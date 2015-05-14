@@ -830,6 +830,75 @@ LBL_Def:
 	}
 }
 
+int CLC::findItem(HWND hwnd, ClcData *dat, HANDLE hItem, ClcContact **contact, ClcGroup **subgroup, int *isVisible)
+{
+	int index = 0;
+	int nowVisible = 1;
+	ClcGroup *group = &dat->list;
+
+	group->scanIndex = 0;
+	for (;;) {
+		if (group->scanIndex == group->cl.count) {
+			ClcGroup *tgroup;
+			group = group->parent;
+			if (group == NULL)
+				break;
+			nowVisible = 1;
+			for (tgroup = group; tgroup; tgroup = tgroup->parent) {
+				if (!(group->expanded)) {
+					nowVisible = 0; break;
+				}
+			}
+			group->scanIndex++;
+			continue;
+		}
+		if (nowVisible)
+			index++;
+		if ((IsHContactGroup(hItem) && group->cl.items[group->scanIndex]->type == CLCIT_GROUP && ((UINT_PTR)hItem & ~HCONTACT_ISGROUP) == group->cl.items[group->scanIndex]->groupId) ||
+			(IsHContactContact(hItem) && group->cl.items[group->scanIndex]->type == CLCIT_CONTACT && group->cl.items[group->scanIndex]->hContact == (MCONTACT)hItem) ||
+			(IsHContactInfo(hItem) && group->cl.items[group->scanIndex]->type == CLCIT_INFO && group->cl.items[group->scanIndex]->hContact == (MCONTACT)((UINT_PTR)hItem & ~HCONTACT_ISINFO)))
+		{
+			if (isVisible) {
+				if (!nowVisible)
+					*isVisible = 0;
+				else {
+					int posy = RowHeight::getItemTopY(dat, index + 1);
+					if (posy < dat->yScroll)
+						*isVisible = 0;
+					//if ((index + 1) * dat->rowHeight< dat->yScroll)
+					//    *isVisible = 0;
+					else {
+						RECT clRect;
+						GetClientRect(hwnd, &clRect);
+						//if (index * dat->rowHeight >= dat->yScroll + clRect.bottom)
+						if (posy >= dat->yScroll + clRect.bottom)
+							*isVisible = 0;
+						else
+							*isVisible = 1;
+					}
+				}
+			}
+			if (contact)
+				*contact = group->cl.items[group->scanIndex];
+			if (subgroup)
+				*subgroup = group;
+			return 1;
+		}
+		if (group->cl.items[group->scanIndex]->type == CLCIT_GROUP) {
+			group = group->cl.items[group->scanIndex]->group;
+			group->scanIndex = 0;
+			nowVisible &= (group->expanded);
+			continue;
+		}
+		group->scanIndex++;
+	}
+
+	if (isVisible) *isVisible = FALSE;
+	if (contact)   *contact = NULL;
+	if (subgroup)  *subgroup = NULL;
+	return 0;
+}
+
 void CLC::countAvatars(ClcData *dat)
 {
 	if(dat->bisEmbedded)

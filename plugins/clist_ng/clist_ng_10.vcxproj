@@ -338,7 +338,6 @@
     <ClCompile Include="skineditor\skinedit.cpp" />
     <ClCompile Include="SRC\clc.cpp" />
     <ClCompile Include="SRC\CLCButton.cpp" />
-    <ClCompile Include="SRC\clcidents.cpp" />
     <ClCompile Include="SRC\clcitems.cpp" />
     <ClCompile Include="SRC\clcmsgs.cpp" />
     <ClCompile Include="SRC\clcopts.cpp" />
