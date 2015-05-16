@@ -24,9 +24,7 @@
  *
  * part of clist_ng plugin for Miranda.
  *
- * (C) 2005-2010 by silvercircle _at_ gmail _dot_ com and contributors
- *
- * $Id: skin.h 137 2010-10-16 21:03:23Z silvercircle $
+ * (C) 2005-2015 by silvercircle _at_ gmail _dot_ com and contributors
  *
  * clist_ng skin helper classes and functions. No low level Gfx here, just
  * managing the skin data structures...

@@ -24,19 +24,23 @@
  *
  * part of clist_ng plugin for Miranda.
  *
- * (C) 2005-2010 by silvercircle _at_ gmail _dot_ com and contributors
- *
- * $Id: clistmod.cpp 138 2010-11-01 10:51:15Z silvercircle $
+ * (C) 2005-2015 by silvercircle _at_ gmail _dot_ com and contributors
  *
  */
 
 #include <commonheaders.h>
 
-INT_PTR GetContactStatusMessage(WPARAM wParam, LPARAM lParam);
 void TrayIconUpdateBase(const char *szChangedProto);
 int EventsProcessContactDoubleClick(HANDLE hContact);
 
 extern HANDLE    hSvc_GetContactStatusMsg;
+
+static INT_PTR GetContactStatusMessage(WPARAM wParam, LPARAM lParam)
+{
+	if (!cfg::shutDown)
+		return SendMessage(pcli->hwndContactTree, CLM_GETSTATUSMSG, wParam, lParam);
+	return 0;
+}
 
 static INT_PTR GetStatusMode(WPARAM wParam, LPARAM lParam)
 {

@@ -204,6 +204,7 @@
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <PreprocessorDefinitions>_WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level1</WarningLevel>
     </ClCompile>
     <ResourceCompile>
       <AdditionalIncludeDirectories>../../include;./include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -237,6 +238,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <FloatingPointModel>Fast</FloatingPointModel>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <WarningLevel>Level1</WarningLevel>
     </ClCompile>
     <ResourceCompile>
       <AdditionalIncludeDirectories>../../include;./include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -347,7 +349,6 @@
     <ClCompile Include="SRC\clistmenus.cpp" />
     <ClCompile Include="SRC\clistmod.cpp" />
     <ClCompile Include="SRC\clistopts.cpp" />
-    <ClCompile Include="SRC\clistsettings.cpp" />
     <ClCompile Include="SRC\clisttray.cpp" />
     <ClCompile Include="SRC\clui.cpp" />
     <ClCompile Include="SRC\cluiopts.cpp" />
