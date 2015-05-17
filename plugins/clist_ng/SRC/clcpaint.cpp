@@ -173,10 +173,9 @@ LONG g_maxAV_X = 200, g_maxAV_Y = 200;
 int CLCPaintHelper::drawAvatar(RECT *rc, ClcContact *contact, int y, WORD cstatus, int rowHeight)
 {
 	float 		dScale = 0.;
-	float 		newHeight, newWidth;
-	DWORD 		topoffset = 0, leftoffset = 0;
+	float 		newHeight, newWidth, dAspect;
+	DWORD 		topoffset = 0, leftoffset = 0, dwFlags = contact->dwDFlags;
 	LONG 		bmWidth, bmHeight;
-	float 		dAspect;
 	HBITMAP 	hbm;
 	HRGN 		rgn = 0;
 	int 		avatar_size = cfg::dat.avatarSize;
@@ -184,7 +183,6 @@ int CLCPaintHelper::drawAvatar(RECT *rc, ClcContact *contact, int y, WORD cstatu
 	TStatusItem *item = contact->wStatus == ID_STATUS_OFFLINE ? &Skin::statusItems[ID_EXTBKAVATARFRAMEOFFLINE] : &Skin::statusItems[ID_EXTBKAVATARFRAME];
 	int  		skinMarginX, skinMarginY;
 	BOOL 		fOverlay = (cfg::dat.dwFlags & CLUI_FRAME_OVERLAYICONS);
-	DWORD		dwFlags = contact->dwDFlags;
 
 	contact->avatarLeft = -1;
 	if(dat->bisEmbedded)

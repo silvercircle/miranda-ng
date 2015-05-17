@@ -188,7 +188,7 @@ void RowHeight::calcRowHeights(ClcData *dat, HWND hwnd, CLCPaintHelper* ph)
 		// Calc row height
 		getRowHeight(dat, Drawing, line_num, dwStyle, ph);
 
-		if(group->cl.items[group->scanIndex]->type==CLCIT_GROUP && /*!IsBadCodePtr((FARPROC)group->cl.items[group->scanIndex]->group) && */ (group->cl.items[group->scanIndex]->group->expanded & 0x0000ffff)) {
+		if(group->cl.items[group->scanIndex]->type==CLCIT_GROUP && (group->cl.items[group->scanIndex]->group->expanded & 0x0000ffff)) {
 			group=group->cl.items[group->scanIndex]->group;
 			indent++;
 			group->scanIndex=0;

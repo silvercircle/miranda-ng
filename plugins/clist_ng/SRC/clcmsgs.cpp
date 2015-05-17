@@ -67,14 +67,6 @@ LRESULT CLC::ProcessExternalMessages(HWND hwnd, ClcData *dat, UINT msg, WPARAM w
 			if(contact->type != CLCIT_CONTACT) // || contact->bIsMeta)
 				return 0;
 
-			//if(contact->bIsMeta && LOWORD(lParam) != EIMG_EXTRA && LOWORD(lParam) != EIMG_CLIENT)
-			//	return 0;
-
-            /*
-            if(contact->hContact == 5846286) {
-                _DebugTraceA("set extra image %d", LOWORD(lParam));
-            }
-            */
 			if(index >= 0 && index < cfg::nextCacheEntry) {
 				cfg::eCache[index].iExtraImage[LOWORD(lParam)] = (BYTE)HIWORD(lParam);
 				cfg::eCache[index].iExtraValid = cfg::eCache[index].iExtraImage[LOWORD(lParam)] != (BYTE)0xff ? (cfg::eCache[index].iExtraValid | (1 << LOWORD(lParam))) : (cfg::eCache[index].iExtraValid & ~(1 << LOWORD(lParam)));

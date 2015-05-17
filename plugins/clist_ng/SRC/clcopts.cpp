@@ -37,6 +37,7 @@
 #define DBFONTF_ITALIC     2
 #define DBFONTF_UNDERLINE  4
 
+// todo: fix me
 
 struct CheckBoxToStyleEx_t {
 	int id;
@@ -152,6 +153,9 @@ void DSP_LoadFromDefaults(TDisplayProfile *p)
 	int         i;
 	DBVARIANT   dbv = {0};
 	char        szKey[5];
+
+	if (0 == p)
+		return;
 
 	p->dwExtraImageMask = cfg::dat.dwExtraImageMask;
 	p->exIconScale = cfg::dat.exIconScale;
