@@ -24,10 +24,7 @@
  *
  * part of clist_ng plugin for Miranda.
  *
- * (C) 2005-2010 by silvercircle _at_ gmail _dot_ com and contributors
- *
- * $Id: clc.h 135 2010-10-06 13:13:51Z silvercircle $
- *
+ * (C) 2005-2015 by silvercircle _at_ gmail _dot_ com and contributors
  */
 
 #ifndef __CLC_H_
@@ -133,7 +130,7 @@ public:
 		status = ID_STATUS_OFFLINE;
 		statusOnlineness = 0;
 
-			thisStatus = cfg::maxStatus;//  pcli->clcProto[i].dwStatus;
+			thisStatus = cfg::maxStatus;
 			if (thisStatus == ID_STATUS_INVISIBLE)
 				return ID_STATUS_INVISIBLE;
 			thisOnlineness = getStatusOnlineness(thisStatus, true);
@@ -174,7 +171,7 @@ public:
 #define INTM_XSTATUSCHANGED  (WM_USER+26)
 #define INTM_METACHANGEDEVENT (WM_USER+27)
 #define INTM_CODEPAGECHANGED (WM_USER+28)
-//#define INTM_CLIENTCHANGED   (WM_USER+29)
+#define INTM_CLIENTCHANGED   (WM_USER+29)
 #define INTM_AVATARCHANGED   (WM_USER+30)
 #define INTM_STATUSMSGCHANGED   (WM_USER+31)
 #define INTM_SORTCLC            (WM_USER+32)
@@ -330,7 +327,6 @@ struct ClcData : public ClcDataBase
 };
 
 
-//#define CLUI_FRAME_SHOWTOPBUTTONS 1
 #define CLUI_FRAME_SHOWBOTTOMBUTTONS 2
 #define CLUI_SHOWCLIENTICONS 4
 #define CLUI_SHOWVISI 8
@@ -340,12 +336,10 @@ struct ClcData : public ClcDataBase
 #define CLUI_FRAME_BUTTONSCLASSIC 128
 #define CLUI_USEMETAICONS 256
 #define CLUI_FRAME_AUTOHIDENOTIFY 512
-//#define CLUI_FRAME_USEXSTATUSASSTATUS 1024
 #define CLUI_STICKYEVENTS 2048
 #define CLUI_FRAME_SBARSHOW 4096
 #define CLUI_STATUSASTEXT 8192
 #define CLUI_FULLROWSELECT 16384
-//#define CLUI_FRAME_EVENTAREASUNKEN 32768
 #define CLUI_FRAME_BUTTONBARSUNKEN 65536
 #define CLUI_FRAME_AVATARS         0x20000
 #define CLUI_FRAME_AVATARSLEFT     0x40000
@@ -560,7 +554,7 @@ int CoolSB_SetupScrollBar(HWND hwnd);
 #define NR_CLIENTS 40
 
 /*
- * floating stuff
+ * status and contact floater flags
  */
 
 #define FLT_SIMPLE			1
@@ -588,6 +582,5 @@ typedef struct _floatopts {
 } FLOATINGOPTIONS;
 
 extern FLOATINGOPTIONS g_floatoptions;
-
 
 #endif /* __CLC_H_*/
