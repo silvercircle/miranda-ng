@@ -1,38 +1,20 @@
 #include "stdafx.h"
 
-void CDropbox::SendFile(const char *fileName, const char *data, int length)
+void CDropbox::SendFile(const char *path, const char *data, int length)
 {
-	CMStringA url(FORMAT, DROPBOX_APICONTENT_URL "/files_put/%s/%s", DROPBOX_API_ROOT, ptrA(mir_utf8encode(fileName)));
-	url.Replace('\\', '/');
-
-	HttpRequest *request = new HttpRequest(hNetlibConnection, REQUEST_PUT, DROPBOX_APICONTENT_URL "/files_put");
-	request->AddBearerAuthHeader(ptrA(db_get_sa(NULL, MODULE, "TokenSecret")));
-	request->pData = (char*)mir_alloc(sizeof(char)* length);
-	memcpy(request->pData, data, length);
-	request->dataLength = length;
-
-	mir_ptr<NETLIBHTTPREQUEST> response(request->Send());
-
-	delete request;
-
+	ptrA token(db_get_sa(NULL, MODULE, "TokenSecret"));
+	ptrA encodedPath(mir_utf8encode(path));
+	UploadFileRequest request(token, encodedPath, data, length);
+	mir_ptr<NETLIBHTTPREQUEST> response(request.Send(hNetlibConnection));
 	HandleHttpResponseError(response);
 }
 
 void CDropbox::SendFileChunkedFirst(const char *data, int length, char *uploadId, size_t &offset)
 {
-	HttpRequest *request = new HttpRequest(hNetlibConnection, REQUEST_PUT, DROPBOX_APICONTENT_URL "/chunked_upload");
-	request->AddBearerAuthHeader(ptrA(db_get_sa(NULL, MODULE, "TokenSecret")));
-	request->AddHeader("Content-Type", "application/octet-stream");
-	request->pData = (char*)mir_alloc(sizeof(char)* length);
-	memcpy(request->pData, data, length);
-	request->dataLength = length;
-
-	mir_ptr<NETLIBHTTPREQUEST> response(request->Send());
-
-	delete request;
-
+	ptrA token(db_get_sa(NULL, MODULE, "TokenSecret"));
+	UploadFileChunkRequest request(token, data, length);
+	mir_ptr<NETLIBHTTPREQUEST> response(request.Send(hNetlibConnection));
 	HandleHttpResponseError(response);
-
 	JSONROOT root(response->pData);
 	if (root)
 	{
@@ -46,22 +28,10 @@ void CDropbox::SendFileChunkedFirst(const char *data, int length, char *uploadId
 
 void CDropbox::SendFileChunkedNext(const char *data, int length, const char *uploadId, size_t &offset)
 {
-	CMStringA url(DROPBOX_APICONTENT_URL "/chunked_upload");
-	url.AppendFormat("?upload_id=%s&offset=%i", uploadId, offset);
-
-	HttpRequest *request = new HttpRequest(hNetlibConnection, REQUEST_PUT, url);
-	request->AddBearerAuthHeader(ptrA(db_get_sa(NULL, MODULE, "TokenSecret")));
-	request->AddHeader("Content-Type", "application/octet-stream");
-	request->pData = (char*)mir_alloc(sizeof(char)* length);
-	memcpy(request->pData, data, length);
-	request->dataLength = length;
-
-	mir_ptr<NETLIBHTTPREQUEST> response(request->Send());
-
-	delete request;
-
+	ptrA token(db_get_sa(NULL, MODULE, "TokenSecret"));
+	UploadFileChunkRequest request(token, uploadId, offset, data, length);
+	mir_ptr<NETLIBHTTPREQUEST> response(request.Send(hNetlibConnection));
 	HandleHttpResponseError(response);
-
 	JSONROOT root(response->pData);
 	if (root)
 	{
@@ -70,42 +40,21 @@ void CDropbox::SendFileChunkedNext(const char *data, int length, const char *upl
 	}
 }
 
-void CDropbox::SendFileChunkedLast(const char *fileName, const char *uploadId)
+void CDropbox::SendFileChunkedLast(const char *path, const char *uploadId)
 {
-	CMStringA url(FORMAT, "%s/commit_chunked_upload/%s/%s", DROPBOX_APICONTENT_URL, DROPBOX_API_ROOT, fileName);
-	url.Replace('\\', '/');
-
-	CMStringA data(FORMAT, "upload_id=%s", uploadId);
-
-	HttpRequest *request = new HttpRequest(hNetlibConnection, REQUEST_POST, url);
-	request->AddBearerAuthHeader(ptrA(db_get_sa(NULL, MODULE, "TokenSecret")));
-	request->AddHeader("Content-Type", "application/x-www-form-urlencoded");
-	request->pData = data.GetBuffer();
-	request->dataLength = data.GetLength();
-
-	mir_ptr<NETLIBHTTPREQUEST> response(request->Send());
-
-	delete request;
-
+	ptrA token(db_get_sa(NULL, MODULE, "TokenSecret"));
+	ptrA encodedPath(mir_utf8encode(path));
+	UploadFileChunkRequest request(token, uploadId, (char*)encodedPath);
+	mir_ptr<NETLIBHTTPREQUEST> response(request.Send(hNetlibConnection));
 	HandleHttpResponseError(response);
 }
 
-void CDropbox::CreateFolder(const char *folderName)
+void CDropbox::CreateFolder(const char *path)
 {
-	CMStringA folder(folderName);
-	folder.Replace('\\', '/');
-
-	CMStringA data(FORMAT, "root=%s&path=%s", DROPBOX_API_ROOT, folder);
-
-	HttpRequest *request = new HttpRequest(hNetlibConnection, REQUEST_POST, DROPBOX_API_URL "/fileops/create_folder");
-	request->AddBearerAuthHeader(ptrA(db_get_sa(NULL, MODULE, "TokenSecret")));
-	request->AddHeader("Content-Type", "application/x-www-form-urlencoded");
-	request->pData = data.GetBuffer();
-	request->dataLength = data.GetLength();
-
-	mir_ptr<NETLIBHTTPREQUEST> response(request->Send());
-
-	delete request;
+	ptrA token(db_get_sa(NULL, MODULE, "TokenSecret"));
+	ptrA encodedPath(mir_utf8encode(path));
+	CreateFolderRequest request(token, encodedPath);
+	mir_ptr<NETLIBHTTPREQUEST> response(request.Send(hNetlibConnection));
 
 	// forder exists on server
 	if (response->resultCode == HTTP_STATUS_FORBIDDEN)
@@ -116,26 +65,17 @@ void CDropbox::CreateFolder(const char *folderName)
 
 void CDropbox::CreateDownloadUrl(const char *path, char *url)
 {
-	CMStringA api_url(DROPBOX_API_URL);
-	api_url.AppendFormat("/shares/%s/%s", DROPBOX_API_ROOT, path);
-
-	if (!db_get_b(NULL, MODULE, "UseSortLinks", 1))
-		api_url += "?short_url=false";
-
-	HttpRequest *request = new HttpRequest(hNetlibConnection, REQUEST_POST, api_url);
-	request->AddBearerAuthHeader(ptrA(db_get_sa(NULL, MODULE, "TokenSecret")));
-
-	mir_ptr<NETLIBHTTPREQUEST> response(request->Send());
-
-	delete request;
-
+	ptrA token(db_get_sa(NULL, MODULE, "TokenSecret"));
+	ptrA encodedPath(mir_utf8encode(path));
+	bool useShortUrl = db_get_b(NULL, MODULE, "UseSortLinks", 1) > 0;
+	ShareRequest request(token, encodedPath, useShortUrl);
+	mir_ptr<NETLIBHTTPREQUEST> response(request.Send(hNetlibConnection));
 	HandleHttpResponseError(response);
-
 	JSONROOT root(response->pData);
 	if (root)
 	{
 		JSONNODE *node = json_get(root, "url");
-		mir_strcpy(url, ptrA(mir_urlEncode(_T2A(json_as_string(node)))));
+		mir_strcpy(url, _T2A(json_as_string(node)));
 	}
 }
 
@@ -189,13 +129,13 @@ UINT CDropbox::SendFilesAsync(void *owner, void *arg)
 			ftp->pfts.currentFileNumber = i;
 			ftp->pfts.currentFileSize = fileSize;
 			ftp->pfts.currentFileProgress = 0;
-			ftp->pfts.tszCurrentFile = wcsrchr(ftp->pfts.ptszFiles[i], '\\') + 1;
+			ftp->pfts.tszCurrentFile = _tcsrchr(ftp->pfts.ptszFiles[i], '\\') + 1;
 
 			ProtoBroadcastAck(MODULE, ftp->pfts.hContact, ACKTYPE_FILE, ACKRESULT_DATA, ftp->hProcess, (LPARAM)&ftp->pfts);
 
 			//
 			size_t offset = 0;
-			char *uploadId = new char[32];
+			char uploadId[32];
 
 			int chunkSize = DROPBOX_FILE_CHUNK_SIZE / 4;
 			if (fileSize < 1024 * 1024)
@@ -203,6 +143,7 @@ UINT CDropbox::SendFilesAsync(void *owner, void *arg)
 			else if (fileSize > 20 * 1024 * 1024)
 				chunkSize = DROPBOX_FILE_CHUNK_SIZE;
 
+			char *data = (char*)mir_alloc(chunkSize);
 			while (!feof(hFile) && fileSize != offset)
 			{
 				if (ferror(hFile))
@@ -211,20 +152,28 @@ UINT CDropbox::SendFilesAsync(void *owner, void *arg)
 				if (ftp->isTerminated)
 					throw TransferException("Transfer was terminated");
 
-				char *data = new char[chunkSize + 1];
 				int count = (int)fread(data, sizeof(char), chunkSize, hFile);
 
-				if (offset == 0)
-					instance->SendFileChunkedFirst(data, count, uploadId, offset);
-				else
-					instance->SendFileChunkedNext(data, count, uploadId, offset);
+				try
+				{
+					if (offset == 0)
+						instance->SendFileChunkedFirst(data, count, uploadId, offset);
+					else
+						instance->SendFileChunkedNext(data, count, uploadId, offset);
+				}
+				catch (TransferException)
+				{
+					mir_free(data);
+					fclose(hFile);
+					throw;
+				}
 
 				ftp->pfts.currentFileProgress += count;
 				ftp->pfts.totalProgress += count;
 
 				ProtoBroadcastAck(MODULE, ftp->pfts.hContact, ACKTYPE_FILE, ACKRESULT_DATA, ftp->hProcess, (LPARAM)&ftp->pfts);
 			}
-
+			mir_free(data);
 			fclose(hFile);
 
 			ptrA utf8_fileName(mir_utf8encodeW(fileName));
@@ -290,7 +239,11 @@ UINT CDropbox::SendFilesAndReportAsync(void *owner, void *arg)
 				dbei.pBlob = (PBYTE)message;
 				db_event_add(ftp->hContact, &dbei);
 			}
-			else CallServiceSync(MS_MSG_SENDMESSAGE, (WPARAM)ftp->hContact, (LPARAM)data);
+			else
+			{
+				CallServiceSync(MS_MSG_SENDMESSAGE, (WPARAM)ftp->hContact, (LPARAM)data);
+				mir_free(message);
+			}
 		}
 		else
 		{

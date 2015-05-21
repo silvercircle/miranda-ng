@@ -373,13 +373,6 @@ public:
 	virtual void OnApply();
 	virtual void OnReset();
 
-	static int cmp(const CCtrlBase *c1, const CCtrlBase *c2)
-	{
-		if (c1->m_idCtrl < c2->m_idCtrl) return -1;
-		if (c1->m_idCtrl > c2->m_idCtrl) return +1;
-		return 0;
-	}
-
 protected:
 	HWND m_hwnd;  // must be the first data item
 	int m_idCtrl;
@@ -709,7 +702,7 @@ public:
 	COLORREF   GetInsertMarkColor();
 	int        GetInsertMarkRect(LPRECT prc);
 	BOOL       GetISearchString(LPSTR lpsz);
-	void       GetItem(LPLVITEM pitem);
+	bool       GetItem(LPLVITEM pitem);
 	int        GetItemCount();
 	void       GetItemPosition(int i, POINT *ppt);
 	void       GetItemRect(int i, RECT *prc, int code);
@@ -851,12 +844,15 @@ protected:
 #undef GetNextSibling
 #undef GetPrevSibling
 
-#define MTREE_CHECKBOX 0x0001
-#define MTREE_DND      0x0002
+#define MTREE_CHECKBOX    0x0001
+#define MTREE_DND         0x0002
+#define MTREE_MULTISELECT 0x0004
 
 class MIR_CORE_EXPORT CCtrlTreeView : public CCtrlBase
 {
 	typedef CCtrlBase CSuper;
+
+	HTREEITEM MoveItemAbove(HTREEITEM hItem, HTREEITEM hInsertAfter);
 
 public:
 	CCtrlTreeView(CDlgBase *dlg, int ctrlId);
@@ -931,6 +927,21 @@ public:
 	void       GetItem(HTREEITEM hItem, TVITEMEX *tvi, TCHAR *szText, int iTextLength);
 	void       InvertCheck(HTREEITEM hItem);
 
+	bool       IsSelected(HTREEITEM hItem);
+	int        GetNumSelected();
+	void       GetSelected(LIST<_TREEITEM> &selected);
+
+	void       Select(HTREEITEM hItem);
+	void       Select(LIST<_TREEITEM> &selected);
+	void       SelectAll();
+	void       SelectRange(HTREEITEM hStart, HTREEITEM hEnd);
+
+	void       Unselect(HTREEITEM hItem);
+	void       UnselectAll();
+
+	void       DropHilite(HTREEITEM hItem);
+	void       DropUnhilite(HTREEITEM hItem);
+
 	// Events
 	struct TEventInfo {
 		CCtrlTreeView *treeviewctrl;
@@ -970,6 +981,7 @@ protected:
 			bool m_bDndEnabled : 1;
 			bool m_bDragging : 1;
 			bool m_bCheckBox : 1;
+			bool m_bMultiSelect : 1;
 		};
 	};
 	HTREEITEM m_hDragItem; // valid if m_bDragging == true

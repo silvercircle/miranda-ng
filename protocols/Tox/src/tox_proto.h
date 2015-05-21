@@ -84,7 +84,7 @@ private:
 	std::tstring GetToxProfilePath();
 	static std::tstring CToxProto::GetToxProfilePath(const TCHAR *accountName);
 
-	bool LoadToxProfile(Tox_Options *options);
+	bool LoadToxProfile(const Tox_Options *options);
 	void SaveToxProfile();
 
 	INT_PTR __cdecl OnCopyToxID(WPARAM, LPARAM);
@@ -237,7 +237,7 @@ private:
 
 	// avatars
 	std::tstring GetAvatarFilePath(MCONTACT hContact = NULL);
-	void SetToxAvatar(std::tstring path, bool checkHash = false);
+	void SetToxAvatar(std::tstring path);
 
 	INT_PTR __cdecl GetAvatarCaps(WPARAM wParam, LPARAM lParam);
 	INT_PTR __cdecl GetAvatarInfo(WPARAM, LPARAM lParam);

@@ -5,9 +5,9 @@ void CDropbox::CommandHelp(void *arg)
 	CommandParam *param = (CommandParam*)arg;
 
 	CMStringA help(Translate("Dropbox supports the following commands:")); help += "\n";
-	help += "\"/content [dir]\" - "; help += Translate("shows all files in folder \"dir\" (\"dir\" can be omitted for root folder)"); help += "\n";
-	help += "\"/share <path>\" - "; help += Translate("returns download link for file or folder with specified path (\"path\" is relative from root folder)"); help += "\n";
-	help += "\"/delete <path>\" - "; help += Translate("deletes file or folder with specified path (\"path\" is relative from root folder)");
+	help += "\"/content [dir]\" \t- "; help += Translate("shows all files in folder \"dir\" (\"dir\" can be omitted for root folder)"); help += "\n";
+	help += "\"/share <path>\" \t- "; help += Translate("returns download link for file or folder with specified path (\"path\" is relative from root folder)"); help += "\n";
+	help += "\"/delete <path>\" \t- "; help += Translate("deletes file or folder with specified path (\"path\" is relative from root folder)");
 
 	ProtoBroadcastAck(MODULE, param->hContact, ACKTYPE_MESSAGE, ACKRESULT_SUCCESS, param->hProcess, 0);
 	CallContactService(param->instance->GetDefaultContact(), PSR_MESSAGE, 0, (LPARAM)help.GetBuffer());
@@ -17,35 +17,34 @@ void CDropbox::CommandContent(void *arg)
 {
 	CommandParam *param = (CommandParam*)arg;
 
-	char *name = (char*)param->data;
+	char *path = (char*)param->data;
+	if (path == NULL)
+		path = "";
 
-	CMStringA url(DROPBOX_API_URL "/metadata/" DROPBOX_API_ROOT);
-	if (name)
-		url.AppendFormat("/%s", ptrA(mir_utf8encode(name)));
+	ptrA token(db_get_sa(NULL, MODULE, "TokenSecret"));
+	ptrA encodedPath(mir_utf8encode(path));
+	GetMetadataRequest request(token, encodedPath);
+	mir_ptr<NETLIBHTTPREQUEST> response(request.Send(param->instance->hNetlibConnection));
 
-	HttpRequest *request = new HttpRequest(param->instance->hNetlibConnection, REQUEST_GET, url);
-	request->AddBearerAuthHeader(db_get_sa(NULL, MODULE, "TokenSecret"));
-
-	mir_ptr<NETLIBHTTPREQUEST> response(request->Send());
-
-	delete request;
-
-	if (response && response->resultCode == HTTP_STATUS_OK) {
+	if (response && response->resultCode == HTTP_STATUS_OK)
+	{
 		CMStringA message;
 
 		JSONROOT root(response->pData);
-		if (root) {
+		if (root)
+		{
 			JSONNODE *node = json_get(root, "is_dir");
 			bool isDir = json_as_bool(node) > 0;
 			if (!isDir)
-				message.AppendFormat("\"%s\" %s", name, Translate("is file"));
-			else {
+				message.AppendFormat("\"%s\" %s", path, Translate("is file"));
+			else
+			{
 				JSONNODE *content = json_as_array(json_get(root, "contents"));
 				for (int i = 0;; i++) {
 					JSONNODE *item = json_at(content, i);
 					if (item == NULL) {
 						if (i == 0)
-							message.AppendFormat("\"%s\" %s", name, Translate("is empty"));
+							message.AppendFormat("\"%s\" %s", path, Translate("is empty"));
 						break;
 					}
 
@@ -68,24 +67,22 @@ void CDropbox::CommandShare(void *arg)
 {
 	CommandParam *param = (CommandParam*)arg;
 
-	char *name = (char*)param->data;
-	if (name) {
-		CMStringA url(DROPBOX_API_URL "/shares/" DROPBOX_API_ROOT);
-		if (name)
-			url.AppendFormat("/%s", ptrA(mir_utf8encode(name)));
+	char *path = (char*)param->data;
+	if (path)
+	{
+		ptrA token(db_get_sa(NULL, MODULE, "TokenSecret"));
+		ptrA encodedPath(mir_utf8encode(path));
+		bool useShortUrl = db_get_b(NULL, MODULE, "UseSortLinks", 1) > 0;
+		ShareRequest request(token, encodedPath, useShortUrl);
+		mir_ptr<NETLIBHTTPREQUEST> response(request.Send(param->instance->hNetlibConnection));
 
-		HttpRequest *request = new HttpRequest(param->instance->hNetlibConnection, REQUEST_POST, url);
-		request->AddBearerAuthHeader(db_get_sa(NULL, MODULE, "TokenSecret"));
-
-		mir_ptr<NETLIBHTTPREQUEST> response(request->Send());
-
-		delete request;
-
-		if (response && response->resultCode == HTTP_STATUS_OK) {
+		if (response && response->resultCode == HTTP_STATUS_OK)
+		{
 			CMStringA link;
 
 			JSONROOT root(response->pData);
-			if (root) {
+			if (root)
+			{
 				JSONNODE *node = json_get(root, "url");
 				link = mir_u2a(json_as_string(node));
 				ProtoBroadcastAck(MODULE, param->hContact, ACKTYPE_MESSAGE, ACKRESULT_SUCCESS, param->hProcess, 0);
@@ -95,7 +92,8 @@ void CDropbox::CommandShare(void *arg)
 			}
 		}
 	}
-	else {
+	else
+	{
 		CMStringA error(FORMAT, Translate("\"%s\" command has invalid parameter.\nUse \"/help\" for more info."), "/share");
 		ProtoBroadcastAck(MODULE, param->hContact, ACKTYPE_MESSAGE, ACKRESULT_SUCCESS, param->hProcess, 0);
 		CallContactService(param->instance->GetDefaultContact(), PSR_MESSAGE, 0, (LPARAM)error.GetBuffer());
@@ -110,33 +108,30 @@ void CDropbox::CommandDelete(void *arg)
 {
 	CommandParam *param = (CommandParam*)arg;
 
-	char *name = (char*)param->data;
-	if (name) {
-		CMStringA pparam = CMStringA("root=" DROPBOX_API_ROOT "&path=") + ptrA(mir_utf8encode(name));
+	char *path = (char*)param->data;
+	if (path)
+	{
+		ptrA token(db_get_sa(NULL, MODULE, "TokenSecret"));
+		ptrA encodedPath(mir_utf8encode(path));
+		DeleteRequest request(token, encodedPath);
+		mir_ptr<NETLIBHTTPREQUEST> response(request.Send(param->instance->hNetlibConnection));
 
-		HttpRequest *request = new HttpRequest(param->instance->hNetlibConnection, REQUEST_POST, DROPBOX_API_URL "/fileops/delete");
-		request->AddBearerAuthHeader(db_get_sa(NULL, MODULE, "TokenSecret"));
-		request->AddHeader("Content-Type", "application/x-www-form-urlencoded");
-		request->pData = mir_strdup(pparam);
-		request->dataLength = pparam.GetLength();
-
-		mir_ptr<NETLIBHTTPREQUEST> response(request->Send());
-
-		delete request;
-
-		if (response && response->resultCode == HTTP_STATUS_OK) {
+		if (response && response->resultCode == HTTP_STATUS_OK)
+		{
 			JSONROOT root(response->pData);
-			if (root) {
+			if (root)
+			{
 				JSONNODE *node = json_get(root, "is_deleted");
 				bool isDeleted = json_as_bool(node) > 0;
-				CMStringA message(FORMAT, "%s %s", name, !isDeleted ? Translate("is not deleted") : Translate("is deleted"));
+				CMStringA message(FORMAT, "%s %s", path, !isDeleted ? Translate("is not deleted") : Translate("is deleted"));
 				ProtoBroadcastAck(MODULE, param->hContact, ACKTYPE_MESSAGE, ACKRESULT_SUCCESS, param->hProcess, 0);
 				CallContactService(param->instance->GetDefaultContact(), PSR_MESSAGE, 0, (LPARAM)message.GetBuffer());
 				return;
 			}
 		}
 	}
-	else {
+	else
+	{
 		CMStringA error(FORMAT, Translate("\"%s\" command has invalid parameter.\nUse \"/help\" for more info."), "/delete");
 		ProtoBroadcastAck(MODULE, param->hContact, ACKTYPE_MESSAGE, ACKRESULT_SUCCESS, param->hProcess, 0);
 		CallContactService(param->instance->GetDefaultContact(), PSR_MESSAGE, 0, (LPARAM)error.GetBuffer());

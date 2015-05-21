@@ -14,11 +14,12 @@ void CToxProto::OnFriendFile(Tox*, uint32_t friendNumber, uint32_t fileNumber, u
 		{
 		case TOX_FILE_KIND_AVATAR:
 		{
-			ptrT id(proto->getTStringA(hContact, TOX_SETTINGS_ID));
+			ptrT address(proto->getTStringA(hContact, TOX_SETTINGS_ID));
 			TCHAR avatarName[MAX_PATH];
-			mir_sntprintf(avatarName, MAX_PATH, _T("%s.png"), id);
+			mir_sntprintf(avatarName, MAX_PATH, _T("%s.png"), address);
 			
 			AvatarTransferParam *transfer = new AvatarTransferParam(friendNumber, fileNumber, avatarName, fileSize);
+			transfer->pfts.flags |= PFTS_RECEIVING;
 			transfer->pfts.hContact = hContact;
 			proto->transfers.Add(transfer);
 
@@ -41,6 +42,7 @@ void CToxProto::OnFriendFile(Tox*, uint32_t friendNumber, uint32_t fileNumber, u
 			TCHAR *name = mir_utf8decodeT(rawName);
 
 			FileTransferParam *transfer = new FileTransferParam(friendNumber, fileNumber, name, fileSize);
+			transfer->pfts.flags |= PFTS_RECEIVING;
 			transfer->pfts.hContact = hContact;
 			proto->transfers.Add(transfer);
 
@@ -78,11 +80,11 @@ HANDLE CToxProto::OnFileAllow(MCONTACT hContact, HANDLE hTransfer, const PROTOCH
 	if (!ProtoBroadcastAck(hContact, ACKTYPE_FILE, ACKRESULT_FILERESUME, (HANDLE)transfer, (LPARAM)&transfer->pfts))
 	{
 		int action = FILERESUME_OVERWRITE;
-		const TCHAR **szFilename = (const TCHAR**)mir_alloc(sizeof(TCHAR) * 2);
+		const TCHAR **szFilename = (const TCHAR**)mir_alloc(sizeof(TCHAR*) * 2);
 		szFilename[0] = fullPath;
 		szFilename[1] = NULL;
 		OnFileResume(hTransfer, &action, szFilename);
-		//mir_free(szFilename);
+		mir_free(szFilename);
 	}
 
 	return hTransfer;
@@ -220,6 +222,7 @@ HANDLE CToxProto::OnSendFile(MCONTACT hContact, const PROTOCHAR*, PROTOCHAR **pp
 	}
 
 	FileTransferParam *transfer = new FileTransferParam(friendNumber, fileNumber, fileName, fileSize);
+	transfer->pfts.flags |= PFTS_SENDING;
 	transfer->pfts.hContact = hContact;
 	transfer->pfts.tszWorkingDir = fileDir;
 	transfer->hFile = hFile;
@@ -246,9 +249,7 @@ void CToxProto::OnFileSendData(Tox*, uint32_t friendNumber, uint32_t fileNumber,
 		proto->debugLogA(__FUNCTION__": finised the transfer of file (%d)", fileNumber);
 		bool isFileFullyTransfered = transfer->pfts.currentFileProgress == transfer->pfts.currentFileSize;
 		if (!isFileFullyTransfered)
-		{
-			proto->debugLogA(__FUNCTION__": file (%d) is transferred not completely", fileNumber);
-		}
+			proto->debugLogA(__FUNCTION__": file (%d) is not completely transferred", fileNumber);
 		proto->ProtoBroadcastAck(transfer->pfts.hContact, ACKTYPE_FILE, isFileFullyTransfered ? ACKRESULT_SUCCESS : ACKRESULT_FAILED, (HANDLE)transfer, 0);
 		proto->transfers.Remove(transfer);
 		return;
@@ -271,6 +272,11 @@ void CToxProto::OnFileSendData(Tox*, uint32_t friendNumber, uint32_t fileNumber,
 	TOX_ERR_FILE_SEND_CHUNK error;
 	if (!tox_file_send_chunk(proto->tox, friendNumber, fileNumber, position, data, length, &error))
 	{
+		if (error == TOX_ERR_FILE_SEND_CHUNK_FRIEND_NOT_CONNECTED)
+		{
+			mir_free(data);
+			return;
+		}
 		proto->debugLogA(__FUNCTION__": failed to send file chunk (%d)", error);
 		proto->ProtoBroadcastAck(transfer->pfts.hContact, ACKTYPE_FILE, ACKRESULT_FAILED, (HANDLE)transfer, 0);
 		tox_file_control(proto->tox, transfer->friendNumber, transfer->fileNumber, TOX_FILE_CONTROL_CANCEL, NULL);
@@ -278,7 +284,8 @@ void CToxProto::OnFileSendData(Tox*, uint32_t friendNumber, uint32_t fileNumber,
 		return;
 	}
 
-	transfer->pfts.totalProgress = transfer->pfts.currentFileProgress = length;
+	transfer->pfts.totalProgress = transfer->pfts.currentFileProgress += length;
+	proto->ProtoBroadcastAck(transfer->pfts.hContact, ACKTYPE_FILE, ACKRESULT_DATA, (HANDLE)transfer, (LPARAM)&transfer->pfts);
 
 	mir_free(data);
 }

@@ -190,16 +190,17 @@
     <ClCompile Include="src\FreeImage\ColorLookup.cpp" />
     <ClCompile Include="src\FreeImage\ConversionFloat.cpp" />
     <ClCompile Include="src\FreeImage\ConversionRGB16.cpp" />
+    <ClCompile Include="src\FreeImage\ConversionRGBA16.cpp" />
+    <ClCompile Include="src\FreeImage\ConversionRGBAF.cpp" />
     <ClCompile Include="src\FreeImage\ConversionUINT16.cpp" />
     <ClCompile Include="src\FreeImage\FreeImage.cpp" />
-    <ClCompile Include="src\FreeImage\FreeImageC.c" />
     <ClCompile Include="src\FreeImage\FreeImageIO.cpp" />
     <ClCompile Include="src\FreeImage\GetType.cpp" />
+    <ClCompile Include="src\FreeImage\LFPQuantizer.cpp" />
     <ClCompile Include="src\FreeImage\MemoryIO.cpp" />
     <ClCompile Include="src\FreeImage\PixelAccess.cpp" />
     <ClCompile Include="src\FreeImage\Plugin.cpp" />
     <ClCompile Include="src\FreeImage\PluginBMP.cpp" />
-    <ClCompile Include="src\FreeImage\PluginCUT.cpp" />
     <ClCompile Include="src\FreeImage\PluginGIF.cpp" />
     <ClCompile Include="src\FreeImage\PluginICO.cpp" />
     <ClCompile Include="src\FreeImage\PluginJPEG.cpp" />
@@ -340,6 +341,7 @@
     <ClInclude Include="src\LibPNG\pnginfo.h" />
     <ClInclude Include="src\LibPNG\pnglibconf.h" />
     <ClInclude Include="src\LibPNG\pngpriv.h" />
+    <ClInclude Include="src\MapIntrospector.h" />
     <ClInclude Include="src\Metadata\FIRational.h" />
     <ClInclude Include="src\FreeImage.h" />
     <ClInclude Include="src\FreeImageIO.h" />

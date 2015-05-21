@@ -42,7 +42,7 @@ void __cdecl CMsnProto::msn_keepAliveThread(void*)
 				msnPingTimeout = 45;
 			else {
 				msnPingTimeout = 20;
-				keepFlag = keepFlag && msnNsThread->send("PNG\r\n", 5);
+				keepFlag = keepFlag && msnNsThread->sendPacket("PNG", "CON 0");
 			}
 			p2p_clearDormantSessions();
 			if (hHttpsConnection && (clock() - mHttpsTS) > 60 * CLOCKS_PER_SEC) {
@@ -70,8 +70,26 @@ void __cdecl CMsnProto::msn_keepAliveThread(void*)
 	debugLogA("Closing keep-alive thread");
 }
 
+void __cdecl CMsnProto::msn_loginThread(void*)
+{
+	MSN_RefreshContactList();
+	MSN_FetchRecentMessages();
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////
 //	MSN server thread - read and process commands from a server
+
+static bool ReallocInfoBuffer(ThreadData *info, size_t mDataSize)
+{
+	char *mData = (char*)mir_realloc(info->mData, mDataSize+1);
+	if (mData == NULL)
+		return false;
+
+	info->mData = mData;
+	info->mDataSize = mDataSize;
+	ZeroMemory(&mData[info->mBytesInData], info->mDataSize-info->mBytesInData+1);
+	return true;
+}
 
 void __cdecl CMsnProto::MSNServerThread(void* arg)
 {
@@ -120,6 +138,7 @@ void __cdecl CMsnProto::MSNServerThread(void* arg)
 		tConn.wPort = MSN_DEFAULT_GATEWAY_PORT;
 	}
 	else {
+		tConn.flags = NLOCF_SSL;
 		tConn.szHost = info->mServer;
 		tConn.wPort = MSN_DEFAULT_PORT;
 	}
@@ -149,9 +168,9 @@ void __cdecl CMsnProto::MSNServerThread(void* arg)
 
 	debugLogA("Connected with handle=%08X", info->s);
 
-	if (info->mType == SERVER_NOTIFICATION) {
-		info->sendPacket("VER", "MSNP18 MSNP17 CVR0");
-	}
+	if (info->mType == SERVER_NOTIFICATION) 
+		info->sendPacketPayload("CNT", "CON", "<connect>%s%s%s<ver>2</ver><agent><os>winnt</os><osVer>5.2</osVer><proc>x86</proc><lcid>en-us</lcid></agent></connect>\r\n",
+		*info->mState?"<xfr><state>":"", *info->mState?info->mState:"", *info->mState?"</state></xfr>":"");
 	else if (info->mType == SERVER_SWITCHBOARD) {
 		info->sendPacket(info->mCaller ? "USR" : "ANS", "%s;%s %s", MyOptions.szEmail, MyOptions.szMachineGuid, info->mCookie);
 	}
@@ -166,7 +185,7 @@ void __cdecl CMsnProto::MSNServerThread(void* arg)
 	debugLogA("Entering main recv loop");
 	info->mBytesInData = 0;
 	for (;;) {
-		int recvResult = info->recv(info->mData + info->mBytesInData, sizeof(info->mData) - info->mBytesInData);
+		int recvResult = info->recv(info->mData + info->mBytesInData, info->mDataSize - info->mBytesInData);
 		if (recvResult == SOCKET_ERROR) {
 			debugLogA("Connection %08p [%08X] was abortively closed", info->s, GetCurrentThreadId());
 			break;
@@ -189,11 +208,12 @@ void __cdecl CMsnProto::MSNServerThread(void* arg)
 				if (peol == NULL)
 					break;
 
-				if (info->mBytesInData < peol - info->mData + 2)
+				int msgLen = (int)(peol - info->mData);
+				if (info->mBytesInData < msgLen + 2)
 					break;  //wait for full line end
 
-				char msg[sizeof(info->mData)];
-				memcpy(msg, info->mData, peol - info->mData); msg[peol - info->mData] = 0;
+				char msg[1024];
+				strncpy_s(msg, info->mData, msgLen);
 
 				if (*++peol != '\n')
 					debugLogA("Dodgy line ending to command: ignoring");
@@ -227,9 +247,11 @@ void __cdecl CMsnProto::MSNServerThread(void* arg)
 			}
 		}
 
-		if (info->mBytesInData == sizeof(info->mData)) {
-			debugLogA("sizeof(data) is too small: the longest line won't fit");
-			break;
+		if (info->mBytesInData == info->mDataSize) {
+			if (!ReallocInfoBuffer(info, info->mDataSize*2)) {
+				debugLogA("sizeof(data) is too small: the longest line won't fit");
+				break;
+			}
 		}
 	}
 
@@ -340,27 +362,16 @@ ThreadData* CMsnProto::MSN_GetThreadByContact(const char* wlid, TInfoType type)
 	return NULL;
 }
 
-ThreadData* CMsnProto::MSN_GetThreadByChatId(const TCHAR* chatId)
+GCThreadData* CMsnProto::MSN_GetThreadByChatId(const TCHAR* chatId)
 {
+	if (mir_tstrlen(chatId) == 0)
+		return NULL;
+
 	mir_cslock lck(m_csThreads);
-
-	for (int i = 0; i < m_arThreads.getCount(); i++) {
-		ThreadData &T = m_arThreads[i];
-		if (_tcsicmp(T.mChatID, chatId) == 0)
-			return &T;
-	}
-
-	return NULL;
-}
-
-ThreadData* CMsnProto::MSN_GetThreadByTimer(UINT timerId)
-{
-	mir_cslock lck(m_csThreads);
-
-	for (int i = 0; i < m_arThreads.getCount(); i++) {
-		ThreadData &T = m_arThreads[i];
-		if (T.mType == SERVER_SWITCHBOARD && T.mTimerId == timerId)
-			return &T;
+	for (int i = 0; i < m_arGCThreads.getCount(); i++) {
+		GCThreadData *T = m_arGCThreads[i];
+		if (_tcsicmp(T->mChatID, chatId) == 0)
+			return T;
 	}
 
 	return NULL;
@@ -517,6 +528,7 @@ ThreadData::ThreadData()
 	mGatewayTimeout = 2;
 	resetTimeout();
 	hWaitEvent = CreateSemaphore(NULL, 0, MSN_PACKETS_COMBINE, NULL);
+	mData = (char*)mir_calloc((mDataSize=8192)+1);
 }
 
 ThreadData::~ThreadData()
@@ -567,6 +579,8 @@ ThreadData::~ThreadData()
 		proto->MSN_GetUnconnectedThread(wlid) == NULL) {
 		proto->MsgQueue_Clear(wlid, true);
 	}
+
+	mir_free(mData);
 }
 
 void ThreadData::applyGatewayData(HANDLE hConn, bool isPoll)
@@ -673,13 +687,13 @@ HReadBuffer::~HReadBuffer()
 		owner->mBytesInData = (int)totalDataSize;
 	}
 	else owner->mBytesInData = 0;
+
+	buffer[owner->mBytesInData] = 0;
 }
 
 BYTE* HReadBuffer::surelyRead(size_t parBytes)
 {
-	const size_t bufferSize = sizeof(owner->mData);
-
-	if ((startOffset + parBytes) > bufferSize) {
+	if ((startOffset + parBytes) > owner->mDataSize) {
 		if (totalDataSize > startOffset)
 			memmove(buffer, buffer + startOffset, (totalDataSize -= startOffset));
 		else
@@ -687,14 +701,19 @@ BYTE* HReadBuffer::surelyRead(size_t parBytes)
 
 		startOffset = 0;
 
-		if (parBytes > bufferSize) {
-			owner->proto->debugLogA("HReadBuffer::surelyRead: not enough memory, %d %d %d", parBytes, bufferSize, startOffset);
-			return NULL;
+		if (parBytes > owner->mDataSize) {
+			size_t mDataSize = owner->mDataSize;
+			while (parBytes > mDataSize) mDataSize*=2;
+			if (!ReallocInfoBuffer(owner, mDataSize)) {
+				owner->proto->debugLogA("HReadBuffer::surelyRead: not enough memory, %d %d %d", parBytes, owner->mDataSize, startOffset);
+				return NULL;
+			}
+			buffer = (BYTE*)owner->mData;
 		}
 	}
 
-	while ((startOffset + parBytes) > totalDataSize) {
-		int recvResult = owner->recv((char*)buffer + totalDataSize, bufferSize - totalDataSize);
+  	while ((startOffset + parBytes) > totalDataSize) {
+		int recvResult = owner->recv((char*)buffer + totalDataSize, owner->mDataSize - totalDataSize);
 
 		if (recvResult <= 0)
 			return NULL;
@@ -703,5 +722,20 @@ BYTE* HReadBuffer::surelyRead(size_t parBytes)
 	}
 
 	BYTE *result = buffer + startOffset; startOffset += parBytes;
+	buffer[totalDataSize] = 0;
 	return result;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// class GCThreadData members
+
+GCThreadData::GCThreadData() :
+mJoinedContacts(10, PtrKeySortT)
+{
+	memset(&mCreator, 0, sizeof(GCThreadData) - sizeof(mJoinedContacts));
+}
+
+GCThreadData::~GCThreadData()
+{
+}
+

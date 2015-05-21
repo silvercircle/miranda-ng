@@ -62,9 +62,6 @@
     <ClCompile Include="src\FreeImage\FreeImage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\FreeImage\FreeImageC.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\FreeImage\FreeImageIO.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -81,9 +78,6 @@
       <Filter>Source Files\Plugins</Filter>
     </ClCompile>
     <ClCompile Include="src\FreeImage\PluginBMP.cpp">
-      <Filter>Source Files\Plugins</Filter>
-    </ClCompile>
-    <ClCompile Include="src\FreeImage\PluginCUT.cpp">
       <Filter>Source Files\Plugins</Filter>
     </ClCompile>
     <ClCompile Include="src\FreeImage\PluginGIF.cpp">
@@ -122,6 +116,12 @@
     <ClCompile Include="src\FreeImage\ConversionRGBF.cpp">
       <Filter>Source Files\Conversion</Filter>
     </ClCompile>
+    <ClCompile Include="src\FreeImage\ConversionRGBA16.cpp">
+      <Filter>Source Files\Conversion</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FreeImage\ConversionRGBAF.cpp">
+      <Filter>Source Files\Conversion</Filter>
+    </ClCompile>
     <ClCompile Include="src\FreeImage\ConversionType.cpp">
       <Filter>Source Files\Conversion</Filter>
     </ClCompile>
@@ -145,6 +145,9 @@
     </ClCompile>
     <ClCompile Include="src\FreeImage\ToneMapping.cpp">
       <Filter>Source Files\Conversion</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FreeImage\LFPQuantizer.cpp">
+      <Filter>Source Files\Quantizers</Filter>
     </ClCompile>
     <ClCompile Include="src\FreeImage\NNQuantizer.cpp">
       <Filter>Source Files\Quantizers</Filter>
@@ -538,6 +541,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\CacheFile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MapIntrospector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

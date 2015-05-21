@@ -41,8 +41,12 @@ static LIST<CCtrlBase> arControls(10, CompareControls);
 
 #pragma comment(lib, "uxtheme")
 
-CDlgBase::CDlgBase(HINSTANCE hInst, int idDialog) :
-	m_controls(1, CCtrlBase::cmp)
+static int CompareControlId(const CCtrlBase *c1, const CCtrlBase *c2)
+{	return c1->GetCtrlId() - c2->GetCtrlId();
+}
+
+CDlgBase::CDlgBase(HINSTANCE hInst, int idDialog)
+	: m_controls(1, CompareControlId)
 {
 	m_hInst = hInst;
 	m_idDialog = idDialog;
@@ -91,7 +95,7 @@ void CDlgBase::SetCaption(const TCHAR *ptszCaption)
 
 int CDlgBase::Resizer(UTILRESIZECONTROL*)
 {
-	return RD_ANCHORX_LEFT|RD_ANCHORY_TOP;
+	return RD_ANCHORX_LEFT | RD_ANCHORY_TOP;
 }
 
 INT_PTR CDlgBase::DlgProc(UINT msg, WPARAM wParam, LPARAM lParam)
@@ -150,12 +154,11 @@ INT_PTR CDlgBase::DlgProc(UINT msg, WPARAM wParam, LPARAM lParam)
 
 			if (idCode == BN_CLICKED &&
 				((idCtrl == IDOK) && (m_autoClose & CLOSE_ON_OK) ||
-				(idCtrl == IDCANCEL) && (m_autoClose & CLOSE_ON_CANCEL)))
-			{
+				(idCtrl == IDCANCEL) && (m_autoClose & CLOSE_ON_CANCEL))) {
 				PostMessage(m_hwnd, WM_CLOSE, 0, 0);
 			}
-			return FALSE;
 		}
+		return FALSE;
 
 	case WM_NOTIFY:
 		{
@@ -174,8 +177,8 @@ INT_PTR CDlgBase::DlgProc(UINT msg, WPARAM wParam, LPARAM lParam)
 
 			if (CCtrlBase *ctrl = FindControl(pnmh->idFrom))
 				return ctrl->OnNotify(idCtrl, pnmh);
-			return FALSE;
 		}
+		return FALSE;
 
 	case WM_SIZE:
 		if (m_forceResizable || (GetWindowLongPtr(m_hwnd, GWL_STYLE) & WS_SIZEBOX)) {
@@ -228,7 +231,7 @@ INT_PTR CALLBACK CDlgBase::GlobalDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPA
 	if (msg == WM_INITDIALOG) {
 		wnd = (CDlgBase*)lParam;
 		wnd->m_hwnd = hwnd;
-		
+
 		mir_cslock lck(csDialogs);
 		arDialogs.insert(wnd);
 	}
@@ -255,7 +258,7 @@ void CDlgBase::AddControl(CCtrlBase *ctrl)
 
 void CDlgBase::NotifyControls(void (CCtrlBase::*fn)())
 {
-	for (int i=0; i < m_controls.getCount(); i++)
+	for (int i = 0; i < m_controls.getCount(); i++)
 		(m_controls[i]->*fn)();
 }
 
@@ -275,10 +278,9 @@ CDlgBase* CDlgBase::Find(HWND hwnd)
 /////////////////////////////////////////////////////////////////////////////////////////
 // CCtrlCombo class
 
-CCtrlCombo::CCtrlCombo(CDlgBase* dlg, int ctrlId) :
-	CCtrlData(dlg, ctrlId)
-{
-}
+CCtrlCombo::CCtrlCombo(CDlgBase* dlg, int ctrlId)
+	: CCtrlData(dlg, ctrlId)
+{}
 
 BOOL CCtrlCombo::OnCommand(HWND, WORD, WORD idCode)
 {
@@ -415,9 +417,8 @@ void CCtrlCombo::ShowDropdown(bool show)
 // CCtrlListBox class
 
 CCtrlListBox::CCtrlListBox(CDlgBase* dlg, int ctrlId) :
-	CCtrlBase(dlg, ctrlId)
-{
-}
+CCtrlBase(dlg, ctrlId)
+{}
 
 BOOL CCtrlListBox::OnCommand(HWND, WORD, WORD idCode)
 {
@@ -524,10 +525,9 @@ void CCtrlListBox::SetSel(int index, bool sel)
 /////////////////////////////////////////////////////////////////////////////////////////
 // CCtrlCheck class
 
-CCtrlCheck::CCtrlCheck(CDlgBase* dlg, int ctrlId) :
-	CCtrlData(dlg, ctrlId)
-{
-}
+CCtrlCheck::CCtrlCheck(CDlgBase* dlg, int ctrlId)
+	: CCtrlData(dlg, ctrlId)
+{}
 
 BOOL CCtrlCheck::OnCommand(HWND, WORD, WORD)
 {
@@ -558,10 +558,9 @@ void CCtrlCheck::SetState(int state)
 /////////////////////////////////////////////////////////////////////////////////////////
 // CCtrlEdit class
 
-CCtrlEdit::CCtrlEdit(CDlgBase* dlg, int ctrlId) :
-	CCtrlData(dlg, ctrlId)
-{
-}
+CCtrlEdit::CCtrlEdit(CDlgBase* dlg, int ctrlId)
+	: CCtrlData(dlg, ctrlId)
+{}
 
 BOOL CCtrlEdit::OnCommand(HWND, WORD, WORD idCode)
 {
@@ -596,11 +595,10 @@ void CCtrlEdit::OnReset()
 /////////////////////////////////////////////////////////////////////////////////////////
 // CCtrlData class
 
-CCtrlData::CCtrlData(CDlgBase *wnd, int idCtrl) :
-	CCtrlBase(wnd, idCtrl),
+CCtrlData::CCtrlData(CDlgBase *wnd, int idCtrl)
+	: CCtrlBase(wnd, idCtrl),
 	m_dbLink(NULL)
-{
-}
+{}
 
 CCtrlData::~CCtrlData()
 {
@@ -627,19 +625,17 @@ void CCtrlData::CreateDbLink(const char* szModuleName, const char* szSetting, TC
 /////////////////////////////////////////////////////////////////////////////////////////
 // CCtrlMButton
 
-CCtrlMButton::CCtrlMButton(CDlgBase* dlg, int ctrlId, HICON hIcon, const char* tooltip) :
-	CCtrlButton(dlg, ctrlId),
+CCtrlMButton::CCtrlMButton(CDlgBase* dlg, int ctrlId, HICON hIcon, const char* tooltip) 
+	: CCtrlButton(dlg, ctrlId),
 	m_hIcon(hIcon),
 	m_toolTip(tooltip)
-{
-}
+{}
 
-CCtrlMButton::CCtrlMButton(CDlgBase* dlg, int ctrlId, int iCoreIcon, const char* tooltip) :
-	CCtrlButton(dlg, ctrlId),
+CCtrlMButton::CCtrlMButton(CDlgBase* dlg, int ctrlId, int iCoreIcon, const char* tooltip)
+	: CCtrlButton(dlg, ctrlId),
 	m_hIcon(::LoadSkinnedIcon(iCoreIcon)),
 	m_toolTip(tooltip)
-{
-}
+{}
 
 CCtrlMButton::~CCtrlMButton()
 {
@@ -668,10 +664,9 @@ void CCtrlMButton::MakePush()
 /////////////////////////////////////////////////////////////////////////////////////////
 // CCtrlButton
 
-CCtrlButton::CCtrlButton(CDlgBase* wnd, int idCtrl) :
-	CCtrlBase(wnd, idCtrl)
-{
-}
+CCtrlButton::CCtrlButton(CDlgBase* wnd, int idCtrl)
+	: CCtrlBase(wnd, idCtrl)
+{}
 
 BOOL CCtrlButton::OnCommand(HWND, WORD, WORD idCode)
 {
@@ -683,11 +678,10 @@ BOOL CCtrlButton::OnCommand(HWND, WORD, WORD idCode)
 /////////////////////////////////////////////////////////////////////////////////////////
 // CCtrlHyperlink
 
-CCtrlHyperlink::CCtrlHyperlink(CDlgBase* wnd, int idCtrl, const char* url) :
-	CCtrlBase(wnd, idCtrl),
+CCtrlHyperlink::CCtrlHyperlink(CDlgBase* wnd, int idCtrl, const char* url)
+	: CCtrlBase(wnd, idCtrl),
 	m_url(url)
-{
-}
+{}
 
 BOOL CCtrlHyperlink::OnCommand(HWND, WORD, WORD)
 {
@@ -697,10 +691,9 @@ BOOL CCtrlHyperlink::OnCommand(HWND, WORD, WORD)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // CCtrlClc
-CCtrlClc::CCtrlClc(CDlgBase* dlg, int ctrlId):
-	CCtrlBase(dlg, ctrlId)
-{
-}
+CCtrlClc::CCtrlClc(CDlgBase* dlg, int ctrlId)
+	: CCtrlBase(dlg, ctrlId)
+{}
 
 BOOL CCtrlClc::OnNotify(int, NMHDR *pnmh)
 {
@@ -910,10 +903,9 @@ void CCtrlClc::SetTextColor(int iFontId, COLORREF clText)
 /////////////////////////////////////////////////////////////////////////////////////////
 // CCtrlListView
 
-CCtrlListView::CCtrlListView(CDlgBase* dlg, int ctrlId) :
-	CCtrlBase(dlg, ctrlId)
-{
-}
+CCtrlListView::CCtrlListView(CDlgBase* dlg, int ctrlId)
+	: CCtrlBase(dlg, ctrlId)
+{}
 
 BOOL CCtrlListView::OnNotify(int, NMHDR *pnmh)
 {
@@ -933,7 +925,6 @@ BOOL CCtrlListView::OnNotify(int, NMHDR *pnmh)
 		case LVN_GETDISPINFO:       OnGetDispInfo(&evt);       return TRUE;
 		case LVN_GETINFOTIP:        OnGetInfoTip(&evt);        return TRUE;
 		case LVN_HOTTRACK:          OnHotTrack(&evt);          return TRUE;
-		//case LVN_INCREMENTALSEARCH: OnIncrementalSearch(&evt); return TRUE;
 		case LVN_INSERTITEM:        OnInsertItem(&evt);        return TRUE;
 		case LVN_ITEMACTIVATE:      OnItemActivate(&evt);      return TRUE;
 		case LVN_ITEMCHANGED:       OnItemChanged(&evt);       return TRUE;
@@ -971,7 +962,7 @@ void CCtrlListView::AddColumn(int iSubItem, TCHAR *name, int cx)
 
 void CCtrlListView::AddGroup(int iGroupId, TCHAR *name)
 {
-	LVGROUP lvg = {0};
+	LVGROUP lvg = { 0 };
 	lvg.cbSize = sizeof(lvg);
 	lvg.mask = LVGF_HEADER | LVGF_GROUPID;
 	lvg.pszHeader = name;
@@ -982,7 +973,7 @@ void CCtrlListView::AddGroup(int iGroupId, TCHAR *name)
 
 int CCtrlListView::AddItem(TCHAR *text, int iIcon, LPARAM lParam, int iGroupId)
 {
-	LVITEM lvi = {0};
+	LVITEM lvi = { 0 };
 	lvi.mask = LVIF_PARAM | LVIF_TEXT | LVIF_IMAGE;
 	lvi.iSubItem = 0;
 	lvi.pszText = text;
@@ -998,7 +989,7 @@ int CCtrlListView::AddItem(TCHAR *text, int iIcon, LPARAM lParam, int iGroupId)
 
 void CCtrlListView::SetItem(int iItem, int iSubItem, TCHAR *text, int iIcon)
 {
-	LVITEM lvi = {0};
+	LVITEM lvi = { 0 };
 	lvi.mask = LVIF_TEXT;
 	lvi.iItem = iItem;
 	lvi.iSubItem = iSubItem;
@@ -1013,7 +1004,7 @@ void CCtrlListView::SetItem(int iItem, int iSubItem, TCHAR *text, int iIcon)
 
 LPARAM CCtrlListView::GetItemData(int iItem)
 {
-	LVITEM lvi = {0};
+	LVITEM lvi = { 0 };
 	lvi.mask = LVIF_PARAM;
 	lvi.iItem = iItem;
 	GetItem(&lvi);
@@ -1114,8 +1105,8 @@ int CCtrlListView::GetInsertMarkRect(LPRECT prc)
 BOOL CCtrlListView::GetISearchString(LPSTR lpsz)
 {	return ListView_GetISearchString(m_hwnd, lpsz);
 }
-void CCtrlListView::GetItem(LPLVITEM pitem)
-{	ListView_GetItem(m_hwnd, pitem);
+bool CCtrlListView::GetItem(LPLVITEM pitem)
+{	return ListView_GetItem(m_hwnd, pitem) == TRUE;
 }
 int CCtrlListView::GetItemCount()
 {	return ListView_GetItemCount(m_hwnd);
@@ -1364,16 +1355,18 @@ BOOL CCtrlListView::Update(int iItem)
 /////////////////////////////////////////////////////////////////////////////////////////
 // CCtrlTreeView
 
-CCtrlTreeView::CCtrlTreeView(CDlgBase* dlg, int ctrlId):
-	CCtrlBase(dlg, ctrlId),
+CCtrlTreeView::CCtrlTreeView(CDlgBase* dlg, int ctrlId)
+	: CCtrlBase(dlg, ctrlId),
 	m_dwFlags(0)
-{
-}
+{}
 
 void CCtrlTreeView::SetFlags(uint32_t dwFlags)
 {
 	if (dwFlags & MTREE_CHECKBOX)
 		m_bCheckBox = true;
+
+	if (dwFlags & MTREE_MULTISELECT)
+		m_bMultiSelect = true;
 
 	if (dwFlags & MTREE_DND) {
 		m_bDndEnabled = true;
@@ -1390,80 +1383,160 @@ void CCtrlTreeView::OnInit()
 		Subclass();
 }
 
+HTREEITEM CCtrlTreeView::MoveItemAbove(HTREEITEM hItem, HTREEITEM hInsertAfter)
+{
+	if (hItem == NULL || hInsertAfter == NULL)
+		return NULL;
+
+	if (hItem == hInsertAfter)
+		return hItem;
+
+	TCHAR name[128];
+	TVINSERTSTRUCT tvis = { 0 };
+	tvis.itemex.mask = (UINT)-1;
+	tvis.itemex.pszText = name;
+	tvis.itemex.cchTextMax = SIZEOF(name);
+	tvis.itemex.hItem = hItem;
+	if (!GetItem(&tvis.itemex))
+		return NULL;
+
+	// the pointed lParam will be freed inside TVN_DELETEITEM
+	// so lets substitute it with 0
+	LPARAM saveOldData = tvis.itemex.lParam;
+	tvis.itemex.lParam = 0;
+	SetItem(&tvis.itemex);
+
+	// now current item contain lParam = 0 we can delete it. the memory will be kept.
+	DeleteItem(hItem);
+
+	tvis.itemex.stateMask = tvis.itemex.state;
+	tvis.itemex.lParam = saveOldData;
+	tvis.hParent = NULL;
+	tvis.hInsertAfter = hInsertAfter;
+	return InsertItem(&tvis);
+}
+
 LRESULT CCtrlTreeView::CustomWndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	TVHITTESTINFO hti;
 
 	switch (msg) {
 	case WM_MOUSEMOVE:
-		if (!m_bDragging)
-			break;
-
-		hti.pt.x = (short)LOWORD(lParam);
-		hti.pt.y = (short)HIWORD(lParam);
-		HitTest(&hti);
-		if (hti.flags & (TVHT_ONITEM | TVHT_ONITEMRIGHT)) {
-			HTREEITEM it = hti.hItem;
-			hti.pt.y -= GetItemHeight() / 2;
+		if (m_bDragging) {
+			hti.pt.x = (short)LOWORD(lParam);
+			hti.pt.y = (short)HIWORD(lParam);
 			HitTest(&hti);
-			if (!(hti.flags & TVHT_ABOVE))
-				SetInsertMark(hti.hItem, 1);
-			else
-				SetInsertMark(it, 0);
-		}
-		else {
-			if (hti.flags & TVHT_ABOVE) SendMsg(WM_VSCROLL, MAKEWPARAM(SB_LINEUP, 0), 0);
-			if (hti.flags & TVHT_BELOW) SendMsg(WM_VSCROLL, MAKEWPARAM(SB_LINEDOWN, 0), 0);
-			SetInsertMark(NULL, 0);
+			if (hti.flags & (TVHT_ONITEM | TVHT_ONITEMRIGHT)) {
+				HTREEITEM it = hti.hItem;
+				hti.pt.y -= GetItemHeight() / 2;
+				HitTest(&hti);
+				if (!(hti.flags & TVHT_ABOVE))
+					SetInsertMark(hti.hItem, 1);
+				else
+					SetInsertMark(it, 0);
+			}
+			else {
+				if (hti.flags & TVHT_ABOVE) SendMsg(WM_VSCROLL, MAKEWPARAM(SB_LINEUP, 0), 0);
+				if (hti.flags & TVHT_BELOW) SendMsg(WM_VSCROLL, MAKEWPARAM(SB_LINEDOWN, 0), 0);
+				SetInsertMark(NULL, 0);
+			}
 		}
 		break;
 
 	case WM_LBUTTONUP:
-		if (!m_bDragging)
-			break;
+		if (m_bDragging) {
+			SetInsertMark(NULL, 0);
+			m_bDragging = 0;
+			ReleaseCapture();
 
-		SetInsertMark(NULL, 0);
-		m_bDragging = 0;
-		ReleaseCapture();
+			hti.pt.x = (short)LOWORD(lParam);
+			hti.pt.y = (short)HIWORD(lParam) - GetItemHeight() / 2;
+			HitTest(&hti);
+			if (m_hDragItem == hti.hItem)
+				break;
+
+			if (hti.flags & TVHT_ABOVE)
+				hti.hItem = TVI_FIRST;
+			else if (hti.flags & TVHT_BELOW)
+				hti.hItem = TVI_LAST;
+
+			HTREEITEM FirstItem = NULL;
+			if (m_bMultiSelect) {
+				LIST<_TREEITEM> arItems(10);
+				GetSelected(arItems);
+
+				// Proceed moving
+				HTREEITEM insertAfter = hti.hItem;
+				for (int i = 0; i < arItems.getCount(); i++) {
+					if (!insertAfter)
+						break;
+
+					insertAfter = MoveItemAbove(arItems[i], insertAfter);
+					if (!i)
+						FirstItem = insertAfter;
+				}
+			}
+			else FirstItem = MoveItemAbove(m_hDragItem, hti.hItem);
+			if (FirstItem)
+				SelectItem(FirstItem);
+
+			NotifyChange();
+		}
+		break;
+
+	case WM_LBUTTONDOWN:
+		if (!m_bMultiSelect)
+			break;
 
 		hti.pt.x = (short)LOWORD(lParam);
-		hti.pt.y = (short)HIWORD(lParam) - GetItemHeight() / 2;
-		HitTest(&hti);
-		if (m_hDragItem == hti.hItem)
+		hti.pt.y = (short)HIWORD(lParam);
+		if (!TreeView_HitTest(m_hwnd, &hti)) {
+			UnselectAll();
 			break;
-		if (hti.flags & TVHT_ABOVE)
-			hti.hItem = TVI_FIRST;
+		}
 
-		TVITEMEX tvi;
-		tvi.mask = TVIF_HANDLE | TVIF_PARAM | TVIF_IMAGE;
-		tvi.hItem = m_hDragItem;
-		GetItem(&tvi);
-		if ((hti.flags & (TVHT_ONITEM | TVHT_ONITEMRIGHT)) || hti.hItem == TVI_FIRST) {
-			TCHAR name[128];
-			TVINSERTSTRUCT tvis = { 0 };
-			tvis.itemex.mask = TVIF_HANDLE | TVIF_PARAM | TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
-			tvis.itemex.stateMask = 0xFFFFFFFF;
-			tvis.itemex.pszText = name;
-			tvis.itemex.cchTextMax = SIZEOF(name);
-			tvis.itemex.hItem = m_hDragItem;
-			tvis.itemex.iImage = tvis.itemex.iSelectedImage = tvi.iImage;
-			GetItem(&tvis.itemex);
+		if (!m_bDndEnabled)
+			if (!(wParam & (MK_CONTROL | MK_SHIFT)) || !(hti.flags & (TVHT_ONITEMICON | TVHT_ONITEMLABEL | TVHT_ONITEMRIGHT))) {
+				UnselectAll();
+				TreeView_SelectItem(m_hwnd, hti.hItem);
+				break;
+			}
 
-			// the pointed lParam will be freed inside TVN_DELETEITEM
-			// so lets substitute it with 0
-			LPARAM saveOldData = tvis.itemex.lParam;
-			tvis.itemex.lParam = 0;
-			SetItem(&tvis.itemex);
+		if (wParam & MK_CONTROL) {
+			LIST<_TREEITEM> selected(1);
+			GetSelected(selected);
 
-			// now current item contain lParam = 0 we can delete it. the memory will be kept.
-			tvis.itemex.lParam = saveOldData;
-			DeleteItem(m_hDragItem);
+			// Check if have to deselect it
+			for (int i = 0; i < selected.getCount(); i++) {
+				if (selected[i] == hti.hItem) {
+					// Deselect it
+					UnselectAll();
+					selected.remove(i);
 
-			tvis.hParent = NULL;
-			tvis.hInsertAfter = hti.hItem;
-			SelectItem(InsertItem(&tvis));
-			
-			NotifyChange();
+					if (i > 0)
+						hti.hItem = selected[0];
+					else if (i < selected.getCount())
+						hti.hItem = selected[i];
+					else
+						hti.hItem = NULL;
+					break;
+				}
+			}
+
+			TreeView_SelectItem(m_hwnd, hti.hItem);
+			Select(selected);
+		}
+		else if (wParam & MK_SHIFT) {
+			HTREEITEM hItem = TreeView_GetSelection(m_hwnd);
+			if (hItem == NULL)
+				break;
+
+			LIST<_TREEITEM> selected(1);
+			GetSelected(selected);
+
+			TreeView_SelectItem(m_hwnd, hti.hItem);
+			Select(selected);
+			SelectRange(hItem, hti.hItem);
 		}
 		break;
 	}
@@ -1502,21 +1575,30 @@ BOOL CCtrlTreeView::OnNotify(int, NMHDR *pnmh)
 		return TRUE;
 
 	case TVN_KEYDOWN:
-		if (m_bCheckBox && evt.nmtvkey->wVKey == VK_SPACE)
-			InvertCheck(GetSelection());
+		if (evt.nmtvkey->wVKey == VK_SPACE) {
+			if (m_bCheckBox)
+				InvertCheck(GetSelection());
+			NotifyChange();
+		}
 
 		OnKeyDown(&evt);
 		return TRUE;
 	}
 
-	if (m_bCheckBox && pnmh->code == NM_CLICK) {
+	if (pnmh->code == NM_CLICK) {
 		TVHITTESTINFO hti;
 		hti.pt.x = (short)LOWORD(GetMessagePos());
 		hti.pt.y = (short)HIWORD(GetMessagePos());
 		ScreenToClient(pnmh->hwndFrom, &hti.pt);
-		if (HitTest(&hti))
-			if (hti.flags & TVHT_ONITEMICON)
-				InvertCheck(hti.hItem);
+		if (HitTest(&hti)) {
+			if (m_bCheckBox && (hti.flags & TVHT_ONITEMICON) || !m_bCheckBox && (hti.flags & TVHT_ONITEMSTATEICON)) {
+				if (m_bCheckBox)
+					InvertCheck(hti.hItem);
+				else
+					SelectItem(hti.hItem);
+				NotifyChange();
+			}
+		}
 	}
 
 	return FALSE;
@@ -1532,8 +1614,6 @@ void CCtrlTreeView::InvertCheck(HTREEITEM hItem)
 
 	tvi.iImage = tvi.iSelectedImage = !tvi.iImage;
 	SetItem(&tvi);
-
-	NotifyChange();
 }
 
 void CCtrlTreeView::TranslateItem(HTREEITEM hItem)
@@ -1571,7 +1651,7 @@ void CCtrlTreeView::TranslateTree()
 
 HTREEITEM CCtrlTreeView::FindNamedItem(HTREEITEM hItem, const TCHAR *name)
 {
-	TVITEMEX tvi = {0};
+	TVITEMEX tvi = { 0 };
 	TCHAR str[MAX_PATH];
 
 	if (hItem)
@@ -1600,7 +1680,7 @@ HTREEITEM CCtrlTreeView::FindNamedItem(HTREEITEM hItem, const TCHAR *name)
 void CCtrlTreeView::GetItem(HTREEITEM hItem, TVITEMEX *tvi)
 {
 	memset(tvi, 0, sizeof(*tvi));
-	tvi->mask = TVIF_CHILDREN|TVIF_HANDLE|TVIF_IMAGE|TVIF_INTEGRAL|TVIF_PARAM|TVIF_SELECTEDIMAGE|TVIF_STATE;
+	tvi->mask = TVIF_CHILDREN | TVIF_HANDLE | TVIF_IMAGE | TVIF_INTEGRAL | TVIF_PARAM | TVIF_SELECTEDIMAGE | TVIF_STATE;
 	tvi->hItem = hItem;
 	GetItem(tvi);
 }
@@ -1608,12 +1688,121 @@ void CCtrlTreeView::GetItem(HTREEITEM hItem, TVITEMEX *tvi)
 void CCtrlTreeView::GetItem(HTREEITEM hItem, TVITEMEX *tvi, TCHAR *szText, int iTextLength)
 {
 	memset(tvi, 0, sizeof(*tvi));
-	tvi->mask = TVIF_CHILDREN|TVIF_HANDLE|TVIF_IMAGE|TVIF_INTEGRAL|TVIF_PARAM|TVIF_SELECTEDIMAGE|TVIF_STATE|TVIF_TEXT;
+	tvi->mask = TVIF_CHILDREN | TVIF_HANDLE | TVIF_IMAGE | TVIF_INTEGRAL | TVIF_PARAM | TVIF_SELECTEDIMAGE | TVIF_STATE | TVIF_TEXT;
 	tvi->hItem = hItem;
 	tvi->pszText = szText;
 	tvi->cchTextMax = iTextLength;
 	GetItem(tvi);
 }
+
+bool CCtrlTreeView::IsSelected(HTREEITEM hItem)
+{
+	return (TVIS_SELECTED & TreeView_GetItemState(m_hwnd, hItem, TVIS_SELECTED)) == TVIS_SELECTED;
+}
+
+void CCtrlTreeView::Select(HTREEITEM hItem)
+{
+	TreeView_SetItemState(m_hwnd, hItem, TVIS_SELECTED, TVIS_SELECTED);
+}
+
+void CCtrlTreeView::Unselect(HTREEITEM hItem)
+{
+	TreeView_SetItemState(m_hwnd, hItem, 0, TVIS_SELECTED);
+}
+
+void CCtrlTreeView::DropHilite(HTREEITEM hItem)
+{
+	TreeView_SetItemState(m_hwnd, hItem, TVIS_DROPHILITED, TVIS_DROPHILITED);
+}
+
+void CCtrlTreeView::DropUnhilite(HTREEITEM hItem)
+{
+	TreeView_SetItemState(m_hwnd, hItem, 0, TVIS_DROPHILITED);
+}
+
+void CCtrlTreeView::SelectAll()
+{
+	TreeView_SelectItem(m_hwnd, NULL);
+
+	HTREEITEM hItem = TreeView_GetRoot(m_hwnd);
+	while (hItem) {
+		Select(hItem);
+		hItem = TreeView_GetNextSibling(m_hwnd, hItem);
+	}
+}
+
+void CCtrlTreeView::UnselectAll()
+{
+	TreeView_SelectItem(m_hwnd, NULL);
+
+	HTREEITEM hItem = TreeView_GetRoot(m_hwnd);
+	while (hItem) {
+		Unselect(hItem);
+		hItem = TreeView_GetNextSibling(m_hwnd, hItem);
+	}
+}
+
+void CCtrlTreeView::SelectRange(HTREEITEM hStart, HTREEITEM hEnd)
+{
+	int start = 0, end = 0, i = 0;
+	HTREEITEM hItem = TreeView_GetRoot(m_hwnd);
+	while (hItem) {
+		if (hItem == hStart)
+			start = i;
+		if (hItem == hEnd)
+			end = i;
+
+		i++;
+		hItem = TreeView_GetNextSibling(m_hwnd, hItem);
+	}
+
+	if (end < start) {
+		int tmp = start;
+		start = end;
+		end = tmp;
+	}
+
+	i = 0;
+	hItem = TreeView_GetRoot(m_hwnd);
+	while (hItem) {
+		if (i >= start)
+			Select(hItem);
+		if (i == end)
+			break;
+
+		i++;
+		hItem = TreeView_GetNextSibling(m_hwnd, hItem);
+	}
+}
+
+int CCtrlTreeView::GetNumSelected()
+{
+	int ret = 0;
+	for (HTREEITEM hItem = TreeView_GetRoot(m_hwnd); hItem; hItem = TreeView_GetNextSibling(m_hwnd, hItem))
+		if (IsSelected(hItem))
+			ret++;
+
+	return ret;
+}
+
+void CCtrlTreeView::GetSelected(LIST<_TREEITEM> &selected)
+{
+	HTREEITEM hItem = TreeView_GetRoot(m_hwnd);
+	while (hItem) {
+		if (IsSelected(hItem))
+			selected.insert(hItem);
+		hItem = TreeView_GetNextSibling(m_hwnd, hItem);
+	}
+}
+
+void CCtrlTreeView::Select(LIST<_TREEITEM> &selected)
+{
+	for (int i = 0; i < selected.getCount(); i++)
+		if (selected[i] != NULL)
+			Select(selected[i]);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
 
 HIMAGELIST CCtrlTreeView::CreateDragImage(HTREEITEM hItem)
 {	return TreeView_CreateDragImage(m_hwnd, hItem);
@@ -1850,10 +2039,11 @@ void CCtrlTreeView::SortChildrenCB(TVSORTCB *cb, BOOL fRecurse)
 /////////////////////////////////////////////////////////////////////////////////////////
 // CCtrlPages
 
-CCtrlPages::CCtrlPages(CDlgBase* dlg, int ctrlId):
-	CCtrlBase(dlg, ctrlId), m_hIml(NULL), m_pActivePage(NULL)
-{
-}
+CCtrlPages::CCtrlPages(CDlgBase* dlg, int ctrlId)
+	: CCtrlBase(dlg, ctrlId),
+	m_hIml(NULL),
+	m_pActivePage(NULL)
+{}
 
 void CCtrlPages::OnInit()
 {
@@ -1907,11 +2097,14 @@ void CCtrlPages::AttachDialog(int iPage, CDlgBase *pDlg)
 			info->m_pDlg->Close();
 
 		info->m_pDlg = pDlg;
-		//SetParent(info->m_pDlg->GetHwnd(), m_hwnd);
+		if (pDlg->GetHwnd() == NULL) {
+			pDlg->SetParent(m_hwnd);
+			pDlg->Create();
+		}
 
 		if (iPage == TabCtrl_GetCurSel(m_hwnd)) {
-			m_pActivePage = info->m_pDlg;
-			ShowPage(info->m_pDlg);
+			m_pActivePage = pDlg;
+			ShowPage(pDlg);
 		}
 	}
 }
@@ -1923,14 +2116,14 @@ void CCtrlPages::ShowPage(CDlgBase *pDlg)
 	RECT rc;
 	GetClientRect(m_hwnd, &rc);
 	TabCtrl_AdjustRect(m_hwnd, FALSE, &rc);
-	MapWindowPoints(m_hwnd, ::GetParent(m_hwnd), (LPPOINT)&rc, 2);
-	SetWindowPos(pDlg->GetHwnd(), HWND_TOP, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, SWP_SHOWWINDOW);
+
+	EnableThemeDialogTexture(pDlg->GetHwnd(), ETDT_ENABLETAB);
+	SetWindowPos(pDlg->GetHwnd(), HWND_TOP, rc.left, rc.top, 0, 0, SWP_NOSIZE | SWP_SHOWWINDOW);
 }
 
 void CCtrlPages::ActivatePage(int iPage)
 {
 	TabCtrl_SetCurSel(m_hwnd, iPage);
-	//ShowPage(iPage);
 }
 
 BOOL CCtrlPages::OnNotify(int /*idCtrl*/, NMHDR *pnmh)
@@ -2030,8 +2223,7 @@ void CCtrlBase::OnApply()
 }
 
 void CCtrlBase::OnReset()
-{
-}
+{}
 
 void CCtrlBase::Enable(int bIsEnable)
 {
@@ -2047,7 +2239,7 @@ void CCtrlBase::NotifyChange()
 {
 	if (!m_parentWnd || m_parentWnd->IsInitialized())
 		m_bChanged = true;
-	
+
 	if (m_parentWnd) {
 		m_parentWnd->OnChange(this);
 		if (m_parentWnd->IsInitialized())
@@ -2230,8 +2422,7 @@ CProtoIntDlgBase::CProtoIntDlgBase(PROTO_INTERFACE *proto, int idDialog, bool sh
 	m_proto_interface(proto),
 	m_show_label(show_label),
 	m_hwndStatus(NULL)
-{
-}
+{}
 
 void CProtoIntDlgBase::CreateLink(CCtrlData& ctrl, char *szSetting, BYTE type, DWORD iValue)
 {
@@ -2315,7 +2506,8 @@ INT_PTR CProtoIntDlgBase::DlgProc(UINT msg, WPARAM wParam, LPARAM lParam)
 
 void CProtoIntDlgBase::UpdateProtoTitle(const TCHAR *szText)
 {
-	if (!m_show_label) return;
+	if (!m_show_label)
+		return;
 
 	int curLength;
 	const TCHAR *curText;

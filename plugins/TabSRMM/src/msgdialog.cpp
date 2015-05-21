@@ -540,8 +540,8 @@ static LRESULT CALLBACK MessageLogSubclassProc(HWND hwnd, UINT msg, WPARAM wPara
 			ClientToScreen(hwnd, &pt);
 		}
 		else {
-			pt.x = (short)LOWORD(lParam);
-			pt.y = (short)HIWORD(lParam);
+			pt.x = GET_X_LPARAM(lParam);
+			pt.y = GET_Y_LPARAM(lParam);
 		}
 
 		ShowPopupMenu(mwdat, IDC_LOG, hwnd, pt);
@@ -790,8 +790,8 @@ static LRESULT CALLBACK MessageEditSubclassProc(HWND hwnd, UINT msg, WPARAM wPar
 			ClientToScreen(hwnd, &pt);
 		}
 		else {
-			pt.x = (short)LOWORD(lParam);
-			pt.y = (short)HIWORD(lParam);
+			pt.x = GET_X_LPARAM(lParam);
+			pt.y = GET_Y_LPARAM(lParam);
 		}
 
 		ShowPopupMenu(mwdat, IDC_MESSAGE, hwnd, pt);
@@ -3296,13 +3296,6 @@ INT_PTR CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 			db_set_dw(0, SRMSGMOD, "multisplit", dat->multiSplitterX);
 
 		{
-			HFONT hFont = (HFONT)SendDlgItemMessage(hwndDlg, IDC_MESSAGE, WM_GETFONT, 0, 0);
-			if (hFont != NULL && hFont != (HFONT)SendDlgItemMessage(hwndDlg, IDOK, WM_GETFONT, 0, 0))
-				DeleteObject(hFont);
-
-			TCITEM item = { 0 };
-			item.mask = TCIF_PARAM;
-
 			int i = GetTabIndexFromHWND(hwndTab, hwndDlg);
 			if (i >= 0) {
 				SendMessage(hwndTab, WM_USER + 100, 0, 0);                      // remove tooltip

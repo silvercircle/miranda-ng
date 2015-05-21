@@ -27,25 +27,49 @@ MCONTACT CMsnProto::MSN_HContactFromEmail(const char* wlid, const char* msnNick,
 {
 	MCONTACT hContact = NULL;
 
-	char *szEmail;
-	parseWLID(NEWSTR_ALLOCA(wlid), NULL, &szEmail, NULL);
+	char *szEmail, *szNet = NULL;
+	parseWLID(NEWSTR_ALLOCA(wlid), &szNet, &szEmail, NULL);
 
 	MsnContact *msc = Lists_Get(szEmail);
 	if (msc && msc->hContact)
 		hContact = msc->hContact;
 
 	if (hContact == NULL && addIfNeeded) {
+		int netId = (msc && msc->netId)?msc->netId:(szNet?atoi(szNet):NETID_MSN);
 		hContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
 		CallService(MS_PROTO_ADDTOCONTACT, hContact, (LPARAM)m_szModuleName);
-		setString(hContact, "e-mail", szEmail);
+		if (netId != NETID_SKYPE) setString(hContact, "e-mail", szEmail);
 		setStringUtf(hContact, "Nick", msnNick ? msnNick : wlid);
+		setWord(hContact, "netId", netId);
+		setString(hContact, "wlid", szEmail);
 		if (temporary)
 			db_set_b(hContact, "CList", "NotOnList", 1);
 
-		Lists_Add(0, NETID_MSN, wlid, hContact);
+		Lists_Add(0, szNet?atoi(szNet):NETID_MSN, szEmail, hContact);
 	}
 
 	return hContact;
+}
+
+MCONTACT CMsnProto::MSN_HContactFromChatID(const char* wlid)
+{
+	MCONTACT hContact = NULL;
+
+	for (hContact = db_find_first(m_szModuleName); hContact; 
+			hContact = db_find_next(hContact, m_szModuleName)) 
+	{
+		if (isChatRoom(hContact) != 0) {
+			DBVARIANT dbv;
+			if (getString(hContact, "ChatRoomID", &dbv) == 0) {
+				if (strcmp(dbv.pszVal, wlid) == 0) {
+					db_free(&dbv);
+					return hContact;
+				}
+				db_free(&dbv);
+			}
+		}
+	}
+	return NULL;
 }
 
 
@@ -82,6 +106,7 @@ void CMsnProto::MSN_SetContactDb(MCONTACT hContact, const char *szEmail)
 
 void CMsnProto::AddDelUserContList(const char* email, const int list, const int netId, const bool del)
 {
+/*
 	char buf[512];
 	size_t sz;
 
@@ -101,6 +126,7 @@ void CMsnProto::AddDelUserContList(const char* email, const int list, const int 
 		}
 		msnNsThread->sendPacket(del ? "RML" : "ADL", "%d\r\n%s", sz, buf);
 	}
+*/
 
 	if (del)
 		Lists_Remove(list, email);
@@ -226,21 +252,40 @@ bool CMsnProto::MSN_RefreshContactList(void)
 	Lists_Wipe();
 	Lists_Populate();
 
-	if (!MSN_SharingFindMembership()) return false;
+	if (MyOptions.netId != NETID_SKYPE)
+	{
+		// Get your own profile info
+		if (!MSN_SharingFindMembership()) return false;
 
-	if (m_iDesiredStatus == ID_STATUS_OFFLINE) return false;
+		if (m_iDesiredStatus == ID_STATUS_OFFLINE) return false;
 
-	if (!MSN_ABFind("ABFindContactsPaged", NULL)) return false;
+		// Get "classic" MSN contacts
+		if (!MSN_ABFind("ABFindContactsPaged", NULL)) return false;
 
-	if (m_iDesiredStatus == ID_STATUS_OFFLINE) return false;
+		// Get Skype contacts on linked profiles
+		if (!MSN_ABRefreshClist()) return false;
 
-	MSN_CleanupLists();
+		if (m_iDesiredStatus == ID_STATUS_OFFLINE) return false;
 
-	if (m_iDesiredStatus == ID_STATUS_OFFLINE) return false;
+		// Remove contacts not on server etc.
+		MSN_CleanupLists();
 
-	msnLoggedIn = true;
+		if (m_iDesiredStatus == ID_STATUS_OFFLINE) return false;
 
-	MSN_CreateContList();
-	MSN_StoreGetProfile();
+		msnLoggedIn = true;
+
+		// Populate Contact list on MSN network to get status updates of contacts
+		MSN_CreateContList();
+		//MSN_StoreGetProfile();
+	}
+	else
+	{
+		/* TODO: Add pulling Skype contacts from event server or skypeweb or other unknown method.. */
+		MSN_CreateContList();
+	}
+
+	// Refresh Threads which are also part of the contact list
+	if (msnP24Ver>1) MSN_GCRefreshThreadsInfo();
+
 	return true;
 }

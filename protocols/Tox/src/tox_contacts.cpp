@@ -9,17 +9,13 @@ void CToxProto::SetContactStatus(MCONTACT hContact, WORD status)
 {
 	WORD oldStatus = GetContactStatus(hContact);
 	if (oldStatus != status)
-	{
 		setWord(hContact, "Status", status);
-	}
 }
 
 void CToxProto::SetAllContactsStatus(WORD status)
 {
 	for (MCONTACT hContact = db_find_first(m_szModuleName); hContact; hContact = db_find_next(hContact, m_szModuleName))
-	{
 		SetContactStatus(hContact, status);
-	}
 }
 
 MCONTACT CToxProto::GetContactFromAuthEvent(MEVENT hEvent)
@@ -62,9 +58,7 @@ MCONTACT CToxProto::GetContact(const char *pubKey)
 		ptrA contactPubKey(getStringA(hContact, TOX_SETTINGS_ID));
 		// check only public key part of address
 		if (strnicmp(pubKey, contactPubKey, TOX_PUBLIC_KEY_SIZE) == 0)
-		{
 			break;
-		}
 	}
 	return hContact;
 }
@@ -80,9 +74,7 @@ MCONTACT CToxProto::AddContact(const char *address, const TCHAR *dnsId, bool isT
 		setString(hContact, TOX_SETTINGS_ID, address);
 
 		if (dnsId && mir_tstrlen(dnsId))
-		{
 			setTString(hContact, TOX_SETTINGS_DNS, dnsId);
-		}
 
 		DBVARIANT dbv;
 		if (!getTString(TOX_SETTINGS_GROUP, &dbv))
@@ -108,9 +100,7 @@ uint32_t CToxProto::GetToxFriendNumber(MCONTACT hContact)
 	TOX_ERR_FRIEND_BY_PUBLIC_KEY error;
 	uint32_t friendNumber = tox_friend_by_public_key(tox, pubKey, &error);
 	if (error != TOX_ERR_FRIEND_BY_PUBLIC_KEY_OK)
-	{
 		debugLogA(__FUNCTION__": failed to get friend number (%d)", error);
-	}
 	return friendNumber;
 }
 
@@ -352,7 +342,7 @@ void CToxProto::OnConnectionStatusChanged(Tox*, uint32_t friendNumber, TOX_CONNE
 					if (!tox_file_control(proto->tox, transfer->friendNumber, transfer->fileNumber, TOX_FILE_CONTROL_RESUME, &error))
 					{
 						proto->debugLogA(__FUNCTION__": failed to resume the transfer (%d)", error);
-						tox_file_control(proto->tox, transfer->friendNumber, transfer->fileNumber, TOX_FILE_CONTROL_RESUME, NULL);
+						tox_file_control(proto->tox, transfer->friendNumber, transfer->fileNumber, TOX_FILE_CONTROL_CANCEL, NULL);
 					}
 				}
 			}
@@ -389,6 +379,7 @@ void CToxProto::OnConnectionStatusChanged(Tox*, uint32_t friendNumber, TOX_CONNE
 				}
 
 				AvatarTransferParam *transfer = new AvatarTransferParam(friendNumber, fileNumber, NULL, length);
+				transfer->pfts.flags |= PFTS_SENDING;
 				memcpy(transfer->hash, hash, TOX_HASH_LENGTH);
 				transfer->pfts.hContact = hContact;
 				transfer->hFile = hFile;
@@ -401,13 +392,6 @@ void CToxProto::OnConnectionStatusChanged(Tox*, uint32_t friendNumber, TOX_CONNE
 		{
 			proto->SetContactStatus(hContact, ID_STATUS_OFFLINE);
 			proto->setDword(hContact, "LastEventDateTS", time(NULL));
-
-			/*for (size_t i = 0; i < proto->transfers.Count(); i++)
-			{
-				FileTransferParam *transfer = proto->transfers.GetAt(i);
-				if (transfer->friendNumber == friendNumber)
-					transfer->status = BROKEN;
-			}*/
 		}
 	}
 }
@@ -415,9 +399,7 @@ void CToxProto::OnConnectionStatusChanged(Tox*, uint32_t friendNumber, TOX_CONNE
 int CToxProto::OnUserInfoInit(WPARAM wParam, LPARAM lParam)
 {
 	if (!CallService(MS_PROTO_ISPROTOCOLLOADED, 0, (LPARAM)m_szModuleName))
-	{
 		return 0;
-	}
 
 	MCONTACT hContact = lParam;
 	char *szProto = GetContactProto(hContact);

@@ -5,6 +5,7 @@
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 
 #include <windows.h>
+#include <windowsx.h>
 #include <winsock.h>
 #include <shellapi.h>
 #include <commdlg.h>
@@ -73,7 +74,7 @@ struct HistPair {
 	short first;
 	time_t second;
 
-	const bool operator==(const HistPair &other) const {return first == other.first && second == other.second;}
+	const bool operator==(const HistPair &other) const { return first == other.first && second == other.second; }
 };
 typedef LinkedList< HistPair > HistoryList;
 
@@ -125,7 +126,7 @@ extern PINGLIST list_items;
 extern HANDLE reload_event_handle;
 extern mir_cs list_cs;
 extern HANDLE mainThread;
-extern HANDLE hWakeEvent; 
+extern HANDLE hWakeEvent;
 extern mir_cs thread_finished_cs, list_changed_cs, data_list_cs;
 
 extern PINGLIST data_list;
