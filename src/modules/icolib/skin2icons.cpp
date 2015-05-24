@@ -43,14 +43,14 @@ mir_cs csIconList;
 
 static int sttCompareSections(const SectionItem* p1, const SectionItem* p2)
 {
-	return _tcscmp(p1->name, p2->name);
+	return mir_tstrcmp(p1->name, p2->name);
 }
 
 LIST<SectionItem> sectionList(20, sttCompareSections);
 
 static int sttCompareIconSourceFiles(const IconSourceFile* p1, const IconSourceFile* p2)
 {
-	return _tcsicmp(p1->file, p2->file);
+	return mir_tstrcmpi(p1->file, p2->file);
 }
 
 static LIST<IconSourceFile> iconSourceFileList(10, sttCompareIconSourceFiles);
@@ -85,7 +85,7 @@ static LIST<IconSourceItem> iconSourceList(20, sttCompareIconSourceItems);
 
 static int sttCompareIcons(const IcolibItem* p1, const IcolibItem* p2)
 {
-	return strcmp(p1->name, p2->name);
+	return mir_strcmp(p1->name, p2->name);
 }
 
 LIST<IcolibItem> iconList(20, sttCompareIcons);

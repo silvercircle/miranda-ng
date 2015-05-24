@@ -697,7 +697,7 @@ PMO_IntMenuItem MO_AddNewMenuItem(HANDLE menuobjecthandle, PMO_MenuItem pmi)
 int FindRoot(PMO_IntMenuItem pimi, void* param)
 {
 	if (pimi->mi.pszName != NULL)
-		if (pimi->submenu.first && !_tcscmp(pimi->mi.ptszName, (TCHAR*)param))
+		if (pimi->submenu.first && !mir_tstrcmp(pimi->mi.ptszName, (TCHAR*)param))
 			return TRUE;
 
 	return FALSE;
@@ -936,7 +936,7 @@ HMENU BuildRecursiveMenu(HMENU hMenu, PMO_IntMenuItem pRootMenu, ListParam *para
 			// mi.pszName
 			mir_snprintf(DBString, SIZEOF(DBString), "%s_name", menuItemName);
 			if (!db_get_ts(NULL, MenuNameItems, DBString, &dbv)) {
-				if (_tcslen(dbv.ptszVal) > 0)
+				if (mir_tstrlen(dbv.ptszVal) > 0)
 					replaceStrT(pmi->CustomName, dbv.ptszVal);
 				db_free(&dbv);
 			}
@@ -1073,7 +1073,7 @@ static int MO_RegisterIcon(PMO_IntMenuItem pmi, void*)
 				if ((p = _tcschr(p, '&')) == NULL)
 					break;
 
-				memmove(p, p + 1, sizeof(TCHAR)*(_tcslen(p + 1) + 1));
+				memmove(p, p + 1, sizeof(TCHAR)*(mir_tstrlen(p + 1) + 1));
 				if (*p == '\0')
 					p++;
 			}

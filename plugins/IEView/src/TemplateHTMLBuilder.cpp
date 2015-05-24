@@ -61,14 +61,14 @@ char* TemplateHTMLBuilder::getAvatar(MCONTACT hContact, const char *szProto)
 		}
 	}
 	if (!db_get_ts(hContact, "ContactPhoto", "File", &dbv)) {
-		if (_tcslen(dbv.ptszVal) > 0) {
+		if (mir_tstrlen(dbv.ptszVal) > 0) {
 			TCHAR *ext = _tcsrchr(dbv.ptszVal, '.');
 			if (ext && mir_tstrcmpi(ext, _T(".xml")) == 0)
 				result = (TCHAR*)getFlashAvatar(dbv.ptszVal, (hContact == NULL) ? 1 : 0);
 			else {
 				if (result == NULL) {
 					/* relative -> absolute */
-					_tcscpy(tmpPath, dbv.ptszVal);
+					mir_tstrcpy(tmpPath, dbv.ptszVal);
 					if (_tcsncmp(tmpPath, _T("http://"), 7))
 						PathToAbsoluteT(dbv.ptszVal, tmpPath);
 
@@ -146,7 +146,7 @@ char *TemplateHTMLBuilder::timestampToString(DWORD dwFlags, time_t check, int mo
 		}
 	}
 
-	mir_strncpy(szResult, ptrA(mir_utf8encodeT(str)), 500);
+	mir_strncpy(szResult, T2Utf(str), 500);
 	return szResult;
 }
 
@@ -175,9 +175,9 @@ void TemplateHTMLBuilder::buildHeadTemplate(IEView *view, IEVIEWEVENT *event, Pr
 	if (tmpm == NULL)
 		return;
 
-	strcpy(tempBase, "file://");
+	mir_strcpy(tempBase, "file://");
 	strncat(tempBase, tmpm->getFilename(), SIZEOF(tempBase) - mir_strlen(tempBase));
-	char *pathrun = tempBase + strlen(tempBase);
+	char *pathrun = tempBase + mir_strlen(tempBase);
 	while ((*pathrun != '\\' && *pathrun != '/') && (pathrun > tempBase))
 		pathrun--;
 	pathrun++;
@@ -215,7 +215,7 @@ void TemplateHTMLBuilder::buildHeadTemplate(IEView *view, IEVIEWEVENT *event, Pr
 		szAvatarOut = mir_strdup(szNoAvatar);
 
 	if (!db_get(event->hContact, "CList", "StatusMsg", &dbv)) {
-		if (strlen(dbv.pszVal) > 0)
+		if (mir_strlen(dbv.pszVal) > 0)
 			szStatusMsg = mir_utf8encode(dbv.pszVal);
 		db_free(&dbv);
 	}
@@ -346,9 +346,9 @@ void TemplateHTMLBuilder::appendEventTemplate(IEView *view, IEVIEWEVENT *event, 
 
 	TemplateMap *tmpm = getTemplateMap(protoSettings);
 	if (tmpm != NULL) {
-		strcpy(tempBase, "file://");
+		mir_strcpy(tempBase, "file://");
 		strcat(tempBase, tmpm->getFilename());
-		char* pathrun = tempBase + strlen(tempBase);
+		char* pathrun = tempBase + mir_strlen(tempBase);
 		while ((*pathrun != '\\' && *pathrun != '/') && (pathrun > tempBase)) pathrun--;
 		pathrun++;
 		*pathrun = '\0';
@@ -393,7 +393,7 @@ void TemplateHTMLBuilder::appendEventTemplate(IEView *view, IEVIEWEVENT *event, 
 
 	if (event->hContact != NULL) {
 		if (!db_get(event->hContact, "CList", "StatusMsg", &dbv)) {
-			if (strlen(dbv.pszVal) > 0)
+			if (mir_strlen(dbv.pszVal) > 0)
 				szStatusMsg = mir_utf8encode(dbv.pszVal);
 			db_free(&dbv);
 		}

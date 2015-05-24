@@ -73,31 +73,28 @@ void CJabberProto::DBAddAuthRequest(const TCHAR *jid, const TCHAR *nick)
 	MCONTACT hContact = DBCreateContact(jid, nick, TRUE, TRUE);
 	delSetting(hContact, "Hidden");
 
-	char* szJid = mir_utf8encodeT(jid);
-	char* szNick = mir_utf8encodeT(nick);
+	T2Utf szJid(jid);
+	T2Utf szNick(nick);
 
-	//blob is: uin(DWORD), hContact(DWORD), nick(ASCIIZ), first(ASCIIZ), last(ASCIIZ), email(ASCIIZ), reason(ASCIIZ)
-	//blob is: 0(DWORD), hContact(DWORD), nick(ASCIIZ), ""(ASCIIZ), ""(ASCIIZ), email(ASCIIZ), ""(ASCIIZ)
+	// blob is: uin(DWORD), hContact(DWORD), nick(ASCIIZ), first(ASCIIZ), last(ASCIIZ), email(ASCIIZ), reason(ASCIIZ)
+	// blob is: 0(DWORD), hContact(DWORD), nick(ASCIIZ), ""(ASCIIZ), ""(ASCIIZ), email(ASCIIZ), ""(ASCIIZ)
 	DBEVENTINFO dbei = { sizeof(DBEVENTINFO) };
 	dbei.szModule = m_szModuleName;
 	dbei.timestamp = (DWORD)time(NULL);
 	dbei.flags = DBEF_UTF;
 	dbei.eventType = EVENTTYPE_AUTHREQUEST;
-	dbei.cbBlob = (DWORD)(sizeof(DWORD)*2 + strlen(szNick) + strlen(szJid) + 5);
+	dbei.cbBlob = (DWORD)(sizeof(DWORD)*2 + mir_strlen(szNick) + mir_strlen(szJid) + 5);
 	PBYTE pCurBlob = dbei.pBlob = (PBYTE)mir_alloc(dbei.cbBlob);
 	*((PDWORD)pCurBlob) = 0; pCurBlob += sizeof(DWORD);
 	*((PDWORD)pCurBlob) = (DWORD)hContact; pCurBlob += sizeof(DWORD);
-	strcpy((char*)pCurBlob, szNick); pCurBlob += strlen(szNick)+1;
+	mir_strcpy((char*)pCurBlob, szNick); pCurBlob += mir_strlen(szNick)+1;
 	*pCurBlob = '\0'; pCurBlob++;		//firstName
 	*pCurBlob = '\0'; pCurBlob++;		//lastName
-	strcpy((char*)pCurBlob, szJid); pCurBlob += strlen(szJid)+1;
+	mir_strcpy((char*)pCurBlob, szJid); pCurBlob += mir_strlen(szJid)+1;
 	*pCurBlob = '\0';					//reason
 
 	db_event_add(NULL, &dbei);
 	debugLogA("Setup DBAUTHREQUEST with nick='%s' jid='%s'", szNick, szJid);
-
-	mir_free(szJid);
-	mir_free(szNick);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -119,14 +116,14 @@ MCONTACT CJabberProto::DBCreateContact(const TCHAR *jid, const TCHAR *nick, BOOL
 		*q = '/';
 
 	// We can't use JabberHContactFromJID() here because of the stripResource option
-	size_t len = _tcslen(s);
+	size_t len = mir_tstrlen(s);
 	for (MCONTACT hContact = db_find_first(m_szModuleName); hContact; hContact = db_find_next(hContact, m_szModuleName)) {
 		ptrT jid( getTStringA(hContact, "jid"));
 		if (jid == NULL)
 			continue;
 
 		TCHAR *p = jid;
-		if (p && _tcslen(p) >= len && (p[len]=='\0'||p[len]=='/') && !_tcsnicmp(p, s, len))
+		if (p && mir_tstrlen(p) >= len && (p[len]=='\0'||p[len]=='/') && !_tcsnicmp(p, s, len))
 			return hContact;
 	}
 

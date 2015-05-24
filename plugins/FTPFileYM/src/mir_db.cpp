@@ -79,7 +79,7 @@ int DB::getAString(MCONTACT hContact, char *szModule, char *szSetting, char *buf
 	DBVARIANT dbv;
 	if (!db_get_s(hContact, szModule, szSetting, &dbv))
 	{
-		strcpy(buff, dbv.pszVal);
+		mir_strcpy(buff, dbv.pszVal);
 		db_free(&dbv);
 		return 0;
 	}
@@ -100,7 +100,7 @@ int DB::getString(MCONTACT hContact, char *szModule, char *szSetting, TCHAR *buf
 	DBVARIANT dbv;
 	if (!db_get_ts(hContact, szModule, szSetting, &dbv))
 	{
-		_tcscpy(buff, dbv.ptszVal);
+		mir_tstrcpy(buff, dbv.ptszVal);
 		db_free(&dbv);
 		return 0;
 	}

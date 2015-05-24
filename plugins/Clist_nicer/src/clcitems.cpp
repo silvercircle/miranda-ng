@@ -111,7 +111,7 @@ int AddContactToGroup(struct ClcData *dat, ClcGroup *group, MCONTACT hContact)
 	p->xStatus = cfg::getByte(hContact, p->proto, "XStatusId", 0);
 
 	if (p->proto)
-		p->bIsMeta = !strcmp(p->proto, META_PROTO);
+		p->bIsMeta = !mir_strcmp(p->proto, META_PROTO);
 	else
 		p->bIsMeta = FALSE;
 	if (p->bIsMeta && !(cfg::dat.dwFlags & CLUI_USEMETAICONS)) {
@@ -418,7 +418,7 @@ void LoadSkinItemToCache(TExtraCache *cEntry)
 		if (cEntry->status_item == NULL)
 			cEntry->status_item = reinterpret_cast<StatusItems_t *>(malloc(sizeof(StatusItems_t)));
 		memset(cEntry->status_item, 0, sizeof(StatusItems_t));
-		strcpy(cEntry->status_item->szName, "{--CONTACT--}"); // mark as "per contact" item
+		mir_strcpy(cEntry->status_item->szName, "{--CONTACT--}"); // mark as "per contact" item
 		cEntry->status_item->IGNORED = 0;
 
 		cEntry->status_item->TEXTCOLOR = cfg::getDword(hContact, "EXTBK", "TEXT", RGB(20, 20, 20));

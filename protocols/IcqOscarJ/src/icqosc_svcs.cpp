@@ -107,7 +107,7 @@ INT_PTR CIcqProto::GetInfoSetting(WPARAM hContact, LPARAM lParam)
 				}
 			}
 			else {
-				char *savePtr = dbv.pszVal ? strcpy((char*)_alloca(mir_strlen(dbv.pszVal) + 1), dbv.pszVal) : NULL;
+				char *savePtr = dbv.pszVal ? mir_strcpy((char*)_alloca(mir_strlen(dbv.pszVal) + 1), dbv.pszVal) : NULL;
 				if (!mir_utf8decode(savePtr, &cgs->pValue->pwszVal))
 					rc = 1;
 			}
@@ -124,26 +124,26 @@ INT_PTR CIcqProto::GetInfoSetting(WPARAM hContact, LPARAM lParam)
 
 		cgs->pValue->type = type;
 	}
-	else if (!strcmpnull(cgs->szModule, m_szModuleName) && (dbv.type == DBVT_BYTE || dbv.type == DBVT_WORD || dbv.type == DBVT_DWORD)) {
+	else if (!mir_strcmp(cgs->szModule, m_szModuleName) && (dbv.type == DBVT_BYTE || dbv.type == DBVT_WORD || dbv.type == DBVT_DWORD)) {
 		int code = (dbv.type == DBVT_BYTE) ? dbv.bVal : ((dbv.type == DBVT_WORD) ? dbv.wVal : dbv.dVal);
 
-		if (!strcmpnull(cgs->szSetting, "Language1") || !strcmpnull(cgs->szSetting, "Language2") || !strcmpnull(cgs->szSetting, "Language3"))
+		if (!mir_strcmp(cgs->szSetting, "Language1") || !mir_strcmp(cgs->szSetting, "Language2") || !mir_strcmp(cgs->szSetting, "Language3"))
 			rc = LookupDatabaseSetting(languageField, code, cgs->pValue, type);
-		else if (!strcmpnull(cgs->szSetting, "Country") || !strcmpnull(cgs->szSetting, "OriginCountry") || !strcmpnull(cgs->szSetting, "CompanyCountry")) {
+		else if (!mir_strcmp(cgs->szSetting, "Country") || !mir_strcmp(cgs->szSetting, "OriginCountry") || !mir_strcmp(cgs->szSetting, "CompanyCountry")) {
 			if (code == 420) code = 42; // conversion of obsolete codes (OMG!)
 			else if (code == 421) code = 4201;
 			else if (code == 102) code = 1201;
 			rc = LookupDatabaseSetting(countryField, code, cgs->pValue, type);
 		}
-		else if (!strcmpnull(cgs->szSetting, "Gender"))
+		else if (!mir_strcmp(cgs->szSetting, "Gender"))
 			rc = LookupDatabaseSetting(genderField, code, cgs->pValue, type);
-		else if (!strcmpnull(cgs->szSetting, "MaritalStatus"))
+		else if (!mir_strcmp(cgs->szSetting, "MaritalStatus"))
 			rc = LookupDatabaseSetting(maritalField, code, cgs->pValue, type);
-		else if (!strcmpnull(cgs->szSetting, "StudyLevel"))
+		else if (!mir_strcmp(cgs->szSetting, "StudyLevel"))
 			rc = LookupDatabaseSetting(studyLevelField, code, cgs->pValue, type);
-		else if (!strcmpnull(cgs->szSetting, "CompanyIndustry"))
+		else if (!mir_strcmp(cgs->szSetting, "CompanyIndustry"))
 			rc = LookupDatabaseSetting(industryField, code, cgs->pValue, type);
-		else if (!strcmpnull(cgs->szSetting, "Interest0Cat") || !strcmpnull(cgs->szSetting, "Interest1Cat") || !strcmpnull(cgs->szSetting, "Interest2Cat") || !strcmpnull(cgs->szSetting, "Interest3Cat"))
+		else if (!mir_strcmp(cgs->szSetting, "Interest0Cat") || !mir_strcmp(cgs->szSetting, "Interest1Cat") || !mir_strcmp(cgs->szSetting, "Interest2Cat") || !mir_strcmp(cgs->szSetting, "Interest3Cat"))
 			rc = LookupDatabaseSetting(interestsField, code, cgs->pValue, type);
 	}
 	// Release database memory
@@ -293,8 +293,8 @@ INT_PTR CIcqProto::GetAvatarCaps(WPARAM wParam, LPARAM lParam)
 	if (wParam == AF_MAXSIZE) {
 		POINT *size = (POINT*)lParam;
 		if (size) {
-			size->x = 600;
-			size->y = 600;
+			size->x = 64;
+			size->y = 64;
 		}
 		return 0;
 	}
@@ -444,7 +444,7 @@ INT_PTR CIcqProto::RevokeAuthorization(WPARAM wParam, LPARAM)
 
 		if (MessageBox(NULL, TranslateT("Are you sure you want to revoke user's authorization?\nThis will remove you from his/her list on some clients."), TranslateT("Confirmation"), MB_ICONQUESTION | MB_YESNO) != IDYES)
 			return 0;
-
+		
 		icq_sendRevokeAuthServ(dwUin, szUid);
 	}
 
@@ -586,11 +586,9 @@ MCONTACT CIcqProto::AddToListByUID(const char *szUID, DWORD dwFlags)
 
 void CIcqProto::ICQAddRecvEvent(MCONTACT hContact, WORD wType, PROTORECVEVENT* pre, size_t cbBlob, PBYTE pBlob, DWORD flags)
 {
+	flags |= DBEF_UTF;
 	if (pre->flags & PREF_CREATEREAD)
 		flags |= DBEF_READ;
-
-	if (pre->flags & PREF_UTF)
-		flags |= DBEF_UTF;
 
 	if (hContact && db_get_b(hContact, "CList", "Hidden", 0)) {
 		// if the contact was hidden, add to client-list if not in server-list authed

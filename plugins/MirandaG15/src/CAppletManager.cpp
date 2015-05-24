@@ -629,27 +629,6 @@ void CAppletManager::HandleEvent(CEvent *pEvent)
 	}
 }
 
-bool CAppletManager::IsUtfSendAvailable(MCONTACT hContact) {
-	char* szProto = GetContactProto(hContact);
-	if ( szProto == NULL )
-		return FALSE;
-
-	return ( CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_4, 0) & PF4_IMSENDUTF ) ? TRUE : FALSE;
-}
-
-//************************************************************************
-// returns the contacts message service name
-//************************************************************************
-char *CAppletManager::GetMessageServiceName(MCONTACT hContact,bool bIsUnicode)
-{
-	char *szProto = GetContactProto(hContact);
-		
-	if(szProto == NULL)
-		return NULL;
-
-	return PSS_MESSAGE;
-}
-
 //************************************************************************
 // updates all pending message jobs
 //************************************************************************
@@ -710,16 +689,12 @@ void CAppletManager::FinishMessageJob(SMessageJob *pJob)
 				DBEVENTINFO dbei = { 0 };
 				dbei.cbSize = sizeof(dbei);
 				dbei.eventType = EVENTTYPE_MESSAGE;
-				dbei.flags = DBEF_SENT;		
+				dbei.flags = DBEF_SENT | DBEF_UTF;		
 				dbei.szModule = szProto;
 				dbei.timestamp = time(NULL);
 				// Check if protocoll is valid
 				if(dbei.szModule == NULL)
 					return;
-
-				if(pJob->dwFlags & PREF_UTF) {
-					dbei.flags |= DBEF_UTF;
-				}	
 
 				dbei.cbBlob = pJob->iBufferSize;
 				dbei.pBlob = (PBYTE) pJob->pcBuffer;
@@ -834,43 +809,16 @@ MEVENT CAppletManager::SendMessageToContact(MCONTACT hContact,tstring strMessage
 	}
 	else
 	{
-		DWORD pref = 0;
-		bool bIsUnicode = false;
-		if(CAppletManager::IsUtfSendAvailable(pJob->hContact)) {
-			pref = PREF_UTF;
-			char* szMsgUtf = NULL;
-			szMsgUtf = mir_utf8encodeW( strMessage.c_str());
+		char* szMsgUtf = mir_utf8encodeW(strMessage.c_str());
 
-			pJob->iBufferSize = (int)strlen(szMsgUtf)+1;
-			pJob->pcBuffer = (char *)malloc(pJob->iBufferSize);
-			pJob->dwFlags = PREF_UTF;
+		pJob->iBufferSize = (int)mir_strlen(szMsgUtf)+1;
+		pJob->pcBuffer = (char *)malloc(pJob->iBufferSize);
+		pJob->dwFlags = 0;
 
-			memcpy(pJob->pcBuffer,szMsgUtf,pJob->iBufferSize);
-			mir_free(szMsgUtf);
-		} else {
-			bIsUnicode = !IsUnicodeAscii(strMessage.c_str(),mir_tstrlen(strMessage.c_str()));
-			if(bIsUnicode) {
-				pref = PREF_UNICODE;
-				pJob->iBufferSize = bufSize * (sizeof(TCHAR) + 1);
-			} else {
-				pJob->iBufferSize = bufSize;
-			}
-			pJob->pcBuffer = (char *)malloc(pJob->iBufferSize);
-			memcpy(pJob->pcBuffer,strAscii.c_str(),bufSize);
+		memcpy(pJob->pcBuffer,szMsgUtf,pJob->iBufferSize);
+		mir_free(szMsgUtf);
 
-			if(bIsUnicode) {
-				memcpy(&pJob->pcBuffer[bufSize],strMessage.c_str(),bufSize*sizeof(TCHAR));
-			}
-		}
-		char *szService = CAppletManager::GetMessageServiceName(pJob->hContact,bIsUnicode);
-
-		if(szService == NULL)
-		{
-			free(pJob->pcBuffer);
-			pJob->pcBuffer = NULL;
-			return NULL;
-		}
-		pJob->hEvent = (MEVENT)CallContactService(pJob->hContact, szService , pref, (LPARAM)pJob->pcBuffer );
+		pJob->hEvent = (MEVENT)CallContactService(pJob->hContact, PSS_MESSAGE, 0, (LPARAM)pJob->pcBuffer );
 		CAppletManager::GetInstance()->AddMessageJob(pJob);
 	}
 
@@ -952,7 +900,7 @@ bool CAppletManager::TranslateDBEvent(CEvent *pEvent, WPARAM hContact, LPARAM hd
 	
 	switch(dbevent.eventType) {
 	case EVENTTYPE_MESSAGE:
-		msglen = (int)strlen((char *) dbevent.pBlob) + 1;
+		msglen = (int)mir_strlen((char *) dbevent.pBlob) + 1;
 		if (dbevent.flags & DBEF_UTF) {
 			pEvent->strValue = Utf8_Decode((char*)dbevent.pBlob);
 		} else if ((int) dbevent.cbBlob == msglen*3){
@@ -1223,7 +1171,7 @@ int CAppletManager::HookChatInbound(WPARAM wParam,LPARAM lParam)
 	// fetch the network name
 	if(gcd->iType == GC_EVENT_CHANGESESSIONAME)
 	{
-		if (gcd->ptszID && !_tcsicmp(gcd->ptszID,_T("Network log")))
+		if (gcd->ptszID && !mir_tstrcmpi(gcd->ptszID,_T("Network log")))
 		{
 			pIRCCon->strNetwork = toTstring(gce->ptszText);
 			TRACE(_T("\t Found network identifier: %s\n"),pIRCCon->strNetwork.c_str());
@@ -1248,7 +1196,7 @@ int CAppletManager::HookChatInbound(WPARAM wParam,LPARAM lParam)
 			strChannel = strChannel.substr(0,pos-1);
 		else
 		{
-			if(_tcsicmp(gcd->ptszID,_T("Network log")))
+			if(mir_tstrcmpi(gcd->ptszID,_T("Network log")))
 				TRACE(_T("\t WARNING: ignoring unknown event!\n"));
 			return 0;
 		}
@@ -1557,7 +1505,7 @@ int CAppletManager::HookStatusChanged(WPARAM wParam, LPARAM lParam)
 {
 	DBCONTACTWRITESETTING *cws = (DBCONTACTWRITESETTING*)lParam;
 
-	if ((wParam == 0) || (strcmp(cws->szSetting,"Status") != NULL))
+	if ((wParam == 0) || (mir_strcmp(cws->szSetting,"Status") != NULL))
 		return 0;
 
 
@@ -1803,14 +1751,14 @@ int CAppletManager::HookSettingChanged(WPARAM hContact,LPARAM lParam)
 		if(!mir_strcmp(dbcws->szSetting,"Nick")) {
 			if (!db_get_ts(Event.hContact, "CList", "MyHandle", &dbv)) {
 				// handle found, ignore this event
-				if(dbv.pszVal && strlen(dbv.pszVal)>0)
+				if(dbv.pszVal && mir_strlen(dbv.pszVal)>0)
 					return 0;
 			}
 			db_free(&dbv);
 		}
 
 		Event.eType = EVENT_CONTACT_NICK;
-		if(dbcws->value.type != DBVT_DELETED && dbcws->value.pszVal && strlen(dbcws->value.pszVal)>0) {
+		if(dbcws->value.type != DBVT_DELETED && dbcws->value.pszVal && mir_strlen(dbcws->value.pszVal)>0) {
 			if(dbcws->value.type == DBVT_UTF8)
 				Event.strValue = Utf8_Decode(dbcws->value.pszVal);
 			else

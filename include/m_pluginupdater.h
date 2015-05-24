@@ -65,4 +65,7 @@ typedef struct {
 
 #define MS_PU_GETNTHHASH  "PluginUpdater/GetNthCount"
 
+
+#define MS_PU_SHOWLIST "PluginUpdater/ShowList"
+#define MS_PU_CHECKUPDATES "PluginUpdater/CheckUpdates"
 #endif // M_PLUGINUPDATER_H__

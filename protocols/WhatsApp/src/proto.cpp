@@ -90,7 +90,7 @@ DWORD_PTR WhatsAppProto::GetCaps(int type, MCONTACT hContact)
 	case PFLAGNUM_3:
 		return 0;
 	case PFLAGNUM_4:
-		return PF4_NOCUSTOMAUTH | PF4_IMSENDUTF | PF4_FORCEADDED | PF4_NOAUTHDENYREASON | PF4_IMSENDOFFLINE | PF4_SUPPORTTYPING | PF4_AVATARS;
+		return PF4_NOCUSTOMAUTH | PF4_FORCEADDED | PF4_NOAUTHDENYREASON | PF4_IMSENDOFFLINE | PF4_SUPPORTTYPING | PF4_AVATARS;
 	case PFLAGNUM_5:
 		return 0;
 	case PFLAG_UNIQUEIDTEXT:
@@ -168,7 +168,7 @@ MCONTACT WhatsAppProto::AddToList(int flags, PROTOSEARCHRESULT* psr)
 	if (psr->id == NULL)
 		return NULL;
 
-	std::string phone(ptrA(mir_utf8encodeT(psr->id)));
+	std::string phone(T2Utf(psr->id));
 	std::string jid(phone + "@s.whatsapp.net");
 
 	MCONTACT hContact = AddToContactList(jid, phone.c_str());

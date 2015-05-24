@@ -59,14 +59,14 @@ void TwitterProto::UpdateChat(const twitter_user &update)
 int TwitterProto::OnChatOutgoing(WPARAM, LPARAM lParam)
 {
 	GCHOOK *hook = reinterpret_cast<GCHOOK*>(lParam);
-	if (strcmp(hook->pDest->pszModule, m_szModuleName))
+	if (mir_strcmp(hook->pDest->pszModule, m_szModuleName))
 		return 0;
 
 	switch (hook->pDest->iType) {
 	case GC_USER_MESSAGE:
 		debugLog(_T("**Chat - Outgoing message: %s"), hook->ptszText);
 		{
-			ptrA text(mir_utf8encodeT(hook->ptszText));
+			T2Utf text(hook->ptszText);
 
 			std::string tweet(text);
 			replaceAll(tweet, "%%", "%"); // the chat plugin will turn "%" into "%%", so we have to change it back :/

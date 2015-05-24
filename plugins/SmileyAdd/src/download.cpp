@@ -86,20 +86,20 @@ bool InternetDownloadFile(const char *szUrl, char* szDest, HANDLE &hHttpDwnl)
 				// get the url for the new location and save it to szInfo
 				// look for the reply header "Location"
 				for (int i=0; i<nlhrReply->headersCount; i++) {
-					if (!strcmp(nlhrReply->headers[i].szName, "Location")) {
+					if (!mir_strcmp(nlhrReply->headers[i].szName, "Location")) {
 						size_t rlen = 0;
 						if (nlhrReply->headers[i].szValue[0] == '/') {
 							const char* szPath;
 							const char* szPref = strstr(szUrl, "://");
 							szPref = szPref ? szPref + 3 : szUrl;
 							szPath = strchr(szPref, '/');
-							rlen = szPath != NULL ? szPath - szUrl : strlen(szUrl);
+							rlen = szPath != NULL ? szPath - szUrl : mir_strlen(szUrl);
 						}
 
-						szRedirUrl = (char*)mir_realloc(szRedirUrl, rlen + strlen(nlhrReply->headers[i].szValue)*3 + 1);
+						szRedirUrl = (char*)mir_realloc(szRedirUrl, rlen + mir_strlen(nlhrReply->headers[i].szValue)*3 + 1);
 
 						strncpy(szRedirUrl, szUrl, rlen);
-						strcpy(szRedirUrl+rlen, nlhrReply->headers[i].szValue);
+						mir_strcpy(szRedirUrl+rlen, nlhrReply->headers[i].szValue);
 
 						nlhr.szUrl = szRedirUrl;
 						break;

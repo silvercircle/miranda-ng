@@ -129,7 +129,7 @@ bool bOpenLogFile() {
 
 bool bWriteToFile(HANDLE hFile, const char * pszSrc, int nLen = -1) {
 	if (nLen < 0)
-		nLen = (int)strlen(pszSrc);
+		nLen = (int)mir_strlen(pszSrc);
 	DWORD dwBytesWritten;
 	return WriteFile(hFile, pszSrc, nLen, &dwBytesWritten, NULL) && (dwBytesWritten == (DWORD)nLen);
 }
@@ -166,7 +166,7 @@ void LogEvent(const TCHAR * pszTitle, const char * pszLog) {
 	time(&now);
 	int nLen = (int)strftime(szTmp, sizeof(szTmp), "%d-%m-%Y %H:%M:%S -- ", localtime(&now));
 
-	int nLogLen = (int)strlen(pszLog);
+	int nLogLen = (int)mir_strlen(pszLog);
 	while (nLogLen > 0 && (pszLog[nLogLen-1] == '\r' || pszLog[nLogLen-1] == '\n'))
 		nLogLen--;
 
@@ -229,7 +229,7 @@ bool bReadConfigurationFile() {
 	CLFileShareNode * pclLastNode = NULL;
 
 	char szBuf[1000];
-	strcpy(szBuf, szPluginPath);
+	mir_strcpy(szBuf, szPluginPath);
 	strcat(szBuf, szConfigFile);
 	HANDLE hFile = CreateFile(szBuf, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, 
 		NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -329,7 +329,7 @@ bool bReadConfigurationFile() {
 bool bWriteConfigurationFile() {
 	CLFileShareListAccess clCritSection;
 	char szBuf[1000];
-	strcpy(szBuf, szPluginPath);
+	mir_strcpy(szBuf, szPluginPath);
 	strcat(szBuf, szConfigFile);
 	HANDLE hFile = CreateFile(szBuf, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE) {
@@ -406,7 +406,7 @@ static INT_PTR nAddChangeRemoveShare(WPARAM wParam, LPARAM lParam) {
 		return 1002;
 
 	CLFileShareListAccess clCritSection;
-	bool bIsDirectory = (pclNew->pszSrvPath[strlen(pclNew->pszSrvPath)-1] == '/');
+	bool bIsDirectory = (pclNew->pszSrvPath[mir_strlen(pclNew->pszSrvPath)-1] == '/');
 
 	CLFileShareNode **pclPrev = &pclFirstNode;
 	CLFileShareNode * pclCur = pclFirstNode;
@@ -486,10 +486,10 @@ static INT_PTR nGetShare(WPARAM /*wParam*/, LPARAM lParam) {
 	STFileShareInfo * pclShare = (STFileShareInfo*)lParam;
 	CLFileShareNode * pclCur = pclFirstNode;
 	while (pclCur) {
-		if (strcmp(pclCur->st.pszSrvPath, pclShare->pszSrvPath) == 0) {
-			if (pclShare->dwMaxRealPath <= strlen(pclCur->st.pszRealPath) + 1)
+		if (mir_strcmp(pclCur->st.pszSrvPath, pclShare->pszSrvPath) == 0) {
+			if (pclShare->dwMaxRealPath <= mir_strlen(pclCur->st.pszRealPath) + 1)
 				return 1003;
-			strcpy(pclShare->pszRealPath, pclCur->st.pszRealPath);
+			mir_strcpy(pclShare->pszRealPath, pclCur->st.pszRealPath);
 			pclShare->dwAllowedIP = pclCur->st.dwAllowedIP;
 			pclShare->dwAllowedMask = pclCur->st.dwAllowedMask;
 			pclShare->nMaxDownloads = pclCur->st.nMaxDownloads;
@@ -728,11 +728,11 @@ int MainInit(WPARAM /*wparam*/, LPARAM /*lparam*/) {
 
 			share.pszRealPath = szRealPath;
 			share.dwMaxRealPath = sizeof(szRealPath);
-			strcpy(share.pszRealPath, p[0]);
+			mir_strcpy(share.pszRealPath, p[0]);
 
 			share.pszSrvPath = szSrvPath;
 			share.dwMaxSrvPath = sizeof(szSrvPath);
-			strcpy(share.pszSrvPath, p[1]);
+			mir_strcpy(share.pszSrvPath, p[1]);
 
 			if (CallService(MS_HTTP_ADD_CHANGE_REMOVE, 0, (LPARAM)&share))
 				break;
@@ -908,7 +908,7 @@ int nSystemShutdown(WPARAM /*wparam*/, LPARAM /*lparam*/) {
 			return 1;
 		}
 
-		nPluginPathLen = (int)strlen(szPluginPath);
+		nPluginPathLen = (int)mir_strlen(szPluginPath);
 
 		sLogFilePath = szPluginPath;
 		sLogFilePath += "HTTPServer.log";

@@ -234,8 +234,8 @@ char* multiReplace(const char* value, const char *find, const char *replace, int
 {
 	char *head, *temp, *string;
 
-	int len = (int)strlen(find);
-	int replen = (int)strlen(replace);
+	int len = (int)mir_strlen(find);
+	int replen = (int)mir_strlen(replace);
 
 	// only should be 1 '=' sign there...
 	if (head = (char*)(cs ? strstr(value, find) : StrStrI(value, find))) {
@@ -244,7 +244,7 @@ char* multiReplace(const char* value, const char *find, const char *replace, int
 		temp[0] = '\0';
 
 		while (head) {
-			temp = (char*)mir_realloc(temp, strlen(temp) + strlen(string) + replen + 1);
+			temp = (char*)mir_realloc(temp, mir_strlen(temp) + mir_strlen(string) + replen + 1);
 			if (!temp) mir_tstrdup(value);
 
 			strncat(temp, string, (head - string));
@@ -531,7 +531,7 @@ void __cdecl FindSettings(LPVOID di)
 						switch (dbv.type) {
 						case DBVT_UTF8: // no conversion atm
 						case DBVT_ASCIIZ:
-							if ((exactMatch && !(caseSensitive ? strcmp(dbv.pszVal, text) : strcmpi(dbv.pszVal, text))) || (!exactMatch && (caseSensitive ? strstr(dbv.pszVal, text) : StrStrI(dbv.pszVal, text)))) {
+							if ((exactMatch && !(caseSensitive ? mir_strcmp(dbv.pszVal, text) : strcmpi(dbv.pszVal, text))) || (!exactMatch && (caseSensitive ? strstr(dbv.pszVal, text) : StrStrI(dbv.pszVal, text)))) {
 								if ((mode & RW_FOUND) || (mode & RW_SETVAL))
 									replaceCount += replaceValue(hwnd, hContact, module->name, setting->name, &dbv, text, replace, mode);
 								else
@@ -578,7 +578,7 @@ void __cdecl FindSettings(LPVOID di)
 
 				// check in setting name
 				if (inSettingName) {
-					if ((exactMatch && !(caseSensitive ? strcmp(setting->name, text) : strcmpi(setting->name, text))) || (!exactMatch && (caseSensitive ? StrStrI(setting->name, text) : StrStrI(setting->name, text)))) {
+					if ((exactMatch && !(caseSensitive ? mir_strcmp(setting->name, text) : strcmpi(setting->name, text))) || (!exactMatch && (caseSensitive ? StrStrI(setting->name, text) : StrStrI(setting->name, text)))) {
 						if ((mode & RW_FOUND) || (mode & RW_SETNAME)) {
 							if (!GetSetting(hContact, module->name, setting->name, &dbv)) {
 								replaceCount += replaceSetting(hwnd, hContact, module->name, setting->name, &dbv, text, replace, mode);
@@ -596,7 +596,7 @@ void __cdecl FindSettings(LPVOID di)
 
 			// check in module name
 			if (inModuleName) {
-				if ((exactMatch && !(caseSensitive ? strcmp(module->name, text) : strcmpi(module->name, text))) || (!exactMatch && (caseSensitive ? strstr(module->name, text) : StrStrI(module->name, text)))) {
+				if ((exactMatch && !(caseSensitive ? mir_strcmp(module->name, text) : strcmpi(module->name, text))) || (!exactMatch && (caseSensitive ? strstr(module->name, text) : StrStrI(module->name, text)))) {
 					if ((mode & RW_FOUND) || (mode & RW_MODULE))
 						replaceCount += replaceModule(hwnd, hContact, module->name, text, replace, mode);
 					else

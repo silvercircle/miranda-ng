@@ -80,7 +80,7 @@ static LRESULT CALLBACK MsgEditSubclassProc(HWND hWnd, UINT Msg, WPARAM wParam, 
 				int nLen = GetWindowTextLength(hWnd);
 				TCHAR *text = (TCHAR*)_alloca((nLen + 1) * sizeof(TCHAR));
 				GetWindowText(hWnd, text, nLen + 1);
-				memmove(text + start, text + end, sizeof(TCHAR)* (_tcslen(text) + 1 - end));
+				memmove(text + start, text + end, sizeof(TCHAR)* (mir_tstrlen(text) + 1 - end));
 				SetWindowText(hWnd, text);
 
 				SendMessage(hWnd, EM_SETSEL, start, start);
@@ -879,7 +879,7 @@ INT_PTR CALLBACK SetAwayMsgDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 				if (CallProtoService(p->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGSEND) {
 					PROTOACCOUNT * acc = ProtoGetAccount(p->szModuleName);
 					hItem = CList->AddInfo(TCString(_T("* ")) + acc->tszAccountName + _T(" *"), CLC_ROOT, hItem, (LPARAM)p->szModuleName, LoadSkinnedProtoIcon(p->szModuleName, g_ProtoStates[p->szModuleName].Status));
-					if (dat->szProtocol && !strcmp(p->szModuleName, dat->szProtocol))
+					if (dat->szProtocol && !mir_strcmp(p->szModuleName, dat->szProtocol))
 						hSelItem = hItem;
 				}
 			}

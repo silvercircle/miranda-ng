@@ -114,7 +114,7 @@ void TiXmlBase::PutString(const TIXML_STRING& str, TIXML_STRING* outString)
 
 			//*ME:	warning C4267: convert 'size_t' to 'int'
 			//*ME:	Int-Cast to make compiler happy ...
-			outString->append(buf, (int)strlen(buf));
+			outString->append(buf, (int)mir_strlen(buf));
 			++i;
 		}
 		else
@@ -134,7 +134,7 @@ TiXmlBase::StringToBuffer::StringToBuffer(const TIXML_STRING& str)
 	buffer = new char[ str.length()+1 ];
 	if (buffer)
 	{
-		strcpy(buffer, str.c_str());
+		mir_strcpy(buffer, str.c_str());
 	}
 }
 
@@ -357,7 +357,7 @@ const TiXmlNode* TiXmlNode::FirstChild(const char * _value) const
 	const TiXmlNode* node;
 	for (node = firstChild; node; node = node->next)
 	{
-		if (strcmp(node->Value(), _value) == 0)
+		if (mir_strcmp(node->Value(), _value) == 0)
 			return node;
 	}
 	return 0;
@@ -369,7 +369,7 @@ TiXmlNode* TiXmlNode::FirstChild(const char * _value)
 	TiXmlNode* node;
 	for (node = firstChild; node; node = node->next)
 	{
-		if (strcmp(node->Value(), _value) == 0)
+		if (mir_strcmp(node->Value(), _value) == 0)
 			return node;
 	}
 	return 0;
@@ -381,7 +381,7 @@ const TiXmlNode* TiXmlNode::LastChild(const char * _value) const
 	const TiXmlNode* node;
 	for (node = lastChild; node; node = node->prev)
 	{
-		if (strcmp(node->Value(), _value) == 0)
+		if (mir_strcmp(node->Value(), _value) == 0)
 			return node;
 	}
 	return 0;
@@ -392,7 +392,7 @@ TiXmlNode* TiXmlNode::LastChild(const char * _value)
 	TiXmlNode* node;
 	for (node = lastChild; node; node = node->prev)
 	{
-		if (strcmp(node->Value(), _value) == 0)
+		if (mir_strcmp(node->Value(), _value) == 0)
 			return node;
 	}
 	return 0;
@@ -455,7 +455,7 @@ const TiXmlNode* TiXmlNode::NextSibling(const char * _value) const
 	const TiXmlNode* node;
 	for (node = next; node; node = node->next)
 	{
-		if (strcmp(node->Value(), _value) == 0)
+		if (mir_strcmp(node->Value(), _value) == 0)
 			return node;
 	}
 	return 0;
@@ -466,7 +466,7 @@ TiXmlNode* TiXmlNode::NextSibling(const char * _value)
 	TiXmlNode* node;
 	for (node = next; node; node = node->next)
 	{
-		if (strcmp(node->Value(), _value) == 0)
+		if (mir_strcmp(node->Value(), _value) == 0)
 			return node;
 	}
 	return 0;
@@ -477,7 +477,7 @@ const TiXmlNode* TiXmlNode::PreviousSibling(const char * _value) const
 	const TiXmlNode* node;
 	for (node = prev; node; node = node->prev)
 	{
-		if (strcmp(node->Value(), _value) == 0)
+		if (mir_strcmp(node->Value(), _value) == 0)
 			return node;
 	}
 	return 0;
@@ -488,7 +488,7 @@ TiXmlNode* TiXmlNode::PreviousSibling(const char * _value)
 	TiXmlNode* node;
 	for (node = prev; node; node = node->prev)
 	{
-		if (strcmp(node->Value(), _value) == 0)
+		if (mir_strcmp(node->Value(), _value) == 0)
 			return node;
 	}
 	return 0;
@@ -1092,7 +1092,7 @@ bool TiXmlDocument::GetAsCharBuffer(char* buffer, size_t bufferSize)
 	}
 	else
 	{
-		strcpy(buffer, data.c_str());
+		mir_strcpy(buffer, data.c_str());
 		return true;
 	}
 }

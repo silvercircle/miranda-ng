@@ -503,7 +503,7 @@ void CYahooProto::ext_got_file(const char *me, const char *who, const char *url,
 	TCHAR* ptszFileName = mir_a2t(fn);
 
 	PROTORECVFILET pre = {0};
-	pre.flags = PREF_TCHAR;
+	pre.dwFlags = PRFF_TCHAR;
 	pre.fileCount = 1;
 	pre.timestamp = time(NULL);
 	pre.tszDescription = mir_a2t(msg);
@@ -547,18 +547,13 @@ void CYahooProto::ext_got_files(const char *me, const char *who, const char *ft_
 
 	}
 
-	TCHAR* ptszFileName = mir_a2t(fn);
-
 	PROTORECVFILET pre = {0};
-	pre.flags = PREF_TCHAR;
 	pre.fileCount = 1;
 	pre.timestamp = time(NULL);
-	pre.tszDescription = _T("");
-	pre.ptszFiles = &ptszFileName;
+	pre.szDescription = "";
+	pre.pszFiles = (char**)&fn;
 	pre.lParam = (LPARAM)ft;
 	ProtoChainRecvFile(ft->hContact, &pre);
-
-	mir_free(ptszFileName);
 }
 
 void CYahooProto::ext_got_file7info(const char *me, const char *who, const char *url, const char *fname, const char *ft_token)
@@ -690,13 +685,7 @@ HANDLE __cdecl CYahooProto::SendFile(MCONTACT hContact, const PROTOCHAR* szDescr
 	
 			struct yahoo_file_info *fi = y_new(struct yahoo_file_info,1);
 			
-			/**
-			 * Need to use regular memory allocator/deallocator, since this is how things are build w/ libyahoo2
-			 */
-			char *s = mir_utf8encodeT(ppszFiles[i]);
-			fi->filename = strdup(s);
-			mir_free(s);
-			
+			fi->filename = strdup(T2Utf(ppszFiles[i]));
 			fi->filesize = tFileSize;
 		
 			fs = y_list_append(fs, fi);
@@ -738,7 +727,7 @@ HANDLE __cdecl CYahooProto::FileAllow(MCONTACT hContact, HANDLE hTransfer, const
 	//LOG(LOG_INFO, "[%s] Requesting file from %s", ft->cookie, ft->user);
 	ft->pfts.tszWorkingDir = _tcsdup( szPath );
 
-	size_t len = _tcslen(ft->pfts.tszWorkingDir) - 1;
+	size_t len = mir_tstrlen(ft->pfts.tszWorkingDir) - 1;
 	if (ft->pfts.tszWorkingDir[len] == '\\')
 		ft->pfts.tszWorkingDir[len] = 0;
 		

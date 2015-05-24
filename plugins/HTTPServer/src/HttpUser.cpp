@@ -183,7 +183,7 @@ bool CLHttpUser::bReadGetParameters(char * pszRequest) {
 		pszRequest[0] = 0;
 		pszRequest++;
 		for (int nCur = 0; nCur < eLastParam ; nCur++) {
-			int nLen = (int)strlen(szParmStr[nCur]);
+			int nLen = (int)mir_strlen(szParmStr[nCur]);
 			if (strncmp(pszRequest, szParmStr[nCur], nLen) == 0) {
 				if (apszParam[nCur]) {
 					bRet = false;
@@ -429,7 +429,7 @@ bool CLHttpUser::bProcessGetRequest(char * pszRequest, bool bIsGetCommand) {
 				    FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
 				if (hFile == INVALID_HANDLE_VALUE) {
-					if (pszSrvPath[strlen(pszSrvPath)-1] != '/') {
+					if (pszSrvPath[mir_strlen(pszSrvPath)-1] != '/') {
 						strmcat(pszRealPath, "\\", MAX_PATH);
 						strmcat(pszSrvPath,  "/", MAX_PATH);
 					}
@@ -457,7 +457,7 @@ bool CLHttpUser::bProcessGetRequest(char * pszRequest, bool bIsGetCommand) {
 								while (pszTmp = strchr(pszTmp, '/'))
 									* pszTmp = '~';
 							}
-							pszRealPath[strlen(pszRealPath) - 10] = '\0';
+							pszRealPath[mir_strlen(pszRealPath) - 10] = '\0';
 
 							// detecting browser function removed
 							// every browser should support it by now
@@ -472,14 +472,14 @@ bool CLHttpUser::bProcessGetRequest(char * pszRequest, bool bIsGetCommand) {
 								hFile = CreateFile(szTempfile, GENERIC_READ ,
 								    FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
-								strcpy(szRealPath, "a.xml"); // restore .xml for mime type
+								mir_strcpy(szRealPath, "a.xml"); // restore .xml for mime type
 							} else if ((indexCreationMode == INDEX_CREATION_HTML ||
 							    indexCreationMode == INDEX_CREATION_DETECT) &&
 							    bCreateIndexHTML(pszRealPath, szTempfile, pszSrvPath, dwRemoteIP)) {
 								hFile = CreateFile(szTempfile, GENERIC_READ,
 								    FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
-								strcpy(szRealPath, "a.html"); // restore .html for mime type
+								mir_strcpy(szRealPath, "a.html"); // restore .html for mime type
 							} else {
 								continue;
 							}
@@ -504,7 +504,7 @@ bool CLHttpUser::bProcessGetRequest(char * pszRequest, bool bIsGetCommand) {
 				}
 			}
 
-			strcpy(this->szCurrentDLSrvPath, pszSrvPath);
+			mir_strcpy(this->szCurrentDLSrvPath, pszSrvPath);
 
 			DWORD nDataSize = GetFileSize(hFile, NULL);
 			dwTotalSize = nDataSize;
@@ -521,7 +521,7 @@ bool CLHttpUser::bProcessGetRequest(char * pszRequest, bool bIsGetCommand) {
 			FileTimeToUnixTime(&stFileTime, &ltime);
 			strftime(szFileTime, sizeof(szFileTime), "%a, %d %b %Y %H:%M:%S GMT", gmtime(&ltime));
 			
-			if (apszParam[eIfModifiedSince] && strcmp(apszParam[eIfModifiedSince], szFileTime) == 0) {
+			if (apszParam[eIfModifiedSince] && mir_strcmp(apszParam[eIfModifiedSince], szFileTime) == 0) {
 				SendError(304, "Not Modified" );
 				return true;
 			}

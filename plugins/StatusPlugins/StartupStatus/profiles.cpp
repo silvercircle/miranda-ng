@@ -189,12 +189,12 @@ TCHAR *GetStatusMessage(int profile, char *szProto)
 	DBVARIANT dbv;
 
 	for ( int i=0; i < pceCount; i++ ) {
-		if ( (pce[i].profile == profile) && (!strcmp(pce[i].szProto, szProto))) {
+		if ( (pce[i].profile == profile) && (!mir_strcmp(pce[i].szProto, szProto))) {
 			mir_snprintf(dbSetting, SIZEOF(dbSetting), "%d_%s_%s", profile, szProto, SETTING_PROFILE_STSMSG);
 			if (!db_get_ts(NULL, MODULENAME, dbSetting, &dbv)) { // reload from db
-				pce[i].msg = ( TCHAR* )realloc(pce[i].msg, sizeof(TCHAR)*(_tcslen(dbv.ptszVal)+1));
+				pce[i].msg = ( TCHAR* )realloc(pce[i].msg, sizeof(TCHAR)*(mir_tstrlen(dbv.ptszVal)+1));
 				if (pce[i].msg != NULL) {
-					_tcscpy(pce[i].msg, dbv.ptszVal);
+					mir_tstrcpy(pce[i].msg, dbv.ptszVal);
 				}
 				db_free(&dbv);
 			}

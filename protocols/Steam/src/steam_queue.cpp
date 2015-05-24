@@ -36,7 +36,7 @@ void CSteamProto::StartQueue()
 		}
 		else
 		{
-			ptrA username(mir_urlEncode(ptrA(mir_utf8encodeT(getTStringA("Username")))));
+			ptrA username(mir_urlEncode(T2Utf(getTStringA("Username"))));
 			if (username == NULL || username[0] == '\0')
 				return;
 
@@ -80,7 +80,10 @@ void CSteamProto::StopQueue()
 
 	SteamWebApi::HttpRequest *request = new SteamWebApi::LogoffRequest(token, umqid);
 	NETLIBHTTPREQUEST *response = request->Send(m_hNetlibUser);
-	CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)response);
+	if (response != NULL)
+	{
+		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)response);
+	}
 	delete request;
 
 	m_hQueueThread = NULL;

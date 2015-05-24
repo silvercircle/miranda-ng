@@ -53,7 +53,7 @@ WIDATA* GetWIData(TCHAR *pszServ)
 	// loop through the list to find matching internal name
 	for (WIDATALIST *Item = WIHead;Item != NULL;Item = Item->next)
 		// if internal name found, return the data
-		if ( _tcscmp(Item->Data.InternalName, pszServ) == 0)
+		if ( mir_tstrcmp(Item->Data.InternalName, pszServ) == 0)
 			return &Item->Data;
 		
 	// return NULL when no match found
@@ -96,7 +96,7 @@ void ResetDataItem(WIDATAITEM *Item, const TCHAR *name)
 {
 	TCHAR str[] = _T("ID Search - Station Name");
 	Item->Name = ( TCHAR* )mir_alloc( sizeof(str));
-	_tcscpy(Item->Name, str);
+	mir_tstrcpy(Item->Name, str);
 	Item->Start = _T("");
 	Item->End = _T("");
 	Item->Unit = _T("");
@@ -131,7 +131,7 @@ void WICondListAdd(char *str, WICONDLIST *List)
 {
 	WICONDITEM *newItem = (WICONDITEM*)mir_alloc(sizeof(WICONDITEM));
 	wSetData(&newItem->Item, str);
-	CharLowerBuff(newItem->Item, (DWORD)_tcslen( newItem->Item ));
+	CharLowerBuff(newItem->Item, (DWORD)mir_tstrlen( newItem->Item ));
 	newItem->Next = NULL;
 	if (List->Tail == NULL)	List->Head = newItem;
 	else List->Tail->Next = newItem;
@@ -196,7 +196,7 @@ bool LoadWIData(bool dial)
 			chop = _tcsrchr(FileName, '\\');
 			chop[1] = '\0';
 			_tcsncat(FileName, fd.cFileName, SIZEOF(FileName) - mir_tstrlen(FileName));
-			if ( _tcsicmp(fd.cFileName, _T("SAMPLE_INI.INI"))) {
+			if ( mir_tstrcmpi(fd.cFileName, _T("SAMPLE_INI.INI"))) {
 				WIDATA Data;
 				LoadStationData(FileName, fd.cFileName, &Data);
 				if (Data.Enabled)
@@ -257,19 +257,19 @@ void LoadStationData(TCHAR *pszFile, TCHAR *pszShortFile, WIDATA *Data)
 		TrimString(Line);
 
 		// make sure it is a valid weather protocol ini file
-		if ( !strcmp(Line, "[Weather 0.3.x Update Data]"))
+		if ( !mir_strcmp(Line, "[Weather 0.3.x Update Data]"))
 			Data->InternalVer = 1;
-		else if ( !strcmp(Line, "[Weather 0.3.x Update Data 1.1]"))
+		else if ( !mir_strcmp(Line, "[Weather 0.3.x Update Data 1.1]"))
 			Data->InternalVer = 2;
-		else if ( !strcmp(Line, "[Weather 0.3.x Update Data 1.1a]"))
+		else if ( !mir_strcmp(Line, "[Weather 0.3.x Update Data 1.1a]"))
 			Data->InternalVer = 3;
-		else if ( !strcmp(Line, "[Weather 0.3.x Update Data 1.2]"))
+		else if ( !mir_strcmp(Line, "[Weather 0.3.x Update Data 1.2]"))
 			Data->InternalVer = 4;
-		else if ( !strcmp(Line, "[Weather 0.3.x Update Data 1.3]"))
+		else if ( !mir_strcmp(Line, "[Weather 0.3.x Update Data 1.3]"))
 			Data->InternalVer = 5;
-		else if ( !strcmp(Line, "[Weather 0.3.x Update Data 1.4]"))
+		else if ( !mir_strcmp(Line, "[Weather 0.3.x Update Data 1.4]"))
 			Data->InternalVer = 6;
-		else if ( !strcmp(Line, "[Weather 0.3.x Update Data 1.5]"))
+		else if ( !mir_strcmp(Line, "[Weather 0.3.x Update Data 1.5]"))
 			Data->InternalVer = 7;
 		else
 		{
@@ -327,7 +327,7 @@ void LoadStationData(TCHAR *pszFile, TCHAR *pszShortFile, WIDATA *Data)
 
 		// initialize the linked list for update items
 		Data->UpdateDataCount = 0;
-		Data->MemUsed = sizeof(WIDATA) + sizeof(WIDATALIST) + (_tcslen(pszShortFile) + _tcslen(pszFile) + 20)*sizeof( TCHAR );
+		Data->MemUsed = sizeof(WIDATA) + sizeof(WIDATALIST) + (mir_tstrlen(pszShortFile) + mir_tstrlen(pszFile) + 20)*sizeof( TCHAR );
 		Data->UpdateData = NULL;
 		Data->UpdateDataTail = NULL;
 
@@ -350,7 +350,7 @@ void LoadStationData(TCHAR *pszFile, TCHAR *pszShortFile, WIDATA *Data)
 				
 				if (Line[1] != '/')  {	// if it is not a footer (for old ini)
 					// save the group name
-					Temp = (char *)mir_alloc(strlen(Line)+10);
+					Temp = (char *)mir_alloc(mir_strlen(Line)+10);
 					strncpy(Temp, Line+1, chop-Line-1);
 					Temp[chop-Line-1] = 0;
 					wfree(&Group);
@@ -380,7 +380,7 @@ void LoadStationData(TCHAR *pszFile, TCHAR *pszShortFile, WIDATA *Data)
 			if (Value == NULL)	continue;
 
 			// get the string before '=' (ValName) and after '=' (Value)
-			ValName = (char *)mir_alloc(strlen(Line)+1);
+			ValName = (char *)mir_alloc(mir_strlen(Line)+1);
 			strncpy(ValName, Line, Value-Line);
 			ValName[Value-Line] = 0;
 			Value++;
@@ -453,7 +453,7 @@ void LoadStationData(TCHAR *pszFile, TCHAR *pszShortFile, WIDATA *Data)
 				else if ( !_stricmp(ValName, "HIDDEN")) {
 					if ( !_stricmp(Value, "TRUE")) {
 						TCHAR *nm = Data->UpdateDataTail->Item.Name;
-						size_t len = _tcslen(nm) + 1;
+						size_t len = mir_tstrlen(nm) + 1;
 
 						Data->UpdateDataTail->Item.Name = nm = ( TCHAR* )mir_realloc(nm, sizeof(TCHAR)*(len + 3));
 						memmove(nm + 1, nm, len*sizeof( TCHAR ));
@@ -470,7 +470,7 @@ void LoadStationData(TCHAR *pszFile, TCHAR *pszShortFile, WIDATA *Data)
 				}
 			}
 			// recalculate memory used
-			Data->MemUsed += (strlen(Value) + 10);
+			Data->MemUsed += (mir_strlen(Value) + 10);
 			wfree(&ValName);
 		}
 		// calcualate memory used for the ini and close the file

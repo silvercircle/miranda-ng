@@ -45,7 +45,7 @@ int CJabberProto::OnContactDeleted(WPARAM hContact, LPARAM)
 			TCHAR szStrippedJid[JABBER_MAX_JID_LEN];
 			JabberStripJid(m_ThreadInfo->fullJID, szStrippedJid, SIZEOF(szStrippedJid));
 			TCHAR *szDog = _tcschr(szStrippedJid, _T('@'));
-			if (szDog && _tcsicmp(szDog + 1, jid))
+			if (szDog && mir_tstrcmpi(szDog + 1, jid))
 				m_ThreadInfo->send(XmlNodeIq(_T("set"), SerialNext(), jid) << XQUERY(JABBER_FEAT_REGISTER) << XCHILD(_T("remove")));
 		}
 
@@ -162,14 +162,14 @@ int __cdecl CJabberProto::OnDbSettingChanged(WPARAM hContact, LPARAM lParam)
 		return 0;
 
 	DBCONTACTWRITESETTING* cws = (DBCONTACTWRITESETTING*)lParam;
-	if (strcmp(cws->szModule, "CList"))
+	if (mir_strcmp(cws->szModule, "CList"))
 		return 0;
 
-	if (!strcmp(cws->szSetting, "Group"))
+	if (!mir_strcmp(cws->szSetting, "Group"))
 		OnRenameGroup(cws, hContact);
-	else if (!strcmp(cws->szSetting, "MyHandle"))
+	else if (!mir_strcmp(cws->szSetting, "MyHandle"))
 		OnRenameContact(cws, hContact);
-	else if (!strcmp(cws->szSetting, "NotOnList"))
+	else if (!mir_strcmp(cws->szSetting, "NotOnList"))
 		OnAddContactForever(cws, hContact);
 
 	return 0;

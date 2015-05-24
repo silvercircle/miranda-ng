@@ -122,7 +122,7 @@ BaseExtraIcon* GetExtraIconByName(const char *name)
 {
 	for (int i=0; i < registeredExtraIcons.getCount(); i++) {
 		BaseExtraIcon *extra = registeredExtraIcons[i];
-		if (strcmp(name, extra->getName()) == 0)
+		if (mir_strcmp(name, extra->getName()) == 0)
 			return extra;
 	}
 	return NULL;
@@ -369,7 +369,7 @@ INT_PTR ExtraIcon_Register(WPARAM wParam, LPARAM lParam)
 			return 0;
 
 		// Found one, now merge it
-		if (_tcsicmp(extra->getDescription(), desc)) {
+		if (mir_tstrcmpi(extra->getDescription(), desc)) {
 			CMString newDesc = extra->getDescription();
 			newDesc += _T(" / ");
 			newDesc += desc;

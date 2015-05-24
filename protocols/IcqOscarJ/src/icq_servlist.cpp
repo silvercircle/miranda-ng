@@ -432,7 +432,7 @@ int CIcqProto::servlistPendingFindItem(int nType, MCONTACT hContact, const char 
 		for (int i = 0; i < servlistPendingCount; i++)
 			if (servlistPendingList[i]->nType == nType)
 				if (((nType == ITEM_PENDING_CONTACT) && (servlistPendingList[i]->hContact == hContact)) ||
-					 ((nType == ITEM_PENDING_GROUP) && (!strcmpnull(servlistPendingList[i]->szGroup, pszGroup))))
+					 ((nType == ITEM_PENDING_GROUP) && (!mir_strcmp(servlistPendingList[i]->szGroup, pszGroup))))
 					return i;
 
 	return -1;
@@ -1385,7 +1385,7 @@ int CIcqProto::getCListGroupExists(const char *szGroup)
 				break;
 
 			// we have found the group
-			if (!_tcscmp(tszGroup, tszGroupName))
+			if (!mir_tstrcmp(tszGroup, tszGroupName))
 				return i;
 		}
 
@@ -1509,7 +1509,7 @@ static int SrvGroupNamesEnumProc(const char *szSetting, LPARAM lParam)
 	CIcqProto *ppro = (CIcqProto*)params[0];
 	char *szGroupName = ppro->getSettingStringUtf(NULL, params[3], szSetting, NULL);
 
-	if (!strcmpnull(szGroupName, params[2]))
+	if (!mir_strcmp(szGroupName, params[2]))
 		params[1] = szSetting; // do not need the real value, just arbitrary non-NULL
 
 	SAFE_FREE(&szGroupName);
@@ -1551,7 +1551,7 @@ char* CIcqProto::getServListUniqueGroupName(const char *szGroupName, int bAlloce
 			null_strcut(szGroupNameBase, m_wServerListRecordNameMaxLength - mir_strlen(szUnique) - 1);
 			szNewGroupName = (char*)SAFE_MALLOC(mir_strlen(szUnique) + mir_strlen(szGroupNameBase) + 2);
 			if (szNewGroupName) {
-				strcpy(szNewGroupName, szGroupNameBase);
+				mir_strcpy(szNewGroupName, szGroupNameBase);
 				strcat(szNewGroupName, "~");
 				strcat(szNewGroupName, szUnique);
 			}
@@ -1586,7 +1586,7 @@ int CIcqProto::servlistCreateGroup_gotParentGroup(const char *szGroup, WORD wGro
 
 	szSubGroup = (char*)SAFE_MALLOC(mir_strlen(szGroup) + mir_strlen(szSubGroupName) + 2);
 	if (szSubGroup) {
-		strcpy(szSubGroup, szGroup);
+		mir_strcpy(szSubGroup, szGroup);
 		strcat(szSubGroup, "\\");
 		strcat(szSubGroup, szSubGroupName);
 	}
@@ -1619,7 +1619,7 @@ int CIcqProto::servlistCreateGroup_gotParentGroup(const char *szGroup, WORD wGro
 			for (i = 0; i < wSubGroupLevel; i++)
 				szSubGroupItem[i] = '>';
 
-			strcpy(szSubGroupItem + wSubGroupLevel, szSubGroupName);
+			mir_strcpy(szSubGroupItem + wSubGroupLevel, szSubGroupName);
 			szSubGroupItem[mir_strlen(szSubGroupName) + wSubGroupLevel] = '\0';
 			SAFE_FREE((void**)&szSubGroupName);
 			// check and create unique group name (Miranda does allow more subgroups with the same name!)
@@ -2139,7 +2139,7 @@ void CIcqProto::servlistRenameGroup(char *szGroup, WORD wGroupId, char *szNewGro
 			szLast[0] = '\0';
 
 		// this group was not changed, nothing to rename
-		if (!strcmpnull(szGroupName, szNewGroupName)) return;
+		if (!mir_strcmp(szGroupName, szNewGroupName)) return;
 
 		szGroupName = szNewGroupName;
 		szNewGroupName = (char*)SAFE_MALLOC(mir_strlen(szGroupName) + 1 + nGroupLevel);
@@ -2268,20 +2268,20 @@ int CIcqProto::ServListDbSettingChanged(WPARAM hContact, LPARAM lParam)
 	if (!icqOnline() || !m_bSsiEnabled || bIsSyncingCL)
 		return 0;
 
-	if (!strcmpnull(cws->szModule, "CList")) {
+	if (!mir_strcmp(cws->szModule, "CList")) {
 		// Has contact been renamed?
-		if (!strcmpnull(cws->szSetting, "MyHandle") && getByte("StoreServerDetails", DEFAULT_SS_STORE))
+		if (!mir_strcmp(cws->szSetting, "MyHandle") && getByte("StoreServerDetails", DEFAULT_SS_STORE))
 			servlistUpdateContact(hContact); // Update contact's details in server-list
 
 		// Has contact been moved to another group?
-		if (!strcmpnull(cws->szSetting, "Group") && getByte("StoreServerDetails", DEFAULT_SS_STORE)) {
+		if (!mir_strcmp(cws->szSetting, "Group") && getByte("StoreServerDetails", DEFAULT_SS_STORE)) {
 			char* szNewGroup = getContactCListGroup(hContact); // Read group from DB
 			SAFE_FREE(&szNewGroup);
 		}
 	}
-	else if (!strcmpnull(cws->szModule, "UserInfo")) {
+	else if (!mir_strcmp(cws->szModule, "UserInfo")) {
 		// Update contact's details in server-list
-		if (!strcmpnull(cws->szSetting, "MyNotes") && getByte("StoreServerDetails", DEFAULT_SS_STORE))
+		if (!mir_strcmp(cws->szSetting, "MyNotes") && getByte("StoreServerDetails", DEFAULT_SS_STORE))
 			servlistUpdateContact(hContact);
 	}
 

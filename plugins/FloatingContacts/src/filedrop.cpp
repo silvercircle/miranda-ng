@@ -217,15 +217,15 @@ static int CountFiles( char *szItem )
 			if ( fd.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY )
 			{
 				// Skip parent directories
-				if (( 0 != strcmp( fd.cFileName, "." )) &&
-					 ( 0 != strcmp( fd.cFileName, ".." )) )
+				if (( 0 != mir_strcmp( fd.cFileName, "." )) &&
+					 ( 0 != mir_strcmp( fd.cFileName, ".." )) )
 				{
 					char szDirName[MAX_PATH];
 					strncpy( szDirName, szItem, MAX_PATH - 1);
 
 					if ( NULL != strstr( szItem, "*.*" ))
 					{
-						size_t offset = strlen( szDirName ) - 3;
+						size_t offset = mir_strlen( szDirName ) - 3;
 						mir_snprintf(szDirName + offset, SIZEOF( szDirName) - offset, "%s\0", fd.cFileName);
 					}
 					
@@ -259,15 +259,15 @@ static void SaveFiles( char *szItem, char **ppFiles, int *pnCount )
 			if ( fd.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY )
 			{
 				// Skip parent directories
-				if (( 0 != strcmp( fd.cFileName, "." )) &&
-					 ( 0 != strcmp( fd.cFileName, ".." )) )
+				if (( 0 != mir_strcmp( fd.cFileName, "." )) &&
+					 ( 0 != mir_strcmp( fd.cFileName, ".." )) )
 				{
 					char szDirName[MAX_PATH];
 					strncpy( szDirName, szItem, MAX_PATH - 1);
 
 					if ( NULL != strstr( szItem, "*.*" ))
 					{
-						size_t offset = strlen( szDirName ) - 3;
+						size_t offset = mir_strlen( szDirName ) - 3;
 						mir_snprintf(szDirName + offset, SIZEOF( szDirName) - offset, "%s\0", fd.cFileName);
 					}
 					
@@ -281,14 +281,14 @@ static void SaveFiles( char *szItem, char **ppFiles, int *pnCount )
 			}
 			else
 			{
-				size_t nSize = sizeof(char) * ( strlen( szItem ) + strlen( fd.cFileName ) + sizeof( char ));
+				size_t nSize = sizeof(char) * ( mir_strlen( szItem ) + mir_strlen( fd.cFileName ) + sizeof( char ));
 				char  *szFile = (char*) malloc( nSize ) ;
 				
 				strncpy( szFile, szItem, nSize - 1); 
 				
 				if ( NULL != strstr( szFile, "*.*" ))
 				{
-					szFile[ strlen( szFile ) - 3 ] = '\0';
+					szFile[ mir_strlen( szFile ) - 3 ] = '\0';
 					strncat(szFile, fd.cFileName, nSize - mir_strlen(szFile));
 				}
 								

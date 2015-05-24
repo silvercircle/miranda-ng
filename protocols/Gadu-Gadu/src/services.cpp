@@ -43,7 +43,7 @@ char *gg_status2db(int status, const char *suffix)
 		default: return NULL;
 	}
 	strncpy(str, prefix, sizeof(str));
-	strncat(str, suffix, sizeof(str) - strlen(str));
+	strncat(str, suffix, sizeof(str) - mir_strlen(str));
 	return str;
 }
 
@@ -105,16 +105,14 @@ int GGPROTO::refreshstatus(int status)
 		gg_EnterCriticalSection(&modemsg_mutex, "refreshstatus", 69, "modemsg_mutex", 1);
 		szMsg = getstatusmsg(status);
 		gg_LeaveCriticalSection(&modemsg_mutex, "refreshstatus", 69, 1, "modemsg_mutex", 1);
-		char *szMsg_utf8 = mir_utf8encodeT(szMsg);
-		if (szMsg_utf8)
-		{
+		T2Utf szMsg_utf8(szMsg);
+		if (szMsg_utf8) {
 			debugLogA("refreshstatus(): Setting status and away message.");
 			gg_EnterCriticalSection(&sess_mutex, "refreshstatus", 70, "sess_mutex", 1);
 			gg_change_status_descr(sess, status_m2gg(status, szMsg_utf8 != NULL), szMsg_utf8);
 			gg_LeaveCriticalSection(&sess_mutex, "refreshstatus", 70, 1, "sess_mutex", 1);
 		}
-		else
-		{
+		else {
 			debugLogA("refreshstatus(): Setting just status.");
 			gg_EnterCriticalSection(&sess_mutex, "refreshstatus", 71, "sess_mutex", 1);
 			gg_change_status(sess, status_m2gg(status, 0));
@@ -123,7 +121,6 @@ int GGPROTO::refreshstatus(int status)
 		// Change status of the contact with our own UIN (if got yourself added to the contact list)
 		changecontactstatus( getDword(GG_KEY_UIN, 0), status_m2gg(status, szMsg != NULL), szMsg, 0, 0, 0, 0);
 		broadcastnewstatus(status);
-		mir_free(szMsg_utf8);
 	}
 
 	return TRUE;
@@ -193,7 +190,7 @@ INT_PTR GGPROTO::getavatarinfo(WPARAM wParam, LPARAM lParam)
 	//directly check if contact has protected user avatar set by AVS, and if yes return it as protocol avatar
 	DBVARIANT dbv;
 	if (!db_get_ts(pai->hContact, "ContactPhoto", "Backup", &dbv)) {
-		if ((_tcslen(dbv.ptszVal)>0) && db_get_b(pai->hContact, "ContactPhoto", "Locked", 0)){
+		if ((mir_tstrlen(dbv.ptszVal)>0) && db_get_b(pai->hContact, "ContactPhoto", "Locked", 0)){
 			debugLogA("getavatarinfo(): Incoming request for avatar information. Contact has assigned Locked ContactPhoto. return GAIR_SUCCESS");
 			_tcscpy_s(pai->filename, SIZEOF(pai->filename) ,dbv.ptszVal);
 			pai->format = ProtoGetAvatarFormat(pai->filename);
@@ -230,7 +227,7 @@ INT_PTR GGPROTO::getavatarinfo(WPARAM wParam, LPARAM lParam)
 	ptrA AvatarSavedHash( getStringA(pai->hContact, GG_KEY_AVATARHASH));
 	if (AvatarHash != NULL && AvatarSavedHash != NULL) {
 		getAvatarFilename(pai->hContact, pai->filename, SIZEOF(pai->filename));
-		if (!strcmp(AvatarHash, AvatarSavedHash)) {
+		if (!mir_strcmp(AvatarHash, AvatarSavedHash)) {
 			if (_taccess(pai->filename, 0) == 0){
 				debugLogA("getavatarinfo(): Incoming request for avatar information. uin=%d. Avatar hash unchanged. return GAIR_SUCCESS", uin);
 				return GAIR_SUCCESS;
@@ -339,7 +336,7 @@ INT_PTR GGPROTO::setmyavatar(WPARAM wParam, LPARAM lParam)
 
 	TCHAR szMyFilename[MAX_PATH];
 	getAvatarFilename(NULL, szMyFilename, SIZEOF(szMyFilename));
-	if ( _tcscmp(szFilename, szMyFilename) && !CopyFile(szFilename, szMyFilename, FALSE)) {
+	if ( mir_tstrcmp(szFilename, szMyFilename) && !CopyFile(szFilename, szMyFilename, FALSE)) {
 		debugLogA("setmyavatar(): Failed to set user avatar. File with type %d could not be created/overwritten.", iAvType);
 		return -1;
 	}

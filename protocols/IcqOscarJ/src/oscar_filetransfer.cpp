@@ -62,7 +62,7 @@ char* FindFilePathContainer(const char **files, int iFile, char *szContainer)
 
 				if (((pszLastBackslash = strrchr(files[i], '\\')) == NULL) &&
 					 ((pszLastBackslash = strrchr(files[i], '/')) == NULL)) {
-					strcpy(szContainer, files[i]);
+					mir_strcpy(szContainer, files[i]);
 				}
 				else {
 					len = pszLastBackslash - files[i] + 1;
@@ -464,7 +464,7 @@ void CIcqProto::handleRecvServMsgOFT(BYTE *buf, size_t wLen, DWORD dwUin, char *
 					if (ft->wFilesCount == 1) {  // Filename - use for DB event
 						char *szFileName = (char*)_alloca(mir_strlen(pszFileName) + 1);
 
-						strcpy(szFileName, pszFileName);
+						mir_strcpy(szFileName, pszFileName);
 						SAFE_FREE(&pszFileName);
 						pszFileName = szFileName;
 					}
@@ -496,13 +496,13 @@ void CIcqProto::handleRecvServMsgOFT(BYTE *buf, size_t wLen, DWORD dwUin, char *
 				// Send chain event
 				char *szBlob = (char*)_alloca(sizeof(DWORD) + mir_strlen(pszFileName) + mir_strlen(pszDescription) + 2);
 				*(PDWORD)szBlob = 0;
-				strcpy(szBlob + sizeof(DWORD), pszFileName);
-				strcpy(szBlob + sizeof(DWORD) + mir_strlen(pszFileName) + 1, pszDescription);
+				mir_strcpy(szBlob + sizeof(DWORD), pszFileName);
+				mir_strcpy(szBlob + sizeof(DWORD) + mir_strlen(pszFileName) + 1, pszDescription);
 
 				TCHAR* ptszFileName = mir_utf8decodeT(pszFileName);
 
 				PROTORECVFILET pre = { 0 };
-				pre.flags = PREF_TCHAR;
+				pre.dwFlags = PRFF_TCHAR;
 				pre.fileCount = 1;
 				pre.timestamp = time(NULL);
 				pre.tszDescription = mir_utf8decodeT(pszDescription);
@@ -701,9 +701,9 @@ static char* oftGetFileContainer(oscar_filetransfer* oft, const char** files, in
 
 	// try to find existing container
 	for (i = 0; i < oft->containerCount; i++)
-		if (!strcmpnull(szPathUtf, oft->file_containers[i])) {
-		SAFE_FREE((void**)&szPathUtf);
-		return oft->file_containers[i];
+		if (!mir_strcmp(szPathUtf, oft->file_containers[i])) {
+			SAFE_FREE((void**)&szPathUtf);
+			return oft->file_containers[i];
 		}
 
 	// create new container
@@ -793,7 +793,7 @@ HANDLE CIcqProto::oftInitTransfer(MCONTACT hContact, DWORD dwUin, char* szUid, c
 		ft->wCompress = 0;
 		ft->wPartsCount = 1;
 		ft->wPartsLeft = 1;
-		strcpy(ft->rawIDString, "Cool FileXfer");
+		mir_strcpy(ft->rawIDString, "Cool FileXfer");
 		ft->bHeaderFlags = 0x20;
 		ft->bNameOff = 0x1C;
 		ft->bSizeOff = 0x11;
@@ -1753,7 +1753,7 @@ void CIcqProto::handleOFT2FramePacket(oscar_connection *oc, WORD datatype, BYTE 
 		}
 		
 		char *szFullPath = (char*)SAFE_MALLOC(mir_strlen(ft->szSavePath) + mir_strlen(ft->szThisPath) + mir_strlen(ft->szThisFile) + 3);
-		strcpy(szFullPath, ft->szSavePath);
+		mir_strcpy(szFullPath, ft->szSavePath);
 		NormalizeBackslash(szFullPath);
 		strcat(szFullPath, ft->szThisPath);
 		NormalizeBackslash(szFullPath);
@@ -2038,7 +2038,7 @@ void CIcqProto::oft_sendPeerInit(oscar_connection *oc)
 	char* szThisContainer = ft->files[ft->iCurrentFile].szContainer;
 
 	char *pszThisFileName = (char*)SAFE_MALLOC(mir_strlen(ft->szThisFile) + mir_strlen(szThisContainer) + 4);
-	strcpy(pszThisFileName, szThisContainer);
+	mir_strcpy(pszThisFileName, szThisContainer);
 	NormalizeBackslash(pszThisFileName);
 	strcat(pszThisFileName, ExtractFileName(ft->szThisFile));
 	
@@ -2075,7 +2075,7 @@ void CIcqProto::oft_sendPeerInit(oscar_connection *oc)
 		if (ft->cbRawFileName < 64)
 			ft->cbRawFileName = 64;
 		ft->rawFileName = (char*)SAFE_MALLOC(ft->cbRawFileName);
-		strcpy(ft->rawFileName, (char*)pszThisFileName);
+		mir_strcpy(ft->rawFileName, (char*)pszThisFileName);
 		SAFE_FREE((void**)&pszThisFileName);
 	}
 	else {

@@ -277,7 +277,7 @@ INT_PTR CALLBACK DlgProcAlarm(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 #define AddItem(x)							\
 		mmi.wID++;							\
 		mmi.dwTypeData = TranslateT(x);		\
-		mmi.cch = ( UINT )_tcslen(mmi.dwTypeData);	\
+		mmi.cch = ( UINT )mir_tstrlen(mmi.dwTypeData);	\
 		InsertMenuItem(hMenu, mmi.wID, FALSE, &mmi);
 
 					AddItem(LPGEN("5 mins"));
@@ -364,32 +364,32 @@ int ReloadFonts(WPARAM, LPARAM)
 int AlarmWinModulesLoaded(WPARAM, LPARAM)
 {
 	title_font_id.cbSize = sizeof(FontIDT);
-	_tcscpy(title_font_id.group, LPGENT("Alarms"));
-	_tcscpy(title_font_id.name, LPGENT("Title"));
-	strcpy(title_font_id.dbSettingsGroup, MODULE);
-	strcpy(title_font_id.prefix, "FontTitle");
-	_tcscpy(title_font_id.backgroundGroup,LPGENT("Alarms"));
-	_tcscpy(title_font_id.backgroundName,LPGENT("Background"));
+	mir_tstrcpy(title_font_id.group, LPGENT("Alarms"));
+	mir_tstrcpy(title_font_id.name, LPGENT("Title"));
+	mir_strcpy(title_font_id.dbSettingsGroup, MODULE);
+	mir_strcpy(title_font_id.prefix, "FontTitle");
+	mir_tstrcpy(title_font_id.backgroundGroup,LPGENT("Alarms"));
+	mir_tstrcpy(title_font_id.backgroundName,LPGENT("Background"));
 	title_font_id.flags = 0;
 	title_font_id.order = 0;
 	FontRegisterT(&title_font_id);
 
 	window_font_id.cbSize = sizeof(FontIDT);
-	_tcscpy(window_font_id.group, LPGENT("Alarms"));
-	_tcscpy(window_font_id.name, LPGENT("Window"));
-	strcpy(window_font_id.dbSettingsGroup, MODULE);
-	strcpy(window_font_id.prefix, "FontWindow");
-	_tcscpy(window_font_id.backgroundGroup,LPGENT("Alarms"));
-	_tcscpy(window_font_id.backgroundName,LPGENT("Background"));
+	mir_tstrcpy(window_font_id.group, LPGENT("Alarms"));
+	mir_tstrcpy(window_font_id.name, LPGENT("Window"));
+	mir_strcpy(window_font_id.dbSettingsGroup, MODULE);
+	mir_strcpy(window_font_id.prefix, "FontWindow");
+	mir_tstrcpy(window_font_id.backgroundGroup,LPGENT("Alarms"));
+	mir_tstrcpy(window_font_id.backgroundName,LPGENT("Background"));
 	window_font_id.flags = 0;
 	window_font_id.order = 1;
 	FontRegisterT(&window_font_id);
 
 	bk_colour_id.cbSize = sizeof(ColourIDT);
-	strcpy(bk_colour_id.dbSettingsGroup, MODULE);
-	_tcscpy(bk_colour_id.group, LPGENT("Alarms"));
-	_tcscpy(bk_colour_id.name, LPGENT("Background"));
-	strcpy(bk_colour_id.setting, "BkColour");
+	mir_strcpy(bk_colour_id.dbSettingsGroup, MODULE);
+	mir_tstrcpy(bk_colour_id.group, LPGENT("Alarms"));
+	mir_tstrcpy(bk_colour_id.name, LPGENT("Background"));
+	mir_strcpy(bk_colour_id.setting, "BkColour");
 	bk_colour_id.defcolour = GetSysColor(COLOR_3DFACE);
 	bk_colour_id.flags = 0;
 	bk_colour_id.order = 0;

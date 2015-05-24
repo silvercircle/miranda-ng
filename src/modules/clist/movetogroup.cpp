@@ -54,7 +54,7 @@ static TCHAR* PrepareGroupName(TCHAR* str)
 	if (p == NULL)
 		return mir_tstrdup(str);
 
-	d = p = (TCHAR*)mir_alloc(sizeof(TCHAR)*(2*_tcslen(str)+1));
+	d = p = (TCHAR*)mir_alloc(sizeof(TCHAR)*(2*mir_tstrlen(str)+1));
 	while (*str) {
 		if (*str == '&')
 			*d++='&';
@@ -124,7 +124,7 @@ static int OnContactMenuBuild(WPARAM wParam, LPARAM)
 	}
 
 	for (i=0; i < groups.getCount(); i++) {
-		bool checked = szContactGroup && !_tcscmp(szContactGroup, groups[i].name);
+		bool checked = szContactGroup && !mir_tstrcmp(szContactGroup, groups[i].name);
 		AddGroupItem(hMoveToGroupItem, groups[i].name, ++pos, groups[i].position, checked);
 	}
 

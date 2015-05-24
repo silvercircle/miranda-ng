@@ -125,7 +125,7 @@ bool CDb3Mmap::EnterPassword(const BYTE *pKey, const size_t keyLen)
 		if (IDOK != DialogBoxParam(g_hInst, MAKEINTRESOURCE(IDD_LOGIN), 0, sttEnterPassword, (LPARAM)&param))
 			return false;
 
-		m_crypto->setPassword(ptrA(mir_utf8encodeT(param.newPass)));
+		m_crypto->setPassword(T2Utf(param.newPass));
 		if (m_crypto->setKey(pKey, keyLen)) {
 			m_bUsesPassword = true;
 			SecureZeroMemory(&param, sizeof(param));
@@ -143,8 +143,7 @@ static bool CheckOldPassword(HWND hwndDlg, CDb3Mmap *db)
 	if (db->usesPassword()) {
 		TCHAR buf[100];
 		GetDlgItemText(hwndDlg, IDC_OLDPASS, buf, SIZEOF(buf));
-		ptrA oldPass(mir_utf8encodeT(buf));
-		if (!db->m_crypto->checkPassword(oldPass)) {
+		if (!db->m_crypto->checkPassword(T2Utf(buf))) {
 			SetDlgItemText(hwndDlg, IDC_HEADERBAR, TranslateT("Wrong old password entered!"));
 			return false;
 		}
@@ -202,13 +201,13 @@ static INT_PTR CALLBACK sttChangePassword(HWND hwndDlg, UINT uMsg, WPARAM wParam
 		case IDOK:
 			TCHAR buf2[100];
 			GetDlgItemText(hwndDlg, IDC_USERPASS1, buf2, SIZEOF(buf2));
-			if (_tcslen(buf2) < 3) {
+			if (mir_tstrlen(buf2) < 3) {
 				SetDlgItemText(hwndDlg, IDC_HEADERBAR, TranslateT("Password is too short!"));
 				goto LBL_Error;
 			}
 
 			GetDlgItemText(hwndDlg, IDC_USERPASS2, buf, SIZEOF(buf));
-			if (_tcscmp(buf2, buf)) {
+			if (mir_tstrcmp(buf2, buf)) {
 				SetDlgItemText(hwndDlg, IDC_HEADERBAR, TranslateT("Passwords do not match!"));
 				goto LBL_Error;
 			}

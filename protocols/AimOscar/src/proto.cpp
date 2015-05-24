@@ -162,8 +162,8 @@ HANDLE __cdecl CAimProto::FileAllow(MCONTACT, HANDLE hTransfer, const PROTOCHAR*
 
 		if (ft->pfts.totalFiles > 1 && ft->file[0])
 		{
-			size_t path_len = strlen(path);
-			size_t len = strlen(ft->file) + 2;
+			size_t path_len = mir_strlen(path);
+			size_t len = mir_strlen(ft->file) + 2;
 
 			path = (char*)mir_realloc(path, path_len + len);
 			mir_snprintf(&path[path_len], len, "%s\\", ft->file);
@@ -280,7 +280,7 @@ DWORD_PTR __cdecl CAimProto::GetCaps(int type, MCONTACT)
 
 	case PFLAGNUM_4:
 		return PF4_SUPPORTTYPING | PF4_FORCEAUTH | PF4_NOCUSTOMAUTH | PF4_FORCEADDED |
-			PF4_SUPPORTIDLE | PF4_AVATARS | PF4_IMSENDUTF | PF4_IMSENDOFFLINE;
+			PF4_SUPPORTIDLE | PF4_AVATARS | PF4_IMSENDOFFLINE;
 
 	case PFLAGNUM_5:
 		return PF2_ONTHEPHONE;
@@ -305,7 +305,7 @@ void __cdecl CAimProto::basic_search_ack_success(void* p)
 	char *sn = normalize_name((char*)p);
 	if (sn) // normalize it
 	{
-		if (strlen(sn) > 32)
+		if (mir_strlen(sn) > 32)
 		{
 			ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE) 1, 0);
 		}
@@ -338,7 +338,7 @@ HANDLE __cdecl CAimProto::SearchBasic(const PROTOCHAR* szId)
 HANDLE __cdecl CAimProto::SearchByEmail(const PROTOCHAR* email)
 {
 	// Maximum email size should really be 320, but the char string is limited to 255.
-	if (state != 1 || email == NULL || _tcslen(email) >= 254)
+	if (state != 1 || email == NULL || mir_tstrlen(email) >= 254)
 		return NULL;
 
 	char* szEmail = mir_t2a(email);
@@ -454,7 +454,7 @@ void __cdecl CAimProto::msg_ack_success(void* param)
 }
 
 
-int __cdecl CAimProto::SendMsg(MCONTACT hContact, int flags, const char* pszSrc)
+int __cdecl CAimProto::SendMsg(MCONTACT hContact, int, const char* pszSrc)
 {
 	if (pszSrc == NULL) return 0;
 
@@ -475,31 +475,13 @@ int __cdecl CAimProto::SendMsg(MCONTACT hContact, int flags, const char* pszSrc)
 		ForkThread(&CAimProto::msg_ack_success, msg_ack);
 	}
 
-	char* msg;
-	if (flags & PREF_UNICODE)
-	{
-		const char* p = strchr(pszSrc, '\0');
-		if (p != pszSrc)
-		{
-			while (*(++p) == '\0');
-		}
-		msg = mir_utf8encodeW((wchar_t*)p);
-	}
-	else if (flags & PREF_UTF)
-		msg = mir_strdup(pszSrc);
-	else
-		msg = mir_utf8encode(pszSrc);
-
-	char* smsg = html_encode(msg);
-	mir_free(msg);
-
+	char *smsg = html_encode(pszSrc), *msg;
 	if (getByte(AIM_KEY_FO, 1))
 	{
 		msg = bbcodes_to_html(smsg);
 		mir_free(smsg);
 	}
-	else
-		msg = smsg;
+	else msg = smsg;
 
 	bool blast = getBool(hContact, AIM_KEY_BLS, false);
 	int res = aim_send_message(hServerConn, seqno, sn, msg, false, blast);

@@ -155,7 +155,7 @@ DWORD_PTR GGPROTO::GetCaps(int type, MCONTACT hContact)
 		case PFLAGNUM_3:
 			return PF2_ONLINE | PF2_SHORTAWAY | PF2_HEAVYDND | PF2_FREECHAT | PF2_INVISIBLE;
 		case PFLAGNUM_4:
-			return PF4_NOCUSTOMAUTH | PF4_SUPPORTTYPING | PF4_AVATARS | PF4_IMSENDOFFLINE | PF4_IMSENDUTF;
+			return PF4_NOCUSTOMAUTH | PF4_SUPPORTTYPING | PF4_AVATARS | PF4_IMSENDOFFLINE;
 		case PFLAGNUM_5:
 			return PF2_LONGAWAY;
 		case PFLAG_UNIQUEIDTEXT:
@@ -277,13 +277,9 @@ HANDLE GGPROTO::SearchBasic(const PROTOCHAR *id)
 		return (HANDLE)1;
 	}
 
-	char *id_utf8 = mir_utf8encodeT(id);
-
 	// Add uin and search it
-	gg_pubdir50_add(req, GG_PUBDIR50_UIN, id_utf8);
+	gg_pubdir50_add(req, GG_PUBDIR50_UIN, T2Utf(id));
 	gg_pubdir50_seq_set(req, GG_SEQ_SEARCH);
-
-	mir_free(id_utf8);
 
 	gg_EnterCriticalSection(&sess_mutex, "SearchBasic", 50, "sess_mutex", 1);
 	if (!gg_pubdir50(sess, req))
@@ -330,30 +326,27 @@ HANDLE GGPROTO::SearchByName(const PROTOCHAR *nick, const PROTOCHAR *firstName, 
 	// Add nick,firstName,lastName and search it
 	if (nick)
 	{
-		char *nick_utf8 = mir_utf8encodeT(nick);
+		T2Utf nick_utf8(nick);
 		gg_pubdir50_add(req, GG_PUBDIR50_NICKNAME, nick_utf8);
-		strncat(data, nick_utf8, sizeof(data) - strlen(data));
-		mir_free(nick_utf8);
+		strncat(data, nick_utf8, sizeof(data) - mir_strlen(data));
 	}
-	strncat(data, ".", sizeof(data) - strlen(data));
+	strncat(data, ".", sizeof(data) - mir_strlen(data));
 
 	if (firstName)
 	{
-		char *firstName_utf8 = mir_utf8encodeT(firstName);
+		T2Utf firstName_utf8(firstName);
 		gg_pubdir50_add(req, GG_PUBDIR50_FIRSTNAME, firstName_utf8);
-		strncat(data, firstName_utf8, sizeof(data) - strlen(data));
-		mir_free(firstName_utf8);
+		strncat(data, firstName_utf8, sizeof(data) - mir_strlen(data));
 	}
-	strncat(data, ".", sizeof(data) - strlen(data));
+	strncat(data, ".", sizeof(data) - mir_strlen(data));
 
 	if (lastName)
 	{
-		char *lastName_utf8 = mir_utf8encodeT(lastName);
+		T2Utf lastName_utf8(lastName);
 		gg_pubdir50_add(req, GG_PUBDIR50_LASTNAME, lastName_utf8);
-		strncat(data, lastName_utf8, sizeof(data) - strlen(data));
-		mir_free(lastName_utf8);
+		strncat(data, lastName_utf8, sizeof(data) - mir_strlen(data));
 	}
-	strncat(data, ".", sizeof(data) - strlen(data));
+	strncat(data, ".", sizeof(data) - mir_strlen(data));
 
 	// Count crc & check if the data was equal if yes do same search with shift
 	crc = crc_get(data);
@@ -405,47 +398,43 @@ HWND GGPROTO::SearchAdvanced(HWND hwndDlg)
 
 	// Fetch search data
 	GetDlgItemText(hwndDlg, IDC_FIRSTNAME, text, SIZEOF(text));
-	if (_tcslen(text))
+	if (mir_tstrlen(text))
 	{
-		char *firstName_utf8 = mir_utf8encodeT(text);
+		T2Utf firstName_utf8(text);
 		gg_pubdir50_add(req, GG_PUBDIR50_FIRSTNAME, firstName_utf8);
-		strncat(data, firstName_utf8, sizeof(data) - strlen(data));
-		mir_free(firstName_utf8);
+		strncat(data, firstName_utf8, sizeof(data) - mir_strlen(data));
 	}
-	/* 1 */ strncat(data, ".", sizeof(data) - strlen(data));
+	/* 1 */ strncat(data, ".", sizeof(data) - mir_strlen(data));
 
 	GetDlgItemText(hwndDlg, IDC_LASTNAME, text, SIZEOF(text));
-	if (_tcslen(text))
+	if (mir_tstrlen(text))
 	{
-		char *lastName_utf8 = mir_utf8encodeT(text);
+		T2Utf lastName_utf8(text);
 		gg_pubdir50_add(req, GG_PUBDIR50_LASTNAME, lastName_utf8);
-		strncat(data, lastName_utf8, sizeof(data) - strlen(data));
-		mir_free(lastName_utf8);
+		strncat(data, lastName_utf8, sizeof(data) - mir_strlen(data));
 	}
-	/* 2 */ strncat(data, ".", sizeof(data) - strlen(data));
+	/* 2 */ strncat(data, ".", sizeof(data) - mir_strlen(data));
 
 	GetDlgItemText(hwndDlg, IDC_NICKNAME, text, SIZEOF(text));
-	if (_tcslen(text))
+	if (mir_tstrlen(text))
 	{
-		char *nickName_utf8 = mir_utf8encodeT(text);
+		T2Utf nickName_utf8(text);
 		gg_pubdir50_add(req, GG_PUBDIR50_NICKNAME, nickName_utf8);
-		strncat(data, nickName_utf8, sizeof(data) - strlen(data));
-		mir_free(nickName_utf8);
+		strncat(data, nickName_utf8, sizeof(data) - mir_strlen(data));
 	}
-	/* 3 */ strncat(data, ".", sizeof(data) - strlen(data));
+	/* 3 */ strncat(data, ".", sizeof(data) - mir_strlen(data));
 
 	GetDlgItemText(hwndDlg, IDC_CITY, text, SIZEOF(text));
-	if (_tcslen(text))
+	if (mir_tstrlen(text))
 	{
-		char *city_utf8 = mir_utf8encodeT(text);
+		T2Utf city_utf8(text);
 		gg_pubdir50_add(req, GG_PUBDIR50_CITY, city_utf8);
-		strncat(data, city_utf8, sizeof(data) - strlen(data));
-		mir_free(city_utf8);
+		strncat(data, city_utf8, sizeof(data) - mir_strlen(data));
 	}
-	/* 4 */ strncat(data, ".", sizeof(data) - strlen(data));
+	/* 4 */ strncat(data, ".", sizeof(data) - mir_strlen(data));
 
 	GetDlgItemText(hwndDlg, IDC_AGEFROM, text, SIZEOF(text));
-	if (_tcslen(text))
+	if (mir_tstrlen(text))
 	{
 		int yearTo = _tstoi(text);
 		int yearFrom;
@@ -468,35 +457,34 @@ HWND GGPROTO::SearchAdvanced(HWND hwndDlg)
 			yearFrom = ay - yearFrom;
 		mir_sntprintf(text, SIZEOF(text), _T("%d %d"), yearFrom, yearTo);
 
-		char *age_utf8 = mir_utf8encodeT(text);
+		T2Utf age_utf8(text);
 		gg_pubdir50_add(req, GG_PUBDIR50_BIRTHYEAR, age_utf8);
-		strncat(data, age_utf8, sizeof(data) - strlen(data));
-		mir_free(age_utf8);
+		strncat(data, age_utf8, sizeof(data) - mir_strlen(data));
 	}
-	/* 5 */ strncat(data, ".", sizeof(data) - strlen(data));
+	/* 5 */ strncat(data, ".", sizeof(data) - mir_strlen(data));
 
 	switch(SendDlgItemMessage(hwndDlg, IDC_GENDER, CB_GETCURSEL, 0, 0))
 	{
 		case 1:
 			gg_pubdir50_add(req, GG_PUBDIR50_GENDER, GG_PUBDIR50_GENDER_FEMALE);
-			strncat(data, GG_PUBDIR50_GENDER_MALE, sizeof(data) - strlen(data));
+			strncat(data, GG_PUBDIR50_GENDER_MALE, sizeof(data) - mir_strlen(data));
 			break;
 		case 2:
 			gg_pubdir50_add(req, GG_PUBDIR50_GENDER, GG_PUBDIR50_GENDER_MALE);
-			strncat(data, GG_PUBDIR50_GENDER_FEMALE, sizeof(data) - strlen(data));
+			strncat(data, GG_PUBDIR50_GENDER_FEMALE, sizeof(data) - mir_strlen(data));
 			break;
 	}
-	/* 6 */ strncat(data, ".", sizeof(data) - strlen(data));
+	/* 6 */ strncat(data, ".", sizeof(data) - mir_strlen(data));
 
 	if (IsDlgButtonChecked(hwndDlg, IDC_ONLYCONNECTED))
 	{
 		gg_pubdir50_add(req, GG_PUBDIR50_ACTIVE, GG_PUBDIR50_ACTIVE_TRUE);
-		strncat(data, GG_PUBDIR50_ACTIVE_TRUE, sizeof(data) - strlen(data));
+		strncat(data, GG_PUBDIR50_ACTIVE_TRUE, sizeof(data) - mir_strlen(data));
 	}
-	/* 7 */ strncat(data, ".", sizeof(data) - strlen(data));
+	/* 7 */ strncat(data, ".", sizeof(data) - mir_strlen(data));
 
 	// No data entered
-	if (strlen(data) <= 7 || (strlen(data) == 8 && IsDlgButtonChecked(hwndDlg, IDC_ONLYCONNECTED))) return (HWND)0;
+	if (mir_strlen(data) <= 7 || (mir_strlen(data) == 8 && IsDlgButtonChecked(hwndDlg, IDC_ONLYCONNECTED))) return (HWND)0;
 
 	// Count crc & check if the data was equal if yes do same search with shift
 	crc = crc_get(data);
@@ -567,25 +555,17 @@ void __cdecl GGPROTO::sendackthread(void *ack)
 	mir_free(ack);
 }
 
-int GGPROTO::SendMsg(MCONTACT hContact, int flags, const char *msg)
+int GGPROTO::SendMsg(MCONTACT hContact, int, const char *msg)
 {
 	uin_t uin = (uin_t)getDword(hContact, GG_KEY_UIN, 0);
 	if (!isonline() || !uin)
 		return 0;
 
-	char* msg_utf8;
-	if (flags & PREF_UNICODE)
-		msg_utf8 = mir_utf8encodeW((wchar_t*)&msg[ strlen( msg )+1 ] );
-	else if (flags & PREF_UTF)
-		msg_utf8 = mir_strdup(msg);
-	else
-		msg_utf8 = mir_utf8encode(msg);
-
-	if (!msg_utf8)
+	if (!msg)
 		return 0;
 
 	gg_EnterCriticalSection(&sess_mutex, "SendMsg", 53, "sess_mutex", 1);
-	int seq = gg_send_message(sess, GG_CLASS_CHAT, uin, (BYTE*)msg_utf8);
+	int seq = gg_send_message(sess, GG_CLASS_CHAT, uin, (BYTE*)msg);
 	gg_LeaveCriticalSection(&sess_mutex, "SendMsg", 53, 1, "sess_mutex", 1);
 	if (!getByte(GG_KEY_MSGACK, GG_KEYDEF_MSGACK))
 	{
@@ -601,7 +581,6 @@ int GGPROTO::SendMsg(MCONTACT hContact, int flags, const char *msg)
 			ForkThread(&GGPROTO::sendackthread, ack);
 		}
 	}
-	mir_free(msg_utf8);
 	return seq;
 }
 
@@ -701,7 +680,7 @@ int GGPROTO::SetAwayMsg(int iStatus, const PROTOCHAR *newMsg)
 	}
 
 	// Check if we change status here somehow
-	if (*msgPtr && newMsg && !_tcscmp(*msgPtr, newMsg)
+	if (*msgPtr && newMsg && !mir_tstrcmp(*msgPtr, newMsg)
 		|| !*msgPtr && (!newMsg || !*newMsg))
 	{
 		if (status == m_iDesiredStatus && m_iDesiredStatus == m_iStatus)

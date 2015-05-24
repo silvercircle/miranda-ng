@@ -106,7 +106,7 @@ GGGC* GGPROTO::gc_lookup(const TCHAR *id)
 	for(l = chats; l; l = l->next)
 	{
 		chat = (GGGC *)l->data;
-		if (chat && !_tcscmp(chat->id, id))
+		if (chat && !mir_tstrcmp(chat->id, id))
 			return chat;
 	}
 
@@ -142,7 +142,7 @@ int GGPROTO::gc_event(WPARAM wParam, LPARAM lParam)
 			MCONTACT hNext = db_find_next(hContact);
 			DBVARIANT dbv;
 			if (!getTString(hContact, "ChatRoomID", &dbv)) {
-				if (dbv.ptszVal && !_tcscmp(gch->pDest->ptszID, dbv.ptszVal))
+				if (dbv.ptszVal && !mir_tstrcmp(gch->pDest->ptszID, dbv.ptszVal))
 					CallService(MS_DB_CONTACT_DELETE, hContact, 0);
 				db_free(&dbv);
 			}
@@ -170,7 +170,7 @@ int GGPROTO::gc_event(WPARAM wParam, LPARAM lParam)
 		gce.ptszNick = nickT;
 
 		// Get rid of CRLF at back
-		int lc = (int)_tcslen(gch->ptszText) - 1;
+		int lc = (int)mir_tstrlen(gch->ptszText) - 1;
 		while(lc >= 0 && (gch->ptszText[lc] == '\n' || gch->ptszText[lc] == '\r'))
 			gch->ptszText[lc --] = 0;
 
@@ -181,12 +181,10 @@ int GGPROTO::gc_event(WPARAM wParam, LPARAM lParam)
 		CallServiceSync(MS_GC_EVENT, 0, (LPARAM)&gce);
 		mir_free(nickT);
 		
-		char* pszText_utf8 = mir_utf8encodeT(gch->ptszText);
+		T2Utf pszText_utf8(gch->ptszText);
 		gg_EnterCriticalSection(&sess_mutex, "gc_event", 57, "sess_mutex", 1);
-		gg_send_message_confer(sess, GG_CLASS_CHAT, chat->recipients_count, chat->recipients, (BYTE*)pszText_utf8);
+		gg_send_message_confer(sess, GG_CLASS_CHAT, chat->recipients_count, chat->recipients, pszText_utf8);
 		gg_LeaveCriticalSection(&sess_mutex, "gc_event", 57, 1, "sess_mutex", 1);
-		mir_free(pszText_utf8);
-		
 		return 1;
 	}
 
@@ -316,8 +314,8 @@ TCHAR* GGPROTO::gc_getchat(uin_t sender, uin_t *recipients, int recipients_count
 	gcwindow.ptszStatusbarText = status;
 
 	// Here we put nice new hash sign
-	TCHAR *name = (TCHAR*)calloc(_tcslen(gcwindow.ptszName) + 2, sizeof(TCHAR));
-	*name = '#'; _tcscpy(name + 1, gcwindow.ptszName);
+	TCHAR *name = (TCHAR*)calloc(mir_tstrlen(gcwindow.ptszName) + 2, sizeof(TCHAR));
+	*name = '#'; mir_tstrcpy(name + 1, gcwindow.ptszName);
 	gcwindow.ptszName = name;
 
 	// Create new room

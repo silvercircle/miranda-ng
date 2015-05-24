@@ -35,11 +35,11 @@ TNtlmAuth::TNtlmAuth(ThreadData *info, const char* mechanism, const TCHAR *hostn
 	szHostName = hostname;
 
 	const TCHAR *szProvider;
-	if (!strcmp(mechanism, "GSS-SPNEGO"))
+	if (!mir_strcmp(mechanism, "GSS-SPNEGO"))
 		szProvider = _T("Negotiate");
-	else if (!strcmp(mechanism, "GSSAPI"))
+	else if (!mir_strcmp(mechanism, "GSSAPI"))
 		szProvider = _T("GSSAPI");
-	else if (!strcmp(mechanism, "NTLM"))
+	else if (!mir_strcmp(mechanism, "NTLM"))
 		szProvider = _T("NTLM");
 	else {
 LBL_Invalid:
@@ -49,8 +49,8 @@ LBL_Invalid:
 	}
 
 	TCHAR szSpn[1024] = _T("");
-	if (strcmp(mechanism, "NTLM"))
-		if (!getSpn(szSpn, SIZEOF(szSpn)) && !strcmp(mechanism, "GSSAPI"))
+	if (mir_strcmp(mechanism, "NTLM"))
+		if (!getSpn(szSpn, SIZEOF(szSpn)) && !mir_strcmp(mechanism, "GSSAPI"))
 			goto LBL_Invalid;
 
 	if ((hProvider = Netlib_InitSecurityProvider2(szProvider, szSpn)) == NULL)
@@ -157,42 +157,41 @@ char* TMD5Auth::getChallenge(const TCHAR *challenge)
 	CallService(MS_UTILS_GETRANDOM, sizeof(digest), (LPARAM)digest);
 	mir_snprintf(cnonce, SIZEOF(cnonce), "%08x%08x%08x%08x", htonl(digest[0]), htonl(digest[1]), htonl(digest[2]), htonl(digest[3]));
 
-	ptrA uname(mir_utf8encodeT(info->conn.username)),
-		passw(mir_utf8encodeT(info->conn.password)),
-		serv(mir_utf8encode(info->conn.server));
+	T2Utf uname(info->conn.username), passw(info->conn.password);
+	ptrA  serv(mir_utf8encode(info->conn.server));
 
 	mir_md5_init(&ctx);
-	mir_md5_append(&ctx, (BYTE*)(char*)uname, (int)strlen(uname));
+	mir_md5_append(&ctx, (BYTE*)(char*)uname, (int)mir_strlen(uname));
 	mir_md5_append(&ctx, (BYTE*)":", 1);
-	mir_md5_append(&ctx, (BYTE*)realm, (int)strlen(realm));
+	mir_md5_append(&ctx, (BYTE*)realm, (int)mir_strlen(realm));
 	mir_md5_append(&ctx, (BYTE*)":", 1);
-	mir_md5_append(&ctx, (BYTE*)(char*)passw, (int)strlen(passw));
+	mir_md5_append(&ctx, (BYTE*)(char*)passw, (int)mir_strlen(passw));
 	mir_md5_finish(&ctx, (BYTE*)hash1);
 
 	mir_md5_init(&ctx);
 	mir_md5_append(&ctx, (BYTE*)hash1, 16);
 	mir_md5_append(&ctx, (BYTE*)":", 1);
-	mir_md5_append(&ctx, (BYTE*)nonce, (int)strlen(nonce));
+	mir_md5_append(&ctx, (BYTE*)nonce, (int)mir_strlen(nonce));
 	mir_md5_append(&ctx, (BYTE*)":", 1);
-	mir_md5_append(&ctx, (BYTE*)cnonce, (int)strlen(cnonce));
+	mir_md5_append(&ctx, (BYTE*)cnonce, (int)mir_strlen(cnonce));
 	mir_md5_finish(&ctx, (BYTE*)hash1);
 
 	mir_md5_init(&ctx);
 	mir_md5_append(&ctx, (BYTE*)"AUTHENTICATE:xmpp/", 18);
-	mir_md5_append(&ctx, (BYTE*)(char*)serv, (int)strlen(serv));
+	mir_md5_append(&ctx, (BYTE*)(char*)serv, (int)mir_strlen(serv));
 	mir_md5_finish(&ctx, (BYTE*)hash2);
 
 	mir_md5_init(&ctx);
 	mir_snprintf(tmpBuf, SIZEOF(tmpBuf), "%08x%08x%08x%08x", htonl(hash1[0]), htonl(hash1[1]), htonl(hash1[2]), htonl(hash1[3]));
-	mir_md5_append(&ctx, (BYTE*)tmpBuf, (int)strlen(tmpBuf));
+	mir_md5_append(&ctx, (BYTE*)tmpBuf, (int)mir_strlen(tmpBuf));
 	mir_md5_append(&ctx, (BYTE*)":", 1);
-	mir_md5_append(&ctx, (BYTE*)nonce, (int)strlen(nonce));
+	mir_md5_append(&ctx, (BYTE*)nonce, (int)mir_strlen(nonce));
 	mir_snprintf(tmpBuf, SIZEOF(tmpBuf), ":%08d:", iCallCount);
-	mir_md5_append(&ctx, (BYTE*)tmpBuf, (int)strlen(tmpBuf));
-	mir_md5_append(&ctx, (BYTE*)cnonce, (int)strlen(cnonce));
+	mir_md5_append(&ctx, (BYTE*)tmpBuf, (int)mir_strlen(tmpBuf));
+	mir_md5_append(&ctx, (BYTE*)cnonce, (int)mir_strlen(cnonce));
 	mir_md5_append(&ctx, (BYTE*)":auth:", 6);
 	mir_snprintf(tmpBuf, SIZEOF(tmpBuf), "%08x%08x%08x%08x", htonl(hash2[0]), htonl(hash2[1]), htonl(hash2[2]), htonl(hash2[3]));
-	mir_md5_append(&ctx, (BYTE*)tmpBuf, (int)strlen(tmpBuf));
+	mir_md5_append(&ctx, (BYTE*)tmpBuf, (int)mir_strlen(tmpBuf));
 	mir_md5_finish(&ctx, (BYTE*)digest);
 
 	char *buf = (char*)alloca(8000);
@@ -249,7 +248,7 @@ char* TScramAuth::getChallenge(const TCHAR *challenge)
 
 	for (char *p = strtok(NEWSTR_ALLOCA(chl), ","); p != NULL; p = strtok(NULL, ",")) {
 		if (*p == 'r' && p[1] == '=') { // snonce
-			if (strncmp(cnonce, p + 2, strlen(cnonce)))
+			if (strncmp(cnonce, p + 2, mir_strlen(cnonce)))
 				return NULL;
 			snonce = mir_strdup(p + 2);
 		}
@@ -263,7 +262,7 @@ char* TScramAuth::getChallenge(const TCHAR *challenge)
 		return NULL;
 
 	ptrA passw(mir_utf8encodeT(info->conn.password));
-	size_t passwLen = strlen(passw);
+	size_t passwLen = mir_strlen(passw);
 
 	BYTE saltedPassw[MIR_SHA1_HASH_SIZE];
 	Hi(saltedPassw, passw, passwLen, salt, saltLen, ind);
@@ -304,7 +303,7 @@ char* TScramAuth::getChallenge(const TCHAR *challenge)
 
 char* TScramAuth::getInitialRequest()
 {
-	ptrA uname(mir_utf8encodeT(info->conn.username));
+	T2Utf uname(info->conn.username);
 
 	unsigned char nonce[24];
 	CallService(MS_UTILS_GETRANDOM, sizeof(nonce), (LPARAM)nonce);
@@ -339,9 +338,9 @@ TPlainAuth::~TPlainAuth()
 
 char* TPlainAuth::getInitialRequest()
 {
-	ptrA uname(mir_utf8encodeT(info->conn.username)), passw(mir_utf8encodeT(info->conn.password));
+	T2Utf uname(info->conn.username), passw(info->conn.password);
 
-	size_t size = 2 * strlen(uname) + strlen(passw) + strlen(info->conn.server) + 4;
+	size_t size = 2 * mir_strlen(uname) + mir_strlen(passw) + mir_strlen(info->conn.server) + 4;
 	char *toEncode = (char*)alloca(size);
 	if (bOld)
 		size = mir_snprintf(toEncode, size, "%s@%s%c%s%c%s", uname, info->conn.server, 0, uname, 0, passw);

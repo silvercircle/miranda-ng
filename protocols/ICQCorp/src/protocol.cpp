@@ -913,7 +913,7 @@ void ICQ::processSystemMessage(Packet &packet, unsigned long checkUin, unsigned 
     case ICQ_CMDxRCV_SYSxBROADCAST:
         T("broadcast message from %d\n", checkUin);
 
-        messageLen = (unsigned int)strlen(message);
+        messageLen = (unsigned int)mir_strlen(message);
         for (i=0; i<messageLen; i++) if (message[i] == (char)0xFE) message[i] = '\n';
 
         addMessage(u, message, ICQ_CMDxRCV_SYSxMSGxONLINE, ICQ_CMDxTCP_MSG, 0, timeSent);
@@ -1163,7 +1163,7 @@ void ICQ::updateContactList()
 
 	for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact)) {
 		proto = (char*)CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM)hContact, 0);
-        if (proto && !strcmp(proto, protoName))
+        if (proto && !mir_strcmp(proto, protoName))
         {
             if ((u = getUserByContact(hContact)) == NULL)
             {
@@ -1567,13 +1567,13 @@ ICQEvent *ICQ::sendUrl(ICQUser *u, char *url)
     char *m, *description;
     ICQEvent *result;
 
-	nameLen = (unsigned int)strlen(url);
+	nameLen = (unsigned int)mir_strlen(url);
     description = (char*)url + nameLen + 1;
-	descriptionLen = (unsigned int)strlen(description);
+	descriptionLen = (unsigned int)mir_strlen(description);
 
     m = new char[nameLen + descriptionLen + 2];
-    strcpy(m, description);
-    strcpy(m + descriptionLen + 1, url);
+    mir_strcpy(m, description);
+    mir_strcpy(m + descriptionLen + 1, url);
     m[descriptionLen] = (char)0xFE;
 
     result = send(u, ICQ_CMDxTCP_URL, "url", m);
@@ -2207,12 +2207,12 @@ void ICQ::addUrl(ICQUser *u, char *m, unsigned short theCmd, unsigned short theS
     CCSDATA ccs;
     PROTORECVEVENT pre;
 
-    messageLen = lstrlen(m);
+    messageLen = mir_tstrlen(m);
     for (i=0; i<messageLen; i++) if (m[i] == (char)0xFE) m[i] = 0;
 
     url = new char[messageLen + 1];
-    lstrcpy(url, m + lstrlen(m) + 1);
-    lstrcpy(url + lstrlen(url) + 1, m);
+    lstrcpy(url, m + mir_tstrlen(m) + 1);
+    lstrcpy(url + mir_tstrlen(url) + 1, m);
 
     ccs.hContact = u->hContact;
     ccs.szProtoService = PSR_URL;
@@ -2261,13 +2261,13 @@ void ICQ::addAdded(ICQUser *u, char *m, unsigned short theCmd, unsigned short th
     dbei.timestamp=TimestampLocalToGMT(YMDHMSToTime(year,month,day,hour,minute,0));
     dbei.flags=0;
     dbei.eventType=EVENTTYPE_ADDED;
-    dbei.cbBlob=sizeof(DWORD)+strlen(nick)+strlen(first)+strlen(last)+strlen(email)+4;
+    dbei.cbBlob=sizeof(DWORD)+mir_strlen(nick)+mir_strlen(first)+mir_strlen(last)+mir_strlen(email)+4;
     pCurBlob=dbei.pBlob=(PBYTE)malloc(dbei.cbBlob);
     CopyMemory(pCurBlob,&uin,sizeof(DWORD)); pCurBlob+=sizeof(DWORD);
-    CopyMemory(pCurBlob,nick,strlen(nick)+1); pCurBlob+=strlen(nick)+1;
-    CopyMemory(pCurBlob,first,strlen(first)+1); pCurBlob+=strlen(first)+1;
-    CopyMemory(pCurBlob,last,strlen(last)+1); pCurBlob+=strlen(last)+1;
-    CopyMemory(pCurBlob,email,strlen(email)+1); pCurBlob+=strlen(email)+1;
+    CopyMemory(pCurBlob,nick,mir_strlen(nick)+1); pCurBlob+=mir_strlen(nick)+1;
+    CopyMemory(pCurBlob,first,mir_strlen(first)+1); pCurBlob+=mir_strlen(first)+1;
+    CopyMemory(pCurBlob,last,mir_strlen(last)+1); pCurBlob+=mir_strlen(last)+1;
+    CopyMemory(pCurBlob,email,mir_strlen(email)+1); pCurBlob+=mir_strlen(email)+1;
     CallService(MS_DB_EVENT_ADD,(WPARAM)(HANDLE)NULL,(LPARAM)&dbei);
 }
 */
@@ -2304,11 +2304,11 @@ void ICQ::addFileReq(ICQUser *u, char *m, char *filename, unsigned long size, un
 
 
     // Send chain event
-    szBlob = new char[sizeof(DWORD) + strlen(filename) + strlen(m) + 2];
+    szBlob = new char[sizeof(DWORD) + mir_strlen(filename) + mir_strlen(m) + 2];
 
     *(PDWORD)szBlob = (DWORD)transfer;
-    strcpy(szBlob + sizeof(DWORD), filename);
-    strcpy(szBlob + sizeof(DWORD) + strlen(filename) + 1, m);
+    mir_strcpy(szBlob + sizeof(DWORD), filename);
+    mir_strcpy(szBlob + sizeof(DWORD) + mir_strlen(filename) + 1, m);
 
     ccs.hContact = u->hContact;
     ccs.szProtoService = PSR_FILE;

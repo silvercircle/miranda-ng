@@ -111,7 +111,7 @@ static int AvatarChanged(WPARAM hContact, LPARAM lParam)
 	if (proto == NULL)
 		return 0;
 
-	if (strcmp(META_PROTO, proto) == 0)
+	if (mir_strcmp(META_PROTO, proto) == 0)
 		return 0;
 
 	DBVARIANT dbvOldHash = {0};
@@ -119,7 +119,7 @@ static int AvatarChanged(WPARAM hContact, LPARAM lParam)
 
 	CONTACTAVATARCHANGEDNOTIFICATION* avatar = (CONTACTAVATARCHANGEDNOTIFICATION*)lParam;
 	if (avatar == NULL) {
-		if (!ret || !_tcscmp(dbvOldHash.ptszVal, _T("-"))) {
+		if (!ret || !mir_tstrcmp(dbvOldHash.ptszVal, _T("-"))) {
 			//avoid duplicate "removed avatar" notifications
 			//do not notify on an empty profile
 			ShowDebugPopup(hContact, TranslateT("AVH Debug"), TranslateT("Removed avatar, no avatar before... skipping"));
@@ -135,7 +135,7 @@ static int AvatarChanged(WPARAM hContact, LPARAM lParam)
 			ShowPopup(hContact, NULL, opts.popup_removed);
 	}
 	else {
-		if (ret && !_tcscmp(dbvOldHash.ptszVal, avatar->hash)) {
+		if (ret && !mir_tstrcmp(dbvOldHash.ptszVal, avatar->hash)) {
 			// same avatar hash, skipping
 			ShowDebugPopup(hContact, TranslateT("AVH Debug"), TranslateT("Hashes are the same... skipping"));
 			db_free(&dbvOldHash);
@@ -211,15 +211,15 @@ static int AvatarChanged(WPARAM hContact, LPARAM lParam)
 		if (ContactEnabled(hContact, "LogToHistory", AVH_DEF_LOGTOHISTORY)) {
 			TCHAR rel_path[MAX_PATH];
 			PathToRelativeT(history_filename, rel_path);
-			ptrA blob( mir_utf8encodeT(rel_path));
+			T2Utf blob(rel_path);
 
 			DBEVENTINFO dbei = { sizeof(dbei) };
 			dbei.szModule = GetContactProto(hContact);
 			dbei.flags = DBEF_READ | DBEF_UTF;
 			dbei.timestamp = (DWORD) time(NULL);
 			dbei.eventType = EVENTTYPE_AVATAR_CHANGE;
-			dbei.cbBlob = (DWORD) strlen(blob) + 1;
-			dbei.pBlob = (PBYTE)(char*)blob;
+			dbei.cbBlob = (DWORD)mir_strlen(blob) + 1;
+			dbei.pBlob = blob;
 			db_event_add(hContact, &dbei);
 		}
 	}
@@ -342,7 +342,7 @@ extern "C" __declspec(dllexport) int Load(void)
 	CreateServiceFunction(MS_AVATARHISTORY_GET_CACHED_AVATAR, GetCachedAvatar);
 
 	if (CallService(MS_DB_GETPROFILEPATHT, MAX_PATH, (LPARAM)profilePath) != 0)
-		_tcscpy(profilePath, _T(".")); // Failed, use current dir
+		mir_tstrcpy(profilePath, _T(".")); // Failed, use current dir
 
 	SkinAddNewSoundExT("avatar_changed",LPGENT("Avatar History"),LPGENT("Contact changed avatar"));
 	SkinAddNewSoundExT("avatar_removed",LPGENT("Avatar History"),LPGENT("Contact removed avatar"));

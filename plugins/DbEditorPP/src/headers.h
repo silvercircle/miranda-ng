@@ -75,9 +75,9 @@ extern MCONTACT hRestore;
 
 #define WM_FINDITEM (WM_USER + 1) // onyl for the main window, wparam is ItemIfno* lparam is 0
 
-#define mir_strlen(ptr) ((ptr == NULL) ? 0 : (int)strlen(ptr))
+#define mir_strlen(ptr) ((ptr == NULL) ? 0 : (int)mir_strlen(ptr))
 #define mir_strncpy(dst, src, len) strncpy(dst, src, len)[len - 1] = 0;
-#define mir_strcmp(ptr1, ptr2) ((ptr1 && ptr2) ? strcmp(ptr1, ptr2) : 1) // (ptr1||ptr2)
+#define mir_strcmp(ptr1, ptr2) ((ptr1 && ptr2) ? mir_strcmp(ptr1, ptr2) : 1) // (ptr1||ptr2)
 
 #define ListView_SetItemTextW(hwndLV, i, iSubItem_, pszText_) \
 { LV_ITEMW _ms_lvi;\

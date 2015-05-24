@@ -223,7 +223,7 @@ BOOL checkProtocol(char *szProto)
 		return FALSE;
 
 	for (int i=0; i < ProtoList.protoCount; i++)
-		if (ProtoList.protoInfo[i].szProto && !strcmp(ProtoList.protoInfo[i].szProto, szProto))
+		if (ProtoList.protoInfo[i].szProto && !mir_strcmp(ProtoList.protoInfo[i].szProto, szProto))
 			return ProtoList.protoInfo[i].enabled;
 
 	return FALSE;
@@ -233,7 +233,7 @@ BOOL metaCheckProtocol(char *szProto, MCONTACT hContact, WORD eventType)
 {
 	MCONTACT hSubContact=NULL;
 
-	if (bMetaProtoEnabled && szProto && !strcmp(META_PROTO, szProto))
+	if (bMetaProtoEnabled && szProto && !mir_strcmp(META_PROTO, szProto))
 		if (hSubContact = db_mc_getMostOnline(hContact))
 			szProto = GetContactProto(hSubContact);
 
@@ -378,7 +378,7 @@ BOOL checkXstatus(char *szProto)
 		return checkGlobalXstatus();
 
 	for (int i=0; i < ProtoList.protoCount; i++)
-		if (ProtoList.protoInfo[i].szProto && !strcmp(ProtoList.protoInfo[i].szProto, szProto)) {
+		if (ProtoList.protoInfo[i].szProto && !mir_strcmp(ProtoList.protoInfo[i].szProto, szProto)) {
 			if (!ProtoList.protoInfo[i].xstatus.count) return TRUE;
 
 			// Retrieve xstatus for protocol
@@ -662,15 +662,15 @@ void createProtocolList(void)
 	for (int i=0; i < ProtoList.protoCount; i++) {
 		ProtoList.protoInfo[i].xstatus.count = 0;
 		ProtoList.protoInfo[i].xstatus.enabled = NULL;
-		ProtoList.protoInfo[i].szProto = (char *)malloc(strlen(proto[i]->szModuleName) + 1);
+		ProtoList.protoInfo[i].szProto = (char *)malloc(mir_strlen(proto[i]->szModuleName) + 1);
 		if (!ProtoList.protoInfo[i].szProto) {
 			ProtoList.protoInfo[i].enabled = FALSE;
 			ProtoList.protoInfo[i].visible = FALSE;
 		}
 		else {
-			strcpy(ProtoList.protoInfo[i].szProto, proto[i]->szModuleName);
+			mir_strcpy(ProtoList.protoInfo[i].szProto, proto[i]->szModuleName);
 			ProtoList.protoInfo[i].enabled = FALSE;
-			if (!strcmp(proto[i]->szModuleName, META_PROTO))
+			if (!mir_strcmp(proto[i]->szModuleName, META_PROTO))
 				ProtoList.protoInfo[i].visible = FALSE;
 			else {
 				ProtoList.protoInfo[i].visible = TRUE;
@@ -692,7 +692,7 @@ void createEventPrefix(TCHAR *prefixName, size_t maxLen)
 
 	while (str = _tcschr(profileName, _T('\\')))
 		*str = _T('/');
-	if ((len = _tcslen(profileName)) <= maxLen)
+	if ((len = mir_tstrlen(profileName)) <= maxLen)
 		_tcsncpy_s(prefixName, maxLen, profileName, _TRUNCATE);
 	else {
 		str = profileName + len - maxLen / 2;

@@ -185,7 +185,7 @@ void additem(HWND hwnd2Settings, MCONTACT hContact, char* module, char* setting,
 				lvi.iImage = 5;
 				ListView_SetItem(hwnd2Settings, &lvi);
 
-				int length = (int)strlen(dbv.pszVal) + 1;
+				int length = (int)mir_strlen(dbv.pszVal) + 1;
 				WCHAR *wc = (WCHAR*)_alloca(length*sizeof(WCHAR));
 				MultiByteToWideChar(CP_UTF8, 0, dbv.pszVal, -1, wc, length);
 				ListView_SetItemTextW(hwnd2Settings, index, 1, wc);
@@ -566,8 +566,8 @@ void EditLabel(HWND hwnd2List, int item, int subitem)
 	}
 
 	data->hContact = info->hContact;
-	strcpy(data->module, info->module);
-	strcpy(data->setting, setting);
+	mir_strcpy(data->module, info->module);
+	mir_strcpy(data->setting, setting);
 	data->item = item;
 	data->subitem = subitem;
 	data->hwnd = hwnd2List;
@@ -661,7 +661,7 @@ INT_PTR CALLBACK SettingsCompare(LPARAM lParam1, LPARAM lParam2, LPARAM myParam)
 	ListView_GetItemText(params.hList, lParam1, params.column, text1, SIZEOF(text1));
 	ListView_GetItemText(params.hList, lParam2, params.column, text2, SIZEOF(text2));
 
-	int res = _tcsicmp(text1, text2);
+	int res = mir_tstrcmpi(text1, text2);
 	res = (params.column == lastColumn) ? -res : res;
 	return res;
 }

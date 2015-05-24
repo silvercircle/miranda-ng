@@ -3,10 +3,27 @@ Copyright (C) 2010, 2011 tico-tico
 */
 
 #include "stdafx.h"
-#define BASSDEF(f) (WINAPI *f)
+
+#include <delayimp.h>
 #include "bass.h"
 
-#define LOADBASSFUNCTION(f) (*((void**)&f)=(void*)GetProcAddress(hBass,#f))
+#pragma comment(lib, "delayimp.lib")
+#ifdef _WIN64
+	#pragma comment(lib, "src\\bass64.lib")
+#else
+	#pragma comment(lib, "src\\bass.lib")
+#endif
+
+static HINSTANCE hBass = NULL;
+
+FARPROC WINAPI delayHook(unsigned dliNotify, PDelayLoadInfo)
+{
+	if (dliNotify == dliNotePreLoadLibrary)
+		return (FARPROC)hBass;
+	return NULL;
+}
+
+extern "C" PfnDliHook __pfnDliNotifyHook2 = &delayHook;
 
 HINSTANCE hInst;
 int hLangpack;
@@ -24,8 +41,6 @@ PLUGININFOEX pluginInfo = {
 	// {2F07EA05-05B5-4FF0-875D-C590DA2DDAC1}
 	{ 0x2f07ea05, 0x05b5, 0x4ff0, { 0x87, 0x5d, 0xc5, 0x90, 0xda, 0x2d, 0xda, 0xc1 } }
 };
-
-static HINSTANCE hBass = NULL;
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD, LPVOID)
 {
@@ -98,7 +113,7 @@ static int OnPlaySnd(WPARAM wParam, LPARAM lParam)
 
 	if (doPlay) {
 		BASS_StreamFree(sndSSnd[sndNSnd]);
-		sndSSnd[sndNSnd] = BASS_StreamCreateFileW(FALSE, ptszFile, 0, 0, BASS_STREAM_AUTOFREE);
+		sndSSnd[sndNSnd] = BASS_StreamCreateFile(FALSE, ptszFile, 0, 0, BASS_STREAM_AUTOFREE);
 		BASS_ChannelPlay(sndSSnd[sndNSnd], FALSE);
 		sndNSnd = (sndNSnd + 1) % sndLimSnd;
 	}
@@ -412,8 +427,8 @@ int ReloadColors(WPARAM, LPARAM)
 {
 	ColourIDT colourid = { 0 };
 	colourid.cbSize = sizeof(colourid);
-	_tcscpy(colourid.group, _T(ModuleName));
-	_tcscpy(colourid.name, LPGENT("Frame background"));
+	mir_tstrcpy(colourid.group, _T(ModuleName));
+	mir_tstrcpy(colourid.name, LPGENT("Frame background"));
 	clBack = CallService(MS_COLOUR_GETT, (WPARAM)&colourid, 0);
 
 	if (hBkgBrush)
@@ -459,10 +474,10 @@ void CreateFrame()
 
 	ColourIDT colourid = { 0 };
 	colourid.cbSize = sizeof(ColourIDT);
-	strcpy(colourid.dbSettingsGroup, ModuleName);
-	strcpy(colourid.setting, "ColorFrame");
-	_tcscpy(colourid.name, LPGENT("Frame background"));
-	_tcscpy(colourid.group, _T(ModuleName));
+	mir_strcpy(colourid.dbSettingsGroup, ModuleName);
+	mir_strcpy(colourid.setting, "ColorFrame");
+	mir_tstrcpy(colourid.name, LPGENT("Frame background"));
+	mir_tstrcpy(colourid.group, _T(ModuleName));
 	colourid.defcolour = GetSysColor(COLOR_3DFACE);
 	ColourRegisterT(&colourid);
 
@@ -482,46 +497,39 @@ void LoadBassLibrary(TCHAR CurrBassPath[MAX_PATH])
 {
 	hBass = LoadLibrary(CurrBassPath);
 	if (hBass != NULL) {
-		if (LOADBASSFUNCTION(BASS_Init) != NULL && LOADBASSFUNCTION(BASS_SetConfig) != NULL &&
-			LOADBASSFUNCTION(BASS_ChannelPlay) != NULL && LOADBASSFUNCTION(BASS_StreamCreateFile) != NULL &&
-			LOADBASSFUNCTION(BASS_GetVersion) != NULL && LOADBASSFUNCTION(BASS_StreamFree) != NULL &&
-			LOADBASSFUNCTION(BASS_GetDeviceInfo) != NULL && LOADBASSFUNCTION(BASS_Free))
-		{
-			BASS_DEVICEINFO info;
+		newBass = (BASS_SetConfig(BASS_CONFIG_DEV_DEFAULT, TRUE) != 0); // will use new "Default" device
 
-			newBass = (BASS_SetConfig(BASS_CONFIG_DEV_DEFAULT, TRUE) != 0); // will use new "Default" device
+		DBVARIANT dbv = { 0 };
 
-			DBVARIANT dbv = { 0 };
+		BASS_DEVICEINFO info;
+		if (!db_get_ts(NULL, ModuleName, OPT_OUTDEVICE, &dbv))
+			for (int i = 1; BASS_GetDeviceInfo(i, &info); i++)
+				if (!mir_tstrcmp(dbv.ptszVal, _A2T(info.name)))
+					device = i;
 
-			if (!db_get_ts(NULL, ModuleName, OPT_OUTDEVICE, &dbv))
-				for (int i = 1; BASS_GetDeviceInfo(i, &info); i++)
-					if (!mir_tstrcmp(dbv.ptszVal, _A2T(info.name)))
-						device = i;
+		db_free(&dbv);
 
-			db_free(&dbv);
+		sndLimSnd = db_get_b(NULL, ModuleName, OPT_MAXCHAN, MAXCHAN);
+		if (sndLimSnd > MAXCHAN)
+			sndLimSnd = MAXCHAN;
+		TimeWrd1 = db_get_w(NULL, ModuleName, OPT_TIME1, 0);
+		TimeWrd2 = db_get_w(NULL, ModuleName, OPT_TIME2, 0);
+		QuietTime = db_get_b(NULL, ModuleName, OPT_QUIETTIME, 0);
+		EnPreview = db_get_b(NULL, ModuleName, OPT_PREVIEW, 0);
 
-			sndLimSnd = db_get_b(NULL, ModuleName, OPT_MAXCHAN, MAXCHAN);
-			if (sndLimSnd > MAXCHAN)
-				sndLimSnd = MAXCHAN;
-			TimeWrd1 = db_get_w(NULL, ModuleName, OPT_TIME1, 0);
-			TimeWrd2 = db_get_w(NULL, ModuleName, OPT_TIME2, 0);
-			QuietTime = db_get_b(NULL, ModuleName, OPT_QUIETTIME, 0);
-			EnPreview = db_get_b(NULL, ModuleName, OPT_PREVIEW, 0);
+		StatMask = db_get_w(NULL, ModuleName, OPT_STATUS, 0x3ff);
 
-			StatMask = db_get_w(NULL, ModuleName, OPT_STATUS, 0x3ff);
+		ClistHWND = (HWND)CallService("CLUI/GetHwnd", 0, 0);
+		BASS_Init(device, 44100, 0, ClistHWND, NULL);
 
-			ClistHWND = (HWND)CallService("CLUI/GetHwnd", 0, 0);
-			BASS_Init(device, 44100, 0, ClistHWND, NULL);
-
-			Volume = db_get_b(NULL, ModuleName, OPT_VOLUME, 33);
-			BASS_SetConfig(BASS_CONFIG_GVOL_STREAM, Volume * 100);
-			hPlaySound = HookEvent(ME_SKIN_PLAYINGSOUND, OnPlaySnd);
-			CreateFrame();
-		}
-		else {
-			FreeLibrary(hBass);
-			hBass = NULL;
-		}
+		Volume = db_get_b(NULL, ModuleName, OPT_VOLUME, 33);
+		BASS_SetConfig(BASS_CONFIG_GVOL_STREAM, Volume * 100);
+		hPlaySound = HookEvent(ME_SKIN_PLAYINGSOUND, OnPlaySnd);
+		CreateFrame();
+	}
+	else {
+		FreeLibrary(hBass);
+		hBass = NULL;
 	}
 }
 
@@ -572,8 +580,8 @@ int OnSettingChanged(WPARAM wParam, LPARAM lParam)
 		return 0;
 
 	DBCONTACTWRITESETTING *dbcws = (DBCONTACTWRITESETTING*)lParam;
-	if (!strcmp(dbcws->szModule, "Skin")) {
-		if (!strcmp(dbcws->szSetting, "UseSound")) {
+	if (!mir_strcmp(dbcws->szModule, "Skin")) {
+		if (!mir_strcmp(dbcws->szSetting, "UseSound")) {
 			EnableFrameIcon(dbcws->value.bVal != 0);
 			return 0;
 		}

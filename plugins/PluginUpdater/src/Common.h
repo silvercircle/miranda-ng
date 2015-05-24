@@ -33,7 +33,6 @@ Boston, MA 02111-1307, USA.
 #include <m_skin.h>
 #include <m_langpack.h>
 #include <m_options.h>
-#include <m_database.h>
 #include <m_system_cpp.h>
 #include <m_popup.h>
 #include <m_hotkeys.h>
@@ -48,7 +47,7 @@ Boston, MA 02111-1307, USA.
 #include "resource.h"
 
 #if MIRANDA_VER < 0x0A00
-#include "compat.h"
+#include "Compat\compat.h"
 #endif
 
 #include "Notifications.h"
@@ -85,20 +84,14 @@ struct FILEINFO
 
 typedef OBJLIST<FILEINFO> FILELIST;
 
-struct PopupDataText
-{
-	TCHAR *Title;
-	TCHAR *Text;
-};
-
-struct PlugOptions
+extern struct PlugOptions
 {
 	BYTE bUpdateOnStartup, bUpdateOnPeriod, bOnlyOnceADay, bForceRedownload, bSilentMode;
 	BOOL bSilent, bDlgDld;
 
 	BYTE bPeriodMeasure;
 	int  Period;
-};
+} opts;
 
 #define DEFAULT_UPDATEONSTARTUP   1
 #define DEFAULT_UPDATEONPERIOD    0
@@ -114,6 +107,7 @@ struct PlugOptions
 #define DEFAULT_UPDATE_URL                "http://miranda-ng.org/distr/stable/x%platform%"
 #define DEFAULT_UPDATE_URL_TRUNK          "http://miranda-ng.org/distr/x%platform%"
 #define DEFAULT_UPDATE_URL_TRUNK_SYMBOLS  "http://miranda-ng.org/distr/pdb_x%platform%"
+#define PLUGIN_INFO_URL	_T("http://miranda-ng.org/p/%s")
 
 #define UPDATE_MODE_CUSTOM			0
 #define UPDATE_MODE_STABLE			1
@@ -141,14 +135,11 @@ using namespace std;
 extern HINSTANCE hInst;
 
 extern TCHAR tszRoot[MAX_PATH], tszTempPath[MAX_PATH];
-extern FILEINFO *pFileInfo;
-extern PlugOptions opts;
-extern POPUP_OPTIONS PopupOptions;
 extern aPopups PopupsList[POPUPS];
-extern HANDLE Timer, hPipe, hNetlibUser;
-
-void DoCheck(bool bSilent);
-
+extern HANDLE hPipe, hNetlibUser;
+#if MIRANDA_VER >= 0x0A00
+extern IconItemT iconList[];
+#endif
 void UninitCheck(void);
 void UninitListNew(void);
 
@@ -187,7 +178,6 @@ struct ServListEntry
 	TCHAR *m_name;
 	DWORD  m_crc;
 	char   m_szHash[32+1];
-	BYTE   m_selected;
 };
 
 typedef OBJLIST<ServListEntry> SERVLIST;
@@ -203,6 +193,7 @@ void  InitEvents();
 void  InitOptions();
 void  InitListNew();
 void  InitCheck();
+void  CreateTimer();
 
 void  UnloadCheck();
 void  UnloadListNew();
@@ -222,12 +213,6 @@ void  __stdcall RestartMe(void*);
 void  __stdcall OpenPluginOptions(void*);
 void  CheckUpdateOnStartup();
 void  InitTimer(void *type);
-
-INT_PTR EmptyFolder(WPARAM,LPARAM);
-
-INT_PTR CALLBACK DlgMsgPop(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-int  ImageList_AddIconFromIconLib(HIMAGELIST hIml, const char *name);
 
 bool unzip(const TCHAR *ptszZipFile, TCHAR *ptszDestPath, TCHAR *ptszBackPath,bool ch);
 void strdel(TCHAR *parBuffer, int len);

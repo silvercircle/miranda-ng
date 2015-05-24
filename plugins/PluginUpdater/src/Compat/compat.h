@@ -1,5 +1,10 @@
 #define MIID_UPDATER	{0x4a47b19b, 0xde5a, 0x4436, { 0xab, 0x4b, 0xe1, 0xf3, 0xa0, 0x22, 0x5d, 0xe7}}
 
+#include <m_database.h>
+
+#define MS_PU_SHOWLIST "PluginUpdater/ShowList"
+#define MS_PU_CHECKUPDATES "PluginUpdater/CheckUpdates"
+
 #define db_free(A) DBFreeVariant(A)
 
 #define db_get_b(A,B,C,D)  DBGetContactSettingByte(A,B,C,D)
@@ -73,6 +78,19 @@ public:
 	}
 };
 
+struct
+{
+	char *szIconName;
+	char *szDescr;
+	int   IconID;
+}
+static iconList[] =
+{
+	{ "check_update", LPGEN("Check for updates"),           IDI_MENU },
+	{ "info",         LPGEN("Plugin info"),                 IDI_INFO },
+	{ "plg_list",     LPGEN("Component list"),              IDI_PLGLIST }
+};
+
 __forceinline INT_PTR Options_Open(OPENOPTIONSDIALOG *ood)
 {
 	return CallService("Opt/OpenOptions", 0, (LPARAM)ood);
@@ -87,6 +105,7 @@ char *bin2hex(const void *pData, size_t len, char *dest);
 char *rtrim(char *str);
 void CreatePathToFileT(TCHAR *ptszPath);
 int wildcmpit(const WCHAR *name, const WCHAR *mask);
+void InitIcoLib();
 
 #define NEWTSTR_ALLOCA(A) (A == NULL)?NULL:_tcscpy((TCHAR*)alloca((_tcslen(A)+1) *sizeof(TCHAR)), A)
 

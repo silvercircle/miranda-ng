@@ -21,7 +21,6 @@ CSkypeProto::CSkypeProto(const char* protoName, const TCHAR* userName) :
 PROTO<CSkypeProto>(protoName, userName), password(NULL)
 {
 	m_hProtoIcon = Icons[0].Handle;
-	SetAllContactsStatus(ID_STATUS_OFFLINE);
 
 	wchar_t name[128];
 	mir_sntprintf(name, SIZEOF(name), TranslateT("%s connection"), m_tszUserName);
@@ -86,7 +85,7 @@ DWORD_PTR CSkypeProto::GetCaps(int type, MCONTACT)
 	case PFLAGNUM_3:
 		return PF2_ONLINE | PF2_INVISIBLE | PF2_SHORTAWAY | PF2_HEAVYDND;
 	case PFLAGNUM_4:
-		return PF4_FORCEADDED | PF4_NOAUTHDENYREASON | PF4_SUPPORTTYPING | PF4_AVATARS | PF4_IMSENDOFFLINE | PF4_IMSENDUTF;
+		return PF4_FORCEADDED | PF4_NOAUTHDENYREASON | PF4_SUPPORTTYPING | PF4_AVATARS | PF4_IMSENDOFFLINE;
 	case PFLAG_UNIQUEIDTEXT:
 		return (INT_PTR)"Skypename";
 	case PFLAG_UNIQUEIDSETTING:
@@ -117,15 +116,15 @@ MCONTACT CSkypeProto::AddToListByEvent(int, int, MEVENT hDbEvent)
 		return NULL;
 	if (db_event_get(hDbEvent, &dbei))
 		return NULL;
-	if (strcmp(dbei.szModule, m_szModuleName))
+	if (mir_strcmp(dbei.szModule, m_szModuleName))
 		return NULL;
 	if (dbei.eventType != EVENTTYPE_AUTHREQUEST)
 		return NULL;
 
 	char *nick = (char*)(dbei.pBlob + sizeof(DWORD) * 2);
-	char *firstName = nick + strlen(nick) + 1;
-	char *lastName = firstName + strlen(firstName) + 1;
-	char *skypename = lastName + strlen(lastName) + 1;
+	char *firstName = nick + mir_strlen(nick) + 1;
+	char *lastName = firstName + mir_strlen(firstName) + 1;
+	char *skypename = lastName + mir_strlen(lastName) + 1;
 
 	char *newSkypename = (dbei.flags & DBEF_UTF) ? mir_utf8decodeA(skypename) : skypename;
 	MCONTACT hContact = AddContact(newSkypename);
@@ -169,7 +168,7 @@ int CSkypeProto::AuthRequest(MCONTACT hContact, const PROTOCHAR *szMessage)
 
 	ptrA token(getStringA("TokenSecret"));
 	ptrA skypename(getStringA(hContact, SKYPE_SETTINGS_ID));
-	PushRequest(new AddContactRequest(token, skypename, ptrA(mir_utf8encodeT(szMessage))));
+	PushRequest(new AddContactRequest(token, skypename, T2Utf(szMessage)));
 	return 0;
 }
 

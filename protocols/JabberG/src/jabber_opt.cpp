@@ -456,7 +456,7 @@ protected:
 
 		for (int i=0; g_LanguageCodes[i].szCode; i++) {
 			int iItem = m_cbLocale.AddString(TranslateTS(g_LanguageCodes[i].szDescription), (LPARAM)g_LanguageCodes[i].szCode);
-			if (!_tcscmp(m_proto->m_tszSelectedLang, g_LanguageCodes[i].szCode))
+			if (!mir_tstrcmp(m_proto->m_tszSelectedLang, g_LanguageCodes[i].szCode))
 				m_cbLocale.SetCurSel(iItem);
 		}
 
@@ -1088,9 +1088,9 @@ void CJabberProto::_RosterHandleGetRequest(HXML node, CJabberIqInfo*)
 				}
 				if (bPushed) {
 					HXML item = query << XCHILD(_T("item"));
-					if (_tcslen(group))
+					if (mir_tstrlen(group))
 						item << XCHILD(_T("group"), group);
-					if (_tcslen(name))
+					if (mir_tstrlen(name))
 						item << XATTR(_T("name"), name);
 					item << XATTR(_T("jid"), jid) << XATTR(_T("subscription"), subscr[0] ? subscr : _T("none"));
 					itemCount++;
@@ -1232,11 +1232,8 @@ void CJabberProto::_RosterExportToFile(HWND hwndDlg)
 	fwrite(header, 1, sizeof(header) - 1 /* for zero terminator */, fp);
 
 	TCHAR *xtmp = xi.toString(root, NULL);
-	char *tmp = mir_utf8encodeT(xtmp);
+	fputs(T2Utf(xtmp), fp);
 	xi.freeMem(xtmp);
-
-	fwrite(tmp, 1, strlen(tmp), fp);
-	mir_free(tmp);
 	fclose(fp);
 }
 

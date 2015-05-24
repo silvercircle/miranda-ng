@@ -202,7 +202,7 @@ TCHAR* GetStr(STATUSMSGINFO *n, const TCHAR *tmplt)
 				break;
 
 			case 'o':
-				if (n->oldstatusmsg == NULL || n->oldstatusmsg[0] == _T('\0') || _tcscmp(n->oldstatusmsg, TranslateT("<no status message>")) == 0)
+				if (n->oldstatusmsg == NULL || n->oldstatusmsg[0] == _T('\0') || mir_tstrcmp(n->oldstatusmsg, TranslateT("<no status message>")) == 0)
 					res.Append(TranslateT("<no status message>"));
 				else
 					AddCR(res, n->oldstatusmsg);
@@ -262,13 +262,12 @@ bool SkipHiddenContact(MCONTACT hContact)
 
 void LogSMsgToDB(STATUSMSGINFO *smi, const TCHAR *tmplt)
 {
-	TCHAR *str = GetStr(smi, tmplt);
-
-	char *blob = mir_utf8encodeT(str);
+	ptrT str(GetStr(smi, tmplt));
+	T2Utf blob(str);
 
 	DBEVENTINFO dbei = { 0 };
 	dbei.cbSize = sizeof(dbei);
-	dbei.cbBlob = (DWORD)strlen(blob) + 1;
+	dbei.cbBlob = (DWORD)mir_strlen(blob) + 1;
 	dbei.pBlob = (PBYTE)blob;
 	dbei.eventType = EVENTTYPE_STATUSCHANGE;
 	dbei.flags = DBEF_READ | DBEF_UTF;
@@ -276,8 +275,6 @@ void LogSMsgToDB(STATUSMSGINFO *smi, const TCHAR *tmplt)
 	dbei.timestamp = (DWORD)time(NULL);
 	dbei.szModule = MODULE;
 	MEVENT hDBEvent = db_event_add(smi->hContact, &dbei);
-	mir_free(blob);
-	mir_free(str);
 
 	if (opt.SMsgLogToDB_WinOpen && opt.SMsgLogToDB_Remove) {
 		DBEVENT *dbevent = (DBEVENT *)mir_alloc(sizeof(DBEVENT));
@@ -353,11 +350,11 @@ int ContactStatusChanged(MCONTACT hContact, WORD oldStatus, WORD newStatus)
 	if (opt.LogToDB && (!opt.LogToDB_WinOpen || CheckMsgWnd(hContact))) {
 		TCHAR stzStatusText[MAX_SECONDLINE] = { 0 };
 		GetStatusText(hContact, newStatus, oldStatus, stzStatusText);
-		char *blob = mir_utf8encodeT(stzStatusText);
+		T2Utf blob(stzStatusText);
 
 		DBEVENTINFO dbei = { 0 };
 		dbei.cbSize = sizeof(dbei);
-		dbei.cbBlob = (DWORD)strlen(blob) + 1;
+		dbei.cbBlob = (DWORD)mir_strlen(blob) + 1;
 		dbei.pBlob = (PBYTE)blob;
 		dbei.eventType = EVENTTYPE_STATUSCHANGE;
 		dbei.flags = DBEF_READ | DBEF_UTF;
@@ -365,7 +362,6 @@ int ContactStatusChanged(MCONTACT hContact, WORD oldStatus, WORD newStatus)
 		dbei.timestamp = (DWORD)time(NULL);
 		dbei.szModule = MODULE;
 		MEVENT hDBEvent = db_event_add(hContact, &dbei);
-		mir_free(blob);
 
 		if (opt.LogToDB_WinOpen && opt.LogToDB_Remove) {
 			DBEVENT *dbevent = (DBEVENT *)mir_alloc(sizeof(DBEVENT));
@@ -379,7 +375,7 @@ int ContactStatusChanged(MCONTACT hContact, WORD oldStatus, WORD newStatus)
 	char *szProto = GetContactProto(hContact);
 	WORD myStatus = (WORD)CallProtoService(szProto, PS_GETSTATUS, 0, 0);
 
-	if (!strcmp(szProto, META_PROTO)) { //this contact is Meta
+	if (!mir_strcmp(szProto, META_PROTO)) { //this contact is Meta
 		MCONTACT hSubContact = db_mc_getMostOnline(hContact);
 		char *szSubProto = GetContactProto(hSubContact);
 		if (szSubProto == NULL)
@@ -479,7 +475,7 @@ int ProcessStatus(DBCONTACTWRITESETTING *cws, MCONTACT hContact)
 		return 0;
 
 	char *szProto = GetContactProto(hContact);
-	if (strcmp(cws->szModule, szProto))
+	if (mir_strcmp(cws->szModule, szProto))
 		return 0;
 
 	// we don't want to be notified if new chatroom comes online
@@ -576,10 +572,10 @@ int ProcessExtraStatus(DBCONTACTWRITESETTING *cws, MCONTACT hContact)
 	}
 
 	if (strstr(cws->szSetting, "XStatus")) {
-		if (strcmp(cws->szModule, szProto))
+		if (mir_strcmp(cws->szModule, szProto))
 			return 0;
 
-		if (strcmp(cws->szSetting, "XStatusName") == 0) {
+		if (mir_strcmp(cws->szSetting, "XStatusName") == 0) {
 			smi.compare = CompareStatusMsg(&smi, cws, "LastXStatusName");
 			if (smi.compare == COMPARE_SAME) {
 				replaceStrT(smi.newstatusmsg, 0);
@@ -594,7 +590,7 @@ int ProcessExtraStatus(DBCONTACTWRITESETTING *cws, MCONTACT hContact)
 			xsc = NewXSC(hContact, szProto, TYPE_ICQ_XSTATUS, smi.compare, smi.newstatusmsg, NULL);
 			ExtraStatusChanged(xsc);
 		}
-		else if (!strcmp(cws->szSetting, "XStatusMsg")) {
+		else if (!mir_strcmp(cws->szSetting, "XStatusMsg")) {
 			smi.compare = CompareStatusMsg(&smi, cws, "LastXStatusMsg");
 			if (smi.compare == COMPARE_SAME) {
 				replaceStrT(smi.newstatusmsg, 0);
@@ -636,11 +632,11 @@ int ProcessStatusMessage(DBCONTACTWRITESETTING *cws, MCONTACT hContact)
 	if (_stricmp(szProto, "mRadio") == 0 && !cws->value.type == DBVT_DELETED) {
 		TCHAR buf[MAX_PATH];
 		mir_sntprintf(buf, SIZEOF(buf), _T(" (%s)"), TranslateT("connecting"));
-		ptrA pszUtf(mir_utf8encodeT(buf));
+		T2Utf pszUtf(buf);
 		mir_sntprintf(buf, SIZEOF(buf), _T(" (%s)"), TranslateT("aborting"));
-		ptrA pszUtf2(mir_utf8encodeT(buf));
+		T2Utf pszUtf2(buf);
 		mir_sntprintf(buf, SIZEOF(buf), _T(" (%s)"), TranslateT("playing"));
-		ptrA pszUtf3(mir_utf8encodeT(buf));
+		T2Utf pszUtf3(buf);
 		if (_stricmp(cws->value.pszVal, pszUtf) == 0 || _stricmp(cws->value.pszVal, pszUtf2) == 0 || _stricmp(cws->value.pszVal, pszUtf3) == 0)
 			goto skip_notify;
 	}
@@ -687,7 +683,7 @@ int ProcessStatusMessage(DBCONTACTWRITESETTING *cws, MCONTACT hContact)
 	if (bEnablePopup && db_get_b(hContact, MODULE, "EnablePopups", 1) && !opt.TempDisabled) {
 		// cut message if needed
 		TCHAR *copyText = NULL;
-		if (opt.PSMsgTruncate && (opt.PSMsgLen > 0) && smi.newstatusmsg && (_tcslen(smi.newstatusmsg) > opt.PSMsgLen)) {
+		if (opt.PSMsgTruncate && (opt.PSMsgLen > 0) && smi.newstatusmsg && (mir_tstrlen(smi.newstatusmsg) > opt.PSMsgLen)) {
 			TCHAR buff[MAX_TEXT_LEN + 3];
 			copyText = mir_tstrdup(smi.newstatusmsg);
 			_tcsncpy(buff, smi.newstatusmsg, opt.PSMsgLen);
@@ -790,11 +786,11 @@ int ContactSettingChanged(WPARAM hContact, LPARAM lParam)
 		if (ProcessExtraStatus(cws, hContact))
 			return 0;
 
-	if (!strcmp(cws->szSetting, "Status"))
+	if (!mir_strcmp(cws->szSetting, "Status"))
 		if (ProcessStatus(cws, hContact))
 			return 0;
 
-	if (!strcmp(cws->szModule, "CList") && !strcmp(cws->szSetting, "StatusMsg"))
+	if (!mir_strcmp(cws->szModule, "CList") && !mir_strcmp(cws->szSetting, "StatusMsg"))
 		if (ProcessStatusMessage(cws, hContact))
 			return 0;
 

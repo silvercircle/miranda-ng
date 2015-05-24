@@ -111,7 +111,7 @@ static INT_PTR icqAuthAllow(WPARAM wParam, LPARAM lParam)
     dbei.pBlob = (PBYTE)&uin;
     if (CallService(MS_DB_EVENT_GET, wParam, (LPARAM)&dbei)) return 1;
     if (dbei.eventType != EVENTTYPE_AUTHREQUEST) return 1;
-    if (strcmp(dbei.szModule, ICQOSCPROTONAME)) return 1;
+    if (mir_strcmp(dbei.szModule, ICQOSCPROTONAME)) return 1;
     if (uin <= 1) return 1;
     icq_sendAuthGrantedServ(uin);
 */    
@@ -217,7 +217,7 @@ static INT_PTR icqRecvMessage(WPARAM wParam, LPARAM lParam)
     dbei.timestamp = pre->timestamp;
     dbei.flags = pre->flags & (PREF_CREATEREAD ? DBEF_READ : 0);
     dbei.eventType = EVENTTYPE_MESSAGE;
-    dbei.cbBlob = lstrlen(pre->szMessage) + 1;
+    dbei.cbBlob = mir_tstrlen(pre->szMessage) + 1;
     dbei.pBlob = (PBYTE)pre->szMessage;
 	db_event_add(ccs->hContact, &dbei);
     return 0;
@@ -253,14 +253,14 @@ static INT_PTR icqRecvUrl(WPARAM wParam, LPARAM lParam)
     T("[   ] recieve url\n");
 
     db_unset(ccs->hContact, "CList", "Hidden");
-    pszDescr = pre->szMessage + lstrlen(pre->szMessage) + 1;
+    pszDescr = pre->szMessage + mir_tstrlen(pre->szMessage) + 1;
     ZeroMemory(&dbei, sizeof(dbei));
     dbei.cbSize = sizeof(dbei);
     dbei.szModule = protoName;
     dbei.timestamp = pre->timestamp;
     dbei.flags = pre->flags & (PREF_CREATEREAD ? DBEF_READ : 0);
     dbei.eventType = EVENTTYPE_URL;
-    dbei.cbBlob = lstrlen(pre->szMessage) + lstrlen(pszDescr) + 2;
+    dbei.cbBlob = mir_tstrlen(pre->szMessage) + mir_tstrlen(pszDescr) + 2;
     dbei.pBlob = (PBYTE)pre->szMessage;
 	db_event_add(ccs->hContact, &dbei);
     return 0;
@@ -275,8 +275,8 @@ static INT_PTR icqSetAwayMsg(WPARAM wParam, LPARAM lParam)
     if (lParam == NULL) return 0;
 
     if (icq.awayMessage) delete [] icq.awayMessage;
-    icq.awayMessage = new char[strlen((char*)lParam) + 1];
-    strcpy(icq.awayMessage, (char*)lParam);
+    icq.awayMessage = new char[mir_strlen((char*)lParam) + 1];
+    mir_strcpy(icq.awayMessage, (char*)lParam);
 
 	return 0;
 }
@@ -347,7 +347,7 @@ static INT_PTR icqSendFile(WPARAM wParam, LPARAM lParam)
         if (filesCount == 1)
         {
             char *p = strrchr(files[0], '\\');
-            strcpy(filename, p ? p+1 : files[0]);
+            mir_strcpy(filename, p ? p+1 : files[0]);
         }
         else sprintf(filename, filesCount == 1 ? Translate("%d file") : Translate("%d files"), filesCount);
     }
@@ -446,7 +446,7 @@ static INT_PTR icqRecvFile(WPARAM wParam, LPARAM lParam)
 	db_unset(ccs->hContact, "CList", "Hidden");
 
 	szFile = pre->szMessage + sizeof(DWORD);
-	szDesc = szFile + strlen(szFile) + 1;
+	szDesc = szFile + mir_strlen(szFile) + 1;
 
 	ZeroMemory(&dbei, sizeof(dbei));
 	dbei.cbSize = sizeof(dbei);
@@ -454,7 +454,7 @@ static INT_PTR icqRecvFile(WPARAM wParam, LPARAM lParam)
 	dbei.timestamp = pre->timestamp;
 	dbei.flags = pre->flags & (PREF_CREATEREAD ? DBEF_READ : 0);
 	dbei.eventType = EVENTTYPE_FILE;
-	dbei.cbBlob = sizeof(DWORD)+(DWORD)strlen(szFile) + (DWORD)strlen(szDesc) + 2;
+	dbei.cbBlob = sizeof(DWORD)+(DWORD)mir_strlen(szFile) + (DWORD)mir_strlen(szDesc) + 2;
 	dbei.pBlob = (PBYTE)pre->szMessage;
 	db_event_add(ccs->hContact, &dbei);
 
@@ -526,7 +526,7 @@ static int icqModulesLoaded(WPARAM wParam, LPARAM lParam)
 
 char *CreateServiceName(char *serviceName, char *functionName)
 {
-    strcpy(serviceName, protoName);
+    mir_strcpy(serviceName, protoName);
     strcat(serviceName, functionName);
 
     return serviceName;

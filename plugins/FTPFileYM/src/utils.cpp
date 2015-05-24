@@ -61,9 +61,9 @@ TCHAR *Utils::getFileNameFromPath(TCHAR *stzPath)
 
 TCHAR *Utils::getTextFragment(TCHAR *stzText, size_t length, TCHAR *buff)
 {
-	if (_tcslen(stzText) > length)
+	if (mir_tstrlen(stzText) > length)
 	{
-		_tcscpy(buff, stzText);
+		mir_tstrcpy(buff, stzText);
 		buff[length - 1] = 0;
 		_tcscat(buff, _T("..."));
 		return buff;
@@ -81,7 +81,7 @@ void Utils::copyToClipboard(char *szText)
 			EmptyClipboard();
 			HGLOBAL hClipboardData = GlobalAlloc(GMEM_DDESHARE, 1024);
 			char *pchData = (char *)GlobalLock(hClipboardData);
-			strcpy(pchData, szText);
+			mir_strcpy(pchData, szText);
 			GlobalUnlock(hClipboardData);
 			SetClipboardData(CF_TEXT, hClipboardData);
 			CloseClipboard();
@@ -95,7 +95,7 @@ const char to_chars[]	= "abvgdeezziiklmnoprstufhccwwqyqeuaABVGDEEZZIIKLMNOPRSTUF
 char* Utils::makeSafeString(TCHAR *input, char *output)
 {
 	char *buff = mir_t2a(input);
-	size_t length = strlen(buff);
+	size_t length = mir_strlen(buff);
 
 	for (UINT i = 0; i < length; i++)
 	{
@@ -109,7 +109,7 @@ char* Utils::makeSafeString(TCHAR *input, char *output)
 		}
 	}
 
-	strcpy(output, buff);
+	mir_strcpy(output, buff);
 	FREE(buff);
 
 	return output;
@@ -171,7 +171,7 @@ INT_PTR CALLBACK Utils::DlgProcSetFileName(HWND hwndDlg, UINT msg, WPARAM wParam
 			if (GetDlgCtrlID((HWND)wParam) != IDC_NAME)
 			{
 				SetFocus(GetDlgItem(hwndDlg, IDC_NAME));
-				SendDlgItemMessage(hwndDlg, IDC_NAME, EM_SETSEL, 0, _tcslen(fileName) - 4);
+				SendDlgItemMessage(hwndDlg, IDC_NAME, EM_SETSEL, 0, mir_tstrlen(fileName) - 4);
 				return FALSE;
 			}
 
@@ -211,14 +211,14 @@ bool Utils::setFileNameDlgA(char *nameBuff)
 {
 	TCHAR buff[64];
 	TCHAR *tmp = mir_a2t(nameBuff);
-	_tcscpy(buff, tmp);
+	mir_tstrcpy(buff, tmp);
 	FREE(tmp);
 
 	bool res = setFileNameDlg(buff);
 	if (res)
 	{
 		char *p = mir_t2a(buff);
-		strcpy(nameBuff, p);
+		mir_strcpy(nameBuff, p);
 		FREE(p);
 	}
 
@@ -227,7 +227,7 @@ bool Utils::setFileNameDlgA(char *nameBuff)
 
 void Utils::createFileDownloadLink(char *szUrl, char *fileName, char *buff, int buffSize)
 {
-	if (szUrl[strlen(szUrl) - 1] == '/')
+	if (szUrl[mir_strlen(szUrl) - 1] == '/')
 		mir_snprintf(buff, buffSize, "%s%s", szUrl, fileName);
 	else
 		mir_snprintf(buff, buffSize, "%s/%s", szUrl, fileName);

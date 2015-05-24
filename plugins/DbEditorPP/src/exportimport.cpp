@@ -295,16 +295,16 @@ void importSettings(MCONTACT hContact, char *importstring)
 			continue;
 		}
 
-		if (!strncmp(&importstring[i], "SETTINGS:", strlen("SETTINGS:"))) {
+		if (!strncmp(&importstring[i], "SETTINGS:", mir_strlen("SETTINGS:"))) {
 			importstring = strtok(NULL, "\n");
 			continue;
 		}
 
-		if (!strncmp(&importstring[i], "CONTACT:", strlen("CONTACT:"))) {
+		if (!strncmp(&importstring[i], "CONTACT:", mir_strlen("CONTACT:"))) {
 			hContact = INVALID_CONTACT_ID;
 
-			i = i + (int)strlen("CONTACT:");
-			int len = (int)strlen(&importstring[i]);
+			i = i + (int)mir_strlen("CONTACT:");
+			int len = (int)mir_strlen(&importstring[i]);
 
 			if (len > 10) {
 				char uid[256] = "", szUID[256] = "", szProto[512] = "";
@@ -348,20 +348,20 @@ void importSettings(MCONTACT hContact, char *importstring)
 		else if (importstring[i] == '[' && !strchr(&importstring[i + 1], '=')) { // get the module
 			if (end = strpbrk(&importstring[i + 1], "]")) {
 				*end = '\0';
-				strcpy(module, &importstring[i + 1]);
+				mir_strcpy(module, &importstring[i + 1]);
 			}
 		}
 		else if (importstring[i] == '-' && importstring[i + 1] == '[' && !strchr(&importstring[i + 2], '=')) { // get the module
 			if (end = strpbrk(&importstring[i + 2], "]")) {
 				*end = '\0';
-				strcpy(module, &importstring[i + 2]);
+				mir_strcpy(module, &importstring[i + 2]);
 				deleteModule(module, hContact, 1);
 			}
 		}
 		else if (strstr(&importstring[i], "=") && module[0]) { // get the setting
 			if (end = strpbrk(&importstring[i + 1], "=")) {
 				*end = '\0';
-				strcpy(setting, &importstring[i]);
+				mir_strcpy(setting, &importstring[i]);
 
 				// get the type
 				type = *(end + 1);
@@ -424,7 +424,7 @@ void importSettings(MCONTACT hContact, char *importstring)
 					break;
 				case 'n':
 				case 'N':
-					WriteBlobFromString(hContact, module, setting, (end + 2), (int)strlen((end + 2)));
+					WriteBlobFromString(hContact, module, setting, (end + 2), (int)mir_strlen((end + 2)));
 					break;
 				}
 			}
@@ -563,9 +563,9 @@ void ImportSettingsFromFileMenuItem(MCONTACT hContact, char* FilePath)
 		}
 
 		while (szFileNames[index]) {
-			strcpy(szFile, szPath);
+			mir_strcpy(szFile, szPath);
 			strcat(szFile, &szFileNames[index]);
-			index += (int)strlen(&szFileNames[index]) + 1;
+			index += (int)mir_strlen(&szFileNames[index]) + 1;
 
 			HANDLE hFile = CreateFile(szFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 			if (hFile != INVALID_HANDLE_VALUE) {

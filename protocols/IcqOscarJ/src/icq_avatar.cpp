@@ -94,19 +94,19 @@ void CIcqProto::GetAvatarFileName(int dwUin, const char *szUid, TCHAR *pszDest, 
 		_ltot(dwUin, pszDest + tPathLen, 10);
 	else if (szUid) {
 		TCHAR* p = mir_a2t(szUid);
-		_tcscpy(pszDest + tPathLen, p);
+		mir_tstrcpy(pszDest + tPathLen, p);
 		mir_free(p);
 	}
 	else {
 		TCHAR szBuf[MAX_PATH];
 		if (CallService(MS_DB_GETPROFILENAMET, MAX_PATH, (LPARAM)szBuf))
-			_tcscpy(pszDest + tPathLen, _T("avatar"));
+			mir_tstrcpy(pszDest + tPathLen, _T("avatar"));
 		else {
 			TCHAR *szLastDot = _tcsrchr(szBuf, '.');
 			if (szLastDot)
 				szLastDot[0] = '\0';
 
-			_tcscpy(pszDest + tPathLen, szBuf);
+			mir_tstrcpy(pszDest + tPathLen, szBuf);
 			_tcscat(pszDest + tPathLen, _T("_avt"));
 		}
 	}
@@ -528,7 +528,7 @@ int CIcqProto::GetAvatarData(MCONTACT hContact, DWORD dwUin, const char *szUid, 
 	uid_str szUidData;
 	char *pszUid = NULL;
 	if (!dwUin && szUid) { // create a copy in local writable buffer
-		strcpy(szUidData, szUid);
+		mir_strcpy(szUidData, szUid);
 		pszUid = szUidData;
 	}
 
@@ -585,7 +585,7 @@ int CIcqProto::GetAvatarData(MCONTACT hContact, DWORD dwUin, const char *szUid, 
 	ar->hContact = hContact;
 	ar->dwUin = dwUin;
 	if (!dwUin)
-		strcpy(ar->szUid, szUid);
+		mir_strcpy(ar->szUid, szUid);
 	ar->hash = (BYTE*)SAFE_MALLOC(hashlen);
 	if (!ar->hash) { // alloc failed
 		delete ar;

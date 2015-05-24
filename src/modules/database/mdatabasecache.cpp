@@ -26,12 +26,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static int stringCompare(const char *p1, const char *p2)
 {
-	return strcmp(p1, p2);
+	return mir_strcmp(p1, p2);
 }
 
 static int compareGlobals(const DBCachedGlobalValue *p1, const DBCachedGlobalValue *p2)
 {
-	return strcmp(p1->name, p2->name);
+	return mir_strcmp(p1->name, p2->name);
 }
 
 MDatabaseCache::MDatabaseCache(size_t _size) :
@@ -121,7 +121,7 @@ char* MDatabaseCache::InsertCachedSetting(const char* szName, int cbLen)
 {
 	char* newValue = (char*)HeapAlloc(m_hCacheHeap, 0, cbLen);
 	*newValue++ = 0;
-	strcpy(newValue, szName);
+	mir_strcpy(newValue, szName);
 	m_lSettings.insert(newValue);
 	return newValue;
 }
@@ -131,14 +131,14 @@ char* MDatabaseCache::GetCachedSetting(const char *szModuleName, const char *szS
 	char szFullName[512];
 	const char *szKey;
 	if (szModuleName != NULL) {
-		strcpy(szFullName, szModuleName);
+		mir_strcpy(szFullName, szModuleName);
 		szFullName[moduleNameLen] = '/';
-		strcpy(szFullName + moduleNameLen + 1, szSettingName);
+		mir_strcpy(szFullName + moduleNameLen + 1, szSettingName);
 		szKey = szFullName;
 	}
 	else szKey = szSettingName;
 
-	if (m_lastSetting && !strcmp(szKey, m_lastSetting))
+	if (m_lastSetting && !mir_strcmp(szKey, m_lastSetting))
 		return m_lastSetting;
 
 	int index = m_lSettings.getIndex((char*)szKey);
@@ -157,10 +157,10 @@ void MDatabaseCache::SetCachedVariant(DBVARIANT* s /* new */, DBVARIANT* d /* ca
 	memcpy(d, s, sizeof(DBVARIANT));
 	if ((s->type == DBVT_UTF8 || s->type == DBVT_ASCIIZ) && s->pszVal != NULL) {
 		if (szSave != NULL)
-			d->pszVal = (char*)HeapReAlloc(m_hCacheHeap, 0, szSave, strlen(s->pszVal) + 1);
+			d->pszVal = (char*)HeapReAlloc(m_hCacheHeap, 0, szSave, mir_strlen(s->pszVal) + 1);
 		else
-			d->pszVal = (char*)HeapAlloc(m_hCacheHeap, 0, strlen(s->pszVal) + 1);
-		strcpy(d->pszVal, s->pszVal);
+			d->pszVal = (char*)HeapAlloc(m_hCacheHeap, 0, mir_strlen(s->pszVal) + 1);
+		mir_strcpy(d->pszVal, s->pszVal);
 	}
 	else if (szSave != NULL)
 		HeapFree(m_hCacheHeap, 0, szSave);

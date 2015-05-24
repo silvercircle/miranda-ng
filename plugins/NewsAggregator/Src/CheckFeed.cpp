@@ -123,8 +123,8 @@ static void XmlToMsg(MCONTACT hContact, CMString &title, CMString &link, CMStrin
 	olddbei.cbSize = sizeof(olddbei);
 
 	bool  MesExist = false;
-	ptrA  pszTemp(mir_utf8encodeT(message));
-	DWORD cbMemoLen = 10000, cbOrigLen = (DWORD)strlen(pszTemp);
+	T2Utf pszTemp(message);
+	DWORD cbMemoLen = 10000, cbOrigLen = (DWORD)mir_strlen(pszTemp);
 	BYTE *pbBuffer = (BYTE*)mir_alloc(cbMemoLen);
 	for (MEVENT hDbEvent = db_event_last(hContact); hDbEvent; hDbEvent = db_event_prev(hContact, hDbEvent)) {
 		olddbei.cbBlob = db_event_getBlobSize(hDbEvent);
@@ -137,7 +137,7 @@ static void XmlToMsg(MCONTACT hContact, CMString &title, CMString &link, CMStrin
 		if (stamp > 0 && olddbei.timestamp < (DWORD)stamp)
 			break;
 
-		if ((DWORD)strlen((char*)olddbei.pBlob) == cbOrigLen && !mir_strcmp((char*)olddbei.pBlob, pszTemp)) {
+		if ((DWORD)mir_strlen((char*)olddbei.pBlob) == cbOrigLen && !mir_strcmp((char*)olddbei.pBlob, pszTemp)) {
 			MesExist = true;
 			break;
 		}
@@ -148,10 +148,11 @@ static void XmlToMsg(MCONTACT hContact, CMString &title, CMString &link, CMStrin
 		if (stamp == 0)
 			stamp = time(NULL);
 
+		T2Utf pszMessage(message);
+
 		PROTORECVEVENT recv = { 0 };
-		recv.flags = PREF_TCHAR;
 		recv.timestamp = (DWORD)stamp;
-		recv.tszMessage = (TCHAR*)message.c_str();
+		recv.szMessage = pszMessage;
 		ProtoChainRecvMsg(hContact, &recv);
 	}
 }

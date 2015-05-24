@@ -166,13 +166,13 @@ MCONTACT CMraProto::AddToListByEvent(int, int, MEVENT hDbEvent)
 	if ((dbei.cbBlob = db_event_getBlobSize(hDbEvent)) != -1) {
 		dbei.pBlob = (PBYTE)alloca(dbei.cbBlob);
 		if (db_event_get(hDbEvent, &dbei) == 0 &&
-			 !strcmp(dbei.szModule, m_szModuleName) &&
+			 !mir_strcmp(dbei.szModule, m_szModuleName) &&
 			 (dbei.eventType == EVENTTYPE_AUTHREQUEST || dbei.eventType == EVENTTYPE_CONTACTS))
 		{
 			char *nick = (char*)(dbei.pBlob + sizeof(DWORD) * 2);
-			char *firstName = nick + strlen(nick) + 1;
-			char *lastName = firstName + strlen(firstName) + 1;
-			char *email = lastName + strlen(lastName) + 1;
+			char *firstName = nick + mir_strlen(nick) + 1;
+			char *lastName = firstName + mir_strlen(firstName) + 1;
+			char *email = lastName + mir_strlen(lastName) + 1;
 			return AddToListByEmail(_A2T(email), _A2T(nick), _A2T(firstName), _A2T(lastName), 0);
 		}
 	}
@@ -192,7 +192,7 @@ int CMraProto::Authorize(MEVENT hDBEvent)
 	dbei.pBlob = (PBYTE)alloca(dbei.cbBlob);
 	if (db_event_get(hDBEvent, &dbei))           return 1;
 	if (dbei.eventType != EVENTTYPE_AUTHREQUEST) return 1;
-	if (strcmp(dbei.szModule, m_szModuleName))   return 1;
+	if (mir_strcmp(dbei.szModule, m_szModuleName))   return 1;
 
 	LPSTR lpszNick = (LPSTR)(dbei.pBlob + sizeof(DWORD) * 2);
 	LPSTR lpszFirstName = lpszNick + mir_strlen(lpszNick) + 1;
@@ -212,7 +212,7 @@ int CMraProto::AuthDeny(MEVENT hDBEvent, const TCHAR* szReason)
 	dbei.pBlob = (PBYTE)alloca(dbei.cbBlob);
 	if (db_event_get(hDBEvent, &dbei))           return 1;
 	if (dbei.eventType != EVENTTYPE_AUTHREQUEST) return 1;
-	if (strcmp(dbei.szModule, m_szModuleName))   return 1;
+	if (mir_strcmp(dbei.szModule, m_szModuleName))   return 1;
 
 	LPSTR lpszNick = (LPSTR)(dbei.pBlob + sizeof(DWORD) * 2);
 	LPSTR lpszFirstName = lpszNick + mir_strlen(lpszNick) + 1;
@@ -272,7 +272,7 @@ DWORD_PTR CMraProto::GetCaps(int type, MCONTACT)
 		return PF2_ONLINE | PF2_INVISIBLE | PF2_SHORTAWAY | PF2_HEAVYDND | PF2_FREECHAT | PF2_ONTHEPHONE;
 
 	case PFLAGNUM_4:
-		return PF4_FORCEAUTH | PF4_FORCEADDED | PF4_SUPPORTTYPING | PF4_AVATARS | PF4_IMSENDUTF;
+		return PF4_FORCEAUTH | PF4_FORCEADDED | PF4_SUPPORTTYPING | PF4_AVATARS;
 
 	case PFLAGNUM_5:
 		return PF2_ONTHEPHONE;
@@ -385,7 +385,7 @@ HANDLE CMraProto::SendFile(MCONTACT hContact, const TCHAR*, TCHAR **ppszFiles)
 	return (HANDLE)iRet;
 }
 
-int CMraProto::SendMsg(MCONTACT hContact, int flags, const char *lpszMessage)
+int CMraProto::SendMsg(MCONTACT hContact, int, const char *lpszMessage)
 {
 	if (!m_bLoggedIn) {
 		ProtoBroadcastAck(hContact, ACKTYPE_MESSAGE, ACKRESULT_FAILED, NULL, (LPARAM)"You cannot send when you are offline.");
@@ -393,15 +393,7 @@ int CMraProto::SendMsg(MCONTACT hContact, int flags, const char *lpszMessage)
 	}
 
 	DWORD dwFlags = 0;
-	CMStringW wszMessage;
-
-	if (flags & PREF_UNICODE)
-		wszMessage = (LPWSTR)(lpszMessage + mir_strlen(lpszMessage) + 1);
-	else if (flags & PREF_UTF)
-		wszMessage = ptrW(mir_utf8decodeT(lpszMessage));
-	else
-		wszMessage = ptrW(mir_a2t(lpszMessage));
-
+	CMStringW wszMessage(ptrW(mir_utf8decodeT(lpszMessage)));
 	if (wszMessage.IsEmpty()) {
 		ProtoBroadcastAck(hContact, ACKTYPE_MESSAGE, ACKRESULT_FAILED, NULL, (LPARAM)"Cant allocate buffer for convert to unicode.");
 		return 0;

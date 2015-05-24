@@ -31,14 +31,14 @@ DBCachedContact* AddToCachedContactList(MCONTACT contactID, int index);
 BOOL CDb3Mmap::IsSettingEncrypted(LPCSTR szModule, LPCSTR szSetting)
 {
 	if (!_strnicmp(szSetting, "password", 8))      return true;
-	if (!strcmp(szSetting, "NLProxyAuthPassword")) return true;
-	if (!strcmp(szSetting, "LNPassword"))          return true;
-	if (!strcmp(szSetting, "FileProxyPassword"))   return true;
-	if (!strcmp(szSetting, "TokenSecret"))         return true;
+	if (!mir_strcmp(szSetting, "NLProxyAuthPassword")) return true;
+	if (!mir_strcmp(szSetting, "LNPassword"))          return true;
+	if (!mir_strcmp(szSetting, "FileProxyPassword"))   return true;
+	if (!mir_strcmp(szSetting, "TokenSecret"))         return true;
 
-	if (!strcmp(szModule, "SecureIM")) {
-		if (!strcmp(szSetting, "pgp"))              return true;
-		if (!strcmp(szSetting, "pgpPrivKey"))       return true;
+	if (!mir_strcmp(szModule, "SecureIM")) {
+		if (!mir_strcmp(szSetting, "pgp"))              return true;
+		if (!mir_strcmp(szSetting, "pgpPrivKey"))       return true;
 	}
 	return false;
 }
@@ -47,10 +47,10 @@ BOOL CDb3Mmap::IsSettingEncrypted(LPCSTR szModule, LPCSTR szSetting)
 
 static bool ValidLookupName(LPCSTR szModule, LPCSTR szSetting)
 {
-	if (!strcmp(szModule, META_PROTO))
-		return strcmp(szSetting, "IsSubcontact") && strcmp(szSetting, "ParentMetaID");
+	if (!mir_strcmp(szModule, META_PROTO))
+		return mir_strcmp(szSetting, "IsSubcontact") && mir_strcmp(szSetting, "ParentMetaID");
 
-	if (!strcmp(szModule, "Ignore"))
+	if (!mir_strcmp(szModule, "Ignore"))
 		return false;
 
 	return true;
@@ -62,8 +62,8 @@ int CDb3Mmap::GetContactSettingWorker(MCONTACT contactID, LPCSTR szModule, LPCST
 		return 1;
 
 	// the db format can't tolerate more than 255 bytes of space (incl. null) for settings+module name
-	int settingNameLen = (int)strlen(szSetting);
-	int moduleNameLen = (int)strlen(szModule);
+	int settingNameLen = (int)mir_strlen(szSetting);
+	int moduleNameLen = (int)mir_strlen(szModule);
 	if (settingNameLen > 0xFE) {
 #ifdef _DEBUG
 		OutputDebugStringA("GetContactSettingWorker() got a > 255 setting name length. \n");
@@ -92,7 +92,7 @@ LBL_Seek:
 			if (isStatic) {
 				int cbLen = 0;
 				if (pCachedValue->pszVal != NULL)
-					cbLen = (int)strlen(pCachedValue->pszVal);
+					cbLen = (int)mir_strlen(pCachedValue->pszVal);
 
 				cbOrigLen--;
 				dbv->pszVal = cbOrigPtr;
@@ -103,8 +103,8 @@ LBL_Seek:
 				dbv->cchVal = cbLen;
 			}
 			else {
-				dbv->pszVal = (char*)mir_alloc(strlen(pCachedValue->pszVal) + 1);
-				strcpy(dbv->pszVal, pCachedValue->pszVal);
+				dbv->pszVal = (char*)mir_alloc(mir_strlen(pCachedValue->pszVal) + 1);
+				mir_strcpy(dbv->pszVal, pCachedValue->pszVal);
 			}
 		}
 		else memcpy(dbv, pCachedValue, sizeof(DBVARIANT));
@@ -237,7 +237,7 @@ LBL_Seek:
 	if (cc && cc->IsMeta() && ValidLookupName(szModule, szSetting)) {
 		if (contactID = db_mc_getDefault(contactID)) {
 			if (szModule = GetContactProto(contactID)) {
-				moduleNameLen = (int)strlen(szModule);
+				moduleNameLen = (int)mir_strlen(szModule);
 				goto LBL_Seek;
 			}
 		}
@@ -364,7 +364,7 @@ STDMETHODIMP_(BOOL) CDb3Mmap::FreeVariant(DBVARIANT *dbv)
 
 STDMETHODIMP_(BOOL) CDb3Mmap::SetSettingResident(BOOL bIsResident, const char *pszSettingName)
 {
-	char *szSetting = m_cache->GetCachedSetting(NULL, pszSettingName, 0, (int)strlen(pszSettingName));
+	char *szSetting = m_cache->GetCachedSetting(NULL, pszSettingName, 0, (int)mir_strlen(pszSettingName));
 	szSetting[-1] = (char)bIsResident;
 
 	mir_cslock lck(m_csDbAccess);
@@ -385,8 +385,8 @@ STDMETHODIMP_(BOOL) CDb3Mmap::WriteContactSetting(MCONTACT contactID, DBCONTACTW
 		return 1;
 
 	// the db format can't tolerate more than 255 bytes of space (incl. null) for settings+module name
-	int settingNameLen = (int)strlen(dbcws->szSetting);
-	int moduleNameLen = (int)strlen(dbcws->szModule);
+	int settingNameLen = (int)mir_strlen(dbcws->szSetting);
+	int moduleNameLen = (int)mir_strlen(dbcws->szModule);
 	if (settingNameLen > 0xFE) {
 #ifdef _DEBUG
 		OutputDebugStringA("WriteContactSetting() got a > 255 setting name length. \n");
@@ -408,8 +408,8 @@ STDMETHODIMP_(BOOL) CDb3Mmap::WriteContactSetting(MCONTACT contactID, DBCONTACTW
 			if (val == NULL)
 				return 1;
 
-			dbcwNotif.value.pszVal = (char*)alloca(strlen(val) + 1);
-			strcpy(dbcwNotif.value.pszVal, val);
+			dbcwNotif.value.pszVal = (char*)alloca(mir_strlen(val) + 1);
+			mir_strcpy(dbcwNotif.value.pszVal, val);
 			mir_free(val);
 			dbcwNotif.value.type = DBVT_UTF8;
 		}
@@ -432,7 +432,7 @@ STDMETHODIMP_(BOOL) CDb3Mmap::WriteContactSetting(MCONTACT contactID, DBCONTACTW
 	LBL_WriteString:
 		if (dbcwWork.value.pszVal == NULL)
 			return 1;
-		dbcwWork.value.cchVal = (WORD)strlen(dbcwWork.value.pszVal);
+		dbcwWork.value.cchVal = (WORD)mir_strlen(dbcwWork.value.pszVal);
 		if (bIsEncrypted) {
 			size_t len;
 			BYTE *pResult = m_crypto->encodeString(dbcwWork.value.pszVal, &len);
@@ -478,7 +478,7 @@ STDMETHODIMP_(BOOL) CDb3Mmap::WriteContactSetting(MCONTACT contactID, DBCONTACTW
 				case DBVT_WORD:   bIsIdentical = pCachedValue->wVal == dbcwWork.value.wVal;  break;
 				case DBVT_DWORD:  bIsIdentical = pCachedValue->dVal == dbcwWork.value.dVal;  break;
 				case DBVT_UTF8:
-				case DBVT_ASCIIZ: bIsIdentical = strcmp(pCachedValue->pszVal, dbcwWork.value.pszVal) == 0; break;
+				case DBVT_ASCIIZ: bIsIdentical = mir_strcmp(pCachedValue->pszVal, dbcwWork.value.pszVal) == 0; break;
 				}
 				if (bIsIdentical)
 					return 0;
@@ -706,8 +706,8 @@ STDMETHODIMP_(BOOL) CDb3Mmap::DeleteContactSetting(MCONTACT contactID, LPCSTR sz
 		return 1;
 
 	// the db format can't tolerate more than 255 bytes of space (incl. null) for settings+module name
-	int settingNameLen = (int)strlen(szSetting);
-	int moduleNameLen = (int)strlen(szModule);
+	int settingNameLen = (int)mir_strlen(szSetting);
+	int moduleNameLen = (int)mir_strlen(szModule);
 	if (settingNameLen > 0xFE) {
 #ifdef _DEBUG
 		OutputDebugStringA("DeleteContactSetting() got a > 255 setting name length. \n");

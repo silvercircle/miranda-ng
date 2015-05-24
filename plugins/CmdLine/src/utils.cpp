@@ -55,7 +55,7 @@ int Log(char *format, ...)
 		}
 
 	va_end(vararg);
-	if (str[strlen(str) - 1] != '\n')
+	if (str[mir_strlen(str) - 1] != '\n')
 		{
 			strcat(str, "\n");
 		}
@@ -107,7 +107,7 @@ char *BinToHex(int size, PBYTE data)
 void HexToBin(char *inData, ULONG &size, LPBYTE &outData)
 {
 	char buffer[32] = {0};
-	strcpy(buffer, "0x");
+	mir_strcpy(buffer, "0x");
 	STRNCPY(buffer + 2, inData, HEX_SIZE);
 	sscanf(buffer, "%x", &size);
 	outData = (unsigned char*)new char[size*2];
@@ -132,7 +132,7 @@ int GetStringFromDatabase(MCONTACT hContact, char *szModule, char *szSettingName
 	if (db_get(hContact, szModule, szSettingName, &dbv) == 0)
 		{
 			res = 0;
-			size_t tmp = strlen(dbv.pszVal);
+			size_t tmp = mir_strlen(dbv.pszVal);
 			len = (tmp < size - 1) ? tmp : size - 1;
 			strncpy(szResult, dbv.pszVal, len);
 			szResult[len] = '\0';
@@ -142,7 +142,7 @@ int GetStringFromDatabase(MCONTACT hContact, char *szModule, char *szSettingName
 			res = 1;
 			if (szError)
 				{
-					size_t tmp = strlen(szError);
+					size_t tmp = mir_strlen(szError);
 					len = (tmp < size - 1) ? tmp : size - 1;
 					strncpy(szResult, szError, len);
 					szResult[len] = '\0';
@@ -340,7 +340,7 @@ MCONTACT GetContactFromID(TCHAR *szID, char *szProto)
 		tmp = (char *) CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, 0);
 		STRNCPY(dispName, tmp, sizeof(dispName));
 
-		if ((szHandle) && ((_tcsicmp(szHandle, szID) == 0) || (_tcsicmp(dispName, szID) == 0)) && ((szProto == NULL) || (_stricmp(szProto, cProtocol) == 0)))
+		if ((szHandle) && ((mir_tstrcmpi(szHandle, szID) == 0) || (mir_tstrcmpi(dispName, szID) == 0)) && ((szProto == NULL) || (_stricmp(szProto, cProtocol) == 0)))
 			found = 1;
 
 		free(szHandle);

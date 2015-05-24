@@ -34,7 +34,7 @@ UploadJob::UploadJob(MCONTACT _hContact, int _iFtpNum, EMode _mode) :
 UploadJob::UploadJob(UploadJob *job) :
 	GenericJob(job),fp(NULL),uiSent(0),uiTotalSent(0),uiFileSize(0)
 { 
-	strcpy(this->szFileLink, job->szFileLink);
+	mir_strcpy(this->szFileLink, job->szFileLink);
 	for (int i = 0; i < SIZEOF(this->lastSpeed); i++)
 		this->lastSpeed[i] = 0;
 }
@@ -62,8 +62,8 @@ void UploadJob::addToUploadDlg()
 {
 	for (UINT i = 0; i < this->files.size(); i++) {
 		UploadJob *jobCopy = new UploadJob(this);
-		_tcscpy(jobCopy->stzFilePath, this->files[i]);
-		_tcscpy(jobCopy->stzFileName, Utils::getFileNameFromPath(jobCopy->stzFilePath));
+		mir_tstrcpy(jobCopy->stzFilePath, this->files[i]);
+		mir_tstrcpy(jobCopy->stzFileName, Utils::getFileNameFromPath(jobCopy->stzFilePath));
 		Utils::makeSafeString(jobCopy->stzFileName, jobCopy->szSafeFileName);
 
 		UploadDialog::Tab *newTab = new UploadDialog::Tab(jobCopy);
@@ -88,7 +88,7 @@ void UploadJob::autoSend()
 	dbei.flags = DBEF_SENT;
 	dbei.szModule = szProto;
 	dbei.timestamp = (DWORD)time(NULL);
-	dbei.cbBlob = (DWORD)strlen(this->szFileLink) + 1;
+	dbei.cbBlob = (DWORD)mir_strlen(this->szFileLink) + 1;
 	dbei.pBlob = (PBYTE)this->szFileLink;
 	db_event_add(this->hContact, &dbei);
 	CallContactService(this->hContact, PSS_MESSAGE, 0, (LPARAM)this->szFileLink);

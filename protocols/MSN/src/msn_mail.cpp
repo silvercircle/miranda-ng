@@ -45,7 +45,7 @@ ezxml_t CMsnProto::oimRecvHdr(const char* service, ezxml_t& tbdy, char*& httphdr
 	tbdy = ezxml_add_child(bdy, service, 0);
 	ezxml_set_attr(tbdy, "xmlns", "http://www.hotmail.msn.com/ws/2004/09/oim/rsi");
 
-	size_t hdrsz = strlen(service) + sizeof(mailReqHdr) + 20;
+	size_t hdrsz = mir_strlen(service) + sizeof(mailReqHdr) + 20;
 	httphdr = (char*)mir_alloc(hdrsz);
 
 	mir_snprintf(httphdr, hdrsz, mailReqHdr, service);
@@ -88,7 +88,7 @@ void CMsnProto::getOIMs(ezxml_t xmli)
 		mir_free(url);
 
 		if (tResult != NULL && status == 200) {
-			ezxml_t xmlm = ezxml_parse_str(tResult, strlen(tResult));
+			ezxml_t xmlm = ezxml_parse_str(tResult, mir_strlen(tResult));
 			ezxml_t body = getSoapResponse(xmlm, "GetMessage");
 
 			MimeHeaders mailInfo;
@@ -117,7 +117,6 @@ void CMsnProto::getOIMs(ezxml_t xmli)
 
 			PROTORECVEVENT pre = { 0 };
 			pre.szMessage = mailInfo.decodeMailBody((char*)mailbody);
-			pre.flags = PREF_UTF /*+ ((isRtl) ? PREF_RTL : 0)*/;
 			pre.timestamp = evtm;
 			ProtoChainRecvMsg(MSN_HContactFromEmail(szEmail), &pre);
 			mir_free(pre.szMessage);
@@ -169,7 +168,7 @@ void CMsnProto::getMetaData(void)
 	mir_free(getReqHdr);
 
 	if (tResult != NULL && status == 200) {
-		ezxml_t xmlm = ezxml_parse_str(tResult, strlen(tResult));
+		ezxml_t xmlm = ezxml_parse_str(tResult, mir_strlen(tResult));
 		ezxml_t xmli = ezxml_get(xmlm, "s:Body", 0, "GetMetadataResponse", 0, "MD", -1);
 		if (!xmli)
 			xmli = ezxml_get(xmlm, "soap:Body", 0, "GetMetadataResponse", 0, "MD", -1);
@@ -183,11 +182,11 @@ void CMsnProto::getMetaData(void)
 
 void CMsnProto::processMailData(char* mailData)
 {
-	if (strcmp(mailData, "too-large") == 0) {
+	if (mir_strcmp(mailData, "too-large") == 0) {
 		getMetaData();
 	}
 	else {
-		ezxml_t xmli = ezxml_parse_str(mailData, strlen(mailData));
+		ezxml_t xmli = ezxml_parse_str(mailData, mir_strlen(mailData));
 
 		ezxml_t toke = ezxml_child(xmli, "E");
 
@@ -233,13 +232,13 @@ void CMsnProto::sttNotificationMessage(char* msgBody, bool isInitial)
 
 	if (MsgDelta != NULL) {
 		int iDelta = atol(MsgDelta);
-		if (SrcFolder && strcmp(SrcFolder, "ACTIVE") == 0)
+		if (SrcFolder && mir_strcmp(SrcFolder, "ACTIVE") == 0)
 			mUnreadMessages -= iDelta;
-		else if (DestFolder && strcmp(DestFolder, "ACTIVE") == 0)
+		else if (DestFolder && mir_strcmp(DestFolder, "ACTIVE") == 0)
 			mUnreadMessages += iDelta;
-		if (SrcFolder && strcmp(SrcFolder, "HM_BuLkMail_") == 0)
+		if (SrcFolder && mir_strcmp(SrcFolder, "HM_BuLkMail_") == 0)
 			mUnreadJunkEmails -= iDelta;
-		else if (DestFolder && strcmp(DestFolder, "HM_BuLkMail_") == 0)
+		else if (DestFolder && mir_strcmp(DestFolder, "HM_BuLkMail_") == 0)
 			mUnreadJunkEmails += iDelta;
 
 		if (mUnreadJunkEmails < 0) mUnreadJunkEmails = 0;
@@ -248,8 +247,8 @@ void CMsnProto::sttNotificationMessage(char* msgBody, bool isInitial)
 
 	if (From != NULL && Subject != NULL && Fromaddr != NULL) {
 		if (DestFolder != NULL && SrcFolder == NULL) {
-			mUnreadMessages += strcmp(DestFolder, "ACTIVE") == 0;
-			mUnreadJunkEmails += strcmp(DestFolder, "HM_BuLkMail_") == 0;
+			mUnreadMessages += mir_strcmp(DestFolder, "ACTIVE") == 0;
+			mUnreadJunkEmails += mir_strcmp(DestFolder, "HM_BuLkMail_") == 0;
 		}
 
 		wchar_t* mimeFromW = tFileInfo.decode(From);
@@ -358,7 +357,7 @@ void CMsnProto::sttNotificationMessage(char* msgBody, bool isInitial)
 
 static void TruncUtf8(char *str, size_t sz)
 {
-	size_t len = strlen(str);
+	size_t len = mir_strlen(str);
 	if (sz > len) sz = len;
 
 	size_t cntl = 0, cnt = 0;

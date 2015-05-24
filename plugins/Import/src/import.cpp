@@ -42,7 +42,7 @@ struct AccountMap
 };
 
 static int CompareAccs(const AccountMap *p1, const AccountMap *p2)
-{	return stricmp(p1->szSrcAcc, p2->szSrcAcc);
+{	return mir_strcmpi(p1->szSrcAcc, p2->szSrcAcc);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -93,7 +93,7 @@ static bool CompareDb(DBVARIANT &dbv1, DBVARIANT &dbv2)
 
 		case DBVT_ASCIIZ:
 		case DBVT_UTF8:
-			return 0 == strcmp(dbv1.pszVal, dbv2.pszVal);
+			return 0 == mir_strcmp(dbv1.pszVal, dbv2.pszVal);
 		}
 	}
 	return false;
@@ -373,7 +373,7 @@ static INT_PTR CALLBACK AccountsMatcherProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
 
 static char* newStr(const char *s)
 {
-	return (s == NULL) ? NULL : strcpy(new char[strlen(s) + 1], s);
+	return (s == NULL) ? NULL : mir_strcpy(new char[mir_strlen(s) + 1], s);
 }
 
 static bool FindDestAccount(const char *szProto)
@@ -383,7 +383,7 @@ static bool FindDestAccount(const char *szProto)
 		if (pam.pa == NULL)
 			continue;
 
-		if (!strcmp(pam.pa->szModuleName, szProto))
+		if (!mir_strcmp(pam.pa->szModuleName, szProto))
 			return true;
 	}
 
@@ -411,7 +411,7 @@ static PROTOACCOUNT* FindMyAccount(const char *szProto, const char *szBaseProto,
 		if (pa->bOldProto || pa->bIsVirtual || pa->bDynDisabled)
 			return pa;
 
-		if (ptszName && !_tcscmp(pa->tszAccountName, ptszName))
+		if (ptszName && !mir_tstrcmp(pa->tszAccountName, ptszName))
 			return pa;
 
 		char *pszUniqueSetting = (char*)CallProtoService(pa->szModuleName, PS_GETCAPS, PFLAG_UNIQUEIDSETTING, 0);
@@ -929,7 +929,7 @@ static void ImportHistory(MCONTACT hContact, PROTOACCOUNT **protocol, int protoC
 			if (hDst == NULL) {
 				bSkipAll = true;
 				for (int i = 0; i < protoCount; i++) {
-					if (!strcmp(dbei.szModule, protocol[i]->szModuleName)) {
+					if (!mir_strcmp(dbei.szModule, protocol[i]->szModuleName)) {
 						bSkipAll = false;
 						break;
 					}
@@ -1013,7 +1013,7 @@ static void ImportHistory(MCONTACT hContact, PROTOACCOUNT **protocol, int protoC
 /////////////////////////////////////////////////////////////////////////////////////////
 
 static int CompareModules(const char *p1, const char *p2)
-{	return stricmp(p1, p2);
+{	return mir_strcmpi(p1, p2);
 }
 
 void MirandaImport(HWND hdlg)

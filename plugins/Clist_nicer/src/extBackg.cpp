@@ -262,7 +262,7 @@ StatusItems_t *GetProtocolStatusItem(const char *szProto)
 
 	for (int i = SIZEOF(_StatusItems); i < arStatusItems.getCount(); i++) {
 		StatusItems_t *p = arStatusItems[i];
-		if (!strcmp(p->szName[0] == '{' ? p->szName+3 : p->szName, szProto))
+		if (!mir_strcmp(p->szName[0] == '{' ? p->szName+3 : p->szName, szProto))
 			return p;
 	}
 	return NULL;
@@ -304,19 +304,19 @@ void LoadExtBkSettingsFromDB()
 
 		p->imageItem = 0;
 		char buffer[255], *pszEnd = buffer + mir_snprintf(buffer, SIZEOF(buffer), "%s_", p->szDBname);
-		strcpy(pszEnd, "IGNORE"); p->IGNORED = (BYTE)cfg::getByte("CLCExt", buffer, p->IGNORED);
-		strcpy(pszEnd, "GRADIENT"); p->GRADIENT = (BYTE)cfg::getDword("CLCExt", buffer, p->GRADIENT);
-		strcpy(pszEnd, "CORNER"); p->CORNER = (BYTE)cfg::getDword("CLCExt", buffer, p->CORNER);
-		strcpy(pszEnd, "COLOR"); p->COLOR = cfg::getDword("CLCExt", buffer, p->COLOR);
-		strcpy(pszEnd, "COLOR2"); p->COLOR2 = cfg::getDword(NULL, "CLCExt", buffer, p->COLOR2);
-		strcpy(pszEnd, "COLOR2_TRANSPARENT"); p->COLOR2_TRANSPARENT = (BYTE)cfg::getByte("CLCExt", buffer, p->COLOR2_TRANSPARENT);
-		strcpy(pszEnd, "TEXTCOLOR"); p->TEXTCOLOR = cfg::getDword("CLCExt", buffer, p->TEXTCOLOR);
-		strcpy(pszEnd, "ALPHA"); p->ALPHA = cfg::getByte("CLCExt", buffer, p->ALPHA);
-		strcpy(pszEnd, "MRGN_LEFT"); p->MARGIN_LEFT = cfg::getByte("CLCExt", buffer, p->MARGIN_LEFT);
-		strcpy(pszEnd, "MRGN_TOP"); p->MARGIN_TOP = cfg::getByte("CLCExt", buffer, p->MARGIN_TOP);
-		strcpy(pszEnd, "MRGN_RIGHT"); p->MARGIN_RIGHT = cfg::getByte("CLCExt", buffer, p->MARGIN_RIGHT);
-		strcpy(pszEnd, "MRGN_BOTTOM"); p->MARGIN_BOTTOM = cfg::getByte("CLCExt", buffer, p->MARGIN_BOTTOM);
-		strcpy(pszEnd, "BDRSTYLE"); p->BORDERSTYLE = cfg::getDword("CLCExt", buffer, p->BORDERSTYLE);
+		mir_strcpy(pszEnd, "IGNORE"); p->IGNORED = (BYTE)cfg::getByte("CLCExt", buffer, p->IGNORED);
+		mir_strcpy(pszEnd, "GRADIENT"); p->GRADIENT = (BYTE)cfg::getDword("CLCExt", buffer, p->GRADIENT);
+		mir_strcpy(pszEnd, "CORNER"); p->CORNER = (BYTE)cfg::getDword("CLCExt", buffer, p->CORNER);
+		mir_strcpy(pszEnd, "COLOR"); p->COLOR = cfg::getDword("CLCExt", buffer, p->COLOR);
+		mir_strcpy(pszEnd, "COLOR2"); p->COLOR2 = cfg::getDword(NULL, "CLCExt", buffer, p->COLOR2);
+		mir_strcpy(pszEnd, "COLOR2_TRANSPARENT"); p->COLOR2_TRANSPARENT = (BYTE)cfg::getByte("CLCExt", buffer, p->COLOR2_TRANSPARENT);
+		mir_strcpy(pszEnd, "TEXTCOLOR"); p->TEXTCOLOR = cfg::getDword("CLCExt", buffer, p->TEXTCOLOR);
+		mir_strcpy(pszEnd, "ALPHA"); p->ALPHA = cfg::getByte("CLCExt", buffer, p->ALPHA);
+		mir_strcpy(pszEnd, "MRGN_LEFT"); p->MARGIN_LEFT = cfg::getByte("CLCExt", buffer, p->MARGIN_LEFT);
+		mir_strcpy(pszEnd, "MRGN_TOP"); p->MARGIN_TOP = cfg::getByte("CLCExt", buffer, p->MARGIN_TOP);
+		mir_strcpy(pszEnd, "MRGN_RIGHT"); p->MARGIN_RIGHT = cfg::getByte("CLCExt", buffer, p->MARGIN_RIGHT);
+		mir_strcpy(pszEnd, "MRGN_BOTTOM"); p->MARGIN_BOTTOM = cfg::getByte("CLCExt", buffer, p->MARGIN_BOTTOM);
+		mir_strcpy(pszEnd, "BDRSTYLE"); p->BORDERSTYLE = cfg::getDword("CLCExt", buffer, p->BORDERSTYLE);
 	}
 
 	if (cfg::dat.bFirstRun) {
@@ -471,19 +471,19 @@ void extbk_export(char *file)
 			continue;
 
 		char *pszEnd = buffer + mir_snprintf(buffer, SIZEOF(buffer), "%s_", p->szDBname);
-		strcpy(pszEnd, "ALPHA"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->ALPHA), sizeof(p->ALPHA), file);
-		strcpy(pszEnd, "COLOR"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->COLOR), sizeof(p->COLOR), file);
-		strcpy(pszEnd, "COLOR2"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->COLOR2), sizeof(p->COLOR2), file);
-		strcpy(pszEnd, "COLOR2_TRANSPARENT"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->COLOR2_TRANSPARENT), sizeof(p->COLOR2_TRANSPARENT), file);
-		strcpy(pszEnd, "TEXTCOLOR"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->TEXTCOLOR), sizeof(p->TEXTCOLOR), file);
-		strcpy(pszEnd, "CORNER"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->CORNER), sizeof(p->CORNER), file);
-		strcpy(pszEnd, "GRADIENT"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->GRADIENT), sizeof(p->GRADIENT), file);
-		strcpy(pszEnd, "IGNORED"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->IGNORED), sizeof(p->IGNORED), file);
-		strcpy(pszEnd, "MARGIN_BOTTOM"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->MARGIN_BOTTOM), sizeof(p->MARGIN_BOTTOM), file);
-		strcpy(pszEnd, "MARGIN_LEFT"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->MARGIN_LEFT), sizeof(p->MARGIN_LEFT), file);
-		strcpy(pszEnd, "MARGIN_RIGHT"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->MARGIN_RIGHT), sizeof(p->MARGIN_RIGHT), file);
-		strcpy(pszEnd, "MARGIN_TOP"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->MARGIN_TOP), sizeof(p->MARGIN_TOP), file);
-		strcpy(pszEnd, "BORDERSTYLE"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->BORDERSTYLE), sizeof(p->BORDERSTYLE), file);
+		mir_strcpy(pszEnd, "ALPHA"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->ALPHA), sizeof(p->ALPHA), file);
+		mir_strcpy(pszEnd, "COLOR"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->COLOR), sizeof(p->COLOR), file);
+		mir_strcpy(pszEnd, "COLOR2"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->COLOR2), sizeof(p->COLOR2), file);
+		mir_strcpy(pszEnd, "COLOR2_TRANSPARENT"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->COLOR2_TRANSPARENT), sizeof(p->COLOR2_TRANSPARENT), file);
+		mir_strcpy(pszEnd, "TEXTCOLOR"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->TEXTCOLOR), sizeof(p->TEXTCOLOR), file);
+		mir_strcpy(pszEnd, "CORNER"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->CORNER), sizeof(p->CORNER), file);
+		mir_strcpy(pszEnd, "GRADIENT"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->GRADIENT), sizeof(p->GRADIENT), file);
+		mir_strcpy(pszEnd, "IGNORED"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->IGNORED), sizeof(p->IGNORED), file);
+		mir_strcpy(pszEnd, "MARGIN_BOTTOM"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->MARGIN_BOTTOM), sizeof(p->MARGIN_BOTTOM), file);
+		mir_strcpy(pszEnd, "MARGIN_LEFT"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->MARGIN_LEFT), sizeof(p->MARGIN_LEFT), file);
+		mir_strcpy(pszEnd, "MARGIN_RIGHT"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->MARGIN_RIGHT), sizeof(p->MARGIN_RIGHT), file);
+		mir_strcpy(pszEnd, "MARGIN_TOP"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->MARGIN_TOP), sizeof(p->MARGIN_TOP), file);
+		mir_strcpy(pszEnd, "BORDERSTYLE"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->BORDERSTYLE), sizeof(p->BORDERSTYLE), file);
 	}
 
 	for (n = 0; n <= FONTID_LAST; n++) {
@@ -686,7 +686,7 @@ static void ReadItem(StatusItems_t *this_item, char *szItem, char *file)
 	GetPrivateProfileStringA(szItem, "BasedOn", "None", buffer, 400, file);
 
 
-	if (strcmp(buffer, "None")) {
+	if (mir_strcmp(buffer, "None")) {
 		for (int i = 0; i < arStatusItems.getCount(); i++) {
 			StatusItems_t *p = arStatusItems[i];
 			if (!_stricmp(p->szName[0] == '{' ? p->szName+3 : p->szName, buffer)) {
@@ -759,7 +759,7 @@ void IMG_ReadItem(const char *itemname, const char *szFileName)
 
 	memset(&tmpItem, 0, sizeof(ImageItem));
 	GetPrivateProfileStringA(itemname, "Glyph", "None", buffer, 500, szFileName);
-	if (strcmp(buffer, "None")) {
+	if (mir_strcmp(buffer, "None")) {
 		sscanf(buffer, "%d,%d,%d,%d", &tmpItem.glyphMetrics[0], &tmpItem.glyphMetrics[1],
 			&tmpItem.glyphMetrics[2], &tmpItem.glyphMetrics[3]);
 		if (tmpItem.glyphMetrics[2] > tmpItem.glyphMetrics[0] && tmpItem.glyphMetrics[3] > tmpItem.glyphMetrics[1]) {
@@ -770,7 +770,7 @@ void IMG_ReadItem(const char *itemname, const char *szFileName)
 		}
 	}
 	GetPrivateProfileStringA(itemname, "Image", "None", buffer, 500, szFileName);
-	if (strcmp(buffer, "None")) {
+	if (mir_strcmp(buffer, "None")) {
 
 done_with_glyph:
 
@@ -805,7 +805,7 @@ done_with_glyph:
 			}
 		}
 		GetPrivateProfileStringA(itemname, "Fillcolor", "None", buffer, 500, szFileName);
-		if (strcmp(buffer, "None")) {
+		if (mir_strcmp(buffer, "None")) {
 			COLORREF fillColor = HexStringToLong(buffer);
 			tmpItem.fillBrush = CreateSolidBrush(fillColor);
 			tmpItem.dwFlags |= IMAGE_FILLSOLID;
@@ -855,9 +855,9 @@ done_with_glyph:
 		for (n = 0; ; n++) {
 			mir_snprintf(szItemNr, SIZEOF(szItemNr), "Item%d", n);
 			GetPrivateProfileStringA(itemname, szItemNr, "None", buffer, 500, szFileName);
-			if (!strcmp(buffer, "None"))
+			if (!mir_strcmp(buffer, "None"))
 				break;
-			if (!strcmp(buffer, "CLUI")) {
+			if (!mir_strcmp(buffer, "CLUI")) {
 				if (!(tmpItem.dwFlags & IMAGE_GLYPH))
 					IMG_CreateItem(&tmpItem, szFinalName, hdc);
 				if (tmpItem.hbm || tmpItem.dwFlags & IMAGE_GLYPH) {
@@ -1067,7 +1067,7 @@ static void BTN_ReadItem(char *itemName, char *file)
 			char szKey[20];
 			BYTE *pValue;
 
-			strcpy(szKey, n == 0 ? "dbonpush" : "dbonrelease");
+			mir_strcpy(szKey, n == 0 ? "dbonpush" : "dbonrelease");
 			pValue = (n == 0 ? tmpItem.bValuePush : tmpItem.bValueRelease);
 
 			GetPrivateProfileStringA(itemName, szKey, "None", szBuffer, 1000, file);
@@ -1128,7 +1128,7 @@ static void BTN_ReadItem(char *itemName, char *file)
 	}
 
 	GetPrivateProfileStringA(itemName, "Tip", "None", szBuffer, 1000, file);
-	if (strcmp(szBuffer, "None")) {
+	if (mir_strcmp(szBuffer, "None")) {
 		MultiByteToWideChar(cfg::dat.langPackCP, 0, szBuffer, -1, tmpItem.szTip, 256);
 		tmpItem.szTip[255] = 0;
 	}
@@ -1287,7 +1287,7 @@ void LoadPerContactSkins(TCHAR *tszFileName)
 
 				int j;
 				for (j = 0; j < i - 1; j++) {
-					if (!strcmp(szProto, items[j].szName) && !strcmp(UIN, items[j].szDBname) &&
+					if (!mir_strcmp(szProto, items[j].szName) && !mir_strcmp(UIN, items[j].szDBname) &&
 							mir_strlen(szProto) == mir_strlen(items[j].szName) && mir_strlen(UIN) == mir_strlen(items[j].szDBname)) {
 						cfg::writeDword(hContact, "EXTBK", "TEXT", items[j].TEXTCOLOR);
 						cfg::writeDword(hContact, "EXTBK", "COLOR1", items[j].COLOR);
@@ -1542,7 +1542,7 @@ static INT_PTR CALLBACK DlgProcSkinOpts(HWND hwndDlg, UINT msg, WPARAM wParam, L
 					DBVARIANT dbv = {0};
 
 					if (!cfg::getTString(NULL, "CLC", "AdvancedSkin", &dbv)) {
-						if (_tcscmp(dbv.ptszVal, final_path))
+						if (mir_tstrcmp(dbv.ptszVal, final_path))
 							skinChanged = TRUE;
 						db_free(&dbv);
 					}

@@ -1760,7 +1760,7 @@ void TSAPI GetMyNick(TWindowData *dat)
 		switch (ci.type) {
 		case CNFT_ASCIIZ:
 			if (mir_tstrlen((TCHAR*)ci.pszVal) == 0 ||
-				!_tcscmp((TCHAR*)ci.pszVal, TranslateT("'(Unknown contact)'"))) {
+				!mir_tstrcmp((TCHAR*)ci.pszVal, TranslateT("'(Unknown contact)'"))) {
 				_tcsncpy_s(dat->szMyNickname, (dat->myUin[0] ? dat->myUin : TranslateT("'(Unknown contact)'")), _TRUNCATE);
 			}
 			else {
@@ -1783,7 +1783,7 @@ void TSAPI GetMyNick(TWindowData *dat)
 
 HICON TSAPI MY_GetContactIcon(const TWindowData *dat, LPCSTR szSetting)
 {
-	int bUseMeta = (szSetting == NULL) ? false : M.GetByte(szSetting, strcmp(szSetting, "MetaiconTab") == 0);
+	int bUseMeta = (szSetting == NULL) ? false : M.GetByte(szSetting, mir_strcmp(szSetting, "MetaiconTab") == 0);
 	if (bUseMeta)
 		return LoadSkinnedProtoIcon(dat->cache->getProto(), dat->cache->getStatus());
 	return LoadSkinnedProtoIcon(dat->cache->getActiveProto(), dat->cache->getActiveStatus());
@@ -1924,14 +1924,14 @@ void TSAPI SendHBitmapAsFile(const TWindowData *dat, HBITMAP hbmp)
 		return;
 	}
 
-	if (tempdirlen <= 0 || tempdirlen >= MAX_PATH - _tcslen(mirandatempdir) - _tcslen(filenametemplate) - 2) // -2 is because %Y takes 4 symbols
+	if (tempdirlen <= 0 || tempdirlen >= MAX_PATH - mir_tstrlen(mirandatempdir) - mir_tstrlen(filenametemplate) - 2) // -2 is because %Y takes 4 symbols
 		filename[0] = 0;					// prompt for a new name
 	else {
-		_tcscpy(filename + tempdirlen, mirandatempdir);
+		mir_tstrcpy(filename + tempdirlen, mirandatempdir);
 		if ((GetFileAttributes(filename) == INVALID_FILE_ATTRIBUTES || ((GetFileAttributes(filename) & FILE_ATTRIBUTE_DIRECTORY) == 0)) && CreateDirectory(filename, NULL) == 0)
 			filename[0] = 0;
 		else {
-			tempdirlen = _tcslen(filename);
+			tempdirlen = mir_tstrlen(filename);
 
 			time_t rawtime;
 			time(&rawtime);

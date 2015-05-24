@@ -146,8 +146,8 @@ BOOL ShowListMainDlgProc_OpenContactMenu(HWND hDlg, HWND hList, int item, LASTUC
 void wSetData(char **Data, const char *Value)
 {
 	if (Value[0] != 0) {
-		char *newData = (char*)mir_alloc(strlen(Value)+3);
-		strcpy(newData, Value);
+		char *newData = (char*)mir_alloc(mir_strlen(Value)+3);
+		mir_strcpy(newData, Value);
 		*Data = newData;
 	}
 	else *Data = "";
@@ -155,7 +155,7 @@ void wSetData(char **Data, const char *Value)
 
 void wfree(char **Data)
 {
-	if (*Data && strlen(*Data) > 0)	mir_free(*Data);
+	if (*Data && mir_strlen(*Data) > 0)	mir_free(*Data);
 	*Data = NULL;
 }
 
@@ -455,7 +455,7 @@ static int OnContactSettingChanged( WPARAM hContact, LPARAM lParam )
 {
 	DBCONTACTWRITESETTING* pdbcws = ( DBCONTACTWRITESETTING* )lParam;
 	if ( hContact == NULL )
-		if ( !stricmp( pdbcws->szModule, dbLastUC_ModuleName))
+		if ( !mir_strcmpi( pdbcws->szModule, dbLastUC_ModuleName))
 			LoadDBSettings();
 
 	return 0;

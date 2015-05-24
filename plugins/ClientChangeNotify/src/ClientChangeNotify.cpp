@@ -194,7 +194,7 @@ int ContactSettingChanged(WPARAM hContact, LPARAM lParam)
 			return 0;
 
 		_ASSERT(szProto);
-		if (!strcmp(szProto, META_PROTO)) // workaround for metacontacts
+		if (!mir_strcmp(szProto, META_PROTO)) // workaround for metacontacts
 			return 0;
 
 		sd.MirVer = db_get_s(hContact, szProto, DB_MIRVER, _T(""));
@@ -233,7 +233,7 @@ int ContactSettingChanged(WPARAM hContact, LPARAM lParam)
 				LPCTSTR ptszOldClient = Finger_GetClientDescr(sd.OldMirVer); 
 				LPCTSTR ptszClient = Finger_GetClientDescr(sd.MirVer);
 				if (ptszOldClient && ptszClient) {
-					if (PerContactSetting != NOTIFY_ALMOST_ALWAYS && PerContactSetting != NOTIFY_ALWAYS && !PopupOptPage.GetValue(IDC_POPUPOPTDLG_VERCHGNOTIFY) && !_tcscmp(ptszClient, ptszOldClient))
+					if (PerContactSetting != NOTIFY_ALMOST_ALWAYS && PerContactSetting != NOTIFY_ALWAYS && !PopupOptPage.GetValue(IDC_POPUPOPTDLG_VERCHGNOTIFY) && !mir_tstrcmp(ptszClient, ptszOldClient))
 						return 0;
 
 					if (!PopupOptPage.GetValue(IDC_POPUPOPTDLG_SHOWVER)) {

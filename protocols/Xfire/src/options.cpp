@@ -104,7 +104,7 @@ static mytreeitem mytree[] = {
 //funktion zum auslesen aller einträge unter XFireBlock
 static int enumSettingsProc(const char *szSetting, LPARAM lParam)
 {
-	if (strlen(szSetting) > 0)
+	if (mir_strlen(szSetting) > 0)
 	{
 		SendDlgItemMessageA((HWND)lParam, IDC_BLOCKUSER, LB_ADDSTRING, 0, (LPARAM)szSetting);
 	}
@@ -578,7 +578,7 @@ static INT_PTR CALLBACK DlgProcOpts4(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 		//addgamedia auf 0 setzen
 		TranslateDialogDefault(hwndDlg);
 
-		strcpy(inipath, XFireGetFoldersPath("IniFile"));
+		mir_strcpy(inipath, XFireGetFoldersPath("IniFile"));
 		strcat(inipath, "xfire_games.ini");
 
 		FILE * f = fopen(inipath, "r");
@@ -594,7 +594,7 @@ static INT_PTR CALLBACK DlgProcOpts4(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			inifound = FALSE;
 		}
 
-		strcpy(inipath, XFireGetFoldersPath("IconsFile"));
+		mir_strcpy(inipath, XFireGetFoldersPath("IconsFile"));
 		strcat(inipath, "icons.dll");
 
 		f = fopen(inipath, "r");
@@ -618,7 +618,7 @@ static INT_PTR CALLBACK DlgProcOpts4(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 
 		SendDlgItemMessage(hwndDlg, IDC_REMUSER, BM_SETIMAGE, IMAGE_ICON, (WPARAM)LoadSkinnedIcon(SKINICON_OTHER_DELETE));
 
-		strcpy(inipath, XFireGetFoldersPath("IniFile"));
+		mir_strcpy(inipath, XFireGetFoldersPath("IniFile"));
 		SetDlgItemTextA(hwndDlg, IDC_FILESSHOULDBE, inipath);
 
 		EnableDlgItem(hwndDlg, IDC_REMUSER, FALSE);
@@ -895,9 +895,9 @@ static INT_PTR CALLBACK DlgProcOpts6(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 		char* buffer;
 
 		EmptyClipboard();
-		clipbuffer = GlobalAlloc(GMEM_DDESHARE, strlen(out)+1);
+		clipbuffer = GlobalAlloc(GMEM_DDESHARE, mir_strlen(out)+1);
 		buffer = (char*)GlobalLock(clipbuffer);
-		strcpy(buffer, LPCSTR(out));
+		mir_strcpy(buffer, LPCSTR(out));
 		GlobalUnlock(clipbuffer);
 
 		SetClipboardData(CF_TEXT, clipbuffer);

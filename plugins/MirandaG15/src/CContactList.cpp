@@ -132,7 +132,7 @@ void CContactList::AddContact(MCONTACT hContact)
 	}
 
 	// Don't add metacontacts as contacts
-	if(!stricmp(szProto,"MetaContacts"))
+	if(!mir_strcmpi(szProto,"MetaContacts"))
 	{
 		if(!CConfig::GetBoolSetting(CLIST_USEGROUPS))
 			strGroup = _T("");
@@ -505,7 +505,7 @@ bool CContactList::CompareEntries(CListEntry<CContactListEntry*,CContactListGrou
 		else if(pLeftEntry->iStatus != pRightEntry->iStatus)
 			return (aiStatusPriority[pLeftEntry->iStatus - ID_STATUS_OFFLINE] > aiStatusPriority[pRightEntry->iStatus - ID_STATUS_OFFLINE]);
 		else
-			return _tcsicmp(pLeftEntry->strName.c_str(),pRightEntry->strName.c_str())<0;
+			return mir_tstrcmpi(pLeftEntry->strName.c_str(),pRightEntry->strName.c_str())<0;
 	}
 	else if(pLeft->GetType() == ITEM && pRight->GetType() == CONTAINER)
 		return false;
@@ -523,7 +523,7 @@ bool CContactList::CompareEntries(CListEntry<CContactListEntry*,CContactListGrou
 		else if (pGroup1->iEvents && pGroup2->iEvents)
 			return (pGroup1->iEvents > pGroup2->iEvents);
 		else
-			return _tcsicmp(pGroup1->strName.c_str(),pGroup2->strName.c_str())<0;
+			return mir_tstrcmpi(pGroup1->strName.c_str(),pGroup2->strName.c_str())<0;
 	}
 
 	return false;
@@ -1010,7 +1010,7 @@ void CContactList::InitializeGroupObjects()
 	{
 		tstring strGroup = GetContactGroupPath(hContact);
 		szProto = GetContactProto(hContact);
-		if(szProto && db_get_b(NULL,"MetaContacts","Enabled",1) && !stricmp(szProto,"MetaContacts"))
+		if(szProto && db_get_b(NULL,"MetaContacts","Enabled",1) && !mir_strcmpi(szProto,"MetaContacts"))
 		{
 			tstring strName = CAppletManager::GetContactDisplayname(hContact);
 			tstring strPath = _T("");

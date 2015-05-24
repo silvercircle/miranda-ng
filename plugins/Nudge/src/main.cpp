@@ -34,7 +34,7 @@ INT_PTR NudgeShowMenu(WPARAM wParam, LPARAM lParam)
 	bool bEnabled = false;
 	for (int i = 0; i < arNudges.getCount(); i++) {
 		CNudgeElement &p = arNudges[i];
-		if (!strcmp((char*)wParam, p.ProtocolName)) {
+		if (!mir_strcmp((char*)wParam, p.ProtocolName)) {
 			bEnabled = (GlobalNudge.useByProtocol) ? p.enabled : DefaultNudge.enabled;
 			break;
 		}
@@ -54,7 +54,7 @@ INT_PTR NudgeSend(WPARAM hContact, LPARAM lParam)
 		if (GlobalNudge.useByProtocol) {
 			for (int i = 0; i < arNudges.getCount(); i++) {
 				CNudgeElement &p = arNudges[i];
-				if (!strcmp(protoName, p.ProtocolName))
+				if (!mir_strcmp(protoName, p.ProtocolName))
 					Nudge_ShowPopup(&p, hContact, msg);
 			}
 		}
@@ -68,7 +68,7 @@ INT_PTR NudgeSend(WPARAM hContact, LPARAM lParam)
 	if (GlobalNudge.useByProtocol) {
 		for (int i = 0; i < arNudges.getCount(); i++) {
 			CNudgeElement &p = arNudges[i];
-			if (!strcmp(protoName, p.ProtocolName))
+			if (!mir_strcmp(protoName, p.ProtocolName))
 				if (p.showStatus)
 					Nudge_SentStatus(&p, hContact);
 		}
@@ -105,7 +105,7 @@ int NudgeReceived(WPARAM hContact, LPARAM lParam)
 	if (GlobalNudge.useByProtocol) {
 		for (int i = 0; i < arNudges.getCount(); i++) {
 			CNudgeElement &p = arNudges[i];
-			if (!strcmp(protoName, p.ProtocolName)) {
+			if (!mir_strcmp(protoName, p.ProtocolName)) {
 
 				if (p.enabled) {
 					if (p.useIgnoreSettings && CallService(MS_IGNORE_ISIGNORED, hContact, IGNOREEVENT_USERONLINE))
@@ -240,7 +240,7 @@ static int TabsrmmButtonPressed(WPARAM wParam, LPARAM lParam)
 {
 	CustomButtonClickData *cbcd = (CustomButtonClickData *)lParam;
 
-	if (!strcmp(cbcd->pszModule, "Nudge"))
+	if (!mir_strcmp(cbcd->pszModule, "Nudge"))
 		NudgeSend(wParam, 0);
 
 	return 0;
@@ -476,32 +476,30 @@ void Nudge_ShowPopup(CNudgeElement *n, MCONTACT hContact, TCHAR * Message)
 
 void Nudge_SentStatus(CNudgeElement *n, MCONTACT hContact)
 {
-	char *buff = mir_utf8encodeT(n->senText);
+	T2Utf buff(n->senText);
 
 	DBEVENTINFO dbei = { sizeof(dbei) };
 	dbei.szModule = MODULENAME;
 	dbei.flags = DBEF_SENT | DBEF_UTF;
 	dbei.timestamp = (DWORD)time(NULL);
 	dbei.eventType = 1;
-	dbei.cbBlob = (DWORD)strlen(buff) + 1;
+	dbei.cbBlob = (DWORD)mir_strlen(buff) + 1;
 	dbei.pBlob = (PBYTE)buff;
 	db_event_add(hContact, &dbei);
-	mir_free(buff);
 }
 
 void Nudge_ShowStatus(CNudgeElement *n, MCONTACT hContact, DWORD timestamp)
 {
-	char *buff = mir_utf8encodeT(n->recText);
+	T2Utf buff(n->recText);
 
 	DBEVENTINFO dbei = { sizeof(dbei) };
 	dbei.szModule = MODULENAME;
 	dbei.eventType = 1;
 	dbei.flags = DBEF_UTF;
 	dbei.timestamp = timestamp;
-	dbei.cbBlob = (DWORD)strlen(buff) + 1;
+	dbei.cbBlob = (DWORD)mir_strlen(buff) + 1;
 	dbei.pBlob = (PBYTE)buff;
 	db_event_add(hContact, &dbei);
-	mir_free(buff);
 }
 
 void Nudge_AddAccount(PROTOACCOUNT *proto)

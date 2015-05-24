@@ -142,7 +142,7 @@ static INT_PTR CALLBACK DlgProcFirstRun(HWND hwndDlg,UINT msg,WPARAM wParam,LPAR
 						creation_date = mir_wstrdup(toUTF16(out.substr(p,p2-p)).c_str());
 						p2 = out.find("[", p2);
 						p2 = out.find("expires:", p2);
-						p2 += strlen("expires:");
+						p2 += mir_strlen("expires:");
 						if(p2 != std::string::npos)
 						{
 							p2++;
@@ -270,7 +270,7 @@ static INT_PTR CALLBACK DlgProcFirstRun(HWND hwndDlg,UINT msg,WPARAM wParam,LPAR
 			string keyinfo = Translate("key ID");
 			keyinfo += ": ";
 			char *keyid = UniGetContactSettingUtf(NULL, szGPGModuleName, "KeyID", "");
-			keyinfo += (strlen(keyid) > 0)?keyid:Translate("not set");
+			keyinfo += (mir_strlen(keyid) > 0)?keyid:Translate("not set");
 			mir_free(keyid);
 			SetDlgItemTextA(hwndDlg, IDC_KEY_ID, keyinfo.c_str());
 		}
@@ -296,7 +296,7 @@ static INT_PTR CALLBACK DlgProcFirstRun(HWND hwndDlg,UINT msg,WPARAM wParam,LPAR
 				  {
 					  wstring str = name;
 					  wstring::size_type p = str.find(_T("("))-1;
-					  _tcscpy(name, str.substr(0, p).c_str());
+					  mir_tstrcpy(name, str.substr(0, p).c_str());
 				  }
 			  }
 			  string out;
@@ -322,7 +322,7 @@ static INT_PTR CALLBACK DlgProcFirstRun(HWND hwndDlg,UINT msg,WPARAM wParam,LPAR
 			  {
 				  char buf[64];
 				  GetDlgItemTextA(hwndDlg, IDC_ACCOUNT, buf, SIZEOF(buf));
-				  if(!strcmp(buf, Translate("Default")))
+				  if(!mir_strcmp(buf, Translate("Default")))
 				  {
 					  db_set_s(NULL, szGPGModuleName, "GPGPubKey", out.c_str());
 					  db_set_ts(NULL, szGPGModuleName, "KeyMainName", name);
@@ -340,7 +340,7 @@ static INT_PTR CALLBACK DlgProcFirstRun(HWND hwndDlg,UINT msg,WPARAM wParam,LPAR
 					  acc_str += "_KeyID";
 					  db_set_ts(NULL, szGPGModuleName, acc_str.c_str(), fp);
 				  }
-				  if(!strcmp(buf, Translate("Default")))
+				  if(!mir_strcmp(buf, Translate("Default")))
 				  {
 					  wstring keyinfo = TranslateT("Default private key ID");
 					  keyinfo += _T(": ");
@@ -468,7 +468,7 @@ static INT_PTR CALLBACK DlgProcFirstRun(HWND hwndDlg,UINT msg,WPARAM wParam,LPAR
 			  if(result == pxNotFound)
 				  break;
 			  string::size_type s = out.find("Key fingerprint = ");
-			  s += strlen("Key fingerprint = ");
+			  s += mir_strlen("Key fingerprint = ");
 			  string::size_type s2 = out.find("\n", s);
 			  TCHAR *fp = NULL;
 			  {
@@ -497,7 +497,7 @@ static INT_PTR CALLBACK DlgProcFirstRun(HWND hwndDlg,UINT msg,WPARAM wParam,LPAR
 		  {
 			  char buf[64];
 			  GetDlgItemTextA(hwndDlg, IDC_ACCOUNT, buf, SIZEOF(buf));
-			  if(!strcmp(buf, Translate("Default")))
+			  if(!mir_strcmp(buf, Translate("Default")))
 			  {
 				  db_unset(NULL, szGPGModuleName, "GPGPubKey");
 				  db_unset(NULL, szGPGModuleName, "KeyID");
@@ -625,7 +625,7 @@ static INT_PTR CALLBACK DlgProcFirstRun(HWND hwndDlg,UINT msg,WPARAM wParam,LPAR
 				  {
 					  char buf[64];
 					  GetDlgItemTextA(hwndDlg, IDC_ACCOUNT, buf, SIZEOF(buf));
-					  if(!strcmp(buf, Translate("Default")))
+					  if(!mir_strcmp(buf, Translate("Default")))
 					  {
 						  db_set_s(NULL, szGPGModuleName, "GPGPubKey", out.c_str());
 						  db_set_ts(NULL, szGPGModuleName, "KeyID", fp);
@@ -650,12 +650,12 @@ static INT_PTR CALLBACK DlgProcFirstRun(HWND hwndDlg,UINT msg,WPARAM wParam,LPAR
 			{
 				char buf[64];
 				GetDlgItemTextA(hwndDlg, IDC_ACCOUNT, buf, SIZEOF(buf));
-				if(!strcmp(buf, Translate("Default")))
+				if(!mir_strcmp(buf, Translate("Default")))
 				{
 					string keyinfo = Translate("key ID");
 					keyinfo += ": ";
 					char *keyid = UniGetContactSettingUtf(NULL, szGPGModuleName, "KeyID", "");
-					keyinfo += (strlen(keyid) > 0)?keyid:Translate("not set");
+					keyinfo += (mir_strlen(keyid) > 0)?keyid:Translate("not set");
 					mir_free(keyid);
 					SetDlgItemTextA(hwndDlg, IDC_KEY_ID, keyinfo.c_str());
 				}
@@ -666,7 +666,7 @@ static INT_PTR CALLBACK DlgProcFirstRun(HWND hwndDlg,UINT msg,WPARAM wParam,LPAR
 					std::string acc_str= buf;
 					acc_str += "_KeyID";
 					char *keyid = UniGetContactSettingUtf(NULL, szGPGModuleName, acc_str.c_str(), "");
-					keyinfo += (strlen(keyid) > 0)?keyid:Translate("not set");
+					keyinfo += (mir_strlen(keyid) > 0)?keyid:Translate("not set");
 					mir_free(keyid);
 					SetDlgItemTextA(hwndDlg, IDC_KEY_ID, keyinfo.c_str());
 				}
@@ -861,17 +861,17 @@ static INT_PTR CALLBACK DlgProcGpgBinOpts(HWND hwndDlg, UINT msg, WPARAM wParam,
 			SetCurrentDirectoryA(mir_path);
 			tmp = mir_a2t(mir_path);
 			mir_free(mir_path);
-			mir_realloc(path, (_tcslen(path)+128)*sizeof(TCHAR));
+			mir_realloc(path, (mir_tstrlen(path)+128)*sizeof(TCHAR));
 			TCHAR *gpg_path = (TCHAR*)mir_alloc(sizeof(TCHAR) * MAX_PATH), *gpg_lang_path = (TCHAR*)mir_alloc(sizeof(TCHAR) * MAX_PATH);
-			_tcscpy(gpg_path, tmp);
+			mir_tstrcpy(gpg_path, tmp);
 			_tcscat(gpg_path, _T("\\GnuPG\\gpg.exe"));
-			_tcscpy(gpg_lang_path, tmp);
+			mir_tstrcpy(gpg_lang_path, tmp);
 			_tcscat(gpg_lang_path, _T("\\GnuPG\\gnupg.nls\\en@quot.mo"));
 			mir_free(tmp);
 			if(boost::filesystem::exists(gpg_path))
 			{
 				gpg_exists = true;
-				_tcscpy(path, _T("GnuPG\\gpg.exe"));
+				mir_tstrcpy(path, _T("GnuPG\\gpg.exe"));
 			}
 			if(boost::filesystem::exists(gpg_lang_path))
 				lang_exists = true;
@@ -913,7 +913,7 @@ static INT_PTR CALLBACK DlgProcGpgBinOpts(HWND hwndDlg, UINT msg, WPARAM wParam,
 			string::size_type p1 = out.find("(GnuPG) ");
 			if(p1 != string::npos)
 			{
-				p1 += strlen("(GnuPG) ");
+				p1 += mir_strlen("(GnuPG) ");
 				if(out[p1] != '1')
 					bad_version = true;
 			}
@@ -974,7 +974,7 @@ static INT_PTR CALLBACK DlgProcGpgBinOpts(HWND hwndDlg, UINT msg, WPARAM wParam,
 			  char* p_path = NULL;
 			  if(StriStr(atmp, mir_path))
 			  {
-				  p_path = atmp + strlen(mir_path);
+				  p_path = atmp + mir_strlen(mir_path);
 				  tmp = mir_a2t(p_path);
 				  SetDlgItemText(hwndDlg, IDC_BIN_PATH, tmp);
 			  }
@@ -992,7 +992,7 @@ static INT_PTR CALLBACK DlgProcGpgBinOpts(HWND hwndDlg, UINT msg, WPARAM wParam,
 			  char* p_path = NULL;
 			  if(StriStr(atmp, mir_path))
 			  {
-				  p_path = atmp + strlen(mir_path);
+				  p_path = atmp + mir_strlen(mir_path);
 				  tmp = mir_a2t(p_path);
 				  SetDlgItemText(hwndDlg, IDC_HOME_DIR, tmp);
 			  }
@@ -1038,7 +1038,7 @@ static INT_PTR CALLBACK DlgProcGpgBinOpts(HWND hwndDlg, UINT msg, WPARAM wParam,
 			  string::size_type p1 = out.find("(GnuPG) ");
 			  if(p1 != string::npos)
 			  {
-				  p1 += strlen("(GnuPG) ");
+				  p1 += mir_strlen("(GnuPG) ");
 				  if(out[p1] != '1')
 					  bad_version = true;
 			  }
@@ -1052,8 +1052,8 @@ static INT_PTR CALLBACK DlgProcGpgBinOpts(HWND hwndDlg, UINT msg, WPARAM wParam,
 		  }
 		  db_set_ts(NULL, szGPGModuleName, "szGpgBinPath", tmp);
 		  GetDlgItemText(hwndDlg, IDC_HOME_DIR, tmp, SIZEOF(tmp));
-		  while(tmp[_tcslen(tmp)-1] == '\\')
-			  tmp[_tcslen(tmp)-1] = '\0';
+		  while(tmp[mir_tstrlen(tmp)-1] == '\\')
+			  tmp[mir_tstrlen(tmp)-1] = '\0';
 		  if(!tmp[0])
 		  {
 			  MessageBox(0, TranslateT("Please set keyring's home directory"), TranslateT("Warning"), MB_OK);
@@ -1116,7 +1116,7 @@ static INT_PTR CALLBACK DlgProcGpgBinOpts(HWND hwndDlg, UINT msg, WPARAM wParam,
 				string::size_type p1 = out.find("(GnuPG) ");
 				if(p1 != string::npos)
 				{
-					p1 += strlen("(GnuPG) ");
+					p1 += mir_strlen("(GnuPG) ");
 					if(out[p1] != '1')
 						bad_version = true;
 				}
@@ -1130,8 +1130,8 @@ static INT_PTR CALLBACK DlgProcGpgBinOpts(HWND hwndDlg, UINT msg, WPARAM wParam,
 			}
 			db_set_ts(NULL, szGPGModuleName, "szGpgBinPath", tmp);
 			GetDlgItemText(hwndDlg, IDC_HOME_DIR, tmp, SIZEOF(tmp));
-			while(tmp[_tcslen(tmp)-1] == '\\')
-				tmp[_tcslen(tmp)-1] = '\0';
+			while(tmp[mir_tstrlen(tmp)-1] == '\\')
+				tmp[mir_tstrlen(tmp)-1] = '\0';
 			if(!tmp[0])
 			{
 				MessageBox(0, TranslateT("Please set keyring's home directory"), TranslateT("Warning"), MB_OK);
@@ -1371,7 +1371,7 @@ static INT_PTR CALLBACK DlgProcKeyGenDialog(HWND hwndDlg, UINT msg, WPARAM wPara
 			  { //data sanity checks
 				  TCHAR *tmp = (TCHAR*)mir_alloc(sizeof(TCHAR)*5);
 				  GetDlgItemText(hwndDlg, IDC_KEY_TYPE, tmp, 5);
-				  if(_tcslen(tmp) < 3)
+				  if(mir_tstrlen(tmp) < 3)
 				  {
 					  mir_free(tmp); tmp = NULL;
 					  MessageBox(0, TranslateT("You must set encryption algorithm first"), TranslateT("Error"), MB_OK);
@@ -1390,7 +1390,7 @@ static INT_PTR CALLBACK DlgProcKeyGenDialog(HWND hwndDlg, UINT msg, WPARAM wPara
 				  }
 				  tmp = (TCHAR*)mir_alloc(sizeof(TCHAR)*12);
 				  GetDlgItemText(hwndDlg, IDC_KEY_EXPIRE_DATE, tmp, 11);
-				  if(_tcslen(tmp) != 10 && tmp[0] != '0')
+				  if(mir_tstrlen(tmp) != 10 && tmp[0] != '0')
 				  {
 					  MessageBox(0, TranslateT("Invalid date"), TranslateT("Error"), MB_OK);
 					  mir_free(tmp);
@@ -1399,7 +1399,7 @@ static INT_PTR CALLBACK DlgProcKeyGenDialog(HWND hwndDlg, UINT msg, WPARAM wPara
 				  mir_free(tmp);
 				  tmp = (TCHAR*)mir_alloc(sizeof(TCHAR)*128);
 				  GetDlgItemText(hwndDlg, IDC_KEY_REAL_NAME, tmp, 127);
-				  if(_tcslen(tmp) < 5)
+				  if(mir_tstrlen(tmp) < 5)
 				  {
 					  MessageBox(0, TranslateT("Name must contain at least 5 characters"), TranslateT("Error"), MB_OK);
 					  mir_free(tmp);
@@ -1414,7 +1414,7 @@ static INT_PTR CALLBACK DlgProcKeyGenDialog(HWND hwndDlg, UINT msg, WPARAM wPara
 				  mir_free(tmp);
 				  tmp = (TCHAR*)mir_alloc(sizeof(TCHAR)*128);
 				  GetDlgItemText(hwndDlg, IDC_KEY_EMAIL, tmp, 128);
-				  if((_tcslen(tmp)) < 5 || (!_tcschr(tmp, _T('@'))) || (!_tcschr(tmp, _T('.'))))
+				  if((mir_tstrlen(tmp)) < 5 || (!_tcschr(tmp, _T('@'))) || (!_tcschr(tmp, _T('.'))))
 				  {
 					  MessageBox(0, TranslateT("Invalid Email"), TranslateT("Error"), MB_OK);
 					  mir_free(tmp);
@@ -1442,9 +1442,9 @@ static INT_PTR CALLBACK DlgProcKeyGenDialog(HWND hwndDlg, UINT msg, WPARAM wPara
 				  mir_free(tmp);
 				  char *subkeytype = (char*)mir_alloc(6);
 				  if(strstr(tmp2, "RSA"))
-					  strcpy(subkeytype, "RSA");
+					  mir_strcpy(subkeytype, "RSA");
 				  else if(strstr(tmp2, "DSA")) //this is useless check for now, but it will be required if someone add another key types support
-					  strcpy(subkeytype, "ELG-E");
+					  mir_strcpy(subkeytype, "ELG-E");
 				  f<<tmp2;
 				  mir_free(tmp2);
 				  f<<"\n";
@@ -1747,7 +1747,7 @@ static INT_PTR CALLBACK DlgProcLoadExistingKey(HWND hwndDlg,UINT msg,WPARAM wPar
 						p2 = p3;
 						p2--;
 						p3++;
-						p3+=strlen("expires: ");
+						p3+=mir_strlen("expires: ");
 						string::size_type p4 = out.find("]", p3);
 						tmp = mir_wstrdup(toUTF16(out.substr(p3,p4-p3)).c_str());
 						ListView_SetItemText(hwndList, iRow, 4, tmp);
@@ -1759,7 +1759,7 @@ static INT_PTR CALLBACK DlgProcLoadExistingKey(HWND hwndDlg,UINT msg,WPARAM wPar
 					ListView_SetItemText(hwndList, iRow, 3, tmp);
 					mir_free(tmp);
 					p = out.find("uid  ", p);
-					p+= strlen("uid ");
+					p+= mir_strlen("uid ");
 					p2 = out.find("\n", p);
 					p3 = out.substr(p, p2-p).find("<");
 					if(p3 != string::npos)
@@ -1833,7 +1833,7 @@ static INT_PTR CALLBACK DlgProcLoadExistingKey(HWND hwndDlg,UINT msg,WPARAM wPar
 				  p2 = out.find("-----END PGP PUBLIC KEY BLOCK-----", p1);
 				  if(p2 != std::string::npos)
 				  {
-					  p2 += strlen("-----END PGP PUBLIC KEY BLOCK-----");
+					  p2 += mir_strlen("-----END PGP PUBLIC KEY BLOCK-----");
 					  out = out.substr(p1, p2-p1);
 					  TCHAR *tmp = mir_a2t(out.c_str());
 					  SetWindowText(hPubKeyEdit, tmp);
@@ -2121,7 +2121,7 @@ void InitCheck()
 				if((p != std::string::npos) && (p < p2))
 				{
 					p = out.find("expires:", p);
-					p += strlen("expires:");
+					p += mir_strlen("expires:");
 					p++;
 					p2 = out.find("]", p);
 					TCHAR *expire_date = mir_wstrdup(toUTF16(out.substr(p,p2-p)).c_str());
@@ -2188,7 +2188,7 @@ void InitCheck()
 		if((p != std::string::npos) && (p < p2))
 		{
 			p = out.find("expires:", p);
-			p += strlen("expires:");
+			p += mir_strlen("expires:");
 			p++;
 			p2 = out.find("]", p);
 			TCHAR *expire_date = mir_wstrdup(toUTF16(out.substr(p,p2-p)).c_str());
@@ -2341,7 +2341,7 @@ void ImportKey()
 						if(hcnt)
 						{
 							char *tmp = NULL;
-							string::size_type s = output.find("gpg: key ") + strlen("gpg: key ");
+							string::size_type s = output.find("gpg: key ") + mir_strlen("gpg: key ");
 							string::size_type s2 = output.find(":", s);
 							db_set_s(hcnt, szGPGModuleName, "KeyID", output.substr(s,s2-s).c_str());
 							s = output.find("“", s2);
@@ -2366,7 +2366,7 @@ void ImportKey()
 							if(s != string::npos && s2 != string::npos)
 							{
 								tmp = (char*)mir_alloc(sizeof(char)*(output.substr(s,s2-s-(uncommon?1:0)).length()+1));
-								strcpy(tmp, output.substr(s,s2-s-(uncommon?1:0)).c_str());
+								mir_strcpy(tmp, output.substr(s,s2-s-(uncommon?1:0)).c_str());
 								mir_utf8decode(tmp, 0);
 								db_set_s(hcnt, szGPGModuleName, "KeyMainName", tmp);
 								mir_free(tmp);
@@ -2382,7 +2382,7 @@ void ImportKey()
 								if(output[s] == ')')
 								{
 									tmp = (char*)mir_alloc(sizeof(char)* (output.substr(s2,s-s2).length()+1));
-									strcpy(tmp, output.substr(s2,s-s2).c_str());
+									mir_strcpy(tmp, output.substr(s2,s-s2).c_str());
 									mir_utf8decode(tmp, 0);
 									db_set_s(hcnt, szGPGModuleName, "KeyComment", tmp);
 									mir_free(tmp);
@@ -2391,7 +2391,7 @@ void ImportKey()
 									if(s != string::npos && s2 != string::npos)
 									{
 										tmp = (char*) mir_alloc(sizeof(char)*(output.substr(s,s2-s).length()+1));
-										strcpy(tmp, output.substr(s,s2-s).c_str());
+										mir_strcpy(tmp, output.substr(s,s2-s).c_str());
 										mir_utf8decode(tmp, 0);
 										db_set_s(hcnt, szGPGModuleName, "KeyMainEmail", tmp);
 										mir_free(tmp);
@@ -2400,7 +2400,7 @@ void ImportKey()
 								else
 								{
 									tmp = (char*)mir_alloc(sizeof(char)* (output.substr(s2,s-s2).length()+1));
-									strcpy(tmp, output.substr(s2,s-s2).c_str());
+									mir_strcpy(tmp, output.substr(s2,s-s2).c_str());
 									mir_utf8decode(tmp, 0);
 									db_set_s(hcnt, szGPGModuleName, "KeyMainEmail", output.substr(s2,s-s2).c_str());
 									mir_free(tmp);
@@ -2413,7 +2413,7 @@ void ImportKey()
 				else
 				{
 					char *tmp = NULL;
-					string::size_type s = output.find("gpg: key ") + strlen("gpg: key ");
+					string::size_type s = output.find("gpg: key ") + mir_strlen("gpg: key ");
 					string::size_type s2 = output.find(":", s);
 					db_set_s(metaGetMostOnline(hContact), szGPGModuleName, "KeyID", output.substr(s,s2-s).c_str());
 					s = output.find("“", s2);
@@ -2438,7 +2438,7 @@ void ImportKey()
 					if(s != string::npos && s2 != string::npos)
 					{
 						tmp = (char*)mir_alloc(sizeof(char)*(output.substr(s,s2-s-(uncommon?1:0)).length()+1));
-						strcpy(tmp, output.substr(s,s2-s-(uncommon?1:0)).c_str());
+						mir_strcpy(tmp, output.substr(s,s2-s-(uncommon?1:0)).c_str());
 						mir_utf8decode(tmp, 0);
 						db_set_s(metaGetMostOnline(hContact), szGPGModuleName, "KeyMainName", tmp);
 						mir_free(tmp);
@@ -2453,7 +2453,7 @@ void ImportKey()
 						if(output[s] == ')')
 						{
 							tmp = (char*)mir_alloc(sizeof(char)* (output.substr(s2,s-s2).length()+1));
-							strcpy(tmp, output.substr(s2,s-s2).c_str());
+							mir_strcpy(tmp, output.substr(s2,s-s2).c_str());
 							mir_utf8decode(tmp, 0);
 							db_set_s(metaGetMostOnline(hContact), szGPGModuleName, "KeyComment", tmp);
 							mir_free(tmp);
@@ -2462,7 +2462,7 @@ void ImportKey()
 							if(s != string::npos && s2 != string::npos)
 							{
 								tmp = (char*) mir_alloc(sizeof(char)*(output.substr(s,s2-s).length()+1));
-								strcpy(tmp, output.substr(s,s2-s).c_str());
+								mir_strcpy(tmp, output.substr(s,s2-s).c_str());
 								mir_utf8decode(tmp, 0);
 								db_set_s(metaGetMostOnline(hContact), szGPGModuleName, "KeyMainEmail", tmp);
 								mir_free(tmp);
@@ -2471,7 +2471,7 @@ void ImportKey()
 						else
 						{
 							tmp = (char*)mir_alloc(sizeof(char)* (output.substr(s2,s-s2).length()+1));
-							strcpy(tmp, output.substr(s2,s-s2).c_str());
+							mir_strcpy(tmp, output.substr(s2,s-s2).c_str());
 							mir_utf8decode(tmp, 0);
 							db_set_s(metaGetMostOnline(hContact), szGPGModuleName, "KeyMainEmail", output.substr(s2,s-s2).c_str());
 							mir_free(tmp);
@@ -2483,7 +2483,7 @@ void ImportKey()
 			else
 			{
 				char *tmp = NULL;
-				string::size_type s = output.find("gpg: key ") + strlen("gpg: key ");
+				string::size_type s = output.find("gpg: key ") + mir_strlen("gpg: key ");
 				string::size_type s2 = output.find(":", s);
 				db_set_s(hContact, szGPGModuleName, "KeyID", output.substr(s,s2-s).c_str());
 				s = output.find("“", s2);
@@ -2508,7 +2508,7 @@ void ImportKey()
 				if(s != string::npos && s2 != string::npos)
 				{
 					tmp = (char*)mir_alloc(sizeof(char)*(output.substr(s,s2-s-(uncommon?1:0)).length()+1));
-					strcpy(tmp, output.substr(s,s2-s-(uncommon?1:0)).c_str());
+					mir_strcpy(tmp, output.substr(s,s2-s-(uncommon?1:0)).c_str());
 					mir_utf8decode(tmp, 0);
 					db_set_s(hContact, szGPGModuleName, "KeyMainName", tmp);
 					mir_free(tmp);
@@ -2523,7 +2523,7 @@ void ImportKey()
 					if(output[s] == ')')
 					{
 						tmp = (char*)mir_alloc(sizeof(char)* (output.substr(s2,s-s2).length()+1));
-						strcpy(tmp, output.substr(s2,s-s2).c_str());
+						mir_strcpy(tmp, output.substr(s2,s-s2).c_str());
 						mir_utf8decode(tmp, 0);
 						db_set_s(hContact, szGPGModuleName, "KeyComment", tmp);
 						mir_free(tmp);
@@ -2532,7 +2532,7 @@ void ImportKey()
 						if(s != string::npos && s2 != string::npos)
 						{
 							tmp = (char*) mir_alloc(sizeof(char)*(output.substr(s,s2-s).length()+1));
-							strcpy(tmp, output.substr(s,s2-s).c_str());
+							mir_strcpy(tmp, output.substr(s,s2-s).c_str());
 							mir_utf8decode(tmp, 0);
 							db_set_s(hContact, szGPGModuleName, "KeyMainEmail", tmp);
 							mir_free(tmp);
@@ -2541,7 +2541,7 @@ void ImportKey()
 					else
 					{
 						tmp = (char*)mir_alloc(sizeof(char)* (output.substr(s2,s-s2).length()+1));
-						strcpy(tmp, output.substr(s2,s-s2).c_str());
+						mir_strcpy(tmp, output.substr(s2,s-s2).c_str());
 						mir_utf8decode(tmp, 0);
 						db_set_s(hContact, szGPGModuleName, "KeyMainEmail", output.substr(s2,s-s2).c_str());
 						mir_free(tmp);

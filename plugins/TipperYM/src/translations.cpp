@@ -39,7 +39,7 @@ void AddTranslation(DBVTranslation *newTrans)
 	char szSetting[256];
 	mir_snprintf(szSetting, sizeof(szSetting),"Trans_%s",szName);
 
-	if (_tcscmp(newTrans->swzName, _T("[No translation]")) == 0) 
+	if (mir_tstrcmp(newTrans->swzName, _T("[No translation]")) == 0) 
 	{
 		translations[iTransFuncsCount - 1].id = 0;
 	} 
@@ -206,7 +206,7 @@ TCHAR *WordToCountry(MCONTACT hContact, const char *szModuleName, const char *sz
 	WORD cid = (WORD)db_get_w(hContact, szModuleName, szSettingName, (WORD)-1);
 	if (cid != (WORD)-1 && ServiceExists(MS_UTILS_GETCOUNTRYBYNUMBER) && (szCountryName = (char *)CallService(MS_UTILS_GETCOUNTRYBYNUMBER, cid, 0)) != 0)
 	{
-		if (strcmp(szCountryName, "Unknown") == 0)
+		if (mir_strcmp(szCountryName, "Unknown") == 0)
 			return 0;
 		a2t(szCountryName, buff, bufflen);
 		buff[bufflen - 1] = 0;

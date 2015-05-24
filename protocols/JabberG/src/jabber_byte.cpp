@@ -61,7 +61,7 @@ void CJabberProto::IqResultProxyDiscovery(HXML iqNode, CJabberIqInfo *pInfo)
 		HXML queryNode = xmlGetChild(iqNode , "query");
 		if (queryNode) {
 			const TCHAR *queryXmlns = xmlGetAttrValue(queryNode, _T("xmlns"));
-			if (queryXmlns && !_tcscmp(queryXmlns, JABBER_FEAT_BYTESTREAMS)) {
+			if (queryXmlns && !mir_tstrcmp(queryXmlns, JABBER_FEAT_BYTESTREAMS)) {
 				HXML streamHostNode = xmlGetChild(queryNode , "streamhost");
 				if (streamHostNode) {
 					const TCHAR *streamJid = xmlGetAttrValue(streamHostNode, _T("jid"));
@@ -218,7 +218,7 @@ void CJabberProto::ByteSendThread(JABBER_BYTE_TRANSFER *jbt)
 
 			NETLIBIPLIST* ihaddr = (NETLIBIPLIST*)CallService(MS_NETLIB_GETMYIP, 1, 0);
 			for (unsigned i=0; i < ihaddr->cbNum; i++)
-				if (strcmp(localAddr, ihaddr->szIp[i]))
+				if (mir_strcmp(localAddr, ihaddr->szIp[i]))
 					query << XCHILD(_T("streamhost")) << XATTR(_T("jid"), m_ThreadInfo->fullJID) << XATTR(_T("host"), _A2T(ihaddr->szIp[i])) << XATTRI(_T("port"), nlb.wPort);
 
 			mir_free(ihaddr);
@@ -257,7 +257,7 @@ void CJabberProto::ByteSendThread(JABBER_BYTE_TRANSFER *jbt)
 		return;
 	}
 
-	if (jbt->bProxyDiscovered && !_tcscmp(jbt->szProxyJid, jbt->szStreamhostUsed)) {
+	if (jbt->bProxyDiscovered && !mir_tstrcmp(jbt->szProxyJid, jbt->szStreamhostUsed)) {
 		// jabber proxy used
 		if (bDirect) {
 			SetEvent(jbt->hSendEvent);
@@ -299,7 +299,7 @@ void CJabberProto::ByteInitiateResult(HXML iqNode, CJabberIqInfo *pInfo)
 		HXML queryNode = xmlGetChild(iqNode , "query");
 		if (queryNode) {
 			const TCHAR *queryXmlns = xmlGetAttrValue(queryNode, _T("xmlns"));
-			if (queryXmlns && !_tcscmp(queryXmlns, JABBER_FEAT_BYTESTREAMS)) {
+			if (queryXmlns && !mir_tstrcmp(queryXmlns, JABBER_FEAT_BYTESTREAMS)) {
 				HXML streamHostNode = xmlGetChild(queryNode ,  "streamhost-used");
 				if (streamHostNode) {
 					const TCHAR *streamJid = xmlGetAttrValue(streamHostNode, _T("jid"));
@@ -367,7 +367,7 @@ int CJabberProto::ByteSendParse(HANDLE hConn, JABBER_BYTE_TRANSFER *jbt, char* b
 			mir_free(szInitiatorJid);
 			mir_free(szTargetJid);
 
-			ptrA szAuthString(mir_utf8encodeT(text));
+			T2Utf szAuthString(text);
 			debugLogA("Auth: '%s'", szAuthString);
 
 			JabberShaStrBuf buf;
@@ -516,7 +516,7 @@ int CJabberProto::ByteSendProxyParse(HANDLE hConn, JABBER_BYTE_TRANSFER *jbt, ch
 			mir_free(szInitiatorJid);
 			mir_free(szTargetJid);
 
-			char* szAuthString = mir_utf8encodeT(text);
+			T2Utf szAuthString(text);
 			debugLogA("Auth: '%s'", szAuthString);
 
 			JabberShaStrBuf buf;
@@ -524,7 +524,6 @@ int CJabberProto::ByteSendProxyParse(HANDLE hConn, JABBER_BYTE_TRANSFER *jbt, ch
 
 			Netlib_Send(hConn, (char*)data, 47, 0);
 			jbt->state = JBT_CONNECT;
-			mir_free(szAuthString);
 		}
 		else jbt->state = JBT_SOCKSERR;
 		break;
@@ -705,12 +704,13 @@ int CJabberProto::ByteReceiveParse(HANDLE hConn, JABBER_BYTE_TRANSFER *jbt, char
 			data[4] = 40;
 
 			TCHAR text[JABBER_MAX_JID_LEN * 2];
-			TCHAR *szInitiatorJid = JabberPrepareJid(jbt->srcJID);
-			TCHAR *szTargetJid = JabberPrepareJid(jbt->dstJID);
-			mir_sntprintf(text, SIZEOF(text), _T("%s%s%s"), jbt->sid, szInitiatorJid, szTargetJid);
-			mir_free(szInitiatorJid);
-			mir_free(szTargetJid);
-			char* szAuthString = mir_utf8encodeT(text);
+			{
+				ptrT szInitiatorJid(JabberPrepareJid(jbt->srcJID));
+				ptrT szTargetJid(JabberPrepareJid(jbt->dstJID));
+				mir_sntprintf(text, SIZEOF(text), _T("%s%s%s"), jbt->sid, szInitiatorJid, szTargetJid);
+			}
+
+			T2Utf szAuthString(text);
 			debugLogA("Auth: '%s'", szAuthString);
 
 			JabberShaStrBuf buf;
@@ -718,7 +718,6 @@ int CJabberProto::ByteReceiveParse(HANDLE hConn, JABBER_BYTE_TRANSFER *jbt, char
 
 			Netlib_Send(hConn, (char*)data, 47, 0);
 			jbt->state = JBT_CONNECT;
-			mir_free(szAuthString);
 		}
 		else jbt->state = JBT_SOCKSERR;
 		break;

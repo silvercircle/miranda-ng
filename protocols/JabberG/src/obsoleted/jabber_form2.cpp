@@ -580,7 +580,7 @@ public:
 			WS_CHILD|WS_VISIBLE|WS_TABSTOP|BS_AUTOCHECKBOX|BS_MULTILINE,
 			0, 0, 0, 0,
 			m_parent->GetHwnd(), (HMENU)m_id, hInst, NULL);
-		if (m_field->GetValue() && !_tcscmp(m_field->GetValue(), _T("1")))
+		if (m_field->GetValue() && !mir_tstrcmp(m_field->GetValue(), _T("1")))
 			SendMessage(m_hwnd, BM_SETCHECK, 1, 0);
 	}
 
@@ -777,7 +777,7 @@ public:
 		CreateLabel();
 		int i, length = 1;
 		for (i = 0; i < m_field->GetValueCount(); ++i)
-			length += lstrlen(m_field->GetValue(i)) + 2;
+			length += mir_tstrlen(m_field->GetValue(i)) + 2;
 
 		TCHAR *str = (TCHAR *)mir_alloc(sizeof(TCHAR) * length);
 		*str = 0;

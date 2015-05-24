@@ -28,8 +28,8 @@ LPSTR InitKeyA(pUinKey ptr, int features)
 	else
 		keysig = (LPSTR)SIG_KEY3;
 
-	int slen = (int)strlen(keysig);
-	int tlen = (int)strlen(pub_text);
+	int slen = (int)mir_strlen(keysig);
+	int tlen = (int)mir_strlen(pub_text);
 
 	LPSTR keyToSend = (LPSTR)mir_alloc(slen + tlen + 1);
 
@@ -106,8 +106,8 @@ LPSTR encrypt(pUinKey ptr, LPCSTR szEncMsg)
 {
 	LPSTR szSig = (LPSTR)(ptr->offlineKey ? SIG_ENOF : SIG_ENON);
 
-	int slen = (int)strlen(szSig);
-	int clen = (int)strlen(szEncMsg);
+	int slen = (int)mir_strlen(szSig);
+	int clen = (int)mir_strlen(szEncMsg);
 
 	LPSTR szMsg = (LPSTR)mir_alloc(clen + slen + 1);
 	memcpy(szMsg, szSig, slen);
@@ -121,18 +121,7 @@ LPSTR encrypt(pUinKey ptr, LPCSTR szEncMsg)
 LPSTR encodeMsg(pUinKey ptr, LPARAM lParam)
 {
 	CCSDATA *pccsd = (CCSDATA *)lParam;
-	LPSTR szNewMsg = NULL;
-	LPSTR szOldMsg = (LPSTR)pccsd->lParam;
-
-	if (pccsd->wParam & PREF_UTF)
-		szNewMsg = encrypt(ptr, cpp_encodeU(ptr->cntx, szOldMsg));
-	else if (pccsd->wParam & PREF_UNICODE)
-		szNewMsg = encrypt(ptr, cpp_encodeW(ptr->cntx, (LPWSTR)(szOldMsg + strlen(szOldMsg) + 1)));
-	else
-		szNewMsg = encrypt(ptr, cpp_encodeA(ptr->cntx, szOldMsg));
-
-	pccsd->wParam &= ~PREF_UNICODE;
-	return szNewMsg;
+	return encrypt(ptr, cpp_encodeU(ptr->cntx, (LPSTR)pccsd->lParam));
 }
 
 
@@ -143,7 +132,7 @@ LPSTR decodeMsg(pUinKey ptr, LPARAM lParam, LPSTR szEncMsg)
 	PROTORECVEVENT *ppre = (PROTORECVEVENT *)pccsd->lParam;
 
 	LPSTR szNewMsg = NULL;
-	LPSTR szOldMsg = (ppre->flags&PREF_UTF) ? cpp_decodeU(ptr->cntx, szEncMsg) : cpp_decode(ptr->cntx, szEncMsg);
+	LPSTR szOldMsg = cpp_decodeU(ptr->cntx, szEncMsg);
 
 	if (szOldMsg == NULL) {
 		ptr->decoded = false;
@@ -159,23 +148,12 @@ LPSTR decodeMsg(pUinKey ptr, LPARAM lParam, LPSTR szEncMsg)
 			szNewMsg = mir_strdup(Translate(sim101));
 			break;
 		}
-		ppre->flags &= ~(PREF_UNICODE | PREF_UTF);
-		pccsd->wParam &= ~(PREF_UNICODE | PREF_UTF);
 	}
 	else {
 		ptr->decoded = true;
-		if (ppre->flags & PREF_UTF) {
-			int olen = (int)strlen(szOldMsg) + 1;
-			szNewMsg = (LPSTR)mir_alloc(olen);
-			memcpy(szNewMsg, szOldMsg, olen);
-		}
-		else {
-			int olen = ((int)strlen(szOldMsg) + 1)*(sizeof(WCHAR) + 1);
-			szNewMsg = (LPSTR)mir_alloc(olen);
-			memcpy(szNewMsg, szOldMsg, olen);
-			ppre->flags |= PREF_UNICODE;
-			pccsd->wParam |= PREF_UNICODE;
-		}
+		int olen = (int)mir_strlen(szOldMsg) + 1;
+		szNewMsg = (LPSTR)mir_alloc(olen);
+		memcpy(szNewMsg, szOldMsg, olen);
 	}
 	ppre->szMessage = szNewMsg;
 	return szNewMsg;

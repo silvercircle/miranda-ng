@@ -160,9 +160,9 @@ int CMsnProto::MSN_GetPassportAuth(void)
 
 	char* szPassportHost = (char*)mir_alloc(256);
 	if (db_get_static(NULL, m_szModuleName, "MsnPassportHost", szPassportHost, 256))
-		strcpy(szPassportHost, defaultPassportUrl);
+		mir_strcpy(szPassportHost, defaultPassportUrl);
 
-	bool defaultUrlAllow = strcmp(szPassportHost, defaultPassportUrl) != 0;
+	bool defaultUrlAllow = mir_strcmp(szPassportHost, defaultPassportUrl) != 0;
 	char *tResult = NULL;
 
 	while (retVal == -1) {
@@ -171,7 +171,7 @@ int CMsnProto::MSN_GetPassportAuth(void)
 		tResult = getSslResult(&szPassportHost, szAuthInfo, NULL, status);
 		if (tResult == NULL) {
 			if (defaultUrlAllow) {
-				strcpy(szPassportHost, defaultPassportUrl);
+				mir_strcpy(szPassportHost, defaultPassportUrl);
 				defaultUrlAllow = false;
 				continue;
 			}
@@ -186,7 +186,7 @@ int CMsnProto::MSN_GetPassportAuth(void)
 			const char *errurl;
 			{
 				errurl = NULL;
-				ezxml_t xml = ezxml_parse_str(tResult, strlen(tResult));
+				ezxml_t xml = ezxml_parse_str(tResult, mir_strlen(tResult));
 
 				ezxml_t tokr = ezxml_get(xml, "S:Body", 0,
 					"wst:RequestSecurityTokenResponseCollection", 0,
@@ -199,7 +199,7 @@ int CMsnProto::MSN_GetPassportAuth(void)
 					const char* addr = ezxml_txt(ezxml_get(tokr, "wsp:AppliesTo", 0,
 						"wsa:EndpointReference", 0, "wsa:Address", -1));
 
-					if (strcmp(addr, "http://Passport.NET/tb") == 0) {
+					if (mir_strcmp(addr, "http://Passport.NET/tb") == 0) {
 						ezxml_t node = ezxml_get(tokr, "wst:RequestedSecurityToken", 0, "EncryptedData", -1);
 						free(hotAuthToken);
 						hotAuthToken = ezxml_toxml(node, 0);
@@ -209,7 +209,7 @@ int CMsnProto::MSN_GetPassportAuth(void)
 						replaceStr(hotSecretToken, ezxml_txt(node));
 						setString("hotSecretToken", hotSecretToken);
 					}
-					else if (strcmp(addr, "chatservice.live.com") == 0) {
+					else if (mir_strcmp(addr, "chatservice.live.com") == 0) {
 						ezxml_t node = ezxml_get(tokr, "wst:RequestedProofToken", 0,
 							"wst:BinarySecret", -1);
 						if (toks) {
@@ -221,7 +221,7 @@ int CMsnProto::MSN_GetPassportAuth(void)
 							errurl = ezxml_txt(ezxml_get(tokr, "S:Fault", 0, "psf:pp", 0, "psf:flowurl", -1));
 						}
 					}
-					else if (strcmp(addr, "messenger.msn.com") == 0 && toks) {
+					else if (mir_strcmp(addr, "messenger.msn.com") == 0 && toks) {
 						const char* tok = ezxml_txt(toks);
 						char* ch = (char*)strchr(tok, '&');
 						*ch = 0;
@@ -229,15 +229,16 @@ int CMsnProto::MSN_GetPassportAuth(void)
 						replaceStr(pAuthToken, ch + 3);
 						*ch = '&';
 					}
-					else if (strcmp(addr, "contacts.msn.com") == 0 && toks) {
+					else if (mir_strcmp(addr, "contacts.msn.com") == 0 && toks) {
 						replaceStr(authContactToken, ezxml_txt(toks));
 						setString("authContactToken", authContactToken);
 					}
-					else if (strcmp(addr, "messengersecure.live.com") == 0 && toks) {
+					else if (mir_strcmp(addr, "messengersecure.live.com") == 0 && toks) {
 						replaceStr(oimSendToken, ezxml_txt(toks));
 					}
-					else if (strcmp(addr, "storage.msn.com") == 0 && toks) {
+					else if (mir_strcmp(addr, "storage.msn.com") == 0 && toks) {
 						replaceStr(authStorageToken, ezxml_txt(toks));
+						setString("authStorageToken", authStorageToken);
 					}
 
 					tokr = ezxml_next(tokr);
@@ -252,14 +253,14 @@ int CMsnProto::MSN_GetPassportAuth(void)
 					ezxml_t tokf = ezxml_get(xml, "S:Body", 0, "S:Fault", 0, "S:Detail", -1);
 					ezxml_t tokrdr = ezxml_child(tokf, "psf:redirectUrl");
 					if (tokrdr != NULL) {
-						strcpy(szPassportHost, ezxml_txt(tokrdr));
+						mir_strcpy(szPassportHost, ezxml_txt(tokrdr));
 						debugLogA("Redirected to '%s'", szPassportHost);
 					}
 					else {
 						const char* szFault = ezxml_txt(ezxml_get(tokf, "psf:error", 0, "psf:value", -1));
-						retVal = strcmp(szFault, "0x80048821") == 0 ? 3 : (tokf ? 5 : 7);
+						retVal = mir_strcmp(szFault, "0x80048821") == 0 ? 3 : (tokf ? 5 : 7);
 						if (retVal != 3 && defaultUrlAllow) {
-							strcpy(szPassportHost, defaultPassportUrl);
+							mir_strcpy(szPassportHost, defaultPassportUrl);
 							defaultUrlAllow = false;
 							retVal = -1;
 						}
@@ -277,7 +278,7 @@ int CMsnProto::MSN_GetPassportAuth(void)
 
 		default:
 			if (defaultUrlAllow) {
-				strcpy(szPassportHost, defaultPassportUrl);
+				mir_strcpy(szPassportHost, defaultPassportUrl);
 				defaultUrlAllow = false;
 			}
 			else
@@ -388,7 +389,7 @@ char* CMsnProto::GenerateLoginBlob(char* challenge)
 	derive_key(key2, key1, key1len, (unsigned char*)encdata1, sizeof(encdata1) - 1);
 	derive_key(key3, key1, key1len, (unsigned char*)encdata2, sizeof(encdata2) - 1);
 
-	size_t chllen = strlen(challenge);
+	size_t chllen = mir_strlen(challenge);
 
 	BYTE hash[MIR_SHA1_HASH_SIZE];
 	mir_hmac_sha1(hash, key2, MIR_SHA1_HASH_SIZE + 4, (BYTE*)challenge, chllen);
@@ -575,7 +576,7 @@ static int CopyCookies(NETLIBHTTPREQUEST *nlhrReply, NETLIBHTTPHEADER *hdr)
 			if (*hdr->szValue) strcat (hdr->szValue, "; ");
 			strcat (hdr->szValue, nlhrReply->headers[i].szValue);
 		}
-		else nSize += (int)strlen(nlhrReply->headers[i].szValue) + 2;
+		else nSize += (int)mir_strlen(nlhrReply->headers[i].szValue) + 2;
 	}
 	return nSize;
 }
@@ -617,7 +618,7 @@ bool CMsnProto::RefreshOAuth(const char *pszRefreshToken, const char *pszService
 		ptrA(mir_urlEncode(pszService)), pszRefreshToken);
 	
 	nlhr.pData = (char*)(const char*)post;
-	nlhr.dataLength = (int)strlen(nlhr.pData);
+	nlhr.dataLength = (int)mir_strlen(nlhr.pData);
 	nlhr.szUrl = "https://login.live.com/oauth20_token.srf";
 
 	// Query
@@ -687,6 +688,10 @@ void CMsnProto::LoadAuthTokensDB(void)
 		hotAuthToken = strdup(dbv.pszVal);
 		db_free(&dbv);
 	}
+	if (getString("authStorageToken", &dbv) == 0) {
+		replaceStr(authStorageToken, dbv.pszVal);
+		db_free(&dbv);
+	}
 }
 
 void CMsnProto::SaveAuthTokensDB(void)
@@ -695,7 +700,6 @@ void CMsnProto::SaveAuthTokensDB(void)
 	setDword("authMethod", authMethod);
 	setString("authUser", authUser);
 	setString("authSSLToken", authSSLToken);
-	setString("authContactToken", authContactToken);
 	setString("authUIC", authUIC);
 	setString("authCookies", authCookies);
 	setString("authStrToken", authStrToken);
@@ -779,8 +783,9 @@ int CMsnProto::MSN_AuthOAuth(void)
 				nlhr.requestType = REQUEST_POST;
 				nlhr.flags &= (~NLHRF_REDIRECT);
 				mHttpsTS = clock();
-				nlhr.dataLength = (int)strlen(post);
+				nlhr.dataLength = (int)mir_strlen(post);
 				nlhr.pData = (char*)(const char*)post;
+				nlhr.nlc = hHttpsConnection;
 				NETLIBHTTPREQUEST *nlhrReply2 = (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)hNetlibUserHttps, (LPARAM)&nlhr);
 				CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)nlhrReply);
 				nlhrReply = nlhrReply2;
@@ -843,8 +848,9 @@ int CMsnProto::MSN_AuthOAuth(void)
 									/* Prepare headers*/
 									nlhr.headers[2].szValue = "application/json";
 									nlhr.pData = "{\"trouterurl\":\"https://\",\"connectionid\":\"a\"}";
-									nlhr.dataLength = (int)strlen(nlhr.pData);
+									nlhr.dataLength = (int)mir_strlen(nlhr.pData);
 									nlhr.szUrl = "https://skypewebexperience.live.com/v1/User/Initialization";
+									nlhr.nlc = hHttpsConnection;
 								
 									/* Request MappingContainer */
 									mHttpsTS = clock();

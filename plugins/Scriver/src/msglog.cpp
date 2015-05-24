@@ -99,7 +99,7 @@ TCHAR* GetNickname(MCONTACT hContact, const char *szProto)
 		if (ci.type == CNFT_ASCIIZ) {
 			if (ci.pszVal) {
 				if (IsUnicodeMIM()) {
-					if (!_tcscmp((TCHAR*)ci.pszVal, TranslateW(_T("'(Unknown Contact)'")))) {
+					if (!mir_tstrcmp((TCHAR*)ci.pszVal, TranslateW(_T("'(Unknown Contact)'")))) {
 						ci.dwFlag &= ~CNF_UNICODE;
 						if (!CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ci))
 							szName = mir_a2t((char*)ci.pszVal);
@@ -265,11 +265,11 @@ static int AppendUnicodeOrAnsiiToBufferL(char *&buffer, size_t &cbBufferEnd, siz
 
 	char *d = buffer + cbBufferEnd;
 	if (isAnsii) {
-		strcpy(d, "{");
+		mir_strcpy(d, "{");
 		d++;
 	}
 	else {
-		strcpy(d, "{\\uc1 ");
+		mir_strcpy(d, "{\\uc1 ");
 		d += 6;
 	}
 
@@ -309,7 +309,7 @@ static int AppendUnicodeOrAnsiiToBufferL(char *&buffer, size_t &cbBufferEnd, siz
 		memcpy(d, " ", 1);
 		d++;
 	}
-	strcpy(d, "}");
+	mir_strcpy(d, "}");
 	d++;
 
 	cbBufferEnd = (int)(d - buffer);
@@ -498,7 +498,7 @@ static void AppendWithCustomLinks(EventData *evt, int style, char *&buffer, size
 	int lasttoken = 0;
 	size_t len, laststart = 0;
 	if (isAnsii) {
-		len = strlen(evt->pszText);
+		len = mir_strlen(evt->pszText);
 		wText = mir_a2u(evt->pszText);
 	}
 	else {
@@ -965,7 +965,7 @@ void LoadMsgLogIcons(void)
 		char *szDest = pLogIconBmpBits[i] + rtfHeaderSize;
 		bin2hex(&bih, sizeof(bih), szDest); szDest += sizeof(bih) * 2;
 		bin2hex(pBmpBits, widthBytes * bih.biHeight, szDest); szDest += widthBytes * bih.biHeight * 2;
-		strcpy(szDest, "}");
+		mir_strcpy(szDest, "}");
 
 		logIconBmpSize[i] = size_t(szDest - pLogIconBmpBits[i]) + 1;
 	}

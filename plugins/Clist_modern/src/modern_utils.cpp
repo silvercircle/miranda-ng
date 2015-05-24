@@ -23,25 +23,6 @@ char * __cdecl strstri(char *a, const char *b)
 	return NULL;
 }
 
-BOOL __cdecl mir_bool_strcmpi(const char *a, const char *b)
-{
-	if (a == NULL && b == NULL) return 1;
-	if (a == NULL || b == NULL) return _stricmp(a ? a : "", b ? b : "") == 0;
-	return _stricmp(a, b) == 0;
-}
-
-BOOL __cdecl mir_bool_tstrcmpi(const TCHAR *a, const TCHAR *b)
-{
-	if (a == NULL && b == NULL) return 1;
-	if (a == NULL || b == NULL) return _tcsicmp(a ? a : _T(""), b ? b : _T("")) == 0;
-	return _tcsicmp(a, b) == 0;
-}
-
-#ifdef strlen
-#undef mir_strcmp
-#undef strlen
-#endif
-
 //copy len symbols from string - do not check is it null terminated or len is more then actual
 char * strdupn(const char * src, int len)
 {
@@ -52,19 +33,6 @@ char * strdupn(const char * src, int len)
 	memcpy(p, src, len);
 	p[len] = '\0';
 	return p;
-}
-
-DWORD exceptFunction(LPEXCEPTION_POINTERS EP)
-{
-	char buf[4096];
-	mir_snprintf(buf, SIZEOF(buf), "\r\nExceptCode: %x\r\nExceptFlags: %x\r\nExceptAddress: %p\r\n",
-		EP->ExceptionRecord->ExceptionCode,
-		EP->ExceptionRecord->ExceptionFlags,
-		EP->ExceptionRecord->ExceptionAddress);
-
-	TRACE(buf);
-	MessageBoxA(0, buf, "clist_mw Exception", 0);
-	return EXCEPTION_EXECUTE_HANDLER;
 }
 
 #ifdef _DEBUG

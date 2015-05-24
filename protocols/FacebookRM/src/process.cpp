@@ -27,7 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /**
  * Helper function for loading name from database (or use default one specified as parameter), used for title of few notifications.
  */
-std::string getContactName(FacebookProto *proto, MCONTACT hContact, const char *defaultName) {
+std::string getContactName(FacebookProto *proto, MCONTACT hContact, const char *defaultName)
+{
 	std::string name = defaultName;
 
 	DBVARIANT dbv;
@@ -84,7 +85,7 @@ void FacebookProto::ProcessBuddyList(void*)
 				fbu->handle = AddToContactList(fbu, CONTACT_FRIEND);
 
 			ptrT client(getTStringA(fbu->handle, "MirVer"));
-			if (!client || _tcscmp(client, fbu->getMirVer()))
+			if (!client || mir_tstrcmp(client, fbu->getMirVer()))
 				setTString(fbu->handle, "MirVer", fbu->getMirVer());
 
 			if (getDword(fbu->handle, "IdleTS", 0) != fbu->last_active) {
@@ -217,7 +218,7 @@ void FacebookProto::ProcessFriendList(void*)
 
 				// Update username
 				ptrA username(getStringA(hContact, FACEBOOK_KEY_USERNAME));
-				if (!username || strcmp(username, fbu->username.c_str())) {
+				if (!username || mir_strcmp(username, fbu->username.c_str())) {
 					if (!fbu->username.empty())
 						setString(hContact, FACEBOOK_KEY_USERNAME, fbu->username.c_str());
 					else
@@ -725,7 +726,7 @@ void FacebookProto::ReceiveMessages(std::vector<facebook_message*> messages, boo
 
 			// Save TID if not exists already
 			ptrA tid(getStringA(hChatContact, FACEBOOK_KEY_TID));
-			if (!tid || strcmp(tid, messages[i]->thread_id.c_str()))
+			if (!tid || mir_strcmp(tid, messages[i]->thread_id.c_str()))
 				setString(hChatContact, FACEBOOK_KEY_TID, messages[i]->thread_id.c_str());
 
 			// Try to map name of this chat participant to his id
@@ -775,12 +776,11 @@ void FacebookProto::ReceiveMessages(std::vector<facebook_message*> messages, boo
 
 			// Save TID if not exists already
 			ptrA tid(getStringA(hContact, FACEBOOK_KEY_TID));
-			if (!tid || strcmp(tid, messages[i]->thread_id.c_str()))
+			if (!tid || mir_strcmp(tid, messages[i]->thread_id.c_str()))
 				setString(hContact, FACEBOOK_KEY_TID, messages[i]->thread_id.c_str());
 
 			if (messages[i]->isIncoming && messages[i]->isUnread && messages[i]->type == MESSAGE) {
 				PROTORECVEVENT recv = { 0 };
-				recv.flags = PREF_UTF;
 				recv.szMessage = const_cast<char*>(messages[i]->message_text.c_str());
 				recv.timestamp = messages[i]->time;
 				ProtoChainRecvMsg(hContact, &recv);
@@ -962,7 +962,7 @@ void FacebookProto::ProcessFriendRequests(void*)
 
 			bool isNew = false;
 			ptrA oldTime(getStringA(hContact, "RequestTime"));
-			if (oldTime == NULL || strcmp(oldTime, time.c_str())) {
+			if (oldTime == NULL || mir_strcmp(oldTime, time.c_str())) {
 				// This is new request
 				isNew = true;
 				setString(hContact, "RequestTime", time.c_str());
@@ -980,11 +980,11 @@ void FacebookProto::ProcessFriendRequests(void*)
 				PBYTE pCurBlob = dbei.pBlob = (PBYTE)mir_alloc(dbei.cbBlob);
 				*(PDWORD)pCurBlob = 0; pCurBlob += sizeof(DWORD);                    // UID
 				*(PDWORD)pCurBlob = (DWORD)hContact; pCurBlob += sizeof(DWORD);      // Contact Handle
-				strcpy((char*)pCurBlob, fbu.real_name.data()); pCurBlob += fbu.real_name.length() + 1;	// Nickname
+				mir_strcpy((char*)pCurBlob, fbu.real_name.data()); pCurBlob += fbu.real_name.length() + 1;	// Nickname
 				*pCurBlob = '\0'; pCurBlob++;                                        // First Name
 				*pCurBlob = '\0'; pCurBlob++;                                        // Last Name
-				strcpy((char*)pCurBlob, fbu.user_id.data()); pCurBlob += fbu.user_id.length() + 1;	// E-mail (we use it for string ID)
-				strcpy((char*)pCurBlob, reason.data()); pCurBlob += reason.length() + 1;	// Reason (we use it for info about common friends)
+				mir_strcpy((char*)pCurBlob, fbu.user_id.data()); pCurBlob += fbu.user_id.length() + 1;	// E-mail (we use it for string ID)
+				mir_strcpy((char*)pCurBlob, reason.data()); pCurBlob += reason.length() + 1;	// Reason (we use it for info about common friends)
 
 				db_event_add(0, &dbei);
 			}
@@ -1226,8 +1226,7 @@ void FacebookProto::SearchAckThread(void *targ)
 
 	int count = 0;
 
-	char *arg = mir_utf8encodeT((TCHAR*)targ);
-	std::string search = utils::url::encode(arg);
+	std::string search = utils::url::encode(T2Utf((TCHAR *)targ).str());
 	std::string ssid;
 
 	while (count < 50 && !isOffline())
@@ -1301,15 +1300,13 @@ void FacebookProto::SearchAckThread(void *targ)
 	facy.handle_success("searchAckThread");
 
 	mir_free(targ);
-	mir_free(arg);
 }
 
 void FacebookProto::SearchIdAckThread(void *targ)
 {
 	facy.handle_entry("searchIdAckThread");
 
-	char *arg = mir_utf8encodeT((TCHAR*)targ);
-	std::string search = utils::url::encode(arg) + "?";
+	std::string search = utils::url::encode(T2Utf((TCHAR*)targ).str()) + "?";
 
 	if (!isOffline())
 	{
@@ -1359,5 +1356,4 @@ void FacebookProto::SearchIdAckThread(void *targ)
 	facy.handle_success("searchIdAckThread");
 
 	mir_free(targ);
-	mir_free(arg);
 }

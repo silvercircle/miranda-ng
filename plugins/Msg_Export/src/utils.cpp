@@ -456,7 +456,7 @@ static bool bWriteTextToFile(HANDLE hFile, const TCHAR *pszSrc, bool bUtf8File, 
 		return bWriteToFile(hFile, pszAstr, -1);
 	}
 
-	ptrA pszUtf8(mir_utf8encodeT(pszSrc));
+	T2Utf pszUtf8(pszSrc);
 	return bWriteToFile(hFile, pszUtf8, -1);
 }
 
@@ -1173,7 +1173,7 @@ void ExportDBEventInfo(MCONTACT hContact, DBEVENTINFO &dbei)
 							bool bConvertedToUtf8 = false;
 							if (bWriteUTF8Format )// Write UTF-8 format in file ?
 							{
-							int nAnsiLen = strlen((char *) dbei.pBlob)+1;
+							int nAnsiLen = mir_strlen((char *) dbei.pBlob)+1;
 							if (nAnsiLen < (int)dbei.cbBlob )
 							{
 							// Message is also encoded in unicode UTF-16/UCS-2, little endian.

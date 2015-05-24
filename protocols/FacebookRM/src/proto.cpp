@@ -167,7 +167,7 @@ DWORD_PTR FacebookProto::GetCaps(int type, MCONTACT)
 		else
 			return 0;
 	case PFLAGNUM_4:
-		return PF4_NOCUSTOMAUTH | PF4_FORCEADDED | PF4_IMSENDUTF | PF4_AVATARS | PF4_SUPPORTTYPING | PF4_NOAUTHDENYREASON | PF4_IMSENDOFFLINE;
+		return PF4_NOCUSTOMAUTH | PF4_FORCEADDED | PF4_AVATARS | PF4_SUPPORTTYPING | PF4_NOAUTHDENYREASON | PF4_IMSENDOFFLINE;
 	case PFLAGNUM_5:
 		return PF2_ONTHEPHONE;
 	case PFLAG_MAXLENOFMESSAGE:
@@ -227,10 +227,9 @@ int FacebookProto::SetAwayMsg(int, const PROTOCHAR *msg)
 		return 0;
 	}
 
-	char *narrow = mir_utf8encodeT(msg);
-	if (last_status_msg_ != narrow)
+	T2Utf narrow(msg);
+	if (last_status_msg_ != (char*)narrow)
 		last_status_msg_ = narrow;
-	mir_free(narrow);
 
 	if (isOnline() && getByte(FACEBOOK_KEY_SET_MIRANDA_STATUS, DEFAULT_SET_MIRANDA_STATUS))
 		ForkThread(&FacebookProto::SetAwayMsgWorker, NULL);
@@ -616,7 +615,7 @@ int FacebookProto::OnProcessSrmmEvent(WPARAM, LPARAM lParam)
 int FacebookProto::OnPreCreateEvent(WPARAM, LPARAM lParam)
 {
 	MessageWindowEvent *evt = (MessageWindowEvent *)lParam;
-	if (strcmp(GetContactProto(evt->hContact), m_szModuleName))
+	if (mir_strcmp(GetContactProto(evt->hContact), m_szModuleName))
 		return 0;
 
 	std::map<int, time_t>::iterator it = facy.messages_timestamp.find(evt->seq);
@@ -854,7 +853,7 @@ MCONTACT FacebookProto::HContactFromAuthEvent(MEVENT hEvent)
 	if (dbei.eventType != EVENTTYPE_AUTHREQUEST)
 		return INVALID_CONTACT_ID;
 
-	if (strcmp(dbei.szModule, m_szModuleName))
+	if (mir_strcmp(dbei.szModule, m_szModuleName))
 		return INVALID_CONTACT_ID;
 
 	return DbGetAuthEventContact(&dbei);
@@ -880,7 +879,7 @@ std::string FacebookProto::PrepareUrl(std::string url) {
 
 		// Make realtive url
 		if (!isRelativeUrl) {
-			url = url.substr(pos + strlen(FACEBOOK_SERVER_DOMAIN));
+			url = url.substr(pos + mir_strlen(FACEBOOK_SERVER_DOMAIN));
 
 			// Strip eventual port
 			pos = url.find("/");
@@ -1057,7 +1056,7 @@ void FacebookProto::InitHotkeys()
 {
 	char text[200];
 	mir_strncpy(text, m_szModuleName, 100);
-	char *tDest = text + strlen(text);
+	char *tDest = text + mir_strlen(text);
 
 	HOTKEYDESC hkd = { sizeof(hkd) };
 	hkd.pszName = text;
@@ -1065,15 +1064,15 @@ void FacebookProto::InitHotkeys()
 	hkd.ptszSection = m_tszUserName;
 	hkd.dwFlags = HKD_TCHAR;
 
-	strcpy(tDest, "/VisitProfile");
+	mir_strcpy(tDest, "/VisitProfile");
 	hkd.ptszDescription = LPGENT("Visit profile");
 	Hotkey_Register(&hkd);
 
-	strcpy(tDest, "/VisitNotifications");
+	mir_strcpy(tDest, "/VisitNotifications");
 	hkd.ptszDescription = LPGENT("Visit notifications");
 	Hotkey_Register(&hkd);
 
-	strcpy(tDest, "/Mind");
+	mir_strcpy(tDest, "/Mind");
 	hkd.ptszDescription = LPGENT("Show 'Share status' window");
 	hkd.DefHotKey = HOTKEYCODE(HOTKEYF_ALT | HOTKEYF_EXT, 'F');
 	Hotkey_Register(&hkd);

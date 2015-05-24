@@ -75,7 +75,7 @@ public:
 	void Module(const char* val)
 	{
 		if (val)
-			strncpy_s(m_szModule,val,strlen(val));
+			strncpy_s(m_szModule,val,mir_strlen(val));
 		else
 			m_szModule[0] = '\0';
 	}
@@ -180,7 +180,7 @@ LRESULT APIENTRY SkypeAPI_WindowProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 						const char szSkypeCmdSetStatus[] = "SET USERSTATUS ";
 						::strncpy_s(szSkypeCmd,szSkypeCmdSetStatus,sizeof(szSkypeCmdSetStatus)/sizeof(szSkypeCmdSetStatus[0]));
 						::strncat_s(szSkypeCmd, ms.m_pszSkypeStatus, SIZEOF(szSkypeCmd) - mir_strlen(szSkypeCmd));
-						DWORD cLength = static_cast<DWORD>(strlen(szSkypeCmd));
+						DWORD cLength = static_cast<DWORD>(mir_strlen(szSkypeCmd));
 
 						COPYDATASTRUCT oCopyData;
 						oCopyData.dwData=0;
@@ -195,16 +195,15 @@ LRESULT APIENTRY SkypeAPI_WindowProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp)
 							if ((NULL == pszStatusMsg) || (CALLSERVICE_NOTFOUND == reinterpret_cast<int>(pszStatusMsg)))
 								pszStatusMsg = reinterpret_cast<TCHAR*>(CallService(MS_AWAYMSG_GETSTATUSMSGT,(WPARAM)ms.m_nMirandaStatus,0));
 
-							if (pszStatusMsg && reinterpret_cast<int>(pszStatusMsg) != CALLSERVICE_NOTFOUND) {
-								char* pMsg = mir_utf8encodeT(pszStatusMsg);
+							if (pszStatusMsg && reinterpret_cast<LPARAM>(pszStatusMsg) != CALLSERVICE_NOTFOUND) {
+								T2Utf pMsg(pszStatusMsg);
 								mir_free(pszStatusMsg);
 
 								const char szSkypeCmdSetStatusMsg[] = "SET PROFILE MOOD_TEXT ";
 								::strncpy_s(szSkypeCmd,szSkypeCmdSetStatusMsg,sizeof(szSkypeCmdSetStatusMsg)/sizeof(szSkypeCmdSetStatusMsg[0]));
 								::strncat_s(szSkypeCmd, pMsg, SIZEOF(szSkypeCmd) - mir_strlen(szSkypeCmd));
-								mir_free(pMsg);
 										
-								DWORD cLength = static_cast<DWORD>(strlen(szSkypeCmd));
+								DWORD cLength = static_cast<DWORD>(mir_strlen(szSkypeCmd));
 
 								oCopyData.dwData=0;
 								oCopyData.lpData = szSkypeCmd;

@@ -40,7 +40,7 @@ TServiceListItem;
 
 static int CompareServiceItems(const TServiceListItem* p1, const TServiceListItem* p2)
 {
-	return strcmp(p1->name, p2->name);
+	return mir_strcmp(p1->name, p2->name);
 }
 
 static LIST<TServiceListItem> serviceItems(10, CompareServiceItems);
@@ -52,7 +52,7 @@ static int CompareProtos(const PROTOCOLDESCRIPTOR *p1, const PROTOCOLDESCRIPTOR 
 	if (p1->type != p2->type)
 		return p1->type - p2->type;
 
-	return strcmp(p1->szName, p2->szName);
+	return mir_strcmp(p1->szName, p2->szName);
 }
 
 LIST<PROTOCOLDESCRIPTOR> filters(10, CompareProtos);
@@ -124,20 +124,14 @@ static INT_PTR Proto_RecvMessage(WPARAM, LPARAM lParam)
 	ptrA pszTemp;
 	mir_ptr<BYTE> pszBlob;
 
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = { 0 };
+	dbei.cbSize = sizeof(dbei);
+	dbei.flags = DBEF_UTF;
 	dbei.szModule = GetContactProto(ccs->hContact);
 	dbei.timestamp = pre->timestamp;
 	dbei.eventType = EVENTTYPE_MESSAGE;
-	if (pre->flags & PREF_UNICODE) {
-		pszTemp = mir_utf8encodeT(pre->tszMessage);
-		dbei.pBlob = (PBYTE)(char*)pszTemp;
-		dbei.cbBlob = (DWORD)strlen(pszTemp) + 1;
-		dbei.flags |= DBEF_UTF;
-	}
-	else {
-		dbei.cbBlob = (DWORD)strlen(pre->szMessage) + 1;
-		dbei.pBlob = (PBYTE)pre->szMessage;
-	}
+	dbei.cbBlob = (DWORD)mir_strlen(pre->szMessage) + 1;
+	dbei.pBlob = (PBYTE)pre->szMessage;
 
 	if (pre->cbCustomDataSize != 0) {
 		pszBlob = (PBYTE)mir_alloc(dbei.cbBlob + pre->cbCustomDataSize);
@@ -149,8 +143,6 @@ static INT_PTR Proto_RecvMessage(WPARAM, LPARAM lParam)
 
 	if (pre->flags & PREF_CREATEREAD)
 		dbei.flags |= DBEF_READ;
-	if (pre->flags & PREF_UTF)
-		dbei.flags |= DBEF_UTF;
 	if (pre->flags & PREF_SENT)
 		dbei.flags |= DBEF_SENT;
 
@@ -164,8 +156,7 @@ static INT_PTR Proto_AuthRecv(WPARAM wParam, LPARAM lParam)
 	DBEVENTINFO dbei = { sizeof(dbei) };
 	dbei.szModule = (char*)wParam;
 	dbei.timestamp = pre->timestamp;
-	dbei.flags = pre->flags & (PREF_CREATEREAD ? DBEF_READ : 0);
-	dbei.flags |= (pre->flags & PREF_UTF) ? DBEF_UTF : 0;
+	dbei.flags = DBEF_UTF | pre->flags & (PREF_CREATEREAD ? DBEF_READ : 0);
 	dbei.eventType = EVENTTYPE_AUTHREQUEST;
 	dbei.cbBlob = pre->lParam;
 	dbei.pBlob = (PBYTE)pre->szMessage;
@@ -522,7 +513,7 @@ INT_PTR CallProtoServiceInt(MCONTACT hContact, const char *szModule, const char 
 		}
 	}
 
-	if (!strcmp(szService, PS_ADDTOLIST)) {
+	if (!mir_strcmp(szService, PS_ADDTOLIST)) {
 		PROTOSEARCHRESULT *psr = (PROTOSEARCHRESULT*)lParam;
 		if (!(psr->flags & PSR_UNICODE)) {
 			PROTOSEARCHRESULT *psra = (PROTOSEARCHRESULT*)mir_alloc(psr->cbSize);

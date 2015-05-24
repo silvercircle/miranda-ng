@@ -10,8 +10,8 @@ CSametimeProto* getProtoFromMwFileTransfer(mwFileTransfer* ft)
 }
 
 /** an incoming file transfer has been offered */
-void mwFileTransfer_offered(mwFileTransfer* ft) {
-
+void mwFileTransfer_offered(mwFileTransfer* ft)
+{
 	CSametimeProto* proto = getProtoFromMwFileTransfer(ft);
 	proto->debugLog(_T("mwFileTransfer_offered() start"));
 
@@ -39,7 +39,7 @@ void mwFileTransfer_offered(mwFileTransfer* ft) {
 		_tcsncpy_s(descriptionT, filenameT, _TRUNCATE);
 
 	PROTORECVFILET pre = {0};
-	pre.flags = PREF_TCHAR;
+	pre.dwFlags = PRFF_TCHAR;
 	pre.fileCount = 1;
 	pre.timestamp = time(NULL);
 	pre.tszDescription = descriptionT;
@@ -148,7 +148,7 @@ void mwFileTransfer_closed(mwFileTransfer* ft, guint32 code)
 		if (code != mwFileTransfer_SUCCESS || !mwFileTransfer_isDone(ft)) {
 			if (!ftcd->sending) {
 				char fn[MAX_PATH];
-				if (ftcd->save_path) strcpy(fn, ftcd->save_path);
+				if (ftcd->save_path) mir_strcpy(fn, ftcd->save_path);
 				else fn[0] = 0;
 				strcat(fn, mwFileTransfer_getFileName(ft));
 
@@ -297,17 +297,10 @@ HANDLE CSametimeProto::SendFilesToUser(MCONTACT hContact, PROTOCHAR** files, con
 				TCHAR *fn = _tcsrchr(files[i], '\\');
 				if (fn)
 					fn++;
-
-				char* pszDesc_utf8 = mir_utf8encodeT(ptszDesc);
-				char* pszFile_utf8;
-				if (fn)
-					pszFile_utf8 = mir_utf8encodeT(fn);
 				else
-					pszFile_utf8 = mir_utf8encodeT(files[i]);
+					fn = files[i];
 
-				ft = mwFileTransfer_new(service_files, &idb, pszDesc_utf8, pszFile_utf8, filesize);
-				mir_free(pszFile_utf8);
-				mir_free(pszDesc_utf8);
+				ft = mwFileTransfer_new(service_files, &idb, T2Utf(ptszDesc), T2Utf(fn), filesize);
 
 				ftcd = new FileTransferClientData;
 				memset((void*)ftcd, 0, sizeof(FileTransferClientData));
@@ -380,7 +373,7 @@ HANDLE CSametimeProto::AcceptFileTransfer(MCONTACT hContact, HANDLE hFt, char* s
 	if (fn) fn++;
 
 	if (ftcd->save_path)
-		strcpy(fp, ftcd->save_path);
+		mir_strcpy(fp, ftcd->save_path);
 	else
 		fp[0] = 0;
 

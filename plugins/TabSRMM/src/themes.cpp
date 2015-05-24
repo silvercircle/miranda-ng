@@ -804,7 +804,7 @@ TCHAR* CImageItem::Read(const TCHAR *szFilename)
 	TCHAR	*szFinalName = 0;
 
 	GetPrivateProfileString(m_szName, _T("Glyph"), _T("None"), buffer, 500, szFilename);
-	if (_tcscmp(buffer, _T("None"))) {
+	if (mir_tstrcmp(buffer, _T("None"))) {
 		_stscanf(buffer, _T("%d,%d,%d,%d"), &m_glyphMetrics[0], &m_glyphMetrics[1],
 			&m_glyphMetrics[2], &m_glyphMetrics[3]);
 		if (m_glyphMetrics[2] > m_glyphMetrics[0] && m_glyphMetrics[3] > m_glyphMetrics[1]) {
@@ -815,7 +815,7 @@ TCHAR* CImageItem::Read(const TCHAR *szFilename)
 	}
 
 	GetPrivateProfileString(m_szName, _T("Image"), _T("None"), buffer, 500, szFilename);
-	if (_tcscmp(buffer, _T("None")) || m_dwFlags & IMAGE_GLYPH) {
+	if (mir_tstrcmp(buffer, _T("None")) || m_dwFlags & IMAGE_GLYPH) {
 		szFinalName = new TCHAR[MAX_PATH];
 		//strncpy(m_szName, &m_szName[1], sizeof(m_szName));
 		//m_szName[sizeof(m_szName) - 1] = 0;
@@ -854,7 +854,7 @@ TCHAR* CImageItem::Read(const TCHAR *szFilename)
 			}
 		}
 		GetPrivateProfileString(m_szName, _T("Fillcolor"), _T("None"), buffer, 500, szFilename);
-		if (_tcscmp(buffer, _T("None"))) {
+		if (mir_tstrcmp(buffer, _T("None"))) {
 			COLORREF fillColor = CSkin::HexStringToLong(buffer);
 			m_fillBrush = CreateSolidBrush(fillColor);
 			m_dwFlags |= IMAGE_FILLSOLID;
@@ -862,7 +862,7 @@ TCHAR* CImageItem::Read(const TCHAR *szFilename)
 		else
 			m_fillBrush = 0;
 		GetPrivateProfileString(m_szName, _T("Colorkey"), _T("None"), buffer, 500, szFilename);
-		if (_tcscmp(buffer, _T("None"))) {
+		if (mir_tstrcmp(buffer, _T("None"))) {
 			CSkin::m_ContainerColorKey = CSkin::HexStringToLong(buffer);
 			if (CSkin::m_ContainerColorKeyBrush)
 				DeleteObject(CSkin::m_ContainerColorKeyBrush);
@@ -1208,7 +1208,7 @@ void CSkin::LoadIcon(const TCHAR *szSection, const TCHAR *name, HICON &hIcon)
 	GetPrivateProfileString(szSection, name, _T("none"), buffer, 250, m_tszFileName);
 	buffer[500] = 0;
 
-	if (_tcsicmp(buffer, _T("none"))) {
+	if (mir_tstrcmpi(buffer, _T("none"))) {
 		TCHAR szDrive[MAX_PATH], szDir[MAX_PATH], szImagePath[MAX_PATH];
 
 		_tsplitpath(m_tszFileName, szDrive, szDir, NULL, NULL);
@@ -1303,7 +1303,7 @@ void CSkin::ReadImageItem(const TCHAR *itemname)
 
 	TCHAR *szImageFileName = tmpItem.Read(m_tszFileName);
 
-	if (!_tcsicmp(itemname, _T("$glyphs")) && szImageFileName != 0) {		// the glyph item MUST have a valid image
+	if (!mir_tstrcmpi(itemname, _T("$glyphs")) && szImageFileName != 0) {		// the glyph item MUST have a valid image
 		tmpItem.Create(szImageFileName);
 		if (tmpItem.getHbm()) {
 			m_glyphItem = tmpItem;
@@ -1318,10 +1318,10 @@ void CSkin::ReadImageItem(const TCHAR *itemname)
 	for (int n = 0;; n++) {
 		mir_sntprintf(szItemNr, SIZEOF(szItemNr), _T("Item%d"), n);
 		GetPrivateProfileString(itemname, szItemNr, _T("None"), buffer, 500, m_tszFileName);
-		if (!_tcscmp(buffer, _T("None")))
+		if (!mir_tstrcmp(buffer, _T("None")))
 			break;
 		for (int i = 0; i <= ID_EXTBK_LAST; i++) {
-			if (!_tcsicmp(SkinItems[i].szName[0] == '{' ? &SkinItems[i].szName[3] : SkinItems[i].szName, buffer)) {
+			if (!mir_tstrcmpi(SkinItems[i].szName[0] == '{' ? &SkinItems[i].szName[3] : SkinItems[i].szName, buffer)) {
 				if (!(tmpItem.getFlags() & IMAGE_GLYPH)) {
 					if (szImageFileName)
 						tmpItem.Create(szImageFileName);
@@ -1416,7 +1416,7 @@ void CSkin::Load(void)
 			continue;
 		}
 		for (i = 0; i <= ID_EXTBK_LAST; i++) {
-			if (!_tcsicmp(&p[1], SkinItems[i].szName[0] == '{' ? &SkinItems[i].szName[3] : SkinItems[i].szName)) {
+			if (!mir_tstrcmpi(&p[1], SkinItems[i].szName[0] == '{' ? &SkinItems[i].szName[3] : SkinItems[i].szName)) {
 				ReadItem(i, p);
 				break;
 			}
@@ -1434,7 +1434,7 @@ void CSkin::Load(void)
 	m_avatarBorderClr = (COLORREF)HexStringToLong(buffer);
 
 	GetPrivateProfileString(_T("Global"), _T("SideBarBG"), _T("None"), buffer, 20, m_tszFileName);
-	if (_tcscmp(buffer, _T("None")))
+	if (mir_tstrcmp(buffer, _T("None")))
 		m_sideBarContainerBG = (COLORREF)HexStringToLong(buffer);
 	else
 		m_sideBarContainerBG = SkinItems[ID_EXTBKSIDEBARBG].COLOR;
@@ -1494,7 +1494,7 @@ void CSkin::Load(void)
 		DeleteObject(m_MenuBGBrush);
 		m_MenuBGBrush = 0;
 	}
-	if (_tcscmp(buffer, _T("None")))
+	if (mir_tstrcmp(buffer, _T("None")))
 		m_MenuBGBrush = CreateSolidBrush(data);
 
 	GetPrivateProfileString(_T("Global"), _T("LightShadow"), _T("000000"), buffer, 20, m_tszFileName);
@@ -1507,7 +1507,7 @@ void CSkin::Load(void)
 	SkinCalcFrameWidth();
 
 	GetPrivateProfileString(_T("Global"), _T("FontColor"), _T("None"), buffer, 20, m_tszFileName);
-	if (_tcscmp(buffer, _T("None")))
+	if (mir_tstrcmp(buffer, _T("None")))
 		CSkin::m_DefaultFontColor = HexStringToLong(buffer);
 	else
 		CSkin::m_DefaultFontColor = GetSysColor(COLOR_BTNTEXT);

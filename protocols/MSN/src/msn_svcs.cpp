@@ -81,7 +81,7 @@ INT_PTR CMsnProto::GetAvatarInfo(WPARAM wParam, LPARAM lParam)
 		MSN_GetAvatarFileName(NULL, filename, SIZEOF(filename), NULL);
 		AI->format = ProtoGetAvatarFormat(filename);
 		if (AI->format != PA_FORMAT_UNKNOWN)
-			_tcscpy(AI->filename, filename);
+			mir_tstrcpy(AI->filename, filename);
 		return AI->format == PA_FORMAT_UNKNOWN ? GAIR_NOAVATAR : GAIR_SUCCESS;
 	}
 
@@ -99,7 +99,7 @@ INT_PTR CMsnProto::GetAvatarInfo(WPARAM wParam, LPARAM lParam)
 	if (AI->format != PA_FORMAT_UNKNOWN) {
 		bool needupdate = true;
 		if (getString(AI->hContact, "PictSavedContext", &dbv) == 0) {
-			needupdate = strcmp(dbv.pszVal, szContext) != 0;
+			needupdate = mir_strcmp(dbv.pszVal, szContext) != 0;
 			db_free(&dbv);
 		}
 
@@ -113,7 +113,7 @@ INT_PTR CMsnProto::GetAvatarInfo(WPARAM wParam, LPARAM lParam)
 				mir_free(szAvatarHash);
 			}
 		}
-		_tcscpy(AI->filename, filename);
+		mir_tstrcpy(AI->filename, filename);
 		return GAIR_SUCCESS;
 	}
 
@@ -133,6 +133,7 @@ INT_PTR CMsnProto::GetAvatarInfo(WPARAM wParam, LPARAM lParam)
 			pushAvatarRequest(AI->hContact, dbv.pszVal);
 			db_free(&dbv);
 		}
+#ifdef OBSOLETE
 		else if (p2p_getAvatarSession(AI->hContact) == NULL) {
 			filetransfer* ft = new filetransfer(this);
 			ft->std.hContact = AI->hContact;
@@ -143,6 +144,7 @@ INT_PTR CMsnProto::GetAvatarInfo(WPARAM wParam, LPARAM lParam)
 
 			p2p_invite(MSN_APPID_AVATAR, ft, NULL);
 		}
+#endif
 
 		return GAIR_WAITFOR;
 	}
@@ -248,11 +250,12 @@ INT_PTR CMsnProto::SendNudge(WPARAM hContact, LPARAM)
 	char tEmail[MSN_MAX_EMAIL_LEN];
 	if (MSN_IsMeByContact(hContact, tEmail)) return 0;
 
+	int netId = Lists_GetNetId(tEmail);
+
+#ifdef OBSOLETE
 	static const char nudgemsg[] =
 		"Content-Type: text/x-msnmsgr-datacast\r\n\r\n"
 		"ID: 1\r\n\r\n";
-
-	int netId = Lists_GetNetId(tEmail);
 
 	switch (netId) {
 	case NETID_UNKNOWN:
@@ -281,9 +284,13 @@ INT_PTR CMsnProto::SendNudge(WPARAM hContact, LPARAM)
 	default:
 		break;
 	}
+#else
+	msnNsThread->sendMessage('3', tEmail, netId, "", MSG_NUDGE);
+#endif
 	return 0;
 }
 
+#ifdef OBSOLETE
 /////////////////////////////////////////////////////////////////////////////////////////
 //	GetCurrentMedia - get current media
 
@@ -366,6 +373,7 @@ INT_PTR CMsnProto::SetCurrentMedia(WPARAM, LPARAM lParam)
 
 	return 0;
 }
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // MsnContactDeleted - called when a contact is deleted from list
@@ -428,7 +436,7 @@ int CMsnProto::OnGroupChange(WPARAM hContact, LPARAM lParam)
 	}
 	else {
 		if (MSN_IsMyContact(hContact))
-			MSN_MoveContactToGroup(hContact, ptrA(mir_utf8encodeT(grpchg->pszNewName)));
+			MSN_MoveContactToGroup(hContact, T2Utf(grpchg->pszNewName));
 	}
 	return 0;
 }
@@ -445,8 +453,8 @@ int CMsnProto::OnDbSettingChanged(WPARAM hContact, LPARAM lParam)
 		return 0;
 
 	if (hContact == NULL) {
-		if (MyOptions.SlowSend && strcmp(cws->szSetting, "MessageTimeout") == 0 &&
-			(strcmp(cws->szModule, "SRMM") == 0 || strcmp(cws->szModule, "SRMsg") == 0)) {
+		if (MyOptions.SlowSend && mir_strcmp(cws->szSetting, "MessageTimeout") == 0 &&
+			(mir_strcmp(cws->szModule, "SRMM") == 0 || mir_strcmp(cws->szModule, "SRMsg") == 0)) {
 			if (cws->value.dVal < 60000)
 				MessageBox(NULL, TranslateT("MSN requires message send timeout in your Message window plugin to be not less then 60 sec. Please correct the timeout value."),
 				TranslateT("MSN Protocol"), MB_OK | MB_ICONINFORMATION);
@@ -454,7 +462,7 @@ int CMsnProto::OnDbSettingChanged(WPARAM hContact, LPARAM lParam)
 		return 0;
 	}
 
-	if (!strcmp(cws->szSetting, "ApparentMode")) {
+	if (!mir_strcmp(cws->szSetting, "ApparentMode")) {
 		char tEmail[MSN_MAX_EMAIL_LEN];
 		if (!db_get_static(hContact, m_szModuleName, "wlid", tEmail, sizeof(tEmail)) ||
 			!db_get_static(hContact, m_szModuleName, "e-mail", tEmail, sizeof(tEmail))) {
@@ -471,7 +479,7 @@ int CMsnProto::OnDbSettingChanged(WPARAM hContact, LPARAM lParam)
 		}
 	}
 
-	if (!strcmp(cws->szSetting, "MyHandle") && !strcmp(cws->szModule, "CList")) {
+	if (!mir_strcmp(cws->szSetting, "MyHandle") && !mir_strcmp(cws->szModule, "CList")) {
 		bool isMe = MSN_IsMeByContact(hContact);
 		if (!isMe || !nickChg) {
 			char szContactID[100];
@@ -515,6 +523,7 @@ int CMsnProto::OnIdleChanged(WPARAM, LPARAM lParam)
 	return 0;
 }
 
+#ifdef OBSOLETE
 /////////////////////////////////////////////////////////////////////////////////////////
 // OnWindowEvent - creates session on window open
 
@@ -544,6 +553,7 @@ int CMsnProto::OnWindowEvent(WPARAM, LPARAM lParam)
 	}
 	return 0;
 }
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // OnWindowEvent - creates session on window open

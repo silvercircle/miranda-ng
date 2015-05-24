@@ -134,7 +134,7 @@ void Mind::Load(tstring filename)
 			format(st);
 			count = st.length();
 			c = co = new TCHAR[count + 1];
-			_tcscpy(c, st.c_str());
+			mir_tstrcpy(c, st.c_str());
 			size_t pos = 0;
 			while (pos < count && _istspace(*c))
 			{
@@ -213,35 +213,35 @@ void Mind::Load(tstring filename)
 					++c;
 					count -= 2;
 					c[count] = '\0';
-					if (_tcscmp(c, _T("QUESTION")) == 0)
+					if (mir_tstrcmp(c, _T("QUESTION")) == 0)
 					{
 						toLowerStr(c);
 						data->question.insert(s1);
 					}
 					else
-						if (_tcscmp(c, _T("IGNORED")) == 0)
+						if (mir_tstrcmp(c, _T("IGNORED")) == 0)
 						{
 							toLowerStr(c);
 							data->special.insert(s1);
 						}
 						else
-							if (_tcscmp(c, _T("ESCAPE")) == 0)
+							if (mir_tstrcmp(c, _T("ESCAPE")) == 0)
 							{
 								data->escape.push_back(s1);
 							}
 							else
-								if (_tcscmp(c, _T("FAILURE")) == 0)
+								if (mir_tstrcmp(c, _T("FAILURE")) == 0)
 								{
 									data->failure.push_back(s1);
 								}
 								else
-									if (_tcscmp(c, _T("REPEAT")) == 0)
+									if (mir_tstrcmp(c, _T("REPEAT")) == 0)
 									{
 										data->repeats.push_back(s1);
 									}
 									else
 									{
-										if (_tcscmp(c, _T("INITIAL")) != 0)
+										if (mir_tstrcmp(c, _T("INITIAL")) != 0)
 											throw error;
 										data->initial.push_back(s1);
 									}
@@ -259,7 +259,7 @@ void Mind::Load(tstring filename)
 					tstring sc(c);
 					int count1 = (int)s1.length();
 					TCHAR *c = new TCHAR[count1 + 1];
-					_tcscpy(c, s1.c_str());
+					mir_tstrcpy(c, s1.c_str());
 					CharLower(c);
 					s1 = c;
 					delete c;

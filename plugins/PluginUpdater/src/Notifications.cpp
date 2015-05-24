@@ -101,7 +101,11 @@ void ShowPopup(LPCTSTR ptszTitle, LPCTSTR ptszText, int Number)
 		if (db_get_b(NULL, MODNAME, setting, DEFAULT_POPUP_ENABLED)) {
 			POPUPDATAT pd = { 0 };
 			pd.lchContact = NULL;
+#if MIRANDA_VER >= 0x0A00
+			pd.lchIcon = Skin_GetIconByHandle(iconList[0].hIcolib);
+#else
 			pd.lchIcon = Skin_GetIcon("check_update");
+#endif
 			if (Number == POPUP_TYPE_MSG) {
 				pd.PluginWindowProc = PopupDlgProcRestart;
 				pd.iSeconds = -1;
@@ -132,22 +136,6 @@ void ShowPopup(LPCTSTR ptszTitle, LPCTSTR ptszText, int Number)
 		}
 	}
 
-	if (Number == POPUP_TYPE_ERROR) {
-		int iMsgType;
-		switch (Number) {
-			case POPUP_TYPE_MSG: iMsgType = MB_ICONSTOP; break;
-			case POPUP_TYPE_ERROR: iMsgType = MB_ICONINFORMATION; break;
-			case POPUP_TYPE_INFO: iMsgType = MB_ICONQUESTION; break;
-			default: iMsgType = 0;
-		}
-		MessageBox(0, ptszText, ptszTitle, iMsgType);
-	}
-}
-
-int ImageList_AddIconFromIconLib(HIMAGELIST hIml, const char *name)
-{
-	HICON icon = Skin_GetIconByHandle(Skin_GetIconHandle(name));
-	int res = ImageList_AddIcon(hIml, icon);
-	Skin_ReleaseIcon(icon);
-	return res;
+	if (Number == POPUP_TYPE_ERROR)
+		MessageBox(0, ptszText, ptszTitle, MB_ICONINFORMATION);
 }

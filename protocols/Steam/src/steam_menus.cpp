@@ -99,7 +99,7 @@ void CSteamProto::OnInitStatusMenu()
 {
 	char text[200];
 	mir_strncpy(text, m_szModuleName, 100);
-	char* tDest = text + strlen(text);
+	char* tDest = text + mir_strlen(text);
 
 	CLISTMENUITEM mi = { sizeof(mi) };
 	mi.pszService = text;
@@ -125,7 +125,7 @@ void CSteamProto::OnInitStatusMenu()
 	mi.flags = CMIF_CHILDPOPUP | CMIF_TCHAR;
 
 	// Show block list
-	strcpy(tDest, "/BlockList");
+	mir_strcpy(tDest, "/BlockList");
 	CreateProtoService(tDest, &CSteamProto::OpenBlockListCommand);
 	mi.ptszName = LPGENT("Blocked contacts");
 	mi.position = 200000 + SMI_BLOCKED_LIST;

@@ -76,7 +76,7 @@ void RegPopupActions()
 {
 	if (ServiceExists(MS_POPUP_ADDPOPUPT)) {
 		poOptions.paActions[0].cbSize = sizeof(POPUPACTION);
-		strcpy(poOptions.paActions[0].lpzTitle, ModuleName);
+		mir_strcpy(poOptions.paActions[0].lpzTitle, ModuleName);
 		strcat(poOptions.paActions[0].lpzTitle, "/Copy to clipboard");
 		poOptions.paActions[0].flags = PAF_ENABLED;
 		poOptions.paActions[0].wParam = poOptions.paActions[0].lParam = 0;
@@ -104,11 +104,11 @@ int ModulesLoaded(WPARAM wParam, LPARAM lParam)
 		ptrT tszValue(db_get_tsa(NULL, ModuleName, ptszTemp));
 		if (tszValue == 0)
 			ptszLayStrings[i] = ptszCurrLayout;
-		else if (!_tcscmp(tszValue, ptszEmptySting))
+		else if (!mir_tstrcmp(tszValue, ptszEmptySting))
 			ptszLayStrings[i] = ptszCurrLayout;
 		else {
 			ptszLayStrings[i] = tszValue.detouch();
-			if (!_tcscmp(ptszCurrLayout, ptszLayStrings[i]))
+			if (!mir_tstrcmp(ptszCurrLayout, ptszLayStrings[i]))
 				db_unset(NULL, ModuleName, ptszTemp);
 			mir_free(ptszCurrLayout);
 		}

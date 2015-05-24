@@ -151,7 +151,7 @@ public:
 				TCHAR buf[MAXDATASIZE];
 				va_list vl;
 
-				_tcscpy(fmt, szText);
+				mir_tstrcpy(fmt, szText);
 
 				// delete bbcodes
 				if (!_bBBCode)
@@ -404,7 +404,7 @@ public:
 		_popupButtons[0].lchIcon = Skin_GetIcon(ICO_BTN_DOWNARROW);
 		_popupButtons[0].wParam = MAKEWORD(IDSKIP, BN_CLICKED);
 		_popupButtons[0].lParam = NULL;
-		strcpy(_popupButtons[0].lpzTitle, MODNAME"/Hide");
+		mir_strcpy(_popupButtons[0].lpzTitle, MODNAME"/Hide");
 
 		// cancel button
 		_popupButtons[1].cbSize = sizeof(POPUPACTION);
@@ -412,7 +412,7 @@ public:
 		_popupButtons[1].lchIcon = Skin_GetIcon(ICO_BTN_CANCEL);
 		_popupButtons[1].wParam = MAKEWORD(IDCANCEL, BN_CLICKED);
 		_popupButtons[1].lParam = NULL;
-		strcpy(_popupButtons[1].lpzTitle, MODNAME"/Cancel");
+		mir_strcpy(_popupButtons[1].lpzTitle, MODNAME"/Cancel");
 	}
 
 	/**
@@ -434,7 +434,7 @@ public:
 		_szText = mir_tstrdup(szTitle);
 		mir_tstrcpy(pd.lptzContactName, _szText);
 		
-		_tcscpy(pd.lptzText, _T(" "));
+		mir_tstrcpy(pd.lptzText, _T(" "));
 		
 		_pFnCallBack = pFnCallBack;
 		_hWnd = (HWND) CallService(MS_POPUP_ADDPOPUPT, (WPARAM) &pd, APF_RETURN_HWND|APF_NEWDATA);

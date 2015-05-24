@@ -64,9 +64,9 @@ bool IsInsideRootDir(TCHAR* profiledir, bool exact)
 {
 	VARST pfd( _T("%miranda_path%"));
 	if (exact)
-		return _tcsicmp(profiledir, pfd) == 0;
+		return mir_tstrcmpi(profiledir, pfd) == 0;
 
-	return _tcsnicmp(profiledir, pfd, _tcslen(pfd)) == 0;
+	return _tcsnicmp(profiledir, pfd, mir_tstrlen(pfd)) == 0;
 }
 
 // returns 1 if the profile path was returned, without trailing slash
@@ -76,7 +76,7 @@ int getProfilePath(TCHAR *buf, size_t cch)
 	GetPrivateProfileString(_T("Database"), _T("ProfileDir"), _T(""), profiledir, SIZEOF(profiledir), mirandabootini);
 
 	if (profiledir[0] == 0)
-		_tcscpy(profiledir, _T("%miranda_path%\\Profiles"));
+		mir_tstrcpy(profiledir, _T("%miranda_path%\\Profiles"));
 
 	size_t len = PathToAbsoluteT( VARST(profiledir), buf);
 
@@ -89,8 +89,8 @@ int getProfilePath(TCHAR *buf, size_t cch)
 // returns 1 if *.dat spec is matched
 int isValidProfileName(const TCHAR *name)
 {
-	size_t len = _tcslen(name) - 4;
-	return len > 0 && _tcsicmp(&name[len], _T(".dat")) == 0;
+	size_t len = mir_tstrlen(name) - 4;
+	return len > 0 && mir_tstrcmpi(&name[len], _T(".dat")) == 0;
 }
 
 // returns 1 if the profile manager should be shown
@@ -103,7 +103,7 @@ static bool showProfileManager(void)
 
 	// wanna show it?
 	GetPrivateProfileString(_T("Database"), _T("ShowProfileMgr"), _T("never"), Mgr, SIZEOF(Mgr), mirandabootini);
-	return (_tcsicmp(Mgr, _T("yes")) == 0);
+	return (mir_tstrcmpi(Mgr, _T("yes")) == 0);
 }
 
 bool shouldAutoCreate(TCHAR *szProfile)
@@ -113,7 +113,7 @@ bool shouldAutoCreate(TCHAR *szProfile)
 
 	TCHAR ac[32];
 	GetPrivateProfileString(_T("Database"), _T("AutoCreate"), _T(""), ac, SIZEOF(ac), mirandabootini);
-	return _tcsicmp(ac, _T("yes")) == 0;
+	return mir_tstrcmpi(ac, _T("yes")) == 0;
 }
 
 static void getDefaultProfile(TCHAR *szProfile, size_t cch)
@@ -157,7 +157,7 @@ static void loadProfileByShortName(const TCHAR* src, TCHAR *szProfile, size_t cc
 		if (profileName[0]) {
 			p = _tcsrchr(g_profileDir, '\\'); *p = 0;
 			p = _tcsrchr(g_profileDir, '\\');
-			if (p && _tcsicmp(p + 1, profileName) == 0)
+			if (p && mir_tstrcmpi(p + 1, profileName) == 0)
 				*p = 0;
 		}
 		else szProfile[0] = 0;
@@ -248,7 +248,7 @@ static int getProfile1(TCHAR *szProfile, size_t cch, TCHAR *profiledir, BOOL * n
 		if (hFind != INVALID_HANDLE_VALUE) {
 			do {
 				// make sure the first hit is actually a *.dat file
-				if (!(ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || !_tcscmp(ffd.cFileName, _T(".")) || !_tcscmp(ffd.cFileName, _T("..")))
+				if (!(ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || !mir_tstrcmp(ffd.cFileName, _T(".")) || !mir_tstrcmp(ffd.cFileName, _T("..")))
 					continue;
 
 				TCHAR newProfile[MAX_PATH];
@@ -288,7 +288,7 @@ static int getProfileAutoRun(TCHAR *szProfile)
 
 	TCHAR Mgr[32];
 	GetPrivateProfileString(_T("Database"), _T("ShowProfileMgr"), _T(""), Mgr, SIZEOF(Mgr), mirandabootini);
-	if (_tcsicmp(Mgr, _T("never")))
+	if (mir_tstrcmpi(Mgr, _T("never")))
 		return 0;
 
 	return fileExist(szProfile) || shouldAutoCreate(szProfile);
@@ -342,7 +342,7 @@ char* makeFileName(const TCHAR* tszOriginalName)
 	char *szResult = NULL;
 	char *szFileName = mir_t2a(tszOriginalName);
 	TCHAR *tszFileName = mir_a2t(szFileName);
-	if (_tcscmp(tszOriginalName, tszFileName)) {
+	if (mir_tstrcmp(tszOriginalName, tszFileName)) {
 		TCHAR tszProfile[MAX_PATH];
 		if (GetShortPathName(tszOriginalName, tszProfile, MAX_PATH) != 0)
 			szResult = mir_t2a(tszProfile);

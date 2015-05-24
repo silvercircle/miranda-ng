@@ -21,7 +21,7 @@ LIST<CSkypeProto> Accounts(1, CSkypeProto::CompareAccounts);
 
 int CSkypeProto::CompareAccounts(const CSkypeProto *p1, const CSkypeProto *p2)
 {
-	return _tcscmp(p1->m_tszUserName, p2->m_tszUserName);
+	return mir_tstrcmp(p1->m_tszUserName, p2->m_tszUserName);
 }
 
 CSkypeProto* CSkypeProto::InitAccount(const char *protoName, const wchar_t *userName)
@@ -48,6 +48,8 @@ CSkypeProto* CSkypeProto::GetContactAccount(MCONTACT hContact)
 
 int CSkypeProto::OnAccountLoaded(WPARAM, LPARAM)
 {
+	SetAllContactsStatus(ID_STATUS_OFFLINE);
+
 	HookProtoEvent(ME_OPT_INITIALISE, &CSkypeProto::OnOptionsInit);
 	HookProtoEvent(ME_MSG_PRECREATEEVENT, &CSkypeProto::OnPreCreateMessage);
 

@@ -55,7 +55,7 @@ int Log(char *format, ...)
 		}
 
 	va_end(vararg);
-	if (str[strlen(str) - 1] != '\n')
+	if (str[mir_strlen(str) - 1] != '\n')
 		{
 			strcat(str, "\n");
 		}
@@ -103,12 +103,12 @@ char *BinToHex(int size, PBYTE data)
 	szresult = (char *) new char[ maxSize ];
 	memset(szresult, 0, maxSize);
 	mir_snprintf(buffer, SIZEOF(buffer), "%0*X", HEX_SIZE, size);
-	strcpy(szresult, buffer);
+	mir_strcpy(szresult, buffer);
 	int i;
 	for (i = 0; i < size; i++)
 		{
 			mir_snprintf(buffer, SIZEOF(buffer), "%02X", data[i]);
-			strcpy(szresult + (HEX_SIZE + i * 2), buffer);
+			mir_strcpy(szresult + (HEX_SIZE + i * 2), buffer);
 		}
 	return szresult; 
 }
@@ -116,7 +116,7 @@ char *BinToHex(int size, PBYTE data)
 void HexToBin(char *inData, ULONG &size, LPBYTE &outData)
 {
 	char buffer[32] = {0};
-	strcpy(buffer, "0x");
+	mir_strcpy(buffer, "0x");
 	strncpy(buffer + 2, inData, HEX_SIZE);
 	sscanf(buffer, "%x", &size);
 	outData = (unsigned char*)new char[size*2];
@@ -141,7 +141,7 @@ int GetStringFromDatabase(MCONTACT hContact, char *szModule, char *szSettingName
 	if (db_get_s(hContact, szModule, szSettingName, &dbv) == 0)
 		{
 			res = 0;
-			int tmp = (int)strlen(dbv.pszVal);
+			int tmp = (int)mir_strlen(dbv.pszVal);
 			len = (tmp < size - 1) ? tmp : size - 1;
 			strncpy(szResult, dbv.pszVal, len);
 			szResult[len] = '\0';
@@ -151,7 +151,7 @@ int GetStringFromDatabase(MCONTACT hContact, char *szModule, char *szSettingName
 			res = 1;
 			if (szError)
 				{
-					int tmp = (int)strlen(szError);
+					int tmp = (int)mir_strlen(szError);
 					len = (tmp < size - 1) ? tmp : size - 1;
 					strncpy(szResult, szError, len);
 					szResult[len] = '\0';
@@ -329,7 +329,7 @@ MCONTACT GetContactFromID(TCHAR *szID, char *szProto)
 		tmp = (TCHAR *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR);
 		_tcsncpy(dispName, tmp, SIZEOF(dispName));
 		
-		if ((szHandle) && ((_tcsicmp(szHandle, szID) == 0) || (_tcsicmp(dispName, szID) == 0)) && ((szProto == NULL) || (_stricmp(szProto, cProtocol) == 0)))
+		if ((szHandle) && ((mir_tstrcmpi(szHandle, szID) == 0) || (mir_tstrcmpi(dispName, szID) == 0)) && ((szProto == NULL) || (_stricmp(szProto, cProtocol) == 0)))
 			found = 1;
 
 		if (szHandle) { free(szHandle); }

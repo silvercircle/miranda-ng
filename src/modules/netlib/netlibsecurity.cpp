@@ -61,7 +61,7 @@ struct NtlmType2packet
 };
 
 static unsigned secCnt = 0, ntlmCnt = 0;
-static HANDLE hSecMutex;
+static mir_cs csSec;
 
 static void ReportSecError(SECURITY_STATUS scRet, int line)
 {
@@ -106,7 +106,7 @@ HANDLE NetlibInitSecurityProvider(const TCHAR* szProvider, const TCHAR* szPrinci
 {
 	HANDLE hSecurity = NULL;
 
-	if (_tcsicmp(szProvider, _T("Basic")) == 0) {
+	if (mir_tstrcmpi(szProvider, _T("Basic")) == 0) {
 		NtlmHandleType* hNtlm = (NtlmHandleType*)mir_calloc(sizeof(NtlmHandleType));
 		hNtlm->szProvider = mir_tstrdup(szProvider);
 		SecInvalidateHandle(&hNtlm->hClientContext);
@@ -116,7 +116,7 @@ HANDLE NetlibInitSecurityProvider(const TCHAR* szProvider, const TCHAR* szPrinci
 		return hNtlm;
 	}
 
-	WaitForSingleObject(hSecMutex, INFINITE);
+	mir_cslock lck(csSec);
 
 	if (secCnt == 0) {
 		LoadSecurityLibrary();
@@ -126,7 +126,7 @@ HANDLE NetlibInitSecurityProvider(const TCHAR* szProvider, const TCHAR* szPrinci
 
 	if (g_pSSPI != NULL) {
 		PSecPkgInfo ntlmSecurityPackageInfo;
-		bool isGSSAPI = _tcsicmp(szProvider, _T("GSSAPI")) == 0;
+		bool isGSSAPI = mir_tstrcmpi(szProvider, _T("GSSAPI")) == 0;
 		const TCHAR *szProviderC = isGSSAPI ? _T("Kerberos") : szProvider;
 		SECURITY_STATUS sc = g_pSSPI->QuerySecurityPackageInfo((LPTSTR)szProviderC, &ntlmSecurityPackageInfo);
 		if (sc == SEC_E_OK) {
@@ -143,8 +143,6 @@ HANDLE NetlibInitSecurityProvider(const TCHAR* szProvider, const TCHAR* szPrinci
 			ntlmCnt++;
 		}
 	}
-
-	ReleaseMutex(hSecMutex);
 	return hSecurity;
 }
 
@@ -158,24 +156,23 @@ void NetlibDestroySecurityProvider(HANDLE hSecurity)
 	if (hSecurity == NULL)
 		return;
 
-	WaitForSingleObject(hSecMutex, INFINITE);
+	mir_cslock lck(csSec);
 
 	if (ntlmCnt != 0) {
 		NtlmHandleType* hNtlm = (NtlmHandleType*)hSecurity;
-		if (SecIsValidHandle(&hNtlm->hClientContext)) g_pSSPI->DeleteSecurityContext(&hNtlm->hClientContext);
-		if (SecIsValidHandle(&hNtlm->hClientCredential)) g_pSSPI->FreeCredentialsHandle(&hNtlm->hClientCredential);
-		mir_free(hNtlm->szProvider);
-		mir_free(hNtlm->szPrincipal);
+		if (hNtlm != NULL) {
+			if (SecIsValidHandle(&hNtlm->hClientContext)) g_pSSPI->DeleteSecurityContext(&hNtlm->hClientContext);
+			if (SecIsValidHandle(&hNtlm->hClientCredential)) g_pSSPI->FreeCredentialsHandle(&hNtlm->hClientCredential);
+			mir_free(hNtlm->szProvider);
+			mir_free(hNtlm->szPrincipal);
+			mir_free(hNtlm);
+		}
 
 		--ntlmCnt;
-
-		mir_free(hNtlm);
 	}
 
 	if (secCnt && --secCnt == 0)
 		FreeSecurityLibrary();
-
-	ReleaseMutex(hSecMutex);
 }
 
 char* CompleteGssapi(HANDLE hSecurity, unsigned char *szChallenge, unsigned chlsz)
@@ -254,8 +251,8 @@ char* NtlmCreateResponseFromChallenge(HANDLE hSecurity, const char *szChallenge,
 	char *szOutputToken;
 
 	NtlmHandleType* hNtlm = (NtlmHandleType*)hSecurity;
-	if (_tcsicmp(hNtlm->szProvider, _T("Basic"))) {
-		bool isGSSAPI = _tcsicmp(hNtlm->szProvider, _T("GSSAPI")) == 0;
+	if (mir_tstrcmpi(hNtlm->szProvider, _T("Basic"))) {
+		bool isGSSAPI = mir_tstrcmpi(hNtlm->szProvider, _T("GSSAPI")) == 0;
 		TCHAR *szProvider = isGSSAPI ? _T("Kerberos") : hNtlm->szProvider;
 		bool hasChallenge = szChallenge != NULL && szChallenge[0] != '\0';
 		if (hasChallenge) {
@@ -292,12 +289,12 @@ char* NtlmCreateResponseFromChallenge(HANDLE hSecurity, const char *szChallenge,
 					else domainLen /= sizeof(wchar_t);
 
 					if (domainLen) {
-						size_t newLoginLen = _tcslen(login) + domainLen + 1;
+						size_t newLoginLen = mir_tstrlen(login) + domainLen + 1;
 						TCHAR *newLogin = (TCHAR*)alloca(newLoginLen * sizeof(TCHAR));
 
 						_tcsncpy(newLogin, domainName, domainLen);
 						newLogin[domainLen] = '\\';
-						_tcscpy(newLogin + domainLen + 1, login);
+						mir_tstrcpy(newLogin + domainLen + 1, login);
 
 						char* szChl = NtlmCreateResponseFromChallenge(hSecurity, NULL, newLogin, psw, http, complete);
 						mir_free(szChl);
@@ -383,7 +380,7 @@ char* NtlmCreateResponseFromChallenge(HANDLE hSecurity, const char *szChallenge,
 		char *szLogin = mir_t2a(login);
 		char *szPassw = mir_t2a(psw);
 
-		size_t authLen = strlen(szLogin) + strlen(szPassw) + 5;
+		size_t authLen = mir_strlen(szLogin) + mir_strlen(szPassw) + 5;
 		char *szAuth = (char*)alloca(authLen);
 
 		int len = mir_snprintf(szAuth, authLen, "%s:%s", szLogin, szPassw);
@@ -401,7 +398,7 @@ char* NtlmCreateResponseFromChallenge(HANDLE hSecurity, const char *szChallenge,
 		return szOutputToken;
 
 	ptrA szProvider(mir_t2a(hNtlm->szProvider));
-	size_t resLen = strlen(szOutputToken) + strlen(szProvider) + 10;
+	size_t resLen = mir_strlen(szOutputToken) + mir_strlen(szProvider) + 10;
 	char *result = (char*)mir_alloc(resLen);
 	mir_snprintf(result, resLen, "%s %s", szProvider, szOutputToken);
 	mir_free(szOutputToken);
@@ -458,16 +455,9 @@ static INT_PTR NtlmCreateResponseService2(WPARAM wParam, LPARAM lParam)
 
 void NetlibSecurityInit(void)
 {
-	hSecMutex = CreateMutex(NULL, FALSE, NULL);
-
 	CreateServiceFunction(MS_NETLIB_INITSECURITYPROVIDER, InitSecurityProviderService);
 	CreateServiceFunction(MS_NETLIB_INITSECURITYPROVIDER2, InitSecurityProviderService2);
 	CreateServiceFunction(MS_NETLIB_DESTROYSECURITYPROVIDER, DestroySecurityProviderService);
 	CreateServiceFunction(MS_NETLIB_NTLMCREATERESPONSE, NtlmCreateResponseService);
 	CreateServiceFunction(MS_NETLIB_NTLMCREATERESPONSE2, NtlmCreateResponseService2);
-}
-
-void NetlibSecurityDestroy(void)
-{
-	CloseHandle(hSecMutex);
 }

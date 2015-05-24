@@ -275,6 +275,7 @@ public:
 	__forceinline bool IsInitialized() const { return m_initialized; }
 	__forceinline void SetParent(HWND hwnd) { m_hwndParent = hwnd; }
 	__forceinline void Close() { SendMessage(m_hwnd, WM_CLOSE, 0, 0); }
+	__forceinline void Fail() { m_lresult = false; }
 
 	static CDlgBase* Find(HWND hwnd);
 
@@ -291,8 +292,6 @@ protected:
 	enum { CLOSE_ON_OK = 0x1, CLOSE_ON_CANCEL = 0x2 };
 	BYTE    m_autoClose;    // automatically close dialog on IDOK/CANCEL commands. default: CLOSE_ON_OK|CLOSE_ON_CANCEL
 
-	CCtrlBase* m_first;
-
 	// override this handlers to provide custom functionality
 	// general messages
 	virtual void OnInitDialog() { }
@@ -308,7 +307,7 @@ protected:
 	// main dialog procedure
 	virtual INT_PTR DlgProc(UINT msg, WPARAM wParam, LPARAM lParam);
 
-	// resister controls
+	// register controls
 	void AddControl(CCtrlBase *ctrl);
 
 	// win32 stuff
@@ -376,7 +375,6 @@ public:
 protected:
 	HWND m_hwnd;  // must be the first data item
 	int m_idCtrl;
-	CCtrlBase* m_next;
 	CDlgBase* m_parentWnd;
 	bool m_bChanged;
 
@@ -990,6 +988,12 @@ protected:
 /////////////////////////////////////////////////////////////////////////////////////////
 // CCtrlTreeView
 
+#define PSN_INFOCHANGED    1
+#define PSN_PARAMCHANGED   2
+
+// force-send a PSN_INFOCHANGED to all pages
+#define PSM_FORCECHANGED  (WM_USER+100)
+
 class MIR_CORE_EXPORT CCtrlPages : public CCtrlBase
 {
 	typedef CCtrlBase CSuper;
@@ -997,16 +1001,17 @@ class MIR_CORE_EXPORT CCtrlPages : public CCtrlBase
 public:
 	CCtrlPages(CDlgBase *dlg, int ctrlId);
 
-	void AddPage(TCHAR *ptszName, HICON hIcon, CCallback<void> onCreate = CCallback<void>(), void *param = NULL);
-	void AttachDialog(int iPage, CDlgBase *pDlg);
-
+	void AddPage(TCHAR *ptszName, HICON hIcon, CDlgBase *pDlg);
 	void ActivatePage(int iPage);
-
 
 protected:
 	virtual BOOL OnNotify(int idCtrl, NMHDR *pnmh);
-	void OnInit();
-	void OnDestroy();
+	
+	virtual void OnInit();
+	virtual void OnDestroy();
+
+	virtual void OnApply();
+	virtual void OnReset();
 
 	virtual LRESULT CustomWndProc(UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -1014,14 +1019,19 @@ private:
 	HIMAGELIST m_hIml;
 	CDlgBase *m_pActivePage;
 
-	struct TPageInfo
+	struct TPageInfo : public MZeroedObject
 	{
-		CCallback<void> m_onCreate;
-		void *m_param;
+		int m_pageId;
+		ptrT m_ptszHeader;
+		HICON m_hIcon;
+		BOOL m_bChanged;
 		CDlgBase *m_pDlg;
 	};
 
 	void ShowPage(CDlgBase *pDlg);
+
+	TPageInfo* GetCurrPage();
+	LIST<TPageInfo> m_pages;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////

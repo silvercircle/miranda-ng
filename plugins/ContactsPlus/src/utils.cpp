@@ -27,7 +27,7 @@
 size_t __fastcall strlennull(const char *string)
 {
 	if (string)
-		return strlen(string);
+		return mir_strlen(string);
 
 	return 0;
 }
@@ -36,7 +36,7 @@ int __fastcall strcmpnull(const char *str1, const char *str2)
 {
 	if (!str1 || !str2) return 1;
 
-	return strcmp(str1, str2);
+	return mir_strcmp(str1, str2);
 }
 
 void __fastcall strcpynull(char *str1, const char *str2)
@@ -44,7 +44,7 @@ void __fastcall strcpynull(char *str1, const char *str2)
 	if (!str2)
 		str2 = "";
 
-	strcpy(str1, str2);
+	mir_strcpy(str1, str2);
 }
 
 char* __fastcall null_strdup(const char *string)

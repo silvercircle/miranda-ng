@@ -11,9 +11,9 @@ MCONTACT find_contact(const char* userid, const char* protocol)
 {
 	for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact)) {
 		const char *proto = GetContactProto(hContact);
-		if(proto && strcmp(proto, protocol) == 0) {
+		if(proto && mir_strcmp(proto, protocol) == 0) {
 			char *name = contact_get_id(hContact);
-			if(name && strcmp(name, userid) == 0) {
+			if(name && mir_strcmp(name, userid) == 0) {
 				mir_free(name);
 				return hContact;
 			}
@@ -164,7 +164,7 @@ void ShowPopup(const TCHAR* line1, const TCHAR* line2, int timeout, const MCONTA
 		mir_sntprintf(title, SIZEOF(title), _T("%s Message"), _T(MODULENAME));
 
 		if(line1 && line2) {
-			int size = int(_tcslen(line1) + _tcslen(line2) + 3);
+			int size = int(mir_tstrlen(line1) + mir_tstrlen(line2) + 3);
 			TCHAR *message = new TCHAR[size]; // newline and null terminator
 			mir_sntprintf(message, size, _T("%s\r\n%s"), line1, line2);
 			MessageBox( NULL, message, title, MB_OK | MB_ICONINFORMATION );
@@ -217,7 +217,7 @@ void ShowWarning(TCHAR *msg) {
 	switch(disp) {
 		case ED_POP:
 			{
-				int size = int(_tcslen(msg) + 515);
+				int size = int(mir_tstrlen(msg) + 515);
 				message = new TCHAR[size]; // newline and null terminator
 				mir_sntprintf(message, size, _T("%s\r\n%s"), buffer, msg);
 				PUShowMessageT(message, SM_WARNING);
@@ -264,7 +264,7 @@ void ShowError(TCHAR *msg) {
 	switch(disp) {
 		case ED_POP:
 			{
-				int size = int(_tcslen(msg) + 515);
+				int size = int(mir_tstrlen(msg) + 515);
 				message = new TCHAR[size]; // newline and null terminator
 				mir_sntprintf(message, size, _T("%s\r\n%s"), buffer, msg);
 				PUShowMessageT(message, SM_WARNING);
@@ -316,15 +316,13 @@ void ShowErrorUtf(char* msg) {
 void ShowMessageInline(const MCONTACT hContact, const TCHAR *msg) {
 	TCHAR buff[1024];
 	mir_sntprintf(buff, SIZEOF(buff), _T("%s%s"), TranslateT(LANG_INLINE_PREFIX), msg);
+	T2Utf utf(buff);
 
 	PROTORECVEVENT pre = {0};
 	pre.timestamp = time(0);
-	char *utf = mir_utf8encodeT(buff);
 	pre.szMessage = utf;
-	pre.flags = PREF_UTF|PREF_BYPASS_OTR;
+	pre.flags = PREF_BYPASS_OTR;
 	ProtoChainRecvMsg(hContact, &pre);	
-
-	mir_free(utf);
 }
 
 void ShowMessageInlineUtf(const MCONTACT hContact, const char *msg) {
@@ -334,7 +332,7 @@ void ShowMessageInlineUtf(const MCONTACT hContact, const char *msg) {
 	PROTORECVEVENT pre = {0};
 	pre.timestamp = time(0);
 	pre.szMessage = buff;
-	pre.flags = PREF_UTF|PREF_BYPASS_OTR;
+	pre.flags = PREF_BYPASS_OTR;
 	ProtoChainRecvMsg(hContact, &pre);
 }
 
@@ -372,13 +370,13 @@ const TCHAR *policy_to_string(OtrlPolicy policy) {
 }
 
 OtrlPolicy policy_from_string(const TCHAR *polstring) {
-	if (_tcscmp(polstring, TranslateT(LANG_POLICY_NEVER)) == 0)
+	if (mir_tstrcmp(polstring, TranslateT(LANG_POLICY_NEVER)) == 0)
 		return OTRL_POLICY_NEVER;
-	else if (_tcscmp(polstring, TranslateT(LANG_POLICY_OPP)) == 0)
+	else if (mir_tstrcmp(polstring, TranslateT(LANG_POLICY_OPP)) == 0)
 		return OTRL_POLICY_OPPORTUNISTIC;
-	else if (_tcscmp(polstring, TranslateT(LANG_POLICY_MANUAL)) == 0)
+	else if (mir_tstrcmp(polstring, TranslateT(LANG_POLICY_MANUAL)) == 0)
 		return OTRL_POLICY_MANUAL_MOD;
-	else if (_tcscmp(polstring, TranslateT(LANG_POLICY_ALWAYS)) == 0)
+	else if (mir_tstrcmp(polstring, TranslateT(LANG_POLICY_ALWAYS)) == 0)
 		return OTRL_POLICY_ALWAYS;
 	else 
 		return CONTACT_DEFAULT_POLICY;

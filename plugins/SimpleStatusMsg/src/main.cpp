@@ -70,21 +70,21 @@ void log2file(const char *fmt, ...)
 	SetFilePointer(hFile, 0, 0, FILE_END);
 
 	strncpy(szText, "[\0", SIZEOF(szText));
-	WriteFile(hFile, szText, (DWORD)strlen(szText), &dwBytesWritten, NULL);
+	WriteFile(hFile, szText, (DWORD)mir_strlen(szText), &dwBytesWritten, NULL);
 
 	GetTimeFormatA(LOCALE_USER_DEFAULT, 0, NULL, NULL, szText, SIZEOF(szText));
-	WriteFile(hFile, szText, (DWORD)strlen(szText), &dwBytesWritten, NULL);
+	WriteFile(hFile, szText, (DWORD)mir_strlen(szText), &dwBytesWritten, NULL);
 
 	strncpy(szText, "] \0", SIZEOF(szText));
 
 	va_start(va, fmt);
-	mir_vsnprintf(szText + strlen(szText), SIZEOF(szText) - strlen(szText), fmt, va);
+	mir_vsnprintf(szText + mir_strlen(szText), SIZEOF(szText) - mir_strlen(szText), fmt, va);
 	va_end(va);
 
-	WriteFile(hFile, szText, (DWORD)strlen(szText), &dwBytesWritten, NULL);
+	WriteFile(hFile, szText, (DWORD)mir_strlen(szText), &dwBytesWritten, NULL);
 
 	strncpy(szText, "\n\0", SIZEOF(szText));
-	WriteFile(hFile, szText, (DWORD)strlen(szText), &dwBytesWritten, NULL);
+	WriteFile(hFile, szText, (DWORD)mir_strlen(szText), &dwBytesWritten, NULL);
 
 	CloseHandle(hFile);
 }
@@ -122,7 +122,7 @@ static TCHAR *GetWinampSong(void)
 
 	if (pstr < szTitle + (iTitleLen / 2))
 	{
-		memmove(szTitle, pstr + 9, _tcslen(pstr + 9) * sizeof(TCHAR));
+		memmove(szTitle, pstr + 9, mir_tstrlen(pstr + 9) * sizeof(TCHAR));
 		pstr = _tcsstr(pstr + 1, _T(" - Winamp"));
 		if (pstr == NULL)
 		{
@@ -974,7 +974,7 @@ INT_PTR ShowStatusMessageDialog(WPARAM wParam, LPARAM lParam)
 		if (!accounts->pa[i]->bIsVisible)
 			continue;
 
-		if (!strcmp(accounts->pa[i]->szModuleName, (char *)lParam))
+		if (!mir_strcmp(accounts->pa[i]->szModuleName, (char *)lParam))
 		{
 			box_data->m_szProto = accounts->pa[i]->szModuleName;
 			box_data->m_iStatusModes = CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_2, 0)&~CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_5, 0);
@@ -1011,7 +1011,7 @@ static int ChangeStatusMessage(WPARAM wParam, LPARAM lParam)
 
 	// TODO this could be done better
 	BOOL bOnStartup = FALSE, bGlobalStartupStatus = TRUE;
-	if (szProto && !strcmp(szProto, "SimpleStatusMsgGlobalStartupStatus")) {
+	if (szProto && !mir_strcmp(szProto, "SimpleStatusMsgGlobalStartupStatus")) {
 		szProto = NULL;
 		bOnStartup = TRUE;
 	}
@@ -1743,7 +1743,7 @@ static int OnAccListChanged(WPARAM wParam, LPARAM lParam)
 		if (!IsAccountEnabled(accounts->pa[i]))
 			continue;
 
-		if (!strcmp(accounts->pa[i]->szProtoName, "ICQ"))
+		if (!mir_strcmp(accounts->pa[i]->szProtoName, "ICQ"))
 			HookProtoEvent(accounts->pa[i]->szModuleName, ME_ICQ_STATUSMSGREQ, OnICQStatusMsgRequest);
 
 		accounts->statusFlags |= (CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_2, 0) & ~CallProtoService(accounts->pa[i]->szModuleName, PS_GETCAPS, PFLAGNUM_5, 0));

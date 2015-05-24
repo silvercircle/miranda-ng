@@ -71,7 +71,7 @@ void DrawMyControl(HDC hDC, HWND /*hwndButton*/, HANDLE hTheme, UINT iState, REC
 		}
 		else // ...else draw non pressed button
 		{
-			UINT uState = DFCS_BUTTONPUSH|(bIsPressed? DFCS_PUSHED : 0);
+			UINT uState = DFCS_BUTTONPUSH;
 			DrawFrameControl(hDC, &rect, DFC_BUTTON, uState);
 		}
 	}
@@ -112,7 +112,7 @@ static INT_PTR CALLBACK userinfo_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, L
 				cf.cbSize = sizeof(cf);
 				cf.yHeight=12*20;
 				cf.dwMask=CFM_SIZE|CFM_FACE;
-				_tcscpy(cf.szFaceName, TEXT("Arial"));
+				mir_tstrcpy(cf.szFaceName, TEXT("Arial"));
 				SendDlgItemMessage(hwndDlg, IDC_PROFILE, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
 			}
 			else
@@ -624,7 +624,7 @@ static INT_PTR CALLBACK userinfo_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, L
 				cf.dwEffects=0;
 				char chsize[5] = "";
 				SendDlgItemMessage(hwndDlg, IDC_FONTSIZE, CB_GETLBTEXT, SendDlgItemMessage(hwndDlg, IDC_FONTSIZE, CB_GETCURSEL, 0, 0),(LPARAM)chsize);
-				//strlcpy(cf.szFaceName,size,strlen(size)+1);
+				//strlcpy(cf.szFaceName,size,mir_strlen(size)+1);
 				cf.yHeight=atoi(chsize)*20;
 				SendDlgItemMessage(hwndDlg, IDC_PROFILE, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
 				SetFocus(GetDlgItem(hwndDlg, IDC_PROFILE));
@@ -692,18 +692,18 @@ INT_PTR CALLBACK admin_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 
 			char name[64];
 			GetDlgItemTextA(hwndDlg, IDC_FNAME, name, SIZEOF(name));
-			if (strlen(trim_str(name)) > 0 && !ppro->getString(AIM_KEY_SN, &dbv))
+			if (mir_strlen(trim_str(name)) > 0 && !ppro->getString(AIM_KEY_SN, &dbv))
 			{
-				if (strcmp(name, dbv.pszVal))
+				if (mir_strcmp(name, dbv.pszVal))
 					ppro->aim_admin_format_name(ppro->hAdminConn,ppro->admin_seqno,name);
 				db_free(&dbv);
 			}
 
 			char email[254];
 			GetDlgItemTextA(hwndDlg, IDC_CEMAIL, email, SIZEOF(email));
-			if (strlen(trim_str(email)) > 1 && !ppro->getString(AIM_KEY_EM, &dbv)) // Must be greater than 1 or a SNAC error is thrown.
+			if (mir_strlen(trim_str(email)) > 1 && !ppro->getString(AIM_KEY_EM, &dbv)) // Must be greater than 1 or a SNAC error is thrown.
 			{
-				if (strcmp(email, dbv.pszVal))
+				if (mir_strcmp(email, dbv.pszVal))
 					ppro->aim_admin_change_email(ppro->hAdminConn,ppro->admin_seqno,email);
 				db_free(&dbv);
 			}
@@ -719,7 +719,7 @@ INT_PTR CALLBACK admin_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 				// AOL only requires that you send the current password and a (single) new password.
 				// Let's allow the client to type (two) new passwords incase they make a mistake so we
 				// can handle any input error locally.
-				if (strcmp(npw1,npw2) == 0)
+				if (mir_strcmp(npw1,npw2) == 0)
 				{
 					ppro->aim_admin_change_password(ppro->hAdminConn,ppro->admin_seqno,cpw,npw1);
 				}
@@ -891,7 +891,7 @@ static INT_PTR CALLBACK options_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 				//HN
 				GetDlgItemTextA(hwndDlg, IDC_HN, str, SIZEOF(str));
-				if (str[0] != 0 && strcmp(str, AIM_DEFAULT_SERVER))
+				if (str[0] != 0 && mir_strcmp(str, AIM_DEFAULT_SERVER))
 					ppro->setString(AIM_KEY_HN, str);
 				else
 					ppro->delSetting(AIM_KEY_HN);
@@ -919,7 +919,7 @@ static INT_PTR CALLBACK options_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 				//PN
 				int port = GetDlgItemInt(hwndDlg, IDC_PN, NULL, FALSE);
-				if (port > 0 && port != ppro->getByte(AIM_KEY_DSSL, 0) ? AIM_DEFAULT_PORT : AIM_DEFAULT_SSL_PORT)
+				if (port > 0 && port != (ppro->getByte(AIM_KEY_DSSL, 0) ? AIM_DEFAULT_PORT : AIM_DEFAULT_SSL_PORT))
 					ppro->setWord(AIM_KEY_PN, (WORD)port);
 				else
 					ppro->delSetting(AIM_KEY_PN);

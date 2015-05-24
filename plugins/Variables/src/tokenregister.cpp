@@ -41,7 +41,7 @@ unsigned long int hashlittle(void *key, size_t length, unsigned long int initval
 
 static DWORD NameHashFunction(TCHAR *tszStr)
 {
-	return (DWORD)hashlittle(tszStr, _tcslen(tszStr)*sizeof(TCHAR), 0);
+	return (DWORD)hashlittle(tszStr, mir_tstrlen(tszStr)*sizeof(TCHAR), 0);
 }
 
 static TokenRegisterEntry* FindTokenRegisterByName(TCHAR *name)
@@ -122,7 +122,7 @@ INT_PTR registerToken(WPARAM wParam, LPARAM lParam)
 
 	memcpy(&tre->tr, newVr, newVr->cbSize);
 	tre->nameHash = hash;
-	if (!_tcscmp(newVr->tszTokenString, _T("alias")))
+	if (!mir_tstrcmp(newVr->tszTokenString, _T("alias")))
 		log_debugA("alias");
 
 	if (!(newVr->flags & TRF_PARSEFUNC) && newVr->szService != NULL)

@@ -227,10 +227,10 @@ TCHAR *gg_img_getfilter(TCHAR *szFilter, int nSize)
 
 	// Make up filter
 	_tcsncpy(pFilter, szFilterName, nSize);
-	pFilter += _tcslen(pFilter) + 1;
+	pFilter += mir_tstrlen(pFilter) + 1;
 	if (pFilter >= szFilter + nSize) return NULL;
 	_tcsncpy(pFilter, szFilterMask, nSize - (pFilter - szFilter));
-	pFilter += _tcslen(pFilter) + 1;
+	pFilter += mir_tstrlen(pFilter) + 1;
 	if (pFilter >= szFilter + nSize) return NULL;
 	*pFilter = 0;
 
@@ -787,14 +787,14 @@ TCHAR *gg_img_hasextension(TCHAR *filename)
 		TCHAR *imgtype = _tcsrchr(filename, '.');
 		if (imgtype != NULL)
 		{
-			size_t len = _tcslen(imgtype);
+			size_t len = mir_tstrlen(imgtype);
 			imgtype++;
-			if (len == 4 && (_tcsicmp(imgtype, _T("bmp")) == 0 ||
-							 _tcsicmp(imgtype, _T("gif")) == 0 ||
-							 _tcsicmp(imgtype, _T("jpg")) == 0 ||
-							 _tcsicmp(imgtype, _T("png")) == 0))
+			if (len == 4 && (mir_tstrcmpi(imgtype, _T("bmp")) == 0 ||
+							 mir_tstrcmpi(imgtype, _T("gif")) == 0 ||
+							 mir_tstrcmpi(imgtype, _T("jpg")) == 0 ||
+							 mir_tstrcmpi(imgtype, _T("png")) == 0))
 				return --imgtype;
-			if (len == 5 &&  _tcsicmp(imgtype, _T("jpeg")) == 0)
+			if (len == 5 &&  mir_tstrcmpi(imgtype, _T("jpeg")) == 0)
 				return --imgtype;
 		}
 	}
@@ -817,8 +817,8 @@ int GGPROTO::img_displayasmsg(MCONTACT hContact, void *img)
 		mir_free(tmpPath);
 	}
 	else {
-		_tcscpy(szPath, path);
-		tPathLen = _tcslen(szPath);
+		mir_tstrcpy(szPath, path);
+		tPathLen = mir_tstrlen(szPath);
 	}
 
 	if ( _taccess(szPath, 0)){
@@ -835,7 +835,7 @@ int GGPROTO::img_displayasmsg(MCONTACT hContact, void *img)
 
 	mir_sntprintf(szPath + tPathLen, MAX_PATH - tPathLen, _T("\\%s"), dat->lpszFileName);
 	if ((pImgext = gg_img_hasextension(szPath)) == NULL)
-		pImgext = szPath + _tcslen(szPath);
+		pImgext = szPath + mir_tstrlen(szPath);
 	_tcsncpy_s(imgext, pImgext, _TRUNCATE);
 	for (i = 1; ; ++i)
 	{
@@ -862,17 +862,14 @@ int GGPROTO::img_displayasmsg(MCONTACT hContact, void *img)
 		TCHAR image_msg[MAX_PATH + 11];
 		mir_sntprintf(image_msg, SIZEOF(image_msg), _T("[img]%s[/img]"), szPath);
 
+		T2Utf szMessage(image_msg);
 		PROTORECVEVENT pre = {0};
-		pre.flags = PREF_TCHAR;
 		pre.timestamp = time(NULL);
-		pre.tszMessage = image_msg;
+		pre.szMessage = szMessage;
 		ProtoChainRecvMsg(hContact, &pre);
 		debugLog(_T("img_displayasmsg(): Image saved to %s."), szPath);
 	}
-	else
-	{
-		debugLog(_T("img_displayasmsg(): Cannot save image to %s."), szPath);
-	}
+	else debugLog(_T("img_displayasmsg(): Cannot save image to %s."), szPath);
 
 	return 0;
 }
@@ -1027,7 +1024,7 @@ void* GGPROTO::img_loadpicture(gg_event* e, TCHAR *szFileName)
 			if (*szImgType) {
 				dat->lpszFileName = (TCHAR*)calloc(sizeof(TCHAR), mir_tstrlen(tmpFileName) + mir_tstrlen(szImgType) + 1);
 				if (dat->lpszFileName != NULL) {
-					_tcscpy(dat->lpszFileName, tmpFileName);
+					mir_tstrcpy(dat->lpszFileName, tmpFileName);
 					_tcscat(dat->lpszFileName, szImgType);
 				}
 			}

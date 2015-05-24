@@ -627,7 +627,7 @@ int UnloadPlugin(TCHAR* buf, int bufLen)
 {
 	for (int i = pluginList.getCount() - 1; i >= 0; i--) {
 		pluginEntry *p = pluginList[i];
-		if (!_tcsicmp(p->pluginname, buf)) {
+		if (!mir_tstrcmpi(p->pluginname, buf)) {
 			GetModuleFileName(p->bpi.hInst, buf, bufLen);
 			Plugin_Uninit(p);
 			return TRUE;
@@ -671,7 +671,7 @@ int LoadDefaultServiceModePlugin()
 	if (param == NULL || *param == 0)
 		return SERVICE_CONTINUE;
 
-	size_t cbLen = _tcslen(param);
+	size_t cbLen = mir_tstrlen(param);
 	for (int i = 0; i < servicePlugins.getCount(); i++) {
 		pluginEntry *p = servicePlugins[i];
 		if (!_tcsnicmp(p->pluginname, param, cbLen)) {
@@ -694,7 +694,7 @@ void EnsureCheckerLoaded(bool bEnable)
 {
 	for (int i = 0; i < pluginList.getCount(); i++) {
 		pluginEntry *p = pluginList[i];
-		if (_tcsicmp(p->pluginname, _T("dbchecker.dll")))
+		if (mir_tstrcmpi(p->pluginname, _T("dbchecker.dll")))
 			continue;
 
 		if (bEnable) {

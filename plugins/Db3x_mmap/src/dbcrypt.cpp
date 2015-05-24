@@ -149,7 +149,7 @@ int CDb3Mmap::InitCrypt()
 		DBCONTACTWRITESETTING dbcws = { "CryptoEngine", "Provider" };
 		dbcws.value.type = DBVT_BLOB;
 		dbcws.value.pbVal = (PBYTE)pProvider->pszName;
-		dbcws.value.cpbVal = (int)strlen(pProvider->pszName) + 1;
+		dbcws.value.cpbVal = (int)mir_strlen(pProvider->pszName) + 1;
 		WriteContactSetting(NULL, &dbcws);
 	}
 	else {
@@ -232,7 +232,7 @@ void CDb3Mmap::SetPassword(LPCTSTR ptszPassword)
 	}
 	else {
 		m_bUsesPassword = true;
-		m_crypto->setPassword(ptrA(mir_utf8encodeT(ptszPassword)));
+		m_crypto->setPassword(T2Utf(ptszPassword));
 	}
 	UpdateMenuItem();
 }

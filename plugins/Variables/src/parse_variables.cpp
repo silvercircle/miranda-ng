@@ -26,12 +26,12 @@ static int vrCount = 0;
 
 static int addToVariablesRegister(TCHAR *szName, TCHAR *szText)
 {
-	if ((szName == NULL) || (szText == NULL) || (_tcslen(szName) <= 0))
+	if ((szName == NULL) || (szText == NULL) || (mir_tstrlen(szName) <= 0))
 		return -1;
 
 	mir_cslock lck(csVarRegister);
 	for (int i = 0; i < vrCount; i++) {
-		if ((!_tcscmp(vr[i].szName, szName))) {
+		if ((!mir_tstrcmp(vr[i].szName, szName))) {
 			mir_free(vr[i].szText);
 			vr[i].szText = mir_tstrdup(szText);
 			return 0;
@@ -50,12 +50,12 @@ static int addToVariablesRegister(TCHAR *szName, TCHAR *szText)
 
 static TCHAR *searchVariableRegister(TCHAR *szName)
 {
-	if ((szName == NULL) || (_tcslen(szName) <= 0))
+	if ((szName == NULL) || (mir_tstrlen(szName) <= 0))
 		return NULL;
 
 	mir_cslock lck(csVarRegister);
 	for (int i = 0; i < vrCount; i++)
-		if ((!_tcscmp(vr[i].szName, szName)))
+		if ((!mir_tstrcmp(vr[i].szName, szName)))
 			return mir_tstrdup(vr[i].szText);
 
 	return NULL;

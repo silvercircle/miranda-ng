@@ -29,7 +29,7 @@ MCONTACT AddRoom(const char *pszModule, const TCHAR *pszRoom, const TCHAR *pszDi
 	if (groupName)
 		_tcsncpy_s(pszGroup, groupName, _TRUNCATE);
 	else
-		_tcscpy(pszGroup, _T("Chat rooms"));
+		mir_tstrcpy(pszGroup, _T("Chat rooms"));
 
 	if (pszGroup[0])  {
 		HANDLE hGroup = Clist_GroupExists(pszGroup);
@@ -89,7 +89,7 @@ BOOL SetAllOffline(BOOL bHide, const char *pszModule)
 		char *szProto = GetContactProto(hContact);
 		if (!ci.MM_FindModule(szProto))
 			continue;
-		if (pszModule && strcmp(pszModule, szProto))
+		if (pszModule && mir_strcmp(pszModule, szProto))
 			continue;
 		int i = db_get_b(hContact, szProto, "ChatRoom", 0);
 		if (i != 0) {
@@ -207,7 +207,7 @@ BOOL AddEvent(MCONTACT hContact, HICON hIcon, MEVENT hEvent, int type, TCHAR* fm
 {
 	TCHAR szBuf[4096];
 
-	if (!fmt || !fmt[0] || _tcslen(fmt) > 2000)
+	if (!fmt || !fmt[0] || mir_tstrlen(fmt) > 2000)
 		return FALSE;
 
 	va_list marker;

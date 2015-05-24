@@ -249,7 +249,7 @@ static UINT MyCountriesCount = 0;
 * @param	p1				- (LPIDSTRLIST) first item to compare
 * @param	p2				- (LPIDSTRLIST) second item to compare
 *
-* returns -1, 0, 1			according to the comparison result of _tcscmp.
+* returns -1, 0, 1			according to the comparison result of mir_tstrcmp.
 **/
 
 static int __cdecl ListSortProc(const LPIDSTRLIST p1, const LPIDSTRLIST p2)
@@ -277,7 +277,7 @@ static void SvcConstantsTranslateList(LPIDSTRLIST pList, UINT nListCount/*, Sort
 			pList[i].ptszTranslated = (LPTSTR)CallService(MS_LANGPACK_PCHARTOTCHAR, 0, (LPARAM)pList[i].pszText);
 		}
 		// Ignore last item, if it is a "Other" item.
-		if (!strcmp(pList[nListCount-1].pszText, LPGEN("Other"))) nListCount--;
+		if (!mir_strcmp(pList[nListCount-1].pszText, LPGEN("Other"))) nListCount--;
 	
 		// Sort list according translated text and ignore first item.
 		qsort(pList+1, nListCount-1, sizeof(pList[0]), 

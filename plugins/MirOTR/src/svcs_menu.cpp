@@ -31,7 +31,7 @@ int StartOTR(MCONTACT hContact) {
 		LCID langid = Langpack_GetDefaultLocale();
 		if(langid != 0x0409/*US*/ && langid != 0x1009/*CA*/ && langid != 0x0809/*GB*/){ // non english
 			const TCHAR* translated=TranslateTS(MIROTR_PROTO_HELLO_MSG);
-			if(_tcscmp(MIROTR_PROTO_HELLO_MSG,translated)){
+			if(mir_tstrcmp(MIROTR_PROTO_HELLO_MSG,translated)){
 				*msgoff++ = '\n';
 				for(const TCHAR* c=nick; *c && msgoff<msgend; *msgoff++=*c++);
 				for(const TCHAR* c=translated; *c && msgoff<msgend; *msgoff++=*c++);
@@ -39,9 +39,9 @@ int StartOTR(MCONTACT hContact) {
 		}
 		*msgoff='\0';
 		mir_free(nick);
-		char* msg_utf8 = mir_utf8encodeT(msg);
+		
+		T2Utf msg_utf8(msg);
 		otr_gui_inject_message((void*)hContact, proto, proto, uname, msg_utf8 ? msg_utf8 : MIROTR_PROTO_HELLO);
-		mir_free(msg_utf8);
 	}
 	#endif
 	mir_free(uname);
@@ -192,7 +192,7 @@ hide_all:
 		return 0;
 	}
 	
-	if(proto && strcmp(proto, META_PROTO) == 0) {
+	if(proto && mir_strcmp(proto, META_PROTO) == 0) {
 		// make menu act as per most online subcontact
 		hContact = db_mc_getMostOnline(hContact);
 		if (!hContact)

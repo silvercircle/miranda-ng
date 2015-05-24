@@ -184,7 +184,7 @@ INT_PTR CALLBACK DlgProcChange(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPa
 		if ( !db_get_ts(hContact, WEATHERPROTONAME, "ID", &dbv)) {
 			SetDlgItemText(hwndDlg, IDC_ID, dbv.ptszVal);
 			// check if the station is a default station
-			CheckDlgButton(hwndDlg, IDC_DEFA, _tcscmp(dbv.ptszVal, opt.Default) != 0 ? BST_CHECKED : BST_UNCHECKED);
+			CheckDlgButton(hwndDlg, IDC_DEFA, mir_tstrcmp(dbv.ptszVal, opt.Default) != 0 ? BST_CHECKED : BST_UNCHECKED);
 			db_free(&dbv);
 		}
 		if ( !db_get_ts(hContact, WEATHERPROTONAME, "Nick", &dbv)) {
@@ -295,14 +295,14 @@ INT_PTR CALLBACK DlgProcChange(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPa
 			// set filters
 			_tcsncpy(filter, TranslateT("Text Files"), SIZEOF(filter) - 1);
 			_tcsncat(filter, _T(" (*.txt)"), SIZEOF(filter) - mir_tstrlen(filter));
-			pfilter = filter + _tcslen(filter)+1;
+			pfilter = filter + mir_tstrlen(filter)+1;
 			_tcsncpy(pfilter, _T("*.txt"), SIZEOF(filter) - 1);
-			pfilter = pfilter + _tcslen(pfilter)+1;
+			pfilter = pfilter + mir_tstrlen(pfilter)+1;
 			_tcsncpy(pfilter, TranslateT("All Files"), SIZEOF(filter) - 1);
 			_tcsncat(pfilter, _T(" (*.*)"), SIZEOF(filter) - mir_tstrlen(filter));
-			pfilter = pfilter + _tcslen(pfilter)+1;
+			pfilter = pfilter + mir_tstrlen(pfilter)+1;
 			_tcsncpy(pfilter, _T("*.*"), SIZEOF(filter) - 1);
-			pfilter = pfilter + _tcslen(pfilter)+1;
+			pfilter = pfilter + mir_tstrlen(pfilter)+1;
 			*pfilter = '\0';
 			ofn.lpstrFilter = filter;
 			ofn.nFilterIndex = 1;
@@ -363,7 +363,7 @@ INT_PTR CALLBACK DlgProcChange(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPa
 			GetDlgItemText(hwndDlg, IDC_ID, str, SIZEOF(str));
 			db_set_ts(hContact, WEATHERPROTONAME, "ID", str);
 			if ((BYTE)IsDlgButtonChecked(hwndDlg, IDC_DEFA)) {	// if default station is set
-				_tcscpy(opt.Default, str);
+				mir_tstrcpy(opt.Default, str);
 				opt.DefStn = hContact;
 				db_set_ts(NULL, WEATHERPROTONAME, "Default", opt.Default);
 			}
@@ -437,7 +437,7 @@ int ContactDeleted(WPARAM wParam, LPARAM lParam)
 	// exit this function if it is not default station
 	DBVARIANT dbv;
 	if (!db_get_ts(wParam, WEATHERPROTONAME, "ID", &dbv)) {
-		if ( _tcscmp(dbv.ptszVal, opt.Default)) {
+		if ( mir_tstrcmp(dbv.ptszVal, opt.Default)) {
 			db_free(&dbv);
 			return 0;
 		}
@@ -451,7 +451,7 @@ int ContactDeleted(WPARAM wParam, LPARAM lParam)
 		if ( !db_get_ts(hContact, WEATHERPROTONAME, "ID", &dbv)) {
 			// if the station is not a default station, set it as the new default station
 			// this is the first weather station encountered from the search
-			if ( _tcscmp(opt.Default, dbv.ptszVal)) {
+			if ( mir_tstrcmp(opt.Default, dbv.ptszVal)) {
 				_tcsncpy(opt.Default, dbv.ptszVal, SIZEOF(opt.Default) - 1);
 				opt.DefStn = hContact;
 				db_free(&dbv);
@@ -477,5 +477,5 @@ int ContactDeleted(WPARAM wParam, LPARAM lParam)
 BOOL IsMyContact(MCONTACT hContact)
 {
 	const char* szProto = GetContactProto(hContact);
-	return szProto != NULL && strcmp(WEATHERPROTONAME, szProto) == 0;
+	return szProto != NULL && mir_strcmp(WEATHERPROTONAME, szProto) == 0;
 }

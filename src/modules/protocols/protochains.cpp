@@ -49,7 +49,7 @@ static int GetProtocolP(MCONTACT hContact, char *szBuf, int cbLen)
 		if (cc == NULL)
 			cc = currDb->m_cache->AddContactToCache(hContact);
 
-		cc->szProto = currDb->m_cache->GetCachedSetting(NULL, szBuf, 0, (int)strlen(szBuf));
+		cc->szProto = currDb->m_cache->GetCachedSetting(NULL, szBuf, 0, (int)mir_strlen(szBuf));
 	}
 	return res;
 }
@@ -197,7 +197,7 @@ static INT_PTR Proto_IsProtoOnContact(WPARAM wParam, LPARAM lParam)
 			return -1;
 
 	for (int i = 0; i < filters.getCount(); i++)
-		if (!strcmp(szProto, filters[i]->szName))
+		if (!mir_strcmp(szProto, filters[i]->szName))
 			return i + 1;
 
 	return 0;

@@ -205,12 +205,12 @@ INT_PTR CALLBACK DlgMainProcOptions(HWND hWnd, UINT uiMessage, WPARAM wParam, LP
 				GetDlgItemText(hWnd, IDC_EDIT_SET, ptszFormLay, MaxTextSize);
 				i = SendDlgItemMessage(hWnd, IDC_COMBO_LANG, CB_GETCURSEL, 0, 0);
 				ptszMemLay = ptszLayStrings[i];
-				if (_tcscmp(ptszMemLay, ptszFormLay) != 0) {
-					_tcscpy(ptszMemLay, ptszFormLay);
+				if (mir_tstrcmp(ptszMemLay, ptszFormLay) != 0) {
+					mir_tstrcpy(ptszMemLay, ptszFormLay);
 					ptszGenLay = GenerateLayoutString(hklLayouts[i]);
 					pszNameLay = GetNameOfLayout(hklLayouts[i]);
 
-					if (_tcscmp(ptszMemLay, ptszGenLay) != 0)
+					if (mir_tstrcmp(ptszMemLay, ptszGenLay) != 0)
 						db_set_ts(NULL, ModuleName, pszNameLay, ptszMemLay);
 					else
 						db_unset(NULL, ModuleName, pszNameLay);
@@ -382,7 +382,7 @@ INT_PTR CALLBACK DlgPopupsProcOptions(HWND hWnd, UINT uiMessage, WPARAM wParam, 
 					pdtData.iSeconds = poOptionsTemp.bTimeout;
 					break;
 				}
-				_tcscpy(ptszPopupPreviewText, pdtData.lptzText);
+				mir_tstrcpy(ptszPopupPreviewText, pdtData.lptzText);
 				pdtData.PluginData = ptszPopupPreviewText;
 				pdtData.lchIcon = hPopupIcon;
 				poOptions.paActions[0].lchIcon = hCopyIcon;

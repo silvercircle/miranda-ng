@@ -20,14 +20,13 @@ BOOL bPGPloaded = false, bPGPkeyrings = false, bUseKeyrings = false, bPGPprivkey
 BOOL bGPGloaded = false, bGPGkeyrings = false, bSavePass = false;
 BOOL bSFT, bSOM, bASI, bMCD, bSCM, bDGP, bAIP, bNOL, bAAK, bMCM;
 BYTE bPGP, bGPG;
-DWORD iCoreVersion = 0;
 mir_cs localQueueMutex;
 
 LPSTR myDBGetStringDecode(MCONTACT hContact, const char *szModule, const char *szSetting)
 {
 	char *val = db_get_sa(hContact, szModule, szSetting);
 	if (!val) return NULL;
-	size_t len = strlen(val) + 64;
+	size_t len = mir_strlen(val) + 64;
 	char *buf = (LPSTR)mir_alloc(len);
 	strncpy(buf, val, len); mir_free(val);
 	return buf;
@@ -35,7 +34,7 @@ LPSTR myDBGetStringDecode(MCONTACT hContact, const char *szModule, const char *s
 
 int myDBWriteStringEncode(MCONTACT hContact, const char *szModule, const char *szSetting, const char *val)
 {
-	int len = (int)strlen(val) + 64;
+	int len = (int)mir_strlen(val) + 64;
 	char *buf = (LPSTR)alloca(len);
 	strncpy(buf, val, len);
 	int ret = db_set_s(hContact, szModule, szSetting, buf);

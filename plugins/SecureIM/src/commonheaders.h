@@ -48,7 +48,6 @@
 #include "options.h"
 #include "popupoptions.h"
 #include "loadicons.h"
-#include "rtfconv.h"
 #include "cryptopp.h"
 #include "loadlib.h"
 #include "images.h"
@@ -82,7 +81,6 @@ extern BOOL bPGPloaded, bPGPkeyrings, bUseKeyrings, bPGPprivkey;
 extern BOOL bGPGloaded, bGPGkeyrings, bSavePass;
 extern BOOL bSFT, bSOM, bASI, bMCD, bSCM, bDGP, bAIP, bNOL, bAAK, bMCM;
 extern BYTE bPGP, bGPG;
-extern DWORD iCoreVersion;
 extern mir_cs localQueueMutex;
 
 __forceinline int SendBroadcast(MCONTACT hContact, int type, int result, HANDLE hProcess, LPARAM lParam)

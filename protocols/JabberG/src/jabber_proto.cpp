@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #pragma warning(disable:4355)
 
 static int compareTransports(const TCHAR *p1, const TCHAR *p2)
-{	return _tcsicmp(p1, p2);
+{	return mir_tstrcmpi(p1, p2);
 }
 
 static int compareListItems(const JABBER_LIST_ITEM *p1, const JABBER_LIST_ITEM *p2)
@@ -351,7 +351,7 @@ MCONTACT __cdecl CJabberProto::AddToListByEvent(int flags, int /*iContact*/, MEV
 		return NULL;
 	if (db_event_get(hDbEvent, &dbei))
 		return NULL;
-	if (strcmp(dbei.szModule, m_szModuleName))
+	if (mir_strcmp(dbei.szModule, m_szModuleName))
 		return NULL;
 
 /*
@@ -365,9 +365,9 @@ MCONTACT __cdecl CJabberProto::AddToListByEvent(int flags, int /*iContact*/, MEV
 		return NULL;
 
 	char *nick = (char*)(dbei.pBlob + sizeof(DWORD)*2);
-	char *firstName = nick + strlen(nick) + 1;
-	char *lastName = firstName + strlen(firstName) + 1;
-	char *jid = lastName + strlen(lastName) + 1;
+	char *firstName = nick + mir_strlen(nick) + 1;
+	char *lastName = firstName + mir_strlen(firstName) + 1;
+	char *jid = lastName + mir_strlen(lastName) + 1;
 
 	TCHAR *newJid = (dbei.flags & DBEF_UTF) ? mir_utf8decodeT(jid) : mir_a2t(jid);
 	MCONTACT hContact = (MCONTACT)AddToListByJID(newJid, flags);
@@ -392,13 +392,13 @@ int CJabberProto::Authorize(MEVENT hDbEvent)
 		return 1;
 	if (dbei.eventType != EVENTTYPE_AUTHREQUEST)
 		return 1;
-	if (strcmp(dbei.szModule, m_szModuleName))
+	if (mir_strcmp(dbei.szModule, m_szModuleName))
 		return 1;
 
 	char *nick = (char*)(dbei.pBlob + sizeof(DWORD)*2);
-	char *firstName = nick + strlen(nick) + 1;
-	char *lastName = firstName + strlen(firstName) + 1;
-	char *jid = lastName + strlen(lastName) + 1;
+	char *firstName = nick + mir_strlen(nick) + 1;
+	char *lastName = firstName + mir_strlen(firstName) + 1;
+	char *jid = lastName + mir_strlen(lastName) + 1;
 
 	debugLog(_T("Send 'authorization allowed' to %s"), jid);
 
@@ -446,13 +446,13 @@ int CJabberProto::AuthDeny(MEVENT hDbEvent, const TCHAR*)
 	if (dbei.eventType != EVENTTYPE_AUTHREQUEST)
 		return 1;
 
-	if (strcmp(dbei.szModule, m_szModuleName))
+	if (mir_strcmp(dbei.szModule, m_szModuleName))
 		return 1;
 
 	char *nick = (char*)(dbei.pBlob + sizeof(DWORD)*2);
-	char *firstName = nick + strlen(nick) + 1;
-	char *lastName = firstName + strlen(firstName) + 1;
-	char *jid = lastName + strlen(lastName) + 1;
+	char *firstName = nick + mir_strlen(nick) + 1;
+	char *lastName = firstName + mir_strlen(firstName) + 1;
+	char *jid = lastName + mir_strlen(lastName) + 1;
 
 	debugLogA("Send 'authorization denied' to %s", jid);
 
@@ -471,7 +471,7 @@ HANDLE __cdecl CJabberProto::FileAllow(MCONTACT /*hContact*/, HANDLE hTransfer, 
 
 	filetransfer *ft = (filetransfer*)hTransfer;
 	ft->std.tszWorkingDir = mir_tstrdup(szPath);
-	size_t len = _tcslen(ft->std.tszWorkingDir)-1;
+	size_t len = mir_tstrlen(ft->std.tszWorkingDir)-1;
 	if (ft->std.tszWorkingDir[len] == '/' || ft->std.tszWorkingDir[len] == '\\')
 		ft->std.tszWorkingDir[len] = 0;
 
@@ -574,7 +574,7 @@ DWORD_PTR __cdecl CJabberProto::GetCaps(int type, MCONTACT hContact)
 	case PFLAGNUM_3:
 		return PF2_ONLINE | PF2_SHORTAWAY | PF2_LONGAWAY | PF2_HEAVYDND | PF2_FREECHAT;
 	case PFLAGNUM_4:
-		return PF4_FORCEAUTH | PF4_NOCUSTOMAUTH | PF4_NOAUTHDENYREASON | PF4_SUPPORTTYPING | PF4_AVATARS | PF4_IMSENDUTF | PF4_FORCEADDED;
+		return PF4_FORCEAUTH | PF4_NOCUSTOMAUTH | PF4_NOAUTHDENYREASON | PF4_SUPPORTTYPING | PF4_AVATARS | PF4_FORCEADDED;
 	case PFLAG_UNIQUEIDTEXT:
 		return (DWORD_PTR)Translate("JID");
 	case PFLAG_UNIQUEIDSETTING:
@@ -620,10 +620,10 @@ int __cdecl CJabberProto::GetInfo(MCONTACT hContact, int /*infoType*/)
 			item = ListGetItemPtr(LIST_ROSTER, jid);
 
 		if (item == NULL) {
-			bool bHasResource = _tcscmp(jid, szBareJid) != 0;
+			bool bHasResource = mir_tstrcmp(jid, szBareJid) != 0;
 			JABBER_LIST_ITEM *tmpItem = NULL;
 			if (bHasResource && (tmpItem = ListGetItemPtr(LIST_CHATROOM, szBareJid))) {
-				pResourceStatus him(tmpItem->findResource(szBareJid+_tcslen(szBareJid)+1));
+				pResourceStatus him(tmpItem->findResource(szBareJid+mir_tstrlen(szBareJid)+1));
 				if (him) {
 					item = ListAdd(LIST_VCARD_TEMP, jid);
 					ListAddResource(LIST_VCARD_TEMP, jid, him->m_iStatus, him->m_tszStatusMessage, him->m_iPriority);
@@ -651,7 +651,7 @@ int __cdecl CJabberProto::GetInfo(MCONTACT hContact, int /*infoType*/)
 						m_ThreadInfo->send(iq4);
 					}
 
-					if (!_tcscmp(tmp, jid)) {
+					if (!mir_tstrcmp(tmp, jid)) {
 						XmlNodeIq iq3(AddIQ(&CJabberProto::OnIqResultLastActivity, JABBER_IQ_TYPE_GET, tmp, JABBER_IQ_PARSE_FROM));
 						iq3 << XQUERY(JABBER_FEAT_LAST_ACTIVITY);
 						m_ThreadInfo->send(iq3);
@@ -719,7 +719,7 @@ HANDLE __cdecl CJabberProto::SearchBasic(const TCHAR *szJid)
 			szServer = getTStringA(NULL, "LoginServer");
 			if (szServer == NULL)
 				szServer = mir_tstrdup(_T("jabber.org"));
-			else if (numericjid && !_tcsicmp(szServer, _T("S.ms"))) {
+			else if (numericjid && !mir_tstrcmpi(szServer, _T("S.ms"))) {
 				mir_free(szServer);
 				szServer = mir_tstrdup(_T("sms"));
 			}
@@ -804,8 +804,8 @@ HANDLE __cdecl CJabberProto::SearchByName(const TCHAR *nick, const TCHAR *firstN
 
 int __cdecl CJabberProto::RecvMsg(MCONTACT hContact, PROTORECVEVENT *evt)
 {
-	ptrA szResUtf(mir_utf8encodeT((LPCTSTR)evt->lParam));
-	evt->pCustomData = szResUtf;
+	T2Utf szResUtf((LPCTSTR)evt->lParam);
+	evt->pCustomData = (char*)szResUtf;
 	evt->cbCustomDataSize = (DWORD)mir_strlen(szResUtf);
 	Proto_RecvMessage(hContact, evt);
 	return 0;
@@ -956,7 +956,7 @@ void __cdecl CJabberProto::SendMessageAckThread(void* param)
 static char PGP_PROLOG[] = "-----BEGIN PGP MESSAGE-----\r\n\r\n";
 static char PGP_EPILOG[] = "\r\n-----END PGP MESSAGE-----\r\n";
 
-int __cdecl CJabberProto::SendMsg(MCONTACT hContact, int flags, const char* pszSrc)
+int __cdecl CJabberProto::SendMsg(MCONTACT hContact, int, const char* pszSrc)
 {
 	TCHAR szClientJid[JABBER_MAX_JID_LEN];
 	if (!m_bJabberOnline || !GetClientJID(hContact, szClientJid, SIZEOF(szClientJid))) {
@@ -965,28 +965,20 @@ int __cdecl CJabberProto::SendMsg(MCONTACT hContact, int flags, const char* pszS
 		return 1;
 	}
 
-	TCHAR *msg;
 	int  isEncrypted, id = SerialNext();
-
-	if (!strncmp(pszSrc, PGP_PROLOG, strlen(PGP_PROLOG))) {
+	if (!strncmp(pszSrc, PGP_PROLOG, mir_strlen(PGP_PROLOG))) {
 		const char *szEnd = strstr(pszSrc, PGP_EPILOG);
-		char *tempstring = (char*)alloca(strlen(pszSrc) + 1);
-		size_t nStrippedLength = strlen(pszSrc) - strlen(PGP_PROLOG) - (szEnd ? strlen(szEnd) : 0);
-		strncpy_s(tempstring, nStrippedLength, pszSrc + strlen(PGP_PROLOG), _TRUNCATE);
+		char *tempstring = (char*)alloca(mir_strlen(pszSrc) + 1);
+		size_t nStrippedLength = mir_strlen(pszSrc) - mir_strlen(PGP_PROLOG) - (szEnd ? mir_strlen(szEnd) : 0);
+		strncpy_s(tempstring, nStrippedLength, pszSrc + mir_strlen(PGP_PROLOG), _TRUNCATE);
 		tempstring[nStrippedLength] = 0;
 		pszSrc = tempstring;
 		isEncrypted = 1;
-		flags &= ~PREF_UNICODE;
 	}
 	else isEncrypted = 0;
 
-	if (flags & PREF_UTF)
-		mir_utf8decode(NEWSTR_ALLOCA(pszSrc), &msg);
-	else if (flags & PREF_UNICODE)
-		msg = mir_u2t((wchar_t*)&pszSrc[strlen(pszSrc) + 1]);
-	else
-		msg = mir_a2t(pszSrc);
-
+	TCHAR *msg;
+	mir_utf8decode(NEWSTR_ALLOCA(pszSrc), &msg);
 	if (msg == NULL)
 		return 0;
 
@@ -1151,7 +1143,7 @@ void __cdecl CJabberProto::GetAwayMsgThread(void *param)
 					JABBER_RESOURCE_STATUS *r = item->arResources[i];
 					if (r->m_tszStatusMessage) {
 						msgCount++;
-						len += (_tcslen(r->m_tszResourceName) + _tcslen(r->m_tszStatusMessage) + 8);
+						len += (mir_tstrlen(r->m_tszResourceName) + mir_tstrlen(r->m_tszStatusMessage) + 8);
 					}
 				}
 

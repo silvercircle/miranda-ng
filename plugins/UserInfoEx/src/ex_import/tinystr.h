@@ -82,7 +82,7 @@ class TiXmlString
 	// TiXmlString constructor, based on a string
 	TIXML_EXPLICIT TiXmlString (const char * copy)
 	{
-		init(static_cast<size_type>(strlen(copy)));
+		init(static_cast<size_type>(mir_strlen(copy)));
 		memcpy(start(), copy, length());
 	}
 
@@ -102,7 +102,7 @@ class TiXmlString
 	// = operator
 	TiXmlString& operator = (const char * copy)
 	{
-		return assign(copy, (size_type)strlen(copy));
+		return assign(copy, (size_type)mir_strlen(copy));
 	}
 
 	// = operator
@@ -115,7 +115,7 @@ class TiXmlString
 	// += operator. Maps to append
 	TiXmlString& operator += (const char * suffix)
 	{
-		return append(suffix, static_cast<size_type>(strlen(suffix)));
+		return append(suffix, static_cast<size_type>(mir_strlen(suffix)));
 	}
 
 	// += operator. Maps to append
@@ -262,11 +262,11 @@ class TiXmlString
 inline bool operator == (const TiXmlString & a, const TiXmlString & b)
 {
 	return		(a.length() == b.length())				// optimization on some platforms
-				 && (strcmp(a.c_str(), b.c_str()) == 0);	// actual compare
+				 && (mir_strcmp(a.c_str(), b.c_str()) == 0);	// actual compare
 }
 inline bool operator < (const TiXmlString & a, const TiXmlString & b)
 {
-	return strcmp(a.c_str(), b.c_str()) < 0;
+	return mir_strcmp(a.c_str(), b.c_str()) < 0;
 }
 
 inline bool operator != (const TiXmlString & a, const TiXmlString & b) { return !(a == b); }
@@ -274,7 +274,7 @@ inline bool operator >	(const TiXmlString & a, const TiXmlString & b) { return b
 inline bool operator <= (const TiXmlString & a, const TiXmlString & b) { return !(b < a); }
 inline bool operator >= (const TiXmlString & a, const TiXmlString & b) { return !(a < b); }
 
-inline bool operator == (const TiXmlString & a, const char* b) { return strcmp(a.c_str(), b) == 0; }
+inline bool operator == (const TiXmlString & a, const char* b) { return mir_strcmp(a.c_str(), b) == 0; }
 inline bool operator == (const char* a, const TiXmlString & b) { return b == a; }
 inline bool operator != (const TiXmlString & a, const char* b) { return !(a == b); }
 inline bool operator != (const char* a, const TiXmlString & b) { return !(b == a); }

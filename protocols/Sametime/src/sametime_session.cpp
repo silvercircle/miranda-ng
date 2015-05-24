@@ -118,7 +118,7 @@ void __cdecl SessionStateChange(mwSession* session, mwSessionState state, gpoint
 	case mwSession_LOGIN_REDIR:
 		proto->debugLog(_T("SessionStateChange()  mwSession_LOGIN_REDIR  info=[%s]"), _A2T((char*)info));
 		//options.server_name = str((char*)info);
-		strcpy(proto->options.server_name, (char*)info);
+		mir_strcpy(proto->options.server_name, (char*)info);
 		proto->LogOut();
 		proto->LogIn(proto->login_status, proto->m_hNetlibUser);
 		break;
@@ -275,7 +275,7 @@ int CSametimeProto::SetSessionStatus(int status)
 		us.desc = AwayMessages.szOnline; us.status = mwStatus_ACTIVE; break;
 	}
 
-	debugLog(_T("SetSessionStatus() mwSession_setUserStatus  us.status=[%d], us.desc:len=[%d]"), us.status, us.desc == NULL ? -1 : strlen(us.desc));
+	debugLog(_T("SetSessionStatus() mwSession_setUserStatus  us.status=[%d], us.desc:len=[%d]"), us.status, us.desc == NULL ? -1 : mir_strlen(us.desc));
 	mwSession_setUserStatus(session, &us);
 
 	return 0;
@@ -317,9 +317,9 @@ int CSametimeProto::SetIdle(bool idle)
 
 void CSametimeProto::SetSessionAwayMessage(int status, const PROTOCHAR* msgT)
 {
-	debugLog(_T("SetSessionAwayMessage() status=[%d], msgT:len=[%d]"), status, msgT == NULL ? -1 : _tcslen(msgT));
+	debugLog(_T("SetSessionAwayMessage() status=[%d], msgT:len=[%d]"), status, msgT == NULL ? -1 : mir_tstrlen(msgT));
 
-	ptrA msg(mir_utf8encodeT(msgT));
+	T2Utf msg(msgT);
 	if (status == ID_STATUS_ONLINE)
 		replaceStr(AwayMessages.szOnline, msg);
 	else if (status == ID_STATUS_AWAY)
@@ -540,9 +540,8 @@ void CSametimeProto::DeinitAwayMsg()
 void SendAnnouncement(SendAnnouncementFunc_arg* arg)
 {
 	CSametimeProto* proto = arg->proto;
-	char* utfs = mir_utf8encodeT(arg->msg);
-	if (proto->session && arg->recipients) mwSession_sendAnnounce(proto->session, false, utfs, arg->recipients);
-	mir_free(utfs);
+	if (proto->session && arg->recipients)
+		mwSession_sendAnnounce(proto->session, false, T2Utf(arg->msg), arg->recipients);
 }
 
 INT_PTR CSametimeProto::SessionAnnounce(WPARAM wParam, LPARAM lParam)

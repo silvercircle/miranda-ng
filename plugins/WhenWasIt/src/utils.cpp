@@ -50,7 +50,7 @@ int Log(char *format, ...)
 		str[tBytes] = 0;
 
 	va_end(vararg);
-	if (str[strlen(str) - 1] != '\n')
+	if (str[mir_strlen(str) - 1] != '\n')
 		strcat(str, "\n");
 	fputs(str, fout);
 	fclose(fout);
@@ -81,11 +81,11 @@ char* BinToHex(int size, PBYTE data)
 	szresult = (char *) new char[maxSize];
 	memset(szresult, 0, maxSize);
 	mir_snprintf(buffer, SIZEOF(buffer), "%0*X", HEX_SIZE, size);
-	strcpy(szresult, buffer);
+	mir_strcpy(szresult, buffer);
 
 	for (int i = 0; i < size; i++) {
 		mir_snprintf(buffer, SIZEOF(buffer), "%02X", data[i]);
-		strcpy(szresult + (HEX_SIZE + i * 2), buffer);
+		mir_strcpy(szresult + (HEX_SIZE + i * 2), buffer);
 	}
 	return szresult;
 }
@@ -93,7 +93,7 @@ char* BinToHex(int size, PBYTE data)
 void HexToBin(char *inData, ULONG &size, LPBYTE &outData)
 {
 	char buffer[32] = { 0 };
-	strcpy(buffer, "0x");
+	mir_strcpy(buffer, "0x");
 	strncpy(buffer + 2, inData, HEX_SIZE);
 	sscanf(buffer, "%x", &size);
 	outData = (unsigned char*)new char[size * 2];
@@ -114,7 +114,7 @@ int GetStringFromDatabase(MCONTACT hContact, char *szModule, char *szSettingName
 	dbv.type = DBVT_ASCIIZ;
 	if (db_get(hContact, szModule, szSettingName, &dbv) == 0) {
 		res = 0;
-		size_t tmp = strlen(dbv.pszVal);
+		size_t tmp = mir_strlen(dbv.pszVal);
 		len = (tmp < size - 1) ? tmp : size - 1;
 		strncpy(szResult, dbv.pszVal, len);
 		szResult[len] = '\0';
@@ -123,7 +123,7 @@ int GetStringFromDatabase(MCONTACT hContact, char *szModule, char *szSettingName
 	else {
 		res = 1;
 		if (szError) {
-			size_t tmp = strlen(szError);
+			size_t tmp = mir_strlen(szError);
 			len = (tmp < size - 1) ? tmp : size - 1;
 			strncpy(szResult, szError, len);
 			szResult[len] = '\0';
@@ -185,7 +185,7 @@ MCONTACT GetContactFromID(TCHAR *szID, char *szProto)
 		char *m_szProto = GetContactProto(hContact);
 		TCHAR *szHandle = GetContactID(hContact, szProto);
 		if (szHandle) {
-			bool found = (!_tcsicmp(szHandle, szID) && !_stricmp(szProto, m_szProto));
+			bool found = (!mir_tstrcmpi(szHandle, szID) && !_stricmp(szProto, m_szProto));
 			free(szHandle);
 			if (found)
 				return hContact;

@@ -79,9 +79,9 @@ static void TlenFileReceiveParse(TLEN_FILE_TRANSFER *ft)
 			TlenP2PPacketSend(ft->s, packet);
 			TlenP2PPacketFree(packet);
 
-			fullFileName = (char *) mir_alloc(strlen(ft->szSavePath) + strlen(ft->files[ft->currentFile]) + 2);
-			strcpy(fullFileName, ft->szSavePath);
-			if (fullFileName[strlen(fullFileName)-1] != '\\')
+			fullFileName = (char *) mir_alloc(mir_strlen(ft->szSavePath) + mir_strlen(ft->files[ft->currentFile]) + 2);
+			mir_strcpy(fullFileName, ft->szSavePath);
+			if (fullFileName[mir_strlen(fullFileName)-1] != '\\')
 				strcat(fullFileName, "\\");
 			strcat(fullFileName, ft->files[ft->currentFile]);
 			ft->fileId = _open(fullFileName, _O_BINARY|_O_WRONLY|_O_CREAT|_O_TRUNC, _S_IREAD|_S_IWRITE);
@@ -552,7 +552,7 @@ void TlenProcessF(XmlNode *node, ThreadData *info)
 	int numFiles;
 	TLEN_LIST_ITEM *item;
 
-//	if (!node->name || strcmp(node->name, "f")) return;
+//	if (!node->name || mir_strcmp(node->name, "f")) return;
 	if (info == NULL) return;
 
 	char *from=TlenXmlGetAttrValue(node, "f");
@@ -564,7 +564,7 @@ void TlenProcessF(XmlNode *node, ThreadData *info)
 		}
 		char *e=TlenXmlGetAttrValue(node, "e");
 		if (e != NULL) {
-			if (!strcmp(e, "1")) {
+			if (!mir_strcmp(e, "1")) {
 				// FILE_RECV : e='1' : File transfer request
 				TLEN_FILE_TRANSFER *ft = TlenFileCreateFT(info->proto, jid);
 				ft->hContact = TlenHContactFromJID(info->proto, jid);
@@ -581,7 +581,7 @@ void TlenProcessF(XmlNode *node, ThreadData *info)
 							strncpy(szFilename, p, sizeof(szFilename)-1);
 							mir_free(p);
 						} else {
-							strcpy(szFilename, Translate("1 File"));
+							mir_strcpy(szFilename, Translate("1 File"));
 						}
 					}
 					else if (numFiles > 1) {
@@ -592,7 +592,7 @@ void TlenProcessF(XmlNode *node, ThreadData *info)
 				if (szFilename[0] != '\0' && ft->iqId != NULL) {
 					TCHAR* filenameT = mir_utf8decodeT((char*)szFilename);
 					PROTORECVFILET pre = {0};
-					pre.flags = PREF_TCHAR;
+					pre.dwFlags = PRFF_TCHAR;
 					pre.fileCount = 1;
 					pre.timestamp = time(NULL);
 					pre.tszDescription = filenameT;
@@ -610,7 +610,7 @@ void TlenProcessF(XmlNode *node, ThreadData *info)
 					TlenP2PFreeFileTransfer(ft);
 				}
 			}
-			else if (!strcmp(e, "3")) {
+			else if (!mir_strcmp(e, "3")) {
 				// FILE_RECV : e='3' : invalid transfer error
 				if ((p=TlenXmlGetAttrValue(node, "i")) != NULL) {
 					if ((item=TlenListGetItemPtr(info->proto, LIST_FILE, p)) != NULL) {
@@ -622,27 +622,27 @@ void TlenProcessF(XmlNode *node, ThreadData *info)
 					}
 				}
 			}
-			else if (!strcmp(e, "4")) {
+			else if (!mir_strcmp(e, "4")) {
 				// FILE_SEND : e='4' : File sending request was denied by the remote client
 				if ((p=TlenXmlGetAttrValue(node, "i")) != NULL) {
 					if ((item=TlenListGetItemPtr(info->proto, LIST_FILE, p)) != NULL) {
-						if (!strcmp(item->ft->jid, jid)) {
+						if (!mir_strcmp(item->ft->jid, jid)) {
 							ProtoBroadcastAck(info->proto->m_szModuleName, item->ft->hContact, ACKTYPE_FILE, ACKRESULT_DENIED, item->ft, 0);
 							TlenListRemove(info->proto, LIST_FILE, p);
 						}
 					}
 				}
 			}
-			else if (!strcmp(e, "5")) {
+			else if (!mir_strcmp(e, "5")) {
 				// FILE_SEND : e='5' : File sending request was accepted
 				if ((p=TlenXmlGetAttrValue(node, "i")) != NULL) {
 					if ((item=TlenListGetItemPtr(info->proto, LIST_FILE, p)) != NULL) {
-						if (!strcmp(item->ft->jid, jid))
+						if (!mir_strcmp(item->ft->jid, jid))
 							forkthread((void (__cdecl *)(void*))TlenFileSendingThread, 0, item->ft);
 					}
 				}
 			}
-			else if (!strcmp(e, "6")) {
+			else if (!mir_strcmp(e, "6")) {
 				// FILE_RECV : e='6' : IP and port information to connect to get file
 				if ((p=TlenXmlGetAttrValue(node, "i")) != NULL) {
 					if ((item=TlenListGetItemPtr(info->proto, LIST_FILE, p)) != NULL) {
@@ -656,7 +656,7 @@ void TlenProcessF(XmlNode *node, ThreadData *info)
 					}
 				}
 			}
-			else if (!strcmp(e, "7")) {
+			else if (!mir_strcmp(e, "7")) {
 				// FILE_RECV : e='7' : IP and port information to connect to send file
 				// in case the conection to the given server was not successful
 				if ((p=TlenXmlGetAttrValue(node, "i")) != NULL) {
@@ -673,7 +673,7 @@ void TlenProcessF(XmlNode *node, ThreadData *info)
 					}
 				}
 			}
-			else if (!strcmp(e, "8")) {
+			else if (!mir_strcmp(e, "8")) {
 				// FILE_RECV : e='8' : transfer error
 				if ((p=TlenXmlGetAttrValue(node, "i")) != NULL) {
 					if ((item=TlenListGetItemPtr(info->proto, LIST_FILE, p)) != NULL) {

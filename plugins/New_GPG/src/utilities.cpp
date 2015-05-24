@@ -62,15 +62,15 @@ void GetFilePath(TCHAR *WindowTittle, char *szSetting, TCHAR *szExt, TCHAR *szEx
 	ofn.Flags=OFN_EXPLORER;
 	ofn.lpstrTitle=TranslateW(WindowTittle);
 	_tcsncpy(filter,TranslateW(szExtDesc), SIZEOF(filter)-1);
-	pfilter=filter+_tcslen(filter)+1;
-	_tcscpy(pfilter, szExt);
-	pfilter[_tcslen(pfilter)+1] = '\0';
-	pfilter[_tcslen(pfilter)+2] = '\0';
+	pfilter=filter+mir_tstrlen(filter)+1;
+	mir_tstrcpy(pfilter, szExt);
+	pfilter[mir_tstrlen(pfilter)+1] = '\0';
+	pfilter[mir_tstrlen(pfilter)+2] = '\0';
 	ofn.lpstrFilter=filter;
 	tmp = UniGetContactSettingUtf(0, szGPGModuleName, szSetting, _T(""));
 	_tcsncpy(str, tmp, SIZEOF(str)-1);
 	mir_free(tmp);
-	if(_tcslen(str)< 2)
+	if(mir_tstrlen(str)< 2)
 		str[0] = '\0';
 	ofn.lpstrFile=str;
 	ofn.nMaxFile=_MAX_PATH;
@@ -88,14 +88,14 @@ TCHAR *GetFilePath(TCHAR *WindowTittle, TCHAR *szExt, TCHAR *szExtDesc, bool sav
 	ofn.lStructSize=CDSIZEOF_STRUCT(OPENFILENAME,lpTemplateName);
 	ofn.Flags=OFN_EXPLORER;
 	ofn.lpstrTitle=TranslateW(WindowTittle);
-	_tcscpy(filter,TranslateW(szExtDesc));
-	pfilter=filter+_tcslen(filter)+1;
-	_tcscpy(pfilter, szExt);
-	pfilter[_tcslen(pfilter)+1] = '\0';
-	pfilter[_tcslen(pfilter)+2] = '\0';
+	mir_tstrcpy(filter,TranslateW(szExtDesc));
+	pfilter=filter+mir_tstrlen(filter)+1;
+	mir_tstrcpy(pfilter, szExt);
+	pfilter[mir_tstrlen(pfilter)+1] = '\0';
+	pfilter[mir_tstrlen(pfilter)+2] = '\0';
 	ofn.lpstrFilter=filter;
-	_tcscpy(str, _T(""));
-	if(_tcslen(str)< 2)
+	mir_tstrcpy(str, _T(""));
+	if(mir_tstrlen(str)< 2)
 		str[0] = '\0';
 	ofn.lpstrFile=str;
 	ofn.nMaxFile=_MAX_PATH;
@@ -178,7 +178,7 @@ INT_PTR SendKey(WPARAM w, LPARAM l)
 	{
 		BYTE enc = db_get_b(hContact, szGPGModuleName, "GPGEncryption", 0);
 		db_set_b(hContact, szGPGModuleName, "GPGEncryption", 0);
-		CallContactService(hContact, PSS_MESSAGE, PREF_UTF, (LPARAM)szMessage);
+		CallContactService(hContact, PSS_MESSAGE, 0, (LPARAM)szMessage);
 		std::string msg = "Public key ";
 		char *keyid = UniGetContactSettingUtf(NULL, szGPGModuleName, key_id_str.c_str(), "");
 		if(!keyid[0])
@@ -336,7 +336,7 @@ int onProtoAck(WPARAM w, LPARAM l)
 						cmd.push_back(L"-o");
 						wstring file = filename;
 						wstring::size_type p1 = file.rfind(_T(".gpg"));
-						file.erase(p1, _tcslen(_T(".gpg")));
+						file.erase(p1, mir_tstrlen(_T(".gpg")));
 						if(boost::filesystem::exists(file))
 						{
 							if(MessageBox(0, TranslateT("Target file exists, do you want to replace it?"), TranslateT("Warning"), MB_YESNO) == IDNO)
@@ -348,22 +348,22 @@ int onProtoAck(WPARAM w, LPARAM l)
 						{ // password
 							TCHAR *pass = NULL;
 							char *keyid = UniGetContactSettingUtf(ack->hContact, szGPGModuleName, "KeyID", "");
-							if(strlen(keyid) > 0)
+							if(mir_strlen(keyid) > 0)
 							{
 								string dbsetting = "szKey_";
 								dbsetting += keyid;
 								dbsetting += "_Password";
 								pass = UniGetContactSettingUtf(NULL, szGPGModuleName, dbsetting.c_str(), _T(""));
-								if(_tcslen(pass) > 0 && bDebugLog)
+								if(mir_tstrlen(pass) > 0 && bDebugLog)
 									debuglog<<std::string(time_str()+": info: found password in database for key ID: "+keyid+", trying to decrypt message from "+toUTF8((TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)ack->hContact, GCDNF_TCHAR))+" with password");
 							}
 							else
 							{
 								pass = UniGetContactSettingUtf(NULL, szGPGModuleName, "szKeyPassword", _T(""));
-								if(_tcslen(pass) > 0 && bDebugLog)
+								if(mir_tstrlen(pass) > 0 && bDebugLog)
 									debuglog<<std::string(time_str()+": info: found password for all keys in database, trying to decrypt message from "+toUTF8((TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)ack->hContact, GCDNF_TCHAR))+" with password");
 							}
-							if(_tcslen(pass) > 0)
+							if(mir_tstrlen(pass) > 0)
 							{
 								cmd.push_back(L"--passphrase");
 								cmd.push_back(pass);
@@ -397,7 +397,7 @@ int onProtoAck(WPARAM w, LPARAM l)
 							{ //save inkey id
 								string::size_type s = out.find(" encrypted with ");
 								s = out.find(" ID ", s);
-								s += strlen(" ID ");
+								s += mir_strlen(" ID ");
 								string::size_type s2 = out.find(",",s);
 								if(db_mc_isMeta(ack->hContact))
 									db_set_s(metaGetMostOnline(ack->hContact), szGPGModuleName, "InKeyID", out.substr(s, s2-s).c_str());
@@ -483,8 +483,8 @@ std::wstring encrypt_file(MCONTACT hContact, TCHAR *filename)
 		name = filename;
 	else
 		name++;
-	TCHAR *file_out =  new TCHAR [_tcslen(name) + _tcslen(_T(".gpg")) + 1];
-	mir_sntprintf(file_out, _tcslen(name) + _tcslen(_T(".gpg")) + 1, _T("%s.gpg"), name);
+	TCHAR *file_out =  new TCHAR [mir_tstrlen(name) + mir_tstrlen(_T(".gpg")) + 1];
+	mir_sntprintf(file_out, mir_tstrlen(name) + mir_tstrlen(_T(".gpg")) + 1, _T("%s.gpg"), name);
 	cmd.push_back(szKeyid);
 	if(db_get_b(hcnt, szGPGModuleName, "bAlwaysTrust", 0))
 	{
@@ -641,7 +641,7 @@ void HistoryLog(MCONTACT hContact, db_event evt)
 		Event.timestamp = (DWORD)time(NULL);
 	else
 		Event.timestamp = evt.timestamp;
-	Event.cbBlob = (DWORD)strlen((char*)evt.pBlob)+1;
+	Event.cbBlob = (DWORD)mir_strlen((char*)evt.pBlob)+1;
 	Event.pBlob = (PBYTE)_strdup((char*)evt.pBlob);
 	db_event_add(hContact, &Event);
 }
@@ -723,7 +723,7 @@ static JABBER_HANDLER_FUNC SendHandler(IJabberInterface *ji, HXML node, void *pU
 			{
 				wstring data = str;
 				xi.setText(local_node, _T("This message is encrypted."));
-				wstring::size_type p1 = data.find(_T("-----BEGIN PGP MESSAGE-----")) + _tcslen(_T("-----BEGIN PGP MESSAGE-----"));
+				wstring::size_type p1 = data.find(_T("-----BEGIN PGP MESSAGE-----")) + mir_tstrlen(_T("-----BEGIN PGP MESSAGE-----"));
 				while(data.find(_T("Version: "), p1) != wstring::npos)
 				{
 					p1 = data.find(_T("Version: "), p1);
@@ -859,7 +859,7 @@ static JABBER_HANDLER_FUNC SendHandler(IJabberInterface *ji, HXML node, void *pU
 					}
 					if(data.find(_T("-----BEGIN PGP SIGNATURE-----")) != wstring::npos && data.find(_T("-----END PGP SIGNATURE-----")) != wstring::npos)
 					{
-						wstring::size_type p1 = data.find(_T("-----BEGIN PGP SIGNATURE-----")) + _tcslen(_T("-----BEGIN PGP SIGNATURE-----"));
+						wstring::size_type p1 = data.find(_T("-----BEGIN PGP SIGNATURE-----")) + mir_tstrlen(_T("-----BEGIN PGP SIGNATURE-----"));
 						if(data.find(_T("Version: "), p1) != wstring::npos)
 						{
 							p1 = data.find(_T("Version: "), p1);
@@ -997,7 +997,7 @@ static JABBER_HANDLER_FUNC PrescenseHandler(IJabberInterface *ji, HXML node, voi
 							if(out.find("key ID ") != string::npos)
 							{
 								//need to get hcontact here, i can get jid from hxml, and get handle from jid, maybe exists better way ?
-								string::size_type p1 = out.find("key ID ") + strlen("key ID ");
+								string::size_type p1 = out.find("key ID ") + mir_strlen("key ID ");
 								string::size_type p2 = out.find("\n", p1);
 								if(p1 != string::npos && p2 != string::npos)
 								{
@@ -1091,7 +1091,7 @@ bool isContactSecured(MCONTACT hContact)
 bool isContactHaveKey(MCONTACT hContact)
 {
 	TCHAR *key = UniGetContactSettingUtf(hContact, szGPGModuleName, "GPGPubKey", _T(""));
-	if(_tcslen(key) > 0)
+	if(mir_tstrlen(key) > 0)
 	{
 		mir_free(key);
 		return true;
@@ -1133,9 +1133,9 @@ bool isGPGValid()
 		SetCurrentDirectoryW(mir_path);
 		tmp = mir_tstrdup(mir_path);
 		mir_free(mir_path);
-		//mir_realloc(path, (_tcslen(path)+64)*sizeof(TCHAR));
+		//mir_realloc(path, (mir_tstrlen(path)+64)*sizeof(TCHAR));
 		TCHAR *gpg_path = (TCHAR*)mir_alloc(sizeof(TCHAR)*MAX_PATH);
-		_tcscpy(gpg_path, tmp);
+		mir_tstrcpy(gpg_path, tmp);
 		_tcscat(gpg_path, _T("\\GnuPG\\gpg.exe"));
 		mir_free(tmp);
 		tmp = NULL;
@@ -1143,7 +1143,7 @@ bool isGPGValid()
 		if(boost::filesystem::exists(p) && boost::filesystem::is_regular_file(p))
 		{
 			gpg_exists = true;
-			_tcscpy(path, _T("GnuPG\\gpg.exe"));
+			mir_tstrcpy(path, _T("GnuPG\\gpg.exe"));
 		}
 		mir_free(gpg_path);
 		tmp = mir_tstrdup(path);
@@ -1187,7 +1187,7 @@ bool isGPGValid()
 	return is_valid && gpg_exists;
 }
 
-#define NEWTSTR_MALLOC(A) (A==NULL)?NULL:strcpy((char*)mir_alloc(sizeof(char)*(strlen(A)+1)),A)
+#define NEWTSTR_MALLOC(A) (A==NULL)?NULL:mir_strcpy((char*)mir_alloc(sizeof(char)*(mir_strlen(A)+1)),A)
 
 const bool StriStr(const char *str, const char *substr)
 {
@@ -1195,8 +1195,8 @@ const bool StriStr(const char *str, const char *substr)
 	char *str_up = NEWTSTR_MALLOC(str);
 	char *substr_up = NEWTSTR_MALLOC(substr);
 
-	CharUpperBuffA(str_up, (DWORD)strlen(str_up));
-	CharUpperBuffA(substr_up, (DWORD)strlen(substr_up));
+	CharUpperBuffA(str_up, (DWORD)mir_strlen(str_up));
+	CharUpperBuffA(substr_up, (DWORD)mir_strlen(substr_up));
 
 	if(strstr (str_up, substr_up))
 		i = true;
@@ -1325,7 +1325,7 @@ void send_encrypted_msgs_thread(void *param)
 			extern std::list<HANDLE> sent_msgs;
 			for(list<string>::iterator p = hcontact_data[hContact].msgs_to_send.begin(); p != end; ++p)
 			{
-				sent_msgs.push_back((HANDLE)CallContactService(hContact, PSS_MESSAGE, PREF_UTF, (LPARAM)p->c_str()));
+				sent_msgs.push_back((HANDLE)CallContactService(hContact, PSS_MESSAGE, 0, (LPARAM)p->c_str()));
 				HistoryLog(hContact, db_event((char*)p->c_str(),0,0, DBEF_SENT));
 				boost::this_thread::sleep(boost::posix_time::seconds(1));
 			}
@@ -1508,7 +1508,7 @@ void ExportGpGKeysFunc(int type)
 			std::string::size_type p1 = key.find("-----BEGIN PGP PUBLIC KEY BLOCK-----");
 			if(p1 == std::string::npos)
 				continue;
-			p1 += strlen("-----BEGIN PGP PUBLIC KEY BLOCK-----");
+			p1 += mir_strlen("-----BEGIN PGP PUBLIC KEY BLOCK-----");
 			p1 ++;
 			id += '\n';
 			key.insert(p1, id);
@@ -1589,10 +1589,10 @@ INT_PTR ImportGpGKeys(WPARAM w, LPARAM l)
 		{
 			std::string::size_type p1 = 0, p2 = 0;
 			p1 = key.find("Comment: login ");
-			p1 += strlen("Comment: login ");
+			p1 += mir_strlen("Comment: login ");
 			p2 = key.find(" contact_id ");
 			login = key.substr(p1, p2-p1);
-			p2 += strlen(" contact_id ");
+			p2 += mir_strlen(" contact_id ");
 			p1 = key.find("\n", p2);
 			contact_id = key.substr(p2, p1-p2);
 			p1 = key.find("Comment: login ");
@@ -1779,10 +1779,10 @@ INT_PTR ImportGpGKeys(WPARAM w, LPARAM l)
 								break;
 							}
 							char *tmp2;
-							string::size_type s = output.find("gpg: key ") + strlen("gpg: key ");
+							string::size_type s = output.find("gpg: key ") + mir_strlen("gpg: key ");
 							string::size_type s2 = output.find(":", s);
 							tmp2 = (char*)mir_alloc((output.substr(s,s2-s).length()+1) * sizeof(char));
-							strcpy(tmp2, output.substr(s,s2-s).c_str());
+							mir_strcpy(tmp2, output.substr(s,s2-s).c_str());
 							mir_utf8decode(tmp2, 0);
 							db_set_s(hContact, szGPGModuleName, "KeyID", tmp2);
 							mir_free(tmp2);
@@ -1801,7 +1801,7 @@ INT_PTR ImportGpGKeys(WPARAM w, LPARAM l)
 							if(s2 != string::npos)
 							{
 								tmp2 = (char*)mir_alloc((output.substr(s,s2-s-1).length()+1) * sizeof(char));
-								strcpy(tmp2, output.substr(s,s2-s-1).c_str());
+								mir_strcpy(tmp2, output.substr(s,s2-s-1).c_str());
 								mir_utf8decode(tmp2, 0);
 								if(hContact)
 								{
@@ -1816,7 +1816,7 @@ INT_PTR ImportGpGKeys(WPARAM w, LPARAM l)
 								if(output[s] == ')')
 								{
 									tmp2 = (char*)mir_alloc((output.substr(s2,s-s2).length()+1) * sizeof(char));
-									strcpy(tmp2, output.substr(s2,s-s2).c_str());
+									mir_strcpy(tmp2, output.substr(s2,s-s2).c_str());
 									mir_utf8decode(tmp2, 0);
 									if(hContact)
 										db_set_s(hContact, szGPGModuleName, "KeyComment", output.substr(s2,s-s2).c_str());
@@ -1824,7 +1824,7 @@ INT_PTR ImportGpGKeys(WPARAM w, LPARAM l)
 									s+=3;
 									s2 = output.find(">", s);
 									tmp2 = (char*)mir_alloc((output.substr(s,s2-s).length()+1) * sizeof(char));
-									strcpy(tmp2, output.substr(s,s2-s).c_str());
+									mir_strcpy(tmp2, output.substr(s,s2-s).c_str());
 									mir_utf8decode(tmp2, 0);
 									if(hContact)
 										db_set_s(hContact, szGPGModuleName, "KeyMainEmail", output.substr(s,s2-s).c_str());
@@ -1833,7 +1833,7 @@ INT_PTR ImportGpGKeys(WPARAM w, LPARAM l)
 								else
 								{
 									tmp2 = (char*)mir_alloc((output.substr(s2,s-s2).length()+1) * sizeof(char));
-									strcpy(tmp2, output.substr(s2,s-s2).c_str());
+									mir_strcpy(tmp2, output.substr(s2,s-s2).c_str());
 									mir_utf8decode(tmp2, 0);
 									if(hContact)
 										db_set_s(hContact, szGPGModuleName, "KeyMainEmail", output.substr(s2,s-s2).c_str());
@@ -2096,7 +2096,7 @@ static INT_PTR CALLBACK DlgProcChangePasswd(HWND hwndDlg, UINT msg, WPARAM wPara
 			  old_pass = toUTF8(buf);
 			  bool old_pass_match = false;
 			  TCHAR *pass = UniGetContactSettingUtf(NULL, szGPGModuleName, "szKeyPassword", _T(""));
-			  if(!_tcscmp(pass,buf))
+			  if(!mir_tstrcmp(pass,buf))
 				  old_pass_match = true;
 			  mir_free(pass);
 			  if(!old_pass_match)
@@ -2107,7 +2107,7 @@ static INT_PTR CALLBACK DlgProcChangePasswd(HWND hwndDlg, UINT msg, WPARAM wPara
 					  dbsetting += toUTF8(key_id_global);
 					  dbsetting += "_Password";
 					  pass = UniGetContactSettingUtf(NULL, szGPGModuleName, dbsetting.c_str(), _T(""));
-					  if(!_tcscmp(pass,buf))
+					  if(!mir_tstrcmp(pass,buf))
 						  old_pass_match = true;
 					  mir_free(pass);
 				  }

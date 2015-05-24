@@ -203,7 +203,7 @@ TLEN_FILE_TRANSFER* TlenP2PEstablishIncomingConnection(TlenProtocol *proto, HAND
 		item = TlenListGetItemPtrFromIndex(proto, i);
 		if (item != NULL) {
 			mir_snprintf(str, SIZEOF(str), "%d", iqId);
-			if (!strcmp(item->ft->iqId, str)) {
+			if (!mir_strcmp(item->ft->iqId, str)) {
 				char *hash, *nick;
 				int j;
 				nick = TlenNickFromJID(item->ft->jid);
@@ -308,8 +308,8 @@ static HANDLE TlenP2PBindSocks4(SOCKSBIND * sb, TLEN_FILE_TRANSFER *ft)
 	*(PWORD)(buf+2) = htons(0); // port
 	*(PDWORD)(buf+4) = INADDR_ANY;
 	if (sb->useAuth) {
-		strcpy((char*)buf+8, sb->szUser);
-		len = (int)strlen(sb->szUser);
+		mir_strcpy((char*)buf+8, sb->szUser);
+		len = (int)mir_strlen(sb->szUser);
 	} else {
 		buf[8] = 0;
 		len = 0;
@@ -374,8 +374,8 @@ static HANDLE TlenP2PBindSocks5(SOCKSBIND * sb, TLEN_FILE_TRANSFER *ft)
 		int nUserLen, nPassLen;
 		PBYTE pAuthBuf;
 
-		nUserLen = (int)strlen(sb->szUser);
-		nPassLen = (int)strlen(sb->szPassword);
+		nUserLen = (int)mir_strlen(sb->szUser);
+		nPassLen = (int)mir_strlen(sb->szPassword);
 		pAuthBuf = (PBYTE)mir_alloc(3+nUserLen+nPassLen);
 		pAuthBuf[0] = 1;		//auth version
 		pAuthBuf[1] = nUserLen;
@@ -428,7 +428,7 @@ static HANDLE TlenP2PBindSocks5(SOCKSBIND * sb, TLEN_FILE_TRANSFER *ft)
 		len += 4;
 	} else { // ip address
 		in.S_un.S_addr = *(PDWORD)(buf+4);
-		strcpy(sb->szHost, inet_ntoa(in));
+		mir_strcpy(sb->szHost, inet_ntoa(in));
 		len = 8;
 	}
 	sb->wPort = htons(*(PWORD)(buf+len));
@@ -454,12 +454,12 @@ HANDLE TlenP2PListen(TLEN_FILE_TRANSFER *ft)
 	ft->wPort = 0;
 	if (db_get_b(NULL, proto->m_szModuleName, "UseFileProxy", FALSE)) {
 		if (!db_get(NULL, proto->m_szModuleName, "FileProxyHost", &dbv)) {
-			strcpy(sb.szHost, dbv.pszVal);
+			mir_strcpy(sb.szHost, dbv.pszVal);
 			db_free(&dbv);
 			sb.wPort = db_get_w(NULL, proto->m_szModuleName, "FileProxyPort", 0);
 			sb.useAuth = FALSE;
-			strcpy(sb.szUser, "");
-			strcpy(sb.szPassword, "");
+			mir_strcpy(sb.szUser, "");
+			mir_strcpy(sb.szPassword, "");
 			if (db_get_b(NULL, proto->m_szModuleName, "FileProxyAuth", FALSE)) {
 				sb.useAuth = TRUE;
 				if (!db_get_s(NULL, proto->m_szModuleName, "FileProxyUsername", &dbv)) {

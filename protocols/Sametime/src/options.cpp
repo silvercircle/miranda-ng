@@ -292,14 +292,13 @@ static INT_PTR CALLBACK DlgProcOptNet(HWND hwndDlg, UINT msg, WPARAM wParam, LPA
 	case WM_NOTIFY:
 		if (((LPNMHDR)lParam)->code == PSN_APPLY) {
 			TCHAR ws[2048];
-			char* utf;
 
 			GetDlgItemText(hwndDlg, IDC_ED_SNAME, ws, LSTRINGLEN);
-			strcpy(proto->options.server_name, utf = mir_utf8encodeT(ws)); mir_free(utf);
+			mir_strcpy(proto->options.server_name, T2Utf(ws));
 			GetDlgItemText(hwndDlg, IDC_ED_NAME, ws, LSTRINGLEN);
-			strcpy(proto->options.id, utf = mir_utf8encodeT(ws)); mir_free(utf);
+			mir_strcpy(proto->options.id, T2Utf(ws));
 			GetDlgItemText(hwndDlg, IDC_ED_PWORD, ws, LSTRINGLEN);
-			strcpy(proto->options.pword, utf = mir_utf8encodeT(ws)); mir_free(utf);
+			mir_strcpy(proto->options.pword, T2Utf(ws));
 
 			BOOL translated;
 			int port = GetDlgItemInt(hwndDlg, IDC_ED_PORT, &translated, FALSE);
@@ -411,7 +410,7 @@ void CSametimeProto::LoadOptions()
 	if (options.err_method == ED_POP && !ServiceExists(MS_POPUP_SHOWMESSAGE)) options.err_method = ED_BAL;
 	if (options.err_method == ED_BAL && !ServiceExists(MS_CLIST_SYSTRAY_NOTIFY)) options.err_method = ED_MB;
 
-	debugLog(_T("LoadOptions() loaded: ServerName:len=[%d], id:len=[%d], pword:len=[%d]"), options.server_name == NULL ? -1 : strlen(options.server_name), options.id == NULL ? -1 : strlen(options.id), options.pword == NULL ? -1 : strlen(options.pword));
+	debugLog(_T("LoadOptions() loaded: ServerName:len=[%d], id:len=[%d], pword:len=[%d]"), options.server_name == NULL ? -1 : mir_strlen(options.server_name), options.id == NULL ? -1 : mir_strlen(options.id), options.pword == NULL ? -1 : mir_strlen(options.pword));
 	debugLog(_T("LoadOptions() loaded: port=[%d], encrypt_session=[%d], ClientID=[%d], ClientVersionMajor=[%d], ClientVersionMinor=[%d]"), options.port, options.encrypt_session, options.client_id, options.client_versionMajor, options.client_versionMinor);
 	debugLog(_T("LoadOptions() loaded: get_server_contacts=[%d], add_contacts=[%d], idle_as_away=[%d], err_method=[%d]"), options.get_server_contacts, options.add_contacts, options.idle_as_away, options.err_method);
 

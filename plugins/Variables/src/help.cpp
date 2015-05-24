@@ -246,7 +246,7 @@ static TCHAR *getTokenCategory(TOKENREGISTEREX *tr) {
 	while (*cur != 0) {
 		if (*cur == '\t') {
 			*cur = 0;
-			helpText = ( char* )mir_realloc(helpText, strlen(helpText)+1);
+			helpText = ( char* )mir_realloc(helpText, mir_strlen(helpText)+1);
 
 			TCHAR *res = mir_a2t(helpText);
 			mir_free(helpText);
@@ -266,7 +266,7 @@ static TCHAR *getHelpDescription(TOKENREGISTEREX *tr)
 	if (tr == NULL)
 		return NULL;
 
-	char *cur = tr->szHelpText + strlen(tr->szHelpText);
+	char *cur = tr->szHelpText + mir_strlen(tr->szHelpText);
 	while (cur > tr->szHelpText) {
 		if (*cur == '\t') {
 
@@ -314,7 +314,7 @@ static TCHAR *getTokenDescription(TOKENREGISTEREX *tr)
 	}
 	else args = NULL;
 
-	size_t len = _tcslen(tr->tszTokenString) + (args!=NULL?strlen(args):0) + 3;
+	size_t len = mir_tstrlen(tr->tszTokenString) + (args!=NULL?mir_strlen(args):0) + 3;
 	TCHAR *desc = (TCHAR*)mir_calloc(len * sizeof(TCHAR));
 	if (desc == NULL) {
 		mir_free(helpText);
@@ -347,14 +347,14 @@ static int CALLBACK compareTokenHelp(LPARAM lParam1, LPARAM lParam2, LPARAM lPar
 	if (cat1 == NULL || cat2 == NULL)
 		return 0;
 
-	int res = _tcscmp(cat1, cat2);
+	int res = mir_tstrcmp(cat1, cat2);
 	if (res != 0)
 		return res;
 
 	if (tr1->tszTokenString == NULL || tr2->tszTokenString == NULL)
 		return 0;
 
-	return _tcscmp(tr1->tszTokenString, tr2->tszTokenString);
+	return mir_tstrcmp(tr1->tszTokenString, tr2->tszTokenString);
 }
 
 static BOOL CALLBACK processTokenListMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -387,14 +387,14 @@ static BOOL CALLBACK processTokenListMessage(HWND hwndDlg, UINT msg, WPARAM wPar
 					continue;
 
 				else if (hdd != NULL) {
-					if (!_tcscmp(tr->tszTokenString, SUBJECT)) {
+					if (!mir_tstrcmp(tr->tszTokenString, SUBJECT)) {
 						if (hdd->vhs->flags&VHF_HIDESUBJECTTOKEN)
 							continue;
 
 						if (hdd->vhs->szSubjectDesc != NULL)
 							tszHelpDesc = mir_a2t(hdd->vhs->szSubjectDesc);
 					}
-					if (!_tcscmp(tr->tszTokenString, MIR_EXTRATEXT)) {
+					if (!mir_tstrcmp(tr->tszTokenString, MIR_EXTRATEXT)) {
 						if (hdd->vhs->flags & VHF_HIDEEXTRATEXTTOKEN)
 							continue;
 
@@ -447,7 +447,7 @@ static BOOL CALLBACK processTokenListMessage(HWND hwndDlg, UINT msg, WPARAM wPar
 				}
 				else text = NULL;
 
-				if (text != NULL && (last == NULL || _tcsicmp(last, text))) {
+				if (text != NULL && (last == NULL || mir_tstrcmpi(last, text))) {
 					lvItem.mask = LVIF_TEXT;
 					lvItem.pszText = text;
 					ListView_InsertItem(hList, &lvItem);
@@ -484,7 +484,7 @@ static BOOL CALLBACK processTokenListMessage(HWND hwndDlg, UINT msg, WPARAM wPar
 			if (tr == NULL)
 				break;
 
-			size_t len = _tcslen(tr->tszTokenString) + 2;
+			size_t len = mir_tstrlen(tr->tszTokenString) + 2;
 			TCHAR *tokenString = (TCHAR*)mir_alloc((len+1)*sizeof(TCHAR));
 			if (tokenString == NULL)
 				break;
@@ -719,7 +719,7 @@ static INT_PTR CALLBACK inputDlgProc(HWND hwndDlg,UINT msg,WPARAM wParam,LPARAM 
 				TCHAR *newString = variables_parsedup(string, extraText, (MCONTACT)SendMessage(GetParent(hwndDlg), VARM_GETSUBJECT, 0, 0));
 				if (newString != NULL) {
 					TCHAR *oldString = Hlp_GetDlgItemText(hwndDlg, IDC_RESULT);
-					if (oldString == NULL || _tcscmp(oldString, newString))
+					if (oldString == NULL || mir_tstrcmp(oldString, newString))
 						SetDlgItemText(hwndDlg, IDC_RESULT, newString);
 
 					mir_free(newString);

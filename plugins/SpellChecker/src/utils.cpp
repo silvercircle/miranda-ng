@@ -1385,7 +1385,7 @@ int MsgWindowEvent(WPARAM, LPARAM lParam)
 int IconPressed(WPARAM hContact, LPARAM lParam)
 {
 	StatusIconClickData *sicd = (StatusIconClickData *)lParam;
-	if (sicd == NULL || strcmp(sicd->szModule, MODULE_NAME) != 0)
+	if (sicd == NULL || mir_strcmp(sicd->szModule, MODULE_NAME) != 0)
 		return 0;
 
 	if (hContact == NULL)
@@ -1593,7 +1593,7 @@ BOOL lstreq(TCHAR *a, TCHAR *b, size_t len)
 	if (len >= 0)
 		ret = !_tcsncmp(a, b, len);
 	else
-		ret = !_tcscmp(a, b);
+		ret = !mir_tstrcmp(a, b);
 	free(a);
 	free(b);
 	return ret;

@@ -55,32 +55,6 @@ INT_PTR __cdecl onRecvMsg(WPARAM wParam, LPARAM lParam)
 
 	Sent_NetLog("onRecvMsg: %s", szEncMsg);
 
-	// cut rtf tags
-	if (pRtfconvString && memcmp(szEncMsg, "{\\rtf1", 6) == 0) {
-		SAFE_FREE(szUnrtfMsg);
-		int len = (int)strlen(szEncMsg) + 1;
-		LPWSTR szTemp = (LPWSTR)mir_alloc(len*sizeof(WCHAR));
-		if (ppre->flags & PREF_UNICODE)
-			rtfconvW((LPWSTR)(szEncMsg + len), szTemp);
-		else
-			rtfconvA(szEncMsg, szTemp);
-		len = (int)wcslen(szTemp) - 1;
-		while (len) {
-			if (szTemp[len] == 0x0D || szTemp[len] == 0x0A)
-				szTemp[len] = 0;
-			else
-				break;
-			len--;
-		}
-		len = (int)wcslen(&szTemp[1]) + 1;
-		szUnrtfMsg = (LPSTR)mir_alloc(len*(sizeof(WCHAR) + 1));
-		WideCharToMultiByte(CP_ACP, 0, &szTemp[1], -1, szUnrtfMsg, len*(sizeof(WCHAR) + 1), NULL, NULL);
-		memcpy(szUnrtfMsg + len, &szTemp[1], len*sizeof(WCHAR));
-		ppre->szMessage = szEncMsg = szUnrtfMsg;
-		ppre->flags |= PREF_UNICODE;
-		mir_free(szTemp);
-	}
-
 	int ssig = getSecureSig(ppre->szMessage, &szEncMsg);
 	bool bSecured = (isContactSecured(pccsd->hContact)&SECURED) != 0;
 	bool bPGP = isContactPGP(pccsd->hContact);
@@ -104,7 +78,7 @@ INT_PTR __cdecl onRecvMsg(WPARAM wParam, LPARAM lParam)
 	if (ssig == SiG_NONE && !ptr->msgSplitted) {
 		Sent_NetLog("onRecvMsg: non-secure message");
 
-		ptrA szPlainMsg((ppre->flags & PREF_UNICODE) ? m_awstrcat(Translate(sim402), szEncMsg) : m_aastrcat(Translate(sim402), szEncMsg));
+		ptrA szPlainMsg(m_aastrcat(Translate(sim402), szEncMsg));
 		ppre->szMessage = szPlainMsg;
 		pccsd->wParam |= PREF_SIMNOMETA;
 		return CallService(MS_PROTO_CHAINRECV, wParam, lParam);
@@ -136,8 +110,8 @@ INT_PTR __cdecl onRecvMsg(WPARAM wParam, LPARAM lParam)
 	if (ssig == SiG_NONE && ptr->msgSplitted) {
 		Sent_NetLog("onRecvMsg: combine untagged splitted message");
 
-		LPSTR tmp = (LPSTR)mir_alloc(strlen(ptr->msgSplitted) + strlen(szEncMsg) + 1);
-		strcpy(tmp, ptr->msgSplitted);
+		LPSTR tmp = (LPSTR)mir_alloc(mir_strlen(ptr->msgSplitted) + mir_strlen(szEncMsg) + 1);
+		mir_strcpy(tmp, ptr->msgSplitted);
 		strcat(tmp, szEncMsg);
 		mir_free(ptr->msgSplitted);
 		ptr->msgSplitted = szEncMsg = ppre->szMessage = tmp;
@@ -178,8 +152,6 @@ INT_PTR __cdecl onRecvMsg(WPARAM wParam, LPARAM lParam)
 
 		if (!szOldMsg) { // error while decrypting message, send error
 			SAFE_FREE(ptr->msgSplitted);
-			ppre->flags &= ~(PREF_UNICODE | PREF_UTF);
-			pccsd->wParam &= ~(PREF_UNICODE | PREF_UTF);
 			ppre->szMessage = Translate(sim401);
 			return CallService(MS_PROTO_CHAINRECV, wParam, lParam);
 		}
@@ -252,8 +224,8 @@ INT_PTR __cdecl onRecvMsg(WPARAM wParam, LPARAM lParam)
 			// reinit key exchange user has send an encrypted message and i have no key
 			cpp_reset_context(ptr->cntx);
 
-			ptrA reSend((LPSTR)mir_alloc(strlen(szEncMsg) + LEN_RSND));
-			strcpy(reSend, SIG_RSND); // copy resend sig
+			ptrA reSend((LPSTR)mir_alloc(mir_strlen(szEncMsg) + LEN_RSND));
+			mir_strcpy(reSend, SIG_RSND); // copy resend sig
 			strcat(reSend, szEncMsg); // add mess
 
 			pccsd->wParam |= PREF_METANODB;
@@ -761,7 +733,6 @@ INT_PTR __cdecl onSendMsg(WPARAM wParam, LPARAM lParam)
 			ptrA keyToSend(InitKeyA(ptr, 0));	// calculate public and private key & fill KeyA
 			Sent_NetLog("Sending KEY3: %s", keyToSend);
 
-			pccsd->wParam &= ~PREF_UNICODE;
 			pccsd->wParam |= PREF_METANODB;
 			pccsd->lParam = (LPARAM)keyToSend;
 			pccsd->szProtoService = PSS_MESSAGE;
@@ -801,7 +772,7 @@ INT_PTR __cdecl onSendFile(WPARAM wParam, LPARAM lParam)
 			if (!name) name = file[i];
 			else name++;
 
-			int size = TEMP_SIZE + (int)strlen(name) + 20;
+			int size = TEMP_SIZE + (int)mir_strlen(name) + 20;
 			char *file_out = (char *)mir_alloc(size);
 			mir_snprintf(file_out, size, "%s\\%s.AESHELL(%d)", TEMP, name, file_idx++);
 

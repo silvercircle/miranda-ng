@@ -78,24 +78,24 @@ int UpdateWeather(MCONTACT hContact)
 	WEATHERINFO winfo = LoadWeatherInfo(hContact);
 
 	// translate weather condition
-	_tcscpy(winfo.cond, TranslateTS(winfo.cond));
+	mir_tstrcpy(winfo.cond, TranslateTS(winfo.cond));
 
 	// compare the old condition and determine if the weather had changed
 	if (opt.UpdateOnlyConditionChanged) {	// consider condition change
 		if (!db_get_ts(hContact, WEATHERPROTONAME, "LastCondition", &dbv)) {
-			if (_tcsicmp(winfo.cond, dbv.ptszVal))  Ch = TRUE;		// the weather condition is changed
+			if (mir_tstrcmpi(winfo.cond, dbv.ptszVal))  Ch = TRUE;		// the weather condition is changed
 			db_free(&dbv);
 		}
 		else Ch = TRUE;
 		if (!db_get_ts(hContact, WEATHERPROTONAME, "LastTemperature", &dbv)) {
-			if (_tcsicmp(winfo.temp, dbv.ptszVal))  Ch = TRUE;		// the temperature is changed
+			if (mir_tstrcmpi(winfo.temp, dbv.ptszVal))  Ch = TRUE;		// the temperature is changed
 			db_free(&dbv);
 		}
 		else Ch = TRUE;
 	}
 	else {	// consider update time change
 		if (!db_get_ts(hContact, WEATHERPROTONAME, "LastUpdate", &dbv)) {
-			if (_tcsicmp(winfo.update, dbv.ptszVal))  Ch = TRUE;		// the update time is changed
+			if (mir_tstrcmpi(winfo.update, dbv.ptszVal))  Ch = TRUE;		// the update time is changed
 			db_free(&dbv);
 		}
 		else Ch = TRUE;
@@ -152,7 +152,7 @@ int UpdateWeather(MCONTACT hContact)
 	db_set_b(hContact, WEATHERPROTONAME, "IsUpdated", TRUE);
 
 	// save info for default weather condition
-	if ( !_tcscmp(winfo.id, opt.Default) && !opt.NoProtoCondition) {
+	if ( !mir_tstrcmp(winfo.id, opt.Default) && !opt.NoProtoCondition) {
 		// save current condition for default station to be displayed after the update
 		old_status = status;
 		status = winfo.status;
@@ -189,13 +189,15 @@ int UpdateWeather(MCONTACT hContact)
 			// internal log using history
 			GetDisplay(&winfo, opt.hText, str2);
 
+			T2Utf szMessage(str2);
+
 			DBEVENTINFO dbei = { sizeof(dbei) };
 			dbei.szModule = WEATHERPROTONAME;
 			dbei.timestamp = (DWORD)time(NULL);
-			dbei.flags = DBEF_READ|DBEF_UTF;
+			dbei.flags = DBEF_READ | DBEF_UTF;
 			dbei.eventType = EVENTTYPE_MESSAGE;
-			dbei.pBlob = (PBYTE)mir_utf8encodeT(str2);
-			dbei.cbBlob = (DWORD)strlen((char*)dbei.pBlob)+1;
+			dbei.pBlob = szMessage;
+			dbei.cbBlob = (DWORD)mir_strlen(szMessage)+1;
 			db_event_add(hContact, &dbei);
 		}
 
@@ -457,7 +459,7 @@ int GetWeatherData(MCONTACT hContact)
 				// if it is a normal item with start= and end=, then parse through the downloaded string
 				// to get a data value.
 				GetDataValue(&Item->Item, DataValue, &szInfo);
-				if ( _tcscmp(Item->Item.Name, _T("Condition")) && _tcsicmp(Item->Item.Unit, _T("Cond")))
+				if ( mir_tstrcmp(Item->Item.Name, _T("Condition")) && mir_tstrcmpi(Item->Item.Unit, _T("Cond")))
 					_tcsncpy(DataValue, TranslateTS(DataValue), MAX_DATA_LEN - 1);
 				break;
 
@@ -487,14 +489,14 @@ int GetWeatherData(MCONTACT hContact)
 						case '[':  // variable, add the value to the result string
 							hasvar = TRUE;
 							if ( !DBGetData(hContact, _T2A(str2), &dbv)) {
-								_tcsncat(DataValue, dbv.ptszVal, SIZEOF(DataValue) - _tcslen(DataValue));
+								_tcsncat(DataValue, dbv.ptszVal, SIZEOF(DataValue) - mir_tstrlen(DataValue));
 								DataValue[SIZEOF(DataValue)-1] = 0;
 								db_free(&dbv);
 							}
 							break;
 
 						case'\"': // constant, add it to the result string
-							_tcsncat(DataValue, TranslateTS(str2), SIZEOF(DataValue) - _tcslen(DataValue));
+							_tcsncat(DataValue, TranslateTS(str2), SIZEOF(DataValue) - mir_tstrlen(DataValue));
 							DataValue[SIZEOF(DataValue)-1] = 0;
 							break;
 						}
@@ -527,7 +529,7 @@ int GetWeatherData(MCONTACT hContact)
 						break;	// exit if break string is not found
 					}
 					*end = '\0';
-					end += _tcslen(Item->Item.Break);
+					end += mir_tstrlen(Item->Item.Break);
 					while (end[0] == ' ')
 						end++;		// remove extra space
 
@@ -540,27 +542,27 @@ int GetWeatherData(MCONTACT hContact)
 			}	}
 
 			// don't store data if it is not available
-			if ((DataValue[0] != 0 && _tcscmp(DataValue, NODATA) && 
-				_tcscmp(DataValue, TranslateTS(NODATA)) && _tcscmp(Item->Item.Name, _T("Ignore"))) ||
-				( !_tcscmp(Item->Item.Name, _T("Alert")) && i == 0)) 
+			if ((DataValue[0] != 0 && mir_tstrcmp(DataValue, NODATA) && 
+				mir_tstrcmp(DataValue, TranslateTS(NODATA)) && mir_tstrcmp(Item->Item.Name, _T("Ignore"))) ||
+				( !mir_tstrcmp(Item->Item.Name, _T("Alert")) && i == 0)) 
 			{
 				// temporary workaround for mToolTip to show feel-like temperature
-				if ( !_tcscmp(Item->Item.Name, _T("Feel")))
+				if ( !mir_tstrcmp(Item->Item.Name, _T("Feel")))
 					db_set_ts(hContact, WEATHERCONDITION, "Heat Index", DataValue);
 				GetStationID(hContact, Svc, SIZEOF(Svc));
-				if ( !_tcscmp(Svc, opt.Default))
+				if ( !mir_tstrcmp(Svc, opt.Default))
 					db_set_ts(NULL, DEFCURRENTWEATHER, _T2A(Item->Item.Name), DataValue);
-				if ( !_tcscmp(Item->Item.Name, _T("Condition"))) {
+				if ( !mir_tstrcmp(Item->Item.Name, _T("Condition"))) {
 					TCHAR buf[128], *cbuf;
 					mir_sntprintf(buf, SIZEOF(buf), _T("#%s Weather"), DataValue);
 					cbuf = TranslateTS(buf);
 					if (cbuf[0] == '#')
 						cbuf = TranslateTS(DataValue);
 					db_set_ts(hContact, WEATHERCONDITION, _T2A(Item->Item.Name), cbuf);
-					CharLowerBuff(DataValue, (DWORD)_tcslen(DataValue));
+					CharLowerBuff(DataValue, (DWORD)mir_tstrlen(DataValue));
 					cond = GetIcon(DataValue, Data);
 				}
-				else if ( _tcsicmp(Item->Item.Unit, _T("Cond")) == 0) {
+				else if ( mir_tstrcmpi(Item->Item.Unit, _T("Cond")) == 0) {
 					TCHAR buf[128], *cbuf;
 					mir_sntprintf(buf, SIZEOF(buf), _T("#%s Weather"), DataValue);
 					cbuf = TranslateTS(buf);

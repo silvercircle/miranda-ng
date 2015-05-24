@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 TokenDef::TokenDef(const char *tokenString)
 {
 	this->tokenString = tokenString;
-	this->tokenLen = (int)strlen(tokenString);
+	this->tokenLen = (int)mir_strlen(tokenString);
 	this->token = 0;
 	this->escape = 0;
 }
@@ -33,7 +33,7 @@ TokenDef::TokenDef(const char *tokenString, int token, int escape)
 {
 	this->tokenString = tokenString;
 	this->token = token;
-	this->tokenLen = (int)strlen(tokenString);
+	this->tokenLen = (int)mir_strlen(tokenString);
 	this->escape = escape;
 }
 
@@ -113,7 +113,7 @@ Template* Template::getNext()
 
 bool Template::equals(const char *name)
 {
-	if (!strcmp(name, this->name))
+	if (!mir_strcmp(name, this->name))
 		return true;
 
 	return false;
@@ -170,7 +170,7 @@ void Template::tokenize()
 	Token *lastToken = NULL;
 	int lastTokenType = Token::PLAIN;
 	int lastTokenEscape = 0;
-	int l = (int)strlen(str);
+	int l = (int)mir_strlen(str);
 	for (int i = 0, lastTokenStart = 0; i <= l;) {
 		Token *newToken;
 		int newTokenType = 0, newTokenSize = 0, newTokenEscape = 0;
@@ -252,7 +252,7 @@ TemplateMap* TemplateMap::add(const char *id, const char *filename)
 {
 	TemplateMap *map;
 	for (map = mapList; map != NULL; map = map->next) {
-		if (!strcmp(map->name, id)) {
+		if (!mir_strcmp(map->name, id)) {
 			map->clear();
 			map->setFilename(filename);
 			return map;
@@ -339,7 +339,7 @@ TemplateMap* TemplateMap::loadTemplateFile(const char *id, const char *filename,
 {
 	char lastTemplate[1024], tmp2[1024];
 	unsigned int i = 0;
-	if (filename == NULL || strlen(filename) == 0)
+	if (filename == NULL || mir_strlen(filename) == 0)
 		return NULL;
 
 	FILE *fh = fopen(filename, "rt");
@@ -425,7 +425,7 @@ Template* TemplateMap::getTemplate(const char *text)
 Template* TemplateMap::getTemplate(const char *proto, const char *text)
 {
 	for (TemplateMap *ptr = mapList; ptr != NULL; ptr = ptr->next)
-		if (!strcmp(ptr->name, proto))
+		if (!mir_strcmp(ptr->name, proto))
 			return ptr->getTemplate(text);
 
 	return NULL;
@@ -434,7 +434,7 @@ Template* TemplateMap::getTemplate(const char *proto, const char *text)
 TemplateMap* TemplateMap::getTemplateMap(const char *proto)
 {
 	for (TemplateMap *ptr = mapList; ptr != NULL; ptr = ptr->next)
-		if (!strcmp(ptr->name, proto))
+		if (!mir_strcmp(ptr->name, proto))
 			return ptr;
 
 	return NULL;

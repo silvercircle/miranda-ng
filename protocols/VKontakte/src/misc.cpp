@@ -463,9 +463,9 @@ bool CVkProto::AutoFillForm(char *pBody, CMStringA &szAction, CMStringA& szResul
 			CMStringA name = getAttr(pFieldBeg, "name");
 			CMStringA value = getAttr(pFieldBeg, "value");
 			if (name == "email")
-				value = ptrA(mir_utf8encodeT(ptrT(getTStringA("Login"))));
+				value = (char*)T2Utf(ptrT(getTStringA("Login")));
 			else if (name == "pass")
-				value = ptrA(mir_utf8encodeT(ptrT(GetUserStoredPassword())));
+				value = (char*)T2Utf(ptrT(GetUserStoredPassword()));
 			else if (name == "captcha_key") {
 				char *pCaptchaBeg = strstr(pFormBeg, "<img id=\"captcha\"");
 				if (pCaptchaBeg != NULL)
@@ -580,9 +580,9 @@ void CVkProto::DBAddAuthRequest(const MCONTACT hContact)
 {
 	debugLogA("CVkProto::DBAddAuthRequest");
 		
-	ptrA szNick(mir_utf8encodeT(ptrT(db_get_tsa(hContact, m_szModuleName, "Nick"))));
-	ptrA szFirstName(mir_utf8encodeT(ptrT(db_get_tsa(hContact, m_szModuleName, "FirstName"))));
-	ptrA szLastName(mir_utf8encodeT(ptrT(db_get_tsa(hContact, m_szModuleName, "LastName"))));
+	T2Utf szNick(ptrT(db_get_tsa(hContact, m_szModuleName, "Nick")));
+	T2Utf szFirstName(ptrT(db_get_tsa(hContact, m_szModuleName, "FirstName")));
+	T2Utf szLastName(ptrT(db_get_tsa(hContact, m_szModuleName, "LastName")));
 		
 	//blob is: uin(DWORD), hContact(DWORD), nick(ASCIIZ), first(ASCIIZ), last(ASCIIZ), email(ASCIIZ), reason(ASCIIZ)
 	//blob is: 0(DWORD), hContact(DWORD), nick(ASCIIZ), first(ASCIIZ), last(ASCIIZ), ""(ASCIIZ), ""(ASCIIZ)
@@ -601,13 +601,13 @@ void CVkProto::DBAddAuthRequest(const MCONTACT hContact)
 	*((PDWORD)pCurBlob) = (DWORD)hContact;
 	pCurBlob += sizeof(DWORD); // hContact(DWORD)
 
-	strcpy((char*)pCurBlob, szNick); 
+	mir_strcpy((char*)pCurBlob, szNick); 
 	pCurBlob += mir_strlen(szNick) + 1;
 
-	strcpy((char*)pCurBlob, szFirstName);
+	mir_strcpy((char*)pCurBlob, szFirstName);
 	pCurBlob += mir_strlen(szFirstName) + 1;
 
-	strcpy((char*)pCurBlob, szLastName);
+	mir_strcpy((char*)pCurBlob, szLastName);
 	pCurBlob += mir_strlen(szLastName) + 1;
 	
 	*pCurBlob = '\0';	//email
@@ -631,7 +631,7 @@ MCONTACT CVkProto::MContactFromDbEvent(MEVENT hDbEvent)
 
 	if (db_event_get(hDbEvent, &dbei))
 		return INVALID_CONTACT_ID;
-	if (dbei.eventType != EVENTTYPE_AUTHREQUEST || strcmp(dbei.szModule, m_szModuleName))
+	if (dbei.eventType != EVENTTYPE_AUTHREQUEST || mir_strcmp(dbei.szModule, m_szModuleName))
 		return INVALID_CONTACT_ID;
 
 	MCONTACT hContact = DbGetAuthEventContact(&dbei);
@@ -775,12 +775,12 @@ int CVkProto::OnDbSettingChanged(WPARAM hContact, LPARAM lParam)
 	if (hContact != NULL)
 		return 0;
 
-	if (strcmp(cws->szModule, "ListeningTo"))
+	if (mir_strcmp(cws->szModule, "ListeningTo"))
 		return 0;
 	
 	CMStringA szListeningTo(m_szModuleName);
 	szListeningTo += "Enabled";
-	if (!strcmp(cws->szSetting, szListeningTo.GetBuffer())) {
+	if (!mir_strcmp(cws->szSetting, szListeningTo.GetBuffer())) {
 		MusicSendMetod iOldMusicSendMetod = (MusicSendMetod)getByte("OldMusicSendMetod", sendBroadcastAndStatus);
 		
 		if (cws->value.bVal == 0)

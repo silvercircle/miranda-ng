@@ -144,7 +144,7 @@ static void TSAPI LoadLogfontFromINI(int i, char *szKey, LOGFONTA *lf, COLORREF 
 		 * filter out font attributes from the message input area font
 		 * (can be disabled by db tweak)
 		 */
-		if (!strcmp(szKey, "Font16") && M.GetByte("inputFontFix", 1) == 1) {
+		if (!mir_strcmp(szKey, "Font16") && M.GetByte("inputFontFix", 1) == 1) {
 			lf->lfWeight = FW_NORMAL;
 			lf->lfItalic = 0;
 			lf->lfUnderline = 0;
@@ -225,19 +225,11 @@ void TSAPI WriteThemeToINI(const TCHAR *szIniFilenameT, TWindowData *dat)
 	WritePrivateProfileStringA("Message Log", "ExtraMicroLF", _itoa(M.GetByte("extramicrolf", 0), szBuf, 10), szIniFilename);
 
 	for (i = 0; i <= TMPL_ERRMSG; i++) {
-		char *encoded;
-		if (dat == 0)
-			encoded = mir_utf8encodeT(LTR_Active.szTemplates[i]);
-		else
-			encoded = mir_utf8encodeT(dat->pContainer->ltr_templates->szTemplates[i]);
-		WritePrivateProfileStringA("Templates", TemplateNames[i], encoded, szIniFilename);
-		mir_free(encoded);
-		if (dat == 0)
-			encoded = mir_utf8encodeT(RTL_Active.szTemplates[i]);
-		else
-			encoded = mir_utf8encodeT(dat->pContainer->rtl_templates->szTemplates[i]);
-		WritePrivateProfileStringA("RTLTemplates", TemplateNames[i], encoded, szIniFilename);
-		mir_free(encoded);
+		T2Utf szLTR((dat == 0) ? LTR_Active.szTemplates[i] : dat->pContainer->ltr_templates->szTemplates[i]);
+		WritePrivateProfileStringA("Templates", TemplateNames[i], szLTR, szIniFilename);
+
+		T2Utf szRTL((dat == 0) ? RTL_Active.szTemplates[i] : dat->pContainer->rtl_templates->szTemplates[i]);
+		WritePrivateProfileStringA("RTLTemplates", TemplateNames[i], szRTL, szIniFilename);
 	}
 	for (i = 0; i < CUSTOM_COLORS; i++) {
 		mir_snprintf(szTemp, SIZEOF(szTemp), "cc%d", i + 1);
@@ -391,7 +383,7 @@ void TSAPI ReadThemeFromINI(const TCHAR *szIniFilenameT, TContainerData *dat, in
 
 				GetPrivateProfileStringA("Templates", TemplateNames[i], "[undef]", szTemplateBuffer, TEMPLATE_LENGTH * 3, szIniFilename);
 
-				if (strcmp(szTemplateBuffer, "[undef]")) {
+				if (mir_strcmp(szTemplateBuffer, "[undef]")) {
 					if (dat == 0)
 						db_set_utf(NULL, TEMPLATES_MODULE, TemplateNames[i], szTemplateBuffer);
 					decoded = mir_utf8decodeW(szTemplateBuffer);
@@ -404,7 +396,7 @@ void TSAPI ReadThemeFromINI(const TCHAR *szIniFilenameT, TContainerData *dat, in
 
 				GetPrivateProfileStringA("RTLTemplates", TemplateNames[i], "[undef]", szTemplateBuffer, TEMPLATE_LENGTH * 3, szIniFilename);
 
-				if (strcmp(szTemplateBuffer, "[undef]")) {
+				if (mir_strcmp(szTemplateBuffer, "[undef]")) {
 					if (dat == 0)
 						db_set_utf(NULL, RTLTEMPLATES_MODULE, TemplateNames[i], szTemplateBuffer);
 					decoded = mir_utf8decodeW(szTemplateBuffer);

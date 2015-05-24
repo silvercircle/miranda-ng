@@ -63,7 +63,7 @@ bool txtParseParam(const char* szData, const char* presearch, const char* start,
 
 	cp = strstr(cp1, start);
 	if (cp == NULL) return false;
-	cp += strlen(start);
+	cp += mir_strlen(start);
 	while (*cp == ' ') ++cp;
 
 	if (finish) {
@@ -182,11 +182,11 @@ char* HtmlEncode(const char *str)
 	if ((s = (char*)mir_alloc(c + 1)) != NULL) {
 		for (p = (char*)str, q = s; *p != '\0'; p++) {
 			switch (*p) {
-				case '&': strcpy(q, "&amp;"); q += 5; break;
-				case '\'': strcpy(q, "&apos;"); q += 6; break;
-				case '>': strcpy(q, "&gt;"); q += 4; break;
-				case '<': strcpy(q, "&lt;"); q += 4; break;
-				case '"': strcpy(q, "&quot;"); q += 6; break;
+				case '&': mir_strcpy(q, "&amp;"); q += 5; break;
+				case '\'': mir_strcpy(q, "&apos;"); q += 6; break;
+				case '>': mir_strcpy(q, "&gt;"); q += 4; break;
+				case '<': mir_strcpy(q, "&lt;"); q += 4; break;
+				case '"': mir_strcpy(q, "&quot;"); q += 6; break;
 				default: *q = *p; q++; break;
 			}
 		}
@@ -275,12 +275,12 @@ void  stripHTML(char* str)
 	{
 		if ( *p == '<' )
 		{
-			if      ( !strnicmp( p, "<p>",  3 )) { strcpy(q, "\r\n\r\n"); q += 3; p += 2; }
-			else if ( !strnicmp( p, "</p>", 4 )) { strcpy(q, "\r\n\r\n"); q += 3; p += 3; }
-			else if ( !strnicmp( p, "<br>", 4 )) { strcpy(q, "\r\n"); ++q; p += 3; }
-			else if ( !strnicmp( p, "<br />", 6 )) { strcpy(q, "\r\n"); ++q; p += 5; }
-			else if ( !strnicmp( p, "<hr>", 4 )) { strcpy(q, "\r\n"); ++q; p += 3; }
-			else if ( !strnicmp( p, "<hr />", 6 )) { strcpy(q, "\r\n"); ++q; p += 5; }
+			if      ( !strnicmp( p, "<p>",  3 )) { mir_strcpy(q, "\r\n\r\n"); q += 3; p += 2; }
+			else if ( !strnicmp( p, "</p>", 4 )) { mir_strcpy(q, "\r\n\r\n"); q += 3; p += 3; }
+			else if ( !strnicmp( p, "<br>", 4 )) { mir_strcpy(q, "\r\n"); ++q; p += 3; }
+			else if ( !strnicmp( p, "<br />", 6 )) { mir_strcpy(q, "\r\n"); ++q; p += 5; }
+			else if ( !strnicmp( p, "<hr>", 4 )) { mir_strcpy(q, "\r\n"); ++q; p += 3; }
+			else if ( !strnicmp( p, "<hr />", 6 )) { mir_strcpy(q, "\r\n"); ++q; p += 5; }
 			else { 
 				char *l = strchr(p, '>');
 				if (l) { p = l; --q; } else *q = *p; 
@@ -304,7 +304,7 @@ TCHAR* EscapeChatTags(const TCHAR* pszText)
 	if (nChars == 0)
 		return mir_tstrdup(pszText);
 
-	TCHAR *pszNewText = (TCHAR*)mir_alloc(sizeof(TCHAR)*(_tcslen(pszText) + 1 + nChars));
+	TCHAR *pszNewText = (TCHAR*)mir_alloc(sizeof(TCHAR)*(mir_tstrlen(pszText) + 1 + nChars));
 	if (pszNewText == NULL)
 		return mir_tstrdup(pszText);
 
@@ -338,7 +338,7 @@ char* getNewUuid(void)
 
 	BYTE *p;
 	UuidToStringA(&id, &p);
-	size_t len = strlen((char*)p) + 3;
+	size_t len = mir_strlen((char*)p) + 3;
 	char *result = (char*)mir_alloc(len);
 	mir_snprintf(result, len, "{%s}", p);
 	_strupr(result);

@@ -15,7 +15,7 @@ int bInitMimeHandling() {
 	ExtensionListCell *pExtCell = NULL;
 	char szBuf[10000];
 
-	strcpy(szBuf, szPluginPath);
+	mir_strcpy(szBuf, szPluginPath);
 	strcat(szBuf, szMimeTypeConfigFile);
 	mimeDB = fopen(szBuf, "r");
 
@@ -31,7 +31,7 @@ int bInitMimeHandling() {
 					*tok = '\0';
 				}
 				/* remove trailing \n */
-				int lenght = (int)strlen(line);
+				int lenght = (int)mir_strlen(line);
 				if (lenght > 0 && line[lenght - 1] == '\n')
 					line[lenght - 1] = '\0';
 
@@ -39,8 +39,8 @@ int bInitMimeHandling() {
 				tok = (char*)strtok(line, " \t");
 				/*create and fill a cell*/
 				pDBCell = (ContentType*)malloc(sizeof(ContentType));
-				pDBCell->mimeType = (char*)malloc(strlen(tok) + 1);
-				strcpy(pDBCell->mimeType, tok);
+				pDBCell->mimeType = (char*)malloc(mir_strlen(tok) + 1);
+				mir_strcpy(pDBCell->mimeType, tok);
 				pDBCell->extList = NULL;
 				pDBCell->next = NULL;
 				/* looking for extensions */
@@ -48,8 +48,8 @@ int bInitMimeHandling() {
 				while (tok != NULL) {
 					/*create and fill a cell*/
 					pExtCell = (ExtensionListCell*)malloc(sizeof(ExtensionListCell));
-					pExtCell->ext = (char*)malloc(strlen(tok) + 1);
-					strcpy(pExtCell->ext, tok);
+					pExtCell->ext = (char*)malloc(mir_strlen(tok) + 1);
+					mir_strcpy(pExtCell->ext, tok);
 					pExtCell->next = NULL;
 					/*link*/
 					if (pDBCell->extList == NULL) {

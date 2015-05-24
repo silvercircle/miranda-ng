@@ -66,9 +66,9 @@ WORD GetRowItems(TCHAR *InputString, RowItemInfo **RowItemsList)
 		else
 		{
 			// Выделяем память под строку.
-			(*RowItemsList)[c].String = (TCHAR*)mir_alloc(sizeof(TCHAR) * _tcslen(end));
+			(*RowItemsList)[c].String = (TCHAR*)mir_alloc(sizeof(TCHAR) * mir_tstrlen(end));
 			// Копируем строку.
-			_tcsncpy((*RowItemsList)[c].String, end + 1, _tcslen(end));
+			_tcsncpy((*RowItemsList)[c].String, end + 1, mir_tstrlen(end));
 		}
 
 		c++;
@@ -156,7 +156,7 @@ size_t GetFormattedTraffic(DWORD Value, BYTE Unit, TCHAR *Buffer, size_t Size)
 	mir_sntprintf(Str1, SIZEOF(Str1), _T("%d.%d"), Value / Divider, Value % Divider);
 	size_t l = GetNumberFormat(LOCALE_USER_DEFAULT, 0, Str1, &nf, NULL, 0);
 	if (!l) return 0;
-	l += _tcslen(szUnit) + 1;
+	l += mir_tstrlen(szUnit) + 1;
 	Res = (TCHAR*)malloc(l * sizeof(TCHAR));
 	if (!Res) return 0;
 	GetNumberFormat(LOCALE_USER_DEFAULT, 0, Str1, &nf, Res, l);
@@ -164,12 +164,12 @@ size_t GetFormattedTraffic(DWORD Value, BYTE Unit, TCHAR *Buffer, size_t Size)
 
 	if (Size && Buffer)
 	{
-		_tcscpy(Buffer, Res);
-		l = _tcslen(Buffer);
+		mir_tstrcpy(Buffer, Res);
+		l = mir_tstrlen(Buffer);
 	}
 	else
 	{
-		l = _tcslen(Res) + 1;
+		l = mir_tstrlen(Res) + 1;
 	}
 
 	free(Res);
@@ -207,49 +207,49 @@ size_t GetDurationFormatM(DWORD Duration, TCHAR *Format, TCHAR *Buffer, WORD Siz
 		Token[TokenIndex] = 0;
 
 		// Что получили в аккумуляторе?
-		if (!_tcscmp(Token, _T("d")))
+		if (!mir_tstrcmp(Token, _T("d")))
 		{
 			q = Duration / (60 * 60 * 24);
 			mir_sntprintf(Token, SIZEOF(Token), _T("%d"), q);
 			Duration -= q * 60 * 60 * 24;
 		}
 		else
-		if (!_tcscmp(Token, _T("h")))
+		if (!mir_tstrcmp(Token, _T("h")))
 		{
 			q = Duration / (60 * 60);
 			mir_sntprintf(Token, SIZEOF(Token), _T("%d"), q);
 			Duration -= q * 60 * 60;
 		}
 		else
-		if (!_tcscmp(Token, _T("hh")))
+		if (!mir_tstrcmp(Token, _T("hh")))
 		{
 			q = Duration / (60 * 60);
 			mir_sntprintf(Token, SIZEOF(Token), _T("%02d"), q);
 			Duration -= q * 60 * 60;
 		}
 		else
-		if (!_tcscmp(Token, _T("m")))
+		if (!mir_tstrcmp(Token, _T("m")))
 		{
 			q = Duration / 60;
 			mir_sntprintf(Token, SIZEOF(Token), _T("%d"), q);
 			Duration -= q * 60;
 		}
 		else
-		if (!_tcscmp(Token, _T("mm")))
+		if (!mir_tstrcmp(Token, _T("mm")))
 		{
 			q = Duration / 60;
 			mir_sntprintf(Token, SIZEOF(Token), _T("%02d"), q);
 			Duration -= q * 60;
 		}
 		else
-		if (!_tcscmp(Token, _T("s")))
+		if (!mir_tstrcmp(Token, _T("s")))
 		{
 			q = Duration;
 			mir_sntprintf(Token, SIZEOF(Token), _T("%d"), q);
 			Duration -= q;
 		}
 		else
-		if (!_tcscmp(Token, _T("ss")))
+		if (!mir_tstrcmp(Token, _T("ss")))
 		{
 			q = Duration;
 			mir_sntprintf(Token, SIZEOF(Token), _T("%02d"), q);
@@ -257,7 +257,7 @@ size_t GetDurationFormatM(DWORD Duration, TCHAR *Format, TCHAR *Buffer, WORD Siz
 		}
 
 		// Добавим памяти, если нужно.
-		Length = _tcslen(Res) + _tcslen(Token) + 1;
+		Length = mir_tstrlen(Res) + mir_tstrlen(Token) + 1;
 		Res = (TCHAR*)realloc(Res, Length * sizeof(TCHAR));
 		_tcscat(Res, Token);
 	}
@@ -265,11 +265,11 @@ size_t GetDurationFormatM(DWORD Duration, TCHAR *Format, TCHAR *Buffer, WORD Siz
 	if (Size && Buffer)
 	{
 		_tcsncpy(Buffer, Res, Size);
-		Length = _tcslen(Buffer);
+		Length = mir_tstrlen(Buffer);
 	}
 	else
 	{
-		Length = _tcslen(Res) + 1;
+		Length = mir_tstrlen(Res) + 1;
 	}
 
 	free(Res);

@@ -145,17 +145,17 @@ extern "C" int __declspec(dllexport) Load()
 
 	// Set vars
 	strcat(gMirandaDir, "\\");
-	strcpy(gIniFile, gMirandaDir);
+	mir_strcpy(gIniFile, gMirandaDir);
 
 	// Store last pos
-	strTmp = &gIniFile[strlen(gIniFile)];
+	strTmp = &gIniFile[mir_strlen(gIniFile)];
 
 	// Lets try fist name
-	strcpy(strTmp, INI_FILE_NAME);
+	mir_strcpy(strTmp, INI_FILE_NAME);
 
 	if (_access(gIniFile, 4) != 0) {
 		// Not found, lets try the other aproach
-		strcpy(strTmp, "plugins\\" INI_FILE_NAME);
+		mir_strcpy(strTmp, "plugins\\" INI_FILE_NAME);
 
 		if (_access(gIniFile, 4) != 0) {
 			// Not found :(
@@ -269,7 +269,7 @@ void RemoveProtocolSettings(const char * protocolName)
 		while(name[0] != '\0') {
 			value = strchr(name, '=');
 			if (value == NULL)
-				value = &name[strlen(name)];
+				value = &name[mir_strlen(name)];
 
 			// Has " ?
 			if (*name == '"' && *(value-1) == '"') {
@@ -282,7 +282,7 @@ void RemoveProtocolSettings(const char * protocolName)
 				DeleteSettingEx(protocolName, name);
 
 			// Get next one
-			name = value + strlen(value) + 1;
+			name = value + mir_strlen(value) + 1;
 		}
 	}
 
@@ -296,7 +296,7 @@ void RemoveProtocolSettings(const char * protocolName)
 		while(name[0] != '\0') {
 			value = strchr(name, '=');
 			if (value == NULL)
-				value = &name[strlen(name)];
+				value = &name[mir_strlen(name)];
 
 			// Has " ?
 			if (*name == '"' && *(value-1) == '"') {
@@ -311,7 +311,7 @@ void RemoveProtocolSettings(const char * protocolName)
 			}
 
 			// Get next one
-			name = value + strlen(value) + 1;
+			name = value + mir_strlen(value) + 1;
 		}
 	}
 }
@@ -349,7 +349,7 @@ void RemoveSettings()
 			while(name[0] != '\0') {
 				value = strchr(name, '=');
 				if (value == NULL)
-					value = &name[strlen(name)];
+					value = &name[mir_strlen(name)];
 
 				// Has " ?
 				if (*name == '"' && *(value-1) == '"') {
@@ -362,7 +362,7 @@ void RemoveSettings()
 					RemoveProtocolSettings(name);
 
 				// Get next one
-				name = value + strlen(value) + 1;
+				name = value + mir_strlen(value) + 1;
 			}
 		}
 	}
@@ -377,7 +377,7 @@ void RemoveSettings()
 		while(name[0] != '\0') {
 			value = strchr(name, '=');
 			if (value == NULL)
-				value = &name[strlen(name)];
+				value = &name[mir_strlen(name)];
 
 			// Has " ?
 			if (*name == '"' && *(value-1) == '"') {
@@ -390,7 +390,7 @@ void RemoveSettings()
 				DeleteSetting(name);
 
 			// Get next one
-			name = value + strlen(value) + 1;
+			name = value + mir_strlen(value) + 1;
 		}
 	}
 }
@@ -407,7 +407,7 @@ void ExecuteServices()
 		while(name[0] != '\0') {
 			value = strchr(name, '=');
 			if (value == NULL)
-				value = &name[strlen(name)];
+				value = &name[mir_strlen(name)];
 
 			// Has " ?
 			if (*name == '"' && *(value-1) == '"') {
@@ -421,7 +421,7 @@ void ExecuteServices()
 					CallService(name,0,0);
 
 			// Get next one
-			name = value + strlen(value) + 1;
+			name = value + mir_strlen(value) + 1;
 		}
 	}
 }
@@ -461,7 +461,7 @@ void RemoveDirectories()
 		while(name[0] != '\0') {
 			value = strchr(name, '=');
 			if (value == NULL)
-				value = &name[strlen(name)];
+				value = &name[mir_strlen(name)];
 
 			// Has " ?
 			if (*name == '"' && *(value-1) == '"') {
@@ -476,7 +476,7 @@ void RemoveDirectories()
 			}
 
 			// Get next one
-			name = value + strlen(value) + 1;
+			name = value + mir_strlen(value) + 1;
 		}
 	}
 }
@@ -493,7 +493,7 @@ void DisablePlugins()
 		while(name[0] != '\0') {
 			value = strchr(name, '=');
 			if (value == NULL)
-				value = &name[strlen(name)];
+				value = &name[mir_strlen(name)];
 
 			// Has " ?
 			if (*name == '"' && *(value-1) == '"') {
@@ -511,7 +511,7 @@ void DisablePlugins()
 			}
 
 			// Get next one
-			name = value + strlen(value) + 1;
+			name = value + mir_strlen(value) + 1;
 		}
 	}
 }
@@ -526,7 +526,7 @@ BOOL GetSettingBool(const char *section, const char *key, BOOL defaultValue)
 	if (GetPrivateProfileStringA(section, key, defaultValue ? "true" : "false", tmp, sizeof(tmp), gIniFile) == 0)
 		return defaultValue;
 
-	return stricmp(tmp, "true") == 0;
+	return mir_strcmpi(tmp, "true") == 0;
 }
 
 
@@ -562,12 +562,12 @@ void DeleteFileOrFolder(const char *name)
 			}
 			else {
 				strcat(tmp, "\\");
-				strTmp = &tmp[strlen(tmp)];
+				strTmp = &tmp[mir_strlen(tmp)];
 			}
 
 			do {
-				if (strcmp(findData.cFileName, ".") && strcmp(findData.cFileName, "..")) {
-					strcpy(strTmp, findData.cFileName);
+				if (mir_strcmp(findData.cFileName, ".") && mir_strcmp(findData.cFileName, "..")) {
+					mir_strcpy(strTmp, findData.cFileName);
 					DeleteFileOrFolder(tmp);
 				}
 			}
@@ -586,7 +586,7 @@ void DeleteFileOrFolder(const char *name)
 		HANDLE hwnd = FindFirstFileA(tmp, &findData);
 		if (hwnd != INVALID_HANDLE_VALUE) {
 			do {
-				if (strcmp(findData.cFileName, ".") && strcmp(findData.cFileName, "..")) {
+				if (mir_strcmp(findData.cFileName, ".") && mir_strcmp(findData.cFileName, "..")) {
 					mir_snprintf(tmp, SIZEOF(tmp), "%s\\%s", name, findData.cFileName);
 					DeleteFileOrFolder(tmp);
 				}
@@ -624,12 +624,12 @@ typedef struct {
 int EnumProc(const char *szName, LPARAM lParam)
 {
 	DeleteModuleStruct *dms = (DeleteModuleStruct *) lParam;
-	size_t len = strlen(szName);
+	size_t len = mir_strlen(szName);
 
 	if (dms->filter != NULL && dms->lenFilterMinusOne > 0) {
 		if (len >= dms->lenFilterMinusOne) {
 			if (dms->filter[0] == '*') {
-				if (strcmp(&dms->filter[1], &szName[len - dms->lenFilterMinusOne]) != 0)
+				if (mir_strcmp(&dms->filter[1], &szName[len - dms->lenFilterMinusOne]) != 0)
 					return 0;
 			}
 			else { // if (dms->filter[dms->lenFilterMinusOne] == '*')
@@ -641,7 +641,7 @@ int EnumProc(const char *szName, LPARAM lParam)
 
 	// Add to the struct
 	if (len > 0 && len < sizeof(dms->buffer) - dms->pos - 2) {
-		strcpy(&dms->buffer[dms->pos], szName);
+		mir_strcpy(&dms->buffer[dms->pos], szName);
 		dms->pos += len + 1;
 	}
 
@@ -660,7 +660,7 @@ void DeleteSettingEx(const char *szModule, const char *szSetting)
 	if (szModule == NULL)
 		return;
 
-	lenModule = strlen(szModule);
+	lenModule = mir_strlen(szModule);
 	if (szModule[0] == '*' || szModule[lenModule-1] == '*') {
 		DeleteModuleStruct dms;
 		memset(&dms, 0, sizeof(dms));
@@ -676,11 +676,11 @@ void DeleteSettingEx(const char *szModule, const char *szSetting)
 			DeleteSettingEx(szModule, szSetting);
 
 			// Get next one
-			szModule += strlen(szModule) + 1;
+			szModule += mir_strlen(szModule) + 1;
 		}
 	}
 	else {
-		size_t lenSetting = szSetting == NULL ? 0 : strlen(szSetting);
+		size_t lenSetting = szSetting == NULL ? 0 : mir_strlen(szSetting);
 		if (szSetting == NULL || szSetting[0] == '*' || szSetting[lenSetting-1] == '*') {
 			DeleteModuleStruct dms;
 			DBCONTACTENUMSETTINGS dbces;
@@ -703,7 +703,7 @@ void DeleteSettingEx(const char *szModule, const char *szSetting)
 				db_unset(NULL, szModule, szSetting);
 
 				// Get next one
-				szSetting += strlen(szSetting) + 1;
+				szSetting += mir_strlen(szSetting) + 1;
 			}
 		}
 		else {

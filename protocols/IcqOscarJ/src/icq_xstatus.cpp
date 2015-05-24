@@ -122,15 +122,15 @@ static HANDLE LoadXStatusIconLibrary(TCHAR *path, const TCHAR *sub)
 	TCHAR* p = _tcsrchr(path, '\\');
 	HANDLE hLib;
 
-	_tcscpy(p, sub);
+	mir_tstrcpy(p, sub);
 	_tcscat(p, _T("\\xstatus_ICQ.dll"));
 	if (hLib = LoadLibrary(path))
 		return hLib;
-	_tcscpy(p, sub);
+	mir_tstrcpy(p, sub);
 	_tcscat(p, _T("\\xstatus_icons.dll"));
 	if (hLib = LoadLibrary(path))
 		return hLib;
-	_tcscpy(p, _T("\\"));
+	mir_tstrcpy(p, _T("\\"));
 	return hLib;
 }
 
@@ -150,7 +150,7 @@ static TCHAR* InitXStatusIconLibrary(TCHAR *buf, size_t buf_size)
 		null_strcpy(buf, path, buf_size - 1);
 
 		char ident[MAX_PATH];
-		if ( LoadStringA(hXStatusIconsDLL, IDS_IDENTIFY, ident, sizeof(ident)) == 0 || strcmpnull(ident, "# Custom Status Icons #"))
+		if ( LoadStringA(hXStatusIconsDLL, IDS_IDENTIFY, ident, sizeof(ident)) == 0 || mir_strcmp(ident, "# Custom Status Icons #"))
 			*buf = 0;
 
 		FreeLibrary(hXStatusIconsDLL);
@@ -419,7 +419,7 @@ void CIcqProto::handleXStatusCaps(DWORD dwUIN, char *szUID, MCONTACT hContact, B
 
 					if (moodXStatus[i] == -1) continue;
 					mir_snprintf(szMoodId, SIZEOF(szMoodId), "0icqmood%d", moodXStatus[i]);
-					if ( !strcmpnull(szMoodId, szMoodData)) {
+					if (!mir_strcmp(szMoodId, szMoodData)) {
 						BYTE bXStatusId = (BYTE)(i+1);
 						char str[MAX_PATH];
 
@@ -994,7 +994,7 @@ INT_PTR CIcqProto::GetXStatusEx(WPARAM hContact, LPARAM lParam)
 				char *text = (char*)nameXStatus[status-1];
 				MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, text, -1, pData->pwszName, MAX_PATH);
 			}
-			else strcpy(pData->pszName, (char*)nameXStatus[status-1]);
+			else mir_strcpy(pData->pszName, (char*)nameXStatus[status-1]);
 		}
 		else { // moods does not support status title
 			if (!m_bXStatusEnabled) return 1;
@@ -1010,10 +1010,10 @@ INT_PTR CIcqProto::GetXStatusEx(WPARAM hContact, LPARAM lParam)
 			else {
 				DBVARIANT dbv;
 				if ( !getString(hContact, DBSETTING_XSTATUS_NAME, &dbv) && dbv.pszVal) {
-					strcpy(pData->pszName, dbv.pszVal);
+					mir_strcpy(pData->pszName, dbv.pszVal);
 					db_free(&dbv);
 				}
-				else strcpy(pData->pszName, "");
+				else mir_strcpy(pData->pszName, "");
 			}
 		}
 	}
@@ -1031,9 +1031,9 @@ INT_PTR CIcqProto::GetXStatusEx(WPARAM hContact, LPARAM lParam)
 			DBVARIANT dbv = {0};
 
 			if (!getString(hContact, CheckContactCapabilities(hContact, CAPF_STATUS_MOOD) ? DBSETTING_STATUS_NOTE : DBSETTING_XSTATUS_MSG, &dbv) && dbv.pszVal)
-				strcpy(pData->pszMessage, dbv.pszVal);
+				mir_strcpy(pData->pszMessage, dbv.pszVal);
 			else
-				strcpy(pData->pszMessage, "");
+				mir_strcpy(pData->pszMessage, "");
 
 			db_free(&dbv);
 		}

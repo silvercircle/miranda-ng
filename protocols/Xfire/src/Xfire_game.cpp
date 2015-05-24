@@ -23,7 +23,7 @@ BOOL Xfire_game::start_game(char*ip, unsigned int port, char*pw) {
 		return FALSE;
 
 	//ist launchparam großgenug für eibne urlprüfung?
-	if (strlen(this->launchparams) > 5)
+	if (mir_strlen(this->launchparams) > 5)
 	{
 		//launchparams ne url? dann openurl funktion von miranda verwenden
 		if (this->launchparams[0] == 'h'&&
@@ -49,10 +49,10 @@ BOOL Xfire_game::start_game(char*ip, unsigned int port, char*pw) {
 
 			//größe des netzwerparams berechnen
 			if (this->pwparams)
-				pwsize += strlen(this->pwparams);
+				pwsize += mir_strlen(this->pwparams);
 
-			mynetworkparams = new char[strlen(this->networkparams) + pwsize];
-			strcpy_s(mynetworkparams, strlen(this->networkparams) + pwsize, this->networkparams);
+			mynetworkparams = new char[mir_strlen(this->networkparams) + pwsize];
+			strcpy_s(mynetworkparams, mir_strlen(this->networkparams) + pwsize, this->networkparams);
 
 			//port begrenzen
 			port = port % 65535;
@@ -92,19 +92,19 @@ BOOL Xfire_game::start_game(char*ip, unsigned int port, char*pw) {
 		}
 
 		if (mynetworkparams)
-			networksize = strlen(mynetworkparams) + strlen(this->networkparams);
+			networksize = mir_strlen(mynetworkparams) + mir_strlen(this->networkparams);
 	}
 
 	//extra parameter
 	int extraparamssize = 0;
 	if (this->extraparams)
 	{
-		extraparamssize = strlen(this->extraparams);
+		extraparamssize = mir_strlen(this->extraparams);
 	}
 
 	//temporäres array anlegen
 	char*temp = NULL;
-	temp = new char[strlen(this->launchparams) + networksize + extraparamssize + 1];
+	temp = new char[mir_strlen(this->launchparams) + networksize + extraparamssize + 1];
 
 	if (temp == NULL)
 	{
@@ -116,7 +116,7 @@ BOOL Xfire_game::start_game(char*ip, unsigned int port, char*pw) {
 	}
 
 	//launcherstring ins temporäre array
-	strcpy_s(temp, strlen(this->launchparams) + 1, this->launchparams);
+	strcpy_s(temp, mir_strlen(this->launchparams) + 1, this->launchparams);
 
 	//netzwerkparameter ?
 	if (mynetworkparams)
@@ -202,7 +202,7 @@ BOOL Xfire_game::checkpath(PROCESSENTRY32* processInfo)
 		this->strtolowerT(fpath);
 
 		if (this->wildcmp(_A2T(this->path), fpath))
-			//if (strcmp(this->path,fpath)==0)
+			//if (mir_strcmp(this->path,fpath)==0)
 		{
 			//pfad stimmt überein, commandline prüfen
 			if (checkCommandLine(op, this->mustcontain, this->notcontain))
@@ -218,7 +218,7 @@ BOOL Xfire_game::checkpath(PROCESSENTRY32* processInfo)
 			int size = mpath.size();
 			for (int j = 0; j < size; j++)
 			{
-				if (_tcsicmp(_A2T(mpath.at(j)), fpath) == 0)
+				if (mir_tstrcmpi(_A2T(mpath.at(j)), fpath) == 0)
 				{
 					//pfad stimmt überein, commandline prüfen
 					if (checkCommandLine(op, this->mustcontain, this->notcontain))
@@ -289,7 +289,7 @@ void Xfire_game::readFromDB(unsigned dbid)
 	if (this->path)
 	{
 		BOOL found = FALSE;
-		for (unsigned int i = 0; i < strlen(this->path); i++)
+		for (unsigned int i = 0; i < mir_strlen(this->path); i++)
 		{
 			if (this->path[i] == '~')
 			{
@@ -429,7 +429,7 @@ void Xfire_game::writeToDB(unsigned dbid)
 void Xfire_game::createMenuitem(unsigned int pos, int dbid)
 {
 	char servicefunction[100];
-	strcpy(servicefunction, protocolname);
+	mir_strcpy(servicefunction, protocolname);
 	strcat(servicefunction, "StartGame%d");
 
 	if (dbid < 0)

@@ -280,12 +280,12 @@ void CAimProto::snac_user_online(SNAC &snac)//family 0x0003
 
 				if (bot)
 				{
-					strcpy(client,CLIENT_BOT);
+					mir_strcpy(client,CLIENT_BOT);
 					bot_user=1;
 				}
 				if (wireless)
 				{
-					strcpy(client,CLIENT_SMS);
+					mir_strcpy(client,CLIENT_SMS);
 					wireless_user=1;
 				}
 				else if (away)
@@ -356,31 +356,31 @@ void CAimProto::snac_user_online(SNAC &snac)//family 0x0003
 					}
 					else if (memcmp(cap, "Kopete ICQ", 10) == 0)
 					{
-						strcpy(client,CLIENT_KOPETE);
+						mir_strcpy(client,CLIENT_KOPETE);
 					}
 					else if (memcmp(&cap[7], "QIP", 3) == 0)
 					{
-						strcpy(client,CLIENT_QIP);
+						mir_strcpy(client,CLIENT_QIP);
 					}
 					else if (memcmp(cap, "mICQ", 4) == 0)
 					{
-						strcpy(client,CLIENT_MICQ);
+						mir_strcpy(client,CLIENT_MICQ);
 					}
 					else if (cap_cmp(cap, AIM_CAP_IM2) == 0)
 					{
-						strcpy(client,CLIENT_IM2);
+						mir_strcpy(client,CLIENT_IM2);
 					}
 					else if (memcmp(cap, "SIM client", 10) == 0)
 					{
-						strcpy(client,CLIENT_SIM);
+						mir_strcpy(client,CLIENT_SIM);
 					}
 					else if (memcmp(cap+4, "naim", 4) == 0)
 					{
-						strcpy(client,CLIENT_NAIM);
+						mir_strcpy(client,CLIENT_NAIM);
 					}
 					else if (memcmp(cap, "digsby", 6) == 0)
 					{
-						strcpy(client,CLIENT_DIGSBY);
+						mir_strcpy(client,CLIENT_DIGSBY);
 					}
 					mir_free(cap);
 				}
@@ -432,7 +432,7 @@ void CAimProto::snac_user_online(SNAC &snac)//family 0x0003
 						O1ff=1;
 					if (cap==0x1323)
 					{
-						strcpy(client,CLIENT_GPRS);
+						mir_strcpy(client,CLIENT_GPRS);
 						hiptop_user=1;
 					}
 					if (cap==0x1341)
@@ -455,52 +455,52 @@ void CAimProto::snac_user_online(SNAC &snac)//family 0x0003
 						l34e=1;
 				}
 				if (f002&&f003&&f004&&f005)
-					strcpy(client,CLIENT_TRILLIAN_PRO);
+					mir_strcpy(client,CLIENT_TRILLIAN_PRO);
 				else if ((f004&&f005&&f007&&f008) || (f004&&f005&&O104&&O105))
-					strcpy(client,CLIENT_ICHAT);
+					mir_strcpy(client,CLIENT_ICHAT);
 				else if (f003&f004&f005)
-					strcpy(client,CLIENT_TRILLIAN);
+					mir_strcpy(client,CLIENT_TRILLIAN);
 				else if (l343&&O1ff&&tlv.len()==4)
-					strcpy(client,CLIENT_TRILLIAN_ASTRA);
+					mir_strcpy(client,CLIENT_TRILLIAN_ASTRA);
 				else if (l343&&tlv.len()==2)
-					strcpy(client,CLIENT_AIMTOC);
+					mir_strcpy(client,CLIENT_AIMTOC);
 				else if (l343&&l345&&l346&&tlv.len()==6)
-					strcpy(client,CLIENT_GAIM);
+					mir_strcpy(client,CLIENT_GAIM);
 				else if (l343&&l345&&l346&&l34e&&tlv.len()==8)
-					strcpy(client,CLIENT_PURPLE);
+					mir_strcpy(client,CLIENT_PURPLE);
 				else if (l343&&l345&&l346&&l349&&l34e&&tlv.len()==10)
-					strcpy(client,CLIENT_PURPLE);
+					mir_strcpy(client,CLIENT_PURPLE);
 				else if (l343&&l345&&l34e&&tlv.len()==6)
-					strcpy(client,CLIENT_ADIUM);
+					mir_strcpy(client,CLIENT_ADIUM);
 				else if (l343&&l346&&l34e&&tlv.len()==6)
-					strcpy(client,CLIENT_TERRAIM);
+					mir_strcpy(client,CLIENT_TERRAIM);
 				else if (tlv.len()==0 && getWord(hContact, AIM_KEY_ST,0)!=ID_STATUS_ONTHEPHONE)
-					strcpy(client,CLIENT_AIMEXPRESS5);	
+					mir_strcpy(client,CLIENT_AIMEXPRESS5);	
 				else if (l34b&&l343&&O1ff&&l345&&l346&&tlv.len()==10)
-					strcpy(client,CLIENT_AIMEXPRESS6);	
+					mir_strcpy(client,CLIENT_AIMEXPRESS6);	
 				else if (l34b&&l341&&l343&&O1ff&&l345&&l346&&l347)
-					strcpy(client,CLIENT_AIM5);
+					mir_strcpy(client,CLIENT_AIM5);
 				else if (l34b&&l341&&l343&&l345&l346&&l347&&l348)
-					strcpy(client,CLIENT_AIM4);
+					mir_strcpy(client,CLIENT_AIM4);
 				else if (O1ff&&l343&&O107&&l341&&O104&&O105&&O101&&l346)
 				{
 					if (O10d)
-						strcpy(client,CLIENT_AIM6_9);
+						mir_strcpy(client,CLIENT_AIM6_9);
 					else if (O10c)
-						strcpy(client,CLIENT_AIM6_8);
+						mir_strcpy(client,CLIENT_AIM6_8);
 					else if (O10a)
-						strcpy(client,CLIENT_AIM6_5);
+						mir_strcpy(client,CLIENT_AIM6_5);
 					else
-						strcpy(client,CLIENT_AIM_TRITON);
+						mir_strcpy(client,CLIENT_AIM_TRITON);
 				}
 				else if (O1ff&&l343&&l341&&O104&&O105&&O101&&l346)
-					strcpy(client,CLIENT_AIM7_0);
+					mir_strcpy(client,CLIENT_AIM7_0);
 				else if (l346&&l34e&&tlv.len()==4)
-					strcpy(client,CLIENT_MEEBO);
+					mir_strcpy(client,CLIENT_MEEBO);
 				else if (l34e&&tlv.len()==2)
-					strcpy(client,CLIENT_BEEJIVE);
+					mir_strcpy(client,CLIENT_BEEJIVE);
 				else if (l34e&&l343&&tlv.len()==4)
-					strcpy(client,CLIENT_BEEJIVE);
+					mir_strcpy(client,CLIENT_BEEJIVE);
 
 				//	setByte(hContact, AIM_KEY_US, utf8);
 			}
@@ -659,13 +659,13 @@ void CAimProto::process_ssi_list(SNAC &snac, int &offset)
 						bool ok = false;
 						DBVARIANT dbv;
 						if (!db_get_utf(hContact, MOD_KEY_CL, OTH_KEY_GP, &dbv) && dbv.pszVal[0]) {
-							ok = strcmp(group, dbv.pszVal) == 0;
+							ok = mir_strcmp(group, dbv.pszVal) == 0;
 							db_free(&dbv);
 						}
-						else ok = strcmp(group, AIM_DEFAULT_GROUP) == 0;
+						else ok = mir_strcmp(group, AIM_DEFAULT_GROUP) == 0;
 
 						if (!ok) {
-							if (strcmp(group, AIM_DEFAULT_GROUP))
+							if (mir_strcmp(group, AIM_DEFAULT_GROUP))
 								db_set_utf(hContact, MOD_KEY_CL, OTH_KEY_GP, group);
 							else
 								db_unset(hContact, MOD_KEY_CL, OTH_KEY_GP);
@@ -911,7 +911,7 @@ void CAimProto::modify_ssi_list(SNAC &snac, int &offset)
 
 				if (tlv.cmp(0x00d5) && tlv.len() > 2)
 				{
-					unsigned char type = tlv.ubyte(0);
+//					unsigned char type = tlv.ubyte(0);
 					if (name_length == 1)
 					{
 						mir_free(hash_sm);
@@ -1181,7 +1181,7 @@ void CAimProto::snac_received_message(SNAC &snac,HANDLE hServerConn,unsigned sho
 						}
 						else if (tlv.cmp(0x2712)) {
 							char* enc = tlv.dup();
-							utf_fname = strcmp(enc, "utf-8") == 0;
+							utf_fname = mir_strcmp(enc, "utf-8") == 0;
 							mir_free(enc);
 						}
 						else if (tlv.cmp(0x2713)) {
@@ -1204,7 +1204,7 @@ void CAimProto::snac_received_message(SNAC &snac,HANDLE hServerConn,unsigned sho
 						}
 						else if (tlv.cmp(0x000d)) {
 							char* enc = tlv.dup();
-							unicode_descr = strcmp(enc, "unicode-2-0") == 0;
+							unicode_descr = mir_strcmp(enc, "unicode-2-0") == 0;
 							mir_free(enc);
 						}
 						i += TLV_HEADER_SIZE + tlv.len();
@@ -1264,11 +1264,10 @@ void CAimProto::snac_received_message(SNAC &snac,HANDLE hServerConn,unsigned sho
 
 		if (channel == 1) { //Message not file
 			if (auto_response) { //this message must be an autoresponse
-				char* away = mir_utf8encodeT(TranslateT("[Auto-Response]:"));
-				size_t len = strlen(msg_buf) + strlen(away) + 2;
+				T2Utf away(TranslateT("[Auto-Response]:"));
+				size_t len = mir_strlen(msg_buf) + mir_strlen(away) + 2;
 				char* buf = (char*)mir_alloc(len);
 				mir_snprintf(buf, len, "%s %s", away, msg_buf);
-				mir_free(away);
 				mir_free(msg_buf);
 				msg_buf = buf;
 			}
@@ -1277,7 +1276,6 @@ void CAimProto::snac_received_message(SNAC &snac,HANDLE hServerConn,unsigned sho
 			CallService(MS_PROTO_CONTACTISTYPING, (WPARAM)hMsgContact, 0);
 			{
 				PROTORECVEVENT pre = { 0 };
-				pre.flags = PREF_UTF;
 				pre.timestamp = (is_offline) ? offline_timestamp : (DWORD)time(0);
 				pre.szMessage = msg_buf;
 				ProtoChainRecvMsg(hMsgContact, &pre);
@@ -1292,11 +1290,10 @@ void CAimProto::snac_received_message(SNAC &snac,HANDLE hServerConn,unsigned sho
 				{
 					char* s_msg = process_status_msg(*msgptr, sn);
 
-					char* away = mir_utf8encodeT(TranslateT("[Auto-Response]:"));
-					size_t len = strlen(s_msg) + strlen(away) + 2;
+					T2Utf away(TranslateT("[Auto-Response]:"));
+					size_t len = mir_strlen(s_msg) + mir_strlen(away) + 2;
 					char* buf = (char*)alloca(len);
 					mir_snprintf(buf, len, "%s %s", away, s_msg);
-					mir_free(away);
 
 					DBEVENTINFO dbei = { sizeof(dbei) };
 					dbei.szModule = m_szModuleName;
@@ -1342,8 +1339,8 @@ void CAimProto::snac_received_message(SNAC &snac,HANDLE hServerConn,unsigned sho
 
 				TCHAR* filenameT = mir_utf8decodeT(filename);
 
-				PROTORECVFILET pre = {0};
-				pre.flags = PREF_TCHAR;
+				PROTORECVFILET pre = { 0 };
+				pre.dwFlags = PRFF_TCHAR;
 				pre.fileCount = 1;
 				pre.timestamp = time(NULL);
 				pre.tszDescription = mir_utf8decodeT(msg_buf);
@@ -1436,7 +1433,7 @@ void CAimProto::snac_file_decline(SNAC &snac)//family 0x0004
 		{
 			int sn_len = snac.ubyte(10);
 			char* sn   = snac.part(11, sn_len);
-			int reason = snac.ushort(11 + sn_len);
+//			int reason = snac.ushort(11 + sn_len);
 			MCONTACT hContact = contact_from_sn(sn);
 
 			msg_ack_param *msg_ack = (msg_ack_param*)mir_alloc(sizeof(msg_ack_param));

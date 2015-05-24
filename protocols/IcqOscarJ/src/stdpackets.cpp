@@ -240,7 +240,7 @@ void CIcqProto::icq_setstatus(WORD wStatus, const char *szStatusNote)
 	size_t wStatusMoodLen = 0, wStatusNoteLen = 0, wSessionDataLen = 0;
 	char *szMoodData = NULL;
 
-	if (szStatusNote && strcmpnull(szCurrentStatusNote, szStatusNote)) { // status note was changed, update now
+	if (szStatusNote && mir_strcmp(szCurrentStatusNote, szStatusNote)) { // status note was changed, update now
 		DBVARIANT dbv = { DBVT_DELETED };
 		if (m_bMoodsEnabled && !getString(DBSETTING_STATUS_MOOD, &dbv))
 			szMoodData = null_strdup(dbv.pszVal);
@@ -659,7 +659,7 @@ void CIcqProto::icq_sendSetAimAwayMsgServ(const char *szMsg)
 
 		if (IsUSASCII(szMsg, wMsgLen)) {
 			const char* fmt = "text/x-aolrtf; charset=\"us-ascii\"";
-			size_t fmtlen = strlen(fmt);
+			size_t fmtlen = mir_strlen(fmt);
 
 			serverPacketInit(&packet, 23 + wMsgLen + fmtlen);
 			packFNACHeader(&packet, ICQ_LOCATION_FAMILY, ICQ_LOCATION_SET_USER_INFO, 0, dwCookie);
@@ -669,7 +669,7 @@ void CIcqProto::icq_sendSetAimAwayMsgServ(const char *szMsg)
 		}
 		else {
 			const char* fmt = "text/x-aolrtf; charset=\"unicode-2-0\"";
-			size_t fmtlen = strlen(fmt);
+			size_t fmtlen = mir_strlen(fmt);
 
 			WCHAR *szMsgW = make_unicode_string(szMsg);
 			wMsgLen = mir_wstrlen(szMsgW) * sizeof(WCHAR);
@@ -989,7 +989,7 @@ void CIcqProto::icq_sendAwayMsgReplyServExt(DWORD dwUin, char *szUID, DWORD dwMs
 			// convert to HTML 
 			char *mng = MangleXml(pszMsg, mir_strlen(pszMsg));
 			pszMsg = (char*)SAFE_MALLOC(mir_strlen(mng) + 28);
-			strcpy(pszMsg, "<HTML><BODY>"); /// TODO: add support for RTL & user customizable font
+			mir_strcpy(pszMsg, "<HTML><BODY>"); /// TODO: add support for RTL & user customizable font
 			strcat(pszMsg, mng);
 			SAFE_FREE(&mng);
 			strcat(pszMsg, "</BODY></HTML>");

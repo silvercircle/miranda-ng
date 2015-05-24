@@ -230,7 +230,7 @@ void GetISO8061Time(SYSTEMTIME *stLocal, LPTSTR lpszString, DWORD dwSize)
 
 	if (clsdates) {
 		GetDateFormat(LOCALE_INVARIANT, 0, stLocal, TEXT("d MMM yyyy"), lpszString, dwSize);
-		int dlen = (int)_tcslen(lpszString);
+		int dlen = (int)mir_tstrlen(lpszString);
 		GetTimeFormat(LOCALE_INVARIANT, 0, stLocal, TEXT(" H:mm:ss"), lpszString + dlen, dwSize - dlen);
 	}
 	else {
@@ -307,13 +307,13 @@ void GetInternetExplorerVersion(CMString &buffer)
 	if (ieVersion[0] == 0) {
 		if (iVer[0] == 0)
 			buffer.Append(TEXT("<not installed>"));
-		else if (_tcscmp(iVer, TEXT("100")) == 0)
+		else if (mir_tstrcmp(iVer, TEXT("100")) == 0)
 			buffer.Append(TEXT("1.0"));
-		else if (_tcscmp(iVer, TEXT("101")) == 0)
+		else if (mir_tstrcmp(iVer, TEXT("101")) == 0)
 			buffer.Append(TEXT("NT"));
-		else if (_tcscmp(iVer, TEXT("102")) == 0)
+		else if (mir_tstrcmp(iVer, TEXT("102")) == 0)
 			buffer.Append(TEXT("2.0"));
-		else if (_tcscmp(iVer, TEXT("103")) == 0)
+		else if (mir_tstrcmp(iVer, TEXT("103")) == 0)
 			buffer.Append(TEXT("3.0"));
 	}
 	else buffer.Append(ieVersion);
@@ -353,12 +353,12 @@ void GetProcessorString(CMString &buffer)
 	if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT("Hardware\\Description\\System\\CentralProcessor\\0"), 0, KEY_QUERY_VALUE, &hKey)) {
 		size = SIZEOF(cpuName);
 		if (RegQueryValueEx(hKey, TEXT("ProcessorNameString"), NULL, NULL, (LPBYTE)cpuName, &size) != ERROR_SUCCESS)
-			_tcscpy(cpuName, TEXT("Unknown"));
+			mir_tstrcpy(cpuName, TEXT("Unknown"));
 
 		size = SIZEOF(cpuIdent);
 		if (RegQueryValueEx(hKey, TEXT("Identifier"), NULL, NULL, (LPBYTE)cpuIdent, &size) != ERROR_SUCCESS)
 			if (RegQueryValueEx(hKey, TEXT("VendorIdentifier"), NULL, NULL, (LPBYTE)cpuIdent, &size) != ERROR_SUCCESS)
-				_tcscpy(cpuIdent, TEXT("Unknown"));
+				mir_tstrcpy(cpuIdent, TEXT("Unknown"));
 
 		RegCloseKey(hKey);
 	}

@@ -295,7 +295,7 @@ int CSendLater::addJob(const char *szSetting, LPARAM lParam)
 	DBVARIANT dbv = { 0 };
 	char *szOrig_Utf = 0;
 
-	if (!m_fAvail || !szSetting || !strcmp(szSetting, "count") || mir_strlen(szSetting) < 8)
+	if (!m_fAvail || !szSetting || !mir_strcmp(szSetting, "count") || mir_strlen(szSetting) < 8)
 		return 0;
 
 	if (szSetting[0] != 'S' && szSetting[0] != 'M')
@@ -304,7 +304,7 @@ int CSendLater::addJob(const char *szSetting, LPARAM lParam)
 	// check for possible dupes
 	for (int i = 0; i < m_sendLaterJobList.getCount(); i++) {
 		CSendLaterJob *p = m_sendLaterJobList[i];
-		if (p->hContact == hContact && !strcmp(p->szId, szSetting))
+		if (p->hContact == hContact && !mir_strcmp(p->szId, szSetting))
 			return 0;
 	}
 
@@ -417,12 +417,7 @@ int CSendLater::sendIt(CSendLaterJob *job)
 	job->iSendCount++;
 	job->hTargetContact = hContact;
 	job->bCode = CSendLaterJob::JOB_WAITACK;
-
-	DWORD dwFlags = IsUtfSendAvailable(hContact) ? PREF_UTF : PREF_UNICODE;
-	if (dwFlags & PREF_UTF)
-		job->hProcess = (HANDLE)CallContactService(hContact, PSS_MESSAGE, dwFlags, (LPARAM)job->sendBuffer);
-	else
-		job->hProcess = (HANDLE)CallContactService(hContact, PSS_MESSAGE, dwFlags, (LPARAM)job->pBuf);
+	job->hProcess = (HANDLE)CallContactService(hContact, PSS_MESSAGE, 0, (LPARAM)job->sendBuffer);
 	return 0;
 }
 

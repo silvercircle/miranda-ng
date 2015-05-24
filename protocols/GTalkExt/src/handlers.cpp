@@ -340,11 +340,11 @@ BOOL OnIqSetGoogleSharedStatus(IJabberInterface *ji, HXML iqNode, void *)
 	int status;
 	HXML query = xi.getChildByPath(iqNode, NODENAME_QUERY, 0);
 	HXML node = xi.getChildByPath(query, _T("invisible"), 0);
-	if (0 == _tcsicmp(_T("true"), xi.getAttrValue(node, _T("value"))))
+	if (0 == mir_tstrcmpi(_T("true"), xi.getAttrValue(node, _T("value"))))
 		status = ID_STATUS_INVISIBLE;
 	else {
 		LPCTSTR txt = xi.getText(xi.getChildByPath(query, _T("show"), 0));
-		if (txt && 0 == _tcsicmp(_T("dnd"), txt))
+		if (txt && 0 == mir_tstrcmpi(_T("dnd"), txt))
 			status = ID_STATUS_DND;
 		else if (gta->m_pa->ppro->m_iStatus == ID_STATUS_DND || gta->m_pa->ppro->m_iStatus == ID_STATUS_INVISIBLE)
 			status = ID_STATUS_ONLINE;
@@ -441,7 +441,7 @@ static void sttCreateInstance(LPCSTR szModuleName)
 		return;
 
 	ptrA host(db_get_sa(NULL, szModuleName, "ManualHost"));
-	if (host == NULL || strcmp(host, "talk.google.com"))
+	if (host == NULL || mir_strcmp(host, "talk.google.com"))
 		return;
 
 	GoogleTalkAcc *gta = new GoogleTalkAcc();

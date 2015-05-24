@@ -294,7 +294,6 @@ static int onShutdown(WPARAM, LPARAM)
 	DestroyHookableEvent(g_hEvent[1]);
 
 	freeContactList();
-	free_rtfconv();
 
 	DeinitNetlib();
 	return 0;
@@ -312,7 +311,7 @@ extern "C" __declspec(dllexport) int __cdecl Load(void)
 	char temp[MAX_PATH];
 	GetTempPath(sizeof(temp), temp);
 	GetLongPathName(temp, TEMP, sizeof(TEMP));
-	TEMP_SIZE = (int)strlen(TEMP);
+	TEMP_SIZE = (int)mir_strlen(TEMP);
 	if (TEMP[TEMP_SIZE - 1] == '\\') {
 		TEMP_SIZE--;
 		TEMP[TEMP_SIZE] = '\0';
@@ -338,15 +337,11 @@ extern "C" __declspec(dllexport) int __cdecl Load(void)
 	if (bIsComCtl6)	iBmpDepth = ILC_COLOR32 | ILC_MASK;  // 32-bit images are supported
 	else		iBmpDepth = ILC_COLOR24 | ILC_MASK;
 
-	iCoreVersion = CallService(MS_SYSTEM_GETVERSION, 0, 0);
-
 	// load crypo++ dll
 	if (!loadlib()) {
 		msgbox1(0, sim107, MODULENAME, MB_OK | MB_ICONSTOP);
 		return 1;
 	}
-
-	load_rtfconv();
 
 	// register plugin module
 	PROTOCOLDESCRIPTOR pd = { sizeof(pd) };

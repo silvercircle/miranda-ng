@@ -148,7 +148,7 @@ int CSkypeProto::OnGroupChatEventHook(WPARAM, LPARAM lParam)
 	{
 		return 1;
 	}
-	else if (strcmp(gch->pDest->pszModule, m_szModuleName) != 0)
+	else if (mir_strcmp(gch->pDest->pszModule, m_szModuleName) != 0)
 	{
 		return 0;
 	}
@@ -566,7 +566,7 @@ INT_PTR CSkypeProto::SvcCreateChat(WPARAM, LPARAM)
 int CSkypeProto::OnGroupChatMenuHook(WPARAM, LPARAM lParam)
 {
 	GCMENUITEMS *gcmi = (GCMENUITEMS*)lParam;
-	if (stricmp(gcmi->pszModule, m_szModuleName)) return 0;
+	if (mir_strcmpi(gcmi->pszModule, m_szModuleName)) return 0;
 
 	if (gcmi->Type == MENU_ON_LOG)
 	{

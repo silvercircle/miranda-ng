@@ -158,7 +158,7 @@ static DWORD_PTR ConvertServiceParam(MCONTACT hContact, const TCHAR *param)
 	DWORD_PTR ret;
 	if (param == NULL)
 		ret = 0;
-	else if (_tcsicmp(_T("hContact"), param) == 0)
+	else if (mir_tstrcmpi(_T("hContact"), param) == 0)
 		ret = (DWORD_PTR)hContact;
 	else if (_istdigit(*param))
 		ret = _ttoi(param);
@@ -849,7 +849,7 @@ void SmileyCategoryListType::AddAccountAsCategory(PROTOACCOUNT *acc, const CMStr
 		
 		if (paths.IsEmpty()){
 			const char* packnam = acc->szProtoName;
-			if (strcmp(packnam, "JABBER") == 0)
+			if (mir_strcmp(packnam, "JABBER") == 0)
 				packnam = "JGMail";
 			else if (strstr(packnam, "SIP") != NULL)
 				packnam = "MSN";
@@ -876,7 +876,7 @@ void SmileyCategoryListType::AddProtoAsCategory(char *acc, const CMString& defau
 		return;
 	
 	const char* packnam = acc;
-	if (strcmp(packnam, "JABBER") == 0)
+	if (mir_strcmp(packnam, "JABBER") == 0)
 		packnam = "JGMail";
 	else if (strstr(packnam, "SIP") != NULL)
 		packnam = "MSN";

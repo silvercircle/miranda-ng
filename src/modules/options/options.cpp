@@ -164,7 +164,7 @@ HTREEITEM FindNamedTreeItemAtRoot(HWND hwndTree, const TCHAR* name)
 	tvi.hItem = TreeView_GetRoot(hwndTree);
 	while (tvi.hItem != NULL) {
 		SendMessage(hwndTree, TVM_GETITEM, 0, (LPARAM)&tvi);
-		if (!_tcsicmp(str, name))
+		if (!mir_tstrcmpi(str, name))
 			return tvi.hItem;
 
 		tvi.hItem = TreeView_GetNextSibling(hwndTree, tvi.hItem);
@@ -182,7 +182,7 @@ static HTREEITEM FindNamedTreeItemAtChildren(HWND hwndTree, HTREEITEM hItem, con
 	tvi.hItem = TreeView_GetChild(hwndTree, hItem);
 	while (tvi.hItem != NULL) {
 		SendMessage(hwndTree, TVM_GETITEM, 0, (LPARAM)&tvi);
-		if (!_tcsicmp(str, name))
+		if (!mir_tstrcmpi(str, name))
 			return tvi.hItem;
 
 		tvi.hItem = TreeView_GetNextSibling(hwndTree, tvi.hItem);
@@ -530,12 +530,12 @@ static void RebuildPageTree(HWND hdlg, OptionsDlgData *dat)
 
 	// if filter string is set to all modules then make the filter string empty (this will return all modules)
 	BOOL bRemoveFocusFromFilter = FALSE;
-	if (_tcscmp(dat->szFilterString, TranslateT(ALL_MODULES_FILTER)) == 0) {
+	if (mir_tstrcmp(dat->szFilterString, TranslateT(ALL_MODULES_FILTER)) == 0) {
 		dat->szFilterString[0] = 0;
 		bRemoveFocusFromFilter = TRUE;
 	}
 	// if filter string is set to core modules replace it with the name of the executable (this will return all core modules)
-	else if (_tcscmp(dat->szFilterString, TranslateT(CORE_MODULES_FILTER)) == 0) {
+	else if (mir_tstrcmp(dat->szFilterString, TranslateT(CORE_MODULES_FILTER)) == 0) {
 		// replace string with process name - that will show core settings
 		TCHAR szFileName[300];
 		GetModuleFileName(NULL, szFileName, SIZEOF(szFileName));

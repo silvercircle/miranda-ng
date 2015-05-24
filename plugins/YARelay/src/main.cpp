@@ -73,7 +73,7 @@ int ProtoAck(WPARAM,LPARAM lparam)
 		dbei.timestamp = ltime;
 		dbei.flags = DBEF_SENT | DBEF_UTF;
 		dbei.eventType = EVENTTYPE_MESSAGE;
-		dbei.cbBlob = (DWORD)strlen(p->msgText) + 1;
+		dbei.cbBlob = (DWORD)mir_strlen(p->msgText) + 1;
 		dbei.pBlob = (PBYTE)p->msgText;
 		db_event_add(hForwardTo, &dbei);
 	}
@@ -134,7 +134,7 @@ static int MessageEventAdded(WPARAM hContact, LPARAM hDBEvent)
 
 	// build a message
 	Buffer<char> szUtfMsg;
-	ptrA szTemplate( mir_utf8encodeT(tszForwardTemplate));
+	T2Utf szTemplate(tszForwardTemplate);
 	for (char *p = szTemplate; *p; p++) {
 		if (*p != '%') {
 			szUtfMsg.append(*p);
@@ -145,7 +145,7 @@ static int MessageEventAdded(WPARAM hContact, LPARAM hDBEvent)
 		switch(*++p) {
 		case 'u':
 		case 'U':
-			szUtfMsg.append( ptrA(mir_utf8encodeT(pcli->pfnGetContactDisplayName(hContact, 0))));
+			szUtfMsg.append(T2Utf(pcli->pfnGetContactDisplayName(hContact, 0)));
 			break;
 
 		case 'i':
@@ -166,19 +166,19 @@ static int MessageEventAdded(WPARAM hContact, LPARAM hDBEvent)
 				}
 				else mir_sntprintf(buf, SIZEOF(buf), _T("%p"), hContact);
 			}
-			szUtfMsg.append( ptrA(mir_utf8encodeT(buf)));
+			szUtfMsg.append(T2Utf(buf));
 			break;
 
 		case 't':
 		case 'T':
 			_tcsftime(buf, 10, _T("%H:%M"), tm_time);
-			szUtfMsg.append( ptrA(mir_utf8encodeT(buf)));
+			szUtfMsg.append(T2Utf(buf));
 			break;
 
 		case 'd':
 		case 'D':
 			_tcsftime(buf, 12, _T("%d/%m/%Y"), tm_time);
-			szUtfMsg.append( ptrA(mir_utf8encodeT(buf)));
+			szUtfMsg.append(T2Utf(buf));
 			break;
 
 		case 'm':
@@ -186,7 +186,7 @@ static int MessageEventAdded(WPARAM hContact, LPARAM hDBEvent)
 			if (dbei.flags & DBEF_UTF)
 				szUtfMsg.append((char*)dbei.pBlob, dbei.cbBlob);
 			else
-				szUtfMsg.append( ptrA(mir_utf8encode((char*)dbei.pBlob)));
+				szUtfMsg.append(ptrA(mir_utf8encode((char*)dbei.pBlob)));
 			break;
 
 		case '%':
@@ -208,7 +208,7 @@ static int MessageEventAdded(WPARAM hContact, LPARAM hDBEvent)
 		strncpy(szMsgPart, szBuf, cbPortion);
 		szMsgPart[cbPortion] = 0;
 
-		HANDLE hMsgProc = (HANDLE)CallContactService(hForwardTo, PSS_MESSAGE, PREF_UTF, (LPARAM)szMsgPart);
+		HANDLE hMsgProc = (HANDLE)CallContactService(hForwardTo, PSS_MESSAGE, 0, (LPARAM)szMsgPart);
 
 		MESSAGE_PROC* msgProc = (MESSAGE_PROC*)mir_alloc(sizeof(MESSAGE_PROC));
 		msgProc->hProcess = hMsgProc;

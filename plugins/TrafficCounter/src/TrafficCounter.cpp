@@ -220,7 +220,7 @@ int TrafficCounterModulesLoaded(WPARAM wParam, LPARAM lParam)
 	}
 	else //defaults here
 	{
-		_tcscpy(Traffic_CounterFormat, _T("{I4}\x0D\x0A\x0A\
+		mir_tstrcpy(Traffic_CounterFormat, _T("{I4}\x0D\x0A\x0A\
 {R65}?tc_GetTraffic(%extratext%,now,sent,d)\x0D\x0A\x0A\
 {R115}?tc_GetTraffic(%extratext%,now,received,d)\x0D\x0A\x0A\
 {R165}?tc_GetTraffic(%extratext%,total,both,d)\x0D\x0A\x0A\
@@ -238,7 +238,7 @@ int TrafficCounterModulesLoaded(WPARAM wParam, LPARAM lParam)
 	}
 	else //defaults here
 	{
-		_tcscpy(Traffic_TooltipFormat, _T("Traffic Counter"));
+		mir_tstrcpy(Traffic_TooltipFormat, _T("Traffic Counter"));
 	}
 
 	Traffic_AdditionSpace = db_get_b(NULL, TRAFFIC_SETTINGS_GROUP, SETTINGS_ADDITION_SPACE, 0);
@@ -248,25 +248,25 @@ int TrafficCounterModulesLoaded(WPARAM wParam, LPARAM lParam)
 
 	//register traffic font
 	TrafficFontID.cbSize = sizeof(FontIDT);
-	_tcscpy(TrafficFontID.group, LPGENT("Traffic counter"));
-	_tcscpy(TrafficFontID.name, LPGENT("Font"));
-	strcpy(TrafficFontID.dbSettingsGroup, TRAFFIC_SETTINGS_GROUP);
-	strcpy(TrafficFontID.prefix, "Font");
+	mir_tstrcpy(TrafficFontID.group, LPGENT("Traffic counter"));
+	mir_tstrcpy(TrafficFontID.name, LPGENT("Font"));
+	mir_strcpy(TrafficFontID.dbSettingsGroup, TRAFFIC_SETTINGS_GROUP);
+	mir_strcpy(TrafficFontID.prefix, "Font");
 	TrafficFontID.flags = FIDF_DEFAULTVALID | FIDF_SAVEPOINTSIZE;
 	TrafficFontID.deffontsettings.charset = DEFAULT_CHARSET;
 	TrafficFontID.deffontsettings.colour = GetSysColor(COLOR_BTNTEXT);
 	TrafficFontID.deffontsettings.size = 12;
 	TrafficFontID.deffontsettings.style = 0;
-	_tcscpy(TrafficFontID.deffontsettings.szFace, _T("Arial"));
+	mir_tstrcpy(TrafficFontID.deffontsettings.szFace, _T("Arial"));
 	TrafficFontID.order = 0;
 	FontRegisterT(&TrafficFontID);
 
 	// Регистрируем цвет фона
 	TrafficBackgroundColorID.cbSize = sizeof(ColourIDT);
-	_tcscpy(TrafficBackgroundColorID.group, LPGENT("Traffic counter"));
-	_tcscpy(TrafficBackgroundColorID.name, LPGENT("Font"));
-	strcpy(TrafficBackgroundColorID.dbSettingsGroup, TRAFFIC_SETTINGS_GROUP);
-	strcpy(TrafficBackgroundColorID.setting, "FontBkColor");
+	mir_tstrcpy(TrafficBackgroundColorID.group, LPGENT("Traffic counter"));
+	mir_tstrcpy(TrafficBackgroundColorID.name, LPGENT("Font"));
+	mir_strcpy(TrafficBackgroundColorID.dbSettingsGroup, TRAFFIC_SETTINGS_GROUP);
+	mir_strcpy(TrafficBackgroundColorID.setting, "FontBkColor");
 	TrafficBackgroundColorID.defcolour = GetSysColor(COLOR_BTNFACE);
 	ColourRegisterT(&TrafficBackgroundColorID);
 
@@ -357,7 +357,7 @@ int TrafficRecv(WPARAM wParam,LPARAM lParam)
 		
 	if (nln->result > 0)
 		for (i = 0; i < NumberOfAccounts; i++)
-			if (!strcmp(ProtoList[i].name, nlu->szSettingsModule)) 
+			if (!mir_strcmp(ProtoList[i].name, nlu->szSettingsModule)) 
 				InterlockedExchangeAdd(&ProtoList[i].AllStatistics[ProtoList[i].NumberOfRecords-1].Incoming, nln->result);
 	return 0;
 }
@@ -370,7 +370,7 @@ int TrafficSend(WPARAM wParam,LPARAM lParam)
 	
 	if (nln->result > 0)
 		for (i = 0; i < NumberOfAccounts; i++)
-			if (!strcmp(ProtoList[i].name, nlu->szSettingsModule))
+			if (!mir_strcmp(ProtoList[i].name, nlu->szSettingsModule))
 				InterlockedExchangeAdd(&ProtoList[i].AllStatistics[ProtoList[i].NumberOfRecords-1].Outgoing, nln->result);
 	return 0;
 }
@@ -1178,10 +1178,10 @@ void CreateProtocolList(void)
 	//
 	for (i = 0; i < NumberOfAccounts; i++)
 	{
-		ProtoList[i].name = (char*)mir_alloc(strlen(acc[i]->szModuleName) + 1);
-		strcpy(ProtoList[i].name, acc[i]->szModuleName);
-		ProtoList[i].tszAccountName = (TCHAR*)mir_alloc(sizeof(TCHAR) * (1 + _tcslen(acc[i]->tszAccountName)));
-		_tcscpy(ProtoList[i].tszAccountName, acc[i]->tszAccountName);
+		ProtoList[i].name = (char*)mir_alloc(mir_strlen(acc[i]->szModuleName) + 1);
+		mir_strcpy(ProtoList[i].name, acc[i]->szModuleName);
+		ProtoList[i].tszAccountName = (TCHAR*)mir_alloc(sizeof(TCHAR) * (1 + mir_tstrlen(acc[i]->tszAccountName)));
+		mir_tstrcpy(ProtoList[i].tszAccountName, acc[i]->tszAccountName);
 		//
 		ProtoList[i].Flags = db_get_b(NULL, ProtoList[i].name, SETTINGS_PROTO_FLAGS, 3);
 		ProtoList[i].CurrentRecvTraffic = 
@@ -1225,7 +1225,7 @@ int ProtocolAckHook(WPARAM wParam,LPARAM lParam)
 			for (i = 0; i < NumberOfAccounts; i++)
 			{
 				if (!ProtoList[i].name) continue;
-				if (!strcmp(ProtoList[i].name, pAck->szModule))
+				if (!mir_strcmp(ProtoList[i].name, pAck->szModule))
 				{
 					ProtocolIsOffLine(i);
 					break;
@@ -1237,7 +1237,7 @@ int ProtocolAckHook(WPARAM wParam,LPARAM lParam)
 			if ((pAck->lParam >= ID_STATUS_ONLINE) && (pAck->lParam <= ID_STATUS_OUTTOLUNCH))
 			{
 				for (i = 0; i < NumberOfAccounts; i++)
-					if (!strcmp(ProtoList[i].name, pAck->szModule))
+					if (!mir_strcmp(ProtoList[i].name, pAck->szModule))
 					{
 						ProtocolIsOnLine(i);
 						break;
@@ -1313,7 +1313,7 @@ int OnAccountsListChange(WPARAM wParam, LPARAM lParam)
 		case PRAC_CHANGED:
 		case PRAC_CHECKED:
 			for (i = 0; i < NumberOfAccounts; i++)
-				if (!strcmp(acc->szModuleName, ProtoList[i].name))
+				if (!mir_strcmp(acc->szModuleName, ProtoList[i].name))
 					ProtoList[i].Enabled = acc->bIsEnabled;
 			break;
 	}

@@ -21,19 +21,11 @@ INT_PTR SkypeRecvFile(WPARAM, LPARAM lParam)
 	dbei.szModule = SKYPE_PROTONAME;
 	dbei.timestamp = pre->timestamp;
 	if (pre->flags & PREF_CREATEREAD) dbei.flags |= DBEF_READ;
-	if (pre->flags & PREF_UTF) dbei.flags |= DBEF_UTF;
 	dbei.eventType = EVENTTYPE_FILE;
 	dbei.cbBlob = sizeof(DWORD);
-	if (pre->flags & PREF_UNICODE) {
-		for (nFiles = 0; cbFilename = wcslen((wchar_t*)&pre->szMessage[dbei.cbBlob])*sizeof(wchar_t); nFiles++)
-			dbei.cbBlob += DWORD(cbFilename) + sizeof(wchar_t);
-		dbei.cbBlob += sizeof(wchar_t);
-	}
-	else {
-		for (nFiles = 0; cbFilename = strlen(&pre->szMessage[dbei.cbBlob]); nFiles++)
-			dbei.cbBlob += DWORD(cbFilename) + 1;
-		dbei.cbBlob++;
-	}
+	for (nFiles = 0; cbFilename = mir_strlen(&pre->szMessage[dbei.cbBlob]); nFiles++)
+		dbei.cbBlob += DWORD(cbFilename) + 1;
+	dbei.cbBlob++;
 	dbei.pBlob = (PBYTE)pre->szMessage;
 
 	TYP_MSGLENTRY *pEntry = MsgList_Add(pre->lParam, db_event_add(ccs->hContact, &dbei));
@@ -48,21 +40,12 @@ INT_PTR SkypeRecvFile(WPARAM, LPARAM lParam)
 			pfts->hContact = ccs->hContact;
 			pfts->totalFiles = nFiles;
 			if (pfts->pszFiles = (char**)calloc(nFiles + 1, sizeof(char*))) {
-				if (pre->flags & PREF_UNICODE) {
-					wchar_t *pFN;
-					for (size_t i = 0; cbFilename = wcslen(pFN = (wchar_t*)&pre->szMessage[iOffs])*sizeof(wchar_t); i++) {
-						pfts->pszFiles[i] = (char*)wcsdup(pFN);
-						iOffs += cbFilename + sizeof(wchar_t);
-					}
+				char *pFN;
+				for (size_t i = 0; cbFilename = mir_strlen(pFN = &pre->szMessage[iOffs]); i++) {
+					pfts->pszFiles[i] = strdup(pFN);
+					iOffs += cbFilename + 1;
 				}
-				else {
-					char *pFN;
-					for (size_t i = 0; cbFilename = strlen(pFN = &pre->szMessage[iOffs]); i++) {
-						pfts->pszFiles[i] = strdup(pFN);
-						iOffs += cbFilename + 1;
-					}
-					if (pre->flags & PREF_UTF) pfts->flags |= PFTS_UTF;
-				}
+				pfts->flags |= PFTS_UTF;
 				ret = pre->lParam;
 			}
 		}
@@ -93,7 +76,7 @@ INT_PTR SkypeSendFile(WPARAM, LPARAM lParam)
 	size_t iLen = 0;
 	for (nFiles = 0; files[nFiles]; nFiles++) {
 		utfmsg = (char*)make_utf8_string(files[nFiles]);
-		iLen += strlen(utfmsg) + 3;
+		iLen += mir_strlen(utfmsg) + 3;
 		if (pszFile = pszFile ? (char*)realloc(pszFile, iLen) : (char*)calloc(1, iLen)) {
 			if (nFiles > 0) strcat(pszFile, ",");
 			strcat(pszFile, "\"");
@@ -232,19 +215,18 @@ BOOL FXHandleRecv(PROTORECVEVENT *pre, MCONTACT hContact)
 	for (char *pszMsgNum = strtok(pszXferIDs, ", "); pszMsgNum; pszMsgNum = strtok(NULL, ", ")) {
 		char *pszStatus = SkypeGetErrID("FILETRANSFER", pszMsgNum, "STATUS");
 		if (pszStatus) {
-			if (!strcmp(pszStatus, "NEW") || !strcmp(pszStatus, "PLACEHOLDER")) {
+			if (!mir_strcmp(pszStatus, "NEW") || !mir_strcmp(pszStatus, "PLACEHOLDER")) {
 				char *pszType = SkypeGetErr("FILETRANSFER", pszMsgNum, "TYPE");
 				if (pszType) {
-					if (!strcmp(pszType, "INCOMING")) {
+					if (!mir_strcmp(pszType, "INCOMING")) {
 						char *pszFN = SkypeGetErr("FILETRANSFER", pszMsgNum, "FILENAME");
 						if (pszFN) {
-							cbNewSize = cbMsg + strlen(pszFN) + 2;
+							cbNewSize = cbMsg + mir_strlen(pszFN) + 2;
 							if ((pre->szMessage = (char*)realloc(pre->szMessage, cbNewSize))) {
 								memcpy(pre->szMessage + cbMsg, pszFN, cbNewSize - cbMsg - 1);
 								cbMsg = cbNewSize - 1;
 							}
 							else pszMsgNum = NULL;
-							pre->flags |= PREF_UTF;
 							free(pszFN);
 						}
 					}
@@ -302,15 +284,15 @@ void FXHandleMessageThread(ft_args *pargs)
 	}
 
 	if (pargs->bStatus) {
-		if (!strcmp(pargs->szArg, "CONNECTING"))
+		if (!mir_strcmp(pargs->szArg, "CONNECTING"))
 			ProtoBroadcastAck(SKYPE_PROTONAME, hContact, ACKTYPE_FILE, ACKRESULT_CONNECTING, (HANDLE)dwChat, 0);
 		else if (!strncmp(pargs->szArg, "TRANSFERRING", 12))
 			ProtoBroadcastAck(SKYPE_PROTONAME, hContact, ACKTYPE_FILE, ACKRESULT_CONNECTED, (HANDLE)dwChat, 0);
-		else if (!strcmp(pargs->szArg, "FAILED"))
+		else if (!mir_strcmp(pargs->szArg, "FAILED"))
 			ProtoBroadcastAck(SKYPE_PROTONAME, hContact, ACKTYPE_FILE, ACKRESULT_FAILED, (HANDLE)dwChat, 0);
-		else if (!strcmp(pargs->szArg, "CANCELLED"))
+		else if (!mir_strcmp(pargs->szArg, "CANCELLED"))
 			ProtoBroadcastAck(SKYPE_PROTONAME, hContact, ACKTYPE_FILE, ACKRESULT_DENIED, (HANDLE)dwChat, 0);
-		else if (!strcmp(pargs->szArg, "COMPLETED")) {
+		else if (!mir_strcmp(pargs->szArg, "COMPLETED")) {
 			// Check if all transfers from this message are completed.
 			char *pszMsgNum, *pszStatus;
 			BOOL bAllComplete = TRUE;
@@ -318,7 +300,7 @@ void FXHandleMessageThread(ft_args *pargs)
 			if (pszXferIDs) {
 				for (pszMsgNum = strtok(pszXferIDs, ", "); pszMsgNum; pszMsgNum = strtok(NULL, ", ")) {
 					if (pszStatus = SkypeGetErrID("FILETRANSFER", pszMsgNum, "STATUS")) {
-						if (strcmp(pszStatus, "COMPLETED")) bAllComplete = FALSE;
+						if (mir_strcmp(pszStatus, "COMPLETED")) bAllComplete = FALSE;
 						free(pszStatus);
 						if (!bAllComplete) break;
 					}
@@ -342,7 +324,7 @@ void FXHandleMessageThread(ft_args *pargs)
 		if (pszXferIDs) {
 			for (pszMsgNum = strtok(pszXferIDs, ", "), i = 0; pszMsgNum; pszMsgNum = strtok(NULL, ", "), i++) {
 				DWORD dwTransferred;
-				BOOL bIsCurFil = strcmp(pargs->szNum, pszMsgNum) == 0;
+				BOOL bIsCurFil = mir_strcmp(pargs->szNum, pszMsgNum) == 0;
 
 				if (bIsCurFil)
 					pfts.currentFileNumber = i;

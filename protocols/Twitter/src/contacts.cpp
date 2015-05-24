@@ -107,14 +107,13 @@ void TwitterProto::DoSearch(void *p)
 
 	bool found = false;
 	try {
-		char *p = mir_utf8encodeT(query->query.c_str());
+		T2Utf p(query->query.c_str());
 
 		mir_cslock s(twitter_lock_);
 		if (query->by_email)
-			found = twit_.get_info_by_email(p, &info);
+			found = twit_.get_info_by_email(p.str(), &info);
 		else
-			found = twit_.get_info(p, &info);
-		mir_free(p);
+			found = twit_.get_info(p.str(), &info);
 	}
 	catch (const std::exception &e) {
 		ShowPopup((std::string("While searching for contacts, an error occurred: ") + e.what()).c_str());
@@ -197,7 +196,7 @@ int TwitterProto::OnContactDeleted(WPARAM hContact, LPARAM)
 bool TwitterProto::IsMyContact(MCONTACT hContact, bool include_chat)
 {
 	char *proto = GetContactProto(hContact);
-	if (proto && strcmp(m_szModuleName, proto) == 0) {
+	if (proto && mir_strcmp(m_szModuleName, proto) == 0) {
 		if (include_chat)
 			return true;
 		return !isChatRoom(hContact);
@@ -213,7 +212,7 @@ MCONTACT TwitterProto::UsernameToHContact(const char *name)
 
 		DBVARIANT dbv;
 		if (!db_get_s(hContact, m_szModuleName, TWITTER_KEY_UN, &dbv)) {
-			if (strcmp(name, dbv.pszVal) == 0) {
+			if (mir_strcmp(name, dbv.pszVal) == 0) {
 				db_free(&dbv);
 				return hContact;
 			}

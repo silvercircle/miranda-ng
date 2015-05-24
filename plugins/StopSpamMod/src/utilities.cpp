@@ -119,9 +119,9 @@ tstring variables_parse(tstring const &tstrFormat, MCONTACT hContact){
 	return tstrFormat;
 }
 
-// case-insensitive _tcscmp
+// case-insensitive mir_tstrcmp
 //by nullbie as i remember...
-#define NEWTSTR_MALLOC(A) (A==NULL) ? NULL : _tcscpy((TCHAR*)mir_alloc(sizeof(TCHAR)*(_tcslen(A)+1)),A)
+#define NEWTSTR_MALLOC(A) (A==NULL) ? NULL : mir_tstrcpy((TCHAR*)mir_alloc(sizeof(TCHAR)*(mir_tstrlen(A)+1)),A)
 const int Stricmp(const TCHAR *str, const TCHAR *substr)
 {
 	int i = 0;
@@ -132,7 +132,7 @@ const int Stricmp(const TCHAR *str, const TCHAR *substr)
 	CharUpperBuff(str_up, mir_tstrlen(str_up));
 	CharUpperBuff(substr_up, mir_tstrlen(substr_up));
 
-	i = _tcscmp(str_up, substr_up);
+	i = mir_tstrcmp(str_up, substr_up);
 
 	mir_free(str_up);
 	mir_free(substr_up);
@@ -187,7 +187,7 @@ BOOL IsUrlContains(TCHAR * Str)
 		L".tv"
 	};
 
-	if(Str && _tcslen(Str)>0) {
+	if(Str && mir_tstrlen(Str)>0) {
 		TCHAR *StrLower = NEWTSTR_MALLOC(Str);
 		CharLowerBuff(StrLower, mir_tstrlen(StrLower));
 		for (int i=0; i<CountUrl; i++)
@@ -365,7 +365,7 @@ void HistoryLog(MCONTACT hContact, char *data, int event_type, int flags)
 	Event.eventType = event_type;
 	Event.flags = flags | DBEF_UTF;
 	Event.timestamp = (DWORD)time(NULL);
-	Event.cbBlob = (DWORD)strlen(data)+1;
+	Event.cbBlob = (DWORD)mir_strlen(data)+1;
 	Event.pBlob = (PBYTE)_strdup(data);
 	db_event_add(hContact, &Event);
 }

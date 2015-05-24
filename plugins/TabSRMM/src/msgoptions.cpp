@@ -120,7 +120,7 @@ static int TSAPI ScanSkinDir(const TCHAR* tszFolder, HWND hwndCombobox)
 		mir_sntprintf(tszFinalName, SIZEOF(tszFinalName), _T("%s%s"), tszFolder, fd.cFileName);
 
 		GetPrivateProfileString(_T("Global"), _T("Name"), _T("None"), szBuf, SIZEOF(szBuf), tszFinalName);
-		if (!_tcscmp(szBuf, _T("None"))) {
+		if (!mir_tstrcmp(szBuf, _T("None"))) {
 			fd.cFileName[mir_tstrlen(fd.cFileName) - 4] = 0;
 			_tcsncpy_s(szBuf, fd.cFileName, _TRUNCATE);
 		}
@@ -129,7 +129,7 @@ static int TSAPI ScanSkinDir(const TCHAR* tszFolder, HWND hwndCombobox)
 		if ((lr = SendMessage(hwndCombobox, CB_INSERTSTRING, -1, (LPARAM)szBuf)) != CB_ERR) {
 			TCHAR *idata = (TCHAR*)mir_alloc((mir_tstrlen(tszRel) + 1) * sizeof(TCHAR));
 
-			_tcscpy(idata, tszRel);
+			mir_tstrcpy(idata, tszRel);
 			SendMessage(hwndCombobox, CB_SETITEMDATA, lr, (LPARAM)idata);
 		}
 	}
@@ -178,7 +178,7 @@ static int TSAPI RescanSkins(HWND hwndCombobox)
 		for (int i = 1; i < lr; i++) {
 			TCHAR *idata = (TCHAR*)SendMessage(hwndCombobox, CB_GETITEMDATA, i, 0);
 			if (idata && idata != (TCHAR*)CB_ERR) {
-				if (!_tcsicmp(dbv.ptszVal, idata)) {
+				if (!mir_tstrcmpi(dbv.ptszVal, idata)) {
 					SendMessage(hwndCombobox, CB_SETCURSEL, i, 0);
 					break;
 				}

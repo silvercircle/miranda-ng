@@ -279,7 +279,7 @@ int CMraProto::MraRebuildStatusMenu(WPARAM, LPARAM)
 {
 	CHAR szServiceFunction[MAX_PATH * 2], *pszServiceFunctionName, szValueName[MAX_PATH];
 	strncpy(szServiceFunction, m_szModuleName, sizeof(szServiceFunction));
-	pszServiceFunctionName = szServiceFunction + strlen(m_szModuleName);
+	pszServiceFunctionName = szServiceFunction + mir_strlen(m_szModuleName);
 
 	TCHAR szItem[MAX_PATH + 64];
 	mir_sntprintf(szItem, SIZEOF(szItem), _T("%s Custom Status"), m_tszUserName);
@@ -327,7 +327,7 @@ HGENMENU CMraProto::CListCreateMenu(LONG lPosition, LONG lPopupPosition, BOOL bI
 
 	char szServiceFunction[MAX_PATH];
 	strncpy(szServiceFunction, m_szModuleName, sizeof(szServiceFunction));
-	char *pszServiceFunctionName = szServiceFunction + strlen(m_szModuleName);
+	char *pszServiceFunctionName = szServiceFunction + mir_strlen(m_szModuleName);
 
 	CLISTMENUITEM mi = { sizeof(mi) };
 
@@ -364,7 +364,7 @@ HGENMENU CMraProto::CListCreateMenu(LONG lPosition, LONG lPopupPosition, BOOL bI
 	mi.pszService = szServiceFunction;
 
 	for (size_t i = 0; i < dwCount; i++) {
-		strcpy(pszServiceFunctionName, pgdiItems[i].szName);
+		mir_strcpy(pszServiceFunctionName, pgdiItems[i].szName);
 		mi.position = int(lPosition + i);
 		mi.icolibItem = pgdiItems[i].hIcolib;
 		mi.pszName = pgdiItems[i].szDescr;

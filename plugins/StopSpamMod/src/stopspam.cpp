@@ -66,9 +66,8 @@ MIRANDA_HOOK_EVENT(ME_DB_EVENT_ADDED, hContact, hDbEvent)
 						msg = 0; //is it useful ?
 				}
 				if(msg) {
-					char * buff=mir_utf8encodeW(variables_parse(gbAuthRepl, hcntct).c_str());
-					CallContactService(hcntct, PSS_MESSAGE, PREF_UTF, (LPARAM) buff);
-					mir_free(buff);
+					ptrA buff(mir_utf8encodeW(variables_parse(gbAuthRepl, hcntct).c_str()));
+					CallContactService(hcntct, PSS_MESSAGE, 0, (LPARAM)buff);
 				}
 				return 1;
 			}
@@ -157,7 +156,7 @@ MIRANDA_HOOK_EVENT(ME_DB_EVENT_FILTER_ADD, w, l)
 		}
 	}
 	else if(!gbRegexMatch)
-		answered = gbCaseInsensitive?(!Stricmp(message.c_str(), (variables_parse(gbAnswer, hContact).c_str()))):( !_tcscmp(message.c_str(), (variables_parse(gbAnswer, hContact).c_str())));
+		answered = gbCaseInsensitive?(!Stricmp(message.c_str(), (variables_parse(gbAnswer, hContact).c_str()))):( !mir_tstrcmp(message.c_str(), (variables_parse(gbAnswer, hContact).c_str())));
 	else
 	{
 		if(gbCaseInsensitive)
@@ -197,9 +196,9 @@ MIRANDA_HOOK_EVENT(ME_DB_EVENT_FILTER_ADD, w, l)
 			if((Stricmp(_T("ICQ"),prot.c_str()))||(!gbAutoReqAuth))
 			{
 				char * buf=mir_utf8encodeW(variables_parse(gbCongratulation, hContact).c_str());
-				CallContactService(hContact, PSS_MESSAGE, PREF_UTF, (LPARAM)buf);
+				CallContactService(hContact, PSS_MESSAGE, 0, (LPARAM)buf);
 				mir_free(buf);
-			};
+			}
 			// Note: For ANSI can be not work
 			if(!Stricmp(_T("ICQ"),prot.c_str())){
 				// grand auth.
@@ -298,9 +297,7 @@ MIRANDA_HOOK_EVENT(ME_DB_EVENT_FILTER_ADD, w, l)
 			else
 				q += variables_parse(gbQuestion, hContact);
 
-			char * buf=mir_utf8encodeW(q.c_str());
-			CallContactService(hContact, PSS_MESSAGE, PREF_UTF, (LPARAM)buf);
-			mir_free(buf);
+			CallContactService(hContact, PSS_MESSAGE, 0, ptrA(mir_utf8encodeW(q.c_str())));
 
 			// increment question count
 			DWORD questCount = db_get_dw(hContact, pluginName, "QuestionCount", 0);
@@ -345,9 +342,9 @@ MIRANDA_HOOK_EVENT(ME_DB_CONTACT_SETTINGCHANGED, w, l)
 	DBCONTACTWRITESETTING * cws = (DBCONTACTWRITESETTING*)l;
 
 	// if CList/NotOnList is being deleted then remove answeredSetting
-	if(strcmp(cws->szModule, "CList"))
+	if(mir_strcmp(cws->szModule, "CList"))
 		return 0;
-	if(strcmp(cws->szSetting, "NotOnList"))
+	if(mir_strcmp(cws->szSetting, "NotOnList"))
 		return 0;
 	if(!cws->value.type)
 	{

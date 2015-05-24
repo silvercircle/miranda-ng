@@ -124,7 +124,7 @@ SIZE GetControlTextSize(HWND hCtrl)
 	TCHAR buffer[maxSize];
 	SIZE size;
 	GetWindowText(hCtrl, buffer, SIZEOF(buffer));
-	GetTextExtentPoint32(hDC, buffer, (int)_tcslen(buffer), &size);
+	GetTextExtentPoint32(hDC, buffer, (int)mir_tstrlen(buffer), &size);
 	SelectObject(hDC, oldFont);
 	ReleaseDC(hCtrl, hDC);
 	return size;
@@ -144,7 +144,7 @@ int EnlargeControl(HWND hCtrl, HWND hGroup, SIZE oldSize)
 TCHAR *strtrim(TCHAR *str)
 {
 	size_t i = 0;
-	size_t len = _tcslen(str);
+	size_t len = mir_tstrlen(str);
 	while ((i < len) && (str[i] == _T(' '))) { i++; }
 	if (i) {
 		memmove(str, str + i, len - i + 1);
@@ -327,11 +327,11 @@ INT_PTR CALLBACK DlgProcOptions(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 					if (pos) {
 						TCHAR tmp[128];
 						*pos = 0;
-						_tcscpy(tmp, buffer);
+						mir_tstrcpy(tmp, buffer);
 						strtrim(tmp);
 						commonData.popupTimeout = _ttol(tmp);
 
-						_tcscpy(tmp, pos + 1);
+						mir_tstrcpy(tmp, pos + 1);
 						strtrim(tmp);
 						commonData.popupTimeoutToday = _ttol(tmp);
 
@@ -561,7 +561,7 @@ INT_PTR CALLBACK BirthdaysCompare(LPARAM lParam1, LPARAM lParam2, LPARAM myParam
 		else
 			res = (value1 != value2);
 	}
-	else res = _tcsicmp(text1, text2);
+	else res = mir_tstrcmpi(text1, text2);
 
 	res = (params.column == lastColumn) ? -res : res;
 	return res;

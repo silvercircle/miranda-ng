@@ -32,9 +32,9 @@ GenericJob::GenericJob(MCONTACT _hContact, int _iFtpNum, EMode _mode) :
 GenericJob::GenericJob(GenericJob *job)
 :hContact(job->hContact),iFtpNum(job->iFtpNum),mode(job->mode),status(job->status),ftp(job->ftp),tab(job->tab)
 { 
-	_tcscpy(this->stzFilePath, job->stzFilePath);
-	_tcscpy(this->stzFileName, job->stzFileName);
-	strcpy(this->szSafeFileName, job->szSafeFileName);
+	mir_tstrcpy(this->stzFilePath, job->stzFilePath);
+	mir_tstrcpy(this->stzFileName, job->stzFileName);
+	mir_strcpy(this->szSafeFileName, job->szSafeFileName);
 }
 
 GenericJob::~GenericJob()
@@ -79,7 +79,7 @@ void GenericJob::getFilesFromOpenDialog()
 {
 	TCHAR stzFile[MAX_PATH];
 
-	size_t length = _tcslen(this->stzFilePath);
+	size_t length = mir_tstrlen(this->stzFilePath);
 	if (this->stzFilePath[0] && this->stzFilePath[length+1]) // multiple files
 	{
 		TCHAR *ptr = this->stzFilePath + length + 1;
@@ -87,7 +87,7 @@ void GenericJob::getFilesFromOpenDialog()
 		{
 			mir_sntprintf(stzFile, SIZEOF(stzFile), _T("%s\\%s"), this->stzFilePath, ptr);
 			this->addFile(stzFile);
-			ptr += _tcslen(ptr) + 1;
+			ptr += mir_tstrlen(ptr) + 1;
 		}
 	} 
 	else

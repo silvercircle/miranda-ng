@@ -60,7 +60,7 @@ int OnDatabaseEventPreAdd(WPARAM hContact, LPARAM lParam)
 	if (db_get_b(hContact, proto, "ChatRoom", 0) == 1)
 		return 0;
 	
-	if(strcmp(proto, META_PROTO) == 0) {
+	if(mir_strcmp(proto, META_PROTO) == 0) {
 		hContact = db_mc_getMostOnline(hContact);
 		if (!hContact) return 0;
 		proto = GetContactProto(hContact);
@@ -77,7 +77,7 @@ int OnDatabaseEventPreAdd(WPARAM hContact, LPARAM lParam)
 	char *msg = (char *)dbei->pBlob;
 	char *newmsg = 0;
 	DWORD alloclen = 0;
-	DWORD msglen = (DWORD)strlen(msg);
+	DWORD msglen = (DWORD)mir_strlen(msg);
 	if (dbei->flags & DBEF_UTF) {
 		int prefixlen = (int)strnlen(options.prefix, 64);
 		if (strncmp(msg, options.prefix, prefixlen) == 0) return 0;
@@ -119,7 +119,7 @@ int OnDatabaseEventPreAdd(WPARAM hContact, LPARAM lParam)
 			int msglenw = (int)wcslen(msgw);
 
 			char *prefix = mir_utf8decodeA(options.prefix);
-			int prefixlen = (int)strlen(prefix);
+			int prefixlen = (int)mir_strlen(prefix);
 
 			alloclen = (msglen+prefixlen+1)* sizeof(char) + (msglenw + prefixlenw +1) * sizeof(wchar_t);
 			// get additional data
@@ -144,7 +144,7 @@ int OnDatabaseEventPreAdd(WPARAM hContact, LPARAM lParam)
 		}
 		else {
 			char *prefix = mir_utf8decodeA(options.prefix);
-			int prefixlen = (int)strlen(prefix);
+			int prefixlen = (int)mir_strlen(prefix);
 			if (strncmp(msg, prefix, prefixlen) == 0) {
 				mir_free(prefix);
 				return 0;
@@ -186,8 +186,8 @@ int OnDatabaseEventPreAdd(WPARAM hContact, LPARAM lParam)
 
 	static char* prefixutf = mir_utf8encodeT(TranslateT(LANG_INLINE_PREFIX));
 	static char* prefix = Translate(LANG_INLINE_PREFIX);
-	static DWORD lenutf = (DWORD)strlen(prefixutf);
-	static DWORD len = (DWORD)strlen(prefix);
+	static DWORD lenutf = (DWORD)mir_strlen(prefixutf);
+	static DWORD len = (DWORD)mir_strlen(prefix);
 
 	DBEVENTINFO info = { sizeof(info) };
 	info.cbBlob = lenutf*2;
@@ -278,7 +278,7 @@ int StatusModeChange(WPARAM wParam, LPARAM lParam) {
 	
 		ConnContext *context = otr_user_state->context_root;
 		while(context) {
-			if(context->msgstate == OTRL_MSGSTATE_ENCRYPTED && (proto == 0 || strcmp(proto, context->protocol) == 0)) {
+			if(context->msgstate == OTRL_MSGSTATE_ENCRYPTED && (proto == 0 || mir_strcmp(proto, context->protocol) == 0)) {
 				hContact = (MCONTACT)context->app_data;
 				
 				if(hContact) {
@@ -298,7 +298,7 @@ int OnContactSettingChanged(WPARAM hContact, LPARAM lParam)
 	if (!options.end_offline)
 		return 0;
 	DBCONTACTWRITESETTING *cws = (DBCONTACTWRITESETTING *)lParam;
-	if (!lParam || strcmp(cws->szSetting, "Status") != 0) return 0;
+	if (!lParam || mir_strcmp(cws->szSetting, "Status") != 0) return 0;
 	int status=0;
 	switch (cws->value.type){
 		case DBVT_WORD:

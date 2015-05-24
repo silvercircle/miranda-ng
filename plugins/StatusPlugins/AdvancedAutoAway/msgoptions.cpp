@@ -78,8 +78,8 @@ INT_PTR CALLBACK DlgProcAutoAwayMsgOpts(HWND hwndDlg, UINT msg, WPARAM wParam, L
 
 				DBVARIANT dbv;
 				if ( !db_get(NULL, MODULENAME, StatusModeToDbSetting(statusModeList[i],SETTING_STATUSMSG), &dbv)) {
-					settings[count]->msg = ( char* )malloc(strlen(dbv.pszVal) + 1);
-					strcpy(settings[count]->msg, dbv.pszVal);
+					settings[count]->msg = ( char* )malloc(mir_strlen(dbv.pszVal) + 1);
+					mir_strcpy(settings[count]->msg, dbv.pszVal);
 					db_free(&dbv);
 				}
 				else settings[count]->msg = NULL;

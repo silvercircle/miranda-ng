@@ -72,15 +72,6 @@ static void _clrMsgFilter(LPARAM lParam)
 	m->wParam = 0;
 }
 
-BOOL TSAPI IsUtfSendAvailable(MCONTACT hContact)
-{
-	char *szProto = GetContactProto(hContact);
-	if (szProto == NULL)
-		return FALSE;
-
-	return (CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_4, 0) & PF4_IMSENDUTF) ? TRUE : FALSE;
-}
-
 /////////////////////////////////////////////////////////////////////////////////////////
 // show a modified context menu for the richedit control(s)
 // @param dat			message window data
@@ -618,7 +609,7 @@ static LRESULT CALLBACK MessageEditSubclassProc(HWND hwnd, UINT msg, WPARAM wPar
 		if (OpenClipboard(hwnd)) {
 			HANDLE hClip = GetClipboardData(CF_TEXT);
 			if (hClip) {
-				if (mir_strlen((char*)hClip) > mwdat->nMax) {
+				if ((int)mir_strlen((char*)hClip) > mwdat->nMax) {
 					TCHAR szBuffer[512];
 					if (M.GetByte("autosplit", 0))
 						mir_sntprintf(szBuffer, SIZEOF(szBuffer), TranslateT("WARNING: The message you are trying to paste exceeds the message size limit for the active protocol. It will be sent in chunks of max %d characters"), mwdat->nMax - 10);
@@ -2422,8 +2413,7 @@ INT_PTR CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 					if (job->hSendId == 0 && job->hContact == 0)
 						break;
 
-					job->hSendId = (HANDLE)CallContactService(job->hContact, PSS_MESSAGE,
-						(dat->sendMode & SMODE_FORCEANSI) ? (job->dwFlags & ~PREF_UNICODE) : job->dwFlags, (LPARAM)job->szSendBuffer);
+					job->hSendId = (HANDLE)CallContactService(job->hContact, PSS_MESSAGE, job->dwFlags, (LPARAM)job->szSendBuffer);
 					resent++;
 				}
 
@@ -2671,54 +2661,41 @@ INT_PTR CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 				if (decoded.IsEmpty())
 					break;
 
-				char *utfResult = NULL;
 				if (final_sendformat)
 					DoRtfToTags(dat, decoded, SIZEOF(rtfDefColors), rtfDefColors);
 				decoded.TrimRight();
 				int bufSize = WideCharToMultiByte(dat->codePage, 0, decoded, -1, dat->sendBuffer, 0, 0, 0);
 
-				size_t memRequired = 0;
 				int flags = 0;
-				if (!IsUtfSendAvailable(dat->hContact)) {
-					flags |= PREF_UNICODE;
-					memRequired = bufSize + (mir_wstrlen(decoded) + 1) * sizeof(WCHAR);
-				}
-				else {
-					flags |= PREF_UTF;
-					utfResult = mir_utf8encodeT(decoded);
-					memRequired = strlen(utfResult) + 1;
-				}
+				size_t memRequired;
+				{
+					T2Utf utfResult(decoded);
+					memRequired = mir_strlen(utfResult) + 1;
 
-				// try to detect RTL
-				HWND hwndEdit = GetDlgItem(hwndDlg, IDC_MESSAGE);
-				SendMessage(hwndEdit, WM_SETREDRAW, FALSE, 0);
+					// try to detect RTL
+					HWND hwndEdit = GetDlgItem(hwndDlg, IDC_MESSAGE);
+					SendMessage(hwndEdit, WM_SETREDRAW, FALSE, 0);
 
-				PARAFORMAT2 pf2;
-				memset(&pf2, 0, sizeof(PARAFORMAT2));
-				pf2.cbSize = sizeof(pf2);
-				pf2.dwMask = PFM_RTLPARA;
-				SendMessage(hwndEdit, EM_SETSEL, 0, -1);
-				SendMessage(hwndEdit, EM_GETPARAFORMAT, 0, (LPARAM)&pf2);
-				if (pf2.wEffects & PFE_RTLPARA)
-					if (SendQueue::RTL_Detect(decoded))
-						flags |= PREF_RTL;
+					PARAFORMAT2 pf2;
+					memset(&pf2, 0, sizeof(PARAFORMAT2));
+					pf2.cbSize = sizeof(pf2);
+					pf2.dwMask = PFM_RTLPARA;
+					SendMessage(hwndEdit, EM_SETSEL, 0, -1);
+					SendMessage(hwndEdit, EM_GETPARAFORMAT, 0, (LPARAM)&pf2);
+					if (pf2.wEffects & PFE_RTLPARA)
+						if (SendQueue::RTL_Detect(decoded))
+							flags |= PREF_RTL;
 
-				SendMessage(hwndEdit, WM_SETREDRAW, TRUE, 0);
-				SendMessage(hwndEdit, EM_SETSEL, -1, -1);
-				InvalidateRect(hwndEdit, NULL, FALSE);
+					SendMessage(hwndEdit, WM_SETREDRAW, TRUE, 0);
+					SendMessage(hwndEdit, EM_SETSEL, -1, -1);
+					InvalidateRect(hwndEdit, NULL, FALSE);
 
-				if (memRequired > dat->iSendBufferSize) {
-					dat->sendBuffer = (char *)mir_realloc(dat->sendBuffer, memRequired);
-					dat->iSendBufferSize = memRequired;
-				}
-				if (utfResult) {
-					memcpy(dat->sendBuffer, utfResult, memRequired);
-					mir_free(utfResult);
-				}
-				else {
-					WideCharToMultiByte(dat->codePage, 0, decoded, -1, dat->sendBuffer, bufSize, 0, 0);
-					if (flags & PREF_UNICODE)
-						memcpy(&dat->sendBuffer[bufSize], decoded, (mir_wstrlen(decoded) + 1) * sizeof(WCHAR));
+					if (memRequired > dat->iSendBufferSize) {
+						dat->sendBuffer = (char *)mir_realloc(dat->sendBuffer, memRequired);
+						dat->iSendBufferSize = memRequired;
+					}
+
+					memcpy(dat->sendBuffer, (char*)utfResult, memRequired);
 				}
 
 				if (memRequired == 0 || dat->sendBuffer[0] == 0)
@@ -2805,7 +2782,7 @@ INT_PTR CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 				TCHAR *szText = (TCHAR*)mir_alloc((dbei.cbBlob + 1) * sizeof(TCHAR));   //URLs are made one char bigger for crlf
 				dbei.pBlob = (BYTE*)szText;
 				db_event_get(hDBEvent, &dbei);
-				int iSize = int(strlen((char*)dbei.pBlob)) + 1;
+				int iSize = int(mir_strlen((char*)dbei.pBlob)) + 1;
 
 				bool bNeedsFree = false;
 				TCHAR *szConverted;
@@ -2935,7 +2912,7 @@ INT_PTR CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 	case DM_CONTAINERSELECTED:
 	{
 		TCHAR *szNewName = (TCHAR*)lParam;
-		if (!_tcscmp(szNewName, TranslateT("Default container")))
+		if (!mir_tstrcmp(szNewName, TranslateT("Default container")))
 			szNewName = CGlobals::m_default_container_name;
 
 		int iOldItems = TabCtrl_GetItemCount(hwndTab);
@@ -3007,7 +2984,7 @@ INT_PTR CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 	case DM_MYAVATARCHANGED:
 	{
 		const char *szProto = dat->cache->getActiveProto();
-		if (!strcmp((char *)wParam, szProto) && mir_strlen(szProto) == mir_strlen((char *)wParam))
+		if (!mir_strcmp((char *)wParam, szProto) && mir_strlen(szProto) == mir_strlen((char *)wParam))
 			LoadOwnAvatar(dat);
 	}
 	break;

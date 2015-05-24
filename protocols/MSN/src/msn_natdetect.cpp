@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "msn_global.h"
 #include "msn_proto.h"
 #include <netfw.h>
+#ifdef OBSOLETE
 
 #ifndef CLSID_NetFwMgr
 #define MDEF_CLSID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
@@ -370,7 +371,7 @@ void CMsnProto::MSNConnDetectThread(void*)
 		// if it does, move to connection type autodetection,
 		// if it does not, guess connection type from available info
 		db_get_static(NULL, m_szModuleName, "YourHost", parBuf, sizeof(parBuf));
-		if (msnExternalIP == NULL || strcmp(msnExternalIP, parBuf) != 0) {
+		if (msnExternalIP == NULL || mir_strcmp(msnExternalIP, parBuf) != 0) {
 			MyConnection.extIP = inet_addr(parBuf);
 			if (MyConnection.extIP == INADDR_NONE) {
 				PHOSTENT myhost = gethostbyname(parBuf);
@@ -448,7 +449,7 @@ void CMsnProto::MSNConnDetectThread(void*)
 void MyConnectionType::SetUdpCon(const char* str)
 {
 	for (unsigned i = 0; i < sizeof(conStr) / sizeof(char*); ++i) {
-		if (strcmp(conStr[i], str) == 0) {
+		if (mir_strcmp(conStr[i], str) == 0) {
 			udpConType = (ConEnum)i;
 			break;
 		}
@@ -467,3 +468,4 @@ void MyConnectionType::CalculateWeight(void)
 	else if (udpConType == conFirewall) weight = 2;
 	else if (udpConType == conISALike) weight = 3;
 }
+#endif

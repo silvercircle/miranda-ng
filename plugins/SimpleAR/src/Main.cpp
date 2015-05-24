@@ -209,28 +209,27 @@ INT addEvent(WPARAM hContact, LPARAM hDBEvent)
 							return FALSE;
 						}
 
-						msgLen += (int)_tcslen(dbv.ptszVal);
+						msgLen += (int)mir_tstrlen(dbv.ptszVal);
 						if (!db_get_ts(NULL,protocolname,KEY_HEADING,&dbvHead))
 						{
 							ptszTemp = dbvHead.ptszVal;
 							ptszTemp.Replace(_T("%user%"), dbvNick.ptszVal);
-							msgLen += (int)(_tcslen(ptszTemp));
+							msgLen += (int)(mir_tstrlen(ptszTemp));
 						}
 						ptszTemp2 = (TCHAR*)mir_alloc(sizeof(TCHAR) * (msgLen+5));
 						mir_sntprintf(ptszTemp2, msgLen+5, _T("%s\r\n\r\n%s"), ptszTemp.c_str(), dbv.ptszVal);
 						if (ServiceExists(MS_VARS_FORMATSTRING))
 						{
-							FORMATINFO fi;
-
-							memset(&fi, 0, sizeof(fi));
+							FORMATINFO fi = { 0 };
 							fi.cbSize = sizeof(fi);
 							fi.flags = FIF_TCHAR;
 							fi.tszFormat = ptszTemp2;
 							ptszTemp = (TCHAR*)CallService(MS_VARS_FORMATSTRING, (WPARAM)&fi, 0);
-						}else
-							ptszTemp = Utils_ReplaceVarsT(ptszTemp2);
-						char* pszUtf = mir_utf8encodeT(ptszTemp);
-						CallContactService(hContact, PSS_MESSAGE, PREF_UTF, (LPARAM)pszUtf);
+						}
+						else ptszTemp = Utils_ReplaceVarsT(ptszTemp2);
+						
+						T2Utf pszUtf(ptszTemp);
+						CallContactService(hContact, PSS_MESSAGE, 0, pszUtf);
 
 						dbei.cbSize = sizeof(dbei);
 						dbei.eventType = EVENTTYPE_MESSAGE;
@@ -242,7 +241,6 @@ INT addEvent(WPARAM hContact, LPARAM hDBEvent)
 						db_event_add(hContact, &dbei);
 
 						mir_free(ptszTemp2);
-						mir_free(pszUtf);
 						if (dbvNick.ptszVal)
 							db_free(&dbvNick);
 						if (dbvHead.ptszVal)

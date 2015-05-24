@@ -107,7 +107,7 @@ int CAimProto::OnGCEvent(WPARAM, LPARAM lParam)
 	GCHOOK *gch = (GCHOOK*) lParam;
 	if (!gch) return 1;
 
-	if (strcmp(gch->pDest->pszModule, m_szModuleName)) return 0;
+	if (mir_strcmp(gch->pDest->pszModule, m_szModuleName)) return 0;
 
 	char* id = mir_t2a(gch->pDest->ptszID);
 	chat_list_item* item = find_chat_by_id(id);
@@ -122,13 +122,10 @@ int CAimProto::OnGCEvent(WPARAM, LPARAM lParam)
 			break;
 
 		case GC_USER_MESSAGE:
-			if (gch->ptszText && _tcslen(gch->ptszText)) 
-			{
-				char* msg = mir_utf8encodeT(gch->ptszText);
-				aim_chat_send_message(item->hconn, item->seqno, msg);
-				mir_free(msg);
-			}
+			if (gch->ptszText && mir_tstrlen(gch->ptszText)) 
+				aim_chat_send_message(item->hconn, item->seqno, T2Utf(gch->ptszText));
 			break;
+
 		case GC_USER_CHANMGR: 
 			DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_CHATROOM_INVITE), NULL, invite_to_chat_dialog, 
 				LPARAM(new invite_chat_param(item->id, this)));
@@ -206,7 +203,7 @@ int CAimProto::OnGCMenuHook(WPARAM, LPARAM lParam)
 	else if ( gcmi->Type == MENU_ON_NICKLIST ) 
 	{
 		char* sn = mir_t2a(gcmi->pszUID);
-		if ( !strcmp(username, sn)) 
+		if ( !mir_strcmp(username, sn)) 
 		{
 			static const struct gc_item Items[] = {
 				{ TranslateT("User &details"), 10, MENU_ITEM, FALSE },
@@ -265,7 +262,7 @@ chat_list_item* CAimProto::find_chat_by_id(char* id)
 	chat_list_item* item = NULL;
 	for(int i=0; i<chat_rooms.getCount(); ++i)
 	{
-		if (strcmp(chat_rooms[i].id, id) == 0)
+		if (mir_strcmp(chat_rooms[i].id, id) == 0)
 		{
 			item = &chat_rooms[i];
 			break;

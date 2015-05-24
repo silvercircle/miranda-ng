@@ -131,7 +131,7 @@ DWORD_PTR CSametimeProto::GetCaps(int type, MCONTACT hContact)
 		ret = PF2_ONLINE | PF2_SHORTAWAY | PF2_HEAVYDND | PF2_LIGHTDND;
 		break;
 	case PFLAGNUM_4:
-		ret = PF4_SUPPORTTYPING | PF4_IMSENDUTF;
+		ret = PF4_SUPPORTTYPING;
 		break;
 	case PFLAG_UNIQUEIDTEXT:
 		ret = (DWORD_PTR)Translate("ID");
@@ -170,25 +170,19 @@ int CSametimeProto::GetInfo(MCONTACT hContact, int infoType)
 
 HANDLE CSametimeProto::SearchBasic(const PROTOCHAR* id)
 {
-	debugLog(_T("CSametimeProto::SearchBasic()  id:len=[%d]"), id == NULL ? -1 : _tcslen(id));
-	char* id_utf8 = mir_utf8encodeT(id);
-	int ret = SearchForUser(id_utf8, FALSE);
-	mir_free(id_utf8);
-	return (HANDLE)ret;
+	debugLog(_T("CSametimeProto::SearchBasic()  id:len=[%d]"), id == NULL ? -1 : mir_tstrlen(id));
+	return (HANDLE)SearchForUser(T2Utf(id), FALSE);
 	///TODO - add timeout (like at GGPROTO::searchthread)
 }
 
 HWND CSametimeProto::SearchAdvanced(HWND owner)
 {
 	TCHAR buf[512];
-	int ret = 0;
 	if (GetDlgItemText(owner, IDC_EDIT1, buf, SIZEOF(buf))) {
-		debugLog(_T("CSametimeProto::SearchAdvanced()  buf:len=[%d]"), buf == NULL ? -1 : _tcslen(buf));
-		char* buf_utf8 = mir_utf8encodeT(buf);
-		ret = SearchForUser(buf_utf8, TRUE);
-		mir_free(buf_utf8);
+		debugLog(_T("CSametimeProto::SearchAdvanced()  buf:len=[%d]"), buf == NULL ? -1 : mir_tstrlen(buf));
+		return (HWND)SearchForUser(T2Utf(buf), TRUE);
 	}
-	return (HWND)ret;
+	return NULL;
 }
 
 HWND CSametimeProto::CreateExtendedSearchUI(HWND owner)
@@ -231,14 +225,14 @@ HANDLE CSametimeProto::SendFile(MCONTACT hContact, const PROTOCHAR* szDescriptio
 	return 0; // failure
 }
 
-int CSametimeProto::SendMsg(MCONTACT hContact, int flags, const char* msg)
+int CSametimeProto::SendMsg(MCONTACT hContact, int, const char* msg)
 {
-	debugLog(_T("CSametimeProto::SendMsg()  hContact=[%x], flags=[%d]"), hContact, flags);
+	debugLog(_T("CSametimeProto::SendMsg()  hContact=[%x]"), hContact);
 
 	char *proto = GetContactProto(hContact);
 	int ret;
 
-	if (!proto || strcmp(proto, m_szModuleName) != 0 || db_get_w(hContact, m_szModuleName, "Status", ID_STATUS_OFFLINE) == ID_STATUS_OFFLINE) {
+	if (!proto || mir_strcmp(proto, m_szModuleName) != 0 || db_get_w(hContact, m_szModuleName, "Status", ID_STATUS_OFFLINE) == ID_STATUS_OFFLINE) {
 		TFakeAckParams* tfap = (TFakeAckParams*)mir_alloc(sizeof(TFakeAckParams));
 		tfap->proto = this;
 		tfap->hContact = hContact;
@@ -247,19 +241,10 @@ int CSametimeProto::SendMsg(MCONTACT hContact, int flags, const char* msg)
 		return 0;
 	}
 
-	char *msg_utf8;
-	if (flags & PREF_UNICODE)
-		msg_utf8 = mir_utf8encodeW((wchar_t*)&msg[strlen(msg) + 1]);
-	else if (flags & PREF_UTF)
-		msg_utf8 = mir_strdup(msg);
-	else
-		msg_utf8 = mir_utf8encode(msg);
-
-	if (!msg_utf8)
+	if (!msg)
 		return 0;
 
-	ret = (int)SendMessageToUser(hContact, msg_utf8);
-	mir_free(msg_utf8);
+	ret = (int)SendMessageToUser(hContact, msg);
 
 	TFakeAckParams *tfap = (TFakeAckParams*)mir_alloc(sizeof(TFakeAckParams));
 	tfap->proto = this;
@@ -305,19 +290,14 @@ int CSametimeProto::RecvAwayMsg(MCONTACT hContact, int mode, PROTORECVEVENT* evt
 {
 	debugLog(_T("CSametimeProto::RecvAwayMsg()  hContact=[%x], mode=[%d]"), hContact, mode);
 
-	if (evt->flags & PREF_UTF) {
-		TCHAR* pszMsg = mir_utf8decodeT(evt->szMessage);
-		ProtoBroadcastAck(hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, (HANDLE)evt->lParam, (LPARAM)pszMsg);
-		mir_free(pszMsg);
-	}
-	else ProtoBroadcastAck(hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, (HANDLE)evt->lParam, (LPARAM)(TCHAR*)_A2T(evt->szMessage));
-
+	ptrT pszMsg(mir_utf8decodeT(evt->szMessage));
+	ProtoBroadcastAck(hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, (HANDLE)evt->lParam, pszMsg);
 	return 0;
 }
 
 int CSametimeProto::SetAwayMsg(int iStatus, const PROTOCHAR* msg)
 {
-	debugLog(_T("CSametimeProto::SetAwayMsg()  iStatus=[%d], msg:len=[%d]"), iStatus, msg == NULL ? -1 : _tcslen(msg));
+	debugLog(_T("CSametimeProto::SetAwayMsg()  iStatus=[%d], msg:len=[%d]"), iStatus, msg == NULL ? -1 : mir_tstrlen(msg));
 	SetSessionAwayMessage(iStatus, msg);
 	return 0;
 }

@@ -321,7 +321,7 @@ TCHAR* Utils::FormatTitleBar(const TWindowData *dat, const TCHAR *szFormat)
 			break;
 		}
 		case 'c': {
-			TCHAR	*c = (!_tcscmp(dat->pContainer->szName, _T("default")) ? TranslateT("Default container") : dat->pContainer->szName);
+			TCHAR	*c = (!mir_tstrcmp(dat->pContainer->szName, _T("default")) ? TranslateT("Default container") : dat->pContainer->szName);
 			title.insert(tempmark + 2, c);
 			title.erase(tempmark, 2);
 			curpos = tempmark + mir_tstrlen(c);
@@ -456,7 +456,7 @@ const TCHAR* Utils::DoubleAmpersands(TCHAR *pszText)
 		}
 		break;
 	}
-	_tcscpy(pszText, text.c_str());
+	mir_tstrcpy(pszText, text.c_str());
 	return pszText;
 }
 
@@ -473,8 +473,8 @@ TCHAR* Utils::GetPreviewWithEllipsis(TCHAR *szText, size_t iMaxLen)
 	TCHAR *p = 0, cSaved;
 	bool	 fEllipsis = false;
 
-	if (_tcslen(szText) <= iMaxLen) {
-		uRequired = _tcslen(szText) + 4;
+	if (mir_tstrlen(szText) <= iMaxLen) {
+		uRequired = mir_tstrlen(szText) + 4;
 		cSaved = 0;
 	}
 	else {
@@ -1293,9 +1293,7 @@ INT_PTR CALLBACK CWarning::dlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 			str->insert(pos, L"\\line ");
 		}
 
-		char *utf8 = mir_utf8encodeT(str->c_str());
-		::SendDlgItemMessage(hwnd, IDC_WARNTEXT, EM_SETTEXTEX, (WPARAM)&stx, (LPARAM)utf8);
-		mir_free(utf8);
+		::SendDlgItemMessage(hwnd, IDC_WARNTEXT, EM_SETTEXTEX, (WPARAM)&stx, T2Utf(str->c_str()));
 		delete str;
 
 		::SetDlgItemTextW(hwnd, IDC_CAPTION, m_szTitle);

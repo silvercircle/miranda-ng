@@ -77,7 +77,7 @@ void CJabberProto::OnIqResultPrivacyList(HXML iqNode, CJabberIqInfo*)
 	if (type == NULL)
 		return;
 
-	if ( _tcscmp(type, _T("result")))
+	if ( mir_tstrcmp(type, _T("result")))
 		return;
 
 	HXML query = xmlGetChild(iqNode , "query");
@@ -104,11 +104,11 @@ void CJabberProto::OnIqResultPrivacyList(HXML iqNode, CJabberIqInfo*)
 		const TCHAR *itemType = xmlGetAttrValue(item, _T("type"));
 		PrivacyListRuleType nItemType = Else;
 		if (itemType) {
-			if (!_tcsicmp(itemType, _T("jid")))
+			if (!mir_tstrcmpi(itemType, _T("jid")))
 				nItemType = Jid;
-			else if (!_tcsicmp(itemType, _T("group")))
+			else if (!mir_tstrcmpi(itemType, _T("group")))
 				nItemType = Group;
-			else if (!_tcsicmp(itemType, _T("subscription")))
+			else if (!mir_tstrcmpi(itemType, _T("subscription")))
 				nItemType = Subscription;
 		}
 
@@ -116,7 +116,7 @@ void CJabberProto::OnIqResultPrivacyList(HXML iqNode, CJabberIqInfo*)
 
 		const TCHAR *itemAction = xmlGetAttrValue(item, _T("action"));
 		BOOL bAllow = TRUE;
-		if (itemAction && !_tcsicmp(itemAction, _T("deny")))
+		if (itemAction && !mir_tstrcmpi(itemAction, _T("deny")))
 			bAllow = FALSE;
 
 		const TCHAR *itemOrder = xmlGetAttrValue(item, _T("order"));
@@ -185,7 +185,7 @@ void CJabberProto::OnIqResultPrivacyListActive(HXML iqNode, CJabberIqInfo *pInfo
 
 	CMString szText;
 
-	if (!_tcscmp(type, _T("result"))) {
+	if (!mir_tstrcmp(type, _T("result"))) {
 		mir_cslock lck(m_privacyListManager.m_cs);
 		if (pList) {
 			m_privacyListManager.SetActiveListName(pList->GetListName());
@@ -222,7 +222,7 @@ void CJabberProto::OnIqResultPrivacyListDefault(HXML iqNode, CJabberIqInfo *pInf
 	szText[0] = 0;
 	{
 		mir_cslock lck(m_privacyListManager.m_cs);
-		if (!_tcscmp(type, _T("result"))) {
+		if (!mir_tstrcmp(type, _T("result"))) {
 			CPrivacyList *pList = (CPrivacyList *)pInfo->GetUserData();
 			if (pList) {
 				m_privacyListManager.SetDefaultListName(pList->GetListName());
@@ -1011,22 +1011,22 @@ void CJabberDlgPrivacyLists::ShowAdvancedList(CPrivacyList *pList)
 		if (!dwPackets)
 			dwPackets = JABBER_PL_RULE_TYPE_ALL;
 		if (dwPackets == JABBER_PL_RULE_TYPE_ALL)
-			_tcscpy(szPackets, _T("all"));
+			mir_tstrcpy(szPackets, _T("all"));
 		else {
 			if (dwPackets & JABBER_PL_RULE_TYPE_MESSAGE)
 				_tcscat(szPackets, _T("messages"));
 			if (dwPackets & JABBER_PL_RULE_TYPE_PRESENCE_IN) {
-				if (_tcslen(szPackets))
+				if (mir_tstrlen(szPackets))
 					_tcscat(szPackets, _T(", "));
 				_tcscat(szPackets, _T("presence-in"));
 			}
 			if (dwPackets & JABBER_PL_RULE_TYPE_PRESENCE_OUT) {
-				if (_tcslen(szPackets))
+				if (mir_tstrlen(szPackets))
 					_tcscat(szPackets, _T(", "));
 				_tcscat(szPackets, _T("presence-out"));
 			}
 			if (dwPackets & JABBER_PL_RULE_TYPE_IQ) {
-				if (_tcslen(szPackets))
+				if (mir_tstrlen(szPackets))
 					_tcscat(szPackets, _T(", "));
 				_tcscat(szPackets, _T("queries"));
 			}
@@ -1837,7 +1837,7 @@ void CJabberDlgPrivacyLists::btnAddList_OnClick(CCtrlButton*)
 	// FIXME: line length is hard coded in dialog procedure
 	CJabberDlgPrivacyAddList dlgPrivacyAddList(m_proto, m_hwnd);
 	int nRetVal = dlgPrivacyAddList.DoModal();
-	if (nRetVal && _tcslen(dlgPrivacyAddList.szLine)) {
+	if (nRetVal && mir_tstrlen(dlgPrivacyAddList.szLine)) {
 		mir_cslockfull lck(m_proto->m_privacyListManager.m_cs);
 	
 		CPrivacyList *pList = m_proto->m_privacyListManager.FindList(dlgPrivacyAddList.szLine);
@@ -1870,8 +1870,8 @@ void CJabberDlgPrivacyLists::btnRemoveList_OnClick(CCtrlButton *)
 	CPrivacyList *pList = GetSelectedList(m_hwnd);
 	if (pList) {
 		TCHAR *szListName = pList->GetListName();
-		if ((m_proto->m_privacyListManager.GetActiveListName() && !_tcscmp(szListName, m_proto->m_privacyListManager.GetActiveListName())) ||
-			 (m_proto->m_privacyListManager.GetDefaultListName() && !_tcscmp(szListName, m_proto->m_privacyListManager.GetDefaultListName())))
+		if ((m_proto->m_privacyListManager.GetActiveListName() && !mir_tstrcmp(szListName, m_proto->m_privacyListManager.GetActiveListName())) ||
+			 (m_proto->m_privacyListManager.GetDefaultListName() && !mir_tstrcmp(szListName, m_proto->m_privacyListManager.GetDefaultListName())))
 		{
 			lck.unlock();
 			MessageBox(m_hwnd, TranslateT("Can't remove active or default list"), TranslateT("Sorry"), MB_OK | MB_ICONSTOP);
@@ -2121,7 +2121,7 @@ void CJabberProto::BuildPrivacyListsMenu(bool bDeleteOld)
 
 	mir_cslock lck(m_privacyListManager.m_cs);
 
-	char srvFce[MAX_PATH + 64], *svcName = srvFce + strlen(m_szModuleName);
+	char srvFce[MAX_PATH + 64], *svcName = srvFce + mir_strlen(m_szModuleName);
 
 	CLISTMENUITEM mi = { sizeof(mi) };
 	mi.position = 2000040000;

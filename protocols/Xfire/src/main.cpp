@@ -274,7 +274,7 @@ void XFireClient::handlingBuddy(MCONTACT handle)
 }
 
 void XFireClient::setNick(char*nnick) {
-	/*if (strlen(nnick)==0)
+	/*if (mir_strlen(nnick)==0)
 		return;*/
 	SendNickChangePacket nick;
 	nick.nick = nnick;
@@ -284,7 +284,7 @@ void XFireClient::setNick(char*nnick) {
 
 void XFireClient::sendmsg(char*usr, char*cmsg) {
 	SendMessagePacket msg;
-	//	if (strlen(cmsg)>255)
+	//	if (mir_strlen(cmsg)>255)
 	//		*(cmsg+255)=0;
 	msg.init(client, usr, cmsg);
 	client->send(&msg);
@@ -715,12 +715,11 @@ void XFireClient::receivedPacket(XFirePacket *packet) {
 			{
 				str = ((MessagePacket*)content)->getMessage();
 
+				CallService(MS_PROTO_CONTACTISTYPING, (WPARAM)entry->hcontact, PROTOTYPE_CONTACTTYPING_OFF);
+
 				PROTORECVEVENT pre = { 0 };
 				pre.timestamp = time(NULL);
 				pre.szMessage = (char*)str.c_str();
-				pre.flags = PREF_UTF;
-
-				CallService(MS_PROTO_CONTACTISTYPING, (WPARAM)entry->hcontact, PROTOTYPE_CONTACTTYPING_OFF);
 				ProtoChainRecvMsg(entry->hcontact, &pre);
 			}
 		}
@@ -830,7 +829,7 @@ INT_PTR UrlCall(WPARAM wparam, LPARAM lparam) {
 				//abschneiden
 				*q = 0;
 				//ein addfriend url request?
-				if (strcmp("add_friend", type) == 0)
+				if (mir_strcmp("add_friend", type) == 0)
 				{
 					q++;
 					//nach = suchen
@@ -841,12 +840,12 @@ INT_PTR UrlCall(WPARAM wparam, LPARAM lparam) {
 						*g = 0;
 						g++;
 						//user parameter?
-						if (strcmp("user", q) == 0)
+						if (mir_strcmp("user", q) == 0)
 						{
 							//tempbuffer für die frage and en user
 							char temp[100];
 
-							if (strlen(g) > 25) //zugroße abschneiden
+							if (mir_strlen(g) > 25) //zugroße abschneiden
 								*(g + 25) = 0;
 
 							mir_snprintf(temp, SIZEOF(temp), Translate("Do you really want to add %s to your friend list?"), g);
@@ -1046,7 +1045,7 @@ extern "C" __declspec(dllexport) int  Load(void)
 	XDEBUGS("-----------------------------------------------------\n");
 
 	//statusmessages setzen
-	strcpy(statusmessage[0], "");
+	mir_strcpy(statusmessage[0], "");
 	mir_snprintf(statusmessage[1], SIZEOF(statusmessage[1]), "(AFK) %s", Translate("Away from Keyboard"));
 
 	HookEvent(ME_OPT_INITIALISE, OptInit);
@@ -1124,7 +1123,7 @@ extern "C" __declspec(dllexport) int  Load(void)
 	char servicefunction[100];
 
 	//gotoprofilemenüpunkt
-	strcpy(servicefunction, protocolname);
+	mir_strcpy(servicefunction, protocolname);
 	strcat(servicefunction, "GotoProfile");
 	CreateServiceFunction(servicefunction, GotoProfile);
 	mi.pszService = servicefunction;
@@ -1135,7 +1134,7 @@ extern "C" __declspec(dllexport) int  Load(void)
 	Menu_AddContactMenuItem(&mi);
 
 	//gotoxfireclansitemenüpunkt
-	strcpy(servicefunction, protocolname);
+	mir_strcpy(servicefunction, protocolname);
 	strcat(servicefunction, "GotoXFireClanSite");
 	CreateServiceFunction(servicefunction, GotoXFireClanSite);
 	mi.pszService = servicefunction;
@@ -1146,7 +1145,7 @@ extern "C" __declspec(dllexport) int  Load(void)
 	gotoclansite = Menu_AddContactMenuItem(&mi);
 
 	//kopiermenüpunkt
-	strcpy(servicefunction, protocolname);
+	mir_strcpy(servicefunction, protocolname);
 	strcat(servicefunction, "GetIPPort");
 	CreateServiceFunction(servicefunction, GetIPPort);
 	mi.pszService = servicefunction;
@@ -1157,7 +1156,7 @@ extern "C" __declspec(dllexport) int  Load(void)
 	copyipport = Menu_AddContactMenuItem(&mi);
 
 	//kopiermenüpunkt
-	strcpy(servicefunction, protocolname);
+	mir_strcpy(servicefunction, protocolname);
 	strcat(servicefunction, "VoiceIPPort");
 	CreateServiceFunction(servicefunction, GetVIPPort);
 	mi.pszService = servicefunction;
@@ -1168,7 +1167,7 @@ extern "C" __declspec(dllexport) int  Load(void)
 	vipport = Menu_AddContactMenuItem(&mi);
 
 	//joinmenüpunkt
-	strcpy(servicefunction, protocolname);
+	mir_strcpy(servicefunction, protocolname);
 	strcat(servicefunction, "JoinGame");
 	CreateServiceFunction(servicefunction, JoinGame);
 	mi.pszService = servicefunction;
@@ -1179,7 +1178,7 @@ extern "C" __declspec(dllexport) int  Load(void)
 	joingame = Menu_AddContactMenuItem(&mi);
 
 	//joinmenüpunkt
-	strcpy(servicefunction, protocolname);
+	mir_strcpy(servicefunction, protocolname);
 	strcat(servicefunction, "StartThisGame");
 	CreateServiceFunction(servicefunction, StartThisGame);
 	mi.pszService = servicefunction;
@@ -1190,7 +1189,7 @@ extern "C" __declspec(dllexport) int  Load(void)
 	startthisgame = Menu_AddContactMenuItem(&mi);
 
 	//remove friend
-	strcpy(servicefunction, protocolname);
+	mir_strcpy(servicefunction, protocolname);
 	strcat(servicefunction, "RemoveFriend");
 	CreateServiceFunction(servicefunction, RemoveFriend);
 	mi.pszService = servicefunction;
@@ -1201,7 +1200,7 @@ extern "C" __declspec(dllexport) int  Load(void)
 	removefriend = Menu_AddContactMenuItem(&mi);
 
 	//block user
-	strcpy(servicefunction, protocolname);
+	mir_strcpy(servicefunction, protocolname);
 	strcat(servicefunction, "BlockFriend");
 	CreateServiceFunction(servicefunction, BlockFriend);
 	mi.pszService = servicefunction;
@@ -1212,7 +1211,7 @@ extern "C" __declspec(dllexport) int  Load(void)
 	blockfriend = Menu_AddContactMenuItem(&mi);
 
 	//my fire profile
-	strcpy(servicefunction, protocolname);
+	mir_strcpy(servicefunction, protocolname);
 	strcat(servicefunction, "GotoProfile2");
 	CreateServiceFunction(servicefunction, GotoProfile2);
 	mi.pszService = servicefunction;
@@ -1223,7 +1222,7 @@ extern "C" __declspec(dllexport) int  Load(void)
 	Menu_AddMainMenuItem(&mi);
 
 	//my activity protocol
-	strcpy(servicefunction, protocolname);
+	mir_strcpy(servicefunction, protocolname);
 	strcat(servicefunction, "GotoProfileAct");
 	CreateServiceFunction(servicefunction, GotoProfileAct);
 	mi.pszService = servicefunction;
@@ -1234,7 +1233,7 @@ extern "C" __declspec(dllexport) int  Load(void)
 	Menu_AddMainMenuItem(&mi);
 
 	//rescan my games
-	strcpy(servicefunction, protocolname);
+	mir_strcpy(servicefunction, protocolname);
 	strcat(servicefunction, "ReScanMyGames");
 	CreateServiceFunction(servicefunction, ReScanMyGames);
 	mi.pszService = servicefunction;
@@ -1244,7 +1243,7 @@ extern "C" __declspec(dllexport) int  Load(void)
 	mi.ptszName = LPGENT("&Rescan my games...");
 	Menu_AddMainMenuItem(&mi);
 
-	strcpy(servicefunction, protocolname);
+	mir_strcpy(servicefunction, protocolname);
 	strcat(servicefunction, "SetNick");
 	CreateServiceFunction(servicefunction, SetNickDlg);
 	mi.pszService = servicefunction;
@@ -1602,10 +1601,10 @@ MCONTACT CList_AddContact(XFireContact xfc, bool InList, bool SetOnline, int cla
 			db_set_b(hContact, "CList", "NotOnList", 1);
 		db_unset(hContact, "CList", "Hidden");
 
-		if (strlen(xfc.nick) > 0) {
+		if (mir_strlen(xfc.nick) > 0) {
 			db_set_utf(hContact, protocolname, "Nick", xfc.nick);
 		}
-		else if (strlen(xfc.username) > 0) {
+		else if (mir_strlen(xfc.username) > 0) {
 			db_set_s(hContact, protocolname, "Nick", xfc.username);
 		}
 
@@ -1625,8 +1624,8 @@ MCONTACT CList_AddContact(XFireContact xfc, bool InList, bool SetOnline, int cla
 			{
 				XFire_SetAvatar* xsa = new XFire_SetAvatar;
 				xsa->hContact = hContact;
-				xsa->username = new char[strlen(xfc.username) + 1];
-				strcpy(xsa->username, xfc.username);
+				xsa->username = new char[mir_strlen(xfc.username) + 1];
+				mir_strcpy(xsa->username, xfc.username);
 				mir_forkthread(SetAvatar, (LPVOID)xsa);
 			}
 			else
@@ -1876,7 +1875,7 @@ BOOL GetAvatar(char* username, XFireAvatar* av)
 					if (pos)
 					{
 						char filename[512];
-						strcpy(filename, XFireGetFoldersPath("Avatar"));
+						mir_strcpy(filename, XFireGetFoldersPath("Avatar"));
 						strcat(filename, username);
 
 						pos++;
@@ -1926,9 +1925,9 @@ static INT_PTR GetIPPort(WPARAM hContact, LPARAM lParam)
 	if (OpenClipboard(NULL)) {
 		EmptyClipboard();
 
-		HGLOBAL clipbuffer = GlobalAlloc(GMEM_DDESHARE, strlen(temp) + 1);
+		HGLOBAL clipbuffer = GlobalAlloc(GMEM_DDESHARE, mir_strlen(temp) + 1);
 		char *buffer = (char*)GlobalLock(clipbuffer);
-		strcpy(buffer, LPCSTR(temp));
+		mir_strcpy(buffer, LPCSTR(temp));
 		GlobalUnlock(clipbuffer);
 
 		SetClipboardData(CF_TEXT, clipbuffer);
@@ -1954,9 +1953,9 @@ static INT_PTR GetVIPPort(WPARAM hContact, LPARAM lParam)
 	if (OpenClipboard(NULL)) {
 		EmptyClipboard();
 
-		HGLOBAL clipbuffer = GlobalAlloc(GMEM_DDESHARE, strlen(temp) + 1);
+		HGLOBAL clipbuffer = GlobalAlloc(GMEM_DDESHARE, mir_strlen(temp) + 1);
 		char *buffer = (char*)GlobalLock(clipbuffer);
-		strcpy(buffer, LPCSTR(temp));
+		mir_strcpy(buffer, LPCSTR(temp));
 		GlobalUnlock(clipbuffer);
 
 		SetClipboardData(CF_TEXT, clipbuffer);
@@ -1973,7 +1972,7 @@ static INT_PTR GotoProfile(WPARAM hContact, LPARAM lParam)
 		return 0;
 
 	char temp[64];
-	strcpy(temp, "http://xfire.com/profile/");
+	mir_strcpy(temp, "http://xfire.com/profile/");
 	strcat_s(temp, 64, dbv.pszVal);
 	db_free(&dbv);
 
@@ -1993,7 +1992,7 @@ static INT_PTR GotoXFireClanSite(WPARAM hContact, LPARAM lParam)
 	if (db_get_s(NULL, protocolname, temp, &dbv))
 		return 0;
 
-	strcpy(temp, "http://xfire.com/clans/");
+	mir_strcpy(temp, "http://xfire.com/clans/");
 	strcat_s(temp, 64, dbv.pszVal);
 	db_free(&dbv);
 
@@ -2009,7 +2008,7 @@ static INT_PTR GotoProfile2(WPARAM wParam, LPARAM lParam)
 		return 0;
 
 	char temp[64];
-	strcpy(temp, "http://xfire.com/profile/");
+	mir_strcpy(temp, "http://xfire.com/profile/");
 	strcat_s(temp, 64, dbv.pszVal);
 	db_free(&dbv);
 
@@ -2025,7 +2024,7 @@ static INT_PTR GotoProfileAct(WPARAM wParam, LPARAM lParam)
 	if (db_get_s(NULL, protocolname, "login", &dbv))
 		return 0;
 
-	strcpy(temp, "http://www.xfire.com/?username=");
+	mir_strcpy(temp, "http://www.xfire.com/?username=");
 	strcat_s(temp, 64, dbv.pszVal);
 	db_free(&dbv);
 
@@ -2613,8 +2612,8 @@ if (db_get(entry->hcontact,"ContactPhoto", "File",&dbv))
 {
 XFire_SetAvatar* xsa=new XFire_SetAvatar;
 xsa->hContact=entry->hcontact;
-xsa->username=new char[strlen(entry->username.c_str())+1];
-strcpy(xsa->username,entry->username.c_str());
+xsa->username=new char[mir_strlen(entry->username.c_str())+1];
+mir_strcpy(xsa->username,entry->username.c_str());
 
 mir_forkthread(SetAvatar,(LPVOID)xsa);
 }
@@ -2704,7 +2703,7 @@ MCONTACT handlingBuddys(BuddyListEntry *entry, int clan, char*group, BOOL dontsc
 
 			DummyXFireGame *gameob;
 
-			if (strlen(entry->gameinfo.c_str()) > 0)
+			if (mir_strlen(entry->gameinfo.c_str()) > 0)
 				db_set_s(hContact, protocolname, "GameInfo", entry->gameinfo.c_str());
 
 			//beim voicechat foglendes machn
@@ -2791,7 +2790,7 @@ MCONTACT handlingBuddys(BuddyListEntry *entry, int clan, char*group, BOOL dontsc
 					if (entry->lastpopup == NULL)
 					{
 						//größe des popupstrings
-						int size = strlen(temp) + 1;
+						int size = mir_strlen(temp) + 1;
 						//popup darstellen
 						displayPopup(NULL, temp, PLUGIN_TITLE, 0, hicongame);
 						//letzten popup definieren
@@ -2801,13 +2800,13 @@ MCONTACT handlingBuddys(BuddyListEntry *entry, int clan, char*group, BOOL dontsc
 					}
 					else
 					{
-						if (strcmp(entry->lastpopup, temp) != 0)
+						if (mir_strcmp(entry->lastpopup, temp) != 0)
 						{
 							delete[] entry->lastpopup;
 							entry->lastpopup = NULL;
 
 							//größe des popupstrings
-							int size = strlen(temp) + 1;
+							int size = mir_strlen(temp) + 1;
 							//popup darstellen
 							displayPopup(NULL, temp, PLUGIN_TITLE, 0, hicongame);
 							//letzten popup definieren
@@ -3127,7 +3126,7 @@ INT_PTR SetAwayMsg(WPARAM wParam, LPARAM lParam)
 	{
 		if (wParam == ID_STATUS_ONLINE)
 		{
-			strcpy(statusmessage[0], "");
+			mir_strcpy(statusmessage[0], "");
 		}
 		else if (wParam != ID_STATUS_OFFLINE/*&&db_get_b(NULL,protocolname,"nocustomaway",0)==0*/)
 		{
@@ -3138,12 +3137,12 @@ INT_PTR SetAwayMsg(WPARAM wParam, LPARAM lParam)
 	{
 		if (wParam == ID_STATUS_ONLINE)
 		{
-			strcpy(statusmessage[0], (char*)lParam);
+			mir_strcpy(statusmessage[0], (char*)lParam);
 		}
 		else if (wParam != ID_STATUS_OFFLINE) {
-			if (db_get_b(NULL, protocolname, "nocustomaway", 0) == 0 && strlen((char*)lParam) > 0) {
+			if (db_get_b(NULL, protocolname, "nocustomaway", 0) == 0 && mir_strlen((char*)lParam) > 0) {
 				mir_snprintf(statusmessage[1], SIZEOF(statusmessage[1]), "(AFK) %s", (char*)lParam);
-				//strcpy(statusmessage[1],( char* )lParam);
+				//mir_strcpy(statusmessage[1],( char* )lParam);
 			}
 			else
 				mir_snprintf(statusmessage[1], SIZEOF(statusmessage[1]), "(AFK) %s", Translate("Away from Keyboard"));

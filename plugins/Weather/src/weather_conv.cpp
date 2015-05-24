@@ -84,15 +84,15 @@ void GetTemp(TCHAR *tempchar, TCHAR *unit, TCHAR* str)
 
 	TrimString(tempchar);
 	if (tempchar[0] == '-' && tempchar[1] == ' ')
-		memmove(&tempchar[1], &tempchar[2], sizeof(TCHAR)*(_tcslen(&tempchar[2])+1));
+		memmove(&tempchar[1], &tempchar[2], sizeof(TCHAR)*(mir_tstrlen(&tempchar[2])+1));
 
 	// quit if the value obtained is N/A or not a number
-	if ( !_tcscmp(tempchar, NODATA) || !_tcscmp(tempchar, _T("N/A"))) {
-		_tcscpy(str, tempchar);
+	if ( !mir_tstrcmp(tempchar, NODATA) || !mir_tstrcmp(tempchar, _T("N/A"))) {
+		mir_tstrcpy(str, tempchar);
 		return;
 	}
 	if ( !is_number(tempchar)) {
-		_tcscpy(str, NODATA);
+		mir_tstrcpy(str, NODATA);
 		return;
 	}
 
@@ -100,8 +100,8 @@ void GetTemp(TCHAR *tempchar, TCHAR *unit, TCHAR* str)
 	temp = _ttof(tempchar);
 
 	// convert all to F first
-	if ( !_tcsicmp(unit, _T("C")))		temp = (temp*9/5)+32;
-	else if ( !_tcsicmp(unit, _T("K")))	temp = ((temp-273.15)*9/5)+32;
+	if ( !mir_tstrcmpi(unit, _T("C")))		temp = (temp*9/5)+32;
+	else if ( !mir_tstrcmpi(unit, _T("K")))	temp = ((temp-273.15)*9/5)+32;
 
 	// convert to apporiate unit
 	switch (opt.tUnit) {
@@ -138,22 +138,22 @@ void GetPressure(TCHAR *tempchar, TCHAR *unit, TCHAR* str)
 	// if it end up with 0, then it's not a number, return the original string and quit
 	output = _ttof(tempchar);
 	if (output == 0) {
-		_tcscpy(str, tempchar); 
+		mir_tstrcpy(str, tempchar); 
 		return;
 	}
 
 	// convert all to mb first
-	if ( !_tcsicmp(unit, _T("KPA")))
+	if ( !mir_tstrcmpi(unit, _T("KPA")))
 		tempunit = (double)output * 10;
-	else if ( !_tcsicmp(unit, _T("HPA")))
+	else if ( !mir_tstrcmpi(unit, _T("HPA")))
 		tempunit = (double)output;
-	else if ( !_tcsicmp(unit, _T("MB")))
+	else if ( !mir_tstrcmpi(unit, _T("MB")))
 		tempunit = (double)output;
-	else if ( !_tcsicmp(unit, _T("IN")))
+	else if ( !mir_tstrcmpi(unit, _T("IN")))
 		tempunit = (double)output * 33.86388;
-	else if ( !_tcsicmp(unit, _T("MM")))
+	else if ( !mir_tstrcmpi(unit, _T("MM")))
 		tempunit = (double)output * 1.33322;
-	else if ( !_tcsicmp(unit, _T("TORR")))
+	else if ( !mir_tstrcmpi(unit, _T("TORR")))
 		tempunit = (double)output * 1.33322;
 
 	// convert to apporiate unit
@@ -175,7 +175,7 @@ void GetPressure(TCHAR *tempchar, TCHAR *unit, TCHAR* str)
 		mir_sntprintf(str, MAX_DATA_LEN, _T("%i.%i %s"), intunit/10, intunit%10, opt.DoNotAppendUnit ? _T("") : TranslateT("mm"));
 		break;
 	default:
-		_tcscpy(str, tempchar); 
+		mir_tstrcpy(str, tempchar); 
 		break;
 
 	}
@@ -200,13 +200,13 @@ void GetSpeed(TCHAR *tempchar, TCHAR *unit, TCHAR *str)
 		return;
 
 	// convert all to m/s first
-	if ( !_tcsicmp(unit, _T("KM/H")))
+	if ( !mir_tstrcmpi(unit, _T("KM/H")))
 		tempunit /= 3.6;
-//	else if ( !_tcsicmp(unit, _T("M/S"))
+//	else if ( !mir_tstrcmpi(unit, _T("M/S"))
 //		tempunit = tempunit;
-	else if ( !_tcsicmp(unit, _T("MPH")))
+	else if ( !mir_tstrcmpi(unit, _T("MPH")))
 		tempunit *= 0.44704;
-	else if ( !_tcsicmp(unit, _T("KNOTS")))
+	else if ( !mir_tstrcmpi(unit, _T("KNOTS")))
 		tempunit *= 0.514444;
 
 	// convert to apporiate unit
@@ -244,14 +244,14 @@ void GetDist(TCHAR *tempchar, TCHAR *unit, TCHAR *str)
 	// if it end up with 0, then it's not a number, return the original string and quit
 	output = _ttof(tempchar);
 	if (output == 0) {
-		_tcscpy(str, tempchar);
+		mir_tstrcpy(str, tempchar);
 		return;
 	}
 
 	// convert all to km first
-	if ( !_tcsicmp(unit, _T("KM")))
+	if ( !mir_tstrcmpi(unit, _T("KM")))
 		tempunit = (double)output;
-	else if ( !_tcsicmp(unit, _T("MILES")))
+	else if ( !mir_tstrcmpi(unit, _T("MILES")))
 		tempunit = (double)output * 1.609;
 
 	// convert to apporiate unit
@@ -265,7 +265,7 @@ void GetDist(TCHAR *tempchar, TCHAR *unit, TCHAR *str)
 		mir_sntprintf(str, MAX_DATA_LEN, _T("%i.%i %s"), intunit/10, intunit%10, opt.DoNotAppendUnit ? _T("") : TranslateT("miles"));
 		break;
 	default:
-		_tcscpy(str, tempchar);
+		mir_tstrcpy(str, tempchar);
 		break;
 	}
 }
@@ -284,14 +284,14 @@ void GetElev(TCHAR *tempchar, TCHAR *unit, TCHAR *str)
 	// if it end up with 0, then it's not a number, return the original string and quit
 	output = _ttof(tempchar);
 	if (output == 0) {
-		_tcscpy(str, tempchar);
+		mir_tstrcpy(str, tempchar);
 		return;
 	}
 
 	// convert all to m first
-	if ( !_tcsicmp(unit, _T("M")))
+	if ( !mir_tstrcmpi(unit, _T("M")))
 		tempunit = (double)output;
-	else if ( !_tcsicmp(unit, _T("FT")))
+	else if ( !mir_tstrcmpi(unit, _T("FT")))
 		tempunit = (double)output / 3.28;
 
 	// convert to apporiate unit
@@ -305,7 +305,7 @@ void GetElev(TCHAR *tempchar, TCHAR *unit, TCHAR *str)
 		mir_sntprintf(str, MAX_DATA_LEN, _T("%i.%i %s"), intunit/10, intunit%10, opt.DoNotAppendUnit ? _T("") : TranslateT("m"));
 		break;
 	default:
-		_tcscpy(str, tempchar);
+		mir_tstrcpy(str, tempchar);
 		break;
 	}
 }
@@ -395,12 +395,12 @@ WORD GetIcon(const TCHAR* cond, WIDATA *Data)
 			// using the format _T("# Weather <condition name> <counter> #"
 			mir_sntprintf(LangPackStr, SIZEOF(LangPackStr), _T("# Weather %s %i #"), statusStr[i], j);
 			_tcsncpy_s(LangPackStr1, TranslateTS(LangPackStr), _TRUNCATE);
-			CharLowerBuff(LangPackStr1, (DWORD)_tcslen(LangPackStr1));
+			CharLowerBuff(LangPackStr1, (DWORD)mir_tstrlen(LangPackStr1));
 			if (_tcsstr(cond, LangPackStr1) != NULL)
 				return statusValue[i];
 			// loop until the translation string exists (ie, the translated string is differ from original)
 		} 
-			while (_tcscmp(TranslateTS(LangPackStr), LangPackStr));
+			while (mir_tstrcmp(TranslateTS(LangPackStr), LangPackStr));
 	}
 
 	return NA;
@@ -414,7 +414,7 @@ void CaseConv(TCHAR *str)
 	TCHAR *pstr;
 	BOOL nextUp = TRUE;
 
-	CharLowerBuff(str, (DWORD)_tcslen(str));
+	CharLowerBuff(str, (DWORD)mir_tstrlen(str));
 	for(pstr = str; *pstr; pstr++) {
 		if (*pstr == ' ' || *pstr == '-')
 			nextUp = TRUE;
@@ -432,7 +432,7 @@ void TrimString(char *str)
 {
 	size_t len, start;
 
-	len = strlen(str);
+	len = mir_strlen(str);
 	while(len && (unsigned char)str[len-1] <= ' ') str[--len] = 0;
 	for(start=0; (unsigned char)str[start] <= ' ' && str[start]; start++);
 	memmove(str, str+start, len-start+1);
@@ -458,7 +458,7 @@ void ConvertBackslashes(char *str)
 				case 't': *pstr = '\t'; break;
 				default: *pstr = pstr[1]; break;
 			}
-			memmove(pstr+1, pstr+2, strlen(pstr+2)+1);
+			memmove(pstr+1, pstr+2, mir_strlen(pstr+2)+1);
 }	}	}
 
 // replace spaces with _T("%20"
@@ -467,7 +467,7 @@ void ConvertBackslashes(char *str)
 char *GetSearchStr(char *dis) 
 {
 	char *pstr = dis;
-	size_t len = strlen(dis);
+	size_t len = mir_strlen(dis);
 	while (*pstr != 0)
 	{
 		if (*pstr == ' ')
@@ -499,7 +499,7 @@ TCHAR* GetDisplay(WEATHERINFO *w, const TCHAR *dis, TCHAR* str)
 	str[0] = 0;
 
 	// looking character by character
-	for (i=0; i < _tcslen(dis); i++) {
+	for (i=0; i < mir_tstrlen(dis); i++) {
 		// for the escape characters
 		if (dis[i] == '\\') {
 			i++;
@@ -536,7 +536,7 @@ TCHAR* GetDisplay(WEATHERINFO *w, const TCHAR *dis, TCHAR* str)
 			case 's': _tcscat(str, w->id); break;
 			case 't': _tcscat(str, w->temp); break;
 			case 'u':
-				if (_tcscmp(w->update, NODATA))	_tcscat(str, w->update);
+				if (mir_tstrcmp(w->update, NODATA))	_tcscat(str, w->update);
 				else	_tcscat(str, TranslateT("<unknown time>"));
 				break;
 			case 'v': _tcscat(str, w->vis); break;
@@ -547,7 +547,7 @@ TCHAR* GetDisplay(WEATHERINFO *w, const TCHAR *dis, TCHAR* str)
 				i++;
 				name[0] = 0;
 				// read the entire variable name
-				while (dis[i] != ']' && i < _tcslen(dis)) {
+				while (dis[i] != ']' && i < mir_tstrlen(dis)) {
 					mir_snprintf(temp, SIZEOF(temp), "%c", dis[i++]);
 					strcat(name, temp);
 				}
@@ -594,7 +594,7 @@ void GetSvc(TCHAR *pszID)
 void GetID(TCHAR *pszID) 
 {
 	TCHAR *chop = _tcsstr(pszID, _T("/"));
-	if (chop != NULL)	_tcscpy(pszID, chop+1);
+	if (chop != NULL)	mir_tstrcpy(pszID, chop+1);
 	else				pszID[0] = 0;
 }
 

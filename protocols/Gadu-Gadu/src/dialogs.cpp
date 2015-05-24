@@ -190,11 +190,11 @@ void GGPROTO::checknewuser(uin_t uin, const char* passwd)
 	oldpasswd[0] = '\0';
 	if (!getString(GG_KEY_PASSWORD, &dbv))
 	{
-		if (dbv.pszVal) strcpy(oldpasswd, dbv.pszVal);
+		if (dbv.pszVal) mir_strcpy(oldpasswd, dbv.pszVal);
 		db_free(&dbv);
 	}
 
-	if (uin > 0 && strlen(passwd) > 0 && (uin != olduin || strcmp(oldpasswd, passwd)))
+	if (uin > 0 && mir_strlen(passwd) > 0 && (uin != olduin || mir_strcmp(oldpasswd, passwd)))
 		check_first_conn = 1;
 }
 
@@ -340,7 +340,7 @@ static INT_PTR CALLBACK gg_genoptsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 				GetDlgItemTextA(hwndDlg, IDC_UIN, email, SIZEOF(email));
 				uin = atoi(email);
 				GetDlgItemTextA(hwndDlg, IDC_EMAIL, email, SIZEOF(email));
-				if (!strlen(email))
+				if (!mir_strlen(email))
 					MessageBox(NULL, TranslateT("You need to specify your registration e-mail first."),
 					gg->m_tszUserName, MB_OK | MB_ICONEXCLAMATION);
 				else if (MessageBox(NULL,
@@ -832,32 +832,20 @@ static INT_PTR CALLBACK gg_detailsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 			req = gg_pubdir50_new(GG_PUBDIR50_WRITE);
 
 			GetDlgItemText(hwndDlg, IDC_FIRSTNAME, text, SIZEOF(text));
-			if (_tcslen(text)){
-				char* text_utf8 = mir_utf8encodeT(text);
-				gg_pubdir50_add(req, GG_PUBDIR50_FIRSTNAME, text_utf8);
-				mir_free(text_utf8);
-			}
+			if (mir_tstrlen(text))
+				gg_pubdir50_add(req, GG_PUBDIR50_FIRSTNAME, T2Utf(text));
 
 			GetDlgItemText(hwndDlg, IDC_LASTNAME, text, SIZEOF(text));
-			if (_tcslen(text)){
-				char* text_utf8 = mir_utf8encodeT(text);
-				gg_pubdir50_add(req, GG_PUBDIR50_LASTNAME, text_utf8);
-				mir_free(text_utf8);
-			}
+			if (mir_tstrlen(text))
+				gg_pubdir50_add(req, GG_PUBDIR50_LASTNAME, T2Utf(text));
 
 			GetDlgItemText(hwndDlg, IDC_NICKNAME, text, SIZEOF(text));
-			if (_tcslen(text)){
-				char* text_utf8 = mir_utf8encodeT(text);
-				gg_pubdir50_add(req, GG_PUBDIR50_NICKNAME, text_utf8);
-				mir_free(text_utf8);
-			}
+			if (mir_tstrlen(text))
+				gg_pubdir50_add(req, GG_PUBDIR50_NICKNAME, T2Utf(text));
 
 			GetDlgItemText(hwndDlg, IDC_CITY, text, SIZEOF(text));
-			if (_tcslen(text)){
-				char* text_utf8 = mir_utf8encodeT(text);
-				gg_pubdir50_add(req, GG_PUBDIR50_CITY, text_utf8);
-				mir_free(text_utf8);
-			}
+			if (mir_tstrlen(text))
+				gg_pubdir50_add(req, GG_PUBDIR50_CITY, T2Utf(text));
 
 			// Gadu-Gadu Female <-> Male
 			switch(SendDlgItemMessage(hwndDlg, IDC_GENDER, CB_GETCURSEL, 0, 0)) {
@@ -872,25 +860,16 @@ static INT_PTR CALLBACK gg_detailsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 			}
 
 			GetDlgItemText(hwndDlg, IDC_BIRTHYEAR, text, SIZEOF(text));
-			if (_tcslen(text)){
-				char* text_utf8 = mir_utf8encodeT(text);
-				gg_pubdir50_add(req, GG_PUBDIR50_BIRTHYEAR, text_utf8);
-				mir_free(text_utf8);
-			}
+			if (mir_tstrlen(text))
+				gg_pubdir50_add(req, GG_PUBDIR50_BIRTHYEAR, T2Utf(text));
 
 			GetDlgItemText(hwndDlg, IDC_FAMILYNAME, text, SIZEOF(text));
-			if (_tcslen(text)){
-				char* text_utf8 = mir_utf8encodeT(text);
-				gg_pubdir50_add(req, GG_PUBDIR50_FAMILYNAME, text_utf8);
-				mir_free(text_utf8);
-			}
+			if (mir_tstrlen(text))
+				gg_pubdir50_add(req, GG_PUBDIR50_FAMILYNAME, T2Utf(text));
 
 			GetDlgItemText(hwndDlg, IDC_CITYORIGIN, text, SIZEOF(text));
-			if (_tcslen(text)){
-				char* text_utf8 = mir_utf8encodeT(text);
-				gg_pubdir50_add(req, GG_PUBDIR50_FAMILYCITY, text_utf8);
-				mir_free(text_utf8);
-			}
+			if (mir_tstrlen(text))
+				gg_pubdir50_add(req, GG_PUBDIR50_FAMILYCITY, T2Utf(text));
 
 			// Run update
 			gg_pubdir50_seq_set(req, GG_SEQ_CHINFO);
@@ -928,7 +907,7 @@ int GGPROTO::details_init(WPARAM wParam, LPARAM lParam)
 		char* szProto = GetContactProto(hContact);
 		if (szProto == NULL)
 			return 0;
-		if (strcmp(szProto, m_szModuleName) || isChatRoom(hContact))
+		if (mir_strcmp(szProto, m_szModuleName) || isChatRoom(hContact))
 			return 0;
 		pszTemplate = MAKEINTRESOURCEA(IDD_INFO_GG);
 	}

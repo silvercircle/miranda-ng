@@ -122,7 +122,7 @@ int StatusMsgReq(WPARAM wParam, LPARAM lParam, CString &szProto)
 		if (db_get_dw(hContact, szCurProto, "UIN", 0) == lParam) {
 			szFoundProto = szCurProto;
 			hFoundContact = hContact;
-			if (!strcmp(szCurProto, szProto))
+			if (!mir_strcmp(szCurProto, szProto))
 				break;
 		}
 	}
@@ -353,7 +353,7 @@ int PreBuildContactMenu(WPARAM hContact, LPARAM)
 static int DBSettingChanged(WPARAM hContact, LPARAM lParam)
 {
 	DBCONTACTWRITESETTING *cws = (DBCONTACTWRITESETTING*)lParam;
-	if (hContact != NULL && !strcmp(cws->szSetting, "Status"))
+	if (hContact != NULL && !mir_strcmp(cws->szSetting, "Status"))
 		db_set_w(hContact, "UserOnline", "OldStatus", cws->value.wVal);
 	
 	return 0;
@@ -537,7 +537,7 @@ INT_PTR srvVariablesHandler(WPARAM, LPARAM lParam)
 		TreeCtrl->DBToMem(CString(MOD_NAME));
 
 		for (int i = 0; i < TreeCtrl->Value.GetSize(); i++) {
-			if (!(TreeCtrl->Value[i].Flags & TIF_GROUP) && !_tcsicmp(TreeCtrl->Value[i].Title, ai->targv[1])) {
+			if (!(TreeCtrl->Value[i].Flags & TIF_GROUP) && !mir_tstrcmpi(TreeCtrl->Value[i].Title, ai->targv[1])) {
 				Result = TreeCtrl->Value[i].User_Str1;
 				break;
 			}
@@ -559,7 +559,7 @@ INT_PTR srvVariablesHandler(WPARAM, LPARAM lParam)
 	if (!szResult)
 		return NULL;
 
-	_tcscpy(szResult, (Result != NULL) ? Result : _T(""));
+	mir_tstrcpy(szResult, (Result != NULL) ? Result : _T(""));
 	return (INT_PTR)szResult;
 }
 

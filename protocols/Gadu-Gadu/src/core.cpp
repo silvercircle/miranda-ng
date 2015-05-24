@@ -638,7 +638,7 @@ retry:
 							_tcsncpy_s(strFmt2, pcli->pfnGetStatusModeDescription( status_gg2m(atoi(__status)), 0), _TRUNCATE);
 							if (__city) {
 								mir_sntprintf(strFmt1, SIZEOF(strFmt1), _T(", %s %s"), TranslateT("City:"), __city);
-								_tcsncat(strFmt2, strFmt1, SIZEOF(strFmt2) - _tcslen(strFmt2));
+								_tcsncat(strFmt2, strFmt1, SIZEOF(strFmt2) - mir_tstrlen(strFmt2));
 							}
 							if (__birthyear) {
 								time_t t = time(NULL);
@@ -647,7 +647,7 @@ retry:
 
 								if (br < (lt->tm_year + 1900) && br > 1900) {
 									mir_sntprintf(strFmt1, SIZEOF(strFmt1), _T(", %s %d"), TranslateT("Age:"), (lt->tm_year + 1900) - br);
-									_tcsncat(strFmt2, strFmt1, SIZEOF(strFmt2) - _tcslen(strFmt2));
+									_tcsncat(strFmt2, strFmt1, SIZEOF(strFmt2) - mir_tstrlen(strFmt2));
 								}
 							}
 
@@ -724,12 +724,12 @@ retry:
 							{
 								if (res->seq == GG_SEQ_CHINFO)
 									setByte(hContact, GG_KEY_PD_GANDER,
-									(BYTE)(!strcmp(__gender, GG_PUBDIR50_GENDER_SET_MALE) ? 'M' :
-										  (!strcmp(__gender, GG_PUBDIR50_GENDER_SET_FEMALE) ? 'F' : '?')));
+									(BYTE)(!mir_strcmp(__gender, GG_PUBDIR50_GENDER_SET_MALE) ? 'M' :
+										  (!mir_strcmp(__gender, GG_PUBDIR50_GENDER_SET_FEMALE) ? 'F' : '?')));
 								else
 									setByte(hContact, GG_KEY_PD_GANDER,
-									(BYTE)(!strcmp(__gender, GG_PUBDIR50_GENDER_MALE) ? 'M' :
-										  (!strcmp(__gender, GG_PUBDIR50_GENDER_FEMALE) ? 'F' : '?')));
+									(BYTE)(!mir_strcmp(__gender, GG_PUBDIR50_GENDER_MALE) ? 'M' :
+										  (!mir_strcmp(__gender, GG_PUBDIR50_GENDER_FEMALE) ? 'F' : '?')));
 							}
 							else if (res->seq == GG_SEQ_CHINFO)
 							{
@@ -843,12 +843,11 @@ retry:
 						}
 					}
 					// Check if not empty message ( who needs it? )
-					else if (!e->event.msg.recipients_count && e->event.msg.message && *e->event.msg.message && strcmp(e->event.msg.message, "\xA0\0"))
+					else if (!e->event.msg.recipients_count && e->event.msg.message && *e->event.msg.message && mir_strcmp(e->event.msg.message, "\xA0\0"))
 					{
 						PROTORECVEVENT pre = {0};
 						time_t t = time(NULL);
 						pre.timestamp = (!(e->event.msg.msgclass & GG_CLASS_OFFLINE) || e->event.msg.time > (t - timeDeviation)) ? t : e->event.msg.time;
-						pre.flags = PREF_UTF;
 						pre.szMessage = e->event.msg.message;
 						ProtoChainRecvMsg( getcontact(e->event.msg.sender, 1, 0, NULL), &pre);
 					}
@@ -916,14 +915,14 @@ retry:
 					}
 				}
 				else if (!e->event.multilogon_msg.recipients_count && e->event.multilogon_msg.message && *e->event.multilogon_msg.message
-					&& strcmp(e->event.multilogon_msg.message, "\xA0\0"))
+					&& mir_strcmp(e->event.multilogon_msg.message, "\xA0\0"))
 				{
 					DBEVENTINFO dbei = { sizeof(dbei) };
 					dbei.szModule = m_szModuleName;
 					dbei.timestamp = (DWORD)e->event.multilogon_msg.time;
 					dbei.flags = DBEF_SENT | DBEF_UTF;
 					dbei.eventType = EVENTTYPE_MESSAGE;
-					dbei.cbBlob = (DWORD)strlen(e->event.multilogon_msg.message) + 1;
+					dbei.cbBlob = (DWORD)mir_strlen(e->event.multilogon_msg.message) + 1;
 					dbei.pBlob = (PBYTE)e->event.multilogon_msg.message;
 					db_event_add( getcontact(e->event.multilogon_msg.sender, 1, 0, NULL), &dbei);
 				}
@@ -1058,7 +1057,7 @@ retry:
 					TCHAR* filenameT = mir_a2t((char*)dcc7->filename);
 
 					PROTORECVFILET pre = {0};
-					pre.flags = PREF_TCHAR;
+					pre.dwFlags = PRFF_TCHAR;
 					pre.fileCount = 1;
 					pre.timestamp = time(NULL);
 					pre.tszDescription = filenameT;
@@ -1171,7 +1170,7 @@ retry:
 						sender = node != NULL ? mir_t2a(xi.getText(node)) : NULL;
 						debugLogA("mainthread() (%x): XML Action type: %s.", this, type != NULL ? type : "unknown");
 						// Avatar change notify
-						if (type != NULL && !strcmp(type, "28")) {
+						if (type != NULL && !mir_strcmp(type, "28")) {
 							debugLogA("mainthread() (%x): Client %s changed his avatar.", this, sender);
 							requestAvatarInfo(getcontact(atoi(sender), 0, 0, NULL), 0);
 						}
@@ -1335,14 +1334,14 @@ int GGPROTO::dbsettingchanged(WPARAM hContact, LPARAM lParam)
 		return 0;
 
 	// If contact has been blocked
-	if (!strcmp(cws->szModule, m_szModuleName) && !strcmp(cws->szSetting, GG_KEY_BLOCK))
+	if (!mir_strcmp(cws->szModule, m_szModuleName) && !mir_strcmp(cws->szSetting, GG_KEY_BLOCK))
 	{
 		notifyuser(hContact, 1);
 		return 0;
 	}
 
 	// Contact is being renamed
-	if (gc_enabled && !strcmp(cws->szModule, m_szModuleName) && !strcmp(cws->szSetting, GG_KEY_NICK)){
+	if (gc_enabled && !mir_strcmp(cws->szModule, m_szModuleName) && !mir_strcmp(cws->szSetting, GG_KEY_NICK)){
 
 		TCHAR* ptszVal = sttSettingToTchar(&(cws->value));
 		if(ptszVal==NULL) return 0;
@@ -1373,10 +1372,10 @@ int GGPROTO::dbsettingchanged(WPARAM hContact, LPARAM lParam)
 	}
 
 	// Contact list changes
-	if (!strcmp(cws->szModule, "CList"))
+	if (!mir_strcmp(cws->szModule, "CList"))
 	{
 		// If name changed... change nick
-		if (!strcmp(cws->szSetting, "MyHandle")){
+		if (!mir_strcmp(cws->szSetting, "MyHandle")){
 			TCHAR* ptszVal = sttSettingToTchar(&(cws->value));
 			if(ptszVal==NULL) return 0;
 			setTString(hContact, GG_KEY_NICK, ptszVal);
@@ -1384,7 +1383,7 @@ int GGPROTO::dbsettingchanged(WPARAM hContact, LPARAM lParam)
 		}
 
 		// If not on list changed
-		if (!strcmp(cws->szSetting, "NotOnList"))
+		if (!mir_strcmp(cws->szSetting, "NotOnList"))
 		{
 			if (db_get_b(hContact, "CList", "Hidden", 0))
 				return 0;

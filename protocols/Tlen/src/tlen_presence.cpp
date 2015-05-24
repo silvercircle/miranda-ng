@@ -44,7 +44,7 @@ void TlenProcessPresence(XmlNode *node, TlenProtocol *proto)
 					TlenProcessPresenceAvatar(proto, node, item);
 				}
 			}
-			if (type == NULL || (!strcmp(type, "available"))) {
+			if (type == NULL || (!mir_strcmp(type, "available"))) {
 				if ((nick=TlenLocalNickFromJID(from)) != NULL) {
 					if ((hContact=TlenHContactFromJID(proto, from)) == NULL)
 						hContact = TlenDBCreateContact(proto, from, nick, FALSE);
@@ -55,11 +55,11 @@ void TlenProcessPresence(XmlNode *node, TlenProtocol *proto)
 					status = ID_STATUS_ONLINE;
 					if ((showNode=TlenXmlGetChild(node, "show")) != NULL) {
 						if ((show=showNode->text) != NULL) {
-							if (!strcmp(show, "away")) status = ID_STATUS_AWAY;
-							else if (!strcmp(show, "xa")) status = ID_STATUS_NA;
-							else if (!strcmp(show, "dnd")) status = ID_STATUS_DND;
-							else if (!strcmp(show, "chat")) status = ID_STATUS_FREECHAT;
-							else if (!strcmp(show, "unavailable")) {
+							if (!mir_strcmp(show, "away")) status = ID_STATUS_AWAY;
+							else if (!mir_strcmp(show, "xa")) status = ID_STATUS_NA;
+							else if (!mir_strcmp(show, "dnd")) status = ID_STATUS_DND;
+							else if (!mir_strcmp(show, "chat")) status = ID_STATUS_FREECHAT;
+							else if (!mir_strcmp(show, "unavailable")) {
 								// Always show invisible (on old Tlen client) as invisible (not offline)
 								status = ID_STATUS_OFFLINE;
 							}
@@ -106,7 +106,7 @@ void TlenProcessPresence(XmlNode *node, TlenProtocol *proto)
 					mir_free(nick);
 				}
 			}
-			else if (!strcmp(type, "unavailable")) {
+			else if (!mir_strcmp(type, "unavailable")) {
 				if (!TlenListExist(proto, LIST_ROSTER, from)) {
 					proto->debugLogA("Receive presence offline from %s (who is not in my roster)", from);
 					TlenListAdd(proto, LIST_ROSTER, from);
@@ -153,7 +153,7 @@ void TlenProcessPresence(XmlNode *node, TlenProtocol *proto)
 					proto->debugLogA("%s offline, set contact status to %d", from, status);
 				}
 			}
-			else if (!strcmp(type, "subscribe")) {
+			else if (!mir_strcmp(type, "subscribe")) {
 				if (strchr(from, '@') == NULL) {
 					// automatically send authorization allowed to agent/transport
 					TlenSend(proto, "<presence to='%s' type='subscribed'/>", from);
@@ -164,7 +164,7 @@ void TlenProcessPresence(XmlNode *node, TlenProtocol *proto)
 					mir_free(nick);
 				}
 			}
-			else if (!strcmp(type, "subscribed")) {
+			else if (!mir_strcmp(type, "subscribed")) {
 				if ((item=TlenListGetItemPtr(proto, LIST_ROSTER, from)) != NULL) {
 					if (item->subscription == SUB_FROM) item->subscription = SUB_BOTH;
 					else if (item->subscription == SUB_NONE) {
@@ -281,9 +281,9 @@ static void TlenSendPresenceTo(TlenProtocol *proto, int status, char *to)
 						else if (!_strnicmp(ptr+i,"%date%",6))
 							GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,NULL,NULL,substituteStr,sizeof(substituteStr));
 						else continue;
-						if (strlen(substituteStr)>6) ptr=(char*)mir_realloc(ptr,strlen(ptr)+1+strlen(substituteStr)-6);
-						memmove(ptr+i+strlen(substituteStr),ptr+i+6,strlen(ptr)-i-5);
-						memcpy(ptr+i,substituteStr,strlen(substituteStr));
+						if (mir_strlen(substituteStr)>6) ptr=(char*)mir_realloc(ptr,mir_strlen(ptr)+1+mir_strlen(substituteStr)-6);
+						memmove(ptr+i+mir_strlen(substituteStr),ptr+i+6,mir_strlen(ptr)-i-5);
+						memcpy(ptr+i,substituteStr,mir_strlen(substituteStr));
 					}
 				}
 			}

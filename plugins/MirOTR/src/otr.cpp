@@ -133,7 +133,7 @@ extern "C" {
 		DEBUGOUT_T("OTR_GUI_INJECT_MESSAGE\n");
 		MCONTACT hContact = (MCONTACT)opdata;
 		if (db_get_w(hContact, protocol, "Status", ID_STATUS_OFFLINE) != ID_STATUS_OFFLINE)
-			CallContactService(hContact, PSS_MESSAGE, PREF_UTF | PREF_BYPASS_OTR, (LPARAM)message);
+			CallContactService(hContact, PSS_MESSAGE, PREF_BYPASS_OTR, (LPARAM)message);
 	}
 
 	/* When the list of ConnContexts changes (including a change in
@@ -180,7 +180,7 @@ extern "C" {
 			mir_sntprintf(buff, SIZEOF(buff), TranslateT(LANG_SESSION_NOT_STARTED_OTR), contact_get_nameT(hContact));
 		}
 		if (context->protocol_version < MIROTR_PROTO_LATEST){
-			size_t remaining = _tcslen(buff);
+			size_t remaining = mir_tstrlen(buff);
 			TCHAR *offset = buff + remaining;
 			remaining = SIZEOF(buff) - remaining;
 			mir_sntprintf(offset, remaining, TranslateT("\nusing older protocol version %i"), context->protocol_version);
@@ -249,7 +249,7 @@ extern "C" {
 			proto = GetContactProto((MCONTACT)opdata);
 		// ugly wokaround for ICQ. ICQ protocol reports more than 7k, but in SMP this is too long.
 		// possibly ICQ doesn't allow single words without spaces to become longer than ~2340?
-		if (strcmp("ICQ", proto) == 0 || strncmp("ICQ_", proto, 4) == 0)
+		if (mir_strcmp("ICQ", proto) == 0 || strncmp("ICQ_", proto, 4) == 0)
 			return 2340;
 		return CallProtoService(proto, PS_GETCAPS, PFLAG_MAXLENOFMESSAGE, (LPARAM)opdata);
 	}

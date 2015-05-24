@@ -282,7 +282,7 @@ static int StatusChange(WPARAM wParam, LPARAM lParam)
 	else {
 		for (int i = 0; i < connectionSettings.getCount(); i++) {
 			TConnectionSettings& cs = connectionSettings[i];
-			if (GetStatus(cs) != ID_STATUS_DISABLED && !strcmp(cs.szName, szProto))
+			if (GetStatus(cs) != ID_STATUS_DISABLED && !mir_strcmp(cs.szName, szProto))
 				AssignStatus(&cs, wParam, 0, cs.szMsg);
 		}
 	}
@@ -304,7 +304,7 @@ static int CSStatusChange(WPARAM wParam, LPARAM)
 				if ((protoSettings[i]->szName == NULL) || (connectionSettings[j].szName == NULL))
 					continue;
 
-				if (!strcmp(protoSettings[i]->szName, connectionSettings[j].szName))
+				if (!mir_strcmp(protoSettings[i]->szName, connectionSettings[j].szName))
 					if (GetStatus(connectionSettings[j]) != ID_STATUS_DISABLED)
 						AssignStatus(&connectionSettings[j], protoSettings[i]->status, protoSettings[i]->lastStatus, connectionSettings[j].szMsg);
 			}
@@ -327,7 +327,7 @@ static int CSStatusChangeEx(WPARAM wParam, LPARAM)
 			for (int j = 0; j < connectionSettings.getCount(); j++) {
 				if ((protoSettings[i]->szName == NULL) || (connectionSettings[j].szName == NULL))
 					continue;
-				if (!strcmp(protoSettings[i]->szName, connectionSettings[j].szName)) {
+				if (!mir_strcmp(protoSettings[i]->szName, connectionSettings[j].szName)) {
 					if (GetStatus(connectionSettings[j]) != ID_STATUS_DISABLED)
 						AssignStatus(&connectionSettings[j], protoSettings[i]->status, protoSettings[i]->lastStatus, protoSettings[i]->szMsg);
 				}
@@ -527,7 +527,7 @@ static int ProcessProtoAck(WPARAM, LPARAM lParam)
 	if (ack->type == ACKTYPE_STATUS && ack->result == ACKRESULT_SUCCESS) {
 		for (int i = 0; i < connectionSettings.getCount(); i++) {
 			TConnectionSettings& cs = connectionSettings[i];
-			if (!strcmp(cs.szName, ack->szModule))
+			if (!mir_strcmp(cs.szName, ack->szModule))
 				cs.lastStatusAckTime = GetTickCount();
 		}
 		StartTimer(IDT_PROCESSACK, 0, FALSE);
@@ -538,7 +538,7 @@ static int ProcessProtoAck(WPARAM, LPARAM lParam)
 		if (ack->lParam == LOGINERR_OTHERLOCATION) {
 			for (int i = 0; i < connectionSettings.getCount(); i++) {
 				TConnectionSettings& cs = connectionSettings[i];
-				if (!strcmp(ack->szModule, cs.szName)) {
+				if (!mir_strcmp(ack->szModule, cs.szName)) {
 					AssignStatus(&cs, ID_STATUS_OFFLINE, 0, NULL);
 					if (db_get_b(NULL, MODULENAME, SETTING_CNCOTHERLOC, 0)) {
 						StopTimer(IDT_PROCESSACK);
@@ -561,7 +561,7 @@ static int ProcessProtoAck(WPARAM, LPARAM lParam)
 				log_infoA("KeepStatus: cancel on login error (%s)", ack->szModule);
 				for (int i = 0; i < connectionSettings.getCount(); i++) {
 					TConnectionSettings& cs = connectionSettings[i];
-					if (!strcmp(ack->szModule, cs.szName))
+					if (!mir_strcmp(ack->szModule, cs.szName))
 						AssignStatus(&cs, ID_STATUS_OFFLINE, 0, NULL);
 				}
 				ProcessPopup(KS_CONN_STATE_LOGINERROR, (LPARAM)ack->szModule);
@@ -929,12 +929,12 @@ static int ProcessPopup(int reason, LPARAM lParam)
 			TCHAR protoInfoLine[512], protoInfo[MAX_SECONDLINE];
 			memset(protoInfoLine, '\0', sizeof(protoInfoLine));
 			memset(protoInfo, '\0', sizeof(protoInfo));
-			_tcscpy(protoInfo, _T("\r\n"));
+			mir_tstrcpy(protoInfo, _T("\r\n"));
 			for (int i = 0; i < connectionSettings.getCount(); i++) {
-				if (_tcslen(ps[i]->tszAccName) > 0 && strlen(ps[i]->szName) > 0) {
+				if (mir_tstrlen(ps[i]->tszAccName) > 0 && mir_strlen(ps[i]->szName) > 0) {
 					if (db_get_b(NULL, MODULENAME, SETTING_PUSHOWEXTRA, TRUE)) {
 						mir_sntprintf(protoInfoLine, SIZEOF(protoInfoLine), TranslateT("%s\t(will be set to %s)\r\n"), ps[i]->tszAccName, pcli->pfnGetStatusModeDescription(ps[i]->status, GSMDF_TCHAR));
-						_tcsncat(protoInfo, protoInfoLine, SIZEOF(protoInfo) - _tcslen(protoInfo) - 1);
+						_tcsncat(protoInfo, protoInfoLine, SIZEOF(protoInfo) - mir_tstrlen(protoInfo) - 1);
 					}
 				}
 			}
@@ -1058,7 +1058,7 @@ INT_PTR EnableProtocolService(WPARAM wParam, LPARAM lParam)
 	int ret = -2;
 	for (int i = 0; i < connectionSettings.getCount(); i++) {
 		TConnectionSettings& cs = connectionSettings[i];
-		if (!strcmp(szProto, cs.szName)) {
+		if (!mir_strcmp(szProto, cs.szName)) {
 			if (wParam) {
 				if (GetStatus(cs) == ID_STATUS_DISABLED)
 					AssignStatus(&cs, CallProtoService(cs.szName, PS_GETSTATUS, 0, 0), 0, NULL);
@@ -1083,7 +1083,7 @@ INT_PTR IsProtocolEnabledService(WPARAM, LPARAM lParam)
 
 	for (int i = 0; i < connectionSettings.getCount(); i++) {
 		TConnectionSettings& cs = connectionSettings[i];
-		if (!strcmp(szProto, cs.szName))
+		if (!mir_strcmp(szProto, cs.szName))
 			return GetStatus(cs) != ID_STATUS_DISABLED;
 	}
 

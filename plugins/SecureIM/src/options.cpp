@@ -75,7 +75,7 @@ void LV_GetItemTextA(HWND hwnd, WPARAM wparam, int iSubItem, LPSTR text, int cch
 	lvi.pszText = text;
 	SNDMSG(hwnd, LVM_GETITEMTEXTW, wparam, (LPARAM)&lvi);
 	lvi.pszText = mir_u2a((LPWSTR)text);
-	strcpy(text, lvi.pszText);
+	mir_strcpy(text, lvi.pszText);
 	mir_free(lvi.pszText);
 }
 
@@ -1495,7 +1495,7 @@ int CALLBACK CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 				s = (dbv1.type == DBVT_ASCIIZ);
 				d = (dbv2.type == DBVT_ASCIIZ);
 				if (s && d) {
-					s = strcmp(dbv1.pszVal, dbv2.pszVal);
+					s = mir_strcmp(dbv1.pszVal, dbv2.pszVal);
 					d = 0;
 				}
 				db_free(&dbv1);
@@ -1512,7 +1512,7 @@ int CALLBACK CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 			if(!db_get_s(p2->hContact, MODULENAME, "gpg", &dbv2)) {
 				d = (dbv2.type == DBVT_ASCIIZ);
 				if (s && d) {
-					s = strcmp(dbv1.pszVal, dbv2.pszVal);
+					s = mir_strcmp(dbv1.pszVal, dbv2.pszVal);
 					d = 0;
 				}
 				db_free(&dbv1);
@@ -1606,14 +1606,14 @@ LPSTR LoadKeys(LPCSTR file, BOOL priv)
 	LPSTR keys = (LPSTR)mir_alloc(flen + 1);
 	int i = 0; BOOL b = false;
 	while (fgets(keys + i, 128, f)) {
-		if (!b && strncmp(keys + i, beg, strlen(beg)) == 0)
+		if (!b && strncmp(keys + i, beg, mir_strlen(beg)) == 0)
 			b = true;
-		else if (b && strncmp(keys + i, end, strlen(end)) == 0) {
-			i += (int)strlen(keys + i);
+		else if (b && strncmp(keys + i, end, mir_strlen(end)) == 0) {
+			i += (int)mir_strlen(keys + i);
 			b = false;
 		}
 		if (b)
-			i += (int)strlen(keys + i);
+			i += (int)mir_strlen(keys + i);
 	}
 	*(keys + i) = '\0';
 	fclose(f);
@@ -1624,7 +1624,7 @@ BOOL SaveExportRSAKeyDlg(HWND hParent, LPSTR key, BOOL priv)
 {
 	TCHAR szFile[MAX_PATH] = _T("rsa_pub.asc");
 	if (priv)
-		_tcscpy(szFile, _T("rsa_priv.asc"));
+		mir_tstrcpy(szFile, _T("rsa_priv.asc"));
 
 	OPENFILENAME ofn = { sizeof(ofn) };
 	char temp[MAX_PATH];
@@ -1642,7 +1642,7 @@ BOOL SaveExportRSAKeyDlg(HWND hParent, LPSTR key, BOOL priv)
 	FILE *f = _tfopen(szFile, _T("wb"));
 	if (!f)
 		return FALSE;
-	fwrite(key, strlen(key), 1, f);
+	fwrite(key, mir_strlen(key), 1, f);
 	fclose(f);
 
 	return TRUE;
@@ -1652,7 +1652,7 @@ BOOL LoadImportRSAKeyDlg(HWND hParent, LPSTR key, BOOL priv)
 {
 	TCHAR szFile[MAX_PATH] = _T("rsa_pub.asc");
 	if (priv)
-		_tcscpy(szFile, _T("rsa_priv.asc"));
+		mir_tstrcpy(szFile, _T("rsa_priv.asc"));
 
 	OPENFILENAME ofn = { 0 };
 	ofn.lStructSize = sizeof(ofn);

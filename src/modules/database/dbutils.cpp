@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static int CompareEventTypes(const DBEVENTTYPEDESCR *p1, const DBEVENTTYPEDESCR *p2)
 {
-	int result = strcmp(p1->module, p2->module);
+	int result = mir_strcmp(p1->module, p2->module);
 	if (result)
 		return result;
 
@@ -86,7 +86,7 @@ static INT_PTR DbEventTypeGet(WPARAM wParam, LPARAM lParam)
 static TCHAR* getEventString(DBEVENTINFO *dbei, LPSTR &buf)
 {
 	LPSTR in = buf;
-	buf += strlen(buf) + 1;
+	buf += mir_strlen(buf) + 1;
 	return (dbei->flags & DBEF_UTF) ? Utf8DecodeT(in) : mir_a2t(in);
 }
 

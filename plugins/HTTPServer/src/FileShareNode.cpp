@@ -207,25 +207,25 @@ bool CLFileShareNode::bSetPaths(char * pszSrvPath, char * pszRealPath) {
 	delete [] st.pszSrvPath;
 	delete [] st.pszRealPath;
 
-	st.dwMaxSrvPath = (int)strlen(pszSrvPath) + 1;
+	st.dwMaxSrvPath = (int)mir_strlen(pszSrvPath) + 1;
 	st.pszSrvPath = new char[ st.dwMaxSrvPath ];
-	strcpy(st.pszSrvPath, pszSrvPath);
+	mir_strcpy(st.pszSrvPath, pszSrvPath);
 
-	int nRealLen = (int)strlen(pszRealPath);
+	int nRealLen = (int)mir_strlen(pszRealPath);
 	if (nRealLen <= 2 || !(pszRealPath[1] == ':' ||
 	    (pszRealPath[0] == '\\' && pszRealPath[1] == '\\'))) {
 		// Relative path
 		// we will prepend plugin path to avoid problems
 		st.dwMaxRealPath = nPluginPathLen  + nRealLen + 1;
 		st.pszRealPath = new char[ st.dwMaxRealPath ];
-		strcpy(st.pszRealPath, szPluginPath);
+		mir_strcpy(st.pszRealPath, szPluginPath);
 		pszOrigRealPath = &st.pszRealPath[nPluginPathLen];
 	} else {
 		st.dwMaxRealPath = nRealLen + 1;
 		st.pszRealPath = new char[ st.dwMaxRealPath ];
 		pszOrigRealPath = st.pszRealPath;
 	}
-	strcpy(pszOrigRealPath, pszRealPath);
+	mir_strcpy(pszOrigRealPath, pszRealPath);
 	return true;
 }
 
@@ -299,7 +299,7 @@ bool CLFileShareNode::bAddUser(CLShareUser * pclUser) {
 			// iterate through its users
 			CLShareUser * pclCur = pclShare->pclCurrentUsers;
 			while (pclCur) {
-				//strcmp(pclCur->szCurrentDLSrvPath, pclUser->szCurrentDLSrvPath) == 0) // same file
+				//mir_strcmp(pclCur->szCurrentDLSrvPath, pclUser->szCurrentDLSrvPath) == 0) // same file
 				if (memcmp(&pclCur->stAddr, &pclUser->stAddr, sizeof(in_addr)) == 0)  // same IP
 					nUserConnectionCount++;
 

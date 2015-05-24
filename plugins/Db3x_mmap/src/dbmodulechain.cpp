@@ -63,7 +63,7 @@ int CDb3Mmap::InitModuleNames(void)
 DWORD CDb3Mmap::FindExistingModuleNameOfs(const char *szName)
 {
 	ModuleName mn = { (char*)szName, 0 };
-	if (m_lastmn && !strcmp(mn.name, m_lastmn->name))
+	if (m_lastmn && !mir_strcmp(mn.name, m_lastmn->name))
 		return m_lastmn->ofs;
 
 	int index = m_lMods.getIndex(&mn);
@@ -86,7 +86,7 @@ DWORD CDb3Mmap::GetModuleNameOfs(const char *szName)
 	if (m_bReadOnly)
 		return 0;
 
-	int nameLen = (int)strlen(szName);
+	int nameLen = (int)mir_strlen(szName);
 
 	// need to create the module name
 	DWORD ofsNew = CreateNewSpace(nameLen + offsetof(struct DBModuleName, name));
@@ -103,7 +103,7 @@ DWORD CDb3Mmap::GetModuleNameOfs(const char *szName)
 
 	// add to cache
 	char *mod = (char*)HeapAlloc(m_hModHeap, 0, nameLen + 1);
-	strcpy(mod, szName);
+	mir_strcpy(mod, szName);
 	AddToList(mod, ofsNew);
 
 	// quit

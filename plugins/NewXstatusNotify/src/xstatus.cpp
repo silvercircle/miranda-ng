@@ -80,13 +80,13 @@ TCHAR* GetStatusTypeAsString(int type, TCHAR *buff)
 {
 	switch (type) {
 	case TYPE_JABBER_MOOD:
-		_tcscpy(buff, TranslateT("Mood")); return buff;
+		mir_tstrcpy(buff, TranslateT("Mood")); return buff;
 	case TYPE_JABBER_ACTIVITY:
-		_tcscpy(buff, TranslateT("Activity")); return buff;
+		mir_tstrcpy(buff, TranslateT("Activity")); return buff;
 	case TYPE_ICQ_XSTATUS:
-		_tcscpy(buff, TranslateT("xStatus")); return buff;
+		mir_tstrcpy(buff, TranslateT("xStatus")); return buff;
 	default:
-		_tcscpy(buff, TranslateT("<unknown>")); return buff;
+		mir_tstrcpy(buff, TranslateT("<unknown>")); return buff;
 	}
 }
 
@@ -189,7 +189,7 @@ void ShowXStatusPopup(XSTATUSCHANGE *xsc)
 
 	// cut message if needed
 	TCHAR *copyText = NULL;
-	if (opt.PXMsgTruncate && (opt.PXMsgLen > 0) && xsc->stzText && (_tcslen(xsc->stzText) > opt.PXMsgLen)) {
+	if (opt.PXMsgTruncate && (opt.PXMsgLen > 0) && xsc->stzText && (mir_tstrlen(xsc->stzText) > opt.PXMsgLen)) {
 		TCHAR buff[MAX_TEXT_LEN + 3];
 		copyText = mir_tstrdup(xsc->stzText);
 		_tcsncpy(buff, xsc->stzText, opt.PXMsgLen);
@@ -294,11 +294,11 @@ void LogChangeToDB(XSTATUSCHANGE *xsc)
 	if (opt.XLogToDB) {
 		db_set_ws(xsc->hContact, MODULE, DB_LASTLOG, stzLogText);
 
-		ptrA blob(mir_utf8encodeT(stzLogText));
+		T2Utf blob(stzLogText);
 
 		DBEVENTINFO dbei = { 0 };
 		dbei.cbSize = sizeof(dbei);
-		dbei.cbBlob = (DWORD)strlen(blob) + 1;
+		dbei.cbBlob = (DWORD)mir_strlen(blob) + 1;
 		dbei.pBlob = (PBYTE)(char*)blob;
 		dbei.eventType = EVENTTYPE_STATUSCHANGE;
 		dbei.flags = DBEF_READ | DBEF_UTF;
@@ -433,7 +433,7 @@ TCHAR* GetIcqXStatus(MCONTACT hContact, char *szProto, char *szValue, TCHAR *buf
 	int statusID = db_get_b(hContact, szProto, "XStatusId", -1);
 	if (statusID != -1) {
 		if (!db_get_ts(hContact, szProto, szValue, &dbv)) {
-			if ((strcmp(szValue, "XStatusName") == 0) && dbv.ptszVal[0] == 0)
+			if ((mir_strcmp(szValue, "XStatusName") == 0) && dbv.ptszVal[0] == 0)
 				GetDefaultXstatusName(statusID, szProto, buff, bufflen);
 			else
 				_tcsncpy(buff, dbv.ptszVal, bufflen);

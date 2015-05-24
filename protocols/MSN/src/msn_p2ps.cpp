@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "msn_global.h"
 #include "msn_proto.h"
+#ifdef OBSOLETE
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // add file session to a list
@@ -255,7 +256,7 @@ directconnection* CMsnProto::p2p_getDCByCallID(const char* CallID, const char* w
 
 	for (int i = 0; i < m_arDirect.getCount(); i++) {
 		directconnection* DC = &m_arDirect[i];
-		if (DC->callId != NULL && !strcmp(DC->callId, CallID) && !strcmp(DC->wlid, wlid))
+		if (DC->callId != NULL && !mir_strcmp(DC->callId, CallID) && !mir_strcmp(DC->wlid, wlid))
 			return DC;
 	}
 
@@ -271,3 +272,4 @@ void CMsnProto::P2pSessions_Uninit(void)
 	m_arSessions.destroy();
 	m_arDirect.destroy();
 }
+#endif

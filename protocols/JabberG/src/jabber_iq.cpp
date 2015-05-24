@@ -245,9 +245,9 @@ bool CJabberIqManager::HandleIq(int nIqId, HXML pNode)
 		return false;
 
 	int nIqType = JABBER_IQ_TYPE_FAIL;
-	if (!_tcsicmp(szType, _T("result")))
+	if (!mir_tstrcmpi(szType, _T("result")))
 		nIqType = JABBER_IQ_TYPE_RESULT;
-	else if (!_tcsicmp(szType, _T("error")))
+	else if (!mir_tstrcmpi(szType, _T("error")))
 		nIqType = JABBER_IQ_TYPE_ERROR;
 	else
 		return false;
@@ -297,9 +297,9 @@ bool CJabberIqManager::HandleIqPermanent(HXML pNode)
 
 		CJabberIqInfo iqInfo;
 		iqInfo.m_nIqType = JABBER_IQ_TYPE_FAIL;
-		if (!_tcsicmp(szType, _T("get")))
+		if (!mir_tstrcmpi(szType, _T("get")))
 			iqInfo.m_nIqType = JABBER_IQ_TYPE_GET;
-		else if (!_tcsicmp(szType, _T("set")))
+		else if (!mir_tstrcmpi(szType, _T("set")))
 			iqInfo.m_nIqType = JABBER_IQ_TYPE_SET;
 		else
 			return FALSE;
@@ -314,8 +314,8 @@ bool CJabberIqManager::HandleIqPermanent(HXML pNode)
 		const TCHAR *szTagName = xmlGetName(pFirstChild);
 		const TCHAR *szXmlns = xmlGetAttrValue(pFirstChild, _T("xmlns"));
 
-		if ((!pInfo.m_szXmlns || (szXmlns && !_tcscmp(pInfo.m_szXmlns, szXmlns))) &&
-			 (!pInfo.m_szTag || !_tcscmp(pInfo.m_szTag, szTagName)))
+		if ((!pInfo.m_szXmlns || (szXmlns && !mir_tstrcmp(pInfo.m_szXmlns, szXmlns))) &&
+			 (!pInfo.m_szTag || !mir_tstrcmp(pInfo.m_szTag, szTagName)))
 		{
 			// node suits handler criteria, call the handler
 			iqInfo.m_pChildNode = pFirstChild;

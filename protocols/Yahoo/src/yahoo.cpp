@@ -200,56 +200,28 @@ void CYahooProto::logout()
 
 void CYahooProto::AddBuddy(MCONTACT hContact, const char *group, const TCHAR *msg)
 {
-	DBVARIANT dbv;
-	char *fname=NULL, *lname=NULL, *ident=NULL, *who, *u_msg;
-	int protocol;
-	
 	/* We adding a buddy to our list.
 	  2 Stages.
 	1. We send add buddy packet.
 	2. We get a packet back from the server confirming add.
 	
 	No refresh needed. */
-	
-	if (!getString(hContact, YAHOO_LOGINID, &dbv))
-	{
-		who = strdup(dbv.pszVal);
-		db_free(&dbv);
-	}
-	else
+
+	ptrA who(getStringA(hContact, YAHOO_LOGINID));
+	if (who == NULL)
 		return;
 
-	protocol = getWord(hContact, "yprotoid", 0);
-	u_msg = mir_utf8encodeT(msg);
+	int protocol = getWord(hContact, "yprotoid", 0);
+	T2Utf u_msg(msg);
 
-	if (!getString(hContact, "MyIdentity", &dbv))
-	{
-		ident = strdup(dbv.pszVal);
-		db_free(&dbv);
-	}
-
-	if (!GetStringUtf(NULL, "FirstName", &dbv))
-	{
-		fname = strdup(dbv.pszVal);
-		db_free(&dbv);
-	}
-
-	if (!GetStringUtf(NULL, "LastName", &dbv))
-	{
-		lname = strdup(dbv.pszVal);
-		db_free(&dbv);
-	}
+	ptrA ident(getStringA(hContact, "MyIdentity"));
+	ptrT fname(getTStringA(NULL, "FirstName"));
+	ptrT lname(getTStringA(NULL, "LastName"));
 
 	SetStringUtf(hContact, "YGroup", group);
 
 	debugLogA("Adding Permanently %s to list. Auth: %s", who, u_msg ? u_msg : "<None>");
- 	yahoo_add_buddy(m_id, ident, fname, lname, who, protocol, group, u_msg);
-
-	free(fname);
-	free(lname);
-	free(ident);
-	free(who);
-	mir_free(u_msg);
+ 	yahoo_add_buddy(m_id, ident, T2Utf(fname), T2Utf(lname), who, protocol, group, u_msg);
 }
 
 MCONTACT CYahooProto::getbuddyH(const char *yahoo_id)
@@ -771,10 +743,10 @@ void CYahooProto::ext_contact_added(const char *myid, const char *who, const cha
 
 	hContact = add_buddy(who, nick, protocol, PALF_TEMPORARY);
 
-	if (strcmp(nick, who) != 0)
+	if (mir_strcmp(nick, who) != 0)
 		SetStringUtf(hContact, "Nick", nick);
 
-	if (strcmp(myid, m_yahoo_id))
+	if (mir_strcmp(myid, m_yahoo_id))
 		setString(hContact, "MyIdentity", myid);
 	else
 		delSetting(hContact, "MyIdentity");
@@ -782,9 +754,7 @@ void CYahooProto::ext_contact_added(const char *myid, const char *who, const cha
 	//setWord(hContact, "yprotoid", protocol);
 	Set_Protocol(hContact, protocol);
 
-	pre.flags			= PREF_UTF;
-	pre.timestamp		= time(NULL);
-
+	pre.timestamp = time(NULL);
 	pre.lParam = sizeof(DWORD)+sizeof(HANDLE)+mir_strlen(who)+mir_strlen(nick)+5;
 
 	if (fname != NULL)

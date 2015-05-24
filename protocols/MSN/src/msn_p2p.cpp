@@ -34,6 +34,7 @@ static const char sttP2PheaderV2[] =
 	"P2P-Src: %s;%s\r\n\r\n";
 
 const char sttVoidUid[] = "{00000000-0000-0000-0000-000000000000}";
+#ifdef OBSOLETE
 static const char szUbnCall[] = "{F13B5C79-0126-458F-A29D-747C79C56530}";
 
 static const char p2pV2Caps[] = { 0x01, 0x0C, 0x00, 0x02, 0x00, 0x00, 0x00, 0x0E, 0x00, 0x00, 0x0F, 0x01, 0x00, 0x00 };
@@ -119,7 +120,7 @@ bool CMsnProto::p2p_createListener(filetransfer* ft, directconnection *dc, MimeH
 		}
 		else {
 			if (i4++ != 0) strcat(szIpv4, " ");
-			ipInt |= (strcmp(ihaddr->szIp[i], szExtIp) == 0);
+			ipInt |= (mir_strcmp(ihaddr->szIp[i], szExtIp) == 0);
 			strcat(szIpv4, ihaddr->szIp[i]);
 		}
 	}
@@ -248,9 +249,7 @@ void CMsnProto::p2p_savePicture2disk(filetransfer* ft)
 			setString(ft->std.hContact, "PictSavedContext", ft->p2p_object);
 			ProtoBroadcastAck(AI.hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, &AI, 0);
 
-			char *filename = mir_utf8encodeT(AI.filename);
-			debugLogA("Avatar for contact %08x saved to file '%s'", AI.hContact, filename);
-			mir_free(filename);
+			debugLogA("Avatar for contact %08x saved to file '%s'", AI.hContact, T2Utf(AI.filename));
 		}
 		break;
 
@@ -263,7 +262,7 @@ void CMsnProto::p2p_savePicture2disk(filetransfer* ft)
 			cont.type = 1;
 
 			TCHAR* pathcpy = mir_tstrdup(ft->std.tszCurrentFile);
-			_tcscpy(_tcsrchr(pathcpy, '.') + 1, ext);
+			mir_tstrcpy(_tcsrchr(pathcpy, '.') + 1, ext);
 			_trename(ft->std.tszCurrentFile, pathcpy);
 
 			cont.path = pathcpy;
@@ -730,7 +729,7 @@ bool CMsnProto::p2p_connectTo(ThreadData* info, directconnection *dc)
 
 		if (dc->useHashedNonce) {
 			char* hnonce = dc->calcHashedNonce((UUID*)&cookie.mAckSessionID);
-			cookieMatch = strcmp(hnonce, dc->xNonce) == 0;
+			cookieMatch = mir_strcmp(hnonce, dc->xNonce) == 0;
 			mir_free(hnonce);
 		}
 		else
@@ -738,7 +737,7 @@ bool CMsnProto::p2p_connectTo(ThreadData* info, directconnection *dc)
 	}
 	else {
 		char* hnonce = dc->calcHashedNonce((UUID*)p);
-		cookieMatch = strcmp(hnonce, dc->xNonce) == 0;
+		cookieMatch = mir_strcmp(hnonce, dc->xNonce) == 0;
 		mir_free(hnonce);
 	}
 
@@ -793,7 +792,7 @@ LBL_Error:
 
 		if (dc->useHashedNonce) {
 			char* hnonce = dc->calcHashedNonce((UUID*)&cookie.mAckSessionID);
-			cookieMatch = strcmp(hnonce, dc->xNonce) == 0;
+			cookieMatch = mir_strcmp(hnonce, dc->xNonce) == 0;
 			mir_free(hnonce);
 			memcpy(&cookie.mAckSessionID, dc->mNonce, sizeof(UUID));
 		}
@@ -811,7 +810,7 @@ LBL_Error:
 	}
 	else {
 		char* hnonce = dc->calcHashedNonce((UUID*)p);
-		cookieMatch = strcmp(hnonce, dc->xNonce) == 0;
+		cookieMatch = mir_strcmp(hnonce, dc->xNonce) == 0;
 		mir_free(hnonce);
 
 		if (!cookieMatch) {
@@ -997,7 +996,7 @@ void CMsnProto::p2p_sendFeedStart(filetransfer* ft)
 	if (ft->std.flags & PFTS_SENDING) {
 		ThreadData* newThread = new ThreadData;
 		newThread->mType = SERVER_FILETRANS;
-		strcpy(newThread->mCookie, ft->p2p_callID);
+		mir_strcpy(newThread->mCookie, ft->p2p_callID);
 		newThread->mInitialContactWLID = mir_strdup(ft->p2p_dest);
 		newThread->startThread(&CMsnProto::p2p_sendFeedThread, this);
 	}
@@ -1157,18 +1156,18 @@ void CMsnProto::p2p_InitFileTransfer(
 			if (pictmatch) {
 				UrlDecode(dbv.pszVal);
 
-				ezxml_t xmlcon = ezxml_parse_str((char*)szContext, strlen(szContext));
-				ezxml_t xmldb = ezxml_parse_str(dbv.pszVal, strlen(dbv.pszVal));
+				ezxml_t xmlcon = ezxml_parse_str((char*)szContext, mir_strlen(szContext));
+				ezxml_t xmldb = ezxml_parse_str(dbv.pszVal, mir_strlen(dbv.pszVal));
 
 				const char *szCtBuf = ezxml_attr(xmlcon, "SHA1C");
 				if (szCtBuf) {
 					const char *szPtBuf = ezxml_attr(xmldb, "SHA1C");
-					pictmatch = szPtBuf && strcmp(szCtBuf, szPtBuf) == 0;
+					pictmatch = szPtBuf && mir_strcmp(szCtBuf, szPtBuf) == 0;
 				}
 				else {
 					const char *szCtBuf = ezxml_attr(xmlcon, "SHA1D");
 					const char *szPtBuf = ezxml_attr(xmldb, "SHA1D");
-					pictmatch = szCtBuf && szPtBuf && strcmp(szCtBuf, szPtBuf) == 0;
+					pictmatch = szCtBuf && szPtBuf && mir_strcmp(szCtBuf, szPtBuf) == 0;
 				}
 
 				ezxml_free(xmlcon);
@@ -1230,7 +1229,7 @@ void CMsnProto::p2p_InitFileTransfer(
 			mir_sntprintf(tComment, SIZEOF(tComment), TranslateT("%I64u bytes"), ft->std.currentFileSize);
 
 			PROTORECVFILET pre = { 0 };
-			pre.flags = PREF_TCHAR;
+			pre.dwFlags = PRFF_TCHAR;
 			pre.fileCount = 1;
 			pre.timestamp = time(NULL);
 			pre.tszDescription = tComment;
@@ -1348,8 +1347,8 @@ void CMsnProto::p2p_InitDirectTransfer(MimeHeaders& tFileInfo, MimeHeaders& tFil
 
 	conType.extIP = atol(szNetID);
 	conType.SetUdpCon(szConnType);
-	conType.upnpNAT = strcmp(szUPnPNat, "true") == 0;
-	conType.icf = strcmp(szICF, "true") == 0;
+	conType.upnpNAT = mir_strcmp(szUPnPNat, "true") == 0;
+	conType.icf = mir_strcmp(szICF, "true") == 0;
 	conType.CalculateWeight();
 
 	MimeHeaders chdrs(12);
@@ -1444,7 +1443,7 @@ void CMsnProto::p2p_InitDirectTransfer2(MimeHeaders& tFileInfo, MimeHeaders& tFi
 	dc->useHashedNonce = szHashedNonce != NULL;
 	replaceStr(dc->xNonce, szHashedNonce ? szHashedNonce : szNonce);
 
-	if (!strcmp(szListening, "true") && strcmp(dc->xNonce, sttVoidUid)) {
+	if (!mir_strcmp(szListening, "true") && mir_strcmp(dc->xNonce, sttVoidUid)) {
 		p2p_startConnect(wlid, szCallID, szV6Address, szV6Port, true);
 		p2p_startConnect(wlid, szCallID, szInternalAddress, szInternalPort, false);
 		p2p_startConnect(wlid, szCallID, szExternalAddress, szExternalPort, false);
@@ -1494,7 +1493,7 @@ LBL_Close:
 
 	MimeHeaders chdrs(12);
 
-	if (!strcmp(szOldContentType, "application/x-msnmsgr-sessionreqbody")) {
+	if (!mir_strcmp(szOldContentType, "application/x-msnmsgr-sessionreqbody")) {
 		if (ft == &ftl) {
 			p2p_sendCancel(ft);
 			return;
@@ -1536,7 +1535,7 @@ LBL_Close:
 		chdrs.addString("IPv6-global", GetGlobalIp(), 2);
 		chdrs.addString("Hashed-Nonce", dc->mNonceToHash(), 2);
 	}
-	else if (!strcmp(szOldContentType, "application/x-msnmsgr-transrespbody")) {
+	else if (!mir_strcmp(szOldContentType, "application/x-msnmsgr-transrespbody")) {
 		const char	*szListening = tFileInfo2["Listening"],
 			*szNonce = tFileInfo2["Nonce"],
 			*szHashedNonce = tFileInfo2["Hashed-Nonce"],
@@ -1564,7 +1563,7 @@ LBL_Close:
 		replaceStr(dc->xNonce, szHashedNonce ? szHashedNonce : szNonce);
 
 		// another side reported that it will be a server.
-		if (!strcmp(szListening, "true") && (szNonce == NULL || strcmp(szNonce, sttVoidUid))) {
+		if (!mir_strcmp(szListening, "true") && (szNonce == NULL || mir_strcmp(szNonce, sttVoidUid))) {
 			p2p_startConnect(ft->p2p_dest, szCallID, szV6Address, szV6Port, true);
 			p2p_startConnect(ft->p2p_dest, szCallID, szInternalAddress, szInternalPort, false);
 			p2p_startConnect(ft->p2p_dest, szCallID, szExternalAddress, szExternalPort, false);
@@ -1583,7 +1582,7 @@ LBL_Close:
 
 		tResult.addString("Content-Type", "application/x-msnmsgr-transrespbody");
 	}
-	else if (!strcmp(szOldContentType, "application/x-msnmsgr-transreqbody")) {
+	else if (!mir_strcmp(szOldContentType, "application/x-msnmsgr-transreqbody")) {
 		const char *szHashedNonce = tFileInfo2["Hashed-Nonce"];
 		const char *szNonce = tFileInfo2["Nonce"];
 
@@ -1649,17 +1648,17 @@ void CMsnProto::p2p_processSIP(ThreadData* info, char* msgbody, P2PB_Header* hdr
 	}
 
 	if (hdrdata && !hdrdata->isV2Hdr()) {
-		if (iMsgType == 2 || (iMsgType == 1 && !strcmp(szContentType, "application/x-msnmsgr-transreqbody")))
+		if (iMsgType == 2 || (iMsgType == 1 && !mir_strcmp(szContentType, "application/x-msnmsgr-transreqbody")))
 			p2p_getMsgId(wlid, 1);
 	}
 
 	switch (iMsgType) {
 	case 1:
-		if (!strcmp(szContentType, "application/x-msnmsgr-sessionreqbody"))
+		if (!mir_strcmp(szContentType, "application/x-msnmsgr-sessionreqbody"))
 			p2p_InitFileTransfer(info, tFileInfo, tFileInfo2, wlid);
-		else if (!strcmp(szContentType, "application/x-msnmsgr-transreqbody"))
+		else if (!mir_strcmp(szContentType, "application/x-msnmsgr-transreqbody"))
 			p2p_InitDirectTransfer(tFileInfo, tFileInfo2, wlid);
-		else if (!strcmp(szContentType, "application/x-msnmsgr-transrespbody"))
+		else if (!mir_strcmp(szContentType, "application/x-msnmsgr-transrespbody"))
 			p2p_InitDirectTransfer2(tFileInfo, tFileInfo2, wlid);
 		break;
 
@@ -1668,7 +1667,7 @@ void CMsnProto::p2p_processSIP(ThreadData* info, char* msgbody, P2PB_Header* hdr
 		break;
 
 	case 3:
-		if (!strcmp(szContentType, "application/x-msnmsgr-sessionclosebody")) {
+		if (!mir_strcmp(szContentType, "application/x-msnmsgr-sessionclosebody")) {
 			filetransfer* ft = p2p_getSessionByCallID(tFileInfo["Call-ID"], wlid);
 			if (ft != NULL) {
 				if (ft->std.currentFileProgress < ft->std.currentFileSize) {
@@ -1709,12 +1708,12 @@ void CMsnProto::p2p_processSIP(ThreadData* info, char* msgbody, P2PB_Header* hdr
 	break;
 
 	case 5:
-		if (!strcmp(szContentType, "application/x-msnmsgr-turnsetup")) {
+		if (!mir_strcmp(szContentType, "application/x-msnmsgr-turnsetup")) {
 			//			tFileInfo2["ServerAddress"];
 			//			tFileInfo2["SessionUsername"];
 			//			tFileInfo2["SessionPassword"];
 		}
-		else if (!strcmp(szContentType, "application/x-msnmsgr-transudpswitch")) {
+		else if (!mir_strcmp(szContentType, "application/x-msnmsgr-transudpswitch")) {
 			//			tFileInfo2["IPv6AddrsAndPorts"];
 			//			tFileInfo2["IPv4ExternalAddrsAndPorts"];
 			//			tFileInfo2["IPv4InternalAddrsAndPorts"];
@@ -2050,7 +2049,7 @@ void CMsnProto::p2p_invite(unsigned iAppID, filetransfer* ft, const char *wlid)
 			return;
 		}
 
-		ezxml_t xmlo = ezxml_parse_str(NEWSTR_ALLOCA(ft->p2p_object), strlen(ft->p2p_object));
+		ezxml_t xmlo = ezxml_parse_str(NEWSTR_ALLOCA(ft->p2p_object), mir_strlen(ft->p2p_object));
 		ezxml_t xmlr = ezxml_new("msnobj");
 
 		const char* p;
@@ -2079,7 +2078,7 @@ void CMsnProto::p2p_invite(unsigned iAppID, filetransfer* ft, const char *wlid)
 			ezxml_set_attr(xmlr, "SHA1C", p);
 
 		pContext = ezxml_toxml(xmlr, false);
-		cbContext = strlen(pContext) + 1;
+		cbContext = mir_strlen(pContext) + 1;
 
 		ezxml_free(xmlr);
 		ezxml_free(xmlo);
@@ -2098,7 +2097,7 @@ void CMsnProto::p2p_invite(unsigned iAppID, filetransfer* ft, const char *wlid)
 				if (cont->places.getCount() && cont->places[0].cap1 & cap_SupportsP2PBootstrap) {
 					char wlid[128];
 					mir_snprintf(wlid, SIZEOF(wlid),
-						strcmp(cont->places[0].id, sttVoidUid) ? "%s;%s" : "%s",
+						mir_strcmp(cont->places[0].id, sttVoidUid) ? "%s;%s" : "%s",
 						cont->email, cont->places[0].id);
 
 					if (!MSN_GetThreadByContact(wlid, SERVER_P2P_DIRECT))
@@ -2149,7 +2148,7 @@ void CMsnProto::p2p_invite(unsigned iAppID, filetransfer* ft, const char *wlid)
 		for (int i = 0; i < cont->places.getCount(); ++i) {
 			char wlid[128];
 			mir_snprintf(wlid, SIZEOF(wlid),
-				strcmp(cont->places[i].id, sttVoidUid) ? "%s;%s" : "%s",
+				mir_strcmp(cont->places[i].id, sttVoidUid) ? "%s;%s" : "%s",
 				cont->email, cont->places[i].id);
 
 			p2p_sendSlp(-2, ft, tResult, chdrs, wlid);
@@ -2329,3 +2328,4 @@ char* P2P_Header::createMsg(char *buf, const char* wlid, CMsnProto *ppro)
 	memcpy(buf, &mSessionID, 48);
 	return buf + 48;
 }
+#endif

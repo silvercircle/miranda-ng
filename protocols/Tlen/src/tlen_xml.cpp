@@ -193,7 +193,7 @@ static void TlenXmlParseAttr(XmlNode *node, char *text)
 	char *p;
 	XmlAttr *a;
 
-	if (node == NULL || text == NULL || strlen(text) <= 0)
+	if (node == NULL || text == NULL || mir_strlen(text) <= 0)
 		return;
 
 	for (p=text;;) {
@@ -279,7 +279,7 @@ static BOOL TlenXmlProcessElem(XmlState *xmlState, XmlElemType elemType, char *e
 
 	if (elemText == NULL) return FALSE;
 
-	if (elemType == ELEM_OPEN && !strcmp(elemText, "?xml")) {
+	if (elemType == ELEM_OPEN && !mir_strcmp(elemText, "?xml")) {
 //		TlenLog("XML: skip <?xml> tag");
 		return TRUE;
 	}
@@ -349,7 +349,7 @@ static BOOL TlenXmlProcessElem(XmlState *xmlState, XmlElemType elemType, char *e
 		}
 		break;
 	case ELEM_CLOSE:
-		if (node->name != NULL && !strcmp(node->name, text)) {
+		if (node->name != NULL && !mir_strcmp(node->name, text)) {
 			node->state = NODE_CLOSE;
 			int nodeDepth = node->depth;
 			if (nodeDepth == 1 && xmlState->callback1_close != NULL) {
@@ -387,10 +387,10 @@ char *TlenXmlGetAttrValue(XmlNode *node, char *key)
 {
 	int i;
 
-	if (node == NULL || node->numAttr <= 0 || key == NULL || strlen(key) <= 0)
+	if (node == NULL || node->numAttr <= 0 || key == NULL || mir_strlen(key) <= 0)
 		return NULL;
 	for (i=0; i<node->numAttr; i++) {
-		if (node->attr[i]->name && !strcmp(key, node->attr[i]->name))
+		if (node->attr[i]->name && !mir_strcmp(key, node->attr[i]->name))
 			return node->attr[i]->value;
 	}
 	return NULL;
@@ -405,11 +405,11 @@ XmlNode *TlenXmlGetNthChild(XmlNode *node, char *tag, int nth)
 {
 	int i, num;
 
-	if (node == NULL || node->numChild <= 0 || tag == NULL || strlen(tag) <= 0 || nth < 1)
+	if (node == NULL || node->numChild <= 0 || tag == NULL || mir_strlen(tag) <= 0 || nth < 1)
 		return NULL;
 	num = 1;
 	for (i=0; i<node->numChild; i++) {
-		if (node->child[i]->name && !strcmp(tag, node->child[i]->name)) {
+		if (node->child[i]->name && !mir_strcmp(tag, node->child[i]->name)) {
 			if (num == nth) {
 				return node->child[i];
 			}
@@ -424,12 +424,12 @@ XmlNode *TlenXmlGetChildWithGivenAttrValue(XmlNode *node, char *tag, char *attrK
 	int i;
 	char *str;
 
-	if (node == NULL || node->numChild <= 0 || tag == NULL || strlen(tag) <= 0 || attrKey == NULL || strlen(attrKey) <= 0 || attrValue == NULL || strlen(attrValue) <= 0)
+	if (node == NULL || node->numChild <= 0 || tag == NULL || mir_strlen(tag) <= 0 || attrKey == NULL || mir_strlen(attrKey) <= 0 || attrValue == NULL || mir_strlen(attrValue) <= 0)
 		return NULL;
 	for (i=0; i<node->numChild; i++) {
-		if (node->child[i]->name && !strcmp(tag, node->child[i]->name)) {
+		if (node->child[i]->name && !mir_strcmp(tag, node->child[i]->name)) {
 			if ((str=TlenXmlGetAttrValue(node->child[i], attrKey)) != NULL)
-				if (!strcmp(str, attrValue))
+				if (!mir_strcmp(str, attrValue))
 					return node->child[i];
 		}
 	}

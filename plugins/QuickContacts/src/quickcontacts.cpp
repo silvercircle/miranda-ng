@@ -264,7 +264,7 @@ int lstreq(TCHAR *a, TCHAR *b, size_t len = -1)
 	if (len > 0)
 		ret = _tcsncmp(a, b, len);
 	else
-		ret = _tcscmp(a, b);
+		ret = mir_tstrcmp(a, b);
 	free(a);
 	free(b);
 	return ret;
@@ -351,7 +351,7 @@ void LoadContacts(HWND hwndDlg, BOOL show_all)
 			if ((!show_all && opts.hide_subcontacts) || opts.group_append)
 				hMeta = db_mc_getMeta(hContact);
 		}
-		else if (!strcmp(META_PROTO, pszProto))
+		else if (!mir_strcmp(META_PROTO, pszProto))
 			continue;
 
 		if (!show_all)

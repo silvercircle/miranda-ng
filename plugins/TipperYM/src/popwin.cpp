@@ -28,7 +28,7 @@ __inline void AddRow(PopupWindowData *pwd, TCHAR *swzLabel, TCHAR *swzValue, cha
 	pwd->rows = pRows;								
 	pwd->rows[pwd->iRowCount].swzLabel = swzLabel ? mir_tstrdup(swzLabel) : NULL;
 	pwd->rows[pwd->iRowCount].swzValue = swzValue ? mir_tstrdup(swzValue) : NULL;
-	pwd->rows[pwd->iRowCount].spi = bParseSmileys ? Smileys_PreParse(swzValue, (int)_tcslen(swzValue), szProto) : NULL;
+	pwd->rows[pwd->iRowCount].spi = bParseSmileys ? Smileys_PreParse(swzValue, (int)mir_tstrlen(swzValue), szProto) : NULL;
 	pwd->rows[pwd->iRowCount].bValueNewline = bNewline;
 	pwd->rows[pwd->iRowCount].bLineAbove = bLineAbove;
 	pwd->rows[pwd->iRowCount].bIsTitle = bIsTitle;
@@ -73,10 +73,10 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				if (ServiceExists(MS_PROTO_GETACCOUNT)) {
 					PROTOACCOUNT *pa = ProtoGetAccount(pwd->clcit.szProto);
 					if (pa)
-						_tcscpy(pwd->swzTitle, pa->tszAccountName);
+						mir_tstrcpy(pwd->swzTitle, pa->tszAccountName);
 				}
 
-				if (_tcslen(pwd->swzTitle) == 0)
+				if (mir_tstrlen(pwd->swzTitle) == 0)
 					a2t(pwd->clcit.szProto, pwd->swzTitle, TITLE_TEXT_LEN);
 
 				if (CallService(MS_PROTO_ISACCOUNTLOCKED, 0, (LPARAM)pwd->clcit.szProto))
@@ -225,7 +225,7 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				}
 				else {
 					TCHAR buff[2048], *swzText = pwd->clcit.swzText;
-					size_t iBuffPos, i = 0, iSize = _tcslen(pwd->clcit.swzText);
+					size_t iBuffPos, i = 0, iSize = mir_tstrlen(pwd->clcit.swzText);
 					bool bTopMessage = false;
 
 					while (i < iSize && swzText[i] != _T('<')) {
@@ -337,7 +337,7 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 						int iXstatus = db_get_b(pwd->hContact, szProto, "XStatusId", 0);
 						if (iXstatus) {
 							char szIconProto[64];
-							if (strcmp(szProto, META_PROTO) != 0)
+							if (mir_strcmp(szProto, META_PROTO) != 0)
 								strncpy(szIconProto, szProto, sizeof(szIconProto) - 1);
 							else if (!db_get_s(pwd->hContact, szProto, "XStatusProto", &dbv)) {
 								strncpy(szIconProto, dbv.pszVal, sizeof(szIconProto) - 1);
@@ -772,14 +772,14 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			for (int i = 0; i < pwd->iRowCount; i++) {
 				if (pwd->rows[i].swzValue) {
 					TCHAR buff[128];
-					int iLen = (int)_tcslen(pwd->rows[i].swzValue);
+					int iLen = (int)mir_tstrlen(pwd->rows[i].swzValue);
 					if (iLen) {
 						if (iLen > MAX_VALUE_LEN) {
 							_tcsncpy(buff, pwd->rows[i].swzValue, MAX_VALUE_LEN);
 							buff[MAX_VALUE_LEN] = 0;
 							_tcscat(buff, _T("..."));
 						}
-						else _tcscpy(buff, pwd->rows[i].swzValue);
+						else mir_tstrcpy(buff, pwd->rows[i].swzValue);
 
 						AppendMenu(hMenu, MF_STRING, i + 1, buff);  // first id = 1, because no select have id = 0
 						SetMenuItemBitmaps(hMenu, i + 1, MF_BYCOMMAND, hbmpItem, hbmpItem);
@@ -852,7 +852,7 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 						}
 					}
 					// single row
-					else _tcscpy(pchData, pwd->rows[iSelItem - 1].swzValue);
+					else mir_tstrcpy(pchData, pwd->rows[iSelItem - 1].swzValue);
 
 					GlobalUnlock(hClipboardData);
 					SetClipboardData(CF_UNICODETEXT, hClipboardData);
@@ -1066,7 +1066,7 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 						pwd->rows[pwd->iRowCount].swzLabel = mir_tstrdup(buff_label);
 						pwd->rows[pwd->iRowCount].swzValue = mir_tstrdup(buff);
-						pwd->rows[pwd->iRowCount].spi = Smileys_PreParse(buff, (int)_tcslen(buff), szProto);
+						pwd->rows[pwd->iRowCount].spi = Smileys_PreParse(buff, (int)mir_tstrlen(buff), szProto);
 						pwd->rows[pwd->iRowCount].bValueNewline = node->di.bValueNewline;
 						pwd->rows[pwd->iRowCount].bLineAbove = node->di.bLineAbove;
 						pwd->iRowCount++;
@@ -1183,7 +1183,7 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 					else if (hFontLabels)
 						SelectObject(hdc, (HGDIOBJ)hFontLabels);
 
-					GetTextExtentPoint32(hdc, pwd->rows[i].swzLabel, (int)_tcslen(pwd->rows[i].swzLabel), &sz);
+					GetTextExtentPoint32(hdc, pwd->rows[i].swzLabel, (int)mir_tstrlen(pwd->rows[i].swzLabel), &sz);
 					if (sz.cx > pwd->iLabelWidth)
 						pwd->iLabelWidth = sz.cx;
 				}
@@ -1198,7 +1198,7 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 					SelectObject(hdc, (HGDIOBJ)hFontLabels);
 
 				if (pwd->rows[i].swzLabel && pwd->rows[i].swzLabel[0])
-					GetTextExtentPoint32(hdc, pwd->rows[i].swzLabel, (int)_tcslen(pwd->rows[i].swzLabel), &sz);
+					GetTextExtentPoint32(hdc, pwd->rows[i].swzLabel, (int)mir_tstrlen(pwd->rows[i].swzLabel), &sz);
 				else
 					sz.cy = sz.cx = 0;
 
@@ -1219,7 +1219,7 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 				if (pwd->rows[i].swzValue && pwd->rows[i].swzValue[0]) {
 					if (!bStatusMsg && opt.bGetNewStatusMsg) {
-						if (!_tcscmp(pwd->rows[i].swzValue, _T("%sys:status_msg%")))
+						if (!mir_tstrcmp(pwd->rows[i].swzValue, _T("%sys:status_msg%")))
 							bStatusMsg = true;
 					}
 
@@ -1499,7 +1499,7 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			else buff[0] = 0;
 
 			TCHAR swzProto[256];
-			_tcscpy(swzProto, pa->tszAccountName);
+			mir_tstrcpy(swzProto, pa->tszAccountName);
 			if (dwItems & TRAYTIP_LOCKSTATUS)
 				if (CallService(MS_PROTO_ISACCOUNTLOCKED, 0, (LPARAM)pa->szModuleName))
 					mir_sntprintf(swzProto, SIZEOF(swzProto), TranslateT("%s (locked)"), pa->tszAccountName);
@@ -1634,7 +1634,7 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 								mir_sntprintf(swzName, SIZEOF(swzName), _T("%s (%s)"), swzNick, swzProto);
 								mir_free(swzProto);
 							}
-							else _tcscpy(swzName, swzNick);
+							else mir_tstrcpy(swzName, swzNick);
 
 							AddRow(pwd, swzName, swzStatus, NULL, false, false, false);
 						}
@@ -1667,7 +1667,7 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 			if (!pchBold || pchBold != pwd->clcit.swzText) {
 				TCHAR swzText[256];
-				_tcscpy(swzText, pwd->clcit.swzText);
+				mir_tstrcpy(swzText, pwd->clcit.swzText);
 				if (pchBr) swzText[pchBr - pwd->clcit.swzText] = 0;
 				AddRow(pwd, swzText, _T(""), NULL, false, true, false, true, LoadSkinnedIcon(SKINICON_OTHER_FILLEDBLOB));
 			}

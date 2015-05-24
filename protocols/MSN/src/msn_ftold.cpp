@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "msn_global.h"
 #include "msn_proto.h"
+#ifdef OBSOLETE
 
 void CMsnProto::msnftp_sendAcceptReject(filetransfer *ft, bool acc)
 {
@@ -36,7 +37,7 @@ void CMsnProto::msnftp_sendAcceptReject(filetransfer *ft, bool acc)
 			"Invitation-Cookie: %s\r\n"
 			"Launch-Application: FALSE\r\n"
 			"Request-Data: IP-Address:\r\n\r\n",
-			172 + 4 + strlen(ft->szInvcookie), ft->szInvcookie);
+			172 + 4 + mir_strlen(ft->szInvcookie), ft->szInvcookie);
 	}
 	else {
 		thread->sendPacket("MSG",
@@ -45,7 +46,7 @@ void CMsnProto::msnftp_sendAcceptReject(filetransfer *ft, bool acc)
 			"Invitation-Command: CANCEL\r\n"
 			"Invitation-Cookie: %s\r\n"
 			"Cancel-Code: REJECT\r\n\r\n",
-			172 - 33 + 4 + strlen(ft->szInvcookie), ft->szInvcookie);
+			172 - 33 + 4 + mir_strlen(ft->szInvcookie), ft->szInvcookie);
 	}
 }
 
@@ -163,10 +164,10 @@ LBL_InvalidCommand:
 			break;
 		}
 
-		if (strcmp(protocol1, "MSNFTP") != 0) {
+		if (mir_strcmp(protocol1, "MSNFTP") != 0) {
 			int tempInt;
 			int tFieldCount = sscanf(params, "%d %6s", &tempInt, protocol1);
-			if (tFieldCount != 2 || strcmp(protocol1, "MSNFTP") != 0) {
+			if (tFieldCount != 2 || mir_strcmp(protocol1, "MSNFTP") != 0) {
 				debugLogA("Another side requested the unknown protocol (%s), closing thread", params);
 				return 1;
 			}
@@ -180,7 +181,7 @@ LBL_InvalidCommand:
 		}
 		else if (info->mCaller == 2) { //send
 			static const char sttCommand[] = "VER MSNFTP\r\n";
-			info->send(sttCommand, strlen(sttCommand));
+			info->send(sttCommand, mir_strlen(sttCommand));
 		}
 		break;
 
@@ -209,7 +210,7 @@ LBL_Error:
 			if (tIsTransitionFinished) {
 LBL_Success:
 				static const char sttCommand[] = "BYE 16777989\r\n";
-				info->send(sttCommand, strlen(sttCommand));
+				info->send(sttCommand, mir_strlen(sttCommand));
 				return 1;
 			}
 
@@ -332,7 +333,7 @@ void CMsnProto::msnftp_startFileSend(ThreadData* info, const char* Invcommand, c
 
 	const PIN_ADDR addr = (PIN_ADDR)he->h_addr_list[0];
 	if (addr)
-		strcpy(hostname, inet_ntoa(*addr));
+		mir_strcpy(hostname, inet_ntoa(*addr));
 	else
 		hostname[0] = 0;
 
@@ -365,3 +366,4 @@ void CMsnProto::msnftp_startFileSend(ThreadData* info, const char* Invcommand, c
 	}
 	else delete ft;
 }
+#endif

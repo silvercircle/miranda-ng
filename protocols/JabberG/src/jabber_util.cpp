@@ -75,7 +75,7 @@ MCONTACT CJabberProto::HContactFromJID(const TCHAR *jid, BOOL bStripResource)
 					if (bIsChat)
 						result = mir_tstrcmpi(jid, dbJid);  // for chat room we have to have full contact matched
 					else if (TRUE)
-						result = _tcsnicmp(jid, dbJid, _tcslen(dbJid));
+						result = _tcsnicmp(jid, dbJid, mir_tstrlen(dbJid));
 					else
 						result = JabberCompareJids(jid, dbJid);
 				}
@@ -170,7 +170,7 @@ char* __stdcall JabberSha1(const char *str, JabberShaStrBuf buf)
 	BYTE digest[MIR_SHA1_HASH_SIZE];
 	mir_sha1_ctx sha;
 	mir_sha1_init(&sha);
-	mir_sha1_append(&sha, (BYTE*)str, (int)strlen(str));
+	mir_sha1_append(&sha, (BYTE*)str, (int)mir_strlen(str));
 	mir_sha1_finish(&sha, digest);
 
 	bin2hex(digest, sizeof(digest), buf);
@@ -310,7 +310,7 @@ TCHAR* __stdcall JabberErrorMsg(HXML errorNode, int* pErrorCode)
 			HXML c = xmlGetChild(errorNode, i);
 			if (c == NULL) break;
 			const TCHAR *attr = xmlGetAttrValue(c, _T("xmlns"));
-			if (attr && !_tcscmp(attr, _T("urn:ietf:params:xml:ns:xmpp-stanzas"))) {
+			if (attr && !mir_tstrcmp(attr, _T("urn:ietf:params:xml:ns:xmpp-stanzas"))) {
 				str = xmlGetName(c);
 				break;
 			}
@@ -617,10 +617,10 @@ TCHAR* __stdcall JabberStripJid(const TCHAR *jid, TCHAR *dest, size_t destLen)
 LPCTSTR __stdcall JabberGetPictureType(HXML node, const char *picBuf)
 {
 	if (LPCTSTR ptszType = xmlGetText(xmlGetChild(node, "TYPE")))
-		if (!_tcscmp(ptszType, _T("image/jpeg")) ||
-			 !_tcscmp(ptszType, _T("image/png")) ||
-			 !_tcscmp(ptszType, _T("image/gif")) ||
-			 !_tcscmp(ptszType, _T("image/bmp")))
+		if (!mir_tstrcmp(ptszType, _T("image/jpeg")) ||
+			 !mir_tstrcmp(ptszType, _T("image/png")) ||
+			 !mir_tstrcmp(ptszType, _T("image/gif")) ||
+			 !mir_tstrcmp(ptszType, _T("image/bmp")))
 			return ptszType;
 
 	switch (ProtoGetBufferFormat(picBuf)) {
@@ -679,7 +679,7 @@ TStringPairs::~TStringPairs()
 const char* TStringPairs::operator[](const char* key) const
 {
 	for (int i = 0; i < numElems; i++)
-		if (!strcmp(elems[i].name, key))
+		if (!mir_strcmp(elems[i].name, key))
 			return elems[i].value;
 
 	return "";
@@ -914,7 +914,7 @@ bool CJabberProto::IsMyOwnJID(LPCTSTR szJID)
 	if (pDelimiter)
 		*pDelimiter = 0;
 
-	return _tcscmp(szFrom, szTo) == 0;
+	return mir_tstrcmp(szFrom, szTo) == 0;
 }
 
 void __cdecl CJabberProto::LoadHttpAvatars(void* param)

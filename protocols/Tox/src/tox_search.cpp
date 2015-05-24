@@ -108,7 +108,7 @@ void CToxProto::SearchByNameAsync(void *arg)
 					tox_dns3_kill(dns);
 				}
 			}
-			section += strlen(section) + 1;
+			section += mir_strlen(section) + 1;
 		}
 	}
 
@@ -190,7 +190,7 @@ HWND CToxProto::OnSearchAdvanced(HWND owner)
 	TCHAR text[MAX_PATH];
 	GetDlgItemText(owner, IDC_SEARCH, text, SIZEOF(text));
 
-	const std::string query = ptrA(mir_utf8encodeT(text));
+	const std::string query = T2Utf(text);
 	if (std::regex_search(query, match, regex))
 	{
 		std::string address = match[1];

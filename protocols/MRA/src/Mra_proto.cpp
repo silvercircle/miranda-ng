@@ -1763,7 +1763,7 @@ DWORD CMraProto::MraRecvCommand_Message(DWORD dwTime, DWORD dwFlags, CMStringA &
 					ptrA lpbBuffer(mir_u2a_cp(wszMessage, MRA_CODE_PAGE));
 					pre.flags = 0;
 					pre.szMessage = (LPSTR)lpbBuffer;
-					pre.lParam = strlen(lpbBuffer);
+					pre.lParam = mir_strlen(lpbBuffer);
 
 					LPSTR lpbBufferCurPos = lpbBuffer;
 					while (TRUE) { // цикл замены ; на 0
@@ -1781,8 +1781,8 @@ DWORD CMraProto::MraRecvCommand_Message(DWORD dwTime, DWORD dwFlags, CMStringA &
 					if (m_heNudgeReceived)
 						NotifyEventHooks(m_heNudgeReceived, hContact, NULL);
 					else {
-						pre.flags = PREF_UNICODE;
-						pre.szMessage = (LPSTR)TranslateTS(MRA_ALARM_MESSAGE);
+						T2Utf szMsg(TranslateTS(MRA_ALARM_MESSAGE));
+						pre.szMessage = szMsg;
 						ProtoChainRecvMsg(hContact, &pre);
 					}
 				}
@@ -1797,7 +1797,6 @@ DWORD CMraProto::MraRecvCommand_Message(DWORD dwTime, DWORD dwFlags, CMStringA &
 						// some plugins can change pre.szMessage pointer and we failed to free it
 						ptrA lpszMessageUTF(mir_utf8encodeW(wszMessage));
 						pre.szMessage = lpszMessageUTF;
-						pre.flags = PREF_UTF;
 						ProtoChainRecvMsg(hContact, &pre);
 					}
 

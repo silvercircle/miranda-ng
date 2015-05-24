@@ -150,7 +150,7 @@ static HANDLE timeapiGetInfoByName(LPCTSTR tszName, DWORD dwFlags)
 	if (tszName == NULL)
 		return (dwFlags & (TZF_DIFONLY | TZF_KNOWNONLY)) ? NULL : &myInfo.myTZ;
 
-	if (_tcscmp(myInfo.myTZ.tszName, tszName) == 0)
+	if (mir_tstrcmp(myInfo.myTZ.tszName, tszName) == 0)
 		return (dwFlags & TZF_DIFONLY) ? NULL : &myInfo.myTZ;
 
 	MIM_TIMEZONE tzsearch;
@@ -311,9 +311,9 @@ static const ListMessages* GetListMessages(HWND hWnd, DWORD dwFlags)
 	if (!(dwFlags & (TZF_PLF_CB | TZF_PLF_LB))) {
 		TCHAR	tszClassName[128];
 		GetClassName(hWnd, tszClassName, SIZEOF(tszClassName));
-		if (!_tcsicmp(tszClassName, _T("COMBOBOX")))
+		if (!mir_tstrcmpi(tszClassName, _T("COMBOBOX")))
 			dwFlags |= TZF_PLF_CB;
-		else if (!_tcsicmp(tszClassName, _T("LISTBOX")))
+		else if (!mir_tstrcmpi(tszClassName, _T("LISTBOX")))
 			dwFlags |= TZF_PLF_LB;
 	}
 	if (dwFlags & TZF_PLF_CB)
@@ -525,7 +525,7 @@ void InitTimeZones(void)
 				tz->tzi.DaylightDate = tzi.DaylightDate;
 				tz->tzi.DaylightBias = tzi.DaylightBias;
 
-				_tcscpy(tz->tszName, tszName);
+				mir_tstrcpy(tz->tszName, tszName);
 				tz->hash = mir_hashstrT(tszName);
 				tz->offset = INT_MIN;
 

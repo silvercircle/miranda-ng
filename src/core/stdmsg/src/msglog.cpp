@@ -78,14 +78,14 @@ static int AppendToBufferWithRTF(char *&buffer, size_t &cbBufferEnd, size_t &cbB
 	if (line == NULL)
 		return 0;
 
-	size_t lineLen = _tcslen(line) * 9 + 8;
+	size_t lineLen = mir_tstrlen(line) * 9 + 8;
 	if (cbBufferEnd + lineLen > cbBufferAlloced) {
 		cbBufferAlloced += lineLen + 1024 - lineLen % 1024;
 		buffer = (char*)mir_realloc(buffer, cbBufferAlloced);
 	}
 
 	d = buffer + cbBufferEnd;
-	strcpy(d, "{\\uc1 ");
+	mir_strcpy(d, "{\\uc1 ");
 	d += 6;
 
 	for (; *line; line++, textCharsCount++) {
@@ -110,9 +110,9 @@ static int AppendToBufferWithRTF(char *&buffer, size_t &cbBufferEnd, size_t &cbB
 			int i, found = 0;
 			for (i = 0; i < SIZEOF(bbcodes); ++i) {
 				if (line[1] == bbcodes[i][1]) {
-					size_t lenb = _tcslen(bbcodes[i]);
+					size_t lenb = mir_tstrlen(bbcodes[i]);
 					if (!_tcsnicmp(line, bbcodes[i], lenb)) {
-						size_t len = strlen(bbcodefmt[i]);
+						size_t len = mir_strlen(bbcodefmt[i]);
 						memcpy(d, bbcodefmt[i], len);
 						d += len;
 						line += lenb - 1;
@@ -362,7 +362,7 @@ static char *CreateRTFFromDbEvent(SrmmWindowData *dat, MCONTACT hContact, MEVENT
 	case EVENTTYPE_FILE:
 		{
 			char* filename = (char*)dbei.pBlob + sizeof(DWORD);
-			char* descr = filename + strlen(filename) + 1;
+			char* descr = filename + mir_strlen(filename) + 1;
 			
 			ptrT ptszFileName(DbGetEventStringT(&dbei, filename));
 			AppendToBuffer(buffer, bufferEnd, bufferAlloced, " %s ", SetToStyle(MSGFONTID_NOTICE));
@@ -482,8 +482,8 @@ void StreamInEvents(HWND hwndDlg, MEVENT hDbEventFirst, int count, int fAppend)
 		SendMessage(hwndLog, EM_EXSETSEL, 0, (LPARAM)& sel);
 	}
 
-	strcpy(szSep2, fAppend ? "\\par\\sl0" : "\\sl1000");
-	strcpy(szSep2_RTL, fAppend ? "\\rtlpar\\rtlmark\\par\\sl1000" : "\\sl1000");
+	mir_strcpy(szSep2, fAppend ? "\\par\\sl0" : "\\sl1000");
+	mir_strcpy(szSep2_RTL, fAppend ? "\\rtlpar\\rtlmark\\par\\sl1000" : "\\sl1000");
 
 	SendMessage(hwndLog, EM_STREAMIN, fAppend ? SFF_SELECTION | SF_RTF : SF_RTF, (LPARAM)& stream);
 	if (bottomScroll) {
@@ -545,7 +545,7 @@ void LoadMsgLogIcons(void)
 		char *szDest = pLogIconBmpBits[i] + rtfHeaderSize;
 		bin2hex(&bih, sizeof(bih), szDest); szDest += sizeof(bih) * 2;
 		bin2hex(pBmpBits, widthBytes * bih.biHeight, szDest); szDest += widthBytes * bih.biHeight * 2;
-		strcpy(szDest, "}");
+		mir_strcpy(szDest, "}");
 
 		logIconBmpSize[i] = size_t(szDest - pLogIconBmpBits[i]) + 1;
 	}

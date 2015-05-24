@@ -638,7 +638,7 @@ void CPepMood::ProcessItems(const TCHAR *from, HXML itemsNode)
 
 	LPCTSTR moodType = NULL, moodText = NULL;
 	for (int i=0; n = xmlGetChild(moodNode, i); i++) {
-		if (!_tcscmp(xmlGetName(n), _T("text")))
+		if (!mir_tstrcmp(xmlGetName(n), _T("text")))
 			moodText = xmlGetText(n);
 		else
 			moodType = xmlGetName(n);
@@ -876,7 +876,7 @@ static int ActivityCheck(LPCTSTR szFirstNode, LPCTSTR szSecondNode)
 	int i = 0, nFirst = -1, nSecond = -1;
 	while (g_arrActivities[i].szFirst || g_arrActivities[i].szSecond) {
 		// check first node
-		if (g_arrActivities[i].szFirst && !strcmp(s1, g_arrActivities[i].szFirst)) {
+		if (g_arrActivities[i].szFirst && !mir_strcmp(s1, g_arrActivities[i].szFirst)) {
 			// first part found
 			nFirst = i;
 			if (!s2) {
@@ -885,7 +885,7 @@ static int ActivityCheck(LPCTSTR szFirstNode, LPCTSTR szSecondNode)
 			}
 			i++; // move to next
 			while (g_arrActivities[i].szSecond) {
-				if (!strcmp(g_arrActivities[i].szSecond, s2)) {
+				if (!mir_strcmp(g_arrActivities[i].szSecond, s2)) {
 					nSecond = i;
 					break;
 				}
@@ -1511,15 +1511,15 @@ void g_XstatusIconsInit()
 	TCHAR szFile[MAX_PATH];
 	GetModuleFileName(hInst, szFile, SIZEOF(szFile));
 	if (TCHAR *p = _tcsrchr(szFile, '\\'))
-		_tcscpy(p + 1, _T("..\\Icons\\xstatus_jabber.dll"));
+		mir_tstrcpy(p + 1, _T("..\\Icons\\xstatus_jabber.dll"));
 
 	TCHAR szSection[100];
-	_tcscpy(szSection, _T("Protocols/Jabber/")LPGENT("Moods"));
+	mir_tstrcpy(szSection, _T("Protocols/Jabber/")LPGENT("Moods"));
 
 	for (int i = 1; i < SIZEOF(g_arrMoods); i++)
 		g_MoodIcons.RegisterIcon(g_arrMoods[i].szTag, szFile, -(200 + i), szSection, TranslateTS(g_arrMoods[i].szName));
 
-	_tcscpy(szSection, _T("Protocols/Jabber/")LPGENT("Activities"));
+	mir_tstrcpy(szSection, _T("Protocols/Jabber/")LPGENT("Activities"));
 	for (int k = 0; k < SIZEOF(g_arrActivities); k++) {
 		if (g_arrActivities[k].szFirst)
 			g_ActivityIcons.RegisterIcon(g_arrActivities[k].szFirst, szFile, g_arrActivities[k].iconid, szSection, TranslateTS(g_arrActivities[k].szTitle));

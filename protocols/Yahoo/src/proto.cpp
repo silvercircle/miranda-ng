@@ -161,7 +161,7 @@ MCONTACT __cdecl CYahooProto::AddToListByEvent( int flags, int /*iContact*/, MEV
 		return 0;
 	}
 
-	if ( strcmp(dbei.szModule, m_szModuleName)) {
+	if ( mir_strcmp(dbei.szModule, m_szModuleName)) {
 		debugLogA("[YahooAddToListByEvent] ERROR: Not Yahoo protocol.");
 		return 0;
 	}
@@ -197,7 +197,7 @@ int CYahooProto::Authorize(MEVENT hdbe)
 	if (dbei.eventType != EVENTTYPE_AUTHREQUEST)
 		return 1;
 
-	if ( strcmp(dbei.szModule, m_szModuleName))
+	if ( mir_strcmp(dbei.szModule, m_szModuleName))
 		return 1;
 
 	/* Need to remove the buddy from our Miranda Lists */
@@ -240,7 +240,7 @@ int CYahooProto::AuthDeny(MEVENT hdbe, const TCHAR *reason)
 		return 1;
 	}
 
-	if (strcmp( dbei.szModule, m_szModuleName)) {
+	if (mir_strcmp( dbei.szModule, m_szModuleName)) {
 		debugLogA("YahooAuthDeny - wrong module?");
 		return 1;
 	}
@@ -248,10 +248,10 @@ int CYahooProto::AuthDeny(MEVENT hdbe, const TCHAR *reason)
 	/* Need to remove the buddy from our Miranda Lists */
 	MCONTACT hContact = DbGetAuthEventContact(&dbei);
 	if (hContact != NULL) {
-		ptrA who( getStringA(hContact, YAHOO_LOGINID));
+		ptrA who(getStringA(hContact, YAHOO_LOGINID));
 		if (who) {
-			ptrA myid( getStringA(hContact, "MyIdentity"));
-			ptrA u_reason( mir_utf8encodeT(reason));
+			ptrA myid(getStringA(hContact, "MyIdentity"));
+			T2Utf u_reason(reason);
 
 			debugLogA("Rejecting buddy:%s msg: %s", who, u_reason);
 			reject(myid, who, getWord(hContact, "yprotoid", 0), u_reason);
@@ -308,7 +308,7 @@ DWORD_PTR __cdecl CYahooProto::GetCaps(int type, MCONTACT hContact)
 
 	case PFLAGNUM_4:
 		return PF4_FORCEAUTH | PF4_FORCEADDED | PF4_SUPPORTTYPING | PF4_SUPPORTIDLE
-			|PF4_AVATARS | PF4_OFFLINEFILES | PF4_IMSENDUTF | PF4_IMSENDOFFLINE /* for Meta plugin*/;
+			|PF4_AVATARS | PF4_OFFLINEFILES | PF4_IMSENDOFFLINE /* for Meta plugin*/;
 	case PFLAG_UNIQUEIDTEXT:
 		return (DWORD_PTR) Translate("ID");
 	case PFLAG_UNIQUEIDSETTING:
@@ -610,7 +610,7 @@ int __cdecl CYahooProto::UserIsTyping(MCONTACT hContact, int type)
 		return 0;
 
 	char *szProto = GetContactProto(hContact);
-	if (szProto == NULL || strcmp(szProto, m_szModuleName))
+	if (szProto == NULL || mir_strcmp(szProto, m_szModuleName))
 		return 0;
 
 	DBVARIANT dbv;

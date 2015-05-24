@@ -451,7 +451,7 @@ static bool TabAutoComplete(HWND hwnd, MESSAGESUBDATA *dat, SESSION_INFO *si)
 		start -= 2;
 
 	if (dat->szSearchResult != NULL) {
-		int cbResult = (int)_tcslen(dat->szSearchResult);
+		int cbResult = (int)mir_tstrlen(dat->szSearchResult);
 		if (start >= cbResult && !_tcsncicmp(dat->szSearchResult, pszText + start - cbResult, cbResult)) {
 			start -= cbResult;
 			goto LBL_SkipEnd;
@@ -2708,7 +2708,7 @@ LABEL_SHOWWINDOW:
 									SendDlgItemMessage(hwndDlg, IDC_CHAT_MESSAGE, EM_GETTEXTRANGE, 0, (LPARAM)&tr2);
 									if (!_istspace(*tr2.lpstrText))
 										*tszTmp++ = _T(' ');
-									_tcscpy(tszTmp, tr.lpstrText);
+									mir_tstrcpy(tszTmp, tr.lpstrText);
 								}
 								else // in the beginning of the message window
 									mir_sntprintf(tszAppeal, bufSize, tszAplTmpl, tr.lpstrText);
@@ -3214,7 +3214,7 @@ LABEL_SHOWWINDOW:
 	case DM_CONTAINERSELECTED:
 		{
 			TCHAR *szNewName = (TCHAR*)lParam;
-			if (!_tcscmp(szNewName, TranslateT("Default container")))
+			if (!mir_tstrcmp(szNewName, TranslateT("Default container")))
 				szNewName = CGlobals::m_default_container_name;
 			int iOldItems = TabCtrl_GetItemCount(hwndTab);
 			if (!_tcsncmp(dat->pContainer->szName, szNewName, CONTAINER_NAMELEN))

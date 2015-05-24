@@ -407,12 +407,12 @@ int UpdateMails(HWND hDlg, HACCOUNT ActualAccount, DWORD nflags, DWORD nnflags)
 
 	if (RunMailBrowser)
 	{
-		size_t len = strlen(ActualAccount->Name) + strlen(Translate(MAILBROWSERTITLE)) + 10;	//+10 chars for numbers
+		size_t len = mir_strlen(ActualAccount->Name) + mir_strlen(Translate(MAILBROWSERTITLE)) + 10;	//+10 chars for numbers
 		char *TitleStrA = new char[len];
 		WCHAR *TitleStrW = new WCHAR[len];
 
 		mir_snprintf(TitleStrA, len, Translate(MAILBROWSERTITLE), ActualAccount->Name, MN.Real.DisplayUC + MN.Virtual.DisplayUC, MN.Real.Display + MN.Virtual.Display);
-		MultiByteToWideChar(CP_ACP, MB_USEGLYPHCHARS, TitleStrA, -1, TitleStrW, (int)strlen(TitleStrA) + 1);
+		MultiByteToWideChar(CP_ACP, MB_USEGLYPHCHARS, TitleStrA, -1, TitleStrW, (int)mir_strlen(TitleStrA) + 1);
 		SetWindowTextW(hDlg, TitleStrW);
 		delete[] TitleStrA;
 		delete[] TitleStrW;
@@ -1088,7 +1088,7 @@ ULONGLONG MimeDateToFileTime(char *datein)
 
 		if (year) {
 			st.wYear = atoi(year);
-			if (strlen(year) < 4)	if (st.wYear < 70)st.wYear += 2000; else st.wYear += 1900;
+			if (mir_strlen(year) < 4)	if (st.wYear < 70)st.wYear += 2000; else st.wYear += 1900;
 		};
 		if (month) for (int i = 0; i < 12; i++) if (strncmp(month, s_MonthNames[i], 3) == 0) { st.wMonth = i + 1; break; }
 		if (day) st.wDay = atoi(day);
@@ -1107,12 +1107,12 @@ ULONGLONG MimeDateToFileTime(char *datein)
 		else { st.wHour = st.wMinute = st.wSecond = 0; }
 
 		if (shift) {
-			if (strlen(shift) < 4) {
+			if (mir_strlen(shift) < 4) {
 				//has only hour
 				wShiftSeconds = (atoi(shift)) * 3600;
 			}
 			else {
-				char *smin = shift + strlen(shift) - 2;
+				char *smin = shift + mir_strlen(shift) - 2;
 				int ismin = atoi(smin);
 				smin[0] = 0;
 				int ishour = atoi(shift);
@@ -1214,7 +1214,7 @@ int CALLBACK ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSo
 				str2 = Header2.From;
 			else str2 = Header2.FromNick;
 
-			nResult = strcmp(str1, str2);
+			nResult = mir_strcmp(str1, str2);
 
 			if (bFrom) nResult = -nResult;
 			break;
@@ -1227,7 +1227,7 @@ int CALLBACK ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSo
 				str2 = " ";
 			else str2 = Header2.Subject;
 
-			nResult = strcmp(str1, str2);
+			nResult = mir_strcmp(str1, str2);
 
 			if (bSub) nResult = -nResult;
 			break;
@@ -1258,7 +1258,7 @@ int CALLBACK ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSo
 			if (Header2.Subject == NULL) str2 = " ";
 			else str2 = Header2.Subject;
 
-			nResult = strcmp(str1, str2);
+			nResult = mir_strcmp(str1, str2);
 			break;
 		}
 		//MessageBox(NULL,str1,str2,0);
@@ -1390,7 +1390,7 @@ INT_PTR CALLBACK DlgProcYAMNShowMessage(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 				Subj = new WCHAR[wcslen(str2) + 1];
 				wcscpy(Subj, str2);
 			}
-			//if (!hasBody) if (!strcmp(Header->name,"Body")) hasBody = true;
+			//if (!hasBody) if (!mir_strcmp(Header->name,"Body")) hasBody = true;
 			int count = 0; WCHAR **split = 0;
 			int ofs = 0;
 			while (str2[ofs]) {
@@ -1444,12 +1444,12 @@ INT_PTR CALLBACK DlgProcYAMNShowMessage(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 				if (!_strnicmp(contentType, "text", 4)) {
 					if (transEncoding) {
 						if (!_stricmp(transEncoding, "base64")) {
-							int size = (int)strlen(body) * 3 / 4 + 5;
+							int size = (int)mir_strlen(body) * 3 / 4 + 5;
 							localBody = new char[size + 1];
 							DecodeBase64(body, localBody, size);
 						}
 						else if (!_stricmp(transEncoding, "quoted-printable")) {
-							int size = (int)strlen(body) + 2;
+							int size = (int)mir_strlen(body) + 2;
 							localBody = new char[size + 1];
 							DecodeQuotedPrintable(body, localBody, size, FALSE);
 						}
@@ -1618,9 +1618,9 @@ INT_PTR CALLBACK DlgProcYAMNShowMessage(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 						if ((nReturnCmd == 1) && (ListView_GetItemState(hList, courRow, LVIS_SELECTED) == 0)) continue;
 						ListView_GetItemText(hList, courRow, 0, headname, SIZEOF(headname));
 						ListView_GetItemText(hList, courRow, 1, headvalue, SIZEOF(headvalue));
-						size_t headnamelen = _tcslen(headname);
+						size_t headnamelen = mir_tstrlen(headname);
 						if (headnamelen) sizeNeeded += 1 + headnamelen;
-						sizeNeeded += 3 + _tcslen(headvalue);
+						sizeNeeded += 3 + mir_tstrlen(headvalue);
 					}
 					if (sizeNeeded && OpenClipboard(hDlg)) {
 						EmptyClipboard();
@@ -1631,7 +1631,7 @@ INT_PTR CALLBACK DlgProcYAMNShowMessage(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 							if ((nReturnCmd == 1) && (ListView_GetItemState(hList, courRow, LVIS_SELECTED) == 0)) continue;
 							ListView_GetItemText(hList, courRow, 0, headname, SIZEOF(headname));
 							ListView_GetItemText(hList, courRow, 1, headvalue, SIZEOF(headvalue));
-							if (_tcslen(headname)) courPos += mir_sntprintf(&buff[courPos], sizeNeeded + 1, _T("%s:\t%s\r\n"), headname, headvalue);
+							if (mir_tstrlen(headname)) courPos += mir_sntprintf(&buff[courPos], sizeNeeded + 1, _T("%s:\t%s\r\n"), headname, headvalue);
 							else courPos += mir_sntprintf(&buff[courPos], sizeNeeded + 1, _T("\t%s\r\n"), headvalue);
 						}
 						GlobalUnlock(hData);
@@ -2405,7 +2405,7 @@ INT_PTR CALLBACK DlgProcYAMNMailBrowser(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 						ListView_GetItemText(hList, courRow, 1, subject, SIZEOF(subject));
 						ListView_GetItemText(hList, courRow, 2, size, SIZEOF(size));
 						ListView_GetItemText(hList, courRow, 3, date, SIZEOF(date));
-						sizeNeeded += 5 + _tcslen(from) + _tcslen(subject) + _tcslen(size) + _tcslen(date);
+						sizeNeeded += 5 + mir_tstrlen(from) + mir_tstrlen(subject) + mir_tstrlen(size) + mir_tstrlen(date);
 					}
 					if (sizeNeeded && OpenClipboard(hDlg)) {
 						EmptyClipboard();

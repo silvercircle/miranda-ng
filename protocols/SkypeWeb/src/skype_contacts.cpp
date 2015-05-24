@@ -67,7 +67,7 @@ MCONTACT CSkypeProto::GetContactFromAuthEvent(MEVENT hEvent)
 	if (dbei.eventType != EVENTTYPE_AUTHREQUEST)
 		return INVALID_CONTACT_ID;
 
-	if (strcmp(dbei.szModule, m_szModuleName) != 0)
+	if (mir_strcmp(dbei.szModule, m_szModuleName) != 0)
 		return INVALID_CONTACT_ID;
 	return DbGetAuthEventContact(&dbei);
 }
@@ -151,7 +151,6 @@ void CSkypeProto::LoadContactsAuth(const NETLIBHTTPREQUEST *response)
 				delSetting(hContact, "Auth");
 
 				PROTORECVEVENT pre = { 0 };
-				pre.flags = PREF_UTF;
 				pre.timestamp = time(NULL);
 				pre.lParam = (DWORD)(sizeof(DWORD) * 2 + mir_strlen(skypename) + reason.GetLength() + 5);
 

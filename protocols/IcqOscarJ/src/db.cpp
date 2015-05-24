@@ -138,7 +138,7 @@ static INT_PTR CALLBACK PwConfirmDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, 
 
 				GetDlgItemTextA(hwndDlg, IDC_OLDPASS, szTest, SIZEOF(szTest));
 
-				if (strcmpnull(szTest, dat->ppro->GetUserPassword(TRUE))) {
+				if (mir_strcmp(szTest, dat->ppro->GetUserPassword(TRUE))) {
 					MessageBox(hwndDlg, TranslateT("The password does not match your current password. Check Caps Lock and try again."), TranslateT("Change ICQ Details"), MB_OK);
 					SendDlgItemMessage(hwndDlg, IDC_OLDPASS, EM_SETSEL, 0, (LPARAM)-1);
 					SetFocus(GetDlgItem(hwndDlg, IDC_OLDPASS));
@@ -146,7 +146,7 @@ static INT_PTR CALLBACK PwConfirmDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, 
 				}
 
 				GetDlgItemTextA(hwndDlg, IDC_PASSWORD, szTest, SIZEOF(szTest));
-				if (strcmpnull(szTest, dat->Pass)) {
+				if (mir_strcmp(szTest, dat->Pass)) {
 					MessageBox(hwndDlg, TranslateT("The password does not match the password you originally entered. Check Caps Lock and try again."), TranslateT("Change ICQ Details"), MB_OK);
 					SendDlgItemMessage(hwndDlg, IDC_PASSWORD, EM_SETSEL, 0, (LPARAM)-1);
 					SetFocus(GetDlgItem(hwndDlg, IDC_PASSWORD));
@@ -190,7 +190,7 @@ int ChangeInfoData::SaveSettingsToDb(HWND hwndDlg)
 					ret = 0;
 					break;
 				}
-				strcpy(ppro->m_szPassword, (char*)sid.value);
+				mir_strcpy(ppro->m_szPassword, (char*)sid.value);
 			}
 			else {
 				if (*(char*)sid.value)

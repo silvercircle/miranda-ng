@@ -186,20 +186,12 @@ void addMsg2Queue(pUinKey ptr, WPARAM wParam, LPSTR szMsg)
 
 	ptrMessage->wParam = wParam;
 	ptrMessage->nextMessage = NULL;
-
-	if (wParam & PREF_UNICODE) {
-		int slen = (int)strlen(szMsg) + 1;
-		int wlen = (int)wcslen((wchar_t *)(szMsg + slen)) + 1;
-		ptrMessage->Message = (LPSTR)mir_alloc(slen + wlen*sizeof(WCHAR));
-		memcpy(ptrMessage->Message, szMsg, slen + wlen*sizeof(WCHAR));
-	}
-	else ptrMessage->Message = mir_strdup(szMsg);
-
+	ptrMessage->Message = mir_strdup(szMsg);
 }
 
 void getContactNameA(MCONTACT hContact, LPSTR szName)
 {
-	strcpy(szName, (LPCSTR)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, 0));
+	mir_strcpy(szName, (LPCSTR)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, 0));
 }
 
 void getContactName(MCONTACT hContact, LPSTR szName)
@@ -228,7 +220,7 @@ void getContactUinA(MCONTACT hContact, LPSTR szUIN)
 		else
 			sprintf(szUIN, "%s [%s]", dbv_uniqueid.pszVal, ptr->name); //!!!!!!!!!!!
 	}
-	else strcpy(szUIN, " == =  unknown   == =");
+	else mir_strcpy(szUIN, " == =  unknown   == =");
 
 	db_free(&dbv_uniqueid);
 }

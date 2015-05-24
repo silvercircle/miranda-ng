@@ -95,7 +95,7 @@ static int AddDatabaseToList(HWND hwndList, const TCHAR* filename, TCHAR* dir)
 	lvi.iSubItem = 0;
 	for (lvi.iItem = ListView_GetItemCount(hwndList) - 1; lvi.iItem >= 0; lvi.iItem--) {
 		ListView_GetItem(hwndList, &lvi);
-		if (!_tcsicmp((TCHAR*)lvi.lParam, filename))
+		if (!mir_tstrcmpi((TCHAR*)lvi.lParam, filename))
 			return lvi.iItem;
 	}
 
@@ -117,7 +117,7 @@ static int AddDatabaseToList(HWND hwndList, const TCHAR* filename, TCHAR* dir)
 	mir_sntprintf(szName, SIZEOF(szName), _T("%s%s"), dir, pName);
 
 	TCHAR *pDot = _tcsrchr(szName, '.');
-	if (pDot != NULL && !_tcsicmp(pDot, _T(".dat")))
+	if (pDot != NULL && !mir_tstrcmpi(pDot, _T(".dat")))
 		*pDot = 0;
 
 	lvi.iItem = 0;
@@ -146,7 +146,7 @@ void FindAdd(HWND hdlg, TCHAR *szProfileDir, TCHAR *szPrefix)
 	hFind = FindFirstFile(szSearchPath, &fd);
 	if (hFind != INVALID_HANDLE_VALUE) {
 		do {
-			if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || !_tcscmp(fd.cFileName, _T(".")) || !_tcscmp(fd.cFileName, _T("..")))
+			if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || !mir_tstrcmp(fd.cFileName, _T(".")) || !mir_tstrcmp(fd.cFileName, _T("..")))
 				continue;
 
 			mir_sntprintf(szFilename, SIZEOF(szFilename), _T("%s\\%s\\%s.dat"), szProfileDir, fd.cFileName, fd.cFileName);
@@ -159,8 +159,8 @@ void FindAdd(HWND hdlg, TCHAR *szProfileDir, TCHAR *szPrefix)
 
 TCHAR *addstring(TCHAR *str, TCHAR *add)
 {
-	_tcscpy(str, add);
-	return str + _tcslen(add) + 1;
+	mir_tstrcpy(str, add);
+	return str + mir_tstrlen(add) + 1;
 }
 
 INT_PTR CALLBACK SelectDbDlgProc(HWND hdlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -203,7 +203,7 @@ INT_PTR CALLBACK SelectDbDlgProc(HWND hdlg, UINT message, WPARAM wParam, LPARAM 
 			TCHAR szMirandaProfiles[MAX_PATH];
 			DWORD cbData = SIZEOF(szMirandaPath);
 
-			_tcscpy(szMirandaProfiles, szMirandaPath);
+			mir_tstrcpy(szMirandaProfiles, szMirandaPath);
 			_tcscat(szMirandaProfiles, _T("\\Profiles"));
 			GetProfileDirectory(szMirandaPath, szProfileDir, SIZEOF(szProfileDir));
 
@@ -265,7 +265,7 @@ INT_PTR CALLBACK SelectDbDlgProc(HWND hdlg, UINT message, WPARAM wParam, LPARAM 
 			TCHAR *filter, *tmp, *tmp1, *tmp2;
 			tmp1 = TranslateT("Miranda Databases (*.dat)");
 			tmp2 = TranslateT("All Files");
-			filter = tmp = (TCHAR*)_alloca((_tcslen(tmp1) + _tcslen(tmp2) + 11)*sizeof(TCHAR));
+			filter = tmp = (TCHAR*)_alloca((mir_tstrlen(tmp1) + mir_tstrlen(tmp2) + 11)*sizeof(TCHAR));
 			tmp = addstring(tmp, tmp1);
 			tmp = addstring(tmp, _T("*.DAT"));
 			tmp = addstring(tmp, tmp2);

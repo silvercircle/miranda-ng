@@ -42,7 +42,7 @@ BYTE nameOrder[NAMEORDERCOUNT];
 
 static int GetDatabaseString(CONTACTINFO *ci, const char* setting, DBVARIANT* dbv)
 {
-	if (strcmp(ci->szProto, "CList") && CallProtoService(ci->szProto, PS_GETCAPS, PFLAGNUM_4, 0) & PF4_INFOSETTINGSVC) {
+	if (mir_strcmp(ci->szProto, "CList") && CallProtoService(ci->szProto, PS_GETCAPS, PFLAGNUM_4, 0) & PF4_INFOSETTINGSVC) {
 		DBCONTACTGETSETTING cgs = { ci->szProto, setting, dbv };
 		dbv->type = (ci->dwFlag & CNF_UNICODE) ? DBVT_WCHAR : DBVT_ASCIIZ;
 
@@ -191,10 +191,10 @@ static INT_PTR GetContactInfo(WPARAM, LPARAM lParam)
 					ci->pszVal = (TCHAR*)buf;
 				}
 				else {
-					size_t len = strlen(dbv.pszVal) + strlen(dbv2.pszVal) + 2;
+					size_t len = mir_strlen(dbv.pszVal) + mir_strlen(dbv2.pszVal) + 2;
 					char* buf = (char*)mir_alloc(len);
 					if (buf != NULL)
-						strcat(strcat(strcpy(buf, dbv.pszVal), " "), dbv2.pszVal);
+						strcat(strcat(mir_strcpy(buf, dbv.pszVal), " "), dbv2.pszVal);
 					ci->pszVal = (TCHAR*)buf;
 				}
 				db_free(&dbv);
@@ -316,10 +316,10 @@ static INT_PTR GetContactInfo(WPARAM, LPARAM lParam)
 							ci->pszVal = (TCHAR*)buf;
 						}
 						else {
-							size_t len = strlen(dbv.pszVal) + strlen(dbv2.pszVal) + 2;
+							size_t len = mir_strlen(dbv.pszVal) + mir_strlen(dbv2.pszVal) + 2;
 							char* buf = (char*)mir_alloc(len);
 							if (buf != NULL)
-								strcat(strcat(strcpy(buf, dbv.pszVal), " "), dbv2.pszVal);
+								strcat(strcat(mir_strcpy(buf, dbv.pszVal), " "), dbv2.pszVal);
 							ci->pszVal = (TCHAR*)buf;
 						}
 

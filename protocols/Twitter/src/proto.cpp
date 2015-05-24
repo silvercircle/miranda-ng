@@ -86,7 +86,7 @@ DWORD_PTR TwitterProto::GetCaps(int type, MCONTACT)
 	case PFLAGNUM_3:
 		return PF2_ONLINE;
 	case PFLAGNUM_4:
-		return PF4_NOCUSTOMAUTH | PF4_IMSENDUTF | PF4_AVATARS;
+		return PF4_NOCUSTOMAUTH | PF4_AVATARS;
 	case PFLAG_MAXLENOFMESSAGE:
 		return 159; // 140 + <max length of a users name (15 apparently)> + 4 ("RT @").  this allows for the new style retweets
 	case PFLAG_UNIQUEIDTEXT:
@@ -136,18 +136,10 @@ void TwitterProto::SendSuccess(void *p)
 	delete data;
 }
 
-int TwitterProto::SendMsg(MCONTACT hContact, int flags, const char *msg)
+int TwitterProto::SendMsg(MCONTACT hContact, int, const char *msg)
 {
 	if (m_iStatus != ID_STATUS_ONLINE)
 		return 0;
-
-	TCHAR *tszMsg;
-	if (flags & PREF_UTF)
-		tszMsg = mir_utf8decodeT(msg);
-	else if (flags & PREF_UNICODE)
-		tszMsg = mir_u2t((wchar_t*)&msg[strlen(msg) + 1]);
-	else
-		tszMsg = mir_a2t(msg);
 
 	int seq = InterlockedIncrement(&g_msgid);
 	ForkThread(&TwitterProto::SendSuccess, new send_direct(hContact, msg, seq));
@@ -265,8 +257,8 @@ int TwitterProto::OnBuildStatusMenu(WPARAM, LPARAM)
 		return 0;
 
 	char text[200];
-	strcpy(text, m_szModuleName);
-	char *tDest = text + strlen(text);
+	mir_strcpy(text, m_szModuleName);
+	char *tDest = text + mir_strlen(text);
 
 	CLISTMENUITEM mi = { sizeof(mi) };
 	mi.pszService = text;
@@ -279,7 +271,7 @@ int TwitterProto::OnBuildStatusMenu(WPARAM, LPARAM)
 	// TODO: Disable this menu item when offline
 	// "Send Tweet..."
 	CreateProtoService("/Tweet", &TwitterProto::OnTweet);
-	strcpy(tDest, "/Tweet");
+	mir_strcpy(tDest, "/Tweet");
 	mi.ptszName = LPGENT("Send Tweet...");
 	mi.popupPosition = 200001;
 	mi.icolibItem = GetIconHandle("tweet");
@@ -429,9 +421,9 @@ void TwitterProto::SendTweetWorker(void *p)
 		return;
 
 	char *text = static_cast<char*>(p);
-	if (strlen(text) > 140) { // looks like the chat max outgoing msg thing doesn't work, so i'll do it here.
+	if (mir_strlen(text) > 140) { // looks like the chat max outgoing msg thing doesn't work, so i'll do it here.
 		TCHAR errorPopup[280];
-		mir_sntprintf(errorPopup, SIZEOF(errorPopup), _T("Don't be crazy! Everyone knows the max tweet size is 140, and you're trying to fit %d chars in there?"), strlen(text));
+		mir_sntprintf(errorPopup, SIZEOF(errorPopup), _T("Don't be crazy! Everyone knows the max tweet size is 140, and you're trying to fit %d chars in there?"), mir_strlen(text));
 		ShowPopup(errorPopup, 1);
 		return;
 	}
