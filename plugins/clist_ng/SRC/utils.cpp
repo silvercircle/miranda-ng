@@ -518,7 +518,6 @@ INT_PTR CALLBACK WarningDlg::dlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 				::ShowWindow(hwnd, SW_SHOWNORMAL);
 
 			WindowList_Add(hWindowList, hwnd, (MCONTACT)hwnd);
-			HWND foo;
 			return(TRUE);
 		}
 

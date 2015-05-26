@@ -106,7 +106,6 @@ static CLISTEVENT* MyGetEvent(int iSelection)
  */
 void PaintNotifyArea(HDC hDC, RECT *rc, HANDLE hTheme)
 {
-	struct ClcData *dat = (struct ClcData *) GetWindowLongPtr(pcli->hwndContactTree, 0);
 	int iCount;
 	static int ev_lastIcon = 0;
 

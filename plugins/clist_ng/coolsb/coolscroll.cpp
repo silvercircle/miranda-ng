@@ -541,7 +541,6 @@ static int CalcThumbSize(SCROLLBAR *sbar, const RECT *rect, int *pthumbsize, int
 	int startcoord;
 	int thumbpos = 0, thumbsize = 0;
 
-	int adjust=0;
 	static int count=0;
 
 	//work out the width (for a horizontal) or the height (for a vertical)
@@ -2117,7 +2116,6 @@ static LRESULT LButtonUp(SCROLLWND *sw, HWND hwnd, WPARAM wParam, LPARAM lParam)
 	HDC hdc;
 	POINT pt;
 	RECT winrect;
-	UINT buttonIdx = 0;
 	
 	//current scrollportion is the button that we clicked down on
 	if(uCurrentScrollPortion != HTSCROLL_NONE)
@@ -2673,7 +2671,6 @@ static LRESULT NCCalcSize(SCROLLWND *sw, HWND hwnd, WPARAM wParam, LPARAM lParam
 	NCCALCSIZE_PARAMS *nccsp;
 	RECT *rect;
 	RECT oldrect;
-	BOOL fCalcValidRects = (wParam == TRUE);
 	SCROLLBAR *sb;
 	LRESULT ret;
 	DWORD dwStyle;

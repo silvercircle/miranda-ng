@@ -79,7 +79,7 @@ static void MF_CalcFrequency(MCONTACT hContact, DWORD dwCutoffDays, int doSleep)
     DWORD     frequency, eventCount;
     DBEVENTINFO dbei = {0};
     MEVENT hEvent = db_event_last(hContact);
-    DWORD firstEventTime = 0, lastEventTime = 0;
+    DWORD lastEventTime = 0;
 
     eventCount = 0;
     dbei.cbSize = sizeof(dbei);
@@ -156,7 +156,6 @@ void CLC::LoadContactTree()
 {
     MCONTACT hContact;
     int i, status, hideOffline;
-    DBVARIANT dbv = {0};
     BYTE      bMsgFrequency = cfg::getByte("CList", "fhistdata", 0);
 
     CallService(MS_CLUI_LISTBEGINREBUILD, 0, 0);

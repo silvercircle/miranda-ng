@@ -570,7 +570,6 @@ BOOL WINAPI CoolSB_ShowScrollBar (HWND hwnd, int wBar, BOOL fShow)
 //
 HRESULT WINAPI UninitializeCoolSB(HWND hwnd)
 {
-	int i = 0;
 	SCROLLWND *sw = GetScrollWndFromHwnd(hwnd);
 	if(!sw) return E_FAIL;
 

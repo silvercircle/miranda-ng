@@ -43,8 +43,8 @@ public:
 	CThumbBase(const CProxyWindow* pWnd);
 	virtual ~CThumbBase();
 
-	__inline const HBITMAP getHBM() const { return m_hbmThumb; }
-	__inline const bool    isValid() const { return m_isValid; }
+	const HBITMAP getHBM() const { return m_hbmThumb; }
+	const bool    isValid() const { return m_isValid; }
 
 	virtual void  setValid(const bool fNewValid) { m_isValid = fNewValid; }
 	virtual void  update() = 0;

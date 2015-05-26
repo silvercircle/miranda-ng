@@ -430,8 +430,6 @@ void RTL_DetectGroupName(struct ClcContact *group)
 
 void GetExtendedInfo(struct ClcContact *contact, struct ClcData *dat)
 {
-	CONTACTINFO ci;
-    BOOL iCacheNew = FALSE;
     int index;
 
     if(dat->bisEmbedded || contact == NULL)

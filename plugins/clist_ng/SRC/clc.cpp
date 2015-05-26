@@ -536,7 +536,6 @@ LBL_Def:
 			goto LBL_Def;
 		}
 		case INTM_PROTOCHANGED: {
-			DBCONTACTWRITESETTING *dbcws = (DBCONTACTWRITESETTING *) lParam;
 			struct ClcContact *contact = NULL;
 
 			if (!findItem(hwnd, dat, (HANDLE) wParam, &contact, NULL, NULL))

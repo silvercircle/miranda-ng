@@ -362,7 +362,6 @@ INT_PTR CALLBACK cfg::DlgProcDspGroups(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 {
 	switch(msg) {
 		case WM_INITDIALOG: {
-			int i = 0;
 			TranslateDialogDefault(hwndDlg);
 			SendDlgItemMessage(hwndDlg, IDC_GROUPALIGN, CB_INSERTSTRING, -1, (LPARAM)TranslateT("Always Left"));
 			SendDlgItemMessage(hwndDlg, IDC_GROUPALIGN, CB_INSERTSTRING, -1, (LPARAM)TranslateT("Always Right"));

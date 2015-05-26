@@ -416,7 +416,6 @@ void SkinLoader::loadBaseItems()
 {
 	int protoCount = 	0, i, n;
 	PROTOACCOUNT**		accs = 0;
-	DBVARIANT 			dbv = {0};
 	char*				p = 0;
 
 	ProtoEnumAccounts(&protoCount, &accs);
@@ -652,7 +651,6 @@ HRESULT SkinLoader::loadItems()
 {
     char*		szSections = 0, *szFileName;
     char*		p;
-    int  		i = 0;
 
     /*
      * TODO rewrite the skin loading in wchar_t manner

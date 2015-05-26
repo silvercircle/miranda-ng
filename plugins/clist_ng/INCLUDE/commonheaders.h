@@ -235,15 +235,15 @@ int _DebugTraceA(const char *fmt, ...);
 typedef std::unique_ptr<std::basic_string<wchar_t> > pSmartWstring;
 
 #include "m_cln_skinedit.h"
-#include <clui.h>
+#include "clui.h"
 #include <m_avatars.h>
-#include <config.h>
+#include "config.h"
 #include "clc.h"
-#include <skin.h>
-#include <gfx.h>
-#include <utils.h>
-#include <clist.h>
-#include <rowheight_funcs.h>
+#include "skin.h"
+#include "gfx.h"
+#include "utils.h"
+#include "clist.h"
+#include "rowheight_funcs.h"
 
 // shared vars
 extern HINSTANCE g_hInst;

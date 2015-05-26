@@ -278,7 +278,7 @@ int CLCPaintHelper::drawAvatar(RECT *rc, ClcContact *contact, int y, WORD cstatu
 	if(!item->IGNORED) {
 		RECT rcFrame;
 		bool inClCPaint_save = CLC::fInPaint;
-		HDC  hdcTemp = 0, hdcSaved = 0;
+		HDC  hdcTemp = 0;
 		HBITMAP hbmOld, hbmTemp;
 
 		CLC::fInPaint = false;
@@ -847,13 +847,11 @@ text:
 		Api::pfnBufferedPaintSetAlpha(hbp, &rc, 255);
 	} else if (type == CLCIT_GROUP) {
 		RECT rc;
-		int leftMargin = 0, countStart = 0;
 		m_fontHeight = dat->fontInfo[FONTID_GROUPS].fontHeight;
 		rc.top = y + ((rowHeight - m_fontHeight) >> 1) + cfg::dat.group_padding;
 		rc.bottom = rc.top + textSize.cy;
 		if (szCounts[0]) {
 			int required, labelWidth, offset = 0;
-			int height = 0;
 			COLORREF clr = GetTextColor(hdcMem);
 
 			changeToFont(FONTID_GROUPCOUNTS);
@@ -956,7 +954,6 @@ text:
 				SIZE 		szTime;
 				RECT 		rc = rcContent;
 				COLORREF 	oldColor;
-				int 		fHeight = 0;
 
 				if (tmi.printDateTime(cEntry->hTimeZone, _T("t"), szResult, SIZEOF(szResult), 0))
 

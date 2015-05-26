@@ -143,7 +143,6 @@ void Gfx::setBitmapAlpha(HBITMAP hBitmap, BYTE bAlpha)
 	BITMAP bmp;
 	DWORD dwLen;
 	int x, y;
-	BOOL fixIt = TRUE;
 
 	GetObject(hBitmap, sizeof(bmp), &bmp);
 
@@ -352,7 +351,7 @@ void Gfx::colorizeGlyph(TImageItem *item, const COLORREF clr, float hue, float s
 	BITMAP 	bmp = {0};
 	DWORD	dwLen;
 	BYTE*	pOrig, *pLine, alpha;
-	float	v_s_u, v_s_w, r, g, b;
+	float	v_s_u = 0, v_s_w = 0, r = 0, g = 0, b = 0;
 
     if(0 == clr) {			// do hsv transformation
     	v_s_u = value * saturation * cos(hue * M_PI/180);
@@ -386,7 +385,7 @@ void Gfx::colorizeGlyph(TImageItem *item, const COLORREF clr, float hue, float s
 			dwLen = bmp.bmWidth * bmp.bmHeight * 4;
 			if (dwLen > m_sAllocated) {
 				m_p = (BYTE *)realloc(m_p, dwLen);
-				dwLen = m_sAllocated;
+				dwLen = (DWORD)m_sAllocated;
 			}
 			memset(m_p, 0, dwLen);
 			pOrig = m_p;

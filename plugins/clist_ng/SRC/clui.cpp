@@ -147,7 +147,7 @@ void CLUI::Tweak_It(const COLORREF clr)
 void CLUI::layoutButtons(HWND hwnd, RECT *rc)
 {
 	RECT rect;
-	BYTE rightButton = 1, leftButton = 0;
+	BYTE rightButton = 1;
 	BYTE left_offset = Skin::metrics.cLeft - (cfg::dat.dwFlags & CLUI_FRAME_CLISTSUNKEN ? 3 : 0);
 	BYTE right_offset = Skin::metrics.cRight - (cfg::dat.dwFlags & CLUI_FRAME_CLISTSUNKEN ? 3 : 0);
 	BYTE delta = left_offset + right_offset;
@@ -1232,7 +1232,6 @@ skipbg:
 			LRESULT result;
 			RECT r;
 			POINT pt;
-			int k = 0;
 
 			GetWindowRect(hwnd, &r);
 			GetCursorPos(&pt);

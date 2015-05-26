@@ -166,9 +166,9 @@ int CLC::RTL_HitTest(HWND hwnd, ClcData *dat, int testx, int testy, ClcContact *
  */
 int CLC::HitTest(HWND hwnd, ClcData *dat, int testx, int testy, ClcContact **contact, ClcGroup **group, DWORD *flags)
 {
-	struct ClcContact *hitcontact;
-	struct ClcGroup *hitgroup;
-	int hit, indent, width, i, cxSmIcon;
+	struct ClcContact *hitcontact = 0;
+	struct ClcGroup *hitgroup = 0;
+	int hit, indent, width, i;
 	int checkboxWidth;
 	SIZE textSize;
 	HDC hdc;

@@ -690,8 +690,6 @@ static BOOL CALLBACK SkinEdit_ExtBkDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam
             return TRUE;
         case WM_USER + 101:
             {
-                DBVARIANT dbv = {0};
-                
                 SendDlgItemMessage(hwndDlg, IDC_MRGN_LEFT_SPIN, UDM_SETRANGE, 0, MAKELONG(100, 0));
                 SendDlgItemMessage(hwndDlg, IDC_MRGN_TOP_SPIN, UDM_SETRANGE, 0, MAKELONG(100, 0));
                 SendDlgItemMessage(hwndDlg, IDC_MRGN_RIGHT_SPIN, UDM_SETRANGE, 0, MAKELONG(100, 0));

@@ -980,7 +980,6 @@ void FLT_Update(struct ClcData *dat, struct ClcContact *contact)
 	BLENDFUNCTION bf = {0};
 	HWND 	hwnd;
 	HDC 	hdc;
-	BOOL 	firstDrawn = TRUE;
 	ClcGroup *group = NULL;
 	ClcContact *newContact = NULL;
 	HBRUSH 		hbrBorder;
