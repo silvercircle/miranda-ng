@@ -331,7 +331,7 @@ void CLCPaintHelper::Paint(ClcGroup *group, ClcContact *contact, int rowHeight)
 {
 	RECT 				rc;
 	int 				iImage = -1;
-	SIZE 				textSize, countsSize, spaceSize;
+	SIZE 				textSize = { 0 }, countsSize = { 0 }, spaceSize = { 0 };
 	int 				width, checkboxWidth;
 	TCHAR*				szCounts = 0;
 	wchar_t*			wszCounts = 0;
@@ -950,10 +950,9 @@ text:
 			if(cEntry->hTimeZone != 0 && fLocalTime) {
 				wchar_t 	szResult[80];
 				int  		idOldFont;
-				DWORD 		now = cfg::dat.t_now;
 				SIZE 		szTime;
 				RECT 		rc = rcContent;
-				COLORREF 	oldColor;
+				COLORREF 	oldColor = 0;
 
 				if (tmi.printDateTime(cEntry->hTimeZone, _T("t"), szResult, SIZEOF(szResult), 0))
 

@@ -132,7 +132,6 @@ int CLC::SettingChanged(WPARAM hContact, LPARAM lParam)
 			if (!__strcmp(cws->szSetting, "Timezone") || !__strcmp(cws->szSetting, "TzName"))
 				ReloadExtraInfo(hContact);
 		} else if (hContact != 0 && (szProto = (char *)CallService(MS_PROTO_GETCONTACTBASEPROTO, hContact, 0)) != NULL) {
-			char *id = NULL;
 			if (!__strcmp(cws->szModule, "Protocol") && !__strcmp(cws->szSetting, "p")) {
 				char *szProto_s;
 				pcli->pfnClcBroadcast(INTM_PROTOCHANGED, hContact, lParam);

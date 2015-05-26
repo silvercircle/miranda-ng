@@ -471,7 +471,7 @@ void UpdateFilters()
     char szSetting[128];
     char *szBuf = NULL;
     int iLen;
-    DWORD statusMask = 0, localMask = 0;
+	DWORD statusMask = 0;
     DWORD dwFlags;
     DWORD opt;
     char  szTemp[100];
@@ -864,7 +864,7 @@ static int menuCounter = 0;
 
 static int FillMenuCallback(char *szSetting)
 {
-    if(szSetting[0] == (char)246)
+    if(szSetting[0] == 246)
         return 1;
 
     AppendMenuA(hViewModeMenu, MF_STRING, menuCounter++, szSetting);

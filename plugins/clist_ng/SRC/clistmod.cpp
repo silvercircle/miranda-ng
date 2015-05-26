@@ -98,7 +98,7 @@ int LoadContactListModule(void)
 
 int GetWindowVisibleState(HWND hWnd, int iStepX, int iStepY)
 {
-	RECT rc = {0}, rcUpdate = {0};
+	RECT rc = { 0 };
 	POINT pt = {0};
 	register int i = 0, j = 0, width = 0, height = 0, iCountedDots = 0, iNotCoveredDots = 0;
 	BOOL bPartiallyCovered = FALSE;

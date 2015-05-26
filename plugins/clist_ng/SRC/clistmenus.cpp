@@ -391,7 +391,7 @@ static INT_PTR CALLBACK IgnoreDialogProc(HWND hWnd, UINT msg, WPARAM wParam, LPA
 
 			if(CLC::findItem(pcli->hwndContactTree, cfg::clcdat, (HANDLE)hContact, &contact, NULL, NULL)) {
 				if(contact) {
-					WORD wApparentMode = 0, oldApparentMode = cfg::getWord(hContact, contact->proto, "ApparentMode", 0);
+					WORD wApparentMode = 0;
 
 					if(IsDlgButtonChecked(hWnd, IDC_IGN_ALWAYSONLINE))
 						wApparentMode = ID_STATUS_ONLINE;

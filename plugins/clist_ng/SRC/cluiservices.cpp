@@ -76,7 +76,7 @@ void CluiProtocolStatusChanged( int parStatus, const char* szProto )
 	wchar_t *szStatus = NULL;
 	char *szMaxProto = NULL;
 	int maxOnline = 0, onlineness = 0;
-	WORD maxStatus = ID_STATUS_OFFLINE, wStatus;
+	WORD maxStatus = ID_STATUS_OFFLINE, wStatus = ID_STATUS_OFFLINE;
 	DBVARIANT dbv = {0};
 	int iIcon = 0;
 	HICON hIcon = 0;

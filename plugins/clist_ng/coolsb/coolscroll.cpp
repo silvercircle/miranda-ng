@@ -807,7 +807,7 @@ static LRESULT NCDrawHScrollbar(SCROLLBAR *sb, HWND hwnd, HDC hdc, const RECT *r
 	COLORREF crInverse1 = InvertCOLORREF(crCheck1);
 	COLORREF crInverse2 = InvertCOLORREF(crCheck2);
 
-	UINT uDFCFlat = sb->fFlatScrollbar ? DFCS_FLAT : 0;
+	//UINT uDFCFlat = sb->fFlatScrollbar ? DFCS_FLAT : 0;
 	UINT uDEFlat  = sb->fFlatScrollbar ? BF_FLAT   : 0;
 
 	//drawing flags to modify the appearance of the scrollbar buttons
@@ -1438,7 +1438,9 @@ static LRESULT NCPaint(SCROLLWND *sw, HWND hwnd, WPARAM wParam, LPARAM lParam)
 	sb = &sw->sbarHorz;
 	if(sb->fScrollVisible)
 	{
-		int hbarwidth = 0, leftright = 0;
+		int hbarwidth, leftright;
+
+		hbarwidth = leftright = 0;
 
 		//get the screen coordinates of the whole horizontal scrollbar area
 		GetHScrollRect(sw, hwnd, &rect);
@@ -1492,7 +1494,8 @@ static LRESULT NCPaint(SCROLLWND *sw, HWND hwnd, WPARAM wParam, LPARAM lParam)
 	sb = &sw->sbarVert;
 	if(sb->fScrollVisible)
 	{
-		int vbarheight = 0, updown = 0;
+		int vbarheight;
+		vbarheight = 0;
 
 		//get the screen cooridinates of the whole horizontal scrollbar area
 		GetVScrollRect(sw, hwnd, &rect);
@@ -1928,8 +1931,10 @@ static LRESULT NCLButtonDown(SCROLLWND *sw, HWND hwnd, WPARAM wParam, LPARAM lPa
 	RECT rect, winrect;
 	HDC hdc;
 	SCROLLBAR *sb;
-	SCROLLBUT *sbut = 0;
+	SCROLLBUT *sbut;
 	POINT pt;
+
+	sbut = 0;
 
 	pt.x = LOWORD(lParam);
 	pt.y = HIWORD(lParam);
@@ -2424,7 +2429,9 @@ static LRESULT MouseMove(SCROLLWND *sw, HWND hwnd, WPARAM wParam, LPARAM lParam)
 	{
 		LPARAM nlParam;
 		SCROLLBAR *sb = &sw->sbarHorz;
-		SCROLLBUT *sbut = 0;
+		SCROLLBUT *sbut;
+			
+		sbut = 0;
 
 		nlParam = GetMessagePos();
 

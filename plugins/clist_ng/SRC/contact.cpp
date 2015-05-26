@@ -79,7 +79,6 @@ static void MF_CalcFrequency(MCONTACT hContact, DWORD dwCutoffDays, int doSleep)
     DWORD     frequency, eventCount;
     DBEVENTINFO dbei = {0};
     MEVENT hEvent = db_event_last(hContact);
-    DWORD lastEventTime = 0;
 
     eventCount = 0;
     dbei.cbSize = sizeof(dbei);

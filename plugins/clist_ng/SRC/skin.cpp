@@ -254,15 +254,19 @@ void Skin::setupAGGItemContext(TStatusItem* item)
 	 * alpha values as read from the skin definition are in PERCENT (0-100)
 	 */
 	if(item->GRADIENT & GRADIENT_ACTIVE) {
+		//agg::rgba8 r1 = agg::rgba8(r, g, b, percent_to_byte(item->ALPHA));
+		//agg::rgba8 r2 = agg::rgba8(r2, g2, b2, percent_to_byte(item->ALPHA2));
+
+		agg::rgba8 r1(r, g, b, percent_to_byte(item->ALPHA));
+		agg::rgba8 r2(r2, g2, b2, percent_to_byte(item->ALPHA2));
+
 		if(item->GRADIENT & GRADIENT_LR || item->GRADIENT & GRADIENT_TB) {
-			AGGContext::fill_color_array(*(item->color_array), agg::rgba8(r, g, b, percent_to_byte(item->ALPHA)),
-					agg::rgba8(r2, g2, b2, percent_to_byte(item->ALPHA2)));
+			AGGContext::fill_color_array(*(item->color_array), r1, r2);
 			item->dwFlags |= (item->GRADIENT & GRADIENT_LR ? AGG_USE_GRADIENT_X_RENDERER : AGG_USE_GRADIENT_Y_RENDERER);
 		}
 		else {
 			item->dwFlags |= (item->GRADIENT & GRADIENT_RL ? AGG_USE_GRADIENT_X_RENDERER : AGG_USE_GRADIENT_Y_RENDERER);
-			AGGContext::fill_color_array(*(item->color_array), agg::rgba8(r2, g2, b2, percent_to_byte(item->ALPHA2)),
-					agg::rgba8(r, g, b, percent_to_byte(item->ALPHA)));
+			AGGContext::fill_color_array(*(item->color_array), r2, r1);
 		}
 	}
 	else {
@@ -779,7 +783,6 @@ done_with_glyph:
             if(!(tmpItem.dwFlags & IMAGE_GLYPH))
                 createImageItem(&tmpItem, szFinalName, hdc);
             if(tmpItem.hbm || tmpItem.dwFlags & IMAGE_GLYPH) {
-                TImageItem *pItem = Skin::imageItems;
 
                 newItem = reinterpret_cast<TImageItem *>(malloc(sizeof(TImageItem)));
                 ZeroMemory(newItem, sizeof(TImageItem));

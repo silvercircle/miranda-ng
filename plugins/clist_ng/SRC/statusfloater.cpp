@@ -567,8 +567,6 @@ LRESULT CALLBACK ContactFloaterClassProc(HWND hwnd, UINT msg, WPARAM wParam, LPA
 			}
 		case WM_DESTROY:
 			if(centry) {
-                WINDOWPLACEMENT wp = {0};
-
 				SelectObject(centry->floater->hdc, centry->floater->hbmOld);
 				DeleteObject(centry->floater->hbm);
 				DeleteDC(centry->floater->hdc);

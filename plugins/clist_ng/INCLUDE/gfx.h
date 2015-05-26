@@ -316,8 +316,8 @@ public:
 
 	   	hBitmap = (HBITMAP)CallService(MS_IMG_LOAD, (WPARAM)szFilename, dwFlags);
 	   	if(CALLSERVICE_NOTFOUND == (INT_PTR)hBitmap) {
-	   		throw(CRTException("Critical error while loading a skin", L"The image service plugin is not available"));
-	   		hBitmap = 0;
+			hBitmap = 0;
+			throw(CRTException("Critical error while loading a skin", L"The image service plugin is not available"));
 	   	}
 	   	return(hBitmap);
 	}

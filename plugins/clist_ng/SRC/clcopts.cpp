@@ -205,7 +205,6 @@ void DSP_LoadFromDefaults(TDisplayProfile *p)
 void DSP_Apply(TDisplayProfile *p)
 {
 	int   oldexIconScale = cfg::dat.exIconScale;
-	DWORD oldMask = cfg::dat.dwExtraImageMask;
 	int   i;
 	DWORD exStyle;
 	char  temp[EXICON_COUNT + 1], szKey[5];

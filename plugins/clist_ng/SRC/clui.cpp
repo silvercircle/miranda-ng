@@ -147,7 +147,6 @@ void CLUI::Tweak_It(const COLORREF clr)
 void CLUI::layoutButtons(HWND hwnd, RECT *rc)
 {
 	RECT rect;
-	BYTE rightButton = 1;
 	BYTE left_offset = Skin::metrics.cLeft - (cfg::dat.dwFlags & CLUI_FRAME_CLISTSUNKEN ? 3 : 0);
 	BYTE right_offset = Skin::metrics.cRight - (cfg::dat.dwFlags & CLUI_FRAME_CLISTSUNKEN ? 3 : 0);
 	BYTE delta = left_offset + right_offset;
@@ -1349,8 +1348,8 @@ skipbg:
 				}
 				setLayeredAttributes(Skin::metrics.fHaveColorkey ? cfg::dat.colorkey : RGB(0, 0, 0), (BYTE)(sourceAlpha + (destAlpha - sourceAlpha) * (int)(thisTick - startTick) / 200), LWA_ALPHA | (Skin::metrics.fHaveColorkey ? LWA_COLORKEY : 0));
 			}
-			setLayeredAttributes(Skin::metrics.fHaveColorkey ? cfg::dat.colorkey : RGB(0, 0, 0), (BYTE)(destAlpha), LWA_ALPHA | (Skin::metrics.fHaveColorkey ? LWA_COLORKEY : 0));
-			return DefWindowProc(hwnd, msg, wParam, lParam);
+			//setLayeredAttributes(Skin::metrics.fHaveColorkey ? cfg::dat.colorkey : RGB(0, 0, 0), (BYTE)(destAlpha), LWA_ALPHA | (Skin::metrics.fHaveColorkey ? LWA_COLORKEY : 0));
+			//return DefWindowProc(hwnd, msg, wParam, lParam);
 		}
 
 		case WM_SYSCOMMAND:
@@ -1707,8 +1706,6 @@ buttons_done:
 			LPDRAWITEMSTRUCT dis = (LPDRAWITEMSTRUCT) lParam;
 
 			if (hbmLockedPoint == 0) {
-				RECT rc = {0, 0, 5, 5};
-
 				hdcLockedPoint = CreateCompatibleDC(dis->hDC);
 				hbmLockedPoint = CreateCompatibleBitmap(dis->hDC, 5, 5);
 				hbmOldLockedPoint = reinterpret_cast<HBITMAP>(SelectObject(hdcLockedPoint, hbmLockedPoint));
@@ -1860,8 +1857,6 @@ static BOOL g_AboutDlgActive = 0;
 INT_PTR CALLBACK DlgProcAbout(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	HICON hIcon;
-	COLORREF url_visited = RGB(128, 0, 128);
-	COLORREF url_unvisited = RGB(0, 0, 255);
 
 	switch (msg) {
 		case WM_INITDIALOG:
