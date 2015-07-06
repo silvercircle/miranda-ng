@@ -125,15 +125,7 @@ namespace agg
         const GammaLut& m_gamma;
     };
 
-
-    
-
-
-
-
-
-
-
+	
     //=============================================================blender_rgba
     template<class ColorT, class Order> struct blender_rgba
     {

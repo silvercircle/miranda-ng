@@ -37,8 +37,6 @@
 #define DBFONTF_ITALIC     2
 #define DBFONTF_UNDERLINE  4
 
-// todo: fix me
-
 struct CheckBoxToStyleEx_t {
 	int id;
 	DWORD flag;
