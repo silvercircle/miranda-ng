@@ -92,22 +92,22 @@ static int CreateMainMenuItems(WPARAM, LPARAM)
 	char servicename[128];
 	int i, count;
 
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.popupPosition = 2000100000;
+	CMenuItem mi;
+	mi.position = 2000100000;
 	mi.flags = CMIF_TCHAR;
 	mcount = 0;
 	count = GetProfileCount(0, 0);
-	for (i=0; i < count; i++) {
+	for (i = 0; i < count; i++) {
 		TCHAR profilename[128];
-		if ( !db_get_b(NULL, MODULENAME, OptName(i, SETTING_CREATEMMITEM), 0) || GetProfileName(i, (LPARAM)profilename))
+		if (!db_get_b(NULL, MODULENAME, OptName(i, SETTING_CREATEMMITEM), 0) || GetProfileName(i, (LPARAM)profilename))
 			continue;
 
-		if ( db_get_b(NULL, MODULENAME, OptName(i, SETTING_INSUBMENU), 1))
-			mi.ptszPopupName = LPGENT("Status profiles");
+		if (db_get_b(NULL, MODULENAME, OptName(i, SETTING_INSUBMENU), 1))
+			mi.root = Menu_CreateRoot(MO_STATUS, LPGENT("Status profiles"), 2000100000);
 
-		mi.ptszName = profilename;
+		mi.name.t = profilename;
 		mi.position = 2000100000 + mcount;
-		mir_snprintf(servicename, SIZEOF(servicename), "%s%d", MS_SS_MENUSETPROFILEPREFIX, mcount);
+		mir_snprintf(servicename, _countof(servicename), "%s%d", MS_SS_MENUSETPROFILEPREFIX, mcount);
 		switch(mcount) {
 		case 0:
 			hProfileServices[mcount] = CreateServiceFunction(servicename, profileService0);
@@ -132,7 +132,7 @@ static int CreateMainMenuItems(WPARAM, LPARAM)
 			return 0;
 		}
 		mi.pszService = servicename;
-		if ( Menu_AddStatusMenuItem(&mi)) {
+		if (Menu_AddStatusMenuItem(&mi)) {
 			menuprofiles[mcount] = i;
 			mcount += 1;
 		}
@@ -161,7 +161,7 @@ INT_PTR GetProfileName(WPARAM wParam, LPARAM lParam)
 
 	DBVARIANT dbv;
 	char setting[80];
-	mir_snprintf(setting, SIZEOF(setting), "%d_%s", profile, SETTING_PROFILENAME);
+	mir_snprintf(setting, "%d_%s", profile, SETTING_PROFILENAME);
 	if ( db_get_ts(NULL, MODULENAME, setting, &dbv))
 		return -1;
 
@@ -190,7 +190,7 @@ TCHAR *GetStatusMessage(int profile, char *szProto)
 
 	for ( int i=0; i < pceCount; i++ ) {
 		if ( (pce[i].profile == profile) && (!mir_strcmp(pce[i].szProto, szProto))) {
-			mir_snprintf(dbSetting, SIZEOF(dbSetting), "%d_%s_%s", profile, szProto, SETTING_PROFILE_STSMSG);
+			mir_snprintf(dbSetting, _countof(dbSetting), "%d_%s_%s", profile, szProto, SETTING_PROFILE_STSMSG);
 			if (!db_get_ts(NULL, MODULENAME, dbSetting, &dbv)) { // reload from db
 				pce[i].msg = ( TCHAR* )realloc(pce[i].msg, sizeof(TCHAR)*(mir_tstrlen(dbv.ptszVal)+1));
 				if (pce[i].msg != NULL) {
@@ -214,7 +214,7 @@ TCHAR *GetStatusMessage(int profile, char *szProto)
 	pce[pceCount].profile = profile;
 	pce[pceCount].szProto = _strdup(szProto);
 	pce[pceCount].msg = NULL;
-	mir_snprintf(dbSetting, SIZEOF(dbSetting), "%d_%s_%s", profile, szProto, SETTING_PROFILE_STSMSG);
+	mir_snprintf(dbSetting, _countof(dbSetting), "%d_%s_%s", profile, szProto, SETTING_PROFILE_STSMSG);
 	if (!db_get_ts(NULL, MODULENAME, dbSetting, &dbv)) {
 		pce[pceCount].msg = _tcsdup(dbv.ptszVal);
 		db_free(&dbv);
@@ -237,7 +237,7 @@ int GetProfile( int profile, TSettingsList& arSettings )
 
 	// if count == 0, continue so the default profile will be returned
 	PROTOACCOUNT** protos;
-	ProtoEnumAccounts( &count, &protos );
+	Proto_EnumAccounts( &count, &protos );
 
 	for ( int i=0; i < count; i++ )
 		if ( IsSuitableProto( protos[i] ))
@@ -264,7 +264,7 @@ INT_PTR LoadAndSetProfile(WPARAM wParam, LPARAM lParam)
 		profile = (profile >= 0)?profile:db_get_w(NULL, MODULENAME, SETTING_DEFAULTPROFILE, 0);
 
 		char setting[64];
-		mir_snprintf(setting, SIZEOF(setting), "%d_%s", profile, SETTING_SHOWCONFIRMDIALOG);
+		mir_snprintf(setting, "%d_%s", profile, SETTING_SHOWCONFIRMDIALOG);
 		if (!db_get_b(NULL, MODULENAME, setting, 0))
 			CallService(MS_CS_SETSTATUSEX,(WPARAM)&profileSettings, 0);
 		else
@@ -339,7 +339,7 @@ static int RegisterHotKeys()
 			return -1;
 
 		char atomname[255];
-		mir_snprintf(atomname, SIZEOF(atomname), "StatusProfile_%d", i);
+		mir_snprintf(atomname, _countof(atomname), "StatusProfile_%d", i);
 		hkInfo[hkiCount].id = GlobalAddAtomA(atomname);
 		if (hkInfo[hkiCount].id == 0)
 			continue;

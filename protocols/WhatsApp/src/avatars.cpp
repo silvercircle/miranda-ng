@@ -2,19 +2,19 @@
 
 INT_PTR WhatsAppProto::GetAvatarInfo(WPARAM wParam, LPARAM lParam)
 {
-	PROTO_AVATAR_INFORMATIONT* AI = (PROTO_AVATAR_INFORMATIONT*)lParam;
+	PROTO_AVATAR_INFORMATION *pai = (PROTO_AVATAR_INFORMATION*)lParam;
 
-	ptrA id(getStringA(AI->hContact, isChatRoom(AI->hContact) ? "ChatRoomID" : WHATSAPP_KEY_ID));
+	ptrA id(getStringA(pai->hContact, isChatRoom(pai->hContact) ? "ChatRoomID" : WHATSAPP_KEY_ID));
 	if (id == NULL)
 		return GAIR_NOAVATAR;
 
-	std::tstring tszFileName = GetAvatarFileName(AI->hContact);
-	_tcsncpy_s(AI->filename, tszFileName.c_str(), _TRUNCATE);
-	AI->format = PA_FORMAT_JPEG;
+	std::tstring tszFileName = GetAvatarFileName(pai->hContact);
+	_tcsncpy_s(pai->filename, tszFileName.c_str(), _TRUNCATE);
+	pai->format = PA_FORMAT_JPEG;
 
-	ptrA szAvatarId(getStringA(AI->hContact, WHATSAPP_KEY_AVATAR_ID));
+	ptrA szAvatarId(getStringA(pai->hContact, WHATSAPP_KEY_AVATAR_ID));
 	if (szAvatarId == NULL || (wParam & GAIF_FORCE) != 0)
-		if (AI->hContact != NULL && m_pConnection != NULL) {
+		if (pai->hContact != NULL && m_pConnection != NULL) {
 			m_pConnection->sendGetPicture(id, "image");
 			return GAIR_WAITFOR;
 		}
@@ -90,7 +90,7 @@ int WhatsAppProto::InternalSetAvatar(MCONTACT hContact, const char *szJid, const
 		return errno;
 
 	ResizeBitmap resize = { 0 };
-	if ((resize.hBmp = (HBITMAP)CallService(MS_UTILS_LOADBITMAPT, 0, (LPARAM)ptszFileName)) == NULL)
+	if ((resize.hBmp = Bitmap_Load(ptszFileName)) == NULL)
 		return 2;
 	resize.size = sizeof(resize);
 	resize.fit = RESIZEBITMAP_KEEP_PROPORTIONS;
@@ -102,8 +102,8 @@ int WhatsAppProto::InternalSetAvatar(MCONTACT hContact, const char *szJid, const
 
 	TCHAR tszTempFile[MAX_PATH], tszMyFile[MAX_PATH];
 	if (hContact == NULL) {
-		mir_sntprintf(tszMyFile, SIZEOF(tszMyFile), _T("%s\\myavatar.jpg"), m_tszAvatarFolder.c_str());
-		mir_sntprintf(tszTempFile, SIZEOF(tszTempFile), _T("%s\\myavatar.preview.jpg"), m_tszAvatarFolder.c_str());
+		mir_sntprintf(tszMyFile, _countof(tszMyFile), _T("%s\\myavatar.jpg"), m_tszAvatarFolder.c_str());
+		mir_sntprintf(tszTempFile, _countof(tszTempFile), _T("%s\\myavatar.preview.jpg"), m_tszAvatarFolder.c_str());
 	}
 	else {
 		std::tstring tszContactAva = GetAvatarFileName(hContact);

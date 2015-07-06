@@ -1,5 +1,6 @@
 #include "common.h"
 
+CLIST_INTERFACE *pcli;
 HINSTANCE hInst;
 HANDLE hOptInitialize, hModulesLoaded, hDBContactAdded, hDBEventAdded, hDBEventFilterAdd;
 time_t last_queue_check = 0;
@@ -19,8 +20,6 @@ PLUGININFOEX pluginInfo = {
 	{0x14331048, 0x5a73, 0x4fdb, {0xb9, 0x09, 0x2d, 0x7e, 0x18, 0x25, 0xa0, 0x12}}
 };
 
-
-
 extern int OnOptInitialize(WPARAM wParam, LPARAM lParam);
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
@@ -36,25 +35,12 @@ int OnModulesLoaded(WPARAM, LPARAM)
 	return 0;
 }
 
-int OnDBContactAdded(WPARAM, LPARAM)
-{
-	//MessageBox(NULL, _T("OnDBContactAdded"), _T("Event"), MB_OK);
-	return 0;
-}
-
-int OnDBEventAdded(WPARAM wParam, LPARAM lParam)
-{
-
-	return 0;
-}
-
 int OnDBEventFilterAdd(WPARAM wParam, LPARAM lParam)
 {
 	MCONTACT hContact = wParam;
 	DBEVENTINFO *dbei = (DBEVENTINFO *)lParam;
 	char *msgblob;
 	POPUPDATAT ppdp = {0};
-	DBTIMETOSTRING tts = {0};
 	char protoOption[256] = {0};
 	int buflen = MAX_BUFFER_LENGTH;
 	TCHAR buf[MAX_BUFFER_LENGTH];
@@ -85,8 +71,8 @@ int OnDBEventFilterAdd(WPARAM wParam, LPARAM lParam)
 	/*** Check for conditional and unconditional approval ***/
 
 	// Pass-through if protocol is not enabled
-	strcat(protoOption, "proto_");
-	strcat(protoOption, dbei->szModule);
+	mir_strcat(protoOption, "proto_");
+	mir_strcat(protoOption, dbei->szModule);
 	if (_getOptB(protoOption, 0) == 0) // Protocol is not handled by Spam-o-tron
 		return 0;
 
@@ -403,7 +389,7 @@ int OnDBEventFilterAdd(WPARAM wParam, LPARAM lParam)
 	case SPAMOTRON_MODE_MATH:
 		a = (rand() % 10) + 1;
 		b = (rand() % 10) + 1;
-		mir_sntprintf(mexpr, SIZEOF(mexpr), _T("%d + %d"), a, b);
+		mir_sntprintf(mexpr, _countof(mexpr), _T("%d + %d"), a, b);
 		if (dbei->eventType == EVENTTYPE_AUTHREQUEST)
 			_getOptS(challengeW, maxmsglen, "AuthChallengeMath", defaultAuthChallengeMath);
 		else
@@ -503,7 +489,7 @@ void RemoveNotOnListSettings()
 	mir_strcpy(protoName, "proto_");
 	while (hContact != NULL) {
 		if (db_get_s(hContact, "Protocol", "p", &dbv) == 0) {
-			strcat(protoName, dbv.pszVal);
+			mir_strcat(protoName, dbv.pszVal);
 			if (_getOptB(protoName, 0) != 0) {
 				if (db_get_b(hContact, "CList", "Delete", 0) == 1) {
 					db_unset(hContact, "CList", "NotOnList");
@@ -524,6 +510,8 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD miranda
 extern "C" __declspec(dllexport) int Load()
 {
 	mir_getLP(&pluginInfo);
+	mir_getCLI();
+
 	srand((unsigned)time(0));
 	bayesdb = NULL;
 	if (_getOptB("BayesEnabled", defaultBayesEnabled)) {
@@ -537,8 +525,6 @@ extern "C" __declspec(dllexport) int Load()
 	}
 
 	hModulesLoaded = HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
-	hDBContactAdded = HookEvent(ME_DB_CONTACT_ADDED, OnDBContactAdded);
-	hDBEventAdded = HookEvent(ME_DB_EVENT_ADDED, OnDBEventAdded);
 	hDBEventFilterAdd = HookEvent(ME_DB_EVENT_FILTER_ADD, OnDBEventFilterAdd);
 	return 0;
 }

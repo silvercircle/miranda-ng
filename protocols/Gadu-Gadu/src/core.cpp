@@ -361,7 +361,7 @@ void __cdecl GGPROTO::mainthread(void *)
 			if (!(p.external_addr = gg_dnslookup(this, dbv.pszVal))) {
 				TCHAR error[128];
 				TCHAR* forwardHostT = mir_a2t(dbv.pszVal);
-				mir_sntprintf(error, SIZEOF(error), TranslateT("External direct connections hostname %s is invalid. Disabling external host forwarding."), forwardHostT);
+				mir_sntprintf(error, TranslateT("External direct connections hostname %s is invalid. Disabling external host forwarding."), forwardHostT);
 				mir_free(forwardHostT);
 				showpopup(m_tszUserName, error, GG_POPUP_WARNING | GG_POPUP_ALLOW_MSGBOX);
 			}
@@ -392,7 +392,7 @@ retry:
 		{
 			TCHAR error[128];
 			TCHAR* hostnameT = mir_a2t(hosts[hostnum].hostname);
-			mir_sntprintf(error, SIZEOF(error), TranslateT("Server hostname %s is invalid. Using default hostname provided by the network."), hostnameT);
+			mir_sntprintf(error, TranslateT("Server hostname %s is invalid. Using default hostname provided by the network."), hostnameT);
 			mir_free(hostnameT);
 			showpopup(m_tszUserName, error, GG_POPUP_WARNING | GG_POPUP_ALLOW_MSGBOX);
 		}
@@ -423,7 +423,7 @@ retry:
 				}
 			}
 			if (!perror) {
-				mir_sntprintf(error, SIZEOF(error), TranslateT("Connection cannot be established. errno=%d: %s"),errno, strerror(errno));
+				mir_sntprintf(error, TranslateT("Connection cannot be established. errno=%d: %s"),errno, strerror(errno));
 				perror = error;
 			}
 			debugLogA("mainthread() (%x): %s", this, perror);
@@ -637,8 +637,8 @@ retry:
 
 							_tcsncpy_s(strFmt2, pcli->pfnGetStatusModeDescription( status_gg2m(atoi(__status)), 0), _TRUNCATE);
 							if (__city) {
-								mir_sntprintf(strFmt1, SIZEOF(strFmt1), _T(", %s %s"), TranslateT("City:"), __city);
-								_tcsncat(strFmt2, strFmt1, SIZEOF(strFmt2) - mir_tstrlen(strFmt2));
+								mir_sntprintf(strFmt1, _countof(strFmt1), _T(", %s %s"), TranslateT("City:"), __city);
+								mir_tstrncat(strFmt2, strFmt1, _countof(strFmt2) - mir_tstrlen(strFmt2));
 							}
 							if (__birthyear) {
 								time_t t = time(NULL);
@@ -646,22 +646,22 @@ retry:
 								int br = atoi(__birthyear);
 
 								if (br < (lt->tm_year + 1900) && br > 1900) {
-									mir_sntprintf(strFmt1, SIZEOF(strFmt1), _T(", %s %d"), TranslateT("Age:"), (lt->tm_year + 1900) - br);
-									_tcsncat(strFmt2, strFmt1, SIZEOF(strFmt2) - mir_tstrlen(strFmt2));
+									mir_sntprintf(strFmt1, _countof(strFmt1), _T(", %s %d"), TranslateT("Age:"), (lt->tm_year + 1900) - br);
+									mir_tstrncat(strFmt2, strFmt1, _countof(strFmt2) - mir_tstrlen(strFmt2));
 								}
 							}
 
-							GGSEARCHRESULT sr;
-							memset(&sr, 0, sizeof(sr));
-							sr.cbSize = sizeof(sr);
-							sr.flags = PSR_TCHAR;
-							sr.nick = __nickname;
-							sr.firstName = __firstname;
-							sr.lastName = __lastname;
-							sr.email = strFmt2;
-							sr.id = _ultot(uin, strFmt1, 10);
-							sr.uin = uin;
-							ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE) 1, (LPARAM)&sr);
+							GGSEARCHRESULT psr;
+							memset(&psr, 0, sizeof(psr));
+							psr.cbSize = sizeof(psr);
+							psr.flags = PSR_TCHAR;
+							psr.nick.t = __nickname;
+							psr.firstName.t = __firstname;
+							psr.lastName.t = __lastname;
+							psr.email.t = strFmt2;
+							psr.id.t = _ultot(uin, strFmt1, 10);
+							psr.uin = uin;
+							ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE) 1, (LPARAM)&psr);
 						}
 
 						if (((res->seq == GG_SEQ_INFO || res->seq == GG_SEQ_GETNICK) && hContact != NULL)
@@ -776,7 +776,7 @@ retry:
 					{
 						// Status was changed by the user simultaneously logged on using different Miranda account or IM client
 						int iStatus = status_gg2m(e->event.status60.status);
-						CallProtoService(m_szModuleName, PS_SETAWAYMSGT, iStatus, (LPARAM)descrT);
+						CallProtoService(m_szModuleName, PS_SETAWAYMSG, iStatus, (LPARAM)descrT);
 						CallProtoService(m_szModuleName, PS_SETSTATUS, iStatus, 0);
 					}
 					
@@ -834,7 +834,7 @@ retry:
 							gce.ptszUID = id;
 							TCHAR* messageT = mir_utf8decodeT(e->event.msg.message);
 							gce.ptszText = messageT;
-							gce.ptszNick = (TCHAR*) CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM) getcontact(e->event.msg.sender, 1, 0, NULL), GCDNF_TCHAR);
+							gce.ptszNick = (TCHAR*) pcli->pfnGetContactDisplayName( getcontact(e->event.msg.sender, 1, 0, NULL), 0);
 							gce.time = (!(e->event.msg.msgclass & GG_CLASS_OFFLINE) || e->event.msg.time > (t - timeDeviation)) ? t : e->event.msg.time;
 							gce.dwFlags = GCEF_ADDTOLOG;
 							debugLog(_T("mainthread() (%x): Conference message to room %s & id %s."), this, chat, id);
@@ -975,7 +975,7 @@ retry:
 							if (iIndexes && iIndexes[i])
 								continue;
 
-							mir_sntprintf(szMsg, SIZEOF(szMsg), _T("%s (%s)"), szText,
+							mir_sntprintf(szMsg, _countof(szMsg), _T("%s (%s)"), szText,
 								*e->event.multilogon_info.sessions[i].name != '\0' ?
 								_A2T(e->event.multilogon_info.sessions[i].name) : TranslateT("Unknown client"));
 							showpopup(m_tszUserName, szMsg, GG_POPUP_MULTILOGON);
@@ -1008,7 +1008,7 @@ retry:
 					{
 						CLISTEVENT cle = {0};
 						char service[128];
-						mir_snprintf(service, SIZEOF(service), GGS_RECVIMAGE, m_szModuleName);
+						mir_snprintf(service, _countof(service), GGS_RECVIMAGE, m_szModuleName);
 
 						cle.cbSize = sizeof(cle);
 						cle.hContact = hContact;
@@ -1060,8 +1060,8 @@ retry:
 					pre.dwFlags = PRFF_TCHAR;
 					pre.fileCount = 1;
 					pre.timestamp = time(NULL);
-					pre.tszDescription = filenameT;
-					pre.ptszFiles = &filenameT;
+					pre.descr.t = filenameT;
+					pre.files.t = &filenameT;
 					pre.lParam = (LPARAM)dcc7;
 					ProtoChainRecvFile((MCONTACT)dcc7->contact, &pre);
 
@@ -1153,7 +1153,7 @@ retry:
 
 					xmlAction = mir_a2t(e->event.xml_action.data);
 					tag = mir_a2t("events");
-					hXml = xi.parseString(xmlAction, 0, tag);
+					hXml = xmlParseString(xmlAction, 0, tag);
 
 					if (hXml != NULL) {
 						HXML node;
@@ -1161,13 +1161,13 @@ retry:
 						
 						mir_free(tag);
 						tag = mir_a2t("event/type");
-						node = xi.getChildByPath(hXml, tag, 0);
-						type = node != NULL ? mir_t2a(xi.getText(node)) : NULL;
+						node = xmlGetChildByPath(hXml, tag, 0);
+						type = node != NULL ? mir_t2a(xmlGetText(node)) : NULL;
 
 						mir_free(tag);
 						tag = mir_a2t("event/sender");
-						node = xi.getChildByPath(hXml, tag, 0);
-						sender = node != NULL ? mir_t2a(xi.getText(node)) : NULL;
+						node = xmlGetChildByPath(hXml, tag, 0);
+						sender = node != NULL ? mir_t2a(xmlGetText(node)) : NULL;
 						debugLogA("mainthread() (%x): XML Action type: %s.", this, type != NULL ? type : "unknown");
 						// Avatar change notify
 						if (type != NULL && !mir_strcmp(type, "28")) {
@@ -1176,7 +1176,7 @@ retry:
 						}
 						mir_free(type);
 						mir_free(sender);
-						xi.destroyNode(hXml);
+						xmlDestroyNode(hXml);
 					}
 					mir_free(tag);
 					mir_free(xmlAction);
@@ -1543,7 +1543,7 @@ MCONTACT GGPROTO::getcontact(uin_t uin, int create, int inlist, TCHAR *szNick)
 		return NULL;
 	}
 
-	if (CallService(MS_PROTO_ADDTOCONTACT, hContact, (LPARAM)m_szModuleName) != 0) {
+	if (Proto_AddToContact(hContact, m_szModuleName) != 0) {
 		// For some reason we failed to register the protocol for this contact
 		CallService(MS_DB_CONTACT_DELETE, hContact, 0);
 		debugLogA("getcontact(): Failed to register GG contact %d", uin);
@@ -1561,10 +1561,9 @@ MCONTACT GGPROTO::getcontact(uin_t uin, int create, int inlist, TCHAR *szNick)
 	if (szNick)
 		setTString(hContact, GG_KEY_NICK, szNick);
 	else if (isonline()) {
-		gg_pubdir50_t req;
-
 		// Search for that nick
-		if (req = gg_pubdir50_new(GG_PUBDIR50_SEARCH)) {
+		gg_pubdir50_t req = gg_pubdir50_new(GG_PUBDIR50_SEARCH);
+		if (req) {
 			// Add uin and search it
 			gg_pubdir50_add(req, GG_PUBDIR50_UIN, ditoa(uin));
 			gg_pubdir50_seq_set(req, GG_SEQ_GETNICK);
@@ -1582,21 +1581,18 @@ MCONTACT GGPROTO::getcontact(uin_t uin, int create, int inlist, TCHAR *szNick)
 	// Add to notify list and pull avatar for the new contact
 	if (isonline())
 	{
-		PROTO_AVATAR_INFORMATIONT pai = {0};
-
 		gg_EnterCriticalSection(&sess_mutex, "getcontact", 32, "sess_mutex", 1);
 		gg_add_notify_ex(sess, uin, (char)(inlist ? GG_USER_NORMAL : GG_USER_OFFLINE));
 		gg_LeaveCriticalSection(&sess_mutex, "getcontact", 32, 1, "sess_mutex", 1);
 
-		pai.cbSize = sizeof(pai);
-		pai.hContact = hContact;
-		getavatarinfo((WPARAM)GAIF_FORCE, (LPARAM)&pai);
+		PROTO_AVATAR_INFORMATION ai = { 0 };
+		ai.hContact = hContact;
+		getavatarinfo((WPARAM)GAIF_FORCE, (LPARAM)&ai);
 
 		// Change status of the contact with our own UIN (if got yourself added to the contact list)
 		if (getDword(GG_KEY_UIN, 0) == uin) {
-			TCHAR *szMsg;
 			gg_EnterCriticalSection(&modemsg_mutex, "getcontact", 33, "modemsg_mutex", 1);
-			szMsg = mir_tstrdup(getstatusmsg(m_iStatus));
+			TCHAR *szMsg = mir_tstrdup(getstatusmsg(m_iStatus));
 			gg_LeaveCriticalSection(&modemsg_mutex, "getcontact", 33, 1, "modemsg_mutex", 1);
 			changecontactstatus(uin, status_m2gg(m_iStatus, szMsg != NULL), szMsg, 0, 0, 0, 0);
 			mir_free(szMsg);
@@ -1720,7 +1716,7 @@ void GGPROTO::changecontactstatus(uin_t uin, int status, const TCHAR *idescr, in
 	{
 		char sversion[48];
 		setDword(hContact, GG_KEY_CLIENTVERSION, (DWORD) version);
-		mir_snprintf(sversion, SIZEOF(sversion), "%sGadu-Gadu %s", (version & 0x00ffffff) > 0x2b ? "Nowe " : "", gg_version2string(version));
+		mir_snprintf(sversion, _countof(sversion), "%sGadu-Gadu %s", (version & 0x00ffffff) > 0x2b ? "Nowe " : "", gg_version2string(version));
 		setString(hContact, "MirVer", sversion);
 	}
 }

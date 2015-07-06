@@ -43,7 +43,7 @@ static LPSTR Get(MCONTACT hContact)
 {
 	// ignore owner
 	if (hContact != NULL) {
-		LPCSTR pszProto = DB::Contact::Proto(hContact);
+		LPCSTR pszProto = Proto_GetBaseAccountName(hContact);
 		if (pszProto != NULL) {
 			LPCSTR e[2] = { SET_CONTACT_HOMEPAGE, SET_CONTACT_COMPANY_HOMEPAGE };
 			for (int i = 0; i < 2; i++) {
@@ -70,7 +70,7 @@ static INT_PTR MenuCommand(WPARAM wParam, LPARAM lParam)
 {
 	LPSTR szUrl = Get(wParam);
 	if (szUrl) {
-		CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)szUrl);
+		Utils_OpenUrl(szUrl);
 		mir_free(szUrl);
 	}
 	else MessageBox((HWND)lParam, TranslateT("User has no valid homepage"), TranslateT("View Homepage"), MB_OK);
@@ -153,10 +153,10 @@ void SvcHomepageRebuildMenu()
 
 	if (!ghMenuItem) {
 		// insert contact menuitem
-		CLISTMENUITEM mi = { sizeof(mi) };
+		CMenuItem mi;
 		mi.position = -2000010000;
-		mi.hIcon = Skin_GetIcon(ICO_BTN_GOTO);
-		mi.pszName = LPGEN("&Homepage");
+		mi.hIcolibItem = IcoLib_GetIcon(ICO_BTN_GOTO);
+		mi.name.a = LPGEN("&Homepage");
 		mi.pszService = MS_USERINFO_HOMEPAGE_OPENURL;
 		ghMenuItem = Menu_AddContactMenuItem(&mi);
 	}

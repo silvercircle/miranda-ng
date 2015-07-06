@@ -19,6 +19,7 @@ Boston, MA 02111-1307, USA.
 
 #include "commons.h"
 
+CLIST_INTERFACE *pcli;
 int hLangpack;
 
 PLUGININFOEX pluginInfo={
@@ -56,10 +57,10 @@ int TopToolBarLoaded(WPARAM wParam, LPARAM lParam);
 int SettingChanged(WPARAM wParam,LPARAM lParam);
 
 INT_PTR MainMenuClicked(WPARAM wParam, LPARAM lParam);
-BOOL    ListeningToEnabled(char *proto, BOOL ignoreGlobal = FALSE);
+bool    ListeningToEnabled(char *proto, bool ignoreGlobal = false);
 INT_PTR ListeningToEnabled(WPARAM wParam, LPARAM lParam);
 INT_PTR EnableListeningTo(WPARAM wParam,LPARAM lParam);
-INT_PTR EnableListeningTo(char  *proto = NULL,BOOL enabled = FALSE);
+INT_PTR EnableListeningTo(char  *proto = NULL, bool enabled = false);
 INT_PTR GetTextFormat(WPARAM wParam,LPARAM lParam);
 TCHAR*	GetParsedFormat(LISTENINGTOINFO *lti);
 INT_PTR GetParsedFormat(WPARAM wParam,LPARAM lParam);
@@ -112,6 +113,7 @@ static IconItem iconList[] =
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
+	mir_getCLI();
 
 	CoInitialize(NULL);
 
@@ -140,7 +142,7 @@ extern "C" int __declspec(dllexport) Load(void)
 	InitOptions();
 
 	// icons
-	Icon_Register(hInst, LPGEN("ListeningTo"), iconList, SIZEOF(iconList));
+	Icon_Register(hInst, LPGEN("ListeningTo"), iconList, _countof(iconList));
 
 	// Extra icon support
 	hExtraIcon = ExtraIcon_Register(MODULE_NAME "_icon", LPGEN("Listening to music"), "listening_to_icon");
@@ -157,13 +159,10 @@ extern "C" int __declspec(dllexport) Unload(void)
 
 void UpdateGlobalStatusMenus()
 {
-	BOOL enabled = ListeningToEnabled(NULL, TRUE);
+	bool enabled = ListeningToEnabled(NULL, true);
 
-	CLISTMENUITEM clmi = { sizeof(clmi) };
-	clmi.flags = CMIM_FLAGS
-			| (enabled ? CMIF_CHECKED : 0)
-			| (opts.enable_sending ? 0 : CMIF_GRAYED);
-	Menu_ModifyItem(proto_items[0].hMenu, &clmi);
+	Menu_SetChecked(proto_items[0].hMenu, enabled);
+	Menu_EnableItem(proto_items[0].hMenu, opts.enable_sending);
 
 	if (hTTB != NULL)
 		CallService(MS_TTB_SETBUTTONSTATE, (WPARAM) hTTB, (LPARAM) (enabled ? TTBST_PUSHED : 0));
@@ -188,18 +187,18 @@ void RebuildMenu()
 		ProtocolInfo *info = &proto_items[i];
 
 		if (info->hMenu != NULL)
-			CallService(MO_REMOVEMENUITEM, (WPARAM) info->hMenu, 0);
+			Menu_RemoveItem(info->hMenu);
 
 		TCHAR text[512];
-		mir_sntprintf(text, SIZEOF(text), TranslateT("Send to %s"), info->account);
+		mir_sntprintf(text, TranslateT("Send to %s"), info->account);
 
-		CLISTMENUITEM mi = { sizeof(mi) };
+		CMenuItem mi;
 		mi.position = 100000 + i;
-		mi.pszPopupName = (char *) hMainMenuGroup;
-		mi.popupPosition = 500080000 + i;
+		mi.root = hMainMenuGroup;
+		mi.position = 500080000 + i;
 		mi.pszService = MS_LISTENINGTO_MAINMENU;
-		mi.ptszName = text;
-		mi.flags = CMIF_CHILDPOPUP | CMIF_TCHAR
+		mi.name.t = text;
+		mi.flags =  CMIF_TCHAR
 				| (ListeningToEnabled(info->proto, TRUE) ? CMIF_CHECKED : 0)
 				| (opts.enable_sending ? 0 : CMIF_GRAYED);
 
@@ -211,16 +210,16 @@ void RebuildMenu()
 
 void RegisterProtocol(char *proto, TCHAR *account)
 {
-	if (!ProtoServiceExists(proto, PS_SET_LISTENINGTO) && !ProtoServiceExists(proto, PS_SETCUSTOMSTATUSEX) && !ProtoServiceExists(proto, PS_SETAWAYMSGT) && !ProtoServiceExists(proto, PS_SETAWAYMSG))
+	if (!ProtoServiceExists(proto, PS_SET_LISTENINGTO) && !ProtoServiceExists(proto, PS_SETCUSTOMSTATUSEX) && !ProtoServiceExists(proto, PS_SETAWAYMSG))
 		return;
 
 	size_t id = proto_items.size();
 	proto_items.resize(id+1);
 
-	strncpy(proto_items[id].proto, proto, SIZEOF(proto_items[id].proto));
-	proto_items[id].proto[SIZEOF(proto_items[id].proto)-1] = 0;
+	strncpy(proto_items[id].proto, proto, _countof(proto_items[id].proto));
+	proto_items[id].proto[_countof(proto_items[id].proto)-1] = 0;
 
-	mir_tstrncpy(proto_items[id].account, account, SIZEOF(proto_items[id].account));
+	mir_tstrncpy(proto_items[id].account, account, _countof(proto_items[id].account));
 
 	proto_items[id].hMenu = NULL;
 	proto_items[id].old_xstatus = 0;
@@ -240,19 +239,15 @@ int AccListChanged(WPARAM wParam, LPARAM lParam)
 	{
 		if (wParam == PRAC_UPGRADED || wParam == PRAC_CHANGED)
 		{
-			mir_tstrncpy(info->account, proto->tszAccountName, SIZEOF(info->account));
+			mir_tstrncpy(info->account, proto->tszAccountName, _countof(info->account));
 
 			TCHAR text[512];
-			mir_sntprintf(text, SIZEOF(text), TranslateT("Send to %s"), info->account);
-
-			CLISTMENUITEM clmi = { sizeof(clmi) };
-			clmi.flags = CMIM_NAME | CMIF_TCHAR | CMIF_KEEPUNTRANSLATED;
-			clmi.ptszName = text;
-			Menu_ModifyItem(info->hMenu, &clmi);
+			mir_sntprintf(text, TranslateT("Send to %s"), info->account);
+			Menu_ModifyItem(info->hMenu, text);
 		}
 		else if (wParam == PRAC_REMOVED || (wParam == PRAC_CHECKED && !proto->bIsEnabled))
 		{
-			CallService(MO_REMOVEMENUITEM, (WPARAM) info->hMenu, 0);
+			Menu_RemoveItem(info->hMenu);
 
 			for(std::vector<ProtocolInfo>::iterator it = proto_items.begin(); it != proto_items.end(); ++it)
 			{
@@ -298,23 +293,22 @@ int ModulesLoaded(WPARAM, LPARAM)
 	}
 
 	// Add main menu item
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = 500080000;
-	mi.ptszName = LPGENT("Listening to");
-	mi.flags = CMIF_ROOTPOPUP | CMIF_TCHAR;
-	mi.icolibItem = iconList[0].hIcolib;
+	mi.name.t = LPGENT("Listening to");
+	mi.flags =  CMIF_TCHAR;
+	mi.hIcolibItem = iconList[0].hIcolib;
 	hMainMenuGroup = Menu_AddMainMenuItem(&mi);
 
-	mi.hParentMenu = hMainMenuGroup;
-	mi.popupPosition = 500080000;
+	mi.root = hMainMenuGroup;
 	mi.position = 0;
 	mi.pszService = MS_LISTENINGTO_MAINMENU;
-	mi.hIcon = NULL;
+	mi.hIcolibItem = NULL;
 
 	// Add all protos
-	mi.ptszName = LPGENT("Send to all protocols");
-	mi.flags = CMIF_CHILDPOPUP  | CMIF_TCHAR
-			| (ListeningToEnabled(NULL, TRUE) ? CMIF_CHECKED : 0)
+	mi.name.t = LPGENT("Send to all protocols");
+	mi.flags = CMIF_TCHAR
+			| (ListeningToEnabled(NULL, true) ? CMIF_CHECKED : 0)
 			| (opts.enable_sending ? 0 : CMIF_GRAYED);
 	proto_items.resize(1);
 	proto_items[0].hMenu = Menu_AddMainMenuItem(&mi);
@@ -327,7 +321,7 @@ int ModulesLoaded(WPARAM, LPARAM)
 	// Add each proto
 	PROTOACCOUNT **protos;
 	int count;
-	ProtoEnumAccounts(&count,&protos);
+	Proto_EnumAccounts(&count,&protos);
 
 	for (int i = 0; i < count; i++)
 		if (protos[i]->bIsEnabled)
@@ -448,18 +442,18 @@ int PreShutdown(WPARAM, LPARAM)
 
 static INT_PTR TopToolBarClick(WPARAM, LPARAM)
 {
-	EnableListeningTo(NULL, !ListeningToEnabled(NULL, TRUE));
+	EnableListeningTo(NULL, !ListeningToEnabled(NULL, true));
 	return 0;
 }
 
 // Toptoolbar hook to put an icon in the toolbar
 int TopToolBarLoaded(WPARAM, LPARAM)
 {
-	BOOL enabled = ListeningToEnabled(NULL, TRUE);
+	BOOL enabled = ListeningToEnabled(NULL, true);
 
 	CreateServiceFunction(MS_LISTENINGTO_TTB, TopToolBarClick);
 
-	TTBButton ttb = { sizeof(ttb) };
+	TTBButton ttb = { 0 };
 	ttb.hIconHandleDn = iconList[0].hIcolib;
 	ttb.hIconHandleUp = iconList[1].hIcolib;
 	ttb.pszService = MS_LISTENINGTO_TTB;
@@ -484,7 +478,7 @@ INT_PTR MainMenuClicked(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-BOOL ListeningToEnabled(char *proto, BOOL ignoreGlobal)
+bool ListeningToEnabled(char *proto, bool ignoreGlobal)
 {
 	if (!ignoreGlobal && !opts.enable_sending)
 		return FALSE;
@@ -504,8 +498,8 @@ BOOL ListeningToEnabled(char *proto, BOOL ignoreGlobal)
 	else
 	{
 		char setting[256];
-		mir_snprintf(setting, SIZEOF(setting), "%sEnabled", proto);
-		return (BOOL) db_get_b(NULL, MODULE_NAME, setting, FALSE);
+		mir_snprintf(setting, "%sEnabled", proto);
+		return db_get_b(NULL, MODULE_NAME, setting, false) != 0;
 	}
 }
 
@@ -571,9 +565,9 @@ void SetListeningInfo(char *proto, LISTENINGTOINFO *lti = NULL)
 				};
 
 				Buffer<TCHAR> name;
-				ReplaceTemplate(&name, NULL, opts.xstatus_name, fr, SIZEOF(fr));
+				ReplaceTemplate(&name, NULL, opts.xstatus_name, fr, _countof(fr));
 				Buffer<TCHAR> msg;
-				ReplaceTemplate(&msg, NULL, opts.xstatus_message, fr, SIZEOF(fr));
+				ReplaceTemplate(&msg, NULL, opts.xstatus_message, fr, _countof(fr));
 
 				ics.flags = CSSF_TCHAR | CSSF_MASK_STATUS |	CSSF_MASK_NAME | CSSF_MASK_MESSAGE;
 				ics.ptszName = name.str;
@@ -663,9 +657,9 @@ void SetListeningInfo(char *proto, LISTENINGTOINFO *lti = NULL)
 			};
 
 			Buffer<TCHAR> name;
-			ReplaceTemplate(&name, NULL, opts.xstatus_name, fr, SIZEOF(fr));
+			ReplaceTemplate(&name, NULL, opts.xstatus_name, fr, _countof(fr));
 			Buffer<TCHAR> msg;
-			ReplaceTemplate(&msg, NULL, opts.xstatus_message, fr, SIZEOF(fr));
+			ReplaceTemplate(&msg, NULL, opts.xstatus_message, fr, _countof(fr));
 
 			status = XSTATUS_MUSIC;
 			ics.flags = CSSF_TCHAR | CSSF_MASK_STATUS |	CSSF_MASK_NAME | CSSF_MASK_MESSAGE;
@@ -678,33 +672,20 @@ void SetListeningInfo(char *proto, LISTENINGTOINFO *lti = NULL)
 			mir_free(fr[1]);
 		}
 	}
-	else if (db_get_b(0,MODULE_NAME,"UseStatusMessage",1) && (ProtoServiceExists(proto, PS_SETAWAYMSGT) || ProtoServiceExists(proto, PS_SETAWAYMSG)))
+	else if (db_get_b(0,MODULE_NAME,"UseStatusMessage",1) && ProtoServiceExists(proto, PS_SETAWAYMSG))
 	{
 		int status = CallProtoService(proto, PS_GETSTATUS, 0, 0);
 		if (lti == NULL)
-		{
-			INT_PTR ret = CallProtoService(proto, PS_SETAWAYMSGT, (WPARAM) status, 0);
-			if(ret == CALLSERVICE_NOTFOUND)
-			{
-				CallProtoService(proto, PS_SETAWAYMSG, (WPARAM)status, 0);
-			}
-		}
+			CallProtoService(proto, PS_SETAWAYMSG, status, 0);
 		else
 		{
-			TCHAR *fr = GetParsedFormat(lti);
-			INT_PTR ret = CallProtoService(proto, PS_SETAWAYMSGT, (WPARAM)status, (LPARAM)fr);
-			if(ret == CALLSERVICE_NOTFOUND)
-			{
-				char *info = mir_t2a(fr);
-				CallProtoService(proto, PS_SETAWAYMSG, (WPARAM)status, (LPARAM)info);
-				mir_free(info);
-			}
-			mir_free(fr);
+			ptrT fr(GetParsedFormat(lti));
+			CallProtoService(proto, PS_SETAWAYMSG, status, fr);
 		}
 	}
 }
 
-INT_PTR EnableListeningTo(char *proto,BOOL enabled)
+INT_PTR EnableListeningTo(char *proto, bool enabled)
 {
 	if (!loaded)
 		return -1;
@@ -713,31 +694,23 @@ INT_PTR EnableListeningTo(char *proto,BOOL enabled)
 	{
 		// For all protocols
 		for (unsigned int i = 1; i < proto_items.size(); ++i)
-		{
 			EnableListeningTo(proto_items[i].proto, enabled);
-		}
 	}
 	else
 	{
-		if (!ProtoServiceExists(proto, PS_SET_LISTENINGTO) &&
-			!ProtoServiceExists(proto, PS_SETCUSTOMSTATUSEX) &&
-			!ProtoServiceExists(proto, PS_SETAWAYMSGT) && // by yaho
-			!ProtoServiceExists(proto, PS_SETAWAYMSG))
+		if (!ProtoServiceExists(proto, PS_SET_LISTENINGTO) && !ProtoServiceExists(proto, PS_SETCUSTOMSTATUSEX) && !ProtoServiceExists(proto, PS_SETAWAYMSG))
 			return 0;
 
 		char setting[256];
-		mir_snprintf(setting, SIZEOF(setting), "%sEnabled", proto);
+		mir_snprintf(setting, "%sEnabled", proto);
 		db_set_b(NULL, MODULE_NAME, setting, enabled);
 
 		// Modify menu info
 		ProtocolInfo *info = GetProtoInfo(proto);
 		if (info != NULL)
 		{
-			CLISTMENUITEM clmi = { sizeof(clmi) };
-			clmi.flags = CMIM_FLAGS
-					| (enabled ? CMIF_CHECKED : 0)
-					| (opts.enable_sending ? 0 : CMIF_GRAYED);
-			Menu_ModifyItem(info->hMenu, &clmi);
+			Menu_EnableItem(info->hMenu, opts.enable_sending);
+			Menu_SetChecked(info->hMenu, enabled);
 
 			SetListeningInfo(proto,(opts.enable_sending && enabled) ? GetListeningInfo() : NULL);
 		}
@@ -755,12 +728,12 @@ INT_PTR EnableListeningTo(char *proto,BOOL enabled)
 
 INT_PTR EnableListeningTo(WPARAM wParam,LPARAM lParam)
 {
-	return EnableListeningTo((char*)wParam,(BOOL)lParam);
+	return EnableListeningTo((char*)wParam, lParam != 0);
 }
 
 INT_PTR HotkeysEnable(WPARAM,LPARAM lParam)
 {
-	return EnableListeningTo(lParam, TRUE);
+	return EnableListeningTo(lParam, true);
 }
 
 INT_PTR HotkeysDisable(WPARAM wParam,LPARAM lParam)
@@ -799,7 +772,7 @@ TCHAR *GetParsedFormat(LISTENINGTOINFO *lti)
 	};
 
 	Buffer<TCHAR> ret;
-	ReplaceTemplate(&ret, NULL, opts.templ, fr, SIZEOF(fr));
+	ReplaceTemplate(&ret, NULL, opts.templ, fr, _countof(fr));
 	return ret.detach();
 }
 
@@ -969,11 +942,11 @@ INT_PTR SetNewSong(WPARAM wParam,LPARAM lParam)
 
 	if (lParam == LISTENINGTO_ANSI) {
 		CharToWchar data((char *) wParam);
-		((GenericPlayer *) players[GENERIC])->NewData(data, wcslen(data));
+		((GenericPlayer *) players[GENERIC])->NewData(data, mir_wstrlen(data));
 	}
 	else {
 		WCHAR *data = (WCHAR *) wParam;
-		((GenericPlayer *) players[GENERIC])->NewData(data, wcslen(data));
+		((GenericPlayer *) players[GENERIC])->NewData(data, mir_wstrlen(data));
 	}
 
 	return 0;
@@ -1004,7 +977,7 @@ TCHAR* VariablesParseInfo(ARGUMENTSINFO *ai)
 	};
 
 	Buffer<TCHAR> ret;
-	ReplaceTemplate(&ret, NULL, opts.templ, fr, SIZEOF(fr));
+	ReplaceTemplate(&ret, NULL, opts.templ, fr, _countof(fr));
 	return ret.detach();
 }
 

@@ -22,12 +22,14 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include <commonheaders.h>
+#include "stdafx.h"
 
 struct
 {
 	int status, order;
-} statusModeOrder[] = {
+}
+statusModeOrder[] =
+{
 	{ ID_STATUS_OFFLINE, 500 },
 	{ ID_STATUS_ONLINE, 10 },
 	{ ID_STATUS_AWAY, 200 },
@@ -165,7 +167,7 @@ int __forceinline GetProtoIndex(char * szName)
 	if (!szName)
 		return -1;
 
-	PROTOACCOUNT *pa = ProtoGetAccount(szName);
+	PROTOACCOUNT *pa = Proto_GetAccount(szName);
 	return (pa == NULL) ? -1 : pa->iOrder;
 }
 

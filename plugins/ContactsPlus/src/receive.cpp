@@ -169,7 +169,7 @@ INT_PTR CALLBACK RecvDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 		TranslateDialogDefault(hwndDlg);
 		{
 			CLISTEVENT *pcle = (CLISTEVENT*)lParam;
-			WindowList_Add(ghRecvWindowList, hwndDlg, pcle->hContact);
+			WindowList_Add(g_hRecvWindowList, hwndDlg, pcle->hContact);
 			SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(hInst, MAKEINTRESOURCE(IDI_CONTACTS)));
 			EnableDlgItem(hwndDlg, IDOK, FALSE);
 			EnableDlgItem(hwndDlg, IDDETAILS, FALSE);
@@ -380,8 +380,8 @@ INT_PTR CALLBACK RecvDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 			case IDC_USERMENU:
 				{
 					RECT rc;
-					HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDCONTACT, (WPARAM)wndData->mhContact, 0);
 					GetWindowRect(GetDlgItem(hwndDlg,IDC_USERMENU), &rc);
+					HMENU hMenu = Menu_BuildContactMenu(wndData->mhContact);
 					TrackPopupMenu(hMenu, 0, rc.left, rc.bottom, 0, hwndDlg, NULL);
 					DestroyMenu(hMenu);
 				}
@@ -437,10 +437,10 @@ INT_PTR CALLBACK RecvDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 				fi.psz = wndData->haUin;
 				int iLPos = ListView_FindItem(hLV, -1, &fi);
 				if (iLPos == -1) iLPos = 0;
-				if (mir_tstrcmp(psr->nick, _T("")) && psr->nick)
-					ListView_SetItemText(hLV, iLPos, 1, psr->nick);
-				ListView_SetItemText(hLV, iLPos, 2, psr->firstName);
-				ListView_SetItemText(hLV, iLPos, 3, psr->lastName);
+				if (mir_tstrcmp(psr->nick.t, _T("")) && psr->nick.t)
+					ListView_SetItemText(hLV, iLPos, 1, psr->nick.t);
+				ListView_SetItemText(hLV, iLPos, 2, psr->firstName.t);
+				ListView_SetItemText(hLV, iLPos, 3, psr->lastName.t);
 				break;
 			}
 			mir_free(wndData->haUin);
@@ -448,7 +448,7 @@ INT_PTR CALLBACK RecvDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 		break;
 	
 	case WM_CLOSE:  // user closed window, so destroy it
-		WindowList_Remove(ghRecvWindowList, hwndDlg);
+		WindowList_Remove(g_hRecvWindowList, hwndDlg);
 		DestroyWindow(hwndDlg);
 		break;
 
@@ -459,29 +459,22 @@ INT_PTR CALLBACK RecvDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 		UnhookEvent(wndData->hHook);
 		DestroyMenu(wndData->mhPopup);
 		{
-			for (int i = 0; i < SIZEOF(wndData->hIcons); i++)
+			for (int i = 0; i < _countof(wndData->hIcons); i++)
 				DestroyIcon(wndData->hIcons[i]);
 		}
 		delete wndData; // automatically calls destructor
 		break;
 
 	case WM_MEASUREITEM:
-		return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
+		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
 
 	case WM_DRAWITEM:
 		DrawProtocolIcon(hwndDlg, lParam, wndData->mhContact);
-		return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
+		return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
 
 	case WM_SIZE:
-		if (!IsIconic(hwndDlg)) {
-			// make the dlg resizeable
-			UTILRESIZEDIALOG urd = { sizeof(urd) };
-			urd.hInstance = hInst;
-			urd.hwndDlg = hwndDlg;
-			urd.lpTemplate = MAKEINTRESOURCEA(IDD_RECEIVE);
-			urd.pfnResizer = RecvDlg_Resize;
-			CallService(MS_UTILS_RESIZEDIALOG, 0, (LPARAM) & urd);
-		}
+		if (!IsIconic(hwndDlg)) // make the dlg resizeable
+			Utils_ResizeDialog(hwndDlg, hInst, MAKEINTRESOURCEA(IDD_RECEIVE), RecvDlg_Resize);
 		break;
 
 	case WM_GETMINMAXINFO:

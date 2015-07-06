@@ -202,7 +202,7 @@ int CMraProto::MraDbSettingChanged(WPARAM hContact, LPARAM lParam)
 				// always store custom nick
 				CMStringW wszNick;
 				if (cws->value.type == DBVT_DELETED) {
-					wszNick = GetContactNameW(hContact);
+					wszNick = pcli->pfnGetContactDisplayName(hContact, 0);
 					db_set_ws(hContact, "CList", "MyHandle", wszNick);
 				}
 				else if (cws->value.pszVal) {
@@ -353,13 +353,13 @@ DWORD CMraProto::MraSetXStatusInternal(DWORD dwXStatus)
 
 		// obsolete (TODO: remove in next version)
 		char szValueName[MAX_PATH];
-		mir_snprintf(szValueName, SIZEOF(szValueName), "XStatus%ldName", dwXStatus);
+		mir_snprintf(szValueName, _countof(szValueName), "XStatus%ldName", dwXStatus);
 		if (!mraGetStringW(NULL, szValueName, szBuff))
 			szBuff = lpcszXStatusNameDef[dwXStatus];
 		mraSetStringExW(NULL, DBSETTING_XSTATUSNAME, szBuff);
 
 		// obsolete (TODO: remove in next version)
-		mir_snprintf(szValueName, SIZEOF(szValueName), "XStatus%ldMsg", dwXStatus);
+		mir_snprintf(szValueName, _countof(szValueName), "XStatus%ldMsg", dwXStatus);
 		if (mraGetStringW(NULL, szValueName, szBuff))
 			mraSetStringExW(NULL, DBSETTING_XSTATUSMSG, szBuff);
 		else
@@ -401,7 +401,7 @@ INT_PTR CMraProto::MraSetXStatusEx(WPARAM, LPARAM lParam)
 
 				// set custom status name
 				if (pData->flags & CSSF_MASK_NAME) {
-					mir_snprintf(szValueName, SIZEOF(szValueName), "XStatus%ldName", dwXStatus);
+					mir_snprintf(szValueName, _countof(szValueName), "XStatus%ldName", dwXStatus);
 					if (pData->flags & CSSF_UNICODE) {
 						mraSetStringExW(NULL, szValueName, pData->pwszName);
 						mraSetStringExW(NULL, DBSETTING_XSTATUSNAME, pData->pwszName);
@@ -414,7 +414,7 @@ INT_PTR CMraProto::MraSetXStatusEx(WPARAM, LPARAM lParam)
 
 				// set custom status message
 				if (pData->flags & CSSF_MASK_MESSAGE) {
-					mir_snprintf(szValueName, SIZEOF(szValueName), "XStatus%ldMsg", dwXStatus);
+					mir_snprintf(szValueName, _countof(szValueName), "XStatus%ldMsg", dwXStatus);
 					if (pData->flags & CSSF_UNICODE) {
 						mraSetStringExW(NULL, szValueName, pData->pwszMessage);
 						mraSetStringExW(NULL, DBSETTING_XSTATUSMSG, pData->pwszMessage);
@@ -487,7 +487,7 @@ INT_PTR CMraProto::MraGetXStatusEx(WPARAM hContact, LPARAM lParam)
 	// fill status message member
 	if (pData->flags & CSSF_MASK_MESSAGE) {
 		char szSetting[100];
-		mir_snprintf(szSetting, SIZEOF(szSetting), "XStatus%dMsg", m_iXStatus);
+		mir_snprintf(szSetting, "XStatus%dMsg", m_iXStatus);
 		if (pData->flags & CSSF_UNICODE)
 			mraGetStaticStringW(hContact, szSetting, pData->pwszMessage, (STATUS_DESC_MAX + 1), NULL);
 		else
@@ -528,7 +528,7 @@ DWORD CMraProto::MraSendNewStatus(DWORD dwStatusMir, DWORD dwXStatusMir, const C
 	if (IsXStatusValid(dwXStatusMir)) {
 		char szValueName[MAX_PATH];
 		if (pwszStatusTitle.IsEmpty()) {
-			mir_snprintf(szValueName, SIZEOF(szValueName), "XStatus%ldName", dwXStatusMir);
+			mir_snprintf(szValueName, _countof(szValueName), "XStatus%ldName", dwXStatusMir);
 			// custom xstatus name
 			if (!mraGetStringW(NULL, szValueName, wszStatusTitle))
 				wszStatusTitle = TranslateTS(lpcszXStatusNameDef[dwXStatusMir]);
@@ -536,7 +536,7 @@ DWORD CMraProto::MraSendNewStatus(DWORD dwStatusMir, DWORD dwXStatusMir, const C
 		else wszStatusTitle = pwszStatusTitle;
 
 		if (pwszStatusDesc.IsEmpty()) {
-			mir_snprintf(szValueName, SIZEOF(szValueName), "XStatus%ldMsg", dwXStatusMir);
+			mir_snprintf(szValueName, _countof(szValueName), "XStatus%ldMsg", dwXStatusMir);
 			// custom xstatus description
 			mraGetStringW(NULL, szValueName, wszStatusDesc);
 		}
@@ -614,8 +614,8 @@ INT_PTR CMraProto::MraGetAvatarCaps(WPARAM wParam, LPARAM)
 INT_PTR CMraProto::MraGetAvatarInfo(WPARAM wParam, LPARAM lParam)
 {
 	if (lParam) {
-		PROTO_AVATAR_INFORMATIONT *ppai = (PROTO_AVATAR_INFORMATIONT*)lParam;
-		return (INT_PTR)MraAvatarsQueueGetAvatar(hAvatarsQueueHandle, (DWORD)wParam, ppai->hContact, NULL, (DWORD*)&ppai->format, ppai->filename);
+		PROTO_AVATAR_INFORMATION *pai = (PROTO_AVATAR_INFORMATION*)lParam;
+		return (INT_PTR)MraAvatarsQueueGetAvatar(hAvatarsQueueHandle, (DWORD)wParam, pai->hContact, NULL, (DWORD*)&pai->format, pai->filename);
 	}
 	return GAIR_NOAVATAR;
 }

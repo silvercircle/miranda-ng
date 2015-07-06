@@ -36,7 +36,7 @@ MCONTACT WhatsAppProto::AddToContactList(const std::string &jid, const char *new
 	if ((hContact = CallService(MS_DB_CONTACT_ADD, 0, 0)) == 0)
 		return INVALID_CONTACT_ID;
 
-	CallService(MS_PROTO_ADDTOCONTACT, (WPARAM)hContact, (LPARAM)m_szModuleName);
+	Proto_AddToContact(hContact, m_szModuleName);
 	setString(hContact, "ID", jid.c_str());
 	debugLogA("Added contact %s", jid.c_str());
 	setString(hContact, "MirVer", "WhatsApp");
@@ -136,7 +136,7 @@ void WhatsAppProto::UpdateStatusMsg(MCONTACT hContact)
 	if (lastSeen != -1) {
 		time_t ts = lastSeen;
 		TCHAR stzLastSeen[MAX_PATH];
-		_tcsftime(stzLastSeen, SIZEOF(stzLastSeen), TranslateT("Last seen on %x at %X"), localtime(&ts));
+		_tcsftime(stzLastSeen, _countof(stzLastSeen), TranslateT("Last seen on %x at %X"), localtime(&ts));
 		ss << stzLastSeen;
 	}
 
@@ -165,7 +165,7 @@ void WhatsAppProto::onSendGetPicture(const std::string &jid, const std::vector<u
 		size_t r = fwrite(std::string(data.begin(), data.end()).c_str(), 1, data.size(), f);
 		fclose(f);
 
-		PROTO_AVATAR_INFORMATIONT ai = { sizeof(ai) };
+		PROTO_AVATAR_INFORMATION ai = { 0 };
 		ai.hContact = hContact;
 		ai.format = PA_FORMAT_JPEG;
 		_tcsncpy_s(ai.filename, filename.c_str(), _TRUNCATE);

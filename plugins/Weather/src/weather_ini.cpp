@@ -178,12 +178,12 @@ bool LoadWIData(bool dial)
 
 	// find all *.ini file in the plugin\weather directory
 	TCHAR szSearchPath[MAX_PATH], FileName[MAX_PATH];
-	GetModuleFileName(GetModuleHandle(NULL), szSearchPath, SIZEOF(szSearchPath));
+	GetModuleFileName(GetModuleHandle(NULL), szSearchPath, _countof(szSearchPath));
 	TCHAR *chop = _tcsrchr(szSearchPath, '\\');
 	if (chop == NULL)
 		return false;
 	*chop = '\0';
-	_tcsncat(szSearchPath, _T("\\Plugins\\Weather\\*.ini"), SIZEOF(szSearchPath) - mir_tstrlen(szSearchPath));
+	mir_tstrncat(szSearchPath, _T("\\Plugins\\Weather\\*.ini"), _countof(szSearchPath) - mir_tstrlen(szSearchPath));
 	_tcsncpy(FileName, szSearchPath, MAX_PATH - 1);
 
 	WIN32_FIND_DATA fd;
@@ -195,7 +195,7 @@ bool LoadWIData(bool dial)
 		do {
 			chop = _tcsrchr(FileName, '\\');
 			chop[1] = '\0';
-			_tcsncat(FileName, fd.cFileName, SIZEOF(FileName) - mir_tstrlen(FileName));
+			mir_tstrncat(FileName, fd.cFileName, _countof(FileName) - mir_tstrlen(FileName));
 			if ( mir_tstrcmpi(fd.cFileName, _T("SAMPLE_INI.INI"))) {
 				WIDATA Data;
 				LoadStationData(FileName, fd.cFileName, &Data);
@@ -253,7 +253,7 @@ void LoadStationData(TCHAR *pszFile, TCHAR *pszShortFile, WIDATA *Data)
 	FILE *pfile = _tfsopen(pszFile, _T("rt"), _SH_DENYWR);
 	if (pfile != NULL) {
 		char Line[4096];
-		fgets(Line, SIZEOF(Line), pfile);
+		fgets(Line, _countof(Line), pfile);
 		TrimString(Line);
 
 		// make sure it is a valid weather protocol ini file
@@ -274,7 +274,7 @@ void LoadStationData(TCHAR *pszFile, TCHAR *pszShortFile, WIDATA *Data)
 		else
 		{
 			TCHAR str[4096];
-			mir_sntprintf(str, SIZEOF(str), TranslateT("Invalid ini format for: %s"), pszFile);
+			mir_sntprintf(str, _countof(str), TranslateT("Invalid ini format for: %s"), pszFile);
 			MessageBox(NULL, str, TranslateT("Weather Protocol"), MB_OK|MB_ICONERROR);
 			fclose(pfile);
 			return;
@@ -338,7 +338,7 @@ void LoadStationData(TCHAR *pszFile, TCHAR *pszShortFile, WIDATA *Data)
 		while (!feof(pfile)) {
 			// determine current tag
 
-			if (fgets(Line, SIZEOF(Line), pfile) == NULL)
+			if (fgets(Line, _countof(Line), pfile) == NULL)
 				break;
 			TrimString(Line);
 
@@ -553,21 +553,20 @@ INT_PTR CALLBACK DlgProcSetup(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 		break;
 
 	case WM_COMMAND:
-		switch(LOWORD(wParam)) 
-		{
+		switch(LOWORD(wParam)) {
 		case IDC_STEP1:
 			// update current data
-			CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW | OUF_TCHAR, (LPARAM)_T("http://miranda-ng.org/"));
+			Utils_OpenUrl("http://miranda-ng.org/");
 			break;
 
 		case IDC_STEP2: 
 			{
 				TCHAR szPath[1024];
-				GetModuleFileName(GetModuleHandle(NULL), szPath, SIZEOF(szPath));
+				GetModuleFileName(GetModuleHandle(NULL), szPath, _countof(szPath));
 				TCHAR *chop = _tcsrchr(szPath, '\\');
 				if (chop) {
 					*chop = '\0';
-					_tcsncat(szPath, _T("\\Plugins\\weather\\"), SIZEOF(szPath) - mir_tstrlen(szPath));
+					mir_tstrncat(szPath, _T("\\Plugins\\weather\\"), _countof(szPath) - mir_tstrlen(szPath));
 					_tmkdir(szPath);
 					ShellExecute((HWND)lParam, _T("open"), szPath, _T(""), _T(""), SW_SHOW);
 				}

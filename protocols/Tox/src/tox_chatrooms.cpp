@@ -24,12 +24,12 @@ MCONTACT CToxProto::AddChatRoom(int groupNumber)
 	if (!hContact)
 	{
 		hContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
-		CallService(MS_PROTO_ADDTOCONTACT, hContact, (LPARAM)m_szModuleName);
+		Proto_AddToContact(hContact, m_szModuleName);
 
 		setWord(hContact, TOX_SETTINGS_CHAT_ID, groupNumber);
 
 		TCHAR title[MAX_PATH];
-		mir_sntprintf(title, SIZEOF(title), _T("%s #%d"), TranslateT("Groupchat"), groupNumber);
+		mir_sntprintf(title, _countof(title), _T("%s #%d"), TranslateT("Groupchat"), groupNumber);
 		setTString(hContact, "Nick", title);
 
 		DBVARIANT dbv;

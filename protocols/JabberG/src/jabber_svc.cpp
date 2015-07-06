@@ -121,39 +121,39 @@ INT_PTR __cdecl CJabberProto::JabberGetAvatarInfo(WPARAM wParam, LPARAM lParam)
 	if (!m_options.EnableAvatars)
 		return GAIR_NOAVATAR;
 
-	PROTO_AVATAR_INFORMATIONT* AI = (PROTO_AVATAR_INFORMATIONT*)lParam;
+	PROTO_AVATAR_INFORMATION* pai = (PROTO_AVATAR_INFORMATION*)lParam;
 
-	ptrA szHashValue( getStringA(AI->hContact, "AvatarHash"));
+	ptrA szHashValue( getStringA(pai->hContact, "AvatarHash"));
 	if (szHashValue == NULL) {
 		debugLogA("No avatar");
 		return GAIR_NOAVATAR;
 	}
 
 	TCHAR tszFileName[MAX_PATH];
-	GetAvatarFileName(AI->hContact, tszFileName, SIZEOF(tszFileName));
-	_tcsncpy_s(AI->filename, tszFileName, _TRUNCATE);
+	GetAvatarFileName(pai->hContact, tszFileName, _countof(tszFileName));
+	_tcsncpy_s(pai->filename, tszFileName, _TRUNCATE);
 
-	AI->format = (AI->hContact == NULL) ? PA_FORMAT_PNG : getByte(AI->hContact, "AvatarType", 0);
+	pai->format = (pai->hContact == NULL) ? PA_FORMAT_PNG : getByte(pai->hContact, "AvatarType", 0);
 
-	if (::_taccess(AI->filename, 0) == 0) {
-		ptrA szSavedHash( getStringA(AI->hContact, "AvatarSaved"));
+	if (::_taccess(pai->filename, 0) == 0) {
+		ptrA szSavedHash( getStringA(pai->hContact, "AvatarSaved"));
 		if (szSavedHash != NULL && !mir_strcmp(szSavedHash, szHashValue)) {
 			debugLogA("Avatar is Ok: %s == %s", szSavedHash, szHashValue);
 			return GAIR_SUCCESS;
 		}
 	}
 
-	if ((wParam & GAIF_FORCE) != 0 && AI->hContact != NULL && m_bJabberOnline) {
-		ptrT tszJid( getTStringA(AI->hContact, "jid"));
+	if ((wParam & GAIF_FORCE) != 0 && pai->hContact != NULL && m_bJabberOnline) {
+		ptrT tszJid( getTStringA(pai->hContact, "jid"));
 		if (tszJid != NULL) {
 			JABBER_LIST_ITEM *item = ListGetItemPtr(LIST_ROSTER, tszJid);
 			if (item != NULL) {
-				BOOL isXVcard = getByte(AI->hContact, "AvatarXVcard", 0);
+				BOOL isXVcard = getByte(pai->hContact, "AvatarXVcard", 0);
 
 				TCHAR szJid[JABBER_MAX_JID_LEN]; szJid[0] = 0;
 				if (item->arResources.getCount() != NULL && !isXVcard)
 					if (TCHAR *bestResName = ListGetBestClientResourceNamePtr(tszJid))
-						mir_sntprintf(szJid, SIZEOF(szJid), _T("%s/%s"), tszJid, bestResName);
+						mir_sntprintf(szJid, _countof(szJid), _T("%s/%s"), tszJid, bestResName);
 
 				if (szJid[0] == 0)
 					_tcsncpy_s(szJid, tszJid, _TRUNCATE);
@@ -464,17 +464,16 @@ INT_PTR __cdecl CJabberProto::JabberServiceParseXmppURI(WPARAM, LPARAM lParam)
 	
 	if (!mir_tstrcmpi(szCommand, _T("roster"))) {
 		if (!HContactFromJID(szJid)) {
-			JABBER_SEARCH_RESULT jsr = { 0 };
-			jsr.hdr.cbSize = sizeof(JABBER_SEARCH_RESULT);
-			jsr.hdr.flags = PSR_TCHAR;
-			jsr.hdr.nick = szJid;
-			jsr.hdr.id = szJid;
-			_tcsncpy_s(jsr.jid, szJid, _TRUNCATE);
+			PROTOSEARCHRESULT psr = { 0 };
+			psr.cbSize = sizeof(psr);
+			psr.flags = PSR_TCHAR;
+			psr.nick.t = szJid;
+			psr.id.t = szJid;
 
 			ADDCONTACTSTRUCT acs;
 			acs.handleType = HANDLE_SEARCHRESULT;
 			acs.szProto = m_szModuleName;
-			acs.psr = &jsr.hdr;
+			acs.psr = &psr;
 			CallService(MS_ADDCONTACT_SHOW, 0, (LPARAM)&acs);
 		}
 		return 0;
@@ -534,7 +533,7 @@ INT_PTR __cdecl CJabberProto::JabberSendNudge(WPARAM hContact, LPARAM)
 	TCHAR tszJid[JABBER_MAX_JID_LEN];
 	TCHAR *szResource = ListGetBestClientResourceNamePtr(jid);
 	if (szResource)
-		mir_sntprintf(tszJid, SIZEOF(tszJid), _T("%s/%s"), jid, szResource);
+		mir_sntprintf(tszJid, _countof(tszJid), _T("%s/%s"), jid, szResource);
 	else
 		_tcsncpy_s(tszJid, jid, _TRUNCATE);
 

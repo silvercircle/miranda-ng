@@ -241,7 +241,7 @@ MZodiac MAnnivDate::Zodiac()
 	for (i = 0; i < 13 && (wDays < zodiac[i].startDays || wDays > zodiac[i].endDays); i++);
 
 	MZodiac mZodiac;
-	mZodiac.hIcon = Skin_GetIcon(zodiac[i].szZodiacIcon);
+	mZodiac.hIcon = IcoLib_GetIcon(zodiac[i].szZodiacIcon);
 	mZodiac.pszName = zodiac[i].szZodiac;
 	return mZodiac;
 }
@@ -270,10 +270,10 @@ int MAnnivDate::DBGetReminderOpts(MCONTACT hContact)
 		char pszSetting[MAXSETTING];
 
 		// read reminder option
-		mir_snprintf(pszSetting, SIZEOF(pszSetting), "Anniv%dReminder", _wID);
+		mir_snprintf(pszSetting, _countof(pszSetting), "Anniv%dReminder", _wID);
 		_bRemind = db_get_b(hContact, Module(), pszSetting, BST_INDETERMINATE);
 		// read offset
-		mir_snprintf(pszSetting, SIZEOF(pszSetting), "Anniv%dOffset", _wID);
+		mir_snprintf(pszSetting, _countof(pszSetting), "Anniv%dOffset", _wID);
 		_wDaysEarlier = db_get_w(hContact, Module(), pszSetting, (WORD)-1);
 	}
 	else {
@@ -309,14 +309,14 @@ int MAnnivDate::DBWriteReminderOpts(MCONTACT hContact)
 	else if (_wID <= ANID_LAST) {
 		char pszSetting[MAXSETTING];
 		// read reminder option
-		mir_snprintf(pszSetting, SIZEOF(pszSetting), "Anniv%dReminder", _wID);
+		mir_snprintf(pszSetting, _countof(pszSetting), "Anniv%dReminder", _wID);
 		if (_bRemind == BST_INDETERMINATE)
 			db_unset(hContact, USERINFO, pszSetting);
 		else
 			db_set_b(hContact, USERINFO, pszSetting, _bRemind);
 
 		// read offset
-		mir_snprintf(pszSetting, SIZEOF(pszSetting), "Anniv%dOffset", _wID);
+		mir_snprintf(pszSetting, _countof(pszSetting), "Anniv%dOffset", _wID);
 		if (_wDaysEarlier == (WORD)-1)
 			db_unset(hContact, USERINFO, pszSetting);
 		else
@@ -473,7 +473,7 @@ int MAnnivDate::DBGetBirthDate(MCONTACT hContact, LPSTR pszProto)
 		SetFlags(MADF_HASCUSTOM);
 	}
 	// if pszProto is set to NULL, this will be scaned only incase the birthday date has not been found yet
-	else if (pszProto || (pszProto = DB::Contact::Proto(hContact)) != NULL)
+	else if (pszProto || (pszProto = Proto_GetBaseAccountName(hContact)) != NULL)
 	{
 		// try to get birthday from basic protocol
 		if (!DBGetDate(hContact, pszProto, SET_CONTACT_BIRTHDAY, SET_CONTACT_BIRTHMONTH, SET_CONTACT_BIRTHYEAR))
@@ -626,7 +626,7 @@ int MAnnivDate::DBGetAnniversaryDate(MCONTACT hContact, WORD iIndex)
 
 	// read date and convert older versions
 	CHAR szStamp[MAXSETTING];
-	mir_snprintf(szStamp, SIZEOF(szStamp), "Anniv%dDate", iIndex);
+	mir_snprintf(szStamp, _countof(szStamp), "Anniv%dDate", iIndex);
 	int rc = DBGetDateStamp(hContact, USERINFO, szStamp);
 	if (!rc) {
 		_strModule = USERINFO;
@@ -634,7 +634,7 @@ int MAnnivDate::DBGetAnniversaryDate(MCONTACT hContact, WORD iIndex)
 		_wID = iIndex;
 
 		// read description
-		mir_snprintf(szStamp, SIZEOF(szStamp), "Anniv%dDesc", iIndex);
+		mir_snprintf(szStamp, _countof(szStamp), "Anniv%dDesc", iIndex);
 		DBVARIANT dbv;
 		if (!DB::Setting::GetTString(hContact, USERINFO, szStamp, &dbv)) {
 			_strDesc = dbv.ptszVal;
@@ -659,10 +659,10 @@ int MAnnivDate::DBWriteAnniversaryDate(MCONTACT hContact, WORD wIndex)
 		_wID = wIndex;
 
 		CHAR pszSetting[MAXSETTING];
-		mir_snprintf(pszSetting, SIZEOF(pszSetting), "Anniv%dDate", wIndex);
+		mir_snprintf(pszSetting, _countof(pszSetting), "Anniv%dDate", wIndex);
 		if (!DBWriteDateStamp(hContact, USERINFO, pszSetting)) {
 			// write description
-			mir_snprintf(pszSetting, SIZEOF(pszSetting), "Anniv%dDesc", wIndex);
+			mir_snprintf(pszSetting, _countof(pszSetting), "Anniv%dDesc", wIndex);
 			db_set_ts(hContact, USERINFO, pszSetting, (LPTSTR)Description());
 			return 0;
 		}
@@ -683,16 +683,16 @@ static WORD AskUser(MCONTACT hContact, MAnnivDate *pOldCustomDate, MAnnivDate *p
 	TCHAR	 szDate[MAX_PATH];
 	TCHAR	 szoldDate[MAX_PATH];
 
-	pOldCustomDate->DateFormat(szoldDate, SIZEOF(szoldDate));
-	pNewProtoDate->DateFormat(szDate, SIZEOF(szDate));
+	pOldCustomDate->DateFormat(szoldDate, _countof(szoldDate));
+	pNewProtoDate->DateFormat(szDate, _countof(szDate));
 
-	mir_sntprintf(szMsg, SIZEOF(szMsg),
+	mir_sntprintf(szMsg, _countof(szMsg),
 		TranslateT("%s provides a new birthday via protocol.\nIt is %s. The old one was %s.\n\nDo you want to use this as the new birthday for this contact?"),
 		DB::Contact::DisplayName(hContact), szDate, szoldDate);
 
 	MB.cbSize = sizeof(MSGBOX);
 	MB.hParent = NULL;
-	MB.hiLogo = Skin_GetIcon(ICO_DLG_ANNIVERSARY);
+	MB.hiLogo = IcoLib_GetIcon(ICO_DLG_ANNIVERSARY);
 	MB.hiMsg = NULL;
 	MB.uType = MB_YESALLNO|MB_ICON_QUESTION|MB_INFOBAR|MB_NOPOPUP;
 	MB.ptszTitle = LPGENT("Update custom birthday");
@@ -728,7 +728,7 @@ int MAnnivDate::BackupBirthday(MCONTACT hContact, LPSTR pszProto, const BYTE bDo
 	// A custom birthday was set by user before and is not to be ignored
 	if ((_wFlags & MADF_HASCUSTOM) && (bDontIgnoreAnything || !lastAnswer || (*lastAnswer != IDNONE))) {
 		if (!pszProto)
-			pszProto = DB::Contact::Proto(hContact);
+			pszProto = Proto_GetBaseAccountName(hContact);
 
 		if (pszProto) {
 			BYTE bIsMeta = DB::Module::IsMeta(pszProto);
@@ -772,7 +772,7 @@ int MAnnivDate::BackupBirthday(MCONTACT hContact, LPSTR pszProto, const BYTE bDo
 					for (int i = 0; i < nSubContactCount; i++) {
 						MCONTACT hSubContact = db_mc_getSub(hContact, i);
 						if (hSubContact != NULL) {
-							if (!mdbIgnore.DBGetDate(hSubContact, DB::Contact::Proto(hSubContact), SET_CONTACT_BIRTHDAY, SET_CONTACT_BIRTHMONTH, SET_CONTACT_BIRTHYEAR))
+							if (!mdbIgnore.DBGetDate(hSubContact, Proto_GetBaseAccountName(hSubContact), SET_CONTACT_BIRTHDAY, SET_CONTACT_BIRTHMONTH, SET_CONTACT_BIRTHYEAR))
 								mdbIgnore.DBWriteDateStamp(hSubContact, USERINFO, SET_REMIND_BIRTHDAY_IGNORED);
 
 							DBWriteBirthDate(hSubContact);

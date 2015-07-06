@@ -43,7 +43,7 @@ int WeatherPopup(WPARAM hContact, LPARAM lParam)
 		// setup the popup
 		POPUPDATAT ppd = { 0 };
 		ppd.lchContact = hContact;
-		ppd.PluginData = ppd.lchIcon = LoadSkinnedProtoIcon(WEATHERPROTONAME, winfo.status);
+		ppd.PluginData = ppd.lchIcon = Skin_LoadProtoIcon(WEATHERPROTONAME, winfo.status);
 		GetDisplay(&winfo, opt.pTitle, ppd.lptzContactName);
 		GetDisplay(&winfo, opt.pText, ppd.lptzText);
 		ppd.PluginWindowProc = PopupDlgProc;
@@ -79,8 +79,8 @@ int WeatherError(WPARAM wParam, LPARAM lParam)
 		TCHAR str1[512], str2[512];
 
 		// get the 2 strings
-		_tcsncpy(str1, tszMsg, SIZEOF(str1) - 1);
-		_tcsncpy(str2, tszMsg, SIZEOF(str2) - 1);
+		_tcsncpy(str1, tszMsg, _countof(str1) - 1);
+		_tcsncpy(str2, tszMsg, _countof(str2) - 1);
 		TCHAR *chop = _tcschr(str1, 255);
 		if (chop != NULL)
 			*chop = '\0';
@@ -88,7 +88,7 @@ int WeatherError(WPARAM wParam, LPARAM lParam)
 			str1[0] = 0;
 		chop = _tcschr(str2, 255);
 		if (chop != NULL)
-			_tcsncpy(str2, chop+1, SIZEOF(str2) - 1);
+			_tcsncpy(str2, chop+1, _countof(str2) - 1);
 		else
 			str2[0] = 0;
 
@@ -141,7 +141,7 @@ LRESULT CALLBACK PopupDlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 		return TRUE;
 
 	case UM_FREEPLUGINDATA:
-		Skin_ReleaseIcon((HICON)PUGetPluginData(hWnd));
+		IcoLib_ReleaseIcon((HICON)PUGetPluginData(hWnd));
 		return FALSE;
 	}
 
@@ -176,7 +176,7 @@ LRESULT CALLBACK PopupWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 		break;
 
 	case IDM_M7:	// display contact menu
-		hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDCONTACT,wParam,0);
+		hMenu = Menu_BuildContactMenu(wParam);
 		GetCursorPos(&pt);
 		hPopupContact = (HANDLE)wParam;
 		TrackPopupMenu(hMenu,TPM_LEFTALIGN,pt.x,pt.y,0,hWnd,NULL);
@@ -187,15 +187,15 @@ LRESULT CALLBACK PopupWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 		CallService(MS_USERINFO_SHOWDIALOG, wParam, 0);
 
 	case WM_COMMAND:	 //Needed by the contact's context menu
-		if ( CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(LOWORD(wParam),MPCF_CONTACTMENU), (LPARAM)hPopupContact))
+		if (CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(LOWORD(wParam), MPCF_CONTACTMENU), (LPARAM)hPopupContact))
 			break;
 		return FALSE;
 
 	case WM_MEASUREITEM: //Needed by the contact's context menu
-		return CallService(MS_CLIST_MENUMEASUREITEM,wParam,lParam);
+		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
 
 	case WM_DRAWITEM: //Needed by the contact's context menu
-		return CallService(MS_CLIST_MENUDRAWITEM,wParam,lParam);
+		return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
 	}
 
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);//FALSE;
@@ -222,7 +222,7 @@ void ReadPopupOpt(HWND hdlg)
 	opt.BGColour = SendDlgItemMessage(hdlg,IDC_BGCOLOUR,CPM_GETCOLOUR,0,0);
 
 	// get delay time
-	GetDlgItemText(hdlg, IDC_DELAY, str, SIZEOF(str));
+	GetDlgItemText(hdlg, IDC_DELAY, str, _countof(str));
 	int num = _ttoi(str);
 	opt.pDelay = num;
 
@@ -237,9 +237,9 @@ void ReadPopupOpt(HWND hdlg)
 	// popup texts
 	wfree(&opt.pText);
 	wfree(&opt.pTitle);
-	GetDlgItemText(hdlg, IDC_PText, text, SIZEOF(text));
+	GetDlgItemText(hdlg, IDC_PText, text, _countof(text));
 	wSetData(&opt.pText, text);
-	GetDlgItemText(hdlg, IDC_PTitle, text, SIZEOF(text));
+	GetDlgItemText(hdlg, IDC_PTitle, text, _countof(text));
 	wSetData(&opt.pTitle, text);
 }
 
@@ -261,9 +261,9 @@ INT_PTR CALLBACK DlgPopupOpts(HWND hdlg, UINT msg, WPARAM wParam, LPARAM lParam)
 		// click actions
 		hMenu  = LoadMenu(hInst, MAKEINTRESOURCE(IDR_PMENU));
 		hMenu1 = GetSubMenu(hMenu, 0);
-		GetMenuString(hMenu1, opt.LeftClickAction, str, SIZEOF(str), MF_BYCOMMAND);
+		GetMenuString(hMenu1, opt.LeftClickAction, str, _countof(str), MF_BYCOMMAND);
 		SetDlgItemText(hdlg, IDC_LeftClick, TranslateTS(str));
-		GetMenuString(hMenu1, opt.RightClickAction, str, SIZEOF(str), MF_BYCOMMAND);
+		GetMenuString(hMenu1, opt.RightClickAction, str, _countof(str), MF_BYCOMMAND);
 		SetDlgItemText(hdlg, IDC_RightClick, TranslateTS(str));
 		DestroyMenu(hMenu);
 
@@ -396,10 +396,10 @@ INT_PTR CALLBACK DlgPopupOpts(HWND hdlg, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		case IDC_VAR3:
 			// display variable list
-			_tcsncpy(str, _T("                                                            \n"),SIZEOF(str) - 1);		// to make the message box wider
-			_tcsncat(str, VAR_LIST_POPUP, SIZEOF(str) - mir_tstrlen(str));
-			_tcsncat(str, _T("\n"), SIZEOF(str) - mir_tstrlen(str));
-			_tcsncat(str, CUSTOM_VARS, SIZEOF(str) - mir_tstrlen(str));
+			_tcsncpy(str, _T("                                                            \n"),_countof(str) - 1);		// to make the message box wider
+			mir_tstrncat(str, VAR_LIST_POPUP, _countof(str) - mir_tstrlen(str));
+			mir_tstrncat(str, _T("\n"), _countof(str) - mir_tstrlen(str));
+			mir_tstrncat(str, CUSTOM_VARS, _countof(str) - mir_tstrlen(str));
 			MessageBox(NULL, str, TranslateT("Variable List"), MB_OK|MB_ICONASTERISK|MB_TOPMOST);
 			break;
 

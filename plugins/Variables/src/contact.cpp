@@ -94,7 +94,7 @@ BYTE getContactInfoType(TCHAR* type)
 	if (type == NULL || mir_tstrlen(type) == 0 )
 		return 0;
 
-	for (int i=0; i < SIZEOF(builtinCnfs); i++ )
+	for (int i=0; i < _countof(builtinCnfs); i++ )
 		if (!mir_tstrcmp( builtinCnfs[i].str, type ))
 			return builtinCnfs[i].cnfCode;
 
@@ -120,7 +120,7 @@ TCHAR* getContactInfoT(BYTE type, MCONTACT hContact)
 		return mir_a2t(szProto);
 
 	case CCNF_ACCOUNT: {
-		PROTOACCOUNT *pa = ProtoGetAccount(szProto);
+		PROTOACCOUNT *pa = Proto_GetAccount(szProto);
 		return pa ? mir_tstrdup(pa->tszAccountName) : NULL;
 	}
 
@@ -132,7 +132,7 @@ TCHAR* getContactInfoT(BYTE type, MCONTACT hContact)
 	}
 
 	case CCNF_STATUS:
-		return mir_tstrdup((TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, db_get_w(hContact, szProto, "Status", ID_STATUS_OFFLINE), GSMDF_UNICODE));
+		return mir_tstrdup(pcli->pfnGetStatusModeDescription(db_get_w(hContact, szProto, "Status", ID_STATUS_OFFLINE), 0));
 
 	case CCNF_INTERNALIP:
 	case CCNF_EXTERNALIP:

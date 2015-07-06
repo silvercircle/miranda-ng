@@ -55,10 +55,10 @@ INT_PTR CALLBACK GenKeyDlgBoxProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM 
 			return 0;
 		}
 		TranslateDialogDefault(hWndDlg);
-		SetClassLongPtr(hWndDlg, GCLP_HICON, (LONG_PTR)LoadIcon(ICON_OTR, 1));
+		SetClassLongPtr(hWndDlg, GCLP_HICON, (LONG_PTR)IcoLib_GetIcon(ICON_OTR, 1));
 		TCHAR buff[256];
 		TCHAR *proto = mir_a2t((char*)lParam);
-		mir_sntprintf(buff, SIZEOF(buff), TranslateT(LANG_GENERATE_KEY), proto);
+		mir_sntprintf(buff, TranslateT(LANG_GENERATE_KEY), proto);
 		mir_free(proto);
 		SetDlgItemText(hWndDlg, IDC_GENERATE, buff);
 		GenKeyData *data = (GenKeyData *)mir_calloc(sizeof(GenKeyData));
@@ -71,7 +71,7 @@ INT_PTR CALLBACK GenKeyDlgBoxProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM 
 		return TRUE;
 	case WM_DESTROY:
 		SetClassLongPtr(hWndDlg, GCLP_HICON, 0);
-		ReleaseIcon(ICON_OTR, 1);
+		IcoLib_Release(ICON_OTR, 1);
 	}
 	return FALSE;
 }
@@ -170,19 +170,19 @@ extern "C" {
 		SetEncryptionStatus(hContact, trusted);
 		TCHAR buff[512];
 		if (trusted == TRUST_PRIVATE) {
-			mir_sntprintf(buff, SIZEOF(buff), TranslateT(LANG_SESSION_START_OTR), contact_get_nameT(hContact));
+			mir_sntprintf(buff, TranslateT(LANG_SESSION_START_OTR), contact_get_nameT(hContact));
 		}
 		else if (trusted == TRUST_UNVERIFIED) {
 			if (options.autoshow_verify) SMPInitDialog(context); //VerifyContextDialog(context);
-			mir_sntprintf(buff, SIZEOF(buff), TranslateT(LANG_SESSION_START_OTR_VERIFY), contact_get_nameT(hContact));
+			mir_sntprintf(buff, TranslateT(LANG_SESSION_START_OTR_VERIFY), contact_get_nameT(hContact));
 		}
 		else { // should never happen
-			mir_sntprintf(buff, SIZEOF(buff), TranslateT(LANG_SESSION_NOT_STARTED_OTR), contact_get_nameT(hContact));
+			mir_sntprintf(buff, TranslateT(LANG_SESSION_NOT_STARTED_OTR), contact_get_nameT(hContact));
 		}
 		if (context->protocol_version < MIROTR_PROTO_LATEST){
 			size_t remaining = mir_tstrlen(buff);
 			TCHAR *offset = buff + remaining;
-			remaining = SIZEOF(buff) - remaining;
+			remaining = _countof(buff) - remaining;
 			mir_sntprintf(offset, remaining, TranslateT("\nusing older protocol version %i"), context->protocol_version);
 		}
 		ShowMessage(hContact, buff);
@@ -194,7 +194,7 @@ extern "C" {
 		MCONTACT hContact = (MCONTACT)opdata;
 		DEBUGOUT_T("OTR_GUI_GONE_INSECURE\n");
 		TCHAR buff[512];
-		mir_sntprintf(buff, SIZEOF(buff), TranslateT(LANG_SESSION_TERMINATED_BY_OTR), contact_get_nameT(hContact));
+		mir_sntprintf(buff, TranslateT(LANG_SESSION_TERMINATED_BY_OTR), contact_get_nameT(hContact));
 		//MessageBox(0, buff, Translate("OTR Information"), MB_OK);
 		if (!Miranda_Terminated()) {
 			ShowMessage(hContact, buff);
@@ -214,27 +214,27 @@ extern "C" {
 		TCHAR buff[1024];
 		if (!is_reply) {
 			if (trusted == TRUST_PRIVATE) {
-				mir_sntprintf(buff, SIZEOF(buff), TranslateT(LANG_SESSION_CONTINUE_OTR), contact_get_nameT(hContact));
+				mir_sntprintf(buff, TranslateT(LANG_SESSION_CONTINUE_OTR), contact_get_nameT(hContact));
 			}
 			else if (trusted == TRUST_UNVERIFIED) {
 				if (options.autoshow_verify) SMPInitDialog(context); //VerifyContextDialog(context);
-				mir_sntprintf(buff, SIZEOF(buff), TranslateT(LANG_SESSION_CONTINUE_OTR_VERIFY), contact_get_nameT(hContact));
+				mir_sntprintf(buff, TranslateT(LANG_SESSION_CONTINUE_OTR_VERIFY), contact_get_nameT(hContact));
 			}
 			else { // should never happen
-				mir_sntprintf(buff, SIZEOF(buff), TranslateT(LANG_SESSION_NOT_STARTED_OTR), contact_get_nameT(hContact));
+				mir_sntprintf(buff, TranslateT(LANG_SESSION_NOT_STARTED_OTR), contact_get_nameT(hContact));
 			}
 			// opdata is hContact
 			ShowMessage(hContact, buff);
 		}
 		else {
 			if (trusted == TRUST_PRIVATE) {
-				mir_sntprintf(buff, SIZEOF(buff), TranslateT(LANG_SESSION_HAS_CONTINUE_OTR), contact_get_nameT(hContact));
+				mir_sntprintf(buff, TranslateT(LANG_SESSION_HAS_CONTINUE_OTR), contact_get_nameT(hContact));
 			}
 			else if (trusted == TRUST_UNVERIFIED) {
-				mir_sntprintf(buff, SIZEOF(buff), TranslateT(LANG_SESSION_HAS_CONTINUE_OTR_VERIFY), contact_get_nameT(hContact));
+				mir_sntprintf(buff, TranslateT(LANG_SESSION_HAS_CONTINUE_OTR_VERIFY), contact_get_nameT(hContact));
 			}
 			else { // should never happen
-				mir_sntprintf(buff, SIZEOF(buff), TranslateT(LANG_SESSION_NOT_STARTED_OTR), contact_get_nameT(hContact));
+				mir_sntprintf(buff, TranslateT(LANG_SESSION_NOT_STARTED_OTR), contact_get_nameT(hContact));
 			}
 
 		}
@@ -314,68 +314,68 @@ extern "C" {
 			break;
 		case OTRL_MSGEVENT_ENCRYPTION_REQUIRED:
 			msgfunc = ShowMessageInline;
-			mir_tstrncpy(msg, TranslateT("Attempting to start a private conversation..."), SIZEOF(msg));
+			mir_tstrncpy(msg, TranslateT("Attempting to start a private conversation..."), _countof(msg));
 			break;
 		case OTRL_MSGEVENT_ENCRYPTION_ERROR:
 			msgfunc = ShowMessageInline;
-			mir_tstrncpy(msg, TranslateT("An error occurred when encrypting your message.\nThe message was not sent"), SIZEOF(msg));
+			mir_tstrncpy(msg, TranslateT("An error occurred when encrypting your message.\nThe message was not sent"), _countof(msg));
 			break;
 		case OTRL_MSGEVENT_CONNECTION_ENDED:
 			msgfunc = ShowMessageInline;
-			mir_snwprintf(msg, SIZEOF(msg), TranslateT("'%s' has already closed his/her private connection to you; you should do the same"), contact);
+			mir_snwprintf(msg, _countof(msg), TranslateT("'%s' has already closed his/her private connection to you; you should do the same"), contact);
 			break;
 		case OTRL_MSGEVENT_SETUP_ERROR:
 			//			title = TranslateT("OTR Error");
 			if (!err) err = GPG_ERR_INV_VALUE;
 			switch (gcry_err_code(err)){
 			case GPG_ERR_INV_VALUE:
-				mir_snwprintf(msg, SIZEOF(msg), TranslateT("Error setting up private conversation: %s"), TranslateT("Malformed message received"));
+				mir_snwprintf(msg, _countof(msg), TranslateT("Error setting up private conversation: %s"), TranslateT("Malformed message received"));
 				break;
 			default:{
 				TCHAR* tmp = mir_utf8decodeT(gcry_strerror(err));
-				mir_snwprintf(msg, SIZEOF(msg), TranslateT("Error setting up private conversation: %s"), tmp);
+				mir_snwprintf(msg, _countof(msg), TranslateT("Error setting up private conversation: %s"), tmp);
 				mir_free(tmp); }
 			}
 			break;
 		case OTRL_MSGEVENT_MSG_REFLECTED:
 			//			title = TranslateT("OTR Error");
-			mir_tstrncpy(msg, TranslateT("We are receiving our own OTR messages.\nYou are either trying to talk to yourself, or someone is reflecting your messages back at you"), SIZEOF(msg));
+			mir_tstrncpy(msg, TranslateT("We are receiving our own OTR messages.\nYou are either trying to talk to yourself, or someone is reflecting your messages back at you"), _countof(msg));
 			break;
 		case OTRL_MSGEVENT_MSG_RESENT:
 			//			title = TranslateT("Message resent");
-			mir_snwprintf(msg, SIZEOF(msg), TranslateT("The last message to '%s' was resent"), contact);
+			mir_snwprintf(msg, _countof(msg), TranslateT("The last message to '%s' was resent"), contact);
 			break;
 		case OTRL_MSGEVENT_RCVDMSG_NOT_IN_PRIVATE:
 			//			title = TranslateT("Unreadable message");
-			mir_snwprintf(msg, SIZEOF(msg), TranslateT("The encrypted message received from '%s' is unreadable, as you are not currently communicating privately"), contact);
+			mir_snwprintf(msg, _countof(msg), TranslateT("The encrypted message received from '%s' is unreadable, as you are not currently communicating privately"), contact);
 			break;
 		case OTRL_MSGEVENT_RCVDMSG_UNREADABLE:
 			//			title = TranslateT("OTR Error");
-			mir_snwprintf(msg, SIZEOF(msg), TranslateT("We received an unreadable encrypted message from '%s'"), contact);
+			mir_snwprintf(msg, _countof(msg), TranslateT("We received an unreadable encrypted message from '%s'"), contact);
 			break;
 		case OTRL_MSGEVENT_RCVDMSG_MALFORMED:
 			//			title = TranslateT("OTR Error");
-			mir_snwprintf(msg, SIZEOF(msg), TranslateT("We received a malformed data message from '%s'"), contact);
+			mir_snwprintf(msg, _countof(msg), TranslateT("We received a malformed data message from '%s'"), contact);
 			break;
 		case OTRL_MSGEVENT_RCVDMSG_GENERAL_ERR:{
 			//			title = TranslateT("OTR Error");
 			TCHAR* tmp = mir_utf8decodeT(message);
-			mir_tstrncpy(msg, tmp, SIZEOF(msg));
+			mir_tstrncpy(msg, tmp, _countof(msg));
 			mir_free(tmp);
 			break; }
 		case OTRL_MSGEVENT_RCVDMSG_UNENCRYPTED:{
 			//			title = TranslateT("Received unencrypted message");
 			TCHAR* tmp = mir_utf8decodeT(message);
-			mir_snwprintf(msg, SIZEOF(msg), TranslateT("The following message received from '%s' was NOT encrypted: [%s]"), contact, tmp);
+			mir_snwprintf(msg, _countof(msg), TranslateT("The following message received from '%s' was NOT encrypted: [%s]"), contact, tmp);
 			mir_free(tmp);
 			break; }
 		case OTRL_MSGEVENT_RCVDMSG_FOR_OTHER_INSTANCE:
 			//			title = TranslateT("Received message for a different session");
-			mir_snwprintf(msg, SIZEOF(msg), TranslateT("'%s' has sent a message intended for a different session. If you are logged in multiple times, another session may have received the message."), contact);
+			mir_snwprintf(msg, _countof(msg), TranslateT("'%s' has sent a message intended for a different session. If you are logged in multiple times, another session may have received the message."), contact);
 			break;
 		default:
 			//			title = TranslateT("OTR Error");
-			mir_tstrncpy(msg, TranslateT("unknown OTR message received, please report that to Miranda NG"), SIZEOF(msg));
+			mir_tstrncpy(msg, TranslateT("unknown OTR message received, please report that to Miranda NG"), _countof(msg));
 		}
 		if (msg[0])
 			msgfunc(hContact, msg);

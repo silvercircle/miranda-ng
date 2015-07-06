@@ -90,12 +90,13 @@ extern "C" int __declspec(dllexport) Load(void)
 	mir_getLP(&pluginInfo);
 	mir_getCLI();
 
-	PROTOCOLDESCRIPTOR pd = { sizeof(pd) };
+	PROTOCOLDESCRIPTOR pd = { 0 };
+	pd.cbSize = sizeof(pd);
 	pd.szName = "Twitter";
 	pd.type = PROTOTYPE_PROTOCOL;
 	pd.fnInit = protoInit;
 	pd.fnUninit = protoUninit;
-	CallService(MS_PROTO_REGISTERMODULE, 0, reinterpret_cast<LPARAM>(&pd));
+	Proto_RegisterModule(&pd);
 
 	InitIcons();
 	InitContactMenus();
@@ -109,7 +110,7 @@ extern "C" int __declspec(dllexport) Load(void)
 extern "C" int __declspec(dllexport) Unload(void)
 {
 	UninitContactMenus();
-	for (size_t i = 1; i < SIZEOF(g_hEvents); i++)
+	for (size_t i = 1; i < _countof(g_hEvents); i++)
 		UnhookEvent(g_hEvents[i]);
 
 	return 0;

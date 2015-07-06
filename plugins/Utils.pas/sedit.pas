@@ -88,11 +88,10 @@ procedure RegisterIcons;
 var
   sid:TSKINICONDESC;
 begin
-  if CallService(MS_SKIN2_GETICON,0,LPARAM(ACI_NEW))<>0 then
+  if IcoLib_GetIcon(ACI_NEW,0)<>0 then
     exit;
 
   FillChar(sid,SizeOf(TSKINICONDESC),0);
-  sid.cbSize     :=SizeOf(TSKINICONDESC);
   sid.cx         :=16;
   sid.cy         :=16;
   sid.flags      :=SIDF_UNICODE;
@@ -442,7 +441,7 @@ var
   {$IFDEF Miranda}isScript:boolean;{$ENDIF}
 begin
   li.iItem:=item;
-  
+
   // result value check and element type
   li.mask      :=LVIF_PARAM or LVIF_STATE;
   li.iSubItem  :=0;
@@ -490,7 +489,7 @@ begin
   // type text (can skip and use type code)
   li.mask      :=LVIF_TEXT;
   li.cchTextMax:=HIGH(buf);
-  li.pszText   :=@buf; 
+  li.pszText   :=@buf;
   li.iSubItem  :=col_type;
   SendMessageW(list,LVM_GETITEMTEXTW,item,lparam(@li));
   dst:=StrEnd(FastWideToAnsiBuf(@buf,dst));
@@ -499,7 +498,7 @@ begin
   // alias
   li.mask      :=LVIF_TEXT;
   li.cchTextMax:=HIGH(buf);
-  li.pszText   :=@buf; 
+  li.pszText   :=@buf;
 
   li.iSubItem  :=col_alias;
   if SendMessageW(list,LVM_GETITEMTEXTW,item,lparam(@li))>0 then
@@ -839,7 +838,7 @@ begin
 {$ENDIF}
   buf[idx]:=#0;
   LV_SetItemW(list,@buf,item,col_flag);
-  
+
   // values
   tmp:=nil;
   case ltype of
@@ -1004,7 +1003,6 @@ var
   idchide,idcshow,csize:integer;
 {$IFDEF Miranda}
   pc:PAnsiChar;
-  urd:TUTILRESIZEDIALOG;
 {$ELSE}
   rc,rc1:TRECT;
 {$ENDIF}
@@ -1057,14 +1055,7 @@ begin
 
     WM_SIZE: begin
 {$IFDEF Miranda}
-      FillChar(urd,SizeOf(TUTILRESIZEDIALOG),0);
-      urd.cbSize    :=SizeOf(urd);
-      urd.hwndDlg   :=Dialog;
-      urd.hInstance :=hInstance;
-      urd.lpTemplate:='IDD_STRUCTURE';//MAKEINTRESOURCEA(IDD_STRUCTURE);
-      urd.lParam    :=0;
-      urd.pfnResizer:=@StructEditDlgResizer;
-      CallService(MS_UTILS_RESIZEDIALOG,0,TLPARAM(@urd));
+      Utils_ResizeDialog(Dialog, hInstance, 'IDD_STRUCTURE', @StructEditDlgResizer);
 {$ELSE}
       GetWindowRect(Dialog,rc);
 
@@ -1072,7 +1063,7 @@ begin
       GetWindowRect(wnd,rc1);
       SetWindowPos(wnd,0,0,0,rc.right-rc1.left-8,rc1.bottom-rc1.top,
           SWP_NOMOVE or SWP_NOZORDER or SWP_SHOWWINDOW);
-      
+
       wnd:=GetDlgItem(Dialog,IDC_DATA_FULL);
       GetWindowRect(wnd,rc1);
       SetWindowPos(wnd,0,0,0,rc1.right-rc1.left, rc.bottom-rc1.top-8,

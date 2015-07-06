@@ -22,7 +22,7 @@ int StartOTR(MCONTACT hContact) {
 	TCHAR* nick=ProtoGetNickname(proto);
 	if(nick){
 		TCHAR msg[1024];
-		TCHAR* msgend = msg+SIZEOF(msg)-1;
+		TCHAR* msgend = msg+_countof(msg)-1;
 		TCHAR* msgoff = msg;
 		for(const char* c=MIROTR_PROTO_HELLO; *c; *msgoff++=*c++);
 		*msgoff++ = '\n';
@@ -57,12 +57,12 @@ INT_PTR SVC_StartOTR(WPARAM hContact, LPARAM lParam)
 		hContact = hSub;
 
 	if ( options.bHaveSecureIM && CallService("SecureIM/IsContactSecured", hContact, 0) != 0 ) {
-		mir_sntprintf(buff, SIZEOF(buff), TranslateT(LANG_OTR_SECUREIM_STARTED), contact_get_nameT(hContact));
+		mir_sntprintf(buff, TranslateT(LANG_OTR_SECUREIM_STARTED), contact_get_nameT(hContact));
 		ShowError(buff);
 		return 0;
 	}
 
-	mir_sntprintf(buff, SIZEOF(buff), TranslateT(LANG_SESSION_REQUEST_OTR), contact_get_nameT(hContact));
+	mir_sntprintf(buff, TranslateT(LANG_SESSION_REQUEST_OTR), contact_get_nameT(hContact));
 	ShowMessage(hContact, buff);
 
 	return StartOTR(hContact);
@@ -82,7 +82,7 @@ INT_PTR SVC_RefreshOTR(WPARAM hContact, LPARAM lParam)
 		return 0;
 	}
 	
-	mir_sntprintf(buff, SIZEOF(buff), TranslateT(LANG_SESSION_TRY_CONTINUE_OTR), contact_get_nameT(hContact));
+	mir_sntprintf(buff, TranslateT(LANG_SESSION_TRY_CONTINUE_OTR), contact_get_nameT(hContact));
 	ShowMessage(hContact, buff);
 
 	int res = StartOTR(hContact);
@@ -116,7 +116,7 @@ INT_PTR SVC_StopOTR(WPARAM hContact, LPARAM lParam)
 	SetEncryptionStatus(hContact, TRUST_NOT_PRIVATE);
 
 	TCHAR buff[512];
-	mir_sntprintf(buff, SIZEOF(buff), TranslateT(LANG_SESSION_TERMINATED_OTR), contact_get_nameT(hContact));
+	mir_sntprintf(buff, TranslateT(LANG_SESSION_TERMINATED_OTR), contact_get_nameT(hContact));
 	ShowMessage(hContact, buff);
 	return 0;
 }
@@ -158,19 +158,19 @@ void InitMenu()
 	CreateServiceFunction(MS_OTR_MENUVERIFY, SVC_VerifyOTR);
 	CreateServiceFunction(MS_OTR_MENUTOGGLEHTML, SVC_ToggleHTMLOTR);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.flags = CMIF_NOTOFFLINE | CMIF_TCHAR;
 	mi.position = -400000;
 
-	mi.ptszName = _T(LANG_STOP_OTR);
+	mi.name.t = _T(LANG_STOP_OTR);
 	mi.pszService = MS_OTR_MENUSTOP;
-	mi.icolibItem = GetIconHandle(ICON_PRIVATE);
+	mi.hIcolibItem = IcoLib_GetIconHandle(ICON_PRIVATE);
 
 	hStopItem = Menu_AddContactMenuItem(&mi);
 	
-	mi.ptszName = _T(LANG_START_OTR);
+	mi.name.t = _T(LANG_START_OTR);
 	mi.pszService = MS_OTR_MENUSTART;
-	mi.icolibItem = GetIconHandle(ICON_NOT_PRIVATE);
+	mi.hIcolibItem = IcoLib_GetIconHandle(ICON_NOT_PRIVATE);
 
 	hStartItem = Menu_AddContactMenuItem(&mi);
 
@@ -179,9 +179,6 @@ void InitMenu()
 
 int SVC_PrebuildContactMenu(WPARAM hContact, LPARAM lParam)
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.flags = CMIM_FLAGS | CMIF_NOTOFFLINE | CMIF_TCHAR;
-	
 	const char *proto = GetContactProto(hContact);
 	DWORD pol = CONTACT_DEFAULT_POLICY;
 	

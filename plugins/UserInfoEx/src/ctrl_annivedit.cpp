@@ -364,10 +364,10 @@ INT_PTR CAnnivEditCtrl::DBWriteAnniversaries(MCONTACT hContact)
 	}
 	// delete reluctant items
 	do {
-		ofs = mir_snprintf(szSet0, SIZEOF(szSet0), "Anniv%d", wIndex);
+		ofs = mir_snprintf(szSet0, _countof(szSet0), "Anniv%d", wIndex);
 		ret = 1;
-		for (i = 0; i < SIZEOF(szPrefix); i++) {
-			mir_strncpy(szSet0 + ofs, szPrefix[i], SIZEOF(szSet0) - ofs);
+		for (i = 0; i < _countof(szPrefix); i++) {
+			mir_strncpy(szSet0 + ofs, szPrefix[i], _countof(szSet0) - ofs);
 			ret &= db_unset(hContact, USERINFO, szSet0);
 		}
 	}
@@ -404,7 +404,7 @@ INT_PTR CAnnivEditCtrl::SetCurSel(WORD wIndex)
 	}
 	else {
 		TCHAR szText[MAX_DESC];
-		mir_sntprintf(szText, SIZEOF(szText), _T("'%s'"), TranslateT("Unspecified"));
+		mir_sntprintf(szText, _T("'%s'"), TranslateT("Unspecified"));
 		DateTime_SetSystemtime(_hwndDate, GDT_NONE, NULL);
 		DateTime_SetFormat(_hwndDate, szText);
 	}
@@ -432,15 +432,14 @@ void CAnnivEditCtrl::OnMenuPopup()
 {
 	POINT pt = { 0, 0 };
 	RECT rc;
-	MENUITEMINFO mii;
 	HMENU hMenu;
 	WORD i;
 
 	if (hMenu = CreatePopupMenu()) {
 		SetFocus(_hBtnMenu);
 
-		memset(&mii, 0, sizeof(MENUITEMINFO));
-		mii.cbSize = sizeof(MENUITEMINFO);
+		MENUITEMINFO mii = { 0 };
+		mii.cbSize = sizeof(mii);
 		mii.fMask = MIIM_ID|MIIM_STRING|MIIM_STATE;
 
 		// insert the items

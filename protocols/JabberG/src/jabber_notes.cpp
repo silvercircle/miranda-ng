@@ -137,10 +137,10 @@ void CNoteList::LoadXml(HXML hXml)
 	destroy();
 	m_bIsModified = false;
 
-	int count = xmlGetChildCount(hXml);
+	int count = XmlGetChildCount(hXml);
 	for (int i=0; i < count; i++)
 	{
-		CNoteItem *pNote = new CNoteItem(xi.getChild(hXml, i));
+		CNoteItem *pNote = new CNoteItem(xmlGetChild(hXml, i));
 		if (pNote->IsNotEmpty())
 			insert(pNote);
 		else
@@ -377,7 +377,7 @@ public:
 		SelectObject(hdc, m_hfntNormal);
 		if (pNote->GetFrom()) {
 			TCHAR buf[256];
-			mir_sntprintf(buf, SIZEOF(buf), TranslateT("From: %s"), pNote->GetFrom());
+			mir_sntprintf(buf, TranslateT("From: %s"), pNote->GetFrom());
 			rc.top += DrawText(hdc, buf, -1, &rc, DT_NOPREFIX | DT_SINGLELINE | DT_END_ELLIPSIS);
 		}
 		rc.top += DrawText(hdc, pNote->GetText(), -1, &rc, DT_NOPREFIX | DT_WORDBREAK | DT_EXPANDTABS | DT_END_ELLIPSIS);
@@ -412,7 +412,7 @@ public:
 		SelectObject(hdc, m_hfntNormal);
 		if (pNote->GetFrom()) {
 			TCHAR buf[256];
-			mir_sntprintf(buf, SIZEOF(buf), TranslateT("From: %s"), pNote->GetFrom());
+			mir_sntprintf(buf, TranslateT("From: %s"), pNote->GetFrom());
 			rcTmp = rc;
 			DrawText(hdc, buf, -1, &rcTmp, DT_NOPREFIX | DT_SINGLELINE | DT_END_ELLIPSIS | DT_CALCRECT);
 			lps->itemHeight += rcTmp.bottom;
@@ -729,7 +729,7 @@ void CJabberProto::ProcessOutgoingNote(CNoteItem *pNote, bool ok)
 	}
 
 	TCHAR buf[1024];
-	mir_sntprintf(buf, SIZEOF(buf), _T("Incoming note: %s\n\n%s\nTags: %s"),
+	mir_sntprintf(buf, _T("Incoming note: %s\n\n%s\nTags: %s"),
 		pNote->GetTitle(), pNote->GetText(), pNote->GetTagsStr());
 
 	JabberCapsBits jcb = GetResourceCapabilites(pNote->GetFrom(), TRUE);
@@ -780,7 +780,7 @@ bool CJabberProto::OnIncomingNote(const TCHAR *szFrom, HXML hXml)
 
 	CLISTEVENT cle = { 0 };
 	char szService[256];
-	mir_snprintf(szService, SIZEOF(szService), "%s%s", m_szModuleName, JS_INCOMING_NOTE_EVENT);
+	mir_snprintf(szService, "%s%s", m_szModuleName, JS_INCOMING_NOTE_EVENT);
 	cle.cbSize = sizeof(CLISTEVENT);
 	cle.hIcon = (HICON)LoadIconEx("notes");
 	cle.flags = CLEF_PROTOCOLGLOBAL | CLEF_TCHAR;

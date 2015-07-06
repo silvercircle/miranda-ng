@@ -26,13 +26,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*       Module responsible for working with contact list control       */
 /************************************************************************/
 
-#include "hdr/modern_commonheaders.h"
+#include "stdafx.h"
 #include "m_skin.h"
-#include "hdr/modern_commonprototypes.h"
+#include "modern_commonprototypes.h"
 
-#include "hdr/modern_clc.h"
-#include "hdr/modern_clist.h"
-#include "hdr/modern_clcpaint.h"
+#include "modern_clc.h"
+#include "modern_clist.h"
+#include "modern_clcpaint.h"
 
 #include "m_modernopt.h"
 
@@ -62,7 +62,7 @@ static int clcExitDragToScroll();
 
 int ReloadSkinFolder(WPARAM, LPARAM)
 {
-	FoldersGetCustomPathT(hSkinFolder, SkinsFolder, SIZEOF(SkinsFolder), _T(DEFAULT_SKIN_FOLDER));
+	FoldersGetCustomPathT(hSkinFolder, SkinsFolder, _countof(SkinsFolder), _T(DEFAULT_SKIN_FOLDER));
 	return 0;
 }
 
@@ -83,26 +83,26 @@ static int clcHookIconsChanged(WPARAM, LPARAM)
 {
 	int i;
 	if (MirandaExiting()) return 0;
-	for (i = 0; i < SIZEOF(g_pAvatarOverlayIcons); i++) {
+	for (i = 0; i < _countof(g_pAvatarOverlayIcons); i++) {
 		g_pAvatarOverlayIcons[i].listID = -1;
 		g_pStatusOverlayIcons[i].listID = -1;
 	}
 
 	if (hAvatarOverlays)
 		ImageList_Destroy(hAvatarOverlays);
-	hAvatarOverlays = ImageList_Create(16, 16, ILC_MASK | ILC_COLOR32, SIZEOF(g_pAvatarOverlayIcons) * 2, 1);
+	hAvatarOverlays = ImageList_Create(16, 16, ILC_MASK | ILC_COLOR32, _countof(g_pAvatarOverlayIcons) * 2, 1);
 
-	for (i = 0; i < SIZEOF(g_pAvatarOverlayIcons); i++) {
-		HICON hIcon = Skin_GetIcon(g_pAvatarOverlayIcons[i].name);
+	for (i = 0; i < _countof(g_pAvatarOverlayIcons); i++) {
+		HICON hIcon = IcoLib_GetIcon(g_pAvatarOverlayIcons[i].name);
 		g_pAvatarOverlayIcons[i].listID = ImageList_AddIcon(hAvatarOverlays, hIcon);
-		Skin_ReleaseIcon(g_pAvatarOverlayIcons[i].name);
+		IcoLib_Release(g_pAvatarOverlayIcons[i].name);
 
-		hIcon = Skin_GetIcon(g_pStatusOverlayIcons[i].name);
+		hIcon = IcoLib_GetIcon(g_pStatusOverlayIcons[i].name);
 		g_pStatusOverlayIcons[i].listID = ImageList_AddIcon(hAvatarOverlays, hIcon);
-		Skin_ReleaseIcon(g_pStatusOverlayIcons[i].name);
+		IcoLib_Release(g_pStatusOverlayIcons[i].name);
 	}
 
-	g_hListeningToIcon = Skin_GetIcon("LISTENING_TO_ICON");
+	g_hListeningToIcon = IcoLib_GetIcon("LISTENING_TO_ICON");
 
 	pcli->pfnClcBroadcast(INTM_INVALIDATE, 0, 0);
 	AniAva_UpdateOptions();
@@ -374,7 +374,7 @@ static LRESULT clcOnCommand(ClcData *dat, HWND hwnd, UINT, WPARAM wParam, LPARAM
 	}
 
 	if (contact->type == CLCIT_GROUP)
-		if (CallService(MO_PROCESSCOMMANDBYMENUIDENT, LOWORD(wParam), (LPARAM)hwnd))
+		if (Menu_ProcessCommandById(wParam, (LPARAM)hwnd))
 			return 0;
 
 	return 0;
@@ -1011,7 +1011,7 @@ static LRESULT clcOnMouseMove(ClcData *dat, HWND hwnd, UINT, WPARAM wParam, LPAR
 				break;
 			if (contSour->type == CLCIT_CONTACT && mir_strcmp(contSour->proto, META_PROTO)) {
 				if (!contSour->isSubcontact)
-					hNewCursor = LoadCursor(GetModuleHandle(NULL), MAKEINTRESOURCE(IDC_DROPUSER));  /// Add to meta
+					hNewCursor = LoadCursor(g_hMirApp, MAKEINTRESOURCE(IDC_DROPUSER));  /// Add to meta
 				else
 					hNewCursor = LoadCursor(g_hInst, MAKEINTRESOURCE(IDC_DROPMETA));
 			}
@@ -1024,7 +1024,7 @@ static LRESULT clcOnMouseMove(ClcData *dat, HWND hwnd, UINT, WPARAM wParam, LPAR
 				break;
 			if (contSour->type == CLCIT_CONTACT && mir_strcmp(contSour->proto, META_PROTO)) {
 				if (!contSour->isSubcontact)
-					hNewCursor = LoadCursor(GetModuleHandle(NULL), MAKEINTRESOURCE(IDC_DROPUSER));  /// Add to meta
+					hNewCursor = LoadCursor(g_hMirApp, MAKEINTRESOURCE(IDC_DROPUSER));  /// Add to meta
 				else if (contSour->subcontacts == contDest)
 					hNewCursor = LoadCursor(g_hInst, MAKEINTRESOURCE(IDC_DEFAULTSUB)); ///MakeDefault
 				else
@@ -1039,7 +1039,7 @@ static LRESULT clcOnMouseMove(ClcData *dat, HWND hwnd, UINT, WPARAM wParam, LPAR
 				break;
 			if (contSour->type == CLCIT_CONTACT && mir_strcmp(contSour->proto, META_PROTO)) {
 				if (!contSour->isSubcontact)
-					hNewCursor = LoadCursor(GetModuleHandle(NULL), MAKEINTRESOURCE(IDC_DROPUSER));  /// Add to meta
+					hNewCursor = LoadCursor(g_hMirApp, MAKEINTRESOURCE(IDC_DROPUSER));  /// Add to meta
 				else if (contDest->subcontacts == contSour->subcontacts)
 					break;
 				else
@@ -1048,11 +1048,11 @@ static LRESULT clcOnMouseMove(ClcData *dat, HWND hwnd, UINT, WPARAM wParam, LPAR
 			break;
 
 		case DROPTARGET_ONGROUP:
-			hNewCursor = LoadCursor(GetModuleHandle(NULL), MAKEINTRESOURCE(IDC_DROPUSER));
+			hNewCursor = LoadCursor(g_hMirApp, MAKEINTRESOURCE(IDC_DROPUSER));
 			break;
 
 		case DROPTARGET_INSERTION:
-			hNewCursor = LoadCursor(GetModuleHandle(NULL), MAKEINTRESOURCE(IDC_DROP));
+			hNewCursor = LoadCursor(g_hMirApp, MAKEINTRESOURCE(IDC_DROP));
 			break;
 
 		case DROPTARGET_OUTSIDE:
@@ -1088,7 +1088,7 @@ static LRESULT clcOnMouseMove(ClcData *dat, HWND hwnd, UINT, WPARAM wParam, LPAR
 				ClcContact *contSour;
 				cliGetRowByIndex(dat, dat->iDragItem, &contSour, NULL);
 				if (!contSour->isSubcontact)
-					hNewCursor = LoadCursor(GetModuleHandle(NULL), MAKEINTRESOURCE(IDC_DROPUSER));
+					hNewCursor = LoadCursor(g_hMirApp, MAKEINTRESOURCE(IDC_DROPUSER));
 			}
 			break;
 		}
@@ -1145,7 +1145,7 @@ static LRESULT clcOnLButtonUp(ClcData *dat, HWND hwnd, UINT msg, WPARAM wParam, 
 				if (mir_strcmp(contSour->proto, META_PROTO)) {
 					if (!contSour->isSubcontact) {
 						MCONTACT hDest = contDest->hContact;
-						mir_sntprintf(Wording, SIZEOF(Wording), TranslateT("Do you want contact '%s' to be converted to metacontact and '%s' be added to it?"), contDest->szText, contSour->szText);
+						mir_sntprintf(Wording, _countof(Wording), TranslateT("Do you want contact '%s' to be converted to metacontact and '%s' be added to it?"), contDest->szText, contSour->szText);
 						int res = MessageBox(hwnd, Wording, TranslateT("Converting to metacontact"), MB_OKCANCEL | MB_ICONQUESTION);
 						if (res == 1) {
 							MCONTACT handle = CallService(MS_MC_CONVERTTOMETA, hDest, 0);
@@ -1158,7 +1158,7 @@ static LRESULT clcOnLButtonUp(ClcData *dat, HWND hwnd, UINT msg, WPARAM wParam, 
 					else {
 						hcontact = contSour->hContact;
 						MCONTACT hdest = contDest->hContact;
-						mir_sntprintf(Wording, SIZEOF(Wording), TranslateT("Do you want contact '%s' to be converted to metacontact and '%s' be added to it (remove it from '%s')?"), contDest->szText, contSour->szText, contSour->subcontacts->szText);
+						mir_sntprintf(Wording, _countof(Wording), TranslateT("Do you want contact '%s' to be converted to metacontact and '%s' be added to it (remove it from '%s')?"), contDest->szText, contSour->szText, contSour->subcontacts->szText);
 						int res = MessageBox(hwnd, Wording, TranslateT("Converting to metacontact (moving)"), MB_OKCANCEL | MB_ICONQUESTION);
 						if (res == 1) {
 							MCONTACT handle = (MCONTACT)CallService(MS_MC_CONVERTTOMETA, (WPARAM)hdest, 0);
@@ -1184,7 +1184,7 @@ static LRESULT clcOnLButtonUp(ClcData *dat, HWND hwnd, UINT msg, WPARAM wParam, 
 				if (!contSour->isSubcontact) {
 					MCONTACT hcontact = contSour->hContact;
 					MCONTACT handle = contDest->hContact;
-					mir_sntprintf(Wording, SIZEOF(Wording), TranslateT("Do you want contact '%s' to be added to metacontact '%s'?"), contSour->szText, contDest->szText);
+					mir_sntprintf(Wording, _countof(Wording), TranslateT("Do you want contact '%s' to be added to metacontact '%s'?"), contSour->szText, contDest->szText);
 					int res = MessageBox(hwnd, Wording, TranslateT("Adding contact to metacontact"), MB_OKCANCEL | MB_ICONQUESTION);
 					if (res == 1) {
 						if (!handle)
@@ -1194,7 +1194,7 @@ static LRESULT clcOnLButtonUp(ClcData *dat, HWND hwnd, UINT msg, WPARAM wParam, 
 				}
 				else if (contSour->subcontacts == contDest) {
 					MCONTACT hsour = contSour->hContact;
-					mir_sntprintf(Wording, SIZEOF(Wording), TranslateT("Do you want contact '%s' to be default?"), contSour->szText);
+					mir_sntprintf(Wording, _countof(Wording), TranslateT("Do you want contact '%s' to be default?"), contSour->szText);
 					int res = MessageBox(hwnd, Wording, TranslateT("Set default contact"), MB_OKCANCEL | MB_ICONQUESTION);
 					if (res == 1)
 						db_mc_setDefault(contDest->hContact, hsour, true);
@@ -1202,7 +1202,7 @@ static LRESULT clcOnLButtonUp(ClcData *dat, HWND hwnd, UINT msg, WPARAM wParam, 
 				else {
 					MCONTACT hcontact = contSour->hContact;
 					MCONTACT handle = contDest->hContact;
-					mir_sntprintf(Wording, SIZEOF(Wording), TranslateT("Do you want contact '%s' to be removed from metacontact '%s' and added to '%s'?"), contSour->szText, contSour->subcontacts->szText, contDest->szText);
+					mir_sntprintf(Wording, _countof(Wording), TranslateT("Do you want contact '%s' to be removed from metacontact '%s' and added to '%s'?"), contSour->szText, contSour->subcontacts->szText, contDest->szText);
 					int res = MessageBox(hwnd, Wording, TranslateT("Changing metacontacts (moving)"), MB_OKCANCEL | MB_ICONQUESTION);
 					if (res == 1) {
 						if (!handle)
@@ -1226,7 +1226,7 @@ static LRESULT clcOnLButtonUp(ClcData *dat, HWND hwnd, UINT msg, WPARAM wParam, 
 				if (!contSour->isSubcontact) {
 					MCONTACT hcontact = contSour->hContact;
 					MCONTACT handle = contDest->subcontacts->hContact;
-					mir_sntprintf(Wording, SIZEOF(Wording), TranslateT("Do you want contact '%s' to be added to metacontact '%s'?"), contSour->szText, contDest->subcontacts->szText);
+					mir_sntprintf(Wording, _countof(Wording), TranslateT("Do you want contact '%s' to be added to metacontact '%s'?"), contSour->szText, contDest->subcontacts->szText);
 					int res = MessageBox(hwnd, Wording, TranslateT("Changing metacontacts (moving)"), MB_OKCANCEL | MB_ICONQUESTION);
 					if (res == 1) {
 						if (!handle)
@@ -1238,7 +1238,7 @@ static LRESULT clcOnLButtonUp(ClcData *dat, HWND hwnd, UINT msg, WPARAM wParam, 
 				else if (contSour->subcontacts != contDest->subcontacts) {
 					MCONTACT hcontact = contSour->hContact;
 					MCONTACT handle = contDest->subcontacts->hContact;
-					mir_sntprintf(Wording, SIZEOF(Wording), TranslateT("Do you want contact '%s' to be removed from metacontact '%s' and added to '%s'?"), contSour->szText, contSour->subcontacts->szText, contDest->subcontacts->szText);
+					mir_sntprintf(Wording, _countof(Wording), TranslateT("Do you want contact '%s' to be removed from metacontact '%s' and added to '%s'?"), contSour->szText, contSour->subcontacts->szText, contDest->subcontacts->szText);
 					int res = MessageBox(hwnd, Wording, TranslateT("Changing metacontacts (moving)"), MB_OKCANCEL | MB_ICONQUESTION);
 					if (res == 1) {
 						if (!handle)
@@ -1276,9 +1276,9 @@ static LRESULT clcOnLButtonUp(ClcData *dat, HWND hwnd, UINT msg, WPARAM wParam, 
 				if (shortGroup) {
 					NeedRename = TRUE;
 					if (sourceGrName)
-						mir_sntprintf(newName, SIZEOF(newName), _T("%s\\%s"), sourceGrName, shortGroup);
+						mir_sntprintf(newName, _countof(newName), _T("%s\\%s"), sourceGrName, shortGroup);
 					else
-						mir_tstrncpy(newName, shortGroup, SIZEOF(newName));
+						mir_tstrncpy(newName, shortGroup, _countof(newName));
 				}
 				mir_free(groupName);
 				mir_free(sourceGrName);
@@ -1507,7 +1507,7 @@ static LRESULT clcOnIntmNameChanged(ClcData *dat, HWND hwnd, UINT msg, WPARAM wP
 		return ret;
 
 	if (contact) {
-		mir_tstrncpy(contact->szText, pcli->pfnGetContactDisplayName(wParam, 0), SIZEOF(contact->szText));
+		mir_tstrncpy(contact->szText, pcli->pfnGetContactDisplayName(wParam, 0), _countof(contact->szText));
 		Cache_GetText(dat, contact, 1);
 		cliRecalcScrollBar(hwnd, dat);
 	}
@@ -1631,37 +1631,37 @@ static int clcHookModulesLoaded(WPARAM, LPARAM)
 
 	HookEvent(ME_FOLDERS_PATH_CHANGED, ReloadSkinFolder);
 	hSkinFolder = FoldersRegisterCustomPathT(LPGEN("Skins"), LPGEN("Modern contact list"), MIRANDA_PATHT _T("\\") _T(DEFAULT_SKIN_FOLDER));
-	FoldersGetCustomPathT(hSkinFolder, SkinsFolder, SIZEOF(SkinsFolder), _T(DEFAULT_SKIN_FOLDER));
+	FoldersGetCustomPathT(hSkinFolder, SkinsFolder, _countof(SkinsFolder), _T(DEFAULT_SKIN_FOLDER));
 
 	// Get icons
 	TCHAR szMyPath[MAX_PATH];
-	GetModuleFileName(g_hInst, szMyPath, SIZEOF(szMyPath));
+	GetModuleFileName(g_hInst, szMyPath, _countof(szMyPath));
 
-	SKINICONDESC sid = { sizeof(sid) };
+	SKINICONDESC sid = { 0 };
 	sid.cx = sid.cy = 16;
-	sid.ptszDefaultFile = szMyPath;
+	sid.defaultFile.t = szMyPath;
 	sid.flags = SIDF_PATH_TCHAR;
 
-	sid.pszSection = LPGEN("Contact list");
-	sid.pszDescription = LPGEN("Listening to");
+	sid.section.a = LPGEN("Contact list");
+	sid.description.a = LPGEN("Listening to");
 	sid.pszName = "LISTENING_TO_ICON";
 	sid.iDefaultIndex = -IDI_LISTENING_TO;
-	Skin_AddIcon(&sid);
+	IcoLib_AddIcon(&sid);
 
-	sid.pszSection = LPGEN("Contact list") "/" LPGEN("Avatar overlay");
-	for (int i = 0; i < SIZEOF(g_pAvatarOverlayIcons); i++) {
-		sid.pszDescription = g_pAvatarOverlayIcons[i].description;
+	sid.section.a = LPGEN("Contact list") "/" LPGEN("Avatar overlay");
+	for (int i = 0; i < _countof(g_pAvatarOverlayIcons); i++) {
+		sid.description.a = g_pAvatarOverlayIcons[i].description;
 		sid.pszName = g_pAvatarOverlayIcons[i].name;
 		sid.iDefaultIndex = -g_pAvatarOverlayIcons[i].id;
-		Skin_AddIcon(&sid);
+		IcoLib_AddIcon(&sid);
 	}
 
-	sid.pszSection = LPGEN("Contact list") "/" LPGEN("Status overlay");
-	for (int i = 0; i < SIZEOF(g_pStatusOverlayIcons); i++) {
-		sid.pszDescription = g_pStatusOverlayIcons[i].description;
+	sid.section.a = LPGEN("Contact list") "/" LPGEN("Status overlay");
+	for (int i = 0; i < _countof(g_pStatusOverlayIcons); i++) {
+		sid.description.a = g_pStatusOverlayIcons[i].description;
 		sid.pszName = g_pStatusOverlayIcons[i].name;
 		sid.iDefaultIndex = -g_pStatusOverlayIcons[i].id;
-		Skin_AddIcon(&sid);
+		IcoLib_AddIcon(&sid);
 	}
 
 	clcHookIconsChanged(0, 0);
@@ -1781,7 +1781,7 @@ int ClcGetShortData(ClcData* pData, SHORTDATA *pShortData)
 	pShortData->second_line_draw_smileys = pData->second_line_draw_smileys;
 	pShortData->second_line_type = pData->second_line_type;
 
-	mir_tstrncpy(pShortData->second_line_text, pData->second_line_text, SIZEOF(pShortData->second_line_text));
+	mir_tstrncpy(pShortData->second_line_text, pData->second_line_text, _countof(pShortData->second_line_text));
 
 	pShortData->second_line_xstatus_has_priority = pData->second_line_xstatus_has_priority;
 	pShortData->second_line_show_status_if_no_away = pData->second_line_show_status_if_no_away;
@@ -1793,7 +1793,7 @@ int ClcGetShortData(ClcData* pData, SHORTDATA *pShortData)
 	pShortData->third_line_draw_smileys = pData->third_line_draw_smileys;
 	pShortData->third_line_type = pData->third_line_type;
 
-	mir_tstrncpy(pShortData->third_line_text, pData->third_line_text, SIZEOF(pShortData->third_line_text));
+	mir_tstrncpy(pShortData->third_line_text, pData->third_line_text, _countof(pShortData->third_line_text));
 
 	pShortData->third_line_xstatus_has_priority = pData->third_line_xstatus_has_priority;
 	pShortData->third_line_show_status_if_no_away = pData->third_line_show_status_if_no_away;

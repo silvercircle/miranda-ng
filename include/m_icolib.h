@@ -27,34 +27,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern int hLangpack;
 
+#ifndef M_CORE_H__
+#include <m_core.h>
+#endif
+
 ///////////////////////////////////////////////////////////////////////////////
 // WARNING: do not use Translate(TS) for p(t)szSection or p(t)szDescription as they
 // are translated by the core, which may lead to double translation.
 // Use LPGEN instead which are just dummy wrappers/markers for "lpgen.pl".
-
-typedef struct {
-  size_t cbSize;
-  union {
-    char *pszSection;         // section name used to group icons
-    TCHAR *ptszSection;       // [TRANSLATED-BY-CORE]
-    WCHAR *pwszSection;
-  };
-  union {
-    char *pszDescription;     // description for options dialog
-    TCHAR *ptszDescription;   // [TRANSLATED-BY-CORE]
-    WCHAR *pwszDescription;
-  };
-  char *pszName;              // name to refer to icon when playing and in db
-  union {
-    char *pszDefaultFile;     // default icon file to use
-    TCHAR *ptszDefaultFile;
-    WCHAR *pwszDefaultFile;
-  };
-  int  iDefaultIndex;         // index of icon in default file
-  HICON hDefaultIcon;         // handle to default icon
-  int cx,cy;                  // dimensions of icon (if 0 then standard size icon (big and small options available)
-  int flags;                  // combination of SIDF_*
-} SKINICONDESC;
 
 #define SIDF_SORTED       0x01    // Icons in section are sorted by name
 #define SIDF_UNICODE      0x100   // Section and Description are in UCS-2
@@ -71,124 +51,83 @@ typedef struct {
   #define SIDF_ALL_TCHAR  0
 #endif
 
-///////////////////////////////////////////////////////////////////////////////
-//  Adds an icon into options UI
-//
-//  wParam = (WPARAM)0
-//  lParam = (LPARAM)(SKINICONDESC*)sid;
-//  returns a handle to the newly added item
+struct SKINICONDESC
+{
+	MAllStrings section;       // section name used to group icons
+	MAllStrings description;   // description for options dialog
+	char       *pszName;       // name to refer to icon when playing and in db
+	MAllStrings defaultFile;   // default icon file to use
+	int         iDefaultIndex; // index of icon in default file
+	HICON       hDefaultIcon;  // handle to default icon
+	int         cx, cy;        // dimensions of icon (if 0 then standard size icon (big and small options available)
+	int         flags;         // combination of SIDF_*
+};
 
-__forceinline HANDLE Skin_AddIcon(SKINICONDESC* si)
-{	return (HANDLE)CallService("Skin2/Icons/AddIcon", hLangpack, (LPARAM)si);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//  Removes an icon from options UI
-//
-//  wParam = (WPARAM)(HANDLE)hIcolib (optional)
-//  lParam = (LPARAM)(char*)pszName (optional)
-//  at least one needs to be specified
-
-#define MS_SKIN2_REMOVEICON "Skin2/Icons/RemoveIcon"
-
-__forceinline void Skin_RemoveIcon(const char* szIconName)
-{	CallService(MS_SKIN2_REMOVEICON, 0, (LPARAM)szIconName);
-}
-
-__forceinline void Skin_RemoveIconHandle(HANDLE hIcolib)
-{	CallService(MS_SKIN2_REMOVEICON, (WPARAM)hIcolib, 0);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//  Retrieves HICON with the name specified in lParam
-//
-//  wParam = (WPARAM)0 - small 1 - big
-//  lParam = (LPARAM)(char*)pszName
-//  Returned HICON SHOULDN'T be destroyed, it is managed by IcoLib
-
-#define MS_SKIN2_GETICON "Skin2/Icons/GetIcon"
-
-#ifdef __cplusplus
-__forceinline HICON Skin_GetIcon(const char* szIconName, int size=0)
-#else
-__forceinline HICON Skin_GetIcon(const char* szIconName, int size)
+#if defined(__cplusplus)
+extern "C"
+{
 #endif
-{	return (HICON)CallService(MS_SKIN2_GETICON, size, (LPARAM)szIconName);
-}
 
 ///////////////////////////////////////////////////////////////////////////////
-//  Retrieves an icolib handle by the icon's name specified in lParam
-//
-//  wParam = (WPARAM)0
-//  lParam = (LPARAM)(char*)pszName
+// Adds an icon into the icon library
+// returns a handle to the newly added item
 
-#define MS_SKIN2_GETICONHANDLE "Skin2/Icons/GetIconHandle"
-
-__forceinline HANDLE Skin_GetIconHandle(const char* szIconName)
-{	return (HANDLE)CallService(MS_SKIN2_GETICONHANDLE, 0, (LPARAM)szIconName);
-}
+MIR_APP_DLL(HANDLE) IcoLib_AddIcon(SKINICONDESC *sid, int _lang = hLangpack);
 
 ///////////////////////////////////////////////////////////////////////////////
-//  Retrieves HICON with HANDLE specified in lParam
-//
-//  wParam = (WPARAM)0 - small 1 - big
-//  lParam = (LPARAM)(HANDLE)hIcoLibIcon
-//  Returned HICON SHOULDN'T be destroyed, it is managed by IcoLib
+// Removes an icon from icon library by icon's name or handle
 
-#define MS_SKIN2_GETICONBYHANDLE "Skin2/Icons/GetIconByHandle"
-
-#ifdef __cplusplus
-__forceinline HICON Skin_GetIconByHandle(HANDLE hIcolibIcon, int size=0)
-#else
-__forceinline HICON Skin_GetIconByHandle(HANDLE hIcolibIcon, int size)
-#endif
-{	return (HICON)CallService(MS_SKIN2_GETICONBYHANDLE, size, (LPARAM)hIcolibIcon);
-}
+MIR_APP_DLL(void)   IcoLib_RemoveIcon(const char *pszIconName);
+MIR_APP_DLL(void)   IcoLib_RemoveIconByHandle(HANDLE hItem);
 
 ///////////////////////////////////////////////////////////////////////////////
-//  Adds a reference to HICON
-//
-//  wParam = (WPARAM)HICON
-//  lParam = 0 - small 1 - big
+// Retrieves HICON with the name specified in lParam
+// Returned HICON SHOULDN'T be destroyed, it is managed by IcoLib
 
-#define MS_SKIN2_ADDREFICON "Skin2/Icons/AddRef"
-
-///////////////////////////////////////////////////////////////////////////////
-//  Retrieved HICON is not needed anymore (releases a reference; thus helps to optimize GDI usage)
-//
-//  wParam = (WPARAM)HICON (optional)
-//  lParam = (LPARAM)(char*)pszName (optional)  // at least one needs to be specified
-
-#define MS_SKIN2_RELEASEICON "Skin2/Icons/ReleaseIcon"
-#define MS_SKIN2_RELEASEICONBIG "Skin2/Icons/ReleaseIconBig"
-
-__forceinline void Skin_ReleaseIcon(const char* szIconName)
-{	CallService(MS_SKIN2_RELEASEICON, 0, (LPARAM)szIconName);
-}
-
-#ifdef __cplusplus
-__forceinline void Skin_ReleaseIcon(const char* szIconName, int big)
-{	CallService((big) ? MS_SKIN2_RELEASEICONBIG : MS_SKIN2_RELEASEICON, 0, (LPARAM)szIconName);
-}
-
-__forceinline void Skin_ReleaseIcon(HICON hIcon)
-#else
-__forceinline void Skin_ReleaseIcon2(HICON hIcon)
-#endif
-{	CallService(MS_SKIN2_RELEASEICON, (WPARAM)hIcon, 0);
-}
+MIR_APP_DLL(HICON)  IcoLib_GetIcon(const char *pszIconName, bool big = false);
+MIR_APP_DLL(HICON)  IcoLib_GetIconByHandle(HANDLE hItem, bool big = false);
 
 ///////////////////////////////////////////////////////////////////////////////
-//  Checks whether HICON is managed by IcoLib
-//
-//  wParam = (WPARAM)HICON
-//  lParam = 0
+// Retrieves an icolib handle by the icon's name specified in lParam
 
-#define MS_SKIN2_ISMANAGEDICON "Skin2/Icons/IsManaged"
+MIR_APP_DLL(HANDLE) IcoLib_GetIconHandle(const char *pszIconName);
 
 ///////////////////////////////////////////////////////////////////////////////
-//  Icons' change notification
+// Adds 1 to an icon's ref counter. prevents an icon from being unloaded
+
+MIR_APP_DLL(int)    IcoLib_AddRef(HICON hIcon);
+
+///////////////////////////////////////////////////////////////////////////////
+// Retrieved HICON is not needed anymore (releases a reference; thus helps to optimize GDI usage)
+
+MIR_APP_DLL(int)    IcoLib_Release(const char *pszIconName, bool big = false);
+MIR_APP_DLL(int)    IcoLib_ReleaseIcon(HICON hIcon, bool big = false);
+
+///////////////////////////////////////////////////////////////////////////////
+// Checks whether HICON is managed by IcoLib
+
+MIR_APP_DLL(HANDLE) IcoLib_IsManaged(HICON hIcon);
+
+///////////////////////////////////////////////////////////////////////////////
+// Helper to apply an icolib's icon to a button
+
+MIR_APP_DLL(void)   Button_SetIcon_IcoLib(HWND hDlg, int itemId, int iconId, const char* tooltip);
+MIR_APP_DLL(void)   Button_FreeIcon_IcoLib(HWND hDlg, int itemId);
+
+///////////////////////////////////////////////////////////////////////////////
+// Helper to apply an icolib's icon to a window
+
+MIR_APP_DLL(void)   Window_SetIcon_IcoLib(HWND hWnd, int iconId);
+MIR_APP_DLL(void)   Window_SetProtoIcon_IcoLib(HWND hWnd, const char *szProto, int iconId);
+MIR_APP_DLL(void)   Window_FreeIcon_IcoLib(HWND hWnd);
+
+///////////////////////////////////////////////////////////////////////////////
+//  Icons' change notification event
 
 #define ME_SKIN2_ICONSCHANGED "Skin2/IconsChanged"
+
+#if defined(__cplusplus)
+}
+#endif
 
 #endif /* M_ICOLIB_H__ */

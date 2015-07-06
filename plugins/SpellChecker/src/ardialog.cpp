@@ -97,7 +97,7 @@ static LRESULT CALLBACK OnlyCharsEditProc(HWND hwnd, UINT msg, WPARAM wParam, LP
 	case EM_PASTESPECIAL:
 	case WM_PASTE:
 		TCHAR text[256];
-		GetWindowText(hwnd, text, SIZEOF(text));
+		GetWindowText(hwnd, text, _countof(text));
 
 		scoped_free<TCHAR> dest = data->dict->autoReplace->filterText(text);
 		SetWindowText(hwnd, dest);
@@ -165,9 +165,9 @@ static INT_PTR CALLBACK AddReplacementDlgProc(HWND hwndDlg, UINT msg, WPARAM wPa
 			SetWindowLongPtr(GetDlgItem(hwndDlg, IDC_OLD), GWLP_USERDATA, (LONG_PTR)data);
 			mir_subclassWindow(GetDlgItem(hwndDlg, IDC_OLD), OnlyCharsEditProc);
 
-			HICON hIcon = Skin_GetIcon("spellchecker_enabled");
+			HICON hIcon = IcoLib_GetIcon("spellchecker_enabled");
 			SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
-			Skin_ReleaseIcon(hIcon);
+			IcoLib_ReleaseIcon(hIcon);
 
 			SendDlgItemMessage(hwndDlg, IDC_OLD, EM_LIMITTEXT, 256, 0);
 			SendDlgItemMessage(hwndDlg, IDC_NEW, EM_LIMITTEXT, 256, 0);
@@ -217,14 +217,14 @@ static INT_PTR CALLBACK AddReplacementDlgProc(HWND hwndDlg, UINT msg, WPARAM wPa
 
 			TCHAR find[256];
 			if (data->findReadOnly)
-				mir_tstrncpy(find, data->find.c_str(), SIZEOF(find));
+				mir_tstrncpy(find, data->find.c_str(), _countof(find));
 			else {
-				GetDlgItemText(hwndDlg, IDC_OLD, find, SIZEOF(find));
+				GetDlgItemText(hwndDlg, IDC_OLD, find, _countof(find));
 				lstrtrim(find);
 			}
 
 			TCHAR replace[256];
-			GetDlgItemText(hwndDlg, IDC_NEW, replace, SIZEOF(replace));
+			GetDlgItemText(hwndDlg, IDC_NEW, replace, _countof(replace));
 			lstrtrim(replace);
 
 			if (!data->findReadOnly && find[0] == 0)

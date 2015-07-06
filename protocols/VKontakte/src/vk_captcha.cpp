@@ -34,8 +34,8 @@ static INT_PTR CALLBACK CaptchaFormDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam
 	switch (msg) {
 	case WM_INITDIALOG: {
 		TranslateDialogDefault(hwndDlg);
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)Skin_GetIconByHandle(GetIconHandle(IDI_KEYS), TRUE));
-		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)Skin_GetIconByHandle(GetIconHandle(IDI_KEYS)));
+		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIconByHandle(GetIconHandle(IDI_KEYS), TRUE));
+		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIconByHandle(GetIconHandle(IDI_KEYS)));
 		params = (CAPTCHA_FORM_PARAMS*)lParam;
 
 		SetDlgItemText(hwndDlg, IDC_INSTRUCTION, TranslateT("Enter the text you see"));
@@ -80,7 +80,7 @@ static INT_PTR CALLBACK CaptchaFormDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam
 			return TRUE;
 
 		case IDOK:
-			GetDlgItemTextA(hwndDlg, IDC_VALUE, params->Result, SIZEOF(params->Result));
+			GetDlgItemTextA(hwndDlg, IDC_VALUE, params->Result, _countof(params->Result));
 			EndDialog(hwndDlg, 1);
 			return TRUE;
 		}
@@ -91,8 +91,8 @@ static INT_PTR CALLBACK CaptchaFormDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam
 		break;
 
 	case WM_DESTROY:
-		Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_BIG, 0));
-		Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_BIG, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, 0));
 		break;
 	}
 	return FALSE;
@@ -123,7 +123,7 @@ bool CVkProto::RunCaptchaForm(LPCSTR szUrl, CMStringA &result)
 	memio.iLen = reply->dataLength;
 	memio.pBuf = reply->pData;
 	memio.fif = FIF_UNKNOWN; /* detect */
-	param.bmp = (HBITMAP)CallService(MS_IMG_LOADFROMMEM, (WPARAM)&memio, 0);
+	param.bmp = (HBITMAP)CallService(MS_IMG_LOADFROMMEM, (WPARAM)&memio);
 	
 	BITMAP bmp = {0};
 	GetObject(param.bmp, sizeof(bmp), &bmp);
@@ -141,15 +141,16 @@ bool CVkProto::RunCaptchaForm(LPCSTR szUrl, CMStringA &result)
 /////////////////////////////////////////////////////////////////////////////////////////
 // fill a request from JSON
 
-bool CVkProto::ApplyCaptcha(AsyncHttpRequest *pReq, JSONNODE *pErrorNode)
+bool CVkProto::ApplyCaptcha(AsyncHttpRequest *pReq, const JSONNode &jnErrorNode)
 {
 	debugLogA("CVkProto::ApplyCaptcha");
 	if (!IsOnline())
 		return false;
 	
-	char *szUrl = NEWSTR_ALLOCA(_T2A(json_as_string(json_get(pErrorNode, "captcha_img"))));
-	char *szSid = NEWSTR_ALLOCA(_T2A(json_as_string(json_get(pErrorNode, "captcha_sid"))));
-	if (szUrl == NULL || szSid == NULL)
+	CMStringA szUrl(jnErrorNode["captcha_img"].as_mstring());
+	CMStringA szSid(jnErrorNode["captcha_sid"].as_mstring());
+
+	if (szUrl.IsEmpty() || szSid.IsEmpty())
 		return false;
 
 	CMStringA userReply;

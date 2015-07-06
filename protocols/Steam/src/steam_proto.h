@@ -5,29 +5,16 @@
 #define STEAM_SEARCH_BYNAME 1002
 #define STEAM_TYPING_TIME 10
 
-struct PasswordParam
-{
-	char password[513];
-	char timestamp[16];
-};
-
 struct SendAuthParam
 {
 	MCONTACT hContact;
 	HANDLE hAuth;
 };
 
-struct SendMessageParam
-{
-	MCONTACT hContact;
-	HANDLE hMessage;
-	const char *msg;
-};
-
 struct STEAM_SEARCH_RESULT
 {
 	PROTOSEARCHRESULT hdr;
-	JSONNODE *data;
+	JSONNode *data;
 };
 
 enum
@@ -41,70 +28,14 @@ enum
 	CMI_MAX   // this item shall be the last one
 };
 
-enum HTTP_STATUS
-{
-	HTTP_STATUS_NONE = 0,
-	HTTP_STATUS_OK = 200,
-	HTTP_STATUS_FOUND = 302,
-	HTTP_STATUS_BAD_REQUEST = 400,
-	HTTP_STATUS_UNAUTHORIZED = 401,
-	HTTP_STATUS_FORBIDDEN = 403,
-	HTTP_STATUS_NOT_FOUND = 404,
-	HTTP_STATUS_METHOD_NOT_ALLOWED = 405,
-	HTTP_STATUS_TOO_MANY_REQUESTS = 429,
-	HTTP_STATUS_SERVICE_UNAVAILABLE = 503,
-	HTTP_STATUS_INSUFICIENTE_STORAGE = 507
-};
-
-enum ARG_FREE_TYPE
-{
-	ARG_NO_FREE,
-	ARG_MIR_FREE
-};
-
-typedef void (CSteamProto::*RESPONSE)(const NETLIBHTTPREQUEST *response, void *arg);
-
-struct QueueItem
-{
-	SteamWebApi::HttpRequest *request;
-	void *arg;
-	ARG_FREE_TYPE arg_free_type;
-	RESPONSE responseCallback;
-	//RESPONSE responseFailedCallback;
-
-	QueueItem(SteamWebApi::HttpRequest *request) : 
-		request(request), arg(NULL), responseCallback(NULL)/*, responseFailedCallback(NULL)*/ { }
-	
-	QueueItem(SteamWebApi::HttpRequest *request, RESPONSE response) : 
-		request(request), arg(NULL), responseCallback(response)/*, responseFailedCallback(NULL)*/ { }
-	
-	//QueueItem(SteamWebApi::HttpRequest *request, RESPONSE response, RESPONSE responseFailedCallback) : 
-	//	request(request), arg(NULL), responseCallback(response), responseFailedCallback(responseFailedCallback) { }
-
-	~QueueItem() { 
-		// Free request
-		delete request;
-
-		// Free argument
-		switch (arg_free_type)
-		{
-		case ARG_NO_FREE:
-			break;
-		case ARG_MIR_FREE:
-			mir_free(arg);
-		default:
-			break;
-		}
-
-		responseCallback = NULL;
-		//responseFailedCallback = NULL;
-	}
-};
+typedef void(CSteamProto::*SteamResponseCallback)(const NETLIBHTTPREQUEST *response);
+typedef void(CSteamProto::*SteamResponseWithArgCallback)(const NETLIBHTTPREQUEST *response, void *arg);
 
 class CSteamProto : public PROTO<CSteamProto>
 {
 	friend CSteamPasswordEditor;
 	friend CSteamOptionsMain;
+	friend CSteamOptionsBlockList;
 
 public:
 	// PROTO_INTERFACE
@@ -152,42 +83,40 @@ protected:
 	mir_cs contact_search_lock;
 	mir_cs requests_queue_lock;
 	mir_cs set_status_lock;
-	LIST<QueueItem> requestsQueue;
 
 	// instances
 	static LIST<CSteamProto> InstanceList;
 	static int CompareProtos(const CSteamProto *p1, const CSteamProto *p2);
 
-	// queue
-	void InitQueue();
-	void UninitQueue();
-	
-	void StartQueue();
-	void StopQueue();
+	// requests
+	RequestQueue *requestQueue;
 
-	void PushRequest(SteamWebApi::HttpRequest *request);
-	void PushRequest(SteamWebApi::HttpRequest *request, RESPONSE response);
-	void PushRequest(SteamWebApi::HttpRequest *request, RESPONSE response, void *arg, ARG_FREE_TYPE arg_free_type);
+	void PushRequest(HttpRequest *request);
+	void PushRequest(HttpRequest *request, SteamResponseCallback response);
+	void PushRequest(HttpRequest *request, SteamResponseWithArgCallback response, void *arg, HttpFinallyCallback last = NULL);
 
-	void ExecuteRequest(QueueItem *requestItem);
+	void SendRequest(HttpRequest *request);
+	void SendRequest(HttpRequest *request, SteamResponseCallback response);
+	void SendRequest(HttpRequest *request, SteamResponseWithArgCallback response, void *arg, HttpFinallyCallback last = NULL);
 
-	void __cdecl SendMsgThread(void*);
-	void __cdecl QueueThread(void*);
+	static void MirFreeArg(void *arg) { mir_free(arg); }
 
 	// pooling thread
-	void ParsePollData(JSONNODE *data);
+	void ParsePollData(JSONNode *data);
 	void __cdecl PollingThread(void*);
 
 	// account
 	bool IsOnline();
 	bool IsMe(const char *steamId);
 
-	void OnGotRsaKey(const NETLIBHTTPREQUEST *response, void *arg);
+	void OnGotRsaKey(const NETLIBHTTPREQUEST *response);
 	
-	void OnAuthorization(const NETLIBHTTPREQUEST *response, void *arg);
-	void OnGotSession(const NETLIBHTTPREQUEST *response, void *arg);
+	void OnAuthorization(const NETLIBHTTPREQUEST *response);
+	void OnAuthorizationError(const JSONNode &node);
+	void OnAuthorizationSuccess(const JSONNode &node);
+	void OnGotSession(const NETLIBHTTPREQUEST *response);
 
-	void OnLoggedOn(const NETLIBHTTPREQUEST *response, void *arg);
+	void OnLoggedOn(const NETLIBHTTPREQUEST *response);
 
 	void HandleTokenExpired();
 
@@ -197,8 +126,8 @@ protected:
 
 	MCONTACT GetContactFromAuthEvent(MEVENT hEvent);
 
-	void UpdateContact(MCONTACT hContact, JSONNODE *data);
-	void ProcessContact(std::map<std::string, JSONNODE*>::iterator *it, MCONTACT hContact);
+	void UpdateContact(MCONTACT hContact, JSONNode *data);
+	void ProcessContact(std::map<std::string, JSONNode*>::iterator *it, MCONTACT hContact);
 	
 	void ContactIsRemoved(MCONTACT hContact);
 	void ContactIsFriend(MCONTACT hContact);
@@ -207,9 +136,9 @@ protected:
 	MCONTACT FindContact(const char *steamId);
 	MCONTACT AddContact(const char *steamId, bool isTemporary = false);
 
-	void OnGotFriendList(const NETLIBHTTPREQUEST *response, void *arg);
-	void OnGotBlockList(const NETLIBHTTPREQUEST *response, void *arg);
-	void OnGotUserSummaries(const NETLIBHTTPREQUEST *response, void *arg);
+	void OnGotFriendList(const NETLIBHTTPREQUEST *response);
+	void OnGotBlockList(const NETLIBHTTPREQUEST *response);
+	void OnGotUserSummaries(const NETLIBHTTPREQUEST *response);
 	void OnGotAvatar(const NETLIBHTTPREQUEST *response, void *arg);
 
 	void OnFriendAdded(const NETLIBHTTPREQUEST *response, void *arg);
@@ -227,11 +156,11 @@ protected:
 	void OnSearchByNameFinished(const NETLIBHTTPREQUEST *response, void *arg);
 
 	// messages
+	int OnSendMessage(MCONTACT hContact, const char* message);
 	void OnMessageSent(const NETLIBHTTPREQUEST *response, void *arg);
 
 	// menus
-	HGENMENU m_hMenuRoot;
-	static HANDLE hChooserMenu;
+	static int hChooserMenu;
 	static HGENMENU contactMenuItems[CMI_MAX];
 
 	int __cdecl AuthRequestCommand(WPARAM, LPARAM);
@@ -249,7 +178,7 @@ protected:
 
 	// avatars
 	TCHAR* GetAvatarFilePath(MCONTACT hContact);
-	bool GetDbAvatarInfo(PROTO_AVATAR_INFORMATIONT &pai);
+	bool GetDbAvatarInfo(PROTO_AVATAR_INFORMATION &pai);
 	void CheckAvatarChange(MCONTACT hContact, std::string avatarUrl);
 
 	INT_PTR __cdecl GetAvatarInfo(WPARAM, LPARAM);
@@ -278,8 +207,8 @@ protected:
 
 	MEVENT AddDBEvent(MCONTACT hContact, WORD type, DWORD timestamp, DWORD flags, DWORD cbBlob, PBYTE pBlob);
 
-	static void CSteamProto::ShowNotification(const wchar_t *message, int flags = 0, MCONTACT hContact = NULL);
-	static void CSteamProto::ShowNotification(const wchar_t *caption, const wchar_t *message, int flags = 0, MCONTACT hContact = NULL);
+	static void CSteamProto::ShowNotification(const TCHAR *message, int flags = 0, MCONTACT hContact = NULL);
+	static void CSteamProto::ShowNotification(const TCHAR *caption, const wchar_t *message, int flags = 0, MCONTACT hContact = NULL);
 
 	// helpers
 	inline int IdleSeconds() {

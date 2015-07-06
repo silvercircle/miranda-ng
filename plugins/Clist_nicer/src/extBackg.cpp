@@ -22,8 +22,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include <commonheaders.h>
-#include "../coolsb/coolscroll.h"
+#include "stdafx.h"
+#include "coolscroll.h"
 
 extern int g_hottrack;
 
@@ -260,7 +260,7 @@ StatusItems_t *GetProtocolStatusItem(const char *szProto)
 	if (szProto == NULL)
 		return NULL;
 
-	for (int i = SIZEOF(_StatusItems); i < arStatusItems.getCount(); i++) {
+	for (int i = _countof(_StatusItems); i < arStatusItems.getCount(); i++) {
 		StatusItems_t *p = arStatusItems[i];
 		if (!mir_strcmp(p->szName[0] == '{' ? p->szName+3 : p->szName, szProto))
 			return p;
@@ -272,7 +272,7 @@ StatusItems_t *GetProtocolStatusItem(const char *szProto)
 void LoadExtBkSettingsFromDB()
 {
 	int i, n;
-	for (i = 0; i < SIZEOF(_StatusItems); i++) {
+	for (i = 0; i < _countof(_StatusItems); i++) {
 		StatusItems_t *p = (StatusItems_t*)mir_alloc(sizeof(StatusItems_t));
 		*p = _StatusItems[i];
 		arStatusItems.insert(p);
@@ -280,19 +280,18 @@ void LoadExtBkSettingsFromDB()
 
 	int protoCount;
 	PROTOACCOUNT **accs;
-	ProtoEnumAccounts(&protoCount, &accs);
+	Proto_EnumAccounts(&protoCount, &accs);
 
 	for (i = 0; i < protoCount; i++) {
 		StatusItems_t *p = (StatusItems_t*)mir_alloc(sizeof(StatusItems_t));
 		*p = _StatusItems[0];
 		ID_EXTBK_LAST++;
 
-		mir_snprintf(p->szDBname, SIZEOF(p->szDBname), "EXBK_%s", accs[i]->szModuleName);
-		if (i == 0) {
-			mir_strncpy(p->szName, "{-}", SIZEOF(p->szName));
-			strncat(p->szName, accs[i]->szModuleName, SIZEOF(p->szName) - mir_strlen(p->szName));
-		}
-		else mir_strncpy(p->szName, accs[i]->szModuleName, SIZEOF(p->szName));
+		mir_snprintf(p->szDBname, _countof(p->szDBname), "EXBK_%s", accs[i]->szModuleName);
+		if (i == 0)
+			mir_snprintf(p->szName, _countof(p->szName), "{-}%s", accs[i]->szModuleName);
+		else
+			strncpy_s(p->szName, accs[i]->szModuleName, _TRUNCATE);
 		p->statusID = ID_EXTBK_LAST;
 		arStatusItems.insert(p);
 	}
@@ -303,7 +302,7 @@ void LoadExtBkSettingsFromDB()
 			continue;
 
 		p->imageItem = 0;
-		char buffer[255], *pszEnd = buffer + mir_snprintf(buffer, SIZEOF(buffer), "%s_", p->szDBname);
+		char buffer[255], *pszEnd = buffer + mir_snprintf(buffer, "%s_", p->szDBname);
 		mir_strcpy(pszEnd, "IGNORE"); p->IGNORED = (BYTE)cfg::getByte("CLCExt", buffer, p->IGNORED);
 		mir_strcpy(pszEnd, "GRADIENT"); p->GRADIENT = (BYTE)cfg::getDword("CLCExt", buffer, p->GRADIENT);
 		mir_strcpy(pszEnd, "CORNER"); p->CORNER = (BYTE)cfg::getDword("CLCExt", buffer, p->CORNER);
@@ -333,36 +332,37 @@ void LoadExtBkSettingsFromDB()
 }
 
 // writes whole struct to the database
-static void SaveCompleteStructToDB() {
+static void SaveCompleteStructToDB()
+{
 	for (int n = 0; n < arStatusItems.getCount(); n++) {
 		StatusItems_t *p = arStatusItems[n];
 		if (p->statusID != ID_EXTBKSEPARATOR) {
 			char buffer[255];
-			mir_snprintf(buffer, SIZEOF(buffer), "%s_IGNORE", p->szDBname);
+			mir_snprintf(buffer, "%s_IGNORE", p->szDBname);
 			cfg::writeByte("CLCExt", buffer, p->IGNORED);
-			mir_snprintf(buffer, SIZEOF(buffer), "%s_GRADIENT", p->szDBname);
+			mir_snprintf(buffer, "%s_GRADIENT", p->szDBname);
 			cfg::writeDword("CLCExt", buffer, p->GRADIENT);
-			mir_snprintf(buffer, SIZEOF(buffer), "%s_CORNER", p->szDBname);
+			mir_snprintf(buffer, "%s_CORNER", p->szDBname);
 			cfg::writeDword("CLCExt", buffer, p->CORNER);
-			mir_snprintf(buffer, SIZEOF(buffer), "%s_COLOR", p->szDBname);
+			mir_snprintf(buffer, "%s_COLOR", p->szDBname);
 			cfg::writeDword("CLCExt", buffer, p->COLOR);
-			mir_snprintf(buffer, SIZEOF(buffer), "%s_COLOR2", p->szDBname);
+			mir_snprintf(buffer, "%s_COLOR2", p->szDBname);
 			cfg::writeDword("CLCExt", buffer, p->COLOR2);
-			mir_snprintf(buffer, SIZEOF(buffer), "%s_COLOR2_TRANSPARENT", p->szDBname);
+			mir_snprintf(buffer, "%s_COLOR2_TRANSPARENT", p->szDBname);
 			cfg::writeByte("CLCExt", buffer, p->COLOR2_TRANSPARENT);
-			mir_snprintf(buffer, SIZEOF(buffer), "%s_TEXTCOLOR", p->szDBname);
+			mir_snprintf(buffer, "%s_TEXTCOLOR", p->szDBname);
 			cfg::writeDword("CLCExt", buffer, p->TEXTCOLOR);
-			mir_snprintf(buffer, SIZEOF(buffer), "%s_ALPHA", p->szDBname);
+			mir_snprintf(buffer, "%s_ALPHA", p->szDBname);
 			cfg::writeByte("CLCExt", buffer, (BYTE)p->ALPHA);
-			mir_snprintf(buffer, SIZEOF(buffer), "%s_MRGN_LEFT", p->szDBname);
+			mir_snprintf(buffer, "%s_MRGN_LEFT", p->szDBname);
 			cfg::writeByte("CLCExt", buffer, (BYTE)p->MARGIN_LEFT);
-			mir_snprintf(buffer, SIZEOF(buffer), "%s_MRGN_TOP", p->szDBname);
+			mir_snprintf(buffer, "%s_MRGN_TOP", p->szDBname);
 			cfg::writeByte("CLCExt", buffer, (BYTE)p->MARGIN_TOP);
-			mir_snprintf(buffer, SIZEOF(buffer), "%s_MRGN_RIGHT", p->szDBname);
+			mir_snprintf(buffer, "%s_MRGN_RIGHT", p->szDBname);
 			cfg::writeByte("CLCExt", buffer, (BYTE)p->MARGIN_RIGHT);
-			mir_snprintf(buffer, SIZEOF(buffer), "%s_MRGN_BOTTOM", p->szDBname);
+			mir_snprintf(buffer, "%s_MRGN_BOTTOM", p->szDBname);
 			cfg::writeByte("CLCExt", buffer, (BYTE)p->MARGIN_BOTTOM);
-			mir_snprintf(buffer, SIZEOF(buffer), "%s_BDRSTYLE", p->szDBname);
+			mir_snprintf(buffer, "%s_BDRSTYLE", p->szDBname);
 			cfg::writeDword("CLCExt", buffer, p->BORDERSTYLE);
 		}
 	}
@@ -373,7 +373,7 @@ void SetButtonToSkinned()
 	bool bSkinned = (cfg::dat.bSkinnedButtonMode = cfg::getByte("CLCExt", "bskinned", 0)) != 0;
 	bool bFlat = bSkinned || (cfg::getByte("TopToolBar", "UseFlatButton", 0) != 0);
 
-	for (int i = 0; ; i++) {
+	for (int i = 0;; i++) {
 		if (BTNS[i].pszButtonID == NULL)
 			break;
 		if (BTNS[i].hwndButton != 0 && BTNS[i].ctrlid != IDC_TBGLOBALSTATUS && BTNS[i].ctrlid != IDC_TBMENU)
@@ -418,7 +418,7 @@ void SaveNonStatusItemsSettings(HWND hwndDlg)
 	cfg::writeByte("CLCExt", "override_status", (BYTE)cfg::dat.bOverridePerStatusColors);
 	cfg::writeByte("CLCExt", "bskinned", (BYTE)(IsDlgButtonChecked(hwndDlg, IDC_SETALLBUTTONSKINNED) ? 1 : 0));
 	cfg::writeByte("CLCExt", "FastGradients", cfg::dat.bWantFastGradients);
-	cfg::writeByte("CLC", "IgnoreSelforGroups", (BYTE) IsDlgButtonChecked(hwndDlg, IDC_IGNORESELFORGROUPS));
+	cfg::writeByte("CLC", "IgnoreSelforGroups", (BYTE)IsDlgButtonChecked(hwndDlg, IDC_IGNORESELFORGROUPS));
 
 	cfg::writeDword("CLCExt", "grp_padding", cfg::dat.group_padding);
 	cfg::writeByte("CLCExt", "frame_height", cfg::dat.titleBarHeight);
@@ -428,7 +428,7 @@ void SaveNonStatusItemsSettings(HWND hwndDlg)
 }
 
 // skin/theme related settings which are exported to/imported from the .ini style .clist file
-struct {char *szModule; char *szSetting; unsigned int size; int defaultval;} _tagSettings[] = {
+struct { char *szModule; char *szSetting; unsigned int size; int defaultval; } _tagSettings[] = {
 	"CLCExt", "3dbright", 4, RGB(224, 225, 225),
 	"CLCExt", "3ddark", 4, RGB(224, 225, 225),
 	"CLCExt", "bskinned", 1, 0,
@@ -459,7 +459,7 @@ void extbk_export(char *file)
 	char buffer[255];
 	char szSection[255];
 	char szKey[255];
-	DBVARIANT dbv = {0};
+	DBVARIANT dbv = { 0 };
 	DWORD data;
 
 	data = 3;
@@ -470,7 +470,7 @@ void extbk_export(char *file)
 		if (p->statusID == ID_EXTBKSEPARATOR)
 			continue;
 
-		char *pszEnd = buffer + mir_snprintf(buffer, SIZEOF(buffer), "%s_", p->szDBname);
+		char *pszEnd = buffer + mir_snprintf(buffer, "%s_", p->szDBname);
 		mir_strcpy(pszEnd, "ALPHA"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->ALPHA), sizeof(p->ALPHA), file);
 		mir_strcpy(pszEnd, "COLOR"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->COLOR), sizeof(p->COLOR), file);
 		mir_strcpy(pszEnd, "COLOR2"); WritePrivateProfileStructA("ExtBKSettings", buffer, &(p->COLOR2), sizeof(p->COLOR2), file);
@@ -487,34 +487,34 @@ void extbk_export(char *file)
 	}
 
 	for (n = 0; n <= FONTID_LAST; n++) {
-		mir_snprintf(szSection, SIZEOF(szSection), "Font%d", n);
+		mir_snprintf(szSection, _countof(szSection), "Font%d", n);
 
-		mir_snprintf(szKey, SIZEOF(szKey), "Font%dName", n);
+		mir_snprintf(szKey, _countof(szKey), "Font%dName", n);
 		if (!cfg::getString(NULL, "CLC", szKey, &dbv)) {
 			WritePrivateProfileStringA(szSection, "Name", dbv.pszVal, file);
 			mir_free(dbv.pszVal);
 		}
-		mir_snprintf(szKey, SIZEOF(szKey), "Font%dSize", n);
+		mir_snprintf(szKey, _countof(szKey), "Font%dSize", n);
 		data = (DWORD)cfg::getByte("CLC", szKey, 8);
 		WritePrivateProfileStructA(szSection, "Size", &data, 1, file);
 
-		mir_snprintf(szKey, SIZEOF(szKey), "Font%dSty", n);
+		mir_snprintf(szKey, _countof(szKey), "Font%dSty", n);
 		data = (DWORD)cfg::getByte("CLC", szKey, 8);
 		WritePrivateProfileStructA(szSection, "Style", &data, 1, file);
 
-		mir_snprintf(szKey, SIZEOF(szKey), "Font%dSet", n);
+		mir_snprintf(szKey, _countof(szKey), "Font%dSet", n);
 		data = (DWORD)cfg::getByte("CLC", szKey, 8);
 		WritePrivateProfileStructA(szSection, "Set", &data, 1, file);
 
-		mir_snprintf(szKey, SIZEOF(szKey), "Font%dCol", n);
+		mir_snprintf(szKey, _countof(szKey), "Font%dCol", n);
 		data = cfg::getDword("CLC", szKey, 8);
 		WritePrivateProfileStructA(szSection, "Color", &data, 4, file);
 
-		mir_snprintf(szKey, SIZEOF(szKey), "Font%dFlags", n);
+		mir_snprintf(szKey, _countof(szKey), "Font%dFlags", n);
 		data = (DWORD)cfg::getDword("CLC", szKey, 8);
 		WritePrivateProfileStructA(szSection, "Flags", &data, 4, file);
 
-		mir_snprintf(szKey, SIZEOF(szKey), "Font%dAs", n);
+		mir_snprintf(szKey, _countof(szKey), "Font%dAs", n);
 		data = (DWORD)cfg::getWord("CLC", szKey, 8);
 		WritePrivateProfileStructA(szSection, "SameAs", &data, 2, file);
 	}
@@ -579,9 +579,9 @@ static void PreMultiply(HBITMAP hBitmap, int mode)
 		for (int x = 0; x < width; ++x) {
 			if (mode) {
 				BYTE alpha = px[3];
-				px[0] = px[0] * alpha/255;
-				px[1] = px[1] * alpha/255;
-				px[2] = px[2] * alpha/255;
+				px[0] = px[0] * alpha / 255;
+				px[1] = px[1] * alpha / 255;
+				px[2] = px[2] * alpha / 255;
 			}
 			else px[3] = 255;
 			px += 4;
@@ -626,7 +626,7 @@ static void CorrectBitmap32Alpha(HBITMAP hBitmap)
 
 static HBITMAP LoadPNG(const char *szFilename)
 {
-	HBITMAP hBitmap = (HBITMAP)CallService(MS_UTILS_LOADBITMAP, 0, (LPARAM)szFilename);
+	HBITMAP hBitmap = Bitmap_Load(_A2T(szFilename));
 	if (hBitmap != 0)
 		CorrectBitmap32Alpha(hBitmap);
 
@@ -689,7 +689,7 @@ static void ReadItem(StatusItems_t *this_item, char *szItem, char *file)
 	if (mir_strcmp(buffer, "None")) {
 		for (int i = 0; i < arStatusItems.getCount(); i++) {
 			StatusItems_t *p = arStatusItems[i];
-			if (!_stricmp(p->szName[0] == '{' ? p->szName+3 : p->szName, buffer)) {
+			if (!_stricmp(p->szName[0] == '{' ? p->szName + 3 : p->szName, buffer)) {
 				defaults = p;
 				break;
 			}
@@ -700,12 +700,12 @@ static void ReadItem(StatusItems_t *this_item, char *szItem, char *file)
 	this_item->ALPHA = min(this_item->ALPHA, 100);
 
 	clr = RGB(GetBValue(defaults->COLOR), GetGValue(defaults->COLOR), GetRValue(defaults->COLOR));
-	mir_snprintf(def_color, SIZEOF(def_color), "%6.6x", clr);
+	mir_snprintf(def_color, _countof(def_color), "%6.6x", clr);
 	GetPrivateProfileStringA(szItem, "Color1", def_color, buffer, 400, file);
 	this_item->COLOR = HexStringToLong(buffer);
 
 	clr = RGB(GetBValue(defaults->COLOR2), GetGValue(defaults->COLOR2), GetRValue(defaults->COLOR2));
-	mir_snprintf(def_color, SIZEOF(def_color), "%6.6x", clr);
+	mir_snprintf(def_color, _countof(def_color), "%6.6x", clr);
 	GetPrivateProfileStringA(szItem, "Color2", def_color, buffer, 400, file);
 	this_item->COLOR2 = HexStringToLong(buffer);
 
@@ -724,7 +724,7 @@ static void ReadItem(StatusItems_t *this_item, char *szItem, char *file)
 	if (this_item->CORNER)
 		this_item->CORNER |= CORNER_ACTIVE;
 
-	this_item->GRADIENT = defaults->GRADIENT & GRADIENT_ACTIVE ?  defaults->GRADIENT : 0;
+	this_item->GRADIENT = defaults->GRADIENT & GRADIENT_ACTIVE ? defaults->GRADIENT : 0;
 	GetPrivateProfileStringA(szItem, "Gradient", "None", buffer, 400, file);
 	if (strstr(buffer, "left"))
 		this_item->GRADIENT = GRADIENT_RL;
@@ -777,7 +777,7 @@ done_with_glyph:
 		strncpy(tmpItem.szName, &itemname[1], sizeof(tmpItem.szName));
 		tmpItem.szName[sizeof(tmpItem.szName) - 1] = 0;
 		_splitpath(szFileName, szDrive, szPath, NULL, NULL);
-		mir_snprintf(szFinalName, SIZEOF(szFinalName), "%s\\%s\\%s", szDrive, szPath, buffer);
+		mir_snprintf(szFinalName, _countof(szFinalName), "%s\\%s\\%s", szDrive, szPath, buffer);
 		tmpItem.alpha = GetPrivateProfileIntA(itemname, "Alpha", 100, szFileName);
 		tmpItem.alpha = min(tmpItem.alpha, 100);
 		tmpItem.alpha = (BYTE)((FLOAT)(((FLOAT)tmpItem.alpha) / 100) * 255);
@@ -809,7 +809,7 @@ done_with_glyph:
 			COLORREF fillColor = HexStringToLong(buffer);
 			tmpItem.fillBrush = CreateSolidBrush(fillColor);
 			tmpItem.dwFlags |= IMAGE_FILLSOLID;
-		} 
+		}
 		else
 			tmpItem.fillBrush = 0;
 
@@ -852,8 +852,8 @@ done_with_glyph:
 			}
 			goto imgread_done;
 		}
-		for (n = 0; ; n++) {
-			mir_snprintf(szItemNr, SIZEOF(szItemNr), "Item%d", n);
+		for (n = 0;; n++) {
+			mir_snprintf(szItemNr, _countof(szItemNr), "Item%d", n);
 			GetPrivateProfileStringA(itemname, szItemNr, "None", buffer, 500, szFileName);
 			if (!mir_strcmp(buffer, "None"))
 				break;
@@ -884,7 +884,7 @@ done_with_glyph:
 			}
 			for (i = 0; i < arStatusItems.getCount(); i++) {
 				StatusItems_t *p = arStatusItems[i];
-				if (!_stricmp(p->szName[0] == '{' ? p->szName+3 : p->szName, buffer)) {
+				if (!_stricmp(p->szName[0] == '{' ? p->szName + 3 : p->szName, buffer)) {
 					if (!alloced) {
 						if (!(tmpItem.dwFlags & IMAGE_GLYPH))
 							IMG_CreateItem(&tmpItem, szFinalName, hdc);
@@ -1106,7 +1106,7 @@ static void BTN_ReadItem(char *itemName, char *file)
 			tmpItem.uId = nextButtonID++;
 		}
 	}
-	else if(_stricmp(szBuffer, "Custom")) {
+	else if (_stricmp(szBuffer, "Custom")) {
 		int i = 0;
 
 		while (BTNS[i].ctrlid) {
@@ -1237,7 +1237,7 @@ void LoadPerContactSkins(TCHAR *tszFileName)
 	ReadItem(&default_item, "%Default", file);
 	GetPrivateProfileSectionNamesA(szSections, 3000, file);
 	szSections[3001] = szSections[3000] = 0;
-	
+
 	while (mir_strlen(p) > 1) {
 		if (p[0] == '%') {
 			p += (mir_strlen(p) + 1);
@@ -1267,14 +1267,14 @@ void LoadPerContactSkins(TCHAR *tszFileName)
 
 			char *uid = (char *)CallProtoService(szProto, PS_GETCAPS, PFLAG_UNIQUEIDSETTING, 0);
 			if ((INT_PTR)uid != CALLSERVICE_NOTFOUND && uid != NULL) {
-				DBVARIANT dbv = {0};
+				DBVARIANT dbv = { 0 };
 				if (db_get(hContact, szProto, uid, &dbv))
 					break;
 
 				char UIN[40];
 				switch (dbv.type) {
 				case DBVT_DWORD:
-					mir_snprintf(UIN, SIZEOF(UIN), "%d", dbv.dVal);
+					mir_snprintf(UIN, _countof(UIN), "%d", dbv.dVal);
 					break;
 				case DBVT_ASCIIZ:
 					strncpy_s(UIN, dbv.pszVal, _TRUNCATE);
@@ -1288,7 +1288,7 @@ void LoadPerContactSkins(TCHAR *tszFileName)
 				int j;
 				for (j = 0; j < i - 1; j++) {
 					if (!mir_strcmp(szProto, items[j].szName) && !mir_strcmp(UIN, items[j].szDBname) &&
-							mir_strlen(szProto) == mir_strlen(items[j].szName) && mir_strlen(UIN) == mir_strlen(items[j].szDBname)) {
+						mir_strlen(szProto) == mir_strlen(items[j].szName) && mir_strlen(UIN) == mir_strlen(items[j].szDBname)) {
 						cfg::writeDword(hContact, "EXTBK", "TEXT", items[j].TEXTCOLOR);
 						cfg::writeDword(hContact, "EXTBK", "COLOR1", items[j].COLOR);
 						cfg::writeDword(hContact, "EXTBK", "COLOR2", items[j].COLOR2);
@@ -1331,31 +1331,31 @@ void extbk_import(char *file, HWND hwndDlg)
 		if (p->statusID == ID_EXTBKSEPARATOR)
 			continue;
 
-		mir_snprintf(buffer, SIZEOF(buffer), "%s_ALPHA", p->szDBname);
+		mir_snprintf(buffer, "%s_ALPHA", p->szDBname);
 		GetPrivateProfileStructA("ExtBKSettings", buffer, &(p->ALPHA), sizeof(p->ALPHA), file);
-		mir_snprintf(buffer, SIZEOF(buffer), "%s_COLOR", p->szDBname);
+		mir_snprintf(buffer, "%s_COLOR", p->szDBname);
 		GetPrivateProfileStructA("ExtBKSettings", buffer, &(p->COLOR), sizeof(p->COLOR), file);
-		mir_snprintf(buffer, SIZEOF(buffer), "%s_COLOR2", p->szDBname);
+		mir_snprintf(buffer, "%s_COLOR2", p->szDBname);
 		GetPrivateProfileStructA("ExtBKSettings", buffer, &(p->COLOR2), sizeof(p->COLOR2), file);
-		mir_snprintf(buffer, SIZEOF(buffer), "%s_COLOR2_TRANSPARENT", p->szDBname);
+		mir_snprintf(buffer, "%s_COLOR2_TRANSPARENT", p->szDBname);
 		GetPrivateProfileStructA("ExtBKSettings", buffer, &(p->COLOR2_TRANSPARENT), sizeof(p->COLOR2_TRANSPARENT), file);
-		mir_snprintf(buffer, SIZEOF(buffer), "%s_TEXTCOLOR", p->szDBname);
+		mir_snprintf(buffer, "%s_TEXTCOLOR", p->szDBname);
 		GetPrivateProfileStructA("ExtBKSettings", buffer, &(p->TEXTCOLOR), sizeof(p->TEXTCOLOR), file);
-		mir_snprintf(buffer, SIZEOF(buffer), "%s_CORNER", p->szDBname);
+		mir_snprintf(buffer, "%s_CORNER", p->szDBname);
 		GetPrivateProfileStructA("ExtBKSettings", buffer, &(p->CORNER), sizeof(p->CORNER), file);
-		mir_snprintf(buffer, SIZEOF(buffer), "%s_GRADIENT", p->szDBname);
+		mir_snprintf(buffer, "%s_GRADIENT", p->szDBname);
 		GetPrivateProfileStructA("ExtBKSettings", buffer, &(p->GRADIENT), sizeof(p->GRADIENT), file);
-		mir_snprintf(buffer, SIZEOF(buffer), "%s_IGNORED", p->szDBname);
+		mir_snprintf(buffer, "%s_IGNORED", p->szDBname);
 		GetPrivateProfileStructA("ExtBKSettings", buffer, &(p->IGNORED), sizeof(p->IGNORED), file);
-		mir_snprintf(buffer, SIZEOF(buffer), "%s_MARGIN_BOTTOM", p->szDBname);
+		mir_snprintf(buffer, "%s_MARGIN_BOTTOM", p->szDBname);
 		GetPrivateProfileStructA("ExtBKSettings", buffer, &(p->MARGIN_BOTTOM), sizeof(p->MARGIN_BOTTOM), file);
-		mir_snprintf(buffer, SIZEOF(buffer), "%s_MARGIN_LEFT", p->szDBname);
+		mir_snprintf(buffer, "%s_MARGIN_LEFT", p->szDBname);
 		GetPrivateProfileStructA("ExtBKSettings", buffer, &(p->MARGIN_LEFT), sizeof(p->MARGIN_LEFT), file);
-		mir_snprintf(buffer, SIZEOF(buffer), "%s_MARGIN_RIGHT", p->szDBname);
+		mir_snprintf(buffer, "%s_MARGIN_RIGHT", p->szDBname);
 		GetPrivateProfileStructA("ExtBKSettings", buffer, &(p->MARGIN_RIGHT), sizeof(p->MARGIN_RIGHT), file);
-		mir_snprintf(buffer, SIZEOF(buffer), "%s_MARGIN_TOP", p->szDBname);
+		mir_snprintf(buffer, "%s_MARGIN_TOP", p->szDBname);
 		GetPrivateProfileStructA("ExtBKSettings", buffer, &(p->MARGIN_TOP), sizeof(p->MARGIN_TOP), file);
-		mir_snprintf(buffer, SIZEOF(buffer), "%s_BORDERSTYLE", p->szDBname);
+		mir_snprintf(buffer, "%s_BORDERSTYLE", p->szDBname);
 		GetPrivateProfileStructA("ExtBKSettings", buffer, &(p->BORDERSTYLE), sizeof(p->BORDERSTYLE), file);
 	}
 
@@ -1363,38 +1363,38 @@ void extbk_import(char *file, HWND hwndDlg)
 	GetPrivateProfileStructA("Global", "Version", &version, 4, file);
 	if (version >= 2) {
 		for (n = 0; n <= FONTID_LAST; n++) {
-			mir_snprintf(szSection, SIZEOF(szSection), "Font%d", n);
+			mir_snprintf(szSection, _countof(szSection), "Font%d", n);
 
-			mir_snprintf(szKey, SIZEOF(szKey), "Font%dName", n);
+			mir_snprintf(szKey, _countof(szKey), "Font%dName", n);
 			GetPrivateProfileStringA(szSection, "Name", "Arial", buffer, sizeof(buffer), file);
 			cfg::writeString(NULL, "CLC", szKey, buffer);
 
-			mir_snprintf(szKey, SIZEOF(szKey), "Font%dSize", n);
+			mir_snprintf(szKey, _countof(szKey), "Font%dSize", n);
 			data = 0;
 			GetPrivateProfileStructA(szSection, "Size", &data, 1, file);
 			cfg::writeByte("CLC", szKey, (BYTE)data);
 
-			mir_snprintf(szKey, SIZEOF(szKey), "Font%dSty", n);
+			mir_snprintf(szKey, _countof(szKey), "Font%dSty", n);
 			data = 0;
 			GetPrivateProfileStructA(szSection, "Style", &data, 1, file);
 			cfg::writeByte("CLC", szKey, (BYTE)data);
 
-			mir_snprintf(szKey, SIZEOF(szKey), "Font%dSet", n);
+			mir_snprintf(szKey, _countof(szKey), "Font%dSet", n);
 			data = 0;
 			GetPrivateProfileStructA(szSection, "Set", &data, 1, file);
 			cfg::writeByte("CLC", szKey, (BYTE)data);
 
-			mir_snprintf(szKey, SIZEOF(szKey), "Font%dCol", n);
+			mir_snprintf(szKey, _countof(szKey), "Font%dCol", n);
 			data = 0;
 			GetPrivateProfileStructA(szSection, "Color", &data, 4, file);
 			cfg::writeDword("CLC", szKey, data);
 
-			mir_snprintf(szKey, SIZEOF(szKey), "Font%dFlags", n);
+			mir_snprintf(szKey, _countof(szKey), "Font%dFlags", n);
 			data = 0;
 			GetPrivateProfileStructA(szSection, "Flags", &data, 4, file);
 			cfg::writeDword("CLC", szKey, (WORD)data);
 
-			mir_snprintf(szKey, SIZEOF(szKey), "Font%dAs", n);
+			mir_snprintf(szKey, _countof(szKey), "Font%dAs", n);
 			data = 0;
 			GetPrivateProfileStructA(szSection, "SameAs", &data, 2, file);
 			cfg::writeDword("CLC", szKey, (WORD)data);
@@ -1440,7 +1440,7 @@ void extbk_import(char *file, HWND hwndDlg)
 
 static void ApplyCLUISkin()
 {
-	DBVARIANT dbv = {0};
+	DBVARIANT dbv = { 0 };
 	TCHAR tszFinalName[MAX_PATH];
 	char szFinalName[MAX_PATH];
 	if (!cfg::getTString(NULL, "CLC", "AdvancedSkin", &dbv)) {
@@ -1466,53 +1466,53 @@ static INT_PTR CALLBACK DlgProcSkinOpts(HWND hwndDlg, UINT msg, WPARAM wParam, L
 {
 	switch (msg) {
 	case WM_INITDIALOG: {
-		DBVARIANT dbv;
-		TranslateDialogDefault(hwndDlg);
+			DBVARIANT dbv;
+			TranslateDialogDefault(hwndDlg);
 
-		CheckDlgButton(hwndDlg, IDC_EQUALSELECTION, (cfg::getByte("CLCExt", "EXBK_EqualSelection", 1) == 1) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_SELBLEND, cfg::getByte("CLCExt", "EXBK_SelBlend", 1) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_SETALLBUTTONSKINNED, cfg::getByte("CLCExt", "bskinned", 0) ? BST_CHECKED : BST_UNCHECKED);
+			CheckDlgButton(hwndDlg, IDC_EQUALSELECTION, (cfg::getByte("CLCExt", "EXBK_EqualSelection", 1) == 1) ? BST_CHECKED : BST_UNCHECKED);
+			CheckDlgButton(hwndDlg, IDC_SELBLEND, cfg::getByte("CLCExt", "EXBK_SelBlend", 1) ? BST_CHECKED : BST_UNCHECKED);
+			CheckDlgButton(hwndDlg, IDC_SETALLBUTTONSKINNED, cfg::getByte("CLCExt", "bskinned", 0) ? BST_CHECKED : BST_UNCHECKED);
 
-		SendDlgItemMessage(hwndDlg, IDC_CORNERSPIN, UDM_SETRANGE, 0, MAKELONG(10, 0));
-		SendDlgItemMessage(hwndDlg, IDC_CORNERSPIN, UDM_SETPOS, 0, cfg::dat.cornerRadius);
+			SendDlgItemMessage(hwndDlg, IDC_CORNERSPIN, UDM_SETRANGE, 0, MAKELONG(10, 0));
+			SendDlgItemMessage(hwndDlg, IDC_CORNERSPIN, UDM_SETPOS, 0, cfg::dat.cornerRadius);
 
-		SendDlgItemMessage(hwndDlg, IDC_GRPPADDINGSPIN, UDM_SETRANGE, 0, MAKELONG(20, 0));
-		SendDlgItemMessage(hwndDlg, IDC_GRPPADDINGSPIN, UDM_SETPOS, 0, cfg::dat.group_padding);
+			SendDlgItemMessage(hwndDlg, IDC_GRPPADDINGSPIN, UDM_SETRANGE, 0, MAKELONG(20, 0));
+			SendDlgItemMessage(hwndDlg, IDC_GRPPADDINGSPIN, UDM_SETPOS, 0, cfg::dat.group_padding);
 
-		SendDlgItemMessage(hwndDlg, IDC_LASTITEMPADDINGSPIN, UDM_SETRANGE, 0, MAKELONG(40, 0));
-		SendDlgItemMessage(hwndDlg, IDC_LASTITEMPADDINGSPIN, UDM_SETPOS, 0, cfg::dat.titleBarHeight);
+			SendDlgItemMessage(hwndDlg, IDC_LASTITEMPADDINGSPIN, UDM_SETRANGE, 0, MAKELONG(40, 0));
+			SendDlgItemMessage(hwndDlg, IDC_LASTITEMPADDINGSPIN, UDM_SETPOS, 0, cfg::dat.titleBarHeight);
 
-		CheckDlgButton(hwndDlg, IDC_APPLYINDENTBG, cfg::dat.bApplyIndentToBg ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_USEPERPROTO, cfg::dat.bUsePerProto ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_OVERRIDEPERSTATUSCOLOR, cfg::dat.bOverridePerStatusColors ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_FASTGRADIENT, cfg::dat.bWantFastGradients ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_IGNORESELFORGROUPS, cfg::getByte("CLC", "IgnoreSelforGroups", 0) ? BST_CHECKED : BST_UNCHECKED);
+			CheckDlgButton(hwndDlg, IDC_APPLYINDENTBG, cfg::dat.bApplyIndentToBg ? BST_CHECKED : BST_UNCHECKED);
+			CheckDlgButton(hwndDlg, IDC_USEPERPROTO, cfg::dat.bUsePerProto ? BST_CHECKED : BST_UNCHECKED);
+			CheckDlgButton(hwndDlg, IDC_OVERRIDEPERSTATUSCOLOR, cfg::dat.bOverridePerStatusColors ? BST_CHECKED : BST_UNCHECKED);
+			CheckDlgButton(hwndDlg, IDC_FASTGRADIENT, cfg::dat.bWantFastGradients ? BST_CHECKED : BST_UNCHECKED);
+			CheckDlgButton(hwndDlg, IDC_IGNORESELFORGROUPS, cfg::getByte("CLC", "IgnoreSelforGroups", 0) ? BST_CHECKED : BST_UNCHECKED);
 
-		if (!cfg::getString(NULL, "CLC", "ContactSkins", &dbv)) {
-			SetDlgItemTextA(hwndDlg, IDC_SKINFILE, dbv.pszVal);
-			db_free(&dbv);
-			Utils::enableDlgControl(hwndDlg, IDC_RELOAD, TRUE);
+			if (!cfg::getString(NULL, "CLC", "ContactSkins", &dbv)) {
+				SetDlgItemTextA(hwndDlg, IDC_SKINFILE, dbv.pszVal);
+				db_free(&dbv);
+				Utils::enableDlgControl(hwndDlg, IDC_RELOAD, TRUE);
+			}
+			else
+				Utils::enableDlgControl(hwndDlg, IDC_RELOAD, FALSE);
+			CheckDlgButton(hwndDlg, IDC_USESKIN, cfg::getByte("CLUI", "useskin", 0) ? BST_CHECKED : BST_UNCHECKED);
+			if (!cfg::getTString(NULL, "CLC", "AdvancedSkin", &dbv)) {
+				SetDlgItemText(hwndDlg, IDC_SKINFILENAME, dbv.ptszVal);
+				db_free(&dbv);
+			}
+			else
+				SetDlgItemText(hwndDlg, IDC_SKINFILENAME, _T(""));
+			return TRUE;
 		}
-		else
-			Utils::enableDlgControl(hwndDlg, IDC_RELOAD, FALSE);
-		CheckDlgButton(hwndDlg, IDC_USESKIN, cfg::getByte("CLUI", "useskin", 0) ? BST_CHECKED : BST_UNCHECKED);
-		if (!cfg::getTString(NULL, "CLC", "AdvancedSkin", &dbv)) {
-			SetDlgItemText(hwndDlg, IDC_SKINFILENAME, dbv.ptszVal);
-			db_free(&dbv);
-		}
-		else
-			SetDlgItemText(hwndDlg, IDC_SKINFILENAME, _T(""));
-		return TRUE;
-	}
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
-		case IDC_USESKIN: 
+		case IDC_USESKIN:
 			{
 				int useskin = IsDlgButtonChecked(hwndDlg, IDC_USESKIN);
-
 				cfg::writeByte("CLUI", "useskin", (BYTE)(useskin ? 1 : 0));
-				break;
 			}
+			break;
+
 		case IDC_UNLOAD:
 			IMG_DeleteItems();
 			ConfigureFrame();
@@ -1520,9 +1520,10 @@ static INT_PTR CALLBACK DlgProcSkinOpts(HWND hwndDlg, UINT msg, WPARAM wParam, L
 			SendMessage(pcli->hwndContactList, WM_SIZE, 0, 0);
 			PostMessage(pcli->hwndContactList, CLUIINTM_REDRAW, 0, 0);
 			break;
+
 		case IDC_SELECTSKINFILE:
 			{
-				OPENFILENAME ofn = {0};
+				OPENFILENAME ofn = { 0 };
 				TCHAR str[MAX_PATH] = _T("*.clist"), final_path[MAX_PATH];
 
 				ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400;
@@ -1539,7 +1540,7 @@ static INT_PTR CALLBACK DlgProcSkinOpts(HWND hwndDlg, UINT msg, WPARAM wParam, L
 				MY_pathToRelative(str, final_path);
 				if (PathFileExists(str)) {
 					int skinChanged = 0;
-					DBVARIANT dbv = {0};
+					DBVARIANT dbv = { 0 };
 
 					if (!cfg::getTString(NULL, "CLC", "AdvancedSkin", &dbv)) {
 						if (mir_tstrcmp(dbv.ptszVal, final_path))
@@ -1552,32 +1553,33 @@ static INT_PTR CALLBACK DlgProcSkinOpts(HWND hwndDlg, UINT msg, WPARAM wParam, L
 					cfg::writeByte("CLUI", "skin_changed", (BYTE)skinChanged);
 					SetDlgItemText(hwndDlg, IDC_SKINFILENAME, final_path);
 				}
-				break;
 			}
+			break;
+
 		case IDC_RELOADSKIN:
 			cfg::writeByte("CLUI", "skin_changed", 1);
 			ApplyCLUISkin();
 			break;
-		case IDC_RELOAD:
-			{
-				TCHAR tszFilename[MAX_PATH], tszFinalPath[MAX_PATH];
 
-				GetDlgItemText(hwndDlg, IDC_SKINFILE, tszFilename, SIZEOF(tszFilename));
-				tszFilename[MAX_PATH - 1] = 0;
-				MY_pathToAbsolute(tszFilename, tszFinalPath);
-				if (PathFileExists(tszFinalPath)) {
-					LoadPerContactSkins(tszFinalPath);
-					ReloadSkinItemsToCache();
-					pcli->pfnClcBroadcast(CLM_AUTOREBUILD, 0, 0);
-				}
-				break;
+		case IDC_RELOAD:
+			TCHAR tszFilename[MAX_PATH], tszFinalPath[MAX_PATH];
+			GetDlgItemText(hwndDlg, IDC_SKINFILE, tszFilename, _countof(tszFilename));
+			tszFilename[MAX_PATH - 1] = 0;
+			MY_pathToAbsolute(tszFilename, tszFinalPath);
+			if (PathFileExists(tszFinalPath)) {
+				LoadPerContactSkins(tszFinalPath);
+				ReloadSkinItemsToCache();
+				pcli->pfnClcBroadcast(CLM_AUTOREBUILD, 0, 0);
 			}
+			break;
 		}
 		if ((LOWORD(wParam) == IDC_SKINFILE || LOWORD(wParam) == IDC_SKINFILENAME)
-			&& (HIWORD(wParam) != EN_CHANGE || (HWND) lParam != GetFocus()))
+			&& (HIWORD(wParam) != EN_CHANGE || (HWND)lParam != GetFocus()))
 			return 0;
+
 		SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 		break;
+
 	case WM_NOTIFY:
 		switch (((LPNMHDR)lParam)->idFrom) {
 		case 0:
@@ -1611,8 +1613,8 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 			iInit = TRUE;
 
 			TCITEM tci;
-			tci.mask = TCIF_PARAM|TCIF_TEXT;
-			tci.lParam = (LPARAM)CreateDialog(g_hInst,MAKEINTRESOURCE(IDD_OPT_SKIN), hwnd, DlgProcSkinOpts);
+			tci.mask = TCIF_PARAM | TCIF_TEXT;
+			tci.lParam = (LPARAM)CreateDialog(g_hInst, MAKEINTRESOURCE(IDD_OPT_SKIN), hwnd, DlgProcSkinOpts);
 			tci.pszText = TranslateT("Load and apply");
 			TabCtrl_InsertItem(GetDlgItem(hwnd, IDC_OPTIONSTAB), 0, &tci);
 			MoveWindow((HWND)tci.lParam, 5, 25, rcClient.right - 9, rcClient.bottom - 60, 1);
@@ -1621,7 +1623,7 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 				EnableThemeDialogTexture((HWND)tci.lParam, ETDT_ENABLETAB);
 
 			if (ServiceExists(MS_CLNSE_INVOKE)) {
-				SKINDESCRIPTION sd = {0};
+				SKINDESCRIPTION sd = { 0 };
 				sd.cbSize = sizeof(sd);
 				sd.StatusItems = arStatusItems.getArray();
 				sd.hWndParent = hwnd;
@@ -1657,14 +1659,14 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 		case IDC_EXPORT:
 			{
 				char str[MAX_PATH] = "*.clist";
-				OPENFILENAMEA ofn = {0};
+				OPENFILENAMEA ofn = { 0 };
 				ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400;
 				ofn.hwndOwner = hwnd;
 				ofn.hInstance = NULL;
 				ofn.lpstrFilter = "*.clist";
 				ofn.lpstrFile = str;
 				ofn.Flags = OFN_HIDEREADONLY;
-				ofn.nMaxFile = SIZEOF(str);
+				ofn.nMaxFile = _countof(str);
 				ofn.nMaxFileTitle = MAX_PATH;
 				ofn.lpstrDefExt = "clist";
 				if (!GetSaveFileNameA(&ofn))
@@ -1675,15 +1677,14 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 		case IDC_IMPORT:
 			{
 				char str[MAX_PATH] = "*.clist";
-				OPENFILENAMEA ofn = {0};
-
+				OPENFILENAMEA ofn = { 0 };
 				ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400;
 				ofn.hwndOwner = hwnd;
 				ofn.hInstance = NULL;
 				ofn.lpstrFilter = "*.clist";
 				ofn.lpstrFile = str;
 				ofn.Flags = OFN_FILEMUSTEXIST;
-				ofn.nMaxFile = SIZEOF(str);
+				ofn.nMaxFile = _countof(str);
 				ofn.nMaxFileTitle = MAX_PATH;
 				ofn.lpstrDefExt = "";
 				if (!GetOpenFileNameA(&ofn))
@@ -1696,42 +1697,35 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 		break;
 	case WM_NOTIFY:
 		switch (((LPNMHDR)lParam)->idFrom) {
+			TCITEM tci;
 		case 0:
 			switch (((LPNMHDR)lParam)->code) {
 			case PSN_APPLY:
-				{
-					TCITEM tci;
-					int i,count;
-					tci.mask = TCIF_PARAM;
-					count = TabCtrl_GetItemCount(GetDlgItem(hwnd, IDC_OPTIONSTAB));
-					for (i = 0; i < count; i++) {
-						TabCtrl_GetItem(GetDlgItem(hwnd, IDC_OPTIONSTAB), i, &tci);
-						SendMessage((HWND)tci.lParam, WM_NOTIFY, 0, lParam);
-					}
+				tci.mask = TCIF_PARAM;
+				int count = TabCtrl_GetItemCount(GetDlgItem(hwnd, IDC_OPTIONSTAB));
+				for (int i = 0; i < count; i++) {
+					TabCtrl_GetItem(GetDlgItem(hwnd, IDC_OPTIONSTAB), i, &tci);
+					SendMessage((HWND)tci.lParam, WM_NOTIFY, 0, lParam);
 				}
 				break;
 			}
 			break;
+
 		case IDC_OPTIONSTAB:
 			switch (((LPNMHDR)lParam)->code) {
 			case TCN_SELCHANGING:
-				{
-					TCITEM tci;
-					tci.mask = TCIF_PARAM;
-					TabCtrl_GetItem(GetDlgItem(hwnd, IDC_OPTIONSTAB), TabCtrl_GetCurSel(GetDlgItem(hwnd, IDC_OPTIONSTAB)), &tci);
-					ShowWindow((HWND)tci.lParam, SW_HIDE);
-				}
+				tci.mask = TCIF_PARAM;
+				TabCtrl_GetItem(GetDlgItem(hwnd, IDC_OPTIONSTAB), TabCtrl_GetCurSel(GetDlgItem(hwnd, IDC_OPTIONSTAB)), &tci);
+				ShowWindow((HWND)tci.lParam, SW_HIDE);
 				break;
+
 			case TCN_SELCHANGE:
-				{
-					TCITEM tci;
-					tci.mask = TCIF_PARAM;
-					TabCtrl_GetItem(GetDlgItem(hwnd, IDC_OPTIONSTAB), TabCtrl_GetCurSel(GetDlgItem(hwnd, IDC_OPTIONSTAB)), &tci);
-					ShowWindow((HWND)tci.lParam, SW_SHOW);
-					cfg::writeByte("CLUI", "opage", (BYTE)TabCtrl_GetCurSel(GetDlgItem(hwnd, IDC_OPTIONSTAB)));
-					Utils::enableDlgControl(hwnd, IDC_EXPORT, TabCtrl_GetCurSel(GetDlgItem(hwnd, IDC_OPTIONSTAB)) != 0);
-					Utils::enableDlgControl(hwnd, IDC_IMPORT, TabCtrl_GetCurSel(GetDlgItem(hwnd, IDC_OPTIONSTAB)) != 0);
-				}
+				tci.mask = TCIF_PARAM;
+				TabCtrl_GetItem(GetDlgItem(hwnd, IDC_OPTIONSTAB), TabCtrl_GetCurSel(GetDlgItem(hwnd, IDC_OPTIONSTAB)), &tci);
+				ShowWindow((HWND)tci.lParam, SW_SHOW);
+				cfg::writeByte("CLUI", "opage", (BYTE)TabCtrl_GetCurSel(GetDlgItem(hwnd, IDC_OPTIONSTAB)));
+				Utils::enableDlgControl(hwnd, IDC_EXPORT, TabCtrl_GetCurSel(GetDlgItem(hwnd, IDC_OPTIONSTAB)) != 0);
+				Utils::enableDlgControl(hwnd, IDC_IMPORT, TabCtrl_GetCurSel(GetDlgItem(hwnd, IDC_OPTIONSTAB)) != 0);
 				break;
 			}
 			break;
@@ -1761,17 +1755,15 @@ int CoolSB_SetupScrollBar()
 		!arStatusItems[ID_EXTBKSCROLLBUTTONHOVER - ID_STATUS_OFFLINE]->IGNORED &&
 		!arStatusItems[ID_EXTBKSCROLLBUTTONPRESSED - ID_STATUS_OFFLINE]->IGNORED;
 
-
 	if (!arStatusItems[ID_EXTBKSCROLLBACK - ID_STATUS_OFFLINE]->imageItem ||
-		!arStatusItems[ID_EXTBKSCROLLBACKLOWER - ID_STATUS_OFFLINE]->imageItem ||
-		!arStatusItems[ID_EXTBKSCROLLTHUMB - ID_STATUS_OFFLINE]->imageItem ||
-		!arStatusItems[ID_EXTBKSCROLLTHUMBHOVER - ID_STATUS_OFFLINE]->imageItem ||
-		!arStatusItems[ID_EXTBKSCROLLTHUMBPRESSED - ID_STATUS_OFFLINE]->imageItem ||
-		!arStatusItems[ID_EXTBKSCROLLBUTTON - ID_STATUS_OFFLINE]->imageItem ||
-		!arStatusItems[ID_EXTBKSCROLLBUTTONHOVER - ID_STATUS_OFFLINE]->imageItem ||
-		!arStatusItems[ID_EXTBKSCROLLBUTTONPRESSED - ID_STATUS_OFFLINE]->imageItem)
-
-	cfg::dat.bSkinnedScrollbar = FALSE;
+		 !arStatusItems[ID_EXTBKSCROLLBACKLOWER - ID_STATUS_OFFLINE]->imageItem ||
+		 !arStatusItems[ID_EXTBKSCROLLTHUMB - ID_STATUS_OFFLINE]->imageItem ||
+		 !arStatusItems[ID_EXTBKSCROLLTHUMBHOVER - ID_STATUS_OFFLINE]->imageItem ||
+		 !arStatusItems[ID_EXTBKSCROLLTHUMBPRESSED - ID_STATUS_OFFLINE]->imageItem ||
+		 !arStatusItems[ID_EXTBKSCROLLBUTTON - ID_STATUS_OFFLINE]->imageItem ||
+		 !arStatusItems[ID_EXTBKSCROLLBUTTONHOVER - ID_STATUS_OFFLINE]->imageItem ||
+		 !arStatusItems[ID_EXTBKSCROLLBUTTONPRESSED - ID_STATUS_OFFLINE]->imageItem)
+		cfg::dat.bSkinnedScrollbar = FALSE;
 
 	if (cfg::getByte("CLC", "NoVScrollBar", 0)) {
 		UninitializeCoolSB(pcli->hwndContactTree);

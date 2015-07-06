@@ -113,18 +113,18 @@ char *oauth_generate_signature(LIST<OAUTHPARAMETER> &params, const char *httpmet
 
 	res = (char *)mir_alloc(size);
 	mir_strcpy(res, httpmethod);
-	strcat(res, "&");
-	strcat(res, urlenc);
+	mir_strcat(res, "&");
+	mir_strcat(res, urlenc);
 	mir_free(urlenc);
-	strcat(res, "&");
+	mir_strcat(res, "&");
 
 	for (i = 0; i < params.getCount(); i++) {
 		p = params[i];
 		if (!mir_strcmp(p->name, "oauth_signature")) continue;
-		if (i > 0) strcat(res, "%26");
-		strcat(res, p->name);
-		strcat(res, "%3D");
-		strcat(res, p->value);
+		if (i > 0) mir_strcat(res, "%26");
+		mir_strcat(res, p->name);
+		mir_strcat(res, "%3D");
+		mir_strcat(res, p->value);
 	}
 
 	return res;
@@ -196,8 +196,8 @@ int oauth_sign_request(LIST<OAUTHPARAMETER> &params, const char *httpmethod, con
 		ptrA tsenc( oauth_uri_escape(token_secret));
 		ptrA key((char *)mir_alloc(mir_strlen(csenc) + mir_strlen(tsenc) + 2));
 		mir_strcpy(key, csenc);
-		strcat(key, "&");
-		strcat(key, tsenc);
+		mir_strcat(key, "&");
+		mir_strcat(key, tsenc);
 
 		BYTE digest[MIR_SHA1_HASH_SIZE];
 		mir_hmac_sha1(digest, (BYTE*)(char*)key, mir_strlen(key), (BYTE*)(char*)text, mir_strlen(text));
@@ -209,8 +209,8 @@ int oauth_sign_request(LIST<OAUTHPARAMETER> &params, const char *httpmethod, con
 
 		sign = (char *)mir_alloc(mir_strlen(csenc) + mir_strlen(tsenc) + 2);
 		mir_strcpy(sign, csenc);
-		strcat(sign, "&");
-		strcat(sign, tsenc);
+		mir_strcat(sign, "&");
+		mir_strcat(sign, tsenc);
 	}
 
 	oauth_setparam(params, "oauth_signature", sign);
@@ -219,19 +219,15 @@ int oauth_sign_request(LIST<OAUTHPARAMETER> &params, const char *httpmethod, con
 	return 0;
 }
 
-char *oauth_generate_nonce()
+char* oauth_generate_nonce()
 {
-	char timestamp[22], randnum[16];
-	mir_snprintf(timestamp, SIZEOF(timestamp), "%ld", time(NULL)); 
-	CallService(MS_UTILS_GETRANDOM, (WPARAM)sizeof(randnum), (LPARAM)randnum);
+	char randnum[16];
+	Utils_GetRandom(randnum, sizeof(randnum));
 
-	int strSizeB = int(mir_strlen(timestamp) + sizeof(randnum));
-	ptrA str((char *)mir_calloc(strSizeB + 1));
-	mir_strcpy(str, timestamp);
-	strncat(str, randnum, sizeof(randnum));
+	CMStringA str(FORMAT, "%ld%s", time(NULL), randnum);
 
 	BYTE digest[16];
-	mir_md5_hash((BYTE*)(char*)str, strSizeB, digest);
+	mir_md5_hash((BYTE*)str.GetString(), str.GetLength(), digest);
 	return bin2hex(digest, sizeof(digest), (char *)mir_alloc(32 + 1));
 }
 
@@ -240,7 +236,7 @@ char *oauth_auth_header(const char *httpmethod, const char *url, OAUTHSIGNMETHOD
 						const char *token, const char *token_secret)
 {
 	int i, size;
-	char *res, timestamp[22], *nonce;
+	char *res, timestamp[22];
 
 	if (httpmethod == NULL || url == NULL) return NULL;
 
@@ -252,11 +248,9 @@ char *oauth_auth_header(const char *httpmethod, const char *url, OAUTHSIGNMETHOD
 		case RSASHA1: oauth_setparam(oauth_parameters, "oauth_signature_method", "RSA-SHA1"); break;
 		default: oauth_setparam(oauth_parameters, "oauth_signature_method", "PLAINTEXT"); break;
 	};
-	mir_snprintf(timestamp, SIZEOF(timestamp), "%ld", time(NULL)); 
+	mir_snprintf(timestamp, _countof(timestamp), "%ld", time(NULL)); 
 	oauth_setparam(oauth_parameters, "oauth_timestamp", timestamp);
-	nonce = oauth_generate_nonce();
-	oauth_setparam(oauth_parameters, "oauth_nonce", nonce);
-	mir_free(nonce);
+	oauth_setparam(oauth_parameters, "oauth_nonce", ptrA(oauth_generate_nonce()));
 	if (token != NULL && *token)
 		oauth_setparam(oauth_parameters, "oauth_token", token);
 
@@ -277,11 +271,11 @@ char *oauth_auth_header(const char *httpmethod, const char *url, OAUTHSIGNMETHOD
 
 	for (i = 0; i < oauth_parameters.getCount(); i++) {
 		OAUTHPARAMETER *p = oauth_parameters[i];
-		if (i > 0) strcat(res, ",");
-		strcat(res, p->name);
-		strcat(res, "=\"");
-		strcat(res, p->value);
-		strcat(res, "\"");
+		if (i > 0) mir_strcat(res, ",");
+		mir_strcat(res, p->name);
+		mir_strcat(res, "=\"");
+		mir_strcat(res, p->value);
+		mir_strcat(res, "\"");
 	}
 
 	oauth_freeparams(oauth_parameters);
@@ -322,15 +316,15 @@ int GGPROTO::oauth_receivetoken()
 		nlc = resp->nlc; 
 		if (resp->resultCode == 200 && resp->dataLength > 0 && resp->pData) {
 			TCHAR *xmlAction = mir_a2t(resp->pData);
-			HXML hXml = xi.parseString(xmlAction, 0, _T("result"));
+			HXML hXml = xmlParseString(xmlAction, 0, _T("result"));
 			if (hXml != NULL) {
-				HXML node = xi.getChildByPath(hXml, _T("oauth_token"), 0);
-				token = node != NULL ? mir_t2a(xi.getText(node)) : NULL;
+				HXML node = xmlGetChildByPath(hXml, _T("oauth_token"), 0);
+				token = node != NULL ? mir_t2a(xmlGetText(node)) : NULL;
 
-				node = xi.getChildByPath(hXml, _T("oauth_token_secret"), 0);
-				token_secret = node != NULL ? mir_t2a(xi.getText(node)) : NULL;
+				node = xmlGetChildByPath(hXml, _T("oauth_token_secret"), 0);
+				token_secret = node != NULL ? mir_t2a(xmlGetText(node)) : NULL;
 
-				xi.destroyNode(hXml);
+				xmlDestroyNode(hXml);
 			}
 			mir_free(xmlAction);
 		}
@@ -344,7 +338,7 @@ int GGPROTO::oauth_receivetoken()
 	mir_free(str);
 	str = oauth_uri_escape("http://www.mojageneracja.pl");
 
-	mir_snprintf(szUrl, SIZEOF(szUrl), "callback_url=%s&request_token=%s&uin=%s&password=%s",
+	mir_snprintf(szUrl, "callback_url=%s&request_token=%s&uin=%s&password=%s",
 			str, token, uin, password); 
 	mir_free(str);
 	str = mir_strdup(szUrl);
@@ -391,15 +385,15 @@ int GGPROTO::oauth_receivetoken()
 	if (resp) {
 		if (resp->resultCode == 200 && resp->dataLength > 0 && resp->pData) {
 			TCHAR *xmlAction = mir_a2t(resp->pData);
-			HXML hXml = xi.parseString(xmlAction, 0, _T("result"));
+			HXML hXml = xmlParseString(xmlAction, 0, _T("result"));
 			if (hXml != NULL) {
-				HXML node = xi.getChildByPath(hXml, _T("oauth_token"), 0);
-				token = mir_t2a(xi.getText(node));
+				HXML node = xmlGetChildByPath(hXml, _T("oauth_token"), 0);
+				token = mir_t2a(xmlGetText(node));
 
-				node = xi.getChildByPath(hXml, _T("oauth_token_secret"), 0);
-				token_secret = mir_t2a(xi.getText(node));
+				node = xmlGetChildByPath(hXml, _T("oauth_token_secret"), 0);
+				token_secret = mir_t2a(xmlGetText(node));
 
-				xi.destroyNode(hXml);
+				xmlDestroyNode(hXml);
 			}
 			mir_free(xmlAction);
 		}

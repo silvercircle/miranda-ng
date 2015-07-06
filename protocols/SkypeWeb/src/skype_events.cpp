@@ -46,17 +46,17 @@ INT_PTR CSkypeProto::EventGetIcon(WPARAM wParam, LPARAM lParam)
 	case SKYPE_DB_EVENT_TYPE_CALL_INFO:
 	case SKYPE_DB_EVENT_TYPE_INCOMING_CALL:
 	{
-		icon = Skin_GetIconByHandle(GetIconHandle("inc_call"));
+		icon = IcoLib_GetIconByHandle(GetIconHandle("inc_call"));
 		break;
 	}
 	case SKYPE_DB_EVENT_TYPE_ACTION:
 	{
-		icon = Skin_GetIconByHandle(GetIconHandle("me_action"));
+		icon = IcoLib_GetIconByHandle(GetIconHandle("me_action"));
 		break;
 	}
 	default:
 	{
-		icon = LoadSkinnedIcon(SKINICON_EVENT_MESSAGE);
+		icon = Skin_LoadIcon(SKINICON_EVENT_MESSAGE);
 		break;
 	}
 	}
@@ -94,32 +94,32 @@ void CSkypeProto::InitPopups()
 	POPUPCLASS ppc = { sizeof(ppc) };
 	ppc.flags = PCF_TCHAR;
 
-	mir_sntprintf(desc, SIZEOF(desc), _T("%s %s"), m_tszUserName, TranslateT("Calls"));
-	mir_snprintf(name, SIZEOF(name), "%s_%s", m_szModuleName, "Call");
+	mir_sntprintf(desc, _T("%s %s"), m_tszUserName, TranslateT("Calls"));
+	mir_snprintf(name, "%s_%s", m_szModuleName, "Call");
 	ppc.ptszDescription = desc;
 	ppc.pszName = name;
-	ppc.hIcon = Skin_GetIconByHandle(GetIconHandle("inc_call"));
+	ppc.hIcon = IcoLib_GetIconByHandle(GetIconHandle("inc_call"));
 	ppc.colorBack = RGB(255, 255, 255);
 	ppc.colorText = RGB(0, 0, 0);
 	ppc.iSeconds = 30;
 	ppc.PluginWindowProc = PopupDlgProcCall;
 	m_hPopupClassCall = Popup_RegisterClass(&ppc);
 
-	mir_sntprintf(desc, SIZEOF(desc), _T("%s %s"), m_tszUserName, TranslateT("Notifications"));
-	mir_snprintf(name, SIZEOF(name), "%s_%s", m_szModuleName, "Notification");
+	mir_sntprintf(desc, _T("%s %s"), m_tszUserName, TranslateT("Notifications"));
+	mir_snprintf(name, "%s_%s", m_szModuleName, "Notification");
 	ppc.ptszDescription = desc;
 	ppc.pszName = name;
-	ppc.hIcon = Skin_GetIconByHandle(GetIconHandle("notify"));
+	ppc.hIcon = IcoLib_GetIconByHandle(GetIconHandle("notify"));
 	ppc.colorBack = RGB(255, 255, 255);
 	ppc.colorText = RGB(0, 0, 0);
 	ppc.iSeconds = 5;
 	m_hPopupClassNotify = Popup_RegisterClass(&ppc);
 
-	mir_sntprintf(desc, SIZEOF(desc), _T("%s %s"), m_tszUserName, TranslateT("Errors"));
-	mir_snprintf(name, SIZEOF(name), "%s_%s", m_szModuleName, "Error");
+	mir_sntprintf(desc, _T("%s %s"), m_tszUserName, TranslateT("Errors"));
+	mir_snprintf(name, "%s_%s", m_szModuleName, "Error");
 	ppc.ptszDescription = desc;
 	ppc.pszName = name;
-	ppc.hIcon = Skin_GetIconByHandle(GetIconHandle("error"));
+	ppc.hIcon = IcoLib_GetIconByHandle(GetIconHandle("error"));
 	ppc.colorBack = RGB(255, 255, 255);
 	ppc.colorText = RGB(0, 0, 0);
 	ppc.iSeconds = -1;

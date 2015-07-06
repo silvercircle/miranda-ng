@@ -110,7 +110,7 @@ ULONG TShellExt::Release()
 	return ret;
 }
 
-HRESULT TShellExt::Initialize(PCIDLIST_ABSOLUTE pidlFolder, IDataObject *pdtobj, HKEY hkeyProgID)
+HRESULT TShellExt::Initialize(PCIDLIST_ABSOLUTE, IDataObject *pdtobj, HKEY)
 {
 	// DObj is a pointer to an instance of IDataObject which is a pointer itself
 	// it contains a pointer to a function table containing the function pointer
@@ -129,7 +129,7 @@ HRESULT TShellExt::Initialize(PCIDLIST_ABSOLUTE pidlFolder, IDataObject *pdtobj,
 	return S_OK;
 }
 
-HRESULT TShellExt::GetCommandString(UINT_PTR idCmd, UINT uType, UINT *pReserved, LPSTR pszName, UINT cchMax)
+HRESULT TShellExt::GetCommandString(UINT_PTR, UINT, UINT*, LPSTR, UINT)
 {
 	return E_NOTIMPL;
 }
@@ -226,8 +226,7 @@ void DecideMenuItemInfo(TSlotIPC *pct, TGroupNode *pg, MENUITEMINFOA &mii, TEnum
 int __stdcall ClearMRUIPC(
 	THeaderIPC *pipch,       // IPC header info, already mapped
 	HANDLE hWorkThreadEvent, // event object being waited on on miranda thread
-	HANDLE hAckEvent,        // ack event object that has been created
-	TMenuDrawInfo *psd)      // command/draw info
+	HANDLE hAckEvent)        // ack event object that has been created
 {
 	ipcPrepareRequests(IPC_PACKET_SIZE, pipch, REQUEST_CLEARMRU);
 	ipcSendRequest(hWorkThreadEvent, hAckEvent, pipch, 100);
@@ -276,7 +275,7 @@ void BuildContactTree(TGroupNode *group, TEnumData *lParam)
 			char *sz = strtok(LPSTR(UINT_PTR(pct) + sizeof(TSlotIPC) + UINT_PTR(pct->cbStrSection) + 1), "\\");
 			// restore the root
 			TGroupNode *pg = group;
-			unsigned Depth = 0;
+			int Depth = 0;
 			while (sz != NULL) {
 				UINT Hash = murmur_hash(sz);
 				// find this node within
@@ -320,8 +319,8 @@ grouploop:
 
 static void BuildMenuGroupTree(TGroupNode *p, TEnumData *lParam, HMENU hLastMenu)
 {
-	MENUITEMINFOA mii;
-	mii.cbSize = sizeof(MENUITEMINFO);
+	MENUITEMINFOA mii = { 0 };
+	mii.cbSize = sizeof(mii);
 	mii.fMask = MIIM_ID | MIIM_DATA | MIIM_TYPE | MIIM_SUBMENU;
 
 	// go thru each group and create a menu for it adding submenus too.
@@ -370,7 +369,7 @@ static void BuildMenus(TEnumData *lParam)
 				// since it maybe Miranda\Blah\Blah and we have created the first node
 				// which maybe Miranda, thus giving the wrong hash
 				// since "Miranda" can be a group of it's own and a full path
-				q->cchGroup = mir_strlen(Token);
+				q->cchGroup = lstrlenA(Token);
 				q->szGroup = (LPSTR)HeapAlloc(hDllHeap, 0, q->cchGroup + 1);
 				lstrcpyA(q->szGroup, Token);
 				q->dwItems = 0;
@@ -399,7 +398,7 @@ static void BuildMenus(TEnumData *lParam)
 	}
 	
 	MENUITEMINFOA mii = { 0 };
-	mii.cbSize = sizeof(MENUITEMINFO);
+	mii.cbSize = sizeof(mii);
 	mii.fMask = MIIM_ID | MIIM_TYPE | MIIM_DATA;
 	// add all the contacts that have no group (which maybe all of them)
 	pg = lParam->ipch->ContactsBegin;
@@ -443,7 +442,7 @@ static void BuildMenus(TEnumData *lParam)
 		psd->szProfile = "MRU";
 		psd->fTypes = dtGroup;
 		// the IPC string pointer wont be around forever, must make a copy
-		psd->cch = (int)mir_strlen(lParam->ipch->MRUMenuName);
+		psd->cch = (int)strlen(lParam->ipch->MRUMenuName);
 		psd->szText = (LPSTR)HeapAlloc(hDllHeap, 0, psd->cch + 1);
 		lstrcpynA(psd->szText, lParam->ipch->MRUMenuName, sizeof(lParam->ipch->MRUMenuName) - 1);
 
@@ -468,7 +467,7 @@ static void BuildMenus(TEnumData *lParam)
 
 	// allocate display info/memory for "Miranda" string
 
-	mii.cbSize = sizeof(MENUITEMINFO);
+	mii.cbSize = sizeof(mii);
 	if (bIsVistaPlus)
 		mii.fMask = MIIM_ID | MIIM_DATA | MIIM_FTYPE | MIIM_SUBMENU | MIIM_STRING | MIIM_BITMAP;
 	else
@@ -480,7 +479,7 @@ static void BuildMenus(TEnumData *lParam)
 	RemoveCheckmarkSpace(hGroupMenu);
 
 	psd = (TMenuDrawInfo*)HeapAlloc(hDllHeap, 0, sizeof(TMenuDrawInfo));
-	psd->cch = (int)mir_strlen(lParam->ipch->MirandaName);
+	psd->cch = (int)strlen(lParam->ipch->MirandaName);
 	psd->szText = (LPSTR)HeapAlloc(hDllHeap, 0, psd->cch + 1);
 	lstrcpynA(psd->szText, lParam->ipch->MirandaName, sizeof(lParam->ipch->MirandaName) - 1);
 	// there may not be a profile name
@@ -605,7 +604,7 @@ BOOL __stdcall ProcessRequest(HWND hwnd, LPARAM param)
 				lParam->ipch->pClientBaseAddress = lParam->ipch;
 				// fixup all the pointers to be relative to the memory map
 				// the base pointer of the client side version of the mapped file
-				ipcFixupAddresses(false, lParam->ipch);
+				ipcFixupAddresses(lParam->ipch);
 				// store the PID used to create the work event object
 				// that got replied to -- this is needed since each contact
 				// on the final menu maybe on a different instance and another OpenEvent() will be needed.
@@ -653,7 +652,7 @@ HRESULT TShellExt::QueryContextMenu(HMENU hmenu, UINT indexMenu, UINT _idCmdFirs
 
 		HANDLE hMap = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, IPC_PACKET_SIZE, IPC_PACKET_NAME);
 		if (hMap != 0 && GetLastError() != ERROR_ALREADY_EXISTS) {
-			TEnumData ed;
+			TEnumData ed = { 0 };
 			// map the memory to this address space
 			THeaderIPC *pipch = (THeaderIPC*)MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 			if (pipch != NULL) {
@@ -739,8 +738,8 @@ HRESULT ipcGetFiles(THeaderIPC *pipch, IDataObject* pDataObject, MCONTACT hConta
 HRESULT RequestTransfer(TShellExt *Self, int idxCmd)
 {
 	// get the contact information
-	MENUITEMINFOA mii;
-	mii.cbSize = sizeof(MENUITEMINFO);
+	MENUITEMINFOA mii = { 0 };
+	mii.cbSize = sizeof(mii);
 	mii.fMask = MIIM_ID | MIIM_DATA;
 	if ( !GetMenuItemInfoA(Self->hRootMenu, Self->idCmdFirst + idxCmd, false, &mii))
 		return E_INVALIDARG;
@@ -771,7 +770,7 @@ HRESULT RequestTransfer(TShellExt *Self, int idxCmd)
 					if (hReply != 0) {
 						if (psd->fTypes & dtCommand) {
 							if (psd->MenuCommandCallback) 
-								hr = psd->MenuCommandCallback(pipch, hTransfer, hReply, psd);
+								hr = psd->MenuCommandCallback(pipch, hTransfer, hReply);
 						}
 						else {
 							// prepare the buffer
@@ -862,7 +861,7 @@ HRESULT TShellExt::HandleMenuMsg2(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESU
 				GetTextExtentPoint32A(dwi->hDC, psd->szText, psd->cch, &tS);
 				dwi->rcItem.left += tS.cx + 8;
 				SetTextColor(dwi->hDC, GetSysColor(COLOR_GRAYTEXT));
-				DrawTextA(dwi->hDC, psd->szProfile, mir_strlen(psd->szProfile), &dwi->rcItem, DT_NOCLIP | DT_NOPREFIX | DT_SINGLELINE | DT_VCENTER);
+				DrawTextA(dwi->hDC, psd->szProfile, lstrlenA(psd->szProfile), &dwi->rcItem, DT_NOCLIP | DT_NOPREFIX | DT_SINGLELINE | DT_VCENTER);
 			}
 		}
 		else {
@@ -908,7 +907,7 @@ HRESULT TShellExt::HandleMenuMsg2(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESU
 		dx += tS.cx;
 		// main menu item?
 		if (psd->szProfile != NULL) {
-			GetTextExtentPoint32A(hMemDC, psd->szProfile, mir_strlen(psd->szProfile), &tS);
+			GetTextExtentPoint32A(hMemDC, psd->szProfile, lstrlenA(psd->szProfile), &tS);
 			dx += tS.cx;
 		}
 		// store it

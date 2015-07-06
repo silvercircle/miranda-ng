@@ -7,3 +7,5 @@
 ;============================================================
 [Connecting canceled.]
 Connecting cancelled.
+[Unable to initialize Netlib for %s.]
+Unable to initialise Netlib for %s.

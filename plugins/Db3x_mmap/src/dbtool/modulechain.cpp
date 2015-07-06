@@ -17,7 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "..\commonheaders.h"
+#include "..\stdafx.h"
 
 struct ModChainEntry {
 	DWORD ofsOld, ofsNew;
@@ -97,7 +97,7 @@ int CDb3Mmap::WorkModuleChain(int firstTime)
 				}
 			if (n) {
 				TCHAR szModuleName[257];
-				MultiByteToWideChar(CP_ACP, 0, modChain[iCurrentModName].name, -1, szModuleName, SIZEOF(szModuleName));
+				MultiByteToWideChar(CP_ACP, 0, modChain[iCurrentModName].name, -1, szModuleName, _countof(szModuleName));
 				TCHAR *pszModuleName = szModuleName;
 
 				cb->pfnAddLogMessage(STATUS_WARNING, TranslateT("Module name '%s' is not unique: %d duplicates found"), pszModuleName, n);

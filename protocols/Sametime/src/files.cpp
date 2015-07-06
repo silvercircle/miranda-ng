@@ -33,7 +33,7 @@ void mwFileTransfer_offered(mwFileTransfer* ft)
 	TCHAR descriptionT[512];
 	if (message) {
 		TCHAR* messageT = mir_utf8decodeT(message);
-		mir_sntprintf(descriptionT, SIZEOF(descriptionT), _T("%s - %s"), filenameT, messageT);
+		mir_sntprintf(descriptionT, _countof(descriptionT), _T("%s - %s"), filenameT, messageT);
 		mir_free(messageT);
 	} else
 		_tcsncpy_s(descriptionT, filenameT, _TRUNCATE);
@@ -42,8 +42,8 @@ void mwFileTransfer_offered(mwFileTransfer* ft)
 	pre.dwFlags = PRFF_TCHAR;
 	pre.fileCount = 1;
 	pre.timestamp = time(NULL);
-	pre.tszDescription = descriptionT;
-	pre.ptszFiles = &filenameT;
+	pre.descr.t = descriptionT;
+	pre.files.t = &filenameT;
 	pre.lParam = (LPARAM)ft;
 
 	ProtoChainRecvFile(hContact, &pre);
@@ -150,7 +150,7 @@ void mwFileTransfer_closed(mwFileTransfer* ft, guint32 code)
 				char fn[MAX_PATH];
 				if (ftcd->save_path) mir_strcpy(fn, ftcd->save_path);
 				else fn[0] = 0;
-				strcat(fn, mwFileTransfer_getFileName(ft));
+				mir_strcat(fn, mwFileTransfer_getFileName(ft));
 
 				DeleteFileA(fn);
 			}
@@ -276,7 +276,7 @@ mwFileTransferHandler mwFileTransfer_handler = {
 	mwFileTransfer_clear
 };
 
-HANDLE CSametimeProto::SendFilesToUser(MCONTACT hContact, PROTOCHAR** files, const PROTOCHAR* ptszDesc)
+HANDLE CSametimeProto::SendFilesToUser(MCONTACT hContact, TCHAR** files, const TCHAR* ptszDesc)
 {
 	debugLog(_T("CSametimeProto::SendFilesToUser() start"));
 
@@ -377,8 +377,8 @@ HANDLE CSametimeProto::AcceptFileTransfer(MCONTACT hContact, HANDLE hFt, char* s
 	else
 		fp[0] = 0;
 
-	if (fn) strcat(fp, fn);
-	else strcat(fp, mwFileTransfer_getFileName(ft));
+	if (fn) mir_strcat(fp, fn);
+	else mir_strcat(fp, mwFileTransfer_getFileName(ft));
 
 	ftcd->hFile = CreateFileA(fp, GENERIC_WRITE, FILE_SHARE_READ, 0, OPEN_ALWAYS, 0, 0);
 	if (ftcd->hFile == INVALID_HANDLE_VALUE) {

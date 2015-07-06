@@ -23,24 +23,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 //include
-#include "hdr/modern_commonheaders.h"
-#include "hdr/modern_commonprototypes.h"
+#include "stdafx.h"
+#include "modern_commonprototypes.h"
 #include "version.h"
 
-#include "hdr/modern_clui.h"
-#include "hdr/modern_clcpaint.h"
+#include "modern_clui.h"
+#include "modern_clcpaint.h"
 
 //definitions
 
 #define CHECKRES(sub) if (sub != S_OK) return S_FALSE;
 
-HINSTANCE g_hInst = 0;
+HINSTANCE g_hInst = 0, g_hMirApp = 0;
 CLIST_INTERFACE *pcli = NULL;
 CLIST_INTERFACE corecli = { 0 };
 CLUIDATA g_CluiData = { 0 };
 int hLangpack;
-
-TIME_API tmi;
 
 static HRESULT SubclassClistInterface();
 static HRESULT CreateHookableEvents();
@@ -77,9 +75,9 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 extern "C" __declspec(dllexport) int CListInitialise()
 {
 	mir_getLP(&pluginInfo);
-	mir_getTMI(&tmi);
 
 	g_dwMainThreadID = GetCurrentThreadId();
+	g_hMirApp = GetModuleHandleA("mir_app.mir");
 
 	CHECKRES(PreLoadContactListModule());
 	CHECKRES(SubclassClistInterface());
@@ -168,7 +166,6 @@ static HRESULT SubclassClistInterface()
 	pcli->pfnShowHide = cliShowHide;
 	pcli->pfnHitTest = cliHitTest;
 	pcli->pfnCompareContacts = cliCompareContacts;
-	pcli->pfnBuildGroupPopupMenu = cliBuildGroupPopupMenu;
 	pcli->pfnGetIconFromStatusMode = cliGetIconFromStatusMode;
 	pcli->pfnFindItem = cliFindItem;
 	pcli->pfnGetRowByIndex = cliGetRowByIndex;
@@ -206,9 +203,6 @@ static HRESULT SubclassClistInterface()
 static HRESULT CreateHookableEvents()
 {
 	g_CluiData.hEventBkgrChanged = CreateHookableEvent(ME_BACKGROUNDCONFIG_CHANGED);
-	g_CluiData.hEventPreBuildTrayMenu = CreateHookableEvent(ME_CLIST_PREBUILDTRAYMENU);
-	g_CluiData.hEventPreBuildGroupMenu = CreateHookableEvent(ME_CLIST_PREBUILDGROUPMENU);
-	g_CluiData.hEventPreBuildSubGroupMenu = CreateHookableEvent(ME_CLIST_PREBUILDSUBGROUPMENU);
 	g_CluiData.hEventStatusBarShowToolTip = CreateHookableEvent(ME_CLIST_FRAMES_SB_SHOW_TOOLTIP);
 	g_CluiData.hEventStatusBarHideToolTip = CreateHookableEvent(ME_CLIST_FRAMES_SB_HIDE_TOOLTIP);
 	g_CluiData.hEventSkinServicesCreated = CreateHookableEvent(ME_SKIN_SERVICESCREATED);

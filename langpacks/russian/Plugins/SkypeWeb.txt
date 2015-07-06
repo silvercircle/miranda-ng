@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: SkypeWeb.dll
 ;  Plugin: Skype protocol (Web)
-;  Version: 0.11.0.3
+;  Version: 0.12.1.2
 ;  Authors: Miranda NG Team
 ;============================================================
 [Skype protocol support for Miranda NG. Based on new Skype for Web.]
@@ -33,6 +33,10 @@
 Локальное время для принятых сообщений
 [Always notify as unread for all incoming message]
 Помечать все входящие сообщения как "Непрочитанное"
+[Place:]
+Место:
+[Use hostname]
+Использовать имя хоста
 [Enter password]
 Введите пароль
 [Save password]
@@ -56,13 +60,15 @@
 [&Change topic]
 &Изменить тему
 [Kick &user]
-&Выгнать пользователя
+&Выкинуть пользователя
 [Set &role]
 Установить &роль
 [&Admin]
 &Админ
 [&User]
 &Пользователь
+[Enter new chatroom topic]
+Введите новую тему комнаты чата
 [Are you sure?]
 Вы уверены?
 [Incoming call]
@@ -115,6 +121,14 @@
 Значок действия
 [Protocols]
 Протоколы
+[Authentication failed. Invalid username.]
+Ошибка авторизации. Неверное имя пользователя.
+[Authentication failed. Bad username or password.]
+Не удалось авторизоваться, указано неверное имя пользователя или пароль.
+[Too many failed authentication attempts with given username or IP.]
+Превышено допустимое количество неудачных попыток авторизации с этим именем пользователя или с этого IP-адреса.
+[Authentication failed. Unknown error.]
+Не удалось авторизоваться из-за неизвестной ошибки.
 [Request authorization]
 Запросить авторизацию
 [Grant authorization]
@@ -127,6 +141,8 @@
 Разблокировать контакт
 [Create new chat]
 Создать новый чат
+[Enter confirmation code]
+Введите код подтверждения
 [Network]
 Сеть
 [%s connection]

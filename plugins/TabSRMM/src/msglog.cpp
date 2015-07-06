@@ -129,9 +129,9 @@ void TSAPI CacheLogFonts()
 	memset(logfonts, 0, (sizeof(LOGFONTA) * (MSGDLGFONTCOUNT + 2)));
 	for (int i = 0; i < MSGDLGFONTCOUNT; i++) {
 		LoadLogfont(i, &logfonts[i], &fontcolors[i], FONTMODULE);
-		mir_snprintf(rtfFontsGlobal[i], SIZEOF(rtfFontsGlobal[i]), "\\f%u\\cf%u\\b%d\\i%d\\ul%d\\fs%u", i, i, logfonts[i].lfWeight >= FW_BOLD ? 1 : 0, logfonts[i].lfItalic, logfonts[i].lfUnderline, 2 * abs(logfonts[i].lfHeight) * 74 / logPixelSY);
+		mir_snprintf(rtfFontsGlobal[i], _countof(rtfFontsGlobal[i]), "\\f%u\\cf%u\\b%d\\i%d\\ul%d\\fs%u", i, i, logfonts[i].lfWeight >= FW_BOLD ? 1 : 0, logfonts[i].lfItalic, logfonts[i].lfUnderline, 2 * abs(logfonts[i].lfHeight) * 74 / logPixelSY);
 	}
-	mir_snprintf(rtfFontsGlobal[MSGDLGFONTCOUNT], SIZEOF(rtfFontsGlobal[MSGDLGFONTCOUNT]), "\\f%u\\cf%u\\b%d\\i%d\\fs%u", MSGDLGFONTCOUNT, MSGDLGFONTCOUNT, 0, 0, 0);
+	mir_snprintf(rtfFontsGlobal[MSGDLGFONTCOUNT], _countof(rtfFontsGlobal[MSGDLGFONTCOUNT]), "\\f%u\\cf%u\\b%d\\i%d\\fs%u", MSGDLGFONTCOUNT, MSGDLGFONTCOUNT, 0, 0, 0);
 
 	_tcsncpy(szToday, TranslateT("Today"), 20);
 	_tcsncpy(szYesterday, TranslateT("Yesterday"), 20);
@@ -181,9 +181,9 @@ void FreeLogFonts()
 
 void TSAPI CacheMsgLogIcons()
 {
-	Logicons[0] = LoadSkinnedIcon(SKINICON_EVENT_MESSAGE);
-	Logicons[1] = LoadSkinnedIcon(SKINICON_EVENT_URL);
-	Logicons[2] = LoadSkinnedIcon(SKINICON_EVENT_FILE);
+	Logicons[0] = Skin_LoadIcon(SKINICON_EVENT_MESSAGE);
+	Logicons[1] = Skin_LoadIcon(SKINICON_EVENT_URL);
+	Logicons[2] = Skin_LoadIcon(SKINICON_EVENT_FILE);
 	Logicons[3] = PluginConfig.g_iconOut;
 	Logicons[4] = PluginConfig.g_iconIn;
 	Logicons[5] = PluginConfig.g_iconStatus;
@@ -236,7 +236,7 @@ static int AppendUnicodeToBuffer(CMStringA &str, const TCHAR *line, int mode)
 					else {
 						char szTemp[10];
 						int colindex = GetColorIndex(GetRTFFont(LOWORD(mode) ? (MSGFONTID_MYMSG + (HIWORD(mode) ? 8 : 0)) : (MSGFONTID_YOURMSG + (HIWORD(mode) ? 8 : 0))));
-						mir_snprintf(szTemp, SIZEOF(szTemp), "%02d", colindex);
+						mir_snprintf(szTemp, "%02d", colindex);
 						str.Append(szTemp);
 					}
 					str.AppendChar(' ');
@@ -334,7 +334,7 @@ static char* CreateRTFHeader(TWindowData *dat)
 {
 	CMStringA str;
 	Build_RTF_Header(str, dat);
-	return str.Detouch();
+	return str.Detach();
 }
 
 static void AppendTimeStamp(TCHAR *szFinalTimestamp, int isSent, CMStringA &str, int skipFont, TWindowData *dat, int iFontIDOffset)
@@ -367,7 +367,7 @@ static TCHAR* Template_MakeRelativeDate(HANDLE hTimeZone, time_t check, TCHAR co
 		else
 			szFormat = _T("d");
 
-		tmi.printTimeStamp(hTimeZone, check, szFormat, szResult, SIZEOF(szResult), 0);
+		TimeZone_PrintTimeStamp(hTimeZone, check, szFormat, szResult, _countof(szResult), 0);
 	}
 	return szResult;
 }
@@ -421,7 +421,7 @@ static char* Template_CreateRTFFromDbEvent(TWindowData *dat, MCONTACT hContact, 
 		dat->cache->updateStats(TSessionStats::SET_LAST_RCV, mir_strlen((char *)dbei.pBlob));
 
 	TCHAR *formatted = NULL;
-	TCHAR *msg = DbGetEventTextT(&dbei, dat->codePage);
+	TCHAR *msg = DbGetEventTextT(&dbei, CP_UTF8);
 	if (!msg) {
 		mir_free(dbei.pBlob);
 		return NULL;
@@ -460,7 +460,7 @@ static char* Template_CreateRTFFromDbEvent(TWindowData *dat, MCONTACT hContact, 
 	if (dwEffectiveFlags & MWF_DIVIDERWANTED) {
 		static char szStyle_div[128] = "\0";
 		if (szStyle_div[0] == 0)
-			mir_snprintf(szStyle_div, SIZEOF(szStyle_div), "\\f%u\\cf%u\\ul0\\b%d\\i%d\\fs%u", H_MSGFONTID_DIVIDERS, H_MSGFONTID_DIVIDERS, 0, 0, 5);
+			mir_snprintf(szStyle_div, _countof(szStyle_div), "\\f%u\\cf%u\\ul0\\b%d\\i%d\\fs%u", H_MSGFONTID_DIVIDERS, H_MSGFONTID_DIVIDERS, 0, 0, 5);
 
 		str.AppendFormat("\\sl-1\\slmult0\\highlight%d\\cf%d\\-\\par\\sl0", H_MSGFONTID_DIVIDERS, H_MSGFONTID_DIVIDERS);
 		dat->dwFlags &= ~MWF_DIVIDERWANTED;
@@ -496,7 +496,7 @@ static char* Template_CreateRTFFromDbEvent(TWindowData *dat, MCONTACT hContact, 
 	// templated code starts here
 	if (dwEffectiveFlags & MWF_LOG_SHOWTIME) {
 		hTimeZone = ((dat->dwFlags & MWF_LOG_LOCALTIME) && !isSent) ? dat->hTimeZone : NULL;
-		time_t local_time = tmi.timeStampToTimeZoneTimeStamp(hTimeZone, dbei.timestamp);
+		time_t local_time = TimeZone_UtcToLocal(hTimeZone, dbei.timestamp);
 		event_time = *gmtime(&local_time);
 	}
 
@@ -832,7 +832,7 @@ static char* Template_CreateRTFFromDbEvent(TWindowData *dat, MCONTACT hContact, 
 							ptrT tszDescr(DbGetEventStringT(&dbei, szDescr));
 
 							TCHAR buf[1000];
-							mir_sntprintf(buf, SIZEOF(buf), _T("%s (%s)"), tszFileName, tszDescr);
+							mir_sntprintf(buf, _T("%s (%s)"), tszFileName, tszDescr);
 							AppendUnicodeToBuffer(str, buf, 0);
 						}
 						else AppendUnicodeToBuffer(str, tszFileName, 0);
@@ -970,7 +970,7 @@ static char* Template_CreateRTFFromDbEvent(TWindowData *dat, MCONTACT hContact, 
 
 	dat->iLastEventType = MAKELONG((dbei.flags & (DBEF_SENT | DBEF_READ | DBEF_RTL)), dbei.eventType);
 	dat->lastEventTime = dbei.timestamp;
-	return str.Detouch();
+	return str.Detach();
 }
 
 static DWORD CALLBACK LogStreamInEvents(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG cb, LONG * pcb)
@@ -1029,7 +1029,7 @@ static void SetupLogFormatting(TWindowData *dat)
 	if (dat->hHistoryEvents)
 		strncpy_s(dat->szMicroLf, "\\v\\cf%d \\ ~-+%d+-~\\v0 ", _TRUNCATE);
 	else
-		mir_snprintf(dat->szMicroLf, SIZEOF(dat->szMicroLf), "%s\\par\\ltrpar\\sl-1%s ", GetRTFFont(MSGDLGFONTCOUNT), GetRTFFont(MSGDLGFONTCOUNT));
+		mir_snprintf(dat->szMicroLf, _countof(dat->szMicroLf), "%s\\par\\ltrpar\\sl-1%s ", GetRTFFont(MSGDLGFONTCOUNT), GetRTFFont(MSGDLGFONTCOUNT));
 }
 
 static void ReplaceIcons(HWND hwndDlg, TWindowData *dat, LONG startAt, int fAppend, BOOL isSent)
@@ -1139,7 +1139,7 @@ static void ReplaceIcons(HWND hwndDlg, TWindowData *dat, LONG startAt, int fAppe
 
 	if (dat->hHistoryEvents && dat->curHistory == dat->maxHistory) {
 		char szPattern[50];
-		mir_snprintf(szPattern, SIZEOF(szPattern), "~-+%d+-~", (INT_PTR)dat->hHistoryEvents[0]);
+		mir_snprintf(szPattern, _countof(szPattern), "~-+%d+-~", (INT_PTR)dat->hHistoryEvents[0]);
 
 		FINDTEXTEXA fi;
 		fi.lpstrText = szPattern;
@@ -1171,57 +1171,58 @@ void TSAPI StreamInEvents(HWND hwndDlg, MEVENT hDbEventFirst, int count, int fAp
 	tm_today.tm_hour = tm_today.tm_min = tm_today.tm_sec = 0;
 	today = mktime(&tm_today);
 
-	if (dat->hwndIEView != 0) {
-		IEVIEWEVENT event = { sizeof(event) };
+	if (dat->hwndIEView != NULL || dat->hwndHPP != NULL) {
+		const char *pszService;
+		IEVIEWEVENT event = { 0 };
 		event.cbSize = sizeof(IEVIEWEVENT);
-		event.hwnd = dat->hwndIEView;
 		event.hContact = dat->hContact;
-		event.dwFlags = (dat->dwFlags & MWF_LOG_RTL) ? IEEF_RTL : 0;
-		if (dat->sendMode & SMODE_FORCEANSI) {
-			event.dwFlags |= IEEF_NO_UNICODE;
-			event.codepage = dat->codePage;
+		if (dat->hwndIEView != NULL) {
+			event.pszProto = dat->szProto;
+			event.hwnd = dat->hwndIEView;
+			pszService = MS_IEVIEW_EVENT;
 		}
-		else event.codepage = 0;
+		else {
+			event.hwnd = dat->hwndHPP;
+			pszService = MS_HPP_EG_EVENT;
+		}
+
+		if (dat->dwFlags & MWF_LOG_RTL)
+			event.dwFlags = IEEF_RTL;
 
 		if (!fAppend) {
 			event.iType = IEE_CLEAR_LOG;
-			CallService(MS_IEVIEW_EVENT, 0, (LPARAM)&event);
+			CallService(pszService, 0, (LPARAM)&event);
 		}
-		event.iType = IEE_LOG_DB_EVENTS;
-		event.hDbEventFirst = hDbEventFirst;
+
+		IEVIEWEVENTDATA evData = { 0 };
+		if (dbei_s != NULL && hDbEventFirst == 0) {
+			evData.cbSize = sizeof(evData);
+			event.iType = IEE_LOG_MEM_EVENTS;
+			if (dbei_s->flags & DBEF_SENT)
+				evData.dwFlags = IEEDF_SENT;
+			else {
+				evData.dwFlags = IEEDF_UNICODE_NICK;
+				evData.ptszNick = pcli->pfnGetContactDisplayName(dat->hContact, 0);
+			}
+			switch (dbei_s->eventType) {
+				case EVENTTYPE_STATUSCHANGE: evData.iType = IEED_EVENT_STATUSCHANGE; break;
+				case EVENTTYPE_FILE: evData.iType = IEED_EVENT_FILE; break;
+				case EVENTTYPE_ERRMSG: evData.iType = IEED_EVENT_ERRMSG; break;
+				default: evData.iType = IEED_EVENT_MESSAGE; break;
+			}
+			evData.pszText = (char*)dbei_s->pBlob;
+			evData.time = dbei_s->timestamp;
+			event.eventData = &evData;
+			event.codepage = CP_UTF8;
+		}
+		else {
+			event.iType = IEE_LOG_DB_EVENTS;
+			event.hDbEventFirst = hDbEventFirst;
+		}
 		event.count = count;
-		event.pszProto = dat->szProto;
-		CallService(MS_IEVIEW_EVENT, 0, (LPARAM)&event);
+		CallService(pszService, 0, (LPARAM)&event);
 		DM_ScrollToBottom(dat, 0, 0);
-		if (fAppend)
-			dat->hDbEventLast = hDbEventFirst;
-		else
-			dat->hDbEventLast = db_event_last(dat->hContact);
-		return;
-	}
-
-	if (dat->hwndHPP != 0) {
-		IEVIEWEVENT event = { sizeof(event) };
-		event.hwnd = dat->hwndHPP;
-		event.hContact = dat->hContact;
-		event.dwFlags = (dat->dwFlags & MWF_LOG_RTL) ? IEEF_RTL : 0;
-		if (dat->sendMode & SMODE_FORCEANSI) {
-			event.dwFlags |= IEEF_NO_UNICODE;
-			event.codepage = dat->codePage;
-		}
-		else event.codepage = 0;
-
-		if (!fAppend) {
-			event.iType = IEE_CLEAR_LOG;
-			CallService(MS_HPP_EG_EVENT, 0, (LPARAM)&event);
-		}
-		event.iType = IEE_LOG_DB_EVENTS;
-		event.hDbEventFirst = hDbEventFirst;
-		event.count = count;
-		CallService(MS_HPP_EG_EVENT, 0, (LPARAM)&event);
-
-		DM_ScrollToBottom(dat, 0, 0);
-		if (fAppend)
+		if (fAppend && hDbEventFirst)
 			dat->hDbEventLast = hDbEventFirst;
 		else
 			dat->hDbEventLast = db_event_last(dat->hContact);
@@ -1318,25 +1319,4 @@ void TSAPI StreamInEvents(HWND hwndDlg, MEVENT hDbEventFirst, int count, int fAp
 	InvalidateRect(hwndrtf, NULL, FALSE);
 	EnableWindow(GetDlgItem(hwndDlg, IDC_QUOTE), dat->hDbEventLast != NULL);
 	mir_free(streamData.buffer);
-}
-
-// NLS functions (for unicode version only) encoding stuff..
-static BOOL CALLBACK LangAddCallback(LPTSTR str)
-{
-	UINT cp = _ttoi(str);
-	for (int i = 0; i < SIZEOF(cpTable); i++)
-		if (cpTable[i].cpId == cp) {
-			AppendMenu(PluginConfig.g_hMenuEncoding, MF_STRING, cp, TranslateTS(cpTable[i].cpName));
-			break;
-		}
-
-	return TRUE;
-}
-
-void TSAPI BuildCodePageList()
-{
-	PluginConfig.g_hMenuEncoding = CreateMenu();
-	AppendMenu(PluginConfig.g_hMenuEncoding, MF_STRING, 500, TranslateT("Use default codepage"));
-	AppendMenuA(PluginConfig.g_hMenuEncoding, MF_SEPARATOR, 0, 0);
-	EnumSystemCodePages(LangAddCallback, CP_INSTALLED);
 }

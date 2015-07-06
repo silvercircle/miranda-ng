@@ -37,10 +37,10 @@ HWND hPopupWindow;
 HANDLE hHookWeatherUpdated;
 HANDLE hHookWeatherError;
 
-HANDLE hDataWindowList;
-HANDLE hWindowList;
+MWindowList hDataWindowList, hWindowList;
 
 HANDLE hUpdateMutex;
+CLIST_INTERFACE *pcli;
 
 unsigned status;
 unsigned old_status;
@@ -103,7 +103,7 @@ int WeatherShutdown(WPARAM wParam,LPARAM lParam)
 
 int OnToolbarLoaded(WPARAM wParam, LPARAM lParam)
 {
-	TTBButton ttb = { sizeof(ttb) };
+	TTBButton ttb = { 0 };
 	ttb.name = LPGEN("Enable/disable auto update");
 	ttb.pszService = MS_WEATHER_ENABLED;
 	ttb.pszTooltipUp = LPGEN("Auto Update Enabled");
@@ -177,6 +177,7 @@ extern "C" int __declspec(dllexport) Unload(void)
 extern "C" int __declspec(dllexport) Load(void) 
 {
 	mir_getLP(&pluginInfoEx);
+	mir_getCLI();
 
 	// initialize global variables
 	InitVar();
@@ -215,10 +216,11 @@ extern "C" int __declspec(dllexport) Load(void)
 	hUpdateMutex = CreateMutex(NULL, FALSE, NULL);
 
 	// register weather protocol
-	PROTOCOLDESCRIPTOR pd = { PROTOCOLDESCRIPTOR_V3_SIZE };
+	PROTOCOLDESCRIPTOR pd = { 0 };
+	pd.cbSize = sizeof(pd);
 	pd.szName = WEATHERPROTONAME;
 	pd.type = (opt.NoProtoCondition) ? PROTOTYPE_VIRTUAL : PROTOTYPE_PROTOCOL;
-	CallService(MS_PROTO_REGISTERMODULE, 0, (LPARAM)&pd);
+	Proto_RegisterModule(&pd);
 
 	// initialize weather protocol services
 	InitServices();
@@ -229,7 +231,7 @@ extern "C" int __declspec(dllexport) Load(void)
 
 	// window needed for popup commands
 	TCHAR SvcFunc[100];
-	mir_sntprintf(SvcFunc, SIZEOF(SvcFunc), _T("%s__PopupWindow"), _T(WEATHERPROTONAME));
+	mir_sntprintf(SvcFunc, _countof(SvcFunc), _T("%s__PopupWindow"), _T(WEATHERPROTONAME));
 	hPopupWindow = CreateWindowEx(WS_EX_TOOLWINDOW, _T("static"), SvcFunc, 0, CW_USEDEFAULT, CW_USEDEFAULT,
 		CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP, NULL, hInst, NULL);
 	SetWindowLongPtr(hPopupWindow, GWLP_WNDPROC, (LONG_PTR)PopupWndProc);

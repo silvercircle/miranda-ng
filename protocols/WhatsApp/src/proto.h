@@ -44,7 +44,7 @@ public:
 
 	virtual	DWORD_PTR __cdecl GetCaps(int type, MCONTACT hContact = NULL);
 
-	virtual	HANDLE    __cdecl SearchBasic(const PROTOCHAR* id);
+	virtual	HANDLE    __cdecl SearchBasic(const TCHAR* id);
 
 	virtual	int       __cdecl RecvMsg(MCONTACT hContact, PROTORECVEVENT*);
 
@@ -125,7 +125,7 @@ private:
 	{	return ::_InterlockedIncrement(&m_iSerial);
 	}
 
-	void ToggleStatusMenuItems(BOOL bEnable);
+	void ToggleStatusMenuItems(bool bEnable);
 
 	/// Avatars //////////////////////////////////////////////////////////////////////////
 
@@ -141,8 +141,7 @@ private:
 
 	// Private data //////////////////////////////////////////////////////////////////////
 	
-	HGENMENU m_hMenuRoot;
-	HANDLE  m_hMenuCreateGroup;
+	HGENMENU m_hMenuCreateGroup;
 
 	HANDLE  update_loop_lock_;
 

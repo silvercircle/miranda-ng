@@ -53,7 +53,7 @@ int CAimProto::aim_auth_request(HANDLE hServerConn,unsigned short &seqno,const c
 
 	char client_id[64], mirver[64];
 	CallService(MS_SYSTEM_GETVERSIONTEXT, sizeof(mirver), (LPARAM)mirver);
-	int client_id_len = mir_snprintf(client_id, SIZEOF(client_id), "Miranda AIM, version %s", mirver);
+	int client_id_len = mir_snprintf(client_id, _countof(client_id), "Miranda AIM, version %s", mirver);
 
 	char* buf=(char*)alloca(SNAC_SIZE+TLV_HEADER_SIZE*14+MD5_HASH_LENGTH+mir_strlen(username)+client_id_len+30+mir_strlen(language)+mir_strlen(country));
 
@@ -345,7 +345,7 @@ int CAimProto::aim_send_message(HANDLE hServerConn,unsigned short &seqno,const c
 	char* tlv_buf=(char*)alloca(5+msg_len+8);
 
 	char icbm_cookie[8];
-	CallService(MS_UTILS_GETRANDOM, 8, (LPARAM)icbm_cookie);
+	Utils_GetRandom(icbm_cookie, sizeof(icbm_cookie));
  
 	aim_writegeneric(5,"\x05\x01\x00\x01\x01",tlv_offset,tlv_buf);   // icbm im capabilities
 	aim_writeshort(0x0101,tlv_offset,tlv_buf);                       // icbm im text tag

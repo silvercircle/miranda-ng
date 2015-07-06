@@ -236,10 +236,7 @@ INT_PTR RegisterPack(WPARAM, LPARAM lParam)
 	if (IsBadStringPtrA(smre->name, 50) || IsBadStringPtrA(smre->dispname, 50)) return FALSE;
 
 
-	unsigned lpcp = (unsigned)CallService(MS_LANGPACK_GETCODEPAGE, 0, 0);
-	if (lpcp == CALLSERVICE_NOTFOUND) lpcp = CP_ACP;
-
-
+	unsigned lpcp = Langpack_GetDefaultCodePage();
 
 	CMString nmd(A2W_SM(smre->dispname, lpcp));
 
@@ -265,7 +262,7 @@ INT_PTR CustomCatMenu(WPARAM hContact, LPARAM lParam)
 	}
 
 	for (int i=0; i < menuHandleArray.getCount(); i++)
-		CallService(MO_REMOVEMENUITEM, (WPARAM)menuHandleArray[i], 0);
+		Menu_RemoveItem((HGENMENU)menuHandleArray[i]);
 	menuHandleArray.destroy();
 
 	return TRUE;
@@ -288,30 +285,28 @@ int RebuildContactMenu(WPARAM wParam, LPARAM)
 	Menu_ShowItem(hContactMenuItem, haveMenu);
 
 	for (int i=0; i < menuHandleArray.getCount(); i++)
-		CallService(MO_REMOVEMENUITEM, (WPARAM)menuHandleArray[i], 0);
+		Menu_RemoveItem((HGENMENU)menuHandleArray[i]);
 	menuHandleArray.destroy();
 
 	if (haveMenu) {
 		CMString cat;
 		opt.ReadContactCategory(wParam, cat);
 
-		CLISTMENUITEM mi = { sizeof(mi) };
-		mi.hParentMenu = hContactMenuItem;
-		mi.flags       = CMIF_CHILDPOPUP | CMIM_FLAGS | CMIF_TCHAR;
-		mi.pszService  = MS_SMILEYADD_CUSTOMCATMENU;
+		CMenuItem mi;
+		mi.root = hContactMenuItem;
+		mi.flags = CMIF_TCHAR;
+		mi.pszService = MS_SMILEYADD_CUSTOMCATMENU;
 
 		bool nonecheck = true;
 		HGENMENU hMenu;
 
 		for (int i=0; i < smc.getCount(); i++) {
-			if (smc[i].IsExt() || (smc[i].IsProto() && opt.UseOneForAll))
+			if (smc[i].IsExt() || (smc[i].IsProto() && opt.UseOneForAll) || smc[i].GetFilename().IsEmpty())
 				continue;
 
 			const int ind = i + 3;
-
-			mi.position      = ind;
-			mi.popupPosition = ind;
-			mi.ptszName      = (TCHAR*)smc[i].GetDisplayName().c_str();
+			mi.position = ind;
+			mi.name.t = (TCHAR*)smc[i].GetDisplayName().c_str();
 
 			if (cat == smc[i].GetName()) {
 				mi.flags |= CMIF_CHECKED; 
@@ -319,27 +314,28 @@ int RebuildContactMenu(WPARAM wParam, LPARAM)
 			}
 
 			hMenu = Menu_AddContactMenuItem(&mi);
+			Menu_ConfigureItem(hMenu, MCI_OPT_EXECPARAM, ind);
 			menuHandleArray.insert(hMenu);
 			mi.flags &= ~CMIF_CHECKED;
 		}
 
-		mi.position      = 1;
-		mi.popupPosition = 1;
-		mi.ptszName      = _T("<None>");
+		mi.position = 1;
+		mi.name.t = _T("<None>");
 		if (cat == _T("<None>")) {
 			mi.flags |= CMIF_CHECKED; 
 			nonecheck = false;
 		}
 
 		hMenu = Menu_AddContactMenuItem(&mi);
+		Menu_ConfigureItem(hMenu, MCI_OPT_EXECPARAM, 1);
 		menuHandleArray.insert(hMenu);
 
-		mi.position      = 2;
-		mi.popupPosition = 2;
-		mi.ptszName      = LPGENT("Protocol specific");
+		mi.position = 2;
+		mi.name.t = LPGENT("Protocol specific");
 		if (nonecheck) mi.flags |= CMIF_CHECKED; else mi.flags &= ~CMIF_CHECKED;
 
 		hMenu = Menu_AddContactMenuItem(&mi);
+		Menu_ConfigureItem(hMenu, MCI_OPT_EXECPARAM, 2);
 		menuHandleArray.insert(hMenu);
 	}
 

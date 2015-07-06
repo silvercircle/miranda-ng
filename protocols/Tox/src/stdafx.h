@@ -17,7 +17,6 @@
 #include <newpluginapi.h>
 
 #include <m_protoint.h>
-#include <m_protomod.h>
 #include <m_protosvc.h>
 
 #include <m_database.h>
@@ -35,10 +34,9 @@
 #include <m_genmenu.h>
 #include <m_clc.h>
 #include <m_clist.h>
-#include <m_clistint.h>
 #include <m_gui.h>
-
 #include <m_folders.h>
+#include <m_assocmgr.h>
 
 #include <tox.h>
 #include <toxav.h>

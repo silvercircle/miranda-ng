@@ -27,6 +27,7 @@ extern "C" PfnDliHook __pfnDliNotifyHook2 = &delayHook;
 
 HINSTANCE hInst;
 int hLangpack;
+CLIST_INTERFACE *pcli;
 
 PLUGININFOEX pluginInfo = {
 	sizeof(PLUGININFOEX),
@@ -63,7 +64,6 @@ static BOOL QuietTime, Preview, EnPreview;
 static int Volume;
 static int device = -1;
 static int newBass = 0;
-static HWND ClistHWND;
 
 HWND hwndSlider = NULL, hwndMute = NULL, hwndOptSlider = NULL, hwnd_plugin = NULL;
 COLORREF clBack = 0;
@@ -186,7 +186,7 @@ INT_PTR CALLBACK OptionsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 			else {
 				DBVARIANT dbv = { 0 }; BASS_DEVICEINFO info; DWORD bassver = BASS_GetVersion();
 
-				mir_sntprintf(tmp, SIZEOF(tmp), TranslateT("un4seen's bass version: %d.%d.%d.%d"), bassver >> 24, (bassver >> 16) & 0xff, (bassver >> 8) & 0xff, bassver & 0xff);
+				mir_sntprintf(tmp, _countof(tmp), TranslateT("un4seen's bass version: %d.%d.%d.%d"), bassver >> 24, (bassver >> 16) & 0xff, (bassver >> 8) & 0xff, bassver & 0xff);
 				SetDlgItemText(hwndDlg, IDC_BASSVERSION, tmp);
 
 				SendDlgItemMessage(hwndDlg, IDC_OUTDEVICE, CB_RESETCONTENT, 0, 0);
@@ -194,7 +194,7 @@ INT_PTR CALLBACK OptionsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 				SendDlgItemMessage(hwndDlg, IDC_OUTDEVICE, CB_SETCURSEL, 0, 0);
 				db_get_ts(NULL, ModuleName, OPT_OUTDEVICE, &dbv);
 				for (int i = 1; BASS_GetDeviceInfo(i + newBass, &info); i++) {
-					SendDlgItemMessage(hwndDlg, IDC_OUTDEVICE, CB_ADDSTRING, 0, (LPARAM)(TCHAR*)_A2T(info.name));
+					SendDlgItemMessage(hwndDlg, IDC_OUTDEVICE, CB_ADDSTRING, 0, _A2T(info.name));
 					if (!mir_tstrcmp(dbv.ptszVal, _A2T(info.name)))
 						SendDlgItemMessage(hwndDlg, IDC_OUTDEVICE, CB_SETCURSEL, i, 0);
 				}
@@ -222,7 +222,7 @@ INT_PTR CALLBACK OptionsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 			if (hBass != NULL) {
 				SYSTEMTIME systime = { 0 };
 
-				GetDlgItemText(hwndDlg, IDC_OUTDEVICE, tmp, SIZEOF(tmp));
+				GetDlgItemText(hwndDlg, IDC_OUTDEVICE, tmp, _countof(tmp));
 				db_set_ts(NULL, ModuleName, OPT_OUTDEVICE, tmp);
 
 				Volume = (DWORD)SendDlgItemMessage(hwndDlg, IDC_VOLUME, TBM_GETPOS, 0, 0);
@@ -248,8 +248,7 @@ INT_PTR CALLBACK OptionsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 				db_set_b(NULL, ModuleName, OPT_PREVIEW, EnPreview);
 
 				StatMask = 0;
-				for (int i = IDC_CHECKBOX10; i > IDC_CHECKBOX1 - 1; i--)
-				{
+				for (int i = IDC_CHECKBOX10; i > IDC_CHECKBOX1 - 1; i--) {
 					StatMask <<= 1;
 					if (IsDlgButtonChecked(hwndDlg, i) == BST_CHECKED)
 						StatMask |= 1;
@@ -279,11 +278,11 @@ INT_PTR CALLBACK OptionsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case IDC_QUIETTIME:
-		{
-			BOOL b = IsDlgButtonChecked(hwndDlg, IDC_QUIETTIME) == BST_CHECKED;
-			EnableWindow(GetDlgItem(hwndDlg, IDC_TIME1), b);
-			EnableWindow(GetDlgItem(hwndDlg, IDC_TIME2), b);
-		}
+			{
+				BOOL b = IsDlgButtonChecked(hwndDlg, IDC_QUIETTIME) == BST_CHECKED;
+				EnableWindow(GetDlgItem(hwndDlg, IDC_TIME1), b);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_TIME2), b);
+			}
 		case IDC_MAXCHANNEL:
 		case IDC_OUTDEVICE:
 		case IDC_CHECKBOX1:
@@ -301,7 +300,7 @@ INT_PTR CALLBACK OptionsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 			break;
 
 		case IDC_GETBASS:
-			CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)"http://www.un4seen.com/");
+			Utils_OpenUrl("http://www.un4seen.com/");
 			break;
 		}
 		break;
@@ -328,11 +327,11 @@ int OptionsInit(WPARAM wParam, LPARAM)
 static void EnableFrameIcon(bool bEnable)
 {
 	if (bEnable) {
-		SendMessage(hwndMute, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_GetIcon("BASSSoundOn"));
+		SendMessage(hwndMute, BM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIcon("BASSSoundOn"));
 		SendMessage(hwndMute, BUTTONADDTOOLTIP, (WPARAM)Translate("Disable sounds"), 0);
 	}
 	else {
-		SendMessage(hwndMute, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_GetIcon("BASSSoundOff"));
+		SendMessage(hwndMute, BM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIcon("BASSSoundOff"));
 		SendMessage(hwndMute, BUTTONADDTOOLTIP, (WPARAM)Translate("Enable sounds"), 0);
 	}
 }
@@ -353,6 +352,8 @@ static LRESULT CALLBACK SliderWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 
 static LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	RECT rc;
+
 	switch (msg) {
 	case WM_CREATE:
 		hwndMute = CreateWindow(MIRANDABUTTONCLASS, _T(""), WS_CHILD | WS_VISIBLE, 1, 1, 16, 16, hwnd,
@@ -391,23 +392,17 @@ static LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 		break;
 
 	case WM_SIZE:
-	{
-		RECT rect;
-		GetClientRect(hwnd, &rect);
+		GetClientRect(hwnd, &rc);
 		if (hwndMute)
-			MoveWindow(hwndMute, rect.right - 20, 2, 16, 16, FALSE);
-		SetWindowPos(hwndSlider, 0, 1, rect.top + 1 + (20 - 18) / 2, rect.right - rect.left - 1 - 20, 18, SWP_NOZORDER);
-		InvalidateRect(hwnd, &rect, FALSE);
+			MoveWindow(hwndMute, rc.right - 20, 2, 16, 16, FALSE);
+		SetWindowPos(hwndSlider, 0, 1, rc.top + 1 + (20 - 18) / 2, rc.right - rc.left - 1 - 20, 18, SWP_NOZORDER);
+		InvalidateRect(hwnd, &rc, FALSE);
 		return 0;
-	}
 
 	case WM_ERASEBKGND:
-	{
-		RECT rc;
 		GetClientRect(hwnd, &rc);
 		FillRect((HDC)wParam, &rc, hBkgBrush);
 		return TRUE;
-	}
 
 	case WM_CTLCOLORSTATIC:
 		if ((HWND)lParam == hwndSlider) {
@@ -461,7 +456,7 @@ void CreateFrame()
 	RegisterClass(&wndclass);
 
 	hwnd_plugin = CreateWindow(_T("BassInterfaceFrame"), TranslateT("Bass Interface"),
-		WS_CHILD | WS_CLIPCHILDREN, 0, 0, 10, 10, (HWND)CallService(MS_CLUI_GETHWND, 0, 0), NULL, hInst, NULL);
+		WS_CHILD | WS_CLIPCHILDREN, 0, 0, 10, 10, pcli->hwndContactList, NULL, hInst, NULL);
 
 	CLISTFrame Frame = { sizeof(CLISTFrame) };
 	Frame.tname = TranslateT("Bass Interface");
@@ -469,7 +464,7 @@ void CreateFrame()
 	Frame.align = alBottom;
 	Frame.Flags = F_TCHAR | F_VISIBLE | F_SHOWTB | F_SHOWTBTIP;
 	Frame.height = 22;
-	Frame.hIcon = LoadSkinnedIcon(SKINICON_OTHER_FRAME);
+	Frame.hIcon = Skin_LoadIcon(SKINICON_OTHER_FRAME);
 	frame_id = (HANDLE)CallService(MS_CLIST_FRAMES_ADDFRAME, (WPARAM)&Frame, 0);
 
 	ColourIDT colourid = { 0 };
@@ -512,15 +507,14 @@ void LoadBassLibrary(TCHAR CurrBassPath[MAX_PATH])
 		sndLimSnd = db_get_b(NULL, ModuleName, OPT_MAXCHAN, MAXCHAN);
 		if (sndLimSnd > MAXCHAN)
 			sndLimSnd = MAXCHAN;
+		
 		TimeWrd1 = db_get_w(NULL, ModuleName, OPT_TIME1, 0);
 		TimeWrd2 = db_get_w(NULL, ModuleName, OPT_TIME2, 0);
 		QuietTime = db_get_b(NULL, ModuleName, OPT_QUIETTIME, 0);
 		EnPreview = db_get_b(NULL, ModuleName, OPT_PREVIEW, 0);
-
 		StatMask = db_get_w(NULL, ModuleName, OPT_STATUS, 0x3ff);
 
-		ClistHWND = (HWND)CallService("CLUI/GetHwnd", 0, 0);
-		BASS_Init(device, 44100, 0, ClistHWND, NULL);
+		BASS_Init(device, 44100, 0, pcli->hwndContactList, NULL);
 
 		Volume = db_get_b(NULL, ModuleName, OPT_VOLUME, 33);
 		BASS_SetConfig(BASS_CONFIG_GVOL_STREAM, Volume * 100);
@@ -536,7 +530,7 @@ void LoadBassLibrary(TCHAR CurrBassPath[MAX_PATH])
 int OnFoldersChanged(WPARAM, LPARAM)
 {
 	FoldersGetCustomPathT(hBASSFolder, CurrBassPath, MAX_PATH, _T(""));
-	_tcscat(CurrBassPath, _T("\\bass.dll"));
+	mir_tstrcat(CurrBassPath, _T("\\bass.dll"));
 
 	if (hBass != NULL) {
 		BASS_Free();
@@ -553,12 +547,12 @@ int OnModulesLoaded(WPARAM, LPARAM)
 {
 	if (hBASSFolder = FoldersRegisterCustomPathT(LPGEN("Bass Interface"), LPGEN("Bass library"), PLUGINS_PATHT _T("\\Bass"))) {
 		FoldersGetCustomPathT(hBASSFolder, CurrBassPath, MAX_PATH, _T(""));
-		_tcscat(CurrBassPath, _T("\\bass.dll"));
+		mir_tstrcat(CurrBassPath, _T("\\bass.dll"));
 	}
 	else {
 		DBVARIANT dbv;
 		if (db_get_ts(NULL, ModuleName, OPT_BASSPATH, &dbv)) {
-			mir_tstrncpy(CurrBassPath, VARST(_T("Plugins\\Bass\\bass.dll")), SIZEOF(CurrBassPath));
+			mir_tstrncpy(CurrBassPath, VARST(_T("Plugins\\Bass\\bass.dll")), _countof(CurrBassPath));
 			db_set_ts(NULL, ModuleName, OPT_BASSPATH, CurrBassPath);
 		}
 		else {
@@ -609,12 +603,13 @@ static IconItem iconList[] =
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
+	mir_getCLI();
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
 	HookEvent(ME_SYSTEM_SHUTDOWN, OnShutdown);
 	HookEvent(ME_DB_CONTACT_SETTINGCHANGED, OnSettingChanged);
 
-	Icon_Register(hInst, ModuleName, iconList, SIZEOF(iconList));
+	Icon_Register(hInst, ModuleName, iconList, _countof(iconList));
 	return 0;
 }
 

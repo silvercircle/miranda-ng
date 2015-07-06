@@ -73,20 +73,20 @@ static int IconsChanged(WPARAM, LPARAM)
 {
 	StatusIconData sid = { sizeof(sid) };
 	sid.szModule = MODULE_NAME;
-	sid.hIconDisabled = Skin_GetIcon("spellchecker_disabled");
+	sid.hIconDisabled = IcoLib_GetIcon("spellchecker_disabled");
 	sid.flags = MBF_HIDDEN | MBF_TCHAR;
 
 	for (int i = 0; i < languages.getCount(); i++) {
 		sid.dwId = i;
 
 		TCHAR tmp[128];
-		mir_sntprintf(tmp, SIZEOF(tmp), _T("%s - %s"),
+		mir_sntprintf(tmp, _countof(tmp), _T("%s - %s"),
 			TranslateT("Spell Checker"), languages[i]->full_name);
 		sid.tszTooltip = tmp;
 
-		HICON hIcon = (opts.use_flags) ? Skin_GetIconByHandle(languages[i]->hIcolib) : Skin_GetIcon("spellchecker_enabled");
+		HICON hIcon = (opts.use_flags) ? IcoLib_GetIconByHandle(languages[i]->hIcolib) : IcoLib_GetIcon("spellchecker_enabled");
 		sid.hIcon = CopyIcon(hIcon);
-		Skin_ReleaseIcon(hIcon);
+		IcoLib_ReleaseIcon(hIcon);
 
 		Srmm_ModifyIcon(NULL, &sid);
 	}
@@ -135,23 +135,23 @@ static int ModulesLoaded(WPARAM, LPARAM)
 	if (opts.use_flags) {
 		// Load flags dll
 		TCHAR flag_file[MAX_PATH];
-		mir_sntprintf(flag_file, SIZEOF(flag_file), _T("%s\\flags_icons.dll"), flagsDllFolder);
+		mir_sntprintf(flag_file, _countof(flag_file), _T("%s\\flags_icons.dll"), flagsDllFolder);
 		HMODULE hFlagsDll = LoadLibraryEx(flag_file, NULL, LOAD_LIBRARY_AS_DATAFILE);
 
 		TCHAR path[MAX_PATH];
 		GetModuleFileName(hInst, path, MAX_PATH);
 
-		SKINICONDESC sid = { sizeof(sid) };
+		SKINICONDESC sid = { 0 };
 		sid.flags = SIDF_ALL_TCHAR | SIDF_SORTED;
-		sid.ptszSection = LPGENT("Spell Checker")_T("/")LPGENT("Flags");
+		sid.section.t = LPGENT("Spell Checker")_T("/")LPGENT("Flags");
 
 		// Get language flags
 		for (int i = 0; i < languages.getCount(); i++) {
 			Dictionary *p = languages[i];
-			sid.ptszDescription = p->full_name;
+			sid.description.t = p->full_name;
 
 			char lang[32];
-			mir_snprintf(lang, SIZEOF(lang), "spell_lang_%d", i);
+			mir_snprintf(lang, _countof(lang), "spell_lang_%d", i);
 			sid.pszName = lang;
 
 			HICON hFlag = NULL, hFlagIcoLib = NULL;
@@ -160,23 +160,23 @@ static int ModulesLoaded(WPARAM, LPARAM)
 
 			if (hFlag != NULL) {
 				sid.hDefaultIcon = hFlag;
-				sid.ptszDefaultFile = NULL;
+				sid.defaultFile.t = NULL;
 				sid.iDefaultIndex = 0;
 			}
 			else {
-				hFlagIcoLib = Skin_GetIcon("spellchecker_unknown");
+				hFlagIcoLib = IcoLib_GetIcon("spellchecker_unknown");
 				sid.hDefaultIcon = hFlagIcoLib;
-				sid.ptszDefaultFile = NULL;
+				sid.defaultFile.t = NULL;
 				sid.iDefaultIndex = 0;
 			}
 
 			// Oki, lets add to IcoLib, then
-			p->hIcolib = Skin_AddIcon(&sid);
+			p->hIcolib = IcoLib_AddIcon(&sid);
 
 			if (hFlag != NULL)
 				DestroyIcon(hFlag);
 			else
-				Skin_ReleaseIcon(hFlagIcoLib);
+				IcoLib_ReleaseIcon(hFlagIcoLib);
 		}
 		FreeLibrary(hFlagsDll);
 	}
@@ -185,7 +185,7 @@ static int ModulesLoaded(WPARAM, LPARAM)
 		Dictionary *dict = languages[j];
 
 		TCHAR filename[MAX_PATH];
-		mir_sntprintf(filename, SIZEOF(filename), _T("%s\\%s.ar"), customDictionariesFolder, dict->language);
+		mir_sntprintf(filename, _countof(filename), _T("%s\\%s.ar"), customDictionariesFolder, dict->language);
 		dict->autoReplace = new AutoReplaceMap(filename, dict);
 
 		if (mir_tstrcmp(dict->language, opts.default_language) == 0)
@@ -199,17 +199,17 @@ static int ModulesLoaded(WPARAM, LPARAM)
 
 	StatusIconData sid = { sizeof(sid) };
 	sid.szModule = MODULE_NAME;
-	sid.hIconDisabled = Skin_GetIcon("spellchecker_disabled");
+	sid.hIconDisabled = IcoLib_GetIcon("spellchecker_disabled");
 	sid.flags = MBF_TCHAR | MBF_HIDDEN;
 
 	for (int i = 0; i < languages.getCount(); i++) {
 		sid.dwId = i;
 
 		TCHAR tmp[128];
-		mir_sntprintf(tmp, SIZEOF(tmp), _T("%s - %s"),
+		mir_sntprintf(tmp, _countof(tmp), _T("%s - %s"),
 			TranslateT("Spell Checker"), languages[i]->full_name);
 		sid.tszTooltip = tmp;
-		sid.hIcon = (opts.use_flags) ? Skin_GetIconByHandle(languages[i]->hIcolib) : Skin_GetIcon("spellchecker_enabled");
+		sid.hIcon = (opts.use_flags) ? IcoLib_GetIconByHandle(languages[i]->hIcolib) : IcoLib_GetIcon("spellchecker_enabled");
 		Srmm_AddIcon(&sid);
 	}
 
@@ -240,7 +240,7 @@ extern "C" int __declspec(dllexport) Load(void)
 	mir_getLP(&pluginInfo);
 
 	// icons
-	Icon_Register(hInst, LPGEN("Spell Checker"), iconList, SIZEOF(iconList));
+	Icon_Register(hInst, LPGEN("Spell Checker"), iconList, _countof(iconList));
 
 	// hooks
 	HookEvent(ME_SYSTEM_MODULESLOADED, ModulesLoaded);

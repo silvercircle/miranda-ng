@@ -46,7 +46,7 @@ GenericJob::~GenericJob()
 int GenericJob::openFileDialog() 
 {
 	TCHAR temp[MAX_PATH] = _T("");
-	mir_sntprintf(temp, SIZEOF(temp), _T("%s\0*.*\0"), TranslateT("All Files (*.*)"));
+	mir_sntprintf(temp, _T("%s\0*.*\0"), TranslateT("All Files (*.*)"));
 	OPENFILENAME ofn = {0};
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = 0;
@@ -54,7 +54,7 @@ int GenericJob::openFileDialog()
 	ofn.nFilterIndex = 1;
 	ofn.lpstrFile = this->stzFilePath;
 	ofn.lpstrTitle = TranslateT("FTP File - Select files");
-	ofn.nMaxFile = SIZEOF(this->stzFilePath);
+	ofn.nMaxFile = _countof(this->stzFilePath);
 	ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_ALLOWMULTISELECT | OFN_EXPLORER | OFN_NOCHANGEDIR;
 	return GetOpenFileName(&ofn);
 }
@@ -85,7 +85,7 @@ void GenericJob::getFilesFromOpenDialog()
 		TCHAR *ptr = this->stzFilePath + length + 1;
 		while (ptr[0]) 
 		{
-			mir_sntprintf(stzFile, SIZEOF(stzFile), _T("%s\\%s"), this->stzFilePath, ptr);
+			mir_sntprintf(stzFile, _countof(stzFile), _T("%s\\%s"), this->stzFilePath, ptr);
 			this->addFile(stzFile);
 			ptr += mir_tstrlen(ptr) + 1;
 		}
@@ -113,7 +113,7 @@ int GenericJob::getFilesFromFolder(TCHAR *stzFolder)
 	{
 		if (!(ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) 
 		{
-			mir_sntprintf(stzFile, SIZEOF(stzFile), _T("%s\\%s"), stzFolder, ffd.cFileName);
+			mir_sntprintf(stzFile, _countof(stzFile), _T("%s\\%s"), stzFolder, ffd.cFileName);
 			this->addFile(stzFile);
 		}
 
@@ -240,8 +240,8 @@ void GenericJob::refreshTab(bool bTabChanged)
 	{
 		if (this->hContact != NULL)
 		{
-			SendDlgItemMessage(uDlg->hwnd, IDC_BTN_PROTO, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadSkinnedProtoIcon( GetContactProto(this->hContact), ID_STATUS_ONLINE));
-			SetDlgItemText(uDlg->hwnd, IDC_UP_CONTACT, (TCHAR *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)this->hContact, GCDNF_TCHAR));
+			SendDlgItemMessage(uDlg->hwnd, IDC_BTN_PROTO, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadProtoIcon( GetContactProto(this->hContact), ID_STATUS_ONLINE));
+			SetDlgItemText(uDlg->hwnd, IDC_UP_CONTACT, (TCHAR *)pcli->pfnGetContactDisplayName(this->hContact, 0));
 		}
 		else
 		{

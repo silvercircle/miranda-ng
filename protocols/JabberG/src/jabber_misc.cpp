@@ -61,8 +61,8 @@ int JabberCompareJids(const TCHAR *jid1, const TCHAR *jid2)
 	// match only node@domain part
 	TCHAR szTempJid1[JABBER_MAX_JID_LEN], szTempJid2[JABBER_MAX_JID_LEN];
 	return mir_tstrcmpi(
-		JabberStripJid(jid1, szTempJid1, SIZEOF(szTempJid1)),
-		JabberStripJid(jid2, szTempJid2, SIZEOF(szTempJid2)));
+		JabberStripJid(jid1, szTempJid1, _countof(szTempJid1)),
+		JabberStripJid(jid2, szTempJid2, _countof(szTempJid2)));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -128,7 +128,7 @@ MCONTACT CJabberProto::DBCreateContact(const TCHAR *jid, const TCHAR *nick, BOOL
 	}
 
 	MCONTACT hNewContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
-	CallService(MS_PROTO_ADDTOCONTACT, (WPARAM)hNewContact, (LPARAM)m_szModuleName);
+	Proto_AddToContact(hNewContact, m_szModuleName);
 	setTString(hNewContact, "jid", s);
 	if (nick != NULL && *nick != '\0')
 		setTString(hNewContact, "Nick", nick);
@@ -361,14 +361,14 @@ void CJabberProto::FormatMirVer(pResourceStatus &resource, CMString &res)
 		int i;
 
 		// search through known software list
-		for (i = 0; i < SIZEOF(sttCapsNodeToName_Map); i++)
+		for (i = 0; i < _countof(sttCapsNodeToName_Map); i++)
 			if (_tcsstr(resource->m_tszCapsNode, sttCapsNodeToName_Map[i].node)) {
 				res.Format(_T("%s %s"), sttCapsNodeToName_Map[i].name, resource->m_tszCapsVer);
 				break;
 			}
 
 		// unknown software
-		if (i == SIZEOF(sttCapsNodeToName_Map))
+		if (i == _countof(sttCapsNodeToName_Map))
 			res.Format(_T("%s %s"), resource->m_tszCapsNode, resource->m_tszCapsVer);
 	}
 
@@ -407,9 +407,9 @@ void CJabberProto::UpdateMirVer(MCONTACT hContact, pResourceStatus &resource)
 
 	TCHAR szFullJid[JABBER_MAX_JID_LEN];
 	if (resource->m_tszResourceName && !_tcschr(jid, '/'))
-		mir_sntprintf(szFullJid, SIZEOF(szFullJid), _T("%s/%s"), jid, resource->m_tszResourceName);
+		mir_sntprintf(szFullJid, _countof(szFullJid), _T("%s/%s"), jid, resource->m_tszResourceName);
 	else
-		mir_tstrncpy(szFullJid, jid, SIZEOF(szFullJid));
+		mir_tstrncpy(szFullJid, jid, _countof(szFullJid));
 	setTString(hContact, DBSETTING_DISPLAY_UID, szFullJid);
 }
 
@@ -462,10 +462,10 @@ void CJabberProto::SetContactOfflineStatus(MCONTACT hContact)
 void CJabberProto::InitPopups(void)
 {
 	TCHAR desc[256];
-	mir_sntprintf(desc, SIZEOF(desc), _T("%s %s"), m_tszUserName, TranslateT("Errors"));
+	mir_sntprintf(desc, _T("%s %s"), m_tszUserName, TranslateT("Errors"));
 
 	char name[256];
-	mir_snprintf(name, SIZEOF(name), "%s_%s", m_szModuleName, "Error");
+	mir_snprintf(name, "%s_%s", m_szModuleName, "Error");
 
 	POPUPCLASS ppc = { sizeof(ppc) };
 	ppc.flags = PCF_TCHAR;
@@ -477,7 +477,7 @@ void CJabberProto::InitPopups(void)
 	ppc.iSeconds = 60;
 	m_hPopupClass = Popup_RegisterClass(&ppc);
 
-	Skin_ReleaseIcon(ppc.hIcon);
+	IcoLib_ReleaseIcon(ppc.hIcon);
 }
 
 void CJabberProto::MsgPopup(MCONTACT hContact, const TCHAR *szMsg, const TCHAR *szTitle)
@@ -490,7 +490,7 @@ void CJabberProto::MsgPopup(MCONTACT hContact, const TCHAR *szMsg, const TCHAR *
 		ppd.ptszText = szMsg;
 		ppd.pszClassName = name;
 		ppd.hContact = hContact;
-		mir_snprintf(name, SIZEOF(name), "%s_%s", m_szModuleName, "Error");
+		mir_snprintf(name, "%s_%s", m_szModuleName, "Error");
 
 		CallService(MS_POPUP_ADDPOPUPCLASS, 0, (LPARAM)&ppd);
 	}
@@ -498,4 +498,54 @@ void CJabberProto::MsgPopup(MCONTACT hContact, const TCHAR *szMsg, const TCHAR *
 		DWORD mtype = MB_OK | MB_SETFOREGROUND | MB_ICONSTOP;
 		MessageBox(NULL, szMsg, szTitle, mtype);
 	}
+}
+
+CMString CJabberProto::ExtractImage(HXML node)
+{
+	HXML nHtml, nBody, nImg;
+	LPCTSTR src;
+	CMString link;
+
+	if ((nHtml = XmlGetChild(node, "html")) != NULL &&
+		(nBody = XmlGetChild(nHtml, "body")) != NULL &&
+		(nImg = XmlGetChild(nBody, "img")) != NULL &&
+		(src = XmlGetAttrValue(nImg, _T("src"))) != NULL) {
+
+		CMString strSrc(src);
+		if (strSrc.Left(11).Compare(L"data:image/") == 0) {
+			int end = strSrc.Find(L';');
+			if (end != -1) {
+				CMString ext(strSrc.c_str() + 11, end - 11);
+				int comma = strSrc.Find(L',', end);
+				if (comma != -1) {
+					CMString image(strSrc.c_str() + comma + 1, strSrc.GetLength() - comma - 1);
+					image.Replace(L"%2B", L"+");
+					image.Replace(L"%2F", L"/");
+					image.Replace(L"%3D", L"=");
+
+					TCHAR tszTempPath[MAX_PATH], tszTempFile[MAX_PATH];
+					GetTempPath(_countof(tszTempPath), tszTempPath);
+					GetTempFileName(tszTempPath, _T("jab"), InterlockedIncrement(&g_nTempFileId), tszTempFile);
+					_tcsncat_s(tszTempFile, _T("."), 1);
+					_tcsncat_s(tszTempFile, ext, ext.GetLength());
+
+					HANDLE h = CreateFile(tszTempFile, GENERIC_READ | GENERIC_WRITE,
+						FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS,
+						FILE_ATTRIBUTE_NORMAL, NULL);
+
+					if (h != INVALID_HANDLE_VALUE) {
+						DWORD n;
+						unsigned int bufferLen;
+						ptrA buffer((char*)mir_base64_decode(_T2A(image), &bufferLen));
+						WriteFile(h, buffer, bufferLen, &n, NULL);
+						CloseHandle(h);
+
+						link = _T(" file:///");
+						link += tszTempFile;
+					}
+				}
+			}
+		}
+	}
+	return link;
 }

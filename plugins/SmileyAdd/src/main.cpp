@@ -50,13 +50,10 @@ static IconItem icon = { LPGEN("Button smiley"), "SmileyAdd_ButtonSmiley", IDI_S
 
 static int ModulesLoaded(WPARAM, LPARAM)
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.flags = CMIF_ROOTPOPUP;
-	mi.popupPosition = 2000070050;
+	CMenuItem mi;
 	mi.position = 2000070050;
-	mi.icolibItem = icon.hIcolib;
-	mi.pszPopupName = (char*)-1;
-	mi.pszName = LPGEN("Assign smiley category");
+	mi.hIcolibItem = icon.hIcolib;
+	mi.name.a = LPGEN("Assign smiley category");
 	hContactMenuItem = Menu_AddContactMenuItem(&mi);
 
 	DownloadInit();

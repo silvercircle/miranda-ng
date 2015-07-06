@@ -48,10 +48,10 @@ struct WindowData
 
 static void RemoveProtoPic(const char *szProto)
 {
-	db_unset(NULL, PPICT_MODULE, szProto);
-
 	if (szProto == NULL)
 		return;
+
+	db_unset(NULL, PPICT_MODULE, szProto);
 
 	if (!mir_strcmp(AVS_DEFAULT, szProto)) {
 		for (int i = 0; i < g_ProtoPictures.getCount(); i++) {
@@ -60,7 +60,7 @@ static void RemoveProtoPic(const char *szProto)
 				continue;
 
 			p.clear();
-			CreateAvatarInCache(0, &p, (char*)p.szProtoname);
+			CreateAvatarInCache(0, &p, (char *)p.szProtoname);
 			NotifyEventHooks(hEventChanged, 0, (LPARAM)&p);
 		}
 		return;
@@ -71,17 +71,17 @@ static void RemoveProtoPic(const char *szProto)
 		mir_strncpy(szProtoname, szProto, mir_strlen(szProto) - mir_strlen("accounts"));
 		mir_strcpy(szProtoname, strrchr(szProtoname, ' ') + 1);
 		for (int i = 0; i < g_ProtoPictures.getCount(); i++) {
-			protoPicCacheEntry& p = g_ProtoPictures[i];
+			protoPicCacheEntry &p = g_ProtoPictures[i];
 
 			if (p.szProtoname == NULL)
 				continue;
-			PROTOACCOUNT *pdescr = ProtoGetAccount(p.szProtoname);
+			PROTOACCOUNT *pdescr = Proto_GetAccount(p.szProtoname);
 			if (pdescr == NULL && mir_strcmp(p.szProtoname, szProto))
 				continue;
 
 			if (!mir_strcmp(p.szProtoname, szProto) || !mir_strcmp(pdescr->szProtoName, szProtoname)) {
 				p.clear();
-				CreateAvatarInCache(0, &p, (char*)p.szProtoname);
+				CreateAvatarInCache(0, &p, (char *)p.szProtoname);
 				NotifyEventHooks(hEventChanged, 0, (LPARAM)&p);
 			}
 		}
@@ -89,7 +89,7 @@ static void RemoveProtoPic(const char *szProto)
 	}
 
 	for (int i = 0; i < g_ProtoPictures.getCount(); i++) {
-		protoPicCacheEntry& p = g_ProtoPictures[i];
+		protoPicCacheEntry &p = g_ProtoPictures[i];
 		if (!mir_strcmp(p.szProtoname, szProto)) {
 			p.clear();
 			NotifyEventHooks(hEventChanged, 0, (LPARAM)&p);
@@ -99,13 +99,10 @@ static void RemoveProtoPic(const char *szProto)
 
 static void SetProtoPic(char *szProto)
 {
-	TCHAR FileName[MAX_PATH];
+	TCHAR FileName[MAX_PATH], filter[256];
+	Bitmap_GetFilter(filter, _countof(filter));
+
 	OPENFILENAME ofn = { 0 };
-	TCHAR filter[256];
-
-	filter[0] = '\0';
-	CallService(MS_UTILS_GETBITMAPFILTERSTRINGST, SIZEOF(filter), (LPARAM)filter);
-
 	ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400;
 	ofn.lpstrFilter = filter;
 	ofn.hwndOwner = 0;
@@ -143,7 +140,7 @@ static void SetProtoPic(char *szProto)
 		mir_strncpy(szProtoname, szProto, mir_strlen(szProto) - mir_strlen("accounts"));
 		mir_strcpy(szProtoname, strrchr(szProtoname, ' ') + 1);
 		for (int i = 0; i < g_ProtoPictures.getCount(); i++) {
-			PROTOACCOUNT* pdescr = (PROTOACCOUNT*)CallService(MS_PROTO_GETACCOUNT, 0, (LPARAM)g_ProtoPictures[i].szProtoname);
+			PROTOACCOUNT* pdescr = Proto_GetAccount(g_ProtoPictures[i].szProtoname);
 			if (pdescr == NULL && mir_strcmp(g_ProtoPictures[i].szProtoname, szProto))
 				continue;
 
@@ -283,7 +280,7 @@ static char* GetProtoFromList(HWND hwndDlg, int iItem)
 	if (!ListView_GetItem(GetDlgItem(hwndDlg, IDC_PROTOCOLS), &item))
 		return NULL;
 
-	protoPicCacheEntry *pce = (protoPicCacheEntry*)item.lParam;
+	protoPicCacheEntry *pce = (protoPicCacheEntry *)item.lParam;
 	return (pce == NULL) ? NULL : pce->szProtoname;
 }
 
@@ -314,7 +311,7 @@ static INT_PTR CALLBACK DlgProcOptionsProtos(HWND hwndDlg, UINT msg, WPARAM wPar
 				int newItem = ListView_InsertItem(hwndList, &item);
 				if (newItem >= 0)
 					ListView_SetCheckState(hwndList, newItem,
-					db_get_b(NULL, AVS_MODULE, g_ProtoPictures[i].szProtoname, 1) ? TRUE : FALSE);
+						db_get_b(NULL, AVS_MODULE, g_ProtoPictures[i].szProtoname, 1) ? TRUE : FALSE);
 			}
 			ListView_SetColumnWidth(hwndList, 0, LVSCW_AUTOSIZE);
 			ListView_Arrange(hwndList, LVA_ALIGNLEFT | LVA_ALIGNTOP);
@@ -329,7 +326,7 @@ static INT_PTR CALLBACK DlgProcOptionsProtos(HWND hwndDlg, UINT msg, WPARAM wPar
 		case IDC_SETPROTOPIC:
 		case IDC_REMOVEPROTOPIC:
 			int iItem = ListView_GetSelectionMark(hwndList);
-			char* szProto = GetProtoFromList(hwndDlg, iItem);
+			char *szProto = GetProtoFromList(hwndDlg, iItem);
 			if (szProto) {
 				if (LOWORD(wParam) == IDC_SETPROTOPIC)
 					SetProtoPic(szProto);
@@ -391,7 +388,7 @@ static INT_PTR CALLBACK DlgProcOptionsProtos(HWND hwndDlg, UINT msg, WPARAM wPar
 					if (!db_get_ts(NULL, PPICT_MODULE, g_selectedProto, &dbv)) {
 						if (!PathIsAbsoluteT(VARST(dbv.ptszVal))) {
 							TCHAR szFinalPath[MAX_PATH];
-							mir_sntprintf(szFinalPath, SIZEOF(szFinalPath), _T("%%miranda_path%%\\%s"), dbv.ptszVal);
+							mir_sntprintf(szFinalPath, _countof(szFinalPath), _T("%%miranda_path%%\\%s"), dbv.ptszVal);
 							SetDlgItemText(hwndDlg, IDC_PROTOAVATARNAME, szFinalPath);
 						}
 						else SetDlgItemText(hwndDlg, IDC_PROTOAVATARNAME, dbv.ptszVal);
@@ -492,7 +489,7 @@ INT_PTR CALLBACK DlgProcAvatarOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LPA
 		TranslateDialogDefault(hwndDlg);
 		if (hContact) {
 			TCHAR szTitle[512];
-			mir_sntprintf(szTitle, SIZEOF(szTitle), TranslateT("Set avatar options for %s"), pcli->pfnGetContactDisplayName(hContact, 0));
+			mir_sntprintf(szTitle, TranslateT("Set avatar options for %s"), pcli->pfnGetContactDisplayName(hContact, 0));
 			SetWindowText(hwndDlg, szTitle);
 		}
 		SendMessage(hwndDlg, DM_SETAVATARNAME, 0, 0);
@@ -905,7 +902,7 @@ static void EnableDisableControls(HWND hwndDlg, char *proto)
 			EnableWindow(GetDlgItem(hwndDlg, IDC_DELETE), FALSE);
 		}
 		else {
-			if (!ProtoServiceExists(proto, PS_SETMYAVATAR) && !ProtoServiceExists(proto, PS_SETMYAVATARW)) {
+			if (!ProtoServiceExists(proto, PS_SETMYAVATAR)) {
 				EnableWindow(GetDlgItem(hwndDlg, IDC_CHANGE), FALSE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_DELETE), FALSE);
 			}
@@ -1011,7 +1008,7 @@ static INT_PTR CALLBACK DlgProcAvatarProtoInfo(HWND hwndDlg, UINT msg, WPARAM wP
 			PROTOACCOUNT **accs;
 			int count, num = 0;
 
-			ProtoEnumAccounts(&count, &accs);
+			Proto_EnumAccounts(&count, &accs);
 			for (int i = 0; i < count; i++) {
 				if (!ProtoServiceExists(accs[i]->szModuleName, PS_GETMYAVATAR))
 					continue;
@@ -1019,7 +1016,7 @@ static INT_PTR CALLBACK DlgProcAvatarProtoInfo(HWND hwndDlg, UINT msg, WPARAM wP
 				if (!Proto_IsAvatarsEnabled(accs[i]->szModuleName))
 					continue;
 
-				ImageList_AddIcon(hIml, LoadSkinnedProtoIcon(accs[i]->szModuleName, ID_STATUS_ONLINE));
+				ImageList_AddIcon(hIml, Skin_LoadProtoIcon(accs[i]->szModuleName, ID_STATUS_ONLINE));
 				item.pszText = accs[i]->tszAccountName;
 				item.iImage = num;
 				item.lParam = (LPARAM)accs[i]->szModuleName;
@@ -1084,7 +1081,7 @@ static INT_PTR CALLBACK DlgProcAvatarProtoInfo(HWND hwndDlg, UINT msg, WPARAM wP
 					break;
 
 				char description[256];
-				CallProtoService(proto, PS_GETNAME, SIZEOF(description), (LPARAM)description);
+				CallProtoService(proto, PS_GETNAME, _countof(description), (LPARAM)description);
 				TCHAR *descr = mir_a2t(description);
 				if (MessageBox(hwndDlg, TranslateT("Are you sure you want to remove your avatar?"), descr, MB_YESNO) == IDYES)
 					avSetMyAvatar(proto, _T(""));

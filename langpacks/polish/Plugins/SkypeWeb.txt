@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: SkypeWeb.dll
 ;  Plugin: Skype protocol (Web)
-;  Version: 0.11.0.3
+;  Version: 0.12.1.2
 ;  Authors: Miranda NG Team
 ;============================================================
 [Skype protocol support for Miranda NG. Based on new Skype for Web.]
@@ -19,7 +19,7 @@ Zaproś użytkownika do czatu
 [Choose one of your contacts to be invited:]
 Wybierz jeden z kontaktów, który chcesz zaprosić:
 [Skypename:]
-Nazwa użytkownika Skype:
+Nazwa Skype:
 [Password:]
 Hasło:
 [Default group:]
@@ -34,6 +34,10 @@ Automatyczna synchronizacja wiadomości
 Używaj czasu lokalnego dla odebranych wiadomości
 [Always notify as unread for all incoming message]
 Zawsze powiadamiaj o nieprzeczytanych wiadomościach dla wszystkich przychodzących
+[Place:]
+Miejsce:
+[Use hostname]
+Używaj nazwy hosta
 [Enter password]
 Wprowadź hasło
 [Save password]
@@ -66,6 +70,8 @@ Wybierz &rolę
 &Admin
 [&User]
 &Użytkownik
+[Enter new chatroom topic]
+Wprowadź nowy temat pokoju
 ;file \protocols\SkypeWeb\src\skype_contacts.cpp
 [Are you sure?]
 Jesteś pewien?
@@ -122,6 +128,15 @@ Ikona błędu
 Ikona działania
 [Protocols]
 Protokoły
+;file \protocols\SkypeWeb\src\skype_login.cpp
+[Authentication failed. Invalid username.]
+Autoryzacja nie powiodła się. Nieprawidłowa nazwa użytkownika.
+[Authentication failed. Bad username or password.]
+Autoryzacja nie powiodła sie. Błędna nazwa użytkownika lub hasło.
+[Too many failed authentication attempts with given username or IP.]
+Zbyt wiele nieudanych prób autoryzacji z podaną nazwą użytkownika lub IP.
+[Authentication failed. Unknown error.]
+Autoryzacja nie powiodła się. Nieznany błąd.
 ;file \protocols\SkypeWeb\src\skype_menus.cpp
 [Request authorization]
 Poproś o autoryzację
@@ -136,6 +151,9 @@ Odblokuj kontakt
 [Create new chat]
 Utwórz nowy czat
 ;file \protocols\SkypeWeb\src\skype_messages.cpp
+;file \protocols\SkypeWeb\src\skype_mslogin.cpp
+[Enter confirmation code]
+Wprowadź kod weryfikacyjny
 ;file \protocols\SkypeWeb\src\skype_options.cpp
 [Network]
 Protokoły

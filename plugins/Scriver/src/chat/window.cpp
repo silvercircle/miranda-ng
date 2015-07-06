@@ -138,7 +138,7 @@ static void MessageDialogResize(HWND hwndDlg, SESSION_INFO *si, int w, int h)
 	BOOL bToolbar = SendMessage(GetParent(hwndDlg), CM_GETTOOLBARSTATUS, 0, 0);
 	int  buttonVisibility = bToolbar ? g_dat.chatBbuttonVisibility : 0;
 	int  hSplitterMinTop = TOOLBAR_HEIGHT + si->minLogBoxHeight, hSplitterMinBottom = si->minEditBoxHeight;
-	int  toolbarHeight = bToolbar ? IsToolbarVisible(SIZEOF(toolbarButtons), g_dat.chatBbuttonVisibility) ? TOOLBAR_HEIGHT : TOOLBAR_HEIGHT / 3 : 0;
+	int  toolbarHeight = bToolbar ? IsToolbarVisible(_countof(toolbarButtons), g_dat.chatBbuttonVisibility) ? TOOLBAR_HEIGHT : TOOLBAR_HEIGHT / 3 : 0;
 
 	si->iSplitterY = si->desiredInputAreaHeight + SPLITTER_HEIGHT + 3;
 
@@ -147,7 +147,7 @@ static void MessageDialogResize(HWND hwndDlg, SESSION_INFO *si, int w, int h)
 	if (si->iSplitterY < hSplitterMinBottom)
 		si->iSplitterY = hSplitterMinBottom;
 
-	ShowToolbarControls(hwndDlg, SIZEOF(toolbarButtons), toolbarButtons, buttonVisibility, SW_SHOW);
+	ShowToolbarControls(hwndDlg, _countof(toolbarButtons), toolbarButtons, buttonVisibility, SW_SHOW);
 	ShowWindow(GetDlgItem(hwndDlg, IDC_CHAT_SPLITTERX), bNick ? SW_SHOW : SW_HIDE);
 	if (si->iType != GCW_SERVER)
 		ShowWindow(GetDlgItem(hwndDlg, IDC_CHAT_LIST), si->bNicklistEnabled ? SW_SHOW : SW_HIDE);
@@ -178,7 +178,7 @@ static void MessageDialogResize(HWND hwndDlg, SESSION_INFO *si, int w, int h)
 	hdwp = DeferWindowPos(hdwp, GetDlgItem(hwndDlg, IDC_CHAT_SPLITTERX), 0, w - si->iSplitterX, 1, 2, toolbarTopY - 1, SWP_NOZORDER);
 	hdwp = DeferWindowPos(hdwp, GetDlgItem(hwndDlg, IDC_CHAT_SPLITTERY), 0, 0, h - si->iSplitterY, w, SPLITTER_HEIGHT, SWP_NOZORDER);
 	hdwp = DeferWindowPos(hdwp, GetDlgItem(hwndDlg, IDC_CHAT_MESSAGE), 0, 1, h - si->iSplitterY + SPLITTER_HEIGHT, w - 2, si->iSplitterY - SPLITTER_HEIGHT - 1, SWP_NOZORDER);
-	hdwp = ResizeToolbar(hwndDlg, hdwp, w, toolbarTopY + 1, toolbarHeight - 1, SIZEOF(toolbarButtons), toolbarButtons, buttonVisibility);
+	hdwp = ResizeToolbar(hwndDlg, hdwp, w, toolbarTopY + 1, toolbarHeight - 1, _countof(toolbarButtons), toolbarButtons, buttonVisibility);
 	EndDeferWindowPos(hdwp);
 	if (si->hwndLog != NULL) {
 		IEVIEWWINDOW ieWindow;
@@ -278,7 +278,7 @@ LBL_SkipEnd:
 			if (!isRoom && !isTopic && g_Settings.bAddColonToAutoComplete && start == 0) {
 				szReplace = (TCHAR*)mir_alloc((mir_tstrlen(pszName) + 4) * sizeof(TCHAR));
 				mir_tstrcpy(szReplace, pszName);
-				_tcscat(szReplace, _T(": "));
+				mir_tstrcat(szReplace, _T(": "));
 				pszName = szReplace;
 			}
 			SendMessage(hwnd, EM_SETSEL, start, end);
@@ -791,7 +791,7 @@ static void ProcessNickListHovering(HWND hwnd, int hoveredItem, SESSION_INFO * p
 	USERINFO *ui = pci->SM_GetUserFromIndex(parentdat->ptszID, parentdat->pszModule, currentHovered);
 	if (ui) {
 		if (ProtoServiceExists(parentdat->pszModule, MS_GC_PROTO_GETTOOLTIPTEXT)) {
-			TCHAR *p = (TCHAR*)ProtoCallService(parentdat->pszModule, MS_GC_PROTO_GETTOOLTIPTEXT, (WPARAM)parentdat->ptszID, (LPARAM)ui->pszUID);
+			TCHAR *p = (TCHAR*)CallProtoService(parentdat->pszModule, MS_GC_PROTO_GETTOOLTIPTEXT, (WPARAM)parentdat->ptszID, (LPARAM)ui->pszUID);
 			if (p != NULL) {
 				_tcsncpy_s(tszBuf, p, _TRUNCATE);
 				mir_free(p);
@@ -799,7 +799,7 @@ static void ProcessNickListHovering(HWND hwnd, int hoveredItem, SESSION_INFO * p
 		}
 
 		if (tszBuf[0] == 0)
-			mir_sntprintf(tszBuf, SIZEOF(tszBuf), _T("%s: %s\r\n%s: %s\r\n%s: %s"),
+			mir_sntprintf(tszBuf, _countof(tszBuf), _T("%s: %s\r\n%s: %s\r\n%s: %s"),
 				TranslateT("Nickname"), ui->pszNick,
 				TranslateT("Unique ID"), ui->pszUID,
 				TranslateT("Status"), pci->TM_WordToString(parentdat->pStatuses, ui->Status));
@@ -856,7 +856,7 @@ static LRESULT CALLBACK NicklistSubclassProc(HWND hwnd, UINT msg, WPARAM wParam,
 		{
 			MEASUREITEMSTRUCT *mis = (MEASUREITEMSTRUCT *)lParam;
 			if (mis->CtlType == ODT_MENU)
-				return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
+				return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
 		}
 		return FALSE;
 
@@ -864,7 +864,7 @@ static LRESULT CALLBACK NicklistSubclassProc(HWND hwnd, UINT msg, WPARAM wParam,
 		{
 			DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT *)lParam;
 			if (dis->CtlType == ODT_MENU)
-				return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
+				return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
 		}
 		return FALSE;
 
@@ -967,11 +967,11 @@ static LRESULT CALLBACK NicklistSubclassProc(HWND hwnd, UINT msg, WPARAM wParam,
 			TCHAR szNew[2];
 			szNew[0] = (TCHAR)wParam;
 			szNew[1] = '\0';
-			if (mir_tstrlen(si->szSearch) >= SIZEOF(si->szSearch) - 2) {
+			if (mir_tstrlen(si->szSearch) >= _countof(si->szSearch) - 2) {
 				MessageBeep(MB_OK);
 				break;
 			}
-			_tcscat(si->szSearch, szNew);
+			mir_tstrcat(si->szSearch, szNew);
 		}
 		if (si->szSearch[0]) {
 			// iterate over the (sorted) list of nicknames and search for the
@@ -1108,7 +1108,6 @@ static INT_PTR CALLBACK RoomWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
 				iee.iType = IEE_CLEAR_LOG;
 				iee.hwnd = si->hwndLog;
 				iee.hContact = si->hContact;
-				iee.codepage = si->codePage;
 				iee.pszProto = si->pszModule;
 				CallService(MS_IEVIEW_EVENT, 0, (LPARAM)&iee);
 			}
@@ -1182,17 +1181,17 @@ static INT_PTR CALLBACK RoomWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
 
 		switch (si->iType) {
 		case GCW_CHATROOM:
-			mir_sntprintf(szTemp, SIZEOF(szTemp),
+			mir_sntprintf(szTemp,
 				(si->nUsersInNicklist == 1) ? TranslateT("%s: chat room (%u user)") : TranslateT("%s: chat room (%u users)"),
 				si->ptszName, si->nUsersInNicklist);
 			break;
 		case GCW_PRIVMESS:
-			mir_sntprintf(szTemp, SIZEOF(szTemp),
+			mir_sntprintf(szTemp,
 				(si->nUsersInNicklist == 1) ? TranslateT("%s: message session") : TranslateT("%s: message session (%u users)"),
 				si->ptszName, si->nUsersInNicklist);
 			break;
 		case GCW_SERVER:
-			mir_sntprintf(szTemp, SIZEOF(szTemp), _T("%s: Server"), si->ptszName);
+			mir_sntprintf(szTemp, _T("%s: Server"), si->ptszName);
 			break;
 		}
 		tbd.iFlags = TBDF_TEXT | TBDF_ICON;
@@ -1205,7 +1204,7 @@ static INT_PTR CALLBACK RoomWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
 		{
 			MODULEINFO *mi = pci->MM_FindModule(si->pszModule);
 			hIcon = si->wStatus == ID_STATUS_ONLINE ? mi->hOnlineIcon : mi->hOfflineIcon;
-			mir_sntprintf(szTemp, SIZEOF(szTemp), _T("%s : %s"), mi->ptszModDispName, si->ptszStatusbarText ? si->ptszStatusbarText : _T(""));
+			mir_sntprintf(szTemp, _T("%s : %s"), mi->ptszModDispName, si->ptszStatusbarText ? si->ptszStatusbarText : _T(""));
 
 			StatusBarData sbd;
 			sbd.iItem = 0;
@@ -1223,15 +1222,6 @@ static INT_PTR CALLBACK RoomWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
 			sid.szModule = SRMMMOD;
 			Srmm_ModifyIcon(si->hContact, &sid);
 		}
-		break;
-
-	case DM_GETCODEPAGE:
-		SetWindowLongPtr(hwndDlg, DWLP_MSGRESULT, si->codePage);
-		return TRUE;
-
-	case DM_SETCODEPAGE:
-		si->codePage = (int)lParam;
-		SendMessage(hwndDlg, GC_REDRAWLOG2, 0, 0);
 		break;
 
 	case DM_SWITCHINFOBAR:
@@ -1370,7 +1360,7 @@ static INT_PTR CALLBACK RoomWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
 		if (!MeasureMenuItem(wParam, lParam)) {
 			MEASUREITEMSTRUCT *mis = (MEASUREITEMSTRUCT *)lParam;
 			if (mis->CtlType == ODT_MENU)
-				return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
+				return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
 
 			int ih = GetTextPixelSize(_T("AQGgl'"), g_Settings.UserListFont, FALSE);
 			int ih2 = GetTextPixelSize(_T("AQGg'"), g_Settings.UserListHeadingsFont, FALSE);
@@ -1387,7 +1377,7 @@ static INT_PTR CALLBACK RoomWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
 		if (!DrawMenuItem(wParam, lParam)) {
 			DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT *)lParam;
 			if (dis->CtlType == ODT_MENU)
-				return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
+				return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
 
 			if (dis->CtlID == IDC_CHAT_LIST) {
 				int index = dis->itemID;
@@ -1410,17 +1400,17 @@ static INT_PTR CALLBACK RoomWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
 						FillRect(dis->hDC, &dis->rcItem, pci->hListBkgBrush);
 
 					if (g_Settings.bShowContactStatus && g_Settings.bContactStatusFirst && ui->ContactStatus) {
-						hIcon = LoadSkinnedProtoIcon(si->pszModule, ui->ContactStatus);
+						hIcon = Skin_LoadProtoIcon(si->pszModule, ui->ContactStatus);
 						DrawIconEx(dis->hDC, x_offset, dis->rcItem.top + offset - 3, hIcon, 16, 16, 0, NULL, DI_NORMAL);
-						Skin_ReleaseIcon(hIcon);
+						IcoLib_ReleaseIcon(hIcon);
 						x_offset += 18;
 					}
 					DrawIconEx(dis->hDC, x_offset, dis->rcItem.top + offset, pci->SM_GetStatusIcon(si, ui), 10, 10, 0, NULL, DI_NORMAL);
 					x_offset += 12;
 					if (g_Settings.bShowContactStatus && !g_Settings.bContactStatusFirst && ui->ContactStatus) {
-						hIcon = LoadSkinnedProtoIcon(si->pszModule, ui->ContactStatus);
+						hIcon = Skin_LoadProtoIcon(si->pszModule, ui->ContactStatus);
 						DrawIconEx(dis->hDC, x_offset, dis->rcItem.top + offset - 3, hIcon, 16, 16, 0, NULL, DI_NORMAL);
-						Skin_ReleaseIcon(hIcon);
+						IcoLib_ReleaseIcon(hIcon);
 						x_offset += 18;
 					}
 
@@ -1442,7 +1432,7 @@ static INT_PTR CALLBACK RoomWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
 				char szIndicator = SM_GetStatusIndicator(si, ui);
 				if (szIndicator > '\0') {
 					static TCHAR ptszBuf[128];
-					mir_sntprintf(ptszBuf, SIZEOF(ptszBuf), _T("%c%s"), szIndicator, ui->pszNick);
+					mir_sntprintf(ptszBuf, _countof(ptszBuf), _T("%c%s"), szIndicator, ui->pszNick);
 					SendDlgItemMessage(hwndDlg, IDC_CHAT_LIST, LB_ADDSTRING, 0, (LPARAM)ptszBuf);
 				}
 				else SendDlgItemMessage(hwndDlg, IDC_CHAT_LIST, LB_ADDSTRING, 0, (LPARAM)ui->pszNick);
@@ -1651,7 +1641,7 @@ LABEL_SHOWWINDOW:
 					USERINFO *ui = pci->SM_GetUserFromIndex(parentdat->ptszID, parentdat->pszModule, item);
 					if (ui != NULL) {
 						static TCHAR ptszBuf[1024];
-						mir_sntprintf(ptszBuf, SIZEOF(ptszBuf), _T("%s: %s\r\n%s: %s\r\n%s: %s"),
+						mir_sntprintf(ptszBuf, _countof(ptszBuf), _T("%s: %s\r\n%s: %s\r\n%s: %s"),
 							TranslateT("Nickname"), ui->pszNick,
 							TranslateT("Unique ID"), ui->pszUID,
 							TranslateT("Status"), pci->TM_WordToString(parentdat->pStatuses, ui->Status));
@@ -1703,7 +1693,7 @@ LABEL_SHOWWINDOW:
 
 		case IDOK:
 			if (IsWindowEnabled(GetDlgItem(hwndDlg, IDOK))) {
-				ptrA pszRtf(GetRichTextRTF(GetDlgItem(hwndDlg, IDC_CHAT_MESSAGE)));
+				char *pszRtf = GetRichTextRTF(GetDlgItem(hwndDlg, IDC_CHAT_MESSAGE));
 				if (pszRtf == NULL)
 					break;
 
@@ -1717,6 +1707,7 @@ LABEL_SHOWWINDOW:
 					cmdListNew = tcmdlist_last(si->cmdList);
 				}
 
+				// takes pszRtf to a queue, no leak here
 				si->cmdList = tcmdlist_append(si->cmdList, pszRtf, 20, FALSE);
 
 				CMString ptszText(ptrT(mir_utf8decodeT(pszRtf)));
@@ -1753,7 +1744,7 @@ LABEL_SHOWWINDOW:
 		case IDC_CHAT_MESSAGE:
 			if (HIWORD(wParam) == EN_CHANGE) {
 				si->cmdListCurrent = NULL;
-				EnableWindow(GetDlgItem(hwndDlg, IDOK), GetRichTextLength(GetDlgItem(hwndDlg, IDC_CHAT_MESSAGE), si->codePage, FALSE) != 0);
+				EnableWindow(GetDlgItem(hwndDlg, IDOK), GetRichTextLength(GetDlgItem(hwndDlg, IDC_CHAT_MESSAGE), 1200, FALSE) != 0);
 			}
 			break;
 
@@ -1928,8 +1919,9 @@ LABEL_SHOWWINDOW:
 
 	case WM_RBUTTONUP:
 		hToolbarMenu = CreatePopupMenu();
-		for (int i = 0; i < SIZEOF(toolbarButtons); i++) {
-			MENUITEMINFO mii = { sizeof(mii) };
+		for (int i = 0; i < _countof(toolbarButtons); i++) {
+			MENUITEMINFO mii = { 0 };
+			mii.cbSize = sizeof(mii);
 			mii.fMask = MIIM_ID | MIIM_STRING | MIIM_STATE | MIIM_DATA | MIIM_BITMAP;
 			mii.fType = MFT_STRING;
 			mii.fState = (g_dat.chatBbuttonVisibility & (1 << i)) ? MFS_CHECKED : MFS_UNCHECKED;
@@ -1954,12 +1946,12 @@ LABEL_SHOWWINDOW:
 		return TRUE;
 
 	case DM_GETCONTEXTMENU:
-		SetWindowLongPtr(hwndDlg, DWLP_MSGRESULT, CallService(MS_CLIST_MENUBUILDCONTACT, si->hContact, 0));
+		SetWindowLongPtr(hwndDlg, DWLP_MSGRESULT, (LPARAM)Menu_BuildContactMenu(si->hContact));
 		return TRUE;
 
 	case WM_CONTEXTMENU:
 		if (GetParent(hwndDlg) == (HWND)wParam) {
-			HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDCONTACT, si->hContact, 0);
+			HMENU hMenu = Menu_BuildContactMenu(si->hContact);
 			GetCursorPos(&pt);
 			TrackPopupMenu(hMenu, 0, pt.x, pt.y, 0, hwndDlg, NULL);
 			DestroyMenu(hMenu);

@@ -3,11 +3,11 @@
 TCHAR* CSteamProto::GetAvatarFilePath(MCONTACT hContact)
 {
 	TCHAR path[MAX_PATH];
-	mir_sntprintf(path, SIZEOF(path), _T("%s\\%S"), VARST(_T("%miranda_avatarcache%")), m_szModuleName);
+	mir_sntprintf(path, _countof(path), _T("%s\\%S"), VARST(_T("%miranda_avatarcache%")), m_szModuleName);
 
 	DWORD dwAttributes = GetFileAttributes(path);
 	if (dwAttributes == 0xffffffff || (dwAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
-		CallService(MS_UTILS_CREATEDIRTREET, 0, (LPARAM)path);
+		CreateDirectoryTreeT(path);
 
 	ptrA steamId(getStringA(hContact, "SteamID"));
 	if (steamId != NULL)
@@ -18,7 +18,7 @@ TCHAR* CSteamProto::GetAvatarFilePath(MCONTACT hContact)
 	return mir_tstrdup(path);
 }
 
-bool CSteamProto::GetDbAvatarInfo(PROTO_AVATAR_INFORMATIONT &pai)
+bool CSteamProto::GetDbAvatarInfo(PROTO_AVATAR_INFORMATION &pai)
 {
 	ptrT path(GetAvatarFilePath(pai.hContact));
 	if (!path)
@@ -44,8 +44,8 @@ void CSteamProto::CheckAvatarChange(MCONTACT hContact, std::string avatarUrl)
 
 	if (!hContact)
 	{
-		PROTO_AVATAR_INFORMATIONT pai = { sizeof(pai) };
-		if (GetAvatarInfo(update_required ? GAIF_FORCE : 0, (LPARAM)&pai) != GAIR_WAITFOR)
+		PROTO_AVATAR_INFORMATION ai = { 0 };
+		if (GetAvatarInfo(update_required ? GAIF_FORCE : 0, (LPARAM)&ai) != GAIR_WAITFOR)
 			CallService(MS_AV_REPORTMYAVATARCHANGED, (WPARAM)m_szModuleName, 0);
 	}
 	else if (update_required)
@@ -60,7 +60,7 @@ INT_PTR CSteamProto::GetAvatarInfo(WPARAM wParam, LPARAM lParam)
 	if (!lParam)
 		return GAIR_NOAVATAR;
 
-	PROTO_AVATAR_INFORMATIONT* pai = (PROTO_AVATAR_INFORMATIONT*)lParam;
+	PROTO_AVATAR_INFORMATION* pai = (PROTO_AVATAR_INFORMATION*)lParam;
 
 	ptrA avatarUrl(getStringA(pai->hContact, "AvatarUrl"));
 	if (!avatarUrl)
@@ -79,10 +79,9 @@ INT_PTR CSteamProto::GetAvatarInfo(WPARAM wParam, LPARAM lParam)
 		if (needLoad)
 		{
 			PushRequest(
-				new SteamWebApi::GetAvatarRequest(avatarUrl),
+				new GetAvatarRequest(avatarUrl),
 				&CSteamProto::OnGotAvatar,
-				(void*)pai->hContact,
-				ARG_NO_FREE);
+				(void*)pai->hContact);
 
 			return GAIR_WAITFOR;
 		}
@@ -145,7 +144,7 @@ INT_PTR CSteamProto::GetMyAvatar(WPARAM wParam, LPARAM lParam)
 	TCHAR* buf = (TCHAR*)wParam;
 	int  size = (int)lParam;
 
-	PROTO_AVATAR_INFORMATIONT ai = { sizeof(ai) };
+	PROTO_AVATAR_INFORMATION ai = { 0 };
 	switch (GetAvatarInfo(0, (LPARAM)&ai)) {
 	case GAIR_SUCCESS:
 		_tcsncpy(buf, ai.filename, size);

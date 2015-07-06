@@ -33,75 +33,57 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdio.h>
 
 #if !defined(M_SYSTEM_H__)
-#include "m_system.h"
+#include <m_system.h>
 #endif
 
-//this entire module is v0.1.0.1+
-//this module cannot be redefined by a plugin, because it's not useful for it
-//to be possible
-//There are some more utility services in the database for dealing with time
-//and simple string scrambling, but they are very db-orientated
-
-/* Opens a URL in the user's default web browser   v0.1.0.1+
-wParam = OUF_* flags
-lParam = (LPARAM)(const TCHAR*)szUrl
-returns 0 always
-bOpenInNewWindow should be zero to open the URL in the browser window the user
-last used, or nonzero to open in a new browser window. If there's no browser
-running, one will be opened to show the URL.
-*/
-
-#define OUF_NEWWINDOW   1
-#define OUF_UNICODE     2
-
-#if defined( _UNICODE )
-	#define OUF_TCHAR OUF_UNICODE
-#else
-	#define OUF_TCHAR 0
+#if !defined(M_STRING_H__)
+#include <m_string.h>
 #endif
 
-#define MS_UTILS_OPENURL	"Utils/OpenURL"
+/////////////////////////////////////////////////////////////////////////////////////////
+// Opens a URL in the user's default web browser
+//
+// bOpenInNewWindow should be zero to open the URL in the browser window the user
+// last used, or nonzero to open in a new browser window. If there's no browser
+// running, one will be opened to show the URL.
 
-/* Resizes a dialog by calling a custom routine to move the individual
-controls   v0.1.0.1+
-wParam = 0
-lParam = (LPARAM)(UTILRESIZEDIALOG*)&urd
-Returns 0 on success, or nonzero on failure
-Does not support dialogtemplateex dialog boxes, and will return failure if you
-try to resize one
-The dialog itself should have been resized prior to calling this service
-pfnResizer is called once for each control in the dialog
-pfnResizer should return a combination of one rd_anchorx_ and one rd_anchory
-constant
-*/
-typedef struct {
-	int cbSize;
-	UINT wId;				//control ID
-	RECT rcItem;			//original control rectangle, relative to dialog
-							//modify in-place to specify the new position
-	SIZE dlgOriginalSize;	//size of dialog client area in template
-	SIZE dlgNewSize;		//current size of dialog client area
-} UTILRESIZECONTROL;
-typedef int (*DIALOGRESIZERPROC)(HWND hwndDlg, LPARAM lParam, UTILRESIZECONTROL *urc);
-typedef struct {
-	int cbSize;
-	HWND hwndDlg;
-	HINSTANCE hInstance;	//module containing the dialog template
-	LPCSTR lpTemplate;		//dialog template
-	LPARAM lParam;			//caller-defined
-	DIALOGRESIZERPROC pfnResizer;
-} UTILRESIZEDIALOG;
-#define RD_ANCHORX_CUSTOM	0	//function did everything required to the x axis, do no more processing
-#define RD_ANCHORX_LEFT 	0	//move the control to keep it constant distance from the left edge of the dialog
-#define RD_ANCHORX_RIGHT	1	//move the control to keep it constant distance from the right edge of the dialog
-#define RD_ANCHORX_WIDTH	2	//size the control to keep it constant distance from both edges of the dialog
-#define RD_ANCHORX_CENTRE	4	//move the control to keep it constant distance from the centre of the dialog
+EXTERN_C MIR_CORE_DLL(void) Utils_OpenUrl(const char *pszUrl, bool bOpenInNewWindow = true);
+EXTERN_C MIR_CORE_DLL(void) Utils_OpenUrlW(const wchar_t *pszUrl, bool bOpenInNewWindow = true);
+
+#define Utils_OpenUrlT Utils_OpenUrlW
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// Resizes a dialog by calling a custom routine to move the individual
+// Returns 0 on success, or nonzero on failure
+// Does not support dialogtemplateex dialog boxes, and will return failure if you try to resize one
+// The dialog itself should have been resized prior to calling this service
+// pfnResizer is called once for each control in the dialog
+// pfnResizer should return a combination of one rd_anchorx_ and one rd_anchory constant
+
+#define RD_ANCHORX_CUSTOM	0	// function did everything required to the x axis, do no more processing
+#define RD_ANCHORX_LEFT 	0	// move the control to keep it constant distance from the left edge of the dialog
+#define RD_ANCHORX_RIGHT	1	// move the control to keep it constant distance from the right edge of the dialog
+#define RD_ANCHORX_WIDTH	2	// size the control to keep it constant distance from both edges of the dialog
+#define RD_ANCHORX_CENTRE	4	// move the control to keep it constant distance from the centre of the dialog
 #define RD_ANCHORY_CUSTOM	0
 #define RD_ANCHORY_TOP		0
 #define RD_ANCHORY_BOTTOM	8
 #define RD_ANCHORY_HEIGHT	16
 #define RD_ANCHORY_CENTRE	32
-#define MS_UTILS_RESIZEDIALOG	 "Utils/ResizeDialog"
+
+struct UTILRESIZECONTROL
+{
+	int cbSize;
+	UINT wId;             // control ID
+	RECT rcItem;          // original control rectangle, relative to dialog
+	                      // modify in-place to specify the new position
+	SIZE dlgOriginalSize; // size of dialog client area in template
+	SIZE dlgNewSize;      // current size of dialog client area
+};
+
+typedef int (*DIALOGRESIZERPROC)(HWND hwndDlg, LPARAM lParam, UTILRESIZECONTROL *urc);
+
+EXTERN_C MIR_CORE_DLL(int) Utils_ResizeDialog(HWND hwndDlg, HINSTANCE hInstance, LPCSTR lpTemplate, DIALOGRESIZERPROC pfnResizer, LPARAM lParam = 0);
 
 /* Gets the name of a country given its number		v0.1.2.0+
 wParam = countryId
@@ -134,83 +116,55 @@ struct CountryListEntry {
 };
 #define MS_UTILS_GETCOUNTRYLIST    "Utils/GetCountryList"
 
-/******************************* Window lists *******************************/
+/////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////// Window lists //////////////////////////////////////
 
+#if defined(MIR_CORE_EXPORTS)
+typedef struct TWindowList *MWindowList;
+#else
+DECLARE_HANDLE(MWindowList);
+#endif
+
+/////////////////////////////////////////////////////////////////////////////////////////
 // allocates a window list
-// wParam = lParam = 0 (unused)
 // returns a handle to the new window list
-#define MS_UTILS_ALLOCWINDOWLIST "Utils/AllocWindowList"
-__forceinline HANDLE WindowList_Create(void)
-{	return (HANDLE)CallService(MS_UTILS_ALLOCWINDOWLIST, 0, 0);
-}
 
+EXTERN_C MIR_CORE_DLL(MWindowList) WindowList_Create(void);
+
+/////////////////////////////////////////////////////////////////////////////////////////
 // destroys a window list
-// wParam = (HANDLE) window list handle
-// lParam = 0 (unused)
-// returns a handle to the new window list
-#define MS_UTILS_DESTROYWINDOWLIST "Utils/DestroyWindowList"
-__forceinline HANDLE WindowList_Destroy(HANDLE hList)
-{	return (HANDLE)CallService(MS_UTILS_DESTROYWINDOWLIST, (WPARAM)hList, 0);
-}
 
+EXTERN_C MIR_CORE_DLL(void) WindowList_Destroy(MWindowList hList);
+
+/////////////////////////////////////////////////////////////////////////////////////////
 // adds a window to the specified window list
-// wParam = 0
-// lParam = (LPARAM)(WINDOWLISTENTRY*)&wle
 // returns 0 on success, nonzero on failure
-typedef struct {
-	HANDLE hList;
-	HWND hwnd;
-	MCONTACT hContact;
-} WINDOWLISTENTRY;
-#define MS_UTILS_ADDTOWINDOWLIST "Utils/AddToWindowList"
-__forceinline INT_PTR WindowList_Add(HANDLE hList, HWND hwnd, MCONTACT hContact) {
-	WINDOWLISTENTRY wle;
-	wle.hList = hList; wle.hwnd = hwnd; wle.hContact = hContact;
-	return CallService(MS_UTILS_ADDTOWINDOWLIST, 0, (LPARAM)&wle);
-}
 
+EXTERN_C MIR_CORE_DLL(int) WindowList_Add(MWindowList hList, HWND hwnd, MCONTACT hContact);
+
+/////////////////////////////////////////////////////////////////////////////////////////
 // removes a window from the specified window list
-// wParam = (WPARAM)(HANDLE)hList
-// lParam = (LPARAM)(HWND)hwnd
 // returns 0 on success, nonzero on failure
-#define MS_UTILS_REMOVEFROMWINDOWLIST "Utils/RemoveFromWindowList"
-__forceinline INT_PTR WindowList_Remove(HANDLE hList, HWND hwnd) {
-	return CallService(MS_UTILS_REMOVEFROMWINDOWLIST, (WPARAM)hList, (LPARAM)hwnd);
-}
 
+EXTERN_C MIR_CORE_DLL(int) WindowList_Remove(MWindowList hList, HWND hwnd);
+
+/////////////////////////////////////////////////////////////////////////////////////////
 // finds a window given the hContact
-// wParam = (WPARAM)(HANDLE)hList
-// lParam = (MCONTACT)hContact
 // returns the window handle on success, or NULL on failure
-#define MS_UTILS_FINDWINDOWINLIST "Utils/FindWindowInList"
-__forceinline HWND WindowList_Find(HANDLE hList, MCONTACT hContact) {
-	return (HWND)CallService(MS_UTILS_FINDWINDOWINLIST, (WPARAM)hList, hContact);
-}
 
+EXTERN_C MIR_CORE_DLL(HWND) WindowList_Find(MWindowList hList, MCONTACT hContact);
+
+/////////////////////////////////////////////////////////////////////////////////////////
 // sends a message to all windows in a list using SendMessage
-// wParam = (WPARAM)(HANDLE)hList
-// lParam = (LPARAM)(MSG*)&msg
 // returns 0 on success, nonzero on failure
-// Only msg.message, msg.wParam and msg.lParam are used
-#define MS_UTILS_BROADCASTTOWINDOWLIST "Utils/BroadcastToWindowList"
-__forceinline INT_PTR WindowList_Broadcast(HANDLE hList, UINT message, WPARAM wParam, LPARAM lParam) {
-	MSG msg;
-	msg.message = message; msg.wParam = wParam; msg.lParam = lParam;
-	return CallService(MS_UTILS_BROADCASTTOWINDOWLIST, (WPARAM)hList, (LPARAM)&msg);
-}
 
+EXTERN_C MIR_CORE_DLL(int) WindowList_Broadcast(MWindowList hList, UINT message, WPARAM wParam, LPARAM lParam);
+
+/////////////////////////////////////////////////////////////////////////////////////////
 // sends a message to all windows in a list using PostMessage
-// wParam = (WPARAM)(HANDLE)hList
-// lParam = (LPARAM)(MSG*)&msg
 // returns 0 on success, nonzero on failure
-// Only msg.message, msg.wParam and msg.lParam are used
-#define MS_UTILS_BROADCASTTOWINDOWLIST_ASYNC "Utils/BroadcastToWindowListAsync"
 
-__forceinline INT_PTR WindowList_BroadcastAsync(HANDLE hList, UINT message, WPARAM wParam, LPARAM lParam) {
-	MSG msg;
-	msg.message = message; msg.wParam = wParam; msg.lParam = lParam;
-	return CallService(MS_UTILS_BROADCASTTOWINDOWLIST_ASYNC, (WPARAM)hList, (LPARAM)&msg);
-}
+EXTERN_C MIR_CORE_DLL(int) WindowList_BroadcastAsync(MWindowList hList, UINT message, WPARAM wParam, LPARAM lParam);
 
 /***************************** Hyperlink windows ********************************/
 
@@ -219,70 +173,55 @@ __forceinline INT_PTR WindowList_BroadcastAsync(HANDLE hList, UINT message, WPAR
 //the control will obey the SS_LEFT (0), SS_CENTER (1), and SS_RIGHT (2) styles
 //the control will send STN_CLICKED via WM_COMMAND when the link itself is clicked
 
+/////////////////////////////////////////////////////////////////////////////////////////
 // Use this in a SendMessage to set the color of the url when control is enabled
 // wParam = DWORD color
 // lParam = not used
 #define HLK_SETENABLECOLOUR	 (WM_USER+101) // added in 0.3.1
+
+/////////////////////////////////////////////////////////////////////////////////////////
 // Use this in a SendMessage to set the color of the url when control is disabled
 // wParam = DWORD color
 // lParam = not used
 #define HLK_SETDISABLECOLOUR (WM_USER+102) // added in 0.3.1
 
-/***************************** Window Position Saving ***************************/
+/////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////// Window Position Saving ////////////////////////////////
 
-//saves the position of a window in the database   v0.1.1.0+
-//wParam = 0
-//lParam = (LPARAM)(SAVEWINDOWPOS*)&swp
-//returns 0 on success, nonzero on failure
-typedef struct {
-	HWND hwnd;
-	MCONTACT hContact;
-	const char *szModule;		//module name to store the setting in
-	const char *szNamePrefix;	//text to prefix on "x", "width", etc, to form setting names
-} SAVEWINDOWPOS;
-#define MS_UTILS_SAVEWINDOWPOSITION  "Utils/SaveWindowPos"
-__forceinline INT_PTR Utils_SaveWindowPosition(HWND hwnd, MCONTACT hContact, const char *szModule, const char *szNamePrefix) {
-	SAVEWINDOWPOS swp;
-	swp.hwnd = hwnd; swp.hContact = hContact; swp.szModule = szModule; swp.szNamePrefix = szNamePrefix;
-	return CallService(MS_UTILS_SAVEWINDOWPOSITION, 0, (LPARAM)&swp);
-}
+/////////////////////////////////////////////////////////////////////////////////////////
+// saves the position of a window in the database
+// returns 0 on success, nonzero on failure
 
-//restores the position of a window from the database	 v0.1.1.0+
-//wParam = flags
-//lParam = (LPARAM)(SAVEWINDOWPOS*)&swp
-//returns 0 on success, nonzero on failure
-//if no position was found in the database, the function returns 1 and does
-//nothing
-//the NoSize version won't use stored size information: the window is left the
-//same size.
+EXTERN_C MIR_CORE_DLL(int) Utils_SaveWindowPosition(HWND hwnd, MCONTACT hContact, const char *szModule, const char *szNamePrefix);
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// restores the position of a window from the database	 v0.1.1.0+
+// wParam = flags
+// lParam = (LPARAM)(SAVEWINDOWPOS*)&swp
+// returns 0 on success, nonzero on failure
+// if no position was found in the database, the function returns 1 and does
+// nothing
+// the NoSize version won't use stored size information: the window is left the same size.
+
 #define RWPF_NOSIZE 	1  //don't use stored size info: leave dialog same size
 #define RWPF_NOMOVE 	2  //don't use stored position
 #define RWPF_NOACTIVATE 4  //show but don't activate v0.3.3.0+
 #define RWPF_HIDDEN		8  //make it hidden
-#define MS_UTILS_RESTOREWINDOWPOSITION	"Utils/RestoreWindowPos"
-__forceinline INT_PTR Utils_RestoreWindowPositionEx(HWND hwnd, int flags, MCONTACT hContact, const char *szModule, const char *szNamePrefix) {
-	SAVEWINDOWPOS swp;
-	swp.hwnd = hwnd; swp.hContact = hContact; swp.szModule = szModule; swp.szNamePrefix = szNamePrefix;
-	return CallService(MS_UTILS_RESTOREWINDOWPOSITION, flags, (LPARAM)&swp);
+
+EXTERN_C MIR_CORE_DLL(int) Utils_RestoreWindowPosition(HWND hwnd, MCONTACT hContact, const char *szModule, const char *szNamePrefix, int flags = 0);
+
+__forceinline int Utils_RestoreWindowPositionNoSize(HWND hwnd, MCONTACT hContact, const char *szModule, const char *szNamePrefix)
+{	return Utils_RestoreWindowPosition(hwnd, hContact, szModule, szNamePrefix, RWPF_NOSIZE);
 }
-__forceinline INT_PTR Utils_RestoreWindowPosition(HWND hwnd, MCONTACT hContact, const char *szModule, const char *szNamePrefix) {
-	return Utils_RestoreWindowPositionEx(hwnd, 0, hContact, szModule, szNamePrefix);
-}
-__forceinline INT_PTR Utils_RestoreWindowPositionNoSize(HWND hwnd, MCONTACT hContact, const char *szModule, const char *szNamePrefix) {
-	return Utils_RestoreWindowPositionEx(hwnd, RWPF_NOSIZE, hContact, szModule, szNamePrefix);
-}
-__forceinline INT_PTR Utils_RestoreWindowPositionNoMove(HWND hwnd, MCONTACT hContact, const char *szModule, const char *szNamePrefix) {
-	return Utils_RestoreWindowPositionEx(hwnd, RWPF_NOMOVE, hContact, szModule, szNamePrefix);
+__forceinline int Utils_RestoreWindowPositionNoMove(HWND hwnd, MCONTACT hContact, const char *szModule, const char *szNamePrefix)
+{	return Utils_RestoreWindowPosition(hwnd, hContact, szModule, szNamePrefix, RWPF_NOMOVE);
 }
 
-//Moves a RECT inside screen if it is outside.It works with multiple monitors	 v0.9.0.4+
-//wParam = RECT *
-//lParam = 0
-//returns <0 on error, 0 if not changed the rect, 1 if changed the rect
-#define MS_UTILS_ASSERTINSIDESCREEN	"Utils/AssertInsideScreen"
-__forceinline INT_PTR Utils_AssertInsideScreen(RECT *rc) {
-	return CallService(MS_UTILS_ASSERTINSIDESCREEN, (WPARAM)rc, 0);
-}
+/////////////////////////////////////////////////////////////////////////////////////////
+// Moves a RECT inside screen if it is outside. It works with multiple monitors
+// returns < 0 on error, 0 if not changed the rect, 1 if changed the rect
+
+EXTERN_C MIR_CORE_DLL(int) Utils_AssertInsideScreen(RECT *rc);
 
 /************************ Colour Picker Control (0.1.2.1+) **********************/
 
@@ -294,72 +233,99 @@ __forceinline INT_PTR Utils_AssertInsideScreen(RECT *rc) {
 #define CPM_GETDEFAULTCOLOUR   0x1003	  //returns colour
 #define CPN_COLOURCHANGED	   1		  //sent through WM_COMMAND
 
-/***************************** Bitmap Filter (0.1.2.1+) *************************/
+/////////////////////////////////////////////////////////////////////////////////////////
+// Gets the filter strings for use in the open file dialog
+// See the MSDN under OPENFILENAME.lpstrFilter for the formatting
+// An 'All Bitmaps' item is always first and 'All Files' is last.
+// The returned string is already translated.
 
-//Loads a bitmap								v0.1.2.1+
-//wParam = 0
-//lParam = (LPARAM)(const char*)filename
-//returns HBITMAP on success, NULL on failure
-//This function uses OleLoadPicturePath() so supports BMP, JPEG and GIF. It may
-//support PNG on future versions of Windows (or XP for that matter)
-//For speed, if the file extension is .bmp or .rle it'll use LoadImage() so as
-//to avoid the big lag loading OLE.
-//Remember to DeleteObject() when you're done
-#define MS_UTILS_LOADBITMAP   "Utils/LoadBitmap"
+EXTERN_C MIR_CORE_DLL(HBITMAP) Bitmap_Load(const TCHAR *ptszFileName);
+EXTERN_C MIR_CORE_DLL(void) Bitmap_GetFilter(TCHAR *dest, size_t destLen);
 
-#ifdef _UNICODE
-	#define MS_UTILS_LOADBITMAPW  "Utils/LoadBitmapW"
-	#define MS_UTILS_LOADBITMAPT MS_UTILS_LOADBITMAPW
+/////////////////////////////////////////////////////////////////////////////////////////
+// Converts a path to a relative path
+// Only saves as a relative path if the file is in the miranda directory (or
+// sub directory)
+//
+// [pszSrc] is the path to convert and [pszOut] is the buffer that
+// the new path is copied too. pszOut MUST be at least of the size MAX_PATH.
+//
+// [pszBase] is the folder that is treated as root for 'relativity'
+// by default = path to miranda32.exe
+//
+// Returns number of chars copied.
+
+#if defined( __cplusplus )
+EXTERN_C MIR_CORE_DLL(int) PathToRelative(const char *pszSrc, char *pszOut, const char* pszBase = 0);
+EXTERN_C MIR_CORE_DLL(int) PathToRelativeW(const wchar_t *pwszSrc, wchar_t *pwszOut, const wchar_t* pwszBase = 0);
 #else
-	#define MS_UTILS_LOADBITMAPT MS_UTILS_LOADBITMAP
+EXTERN_C MIR_CORE_DLL(int) PathToRelative(const char *pszSrc, char *pszOut, const char* pszBase);
+EXTERN_C MIR_CORE_DLL(int) PathToRelativeW(const wchar_t *pwszSrc, wchar_t *pwszOut, const wchar_t* pwszBase);
 #endif
 
-//Gets the filter strings for use in the open file dialog	   v0.1.2.1+
-//wParam = cbLengthOfBuffer
-//lParam = (LPARAM)(char*)pszBuffer
-//Returns 0 on success, nonzero on failure
-//See the MSDN under OPENFILENAME.lpstrFilter for the formatting
-//An 'All Bitmaps' item is always first and 'All Files' is last.
-//The returned string is already translated.
-#define MS_UTILS_GETBITMAPFILTERSTRINGS  "Utils/GetBitmapFilterStrings"
+#define PathToRelativeT PathToRelativeW
 
-//Saves a path to a relative path (from the miranda directory)
-//Only saves as a relative path if the file is in the miranda directory (or
-//sub directory)
-//wParam = (WPARAM)(char*)pszPath
-//lParam = (LPARAM)(char*)pszNewPath
-//pszPath is the path to convert and pszNewPath is the buffer that
-//the new path is copied too.  pszNewPath MUST be of the size MAX_PATH.
-//Returns numbers of chars copied.
-//Unicode version is available since 0.6.2
-#define MS_UTILS_PATHTORELATIVE "Utils/PathToRelative"
+/////////////////////////////////////////////////////////////////////////////////////////
+// Saves a path to a absolute path (from the miranda directory)
+//
+// [pszSrc] is the path to convert and [pszOut] is the buffer that
+// the new path is copied too. pszOut MUST be of the size MAX_PATH.
+//
+// [pszBase] is the folder that is treated as root for 'relativity'
+// by default = path to miranda32.exe
+//
+// Returns numbers of chars copied.
 
-//Saves a path to a absolute path (from the miranda directory)
-//wParam = (WPARAM)(char*)pszPath
-//lParam = (LPARAM)(char*)pszNewPath
-//pszPath is the path to convert and pszNewPath is the buffer that
-//the new path is copied too.  pszNewPath MUST be of the size MAX_PATH.
-//Returns numbers of chars copied.
-//Unicode version is available since 0.6.2
-#define MS_UTILS_PATHTOABSOLUTE "Utils/PathToAbsolute"
+#if defined( __cplusplus )
+EXTERN_C MIR_CORE_DLL(int) PathToAbsolute(const char *pszSrc, char *pszOut, const char* pszBase = 0);
+EXTERN_C MIR_CORE_DLL(int) PathToAbsoluteW(const wchar_t *pwszSrc, wchar_t *pwszOut, const wchar_t* pwszBase = 0);
+#else
+EXTERN_C MIR_CORE_DLL(int) PathToAbsolute(const char *pszSrc, char *pszOut, const char* pszBase);
+EXTERN_C MIR_CORE_DLL(int) PathToAbsoluteW(const wchar_t *pwszSrc, wchar_t *pwszOut, const wchar_t* pwszBase);
+#endif
 
-//Creates a directory tree (even more than one directories levels are missing) 0.7.0+
-//wParam = 0 (unused)
-//lParam = (LPARAM)(char*)pszPath - directory to be created
-//Returns 0 on success error code otherwise
-//Unicode version is available since 0.7.0
-#define MS_UTILS_CREATEDIRTREE "Utils/CreateDirTree"
+#define PathToAbsoluteT PathToAbsoluteW
 
+/////////////////////////////////////////////////////////////////////////////////////////
+// Creates a directory tree (even more than one directories levels are missing)
+// Returns 0 on success or an error code otherwise
+
+EXTERN_C MIR_CORE_DLL(int) CreateDirectoryTree(const char *pszDir);
+EXTERN_C MIR_CORE_DLL(int) CreateDirectoryTreeW(const wchar_t *pwszDir);
+
+#define CreateDirectoryTreeT CreateDirectoryTreeW
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// Creates all subdirectories required to create a file with the file name given
+// Returns 0 on success or an error code otherwise
+
+EXTERN_C MIR_CORE_DLL(void) CreatePathToFile(char *wszFilePath);
+EXTERN_C MIR_CORE_DLL(void) CreatePathToFileW(wchar_t *wszFilePath);
+
+#define CreatePathToFileT CreatePathToFileW
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// Checks if a file name is absolute or not
+// returns TRUE if yes or FALSE if not
+
+EXTERN_C MIR_CORE_DLL(int) PathIsAbsolute(const char *pSrc);
+EXTERN_C MIR_CORE_DLL(int) PathIsAbsoluteW(const wchar_t *pSrc);
+
+#define PathIsAbsoluteT PathIsAbsoluteW
+
+/////////////////////////////////////////////////////////////////////////////////////////
 // Generates Random number of any length
-//wParam = size - length of the random number to generate
-//lParam = (LPARAM)(char*)pszArray - pointer to array to fill with random number
-//Always returns 0
-#define MS_UTILS_GETRANDOM "Utils/GetRandom"
+// wParam = size - length of the random number to generate
+// lParam = (LPARAM)(char*)pszArray - pointer to array to fill with random number
+// Always returns 0
 
-//Replace variables in text
-//wParam = (char*/TCHAR*/WCHAR*)string (depends on RVF_UNICODE/RVF_TCHAR flag)
-//lParam = (REPLACEVARSDATA *) data about variables, item with key = 0 terminates the list
-//returns new string, use mir_free to destroy
+EXTERN_C MIR_CORE_DLL(void) Utils_GetRandom(void *pszDest, size_t cbLen);
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// Replace variables in text
+// wParam = (char*/TCHAR*/WCHAR*)string (depends on RVF_UNICODE/RVF_TCHAR flag)
+// lParam = (REPLACEVARSDATA *) data about variables, item with key = 0 terminates the list
+// returns new string, use mir_free to destroy
 
 // variables known by the core:
 // ----------------------------
@@ -390,47 +356,15 @@ __forceinline INT_PTR Utils_AssertInsideScreen(RECT *rc) {
 // %destkop%            -> location of the desktop folder in a user's profile.
 // %mydocuments%        -> location of the "My Documents" shell folder.
 
-typedef struct
+struct REPLACEVARSARRAY
 {
-	union
-	{
-		TCHAR *lptzKey;
-		char *lpszKey;
-		WCHAR *lpwzKey;
-	};
-	union
-	{
-		TCHAR *lptzValue;
-		char *lpszValue;
-		WCHAR *lpwzValue;
-	};
-} REPLACEVARSARRAY;
+	MAllStrings key, value;
+};
 
-typedef struct
-{
-	int cbSize;
-	DWORD dwFlags;
-	MCONTACT hContact;
-	REPLACEVARSARRAY *variables;
-} REPLACEVARSDATA;
+EXTERN_C MIR_APP_DLL(char*) Utils_ReplaceVars(const char *szData, MCONTACT hContact = 0, REPLACEVARSARRAY *vars = NULL);
+EXTERN_C MIR_APP_DLL(wchar_t*) Utils_ReplaceVarsW(const wchar_t *szData, MCONTACT hContact = 0, REPLACEVARSARRAY *vars = NULL);
 
-#define RVF_UNICODE	1
-#ifdef _UNICODE
-	#define RVF_TCHAR	RVF_UNICODE
-#else
-	#define RVF_TCHAR	0
-#endif
-
-#define MS_UTILS_REPLACEVARS "Utils/ReplaceVars"
-
-__forceinline char* Utils_ReplaceVars(const char *szData) {
-	REPLACEVARSDATA dat = { sizeof(dat) };
-	return (char*)CallService(MS_UTILS_REPLACEVARS, (WPARAM)szData, (LPARAM)&dat);
-}
-__forceinline TCHAR* Utils_ReplaceVarsT(const TCHAR *szData) {
-	REPLACEVARSDATA dat = { sizeof(dat), RVF_TCHAR };
-	return (TCHAR*)CallService(MS_UTILS_REPLACEVARS, (WPARAM)szData, (LPARAM)&dat);
-}
+#define Utils_ReplaceVarsT Utils_ReplaceVarsW
 
 #if defined(__cplusplus)
 	#if !defined(M_SYSTEM_CPP_H__)
@@ -440,33 +374,18 @@ __forceinline TCHAR* Utils_ReplaceVarsT(const TCHAR *szData) {
 	struct VARS : public ptrA
 	{
 		__forceinline VARS(const char *str) :
-			ptrA( Utils_ReplaceVars(str))
-			{}
+			ptrA(Utils_ReplaceVars(str))
+		{}
 	};
 
-	struct VARST : public ptrT
+	struct VARSW : public ptrW
 	{
-		__forceinline VARST(const TCHAR *str) :
-			ptrT( Utils_ReplaceVarsT(str))
-			{}
+		__forceinline VARSW(const wchar_t *str) :
+			ptrW(Utils_ReplaceVarsW(str))
+		{}
 	};
-#endif
 
-#ifdef _UNICODE
-	#define MS_UTILS_PATHTORELATIVEW         "Utils/PathToRelativeW"
-	#define MS_UTILS_PATHTOABSOLUTEW         "Utils/PathToAbsoluteW"
-	#define MS_UTILS_CREATEDIRTREEW          "Utils/CreateDirTreeW"
-	#define MS_UTILS_GETBITMAPFILTERSTRINGSW "Utils/GetBitmapFilterStringsW"
-
-	#define MS_UTILS_PATHTORELATIVET         MS_UTILS_PATHTORELATIVEW
-	#define MS_UTILS_PATHTOABSOLUTET         MS_UTILS_PATHTOABSOLUTEW
-	#define MS_UTILS_CREATEDIRTREET          MS_UTILS_CREATEDIRTREEW
-	#define MS_UTILS_GETBITMAPFILTERSTRINGST MS_UTILS_GETBITMAPFILTERSTRINGSW
-#else
-	#define MS_UTILS_PATHTORELATIVET         MS_UTILS_PATHTORELATIVE
-	#define MS_UTILS_PATHTOABSOLUTET         MS_UTILS_PATHTOABSOLUTE
-	#define MS_UTILS_CREATEDIRTREET          MS_UTILS_CREATEDIRTREE
-	#define MS_UTILS_GETBITMAPFILTERSTRINGST MS_UTILS_GETBITMAPFILTERSTRINGS
+	typedef VARSW VARST;
 #endif
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -477,7 +396,7 @@ __forceinline TCHAR* Utils_ReplaceVarsT(const TCHAR *szData) {
 #define ESF_RICHEDIT  3
 #define ESF_PASSWORD  4
 
-typedef struct
+struct ENTER_STRING
 {
 	int     cbSize;         // structure size
 	int     type;           // one of ESF_* constants
@@ -490,13 +409,14 @@ typedef struct
 	};
 	int     recentCount;    // number of combobox strings to store
 	int     timeout;        // timeout for the form auto-close
-}
-ENTER_STRING;
+};
 
+/////////////////////////////////////////////////////////////////////////////////////////
 // enters one string
 // wParam = 0 (unused)
 // lParam = ENTER_STRING* (form description)
 // returns TRUE on pressing OK or FALSE if Cancel was pressed
+
 #define MS_UTILS_ENTERSTRING "Utils/EnterString"
 
 __forceinline BOOL EnterString(ENTER_STRING *pForm)

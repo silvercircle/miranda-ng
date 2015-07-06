@@ -26,17 +26,7 @@ static IconItem iconList[] =
 
 void InitIconLib()
 {
-	Icon_Register(hInst, szGPGModuleName, iconList, SIZEOF(iconList));
-}
-
-HICON IconLibGetIcon(const char* ident)
-{
-	return Skin_GetIcon(ident);
-}
-
-void IconLibReleaseIcon(const char* ident)
-{
-	Skin_ReleaseIcon(ident);
+	Icon_Register(hInst, szGPGModuleName, iconList, _countof(iconList));
 }
 
 HANDLE IconLibHookIconsChanged(MIRANDAHOOK hook)
@@ -63,14 +53,14 @@ void setSrmmIcon(MCONTACT h)
 
 	StatusIconData sid = { sizeof(sid) };
 	sid.szModule = szGPGModuleName;
-	sid.hIcon = IconLibGetIcon("secured");
+	sid.hIcon = IcoLib_GetIcon("secured");
 	sid.dwId = 1;
 	sid.flags = enabled ? 0 : MBF_HIDDEN;
 	Srmm_ModifyIcon(hContact, &sid);
 	if(hMC != hContact)
 		Srmm_ModifyIcon(hMC, &sid);
 
-	sid.hIcon = IconLibGetIcon("unsecured");
+	sid.hIcon = IcoLib_GetIcon("unsecured");
 	sid.dwId = 2;
 	sid.flags = enabled ? MBF_HIDDEN : 0;
 	Srmm_ModifyIcon(hContact, &sid);

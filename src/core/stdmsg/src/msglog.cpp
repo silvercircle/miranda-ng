@@ -28,7 +28,7 @@ extern IconItem iconList[];
 #define LOGICON_MSG_NOTICE  2
 
 static char *pLogIconBmpBits[3];
-static size_t logIconBmpSize[ SIZEOF(pLogIconBmpBits) ];
+static size_t logIconBmpSize[ _countof(pLogIconBmpBits) ];
 
 #define STREAMSTAGE_HEADER  0
 #define STREAMSTAGE_EVENTS  1
@@ -108,7 +108,7 @@ static int AppendToBufferWithRTF(char *&buffer, size_t &cbBufferEnd, size_t &cbB
 		}
 		else if (*line == '[' && (g_dat.flags & SMF_SHOWFORMAT)) {
 			int i, found = 0;
-			for (i = 0; i < SIZEOF(bbcodes); ++i) {
+			for (i = 0; i < _countof(bbcodes); ++i) {
 				if (line[1] == bbcodes[i][1]) {
 					size_t lenb = mir_tstrlen(bbcodes[i]);
 					if (!_tcsnicmp(line, bbcodes[i], lenb)) {
@@ -212,7 +212,7 @@ static char *SetToStyle(int style)
 	LOGFONT lf;
 
 	LoadMsgDlgFont(style, &lf, NULL);
-	mir_snprintf(szStyle, SIZEOF(szStyle), "\\f%u\\cf%u\\b%d\\i%d\\fs%u", style, style, lf.lfWeight >= FW_BOLD ? 1 : 0, lf.lfItalic, 2 * abs(lf.lfHeight) * 74 / logPixelSY);
+	mir_snprintf(szStyle, _countof(szStyle), "\\f%u\\cf%u\\b%d\\i%d\\fs%u", style, style, lf.lfWeight >= FW_BOLD ? 1 : 0, lf.lfItalic, 2 * abs(lf.lfHeight) * 74 / logPixelSY);
 	return szStyle;
 }
 
@@ -293,7 +293,7 @@ static char *CreateRTFFromDbEvent(SrmmWindowData *dat, MCONTACT hContact, MEVENT
 		else
 			szFormat = g_dat.flags & SMF_SHOWDATE ? _T("d t") : _T("t");
 
-		tmi.printTimeStamp(NULL, dbei.timestamp, szFormat, str, SIZEOF(str), 0);
+		TimeZone_PrintTimeStamp(NULL, dbei.timestamp, szFormat, str, _countof(str), 0);
 
 		AppendToBuffer(buffer, bufferEnd, bufferAlloced, " %s ", SetToStyle(dbei.flags & DBEF_SENT ? MSGFONTID_MYTIME : MSGFONTID_YOURTIME));
 		AppendToBufferWithRTF(buffer, bufferEnd, bufferAlloced, str);
@@ -529,15 +529,15 @@ void LoadMsgLogIcons(void)
 	HDC hdcMem = CreateCompatibleDC(hdc);
 	PBYTE pBmpBits = (PBYTE)mir_alloc(widthBytes * bih.biHeight);
 
-	for (int i = 0; i < SIZEOF(pLogIconBmpBits); i++) {
-		HICON hIcon = Skin_GetIconByHandle(iconList[i].hIcolib);
+	for (int i = 0; i < _countof(pLogIconBmpBits); i++) {
+		HICON hIcon = IcoLib_GetIconByHandle(iconList[i].hIcolib);
 		size_t size = RTFPICTHEADERMAXSIZE + (bih.biSize + widthBytes * bih.biHeight) * 2;
 		pLogIconBmpBits[i] = (char*)mir_alloc(size);
 		size_t rtfHeaderSize = mir_snprintf(pLogIconBmpBits[i], size, "{\\pict\\dibitmap0\\wbmbitspixel%u\\wbmplanes1\\wbmwidthbytes%u\\picw%u\\pich%u ", bih.biBitCount, widthBytes, bih.biWidth, bih.biHeight);
 		HBITMAP hoBmp = (HBITMAP)SelectObject(hdcMem, hBmp);
 		FillRect(hdcMem, &rc, hBkgBrush);
 		DrawIconEx(hdcMem, 0, 0, hIcon, bih.biWidth, bih.biHeight, 0, NULL, DI_NORMAL);
-		Skin_ReleaseIcon(hIcon);
+		IcoLib_ReleaseIcon(hIcon);
 
 		SelectObject(hdcMem, hoBmp);
 		GetDIBits(hdc, hBmp, 0, bih.biHeight, pBmpBits, (BITMAPINFO*)&bih, DIB_RGB_COLORS);
@@ -558,6 +558,6 @@ void LoadMsgLogIcons(void)
 
 void FreeMsgLogIcons(void)
 {
-	for (int i = 0; i < SIZEOF(pLogIconBmpBits); i++)
+	for (int i = 0; i < _countof(pLogIconBmpBits); i++)
 		mir_free(pLogIconBmpBits[i]);
 }

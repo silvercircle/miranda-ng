@@ -84,7 +84,7 @@ void RefreshInfobar(InfobarWindowData* idat)
 	TCHAR szText[2048];
 	SETTEXTEX st;
 	if ( szXStatusMsg && *szXStatusMsg )
-		mir_sntprintf(szText, SIZEOF(szText), _T("%s (%s)"), TranslateTS(szXStatusName), szXStatusMsg);
+		mir_sntprintf(szText, _T("%s (%s)"), TranslateTS(szXStatusName), szXStatusMsg);
 	else
 		_tcsncpy_s(szText, TranslateTS(szXStatusName), _TRUNCATE);
 	st.flags = ST_DEFAULT;
@@ -263,7 +263,7 @@ static INT_PTR CALLBACK InfobarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 				return TRUE;
 			}
 		}
-		return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
+		return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
 	
 	case WM_LBUTTONDOWN:
 		SendMessage(idat->mwd->hwnd, WM_LBUTTONDOWN, wParam, lParam);
@@ -271,7 +271,7 @@ static INT_PTR CALLBACK InfobarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 
 	case WM_RBUTTONUP:
 		{
-			HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDCONTACT, idat->mwd->hContact, 0);
+			HMENU hMenu = Menu_BuildContactMenu(idat->mwd->hContact);
 
 			POINT pt;
 			GetCursorPos(&pt);

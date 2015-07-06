@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_url.h>
 #include "url.h"
 
-HANDLE hUrlWindowList = NULL;
+MWindowList hUrlWindowList = NULL;
 static HANDLE hEventContactSettingChange = NULL;
 static HANDLE hContactDeleted = NULL;
 static HGENMENU hSRUrlMenuItem = NULL;
@@ -49,13 +49,13 @@ static int UrlEventAdded(WPARAM hContact, LPARAM lParam)
 	SkinPlaySound("RecvUrl");
 
 	TCHAR szTooltip[256];
-	mir_sntprintf(szTooltip, SIZEOF(szTooltip), TranslateT("URL from %s"), pcli->pfnGetContactDisplayName(hContact, 0));
+	mir_sntprintf(szTooltip, _countof(szTooltip), TranslateT("URL from %s"), pcli->pfnGetContactDisplayName(hContact, 0));
 
 	CLISTEVENT cle = { sizeof(cle) };
 	cle.flags = CLEF_TCHAR;
 	cle.hContact = hContact;
 	cle.hDbEvent = lParam;
-	cle.hIcon = LoadSkinIcon(SKINICON_EVENT_URL);
+	cle.hIcon = Skin_LoadIcon(SKINICON_EVENT_URL);
 	cle.pszService = "SRUrl/ReadUrl";
 	cle.ptszTooltip = szTooltip;
 	CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
@@ -71,7 +71,7 @@ static INT_PTR SendUrlCommand(WPARAM wParam, LPARAM)
 static void RestoreUnreadUrlAlerts(void)
 {
 	CLISTEVENT cle = { sizeof(cle) };
-	cle.hIcon = LoadSkinIcon(SKINICON_EVENT_URL);
+	cle.hIcon = Skin_LoadIcon(SKINICON_EVENT_URL);
 	cle.pszService = "SRUrl/ReadUrl";
 	cle.flags = CLEF_TCHAR;
 
@@ -82,7 +82,7 @@ static void RestoreUnreadUrlAlerts(void)
 			db_event_get(hDbEvent, &dbei);
 			if ( !(dbei.flags&(DBEF_SENT|DBEF_READ)) && dbei.eventType == EVENTTYPE_URL) {
 				TCHAR toolTip[256];
-				mir_sntprintf(toolTip, SIZEOF(toolTip), TranslateT("URL from %s"), pcli->pfnGetContactDisplayName(hContact, 0));
+				mir_sntprintf(toolTip, _countof(toolTip), TranslateT("URL from %s"), pcli->pfnGetContactDisplayName(hContact, 0));
 
 				cle.hContact = hContact;
 				cle.hDbEvent = hDbEvent;
@@ -119,10 +119,10 @@ static int SRUrlPreBuildMenu(WPARAM wParam, LPARAM)
 
 static int SRUrlModulesLoaded(WPARAM, LPARAM)
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = -2000040000;
-	mi.icolibItem = GetSkinIconHandle(SKINICON_EVENT_URL);
-	mi.pszName = LPGEN("Web page address (&URL)");
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_EVENT_URL);
+	mi.name.a = LPGEN("Web page address (&URL)");
 	mi.pszService = MS_URL_SENDURL;
 	hSRUrlMenuItem = Menu_AddContactMenuItem(&mi);
 

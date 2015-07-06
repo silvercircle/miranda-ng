@@ -47,6 +47,8 @@ Colores
 Usar colores personalizados
 [Use Windows colors]
 Usar colores de Windows
+[Use default colors]
+Usar colores predeterminados
 [Timeout]
 Tiempo de espera
 [Sec]
@@ -89,10 +91,14 @@ Contacto
 <desconocido>
 [connecting]
 conectando
+[Status change]
+Cambio de estado
 [All Files]
 Todos los archivos
 [Log]
 Registro
+[Account]
+Cuenta
 [Filtering]
 Filtrando
 [(was %s)]

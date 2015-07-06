@@ -28,8 +28,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "commonheaders.h"
 
 static HGENMENU hAwayMsgMenuItem, hCopyMsgMenuItem, hGoToURLMenuItem;
-static HANDLE hWindowList;
-static HANDLE hWindowList2;
+static MWindowList hWindowList, hWindowList2;
 
 static char *StrNormNewlineA(char *szStr)
 {
@@ -106,25 +105,25 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 			WindowList_Add(hWindowList, hwndDlg, dat->hContact);
 			{
 				TCHAR str[256], format[128];
-				TCHAR *contactName = (TCHAR *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)dat->hContact, GCDNF_TCHAR);
+				TCHAR *contactName = (TCHAR *)pcli->pfnGetContactDisplayName(dat->hContact, 0);
 				char *szProto = GetContactProto(dat->hContact);
 				WORD dwStatus = db_get_w(dat->hContact, szProto, "Status", ID_STATUS_OFFLINE);
 				TCHAR *status = pcli->pfnGetStatusModeDescription(dwStatus, 0);
 
-				GetWindowText(hwndDlg, format, SIZEOF(format));
-				mir_sntprintf(str, SIZEOF(str), format, status, contactName);
+				GetWindowText(hwndDlg, format, _countof(format));
+				mir_sntprintf(str, _countof(str), format, status, contactName);
 				SetWindowText(hwndDlg, str);
 				if (dat->hSeq) {
-					GetDlgItemText(hwndDlg, IDC_RETRIEVING, format, SIZEOF(format));
-					mir_sntprintf(str, SIZEOF(str), format, status);
+					GetDlgItemText(hwndDlg, IDC_RETRIEVING, format, _countof(format));
+					mir_sntprintf(str, _countof(str), format, status);
 				}
 				else {
-					mir_sntprintf(str, SIZEOF(str), TranslateT("Failed to retrieve %s message."), status);
+					mir_sntprintf(str, _countof(str), TranslateT("Failed to retrieve %s message."), status);
 					SetDlgItemText(hwndDlg, IDOK, TranslateT("&Close"));
 				}
 				SetDlgItemText(hwndDlg, IDC_RETRIEVING, str);
-				SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadSkinnedProtoIcon(szProto, dwStatus));
-				SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)LoadSkinnedProtoIcon(szProto, dwStatus));
+				SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)Skin_LoadProtoIcon(szProto, dwStatus));
+				SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)Skin_LoadProtoIcon(szProto, dwStatus));
 				EnableWindow(GetDlgItem(hwndDlg, IDC_COPY), FALSE);
 			}
 			Utils_RestoreWindowPosition(hwndDlg, lParam, "SRAway", "AwayMsgDlg");
@@ -166,7 +165,7 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 						break;
 					if (EmptyClipboard()) {
 						TCHAR msg[1024];
-						int len = GetDlgItemText(hwndDlg, IDC_MSG, msg, SIZEOF(msg));
+						int len = GetDlgItemText(hwndDlg, IDC_MSG, msg, _countof(msg));
 						if (len) {
 							LPTSTR lptstrCopy;
 							HGLOBAL hglbCopy = GlobalAlloc(GMEM_MOVEABLE, (len + 1) * sizeof(TCHAR));
@@ -197,8 +196,8 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 				UnhookEvent(dat->hAwayMsgEvent);
 			Utils_SaveWindowPosition(hwndDlg, dat->hContact, "SRAway", "AwayMsgDlg");
 			WindowList_Remove(hWindowList, hwndDlg);
-			Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_BIG, NULL));
-			Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, NULL));
+			IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_BIG, NULL));
+			IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, NULL));
 			mir_free(dat);
 			break;
 	}
@@ -234,9 +233,9 @@ static INT_PTR CALLBACK CopyAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 			dat->hSeq = (HANDLE)CallContactService(dat->hContact, PSS_GETAWAYMSG, 0, 0);
 			dat->hAwayMsgEvent = dat->hSeq ? HookEventMessage(ME_PROTO_ACK, hwndDlg, HM_AWAYMSG) : NULL;
 			WindowList_Add(hWindowList2, hwndDlg, dat->hContact);
-			contactName = (TCHAR *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)dat->hContact, GCDNF_TCHAR);
-			GetWindowText(hwndDlg, format, SIZEOF(format));
-			mir_sntprintf(str, SIZEOF(str), format, contactName);
+			contactName = (TCHAR *)pcli->pfnGetContactDisplayName(dat->hContact, 0);
+			GetWindowText(hwndDlg, format, _countof(format));
+			mir_sntprintf(str, _countof(str), format, contactName);
 			SetWindowText(hwndDlg, str);
 			if (!dat->hSeq)
 				DestroyWindow(hwndDlg);
@@ -352,7 +351,7 @@ static INT_PTR GoToURLMsgCommand(WPARAM wParam, LPARAM lParam)
 		char *szMsgURL = (char *)mir_alloc(i + 1);
 		if (szMsgURL) {
 			mir_strncpy(szMsgURL, szURL, i + 1);
-			CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)szMsgURL);
+			Utils_OpenUrl(szMsgURL);
 			mir_free(szMsgURL);
 		}
 	}
@@ -367,42 +366,34 @@ static int AwayMsgPreBuildMenu(WPARAM hContact, LPARAM lParam)
 	int iHidden = szProto ? db_get_b(hContact, szProto, "ChatRoom", 0) : 0;
 	int iStatus;
 
-	CLISTMENUITEM clmi = { sizeof(clmi) };
-	clmi.cbSize = sizeof(clmi);
-	clmi.flags = CMIM_FLAGS | CMIF_HIDDEN | CMIF_TCHAR;
 	if (!iHidden) {
 		iHidden = 1;
 		iStatus = db_get_w(hContact, szProto, "Status", ID_STATUS_OFFLINE);
 		if (CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGRECV) {
 			if (CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_3, 0) & Proto_Status2Flag(iStatus == ID_STATUS_OFFLINE ? ID_STATUS_INVISIBLE : iStatus)) {
 				iHidden = 0;
-				clmi.flags = CMIM_FLAGS | CMIM_NAME | CMIM_ICON | CMIF_TCHAR;
-				clmi.hIcon = LoadSkinnedProtoIcon(szProto, iStatus);
-				mir_sntprintf(str, SIZEOF(str), TranslateT("Re&ad %s message"), pcli->pfnGetStatusModeDescription(iStatus, 0));
-				clmi.ptszName = str;
+				HICON hIcon = Skin_LoadProtoIcon(szProto, iStatus);
+				mir_sntprintf(str, _countof(str), TranslateT("Re&ad %s message"), pcli->pfnGetStatusModeDescription(iStatus, 0));
+				Menu_ModifyItem(hAwayMsgMenuItem, str, hIcon, 0);
+				IcoLib_ReleaseIcon(hIcon);
 			}
 		}
 	}
-	Menu_ModifyItem(hAwayMsgMenuItem, &clmi);
-	Skin_ReleaseIcon(clmi.hIcon);
+	else Menu_ShowItem(hAwayMsgMenuItem, false);
 
 	ptrA szMsg(db_get_sa(hContact, "CList", "StatusMsg"));
 
-	clmi.flags = CMIM_FLAGS | CMIF_HIDDEN | CMIF_TCHAR;
 	if (!iHidden && szMsg != NULL) {
-		clmi.flags = CMIM_FLAGS | CMIM_NAME | CMIF_TCHAR;
-		mir_sntprintf(str, SIZEOF(str), TranslateT("Copy %s message"), pcli->pfnGetStatusModeDescription(iStatus, 0));
-		clmi.ptszName = str;
+		mir_sntprintf(str, _countof(str), TranslateT("Copy %s message"), pcli->pfnGetStatusModeDescription(iStatus, 0));
+		Menu_ModifyItem(hCopyMsgMenuItem, str);
 	}
-	Menu_ModifyItem(hCopyMsgMenuItem, &clmi);
+	else Menu_ShowItem(hCopyMsgMenuItem, false);
 
-	clmi.flags = CMIM_FLAGS | CMIF_HIDDEN | CMIF_TCHAR;
 	if (!iHidden && szMsg != NULL && StrFindURL(szMsg) != NULL) {
-		clmi.flags = CMIM_FLAGS | CMIM_NAME | CMIF_TCHAR;
-		mir_sntprintf(str, SIZEOF(str), TranslateT("&Go to URL in %s message"), pcli->pfnGetStatusModeDescription(iStatus, 0));
-		clmi.ptszName = str;
+		mir_sntprintf(str, _countof(str), TranslateT("&Go to URL in %s message"), pcli->pfnGetStatusModeDescription(iStatus, 0));
+		Menu_ModifyItem(hGoToURLMenuItem, str);
 	}
-	Menu_ModifyItem(hGoToURLMenuItem, &clmi);
+	else Menu_ShowItem(hGoToURLMenuItem, false);
 
 	return 0;
 }
@@ -425,26 +416,26 @@ int LoadAwayMsgModule(void)
 	hWindowList = WindowList_Create();
 	hWindowList2 = WindowList_Create();
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.flags = CMIF_TCHAR;
 
 	CreateServiceFunction(MS_AWAYMSG_SHOWAWAYMSG, GetMessageCommand);
 	mi.position = -2000005000;
-	mi.ptszName = LPGENT("Re&ad Away message");
+	mi.name.t = LPGENT("Re&ad Away message");
 	mi.pszService = MS_AWAYMSG_SHOWAWAYMSG;
 	hAwayMsgMenuItem = Menu_AddContactMenuItem(&mi);
 
 	CreateServiceFunction(MS_SIMPLESTATUSMSG_COPYMSG, CopyAwayMsgCommand);
 	mi.position = -2000006000;
-	mi.icolibItem = GetIconHandle(IDI_COPY);
-	mi.ptszName = LPGENT("Copy Away message");
+	mi.hIcolibItem = GetIconHandle(IDI_COPY);
+	mi.name.t = LPGENT("Copy Away message");
 	mi.pszService = MS_SIMPLESTATUSMSG_COPYMSG;
 	hCopyMsgMenuItem = Menu_AddContactMenuItem(&mi);
 
 	CreateServiceFunction(MS_SIMPLESTATUSMSG_GOTOURLMSG, GoToURLMsgCommand);
 	mi.position = -2000007000;
-	mi.icolibItem = GetIconHandle(IDI_GOTOURL);
-	mi.ptszName = LPGENT("&Go to URL in Away message");
+	mi.hIcolibItem = GetIconHandle(IDI_GOTOURL);
+	mi.name.t = LPGENT("&Go to URL in Away message");
 	mi.pszService = MS_SIMPLESTATUSMSG_GOTOURLMSG;
 	hGoToURLMenuItem = Menu_AddContactMenuItem(&mi);
 

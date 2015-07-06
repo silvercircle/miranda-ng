@@ -22,7 +22,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include <commonheaders.h>
+#include "stdafx.h"
 
 //processing of all the CLM_ messages incoming
 
@@ -87,15 +87,16 @@ LRESULT ProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPARAM
 		return 0;
 
 	case CLM_SETFONT:
-		if (HIWORD(lParam)>FONTID_LAST)
+		if (HIWORD(lParam) > FONTID_LAST)
 			return 0;
+
 		dat->fontInfo[HIWORD(lParam)].hFont = (HFONT)wParam;
 		dat->fontInfo[HIWORD(lParam)].changed = 1;
 
 		RowHeight::getMaxRowHeight(dat, hwnd);
 
 		if (LOWORD(lParam))
-			InvalidateRect(hwnd,NULL,FALSE);
+			InvalidateRect(hwnd, NULL, FALSE);
 		return 0;
 
 	case CLM_ISMULTISELECT:

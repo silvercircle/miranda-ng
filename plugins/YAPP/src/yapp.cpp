@@ -18,7 +18,9 @@ COLORREF colBg = GetSysColor(COLOR_3DSHADOW);
 HFONT hFontFirstLine = 0, hFontSecondLine = 0, hFontTime = 0;
 COLORREF colFirstLine = RGB(255, 0, 0), colSecondLine = 0, colTime = RGB(0, 0, 255), colBorder = RGB(0, 0, 0), 
 	colSidebar = RGB(128, 128, 128), colTitleUnderline = GetSysColor(COLOR_3DSHADOW);
+
 int hLangpack;
+CLIST_INTERFACE *pcli;
 
 // toptoolbar button
 HANDLE hTTButton;
@@ -71,33 +73,17 @@ int ReloadFont(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-int IconsChanged(WPARAM, LPARAM)
-{
-	CLISTMENUITEM mi = { sizeof(mi) };
-	
-	mi.hIcon = IcoLib_GetIcon(db_get_b(0, "Popup", "ModuleIsEnabled", 1) ? ICO_POPUP_ON : ICO_POPUP_OFF, 0);
-	mi.flags = CMIM_ICON;
-	Menu_ModifyItem(hMenuItem, &mi);
-	Menu_ModifyItem(hMenuRoot, &mi);
-
-	mi.hIcon = IcoLib_GetIcon(ICO_HISTORY, 0);
-	mi.flags = CMIM_ICON;
-	Menu_ModifyItem(hMenuItemHistory, &mi);
-
-	return 0;
-}
-
 int TTBLoaded(WPARAM, LPARAM)
 {
-	TTBButton ttb = { sizeof(ttb) };
+	TTBButton ttb = { 0 };
 	ttb.pszService = "Popup/EnableDisableMenuCommand";
 	ttb.lParamUp = 1;
 	ttb.dwFlags = TTBBF_VISIBLE | TTBBF_SHOWTOOLTIP | TTBBF_ASPUSHBUTTON;
 	if (db_get_b(0, "Popup", "ModuleIsEnabled", 1))
 		ttb.dwFlags |= TTBBF_PUSHED;
 	ttb.name = LPGEN("Toggle Popups");
-	ttb.hIconHandleUp = Skin_GetIconHandle(ICO_TB_POPUP_OFF);
-	ttb.hIconHandleDn = Skin_GetIconHandle(ICO_TB_POPUP_ON);
+	ttb.hIconHandleUp = IcoLib_GetIconHandle(ICO_TB_POPUP_OFF);
+	ttb.hIconHandleDn = IcoLib_GetIconHandle(ICO_TB_POPUP_ON);
 	ttb.pszTooltipUp = LPGEN("Enable Popups");
 	ttb.pszTooltipDn = LPGEN("Disable Popups");
 	hTTButton = TopToolbar_AddButton(&ttb);
@@ -182,27 +168,20 @@ void InitMenuItems(void)
 {
 	bool isEnabled = db_get_b(0, "Popup", "ModuleIsEnabled", 1) == 1;
 
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.flags		= CMIF_ROOTHANDLE|CMIF_TCHAR;
-	mi.hParentMenu	= HGENMENU_ROOT;
+	hMenuRoot = Menu_CreateRoot(MO_MAIN, LPGENT("Popups"), 500010000, IcoLib_GetIcon(isEnabled ? ICO_POPUP_ON : ICO_POPUP_OFF, 0));
 
-	// Build main menu
-	mi.position		= 500010000;
-	mi.ptszName		= LPGENT("Popups");
-	mi.hIcon		= IcoLib_GetIcon(isEnabled ? ICO_POPUP_ON : ICO_POPUP_OFF, 0);
-	hMenuRoot		= Menu_AddMainMenuItem(&mi);
+	CMenuItem mi;
+	mi.flags = CMIF_TCHAR;
+	mi.root = hMenuRoot;
 
-	// Add item to main menu
-	mi.hParentMenu    = (HGENMENU)hMenuRoot;
-
-	mi.hIcon = IcoLib_GetIcon(ICO_HISTORY, 0);
+	mi.hIcolibItem = IcoLib_GetIcon(ICO_HISTORY, 0);
 	mi.pszService= MS_POPUP_SHOWHISTORY;
-	mi.ptszName = LPGENT("Popup History");
+	mi.name.t = LPGENT("Popup History");
 	hMenuItemHistory = Menu_AddMainMenuItem(&mi);
 
-	mi.hIcon = IcoLib_GetIcon(isEnabled ? ICO_POPUP_ON : ICO_POPUP_OFF, 0);
+	mi.hIcolibItem = IcoLib_GetIcon(isEnabled ? ICO_POPUP_ON : ICO_POPUP_OFF, 0);
 	mi.pszService = "Popup/EnableDisableMenuCommand";
-	mi.ptszName = (isEnabled ? LPGENT("Disable Popups") : LPGENT("Enable Popups"));
+	mi.name.t = (isEnabled ? LPGENT("Disable Popups") : LPGENT("Enable Popups"));
 	hMenuItem = Menu_AddMainMenuItem(&mi);
 }
 
@@ -235,6 +214,7 @@ int PreShutdown(WPARAM wParam, LPARAM lParam)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
+	mir_getCLI();
 
 	InitMessagePump();
 	InitOptions();
@@ -243,7 +223,6 @@ extern "C" int __declspec(dllexport) Load(void)
 	InitIcons();
 	InitMenuItems();
 
-	HookEvent(ME_SKIN2_ICONSCHANGED, IconsChanged);
 	HookEvent(ME_SYSTEM_PRESHUTDOWN, PreShutdown);
 	HookEvent(ME_SYSTEM_MODULESLOADED, ModulesLoaded);
 	return 0;

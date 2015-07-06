@@ -41,42 +41,32 @@ HWND      ContactHwnd;
 HINSTANCE hInst;
 HMENU     hMenu;
 int       bpStatus;
-HANDLE    hMenuItem1;
-HANDLE    hMenuItemCountdown;
+HGENMENU  hMenuItem1;
+HGENMENU  hMenuItemCountdown;
 
 /*****************************************************************************/
 void ChangeMenuItem1()
 {
-	/*
-	* Enable or Disable auto updates
-	*/
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.flags = CMIM_NAME | CMIM_ICON | CMIF_TCHAR;
-	mi.hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_SITE));
-
+	// Enable or Disable auto updates
+	LPCTSTR ptszName;
 	if (!db_get_b(NULL, MODULENAME, DISABLE_AUTOUPDATE_KEY, 0))
-		mi.ptszName = LPGENT("Auto update enabled");
+		ptszName = LPGENT("Auto update enabled");
 	else
-		mi.ptszName = LPGENT("Auto update disabled");
+		ptszName = LPGENT("Auto update disabled");
 
-	CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hMenuItem1, (LPARAM)&mi);
+	Menu_ModifyItem(hMenuItem1, ptszName, LoadIcon(hInst, MAKEINTRESOURCE(IDI_SITE)));
 }
 
 /*****************************************************************************/
 void ChangeMenuItemCountdown()
 {
-	/*
-	* countdown
-	*/
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.flags = CMIM_NAME | CMIM_ICON | CMIF_TCHAR  | CMIF_KEEPUNTRANSLATED;
-	mi.hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_UPDATEALL));
+	// countdown
+	HICON hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_UPDATEALL));
 
 	TCHAR countername[100]; 
-	mir_sntprintf(countername,SIZEOF(countername), TranslateT("%d minutes to update"), db_get_dw(NULL, MODULENAME, COUNTDOWN_KEY, 0));
-	mi.ptszName = countername;
+	mir_sntprintf(countername,_countof(countername), TranslateT("%d minutes to update"), db_get_dw(NULL, MODULENAME, COUNTDOWN_KEY, 0));
 
-	CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hMenuItemCountdown, (LPARAM)&mi);
+	Menu_ModifyItem(hMenuItemCountdown, countername, hIcon, CMIF_KEEPUNTRANSLATED);
 }
 
 /*****************************************************************************/
@@ -183,8 +173,8 @@ int Doubleclick(WPARAM wParam, LPARAM lParam)
 
 	int action = db_get_b(hContact, MODULENAME, DBLE_WIN_KEY, 1);
 	if (action == 0) {
-		ptrT url( db_get_tsa(hContact, MODULENAME, "URL"));
-		CallService(MS_UTILS_OPENURL, OUF_TCHAR, (WPARAM)url);
+		ptrT url(db_get_tsa(hContact, MODULENAME, "URL"));
+		Utils_OpenUrlT(url);
 
 		db_set_w(hContact, MODULENAME, "Status", ID_STATUS_ONLINE);     
 	}
@@ -456,9 +446,9 @@ int OnTopMenuCommand(WPARAM wParam, LPARAM lParam, MCONTACT singlecontact)
 INT_PTR WebsiteMenuCommand(WPARAM wParam, LPARAM lParam)
 {
 	MCONTACT hContact = wParam;
-	ptrT url( db_get_tsa(hContact, MODULENAME, "URL"));
+	ptrT url(db_get_tsa(hContact, MODULENAME, "URL"));
 	if (url)
-		CallService(MS_UTILS_OPENURL, OUF_TCHAR, (LPARAM)url);
+		Utils_OpenUrlT(url);
 
 	db_set_w(hContact, MODULENAME, "Status", ID_STATUS_ONLINE); 
 	return 0;

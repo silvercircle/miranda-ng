@@ -27,9 +27,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <CommCtrl.h>
 
-#include "m_genmenu.h"
-#include "m_protocols.h"
-#include "m_clc.h"
+#ifndef M_CLIST_H__
+#include <m_clist.h>
+#endif 
+
+#include <m_protocols.h>
+#include <m_clc.h>
 
 #define HCONTACT_ISGROUP    0x80000000
 #define HCONTACT_ISINFO     0xFFFF0000
@@ -236,22 +239,21 @@ typedef struct _menuProto
  * CLIST_INTERFACE structure definition
  ***************************************************************************/
 
-typedef struct {
+struct ClcProtoStatus
+{
 	char *szProto;
 	DWORD dwStatus;
-}
-	ClcProtoStatus;
+};
 
-typedef struct
+struct ClcCacheEntryBase
 {
 	MCONTACT hContact;
 	TCHAR* tszName;
 	TCHAR* tszGroup;
 	int    bIsHidden;
-}
-	ClcCacheEntryBase;
+};
 
-typedef struct
+struct CLIST_INTERFACE
 {
 	int version;
 
@@ -343,6 +345,8 @@ typedef struct
 	/* clistmod.c */
 	int    (*pfnIconFromStatusMode)(const char *szProto, int status, MCONTACT hContact);
 	int    (*pfnShowHide)(WPARAM, LPARAM);
+	
+	#define GSMDF_UNTRANSLATED 4 // don't tranlate the result
 	TCHAR* (*pfnGetStatusModeDescription)(int mode, int flags);
 
 	/* clistsettings.c */
@@ -350,6 +354,10 @@ typedef struct
 	ClcCacheEntry* (*pfnCreateCacheItem)(MCONTACT hContact);
 	void           (*pfnCheckCacheItem)(ClcCacheEntry*);
 	void           (*pfnFreeCacheItem)(ClcCacheEntry*);
+
+	#define GCDNF_NOMYHANDLE 1 // will never return the user's custom name
+	#define GCDNF_UNICODE    2 // will return TCHAR* instead of char*
+	#define GCDNF_NOCACHE    4 // will not use the cache
 
 	TCHAR* (*pfnGetContactDisplayName)(MCONTACT hContact, int mode);
 	void   (*pfnInvalidateDisplayNameCacheEntry)(MCONTACT hContact);
@@ -463,7 +471,6 @@ typedef struct
 	 * version 6 additions (0.8.0.x) - accounts
 	 *************************************************************************************/
 	int    (*pfnGetAccountIndexByPos)(int pos);
-	int    (*pfnConvertMenu)(CLISTMENUITEM*, TMO_MenuItem*);
 
 	/*************************************************************************************
 	 * version 7 additions (0.11.0.x) - extra images
@@ -479,18 +486,18 @@ typedef struct
 	int    (*pfnGetAverageMode)(int *pNetProtoCount);
 	void   (*pfnInitAutoRebuild)(HWND hwnd);
 	void   (*pfnSetContactCheckboxes)(ClcContact *cc, int checked);
-}
-	CLIST_INTERFACE;
+};
 
-extern CLIST_INTERFACE cli, *pcli;
-
-// Miranda 0.4.3.0+
 // retrieves the pointer to a CLIST_INTERFACE structure
 // NOTE: valid only for the clist clone building, not for the regular use
 
 #define MS_CLIST_RETRIEVE_INTERFACE "CList/RetrieveInterface"
 
-__forceinline void mir_getCLI()
-{	pcli = (CLIST_INTERFACE*)CallService(MS_CLIST_RETRIEVE_INTERFACE, 0, 0);
-}
+#ifndef MIR_APP_EXPORTS
+	extern CLIST_INTERFACE *pcli;
+
+	__forceinline void mir_getCLI()
+	{	pcli = (CLIST_INTERFACE*)CallService(MS_CLIST_RETRIEVE_INTERFACE, 0, 0);
+	}
+#endif
 #endif // M_CLISTINT_H__

@@ -105,13 +105,13 @@ void ShowPopupEx(MCONTACT hContact, const TCHAR *title, const TCHAR *description
 		((PopupDataType*)ppd.PluginData)->hIcon = ppd.lchIcon;
 
 		if (title != NULL)
-			mir_tstrncpy(ppd.lptzContactName, title, SIZEOF(ppd.lptzContactName));
+			mir_tstrncpy(ppd.lptzContactName, title, _countof(ppd.lptzContactName));
 		else if (hContact != NULL)
-			mir_tstrncpy(ppd.lptzContactName, (TCHAR *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR),
-					SIZEOF(ppd.lptzContactName));
+			mir_tstrncpy(ppd.lptzContactName, (TCHAR *)pcli->pfnGetContactDisplayName(hContact, 0),
+					_countof(ppd.lptzContactName));
 
 		if (description != NULL)
-			mir_tstrncpy(ppd.lptzText, description, SIZEOF(ppd.lptzText));
+			mir_tstrncpy(ppd.lptzText, description, _countof(ppd.lptzText));
 
 		if (type == POPUP_TYPE_NORMAL || type == POPUP_TYPE_TEST)
 		{
@@ -174,7 +174,7 @@ void ShowPopupEx(MCONTACT hContact, const TCHAR *title, const TCHAR *description
 	}
 	else
 	{
-		MessageBox(NULL, description, title ? title : (TCHAR *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR),
+		MessageBox(NULL, description, title ? title : (TCHAR *)pcli->pfnGetContactDisplayName(hContact, 0),
 			MB_OK);
 	}
 

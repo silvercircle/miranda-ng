@@ -43,12 +43,13 @@ extern "C" int __declspec(dllexport) Load(void)
 	mir_getCLI();
 	mir_getLP(&pluginInfo);
 
-	PROTOCOLDESCRIPTOR pd = { sizeof(pd) };
+	PROTOCOLDESCRIPTOR pd = { 0 };
+	pd.cbSize = sizeof(pd);
 	pd.szName = "TOX";
 	pd.type = PROTOTYPE_PROTOCOL;
 	pd.fnInit = (pfnInitProto)CToxProto::InitAccount;
 	pd.fnUninit = (pfnUninitProto)CToxProto::UninitAccount;
-	CallService(MS_PROTO_REGISTERMODULE, 0, (LPARAM)&pd);
+	Proto_RegisterModule(&pd);
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, &CToxProto::OnModulesLoaded);
 

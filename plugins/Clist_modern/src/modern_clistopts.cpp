@@ -22,10 +22,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "hdr/modern_commonheaders.h"
+#include "stdafx.h"
 #include "m_clui.h"
-#include "hdr/modern_clist.h"
-#include "hdr/modern_commonprototypes.h"
+#include "modern_clist.h"
+#include "modern_commonprototypes.h"
 
 static INT_PTR CALLBACK DlgProcItemRowOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -62,7 +62,7 @@ static INT_PTR CALLBACK DlgProcItemRowOpts(HWND hwndDlg, UINT msg, WPARAM wParam
 				int type;
 				int pos = 0;
 
-				mir_snprintf(tmp, SIZEOF(tmp), "RowPos%d", i);
+				mir_snprintf(tmp, "RowPos%d", i);
 				type = db_get_w(NULL, "CList", tmp, i);
 
 				switch (type) {
@@ -207,7 +207,7 @@ static INT_PTR CALLBACK DlgProcItemRowOpts(HWND hwndDlg, UINT msg, WPARAM wParam
 					HWND hwndList = GetDlgItem(hwndDlg, IDC_LIST_ORDER);
 					for (int i = 0; i < NUM_ITEM_TYPE; i++) {
 						char tmp[128];
-						mir_snprintf(tmp, SIZEOF(tmp), "RowPos%d", i);
+						mir_snprintf(tmp, "RowPos%d", i);
 						db_set_w(NULL, "CList", tmp, (WORD)SendMessage(hwndList, LB_GETITEMDATA, i, 0));
 					}
 				}
@@ -720,7 +720,7 @@ static INT_PTR CALLBACK DlgProcItemSecondLineOpts(HWND hwndDlg, UINT msg, WPARAM
 				db_set_w(NULL, "CList", "SecondLineType", (WORD)radio);
 
 				TCHAR t[TEXT_TEXT_MAX_LENGTH];
-				GetDlgItemText(hwndDlg, IDC_VARIABLE_TEXT, t, SIZEOF(t));
+				GetDlgItemText(hwndDlg, IDC_VARIABLE_TEXT, t, _countof(t));
 				t[TEXT_TEXT_MAX_LENGTH - 1] = '\0';
 				db_set_ts(NULL, "CList", "SecondLineText", t);
 
@@ -887,7 +887,7 @@ static INT_PTR CALLBACK DlgProcItemThirdLineOpts(HWND hwndDlg, UINT msg, WPARAM 
 				{
 					TCHAR t[TEXT_TEXT_MAX_LENGTH];
 
-					GetDlgItemText(hwndDlg, IDC_VARIABLE_TEXT, t, SIZEOF(t));
+					GetDlgItemText(hwndDlg, IDC_VARIABLE_TEXT, t, _countof(t));
 					t[TEXT_TEXT_MAX_LENGTH - 1] = '\0';
 
 					db_set_ws(NULL, "CList", "ThirdLineText", t);
@@ -940,7 +940,7 @@ int CListOptInit(WPARAM wParam, LPARAM)
 	odp.pszTitle = LPGEN("Row items");
 	odp.flags = ODPF_BOLDGROUPS;
 
-	for (int i = 0; i < SIZEOF(row_opt_items); i++) {
+	for (int i = 0; i < _countof(row_opt_items); i++) {
 		odp.pszTemplate = MAKEINTRESOURCEA(row_opt_items[i].id);
 		odp.pszTab = row_opt_items[i].name;
 		odp.pfnDlgProc = row_opt_items[i].wnd_proc;

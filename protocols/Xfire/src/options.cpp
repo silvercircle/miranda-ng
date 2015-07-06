@@ -181,7 +181,7 @@ static INT_PTR CALLBACK DlgProcOpts2(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 		}
 
 		char temp[255] = "";
-		mir_snprintf(temp, SIZEOF(temp), "%d", db_get_b(NULL, protocolname, "protover", 0x5b));
+		mir_snprintf(temp, _countof(temp), "%d", db_get_b(NULL, protocolname, "protover", 0x5b));
 		SetDlgItemTextA(hwndDlg, IDC_PVER, temp);
 
 		EnableWindow(GetDlgItem(hwndDlg, IDC_LASTGAME), FALSE);
@@ -230,11 +230,11 @@ static INT_PTR CALLBACK DlgProcOpts2(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			EnableDlgItem(hwndDlg, IDC_KONFIG_3, TRUE);
 		}
 		if (LOWORD(wParam) == IDC_URLNEWACC) {
-			CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)"http://www.xfire.com/register/");
+			Utils_OpenUrl("http://www.xfire.com/register/");
 			return TRUE;
 		}
 		if (LOWORD(wParam) == IDC_LOSTPW) {
-			CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)"https://secure.xfire.com/lost_password/");
+			Utils_OpenUrl("https://secure.xfire.com/lost_password/");
 			return TRUE;
 		}
 
@@ -253,7 +253,7 @@ static INT_PTR CALLBACK DlgProcOpts2(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			char str[128];
 			DBVARIANT dbv;
 
-			GetDlgItemTextA(hwndDlg, IDC_LOGIN, login, SIZEOF(login));
+			GetDlgItemTextA(hwndDlg, IDC_LOGIN, login, _countof(login));
 			dbv.pszVal = NULL;
 			if (db_get(NULL, protocolname, "login", &dbv) || mir_strcmp(login, dbv.pszVal))
 				reconnectRequired = 1;
@@ -278,7 +278,7 @@ static INT_PTR CALLBACK DlgProcOpts2(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			db_set_s(NULL, protocolname, "Username", login);
 
 			//nur wenn der nick erfolgreich übertragen wurde
-			GetDlgItemTextA(hwndDlg, IDC_NICK, login, SIZEOF(login));
+			GetDlgItemTextA(hwndDlg, IDC_NICK, login, _countof(login));
 			dbv.pszVal = NULL;
 			if (db_get(NULL, protocolname, "Nick", &dbv) || mir_strcmp(login, dbv.pszVal))
 			{
@@ -288,14 +288,14 @@ static INT_PTR CALLBACK DlgProcOpts2(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			if (dbv.pszVal != NULL)
 				db_free(&dbv);
 
-			GetDlgItemTextA(hwndDlg, IDC_PASSWORD, str, SIZEOF(str));
+			GetDlgItemTextA(hwndDlg, IDC_PASSWORD, str, _countof(str));
 			dbv.pszVal = NULL;
 			if (db_get(NULL, protocolname, "password", &dbv) || mir_strcmp(str, dbv.pszVal))
 				reconnectRequired = 1;
 			if (dbv.pszVal != NULL)
 				db_free(&dbv);
 			db_set_s(NULL, protocolname, "password", str);
-			GetDlgItemTextA(hwndDlg, IDC_SERVER, str, SIZEOF(str));
+			GetDlgItemTextA(hwndDlg, IDC_SERVER, str, _countof(str));
 
 			//neue preferencen sichern
 			if (bpStatus != ID_STATUS_OFFLINE&&bpStatus != ID_STATUS_CONNECTING)
@@ -322,7 +322,7 @@ static INT_PTR CALLBACK DlgProcOpts2(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			}
 
 			//protocolversion wird autoamtisch vergeben
-			//GetDlgItemTextA(hwndDlg,IDC_PVER,str,SIZEOF(str));
+			//GetDlgItemTextA(hwndDlg,IDC_PVER,str,_countof(str));
 			//db_set_b(NULL,protocolname,"protover",(char)atoi(str));
 
 			if (reconnectRequired)
@@ -379,11 +379,11 @@ static INT_PTR CALLBACK DlgProcOpts3(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			SendDlgItemMessage(hwndDlg, IDC_CLANGROUP, CB_ADDSTRING, 0, (LPARAM)TranslateT("<Root Group>"));
 			SendDlgItemMessage(hwndDlg, IDC_FOFGROUP, CB_ADDSTRING, 0, (LPARAM)TranslateT("<Root Group>"));
 
-			mir_snprintf(temp, SIZEOF(temp), "%d", gruppen_id);
+			mir_snprintf(temp, _countof(temp), "%d", gruppen_id);
 			while (!db_get_s(NULL, "CListGroups", temp, &dbv))
 			{
 				gruppen_id++;
-				mir_snprintf(temp, SIZEOF(temp), "%d", gruppen_id);
+				mir_snprintf(temp, _countof(temp), "%d", gruppen_id);
 
 				if (dbv.pszVal != NULL) {
 					SendDlgItemMessageA(hwndDlg, IDC_CLANGROUP, CB_ADDSTRING, 0, (LPARAM)&dbv.pszVal[1]);
@@ -517,7 +517,6 @@ static INT_PTR CALLBACK DlgProcOpts3(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 		{
 		case PSN_APPLY:
 		{
-			int reconnectRequired = 0;
 			int ccc;
 
 			hwndTree = GetDlgItem(hwndDlg, IDC_TREE);
@@ -548,11 +547,6 @@ static INT_PTR CALLBACK DlgProcOpts3(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			ccc = SendDlgItemMessage(hwndDlg, IDC_SCANUPDATECB, CB_GETCURSEL, 0, 0);
 			db_set_b(NULL, protocolname, "scanalways", (BYTE)ccc);
 
-			//protocolversion wird autoamtisch vergeben
-			//GetDlgItemTextA(hwndDlg,IDC_PVER,str,SIZEOF(str));
-			//db_set_b(NULL,protocolname,"protover",(char)atoi(str));
-
-			if (reconnectRequired) MessageBox(hwndDlg, TranslateT("The changes you have made require you to reconnect to the XFire network before they take effect"), TranslateT("XFire Options"), MB_OK | MB_ICONINFORMATION);
 			return TRUE;
 		}
 
@@ -579,7 +573,7 @@ static INT_PTR CALLBACK DlgProcOpts4(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 		TranslateDialogDefault(hwndDlg);
 
 		mir_strcpy(inipath, XFireGetFoldersPath("IniFile"));
-		strcat(inipath, "xfire_games.ini");
+		mir_strcat(inipath, "xfire_games.ini");
 
 		FILE * f = fopen(inipath, "r");
 		if (f != NULL)
@@ -595,7 +589,7 @@ static INT_PTR CALLBACK DlgProcOpts4(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 		}
 
 		mir_strcpy(inipath, XFireGetFoldersPath("IconsFile"));
-		strcat(inipath, "icons.dll");
+		mir_strcat(inipath, "icons.dll");
 
 		f = fopen(inipath, "r");
 		if (f != NULL)
@@ -616,7 +610,7 @@ static INT_PTR CALLBACK DlgProcOpts4(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 		dbces.lParam = (LPARAM)hwndDlg;
 		CallService(MS_DB_CONTACT_ENUMSETTINGS, 0, (LPARAM)&dbces);
 
-		SendDlgItemMessage(hwndDlg, IDC_REMUSER, BM_SETIMAGE, IMAGE_ICON, (WPARAM)LoadSkinnedIcon(SKINICON_OTHER_DELETE));
+		SendDlgItemMessage(hwndDlg, IDC_REMUSER, BM_SETIMAGE, IMAGE_ICON, (WPARAM)Skin_LoadIcon(SKINICON_OTHER_DELETE));
 
 		mir_strcpy(inipath, XFireGetFoldersPath("IniFile"));
 		SetDlgItemTextA(hwndDlg, IDC_FILESSHOULDBE, inipath);
@@ -730,7 +724,7 @@ static INT_PTR CALLBACK DlgProcOpts5(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			int reconnectRequired = 0;
 			char str[512];
 
-			GetDlgItemTextA(hwndDlg, IDC_STATUSMSG, str, SIZEOF(str));
+			GetDlgItemTextA(hwndDlg, IDC_STATUSMSG, str, _countof(str));
 			db_set_s(NULL, protocolname, "setstatusmsg", str);
 
 			db_set_b(NULL, protocolname, "autosetstatusmsg", (BYTE)IsDlgButtonChecked(hwndDlg, IDC_ENABLESTSMSG));
@@ -768,7 +762,7 @@ static INT_PTR CALLBACK DlgProcOpts6(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 		//gamelist füllen
 		SendMessage(hwndDlg, WM_FILLGAMELIST, 0, 0);
 
-		//SendDlgItemMessage(hwndDlg, IDC_CREATETXTLIST), BM_SETIMAGE, IMAGE_ICON, (WPARAM)LoadSkinnedIcon(SKINICON_OTHER_USERDETAILS));
+		//SendDlgItemMessage(hwndDlg, IDC_CREATETXTLIST), BM_SETIMAGE, IMAGE_ICON, (WPARAM)Skin_LoadIcon(SKINICON_OTHER_USERDETAILS));
 
 		return TRUE;
 	}
@@ -782,7 +776,7 @@ static INT_PTR CALLBACK DlgProcOpts6(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 		for (int i = 0; i < found; i++)
 		{
 			//id auslesen
-			mir_snprintf(temp, SIZEOF(temp), "gameid_%d", i);
+			mir_snprintf(temp, _countof(temp), "gameid_%d", i);
 			int gameid = db_get_w(NULL, protocolname, temp, 0);
 			//spielnamen auslesen
 			xgamelist.getGamename(gameid, temp, XFIRE_MAXSIZEOFGAMENAME);
@@ -989,18 +983,18 @@ static INT_PTR CALLBACK DlgProcOpts6(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 
 					//gameskip wert setzen
 					char temp[64] = "";
-					mir_snprintf(temp, SIZEOF(temp), "gameskip_%d", gameid);
+					mir_snprintf(temp, _countof(temp), "gameskip_%d", gameid);
 					CheckDlgButton(hwndDlg, IDC_DONTDETECT, db_get_b(NULL, protocolname, temp, 0) ? BST_CHECKED : BST_UNCHECKED);
-					mir_snprintf(temp, SIZEOF(temp), "gamenostatus_%d", gameid);
+					mir_snprintf(temp, _countof(temp), "gamenostatus_%d", gameid);
 					CheckDlgButton(hwndDlg, IDC_NOSTATUSMSG, db_get_b(NULL, protocolname, temp, 0) ? BST_CHECKED : BST_UNCHECKED);
-					mir_snprintf(temp, SIZEOF(temp), "notinstartmenu_%d", gameid);
+					mir_snprintf(temp, _countof(temp), "notinstartmenu_%d", gameid);
 					CheckDlgButton(hwndDlg, IDC_NOTINSTARTMENU, db_get_b(NULL, protocolname, temp, 0) ? BST_CHECKED : BST_UNCHECKED);
 
 					//extra parameter auslesen, aber nur, wenn das spiel auch sowas unterstützt
 					if (xgtemp && xgtemp->haveExtraGameArgs())
 					{
 						EnableDlgItem(hwndDlg, IDC_EXTRAPARAMS, TRUE);
-						mir_snprintf(temp, SIZEOF(temp), "gameextraparams_%d", gameid);
+						mir_snprintf(temp, _countof(temp), "gameextraparams_%d", gameid);
 						DBVARIANT dbv;
 						if (!db_get(NULL, protocolname, temp, &dbv))
 						{
@@ -1041,7 +1035,7 @@ static INT_PTR CALLBACK DlgProcOpts6(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 
 								//extra parameter auslesen und das gameobj schreiben
 								char str[128] = "";
-								GetDlgItemTextA(hwndDlg, IDC_EXTRAPARAMS, str, SIZEOF(str));
+								GetDlgItemTextA(hwndDlg, IDC_EXTRAPARAMS, str, _countof(str));
 								if (str[0] != 0)
 								{
 									//extra parameter sind gesetzt, zuweisen

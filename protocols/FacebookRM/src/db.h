@@ -37,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define FACEBOOK_KEY_DELETED				"DeletedTS"
 #define FACEBOOK_KEY_CONTACT_TYPE			"ContactType"
 #define FACEBOOK_KEY_MESSAGE_ID				"LastMessageId"
-#define FACEBOOK_KEY_MESSAGE_READ			"MessageRead"
+#define FACEBOOK_KEY_MESSAGE_READ			"LastMsgReadTime"
 #define FACEBOOK_KEY_MESSAGE_READERS		"MessageReaders"
 
 // Contact and account DB keys
@@ -70,12 +70,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Account DB keys - notifications
 #define FACEBOOK_KEY_EVENT_NOTIFICATIONS_ENABLE	"EventNotificationsEnable"
-#define FACEBOOK_KEY_EVENT_FEEDS_ENABLE		"EventFeedsEnable"
-#define FACEBOOK_KEY_EVENT_OTHER_ENABLE		"EventOtherEnable"
-#define FACEBOOK_KEY_EVENT_CLIENT_ENABLE	"EventClientEnable"
-#define FACEBOOK_KEY_EVENT_FRIENDSHIP_ENABLE "EventFriendshipEnable"
-#define FACEBOOK_KEY_EVENT_TICKER_ENABLE	"EventTickerEnable"
-#define FACEBOOK_KEY_FEED_TYPE				"EventFeedsType"
+#define FACEBOOK_KEY_EVENT_FEEDS_ENABLE			"EventFeedsEnable"
+#define FACEBOOK_KEY_EVENT_OTHER_ENABLE			"EventOtherEnable"
+#define FACEBOOK_KEY_EVENT_CLIENT_ENABLE		"EventClientEnable"
+#define FACEBOOK_KEY_EVENT_FRIENDSHIP_ENABLE	"EventFriendshipEnable"
+#define FACEBOOK_KEY_EVENT_TICKER_ENABLE		"EventTickerEnable"
+#define FACEBOOK_KEY_EVENT_ON_THIS_DAY_ENABLE	"EventOnThisDayEnable"
+#define FACEBOOK_KEY_FEED_TYPE					"EventFeedsType"
 
 // Hidden account DB keys (can't be changed through GUI)
 #define FACEBOOK_KEY_POLL_RATE				"PollRate"					// [HIDDEN] - (byte)

@@ -85,7 +85,7 @@ type
 
 var
   Form1: TForm1;
-  IconsItem, PluginsItem, CoreItem: Integer;
+  IconsItem, PluginsItem, CoreItem, LibsItem: Integer;
   IcePath: String;
   MirandaPath: String;
 
@@ -403,7 +403,7 @@ procedure TForm1.IceItClick(Sender: TObject);
 var
   n: Integer;
   S: String;
-  F: String;
+  F,X: String;
   xFilePath: String;
   xIcoPath: String;
   xTemp: String;
@@ -432,8 +432,9 @@ begin
         ProgressBar1.Position := n;
         S := GetValue(CheckListBox1.Items[n], 0);
         S := LowerCase(S);
-        // keep the order as for FillCombo function (atm Core<Plugins<Icons)
-        if      n < PluginsItem then F := '\core'
+        // keep the order as for FillCombo function (atm Core<Libs<Plugins<Icons)
+        if      n < LibsItem    then F := '\core'
+        else if n < PluginsItem then F := '\libs'
         else if n < IconsItem   then F := '\icons'
         else                         F := '\plugins';
 
@@ -449,7 +450,9 @@ begin
         end
         else
         begin
-          xFilePath := MirandaPath + F + '\' + S + '.dll';
+          if (F = '\libs') then X := '.mir'
+          else                  X := '.dll';
+          xFilePath := MirandaPath + F + '\' + S + X;
           xIcoPath := IcePath + F + '\' + S + '\' + S;
         end;
         CheckListBox1.Items[n] := SetValue(CheckListBox1.Items[n], 1, 'PROGRESS');
@@ -569,6 +572,7 @@ begin
   IcePath := ExtractFilePath(ParamStr(0));
 
   CoreItem    := FillCombo('core');
+  LibsItem    := FillCombo('libs');
   PluginsItem := FillCombo('icons');
   IconsItem   := FillCombo('plugins');
 end;

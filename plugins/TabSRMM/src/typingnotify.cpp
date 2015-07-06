@@ -4,7 +4,7 @@ HANDLE hTypingNotify;
 
 static HGENMENU hDisableMenu = NULL;
 
-static HANDLE hPopupsList = NULL;
+static MWindowList hPopupsList = NULL;
 
 static BYTE   OnePopup;
 static BYTE   ShowMenu;
@@ -46,19 +46,10 @@ static INT_PTR EnableDisableMenuCommand(WPARAM, LPARAM)
 	Disabled = !Disabled;
 
 	if (PluginConfig.g_bPopupAvail) {
-		CLISTMENUITEM mi = { sizeof(mi) };
-		mi.flags = CMIM_ICON | CMIM_NAME;
-
-		if (!Disabled) {
-			mi.pszName = LPGEN("Disable &typing notification");
-			mi.hIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_ENABLED));
-		}
-		else {
-			mi.pszName = LPGEN("Enable &typing notification");
-			mi.hIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_DISABLED));
-		}
-
-		Menu_ModifyItem(hDisableMenu, &mi);
+		if (!Disabled)
+			Menu_ModifyItem(hDisableMenu, LPGENT("Disable &typing notification"), LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_ENABLED)));
+		else
+			Menu_ModifyItem(hDisableMenu, LPGENT("Enable &typing notification"), LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_DISABLED)));
 	}
 
 	return 0;
@@ -202,7 +193,7 @@ static INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			CheckDlgButton(hwndDlg, IDC_USEPOPUPCOLORS, BST_CHECKED);
 		}
 
-		for (i = 0; i < SIZEOF(colorPicker); i++) {
+		for (i = 0; i < _countof(colorPicker); i++) {
 			SendDlgItemMessage(hwndDlg, colorPicker[i].res, CPM_SETCOLOUR, 0, colorPicker[i].color);
 			Utils::enableDlgControl(hwndDlg, colorPicker[i].res, (ColorMode == COLOR_OWN));
 		}
@@ -260,7 +251,7 @@ static INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 					bEnableOthers = true;
 				}
 
-				for (i = 0; i < SIZEOF(colorPicker); i++)
+				for (i = 0; i < _countof(colorPicker); i++)
 					Utils::enableDlgControl(hwndDlg, colorPicker[i].res, bEnableOthers);
 
 				Utils::enableDlgControl(hwndDlg, IDC_USEPOPUPCOLORS, bEnableOthers);
@@ -536,26 +527,26 @@ int TN_ModuleInit()
 	Timeout2 = M.GetByte(Module, SET_TIMEOUT2, DEF_TIMEOUT2);
 
 	if (!(M.GetDword(Module, colorPicker[0].desc, 1) && !M.GetDword(Module, colorPicker[0].desc, 0)))
-		for (i = 0; i < SIZEOF(colorPicker); i++)
+		for (i = 0; i < _countof(colorPicker); i++)
 			colorPicker[i].color = M.GetDword(Module, colorPicker[i].desc, 0);
 
-	mir_sntprintf(szStart, SIZEOF(szStart), TranslateT("...is typing a message."));
-	mir_sntprintf(szStop, SIZEOF(szStop), TranslateT("...has stopped typing."));
+	mir_sntprintf(szStart, _countof(szStart), TranslateT("...is typing a message."));
+	mir_sntprintf(szStop, _countof(szStop), TranslateT("...has stopped typing."));
 
 	if (PluginConfig.g_bPopupAvail && ShowMenu) {
 		hTypingNotify = CreateServiceFunction("TypingNotify/EnableDisableMenuCommand", EnableDisableMenuCommand);
 
-		CLISTMENUITEM mi = { sizeof(mi) };
+		CMenuItem mi;
 		if (!Disabled) {
-			mi.pszName = LPGEN("Disable &typing notification");
-			mi.hIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_ENABLED));
+			mi.name.a = LPGEN("Disable &typing notification");
+			mi.hIcolibItem = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_ENABLED));
 		}
 		else {
-			mi.pszName = LPGEN("Enable &typing notification");
-			mi.hIcon = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_DISABLED));
+			mi.name.a = LPGEN("Enable &typing notification");
+			mi.hIcolibItem = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_DISABLED));
 		}
 		mi.pszService = "TypingNotify/EnableDisableMenuCommand";
-		mi.pszPopupName = LPGEN("Popups");
+		mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Popups"), 0);
 		hDisableMenu = Menu_AddMainMenuItem(&mi);
 	}
 

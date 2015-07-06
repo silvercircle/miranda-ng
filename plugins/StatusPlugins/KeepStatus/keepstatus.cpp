@@ -162,7 +162,7 @@ static void GetCurrentConnectionSettings()
 
 	int count;
 	PROTOACCOUNT** protos;
-	ProtoEnumAccounts(&count, &protos);
+	Proto_EnumAccounts(&count, &protos);
 
 	for (int i = 0; i < count; i++)
 		if (IsSuitableProto(protos[i]))
@@ -212,7 +212,7 @@ static int AssignStatus(TConnectionSettings* cs, int status, int lastStatus, TCH
 	mir_cslock lck(GenStatusCS);
 
 	char dbSetting[128];
-	mir_snprintf(dbSetting, SIZEOF(dbSetting), "%s_enabled", cs->szName);
+	mir_snprintf(dbSetting, _countof(dbSetting), "%s_enabled", cs->szName);
 	cs->lastStatus = lastStatus == 0 ? cs->status : lastStatus;
 	if (!db_get_b(NULL, MODULENAME, dbSetting, 1))
 		cs->status = ID_STATUS_DISABLED;
@@ -520,7 +520,7 @@ static int ProcessProtoAck(WPARAM, LPARAM lParam)
 		return 0;
 
 	char dbSetting[128];
-	mir_snprintf(dbSetting, SIZEOF(dbSetting), "%s_enabled", ack->szModule);
+	mir_snprintf(dbSetting, _countof(dbSetting), "%s_enabled", ack->szModule);
 	if (!db_get_b(NULL, MODULENAME, dbSetting, 1))
 		return 0;
 
@@ -659,7 +659,7 @@ static VOID CALLBACK CheckConnectionTimer(HWND, UINT, UINT_PTR, DWORD)
 	log_debugA("CheckConnectionTimer");
 	bool setStatus = false;
 	if (showConnectionPopups)
-		hIcon = LoadSkinnedIcon(SKINICON_STATUS_OFFLINE);
+		hIcon = Skin_LoadIcon(SKINICON_STATUS_OFFLINE);
 
 	for (int i = 0; i < connectionSettings.getCount() && !setStatus; i++) {
 		TConnectionSettings& cs = connectionSettings[i];
@@ -672,7 +672,7 @@ static VOID CALLBACK CheckConnectionTimer(HWND, UINT, UINT_PTR, DWORD)
 		if ((shouldBeStatus != realStatus) && (realStatus == ID_STATUS_OFFLINE) || (realStatus < MIN_STATUS)) {
 			setStatus = true;
 			if (showConnectionPopups)
-				hIcon = LoadSkinnedProtoIcon(cs.szName, ID_STATUS_OFFLINE);
+				hIcon = Skin_LoadProtoIcon(cs.szName, ID_STATUS_OFFLINE);
 		}
 	}
 
@@ -836,7 +836,7 @@ static void CheckContinueslyFunction(void *)
 
 		int count;
 		PROTOACCOUNT** protos;
-		ProtoEnumAccounts(&count, &protos);
+		Proto_EnumAccounts(&count, &protos);
 
 		for (int i = 0; i < count; i++) {
 			if (!IsSuitableProto(protos[i]))
@@ -876,7 +876,7 @@ static VOID CALLBACK CheckContinueslyTimer(HWND, UINT, UINT_PTR, DWORD)
 // =============== popup ======================
 static TCHAR* GetHumanName(LPARAM lParam)
 {
-	PROTOACCOUNT *ProtoAccount = ProtoGetAccount((char*)lParam);
+	PROTOACCOUNT *ProtoAccount = Proto_GetAccount((char*)lParam);
 	return (ProtoAccount != NULL) ? ProtoAccount->tszAccountName : TranslateT("Protocol");
 }
 
@@ -893,19 +893,19 @@ static int ProcessPopup(int reason, LPARAM lParam)
 		if (!db_get_b(NULL, MODULENAME, SETTING_PUOTHER, TRUE))
 			return -1;
 
-		hIcon = LoadSkinnedProtoIcon((char*)lParam, SKINICON_STATUS_OFFLINE);
-		mir_sntprintf(text, SIZEOF(text), TranslateT("%s connected from another location"), GetHumanName(lParam));
+		hIcon = Skin_LoadProtoIcon((char*)lParam, SKINICON_STATUS_OFFLINE);
+		mir_sntprintf(text, TranslateT("%s connected from another location"), GetHumanName(lParam));
 		break;
 
 	case KS_CONN_STATE_LOGINERROR:	// lParam = 1 proto
 		if (!db_get_b(NULL, MODULENAME, SETTING_PUOTHER, TRUE))
 			return -1;
 
-		hIcon = LoadSkinnedProtoIcon((char*)lParam, SKINICON_STATUS_OFFLINE);
+		hIcon = Skin_LoadProtoIcon((char*)lParam, SKINICON_STATUS_OFFLINE);
 		if (db_get_b(NULL, MODULENAME, SETTING_LOGINERR, LOGINERR_NOTHING) == LOGINERR_CANCEL)
-			mir_sntprintf(text, SIZEOF(text), TranslateT("%s login error, cancel reconnecting"), GetHumanName(lParam));
+			mir_sntprintf(text, TranslateT("%s login error, cancel reconnecting"), GetHumanName(lParam));
 		else if (db_get_b(NULL, MODULENAME, SETTING_LOGINERR, LOGINERR_NOTHING) == LOGINERR_SETDELAY)
-			mir_sntprintf(text, SIZEOF(text), TranslateT("%s login error (next retry (%d) in %d s)"), GetHumanName(lParam), retryCount + 1, db_get_dw(NULL, MODULENAME, SETTING_LOGINERR_DELAY, DEFAULT_MAXDELAY));
+			mir_sntprintf(text, TranslateT("%s login error (next retry (%d) in %d s)"), GetHumanName(lParam), retryCount + 1, db_get_dw(NULL, MODULENAME, SETTING_LOGINERR_DELAY, DEFAULT_MAXDELAY));
 		else
 			return -1;
 		break;
@@ -915,10 +915,10 @@ static int ProcessPopup(int reason, LPARAM lParam)
 			return -1;
 
 		if (lParam) { // ”казатель на им€ модул€. 
-			hIcon = LoadSkinnedProtoIcon((char*)lParam, SKINICON_STATUS_OFFLINE);
-			mir_sntprintf(text, SIZEOF(text), TranslateT("%s status error (next retry (%d) in %d s)"), GetHumanName(lParam), retryCount + 1, currentDelay / 1000);
+			hIcon = Skin_LoadProtoIcon((char*)lParam, SKINICON_STATUS_OFFLINE);
+			mir_sntprintf(text, TranslateT("%s status error (next retry (%d) in %d s)"), GetHumanName(lParam), retryCount + 1, currentDelay / 1000);
 		}
-		else mir_sntprintf(text, SIZEOF(text), TranslateT("Status error (next retry (%d) in %d s)"), retryCount + 1, currentDelay / 1000);
+		else mir_sntprintf(text, TranslateT("Status error (next retry (%d) in %d s)"), retryCount + 1, currentDelay / 1000);
 		break;
 
 	case KS_CONN_STATE_RETRY:  // lParam = PROTOCOLSETTINGEX**
@@ -933,18 +933,18 @@ static int ProcessPopup(int reason, LPARAM lParam)
 			for (int i = 0; i < connectionSettings.getCount(); i++) {
 				if (mir_tstrlen(ps[i]->tszAccName) > 0 && mir_strlen(ps[i]->szName) > 0) {
 					if (db_get_b(NULL, MODULENAME, SETTING_PUSHOWEXTRA, TRUE)) {
-						mir_sntprintf(protoInfoLine, SIZEOF(protoInfoLine), TranslateT("%s\t(will be set to %s)\r\n"), ps[i]->tszAccName, pcli->pfnGetStatusModeDescription(ps[i]->status, GSMDF_TCHAR));
-						_tcsncat(protoInfo, protoInfoLine, SIZEOF(protoInfo) - mir_tstrlen(protoInfo) - 1);
+						mir_sntprintf(protoInfoLine, _countof(protoInfoLine), TranslateT("%s\t(will be set to %s)\r\n"), ps[i]->tszAccName, pcli->pfnGetStatusModeDescription(ps[i]->status, 0));
+						mir_tstrncat(protoInfo, protoInfoLine, _countof(protoInfo) - mir_tstrlen(protoInfo) - 1);
 					}
 				}
 			}
-			hIcon = LoadSkinnedProtoIcon(ps[0]->szName, SKINICON_STATUS_OFFLINE);
+			hIcon = Skin_LoadProtoIcon(ps[0]->szName, SKINICON_STATUS_OFFLINE);
 
 			rtrimt(protoInfo);
 			if (retryCount == (maxRetries - 1))
-				mir_sntprintf(text, SIZEOF(text), TranslateT("Resetting status... (last try (%d))%s"), retryCount + 1, protoInfo);
+				mir_sntprintf(text, TranslateT("Resetting status... (last try (%d))%s"), retryCount + 1, protoInfo);
 			else
-				mir_sntprintf(text, SIZEOF(text), TranslateT("Resetting status... (next retry (%d) in %d s)%s"), retryCount + 2, currentDelay / 1000, protoInfo);
+				mir_sntprintf(text, TranslateT("Resetting status... (next retry (%d) in %d s)%s"), retryCount + 2, currentDelay / 1000, protoInfo);
 		}
 		break;
 
@@ -953,9 +953,9 @@ static int ProcessPopup(int reason, LPARAM lParam)
 			return -1;
 
 		if (retryCount == maxRetries - 1)
-			mir_sntprintf(text, SIZEOF(text), TranslateT("No internet connection seems available... (last try (%d))"), retryCount + 1);
+			mir_sntprintf(text, TranslateT("No internet connection seems available... (last try (%d))"), retryCount + 1);
 		else
-			mir_sntprintf(text, SIZEOF(text), TranslateT("No internet connection seems available... (next retry (%d) in %d s)"), retryCount + 2, currentDelay / 1000);
+			mir_sntprintf(text, TranslateT("No internet connection seems available... (next retry (%d) in %d s)"), retryCount + 2, currentDelay / 1000);
 		break;
 
 	case KS_CONN_STATE_STOPPEDCHECKING: // lParam == BOOL succes
@@ -963,14 +963,14 @@ static int ProcessPopup(int reason, LPARAM lParam)
 			return -1;
 
 		if (lParam) {
-			hIcon = LoadSkinnedIcon(SKINICON_STATUS_ONLINE);
-			mir_sntprintf(text, SIZEOF(text), TranslateT("Status was set ok"));
+			hIcon = Skin_LoadIcon(SKINICON_STATUS_ONLINE);
+			mir_sntprintf(text, TranslateT("Status was set ok"));
 		}
-		else mir_sntprintf(text, SIZEOF(text), TranslateT("Giving up"));
+		else mir_sntprintf(text, TranslateT("Giving up"));
 		break;
 	}
 	if (hIcon == NULL)
-		hIcon = LoadSkinnedIcon(SKINICON_STATUS_OFFLINE);
+		hIcon = Skin_LoadIcon(SKINICON_STATUS_OFFLINE);
 
 	log_info(L"KeepStatus: %s", text);
 	return ShowPopup(text, hIcon);
@@ -1051,7 +1051,7 @@ INT_PTR EnableProtocolService(WPARAM wParam, LPARAM lParam)
 		return -1;
 
 	char dbSetting[128];
-	mir_snprintf(dbSetting, SIZEOF(dbSetting), "%s_enabled", szProto);
+	mir_snprintf(dbSetting, _countof(dbSetting), "%s_enabled", szProto);
 	if (!db_get_b(NULL, MODULENAME, dbSetting, 1)) // 'hard' disabled
 		return -1;
 
@@ -1077,7 +1077,7 @@ INT_PTR IsProtocolEnabledService(WPARAM, LPARAM lParam)
 	char *szProto = (char *)lParam;
 
 	char dbSetting[128];
-	mir_snprintf(dbSetting, SIZEOF(dbSetting), "%s_enabled", szProto);
+	mir_snprintf(dbSetting, _countof(dbSetting), "%s_enabled", szProto);
 	if (!db_get_b(NULL, MODULENAME, dbSetting, 1))
 		return FALSE;
 

@@ -75,7 +75,7 @@ void TSAPI LoadLogfont(int i, LOGFONTA * lf, COLORREF * colour, char *szModule)
 		lf->lfClipPrecision = lfResult.lfClipPrecision;
 		lf->lfQuality = lfResult.lfQuality;
 		lf->lfPitchAndFamily = lfResult.lfPitchAndFamily;
-		mir_snprintf(lf->lfFaceName, SIZEOF(lf->lfFaceName), "%S", lfResult.lfFaceName);
+		mir_snprintf(lf->lfFaceName, _countof(lf->lfFaceName), "%S", lfResult.lfFaceName);
 	}
 }
 
@@ -97,7 +97,7 @@ static int TSAPI ScanSkinDir(const TCHAR* tszFolder, HWND hwndCombobox)
 {
 	bool fValid = false;
 	TCHAR tszMask[MAX_PATH];
-	mir_sntprintf(tszMask, SIZEOF(tszMask), _T("%s*.*"), tszFolder);
+	mir_sntprintf(tszMask, _countof(tszMask), _T("%s*.*"), tszFolder);
 
 	WIN32_FIND_DATA fd = { 0 };
 	HANDLE h = FindFirstFile(tszMask, &fd);
@@ -117,9 +117,9 @@ static int TSAPI ScanSkinDir(const TCHAR* tszFolder, HWND hwndCombobox)
 		LRESULT lr;
 		TCHAR	szBuf[255];
 
-		mir_sntprintf(tszFinalName, SIZEOF(tszFinalName), _T("%s%s"), tszFolder, fd.cFileName);
+		mir_sntprintf(tszFinalName, _countof(tszFinalName), _T("%s%s"), tszFolder, fd.cFileName);
 
-		GetPrivateProfileString(_T("Global"), _T("Name"), _T("None"), szBuf, SIZEOF(szBuf), tszFinalName);
+		GetPrivateProfileString(_T("Global"), _T("Name"), _T("None"), szBuf, _countof(szBuf), tszFinalName);
 		if (!mir_tstrcmp(szBuf, _T("None"))) {
 			fd.cFileName[mir_tstrlen(fd.cFileName) - 4] = 0;
 			_tcsncpy_s(szBuf, fd.cFileName, _TRUNCATE);
@@ -153,7 +153,7 @@ static int TSAPI RescanSkins(HWND hwndCombobox)
 	_tcsncpy_s(tszSkinRoot, M.getSkinPath(), _TRUNCATE);
 
 	SetDlgItemText(GetParent(hwndCombobox), IDC_SKINROOTFOLDER, tszSkinRoot);
-	mir_sntprintf(tszFindMask, SIZEOF(tszFindMask), _T("%s*.*"), tszSkinRoot);
+	mir_sntprintf(tszFindMask, _countof(tszFindMask), _T("%s*.*"), tszSkinRoot);
 
 	SendMessage(hwndCombobox, CB_RESETCONTENT, 0, 0);
 	SendMessage(hwndCombobox, CB_INSERTSTRING, -1, (LPARAM)TranslateT("<no skin>"));
@@ -163,7 +163,7 @@ static int TSAPI RescanSkins(HWND hwndCombobox)
 	while (h != INVALID_HANDLE_VALUE) {
 		if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY && fd.cFileName[0] != '.') {
 			TCHAR	tszSubDir[MAX_PATH];
-			mir_sntprintf(tszSubDir, SIZEOF(tszSubDir), _T("%s%s\\"), tszSkinRoot, fd.cFileName);
+			mir_sntprintf(tszSubDir, _countof(tszSubDir), _T("%s%s\\"), tszSkinRoot, fd.cFileName);
 			ScanSkinDir(tszSubDir, hwndCombobox);
 		}
 		if (FindNextFile(h, &fd) == 0)
@@ -331,7 +331,7 @@ static INT_PTR CALLBACK DlgProcSkinOpts(HWND hwndDlg, UINT msg, WPARAM wParam, L
 			break;
 
 		case IDC_HELP_GENERAL:
-			CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)"http://wiki.miranda.or.at/TabSRMM/UsingSkins");
+			Utils_OpenUrl("http://wiki.miranda.or.at/TabSRMM/UsingSkins");
 			break;
 
 		case IDC_SKIN_CLOSENOW:
@@ -594,7 +594,7 @@ static INT_PTR CALLBACK DlgProcOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			break;
 
 		case IDC_HELP_GENERAL:
-			CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)"http://wiki.miranda.or.at/TabSRMM/GeneralSettings");
+			Utils_OpenUrl("http://wiki.miranda.or.at/TabSRMM/GeneralSettings");
 			break;
 
 		case IDC_RESETWARNINGS:
@@ -729,7 +729,7 @@ static INT_PTR CALLBACK DlgProcLogOptions(HWND hwndDlg, UINT msg, WPARAM wParam,
 		Utils::showDlgControl(hwndDlg, IDC_EXPLAINMSGLOGSETTINGS, r == 0 ? SW_HIDE : SW_SHOW);
 		Utils::showDlgControl(hwndDlg, IDC_LOGOPTIONS, r == 0 ? SW_SHOW : SW_HIDE);
 		Utils::enableDlgControl(GetDlgItem(hwndDlg, IDC_MSGLOGDIDSPLAY), r != 0);
-		for (int i = 0; i < SIZEOF(__ctrls); i++)
+		for (int i = 0; i < _countof(__ctrls); i++)
 			Utils::enableDlgControl(hwndDlg, __ctrls[i], r == 0 ? TRUE : FALSE);
 	}
 	return 0;
@@ -953,7 +953,7 @@ static INT_PTR CALLBACK DlgProcTypeOptions(HWND hwndDlg, UINT msg, WPARAM wParam
 				(IsDlgButtonChecked(hwndDlg, IDC_TYPEWIN) || IsDlgButtonChecked(hwndDlg, IDC_TYPENOWIN)));
 			break;
 		case IDC_MTN_HELP:
-			CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)"http://wiki.miranda.or.at/TabSRMM/TypingNotifications");
+			Utils_OpenUrl("http://wiki.miranda.or.at/TabSRMM/TypingNotifications");
 			return 0;
 		}
 		SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
@@ -1123,7 +1123,7 @@ static INT_PTR CALLBACK DlgProcContainerSettings(HWND hwndDlg, UINT msg, WPARAM 
 			Utils::enableDlgControl(hwndDlg, IDC_TABLIMIT, IsDlgButtonChecked(hwndDlg, IDC_LIMITTABS) != 0);
 			break;
 		case IDC_HELP_CONTAINERS:
-			CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)"http://wiki.miranda.or.at/TabSRMM/Containers");
+			Utils_OpenUrl("http://wiki.miranda.or.at/TabSRMM/Containers");
 			break;
 		}
 		SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
@@ -1203,7 +1203,7 @@ INT_PTR CALLBACK PlusOptionsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDC_PLUS_HELP) {
-			CallService(MS_UTILS_OPENURL, 0, (LPARAM)"http://wiki.miranda.or.at/TabSRMM/AdvancedTweaks");
+			Utils_OpenUrl("http://wiki.miranda.or.at/TabSRMM/AdvancedTweaks");
 			break;
 		}
 		else if (LOWORD(wParam) == IDC_PLUS_REVERT) {		// revert to defaults...
@@ -1488,7 +1488,7 @@ static INT_PTR CALLBACK DlgProcTabSrmmModernOptions(HWND hwndDlg, UINT msg, WPAR
 
 			bInit = TRUE;
 
-			for (int i = 0; i < SIZEOF(opts); ++i)
+			for (int i = 0; i < _countof(opts); ++i)
 				OptCheckBox_Load(hwndDlg, opts + i);
 
 			// Always on!
@@ -1572,7 +1572,7 @@ static INT_PTR CALLBACK DlgProcTabSrmmModernOptions(HWND hwndDlg, UINT msg, WPAR
 		case 0:
 			switch (((LPNMHDR)lParam)->code) {
 			case PSN_APPLY:
-				for (int i = 0; i < SIZEOF(opts); ++i)
+				for (int i = 0; i < _countof(opts); ++i)
 					OptCheckBox_Save(hwndDlg, opts + i);
 
 				if (IsDlgButtonChecked(hwndDlg, IDC_LOADCOUNT))
@@ -1624,7 +1624,7 @@ static int ModernOptInitialise(WPARAM wParam, LPARAM)
 
 	MODERNOPTOBJECT obj = { sizeof(obj) };
 	obj.dwFlags = MODEROPT_FLG_TCHAR | MODEROPT_FLG_NORESIZE;
-	obj.hIcon = LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
+	obj.hIcon = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
 	obj.hInstance = g_hInst;
 	obj.iSection = MODERNOPT_PAGE_MSGS;
 	obj.iType = MODERNOPT_TYPE_SECTIONPAGE;
@@ -1661,7 +1661,7 @@ INT_PTR CALLBACK DlgProcSetupStatusModes(HWND hwndDlg, UINT msg, WPARAM wParam, 
 		SetWindowText(hwndDlg, TranslateT("Choose status modes"));
 		{
 			for (int i = ID_STATUS_ONLINE; i <= ID_STATUS_OUTTOLUNCH; i++) {
-				SetDlgItemText(hwndDlg, i, pcli->pfnGetStatusModeDescription(i, GSMDF_TCHAR));
+				SetDlgItemText(hwndDlg, i, pcli->pfnGetStatusModeDescription(i, 0));
 				if (dwStatusMask != -1 && (dwStatusMask & (1 << (i - ID_STATUS_ONLINE))))
 					CheckDlgButton(hwndDlg, i, BST_CHECKED);
 				Utils::enableDlgControl(hwndDlg, i, dwStatusMask != -1);

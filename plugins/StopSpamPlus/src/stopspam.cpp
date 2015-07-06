@@ -48,11 +48,11 @@ extern "C" int __declspec(dllexport) Load(void)
 	// Add deliting temporary contacts
 	hTempRemove = CreateServiceFunction(MS_STOPSPAM_REMTEMPCONTACTS, RemoveTempContacts);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = -0x7FFFFFFF;
 	mi.flags = CMIF_TCHAR;
-	mi.hIcon = LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
-	mi.ptszName = LPGENT("Remove Temporary Contacts");
+	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
+	mi.name.t = LPGENT("Remove Temporary Contacts");
 	mi.pszService = pluginName"/RemoveTempContacts";
 	Menu_AddMainMenuItem(&mi);
 

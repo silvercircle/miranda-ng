@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MS_TOOLTIP_SHOWTIP		"mToolTip/ShowTip"
 #define MS_TOOLTIP_HIDETIP		"mToolTip/HideTip"
 
-static HANDLE hMwinWindowList;
+static MWindowList hMwinWindowList;
 static HANDLE hFontHook;
 
 HGENMENU hMwinMenu;
@@ -60,9 +60,8 @@ static LRESULT CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 	case WM_CONTEXTMENU:
 		{
 			POINT pt;
-
-			HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDCONTACT, (WPARAM)data->hContact, 0);
 			GetCursorPos(&pt);
+			HMENU hMenu = Menu_BuildContactMenu(data->hContact);
 			TrackPopupMenu(hMenu, TPM_LEFTALIGN, pt.x, pt.y, 0, hwnd, NULL);
 			DestroyMenu(hMenu);
 		}
@@ -112,10 +111,10 @@ static LRESULT CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 		return FALSE;
 
 	case WM_MEASUREITEM:	//Needed by the contact's context menu
-		return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
+		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
 
 	case WM_DRAWITEM:	//Needed by the contact's context menu
-		return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
+		return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
 
 	case WM_NOTIFY:
 		if (((LPNMHDR)lParam)->code == NM_AVATAR_CHANGED)
@@ -155,11 +154,11 @@ static LRESULT CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 					int statusIcon = db_get_w(data->hContact, WEATHERPROTONAME, "Status", 0);
 
 					picSize = GetSystemMetrics(SM_CXICON);
-					hIcon = LoadSkinnedProtoIconBig(WEATHERPROTONAME, statusIcon);
+					hIcon = Skin_LoadProtoIcon(WEATHERPROTONAME, statusIcon, true);
 					if ((INT_PTR)hIcon == CALLSERVICE_NOTFOUND)
 					{
 						picSize = GetSystemMetrics(SM_CXSMICON);
-						hIcon = LoadSkinnedProtoIcon(WEATHERPROTONAME, statusIcon);
+						hIcon = Skin_LoadProtoIcon(WEATHERPROTONAME, statusIcon);
 					}
 				}
 
@@ -207,7 +206,7 @@ static LRESULT CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 				HFONT hfntold = ( HFONT )SelectObject(hdc, hfnt);
 				SIZE fontSize;
 
-				TCHAR *nick = ( TCHAR* )CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)data->hContact, GCDNF_TCHAR);
+				TCHAR *nick = ( TCHAR* )pcli->pfnGetContactDisplayName(data->hContact, 0);
 
 				GetTextExtentPoint32(hdc, _T("|"), 1, &fontSize);
 
@@ -234,7 +233,7 @@ static LRESULT CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 					DeleteObject(hfnt);
 				}
 				EndPaint(hwnd, &ps);
-				Skin_ReleaseIcon(hIcon);
+				IcoLib_ReleaseIcon(hIcon);
 				db_free(&dbv);
 			}
 			break;
@@ -252,11 +251,11 @@ static void addWindow(MCONTACT hContact)
 	db_get_ts(hContact, WEATHERPROTONAME, "Nick", &dbv);
 
 	TCHAR winname[512];
-	mir_sntprintf(winname, SIZEOF(winname), _T("Weather: %s"), dbv.ptszVal);
+	mir_sntprintf(winname, _countof(winname), _T("Weather: %s"), dbv.ptszVal);
 	db_free(&dbv);
 
 	HWND hWnd = CreateWindow( _T("WeatherFrame"), _T(""), WS_CHILD | WS_VISIBLE,
-		0, 0, 10, 10, (HWND)CallService(MS_CLUI_GETHWND, 0, 0), NULL, hInst, (void*)hContact);
+		0, 0, 10, 10, pcli->hwndContactList, NULL, hInst, (void*)hContact);
 	WindowList_Add(hMwinWindowList, hWnd, hContact);
 
 	CLISTFrame Frame = {0};
@@ -305,10 +304,8 @@ INT_PTR Mwin_MenuClicked(WPARAM wParam,LPARAM lParam)
 
 int BuildContactMenu(WPARAM wparam,LPARAM lparam)
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.flags = CMIM_FLAGS |
-		(db_get_dw((MCONTACT)wparam, WEATHERPROTONAME, "mwin", 0) ? CMIF_CHECKED : 0);
-	Menu_ModifyItem(hMwinMenu, &mi);
+	int flags = db_get_dw((MCONTACT)wparam, WEATHERPROTONAME, "mwin", 0) ? CMIF_CHECKED : 0;
+	Menu_ModifyItem(hMwinMenu, NULL, INVALID_HANDLE_VALUE, flags);
 	return 0;
 }
 

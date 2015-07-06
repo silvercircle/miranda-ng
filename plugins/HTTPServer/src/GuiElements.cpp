@@ -15,7 +15,6 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-
 #include "Glob.h"
 
 #define MS_SHARE_NEW_FILE "HTTPServer/ShareNewFile"
@@ -201,7 +200,7 @@ unsigned long GetExternIP(const char *szURL, const char *szPattern) {
 string sCreateLink(const char * pszSrvPath) {
 	char szTemp[30];
 	string sLink = DBGetString(NULL, MODULE, "ExternalSrvName", szDefaultExternalSrvName);
-	mir_snprintf(szTemp, SIZEOF(szTemp), "%d.%d.%d.%d", SplitIpAddress(dwLocalIpAddress));
+	mir_snprintf(szTemp, "%d.%d.%d.%d", SplitIpAddress(dwLocalIpAddress));
 	ReplaceAll(sLink, "%LocalIP%", szTemp);
 
 	if (sLink.find("%ExternalIP%") != sLink.npos) {
@@ -214,11 +213,11 @@ string sCreateLink(const char * pszSrvPath) {
 			dwExternalIpAddressGenerated = GetTickCount();
 		}
 
-		mir_snprintf(szTemp, SIZEOF(szTemp), "%d.%d.%d.%d", SplitIpAddress(dwExternalIpAddress));
+		mir_snprintf(szTemp, "%d.%d.%d.%d", SplitIpAddress(dwExternalIpAddress));
 		ReplaceAll(sLink, "%ExternalIP%", szTemp);
 	}
 
-	mir_snprintf(szTemp, SIZEOF(szTemp), "%d", dwLocalPortUsed, szTemp);
+	mir_snprintf(szTemp, "%d", dwLocalPortUsed, szTemp);
 	ReplaceAll(sLink, "%Port%", szTemp);
 
 	string sSrvPath = pszSrvPath;
@@ -280,11 +279,11 @@ UINT_PTR CALLBACK ShareNewFileDialogHook(
 					HWND hWndFileDlg = GetParent(hDlg);
 
 					*szSelection = '/';
-					CommDlg_OpenSave_GetSpec(hWndFileDlg, (LPARAM)(&szSelection[1]), _MAX_PATH);
+					CommDlg_OpenSave_GetSpec(hWndFileDlg, (LPARAM)&szSelection[1], _MAX_PATH);
 
 					HWND hFileName = GetDlgItem(hWndFileDlg, edt1);
 					char pszFileName[MAX_PATH];
-					GetWindowText(hFileName, pszFileName, SIZEOF(pszFileName));
+					GetWindowText(hFileName, pszFileName, _countof(pszFileName));
 
 					if (mir_strcmp(pstShare->pszSrvPath, szSelection) &&
 					    mir_strcmp(pszFileName, pszShareDirStr)) {
@@ -322,7 +321,7 @@ UINT_PTR CALLBACK ShareNewFileDialogHook(
 						memmove(&szSelection[1], pszFolder, mir_strlen(pszFolder) + 1);
 						szSelection[0] = '/';
 						if (szSelection[mir_strlen(szSelection)-1] != '/')
-							strcat(szSelection, "/");
+							mir_strcat(szSelection, "/");
 
 						// only write to IDC_SHARE_NAME when a file / other folder was selected before
 						if (!mir_strcmp(szSelection, pstShare->pszSrvPath))
@@ -353,7 +352,7 @@ UINT_PTR CALLBACK ShareNewFileDialogHook(
 					if (pszTmp) {
 						*pszTmp = '\0';
 						if (pstShare->pszSrvPath[mir_strlen(pstShare->pszSrvPath)-1] != '/')
-							strcat(pstShare->pszSrvPath, "/");
+							mir_strcat(pstShare->pszSrvPath, "/");
 					} else {
 						if (pstShare->pszSrvPath[mir_strlen(pstShare->pszSrvPath)-1] == '/')
 							pstShare->pszSrvPath[mir_strlen(pstShare->pszSrvPath)-1] = '\0';
@@ -435,7 +434,7 @@ bool bShowShareNewFileDlg(HWND hwndOwner, STFileShareInfo * pstNewShare) {
 	ofn.lStructSize = sizeof(OPENFILENAME);
 
 	char temp[MAX_PATH];
-	mir_snprintf(temp, SIZEOF(temp), _T("%s (*.*)%c*.*%c%c"), Translate("All files"), 0, 0, 0);
+	mir_snprintf(temp, _countof(temp), _T("%s (*.*)%c*.*%c%c"), Translate("All files"), 0, 0, 0);
 	ofn.lpstrFilter = temp;
 
 	ofn.lpstrFile = pstNewShare->pszRealPath;
@@ -463,7 +462,7 @@ bool bShowShareNewFileDlg(HWND hwndOwner, STFileShareInfo * pstNewShare) {
 		DWORD dwError = CommDlgExtendedError();
 		if (dwError) {
 			char szTemp[200];
-			mir_snprintf(szTemp, SIZEOF(szTemp), "Failed to create File Open dialog the error returned was %d", dwError);
+			mir_snprintf(szTemp, "Failed to create File Open dialog the error returned was %d", dwError);
 			MessageBox(NULL, szTemp, MSG_BOX_TITEL, MB_OK);
 		}
 		return false;
@@ -560,7 +559,7 @@ void UpdateStatisticView(HWND hwndDlg, bool bRefressUsersOnly = false) {
 			ListView_InsertItem(hShareList, &sItem);
 
 
-			mir_snprintf(szTmp, SIZEOF(szTmp), "%d", pclCur->st.nMaxDownloads);
+			mir_snprintf(szTmp, "%d", pclCur->st.nMaxDownloads);
 			sItem.iSubItem = 1;
 			sItem.pszText = szTmp;
 			ListView_SetItem(hShareList, &sItem);
@@ -600,7 +599,7 @@ void UpdateStatisticView(HWND hwndDlg, bool bRefressUsersOnly = false) {
 			ListView_SetItem(hUserList, &sItem);
 
 			if (pclCurUser->dwTotalSize) {
-				mir_snprintf(szTmp, SIZEOF(szTmp), "%d %%", (pclCurUser->dwCurrentDL * 100) / pclCurUser->dwTotalSize);
+				mir_snprintf(szTmp, "%d %%", (pclCurUser->dwCurrentDL * 100) / pclCurUser->dwTotalSize);
 			} else {
 				mir_strcpy(szTmp, "? %%");
 			}
@@ -612,9 +611,9 @@ void UpdateStatisticView(HWND hwndDlg, bool bRefressUsersOnly = false) {
 			if (dwSpeed > 10000) {
 				dwSpeed += 512; // make sure we round ot down correctly.
 				dwSpeed /= 1024;
-				mir_snprintf(szTmp, SIZEOF(szTmp), "%d KB/Sec", dwSpeed);
+				mir_snprintf(szTmp, "%d KB/Sec", dwSpeed);
 			} else {
-				mir_snprintf(szTmp, SIZEOF(szTmp), "%d B/Sec", dwSpeed);
+				mir_snprintf(szTmp, "%d B/Sec", dwSpeed);
 			}
 			sItem.iSubItem = 4;
 			sItem.pszText = szTmp;
@@ -854,7 +853,7 @@ static INT_PTR CALLBACK DlgProcStatsticView(HWND hwndDlg, UINT msg, WPARAM wPara
 			LVITEM sItem = { 0 };
 			sItem.mask = LVIF_TEXT;
 			sItem.pszText = szTmp;
-			sItem.cchTextMax = SIZEOF(szTmp);
+			sItem.cchTextMax = _countof(szTmp);
 
 			switch (LOWORD(wParam)) {
 				case IDC_SHOWHIDDENSHARES: {
@@ -928,22 +927,15 @@ static INT_PTR CALLBACK DlgProcStatsticView(HWND hwndDlg, UINT msg, WPARAM wPara
 									MessageBox(hwndDlg, TranslateT("Failed to set clipboard data"), MSG_BOX_TITEL, MB_OK);
 
 								CloseClipboard();
-							} else {
-								CallService(MS_UTILS_OPENURL, 0, (LPARAM)sLink.c_str());
 							}
-						} else {
-							MessageBox(hwndDlg, TranslateT("ListView_GetItem failed"), MSG_BOX_TITEL, MB_OK);
+							else Utils_OpenUrl(sLink.c_str());
 						}
-					} else {
-						MessageBox(hwndDlg, TranslateT("No share selected"), MSG_BOX_TITEL, MB_OK);
+						else MessageBox(hwndDlg, TranslateT("ListView_GetItem failed"), MSG_BOX_TITEL, MB_OK);
 					}
+					else MessageBox(hwndDlg, TranslateT("No share selected"), MSG_BOX_TITEL, MB_OK);
+
 					return TRUE;
 				}
-				/*
-				case IDCANCEL:
-				case IDOK:
-				DestroyWindow(hwndDlg);
-				return TRUE;*/
 			}
 			break;
 		}
@@ -1048,7 +1040,7 @@ static INT_PTR nShareNewFile(WPARAM hContact, LPARAM lParam)
 			stNewShare.dwAllowedMask = 0;
 	}
 
-	if (! bShowShareNewFileDlg((HWND)(lParam ? lParam : CallService(MS_CLUI_GETHWND, 0, 0)), &stNewShare))
+	if (!bShowShareNewFileDlg((lParam ? HWND(lParam) : pcli->hwndContactList), &stNewShare))
 		return 0;
 
 	if (stNewShare.dwAllowedIP)
@@ -1212,11 +1204,11 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 					case IDC_TEST_EXTERNALIP: {
 							char szUrl[ 500 ];
 							char szKeyWord[ 1000 ];
-							GetDlgItemText(hwndDlg, IDC_URL_ADDRESS, szUrl, SIZEOF(szUrl));
-							GetDlgItemText(hwndDlg, IDC_PAGE_KEYWORD, szKeyWord, SIZEOF(szKeyWord));
+							GetDlgItemText(hwndDlg, IDC_URL_ADDRESS, szUrl, _countof(szUrl));
+							GetDlgItemText(hwndDlg, IDC_PAGE_KEYWORD, szKeyWord, _countof(szKeyWord));
 							DWORD dwExternalIP = GetExternIP(szUrl, szKeyWord);
 
-							mir_snprintf(szKeyWord, SIZEOF(szKeyWord), Translate("Your external IP was detected as %d.%d.%d.%d\r\nby: %s") ,
+							mir_snprintf(szKeyWord, _countof(szKeyWord), Translate("Your external IP was detected as %d.%d.%d.%d\r\nby: %s") ,
 							    SplitIpAddress(dwExternalIP) ,
 							    szUrl);
 							MessageBox(hwndDlg, szKeyWord, MSG_BOX_TITEL, MB_OK);
@@ -1229,7 +1221,7 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				switch (p->code) {
 					case PSN_APPLY: {
 							char szTemp[ 500 ];
-							if (GetDlgItemText(hwndDlg, IDC_EXTERNAL_SRV_NAME, szTemp, SIZEOF(szTemp)))
+							if (GetDlgItemText(hwndDlg, IDC_EXTERNAL_SRV_NAME, szTemp, _countof(szTemp)))
 								db_set_s(NULL, MODULE, "ExternalSrvName", szTemp);
 
 							bool b = db_get_b(NULL, MODULE, "AddStatisticsMenuItem", 1) != 0;
@@ -1252,11 +1244,11 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 							bShowPopups = IsDlgButtonChecked(hwndDlg, IDC_SHOW_POPUPS) == BST_CHECKED;
 							db_set_b(NULL, MODULE, "ShowPopups", bShowPopups);
 
-							GetDlgItemText(hwndDlg, IDC_URL_ADDRESS, szTemp, SIZEOF(szTemp));
+							GetDlgItemText(hwndDlg, IDC_URL_ADDRESS, szTemp, _countof(szTemp));
 							sUrlAddress = szTemp;
 							db_set_s(NULL, MODULE, "UrlAddress", sUrlAddress.c_str());
 
-							GetDlgItemText(hwndDlg, IDC_PAGE_KEYWORD, szTemp, SIZEOF(szTemp));
+							GetDlgItemText(hwndDlg, IDC_PAGE_KEYWORD, szTemp, _countof(szTemp));
 							sPageKeyword = szTemp;
 							db_set_s(NULL, MODULE, "PageKeyword", sPageKeyword.c_str());
 							dwExternalIpAddress = 0;
@@ -1453,7 +1445,8 @@ void ShowPopupWindow(const char * pszName, const char * pszText, COLORREF ColorB
 // Developer       : KN
 /////////////////////////////////////////////////////////////////////
 
-void InitGuiElements() {
+void InitGuiElements()
+{
 	INITCOMMONCONTROLSEX stInitCom;
 	stInitCom.dwSize = sizeof(INITCOMMONCONTROLSEX);
 	stInitCom.dwICC = ICC_INTERNET_CLASSES;
@@ -1462,61 +1455,33 @@ void InitGuiElements() {
 	//hMainThread = GetCurrentThread();
 	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &hMainThread, THREAD_SET_CONTEXT, FALSE, 0);
 
-
 	sUrlAddress = DBGetString(NULL, MODULE, "UrlAddress", szDefaultUrlAddress);
 	sPageKeyword = DBGetString(NULL, MODULE, "PageKeyword", szDefaultPageKeyword);
 
 	hShareNewFileService = CreateServiceFunction(MS_SHARE_NEW_FILE, nShareNewFile);
-	if (! hShareNewFileService) {
-		MessageBox(NULL, TranslateT("Failed to CreateServiceFunction MS_SHARE_NEW_FILE"), MSG_BOX_TITEL, MB_OK);
-		return;
-	}
-
 	hShowStatisticsViewService = CreateServiceFunction(MS_SHOW_STATISTICS_VIEW, nShowStatisticsView);
-	if (! hShowStatisticsViewService) {
-		MessageBox(NULL, TranslateT("Failed to CreateServiceFunction MS_SHOW_STATISTICS_VIEW"), MSG_BOX_TITEL, MB_OK);
-		return;
-	}
 
-	CLISTMENUITEM mi;
-	memset(&mi, 0, sizeof(mi));
-	mi.cbSize = sizeof(mi);
-	mi.flags = 0;
-	mi.pszContactOwner = NULL;  //all contacts
-	mi.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_SHARE_NEW_FILE));
+	CMenuItem mi;
+	mi.hIcolibItem = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_SHARE_NEW_FILE));
 	mi.position = -2000019955;
-	mi.ptszName = LPGENT("HTTP Share new file");
+	mi.name.t = LPGENT("HTTP Share new file");
 	mi.pszService = MS_SHARE_NEW_FILE;
-
 	hShareNewFileMenuItem = Menu_AddContactMenuItem(&mi);
-	if (!hShareNewFileMenuItem) {
-		MessageBox(NULL, TranslateT("Failed to add contact menu item"), MSG_BOX_TITEL, MB_OK);
-		return;
-	}
-
 
 	if (db_get_b(NULL, MODULE, "AddStatisticsMenuItem", 1) != 0) {
 		mi.position = 1000085005;
 		mi.flags = CMIF_TCHAR;
-		//mi.hIcon=LoadIcon(hInstance,MAKEINTRESOURCE(IDI_SHARE_NEW_FILE));
-		mi.pszContactOwner = NULL;
-		mi.ptszName = LPGENT("Show HTTP server statistics");
+		mi.name.t = LPGENT("Show HTTP server statistics");
 		mi.pszService = MS_SHOW_STATISTICS_VIEW;
 		hShowStatisticsViewMenuItem = Menu_AddMainMenuItem(&mi);
 	}
-
 
 	hEventOptionsInitialize = HookEvent(ME_OPT_INITIALISE, OptionsInitialize);
 	if (!hEventOptionsInitialize)
 		MessageBox(NULL, _T("Failed to HookEvent ME_OPT_INITIALISE"), MSG_BOX_TITEL, MB_OK);
 
 	bShowPopups = db_get_b(NULL, MODULE, "ShowPopups", bShowPopups) != 0;
-	/*
-	#ifdef _DEBUG
-	nShowStatisticsView(0,0);
-	#endif*/
 }
-
 
 /////////////////////////////////////////////////////////////////////
 // Member Function : UninitGuiElements
@@ -1531,6 +1496,7 @@ void InitGuiElements() {
 // Developer       : KN
 /////////////////////////////////////////////////////////////////////
 
-void UnInitGuiElements() {
+void UnInitGuiElements()
+{
 	CloseHandle(hMainThread);
 }

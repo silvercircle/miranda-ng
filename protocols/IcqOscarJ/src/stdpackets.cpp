@@ -990,9 +990,9 @@ void CIcqProto::icq_sendAwayMsgReplyServExt(DWORD dwUin, char *szUID, DWORD dwMs
 			char *mng = MangleXml(pszMsg, mir_strlen(pszMsg));
 			pszMsg = (char*)SAFE_MALLOC(mir_strlen(mng) + 28);
 			mir_strcpy(pszMsg, "<HTML><BODY>"); /// TODO: add support for RTL & user customizable font
-			strcat(pszMsg, mng);
+			mir_strcat(pszMsg, mng);
 			SAFE_FREE(&mng);
-			strcat(pszMsg, "</BODY></HTML>");
+			mir_strcat(pszMsg, "</BODY></HTML>");
 
 			// limit msg len to max snac size - we get disconnected if exceeded /// FIXME: correct HTML cutting
 			size_t wMsgLen = mir_strlen(pszMsg);
@@ -1346,7 +1346,7 @@ DWORD CIcqProto::icq_sendSMSServ(const char *szPhoneNumber, const char *szMsg)
 	strftime(szTime, sizeof(szTime), "%a, %d %b %Y %H:%M:%S GMT", gmtime(&now));
 	/* Sun, 00 Jan 0000 00:00:00 GMT */
 
-	char *szMyNick = null_strdup((char *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)(HANDLE)NULL, 0));
+	char *szMyNick = null_strdup(_T2A(pcli->pfnGetContactDisplayName(NULL, 0)));
 	size_t nBufferSize = 1 + mir_strlen(szMyNick) + mir_strlen(szPhoneNumber) + mir_strlen(szMsg) + sizeof("<icq_sms_message><destination></destination><text></text><codepage>1252</codepage><encoding>utf8</encoding><senders_UIN>0000000000</senders_UIN><senders_name></senders_name><delivery_receipt>Yes</delivery_receipt><time>Sun, 00 Jan 0000 00:00:00 GMT</time></icq_sms_message>");
 
 	if (szBuffer = (char *)_alloca(nBufferSize)) {

@@ -31,258 +31,195 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "statusmodes.h"
 
+#ifndef M_CORE_H__
 #include <m_core.h>
-
-extern int hLangpack;
-
-#if defined _STATIC
-	typedef struct _tagIntMenuItem* HGENMENU;
-#else
-	DECLARE_HANDLE(HGENMENU);
 #endif
 
-//sent when the user asks to change their status
-//wParam = new status, from statusmodes.h
-//lParam = protocol name, NULL if for all protocols (added in v0.3.1alpha)
-//also sent due to a ms_clist_setstatusmode call
+#ifndef M_GENMENU_H__
+#include <m_genmenu.h>
+#endif
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// sent when the user asks to change their status
+// wParam = new status, from statusmodes.h
+// lParam = protocol name, NULL if for all protocols
+// also sent due to a ms_clist_setstatusmode call
 #define ME_CLIST_STATUSMODECHANGE       "CList/StatusModeChange"
 
-//force a change of status mode
-//wParam = new status, from statusmodes.h
+/////////////////////////////////////////////////////////////////////////////////////////
+// force a change of status mode
+// wParam = new status, from statusmodes.h
 #define MS_CLIST_SETSTATUSMODE			"CList/SetStatusMode"
 
-//get the current status mode
-//wParam = lParam = 0
-//returns the current status
-//This is the status *as set by the user*, not any protocol-specific status
-//All protocol modules will attempt to conform to this setting at all times
+/////////////////////////////////////////////////////////////////////////////////////////
+// get the current status mode
+// wParam = lParam = 0
+// returns the current status
+// This is the status *as set by the user*, not any protocol-specific status
+// All protocol modules will attempt to conform to this setting at all times
 #define MS_CLIST_GETSTATUSMODE			"CList/GetStatusMode"
 
-//gets a textual description of the given status mode (v0.1.0.1+)
-//wParam = status mode, from statusmodes.h
-//lParam = flags, below
-//returns a static buffer of the description of the given status mode
-//returns NULL if the status mode was unknown
-#define GSMDF_UNICODE        2   //will return TCHAR* instead of char*
-#if defined(_UNICODE)
-	#define GSMDF_TCHAR       GSMDF_UNICODE      //will return TCHAR* instead of char*
-#else
-	#define GSMDF_TCHAR       0      //will return char*, as usual
-#endif
-#define GSMDF_UNTRANSLATED   4
-#define MS_CLIST_GETSTATUSMODEDESCRIPTION  "CList/GetStatusModeDescription"
+/////////////////////////////////////////////////////////////////////////////////////////
+// MAIN MENU
 
-//add a new item to the main menu
-//wParam = 0
-//lParam = (LPARAM)(CLISTMENUITEM*)&mi
-//returns a handle to the new item, or NULL on failure
-//the service that is called when the item is clicked is called with
-//wParam = 0, lParam = hwndContactList
-//dividers are inserted every 100000 positions
-//pszContactOwner is ignored for this service.
-//there is a #define PUTPOSITIONSINMENU in clistmenus.c which, when set, will
-//cause the position numbers to be placed in brackets after the menu items
+// adds a new element into main menu
+EXTERN_C MIR_APP_DLL(HGENMENU) Menu_AddMainMenuItem(TMO_MenuItem *pmi);
 
-// WARNING: do not use Translate(TS) for p(t)szName or p(t)szPopupName as they
-// are translated by the core, which may lead to double translation.
-// Use LPGEN instead which are just dummy wrappers/markers for "lpgen.pl".
-typedef struct {
-	int cbSize;	            //size in bytes of this structure
-	union {
-		char*  pszName;      //[TRANSLATED-BY-CORE] text of the menu item
-		TCHAR* ptszName;     //Unicode text of the menu item
-	};
-	DWORD flags;            //set of CMIF_* flags
-	int position;           //approx position on the menu. lower numbers go nearer the top
-	union {
-		HICON hIcon;         //icon to put by the item. If this was not loaded from
-                           //a resource, you can delete it straight after the call
-		HANDLE icolibItem;   //set CMIF_ICONFROMICOLIB to pass this value
-	};
-	char* pszService;       //name of service to call when the item gets selected
-	union {
-		char* pszPopupName;  //[TRANSLATED-BY-CORE] name of the popup menu that this item is on. If this
-		TCHAR* ptszPopupName; //is NULL the item is on the root of the menu
-		HGENMENU hParentMenu; // valid if CMIF_ROOTHANDLE is set. NULL or (HGENMENU)-1 means the root menu
-	};
+// gets a handle to the main Miranda menu
+// returns a HMENU. This need not to be freed since it's owned by clist
+EXTERN_C MIR_APP_DLL(HMENU) Menu_GetMainMenu(void);
 
-	int popupPosition;      //position of the popup menu on the root menu. Ignored
-                           //if pszPopupName is NULL or the popup menu already
-                           //existed
-	DWORD hotKey;           //keyboard accelerator, same as lParam of WM_HOTKEY, 0 for none
-	char *pszContactOwner;  //contact menus only. The protocol module that owns
-                           //the contacts to which this menu item applies. NULL if it
-                           //applies to all contacts. If it applies to multiple but not all
-                           //protocols, add multiple menu items or use ME_CLIST_PREBUILDCONTACTMENU
-	int hLangpack;          //plugin's hLangpack (added automatically)
-}
-	CLISTMENUITEM;
+// rebuilds the main menu
+// returns a HMENU identifying the menu.
+EXTERN_C MIR_APP_DLL(HMENU) Menu_BuildMainMenu(void);
 
-#define HGENMENU_ROOT      ((HGENMENU)-1)
+/////////////////////////////////////////////////////////////////////////////////////////
+// the main menu is about to be built
+// wParam = lParam = 0
+#define ME_CLIST_PREBUILDMAINMENU "CList/PreBuildMainMenu"
 
-#define CMIF_GRAYED     1
-#define CMIF_CHECKED    2
-#define CMIF_HIDDEN     4    //only works on contact menus
-#define CMIF_NOTOFFLINE 8	  //item won't appear for contacts that are offline
-#define CMIF_NOTONLINE  16	  //          "      online
-#define CMIF_NOTONLIST  32   //item won't appear on standard contacts
-#define CMIF_NOTOFFLIST 64   //item won't appear on contacts that have the 'NotOnList' setting
-#define CMIF_ROOTHANDLE 384  //means that hParentMenu member is set
+/////////////////////////////////////////////////////////////////////////////////////////
+// CONTACT MENU
 
-#define CMIF_UNICODE        512      //will return TCHAR* instead of char*
-#if defined(_UNICODE)
-	#define CMIF_TCHAR       CMIF_UNICODE      //will return TCHAR* instead of char*
-#else
-	#define CMIF_TCHAR       0       //will return char*, as usual
-#endif
+// adds a new element into contact menu
+EXTERN_C MIR_APP_DLL(HGENMENU) Menu_AddContactMenuItem(TMO_MenuItem *pmi, const char *pszProto = NULL);
 
-#define CMIF_KEEPUNTRANSLATED  1024 // don't translate a menu item
-//#define CMIF_ICONFROMICOLIB  2048 // use icolibName instead of hIcon, unused
-#define CMIF_DEFAULT           4096 // this menu item is the default one
+// builds the context menu for a specific contact
+// returns a HMENU identifying the menu. This should be DestroyMenu()ed when
+// finished with.
+EXTERN_C MIR_APP_DLL(HMENU) Menu_BuildContactMenu(MCONTACT hContact);
 
-// for compatibility. since 0.8.0 they both mean nothing
-#define CMIF_ROOTPOPUP  128   //root item for new popup(save return id for childs)
-#define CMIF_CHILDPOPUP 256   //child for rootpopup menu
+// the context menu for a contact is about to be built
+// modules should use this to change menu items that are specific to the
+// contact that has them
+#define ME_CLIST_PREBUILDCONTACTMENU "CList/PreBuildContactMenu"
 
-__forceinline HGENMENU Menu_AddMainMenuItem(CLISTMENUITEM *mi)
-{	mi->hLangpack = hLangpack;
-	return (HGENMENU)CallService("CList/AddMainMenuItem", 0, (LPARAM)mi);
-}
+/////////////////////////////////////////////////////////////////////////////////////////
+// STATUS MENU
 
-//add a new item to the user contact menus
-//identical to clist/addmainmenuitem except when item is selected the service
-//gets called with wParam = (MCONTACT)hContact
-//pszContactOwner is obeyed.
-//popup menus are not supported. pszPopupName and popupPosition are ignored.
-//If ctrl is held down when right clicking, the menu position numbers will be
-//displayed in brackets after the menu item text. This only works in debug
-//builds.
+// get a handle to the Miranda status menu
+// returns a HMENU. This need not be freed since it's owned by clist
+EXTERN_C MIR_APP_DLL(HMENU) Menu_GetStatusMenu(void);
 
-__forceinline HGENMENU Menu_AddContactMenuItem(CLISTMENUITEM *mi)
-{	mi->hLangpack = hLangpack;
-	return (HGENMENU)CallService("CList/AddContactMenuItem", 0, (LPARAM)mi);
-}
+// adds an item to a status menu
+EXTERN_C MIR_APP_DLL(HGENMENU) Menu_AddStatusMenuItem(TMO_MenuItem *pmi, const char *pszProto = NULL);
 
-__forceinline HGENMENU Menu_AddStatusMenuItem(CLISTMENUITEM *mi)
-{	mi->hLangpack = hLangpack;
-	return (HGENMENU)CallService("CList/AddStatusMenuItem", 0, (LPARAM)mi);
-}
+// the status menu is about to be built
+// wParam = lParam = 0
+#define ME_CLIST_PREBUILDSTATUSMENU "CList/PreBuildStatusMenu"
 
-__forceinline HGENMENU Menu_AddProtoMenuItem(CLISTMENUITEM *mi)
-{	mi->hLangpack = hLangpack;
-	return (HGENMENU)CallService("CList/AddProtoMenuItem", 0, (LPARAM)mi);
-}
+/////////////////////////////////////////////////////////////////////////////////////////
+// PROTOCOL MENU
 
-//modify an existing menu item     v0.1.0.1+
-//wParam = (WPARAM)(HGENMENU)hMenuItem
-//lParam = (LPARAM)(CLISTMENUITEM*)&clmi
-//returns 0 on success, nonzero on failure
-//hMenuItem will have been returned by clist/add*menuItem
-//clmi.flags should contain cmim_ constants below specifying which fields to
-//update. Fields without a mask flag cannot be changed and will be ignored
-#define CMIM_NAME    0x80000000
-#define CMIM_FLAGS   0x40000000
-#define CMIM_ICON    0x20000000
-#define CMIM_HOTKEY  0x10000000
-#define CMIM_ALL     0xF0000000
-#define MS_CLIST_MODIFYMENUITEM         "CList/ModifyMenuItem"
+// adds an item to status or main menu, according to the option
+EXTERN_C MIR_APP_DLL(HGENMENU) Menu_AddProtoMenuItem(TMO_MenuItem *pmi, const char *pszProto = NULL);
 
-__forceinline void Menu_ModifyItem(HGENMENU hMenuItem, CLISTMENUITEM *clmi)
-{	CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hMenuItem, (LPARAM)clmi);
-}
+/////////////////////////////////////////////////////////////////////////////////////////
+// GROUP MENU
 
-//changes menu item's visibility     v0.94.2+
-//wParam = (WPARAM)(HGENMENU)hMenuItem
-//lParam = (BOOL) enable = TRUE, disable = FALSE
-#define MS_CLIST_SHOWHIDEMENUITEM       "CList/ShowHideMenuItem"
+struct GroupMenuParam
+{
+	int wParam;
+	int lParam;
+};
 
-__forceinline void Menu_ShowItem(HGENMENU hMenuItem, BOOL bShow)
-{	CallService(MS_CLIST_SHOWHIDEMENUITEM, (WPARAM)hMenuItem, bShow);
-}
+// builds the Group menu
+// returns a HMENU identifying the menu.
+EXTERN_C MIR_APP_DLL(HMENU) Menu_BuildGroupMenu(void);
 
-//the context menu for a contact is about to be built     v0.1.0.1+
-//wParam = (MCONTACT)hContact
-//lParam = 0
-//modules should use this to change menu items that are specific to the
-//contact that has them
-#define ME_CLIST_PREBUILDCONTACTMENU    "CList/PreBuildContactMenu"
+// adds a new item to the Group menus
+EXTERN_C MIR_APP_DLL(HGENMENU) Menu_AddGroupMenuItem(TMO_MenuItem *pmi, GroupMenuParam *gmp = NULL);
 
-//sets the service to call when a contact is double-clicked
-//wParam = 0
-//lParam = (LPARAM)(CLISTDOUBLECLICKACTION*)&dca
-//contactType is one or more of the constants below
-//pszService is called with wParam = hContact, lParam = 0
-//pszService will only be called if there is no outstanding event on the
-//selected contact
-//returns 0 on success, nonzero on failure
-//in case of conflicts, the first module to have registered will get the
-//double click, no others will. This service will return success even for
-//duplicates.
-/*
- Note: During development of 0.3.0.0 (2003/02/15) this service was completely dropped
- by default it always returns 1 to mark failure, see ME_CLIST_DOUBLECLICKED for
- a better implementation as a hook.
-*/
+// the Group menu is about to be built
+// wParam = lParam = 0
+#define ME_CLIST_PREBUILDGROUPMENU "CList/PreBuildGroupMenu"
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// SUBGROUP MENU
+
+// builds the SubGroup menu
+// returns a HMENU identifying the menu.
+EXTERN_C MIR_APP_DLL(HMENU) Menu_BuildSubGroupMenu(struct ClcGroup *group);
+
+// adds a new item to the SubGroup menus
+// wParam=GroupMenuParam*, params to call when exec menuitem
+// lParam=(LPARAM)(TMO_MenuItem*)&mi
+EXTERN_C MIR_APP_DLL(HGENMENU) Menu_AddSubGroupMenuItem(TMO_MenuItem *pmi, GroupMenuParam *gmp = NULL);
+
+// the SubGroup menu is about to be built
+// wParam = lParam = 0
+#define ME_CLIST_PREBUILDSUBGROUPMENU "CList/PreBuildSubGroupMenu"
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// TRAY MENU
+
+// builds the tray menu
+// returns a HMENU identifying the menu.
+EXTERN_C MIR_APP_DLL(HMENU) Menu_BuildTrayMenu(void);
+
+// destroys a tray menu
+MIR_APP_DLL(void) Menu_DestroyNestedMenu(HMENU hMenu);
+
+// adds a new item to the tray menus
+EXTERN_C MIR_APP_DLL(HGENMENU) Menu_AddTrayMenuItem(TMO_MenuItem *pmi);
+
+// the tray menu is about to be built
+// wParam = lParam = 0
+#define ME_CLIST_PREBUILDTRAYMENU "CList/PreBuildTrayMenu"
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// sets the service to call when a contact is double-clicked
+// contactType is one or more of the constants below
+// pszService is called with wParam = hContact, lParam = 0
+// pszService will only be called if there is no outstanding event on the
+// selected contact
+// returns 0 on success, nonzero on failure
+// in case of conflicts, the first module to have registered will get the
+// double click, no others will. This service will return success even for
+// duplicates.
+
 typedef struct {
 	int cbSize;
 	char *pszContactOwner;	//name of protocol owning contact, or NULL for all
 	DWORD flags;			//any of the CMIF_NOT... flags above
 	char *pszService;		//service to call on double click
 } CLISTDOUBLECLICKACTION;
+
 #define MS_CLIST_SETDOUBLECLICKACTION   "CList/SetDoubleClickAction"
 
-/*
-wParam = (WPARAM)hContact
-lParam = 0
+/////////////////////////////////////////////////////////////////////////////////////////
+// wParam = (WPARAM)hContact
+// lParam = 0
+// 
+// Event is fired when there is a double click on a CList contact,
+// it is upto the caller to check for the protocol & status
+// of the MCONTACT, it's not done for you anymore since it didn't make
+// sense to store all this information in memory, etc.
 
-Event is fired when there is a double click on a CList contact,
-it is upto the caller to check for the protocol & status
-of the MCONTACT, it's not done for you anymore since it didn't make
-sense to store all this information in memory, etc.
-
-*/
 #define ME_CLIST_DOUBLECLICKED "CList/DoubleClicked"
-//gets the string that the contact list will use to represent a contact
-//wParam = (MCONTACT)hContact
-//lParam = flags
-//returns a pointer to the name, will always succeed, even if it needs to
-//return "(Unknown Contact)"
-//this pointer is to a statically allocated buffer which will be overwritten
-//on every call to this service. Callers should make sure that they copy the
-//information before they call this service again.
-#define GCDNF_NOMYHANDLE     1      //will never return the user's custom name
-#define GCDNF_UNICODE        2      //will return TCHAR* instead of char*
-#define GCDNF_NOCACHE        4      //will not use the cache
 
-#if defined(_UNICODE)
-	#define GCDNF_TCHAR       GCDNF_UNICODE      //will return TCHAR* instead of char*
-#else
-	#define GCDNF_TCHAR       0      //will return char*, as usual
-#endif
-
-//even if it's the one that should be displayed.  v0.1.2.0+
-//v0.3.0.0+ if using GCDNF_NOMYHANDLE you must free your string
-#define MS_CLIST_GETCONTACTDISPLAYNAME  "CList/GetContactDisplayName"
-
+/////////////////////////////////////////////////////////////////////////////////////////
 // Invalidates the display name cache
-//wParam = (MCONTACT)hContact
-//lParam = not used
+// wParam = (MCONTACT)hContact
+// lParam = not used
 #define MS_CLIST_INVALIDATEDISPLAYNAME  "CList/InvalidateDiplayName"
 
-//adds an event to the contact list's queue
-//wParam = 0
-//lParam = (LPARAM)(CLISTEVENT*)cle
-//The contact list will flash hIcon next to the contact hContact (use NULL for
-//a system message). szServiceName will be called when the user double clicks
-//the icon, at which point the event will be removed from the contact list's
-//queue automatically
-//pszService is called with wParam = (WPARAM)(HWND)hwndContactList,
-//lParam = (LPARAM)(CLISTEVENT*)cle. Its return value is ignored. cle is
-//invalidated when your service returns, so take copies of any important
-//information in it.
-//hDbEvent should be unique since it and hContact are the identifiers used by
-//clist/removeevent if, for example, your module implements a 'read next' that
-//bypasses the double-click.
+/////////////////////////////////////////////////////////////////////////////////////////
+// adds an event to the contact list's queue
+// wParam = 0
+// lParam = (LPARAM)(CLISTEVENT*)cle
+// The contact list will flash hIcon next to the contact hContact (use NULL for
+// a system message). szServiceName will be called when the user double clicks
+// the icon, at which point the event will be removed from the contact list's
+// queue automatically
+// pszService is called with wParam = (WPARAM)(HWND)hwndContactList,
+// lParam = (LPARAM)(CLISTEVENT*)cle. Its return value is ignored. cle is
+// invalidated when your service returns, so take copies of any important
+// information in it.
+// hDbEvent should be unique since it and hContact are the identifiers used by
+// clist/removeevent if, for example, your module implements a 'read next' that
+// bypasses the double-click.
+
 typedef struct {
 	int cbSize;          //size in bytes of this structure
 	MCONTACT hContact;	 //handle to the contact to put the icon by
@@ -296,7 +233,7 @@ typedef struct {
 	LPARAM lParam;		 //caller defined
 	char *pszService;	 //name of the service to call on activation
 	union {
-		char  *pszTooltip;    //short description of the event to display as a
+		char *pszTooltip;    //short description of the event to display as a
 		TCHAR *ptszTooltip;    //tooltip on the system tray
 	};
 } CLISTEVENT;
@@ -317,83 +254,52 @@ typedef struct {
 
 #define MS_CLIST_ADDEVENT     "CList/AddEvent"
 
-//removes an event from the contact list's queue
-//wParam = (MCONTACT)hContact
-//lParam = (LPARAM)(HANDLE)hDbEvent
-//returns 0 if the event was successfully removed, or nonzero if the event
-//was not found
+/////////////////////////////////////////////////////////////////////////////////////////
+// removes an event from the contact list's queue
+// wParam = (MCONTACT)hContact
+// lParam = (LPARAM)(HANDLE)hDbEvent
+// returns 0 if the event was successfully removed, or nonzero if the event
+// was not found
 #define MS_CLIST_REMOVEEVENT  "Clist/RemoveEvent"
 
-//gets the details of an event in the queue             v0.1.2.1+
-//wParam = (MCONTACT)hContact
-//lParam = iEvent
-//returns a CLISTEVENT* on success, NULL on failure
-//Returns the iEvent-th event from the queue for hContact, so iEvent = 0 will
-//get the event that will be got when the user clicks on that contact.
-//Use hContact = INVALID_HANDLE_VALUE to search over all contacts, so iEvent = 0
-//will get the event that will be got if the user clicks the systray icon.
+/////////////////////////////////////////////////////////////////////////////////////////
+// gets the details of an event in the queue
+// wParam = (MCONTACT)hContact
+// lParam = iEvent
+// returns a CLISTEVENT* on success, NULL on failure
+// Returns the iEvent-th event from the queue for hContact, so iEvent = 0 will
+// get the event that will be got when the user clicks on that contact.
+// Use hContact = INVALID_HANDLE_VALUE to search over all contacts, so iEvent = 0
+// will get the event that will be got if the user clicks the systray icon.
 #define MS_CLIST_GETEVENT     "CList/GetEvent"
 
-//process a WM_MEASUREITEM message for user context menus   v0.1.1.0+
-//wParam, lParam, return value as for WM_MEASUREITEM
-//This is for displaying the icons by the menu items. If you don't call this
-//and clist/menudrawitem whne drawing a menu returned by one of the three menu
-//services below then it'll work but you won't get any icons
-#define MS_CLIST_MENUMEASUREITEM  "CList/MenuMeasureItem"
-
-//process a WM_DRAWITEM message for user context menus      v0.1.1.0+
-//wParam, lParam, return value as for WM_MEASUREITEM
-//See comments for clist/menumeasureitem
-#define MS_CLIST_MENUDRAWITEM     "CList/MenuDrawItem"
-
-//builds the context menu for a specific contact            v0.1.1.0+
-//wParam = (MCONTACT)hContact
-//lParam = 0
-//returns a HMENU identifying the menu. This should be DestroyMenu()ed when
-//finished with.
-#define MS_CLIST_MENUBUILDCONTACT "CList/MenuBuildContact"
-
-//gets the image list with all the useful icons in it     v0.1.1.0+
-//wParam = lParam = 0
-//returns a HIMAGELIST
-//the members of this image list are opaque, and you should trust what you
-//are given
+/////////////////////////////////////////////////////////////////////////////////////////
+// gets the image list with all the useful icons in it
+// wParam = lParam = 0
+// returns a HIMAGELIST
+// the members of this image list are opaque, and you should trust what you are given
 #define MS_CLIST_GETICONSIMAGELIST    "CList/GetIconsImageList"
 #define IMAGE_GROUPOPEN     11
 #define IMAGE_GROUPSHUT     12
 
-//get the icon that should be associated with a contact     v0.1.2.0+
-//wParam = (MCONTACT)hContact
-//lParam = 0
-//returns an index into the contact list imagelist. See clist/geticonsimagelist
-//If the contact is flashing an icon, this function will not return that
-//flashing icon. Use me_clist_contacticonchanged to get info about that.
+/////////////////////////////////////////////////////////////////////////////////////////
+// get the icon that should be associated with a contact
+// wParam = (MCONTACT)hContact
+// lParam = 0
+// returns an index into the contact list imagelist. See clist/geticonsimagelist
+// If the contact is flashing an icon, this function will not return that
+// flashing icon. Use me_clist_contacticonchanged to get info about that.
 #define MS_CLIST_GETCONTACTICON   "CList/GetContactIcon"
 
-//The icon of a contact in the contact list has changed    v0.1.2.0+
-//wParam = (MCONTACT)hContact
-//lParam = iconId
-//iconId is an offset into the clist's imagelist. See clist/geticonsimagelist
+/////////////////////////////////////////////////////////////////////////////////////////
+// The icon of a contact in the contact list has changed
+// wParam = (MCONTACT)hContact
+// lParam = iconId
+// iconId is an offset into the clist's imagelist. See clist/geticonsimagelist
 #define ME_CLIST_CONTACTICONCHANGED   "CList/ContactIconChanged"
 
-/******************************* CLUI only *********************************/
-
-// Stuff below here is ideally for the use of a CList UI module only.
-
-//get a handle to the main Miranda menu						v0.1.1.0+
-//wParam = lParam = 0
-//returns a HMENU. This need not be freed since it's owned by clist
-#define MS_CLIST_MENUGETMAIN    "CList/MenuGetMain"
-
-//get a handle to the Miranda status menu					v0.1.1.0+
-//wParam = lParam = 0
-//returns a HMENU. This need not be freed since it's owned by clist
-#define MS_CLIST_MENUGETSTATUS  "CList/MenuGetStatus"
-
-
-
-
-//processes a menu selection from a menu                    v0.1.1.0+
+/////////////////////////////////////////////////////////////////////////////////////////
+//processes a menu selection from a menu
 //wParam = MAKEWPARAM(LOWORD(wParam from WM_COMMAND), flags)
 //lParam = (LPARAM)(HANDLE)hContact
 //returns TRUE if it processed the command, FALSE otherwise
@@ -403,8 +309,8 @@ typedef struct {
 
 #define CLISTMENUIDMIN	0x4000	  // reserved range for clist menu ids
 #define CLISTMENUIDMAX	0x7fff
-//////////////////////////////////////////////////////////////////////////
-// NOTE:														v0.7.0.26+
+
+/////////////////////////////////////////////////////////////////////////////////////////
 // Due to it is generic practice to handle menu command via WM_COMMAND
 // window message handle and practice to process it via calling service
 // in form: CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(LOWORD(wParam), MPCF_CONTACTMENU), (LPARAM) hContact))
@@ -422,43 +328,50 @@ typedef struct {
 #define MPCF_MAINMENU      2	//test commands from the main menu
 #define MS_CLIST_MENUPROCESSCOMMAND "CList/MenuProcessCommand"
 
-//processes a menu hotkey                                   v0.1.1.0+
-//wParam = virtual key code
-//lParam = MPCF_ flags
-//returns TRUE if it processed the command, FALSE otherwise
-//this should be called in WM_KEYDOWN
+/////////////////////////////////////////////////////////////////////////////////////////
+// processes a menu hotkey
+// wParam = virtual key code
+// lParam = MPCF_ flags
+// returns TRUE if it processed the command, FALSE otherwise
+// this should be called in WM_KEYDOWN
 #define MS_CLIST_MENUPROCESSHOTKEY "CList/MenuProcessHotkey"
 
-//process all the messages required for docking             v0.1.1.0+
-//wParam = (WPARAM)(MSG*)&msg
-//lParam = (LPARAM)(LRESULT*)&lResult
-//returns TRUE if the message should not be processed further, FALSE otherwise
-//only msg.hwnd, msg.message, msg.wParam and msg.lParam are used
-//your wndproc should return lResult if and only if TRUE is returned
+/////////////////////////////////////////////////////////////////////////////////////////
+// process all the messages required for docking
+// wParam = (WPARAM)(MSG*)&msg
+// lParam = (LPARAM)(LRESULT*)&lResult
+// returns TRUE if the message should not be processed further, FALSE otherwise
+// only msg.hwnd, msg.message, msg.wParam and msg.lParam are used
+// your wndproc should return lResult if and only if TRUE is returned
 #define MS_CLIST_DOCKINGPROCESSMESSAGE  "CList/DockingProcessMessage"
 
-//determines whether the contact list is docked             v0.1.1.0+
-//wParam = lParam = 0
-//returns nonzero if the contact list is docked, of 0 if it is not
+/////////////////////////////////////////////////////////////////////////////////////////
+// determines whether the contact list is docked
+// wParam = lParam = 0
+// returns nonzero if the contact list is docked, of 0 if it is not
 #define MS_CLIST_DOCKINGISDOCKED        "CList/DockingIsDocked"
 
-//process all the messages required for hotkeys             v0.1.1.0+
-//wParam = (WPARAM)(MSG*)&msg
-//lParam = (LPARAM)(LRESULT*)&lResult
-//returns TRUE if the message should not be processed further, FALSE otherwise
-//only msg.hwnd, msg.message, msg.wParam and msg.lParam are used
-//your wndproc should return lResult if and only if TRUE is returned
+/////////////////////////////////////////////////////////////////////////////////////////
+// process all the messages required for hotkeys
+// wParam = (WPARAM)(MSG*)&msg
+// lParam = (LPARAM)(LRESULT*)&lResult
+// returns TRUE if the message should not be processed further, FALSE otherwise
+// only msg.hwnd, msg.message, msg.wParam and msg.lParam are used
+// your wndproc should return lResult if and only if TRUE is returned
 #define MS_CLIST_HOTKEYSPROCESSMESSAGE  "CList/HotkeysProcessMessage"
 
-//toggles the show/hide status of the contact list          v0.1.1.0+
-//wParam = lParam = 0
-//returns 0 on success, nonzero on failure
+/////////////////////////////////////////////////////////////////////////////////////////
+// toggles the show/hide status of the contact list
+// wParam = lParam = 0
+// returns 0 on success, nonzero on failure
 #define MS_CLIST_SHOWHIDE     "CList/ShowHide"
 
-//sent when the group get modified (created, renamed or deleted)
-//or contact is moving from group to group
-//wParam = hContact - NULL if operation on group
-//lParam = pointer to CLISTGROUPCHANGE
+/////////////////////////////////////////////////////////////////////////////////////////
+// sent when the group get modified (created, renamed or deleted)
+// or contact is moving from group to group
+// wParam = hContact - NULL if operation on group
+// lParam = pointer to CLISTGROUPCHANGE
+
 typedef struct {
 	int cbSize;	            //size in bytes of this structure
 	TCHAR*  pszOldName;     //old group name
@@ -467,148 +380,157 @@ typedef struct {
 
 #define ME_CLIST_GROUPCHANGE       "CList/GroupChange"
 
-//checks that a group exists                                v0.1.1.0+
-//wParam = 0 (unused)
-//lParam = (TCHAR*)groupName
-//returns 0 if a group is not found or group handle on success
+/////////////////////////////////////////////////////////////////////////////////////////
+// checks that a group exists
+// wParam = 0 (unused)
+// lParam = (TCHAR*)groupName
+// returns 0 if a group is not found or group handle on success
 #define MS_CLIST_GROUPEXISTS       "CList/GroupExists"
 
 __forceinline HANDLE Clist_GroupExists(LPCTSTR ptszGroupName)
 {	return (HANDLE)CallService(MS_CLIST_GROUPEXISTS, 0, (LPARAM)ptszGroupName);
 }
 
-//creates a new group and calls CLUI to display it          v0.1.1.0+
-//wParam = hParentGroup
-//lParam = groupName
-//returns a handle to the new group
-//hParentGroup is NULL to create the new group at the root, or can be the
-//handle of the group of which the new group should be a subgroup.
-//groupName is a TCHAR* pointing to the group name to create or NULL for
-//API to create unique name by itself
+/////////////////////////////////////////////////////////////////////////////////////////
+// creates a new group and calls CLUI to display it
+// wParam = hParentGroup
+// lParam = groupName
+// returns a handle to the new group
+// hParentGroup is NULL to create the new group at the root, or can be the
+// handle of the group of which the new group should be a subgroup.
+// groupName is a TCHAR* pointing to the group name to create or NULL for
+// API to create unique name by itself
 #define MS_CLIST_GROUPCREATE   "CList/GroupCreate"
 
 __forceinline HANDLE Clist_CreateGroup(HANDLE hParent, LPCTSTR ptszGroupName)
 {	return (HANDLE)CallService(MS_CLIST_GROUPCREATE, (WPARAM)hParent, (LPARAM)ptszGroupName);
 }
 
-//deletes a group and calls CLUI to display the change      v0.1.1.0+
-//wParam = (WPARAM)(HANDLE)hGroup
-//lParam = 0
-//returns 0 on success, nonzero on failure
+/////////////////////////////////////////////////////////////////////////////////////////
+// deletes a group and calls CLUI to display the change
+// wParam = (WPARAM)(HANDLE)hGroup
+// lParam = 0
+// returns 0 on success, nonzero on failure
 #define MS_CLIST_GROUPDELETE   "CList/GroupDelete"
 
-//change the expanded state flag for a group internally     v0.1.1.0+
-//wParam = (WPARAM)(HANDLE)hGroup
-//lParam = newState
-//returns 0 on success, nonzero on failure
-//newState is nonzero if the group is expanded, 0 if it's collapsed
-//CLUI is not called when this change is made
+/////////////////////////////////////////////////////////////////////////////////////////
+// change the expanded state flag for a group internally
+// wParam = (WPARAM)(HANDLE)hGroup
+// lParam = newState
+// returns 0 on success, nonzero on failure
+// newState is nonzero if the group is expanded, 0 if it's collapsed
+// CLUI is not called when this change is made
 #define MS_CLIST_GROUPSETEXPANDED  "CList/GroupSetExpanded"
 
-//changes the flags for a group                             v0.1.2.1+
-//wParam = (WPARAM)(HANDLE)hGroup
-//lParam = MAKELPARAM(flags, flagsMask)
-//returns 0 on success, nonzero on failure
-//Only the flags given in flagsMask are altered.
-//CLUI is called on changes to GROUPF_HIDEOFFLINE.
+/////////////////////////////////////////////////////////////////////////////////////////
+// changes the flags for a group
+// wParam = (WPARAM)(HANDLE)hGroup
+// lParam = MAKELPARAM(flags, flagsMask)
+// returns 0 on success, nonzero on failure
+// Only the flags given in flagsMask are altered.
+// CLUI is called on changes to GROUPF_HIDEOFFLINE.
 #define MS_CLIST_GROUPSETFLAGS   "CList/GroupSetFlags"
 
-//get the name of a group                                   v0.1.1.0+
-//wParam = (WPARAM)(HANDLE)hGroup
-//lParam = (LPARAM)(int*)&isExpanded
-//returns a static buffer pointing to the name of the group
-//returns NULL if hGroup is invalid.
-//this buffer is only valid until the next call to this service
-//&isExpanded can be NULL if you don't want to know if the group is expanded
-//or not.
+/////////////////////////////////////////////////////////////////////////////////////////
+// get the name of a group
+// wParam = (WPARAM)(HANDLE)hGroup
+// lParam = (LPARAM)(int*)&isExpanded
+// returns a static buffer pointing to the name of the group
+// returns NULL if hGroup is invalid.
+// this buffer is only valid until the next call to this service
+// & isExpanded can be NULL if you don't want to know if the group is expanded or not.
 #define MS_CLIST_GROUPGETNAME      "CList/GroupGetName"
 
-//get the name of a group                                   v0.1.2.1+
-//wParam = (WPARAM)(HANDLE)hGroup
-//lParam = (LPARAM)(DWORD*)&flags
-//returns a static buffer pointing to the name of the group
-//returns NULL if hGroup is invalid.
-//this buffer is only valid until the next call to this service
-//&flags can be NULL if you don't want any of that info.
+/////////////////////////////////////////////////////////////////////////////////////////
+// get the name of a group
+// wParam = (WPARAM)(HANDLE)hGroup
+// lParam = (LPARAM)(DWORD*)&flags
+// returns a static buffer pointing to the name of the group
+// returns NULL if hGroup is invalid.
+// this buffer is only valid until the next call to this service
+// & flags can be NULL if you don't want any of that info.
 #define GROUPF_EXPANDED    0x04
 #define GROUPF_HIDEOFFLINE 0x08
 #define MS_CLIST_GROUPGETNAME2      "CList/GroupGetName2"
 
-//move a group to directly before another group             v0.1.2.1+
-//wParam = (WPARAM)(HANDLE)hGroup
-//lParam = (LPARAM)(HANDLE)hBeforeGroup
-//returns the new handle of the group on success, NULL on failure
-//The order is represented by the order in which MS_CLUI_GROUPADDED is called,
-//however UIs are free to ignore this order and sort alphabetically if they
-//wish.
+/////////////////////////////////////////////////////////////////////////////////////////
+// move a group to directly before another group
+// wParam = (WPARAM)(HANDLE)hGroup
+// lParam = (LPARAM)(HANDLE)hBeforeGroup
+// returns the new handle of the group on success, NULL on failure
+// The order is represented by the order in which MS_CLUI_GROUPADDED is called,
+// however UIs are free to ignore this order and sort alphabetically if they wish.
 #define MS_CLIST_GROUPMOVEBEFORE   "CList/GroupMoveBefore"
 
-//rename a group internally									v0.1.1.0+
-//wParam = (WPARAM)(HANDLE)hGroup
-//lParam = (LPARAM)(char*)szNewName
-//returns 0 on success, nonzero on failure
-//this will fail if the group name is a duplicate of an existing name
-//CLUI is not called when this change is made
+/////////////////////////////////////////////////////////////////////////////////////////
+// rename a group internally
+// wParam = (WPARAM)(HANDLE)hGroup
+// lParam = (LPARAM)(char*)szNewName
+// returns 0 on success, nonzero on failure
+// this will fail if the group name is a duplicate of an existing name
+// CLUI is not called when this change is made
 #define MS_CLIST_GROUPRENAME       "CList/GroupRename"
 
-//build a menu of the group tree                          v0.1.2.1+
-//wParam = 0
-//lParam = 0
-//returns a HMENU on success, or NULL on failure
-//The return value must be DestroyMenu()ed when you're done with it.
-//NULL will be returned if the user doesn't have any groups
-//The dwItemData of every menu item is the handle to that group.
-//Menu item IDs are assigned starting at 100, in no particular order.
+/////////////////////////////////////////////////////////////////////////////////////////
+// build a menu of the group tree
+// returns a HMENU on success, or NULL on failure
+// The return value must be DestroyMenu()ed when you're done with it.
+// NULL will be returned if the user doesn't have any groups
+// The dwItemData of every menu item is the handle to that group.
+// Menu item IDs are assigned starting at 100, in no particular order.
 #define MS_CLIST_GROUPBUILDMENU    "CList/GroupBuildMenu"
 
-//changes the 'hide offline contacts' flag and call CLUI    v0.1.1.0+
-//wParam = newValue
-//lParam = 0
-//returns 0 on success, nonzero on failure
-//newValue is 0 to show all contacts, 1 to only show online contacts
-//or -1 to toggle the value
+/////////////////////////////////////////////////////////////////////////////////////////
+// changes the 'hide offline contacts' flag and call CLUI
+// wParam = newValue
+// lParam = 0
+// returns 0 on success, nonzero on failure
+// newValue is 0 to show all contacts, 1 to only show online contacts
+// or -1 to toggle the value
 #define MS_CLIST_SETHIDEOFFLINE  "CList/SetHideOffline"
 
-//do the message processing associated with double clicking a contact v0.1.1.0+
-//wParam = (MCONTACT)hContact
-//lParam = 0
-//returns 0 on success, nonzero on failure
+/////////////////////////////////////////////////////////////////////////////////////////
+// do the message processing associated with double clicking a contact
+// wParam = (MCONTACT)hContact
+// lParam = 0
+// returns 0 on success, nonzero on failure
 #define MS_CLIST_CONTACTDOUBLECLICKED "CList/ContactDoubleClicked"
 
-//do the processing for when some files are dropped on a contact    v0.1.2.1+
-//wParam = (MCONTACT)hContact
-//lParam = (LPARAM)(char**)ppFiles
-//returns 0 on success, nonzero on failure
-//ppFiles is an array of fully qualified filenames, ending with a NULL.
+/////////////////////////////////////////////////////////////////////////////////////////
+// do the processing for when some files are dropped on a contact
+// wParam = (MCONTACT)hContact
+// lParam = (LPARAM)(char**)ppFiles
+// returns 0 on success, nonzero on failure
+// ppFiles is an array of fully qualified filenames, ending with a NULL.
 #define MS_CLIST_CONTACTFILESDROPPED   "CList/ContactFilesDropped"
 
-//change the group a contact belongs to       v0.1.1.0+
-//wParam = (MCONTACT)hContact
-//lParam = (LPARAM)(HANDLE)hGroup
-//returns 0 on success, nonzero on failure
-//use hGroup = NULL to put the contact in no group
+/////////////////////////////////////////////////////////////////////////////////////////
+// change the group a contact belongs to
+// wParam = (MCONTACT)hContact
+// lParam = (LPARAM)(HANDLE)hGroup
+// returns 0 on success, nonzero on failure
+// use hGroup = NULL to put the contact in no group
 #define MS_CLIST_CONTACTCHANGEGROUP   "CList/ContactChangeGroup"
 
-//determines the ordering of two contacts              v0.1.1.0+
-//wParam = (WPARAM)(HANDLE)hContact1
-//lParam = (LPARAM)(HANDLE)hContact2
-//returns 0 if hContact1 is the same as hContact2
-//returns +1 if hContact2 should be displayed after hContact1
-//returns -1 if hContact1 should be displayed after hContact2
+/////////////////////////////////////////////////////////////////////////////////////////
+// determines the ordering of two contacts
+// wParam = (WPARAM)(HANDLE)hContact1
+// lParam = (LPARAM)(HANDLE)hContact2
+// returns 0 if hContact1 is the same as hContact2
+// returns +1 if hContact2 should be displayed after hContact1
+// returns -1 if hContact1 should be displayed after hContact2
 #define MS_CLIST_CONTACTSCOMPARE      "CList/ContactsCompare"
 
-/*
-	wParam = 0 (not used)
-	lParam = (LPARAM) &MIRANDASYSTRAYNOTIFY
+/////////////////////////////////////////////////////////////////////////////////////////
+// wParam = 0 (not used)
+// lParam = (LPARAM) &MIRANDASYSTRAYNOTIFY
+//
+// Affects: Show a message in a ballon tip against a protocol icon (if installed)
+// Returns: 0 on success, non zero on failure
+// Notes  : This service will not be created on systems that haven't got the Windows
+// support for ballontips, also note that it's upto Windows if it shows your
+// message and it keeps check of delays (don't be stupid about showing messages)
 
-	Affects: Show a message in a ballon tip against a protocol icon (if installed)
-	Returns: 0 on success, non zero on failure
-	Notes  : This service will not be created on systems that haven't got the Windows
-			 support for ballontips, also note that it's upto Windows if it shows your
-			 message and it keeps check of delays (don't be stupid about showing messages)
-
-	Version: 0.3.1a
-*/
 #define NIIF_INFO           0x00000001
 #define NIIF_WARNING        0x00000002
 #define NIIF_ERROR          0x00000003
@@ -665,5 +587,9 @@ typedef struct {
 #define SETTING_STATE_NORMAL      2
 
 #define SETTING_BRINGTOFRONT_DEFAULT 0
+
+#ifndef M_CLISTINT_H__
+#include <m_clistint.h>
+#endif
 
 #endif // M_CLIST_H__

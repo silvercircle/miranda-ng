@@ -102,7 +102,7 @@ int ShowPopup(MCONTACT hContact, SESSION_INFO *si, HICON hIcon, char* pszProtoNa
 		return 0;
 
 	va_start(marker, fmt);
-	mir_vsntprintf(szBuf, SIZEOF(szBuf), fmt, marker);
+	mir_vsntprintf(szBuf, _countof(szBuf), fmt, marker);
 	va_end(marker);
 
 	pd.lchContact = hContact;
@@ -112,8 +112,8 @@ int ShowPopup(MCONTACT hContact, SESSION_INFO *si, HICON hIcon, char* pszProtoNa
 	else
 		pd.lchIcon = LoadIconEx("window");
 
-	PROTOACCOUNT *pa = ProtoGetAccount(pszProtoName);
-	mir_sntprintf(pd.lptzContactName, SIZEOF(pd.lptzContactName), _T("%s - %s"),
+	PROTOACCOUNT *pa = Proto_GetAccount(pszProtoName);
+	mir_sntprintf(pd.lptzContactName, _countof(pd.lptzContactName), _T("%s - %s"),
 		(pa == NULL) ? _A2T(pszProtoName) : pa->tszAccountName,
 		pcli->pfnGetContactDisplayName(hContact, 0));
 
@@ -536,7 +536,7 @@ UINT CreateGCMenu(HWND hwndDlg, HMENU *hMenu, int iIndex, POINT pt, SESSION_INFO
 
 		if (pszWordText && pszWordText[0]) {
 			TCHAR szMenuText[4096];
-			mir_sntprintf(szMenuText, SIZEOF(szMenuText), TranslateT("Look up '%s':"), pszWordText);
+			mir_sntprintf(szMenuText, _countof(szMenuText), TranslateT("Look up '%s':"), pszWordText);
 			ModifyMenu(*hMenu, 4, MF_STRING | MF_BYPOSITION, 4, szMenuText);
 		}
 		else ModifyMenu(*hMenu, 4, MF_STRING | MF_GRAYED | MF_BYPOSITION, 4, TranslateT("No word to look up"));
@@ -545,7 +545,7 @@ UINT CreateGCMenu(HWND hwndDlg, HMENU *hMenu, int iIndex, POINT pt, SESSION_INFO
 	else if (iIndex == 0) {
 		TCHAR szTemp[50];
 		if (pszWordText)
-			mir_sntprintf(szTemp, SIZEOF(szTemp), TranslateT("&Message %s"), pszWordText);
+			mir_sntprintf(szTemp, TranslateT("&Message %s"), pszWordText);
 		else
 			_tcsncpy_s(szTemp, TranslateT("&Message"), _TRUNCATE);
 
@@ -598,11 +598,12 @@ UINT CreateGCMenu(HWND hwndDlg, HMENU *hMenu, int iIndex, POINT pt, SESSION_INFO
 
 void DestroyGCMenu(HMENU *hMenu, int iIndex)
 {
-	MENUITEMINFO mi = { sizeof(mi) };
-	mi.fMask = MIIM_SUBMENU;
-	while (GetMenuItemInfo(*hMenu, iIndex, TRUE, &mi)) {
-		if (mi.hSubMenu != NULL)
-			DestroyMenu(mi.hSubMenu);
+	MENUITEMINFO mii = { 0 };
+	mii.cbSize = sizeof(mii);
+	mii.fMask = MIIM_SUBMENU;
+	while (GetMenuItemInfo(*hMenu, iIndex, TRUE, &mii)) {
+		if (mii.hSubMenu != NULL)
+			DestroyMenu(mii.hSubMenu);
 		RemoveMenu(*hMenu, iIndex, MF_BYPOSITION);
 	}
 }

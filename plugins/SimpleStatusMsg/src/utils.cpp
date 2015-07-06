@@ -36,19 +36,19 @@ static IconItem iconList[] =
 
 void IconsInit(void)
 {
-	Icon_Register(g_hInst, LPGEN("Simple Status Message"), iconList, SIZEOF(iconList), "SimpleStatusMsg");
+	Icon_Register(g_hInst, LPGEN("Simple Status Message"), iconList, _countof(iconList), "SimpleStatusMsg");
 }
 
 HICON LoadIconEx(const char *name)
 {
 	char szSettingName[100];
-	mir_snprintf(szSettingName, SIZEOF(szSettingName), "SimpleStatusMsg_%s", name);
-	return Skin_GetIcon(szSettingName);
+	mir_snprintf(szSettingName, _countof(szSettingName), "SimpleStatusMsg_%s", name);
+	return IcoLib_GetIcon(szSettingName);
 }
 
 HANDLE GetIconHandle(int iconId)
 {
-	for(int i = 0; i < SIZEOF(iconList); i++)
+	for(int i = 0; i < _countof(iconList); i++)
 		if (iconList[i].defIconID == iconId)
 			return iconList[i].hIcolib;
 
@@ -58,14 +58,14 @@ HANDLE GetIconHandle(int iconId)
 void ReleaseIconEx(const char *name)
 {
 	char szSettingName[100];
-	mir_snprintf(szSettingName, SIZEOF(szSettingName), "SimpleStatusMsg_%s", name);
-	Skin_ReleaseIcon(szSettingName);
+	mir_snprintf(szSettingName, _countof(szSettingName), "SimpleStatusMsg_%s", name);
+	IcoLib_Release(szSettingName);
 }
 
 HANDLE HookProtoEvent(const char *szModule, const char *szEvent, MIRANDAHOOKPARAM hookProc)
 {
 	char szProtoEvent[MAXMODULELABELLENGTH];
-	mir_snprintf(szProtoEvent, SIZEOF(szProtoEvent), "%s%s", szModule, szEvent);
+	mir_snprintf(szProtoEvent, _countof(szProtoEvent), "%s%s", szModule, szEvent);
 	HANDLE res = HookEventParam(szProtoEvent, hookProc, (LPARAM)szModule);
 	arProtoHooks.insert(res);
 	return res;
@@ -84,7 +84,7 @@ int GetRandom(int from, int to)
 	if ((to - from) < 1)
 		return from;
 	unsigned randnum;
-	CallService(MS_UTILS_GETRANDOM, sizeof(randnum), (LPARAM)&randnum);
+	Utils_GetRandom(&randnum, sizeof(randnum));
 	return ((randnum % (to - from + 1)) + from);
 }
 
@@ -126,7 +126,7 @@ const char *StatusModeToDbSetting(int status, const char *suffix)
 	case ID_STATUS_IDLE: prefix = "Idl"; break;
 	default: return NULL;
 	}
-	mir_snprintf(str, SIZEOF(str), "%s%s", prefix, suffix);
+	mir_snprintf(str, "%s%s", prefix, suffix);
 	return str;
 }
 
@@ -134,7 +134,7 @@ int GetCurrentStatus(const char *szProto)
 {
 	if (szProto) {
 		char szSetting[80];
-		mir_snprintf(szSetting, SIZEOF(szSetting), "Cur%sStatus", szProto);
+		mir_snprintf(szSetting, "Cur%sStatus", szProto);
 		return (int)db_get_w(NULL, "SimpleStatusMsg", szSetting, ID_STATUS_OFFLINE);
 
 	}
@@ -147,11 +147,11 @@ int GetStartupStatus(const char *szProto)
 		int status_mode;
 		char szSetting[80];
 
-		mir_snprintf(szSetting, SIZEOF(szSetting), "Startup%sStatus", szProto);
+		mir_snprintf(szSetting, "Startup%sStatus", szProto);
 		status_mode = db_get_w(NULL, "SimpleStatusMsg", szSetting, ID_STATUS_CURRENT);
 		if (status_mode == ID_STATUS_CURRENT) {
 			// load status used for this proto last time
-			mir_snprintf(szSetting, SIZEOF(szSetting), "Last%sStatus", szProto);
+			mir_snprintf(szSetting, "Last%sStatus", szProto);
 			status_mode = db_get_w(NULL, "SimpleStatusMsg", szSetting, ID_STATUS_OFFLINE);
 		}
 		return status_mode;

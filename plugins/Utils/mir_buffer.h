@@ -24,6 +24,7 @@ Boston, MA 02111-1307, USA.
 #include <windows.h>
 
 #include <m_variables.h>
+#include <m_timezones.h>
 
 template<class T>
 static inline size_t __blen(const T *str)
@@ -462,16 +463,12 @@ static void ReplaceVars(Buffer<TCHAR> *buffer, MCONTACT hContact, TCHAR **variab
 				size_t foundLen = i - j + 1;
 				if (foundLen == 9 && _tcsncmp(&buffer->str[j], _T("%contact%"), 9) == 0)
 				{
-					buffer->replace(j, i + 1, (TCHAR *) CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR));
+					buffer->replace(j, i + 1, pcli->pfnGetContactDisplayName(hContact, 0));
 				}
 				else if (foundLen == 6 && _tcsncmp(&buffer->str[j], _T("%date%"), 6) == 0)
 				{
 					TCHAR tmp[128];
-					DBTIMETOSTRINGT tst = {0};
-					tst.szFormat = _T("d s");
-					tst.szDest = tmp;
-					tst.cbDest = 128;
-					CallService(MS_DB_TIME_TIMESTAMPTOSTRINGT, (WPARAM) time(NULL), (LPARAM) &tst);
+					TimeZone_ToStringT(time(NULL), _T("d s"), tmp, _countof(tmp));
 					buffer->replace(j, i + 1, tmp);
 				}
 				else

@@ -15,12 +15,11 @@ INT_PTR CDropbox::SendFilesToDropboxCommand(void *obj, WPARAM hContact, LPARAM)
 
 void CDropbox::InitializeMenus()
 {
-	CLISTMENUITEM mi = { 0 };
-	mi.cbSize = sizeof(CLISTMENUITEM);
+	CMenuItem mi;
 	mi.pszService = MODULE"/SendFilesToDropbox";
-	mi.pszName = LPGEN("Send files to Dropbox");
+	mi.name.a = LPGEN("Upload files to Dropbox");
 	mi.position = -2000020000 + CMI_SEND_FILES;
-	mi.icolibItem = GetIconHandle(IDI_DROPBOX);
+	mi.hIcolibItem = GetIconHandleByName("upload");
 	contactMenuItems[CMI_SEND_FILES] = Menu_AddContactMenuItem(&mi);
 	CreateServiceFunctionObj(mi.pszService, SendFilesToDropboxCommand, this);
 }
@@ -30,7 +29,7 @@ int CDropbox::OnPrebuildContactMenu(WPARAM hContact, LPARAM)
 	if (!hContact)
 		return 0;
 
-	BOOL bShow = FALSE;
+	bool bShow = false;
 
 	if (HasAccessToken() && !hTransferContact && hContact != GetDefaultContact())
 	{
@@ -42,7 +41,7 @@ int CDropbox::OnPrebuildContactMenu(WPARAM hContact, LPARAM)
 			WORD status = db_get_w(hContact, proto, "Status", ID_STATUS_OFFLINE);
 			bool canSendOffline = (CallProtoService(proto, PS_GETCAPS, PFLAGNUM_4, 0) & PF4_IMSENDOFFLINE) > 0;
 			if (isProtoOnline && (status != ID_STATUS_OFFLINE || canSendOffline))
-				bShow = TRUE;
+				bShow = true;
 		}
 	}
 

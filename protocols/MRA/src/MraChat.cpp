@@ -37,14 +37,14 @@ INT_PTR CMraProto::MraChatSessionNew(MCONTACT hContact)
 		GCSESSION gcw = { sizeof(gcw) };
 		gcw.iType = GCW_CHATROOM;
 		gcw.pszModule = m_szModuleName;
-		gcw.ptszName = GetContactNameW(hContact);
+		gcw.ptszName = pcli->pfnGetContactDisplayName(hContact, 0);
 		gcw.ptszID = wszEMail;
 		gcw.ptszStatusbarText = _T("status bar");
 		gcw.dwItemData = (DWORD)hContact;
 		if (!CallServiceSync(MS_GC_NEWSESSION, NULL, (LPARAM)&gcw)) {
 			GCDEST gcd = { m_szModuleName, wszEMail.c_str(), GC_EVENT_ADDGROUP };
 			GCEVENT gce = { sizeof(gce), &gcd };
-			for (int i = 0; i < SIZEOF(lpwszStatuses); i++) {
+			for (int i = 0; i < _countof(lpwszStatuses); i++) {
 				gce.ptszStatus = TranslateTS(lpwszStatuses[i]);
 				CallServiceSync(MS_GC_EVENT, NULL, (LPARAM)&gce);
 			}
@@ -114,7 +114,7 @@ INT_PTR CMraProto::MraChatSessionEventSendByHandle(MCONTACT hContactChatSession,
 		MCONTACT hContactSender = MraHContactFromEmail(lpszUID, FALSE, TRUE, NULL);
 		wszUID = lpszUID;
 		if (hContactSender)
-			gce.ptszNick = GetContactNameW(hContactSender);
+			gce.ptszNick = pcli->pfnGetContactDisplayName(hContactSender, 0);
 		else
 			gce.ptszNick = wszUID;
 	}

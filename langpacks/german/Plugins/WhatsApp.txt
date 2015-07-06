@@ -104,8 +104,8 @@ Nachricht empfangen: %s von %s
 ;file \protocols\WhatsApp\src\proto.cpp
 [%s server connection]
 %s Serververbindung
-[Unable to get Netlib connection for WhatsApp]
-Konnte keine Netzwerkverbindung für WhatsApp herstellen.
+[Unable to initialize Netlib for %s.]
+Kann Netlib-Verbindung für %s nicht initialisieren.
 [Network connection error.]
 Netzwerkverbindungsfehler.
 [Registration failed. Invalid server response.]

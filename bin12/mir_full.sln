@@ -2,20 +2,25 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Express 2013 for Windows Desktop
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Miranda", "..\src\miranda32_12.vcxproj", "{F9916510-9055-4C9F-997A-3755DEC1511B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Miranda", "..\src\miranda32\miranda32.vcxproj", "{F9916510-9055-4C9F-997A-3755DEC1511B}"
 	ProjectSection(ProjectDependencies) = postProject
+		{538E451F-E667-4D07-BCE6-976ECC7BB8D1} = {538E451F-E667-4D07-BCE6-976ECC7BB8D1}
 		{D9EFEA4B-B817-4DE1-BD62-68A5DB8F5F60} = {D9EFEA4B-B817-4DE1-BD62-68A5DB8F5F60}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mir_core", "..\src\mir_core\mir_core_12.vcxproj", "{D9EFEA4B-B817-4DE1-BD62-68A5DB8F5F60}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mir_core", "..\src\mir_core\mir_core.vcxproj", "{D9EFEA4B-B817-4DE1-BD62-68A5DB8F5F60}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mir_app", "..\src\mir_app\mir_app.vcxproj", "{538E451F-E667-4D07-BCE6-976ECC7BB8D1}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libjson", "..\libs\libjson\libjson.vcxproj", "{F6A9340E-B8D9-4C75-BE30-47DC66D0ABC7}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AVS", "..\plugins\AVS\avs.vcxproj", "{7711F563-6473-4ABD-B5E3-477CE8384AD6}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Zlib", "..\plugins\Zlib\zlib_12.vcxproj", "{E2A369CD-EDA3-414F-8AD0-E732CD7EE68C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Zlib", "..\libs\zlib\zlib.vcxproj", "{E2A369CD-EDA3-414F-8AD0-E732CD7EE68C}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Import", "..\plugins\Import\import_12.vcxproj", "{9299B507-1AF9-4C93-9560-5F637D1E0C9E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Dbx_mmap", "..\plugins\Db3x_mmap\db3x_mmap_12.vcxproj", "{20D781FB-4A20-4B75-B863-304A47182966}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Dbx_mmap", "..\plugins\Db3x_mmap\db3x_mmap.vcxproj", "{20D781FB-4A20-4B75-B863-304A47182966}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AdvaImg", "..\plugins\AdvaImg\AdvaImg_12.vcxproj", "{D0C4EACD-F264-4CFA-9AFC-3918FEC31A9A}"
 EndProject
@@ -37,9 +42,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ICQ", "..\protocols\IcqOsca
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Jabber", "..\protocols\JabberG\jabber.vcxproj", "{33276462-8313-4192-8306-13717ECCA60A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MSN", "..\protocols\MSN\msn_12.vcxproj", "{7B0F213E-C15E-4219-8AE5-49DD3D3D553D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MSN", "..\protocols\MSN\msn.vcxproj", "{7B0F213E-C15E-4219-8AE5-49DD3D3D553D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Clist_nicer", "..\plugins\Clist_nicer\clist_nicer_12.vcxproj", "{3C42510C-A29E-4A53-899C-203BFA874E0B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Clist_nicer", "..\plugins\Clist_nicer\clist_nicer.vcxproj", "{3C42510C-A29E-4A53-899C-203BFA874E0B}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Cln_skinedit", "..\plugins\Clist_nicer\skineditor\skinedit_12.vcxproj", "{987F026D-EB1F-4013-ADA8-2406ACCDA526}"
 EndProject
@@ -63,7 +68,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Db_autobackups", "..\plugin
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FavContacts", "..\plugins\FavContacts\favcontacts.vcxproj", "{2D0B4CB0-3ACA-4612-B745-FF3050E1500A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FltContacts", "..\plugins\FloatingContacts\FltCont_12.vcxproj", "{9290A9CC-3FDA-4FD6-A8A2-04AD4BA1C856}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FltContacts", "..\plugins\FloatingContacts\FltCont.vcxproj", "{9290A9CC-3FDA-4FD6-A8A2-04AD4BA1C856}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Folders", "..\plugins\Folders\folders_12.vcxproj", "{019FAEBD-BD7B-4470-A15B-A7DB1787E6BD}"
 EndProject
@@ -159,7 +164,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TopToolBar", "..\plugins\To
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CyrTranslit", "..\plugins\CyrTranslit\CyrTranslit.vcxproj", "{0BB52326-02D5-4698-A180-24078DA5DA0E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Clist_modern", "..\plugins\Clist_modern\clist_modern_12.vcxproj", "{D9057E63-AAAA-4FE7-800A-20C02F4761F3}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Clist_modern", "..\plugins\Clist_modern\clist_modern.vcxproj", "{D9057E63-AAAA-4FE7-800A-20C02F4761F3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EkHtml", "..\plugins\MirOTR\ekhtml\ekhtml_12.vcxproj", "{2C050CAF-D8AA-468A-B1A7-89F3BE99D3C8}"
 EndProject
@@ -259,9 +264,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StdSSL", "..\src\core\stdss
 		{D9EFEA4B-B817-4DE1-BD62-68A5DB8F5F60} = {D9EFEA4B-B817-4DE1-BD62-68A5DB8F5F60}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CmdLine", "..\plugins\CmdLine\CmdLine_12.vcxproj", "{73BA9CA5-640D-4F30-A157-A73557A25F98}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CmdLine", "..\plugins\CmdLine\CmdLine.vcxproj", "{73BA9CA5-640D-4F30-A157-A73557A25F98}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MimCmd", "..\plugins\CmdLine\MimCmd\MimCmd_12.vcxproj", "{1E3BB48A-FFBC-4A03-8C43-9124A484BE51}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MimCmd", "..\plugins\MimCmd\MimCmd.vcxproj", "{1E3BB48A-FFBC-4A03-8C43-9124A484BE51}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FTPFile", "..\plugins\FTPFileYM\ftpfile_12.vcxproj", "{73482497-9F57-4819-A9AB-5D841A9F072D}"
 EndProject
@@ -269,7 +274,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PasteIt", "..\plugins\Paste
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SendSS", "..\plugins\SendScreenshotPlus\SendSS_12.vcxproj", "{CEAD8BCF-1F22-4E00-9F6D-E33405B00552}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DbEditorPP", "..\plugins\DbeditorPP\dbeditorpp_12.vcxproj", "{9C6040B8-1173-40FA-A3DB-DE044CCD8250}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DbEditorPP", "..\plugins\DbeditorPP\dbeditorpp.vcxproj", "{9C6040B8-1173-40FA-A3DB-DE044CCD8250}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CrashDumper", "..\plugins\CrashDumper\crshdmp.vcxproj", "{576EEEFD-E423-482B-879A-F0515D40B8E1}"
 EndProject
@@ -321,7 +326,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Weather", "..\plugins\Weath
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Ping", "..\plugins\Ping\ping_12.vcxproj", "{F31BD1B6-EE9D-4F76-A047-F8AEADC26086}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Fingerprint", "..\plugins\FingerprintNG\fingerprint_ng_12.vcxproj", "{AF7D71D4-19B7-42B8-91DD-701F155AC4AE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Fingerprint", "..\plugins\FingerprintNG\fingerprint_ng.vcxproj", "{AF7D71D4-19B7-42B8-91DD-701F155AC4AE}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AssocMgr", "..\plugins\AssocMgr\assocmgr.vcxproj", "{B57D997C-73E1-D5F7-ECCA-C204345C04A3}"
 EndProject
@@ -381,15 +386,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Exchange", "..\plugins\Exch
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WebView", "..\plugins\WebView\webview_12.vcxproj", "{475ED6ED-C311-4188-ACB2-1C41830B22EE}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ShlExt", "..\plugins\ShellExt\shellext_12.vcxproj", "{B27B85B5-0EF1-496D-99D7-0702A98A342A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ShlExt", "..\plugins\ShellExt\shellext.vcxproj", "{B27B85B5-0EF1-496D-99D7-0702A98A342A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WinterSpeak", "..\plugins\WinterSpeak\WinterSpeak_12.vcxproj", "{A44F96D0-A850-4A67-9570-0E9298A16E40}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VKontakte", "..\protocols\VKontakte\vk.vcxproj", "{BF6E1942-7E42-4564-9DF5-FD0A00D71173}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StartupSilence", "..\plugins\StartupSilence\StartupSilence_12.vcxproj", "{7B072B7F-E2AA-4935-AAF5-5BEF99665AD3}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SkypeClassic", "..\protocols\SkypeClassic\SkypeClassic_12.vcxproj", "{5F9243AE-C6C9-4F42-B670-67A97767A50B}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MirandaG15", "..\plugins\MirandaG15\MirandaG15_12.vcxproj", "{8ACA3C8B-BDFA-47B2-8578-069555BA05B3}"
 EndProject
@@ -407,7 +410,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glib", "..\protocols\Sameti
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GmailNotifier", "..\plugins\GmailNotifier\GmailNotifier_12.vcxproj", "{EDAAD28B-505B-4969-A8BB-97EAE818DEEA}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Pcre16", "..\plugins\Pcre16\pcre16_12.vcxproj", "{6124E997-426E-4A0B-9617-D6D577D5E7D7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Pcre16", "..\libs\Pcre16\pcre16.vcxproj", "{6124E997-426E-4A0B-9617-D6D577D5E7D7}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IEHistory", "..\plugins\IEHistory\IEHistory_12.vcxproj", "{7F5EA8BC-8F2B-478E-8F05-0ED4B691B776}"
 EndProject
@@ -424,6 +427,14 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SkypeWeb", "..\protocols\SkypeWeb\SkypeWeb.vcxproj", "{66A9BDEB-150F-45DC-B20F-9892C0B43834}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tox", "..\protocols\Tox\Tox.vcxproj", "{BCFAB658-326E-466D-995B-E76636C1DEA4}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MinecraftDynmap", "..\protocols\MinecraftDynmap\MinecraftDynmap.vcxproj", "{B4327D10-ACDC-4C12-9555-749DD49A7BB0}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ZeroSwitch", "..\plugins\ZeroSwitch\ZeroSwitch.vcxproj", "{D31CD2B4-9025-4B01-9F74-EEEE2E94DDF4}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MessageState", "..\plugins\MessageState\MessageState.vcxproj", "{D7F4D0B3-7B2C-4DB9-B9CB-0C93491E38E4}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MirLua", "..\plugins\MirLua\MirLua.vcxproj", "{27D41D81-991F-4DC6-8749-B0321C87E694}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -449,6 +460,22 @@ Global
 		{D9EFEA4B-B817-4DE1-BD62-68A5DB8F5F60}.Release|Win32.Build.0 = Release|Win32
 		{D9EFEA4B-B817-4DE1-BD62-68A5DB8F5F60}.Release|x64.ActiveCfg = Release|x64
 		{D9EFEA4B-B817-4DE1-BD62-68A5DB8F5F60}.Release|x64.Build.0 = Release|x64
+		{538E451F-E667-4D07-BCE6-976ECC7BB8D1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{538E451F-E667-4D07-BCE6-976ECC7BB8D1}.Debug|Win32.Build.0 = Debug|Win32
+		{538E451F-E667-4D07-BCE6-976ECC7BB8D1}.Debug|x64.ActiveCfg = Debug|x64
+		{538E451F-E667-4D07-BCE6-976ECC7BB8D1}.Debug|x64.Build.0 = Debug|x64
+		{538E451F-E667-4D07-BCE6-976ECC7BB8D1}.Release|Win32.ActiveCfg = Release|Win32
+		{538E451F-E667-4D07-BCE6-976ECC7BB8D1}.Release|Win32.Build.0 = Release|Win32
+		{538E451F-E667-4D07-BCE6-976ECC7BB8D1}.Release|x64.ActiveCfg = Release|x64
+		{538E451F-E667-4D07-BCE6-976ECC7BB8D1}.Release|x64.Build.0 = Release|x64
+		{F6A9340E-B8D9-4C75-BE30-47DC66D0ABC7}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F6A9340E-B8D9-4C75-BE30-47DC66D0ABC7}.Debug|Win32.Build.0 = Debug|Win32
+		{F6A9340E-B8D9-4C75-BE30-47DC66D0ABC7}.Debug|x64.ActiveCfg = Debug|x64
+		{F6A9340E-B8D9-4C75-BE30-47DC66D0ABC7}.Debug|x64.Build.0 = Debug|x64
+		{F6A9340E-B8D9-4C75-BE30-47DC66D0ABC7}.Release|Win32.ActiveCfg = Release|Win32
+		{F6A9340E-B8D9-4C75-BE30-47DC66D0ABC7}.Release|Win32.Build.0 = Release|Win32
+		{F6A9340E-B8D9-4C75-BE30-47DC66D0ABC7}.Release|x64.ActiveCfg = Release|x64
+		{F6A9340E-B8D9-4C75-BE30-47DC66D0ABC7}.Release|x64.Build.0 = Release|x64
 		{7711F563-6473-4ABD-B5E3-477CE8384AD6}.Debug|Win32.ActiveCfg = Debug|Win32
 		{7711F563-6473-4ABD-B5E3-477CE8384AD6}.Debug|Win32.Build.0 = Debug|Win32
 		{7711F563-6473-4ABD-B5E3-477CE8384AD6}.Debug|x64.ActiveCfg = Debug|x64
@@ -1767,14 +1794,6 @@ Global
 		{7B072B7F-E2AA-4935-AAF5-5BEF99665AD3}.Release|Win32.Build.0 = Release|Win32
 		{7B072B7F-E2AA-4935-AAF5-5BEF99665AD3}.Release|x64.ActiveCfg = Release|x64
 		{7B072B7F-E2AA-4935-AAF5-5BEF99665AD3}.Release|x64.Build.0 = Release|x64
-		{5F9243AE-C6C9-4F42-B670-67A97767A50B}.Debug|Win32.ActiveCfg = Debug|Win32
-		{5F9243AE-C6C9-4F42-B670-67A97767A50B}.Debug|Win32.Build.0 = Debug|Win32
-		{5F9243AE-C6C9-4F42-B670-67A97767A50B}.Debug|x64.ActiveCfg = Debug|x64
-		{5F9243AE-C6C9-4F42-B670-67A97767A50B}.Debug|x64.Build.0 = Debug|x64
-		{5F9243AE-C6C9-4F42-B670-67A97767A50B}.Release|Win32.ActiveCfg = Release|Win32
-		{5F9243AE-C6C9-4F42-B670-67A97767A50B}.Release|Win32.Build.0 = Release|Win32
-		{5F9243AE-C6C9-4F42-B670-67A97767A50B}.Release|x64.ActiveCfg = Release|x64
-		{5F9243AE-C6C9-4F42-B670-67A97767A50B}.Release|x64.Build.0 = Release|x64
 		{8ACA3C8B-BDFA-47B2-8578-069555BA05B3}.Debug|Win32.ActiveCfg = Debug|Win32
 		{8ACA3C8B-BDFA-47B2-8578-069555BA05B3}.Debug|Win32.Build.0 = Debug|Win32
 		{8ACA3C8B-BDFA-47B2-8578-069555BA05B3}.Debug|x64.ActiveCfg = Debug|x64
@@ -1909,6 +1928,38 @@ Global
 		{BCFAB658-326E-466D-995B-E76636C1DEA4}.Release|Win32.Build.0 = Release|Win32
 		{BCFAB658-326E-466D-995B-E76636C1DEA4}.Release|x64.ActiveCfg = Release|x64
 		{BCFAB658-326E-466D-995B-E76636C1DEA4}.Release|x64.Build.0 = Release|x64
+		{B4327D10-ACDC-4C12-9555-749DD49A7BB0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B4327D10-ACDC-4C12-9555-749DD49A7BB0}.Debug|Win32.Build.0 = Debug|Win32
+		{B4327D10-ACDC-4C12-9555-749DD49A7BB0}.Debug|x64.ActiveCfg = Debug|x64
+		{B4327D10-ACDC-4C12-9555-749DD49A7BB0}.Debug|x64.Build.0 = Debug|x64
+		{B4327D10-ACDC-4C12-9555-749DD49A7BB0}.Release|Win32.ActiveCfg = Release|Win32
+		{B4327D10-ACDC-4C12-9555-749DD49A7BB0}.Release|Win32.Build.0 = Release|Win32
+		{B4327D10-ACDC-4C12-9555-749DD49A7BB0}.Release|x64.ActiveCfg = Release|x64
+		{B4327D10-ACDC-4C12-9555-749DD49A7BB0}.Release|x64.Build.0 = Release|x64
+		{D31CD2B4-9025-4B01-9F74-EEEE2E94DDF4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D31CD2B4-9025-4B01-9F74-EEEE2E94DDF4}.Debug|Win32.Build.0 = Debug|Win32
+		{D31CD2B4-9025-4B01-9F74-EEEE2E94DDF4}.Debug|x64.ActiveCfg = Debug|x64
+		{D31CD2B4-9025-4B01-9F74-EEEE2E94DDF4}.Debug|x64.Build.0 = Debug|x64
+		{D31CD2B4-9025-4B01-9F74-EEEE2E94DDF4}.Release|Win32.ActiveCfg = Release|Win32
+		{D31CD2B4-9025-4B01-9F74-EEEE2E94DDF4}.Release|Win32.Build.0 = Release|Win32
+		{D31CD2B4-9025-4B01-9F74-EEEE2E94DDF4}.Release|x64.ActiveCfg = Release|x64
+		{D31CD2B4-9025-4B01-9F74-EEEE2E94DDF4}.Release|x64.Build.0 = Release|x64
+		{D7F4D0B3-7B2C-4DB9-B9CB-0C93491E38E4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D7F4D0B3-7B2C-4DB9-B9CB-0C93491E38E4}.Debug|Win32.Build.0 = Debug|Win32
+		{D7F4D0B3-7B2C-4DB9-B9CB-0C93491E38E4}.Debug|x64.ActiveCfg = Debug|x64
+		{D7F4D0B3-7B2C-4DB9-B9CB-0C93491E38E4}.Debug|x64.Build.0 = Debug|x64
+		{D7F4D0B3-7B2C-4DB9-B9CB-0C93491E38E4}.Release|Win32.ActiveCfg = Release|Win32
+		{D7F4D0B3-7B2C-4DB9-B9CB-0C93491E38E4}.Release|Win32.Build.0 = Release|Win32
+		{D7F4D0B3-7B2C-4DB9-B9CB-0C93491E38E4}.Release|x64.ActiveCfg = Release|x64
+		{D7F4D0B3-7B2C-4DB9-B9CB-0C93491E38E4}.Release|x64.Build.0 = Release|x64
+		{27D41D81-991F-4DC6-8749-B0321C87E694}.Debug|Win32.ActiveCfg = Debug|Win32
+		{27D41D81-991F-4DC6-8749-B0321C87E694}.Debug|Win32.Build.0 = Debug|Win32
+		{27D41D81-991F-4DC6-8749-B0321C87E694}.Debug|x64.ActiveCfg = Debug|x64
+		{27D41D81-991F-4DC6-8749-B0321C87E694}.Debug|x64.Build.0 = Debug|x64
+		{27D41D81-991F-4DC6-8749-B0321C87E694}.Release|Win32.ActiveCfg = Release|Win32
+		{27D41D81-991F-4DC6-8749-B0321C87E694}.Release|Win32.Build.0 = Release|Win32
+		{27D41D81-991F-4DC6-8749-B0321C87E694}.Release|x64.ActiveCfg = Release|x64
+		{27D41D81-991F-4DC6-8749-B0321C87E694}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

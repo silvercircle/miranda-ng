@@ -18,12 +18,13 @@
 
 #include "Glob.h"
 
+CLIST_INTERFACE *pcli;
 HINSTANCE hInstance = NULL;
 int hLangpack = 0;
 
 static HANDLE hOpenHistoryMenuItem = 0;
 
-HANDLE hInternalWindowList = NULL;
+MWindowList hInternalWindowList = NULL;
 
 /////////////////////////////////////////////////////
 // Remember to update the Version in the resource !!!
@@ -114,12 +115,10 @@ int MainInit(WPARAM /*wparam*/, LPARAM /*lparam*/)
 
 	if (!bReplaceHistory)
 	{
-		CLISTMENUITEM mi = { sizeof(mi) };
-		mi.flags = 0;
-		mi.pszContactOwner = NULL;    //all contacts
-		mi.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_EXPORT_MESSAGE));
+		CMenuItem mi;
+		mi.hIcolibItem = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_EXPORT_MESSAGE));
 		mi.position = 1000090100;
-		mi.pszName = LPGEN("Open E&xported History");
+		mi.name.a = LPGEN("Open E&xported History");
 		mi.pszService = MS_SHOW_EXPORT_HISTORY;
 		hOpenHistoryMenuItem = Menu_AddContactMenuItem(&mi);
 
@@ -189,6 +188,8 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 extern "C" __declspec(dllexport) int Load()
 {
 	mir_getLP(&pluginInfo);
+	mir_getCLI();
+
 	HookEvent(ME_SYSTEM_MODULESLOADED, MainInit);
 
 	nMaxLineWidth = db_get_w(NULL, MODULE, "MaxLineWidth", nMaxLineWidth);

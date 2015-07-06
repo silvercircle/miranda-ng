@@ -38,8 +38,8 @@ void __stdcall	ShowPopup(TCHAR *line1, TCHAR *line2, int flags)
 
 		ppd->lchContact = NULL;
 		ppd->lchIcon = (flags ? hIconResponding : hIconNotResponding);
-		mir_tstrncpy(ppd->lptzContactName, line1, SIZEOF(ppd->lptzContactName));
-		mir_tstrncpy(ppd->lptzText, line2, SIZEOF(ppd->lptzText));
+		mir_tstrncpy(ppd->lptzContactName, line1, _countof(ppd->lptzContactName));
+		mir_tstrncpy(ppd->lptzText, line2, _countof(ppd->lptzText));
 
 		ppd->colorBack = GetSysColor(COLOR_BTNFACE);
 		ppd->colorText = GetSysColor(COLOR_WINDOWTEXT);
@@ -178,9 +178,10 @@ INT_PTR ToggleEnabled(WPARAM wParam, LPARAM lParam) {
 	return 0;
 }
 
-INT_PTR EditContact(WPARAM wParam, LPARAM lParam) {
+INT_PTR EditContact(WPARAM wParam, LPARAM lParam)
+{
 	PINGLIST pl;
-	HWND hwndList = (HWND)CallService(MS_CLUI_GETHWND, 0, 0);
+	HWND hwndList = pcli->hwndContactList;
 
 	CallService(PLUG "/GetPingList", 0, (LPARAM)&pl);
 	for (pinglist_it i = pl.begin(); i != pl.end(); ++i) {
@@ -219,32 +220,32 @@ INT_PTR DblClick(WPARAM wParam, LPARAM lParam) {
 void import_ping_address(int index, PINGADDRESS &pa) {
 	DBVARIANT dbv;
 	char buf[256];
-	mir_snprintf(buf, SIZEOF(buf), "Address%d", index);
+	mir_snprintf(buf, "Address%d", index);
 	if (!db_get_ts(0, "PingPlug", buf, &dbv)) {
-		mir_tstrncpy(pa.pszName, dbv.ptszVal, SIZEOF(pa.pszName));
+		mir_tstrncpy(pa.pszName, dbv.ptszVal, _countof(pa.pszName));
 		db_free(&dbv);
 	}
 	else
-		mir_tstrncpy(pa.pszName, TranslateT("Unknown Address"), SIZEOF(pa.pszName));
+		mir_tstrncpy(pa.pszName, TranslateT("Unknown Address"), _countof(pa.pszName));
 
-	mir_snprintf(buf, SIZEOF(buf), "Label%d", index);
+	mir_snprintf(buf, "Label%d", index);
 	if (!db_get_ts(0, "PingPlug", buf, &dbv)) {
-		mir_tstrncpy(pa.pszLabel, dbv.ptszVal, SIZEOF(pa.pszLabel));
+		mir_tstrncpy(pa.pszLabel, dbv.ptszVal, _countof(pa.pszLabel));
 		db_free(&dbv);
 	}
 	else
-		mir_tstrncpy(pa.pszLabel, TranslateT("Unknown"), SIZEOF(pa.pszLabel));
+		mir_tstrncpy(pa.pszLabel, TranslateT("Unknown"), _countof(pa.pszLabel));
 
-	mir_snprintf(buf, SIZEOF(buf), "Port%d", index);
+	mir_snprintf(buf, "Port%d", index);
 	pa.port = (int)db_get_dw(0, "PingPlug", buf, -1);
 
-	mir_snprintf(buf, SIZEOF(buf), "Proto%d", index);
+	mir_snprintf(buf, "Proto%d", index);
 	if (!db_get_s(0, "PingPlug", buf, &dbv)) {
-		mir_strncpy(pa.pszProto, dbv.pszVal, SIZEOF(pa.pszProto));
+		mir_strncpy(pa.pszProto, dbv.pszVal, _countof(pa.pszProto));
 		db_free(&dbv);
-		mir_snprintf(buf, SIZEOF(buf), "Status%d", index);
+		mir_snprintf(buf, "Status%d", index);
 		pa.set_status = db_get_w(0, "PingPlug", buf, ID_STATUS_ONLINE);
-		mir_snprintf(buf, SIZEOF(buf), "Status2%d", index);
+		mir_snprintf(buf, "Status2%d", index);
 		pa.get_status = db_get_w(0, "PingPlug", buf, ID_STATUS_OFFLINE);
 	}
 	else
@@ -259,7 +260,7 @@ void import_ping_address(int index, PINGADDRESS &pa) {
 	pa.pszParams[0] = '\0';
 
 	pa.item_id = 0;
-	mir_snprintf(buf, SIZEOF(buf), "Enabled%d", index);
+	mir_snprintf(buf, "Enabled%d", index);
 	if (db_get_b(0, "PingPlug", buf, 1) == 1)
 		pa.status = PS_NOTRESPONDING;
 	else
@@ -293,10 +294,10 @@ static int OnShutdown(WPARAM, LPARAM)
 
 int ReloadIcons(WPARAM, LPARAM)
 {
-	hIconResponding = Skin_GetIcon("ping_responding");
-	hIconNotResponding = Skin_GetIcon("ping_not_responding");
-	hIconTesting = Skin_GetIcon("ping_testing");
-	hIconDisabled = Skin_GetIcon("ping_disabled");
+	hIconResponding = IcoLib_GetIcon("ping_responding");
+	hIconNotResponding = IcoLib_GetIcon("ping_not_responding");
+	hIconTesting = IcoLib_GetIcon("ping_testing");
+	hIconDisabled = IcoLib_GetIcon("ping_disabled");
 
 	RefreshWindow(0, 0);
 	return 0;
@@ -304,10 +305,10 @@ int ReloadIcons(WPARAM, LPARAM)
 
 void InitUtils()
 {
-	hIconResponding = Skin_GetIcon("ping_responding");
-	hIconNotResponding = Skin_GetIcon("ping_not_responding");
-	hIconTesting = Skin_GetIcon("ping_testing");
-	hIconDisabled = Skin_GetIcon("ping_disabled");
+	hIconResponding = IcoLib_GetIcon("ping_responding");
+	hIconNotResponding = IcoLib_GetIcon("ping_not_responding");
+	hIconTesting = IcoLib_GetIcon("ping_testing");
+	hIconDisabled = IcoLib_GetIcon("ping_disabled");
 
 	POPUPCLASS test = { sizeof(test) };
 	test.flags = PCF_TCHAR;

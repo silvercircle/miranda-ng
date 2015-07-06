@@ -11,15 +11,15 @@ static IconItem iconList[] =
 
 int ReloadIcons(WPARAM wParam, LPARAM lParam)
 {
-	hIconRemove	= Skin_GetIconByHandle(iconList[0].hIcolib);
-	hIconKeep	= Skin_GetIconByHandle(iconList[1].hIcolib);
-	hIconClear	= Skin_GetIconByHandle(iconList[2].hIcolib);
+	hIconRemove	= IcoLib_GetIconByHandle(iconList[0].hIcolib);
+	hIconKeep	= IcoLib_GetIconByHandle(iconList[1].hIcolib);
+	hIconClear	= IcoLib_GetIconByHandle(iconList[2].hIcolib);
 	return 0;
 }
 
 void InitIcons()
 {
-	Icon_Register(hInst, LPGEN("No History"), iconList, SIZEOF(iconList), MODULE);
+	Icon_Register(hInst, LPGEN("No History"), iconList, _countof(iconList), MODULE);
 
 	ReloadIcons(0, 0);
 

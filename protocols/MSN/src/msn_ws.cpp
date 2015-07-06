@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "msn_global.h"
+#include "stdafx.h"
 #include "msn_proto.h"
 
 //=======================================================================================
@@ -62,8 +62,9 @@ bool ThreadData::isTimeout(void)
 		res = !proto->usingGateway;
 	}
 	else if (mJoinedContactsWLID.getCount() <= 1 || mChatID[0] == 0) {
+#ifdef OBSOLETE
 		MCONTACT hContact = getContactHandle();
-
+#endif
 		if (mJoinedContactsWLID.getCount() == 0 || termPending)
 			res = true;
 #ifdef OBSOLETE

@@ -22,14 +22,16 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "hdr/modern_commonheaders.h"
-#include "hdr/modern_clc.h"
-#include "hdr/modern_commonprototypes.h"
-#include "hdr/modern_defsettings.h"
-#include "hdr/modern_effectenum.h"
-#include "hdr/modern_sync.h"
+#include "stdafx.h"
+#include "modern_clc.h"
+#include "modern_commonprototypes.h"
+#include "modern_defsettings.h"
+#include "modern_effectenum.h"
+#include "modern_sync.h"
 #include <m_modernopt.h>
 #include "m_fontservice.h"
+
+#pragma comment(lib, "shlwapi.lib")
 
 INT_PTR CALLBACK DlgProcSBarOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -135,33 +137,33 @@ void RegisterCLUIFonts(void)
 	int index = 0;
 
 	fontid.cbSize = sizeof(fontid);
-	mir_strncpy(fontid.dbSettingsGroup, "CLC", SIZEOF(fontid.dbSettingsGroup));
+	mir_strncpy(fontid.dbSettingsGroup, "CLC", _countof(fontid.dbSettingsGroup));
 
 	effectid.cbSize = sizeof(effectid);
-	mir_strncpy(effectid.dbSettingsGroup, "CLC", SIZEOF(effectid.dbSettingsGroup));
+	mir_strncpy(effectid.dbSettingsGroup, "CLC", _countof(effectid.dbSettingsGroup));
 
-	for (int i = 0; i < SIZEOF(fontOptionsList); i++, index++) {
+	for (int i = 0; i < _countof(fontOptionsList); i++, index++) {
 		fontid.flags = FIDF_DEFAULTVALID | FIDF_APPENDNAME | FIDF_SAVEPOINTSIZE | FIDF_ALLOWEFFECTS | FIDF_ALLOWREREGISTER | FIDF_NOAS;
 		fontid.flags |= fontOptionsList[i].dwFlags;
 
-		mir_tstrncpy(fontid.group, fontOptionsList[i].szGroup, SIZEOF(fontid.group));
-		mir_tstrncpy(fontid.name, fontOptionsList[i].szDescr, SIZEOF(fontid.name));
-		mir_snprintf(idstr, SIZEOF(idstr), "Font%d", fontOptionsList[i].fontID);
-		mir_strncpy(fontid.prefix, idstr, SIZEOF(fontid.prefix));
+		mir_tstrncpy(fontid.group, fontOptionsList[i].szGroup, _countof(fontid.group));
+		mir_tstrncpy(fontid.name, fontOptionsList[i].szDescr, _countof(fontid.name));
+		mir_snprintf(idstr, "Font%d", fontOptionsList[i].fontID);
+		mir_strncpy(fontid.prefix, idstr, _countof(fontid.prefix));
 		fontid.order = i + 1;
 
 		fontid.deffontsettings.charset = fontOptionsList[i].defCharset;
 		fontid.deffontsettings.colour = fontOptionsList[i].defColour;
 		fontid.deffontsettings.size = fontOptionsList[i].defSize;
 		fontid.deffontsettings.style = fontOptionsList[i].defStyle;
-		mir_tstrncpy(fontid.deffontsettings.szFace, fontOptionsList[i].szDefFace, SIZEOF(fontid.deffontsettings.szFace));
+		mir_tstrncpy(fontid.deffontsettings.szFace, fontOptionsList[i].szDefFace, _countof(fontid.deffontsettings.szFace));
 
 		FontRegisterT(&fontid);
 
-		mir_tstrncpy(effectid.group, fontOptionsList[i].szGroup, SIZEOF(effectid.group));
-		mir_tstrncpy(effectid.name, fontOptionsList[i].szDescr, SIZEOF(effectid.name));
-		mir_snprintf(idstr, SIZEOF(idstr), "Font%d", fontOptionsList[i].fontID);
-		mir_strncpy(effectid.setting, idstr, SIZEOF(effectid.setting));
+		mir_tstrncpy(effectid.group, fontOptionsList[i].szGroup, _countof(effectid.group));
+		mir_tstrncpy(effectid.name, fontOptionsList[i].szDescr, _countof(effectid.name));
+		mir_snprintf(idstr, "Font%d", fontOptionsList[i].fontID);
+		mir_strncpy(effectid.setting, idstr, _countof(effectid.setting));
 		effectid.order = i + 1;
 
 		effectid.defeffect.effectIndex = fontOptionsList[i].defeffect.effectIndex;
@@ -174,11 +176,11 @@ void RegisterCLUIFonts(void)
 	ColourIDT colourid = { 0 };
 	colourid.cbSize = sizeof(colourid);
 
-	for (int i = 0; i < SIZEOF(colourOptionsList); i++) {
-		mir_tstrncpy(colourid.group, colourOptionsList[i].szGroup, SIZEOF(colourid.group));
-		mir_tstrncpy(colourid.name, colourOptionsList[i].szDescr, SIZEOF(colourid.group));
-		mir_strncpy(colourid.setting, colourOptionsList[i].chName, SIZEOF(colourid.setting));
-		mir_strncpy(colourid.dbSettingsGroup, colourOptionsList[i].chGroup, SIZEOF(colourid.dbSettingsGroup));
+	for (int i = 0; i < _countof(colourOptionsList); i++) {
+		mir_tstrncpy(colourid.group, colourOptionsList[i].szGroup, _countof(colourid.group));
+		mir_tstrncpy(colourid.name, colourOptionsList[i].szDescr, _countof(colourid.group));
+		mir_strncpy(colourid.setting, colourOptionsList[i].chName, _countof(colourid.setting));
+		mir_strncpy(colourid.dbSettingsGroup, colourOptionsList[i].chGroup, _countof(colourid.dbSettingsGroup));
 		colourid.defcolour = colourOptionsList[i].defColour;
 		colourid.order = i + 1;
 		ColourRegisterT(&colourid);
@@ -202,17 +204,17 @@ void GetFontSetting(int i, LOGFONT *lf, COLORREF *colour, BYTE *effect, COLORREF
 	char idstr[32];
 
 	int index;
-	for (index = 0; index < SIZEOF(fontOptionsList); index++)
+	for (index = 0; index < _countof(fontOptionsList); index++)
 		if (fontOptionsList[index].fontID == i)
 			break;
 
-	if (index == SIZEOF(fontOptionsList))
+	if (index == _countof(fontOptionsList))
 		return;
 
 	FontIDT fontid = { 0 };
 	fontid.cbSize = sizeof(fontid);
-	mir_tstrncpy(fontid.group, fontOptionsList[index].szGroup, SIZEOF(fontid.group));
-	mir_tstrncpy(fontid.name, fontOptionsList[index].szDescr, SIZEOF(fontid.name));
+	mir_tstrncpy(fontid.group, fontOptionsList[index].szGroup, _countof(fontid.group));
+	mir_tstrncpy(fontid.name, fontOptionsList[index].szDescr, _countof(fontid.name));
 
 	COLORREF col = CallService(MS_FONT_GETT, (WPARAM)&fontid, (LPARAM)lf);
 
@@ -220,11 +222,11 @@ void GetFontSetting(int i, LOGFONT *lf, COLORREF *colour, BYTE *effect, COLORREF
 		*colour = col;
 
 	if (effect) {
-		mir_snprintf(idstr, SIZEOF(idstr), "Font%dEffect", i);
+		mir_snprintf(idstr, "Font%dEffect", i);
 		*effect = db_get_b(NULL, "CLC", idstr, 0);
-		mir_snprintf(idstr, SIZEOF(idstr), "Font%dEffectCol1", i);
+		mir_snprintf(idstr, "Font%dEffectCol1", i);
 		*eColour1 = db_get_dw(NULL, "CLC", idstr, 0);
-		mir_snprintf(idstr, SIZEOF(idstr), "Font%dEffectCol2", i);
+		mir_snprintf(idstr, "Font%dEffectCol2", i);
 		*eColour2 = db_get_dw(NULL, "CLC", idstr, 0);
 	}
 }
@@ -389,12 +391,12 @@ static INT_PTR CALLBACK DlgProcClistListOpts(HWND hwndDlg, UINT msg, WPARAM wPar
 		SetWindowLongPtr(GetDlgItem(hwndDlg, IDC_HIDEOFFLINEOPTS), GWL_STYLE, GetWindowLongPtr(GetDlgItem(hwndDlg, IDC_HIDEOFFLINEOPTS), GWL_STYLE) | TVS_NOHSCROLL | TVS_CHECKBOXES);
 		{
 			DWORD exStyle = db_get_dw(NULL, "CLC", "ExStyle", GetDefaultExStyle());
-			for (int i = 0; i < SIZEOF(checkBoxToStyleEx); i++)
+			for (int i = 0; i < _countof(checkBoxToStyleEx); i++)
 				CheckDlgButton(hwndDlg, checkBoxToStyleEx[i].id, (exStyle&checkBoxToStyleEx[i].flag) ^ (checkBoxToStyleEx[i].flag*checkBoxToStyleEx[i].neg) ? BST_CHECKED : BST_UNCHECKED);
 
 			UDACCEL accel[2] = { { 0, 10 }, { 2, 50 } };
 			SendDlgItemMessage(hwndDlg, IDC_SMOOTHTIMESPIN, UDM_SETRANGE, 0, MAKELONG(999, 0));
-			SendDlgItemMessage(hwndDlg, IDC_SMOOTHTIMESPIN, UDM_SETACCEL, SIZEOF(accel), (LPARAM)&accel);
+			SendDlgItemMessage(hwndDlg, IDC_SMOOTHTIMESPIN, UDM_SETACCEL, _countof(accel), (LPARAM)&accel);
 			SendDlgItemMessage(hwndDlg, IDC_SMOOTHTIMESPIN, UDM_SETPOS, 0, MAKELONG(db_get_w(NULL, "CLC", "ScrollTime", CLCDEFAULT_SCROLLTIME), 0));
 		}
 		CheckDlgButton(hwndDlg, IDC_IDLE, db_get_b(NULL, "CLC", "ShowIdle", CLCDEFAULT_SHOWIDLE) ? BST_CHECKED : BST_UNCHECKED);
@@ -405,8 +407,8 @@ static INT_PTR CALLBACK DlgProcClistListOpts(HWND hwndDlg, UINT msg, WPARAM wPar
 
 		EnableWindow(GetDlgItem(hwndDlg, IDC_SMOOTHTIME), IsDlgButtonChecked(hwndDlg, IDC_NOTNOSMOOTHSCROLLING));
 		EnableWindow(GetDlgItem(hwndDlg, IDC_GREYOUTOPTS), IsDlgButtonChecked(hwndDlg, IDC_GREYOUT));
-		FillCheckBoxTree(GetDlgItem(hwndDlg, IDC_GREYOUTOPTS), greyoutValues, SIZEOF(greyoutValues), db_get_dw(NULL, "CLC", "FullGreyoutFlags", CLCDEFAULT_FULLGREYOUTFLAGS));
-		FillCheckBoxTree(GetDlgItem(hwndDlg, IDC_HIDEOFFLINEOPTS), offlineValues, SIZEOF(offlineValues), db_get_dw(NULL, "CLC", "OfflineModes", CLCDEFAULT_OFFLINEMODES));
+		FillCheckBoxTree(GetDlgItem(hwndDlg, IDC_GREYOUTOPTS), greyoutValues, _countof(greyoutValues), db_get_dw(NULL, "CLC", "FullGreyoutFlags", CLCDEFAULT_FULLGREYOUTFLAGS));
+		FillCheckBoxTree(GetDlgItem(hwndDlg, IDC_HIDEOFFLINEOPTS), offlineValues, _countof(offlineValues), db_get_dw(NULL, "CLC", "OfflineModes", CLCDEFAULT_OFFLINEMODES));
 		CheckDlgButton(hwndDlg, IDC_NOSCROLLBAR, db_get_b(NULL, "CLC", "NoVScrollBar", CLCDEFAULT_NOVSCROLL) ? BST_CHECKED : BST_UNCHECKED);
 		return TRUE;
 
@@ -449,7 +451,7 @@ static INT_PTR CALLBACK DlgProcClistListOpts(HWND hwndDlg, UINT msg, WPARAM wPar
 			switch (((LPNMHDR)lParam)->code) {
 			case PSN_APPLY:
 				DWORD exStyle = 0;
-				for (int i = 0; i < SIZEOF(checkBoxToStyleEx); i++)
+				for (int i = 0; i < _countof(checkBoxToStyleEx); i++)
 					if ((IsDlgButtonChecked(hwndDlg, checkBoxToStyleEx[i].id) == 0) == checkBoxToStyleEx[i].neg)
 						exStyle |= checkBoxToStyleEx[i].flag;
 				db_set_dw(NULL, "CLC", "ExStyle", exStyle);
@@ -482,7 +484,7 @@ static int _GetNetVisibleProtoCount()
 {
 	int i, count, netProtoCount;
 	PROTOACCOUNT **accs;
-	ProtoEnumAccounts(&count, &accs);
+	Proto_EnumAccounts(&count, &accs);
 	for (i = 0, netProtoCount = 0; i < count; i++) {
 		if (pcli->pfnGetProtocolVisibility(accs[i]->szModuleName) == 0)
 			continue;
@@ -512,7 +514,7 @@ static INT_PTR CALLBACK DlgProcClistOpts(HWND hwndDlg, UINT msg, WPARAM wParam, 
 		{
 			int i, item;
 			int s1, s2, s3;
-			for (i = 0; i < SIZEOF(sortby); i++) {
+			for (i = 0; i < _countof(sortby); i++) {
 				item = SendDlgItemMessage(hwndDlg, IDC_CLSORT1, CB_ADDSTRING, 0, (LPARAM)TranslateTS(sortby[i]));
 				SendDlgItemMessage(hwndDlg, IDC_CLSORT1, CB_SETITEMDATA, item, 0);
 				item = SendDlgItemMessage(hwndDlg, IDC_CLSORT2, CB_ADDSTRING, 0, (LPARAM)TranslateTS(sortby[i]));
@@ -525,7 +527,7 @@ static INT_PTR CALLBACK DlgProcClistOpts(HWND hwndDlg, UINT msg, WPARAM wParam, 
 			s2 = db_get_b(NULL, "CList", "SortBy2", SETTING_SORTBY2_DEFAULT);
 			s3 = db_get_b(NULL, "CList", "SortBy3", SETTING_SORTBY3_DEFAULT);
 
-			for (i = 0; i < SIZEOF(sortby); i++) {
+			for (i = 0; i < _countof(sortby); i++) {
 				if (s1 == sortbyValue[i])
 					SendDlgItemMessage(hwndDlg, IDC_CLSORT1, CB_SETCURSEL, i, 0);
 				if (s2 == sortbyValue[i])
@@ -620,7 +622,7 @@ static INT_PTR CALLBACK DlgProcTrayOpts(HWND hwndDlg, UINT msg, WPARAM wParam, L
 			int AccNum, i, siS, siV, item;
 			PROTOACCOUNT **acc;
 
-			ProtoEnumAccounts(&AccNum, &acc);
+			Proto_EnumAccounts(&AccNum, &acc);
 
 			for (siS = siV = -1, i = 0; i < AccNum; i++)
 			{
@@ -804,7 +806,7 @@ static INT_PTR CALLBACK DlgProcClistBehaviourOpts(HWND hwndDlg, UINT msg, WPARAM
 		EnableWindow(GetDlgItem(hwndDlg, IDC_STATIC01), IsDlgButtonChecked(hwndDlg, IDC_AUTOHIDE));
 		{
 			TCHAR *hidemode[] = { TranslateT("Hide to tray"), TranslateT("Behind left edge"), TranslateT("Behind right edge") };
-			for (int i = 0; i < SIZEOF(hidemode); i++) {
+			for (int i = 0; i < _countof(hidemode); i++) {
 				int item = SendDlgItemMessage(hwndDlg, IDC_HIDEMETHOD, CB_ADDSTRING, 0, (LPARAM)hidemode[i]);
 				SendDlgItemMessage(hwndDlg, IDC_HIDEMETHOD, CB_SETITEMDATA, item, 0);
 				SendDlgItemMessage(hwndDlg, IDC_HIDEMETHOD, CB_SETCURSEL, db_get_b(NULL, "ModernData", "HideBehind", SETTING_HIDEBEHIND_DEFAULT), 0);
@@ -1013,7 +1015,7 @@ static INT_PTR CALLBACK DlgProcClistWindowOpts(HWND hwndDlg, UINT msg, WPARAM wP
 			SendDlgItemMessage(hwndDlg, IDC_TITLETEXT, CB_ADDSTRING, 0, (LPARAM)MIRANDANAME);
 
 			char szUin[20];
-			mir_snprintf(szUin, SIZEOF(szUin), "%u", db_get_dw(NULL, "ICQ", "UIN", 0));
+			mir_snprintf(szUin, _countof(szUin), "%u", db_get_dw(NULL, "ICQ", "UIN", 0));
 			SendDlgItemMessage(hwndDlg, IDC_TITLETEXT, CB_ADDSTRING, 0, (LPARAM)szUin);
 
 			if (!db_get_s(NULL, "ICQ", "Nick", &dbv)) {
@@ -1111,9 +1113,9 @@ static INT_PTR CALLBACK DlgProcClistWindowOpts(HWND hwndDlg, UINT msg, WPARAM wP
 	case WM_HSCROLL:
 	{
 		char str[10];
-		mir_snprintf(str, SIZEOF(str), "%d%%", 100 * SendDlgItemMessage(hwndDlg, IDC_TRANSINACTIVE, TBM_GETPOS, 0, 0) / 255);
+		mir_snprintf(str, "%d%%", 100 * SendDlgItemMessage(hwndDlg, IDC_TRANSINACTIVE, TBM_GETPOS, 0, 0) / 255);
 		SetDlgItemTextA(hwndDlg, IDC_INACTIVEPERC, str);
-		mir_snprintf(str, SIZEOF(str), "%d%%", 100 * SendDlgItemMessage(hwndDlg, IDC_TRANSACTIVE, TBM_GETPOS, 0, 0) / 255);
+		mir_snprintf(str, "%d%%", 100 * SendDlgItemMessage(hwndDlg, IDC_TRANSACTIVE, TBM_GETPOS, 0, 0) / 255);
 		SetDlgItemTextA(hwndDlg, IDC_ACTIVEPERC, str);
 	}
 	if (wParam != 0x12345678)
@@ -1149,7 +1151,7 @@ static INT_PTR CALLBACK DlgProcClistWindowOpts(HWND hwndDlg, UINT msg, WPARAM wP
 				db_set_b(NULL, "CList", "NoBorder", (BYTE)IsDlgButtonChecked(hwndDlg, IDC_NOBORDERWND));
 				{
 					TCHAR title[256];
-					GetDlgItemText(hwndDlg, IDC_TITLETEXT, title, SIZEOF(title));
+					GetDlgItemText(hwndDlg, IDC_TITLETEXT, title, _countof(title));
 					db_set_ws(NULL, "CList", "TitleText", title);
 				}
 				db_set_b(NULL, "CList", "Min2Tray", (BYTE)IsDlgButtonChecked(hwndDlg, IDC_MIN2TRAY));
@@ -1276,7 +1278,7 @@ static INT_PTR CALLBACK DlgProcClcBkgOpts(HWND hwndDlg, UINT msg, WPARAM wParam,
 				if (!db_get_s(NULL, module, "BkBitmap", &dbv)) {
 					int retval = PathToAbsolute(dbv.pszVal, dat->item[indx].filename);
 					if (!retval || retval == CALLSERVICE_NOTFOUND)
-						mir_strncpy(dat->item[indx].filename, dbv.pszVal, SIZEOF(dat->item[indx].filename));
+						mir_strncpy(dat->item[indx].filename, dbv.pszVal, _countof(dat->item[indx].filename));
 					mir_free(dbv.pszVal);
 				}
 				else *dat->item[indx].filename = 0;
@@ -1311,7 +1313,7 @@ static INT_PTR CALLBACK DlgProcClcBkgOpts(HWND hwndDlg, UINT msg, WPARAM wParam,
 		dat->item[indx].bkColor = SendDlgItemMessage(hwndDlg, IDC_BKGCOLOUR, CPM_GETCOLOUR, 0, 0);
 		dat->item[indx].selColor = SendDlgItemMessage(hwndDlg, IDC_SELCOLOUR, CPM_GETCOLOUR, 0, 0);
 
-		GetDlgItemTextA(hwndDlg, IDC_FILENAME, dat->item[indx].filename, SIZEOF(dat->item[indx].filename));
+		GetDlgItemTextA(hwndDlg, IDC_FILENAME, dat->item[indx].filename, _countof(dat->item[indx].filename));
 
 		WORD flags = 0;
 		if (IsDlgButtonChecked(hwndDlg, IDC_STRETCHH)) flags |= CLB_STRETCHH;
@@ -1361,25 +1363,24 @@ static INT_PTR CALLBACK DlgProcClcBkgOpts(HWND hwndDlg, UINT msg, WPARAM wParam,
 	case M_BKGR_UPDATE:
 	{
 		int isChecked = IsDlgButtonChecked(hwndDlg, IDC_BITMAP);
-		for (int indx = 0; indx < SIZEOF(bitmapRelatedControls); indx++)
+		for (int indx = 0; indx < _countof(bitmapRelatedControls); indx++)
 			EnableWindow(GetDlgItem(hwndDlg, bitmapRelatedControls[indx]), isChecked);
 	}
 	break;
 
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDC_BROWSE) {
-			TCHAR str[MAX_PATH];
-			TCHAR filter[512];
+			TCHAR str[MAX_PATH], filter[512];
+			Bitmap_GetFilter(filter, _countof(filter));
+			GetDlgItemText(hwndDlg, IDC_FILENAME, str, _countof(str));
 
 			OPENFILENAME ofn = { 0 };
-			GetDlgItemText(hwndDlg, IDC_FILENAME, str, SIZEOF(str));
 			ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400;
 			ofn.hwndOwner = hwndDlg;
-			CallService(MS_UTILS_GETBITMAPFILTERSTRINGST, SIZEOF(filter), (LPARAM)filter);
 			ofn.lpstrFilter = filter;
 			ofn.lpstrFile = str;
 			ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
-			ofn.nMaxFile = SIZEOF(str);
+			ofn.nMaxFile = _countof(str);
 			ofn.nMaxFileTitle = MAX_PATH;
 			ofn.lpstrDefExt = _T("bmp");
 			if (!GetOpenFileName(&ofn))
@@ -1643,7 +1644,7 @@ static INT_PTR CALLBACK DlgProcModernOptions(HWND hwndDlg, UINT msg, WPARAM wPar
 		bInit = true;
 		{
 			int i, item;
-			for (i = 0; i < SIZEOF(opts); ++i)
+			for (i = 0; i < _countof(opts); ++i)
 				OptCheckBox_Load(hwndDlg, opts + i);
 
 			EnableWindow(GetDlgItem(hwndDlg, IDC_HIDETIME), IsDlgButtonChecked(hwndDlg, IDC_AUTOHIDE));
@@ -1665,7 +1666,7 @@ static INT_PTR CALLBACK DlgProcModernOptions(HWND hwndDlg, UINT msg, WPARAM wPar
 			SendDlgItemMessage(hwndDlg, IDC_TRANSINACTIVE, TBM_SETPOS, TRUE, db_get_b(NULL, "CList", "AutoAlpha", SETTING_AUTOALPHA_DEFAULT));
 			SendMessage(hwndDlg, WM_HSCROLL, 0x12345678, 0);
 
-			for (i = 0; i < SIZEOF(sortby); i++) {
+			for (i = 0; i < _countof(sortby); i++) {
 				item = SendDlgItemMessage(hwndDlg, IDC_CLSORT1, CB_ADDSTRING, 0, (LPARAM)TranslateTS(sortby[i]));
 				SendDlgItemMessage(hwndDlg, IDC_CLSORT1, CB_SETITEMDATA, item, 0);
 				item = SendDlgItemMessage(hwndDlg, IDC_CLSORT2, CB_ADDSTRING, 0, (LPARAM)TranslateTS(sortby[i]));
@@ -1678,7 +1679,7 @@ static INT_PTR CALLBACK DlgProcModernOptions(HWND hwndDlg, UINT msg, WPARAM wPar
 			int s2 = db_get_b(NULL, "CList", "SortBy2", SETTING_SORTBY2_DEFAULT);
 			int s3 = db_get_b(NULL, "CList", "SortBy3", SETTING_SORTBY3_DEFAULT);
 
-			for (i = 0; i < SIZEOF(sortby); i++) {
+			for (i = 0; i < _countof(sortby); i++) {
 				if (s1 == sortbyValue[i])
 					SendDlgItemMessage(hwndDlg, IDC_CLSORT1, CB_SETCURSEL, i, 0);
 				if (s2 == sortbyValue[i])
@@ -1696,9 +1697,9 @@ static INT_PTR CALLBACK DlgProcModernOptions(HWND hwndDlg, UINT msg, WPARAM wPar
 		break;
 
 	case WM_HSCROLL:
-		mir_snprintf(str, SIZEOF(str), "%d%%", 100 * SendDlgItemMessage(hwndDlg, IDC_TRANSINACTIVE, TBM_GETPOS, 0, 0) / 255);
+		mir_snprintf(str, "%d%%", 100 * SendDlgItemMessage(hwndDlg, IDC_TRANSINACTIVE, TBM_GETPOS, 0, 0) / 255);
 		SetDlgItemTextA(hwndDlg, IDC_INACTIVEPERC, str);
-		mir_snprintf(str, SIZEOF(str), "%d%%", 100 * SendDlgItemMessage(hwndDlg, IDC_TRANSACTIVE, TBM_GETPOS, 0, 0) / 255);
+		mir_snprintf(str, "%d%%", 100 * SendDlgItemMessage(hwndDlg, IDC_TRANSACTIVE, TBM_GETPOS, 0, 0) / 255);
 		SetDlgItemTextA(hwndDlg, IDC_ACTIVEPERC, str);
 		if (wParam != 0x12345678 && !bInit)
 			SendMessage(GetParent(hwndDlg), PSM_CHANGED, (WPARAM)hwndDlg, 0);
@@ -1731,7 +1732,7 @@ static INT_PTR CALLBACK DlgProcModernOptions(HWND hwndDlg, UINT msg, WPARAM wPar
 			case PSN_APPLY:
 				g_mutex_bChangingMode = TRUE;
 
-				for (int i = 0; i < SIZEOF(opts); ++i)
+				for (int i = 0; i < _countof(opts); ++i)
 					OptCheckBox_Save(hwndDlg, opts + i);
 
 				SetWindowPos(pcli->hwndContactList, IsDlgButtonChecked(hwndDlg, IDC_ONTOP) ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
@@ -1782,7 +1783,7 @@ int ModernOptInit(WPARAM wParam, LPARAM)
 
 	MODERNOPTOBJECT obj = { sizeof(obj) };
 	obj.dwFlags = MODEROPT_FLG_TCHAR | MODEROPT_FLG_NORESIZE;
-	obj.hIcon = LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
+	obj.hIcon = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
 	obj.hInstance = g_hInst;
 	obj.iSection = MODERNOPT_PAGE_CLIST;
 	obj.iType = MODERNOPT_TYPE_SECTIONPAGE;
@@ -1827,7 +1828,7 @@ int ClcOptInit(WPARAM wParam, LPARAM)
 	odp.pfnDlgProc = DlgProcClistListOpts;
 	odp.flags = ODPF_BOLDGROUPS;
 
-	for (int i = 0; i < SIZEOF(clist_opt_items); i++) {
+	for (int i = 0; i < _countof(clist_opt_items); i++) {
 		odp.pszTemplate = MAKEINTRESOURCEA(clist_opt_items[i].id);
 		odp.pszTab = clist_opt_items[i].name;
 		odp.pfnDlgProc = clist_opt_items[i].wnd_proc;

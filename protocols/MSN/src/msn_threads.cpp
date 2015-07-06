@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "msn_global.h"
+#include "stdafx.h"
 #include "msn_proto.h"
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -616,9 +616,9 @@ void ThreadData::applyGatewayData(HANDLE hConn, bool isPoll)
 
 void ThreadData::getGatewayUrl(char* dest, int destlen, bool isPoll)
 {
-	static const char openFmtStr[] = "https://%s/gateway/gateway.dll?Action=open&Server=%s&IP=%s";
-	static const char pollFmtStr[] = "https://%s/gateway/gateway.dll?Action=poll&SessionID=%s";
-	static const char cmdFmtStr[] = "https://%s/gateway/gateway.dll?SessionID=%s";
+	static const char openFmtStr[] = "http://%s/gateway/gateway.dll?Action=open&Server=%s&IP=%s";
+	static const char pollFmtStr[] = "http://%s/gateway/gateway.dll?Action=poll&SessionID=%s";
+	static const char cmdFmtStr[] = "http://%s/gateway/gateway.dll?SessionID=%s";
 
 	if (mSessionID[0] == 0) {
 		const char* svr = mType == SERVER_NOTIFICATION ? "NS" : "SB";

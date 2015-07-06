@@ -48,16 +48,13 @@ public:
 			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", regToken)
 			<< CHAR_VALUE("Content-Type", "application/json; charset=UTF-8");
 
-		JSONNODE *node = json_new(5);
-		json_push_back(node, json_new_i("clientmessageid", timestamp));
-		json_push_back(node, json_new_a("messagetype", "RichText"));
-		json_push_back(node, json_new_a("contenttype", "text"));
-		json_push_back(node, json_new_a("content", ptrA(mir_utf8encode(message))));
+		JSONNode node(JSON_NODE);
+		node.push_back(JSONNode("clientmessageid", (long)timestamp));
+		node.push_back(JSONNode("messagetype", "RichText"));
+		node.push_back(JSONNode("contenttype", "text"));
+		node.push_back(JSONNode("content", message));
 
-		T2Utf data(ptrT(json_write(node)));
-		Body << VALUE(data);
-
-		json_delete(node);
+		Body << VALUE(node.write().c_str());
 	}
 };
 
@@ -72,17 +69,14 @@ public:
 			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", regToken)
 			<< CHAR_VALUE("Content-Type", "application/json; charset=UTF-8");
 
-		JSONNODE *node = json_new(5);
-		json_push_back(node, json_new_i("clientmessageid", timestamp));
-		json_push_back(node, json_new_a("messagetype", "RichText"));
-		json_push_back(node, json_new_a("contenttype", "text"));
-		json_push_back(node, json_new_a("content", ptrA(mir_utf8encode(message))));
-		json_push_back(node, json_new_i("skypeemoteoffset", 4));
+		JSONNode node(JSON_NODE);
+		node.push_back(JSONNode("clientmessageid", (long)timestamp));
+		node.push_back(JSONNode("messagetype", "RichText"));
+		node.push_back(JSONNode("contenttype", "text"));
+		node.push_back(JSONNode("content", message));
+		node.push_back(JSONNode("skypeemoteoffset", 4));
 
-		T2Utf data(ptrT(json_write(node)));
-		Body << VALUE(data);
-
-		json_delete(node);
+		Body << VALUE(node.write().c_str());
 	}
 };
 
@@ -99,13 +93,21 @@ public:
 			<< CHAR_VALUE("Content-Type", "application/json; charset=UTF-8")
 			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", regToken);
 
-		CMStringA data = "{\"members\":[";
-		for (int i = 0; i < skypenames.getCount(); i++)
-			data.AppendFormat("{\"id\":\"8:%s\",\"role\":\"%s\"},", skypenames[i], !mir_strcmpi(skypenames[i], selfname) ? "Admin" : "User");
-		data.Truncate(data.GetLength() - 1);
-		data.Append("]}");
+		JSONNode node(JSON_NODE);
+		JSONNode members(JSON_ARRAY);
 
-		Body << VALUE(data);
+		members.set_name("members");
+
+		for (int i = 0; i < skypenames.getCount(); i++)
+		{
+			JSONNode member(JSON_NODE);
+			member.push_back(JSONNode("id", CMStringA(::FORMAT, "8:%s", skypenames[i]).GetBuffer()));
+			member.push_back(JSONNode("role", !mir_strcmpi(skypenames[i], selfname) ? "Admin" : "User"));
+			members.push_back(member);
+		}
+		node.push_back(members);
+
+		Body << VALUE(node.write().c_str());
 	}
 };
 
@@ -135,8 +137,11 @@ public:
 			<< CHAR_VALUE("Content-Type", "application/json; charset=UTF-8")
 			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", regToken);
 
-		CMStringA data(::FORMAT, "{\"role\":\"%s\"}", role);
-		Body << VALUE(data);
+		JSONNode node(JSON_NODE);
+
+		node.push_back(JSONNode("role", role));
+
+		Body << VALUE(node.write().c_str());
 	}
 };
 
@@ -150,6 +155,24 @@ public:
 			<< CHAR_VALUE("Accept", "application/json, text/javascript")
 			<< CHAR_VALUE("Content-Type", "application/json; charset=UTF-8")
 			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", regToken);
+	}
+};
+
+class SetChatPropertiesRequest : public HttpRequest
+{
+public:
+	SetChatPropertiesRequest(const char *regToken, const char *chatId, const char *propname, const char *value, const char *server = SKYPE_ENDPOINTS_HOST) :
+		HttpRequest(REQUEST_PUT, FORMAT, "%s/v1/threads/19:%s/properties?name=%s", server, chatId, propname)
+	{
+		Headers
+			<< CHAR_VALUE("Accept", "application/json, text/javascript")
+			<< CHAR_VALUE("Content-Type", "application/json; charset=UTF-8")
+			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", regToken);
+
+		JSONNode node(JSON_NODE);
+		node.push_back(JSONNode(propname, value));
+
+		Body << VALUE(node.write().c_str());
 	}
 };
 

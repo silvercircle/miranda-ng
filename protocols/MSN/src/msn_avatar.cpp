@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "msn_global.h"
+#include "stdafx.h"
 #include "msn_proto.h"
 
 void CMsnProto::AvatarQueue_Init()
@@ -76,20 +76,20 @@ LBL_Error:
 	if (fmt == PA_FORMAT_UNKNOWN)
 		goto LBL_Error;
 
-	PROTO_AVATAR_INFORMATIONT AI = { sizeof(AI) };
-	AI.format = fmt;
-	AI.hContact = p->hContact;
-	MSN_GetAvatarFileName(AI.hContact, AI.filename, SIZEOF(AI.filename), szExt);
-	_tremove(AI.filename);
+	PROTO_AVATAR_INFORMATION ai = { 0 };
+	ai.format = fmt;
+	ai.hContact = p->hContact;
+	MSN_GetAvatarFileName(ai.hContact, ai.filename, _countof(ai.filename), szExt);
+	_tremove(ai.filename);
 
-	int fileId = _topen(AI.filename, _O_CREAT | _O_TRUNC | _O_WRONLY | O_BINARY, _S_IREAD | _S_IWRITE);
+	int fileId = _topen(ai.filename, _O_CREAT | _O_TRUNC | _O_WRONLY | O_BINARY, _S_IREAD | _S_IWRITE);
 	if (fileId == -1)
 		goto LBL_Error;
 
 	_write(fileId, nlhrReply->pData, (unsigned)nlhrReply->dataLength);
 	_close(fileId);
 
-	ProtoBroadcastAck(p->hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, &AI, 0);
+	ProtoBroadcastAck(p->hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, &ai, 0);
 	CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)nlhrReply);
 	return true;
 }
@@ -100,7 +100,7 @@ void __cdecl CMsnProto::MSN_AvatarsThread(void*)
 		if (WaitForSingleObject(hevAvatarQueue, INFINITE) != WAIT_OBJECT_0)
 			break;
 
-		if (Miranda_Terminated())
+		if (g_bTerminated)
 			break;
 
 		AvatarQueueEntry *p = NULL;
@@ -119,11 +119,10 @@ void __cdecl CMsnProto::MSN_AvatarsThread(void*)
 			ProtoBroadcastAck(p->hContact, ACKTYPE_AVATAR, ACKRESULT_FAILED, 0, 0);
 		delete p;
 	}
-	{
-		mir_cslock lck(csAvatarQueue);
-		while (lsAvatarQueue.getCount() > 0) {
-			delete lsAvatarQueue[0];
-			lsAvatarQueue.remove(0);
-		}
+
+	mir_cslock lck(csAvatarQueue);
+	while (lsAvatarQueue.getCount() > 0) {
+		delete lsAvatarQueue[0];
+		lsAvatarQueue.remove(0);
 	}
 }

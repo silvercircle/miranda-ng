@@ -35,7 +35,7 @@ INT_PTR CALLBACK DlgProc_DataHistory(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 				{ ICO_BTN_EXPORT,	BM_SETIMAGE,	IDOK		},
 				{ ICO_BTN_CANCEL,	BM_SETIMAGE,	IDCANCEL	}
 			};
-			const int numIconsToSet = db_get_b(NULL, MODNAME, SET_ICONS_BUTTONS, 1) ? SIZEOF(idIcon) : 2;
+			const int numIconsToSet = db_get_b(NULL, MODNAME, SET_ICONS_BUTTONS, 1) ? _countof(idIcon) : 2;
 			IcoLib_SetCtrlIcons(hDlg, idIcon, numIconsToSet);
 
 			TranslateDialogDefault(hDlg);
@@ -177,7 +177,7 @@ int CFileXml::Export(lpExImParam ExImContact, LPCSTR pszFileName)
 						break;
 					case EXIM_ACCOUNT:
 						// export only contact with selectet account name
-						if (!mir_strncmp(ExImContact->pszName, DB::Contact::Proto(hContact), mir_strlen(ExImContact->pszName))) {
+						if (!mir_strncmp(ExImContact->pszName, Proto_GetBaseAccountName(hContact), mir_strlen(ExImContact->pszName))) {
 							if (vContact.fromDB(hContact)) {
 								vContact.Export(xmlfile, &Modules);
 							}

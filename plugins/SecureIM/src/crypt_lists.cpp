@@ -1,7 +1,7 @@
 #include "commonheaders.h"
 
-LIST<SupPro> arProto(10, LIST<SupPro>::FTSortFunc(HandleKeySortT));
-LIST<UinKey> arClist(100, LIST<UinKey>::FTSortFunc(NumericKeySortT));
+LIST<SupPro> arProto(10, HandleKeySortT);
+LIST<UinKey> arClist(100, NumericKeySortT);
 
 void loadSupportedProtocols()
 {
@@ -21,7 +21,7 @@ void loadSupportedProtocols()
 
 	int numberOfProtocols;
 	PROTOACCOUNT **protos;
-	ProtoEnumAccounts(&numberOfProtocols, &protos);
+	Proto_EnumAccounts(&numberOfProtocols, &protos);
 
 	for (int i = 0; i < numberOfProtocols; i++) {
 		if (!protos[i]->szModuleName || !CallProtoService(protos[i]->szModuleName, PS_GETCAPS, PFLAGNUM_2, 0))
@@ -30,7 +30,7 @@ void loadSupportedProtocols()
 		SupPro *p = (SupPro*)mir_calloc(sizeof(SupPro));
 		p->name = mir_strdup(protos[i]->szModuleName);
 		if (szNames && p->name) {
-			char tmp[128]; strncpy(tmp, p->name, sizeof(tmp) - 1); strncat(tmp, ":", SIZEOF(tmp) - mir_strlen(tmp));
+			char tmp[128]; strncpy(tmp, p->name, sizeof(tmp) - 1); mir_strncat(tmp, ":", _countof(tmp) - mir_strlen(tmp));
 			LPSTR szName = strstr(szNames, tmp);
 			if (szName) {
 				szName = strchr(szName, ':');
@@ -67,7 +67,7 @@ void freeSupportedProtocols()
 pSupPro getSupPro(MCONTACT hContact)
 {
 	for (int j = 0; j < arProto.getCount(); j++)
-		if (CallService(MS_PROTO_ISPROTOONCONTACT, hContact, (LPARAM)arProto[j]->name))
+		if (Proto_IsProtoOnContact(hContact, arProto[j]->name))
 			return arProto[j];
 
 	return NULL;
@@ -191,12 +191,13 @@ void addMsg2Queue(pUinKey ptr, WPARAM wParam, LPSTR szMsg)
 
 void getContactNameA(MCONTACT hContact, LPSTR szName)
 {
-	mir_strcpy(szName, (LPCSTR)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, 0));
+	ptrA dn(mir_u2a((LPWSTR)pcli->pfnGetContactDisplayName(hContact, 0)));
+	mir_strcpy(szName, dn);
 }
 
 void getContactName(MCONTACT hContact, LPSTR szName)
 {
-	wcscpy((LPWSTR)szName, (LPWSTR)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GSMDF_UNICODE));
+	mir_wstrcpy((LPWSTR)szName, (LPWSTR)pcli->pfnGetContactDisplayName(hContact, 0));
 }
 
 void getContactUinA(MCONTACT hContact, LPSTR szUIN)
@@ -230,7 +231,7 @@ void getContactUin(MCONTACT hContact, LPSTR szUIN)
 	getContactUinA(hContact, szUIN);
 	if (*szUIN) {
 		LPWSTR tmp = mir_a2u(szUIN);
-		wcscpy((LPWSTR)szUIN, tmp);
+		mir_wstrcpy((LPWSTR)szUIN, tmp);
 		mir_free(tmp);
 	}
 }

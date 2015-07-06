@@ -14,7 +14,7 @@ void AddContactEMailToListParam(MCONTACT hContact, BOOL bMRAOnly, LPSTR lpszModu
 	if (DB_GetStringA(hContact, lpszModule, lpszValueName, szEmail)) {
 		if (bMRAOnly == FALSE || IsEMailMR(szEmail)) {
 			WCHAR wszBuff[MAX_EMAIL_LEN];
-			MultiByteToWideChar(MRA_CODE_PAGE, 0, szEmail, -1, wszBuff, SIZEOF(wszBuff));
+			MultiByteToWideChar(MRA_CODE_PAGE, 0, szEmail, -1, wszBuff, _countof(wszBuff));
 			if (SendMessage(hWndList, LB_FINDSTRING, -1, (LPARAM)wszBuff) == LB_ERR)
 				SendMessage(hWndList, LB_ADDSTRING, 0, (LPARAM)wszBuff);
 		}
@@ -22,11 +22,11 @@ void AddContactEMailToListParam(MCONTACT hContact, BOOL bMRAOnly, LPSTR lpszModu
 
 	for (int i = 0; true; i++) {
 		char szBuff[MAX_PATH];
-		mir_snprintf(szBuff, SIZEOF(szBuff), "%s%lu", lpszValueName, i);
+		mir_snprintf(szBuff, _countof(szBuff), "%s%lu", lpszValueName, i);
 		if (DB_GetStringA(hContact, lpszModule, szBuff, szEmail)) {
 			if (bMRAOnly == FALSE || IsEMailMR(szEmail)) {
 				WCHAR wszBuff[MAX_EMAIL_LEN];
-				MultiByteToWideChar(MRA_CODE_PAGE, 0, szEmail, -1, wszBuff, SIZEOF(wszBuff));
+				MultiByteToWideChar(MRA_CODE_PAGE, 0, szEmail, -1, wszBuff, _countof(wszBuff));
 				if (SendMessage(hWndList, LB_FINDSTRING, -1, (LPARAM)wszBuff) == LB_ERR)
 					SendMessage(hWndList, LB_ADDSTRING, 0, (LPARAM)wszBuff);
 			}
@@ -103,7 +103,7 @@ INT_PTR CALLBACK MraSelectEMailDlgProc(HWND hWndDlg, UINT message, WPARAM wParam
 				case MRA_SELECT_EMAIL_TYPE_SEND_POSTCARD:
 					{
 						CMStringA szUrl;
-						szUrl.Format("http://cards.mail.ru/event.html?rcptname=%s&rcptemail=%s", GetContactNameA(dat->hContact), szEmail);
+						szUrl.Format("http://cards.mail.ru/event.html?rcptname=%s&rcptemail=%s", pcli->pfnGetContactDisplayName(dat->hContact, 0), szEmail);
 						dat->ppro->MraMPopSessionQueueAddUrl(dat->ppro->hMPopSessionQueue, szUrl);
 					}
 					break;

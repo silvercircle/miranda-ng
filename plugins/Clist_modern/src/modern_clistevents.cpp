@@ -22,11 +22,11 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "hdr/modern_commonheaders.h"
+#include "stdafx.h"
 #include "m_clui.h"
-#include "hdr/modern_clist.h"
-#include "hdr/modern_commonprototypes.h"
-#include "hdr/modern_clcpaint.h"
+#include "modern_clist.h"
+#include "modern_commonprototypes.h"
+#include "modern_clcpaint.h"
 
 /**************************************************/
 /*   Notify Event Area Frame implementation       */
@@ -105,11 +105,12 @@ CListEvent* cli_AddEvent(CLISTEVENT *cle)
 		return NULL;
 
 	if (p->cle.hContact != 0 && p->cle.hDbEvent != 1 && !(p->cle.flags & CLEF_ONLYAFEW)) {
-		MENUITEMINFO mii = { sizeof(mii) };
+		MENUITEMINFO mii = { 0 };
+		mii.cbSize = sizeof(mii);
 		mii.fMask = MIIM_DATA | MIIM_BITMAP | MIIM_ID;
 		if (p->cle.pszService &&
-			(!strncmp("SRMsg/ReadMessage", p->cle.pszService, SIZEOF("SRMsg/ReadMessage")) ||
-			!strncmp("GChat/DblClickEvent", p->cle.pszService, SIZEOF("GChat/DblClickEvent"))))
+			(!strncmp("SRMsg/ReadMessage", p->cle.pszService, _countof("SRMsg/ReadMessage")) ||
+			!strncmp("GChat/DblClickEvent", p->cle.pszService, _countof("GChat/DblClickEvent"))))
 		{
 			// dup check only for msg events
 			for (int j = 0; j < GetMenuItemCount(g_CluiData.hMenuNotify); j++) {
@@ -131,7 +132,7 @@ CListEvent* cli_AddEvent(CLISTEVENT *cle)
 				TCHAR szwProto[64];
 				MultiByteToWideChar(CP_ACP, 0, szProto, -1, szwProto, 64);
 				szwProto[63] = 0;
-				mir_sntprintf(szBuffer, SIZEOF(szBuffer), _T("%s: %s (%s)"), szwProto, szName, szStatus);
+				mir_sntprintf(szBuffer, _T("%s: %s (%s)"), szwProto, szName, szStatus);
 				szBuffer[127] = 0;
 				AppendMenu(g_CluiData.hMenuNotify, MF_BYCOMMAND | MF_STRING, g_CluiData.wNextMenuID, szBuffer);
 				mii.hbmpItem = HBMMENU_CALLBACK;
@@ -260,15 +261,13 @@ static int  ehhEventAreaBackgroundSettingsChanged(WPARAM, LPARAM)
 		DeleteObject(event_area.hBmpBackground);
 		event_area.hBmpBackground = NULL;
 	}
-	if (g_CluiData.fDisableSkinEngine)
-	{
-		DBVARIANT dbv;
+
+	if (g_CluiData.fDisableSkinEngine) {
 		event_area.bkColour = sttGetColor("EventArea", "BkColour", CLCDEFAULT_BKCOLOUR);
 		if (db_get_b(NULL, "EventArea", "UseBitmap", CLCDEFAULT_USEBITMAP)) {
-			if (!db_get_s(NULL, "EventArea", "BkBitmap", &dbv)) {
-				event_area.hBmpBackground = (HBITMAP)CallService(MS_UTILS_LOADBITMAP, 0, (LPARAM)dbv.pszVal);
-				db_free(&dbv);
-			}
+			ptrT tszBitmap(db_get_tsa(NULL, "EventArea", "BkBitmap"));
+			if (tszBitmap != NULL)
+				event_area.hBmpBackground = Bitmap_Load(tszBitmap);
 		}
 		event_area.useWinColors = db_get_b(NULL, "EventArea", "UseWinColours", CLCDEFAULT_USEWINDOWSCOLOURS);
 		event_area.backgroundBmpUse = db_get_w(NULL, "EventArea", "BkBmpUse", CLCDEFAULT_BKBMPUSE);
@@ -337,23 +336,20 @@ static int EventArea_DrawWorker(HWND hWnd, HDC hDC)
 	}
 	else if (iCount > 0) {
 		MENUITEMINFO mii = { 0 };
-		struct NotifyMenuItemExData *nmi;
-		TCHAR *szName;
-		int iIcon;
-
 		mii.cbSize = sizeof(mii);
 		mii.fMask = MIIM_DATA;
 		GetMenuItemInfo(g_CluiData.hMenuNotify, iCount - 1, TRUE, &mii);
-		nmi = (struct NotifyMenuItemExData *) mii.dwItemData;
-		szName = pcli->pfnGetContactDisplayName(nmi->hContact, 0);
-		iIcon = cli_GetContactIcon(nmi->hContact);
+		
+		NotifyMenuItemExData *nmi = (struct NotifyMenuItemExData *) mii.dwItemData;
+		TCHAR *szName = pcli->pfnGetContactDisplayName(nmi->hContact, 0);
+		int iIcon = cli_GetContactIcon(nmi->hContact);
 		ske_ImageList_DrawEx(g_himlCListClc, iIcon, hDC, rc.left, (rc.bottom + rc.top - GetSystemMetrics(SM_CYSMICON)) / 2, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), CLR_NONE, CLR_NONE, ILD_NORMAL);
 		rc.left += 18;
 		ske_ImageList_DrawEx(g_himlCListClc, nmi->iIcon, hDC, 4, (rc.bottom + rc.top) / 2 - 8, 16, 16, CLR_NONE, CLR_NONE, ILD_NORMAL);
 		ske_DrawText(hDC, szName, -1, &rc, DT_VCENTER | DT_SINGLELINE);
 	}
 	else {
-		HICON hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_BLANK), IMAGE_ICON, 16, 16, 0);
+		HICON hIcon = (HICON)LoadImage(g_hMirApp, MAKEINTRESOURCE(IDI_BLANK), IMAGE_ICON, 16, 16, 0);
 		TCHAR *ptszEvents = TranslateT("No events");
 		ske_DrawText(hDC, ptszEvents, (int)mir_tstrlen(ptszEvents), &rc, DT_VCENTER | DT_SINGLELINE);
 		ske_DrawIconEx(hDC, 4, (rc.bottom + rc.top - 16) / 2, hIcon, 16, 16, 0, 0, DI_NORMAL | DI_COMPAT);
@@ -417,7 +413,7 @@ int EventArea_Create(HWND hCluiWnd)
 	CLISTFrame Frame = { sizeof(Frame) };
 	Frame.hWnd = g_CluiData.hwndEventFrame;
 	Frame.align = alBottom;
-	Frame.hIcon = LoadSkinnedIcon(SKINICON_OTHER_FRAME);
+	Frame.hIcon = Skin_LoadIcon(SKINICON_OTHER_FRAME);
 	Frame.Flags = (db_get_b(NULL, "CLUI", "ShowEventArea", SETTING_SHOWEVENTAREAFRAME_DEFAULT) ? F_VISIBLE : 0) | F_LOCKED | F_NOBORDER | F_NO_SUBCONTAINER | F_TCHAR;
 	Frame.height = h;
 	Frame.tname = _T("EventArea"); //do not translate
@@ -490,13 +486,14 @@ static LRESULT CALLBACK EventArea_WndProc(HWND hwnd, UINT msg, WPARAM wParam, LP
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDC_NOTIFYBUTTON) {
 			int iSelection;
-			MENUITEMINFO mii = { 0 };
-			POINT pt;
 			struct NotifyMenuItemExData *nmi = 0;
 			int iCount = GetMenuItemCount(g_CluiData.hMenuNotify);
 			BOOL result;
 
+			POINT pt;
 			GetCursorPos(&pt);
+
+			MENUITEMINFO mii = { 0 };
 			mii.cbSize = sizeof(mii);
 			mii.fMask = MIIM_DATA;
 			if (iCount > 1)

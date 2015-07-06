@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #pragma once
 
 #ifndef M_STRING_H__
+#define M_STRING_H__
 
 #include <stdio.h>
 #include <string.h>
@@ -439,7 +440,7 @@ public:
 			return;
 		}
 		DWORD dwSize = static_cast<DWORD>(size);
-		BOOL fSuccess = ::CharToOemBuffA(pstrString, pstrString, dwSize);
+		::CharToOemBuffA(pstrString, pstrString, dwSize);
 	}
 
 	static void ConvertToAnsi(_CharType* pstrString, size_t size)
@@ -448,33 +449,13 @@ public:
 			return;
 
 		DWORD dwSize = static_cast<DWORD>(size);
-		BOOL fSuccess = ::OemToCharBuffA(pstrString, pstrString, dwSize);
+		::OemToCharBuffA(pstrString, pstrString, dwSize);
 	}
 
 	static void __stdcall FloodCharacters(char ch, int nLength, char* pch)
 	{
 		// nLength is in XCHARs
 		memset(pch, ch, nLength);
-	}
-
-	static BSTR __stdcall AllocSysString(const char* pchData, int nDataLength)
-	{
-		int nLen = ::MultiByteToWideChar(Langpack_GetDefaultCodePage(), 0, pchData, nDataLength, NULL, NULL);
-		BSTR bstr = ::SysAllocStringLen(NULL, nLen);
-		if (bstr != NULL)
-			::MultiByteToWideChar(Langpack_GetDefaultCodePage(), 0, pchData, nDataLength, bstr, nLen);
-
-		return bstr;
-	}
-
-	static BOOL __stdcall ReAllocSysString(const char* pchData, BSTR* pbstr, int nDataLength)
-	{
-		int nLen = ::MultiByteToWideChar(Langpack_GetDefaultCodePage(), 0, pchData, nDataLength, NULL, NULL);
-		BOOL bSuccess = ::SysReAllocStringLen(pbstr, NULL, nLen);
-		if (bSuccess)
-			::MultiByteToWideChar(Langpack_GetDefaultCodePage(), 0, pchData, nDataLength, *pbstr, nLen);
-
-		return bSuccess;
 	}
 
 	static int __stdcall SafeStringLen(LPCSTR psz)
@@ -628,15 +609,18 @@ public:
 
 	static int __stdcall Format(LPWSTR pszBuffer, LPCWSTR pszFormat, va_list args)
 	{
-#pragma warning (push)
-#pragma warning(disable : 4996)
-		return vswprintf(pszBuffer, pszFormat, args); //!!!!!!!!!
-#pragma warning (pop)
+		#pragma warning(push)
+		#pragma warning(disable : 4996)
+		return vswprintf(pszBuffer, pszFormat, args);
+		#pragma warning(pop)
 	}
 
 	static int __stdcall Format(LPWSTR pszBuffer, size_t nLength, LPCWSTR pszFormat, va_list args)
 	{
+		#pragma warning(push)
+		#pragma warning(disable : 4996)
 		return _vsnwprintf(pszBuffer, nLength, pszFormat, args);
+		#pragma warning(pop)
 	}
 
 	static int __stdcall GetBaseTypeLength(LPCSTR pszSrc)
@@ -688,16 +672,6 @@ public:
 		{
 			psz[i] = ch;
 		}
-	}
-
-	static BSTR __stdcall AllocSysString(const wchar_t* pchData, int nDataLength)
-	{
-		return ::SysAllocStringLen(pchData, nDataLength);
-	}
-
-	static BOOL __stdcall ReAllocSysString(const wchar_t* pchData, BSTR* pbstr, int nDataLength)
-	{
-		return ::SysReAllocStringLen(pbstr, pchData, nDataLength);
 	}
 
 	static int __stdcall SafeStringLen(LPCSTR psz)
@@ -923,13 +897,7 @@ public:
 	void   AppendFormatV(PCXSTR pszFormat, va_list args);
 
 	// return a copy of string to be freed by mir_free()
-	PXSTR Detouch() const;
-
-	// OLE BSTR support
-
-	// allocate a BSTR containing a copy of the string
-	BSTR AllocSysString() const;
-	BSTR SetSysString(BSTR* pbstr) const;
+	PXSTR Detach() const;
 
 	// Set the string to the value of environment variable 'pszVar'
 	BOOL GetEnvironmentVariable(PCXSTR pszVar);

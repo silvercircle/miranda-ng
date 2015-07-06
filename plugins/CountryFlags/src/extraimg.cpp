@@ -55,7 +55,7 @@ static void CALLBACK SetExtraImage(MCONTACT hContact)
 		ExtraIcon_Clear(hExtraIcon, hContact);
 	else {
 		char szId[20];
-		mir_snprintf(szId, SIZEOF(szId), (countryNumber == 0xFFFF) ? "%s0x%X" : "%s%i", "flags_", countryNumber);
+		mir_snprintf(szId, _countof(szId), (countryNumber == 0xFFFF) ? "%s0x%X" : "%s%i", "flags_", countryNumber);
 		ExtraIcon_SetIcon(hExtraIcon, hContact, szId);
 	}
 }
@@ -102,7 +102,7 @@ static void __fastcall SetStatusIcon(MCONTACT hContact,int countryNumber)
 	Srmm_ModifyIcon(hContact, &sid);
 
 	if (sid.hIcon)
-		Skin_ReleaseIcon(sid.hIcon);
+		IcoLib_ReleaseIcon(sid.hIcon);
 }
 
 // always call in context of main thread

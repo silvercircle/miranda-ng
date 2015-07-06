@@ -18,12 +18,14 @@ You should have received a copy of the GNU General Public License along
 with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
+
 #include "stdafx.h"
 
 CLIST_INTERFACE *pcli;
 HINSTANCE hInst;
 int hLangpack;
-static HANDLE hMainMenuItem = 0, hToolBarItem = 0;
+static HANDLE hToolBarItem = 0;
+static HGENMENU hMainMenuItem = 0;
 HWND hAddDlg;
 
 static IconItem icon = { LPGEN("Add contact"), ICON_ADD, IDI_ADDCONTACT };
@@ -76,9 +78,9 @@ static int OnAccListChanged(WPARAM, LPARAM)
 	PROTOACCOUNT** pAccounts;
 	int iRealAccCount, iAccCount = 0;
 
-	ProtoEnumAccounts(&iRealAccCount, &pAccounts);
+	Proto_EnumAccounts(&iRealAccCount, &pAccounts);
 	for (int i = 0; i < iRealAccCount; i++) {
-		if (!IsAccountEnabled(pAccounts[i]))
+		if (!Proto_IsAccountEnabled(pAccounts[i]))
 			continue;
 
 		DWORD dwCaps = (DWORD)CallProtoService(pAccounts[i]->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0);
@@ -90,11 +92,11 @@ static int OnAccListChanged(WPARAM, LPARAM)
 		if (hMainMenuItem)
 			return 0;
 
-		CLISTMENUITEM mi = { sizeof(mi) };
+		CMenuItem mi;
 		mi.position = 500020001;
 		mi.flags = CMIF_TCHAR;
-		mi.icolibItem = icon.hIcolib;
-		mi.ptszName = LPGENT("&Add contact...");
+		mi.hIcolibItem = icon.hIcolib;
+		mi.name.t = LPGENT("&Add contact...");
 		mi.pszService = MS_ADDCONTACTPLUS_SHOW;
 		hMainMenuItem = Menu_AddMainMenuItem(&mi);
 	}
@@ -102,7 +104,7 @@ static int OnAccListChanged(WPARAM, LPARAM)
 		if (!hMainMenuItem)
 			return 0;
 
-		CallService(MO_REMOVEMENUITEM, (WPARAM)hMainMenuItem, 0);
+		Menu_RemoveItem(hMainMenuItem);
 		CallService(MS_TTB_REMOVEBUTTON, (WPARAM)hToolBarItem, 0);
 		hMainMenuItem = 0;
 	}
@@ -112,7 +114,7 @@ static int OnAccListChanged(WPARAM, LPARAM)
 
 static int CreateButton(WPARAM, LPARAM)
 {
-	TTBButton tbb = { sizeof(tbb) };
+	TTBButton tbb = { 0 };
 	tbb.dwFlags = TTBBF_VISIBLE | TTBBF_SHOWTOOLTIP;
 	tbb.pszService = MS_ADDCONTACTPLUS_SHOW;
 	tbb.name = tbb.pszTooltipUp = LPGEN("Add contact");

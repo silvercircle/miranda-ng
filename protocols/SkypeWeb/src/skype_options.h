@@ -24,9 +24,11 @@ private:
 	CCtrlEdit m_skypename;
 	CCtrlEdit m_password;
 	CCtrlEdit m_group;
+	CCtrlEdit m_place;
 	CCtrlCheck m_autosync;
 	CCtrlCheck m_localtime;
 	CCtrlCheck m_allasunread;
+	CCtrlCheck m_usehostname;
 
 protected:
 	CSkypeOptionsMain(CSkypeProto *proto, int idDialog);

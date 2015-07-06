@@ -247,7 +247,7 @@ void OptionsDialogType::AddCategory(void)
 {
 	TCHAR cat[30];
 
-	GetDlgItemText(m_hwndDialog, IDC_NEWCATEGORY, cat, SIZEOF(cat)); 
+	GetDlgItemText(m_hwndDialog, IDC_NEWCATEGORY, cat, _countof(cat)); 
 	CMString catd = cat;
 
 	if (!catd.IsEmpty()) {
@@ -295,7 +295,7 @@ void OptionsDialogType::UpdateControls(bool force)
 	SetDlgItemText(m_hwndDialog, IDC_FILENAME, smf.c_str());
 
 	if (smPack.GetFilename() != smf || force)
-		smPack.LoadSmileyFile(smf, false, true);
+		smPack.LoadSmileyFile(smf, smPack.GetName() , false, true);
 
 	HWND hLstView = GetDlgItem(m_hwndDialog, IDC_CATEGORYLIST);
 	TreeView_SetCheckState(hLstView, TreeView_GetSelection(hLstView), smPack.SmileyCount() != 0);
@@ -381,7 +381,7 @@ void OptionsDialogType::PopulateSmPackList(void)
 				tvi.item.iSelectedImage = i;
 			}
 			tvi.item.lParam = i;
-			tvi.item.state = INDEXTOSTATEIMAGEMASK(smPack.LoadSmileyFile(smc[i].GetFilename(), true, true) ? 2 : 1);
+			tvi.item.state = INDEXTOSTATEIMAGEMASK(smPack.LoadSmileyFile(smc[i].GetFilename(), smc[i].GetDisplayName(), true, true) ? 2 : 1);
 			TreeView_InsertItem(hLstView, &tvi);
 
 			smPack.Clear();
@@ -505,7 +505,7 @@ void OptionsDialogType::ApplyChanges(void)
 	g_SmileyCategories.SaveSettings();
 	g_SmileyCategories.ClearAndLoadAll();
 
-	smPack.LoadSmileyFile(tmpsmcat.GetSmileyCategory(GetSelProto())->GetFilename(), false);
+	smPack.LoadSmileyFile(tmpsmcat.GetSmileyCategory(GetSelProto())->GetFilename(), tmpsmcat.GetSmileyCategory(GetSelProto())->GetDisplayName(),false, true);
 
 	NotifyEventHooks(hEvent1, 0, 0);
 	ProcessAllInputAreas(false);
@@ -517,7 +517,7 @@ bool OptionsDialogType::BrowseForSmileyPacks(int item)
 
 	TCHAR filename[MAX_PATH] = _T("");
 	ofn.lpstrFile = filename;
-	ofn.nMaxFile = SIZEOF(filename);
+	ofn.nMaxFile = _countof(filename);
 
 	CMString inidir;
 	SmileyCategoryType* smc = tmpsmcat.GetSmileyCategory(item); 
@@ -564,7 +564,7 @@ bool OptionsDialogType::BrowseForSmileyPacks(int item)
 void OptionsDialogType::FilenameChanged(void)
 {
 	TCHAR str[MAX_PATH];
-	GetDlgItemText(m_hwndDialog, IDC_FILENAME, str, SIZEOF(str));
+	GetDlgItemText(m_hwndDialog, IDC_FILENAME, str, _countof(str));
 
 	SmileyCategoryType* smc = tmpsmcat.GetSmileyCategory(GetSelProto()); 
 	if (smc->GetFilename() != str) {

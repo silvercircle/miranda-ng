@@ -787,7 +787,7 @@ end;
 
 function ShowContactMenu(wnd:HWND;hContact:TMCONTACT;col:integer=-1):HMENU;
 var
-  mi:TCListMenuItem;
+  mi:TMO_MenuItem;
   pt:tpoint;
   doit:bool;
 begin
@@ -810,7 +810,6 @@ begin
         cmcolumn:=col;
 
         FillChar(mi,SizeOf(mi),0);
-        mi.cbSize:=SizeOf(mi);
         if mnuhandle=0 then
         begin
           mi.flags     :=CMIF_UNICODE;
@@ -819,15 +818,12 @@ begin
           mnuhandle:=Menu_AddContactMenuItem(@mi);
         end
         else
-        begin
-          mi.flags :=CMIM_FLAGS;
-          CallService(MS_CLIST_MODIFYMENUITEM,mnuhandle,LPARAM(@mi));
-        end;
+          Menu_ModifyItem(mnuhandle, nil, INVALID_HANDLE_VALUE, 0);
       end;
     end;
 
     GetCursorPos(pt);
-    result:=CallService(MS_CLIST_MENUBUILDCONTACT,hContact,0);
+    result:=Menu_BuildContactMenu(hContact);
     if result<>0 then
     begin
       TrackPopupMenu(result,0,pt.x,pt.y,0,wnd,nil);
@@ -835,12 +831,7 @@ begin
     end;
     // Due to stupid miranda logic, we need to clear tails at service processing, not earlier
     if doit then
-    begin
-      mi.cbSize:=SizeOf(mi);
-      mi.flags :=CMIM_FLAGS or CMIF_HIDDEN;
-      CallService(MS_CLIST_MODIFYMENUITEM,mnuhandle,LPARAM(@mi));
-    end;
-
+      Menu_ShowItem(mnuhandle, 0);
   end
   else
     result:=0;
@@ -1636,8 +1627,8 @@ begin
     end
     else if (setting_type=QST_CONTACTINFO) and (cnftype=CNF_GENDER) then
     begin
-      if hIconF=0 then hIconF:=CallService(MS_SKIN2_GETICON,0,tlparam(QS_FEMALE));
-      if hIconM=0 then hIconM:=CallService(MS_SKIN2_GETICON,0,tlparam(QS_MALE));
+      if hIconF=0 then hIconF:=IcoLib_GetIcon(QS_FEMALE,0);
+      if hIconM=0 then hIconM:=IcoLib_GetIcon(QS_MALE,0);
       flags:=flags or COL_GENDER;
       tstrMale   :=TranslateW('Male');
       tstrFemale :=TranslateW('Female');
@@ -1897,19 +1888,16 @@ var
   rc:TRECT;
   pt:TPOINT;
   TI:tToolInfoW;
-  urd:TUTILRESIZEDIALOG;
 begin
   result:=0;
   case hMessage of
     WM_DESTROY: begin
       if srvhandle<>0 then DestroyServiceFunction(srvhandle);
-      if mnuhandle<>0 then CallService(MO_REMOVEMENUITEM,mnuhandle,0);
+      if mnuhandle<>0 then Menu_RemoveItem(mnuhandle);
 
       UnhookEvent(hAdd);
       UnhookEvent(hDelete);
       UnhookEvent(hChange);
-//      UnhookEvent(hAccount);
-
       UnhookEvent(colorhook);
 
       mainwnd:=0;
@@ -1977,8 +1965,7 @@ begin
         tmp:=tmp and not WS_EX_TOOLWINDOW;
       SetWindowLongPtrW(Dialog,GWL_EXSTYLE,tmp);
 
-      SendMessage(Dialog,WM_SETICON,ICON_SMALL,//LoadIcon(hInstance,PAnsiChar(IDI_QS))
-        CallService(MS_SKIN2_GETICON,0,tlparam(QS_QS)));
+      SendMessage(Dialog,WM_SETICON,ICON_SMALL,IcoLib_GetIcon(QS_QS,0));
       grid:=GetDlgItem(Dialog,IDC_LIST);
 
       // ListView
@@ -2069,14 +2056,7 @@ begin
 
     WM_SIZE: begin
       SendMessage(StatusBar,WM_SIZE,0,0);
-      FillChar(urd,SizeOf(TUTILRESIZEDIALOG),0);
-      urd.cbSize    :=SizeOf(urd);
-      urd.hwndDlg   :=Dialog;
-      urd.hInstance :=hInstance;
-      urd.lpTemplate:=MAKEINTRESOURCEA(IDD_MAIN);
-      urd.lParam    :=0;
-      urd.pfnResizer:=@FindAddDlgResizer;
-      CallService(MS_UTILS_RESIZEDIALOG,0,tlparam(@urd));
+		Utils_ResizeDialog(Dialog, hInstance, MAKEINTRESOURCEA(IDD_MAIN), @FindAddDlgResizer);
     end;
 
     WM_SYSCOMMAND: begin

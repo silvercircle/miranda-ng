@@ -20,7 +20,7 @@ static INT_PTR CALLBACK DlgProcContactsOptions(HWND hwndDlg, UINT msg, WPARAM wP
 		WindowList_Add(hChangeSoundDlgList, hwndDlg, hContact);
 		Utils_RestoreWindowPositionNoSize(hwndDlg, hContact, SETTINGSNAME, "ChangeSoundDlg");
 		char* szProto = GetContactProto(hContact);
-		PROTOACCOUNT *pa = ProtoGetAccount(szProto);
+		PROTOACCOUNT *pa = Proto_GetAccount(szProto);
 		char* szUniqueId = (char*)CallProtoService(pa->szModuleName, PS_GETCAPS, PFLAG_UNIQUEIDSETTING, 0);
 		if ((INT_PTR)szUniqueId != CALLSERVICE_NOTFOUND && szUniqueId != NULL) {
 			DBVARIANT dbvuid = { 0 };
@@ -40,9 +40,9 @@ static INT_PTR CALLBACK DlgProcContactsOptions(HWND hwndDlg, UINT msg, WPARAM wP
 					break;
 				}
 
-				TCHAR *nick = (TCHAR *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR);
+				TCHAR *nick = (TCHAR *)pcli->pfnGetContactDisplayName(hContact, 0);
 				TCHAR value[100];
-				mir_sntprintf(value, SIZEOF(value), TranslateT("Custom sound for %s (%s)"), nick, uid);
+				mir_sntprintf(value, _countof(value), TranslateT("Custom sound for %s (%s)"), nick, uid);
 				SetWindowText(hwndDlg, value);
 				db_free(&dbvuid);
 			}
@@ -102,9 +102,9 @@ static INT_PTR CALLBACK DlgProcContactsOptions(HWND hwndDlg, UINT msg, WPARAM wP
 			ofn.lStructSize = sizeof(ofn);
 			TCHAR tmp[MAX_PATH];
 			if (GetModuleHandle(_T("bass_interface.dll")))
-				mir_sntprintf(tmp, SIZEOF(tmp), _T("%s (*.wav, *.mp3, *.ogg)%c*.wav;*.mp3;*.ogg%c%c"), TranslateT("Sound files"), 0, 0, 0);
+				mir_sntprintf(tmp, _countof(tmp), _T("%s (*.wav, *.mp3, *.ogg)%c*.wav;*.mp3;*.ogg%c%c"), TranslateT("Sound files"), 0, 0, 0);
 			else
-				mir_sntprintf(tmp, SIZEOF(tmp), _T("%s (*.wav)%c*.wav%c%c"), TranslateT("WAV files"), 0, 0, 0);
+				mir_sntprintf(tmp, _countof(tmp), _T("%s (*.wav)%c*.wav%c%c"), TranslateT("WAV files"), 0, 0, 0);
 			ofn.lpstrFilter = tmp;
 			ofn.hwndOwner = 0;
 			ofn.lpstrFile = FileName;
@@ -122,7 +122,7 @@ static INT_PTR CALLBACK DlgProcContactsOptions(HWND hwndDlg, UINT msg, WPARAM wP
 				if (p == NULL)
 					XSN_Users.insert(new XSN_Data(hContact, FileName, IsDlgButtonChecked(hwndDlg, IDC_CONT_IGNORE_SOUND) ? 1 : 0));
 				else {
-					_tcsncpy(p->path, FileName, SIZEOF(p->path));
+					_tcsncpy(p->path, FileName, _countof(p->path));
 					p->ignore = IsDlgButtonChecked(hwndDlg, IDC_CONT_IGNORE_SOUND) ? 1 : 0;
 				}
 				EnableWindow(GetDlgItem(hwndDlg, IDC_CONT_BUTTON_TEST_PLAY), TRUE);

@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "job_delete.h"
 
 Event DeleteJob::jobDone;
-Mutex DeleteJob::mutexJobCount;
+mir_cs DeleteJob::mutexJobCount;
 int DeleteJob::iRunningJobCount = 0;
 
 extern ServerList &ftpList;
@@ -41,23 +41,23 @@ void DeleteJob::waitingThread(void *arg)
 
 	while(!Miranda_Terminated())
 	{
-		Lock *lock = new Lock(mutexJobCount);
+		mir_cslockfull lock(mutexJobCount);
 		if (iRunningJobCount < MAX_RUNNING_JOBS)
 		{
 			iRunningJobCount++;
-			delete lock;
+			lock.unlock();
 			job->run();
 			delete job;
 
-			Lock *lock = new Lock(mutexJobCount);
+			lock.lock();
 			iRunningJobCount--;
-			delete lock;
+			lock.unlock();
 
 			jobDone.release();
 			return;
 		}
 
-		delete lock;
+		lock.unlock();
 		jobDone.wait();
 	}
 
@@ -105,9 +105,9 @@ void DeleteJob::run()
 char *DeleteJob::getDelFileString()
 {
 	if (ftp->ftpProto == ServerList::FTP::FT_SSH)
-		mir_snprintf(buff, SIZEOF(buff), "rm \"%s/%s\"", ftp->szDir, entry->szFileName);
+		mir_snprintf(buff, "rm \"%s/%s\"", ftp->szDir, entry->szFileName);
 	else
-		mir_snprintf(buff, SIZEOF(buff), "DELE %s", entry->szFileName);
+		mir_snprintf(buff, "DELE %s", entry->szFileName);
 
 	return buff;
 }
@@ -115,9 +115,9 @@ char *DeleteJob::getDelFileString()
 char *DeleteJob::getDelUrlString()
 {	
 	if (ftp->szDir[0] && ftp->ftpProto != ServerList::FTP::FT_SSH)
-		mir_snprintf(buff, SIZEOF(buff), "%s%s/%s/", ftp->getProtoString(), ftp->szServer, ftp->szDir);
+		mir_snprintf(buff, "%s%s/%s/", ftp->getProtoString(), ftp->szServer, ftp->szDir);
 	else
-		mir_snprintf(buff, SIZEOF(buff), "%s%s/", ftp->getProtoString(), ftp->szServer);
+		mir_snprintf(buff, "%s%s/", ftp->getProtoString(), ftp->szServer);
 
 	return buff;
 }

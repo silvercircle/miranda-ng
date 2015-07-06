@@ -26,9 +26,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 This file contains code related to new modern free positioned skinned buttons
 */
 
-#include "hdr/modern_commonheaders.h"
-#include "hdr/modern_skinengine.h"
-#include "hdr/modern_clcpaint.h"
+#include "stdafx.h"
+#include "modern_skinengine.h"
+#include "modern_clcpaint.h"
 #include "m_skinbutton.h"
 
 #define MODERNSKINBUTTONCLASS "MirandaModernSkinButtonClass"
@@ -142,15 +142,15 @@ static int ModernSkinButtonPaintWorker(HWND hwnd, HDC whdc)
 				}
 				case 'd':
 					defval = db_get_dw(NULL, section, key, defval);
-					Value = mir_strdup(_ltoa(defval, buf, SIZEOF(buf)));
+					Value = mir_strdup(_ltoa(defval, buf, _countof(buf)));
 					break;
 				case 'w':
 					defval = db_get_w(NULL, section, key, defval);
-					Value = mir_strdup(_ltoa(defval, buf, SIZEOF(buf)));
+					Value = mir_strdup(_ltoa(defval, buf, _countof(buf)));
 					break;
 				case 'b':
 					defval = db_get_b(NULL, section, key, defval);
-					Value = mir_strdup(_ltoa(defval, buf, SIZEOF(buf)));
+					Value = mir_strdup(_ltoa(defval, buf, _countof(buf)));
 					break;
 				}
 				mir_free(section);
@@ -488,14 +488,11 @@ HWND SetToolTip(HWND hwnd, TCHAR * tip)
 	if (!tip) return 0;
 	mir_cslock lck(csTips);
 	if (!hwndToolTips) {
-		//  hwndToolTips = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, _T(""), WS_POPUP, 0, 0, 0, 0, NULL, NULL, GetModuleHandle(NULL), NULL);
-
 		hwndToolTips = CreateWindowEx(0, TOOLTIPS_CLASS, NULL,
 			WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,
 			CW_USEDEFAULT, CW_USEDEFAULT,
 			CW_USEDEFAULT, CW_USEDEFAULT,
-			hwnd, NULL, GetModuleHandle(NULL),
-			NULL);
+			hwnd, NULL, g_hMirApp, NULL);
 
 		SetWindowPos(hwndToolTips, HWND_TOPMOST, 0, 0, 0, 0,
 			SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);

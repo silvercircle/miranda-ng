@@ -1,5 +1,5 @@
 #include "headers.h"
-#include "..\Zlib\src\zip.h"
+#include "..\..\libs\zlib\src\zip.h"
 
 
 static UINT_PTR	timer_id = 0;
@@ -36,7 +36,7 @@ void ShowPopup(TCHAR* ptszText, TCHAR* ptszHeader, TCHAR* ptszPath)
 	if (ptszPath != NULL)
 		ppd.PluginData = (void*)mir_tstrdup(ptszPath);
 	ppd.PluginWindowProc = DlgProcPopup;
-	ppd.lchIcon = Skin_GetIcon(iconList[0].szName);
+	ppd.lchIcon = IcoLib_GetIcon(iconList[0].szName);
 
 	PUAddPopupT(&ppd);
 }
@@ -138,7 +138,7 @@ bool MakeZip(TCHAR *tszSource, TCHAR *tszDest, TCHAR *dbname, HWND progress_dial
 		zipCloseFileInZip(hZip);
 	}
 	if (ret) {
-		mir_snprintf(buf, SIZEOF(buf), "%s\r\n%s %s %d.%d.%d.%d\r\n",
+		mir_snprintf(buf, "%s\r\n%s %s %d.%d.%d.%d\r\n",
 			Translate("Miranda NG database"), Translate("Created by:"),
 			__PLUGIN_NAME, __MAJOR_VERSION, __MINOR_VERSION, __RELEASE_NUM, __BUILD_NUM);
 	}
@@ -174,7 +174,6 @@ int Comp(const void *i, const void *j)
 
 int RotateBackups(TCHAR *backupfolder, TCHAR *dbname)
 {
-	size_t i = 0;
 	backupFile *bf = NULL, *bftmp;
 	HANDLE hFind;
 	TCHAR backupfolderTmp[MAX_PATH];
@@ -182,10 +181,12 @@ int RotateBackups(TCHAR *backupfolder, TCHAR *dbname)
 
 	if (options.num_backups == 0)
 		return 0; /* Roration disabled. */
-	mir_sntprintf(backupfolderTmp, SIZEOF(backupfolderTmp), _T("%s\\%s*"), backupfolder, dbname);
+	mir_sntprintf(backupfolderTmp, _countof(backupfolderTmp), _T("%s\\%s*"), backupfolder, dbname);
 	hFind = FindFirstFile(backupfolderTmp, &FindFileData);
 	if (hFind == INVALID_HANDLE_VALUE)
 		return 0;
+
+	int i = 0;
 	do {
 		if (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 			continue;
@@ -200,7 +201,7 @@ int RotateBackups(TCHAR *backupfolder, TCHAR *dbname)
 	if (i > 0)
 		qsort(bf, i, sizeof(backupFile), Comp); /* Sort the list of found files by date in descending order. */
 	for (; i >= options.num_backups; i --) {
-		mir_sntprintf(backupfolderTmp, SIZEOF(backupfolderTmp), _T("%s\\%s"), backupfolder, bf[(i - 1)].Name);
+		mir_sntprintf(backupfolderTmp, _countof(backupfolderTmp), _T("%s\\%s"), backupfolder, bf[(i - 1)].Name);
 		DeleteFile(backupfolderTmp);
 	}
 err_out:
@@ -217,12 +218,12 @@ int Backup(TCHAR *backup_filename)
 	HWND progress_dialog = NULL;
 	SYSTEMTIME st;
 
-	CallService(MS_DB_GETPROFILENAMET, SIZEOF(dbname), (LPARAM)dbname);
+	CallService(MS_DB_GETPROFILENAMET, _countof(dbname), (LPARAM)dbname);
 
 	if (backup_filename == NULL) {
 		int err;
 		TCHAR *backupfolder, buffer[MAX_COMPUTERNAME_LENGTH + 1];
-		DWORD size = SIZEOF(buffer);
+		DWORD size = _countof(buffer);
 
 		bZip = options.use_zip != 0;
 		backupfolder = Utils_ReplaceVarsT(options.folder);
@@ -236,7 +237,7 @@ int Backup(TCHAR *backup_filename)
 
 		GetLocalTime(&st);
 		GetComputerName(buffer, &size);
-		mir_sntprintf(dest_file, SIZEOF(dest_file), _T("%s\\%s_%02d.%02d.%02d@%02d-%02d-%02d_%s.%s"), backupfolder, dbname, st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, buffer, bZip ? _T("zip") : _T("dat"));
+		mir_sntprintf(dest_file, _countof(dest_file), _T("%s\\%s_%02d.%02d.%02d@%02d-%02d-%02d_%s.%s"), backupfolder, dbname, st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, buffer, bZip ? _T("zip") : _T("dat"));
 		mir_free(backupfolder);
 	}
 	else {
@@ -252,7 +253,7 @@ int Backup(TCHAR *backup_filename)
 
 	SetDlgItemText(progress_dialog, IDC_PROGRESSMESSAGE, TranslateT("Copying database file..."));
 
-	mir_sntprintf(source_file, SIZEOF(source_file), _T("%s\\%s"), profilePath, dbname);
+	mir_sntprintf(source_file, _countof(source_file), _T("%s\\%s"), profilePath, dbname);
 	TCHAR *pathtmp = Utils_ReplaceVarsT(source_file);
 	BOOL res = 0;
 	if (bZip)

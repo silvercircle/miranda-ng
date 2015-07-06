@@ -72,7 +72,7 @@ static void CB_GetButtonSettings(MCONTACT hContact, CustomButtonData *cbd)
 
 	//modulename_buttonID, position_inIM_inCHAT_isLSide_isRSide_CanBeHidden
 
-	mir_snprintf(SettingName, SIZEOF(SettingName), "%s_%d", cbd->m_pszModuleName, cbd->m_dwButtonOrigID);
+	mir_snprintf(SettingName, _countof(SettingName), "%s_%d", cbd->m_pszModuleName, cbd->m_dwButtonOrigID);
 
 	if (!db_get_s(hContact, "TabSRMM_Toolbar", SettingName, &dbv)) {
 		token = strtok(dbv.pszVal, "_");
@@ -237,7 +237,7 @@ static INT_PTR CB_SetButtonState(WPARAM wParam, LPARAM lParam)
 
 	SetDlgItemTextA(hwndDlg, tempCID, bbdi->pszModuleName);
 	if (bbdi->hIcon)
-		SendDlgItemMessage(hwndDlg, tempCID, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_GetIconByHandle(bbdi->hIcon));
+		SendDlgItemMessage(hwndDlg, tempCID, BM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIconByHandle(bbdi->hIcon));
 	if (bbdi->pszTooltip)
 		SendDlgItemMessage(hwndDlg, tempCID, BUTTONADDTOOLTIP, (WPARAM)bbdi->ptszTooltip, (bbdi->bbbFlags & BBBF_ANSITOOLTIP) ? 0 : BATF_TCHAR);
 	if (bbdi->bbbFlags) {
@@ -369,7 +369,7 @@ static int SaveTree(HWND hToolBarTree)
 	tvi.mask = TVIF_TEXT | TVIF_PARAM | TVIF_HANDLE;
 	tvi.hItem = TreeView_GetRoot(hToolBarTree);
 	tvi.pszText = strbuf;
-	tvi.cchTextMax = SIZEOF(strbuf);
+	tvi.cchTextMax = _countof(strbuf);
 	{
 		mir_cslock lck(csToolBar);
 
@@ -452,7 +452,7 @@ static int BuildMenuObjectsTree(HWND hToolBarTree)
 	TreeView_DeleteAllItems(hToolBarTree);
 
 	himgl = ImageList_Create(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), ILC_COLOR32 | ILC_MASK, 2, 2);
-	ImageList_AddIcon(himgl, LoadSkinnedIcon(SKINICON_OTHER_SMALLDOT));
+	ImageList_AddIcon(himgl, Skin_LoadIcon(SKINICON_OTHER_SMALLDOT));
 	ImageList_Destroy(TreeView_GetImageList(hToolBarTree, TVSIL_NORMAL));
 	TreeView_SetImageList(hToolBarTree, himgl, TVSIL_NORMAL);
 
@@ -471,7 +471,7 @@ static int BuildMenuObjectsTree(HWND hToolBarTree)
 		}
 		else {
 			tvis.item.pszText = TranslateTS(cbd->m_ptszTooltip);
-			iImage = ImageList_AddIcon(himgl, Skin_GetIconByHandle(cbd->m_hIcon));
+			iImage = ImageList_AddIcon(himgl, IcoLib_GetIconByHandle(cbd->m_hIcon));
 			tvis.item.iImage = tvis.item.iSelectedImage = iImage;
 		}
 		cbd->m_opFlags = 0;
@@ -499,7 +499,7 @@ static int BuildMenuObjectsTree(HWND hToolBarTree)
 		}
 		else {
 			tvis.item.pszText = TranslateTS(cbd->m_ptszTooltip);
-			iImage = ImageList_AddIcon(himgl, Skin_GetIconByHandle(cbd->m_hIcon));
+			iImage = ImageList_AddIcon(himgl, IcoLib_GetIconByHandle(cbd->m_hIcon));
 			tvis.item.iImage = tvis.item.iSelectedImage = iImage;
 		}
 		tvis.item.state = 0;
@@ -572,7 +572,7 @@ INT_PTR CALLBACK DlgProcToolBar(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 				tvis.item.mask = TVIF_HANDLE | TVIF_PARAM | TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_STATE;
 				tvis.item.stateMask = 0xFFFFFFFF;
 				tvis.item.pszText = strbuf;
-				tvis.item.cchTextMax = SIZEOF(strbuf);
+				tvis.item.cchTextMax = _countof(strbuf);
 				tvis.item.hItem = (HTREEITEM)hDragItem;
 				TreeView_GetItem(hToolBarTree, &tvis.item);
 				TreeView_DeleteItem(hToolBarTree, hDragItem);
@@ -711,7 +711,7 @@ INT_PTR CALLBACK DlgProcToolBar(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 					TVITEM tvi;
 					tvi.hItem = hti;
 					tvi.pszText = strbuf;
-					tvi.cchTextMax = SIZEOF(strbuf);
+					tvi.cchTextMax = _countof(strbuf);
 					tvi.mask = TVIF_TEXT | TVIF_HANDLE | TVIF_PARAM;
 					TreeView_GetItem(hToolBarTree, &tvi);
 
@@ -738,7 +738,7 @@ INT_PTR CALLBACK DlgProcToolBar(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 
 					TVITEM tvi;
 					tvi.pszText = strbuf;
-					tvi.cchTextMax = SIZEOF(strbuf);
+					tvi.cchTextMax = _countof(strbuf);
 					tvi.mask = TVIF_TEXT | TVIF_HANDLE | TVIF_PARAM;
 					tvi.hItem = hti;
 					TreeView_GetItem(hToolBarTree, &tvi);
@@ -808,7 +808,7 @@ void CustomButtonData::Accustom(HWND hwndBtn, TWindowData *dat)
 	SendMessage(hwndBtn, BUTTONSETASFLATBTN, TRUE, 0);
 	SendMessage(hwndBtn, BUTTONSETASTHEMEDBTN, CSkin::IsThemed(), 0);
 	if (m_hIcon)
-		SendMessage(hwndBtn, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_GetIconByHandle(m_hIcon));
+		SendMessage(hwndBtn, BM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIconByHandle(m_hIcon));
 	if (m_ptszTooltip)
 		SendMessage(hwndBtn, BUTTONADDTOOLTIP, (WPARAM)TranslateTS(m_ptszTooltip), BATF_TCHAR);
 	SendMessage(hwndBtn, BUTTONSETCONTAINER, (LPARAM)dat->pContainer, 0);
@@ -830,8 +830,8 @@ void CB_WriteButtonSettings(MCONTACT hContact, CustomButtonData *cbd)
 
 	//modulename_buttonID, position_inIM_inCHAT_isLSide_isRSide_CanBeHidden
 
-	mir_snprintf(SettingName, SIZEOF(SettingName), "%s_%d", cbd->m_pszModuleName, cbd->m_dwButtonOrigID);
-	mir_snprintf(SettingParameter, SIZEOF(SettingParameter), "%d_%u_%u_%u_%u_%u", cbd->m_dwPosition, cbd->m_bIMButton, cbd->m_bChatButton, cbd->m_bLSided, cbd->m_bRSided, cbd->m_bCanBeHidden);
+	mir_snprintf(SettingName, _countof(SettingName), "%s_%d", cbd->m_pszModuleName, cbd->m_dwButtonOrigID);
+	mir_snprintf(SettingParameter, _countof(SettingParameter), "%d_%u_%u_%u_%u_%u", cbd->m_dwPosition, cbd->m_bIMButton, cbd->m_bChatButton, cbd->m_bLSided, cbd->m_bRSided, cbd->m_bCanBeHidden);
 	if (!(cbd->m_opFlags & BBSF_NTBDESTRUCT))
 		db_set_s(hContact, "TabSRMM_Toolbar", SettingName, SettingParameter);
 	else
@@ -845,7 +845,7 @@ void CB_InitDefaultButtons()
 	bbd.bbbFlags = BBBF_ISIMBUTTON | BBBF_ISLSIDEBUTTON | BBBF_ISARROWBUTTON | BBBF_CREATEBYID;
 	bbd.dwButtonID = IDC_PROTOCOL;
 	bbd.dwDefPos = 10;
-	bbd.hIcon = LoadSkinnedIconHandle(SKINICON_OTHER_CONNECTING);
+	bbd.hIcon = Skin_GetIconHandle(SKINICON_OTHER_CONNECTING);
 	bbd.pszModuleName = "Tabsrmm";
 	bbd.ptszTooltip = LPGENT("Protocol button");
 	CB_AddButton(0, (LPARAM)&bbd);
@@ -1155,7 +1155,7 @@ void BB_UpdateIcons(HWND hdlg)
 				hwndBtn = GetDlgItem(hdlg, cbd->m_dwButtonCID);
 
 			if (hwndBtn && cbd->m_hIcon)
-				SendMessage(hwndBtn, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_GetIconByHandle(cbd->m_hIcon));
+				SendMessage(hwndBtn, BM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIconByHandle(cbd->m_hIcon));
 		}
 	}
 
@@ -1167,7 +1167,7 @@ void BB_UpdateIcons(HWND hdlg)
 				hwndBtn = GetDlgItem(hdlg, cbd->m_dwButtonCID);
 
 			if (hwndBtn && cbd->m_hIcon)
-				SendMessage(hwndBtn, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_GetIconByHandle(cbd->m_hIcon));
+				SendMessage(hwndBtn, BM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIconByHandle(cbd->m_hIcon));
 		}
 	}
 }
@@ -1406,7 +1406,7 @@ void CB_ChangeButton(HWND hwndDlg, TWindowData *dat, CustomButtonData *cbd)
 	HWND hwndBtn = GetDlgItem(hwndDlg, cbd->m_dwButtonCID);
 	if (hwndBtn) {
 		if (cbd->m_hIcon)
-			SendMessage(hwndBtn, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_GetIconByHandle(cbd->m_hIcon));
+			SendMessage(hwndBtn, BM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIconByHandle(cbd->m_hIcon));
 		if (cbd->m_ptszTooltip)
 			SendMessage(hwndBtn, BUTTONADDTOOLTIP, (WPARAM)cbd->m_ptszTooltip, BATF_TCHAR);
 		SendMessage(hwndBtn, BUTTONSETCONTAINER, (LPARAM)dat->pContainer, 0);

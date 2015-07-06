@@ -109,7 +109,7 @@ FOLDERSDATA;
   wParam - (WPARAM) (int) - handle to registered path
   lParam - (LPARAM) (int *) - pointer to the variable that receives the size of the path
   string (not including the null character). Depending on the flags set when creating the path
-  it will either call mir_strlen() or wcslen() to get the length of the string.
+  it will either call mir_strlen() or mir_wstrlen() to get the length of the string.
   Returns the size of the buffer.
   */
 #define MS_FOLDERS_GET_SIZE "Folders/Get/PathSize"
@@ -209,10 +209,10 @@ __inline static INT_PTR FoldersGetCustomPathEx(HANDLE hFolderEntry, char *path, 
 	}
 
 	if (path[0] != '\0')
-		strncat(path, "\\", size - mir_strlen(path));
+		mir_strncat(path, "\\", size - mir_strlen(path));
 
 	if (fileName)
-		strncat(path, fileName, size - mir_strlen(path));
+		mir_strncat(path, fileName, size - mir_strlen(path));
 
 	return res;
 }
@@ -232,10 +232,10 @@ __inline static INT_PTR FoldersGetCustomPathExW(HANDLE hFolderEntry, wchar_t *pa
 	}
 
 	if (pathW[0] != '\0')
-		wcsncat(pathW, L"\\", size - mir_wstrlen(pathW));
+		mir_wstrncat(pathW, L"\\", size - mir_wstrlen(pathW));
 
 	if (fileNameW)
-		wcsncat(pathW, fileNameW, size - mir_wstrlen(pathW));
+		mir_wstrncat(pathW, fileNameW, size - mir_wstrlen(pathW));
 
 	return res;
 }

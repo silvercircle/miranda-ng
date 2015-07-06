@@ -246,8 +246,8 @@ INT_PTR CALLBACK DlgProcOptions1(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lPa
 		SendDlgItemMessage(hwndDlg,IDC_CHAT_SPIN2,UDM_SETPOS,0,MAKELONG(db_get_b(NULL,CHAT_MODULE,"NicklistRowDist",12),0));
 		hListHeading1 = InsertBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), TranslateT("Appearance and functionality of chat windows"), db_get_b(NULL, CHAT_MODULE, "Branch1Exp", 0)?TRUE:FALSE);
 		hListHeading4 = InsertBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), TranslateT("Icons to display in the tray"), db_get_b(NULL, CHAT_MODULE, "Branch5Exp", 0)?TRUE:FALSE);
-		FillBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), hListHeading1, branch1, SIZEOF(branch1), 0);
-		FillBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), hListHeading4, branch4, SIZEOF(branch4), 0x1000);
+		FillBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), hListHeading1, branch1, _countof(branch1), 0);
+		FillBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), hListHeading4, branch4, _countof(branch4), 0x1000);
 		SendMessage(hwndDlg, OPT_FIXHEADINGS, 0, 0);
 		{
 			TCHAR* pszGroup = NULL;
@@ -323,8 +323,8 @@ INT_PTR CALLBACK DlgProcOptions1(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lPa
 					db_set_b(NULL, CHAT_MODULE, "NicklistRowDist", (BYTE)iLen);
 				else
 					db_unset(NULL, CHAT_MODULE, "NicklistRowDist");
-				SaveBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), branch1, SIZEOF(branch1));
-				SaveBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), branch4, SIZEOF(branch4));
+				SaveBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), branch1, _countof(branch1));
+				SaveBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), branch4, _countof(branch4));
 
 				pci->ReloadSettings();
 				pci->SM_BroadcastMessage(NULL, GC_SETWNDPROPS, 0, 0, TRUE);
@@ -361,46 +361,45 @@ INT_PTR CALLBACK DlgProcOptions2(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lPa
 			PathToRelativeT(g_Settings.pszLogDir, tszTemp);
 			SetDlgItemText(hwndDlg, IDC_CHAT_LOGDIRECTORY, tszTemp);
 		}
-		if (ServiceExists(MS_UTILS_REPLACEVARS)) {
-			TCHAR tszTooltipText[2048];
-			RECT rect;
+		
+		TCHAR tszTooltipText[2048];
+		RECT rect;
 
-			mir_sntprintf(tszTooltipText, SIZEOF(tszTooltipText),
-				_T("%s - %s\n%s - %s\n%s - %s\n%s - %s\n\n")
-				_T("%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n\n")
-				_T("%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s"),
-				// contact vars
-				_T("%nick%"),					TranslateT("nick of current contact (if defined)"),
-				_T("%proto%"),					TranslateT("protocol name of current contact (if defined). Account name is used when protocol supports multiple accounts"),
-				_T("%accountname%"),			TranslateT("user-defined account name of current contact (if defined)."),
-				_T("%userid%"),					TranslateT("user ID of current contact (if defined). It is like UIN for ICQ, JID for Jabber, etc."),
-				// global vars
-				_T("%miranda_path%"),			TranslateT("path to Miranda root folder"),
-				_T("%miranda_profilesdir%"),		TranslateT("path to folder containing Miranda profiles"),
-				_T("%miranda_profilename%"),	TranslateT("name of current Miranda profile (filename, without extension)"),
-				_T("%miranda_userdata%"),		TranslateT("will return parsed string %miranda_profilesdir%\\%miranda_profilename%"),
-				_T("%miranda_logpath%"),		TranslateT("will return parsed string %miranda_userdata%\\Logs"),
-				_T("%appdata%"),				TranslateT("same as environment variable %APPDATA% for currently logged-on Windows user"),
-				_T("%username%"),				TranslateT("username for currently logged-on Windows user"),
-				_T("%mydocuments%"),			TranslateT("\"My Documents\" folder for currently logged-on Windows user"),
-				_T("%desktop%"),				TranslateT("\"Desktop\" folder for currently logged-on Windows user"),
-				_T("%xxxxxxx%"),				TranslateT("any environment variable defined in current Windows session (like %systemroot%, %allusersprofile%, etc.)"),
-				// date/time vars
-				_T("%d%"),			TranslateT("day of month, 1-31"),
-				_T("%dd%"),			TranslateT("day of month, 01-31"),
-				_T("%m%"),			TranslateT("month number, 1-12"),
-				_T("%mm%"),			TranslateT("month number, 01-12"),
-				_T("%mon%"),		TranslateT("abbreviated month name"),
-				_T("%month%"),		TranslateT("full month name"),
-				_T("%yy%"),			TranslateT("year without century, 01-99"),
-				_T("%yyyy%"),		TranslateT("year with century, 1901-9999"),
-				_T("%wday%"),		TranslateT("abbreviated weekday name"),
-				_T("%weekday%"),	TranslateT("full weekday name"));
-			GetClientRect (GetDlgItem(hwndDlg, IDC_CHAT_LOGDIRECTORY), &rect);
-			rect.left = -85;
-			hPathTip = CreateToolTip(GetDlgItem(hwndDlg, IDC_CHAT_LOGDIRECTORY), tszTooltipText, TranslateT("Variables"), &rect);
-			SetTimer(hwndDlg, 0, 3000, NULL);
-		}
+		mir_sntprintf(tszTooltipText, _countof(tszTooltipText),
+			_T("%s - %s\n%s - %s\n%s - %s\n%s - %s\n\n")
+			_T("%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n\n")
+			_T("%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s"),
+			// contact vars
+			_T("%nick%"), TranslateT("nick of current contact (if defined)"),
+			_T("%proto%"), TranslateT("protocol name of current contact (if defined). Account name is used when protocol supports multiple accounts"),
+			_T("%accountname%"), TranslateT("user-defined account name of current contact (if defined)."),
+			_T("%userid%"), TranslateT("user ID of current contact (if defined). It is like UIN for ICQ, JID for Jabber, etc."),
+			// global vars
+			_T("%miranda_path%"), TranslateT("path to Miranda root folder"),
+			_T("%miranda_profilesdir%"), TranslateT("path to folder containing Miranda profiles"),
+			_T("%miranda_profilename%"), TranslateT("name of current Miranda profile (filename, without extension)"),
+			_T("%miranda_userdata%"), TranslateT("will return parsed string %miranda_profilesdir%\\%miranda_profilename%"),
+			_T("%miranda_logpath%"), TranslateT("will return parsed string %miranda_userdata%\\Logs"),
+			_T("%appdata%"), TranslateT("same as environment variable %APPDATA% for currently logged-on Windows user"),
+			_T("%username%"), TranslateT("username for currently logged-on Windows user"),
+			_T("%mydocuments%"), TranslateT("\"My Documents\" folder for currently logged-on Windows user"),
+			_T("%desktop%"), TranslateT("\"Desktop\" folder for currently logged-on Windows user"),
+			_T("%xxxxxxx%"), TranslateT("any environment variable defined in current Windows session (like %systemroot%, %allusersprofile%, etc.)"),
+			// date/time vars
+			_T("%d%"), TranslateT("day of month, 1-31"),
+			_T("%dd%"), TranslateT("day of month, 01-31"),
+			_T("%m%"), TranslateT("month number, 1-12"),
+			_T("%mm%"), TranslateT("month number, 01-12"),
+			_T("%mon%"), TranslateT("abbreviated month name"),
+			_T("%month%"), TranslateT("full month name"),
+			_T("%yy%"), TranslateT("year without century, 01-99"),
+			_T("%yyyy%"), TranslateT("year with century, 1901-9999"),
+			_T("%wday%"), TranslateT("abbreviated weekday name"),
+			_T("%weekday%"), TranslateT("full weekday name"));
+		GetClientRect(GetDlgItem(hwndDlg, IDC_CHAT_LOGDIRECTORY), &rect);
+		rect.left = -85;
+		hPathTip = CreateToolTip(GetDlgItem(hwndDlg, IDC_CHAT_LOGDIRECTORY), tszTooltipText, TranslateT("Variables"), &rect);
+		SetTimer(hwndDlg, 0, 3000, NULL);
 
 		SetDlgItemText(hwndDlg, IDC_CHAT_HIGHLIGHTWORDS, g_Settings.pszHighlightWords);
 		SetDlgItemText(hwndDlg, IDC_CHAT_LOGTIMESTAMP, g_Settings.pszTimeStampLog);
@@ -417,8 +416,8 @@ INT_PTR CALLBACK DlgProcOptions2(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lPa
 
 		hListHeading2 = InsertBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), TranslateT("Appearance"), db_get_b(NULL, CHAT_MODULE, "Branch2Exp", 0) ? TRUE : FALSE);
 		hListHeading3 = InsertBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), TranslateT("Default events to show in new chat rooms if the 'event filter' is enabled"), db_get_b(NULL, CHAT_MODULE, "Branch3Exp", 0) ? TRUE : FALSE);
-		FillBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), hListHeading2, branch2, SIZEOF(branch2), 0x0);
-		FillBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), hListHeading3, branch3, SIZEOF(branch3), 0x03E0);
+		FillBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), hListHeading2, branch2, _countof(branch2), 0x0);
+		FillBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), hListHeading3, branch3, _countof(branch3), 0x03E0);
 		SendMessage(hwndDlg, OPT_FIXHEADINGS, 0, 0);
 		break;
 
@@ -592,8 +591,8 @@ INT_PTR CALLBACK DlgProcOptions2(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lPa
 			iLen = SendDlgItemMessage(hwndDlg, IDC_CHAT_SPIN3, UDM_GETPOS, 0, 0);
 			db_set_w(NULL, CHAT_MODULE, "LoggingLimit", (WORD)iLen);
 
-			SaveBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), branch2, SIZEOF(branch2));
-			SaveBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), branch3, SIZEOF(branch3));
+			SaveBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), branch2, _countof(branch2));
+			SaveBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), branch3, _countof(branch3));
 
 			mir_free(pszText);
 
@@ -654,7 +653,7 @@ static INT_PTR CALLBACK DlgProcOptionsPopup(HWND hwndDlg,UINT uMsg,WPARAM wParam
 
 		SendDlgItemMessage(hwndDlg, IDC_CHAT_SPIN1, UDM_SETRANGE, 0, MAKELONG(100, -1));
 		SendDlgItemMessage(hwndDlg, IDC_CHAT_SPIN1, UDM_SETPOS, 0, MAKELONG(g_Settings.iPopupTimeout, 0));
-		FillBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), NULL, branch6, SIZEOF(branch6), 0x0000);
+		FillBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), NULL, branch6, _countof(branch6), 0x0000);
 		break;
 
 	case WM_COMMAND:
@@ -714,7 +713,7 @@ static INT_PTR CALLBACK DlgProcOptionsPopup(HWND hwndDlg,UINT uMsg,WPARAM wParam
 				db_set_dw(NULL, CHAT_MODULE, "PopupColorBG", (DWORD)SendDlgItemMessage(hwndDlg, IDC_CHAT_BKG, CPM_GETCOLOUR, 0, 0));
 				g_Settings.crPUTextColour = SendDlgItemMessage(hwndDlg, IDC_CHAT_TEXT, CPM_GETCOLOUR, 0, 0);
 				db_set_dw(NULL, CHAT_MODULE, "PopupColorText", (DWORD)SendDlgItemMessage(hwndDlg, IDC_CHAT_TEXT, CPM_GETCOLOUR, 0, 0));
-				SaveBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), branch6, SIZEOF(branch6));
+				SaveBranch(GetDlgItem(hwndDlg, IDC_CHAT_CHECKBOXES), branch6, _countof(branch6));
 			}
 			return TRUE;
 		}

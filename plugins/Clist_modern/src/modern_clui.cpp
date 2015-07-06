@@ -22,16 +22,16 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "hdr/modern_commonheaders.h"
+#include "stdafx.h"
 
 #include "m_skinbutton.h"
-#include "hdr/modern_skinengine.h"
-#include "hdr/modern_statusbar.h"
+#include "modern_skinengine.h"
+#include "modern_statusbar.h"
 
-#include "hdr/modern_static_clui.h"
+#include "modern_static_clui.h"
 #include <locale.h>
-#include "hdr/modern_clcpaint.h"
-#include "hdr/modern_sync.h"
+#include "modern_clcpaint.h"
+#include "modern_sync.h"
 
 struct PROTOTICKS
 {
@@ -56,7 +56,6 @@ int MetaStatusChanged(WPARAM, LPARAM);
 
 HRESULT(WINAPI *g_proc_DWMEnableBlurBehindWindow)(HWND hWnd, DWM_BLURBEHIND *pBlurBehind);
 BOOL CALLBACK ProcessCLUIFrameInternalMsg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT& result);
-void DestroyTrayMenu(HMENU hMenu);
 
 // new sources
 #include <crtdbg.h>
@@ -147,7 +146,7 @@ OVERLAYICONINFO g_pStatusOverlayIcons[ID_STATUS_OUTTOLUNCH - ID_STATUS_OFFLINE +
 };
 
 //////////////// CLUI CLASS IMPLEMENTATION // ///////////////////////////////
-#include "hdr/modern_clui.h"
+#include "modern_clui.h"
 
 CLUI* CLUI::m_pCLUI = NULL;
 BOOL CLUI::m_fMainMenuInited = FALSE;
@@ -191,7 +190,7 @@ int CLUI::OnEvent_ContactMenuPreBuild(WPARAM, LPARAM)
 
 	HWND hwndClist = GetFocus();
 	TCHAR cls[128];
-	GetClassName(hwndClist, cls, SIZEOF(cls));
+	GetClassName(hwndClist, cls, _countof(cls));
 	if (mir_tstrcmp(_T(CLISTCONTROL_CLASS), cls))
 		hwndClist = pcli->hwndContactList;
 
@@ -213,21 +212,17 @@ int CLUI::OnEvent_ContactMenuPreBuild(WPARAM, LPARAM)
 
 INT_PTR CLUI::Service_ShowMainMenu(WPARAM, LPARAM)
 {
-	HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUGETMAIN, 0, 0);
-
 	POINT pt;
 	GetCursorPos(&pt);
-	TrackPopupMenu(hMenu, TPM_TOPALIGN | TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, 0, pcli->hwndContactList, NULL);
+	TrackPopupMenu(Menu_GetMainMenu(), TPM_TOPALIGN | TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, 0, pcli->hwndContactList, NULL);
 	return 0;
 }
 
 INT_PTR CLUI::Service_ShowStatusMenu(WPARAM, LPARAM)
 {
-	HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUGETSTATUS, 0, 0);
-
 	POINT pt;
 	GetCursorPos(&pt);
-	TrackPopupMenu(hMenu, TPM_TOPALIGN | TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, 0, pcli->hwndContactList, NULL);
+	TrackPopupMenu(Menu_GetStatusMenu(), TPM_TOPALIGN | TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, 0, pcli->hwndContactList, NULL);
 	return 0;
 }
 
@@ -251,12 +246,13 @@ HRESULT CLUI::CreateCluiFrames()
 {
 	g_hMenuMain = GetMenu(pcli->hwndContactList);
 
-	MENUITEMINFO mii = { sizeof(mii) };
+	MENUITEMINFO mii = { 0 };
+	mii.cbSize = sizeof(mii);
 	mii.fMask = MIIM_SUBMENU;
-	mii.hSubMenu = (HMENU)CallService(MS_CLIST_MENUGETMAIN, 0, 0);
+	mii.hSubMenu = Menu_GetMainMenu();
 	SetMenuItemInfo(g_hMenuMain, 0, TRUE, &mii);
 
-	mii.hSubMenu = (HMENU)CallService(MS_CLIST_MENUGETSTATUS, 0, 0);
+	mii.hSubMenu = Menu_GetStatusMenu();
 	SetMenuItemInfo(g_hMenuMain, 1, TRUE, &mii);
 
 	CreateCLCWindow(pcli->hwndContactList);
@@ -284,9 +280,6 @@ m_hDwmapiDll(NULL)
 	hFrameContactTree = NULL;
 
 	CLUIServices_LoadModule();
-
-	// Call InitGroup menus before
-	GroupMenus_Init();
 
 	CreateServiceFunction(MS_CLUI_SHOWMAINMENU, Service_ShowMainMenu);
 	CreateServiceFunction(MS_CLUI_SHOWSTATUSMENU, Service_ShowStatusMenu);
@@ -334,24 +327,22 @@ static IconItemT iconItem[] = {
 
 HRESULT CLUI::RegisterAvatarMenu()
 {
-	Icon_RegisterT(g_hInst, LPGENT("Contact list"), iconItem, SIZEOF(iconItem));
+	Icon_RegisterT(g_hInst, LPGENT("Contact list"), iconItem, _countof(iconItem));
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	CreateServiceFunction("CList/ShowContactAvatar", CLUI::Service_Menu_ShowContactAvatar);
 	mi.position = 2000150000;
-	mi.icolibItem = iconItem[0].hIcolib;
-	mi.pszName = LPGEN("Show contact &avatar");
+	mi.hIcolibItem = iconItem[0].hIcolib;
+	mi.name.a = LPGEN("Show contact &avatar");
 	mi.pszService = "CList/ShowContactAvatar";
 	hShowAvatarMenuItem = Menu_AddContactMenuItem(&mi);
-	DestroyIcon_protect(mi.hIcon);
 
 	CreateServiceFunction("CList/HideContactAvatar", CLUI::Service_Menu_HideContactAvatar);
 	mi.position = 2000150001;
-	mi.icolibItem = iconItem[1].hIcolib;
-	mi.pszName = LPGEN("Hide contact &avatar");
+	mi.hIcolibItem = iconItem[1].hIcolib;
+	mi.name.a = LPGEN("Hide contact &avatar");
 	mi.pszService = "CList/HideContactAvatar";
 	hHideAvatarMenuItem = Menu_AddContactMenuItem(&mi);
-	DestroyIcon_protect(mi.hIcon);
 
 	HookEvent(ME_CLIST_PREBUILDCONTACTMENU, CLUI::OnEvent_ContactMenuPreBuild);
 	return S_OK;
@@ -421,7 +412,7 @@ HRESULT CLUI::CreateCLC()
 	CLISTFrame Frame = { sizeof(Frame) };
 	Frame.hWnd = pcli->hwndContactTree;
 	Frame.align = alClient;
-	Frame.hIcon = LoadSkinnedIcon(SKINICON_OTHER_FRAME);
+	Frame.hIcon = Skin_LoadIcon(SKINICON_OTHER_FRAME);
 	Frame.Flags = F_VISIBLE | F_SHOWTBTIP | F_NO_SUBCONTAINER | F_TCHAR;
 	Frame.tname = LPGENT("My contacts");
 	Frame.TBtname = TranslateT("My contacts");
@@ -487,7 +478,7 @@ HICON GetMainStatusOverlay(int STATUS)
 
 void UnloadAvatarOverlayIcon()
 {
-	for (int i = 0; i < SIZEOF(g_pAvatarOverlayIcons); i++) {
+	for (int i = 0; i < _countof(g_pAvatarOverlayIcons); i++) {
 		g_pAvatarOverlayIcons[i].listID = -1;
 		g_pStatusOverlayIcons[i].listID = -1;
 	}
@@ -679,9 +670,9 @@ void CLUI_ChangeWindowMode()
 	TCHAR titleText[255] = { 0 };
 	DBVARIANT dbv;
 	if (db_get_ts(NULL, "CList", "TitleText", &dbv))
-		mir_tstrncpy(titleText, _T(MIRANDANAME), SIZEOF(titleText));
+		mir_tstrncpy(titleText, _T(MIRANDANAME), _countof(titleText));
 	else {
-		mir_tstrncpy(titleText, dbv.ptszVal, SIZEOF(titleText));
+		mir_tstrncpy(titleText, dbv.ptszVal, _countof(titleText));
 		db_free(&dbv);
 	}
 	SetWindowText(pcli->hwndContactList, titleText);
@@ -905,15 +896,15 @@ static int CLUI_GetConnectingIconForProtoCount(char *szAccoName)
 
 	if (szAccoName) {
 		// first of all try to find by account name( or empty - global )
-		mir_sntprintf(fileFull, SIZEOF(fileFull), _T("%s\\Icons\\proto_conn_%S.dll"), tszFolderPath, szAccoName);
+		mir_sntprintf(fileFull, _countof(fileFull), _T("%s\\Icons\\proto_conn_%S.dll"), tszFolderPath, szAccoName);
 		if (count = ExtractIconEx(fileFull, -1, NULL, NULL, 1))
 			return count;
 
 		if (szAccoName[0]) {
 			// second try to find by protocol name
-			PROTOACCOUNT *acc = ProtoGetAccount(szAccoName);
+			PROTOACCOUNT *acc = Proto_GetAccount(szAccoName);
 			if (acc && !acc->bOldProto) {
-				mir_sntprintf(fileFull, SIZEOF(fileFull), _T("%s\\Icons\\proto_conn_%S.dll"), tszFolderPath, acc->szProtoName);
+				mir_sntprintf(fileFull, _countof(fileFull), _T("%s\\Icons\\proto_conn_%S.dll"), tszFolderPath, acc->szProtoName);
 				if (count = ExtractIconEx(fileFull, -1, NULL, NULL, 1))
 					return count;
 			}
@@ -921,7 +912,7 @@ static int CLUI_GetConnectingIconForProtoCount(char *szAccoName)
 	}
 
 	// third try global
-	mir_sntprintf(fileFull, SIZEOF(fileFull), _T("%s\\Icons\\proto_conn.dll"), tszFolderPath);
+	mir_sntprintf(fileFull, _countof(fileFull), _T("%s\\Icons\\proto_conn.dll"), tszFolderPath);
 	if (count = ExtractIconEx(fileFull, -1, NULL, NULL, 1))
 		return count;
 
@@ -931,7 +922,7 @@ static int CLUI_GetConnectingIconForProtoCount(char *szAccoName)
 static HICON CLUI_LoadIconFromExternalFile(TCHAR *filename, int i)
 {
 	TCHAR szPath[MAX_PATH], szFullPath[MAX_PATH];
-	mir_sntprintf(szPath, SIZEOF(szPath), _T("Icons\\%s"), filename);
+	mir_sntprintf(szPath, _T("Icons\\%s"), filename);
 	PathToAbsoluteT(szPath, szFullPath);
 	if (_taccess(szPath, 0))
 		return NULL;
@@ -947,15 +938,15 @@ static HICON CLUI_GetConnectingIconForProto(char *szAccoName, int idx)
 	HICON hIcon;
 
 	if (szAccoName) {
-		mir_sntprintf(szFullPath, SIZEOF(szFullPath), _T("proto_conn_%S.dll"), szAccoName);
+		mir_sntprintf(szFullPath, _countof(szFullPath), _T("proto_conn_%S.dll"), szAccoName);
 		if (hIcon = CLUI_LoadIconFromExternalFile(szFullPath, idx))
 			return hIcon;
 
 		if (szAccoName[0]) {
 			// second try to find by protocol name
-			PROTOACCOUNT *acc = ProtoGetAccount(szAccoName);
+			PROTOACCOUNT *acc = Proto_GetAccount(szAccoName);
 			if (acc && !acc->bOldProto) {
-				mir_sntprintf(szFullPath, SIZEOF(szFullPath), _T("proto_conn_%S.dll"), acc->szProtoName);
+				mir_sntprintf(szFullPath, _countof(szFullPath), _T("proto_conn_%S.dll"), acc->szProtoName);
 				if (hIcon = CLUI_LoadIconFromExternalFile(szFullPath, idx))
 					return hIcon;
 			}
@@ -963,7 +954,7 @@ static HICON CLUI_GetConnectingIconForProto(char *szAccoName, int idx)
 	}
 
 	// third try global
-	mir_tstrncpy(szFullPath, _T("proto_conn.dll"), SIZEOF(szFullPath));
+	mir_tstrncpy(szFullPath, _T("proto_conn.dll"), _countof(szFullPath));
 	if (hIcon = CLUI_LoadIconFromExternalFile(szFullPath, idx))
 		return hIcon;
 
@@ -1081,10 +1072,10 @@ void CLUI_DisconnectAll()
 {
 	PROTOACCOUNT **accs;
 	int nProtoCount;
-	ProtoEnumAccounts(&nProtoCount, &accs);
+	Proto_EnumAccounts(&nProtoCount, &accs);
 
 	for (int nProto = 0; nProto < nProtoCount; nProto++)
-		if (IsAccountEnabled(accs[nProto]))
+		if (Proto_IsAccountEnabled(accs[nProto]))
 			CallProtoService(accs[nProto]->szModuleName, PS_SETSTATUS, ID_STATUS_OFFLINE, 0);
 }
 
@@ -1541,17 +1532,17 @@ static BOOL FileExists(TCHAR * tszFilename)
 HANDLE RegisterIcolibIconHandle(char *szIcoID, char *szSectionName, char *szDescription, TCHAR *tszDefaultFile, int iDefaultIndex, HINSTANCE hDefaultModuleInst, int iDefaultResource)
 {
 	if (hDefaultModuleInst == NULL)
-		return LoadSkinnedIconHandle(iDefaultResource);
+		return Skin_GetIconHandle(iDefaultResource);
 
 	TCHAR fileFull[MAX_PATH] = { 0 };
 
-	SKINICONDESC sid = { sizeof(sid) };
+	SKINICONDESC sid = { 0 };
 	sid.cx = sid.cy = 16;
-	sid.pszSection = szSectionName;
+	sid.section.a = szSectionName;
 	sid.pszName = szIcoID;
 	sid.flags |= SIDF_PATH_TCHAR;
-	sid.pszDescription = szDescription;
-	sid.ptszDefaultFile = fileFull;
+	sid.description.a = szDescription;
+	sid.defaultFile.t = fileFull;
 
 	if (tszDefaultFile) {
 		PathToAbsoluteT(tszDefaultFile, fileFull);
@@ -1562,11 +1553,11 @@ HANDLE RegisterIcolibIconHandle(char *szIcoID, char *szSectionName, char *szDesc
 	if (fileFull[0] != _T('\0'))
 		sid.iDefaultIndex = -iDefaultIndex;
 	else {
-		GetModuleFileName(hDefaultModuleInst, fileFull, SIZEOF(fileFull));
+		GetModuleFileName(hDefaultModuleInst, fileFull, _countof(fileFull));
 		sid.iDefaultIndex = -iDefaultResource;
 	}
 
-	return Skin_AddIcon(&sid);
+	return IcoLib_AddIcon(&sid);
 }
 
 // MAIN WINPROC MESSAGE HANDLERS
@@ -1592,7 +1583,7 @@ LRESULT CLUI::PreProcessWndProc(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& bH
 	if (msg == uMsgGetProfile && wParam != 0) { // got IPC message
 		int rc = 0;
 		char szName[MAX_PATH];
-		mir_snprintf(szName, SIZEOF(szName), "Miranda::%u", wParam); // caller will tell us the ID of the map
+		mir_snprintf(szName, _countof(szName), "Miranda::%u", wParam); // caller will tell us the ID of the map
 		HANDLE hMap = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, szName);
 		if (hMap != NULL) {
 			void *hView = NULL;
@@ -1817,8 +1808,7 @@ LRESULT CLUI::OnUpdate(UINT /*msg*/, WPARAM /*wParam*/, LPARAM /*lParam*/)
 LRESULT CLUI::OnInitMenu(UINT /*msg*/, WPARAM /*wParam*/, LPARAM /*lParam*/)
 {
 	if (!CLUI::IsMainMenuInited()) {
-		if (ServiceExists(MS_CLIST_MENUBUILDMAIN))
-			CallService(MS_CLIST_MENUBUILDMAIN, 0, 0);
+		Menu_BuildMainMenu();
 		CLUI::m_fMainMenuInited = TRUE;
 	}
 	return FALSE;
@@ -1912,7 +1902,8 @@ LRESULT CLUI::OnCreate(UINT, WPARAM, LPARAM)
 	DrawMenuBar(m_hWnd);
 	cliCluiProtocolStatusChanged(0, 0);
 
-	MENUITEMINFO mii = { sizeof(mii) };
+	MENUITEMINFO mii = { 0 };
+	mii.cbSize = sizeof(mii);
 	mii.fMask = MIIM_TYPE | MIIM_DATA;
 	mii.dwItemData = MENU_MIRANDAMENU;
 	mii.fType = MFT_OWNERDRAW;
@@ -2335,7 +2326,7 @@ LRESULT CLUI::OnListSizeChangeNotify(NMCLISTCONTROL * pnmc)
 
 	SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWorkArea, FALSE);
 	HMONITOR hMon = MonitorFromWindow(pcli->hwndContactTree, MONITOR_DEFAULTTONEAREST);
-	MONITORINFO mi = { sizeof(mi) };
+	MONITORINFO mi = { 0 };
 	if (GetMonitorInfo(hMon, &mi))
 		rcWorkArea = mi.rcWork;
 
@@ -2433,14 +2424,14 @@ LRESULT CLUI::OnContextMenu(UINT, WPARAM, LPARAM lParam)
 		}
 	}
 	if (PtInRect(&rc, pt)) {
-		HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDGROUP, 0, 0);
+		HMENU hMenu = Menu_BuildGroupMenu();
 		TrackPopupMenu(hMenu, TPM_TOPALIGN | TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, 0, m_hWnd, NULL);
-		DestroyTrayMenu(hMenu);
+		Menu_DestroyNestedMenu(hMenu);
 	}
 	return FALSE;
 }
 
-LRESULT CLUI::OnMeasureItem(UINT, WPARAM wParam, LPARAM lParam)
+LRESULT CLUI::OnMeasureItem(UINT, WPARAM, LPARAM lParam)
 {
 	LPMEASUREITEMSTRUCT pmis = (LPMEASUREITEMSTRUCT)lParam;
 	switch (pmis->itemData) {
@@ -2459,10 +2450,10 @@ LRESULT CLUI::OnMeasureItem(UINT, WPARAM wParam, LPARAM lParam)
 		ReleaseDC(m_hWnd, hdc);
 		return TRUE;
 	}
-	return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
+	return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
 }
 
-LRESULT CLUI::OnDrawItem(UINT, WPARAM wParam, LPARAM lParam)
+LRESULT CLUI::OnDrawItem(UINT, WPARAM, LPARAM lParam)
 {
 	ClcData *dat = (ClcData*)GetWindowLongPtr(pcli->hwndContactTree, 0);
 	LPDRAWITEMSTRUCT dis = (LPDRAWITEMSTRUCT)lParam;
@@ -2474,10 +2465,10 @@ LRESULT CLUI::OnDrawItem(UINT, WPARAM wParam, LPARAM lParam)
 			char buf[255];
 			short offset = 1 + (dis->itemState&ODS_SELECTED ? 1 : 0) - (dis->itemState&ODS_HOTLIGHT ? 1 : 0);
 
-			HICON hIcon = LoadSkinnedIcon(SKINICON_OTHER_MAINMENU);
+			HICON hIcon = Skin_LoadIcon(SKINICON_OTHER_MAINMENU);
 
 			CLUI_DrawMenuBackGround(m_hWnd, dis->hDC, 1, dis->itemState);
-			mir_snprintf(buf, SIZEOF(buf), "Main,ID=MainMenu,Selected=%s,Hot=%s", (dis->itemState&ODS_SELECTED) ? "True" : "False", (dis->itemState&ODS_HOTLIGHT) ? "True" : "False");
+			mir_snprintf(buf, "Main,ID=MainMenu,Selected=%s,Hot=%s", (dis->itemState&ODS_SELECTED) ? "True" : "False", (dis->itemState&ODS_HOTLIGHT) ? "True" : "False");
 			SkinDrawGlyph(dis->hDC, &dis->rcItem, &dis->rcItem, buf);
 
 			int x = (dis->rcItem.right + dis->rcItem.left - GetSystemMetrics(SM_CXSMICON)) / 2 + offset;
@@ -2486,7 +2477,7 @@ LRESULT CLUI::OnDrawItem(UINT, WPARAM wParam, LPARAM lParam)
 			DrawState(dis->hDC, NULL, NULL, (LPARAM)hIcon, 0, x, y, 0, 0,
 				DST_ICON | (dis->itemState & ODS_INACTIVE && (((FALSE))) ? DSS_DISABLED : DSS_NORMAL));
 
-			Skin_ReleaseIcon(hIcon);
+			IcoLib_ReleaseIcon(hIcon);
 			nMirMenuState = dis->itemState;
 		}
 		else {
@@ -2511,7 +2502,7 @@ LRESULT CLUI::OnDrawItem(UINT, WPARAM wParam, LPARAM lParam)
 			}
 			CLUI_DrawMenuBackGround(m_hWnd, dis->hDC, 2, dis->itemState);
 			SetBkMode(dis->hDC, TRANSPARENT);
-			mir_snprintf(buf, SIZEOF(buf), "Main,ID=StatusMenu,Selected=%s,Hot=%s", (dis->itemState&ODS_SELECTED) ? "True" : "False", (dis->itemState&ODS_HOTLIGHT) ? "True" : "False");
+			mir_snprintf(buf, "Main,ID=StatusMenu,Selected=%s,Hot=%s", (dis->itemState&ODS_SELECTED) ? "True" : "False", (dis->itemState&ODS_HOTLIGHT) ? "True" : "False");
 			SkinDrawGlyph(dis->hDC, &dis->rcItem, &dis->rcItem, buf);
 			SetTextColor(dis->hDC, (dis->itemState&ODS_SELECTED/*|dis->itemState&ODS_HOTLIGHT*/) ? dat->MenuTextHiColor : dat->MenuTextColor);
 			DrawText(dis->hDC, TranslateT("Status"), -1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
@@ -2528,16 +2519,16 @@ LRESULT CLUI::OnDrawItem(UINT, WPARAM wParam, LPARAM lParam)
 		//TODO check if caption is visible
 		char buf[255] = { 0 };
 		short dx = 1 + (dis->itemState&ODS_SELECTED ? 1 : 0) - (dis->itemState&ODS_HOTLIGHT ? 1 : 0);
-		HICON hIcon = LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
+		HICON hIcon = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
 		CLUI_DrawMenuBackGround(m_hWnd, dis->hDC, 3, dis->itemState);
-		mir_snprintf(buf, SIZEOF(buf), "Main,ID=MainMenu,Selected=%s,Hot=%s", (dis->itemState&ODS_SELECTED) ? "True" : "False", (dis->itemState&ODS_HOTLIGHT) ? "True" : "False");
+		mir_snprintf(buf, "Main,ID=MainMenu,Selected=%s,Hot=%s", (dis->itemState&ODS_SELECTED) ? "True" : "False", (dis->itemState&ODS_HOTLIGHT) ? "True" : "False");
 		SkinDrawGlyph(dis->hDC, &dis->rcItem, &dis->rcItem, buf);
 		DrawState(dis->hDC, NULL, NULL, (LPARAM)hIcon, 0, (dis->rcItem.right + dis->rcItem.left - GetSystemMetrics(SM_CXSMICON)) / 2 + dx, (dis->rcItem.bottom + dis->rcItem.top - GetSystemMetrics(SM_CYSMICON)) / 2 + dx, 0, 0, DST_ICON);
-		Skin_ReleaseIcon(hIcon);
+		IcoLib_ReleaseIcon(hIcon);
 		nMirMenuState = dis->itemState;
 	}
 
-	return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
+	return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
 }
 
 LRESULT CLUI::OnDestroy(UINT, WPARAM, LPARAM)

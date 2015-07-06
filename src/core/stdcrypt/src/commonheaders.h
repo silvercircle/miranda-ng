@@ -50,7 +50,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_langpack.h>
 #include <m_button.h>
 #include <m_protosvc.h>
-#include <m_protomod.h>
 #include <m_protocols.h>
 #include <m_options.h>
 #include <m_skin.h>
@@ -67,8 +66,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "version.h"
 
-#include "../../resource.h"
-#include "../stdplug.h"
+#include "../../mir_app/src/resource.h"
 
 #include "stdcrypt.h"
 

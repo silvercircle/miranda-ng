@@ -216,7 +216,8 @@ MirfoxData::initializeMirfoxData()
 MirfoxData::shouldProtoBeActiveByName(std::string protoName)
 {
 	if (
-			boost::iequals("ExchangeRates", protoName)
+			boost::iequals("MetaContacts", protoName)
+		||	boost::iequals("ExchangeRates", protoName)
 		||	boost::iequals("mTV", protoName)
 		||	boost::iequals("Quotes", protoName)
 		||	boost::iequals("Weather", protoName)
@@ -280,14 +281,12 @@ MirfoxData::getContactDefaultState(MirandaContact* contact)
 void
 MirfoxData::initializeMirandaAccounts()
 {
-
 	clearMirandaAccounts();
 
+	//get accounts from Miranda by CallService MS_PROTO_ENUMACCOUNTS
 	int accountsCount = 0;
 	PROTOACCOUNT **accounts;
-
-	//get accounts from Miranda by CallService MS_PROTO_ENUMACCOUNTS
-	CallService(MS_PROTO_ENUMACCOUNTS, (WPARAM)&accountsCount, (LPARAM)&accounts);
+	Proto_EnumAccounts(&accountsCount, &accounts);
 
 	uint64_t protocolId = 1;
 
@@ -372,12 +371,11 @@ void MirfoxData::initializeMirandaContacts()
 	for (mirandaContactsIter = mirandaContactsPtr->begin(); mirandaContactsIter != mirandaContactsPtr->end(); mirandaContactsIter++){
 
 		logger->log_p(L"initializeMirandaContacts: try to get account for hContact = [" SCNuPTR L"]", mirandaContactsIter->contactHandle);
-		char* szModuleName = (char*)CallService(MS_PROTO_GETCONTACTBASEACCOUNT, (WPARAM)(mirandaContactsIter->contactHandle), 0);
-		if (szModuleName == NULL){
+		char *szModuleName = Proto_GetBaseAccountName(mirandaContactsIter->contactHandle);
+		if (szModuleName == NULL)
 			continue;  //mirandaContactsIter->mirandaAccountPtr will be NULL
-		}
-		mirandaContactsIter->mirandaAccountPtr = getMirandaAccountPtrBySzModuleName(szModuleName);
 
+		mirandaContactsIter->mirandaAccountPtr = getMirandaAccountPtrBySzModuleName(szModuleName);
 	}
 
 
@@ -387,33 +385,22 @@ void MirfoxData::initializeMirandaContacts()
 		logger->log_p(L"initializeMirandaContacts: try to get name for hContact = [" SCNuPTR L"]", mirandaContactsIter->contactHandle);
 
 		if (mirandaContactsIter->mirandaAccountPtr != NULL){
-
-			if ( strcmp(mirandaContactsIter->mirandaAccountPtr->szProtoName, "Twitter") == 0){
-				//hack for Twitter protocol
+			if (strcmp(mirandaContactsIter->mirandaAccountPtr->szProtoName, "Twitter") == 0){
+				// hack for Twitter protocol
 
 				DBVARIANT dbv;
 				if (!db_get_s(mirandaContactsIter->contactHandle, mirandaContactsIter->mirandaAccountPtr->szModuleName, "Username", &dbv, DBVT_WCHAR)) {
 					mirandaContactsIter->contactNameW = std::wstring(dbv.pwszVal);
 					db_free(&dbv);
 				}
-
-			} else {
-				//standard miranda way for another protocols
-
-				mirandaContactsIter->contactNameW =
-						(TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)mirandaContactsIter->contactHandle, GCDNF_TCHAR);
-						//get contact's display name from clist
-
 			}
-
+			else // standard miranda way for another protocols
+				mirandaContactsIter->contactNameW = pcli->pfnGetContactDisplayName(mirandaContactsIter->contactHandle, 0);
 		}
 
-		if (mirandaContactsIter->contactNameW.size() == 0){
-			//last chance (if some hack didn't work or mirandaContactsIter->mirandaAccountPtr is NULL)
-			mirandaContactsIter->contactNameW =
-					(TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)mirandaContactsIter->contactHandle, GCDNF_TCHAR);
-					//get contact's display name from clist
-		}
+		if (mirandaContactsIter->contactNameW.size() == 0)
+			// last chance (if some hack didn't work or mirandaContactsIter->mirandaAccountPtr is NULL)
+			mirandaContactsIter->contactNameW = pcli->pfnGetContactDisplayName(mirandaContactsIter->contactHandle, 0);
 
 		logger->log_p(L"initializeMirandaContacts: got name for hContact = [" SCNuPTR L"]  is: [%s]", mirandaContactsIter->contactHandle,
 				&(mirandaContactsIter->contactNameW)==NULL ? L"<null>" : mirandaContactsIter->contactNameW.c_str());

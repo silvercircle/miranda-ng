@@ -24,11 +24,11 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "hdr/modern_commonheaders.h"
-#include "hdr/modern_commonprototypes.h"
+#include "stdafx.h"
+#include "modern_commonprototypes.h"
 #include "m_skinbutton.h"
 #include <m_toptoolbar.h>
-#include "hdr/modern_sync.h"
+#include "modern_sync.h"
 
 struct
 {
@@ -58,9 +58,8 @@ static void SetButtonPressed(int i, int state)
 
 void Modern_InitButtons()
 {
-	for (int i = 0; i < SIZEOF(BTNS); i++) {
+	for (int i = 0; i < _countof(BTNS); i++) {
 		TTBButton tbb = { 0 };
-		tbb.cbSize = sizeof(tbb);
 
 		if (BTNS[i].pszButtonID) {
 			tbb.name = LPGEN(BTNS[i].pszButtonName);
@@ -70,13 +69,13 @@ void Modern_InitButtons()
 
 			char buf[255];
 			if (i != 0) {
-				mir_snprintf(buf, SIZEOF(buf), "%s%s%s", TTB_OPTDIR, BTNS[i].pszButtonID, "_dn");
+				mir_snprintf(buf, "%s%s%s", TTB_OPTDIR, BTNS[i].pszButtonID, "_dn");
 				tbb.hIconHandleUp = RegisterIcolibIconHandle(buf, "Toolbar", BTNS[i].pszTooltipUp, _T("icons\\toolbar_icons.dll"), BTNS[i].icoDefIdx, g_hInst, BTNS[i].defResource);
 			}
 			else tbb.hIconHandleUp = RegisterIcolibIconHandle(buf, "Toolbar", BTNS[i].pszTooltipUp, NULL, 0, NULL, SKINICON_OTHER_MAINMENU);
 
 			if (BTNS[i].pszTooltipDn) {
-				mir_snprintf(buf, SIZEOF(buf), "%s%s%s", TTB_OPTDIR, BTNS[i].pszButtonID, "_up");
+				mir_snprintf(buf, "%s%s%s", TTB_OPTDIR, BTNS[i].pszButtonID, "_up");
 				tbb.hIconHandleDn = RegisterIcolibIconHandle(buf, "Toolbar", BTNS[i].pszTooltipDn, _T("icons\\toolbar_icons.dll"), BTNS[i].icoDefIdx + 1, g_hInst, BTNS[i].defResource2);
 			}
 			else tbb.hIconHandleDn = NULL;
@@ -138,14 +137,13 @@ static int ehhToolBarBackgroundSettingsChanged(WPARAM, LPARAM)
 		DeleteObject(tbdat.mtb_hBmpBackground);
 		tbdat.mtb_hBmpBackground = NULL;
 	}
+
 	if (g_CluiData.fDisableSkinEngine) {
-		DBVARIANT dbv;
 		tbdat.mtb_bkColour = sttGetColor("ToolBar", "BkColour", CLCDEFAULT_BKCOLOUR);
 		if (db_get_b(NULL, "ToolBar", "UseBitmap", CLCDEFAULT_USEBITMAP)) {
-			if (!db_get_s(NULL, "ToolBar", "BkBitmap", &dbv, DBVT_TCHAR)) {
-				tbdat.mtb_hBmpBackground = (HBITMAP)CallService(MS_UTILS_LOADBITMAP, 0, (LPARAM)dbv.ptszVal);
-				db_free(&dbv);
-			}
+			ptrT tszBitmapName(db_get_tsa(NULL, "ToolBar", "BkBitmap"));
+			if (tszBitmapName)
+				tbdat.mtb_hBmpBackground = Bitmap_Load(tszBitmapName);
 		}
 		tbdat.mtb_useWinColors = db_get_b(NULL, "ToolBar", "UseWinColours", CLCDEFAULT_USEWINDOWSCOLOURS);
 		tbdat.mtb_backgroundBmpUse = db_get_b(NULL, "ToolBar", "BkBmpUse", CLCDEFAULT_BKBMPUSE);
@@ -289,7 +287,7 @@ void CustomizeToolbar(HWND hwnd)
 	Frame.align = alTop;
 	Frame.Flags = F_VISIBLE | F_NOBORDER | F_LOCKED | F_TCHAR | F_NO_SUBCONTAINER;
 	Frame.height = 18;
-	Frame.hIcon = LoadSkinnedIcon(SKINICON_OTHER_FRAME);
+	Frame.hIcon = Skin_LoadIcon(SKINICON_OTHER_FRAME);
 	pMTBInfo->hFrame = (HANDLE)CallService(MS_CLIST_FRAMES_ADDFRAME, (WPARAM)&Frame, 0);
 
 	CallService(MS_SKINENG_REGISTERPAINTSUB, (WPARAM)hwnd, (LPARAM)ToolBar_LayeredPaintProc);
@@ -350,7 +348,7 @@ static int Toolbar_ModulesLoaded(WPARAM, LPARAM)
 
 	if (!ServiceExists(MS_TTB_REMOVEBUTTON) && bOldSetting == 1)
 		if (IDYES == MessageBox(NULL, TranslateTS(szWarning), TranslateT("Toolbar upgrade"), MB_ICONQUESTION | MB_YESNO))
-			CallService(MS_UTILS_OPENURL, 0, (LPARAM)szUrl);
+			Utils_OpenUrl(szUrl);
 
 	return 0;
 }

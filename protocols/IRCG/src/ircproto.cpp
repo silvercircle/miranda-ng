@@ -68,8 +68,6 @@ CIrcProto::CIrcProto(const char* szModuleName, const TCHAR* tszUserName) :
 
 	InitPrefs();
 
-	db_set_resident(m_szModuleName, "Status");
-
 	CList_SetAllOffline(true);
 
 	IRC_MAP_ENTRY("PING", PING)
@@ -148,9 +146,6 @@ CIrcProto::~CIrcProto()
 	Netlib_CloseHandle(m_hNetlibUser); m_hNetlibUser = NULL;
 	Netlib_CloseHandle(hNetlibDCC); hNetlibDCC = NULL;
 
-	if (hMenuRoot)
-		CallService(MO_REMOVEMENUITEM, (WPARAM)hMenuRoot, 0);
-
 	mir_free(m_alias);
 
 	CloseHandle(m_evWndCreate);
@@ -186,15 +181,15 @@ int CIrcProto::OnModulesLoaded(WPARAM, LPARAM)
 	nlu.cbSize = sizeof(nlu);
 	nlu.flags = NUF_OUTGOING | NUF_INCOMING | NUF_HTTPCONNS | NUF_TCHAR;
 	nlu.szSettingsModule = m_szModuleName;
-	mir_sntprintf(name, SIZEOF(name), TranslateT("%s server connection"), m_tszUserName);
+	mir_sntprintf(name, _countof(name), TranslateT("%s server connection"), m_tszUserName);
 	nlu.ptszDescriptiveName = name;
 	m_hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
 
 	nlu.flags = NUF_OUTGOING | NUF_INCOMING | NUF_HTTPCONNS | NUF_TCHAR;
 	char szTemp2[256];
-	mir_snprintf(szTemp2, SIZEOF(szTemp2), "%s DCC", m_szModuleName);
+	mir_snprintf(szTemp2, _countof(szTemp2), "%s DCC", m_szModuleName);
 	nlu.szSettingsModule = szTemp2;
-	mir_sntprintf(name, SIZEOF(name), TranslateT("%s client-to-client connections"), m_tszUserName);
+	mir_sntprintf(name, _countof(name), TranslateT("%s client-to-client connections"), m_tszUserName);
 	nlu.ptszDescriptiveName = name;
 	hNetlibDCC = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
 
@@ -224,7 +219,7 @@ int CIrcProto::OnModulesLoaded(WPARAM, LPARAM)
 		CallChatEvent(WINDOW_HIDDEN, (LPARAM)&gce);
 
 	TCHAR szTemp[MAX_PATH];
-	mir_sntprintf(szTemp, SIZEOF(szTemp), _T("%%miranda_path%%\\Plugins\\%S_perform.ini"), m_szModuleName);
+	mir_sntprintf(szTemp, _T("%%miranda_path%%\\Plugins\\%S_perform.ini"), m_szModuleName);
 	TCHAR *szLoadFileName = Utils_ReplaceVarsT(szTemp);
 	char* pszPerformData = IrcLoadFile(szLoadFileName);
 	if (pszPerformData != NULL) {
@@ -279,13 +274,13 @@ int CIrcProto::OnModulesLoaded(WPARAM, LPARAM)
 	if (m_nick[0]) {
 		TCHAR szBuf[40];
 		if (mir_tstrlen(m_alternativeNick) == 0) {
-			mir_sntprintf(szBuf, SIZEOF(szBuf), _T("%s%u"), m_nick, rand() % 9999);
+			mir_sntprintf(szBuf, _countof(szBuf), _T("%s%u"), m_nick, rand() % 9999);
 			setTString("AlernativeNick", szBuf);
 			mir_tstrncpy(m_alternativeNick, szBuf, 30);
 		}
 
 		if (mir_tstrlen(m_name) == 0) {
-			mir_sntprintf(szBuf, SIZEOF(szBuf), _T("Miranda%u"), rand() % 9999);
+			mir_sntprintf(szBuf, _countof(szBuf), _T("Miranda%u"), rand() % 9999);
 			setTString("Name", szBuf);
 			mir_tstrncpy(m_name, szBuf, 200);
 		}
@@ -302,7 +297,7 @@ MCONTACT __cdecl CIrcProto::AddToList(int, PROTOSEARCHRESULT* psr)
 	if (m_iStatus == ID_STATUS_OFFLINE || m_iStatus == ID_STATUS_CONNECTING)
 		return 0;
 
-	TCHAR *id = psr->id ? psr->id : psr->nick;
+	TCHAR *id = psr->id.t ? psr->id.t : psr->nick.t;
 	id = psr->flags & PSR_UNICODE ? mir_u2t((wchar_t*)id) : mir_a2t((char*)id);
 
 	CONTACT user = { id, NULL, NULL, true, false, false };
@@ -480,21 +475,21 @@ DWORD_PTR __cdecl CIrcProto::GetCaps(int type, MCONTACT)
 
 struct AckBasicSearchParam
 {
-	PROTOCHAR buf[50];
+	TCHAR buf[50];
 };
 
-void __cdecl CIrcProto::AckBasicSearch(void* param)
+void __cdecl CIrcProto::AckBasicSearch(void *arg)
 {
+	AckBasicSearchParam *param = (AckBasicSearchParam*)arg;
 	PROTOSEARCHRESULT psr = { sizeof(psr) };
 	psr.flags = PSR_TCHAR;
-	psr.id = ((AckBasicSearchParam*)param)->buf;
-	psr.nick = ((AckBasicSearchParam*)param)->buf;
+	psr.id.t = psr.nick.t = param->buf;
 	ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)1, (LPARAM)& psr);
 	ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE)1, 0);
 	delete param;
 }
 
-HANDLE __cdecl CIrcProto::SearchBasic(const PROTOCHAR* szId)
+HANDLE __cdecl CIrcProto::SearchBasic(const TCHAR* szId)
 {
 	if (szId) {
 		if (m_iStatus != ID_STATUS_OFFLINE && m_iStatus != ID_STATUS_CONNECTING &&
@@ -595,13 +590,13 @@ HANDLE __cdecl CIrcProto::SendFile(MCONTACT hContact, const TCHAR*, TCHAR** ppsz
 				PostIrcMessage(_T("/CTCP %s DCC SEND %s 200 0 %I64u %u"),
 					dci->sContactName.c_str(), sFileWithQuotes.c_str(), dci->dwSize, dcc->iToken);
 
-				mir_sntprintf(szTemp, SIZEOF(szTemp),
+				mir_sntprintf(szTemp,
 					TranslateT("DCC reversed file transfer request sent to %s [%s]"),
 					dci->sContactName.c_str(), sFileCorrect.c_str());
 				DoEvent(GC_EVENT_INFORMATION, 0, m_info.sNick.c_str(), szTemp, NULL, NULL, NULL, true, false);
 
 				if (m_sendNotice) {
-					mir_sntprintf(szTemp, SIZEOF(szTemp),
+					mir_sntprintf(szTemp,
 						_T("/NOTICE %s I am sending the file '\002%s\002' (%I64u kB) to you, please accept it. [Reverse transfer]"),
 						dci->sContactName.c_str(), sFileCorrect.c_str(), dci->dwSize / 1024);
 					PostIrcMessage(szTemp);
@@ -614,13 +609,13 @@ HANDLE __cdecl CIrcProto::SendFile(MCONTACT hContact, const TCHAR*, TCHAR** ppsz
 					PostIrcMessage(_T("/CTCP %s DCC SEND %s %u %u %I64u"),
 						dci->sContactName.c_str(), sFileWithQuotes.c_str(), ulAdr, iPort, dci->dwSize);
 
-					mir_sntprintf(szTemp, SIZEOF(szTemp),
+					mir_sntprintf(szTemp,
 						TranslateT("DCC file transfer request sent to %s [%s]"),
 						dci->sContactName.c_str(), sFileCorrect.c_str());
 					DoEvent(GC_EVENT_INFORMATION, 0, m_info.sNick.c_str(), szTemp, NULL, NULL, NULL, true, false);
 
 					if (m_sendNotice) {
-						mir_sntprintf(szTemp, SIZEOF(szTemp),
+						mir_sntprintf(szTemp,
 							_T("/NOTICE %s I am sending the file '\002%s\002' (%I64u kB) to you, please accept it. [IP: %s]"),
 							dci->sContactName.c_str(), sFileCorrect.c_str(), dci->dwSize / 1024, (TCHAR*)_A2T(ConvertIntegerToIP(ulAdr)));
 						PostIrcMessage(szTemp);
@@ -691,8 +686,6 @@ int __cdecl CIrcProto::SendMsg(MCONTACT hContact, int, const char* pszSrc)
 		ForkThread(&CIrcProto::AckMessageFail, (void*)hContact);
 		return 0;
 	}
-
-	int codepage = getCodepage();
 
 	TCHAR *result;
 	mir_utf8decode(NEWSTR_ALLOCA(pszSrc), &result);
@@ -841,15 +834,6 @@ int __cdecl CIrcProto::OnEvent(PROTOEVENTTYPE eventType, WPARAM wParam, LPARAM l
 
 	case EV_PROTO_ONMENU:
 		InitMainMenus();
-		break;
-
-	case EV_PROTO_ONRENAME:
-		if (hMenuRoot) {
-			CLISTMENUITEM mi = { sizeof(mi) };
-			mi.flags = CMIM_NAME | CMIF_TCHAR | CMIF_KEEPUNTRANSLATED;
-			mi.ptszName = m_tszUserName;
-			Menu_ModifyItem(hMenuRoot, &mi);
-		}
 		break;
 
 	case EV_PROTO_ONCONTACTDELETED:

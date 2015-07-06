@@ -22,9 +22,9 @@ CModuleInfo& CModuleInfo::GetInstance()
 	return mi;
 }
 
-HANDLE CModuleInfo::GetWindowList(const std::string& rsKey, bool bAllocateIfNonExist /*= true*/)
+MWindowList CModuleInfo::GetWindowList(const std::string& rsKey, bool bAllocateIfNonExist /*= true*/)
 {
-	HANDLE hResult = NULL;
+	MWindowList hResult = NULL;
 	THandles::const_iterator i = m_ahWindowLists.find(rsKey);
 	if (i != m_ahWindowLists.end())
 	{
@@ -60,10 +60,7 @@ CModuleInfo::TXMLEnginePtr CModuleInfo::GetXMLEnginePtr()
 	{
 		mir_cslock lck(g_lmParsers);
 		if (!g_pXMLEngine)
-		{
-			mir_getXI(&xi);
 			g_pXMLEngine = TXMLEnginePtr(new CXMLEngineMI);
-		}
 	}
 
 	return g_pXMLEngine;

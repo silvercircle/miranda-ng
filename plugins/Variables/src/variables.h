@@ -44,12 +44,13 @@
 #include <m_clc.h>
 #include <m_string.h>
 #include <m_metacontacts.h>
+#include <m_timezones.h>
 
 #include <m_variables.h>
 
 #include "..\helpers\gen_helpers.h"
 
-#include "..\pcre16\src\pcre.h"
+#include "..\..\libs\pcre16\src\pcre.h"
 
 #include "resource.h"
 #include "version.h"

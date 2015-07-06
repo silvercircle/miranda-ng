@@ -38,12 +38,6 @@ void CToxOptionsMain::OnInitDialog()
 		ShowWindow(m_profileExport.GetHwnd(), TRUE);
 	}
 
-	if (m_proto->IsOnline())
-	{
-		EnableWindow(m_nickname.GetHwnd(), TRUE);
-		EnableWindow(m_password.GetHwnd(), TRUE);
-	}
-
 	SendMessage(m_toxAddress.GetHwnd(), EM_LIMITTEXT, TOX_ADDRESS_SIZE * 2, 0);
 	SendMessage(m_nickname.GetHwnd(), EM_LIMITTEXT, TOX_MAX_NAME_LENGTH, 0);
 	SendMessage(m_password.GetHwnd(), EM_LIMITTEXT, 32, 0);
@@ -74,20 +68,20 @@ void CToxOptionsMain::ProfileCreate_OnClick(CCtrlButton*)
 		HANDLE hProfile = CreateFile(profilePath.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (hProfile == NULL)
 		{
-			// TODO: warh error
+			m_proto->debugLogA(__FUNCTION__": failed to create tox profile");
 			return;
 		}
 		CloseHandle(hProfile);
 
 		TOX_ERR_NEW initError;
-		m_proto->tox = tox_new(NULL, NULL, 0, &initError);
+		m_proto->tox = tox_new(NULL, &initError);
 		if (initError != TOX_ERR_NEW_OK)
 		{
-			// TODO: warh error
+			m_proto->debugLogA(__FUNCTION__": failed to load tox profile (%d)", initError);
 			return;
 		}
 	}
-	
+
 	if (m_proto->InitToxCore())
 	{
 		TCHAR *group = m_group.GetText();
@@ -115,7 +109,7 @@ void CToxOptionsMain::ProfileCreate_OnClick(CCtrlButton*)
 void CToxOptionsMain::ProfileImport_OnClick(CCtrlButton*)
 {
 	TCHAR filter[MAX_PATH];
-	mir_sntprintf(filter, SIZEOF(filter), _T("%s(*.tox)%c*.tox%c%s(*.*)%c*.*%c%c"),
+	mir_sntprintf(filter, _countof(filter), _T("%s(*.tox)%c*.tox%c%s(*.*)%c*.*%c%c"),
 		TranslateT("Tox profile"), 0, 0, TranslateT("All files"), 0, 0, 0);
 
 	TCHAR profilePath[MAX_PATH] = { 0 };
@@ -147,11 +141,11 @@ void CToxOptionsMain::ProfileImport_OnClick(CCtrlButton*)
 void CToxOptionsMain::ProfileExport_OnClick(CCtrlButton*)
 {
 	TCHAR filter[MAX_PATH];
-	mir_sntprintf(filter, SIZEOF(filter), _T("%s(*.tox)%c*.tox%c%c"),
+	mir_sntprintf(filter, _countof(filter), _T("%s(*.tox)%c*.tox%c%c"),
 		TranslateT("Tox profile"), 0, 0, 0);
 
 	TCHAR profilePath[MAX_PATH];
-	mir_tstrncpy(profilePath, _T("tox_save.tox"), SIZEOF(profilePath));
+	mir_tstrncpy(profilePath, _T("tox_save.tox"), _countof(profilePath));
 
 	OPENFILENAME ofn = { sizeof(ofn) };
 	ofn.hwndOwner = m_hwnd;
@@ -164,15 +158,11 @@ void CToxOptionsMain::ProfileExport_OnClick(CCtrlButton*)
 	ofn.lpstrInitialDir = _T("%HOMEPATH%");
 
 	if (!GetSaveFileName(&ofn))
-	{
 		return;
-	}
 
 	std::tstring defaultProfilePath = m_proto->GetToxProfilePath();
 	if (mir_tstrcmpi(profilePath, defaultProfilePath.c_str()) != 0)
-	{
 		CopyFile(defaultProfilePath.c_str(), profilePath, FALSE);
-	}
 }
 
 void CToxOptionsMain::OnApply()
@@ -205,7 +195,7 @@ CToxOptionsMultimedia::CToxOptionsMultimedia(CToxProto *proto)
 bool CToxOptionsMultimedia::GetDeviceFullName(GUID guid, TCHAR *deviceName, DWORD deviceNameLength)
 {
 	TCHAR registryKey[MAX_PATH];
-	mir_sntprintf(registryKey, SIZEOF(registryKey), _T("System\\CurrentControlSet\\Control\\MediaCategories\\{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}"),
+	mir_sntprintf(registryKey, _countof(registryKey), _T("System\\CurrentControlSet\\Control\\MediaCategories\\{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}"),
 		guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
 
 	HKEY hKey;
@@ -227,10 +217,10 @@ bool CToxOptionsMultimedia::GetDeviceFullName(GUID guid, TCHAR *deviceName, DWOR
 void CToxOptionsMultimedia::OnInitDialog()
 {
 	CToxDlgBase::OnInitDialog();
-	
+
 	DWORD count = 0;
 	TCHAR deviceName[MAX_PATH];
-	DWORD deviceNameLength = SIZEOF(deviceName);
+	DWORD deviceNameLength = _countof(deviceName);
 
 	WAVEINCAPS2 wic2;
 	count = waveInGetNumDevs();
@@ -385,10 +375,10 @@ void CToxOptionsNodeList::OnInitDialog()
 	m_nodes.SetExtendedListViewStyle(LVS_EX_SUBITEMIMAGES | LVS_EX_FULLROWSELECT | LVS_EX_LABELTIP);
 
 	HIMAGELIST hImageList = m_nodes.CreateImageList(LVSIL_SMALL);
-	HICON icon = LoadSkinnedIcon(SKINICON_OTHER_TYPING);
-	ImageList_AddIcon(hImageList, icon); Skin_ReleaseIcon(icon);
-	icon = LoadSkinnedIcon(SKINICON_OTHER_DELETE);
-	ImageList_AddIcon(hImageList, icon); Skin_ReleaseIcon(icon);
+	HICON icon = Skin_LoadIcon(SKINICON_OTHER_TYPING);
+	ImageList_AddIcon(hImageList, icon); IcoLib_ReleaseIcon(icon);
+	icon = Skin_LoadIcon(SKINICON_OTHER_DELETE);
+	ImageList_AddIcon(hImageList, icon); IcoLib_ReleaseIcon(icon);
 
 	m_nodes.AddColumn(0, _T("IPv4"), 100);
 	m_nodes.AddColumn(1, _T("IPv6"), 100);
@@ -411,22 +401,22 @@ void CToxOptionsNodeList::OnInitDialog()
 		mir_strcpy(fileName, VARS(TOX_INI_PATH));
 
 		char *section, sections[MAX_PATH], value[MAX_PATH];
-		GetPrivateProfileSectionNamesA(sections, SIZEOF(sections), fileName);
+		GetPrivateProfileSectionNamesA(sections, _countof(sections), fileName);
 		section = sections;
 		while (*section != NULL)
 		{
 			if (strstr(section, TOX_SETTINGS_NODE_PREFIX) == section)
 			{
-				GetPrivateProfileStringA(section, "IPv4", NULL, value, SIZEOF(value), fileName);
+				GetPrivateProfileStringA(section, "IPv4", NULL, value, _countof(value), fileName);
 				iItem = m_nodes.AddItem(mir_a2t(value), -1, NULL, 0);
 
-				GetPrivateProfileStringA(section, "IPv6", NULL, value, SIZEOF(value), fileName);
+				GetPrivateProfileStringA(section, "IPv6", NULL, value, _countof(value), fileName);
 				m_nodes.SetItem(iItem, 1, mir_a2t(value));
 
-				GetPrivateProfileStringA(section, "Port", NULL, value, SIZEOF(value), fileName);
+				GetPrivateProfileStringA(section, "Port", NULL, value, _countof(value), fileName);
 				m_nodes.SetItem(iItem, 2, mir_a2t(value));
 
-				GetPrivateProfileStringA(section, "PubKey", NULL, value, SIZEOF(value), fileName);
+				GetPrivateProfileStringA(section, "PubKey", NULL, value, _countof(value), fileName);
 				m_nodes.SetItem(iItem, 3, mir_a2t(value));
 			}
 			section += mir_strlen(section) + 1;
@@ -434,19 +424,19 @@ void CToxOptionsNodeList::OnInitDialog()
 	}
 
 	char module[MAX_PATH], setting[MAX_PATH];
-	mir_snprintf(module, SIZEOF(module), "%s_Nodes", m_proto->m_szModuleName);
+	mir_snprintf(module, _countof(module), "%s_Nodes", m_proto->m_szModuleName);
 	int nodeCount = db_get_w(NULL, module, TOX_SETTINGS_NODE_COUNT, 0);
 	for (int i = 0; i < nodeCount; i++)
 	{
-		mir_snprintf(setting, SIZEOF(setting), TOX_SETTINGS_NODE_IPV4, i);
+		mir_snprintf(setting, TOX_SETTINGS_NODE_IPV4, i);
 		ptrT value(db_get_tsa(NULL, module, setting));
 		iItem = m_nodes.AddItem(value, -1, NULL, 1);
 
-		mir_snprintf(setting, SIZEOF(setting), TOX_SETTINGS_NODE_IPV6, i);
+		mir_snprintf(setting, TOX_SETTINGS_NODE_IPV6, i);
 		value = db_get_tsa(NULL, module, setting);
 		m_nodes.SetItem(iItem, 1, value);
 
-		mir_snprintf(setting, SIZEOF(setting), TOX_SETTINGS_NODE_PORT, i);
+		mir_snprintf(setting, TOX_SETTINGS_NODE_PORT, i);
 		int port = db_get_w(NULL, module, setting, 0);
 		if (port > 0)
 		{
@@ -455,7 +445,7 @@ void CToxOptionsNodeList::OnInitDialog()
 			m_nodes.SetItem(iItem, 2, mir_a2t(portNum));
 		}
 
-		mir_snprintf(setting, SIZEOF(setting), TOX_SETTINGS_NODE_PKEY, i);
+		mir_snprintf(setting, TOX_SETTINGS_NODE_PKEY, i);
 		value = db_get_tsa(NULL, module, setting);
 		m_nodes.SetItem(iItem, 3, value);
 
@@ -540,7 +530,7 @@ void CToxOptionsNodeList::OnApply()
 	lvi.pszText = (TCHAR*)mir_alloc(MAX_PATH * sizeof(TCHAR));
 
 	char module[MAX_PATH];
-	mir_snprintf(module, SIZEOF(module), "%s_Nodes", m_proto->m_szModuleName);
+	mir_snprintf(module, _countof(module), "%s_Nodes", m_proto->m_szModuleName);
 
 	int iItem = 0;
 	int itemCount = m_nodes.GetItemCount();
@@ -557,22 +547,22 @@ void CToxOptionsNodeList::OnApply()
 		lvi.mask = LVIF_TEXT;
 		lvi.iSubItem = 0;
 		m_nodes.GetItem(&lvi);
-		mir_snprintf(setting, SIZEOF(setting), TOX_SETTINGS_NODE_IPV4, iItem);
+		mir_snprintf(setting, TOX_SETTINGS_NODE_IPV4, iItem);
 		db_set_s(NULL, module, setting, _T2A(lvi.pszText));
 
 		lvi.iSubItem = 1;
 		m_nodes.GetItem(&lvi);
-		mir_snprintf(setting, SIZEOF(setting), TOX_SETTINGS_NODE_IPV6, iItem);
+		mir_snprintf(setting, TOX_SETTINGS_NODE_IPV6, iItem);
 		db_set_s(NULL, module, setting, _T2A(lvi.pszText));
 
 		lvi.iSubItem = 2;
 		m_nodes.GetItem(&lvi);
-		mir_snprintf(setting, SIZEOF(setting), TOX_SETTINGS_NODE_PORT, iItem);
+		mir_snprintf(setting, TOX_SETTINGS_NODE_PORT, iItem);
 		db_set_w(NULL, module, setting, _ttoi(lvi.pszText));
 
 		lvi.iSubItem = 3;
 		m_nodes.GetItem(&lvi);
-		mir_snprintf(setting, SIZEOF(setting), TOX_SETTINGS_NODE_PKEY, iItem);
+		mir_snprintf(setting, TOX_SETTINGS_NODE_PKEY, iItem);
 		db_set_s(NULL, module, setting, _T2A(lvi.pszText));
 
 		iItem++;
@@ -581,13 +571,13 @@ void CToxOptionsNodeList::OnApply()
 	int nodeCount = db_get_b(NULL, module, TOX_SETTINGS_NODE_COUNT, 0);
 	for (iItem = itemCount; iItem < nodeCount; iItem++)
 	{
-		mir_snprintf(setting, SIZEOF(setting), TOX_SETTINGS_NODE_IPV4, iItem);
+		mir_snprintf(setting, TOX_SETTINGS_NODE_IPV4, iItem);
 		db_unset(NULL, module, setting);
-		mir_snprintf(setting, SIZEOF(setting), TOX_SETTINGS_NODE_IPV6, iItem);
+		mir_snprintf(setting, TOX_SETTINGS_NODE_IPV6, iItem);
 		db_unset(NULL, module, setting);
-		mir_snprintf(setting, SIZEOF(setting), TOX_SETTINGS_NODE_PORT, iItem);
+		mir_snprintf(setting, TOX_SETTINGS_NODE_PORT, iItem);
 		db_unset(NULL, module, setting);
-		mir_snprintf(setting, SIZEOF(setting), TOX_SETTINGS_NODE_PKEY, iItem);
+		mir_snprintf(setting, TOX_SETTINGS_NODE_PKEY, iItem);
 		db_unset(NULL, module, setting);
 	}
 	db_set_b(NULL, module, TOX_SETTINGS_NODE_COUNT, itemCount);

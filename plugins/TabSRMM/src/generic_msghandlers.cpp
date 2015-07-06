@@ -44,13 +44,13 @@ void TSAPI DM_SaveLogAsRTF(const TWindowData *dat)
 	}
 	else if (dat) {
 		TCHAR szFilter[MAX_PATH], szFilename[MAX_PATH];
-		mir_sntprintf(szFilter, SIZEOF(szFilter), _T("%s%c*.rtf%c%c"), TranslateT("Rich Edit file"), 0, 0, 0);
-		mir_sntprintf(szFilename, SIZEOF(szFilename), _T("%s.rtf"), dat->cache->getNick());
+		mir_sntprintf(szFilter, _T("%s%c*.rtf%c%c"), TranslateT("Rich Edit file"), 0, 0, 0);
+		mir_sntprintf(szFilename, _countof(szFilename), _T("%s.rtf"), dat->cache->getNick());
 
 		Utils::sanitizeFilename(szFilename);
 
 		TCHAR szInitialDir[MAX_PATH + 2];
-		mir_sntprintf(szInitialDir, SIZEOF(szInitialDir), _T("%s%s\\"), M.getDataPath(), _T("\\Saved message logs"));
+		mir_sntprintf(szInitialDir, _countof(szInitialDir), _T("%s%s\\"), M.getDataPath(), _T("\\Saved message logs"));
 		CreateDirectoryTreeT(szInitialDir);
 
 		OPENFILENAME ofn = { 0 };
@@ -146,7 +146,7 @@ void TSAPI DM_InitTip(TWindowData *dat)
 
 LRESULT TSAPI DM_GenericHotkeysCheck(MSG *message, TWindowData *dat)
 {
-	LRESULT mim_hotkey_check = CallService(MS_HOTKEY_CHECK, (WPARAM)message, (LPARAM)(TABSRMM_HK_SECTION_GENERIC));
+	LRESULT mim_hotkey_check = CallService(MS_HOTKEY_CHECK, (WPARAM)message, (LPARAM)TABSRMM_HK_SECTION_GENERIC);
 	HWND	hwndDlg = dat->hwnd;
 
 	switch (mim_hotkey_check) {
@@ -423,7 +423,7 @@ LRESULT TSAPI DM_MsgWindowCmdHandler(HWND hwndDlg, TContainerData *m_pContainer,
 		switch (iSelection) {
 		case ID_FAVORITES_ADDCONTACTTOFAVORITES:
 			db_set_b(dat->hContact, SRMSGMOD_T, "isFavorite", 1);
-			AddContactToFavorites(dat->hContact, dat->cache->getNick(), dat->cache->getProto(), dat->szStatus, dat->wStatus, LoadSkinnedProtoIcon(dat->cache->getProto(), dat->cache->getStatus()), 1, PluginConfig.g_hMenuFavorites);
+			AddContactToFavorites(dat->hContact, dat->cache->getNick(), dat->cache->getProto(), dat->szStatus, dat->wStatus, Skin_LoadProtoIcon(dat->cache->getProto(), dat->cache->getStatus()), 1, PluginConfig.g_hMenuFavorites);
 			break;
 		case ID_FAVORITES_REMOVECONTACTFROMFAVORITES:
 			db_set_b(dat->hContact, SRMSGMOD_T, "isFavorite", 0);
@@ -440,7 +440,6 @@ LRESULT TSAPI DM_MsgWindowCmdHandler(HWND hwndDlg, TContainerData *m_pContainer,
 		CheckMenuItem(submenu, ID_SENDMENU_SENDTOMULTIPLEUSERS, MF_BYCOMMAND | (dat->sendMode & SMODE_MULTIPLE ? MF_CHECKED : MF_UNCHECKED));
 		CheckMenuItem(submenu, ID_SENDMENU_SENDDEFAULT, MF_BYCOMMAND | (dat->sendMode == 0 ? MF_CHECKED : MF_UNCHECKED));
 		CheckMenuItem(submenu, ID_SENDMENU_SENDTOCONTAINER, MF_BYCOMMAND | (dat->sendMode & SMODE_CONTAINER ? MF_CHECKED : MF_UNCHECKED));
-		CheckMenuItem(submenu, ID_SENDMENU_FORCEANSISEND, MF_BYCOMMAND | (dat->sendMode & SMODE_FORCEANSI ? MF_CHECKED : MF_UNCHECKED));
 		CheckMenuItem(submenu, ID_SENDMENU_SENDLATER, MF_BYCOMMAND | (dat->sendMode & SMODE_SENDLATER ? MF_CHECKED : MF_UNCHECKED));
 		CheckMenuItem(submenu, ID_SENDMENU_SENDWITHOUTTIMEOUTS, MF_BYCOMMAND | (dat->sendMode & SMODE_NOACK ? MF_CHECKED : MF_UNCHECKED));
 
@@ -469,9 +468,6 @@ LRESULT TSAPI DM_MsgWindowCmdHandler(HWND hwndDlg, TContainerData *m_pContainer,
 			dat->sendMode ^= SMODE_CONTAINER;
 			RedrawWindow(hwndDlg, 0, 0, RDW_ERASENOW | RDW_UPDATENOW);
 			break;
-		case ID_SENDMENU_FORCEANSISEND:
-			dat->sendMode ^= SMODE_FORCEANSI;
-			break;
 		case ID_SENDMENU_SENDLATER:
 			if (sendLater->isAvail())
 				dat->sendMode ^= SMODE_SENDLATER;
@@ -487,7 +483,6 @@ LRESULT TSAPI DM_MsgWindowCmdHandler(HWND hwndDlg, TContainerData *m_pContainer,
 			break;
 		}
 		db_set_b(dat->hContact, SRMSGMOD_T, "no_ack", (BYTE)(dat->sendMode & SMODE_NOACK ? 1 : 0));
-		db_set_b(dat->hContact, SRMSGMOD_T, "forceansi", (BYTE)(dat->sendMode & SMODE_FORCEANSI ? 1 : 0));
 		SetWindowPos(GetDlgItem(hwndDlg, IDC_MESSAGE), 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOMOVE);
 		if (dat->sendMode & SMODE_MULTIPLE || dat->sendMode & SMODE_CONTAINER) {
 			SetWindowPos(GetDlgItem(hwndDlg, IDC_MESSAGE), 0, 0, 0, 0, 0, SWP_DRAWFRAME | SWP_FRAMECHANGED | SWP_NOZORDER |
@@ -564,7 +559,7 @@ LRESULT TSAPI DM_MsgWindowCmdHandler(HWND hwndDlg, TContainerData *m_pContainer,
 		break;
 
 	case IDC_PROTOCOL:
-		submenu = (HMENU)CallService(MS_CLIST_MENUBUILDCONTACT, dat->hContact, 0);
+		submenu = Menu_BuildContactMenu(dat->hContact);
 		if (lParam == 0)
 			GetWindowRect(GetDlgItem(hwndDlg, IDC_PROTOCOL), &rc);
 		else
@@ -618,11 +613,11 @@ static INT_PTR CALLBACK DlgProcAbout(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			CallService(MS_SYSTEM_GETFILEVERSION, 0, (LPARAM)&v);
 
 			TCHAR tStr[80];
-			mir_sntprintf(tStr, SIZEOF(tStr), _T("%s %d.%d.%d.%d [build %d]"),
+			mir_sntprintf(tStr, _countof(tStr), _T("%s %d.%d.%d.%d [build %d]"),
 				TranslateT("Version"), __MAJOR_VERSION, __MINOR_VERSION, __RELEASE_NUM, __BUILD_NUM, v[3]);
 			SetDlgItemText(hwndDlg, IDC_HEADERBAR, tStr);
 		}
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadSkinnedIconBig(SKINICON_EVENT_MESSAGE));
+		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)Skin_LoadIcon(SKINICON_EVENT_MESSAGE, true));
 		return TRUE;
 
 	case WM_COMMAND:
@@ -631,8 +626,9 @@ static INT_PTR CALLBACK DlgProcAbout(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 		case IDCANCEL:
 			DestroyWindow(hwndDlg);
 			return TRUE;
+		
 		case IDC_SUPPORT:
-			CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)"http://miranda.or.at/");
+			Utils_OpenUrl("http://miranda.or.at/");
 			break;
 		}
 		break;
@@ -1006,7 +1002,7 @@ void TSAPI DM_LoadLocale(TWindowData *dat)
 		if (!PluginConfig.m_bDontUseDefaultKbd) {
 			TCHAR	szBuf[20];
 			GetLocaleInfo(LOCALE_SYSTEM_DEFAULT, LOCALE_ILANGUAGE, szBuf, 20);
-			mir_sntprintf(szKLName, SIZEOF(szKLName), _T("0000%s"), szBuf);
+			mir_sntprintf(szKLName, _countof(szKLName), _T("0000%s"), szBuf);
 			db_set_ts(dat->hContact, SRMSGMOD_T, "locale", szKLName);
 		}
 		else {
@@ -1044,7 +1040,7 @@ void TSAPI DM_UpdateLastMessage(const TWindowData *dat)
 	TCHAR szBuf[100];
 	if (dat->bShowTyping) {
 		SendMessage(dat->pContainer->hwndStatus, SB_SETICON, 0, (LPARAM)PluginConfig.g_buttonBarIcons[ICON_DEFAULT_TYPING]);
-		mir_sntprintf(szBuf, SIZEOF(szBuf), TranslateT("%s is typing a message..."), dat->cache->getNick());
+		mir_sntprintf(szBuf, _countof(szBuf), TranslateT("%s is typing a message..."), dat->cache->getNick());
 	}
 	else if (dat->sbCustom) {
 		SendMessage(dat->pContainer->hwndStatus, SB_SETICON, 0, (LPARAM)dat->sbCustom->hIcon);
@@ -1055,14 +1051,14 @@ void TSAPI DM_UpdateLastMessage(const TWindowData *dat)
 		SendMessage(dat->pContainer->hwndStatus, SB_SETICON, 0, 0);
 
 		if (dat->pContainer->dwFlags & CNT_UINSTATUSBAR)
-			mir_sntprintf(szBuf, SIZEOF(szBuf), _T("UID: %s"), dat->cache->getUIN());
+			mir_sntprintf(szBuf, _countof(szBuf), _T("UID: %s"), dat->cache->getUIN());
 		else if (dat->lastMessage) {
 			TCHAR date[64], time[64];
-			tmi.printTimeStamp(NULL, dat->lastMessage, _T("d"), date, SIZEOF(date), 0);
+			TimeZone_PrintTimeStamp(NULL, dat->lastMessage, _T("d"), date, _countof(date), 0);
 			if (dat->pContainer->dwFlags & CNT_UINSTATUSBAR && mir_tstrlen(date) > 6)
 				date[mir_tstrlen(date) - 5] = 0;
-			tmi.printTimeStamp(NULL, dat->lastMessage, _T("t"), time, SIZEOF(time), 0);
-			mir_sntprintf(szBuf, SIZEOF(szBuf), TranslateT("Last received: %s at %s"), date, time);
+			TimeZone_PrintTimeStamp(NULL, dat->lastMessage, _T("t"), time, _countof(time), 0);
+			mir_sntprintf(szBuf, _countof(szBuf), TranslateT("Last received: %s at %s"), date, time);
 		}
 		else szBuf[0] = 0;
 	}
@@ -1382,7 +1378,7 @@ void TSAPI DM_Typing(TWindowData *dat, bool fForceOff)
 				dat->bShowTyping = 2;
 				dat->nTypeSecs = 86400;
 
-				mir_sntprintf(dat->szStatusBar, SIZEOF(dat->szStatusBar), TranslateT("%s has entered text."), dat->cache->getNick());
+				mir_sntprintf(dat->szStatusBar, _countof(dat->szStatusBar), TranslateT("%s has entered text."), dat->cache->getNick());
 				if (hwndStatus && dat->pContainer->hwndActive == hwndDlg)
 					SendMessage(hwndStatus, SB_SETTEXT, 0, (LPARAM)dat->szStatusBar);
 			}
@@ -1407,7 +1403,7 @@ void TSAPI DM_Typing(TWindowData *dat, bool fForceOff)
 		UpdateStatusBar(dat);
 	}
 	else if (dat->nTypeSecs > 0) {
-		mir_sntprintf(dat->szStatusBar, SIZEOF(dat->szStatusBar), TranslateT("%s is typing a message"), dat->cache->getNick());
+		mir_sntprintf(dat->szStatusBar, _countof(dat->szStatusBar), TranslateT("%s is typing a message"), dat->cache->getNick());
 
 		dat->nTypeSecs--;
 		if (hwndStatus && dat->pContainer->hwndActive == hwndDlg) {
@@ -1600,7 +1596,7 @@ void TSAPI DM_EventAdded(TWindowData *dat, WPARAM hContact, LPARAM lParam)
 			dat->hQueuedEvents[dat->iNextQueuedEvent++] = hDbEvent;
 
 			TCHAR szBuf[100];
-			mir_sntprintf(szBuf, SIZEOF(szBuf), TranslateT("Auto scrolling is disabled, %d message(s) queued (press F12 to enable it)"),
+			mir_sntprintf(szBuf, _countof(szBuf), TranslateT("Auto scrolling is disabled, %d message(s) queued (press F12 to enable it)"),
 				dat->iNextQueuedEvent);
 			SetDlgItemText(hwndDlg, IDC_LOGFROZENTEXT, szBuf);
 			RedrawWindow(GetDlgItem(hwndDlg, IDC_LOGFROZENTEXT), NULL, NULL, RDW_INVALIDATE);
@@ -1652,7 +1648,7 @@ void TSAPI DM_EventAdded(TWindowData *dat, WPARAM hContact, LPARAM lParam)
 		if ((GetActiveWindow() != hwndContainer || GetForegroundWindow() != hwndContainer || dat->pContainer->hwndActive != hwndDlg) && !(dbei.flags & DBEF_SENT)) {
 			if (!(m_pContainer->dwFlags & CNT_NOFLASH) && (GetActiveWindow() != hwndContainer || GetForegroundWindow() != hwndContainer))
 				FlashContainer(m_pContainer, 1, 0);
-			SendMessage(hwndContainer, DM_SETICON, (WPARAM)dat, (LPARAM)LoadSkinnedIcon(SKINICON_EVENT_MESSAGE));
+			SendMessage(hwndContainer, DM_SETICON, (WPARAM)dat, (LPARAM)Skin_LoadIcon(SKINICON_EVENT_MESSAGE));
 			m_pContainer->dwFlags |= CNT_NEED_UPDATETITLE;
 		}
 
@@ -1744,7 +1740,7 @@ void TSAPI DM_UpdateTitle(TWindowData *dat, WPARAM, LPARAM lParam)
 
 			if (lParam != 0) {
 				if (PluginConfig.m_bCutContactNameOnTabs)
-					CutContactName(szNick, newcontactname, SIZEOF(newcontactname));
+					CutContactName(szNick, newcontactname, _countof(newcontactname));
 				else
 					_tcsncpy_s(newcontactname, szNick, _TRUNCATE);
 
@@ -1752,7 +1748,7 @@ void TSAPI DM_UpdateTitle(TWindowData *dat, WPARAM, LPARAM lParam)
 
 				if (mir_tstrlen(newcontactname) != 0) {
 					if (PluginConfig.m_bStatusOnTabs)
-						mir_sntprintf(newtitle, SIZEOF(newtitle), _T("%s (%s)"), newcontactname, dat->szStatus);
+						mir_sntprintf(newtitle, _countof(newtitle), _T("%s (%s)"), newcontactname, dat->szStatus);
 					else
 						_tcsncpy_s(newtitle, newcontactname, _TRUNCATE);
 				}
@@ -1764,11 +1760,11 @@ void TSAPI DM_UpdateTitle(TWindowData *dat, WPARAM, LPARAM lParam)
 
 			TCHAR fulluin[256];
 			if (dat->bIsMeta)
-				mir_sntprintf(fulluin, SIZEOF(fulluin),
+				mir_sntprintf(fulluin, _countof(fulluin),
 				TranslateT("UID: %s (SHIFT click -> copy to clipboard)\nClick for user's details\nRight click for metacontact control\nClick dropdown to add or remove user from your favorites."),
 				bHasName ? dat->cache->getUIN() : TranslateT("No UID"));
 			else
-				mir_sntprintf(fulluin, SIZEOF(fulluin),
+				mir_sntprintf(fulluin, _countof(fulluin),
 				TranslateT("UID: %s (SHIFT click -> copy to clipboard)\nClick for user's details\nClick dropdown to change this contact's favorite status."),
 				bHasName ? dat->cache->getUIN() : TranslateT("No UID"));
 
@@ -1780,7 +1776,7 @@ void TSAPI DM_UpdateTitle(TWindowData *dat, WPARAM, LPARAM lParam)
 	if (dat->idle != dwOldIdle || lParam != 0) {
 		if (item.mask & TCIF_TEXT) {
 			item.pszText = newtitle;
-			_tcsncpy(dat->newtitle, newtitle, SIZEOF(dat->newtitle));
+			_tcsncpy(dat->newtitle, newtitle, _countof(dat->newtitle));
 			dat->newtitle[127] = 0;
 			if (dat->pWnd)
 				dat->pWnd->updateTitle(dat->cache->getNick());
@@ -1796,11 +1792,11 @@ void TSAPI DM_UpdateTitle(TWindowData *dat, WPARAM, LPARAM lParam)
 		UpdateTrayMenuState(dat, TRUE);
 		if (dat->cache->isFavorite())
 			AddContactToFavorites(dat->hContact, dat->cache->getNick(), szActProto, dat->szStatus, dat->wStatus,
-			LoadSkinnedProtoIcon(dat->cache->getProto(), dat->cache->getStatus()), 0, PluginConfig.g_hMenuFavorites);
+			Skin_LoadProtoIcon(dat->cache->getProto(), dat->cache->getStatus()), 0, PluginConfig.g_hMenuFavorites);
 
 		if (dat->cache->isRecent())
 			AddContactToFavorites(dat->hContact, dat->cache->getNick(), szActProto, dat->szStatus, dat->wStatus,
-			LoadSkinnedProtoIcon(dat->cache->getProto(), dat->cache->getStatus()), 0, PluginConfig.g_hMenuRecent);
+			Skin_LoadProtoIcon(dat->cache->getProto(), dat->cache->getStatus()), 0, PluginConfig.g_hMenuRecent);
 
 		dat->Panel->Invalidate();
 		if (dat->pWnd)

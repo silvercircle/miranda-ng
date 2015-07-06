@@ -27,16 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static DWORD protoModeMsgFlags;
 static HWND hwndStatusMsg;
 
-static bool Proto_IsAccountEnabled(PROTOACCOUNT *pa)
-{
-	return pa && ((pa->bIsEnabled && !pa->bDynDisabled) || pa->bOldProto);
-}
-
-static bool Proto_IsAccountLocked(PROTOACCOUNT *pa)
-{
-	return pa && db_get_b(NULL, pa->szModuleName, "LockMainStatus", 0) != 0;
-}
-
 static const TCHAR *GetDefaultMessage(int status)
 {
 	switch(status) {
@@ -75,7 +65,7 @@ static const char *StatusModeToDbSetting(int status, const char *suffix)
 		case ID_STATUS_IDLE:		prefix = "Idl";			break;
 		default: return NULL;
 	}
-	mir_snprintf(str, SIZEOF(str), "%s%s", prefix, suffix);
+	mir_snprintf(str, "%s%s", prefix, suffix);
 	return str;
 }
 
@@ -123,12 +113,12 @@ static TCHAR* GetAwayMessage(int statusMode, char *szProto)
 					if (mm < 0) mm += 60 * 24;
 					t.wMinute = mm % 60;
 					t.wHour = mm / 60;
-					GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &t, NULL, substituteStr, SIZEOF(substituteStr));
+					GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, &t, NULL, substituteStr, _countof(substituteStr));
 				}
-				else GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, NULL, NULL, substituteStr, SIZEOF(substituteStr));
+				else GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, NULL, NULL, substituteStr, _countof(substituteStr));
 			}
 			else if ( !_tcsnicmp(dbv.ptszVal + i, _T("%date%"), 6))
-				GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, NULL, NULL, substituteStr, SIZEOF(substituteStr));
+				GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, NULL, NULL, substituteStr, _countof(substituteStr));
 			else continue;
 
 			if (mir_tstrlen(substituteStr) > 6)
@@ -186,7 +176,7 @@ void ChangeAllProtoMessages(char *szProto, int statusMode, TCHAR *msg)
 	if (szProto == NULL) {
 		int nAccounts;
 		PROTOACCOUNT **accounts;
-		ProtoEnumAccounts(&nAccounts, &accounts);
+		Proto_EnumAccounts(&nAccounts, &accounts);
 
 		for (int i = 0; i < nAccounts; i++) {
 			PROTOACCOUNT *pa = accounts[i];
@@ -194,10 +184,10 @@ void ChangeAllProtoMessages(char *szProto, int statusMode, TCHAR *msg)
 				continue;
 
 			if ((CallProtoService(pa->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGSEND) && !Proto_IsAccountLocked(pa))
-				CallProtoService(pa->szModuleName, PS_SETAWAYMSGT, statusMode, (LPARAM)msg);
+				CallProtoService(pa->szModuleName, PS_SETAWAYMSG, statusMode, (LPARAM)msg);
 		}
 	}
-	else CallProtoService(szProto, PS_SETAWAYMSGT, statusMode, (LPARAM)msg);
+	else CallProtoService(szProto, PS_SETAWAYMSG, statusMode, (LPARAM)msg);
 }
 
 struct SetAwayMsgData
@@ -235,11 +225,11 @@ static INT_PTR CALLBACK SetAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wPa
 			mir_subclassWindow(GetDlgItem(hwndDlg, IDC_MSG), MessageEditSubclassProc);
 			{
 				TCHAR str[256], format[128];
-				GetWindowText(hwndDlg, format, SIZEOF(format));
-				mir_sntprintf(str, SIZEOF(str), format, pcli->pfnGetStatusModeDescription(dat->statusMode, 0));
+				GetWindowText(hwndDlg, format, _countof(format));
+				mir_sntprintf(str, _countof(str), format, pcli->pfnGetStatusModeDescription(dat->statusMode, 0));
 				SetWindowText(hwndDlg, str);
 			}
-			GetDlgItemText(hwndDlg, IDOK, dat->okButtonFormat, SIZEOF(dat->okButtonFormat));
+			GetDlgItemText(hwndDlg, IDOK, dat->okButtonFormat, _countof(dat->okButtonFormat));
 			{
 				TCHAR *msg = GetAwayMessage(dat->statusMode, dat->szProto);
 				SetDlgItemText(hwndDlg, IDC_MSG, msg);
@@ -257,7 +247,7 @@ static INT_PTR CALLBACK SetAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wPa
 	case WM_TIMER:
 		if (--dat->countdown >= 0) {
 			TCHAR str[64];
-			mir_sntprintf(str, SIZEOF(str), dat->okButtonFormat, dat->countdown);
+			mir_sntprintf(str, _countof(str), dat->okButtonFormat, dat->countdown);
 			SetDlgItemText(hwndDlg, IDOK, str);
 		}
 		else {
@@ -280,7 +270,7 @@ static INT_PTR CALLBACK SetAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wPa
 		case IDOK:
 			if (dat->countdown < 0) {
 				TCHAR str[1024];
-				GetDlgItemText(hwndDlg, IDC_MSG, str, SIZEOF(str));
+				GetDlgItemText(hwndDlg, IDC_MSG, str, _countof(str));
 				ChangeAllProtoMessages(dat->szProto, dat->statusMode, str);
 				db_set_ts(NULL, "SRAway", StatusModeToDbSetting(dat->statusMode, "Msg"), str);
 				DestroyWindow(hwndDlg);
@@ -370,7 +360,7 @@ struct AwayMsgInfo
 
 struct AwayMsgDlgData
 {
-	struct AwayMsgInfo info[SIZEOF(statusModes)];
+	struct AwayMsgInfo info[_countof(statusModes)];
 	int oldPage;
 };
 
@@ -386,7 +376,7 @@ static INT_PTR CALLBACK DlgProcAwayMsgOpts(HWND hwndDlg, UINT msg, WPARAM wParam
 			dat = (AwayMsgDlgData*)mir_alloc(sizeof(AwayMsgDlgData));
 			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)dat);
 			dat->oldPage = -1;
-			for (int i = 0; i < SIZEOF(statusModes); i++) {
+			for (int i = 0; i < _countof(statusModes); i++) {
 				if (!(protoModeMsgFlags & Proto_Status2Flag(statusModes[i])))
 					continue;
 
@@ -445,7 +435,7 @@ static INT_PTR CALLBACK DlgProcAwayMsgOpts(HWND hwndDlg, UINT msg, WPARAM wParam
 			}
 
 			RECT rc = dis->rcItem;
-			DrawIconEx(dis->hDC, 3, (rc.top + rc.bottom - 16) / 2, LoadSkinnedProtoIcon(NULL, dis->itemData), 16, 16, 0, NULL, DI_NORMAL);
+			DrawIconEx(dis->hDC, 3, (rc.top + rc.bottom - 16) / 2, Skin_LoadProtoIcon(NULL, dis->itemData), 16, 16, 0, NULL, DI_NORMAL);
 			rc.left += 25;
 			SetBkMode(dis->hDC, TRANSPARENT);
 			DrawText(dis->hDC, buf, -1, &rc, DT_LEFT | DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
@@ -464,7 +454,7 @@ static INT_PTR CALLBACK DlgProcAwayMsgOpts(HWND hwndDlg, UINT msg, WPARAM wParam
 					dat->info[dat->oldPage].ignore = IsDlgButtonChecked(hwndDlg, IDC_DONTREPLY);
 					dat->info[dat->oldPage].noDialog = IsDlgButtonChecked(hwndDlg, IDC_NODIALOG);
 					dat->info[dat->oldPage].usePrevious = IsDlgButtonChecked(hwndDlg, IDC_USEPREVIOUS);
-					GetDlgItemText(hwndDlg, IDC_MSG, dat->info[dat->oldPage].msg, SIZEOF(dat->info[dat->oldPage].msg));
+					GetDlgItemText(hwndDlg, IDC_MSG, dat->info[dat->oldPage].msg, _countof(dat->info[dat->oldPage].msg));
 				}
 				CheckDlgButton(hwndDlg, IDC_DONTREPLY, (i < 0 ? 0 : dat->info[i].ignore) ? BST_CHECKED : BST_UNCHECKED);
 				CheckDlgButton(hwndDlg, IDC_NODIALOG, (i < 0 ? 0 : dat->info[i].noDialog) ? BST_CHECKED : BST_UNCHECKED);
@@ -575,7 +565,7 @@ static int AwayMsgSendAccountsChanged(WPARAM, LPARAM)
 
 	int nAccounts;
 	PROTOACCOUNT** accounts;
-	ProtoEnumAccounts(&nAccounts, &accounts);
+	Proto_EnumAccounts(&nAccounts, &accounts);
 	for (int i = 0; i < nAccounts; i++) {
 		if (!Proto_IsAccountEnabled(accounts[i]))
 			continue;

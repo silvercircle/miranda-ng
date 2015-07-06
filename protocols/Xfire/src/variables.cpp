@@ -108,7 +108,7 @@ char* Varxfireserverip(ARGUMENTSINFO *ai) {
 		DBVARIANT dbv3;
 		if (!db_get(ai->fi->hContact, protocolname, "ServerIP", &dbv3))
 		{
-			mir_snprintf(temp, SIZEOF(temp), "%s:%d", dbv3.pszVal, db_get_w(ai->fi->hContact, protocolname, "Port", 0));
+			mir_snprintf(temp, _countof(temp), "%s:%d", dbv3.pszVal, db_get_w(ai->fi->hContact, protocolname, "Port", 0));
 			db_free(&dbv3);
 			return mir_strdup(temp);
 		}
@@ -133,16 +133,13 @@ char* Varxfirevoiceip(ARGUMENTSINFO *ai) {
 		DBVARIANT dbv3;
 		if (!db_get(ai->fi->hContact, protocolname, "VServerIP", &dbv3))
 		{
-			mir_snprintf(temp, SIZEOF(temp), "%s:%d", dbv3.pszVal, db_get_w(ai->fi->hContact, protocolname, "VPort", 0));
+			mir_snprintf(temp, _countof(temp), "%s:%d", dbv3.pszVal, db_get_w(ai->fi->hContact, protocolname, "VPort", 0));
 			db_free(&dbv3);
 			return mir_strdup(temp);
 		}
 		ai->flags = AIF_FALSE;
 		return mir_strdup("");
 	}
-
-	ai->flags = AIF_FALSE;
-	return mir_strdup("");
 }
 
 char* Varmyxfirevoice(ARGUMENTSINFO *ai)
@@ -174,7 +171,7 @@ char* XFireGetFoldersPath(char * pathtype)
 		if (!mir_strcmp(pathtype, "IconsFile")){
 			FoldersGetCustomPath(XFireIconFolder, path, 1024, "");
 		}
-		strcat(path, "\\");
+		mir_strcat(path, "\\");
 		return path;
 	}
 	else {
@@ -183,7 +180,7 @@ char* XFireGetFoldersPath(char * pathtype)
 		char CurProfileF[MAX_PATH] = "";
 		char CurProfile[MAX_PATH] = "";
 		CallService(MS_DB_GETPROFILEPATH, (WPARAM)MAX_PATH, (LPARAM)BaseFolder);
-		strcat(BaseFolder, "\\");
+		mir_strcat(BaseFolder, "\\");
 		CallService(MS_DB_GETPROFILENAME, (WPARAM)MAX_PATH, (LPARAM)CurProfileF);
 		int i;
 		for (i = MAX_PATH - 1; i > 5; i--){
@@ -193,16 +190,16 @@ char* XFireGetFoldersPath(char * pathtype)
 			}
 		}
 		memcpy(CurProfile, CurProfileF, i);
-		strcat(BaseFolder, CurProfile);
-		strcat(BaseFolder, "\\");
-		strcat(BaseFolder, "XFire");
-		strcat(BaseFolder, "\\");
+		mir_strcat(BaseFolder, CurProfile);
+		mir_strcat(BaseFolder, "\\");
+		mir_strcat(BaseFolder, "XFire");
+		mir_strcat(BaseFolder, "\\");
 		/*******BASE********/
 		if (!mir_strcmp(pathtype, "Avatar")){
-			strcat(BaseFolder, "Avatars");
-			strcat(BaseFolder, "\\");
+			mir_strcat(BaseFolder, "Avatars");
+			mir_strcat(BaseFolder, "\\");
 		}
-		strcat(path, BaseFolder);
+		mir_strcat(path, BaseFolder);
 	}
 	return path;
 }

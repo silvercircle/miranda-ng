@@ -61,14 +61,14 @@ void GetFilePath(TCHAR *WindowTittle, char *szSetting, TCHAR *szExt, TCHAR *szEx
 	ofn.lStructSize=CDSIZEOF_STRUCT(OPENFILENAME,lpTemplateName);
 	ofn.Flags=OFN_EXPLORER;
 	ofn.lpstrTitle=TranslateW(WindowTittle);
-	_tcsncpy(filter,TranslateW(szExtDesc), SIZEOF(filter)-1);
+	_tcsncpy(filter,TranslateW(szExtDesc), _countof(filter)-1);
 	pfilter=filter+mir_tstrlen(filter)+1;
 	mir_tstrcpy(pfilter, szExt);
 	pfilter[mir_tstrlen(pfilter)+1] = '\0';
 	pfilter[mir_tstrlen(pfilter)+2] = '\0';
 	ofn.lpstrFilter=filter;
 	tmp = UniGetContactSettingUtf(0, szGPGModuleName, szSetting, _T(""));
-	_tcsncpy(str, tmp, SIZEOF(str)-1);
+	_tcsncpy(str, tmp, _countof(str)-1);
 	mir_free(tmp);
 	if(mir_tstrlen(str)< 2)
 		str[0] = '\0';
@@ -155,7 +155,7 @@ INT_PTR SendKey(WPARAM w, LPARAM l)
 	std::string key_id_str;
 	{
 		LPSTR proto = GetContactProto(hContact);
-		PROTOACCOUNT *acc = (PROTOACCOUNT*)CallService(MS_PROTO_GETACCOUNT, 0, (LPARAM)proto);
+		PROTOACCOUNT *acc = Proto_GetAccount(proto);
 		std::string acc_str;
 		if(acc)
 		{
@@ -226,11 +226,8 @@ INT_PTR ToggleEncryption(WPARAM w, LPARAM l)
 	void setClistIcon(MCONTACT hContact);
 	setSrmmIcon(hContact);
 	setClistIcon(hContact);
-	enc = enc?0:1;
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.flags = CMIM_NAME;
-	enc?mi.pszName="Turn off GPG encryption":mi.pszName="Turn on GPG encryption";
-	Menu_ModifyItem(hToggleEncryption, &mi);
+
+	Menu_ModifyItem(hToggleEncryption, enc ? LPGENT("Turn off GPG encryption") : LPGENT("Turn on GPG encryption"));
 	return 0;
 }
 
@@ -238,9 +235,9 @@ int OnPreBuildContactMenu(WPARAM w, LPARAM l)
 {
 	MCONTACT hContact = db_mc_tryMeta(w);
 	{
-		CLISTMENUITEM mi2 = { sizeof(mi2) };
+		CMenuItem mi2;
 		LPSTR proto = GetContactProto(hContact);
-		PROTOACCOUNT *acc = (PROTOACCOUNT*)CallService(MS_PROTO_GETACCOUNT, 0, (LPARAM)proto);
+		PROTOACCOUNT *acc = Proto_GetAccount(proto);
 		std::string setting;
 		if(acc)
 		{
@@ -257,24 +254,23 @@ int OnPreBuildContactMenu(WPARAM w, LPARAM l)
 			keyid = UniGetContactSettingUtf(NULL, szGPGModuleName, "KeyID", "");
 		}
 		TCHAR buf[128] = {0};
-		mir_sntprintf(buf, SIZEOF(buf), _T("%s: %s"), TranslateT("Send public key"), toUTF16(keyid).c_str());
+		mir_sntprintf(buf, _T("%s: %s"), TranslateT("Send public key"), toUTF16(keyid).c_str());
 		mir_free(keyid);
-		mi2.ptszName = buf;
-		mi2.flags = CMIM_NAME | CMIF_TCHAR;
-		Menu_ModifyItem(hSendKey, &mi2);
+		Menu_ModifyItem(hSendKey, buf);
 	}
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.flags = CMIM_NAME;
+
+	int flags;
 	TCHAR *tmp = UniGetContactSettingUtf(hContact, szGPGModuleName, "GPGPubKey", _T(""));
 	if(!tmp[0])
 	{
 		db_unset(hContact, szGPGModuleName, "GPGEncryption");
-		mi.flags += CMIM_FLAGS | CMIF_GRAYED;
+		flags = CMIF_GRAYED;
 	}
-	else
-		mi.flags = CMIM_NAME | CMIM_FLAGS;
-	mi.pszName = db_get_b(hContact, szGPGModuleName, "GPGEncryption", 0)?"Turn off GPG encryption":"Turn on GPG encryption";
-	Menu_ModifyItem(hToggleEncryption, &mi);
+	else flags = 0;
+
+	Menu_ModifyItem(hToggleEncryption, 
+		db_get_b(hContact, szGPGModuleName, "GPGEncryption", 0) ? _T("Turn off GPG encryption") : _T("Turn on GPG encryption"),
+		INVALID_HANDLE_VALUE, flags);
 	mir_free(tmp);
 	return 0;
 }
@@ -355,13 +351,13 @@ int onProtoAck(WPARAM w, LPARAM l)
 								dbsetting += "_Password";
 								pass = UniGetContactSettingUtf(NULL, szGPGModuleName, dbsetting.c_str(), _T(""));
 								if(mir_tstrlen(pass) > 0 && bDebugLog)
-									debuglog<<std::string(time_str()+": info: found password in database for key ID: "+keyid+", trying to decrypt message from "+toUTF8((TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)ack->hContact, GCDNF_TCHAR))+" with password");
+									debuglog<<std::string(time_str()+": info: found password in database for key ID: "+keyid+", trying to decrypt message from "+toUTF8(pcli->pfnGetContactDisplayName(ack->hContact, 0))+" with password");
 							}
 							else
 							{
 								pass = UniGetContactSettingUtf(NULL, szGPGModuleName, "szKeyPassword", _T(""));
 								if(mir_tstrlen(pass) > 0 && bDebugLog)
-									debuglog<<std::string(time_str()+": info: found password for all keys in database, trying to decrypt message from "+toUTF8((TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)ack->hContact, GCDNF_TCHAR))+" with password");
+									debuglog<<std::string(time_str()+": info: found password for all keys in database, trying to decrypt message from "+toUTF8(pcli->pfnGetContactDisplayName(ack->hContact, 0))+" with password");
 							}
 							if(mir_tstrlen(pass) > 0)
 							{
@@ -371,12 +367,12 @@ int onProtoAck(WPARAM w, LPARAM l)
 							else if(password)
 							{
 								if(bDebugLog)
-									debuglog<<std::string(time_str()+": info: found password in memory, trying to decrypt message from "+toUTF8((TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)ack->hContact, GCDNF_TCHAR))+" with password");
+									debuglog<<std::string(time_str()+": info: found password in memory, trying to decrypt message from "+toUTF8(pcli->pfnGetContactDisplayName(ack->hContact, 0))+" with password");
 								cmd.push_back(L"--passphrase");
 								cmd.push_back(password);
 							}
 							else if (bDebugLog)
-								debuglog<<std::string(time_str()+": info: passwords not found in database or memory, trying to decrypt message from "+toUTF8((TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)ack->hContact, GCDNF_TCHAR))+" with out password");
+								debuglog<<std::string(time_str()+": info: passwords not found in database or memory, trying to decrypt message from "+toUTF8(pcli->pfnGetContactDisplayName(ack->hContact, 0))+" with out password");
 							mir_free(pass);
 							mir_free(keyid);
 						}
@@ -391,7 +387,7 @@ int onProtoAck(WPARAM w, LPARAM l)
 						while(out.find("public key decryption failed: bad passphrase") != string::npos)
 						{
 							if(bDebugLog)
-								debuglog<<std::string(time_str()+": info: failed to decrypt messaage from "+toUTF8((TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)ack->hContact, GCDNF_TCHAR))+" password needed, trying to get one");
+								debuglog<<std::string(time_str()+": info: failed to decrypt messaage from "+toUTF8(pcli->pfnGetContactDisplayName(ack->hContact, 0))+" password needed, trying to get one");
 							if(_terminate)
 								break;
 							{ //save inkey id
@@ -412,7 +408,7 @@ int onProtoAck(WPARAM w, LPARAM l)
 							if(password)
 							{
 								if(bDebugLog)
-									debuglog<<std::string(time_str()+": info: found password in memory, trying to decrypt message from "+toUTF8((TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)ack->hContact, GCDNF_TCHAR)));
+									debuglog<<std::string(time_str()+": info: found password in memory, trying to decrypt message from "+toUTF8(pcli->pfnGetContactDisplayName(ack->hContact, 0)));
 								std::vector<wstring> tmp;
 								tmp.push_back(L"--passphrase");
 								tmp.push_back(password);
@@ -531,9 +527,10 @@ std::wstring encrypt_file(MCONTACT hContact, TCHAR *filename)
 //from secureim partially
 INT_PTR onSendFile(WPARAM w, LPARAM l)
 {
-	if(!bFileTransfers)
-		return CallService(MS_PROTO_CHAINSEND, w, l);
 	CCSDATA *ccs=(CCSDATA*)l;
+	if(!bFileTransfers)
+		return Proto_ChainSend(w, ccs);
+
 	if(isContactSecured(ccs->hContact))
 	{
 		char *proto = GetContactProto(ccs->hContact);
@@ -545,7 +542,7 @@ INT_PTR onSendFile(WPARAM w, LPARAM l)
 				supported_proto = true;
 				ICQ_CUSTOMCAP cap = {0};
 				strncpy(cap.caps, "GPGFileTransfer",sizeof(cap.caps));
-				if( ProtoCallService(proto, PS_ICQ_CHECKCAPABILITY, (WPARAM)ccs->hContact, (LPARAM)&cap))
+				if (CallProtoService(proto, PS_ICQ_CHECKCAPABILITY, (WPARAM)ccs->hContact, (LPARAM)&cap))
 					cap_found = true;
 			}
 		}
@@ -581,12 +578,12 @@ INT_PTR onSendFile(WPARAM w, LPARAM l)
 		if(supported_proto && !cap_found)
 		{
 			if(MessageBox(0, TranslateT("Capability to decrypt file not found on other side.\nRecipient may be unable to decrypt file(s).\nDo you want to encrypt file(s) anyway?"), TranslateT("File transfer warning"), MB_YESNO) == IDNO)
-				return CallService(MS_PROTO_CHAINSEND, w, l);
+				return Proto_ChainSend(w, ccs);
 		}
 		if(!supported_proto)
 		{
 			if(MessageBox(0, TranslateT("Unable to check encryption support on other side.\nRecipient may be unable to decrypt file(s).\nCurrently capability check supported only for ICQ and Jabber protocols.\nIt will work for any other proto if Miranda with New_GPG is used on other side.\nDo you want to encrypt file(s) anyway?"), TranslateT("File transfer warning"), MB_YESNO) == IDNO)
-				return CallService(MS_PROTO_CHAINSEND, w, l);
+				return Proto_ChainSend(w, ccs);
 		}
 		HistoryLog(ccs->hContact, db_event(Translate("encrypting file for transfer"), 0, 0, DBEF_SENT));
 		DWORD flags = (DWORD)ccs->wParam; //check for PFTS_UNICODE here
@@ -627,7 +624,7 @@ INT_PTR onSendFile(WPARAM w, LPARAM l)
 			}
 		}
 	}
-	return CallService(MS_PROTO_CHAINSEND, w, l);
+	return Proto_ChainSend(w, ccs);
 }
 
 
@@ -668,7 +665,7 @@ int GetJabberInterface(WPARAM w, LPARAM l) //get interface for all jabber accoun
 	void AddHandlers();
 	int count = 0;
 	PROTOACCOUNT **accounts;
-	ProtoEnumAccounts(&count, &accounts);
+	Proto_EnumAccounts(&count, &accounts);
 	list <JabberAccount*>::iterator p;
 	Accounts.clear();
 	Accounts.push_back(new JabberAccount);
@@ -705,11 +702,11 @@ int GetJabberInterface(WPARAM w, LPARAM l) //get interface for all jabber accoun
 static JABBER_HANDLER_FUNC SendHandler(IJabberInterface *ji, HXML node, void *pUserData)
 {
 	HXML local_node = node;
-	for(int n = 0; n <= xi.getChildCount(node); n++)
+	for(int n = 0; n <= xmlGetChildCount(node); n++)
 	{
-		LPCTSTR str = xi.getText(local_node); 
-		LPCTSTR nodename = xi.getName(local_node);
-		LPCTSTR attr = xi.getAttrValue(local_node, _T("to"));
+		LPCTSTR str = xmlGetText(local_node); 
+		LPCTSTR nodename = xmlGetName(local_node);
+		LPCTSTR attr = xmlGetAttrValue(local_node, _T("to"));
 		if(attr)
 		{
 			MCONTACT hContact = ji->ContactFromJID(attr);
@@ -722,7 +719,7 @@ static JABBER_HANDLER_FUNC SendHandler(IJabberInterface *ji, HXML node, void *pU
 			if(_tcsstr(str, _T("-----BEGIN PGP MESSAGE-----")) && _tcsstr(str, _T("-----END PGP MESSAGE-----")))
 			{
 				wstring data = str;
-				xi.setText(local_node, _T("This message is encrypted."));
+				xmlSetText(local_node, _T("This message is encrypted."));
 				wstring::size_type p1 = data.find(_T("-----BEGIN PGP MESSAGE-----")) + mir_tstrlen(_T("-----BEGIN PGP MESSAGE-----"));
 				while(data.find(_T("Version: "), p1) != wstring::npos)
 				{
@@ -743,8 +740,8 @@ static JABBER_HANDLER_FUNC SendHandler(IJabberInterface *ji, HXML node, void *pU
 				wstring::size_type p2 = data.find(_T("-----END PGP MESSAGE-----"));
 				wstring data2 = data.substr(p1, p2-p1-2);
 				strip_line_term(data2);
-				HXML encrypted_data = xi.addChild(node, _T("x"), data2.c_str());
-				xi.addAttr(encrypted_data, _T("xmlns"), _T("jabber:x:encrypted"));
+				HXML encrypted_data = xmlAddChild(node, _T("x"), data2.c_str());
+				xmlAddAttr(encrypted_data, _T("xmlns"), _T("jabber:x:encrypted"));
 				return FALSE;
 			}
 		}
@@ -891,15 +888,15 @@ static JABBER_HANDLER_FUNC SendHandler(IJabberInterface *ji, HXML node, void *pU
 						{
 							std::wstring tmp = data.substr(p1, p2-p1);
 							strip_line_term(tmp);
-							HXML encrypted_data = xi.addChild(node, _T("x"), tmp.c_str());
-							xi.addAttr(encrypted_data, _T("xmlns"), _T("jabber:x:signed"));
+							HXML encrypted_data = xmlAddChild(node, _T("x"), tmp.c_str());
+							xmlAddAttr(encrypted_data, _T("xmlns"), _T("jabber:x:signed"));
 						}
 					}
 					return FALSE;
 				}
 			}
 		}
-		local_node = xi.getChild(node, n);
+		local_node = xmlGetChild(node, n);
 	}
 	return FALSE;
 }
@@ -909,35 +906,35 @@ static JABBER_HANDLER_FUNC SendHandler(IJabberInterface *ji, HXML node, void *pU
 static JABBER_HANDLER_FUNC PrescenseHandler(IJabberInterface *ji, HXML node, void *pUserData)
 {
 	HXML local_node = node;
-	for(int n = 0; n <= xi.getChildCount(node); n++)
+	for(int n = 0; n <= xmlGetChildCount(node); n++)
 	{
-		LPCTSTR str = xi.getText(local_node); 
-		LPCTSTR nodename = xi.getName(local_node);
+		LPCTSTR str = xmlGetText(local_node); 
+		LPCTSTR nodename = xmlGetName(local_node);
 		if(nodename)
 		{
 			if(_tcsstr(nodename, _T("x")))
 			{
-				for(int n = 0; n < xi.getAttrCount(local_node); n++)
+				for(int n = 0; n < xmlGetAttrCount(local_node); n++)
 				{
-					LPCTSTR name = xi.getAttrName(local_node, n);
-					LPCTSTR value = xi.getAttrValue(local_node, name);
+					LPCTSTR name = xmlGetAttrName(local_node, n);
+					LPCTSTR value = xmlGetAttrValue(local_node, name);
 					if(_tcsstr(value, _T("jabber:x:signed")))
 					{
 						std::wstring status_str;
 						HXML local_node2 = node;
-						for(int n = 0; n <= xi.getChildCount(node); n++)
+						for(int n = 0; n <= xmlGetChildCount(node); n++)
 						{
-							LPCTSTR nodename2 = xi.getName(local_node2);
+							LPCTSTR nodename2 = xmlGetName(local_node2);
 							if(_tcsstr(nodename2, _T("status")))
 							{
-								LPCTSTR status = xi.getText(local_node2);
+								LPCTSTR status = xmlGetText(local_node2);
 								if(status)
 									status_str = status;
 								break;
 							}
-							local_node2 = xi.getChild(node, n);
+							local_node2 = xmlGetChild(node, n);
 						}
-						LPCTSTR data = xi.getText(local_node);
+						LPCTSTR data = xmlGetText(local_node);
 						wstring sign = _T("-----BEGIN PGP SIGNATURE-----\n\n");
 						wstring file = toUTF16(get_random(10)), status_file = toUTF16(get_random(10));
 						sign += data;
@@ -1009,7 +1006,7 @@ static JABBER_HANDLER_FUNC PrescenseHandler(IJabberInterface *ji, HXML node, voi
 										{
 											if(!(*p))
 												break;
-											hContact = (*p)->getJabberInterface()->ContactFromJID(xi.getAttrValue(node, _T("from")));
+											hContact = (*p)->getJabberInterface()->ContactFromJID(xmlGetAttrValue(node, _T("from")));
 											if(hContact)
 												hcontact_data[hContact].key_in_prescense = out.substr(p1, p2-p1-1).c_str();
 										}
@@ -1022,7 +1019,7 @@ static JABBER_HANDLER_FUNC PrescenseHandler(IJabberInterface *ji, HXML node, voi
 				}
 			}
 		}
-		local_node = xi.getChild(node, n);
+		local_node = xmlGetChild(node, n);
 	}
 	return FALSE;
 }
@@ -1068,7 +1065,7 @@ bool isContactSecured(MCONTACT hContact)
 	if(!gpg_enc)
 	{
 		if(bDebugLog)
-			debuglog<<std::string(time_str()+": encryption is turned off for "+toUTF8((TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR)));
+			debuglog<<std::string(time_str()+": encryption is turned off for "+toUTF8(pcli->pfnGetContactDisplayName(hContact, 0)));
 		return false;
 	}
 	if(!db_mc_isMeta(hContact))
@@ -1078,13 +1075,13 @@ bool isContactSecured(MCONTACT hContact)
 		{
 			mir_free(key);
 			if(bDebugLog)
-				debuglog<<std::string(time_str()+": encryption is turned off for "+toUTF8((TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR)));
+				debuglog<<std::string(time_str()+": encryption is turned off for "+toUTF8(pcli->pfnGetContactDisplayName(hContact, 0)));
 			return false;
 		}
 		mir_free(key);
 	}
 	if(bDebugLog)
-		debuglog<<std::string(time_str()+": encryption is turned on for "+toUTF8((TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR)));
+		debuglog<<std::string(time_str()+": encryption is turned on for "+toUTF8(pcli->pfnGetContactDisplayName(hContact, 0)));
 	return true;
 }
 
@@ -1136,7 +1133,7 @@ bool isGPGValid()
 		//mir_realloc(path, (mir_tstrlen(path)+64)*sizeof(TCHAR));
 		TCHAR *gpg_path = (TCHAR*)mir_alloc(sizeof(TCHAR)*MAX_PATH);
 		mir_tstrcpy(gpg_path, tmp);
-		_tcscat(gpg_path, _T("\\GnuPG\\gpg.exe"));
+		mir_tstrcat(gpg_path, _T("\\GnuPG\\gpg.exe"));
 		mir_free(tmp);
 		tmp = NULL;
 		p = boost::filesystem::path(gpg_path);
@@ -1412,21 +1409,21 @@ void ExportGpGKeysFunc(int type)
 			case DBVT_BYTE:
 				{
 					char _id[64];
-					mir_snprintf(_id, SIZEOF(_id), "%d", dbv.bVal);
+					mir_snprintf(_id, "%d", dbv.bVal);
 					id += _id;
 				}
 				break;
 			case DBVT_WORD:
 				{
 					char _id[64];
-					mir_snprintf(_id, SIZEOF(_id), "%d", dbv.wVal);
+					mir_snprintf(_id, "%d", dbv.wVal);
 					id += _id;
 				}
 				break;
 			case DBVT_DWORD:
 				{
 					char _id[64];
-					mir_snprintf(_id, SIZEOF(_id), "%d", dbv.dVal);
+					mir_snprintf(_id, "%d", dbv.dVal);
 					id += _id;
 				}
 				break;
@@ -1463,21 +1460,21 @@ void ExportGpGKeysFunc(int type)
 			case DBVT_BYTE:
 				{
 					char _id[64];
-					mir_snprintf(_id, SIZEOF(_id), "%d", dbv.bVal);
+					mir_snprintf(_id, "%d", dbv.bVal);
 					id += _id;
 				}
 				break;
 			case DBVT_WORD:
 				{
 					char _id[64];
-					mir_snprintf(_id, SIZEOF(_id), "%d", dbv.wVal);
+					mir_snprintf(_id, "%d", dbv.wVal);
 					id += _id;
 				}
 				break;
 			case DBVT_DWORD:
 				{
 					char _id[64];
-					mir_snprintf(_id, SIZEOF(_id), "%d", dbv.dVal);
+					mir_snprintf(_id, "%d", dbv.dVal);
 					id += _id;			
 				}
 				break;
@@ -1540,11 +1537,11 @@ void ExportGpGKeysFunc(int type)
 		file.close();
 	TCHAR msg[512];
 	if(type == 2)
-		mir_sntprintf(msg, SIZEOF(msg), TranslateT("We have successfully exported %d public keys and all private keys."), exported_keys);
+		mir_sntprintf(msg, _countof(msg), TranslateT("We have successfully exported %d public keys and all private keys."), exported_keys);
 	else if(type == 1)
-		mir_sntprintf(msg, SIZEOF(msg), TranslateT("We have successfully exported all private keys."));
+		mir_sntprintf(msg, _countof(msg), TranslateT("We have successfully exported all private keys."));
 	else if(!type)
-		mir_sntprintf(msg, SIZEOF(msg), TranslateT("We have successfully exported %d public keys."), exported_keys);
+		mir_sntprintf(msg, _countof(msg), TranslateT("We have successfully exported %d public keys."), exported_keys);
 	MessageBox(NULL, msg, TranslateT("Keys export result"), MB_OK);
 }
 
@@ -1572,7 +1569,7 @@ INT_PTR ImportGpGKeys(WPARAM w, LPARAM l)
 		return 1; //TODO: handle error
 	PROTOACCOUNT **accs;
 	int acc_count = 0, processed_keys = 0, processed_private_keys = 0;
-	ProtoEnumAccounts(&acc_count, &accs);
+	Proto_EnumAccounts(&acc_count, &accs);
 	char line[256];
 	file.getline(line, 255);
 	if(!strstr(line, "-----BEGIN PGP PUBLIC KEY BLOCK-----") && !strstr(line, "-----BEGIN PGP PRIVATE KEY BLOCK-----"))
@@ -1616,7 +1613,7 @@ INT_PTR ImportGpGKeys(WPARAM w, LPARAM l)
 				case DBVT_BYTE:
 					{
 						char _id[64];
-						mir_snprintf(_id, SIZEOF(_id), "%d", dbv.bVal);
+						mir_snprintf(_id, "%d", dbv.bVal);
 						id += _id;
 						if(id == login)
 							acc = accs[i]->szModuleName;
@@ -1625,7 +1622,7 @@ INT_PTR ImportGpGKeys(WPARAM w, LPARAM l)
 				case DBVT_WORD:
 					{
 						char _id[64];
-						mir_snprintf(_id, SIZEOF(_id), "%d", dbv.wVal);
+						mir_snprintf(_id, "%d", dbv.wVal);
 						id += _id;
 						if(id == login)
 							acc = accs[i]->szModuleName;
@@ -1634,7 +1631,7 @@ INT_PTR ImportGpGKeys(WPARAM w, LPARAM l)
 				case DBVT_DWORD:
 					{
 						char _id[64];
-						mir_snprintf(_id, SIZEOF(_id), "%d", dbv.dVal);
+						mir_snprintf(_id, "%d", dbv.dVal);
 						id += _id;
 						if(id == login)
 							acc = accs[i]->szModuleName;
@@ -1685,7 +1682,7 @@ INT_PTR ImportGpGKeys(WPARAM w, LPARAM l)
 					case DBVT_BYTE:
 						{
 							char _id[64];
-							mir_snprintf(_id, SIZEOF(_id), "%d", dbv.bVal);
+							mir_snprintf(_id, "%d", dbv.bVal);
 							id += _id;
 							if(id == contact_id)
 								found = true;
@@ -1694,7 +1691,7 @@ INT_PTR ImportGpGKeys(WPARAM w, LPARAM l)
 					case DBVT_WORD:
 						{
 							char _id[64];
-							mir_snprintf(_id, SIZEOF(_id), "%d", dbv.wVal);
+							mir_snprintf(_id, "%d", dbv.wVal);
 							id += _id;
 							if(id == contact_id)
 								found = true;
@@ -1703,7 +1700,7 @@ INT_PTR ImportGpGKeys(WPARAM w, LPARAM l)
 					case DBVT_DWORD:
 						{
 							char _id[64];
-							mir_snprintf(_id, SIZEOF(_id), "%d", dbv.dVal);
+							mir_snprintf(_id, "%d", dbv.dVal);
 							id += _id;
 							if(id == contact_id)
 								found = true;
@@ -1861,8 +1858,8 @@ INT_PTR ImportGpGKeys(WPARAM w, LPARAM l)
 				ptmp = UniGetContactSettingUtf(NULL, szGPGModuleName, "szHomePath", _T(""));
 				_tcsncpy(tmp2, ptmp, MAX_PATH-1);
 				mir_free(ptmp);
-				_tcsncat(tmp2, _T("\\"), SIZEOF(tmp2) - mir_tstrlen(tmp2));
-				_tcsncat(tmp2, _T("temporary_exported.asc"), SIZEOF(tmp2) - mir_tstrlen(tmp2));
+				mir_tstrncat(tmp2, _T("\\"), _countof(tmp2) - mir_tstrlen(tmp2));
+				mir_tstrncat(tmp2, _T("temporary_exported.asc"), _countof(tmp2) - mir_tstrlen(tmp2));
 				boost::filesystem::remove(tmp2);
 				wfstream f(tmp2, std::ios::out);
 				f<<toUTF16(key).c_str();
@@ -1889,9 +1886,9 @@ INT_PTR ImportGpGKeys(WPARAM w, LPARAM l)
 		file.close();
 	TCHAR msg[512];
 	if(processed_private_keys)
-		mir_sntprintf(msg, SIZEOF(msg), TranslateT("We have successfully processed %d public keys and some private keys."), processed_keys);
+		mir_sntprintf(msg, _countof(msg), TranslateT("We have successfully processed %d public keys and some private keys."), processed_keys);
 	else
-		mir_sntprintf(msg, SIZEOF(msg), TranslateT("We have successfully processed %d public keys."), processed_keys);
+		mir_sntprintf(msg, _countof(msg), TranslateT("We have successfully processed %d public keys."), processed_keys);
 	MessageBox(NULL, msg, TranslateT("Keys import result"), MB_OK);
 	return 0;
 }
@@ -2083,16 +2080,16 @@ static INT_PTR CALLBACK DlgProcChangePasswd(HWND hwndDlg, UINT msg, WPARAM wPara
 			  std::string old_pass, new_pass;
 			  extern TCHAR key_id_global[17];
 			  TCHAR buf[256] = {0};
-			  GetDlgItemText(hwndDlg, IDC_NEW_PASSWD1, buf, SIZEOF(buf));
+			  GetDlgItemText(hwndDlg, IDC_NEW_PASSWD1, buf, _countof(buf));
 			  new_pass = toUTF8(buf);
-			  GetDlgItemText(hwndDlg, IDC_NEW_PASSWD2, buf, SIZEOF(buf));
+			  GetDlgItemText(hwndDlg, IDC_NEW_PASSWD2, buf, _countof(buf));
 			  if(new_pass != toUTF8(buf))
 			  {
 				  MessageBox(hwndDlg, TranslateT("New passwords do not match"), TranslateT("Error"), MB_OK);
 				  //key_id_global[0] = 0;
 				  break;
 			  }
-			  GetDlgItemText(hwndDlg, IDC_OLD_PASSWD, buf, SIZEOF(buf));
+			  GetDlgItemText(hwndDlg, IDC_OLD_PASSWD, buf, _countof(buf));
 			  old_pass = toUTF8(buf);
 			  bool old_pass_match = false;
 			  TCHAR *pass = UniGetContactSettingUtf(NULL, szGPGModuleName, "szKeyPassword", _T(""));

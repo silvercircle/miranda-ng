@@ -339,8 +339,14 @@ Minimizar a la bandeja
 Opciones de translucidez
 [Frames]
 Marcos
+[Round corners]
+Esquinas redondeadas
 [Left margin:]
 Margen izquierdo:
+[height]
+alto
+[width]
+ancho
 [Text:]
 Texto:
 [Status]
@@ -349,8 +355,12 @@ Estado
 Apodo
 [Preview]
 Previsualizar
+[Align]
+Alinear
 [Options]
 Opciones
+[Border]
+Borde
 [&Main menu]
 &Menú principal
 [E&xit]
@@ -461,6 +471,8 @@ Texto
 Iconos adicionales
 [(Unknown contact)]
 (Contacto desconocido)
+[Tray menu]
+Menú de la bandeja
 [&Hide/show]
 &Mostrar/Ocultar
 [&Find/add contacts...]
@@ -469,10 +481,6 @@ Iconos adicionales
 &Opciones
 [Main]
 Principal
-[You need an image services plugin to process PNG images.]
-Usted necesita un plugin de servicios de imagen para procesar imágenes PNG.
-[Error]
-Error
 [Angeli-Ka (graphics), FYR (template)]
 Angeli-Ka (gráficos), FYR (plantilla)
 [Inside library]

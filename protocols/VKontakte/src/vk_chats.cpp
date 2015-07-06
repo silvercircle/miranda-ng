@@ -21,31 +21,32 @@ enum
 {
 	IDM_NONE,
 	IDM_TOPIC, IDM_INVITE, IDM_DESTROY,
-	IDM_KICK, IDM_INFO
+	IDM_KICK, IDM_INFO, IDM_VISIT_PROFILE
 };
 
 static LPCTSTR sttStatuses[] = { LPGENT("Participants"), LPGENT("Owners") };
 
-CVkChatInfo* CVkProto::AppendChat(int id, JSONNODE *pDlg)
+extern JSONNode nullNode;
+
+CVkChatInfo* CVkProto::AppendChat(int id, const JSONNode &jnDlg)
 {
 	debugLog(_T("CVkProto::AppendChat"));
 	if (id == 0)
 		return NULL;
 
 	MCONTACT chatContact = FindChat(id);
-	if (chatContact)
-		if (getBool(chatContact, "kicked", false))
-			return NULL;
+	if (chatContact && getBool(chatContact, "kicked"))
+		return NULL;
 
 	CVkChatInfo *c = m_chats.find((CVkChatInfo*)&id);
 	if (c != NULL)
 		return c;
 
-	ptrT ptszTitle;
+	CMString tszTitle;
 	c = new CVkChatInfo(id);
-	if (pDlg != NULL) {
-		ptszTitle = json_as_string(json_get(pDlg, "title"));
-		c->m_tszTopic = mir_tstrdup((ptszTitle != NULL) ? ptszTitle : _T(""));
+	if (!jnDlg.isnull()) {
+		tszTitle = jnDlg["title"].as_mstring();
+		c->m_tszTopic = mir_tstrdup(!tszTitle.IsEmpty() ? tszTitle : _T(""));
 	}
 
 	CMString sid; 
@@ -55,7 +56,7 @@ CVkChatInfo* CVkProto::AppendChat(int id, JSONNODE *pDlg)
 	GCSESSION gcw = { sizeof(gcw) };
 	gcw.iType = GCW_CHATROOM;
 	gcw.pszModule = m_szModuleName;
-	gcw.ptszName = ptszTitle;
+	gcw.ptszName = tszTitle;
 	gcw.ptszID = sid;
 	CallServiceSync(MS_GC_NEWSESSION, NULL, (LPARAM)&gcw);
 
@@ -66,12 +67,12 @@ CVkChatInfo* CVkProto::AppendChat(int id, JSONNODE *pDlg)
 	CallServiceSync(MS_GC_GETINFO, 0, (LPARAM)&gci);
 	c->m_hContact = gci.hContact;
 
-	setTString(gci.hContact, "Nick", ptszTitle);
+	setTString(gci.hContact, "Nick", tszTitle);
 	m_chats.insert(c);
 
 	GCDEST gcd = { m_szModuleName, sid, GC_EVENT_ADDGROUP };
 	GCEVENT gce = { sizeof(gce), &gcd };
-	for (int i = SIZEOF(sttStatuses)-1; i >= 0; i--) {
+	for (int i = _countof(sttStatuses)-1; i >= 0; i--) {
 		gce.ptszStatus = TranslateTS(sttStatuses[i]);
 		CallServiceSync(MS_GC_EVENT, NULL, (LPARAM)&gce);
 	}
@@ -79,7 +80,7 @@ CVkChatInfo* CVkProto::AppendChat(int id, JSONNODE *pDlg)
 	setDword(gci.hContact, "vk_chat_id", id);
 	db_unset(gci.hContact, m_szModuleName, "off");
 
-	if (json_as_int(json_get(pDlg, "left")) == 1) {
+	if (jnDlg["left"].as_bool())  {
 		setByte(gci.hContact, "off", 1);
 		m_chats.remove(c);
 		return NULL;
@@ -97,24 +98,29 @@ CVkChatInfo* CVkProto::AppendChat(int id, JSONNODE *pDlg)
 
 void CVkProto::RetrieveChatInfo(CVkChatInfo *cc)
 {
-	CMStringA szQuery("return { ");
 
-	// retrieve title & owner id
-	szQuery.AppendFormat("\"info\": API.messages.getChat({\"chat_id\":%d}),", cc->m_chatid);
+	CMString tszQuery;
+	tszQuery.AppendFormat(_T("var ChatId=%d;"), cc->m_chatid);
+	tszQuery += _T("var Info=API.messages.getChat({\"chat_id\":ChatId});");
+	tszQuery += _T("var ChatUsers=API.messages.getChatUsers({\"chat_id\":ChatId,\"fields\":\"id,first_name,last_name\"});");
 
-	// retrieve users
-	szQuery.AppendFormat("\"users\": API.messages.getChatUsers({\"chat_id\":%d, \"fields\":\"id,first_name,last_name\"})", cc->m_chatid);
+	if (!cc->m_bHistoryRead) {
+		tszQuery += _T("var ChatMsg=API.messages.getHistory({\"chat_id\":ChatId,\"count\":20,\"rev\":0});");
+		tszQuery += _T("var MsgUsers=API.users.get({\"user_ids\":ChatMsg.items@.user_id,\"fields\":\"id,first_name,last_name\"});");
+	}
+
+	tszQuery += _T("return {\"info\":Info,\"users\":ChatUsers");
 
 	if (!cc->m_bHistoryRead)
-		szQuery.AppendFormat(",\"msgs\": API.messages.getHistory({\"chat_id\":%d, \"count\":20, \"rev\":0})", cc->m_chatid);
+		tszQuery += _T(",\"msgs\":ChatMsg,\"msgs_users\":MsgUsers");
 
-	szQuery.Append("};");
+	tszQuery +=_T("};");
 
 	debugLogA("CVkProto::RetrieveChantInfo(%d)", cc->m_chatid);
 	if (!IsOnline())
 		return;
 	Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/execute.json", true, &CVkProto::OnReceiveChatInfo)
-		<< CHAR_PARAM("code", szQuery)
+		<< TCHAR_PARAM("code", tszQuery)
 		<< VER_API)->pUserInfo = cc;
 }
 
@@ -124,46 +130,39 @@ void CVkProto::OnReceiveChatInfo(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pRe
 	if (reply->resultCode != 200)
 		return;
 
-	JSONROOT pRoot;
-	JSONNODE *pResponse = CheckJsonResponse(pReq, reply, pRoot);
-	if (pResponse == NULL)
+	JSONNode jnRoot;
+	const JSONNode &jnResponse = CheckJsonResponse(pReq, reply, jnRoot);
+	if (!jnResponse)
 		return;
 
 	CVkChatInfo *cc = (CVkChatInfo*)pReq->pUserInfo;
 	if (m_chats.indexOf(cc) == -1)
 		return;
 
-	JSONNODE *info = json_get(pResponse, "info");
-	if (info != NULL) {
-		ptrT tszTitle(json_as_string(json_get(info, "title")));
-		if (mir_tstrcmp(tszTitle, cc->m_tszTopic)) {
-			cc->m_tszTopic = mir_tstrdup(tszTitle);
-			setTString(cc->m_hContact, "Nick", tszTitle);
+	const JSONNode &jnInfo = jnResponse["info"];
+	if (!jnInfo.isnull()) {
+		if (!jnInfo["title"].isnull())
+			SetChatTitle(cc, jnInfo["title"].as_mstring());
 
-			GCDEST gcd = { m_szModuleName, cc->m_tszId, GC_EVENT_CHANGESESSIONAME };
-			GCEVENT gce = { sizeof(GCEVENT), &gcd };
-			gce.ptszText = tszTitle;
-			CallServiceSync(MS_GC_EVENT, 0, (LPARAM)&gce);
-		}
-		if ((json_as_int(json_get(info, "left")) == 1) || (json_as_int(json_get(info, "kicked")) == 1)) {
+		if (jnInfo["left"].as_bool() || jnInfo["kicked"].as_bool()) {
 			setByte(cc->m_hContact, "kicked", (int)true);
 			LeaveChat(cc->m_chatid);
 			return;
 		}
-		cc->m_admin_id = json_as_int(json_get(info, "admin_id"));	
+		cc->m_admin_id = jnInfo["admin_id"].as_int();
 	}
 
-	JSONNODE *users = json_get(pResponse, "users");
-	if (users != NULL) {
+	const JSONNode &jnUsers = jnResponse["users"];
+	if (!jnUsers.isnull()) {
 		for (int i = 0; i < cc->m_users.getCount(); i++)
 			cc->m_users[i].m_bDel = true;
 
-		for (int i = 0;; i++) {
-			JSONNODE *pUser = json_at(users, i);
-			if (pUser == NULL)
+		for (auto it = jnUsers.begin(); it != jnUsers.end(); ++it) {
+			const JSONNode &jnUser = (*it);
+			if (!jnUser)
 				break;
 
-			int uid = json_as_int(json_get(pUser, "id"));
+			int uid = jnUser["id"].as_int();
 			TCHAR tszId[20];
 			_itot(uid, tszId, 10);
 
@@ -173,12 +172,13 @@ void CVkProto::OnReceiveChatInfo(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pRe
 				cc->m_users.insert(cu = new CVkChatUser(uid));
 				bNew = true;
 			}
-			else bNew = cu->m_bUnknown;
+			else 
+				bNew = cu->m_bUnknown;
 			cu->m_bDel = false;
 
-			ptrT fName(json_as_string(json_get(pUser, "first_name")));
-			ptrT lName(json_as_string(json_get(pUser, "last_name")));
-			CMString tszNick = CMString(fName).Trim() + _T(" ") + CMString(lName).Trim();
+			CMString fName(jnUser["first_name"].as_mstring());
+			CMString lName(jnUser["last_name"].as_mstring());
+			CMString tszNick = fName.Trim() + _T(" ") + lName.Trim();
 			cu->m_tszNick = mir_tstrdup(tszNick);
 			cu->m_bUnknown = false;
 			
@@ -205,23 +205,44 @@ void CVkProto::OnReceiveChatInfo(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pRe
 			GCDEST gcd = { m_szModuleName, cc->m_tszId, GC_EVENT_PART };
 			GCEVENT gce = { sizeof(GCEVENT), &gcd };
 			gce.ptszUID = tszId;
+			gce.dwFlags = GCEF_REMOVECONTACT | GCEF_NOTNOTIFY;
+			gce.time = time(NULL);
+			gce.ptszNick = mir_tstrdup(CMString(FORMAT, _T("%s (https://vk.com/id%s)"), cu.m_tszNick, tszId));
 			CallServiceSync(MS_GC_EVENT, 0, (LPARAM)&gce);
 
 			cc->m_users.remove(i);
 		}
 	}
 
-	JSONNODE *msgs = json_get(pResponse, "msgs");
-	if (msgs != NULL) {
-		int numMessages = json_as_int(json_get(msgs, "count"));
-		msgs = json_get(msgs, "items");
-		if (msgs != NULL) {
-			for (int i = 0; i < numMessages; i++) {
-				JSONNODE *pMsg = json_at(msgs, i);
-				if (pMsg == NULL)
+	const JSONNode &jnMsgsUsers = jnResponse["msgs_users"];
+	for (auto it = jnMsgsUsers.begin(); it != jnMsgsUsers.end(); ++it) {
+		const JSONNode &jnUser = (*it);
+		LONG uid = jnUser["id"].as_int();
+		CVkChatUser *cu = cc->m_users.find((CVkChatUser*)&uid);
+		if (cu)
+			continue;
+		
+		MCONTACT hContact = FindUser(uid);
+		if (hContact)
+			continue;
+
+		hContact = SetContactInfo(jnUser, true);
+		db_set_b(hContact, "CList", "Hidden", 1);
+		db_set_b(hContact, "CList", "NotOnList", 1);
+		db_set_dw(hContact, "Ignore", "Mask1", 0);
+	}
+
+	const JSONNode &jnMsgs = jnResponse["msgs"];
+	if (!jnMsgs.isnull()) {
+		
+		const JSONNode &jnItems = jnMsgs["items"];
+		if (!jnItems.isnull()) {
+			for (auto it = jnItems.begin(); it != jnItems.end(); ++it) {
+				const JSONNode &jnMsg = (*it);
+				if (!jnMsg)
 					break;
 
-				AppendChatMessage(cc->m_chatid, pMsg, true);
+				AppendChatMessage(cc->m_chatid, jnMsg, true);
 			}
 			cc->m_bHistoryRead = true;
 		}
@@ -229,48 +250,142 @@ void CVkProto::OnReceiveChatInfo(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pRe
 
 	for (int j = 0; j < cc->m_msgs.getCount(); j++) {
 		CVkChatMessage &p = cc->m_msgs[j];
-		AppendChatMessage(cc, p.m_uid, p.m_date, p.m_tszBody, p.m_bHistory);
+		AppendChatMessage(cc, p.m_uid, p.m_date, p.m_tszBody, p.m_bHistory, p.m_bIsAction);
 	}
 	cc->m_msgs.destroy();
 }
 
+void CVkProto::SetChatTitle(CVkChatInfo *cc, LPCTSTR tszTopic)
+{
+	debugLog(_T("CVkProto::SetChatTitle"));
+	if (!cc)
+		return;
+
+	if (mir_tstrcmp(cc->m_tszTopic, tszTopic) == 0)
+		return;
+
+	cc->m_tszTopic = mir_tstrdup(tszTopic);
+	setTString(cc->m_hContact, "Nick", tszTopic);
+
+	GCDEST gcd = { m_szModuleName, cc->m_tszId, GC_EVENT_CHANGESESSIONAME };
+	GCEVENT gce = { sizeof(GCEVENT), &gcd };
+	gce.ptszText = tszTopic;
+	CallServiceSync(MS_GC_EVENT, 0, (LPARAM)&gce);
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////
 
-void CVkProto::AppendChatMessage(int id, JSONNODE *pMsg, bool bIsHistory)
+void CVkProto::AppendChatMessage(int id, const JSONNode &jnMsg, bool bIsHistory)
 {
 	debugLogA("CVkProto::AppendChatMessage");
-	CVkChatInfo *cc = AppendChat(id, NULL);
+	CVkChatInfo *cc = AppendChat(id, nullNode);
 	if (cc == NULL)
 		return;
 
-	int mid = json_as_int(json_get(pMsg, "id"));
-	int uid = json_as_int(json_get(pMsg, "user_id"));
+	int mid = jnMsg["id"].as_int();
+	int uid = jnMsg["user_id"].as_int();
+	bool bIsAction = false;
 
-	int msgTime = json_as_int(json_get(pMsg, "date"));
+	int msgTime = jnMsg["date"].as_int();
 	time_t now = time(NULL);
 	if (!msgTime || msgTime > now)
 		msgTime = now;
 
-	ptrT ptszBody(json_as_string(json_get(pMsg, "body")));
+	CMString tszBody(jnMsg["body"].as_mstring());
 	
-	JSONNODE *pFwdMessages = json_get(pMsg, "fwd_messages");
-	if (pFwdMessages != NULL){
-		CMString tszFwdMessages = GetFwdMessages(pFwdMessages, m_iBBCForAttachments);
-		if (!IsEmpty(ptszBody))
+	const JSONNode &jnFwdMessages = jnMsg["fwd_messages"];
+	if (!jnFwdMessages.isnull()) {
+		CMString tszFwdMessages = GetFwdMessages(jnFwdMessages, bbcNo);
+		if (!tszBody.IsEmpty())
 			tszFwdMessages = _T("\n") + tszFwdMessages;
-		ptszBody = mir_tstrdup(CMString(ptszBody) + tszFwdMessages);
+		tszBody += tszFwdMessages;
 	}
 
-	JSONNODE *pAttachments = json_get(pMsg, "attachments");
-	if (pAttachments != NULL){
-		CMString tszAttachmentDescr = GetAttachmentDescr(pAttachments, m_iBBCForAttachments);
-		if (!IsEmpty(ptszBody))
+	const JSONNode &jnAttachments = jnMsg["attachments"];
+	if (!jnAttachments.isnull()) {
+		CMString tszAttachmentDescr = GetAttachmentDescr(jnAttachments, bbcNo);
+		if (!tszBody.IsEmpty())
 			tszAttachmentDescr = _T("\n") + tszAttachmentDescr;
-		ptszBody = mir_tstrdup(CMString(ptszBody) + tszAttachmentDescr);
+		tszBody +=  tszAttachmentDescr;
 	}
 
-	if (cc->m_bHistoryRead)
-		AppendChatMessage(cc, uid, msgTime, ptszBody, bIsHistory);
+	if (tszBody.IsEmpty() && !jnMsg["action"].isnull()) {
+		bIsAction = true;
+		CMString tszAction = jnMsg["action"].as_mstring();
+		
+		if (tszAction.IsEmpty())
+			tszBody = _T("...");
+		else if (tszAction == _T("chat_create")) {
+			CMString tszActionText = jnMsg["action_text"].as_mstring();
+			tszBody.AppendFormat(_T("%s \"%s\""), TranslateT("create chat"), tszActionText.IsEmpty() ? _T(" ") : tszActionText);
+		}
+		else if (tszAction == _T("chat_kick_user")) {
+			CMString tszActionMid = jnMsg["action_mid"].as_mstring();
+			if (tszActionMid.IsEmpty())
+				tszBody = TranslateT("kick user");
+			else {
+				CMString tszUid;
+				tszUid.AppendFormat(_T("%d"), uid);
+				if (tszUid == tszActionMid) {
+					if (cc->m_bHistoryRead)
+						return;
+					tszBody.AppendFormat(_T(" (https://vk.com/id%s) %s"), tszUid, TranslateT("left chat"));
+				}
+				else {
+					int a_uid = 0;
+					int iReadCount = _stscanf(tszActionMid, _T("%d"), &a_uid);
+					if (iReadCount == 1) {
+						CVkChatUser *cu = cc->m_users.find((CVkChatUser*)&a_uid);
+						if (cu == NULL)
+							tszBody.AppendFormat(_T("%s (https://vk.com/id%d)"), TranslateT("kick user"), a_uid);
+						else
+							tszBody.AppendFormat(_T("%s %s (https://vk.com/id%d)"), TranslateT("kick user"), cu->m_tszNick, a_uid);
+					}
+					else 
+						tszBody = TranslateT("kick user");
+				}
+			}
+		}
+		else if (tszAction == _T("chat_invite_user")) {
+			CMString tszActionMid = jnMsg["action_mid"].as_mstring();
+			if (tszActionMid.IsEmpty())
+				tszBody = TranslateT("invite user");
+			else {
+				CMString tszUid;
+				tszUid.AppendFormat(_T("%d"), uid);
+				if (tszUid == tszActionMid)
+					tszBody.AppendFormat(_T(" (https://vk.com/id%s) %s"), tszUid, TranslateT("returned to chat"));
+				else {
+					int a_uid = 0;
+					int iReadCount = _stscanf(tszActionMid, _T("%d"), &a_uid);
+					if (iReadCount == 1) {
+						CVkChatUser *cu = cc->m_users.find((CVkChatUser*)&a_uid);
+						if (cu == NULL)
+							tszBody.AppendFormat(_T("%s (https://vk.com/id%d)"), TranslateT("invite user"), a_uid);
+						else
+							tszBody.AppendFormat(_T("%s %s (https://vk.com/id%d)"), TranslateT("invite user"), cu->m_tszNick, a_uid);
+					}
+					else
+						tszBody = TranslateT("invite user");
+				}			
+			}
+		}
+		else if (tszAction == _T("chat_title_update")) {
+			CMString tszTitle = jnMsg["action_text"].as_mstring();
+			tszBody.AppendFormat(_T("%s \"%s\""), TranslateT("change chat title to"), tszTitle.IsEmpty() ? _T(" ") : tszTitle);
+
+			if (!bIsHistory)
+				SetChatTitle(cc, tszTitle);
+		}
+		else
+			tszBody.AppendFormat(_T(": %s (%s)"), TranslateT("chat action not supported"), tszAction);
+	}
+
+	if (cc->m_bHistoryRead) {
+		if (!jnMsg["title"].isnull())
+			SetChatTitle(cc, jnMsg["title"].as_mstring());
+		AppendChatMessage(cc, uid, msgTime, tszBody, bIsHistory, bIsAction);
+	}
 	else {
 		CVkChatMessage *cm = cc->m_msgs.find((CVkChatMessage *)&mid);
 		if (cm == NULL)
@@ -278,31 +393,33 @@ void CVkProto::AppendChatMessage(int id, JSONNODE *pMsg, bool bIsHistory)
 
 		cm->m_uid = uid;
 		cm->m_date = msgTime;
-		cm->m_tszBody = ptszBody.detouch();
+		cm->m_tszBody = mir_tstrdup(tszBody);
 		cm->m_bHistory = bIsHistory;
+		cm->m_bIsAction = bIsAction;
 	}
 }
 
-void CVkProto::AppendChatMessage(CVkChatInfo *cc, int uid, int msgTime, LPCTSTR ptszBody, bool bIsHistory)
+void CVkProto::AppendChatMessage(CVkChatInfo *cc, int uid, int msgTime, LPCTSTR ptszBody, bool bIsHistory, bool bIsAction)
 {
 	debugLogA("CVkProto::AppendChatMessage2");
+	MCONTACT hContact = FindUser(uid);
 	CVkChatUser *cu = cc->m_users.find((CVkChatUser*)&uid);
 	if (cu == NULL) {
 		cc->m_users.insert(cu = new CVkChatUser(uid));
-		cu->m_tszNick = mir_tstrdup(TranslateT("Unknown"));
+		cu->m_tszNick = mir_tstrdup(hContact ? ptrT(db_get_tsa(hContact, m_szModuleName, "Nick")) : TranslateT("Unknown"));
 		cu->m_bUnknown = true;
 	}
 
 	TCHAR tszId[20];
 	_itot(uid, tszId, 10);
 
-	GCDEST gcd = { m_szModuleName, cc->m_tszId, GC_EVENT_MESSAGE };
+	GCDEST gcd = { m_szModuleName, cc->m_tszId, bIsAction ? GC_EVENT_ACTION : GC_EVENT_MESSAGE };
 	GCEVENT gce = { sizeof(GCEVENT), &gcd };
 	gce.bIsMe = (uid == m_myUserId);
 	gce.ptszUID = tszId;
 	gce.time = msgTime;
 	gce.dwFlags = (bIsHistory) ? GCEF_NOTNOTIFY : GCEF_ADDTOLOG;
-	gce.ptszNick = cu->m_tszNick ? mir_tstrdup(cu->m_tszNick) : mir_tstrdup(TranslateT("Unknown"));
+	gce.ptszNick = cu->m_tszNick ? mir_tstrdup(cu->m_tszNick) : mir_tstrdup(hContact ? ptrT(db_get_tsa(hContact, m_szModuleName, "Nick")) : TranslateT("Unknown"));
 	gce.ptszText = IsEmpty((TCHAR *)ptszBody) ? mir_tstrdup(_T("...")) : mir_tstrdup(ptszBody);
 	CallServiceSync(MS_GC_EVENT, 0, (LPARAM)&gce);
 }
@@ -392,7 +509,7 @@ int CVkProto::OnChatEvent(WPARAM, LPARAM lParam)
 				db_set_dw(hContact, "Ignore", "Mask1", 0);
 				RetrieveUserInfo(_ttoi(gch->ptszUID));
 			}
-			CallService(MS_MSG_SENDMESSAGET, hContact, 0);
+			CallService(MS_MSG_SENDMESSAGET, hContact);
 		}
 		break;
 
@@ -411,8 +528,8 @@ void CVkProto::OnSendChatMsg(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
 {
 	debugLogA("CVkProto::OnSendChatMsg %d", reply->resultCode);
 	if (reply->resultCode == 200) {
-		JSONROOT pRoot;
-		CheckJsonResponse(pReq, reply, pRoot);
+		JSONNode jnRoot;
+		CheckJsonResponse(pReq, reply, jnRoot);
 	}
 }
 
@@ -520,7 +637,7 @@ INT_PTR __cdecl CVkProto::OnJoinChat(WPARAM hContact, LPARAM)
 	if (!IsOnline())
 		return 1;
 
-	if (getBool(hContact, "kicked", false))
+	if (getBool(hContact, "kicked"))
 		return 1;
 	
 	int chat_id = getDword(hContact, "vk_chat_id", -1);
@@ -573,20 +690,19 @@ void CVkProto::LeaveChat(int chat_id, bool close_window, bool delete_chat)
 	gcd.iType = GC_EVENT_CONTROL;
 	CallServiceSync(MS_GC_EVENT, close_window? SESSION_TERMINATE:SESSION_OFFLINE, (LPARAM)&gce);
 	if (delete_chat)
-		CallService(MS_DB_CONTACT_DELETE, (WPARAM)cc->m_hContact, 0);
+		CallService(MS_DB_CONTACT_DELETE, (WPARAM)cc->m_hContact);
 	else
 		setByte(cc->m_hContact, "off", (int)true);
 	m_chats.remove(cc);
 }
 
-void CVkProto::KickFromChat(int chat_id, int user_id, JSONNODE* pMsg)
+void CVkProto::KickFromChat(int chat_id, int user_id, const JSONNode &jnMsg)
 {
 	debugLogA("CVkProto::KickFromChat (%d)", user_id);
 
 	MCONTACT chatContact = FindChat(chat_id);
-	if (chatContact)
-		if (getBool(chatContact, "off", false))
-			return;
+	if (chatContact && getBool(chatContact, "off"))
+		return;
 
 	if (user_id == m_myUserId)
 		LeaveChat(chat_id);
@@ -596,7 +712,7 @@ void CVkProto::KickFromChat(int chat_id, int user_id, JSONNODE* pMsg)
 		return;
 
 	MCONTACT hContact = FindUser(user_id, false);
-	CMString msg = json_as_CMString(json_get(pMsg, "body"));
+	CMString msg(jnMsg["body"].as_mstring());
 	if (msg.IsEmpty()) {
 		msg = TranslateT("You've been kicked by ");
 		if (hContact != NULL)
@@ -604,7 +720,8 @@ void CVkProto::KickFromChat(int chat_id, int user_id, JSONNODE* pMsg)
 		else
 			msg += TranslateT("(Unknown contact)");
 	}
-	else AppendChatMessage(chat_id, pMsg, false);
+	else 
+		AppendChatMessage(chat_id, jnMsg, false);
 
 	MsgPopup(hContact, msg, TranslateT("Chat"));
 	setByte(cc->m_hContact, "kicked", 1);
@@ -627,7 +744,7 @@ INT_PTR __cdecl CVkProto::SvcDestroyKickChat(WPARAM hContact, LPARAM)
 	if (!IsOnline())
 		return 1;
 
-	if (!getBool(hContact, "off", false))
+	if (!getBool(hContact, "off"))
 		return 1;
 		
 	int chat_id = getDword(hContact, "vk_chat_id", -1);
@@ -644,7 +761,7 @@ INT_PTR __cdecl CVkProto::SvcDestroyKickChat(WPARAM hContact, LPARAM)
 		<< CHAR_PARAM("code", code)
 		<< VER_API);
 
-	CallService(MS_DB_CONTACT_DELETE, (WPARAM)hContact, 0);
+	CallService(MS_DB_CONTACT_DELETE, (WPARAM)hContact);
 
 	return 0;
 }
@@ -681,7 +798,15 @@ void CVkProto::NickMenuHook(CVkChatInfo *cc, GCHOOK *gch)
 			db_set_b(hContact, "CList", "NotOnList", 1);
 			db_set_dw(hContact, "Ignore", "Mask1", 0);
 		}
-		CallService(MS_USERINFO_SHOWDIALOG, hContact, 0);
+		CallService(MS_USERINFO_SHOWDIALOG, hContact);
+		break;
+
+	case IDM_VISIT_PROFILE:
+		hContact = FindUser(cu->m_uid);
+		if (hContact == NULL)
+			Utils_OpenUrlT(CMString(FORMAT, _T("http://vk.com/id%d"), cu->m_uid));
+		else 
+			SvcVisitProfile(hContact, 0);
 		break;
 		
 	case IDM_KICK:
@@ -710,6 +835,7 @@ static gc_item sttLogListItems[] =
 static gc_item sttListItems[] =
 {
 	{ LPGENT("&User details"), IDM_INFO, MENU_ITEM },
+	{ LPGENT("Visit profile"), IDM_VISIT_PROFILE, MENU_ITEM },
 	{ LPGENT("&Kick"), IDM_KICK, MENU_ITEM }
 };
 
@@ -723,11 +849,11 @@ int CVkProto::OnGcMenuHook(WPARAM, LPARAM lParam)
 		return 0;
 
 	if (gcmi->Type == MENU_ON_LOG) {
-		gcmi->nItems = SIZEOF(sttLogListItems);
+		gcmi->nItems = _countof(sttLogListItems);
 		gcmi->Item = sttLogListItems;
 	}
 	else if (gcmi->Type == MENU_ON_NICKLIST) {
-		gcmi->nItems = SIZEOF(sttListItems);
+		gcmi->nItems = _countof(sttListItems);
 		gcmi->Item = sttListItems;
 	}
 	return 0;
@@ -795,8 +921,8 @@ static INT_PTR CALLBACK GcCreateDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, L
 
 				if (int hItem = SendMessage(hwndClist, CLM_FINDCONTACT, hContact, 0)) {
 					if (SendMessage(hwndClist, CLM_GETCHECKMARK, (WPARAM)hItem, 0)) {
-						int uid = ppro->getDword(hContact, "ID", 0);
-						if (uid != NULL) {
+						int uid = ppro->getDword(hContact, "ID");
+						if (uid != 0) {
 							if (!uids.IsEmpty())
 								uids.AppendChar(',');
 							uids.AppendFormat("%d", uid);
@@ -806,7 +932,7 @@ static INT_PTR CALLBACK GcCreateDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, L
 			}
 
 			TCHAR tszTitle[1024];
-			GetDlgItemText(hwndDlg, IDC_TITLE, tszTitle, SIZEOF(tszTitle));
+			GetDlgItemText(hwndDlg, IDC_TITLE, tszTitle, _countof(tszTitle));
 			ppro->CreateNewChat(uids, tszTitle);
 			EndDialog(hwndDlg, 0);
 			return TRUE;
@@ -839,12 +965,12 @@ void CVkProto::OnCreateNewChat(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
 	if (reply->resultCode != 200)
 		return;
 
-	JSONROOT pRoot;
-	JSONNODE *pResponse = CheckJsonResponse(pReq, reply, pRoot);
-	if (pResponse == NULL)
+	JSONNode jnRoot;
+	const JSONNode &jnResponse = CheckJsonResponse(pReq, reply, jnRoot);
+	if (!jnResponse)
 		return;
 
-	int chat_id = json_as_int(pResponse);
-	if (chat_id != NULL)
-		AppendChat(chat_id, NULL);
+	int chat_id = jnResponse.as_int();
+	if (chat_id != 0)
+		AppendChat(chat_id, nullNode);
 }

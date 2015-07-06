@@ -46,8 +46,8 @@ static int compareListItems(const JABBER_LIST_ITEM *p1, const JABBER_LIST_ITEM *
 		return mir_tstrcmpi(p1->jid, p2->jid);
 
 	TCHAR szp1[JABBER_MAX_JID_LEN], szp2[JABBER_MAX_JID_LEN];
-	JabberStripJid(p1->jid, szp1, SIZEOF(szp1));
-	JabberStripJid(p2->jid, szp2, SIZEOF(szp2));
+	JabberStripJid(p1->jid, szp1, _countof(szp1));
+	JabberStripJid(p2->jid, szp2, _countof(szp2));
 	return mir_tstrcmpi(szp1, szp2);
 }
 
@@ -82,7 +82,7 @@ CJabberProto::CJabberProto(const char *aProtoName, const TCHAR *aUserName) :
 
 	CreateProtoService(PS_CREATEACCMGRUI, &CJabberProto::SvcCreateAccMgrUI);
 
-	CreateProtoService(PS_GETAVATARINFOT, &CJabberProto::JabberGetAvatarInfo);
+	CreateProtoService(PS_GETAVATARINFO, &CJabberProto::JabberGetAvatarInfo);
 	CreateProtoService(PS_GETMYAWAYMSG, &CJabberProto::GetMyAwayMsg);
 	CreateProtoService(PS_SET_LISTENINGTO, &CJabberProto::OnSetListeningTo);
 
@@ -98,9 +98,9 @@ CJabberProto::CJabberProto(const char *aProtoName, const TCHAR *aUserName) :
 	CreateProtoService(JS_INCOMING_NOTE_EVENT, &CJabberProto::OnIncomingNoteEvent);
 
 	CreateProtoService(JS_SENDXML, &CJabberProto::ServiceSendXML);
-	CreateProtoService(PS_GETMYAVATART, &CJabberProto::JabberGetAvatar);
+	CreateProtoService(PS_GETMYAVATAR, &CJabberProto::JabberGetAvatar);
 	CreateProtoService(PS_GETAVATARCAPS, &CJabberProto::JabberGetAvatarCaps);
-	CreateProtoService(PS_SETMYAVATART, &CJabberProto::JabberSetAvatar);
+	CreateProtoService(PS_SETMYAVATAR, &CJabberProto::JabberSetAvatar);
 	CreateProtoService(PS_SETMYNICKNAME, &CJabberProto::JabberSetNickname);
 
 	CreateProtoService(JS_DB_GETEVENTTEXT_CHATSTATES, &CJabberProto::OnGetEventTextChatStates);
@@ -136,9 +136,7 @@ CJabberProto::CJabberProto(const char *aProtoName, const TCHAR *aUserName) :
 	m_pepServices.insert(new CPepMood(this));
 	m_pepServices.insert(new CPepActivity(this));
 
-	db_set_resident(m_szModuleName, "Status");
 	db_set_resident(m_szModuleName, DBSETTING_DISPLAY_UID);
-
 	db_set_resident(m_szModuleName, "SubscriptionText");
 	db_set_resident(m_szModuleName, "Subscription");
 	db_set_resident(m_szModuleName, "Auth");
@@ -303,7 +301,7 @@ MCONTACT CJabberProto::AddToListByJID(const TCHAR *newJid, DWORD flags)
 		// not already there: add
 		debugLog(_T("Add new jid to contact jid = %s"), newJid);
 		hContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
-		CallService(MS_PROTO_ADDTOCONTACT, hContact, (LPARAM)m_szModuleName);
+		Proto_AddToContact(hContact, m_szModuleName);
 		setTString(hContact, "jid", newJid);
 
 		// Note that by removing or disable the "NotOnList" will trigger
@@ -332,12 +330,10 @@ MCONTACT CJabberProto::AddToListByJID(const TCHAR *newJid, DWORD flags)
 
 MCONTACT CJabberProto::AddToList(int flags, PROTOSEARCHRESULT* psr)
 {
-	if (psr->cbSize != sizeof(JABBER_SEARCH_RESULT) && psr->id == NULL)
+	if (psr->cbSize != sizeof(PROTOSEARCHRESULT) && psr->id.t == NULL)
 		return NULL;
 
-	JABBER_SEARCH_RESULT *jsr = (JABBER_SEARCH_RESULT*)psr;
-	TCHAR *jid = psr->id ? psr->id : jsr->jid;
-	return AddToListByJID(jid, flags);
+	return AddToListByJID(psr->id.t, flags);
 }
 
 MCONTACT __cdecl CJabberProto::AddToListByEvent(int flags, int /*iContact*/, MEVENT hDbEvent)
@@ -581,7 +577,7 @@ DWORD_PTR __cdecl CJabberProto::GetCaps(int type, MCONTACT hContact)
 		return (DWORD_PTR)"jid";
 	case PFLAG_MAXCONTACTSPERPACKET:
 		TCHAR szClientJid[JABBER_MAX_JID_LEN];
-		if (GetClientJID(hContact, szClientJid, SIZEOF(szClientJid))) {
+		if (GetClientJID(hContact, szClientJid, _countof(szClientJid))) {
 			JabberCapsBits jcb = GetResourceCapabilites(szClientJid, TRUE);
 			return ((~jcb & JABBER_CAPS_ROSTER_EXCHANGE) ? 0 : 50);
 		}
@@ -598,10 +594,10 @@ int __cdecl CJabberProto::GetInfo(MCONTACT hContact, int /*infoType*/)
 		return 1;
 
 	TCHAR jid[JABBER_MAX_JID_LEN], szBareJid[JABBER_MAX_JID_LEN];
-	if (!GetClientJID(hContact, jid, SIZEOF(jid)))
+	if (!GetClientJID(hContact, jid, _countof(jid)))
 		return 1;
 
-	JabberStripJid(jid, szBareJid, SIZEOF(szBareJid));
+	JabberStripJid(jid, szBareJid, _countof(szBareJid));
 	bool bUseResource = ListGetItemPtr(LIST_CHATROOM, szBareJid) != NULL;
 
 	if (m_ThreadInfo) {
@@ -637,7 +633,7 @@ int __cdecl CJabberProto::GetInfo(MCONTACT hContact, int /*infoType*/)
 				for (int i=0; i < item->arResources.getCount(); i++) {
 					pResourceStatus r(item->arResources[i]);
 					TCHAR tmp[JABBER_MAX_JID_LEN];
-					mir_sntprintf(tmp, SIZEOF(tmp), _T("%s/%s"), szBareJid, r->m_tszResourceName);
+					mir_sntprintf(tmp, _countof(tmp), _T("%s/%s"), szBareJid, r->m_tszResourceName);
 
 					if (r->m_jcbCachedCaps & JABBER_CAPS_DISCO_INFO) {
 						XmlNodeIq iq5(AddIQ(&CJabberProto::OnIqResultCapsDiscoInfoSI, JABBER_IQ_TYPE_GET, tmp, JABBER_IQ_PARSE_FROM | JABBER_IQ_PARSE_CHILD_TAG_NODE | JABBER_IQ_PARSE_HCONTACT));
@@ -683,18 +679,15 @@ void __cdecl CJabberProto::BasicSearchThread(JABBER_SEARCH_BASIC *jsb)
 {
 	Sleep(100);
 
-	JABBER_SEARCH_RESULT jsr = { 0 };
-	jsr.hdr.cbSize = sizeof(JABBER_SEARCH_RESULT);
-	jsr.hdr.flags = PSR_TCHAR;
-	jsr.hdr.nick = jsb->jid;
-	jsr.hdr.firstName = _T("");
-	jsr.hdr.lastName = _T("");
-	jsr.hdr.id = jsb->jid;
+	PROTOSEARCHRESULT psr = { 0 };
+	psr.cbSize = sizeof(psr);
+	psr.flags = PSR_TCHAR;
+	psr.nick.t = jsb->jid;
+	psr.firstName.t = _T("");
+	psr.lastName.t = _T("");
+	psr.id.t = jsb->jid;
 
-	_tcsncpy_s(jsr.jid, jsb->jid, _TRUNCATE);
-
-	jsr.jid[SIZEOF(jsr.jid)-1] = '\0';
-	ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)jsb->hSearch, (LPARAM)&jsr);
+	ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)jsb->hSearch, (LPARAM)&psr);
 	ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE)jsb->hSearch, 0);
 	mir_free(jsb);
 }
@@ -723,7 +716,7 @@ HANDLE __cdecl CJabberProto::SearchBasic(const TCHAR *szJid)
 				mir_free(szServer);
 				szServer = mir_tstrdup(_T("sms"));
 			}
-			mir_sntprintf(jsb->jid, SIZEOF(jsb->jid), _T("%s@%s"), szJid, szServer);
+			mir_sntprintf(jsb->jid, _countof(jsb->jid), _T("%s@%s"), szJid, szServer);
 		}
 		else _tcsncpy_s(jsb->jid, szJid, _TRUNCATE);
 		mir_free(szServer);
@@ -820,7 +813,7 @@ int __cdecl CJabberProto::SendContacts(MCONTACT hContact, int, int nContacts, MC
 		return 0;
 
 	TCHAR szClientJid[JABBER_MAX_JID_LEN];
-	if (!GetClientJID(hContact, szClientJid, SIZEOF(szClientJid)))
+	if (!GetClientJID(hContact, szClientJid, _countof(szClientJid)))
 		return 0;
 
 	JabberCapsBits jcb = GetResourceCapabilites(szClientJid, TRUE);
@@ -959,7 +952,7 @@ static char PGP_EPILOG[] = "\r\n-----END PGP MESSAGE-----\r\n";
 int __cdecl CJabberProto::SendMsg(MCONTACT hContact, int, const char* pszSrc)
 {
 	TCHAR szClientJid[JABBER_MAX_JID_LEN];
-	if (!m_bJabberOnline || !GetClientJID(hContact, szClientJid, SIZEOF(szClientJid))) {
+	if (!m_bJabberOnline || !GetClientJID(hContact, szClientJid, _countof(szClientJid))) {
 		TFakeAckParams *param = new TFakeAckParams(hContact, Translate("Protocol is offline or no JID"));
 		ForkThread(&CJabberProto::SendMessageAckThread, param);
 		return 1;
@@ -988,7 +981,7 @@ int __cdecl CJabberProto::SendMsg(MCONTACT hContact, int, const char* pszSrc)
 	else
 		msgType = _T("chat");
 
-	XmlNode m(_T("message")); xmlAddAttr(m, _T("type"), msgType);
+	XmlNode m(_T("message")); XmlAddAttr(m, _T("type"), msgType);
 	if (!isEncrypted)
 		m << XCHILD(_T("body"), msg);
 	else {
@@ -1020,17 +1013,17 @@ int __cdecl CJabberProto::SendMsg(MCONTACT hContact, int, const char* pszSrc)
 		!m_options.MsgAck || !getByte(hContact, "MsgAck", TRUE))
 	{
 		if (!mir_tstrcmp(msgType, _T("groupchat")))
-			xmlAddAttr(m, _T("to"), szClientJid);
+			XmlAddAttr(m, _T("to"), szClientJid);
 		else {
 			id = SerialNext();
-			xmlAddAttr(m, _T("to"), szClientJid); xmlAddAttrID(m, id);
+			XmlAddAttr(m, _T("to"), szClientJid); XmlAddAttrID(m, id);
 		}
 		m_ThreadInfo->send(m);
 
 		ForkThread(&CJabberProto::SendMessageAckThread, new TFakeAckParams(hContact, 0, id));
 	}
 	else {
-		xmlAddAttr(m, _T("to"), szClientJid); xmlAddAttrID(m, id);
+		XmlAddAttr(m, _T("to"), szClientJid); XmlAddAttrID(m, id);
 
 		// message receipts XEP priority
 		if (jcb & JABBER_CAPS_MESSAGE_RECEIPTS)
@@ -1152,13 +1145,13 @@ void __cdecl CJabberProto::GetAwayMsgThread(void *param)
 				for (int i = 0; i < item->arResources.getCount(); i++) {
 					JABBER_RESOURCE_STATUS *r = item->arResources[i];
 					if (r->m_tszStatusMessage) {
-						if (str[0] != '\0') _tcscat(str, _T("\r\n"));
+						if (str[0] != '\0') mir_tstrcat(str, _T("\r\n"));
 						if (msgCount > 1) {
-							_tcscat(str, _T("("));
-							_tcscat(str, r->m_tszResourceName);
-							_tcscat(str, _T("): "));
+							mir_tstrcat(str, _T("("));
+							mir_tstrcat(str, r->m_tszResourceName);
+							mir_tstrcat(str, _T("): "));
 						}
-						_tcscat(str, r->m_tszStatusMessage);
+						mir_tstrcat(str, r->m_tszStatusMessage);
 					}
 				}
 
@@ -1246,7 +1239,7 @@ int __cdecl CJabberProto::UserIsTyping(MCONTACT hContact, int type)
 	if (!m_bJabberOnline) return 0;
 
 	TCHAR szClientJid[JABBER_MAX_JID_LEN];
-	if (!GetClientJID(hContact, szClientJid, SIZEOF(szClientJid)))
+	if (!GetClientJID(hContact, szClientJid, _countof(szClientJid)))
 		return 0;
 
 	JABBER_LIST_ITEM *item = ListGetItemPtr(LIST_ROSTER, szClientJid);
@@ -1257,7 +1250,7 @@ int __cdecl CJabberProto::UserIsTyping(MCONTACT hContact, int type)
 	if (jcb & JABBER_RESOURCE_CAPS_ERROR)
 		jcb = JABBER_RESOURCE_CAPS_NONE;
 
-	XmlNode m(_T("message")); xmlAddAttr(m, _T("to"), szClientJid);
+	XmlNode m(_T("message")); XmlAddAttr(m, _T("to"), szClientJid);
 
 	if (jcb & JABBER_CAPS_CHATSTATES) {
 		m << XATTR(_T("type"), _T("chat")) << XATTRID(SerialNext());
@@ -1303,10 +1296,10 @@ void CJabberProto::InfoFrame_OnTransport(CJabberInfoFrame_Event *evt)
 {
 	if (evt->m_event == CJabberInfoFrame_Event::CLICK) {
 		MCONTACT hContact = (MCONTACT)evt->m_pUserData;
-		HMENU hContactMenu = (HMENU)CallService(MS_CLIST_MENUBUILDCONTACT, hContact, 0);
+		HMENU hContactMenu = Menu_BuildContactMenu(hContact);
 		POINT pt;
 		GetCursorPos(&pt);
-		int res = TrackPopupMenu(hContactMenu, TPM_RETURNCMD, pt.x, pt.y, 0, (HWND)CallService(MS_CLUI_GETHWND, 0, 0), NULL);
+		int res = TrackPopupMenu(hContactMenu, TPM_RETURNCMD, pt.x, pt.y, 0, pcli->hwndContactList, NULL);
 		CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(res, MPCF_CONTACTMENU), hContact);
 	}
 }
@@ -1323,15 +1316,6 @@ int __cdecl CJabberProto::OnEvent(PROTOEVENTTYPE eventType, WPARAM wParam, LPARA
 
 	case EV_PROTO_ONMENU:
 		MenuInit();
-		break;
-
-	case EV_PROTO_ONRENAME:
-		if (m_hMenuRoot) {
-			CLISTMENUITEM clmi = { sizeof(clmi) };
-			clmi.flags = CMIM_NAME | CMIF_TCHAR | CMIF_KEEPUNTRANSLATED;
-			clmi.ptszName = m_tszUserName;
-			Menu_ModifyItem(m_hMenuRoot, &clmi);
-		}
 		break;
 
 	case EV_PROTO_ONCONTACTDELETED:

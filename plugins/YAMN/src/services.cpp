@@ -88,9 +88,9 @@ static INT_PTR ContactApplication(WPARAM wParam, LPARAM lParam)
 			if (ActualAccount->NewMailN.App != NULL) {
 				WCHAR *Command;
 				if (ActualAccount->NewMailN.AppParam != NULL)
-					Command = new WCHAR[wcslen(ActualAccount->NewMailN.App)+wcslen(ActualAccount->NewMailN.AppParam)+6];
+					Command = new WCHAR[mir_wstrlen(ActualAccount->NewMailN.App)+mir_wstrlen(ActualAccount->NewMailN.AppParam)+6];
 				else
-					Command = new WCHAR[wcslen(ActualAccount->NewMailN.App)+6];
+					Command = new WCHAR[mir_wstrlen(ActualAccount->NewMailN.App)+6];
 					
 				if (Command != NULL) {
 					mir_wstrcpy(Command, L"\"");
@@ -306,8 +306,7 @@ int AddTopToolbarIcon(WPARAM,LPARAM)
 {
 	if ( db_get_b(NULL, YAMN_DBMODULE, YAMN_TTBFCHECK, 1)) {
 		if ( ServiceExists(MS_TTB_REMOVEBUTTON) && hTTButton == NULL) {
-			TTBButton btn = {0};
-			btn.cbSize = sizeof(btn);
+			TTBButton btn = { 0 };
 			btn.pszService = MS_YAMN_FORCECHECK;
 			btn.dwFlags = TTBBF_VISIBLE | TTBBF_SHOWTOOLTIP;
 			btn.hIconHandleUp = btn.hIconHandleDn = g_GetIconHandle(0);
@@ -484,7 +483,7 @@ void RefreshContact(void)
 		}
 		else if ((Finder->Flags & YAMN_ACC_ENA) && (Finder->NewMailN.Flags & YAMN_ACC_CONT)) {
 			Finder->hContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
-			CallService(MS_PROTO_ADDTOCONTACT, (WPARAM)Finder->hContact, (LPARAM)YAMN_DBMODULE);
+			Proto_AddToContact(Finder->hContact, YAMN_DBMODULE);
 			db_set_s(Finder->hContact, YAMN_DBMODULE, "Id", Finder->Name);
 			db_set_s(Finder->hContact, YAMN_DBMODULE, "Nick", Finder->Name);
 			db_set_s(Finder->hContact, "Protocol", "p", YAMN_DBMODULE);

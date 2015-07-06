@@ -81,12 +81,13 @@ extern "C" int __declspec(dllexport) Load()
 	mir_getCLI();
 
 	// Register protocol module
-	PROTOCOLDESCRIPTOR pd = { sizeof(pd) };
+	PROTOCOLDESCRIPTOR pd = { 0 };
+	pd.cbSize = sizeof(pd);
 	pd.szName = "Dummy";
 	pd.fnInit = (pfnInitProto)dummyProtoInit;
 	pd.fnUninit = (pfnUninitProto)dummyProtoUninit;
 	pd.type = PROTOTYPE_PROTOCOL;
-	CallService(MS_PROTO_REGISTERMODULE, 0, (LPARAM)&pd);
+	Proto_RegisterModule(&pd);
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
 	return 0;

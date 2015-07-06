@@ -58,8 +58,8 @@ HINSTANCE LoadIconsPack(const char* szIconsPack)
 
 int ReloadIcons(WPARAM wParam, LPARAM lParam)
 {
-	for (int i = 0; i < SIZEOF(icons); i++) {
-		HICON hIcon = Skin_GetIcon(icons[i].name);
+	for (int i = 0; i < _countof(icons); i++) {
+		HICON hIcon = IcoLib_GetIcon(icons[i].name);
 		if (icons[i].tbl == TBL_IEC)
 			g_hIEC[icons[i].idx] = hIcon;
 		else if (icons[i].tbl == TBL_ICO)
@@ -94,20 +94,20 @@ void InitIcons(void)
 		g_hIconInst = hNewIconInst;
 
 	TCHAR tszPath[MAX_PATH];
-	GetModuleFileName(g_hIconInst, tszPath, SIZEOF(tszPath));
+	GetModuleFileName(g_hIconInst, tszPath, _countof(tszPath));
 
-	SKINICONDESC sid = { sizeof(sid) };
-	sid.pszSection = "SecureIM";
-	sid.ptszDefaultFile = tszPath;
+	SKINICONDESC sid = { 0 };
+	sid.section.a = "SecureIM";
+	sid.defaultFile.t = tszPath;
 
-	for (int i = 0; i < SIZEOF(icons); i++) {
-		sid.pszSection = icons[i].section;
+	for (int i = 0; i < _countof(icons); i++) {
+		sid.section.a = icons[i].section;
 		sid.pszName = icons[i].name;
-		sid.pszDescription = icons[i].text;
+		sid.description.a = icons[i].text;
 		sid.iDefaultIndex = -icons[i].key;
-		HANDLE hIcolib = Skin_AddIcon(&sid);
+		HANDLE hIcolib = IcoLib_AddIcon(&sid);
 
-		HICON hIcon = Skin_GetIconByHandle(hIcolib);
+		HICON hIcon = IcoLib_GetIconByHandle(hIcolib);
 		if (icons[i].tbl == TBL_IEC)
 			g_hIEC[icons[i].idx] = hIcon;
 		else if (icons[i].tbl == TBL_ICO)

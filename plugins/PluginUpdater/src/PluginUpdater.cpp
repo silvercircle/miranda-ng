@@ -19,8 +19,6 @@ Boston, MA 02111-1307, USA.
 
 #include "common.h"
 
-PlugOptions opts;
-
 HINSTANCE hInst = NULL;
 TCHAR tszRoot[MAX_PATH] = {0}, tszTempPath[MAX_PATH];
 int hLangpack;
@@ -75,7 +73,7 @@ extern "C" __declspec(dllexport) int Load(void)
 
 	db_set_b(NULL, MODNAME, DB_SETTING_NEED_RESTART, 0);
 
-	DWORD dwLen = GetTempPath( SIZEOF(tszTempPath), tszTempPath);
+	DWORD dwLen = GetTempPath( _countof(tszTempPath), tszTempPath);
 	if (tszTempPath[dwLen-1] == '\\')
 		tszTempPath[dwLen-1] = 0;
 
@@ -86,14 +84,18 @@ extern "C" __declspec(dllexport) int Load(void)
 
 	// Add cheking update menu item
 	InitCheck();
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.position = 400010000;
+
 #if MIRANDA_VER >= 0x0A00
-	mi.icolibItem = iconList[0].hIcolib;
+	CMenuItem mi;
+	mi.name.a = LPGEN("Check for updates");
+	mi.hIcolibItem = iconList[0].hIcolib;
 #else
-	mi.icolibItem = Skin_GetIconHandle("check_update");
-#endif
+	CLISTMENUITEM mi = { 0 };
+	mi.cbSize = sizeof(mi);
+	mi.icolibItem = IcoLib_GetIconHandle("check_update");
 	mi.pszName = LPGEN("Check for updates");
+#endif
+	mi.position = 400010000;
 	mi.pszService = MS_PU_CHECKUPDATES;
 	Menu_AddMainMenuItem(&mi);
 
@@ -101,8 +103,8 @@ extern "C" __declspec(dllexport) int Load(void)
 	InitListNew();
 
 	mi.position++;
-	mi.icolibItem = iconList[2].hIcolib;
-	mi.pszName = LPGEN("Available components list");
+	mi.hIcolibItem = iconList[2].hIcolib;
+	mi.name.a = LPGEN("Available components list");
 	mi.pszService = MS_PU_SHOWLIST;
 	Menu_AddMainMenuItem(&mi);
 

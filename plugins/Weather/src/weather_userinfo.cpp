@@ -77,7 +77,7 @@ INT_PTR CALLBACK DlgProcUIPage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPa
 		SetDlgItemText(hwndDlg, IDC_INFO1, GetDisplay(&w, TranslateT("Current condition for %n"), str));
 
 		SendDlgItemMessage(hwndDlg, IDC_INFOICON, STM_SETICON, 
-			(WPARAM)LoadSkinnedProtoIcon(WEATHERPROTONAME,
+			(WPARAM)Skin_LoadProtoIcon(WEATHERPROTONAME,
 			db_get_w(hContact, WEATHERPROTONAME, "StatusIcon",0)), 0);
 
 		{	// bold and enlarge the current condition
@@ -108,7 +108,7 @@ INT_PTR CALLBACK DlgProcUIPage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPa
 		break;
 
 	case WM_DESTROY: 
-		Skin_ReleaseIcon((HICON)SendDlgItemMessage(hwndDlg, IDC_INFOICON, STM_SETICON, 0, 0));
+		IcoLib_ReleaseIcon((HICON)SendDlgItemMessage(hwndDlg, IDC_INFOICON, STM_SETICON, 0, 0));
 		DeleteObject((HFONT)SendDlgItemMessage(hwndDlg, IDC_INFO2, WM_GETFONT, 0, 0));
 		break;
 
@@ -213,8 +213,8 @@ INT_PTR CALLBACK DlgProcMoreData(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 		// set icons
 		{
 			WORD statusIcon = db_get_w(hContact, WEATHERPROTONAME, "StatusIcon", 0);
-			ReleaseIconEx((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadSkinnedProtoIconBig(WEATHERPROTONAME, statusIcon)));
-			ReleaseIconEx((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)LoadSkinnedProtoIcon(WEATHERPROTONAME, statusIcon)));
+			ReleaseIconEx((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)Skin_LoadProtoIcon(WEATHERPROTONAME, statusIcon, true)));
+			ReleaseIconEx((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)Skin_LoadProtoIcon(WEATHERPROTONAME, statusIcon)));
 		}
 		RedrawWindow(GetDlgItem(hwndDlg, IDC_HEADERBAR), NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 		break;
@@ -224,15 +224,9 @@ INT_PTR CALLBACK DlgProcMoreData(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 			RECT rc;
 			HWND hList = GetDlgItem(hwndDlg, IDC_DATALIST);
 			GetWindowRect(hList, &rc);
-			ListView_SetColumnWidth(hList, 1, ListView_GetColumnWidth(hList, 1) + 
-				(int)LOWORD(lParam) - (rc.right - rc.left));
+			ListView_SetColumnWidth(hList, 1, ListView_GetColumnWidth(hList, 1) + (int)LOWORD(lParam) - (rc.right - rc.left));
 
-			UTILRESIZEDIALOG urd = { sizeof(urd) };
-			urd.hwndDlg = hwndDlg;
-			urd.hInstance = hInst;
-			urd.lpTemplate = MAKEINTRESOURCEA(IDD_BRIEF);
-			urd.pfnResizer = BriefDlgResizer;
-			CallService(MS_UTILS_RESIZEDIALOG, 0, (LPARAM)&urd);
+			Utils_ResizeDialog(hwndDlg, hInst, MAKEINTRESOURCEA(IDD_BRIEF), BriefDlgResizer);
 		}				
 		break;
 
@@ -294,14 +288,14 @@ INT_PTR CALLBACK DlgProcMoreData(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 		{
 			LPNMHDR pNmhdr = (LPNMHDR)lParam;
 			if (pNmhdr->idFrom == IDC_MTEXT && pNmhdr->code == EN_LINK) {
-				ENLINK *enlink = (ENLINK *) lParam;
+				ENLINK *enlink = (ENLINK *)lParam;
 				switch (enlink->msg) {
 				case WM_LBUTTONUP:
 					TEXTRANGE tr;
 					tr.chrg = enlink->chrg;
-					tr.lpstrText = ( LPTSTR )mir_alloc( sizeof(TCHAR)*(tr.chrg.cpMax - tr.chrg.cpMin + 8));
+					tr.lpstrText = (LPTSTR)mir_alloc(sizeof(TCHAR)*(tr.chrg.cpMax - tr.chrg.cpMin + 8));
 					SendMessage(pNmhdr->hwndFrom, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
-					CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW | OUF_TCHAR, (LPARAM) tr.lpstrText);
+					Utils_OpenUrlT(tr.lpstrText);
 					mir_free(tr.lpstrText);
 					break;
 				}
@@ -336,7 +330,7 @@ void LoadBriefInfoText(HWND hwndDlg, MCONTACT hContact)
 	winfo = LoadWeatherInfo(hContact);
 	// check if data exist.  If not, display error message box
 	if ( !(BOOL)db_get_b(hContact, WEATHERPROTONAME, "IsUpdated", FALSE))
-		_tcsncpy(str, WEATHER_NO_INFO, SIZEOF(str) - 1);
+		_tcsncpy(str, WEATHER_NO_INFO, _countof(str) - 1);
 	else
 		// set the display text and show the message box
 		GetDisplay(&winfo, opt.bText, str);

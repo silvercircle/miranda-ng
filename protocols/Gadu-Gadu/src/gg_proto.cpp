@@ -40,7 +40,7 @@ GGPROTO::GGPROTO(const char* pszProtoName, const TCHAR* tszUserName) :
 
 	// Register m_hNetlibUser user
 	TCHAR name[128];
-	mir_sntprintf(name, SIZEOF(name), TranslateT("%s connection"), m_tszUserName);
+	mir_sntprintf(name, _countof(name), TranslateT("%s connection"), m_tszUserName);
 
 	NETLIBUSER nlu = { 0 };
 	nlu.cbSize = sizeof(nlu);
@@ -52,12 +52,11 @@ GGPROTO::GGPROTO(const char* pszProtoName, const TCHAR* tszUserName) :
 
 	// Register services
 	CreateProtoService(PS_GETAVATARCAPS, &GGPROTO::getavatarcaps);
-	CreateProtoService(PS_GETAVATARINFOT, &GGPROTO::getavatarinfo);
-	CreateProtoService(PS_GETMYAVATART, &GGPROTO::getmyavatar);
-	CreateProtoService(PS_SETMYAVATART, &GGPROTO::setmyavatar);
+	CreateProtoService(PS_GETAVATARINFO, &GGPROTO::getavatarinfo);
+	CreateProtoService(PS_GETMYAVATAR, &GGPROTO::getmyavatar);
+	CreateProtoService(PS_SETMYAVATAR, &GGPROTO::setmyavatar);
 
 	CreateProtoService(PS_GETMYAWAYMSG, &GGPROTO::getmyawaymsg);
-	CreateProtoService(PS_SETAWAYMSGT, (MyServiceFunc)&GGPROTO::SetAwayMsg);
 	CreateProtoService(PS_CREATEACCMGRUI, &GGPROTO::get_acc_mgr_gui);
 
 	CreateProtoService(PS_LEAVECHAT, &GGPROTO::leavechat);
@@ -69,7 +68,7 @@ GGPROTO::GGPROTO(const char* pszProtoName, const TCHAR* tszUserName) :
 	db_set_resident(m_szModuleName, GG_KEY_AVATARREQUESTED);
 
 	TCHAR szPath[MAX_PATH];
-	mir_sntprintf(szPath, SIZEOF(szPath), _T("%s\\%s\\ImageCache"), (TCHAR*)VARST( _T("%miranda_userdata%")), m_tszUserName);
+	mir_sntprintf(szPath, _T("%s\\%s\\ImageCache"), (TCHAR*)VARST( _T("%miranda_userdata%")), m_tszUserName);
 	hImagesFolder = FoldersRegisterCustomPathT(LPGEN("Images"), m_szModuleName, szPath, m_tszUserName);
 
 	DWORD dwVersion;
@@ -94,9 +93,6 @@ GGPROTO::~GGPROTO()
 
 	Popup_UnregisterClass(hPopupError);
 	Popup_UnregisterClass(hPopupNotify);
-
-	if (hMenuRoot)
-		CallService(MO_REMOVEMENUITEM, (WPARAM)hMenuRoot, 0);
 
 	// Close handles
 	Netlib_CloseHandle(m_hNetlibUser);
@@ -124,20 +120,20 @@ GGPROTO::~GGPROTO()
 //////////////////////////////////////////////////////////
 // when contact is added to list
 
-MCONTACT GGPROTO::AddToList(int flags, PROTOSEARCHRESULT *psr)
+MCONTACT GGPROTO::AddToList(int flags, PROTOSEARCHRESULT *pmsr)
 {
 #ifdef DEBUGMODE
 	debugLogA("AddToList(): id=%s");
 #endif
-	GGSEARCHRESULT *sr = (GGSEARCHRESULT *)psr;
+	GGSEARCHRESULT *psr = (GGSEARCHRESULT *)pmsr;
 	uin_t uin;
 
 	if (psr->cbSize == sizeof(GGSEARCHRESULT))
-		uin = sr->uin;
+		uin = psr->uin;
 	else
-		uin = _ttoi(psr->id);
+		uin = _ttoi(psr->id.t);
 
-	return getcontact(uin, 1, flags & PALF_TEMPORARY ? 0 : 1, sr->nick);
+	return getcontact(uin, 1, flags & PALF_TEMPORARY ? 0 : 1, psr->nick.t);
 }
 
 //////////////////////////////////////////////////////////
@@ -263,13 +259,13 @@ void __cdecl GGPROTO::searchthread(void *)
 #endif
 }
 
-HANDLE GGPROTO::SearchBasic(const PROTOCHAR *id)
+HANDLE GGPROTO::SearchBasic(const TCHAR *id)
 {
 	if (!isonline())
-		return (HANDLE)0;
+		return 0;
 
-	gg_pubdir50_t req;
-	if (!(req = gg_pubdir50_new(GG_PUBDIR50_SEARCH))) {
+	gg_pubdir50_t req = gg_pubdir50_new(GG_PUBDIR50_SEARCH);
+	if (!req) {
 #ifdef DEBUGMODE
 		debugLogA("SearchBasic(): ForkThread 10 GGPROTO::searchthread");
 #endif
@@ -301,12 +297,8 @@ HANDLE GGPROTO::SearchBasic(const PROTOCHAR *id)
 //////////////////////////////////////////////////////////
 // search by details
 
-HANDLE GGPROTO::SearchByName(const PROTOCHAR *nick, const PROTOCHAR *firstName, const PROTOCHAR *lastName)
+HANDLE GGPROTO::SearchByName(const TCHAR *nick, const TCHAR *firstName, const TCHAR *lastName)
 {
-	gg_pubdir50_t req;
-	unsigned long crc;
-	char data[512] = "\0";
-
 	// Check if connected and if there's a search data
 	if (!isonline())
 		return 0;
@@ -314,8 +306,8 @@ HANDLE GGPROTO::SearchByName(const PROTOCHAR *nick, const PROTOCHAR *firstName, 
 	if (!nick && !firstName && !lastName)
 		return 0;
 
-	if (!(req = gg_pubdir50_new(GG_PUBDIR50_SEARCH)))
-	{
+	gg_pubdir50_t req = gg_pubdir50_new(GG_PUBDIR50_SEARCH);
+	if (req == NULL) {
 #ifdef DEBUGMODE
 		debugLogA("SearchByName(): ForkThread 12 GGPROTO::searchthread");
 #endif
@@ -324,33 +316,33 @@ HANDLE GGPROTO::SearchByName(const PROTOCHAR *nick, const PROTOCHAR *firstName, 
 	}
 
 	// Add nick,firstName,lastName and search it
+	CMStringA szQuery;
 	if (nick)
 	{
 		T2Utf nick_utf8(nick);
 		gg_pubdir50_add(req, GG_PUBDIR50_NICKNAME, nick_utf8);
-		strncat(data, nick_utf8, sizeof(data) - mir_strlen(data));
+		szQuery.Append(nick_utf8);
 	}
-	strncat(data, ".", sizeof(data) - mir_strlen(data));
+	szQuery.AppendChar('.');
 
 	if (firstName)
 	{
 		T2Utf firstName_utf8(firstName);
 		gg_pubdir50_add(req, GG_PUBDIR50_FIRSTNAME, firstName_utf8);
-		strncat(data, firstName_utf8, sizeof(data) - mir_strlen(data));
+		szQuery.Append(firstName_utf8);
 	}
-	strncat(data, ".", sizeof(data) - mir_strlen(data));
+	szQuery.AppendChar('.');
 
 	if (lastName)
 	{
 		T2Utf lastName_utf8(lastName);
 		gg_pubdir50_add(req, GG_PUBDIR50_LASTNAME, lastName_utf8);
-		strncat(data, lastName_utf8, sizeof(data) - mir_strlen(data));
+		szQuery.Append(lastName_utf8);
 	}
-	strncat(data, ".", sizeof(data) - mir_strlen(data));
+	szQuery.AppendChar('.');
 
 	// Count crc & check if the data was equal if yes do same search with shift
-	crc = crc_get(data);
-
+	unsigned long crc = crc_get(szQuery.GetBuffer());
 	if (crc == last_crc && next_uin)
 		gg_pubdir50_add(req, GG_PUBDIR50_START, ditoa(next_uin));
 	else
@@ -379,15 +371,12 @@ HANDLE GGPROTO::SearchByName(const PROTOCHAR *nick, const PROTOCHAR *firstName, 
 
 HWND GGPROTO::SearchAdvanced(HWND hwndDlg)
 {
-	gg_pubdir50_t req;
-	TCHAR text[64];
-	char data[800] = "\0";
-	unsigned long crc;
-
 	// Check if connected
-	if (!isonline()) return (HWND)0;
+	if (!isonline())
+		return 0;
 
-	if (!(req = gg_pubdir50_new(GG_PUBDIR50_SEARCH)))
+	gg_pubdir50_t req = gg_pubdir50_new(GG_PUBDIR50_SEARCH);
+	if (!req)
 	{
 #ifdef DEBUGMODE
 		debugLogA("SearchAdvanced(): ForkThread 14 GGPROTO::searchthread");
@@ -396,44 +385,47 @@ HWND GGPROTO::SearchAdvanced(HWND hwndDlg)
 		return (HWND)1;
 	}
 
+	CMStringA szQuery;
+
 	// Fetch search data
-	GetDlgItemText(hwndDlg, IDC_FIRSTNAME, text, SIZEOF(text));
+	TCHAR text[64];
+	GetDlgItemText(hwndDlg, IDC_FIRSTNAME, text, _countof(text));
 	if (mir_tstrlen(text))
 	{
 		T2Utf firstName_utf8(text);
 		gg_pubdir50_add(req, GG_PUBDIR50_FIRSTNAME, firstName_utf8);
-		strncat(data, firstName_utf8, sizeof(data) - mir_strlen(data));
+		szQuery.Append(firstName_utf8);
 	}
-	/* 1 */ strncat(data, ".", sizeof(data) - mir_strlen(data));
+	/* 1 */ szQuery.AppendChar('.');
 
-	GetDlgItemText(hwndDlg, IDC_LASTNAME, text, SIZEOF(text));
+	GetDlgItemText(hwndDlg, IDC_LASTNAME, text, _countof(text));
 	if (mir_tstrlen(text))
 	{
 		T2Utf lastName_utf8(text);
 		gg_pubdir50_add(req, GG_PUBDIR50_LASTNAME, lastName_utf8);
-		strncat(data, lastName_utf8, sizeof(data) - mir_strlen(data));
+		szQuery.Append(lastName_utf8);
 	}
-	/* 2 */ strncat(data, ".", sizeof(data) - mir_strlen(data));
+	/* 2 */ szQuery.AppendChar('.');
 
-	GetDlgItemText(hwndDlg, IDC_NICKNAME, text, SIZEOF(text));
+	GetDlgItemText(hwndDlg, IDC_NICKNAME, text, _countof(text));
 	if (mir_tstrlen(text))
 	{
 		T2Utf nickName_utf8(text);
 		gg_pubdir50_add(req, GG_PUBDIR50_NICKNAME, nickName_utf8);
-		strncat(data, nickName_utf8, sizeof(data) - mir_strlen(data));
+		szQuery.Append(nickName_utf8);
 	}
-	/* 3 */ strncat(data, ".", sizeof(data) - mir_strlen(data));
+	/* 3 */ szQuery.AppendChar('.');
 
-	GetDlgItemText(hwndDlg, IDC_CITY, text, SIZEOF(text));
+	GetDlgItemText(hwndDlg, IDC_CITY, text, _countof(text));
 	if (mir_tstrlen(text))
 	{
 		T2Utf city_utf8(text);
 		gg_pubdir50_add(req, GG_PUBDIR50_CITY, city_utf8);
-		strncat(data, city_utf8, sizeof(data) - mir_strlen(data));
+		szQuery.Append(city_utf8);
 	}
-	/* 4 */ strncat(data, ".", sizeof(data) - mir_strlen(data));
+	/* 4 */ szQuery.AppendChar('.');
 
-	GetDlgItemText(hwndDlg, IDC_AGEFROM, text, SIZEOF(text));
+	GetDlgItemText(hwndDlg, IDC_AGEFROM, text, _countof(text));
 	if (mir_tstrlen(text))
 	{
 		int yearTo = _tstoi(text);
@@ -443,7 +435,7 @@ HWND GGPROTO::SearchAdvanced(HWND hwndDlg)
 		int ay = lt->tm_year + 1900;
 		char age[16];
 
-		GetDlgItemTextA(hwndDlg, IDC_AGETO, age, SIZEOF(age));
+		GetDlgItemTextA(hwndDlg, IDC_AGETO, age, _countof(age));
 		yearFrom = atoi(age);
 
 		// Count & fix ranges
@@ -455,39 +447,40 @@ HWND GGPROTO::SearchAdvanced(HWND hwndDlg)
 			yearFrom = 0;
 		else
 			yearFrom = ay - yearFrom;
-		mir_sntprintf(text, SIZEOF(text), _T("%d %d"), yearFrom, yearTo);
+		mir_sntprintf(text, _T("%d %d"), yearFrom, yearTo);
 
 		T2Utf age_utf8(text);
 		gg_pubdir50_add(req, GG_PUBDIR50_BIRTHYEAR, age_utf8);
-		strncat(data, age_utf8, sizeof(data) - mir_strlen(data));
+		szQuery.Append(age_utf8);
 	}
-	/* 5 */ strncat(data, ".", sizeof(data) - mir_strlen(data));
+	/* 5 */ szQuery.AppendChar('.');
 
 	switch(SendDlgItemMessage(hwndDlg, IDC_GENDER, CB_GETCURSEL, 0, 0))
 	{
 		case 1:
 			gg_pubdir50_add(req, GG_PUBDIR50_GENDER, GG_PUBDIR50_GENDER_FEMALE);
-			strncat(data, GG_PUBDIR50_GENDER_MALE, sizeof(data) - mir_strlen(data));
+			szQuery.Append(GG_PUBDIR50_GENDER_MALE);
 			break;
 		case 2:
 			gg_pubdir50_add(req, GG_PUBDIR50_GENDER, GG_PUBDIR50_GENDER_MALE);
-			strncat(data, GG_PUBDIR50_GENDER_FEMALE, sizeof(data) - mir_strlen(data));
+			szQuery.Append(GG_PUBDIR50_GENDER_FEMALE);
 			break;
 	}
-	/* 6 */ strncat(data, ".", sizeof(data) - mir_strlen(data));
+	/* 6 */ szQuery.AppendChar('.');
 
 	if (IsDlgButtonChecked(hwndDlg, IDC_ONLYCONNECTED))
 	{
 		gg_pubdir50_add(req, GG_PUBDIR50_ACTIVE, GG_PUBDIR50_ACTIVE_TRUE);
-		strncat(data, GG_PUBDIR50_ACTIVE_TRUE, sizeof(data) - mir_strlen(data));
+		szQuery.Append(GG_PUBDIR50_ACTIVE_TRUE);
 	}
-	/* 7 */ strncat(data, ".", sizeof(data) - mir_strlen(data));
+	/* 7 */ szQuery.AppendChar('.');
 
 	// No data entered
-	if (mir_strlen(data) <= 7 || (mir_strlen(data) == 8 && IsDlgButtonChecked(hwndDlg, IDC_ONLYCONNECTED))) return (HWND)0;
+	if (szQuery.GetLength() <= 7 || (szQuery.GetLength() == 8 && IsDlgButtonChecked(hwndDlg, IDC_ONLYCONNECTED)))
+		return 0;
 
 	// Count crc & check if the data was equal if yes do same search with shift
-	crc = crc_get(data);
+	unsigned long crc = crc_get(szQuery.GetBuffer());
 
 	if (crc == last_crc && next_uin)
 		gg_pubdir50_add(req, GG_PUBDIR50_START, ditoa(next_uin));
@@ -549,9 +542,9 @@ typedef struct
 
 void __cdecl GGPROTO::sendackthread(void *ack)
 {
+	GG_SEQ_ACK *pAck = (GG_SEQ_ACK *)ack;
 	gg_sleep(100, FALSE, "sendackthread", 105, 1);
-	ProtoBroadcastAck(((GG_SEQ_ACK *)ack)->hContact,
-		ACKTYPE_MESSAGE, ACKRESULT_SUCCESS, (HANDLE) ((GG_SEQ_ACK *)ack)->seq, 0);
+	ProtoBroadcastAck(pAck->hContact, ACKTYPE_MESSAGE, ACKRESULT_SUCCESS, (HANDLE) pAck->seq, 0);
 	mir_free(ack);
 }
 
@@ -618,19 +611,20 @@ int GGPROTO::SetStatus(int iNewStatus)
 //////////////////////////////////////////////////////////
 // when away message is requested
 
-void __cdecl GGPROTO::getawaymsgthread(void *hContact)
+void __cdecl GGPROTO::getawaymsgthread(void *arg)
 {
 	DBVARIANT dbv;
 
+	MCONTACT hContact = (MCONTACT) arg;
 	debugLogA("getawaymsgthread(): started");
 	gg_sleep(100, FALSE, "getawaymsgthread", 106, 1);
-	if (!db_get_s((MCONTACT)hContact, "CList", GG_KEY_STATUSDESCR, &dbv, DBVT_TCHAR))
+	if (!db_get_s(hContact, "CList", GG_KEY_STATUSDESCR, &dbv, DBVT_TCHAR))
 	{
-		ProtoBroadcastAck((MCONTACT)hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, (HANDLE)1, (LPARAM)dbv.ptszVal);
+		ProtoBroadcastAck(hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, (HANDLE)1, (LPARAM)dbv.ptszVal);
 		debugLog(_T("getawaymsgthread(): Reading away msg <%s>."), dbv.ptszVal);
 		db_free(&dbv);
 	} else {
-		ProtoBroadcastAck((MCONTACT)hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, (HANDLE)1, (LPARAM)NULL);
+		ProtoBroadcastAck(hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, (HANDLE)1, 0);
 	}
 	debugLogA("getawaymsgthread(): end");
 }
@@ -648,7 +642,7 @@ HANDLE GGPROTO::GetAwayMsg(MCONTACT hContact)
 // when away message is being set
 // registered as ProtoService PS_SETAWAYMSGT
 
-int GGPROTO::SetAwayMsg(int iStatus, const PROTOCHAR *newMsg)
+int GGPROTO::SetAwayMsg(int iStatus, const TCHAR *newMsg)
 {
 	int status = gg_normalizestatus(iStatus);
 	TCHAR **msgPtr;
@@ -764,15 +758,6 @@ int GGPROTO::OnEvent(PROTOEVENTTYPE eventType, WPARAM wParam, LPARAM lParam)
 
 	case EV_PROTO_ONMENU:
 		menus_init();
-		break;
-
-	case EV_PROTO_ONRENAME:
-		if (hMenuRoot) {
-			CLISTMENUITEM mi = { sizeof(mi) };
-			mi.flags = CMIM_NAME | CMIF_TCHAR | CMIF_KEEPUNTRANSLATED;
-			mi.ptszName = m_tszUserName;
-			Menu_ModifyItem(hMenuRoot, &mi);
-		}
 		break;
 
 	case EV_PROTO_ONCONTACTDELETED:

@@ -61,7 +61,7 @@
 #include <m_icolib.h>
 #include <m_clc.h>
 #include <m_clui.h>
-#include <m_clistint.h>
+#include <m_clist.h>
 #include <m_userinfo.h>
 #include <m_history.h>
 #include <m_addcontact.h>
@@ -69,7 +69,6 @@
 #include <m_fontservice.h>
 #include <m_acc.h>
 #include <m_chat_int.h>
-#include <m_protomod.h>
 #include <m_hotkeys.h>
 #include <m_genmenu.h>
 #include <m_popup.h>

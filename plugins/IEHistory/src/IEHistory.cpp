@@ -25,7 +25,7 @@ int hLangpack;//Miranda NG langpack used by translate functions, filled by mir_g
 char ModuleName[] = "IEHistory";
 HICON hIcon;
 HINSTANCE hInstance;
-HANDLE hOpenWindowsList = NULL;
+MWindowList hOpenWindowsList = NULL;
 
 HMODULE hUxTheme = 0;
 BOOL(WINAPI *MyEnableThemeDialogTexture)(HANDLE, DWORD) = NULL;
@@ -70,21 +70,22 @@ extern "C" int __declspec(dllexport) Load(void)
 
 	/// all initialization here
 	hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_HISTORYICON));
-	hOpenWindowsList = (HANDLE)CallService(MS_UTILS_ALLOCWINDOWLIST, 0, 0);
+	hOpenWindowsList = WindowList_Create();
 
 	InitServices();
 
 	/// menu items
-	CLISTMENUITEM menuItem = { sizeof(CLISTMENUITEM) };
-	menuItem.ptszName = LPGENT("View &history");
-	menuItem.flags = CMIF_TCHAR;
-	menuItem.position = 1000090000;
-	menuItem.hIcon = hIcon;
-	menuItem.pszService = MS_HISTORY_SHOWCONTACTHISTORY;
-	Menu_AddContactMenuItem(&menuItem);
+	CMenuItem mi;
+	mi.name.t = LPGENT("View &history");
+	mi.flags = CMIF_TCHAR;
+	mi.position = 1000090000;
+	mi.hIcolibItem = hIcon;
+	mi.pszService = MS_HISTORY_SHOWCONTACTHISTORY;
+	Menu_AddContactMenuItem(&mi);
+
 	/// @todo (White-Tiger#1#08/19/14): fully implement System History someday^^
-	menuItem.ptszName = LPGENT("&System History");
-	Menu_AddMainMenuItem(&menuItem);
+	mi.name.t = LPGENT("&System History");
+	Menu_AddMainMenuItem(&mi);
 
 	HookEvents();
 	return 0;

@@ -532,10 +532,10 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			case IDOK: 
 				{
 					TCHAR buff[MAX_PATH];
-					GetDlgItemText(hwndDlg, IDC_TITLE, buff, SIZEOF(buff));
+					GetDlgItemText(hwndDlg, IDC_TITLE, buff, _countof(buff));
 					replaceStrT(add_edit_alarm->szTitle, buff);
 
-					GetDlgItemText(hwndDlg, IDC_DESC, buff, SIZEOF(buff));
+					GetDlgItemText(hwndDlg, IDC_DESC, buff, _countof(buff));
 					replaceStrT(add_edit_alarm->szDesc, buff);
 
 					if (add_edit_alarm->szTitle == 0 || add_edit_alarm->szTitle[0] == '\0') {
@@ -562,9 +562,9 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 					add_edit_alarm->flags |= IsDlgButtonChecked(hwndDlg, IDC_CHK_NOREMINDER) ? ALF_NOREMINDER: 0;
 
 					if (add_edit_alarm->action & AAF_COMMAND) {
-						GetDlgItemText(hwndDlg, IDC_ED_COMMAND, buff, SIZEOF(buff));
+						GetDlgItemText(hwndDlg, IDC_ED_COMMAND, buff, _countof(buff));
 						replaceStrT(add_edit_alarm->szCommand, buff);
-						GetDlgItemText(hwndDlg, IDC_ED_PARAMS, buff, SIZEOF(buff));
+						GetDlgItemText(hwndDlg, IDC_ED_PARAMS, buff, _countof(buff));
 						replaceStrT(add_edit_alarm->szCommandParams, buff);
 					}
 
@@ -692,18 +692,13 @@ void AddMenuItem()
 {
 	if (hMainMenuItem) return;
 
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.flags = CMIM_ALL;
-	mi.icolibItem = Skin_GetIconHandle("alarms_menu_set");
-	mi.pszName = "Set alarm";
+	CMenuItem mi;
+	mi.hIcolibItem = IcoLib_GetIconHandle("alarms_menu_set");
+	mi.name.a = "Set alarm";
 	mi.pszService = MODULE "/NewAlarm";
 	mi.position = 500010000;
 	if (!ServiceExists(MS_CLIST_FRAMES_ADDFRAME))
-		mi.pszPopupName = "Alarms";
-
-	GroupMenuParam gmp = {0};
-	Menu_AddGroupMenuItem(&gmp, &mi);
-
+		mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Alarms"), mi.position);
 	hMainMenuItem = Menu_AddMainMenuItem(&mi);
 }
 
@@ -1188,9 +1183,7 @@ INT_PTR NewAlarmMenuFunc(WPARAM, LPARAM)
 	new_alarm->id = next_alarm_id++;
 	GetPluginTime(&new_alarm->time);
 
-	//New((HWND)CallService(MS_CLUI_GETHWND, 0, 0), *new_alarm, false);
 	New(GetDesktopWindow(), *new_alarm, false);
-
 	return 0;
 }
 

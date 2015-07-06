@@ -210,16 +210,10 @@ int InputAreaShortcuts(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, Common
 							cmdListNew = tcmdlist_last(windowData->cmdList);
 						}
 						if (cmdListNew != NULL) {
-							char *textBuffer;
-							if (windowData->flags & CWDF_RTF_INPUT)
-								textBuffer = GetRichTextRTF(hwnd);
-							else
-								textBuffer = GetRichTextEncoded(hwnd, windowData->codePage);
-
-							if (textBuffer != NULL) {
+							char *textBuffer = GetRichTextUtf(hwnd);
+							if (textBuffer != NULL)
+								// takes textBuffer to a queue, no leak here
 								windowData->cmdList = tcmdlist_append(windowData->cmdList, textBuffer, 20, TRUE);
-								mir_free(textBuffer);
-							}
 						}
 					}
 					else if (windowData->cmdListCurrent->prev != NULL)
@@ -234,12 +228,9 @@ int InputAreaShortcuts(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, Common
 					}
 				}
 				if (cmdListNew != NULL) {
-					int iLen;
 					SendMessage(hwnd, WM_SETREDRAW, FALSE, 0);
-					if (windowData->flags & CWDF_RTF_INPUT)
-						iLen = SetRichTextRTF(hwnd, cmdListNew->szCmd);
-					else
-						iLen = SetRichTextEncoded(hwnd, cmdListNew->szCmd);
+
+					int iLen = SetRichTextRTF(hwnd, cmdListNew->szCmd);
 
 					SendMessage(hwnd, EM_SCROLLCARET, 0, 0);
 					SendMessage(hwnd, WM_SETREDRAW, TRUE, 0);
@@ -302,8 +293,8 @@ void RegisterKeyBindings()
 	desc.pszName = strName;
 	desc.pszDescription = strDesc;
 	for (int i = 0; i < 9; i++) {
-		mir_snprintf(strName, SIZEOF(strName), "Scriver/Nav/Tab %d", i + 1);
-		mir_snprintf(strDesc, SIZEOF(strDesc), Translate("Navigate: tab %d"), i + 1);
+		mir_snprintf(strName, _countof(strName), "Scriver/Nav/Tab %d", i + 1);
+		mir_snprintf(strDesc, _countof(strDesc), Translate("Navigate: tab %d"), i + 1);
 		desc.lParam = KB_TAB1 + i;
 		desc.DefHotKey = HOTKEYCODE(HOTKEYF_ALT, '1' + i);
 		Hotkey_Register(&desc);
@@ -418,7 +409,7 @@ BOOL HandleLinkClick(HINSTANCE hInstance, HWND hwndDlg, HWND hwndFocus, ENLINK *
 		DestroyMenu(hMenu);
 	}
 	if (bOpenLink)
-		CallService(MS_UTILS_OPENURL, OUF_TCHAR | OUF_NEWWINDOW, (LPARAM)tr.lpstrText);
+		Utils_OpenUrlT(tr.lpstrText);
 
 	SetFocus(hwndFocus);
 	mir_free(tr.lpstrText);

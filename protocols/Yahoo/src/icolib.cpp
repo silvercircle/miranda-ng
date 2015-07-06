@@ -19,30 +19,30 @@
 
 static IconItem iconList[] =
 {
-	{	LPGEN("Main"),         "yahoo",      IDI_YAHOO      },
-	{	LPGEN("Mail"),         "mail",       IDI_INBOX      },
-	{	LPGEN("Profile"),      "profile",    IDI_PROFILE    },
-	{	LPGEN("Refresh"),      "refresh",    IDI_REFRESH    },
-	{	LPGEN("Address Book"), "yab",        IDI_YAB        },
-	{	LPGEN("Set Status"),   "set_status", IDI_SET_STATUS },
-	{	LPGEN("Calendar"),     "calendar",   IDI_CALENDAR   }
+	{ LPGEN("Main"), "yahoo", IDI_YAHOO },
+	{ LPGEN("Mail"), "mail", IDI_INBOX },
+	{ LPGEN("Profile"), "profile", IDI_PROFILE },
+	{ LPGEN("Refresh"), "refresh", IDI_REFRESH },
+	{ LPGEN("Address Book"), "yab", IDI_YAB },
+	{ LPGEN("Set Status"), "set_status", IDI_SET_STATUS },
+	{ LPGEN("Calendar"), "calendar", IDI_CALENDAR }
 };
 
-void CYahooProto::IconsInit( void )
+void CYahooProto::IconsInit(void)
 {
-	Icon_Register(hInstance, "Protocols/YAHOO", iconList, SIZEOF(iconList), "YAHOO");
+	Icon_Register(hInstance, "Protocols/YAHOO", iconList, _countof(iconList), "YAHOO");
 }
 
-HICON CYahooProto::LoadIconEx( const char* name, bool big )
+HICON CYahooProto::LoadIconEx(const char* name, bool big)
 {
 	char szSettingName[100];
-	mir_snprintf(szSettingName, SIZEOF(szSettingName), "YAHOO_%s", name);
-	return Skin_GetIcon(szSettingName, big);
+	mir_snprintf(szSettingName, _countof(szSettingName), "YAHOO_%s", name);
+	return IcoLib_GetIcon(szSettingName, big);
 }
 
 HANDLE CYahooProto::GetIconHandle(int iconId)
 {
-	for (unsigned i=0; i < SIZEOF(iconList); i++)
+	for (unsigned i = 0; i < _countof(iconList); i++)
 		if (iconList[i].defIconID == iconId)
 			return iconList[i].hIcolib;
 
@@ -52,6 +52,6 @@ HANDLE CYahooProto::GetIconHandle(int iconId)
 void CYahooProto::ReleaseIconEx(const char* name, bool big)
 {
 	char szSettingName[100];
-	mir_snprintf(szSettingName, SIZEOF(szSettingName), "YAHOO_%s", name);
-	Skin_ReleaseIcon(szSettingName, big);
+	mir_snprintf(szSettingName, _countof(szSettingName), "YAHOO_%s", name);
+	IcoLib_Release(szSettingName, big);
 }

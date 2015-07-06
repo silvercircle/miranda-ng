@@ -13,7 +13,7 @@ int hLangpack = 0;
 CLIST_INTERFACE *pcli;
 HANDLE hTopToolbarButtonShowList;
 HANDLE hMsgWndEvent;
-HANDLE hWindowList;
+MWindowList hWindowList;
 HGENMENU hMenuItemRemove;
 
 const INT_PTR boo = 0;
@@ -127,7 +127,7 @@ BOOL ShowListMainDlgProc_OpenContactMenu(HWND hDlg, HWND hList, int item, LASTUC
 		lvi.iSubItem = 0;
 		ListView_GetItem(hList, &lvi);
 		if (lvi.lParam != NULL) {
-			HMENU hCMenu = (HMENU)CallService(MS_CLIST_MENUBUILDCONTACT, (WPARAM)lvi.lParam, NULL);
+			HMENU hCMenu = Menu_BuildContactMenu(lvi.lParam);
 			if (hCMenu != NULL) {
 				POINT p;
 				GetCursorPos(&p);
@@ -237,7 +237,7 @@ INT_PTR CALLBACK ShowListMainDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 
 			for(curContact = DlgDat->Contacts->begin(); curContact != DlgDat->Contacts->end(); curContact++) {
 				if (curContact->second != NULL && db_get_b(curContact->second, dbLastUC_ModuleName, dbLastUC_IgnoreContact, 0) == 0 ) {
-					TCHAR *cname = ( TCHAR* )CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)curContact->second, GCDNF_TCHAR);
+					TCHAR *cname = ( TCHAR* )pcli->pfnGetContactDisplayName(curContact->second, 0);
 					if ( cname == NULL )
 						continue;
 
@@ -278,7 +278,7 @@ INT_PTR CALLBACK ShowListMainDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 					GetWindowPlacement(hDlg, &wp);
 
 					char szSettingName[64];
-					mir_snprintf(szSettingName, SIZEOF(szSettingName), "%swidth", dbLastUC_WindowPosPrefix);
+					mir_snprintf(szSettingName, _countof(szSettingName), "%swidth", dbLastUC_WindowPosPrefix);
 					int width = db_get_dw(NULL, dbLastUC_ModuleName, szSettingName, -1);
 
 					int right = rect.left - 6;
@@ -291,20 +291,12 @@ INT_PTR CALLBACK ShowListMainDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 					wp.flags = 0;
 
 					SetWindowPlacement(hDlg, &wp);
-				} else {
-					restorePos = true;
 				}
+				else restorePos = true;
 			}
 
-			if (restorePos) {
-				SAVEWINDOWPOS pos;
-				pos.hContact = NULL;
-				pos.hwnd = hDlg;
-				pos.szModule = dbLastUC_ModuleName;
-				pos.szNamePrefix = dbLastUC_WindowPosPrefix;
-
-				CallService(MS_UTILS_RESTOREWINDOWPOSITION, 0, (LPARAM)(SAVEWINDOWPOS*)&pos);
-			}
+			if (restorePos)
+				Utils_RestoreWindowPosition(hDlg, NULL, dbLastUC_ModuleName, dbLastUC_WindowPosPrefix);
 
 			SendMessage(hDlg, WM_SIZE, 0, 0);
 			WindowList_Add(hWindowList, hDlg, NULL);
@@ -350,10 +342,10 @@ INT_PTR CALLBACK ShowListMainDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 		}
 
 	case WM_MEASUREITEM:
-		return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
+		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
 
 	case WM_DRAWITEM:
-		return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
+		return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
 
 	case WM_COMMAND:
 		if (CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(LOWORD(wParam), MPCF_CONTACTMENU), (LPARAM)DlgDat->hContact))
@@ -385,20 +377,14 @@ INT_PTR CALLBACK ShowListMainDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 		break;
 
 	case WM_DESTROY:
-		{
-			// Save current window position.
-			SAVEWINDOWPOS pos;
-			pos.hContact = NULL;
-			pos.hwnd = hDlg;
-			pos.szModule = dbLastUC_ModuleName;
-			pos.szNamePrefix = dbLastUC_WindowPosPrefix;
-			CallService(MS_UTILS_SAVEWINDOWPOSITION, 0, (LPARAM)(SAVEWINDOWPOS*)&pos);
-			delete DlgDat->Contacts;
-			delete DlgDat;
-			// Remove entry from Window list
-			WindowList_Remove(hWindowList, hDlg);
-			break;
-		}
+		Utils_SaveWindowPosition(hDlg, NULL, dbLastUC_ModuleName, dbLastUC_WindowPosPrefix);
+
+		delete DlgDat->Contacts;
+		delete DlgDat;
+
+		// Remove entry from Window list
+		WindowList_Remove(hWindowList, hDlg);
+		break;
 	}
 	return FALSE;
 }
@@ -463,7 +449,7 @@ static int OnContactSettingChanged( WPARAM hContact, LPARAM lParam )
 
 int Create_TopToolbarShowList(WPARAM wParam, LPARAM lParam)
 {
-	TTBButton ttb = { sizeof(ttb) };
+	TTBButton ttb = { 0 };
 	ttb.hIconHandleUp = icon.hIcolib;
 	ttb.pszService = msLastUC_ShowList;
 	ttb.dwFlags = TTBBF_VISIBLE | TTBBF_SHOWTOOLTIP;
@@ -474,15 +460,15 @@ int Create_TopToolbarShowList(WPARAM wParam, LPARAM lParam)
 
 int Create_MenuitemShowList(void)
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.icolibItem = icon.hIcolib;
-	mi.pszName = msLastUC_ShowListName;
+	CMenuItem mi;
+	mi.hIcolibItem = icon.hIcolib;
+	mi.name.a = msLastUC_ShowListName;
 	mi.pszService = msLastUC_ShowList;
 	Menu_AddMainMenuItem(&mi);
 
 	mi.position = 0xFFFFF;
-	mi.icolibItem = icon.hIcolib;
-	mi.pszName = LPGEN("Toggle Ignore");
+	mi.hIcolibItem = icon.hIcolib;
+	mi.name.a = LPGEN("Toggle Ignore");
 	mi.pszService = V_RECENTCONTACTS_TOGGLE_IGNORE;
 	hMenuItemRemove = Menu_AddContactMenuItem(&mi);
 	return 0;
@@ -515,15 +501,10 @@ int OnMsgEvent(WPARAM wParam, LPARAM lParam)
 
 static int OnPrebuildContactMenu(WPARAM hContact, LPARAM lParam)
 {
-	CLISTMENUITEM clmi = { sizeof(clmi) };
-	clmi.flags = CMIM_NAME | CMIF_TCHAR;
-
 	if (db_get_b(hContact, dbLastUC_ModuleName, dbLastUC_IgnoreContact, 0) == 0)
-		clmi.ptszName = TranslateT("Ignore Contact");
+		Menu_ModifyItem(hMenuItemRemove, LPGENT("Ignore Contact"));
 	else
-		clmi.ptszName = TranslateT("Show Contact");
-
-	Menu_ModifyItem(hMenuItemRemove, &clmi);
+		Menu_ModifyItem(hMenuItemRemove, LPGENT("Show Contact"));
 	return 0;
 }
 

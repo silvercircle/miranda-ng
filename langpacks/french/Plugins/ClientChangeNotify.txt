@@ -52,7 +52,7 @@ Texte
 Aperçu
 [Ignore these clients (separated by semicolons):]
 
-[(you have to install pcre16.dll to use regular expressions here)]
+[(you have to install pcre16.mir to use regular expressions here)]
 
 ;file \plugins\ClientChangeNotify\src\ClientChangeNotify.cpp
 [changed client to %s (was %s)]
@@ -65,10 +65,10 @@ Aperçu
 
 [Enable c&lient change notification]
 
-[Popups]
-Popups
 [ClientChangeNotify: Client changed]
 
+[Popups]
+Popups
 ;file \plugins\ClientChangeNotify\src\Misc.h
 [Error #%d]
 

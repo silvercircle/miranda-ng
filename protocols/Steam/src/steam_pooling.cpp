@@ -2,9 +2,9 @@
 
 #define POLLING_ERRORS_LIMIT 3
 
-void CSteamProto::ParsePollData(JSONNODE *data)
+void CSteamProto::ParsePollData(JSONNode *data)
 {
-	JSONNODE *node, *item = NULL;
+	JSONNode *node, *item = NULL;
 
 	std::string steamIds;
 	for (size_t i = 0; i < json_size(data); i++)
@@ -41,7 +41,7 @@ void CSteamProto::ParsePollData(JSONNODE *data)
 			}
 			else
 			{
-				AddDBEvent(hContact, EVENTTYPE_MESSAGE, timestamp, DBEF_UTF | DBEF_SENT, mir_strlen(szMessage) + 1, (PBYTE)(char*)szMessage);
+				AddDBEvent(hContact, EVENTTYPE_MESSAGE, timestamp, DBEF_UTF | DBEF_SENT, (int)mir_strlen(szMessage) + 1, (PBYTE)(char*)szMessage);
 			}
 		}
 		else if (!lstrcmpi(type, _T("typing")))
@@ -127,10 +127,10 @@ void CSteamProto::ParsePollData(JSONNODE *data)
 					ptrA token(getStringA("TokenSecret"));
 
 					PushRequest(
-						new SteamWebApi::GetUserSummariesRequest(token, steamId),
+						new GetUserSummariesRequest(token, steamId),
 						&CSteamProto::OnAuthRequested,
 						mir_strdup(steamId),
-						ARG_MIR_FREE);
+						MirFreeArg);
 				}
 				break;
 
@@ -157,7 +157,7 @@ void CSteamProto::ParsePollData(JSONNODE *data)
 		ptrA token(getStringA("TokenSecret"));
 
 		PushRequest(
-			new SteamWebApi::GetUserSummariesRequest(token, steamIds.c_str()),
+			new GetUserSummariesRequest(token, steamIds.c_str()),
 			&CSteamProto::OnGotUserSummaries);
 	}
 }
@@ -170,17 +170,17 @@ void CSteamProto::PollingThread(void*)
 	ptrA umqId(getStringA("UMQID"));
 	UINT32 messageId = getDword("MessageID", 0);
 
-	//SteamWebApi::PollApi::PollResult pollResult;
+	//PollApi::PollResult pollResult;
 	int errors = 0;
 	bool breaked = false;
 	while (!isTerminated && !breaked && errors < POLLING_ERRORS_LIMIT)
 	{
-		SteamWebApi::PollRequest *request = new SteamWebApi::PollRequest(token, umqId, messageId, IdleSeconds());
+		PollRequest *request = new PollRequest(token, umqId, messageId, IdleSeconds());
 		//request->nlc = m_pollingConnection;
 		NETLIBHTTPREQUEST *response = request->Send(m_hNetlibUser);
 		delete request;
 
-		if (response == NULL || response->resultCode != HTTP_STATUS_OK)
+		if (response == NULL || response->resultCode != HTTP_CODE_OK)
 		{
 			if (response != NULL)
 				CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)response);
@@ -192,7 +192,7 @@ void CSteamProto::PollingThread(void*)
 			errors = 0;
 
 		JSONROOT root(response->pData);
-		JSONNODE *node = json_get(root, "error");
+		JSONNode *node = json_get(root, "error");
 		ptrT error(json_as_string(node));
 
 		if (!lstrcmpi(error, _T("OK")))
@@ -201,7 +201,7 @@ void CSteamProto::PollingThread(void*)
 			messageId = json_as_int(node);
 
 			node = json_get(root, "messages");
-			JSONNODE *nroot = json_as_array(node);
+			JSONNode *nroot = json_as_array(node);
 
 			if (nroot != NULL)
 			{
@@ -233,7 +233,7 @@ void CSteamProto::PollingThread(void*)
 			debugLog(_T("CSteamProto::PollingThread: %s (%d)"), error, response->resultCode);
 
 			// token has expired
-			if (response->resultCode == HTTP_STATUS_UNAUTHORIZED)
+			if (response->resultCode == HTTP_CODE_UNAUTHORIZED)
 				delSetting("TokenSecret");
 
 			// too low timeout?

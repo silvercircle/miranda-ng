@@ -433,7 +433,7 @@ static TCHAR* ShortenPreview(DBEVENTINFO* dbe)
 	}
 	if (fAddEllipsis) {
 		buf = (TCHAR*)mir_realloc(buf, (mir_tstrlen(buf) + 5) * sizeof(TCHAR));
-		_tcscat(buf, _T("..."));
+		mir_tstrcat(buf, _T("..."));
 	}
 	return buf;
 }
@@ -468,13 +468,13 @@ static TCHAR* GetPreviewT(WORD eventType, DBEVENTINFO* dbe)
 				if (szDescr && Utils::safe_strlen(szDescr, dbe->cbBlob - sizeof(DWORD) - namelength - 1) > 0) {
 					ptrT tszDescr(DbGetEventStringT(dbe, szDescr));
 					if (tszFileName && tszDescr) {
-						mir_sntprintf(buf, SIZEOF(buf), _T("%s: %s (%s)"), TranslateT("Incoming file"), tszFileName, tszDescr);
+						mir_sntprintf(buf, _T("%s: %s (%s)"), TranslateT("Incoming file"), tszFileName, tszDescr);
 						return mir_tstrdup(buf);
 					}
 				}
 
 				if (tszFileName) {
-					mir_sntprintf(buf, SIZEOF(buf), _T("%s: %s (%s)"), TranslateT("Incoming file"), tszFileName, TranslateT("No description given"));
+					mir_sntprintf(buf, _T("%s: %s (%s)"), TranslateT("Incoming file"), tszFileName, TranslateT("No description given"));
 					return mir_tstrdup(buf);
 				}
 			}
@@ -500,7 +500,7 @@ static int PopupUpdateT(MCONTACT hContact, MEVENT hEvent)
 
 	TCHAR szHeader[256];
 	if (pdata->pluginOptions->bShowHeaders)
-		mir_sntprintf(szHeader, SIZEOF(szHeader), _T("%s %d\n"), TranslateT("New messages: "), pdata->nrMerged + 1);
+		mir_sntprintf(szHeader, _countof(szHeader), _T("%s %d\n"), TranslateT("New messages: "), pdata->nrMerged + 1);
 	else
 		szHeader[0] = 0;
 
@@ -513,14 +513,14 @@ static int PopupUpdateT(MCONTACT hContact, MEVENT hEvent)
 
 	TCHAR timestamp[MAX_DATASIZE];
 	_tcsftime(timestamp, MAX_DATASIZE, _T("%Y.%m.%d %H:%M"), _localtime32((__time32_t *)&dbe.timestamp));
-	mir_sntprintf(pdata->eventData[pdata->nrMerged].tszText, SIZEOF(pdata->eventData[pdata->nrMerged].tszText), _T("\n\n%s\n"), timestamp);
+	mir_sntprintf(pdata->eventData[pdata->nrMerged].tszText, _countof(pdata->eventData[pdata->nrMerged].tszText), _T("\n\n%s\n"), timestamp);
 
 	TCHAR *szPreview = GetPreviewT(dbe.eventType, &dbe);
 	if (szPreview) {
-		_tcsncat(pdata->eventData[pdata->nrMerged].tszText, szPreview, SIZEOF(pdata->eventData[pdata->nrMerged].tszText) - mir_tstrlen(pdata->eventData[pdata->nrMerged].tszText));
+		mir_tstrncat(pdata->eventData[pdata->nrMerged].tszText, szPreview, _countof(pdata->eventData[pdata->nrMerged].tszText) - mir_tstrlen(pdata->eventData[pdata->nrMerged].tszText));
 		mir_free(szPreview);
 	}
-	else _tcsncat(pdata->eventData[pdata->nrMerged].tszText, _T(" "), SIZEOF(pdata->eventData[pdata->nrMerged].tszText) - mir_tstrlen(pdata->eventData[pdata->nrMerged].tszText));
+	else mir_tstrncat(pdata->eventData[pdata->nrMerged].tszText, _T(" "), _countof(pdata->eventData[pdata->nrMerged].tszText) - mir_tstrlen(pdata->eventData[pdata->nrMerged].tszText));
 
 	pdata->eventData[pdata->nrMerged].tszText[MAX_SECONDLINE - 1] = 0;
 
@@ -544,7 +544,7 @@ static int PopupUpdateT(MCONTACT hContact, MEVENT hEvent)
 	}
 	i = (available > 0) ? i + 1 : i + 2;
 	for (; i <= pdata->nrMerged; i++)
-		_tcsncat(lpzText, pdata->eventData[i].tszText, SIZEOF(lpzText) - mir_tstrlen(lpzText));
+		mir_tstrncat(lpzText, pdata->eventData[i].tszText, _countof(lpzText) - mir_tstrlen(lpzText));
 
 	pdata->eventData[pdata->nrMerged].hEvent = hEvent;
 	pdata->eventData[pdata->nrMerged].timestamp = dbe.timestamp;
@@ -584,7 +584,7 @@ static int PopupShowT(NEN_OPTIONS *pluginOptions, MCONTACT hContact, MEVENT hEve
 	long iSeconds;
 	switch (eventType) {
 	case EVENTTYPE_MESSAGE:
-		pud.lchIcon = LoadSkinnedIcon(SKINICON_EVENT_MESSAGE);
+		pud.lchIcon = Skin_LoadIcon(SKINICON_EVENT_MESSAGE);
 		pud.colorBack = pluginOptions->bDefaultColorMsg ? 0 : pluginOptions->colBackMsg;
 		pud.colorText = pluginOptions->bDefaultColorMsg ? 0 : pluginOptions->colTextMsg;
 		iSeconds = pluginOptions->iDelayMsg;
@@ -672,7 +672,7 @@ void TSAPI UpdateTrayMenuState(TWindowData *dat, BOOL bForced)
 		PluginConfig.m_UnreadInTray -= (mii.dwItemData & 0x0000ffff);
 	if (mii.dwItemData > 0 || bForced) {
 		TCHAR szMenuEntry[80];
-		mir_sntprintf(szMenuEntry, SIZEOF(szMenuEntry), _T("%s: %s (%s) [%d]"), tszProto,
+		mir_sntprintf(szMenuEntry, _countof(szMenuEntry), _T("%s: %s (%s) [%d]"), tszProto,
 			dat->cache->getNick(), dat->szStatus[0] ? dat->szStatus : _T("(undef)"), mii.dwItemData & 0x0000ffff);
 
 		if (!bForced)
@@ -694,7 +694,7 @@ int TSAPI UpdateTrayMenu(const TWindowData *dat, WORD wStatus, const char *szPro
 	if (!PluginConfig.g_hMenuTrayUnread || hContact == 0 || szProto == NULL)
 		return 0;
 
-	PROTOACCOUNT *acc = ProtoGetAccount(szProto);
+	PROTOACCOUNT *acc = Proto_GetAccount(szProto);
 	TCHAR *tszFinalProto = (acc && acc->tszAccountName ? acc->tszAccountName : 0);
 	if (tszFinalProto == 0)
 		return 0;
@@ -702,7 +702,8 @@ int TSAPI UpdateTrayMenu(const TWindowData *dat, WORD wStatus, const char *szPro
 	WORD wMyStatus = (wStatus == 0) ? db_get_w(hContact, szProto, "Status", ID_STATUS_OFFLINE) : wStatus;
 	const TCHAR	*szMyStatus = (szStatus == NULL) ? pcli->pfnGetStatusModeDescription(wMyStatus, 0) : szStatus;
 
-	MENUITEMINFO mii = { sizeof(mii) };
+	MENUITEMINFO mii = { 0 };
+	mii.cbSize = sizeof(mii);
 	mii.fMask = MIIM_DATA | MIIM_ID | MIIM_BITMAP;
 	mii.wID = (UINT)hContact;
 	mii.hbmpItem = HBMMENU_CALLBACK;
@@ -716,7 +717,7 @@ int TSAPI UpdateTrayMenu(const TWindowData *dat, WORD wStatus, const char *szPro
 		if (fromEvent == 2)                         // from chat...
 			mii.dwItemData |= 0x10000000;
 		DeleteMenu(PluginConfig.g_hMenuTrayUnread, (UINT_PTR)hContact, MF_BYCOMMAND);
-		mir_sntprintf(szMenuEntry, SIZEOF(szMenuEntry), _T("%s: %s (%s) [%d]"), tszFinalProto, szNick, szMyStatus, mii.dwItemData & 0x0000ffff);
+		mir_sntprintf(szMenuEntry, _countof(szMenuEntry), _T("%s: %s (%s) [%d]"), tszFinalProto, szNick, szMyStatus, mii.dwItemData & 0x0000ffff);
 		AppendMenu(PluginConfig.g_hMenuTrayUnread, MF_BYCOMMAND | MF_STRING, (UINT_PTR)hContact, szMenuEntry);
 		PluginConfig.m_UnreadInTray++;
 		if (PluginConfig.m_UnreadInTray)
@@ -726,7 +727,7 @@ int TSAPI UpdateTrayMenu(const TWindowData *dat, WORD wStatus, const char *szPro
 	else {
 		szNick = pcli->pfnGetContactDisplayName(hContact, 0);
 		if (CheckMenuItem(PluginConfig.g_hMenuTrayUnread, (UINT_PTR)hContact, MF_BYCOMMAND | MF_UNCHECKED) == -1) {
-			mir_sntprintf(szMenuEntry, SIZEOF(szMenuEntry), _T("%s: %s (%s) [%d]"), tszFinalProto, szNick, szMyStatus, fromEvent ? 1 : 0);
+			mir_sntprintf(szMenuEntry, _countof(szMenuEntry), _T("%s: %s (%s) [%d]"), tszFinalProto, szNick, szMyStatus, fromEvent ? 1 : 0);
 			AppendMenu(PluginConfig.g_hMenuTrayUnread, MF_BYCOMMAND | MF_STRING, (UINT_PTR)hContact, szMenuEntry);
 			mii.dwItemData = fromEvent ? 1 : 0;
 			PluginConfig.m_UnreadInTray += (mii.dwItemData & 0x0000ffff);
@@ -744,7 +745,7 @@ int TSAPI UpdateTrayMenu(const TWindowData *dat, WORD wStatus, const char *szPro
 			mii.fMask |= MIIM_STRING;
 			if (fromEvent == 2)
 				mii.dwItemData |= 0x10000000;
-			mir_sntprintf(szMenuEntry, SIZEOF(szMenuEntry), _T("%s: %s (%s) [%d]"), tszFinalProto, szNick, szMyStatus, mii.dwItemData & 0x0000ffff);
+			mir_sntprintf(szMenuEntry, _countof(szMenuEntry), _T("%s: %s (%s) [%d]"), tszFinalProto, szNick, szMyStatus, mii.dwItemData & 0x0000ffff);
 			mii.cch = (int)mir_tstrlen(szMenuEntry) + 1;
 			mii.dwTypeData = (LPTSTR)szMenuEntry;
 		}

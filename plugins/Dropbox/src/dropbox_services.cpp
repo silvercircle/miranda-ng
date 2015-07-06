@@ -3,7 +3,7 @@
 HANDLE CDropbox::CreateProtoServiceFunctionObj(const char *szService, MIRANDASERVICEOBJ serviceProc, void *obj)
 {
 	char str[MAXMODULELABELLENGTH];
-	mir_snprintf(str, SIZEOF(str), "%s%s", MODULE, szService);
+	mir_snprintf(str, "%s%s", MODULE, szService);
 	str[MAXMODULELABELLENGTH - 1] = 0;
 	return CreateServiceFunctionObj(str, serviceProc, obj);
 }
@@ -151,14 +151,14 @@ INT_PTR CDropbox::ProtoSendMessage(WPARAM, LPARAM lParam)
 
 	char *szMessage = (char*)pccsd->lParam;
 
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	/*DBEVENTINFO dbei = { sizeof(dbei) };
 	dbei.szModule = MODULE;
 	dbei.timestamp = time(NULL);
 	dbei.eventType = EVENTTYPE_MESSAGE;
 	dbei.cbBlob = (int)mir_strlen(szMessage);
 	dbei.pBlob = (PBYTE)szMessage;
 	dbei.flags = DBEF_SENT | DBEF_READ | DBEF_UTF;
-	db_event_add(pccsd->hContact, &dbei);
+	db_event_add(pccsd->hContact, &dbei);*/
 
 	if (*szMessage == '/')
 	{
@@ -179,7 +179,7 @@ INT_PTR CDropbox::ProtoSendMessage(WPARAM, LPARAM lParam)
 			{ "delete", &CDropbox::CommandDelete }
 		};
 
-		for (int i = 0; i < SIZEOF(commands); i++)
+		for (int i = 0; i < _countof(commands); i++)
 		{
 			if (!mir_strcmp(szMessage+1, commands[i].szCommand))
 			{
@@ -199,7 +199,7 @@ INT_PTR CDropbox::ProtoSendMessage(WPARAM, LPARAM lParam)
 	}
 
 	char help[1024];
-	mir_snprintf(help, SIZEOF(help), Translate("\"%s\" is not valid.\nUse \"/help\" for more info."), szMessage);
+	mir_snprintf(help, _countof(help), Translate("\"%s\" is not valid.\nUse \"/help\" for more info."), szMessage);
 	CallContactService(GetDefaultContact(), PSR_MESSAGE, 0, (LPARAM)help);
 	return 0;
 }
@@ -211,11 +211,12 @@ INT_PTR CDropbox::ProtoReceiveMessage(WPARAM, LPARAM lParam)
 	char *message = (char*)pccsd->lParam;
 
 	DBEVENTINFO dbei = { sizeof(dbei) };
+	dbei.flags = DBEF_UTF;
 	dbei.szModule = MODULE;
 	dbei.timestamp = time(NULL);
 	dbei.eventType = EVENTTYPE_MESSAGE;
 	dbei.cbBlob = (int)mir_strlen(message);
-	dbei.pBlob = (PBYTE)message;
+	dbei.pBlob = (PBYTE)mir_strdup(message);
 	db_event_add(pccsd->hContact, &dbei);
 
 	return 0;

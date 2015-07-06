@@ -127,12 +127,10 @@ static INT_PTR avSetAvatar(MCONTACT hContact, TCHAR *tszPath)
 	int is_locked = db_get_b(hContact, "ContactPhoto", "Locked", 0);
 
 	if (tszPath == NULL) {
-		OPENFILENAME ofn = { 0 };
 		TCHAR filter[256];
+		Bitmap_GetFilter(filter, _countof(filter));
 
-		filter[0] = '\0';
-		CallService(MS_UTILS_GETBITMAPFILTERSTRINGST, SIZEOF(filter), (LPARAM)filter);
-
+		OPENFILENAME ofn = { 0 };
 		ofn.lStructSize = sizeof(ofn);
 		ofn.hwndOwner = 0;
 		ofn.lpstrFile = FileName;
@@ -227,7 +225,7 @@ static int InternalRemoveMyAvatar(char *protocol)
 		PROTOACCOUNT **accs;
 		int i, count;
 
-		ProtoEnumAccounts(&count, &accs);
+		Proto_EnumAccounts(&count, &accs);
 		for (i = 0; i < count; i++) {
 			if (!ProtoServiceExists(accs[i]->szModuleName, PS_SETMYAVATAR))
 				continue;
@@ -257,7 +255,7 @@ static int InternalRemoveMyAvatar(char *protocol)
 
 static void FilterGetStrings(CMString &filter, BOOL xml, BOOL swf)
 {
-	filter.AppendFormat(_T("%s (*.bmp;*.jpg;*.gif;*.png"), TranslateT("All Files"));
+	filter.AppendFormat(_T("%s (*.bmp;*.jpg;*.gif;*.png"), TranslateT("All files"));
 	if (swf) filter.Append(_T(";*.swf"));
 	if (xml) filter.Append(_T(";*.xml"));
 
@@ -266,16 +264,16 @@ static void FilterGetStrings(CMString &filter, BOOL xml, BOOL swf)
 	if (xml) filter.Append(_T(";*.XML"));
 	filter.AppendChar(0);
 
-	filter.AppendFormat(_T("%s (*.bmp;*.rle)%c*.BMP;*.RLE%c"), TranslateT("Windows Bitmaps"), 0, 0);
-	filter.AppendFormat(_T("%s (*.jpg;*.jpeg)%c*.JPG;*.JPEG%c"), TranslateT("JPEG Bitmaps"), 0, 0);
-	filter.AppendFormat(_T("%s (*.gif)%c*.GIF%c"), TranslateT("GIF Bitmaps"), 0, 0);
-	filter.AppendFormat(_T("%s (*.png)%c*.PNG%c"), TranslateT("PNG Bitmaps"), 0, 0);
+	filter.AppendFormat(_T("%s (*.bmp;*.rle)%c*.BMP;*.RLE%c"), TranslateT("Windows bitmaps"), 0, 0);
+	filter.AppendFormat(_T("%s (*.jpg;*.jpeg)%c*.JPG;*.JPEG%c"), TranslateT("JPEG bitmaps"), 0, 0);
+	filter.AppendFormat(_T("%s (*.gif)%c*.GIF%c"), TranslateT("GIF bitmaps"), 0, 0);
+	filter.AppendFormat(_T("%s (*.png)%c*.PNG%c"), TranslateT("PNG bitmaps"), 0, 0);
 
 	if (swf)
-		filter.AppendFormat(_T("%s (*.swf)%c*.SWF%c"), TranslateT("Flash Animations"), 0, 0);
+		filter.AppendFormat(_T("%s (*.swf)%c*.SWF%c"), TranslateT("Flash animations"), 0, 0);
 
 	if (xml)
-		filter.AppendFormat(_T("%s (*.xml)%c*.XML%c"), TranslateT("XML Files"), 0, 0);
+		filter.AppendFormat(_T("%s (*.xml)%c*.XML%c"), TranslateT("XML files"), 0, 0);
 
 	filter.AppendChar(0);
 }
@@ -349,7 +347,7 @@ void SaveImage(SaveProtocolData &d, char *protocol, int format)
 	if (!Proto_IsAvatarFormatSupported(protocol, format))
 		return;
 
-	mir_sntprintf(d.image_file_name, SIZEOF(d.image_file_name), _T("%s%s"), d.temp_file, ProtoGetAvatarExtension(format));
+	mir_sntprintf(d.image_file_name, _countof(d.image_file_name), _T("%s%s"), d.temp_file, ProtoGetAvatarExtension(format));
 	if (BmpFilterSaveBitmap(d.hBmpProto, d.image_file_name, format == PA_FORMAT_JPEG ? JPEG_QUALITYSUPERB : 0))
 		return;
 
@@ -530,7 +528,7 @@ static int InternalSetMyAvatar(char *protocol, TCHAR *szFinalName, SetMyAvatarHo
 	else {
 		int count;
 		PROTOACCOUNT **accs;
-		ProtoEnumAccounts(&count, &accs);
+		Proto_EnumAccounts(&count, &accs);
 		for (int i = 0; i < count; i++) {
 			if (!ProtoServiceExists(accs[i]->szModuleName, PS_SETMYAVATAR))
 				continue;
@@ -551,14 +549,14 @@ static int InternalSetMyAvatar(char *protocol, TCHAR *szFinalName, SetMyAvatarHo
 			// Copy avatar file to store as global one
 			TCHAR globalFile[1024];
 			BOOL saved = TRUE;
-			if (FoldersGetCustomPathT(hGlobalAvatarFolder, globalFile, SIZEOF(globalFile), _T(""))) {
-				mir_sntprintf(globalFile, SIZEOF(globalFile), _T("%s%s"), g_szDataPath, _T("GlobalAvatar"));
+			if (FoldersGetCustomPathT(hGlobalAvatarFolder, globalFile, _countof(globalFile), _T(""))) {
+				mir_sntprintf(globalFile, _countof(globalFile), _T("%s%s"), g_szDataPath, _T("GlobalAvatar"));
 				CreateDirectory(globalFile, NULL);
 			}
 
 			TCHAR *ext = _tcsrchr(szFinalName, _T('.')); // Can't be NULL here
 			if (format == PA_FORMAT_XML || format == PA_FORMAT_SWF) {
-				mir_sntprintf(globalFile, SIZEOF(globalFile), _T("%s\\my_global_avatar%s"), globalFile, ext);
+				mir_sntprintf(globalFile, _countof(globalFile), _T("%s\\my_global_avatar%s"), globalFile, ext);
 				CopyFile(szFinalName, globalFile, FALSE);
 			}
 			else {
@@ -576,12 +574,12 @@ static int InternalSetMyAvatar(char *protocol, TCHAR *szFinalName, SetMyAvatarHo
 				// Check if need to resize
 				if (hBmpTmp == hBmp || hBmpTmp == NULL) {
 					// Use original image
-					mir_sntprintf(globalFile, SIZEOF(globalFile), _T("%s\\my_global_avatar%s"), globalFile, ext);
+					mir_sntprintf(globalFile, _countof(globalFile), _T("%s\\my_global_avatar%s"), globalFile, ext);
 					CopyFile(szFinalName, globalFile, FALSE);
 				}
 				else {
 					// Save as PNG
-					mir_sntprintf(globalFile, SIZEOF(globalFile), _T("%s\\my_global_avatar.png"), globalFile);
+					mir_sntprintf(globalFile, _countof(globalFile), _T("%s\\my_global_avatar.png"), globalFile);
 					if (BmpFilterSaveBitmap(hBmpTmp, globalFile, 0))
 						saved = FALSE;
 
@@ -637,7 +635,7 @@ INT_PTR avSetMyAvatar(char* protocol, TCHAR* tszPath)
 
 		int count;
 		PROTOACCOUNT **accs;
-		ProtoEnumAccounts(&count, &accs);
+		Proto_EnumAccounts(&count, &accs);
 		for (int i = 0; i < count; i++) {
 			if (!ProtoServiceExists(accs[i]->szModuleName, PS_SETMYAVATAR))
 				continue;
@@ -667,7 +665,7 @@ INT_PTR avSetMyAvatar(char* protocol, TCHAR* tszPath)
 		FilterGetStrings(filter, allAcceptXML, allAcceptSWF);
 
 		TCHAR inipath[1024];
-		FoldersGetCustomPathT(hMyAvatarsFolder, inipath, SIZEOF(inipath), _T("."));
+		FoldersGetCustomPathT(hMyAvatarsFolder, inipath, _countof(inipath), _T("."));
 
 		OPENFILENAME ofn = { 0 };
 		ofn.lStructSize = sizeof(ofn);
@@ -687,10 +685,10 @@ INT_PTR avSetMyAvatar(char* protocol, TCHAR* tszPath)
 
 		TCHAR title[256];
 		if (protocol == NULL)
-			mir_sntprintf(title, SIZEOF(title), TranslateT("Set My Avatar"));
+			mir_sntprintf(title, _countof(title), TranslateT("Set My Avatar"));
 		else {
 			TCHAR* prototmp = mir_a2t(protocol);
-			mir_sntprintf(title, SIZEOF(title), TranslateT("Set My Avatar for %s"), prototmp);
+			mir_sntprintf(title, _countof(title), TranslateT("Set My Avatar for %s"), prototmp);
 			mir_free(prototmp);
 		}
 		ofn.lpstrTitle = title;

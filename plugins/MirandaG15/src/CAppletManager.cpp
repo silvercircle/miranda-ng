@@ -87,7 +87,7 @@ bool CAppletManager::Initialize(tstring strAppletName)
 	CProtocolData *pProtoData = NULL;
 	CIRCConnection *pIRCConnection = NULL;
 
-	ProtoEnumAccounts(&iCount, &ppAccounts);
+	Proto_EnumAccounts(&iCount, &ppAccounts);
 	for(int i=0;i<iCount;i++)
 	{
 		/**if(ppProtocolDescriptor[i]->type != PROTOTYPE_PROTOCOL)
@@ -210,7 +210,7 @@ tstring CAppletManager::TranslateString(TCHAR *szString,...)
 
 	va_list body;
 	va_start(body, szString);
-	_vstprintf_s(out, SIZEOF(out), szTranslatedString, body);
+	_vstprintf_s(out, _countof(out), szTranslatedString, body);
 	va_end(body);
 	return out;
 }
@@ -445,7 +445,7 @@ bool CAppletManager::ActivateChatScreen(MCONTACT hContact)
 tstring CAppletManager::GetContactDisplayname(MCONTACT hContact,bool bShortened)
 {
 	if(!bShortened || !CConfig::GetBoolSetting(NOTIFY_NICKCUTOFF))
-		return (TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR);
+		return pcli->pfnGetContactDisplayName(hContact, 0);
 	
 	tstring strNick = GetContactDisplayname(hContact,false);
 	if(strNick.length() > (tstring::size_type)CConfig::GetIntSetting(NOTIFY_NICKCUTOFF_OFFSET))
@@ -775,7 +775,6 @@ void CAppletManager::SendTypingNotification(MCONTACT hContact,bool bEnable)
 MEVENT CAppletManager::SendMessageToContact(MCONTACT hContact,tstring strMessage)
 {
 	tstring strAscii = _A2T(toNarrowString(strMessage).c_str());
-	int bufSize = mir_tstrlen(strAscii.c_str())+1;
 	SMessageJob *pJob = new SMessageJob();
 	pJob->dwTimestamp = GetTickCount();
 	pJob->hContact = hContact;
@@ -1528,7 +1527,7 @@ int CAppletManager::HookStatusChanged(WPARAM wParam, LPARAM lParam)
 	tstring strName = CAppletManager::GetContactDisplayname(Event.hContact,true);
 	
 	// Get status String
-	Event.strValue = toTstring((char *) CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, iStatus, 0));
+	Event.strValue = toTstring(pcli->pfnGetStatusModeDescription(iStatus, 0));
 	
 	// check if this is an irc protocol
 	CIRCConnection *pIRCCon = CAppletManager::GetInstance()->GetIRCConnection(strProto);
@@ -1689,7 +1688,7 @@ int CAppletManager::HookProtoAck(WPARAM wParam, LPARAM lParam)
 		Event.strValue = strProto;
 
 		// set the event description / summary
-		tstring strStatus = toTstring((char *) CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, iNewStatus, 0));
+		tstring strStatus = toTstring(pcli->pfnGetStatusModeDescription(iNewStatus, 0));
 		Event.strDescription = _T("(") + Event.strValue + _T(") ")+ TranslateString(_T("You are now %s"),strStatus.c_str());
 		Event.strSummary = TranslateString(_T("Protocol status change"));
 

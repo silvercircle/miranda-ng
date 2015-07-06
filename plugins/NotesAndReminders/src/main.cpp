@@ -110,7 +110,7 @@ IconItem iconList[] =
 
 void InitIcons(void)
 {
-	Icon_Register(hinstance, LPGEN("Sticky Notes"), iconList, SIZEOF(iconList), MODULENAME);
+	Icon_Register(hinstance, LPGEN("Sticky Notes"), iconList, _countof(iconList), MODULENAME);
 }
 
 int OnOptInitialise(WPARAM w, LPARAM L)
@@ -129,8 +129,7 @@ int OnOptInitialise(WPARAM w, LPARAM L)
 
 int OnTopToolBarInit(WPARAM w, LPARAM L) 
 {
-	TTBButton ttb = {0};
-	ttb.cbSize = sizeof(TTBButton);
+	TTBButton ttb = { 0 };
 	ttb.dwFlags = TTBBF_VISIBLE | TTBBF_SHOWTOOLTIP;
 
 	ttb.hIconHandleUp = iconList[14].hIcolib;
@@ -174,6 +173,18 @@ static void InitServices()
 	CreateServiceFunction(MODULENAME"/OpenTriggeredReminder",OpenTriggeredReminder);
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
+
+static void addMenuItem(CMenuItem &mi)
+{
+	if (g_AddContListMI) {
+		HGENMENU save = mi.root; mi.root = NULL;
+		Menu_AddContactMenuItem(&mi);
+		mi.root = save;
+	}
+	Menu_AddMainMenuItem(&mi);
+}
+
 int OnModulesLoaded(WPARAM wparam, LPARAM lparam)
 {
 	// register fonts and hotkeys
@@ -181,81 +192,70 @@ int OnModulesLoaded(WPARAM wparam, LPARAM lparam)
 	RegisterKeyBindings();
 
 	g_AddContListMI = (BOOL)db_get_dw(0,MODULENAME,"AddContactMenuItems",1);
+	
 	// register menus
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.pszContactOwner = NULL;
-	mi.ptszPopupName = LPGENT("Notes && Reminders");
+	CMenuItem mi;
+	mi.root = Menu_CreateRoot(MO_MAIN, LPGENW("Notes && Reminders"), 1600000000);
 	mi.flags = CMIF_TCHAR;
 
 	mi.position = 1600000000;
-	mi.icolibItem = iconList[2].hIcolib;
-	mi.ptszName = LPGENT("New &Note");
+	mi.hIcolibItem = iconList[2].hIcolib;
+	mi.name.t = LPGENT("New &Note");
 	mi.pszService = MODULENAME"/MenuCommandAddNew";
-	if (g_AddContListMI) Menu_AddContactMenuItem(&mi);
-	Menu_AddMainMenuItem(&mi);
+	addMenuItem(mi);
 
 	mi.position = 1600000001;
-	mi.icolibItem = iconList[0].hIcolib;
-	mi.ptszName = LPGENT("New &Reminder");
+	mi.hIcolibItem = iconList[0].hIcolib;
+	mi.name.t = LPGENT("New &Reminder");
 	mi.pszService = MODULENAME"/MenuCommandNewReminder";
-	if (g_AddContListMI) Menu_AddContactMenuItem(&mi);
-	Menu_AddMainMenuItem(&mi);
+	addMenuItem(mi);
 
 	mi.position = 1600100000;
-	mi.icolibItem = iconList[3].hIcolib;
-	mi.ptszName = LPGENT("&Show / Hide Notes");
+	mi.hIcolibItem = iconList[3].hIcolib;
+	mi.name.t = LPGENT("&Show / Hide Notes");
 	mi.pszService = MODULENAME"/MenuCommandShowHide";
-	if (g_AddContListMI) Menu_AddContactMenuItem(&mi);
-	Menu_AddMainMenuItem(&mi);
+	addMenuItem(mi);
 
 	mi.position = 1600100001;
-	mi.icolibItem = iconList[13].hIcolib;
-	mi.ptszName = LPGENT("Vie&w Notes");
+	mi.hIcolibItem = iconList[13].hIcolib;
+	mi.name.t = LPGENT("Vie&w Notes");
 	mi.pszService = MODULENAME"/MenuCommandViewNotes";
-	if (g_AddContListMI) Menu_AddContactMenuItem(&mi);
-	Menu_AddMainMenuItem(&mi);
+	addMenuItem(mi);
 
 	mi.position = 1600100002;
-	mi.icolibItem = iconList[1].hIcolib;
-	mi.ptszName = LPGENT("&Delete All Notes");
+	mi.hIcolibItem = iconList[1].hIcolib;
+	mi.name.t = LPGENT("&Delete All Notes");
 	mi.pszService = MODULENAME"/MenuCommandDeleteAll";
-	if (g_AddContListMI) Menu_AddContactMenuItem(&mi);
-	Menu_AddMainMenuItem(&mi);
+	addMenuItem(mi);
 
 	mi.position = 1600100003;
-	mi.icolibItem = iconList[11].hIcolib;
-	mi.ptszName = LPGENT("&Bring All to Front");
+	mi.hIcolibItem = iconList[11].hIcolib;
+	mi.name.t = LPGENT("&Bring All to Front");
 	mi.pszService = MODULENAME"/MenuCommandBringAllFront";
-	if (g_AddContListMI) Menu_AddContactMenuItem(&mi);
-	Menu_AddMainMenuItem(&mi);
+	addMenuItem(mi);
 
 	mi.position = 1600200000;
-	mi.icolibItem = iconList[6].hIcolib;
-	mi.ptszName = LPGENT("&View Reminders");
+	mi.hIcolibItem = iconList[6].hIcolib;
+	mi.name.t = LPGENT("&View Reminders");
 	mi.pszService = MODULENAME"/MenuCommandViewReminders";
-	if (g_AddContListMI) Menu_AddContactMenuItem(&mi);
-	Menu_AddMainMenuItem(&mi);
+	addMenuItem(mi);
 
 	mi.position = 1600200001;
-	mi.icolibItem = iconList[5].hIcolib;
-	mi.ptszName = LPGENT("D&elete All Reminders");
+	mi.hIcolibItem = iconList[5].hIcolib;
+	mi.name.t = LPGENT("D&elete All Reminders");
 	mi.pszService = MODULENAME"/MenuCommandDeleteReminders";
-	if (g_AddContListMI) Menu_AddContactMenuItem(&mi);
-	Menu_AddMainMenuItem(&mi);
+	addMenuItem(mi);
 
 	// register misc
-
 	hkOptInit = HookEvent(ME_OPT_INITIALISE, OnOptInitialise);
 	hkTopToolbarInit = HookEvent("TopToolBar/ModuleLoaded", OnTopToolBarInit); 
 	UnhookEvent(hkModulesLoaded);
 
 	// init vars and load all data
-
 	InitSettings();
 	CreateMsgWindow();
 	LoadNotes(TRUE);
 	LoadReminders();
-
 	return 0;
 }
 
@@ -279,7 +279,7 @@ extern "C" __declspec(dllexport) int Unload(void)
 
 	UnhookEvent(hkOptInit);
 
-	Skin_ReleaseIcon(g_hReminderIcon);
+	IcoLib_ReleaseIcon(g_hReminderIcon);
 	DeleteObject(hBodyFont);
 	DeleteObject(hCaptionFont);
 

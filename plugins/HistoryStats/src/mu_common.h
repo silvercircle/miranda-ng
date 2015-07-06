@@ -13,11 +13,8 @@ namespace mu
 
 	namespace clist
 	{
-		HANDLE addMainMenuItem(const TCHAR* pszName, DWORD flags, int position, HICON hIcon, const char* pszService, const TCHAR* pszPopupName = NULL, int popupPosition = 0, DWORD hotKey = 0);
-		HANDLE addContactMenuItem(const TCHAR* pszName, DWORD flags, int position, HICON hIcon, const char* pszService, DWORD hotKey = 0, const char* pszContactOwner = NULL);
-		int modifyMenuItem(HANDLE hMenuItem, DWORD toModify, const TCHAR* pszName = NULL, DWORD flags = 0, HICON hIcon = NULL, DWORD hotKey = 0);
-		const TCHAR* getContactDisplayName(MCONTACT hContact);
-		const TCHAR* getStatusModeDescription(int nStatusMode);
+		HGENMENU addMainMenuItem(const TCHAR* pszName, DWORD flags, int position, HICON hIcon, const char* pszService, HGENMENU hRoot = 0);
+		HGENMENU addContactMenuItem(const TCHAR* pszName, DWORD flags, int position, HICON hIcon, const char* pszService);
 	}
 
 	/*
@@ -42,15 +39,6 @@ namespace mu
 	}
 
 	/*
-	 * db_time
-	 */
-
-	namespace db_time
-	{
-		DWORD timestampToLocal(DWORD timestamp);
-	}
-
-	/*
 	 * icolib
 	 */
 
@@ -69,26 +57,6 @@ namespace mu
 	namespace opt
 	{
 		void addPage(WPARAM addInfo, const TCHAR* pszGroup, const TCHAR* pszTitle, const TCHAR* pszTab, DLGPROC pfnDlgProc, const char* pszTemplate, HINSTANCE hInstance, DWORD flags = ODPF_BOLDGROUPS);
-	}
-
-	/*
-	 * png
-	 */
-
-	namespace png
-	{
-		bool _available();
-		bool dibToPng(const BITMAPINFOHEADER* pBMIH, const BYTE* pDIData, BYTE* pImageData, long* pImageLen);
-	}
-
-	/*
-	 * proto
-	 */
-
-	namespace proto
-	{
-		int enumProtocols(int* numProtocols, PROTOACCOUNT*** ppProtoDescriptors);
-		const char* getContactBaseProto(MCONTACT hContact);
 	}
 
 	/*
@@ -130,16 +98,6 @@ namespace mu
 	{
 		bool _available();
 		void registerFL(int fileID, const PLUGININFOEX* pluginInfo);
-	}
-
-	/*
-	 * utils
-	 */
-
-	namespace utils
-	{
-		int pathToRelative(const TCHAR* pszPath, TCHAR* pszNewPath);
-		int pathToAbsolute(const TCHAR* pszPath, TCHAR* pszNewPath);
 	}
 
 	/*

@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "msn_global.h"
+#include "stdafx.h"
 #include "msn_proto.h"
 #include "m_smileyadd.h"
 
@@ -203,8 +203,10 @@ void CMsnProto::Lists_Populate(void)
 	while (hContact) {
 		MCONTACT hNext = db_find_next(hContact, m_szModuleName);
 		char szEmail[MSN_MAX_EMAIL_LEN] = "";
-		if (db_get_static(hContact, m_szModuleName, "wlid", szEmail, sizeof(szEmail)))
-			db_get_static(hContact, m_szModuleName, "e-mail", szEmail, sizeof(szEmail));
+		if (db_get_static(hContact, m_szModuleName, "wlid", szEmail, sizeof(szEmail))) {
+			if (db_get_static(hContact, m_szModuleName, "e-mail", szEmail, sizeof(szEmail)) == 0)
+				setString(hContact, "wlid", szEmail);
+		}
 		if (szEmail[0]) {
 			bool localList = getByte(hContact, "LocalList", 0) != 0;
 			int netId = getWord(hContact, "netId", localList?NETID_MSN:NETID_UNKNOWN);
@@ -237,11 +239,11 @@ void CMsnProto::MSN_CleanupLists(void)
 			if (count) {
 				TCHAR text[256];
 				TCHAR *sze = mir_a2t(p.email);
-				mir_sntprintf(text, SIZEOF(text), TranslateT("Contact %s has been removed from the server.\nWould you like to keep it as \"Local Only\" contact to preserve history?"), sze);
+				mir_sntprintf(text, TranslateT("Contact %s has been removed from the server.\nWould you like to keep it as \"Local Only\" contact to preserve history?"), sze);
 				mir_free(sze);
 
 				TCHAR title[128];
-				mir_sntprintf(title, SIZEOF(title), TranslateT("%s protocol"), m_tszUserName);
+				mir_sntprintf(title, _countof(title), TranslateT("%s protocol"), m_tszUserName);
 
 				if (MessageBox(NULL, text, title, MB_YESNO | MB_ICONQUESTION | MB_SETFOREGROUND) == IDYES) {
 					MSN_AddUser(p.hContact, p.email, 0, LIST_LL);
@@ -258,7 +260,7 @@ void CMsnProto::MSN_CleanupLists(void)
 
 		if (p.list & (LIST_LL | LIST_FL) && p.hContact) {
 			TCHAR path[MAX_PATH];
-			MSN_GetCustomSmileyFileName(p.hContact, path, SIZEOF(path), "", 0);
+			MSN_GetCustomSmileyFileName(p.hContact, path, _countof(path), "", 0);
 			if (path[0]) {
 				SMADD_CONT cont;
 				cont.cbSize = sizeof(SMADD_CONT);
@@ -278,7 +280,7 @@ void CMsnProto::MSN_CreateContList(void)
 
 	CMStringA cxml;
 
-	cxml.Append("<ml l=\"1\">");
+	cxml.AppendFormat("<ml l=\"%d\">", MyOptions.netId == NETID_MSN?1:0);
 	{
 		mir_cslock lck(m_csLists);
 
@@ -497,9 +499,9 @@ INT_PTR CALLBACK DlgProcMsnServLists(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 
 			HIMAGELIST hIml = ImageList_Create(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), ILC_MASK | ILC_COLOR32, 5, 5);
 
-			HICON hIcon = LoadSkinnedIcon(SKINICON_OTHER_SMALLDOT);
+			HICON hIcon = Skin_LoadIcon(SKINICON_OTHER_SMALLDOT);
 			ImageList_AddIcon(hIml, hIcon);
-			Skin_ReleaseIcon(hIcon);
+			IcoLib_ReleaseIcon(hIcon);
 
 			hIcon = LoadIconEx("list_lc");
 			ImageList_AddIcon(hIml, hIcon);

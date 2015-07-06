@@ -124,12 +124,12 @@ static INT_PTR CALLBACK DlgProcGenOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 			int item = SendDlgItemMessage(hwndDlg, IDC_PRIMARYSTATUS, CB_ADDSTRING, 0, (LPARAM)TranslateT("Global"));
 			SendDlgItemMessage(hwndDlg, IDC_PRIMARYSTATUS, CB_SETITEMDATA, item, (LPARAM)0);
-			
+
 			int count;
 			PROTOACCOUNT **accs;
-			ProtoEnumAccounts(&count, &accs);
+			Proto_EnumAccounts(&count, &accs);
 			for (int i = 0; i < count; i++) {
-				if (!IsAccountEnabled(accs[i]) || CallProtoService(accs[i]->szModuleName, PS_GETCAPS, PFLAGNUM_2, 0) == 0)
+				if (!Proto_IsAccountEnabled(accs[i]) || CallProtoService(accs[i]->szModuleName, PS_GETCAPS, PFLAGNUM_2, 0) == 0)
 					continue;
 
 				item = SendDlgItemMessage(hwndDlg, IDC_PRIMARYSTATUS, CB_ADDSTRING, 0, (LPARAM)accs[i]->tszAccountName);
@@ -259,7 +259,7 @@ int CListModernOptInit(WPARAM wParam, LPARAM lParam)
 	MODERNOPTOBJECT obj = { 0 };
 	obj.cbSize = sizeof(obj);
 	obj.dwFlags = MODEROPT_FLG_TCHAR | MODEROPT_FLG_NORESIZE;
-	obj.hIcon = LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
+	obj.hIcon = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
 	obj.hInstance = g_hInst;
 	obj.iSection = MODERNOPT_PAGE_CLIST;
 	obj.iType = MODERNOPT_TYPE_SECTIONPAGE;

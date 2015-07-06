@@ -88,10 +88,10 @@ INT_PTR CALLBACK FBAccountProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
 		{
 			char str[128];
 
-			GetDlgItemTextA(hwnd, IDC_UN, str, SIZEOF(str));
+			GetDlgItemTextA(hwnd, IDC_UN, str, _countof(str));
 			db_set_s(NULL, proto->ModuleName(), FACEBOOK_KEY_LOGIN, str);
 
-			GetDlgItemTextA(hwnd, IDC_PW, str, SIZEOF(str));
+			GetDlgItemTextA(hwnd, IDC_PW, str, _countof(str));
 			db_set_s(NULL, proto->ModuleName(), FACEBOOK_KEY_PASS, str);
 			return TRUE;
 		}
@@ -107,7 +107,7 @@ void RefreshPrivacy(HWND hwnd, post_status_data *data)
 	SendDlgItemMessage(hwnd, IDC_PRIVACY, CB_RESETCONTENT, 0, 0);
 	int wall_id = SendDlgItemMessage(hwnd, IDC_WALL, CB_GETCURSEL, 0, 0);
 	if (data->walls[wall_id]->user_id == data->proto->facy.self_.user_id) {
-		for (size_t i = 0; i < SIZEOF(privacy_types); i++)
+		for (size_t i = 0; i < _countof(privacy_types); i++)
 			SendDlgItemMessageA(hwnd, IDC_PRIVACY, CB_INSERTSTRING, i, reinterpret_cast<LPARAM>(Translate(privacy_types[i].name)));
 	}
 	else {
@@ -193,7 +193,7 @@ INT_PTR CALLBACK FBMindProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
 	{
 		TranslateDialogDefault(hwnd);
 
-		SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)Skin_GetIconByHandle(GetIconHandle("mind")));
+		SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIconByHandle(GetIconHandle("mind")));
 
 		data = reinterpret_cast<post_status_data*>(lparam);
 
@@ -219,7 +219,7 @@ INT_PTR CALLBACK FBMindProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
 		ptrA firstname(data->proto->getStringA(FACEBOOK_KEY_FIRST_NAME));
 		if (firstname != NULL) {
 			char title[100];
-			mir_snprintf(title, SIZEOF(title), Translate("What's on your mind, %s?"), firstname);
+			mir_snprintf(title, _countof(title), Translate("What's on your mind, %s?"), firstname);
 			SetWindowTextA(hwnd, title);
 		}
 	}
@@ -276,9 +276,9 @@ INT_PTR CALLBACK FBMindProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
 			TCHAR urlT[1024];
 			TCHAR placeT[100];
 
-			GetDlgItemText(hwnd, IDC_MINDMSG, mindMessageT, SIZEOF(mindMessageT));
-			GetDlgItemText(hwnd, IDC_PLACE, placeT, SIZEOF(placeT));
-			GetDlgItemText(hwnd, IDC_URL, urlT, SIZEOF(urlT));
+			GetDlgItemText(hwnd, IDC_MINDMSG, mindMessageT, _countof(mindMessageT));
+			GetDlgItemText(hwnd, IDC_PLACE, placeT, _countof(placeT));
+			GetDlgItemText(hwnd, IDC_URL, urlT, _countof(urlT));
 			ShowWindow(hwnd, SW_HIDE);
 
 			int wall_id = SendDlgItemMessage(hwnd, IDC_WALL, CB_GETCURSEL, 0, 0);
@@ -395,13 +395,13 @@ INT_PTR CALLBACK FBOptionsProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
 		{
 			char str[128]; TCHAR tstr[128];
 
-			GetDlgItemTextA(hwnd, IDC_UN, str, SIZEOF(str));
+			GetDlgItemTextA(hwnd, IDC_UN, str, _countof(str));
 			db_set_s(0, proto->ModuleName(), FACEBOOK_KEY_LOGIN, str);
 
-			GetDlgItemTextA(hwnd, IDC_PW, str, SIZEOF(str));
+			GetDlgItemTextA(hwnd, IDC_PW, str, _countof(str));
 			proto->setString(FACEBOOK_KEY_PASS, str);
 
-			GetDlgItemText(hwnd, IDC_GROUP, tstr, SIZEOF(tstr));
+			GetDlgItemText(hwnd, IDC_GROUP, tstr, _countof(tstr));
 			if (tstr[0] != '\0')
 			{
 				proto->m_tszDefaultGroup = mir_tstrdup(tstr);
@@ -496,11 +496,11 @@ INT_PTR CALLBACK FBOptionsEventsProc(HWND hwnd, UINT message, WPARAM wparam, LPA
 		proto = reinterpret_cast<FacebookProto*>(lparam);
 		SetWindowLongPtr(hwnd, GWLP_USERDATA, lparam);
 
-		for (size_t i = 0; i < SIZEOF(feed_types); i++)
+		for (size_t i = 0; i < _countof(feed_types); i++)
 			SendDlgItemMessageA(hwnd, IDC_FEED_TYPE, CB_INSERTSTRING, i, reinterpret_cast<LPARAM>(Translate(feed_types[i].name)));
 		SendDlgItemMessage(hwnd, IDC_FEED_TYPE, CB_SETCURSEL, proto->getByte(FACEBOOK_KEY_FEED_TYPE, 0), 0);
 
-		for (size_t i = 0; i < SIZEOF(server_types); i++)
+		for (size_t i = 0; i < _countof(server_types); i++)
 			SendDlgItemMessageA(hwnd, IDC_URL_SERVER, CB_INSERTSTRING, i, reinterpret_cast<LPARAM>(Translate(server_types[i].name)));
 		SendDlgItemMessage(hwnd, IDC_URL_SERVER, CB_SETCURSEL, proto->getByte(FACEBOOK_KEY_SERVER_TYPE, 0), 0);
 
@@ -513,6 +513,7 @@ INT_PTR CALLBACK FBOptionsEventsProc(HWND hwnd, UINT message, WPARAM wparam, LPA
 		LoadDBCheckState(proto, hwnd, IDC_OTHER_ENABLE, FACEBOOK_KEY_EVENT_OTHER_ENABLE, DEFAULT_EVENT_OTHER_ENABLE);
 		LoadDBCheckState(proto, hwnd, IDC_FRIENDSHIP_ENABLE, FACEBOOK_KEY_EVENT_FRIENDSHIP_ENABLE, DEFAULT_EVENT_FRIENDSHIP_ENABLE);
 		LoadDBCheckState(proto, hwnd, IDC_TICKER_ENABLE, FACEBOOK_KEY_EVENT_TICKER_ENABLE, DEFAULT_EVENT_TICKER_ENABLE);
+		LoadDBCheckState(proto, hwnd, IDC_ON_THIS_DAY_ENABLE, FACEBOOK_KEY_EVENT_ON_THIS_DAY_ENABLE, DEFAULT_EVENT_ON_THIS_DAY_ENABLE);
 		LoadDBCheckState(proto, hwnd, IDC_FILTER_ADS, FACEBOOK_KEY_FILTER_ADS, DEFAULT_FILTER_ADS);
 
 	} return TRUE;
@@ -527,6 +528,7 @@ INT_PTR CALLBACK FBOptionsEventsProc(HWND hwnd, UINT message, WPARAM wparam, LPA
 			proto->NotifyEvent(proto->m_tszUserName, TranslateT("Sample notification"), NULL, FACEBOOK_EVENT_NOTIFICATION);
 			proto->NotifyEvent(proto->m_tszUserName, TranslateT("Sample friendship"), NULL, FACEBOOK_EVENT_FRIENDSHIP);
 			proto->NotifyEvent(proto->m_tszUserName, TranslateT("Sample ticker"), NULL, FACEBOOK_EVENT_TICKER);
+			proto->NotifyEvent(proto->m_tszUserName, TranslateT("Sample on this day"), NULL, FACEBOOK_EVENT_ON_THIS_DAY);
 			break;
 		case IDC_FEED_TYPE:
 		case IDC_URL_SERVER:
@@ -554,6 +556,7 @@ INT_PTR CALLBACK FBOptionsEventsProc(HWND hwnd, UINT message, WPARAM wparam, LPA
 			StoreDBCheckState(proto, hwnd, IDC_FRIENDSHIP_ENABLE, FACEBOOK_KEY_EVENT_FRIENDSHIP_ENABLE);
 			StoreDBCheckState(proto, hwnd, IDC_CLIENT_ENABLE, FACEBOOK_KEY_EVENT_CLIENT_ENABLE);
 			StoreDBCheckState(proto, hwnd, IDC_TICKER_ENABLE, FACEBOOK_KEY_EVENT_TICKER_ENABLE);
+			StoreDBCheckState(proto, hwnd, IDC_ON_THIS_DAY_ENABLE, FACEBOOK_KEY_EVENT_ON_THIS_DAY_ENABLE);
 			StoreDBCheckState(proto, hwnd, IDC_FILTER_ADS, FACEBOOK_KEY_FILTER_ADS);
 		}
 	} return TRUE;

@@ -33,7 +33,7 @@ void CVkProto::SendMsgAck(void *param)
 	debugLogA("CVkProto::SendMsgAck");
 	TFakeAckParams *ack = (TFakeAckParams*)param;
 	Sleep(100);
-	ProtoBroadcastAck(ack->hContact, ACKTYPE_MESSAGE, ACKRESULT_SUCCESS, (HANDLE)ack->msgid, 0);
+	ProtoBroadcastAck(ack->hContact, ACKTYPE_MESSAGE, ACKRESULT_SUCCESS, (HANDLE)ack->msgid);
 	delete ack;
 }
 
@@ -54,6 +54,7 @@ int CVkProto::SendMsg(MCONTACT hContact, int, const char *szMsg)
 	ULONG msgId = ::InterlockedIncrement(&m_msgId);
 	AsyncHttpRequest *pReq = new AsyncHttpRequest(this, REQUEST_POST, "/method/messages.send.json", true, &CVkProto::OnSendMessage, AsyncHttpRequest::rpHigh)
 		<< INT_PARAM("user_id", userID)
+		<< INT_PARAM("guid", ((LONG) time(NULL)) * 100 + msgId % 100)
 		<< VER_API;
 
 	if (StickerId != 0)
@@ -86,13 +87,18 @@ void CVkProto::OnSendMessage(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
 
 	debugLogA("CVkProto::OnSendMessage %d", reply->resultCode);
 	if (reply->resultCode == 200) {
-		JSONROOT pRoot;
-		JSONNODE *pResponse = CheckJsonResponse(pReq, reply, pRoot);
-		if (pResponse != NULL) {
-			UINT mid = json_as_int(pResponse);
+		JSONNode jnRoot;
+		const JSONNode &jnResponse = CheckJsonResponse(pReq, reply, jnRoot);
+		if (!jnResponse.isnull()) {
+			UINT mid;
+			if (jnResponse.type() != JSON_STRING) 
+				mid = jnResponse.as_int();
+			else if (_stscanf(jnResponse.as_mstring(), _T("%d"), &mid) != 1)
+				mid = 0;				
+
 			if (param->iMsgID != -1)
 				m_sendIds.insert((HANDLE)mid);
-			if (mid > getDword(param->hContact, "lastmsgid", 0))
+			if (mid > getDword(param->hContact, "lastmsgid"))
 				setDword(param->hContact, "lastmsgid", mid);
 			if (m_iMarkMessageReadOn >= markOnReply)
 				MarkMessagesRead(param->hContact);
@@ -102,13 +108,13 @@ void CVkProto::OnSendMessage(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
 
 	if (param->iMsgID == -1) {
 		CVkFileUploadParam *fup = (CVkFileUploadParam *)param->iCount;
-		ProtoBroadcastAck(fup->hContact, ACKTYPE_FILE, iResult, (HANDLE)fup, 0);
+		ProtoBroadcastAck(fup->hContact, ACKTYPE_FILE, iResult, (HANDLE)fup);
 		if (!pReq->bNeedsRestart)
 			delete fup;
 		return;
 	}
 	else if (m_bServerDelivery)
-		ProtoBroadcastAck(param->hContact, ACKTYPE_MESSAGE, iResult, HANDLE(param->iMsgID), 0);
+		ProtoBroadcastAck(param->hContact, ACKTYPE_MESSAGE, iResult, HANDLE(param->iMsgID));
 	if (!pReq->bNeedsRestart) {
 		delete param;
 		pReq->pUserInfo = NULL;
@@ -128,9 +134,7 @@ int CVkProto::OnDbEventRead(WPARAM hContact, LPARAM)
 void CVkProto::MarkMessagesRead(const CMStringA &mids)
 {
 	debugLogA("CVkProto::MarkMessagesRead (mids)");
-	if (!IsOnline())
-		return;
-	if (mids.IsEmpty())
+	if (!IsOnline() || mids.IsEmpty())
 		return;
 
 	Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/messages.markAsRead.json", true, &CVkProto::OnReceiveSmth, AsyncHttpRequest::rpLow)
@@ -155,9 +159,7 @@ void CVkProto::MarkMessagesRead(const MCONTACT hContact)
 void CVkProto::RetrieveMessagesByIds(const CMStringA &mids)
 {
 	debugLogA("CVkProto::RetrieveMessagesByIds");
-	if (!IsOnline())
-		return;
-	if (mids.IsEmpty())
+	if (!IsOnline() || mids.IsEmpty())
 		return;
 
 	Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/messages.getById.json", true, &CVkProto::OnReceiveMessages, AsyncHttpRequest::rpHigh)
@@ -180,49 +182,49 @@ void CVkProto::OnReceiveMessages(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pRe
 	if (reply->resultCode != 200)
 		return;
 
-	JSONROOT pRoot;
-	JSONNODE *pResponse = CheckJsonResponse(pReq, reply, pRoot);
-	if (pResponse == NULL)
+	JSONNode jnRoot;
+	const JSONNode &jnResponse = CheckJsonResponse(pReq, reply, jnRoot);
+	if (!jnResponse)
 		return;
 
 	CMStringA mids;
-	int numMessages = json_as_int(json_get(pResponse, "count"));
-	JSONNODE *pMsgs = json_get(pResponse, "items");
+	int numMessages = jnResponse["count"].as_int();
+	const JSONNode &jnMsgs = jnResponse["items"];
 
 	debugLogA("CVkProto::OnReceiveMessages numMessages = %d", numMessages);
 
-	for (int i = 0; i < numMessages; i++) {
-		JSONNODE *pMsg = json_at(pMsgs, i);
-		if (pMsg == NULL) {
+	for (auto it = jnMsgs.begin(); it != jnMsgs.end(); ++it) {
+		const JSONNode &jnMsg = (*it);
+		if (!jnMsg) {
 			debugLogA("CVkProto::OnReceiveMessages pMsg == NULL");
 			break;
 		}
 
-		UINT mid = json_as_int(json_get(pMsg, "id"));
-		ptrT ptszBody(json_as_string(json_get(pMsg, "body")));
-		int datetime = json_as_int(json_get(pMsg, "date"));
-		int isOut = json_as_int(json_get(pMsg, "out"));
-		int isRead = json_as_int(json_get(pMsg, "read_state"));
-		int uid = json_as_int(json_get(pMsg, "user_id"));
+		UINT mid = jnMsg["id"].as_int();
+		CMString tszBody(jnMsg["body"].as_mstring());
+		int datetime = jnMsg["date"].as_int();
+		int isOut = jnMsg["out"].as_int();
+		int isRead = jnMsg["read_state"].as_int();
+		int uid = jnMsg["user_id"].as_int();
 
-		JSONNODE *pFwdMessages = json_get(pMsg, "fwd_messages");
-		if (pFwdMessages != NULL){
-			CMString tszFwdMessages = GetFwdMessages(pFwdMessages, m_iBBCForAttachments);
-			if (!IsEmpty(ptszBody))
+		const JSONNode &jnFwdMessages = jnMsg["fwd_messages"];
+		if (!jnFwdMessages.isnull()) {
+			CMString tszFwdMessages = GetFwdMessages(jnFwdMessages, m_iBBCForAttachments);
+			if (!tszBody.IsEmpty())
 				tszFwdMessages = _T("\n") + tszFwdMessages;
-			ptszBody = mir_tstrdup(CMString(ptszBody) + tszFwdMessages);
+			tszBody +=  tszFwdMessages;
 		}
 
-		JSONNODE *pAttachments = json_get(pMsg, "attachments");
-		if (pAttachments != NULL){
-			CMString tszAttachmentDescr = GetAttachmentDescr(pAttachments, m_iBBCForAttachments);
-			if (!IsEmpty(ptszBody))
+		const JSONNode &jnAttachments = jnMsg["attachments"];
+		if (!jnAttachments.isnull()) {
+			CMString tszAttachmentDescr = GetAttachmentDescr(jnAttachments, m_iBBCForAttachments);
+			if (!tszBody.IsEmpty())
 				tszAttachmentDescr = _T("\n") + tszAttachmentDescr;
-			ptszBody = mir_tstrdup(CMString(ptszBody) + tszAttachmentDescr);
+			tszBody += tszAttachmentDescr;
 		}
 
 		MCONTACT hContact = NULL;
-		int chat_id = json_as_int(json_get(pMsg, "chat_id"));
+		int chat_id = jnMsg["chat_id"].as_int();
 		if (chat_id == 0)
 			hContact = FindUser(uid, true);
 
@@ -236,12 +238,16 @@ void CVkProto::OnReceiveMessages(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pRe
 
 		if (chat_id != 0) {
 			debugLogA("CVkProto::OnReceiveMessages chat_id != 0");
-			CMString action_chat = json_as_CMString(json_get(pMsg, "action"));
-			int action_mid = _ttoi(json_as_CMString(json_get(pMsg, "action_mid")));
+			CMString action_chat = jnMsg["action"].as_mstring();
+			int action_mid = _ttoi(jnMsg["action_mid"].as_mstring());
 			if ((action_chat == "chat_kick_user") && (action_mid == m_myUserId))
-				KickFromChat(chat_id, uid, pMsg);
-			else
-				AppendChatMessage(chat_id, pMsg, false);
+				KickFromChat(chat_id, uid, jnMsg);
+			else {
+				MCONTACT chatContact = FindChat(chat_id);
+				if (chatContact && getBool(chatContact, "kicked", true))
+					db_unset(chatContact, m_szModuleName, "kicked");
+				AppendChatMessage(chat_id, jnMsg, false);
+			}
 			continue;
 		}
 
@@ -253,7 +259,7 @@ void CVkProto::OnReceiveMessages(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pRe
 		else if (m_bUserForceOnlineOnActivity)
 			SetInvisible(hContact);
 
-		T2Utf pszBody(ptszBody);
+		T2Utf pszBody(tszBody);
 		recv.timestamp = m_bUseLocalTime ? time(NULL) : datetime;
 		recv.szMessage = pszBody;
 		recv.lParam = isOut;
@@ -261,7 +267,7 @@ void CVkProto::OnReceiveMessages(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pRe
 		recv.cbCustomDataSize = (int)mir_strlen(szMid);
 		Sleep(100);
 
-		debugLogA("CVkProto::OnReceiveMessages i = %d, mid = %d, datetime = %d, isOut = %d, isRead = %d, uid = %d", i, mid, datetime, isOut, isRead, uid);
+		debugLogA("CVkProto::OnReceiveMessages mid = %d, datetime = %d, isOut = %d, isRead = %d, uid = %d", mid, datetime, isOut, isRead, uid);
 
 		if (!CheckMid(m_sendIds, mid)) {
 			debugLogA("CVkProto::OnReceiveMessages ProtoChainRecvMsg");
@@ -283,37 +289,32 @@ void CVkProto::OnReceiveDlgs(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
 	if (reply->resultCode != 200)
 		return;
 
-	JSONROOT pRoot;
-	JSONNODE *pResponse = CheckJsonResponse(pReq, reply, pRoot);
-	if (pResponse == NULL)
+	JSONNode jnRoot;
+	const JSONNode &jnResponse = CheckJsonResponse(pReq, reply, jnRoot);
+	if (!jnResponse)
+		return;
+		
+	const JSONNode &jnDlgs = jnResponse["items"];
+	if (!jnDlgs)
 		return;
 
-	int numDlgs = json_as_int(json_get(pResponse, "count"));
-	JSONNODE *pDlgs = json_get(pResponse, "items");
-
-	if (pDlgs == NULL)
-		return;
-
-	for (int i = 0; i < numDlgs; i++) {
-		JSONNODE *pDlg = json_at(pDlgs, i);
-		if (pDlg == NULL)
+	for (auto it = jnDlgs.begin(); it != jnDlgs.end(); ++it) {
+		if (!(*it))
+			break;
+		int numUnread = (*it)["unread"].as_int();
+		const JSONNode &jnDlg = (*it)["message"];
+		if (jnDlg == NULL)
 			break;
 
-		int numUnread = json_as_int(json_get(pDlg, "unread"));
-
-		pDlg = json_get(pDlg, "message");
-		if (pDlg == NULL)
-			break;
-
-		int chatid = json_as_int(json_get(pDlg, "chat_id"));
+		int chatid = jnDlg["chat_id"].as_int();
 		if (chatid != 0) {
 			debugLogA("CVkProto::OnReceiveDlgs chatid = %d", chatid);
 			if (m_chats.find((CVkChatInfo*)&chatid) == NULL)
-				AppendChat(chatid, pDlg);
+				AppendChat(chatid, jnDlg);
 		}
 		else if (m_iSyncHistoryMetod) {
-			int mid = json_as_int(json_get(pDlg, "id"));
-			int uid = json_as_int(json_get(pDlg, "user_id"));
+			int mid = jnDlg["id"].as_int();
+			int uid = jnDlg["user_id"].as_int();
 			MCONTACT hContact = FindUser(uid, true);
 
 			if (getDword(hContact, "lastmsgid", -1) == -1 && numUnread)
@@ -325,7 +326,7 @@ void CVkProto::OnReceiveDlgs(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
 				MarkMessagesRead(hContact);
 		}
 		else if (numUnread) {
-			int uid = json_as_int(json_get(pDlg, "user_id"));
+			int uid = jnDlg["user_id"].as_int();
 			MCONTACT hContact = FindUser(uid, true);
 			GetServerHistory(hContact, 0, numUnread, 0, 0, true);
 
@@ -335,5 +336,3 @@ void CVkProto::OnReceiveDlgs(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
 	}
 	RetrieveUsersInfo();
 }
-
-

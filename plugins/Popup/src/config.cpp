@@ -68,14 +68,15 @@ HRESULT(WINAPI *MyDwmEnableBlurBehindWindow)(HWND hWnd, DWM_BLURBEHIND *pBlurBeh
 // ====== Common Vars ========================
 
 //  common funcs
-void LoadOptions() {
+void LoadOptions()
+{
 	memset(&PopupOptions, 0, sizeof(PopupOptions));
 #if defined(_DEBUG)
 	PopupOptions.debug = db_get_b(NULL, MODULNAME, "debug", FALSE);
 #endif
 
 	// Load Popup Options
-	if (!OptionLoaded){
+	if (!OptionLoaded) {
 		LoadOption_General();
 		LoadOption_Skins();
 		LoadOption_Actions();
@@ -104,7 +105,7 @@ void PopupPreview()
 
 	ppd.lptzTitle = lptzTitle1Eng;
 	ppd.lptzText = lptzText1Eng;
-	ppd.lchIcon = LoadSkinnedIcon(SKINICON_EVENT_MESSAGE);
+	ppd.lchIcon = Skin_LoadIcon(SKINICON_EVENT_MESSAGE);
 	CallService(MS_POPUP_ADDPOPUP2, (WPARAM)&ppd, APF_NO_HISTORY);
 	if (PopupOptions.UseAnimations || PopupOptions.UseEffect) Sleep((ANIM_TIME * 2) / 3); // Pause
 
@@ -113,7 +114,7 @@ void PopupPreview()
 	ppd.flags = PU2_TCHAR;
 	ppd.lptzTitle = lptzTitle2;
 	ppd.lptzText = lptzText2;
-	ppd.lchIcon = LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
+	ppd.lchIcon = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
 	ppd.hbmAvatar = hbmNoAvatar;
 
 	CallService(MS_POPUP_ADDPOPUP2, (WPARAM)&ppd, APF_NO_HISTORY);

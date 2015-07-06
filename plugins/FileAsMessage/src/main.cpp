@@ -15,7 +15,8 @@ PLUGININFOEX pluginInfo =
 	{ 0x34b5a402, 0x1b79, 0x4246, { 0xb0, 0x41, 0x43, 0xd0, 0xb5, 0x90, 0xae, 0x2c } }
 };
 
-HANDLE hFileList;
+CLIST_INTERFACE *pcli;
+MWindowList hFileList;
 HINSTANCE hInst;
 int hLangpack;
 
@@ -42,8 +43,8 @@ int iIconId[5] = { 3, 2, 4, 1, 0 };
 //
 int OnSkinIconsChanged(WPARAM wParam, LPARAM lParam)
 {
-	for (int indx = 0; indx < SIZEOF(hIcons); indx++)
-		hIcons[indx] = Skin_GetIconByHandle(iconList[indx].hIcolib);
+	for (int indx = 0; indx < _countof(hIcons); indx++)
+		hIcons[indx] = IcoLib_GetIconByHandle(iconList[indx].hIcolib);
 
 	WindowList_Broadcast(hFileList, WM_FE_SKINCHANGE, 0, 0);
 
@@ -116,17 +117,17 @@ INT_PTR OnSendFile(WPARAM wParam, LPARAM lParam)
 
 INT_PTR OnRecvMessage(WPARAM wParam, LPARAM lParam)
 {
-	CCSDATA *pccsd = (CCSDATA *)lParam;
-	PROTORECVEVENT *ppre = (PROTORECVEVENT *)pccsd->lParam;
+	CCSDATA *ccs = (CCSDATA *)lParam;
+	PROTORECVEVENT *ppre = (PROTORECVEVENT *)ccs->lParam;
 
 	if (strncmp(ppre->szMessage, szServicePrefix, mir_strlen(szServicePrefix)))
-		return CallService(MS_PROTO_CHAINRECV, wParam, lParam);
+		return Proto_ChainRecv(wParam, ccs);
 
-	HWND hwnd = WindowList_Find(hFileList, pccsd->hContact);
+	HWND hwnd = WindowList_Find(hFileList, ccs->hContact);
 	if (!IsWindow(hwnd))
 	{
 		if (hwnd != 0) WindowList_Remove(hFileList, hwnd);
-		FILEECHO *fe = new FILEECHO(pccsd->hContact);
+		FILEECHO *fe = new FILEECHO(ccs->hContact);
 		fe->inSend = FALSE;
 		hwnd = CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_MAIN), NULL, DialogProc, (LPARAM)fe);
 		if (hwnd == NULL)
@@ -136,7 +137,7 @@ INT_PTR OnRecvMessage(WPARAM wParam, LPARAM lParam)
 		}
 	}
 	char *msg = mir_strdup(ppre->szMessage + mir_strlen(szServicePrefix));
-	PostMessage(hwnd, WM_FE_MESSAGE, (WPARAM)pccsd->hContact, (LPARAM)msg);
+	PostMessage(hwnd, WM_FE_MESSAGE, (WPARAM)ccs->hContact, (LPARAM)msg);
 
 	return 0;
 }
@@ -169,17 +170,16 @@ extern "C" __declspec(dllexport) PLUGININFOEX *MirandaPluginInfoEx(DWORD dwVersi
 
 static int OnModulesLoaded(WPARAM wparam, LPARAM lparam)
 {
-	for (int indx = 0; indx < SIZEOF(hIcons); indx++)
-		hIcons[indx] = Skin_GetIconByHandle(iconList[indx].hIcolib);
+	for (int indx = 0; indx < _countof(hIcons); indx++)
+		hIcons[indx] = IcoLib_GetIconByHandle(iconList[indx].hIcolib);
 
 	hHookSkinIconsChanged = HookEvent(ME_SKIN2_ICONSCHANGED, OnSkinIconsChanged);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = 200011;
-	mi.hIcon = hIcons[ICON_MAIN];
-	mi.pszName = LPGEN("File As Message...");
+	mi.hIcolibItem = hIcons[ICON_MAIN];
+	mi.name.a = LPGEN("File As Message...");
 	mi.pszService = SERVICE_NAME "/FESendFile";
-	mi.pszContactOwner = NULL;
 	mi.flags = CMIF_NOTOFFLINE;
 	Menu_AddContactMenuItem(&mi);
 	return 0;
@@ -188,10 +188,11 @@ static int OnModulesLoaded(WPARAM wparam, LPARAM lparam)
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfo);
+	mir_getCLI();
 
 	InitCRC32();
 
-	Icon_Register(hInst, "fileAsMessage", iconList, SIZEOF(iconList));
+	Icon_Register(hInst, "fileAsMessage", iconList, _countof(iconList));
 
 	hFileList = WindowList_Create();
 
@@ -199,10 +200,11 @@ extern "C" __declspec(dllexport) int Load(void)
 	CreateServiceFunction(SERVICE_NAME "/FESendFile", OnSendFile);
 	CreateServiceFunction(SERVICE_NAME "/FERecvFile", OnRecvFile);
 
-	PROTOCOLDESCRIPTOR pd = { sizeof(pd) };
+	PROTOCOLDESCRIPTOR pd = { 0 };
+	pd.cbSize = sizeof(pd);
 	pd.szName = SERVICE_NAME;
 	pd.type = PROTOTYPE_FILTER;
-	CallService(MS_PROTO_REGISTERMODULE, 0, (LPARAM)&pd);
+	Proto_RegisterModule(&pd);
 
 	HookEvent(ME_OPT_INITIALISE, OnOptInitialise);
 	HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);

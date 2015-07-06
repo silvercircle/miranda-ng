@@ -292,7 +292,7 @@ int CheckTextLine(Dialog *dlg, int line, TextParser *parser,
 {
 	int errors = 0;
 	TCHAR text[1024];
-	dlg->re->GetLine(line, text, SIZEOF(text));
+	dlg->re->GetLine(line, text, _countof(text));
 	int len = mir_tstrlen(text);
 	int first_char = dlg->re->GetFirstCharOfLine(line);
 
@@ -381,7 +381,7 @@ int CheckTextLine(Dialog *dlg, int line, TextParser *parser,
 			int dif = dlg->re->Replace(sel.cpMin, sel.cpMax, replacement);
 			if (dif != 0) {
 				// Read line again
-				dlg->re->GetLine(line, text, SIZEOF(text));
+				dlg->re->GetLine(line, text, _countof(text));
 				len = mir_tstrlen(text);
 
 				int old_first_char = first_char;
@@ -454,8 +454,8 @@ void ToLocaleID(TCHAR *szKLName, size_t size)
 	USHORT langID = (USHORT)_tcstol(szKLName, &stopped, 16);
 
 	TCHAR ini[32], end[32];
-	GetLocaleInfo(MAKELCID(langID, 0), LOCALE_SISO639LANGNAME, ini, SIZEOF(ini));
-	GetLocaleInfo(MAKELCID(langID, 0), LOCALE_SISO3166CTRYNAME, end, SIZEOF(end));
+	GetLocaleInfo(MAKELCID(langID, 0), LOCALE_SISO639LANGNAME, ini, _countof(ini));
+	GetLocaleInfo(MAKELCID(langID, 0), LOCALE_SISO3166CTRYNAME, end, _countof(end));
 
 	mir_sntprintf(szKLName, size, _T("%s_%s"), ini, end);
 }
@@ -466,8 +466,8 @@ void LoadDictFromKbdl(Dialog *dlg)
 
 	// Use default input language
 	HKL hkl = GetKeyboardLayout(0);
-	mir_sntprintf(szKLName, SIZEOF(szKLName), _T("%x"), (int)LOWORD(hkl));
-	ToLocaleID(szKLName, SIZEOF(szKLName));
+	mir_sntprintf(szKLName, _countof(szKLName), _T("%x"), (int)LOWORD(hkl));
+	ToLocaleID(szKLName, _countof(szKLName));
 
 	int d = GetClosestLanguage(szKLName);
 	if (d >= 0) {
@@ -518,7 +518,7 @@ LRESULT CALLBACK OwnerProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			int errors = TimerCheck(dlg, TRUE);
 			if (errors > 0) {
 				TCHAR text[500];
-				mir_sntprintf(text, SIZEOF(text), TranslateT("There are %d spelling errors. Are you sure you want to send this message?"), errors);
+				mir_sntprintf(text, TranslateT("There are %d spelling errors. Are you sure you want to send this message?"), errors);
 				if (MessageBox(hwnd, text, TranslateT("Spell Checker"), MB_ICONQUESTION | MB_YESNO) == IDNO)
 					return TRUE;
 			}
@@ -635,7 +635,7 @@ LRESULT CALLBACK EditProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 					TCHAR text[1024];
 					int first_char;
-					GetWordCharRange(dlg, sel, text, SIZEOF(text), first_char);
+					GetWordCharRange(dlg, sel, text, _countof(text), first_char);
 
 					SetNoUnderline(dlg->re, sel.cpMin, sel.cpMax);
 
@@ -702,7 +702,7 @@ int GetClosestLanguage(TCHAR *lang_name)
 
 	// Try searching by the prefix only
 	TCHAR lang[128];
-	mir_tstrncpy(lang, lang_name, SIZEOF(lang));
+	mir_tstrncpy(lang, lang_name, _countof(lang));
 
 	TCHAR *p = _tcschr(lang, _T('_'));
 	if (p != NULL)
@@ -760,7 +760,7 @@ void GetUserProtoLanguageSetting(Dialog *dlg, MCONTACT hContact, char *group, ch
 			if (mir_tstrcmpi(dict->localized_name, lang) == 0
 				 || mir_tstrcmpi(dict->english_name, lang) == 0
 				 || mir_tstrcmpi(dict->language, lang) == 0) {
-				mir_tstrncpy(dlg->lang_name, dict->language, SIZEOF(dlg->lang_name));
+				mir_tstrncpy(dlg->lang_name, dict->language, _countof(dlg->lang_name));
 				break;
 			}
 		}
@@ -803,18 +803,18 @@ void GetContactLanguage(Dialog *dlg)
 
 	if (dlg->hContact == NULL) {
 		if (!db_get_ts(NULL, MODULE_NAME, dlg->name, &dbv)) {
-			mir_tstrncpy(dlg->lang_name, dbv.ptszVal, SIZEOF(dlg->lang_name));
+			mir_tstrncpy(dlg->lang_name, dbv.ptszVal, _countof(dlg->lang_name));
 			db_free(&dbv);
 		}
 	}
 	else {
 		if (!db_get_ts(dlg->hContact, MODULE_NAME, "TalkLanguage", &dbv)) {
-			mir_tstrncpy(dlg->lang_name, dbv.ptszVal, SIZEOF(dlg->lang_name));
+			mir_tstrncpy(dlg->lang_name, dbv.ptszVal, _countof(dlg->lang_name));
 			db_free(&dbv);
 		}
 
 		if (dlg->lang_name[0] == _T('\0') && !db_get_ts(dlg->hContact, "eSpeak", "TalkLanguage", &dbv)) {
-			mir_tstrncpy(dlg->lang_name, dbv.ptszVal, SIZEOF(dlg->lang_name));
+			mir_tstrncpy(dlg->lang_name, dbv.ptszVal, _countof(dlg->lang_name));
 			db_free(&dbv);
 		}
 
@@ -823,12 +823,12 @@ void GetContactLanguage(Dialog *dlg)
 			MCONTACT hMetaContact = db_mc_getMeta(dlg->hContact);
 			if (hMetaContact != NULL) {
 				if (!db_get_ts(hMetaContact, MODULE_NAME, "TalkLanguage", &dbv)) {
-					mir_tstrncpy(dlg->lang_name, dbv.ptszVal, SIZEOF(dlg->lang_name));
+					mir_tstrncpy(dlg->lang_name, dbv.ptszVal, _countof(dlg->lang_name));
 					db_free(&dbv);
 				}
 
 				if (dlg->lang_name[0] == _T('\0') && !db_get_ts(hMetaContact, "eSpeak", "TalkLanguage", &dbv)) {
-					mir_tstrncpy(dlg->lang_name, dbv.ptszVal, SIZEOF(dlg->lang_name));
+					mir_tstrncpy(dlg->lang_name, dbv.ptszVal, _countof(dlg->lang_name));
 					db_free(&dbv);
 				}
 			}
@@ -846,13 +846,13 @@ void GetContactLanguage(Dialog *dlg)
 
 		// Use default lang
 		if (dlg->lang_name[0] == _T('\0'))
-			mir_tstrncpy(dlg->lang_name, opts.default_language, SIZEOF(dlg->lang_name));
+			mir_tstrncpy(dlg->lang_name, opts.default_language, _countof(dlg->lang_name));
 	}
 
 	int i = GetClosestLanguage(dlg->lang_name);
 	if (i < 0) {
 		// Lost a dict?
-		mir_tstrncpy(dlg->lang_name, opts.default_language, SIZEOF(dlg->lang_name));
+		mir_tstrncpy(dlg->lang_name, opts.default_language, _countof(dlg->lang_name));
 		i = GetClosestLanguage(dlg->lang_name);
 	}
 
@@ -1036,7 +1036,7 @@ TCHAR *GetWordUnderPoint(Dialog *dlg, POINT pt, CHARRANGE &sel)
 	TCHAR text[1024];
 	int first_char;
 
-	if (!GetWordCharRange(dlg, sel, text, SIZEOF(text), first_char))
+	if (!GetWordCharRange(dlg, sel, text, _countof(text), first_char))
 		return NULL;
 
 	// copy the word
@@ -1047,8 +1047,8 @@ TCHAR *GetWordUnderPoint(Dialog *dlg, POINT pt, CHARRANGE &sel)
 
 void AppendSubmenu(HMENU hMenu, HMENU hSubMenu, TCHAR *name)
 {
-	MENUITEMINFO mii = { sizeof(mii) };
-	mii.cbSize = sizeof(MENUITEMINFO);
+	MENUITEMINFO mii = { 0 };
+	mii.cbSize = sizeof(mii);
 	mii.fMask = MIIM_SUBMENU | MIIM_TYPE;
 	mii.fType = MFT_STRING;
 	mii.hSubMenu = hSubMenu;
@@ -1062,7 +1062,8 @@ void AppendMenuItem(HMENU hMenu, int id, TCHAR *name, HICON hIcon, BOOL checked)
 	ICONINFO iconInfo;
 	GetIconInfo(hIcon, &iconInfo);
 
-	MENUITEMINFO mii = { sizeof(mii) };
+	MENUITEMINFO mii = { 0 };
+	mii.cbSize = sizeof(mii);
 	mii.fMask = MIIM_CHECKMARKS | MIIM_TYPE | MIIM_STATE;
 	mii.fType = MFT_STRING;
 	mii.fState = (checked ? MFS_CHECKED : 0);
@@ -1134,7 +1135,7 @@ void AddMenuForWord(Dialog *dlg, TCHAR *word, CHARRANGE &pos, HMENU hMenu, BOOL 
 		InsertMenu(hMenu, 0, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
 
 		TCHAR text[128];
-		mir_sntprintf(text, SIZEOF(text), TranslateT("Wrong word: %s"), word);
+		mir_sntprintf(text, TranslateT("Wrong word: %s"), word);
 		InsertMenu(hMenu, 0, MF_BYPOSITION, 0, text);
 	}
 }
@@ -1456,7 +1457,7 @@ LRESULT CALLBACK MenuWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					continue;
 
 				MENUITEMINFO mii = { 0 };
-				mii.cbSize = sizeof(MENUITEMINFO);
+				mii.cbSize = sizeof(mii);
 				mii.fMask = MIIM_STATE;
 				GetMenuItemInfo(hMenu, id, FALSE, &mii);
 
@@ -1506,12 +1507,12 @@ LRESULT CALLBACK MenuWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			// Draw icon
 			if (dict->hIcolib) {
-				HICON hFlag = Skin_GetIconByHandle(dict->hIcolib);
+				HICON hFlag = IcoLib_GetIconByHandle(dict->hIcolib);
 
 				rc.top = (lpdis->rcItem.bottom + lpdis->rcItem.top - ICON_SIZE) / 2;
 				DrawIconEx(lpdis->hDC, rc.left, rc.top, hFlag, 16, 16, 0, NULL, DI_NORMAL);
 
-				Skin_ReleaseIcon(hFlag);
+				IcoLib_ReleaseIcon(hFlag);
 
 				rc.left += ICON_SIZE + 4;
 			}

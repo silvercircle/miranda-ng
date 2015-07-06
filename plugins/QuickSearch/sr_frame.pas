@@ -62,7 +62,6 @@ end;
 
 function QSFrameProc(Dialog:HWND;hMessage:uint;wParam:WPARAM;lParam:LPARAM):LRESULT; stdcall;
 var
-  urd:TUTILRESIZEDIALOG;
   rc:TRECT;
   TI:TTOOLINFOW;
   hwndTooltip:HWND;
@@ -96,14 +95,7 @@ begin
     end;
 
     WM_SIZE: begin
-      FillChar(urd,SizeOf(TUTILRESIZEDIALOG),0);
-      urd.cbSize    :=SizeOf(urd);
-      urd.hwndDlg   :=Dialog;
-      urd.hInstance :=hInstance;
-      urd.lpTemplate:=MAKEINTRESOURCEA(IDD_FRAME);
-      urd.lParam    :=0;
-      urd.pfnResizer:=@QSDlgResizer;
-      CallService(MS_UTILS_RESIZEDIALOG,0,tlparam(@urd));
+		Utils_ResizeDialog(Dialog, hInstance, MAKEINTRESOURCEA(IDD_FRAME), @QSDlgResizer);
     end;
 
     WM_ERASEBKGND: begin
@@ -163,7 +155,7 @@ begin
   hbr:=0;
 
   if parent=0 then
-    parent:=CallService(MS_CLUI_GETHWND,0,0);
+    parent:=cli^.hwndContactList;
 
   if FrameWnd=0 then
     FrameWnd:=CreateDialog(hInstance,MAKEINTRESOURCE(IDD_FRAME),parent,@QSFrameProc);
@@ -176,7 +168,7 @@ begin
     begin
       cbSize  :=SizeOf(Frame);
       hWnd    :=FrameWnd;
-      hIcon   :=CallService(MS_SKIN2_GETICON,0,tlparam(QS_QS));
+      hIcon   :=IcoLib_GetIcon(QS_QS,0);
       align   :=alTop;
       height  :=tr.bottom-tr.top+2;
       Flags   :=F_NOBORDER or F_UNICODE;
@@ -189,7 +181,7 @@ begin
     begin
       CallService(MS_CLIST_FRAMES_UPDATEFRAME,FrameId, FU_FMPOS);
 
-      wnd:=CallService(MS_CLUI_GETHWND{MS_CLUI_GETHWNDTREE},0,0);
+      wnd:=cli^.hwndContactList;
       tmp:=SendMessage(wnd,CLM_GETEXSTYLE,0,0);
       SendMessage(wnd,CLM_SETEXSTYLE,tmp or CLS_EX_SHOWSELALWAYS,0);
 

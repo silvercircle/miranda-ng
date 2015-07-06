@@ -20,8 +20,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <windows.h>
 #include <time.h>
-#include <commctrl.h>
-#include <mshtml.h>
 #include <string>
 #include <vector>
 #include <regex>
@@ -30,7 +28,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <newpluginapi.h>
 
 #include <m_protoint.h>
-#include <m_protomod.h>
 #include <m_protosvc.h>
 
 #include <m_database.h>
@@ -48,10 +45,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <m_chat.h>
 #include <m_genmenu.h>
 #include <m_clc.h>
-#include <m_clistint.h>
 #include <m_string.h>
 #include <m_json.h>
-#include <m_timezones.h>
 #include <m_gui.h>
 #include <m_imgsrvc.h>
 #include <m_xml.h>
@@ -87,6 +82,7 @@ extern LIST<CSkypeProto> Accounts;
 #include "requests\search.h"
 #include "requests\chatrooms.h"
 #include "requests\trouter.h"
+#include "requests\mslogin.h"
 #include "request_queue.h"
 #include "skype_proto.h"
 
@@ -96,7 +92,8 @@ extern LIST<CSkypeProto> Accounts;
 
 enum SKYPE_LOGIN_ERROR
 {
-	LOGIN_ERROR_UNKNOWN = 1001
+	LOGIN_ERROR_UNKNOWN = 1001,
+	LOGIN_ERROR_TOOMANY_REQUESTS
 };
 
 enum SKYPE_DB_EVENT_TYPE

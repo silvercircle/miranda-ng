@@ -68,12 +68,13 @@ extern "C" int __declspec(dllexport) Load(void)
 	mir_getLP(&pluginInfo);
 	mir_getCLI();
 
-	PROTOCOLDESCRIPTOR pd = { sizeof(pd) };
+	PROTOCOLDESCRIPTOR pd = { 0 };
+	pd.cbSize = sizeof(pd);
 	pd.szName = "WhatsApp";
 	pd.type = PROTOTYPE_PROTOCOL;
 	pd.fnInit = protoInit;
 	pd.fnUninit = protoUninit;
-	CallService(MS_PROTO_REGISTERMODULE, 0, reinterpret_cast<LPARAM>(&pd));
+	Proto_RegisterModule(&pd);
 
 	InitIcons();
 	//InitContactMenus();

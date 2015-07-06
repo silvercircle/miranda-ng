@@ -681,24 +681,18 @@ unsigned short ICQ::processUdpPacket(Packet &packet)
         firstName = NULL;
         lastName = NULL;
         email = NULL;
-
-        packet >> checkUin
-               >> alias
-               >> firstName
-               >> lastName
-               >> email
-               >> auth;
-
-        ICQSEARCHRESULT isr;
-
-        isr.hdr.cbSize = sizeof(isr);
-        isr.hdr.nick = alias;
-        isr.hdr.firstName = firstName;
-        isr.hdr.lastName = lastName;
-        isr.hdr.email = email;
-        isr.uin = checkUin;
-        isr.auth = auth;
-        ProtoBroadcastAck(protoName, NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)1, (LPARAM)&isr);
+        packet >> checkUin >> alias >> firstName >> lastName >> email >> auth;
+		  {
+			  ICQSEARCHRESULT psr = { 0 };
+			  psr.hdr.cbSize = sizeof(psr);
+			  psr.hdr.nick.a = alias;
+			  psr.hdr.firstName.a = firstName;
+			  psr.hdr.lastName.a = lastName;
+			  psr.hdr.email.a = email;
+			  psr.uin = checkUin;
+			  psr.auth = auth;
+			  ProtoBroadcastAck(protoName, NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)1, (LPARAM)&psr);
+		  }
 
         delete [] alias;
         delete [] firstName;
@@ -725,7 +719,7 @@ unsigned short ICQ::processUdpPacket(Packet &packet)
                >> newCommand;
 
         timeStampLastMessage = timedataStamp;
-        timedataStamp = CallService(MS_DB_TIME_TIMESTAMPTOLOCAL, timedataStamp, 0);
+        timedataStamp = TimeZone_ToLocal(timedataStamp);
 
         processSystemMessage(packet, checkUin, newCommand, timedataStamp);
         break;
@@ -812,7 +806,7 @@ unsigned short ICQ::processUdpPacket(Packet &packet)
                >> newCommand;
 
         db_set_dw(NULL, protoName, "LastBroadcastTime", timedataStamp);
-        timedataStamp = CallService(MS_DB_TIME_TIMESTAMPTOLOCAL, timedataStamp, 0);
+        timedataStamp = TimeZone_ToLocal(timedataStamp);
 
         processSystemMessage(packet, checkUin, newCommand, timedataStamp);
         break;
@@ -1161,23 +1155,23 @@ void ICQ::updateContactList()
     //HANDLE hContact;
     ICQUser *u;
 
-	for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact)) {
-		proto = (char*)CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM)hContact, 0);
-        if (proto && !mir_strcmp(proto, protoName))
-        {
-            if ((u = getUserByContact(hContact)) == NULL)
-            {
-                u = new ICQUser();
-                u->hContact = hContact;
-                u->uin = db_get_dw(hContact, protoName, "UIN", 0);
-                icqUsers.push_back(u);
-            }
-            if (statusVal <= ID_STATUS_OFFLINE) u->setStatus(ID_STATUS_OFFLINE);
-            else u->statusVal = db_get_w(hContact, protoName, "Status", ID_STATUS_OFFLINE);
-        }
-    }
+	 for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact)) {
+		 proto = GetContactProto(hContact);
+		 if (proto && !mir_strcmp(proto, protoName))
+		 {
+			 if ((u = getUserByContact(hContact)) == NULL)
+			 {
+				 u = new ICQUser();
+				 u->hContact = hContact;
+				 u->uin = db_get_dw(hContact, protoName, "UIN", 0);
+				 icqUsers.push_back(u);
+			 }
+			 if (statusVal <= ID_STATUS_OFFLINE) u->setStatus(ID_STATUS_OFFLINE);
+			 else u->statusVal = db_get_w(hContact, protoName, "Status", ID_STATUS_OFFLINE);
+		 }
+	 }
 
-    if (statusVal <= ID_STATUS_OFFLINE) return;
+	 if (statusVal <= ID_STATUS_OFFLINE) return;
 
 
     // create user info packet
@@ -1304,40 +1298,40 @@ void ICQ::updateUserList(ICQUser *u, char list, char add)
 
 ICQUser *ICQ::addUser(unsigned int uin, bool persistent)
 {
-    unsigned int i;
-    ICQUser *u;
+	unsigned int i;
+	ICQUser *u;
 
-    for (i=0; i<icqUsers.size(); i++)
-    {
-        u = icqUsers[i];
-        if (u->uin == uin)
-        {
-            if (persistent)
-            {
-                db_unset(u->hContact, "CList", "NotOnList");
-                db_unset(u->hContact, "CList", "Hidden");
-            }
-            return u;
-        }
-    }
+	for (i=0; i<icqUsers.size(); i++)
+	{
+		u = icqUsers[i];
+		if (u->uin == uin)
+		{
+			if (persistent)
+			{
+				db_unset(u->hContact, "CList", "NotOnList");
+				db_unset(u->hContact, "CList", "Hidden");
+			}
+			return u;
+		}
+	}
 
-    u = new ICQUser();
-    u->uin = uin;
+	u = new ICQUser();
+	u->uin = uin;
 	u->hContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
-    icqUsers.push_back(u);
+	icqUsers.push_back(u);
 
-    CallService(MS_PROTO_ADDTOCONTACT, (WPARAM)u->hContact, (LPARAM)protoName);
-    u->setInfo("UIN", uin);
+	Proto_AddToContact(u->hContact, protoName);
+	u->setInfo("UIN", uin);
 
-    if (persistent) getUserInfo(u, true);
-    else
-    {
-        db_set_b(u->hContact, "CList", "NotOnList", 1);
-        db_set_b(u->hContact, "CList", "Hidden", 1);
-    }
+	if (persistent) getUserInfo(u, true);
+	else
+	{
+		db_set_b(u->hContact, "CList", "NotOnList", 1);
+		db_set_b(u->hContact, "CList", "Hidden", 1);
+	}
 
-    updateContactList();
-    return u;
+	updateContactList();
+	return u;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1457,7 +1451,8 @@ bool ICQ::openConnection(TCPSocket &socket)
 
 ICQEvent *ICQ::sendTCP(ICQUser *u, unsigned short cmd, char *cmdStr, char *m)
 {
-    if (!u->socket.connected() && !openConnection(u->socket)) return NULL;
+    if (!u->socket.connected() && !openConnection(u->socket))
+		 return NULL;
 
     unsigned int status;
     if (accept)
@@ -1819,7 +1814,7 @@ void ICQ::authorize(unsigned int uinToAuthorize)
 
 void ICQ::processTcpPacket(Packet &packet, unsigned int hSocket)
 {
-    unsigned int i, checkUin, senderIp, localIp, userStatus, senderPort, junkLong, thePort, theTCPSequence;
+    unsigned int i, checkUin, senderIp, localIp, userStatus, senderPort, junkLong, thePort, theTCPSequence = 0;
     unsigned short version, command, junkShort, newCommand, /*messageLen,*/ cicqVersion;
     unsigned char cicqChar, junkChar;
     char *message = NULL;
@@ -2195,7 +2190,7 @@ void ICQ::addMessage(ICQUser *u, char *m, unsigned short theCmd, unsigned short 
     pre.timestamp = t;
     pre.szMessage = (char*)m;
     pre.lParam = 0;
-    CallService(MS_PROTO_CHAINRECV, 0, (LPARAM)&ccs);
+    Proto_ChainRecv(0, &ccs);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2207,7 +2202,7 @@ void ICQ::addUrl(ICQUser *u, char *m, unsigned short theCmd, unsigned short theS
     CCSDATA ccs;
     PROTORECVEVENT pre;
 
-    messageLen = mir_tstrlen(m);
+    messageLen = (int)mir_tstrlen(m);
     for (i=0; i<messageLen; i++) if (m[i] == (char)0xFE) m[i] = 0;
 
     url = new char[messageLen + 1];
@@ -2222,7 +2217,7 @@ void ICQ::addUrl(ICQUser *u, char *m, unsigned short theCmd, unsigned short theS
     pre.timestamp = t;
     pre.szMessage = url;
     pre.lParam = 0;
-    CallService(MS_PROTO_CHAINRECV, 0, (LPARAM)&ccs);
+    Proto_ChainRecv(0, &ccs);
 
     delete [] url;
 }
@@ -2244,7 +2239,7 @@ void ICQ::addAwayMsg(ICQUser *u, char *m, unsigned short theCmd, unsigned short 
     pre.timestamp = t;
     pre.szMessage = (char*)m;
     pre.lParam = theSequence;
-    CallService(MS_PROTO_CHAINRECV, 0, (LPARAM)&ccs);
+    Proto_ChainRecv(0, &ccs);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2318,7 +2313,7 @@ void ICQ::addFileReq(ICQUser *u, char *m, char *filename, unsigned long size, un
     pre.timestamp = t;
     pre.szMessage = szBlob;
     pre.lParam = theSequence;
-    CallService(MS_PROTO_CHAINRECV, 0, (LPARAM)&ccs);
+    Proto_ChainRecv(0, &ccs);
 
     delete [] szBlob;
 

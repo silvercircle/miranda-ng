@@ -23,20 +23,43 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 //Include
-#include "hdr/modern_commonheaders.h"
-#include <m_png.h>
+#include "stdafx.h"
 #include "m_skin_eng.h"
-#include "hdr/modern_skinselector.h"
-#include "CLUIFrames/cluiframes.h"
+#include "modern_skinselector.h"
+#include "cluiframes.h"
 
 #define _EFFECTENUM_FULL_H
-#include "hdr/modern_effectenum.h"
+#include "modern_effectenum.h"
 #undef _EFFECTENUM_FULL_H
 
-#include "hdr/modern_skinengine.h"
-#include "hdr/modern_commonprototypes.h"
-#include "hdr/modern_sync.h"
+#include "modern_skinengine.h"
+#include "modern_commonprototypes.h"
+#include "modern_sync.h"
+
 //Implementation
+
+#pragma pack(push, 1)
+/* tga header */
+struct tga_header_t
+{
+	BYTE id_lenght;          /* size of image id */
+	BYTE colormap_type;      /* 1 is has a colormap */
+	BYTE image_type;         /* compression type */
+
+	short	cm_first_entry;       /* colormap origin */
+	short	cm_length;            /* colormap length */
+	BYTE cm_size;               /* colormap size */
+
+	short	x_origin;             /* bottom left x coord origin */
+	short	y_origin;             /* bottom left y coord origin */
+
+	short	width;                /* picture width (in pixels) */
+	short	height;               /* picture height (in pixels) */
+
+	BYTE pixel_depth;        /* bits per pixel: 8, 16, 24 or 32 */
+	BYTE image_descriptor;   /* 24 bits = 0x00; 32 bits = 0x80 */
+};
+#pragma pack(pop)
 
 /* Global variables */
 
@@ -86,7 +109,7 @@ static void ske_AddParseSkinFont(char * szFontID, char * szDefineString);
 static int  ske_GetSkinFromDB(char * szSection, SKINOBJECTSLIST * Skin);
 static LPSKINOBJECTDESCRIPTOR ske_FindObject(const char *szName, SKINOBJECTSLIST *Skin);
 static int  ske_LoadSkinFromResource(BOOL bOnlyObjects);
-static void ske_PreMultiplyChanells(HBITMAP hbmp, BYTE Mult);
+static void ske_PreMultiplyChannels(HBITMAP hbmp, BYTE Mult);
 static int  ske_ValidateSingleFrameImage(FRAMEWND * Frame, BOOL SkipBkgBlitting);
 static INT_PTR ske_Service_UpdateFrameImage(WPARAM wParam, LPARAM lParam);
 static INT_PTR ske_Service_InvalidateFrameImage(WPARAM wParam, LPARAM lParam);
@@ -192,12 +215,12 @@ int IniParser::GetSkinFolder(IN const TCHAR * szFileName, OUT TCHAR * pszFolderN
 
 	TCHAR custom_folder[MAX_PATH], cus[MAX_PATH];
 	TCHAR *b3;
-	mir_tstrncpy(custom_folder, pszFolderName, SIZEOF(custom_folder));
+	mir_tstrncpy(custom_folder, pszFolderName, _countof(custom_folder));
 	b3 = custom_folder + mir_tstrlen(custom_folder);
 	while (b3 > custom_folder && *b3 != _T('\\')) { b3--; }
 	*b3 = _T('\0');
 
-	GetPrivateProfileString(_T("Skin_Description_Section"), _T("SkinFolder"), _T(""), cus, SIZEOF(custom_folder), szFileName);
+	GetPrivateProfileString(_T("Skin_Description_Section"), _T("SkinFolder"), _T(""), cus, _countof(custom_folder), szFileName);
 	if (cus[0] != 0)
 		mir_sntprintf(pszFolderName, MAX_PATH, _T("%s\\%s"), custom_folder, cus);
 
@@ -243,7 +266,7 @@ HRESULT IniParser::_DoParseFile()
 {
 	char szLine[MAX_LINE_LEN];
 	_nLine = 0;
-	while (fgets(szLine, SIZEOF(szLine), _hFile) != NULL) {
+	while (fgets(szLine, _countof(szLine), _hFile) != NULL) {
 		size_t len = 0;
 		char * pLine = (char*)_RemoveTailings(szLine, len);
 		if (len > 0) {
@@ -1411,7 +1434,7 @@ INT_PTR ske_Service_DrawGlyph(WPARAM wParam, LPARAM lParam)
 }
 
 
-void ske_PreMultiplyChanells(HBITMAP hbmp, BYTE Mult)
+void ske_PreMultiplyChannels(HBITMAP hbmp, BYTE Mult)
 {
 	BITMAP bmp;
 	BOOL flag = FALSE;
@@ -1460,9 +1483,9 @@ int ske_GetFullFilename(TCHAR *buf, const TCHAR *file, TCHAR *skinfolder, BOOL m
 
 	TCHAR b2[MAX_PATH];
 	if (file[0] != '\\' && file[1] != ':')
-		mir_sntprintf(b2, SIZEOF(b2), _T("%s\\%s"), (skinfolder == NULL) ? SkinPlace : ((INT_PTR)skinfolder != -1) ? skinfolder : _T(""), file);
+		mir_sntprintf(b2, _countof(b2), _T("%s\\%s"), (skinfolder == NULL) ? SkinPlace : ((INT_PTR)skinfolder != -1) ? skinfolder : _T(""), file);
 	else
-		mir_tstrncpy(b2, file, SIZEOF(b2));
+		mir_tstrncpy(b2, file, _countof(b2));
 
 	if (madeAbsolute) {
 		if (b2[0] == '\\' && b2[1] != '\\')
@@ -1603,110 +1626,45 @@ static HBITMAP ske_LoadGlyphImage_TGA(const TCHAR *szFilename)
 	return NULL;
 }
 
-
-//this function is required to load PNG to dib buffer myself
-static HBITMAP ske_LoadGlyphImage_Png2Dib(const TCHAR *tszFilename)
-{
-	HANDLE hFile, hMap = NULL;
-	BYTE* ppMap = NULL;
-	long  cbFileSize = 0;
-	BITMAPINFOHEADER* pDib = { 0 };
-	BYTE* pDibBits = NULL;
-
-	if (!ServiceExists(MS_PNG2DIB)) {
-		MessageBox(NULL, TranslateT("You need an image services plugin to process PNG images."), TranslateT("Error"), MB_OK);
-		return (HBITMAP)NULL;
-	}
-
-	if ((hFile = CreateFile(tszFilename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL)) != INVALID_HANDLE_VALUE)
-		if ((hMap = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != NULL)
-			if ((ppMap = (BYTE*)MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL)
-				cbFileSize = GetFileSize(hFile, NULL);
-
-	if (cbFileSize != 0) {
-		PNG2DIB param;
-		param.pSource = ppMap;
-		param.cbSourceSize = cbFileSize;
-		param.pResult = &pDib;
-		if (CallService(MS_PNG2DIB, 0, (LPARAM)&param))
-			pDibBits = (BYTE*)(pDib + 1);
-		else
-			cbFileSize = 0;
-	}
-
-	if (ppMap != NULL)	UnmapViewOfFile(ppMap);
-	if (hMap != NULL)	CloseHandle(hMap);
-	if (hFile != NULL) CloseHandle(hFile);
-
-	if (cbFileSize == 0)
-		return (HBITMAP)NULL;
-
-	HBITMAP hBitmap;
-	BITMAPINFO* bi = (BITMAPINFO*)pDib;
-	BYTE *pt = (BYTE*)bi;
-	pt += bi->bmiHeader.biSize;
-	if (bi->bmiHeader.biBitCount != 32) {
-		HDC sDC = GetDC(NULL);
-		hBitmap = CreateDIBitmap(sDC, pDib, CBM_INIT, pDibBits, bi, DIB_PAL_COLORS);
-		SelectObject(sDC, hBitmap);
-		DeleteDC(sDC);
-	}
-	else {
-		BYTE *ptPixels = pt;
-		hBitmap = CreateDIBSection(NULL, bi, DIB_RGB_COLORS, (void **)&ptPixels, NULL, 0);
-		memcpy(ptPixels, pt, bi->bmiHeader.biSizeImage);
-	}
-	GlobalFree(pDib);
-	return hBitmap;
-}
-
 static HBITMAP ske_LoadGlyphImageByDecoders(const TCHAR *tszFileName)
 {
-	// Loading image from file by imgdecoder...
-	HBITMAP hBitmap = NULL;
-	TCHAR ext[5];
-	BYTE f = 0;
-
-	BITMAP bmpInfo;
-	{
-		size_t l = mir_tstrlen(tszFileName);
-		mir_tstrncpy(ext, tszFileName + (l - 4), 5);
-	}
 	if (!_tcschr(tszFileName, '%') && !PathFileExists(tszFileName))
 		return NULL;
 
+	const TCHAR *ext = _tcsrchr(tszFileName, '.');
+	if (ext == NULL)
+		return NULL;
+
+	BITMAP bmpInfo;
+	HBITMAP hBitmap;
+	bool f = false;
+
 	if (!mir_tstrcmpi(ext, _T(".tga"))) {
 		hBitmap = ske_LoadGlyphImage_TGA(tszFileName);
-		f = 1;
+		f = true;
 	}
-	else if (ServiceExists("Image/Png2Dib") && !mir_tstrcmpi(ext, _T(".png"))) {
-		hBitmap = ske_LoadGlyphImage_Png2Dib(tszFileName);
-		GetObject(hBitmap, sizeof(BITMAP), &bmpInfo);
-		f = (bmpInfo.bmBits != NULL);
-	}
-	else if (mir_tstrcmpi(ext, _T(".png"))) {
-		hBitmap = (HBITMAP)CallService(MS_UTILS_LOADBITMAPT, 0, (LPARAM)tszFileName);
-	}
+	else hBitmap = Bitmap_Load(tszFileName);
 
-	if (hBitmap) {
-		GetObject(hBitmap, sizeof(BITMAP), &bmpInfo);
-		if (bmpInfo.bmBitsPixel == 32)
-			ske_PreMultiplyChanells(hBitmap, f);
-		else {
-			HDC dc32 = CreateCompatibleDC(NULL);
-			HDC dc24 = CreateCompatibleDC(NULL);
-			HBITMAP hBitmap32 = ske_CreateDIB32(bmpInfo.bmWidth, bmpInfo.bmHeight);
-			HBITMAP obmp24 = (HBITMAP)SelectObject(dc24, hBitmap);
-			HBITMAP obmp32 = (HBITMAP)SelectObject(dc32, hBitmap32);
-			BitBlt(dc32, 0, 0, bmpInfo.bmWidth, bmpInfo.bmHeight, dc24, 0, 0, SRCCOPY);
-			SelectObject(dc24, obmp24);
-			SelectObject(dc32, obmp32);
-			DeleteDC(dc24);
-			DeleteDC(dc32);
-			DeleteObject(hBitmap);
-			hBitmap = hBitmap32;
-			ske_PreMultiplyChanells(hBitmap, 0);
-		}
+	if (hBitmap == NULL)
+		return NULL;
+
+	GetObject(hBitmap, sizeof(BITMAP), &bmpInfo);
+	if (bmpInfo.bmBitsPixel == 32)
+		ske_PreMultiplyChannels(hBitmap, f);
+	else {
+		HDC dc32 = CreateCompatibleDC(NULL);
+		HDC dc24 = CreateCompatibleDC(NULL);
+		HBITMAP hBitmap32 = ske_CreateDIB32(bmpInfo.bmWidth, bmpInfo.bmHeight);
+		HBITMAP obmp24 = (HBITMAP)SelectObject(dc24, hBitmap);
+		HBITMAP obmp32 = (HBITMAP)SelectObject(dc32, hBitmap32);
+		BitBlt(dc32, 0, 0, bmpInfo.bmWidth, bmpInfo.bmHeight, dc24, 0, 0, SRCCOPY);
+		SelectObject(dc24, obmp24);
+		SelectObject(dc32, obmp32);
+		DeleteDC(dc24);
+		DeleteDC(dc32);
+		DeleteObject(hBitmap);
+		hBitmap = hBitmap32;
+		ske_PreMultiplyChannels(hBitmap, 0);
 	}
 	return hBitmap;
 }
@@ -2589,7 +2547,7 @@ HICON ske_ImageList_GetIcon(HIMAGELIST himl, int i)
 
 BOOL ske_ImageList_DrawEx(HIMAGELIST himl, int i, HDC hdcDst, int x, int y, int dx, int dy, COLORREF rgbBk, COLORREF rgbFg, UINT fStyle)
 {
-	//the routine to directly draw icon from image list without creating icon from there - should be some faster
+	// the routine to directly draw icon from image list without creating icon from there - should be some faster
 	if (i < 0)
 		return FALSE;
 
@@ -2597,9 +2555,9 @@ BOOL ske_ImageList_DrawEx(HIMAGELIST himl, int i, HDC hdcDst, int x, int y, int 
 		return ImageList_DrawEx(himl, i, hdcDst, x, y, dx, dy, rgbBk, rgbFg, fStyle);
 
 	BYTE alpha;
-	if (fStyle&ILD_BLEND25)
+	if (fStyle & ILD_BLEND25)
 		alpha = 64;
-	else if (fStyle&ILD_BLEND50)
+	else if (fStyle & ILD_BLEND50)
 		alpha = 128;
 	else
 		alpha = 255;
@@ -2796,8 +2754,8 @@ static INT_PTR ske_Service_UpdateFrameImage(WPARAM wParam, LPARAM)           // 
 		return 0;
 
 	RECT wnd;
-	BOOL NoCancelPost = 0;
-	BOOL IsAnyQueued = 0;
+	bool NoCancelPost = false;
+	bool IsAnyQueued = false;
 	if (!g_CluiData.mutexOnEdgeSizing)
 		GetWindowRect(pcli->hwndContactList, &wnd);
 	else
@@ -2882,9 +2840,9 @@ static INT_PTR ske_Service_InvalidateFrameImage(WPARAM wParam, LPARAM lParam)   
 				}
 			}
 		}
-		else Sync(QueueAllFramesUpdating, 1);
+		else Sync(QueueAllFramesUpdating, true);
 	}
-	else Sync(QueueAllFramesUpdating, 1);
+	else Sync(QueueAllFramesUpdating, true);
 
 	if (!flag_bUpdateQueued || g_flag_bPostWasCanceled)
 		if (PostMessage(pcli->hwndContactList, UM_UPDATE, 0, 0)) {
@@ -3025,13 +2983,13 @@ static int ske_ValidateSingleFrameImage(FRAMEWND * Frame, BOOL SkipBkgBlitting) 
 		BitBlt(g_pCachedWindow->hImageDC, rLine.left, rLine.top, rLine.right - rLine.left, rLine.bottom - rLine.top, g_pCachedWindow->hBackDC, rLine.left, rLine.top, SRCCOPY);
 
 		char req[255];
-		mir_snprintf(req, SIZEOF(req), "Main,ID=ScrollBar,Frame=%s,Part=Back", Frame->szName);
+		mir_snprintf(req, _countof(req), "Main,ID=ScrollBar,Frame=%S,Part=Back", Frame->name);
 		SkinDrawGlyph(g_pCachedWindow->hImageDC, &rLine, &rLine, req);
-		mir_snprintf(req, SIZEOF(req), "Main,ID=ScrollBar,Frame=%s,Part=Thumb", Frame->szName);
+		mir_snprintf(req, _countof(req), "Main,ID=ScrollBar,Frame=%S,Part=Thumb", Frame->name);
 		SkinDrawGlyph(g_pCachedWindow->hImageDC, &rThumb, &rThumb, req);
-		mir_snprintf(req, SIZEOF(req), "Main,ID=ScrollBar, Frame=%s,Part=UpLineButton", Frame->szName);
+		mir_snprintf(req, _countof(req), "Main,ID=ScrollBar, Frame=%S,Part=UpLineButton", Frame->name);
 		SkinDrawGlyph(g_pCachedWindow->hImageDC, &rUpBtn, &rUpBtn, req);
-		mir_snprintf(req, SIZEOF(req), "Main,ID=ScrollBar,Frame=%s,Part=DownLineButton", Frame->szName);
+		mir_snprintf(req, _countof(req), "Main,ID=ScrollBar,Frame=%S,Part=DownLineButton", Frame->name);
 		SkinDrawGlyph(g_pCachedWindow->hImageDC, &rDnBtn, &rDnBtn, req);
 	}
 
@@ -3061,6 +3019,7 @@ int ske_BltBackImage(HWND destHWND, HDC destDC, RECT *BltClientRect)
 	return BitBlt(destDC, w.left, w.top, (w.right - w.left), (w.bottom - w.top), g_pCachedWindow->hBackDC, (ptChildWnd.x - ptMainWnd.x), (ptChildWnd.y - ptMainWnd.y), SRCCOPY);
 
 }
+
 int ske_ReCreateBackImage(BOOL Erase, RECT *w)
 {
 	RECT wnd = { 0 };
@@ -3154,7 +3113,8 @@ int ske_DrawNonFramedObjects(BOOL Erase, RECT *r)
 	return 0;
 }
 
-int ske_ValidateFrameImageProc(RECT *r)                                // Calling queued frame paint procs and refresh image
+// Calling queued frame paint procs and refresh image
+int ske_ValidateFrameImageProc(RECT *r)
 {
 	RECT wnd = { 0 };
 	BOOL IsNewCache = 0;
@@ -3205,7 +3165,7 @@ int ske_ValidateFrameImageProc(RECT *r)                                // Callin
 	}
 	if (IsForceAllPainting) {
 		BitBlt(g_pCachedWindow->hImageDC, 0, 0, g_pCachedWindow->Width, g_pCachedWindow->Height, g_pCachedWindow->hBackDC, 0, 0, SRCCOPY);
-		Sync(QueueAllFramesUpdating, (BYTE)1);
+		Sync(QueueAllFramesUpdating, true);
 	}
 	//-- Validating frames
 	for (int i = 0; i < g_nFramesCount; i++)
@@ -3220,7 +3180,7 @@ int ske_ValidateFrameImageProc(RECT *r)                                // Callin
 		ske_UpdateWindowImageRect(&wnd);
 
 	//-- Clear queue
-	Sync(QueueAllFramesUpdating, 0);
+	Sync(QueueAllFramesUpdating, false);
 	flag_bUpdateQueued = 0;
 	g_flag_bPostWasCanceled = 0;
 	return 1;
@@ -3342,11 +3302,11 @@ static DWORD ske_HexToARGB(char * Hex)
 {
 	char buf[10] = { 0 };
 	char buf2[11] = { 0 };
-	mir_snprintf(buf, SIZEOF(buf), "%s\n", Hex);
+	mir_snprintf(buf, "%s\n", Hex);
 	if (buf[1] == 'x' || buf[1] == 'X')
-		mir_snprintf(buf2, SIZEOF(buf2), "0x%s\n", buf + 2);
+		mir_snprintf(buf2, _countof(buf2), "0x%s\n", buf + 2);
 	else
-		mir_snprintf(buf2, SIZEOF(buf2), "0x%s\n", buf);
+		mir_snprintf(buf2, _countof(buf2), "0x%s\n", buf);
 	buf2[10] = '\0';
 
 	char *st;
@@ -3492,7 +3452,7 @@ static void ske_AddParseSkinFont(char * szFontID, char * szDefineString)
 	logfont.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
 
 	char buf[255];
-	mir_strncpy(logfont.lfFaceName, GetParamN(szDefineString, buf, sizeof(buf), 0, ',', TRUE), SIZEOF(logfont.lfFaceName));
+	mir_strncpy(logfont.lfFaceName, GetParamN(szDefineString, buf, sizeof(buf), 0, ',', TRUE), _countof(logfont.lfFaceName));
 	logfont.lfHeight = atoi(GetParamN(szDefineString, buf, sizeof(buf), 1, ',', TRUE));
 	if (logfont.lfHeight < 0) {
 		HDC hdc = CreateCompatibleDC(NULL);

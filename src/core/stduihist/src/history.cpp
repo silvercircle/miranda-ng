@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static INT_PTR CALLBACK DlgProcHistory(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 static INT_PTR CALLBACK DlgProcHistoryFind(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
-static HANDLE hWindowList = 0;
+static MWindowList hWindowList = 0;
 static HGENMENU hContactMenu = 0;
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -55,7 +55,7 @@ static void GetUrlDescription(DBEVENTINFO *dbei, TCHAR* buf, int cbBuf)
 	buf[ len ] = 0;
 
 	if (len < cbBuf-3)
-		_tcscat(buf, _T("\r\n"));
+		mir_tstrcat(buf, _T("\r\n"));
 }
 
 static void GetFileDescription(DBEVENTINFO *dbei, TCHAR* buf, int cbBuf)
@@ -68,7 +68,7 @@ static void GetFileDescription(DBEVENTINFO *dbei, TCHAR* buf, int cbBuf)
 	buf[ len ] = 0;
 
 	if (len < cbBuf-3)
-		_tcscat(buf, _T("\r\n"));
+		mir_tstrcat(buf, _T("\r\n"));
 }
 
 static void GetObjectDescription(DBEVENTINFO *dbei, TCHAR* str, int cbStr)
@@ -162,10 +162,10 @@ static void FillHistoryThread(void* param)
 		db_event_get(hDbEvent, &dbei);
 
 		TCHAR str[200], eventText[256], strdatetime[64];
-		GetObjectSummary(&dbei, str, SIZEOF(str));
+		GetObjectSummary(&dbei, str, _countof(str));
 		if (str[0]) {
-			tmi.printTimeStamp(NULL, dbei.timestamp, _T("d t"), strdatetime, SIZEOF(strdatetime), 0);
-			mir_sntprintf(eventText, SIZEOF(eventText), _T("%s: %s"), strdatetime, str);
+			TimeZone_PrintTimeStamp(NULL, dbei.timestamp, _T("d t"), strdatetime, _countof(strdatetime), 0);
+			mir_sntprintf(eventText, _countof(eventText), _T("%s: %s"), strdatetime, str);
 			i = SendMessage(hwndList, LB_ADDSTRING, 0, (LPARAM)eventText);
 			SendMessage(hwndList, LB_SETITEMDATA, i, (LPARAM)hDbEvent);
 		}
@@ -208,7 +208,7 @@ static INT_PTR CALLBACK DlgProcHistory(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 		{
 			TCHAR* contactName, str[200];
 			contactName = pcli->pfnGetContactDisplayName(hContact, 0);
-			mir_sntprintf(str, SIZEOF(str), TranslateT("History for %s"), contactName);
+			mir_sntprintf(str, _countof(str), TranslateT("History for %s"), contactName);
 			SetWindowText(hwndDlg, str);
 		}
 		Window_SetIcon_IcoLib(hwndDlg, SKINICON_OTHER_HISTORY);
@@ -237,16 +237,7 @@ static INT_PTR CALLBACK DlgProcHistory(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 		break;
 
 	case WM_SIZE:
-		{
-			UTILRESIZEDIALOG urd = { 0 };
-			urd.cbSize = sizeof(urd);
-			urd.hwndDlg = hwndDlg;
-			urd.hInstance = hInst;
-			urd.lpTemplate = MAKEINTRESOURCEA(IDD_HISTORY);
-			urd.lParam = 0;
-			urd.pfnResizer = HistoryDlgResizer;
-			CallService(MS_UTILS_RESIZEDIALOG, 0, (LPARAM)&urd);
-		}
+		Utils_ResizeDialog(hwndDlg, hInst, MAKEINTRESOURCEA(IDD_HISTORY), HistoryDlgResizer);
 		return TRUE;
 
 	case WM_COMMAND:
@@ -289,7 +280,7 @@ static INT_PTR CALLBACK DlgProcHistory(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 					dbei.pBlob = (PBYTE)mir_alloc(dbei.cbBlob);
 					if (db_event_get(hDbEvent, &dbei) == 0) {
 						TCHAR str[8192];
-						GetObjectDescription(&dbei, str, SIZEOF(str));
+						GetObjectDescription(&dbei, str, _countof(str));
 						if (str[0])
 							SetDlgItemText(hwndDlg, IDC_EDIT, str);
 					}
@@ -327,7 +318,7 @@ static INT_PTR CALLBACK DlgProcHistory(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			db_event_get(hDbEvent, &dbei);
 
 			TCHAR str[1024];
-			GetObjectDescription(&dbei, str, SIZEOF(str));
+			GetObjectDescription(&dbei, str, _countof(str));
 			if (str[0]) {
 				CharUpperBuff(str, (int)mir_tstrlen(str));
 				if (_tcsstr(str, (const TCHAR*)lParam) != NULL) {
@@ -361,7 +352,7 @@ static INT_PTR CALLBACK DlgProcHistoryFind(HWND hwndDlg, UINT msg, WPARAM wParam
 		case IDOK://find Next
 			TCHAR str[128];
 			HWND hwndParent = (HWND)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
-			GetDlgItemText(hwndDlg, IDC_FINDWHAT, str, SIZEOF(str));
+			GetDlgItemText(hwndDlg, IDC_FINDWHAT, str, _countof(str));
 			CharUpperBuff(str, (int)mir_tstrlen(str));
 			SendMessage(hwndParent, DM_FINDNEXT, 0, (LPARAM)str);
 			return TRUE;
@@ -410,10 +401,10 @@ static int PreShutdownHistoryModule(WPARAM, LPARAM)
 
 int LoadHistoryModule(void)
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = 1000090000;
-	mi.icolibItem = GetSkinIconHandle(SKINICON_OTHER_HISTORY);
-	mi.pszName = LPGEN("View &history");
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_OTHER_HISTORY);
+	mi.name.a = LPGEN("View &history");
 	mi.pszService = MS_HISTORY_SHOWCONTACTHISTORY;
 	hContactMenu = Menu_AddContactMenuItem(&mi);
 

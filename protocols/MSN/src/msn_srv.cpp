@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "msn_global.h"
+#include "stdafx.h"
 #include "msn_proto.h"
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -284,15 +284,19 @@ void CMsnProto::MSN_SendNicknameUtf(const char* nickname)
 	else
 		delSetting("Nick");
 
+#ifdef OBSOLETE
 	MSN_SetNicknameUtf(nickname[0] ? nickname : MyOptions.szEmail);
+#endif
 
 	ForkThread(&CMsnProto::msn_storeProfileThread, (void*)1);
 }
 
+#ifdef OBSOLETE
 void CMsnProto::MSN_SetNicknameUtf(const char* nickname)
 {
 	msnNsThread->sendPacket("PRP", "MFN %s", ptrA(mir_urlEncode(nickname)));
 }
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // msn_storeAvatarThread - update our own avatar on the server

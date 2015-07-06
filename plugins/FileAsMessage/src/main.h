@@ -8,7 +8,7 @@
 
 #include <newpluginapi.h>
 #include <m_database.h>
-#include <m_protomod.h>
+#include <m_protosvc.h>
 #include <m_langpack.h>
 #include <m_clist.h>
 #include <m_options.h>
@@ -41,7 +41,7 @@ extern const ulong INITCRC;
 #define WM_FE_SKINCHANGE	WM_USER+102
 
 extern HINSTANCE hInst;
-extern HANDLE hFileList;
+extern MWindowList hFileList;
 extern HANDLE hEventNewFile;
 
 extern HICON hIcons[5];

@@ -170,7 +170,7 @@ void IEViewSink::BeforeNavigate2(IDispatch*, VARIANT* url, VARIANT*, VARIANT*, V
 #ifndef GECKO
 	if (mir_tstrcmp(url->bstrVal, _T("about:blank")))
 	{
-		CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW | OUF_TCHAR, (LPARAM)url->bstrVal);
+		Utils_OpenUrlT(url->bstrVal);
 		*cancel = VARIANT_TRUE;
 	}
 #endif
@@ -652,7 +652,7 @@ STDMETHODIMP IEView::GetSecuritySite(IInternetSecurityMgrSite **)
 
 STDMETHODIMP IEView::MapUrlToZone(LPCWSTR pwszUrl, DWORD *pdwZone, DWORD)
 {
-	if (pdwZone != NULL && pwszUrl != NULL && !wcscmp(pwszUrl, L"about:blank")) {
+	if (pdwZone != NULL && pwszUrl != NULL && !mir_wstrcmp(pwszUrl, L"about:blank")) {
 		*pdwZone = URLZONE_LOCAL_MACHINE;
 		return S_OK;
 	}
@@ -667,7 +667,7 @@ STDMETHODIMP IEView::GetSecurityId(LPCWSTR, BYTE *, DWORD *, DWORD_PTR)
 STDMETHODIMP IEView::ProcessUrlAction(LPCWSTR pwszUrl, DWORD dwAction, BYTE *pPolicy, DWORD cbPolicy, BYTE *, DWORD, DWORD, DWORD)
 {
 	DWORD dwPolicy = URLPOLICY_ALLOW;
-	if (pwszUrl != NULL && !wcscmp(pwszUrl, L"about:blank")) {
+	if (pwszUrl != NULL && !mir_wstrcmp(pwszUrl, L"about:blank")) {
 		if (dwAction <= URLACTION_ACTIVEX_MAX && dwAction >= URLACTION_ACTIVEX_MIN) {
 			//dwPolicy = URLPOLICY_DISALLOW;
 			//dwPolicy = URLPOLICY_ALLOW;
@@ -1035,7 +1035,7 @@ bool IEView::mouseClick(POINT pt)
 			if ((GetKeyState(VK_SHIFT) & 0x8000) && !(GetKeyState(VK_CONTROL) & 0x8000) && !(GetKeyState(VK_MENU) & 0x8000))
 				SendMessage(GetParent(hwnd), WM_COMMAND, IDCANCEL, 0);
 
-			CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW | OUF_TCHAR, (LPARAM)url);
+			Utils_OpenUrlT(url);
 			return true;
 		}
 	}

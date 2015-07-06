@@ -95,19 +95,19 @@ bool LoadDS(DISPLAYSUBST *ds, int index)
 	char setting[512];
 	DBVARIANT dbv;
 
-	mir_snprintf(setting, SIZEOF(setting), "Name%d", index);
+	mir_snprintf(setting, "Name%d", index);
 	ds->swzName[0] = 0;
 	if (db_get_ts(0, MODULE_ITEMS, setting, &dbv))
 		return false;
 
-	_tcsncpy(ds->swzName, dbv.ptszVal, SIZEOF(ds->swzName));
-	ds->swzName[SIZEOF(ds->swzName) - 1] = 0;
+	_tcsncpy(ds->swzName, dbv.ptszVal, _countof(ds->swzName));
+	ds->swzName[_countof(ds->swzName) - 1] = 0;
 	db_free(&dbv);
 
-	mir_snprintf(setting, SIZEOF(setting), "Type%d", index);
+	mir_snprintf(setting, "Type%d", index);
 	ds->type = (DisplaySubstType)db_get_b(0, MODULE_ITEMS, setting, DVT_PROTODB);
 
-	mir_snprintf(setting, SIZEOF(setting), "Module%d", index);
+	mir_snprintf(setting, "Module%d", index);
 	ds->szModuleName[0] = 0;
 	if (!db_get(0, MODULE_ITEMS, setting, &dbv)) {
 		strncpy(ds->szModuleName, dbv.pszVal, MODULE_NAME_LEN);
@@ -115,7 +115,7 @@ bool LoadDS(DISPLAYSUBST *ds, int index)
 		db_free(&dbv);
 	}
 
-	mir_snprintf(setting, SIZEOF(setting), "Setting%d", index);
+	mir_snprintf(setting, "Setting%d", index);
 	ds->szSettingName[0] = 0;
 	if (!db_get(0, MODULE_ITEMS, setting, &dbv)) {
 		strncpy(ds->szSettingName, dbv.pszVal, SETTING_NAME_LEN);
@@ -123,12 +123,12 @@ bool LoadDS(DISPLAYSUBST *ds, int index)
 		db_free(&dbv);
 	}
 
-	mir_snprintf(setting, SIZEOF(setting), "TransFuncId%d", index);
+	mir_snprintf(setting, "TransFuncId%d", index);
 	ds->iTranslateFuncId = db_get_dw(0, MODULE_ITEMS, setting, (DWORD)-1);
 
 	// a little backward compatibility
 	if ((DWORD)ds->iTranslateFuncId == (DWORD)-1) {
-		mir_snprintf(setting, SIZEOF(setting), "TransFunc%d", index);
+		mir_snprintf(setting, "TransFunc%d", index);
 		ds->iTranslateFuncId = (DWORD)db_get_w(0, MODULE_ITEMS, setting, 0);
 	}
 
@@ -139,15 +139,15 @@ void SaveDS(DISPLAYSUBST *ds, int index)
 {
 	char setting[512];
 
-	mir_snprintf(setting, SIZEOF(setting), "Name%d", index);
+	mir_snprintf(setting, "Name%d", index);
 	db_set_ts(0, MODULE_ITEMS, setting, ds->swzName);
-	mir_snprintf(setting, SIZEOF(setting), "Type%d", index);
+	mir_snprintf(setting, "Type%d", index);
 	db_set_b(0, MODULE_ITEMS, setting, (BYTE)ds->type);
-	mir_snprintf(setting, SIZEOF(setting), "Module%d", index);
+	mir_snprintf(setting, "Module%d", index);
 	db_set_s(0, MODULE_ITEMS, setting, ds->szModuleName);
-	mir_snprintf(setting, SIZEOF(setting), "Setting%d", index);
+	mir_snprintf(setting, "Setting%d", index);
 	db_set_s(0, MODULE_ITEMS, setting, ds->szSettingName);
-	mir_snprintf(setting, SIZEOF(setting), "TransFuncId%d", index);
+	mir_snprintf(setting, "TransFuncId%d", index);
 	db_set_dw(0, MODULE_ITEMS, setting, (WORD)ds->iTranslateFuncId);
 }
 
@@ -156,32 +156,32 @@ bool LoadDI(DISPLAYITEM *di, int index)
 	char setting[512];
 	DBVARIANT dbv;
 
-	mir_snprintf(setting, SIZEOF(setting), "DILabel%d", index);
+	mir_snprintf(setting, "DILabel%d", index);
 	di->swzLabel[0] = 0;
 	if (db_get_ts(0, MODULE_ITEMS, setting, &dbv))
 		return false;
 
-	_tcsncpy(di->swzLabel, dbv.ptszVal, SIZEOF(di->swzLabel));
-	di->swzLabel[SIZEOF(di->swzLabel) - 1] = 0;
+	_tcsncpy(di->swzLabel, dbv.ptszVal, _countof(di->swzLabel));
+	di->swzLabel[_countof(di->swzLabel) - 1] = 0;
 	db_free(&dbv);
 
-	mir_snprintf(setting, SIZEOF(setting), "DIValue%d", index);
+	mir_snprintf(setting, "DIValue%d", index);
 	di->swzValue[0] = 0;
 	if (!db_get_ts(0, MODULE_ITEMS, setting, &dbv)) {
-		_tcsncpy(di->swzValue, dbv.ptszVal, SIZEOF(di->swzValue));
-		di->swzValue[SIZEOF(di->swzValue) - 1] = 0;
+		_tcsncpy(di->swzValue, dbv.ptszVal, _countof(di->swzValue));
+		di->swzValue[_countof(di->swzValue) - 1] = 0;
 		db_free(&dbv);
 	}
 
-	mir_snprintf(setting, SIZEOF(setting), "DIType%d", index);
+	mir_snprintf(setting, "DIType%d", index);
 	di->type = (DisplayItemType)db_get_b(0, MODULE_ITEMS, setting, DIT_ALL);
-	mir_snprintf(setting, SIZEOF(setting), "DILineAbove%d", index);
+	mir_snprintf(setting, "DILineAbove%d", index);
 	di->bLineAbove = (db_get_b(0, MODULE_ITEMS, setting, 0) == 1);
-	mir_snprintf(setting, SIZEOF(setting), "DIValNewline%d", index);
+	mir_snprintf(setting, "DIValNewline%d", index);
 	di->bValueNewline = (db_get_b(0, MODULE_ITEMS, setting, 0) == 1);
-	mir_snprintf(setting, SIZEOF(setting), "DIVisible%d", index);
+	mir_snprintf(setting, "DIVisible%d", index);
 	di->bIsVisible = (db_get_b(0, MODULE_ITEMS, setting, 1) == 1);
-	mir_snprintf(setting, SIZEOF(setting), "DITipperVarsFirst%d", index);
+	mir_snprintf(setting, "DITipperVarsFirst%d", index);
 	di->bParseTipperVarsFirst = (db_get_b(0, MODULE_ITEMS, setting, 0) == 1);
 
 	return true;
@@ -191,29 +191,29 @@ void SaveDI(DISPLAYITEM *di, int index)
 {
 	char setting[512];
 
-	mir_snprintf(setting, SIZEOF(setting), "DILabel%d", index);
+	mir_snprintf(setting, "DILabel%d", index);
 	if (db_set_ts(0, MODULE_ITEMS, setting, di->swzLabel)) {
 		char buff[LABEL_LEN];
 		t2a(di->swzLabel, buff, LABEL_LEN);
 		db_set_s(0, MODULE_ITEMS, setting, buff);
 	}
 
-	mir_snprintf(setting, SIZEOF(setting), "DIValue%d", index);
+	mir_snprintf(setting, "DIValue%d", index);
 	if (db_set_ts(0, MODULE_ITEMS, setting, di->swzValue)) {
 		char buff[VALUE_LEN];
 		t2a(di->swzValue, buff, VALUE_LEN);
 		db_set_s(0, MODULE_ITEMS, setting, buff);
 	}
 
-	mir_snprintf(setting, SIZEOF(setting), "DIType%d", index);
+	mir_snprintf(setting, "DIType%d", index);
 	db_set_b(0, MODULE_ITEMS, setting, (BYTE)di->type);
-	mir_snprintf(setting, SIZEOF(setting), "DILineAbove%d", index);
+	mir_snprintf(setting, "DILineAbove%d", index);
 	db_set_b(0, MODULE_ITEMS, setting, di->bLineAbove ? 1 : 0);
-	mir_snprintf(setting, SIZEOF(setting), "DIValNewline%d", index);
+	mir_snprintf(setting, "DIValNewline%d", index);
 	db_set_b(0, MODULE_ITEMS, setting, di->bValueNewline ? 1 : 0);
-	mir_snprintf(setting, SIZEOF(setting), "DIVisible%d", index);
+	mir_snprintf(setting, "DIVisible%d", index);
 	db_set_b(0, MODULE_ITEMS, setting, di->bIsVisible ? 1 : 0);
-	mir_snprintf(setting, SIZEOF(setting), "DITipperVarsFirst%d", index);
+	mir_snprintf(setting, "DITipperVarsFirst%d", index);
 	db_set_b(0, MODULE_ITEMS, setting, di->bParseTipperVarsFirst ? 1 : 0);
 }
 
@@ -304,15 +304,15 @@ void LoadObsoleteSkinSetting()
 	DBVARIANT dbv;
 
 	for (int i = 0; i < SKIN_ITEMS_COUNT; i++) {
-		mir_snprintf(setting, SIZEOF(setting), "SPaintMode%d", i);
+		mir_snprintf(setting, "SPaintMode%d", i);
 		opt.transfMode[i] = (TransformationMode)db_get_b(0, MODULE, setting, 0);
-		mir_snprintf(setting, SIZEOF(setting), "SImgFile%d", i);
+		mir_snprintf(setting, "SImgFile%d", i);
 		if (!db_get_ts(NULL, MODULE, setting, &dbv)) {
 			opt.szImgFile[i] = mir_tstrdup(dbv.ptszVal);
 			db_free(&dbv);
 		}
 
-		mir_snprintf(setting, SIZEOF(setting), "SGlyphMargins%d", i);
+		mir_snprintf(setting, "SGlyphMargins%d", i);
 		DWORD margins = db_get_dw(NULL, MODULE, setting, 0);
 		opt.margins[i].top = LOBYTE(LOWORD(margins));
 		opt.margins[i].right = HIBYTE(LOWORD(margins));
@@ -516,7 +516,7 @@ void LoadOptions()
 	}
 	else if (opt.skinMode == SM_IMAGE) {
 		if (!db_get_ts(NULL, MODULE, "SkinName", &dbv)) {
-			_tcsncpy(opt.szSkinName, dbv.ptszVal, SIZEOF(opt.szSkinName) - 1);
+			_tcsncpy(opt.szSkinName, dbv.ptszVal, _countof(opt.szSkinName) - 1);
 			db_free(&dbv);
 		}
 	}
@@ -543,7 +543,7 @@ INT_PTR CALLBACK DlgProcAddItem(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 			SetDlgItemText(hwndDlg, IDC_ED_LABEL, di->swzLabel);
 			SetDlgItemText(hwndDlg, IDC_ED_VALUE, di->swzValue);
 
-			for (int i = 0; i < SIZEOF(displayItemTypes); i++) {
+			for (int i = 0; i < _countof(displayItemTypes); i++) {
 				int index = SendDlgItemMessage(hwndDlg, IDC_CMB_TYPE, CB_ADDSTRING, (WPARAM)-1, (LPARAM)TranslateTS(displayItemTypes[i].title));
 				SendDlgItemMessage(hwndDlg, IDC_CMB_TYPE, CB_SETITEMDATA, index, (LPARAM)displayItemTypes[i].type);
 				if (displayItemTypes[i].type == di->type)
@@ -573,7 +573,7 @@ INT_PTR CALLBACK DlgProcAddItem(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 
 						int sel = SendDlgItemMessage(hwndDlg, IDC_CMB_TYPE, CB_GETCURSEL, 0, 0);
 						int type = SendDlgItemMessage(hwndDlg, IDC_CMB_TYPE, CB_GETITEMDATA, sel, 0);
-						for (int i = 0; i < SIZEOF(displayItemTypes); i++) {
+						for (int i = 0; i < _countof(displayItemTypes); i++) {
 							if (displayItemTypes[i].type == type)
 								di->type = displayItemTypes[i].type;
 						}
@@ -709,10 +709,10 @@ INT_PTR CALLBACK DlgProcAddSubst(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 							ds->type = DVT_PROTODB;
 						else {
 							ds->type = DVT_DB;
-							GetDlgItemTextA(hwndDlg, IDC_ED_MODULE, ds->szModuleName, SIZEOF(ds->szModuleName));
+							GetDlgItemTextA(hwndDlg, IDC_ED_MODULE, ds->szModuleName, _countof(ds->szModuleName));
 						}
 
-						GetDlgItemTextA(hwndDlg, IDC_ED_SETTING, ds->szSettingName, SIZEOF(ds->szSettingName));
+						GetDlgItemTextA(hwndDlg, IDC_ED_SETTING, ds->szSettingName, _countof(ds->szSettingName));
 
 						int sel = SendDlgItemMessage(hwndDlg, IDC_CMB_TRANSLATE, CB_GETCURSEL, 0, 0);
 						ds->iTranslateFuncId = SendDlgItemMessage(hwndDlg, IDC_CMB_TRANSLATE, CB_GETITEMDATA, sel, 0);
@@ -767,11 +767,11 @@ INT_PTR CALLBACK DlgProcOptsContent(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
 
-		for (int i = 0; i < SIZEOF(btns); i++) {
+		for (int i = 0; i < _countof(btns); i++) {
 			SendDlgItemMessage(hwndDlg, btns[i].id, BUTTONSETASFLATBTN, TRUE, 0);
 			SendDlgItemMessage(hwndDlg, btns[i].id, BUTTONADDTOOLTIP, (WPARAM)TranslateTS(btns[i].swzTooltip), BATF_TCHAR);
 			if (btns[i].uintCoreIconId)
-				SendDlgItemMessage(hwndDlg, btns[i].id, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadSkinnedIcon(btns[i].uintCoreIconId));
+				SendDlgItemMessage(hwndDlg, btns[i].id, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(btns[i].uintCoreIconId));
 			else {
 				HICON hIcon = LoadIcon(hInst, MAKEINTRESOURCE(btns[i].uintResIconId));
 				SendDlgItemMessage(hwndDlg, btns[i].id, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
@@ -994,7 +994,7 @@ INT_PTR CALLBACK DlgProcOptsContent(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 							item.stateMask = TVIS_STATEIMAGEMASK;
 							item.hItem = hItem;
 							item.pszText = buff;
-							item.cchTextMax = SIZEOF(buff);
+							item.cchTextMax = _countof(buff);
 							if (TreeView_GetItem(GetDlgItem(hwndDlg, IDC_TREE_FIRST_ITEMS), &item)) {
 								tmpParam = item.lParam;
 								tmpState = item.state;
@@ -1461,7 +1461,7 @@ INT_PTR CALLBACK DlgProcOptsExtra(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 			tvi.hInsertAfter = TVI_LAST;
 			tvi.item.mask = TVIF_TEXT | TVIF_PARAM | TVIF_STATE;
 			tvi.item.stateMask = TVIS_STATEIMAGEMASK;
-			for (int i = 0; i < SIZEOF(extraIconName); i++) {
+			for (int i = 0; i < _countof(extraIconName); i++) {
 				tvi.item.lParam = (LPARAM)&exIcons[i];
 				tvi.item.pszText = TranslateTS(extraIconName[exIcons[i].order]);
 				tvi.item.state = INDEXTOSTATEIMAGEMASK(exIcons[i].vis ? 2 : 1);
@@ -1517,8 +1517,8 @@ INT_PTR CALLBACK DlgProcOptsExtra(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 							item.hItem = TreeView_GetNextSibling(GetDlgItem(hwndDlg, IDC_TREE_EXTRAICONS), item.hItem);
 							i++;
 						}
-						db_set_blob(NULL, MODULE, "IconOrder", opt.exIconsOrder, SIZEOF(opt.exIconsOrder));
-						db_set_blob(NULL, MODULE, "icons_vis", opt.exIconsVis, SIZEOF(opt.exIconsVis));
+						db_set_blob(NULL, MODULE, "IconOrder", opt.exIconsOrder, _countof(opt.exIconsOrder));
+						db_set_blob(NULL, MODULE, "icons_vis", opt.exIconsVis, _countof(opt.exIconsVis));
 
 						opt.iSmileyAddFlags = 0;
 						opt.iSmileyAddFlags |= (IsDlgButtonChecked(hwndDlg, IDC_CHK_ENABLESMILEYS) ? SMILEYADD_ENABLE : 0)
@@ -1647,7 +1647,7 @@ INT_PTR CALLBACK DlgProcOptsExtra(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 				tvis.item.mask = TVIF_HANDLE | TVIF_PARAM | TVIF_TEXT | TVIF_STATE;
 				tvis.item.stateMask = TVIS_STATEIMAGEMASK;
 				tvis.item.pszText = swzName;
-				tvis.item.cchTextMax = SIZEOF(swzName);
+				tvis.item.cchTextMax = _countof(swzName);
 				tvis.item.hItem = dat->hDragItem;
 				tvis.item.state = INDEXTOSTATEIMAGEMASK(((ICONSTATE *)item.lParam)->vis ? 2 : 1);
 				TreeView_GetItem(GetDlgItem(hwndDlg, IDC_TREE_EXTRAICONS), &tvis.item);
@@ -1716,7 +1716,7 @@ INT_PTR CALLBACK DlgProcOptsSkin(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 
 			SendDlgItemMessage(hwndDlg, IDC_BTN_GETSKINS, BUTTONSETASFLATBTN, TRUE, 0);
 			SendDlgItemMessage(hwndDlg, IDC_BTN_GETSKINS, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Get more skins"), BATF_TCHAR);
-			SendDlgItemMessage(hwndDlg, IDC_BTN_GETSKINS, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadSkinnedIcon(SKINICON_EVENT_URL));
+			SendDlgItemMessage(hwndDlg, IDC_BTN_GETSKINS, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(SKINICON_EVENT_URL));
 
 
 			SendDlgItemMessage(hwndDlg, IDC_SPIN_TRANS, UDM_SETRANGE, 0, (LPARAM)MAKELONG(100, 0));
@@ -1840,7 +1840,7 @@ INT_PTR CALLBACK DlgProcOptsSkin(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 					else if (LOWORD(wParam) == IDC_CHK_LOADPROPORTIONS)
 						opt.bLoadProportions = IsDlgButtonChecked(hwndDlg, IDC_CHK_LOADPROPORTIONS) ? true : false;
 					else if (LOWORD(wParam) == IDC_BTN_GETSKINS)
-						CallService(MS_UTILS_OPENURL, 0, (LPARAM)"http://miranda-ng.org/addons/category/48");
+						Utils_OpenUrl("http://miranda-ng.org/addons/category/48");
 
 					break;
 				}
@@ -1966,7 +1966,7 @@ INT_PTR CALLBACK DlgProcOptsTraytip(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 
 			int i, count = 0;
 			PROTOACCOUNT **accs;
-			ProtoEnumAccounts(&count, &accs);
+			Proto_EnumAccounts(&count, &accs);
 
 			for (i = 0; i < count; i++) {
 				if (CallProtoService(accs[i]->szModuleName, PS_GETCAPS, PFLAGNUM_2, 0) != 0) {
@@ -1979,7 +1979,7 @@ INT_PTR CALLBACK DlgProcOptsTraytip(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				}
 			}
 
-			for (i = 0; i < SIZEOF(trayTipItems); i++) {
+			for (i = 0; i < _countof(trayTipItems); i++) {
 				tvi.item.pszText = TranslateTS(trayTipItems[i]);
 				tvi.item.state = INDEXTOSTATEIMAGEMASK(opt.iFirstItems & (1 << i) ? 2 : 1);
 				TreeView_InsertItem(GetDlgItem(hwndDlg, IDC_TREE_FIRST_ITEMS), &tvi);
@@ -2036,14 +2036,14 @@ INT_PTR CALLBACK DlgProcOptsTraytip(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				TVITEM item;
 				item.hItem = TreeView_GetRoot(GetDlgItem(hwndDlg, IDC_TREE_FIRST_PROTOS));
 				item.pszText = buff;
-				item.cchTextMax = SIZEOF(buff);
+				item.cchTextMax = _countof(buff);
 				item.mask = TVIF_HANDLE | TVIF_TEXT | TVIF_STATE;
 				item.stateMask = TVIS_STATEIMAGEMASK;
 				while (item.hItem != NULL) {
 					TreeView_GetItem(GetDlgItem(hwndDlg, IDC_TREE_FIRST_PROTOS), &item);
 					if (((item.state & TVIS_STATEIMAGEMASK) >> 12) == 2) {
-						_tcscat(swzProtos, buff);
-						_tcscat(swzProtos, _T(" "));
+						mir_tstrcat(swzProtos, buff);
+						mir_tstrcat(swzProtos, _T(" "));
 					}
 
 					item.hItem = TreeView_GetNextSibling(GetDlgItem(hwndDlg, IDC_TREE_FIRST_PROTOS), item.hItem);
@@ -2057,8 +2057,8 @@ INT_PTR CALLBACK DlgProcOptsTraytip(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				while (item.hItem != NULL) {
 					TreeView_GetItem(GetDlgItem(hwndDlg, IDC_TREE_SECOND_PROTOS), &item);
 					if (((item.state & TVIS_STATEIMAGEMASK) >> 12) == 2) {
-						_tcscat(swzProtos, buff);
-						_tcscat(swzProtos, _T(" "));
+						mir_tstrcat(swzProtos, buff);
+						mir_tstrcat(swzProtos, _T(" "));
 					}
 
 					item.hItem = TreeView_GetNextSibling(GetDlgItem(hwndDlg, IDC_TREE_SECOND_PROTOS), item.hItem);

@@ -117,7 +117,7 @@ static int ServiceParseAimLink(WPARAM,LPARAM lParam)
             acs.psr=&psr;
             memset(&psr, 0, sizeof(PROTOSEARCHRESULT));
             psr.cbSize=sizeof(PROTOSEARCHRESULT);
-            psr.nick=sn;
+            psr.nick.t=sn;
             CallService(MS_ADDCONTACT_SHOW,0,(LPARAM)&acs);
         }
 		return 0;
@@ -173,7 +173,7 @@ static int AimLinksModulesLoaded(WPARAM wParam,LPARAM lParam)
     char service_name[MAXMODULELABELLENGTH];
 	UNREFERENCED_PARAMETER(wParam);
 	UNREFERENCED_PARAMETER(lParam);
-    mir_snprintf(service_name,SIZEOF(service_name),"%s%s",AIM_PROTOCOL_NAME,"ParseAimLink");
+    mir_snprintf(service_name,_countof(service_name),"%s%s",AIM_PROTOCOL_NAME,"ParseAimLink");
 	/* or "AOL Instant Messenger Links" */
     AssocMgr_AddNewUrlType("aim:",Translate("AIM link protocol"),conn.hInstance,IDI_AOL,service_name,0);
     return 0;
@@ -183,7 +183,7 @@ void aim_links_init()
 {
     char service_name[MAXMODULELABELLENGTH];
     //LOG(LOG_DEBUG,"Links: init");
-    mir_snprintf(service_name,SIZEOF(service_name),"%s%s",AIM_PROTOCOL_NAME,"ParseAimLink");
+    mir_snprintf(service_name,_countof(service_name),"%s%s",AIM_PROTOCOL_NAME,"ParseAimLink");
     hServiceParseLink=CreateServiceFunction(service_name,ServiceParseAimLink);
     hHookModulesLoaded=HookEvent(ME_SYSTEM_MODULESLOADED,AimLinksModulesLoaded);
 }
@@ -367,7 +367,7 @@ static int IcqFilesModulesLoaded(WPARAM wParam,LPARAM lParam)
 	char szService[MAX_PATH+32];
 	UNREFERENCED_PARAMETER(wParam);
 	UNREFERENCED_PARAMETER(lParam);
-	strcat(mir_strcpy(szService,gpszICQProtoName),"OpenFile");
+	mir_strcat(mir_strcpy(szService,gpszICQProtoName),"OpenFile");
 	/* .icq files are not used, just by the ProtoLink plugin */
     //AssocMgr_AddNewFileTypeT(".icq","application/x-icq",TranslateT("ICQ link shortcut"),TranslateT("&Add to contact list..."),hInst,IDI_ICQ,szService,FTDF_BROWSERAUTOOPEN|FTDF_ISTEXT|FTDF_ISSHORTCUT|FTDF_DEFAULTDISABLED);
     AssocMgr_AddNewFileTypeT(".uin","application/x-icq",TranslateT("ICQ link shortcut"),TranslateT("&Add to contact list..."),hInst,IDI_ICQ,szService,FTDF_BROWSERAUTOOPEN|FTDF_ISTEXT|FTDF_ISSHORTCUT);
@@ -377,7 +377,7 @@ static int IcqFilesModulesLoaded(WPARAM wParam,LPARAM lParam)
 void InitIcqFiles(void)
 {
 	char szService[MAX_PATH+32];
-	strcat(mir_strcpy(szService,gpszICQProtoName),"OpenFile");
+	mir_strcat(mir_strcpy(szService,gpszICQProtoName),"OpenFile");
     hServiceOpenFile=CreateServiceFunction(szService,IcqOpenFile);
     hHookModulesLoaded=HookEvent(ME_SYSTEM_MODULESLOADED,IcqFilesModulesLoaded);
 }
@@ -436,7 +436,7 @@ static int ServiceParseYmsgrLink(WPARAM wParam,LPARAM lParam)
             acs.psr=&psr;
             memset(&psr, 0, sizeof(PROTOSEARCHRESULT));
             psr.cbSize=sizeof(PROTOSEARCHRESULT);
-            psr.nick=id;
+            psr.nick.t=id;
             CallService(MS_ADDCONTACT_SHOW,0,(LPARAM)&acs);
         }
 		return 0;
@@ -479,7 +479,7 @@ static int YmsgrLinksModulesLoaded(WPARAM wParam,LPARAM lParam)
     char szService[MAXMODULELABELLENGTH];
 	UNREFERENCED_PARAMETER(wParam);
 	UNREFERENCED_PARAMETER(lParam);
-    mir_snprintf(szService,SIZEOF(szService),"%s%s",yahooProtocolName,"ParseYmsgrLink");
+    mir_snprintf(szService,_countof(szService),"%s%s",yahooProtocolName,"ParseYmsgrLink");
     AssocMgr_AddNewUrlType("ymsgr:",Translate("Yahoo link protocol"),hinstance,IDI_YAHOO,szService,0);
     return 0;
 }
@@ -487,7 +487,7 @@ static int YmsgrLinksModulesLoaded(WPARAM wParam,LPARAM lParam)
 void YmsgrLinksInit(void)
 {
     char szService[MAXMODULELABELLENGTH];
-    mir_snprintf(szService,SIZEOF(szService),"%s%s",yahooProtocolName,"ParseYmsgrLink");
+    mir_snprintf(szService,_countof(szService),"%s%s",yahooProtocolName,"ParseYmsgrLink");
 	hServiceParseYmsgrLink=CreateServiceFunction(szService,ServiceParseYmsgrLink);
     hHookModulesLoaded=HookEvent(ME_SYSTEM_MODULESLOADED,YmsgrLinksModulesLoaded);
 }
@@ -551,8 +551,8 @@ static int ServiceParseMsnimLink(WPARAM wParam,LPARAM lParam)
             acs.psr=&psr;
             memset(&psr, 0, sizeof(PROTOSEARCHRESULT));
             psr.cbSize=sizeof(PROTOSEARCHRESULT);
-            psr.nick=email;
-			psr.email=email;
+            psr.nick.t=email;
+			psr.email.t=email;
             CallService(MS_ADDCONTACT_SHOW,0,(LPARAM)&acs);
         }
 		return 0;
@@ -586,7 +586,7 @@ static int MsnLinksModulesLoaded(WPARAM wParam,LPARAM lParam)
     char szService[MAXMODULELABELLENGTH];
 	UNREFERENCED_PARAMETER(wParam);
 	UNREFERENCED_PARAMETER(lParam);
-    mir_snprintf(szService,SIZEOF(szService),"%s%s",msnProtocolName,"ParseMsnimLink");
+    mir_snprintf(szService,_countof(szService),"%s%s",msnProtocolName,"ParseMsnimLink");
     AssocMgr_AddNewUrlType("msnim:",Translate("MSN link protocol"),hInst,IDI_MSN,szService,0);
     return 0;
 }
@@ -594,7 +594,7 @@ static int MsnLinksModulesLoaded(WPARAM wParam,LPARAM lParam)
 int LoadMsnLinks(void)
 {
     char szService[MAXMODULELABELLENGTH];
-    mir_snprintf(szService,SIZEOF(szService),"%s%s",msnProtocolName,"ParseMsnimLink");
+    mir_snprintf(szService,_countof(szService),"%s%s",msnProtocolName,"ParseMsnimLink");
 	hServiceParseMsnimLink=CreateServiceFunction(szService,ServiceParseMsnimLink);
     hHookModulesLoaded=HookEvent(ME_SYSTEM_MODULESLOADED,MsnLinksModulesLoaded);
 	return 0;
@@ -651,7 +651,7 @@ static int LinksModulesLoaded(WPARAM wParam,LPARAM lParam)
     char szService[MAXMODULELABELLENGTH];
 	UNREFERENCED_PARAMETER(wParam);
 	UNREFERENCED_PARAMETER(lParam);
-    mir_snprintf(szService,SIZEOF(szService),"%s%s",GG_PROTO,"ParseMsnimLink");
+    mir_snprintf(szService,_countof(szService),"%s%s",GG_PROTO,"ParseMsnimLink");
     AssocMgr_AddNewUrlType("gg:",Translate("Gadu-Gadu link protocol"),hInstance,IDI_GG,szService,0);
     return 0;
 }
@@ -659,7 +659,7 @@ static int LinksModulesLoaded(WPARAM wParam,LPARAM lParam)
 void gg_registerlinks(void)
 {
     char szService[MAXMODULELABELLENGTH];
-    mir_snprintf(szService,SIZEOF(szService),"%s%s",GG_PROTO,"ParseLink");
+    mir_snprintf(szService,_countof(szService),"%s%s",GG_PROTO,"ParseLink");
 	hServiceParseLink=CreateServiceFunction(szService,ServiceParseLink);
     hHookModulesLoaded=HookEvent(ME_SYSTEM_MODULESLOADED,LinksModulesLoaded);
 }
@@ -728,7 +728,7 @@ static int ServiceParseXmppURI(WPARAM wParam,LPARAM lParam)
 		if(ServiceExists(MS_MSG_SENDMESSAGE)) {
             hContact=JabberDBCreateContact(jid,jid,TRUE,FALSE);
 			if(subj!=NULL && body!=NULL) {
-				mir_snprintf(msg,SIZEOF(msg),"%.128s %s",subj,body);
+				mir_snprintf(msg,_countof(msg),"%.128s %s",subj,body);
 				body=msg;
 			} else if(body==NULL) body=subj;
             if(hContact!=NULL)
@@ -746,7 +746,7 @@ static int ServiceParseXmppURI(WPARAM wParam,LPARAM lParam)
             acs.psr=&psr;
             memset(&psr, 0, sizeof(PROTOSEARCHRESULT));
             psr.cbSize=sizeof(PROTOSEARCHRESULT);
-            psr.nick=jid;
+            psr.nick.t=jid;
             CallService(MS_ADDCONTACT_SHOW,0,(LPARAM)&acs);
         }
 		return 0;
@@ -777,7 +777,7 @@ static int JabberLinksModulesLoaded(WPARAM wParam,LPARAM lParam)
     char szService[MAXMODULELABELLENGTH];
 	UNREFERENCED_PARAMETER(wParam);
 	UNREFERENCED_PARAMETER(lParam);
-    mir_snprintf(szService,SIZEOF(szService),"%s%s",jabberProtoName,"ParseXmppURI");
+    mir_snprintf(szService,_countof(szService),"%s%s",jabberProtoName,"ParseXmppURI");
     AssocMgr_AddNewUrlType("xmpp:",Translate("Jabber link protocol"),hInst,IDI_JABBER,szService,0);
     return 0;
 }
@@ -785,7 +785,7 @@ static int JabberLinksModulesLoaded(WPARAM wParam,LPARAM lParam)
 int JabberLinksInit()
 {
     char szService[MAXMODULELABELLENGTH];
-    mir_snprintf(szService,SIZEOF(szService),"%s%s",jabberProtoName,"ParseXmppURI");
+    mir_snprintf(szService,_countof(szService),"%s%s",jabberProtoName,"ParseXmppURI");
 	hServiceParseXmppURI=CreateServiceFunction(szService,ServiceParseXmppURI);
     hHookModulesLoaded=HookEvent(ME_SYSTEM_MODULESLOADED,JabberLinksModulesLoaded);
 	return 0;
@@ -802,16 +802,6 @@ int JabberLinksUninit()
 #endif
 
 // -----------------------------------------
-
-/*
-static HANDLE hServiceTest;
-static int TestingService(WPARAM wParam, LPARAM lParam)
-{
-	UNREFERENCED_PARAMETER(wParam);
-	MessageBoxEx(NULL, (TCHAR*)lParam, TranslateT("Testing Service"), MB_OK | MB_SETFOREGROUND | MB_TOPMOST | MB_TASKMODAL, LANGIDFROMLCID((LCID)CallService(MS_LANGPACK_GETLOCALE, 0, 0)));
-	return 0;
-}
-*/
 
 void InitTest(void)
 {

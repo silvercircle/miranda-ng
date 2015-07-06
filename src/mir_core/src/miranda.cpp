@@ -23,25 +23,48 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 HWND hAPCWindow = NULL;
 
 int  InitPathUtils(void);
-void (*RecalculateTime)(void);
+void RecalculateTime(void);
 
 void CheckLogs();
 void InitLogs();
 void UninitLogs();
 
-void InitWinver();
+void InitColourPicker();
+void InitHyperlink();
 void InitMetaContacts();
+void InitTimeZones();
+void InitWinver();
 
 int hLangpack = 0;
 HINSTANCE hInst = 0;
 
 HANDLE hStackMutex, hThreadQueueEmpty;
 DWORD mir_tls = 0;
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+static INT_PTR RestartMiranda(WPARAM wParam, LPARAM)
+{
+	TCHAR mirandaPath[MAX_PATH], cmdLine[MAX_PATH];
+	PROCESS_INFORMATION pi;
+	STARTUPINFO si = { 0 };
+	si.cb = sizeof(si);
+	GetModuleFileName(NULL, mirandaPath, _countof(mirandaPath));
+	if (wParam) {
+		VARST profilename(_T("%miranda_profilename%"));
+		mir_sntprintf(cmdLine, _countof(cmdLine), _T("\"%s\" /restart:%d /profile=%s"), mirandaPath, GetCurrentProcessId(), (TCHAR*)profilename);
+	}
+	else mir_sntprintf(cmdLine, _countof(cmdLine), _T("\"%s\" /restart:%d"), mirandaPath, GetCurrentProcessId());
+
+	CallService("CloseAction", 0, 0);
+	CreateProcess(mirandaPath, cmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+	return 0;
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // module init
@@ -57,7 +80,7 @@ static LRESULT CALLBACK APCWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 	if (msg == WM_TIMER)
 		CheckLogs();
 
-	if (msg == WM_TIMECHANGE && RecalculateTime)
+	if (msg == WM_TIMECHANGE)
 		RecalculateTime();
 
 	return DefWindowProc(hwnd, msg, wParam, lParam);
@@ -73,7 +96,6 @@ static void LoadCoreModule(void)
 	hAPCWindow = CreateWindowEx(0, _T("ComboLBox"), NULL, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
 	SetClassLongPtr(hAPCWindow, GCL_STYLE, GetClassLongPtr(hAPCWindow, GCL_STYLE) | CS_DROPSHADOW);
 	DestroyWindow(hAPCWindow);
-	hAPCWindow = NULL;
 
 	hAPCWindow = CreateWindowEx(0, _T("STATIC"), NULL, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
 	SetWindowLongPtr(hAPCWindow, GWLP_WNDPROC, (LONG_PTR)APCWndProc);
@@ -81,19 +103,18 @@ static void LoadCoreModule(void)
 	hStackMutex = CreateMutex(NULL, FALSE, NULL);
 	hThreadQueueEmpty = CreateEvent(NULL, TRUE, TRUE, NULL);
 
-	#ifdef _WIN64
-		HMODULE mirInst = GetModuleHandleA("miranda64.exe");
-	#else
-		HMODULE mirInst = GetModuleHandleA("miranda32.exe");
-	#endif
-	RecalculateTime = (void (*)()) GetProcAddress(mirInst, "RecalculateTime");
-
 	InitWinver();
 	InitPathUtils();
 	InitLogs();
+	InitColourPicker();
+	InitHyperlink();
+	InitTimeZones();
 	InitialiseModularEngine();
-	InitProtocols();
 	InitMetaContacts();
+
+	CreateServiceFunction(MS_SYSTEM_RESTART, RestartMiranda);
+
+	pfnRtlGenRandom = (PGENRANDOM)GetProcAddress(GetModuleHandleA("advapi32"), "SystemFunction036");
 }
 
 MIR_CORE_DLL(void) UnloadCoreModule(void)
@@ -103,7 +124,6 @@ MIR_CORE_DLL(void) UnloadCoreModule(void)
 	CloseHandle(hThreadQueueEmpty);
 	TlsFree(mir_tls);
 
-	UninitProtocols();
 	DestroyModularEngine();
 	UninitLogs();
 	UnloadLangPackModule();
@@ -112,7 +132,7 @@ MIR_CORE_DLL(void) UnloadCoreModule(void)
 /////////////////////////////////////////////////////////////////////////////////////////
 // entry point
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID)
 {
 	if (fdwReason == DLL_PROCESS_ATTACH) {
 		hInst = hinstDLL;

@@ -30,19 +30,14 @@
 #include "libyahoo2/yahoo2_callbacks.h"
 #include "libyahoo2/yahoo_util.h"
 
-extern "C"
-{
-	#include <newpluginapi.h>
-	#include <m_system.h>
-};
+#include <newpluginapi.h>
+#include <m_system.h>
 
 #include <m_system_cpp.h>
 #include <m_database.h>
-#include <m_protomod.h>
 #include <m_netlib.h>
 #include <m_idle.h>
 #include <m_clist.h>
-#include <m_clistint.h>
 #include <m_protosvc.h>
 #include <m_protoint.h>
 #include <m_langpack.h>
@@ -104,6 +99,11 @@ extern HINSTANCE		hInstance;
 #ifdef HTTP_GATEWAY
 extern int 				iHTTPGateway;
 #endif
+
+struct YAHOO_SEARCH_RESULT : public PROTOSEARCHRESULT
+{
+	yahoo_im_protocols protocol;
+};
 
 #define YAHOO_hasnotification() ServiceExists(MS_CLIST_SYSTRAY_NOTIFY)
 

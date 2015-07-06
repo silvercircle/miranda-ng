@@ -1,14 +1,5 @@
 {}
-(*
-const
-  MenuServices:array [tMenuType] of pAnsiChar = (
-    'CList/AddMainMenuItem'   {MS_CLIST_ADDMAINMENUITEM   },
-    'CList/AddContactMenuItem'{MS_CLIST_ADDCONTACTMENUITEM},
-    'CList/AddTrayMenuItem'   {MS_CLIST_ADDTRAYMENUITEM   },
-    'CList/AddProtoMenuItem'  {MS_CLIST_ADDPROTOMENUITEM  },
-    'CList/AddStatusMenuItem' {MS_CLIST_ADDSTATUSMENUITEM }
-  );
-*)
+
 type
   tuaMenuRec = record
     hMenuRoot:HMENU;
@@ -153,7 +144,6 @@ begin
   begin
     // add icon for action to icolib
     fillChar(sid,SizeOf(sid),0);
-    sid.cbSize         :=sizeof(sid);
     sid.szSection    .w:=ICOLIB_ACTSECTION;
     sid.szDefaultFile.w:=szMyPath;
     sid.iDefaultIndex  :=-IDI_ACTION;
@@ -178,7 +168,6 @@ begin
   begin
     // add icon for action to icolib
     fillChar(sid,SizeOf(sid),0);
-    sid.cbSize         :=sizeof(sid);
     sid.szSection    .w:=ICOLIB_ACTSECTION;
     sid.szDefaultFile.w:=szMyPath;
     sid.iDefaultIndex  :=-IDI_ACTION;
@@ -201,7 +190,7 @@ begin
      (ActionItem.hIcolibIconPressed<>ActionItem.hIcolibIcon) then
   begin
     StrCopy(StrCopyE(@buf1,ActionItem.szNameID),'_pressed');
-    CallService(MS_SKIN2_REMOVEICON,0,LPARAM(@buf1));
+    IcoLib_RemoveIcon(@buf1);
     ActionItem.hIcolibIconPressed:=ActionItem.hIcolibIcon;
   end;
 end;
@@ -209,7 +198,7 @@ end;
 procedure DeleteIcolibIcon(var ActionItem:tMyActionItem);
 begin
   DeleteIcolibIconP(ActionItem);
-  CallService(MS_SKIN2_REMOVEICON,0,LPARAM(ActionItem.szNameID));
+  IcoLib_RemoveIcon(ActionItem.szNameID);
   ActionItem.hIcolibIcon       :=0;
   ActionItem.hIcolibIconPressed:=0;
 end;
@@ -259,7 +248,6 @@ var
 begin
   FillChar(sid,SizeOf(sid),0);
   //first - register icon for root popup
-  sid.cbSize         := sizeof(sid);
   sid.szSection.w    := ICOLIB_MNUSECTION;
   sid.flags          := SIDF_ALL_UNICODE;
   sid.cx             := 16;
@@ -281,7 +269,7 @@ begin
   with ActionItem.UAMenuItem[mtype] do
   begin
     if hMenuItem=0 then exit;
-    CallService(MO_REMOVEMENUITEM,hMenuItem,0);
+    Menu_RemoveItem(hMenuItem);
     hMenuItem:=0;
   end;
 
@@ -305,7 +293,7 @@ begin
         break;
       end;
     end;
-    CallService(MO_REMOVEMENUITEM,hMenuRoot,0);
+    Menu_RemoveItem(hMenuRoot);
     ActionItem.UAMenuItem[mtype].hMenuRoot:=0;
   end;
 end;
@@ -327,7 +315,7 @@ begin
   end;
 end;
 
-function MakeMenuItem(mtype:tMenuType;clmi:PCListMenuItem):THANDLE;
+function MakeMenuItem(mtype:tMenuType;clmi:PMO_MenuItem):THANDLE;
 begin
   case mtype of
     main_menu   : result:=Menu_AddMainMenuItem(clmi);
@@ -345,7 +333,7 @@ var
   extra:pWideChar;
   ActItem:pMyActionItem;
   ActMItem,UAMenuItem:pUAMenuItem;
-  clmi:TCListMenuItem;
+  mi:TMO_MenuItem;
   i:integer;
   res:boolean;
 begin
@@ -379,37 +367,36 @@ begin
   // need to create popup menu
   if not res then
   begin
-    FillChar(clmi,SizeOf(clmi),0);
-    clmi.cbSize:=SizeOf(clmi);
+    FillChar(mi,SizeOf(mi),0);
     if (UAMenuItem.menu_opt and UAF_NOTRANS)<>0 then
-      clmi.flags :=CMIF_UNICODE or CMIF_KEEPUNTRANSLATED
+      mi.flags :=CMIF_UNICODE or CMIF_KEEPUNTRANSLATED
     else
-      clmi.flags :=CMIF_UNICODE{ or CMIF_ICONFROMICOLIB};
+      mi.flags :=CMIF_UNICODE{ or CMIF_ICONFROMICOLIB};
 
     if (UAMenuItem.szMenuPopup<>nil) and (UAMenuItem.szMenuPopup^<>#0) then
     begin
       if (UAMenuItem.menu_opt and UAF_MSUBVAR)<>0 then
-        clmi.szName.w:=ParseVarString(UAMenuItem.szMenuPopup)
+        mi.szName.w:=ParseVarString(UAMenuItem.szMenuPopup)
       else
-        clmi.szName.w:=UAMenuItem.szMenuPopup;
+        mi.szName.w:=UAMenuItem.szMenuPopup;
     end
     else
-      clmi.szName.w:=nil;
-    if clmi.szName.w=nil then
-      clmi.szName.w:=ActionItem.szActDescr;
+      mi.szName.w:=nil;
+    if mi.szName.w=nil then
+      mi.szName.w:=ActionItem.szActDescr;
 
-    clmi.hIcon   :=AddRootMenuIcon(clmi.szName.w);
-    clmi.position:=ActionItem.wSortIndex*10;
+    mi.hIcon   :=AddRootMenuIcon(mi.szName.w);
+    mi.position:=ActionItem.wSortIndex*10;
 
     // position in Root Menu
-    inc(clmi.position,GetMenuPosition(0,mtype,
+    inc(mi.position,GetMenuPosition(0,mtype,
         (UAMenuItem.menu_opt and UAF_MENUSEP)<>0));
 
-    UAMenuItem.hMenuRoot:=MakeMenuItem(mtype,@clmi);
+    UAMenuItem.hMenuRoot:=MakeMenuItem(mtype,@mi);
 
-    if (clmi.szName.w<>ActionItem.szActDescr) and
-       (clmi.szName.w<>UAMenuItem.szMenuPopup) then
-      mFreeMem(clmi.szName.w);
+    if (mi.szName.w<>ActionItem.szActDescr) and
+       (mi.szName.w<>UAMenuItem.szMenuPopup) then
+      mFreeMem(mi.szName.w);
 
     for i:=1 to HIGH(arMenuRec) do
     begin
@@ -427,83 +414,80 @@ begin
 
  // Now Menu Item preparing
 {}{}
-  FillChar(clmi,SizeOf(clmi),0);
-  clmi.cbSize:=SizeOf(clmi);
+  FillChar(mi,SizeOf(mi),0);
   if (UAMenuItem.menu_opt and UAF_NOTRANS)<>0 then
-    clmi.flags :=CMIF_UNICODE or CMIF_KEEPUNTRANSLATED
+    mi.flags :=CMIF_UNICODE or CMIF_KEEPUNTRANSLATED
   else
-    clmi.flags :=CMIF_UNICODE{ or CMIF_ICONFROMICOLIB};
+    mi.flags :=CMIF_UNICODE{ or CMIF_ICONFROMICOLIB};
   if (ActionItem.flags and (UAF_2STATE+UAF_PRESSED))<>(UAF_2STATE+UAF_PRESSED) then
   begin
-    clmi.hIcon:=ActionItem.hIcolibIcon;
+    mi.hIcon:=ActionItem.hIcolibIcon;
     extra:='0';
   end
   else
   begin
-    clmi.hIcon:=ActionItem.hIcolibIconPressed;
-    clmi.flags:=clmi.flags or CMIF_CHECKED;
+    mi.hIcon:=ActionItem.hIcolibIconPressed;
+    mi.flags:=mi.flags or CMIF_CHECKED;
     extra:='1';
   end;
 
   if (UAMenuItem.szMenuNameVars<>nil) and (UAMenuItem.szMenuNameVars^<>#0) then
   begin
     if (UAMenuItem.menu_opt and UAF_MNAMVAR)<>0 then
-      clmi.szName.w:=ParseVarString(UAMenuItem.szMenuNameVars,0,extra)
+      mi.szName.w:=ParseVarString(UAMenuItem.szMenuNameVars,0,extra)
     else
-      clmi.szName.w:=UAMenuItem.szMenuNameVars;
+      mi.szName.w:=UAMenuItem.szMenuNameVars;
   end
   else
-    clmi.szName.w:=nil;
-  if clmi.szName.w=nil then
-    clmi.szName.w:=ActionItem.szActDescr;
+    mi.szName.w:=nil;
+  if mi.szName.w=nil then
+    mi.szName.w:=ActionItem.szActDescr;
 
   if UAMenuItem.hMenuRoot<>0 then
   begin
-    clmi.flags:=clmi.flags or CMIF_ROOTHANDLE;
-    clmi.szPopupName.w:=pWideChar(UAMenuItem.hMenuRoot);
+    mi.root:=UAMenuItem.hMenuRoot;
   end;
 
-  clmi.pszService:=ActionItem.szNameID;
+  mi.pszService:=ActionItem.szNameID;
   if ActionItem.hMenuService=0 then
     ActionItem.hMenuService:=CreateServiceFunctionParam(
-      clmi.pszService,@ServiceCallWithFParam,ActionItem.dwActID);
+      mi.pszService,@ServiceCallWithFParam,ActionItem.dwActID);
 
-  clmi.position:=ActionItem.wSortIndex*10;
+  mi.position:=ActionItem.wSortIndex*10;
 {}{}
-  inc(clmi.position,GetMenuPosition(UAMenuItem.hMenuRoot,mtype,
+  inc(mi.position,GetMenuPosition(UAMenuItem.hMenuRoot,mtype,
       (UAMenuItem.menu_opt and UAF_MENUSEP)<>0));
 
-  UAMenuItem.hMenuItem:=MakeMenuItem(mtype,@clmi);
+  UAMenuItem.hMenuItem:=MakeMenuItem(mtype,@mi);
   //CallService(MenuServices[mtype],0,LPARAM(@clmi));
-  if (clmi.szName.w<>ActionItem.szActDescr) and
-     (clmi.szName.w<>UAMenuItem.szMenuNameVars) then
-    mFreeMem(clmi.szName.w);
+  if (mi.szName.w<>ActionItem.szActDescr) and
+     (mi.szName.w<>UAMenuItem.szMenuNameVars) then
+    mFreeMem(mi.szName.w);
 {}
 
 end;
 
 function PreBuildMenu(mtype:tMenuType;hContact:TMCONTACT=0):int;
 var
-  i:integer;
-  mi:TCListMenuItem;
+  mflags,i:integer;
+  hidden:Boolean;
+  icon:HICON;
   p,extra:pWideChar;
 begin
   result:=0;
 
-  FillChar(mi,SizeOf(mi),0);
-  mi.cbSize:=SizeOf(mi);
-
   for i:=0 to HIGH(UActionList) do
   begin
-    mi.flags:=CMIM_FLAGS;
-    p:=nil;
     with UActionList[i] do
     begin
       with UAMenuItem[mtype] do
       begin
         if hMenuItem<>0 then // it means, we process that item here
         begin
-          mi.szName.w:=nil;
+          hidden := false;
+          mflags := 0;
+          icon := HICON(INVALID_HANDLE_VALUE);
+
           // Show / hide
           if isVarsInstalled then
           begin
@@ -513,7 +497,8 @@ begin
               if p<>nil then
               begin
                 if StrCmpW(p,'1')<>0 then
-                  mi.flags:=CMIM_FLAGS or CMIF_HIDDEN;
+                  hidden := true;
+                  Menu_ShowItem(hMenuItem, 0);
                 mFreeMem(p);
               end;
             end;
@@ -521,25 +506,22 @@ begin
 
           // change if need to show only
           // (popup can be used by many items, keep unchanged)
-          if (mi.flags and CMIF_HIDDEN)=0 then
+          if not hidden then
           begin
-            //!!!! icon (check for contact menu)
-            mi.flags:=mi.flags or CMIM_ICON or CMIM_FLAGS{ or CMIF_ICONFROMICOLIB};
-
             if (mtype=contact_menu) and IsLocalItem(UActionList[i]) then
             begin
               lastContact:=hContact;
               if ((flags and UAF_2STATE)<>0) and
                  (DBReadByte(hContact,opt_ua,szNameID)<>0) then
               begin
-                mi.flags:=mi.flags or CMIF_CHECKED;
-                mi.hIcon:=hIcolibIconPressed;
+                mflags:=mflags or CMIF_CHECKED;
+                icon:=hIcolibIconPressed;
                 extra:='1';
                 flags:=flags or UAF_PRESSED;
               end
               else
               begin
-                mi.hIcon:=hIcolibIcon;
+                icon:=hIcolibIcon;
                 flags:=flags and not UAF_PRESSED;
                 extra:='0';
               end;
@@ -549,37 +531,36 @@ begin
             begin
               if (flags and (UAF_2STATE+UAF_PRESSED))=(UAF_2STATE+UAF_PRESSED) then
               begin
-                mi.flags:=mi.flags or CMIF_CHECKED;
-                mi.hIcon:=hIcolibIconPressed;
+                mflags:=mflags or CMIF_CHECKED;
+                icon:=hIcolibIconPressed;
                 extra:='1';
               end
               else
               begin
-                mi.hIcon:=hIcolibIcon;
+                icon:=hIcolibIcon;
                 extra:='0';
               end;
             end;
 
             // new name
-            mi.flags:=mi.flags or CMIM_NAME or CMIF_UNICODE;
             if (szMenuNameVars<>nil) and (szMenuNameVars^<>#0) then
             begin
               if (menu_opt and UAF_MNAMVAR)<>0 then
-                mi.szName.w:=ParseVarString(szMenuNameVars,hContact,extra)
+                p:=ParseVarString(szMenuNameVars,hContact,extra)
               else
-                mi.szName.w:=szMenuNameVars;
+                p:=szMenuNameVars;
             end
             else
-              mi.szName.w:=nil;
-            if mi.szName.w=nil then
-              mi.szName.w:=szActDescr;
+              p:=nil;
+            if p=nil then
+              p:=szActDescr;
+            
+            Menu_ModifyItem(hMenuItem, p, icon, mflags);
           end;
 
-          CallService(MS_CLIST_MODIFYMENUITEM,hMenuItem,LPARAM(@mi));
-
-          if (mi.szName.w<>szActDescr) and
-             (mi.szName.w<>szMenuNameVars) then
-            mFreeMem(mi.szName.w);
+          if (p<>szActDescr) and
+             (p<>szMenuNameVars) then
+            mFreeMem(p);
         end;
       end;
     end;
@@ -634,9 +615,7 @@ begin
     end;
 
     FillChar(mtButton,SizeOf(mtButton),0);
-    mtButton.cbSize  :=SizeOf(mtButton);
-
-    mtButton.pszService:=TTB_SERVICE_NAME;//SERVICE_WITH_LPARAM_NAME;
+    mtButton.pszService:=TTB_SERVICE_NAME;
     mtButton.lParamUp  :=ActionItem.dwActID;
     mtButton.lParamDown:=ActionItem.dwActID;
 
@@ -795,8 +774,6 @@ end;
 function OnTabButtonPressed(wParam:WPARAM;lParam:LPARAM):int; cdecl;
 var
   cbcd:pCustomButtonClickData;
-//  tabb:BBButton;
-//  pc:pWideChar;
   i:integer;
 begin
   result:=0;
@@ -810,49 +787,6 @@ begin
     begin
       if cbcd.dwButtonId=dwActID then
       begin
-{
-        FillChar(tabb,SizeOf(tabb),0);
-        tabb.cbSize       :=SizeOf(tabb);
-        tabb.dwButtonID   :=cbcd.dwButtonId;
-        tabb.pszModuleName:=MODULE_NAME;
-        if (flags and UAF_2STATE)<>0 then
-        begin
-          CallService(MS_BB_GETBUTTONSTATE,cbcd.hContact,TLPARAM(@tabb));
-          if IsLocalItem(UActionList[i]) then
-          begin
-            if DBReadByte(hContact,opt_ua,szNameID)<>0 then
-          end
-          else
-          begin
-            if (tabb.bbbFlags and BBSF_PUSHED)<>0 then
-            begin
-              pc:=szTabBTooltipPressed;
-              if pc=nil then pc:=szTabBTooltip;
-              tabb.hIcon:=hIcolibIconPressed;
-            end
-            else
-            begin
-              pc:=szTabBTooltip;
-              tabb.hIcon:=hIcolibIcon;
-            end;
-            if pc=nil then pc:=szActDescr;
-            tabb.szTooltip.w:=pc;
-            tabb.bbbFlags     :=BBBF_ISIMBUTTON or BBBF_ISLSIDEBUTTON or
-                                BBBF_ISCHATBUTTON or BBBF_ISPUSHBUTTON;
-        end
-        else
-        begin
-          tabb.hIcon:=hIcolibIcon;
-          tabb.szTooltip.w:=szTabBTooltip;
-          if tabb.szTooltip.w=nil then tabb.szTooltip.w:=szActDescr;
-          tabb.bbbFlags     :=BBBF_ISIMBUTTON or BBBF_ISLSIDEBUTTON or
-                              BBBF_ISCHATBUTTON;
-        end;
-
-        tabb.iButtonWidth:=0;
-        tabb.dwDefPos    :=(TABTOOLBAR_INITPOS+wSortIndex*10) and $7FFF;
-        CallService(MS_BB_MODIFYBUTTON,0,TLPARAM(@tabb));
-}
         ServiceCallWithFParam(cbcd.hContact,0,cbcd.dwButtonId);
         result:=1;
         break;

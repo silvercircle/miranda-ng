@@ -31,8 +31,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /************************************************************************/
 
 
-#include "hdr/modern_commonheaders.h"
-#include "hdr/modern_clist.h"
+#include "stdafx.h"
+#include "modern_clist.h"
 
 #define EMPTY_PLACE 255
 #define COLUMNS_PLACE 254
@@ -120,7 +120,7 @@ void TraceTreeLevel(NodeList * node)
 	PrintIdent();
 	{
 		char buf[255];
-		mir_snprintf(buf, SIZEOF(buf), "%d\n", node->pData);
+		mir_snprintf(buf, "%d\n", node->pData);
 		TRACE(buf);
 	}
 	ident += 5;
@@ -134,7 +134,7 @@ void TraceTreeLevel(NodeList * node)
 			PrintIdent();
 			{
 				char buf[255];
-				mir_snprintf(buf, SIZEOF(buf), "%d\n", node->childNodes[i].pData);
+				mir_snprintf(buf, "%d\n", node->childNodes[i].pData);
 				TRACE(buf);
 			}
 		}

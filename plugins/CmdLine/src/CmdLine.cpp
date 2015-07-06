@@ -18,11 +18,12 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 char ModuleName[] = "CmdLine";
 HINSTANCE hInstance;
 int hLangpack;
+CLIST_INTERFACE *pcli;
 
 PLUGININFOEX pluginInfo = {
 	sizeof(PLUGININFOEX),
@@ -38,7 +39,7 @@ PLUGININFOEX pluginInfo = {
 	{0x2f1a117c, 0x3c1b, 0x4c01, {0x89, 0xea, 0x6d, 0x8f, 0xd8, 0x5a, 0x9b, 0x4c}}
 };
 
-extern "C" __declspec(dllexport) PLUGININFOEX *MirandaPluginInfoEx(DWORD mirandaVersion) 
+extern "C" __declspec(dllexport) PLUGININFOEX *MirandaPluginInfoEx(DWORD)
 {
 	return &pluginInfo;
 }
@@ -46,14 +47,12 @@ extern "C" __declspec(dllexport) PLUGININFOEX *MirandaPluginInfoEx(DWORD miranda
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	
+ 	mir_getCLI();
+
 	if (InitServer())
-	{
 		MessageBox(0, TranslateT("Could not initialize CmdLine plugin property"), TranslateT("Error"), MB_ICONEXCLAMATION | MB_OK);
-	}
-	
+
 	HookEvents();
-	
 	return 0;
 }
 
@@ -62,13 +61,12 @@ extern "C" int __declspec(dllexport) Unload()
 	bWaitForUnload = 0;
 
 	UnhookEvents();
-	
+
 	DestroyServer();
-	
 	return 0;
 }
 
-bool WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+bool WINAPI DllMain(HINSTANCE hinstDLL, DWORD, LPVOID)
 {
 	hInstance = hinstDLL;
 	return TRUE;

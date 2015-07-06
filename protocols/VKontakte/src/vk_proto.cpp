@@ -44,15 +44,15 @@ CVkProto::CVkProto(const char *szModuleName, const TCHAR *ptszUserName) :
 	InitQueue();
 
 	CreateProtoService(PS_CREATEACCMGRUI, &CVkProto::SvcCreateAccMgrUI);
-	CreateProtoService(PS_GETAVATARINFOT, &CVkProto::SvcGetAvatarInfo);
+	CreateProtoService(PS_GETAVATARINFO, &CVkProto::SvcGetAvatarInfo);
 	CreateProtoService(PS_GETAVATARCAPS, &CVkProto::SvcGetAvatarCaps);
-	CreateProtoService(PS_GETMYAVATART, &CVkProto::SvcGetMyAvatar);
+	CreateProtoService(PS_GETMYAVATAR, &CVkProto::SvcGetMyAvatar);
 	CreateProtoService(PS_SET_LISTENINGTO, &CVkProto::SvcSetListeningTo);
 
 	HookProtoEvent(ME_OPT_INITIALISE, &CVkProto::OnOptionsInit);
 
 	TCHAR descr[512];
-	mir_sntprintf(descr, SIZEOF(descr), TranslateT("%s server connection"), m_tszUserName);
+	mir_sntprintf(descr, TranslateT("%s server connection"), m_tszUserName);
 
 	NETLIBUSER nlu = {sizeof(nlu)};
 	nlu.flags = NUF_INCOMING | NUF_OUTGOING | NUF_HTTPCONNS | NUF_TCHAR;
@@ -65,38 +65,36 @@ CVkProto::CVkProto(const char *szModuleName, const TCHAR *ptszUserName) :
 		m_defaultGroup = mir_tstrdup(_T("VKontakte"));
 	Clist_CreateGroup(NULL, m_defaultGroup);
 
-	db_set_resident(m_szModuleName, "Status");
-
 	m_bServerDelivery = getBool("ServerDelivery", true);
 	m_bHideChats = getBool("HideChats", true);
-	m_bMesAsUnread = getBool("MesAsUnread", false);
-	m_bUseLocalTime = getBool("UseLocalTime", false);
-	m_bReportAbuse = getBool("ReportAbuseOnBanUser", false);
-	m_bClearServerHistory = getBool("ClearServerHistoryOnBanUser", false);
-	m_bRemoveFromFrendlist = getBool("RemoveFromFrendlistOnBanUser", false);
-	m_bRemoveFromClist = getBool("RemoveFromClistOnBanUser", false);
-	m_bPopUpSyncHistory = getBool("PopUpSyncHistory", false);
+	m_bMesAsUnread = getBool("MesAsUnread");
+	m_bUseLocalTime = getBool("UseLocalTime");
+	m_bReportAbuse = getBool("ReportAbuseOnBanUser");
+	m_bClearServerHistory = getBool("ClearServerHistoryOnBanUser");
+	m_bRemoveFromFrendlist = getBool("RemoveFromFrendlistOnBanUser");
+	m_bRemoveFromClist = getBool("RemoveFromClistOnBanUser");
+	m_bPopUpSyncHistory = getBool("PopUpSyncHistory");
 	m_iMarkMessageReadOn = (MarkMsgReadOn)getByte("MarkMessageReadOn", markOnRead);
-	m_bStikersAsSmyles = getBool("StikersAsSmyles", false);
-	m_bUserForceOnlineOnActivity = getBool("UserForceOnlineOnActivity", false);
+	m_bStikersAsSmyles = getBool("StikersAsSmyles");
+	m_bUserForceOnlineOnActivity = getBool("UserForceOnlineOnActivity");
 	m_iMusicSendMetod = (MusicSendMetod)getByte("MusicSendMetod", sendBroadcastOnly);
 	m_iSyncHistoryMetod = (SyncHistoryMetod)getByte("SyncHistoryMetod", syncOff);
 	CMStringA szListeningTo(m_szModuleName);
 	szListeningTo += "Enabled";
-	db_set_b(NULL, "ListeningTo", szListeningTo.GetBuffer(), m_iMusicSendMetod == 0 ? 0 : 1);
+	db_set_b(NULL, "ListeningTo", szListeningTo, m_iMusicSendMetod == 0 ? 0 : 1);
 	
-	m_bNewsEnabled = getBool("NewsEnabled", false);
+	m_bNewsEnabled = getBool("NewsEnabled");
 	m_iMaxLoadNewsPhoto = getByte("MaxLoadNewsPhoto", 5);
-	m_bNotificationsEnabled = getBool("NotificationsEnabled", false);
+	m_bNotificationsEnabled = getBool("NotificationsEnabled");
 	m_bNotificationsMarkAsViewed = getBool("NotificationsMarkAsViewed", true);
-	m_bSpecialContactAlwaysEnabled = getBool("SpecialContactAlwaysEnabled", false);
+	m_bSpecialContactAlwaysEnabled = getBool("SpecialContactAlwaysEnabled");
 	m_iNewsInterval = getDword("NewsInterval", 15);
 	m_iNotificationsInterval = getDword("NotificationsInterval", 1);
-	m_iIMGBBCSupport = (IMGBBCSypport)getByte("IMGBBCSupport", 0);
-	m_iBBCForNews = (BBCSupport)getByte("BBCForNews", 1);
-	m_iBBCForAttachments = (BBCSupport)getByte("BBCForAttachments", 1);
+	m_iIMGBBCSupport = (IMGBBCSypport)getByte("IMGBBCSupport", imgNo);
+	m_iBBCForNews = (BBCSupport)getByte("BBCForNews", bbcBasic);
+	m_iBBCForAttachments = (BBCSupport)getByte("BBCForAttachments", bbcBasic);
 	m_bUseBBCOnAttacmentsAsNews = getBool("UseBBCOnAttacmentsAsNews", true);
-	m_bNewsAutoClearHistory = getBool("NewsAutoClearHistory", false);
+	m_bNewsAutoClearHistory = getBool("NewsAutoClearHistory");
 	m_iNewsAutoClearHistoryInterval = getDword("NewsAutoClearHistoryInterval", 60*60*24*3);
 
 	m_bNewsFilterPosts = getBool("NewsFilterPosts", true);
@@ -107,8 +105,8 @@ CVkProto::CVkProto(const char *szModuleName, const TCHAR *ptszUserName) :
 	m_bNewsSourceGroups = getBool("NewsSourceGroups", true);
 	m_bNewsSourcePages = getBool("NewsSourcePages", true);
 	m_bNewsSourceFollowing = getBool("NewsSourceFollowing", true);
-	m_bNewsSourceIncludeBanned = getBool("NewsSourceIncludeBanned", false);
-	m_bNewsSourceNoReposts = getBool("NewsSourceNoReposts", false);
+	m_bNewsSourceIncludeBanned = getBool("NewsSourceIncludeBanned");
+	m_bNewsSourceNoReposts = getBool("NewsSourceNoReposts");
 
 	m_bNotificationFilterComments = getBool("NotificationFilterComments", true);
 	m_bNotificationFilterLikes = getBool("NotificationFilterLikes", true);
@@ -119,6 +117,8 @@ CVkProto::CVkProto(const char *szModuleName, const TCHAR *ptszUserName) :
 	m_bUseNonStandardUrlEncode = getBool("UseNonStandardUrlEncode", true);
 	m_iInvisibleInterval = getDword("InvisibleInterval", 10);
 
+	m_bShortenLinksForAudio = getBool("ShortenLinksForAudio", true);
+	
 	m_bSetBroadcast = false;
 	m_bNeedSendOnline = false;
 	delSetting("InviteGroupIds");
@@ -148,7 +148,7 @@ int CVkProto::OnModulesLoaded(WPARAM, LPARAM)
 	GCREGISTER gcr = { sizeof(gcr) };
 	gcr.ptszDispName = m_tszUserName;
 	gcr.pszModule = m_szModuleName;
-	gcr.nColors = SIZEOF(sttColors);
+	gcr.nColors = _countof(sttColors);
 	gcr.pColors = sttColors;
 	CallServiceSync(MS_GC_REGISTER, NULL, (LPARAM)&gcr);
 	CreateProtoService(PS_LEAVECHAT, &CVkProto::OnLeaveChat);
@@ -191,170 +191,147 @@ void CVkProto::InitMenus()
 	CreateProtoService(PS_SETSTATUSMSG, &CVkProto::SvcSetStatusMsg);
 	CreateProtoService(PS_WALLPOST, &CVkProto::SvcWallPost);
 		
-	CLISTMENUITEM mi = { sizeof(mi) };
-	char szService[100];
+	CMenuItem mi;
+	mi.root = Menu_GetProtocolRoot(this);
 
 	// Proto menu
-	mi.flags = CMIF_CHILDPOPUP;
-	mi.hParentMenu = MO_GetProtoRootMenu(m_szModuleName);
-	
-	mir_snprintf(szService, SIZEOF(szService), "%s%s", m_szModuleName, PS_CREATECHAT);
-	mi.pszService = szService;
+	mi.pszService = PS_CREATECHAT;
 	mi.position = 10009 + PMI_CREATECHAT;
-	mi.icolibItem = LoadSkinnedIconHandle(SKINICON_CHAT_JOIN);
-	mi.pszName = LPGEN("Create new chat");
-	g_hProtoMenuItems[PMI_CREATECHAT] = Menu_AddProtoMenuItem(&mi);
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_CHAT_JOIN);
+	mi.name.a = LPGEN("Create new chat");
+	g_hProtoMenuItems[PMI_CREATECHAT] = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 
-	mir_snprintf(szService, SIZEOF(szService), "%s%s", m_szModuleName, PS_SETSTATUSMSG);
-	mi.pszService = szService;
+	mi.pszService = PS_SETSTATUSMSG;
 	mi.position = 10009 + PMI_SETSTATUSMSG;
-	mi.icolibItem = Skin_GetIconByHandle(GetIconHandle(IDI_STATUS));
-	mi.pszName = LPGEN("Status message");
-	g_hProtoMenuItems[PMI_SETSTATUSMSG] = Menu_AddProtoMenuItem(&mi);
+	mi.hIcolibItem = IcoLib_GetIconByHandle(GetIconHandle(IDI_STATUS));
+	mi.name.a = LPGEN("Status message");
+	g_hProtoMenuItems[PMI_SETSTATUSMSG] = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 
-	mir_snprintf(szService, SIZEOF(szService), "%s%s", m_szModuleName, PS_WALLPOST);
-	mi.pszService = szService;
+	mi.pszService = PS_WALLPOST;
 	mi.position = 10009 + PMI_WALLPOST;
-	mi.icolibItem = Skin_GetIconByHandle(GetIconHandle(IDI_WALL));
-	mi.pszName = LPGEN("Send message to my wall");
-	g_hProtoMenuItems[PMI_WALLPOST] = Menu_AddProtoMenuItem(&mi);
+	mi.hIcolibItem = IcoLib_GetIconByHandle(GetIconHandle(IDI_WALL));
+	mi.name.a = LPGEN("Send message to my wall");
+	g_hProtoMenuItems[PMI_WALLPOST] = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 
-	mir_snprintf(szService, SIZEOF(szService), "%s%s", m_szModuleName, PS_LOADVKNEWS);
-	mi.pszService = szService;
+	mi.pszService = PS_LOADVKNEWS;
 	mi.position = 10009 + PMI_LOADVKNEWS;
-	mi.icolibItem = Skin_GetIconByHandle(GetIconHandle(IDI_NOTIFICATION));
-	mi.pszName = LPGEN("Load news from VK");
-	g_hProtoMenuItems[PMI_LOADVKNEWS] = Menu_AddProtoMenuItem(&mi);
+	mi.hIcolibItem = IcoLib_GetIconByHandle(GetIconHandle(IDI_NOTIFICATION));
+	mi.name.a = LPGEN("Load news from VK");
+	g_hProtoMenuItems[PMI_LOADVKNEWS] = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 	
-	mir_snprintf(szService, SIZEOF(szService), "%s%s", m_szModuleName, PS_VISITPROFILE);
-	mi.pszService = szService;
+	mi.pszService = PS_VISITPROFILE;
 	mi.position = 10009 + PMI_VISITPROFILE;
-	mi.icolibItem = Skin_GetIconByHandle(GetIconHandle(IDI_VISITPROFILE));
-	mi.pszName = LPGEN("Visit profile");
-	g_hProtoMenuItems[PMI_VISITPROFILE] = Menu_AddProtoMenuItem(&mi);
+	mi.hIcolibItem = IcoLib_GetIconByHandle(GetIconHandle(IDI_VISITPROFILE));
+	mi.name.a = LPGEN("Visit profile");
+	g_hProtoMenuItems[PMI_VISITPROFILE] = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 
-	//Contact Menu Items
-	mi.pszContactOwner = m_szModuleName;
+	// Contact Menu Items
+	mi.root = NULL;
 	mi.flags = CMIF_TCHAR;
 
+	mi.pszService = PS_VISITPROFILE;
 	mi.position = -200001000 + CMI_VISITPROFILE;
-	mi.ptszName = LPGENT("Visit profile");
-	g_hContactMenuItems[CMI_VISITPROFILE] = Menu_AddContactMenuItem(&mi);
+	mi.name.t = LPGENT("Visit profile");
+	g_hContactMenuItems[CMI_VISITPROFILE] = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
-	mir_snprintf(szService, SIZEOF(szService), "%s%s", m_szModuleName, PS_WALLPOST);
+	mi.pszService = PS_WALLPOST;
 	mi.position = -200001000 + CMI_WALLPOST;
-	mi.icolibItem = Skin_GetIconByHandle(GetIconHandle(IDI_WALL));
-	mi.ptszName = LPGENT("Send message to user\'s wall");
-	mi.pszService = szService;
-	g_hContactMenuItems[CMI_WALLPOST] = Menu_AddContactMenuItem(&mi);
+	mi.hIcolibItem = IcoLib_GetIconByHandle(GetIconHandle(IDI_WALL));
+	mi.name.t = LPGENT("Send message to user\'s wall");
+	g_hContactMenuItems[CMI_WALLPOST] = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
-	mir_snprintf(szService, SIZEOF(szService), "%s%s", m_szModuleName, PS_ADDASFRIEND);
+	mi.pszService = PS_ADDASFRIEND;
 	mi.position = -200001000 + CMI_ADDASFRIEND;
-	mi.icolibItem = Skin_GetIconByHandle(GetIconHandle(IDI_FRIENDADD));
-	mi.ptszName = LPGENT("Add as friend");
-	mi.pszService = szService;
-	g_hContactMenuItems[CMI_ADDASFRIEND] = Menu_AddContactMenuItem(&mi);
+	mi.hIcolibItem = IcoLib_GetIconByHandle(GetIconHandle(IDI_FRIENDADD));
+	mi.name.t = LPGENT("Add as friend");
+	g_hContactMenuItems[CMI_ADDASFRIEND] = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
-	mir_snprintf(szService, SIZEOF(szService), "%s%s", m_szModuleName, PS_DELETEFRIEND);
+	mi.pszService = PS_DELETEFRIEND;
 	mi.position = -200001000 + CMI_DELETEFRIEND;
-	mi.icolibItem = Skin_GetIconByHandle(GetIconHandle(IDI_FRIENDDEL));
-	mi.ptszName = LPGENT("Delete from friend list");
-	mi.pszService = szService;
-	g_hContactMenuItems[CMI_DELETEFRIEND] = Menu_AddContactMenuItem(&mi);
+	mi.hIcolibItem = IcoLib_GetIconByHandle(GetIconHandle(IDI_FRIENDDEL));
+	mi.name.t = LPGENT("Delete from friend list");
+	g_hContactMenuItems[CMI_DELETEFRIEND] = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
-	mir_snprintf(szService, SIZEOF(szService), "%s%s", m_szModuleName, PS_BANUSER);
+	mi.pszService = PS_BANUSER;
 	mi.position = -200001000 + CMI_BANUSER;
-	mi.icolibItem = Skin_GetIconByHandle(GetIconHandle(IDI_BAN));
-	mi.ptszName = LPGENT("Ban user");
-	mi.pszService = szService;
-	g_hContactMenuItems[CMI_BANUSER] = Menu_AddContactMenuItem(&mi);
+	mi.hIcolibItem = IcoLib_GetIconByHandle(GetIconHandle(IDI_BAN));
+	mi.name.t = LPGENT("Ban user");
+	g_hContactMenuItems[CMI_BANUSER] = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
-	mir_snprintf(szService, SIZEOF(szService), "%s%s", m_szModuleName, PS_REPORTABUSE);
+	mi.pszService = PS_REPORTABUSE;
 	mi.position = -200001000 + CMI_REPORTABUSE;
-	mi.icolibItem = Skin_GetIconByHandle(GetIconHandle(IDI_ABUSE));
-	mi.ptszName = LPGENT("Report abuse");
-	mi.pszService = szService;
-	g_hContactMenuItems[CMI_REPORTABUSE] = Menu_AddContactMenuItem(&mi);
+	mi.hIcolibItem = IcoLib_GetIconByHandle(GetIconHandle(IDI_ABUSE));
+	mi.name.t = LPGENT("Report abuse");
+	g_hContactMenuItems[CMI_REPORTABUSE] = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
-	mir_snprintf(szService, SIZEOF(szService), "%s%s", m_szModuleName, PS_DESTROYKICKCHAT);
+	mi.pszService = PS_DESTROYKICKCHAT;
 	mi.position = -200001000 + CMI_DESTROYKICKCHAT;
-	mi.icolibItem = Skin_GetIconByHandle(GetIconHandle(IDI_FRIENDDEL));
-	mi.ptszName = LPGENT("Destroy room");
-	mi.pszService = szService;
-	g_hContactMenuItems[CMI_DESTROYKICKCHAT] = Menu_AddContactMenuItem(&mi);
+	mi.hIcolibItem = IcoLib_GetIconByHandle(GetIconHandle(IDI_FRIENDDEL));
+	mi.name.t = LPGENT("Destroy room");
+	g_hContactMenuItems[CMI_DESTROYKICKCHAT] = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
-	mir_snprintf(szService, SIZEOF(szService), "%s%s", m_szModuleName, PS_OPENBROADCAST);
+	mi.pszService = PS_OPENBROADCAST;
 	mi.position = -200001000 + CMI_OPENBROADCAST;
-	mi.icolibItem = Skin_GetIconByHandle(GetIconHandle(IDI_BROADCAST));
-	mi.ptszName = LPGENT("Open broadcast");
-	mi.pszService = szService;
-	g_hContactMenuItems[CMI_OPENBROADCAST] = Menu_AddContactMenuItem(&mi);
+	mi.hIcolibItem = IcoLib_GetIconByHandle(GetIconHandle(IDI_BROADCAST));
+	mi.name.t = LPGENT("Open broadcast");
+	g_hContactMenuItems[CMI_OPENBROADCAST] = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
-	mir_snprintf(szService, SIZEOF(szService), "%s%s", m_szModuleName, PS_LOADVKNEWS);
-	mi.pszService = szService;
+	mi.pszService = PS_LOADVKNEWS;
 	mi.position = -200001000 + CMI_LOADVKNEWS;
-	mi.icolibItem = Skin_GetIconByHandle(GetIconHandle(IDI_NOTIFICATION));
-	mi.ptszName = LPGENT("Load news from VK");
-	g_hContactMenuItems[CMI_LOADVKNEWS] = Menu_AddContactMenuItem(&mi);
+	mi.hIcolibItem = IcoLib_GetIconByHandle(GetIconHandle(IDI_NOTIFICATION));
+	mi.name.t = LPGENT("Load news from VK");
+	g_hContactMenuItems[CMI_LOADVKNEWS] = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
 	// Sync history menu
-	mir_snprintf(szService, SIZEOF(szService), "%s%s", m_szModuleName, PS_GETSERVERHISTORY);
+	mi.pszService = PS_GETSERVERHISTORY;
 	mi.position = -200001000 + CMI_GETSERVERHISTORY;
-	mi.icolibItem = Skin_GetIconByHandle(GetIconHandle(IDI_HISTORY));
-	mi.ptszName = LPGENT("Reload messages from vk.com...");
-	mi.pszService = szService;
-	g_hContactMenuItems[CMI_GETSERVERHISTORY] = Menu_AddContactMenuItem(&mi);
+	mi.hIcolibItem = IcoLib_GetIconByHandle(GetIconHandle(IDI_HISTORY));
+	mi.name.t = LPGENT("Reload messages from vk.com...");
+	g_hContactMenuItems[CMI_GETSERVERHISTORY] = Menu_AddContactMenuItem(&mi, m_szModuleName);
 		
-	mi.flags |= CMIF_CHILDPOPUP;
-	mi.hParentMenu = g_hContactMenuItems[CMI_GETSERVERHISTORY];
+	mi.root = g_hContactMenuItems[CMI_GETSERVERHISTORY];
 
-	mir_snprintf(szService, SIZEOF(szService), "%s%s", m_szModuleName, PS_GETSERVERHISTORYLAST1DAY);
+	mi.pszService = PS_GETSERVERHISTORYLAST1DAY;
 	mi.position = -200001000 + CMI_GETSERVERHISTORY + 100 + CHMI_GETSERVERHISTORYLAST1DAY;
-	mi.icolibItem = Skin_GetIconByHandle(GetIconHandle(IDI_HISTORY));
-	mi.ptszName = LPGENT("for last 1 day");
-	mi.pszService = szService;
-	g_hContactHistoryMenuItems[CHMI_GETSERVERHISTORYLAST1DAY] = Menu_AddContactMenuItem(&mi);
+	mi.hIcolibItem = IcoLib_GetIconByHandle(GetIconHandle(IDI_HISTORY));
+	mi.name.t = LPGENT("for last 1 day");
+	g_hContactHistoryMenuItems[CHMI_GETSERVERHISTORYLAST1DAY] = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
-	mir_snprintf(szService, SIZEOF(szService), "%s%s", m_szModuleName, PS_GETSERVERHISTORYLAST3DAY);
+	mi.pszService = PS_GETSERVERHISTORYLAST3DAY;
 	mi.position = -200001000 + CMI_GETSERVERHISTORY + 100 + CHMI_GETSERVERHISTORYLAST3DAY;
-	mi.icolibItem = Skin_GetIconByHandle(GetIconHandle(IDI_HISTORY));
-	mi.ptszName = LPGENT("for last 3 days");
-	mi.pszService = szService;
-	g_hContactHistoryMenuItems[CHMI_GETSERVERHISTORYLAST3DAY] = Menu_AddContactMenuItem(&mi);
+	mi.hIcolibItem = IcoLib_GetIconByHandle(GetIconHandle(IDI_HISTORY));
+	mi.name.t = LPGENT("for last 3 days");
+	g_hContactHistoryMenuItems[CHMI_GETSERVERHISTORYLAST3DAY] = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
-	mir_snprintf(szService, SIZEOF(szService), "%s%s", m_szModuleName, PS_GETSERVERHISTORYLAST7DAY);
+	mi.pszService = PS_GETSERVERHISTORYLAST7DAY;
 	mi.position = -200001000 + CMI_GETSERVERHISTORY + 100 + CHMI_GETSERVERHISTORYLAST7DAY;
-	mi.icolibItem = Skin_GetIconByHandle(GetIconHandle(IDI_HISTORY));
-	mi.ptszName = LPGENT("for last week");
-	mi.pszService = szService;
-	g_hContactHistoryMenuItems[CHMI_GETSERVERHISTORYLAST7DAY] = Menu_AddContactMenuItem(&mi);
+	mi.hIcolibItem = IcoLib_GetIconByHandle(GetIconHandle(IDI_HISTORY));
+	mi.name.t = LPGENT("for last week");
+	g_hContactHistoryMenuItems[CHMI_GETSERVERHISTORYLAST7DAY] = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
-	mir_snprintf(szService, SIZEOF(szService), "%s%s", m_szModuleName, PS_GETSERVERHISTORYLAST30DAY);
+	mi.pszService = PS_GETSERVERHISTORYLAST30DAY;
 	mi.position = -200001000 + CMI_GETSERVERHISTORY + 100 + CHMI_GETSERVERHISTORYLAST30DAY;
-	mi.icolibItem = Skin_GetIconByHandle(GetIconHandle(IDI_HISTORY));
-	mi.ptszName = LPGENT("for last 30 days");
-	mi.pszService = szService;
-	g_hContactHistoryMenuItems[CHMI_GETSERVERHISTORYLAST30DAY] = Menu_AddContactMenuItem(&mi);
+	mi.hIcolibItem = IcoLib_GetIconByHandle(GetIconHandle(IDI_HISTORY));
+	mi.name.t = LPGENT("for last 30 days");
+	g_hContactHistoryMenuItems[CHMI_GETSERVERHISTORYLAST30DAY] = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
-	mir_snprintf(szService, SIZEOF(szService), "%s%s", m_szModuleName, PS_GETSERVERHISTORYLAST90DAY);
+	mi.pszService = PS_GETSERVERHISTORYLAST90DAY;
 	mi.position = -200001000 + CMI_GETSERVERHISTORY + 100 + CHMI_GETSERVERHISTORYLAST90DAY;
-	mi.icolibItem = Skin_GetIconByHandle(GetIconHandle(IDI_HISTORY));
-	mi.ptszName = LPGENT("for last 90 days");
-	mi.pszService = szService;
-	g_hContactHistoryMenuItems[CHMI_GETSERVERHISTORYLAST90DAY] = Menu_AddContactMenuItem(&mi);
+	mi.hIcolibItem = IcoLib_GetIconByHandle(GetIconHandle(IDI_HISTORY));
+	mi.name.t = LPGENT("for last 90 days");
+	g_hContactHistoryMenuItems[CHMI_GETSERVERHISTORYLAST90DAY] = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
-	mir_snprintf(szService, SIZEOF(szService), "%s%s", m_szModuleName, PS_GETALLSERVERHISTORY);
+	mi.pszService = PS_GETALLSERVERHISTORY;
 	mi.position = -200001000 + CMI_GETSERVERHISTORY + 100 + CHMI_GETALLSERVERHISTORY;
-	mi.icolibItem = Skin_GetIconByHandle(GetIconHandle(IDI_HISTORY));
-	mi.ptszName = LPGENT("for all time");
-	mi.pszService = szService;
-	g_hContactHistoryMenuItems[CHMI_GETALLSERVERHISTORY] = Menu_AddContactMenuItem(&mi);
+	mi.hIcolibItem = IcoLib_GetIconByHandle(GetIconHandle(IDI_HISTORY));
+	mi.name.t = LPGENT("for all time");
+	g_hContactHistoryMenuItems[CHMI_GETALLSERVERHISTORY] = Menu_AddContactMenuItem(&mi, m_szModuleName);
 }
 
 int CVkProto::OnPreBuildContactMenu(WPARAM hContact, LPARAM)
 {
 	LONG userID = getDword(hContact, "ID", -1);
-	bool bisFriend = (getByte(hContact, "Auth", -1) == 0);
+	bool bisFriend = (getBool(hContact, "Auth", true) == 0);
 	bool bisBroadcast = !(IsEmpty(ptrT(db_get_tsa(hContact, m_szModuleName, "AudioUrl"))));
 	Menu_ShowItem(g_hContactMenuItems[CMI_VISITPROFILE], !isChatRoom(hContact) && userID != VK_FEED_USER);
 	Menu_ShowItem(g_hContactMenuItems[CMI_WALLPOST], !isChatRoom(hContact));
@@ -362,7 +339,7 @@ int CVkProto::OnPreBuildContactMenu(WPARAM hContact, LPARAM)
 	Menu_ShowItem(g_hContactMenuItems[CMI_DELETEFRIEND], bisFriend && userID != VK_FEED_USER);
 	Menu_ShowItem(g_hContactMenuItems[CMI_BANUSER], !isChatRoom(hContact) && userID != VK_FEED_USER);
 	Menu_ShowItem(g_hContactMenuItems[CMI_REPORTABUSE], !isChatRoom(hContact) && userID != VK_FEED_USER);
-	Menu_ShowItem(g_hContactMenuItems[CMI_DESTROYKICKCHAT], isChatRoom(hContact) && getBool(hContact, "off", false));
+	Menu_ShowItem(g_hContactMenuItems[CMI_DESTROYKICKCHAT], isChatRoom(hContact) && getBool(hContact, "off"));
 	Menu_ShowItem(g_hContactMenuItems[CMI_OPENBROADCAST], !isChatRoom(hContact) && bisBroadcast);
 	Menu_ShowItem(g_hContactMenuItems[CMI_GETSERVERHISTORY], !isChatRoom(hContact) && userID != VK_FEED_USER);
 	Menu_ShowItem(g_hContactMenuItems[CMI_LOADVKNEWS], userID == VK_FEED_USER);
@@ -375,13 +352,13 @@ void CVkProto::UnInitMenus()
 {
 	debugLogA("CVkProto::UnInitMenus");
 	for (int i = 0; i < PMI_COUNT; i++)
-		CallService(MO_REMOVEMENUITEM, (WPARAM)g_hProtoMenuItems[i], 0);
+		Menu_RemoveItem(g_hProtoMenuItems[i]);
 	
 	for (int i = 0; i < CHMI_COUNT; i++)
-		CallService(MO_REMOVEMENUITEM, (WPARAM)g_hContactHistoryMenuItems[i], 0);
+		Menu_RemoveItem(g_hContactHistoryMenuItems[i]);
 
 	for (int i = 0; i < CMI_COUNT; i++)
-		CallService(MO_REMOVEMENUITEM, (WPARAM)g_hContactMenuItems[i], 0);
+		Menu_RemoveItem(g_hContactMenuItems[i]);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -394,21 +371,21 @@ void CVkProto::InitPopups(void)
 	POPUPCLASS ppc = { sizeof(ppc) };
 	ppc.flags = PCF_TCHAR;
 
-	mir_sntprintf(desc, SIZEOF(desc), _T("%s %s"), m_tszUserName, TranslateT("Errors"));
-	mir_snprintf(name, SIZEOF(name), "%s_%s", m_szModuleName, "Error");
+	mir_sntprintf(desc, _T("%s %s"), m_tszUserName, TranslateT("Errors"));
+	mir_snprintf(name, "%s_%s", m_szModuleName, "Error");
 	ppc.ptszDescription = desc;
 	ppc.pszName = name;
-	ppc.hIcon = LoadSkinnedIcon(SKINICON_ERROR);
+	ppc.hIcon = Skin_LoadIcon(SKINICON_ERROR);
 	ppc.colorBack = RGB(191, 0, 0); //Red
 	ppc.colorText = RGB(255, 245, 225); //Yellow
 	ppc.iSeconds = 60;
 	m_hPopupClassError = Popup_RegisterClass(&ppc);
 
-	mir_sntprintf(desc, SIZEOF(desc), _T("%s %s"), m_tszUserName, TranslateT("Notification"));
-	mir_snprintf(name, SIZEOF(name), "%s_%s", m_szModuleName, "Notification");
+	mir_sntprintf(desc, _T("%s %s"), m_tszUserName, TranslateT("Notification"));
+	mir_snprintf(name, "%s_%s", m_szModuleName, "Notification");
 	ppc.ptszDescription = desc;
 	ppc.pszName = name;
-	ppc.hIcon = Skin_GetIconByHandle(GetIconHandle(IDI_NOTIFICATION));
+	ppc.hIcon = IcoLib_GetIconByHandle(GetIconHandle(IDI_NOTIFICATION));
 	ppc.colorBack = RGB(190, 225, 255); //Blue
 	ppc.colorText = RGB(255, 255, 255); //White
 	ppc.iSeconds = 4;
@@ -425,7 +402,7 @@ void CVkProto::MsgPopup(MCONTACT hContact, const TCHAR *szMsg, const TCHAR *szTi
 		ppd.ptszText = szMsg;
 		ppd.pszClassName = name;
 		ppd.hContact = hContact;
-		mir_snprintf(name, SIZEOF(name), "%s_%s", m_szModuleName, err ? "Error" : "Notification");
+		mir_snprintf(name, "%s_%s", m_szModuleName, err ? "Error" : "Notification");
 
 		CallService(MS_POPUP_ADDPOPUPCLASS, 0, (LPARAM)&ppd);
 	}
@@ -461,7 +438,7 @@ DWORD_PTR CVkProto::GetCaps(int type, MCONTACT)
 		return PF2_ONLINE;
 
 	case PFLAGNUM_4:
-		return PF4_AVATARS | PF4_SUPPORTTYPING | PF4_NOAUTHDENYREASON | PF4_IMSENDOFFLINE | PF4_OFFLINEFILES;
+		return PF4_AVATARS | PF4_SUPPORTTYPING | PF4_NOAUTHDENYREASON | PF4_IMSENDOFFLINE | PF4_OFFLINEFILES | PF4_READNOTIFY;
 
 	case PFLAGNUM_5:
 		return PF2_ONTHEPHONE;
@@ -502,7 +479,7 @@ MCONTACT CVkProto::AddToList(int, PROTOSEARCHRESULT* psr)
 {
 	debugLogA("CVkProto::AddToList");
 
-	int uid = _ttoi(psr->id);
+	int uid = _ttoi(psr->id.t);
 	if (!uid)
 		return NULL;
 
@@ -511,7 +488,7 @@ MCONTACT CVkProto::AddToList(int, PROTOSEARCHRESULT* psr)
 	return hContact;
 }
 
-int CVkProto::AuthRequest(MCONTACT hContact,const PROTOCHAR* message)
+int CVkProto::AuthRequest(MCONTACT hContact,const TCHAR* message)
 {
 	debugLogA("CVkProto::AuthRequest");
 	if (!IsOnline())
@@ -538,18 +515,18 @@ void CVkProto::OnReceiveAuthRequest(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *
 	debugLogA("CVkProto::OnReceiveAuthRequest %d", reply->resultCode);
 	CVkSendMsgParam *param = (CVkSendMsgParam*)pReq->pUserInfo;
 	if (reply->resultCode == 200) {
-		JSONROOT pRoot;
-		JSONNODE *pResponse = CheckJsonResponse(pReq, reply, pRoot);
-		if (pResponse != NULL) {
-			int iRet = json_as_int(pResponse);
+		JSONNode jnRoot;
+		const JSONNode &jnResponse = CheckJsonResponse(pReq, reply, jnRoot);
+		if (!jnResponse.isnull()) {
+			int iRet = jnResponse.as_int();
 			setByte(param->hContact, "Auth", 0);
 			if (iRet == 2) {
 				CMString msg,			
 					tszNick = ptrT(db_get_tsa(param->hContact, m_szModuleName, "Nick"));
 				if (tszNick.IsEmpty())
 					tszNick = TranslateT("(Unknown contact)");
-				msg.AppendFormat(TranslateT("User %s added as friend"), tszNick.GetBuffer());
-				MsgPopup(param->hContact, msg.GetBuffer(), tszNick.GetBuffer());
+				msg.AppendFormat(TranslateT("User %s added as friend"), tszNick);
+				MsgPopup(param->hContact, msg, tszNick);
 			}
 		} 
 		else {
@@ -582,7 +559,7 @@ int CVkProto::Authorize(MEVENT hDbEvent)
 	return AuthRequest(hContact, NULL);
 }
 
-int CVkProto::AuthDeny(MEVENT hDbEvent, const PROTOCHAR*)
+int CVkProto::AuthDeny(MEVENT hDbEvent, const TCHAR*)
 {
 	debugLogA("CVkProto::AuthDeny");
 	if (!IsOnline())

@@ -244,7 +244,7 @@ INT_PTR OnEventFire(WPARAM wParam, LPARAM lParam)
 	CallService(MS_SYSTEM_REMOVEWAIT, wParam, 0);
 	CloseHandle((HANDLE)wParam);
 
-	HWND parent = (HWND)CallService(MS_CLUI_GETHWND, 0, 0);
+	HWND parent = pcli->hwndContactList;
 	if (parent == NULL) // no clist, no buttons
 		return -1;
 
@@ -279,7 +279,7 @@ INT_PTR OnEventFire(WPARAM wParam, LPARAM lParam)
 		Frame.align = alTop;
 		Frame.Flags = F_VISIBLE | F_NOBORDER | F_LOCKED | F_TCHAR;
 		Frame.height = g_ctrl->nLastHeight;
-		Frame.hIcon = LoadSkinnedIcon(SKINICON_OTHER_FRAME);
+		Frame.hIcon = Skin_LoadIcon(SKINICON_OTHER_FRAME);
 		g_ctrl->hFrame = (HANDLE)CallService(MS_CLIST_FRAMES_ADDFRAME, (WPARAM)&Frame, 0);
 	}
 
@@ -293,7 +293,6 @@ INT_PTR OnEventFire(WPARAM wParam, LPARAM lParam)
 
 int LoadBackgroundOptions()
 {
-	//load options
 	bkColour = db_get_dw(NULL, TTB_OPTDIR, "BkColour", TTBDEFAULT_BKCOLOUR);
 	if (hBmpBackground) {
 		DeleteObject(hBmpBackground);
@@ -301,11 +300,9 @@ int LoadBackgroundOptions()
 	}
 
 	if (db_get_b(NULL, TTB_OPTDIR, "UseBitmap", TTBDEFAULT_USEBITMAP)) {
-		DBVARIANT dbv;
-		if (!db_get(NULL, TTB_OPTDIR, "BkBitmap", &dbv)) {
-			hBmpBackground = (HBITMAP)CallService(MS_UTILS_LOADBITMAP, 0, (LPARAM)dbv.pszVal);
-			db_free(&dbv);
-		}
+		ptrT tszBitmapName(db_get_tsa(NULL, TTB_OPTDIR, "BkBitmap"));
+		if (tszBitmapName != NULL)
+			hBmpBackground = Bitmap_Load(tszBitmapName);
 	}
 	backgroundBmpUse = db_get_w(NULL, TTB_OPTDIR, "BkBmpUse", TTBDEFAULT_BKBMPUSE);
 

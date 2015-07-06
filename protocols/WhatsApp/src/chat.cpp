@@ -165,17 +165,15 @@ void WhatsAppProto::EditChatSubject(WAChatInfo *pInfo)
 
 void WhatsAppProto::SetChatAvatar(WAChatInfo *pInfo)
 {
-	TCHAR tszFileName[MAX_PATH]; tszFileName[0] = '\0';
-
-	TCHAR filter[256]; filter[0] = '\0';
-	CallService(MS_UTILS_GETBITMAPFILTERSTRINGST, SIZEOF(filter), (LPARAM)filter);
+	TCHAR tszFileName[MAX_PATH], filter[256];
+	Bitmap_GetFilter(filter, _countof(filter));
 
 	OPENFILENAME ofn = { 0 };
 	ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400;
 	ofn.lpstrFilter = filter;
 	ofn.hwndOwner = 0;
 	ofn.lpstrFile = tszFileName;
-	ofn.nMaxFile = ofn.nMaxFileTitle = SIZEOF(tszFileName);
+	ofn.nMaxFile = ofn.nMaxFileTitle = _countof(tszFileName);
 	ofn.Flags = OFN_HIDEREADONLY;
 	ofn.lpstrInitialDir = _T(".");
 	ofn.lpstrDefExt = _T("");
@@ -225,17 +223,17 @@ void WhatsAppProto::AddChatUser(WAChatInfo *pInfo, const TCHAR *ptszJid)
 	if (hContact && !db_get_b(hContact, "CList", "NotInList", 0))
 		return;
 
-	PROTOSEARCHRESULT sr = { 0 };
-	sr.cbSize = sizeof(sr);
-	sr.flags = PSR_TCHAR;
-	sr.id = (TCHAR*)ptszJid;
-	sr.nick = GetChatUserNick(jid);
+	PROTOSEARCHRESULT psr = { 0 };
+	psr.cbSize = sizeof(psr);
+	psr.flags = PSR_TCHAR;
+	psr.id.t = (TCHAR*)ptszJid;
+	psr.nick.t = GetChatUserNick(jid);
 
 	ADDCONTACTSTRUCT acs = { 0 };
 	acs.handleType = HANDLE_SEARCHRESULT;
 	acs.szProto = m_szModuleName;
-	acs.psr = (PROTOSEARCHRESULT*)&sr;
-	CallService(MS_ADDCONTACT_SHOW, (WPARAM)CallService(MS_CLUI_GETHWND, 0, 0), (LPARAM)&acs);
+	acs.psr = &psr;
+	CallService(MS_ADDCONTACT_SHOW, (WPARAM)pcli->hwndContactList, (LPARAM)&acs);
 }
 
 void WhatsAppProto::KickChatUser(WAChatInfo *pInfo, const TCHAR *ptszJid)
@@ -276,11 +274,11 @@ int WhatsAppProto::OnChatMenu(WPARAM wParam, LPARAM lParam)
 		return 0;
 
 	if (gcmi->Type == MENU_ON_LOG) {
-		gcmi->nItems = SIZEOF(sttLogListItems);
+		gcmi->nItems = _countof(sttLogListItems);
 		gcmi->Item = sttLogListItems;
 	}
 	else if (gcmi->Type == MENU_ON_NICKLIST) {
-		gcmi->nItems = SIZEOF(sttNickListItems);
+		gcmi->nItems = _countof(sttNickListItems);
 		gcmi->Item = sttNickListItems;
 	}
 
@@ -315,7 +313,7 @@ WAChatInfo* WhatsAppProto::InitChat(const std::string &jid, const std::string &n
 
 	GCDEST gcd = { m_szModuleName, ptszJid, GC_EVENT_ADDGROUP };
 	GCEVENT gce = { sizeof(gce), &gcd };
-	for (int i = SIZEOF(sttStatuses) - 1; i >= 0; i--) {
+	for (int i = _countof(sttStatuses) - 1; i >= 0; i--) {
 		gce.ptszStatus = TranslateTS(sttStatuses[i]);
 		CallServiceSync(MS_GC_EVENT, NULL, (LPARAM)&gce);
 	}

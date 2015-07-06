@@ -65,9 +65,9 @@ static int UserOnlineSettingChanged(WPARAM hContact, LPARAM lParam)
 				cle.flags = CLEF_ONLYAFEW | CLEF_TCHAR;
 				cle.hContact = hContact;
 				cle.hDbEvent = uniqueEventId++;
-				cle.hIcon = LoadSkinIcon(SKINICON_OTHER_USERONLINE, false);
+				cle.hIcon = Skin_LoadIcon(SKINICON_OTHER_USERONLINE, false);
 				cle.pszService = "UserOnline/Description";
-				mir_sntprintf(tooltip, SIZEOF(tooltip), TranslateT("%s is online"), pcli->pfnGetContactDisplayName(hContact, 0));
+				mir_sntprintf(tooltip, _countof(tooltip), TranslateT("%s is online"), pcli->pfnGetContactDisplayName(hContact, 0));
 				cle.ptszTooltip = tooltip;
 				CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
 				IcoLib_ReleaseIcon(cle.hIcon, 0);
@@ -93,7 +93,7 @@ static int UserOnlineModulesLoaded(WPARAM, LPARAM)
 {
 	int numAccounts;
 	PROTOACCOUNT** accounts;
-	ProtoEnumAccounts(&numAccounts, &accounts);
+	Proto_EnumAccounts(&numAccounts, &accounts);
 
 	// reset the counter
 	for (int i = 0; i < numAccounts; i++)

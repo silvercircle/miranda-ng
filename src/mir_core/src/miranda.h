@@ -26,9 +26,6 @@ extern "C"
 {
 	MIR_CORE_DLL(int) Langpack_MarkPluginLoaded(PLUGININFOEX* pInfo);
 	MIR_CORE_DLL(MUUID*) Langpack_LookupUuid(WPARAM wParam);
-
-	MIR_CORE_DLL(PROTOCOLDESCRIPTOR*) Proto_IsProtocolLoaded(const char *szProtoName);
-	MIR_CORE_DLL(PROTOCOLDESCRIPTOR*) Proto_RegisterModule(PROTOCOLDESCRIPTOR *pd);
 };
 
 void UnloadLangPackModule(void);
@@ -38,8 +35,6 @@ void DestroyModularEngine(void);
 
 int  InitPathUtils(void);
 
-void InitProtocols();
-void UninitProtocols();
 HINSTANCE ProtoGetInstance(const char *szModuleName);
 
 extern HINSTANCE hInst;
@@ -47,7 +42,8 @@ extern HWND hAPCWindow;
 extern HANDLE hStackMutex, hThreadQueueEmpty;
 extern MIDatabase *currDb;
 
-/**** modules.cpp **********************************************************************/
+/////////////////////////////////////////////////////////////////////////////////////////
+// modules.cpp
 
 struct THookSubscriber
 {
@@ -86,57 +82,19 @@ struct THook
 
 extern LIST<HINSTANCE__> pluginListAddr;
 
-/**** langpack.cpp *********************************************************************/
+/////////////////////////////////////////////////////////////////////////////////////////
+// langpack.cpp
 
 char*  LangPackTranslateString(MUUID* pUuid, const char *szEnglish, const int W);
 TCHAR* LangPackTranslateStringT(int hLangpack, const TCHAR* tszEnglish);
 
-/**** options.cpp **********************************************************************/
-
-HTREEITEM FindNamedTreeItemAtRoot(HWND hwndTree, const TCHAR *name);
-
-/**** subclass.cpp *********************************************************************/
-
-/**** threads.cpp **********************************************************************/
+/////////////////////////////////////////////////////////////////////////////////////////
+// threads.cpp
 
 extern DWORD mir_tls;
 
-/**** utils.cpp ************************************************************************/
+/////////////////////////////////////////////////////////////////////////////////////////
+// utils.cpp
 
-void HotkeyToName(TCHAR *buf, int size, BYTE shift, BYTE key);
-WORD GetHotkeyValue(INT_PTR idHotkey);
-
-HBITMAP ConvertIconToBitmap(HICON hIcon, HIMAGELIST hIml, int iconId);
-
-class StrConvUT
-{
-private:
-	wchar_t* m_body;
-
-public:
-	StrConvUT(const char* pSrc) :
-		m_body(mir_a2u(pSrc)) {}
-
-    ~StrConvUT() {  mir_free(m_body); }
-	operator const wchar_t* () const { return m_body; }
-};
-
-class StrConvAT
-{
-private:
-	char* m_body;
-
-public:
-	StrConvAT(const wchar_t* pSrc) :
-		m_body(mir_u2a(pSrc)) {}
-
-    ~StrConvAT() {  mir_free(m_body); }
-	operator const char*  () const { return m_body; }
-	operator const wchar_t* () const { return (wchar_t*)m_body; }  // type cast to fake the interface definition
-	operator const LPARAM () const { return (LPARAM)m_body; }
-};
-
-#define StrConvT(x) StrConvUT(x)
-#define StrConvTu(x) x
-#define StrConvA(x) StrConvAT(x)
-#define StrConvU(x) x
+typedef BOOL(APIENTRY *PGENRANDOM)(PVOID, ULONG);
+extern PGENRANDOM pfnRtlGenRandom;

@@ -57,7 +57,7 @@ char* TemplateHTMLBuilder::getAvatar(MCONTACT hContact, const char *szProto)
 			if (ace->cbSize == sizeof(avatarCacheEntry))
 				result = ace->szFilename;
 			else // compatibility: in M0.9 it will always be char*
-				MultiByteToWideChar(CP_ACP, 0, (char*)ace->szFilename, -1, tmpPath, SIZEOF(tmpPath));
+				MultiByteToWideChar(CP_ACP, 0, (char*)ace->szFilename, -1, tmpPath, _countof(tmpPath));
 		}
 	}
 	if (!db_get_ts(hContact, "ContactPhoto", "File", &dbv)) {
@@ -118,17 +118,12 @@ int TemplateHTMLBuilder::getFlags(ProtocolSettings * protoSettings)
 
 char *TemplateHTMLBuilder::timestampToString(DWORD dwFlags, time_t check, int mode)
 {
-	static char szResult[512];
+	static char szResult[512]; szResult[0] = '\0';
 	TCHAR str[300];
-	DBTIMETOSTRINGT dbtts;
-	dbtts.cbDest = 70;
-	dbtts.szDest = str;
-	szResult[0] = '\0';
-	if (mode) { //time
-		dbtts.szFormat = (dwFlags & Options::LOG_SHOW_SECONDS) ? _T("s") : _T("t");
-		CallService(MS_DB_TIME_TIMESTAMPTOSTRINGT, check, (LPARAM)&dbtts);
-	}
-	else {//date
+
+	if (mode) // time
+		TimeZone_ToStringT(check, (dwFlags & Options::LOG_SHOW_SECONDS) ? _T("s") : _T("t"), str, _countof(str));
+	else { // date
 		struct tm tm_now, tm_today;
 		time_t now = time(NULL);
 		time_t today;
@@ -137,13 +132,11 @@ char *TemplateHTMLBuilder::timestampToString(DWORD dwFlags, time_t check, int mo
 		tm_today.tm_hour = tm_today.tm_min = tm_today.tm_sec = 0;
 		today = mktime(&tm_today);
 		if (dwFlags & Options::LOG_RELATIVE_DATE && check >= today)
-			_tcsncpy(str, TranslateT("Today"), SIZEOF(str));
+			_tcsncpy(str, TranslateT("Today"), _countof(str));
 		else if (dwFlags & Options::LOG_RELATIVE_DATE && check > (today - 86400))
-			_tcsncpy(str, TranslateT("Yesterday"), SIZEOF(str));
-		else {
-			dbtts.szFormat = (dwFlags & Options::LOG_LONG_DATE) ? _T("D") : _T("d");
-			CallService(MS_DB_TIME_TIMESTAMPTOSTRINGT, check, (LPARAM)& dbtts);
-		}
+			_tcsncpy(str, TranslateT("Yesterday"), _countof(str));
+		else
+			TimeZone_ToStringT(check, (dwFlags & Options::LOG_LONG_DATE) ? _T("D") : _T("d"), str, _countof(str));
 	}
 
 	mir_strncpy(szResult, T2Utf(str), 500);
@@ -176,7 +169,7 @@ void TemplateHTMLBuilder::buildHeadTemplate(IEView *view, IEVIEWEVENT *event, Pr
 		return;
 
 	mir_strcpy(tempBase, "file://");
-	strncat(tempBase, tmpm->getFilename(), SIZEOF(tempBase) - mir_strlen(tempBase));
+	mir_strncat(tempBase, tmpm->getFilename(), _countof(tempBase) - mir_strlen(tempBase));
 	char *pathrun = tempBase + mir_strlen(tempBase);
 	while ((*pathrun != '\\' && *pathrun != '/') && (pathrun > tempBase))
 		pathrun--;
@@ -193,17 +186,17 @@ void TemplateHTMLBuilder::buildHeadTemplate(IEView *view, IEVIEWEVENT *event, Pr
 		szNameOut = mir_strdup("&nbsp;");
 		szNameIn = mir_strdup("&nbsp;");
 	}
-	mir_snprintf(tempStr, SIZEOF(tempStr), "%snoavatar.png", tempBase);
+	mir_snprintf(tempStr, _countof(tempStr), "%snoavatar.png", tempBase);
 	TCHAR szNoAvatarPath[MAX_PATH];
 	_tcsncpy_s(szNoAvatarPath, _A2T(protoSettings->getSRMMTemplateFilename()), _TRUNCATE);
 	TCHAR *szNoAvatarPathTmp = _tcsrchr(szNoAvatarPath, '\\');
 	if (szNoAvatarPathTmp != NULL)
 		*szNoAvatarPathTmp = 0;
-	_tcscat(szNoAvatarPath, _T("\\noavatar.png"));
+	mir_tstrcat(szNoAvatarPath, _T("\\noavatar.png"));
 	if (_taccess(szNoAvatarPath, 0) == -1)
-		mir_snprintf(tempStr, SIZEOF(tempStr), "%snoavatar.jpg", tempBase);
+		mir_snprintf(tempStr, _countof(tempStr), "%snoavatar.jpg", tempBase);
 	else
-		mir_snprintf(tempStr, SIZEOF(tempStr), "%snoavatar.png", tempBase);
+		mir_snprintf(tempStr, _countof(tempStr), "%snoavatar.png", tempBase);
 	char *szNoAvatar = mir_utf8encode(tempStr);
 
 	char *szAvatarIn = getAvatar(event->hContact, szRealProto);
@@ -347,7 +340,7 @@ void TemplateHTMLBuilder::appendEventTemplate(IEView *view, IEVIEWEVENT *event, 
 	TemplateMap *tmpm = getTemplateMap(protoSettings);
 	if (tmpm != NULL) {
 		mir_strcpy(tempBase, "file://");
-		strcat(tempBase, tmpm->getFilename());
+		mir_strcat(tempBase, tmpm->getFilename());
 		char* pathrun = tempBase + mir_strlen(tempBase);
 		while ((*pathrun != '\\' && *pathrun != '/') && (pathrun > tempBase)) pathrun--;
 		pathrun++;
@@ -373,11 +366,11 @@ void TemplateHTMLBuilder::appendEventTemplate(IEView *view, IEVIEWEVENT *event, 
 	TCHAR *szNoAvatarPathTmp = _tcsrchr(szNoAvatarPath, '\\');
 	if (szNoAvatarPathTmp != NULL)
 		*szNoAvatarPathTmp = 0;
-	_tcscat(szNoAvatarPath, _T("\\noavatar.png"));
+	mir_tstrcat(szNoAvatarPath, _T("\\noavatar.png"));
 	if (_taccess(szNoAvatarPath, 0) == -1)
-		mir_snprintf(tempStr, SIZEOF(tempStr), "%snoavatar.jpg", tempBase);
+		mir_snprintf(tempStr, _countof(tempStr), "%snoavatar.jpg", tempBase);
 	else
-		mir_snprintf(tempStr, SIZEOF(tempStr), "%snoavatar.png", tempBase);
+		mir_snprintf(tempStr, _countof(tempStr), "%snoavatar.png", tempBase);
 	char *szNoAvatar = mir_utf8encode(tempStr);
 
 	char *szAvatarIn = NULL;
@@ -433,12 +426,12 @@ void TemplateHTMLBuilder::appendEventTemplate(IEView *view, IEVIEWEVENT *event, 
 			if (isSent) {
 				szAvatar = szAvatarOut;
 				szUIN = szUINOut;
-				mir_snprintf(szCID, SIZEOF(szCID), "%d", 0);
+				mir_snprintf(szCID, _countof(szCID), "%d", 0);
 			}
 			else {
 				szAvatar = szAvatarIn;
 				szUIN = szUINIn;
-				mir_snprintf(szCID, SIZEOF(szCID), "%d", (int)event->hContact);
+				mir_snprintf(szCID, _countof(szCID), "%d", (int)event->hContact);
 			}
 			tmpltName[0] = groupTemplate;
 			tmpltName[1] = NULL;

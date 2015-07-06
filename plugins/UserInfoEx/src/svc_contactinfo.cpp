@@ -343,7 +343,7 @@ INT_PTR GetContactInfo(WPARAM wParam, LPARAM lParam)
 	CONTACTINFO *ci = (CONTACTINFO*) lParam;
 	INT_PTR result;
 
-	if (ci && ci->cbSize == sizeof(CONTACTINFO) && (ci->szProto != NULL || (ci->szProto = DB::Contact::Proto(ci->hContact)) != NULL)) {
+	if (ci && ci->cbSize == sizeof(CONTACTINFO) && (ci->szProto != NULL || (ci->szProto = Proto_GetBaseAccountName(ci->hContact)) != NULL)) {
 		switch (ci->dwFlag & 0x7F) {
 
 		//
@@ -548,12 +548,12 @@ INT_PTR GetContactInfo(WPARAM wParam, LPARAM lParam)
 					ci->pszVal = NULL;
 					if (ci->dwFlag & CNF_UNICODE) {
 						WCHAR wszDate[80];
-						if (GetDateFormatW(LOCALE_USER_DEFAULT, wParam == 1 ? DATE_LONGDATE : DATE_SHORTDATE, &st, NULL, wszDate, SIZEOF(wszDate)))
+						if (GetDateFormatW(LOCALE_USER_DEFAULT, wParam == 1 ? DATE_LONGDATE : DATE_SHORTDATE, &st, NULL, wszDate, _countof(wszDate)))
 							ci->pszVal = (LPTSTR)mir_wstrdup(wszDate);
 					}
 					else {
 						CHAR szDate[80];
-						if (GetDateFormatA(LOCALE_USER_DEFAULT, wParam == 1 ? DATE_LONGDATE : DATE_SHORTDATE, &st, NULL, szDate, SIZEOF(szDate)))
+						if (GetDateFormatA(LOCALE_USER_DEFAULT, wParam == 1 ? DATE_LONGDATE : DATE_SHORTDATE, &st, NULL, szDate, _countof(szDate)))
 							ci->pszVal = (LPTSTR)mir_strdup(szDate);
 					}
 					ci->type = (ci->pszVal != NULL) ? CNFT_ASCIIZ : 0;
@@ -563,41 +563,22 @@ INT_PTR GetContactInfo(WPARAM wParam, LPARAM lParam)
 			break;
 
 		case CNF_TIMEZONE:
-			//use new core tz interface
-			if (tmi.prepareList) {
-				HANDLE hTz = tmi.createByContact(ci->hContact, 0, TZF_KNOWNONLY);
+			{
+				HANDLE hTz = TimeZone_CreateByContact(ci->hContact, 0, TZF_KNOWNONLY);
 				if (hTz) {
-					LPTIME_ZONE_INFORMATION tzi = tmi.getTzi(hTz);
+					LPTIME_ZONE_INFORMATION tzi = TimeZone_GetInfo(hTz);
 					int offset = tzi->Bias + tzi->StandardBias;
 
 					char str[80];
-					mir_snprintf(str, SIZEOF(str), offset ? "UTC%+d:%02d" : "UTC", offset / -60, abs(offset % 60));
+					mir_snprintf(str, offset ? "UTC%+d:%02d" : "UTC", offset / -60, abs(offset % 60));
 					ci->pszVal = ci->dwFlag & CNF_UNICODE ? (TCHAR*)mir_a2u(str) : (TCHAR*)mir_strdup(str);
 					ci->type = CNFT_ASCIIZ;
 					return 0;
 				}
 				ci->pszVal = NULL;
+				ci->type = (ci->pszVal != NULL) ? CNFT_ASCIIZ : 0;
+				result = ci->type == 0;
 			}
-			//fallback use old UIEX method
-			else {
-				CTimeZone* ptz = GetContactTimeZone(ci->hContact, ci->szProto);
-				if (ptz) {
-					if (ci->dwFlag & CNF_UNICODE)
-						ci->pszVal = (LPTSTR)mir_t2u(ptz->ptszDisplay);
-					else
-						ci->pszVal = (LPTSTR)mir_t2a(ptz->ptszDisplay);
-				}
-				else {
-					/* If a timezone does not exist in CTzMgr, it is a invalid timezone,
-					because Windows and CTzMgr know all existing timezones and it
-					would not be shown anywhere anyway as UserInfoEx displays only
-					known windows timezones in the details dialog!
-					*/
-					ci->pszVal = NULL;
-				}
-			}
-			ci->type = (ci->pszVal != NULL) ? CNFT_ASCIIZ : 0;
-			result = ci->type == 0;
 			break;
 
 		//

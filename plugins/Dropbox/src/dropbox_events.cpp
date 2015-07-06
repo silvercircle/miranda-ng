@@ -13,7 +13,6 @@ int CDropbox::OnModulesLoaded(WPARAM, LPARAM)
 	NETLIBUSER nlu = { sizeof(nlu) };
 	nlu.flags = NUF_INCOMING | NUF_OUTGOING | NUF_HTTPCONNS | NUF_TCHAR;
 	nlu.szSettingsModule = MODULE;
-	nlu.szSettingsModule = MODULE;
 	nlu.ptszDescriptiveName = L"Dropbox";
 
 	hNetlibConnection = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
@@ -29,8 +28,8 @@ int CDropbox::OnModulesLoaded(WPARAM, LPARAM)
 		bbd.pszModuleName = MODULE;
 
 		bbd.bbbFlags = BBBF_ISIMBUTTON | BBBF_ISRSIDEBUTTON;
-		bbd.ptszTooltip = TranslateT("Send files to Dropbox");
-		bbd.hIcon = GetIconHandle(IDI_DROPBOX);
+		bbd.ptszTooltip = TranslateT("Upload files to Dropbox");
+		bbd.hIcon = GetIconHandleByName("upload");
 		bbd.dwButtonID = BBB_ID_FILE_SEND;
 		bbd.dwDefPos = 100 + bbd.dwButtonID;
 		CallService(MS_BB_ADDBUTTON, 0, (LPARAM)&bbd);
@@ -58,9 +57,11 @@ int CDropbox::OnPreShutdown(WPARAM, LPARAM)
 int CDropbox::OnContactDeleted(WPARAM hContact, LPARAM)
 {
 	if (mir_strcmpi(GetContactProto(hContact), MODULE) == 0)
+	{
 		if (HasAccessToken())
 			DestroyAccessToken();
-
+		hDefaultContact = NULL;
+	}
 	return 0;
 }
 

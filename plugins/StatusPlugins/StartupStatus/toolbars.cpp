@@ -45,22 +45,21 @@ void RemoveTopToolbarButtons()
 int CreateTopToolbarButtons(WPARAM wParam, LPARAM lParam)
 {
 	if (iconList[0].hIcolib == NULL)
-		Icon_Register(hInst, "Toolbar/StartupStatus", iconList, SIZEOF(iconList));
+		Icon_Register(hInst, "Toolbar/StartupStatus", iconList, _countof(iconList));
 
 	int profileCount = CallService(MS_SS_GETPROFILECOUNT, 0, 0);
 
 	TTBButton ttb = { 0 };
-	ttb.cbSize = sizeof(ttb);
 	ttb.dwFlags = TTBBF_VISIBLE | TTBBF_SHOWTOOLTIP;
 	ttb.pszService = MS_SS_LOADANDSETPROFILE;
 	for (int i=0; i < profileCount; i++) {
 		char setting[80];
-		mir_snprintf(setting, SIZEOF(setting), "%d_%s", i, SETTING_CREATETTBBUTTON);
+		mir_snprintf(setting, "%d_%s", i, SETTING_CREATETTBBUTTON);
 		if (!db_get_b(NULL, MODULENAME, setting, FALSE))
 			continue;
 		
 		DBVARIANT dbv;
-		mir_snprintf(setting, SIZEOF(setting), "%d_%s", i, SETTING_PROFILENAME);
+		mir_snprintf(setting, "%d_%s", i, SETTING_PROFILENAME);
 		if (db_get(NULL, MODULENAME, setting, &dbv))
 			continue;
 

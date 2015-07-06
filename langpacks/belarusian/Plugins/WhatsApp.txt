@@ -12,6 +12,8 @@
 Тэлефон
 [Nickname]
 Мянушка
+[Default group:]
+Гурт:
 [Use SSL connection (port 443)]
 Далучэнне па SSL (порт 443)
 [SMS code]
@@ -22,9 +24,31 @@
 Код рэгістраці
 [Including country code, without '+' or '00']
 Уключаючы код краіны, без '+' ці '00'
+[&Invite]
+Запрасіць
 [Cancel]
 Скасаваць
 ;file \protocols\WhatsApp\src\chat.cpp
+[Owners]
+Уладальнікі
+[&Invite a user]
+Запрасіць кантакт
+[&Room options]
+Налады чата
+[View/change &topic]
+Прагляд/змена тэмы
+[Copy room &JID]
+Капіяваць JID чата
+[Copy room topic]
+Капіяваць тэму
+[&Add to roster]
+&Дадаць у росцер
+[&Kick]
+Выкінуць
+[Copy &nickname]
+Капіяваць мянушку
+[Copy real &JID]
+Капіяваць JID
 ;file \protocols\WhatsApp\src\connection.cpp
 [Please enter a country code.]
 Абярыце код краіны.
@@ -45,11 +69,13 @@
 [Account]
 Конт
 ;file \protocols\WhatsApp\src\messages.cpp
+[server]
+сервер
 ;file \protocols\WhatsApp\src\proto.cpp
 [%s server connection]
 Далучэнне да сервера %s
-[Unable to get Netlib connection for WhatsApp]
-Немагчыма стварыць далучэнне Netlib для WhatsApp
+[Unable to initialize Netlib for %s.]
+Немагчыма стварыць злучэнне Netlib для %s.
 [Network connection error.]
 Памылка далучэння
 ;file \protocols\WhatsApp\src\theme.cpp

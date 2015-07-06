@@ -88,8 +88,8 @@ BYTE GetGender(MCONTACT hContact)
 HANDLE GetIconHandle(char *szIcon)
 {
 	char szSettingName[64];
-	mir_snprintf(szSettingName, SIZEOF(szSettingName), "%s_%s", MODULE, szIcon);
-	return Skin_GetIconHandle(szSettingName);
+	mir_snprintf(szSettingName, _countof(szSettingName), "%s_%s", MODULE, szIcon);
+	return IcoLib_GetIconHandle(szSettingName);
 }
 
 static int __inline CheckStr(char *str, int not_empty, int empty)
@@ -304,8 +304,8 @@ void GetStatusText(MCONTACT hContact, WORD newStatus, WORD oldStatus, TCHAR *stz
 
 	if (opt.ShowPreviousStatus) {
 		TCHAR buff[MAX_STATUSTEXT];
-		mir_sntprintf(buff, SIZEOF(buff), TranslateTS(STRING_SHOWPREVIOUSSTATUS), StatusList[Index(oldStatus)].lpzStandardText);
-		_tcscat(_tcscat(stzStatusText, _T(" ")), buff);
+		mir_sntprintf(buff, TranslateTS(STRING_SHOWPREVIOUSSTATUS), StatusList[Index(oldStatus)].lpzStandardText);
+		mir_tstrcat(mir_tstrcat(stzStatusText, _T(" ")), buff);
 	}
 }
 
@@ -328,7 +328,7 @@ void PlayChangeSound(MCONTACT hContact, const char *name)
 		DBVARIANT dbv;
 		TCHAR stzSoundFile[MAX_PATH] = { 0 };
 		if (!db_get_ts(hContact, MODULE, name, &dbv)) {
-			_tcsncpy(stzSoundFile, dbv.ptszVal, SIZEOF(stzSoundFile)-1);
+			_tcsncpy(stzSoundFile, dbv.ptszVal, _countof(stzSoundFile)-1);
 			db_free(&dbv);
 		}
 
@@ -405,7 +405,7 @@ int ContactStatusChanged(MCONTACT hContact, WORD oldStatus, WORD newStatus)
 
 	if (!opt.FromOffline || oldStatus != ID_STATUS_OFFLINE) { // Either it wasn't a change from Offline or we didn't enable that.
 		char buff[8];
-		mir_snprintf(buff, SIZEOF(buff), "%d", newStatus);
+		mir_snprintf(buff, "%d", newStatus);
 		if (db_get_b(0, MODULE, buff, 1) == 0)
 			return 0; // "Notify when a contact changes to one of..." is unchecked
 	}
@@ -416,8 +416,8 @@ int ContactStatusChanged(MCONTACT hContact, WORD oldStatus, WORD newStatus)
 	// check if that proto from which we received statuschange notification, isn't in autodisable list
 	if (opt.AutoDisable) {
 		char statusIDs[12], statusIDp[12];
-		mir_snprintf(statusIDs, SIZEOF(statusIDs), "s%d", myStatus);
-		mir_snprintf(statusIDp, SIZEOF(statusIDp), "p%d", myStatus);
+		mir_snprintf(statusIDs, _countof(statusIDs), "s%d", myStatus);
+		mir_snprintf(statusIDp, _countof(statusIDp), "p%d", myStatus);
 		bEnableSound = db_get_b(0, MODULE, statusIDs, 1) ? FALSE : TRUE;
 		bEnablePopup = db_get_b(0, MODULE, statusIDp, 1) ? FALSE : TRUE;
 	}
@@ -437,13 +437,13 @@ int ContactStatusChanged(MCONTACT hContact, WORD oldStatus, WORD newStatus)
 		pdp->newStatus = newStatus;
 		pdp->hAwayMsgHook = NULL;
 		pdp->hAwayMsgProcess = NULL;
-		ShowChangePopup(hContact, LoadSkinnedProtoIcon(szProto, newStatus), newStatus, str, pdp);
+		ShowChangePopup(hContact, Skin_LoadProtoIcon(szProto, newStatus), newStatus, str, pdp);
 	}
 
 	if (opt.BlinkIcon && !opt.TempDisabled) {
-		HICON hIcon = opt.BlinkIcon_Status ? LoadSkinnedProtoIcon(szProto, newStatus) : LoadSkinnedIcon(SKINICON_OTHER_USERONLINE);
+		HICON hIcon = opt.BlinkIcon_Status ? Skin_LoadProtoIcon(szProto, newStatus) : Skin_LoadIcon(SKINICON_OTHER_USERONLINE);
 		TCHAR str[256];
-		mir_sntprintf(str, SIZEOF(str), TranslateT("%s is now %s"), pcli->pfnGetContactDisplayName(hContact, 0), StatusList[Index(newStatus)].lpzStandardText);
+		mir_sntprintf(str, _countof(str), TranslateT("%s is now %s"), pcli->pfnGetContactDisplayName(hContact, 0), StatusList[Index(newStatus)].lpzStandardText);
 		BlinkIcon(hContact, hIcon, str);
 	}
 
@@ -457,9 +457,9 @@ int ContactStatusChanged(MCONTACT hContact, WORD oldStatus, WORD newStatus)
 	if (opt.LogToFile) {
 		TCHAR stzDate[MAX_STATUSTEXT], stzTime[MAX_STATUSTEXT], stzText[MAX_TEXT_LEN];
 
-		GetTimeFormat(LOCALE_USER_DEFAULT, 0, NULL, _T("HH':'mm"), stzTime, SIZEOF(stzTime));
-		GetDateFormat(LOCALE_USER_DEFAULT, 0, NULL, _T("dd/MM/yyyy"), stzDate, SIZEOF(stzDate));
-		mir_sntprintf(stzText, SIZEOF(stzText), TranslateT("%s, %s. %s changed status to %s (was %s)\r\n"),
+		GetTimeFormat(LOCALE_USER_DEFAULT, 0, NULL, _T("HH':'mm"), stzTime, _countof(stzTime));
+		GetDateFormat(LOCALE_USER_DEFAULT, 0, NULL, _T("dd/MM/yyyy"), stzDate, _countof(stzDate));
+		mir_sntprintf(stzText, _countof(stzText), TranslateT("%s, %s. %s changed status to %s (was %s)\r\n"),
 			stzDate, stzTime, pcli->pfnGetContactDisplayName(hContact, 0), StatusList[Index(newStatus)].lpzStandardText,
 			StatusList[Index(oldStatus)].lpzStandardText);
 		LogToFile(stzText);
@@ -553,7 +553,7 @@ int ProcessExtraStatus(DBCONTACTWRITESETTING *cws, MCONTACT hContact)
 		}
 		else if (strstr(cws->szSetting, "text")) {
 			char dbSetting[128];
-			mir_snprintf(dbSetting, SIZEOF(dbSetting), "%s%s", szSetting, "Msg");
+			mir_snprintf(dbSetting, _countof(dbSetting), "%s%s", szSetting, "Msg");
 			smi.compare = CompareStatusMsg(&smi, cws, dbSetting);
 			if (smi.compare == COMPARE_SAME) {
 				replaceStrT(smi.newstatusmsg, 0);
@@ -631,11 +631,11 @@ int ProcessStatusMessage(DBCONTACTWRITESETTING *cws, MCONTACT hContact)
 	//don't show popup when mradio connecting and disconnecting
 	if (_stricmp(szProto, "mRadio") == 0 && !cws->value.type == DBVT_DELETED) {
 		TCHAR buf[MAX_PATH];
-		mir_sntprintf(buf, SIZEOF(buf), _T(" (%s)"), TranslateT("connecting"));
+		mir_sntprintf(buf, _T(" (%s)"), TranslateT("connecting"));
 		T2Utf pszUtf(buf);
-		mir_sntprintf(buf, SIZEOF(buf), _T(" (%s)"), TranslateT("aborting"));
+		mir_sntprintf(buf, _T(" (%s)"), TranslateT("aborting"));
 		T2Utf pszUtf2(buf);
-		mir_sntprintf(buf, SIZEOF(buf), _T(" (%s)"), TranslateT("playing"));
+		mir_sntprintf(buf, _T(" (%s)"), TranslateT("playing"));
 		T2Utf pszUtf3(buf);
 		if (_stricmp(cws->value.pszVal, pszUtf) == 0 || _stricmp(cws->value.pszVal, pszUtf2) == 0 || _stricmp(cws->value.pszVal, pszUtf3) == 0)
 			goto skip_notify;
@@ -651,11 +651,11 @@ int ProcessStatusMessage(DBCONTACTWRITESETTING *cws, MCONTACT hContact)
 		goto skip_notify;
 
 	char dbSetting[64];
-	mir_snprintf(dbSetting, SIZEOF(dbSetting), "%s_enabled", szProto);
+	mir_snprintf(dbSetting, _countof(dbSetting), "%s_enabled", szProto);
 	// this proto is not set for status message notifications
 	if (db_get_b(NULL, MODULE, dbSetting, 1) == 0)
 		goto skip_notify;
-	mir_snprintf(dbSetting, SIZEOF(dbSetting), "%d", IDC_CHK_STATUS_MESSAGE);
+	mir_snprintf(dbSetting, _countof(dbSetting), "%d", IDC_CHK_STATUS_MESSAGE);
 	// status message change notifications are disabled
 	if (db_get_b(NULL, MODULE, dbSetting, 1) == 0)
 		goto skip_notify;
@@ -666,8 +666,8 @@ int ProcessStatusMessage(DBCONTACTWRITESETTING *cws, MCONTACT hContact)
 	// check if our status isn't on autodisable list
 	if (opt.AutoDisable) {
 		char statusIDs[12], statusIDp[12];
-		mir_snprintf(statusIDs, SIZEOF(statusIDs), "s%d", myStatus);
-		mir_snprintf(statusIDp, SIZEOF(statusIDp), "p%d", myStatus);
+		mir_snprintf(statusIDs, _countof(statusIDs), "s%d", myStatus);
+		mir_snprintf(statusIDp, _countof(statusIDp), "p%d", myStatus);
 		bEnableSound = db_get_b(0, MODULE, statusIDs, 1) ? FALSE : bEnableSound;
 		bEnablePopup = db_get_b(0, MODULE, statusIDp, 1) ? FALSE : bEnablePopup;
 	}
@@ -688,14 +688,14 @@ int ProcessStatusMessage(DBCONTACTWRITESETTING *cws, MCONTACT hContact)
 			copyText = mir_tstrdup(smi.newstatusmsg);
 			_tcsncpy(buff, smi.newstatusmsg, opt.PSMsgLen);
 			buff[opt.PSMsgLen] = 0;
-			_tcscat(buff, _T("..."));
+			mir_tstrcat(buff, _T("..."));
 			replaceStrT(smi.newstatusmsg, buff);
 		}
 
 		TCHAR *str;
 		if (smi.compare == COMPARE_DEL) {
 			char protoname[MAX_PATH];
-			mir_snprintf(protoname, SIZEOF(protoname), "%s_TPopupSMsgRemoved", szProto);
+			mir_snprintf(protoname, _countof(protoname), "%s_TPopupSMsgRemoved", szProto);
 			DBVARIANT dbVar = { 0 };
 			if (db_get_ts(NULL, MODULE, protoname, &dbVar)) {
 				str = GetStr(&smi, DEFAULT_POPUP_SMSGREMOVED);
@@ -707,7 +707,7 @@ int ProcessStatusMessage(DBCONTACTWRITESETTING *cws, MCONTACT hContact)
 		}
 		else {
 			char protoname[MAX_PATH];
-			mir_snprintf(protoname, SIZEOF(protoname), "%s_TPopupSMsgChanged", szProto);
+			mir_snprintf(protoname, _countof(protoname), "%s_TPopupSMsgChanged", szProto);
 			DBVARIANT dbVar = { 0 };
 			if (db_get_ts(NULL, MODULE, protoname, &dbVar)) {
 				str = GetStr(&smi, DEFAULT_POPUP_SMSGCHANGED);
@@ -719,7 +719,7 @@ int ProcessStatusMessage(DBCONTACTWRITESETTING *cws, MCONTACT hContact)
 		}
 
 		ShowChangePopup(hContact,
-			LoadSkinnedProtoIcon(szProto, db_get_w(hContact, szProto, "Status", ID_STATUS_ONLINE)),
+			Skin_LoadProtoIcon(szProto, db_get_w(hContact, szProto, "Status", ID_STATUS_ONLINE)),
 			ID_STATUS_STATUSMSG, str);
 
 		mir_free(str);
@@ -731,9 +731,9 @@ int ProcessStatusMessage(DBCONTACTWRITESETTING *cws, MCONTACT hContact)
 	}
 
 	if (opt.BlinkIcon && opt.BlinkIcon_ForMsgs && !opt.TempDisabled) {
-		HICON hIcon = opt.BlinkIcon_Status ? LoadSkinnedProtoIcon(szProto, db_get_w(hContact, szProto, "Status", ID_STATUS_ONLINE)) : LoadSkinnedIcon(SKINICON_OTHER_USERONLINE);
+		HICON hIcon = opt.BlinkIcon_Status ? Skin_LoadProtoIcon(szProto, db_get_w(hContact, szProto, "Status", ID_STATUS_ONLINE)) : Skin_LoadIcon(SKINICON_OTHER_USERONLINE);
 		TCHAR str[256];
-		mir_sntprintf(str, SIZEOF(str), TranslateT("%s changed status message to %s"), pcli->pfnGetContactDisplayName(hContact, 0), smi.newstatusmsg);
+		mir_sntprintf(str, _countof(str), TranslateT("%s changed status message to %s"), pcli->pfnGetContactDisplayName(hContact, 0), smi.newstatusmsg);
 		BlinkIcon(hContact, hIcon, str);
 	}
 
@@ -751,8 +751,8 @@ int ProcessStatusMessage(DBCONTACTWRITESETTING *cws, MCONTACT hContact)
 	if (opt.SMsgLogToFile && db_get_b(hContact, MODULE, "EnableSMsgLogging", 1)) {
 		TCHAR stzDate[MAX_STATUSTEXT], stzTime[MAX_STATUSTEXT], stzText[MAX_TEXT_LEN];
 
-		GetTimeFormat(LOCALE_USER_DEFAULT, 0, NULL, _T("HH':'mm"), stzTime, SIZEOF(stzTime));
-		GetDateFormat(LOCALE_USER_DEFAULT, 0, NULL, _T("dd/MM/yyyy"), stzDate, SIZEOF(stzDate));
+		GetTimeFormat(LOCALE_USER_DEFAULT, 0, NULL, _T("HH':'mm"), stzTime, _countof(stzTime));
+		GetDateFormat(LOCALE_USER_DEFAULT, 0, NULL, _T("dd/MM/yyyy"), stzDate, _countof(stzDate));
 
 		TCHAR *str;
 		if (smi.compare == COMPARE_DEL)
@@ -760,7 +760,7 @@ int ProcessStatusMessage(DBCONTACTWRITESETTING *cws, MCONTACT hContact)
 		else
 			str = GetStr(&smi, templates.LogSMsgChanged);
 
-		mir_sntprintf(stzText, SIZEOF(stzText), _T("%s, %s. %s %s\r\n"), stzDate, stzTime, pcli->pfnGetContactDisplayName(hContact, 0), str);
+		mir_sntprintf(stzText, _countof(stzText), _T("%s, %s. %s %s\r\n"), stzDate, stzTime, pcli->pfnGetContactDisplayName(hContact, 0), str);
 
 		LogToFile(stzText);
 		mir_free(str);
@@ -803,7 +803,7 @@ int StatusModeChanged(WPARAM wParam, LPARAM lParam)
 	if (opt.AutoDisable && (!opt.OnlyGlobalChanges || szProto == NULL)) {
 		if (opt.DisablePopupGlobally && ServiceExists(MS_POPUP_QUERY)) {
 			char szSetting[12];
-			mir_snprintf(szSetting, SIZEOF(szSetting), "p%d", wParam);
+			mir_snprintf(szSetting, "p%d", wParam);
 			BYTE hlpDisablePopup = db_get_b(0, MODULE, szSetting, 0);
 
 			if (hlpDisablePopup != opt.PopupAutoDisabled) {
@@ -827,7 +827,7 @@ int StatusModeChanged(WPARAM wParam, LPARAM lParam)
 
 		if (opt.DisableSoundGlobally) {
 			char szSetting[12];
-			mir_snprintf(szSetting, SIZEOF(szSetting), "s%d", wParam);
+			mir_snprintf(szSetting, "s%d", wParam);
 			BYTE hlpDisableSound = db_get_b(0, MODULE, szSetting, 0);
 
 			if (hlpDisableSound != opt.SoundAutoDisabled) {
@@ -1049,7 +1049,7 @@ int ProtoAck(WPARAM, LPARAM lParam)
 		else if (oldStatus < ID_STATUS_ONLINE && newStatus >= ID_STATUS_ONLINE) {
 			//The protocol changed from a disconnected status to a connected status.
 			//Enable the popups for this protocol.
-			int idTimer = AddAtomA(szProto);
+			ATOM idTimer = AddAtomA(szProto);
 			if (idTimer)
 				SetTimer(SecretWnd, idTimer, (UINT)opt.PopupConnectionTimeout * 1000, ConnectionTimerProc);
 		}
@@ -1062,27 +1062,21 @@ INT_PTR EnableDisableMenuCommand(WPARAM, LPARAM)
 {
 	db_set_b(0, MODULE, "TempDisable", opt.TempDisabled = !opt.TempDisabled);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.flags = CMIM_ICON | CMIM_NAME | CMIF_TCHAR;
-	if (opt.TempDisabled) {
-		mi.ptszName = LPGENT("Enable status notification");
-		mi.icolibItem = GetIconHandle(ICO_NOTIFICATION_OFF);
-	}
-	else {
-		mi.ptszName = LPGENT("Disable status notification");
-		mi.icolibItem = GetIconHandle(ICO_NOTIFICATION_ON);
-	}
+	if (opt.TempDisabled)
+		Menu_ModifyItem(hEnableDisableMenu, LPGENT("Enable status notification"), GetIconHandle(ICO_NOTIFICATION_OFF));
+	else
+		Menu_ModifyItem(hEnableDisableMenu, LPGENT("Disable status notification"), GetIconHandle(ICO_NOTIFICATION_ON));
 
-	Menu_ModifyItem(hEnableDisableMenu, &mi);
 	CallService(MS_TTB_SETBUTTONSTATE, (WPARAM)hToolbarButton, opt.TempDisabled ? 0 : TTBST_PUSHED);
 	return 0;
 }
 
 void InitMainMenuItem()
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.flags = CMIF_TCHAR;
-	mi.ptszPopupName = ServiceExists(MS_POPUP_ADDPOPUPT) ? _T("Popups") : NULL;
+	if (ServiceExists(MS_POPUP_ADDPOPUPT))
+		mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Popups"), 0);
 	mi.pszService = MS_STATUSCHANGE_MENUCOMMAND;
 	hEnableDisableMenu = Menu_AddMainMenuItem(&mi);
 
@@ -1098,7 +1092,7 @@ static IconItem iconList[] =
 
 void InitIcolib()
 {
-	Icon_Register(hInst, LPGEN("New Status Notify"), iconList, SIZEOF(iconList), MODULE);
+	Icon_Register(hInst, LPGEN("New Status Notify"), iconList, _countof(iconList), MODULE);
 }
 
 void InitSound()
@@ -1112,7 +1106,7 @@ void InitSound()
 
 int InitTopToolbar(WPARAM, LPARAM)
 {
-	TTBButton tbb = { sizeof(tbb) };
+	TTBButton tbb = { 0 };
 	tbb.pszService = MS_STATUSCHANGE_MENUCOMMAND;
 	tbb.dwFlags = (opt.TempDisabled ? 0 : TTBBF_PUSHED) | TTBBF_ASPUSHBUTTON;
 	tbb.name = LPGEN("Toggle status notification");
@@ -1139,9 +1133,9 @@ int ModulesLoaded(WPARAM, LPARAM)
 
 	int count = 0;
 	PROTOACCOUNT **accounts = NULL;
-	ProtoEnumAccounts(&count, &accounts);
+	Proto_EnumAccounts(&count, &accounts);
 	for (int i = 0; i < count; i++)
-		if (IsAccountEnabled(accounts[i]))
+		if (Proto_IsAccountEnabled(accounts[i]))
 			db_set_b(NULL, MODULE, accounts[i]->szModuleName, 0);
 
 	return 0;

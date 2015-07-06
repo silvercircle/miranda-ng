@@ -102,10 +102,10 @@ void Searcher::Find()
 		return;
 	}
 
-	GetWindowText(context->findWindow, str, SIZEOF(str));
+	GetWindowText(context->findWindow, str, _countof(str));
 	if (!str[0]) {
 		TCHAR buf[256];
-		mir_sntprintf(buf, SIZEOF(buf), TranslateT("\"%s\" not found"), str);
+		mir_sntprintf(buf, TranslateT("\"%s\" not found"), str);
 		MessageBox(context->hWnd, buf, TranslateT("Search"), MB_OK | MB_ICONINFORMATION);
 		return;
 	}
@@ -298,8 +298,8 @@ void Searcher::Find()
 	lastFindSelection = -1;
 	if (isStart) {
 		TCHAR buf[256];
-		GetWindowText(context->findWindow, str, SIZEOF(str));
-		mir_sntprintf(buf, SIZEOF(buf), TranslateT("\"%s\" not found"), str);
+		GetWindowText(context->findWindow, str, _countof(str));
+		mir_sntprintf(buf, TranslateT("\"%s\" not found"), str);
 		MessageBox(context->hWnd, buf, TranslateT("Search"), MB_OK | MB_ICONINFORMATION);
 	}
 	else MessageBox(context->hWnd, TranslateTS(onlyGroup ? LPGENT("You have reached the end of the group.") : LPGENT("You have reached the end of the history.")), TranslateT("Search"), MB_OK | MB_ICONINFORMATION);
@@ -311,9 +311,9 @@ bool Searcher::IsInSel(int sel, TCHAR *strFind)
 		return false;
 
 	TCHAR str[MAXSELECTSTR + 8]; // for safety reason
-	EventList::EventData data;
-	for (std::deque<EventList::EventIndex>::iterator it = context->eventList[sel].begin(); it != context->eventList[sel].end(); ++it) {
-		EventList::EventIndex hDbEvent = *it;
+	HistoryEventList::EventData data;
+	for (std::deque<HistoryEventList::EventIndex>::iterator it = context->eventList[sel].begin(); it != context->eventList[sel].end(); ++it) {
+		HistoryEventList::EventIndex hDbEvent = *it;
 		if (context->GetEventData(hDbEvent, data)) {
 			bool isMe = data.isMe;
 			if (onlyIn && isMe || onlyOut && !isMe)

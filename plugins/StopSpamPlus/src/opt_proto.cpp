@@ -14,8 +14,6 @@ int IsProtoIM(const PROTOACCOUNT *pa)
 int FillTree(HWND hwnd)
 {
 	ProtocolData *PD;
-	int i, n;
-	PROTOACCOUNT** pa;
 
 	TVINSERTSTRUCT tvis;
 	tvis.hParent = NULL;
@@ -24,11 +22,12 @@ int FillTree(HWND hwnd)
 
 	TreeView_DeleteAllItems(hwnd);
 
-	if (CallService(MS_PROTO_ENUMACCOUNTS, (LPARAM)&n, (WPARAM)&pa))
-		return FALSE;
+	int n;
+	PROTOACCOUNT** pa;
+	Proto_EnumAccounts(&n, &pa);
 
-	for (i = 0; i < n; i++) {
-		if (IsAccountEnabled(pa[i])) {
+	for (int i = 0; i < n; i++) {
+		if (Proto_IsAccountEnabled(pa[i])) {
 			PD = (ProtocolData*)mir_alloc(sizeof(ProtocolData));
 			PD->RealName = pa[i]->szModuleName;
 			PD->enabled = IsProtoIM(pa[i]);
@@ -56,12 +55,12 @@ INT_PTR CALLBACK ProtoDlgProc(HWND hwnd, UINT msg, WPARAM, LPARAM lParam)
 		{
 			HIMAGELIST himlCheckBoxes = ImageList_Create(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), ILC_COLOR32 | ILC_MASK, 2, 2);
 			HICON Icon;
-			Icon = (HICON)LoadSkinnedIcon(SKINICON_OTHER_NOTICK);
+			Icon = (HICON)Skin_LoadIcon(SKINICON_OTHER_NOTICK);
 			ImageList_AddIcon(himlCheckBoxes, Icon);
-			Skin_ReleaseIcon(Icon);
-			Icon = (HICON)LoadSkinnedIcon(SKINICON_OTHER_TICK);
+			IcoLib_ReleaseIcon(Icon);
+			Icon = (HICON)Skin_LoadIcon(SKINICON_OTHER_TICK);
 			ImageList_AddIcon(himlCheckBoxes, Icon);
-			Skin_ReleaseIcon(Icon);
+			IcoLib_ReleaseIcon(Icon);
 
 			TreeView_SetImageList(hwndProto, himlCheckBoxes, TVSIL_NORMAL);
 		}

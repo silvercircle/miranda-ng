@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Dropbox.dll
 ;  Plugin: Dropbox
-;  Version: 0.12.0.4
+;  Version: 0.12.0.6
 ;  Authors: Miranda NG Team
 ;============================================================
 [Allows you to transfer files via Dropbox.]
@@ -57,10 +57,12 @@
 не удалён
 [is deleted]
 удалён
-[Send files to Dropbox]
+[Upload files to Dropbox]
 Файл через Dropbox
 [Protocol icon]
 Значок протокола
+[Upload file(s)]
+Загрузить файл(ы)
 [you are already authorized]
 вы уже авторизованы
 [you are not authorized yet]

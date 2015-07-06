@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-HANDLE CSteamProto::hChooserMenu;
+int CSteamProto::hChooserMenu;
 HGENMENU CSteamProto::contactMenuItems[CMI_MAX];
 
 template<int(__cdecl CSteamProto::*Service)(WPARAM, LPARAM)>
@@ -33,10 +33,10 @@ int CSteamProto::BlockCommand(WPARAM hContact, LPARAM)
 	char *who = getStringA(hContact, "SteamID");
 
 	PushRequest(
-		new SteamWebApi::BlockFriendRequest(token, sessionId, steamId, who),
+		new BlockFriendRequest(token, sessionId, steamId, who),
 		&CSteamProto::OnFriendBlocked,
 		who,
-		ARG_MIR_FREE);
+		MirFreeArg);
 
 	return 0;
 }
@@ -45,9 +45,8 @@ int CSteamProto::JoinToGameCommand(WPARAM hContact, LPARAM)
 {
 	char url[MAX_PATH];
 	DWORD gameId = getDword(hContact, "GameID", 0);
-	mir_snprintf(url, SIZEOF(url), "steam://rungameid/%lu", gameId);
-	CallService(MS_UTILS_OPENURL, 0, (LPARAM)url);
-
+	mir_snprintf(url, _countof(url), "steam://rungameid/%lu", gameId);
+	Utils_OpenUrl(url);
 	return 0;
 }
 
@@ -57,7 +56,7 @@ INT_PTR CSteamProto::OpenBlockListCommand(WPARAM, LPARAM)
 	ptrA steamId(getStringA("SteamID"));
 
 	PushRequest(
-		new SteamWebApi::GetFriendListRequest(token, steamId, "ignoredfriend"),
+		new GetFriendListRequest(token, steamId, "ignoredfriend"),
 		&CSteamProto::OnGotBlockList);
 
 	return 0;
@@ -88,7 +87,7 @@ int CSteamProto::OnPrebuildContactMenu(WPARAM wParam, LPARAM)
 
 int CSteamProto::PrebuildContactMenu(WPARAM wParam, LPARAM lParam)
 {
-	for (int i = 0; i < SIZEOF(CSteamProto::contactMenuItems); i++)
+	for (int i = 0; i < _countof(CSteamProto::contactMenuItems); i++)
 		Menu_ShowItem(CSteamProto::contactMenuItems[i], false);
 
 	CSteamProto* ppro = CSteamProto::GetContactProtoInstance((MCONTACT)wParam);
@@ -97,65 +96,40 @@ int CSteamProto::PrebuildContactMenu(WPARAM wParam, LPARAM lParam)
 
 void CSteamProto::OnInitStatusMenu()
 {
-	char text[200];
-	mir_strncpy(text, m_szModuleName, 100);
-	char* tDest = text + mir_strlen(text);
-
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.pszService = text;
-
-	HGENMENU hSteamRoot = MO_GetProtoRootMenu(m_szModuleName);
-	if (!hSteamRoot)
-	{
-		mi.ptszName = m_tszUserName;
-		mi.position = -1999901006;
-		mi.hParentMenu = HGENMENU_ROOT;
-		mi.flags = CMIF_ROOTPOPUP | CMIF_TCHAR | CMIF_KEEPUNTRANSLATED;
-		//mi.icolibItem = NULL;
-		hSteamRoot = m_hMenuRoot = Menu_AddProtoMenuItem(&mi);
-	}
-	else
-	{
-		if (m_hMenuRoot)
-			CallService(MO_REMOVEMENUITEM, (WPARAM)m_hMenuRoot, 0);
-		m_hMenuRoot = NULL;
-	}
-
-	mi.hParentMenu = hSteamRoot;
-	mi.flags = CMIF_CHILDPOPUP | CMIF_TCHAR;
+	CMenuItem mi;
+	mi.flags = CMIF_TCHAR;
+	mi.root = Menu_GetProtocolRoot(this);
 
 	// Show block list
-	mir_strcpy(tDest, "/BlockList");
-	CreateProtoService(tDest, &CSteamProto::OpenBlockListCommand);
-	mi.ptszName = LPGENT("Blocked contacts");
+	mi.pszService = "/BlockList";
+	CreateProtoService(mi.pszService, &CSteamProto::OpenBlockListCommand);
+	mi.name.t = LPGENT("Blocked contacts");
 	mi.position = 200000 + SMI_BLOCKED_LIST;
-	//mi.icolibItem = NULL;
-	Menu_AddProtoMenuItem(&mi);
+	Menu_AddProtoMenuItem(&mi, m_szModuleName);
 }
 
 void CSteamProto::InitMenus()
 {
-	hChooserMenu = MO_CreateMenuObject("SteamAccountChooser", LPGEN("Steam menu chooser"), 0, "Steam/MenuChoose");
+	hChooserMenu = Menu_AddObject("SteamAccountChooser", LPGEN("Steam menu chooser"), 0, "Steam/MenuChoose");
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// Contact menu initialization
-	CLISTMENUITEM mi = { 0 };
-	mi.cbSize = sizeof(CLISTMENUITEM);
+	CMenuItem mi;
 	mi.flags = CMIF_TCHAR;
 
 	// "Request authorization"
 	mi.pszService = MODULE "/AuthRequest";
-	mi.ptszName = LPGENT("Request authorization");
+	mi.name.t = LPGENT("Request authorization");
 	mi.position = -201001000 + CMI_AUTH_REQUEST;
-	mi.icolibItem = LoadSkinnedIconHandle(SKINICON_AUTH_REQUEST);
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_AUTH_REQUEST);
 	contactMenuItems[CMI_AUTH_REQUEST] = Menu_AddContactMenuItem(&mi);
 	CreateServiceFunction(mi.pszService, GlobalService<&CSteamProto::AuthRequestCommand>);
 
 	// "Block"
 	mi.pszService = MODULE "/Block";
-	mi.ptszName = LPGENT("Block");
+	mi.name.t = LPGENT("Block");
 	mi.position = -201001001 + CMI_BLOCK;
-	mi.icolibItem = LoadSkinnedIconHandle(SKINICON_AUTH_REQUEST);
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_AUTH_REQUEST);
 	contactMenuItems[CMI_BLOCK] = Menu_AddContactMenuItem(&mi);
 	CreateServiceFunction(mi.pszService, GlobalService<&CSteamProto::BlockCommand>);
 
@@ -163,17 +137,16 @@ void CSteamProto::InitMenus()
 
 	// "Join to game"
 	mi.pszService = MODULE "/JoinToGame";
-	mi.ptszName = LPGENT("Join to game");
+	mi.name.t = LPGENT("Join to game");
 	mi.position = -200001000 + CMI_JOIN_GAME;
-	mi.icolibItem = NULL;
+	mi.hIcolibItem = NULL;
 	contactMenuItems[CMI_JOIN_GAME] = Menu_AddContactMenuItem(&mi);
 	CreateServiceFunction(mi.pszService, GlobalService<&CSteamProto::JoinToGameCommand>);
 }
 
 void CSteamProto::UninitMenus()
 {
-	CallService(MO_REMOVEMENUITEM, (WPARAM)contactMenuItems[CMI_AUTH_REQUEST], 0);
-	CallService(MO_REMOVEMENUITEM, (WPARAM)contactMenuItems[CMI_BLOCK], 0);
-	CallService(MO_REMOVEMENUITEM, (WPARAM)contactMenuItems[CMI_JOIN_GAME], 0);
+	Menu_RemoveItem(contactMenuItems[CMI_AUTH_REQUEST]);
+	Menu_RemoveItem(contactMenuItems[CMI_BLOCK]);
+	Menu_RemoveItem(contactMenuItems[CMI_JOIN_GAME]);
 }
-

@@ -21,7 +21,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 UploadDialog *UploadDialog::instance = NULL;
 UploadDialog *uDlg = NULL;
 
-Mutex UploadDialog::mutexTabs;
+mir_cs UploadDialog::mutexTabs;
 
 extern Options &opt;
 
@@ -67,7 +67,11 @@ void UploadDialog::show()
 }
 
 UploadDialog::Tab::Tab(GenericJob *Job)
-:job(Job),bOptCloseDlg(opt.bCloseDlg),bOptCopyLink(opt.bCopyLink),bOptAutosend(opt.bAutosend),iOptAutoDelete(-1) 
+	: job(Job),
+	bOptCloseDlg(opt.bCloseDlg),
+	bOptCopyLink(opt.bCopyLink),
+	bOptAutosend(opt.bAutosend),
+	iOptAutoDelete(-1) 
 { 
 	if (opt.bAutoDelete)
 		this->iOptAutoDelete = Utils::getDeleteTimeMin();
@@ -81,20 +85,19 @@ UploadDialog::Tab::Tab(GenericJob *Job)
 	tab.mask = TCIF_TEXT;
 	tab.pszText = Utils::getTextFragment(job->stzFileName, 20, buff);
 	TabCtrl_InsertItem(uDlg->hwndTabs, uDlg->tabs.size(), &tab);
-
-	Lock *lock = new Lock(mutexTabs);
-	uDlg->tabs.push_back(this);
-	delete lock;
-
+	{
+		mir_cslock lock(mutexTabs);
+		uDlg->tabs.push_back(this);
+	}
 	this->select();
 }
 
 UploadDialog::Tab::~Tab()
 { 
-	Lock *lock = new Lock(mutexTabs);
-	TabCtrl_DeleteItem(uDlg->hwndTabs, this->index());
-	uDlg->tabs.erase(uDlg->tabs.begin() + this->index());
-	delete lock;
+	{	mir_cslock lock(mutexTabs);
+		TabCtrl_DeleteItem(uDlg->hwndTabs, this->index());
+		uDlg->tabs.erase(uDlg->tabs.begin() + this->index());
+	}
 
 	if (this->job->isCompleted())
 		delete this->job;
@@ -119,11 +122,10 @@ int UploadDialog::Tab::index()
 void UploadDialog::Tab::select()
 { 
 	TabCtrl_SetCurSel(uDlg->hwndTabs, this->index());
-
-	Lock *lock = new Lock(mutexTabs);
-	uDlg->activeTab = this->index();
-	delete lock;
-
+	{
+		mir_cslock lock(mutexTabs);
+		uDlg->activeTab = this->index();
+	}
 	this->job->refreshTab(true);
 	InvalidateRect(uDlg->hwnd, NULL, TRUE);
 }
@@ -131,7 +133,7 @@ void UploadDialog::Tab::select()
 void UploadDialog::Tab::labelCompleted()
 { 
 	TCHAR buff[64], buff2[256];
-	mir_sntprintf(buff2, SIZEOF(buff2), _T("* %s"), Utils::getTextFragment(this->job->stzFileName, 20, buff));
+	mir_sntprintf(buff2, _countof(buff2), _T("* %s"), Utils::getTextFragment(this->job->stzFileName, 20, buff));
 
 	TCITEM tab = {0};
 	tab.mask = TCIF_TEXT;
@@ -202,7 +204,7 @@ INT_PTR CALLBACK UploadDialog::UploadDlgProc(HWND hwndDlg, UINT msg, WPARAM wPar
 			SendDlgItemMessage(hwndDlg, IDC_BTN_CLIPBOARD, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Copy Link to Clipboard"), BATF_TCHAR);
 
 			SendDlgItemMessage(hwndDlg, IDC_BTN_DOWNLOAD, BUTTONSETASFLATBTN, 0, 0);
-			SendDlgItemMessage(hwndDlg, IDC_BTN_DOWNLOAD, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadSkinnedIcon(SKINICON_EVENT_URL));
+			SendDlgItemMessage(hwndDlg, IDC_BTN_DOWNLOAD, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(SKINICON_EVENT_URL));
 			SendDlgItemMessage(hwndDlg, IDC_BTN_DOWNLOAD, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Open in Browser"), BATF_TCHAR);
 
 			SendDlgItemMessage(hwndDlg, IDC_BTN_FILEMANAGER, BUTTONSETASFLATBTN, 0, 0);
@@ -210,23 +212,21 @@ INT_PTR CALLBACK UploadDialog::UploadDlgProc(HWND hwndDlg, UINT msg, WPARAM wPar
 			SendDlgItemMessage(hwndDlg, IDC_BTN_FILEMANAGER, BUTTONADDTOOLTIP, (WPARAM)TranslateT("FTP File Manager"), BATF_TCHAR);
 
 			SendDlgItemMessage(hwndDlg, IDC_BTN_OPTIONS, BUTTONSETASFLATBTN, 0, 0);
-			SendDlgItemMessage(hwndDlg, IDC_BTN_OPTIONS, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadSkinnedIcon(SKINICON_OTHER_OPTIONS));
+			SendDlgItemMessage(hwndDlg, IDC_BTN_OPTIONS, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_OPTIONS));
 			SendDlgItemMessage(hwndDlg, IDC_BTN_OPTIONS, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Options"), BATF_TCHAR);
 
 			SendDlgItemMessage(hwndDlg, IDC_BTN_CLOSE, BUTTONSETASFLATBTN, 0, 0);
-			SendDlgItemMessage(hwndDlg, IDC_BTN_CLOSE, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadSkinnedIcon(SKINICON_OTHER_DELETE));
+			SendDlgItemMessage(hwndDlg, IDC_BTN_CLOSE, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_DELETE));
 			SendDlgItemMessage(hwndDlg, IDC_BTN_CLOSE, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Close"), BATF_TCHAR);
 
 			break;
 		}
 		case WM_MEASUREITEM:
-		{
-			return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
-		}
+			return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
+
 		case WM_DRAWITEM:
-		{
-			return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
-		}
+			return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
+
 		case WM_COMMAND:
 		{
 			MCONTACT hContact = uDlg->tabs[uDlg->activeTab]->job->hContact;
@@ -245,8 +245,8 @@ INT_PTR CALLBACK UploadDialog::UploadDlgProc(HWND hwndDlg, UINT msg, WPARAM wPar
 						if (hContact != NULL)
 						{
 							RECT rc;
-							HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDCONTACT, hContact, 0);
 							GetWindowRect((HWND)lParam, &rc);
+							HMENU hMenu = Menu_BuildContactMenu(hContact);
 							TrackPopupMenu(hMenu, 0, rc.left, rc.bottom, 0, hwndDlg, NULL);
 							DestroyMenu(hMenu);
 						}
@@ -299,17 +299,17 @@ INT_PTR CALLBACK UploadDialog::UploadDlgProc(HWND hwndDlg, UINT msg, WPARAM wPar
 							bool bChecked = (tab->iOptAutoDelete == -1) ? true : false;
 							TCHAR buff[256];
 
-							for (int i = 0; i < SIZEOF(times); i++) 
+							for (int i = 0; i < _countof(times); i++) 
 							{
 								if (i == 3 || i == 7)
 									AppendMenu(hTimeMenu, MF_SEPARATOR, 0, 0);
 
 								if (i < 3)
-									mir_sntprintf(buff, SIZEOF(buff), TranslateT("%d minutes"), times[i]);
+									mir_sntprintf(buff, TranslateT("%d minutes"), times[i]);
 								else if (i < 7)
-									mir_sntprintf(buff, SIZEOF(buff), TranslateT("%d hours"), times[i] / 60);
+									mir_sntprintf(buff, TranslateT("%d hours"), times[i] / 60);
 								else 
-									mir_sntprintf(buff, SIZEOF(buff), TranslateT("%d days"), times[i] / 60 / 24);
+									mir_sntprintf(buff, TranslateT("%d days"), times[i] / 60 / 24);
 
 								UINT check = MF_UNCHECKED;
 								if (!bChecked && tab->iOptAutoDelete == times[i])
@@ -325,9 +325,9 @@ INT_PTR CALLBACK UploadDialog::UploadDlgProc(HWND hwndDlg, UINT msg, WPARAM wPar
 							{
 								switch (opt.timeRange) 
 								{
-									case Options::TR_MINUTES: mir_sntprintf(buff, SIZEOF(buff), TranslateT("%d minutes"), opt.iDeleteTime); break;
-									case Options::TR_HOURS: mir_sntprintf(buff, SIZEOF(buff), TranslateT("%d hours"), opt.iDeleteTime); break;
-									case Options::TR_DAYS: mir_sntprintf(buff, SIZEOF(buff), TranslateT("%d days"), opt.iDeleteTime); break;
+									case Options::TR_MINUTES: mir_sntprintf(buff, TranslateT("%d minutes"), opt.iDeleteTime); break;
+									case Options::TR_HOURS: mir_sntprintf(buff, TranslateT("%d hours"), opt.iDeleteTime); break;
+									case Options::TR_DAYS: mir_sntprintf(buff, TranslateT("%d days"), opt.iDeleteTime); break;
 								}
 
 								AppendMenu(hTimeMenu, MF_SEPARATOR, 0, 0);

@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "sessions.h"
 
+CLIST_INTERFACE *pcli;
 HINSTANCE g_hInst = NULL;
 
 HGENMENU hmSaveCurrentSession;
@@ -202,7 +203,7 @@ INT_PTR CALLBACK SaveSessionDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM l
 				int i = 0, length = GetWindowTextLength(GetDlgItem(hdlg, IDC_LIST));
 				SavePosition(hdlg, "SaveDlg");
 				if (length > 0) {
-					GetDlgItemText(hdlg, IDC_LIST, szUserSessionName, SIZEOF(szUserSessionName));
+					GetDlgItemText(hdlg, IDC_LIST, szUserSessionName, _countof(szUserSessionName));
 					szUserSessionName[length + 1] = '\0';
 					if (IsDlgButtonChecked(hdlg, IDC_SELCONTACTS) && bSC) {
 						for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact)) {
@@ -491,7 +492,7 @@ int SaveSessionDate()
 		mir_sntprintf(szSessionTime, lenn, _T("%s - %s"), szTimeBuf, szDateBuf);
 
 		char szSetting[256];
-		mir_snprintf(szSetting, SIZEOF(szSetting), "%s_%d", "SessionDate", 0);
+		mir_snprintf(szSetting, "%s_%d", "SessionDate", 0);
 		TCHAR *ptszSaveSessionDate = db_get_tsa(NULL, MODNAME, szSetting);
 
 		db_set_ts(NULL, MODNAME, szSetting, szSessionTime);
@@ -516,7 +517,7 @@ int SaveUserSessionName(TCHAR *szUSessionName)
 		return 1;
 
 	char szSetting[256];
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%s_%u", "UserSessionDsc", 0);
+	mir_snprintf(szSetting, "%s_%u", "UserSessionDsc", 0);
 	TCHAR *ptszUserSessionName = db_get_tsa(NULL, MODNAME, szSetting);
 	if (ptszUserSessionName)
 		ResaveSettings("UserSessionDsc", 1, 255, ptszUserSessionName);
@@ -603,17 +604,17 @@ int DelUserDefSession(int ses_count)
 	}
 
 	char szSessionName[256];
-	mir_snprintf(szSessionName, SIZEOF(szSessionName), "%s_%u", "UserSessionDsc", ses_count);
+	mir_snprintf(szSessionName, _countof(szSessionName), "%s_%u", "UserSessionDsc", ses_count);
 	db_unset(NULL, MODNAME, szSessionName);
 
-	mir_snprintf(szSessionName, SIZEOF(szSessionName), "%s_%u", "FavUserSession", ses_count);
+	mir_snprintf(szSessionName, _countof(szSessionName), "%s_%u", "FavUserSession", ses_count);
 	db_unset(NULL, MODNAME, szSessionName);
 
 	for (int i = ses_count + 1;; i++) {
-		mir_snprintf(szSessionName, SIZEOF(szSessionName), "%s_%u", "UserSessionDsc", i);
+		mir_snprintf(szSessionName, _countof(szSessionName), "%s_%u", "UserSessionDsc", i);
 		ptrT szSessionNameBuf(db_get_tsa(NULL, MODNAME, szSessionName));
 
-		mir_snprintf(szSessionName, SIZEOF(szSessionName), "%s_%u", "UserSessionDsc", i - 1);
+		mir_snprintf(szSessionName, _countof(szSessionName), "%s_%u", "UserSessionDsc", i - 1);
 		if (szSessionNameBuf) {
 			MarkUserDefSession(i - 1, IsMarkedUserDefSession(i));
 			db_set_ts(NULL, MODNAME, szSessionName, szSessionNameBuf);
@@ -621,7 +622,7 @@ int DelUserDefSession(int ses_count)
 		else {
 			db_unset(NULL, MODNAME, szSessionName);
 
-			mir_snprintf(szSessionName, SIZEOF(szSessionName), "%s_%u", "FavUserSession", i - 1);
+			mir_snprintf(szSessionName, _countof(szSessionName), "%s_%u", "FavUserSession", i - 1);
 			db_unset(NULL, MODNAME, szSessionName);
 			break;
 		}
@@ -639,14 +640,14 @@ int DeleteAutoSession(int ses_count)
 	}
 
 	char szSessionName[256];
-	mir_snprintf(szSessionName, SIZEOF(szSessionName), "%s_%u", "SessionDate", ses_count);
+	mir_snprintf(szSessionName, _countof(szSessionName), "%s_%u", "SessionDate", ses_count);
 	db_unset(NULL, MODNAME, szSessionName);
 
 	for (int i = ses_count + 1;; i++) {
-		mir_snprintf(szSessionName, SIZEOF(szSessionName), "%s_%u", "SessionDate", i);
+		mir_snprintf(szSessionName, _countof(szSessionName), "%s_%u", "SessionDate", i);
 		ptrT szSessionNameBuf(db_get_tsa(NULL, MODNAME, szSessionName));
 
-		mir_snprintf(szSessionName, SIZEOF(szSessionName), "%s_%u", "SessionDate", i - 1);
+		mir_snprintf(szSessionName, _countof(szSessionName), "%s_%u", "SessionDate", i - 1);
 		if (szSessionNameBuf)
 			db_set_ts(NULL, MODNAME, szSessionName, szSessionNameBuf);
 		else {
@@ -721,7 +722,7 @@ INT_PTR BuildFavMenu(WPARAM, LPARAM)
 
 static int CreateButtons(WPARAM, LPARAM)
 {
-	TTBButton ttb = { sizeof(ttb) };
+	TTBButton ttb = { 0 };
 	ttb.dwFlags = TTBBF_SHOWTOOLTIP | TTBBF_VISIBLE;
 
 	ttb.pszService = MS_SESSIONS_OPENMANAGER;
@@ -793,38 +794,30 @@ static int PluginInit(WPARAM, LPARAM)
 	Hotkey_Register(&hkd);
 
 	// Main menu
-	CLISTMENUITEM cl = { sizeof(cl) };
-	cl.position = 1000000000;
-	cl.flags = CMIM_ALL;
+	CMenuItem mi;
+	mi.position = 1000000000;
+	mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Sessions Manager"), 1000000000);
 
-	cl.pszName = LPGEN("Save session...");
-	cl.pszPopupName = LPGEN("Sessions Manager");
-	cl.icolibItem = iconList[0].hIcolib;
-	cl.pszService = MS_SESSIONS_SAVEUSERSESSION;
-	hmSaveCurrentSession = Menu_AddMainMenuItem(&cl);
+	mi.name.a = LPGEN("Save session...");
+	mi.hIcolibItem = iconList[4].hIcolib;
+	mi.pszService = MS_SESSIONS_SAVEUSERSESSION;
+	hmSaveCurrentSession = Menu_AddMainMenuItem(&mi);
 
-	cl.pszName = LPGEN("Load session...");
-	cl.pszService = MS_SESSIONS_OPENMANAGER;
-	cl.icolibItem = iconList[3].hIcolib;
-	Menu_AddMainMenuItem(&cl);
+	mi.name.a = LPGEN("Load session...");
+	mi.pszService = MS_SESSIONS_OPENMANAGER;
+	mi.hIcolibItem = iconList[3].hIcolib;
+	Menu_AddMainMenuItem(&mi);
 
-	cl.pszName = LPGEN("Close session");
-	cl.pszService = MS_SESSIONS_CLOSESESSION;
-	cl.icolibItem = 0;
-	Menu_AddMainMenuItem(&cl);
+	mi.name.a = LPGEN("Close session");
+	mi.pszService = MS_SESSIONS_CLOSESESSION;
+	mi.hIcolibItem = 0;
+	Menu_AddMainMenuItem(&mi);
 
-	cl.pszName = LPGEN("Load last session");
-	cl.pszService = MS_SESSIONS_RESTORELASTSESSION;
-	cl.icolibItem = iconList[5].hIcolib;
-	cl.position = 10100000;
-	Menu_AddMainMenuItem(&cl);
-
-	memset(&cl, 0, sizeof(cl));
-	cl.cbSize = sizeof(cl);
-	cl.flags = CMIM_ICON;
-	cl.icolibItem = iconList[4].hIcolib;
-	Menu_ModifyItem(hmSaveCurrentSession, &cl);
-
+	mi.name.a = LPGEN("Load last session");
+	mi.pszService = MS_SESSIONS_RESTORELASTSESSION;
+	mi.hIcolibItem = iconList[5].hIcolib;
+	mi.position = 10100000;
+	Menu_AddMainMenuItem(&mi);
 	return 0;
 }
 
@@ -847,6 +840,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD, LPVOID)
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfo);
+	mir_getCLI();
 
 	CreateServiceFunction(MS_SESSIONS_SHOWFAVORITESMENU, BuildFavMenu);
 	CreateServiceFunction(MS_SESSIONS_OPENMANAGER, OpenSessionsManagerWindow);
@@ -894,6 +888,6 @@ extern "C" __declspec(dllexport) int Load(void)
 	HookEvent(ME_SYSTEM_PRESHUTDOWN, SessionPreShutdown);
 
 	// Icons
-	Icon_Register(g_hInst, MODNAME, iconList, SIZEOF(iconList));
+	Icon_Register(g_hInst, MODNAME, iconList, _countof(iconList));
 	return 0;
 }

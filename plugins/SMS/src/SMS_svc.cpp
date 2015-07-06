@@ -8,7 +8,7 @@ int LoadServices(void)
 	pszServiceFunctionName=szServiceFunction+PROTOCOL_NAME_LEN;
 
 	// Service creation
-	for (size_t i=0;i<SIZEOF(siPluginServices);i++)
+	for (size_t i=0;i<_countof(siPluginServices);i++)
 	{
 		memcpy(pszServiceFunctionName,siPluginServices[i].lpszName,(mir_strlen(siPluginServices[i].lpszName)+1));
 		CreateServiceFunction(szServiceFunction,(MIRANDASERVICE)siPluginServices[i].lpFunc);
@@ -26,19 +26,19 @@ int LoadModules(void)
 	HookEvent(ME_PROTO_ACCLISTCHANGED,RefreshAccountList);
 
 	char szServiceFunction[MAX_PATH];
-	mir_snprintf(szServiceFunction,SIZEOF(szServiceFunction),"%s%s",PROTOCOL_NAMEA,SMS_SEND);
+	mir_snprintf(szServiceFunction,_countof(szServiceFunction),"%s%s",PROTOCOL_NAMEA,SMS_SEND);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = 300050000;
-	mi.hIcon = LoadSkinnedIcon(SKINICON_OTHER_SMS);
-	mi.ptszName = SMS_SEND_STR;
+	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_SMS);
+	mi.name.t = SMS_SEND_STR;
 	mi.pszService = szServiceFunction;
 	mi.flags = CMIF_TCHAR;
 	Menu_AddMainMenuItem(&mi);
 
 	mi.position = -2000070000;
-	mi.hIcon = LoadSkinnedIcon(SKINICON_OTHER_SMS);
-	mi.ptszName = SMS_SEND_CM_STR;
+	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_SMS);
+	mi.name.t = SMS_SEND_CM_STR;
 	mi.pszService = szServiceFunction;
 	mi.flags = CMIF_TCHAR;	
 	ssSMSSettings.hContactMenuItems[0] = Menu_AddContactMenuItem(&mi);
@@ -54,7 +54,7 @@ int LoadModules(void)
 
 int SmsRebuildContactMenu(WPARAM wParam,LPARAM lParam)
 {
-	Menu_ShowItem(ssSMSSettings.hContactMenuItems[0], GetContactPhonesCount(wParam));
+	Menu_ShowItem(ssSMSSettings.hContactMenuItems[0], GetContactPhonesCount(wParam) != 0);
 	return 0;
 }
 
@@ -79,7 +79,7 @@ int SendSMSMenuCommand(WPARAM wParam,LPARAM lParam)
 
 		for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact)) {
 			if (GetContactPhonesCount(hContact)) {
-				SendDlgItemMessage(hwndSendSms,IDC_NAME,CB_ADDSTRING,0,(LPARAM)GetContactNameW(hContact));
+				SendDlgItemMessage(hwndSendSms, IDC_NAME, CB_ADDSTRING, 0, (LPARAM)pcli->pfnGetContactDisplayName(hContact, 0));
 				SendSMSWindowSMSContactAdd(hwndSendSms,hContact);
 			}
 		}

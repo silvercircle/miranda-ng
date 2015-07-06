@@ -187,17 +187,17 @@ void LoadMsgDlgFont(int section, int i, LOGFONT *lf, COLORREF* colour, char *szM
 	}
 
 	if (colour) {
-		mir_snprintf(str, SIZEOF(str), "Font%dCol", i);
+		mir_snprintf(str, "Font%dCol", i);
 		*colour = M.GetDword(szMod, str, fol[j].defColour);
 	}
 
 	if (lf) {
-		mir_snprintf(str, SIZEOF(str), "Font%dSize", i);
+		mir_snprintf(str, "Font%dSize", i);
 		lf->lfHeight = (char)M.GetByte(szMod, str, fol[j].defSize);
 		lf->lfWidth = 0;
 		lf->lfEscapement = 0;
 		lf->lfOrientation = 0;
-		mir_snprintf(str, SIZEOF(str), "Font%dSty", i);
+		mir_snprintf(str, "Font%dSty", i);
 		style = M.GetByte(szMod, str, fol[j].defStyle);
 		if (i == MSGFONTID_MESSAGEAREA && section == FONTSECTION_IM && M.GetByte("inputFontFix", 1) == 1) {
 			lf->lfWeight = FW_NORMAL;
@@ -211,13 +211,13 @@ void LoadMsgDlgFont(int section, int i, LOGFONT *lf, COLORREF* colour, char *szM
 			lf->lfUnderline = style & FONTF_UNDERLINE ? 1 : 0;
 			lf->lfStrikeOut = style & FONTF_STRIKEOUT ? 1 : 0;
 		}
-		mir_snprintf(str, SIZEOF(str), "Font%dSet", i);
+		mir_snprintf(str, "Font%dSet", i);
 		lf->lfCharSet = M.GetByte(szMod, str, fol[j].defCharset);
 		lf->lfOutPrecision = OUT_DEFAULT_PRECIS;
 		lf->lfClipPrecision = CLIP_DEFAULT_PRECIS;
 		lf->lfQuality = DEFAULT_QUALITY;
 		lf->lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
-		mir_snprintf(str, SIZEOF(str), "Font%d", i);
+		mir_snprintf(str, "Font%d", i);
 		if ((i == 17 && !mir_strcmp(szMod, CHATFONT_MODULE)) || ((i == 20 || i == 21) && !mir_strcmp(szMod, FONTMODULE))) {
 			lf->lfCharSet = SYMBOL_CHARSET;
 			_tcsncpy_s(lf->lfFaceName, _T("Webdings"), _TRUNCATE);
@@ -337,8 +337,8 @@ static IconItem _logicons[] =
 // add icons to the skinning module
 void Chat_AddIcons(void)
 {
-	Icon_Register(g_hIconDLL, LPGEN("Message Sessions")"/"LPGEN("Group chat windows"), _icons, SIZEOF(_icons));
-	Icon_Register(g_hIconDLL, LPGEN("Message Sessions")"/"LPGEN("Group chat log"), _logicons, SIZEOF(_logicons));
+	Icon_Register(g_hIconDLL, LPGEN("Message Sessions")"/"LPGEN("Group chat windows"), _icons, _countof(_icons));
+	Icon_Register(g_hIconDLL, LPGEN("Message Sessions")"/"LPGEN("Group chat log"), _logicons, _countof(_logicons));
 	pci->MM_IconsChanged();
 }
 
@@ -349,8 +349,8 @@ void Chat_AddIcons(void)
 HICON LoadIconEx(char *pszIcoLibName)
 {
 	char szTemp[256];
-	mir_snprintf(szTemp, SIZEOF(szTemp), "chat_%s", pszIcoLibName);
-	return Skin_GetIcon(szTemp);
+	mir_snprintf(szTemp, "chat_%s", pszIcoLibName);
+	return IcoLib_GetIcon(szTemp);
 }
 
 static void InitSetting(TCHAR* &ppPointer, const char *pszSetting, const TCHAR *pszDefault)
@@ -384,7 +384,7 @@ HWND CreateToolTip(HWND hwndParent, LPTSTR ptszText, LPTSTR ptszTitle)
 	GetClientRect(hwndParent, &ti.rect);
 	ti.rect.left = -65;
 
-	SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)&ti);
+	SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM)&ti);
 	SendMessage(hwndTT, TTM_SETTITLE, 1, (LPARAM)ptszTitle);
 	SendMessage(hwndTT, TTM_SETMAXTIPWIDTH, 0, (LPARAM)640);
 	return hwndTT;
@@ -406,8 +406,8 @@ INT_PTR CALLBACK DlgProcOptions1(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			hListHeading1 = InsertBranch(GetDlgItem(hwndDlg, IDC_CHECKBOXES), TranslateT("Appearance and functionality of chat room windows"), TRUE);
 			hListHeading2 = InsertBranch(GetDlgItem(hwndDlg, IDC_CHECKBOXES), TranslateT("Appearance of the message log"), TRUE);
 
-			FillBranch(GetDlgItem(hwndDlg, IDC_CHECKBOXES), hListHeading1, branch1, SIZEOF(branch1), 0x0000);
-			FillBranch(GetDlgItem(hwndDlg, IDC_CHECKBOXES), hListHeading2, branch2, SIZEOF(branch2), 0x0000);
+			FillBranch(GetDlgItem(hwndDlg, IDC_CHECKBOXES), hListHeading1, branch1, _countof(branch1), 0x0000);
+			FillBranch(GetDlgItem(hwndDlg, IDC_CHECKBOXES), hListHeading2, branch2, _countof(branch2), 0x0000);
 
 			TCHAR* pszGroup = NULL;
 			InitSetting(pszGroup, "AddToGroup", _T("Chat rooms"));
@@ -449,8 +449,8 @@ INT_PTR CALLBACK DlgProcOptions1(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 				mir_free(pszText);
 
 				b = M.GetByte(CHAT_MODULE, "Tabs", 1);
-				SaveBranch(GetDlgItem(hwndDlg, IDC_CHECKBOXES), branch1, SIZEOF(branch1));
-				SaveBranch(GetDlgItem(hwndDlg, IDC_CHECKBOXES), branch2, SIZEOF(branch2));
+				SaveBranch(GetDlgItem(hwndDlg, IDC_CHECKBOXES), branch1, _countof(branch1));
+				SaveBranch(GetDlgItem(hwndDlg, IDC_CHECKBOXES), branch2, _countof(branch2));
 
 				pci->ReloadSettings();
 				pci->MM_IconsChanged();
@@ -494,62 +494,62 @@ void RegisterFontServiceFonts()
 	fid.cbSize = sizeof(FontIDT);
 	cid.cbSize = sizeof(ColourIDT);
 
-	strncpy(fid.dbSettingsGroup, FONTMODULE, SIZEOF(fid.dbSettingsGroup));
+	strncpy(fid.dbSettingsGroup, FONTMODULE, _countof(fid.dbSettingsGroup));
 
-	for (int i = 0; i < SIZEOF(IM_fontOptionsList); i++) {
+	for (int i = 0; i < _countof(IM_fontOptionsList); i++) {
 		fid.flags = FIDF_DEFAULTVALID | FIDF_ALLOWEFFECTS;
 		LoadMsgDlgFont(FONTSECTION_IM, i, &lf, &fontOptionsList[i].colour, FONTMODULE);
-		mir_snprintf(szTemp, SIZEOF(szTemp), "Font%d", i);
-		strncpy(fid.prefix, szTemp, SIZEOF(fid.prefix));
+		mir_snprintf(szTemp, "Font%d", i);
+		strncpy(fid.prefix, szTemp, _countof(fid.prefix));
 		fid.order = i;
-		_tcsncpy(fid.name, fontOptionsList[i].szDescr, SIZEOF(fid.name));
+		_tcsncpy(fid.name, fontOptionsList[i].szDescr, _countof(fid.name));
 		fid.deffontsettings.colour = fontOptionsList[i].colour;
 		fid.deffontsettings.size = (char)lf.lfHeight;
 		fid.deffontsettings.style = (lf.lfWeight >= FW_BOLD ? FONTF_BOLD : 0) | (lf.lfItalic ? FONTF_ITALIC : 0);
 		fid.deffontsettings.charset = lf.lfCharSet;
 		fid.flags = fid.flags & ~FIDF_CLASSMASK | (fid.deffontsettings.style&FONTF_BOLD ? FIDF_CLASSHEADER : FIDF_CLASSGENERAL);
 		_tcsncpy(fid.deffontsettings.szFace, lf.lfFaceName, LF_FACESIZE);
-		_tcsncpy(fid.backgroundGroup, LPGENT("Message Sessions")_T("/")LPGENT("Single Messaging"), SIZEOF(fid.backgroundGroup));
-		_tcsncpy(fid.group, LPGENT("Message Sessions")_T("/")LPGENT("Single Messaging"), SIZEOF(fid.group));
+		_tcsncpy(fid.backgroundGroup, LPGENT("Message Sessions")_T("/")LPGENT("Single Messaging"), _countof(fid.backgroundGroup));
+		_tcsncpy(fid.group, LPGENT("Message Sessions")_T("/")LPGENT("Single Messaging"), _countof(fid.group));
 		switch (i) {
 		case MSGFONTID_MYMSG:
 		case 1:
 		case MSGFONTID_MYNAME:
 		case MSGFONTID_MYTIME:
 		case 21:
-			_tcsncpy(fid.backgroundName, LPGENT("Outgoing background"), SIZEOF(fid.backgroundName));
+			_tcsncpy(fid.backgroundName, LPGENT("Outgoing background"), _countof(fid.backgroundName));
 			break;
 		case 8:
 		case 9:
 		case 12:
 		case 13:
-			_tcsncpy(fid.backgroundName, LPGENT("Outgoing background(old)"), SIZEOF(fid.backgroundName));
+			_tcsncpy(fid.backgroundName, LPGENT("Outgoing background(old)"), _countof(fid.backgroundName));
 			break;
 		case 10:
 		case 11:
 		case 14:
 		case 15:
-			_tcsncpy(fid.backgroundName, LPGENT("Incoming background(old)"), SIZEOF(fid.backgroundName));
+			_tcsncpy(fid.backgroundName, LPGENT("Incoming background(old)"), _countof(fid.backgroundName));
 			break;
 		case MSGFONTID_MESSAGEAREA:
-			_tcsncpy(fid.group, LPGENT("Message Sessions"), SIZEOF(fid.group));
-			_tcsncpy(fid.backgroundGroup, LPGENT("Message Sessions"), SIZEOF(fid.backgroundGroup));
-			_tcsncpy(fid.backgroundName, LPGENT("Input area background"), SIZEOF(fid.backgroundName));
+			_tcsncpy(fid.group, LPGENT("Message Sessions"), _countof(fid.group));
+			_tcsncpy(fid.backgroundGroup, LPGENT("Message Sessions"), _countof(fid.backgroundGroup));
+			_tcsncpy(fid.backgroundName, LPGENT("Input area background"), _countof(fid.backgroundName));
 			fid.flags |= FIDF_DISABLESTYLES;
 			fid.flags &= ~FIDF_ALLOWEFFECTS;
 			break;
 		case 17:
-			_tcsncpy(fid.backgroundName, LPGENT("Status background"), SIZEOF(fid.backgroundName));
+			_tcsncpy(fid.backgroundName, LPGENT("Status background"), _countof(fid.backgroundName));
 			break;
 		case 18:
-			_tcsncpy(fid.backgroundGroup, LPGENT("Message Sessions"), SIZEOF(fid.backgroundGroup));
-			_tcsncpy(fid.backgroundName, LPGENT("Log background"), SIZEOF(fid.backgroundName));
+			_tcsncpy(fid.backgroundGroup, LPGENT("Message Sessions"), _countof(fid.backgroundGroup));
+			_tcsncpy(fid.backgroundName, LPGENT("Log background"), _countof(fid.backgroundName));
 			break;
 		case 19:
-			_tcsncpy(fid.backgroundName, _T(""), SIZEOF(fid.backgroundName));
+			_tcsncpy(fid.backgroundName, _T(""), _countof(fid.backgroundName));
 			break;
 		default:
-			_tcsncpy(fid.backgroundName, LPGENT("Incoming background"), SIZEOF(fid.backgroundName));
+			_tcsncpy(fid.backgroundName, LPGENT("Incoming background"), _countof(fid.backgroundName));
 			break;
 		}
 		FontRegisterT(&fid);
@@ -557,15 +557,15 @@ void RegisterFontServiceFonts()
 
 	fontOptionsList = IP_fontOptionsList;
 	fid.flags = FIDF_DEFAULTVALID | FIDF_ALLOWEFFECTS;
-	_tcsncpy(fid.group, LPGENT("Message Sessions")_T("/")LPGENT("Info Panel"), SIZEOF(fid.group));
-	_tcsncpy(fid.backgroundGroup, LPGENT("Message Sessions")_T("/")LPGENT("Info Panel"), SIZEOF(fid.backgroundGroup));
-	_tcsncpy(fid.backgroundName, LPGENT("Fields background"), SIZEOF(fid.backgroundName));
+	_tcsncpy(fid.group, LPGENT("Message Sessions")_T("/")LPGENT("Info Panel"), _countof(fid.group));
+	_tcsncpy(fid.backgroundGroup, LPGENT("Message Sessions")_T("/")LPGENT("Info Panel"), _countof(fid.backgroundGroup));
+	_tcsncpy(fid.backgroundName, LPGENT("Fields background"), _countof(fid.backgroundName));
 	for (int i = 0; i < IPFONTCOUNT; i++) {
 		LoadMsgDlgFont(FONTSECTION_IP, i + 100, &lf, &fontOptionsList[i].colour, FONTMODULE);
-		mir_snprintf(szTemp, SIZEOF(szTemp), "Font%d", i + 100);
-		strncpy(fid.prefix, szTemp, SIZEOF(fid.prefix));
+		mir_snprintf(szTemp, "Font%d", i + 100);
+		strncpy(fid.prefix, szTemp, _countof(fid.prefix));
 		fid.order = i + 100;
-		_tcsncpy(fid.name, fontOptionsList[i].szDescr, SIZEOF(fid.name));
+		_tcsncpy(fid.name, fontOptionsList[i].szDescr, _countof(fid.name));
 		fid.deffontsettings.colour = fontOptionsList[i].colour;
 		fid.deffontsettings.size = (char)lf.lfHeight;
 		fid.deffontsettings.style = (lf.lfWeight >= FW_BOLD ? FONTF_BOLD : 0) | (lf.lfItalic ? FONTF_ITALIC : 0);
@@ -574,20 +574,20 @@ void RegisterFontServiceFonts()
 		fid.deffontsettings.charset = lf.lfCharSet;
 		_tcsncpy(fid.deffontsettings.szFace, lf.lfFaceName, LF_FACESIZE);
 		if (i == IPFONTCOUNT - 1) {
-			_tcsncpy(fid.backgroundGroup, _T(""), SIZEOF(fid.backgroundGroup));
-			_tcsncpy(fid.backgroundName, _T(""), SIZEOF(fid.backgroundName));
-			_tcsncpy(fid.group, LPGENT("Message Sessions"), SIZEOF(fid.group));
+			_tcsncpy(fid.backgroundGroup, _T(""), _countof(fid.backgroundGroup));
+			_tcsncpy(fid.backgroundName, _T(""), _countof(fid.backgroundName));
+			_tcsncpy(fid.group, LPGENT("Message Sessions"), _countof(fid.group));
 		}
 		FontRegisterT(&fid);
 	}
 
-	_tcsncpy(cid.group, LPGENT("Message Sessions")_T("/")LPGENT("Group chats"), SIZEOF(cid.group));
-	strncpy(cid.dbSettingsGroup, CHAT_MODULE, SIZEOF(cid.dbSettingsGroup));
+	_tcsncpy(cid.group, LPGENT("Message Sessions")_T("/")LPGENT("Group chats"), _countof(cid.group));
+	strncpy(cid.dbSettingsGroup, CHAT_MODULE, _countof(cid.dbSettingsGroup));
 	for (int i = 0; i <= 7; i++) {
-		mir_snprintf(szTemp, SIZEOF(szTemp), "NickColor%d", i);
-		_tcsncpy(cid.name, chatcolorsnames[i], SIZEOF(cid.name));
+		mir_snprintf(szTemp, "NickColor%d", i);
+		_tcsncpy(cid.name, chatcolorsnames[i], _countof(cid.name));
 		cid.order = i + 1;
-		strncpy(cid.setting, szTemp, SIZEOF(cid.setting));
+		strncpy(cid.setting, szTemp, _countof(cid.setting));
 		switch (i) {
 		case 5:
 			cid.defcolour = GetSysColor(COLOR_HIGHLIGHT);
@@ -613,14 +613,14 @@ void RegisterFontServiceFonts()
 	ColourRegisterT(&cid);
 
 	// static colors (info panel, tool bar background etc...)
-	strncpy(fid.dbSettingsGroup, FONTMODULE, SIZEOF(fid.dbSettingsGroup));
-	strncpy(cid.dbSettingsGroup, FONTMODULE, SIZEOF(fid.dbSettingsGroup));
+	strncpy(fid.dbSettingsGroup, FONTMODULE, _countof(fid.dbSettingsGroup));
+	strncpy(cid.dbSettingsGroup, FONTMODULE, _countof(fid.dbSettingsGroup));
 
-	for (int i = 0; i < SIZEOF(_clrs); i++) {
+	for (int i = 0; i < _countof(_clrs); i++) {
 		cid.order = _clrs[i].order;
-		_tcsncpy(cid.group, _clrs[i].tszGroup, SIZEOF(fid.group));
-		_tcsncpy(cid.name, _clrs[i].tszName, SIZEOF(cid.name));
-		strncpy(cid.setting, _clrs[i].szSetting, SIZEOF(cid.setting));
+		_tcsncpy(cid.group, _clrs[i].tszGroup, _countof(fid.group));
+		_tcsncpy(cid.name, _clrs[i].tszName, _countof(cid.name));
+		strncpy(cid.setting, _clrs[i].szSetting, _countof(cid.setting));
 		if (_clrs[i].def & 0xff000000)
 			cid.defcolour = GetSysColor(_clrs[i].def & 0x000000ff);
 		else
@@ -628,14 +628,14 @@ void RegisterFontServiceFonts()
 		ColourRegisterT(&cid);
 	}
 
-	strncpy(cid.dbSettingsGroup, SRMSGMOD_T, SIZEOF(fid.dbSettingsGroup));
+	strncpy(cid.dbSettingsGroup, SRMSGMOD_T, _countof(fid.dbSettingsGroup));
 
 	// text and background colors for tabs
-	for (int i = 0; i < SIZEOF(_tabclrs); i++) {
+	for (int i = 0; i < _countof(_tabclrs); i++) {
 		cid.order = _tabclrs[i].order;
-		_tcsncpy(cid.group, _tabclrs[i].tszGroup, SIZEOF(fid.group));
-		_tcsncpy(cid.name, _tabclrs[i].tszName, SIZEOF(cid.name));
-		strncpy(cid.setting, _tabclrs[i].szSetting, SIZEOF(cid.setting));
+		_tcsncpy(cid.group, _tabclrs[i].tszGroup, _countof(fid.group));
+		_tcsncpy(cid.name, _tabclrs[i].tszName, _countof(cid.name));
+		strncpy(cid.setting, _tabclrs[i].szSetting, _countof(cid.setting));
 		if (_tabclrs[i].def & 0xff000000)
 			cid.defcolour = GetSysColor(_tabclrs[i].def & 0x000000ff);
 		else
@@ -689,42 +689,40 @@ INT_PTR CALLBACK DlgProcOptions2(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			SendDlgItemMessage(hwndDlg, IDC_CHAT_SPIN4, UDM_SETPOS, 0, MAKELONG(db_get_w(NULL, CHAT_MODULE, "LoggingLimit", 100), 0));
 			Utils::enableDlgControl(hwndDlg, IDC_LIMIT, g_Settings.bLoggingEnabled);
 
-			if (ServiceExists(MS_UTILS_REPLACEVARS)) {
-				TCHAR tszTooltipText[2048];
+			TCHAR tszTooltipText[2048];
 
-				mir_sntprintf(tszTooltipText, SIZEOF(tszTooltipText),
-					_T("%s - %s\n%s - %s\n%s - %s\n%s - %s\n\n")
-					_T("%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n\n")
-					_T("%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s"),
-					// contact vars
-					_T("%nick%"), TranslateT("nick of current contact (if defined)"),
-					_T("%proto%"), TranslateT("protocol name of current contact (if defined). Account name is used when protocol supports multiple accounts"),
-					_T("%accountname%"), TranslateT("user-defined account name of current contact (if defined)."),
-					_T("%userid%"), TranslateT("user ID of current contact (if defined). It is like UIN for ICQ, JID for Jabber, etc."),
-					// global vars
-					_T("%miranda_path%"), TranslateT("path to Miranda root folder"),
-					_T("%miranda_profilesdir%"), TranslateT("path to folder containing Miranda profiles"),
-					_T("%miranda_profilename%"), TranslateT("name of current Miranda profile (filename, without extension)"),
-					_T("%miranda_userdata%"), TranslateT("will return parsed string %miranda_profilesdir%\\%miranda_profilename%"),
-					_T("%miranda_logpath%"), TranslateT("will return parsed string %miranda_userdata%\\Logs"),
-					_T("%appdata%"), TranslateT("same as environment variable %APPDATA% for currently logged-on Windows user"),
-					_T("%username%"), TranslateT("username for currently logged-on Windows user"),
-					_T("%mydocuments%"), TranslateT("\"My Documents\" folder for currently logged-on Windows user"),
-					_T("%desktop%"), TranslateT("\"Desktop\" folder for currently logged-on Windows user"),
-					_T("%xxxxxxx%"), TranslateT("any environment variable defined in current Windows session (like %systemroot%, %allusersprofile%, etc.)"),
-					// date/time vars
-					_T("%d%"), TranslateT("day of month, 1-31"),
-					_T("%dd%"), TranslateT("day of month, 01-31"),
-					_T("%m%"), TranslateT("month number, 1-12"),
-					_T("%mm%"), TranslateT("month number, 01-12"),
-					_T("%mon%"), TranslateT("abbreviated month name"),
-					_T("%month%"), TranslateT("full month name"),
-					_T("%yy%"), TranslateT("year without century, 01-99"),
-					_T("%yyyy%"), TranslateT("year with century, 1901-9999"),
-					_T("%wday%"), TranslateT("abbreviated weekday name"),
-					_T("%weekday%"), TranslateT("full weekday name"));
-				hPathTip = CreateToolTip(GetDlgItem(hwndDlg, IDC_LOGDIRECTORY), tszTooltipText, TranslateT("Variables"));
-			}
+			mir_sntprintf(tszTooltipText, _countof(tszTooltipText),
+				_T("%s - %s\n%s - %s\n%s - %s\n%s - %s\n\n")
+				_T("%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n\n")
+				_T("%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s"),
+				// contact vars
+				_T("%nick%"), TranslateT("nick of current contact (if defined)"),
+				_T("%proto%"), TranslateT("protocol name of current contact (if defined). Account name is used when protocol supports multiple accounts"),
+				_T("%accountname%"), TranslateT("user-defined account name of current contact (if defined)."),
+				_T("%userid%"), TranslateT("user ID of current contact (if defined). It is like UIN for ICQ, JID for Jabber, etc."),
+				// global vars
+				_T("%miranda_path%"), TranslateT("path to Miranda root folder"),
+				_T("%miranda_profilesdir%"), TranslateT("path to folder containing Miranda profiles"),
+				_T("%miranda_profilename%"), TranslateT("name of current Miranda profile (filename, without extension)"),
+				_T("%miranda_userdata%"), TranslateT("will return parsed string %miranda_profilesdir%\\%miranda_profilename%"),
+				_T("%miranda_logpath%"), TranslateT("will return parsed string %miranda_userdata%\\Logs"),
+				_T("%appdata%"), TranslateT("same as environment variable %APPDATA% for currently logged-on Windows user"),
+				_T("%username%"), TranslateT("username for currently logged-on Windows user"),
+				_T("%mydocuments%"), TranslateT("\"My Documents\" folder for currently logged-on Windows user"),
+				_T("%desktop%"), TranslateT("\"Desktop\" folder for currently logged-on Windows user"),
+				_T("%xxxxxxx%"), TranslateT("any environment variable defined in current Windows session (like %systemroot%, %allusersprofile%, etc.)"),
+				// date/time vars
+				_T("%d%"), TranslateT("day of month, 1-31"),
+				_T("%dd%"), TranslateT("day of month, 01-31"),
+				_T("%m%"), TranslateT("month number, 1-12"),
+				_T("%mm%"), TranslateT("month number, 01-12"),
+				_T("%mon%"), TranslateT("abbreviated month name"),
+				_T("%month%"), TranslateT("full month name"),
+				_T("%yy%"), TranslateT("year without century, 01-99"),
+				_T("%yyyy%"), TranslateT("year with century, 1901-9999"),
+				_T("%wday%"), TranslateT("abbreviated weekday name"),
+				_T("%weekday%"), TranslateT("full weekday name"));
+			hPathTip = CreateToolTip(GetDlgItem(hwndDlg, IDC_LOGDIRECTORY), tszTooltipText, TranslateT("Variables"));
 		}
 		if (hPathTip)
 			SetTimer(hwndDlg, 0, 3000, NULL);
@@ -759,12 +757,12 @@ INT_PTR CALLBACK DlgProcOptions2(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 					*p1 = 0;
 
 			TCHAR tszInitialDir[_MAX_DRIVE + _MAX_PATH + 10];
-			mir_sntprintf(tszInitialDir, SIZEOF(tszInitialDir), _T("%s%s"), M.getChatLogPath(), p);
+			mir_sntprintf(tszInitialDir, _countof(tszInitialDir), _T("%s%s"), M.getChatLogPath(), p);
 			if (!PathFileExists(tszInitialDir))
 				_tcsncpy_s(tszInitialDir, M.getChatLogPath(), _TRUNCATE);
 
 			TCHAR	tszReturnName[MAX_PATH]; tszReturnName[0] = 0;
-			mir_sntprintf(tszTemp, SIZEOF(tszTemp), _T("%s%c*.*%c%c"), TranslateT("All files"), 0, 0, 0);
+			mir_sntprintf(tszTemp, _countof(tszTemp), _T("%s%c*.*%c%c"), TranslateT("All files"), 0, 0, 0);
 
 			OPENFILENAME ofn = { 0 };
 			ofn.lpstrInitialDir = tszInitialDir;
@@ -955,7 +953,7 @@ INT_PTR CALLBACK DlgProcOptions3(HWND hwndDlg, UINT uMsg, WPARAM, LPARAM lParam)
 			DWORD dwPopupFlags = M.GetDword(CHAT_MODULE, "PopupFlags", GC_EVENT_HIGHLIGHT);
 			DWORD dwLogFlags = M.GetDword(CHAT_MODULE, "DiskLogFlags", GC_EVENT_ALL);
 
-			for (int i = 0; i < SIZEOF(_eventorder); i++) {
+			for (int i = 0; i < _countof(_eventorder); i++) {
 				if (_eventorder[i] != GC_EVENT_HIGHLIGHT) {
 					CheckDlgButton(hwndDlg, IDC_1 + i, dwFilterFlags & _eventorder[i] ? BST_CHECKED : BST_UNCHECKED);
 					CheckDlgButton(hwndDlg, IDC_L1 + i, dwLogFlags & _eventorder[i] ? BST_CHECKED : BST_UNCHECKED);
@@ -987,7 +985,7 @@ INT_PTR CALLBACK DlgProcOptions3(HWND hwndDlg, UINT uMsg, WPARAM, LPARAM lParam)
 				DWORD dwFilterFlags = 0, dwTrayFlags = 0,
 					dwPopupFlags = 0, dwLogFlags = 0;
 
-				for (int i = 0; i < SIZEOF(_eventorder); i++) {
+				for (int i = 0; i < _countof(_eventorder); i++) {
 					if (_eventorder[i] != GC_EVENT_HIGHLIGHT) {
 						dwFilterFlags |= (IsDlgButtonChecked(hwndDlg, IDC_1 + i) ? _eventorder[i] : 0);
 						dwLogFlags |= (IsDlgButtonChecked(hwndDlg, IDC_L1 + i) ? _eventorder[i] : 0);

@@ -21,7 +21,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 class SendCapabilitiesRequest : public HttpRequest
 {
 public:
-	SendCapabilitiesRequest(const char *regToken, const char *endpointID, const char *server = SKYPE_ENDPOINTS_HOST) :
+	SendCapabilitiesRequest(const char *regToken, const char *endpointID, const char *hostname, const char *server = SKYPE_ENDPOINTS_HOST) :
 		HttpRequest(REQUEST_PUT, FORMAT, "%s/v1/users/ME/endpoints/%s/presenceDocs/messagingService", server, ptrA(mir_urlEncode(endpointID)))
 	{
 		Headers
@@ -29,39 +29,26 @@ public:
 			<< CHAR_VALUE("Content-Type", "application/json; charset=UTF-8")
 			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", regToken);
 
+		JSONNode privateInfo(JSON_NODE);
+		privateInfo.set_name("privateInfo");
+		privateInfo.push_back(JSONNode("epname", hostname));
 
-		char compName[MAX_COMPUTERNAME_LENGTH + 1];
-		DWORD size = SIZEOF(compName);
-		GetComputerNameA(compName, &size);
+		JSONNode publicInfo(JSON_NODE);
+		publicInfo.set_name("publicInfo");
+		publicInfo.push_back(JSONNode("capabilities", "Audio|Video"));
+		publicInfo.push_back(JSONNode("typ", 125));
+		publicInfo.push_back(JSONNode("skypeNameVersion", "Miranda NG Skype"));
+		publicInfo.push_back(JSONNode("nodeInfo", "xx"));
+		publicInfo.push_back(JSONNode("version", g_szMirVer));
 
-		JSONNODE *node = json_new(5);
-		JSONNODE *privateInfo = json_new(5);
-		JSONNODE *publicInfo = json_new(5);
+		JSONNode node(JSON_NODE);
+		node.push_back(JSONNode("id", "messagingService"));
+		node.push_back(JSONNode("type", "EndpointPresenceDoc"));
+		node.push_back(JSONNode("selfLink", "uri"));
+		node.push_back(privateInfo);
+		node.push_back(publicInfo);
 
-		json_set_name(privateInfo, "privateInfo");
-		json_set_name(publicInfo, "publicInfo");
-
-		json_push_back(node, json_new_a("id", "messagingService"));
-		json_push_back(node, json_new_a("type", "EndpointPresenceDoc"));
-		json_push_back(node, json_new_a("selfLink", "uri"));
-
-		json_push_back(privateInfo, json_new_a("epname", compName));
-
-		json_push_back(publicInfo, json_new_a("capabilities", "Audio|Video"));
-		json_push_back(publicInfo, json_new_i("typ", 125));
-		json_push_back(publicInfo, json_new_a("skypeNameVersion", "Miranda NG Skype"));
-		json_push_back(publicInfo, json_new_a("nodeInfo", "xx"));
-		json_push_back(publicInfo, json_new_a("version", g_szMirVer));
-
-		json_push_back(node, privateInfo);
-		json_push_back(node, publicInfo);
-
-		ptrA data(mir_utf8encodeT(ptrT(json_write(node))));
-
-		Body <<
-			VALUE(data);
-
-		json_delete(node);
+		Body << VALUE(node.write().c_str());
 	}
 };
 #endif //_SKYPE_REQUEST_CAPS_H_

@@ -119,7 +119,7 @@ public:
 			va_list vl;
 			
 			va_start(vl, szText);
-			if (mir_vsntprintf(buf, SIZEOF(buf), szText, vl) != -1)
+			if (mir_vsntprintf(buf, _countof(buf), szText, vl) != -1)
 			{
 				SetTitle(buf);	 
 			}
@@ -179,7 +179,7 @@ public:
 				}
 			
 				va_start(vl, szText);
-				if (mir_vsntprintf(buf, SIZEOF(buf), fmt, vl) != -1)
+				if (mir_vsntprintf(buf, _countof(buf), fmt, vl) != -1)
 				{
 					SetText(buf);	 
 				}
@@ -401,7 +401,7 @@ public:
 
 		_popupButtons[0].cbSize = sizeof(POPUPACTION);
 		_popupButtons[0].flags = PAF_ENABLED;
-		_popupButtons[0].lchIcon = Skin_GetIcon(ICO_BTN_DOWNARROW);
+		_popupButtons[0].lchIcon = IcoLib_GetIcon(ICO_BTN_DOWNARROW);
 		_popupButtons[0].wParam = MAKEWORD(IDSKIP, BN_CLICKED);
 		_popupButtons[0].lParam = NULL;
 		mir_strcpy(_popupButtons[0].lpzTitle, MODNAME"/Hide");
@@ -409,7 +409,7 @@ public:
 		// cancel button
 		_popupButtons[1].cbSize = sizeof(POPUPACTION);
 		_popupButtons[1].flags = PAF_ENABLED;
-		_popupButtons[1].lchIcon = Skin_GetIcon(ICO_BTN_CANCEL);
+		_popupButtons[1].lchIcon = IcoLib_GetIcon(ICO_BTN_CANCEL);
 		_popupButtons[1].wParam = MAKEWORD(IDCANCEL, BN_CLICKED);
 		_popupButtons[1].lParam = NULL;
 		mir_strcpy(_popupButtons[1].lpzTitle, MODNAME"/Cancel");
@@ -423,11 +423,11 @@ public:
 	{
 		POPUPDATAT_V2 pd = { 0 };
 		pd.cbSize = sizeof(pd);
-		pd.lchIcon = Skin_GetIcon(ICO_BTN_UPDATE);
+		pd.lchIcon = IcoLib_GetIcon(ICO_BTN_UPDATE);
 		pd.iSeconds = -1;
 		pd.PluginData = this;
 		pd.PluginWindowProc = CPopupUpdProgress::WndProc;
-		pd.actionCount = SIZEOF(_popupButtons);
+		pd.actionCount = _countof(_popupButtons);
 		pd.lpActions = _popupButtons;
 
 		// dummy text
@@ -609,13 +609,7 @@ class CContactUpdater : public CContactQueue
 
 		// reset menu
 		if (hMenuItemRefresh)
-		{
-			CLISTMENUITEM clmi = { sizeof(clmi) };
-			clmi.flags = CMIM_NAME|CMIM_ICON;
-			clmi.pszName = LPGEN("Refresh contact details");
-			clmi.hIcon = Skin_GetIcon(ICO_BTN_UPDATE);
-			Menu_ModifyItem(hMenuItemRefresh, &clmi);
-		}
+			Menu_ModifyItem(hMenuItemRefresh, LPGENT("Refresh contact details"), IcoLib_GetIcon(ICO_BTN_UPDATE));
 	}
 
 	/**
@@ -629,7 +623,7 @@ class CContactUpdater : public CContactQueue
 	 **/
 	virtual void Callback(MCONTACT hContact, PVOID param)
 	{
-		LPSTR	pszProto	= DB::Contact::Proto(hContact);
+		LPSTR	pszProto	= Proto_GetBaseAccountName(hContact);
 
 		if (pszProto && pszProto[0])
 		{
@@ -689,7 +683,7 @@ public:
 	 **/
 	BOOL QueueAddRefreshContact(MCONTACT hContact, int iWait)
 	{
-		LPSTR pszProto = DB::Contact::Proto(hContact);
+		LPSTR pszProto = Proto_GetBaseAccountName(hContact);
 
 		if ((mir_strcmp(pszProto, "Weather") != 0) && (mir_strcmp(pszProto, META_PROTO) != 0) && IsProtoOnline(pszProto))
 			return Add(iWait, hContact);
@@ -726,13 +720,7 @@ public:
 
 		// if there are contacts in the queue, change the main menu item to indicate it is meant for canceling.
 		if (hMenuItemRefresh && Size() > 0)
-		{
-			CLISTMENUITEM clmi = { sizeof(clmi) };
-			clmi.flags = CMIM_NAME|CMIM_ICON;
-			clmi.pszName = LPGEN("Abort Refreshing Contact Details");
-			clmi.hIcon = Skin_GetIcon(ICO_BTN_CANCEL);
-			Menu_ModifyItem(hMenuItemRefresh, &clmi);
-		}
+			Menu_ModifyItem(hMenuItemRefresh, LPGENT("Abort Refreshing Contact Details"), IcoLib_GetIcon(ICO_BTN_CANCEL));
 	}
 
 	/**
@@ -763,17 +751,14 @@ static CContactUpdater	*ContactUpdater = NULL;
  **/
 static BOOL IsMirandaOnline()
 {
-	PROTOACCOUNT **pAcc;
-	int i, nAccCount;
 	BOOL bIsOnline = FALSE;
+	PROTOACCOUNT **pAcc;
+	int nAccCount;
+	Proto_EnumAccounts(&nAccCount, &pAcc);
 
-	if (MIRSUCCEEDED(ProtoEnumAccounts(&nAccCount, &pAcc)))
-	{
-		for (i = 0; (i < nAccCount) && !bIsOnline; i++) 
-		{
-			bIsOnline |= (IsProtoAccountEnabled(pAcc[i]) && IsProtoOnline(pAcc[i]->szModuleName));
-		}
-	}
+	for (int i = 0; (i < nAccCount) && !bIsOnline; i++) 
+		bIsOnline |= (IsProtoAccountEnabled(pAcc[i]) && IsProtoOnline(pAcc[i]->szModuleName));
+
 	return bIsOnline;
 }
 

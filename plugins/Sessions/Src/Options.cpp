@@ -55,7 +55,7 @@ int OpLoadSessionContacts(WPARAM, LPARAM lparam)
 
 	int i;
 	for (i = 0; session_list_t[i] != 0; i++)
-		SendDlgItemMessage(g_opHdlg, IDC_OPCLIST, LB_ADDSTRING, 0, CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)session_list_t[i], GCDNF_TCHAR));
+		SendDlgItemMessage(g_opHdlg, IDC_OPCLIST, LB_ADDSTRING, 0, (LPARAM)pcli->pfnGetContactDisplayName(session_list_t[i], 0));
 
 	return i;
 }
@@ -155,8 +155,8 @@ static INT_PTR CALLBACK OptionsProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM l
 			opses_count = 0;
 			g_opHdlg = hdlg;
 			bOptionsInit = TRUE;
-			hMarked = Skin_GetIconByHandle(iconList[1].hIcolib);
-			hNotMarked = Skin_GetIconByHandle(iconList[2].hIcolib);
+			hMarked = IcoLib_GetIconByHandle(iconList[1].hIcolib);
+			hNotMarked = IcoLib_GetIconByHandle(iconList[2].hIcolib);
 
 			hIcon = (bChecked = IsMarkedUserDefSession(opses_count)) ? hMarked : hNotMarked;
 
@@ -378,7 +378,7 @@ static INT_PTR CALLBACK OptionsProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM l
 			if (bSesssionNameChanged) {
 				if (GetWindowTextLength(hComboBoxEdit)) {
 					TCHAR szUserSessionName[MAX_PATH] = { '\0' };
-					GetWindowText(hComboBoxEdit, szUserSessionName, SIZEOF(szUserSessionName));
+					GetWindowText(hComboBoxEdit, szUserSessionName, _countof(szUserSessionName));
 					RenameUserDefSession(opses_count, szUserSessionName);
 					SendDlgItemMessage(hdlg, IDC_LIST, CB_RESETCONTENT, 0, 0);
 					LoadSessionToCombobox(hdlg, 1, 255, "UserSessionDsc", 0);

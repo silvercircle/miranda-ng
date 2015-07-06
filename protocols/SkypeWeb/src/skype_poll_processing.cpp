@@ -17,12 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-void CSkypeProto::ProcessEndpointPresenceRes(JSONNODE *node)
+void CSkypeProto::ProcessEndpointPresenceRes(const JSONNode &node)
 {
 	debugLogA("CSkypeProto::ProcessEndpointPresenceRes");
-	ptrA selfLink(mir_t2a(ptrT(json_as_string(json_get(node, "selfLink")))));
-	ptrA skypename(ContactUrlToName(selfLink));
-	if (skypename == NULL)
+	std::string selfLink = node["selfLink"].as_string();
+	CMStringA skypename(ContactUrlToName(selfLink.c_str()));
+	if (skypename.IsEmpty())
 		return;
 
 	MCONTACT hContact = FindContact(skypename);
@@ -31,17 +31,17 @@ void CSkypeProto::ProcessEndpointPresenceRes(JSONNODE *node)
 
 	//"publicInfo":{"capabilities":"","typ":"11","skypeNameVersion":"0/7.1.0.105//","nodeInfo":"","version":"24"}
 	//"privateInfo": {"epname": "Skype"}
-	JSONNODE *publicInfo = json_get(node, "publicInfo");
-	JSONNODE *privateInfo = json_get(node, "privateInfo");
+	const JSONNode &publicInfo = node["publicInfo"];
+	const JSONNode &privateInfo = node["privateInfo"];
 	CMStringA MirVer = "";
-	if (publicInfo != NULL)
+	if (publicInfo)
 	{
-		ptrA skypeNameVersion(mir_t2a(ptrT(json_as_string(json_get(publicInfo, "skypeNameVersion")))));
-		ptrA version(mir_t2a(ptrT(json_as_string(json_get(publicInfo, "version")))));
-		ptrA typ(mir_t2a(ptrT(json_as_string(json_get(publicInfo, "typ")))));
-		if (typ != NULL)
+		std::string skypeNameVersion = publicInfo["skypeNameVersion"].as_string();
+		std::string version = publicInfo["version"].as_string();
+		std::string typ = publicInfo["typ"].as_string();
+		if (!typ.empty())
 		{
-			int iTyp = atoi(typ);
+			int iTyp = atoi(typ.c_str());
 			switch (iTyp)
 			{
 			case 17:
@@ -76,52 +76,53 @@ void CSkypeProto::ProcessEndpointPresenceRes(JSONNODE *node)
 				break;
 			default:
 				{
-					if (!mir_strcmpi(typ, "website"))
+					if (!mir_strcmpi(typ.c_str(), "website"))
 						MirVer.Append("Skype (Outlook)");
 					else
 						MirVer.Append("Skype (Unknown)");
 					break;
 				}
 			}
+			MirVer.AppendChar(' ');
 			if (iTyp == 125)
-				MirVer.AppendFormat(" %s", version);
+				MirVer.Append(version.c_str());
 			else
-				MirVer.AppendFormat(" %s", ParseUrl(skypeNameVersion, "/"));	
+				MirVer.Append(ParseUrl(skypeNameVersion.c_str(), "/"));
 		}
 	}
 	if (privateInfo != NULL)
 	{
-		ptrA epname(mir_t2a(ptrT(json_as_string(json_get(privateInfo, "epname")))));
-		if (epname != NULL && *epname)
+		std::string epname = privateInfo["epname"].as_string();
+		if (!epname.empty())
 		{
-			MirVer.AppendFormat(" [%s]", epname);
+			MirVer.AppendFormat(" [%s]", epname.c_str());
 		}
 	}
 	db_set_s(hContact, m_szModuleName, "MirVer", MirVer);
 }
 
-void CSkypeProto::ProcessUserPresenceRes(JSONNODE *node)
+void CSkypeProto::ProcessUserPresenceRes(const JSONNode &node)
 {
 	debugLogA("CSkypeProto::ProcessUserPresenceRes");
 
-	ptrA selfLink(mir_t2a(ptrT(json_as_string(json_get(node, "selfLink")))));
-	ptrA status(mir_t2a(ptrT(json_as_string(json_get(node, "status")))));
-	ptrA skypename;
+	std::string selfLink = node["selfLink"].as_string();
+	std::string status = node["status"].as_string();
+	CMStringA skypename;
 
-	if (strstr(selfLink, "/8:"))
+	if (selfLink.find("/8:") != std::string::npos)
 	{
-		skypename = ContactUrlToName(selfLink);
+		skypename = ContactUrlToName(selfLink.c_str());
 	}
-	else if (strstr(selfLink, "/1:"))
+	else if (selfLink.find("/1:") != std::string::npos)
 	{
-		skypename = SelfUrlToName(selfLink);
+		skypename = SelfUrlToName(selfLink.c_str());
 	}
 
-	if (skypename != NULL)
+	if (!skypename.IsEmpty())
 	{
 		if (IsMe(skypename))
 		{
-			int iNewStatus = SkypeToMirandaStatus(status);
+			int iNewStatus = SkypeToMirandaStatus(status.c_str());
 			int old_status = m_iStatus;
 			m_iDesiredStatus = iNewStatus;
 			m_iStatus = iNewStatus;
@@ -131,60 +132,24 @@ void CSkypeProto::ProcessUserPresenceRes(JSONNODE *node)
 		}
 		else
 		{
-			MCONTACT hContact = AddContact(skypename, true);
-			SetContactStatus(hContact, SkypeToMirandaStatus(status));
+			MCONTACT hContact = FindContact(skypename);
+			if (hContact != NULL)
+				SetContactStatus(hContact, SkypeToMirandaStatus(status.c_str()));
 		}
 	}
 }
 
-void CSkypeProto::ProcessNewMessageRes(JSONNODE *node)
+void CSkypeProto::ProcessNewMessageRes(const JSONNode &node)
 {
 	debugLogA("CSkypeProto::ProcessNewMessageRes");
 
-	ptrA conversationLink(mir_t2a(ptrT(json_as_string(json_get(node, "conversationLink")))));
+	std::string conversationLink = node["conversationLink"].as_string();
 
-	if (strstr(conversationLink, "/8:"))
+	if (conversationLink.find("/8:") != std::string::npos)
 		OnPrivateMessageEvent(node);
-	else if (strstr(conversationLink, "/19:"))
+	else if (conversationLink.find("/19:") != std::string::npos)
 		OnChatEvent(node);
 }
 
-void CSkypeProto::ProcessConversationUpdateRes(JSONNODE *node)
-{
-	/*JSONNODE *lastMessage = json_get(node, "lastMessage");
-	JSONNODE *properties = json_get(node, "properties");
-
-	ptrA convLink(mir_t2a(json_as_string(json_get(lastMessage, "conversationLink"))));
-	ptrA fromLink(mir_t2a(json_as_string(json_get(lastMessage, "from"))));
-
-	if (strstr(convLink, "/8:") && IsMe(ContactUrlToName(fromLink)))
-	{
-		ptrA skypename(ContactUrlToName(convLink));
-		MCONTACT hContact = FindContact(skypename);
-
-		if (hContact != NULL)
-		{
-			CMStringA consumptionhorizon(mir_t2a(json_as_string(json_get(properties, "consumptionhorizon"))));
-
-			int iStart = 0;
-			CMStringA szToken1 = consumptionhorizon.Tokenize(";", iStart).Trim();
-
-			if (iStart != -1)
-			{
-				CMStringA szToken2 = consumptionhorizon.Tokenize(";", iStart).Trim();
-
-				szToken2.Truncate(szToken2.GetLength() - 3);
-
-				time_t evttime = atoi(szToken2.GetBuffer());
-				db_set_dw(hContact, m_szModuleName, "LastMsgReadTime", evttime);
-
-				//SetSrmmReadStatus(hContact);
-			}
-		}
-	}*/
-}
-
-void CSkypeProto::ProcessThreadUpdateRes(JSONNODE *node)
-{
-	return;
-}
+void CSkypeProto::ProcessConversationUpdateRes(const JSONNode&){}
+void CSkypeProto::ProcessThreadUpdateRes(const JSONNode&){}

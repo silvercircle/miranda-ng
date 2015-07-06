@@ -38,6 +38,27 @@ ToxHexAddress ResolveToxAddressFromDnsRecordV3(void *dns, uint32_t requestId, co
 	return ToxHexAddress::Empty();
 }
 
+ToxHexAddress ResolveToxAddressFromDns(const char *dnsQuery)
+{
+	ToxHexAddress address = ToxHexAddress::Empty();
+
+	DNS_RECORDA *record = NULL;
+	DNS_STATUS status = DnsQuery_A(dnsQuery, DNS_TYPE_TEXT, DNS_QUERY_STANDARD, NULL, (PDNS_RECORD*)&record, NULL);
+	while (status == ERROR_SUCCESS && record)
+	{
+		DNS_TXT_DATAA *txt = &record->Data.Txt;
+		if (record->wType == DNS_TYPE_TEXT && txt->dwStringCount)
+		{
+			address = ResolveToxAddressFromDnsRecordV1(txt->pStringArray[0]);
+			break;
+		}
+		record = record->pNext;
+	}
+	DnsRecordListFree((PDNS_RECORD*)record, DnsFreeRecordList);
+
+	return address;
+}
+
 void CToxProto::SearchByNameAsync(void *arg)
 {
 	char *query = (char*)arg;
@@ -51,17 +72,17 @@ void CToxProto::SearchByNameAsync(void *arg)
 		char fileName[MAX_PATH];
 		mir_strcpy(fileName, VARS(TOX_INI_PATH));
 
-		char *section, sections[MAX_PATH], value[MAX_PATH];
-		GetPrivateProfileSectionNamesA(sections, SIZEOF(sections), fileName);
+		char *section, sections[MAX_PATH], value[TOX_PUBLIC_KEY_SIZE * 2];
+		GetPrivateProfileSectionNamesA(sections, _countof(sections), fileName);
 		section = sections;
 		while (*section != NULL)
 		{
 			if (strstr(section, "Dns_") == section)
 			{
-				GetPrivateProfileStringA(section, "Domain", NULL, value, SIZEOF(value), fileName);
+				GetPrivateProfileStringA(section, "Domain", NULL, value, _countof(value), fileName);
 				ptrA dnsDomain(mir_strdup(value));
-				GetPrivateProfileStringA(section, "PubKey", NULL, value, SIZEOF(value), fileName);
-				ToxBinAddress dnsPubKey(value);
+				GetPrivateProfileStringA(section, "PubKey", NULL, value, _countof(value), fileName);
+				ToxBinAddress dnsPubKey = value;
 
 				if (domain == NULL || mir_strcmpi(domain, dnsDomain) == 0)
 				{
@@ -74,36 +95,23 @@ void CToxProto::SearchByNameAsync(void *arg)
 					{
 						dnsString[length] = 0;
 						char dnsQuery[MAX_PATH * 2];
-						mir_snprintf(dnsQuery, SIZEOF(dnsQuery), "_%s._tox.%s", dnsString, dnsDomain);
+						mir_snprintf(dnsQuery, _countof(dnsQuery), "_%s._tox.%s", dnsString, dnsDomain);
 
-						DNS_RECORDA *record = NULL;
-						DNS_STATUS status = DnsQuery_A(dnsQuery, DNS_TYPE_TEXT, 0, NULL, (PDNS_RECORD*)&record, NULL);
-						while (status == ERROR_SUCCESS && record)
+						ToxHexAddress address = ResolveToxAddressFromDns(dnsQuery);
+						if (!address.IsEmpty())
 						{
-							DNS_TXT_DATAA *txt = &record->Data.Txt;
-							if (record->wType == DNS_TYPE_TEXT && txt->dwStringCount)
-							{
-								ToxHexAddress address = ResolveToxAddressFromDnsRecordV3(dns, requestId, txt->pStringArray[0]);
-								if (!address.IsEmpty())
-								{
-									PROTOSEARCHRESULT psr = { sizeof(PROTOSEARCHRESULT) };
-									psr.flags = PSR_TCHAR;
-									psr.id = mir_a2t(address);
-									psr.nick = mir_utf8decodeT(name);
+							PROTOSEARCHRESULT psr = { sizeof(PROTOSEARCHRESULT) };
+							psr.flags = PSR_UTF8;
+							psr.id.a = mir_strdup(address);
+							psr.nick.a = mir_strdup(name);
 
-									TCHAR email[MAX_PATH];
-									mir_sntprintf(email, SIZEOF(email), _T("%s@%s"), psr.nick, _A2T(dnsDomain));
-									psr.email = mir_tstrdup(email);
+							char email[MAX_PATH];
+							mir_snprintf(email, _countof(email), "%s@%s", name, domain);
+							psr.email.a = mir_strdup(email);
 
-									ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)1, (LPARAM)&psr);
-
-									resolved++;
-									break;
-								}
-							}
-							record = record->pNext;
+							ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)1, (LPARAM)&psr);
+							break;
 						}
-						DnsRecordListFree((PDNS_RECORD*)record, DnsFreeRecordList);
 					}
 					tox_dns3_kill(dns);
 				}
@@ -115,34 +123,22 @@ void CToxProto::SearchByNameAsync(void *arg)
 	if (resolved == 0 && domain)
 	{
 		char dnsQuery[MAX_PATH];
-		mir_snprintf(dnsQuery, SIZEOF(dnsQuery), "%s._tox.%s", name, domain);
+		mir_snprintf(dnsQuery, _countof(dnsQuery), "%s._tox.%s", name, domain);
 
-		DNS_RECORDA *record = NULL;
-		DNS_STATUS status = DnsQuery_A(dnsQuery, DNS_TYPE_TEXT, DNS_QUERY_STANDARD, NULL, (PDNS_RECORD*)&record, NULL);
-		while (status == ERROR_SUCCESS && record)
+		ToxHexAddress address = ResolveToxAddressFromDns(dnsQuery);
+		if (!address.IsEmpty())
 		{
-			DNS_TXT_DATAA *txt = &record->Data.Txt;
-			if (record->wType == DNS_TYPE_TEXT && txt->dwStringCount)
-			{
-				ToxHexAddress address = ResolveToxAddressFromDnsRecordV1(txt->pStringArray[0]);
-				if (!address.IsEmpty())
-				{
-					PROTOSEARCHRESULT psr = { sizeof(PROTOSEARCHRESULT) };
-					psr.flags = PSR_TCHAR;
-					psr.id = mir_a2t(address);
-					psr.nick = mir_utf8decodeT(name);
+			PROTOSEARCHRESULT psr = { sizeof(PROTOSEARCHRESULT) };
+			psr.flags = PSR_UTF8;
+			psr.id.a = mir_strdup(address);
+			psr.nick.a = mir_strdup(name);
 
-					TCHAR email[MAX_PATH];
-					mir_sntprintf(email, SIZEOF(email), _T("%s@%s"), psr.nick, _A2T(domain));
-					psr.email = mir_tstrdup(email);
+			char email[MAX_PATH];
+			mir_snprintf(email, _countof(email), "%s@%s", name, domain);
+			psr.email.a = mir_strdup(email);
 
-					ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)1, (LPARAM)&psr);
-					break;
-				}
-			}
-			record = record->pNext;
+			ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)1, (LPARAM)&psr);
 		}
-		DnsRecordListFree((PDNS_RECORD*)record, DnsFreeRecordList);
 	}
 
 	ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE)1, 0);
@@ -188,7 +184,7 @@ HWND CToxProto::OnSearchAdvanced(HWND owner)
 	std::regex regex("^\\s*([A-Fa-f0-9]{76})\\s*$");
 
 	TCHAR text[MAX_PATH];
-	GetDlgItemText(owner, IDC_SEARCH, text, SIZEOF(text));
+	GetDlgItemText(owner, IDC_SEARCH, text, _countof(text));
 
 	const std::string query = T2Utf(text);
 	if (std::regex_search(query, match, regex))
@@ -196,8 +192,8 @@ HWND CToxProto::OnSearchAdvanced(HWND owner)
 		std::string address = match[1];
 
 		PROTOSEARCHRESULT psr = { sizeof(psr) };
-		psr.flags = PSR_TCHAR;
-		psr.id = mir_a2t(query.c_str());
+		psr.flags = PSR_UTF8;
+		psr.id.a = mir_strdup(query.c_str());
 
 		ADDCONTACTSTRUCT acs = { HANDLE_SEARCHRESULT };
 		acs.szProto = m_szModuleName;
@@ -211,13 +207,9 @@ HWND CToxProto::OnSearchAdvanced(HWND owner)
 	{
 		regex = "^\\s*(([^ @/:;()\"']+)(@[A-Za-z]+.[A-Za-z]{2,6})?)\\s*$";
 		if (std::regex_search(query, match, regex))
-		{
 			ForkThread(&CToxProto::SearchByNameAsync, mir_strdup(query.c_str()));
-		}
 		else
-		{
 			ForkThread(&CToxProto::SearchFailedAsync, NULL);
-		}
 	}
 	return (HWND)1;
 }

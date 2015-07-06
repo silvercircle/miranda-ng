@@ -53,22 +53,22 @@ static BYTE MsgDlgGetFontDefaultCharset(const TCHAR* szFont)
 
 bool LoadMsgDlgFont(int i, LOGFONT* lf, COLORREF * colour)
 {
-	if (i >= SIZEOF(fontOptionsList))
+	if (i >= _countof(fontOptionsList))
 		return false;
 
 	char str[32];
 
 	if (colour) {
-		mir_snprintf(str, SIZEOF(str), "SRMFont%dCol", i);
+		mir_snprintf(str, "SRMFont%dCol", i);
 		*colour = db_get_dw(NULL, SRMMMOD, str, fontOptionsList[i].defColour);
 	}
 	if (lf) {
-		mir_snprintf(str, SIZEOF(str), "SRMFont%dSize", i);
+		mir_snprintf(str, "SRMFont%dSize", i);
 		lf->lfHeight = (char)db_get_b(NULL, SRMMMOD, str, fontOptionsList[i].defSize);
 		lf->lfWidth = 0;
 		lf->lfEscapement = 0;
 		lf->lfOrientation = 0;
-		mir_snprintf(str, SIZEOF(str), "SRMFont%dSty", i);
+		mir_snprintf(str, "SRMFont%dSty", i);
 		int style = db_get_b(NULL, SRMMMOD, str, fontOptionsList[i].defStyle);
 		lf->lfWeight = style & DBFONTF_BOLD ? FW_BOLD : FW_NORMAL;
 		lf->lfItalic = style & DBFONTF_ITALIC ? 1 : 0;
@@ -78,16 +78,16 @@ bool LoadMsgDlgFont(int i, LOGFONT* lf, COLORREF * colour)
 		lf->lfClipPrecision = CLIP_DEFAULT_PRECIS;
 		lf->lfQuality = DEFAULT_QUALITY;
 		lf->lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
-		mir_snprintf(str, SIZEOF(str), "SRMFont%d", i);
+		mir_snprintf(str, "SRMFont%d", i);
 
 		DBVARIANT dbv;
 		if (db_get_ts(NULL, SRMMMOD, str, &dbv))
-			_tcsncpy(lf->lfFaceName, fontOptionsList[i].szDefFace, SIZEOF(lf->lfFaceName)-1);
+			_tcsncpy(lf->lfFaceName, fontOptionsList[i].szDefFace, _countof(lf->lfFaceName)-1);
 		else {
-			mir_tstrncpy(lf->lfFaceName, dbv.ptszVal, SIZEOF(lf->lfFaceName));
+			mir_tstrncpy(lf->lfFaceName, dbv.ptszVal, _countof(lf->lfFaceName));
 			db_free(&dbv);
 		}
-		mir_snprintf(str, SIZEOF(str), "SRMFont%dSet", i);
+		mir_snprintf(str, "SRMFont%dSet", i);
 		lf->lfCharSet = db_get_b(NULL, SRMMMOD, str, MsgDlgGetFontDefaultCharset(lf->lfFaceName));
 	}
 	return true;
@@ -99,11 +99,11 @@ void RegisterSRMMFonts(void)
 
 	FontIDT fontid = { sizeof(fontid) };
 	fontid.flags = FIDF_ALLOWREREGISTER | FIDF_DEFAULTVALID;
-	for (int i = 0; i < SIZEOF(fontOptionsList); i++) {
+	for (int i = 0; i < _countof(fontOptionsList); i++) {
 		strncpy_s(fontid.dbSettingsGroup, SRMMMOD, _TRUNCATE);
 		_tcsncpy_s(fontid.group, LPGENT("Message log"), _TRUNCATE);
 		_tcsncpy_s(fontid.name, fontOptionsList[i].szDescr, _TRUNCATE);
-		mir_snprintf(idstr, SIZEOF(idstr), "SRMFont%d", i);
+		mir_snprintf(idstr, "SRMFont%d", i);
 		strncpy_s(fontid.prefix, idstr, _TRUNCATE);
 		fontid.order = i;
 
@@ -190,7 +190,7 @@ static INT_PTR CALLBACK DlgProcOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			DWORD avatarHeight, msgTimeout;
 
 			SetWindowLongPtr(GetDlgItem(hwndDlg, IDC_POPLIST), GWL_STYLE, GetWindowLongPtr(GetDlgItem(hwndDlg, IDC_POPLIST), GWL_STYLE) | TVS_NOHSCROLL | TVS_CHECKBOXES);
-			FillCheckBoxTree(GetDlgItem(hwndDlg, IDC_POPLIST), statusValues, SIZEOF(statusValues), db_get_dw(NULL, SRMMMOD, SRMSGSET_POPFLAGS, SRMSGDEFSET_POPFLAGS));
+			FillCheckBoxTree(GetDlgItem(hwndDlg, IDC_POPLIST), statusValues, _countof(statusValues), db_get_dw(NULL, SRMMMOD, SRMSGSET_POPFLAGS, SRMSGDEFSET_POPFLAGS));
 			CheckDlgButton(hwndDlg, IDC_DONOTSTEALFOCUS, db_get_b(NULL, SRMMMOD, SRMSGSET_DONOTSTEALFOCUS, SRMSGDEFSET_DONOTSTEALFOCUS) ? BST_CHECKED : BST_UNCHECKED);
 			SetDlgItemInt(hwndDlg, IDC_NFLASHES, db_get_b(NULL, SRMMMOD, SRMSGSET_FLASHCOUNT, SRMSGDEFSET_FLASHCOUNT), FALSE);
 			CheckDlgButton(hwndDlg, IDC_SHOWBUTTONLINE, g_dat.flags&SMF_SHOWBTNS ? BST_CHECKED : BST_UNCHECKED);
@@ -589,7 +589,7 @@ static int ModernOptInitialise(WPARAM wParam, LPARAM lParam)
 
 	MODERNOPTOBJECT obj = { sizeof(obj) };
 	obj.dwFlags = MODEROPT_FLG_TCHAR | MODEROPT_FLG_NORESIZE;
-	obj.hIcon = LoadSkinnedIcon(SKINICON_EVENT_MESSAGE);
+	obj.hIcon = Skin_LoadIcon(SKINICON_EVENT_MESSAGE);
 	obj.hInstance = g_hInst;
 	obj.iSection = MODERNOPT_PAGE_MSGS;
 	obj.iType = MODERNOPT_TYPE_SECTIONPAGE;

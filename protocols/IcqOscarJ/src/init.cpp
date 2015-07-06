@@ -30,7 +30,6 @@
 
 HINSTANCE hInst;
 int hLangpack;
-TIME_API tmi;
 CLIST_INTERFACE *pcli;
 bool g_bTerminated;
 
@@ -96,18 +95,18 @@ extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
 	mir_getCLI();
-	mir_getTMI(&tmi);
 
 	srand(time(NULL));
 	_tzset();
 
 	// Register the module
-	PROTOCOLDESCRIPTOR pd = { sizeof(pd) };
+	PROTOCOLDESCRIPTOR pd = { 0 };
+	pd.cbSize = sizeof(pd);
 	pd.szName = ICQ_PROTOCOL_NAME;
 	pd.type = PROTOTYPE_PROTOCOL;
 	pd.fnInit = icqProtoInit;
 	pd.fnUninit = icqProtoUninit;
-	CallService(MS_PROTO_REGISTERMODULE, 0, (LPARAM)&pd);
+	Proto_RegisterModule(&pd);
 
 	// Initialize charset conversion routines
 	InitI18N();
@@ -170,7 +169,6 @@ void CIcqProto::UpdateGlobalSettings()
 	m_bSecureLogin = getByte("SecureLogin", DEFAULT_SECURE_LOGIN);
 	m_bLegacyFix = getByte("LegacyFix", DEFAULT_LEGACY_FIX);
 	m_bAimEnabled = getByte("AimEnabled", DEFAULT_AIM_ENABLED);
-	m_bUtfEnabled = getByte("UtfEnabled", DEFAULT_UTF_ENABLED);
 	m_wAnsiCodepage = getWord("AnsiCodePage", DEFAULT_ANSI_CODEPAGE);
 	m_bDCMsgEnabled = getByte("DirectMessaging", DEFAULT_DCMSG_ENABLED);
 	m_bTempVisListEnabled = getByte("TempVisListEnabled", DEFAULT_TEMPVIS_ENABLED);

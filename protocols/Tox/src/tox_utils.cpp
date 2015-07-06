@@ -46,7 +46,7 @@ void CToxProto::ShowNotification(const TCHAR *caption, const TCHAR *message, int
 		ppd.lchContact = hContact;
 		wcsncpy(ppd.lpwzContactName, caption, MAX_CONTACTNAME);
 		wcsncpy(ppd.lpwzText, message, MAX_SECONDLINE);
-		ppd.lchIcon = Skin_GetIcon("Tox_main");
+		ppd.lchIcon = IcoLib_GetIcon("Tox_main");
 
 		if (!PUAddPopupT(&ppd))
 			return;
@@ -65,14 +65,50 @@ bool CToxProto::IsFileExists(std::tstring path)
 	return _taccess(path.c_str(), 0) == 0;
 }
 
-MEVENT CToxProto::AddEventToDb(MCONTACT hContact, WORD type, DWORD timestamp, DWORD flags, PBYTE pBlob, DWORD cbBlob)
+MEVENT CToxProto::AddEventToDb(MCONTACT hContact, WORD type, DWORD timestamp, DWORD flags, PBYTE pBlob, size_t cbBlob)
 {
 	DBEVENTINFO dbei = { sizeof(dbei) };
 	dbei.szModule = this->m_szModuleName;
 	dbei.timestamp = timestamp;
 	dbei.eventType = type;
-	dbei.cbBlob = cbBlob;
+	dbei.cbBlob = (DWORD)cbBlob;
 	dbei.pBlob = pBlob;
 	dbei.flags = flags;
 	return db_event_add(hContact, &dbei);
+}
+
+INT_PTR CToxProto::ParseToxUri(WPARAM, LPARAM lParam)
+{
+	TCHAR *uri = (TCHAR*)lParam;
+	if (mir_tstrlen(uri) <= 4)
+		return 1;
+
+	if (Accounts.getCount() == 0)
+		return 1;
+
+	CToxProto *proto = NULL;
+	for (int i = 0; i < Accounts.getCount(); i++)
+	{
+		if (Accounts[i]->IsOnline())
+		{
+			proto = Accounts[i];
+			break;
+		}
+	}
+	if (proto == NULL)
+		return 1;
+
+	if (_tcschr(uri, _T('@')) != NULL)
+		return 1;
+
+	PROTOSEARCHRESULT psr = { sizeof(psr) };
+	psr.flags = PSR_UTF8;
+	psr.id.a = mir_t2a(&uri[4]);
+
+	ADDCONTACTSTRUCT acs = { HANDLE_SEARCHRESULT };
+	acs.szProto = proto->m_szModuleName;
+	acs.psr = &psr;
+
+	CallService(MS_ADDCONTACT_SHOW, 0, (LPARAM)&acs);
+	return 0;
 }

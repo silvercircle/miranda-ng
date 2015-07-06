@@ -146,15 +146,14 @@ int PrebuildContactMenu(WPARAM hContact, LPARAM lParam)
 	char *proto = GetContactProto(hContact);
 	bool chat_room = (proto && db_get_b(hContact, proto, "ChatRoom", 0) != 0);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.flags = CMIM_FLAGS | CMIF_TCHAR;
-	if (chat_room) mi.flags |= CMIF_HIDDEN;
+	if (chat_room)
+		Menu_ShowItem(hMenuToggle, false);
 	else {
-		mi.flags |= (CMIM_NAME | CMIM_ICON);
-		mi.ptszName = (remove ? LPGENT("Enable History") : LPGENT("Disable History"));
-		mi.hIcon = (remove ? hIconKeep : hIconRemove);
+		if (remove)
+			Menu_ModifyItem(hMenuToggle, LPGENT("Enable History"), hIconKeep);
+		else
+			Menu_ModifyItem(hMenuToggle, LPGENT("Disable History"), hIconRemove);
 	}
-	Menu_ModifyItem(hMenuToggle, &mi);
 
 	Menu_ShowItem(hMenuClear, !chat_room && db_event_count(hContact) > 0);
 	return 0;
@@ -246,19 +245,19 @@ void SrmmMenu_Load()
 int ModulesLoaded(WPARAM wParam, LPARAM lParam)
 {
 	// create contact menu item
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.flags = CMIF_TCHAR;
 
 	mi.position = -300010;
-	mi.ptszName = LPGENT("Disable History");
+	mi.name.t = LPGENT("Disable History");
 	mi.pszService = MS_NOHISTORY_TOGGLE;
-	mi.hIcon = hIconRemove;
+	mi.hIcolibItem = hIconRemove;
 	hMenuToggle = Menu_AddContactMenuItem(&mi);
 
 	mi.position = -300005;
-	mi.ptszName = LPGENT("Clear History");
+	mi.name.t = LPGENT("Clear History");
 	mi.pszService = MS_NOHISTORY_CLEAR;
-	mi.hIcon = hIconClear;
+	mi.hIcolibItem = hIconClear;
 	hMenuClear = Menu_AddContactMenuItem(&mi);
 
 	// add icon to srmm status icons

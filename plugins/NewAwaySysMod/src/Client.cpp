@@ -32,7 +32,7 @@ void __cdecl UpdateMsgsThreadProc(void *)
 {
 	int numAccs;
 	PROTOACCOUNT **accs;
-	ProtoEnumAccounts(&numAccs, &accs);
+	Proto_EnumAccounts(&numAccs, &accs);
 
 	while (WaitForSingleObject(g_hTerminateUpdateMsgsThread, 0) == WAIT_TIMEOUT && !Miranda_Terminated()) {
 		DWORD MinUpdateTimeDifference = g_MoreOptPage.GetDBValueCopy(IDC_MOREOPTDLG_UPDATEMSGSPERIOD) * 1000; // in milliseconds
@@ -47,7 +47,7 @@ void __cdecl UpdateMsgsThreadProc(void *)
 					TCString CurMsg(GetDynamicStatMsg(INVALID_CONTACT_ID, p->szModuleName));
 					if ((TCString)g_ProtoStates[p->szModuleName].CurStatusMsg != (const TCHAR*)CurMsg) { // if the message has changed
 						g_ProtoStates[p->szModuleName].CurStatusMsg = CurMsg;
-						CallAllowedPS_SETAWAYMSG(p->szModuleName, Status, (char*)_T2A(CurMsg));
+						CallAllowedPS_SETAWAYMSG(p->szModuleName, Status, CurMsg);
 					}
 				}
 			}
@@ -86,20 +86,20 @@ void ChangeProtoMessages(char* szProto, int iMode, TCString &Msg)
 		if (Msg == NULL)
 			CurMsg = GetDynamicStatMsg(INVALID_CONTACT_ID, szProto);
 
-		CallAllowedPS_SETAWAYMSG(szProto, iMode, (char*)_T2A(CurMsg));
+		CallAllowedPS_SETAWAYMSG(szProto, iMode, CurMsg);
 		g_ProtoStates[szProto].CurStatusMsg = CurMsg;
 	}
 	else { // change message of all protocols
 		int numAccs;
 		PROTOACCOUNT **accs;
-		ProtoEnumAccounts(&numAccs, &accs);
+		Proto_EnumAccounts(&numAccs, &accs);
 		for (int i = 0; i < numAccs; i++) {
 			PROTOACCOUNT *p = accs[i];
 			if (!db_get_b(NULL, p->szModuleName, "LockMainStatus", 0)) {
 				if (Msg == NULL)
 					CurMsg = GetDynamicStatMsg(INVALID_CONTACT_ID, p->szModuleName);
 
-				CallAllowedPS_SETAWAYMSG(p->szModuleName, iMode, (char*)_T2A(CurMsg));
+				CallAllowedPS_SETAWAYMSG(p->szModuleName, iMode, CurMsg);
 				g_ProtoStates[p->szModuleName].CurStatusMsg = CurMsg;
 			}
 		}
@@ -123,7 +123,7 @@ void ChangeProtoMessages(char* szProto, int iMode, TCString &Msg)
 		ID_STATUS_IDLE, "Idl"
 	};
 
-	for (int i = 0; i < SIZEOF(StatusSettings); i++) {
+	for (int i = 0; i < _countof(StatusSettings); i++) {
 		if (iMode == StatusSettings[i].Status) {
 			db_set_ts(NULL, "SRAway", CString(StatusSettings[i].Setting) + "Msg", CurMsg);
 			db_set_ts(NULL, "SRAway", CString(StatusSettings[i].Setting) + "Default", CurMsg); // TODO: make it more accurate, and change not only here, but when changing status messages through UpdateMsgsTimerFunc too; and when changing messages through AutoAway() ?

@@ -74,8 +74,8 @@ TCHAR* GetFullName(const TCHAR* filename)
 		size_t plen = mir_tstrlen(path);
 		fullname = new TCHAR[plen + flen + 1];
 		fullname[0] = NULL;
-		_tcscat(fullname, path);
-		_tcscat(fullname, filename);
+		mir_tstrcat(fullname, path);
+		mir_tstrcat(fullname, filename);
 	}
 	return fullname;
 }
@@ -117,7 +117,7 @@ static bool LoadMind(const TCHAR* filename, int &line)
 #ifdef DEBUG_LOAD_TIME
 	t = __rdtsc() - t;
 	char dest[101];
-	mir_snprintf(dest, SIZEOF(dest), "%I64d ticks\n", t / 3200000);
+	mir_snprintf(dest, _countof(dest), "%I64d ticks\n", t / 3200000);
 	MessageBoxA(NULL, dest, NULL, 0);
 	//exit(0);
 #endif
@@ -326,7 +326,7 @@ static INT_PTR CALLBACK MainDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
 			if (!bTranslated)
 				Config.AnswerThinkTime = 4;
 			TCHAR c[MAX_WARN_TEXT];
-			bTranslated = GetDlgItemText(hwndDlg, IDC_WARNTXT, c, SIZEOF(c));
+			bTranslated = GetDlgItemText(hwndDlg, IDC_WARNTXT, c, _countof(c));
 			if (bTranslated)
 				Config.WarnText = c;
 			else
@@ -434,7 +434,7 @@ static INT_PTR CALLBACK EngineDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LP
 			if (!bTranslated)
 			{
 				TCHAR message[5000];
-				mir_sntprintf(message, SIZEOF(message), TranslateTS(FAILED_TO_LOAD_BASE), line, c);
+				mir_sntprintf(message, _countof(message), TranslateTS(FAILED_TO_LOAD_BASE), line, c);
 				MessageBox(NULL, message, TranslateTS(BOLTUN_ERROR), MB_ICONERROR | MB_TASKMODAL | MB_OK);
 			}
 			break;
@@ -461,7 +461,7 @@ static INT_PTR CALLBACK EngineDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LP
 			Config.EngineUnderstandAlways = IsDlgButtonChecked(hwndDlg, IDC_ENGINE_UNDERSTAND_ALWAYS) == BST_CHECKED ? TRUE : FALSE;
 			UpdateEngine();
 			TCHAR c[MAX_MIND_FILE];
-			bTranslated = GetDlgItemText(hwndDlg, IDC_MINDFILE, c, SIZEOF(c));
+			bTranslated = GetDlgItemText(hwndDlg, IDC_MINDFILE, c, _countof(c));
 			if (bTranslated)
 				Config.MindFileName = c;
 			else
@@ -545,25 +545,20 @@ static INT_PTR ContactClickStartChatting(WPARAM hContact, LPARAM)
 
 static int MessagePrebuild(WPARAM hContact, LPARAM)
 {
-	CLISTMENUITEM clmi = { sizeof(clmi) };
-
 	if (!blInit || (db_get_b(hContact, "CList", "NotOnList", 0) == 1)) {
-		clmi.flags = CMIM_FLAGS | CMIF_GRAYED;
-
-		Menu_ModifyItem(hMenuItemAutoChat, &clmi);
-		Menu_ModifyItem(hMenuItemNotToChat, &clmi);
+		Menu_EnableItem(hMenuItemAutoChat, false);
+		Menu_EnableItem(hMenuItemNotToChat, false);
 	}
 	else {
-		BOOL boltunautochat = db_get_b(hContact, BOLTUN_KEY, DB_CONTACT_BOLTUN_AUTO_CHAT, FALSE);
-		BOOL boltunnottochat = db_get_b(hContact, BOLTUN_KEY, DB_CONTACT_BOLTUN_NOT_TO_CHAT, FALSE);
+		if (db_get_b(hContact, BOLTUN_KEY, DB_CONTACT_BOLTUN_AUTO_CHAT, FALSE))
+			Menu_ModifyItem(hMenuItemAutoChat, NULL, Skin_LoadIcon(SKINICON_OTHER_TICK), CMIF_CHECKED);
+		else
+			Menu_ModifyItem(hMenuItemAutoChat, NULL, Skin_LoadIcon(SKINICON_OTHER_NOTICK), 0);
 
-		clmi.flags = CMIM_FLAGS | CMIM_ICON | (boltunautochat ? CMIF_CHECKED : 0);
-		clmi.hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE((boltunautochat ? IDI_TICK : IDI_NOTICK)));
-		Menu_ModifyItem(hMenuItemAutoChat, &clmi);
-
-		clmi.flags = CMIM_FLAGS | CMIM_ICON | (boltunnottochat ? CMIF_CHECKED : 0);
-		clmi.hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE((boltunnottochat ? IDI_TICK : IDI_NOTICK)));
-		Menu_ModifyItem(hMenuItemNotToChat, &clmi);
+		if (db_get_b(hContact, BOLTUN_KEY, DB_CONTACT_BOLTUN_NOT_TO_CHAT, FALSE))
+			Menu_ModifyItem(hMenuItemNotToChat, NULL, Skin_LoadIcon(SKINICON_OTHER_TICK), CMIF_CHECKED);
+		else
+			Menu_ModifyItem(hMenuItemNotToChat, NULL, Skin_LoadIcon(SKINICON_OTHER_NOTICK), 0);
 	}
 	return 0;
 }
@@ -602,21 +597,21 @@ extern "C" int __declspec(dllexport) Load(void)
 	CreateServiceFunction(SERV_CONTACT_NOT_TO_CHAT, ContactClickNotToChat);
 	CreateServiceFunction(SERV_CONTACT_START_CHATTING, ContactClickStartChatting);
 	{
-		CLISTMENUITEM mi = { sizeof(mi) };
+		CMenuItem mi;
 		mi.position = -50010002; //TODO: check the warning
-		mi.pszName = BOLTUN_AUTO_CHAT;
+		mi.name.a = BOLTUN_AUTO_CHAT;
 		mi.pszService = SERV_CONTACT_AUTO_CHAT;
 		hMenuItemAutoChat = Menu_AddContactMenuItem(&mi);
 
 		mi.position = -50010001; //TODO: check the warning
-		mi.pszName = BOLTUN_NOT_TO_CHAT;
+		mi.name.a = BOLTUN_NOT_TO_CHAT;
 		mi.pszService = SERV_CONTACT_NOT_TO_CHAT;
 		hMenuItemNotToChat = Menu_AddContactMenuItem(&mi);
 
 		mi.flags = CMIF_NOTOFFLINE;
 		mi.position = -50010000; //TODO: check the warning
-		mi.hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RECVMSG));
-		mi.pszName = BOLTUN_START_CHATTING;
+		mi.hIcolibItem = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_RECVMSG));
+		mi.name.a = BOLTUN_START_CHATTING;
 		mi.pszService = SERV_CONTACT_START_CHATTING;
 		hMenuItemStartChatting = Menu_AddContactMenuItem(&mi);
 	}
@@ -626,7 +621,7 @@ extern "C" int __declspec(dllexport) Load(void)
 	if (!blInit)
 	{
 		TCHAR path[2000];
-		mir_sntprintf(path, SIZEOF(path), TranslateTS(FAILED_TO_LOAD_BASE), line, (const TCHAR*)Config.MindFileName);
+		mir_sntprintf(path, _countof(path), TranslateTS(FAILED_TO_LOAD_BASE), line, (const TCHAR*)Config.MindFileName);
 		MessageBox(NULL, path, TranslateTS(BOLTUN_ERROR), MB_ICONERROR | MB_TASKMODAL | MB_OK);
 	}
 	return 0;
@@ -646,7 +641,7 @@ extern "C" int __declspec(dllexport) Unload(void)
 			//So in case of saving error we will remain silent
 #if 0
 			TCHAR path[MAX_PATH];
-			mir_sntprintf(path, SIZEOF(path), TranslateTS(FAILED_TO_SAVE_BASE), (const TCHAR*)Config.MindFileName);
+			mir_sntprintf(path, _countof(path), TranslateTS(FAILED_TO_SAVE_BASE), (const TCHAR*)Config.MindFileName);
 			TCHAR* err = TranslateTS(BOLTUN_ERROR);
 			MessageBox(NULL, path, err, MB_ICONERROR|MB_TASKMODAL|MB_OK);*/
 #endif

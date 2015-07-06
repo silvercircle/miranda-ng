@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "common.h"
 
+CLIST_INTERFACE *pcli;
 HINSTANCE hInst;
 int hLangpack;
 
@@ -84,91 +85,83 @@ static IconItem iconList[] =
 
 static void InitIcolib()
 {
-	Icon_Register(hInst, LPGEN("FTP File"), iconList, SIZEOF(iconList), MODULE);
+	Icon_Register(hInst, LPGEN("FTP File"), iconList, _countof(iconList), MODULE);
 }
 
 void InitMenuItems()
 {
 	TCHAR stzName[256];
 
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.flags = CMIF_ROOTPOPUP | CMIF_TCHAR;
-	mi.icolibItem = iconList[ServerList::FTP_COUNT].hIcolib;
+	CMenuItem mi;
+	mi.flags = CMIF_TCHAR;
+	mi.hIcolibItem = iconList[ServerList::FTP_COUNT].hIcolib;
 	mi.position = 3000090001;
-	mi.ptszName = LPGENT("FTP File");
+	mi.name.t = LPGENT("FTP File");
 
 	hMainMenu = Menu_AddMainMenuItem(&mi);
 	if (opt.bUseSubmenu)
 		hMenu = Menu_AddContactMenuItem(&mi);
 
 	memset(&mi, 0, sizeof(mi));
-	mi.cbSize = sizeof(mi);
-	mi.ptszName = stzName;
+	mi.name.t = stzName;
 
-	CLISTMENUITEM mi2 = { sizeof(mi2) };
-	mi2.flags = CMIF_CHILDPOPUP | CMIF_ROOTHANDLE | CMIF_TCHAR;
+	CMenuItem mi2;
+	mi2.flags =  CMIF_TCHAR;
 	mi2.pszService = MS_FTPFILE_CONTACTMENU;
 
 	for (int i = 0; i < ServerList::FTP_COUNT; i++) 
 	{
 		if (DB::getStringF(0, MODULE, "Name%d", i, stzName))
-			mir_sntprintf(stzName, SIZEOF(stzName), TranslateT("FTP Server %d"), i + 1);
+			mir_sntprintf(stzName, _countof(stzName), TranslateT("FTP Server %d"), i + 1);
 
 		mi.flags = CMIF_TCHAR;
-		mi.hParentMenu = 0; 
-		if (opt.bUseSubmenu)
-		{
-			mi.flags |= CMIF_CHILDPOPUP | CMIF_ROOTHANDLE;
-			mi.hParentMenu = hMenu;
-		}
+		mi.root = (opt.bUseSubmenu) ? hMenu : 0;
 
-		mi.icolibItem = iconList[i].hIcolib;
-		mi.popupPosition = i + 1000;
+		mi.hIcolibItem = iconList[i].hIcolib;
 		hSubMenu[i] = Menu_AddContactMenuItem(&mi);
+		Menu_ConfigureItem(hSubMenu[i], MCI_OPT_EXECPARAM, i + 1000);
 
-		mi.flags |= CMIF_CHILDPOPUP | CMIF_ROOTHANDLE;
-		mi.hParentMenu = hMainMenu;
+		mi.root = hMainMenu;
 		hMainSubMenu[i] = Menu_AddMainMenuItem(&mi);
 		
-		mi2.hParentMenu = hSubMenu[i];
+		mi2.root = hSubMenu[i];
 		mi2.pszService = MS_FTPFILE_CONTACTMENU;
-		mi2.popupPosition = mi2.position = i + UploadJob::FTP_RAWFILE;
-		mi2.ptszName = LPGENT("Upload file(s)");		
-		Menu_AddContactMenuItem(&mi2);
+		mi2.name.t = LPGENT("Upload file(s)");		
+		HGENMENU tmp = Menu_AddContactMenuItem(&mi2);
+		Menu_ConfigureItem(tmp, MCI_OPT_EXECPARAM, mi2.position = i + UploadJob::FTP_RAWFILE);
 
 		mi2.pszService = MS_FTPFILE_MAINMENU;
-		mi2.hParentMenu = hMainSubMenu[i];
+		mi2.root = hMainSubMenu[i];
 		Menu_AddMainMenuItem(&mi2);
 
-		mi2.hParentMenu = hSubMenu[i];
+		mi2.root = hSubMenu[i];
 		mi2.pszService = MS_FTPFILE_CONTACTMENU;
-		mi2.popupPosition = i + UploadJob::FTP_ZIPFILE;
-		mi2.ptszName = LPGENT("Zip and upload file(s)");
-		Menu_AddContactMenuItem(&mi2);
+		mi2.name.t = LPGENT("Zip and upload file(s)");
+		tmp = Menu_AddContactMenuItem(&mi2);
+		Menu_ConfigureItem(tmp, MCI_OPT_EXECPARAM, i + UploadJob::FTP_ZIPFILE);
 
 		mi2.pszService = MS_FTPFILE_MAINMENU;
-		mi2.hParentMenu = hMainSubMenu[i];
+		mi2.root = hMainSubMenu[i];
 		Menu_AddMainMenuItem(&mi2);
 
-		mi2.hParentMenu = hSubMenu[i];
+		mi2.root = hSubMenu[i];
 		mi2.pszService = MS_FTPFILE_CONTACTMENU;
-		mi2.popupPosition = i + UploadJob::FTP_ZIPFOLDER;
-		mi2.ptszName = LPGENT("Zip and upload folder");
-		Menu_AddContactMenuItem(&mi2);
+		mi2.name.t = LPGENT("Zip and upload folder");
+		tmp = Menu_AddContactMenuItem(&mi2);
+		Menu_ConfigureItem(tmp, MCI_OPT_EXECPARAM, i + UploadJob::FTP_ZIPFOLDER);
 
 		mi2.pszService = MS_FTPFILE_MAINMENU;
-		mi2.hParentMenu = hMainSubMenu[i];
+		mi2.root = hMainSubMenu[i];
 		Menu_AddMainMenuItem(&mi2);
 	}
 
 	memset(&mi, 0, sizeof(mi));
-	mi.cbSize = sizeof(mi);
-	mi.flags = CMIF_CHILDPOPUP | CMIF_ROOTHANDLE | CMIF_TCHAR;
-	mi.icolibItem = iconList[ServerList::FTP_COUNT].hIcolib;
+	mi.flags =  CMIF_TCHAR;
+	mi.hIcolibItem = iconList[ServerList::FTP_COUNT].hIcolib;
 	mi.position = 3000090001;
-	mi.ptszName = LPGENT("FTP File manager");
+	mi.name.t = LPGENT("FTP File manager");
 	mi.pszService = MS_FTPFILE_SHOWMANAGER;
-	mi.hParentMenu = hMainMenu;
+	mi.root = hMainMenu;
 	Menu_AddMainMenuItem(&mi);
 
 	PrebuildMainMenu();
@@ -411,6 +404,7 @@ int Shutdown(WPARAM wParam, LPARAM lParam)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfoEx);
+	mir_getCLI();
 
 #ifdef _DEBUG
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);

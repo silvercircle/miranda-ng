@@ -57,12 +57,8 @@ static INT_PTR ShowGuideFile(WPARAM, LPARAM)
 		mir_free(ptszHelpFile);
 	}
 	LPTSTR pszDirNameEx;
-	if (ServiceExists(MS_UTILS_REPLACEVARS)) {
-		pszDirNameEx = Utils_ReplaceVarsT(pszDirName);
-		mir_free(pszDirName);
-	}
-	else
-		pszDirNameEx = pszDirName;
+	pszDirNameEx = Utils_ReplaceVarsT(pszDirName);
+	mir_free(pszDirName);
 
 	ShellExecute(NULL, _T("open"), pszFileName, NULL, pszDirNameEx, SW_SHOW);
 	mir_free(pszFileName);
@@ -88,11 +84,11 @@ extern "C" __declspec(dllexport) int Load(void)
 	mir_getLP(&pluginInfo);
 	hShowGuide = CreateServiceFunction("UserGuide/ShowGuide", ShowGuideFile);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = 500000;
 	mi.flags = CMIF_TCHAR;
-	mi.hIcon = LoadSkinnedIcon(SKINICON_OTHER_HELP);
-	mi.ptszName = LPGENT("User Guide");
+	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_HELP);
+	mi.name.t = LPGENT("User Guide");
 	mi.pszService = "UserGuide/ShowGuide";
 	Menu_AddMainMenuItem(&mi);
 	

@@ -99,11 +99,11 @@ int CreateAvatarInCache(MCONTACT hContact, avatarCacheEntry *ace, char *szProto)
 					MyPathToAbsolute(tszValue, tszFilename);
 
 				if (!strstr(szProto, "Global avatar for")) {
-					PROTOACCOUNT* pdescr = (PROTOACCOUNT*)CallService(MS_PROTO_GETACCOUNT, 0, (LPARAM)szProto);
+					PROTOACCOUNT* pdescr = Proto_GetAccount(szProto);
 					if (pdescr == NULL)
 						return -1;
 					char key[MAX_PATH];
-					mir_snprintf(key, SIZEOF(key), "Global avatar for %s accounts", pdescr->szProtoName);
+					mir_snprintf(key, _countof(key), "Global avatar for %s accounts", pdescr->szProtoName);
 					if (tszValue = db_get_tsa(NULL, PPICT_MODULE, key))
 						MyPathToAbsolute(tszValue, tszFilename);
 				}
@@ -119,8 +119,8 @@ int CreateAvatarInCache(MCONTACT hContact, avatarCacheEntry *ace, char *szProto)
 				else
 					return -10;
 			}
-			else if (ProtoServiceExists(szProto, PS_GETMYAVATART)) {
-				if (CallProtoService(szProto, PS_GETMYAVATART, (WPARAM)tszFilename, (LPARAM)MAX_PATH))
+			else if (ProtoServiceExists(szProto, PS_GETMYAVATAR)) {
+				if (CallProtoService(szProto, PS_GETMYAVATAR, (WPARAM)tszFilename, (LPARAM)MAX_PATH))
 					tszFilename[0] = '\0';
 			}
 			else if (ProtoServiceExists(szProto, PS_GETMYAVATAR)) {
@@ -128,7 +128,7 @@ int CreateAvatarInCache(MCONTACT hContact, avatarCacheEntry *ace, char *szProto)
 				if (CallProtoService(szProto, PS_GETMYAVATAR, (WPARAM)szFileName, (LPARAM)MAX_PATH))
 					tszFilename[0] = '\0';
 				else
-					MultiByteToWideChar(CP_ACP, 0, szFileName, -1, tszFilename, SIZEOF(tszFilename));
+					MultiByteToWideChar(CP_ACP, 0, szFileName, -1, tszFilename, _countof(tszFilename));
 			}
 			else if (tszValue = db_get_tsa(NULL, szProto, "AvatarFile"))
 				MyPathToAbsolute(tszValue, tszFilename);
@@ -280,7 +280,7 @@ void protoPicCacheEntry::clear()
 	if (hbmPic != 0)
 		DeleteObject(hbmPic);
 
-	memset(this, 0, sizeof(protoPicCacheEntry));
+	memset(this, 0, sizeof(avatarCacheEntry));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -315,10 +315,10 @@ int Proto_AvatarImageProportion(const char *proto)
 void Proto_GetAvatarMaxSize(const char *proto, int *width, int *height)
 {
 	if (ProtoServiceExists(proto, PS_GETAVATARCAPS)) {
-		POINT maxSize;
+		POINT maxSize = { 300, 300 };
 		CallProtoService(proto, PS_GETAVATARCAPS, AF_MAXSIZE, (LPARAM)&maxSize);
-		*width = maxSize.y;
-		*height = maxSize.x;
+		*width = maxSize.x;
+		*height = maxSize.y;
 	}
 	else {
 		*width = 300;
@@ -423,10 +423,8 @@ int ChangeAvatar(MCONTACT hContact, bool fLoad, bool fNotifyHist, int pa_format)
 		PushAvatarRequest(node);
 		SetEvent(hLoaderEvent);
 	}
-	else {
+	else
 		node->wipeInfo();
-		NotifyMetaAware(hContact, node);
-	}
 
 	return 0;
 }

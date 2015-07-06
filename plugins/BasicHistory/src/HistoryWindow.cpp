@@ -82,22 +82,22 @@ HistoryWindow::~HistoryWindow()
 	{
 		for (int i = 0; i < iconsNum; ++i)
 			if (eventIcons[i] != NULL)
-				Skin_ReleaseIcon(eventIcons[i]);
+				IcoLib_ReleaseIcon(eventIcons[i]);
 
 		delete[] eventIcons;
 	}
 
 	if (plusIco != NULL)
-		Skin_ReleaseIcon(plusIco);
+		IcoLib_ReleaseIcon(plusIco);
 
 	if (minusIco != NULL)
-		Skin_ReleaseIcon(minusIco);
+		IcoLib_ReleaseIcon(minusIco);
 
 	if (findNextIco != NULL)
-		Skin_ReleaseIcon(findNextIco);
+		IcoLib_ReleaseIcon(findNextIco);
 
 	if (findPrevIco != NULL)
-		Skin_ReleaseIcon(findPrevIco);
+		IcoLib_ReleaseIcon(findPrevIco);
 
 	if (himlSmall != NULL)
 		ImageList_Destroy(himlSmall);
@@ -430,7 +430,7 @@ INT_PTR HistoryWindow::DeleteAllUserHistory(WPARAM hContact, LPARAM)
 	HWND hWnd = NULL;
 	int start = 0;
 	int end = 0;
-	int count = EventList::GetContactMessageNumber(hContact);
+	int count = HistoryEventList::GetContactMessageNumber(hContact);
 	if (!count)
 		return FALSE;
 	
@@ -482,10 +482,10 @@ INT_PTR HistoryWindow::DeleteAllUserHistory(WPARAM hContact, LPARAM)
 	}
 	CallService(MS_DB_SETSAFETYMODE, TRUE, 0);
 
-	if (EventList::IsImportedHistory(hContact)) {
+	if (HistoryEventList::IsImportedHistory(hContact)) {
 		TCHAR *message = TranslateT("Do you want to delete all imported messages for this contact?\nNote that next scheduler task import this messages again.");
 		if (MessageBox(hWnd, message, TranslateT("Are You sure?"), MB_YESNO | MB_ICONERROR) == IDYES)
-			EventList::DeleteImporter(hContact);
+			HistoryEventList::DeleteImporter(hContact);
 	}
 		
 	RebuildEvents(hContact);
@@ -526,7 +526,7 @@ void ClickLink(HWND hwnd, ENLINK *penLink)
 			tr.chrg = penLink->chrg;
 			tr.lpstrText = buf;
 			SendMessage(hwnd, EM_GETTEXTRANGE, 0, (LPARAM) & tr);
-			CallService(MS_UTILS_OPENURL, (penLink->nmhdr.code == IDM_OPENNEW ? OUF_NEWWINDOW : 0) | OUF_TCHAR, (LPARAM) tr.lpstrText);
+			Utils_OpenUrlT(tr.lpstrText, penLink->nmhdr.code == IDM_OPENNEW);
 		}
 	}
 }
@@ -612,15 +612,8 @@ INT_PTR CALLBACK HistoryWindow::DlgProcHistory(HWND hwndDlg, UINT msg, WPARAM wP
 		((MINMAXINFO*)lParam)->ptMinTrackSize.y = 380;
 
 	case WM_SIZE:
-		{
-			UTILRESIZEDIALOG urd = { sizeof(urd) };
-			urd.hwndDlg = hwndDlg;
-			urd.hInstance = hInst;
-			urd.lpTemplate = MAKEINTRESOURCEA(IDD_HISTORY);
-			urd.pfnResizer = HistoryWindow::HistoryDlgResizer;
-			CallService(MS_UTILS_RESIZEDIALOG, 0, (LPARAM)&urd);
-			ListView_SetColumnWidth(GetDlgItem(hwndDlg,IDC_LIST), 0, LVSCW_AUTOSIZE_USEHEADER);
-		}
+		Utils_ResizeDialog(hwndDlg, hInst, MAKEINTRESOURCEA(IDD_HISTORY), HistoryWindow::HistoryDlgResizer);
+		ListView_SetColumnWidth(GetDlgItem(hwndDlg,IDC_LIST), 0, LVSCW_AUTOSIZE_USEHEADER);
 		DlgReturn(TRUE);
 
 	case WM_COMMAND:
@@ -1103,8 +1096,8 @@ void HistoryWindow::Initialise()
 	ResetCList(hWnd);
 			
 	RestorePos();
-	SendMessage(hWnd, WM_SETICON, ICON_BIG,   ( LPARAM )LoadSkinnedIconBig( SKINICON_OTHER_HISTORY ));
-	SendMessage(hWnd, WM_SETICON, ICON_SMALL, ( LPARAM )LoadSkinnedIcon( SKINICON_OTHER_HISTORY ));
+	SendMessage(hWnd, WM_SETICON, ICON_BIG,   (LPARAM)Skin_LoadIcon(SKINICON_OTHER_HISTORY, true));
+	SendMessage(hWnd, WM_SETICON, ICON_SMALL, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_HISTORY));
 	SendMessage(editWindow,EM_AUTOURLDETECT,TRUE,0);
 	SendMessage(editWindow,EM_SETEVENTMASK,0,ENM_LINK | ENM_SELCHANGE | ENM_KEYEVENTS | ENM_MOUSEEVENTS);
 	SendMessage(editWindow,EM_SETEDITSTYLE,SES_EXTENDBACKCOLOR,SES_EXTENDBACKCOLOR);
@@ -1117,18 +1110,18 @@ void HistoryWindow::Initialise()
 		allIconNumber = iconsNum + 3;
 		eventIcons = new HICON[allIconNumber];
 		for (int i = 0; i < iconsNum; ++i) {
-			eventIcons[i] = Skin_GetIconByHandle( iconList[i].hIcolib );
+			eventIcons[i] = IcoLib_GetIconByHandle( iconList[i].hIcolib );
 			ImageList_AddIcon(himlSmall, eventIcons[i]);
 		}
 
 		int id = iconsNum;
-		eventIcons[id] = LoadSkinnedIcon(SKINICON_EVENT_FILE);
+		eventIcons[id] = Skin_LoadIcon(SKINICON_EVENT_FILE);
 		ImageList_AddIcon(himlSmall, eventIcons[id]);
 
-		eventIcons[++id] = LoadSkinnedIcon(SKINICON_EVENT_URL);
+		eventIcons[++id] = Skin_LoadIcon(SKINICON_EVENT_URL);
 		ImageList_AddIcon(himlSmall, eventIcons[id]);
 
-		eventIcons[++id] = LoadSkinnedIcon(SKINICON_OTHER_WINDOWS);
+		eventIcons[++id] = Skin_LoadIcon(SKINICON_OTHER_WINDOWS);
 		ImageList_AddIcon(himlSmall, eventIcons[id]);
 
 		if ((isGroupImages = Options::instance->groupShowEvents) != false)
@@ -1161,9 +1154,9 @@ void HistoryWindow::Initialise()
 		ImageList_AddIcon(himlButtons, findNextIco);
 		findPrevIco = LoadIconEx(IDI_FINDPREV);
 		ImageList_AddIcon(himlButtons, findPrevIco);
-		configIco = LoadSkinnedIcon(SKINICON_OTHER_OPTIONS);
+		configIco = Skin_LoadIcon(SKINICON_OTHER_OPTIONS);
 		ImageList_AddIcon(himlButtons, configIco);
-		deleteIco = LoadSkinnedIcon(SKINICON_OTHER_DELETE);
+		deleteIco = Skin_LoadIcon(SKINICON_OTHER_DELETE);
 		ImageList_AddIcon(himlButtons, deleteIco);
 				
 		// Set the image list.
@@ -1180,7 +1173,7 @@ void HistoryWindow::Initialise()
 		{ 2, IDM_CONFIG, TBSTATE_ENABLED,  BTNS_DROPDOWN, {0}, 0, (INT_PTR)TranslateT("Options")},
 	};    
 	SendMessage(toolbarWindow, TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0);
-	SendMessage(toolbarWindow, TB_ADDBUTTONS,       (WPARAM)SIZEOF(tbButtons),       (LPARAM)&tbButtons);
+	SendMessage(toolbarWindow, TB_ADDBUTTONS,       (WPARAM)_countof(tbButtons),       (LPARAM)&tbButtons);
 	SendMessage(toolbarWindow, TB_SETBUTTONSIZE, 0, MAKELPARAM(16, 16));
 	SendMessage(toolbarWindow, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_DRAWDDARROWS);
 	SendMessage(toolbarWindow, TB_SETMAXTEXTROWS, 0, 0);
@@ -1198,10 +1191,10 @@ void HistoryWindow::Initialise()
 void HistoryWindow::Destroy()
 {
 	HICON hIcon = (HICON)SendMessage(hWnd, WM_SETICON, ICON_BIG, 0);
-	Skin_ReleaseIcon(hIcon);
+	IcoLib_ReleaseIcon(hIcon);
 	
 	hIcon = (HICON)SendMessage(hWnd, WM_SETICON, ICON_SMALL, 0);
-	Skin_ReleaseIcon(hIcon);
+	IcoLib_ReleaseIcon(hIcon);
 
 	isDestroyed = true;
 	HistoryWindow::Close(this);
@@ -1487,7 +1480,7 @@ void HistoryWindow::SelectEventGroup(int sel)
 				}
 			}
 
-			tmi.printTimeStamp(NULL, data.timestamp, formatDate, str, MAXSELECTSTR, 0);
+			TimeZone_PrintTimeStamp(NULL, data.timestamp, formatDate, str, MAXSELECTSTR, 0);
 			*strLen = (unsigned int)mir_tstrlen(str) * sizeof(TCHAR);
 			TextSelection->SetStart(MAXLONG);
 			TextSelection->GetFont(&TextFont);
@@ -1611,7 +1604,7 @@ void HistoryWindow::EnableWindows(BOOL enable)
 void HistoryWindow::ReloadContacts()
 {
 	HWND contactList = GetDlgItem(hWnd,IDC_LIST_CONTACTS);
-	if (EventList::GetContactMessageNumber(NULL)) {
+	if (HistoryEventList::GetContactMessageNumber(NULL)) {
 		if (hSystem == NULL) {
 			CLCINFOITEM cii = { sizeof(cii) };
 			cii.flags = CLCIIF_GROUPFONT | CLCIIF_BELOWCONTACTS;
@@ -1627,7 +1620,7 @@ void HistoryWindow::ReloadContacts()
 	}
 
 	for (MCONTACT _hContact = db_find_first(); _hContact; _hContact = db_find_next(_hContact)) {
-		if (EventList::GetContactMessageNumber(_hContact) && (metaContactProto == NULL || !db_mc_isSub(_hContact))) {
+		if (HistoryEventList::GetContactMessageNumber(_hContact) && (metaContactProto == NULL || !db_mc_isSub(_hContact))) {
 			HANDLE hItem = (HANDLE)SendMessage(contactList, CLM_FINDCONTACT, (WPARAM)_hContact, 0);
 			if (hItem == NULL)
 				SendMessage(contactList, CLM_ADDCONTACT, (WPARAM)_hContact, 0);
@@ -1971,7 +1964,7 @@ void HistoryWindow::DoImport(IImport::ImportType type)
 					HistoryWindow::RebuildEvents(hContact);
 			}
 			else if (act == IDNO) {
-				EventList::AddImporter(hContact, type, exp.GetFileName());
+				HistoryEventList::AddImporter(hContact, type, exp.GetFileName());
 				if (!changeContact)
 					HistoryWindow::RebuildEvents(hContact);
 			}
@@ -2061,7 +2054,7 @@ void HistoryWindow::Delete(int what)
 		return;
 
 	TCHAR message[256];
-	mir_sntprintf(message, SIZEOF(message), TranslateT("Number of history items to delete: %d.\nAre you sure you want to do this?"), toDelete);
+	mir_sntprintf(message, _countof(message), TranslateT("Number of history items to delete: %d.\nAre you sure you want to do this?"), toDelete);
 	if (MessageBox(hWnd, message, TranslateT("Are You sure?"), MB_OKCANCEL | MB_ICONERROR) != IDOK)
 		return;
 
@@ -2078,7 +2071,7 @@ void HistoryWindow::Delete(int what)
 	if (areImpMessages) {
 		TCHAR *message = TranslateT("Do you want to delete all imported messages for this contact?\nNote that next scheduler task import this messages again.");
 		if (MessageBox(hWnd, message, TranslateT("Are You sure?"), MB_YESNO | MB_ICONERROR) == IDYES) {
-			EventList::DeleteImporter(hContact);
+			HistoryEventList::DeleteImporter(hContact);
 			rebuild = true;
 		}
 	}
@@ -2147,7 +2140,7 @@ void HistoryWindow::FormatQuote(std::wstring& quote, const MessageData& md, cons
 	else
 		quote += contactName;
 	TCHAR str[32];
-	tmi.printTimeStamp(NULL, md.timestamp, _T("d t"), str, 32, 0);
+	TimeZone_PrintTimeStamp(NULL, md.timestamp, _T("d t"), str, 32, 0);
 	quote += _T(", ");
 	quote += str;
 	quote += _T("\n");
@@ -2194,7 +2187,7 @@ MCONTACT HistoryWindow::GetNextContact(MCONTACT hContact, int adder)
 				_hContact = db_find_next(_hContact);
 			}
 
-			if (!find && EventList::GetContactMessageNumber(NULL)) {
+			if (!find && HistoryEventList::GetContactMessageNumber(NULL)) {
 				_hContact = NULL;
 				find = true;
 			}
@@ -2225,7 +2218,7 @@ MCONTACT HistoryWindow::GetNextContact(MCONTACT hContact, int adder)
 		}
 
 		if (hContact != NULL) {
-			if (lastContact == NULL && !EventList::GetContactMessageNumber(NULL)) {
+			if (lastContact == NULL && !HistoryEventList::GetContactMessageNumber(NULL)) {
 				_hContact = db_find_next(hContact);
 				while (_hContact) {
 					HANDLE hItem = (HANDLE)SendMessage(contactList, CLM_FINDCONTACT, (WPARAM)_hContact, 0);
@@ -2236,7 +2229,7 @@ MCONTACT HistoryWindow::GetNextContact(MCONTACT hContact, int adder)
 				}
 			}
 
-			if (lastContact != NULL || EventList::GetContactMessageNumber(NULL)) {
+			if (lastContact != NULL || HistoryEventList::GetContactMessageNumber(NULL)) {
 				_hContact = lastContact;
 				find = true;
 			}

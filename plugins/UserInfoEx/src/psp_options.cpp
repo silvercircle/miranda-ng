@@ -278,11 +278,11 @@ static INT_PTR CALLBACK DlgProc_CommonOpts(HWND hDlg, UINT uMsg, WPARAM wParam, 
 			bInitialized = 0;
 			{
 				// menu item settings
-				for (int i = 0; i < SIZEOF(ctrl_Menu); i++) {
+				for (int i = 0; i < _countof(ctrl_Menu); i++) {
 					int flag = db_get_b(NULL, MODNAME, ctrl_Menu[i].pszKey, 2);
 					// check button and enable / disable control
 					int idEnable[] = { ctrl_Menu[i].idCheckbox + 1, ctrl_Menu[i].idNONE, ctrl_Menu[i].idALL, ctrl_Menu[i].idEXIMPORT };
-					EnableControls(hDlg, idEnable, SIZEOF(idEnable), DBGetCheckBtn(hDlg, ctrl_Menu[i].idCheckbox, ctrl_Menu[i].pszKey, 0));
+					EnableControls(hDlg, idEnable, _countof(idEnable), DBGetCheckBtn(hDlg, ctrl_Menu[i].idCheckbox, ctrl_Menu[i].pszKey, 0));
 					// set radio button state
 					int id = ctrl_Menu[i].idNONE;	//default
 					if ((flag & 4) == 4)
@@ -308,7 +308,7 @@ static INT_PTR CALLBACK DlgProc_CommonOpts(HWND hDlg, UINT uMsg, WPARAM wParam, 
 
 		case PSN_APPLY:
 			// menu item settings
-			for (int i = 0; i < SIZEOF(ctrl_Menu); i++) {
+			for (int i = 0; i < _countof(ctrl_Menu); i++) {
 				int flag = IsDlgButtonChecked(hDlg, ctrl_Menu[i].idCheckbox);
 				flag |= IsDlgButtonChecked(hDlg, ctrl_Menu[i].idNONE) ? 2 : 0;
 				flag |= IsDlgButtonChecked(hDlg, ctrl_Menu[i].idALL) ? 4 : 0;
@@ -359,10 +359,10 @@ static INT_PTR CALLBACK DlgProc_CommonOpts(HWND hDlg, UINT uMsg, WPARAM wParam, 
 		case CHECK_OPT_MI_GROUP:
 		case CHECK_OPT_MI_SUBGROUP:
 		case CHECK_OPT_MI_ACCOUNT:
-			for (int i = 0; i < SIZEOF(ctrl_Menu); i++) {
+			for (int i = 0; i < _countof(ctrl_Menu); i++) {
 				if (ctrl_Menu[i].idCheckbox == LOWORD(wParam)) {
 					const int idMenuItems[] = { ctrl_Menu[i].idCheckbox + 1, ctrl_Menu[i].idNONE, ctrl_Menu[i].idALL, ctrl_Menu[i].idEXIMPORT };
-					EnableControls(hDlg, idMenuItems, SIZEOF(idMenuItems), Button_GetCheck((HWND)lParam));
+					EnableControls(hDlg, idMenuItems, _countof(idMenuItems), Button_GetCheck((HWND)lParam));
 					break;
 				}
 			}
@@ -418,13 +418,8 @@ static INT_PTR CALLBACK DlgProc_AdvancedOpts(HWND hDlg, UINT uMsg, WPARAM wParam
 			DBGetCheckBtn(hDlg, CHECK_OPT_BUTTONICONS, SET_ICONS_BUTTONS, TRUE);
 			DBGetCheckBtn(hDlg, CHECK_OPT_METASCAN, SET_META_SCAN, TRUE);
 			DBGetCheckBtn(hDlg, CHECK_OPT_SREMAIL_ENABLED, SET_EXTENDED_EMAILSERVICE, TRUE);
-			if (tmi.getTimeZoneTime) {
-				CheckDlgButton(hDlg, CHECK_OPT_AUTOTIMEZONE, BST_CHECKED);
-				EnableWindow(GetDlgItem(hDlg, CHECK_OPT_AUTOTIMEZONE), FALSE);
-			}
-			else {
-				DBGetCheckBtn(hDlg, CHECK_OPT_AUTOTIMEZONE, SET_OPT_AUTOTIMEZONE, TRUE);
-			}
+			CheckDlgButton(hDlg, CHECK_OPT_AUTOTIMEZONE, BST_CHECKED);
+			EnableWindow(GetDlgItem(hDlg, CHECK_OPT_AUTOTIMEZONE), FALSE);
 
 			bInitialized = 1;
 			break;
@@ -435,11 +430,6 @@ static INT_PTR CALLBACK DlgProc_AdvancedOpts(HWND hDlg, UINT uMsg, WPARAM wParam
 			DBWriteCheckBtn(hDlg, CHECK_OPT_METASCAN, SET_META_SCAN);
 
 			DBWriteCheckBtn(hDlg, CHECK_OPT_SREMAIL_ENABLED, SET_EXTENDED_EMAILSERVICE);
-			if (!tmi.getTimeZoneTime) {
-				DBWriteCheckBtn(hDlg, CHECK_OPT_AUTOTIMEZONE, SET_OPT_AUTOTIMEZONE);
-				if (IsDlgButtonChecked(hDlg, CHECK_OPT_AUTOTIMEZONE))
-					SvcTimezoneSyncWithWindows();
-			}
 		}
 		break;
 
@@ -565,7 +555,7 @@ static INT_PTR CALLBACK DlgProc_DetailsDlgOpts(HWND hDlg, UINT uMsg, WPARAM wPar
 				const int idCtrl[] = { CLR_NORMAL, CLR_USER, CLR_BOTH, CLR_CHANGED, CLR_META, TXT_OPT_CLR_NORMAL,
 					TXT_OPT_CLR_USER, TXT_OPT_CLR_BOTH, TXT_OPT_CLR_CHANGED, TXT_OPT_CLR_META };
 
-				EnableControls(hDlg, idCtrl, SIZEOF(idCtrl), bChecked);
+				EnableControls(hDlg, idCtrl, _countof(idCtrl), bChecked);
 			}
 
 		case CHECK_OPT_GROUPS:
@@ -596,7 +586,7 @@ static INT_PTR CALLBACK DlgProc_ReminderOpts(HWND hDlg, UINT uMsg, WPARAM wParam
 		TranslateDialogDefault(hDlg);
 		ShowWindow(GetDlgItem(hDlg, CHECK_REMIND_SECURED), myGlobals.UseDbxTree ? SW_HIDE : SW_SHOW);
 
-		SendDlgItemMessage(hDlg, ICO_BIRTHDAY, STM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_GetIcon(ICO_DLG_ANNIVERSARY, TRUE));
+		SendDlgItemMessage(hDlg, ICO_BIRTHDAY, STM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIcon(ICO_DLG_ANNIVERSARY, TRUE));
 
 		// set colours			
 		SendDlgItemMessage(hDlg, EDIT_REMIND, EM_LIMITTEXT, 2, 0);
@@ -649,7 +639,7 @@ static INT_PTR CALLBACK DlgProc_ReminderOpts(HWND hDlg, UINT uMsg, WPARAM wParam
 
 				mtLast.DBGetStamp(NULL, MODNAME, SET_REMIND_LASTCHECK);
 				mtLast.UTCToLocal();
-				mtLast.TimeFormat(szTime, SIZEOF(szTime));
+				mtLast.TimeFormat(szTime, _countof(szTime));
 
 				SetDlgItemText(hDlg, TXT_REMIND_LASTCHECK, szTime);
 
@@ -718,7 +708,7 @@ static INT_PTR CALLBACK DlgProc_ReminderOpts(HWND hDlg, UINT uMsg, WPARAM wParam
 					CHECK_REMIND_SECURED, CHECK_REMIND_STARTUP, EDIT_REMIND_SOUNDOFFSET, SPIN_REMIND_SOUNDOFFSET
 				};
 
-				EnableControls(hDlg, idCtrl, SIZEOF(idCtrl), bEnabled);
+				EnableControls(hDlg, idCtrl, _countof(idCtrl), bEnabled);
 			}
 
 		case EDIT_BIRTHMODULE:
@@ -879,7 +869,7 @@ static INT_PTR CALLBACK DlgProc_Popups(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 				db_set_b(NULL, MODNAME, SET_POPUP_DELAY, 255);
 			else if (IsDlgButtonChecked(hDlg, RADIO_OPT_POPUP_CUSTOM)) {
 				TCHAR szDelay[4];
-				GetDlgItemText(hDlg, EDIT_DELAY, szDelay, SIZEOF(szDelay));
+				GetDlgItemText(hDlg, EDIT_DELAY, szDelay, _countof(szDelay));
 				db_set_b(NULL, MODNAME, SET_POPUP_DELAY, (BYTE)_tcstol(szDelay, NULL, 10));
 			}
 			else
@@ -896,8 +886,8 @@ static INT_PTR CALLBACK DlgProc_Popups(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 				mir_tstrncpy(ppd.lptzText, TranslateT("This is the reminder message"), MAX_SECONDLINE);
 
 				// Birthday
-				mir_tstrncpy(ppd.lptzContactName, TranslateT("Birthday"), SIZEOF(ppd.lptzContactName));
-				ppd.lchIcon = Skin_GetIcon(ICO_RMD_DTB0);
+				mir_tstrncpy(ppd.lptzContactName, TranslateT("Birthday"), _countof(ppd.lptzContactName));
+				ppd.lchIcon = IcoLib_GetIcon(ICO_RMD_DTB0);
 				if (IsDlgButtonChecked(hDlg, CHECK_OPT_POPUP_WINCLR)) {
 					ppd.colorBack = GetSysColor(COLOR_BTNFACE);
 					ppd.colorText = GetSysColor(COLOR_WINDOWTEXT);
@@ -909,8 +899,8 @@ static INT_PTR CALLBACK DlgProc_Popups(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 				PUAddPopupT(&ppd);
 
 				// Anniversary
-				mir_tstrncpy(ppd.lptzContactName, TranslateT("Anniversary"), SIZEOF(ppd.lptzContactName));
-				ppd.lchIcon = Skin_GetIcon(ICO_RMD_DTAX);
+				mir_tstrncpy(ppd.lptzContactName, TranslateT("Anniversary"), _countof(ppd.lptzContactName));
+				ppd.lchIcon = IcoLib_GetIcon(ICO_RMD_DTAX);
 				if (IsDlgButtonChecked(hDlg, CHECK_OPT_POPUP_WINCLR)) {
 					ppd.colorBack = GetSysColor(COLOR_BTNFACE);
 					ppd.colorText = GetSysColor(COLOR_WINDOWTEXT);
@@ -947,7 +937,7 @@ static INT_PTR CALLBACK DlgProc_Popups(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 					RADIO_OPT_POPUP_PERMANENT, EDIT_DELAY
 				};
 
-				EnableControls(hDlg, idCtrl, SIZEOF(idCtrl), bEnabled);
+				EnableControls(hDlg, idCtrl, _countof(idCtrl), bEnabled);
 
 				if (bInitialized)
 					NotifyParentOfChange(hDlg);
@@ -1042,7 +1032,7 @@ static int OnInitOptions(WPARAM wParam, LPARAM lParam)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.position = 95400;
 	odp.hInstance = ghInst;
-	odp.pszTitle = LPGEN(MODULELONGNAME);
+	odp.pszTitle = MODULELONGNAME;
 	odp.pszGroup = LPGEN("Contacts");
 
 	// Common page
@@ -1075,7 +1065,7 @@ static int OnInitOptions(WPARAM wParam, LPARAM lParam)
 
 	// Popups page
 	if (ServiceExists(MS_POPUP_ADDPOPUPT)) {
-		odp.pszTitle = LPGEN(MODULELONGNAME);
+		odp.pszTitle = MODULELONGNAME;
 		odp.pszGroup = LPGEN("Popups");
 		odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_POPUP);
 		odp.pfnDlgProc = DlgProc_Popups;

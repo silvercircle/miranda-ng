@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "msn_global.h"
+#include "stdafx.h"
 #include "msn_proto.h"
 #include "m_smileyadd.h"
 
@@ -115,13 +115,13 @@ bool CMsnProto::p2p_createListener(filetransfer* ft, directconnection *dc, MimeH
 	NETLIBIPLIST* ihaddr = (NETLIBIPLIST*)CallService(MS_NETLIB_GETMYIP, 1, 0);
 	for (unsigned i = 0; i < ihaddr->cbNum; ++i) {
 		if (strchr(ihaddr->szIp[i], ':')) {
-			if (i6++ != 0) strcat(szIpv6, " ");
-			strcat(szIpv6, ihaddr->szIp[i]);
+			if (i6++ != 0) mir_strcat(szIpv6, " ");
+			mir_strcat(szIpv6, ihaddr->szIp[i]);
 		}
 		else {
-			if (i4++ != 0) strcat(szIpv4, " ");
+			if (i4++ != 0) mir_strcat(szIpv4, " ");
 			ipInt |= (mir_strcmp(ihaddr->szIp[i], szExtIp) == 0);
-			strcat(szIpv4, ihaddr->szIp[i]);
+			mir_strcat(szIpv4, ihaddr->szIp[i]);
 		}
 	}
 	mir_free(ihaddr);
@@ -194,11 +194,10 @@ void CMsnProto::p2p_pictureTransferFailed(filetransfer* ft)
 	case MSN_APPID_AVATAR:
 	case MSN_APPID_AVATAR2:
 	{
-		PROTO_AVATAR_INFORMATIONT AI = { 0 };
-		AI.cbSize = sizeof(AI);
-		AI.hContact = ft->std.hContact;
+		PROTO_AVATAR_INFORMATION ai = { 0 };
+		ai.hContact = ft->std.hContact;
 		delSetting(ft->std.hContact, "AvatarHash");
-		ProtoBroadcastAck(AI.hContact, ACKTYPE_AVATAR, ACKRESULT_FAILED, &AI, 0);
+		ProtoBroadcastAck(ai.hContact, ACKTYPE_AVATAR, ACKRESULT_FAILED, &ai, 0);
 	}
 	break;
 	}
@@ -233,13 +232,12 @@ void CMsnProto::p2p_savePicture2disk(filetransfer* ft)
 		case MSN_APPID_AVATAR:
 		case MSN_APPID_AVATAR2:
 		{
-			PROTO_AVATAR_INFORMATIONT AI = { 0 };
-			AI.cbSize = sizeof(AI);
-			AI.format = format;
-			AI.hContact = ft->std.hContact;
-			MSN_GetAvatarFileName(AI.hContact, AI.filename, SIZEOF(AI.filename), ext);
+			PROTO_AVATAR_INFORMATION ai = { 0 };
+			ai.format = format;
+			ai.hContact = ft->std.hContact;
+			MSN_GetAvatarFileName(ai.hContact, ai.filename, _countof(ai.filename), ext);
 
-			_trename(ft->std.tszCurrentFile, AI.filename);
+			_trename(ft->std.tszCurrentFile, ai.filename);
 
 			// Store also avatar hash
 			char *szAvatarHash = MSN_GetAvatarHash(ft->p2p_object);
@@ -247,9 +245,9 @@ void CMsnProto::p2p_savePicture2disk(filetransfer* ft)
 			mir_free(szAvatarHash);
 
 			setString(ft->std.hContact, "PictSavedContext", ft->p2p_object);
-			ProtoBroadcastAck(AI.hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, &AI, 0);
+			ProtoBroadcastAck(ai.hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, &ai, 0);
 
-			debugLogA("Avatar for contact %08x saved to file '%s'", AI.hContact, T2Utf(AI.filename));
+			debugLogA("Avatar for contact %08x saved to file '%s'", ai.hContact, T2Utf(ai.filename));
 		}
 		break;
 
@@ -1176,7 +1174,7 @@ void CMsnProto::p2p_InitFileTransfer(
 			}
 			if (pictmatch) {
 				TCHAR szFileName[MAX_PATH];
-				MSN_GetAvatarFileName(NULL, szFileName, SIZEOF(szFileName), NULL);
+				MSN_GetAvatarFileName(NULL, szFileName, _countof(szFileName), NULL);
 				ft->fileId = _topen(szFileName, O_RDONLY | _O_BINARY, _S_IREAD);
 				if (ft->fileId == -1) {
 					p2p_sendStatus(ft, 603);
@@ -1226,14 +1224,14 @@ void CMsnProto::p2p_InitFileTransfer(
 			ft->std.totalFiles = 1;
 
 			TCHAR tComment[40];
-			mir_sntprintf(tComment, SIZEOF(tComment), TranslateT("%I64u bytes"), ft->std.currentFileSize);
+			mir_sntprintf(tComment, _countof(tComment), TranslateT("%I64u bytes"), ft->std.currentFileSize);
 
 			PROTORECVFILET pre = { 0 };
 			pre.dwFlags = PRFF_TCHAR;
 			pre.fileCount = 1;
 			pre.timestamp = time(NULL);
-			pre.tszDescription = tComment;
-			pre.ptszFiles = &ft->std.tszCurrentFile;
+			pre.descr.t = tComment;
+			pre.files.t = &ft->std.tszCurrentFile;
 			pre.lParam = (LPARAM)ft;
 			ProtoChainRecvFile(ft->std.hContact, &pre);
 		}
@@ -1398,7 +1396,7 @@ void CMsnProto::p2p_startConnect(const char* wlid, const char* szCallID, const c
 			newThread->mType = SERVER_P2P_DIRECT;
 			newThread->mInitialContactWLID = mir_strdup(wlid);
 			strncpy_s(newThread->mCookie, szCallID, _TRUNCATE);
-			mir_snprintf(newThread->mServer, SIZEOF(newThread->mServer),
+			mir_snprintf(newThread->mServer, _countof(newThread->mServer),
 				ipv6 ? "[%s]:%s" : "%s:%s", pAddrTokBeg, pPortTokBeg);
 
 			newThread->startThread(&CMsnProto::p2p_fileActiveThread, this);
@@ -1741,7 +1739,7 @@ void CMsnProto::p2p_processMsgV2(ThreadData* info, char* msgbody, const char* wl
 
 		if (hdrdata.mRemSize || hdrdata.mTFCode == 0) {
 			char msgid[128];
-			mir_snprintf(msgid, SIZEOF(msgid), "%s_%08x", wlid, hdrdata.mPacketNum);
+			mir_snprintf(msgid, _countof(msgid), "%s_%08x", wlid, hdrdata.mPacketNum);
 
 			int idx;
 			if (hdrdata.mTFCode == 0x01) {
@@ -1832,7 +1830,7 @@ void CMsnProto::p2p_processMsg(ThreadData* info, char* msgbody, const char* wlid
 
 		if (hdrdata.mPacketLen < hdrdata.mTotalSize) {
 			char msgid[128];
-			mir_snprintf(msgid, SIZEOF(msgid), "%s_%08x", wlid, hdrdata.mID);
+			mir_snprintf(msgid, _countof(msgid), "%s_%08x", wlid, hdrdata.mID);
 			int idx = addCachedMsg(msgid, msgbody, (size_t)hdrdata.mOffset, hdrdata.mPacketLen,
 				(size_t)hdrdata.mTotalSize, false);
 
@@ -2096,7 +2094,7 @@ void CMsnProto::p2p_invite(unsigned iAppID, filetransfer* ft, const char *wlid)
 			if (ft->p2p_isV2) {
 				if (cont->places.getCount() && cont->places[0].cap1 & cap_SupportsP2PBootstrap) {
 					char wlid[128];
-					mir_snprintf(wlid, SIZEOF(wlid),
+					mir_snprintf(wlid, _countof(wlid),
 						mir_strcmp(cont->places[0].id, sttVoidUid) ? "%s;%s" : "%s",
 						cont->email, cont->places[0].id);
 
@@ -2147,7 +2145,7 @@ void CMsnProto::p2p_invite(unsigned iAppID, filetransfer* ft, const char *wlid)
 	if (ft->p2p_isV2 && ft->std.currentFileNumber == 0) {
 		for (int i = 0; i < cont->places.getCount(); ++i) {
 			char wlid[128];
-			mir_snprintf(wlid, SIZEOF(wlid),
+			mir_snprintf(wlid, _countof(wlid),
 				mir_strcmp(cont->places[i].id, sttVoidUid) ? "%s;%s" : "%s",
 				cont->email, cont->places[i].id);
 

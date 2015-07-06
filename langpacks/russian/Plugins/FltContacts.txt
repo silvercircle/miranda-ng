@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: FltContacts.dll
 ;  Plugin: Floating contacts
-;  Version: 0.7.0.1
+;  Version: 0.7.0.2
 ;  Authors: Iavor Vajarov, Kosh&chka, Victor Pavlychko
 ;============================================================
 [Floating Contacts plugin for Miranda.]
@@ -20,7 +20,7 @@
 [Hide all contacts]
 Прятать все контакты
 [Hide when a fullscreen app is active]
-Прятать когда приложение развернуто
+Прятать когда приложение развёрнуто
 [Show tooltips*]
 Всплывающие подсказки*
 [ms]

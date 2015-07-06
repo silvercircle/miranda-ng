@@ -269,7 +269,7 @@ int RegisterPOP3Plugin(WPARAM, LPARAM)
 		if (ERROR_FILE_NOT_FOUND != GetLastError())
 		{
 			TCHAR temp[1024] = { 0 };
-			mir_sntprintf(temp, SIZEOF(temp), _T("%s\n%s"), TranslateT("Reading file error. File already in use?"), FileName);
+			mir_sntprintf(temp, _T("%s\n%s"), TranslateT("Reading file error. File already in use?"), FileName);
 			MessageBox(NULL, temp, TranslateT("YAMN (internal POP3) read error"), MB_OK);
 			CallService(MS_YAMN_DELETEFILENAME, (WPARAM)FileName, 0);
 			FileName = NULL;
@@ -303,7 +303,7 @@ int RegisterPOP3Plugin(WPARAM, LPARAM)
 		if (!Finder->hContact && (Finder->Flags & YAMN_ACC_ENA) && (Finder->NewMailN.Flags & YAMN_ACC_CONT)) {
 			//No account contact found, have to create one
 			Finder->hContact = CallService(MS_DB_CONTACT_ADD, 0, 0);
-			CallService(MS_PROTO_ADDTOCONTACT, Finder->hContact, (LPARAM)YAMN_DBMODULE);
+			Proto_AddToContact(Finder->hContact, YAMN_DBMODULE);
 			db_set_s(Finder->hContact, YAMN_DBMODULE, "Id", Finder->Name);
 			db_set_s(Finder->hContact, YAMN_DBMODULE, "Nick", Finder->Name);
 			db_set_s(Finder->hContact, "Protocol", "p", YAMN_DBMODULE);
@@ -344,7 +344,7 @@ DWORD WINAPI WritePOP3Accounts()
 	DWORD ReturnValue = CallService(MS_YAMN_WRITEACCOUNTS, (WPARAM)POP3Plugin, (LPARAM)FileName);
 	if (ReturnValue == EACC_SYSTEM) {
 		TCHAR temp[1024] = { 0 };
-		mir_sntprintf(temp, SIZEOF(temp), _T("%s\n%s"), TranslateT("Error while copying data to disk occurred. Is file in use?"), FileName);
+		mir_sntprintf(temp, _T("%s\n%s"), TranslateT("Error while copying data to disk occurred. Is file in use?"), FileName);
 		MessageBox(NULL, temp, TranslateT("POP3 plugin - write file error"), MB_OK);
 	}
 
@@ -380,7 +380,7 @@ DWORD WINAPI ReadPOP3Options(HACCOUNT Which, char **Parser, char *End)
 	if (*Parser >= End)
 		return EACC_FILECOMPATIBILITY;
 #ifdef DEBUG_FILEREAD
-	mir_sntprintf(Debug, SIZEOF(Debug), _T("CodePage: %d, remaining %d chars"), ((HPOP3ACCOUNT)Which)->CP, End-*Parser);
+	mir_sntprintf(Debug, _countof(Debug), _T("CodePage: %d, remaining %d chars"), ((HPOP3ACCOUNT)Which)->CP, End-*Parser);
 	MessageBox(NULL,Debug,_T("debug"),MB_OK);
 #endif
 	return 0;
@@ -713,7 +713,7 @@ DWORD WINAPI SynchroPOP3(struct CheckParam * WhichTemp)
 				for (NewMsgsPtr = (HYAMNMAIL)NewMails; NewMsgsPtr != NULL; NewMsgsPtr = NewMsgsPtr->Next) {
 					if (!mir_strcmp(MsgQueuePtr->ID, NewMsgsPtr->ID)) {
 						TCHAR accstatus[512];
-						mir_sntprintf(accstatus, SIZEOF(accstatus), TranslateT("Reading body %s"), NewMsgsPtr->ID);
+						mir_sntprintf(accstatus, _countof(accstatus), TranslateT("Reading body %s"), NewMsgsPtr->ID);
 						SetAccountStatus(ActualAccount, accstatus);
 						DataRX = MyClient->Top(MsgQueuePtr->Number, 100);
 #ifdef DEBUG_DECODE
@@ -786,7 +786,7 @@ DWORD WINAPI SynchroPOP3(struct CheckParam * WhichTemp)
 			{
 				BOOL autoretr = (ActualAccount->Flags & YAMN_ACC_BODY) != 0;
 				DataRX = MyClient->Top(MsgQueuePtr->Number, autoretr ? 100 : 0);
-				mir_sntprintf(accstatus, SIZEOF(accstatus), TranslateT("Reading new mail messages (%d%% done)"), 100 * i / msgs);
+				mir_sntprintf(accstatus, _countof(accstatus), TranslateT("Reading new mail messages (%d%% done)"), 100 * i / msgs);
 				SetAccountStatus(ActualAccount, accstatus);
 
 #ifdef DEBUG_DECODE

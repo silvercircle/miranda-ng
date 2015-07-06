@@ -52,7 +52,7 @@ static TRTFColorTable _rtf_ctable[] =
 int				Utils::rtf_ctable_size = 0;
 TRTFColorTable* Utils::rtf_ctable = 0;
 
-HANDLE			CWarning::hWindowList = 0;
+MWindowList CWarning::hWindowList = 0;
 
 static TCHAR *w_bbcodes_begin[] = { _T("[b]"), _T("[i]"), _T("[u]"), _T("[s]"), _T("[color=") };
 static TCHAR *w_bbcodes_end[] = { _T("[/b]"), _T("[/i]"), _T("[/u]"), _T("[/s]"), _T("[/color]") };
@@ -146,13 +146,13 @@ const TCHAR* Utils::FormatRaw(TWindowData *dat, const TCHAR *msg, int flags, BOO
 
 						TCHAR szTemp[5];
 						message.insert(beginmark, _T("cxxx "));
-						mir_sntprintf(szTemp, SIZEOF(szTemp), _T("%02d"), MSGDLGFONTCOUNT + 13 + ii);
+						mir_sntprintf(szTemp, _T("%02d"), MSGDLGFONTCOUNT + 13 + ii);
 						message[beginmark + 3] = szTemp[0];
 						message[beginmark + 4] = szTemp[1];
 						clr_found = true;
 						if (was_added) {
 							TCHAR wszTemp[100];
-							mir_sntprintf(wszTemp, SIZEOF(wszTemp), _T("##col##%06u:%04u"), endmark - closing, ii);
+							mir_sntprintf(wszTemp, _countof(wszTemp), _T("##col##%06u:%04u"), endmark - closing, ii);
 							wszTemp[99] = 0;
 							message.insert(beginmark, wszTemp);
 						}
@@ -641,7 +641,7 @@ void Utils::ReadPrivateContainerSettings(TContainerData *pContainer, bool fForce
 	char szCname[50];
 	TContainerSettings csTemp = { 0 };
 
-	mir_snprintf(szCname, SIZEOF(szCname), "%s%d_Blob", CNT_BASEKEYNAME, pContainer->iContainerIndex);
+	mir_snprintf(szCname, _countof(szCname), "%s%d_Blob", CNT_BASEKEYNAME, pContainer->iContainerIndex);
 	Utils::ReadContainerSettingsFromDB(0, &csTemp, szCname);
 	if (csTemp.fPrivate || fForce) {
 		if (pContainer->settings == 0 || pContainer->settings == &PluginConfig.globalContainerSettings)
@@ -658,10 +658,10 @@ void Utils::SaveContainerSettings(TContainerData *pContainer, const char *szSett
 
 	pContainer->dwFlags &= ~(CNT_DEFERREDCONFIGURE | CNT_CREATE_MINIMIZED | CNT_DEFERREDSIZEREQUEST | CNT_CREATE_CLONED);
 	if (pContainer->settings->fPrivate) {
-		mir_snprintf(szCName, SIZEOF(szCName), "%s%d_Blob", szSetting, pContainer->iContainerIndex);
+		mir_snprintf(szCName, _countof(szCName), "%s%d_Blob", szSetting, pContainer->iContainerIndex);
 		WriteContainerSettingsToDB(0, pContainer->settings, szCName);
 	}
-	mir_snprintf(szCName, SIZEOF(szCName), "%s%d_theme", szSetting, pContainer->iContainerIndex);
+	mir_snprintf(szCName, _countof(szCName), "%s%d_theme", szSetting, pContainer->iContainerIndex);
 	if (mir_tstrlen(pContainer->szRelThemeFile) > 1) {
 		if (pContainer->fPrivateThemeChanged == TRUE) {
 			PathToRelativeT(pContainer->szRelThemeFile, pContainer->szAbsThemeFile, M.getDataPath());
@@ -802,7 +802,7 @@ void Utils::getIconSize(HICON hIcon, int& sizeX, int& sizeY)
 // @param uID		the item command id
 // @param pos		zero-based position index
 
-void Utils::addMenuItem(const HMENU& m, MENUITEMINFO& mii, HICON hIcon, const TCHAR *szText, UINT uID, UINT pos)
+void Utils::addMenuItem(const HMENU& m, MENUITEMINFO &mii, HICON hIcon, const TCHAR *szText, UINT uID, UINT pos)
 {
 	mii.wID = uID;
 	mii.dwItemData = (ULONG_PTR)hIcon;
@@ -893,7 +893,7 @@ bool Utils::extractResource(const HMODULE h, const UINT uID, const TCHAR *tszNam
 			DWORD	dwSize = SizeofResource(g_hInst, hRes), written = 0;
 
 			TCHAR	szFilename[MAX_PATH];
-			mir_sntprintf(szFilename, SIZEOF(szFilename), _T("%s%s"), tszPath, tszFilename);
+			mir_sntprintf(szFilename, _countof(szFilename), _T("%s%s"), tszPath, tszFilename);
 			if (!fForceOverwrite)
 				if (PathFileExists(szFilename))
 					return true;
@@ -984,7 +984,7 @@ void Utils::sanitizeFilename(wchar_t* tszFilename)
 void Utils::ensureTralingBackslash(wchar_t *szPathname)
 {
 	if (szPathname[mir_wstrlen(szPathname) - 1] != '\\')
-		wcscat(szPathname, L"\\");
+		mir_wstrcat(szPathname, L"\\");
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -1000,7 +1000,7 @@ HMODULE Utils::loadSystemLibrary(const wchar_t* szFilename)
 		return 0;
 
 	sysPathName[MAX_PATH - 1] = 0;
-	if (wcslen(sysPathName) + wcslen(szFilename) >= MAX_PATH)
+	if (mir_wstrlen(sysPathName) + mir_wstrlen(szFilename) >= MAX_PATH)
 		return 0;
 
 	mir_wstrcat(sysPathName, szFilename);
@@ -1187,7 +1187,7 @@ LRESULT CWarning::show(const int uId, DWORD dwFlags, const wchar_t* tszTxt)
 				*/
 				_s = TranslateTS(warnings[uId]);
 
-				if (wcslen(_s) < 3 || 0 == wcschr(_s, '|'))
+				if (mir_wstrlen(_s) < 3 || 0 == wcschr(_s, '|'))
 					_s = TranslateTS(warnings[uId]);
 			}
 		}
@@ -1195,7 +1195,7 @@ LRESULT CWarning::show(const int uId, DWORD dwFlags, const wchar_t* tszTxt)
 			return -1;
 	}
 
-	if ((wcslen(_s) > 3) && ((separator_pos = wcschr(_s, '|')) != 0)) {
+	if ((mir_wstrlen(_s) > 3) && ((separator_pos = wcschr(_s, '|')) != 0)) {
 		if (uId >= 0) {
 			mask = getMask();
 			val = ((__int64)1L) << uId;
@@ -1203,8 +1203,8 @@ LRESULT CWarning::show(const int uId, DWORD dwFlags, const wchar_t* tszTxt)
 		else mask = val = 0;
 
 		if (0 == (mask & val) || dwFlags & CWF_NOALLOWHIDE) {
-			wchar_t *s = reinterpret_cast<wchar_t *>(mir_alloc((wcslen(_s) + 1) * 2));
-			wcscpy(s, _s);
+			wchar_t *s = reinterpret_cast<wchar_t *>(mir_alloc((mir_wstrlen(_s) + 1) * 2));
+			mir_wstrcpy(s, _s);
 			separator_pos = wcschr(s, '|');
 
 			if (separator_pos) {
@@ -1272,12 +1272,12 @@ INT_PTR CALLBACK CWarning::dlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 		m_hwnd = hwnd;
 
 		::SetWindowTextW(hwnd, TranslateT("TabSRMM warning message"));
-		::SendMessage(hwnd, WM_SETICON, ICON_BIG, LPARAM(::LoadSkinnedIconBig(SKINICON_OTHER_MIRANDA)));
-		::SendMessage(hwnd, WM_SETICON, ICON_SMALL, LPARAM(::LoadSkinnedIcon(SKINICON_OTHER_MIRANDA)));
+		::SendMessage(hwnd, WM_SETICON, ICON_BIG, LPARAM(::Skin_LoadIcon(SKINICON_OTHER_MIRANDA, true)));
+		::SendMessage(hwnd, WM_SETICON, ICON_SMALL, LPARAM(::Skin_LoadIcon(SKINICON_OTHER_MIRANDA)));
 		::SendDlgItemMessage(hwnd, IDC_WARNTEXT, EM_AUTOURLDETECT, TRUE, 0);
 		::SendDlgItemMessage(hwnd, IDC_WARNTEXT, EM_SETEVENTMASK, 0, ENM_LINK);
 
-		mir_sntprintf(temp, SIZEOF(temp), RTF_DEFAULT_HEADER, 0, 0, 0, 30 * 15);
+		mir_sntprintf(temp, RTF_DEFAULT_HEADER, 0, 0, 0, 30 * 15);
 		tstring *str = new tstring(temp);
 
 		str->append(m_szText);
@@ -1322,7 +1322,7 @@ INT_PTR CALLBACK CWarning::dlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 		if (uResId)
 			hIcon = reinterpret_cast<HICON>(::LoadImage(0, MAKEINTRESOURCE(uResId), IMAGE_ICON, 0, 0, LR_SHARED | LR_DEFAULTSIZE));
 		else
-			hIcon = ::LoadSkinnedIconBig(SKINICON_EVENT_MESSAGE);
+			hIcon = ::Skin_LoadIcon(SKINICON_EVENT_MESSAGE, true);
 
 		::SendDlgItemMessageW(hwnd, IDC_WARNICON, STM_SETICON, reinterpret_cast<WPARAM>(hIcon), 0);
 		if (!(m_dwFlags & MB_YESNO || m_dwFlags & MB_YESNOCANCEL))
@@ -1400,7 +1400,7 @@ INT_PTR CALLBACK CWarning::dlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 
 				const wchar_t *wszUrl = Utils::extractURLFromRichEdit(e, ::GetDlgItem(hwnd, IDC_WARNTEXT));
 				if (wszUrl) {
-					CallService(MS_UTILS_OPENURL, OUF_UNICODE, (LPARAM)wszUrl);
+					Utils_OpenUrlW(wszUrl);
 					mir_free(const_cast<TCHAR *>(wszUrl));
 				}
 			}

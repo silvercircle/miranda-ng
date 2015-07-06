@@ -4,7 +4,7 @@
 #define ID_TIMER_SOUND				10101
 #define SOUND_REPEAT_PERIOD			5000	// milliseconds
 #define SPEACH_REPEAT_PERIOD		15000	// milliseconds
-HANDLE hAlarmWindowList = 0;
+MWindowList hAlarmWindowList = 0;
 
 FontIDT title_font_id, window_font_id;
 ColourIDT bk_colour_id;
@@ -181,7 +181,7 @@ INT_PTR CALLBACK DlgProcAlarm(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 				if (data && data->action & AAF_SOUND) {
 					if (data->sound_num <= 3) {
 						char buff[128];
-						mir_snprintf(buff, SIZEOF(buff), "Triggered%d", data->sound_num);
+						mir_snprintf(buff, "Triggered%d", data->sound_num);
 						SkinPlaySound(buff);
 					}
 					else if (data->sound_num == 4) {
@@ -270,15 +270,15 @@ INT_PTR CALLBACK DlgProcAlarm(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 					ScreenToClient(hwndDlg,&pt_rel);
 
 					HMENU hMenu = CreatePopupMenu();
-					MENUITEMINFO mmi = {0};
-					mmi.cbSize = sizeof(mmi);
-					mmi.fMask = MIIM_ID | MIIM_STRING;
+					MENUITEMINFO mii = { 0 };
+					mii.cbSize = sizeof(mii);
+					mii.fMask = MIIM_ID | MIIM_STRING;
 
 #define AddItem(x)							\
-		mmi.wID++;							\
-		mmi.dwTypeData = TranslateT(x);		\
-		mmi.cch = ( UINT )mir_tstrlen(mmi.dwTypeData);	\
-		InsertMenuItem(hMenu, mmi.wID, FALSE, &mmi);
+		mii.wID++;							\
+		mii.dwTypeData = TranslateT(x);		\
+		mii.cch = ( UINT )mir_tstrlen(mii.dwTypeData);	\
+		InsertMenuItem(hMenu, mii.wID, FALSE, &mii);
 
 					AddItem(LPGEN("5 mins"));
 					AddItem(LPGEN("15 mins"));

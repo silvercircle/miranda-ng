@@ -2,9 +2,11 @@
 ;============================================================
 ;  File: Omegle.dll
 ;  Plugin: Omegle protocol
-;  Version: 0.1.2.2
+;  Version: 0.1.2.3
 ;  Authors: Robert Pösel
 ;============================================================
+[Server:]
+Servidor:
 [Connecting...]
 Conectando...
 [%s server connection]

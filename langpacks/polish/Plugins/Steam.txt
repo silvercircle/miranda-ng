@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Steam.dll
 ;  Plugin: Steam protocol
-;  Version: 0.11.3.3
+;  Version: 0.11.4.1
 ;  Authors: unsane, Robert Pösel
 ;============================================================
 [Steam protocol support for Miranda NG.]
@@ -41,9 +41,6 @@ Wprowadź hasło, by kontynuować.
 ;file \protocols\Steam\src\main.cpp
 [Steam game]
 Gra Steam
-;file \protocols\Steam\src\steam_account.cpp
-[Connection token expired. Please login again.]
-Token połączenia wygasł. Zaloguj się ponownie.
 ;file \protocols\Steam\src\steam_contacts.cpp
 [Looking to play]
 Szuka partnera do gry
@@ -69,12 +66,13 @@ Usługa awatarów
 [Name]
 Nazwa
 ;file \protocols\Steam\src\steam_events.cpp
-[%s connection]
-Połączenie %s
 [Network]
 Sieć
 [Blocked contacts]
 Kontakty zablokowane
+;file \protocols\Steam\src\steam_login.cpp
+[Connection token expired. Please login again.]
+Token połączenia wygasł. Zaloguj się ponownie.
 ;file \protocols\Steam\src\steam_menus.cpp
 [Steam menu chooser]
 Wybór menu Steam
@@ -92,6 +90,8 @@ Protokoły
 Ikona protokołu
 [Gaming icon]
 Ikona grania
+[%s connection]
+Połączenie %s
 [SteamID]
 SteamID
 [You cannot send messages when you are offline.]

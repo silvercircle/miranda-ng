@@ -279,7 +279,7 @@ void mwServiceConf_on_text(mwConference* conf, mwLoginInfo* user, const char* wh
 	gce.ptszUID = tszUserId;
 	gce.time = (DWORD)time(0);
 
-	CallService(MS_GC_EVENT, 0, (LPARAM)(GCEVENT *) &gce);
+	CallService(MS_GC_EVENT, 0, (LPARAM)&gce);
 
 	mir_free(textT);
 	mir_free(tszUserName);
@@ -410,7 +410,7 @@ INT_PTR CSametimeProto::onMenuCreateChat(WPARAM wParam, LPARAM lParam)
 	if (my_login_info && GetAwareIdFromContact(hContact, &id_block)) {
 		TCHAR title[512];
 		TCHAR* ts = mir_utf8decodeT(my_login_info->user_name);
-		mir_sntprintf(title, SIZEOF(title), TranslateT("%s's conference"), ts);
+		mir_sntprintf(title, _countof(title), TranslateT("%s's conference"), ts);
 		mir_free(ts);
 
 		idb.user = id_block.user;
@@ -438,10 +438,8 @@ int CSametimeProto::PrebuildContactMenu(WPARAM wParam, LPARAM lParam)
 {
 	MCONTACT hContact = (MCONTACT)wParam;
 	debugLog(_T("CSametimeProto::PrebuildContactMenu() hContact=[%x]"), hContact);
-	CLISTMENUITEM mi = {0};
-	mi.cbSize = sizeof(mi);
-	mi.flags = CMIM_FLAGS | (db_get_b(hContact, m_szModuleName, "ChatRoom", 0) == 1 ? 0 : CMIF_HIDDEN);
-	CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hLeaveChatMenuItem, (LPARAM)&mi);
+
+	Menu_ShowItem(hLeaveChatMenuItem, db_get_b(hContact, m_szModuleName, "ChatRoom", 0) == 1);
 
 	// if user is already in our meeting, 
 	bool not_present = true;
@@ -461,9 +459,8 @@ int CSametimeProto::PrebuildContactMenu(WPARAM wParam, LPARAM lParam)
 
 		db_free(&dbv);
 	}
-	mi.flags = CMIM_FLAGS | CMIF_NOTOFFLINE | (db_get_b(hContact, m_szModuleName, "ChatRoom", 0) == 0 && not_present ? 0 : CMIF_HIDDEN);
-	CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hCreateChatMenuItem, (LPARAM)&mi);
 
+	Menu_ShowItem(hCreateChatMenuItem, db_get_b(hContact, m_szModuleName, "ChatRoom", 0) == 0 && not_present);
 	return 0;
 }
 
@@ -511,31 +508,18 @@ void CSametimeProto::InitConferenceMenu()
 	CreateProtoService(MS_SAMETIME_MENULEAVECHAT, &CSametimeProto::onMenuLeaveChat);
 	CreateProtoService(MS_SAMETIME_MENUCREATECHAT, &CSametimeProto::onMenuCreateChat);
 
-	char service[128];
-
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.flags = CMIF_TCHAR | CMIF_NOTOFFLINE;
-	mi.pszContactOwner = m_szModuleName;
 	
-	mi.ptszName = LPGENT("Leave conference");
-	mir_snprintf(service, SIZEOF(service), "%s%s", m_szModuleName, MS_SAMETIME_MENULEAVECHAT);
-	mi.pszService = service;
-	mi.icolibItem = GetIconHandle(IDI_ICON_LEAVE);
-	hLeaveChatMenuItem = Menu_AddContactMenuItem(&mi);
+	mi.name.t = LPGENT("Leave conference");
+	mi.pszService = MS_SAMETIME_MENULEAVECHAT;
+	mi.hIcolibItem = GetIconHandle(IDI_ICON_LEAVE);
+	hLeaveChatMenuItem = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
-	mi.ptszName = LPGENT("Start conference");
-	mir_snprintf(service, SIZEOF(service), "%s%s", m_szModuleName, MS_SAMETIME_MENUCREATECHAT);
-	mi.pszService = service;
-	mi.icolibItem = GetIconHandle(IDI_ICON_INVITE);
+	mi.name.t = LPGENT("Start conference");
+	mi.pszService = MS_SAMETIME_MENUCREATECHAT;
+	mi.hIcolibItem = GetIconHandle(IDI_ICON_INVITE);
 	hCreateChatMenuItem = Menu_AddContactMenuItem(&mi);
 
 	HookProtoEvent(ME_CLIST_PREBUILDCONTACTMENU, &CSametimeProto::PrebuildContactMenu);
 }
-
-void CSametimeProto::DeinitConferenceMenu()
-{
-	debugLog(_T("CSametimeProto::DeinitConferenceMenu()"));
-	CallService(MO_REMOVEMENUITEM, (WPARAM)hLeaveChatMenuItem, 0);
-	CallService(MO_REMOVEMENUITEM, (WPARAM)hCreateChatMenuItem, 0);
-}
-

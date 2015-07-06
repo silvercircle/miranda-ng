@@ -357,11 +357,11 @@ static LRESULT CALLBACK MessageSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, 
 
 			if (wParam <= '9' && wParam >= '1' && isCtrl && !isAlt) // CTRL + 1 -> 9 (switch tab)
 				if (g_Settings.bTabsEnable)
-					SendMessage(GetParent(hwnd), GC_SWITCHTAB, 0, (LPARAM)((int)wParam - (int)'1'));
+					SendMessage(GetParent(hwnd), GC_SWITCHTAB, 0, (int)wParam - (int)'1');
 
 			if (wParam <= VK_NUMPAD9 && wParam >= VK_NUMPAD1 && isCtrl && !isAlt) // CTRL + 1 -> 9 (switch tab)
 				if (g_Settings.bTabsEnable)
-					SendMessage(GetParent(hwnd), GC_SWITCHTAB, 0, (LPARAM)((int)wParam - (int)VK_NUMPAD1));
+					SendMessage(GetParent(hwnd), GC_SWITCHTAB, 0, (int)wParam - (int)VK_NUMPAD1);
 
 			if (wParam == VK_TAB && !isCtrl && !isShift) {    //tab-autocomplete
 				TCHAR* pszText = NULL;
@@ -989,7 +989,7 @@ static void ProcessNickListHovering(HWND hwnd, int hoveredItem, SESSION_INFO *si
 	USERINFO *ui = pci->SM_GetUserFromIndex(si->ptszID, si->pszModule, currentHovered);
 	if (ui) {
 		if (ProtoServiceExists(si->pszModule, MS_GC_PROTO_GETTOOLTIPTEXT)) {
-			TCHAR *p = (TCHAR*)ProtoCallService(si->pszModule, MS_GC_PROTO_GETTOOLTIPTEXT, (WPARAM)si->ptszID, (LPARAM)ui->pszUID);
+			TCHAR *p = (TCHAR*)CallProtoService(si->pszModule, MS_GC_PROTO_GETTOOLTIPTEXT, (WPARAM)si->ptszID, (LPARAM)ui->pszUID);
 			if (p != NULL) {
 				_tcsncpy_s(tszBuf, p, _TRUNCATE);
 				mir_free(p);
@@ -997,7 +997,7 @@ static void ProcessNickListHovering(HWND hwnd, int hoveredItem, SESSION_INFO *si
 		}
 
 		if (tszBuf[0] == 0)
-			mir_sntprintf(tszBuf, SIZEOF(tszBuf), _T("%s: %s\r\n%s: %s\r\n%s: %s"),
+			mir_sntprintf(tszBuf, _countof(tszBuf), _T("%s: %s\r\n%s: %s\r\n%s: %s"),
 			TranslateT("Nickname"), ui->pszNick,
 			TranslateT("Unique ID"), ui->pszUID,
 			TranslateT("Status"), pci->TM_WordToString(si->pStatuses, ui->Status));
@@ -1060,7 +1060,7 @@ static LRESULT CALLBACK NicklistSubclassProc(HWND hwnd, UINT msg, WPARAM wParam,
 		{
 			MEASUREITEMSTRUCT *mis = (MEASUREITEMSTRUCT *) lParam;
 			if (mis->CtlType == ODT_MENU)
-				return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
+				return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
 		}
 		return FALSE;
 
@@ -1068,7 +1068,7 @@ static LRESULT CALLBACK NicklistSubclassProc(HWND hwnd, UINT msg, WPARAM wParam,
 		{
 			DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT *) lParam;
 			if (dis->CtlType == ODT_MENU)
-				return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
+				return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
 		}
 		return FALSE;
 
@@ -1149,13 +1149,13 @@ static int RestoreWindowPosition(HWND hwnd, MCONTACT hContact, char * szModule, 
 	GetWindowPlacement(hwnd, &wp);
 	
 	char szSettingName[64];
-	mir_snprintf(szSettingName, SIZEOF(szSettingName), "%sx", szNamePrefix);
+	mir_snprintf(szSettingName, _countof(szSettingName), "%sx", szNamePrefix);
 	int x = db_get_dw(hContact, szModule, szSettingName, -1);
-	mir_snprintf(szSettingName, SIZEOF(szSettingName), "%sy", szNamePrefix);
+	mir_snprintf(szSettingName, _countof(szSettingName), "%sy", szNamePrefix);
 	int y = (int)db_get_dw(hContact, szModule, szSettingName, -1);
-	mir_snprintf(szSettingName, SIZEOF(szSettingName), "%swidth", szNamePrefix);
+	mir_snprintf(szSettingName, _countof(szSettingName), "%swidth", szNamePrefix);
 	int width = db_get_dw(hContact, szModule, szSettingName, -1);
-	mir_snprintf(szSettingName, SIZEOF(szSettingName), "%sheight", szNamePrefix);
+	mir_snprintf(szSettingName, _countof(szSettingName), "%sheight", szNamePrefix);
 	int height = db_get_dw(hContact, szModule, szSettingName, -1);
 
 	if (x == -1)
@@ -1315,17 +1315,17 @@ INT_PTR CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 			TCHAR szTemp[100];
 			switch(si->iType) {
 			case GCW_CHATROOM:
-				mir_sntprintf(szTemp, SIZEOF(szTemp),
+				mir_sntprintf(szTemp,
 					(si->nUsersInNicklist == 1) ? TranslateT("%s: chat room (%u user)") : TranslateT("%s: chat room (%u users)"),
 					si->ptszName, si->nUsersInNicklist);
 				break;
 			case GCW_PRIVMESS:
-				mir_sntprintf(szTemp, SIZEOF(szTemp),
+				mir_sntprintf(szTemp,
 					(si->nUsersInNicklist == 1) ? TranslateT("%s: message session") : TranslateT("%s: message session (%u users)"),
 					si->ptszName, si->nUsersInNicklist);
 				break;
 			case GCW_SERVER:
-				mir_sntprintf(szTemp, SIZEOF(szTemp), _T("%s: Server"), si->ptszName);
+				mir_sntprintf(szTemp, _T("%s: Server"), si->ptszName);
 				break;
 			}
 			SetWindowText(hwndDlg, szTemp);
@@ -1426,13 +1426,7 @@ INT_PTR CALLBACK RoomWndProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
 		if (!IsIconic(hwndDlg)) {
 			SendMessage(si->hwndStatus, WM_SIZE, 0, 0);
 
-			UTILRESIZEDIALOG urd = { sizeof(urd) };
-			urd.hInstance = g_hInst;
-			urd.hwndDlg = hwndDlg;
-			urd.lParam = (LPARAM)si;
-			urd.lpTemplate = MAKEINTRESOURCEA(IDD_CHANNEL);
-			urd.pfnResizer = RoomWndResize;
-			CallService(MS_UTILS_RESIZEDIALOG, 0, (LPARAM)&urd);
+			Utils_ResizeDialog(hwndDlg, g_hInst, MAKEINTRESOURCEA(IDD_CHANNEL), RoomWndResize, (LPARAM)si);
 
 			InvalidateRect(si->hwndStatus, NULL, TRUE);
 			RedrawWindow(GetDlgItem(hwndDlg, IDC_MESSAGE), NULL, NULL, RDW_INVALIDATE);
@@ -1792,7 +1786,7 @@ END_REMOVETAB:
 		{
 			MEASUREITEMSTRUCT *mis = (MEASUREITEMSTRUCT *) lParam;
 			if (mis->CtlType == ODT_MENU)
-				return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
+				return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
 
 			int ih = GetTextPixelSize( _T("AQGgl'"), g_Settings.UserListFont,FALSE);
 			int ih2 = GetTextPixelSize( _T("AQGg'"), g_Settings.UserListHeadingsFont,FALSE);
@@ -1811,7 +1805,7 @@ END_REMOVETAB:
 		{
 			DRAWITEMSTRUCT *dis = (DRAWITEMSTRUCT *) lParam;
 			if (dis->CtlType == ODT_MENU)
-				return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
+				return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
 			
 			if (dis->CtlID == IDC_LIST) {
 				int index = dis->itemID;
@@ -1835,14 +1829,14 @@ END_REMOVETAB:
 						FillRect(dis->hDC, &dis->rcItem, pci->hListBkgBrush);
 
 					if (g_Settings.bShowContactStatus && g_Settings.bContactStatusFirst && ui->ContactStatus) {
-						HICON hIcon = LoadSkinnedProtoIcon(si->pszModule, ui->ContactStatus);
+						HICON hIcon = Skin_LoadProtoIcon(si->pszModule, ui->ContactStatus);
 						DrawIconEx(dis->hDC, x_offset, dis->rcItem.top+offset-3,hIcon,16,16,0,NULL, DI_NORMAL);
 						x_offset += 18;
 					}
 					DrawIconEx(dis->hDC,x_offset, dis->rcItem.top + offset,hIcon,10,10,0,NULL, DI_NORMAL);
 					x_offset += 12;
 					if (g_Settings.bShowContactStatus && !g_Settings.bContactStatusFirst && ui->ContactStatus) {
-						HICON hIcon = LoadSkinnedProtoIcon(si->pszModule, ui->ContactStatus);
+						HICON hIcon = Skin_LoadProtoIcon(si->pszModule, ui->ContactStatus);
 						DrawIconEx(dis->hDC, x_offset, dis->rcItem.top+offset-3,hIcon,16,16,0,NULL, DI_NORMAL);
 						x_offset += 18;
 					}
@@ -2058,7 +2052,9 @@ LABEL_SHOWWINDOW:
 						s->wState &= ~GC_EVENT_HIGHLIGHT;
 						s->wState &= ~STATE_TALK;
 						SendMessage(hwndDlg, GC_FIXTABICONS, 0, (LPARAM)s);
-			}	}	}
+					}
+				}
+			}
 
 			if (uMsg != WM_ACTIVATE)
 				SetFocus(GetDlgItem(hwndDlg,IDC_MESSAGE));
@@ -2181,12 +2177,10 @@ LABEL_SHOWWINDOW:
 					tr.chrg = cr;
 					tr.lpstrText = pszWord;
 					long iRes = SendDlgItemMessage(hwndDlg, IDC_LOG, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
-					if (iRes > 0) {
-						int iLen = (int)mir_tstrlen(pszWord)-1;
-						while (iLen >= 0 && _tcschr(szTrimString, pszWord[iLen])) {
+					if (iRes > 0)
+						for (size_t iLen = mir_tstrlen(pszWord)-1;_tcschr(szTrimString, pszWord[iLen]);iLen--)
 							pszWord[iLen] = 0;
-							iLen--;
-				}	}	}
+				}
 
 				uID = CreateGCMenu(hwndDlg, &hMenu, 1, pt, si, NULL, pszWord);
 				switch (uID) {
@@ -2221,18 +2215,15 @@ LABEL_SHOWWINDOW:
 
 				case ID_SEARCH_GOOGLE:
 					if (pszWord[0])
-						CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW | OUF_TCHAR, 
-							(LPARAM)CMString(FORMAT, _T("http://www.google.com/search?q=%s"), pszWord).GetString());
+						Utils_OpenUrlT(CMString(FORMAT, _T("http://www.google.com/search?q=%s"), pszWord));
 
 					PostMessage(hwndDlg, WM_MOUSEACTIVATE, 0, 0);
 					break;
 
 				case ID_SEARCH_WIKIPEDIA:
-					if (pszWord[0]) {
-						TCHAR szURL[1024];
-						mir_sntprintf(szURL, SIZEOF(szURL), _T("http://en.wikipedia.org/wiki/%s"), pszWord);
-						CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW | OUF_TCHAR, (LPARAM)szURL);
-					}
+					if (pszWord[0])
+						Utils_OpenUrlT(CMString(FORMAT, _T("http://en.wikipedia.org/wiki/%s"), pszWord));
+
 					PostMessage(hwndDlg, WM_MOUSEACTIVATE, 0, 0);
 					break;
 
@@ -2273,11 +2264,11 @@ LABEL_SHOWWINDOW:
 							ClientToScreen(((NMHDR *) lParam)->hwndFrom, &pt);
 							switch (TrackPopupMenu(hSubMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hwndDlg, NULL)) {
 							case ID_NEW:
-								CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW|OUF_TCHAR, (LPARAM) tr.lpstrText);
+								Utils_OpenUrlT(tr.lpstrText);
 								break;
 
 							case ID_CURR:
-								CallService(MS_UTILS_OPENURL, OUF_TCHAR, (LPARAM) tr.lpstrText);
+								Utils_OpenUrlT(tr.lpstrText,false);
 								break;
 
 							case ID_COPY:
@@ -2298,7 +2289,7 @@ LABEL_SHOWWINDOW:
 							return TRUE;
 						}
 
-						CallService(MS_UTILS_OPENURL, OUF_TCHAR|OUF_NEWWINDOW, (LPARAM) tr.lpstrText);
+						Utils_OpenUrlT(tr.lpstrText);
 						SetFocus(GetDlgItem(hwndDlg, IDC_MESSAGE));
 						mir_free(tr.lpstrText);
 						break;
@@ -2316,7 +2307,7 @@ LABEL_SHOWWINDOW:
 				USERINFO *ui = pci->SM_GetUserFromIndex(parentdat->ptszID, parentdat->pszModule, item);
 				if (ui != NULL) {
 					static TCHAR ptszBuf[1024];
-					mir_sntprintf(ptszBuf, SIZEOF(ptszBuf), _T("%s: %s\r\n%s: %s\r\n%s: %s"),
+					mir_sntprintf(ptszBuf, _countof(ptszBuf), _T("%s: %s\r\n%s: %s\r\n%s: %s"),
 						TranslateT("Nickname"), ui->pszNick,
 						TranslateT("Unique ID"), ui->pszUID,
 						TranslateT("Status"), pci->TM_WordToString(parentdat->pStatuses, ui->Status));
@@ -2435,11 +2426,11 @@ LABEL_SHOWWINDOW:
 					_tcsncpy_s(szName, (pInfo->ptszModDispName ? pInfo->ptszModDispName : _A2T(si->pszModule)), _TRUNCATE);
 					ValidateFilename(szName);
 
-					mir_sntprintf(szFolder, SIZEOF(szFolder), _T("%s\\%s"), g_Settings.pszLogDir, szName);
-					mir_sntprintf(szName, SIZEOF(szName), _T("%s.log"), si->ptszID);
+					mir_sntprintf(szFolder, _countof(szFolder), _T("%s\\%s"), g_Settings.pszLogDir, szName);
+					mir_sntprintf(szName, _T("%s.log"), si->ptszID);
 					ValidateFilename(szName);
 
-					mir_sntprintf(szFile, SIZEOF(szFile), _T("%s\\%s"), szFolder, szName);
+					mir_sntprintf(szFile, _countof(szFile), _T("%s\\%s"), szFolder, szName);
 					ShellExecute(hwndDlg, _T("open"), szFile, NULL, NULL, SW_SHOW);
 				}
 			}

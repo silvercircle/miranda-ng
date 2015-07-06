@@ -62,8 +62,7 @@ int CExchangeServer::Connect(int bForceConnect)
 		TCHAR server[1024];
 
 		GetStringFromDatabase("Username", _T(""), user, _countof(user));
-		if (ServiceExists(MS_UTILS_REPLACEVARS))
-			_tcsncpy_s(user, VARST(user), _TRUNCATE);
+		_tcsncpy_s(user, VARST(user), _TRUNCATE);
 
 		GetStringFromDatabase("Password", _T(""), password, _countof(password));
 		GetStringFromDatabase("Server", _T(""), server, _countof(server));
@@ -280,9 +279,9 @@ int CExchangeServer::Check(int bNoEmailsNotify)
 	if (((count > 0) || ((bNoEmailsNotify) && (count >= 0))) && (count != -1)) {
 		TCHAR buffer[1024];
 		if (count != 1)
-			mir_sntprintf(buffer, SIZEOF(buffer), TranslateT("You have %d unread emails..."), count);
+			mir_sntprintf(buffer, _countof(buffer), TranslateT("You have %d unread emails..."), count);
 		else
-			mir_sntprintf(buffer, SIZEOF(buffer), TranslateT("You have one unread email..."));
+			mir_sntprintf(buffer, _countof(buffer), TranslateT("You have one unread email..."));
 
 		ShowMessage(buffer, count);
 	}

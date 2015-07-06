@@ -22,8 +22,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include <commonheaders.h>
-#include "../coolsb/coolscroll.h"
+#include "stdafx.h"
+#include "coolscroll.h"
 
 #include <m_extraicons.h>
 
@@ -33,7 +33,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static INT_PTR CALLBACK DlgProcClcMainOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 static INT_PTR CALLBACK DlgProcClcBkgOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
-//static INT_PTR CALLBACK DlgProcClcTextOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 extern INT_PTR CALLBACK DlgProcViewModesSetup(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 extern INT_PTR CALLBACK OptionsDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 extern INT_PTR CALLBACK DlgProcCluiOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -45,10 +44,10 @@ struct CheckBoxToStyleEx_t {
 	DWORD flag;
 	int not_t;
 } static const checkBoxToStyleEx[] = {
-	{IDC_DISABLEDRAGDROP,CLS_EX_DISABLEDRAGDROP,0}, {IDC_NOTEDITLABELS,CLS_EX_EDITLABELS,1},
-	{IDC_SHOWSELALWAYS,CLS_EX_SHOWSELALWAYS,0}, {IDC_TRACKSELECT,CLS_EX_TRACKSELECT,0},
-	{IDC_DIVIDERONOFF,CLS_EX_DIVIDERONOFF,0}, {IDC_NOTNOTRANSLUCENTSEL,CLS_EX_NOTRANSLUCENTSEL,1},
-	{IDC_NOTNOSMOOTHSCROLLING,CLS_EX_NOSMOOTHSCROLLING,1}
+	{ IDC_DISABLEDRAGDROP, CLS_EX_DISABLEDRAGDROP, 0 }, { IDC_NOTEDITLABELS, CLS_EX_EDITLABELS, 1 },
+	{ IDC_SHOWSELALWAYS, CLS_EX_SHOWSELALWAYS, 0 }, { IDC_TRACKSELECT, CLS_EX_TRACKSELECT, 0 },
+	{ IDC_DIVIDERONOFF, CLS_EX_DIVIDERONOFF, 0 }, { IDC_NOTNOTRANSLUCENTSEL, CLS_EX_NOTRANSLUCENTSEL, 1 },
+	{ IDC_NOTNOSMOOTHSCROLLING, CLS_EX_NOSMOOTHSCROLLING, 1 }
 };
 
 struct CheckBoxToGroupStyleEx_t {
@@ -56,9 +55,9 @@ struct CheckBoxToGroupStyleEx_t {
 	DWORD flag;
 	int not_t;
 } static const checkBoxToGroupStyleEx[] = {
-	{IDC_SHOWGROUPCOUNTS,CLS_EX_SHOWGROUPCOUNTS,0}, {IDC_HIDECOUNTSWHENEMPTY,CLS_EX_HIDECOUNTSWHENEMPTY,0},
-	{IDC_LINEWITHGROUPS,CLS_EX_LINEWITHGROUPS,0}, {IDC_QUICKSEARCHVISONLY,CLS_EX_QUICKSEARCHVISONLY,0},
-	{IDC_SORTGROUPSALPHA,CLS_EX_SORTGROUPSALPHA,0}
+	{ IDC_SHOWGROUPCOUNTS, CLS_EX_SHOWGROUPCOUNTS, 0 }, { IDC_HIDECOUNTSWHENEMPTY, CLS_EX_HIDECOUNTSWHENEMPTY, 0 },
+	{ IDC_LINEWITHGROUPS, CLS_EX_LINEWITHGROUPS, 0 }, { IDC_QUICKSEARCHVISONLY, CLS_EX_QUICKSEARCHVISONLY, 0 },
+	{ IDC_SORTGROUPSALPHA, CLS_EX_SORTGROUPSALPHA, 0 }
 };
 
 struct CheckBoxValues_t {
@@ -67,17 +66,17 @@ struct CheckBoxValues_t {
 };
 
 static const struct CheckBoxValues_t greyoutValues[] = {
-	{GREYF_UNFOCUS,LPGENT("Not focused")}, {MODEF_OFFLINE,LPGENT("Offline")}, {PF2_ONLINE,LPGENT("Online")}, {PF2_SHORTAWAY,LPGENT("Away")},
-	{PF2_LONGAWAY,LPGENT("NA")}, {PF2_LIGHTDND,LPGENT("Occupied")}, {PF2_HEAVYDND,LPGENT("DND")}, {PF2_FREECHAT,LPGENT("Free for chat")},
-	{PF2_INVISIBLE,LPGENT("Invisible")}, {PF2_OUTTOLUNCH,LPGENT("Out to lunch")}, {PF2_ONTHEPHONE,LPGENT("On the phone")}
+	{ GREYF_UNFOCUS, LPGENT("Not focused") }, { MODEF_OFFLINE, LPGENT("Offline") }, { PF2_ONLINE, LPGENT("Online") }, { PF2_SHORTAWAY, LPGENT("Away") },
+	{ PF2_LONGAWAY, LPGENT("NA") }, { PF2_LIGHTDND, LPGENT("Occupied") }, { PF2_HEAVYDND, LPGENT("DND") }, { PF2_FREECHAT, LPGENT("Free for chat") },
+	{ PF2_INVISIBLE, LPGENT("Invisible") }, { PF2_OUTTOLUNCH, LPGENT("Out to lunch") }, { PF2_ONTHEPHONE, LPGENT("On the phone") }
 };
 static const struct CheckBoxValues_t offlineValues[] = {
-	{MODEF_OFFLINE,LPGENT("Offline")}, {PF2_ONLINE,LPGENT("Online")}, {PF2_SHORTAWAY,LPGENT("Away")}, {PF2_LONGAWAY,LPGENT("NA")},
-	{PF2_LIGHTDND,LPGENT("Occupied")}, {PF2_HEAVYDND,LPGENT("DND")}, {PF2_FREECHAT,LPGENT("Free for chat")}, {PF2_INVISIBLE,LPGENT("Invisible")},
-	{PF2_OUTTOLUNCH,LPGENT("Out to lunch")}, {PF2_ONTHEPHONE,LPGENT("On the phone")}
+	{ MODEF_OFFLINE, LPGENT("Offline") }, { PF2_ONLINE, LPGENT("Online") }, { PF2_SHORTAWAY, LPGENT("Away") }, { PF2_LONGAWAY, LPGENT("NA") },
+	{ PF2_LIGHTDND, LPGENT("Occupied") }, { PF2_HEAVYDND, LPGENT("DND") }, { PF2_FREECHAT, LPGENT("Free for chat") }, { PF2_INVISIBLE, LPGENT("Invisible") },
+	{ PF2_OUTTOLUNCH, LPGENT("Out to lunch") }, { PF2_ONTHEPHONE, LPGENT("On the phone") }
 };
 
-static UINT sortCtrlIDs[] = {IDC_SORTPRIMARY, IDC_SORTTHEN, IDC_SORTFINALLY, 0};
+static UINT sortCtrlIDs[] = { IDC_SORTPRIMARY, IDC_SORTTHEN, IDC_SORTFINALLY, 0 };
 
 static void FillCheckBoxTree(HWND hwndTree, const struct CheckBoxValues_t *values, int nValues, DWORD style)
 {
@@ -143,7 +142,8 @@ void GetDefaultFontSetting(int i, LOGFONT *lf, COLORREF *colour)
 	case FONTID_NOTONLIST:
 		*colour = GetSysColor(COLOR_3DSHADOW);
 		break;
-}	}
+	}
+}
 
 static INT_PTR CALLBACK DlgProcDspGroups(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -156,7 +156,7 @@ static INT_PTR CALLBACK DlgProcDspGroups(HWND hwndDlg, UINT msg, WPARAM wParam, 
 			SendDlgItemMessage(hwndDlg, IDC_GROUPALIGN, CB_INSERTSTRING, -1, (LPARAM)TranslateT("Automatic (RTL)"));
 
 			DWORD exStyle = cfg::getDword("CLC", "ExStyle", pcli->pfnGetDefaultExStyle());
-			for (int i = 0; i < SIZEOF(checkBoxToGroupStyleEx); i++)
+			for (int i = 0; i < _countof(checkBoxToGroupStyleEx); i++)
 				CheckDlgButton(hwndDlg, checkBoxToGroupStyleEx[i].id, (exStyle & checkBoxToGroupStyleEx[i].flag) ^ (checkBoxToGroupStyleEx[i].flag * checkBoxToGroupStyleEx[i].not_t) ? BST_CHECKED : BST_UNCHECKED);
 
 			CheckDlgButton(hwndDlg, IDC_NOGROUPICON, (cfg::dat.dwFlags & CLUI_FRAME_NOGROUPICON) ? BST_CHECKED : BST_UNCHECKED);
@@ -195,7 +195,7 @@ static INT_PTR CALLBACK DlgProcDspGroups(HWND hwndDlg, UINT msg, WPARAM wParam, 
 			if (((LPNMHDR)lParam)->code == PSN_APPLY) {
 				DWORD exStyle = cfg::getDword("CLC", "ExStyle", pcli->pfnGetDefaultExStyle());
 
-				for (int i = 0; i < SIZEOF(checkBoxToGroupStyleEx); i++) {
+				for (int i = 0; i < _countof(checkBoxToGroupStyleEx); i++) {
 					if ((IsDlgButtonChecked(hwndDlg, checkBoxToGroupStyleEx[i].id) == 0) == checkBoxToGroupStyleEx[i].not_t)
 						exStyle |= checkBoxToGroupStyleEx[i].flag;
 					else
@@ -597,12 +597,12 @@ static INT_PTR CALLBACK DlgProcClcMainOpts(HWND hwndDlg, UINT msg, WPARAM wParam
 		SetWindowLongPtr(GetDlgItem(hwndDlg, IDC_GREYOUTOPTS), GWL_STYLE, GetWindowLongPtr(GetDlgItem(hwndDlg, IDC_GREYOUTOPTS), GWL_STYLE) | TVS_NOHSCROLL | TVS_CHECKBOXES);
 		{
 			DWORD exStyle = cfg::getDword("CLC", "ExStyle", pcli->pfnGetDefaultExStyle());
-			UDACCEL accel[2] = { {0,10}, {2,50} };
+			UDACCEL accel[2] = { { 0, 10 }, { 2, 50 } };
 			SendDlgItemMessage(hwndDlg, IDC_SMOOTHTIMESPIN, UDM_SETRANGE, 0, MAKELONG(999, 0));
-			SendDlgItemMessage(hwndDlg, IDC_SMOOTHTIMESPIN, UDM_SETACCEL, SIZEOF(accel), (LPARAM)&accel);
+			SendDlgItemMessage(hwndDlg, IDC_SMOOTHTIMESPIN, UDM_SETACCEL, _countof(accel), (LPARAM)&accel);
 			SendDlgItemMessage(hwndDlg, IDC_SMOOTHTIMESPIN, UDM_SETPOS, 0, MAKELONG(cfg::getWord("CLC", "ScrollTime", CLCDEFAULT_SCROLLTIME), 0));
 
-			for (int i = 0; i < SIZEOF(checkBoxToStyleEx); i++)
+			for (int i = 0; i < _countof(checkBoxToStyleEx); i++)
 				CheckDlgButton(hwndDlg, checkBoxToStyleEx[i].id, (exStyle & checkBoxToStyleEx[i].flag) ^ (checkBoxToStyleEx[i].flag * checkBoxToStyleEx[i].not_t) ? BST_CHECKED : BST_UNCHECKED);
 		}
 		CheckDlgButton(hwndDlg, IDC_FULLROWSELECT, (cfg::dat.dwFlags & CLUI_FULLROWSELECT) ? BST_CHECKED : BST_UNCHECKED);
@@ -740,26 +740,26 @@ static INT_PTR CALLBACK DlgProcClcBkgOpts(HWND hwndDlg, UINT msg, WPARAM wParam,
 		Utils::enableDlgControl(hwndDlg, IDC_SCROLL, IsDlgButtonChecked(hwndDlg, IDC_BITMAP));
 		Utils::enableDlgControl(hwndDlg, IDC_PROPORTIONAL, IsDlgButtonChecked(hwndDlg, IDC_BITMAP));
 		break;
+
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDC_BROWSE) {
-			char str[MAX_PATH];
-			OPENFILENAMEA ofn = { 0 };
-			char filter[512];
+			TCHAR str[MAX_PATH], filter[512];
+			GetDlgItemText(hwndDlg, IDC_FILENAME, str, _countof(str));
+			Bitmap_GetFilter(filter, _countof(filter));
 
-			GetDlgItemTextA(hwndDlg, IDC_FILENAME, str, SIZEOF(str));
+			OPENFILENAME ofn = { 0 };
 			ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400;
 			ofn.hwndOwner = hwndDlg;
 			ofn.hInstance = NULL;
-			CallService(MS_UTILS_GETBITMAPFILTERSTRINGS, sizeof(filter), (LPARAM)filter);
 			ofn.lpstrFilter = filter;
 			ofn.lpstrFile = str;
 			ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
-			ofn.nMaxFile = SIZEOF(str);
+			ofn.nMaxFile = _countof(str);
 			ofn.nMaxFileTitle = MAX_PATH;
-			ofn.lpstrDefExt = "bmp";
-			if (!GetOpenFileNameA(&ofn))
+			ofn.lpstrDefExt = _T("bmp");
+			if (!GetOpenFileName(&ofn))
 				break;
-			SetDlgItemTextA(hwndDlg, IDC_FILENAME, str);
+			SetDlgItemText(hwndDlg, IDC_FILENAME, str);
 		}
 		else if (LOWORD(wParam) == IDC_FILENAME && HIWORD(wParam) != EN_CHANGE)
 			break;
@@ -785,32 +785,31 @@ static INT_PTR CALLBACK DlgProcClcBkgOpts(HWND hwndDlg, UINT msg, WPARAM wParam,
 
 				cfg::writeByte("CLC", "UseBitmap", (BYTE)IsDlgButtonChecked(hwndDlg, IDC_BITMAP));
 				cfg::writeByte("CLC", "UseWinColours", (BYTE)IsDlgButtonChecked(hwndDlg, IDC_WINCOLOUR));
-				{
-					char str[MAX_PATH], strrel[MAX_PATH];
 
-					GetDlgItemTextA(hwndDlg, IDC_FILENAME, str, SIZEOF(str));
-					if ( PathToRelative(str, strrel))
-						cfg::writeString(NULL, "CLC", "BkBitmap", strrel);
-					else
-						cfg::writeString(NULL, "CLC", "BkBitmap", str);
-				} {
-					WORD flags = 0;
-					if (IsDlgButtonChecked(hwndDlg, IDC_STRETCHH))
-						flags |= CLB_STRETCHH;
-					if (IsDlgButtonChecked(hwndDlg, IDC_STRETCHV))
-						flags |= CLB_STRETCHV;
-					if (IsDlgButtonChecked(hwndDlg, IDC_TILEH))
-						flags |= CLBF_TILEH;
-					if (IsDlgButtonChecked(hwndDlg, IDC_TILEV))
-						flags |= CLBF_TILEV;
-					if (IsDlgButtonChecked(hwndDlg, IDC_SCROLL))
-						flags |= CLBF_SCROLL;
-					if (IsDlgButtonChecked(hwndDlg, IDC_PROPORTIONAL))
-						flags |= CLBF_PROPORTIONAL;
-					cfg::writeWord("CLC", "BkBmpUse", flags);
-					cfg::dat.bWallpaperMode = IsDlgButtonChecked(hwndDlg, IDC_SKINMODE) ? 1 : 0;
-					cfg::writeByte("CLUI", "UseBkSkin", (BYTE)cfg::dat.bWallpaperMode);
-				}
+				char str[MAX_PATH], strrel[MAX_PATH];
+				GetDlgItemTextA(hwndDlg, IDC_FILENAME, str, _countof(str));
+				if (PathToRelative(str, strrel))
+					cfg::writeString(NULL, "CLC", "BkBitmap", strrel);
+				else
+					cfg::writeString(NULL, "CLC", "BkBitmap", str);
+
+				WORD flags = 0;
+				if (IsDlgButtonChecked(hwndDlg, IDC_STRETCHH))
+					flags |= CLB_STRETCHH;
+				if (IsDlgButtonChecked(hwndDlg, IDC_STRETCHV))
+					flags |= CLB_STRETCHV;
+				if (IsDlgButtonChecked(hwndDlg, IDC_TILEH))
+					flags |= CLBF_TILEH;
+				if (IsDlgButtonChecked(hwndDlg, IDC_TILEV))
+					flags |= CLBF_TILEV;
+				if (IsDlgButtonChecked(hwndDlg, IDC_SCROLL))
+					flags |= CLBF_SCROLL;
+				if (IsDlgButtonChecked(hwndDlg, IDC_PROPORTIONAL))
+					flags |= CLBF_PROPORTIONAL;
+				cfg::writeWord("CLC", "BkBmpUse", flags);
+				cfg::dat.bWallpaperMode = IsDlgButtonChecked(hwndDlg, IDC_SKINMODE) ? 1 : 0;
+				cfg::writeByte("CLUI", "UseBkSkin", (BYTE)cfg::dat.bWallpaperMode);
+
 				pcli->pfnClcOptionsChanged();
 				PostMessage(pcli->hwndContactList, CLUIINTM_REDRAW, 0, 0);
 				opt_clc_bkg_changed = 0;

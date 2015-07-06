@@ -51,7 +51,7 @@ INT_PTR GetStatus(WPARAM wParam, LPARAM lParam)
 
 INT_PTR GetName(WPARAM wParam, LPARAM lParam)
 {
-	mir_strncpy((char*)lParam, pluginName, wParam);
+	mir_strncpy((char*)lParam, MODULE_NAME, wParam);
 	return 0;
 }
 
@@ -87,30 +87,32 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 
 extern "C" int __declspec(dllexport) Load()
 {
+	mir_getLP(&pluginInfoEx);
+
 	SkinAddNewSoundEx("Gmail", LPGEN("Other"), LPGEN("Gmail: New thread(s)"));
 	HookEvent(ME_CLIST_DOUBLECLICKED, OpenBrowser);
 
 	PROTOCOLDESCRIPTOR pd = { PROTOCOLDESCRIPTOR_V3_SIZE };
-	pd.szName = pluginName;
+	pd.szName = MODULE_NAME;
 	pd.type = PROTOTYPE_VIRTUAL;
-	CallService(MS_PROTO_REGISTERMODULE, 0, (LPARAM)&pd);
+	Proto_RegisterModule(&pd);
 
-	CreateServiceFunction(pluginName PS_GETCAPS, GetCaps);
-	CreateServiceFunction(pluginName PS_GETSTATUS, GetStatus);
-	CreateServiceFunction(pluginName PS_GETNAME, GetName);
+	CreateProtoServiceFunction(MODULE_NAME, PS_GETCAPS, GetCaps);
+	CreateProtoServiceFunction(MODULE_NAME, PS_GETSTATUS, GetStatus);
+	CreateProtoServiceFunction(MODULE_NAME, PS_GETNAME, GetName);
 	CreateServiceFunction("GmailMNotifier/Notifying", Notifying);
 
-	opt.circleTime = db_get_dw(NULL, pluginName, "circleTime", 30);
-	opt.notifierOnTray = db_get_dw(NULL, pluginName, "notifierOnTray", TRUE);
-	opt.notifierOnPop = db_get_dw(NULL, pluginName, "notifierOnPop", TRUE);
-	opt.popupDuration = db_get_dw(NULL, pluginName, "popupDuration", -1);
-	opt.popupBgColor = db_get_dw(NULL, pluginName, "popupBgColor", RGB(173, 206, 247));
-	opt.popupTxtColor = db_get_dw(NULL, pluginName, "popupTxtColor", RGB(0, 0, 0));
-	opt.OpenUsePrg = db_get_dw(NULL, pluginName, "OpenUsePrg", 0);
-	opt.ShowCustomIcon = db_get_dw(NULL, pluginName, "ShowCustomIcon", FALSE);
-	opt.UseOnline = db_get_dw(NULL, pluginName, "UseOnline", FALSE);
-	opt.AutoLogin = db_get_dw(NULL, pluginName, "AutoLogin", TRUE);
-	opt.LogThreads = db_get_dw(NULL, pluginName, "LogThreads", FALSE);
+	opt.circleTime = db_get_dw(NULL, MODULE_NAME, "circleTime", 30);
+	opt.notifierOnTray = db_get_dw(NULL, MODULE_NAME, "notifierOnTray", TRUE);
+	opt.notifierOnPop = db_get_dw(NULL, MODULE_NAME, "notifierOnPop", TRUE);
+	opt.popupDuration = db_get_dw(NULL, MODULE_NAME, "popupDuration", -1);
+	opt.popupBgColor = db_get_dw(NULL, MODULE_NAME, "popupBgColor", RGB(173, 206, 247));
+	opt.popupTxtColor = db_get_dw(NULL, MODULE_NAME, "popupTxtColor", RGB(0, 0, 0));
+	opt.OpenUsePrg = db_get_dw(NULL, MODULE_NAME, "OpenUsePrg", 0);
+	opt.ShowCustomIcon = db_get_dw(NULL, MODULE_NAME, "ShowCustomIcon", FALSE);
+	opt.UseOnline = db_get_dw(NULL, MODULE_NAME, "UseOnline", FALSE);
+	opt.AutoLogin = db_get_dw(NULL, MODULE_NAME, "AutoLogin", TRUE);
+	opt.LogThreads = db_get_dw(NULL, MODULE_NAME, "LogThreads", FALSE);
 
 	DBVARIANT dbv;
 	if (db_get_s(NULL, "Icons", "GmailMNotifier40076", &dbv)) {
@@ -124,23 +126,24 @@ extern "C" int __declspec(dllexport) Load()
 	BuildList();
 	ID_STATUS_NONEW = opt.UseOnline ? ID_STATUS_ONLINE : ID_STATUS_OFFLINE;
 	for (int i = 0; i < acc_num; i++)
-		db_set_dw(acc[i].hContact, pluginName, "Status", ID_STATUS_NONEW);
+		db_set_dw(acc[i].hContact, MODULE_NAME, "Status", ID_STATUS_NONEW);
 
 	hTimer = SetTimer(NULL, 0, opt.circleTime * 60000, TimerProc);
 	hMirandaStarted = HookEvent(ME_SYSTEM_MODULESLOADED, OnMirandaStart);
 	hOptionsInitial = HookEvent(ME_OPT_INITIALISE, OptInit);
-	CreateServiceFunction("GmailMNotifier/MenuCommand", PluginMenuCommand);
+	
+	CreateServiceFunction(MODULE_NAME "/MenuCommand", PluginMenuCommand);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = -0x7FFFFFFF;
-	mi.flags = 0;
-	mi.hIcon = LoadSkinnedProtoIcon(pluginName, ID_STATUS_ONLINE);
-	mi.pszName = LPGEN("&Check all Gmail inboxes");
-	mi.pszContactOwner = pluginName;
-	mi.pszService = "GmailMNotifier/MenuCommand";
+	mi.hIcolibItem = Skin_LoadProtoIcon(MODULE_NAME, ID_STATUS_ONLINE);
+	mi.name.a = LPGEN("&Check all Gmail inboxes");
+	mi.pszService = MODULE_NAME "/MenuCommand";
 	Menu_AddMainMenuItem(&mi);
-	mi.pszName = LPGEN("&Check Gmail inbox");
-	Menu_AddContactMenuItem(&mi);
+
+	mi.name.a = LPGEN("&Check Gmail inbox");
+	mi.pszService = "/MenuCommand";
+	Menu_AddContactMenuItem(&mi, MODULE_NAME);
 	return 0;
 }
 

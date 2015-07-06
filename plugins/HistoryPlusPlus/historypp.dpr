@@ -162,7 +162,7 @@ begin
   Langpack_Register();
 
   // Getting langpack codepage for ansi translation
-  hppCodepage := CallService(MS_LANGPACK_GETCODEPAGE, 0, 0);
+  hppCodepage := Langpack_GetDefaultCodePage;
   if hppCodepage = CP_ACP then
     hppCodepage := GetACP();
   // Checking the version of richedit is available, need 2.0+
@@ -234,7 +234,7 @@ end;
 // init plugin
 function OnModulesLoad(awParam{0}:WPARAM; alParam{0}:LPARAM):integer; cdecl;
 var
-  menuItem:TCLISTMENUITEM;
+  menuItem:TMO_MenuItem;
 begin
   // register
   hppRegisterGridOptions;
@@ -252,11 +252,8 @@ begin
   InitEventFilters;
   ReadEventFilters;
 
+  // create contact item in contact menu
   ZeroMemory(@menuitem,SizeOf(menuItem));
-
-  //create contact item in contact menu
-  menuItem.cbSize := SizeOf(menuItem);
-  menuItem.pszContactOwner := nil;    //all contacts
   menuItem.flags := CMIF_UNICODE;
 
   menuItem.Position := 1000090000;
@@ -319,18 +316,13 @@ function OnTTBLoaded(awParam: WPARAM; alParam: LPARAM): Integer; cdecl;
 var
   ttb: TTBButton;
 begin
-  if Boolean(ServiceExists(MS_TTB_ADDBUTTON)) then
-  begin
-    ZeroMemory(@ttb,SizeOf(ttb));
-    ttb.cbSize := SizeOf(ttb);
-    ttb.hIconUp := hppIcons[HPP_ICON_GLOBALSEARCH].handle;
-    ttb.pszService := MS_HPP_SHOWGLOBALSEARCH;
-    ttb.dwFlags := TTBBF_VISIBLE or TTBBF_SHOWTOOLTIP;
-    ttb.name := 'Global History Search';
-    ttb.pszTooltipUp := ttb.name;
-    CallService(MS_TTB_ADDBUTTON,WPARAM(@ttb), 0);
-    UnhookEvent(HookTTBLoaded);
-  end;
+  ZeroMemory(@ttb,SizeOf(ttb));
+  ttb.hIconUp := hppIcons[HPP_ICON_GLOBALSEARCH].handle;
+  ttb.pszService := MS_HPP_SHOWGLOBALSEARCH;
+  ttb.dwFlags := TTBBF_VISIBLE or TTBBF_SHOWTOOLTIP;
+  ttb.name := 'Global History Search';
+  ttb.pszTooltipUp := ttb.name;
+  CallService(MS_TTB_ADDBUTTON,WPARAM(@ttb), 0);
   Result := 0;
 end;
 
@@ -376,7 +368,7 @@ begin
     exit;
   end;
 
-  szProto := pAnsiChar(CallService(MS_PROTO_GETCONTACTBASEPROTO, wParam, 0));
+  szProto := Proto_GetProtoName(wParam);
   if (StrComp(cws.szModule, 'CList') <> 0) and
     ((szProto = nil) or (StrComp(cws.szModule, szProto) <> 0)) then
     exit;
@@ -453,24 +445,10 @@ begin
 end;
 
 function OnIcon2Changed(awParam: WPARAM; alParam: LPARAM): Integer; cdecl;
-var
-  menuItem: TCLISTMENUITEM;
 begin
   Result := 0;
   LoadIcons2;
   NotifyAllForms(HM_NOTF_ICONS2CHANGED,0,0);
-  //change menu icons
-  ZeroMemory(@menuitem,SizeOf(menuItem));
-  menuItem.cbSize := SizeOf(menuItem);
-  menuItem.flags := CMIM_ICON;
-  menuItem.hIcon := hppIcons[HPP_ICON_CONTACTHISTORY].handle;
-  CallService(MS_CLIST_MODIFYMENUITEM, MenuHandles[miContact].Handle, LPARAM(@menuItem));
-  CallService(MS_CLIST_MODIFYMENUITEM, MenuHandles[miSystem].Handle, LPARAM(@menuItem));
-  menuItem.hIcon := hppIcons[HPP_ICON_GLOBALSEARCH].handle;
-  CallService(MS_CLIST_MODIFYMENUITEM, MenuHandles[miSearch].Handle, LPARAM(@menuItem));
-  menuItem.hIcon := hppIcons[HPP_ICON_TOOL_DELETEALL].handle;
-  CallService(MS_CLIST_MODIFYMENUITEM, MenuHandles[miEmpty].Handle, LPARAM(@menuItem));
-  CallService(MS_CLIST_MODIFYMENUITEM, MenuHandles[miSysEmpty].Handle, LPARAM(@menuItem));
 end;
 
 //the context menu for a contact is about to be built     v0.1.0.1+
@@ -480,38 +458,27 @@ end;
 //contact that has them
 function OnBuildContactMenu(hContact: WPARAM; alParam: LPARAM): Integer; cdecl;
 var
-  menuItem: TCLISTMENUITEM;
   hLast: THandle;
   count: Integer;
-  res: Integer;
+  text:  PWideChar;
 begin
   Result := 0;
   count := db_event_count(hContact);
   hLast := db_event_last(hContact);
   if (PrevShowHistoryCount xor ShowHistoryCount) or (count <> MenuCount) then
   begin
-    ZeroMemory(@menuitem, SizeOf(menuItem));
-    menuItem.cbSize := SizeOf(menuItem);
-    menuItem.flags := CMIM_FLAGS;
-    if hLast = 0 then
-      menuItem.flags := menuItem.flags or CMIF_HIDDEN;
-    CallService(MS_CLIST_MODIFYMENUITEM, MenuHandles[miEmpty].Handle,
-      lParam(@menuitem));
+    Menu_ShowItem(MenuHandles[miEmpty].Handle, byte(hLast <> 0));
+    Menu_ShowItem(MenuHandles[miContact].Handle, byte(hLast <> 0));
+
     if ShowHistoryCount then
-    begin
-      menuItem.flags := menuItem.flags or dword(CMIM_NAME) or CMIF_UNICODE;
-      menuItem.szName.w :=
-        pChar(Format('%s [%u]',[TranslateW(MenuHandles[miContact].Name),count]));
-    end
+      text := pWideChar(Format('%s [%u]',[TranslateW(MenuHandles[miContact].Name),count]))
     else if PrevShowHistoryCount then
-    begin
-      menuItem.flags := menuItem.flags or DWord(CMIM_NAME);
-      menuItem.szName.w := TranslateW(MenuHandles[miContact].Name);
-    end;
-    res := CallService(MS_CLIST_MODIFYMENUITEM, MenuHandles[miContact].Handle,
-      lParam(@menuitem));
-    if res = 0 then
-      MenuCount := count;
+      text := TranslateW(MenuHandles[miContact].Name)
+    else
+      text := nil;
+
+    Menu_ModifyItem(MenuHandles[miContact].Handle, text);
+    MenuCount := count;
     PrevShowHistoryCount := ShowHistoryCount;
   end;
 end;

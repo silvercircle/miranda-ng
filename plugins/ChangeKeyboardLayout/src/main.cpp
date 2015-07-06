@@ -32,13 +32,13 @@ LPCTSTR ptszSeparators = _T(" \t\n\r");
 
 HANDLE hOptionsInitialize;
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD, LPVOID)
 {
 	hInst = hinstDLL;
 	return TRUE;
 }
 
-extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
+extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 {
 	return &pluginInfoEx;
 }
@@ -61,7 +61,7 @@ extern "C" __declspec(dllexport) int Load(void)
 	HookEvent(ME_SYSTEM_MODULESLOADED, ModulesLoaded);
 
 	// IcoLib support
-	Icon_Register(hInst, ModuleName, iconList, SIZEOF(iconList));
+	Icon_Register(hInst, ModuleName, iconList, _countof(iconList));
 
 	HookEvent(ME_SKIN2_ICONSCHANGED, OnIconsChanged);
 

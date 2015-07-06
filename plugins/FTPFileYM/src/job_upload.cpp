@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "common.h"
 
 Event UploadJob::jobDone;
-Mutex UploadJob::mutexJobCount;
+mir_cs UploadJob::mutexJobCount;
 int UploadJob::iRunningJobCount = 0;
 
 extern UploadDialog *uDlg;
@@ -35,14 +35,14 @@ UploadJob::UploadJob(UploadJob *job) :
 	GenericJob(job),fp(NULL),uiSent(0),uiTotalSent(0),uiFileSize(0)
 { 
 	mir_strcpy(this->szFileLink, job->szFileLink);
-	for (int i = 0; i < SIZEOF(this->lastSpeed); i++)
+	for (int i = 0; i < _countof(this->lastSpeed); i++)
 		this->lastSpeed[i] = 0;
 }
 
 UploadJob::UploadJob(PackerJob *job) :
 	GenericJob(job),fp(NULL),uiSent(0),uiTotalSent(0),uiFileSize(0)
 { 
-	for (int i = 0; i < SIZEOF(this->lastSpeed); i++)
+	for (int i = 0; i < _countof(this->lastSpeed); i++)
 		this->lastSpeed[i] = 0;
 
 	Utils::makeSafeString(job->stzFileName, this->szSafeFileName);
@@ -99,7 +99,7 @@ void UploadJob::copyLinkToML()
 {
 	if (this->hContact != NULL) {
 		char buff[256];
-		mir_snprintf(buff, SIZEOF(buff), "%s\r\n", this->szFileLink);
+		mir_snprintf(buff, "%s\r\n", this->szFileLink);
 		CallServiceSync(MS_MSG_SENDMESSAGE, (WPARAM)this->hContact, (LPARAM)buff);
 	}
 }
@@ -149,24 +149,24 @@ void UploadJob::waitingThread(void *arg)
 	UploadJob *job = (UploadJob *)arg;
 
 	while (!Miranda_Terminated()) {
-		Lock *lock = new Lock(mutexJobCount);
+		mir_cslockfull lock(mutexJobCount);
 		if (iRunningJobCount < MAX_RUNNING_JOBS) {
 			iRunningJobCount++;
-			delete lock;
+			lock.unlock();
 			job->upload();
 
 			if (!job->isCompleted())
 				delete job;
 
-			Lock *lock = new Lock(mutexJobCount);
+			lock.lock();
 			iRunningJobCount--;
-			delete lock;
+			lock.unlock();
 
 			jobDone.release();
 			return;
 		}
 
-		delete lock;
+		lock.unlock();
 		jobDone.wait();
 		job->status = GenericJob::STATUS_WAITING;	
 	}
@@ -182,9 +182,9 @@ void UploadJob::start()
 char *UploadJob::getChmodString()
 {
 	if (ftp->ftpProto == ServerList::FTP::FT_SSH) 
-		mir_snprintf(buff, SIZEOF(buff), "%s \"%s/%s\"", ftp->szChmod, ftp->szDir, this->szSafeFileName);
+		mir_snprintf(buff, "%s \"%s/%s\"", ftp->szChmod, ftp->szDir, this->szSafeFileName);
 	else 
-		mir_snprintf(buff, SIZEOF(buff), "%s %s", ftp->szChmod, this->szSafeFileName);
+		mir_snprintf(buff, "%s %s", ftp->szChmod, this->szSafeFileName);
 
 	return buff;
 }
@@ -192,9 +192,9 @@ char *UploadJob::getChmodString()
 char *UploadJob::getDelFileString()
 {
 	if (ftp->ftpProto == ServerList::FTP::FT_SSH)
-		mir_snprintf(buff, SIZEOF(buff), "rm \"%s/%s\"", ftp->szDir, this->szSafeFileName);
+		mir_snprintf(buff, "rm \"%s/%s\"", ftp->szDir, this->szSafeFileName);
 	else
-		mir_snprintf(buff, SIZEOF(buff), "DELE %s", this->szSafeFileName);
+		mir_snprintf(buff, "DELE %s", this->szSafeFileName);
 
 	return buff;
 }
@@ -202,9 +202,9 @@ char *UploadJob::getDelFileString()
 char *UploadJob::getUrlString()
 {
 	if (ftp->szDir[0])
-		mir_snprintf(buff, SIZEOF(buff), "%s%s/%s/%s", ftp->getProtoString(), ftp->szServer, ftp->szDir, this->szSafeFileName);
+		mir_snprintf(buff, "%s%s/%s/%s", ftp->getProtoString(), ftp->szServer, ftp->szDir, this->szSafeFileName);
 	else
-		mir_snprintf(buff, SIZEOF(buff), "%s%s/%s", ftp->getProtoString(), ftp->szServer, this->szSafeFileName);
+		mir_snprintf(buff, "%s%s/%s", ftp->getProtoString(), ftp->szServer, this->szSafeFileName);
 
 	return buff;
 }
@@ -212,9 +212,9 @@ char *UploadJob::getUrlString()
 char *UploadJob::getDelUrlString()
 {
 	if (ftp->szDir[0] && ftp->ftpProto != ServerList::FTP::FT_SSH)
-		mir_snprintf(buff, SIZEOF(buff), "%s%s/%s/", ftp->getProtoString(), ftp->szServer, ftp->szDir);
+		mir_snprintf(buff, "%s%s/%s/", ftp->getProtoString(), ftp->szServer, ftp->szDir);
 	else
-		mir_snprintf(buff, SIZEOF(buff), "%s%s/", ftp->getProtoString(), ftp->szServer);
+		mir_snprintf(buff, "%s%s/", ftp->getProtoString(), ftp->szServer);
 
 	return buff;
 }
@@ -248,7 +248,7 @@ INT_PTR CALLBACK UploadJob::DlgProcFileExists(HWND hwndDlg, UINT msg, WPARAM wPa
 		{
 			TCHAR buff[256];
 			TCHAR *fileName = mir_a2t((char *)lParam);
-			mir_sntprintf(buff, SIZEOF(buff), TranslateT("File exists - %s"), fileName);
+			mir_sntprintf(buff, TranslateT("File exists - %s"), fileName);
 			SetWindowText(hwndDlg, buff);
 			FREE(fileName);
 		}
@@ -316,7 +316,7 @@ void UploadJob::upload()
 		
 		if (result != CURLE_OK && result != CURLE_ABORTED_BY_CALLBACK) {
 			char buff[256];
-			mir_snprintf(buff, SIZEOF(buff), Translate("FTP error occurred.\n%s"), this->szError);
+			mir_snprintf(buff, Translate("FTP error occurred.\n%s"), this->szError);
 			Utils::msgBoxA(buff, MB_OK | MB_ICONERROR);
 		}
 			
@@ -385,19 +385,19 @@ void UploadJob::updateStats()
 	if (this->uiSent && (time(NULL) > this->startTS)) {
 		double speed = ((double)this->uiSent / 1024)/(time(NULL) - this->startTS);
 		this->avgSpeed = speed;
-		for (int i = 0; i < SIZEOF(this->lastSpeed); i++) {
+		for (int i = 0; i < _countof(this->lastSpeed); i++) {
 			this->avgSpeed += (this->lastSpeed[i] == 0 ? speed : this->lastSpeed[i]);
-			if (i < SIZEOF(this->lastSpeed) - 1)
+			if (i < _countof(this->lastSpeed) - 1)
 				this->lastSpeed[i + 1] = this->lastSpeed[i];
 		}
 
-		this->avgSpeed /= SIZEOF(this->lastSpeed) + 1;
+		this->avgSpeed /= _countof(this->lastSpeed) + 1;
 		this->lastSpeed[0] = speed;
 		
-		mir_sntprintf(this->tab->stzSpeed, SIZEOF(this->tab->stzSpeed), _T("%0.1f kB/s"), this->avgSpeed);
+		mir_sntprintf(this->tab->stzSpeed, _countof(this->tab->stzSpeed), _T("%0.1f kB/s"), this->avgSpeed);
 		
 		double perc = this->uiFileSize ? ((double)this->uiTotalSent / this->uiFileSize) * 100 : 0;
-		mir_sntprintf(this->tab->stzComplet, SIZEOF(this->tab->stzComplet), _T("%0.1f%% (%d kB/%d kB)"), perc, (int)this->uiTotalSent/1024, (int)this->uiFileSize/1024);
+		mir_sntprintf(this->tab->stzComplet, _countof(this->tab->stzComplet), _T("%0.1f%% (%d kB/%d kB)"), perc, (int)this->uiTotalSent/1024, (int)this->uiFileSize/1024);
 	
 		long s = (this->uiFileSize - this->uiTotalSent) / (long)(this->avgSpeed * 1024); 
 		int d = (s / 60 / 60 / 24);
@@ -406,9 +406,9 @@ void UploadJob::updateStats()
 		s = s - (d * 24 * 60 * 60) - (h * 60 * 60) - (m * 60);
 
 		TCHAR buff[256];
-		if (d > 0) mir_sntprintf(buff, SIZEOF(buff), _T("%dd %02d:%02d:%02d"), d, h, m, s);
-		else mir_sntprintf(buff, SIZEOF(buff), _T("%02d:%02d:%02d"), h, m, s);
-		mir_sntprintf(this->tab->stzRemain, SIZEOF(this->tab->stzRemain), _T("%s (%d kB/%d kB)"), buff, (this->uiFileSize - this->uiTotalSent)/1024, this->uiFileSize/1024);
+		if (d > 0) mir_sntprintf(buff, _T("%dd %02d:%02d:%02d"), d, h, m, s);
+		else mir_sntprintf(buff, _T("%02d:%02d:%02d"), h, m, s);
+		mir_sntprintf(this->tab->stzRemain, _countof(this->tab->stzRemain), _T("%s (%d kB/%d kB)"), buff, (this->uiFileSize - this->uiTotalSent)/1024, this->uiFileSize/1024);
 
 		this->refreshTab(false);
 	}
@@ -498,12 +498,12 @@ void UploadJob::closeAllTabs()
 void UploadJob::createToolTip()
 { 
 	TCHAR *server = mir_a2t(this->ftp->szServer);
-	mir_sntprintf(uDlg->stzToolTipText, SIZEOF(uDlg->stzToolTipText), 
+	mir_sntprintf(uDlg->stzToolTipText, _countof(uDlg->stzToolTipText), 
 		TranslateT("Status: %s\r\nFile: %s\r\nServer: %s"), 
 		this->getStatusString(), this->stzFileName, server);
 
 	if (this->tab->stzSpeed[0] && this->tab->stzComplet[0] && this->tab->stzRemain[0])
-		mir_sntprintf(uDlg->stzToolTipText, SIZEOF(uDlg->stzToolTipText), 
+		mir_sntprintf(uDlg->stzToolTipText, _countof(uDlg->stzToolTipText), 
 			TranslateT("%s\r\nSpeed: %s\r\nCompleted: %s\r\nRemaining: %s"), 
 			uDlg->stzToolTipText, this->tab->stzSpeed, this->tab->stzComplet, this->tab->stzRemain);
 		

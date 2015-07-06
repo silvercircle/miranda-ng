@@ -66,7 +66,7 @@ static void __inline ShutdownAndStopWatcher(void)
 static TCHAR* GetMessageText(BYTE **ppBlob,DWORD *pcbBlob)
 {
 	(*ppBlob)[*pcbBlob]=0;
-	DWORD cb = mir_strlen((char*)*ppBlob);
+	size_t cb = mir_strlen((char*)*ppBlob);
 	/* use Unicode data if present */
 	if (*pcbBlob>(cb+3)) {
 		(*ppBlob)[*pcbBlob-1]=0;
@@ -179,7 +179,7 @@ static BOOL CheckAllContactsOffline(void)
 	fSmartCheck=db_get_b(NULL,"AutoShutdown","SmartOfflineCheck",SETTING_SMARTOFFLINECHECK_DEFAULT);
 	for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact)) {
 		char *pszProto = GetContactProto(hContact);
-		if (pszProto != NULL && CallProtoService(pszProto,PS_GETSTATUS,0,0) != ID_STATUS_OFFLINE) {
+		if (pszProto != NULL && CallProtoService(pszProto, PS_GETSTATUS, 0, 0) != ID_STATUS_OFFLINE) {
 			if (db_get_b(hContact,pszProto,"ChatRoom",0)) continue;
 			if (db_get_w(hContact,pszProto,"Status",0) != ID_STATUS_OFFLINE) {
 				if (fSmartCheck) {

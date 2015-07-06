@@ -89,9 +89,9 @@ bool AddContactDlgAccounts(HWND hdlg, AddDialogParam *acs)
 	PROTOACCOUNT** pAccounts;
 	int iRealAccCount, iAccCount = 0;
 
-	ProtoEnumAccounts(&iRealAccCount, &pAccounts);
+	Proto_EnumAccounts(&iRealAccCount, &pAccounts);
 	for (int i = 0; i < iRealAccCount; i++) {
-		if (!IsAccountEnabled(pAccounts[i]))
+		if (!Proto_IsAccountEnabled(pAccounts[i]))
 			continue;
 		
 		DWORD dwCaps = (DWORD)CallProtoService(pAccounts[i]->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0);
@@ -120,7 +120,7 @@ bool AddContactDlgAccounts(HWND hdlg, AddDialogParam *acs)
 	HDC hdc = GetDC(hdlg);
 	SelectObject(hdc, (HFONT)SendDlgItemMessage(hdlg, IDC_PROTO, WM_GETFONT, 0, 0));
 	for (int i = 0; i < iRealAccCount; i++) {
-		if (!IsAccountEnabled(pAccounts[i])) continue;
+		if (!Proto_IsAccountEnabled(pAccounts[i])) continue;
 		DWORD dwCaps = (DWORD)CallProtoService(pAccounts[i]->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0);
 		if (!(dwCaps & PF1_BASICSEARCH) && !(dwCaps & PF1_EXTSEARCH) && !(dwCaps & PF1_SEARCHBYEMAIL) && !(dwCaps & PF1_SEARCHBYNAME))
 			continue;
@@ -164,8 +164,8 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM)
 
 		Utils_RestoreWindowPositionNoSize(hdlg, NULL, "AddContact", "");
 		TranslateDialogDefault(hdlg);
-		SendMessage(hdlg, WM_SETICON, ICON_BIG, (LPARAM)Skin_GetIcon(ICON_ADD,1));
-		SendMessage(hdlg, WM_SETICON, ICON_SMALL, (LPARAM)Skin_GetIcon(ICON_ADD));
+		SendMessage(hdlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIcon(ICON_ADD,1));
+		SendMessage(hdlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIcon(ICON_ADD));
 		HookEventMessage(ME_SKIN2_ICONSCHANGED, hdlg, DM_ADDCONTACT_CHANGEICONS);
 		HookEventMessage(ME_PROTO_ACCLISTCHANGED, hdlg, DM_ADDCONTACT_CHANGEACCLIST);
 		{
@@ -196,7 +196,7 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM)
 		case IDC_USERID:
 			if (HIWORD(wparam) == EN_CHANGE) {
 				TCHAR szUserId[256];
-				if (GetDlgItemText(hdlg, IDC_USERID, szUserId, SIZEOF(szUserId))) {
+				if (GetDlgItemText(hdlg, IDC_USERID, szUserId, _countof(szUserId))) {
 					if (!IsWindowEnabled(GetDlgItem(hdlg, IDOK)))
 						EnableWindow(GetDlgItem(hdlg, IDOK), TRUE);
 				}
@@ -234,7 +234,7 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM)
 		case IDOK:
 			{
 				TCHAR szUserId[256];
-				GetDlgItemText(hdlg, IDC_USERID, szUserId, SIZEOF(szUserId));
+				GetDlgItemText(hdlg, IDC_USERID, szUserId, _countof(szUserId));
 
 				if (*rtrimt(szUserId) == 0 ||
 					(strstr(acs->proto, "GG") && _tcstoul(szUserId, NULL, 10) > INT_MAX) || // Gadu-Gadu protocol
@@ -256,7 +256,7 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM)
 					}
 					psr = (PROTOSEARCHRESULT*)mir_calloc(sizeof(TLEN_SEARCH_RESULT));
 					psr->cbSize = sizeof(TLEN_SEARCH_RESULT);
-					mir_snprintf(((TLEN_SEARCH_RESULT*)psr)->jid, SIZEOF(((TLEN_SEARCH_RESULT*)psr)->jid), "%S", szUserId);
+					mir_snprintf(((TLEN_SEARCH_RESULT*)psr)->jid, _countof(((TLEN_SEARCH_RESULT*)psr)->jid), "%S", szUserId);
 				}
 				else {
 					psr = (PROTOSEARCHRESULT*)mir_calloc(sizeof(PROTOSEARCHRESULT));
@@ -264,7 +264,7 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM)
 				}
 
 				psr->flags = PSR_TCHAR;
-				psr->id = mir_tstrdup(szUserId);
+				psr->id.t = mir_tstrdup(szUserId);
 				acs->psr = psr;
 
 				MCONTACT hContact = (MCONTACT)CallProtoService(acs->proto, PS_ADDTOLIST, IsDlgButtonChecked(hdlg, IDC_ADDTEMP) ? PALF_TEMPORARY : 0, (LPARAM)acs->psr);
@@ -276,7 +276,7 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM)
 				}
 
 				TCHAR szHandle[256];
-				if (GetDlgItemText(hdlg, IDC_MYHANDLE, szHandle, SIZEOF(szHandle)))
+				if (GetDlgItemText(hdlg, IDC_MYHANDLE, szHandle, _countof(szHandle)))
 					db_set_ts(hContact, "CList", "MyHandle", szHandle);
 
 				int item = SendDlgItemMessage(hdlg, IDC_GROUP, CB_GETCURSEL, 0, 0);
@@ -294,17 +294,17 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM)
 					if (IsDlgButtonChecked(hdlg, IDC_AUTH)) {
 						DWORD flags = CallProtoService(acs->proto, PS_GETCAPS, PFLAGNUM_4, 0);
 						if (flags & PF4_NOCUSTOMAUTH)
-							CallContactService(hContact, PSS_AUTHREQUESTT, 0, 0);
+							CallContactService(hContact, PSS_AUTHREQUEST, 0, 0);
 						else {
-							TCHAR szReason[512];
-							GetDlgItemText(hdlg, IDC_AUTHREQ, szReason, SIZEOF(szReason));
-							CallContactService(hContact, PSS_AUTHREQUESTT, 0, (LPARAM)szReason);
+							TCHAR tszReason[512];
+							GetDlgItemText(hdlg, IDC_AUTHREQ, tszReason, _countof(tszReason));
+							CallContactService(hContact, PSS_AUTHREQUEST, 0, (LPARAM)tszReason);
 						}
 					}
 				}
 
 				if (GetAsyncKeyState(VK_CONTROL))
-					CallService(MS_MSG_SENDMESSAGE, hContact, (LPARAM)(const char*)NULL);
+					CallService(MS_MSG_SENDMESSAGE, hContact, NULL);
 			}
 			// fall through
 		case IDCANCEL:
@@ -324,8 +324,8 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM)
 		break;
 
 	case DM_ADDCONTACT_CHANGEICONS:
-		Skin_ReleaseIcon((HICON)SendMessage(hdlg, WM_SETICON, ICON_BIG, (LPARAM)Skin_GetIcon(ICON_ADD, 1)));
-		Skin_ReleaseIcon((HICON)SendMessage(hdlg, WM_SETICON, ICON_SMALL, (LPARAM)Skin_GetIcon(ICON_ADD)));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hdlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIcon(ICON_ADD, 1)));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hdlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIcon(ICON_ADD)));
 		break;
 
 	case DM_ADDCONTACT_CHANGEACCLIST:
@@ -334,16 +334,16 @@ INT_PTR CALLBACK AddContactDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM)
 
 	case WM_DESTROY:
 		hAddDlg = NULL;
-		Skin_ReleaseIcon((HICON)SendMessage(hdlg, WM_SETICON, ICON_BIG, 0));
-		Skin_ReleaseIcon((HICON)SendMessage(hdlg, WM_SETICON, ICON_SMALL, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hdlg, WM_SETICON, ICON_BIG, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hdlg, WM_SETICON, ICON_SMALL, 0));
 		ImageList_Destroy((HIMAGELIST)SendDlgItemMessage(hdlg, IDC_PROTO, CBEM_GETIMAGELIST, 0, 0));
 		if (acs) {
 			db_set_s(NULL, "AddContact", "LastProto", acs->proto);
 			if (acs->psr) {
-				mir_free(acs->psr->nick);
-				mir_free(acs->psr->firstName);
-				mir_free(acs->psr->lastName);
-				mir_free(acs->psr->email);
+				mir_free(acs->psr->nick.t);
+				mir_free(acs->psr->firstName.t);
+				mir_free(acs->psr->lastName.t);
+				mir_free(acs->psr->email.t);
 				mir_free(acs->psr);
 			}
 			delete acs;

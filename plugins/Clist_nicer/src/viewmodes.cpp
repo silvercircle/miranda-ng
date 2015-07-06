@@ -22,9 +22,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include <commonheaders.h>
-#include <m_variables.h>
-#include "../cluiframes/cluiframes.h"
+#include "stdafx.h"
+#include "cluiframes.h"
 
 #define TIMERID_VIEWMODEEXPIRE 100
 
@@ -178,7 +177,7 @@ static int FillDialog(HWND hwnd)
 
 	// fill protocols...
 
-	ProtoEnumAccounts( &protoCount, &accs );
+	Proto_EnumAccounts( &protoCount, &accs );
 	item.mask = LVIF_TEXT;
 	item.iItem = 1000;
 	for (i = 0; i < protoCount; i++) {
@@ -302,17 +301,17 @@ void SaveViewMode(const char *name, const TCHAR *szGroupFilter, const char *szPr
 {
 	char szSetting[512];
 
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_PF", 246, name);
+	mir_snprintf(szSetting, "%c%s_PF", 246, name);
 	cfg::writeString(NULL, CLVM_MODULE, szSetting, szProtoFilter);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_GF", 246, name);
+	mir_snprintf(szSetting, "%c%s_GF", 246, name);
 	cfg::writeTString(NULL, CLVM_MODULE, szSetting, szGroupFilter);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_SM", 246, name);
+	mir_snprintf(szSetting, "%c%s_SM", 246, name);
 	cfg::writeDword(CLVM_MODULE, szSetting, statusMask);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_SSM", 246, name);
+	mir_snprintf(szSetting, "%c%s_SSM", 246, name);
 	cfg::writeDword(CLVM_MODULE, szSetting, stickyStatusMask);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_OPT", 246, name);
+	mir_snprintf(szSetting, "%c%s_OPT", 246, name);
 	cfg::writeDword(CLVM_MODULE, szSetting, options);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_LM", 246, name);
+	mir_snprintf(szSetting, "%c%s_LM", 246, name);
 	cfg::writeDword(CLVM_MODULE, szSetting, lmdat);
 
 	cfg::writeDword(CLVM_MODULE, name, MAKELONG((unsigned short)operators, (unsigned short)stickies));
@@ -321,9 +320,9 @@ void SaveViewMode(const char *name, const TCHAR *szGroupFilter, const char *szPr
 // saves the state of the filter definitions for the current item
 void SaveState()
 {
-	TCHAR newGroupFilter[2048] = _T("|");
-	char newProtoFilter[2048] = "|";
-	int i, iLen;
+	CMString newGroupFilter(_T("|"));
+	CMStringA newProtoFilter("|");
+	int i;
 	HWND hwndList;
 	char *szModeName = NULL;
 	DWORD statusMask = 0;
@@ -342,12 +341,12 @@ void SaveState()
 			if (ListView_GetCheckState(hwndList, i)) {
 				item.mask = LVIF_TEXT;
 				item.pszText = szTemp;
-				item.cchTextMax = SIZEOF(szTemp);
+				item.cchTextMax = _countof(szTemp);
 				item.iItem = i;
 				SendMessageA(hwndList, LVM_GETITEMA, 0, (LPARAM)&item);
-				strncat(newProtoFilter, szTemp, SIZEOF(newProtoFilter) - mir_strlen(newProtoFilter));
-				strncat(newProtoFilter, "|", SIZEOF(newProtoFilter) - mir_strlen(newProtoFilter));
-				newProtoFilter[2047] = 0;
+				
+				newProtoFilter.Append(szTemp);
+				newProtoFilter.AppendChar('|');
 			}
 		}
 	}
@@ -364,12 +363,12 @@ void SaveState()
 			if (ListView_GetCheckState(hwndList, i)) {
 				item.mask = LVIF_TEXT;
 				item.pszText = szTemp;
-				item.cchTextMax = SIZEOF(szTemp);
+				item.cchTextMax = _countof(szTemp);
 				item.iItem = i;
 				SendMessage(hwndList, LVM_GETITEM, 0, (LPARAM)&item);
-				_tcsncat(newGroupFilter, szTemp, SIZEOF(newGroupFilter) - mir_tstrlen(newGroupFilter));
-				_tcsncat(newGroupFilter, _T("|"), SIZEOF(newGroupFilter) - mir_tstrlen(newGroupFilter));
-				newGroupFilter[2047] = 0;
+
+				newGroupFilter.Append(szTemp);
+				newGroupFilter.AppendChar('|');
 			}
 		}
 	}
@@ -378,7 +377,7 @@ void SaveState()
 		if (ListView_GetCheckState(hwndList, i - ID_STATUS_OFFLINE))
 			statusMask |= (1 << (i - ID_STATUS_OFFLINE));
 
-	iLen = SendDlgItemMessageA(clvmHwnd, IDC_VIEWMODES, LB_GETTEXTLEN, clvm_curItem, 0);
+	int iLen = SendDlgItemMessageA(clvmHwnd, IDC_VIEWMODES, LB_GETTEXTLEN, clvm_curItem, 0);
 	if (iLen) {
 		unsigned int stickies = 0;
 		DWORD dwGlobalMask, dwLocalMask;
@@ -449,21 +448,21 @@ void UpdateFilters()
 	SendDlgItemMessageA(clvmHwnd, IDC_VIEWMODES, LB_GETTEXT, clvm_curItem, (LPARAM)szBuf);
 	strncpy(g_szModename, szBuf, sizeof(g_szModename));
 	g_szModename[sizeof(g_szModename) - 1] = 0;
-	mir_snprintf(szTemp, SIZEOF(szTemp), Translate("Current view mode: %s"), g_szModename);
+	mir_snprintf(szTemp, Translate("Current view mode: %s"), g_szModename);
 	SetDlgItemTextA(clvmHwnd, IDC_CURVIEWMODE2, szTemp);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_PF", 246, szBuf);
+	mir_snprintf(szSetting, "%c%s_PF", 246, szBuf);
 	if (db_get(NULL, CLVM_MODULE, szSetting, &dbv_pf))
 		goto cleanup;
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_GF", 246, szBuf);
+	mir_snprintf(szSetting, "%c%s_GF", 246, szBuf);
 	if (cfg::getTString(NULL, CLVM_MODULE, szSetting, &dbv_gf))
 		goto cleanup;
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_OPT", 246, szBuf);
+	mir_snprintf(szSetting, "%c%s_OPT", 246, szBuf);
 	if ((opt = cfg::getDword(NULL, CLVM_MODULE, szSetting, -1)) != -1) {
 		SendDlgItemMessage(clvmHwnd, IDC_AUTOCLEARSPIN, UDM_SETPOS, 0, MAKELONG(LOWORD(opt), 0));
 	}
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_SM", 246, szBuf);
+	mir_snprintf(szSetting, "%c%s_SM", 246, szBuf);
 	statusMask = cfg::getDword(CLVM_MODULE, szSetting, -1);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_SSM", 246, szBuf);
+	mir_snprintf(szSetting, "%c%s_SSM", 246, szBuf);
 	stickyStatusMask = cfg::getDword(CLVM_MODULE, szSetting, -1);
 	dwFlags = cfg::getDword(CLVM_MODULE, szBuf, 0);
 	{
@@ -475,12 +474,12 @@ void UpdateFilters()
 
 		item.mask = LVIF_TEXT;
 		item.pszText = szTemp;
-		item.cchTextMax = SIZEOF(szTemp);
+		item.cchTextMax = _countof(szTemp);
 
 		for (i = 0; i < ListView_GetItemCount(hwndList); i++) {
 			item.iItem = i;
 			SendMessageA(hwndList, LVM_GETITEMA, 0, (LPARAM)&item);
-			mir_snprintf(szMask, SIZEOF(szMask), "%s|", szTemp);
+			mir_snprintf(szMask, _countof(szMask), "%s|", szTemp);
 			if (dbv_pf.pszVal && strstr(dbv_pf.pszVal, szMask))
 				ListView_SetCheckState(hwndList, i, TRUE)
 			else
@@ -497,14 +496,14 @@ void UpdateFilters()
 
 		item.mask = LVIF_TEXT;
 		item.pszText = szTemp;
-		item.cchTextMax = SIZEOF(szTemp);
+		item.cchTextMax = _countof(szTemp);
 
 		ListView_SetCheckState(hwndList, 0, dwFlags & CLVM_INCLUDED_UNGROUPED ? TRUE : FALSE);
 
 		for (i = 1; i < ListView_GetItemCount(hwndList); i++) {
 			item.iItem = i;
 			SendMessage(hwndList, LVM_GETITEM, 0, (LPARAM)&item);
-			mir_sntprintf(szMask, SIZEOF(szMask), _T("%s|"), szTemp);
+			mir_sntprintf(szMask, _countof(szMask), _T("%s|"), szTemp);
 			if (dbv_gf.ptszVal && _tcsstr(dbv_gf.ptszVal, szMask))
 				ListView_SetCheckState(hwndList, i, TRUE)
 			else
@@ -538,7 +537,7 @@ void UpdateFilters()
 		Utils::enableDlgControl(clvmHwnd, IDC_LASTMSGVALUE, useLastMsg);
 		Utils::enableDlgControl(clvmHwnd, IDC_LASTMESSAGEUNIT, useLastMsg);
 
-		mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_LM", 246, szBuf);
+		mir_snprintf(szSetting, "%c%s_LM", 246, szBuf);
 		lmdat = cfg::getDword(CLVM_MODULE, szSetting, 0);
 
 		SetDlgItemInt(clvmHwnd, IDC_LASTMSGVALUE, LOWORD(lmdat), FALSE);
@@ -573,7 +572,7 @@ INT_PTR CALLBACK DlgProcViewModesSetup(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 			himlViewModes = ImageList_Create(16, 16, ILC_MASK | ILC_COLOR32, 12, 0);
 			for (i = ID_STATUS_OFFLINE; i <= ID_STATUS_OUTTOLUNCH; i++)
-				ImageList_AddIcon(himlViewModes, LoadSkinnedProtoIcon(NULL, i));
+				ImageList_AddIcon(himlViewModes, Skin_LoadProtoIcon(NULL, i));
 
 			hIcon = (HICON)LoadImage(g_hInst, MAKEINTRESOURCE(IDI_MINIMIZE), IMAGE_ICON, 16, 16, 0);
 			nullImage = ImageList_AddIcon(himlViewModes, hIcon);
@@ -652,15 +651,15 @@ INT_PTR CALLBACK DlgProcViewModesSetup(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 						char *szBuf = (char*)malloc(iLen + 1);
 						if (szBuf) {
 							SendDlgItemMessageA(hwndDlg, IDC_VIEWMODES, LB_GETTEXT, SendDlgItemMessage(hwndDlg, IDC_VIEWMODES, LB_GETCURSEL, 0, 0), (LPARAM)szBuf);
-							mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_PF", 246, szBuf);
+							mir_snprintf(szSetting, "%c%s_PF", 246, szBuf);
 							db_unset(NULL, CLVM_MODULE, szSetting);
-							mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_GF", 246, szBuf);
+							mir_snprintf(szSetting, "%c%s_GF", 246, szBuf);
 							db_unset(NULL, CLVM_MODULE, szSetting);
-							mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_SM", 246, szBuf);
+							mir_snprintf(szSetting, "%c%s_SM", 246, szBuf);
 							db_unset(NULL, CLVM_MODULE, szSetting);
-							mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_VA", 246, szBuf);
+							mir_snprintf(szSetting, "%c%s_VA", 246, szBuf);
 							db_unset(NULL, CLVM_MODULE, szSetting);
-							mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_SSM", 246, szBuf);
+							mir_snprintf(szSetting, "%c%s_SSM", 246, szBuf);
 							db_unset(NULL, CLVM_MODULE, szSetting);
 							db_unset(NULL, CLVM_MODULE, szBuf);
 							if (!mir_strcmp(cfg::dat.current_viewmode, szBuf) && mir_strlen(szBuf) == mir_strlen(cfg::dat.current_viewmode)) {
@@ -690,7 +689,7 @@ INT_PTR CALLBACK DlgProcViewModesSetup(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				char szBuf[256];
 
 				szBuf[0] = 0;
-				GetDlgItemTextA(hwndDlg, IDC_NEWVIEMODE, szBuf, SIZEOF(szBuf));
+				GetDlgItemTextA(hwndDlg, IDC_NEWVIEMODE, szBuf, _countof(szBuf));
 				szBuf[255] = 0;
 
 				if (mir_strlen(szBuf) > 2) {
@@ -883,9 +882,9 @@ LRESULT CALLBACK ViewModeFrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 	case WM_USER + 100:
 		{
 			bool bSkinned = cfg::getByte("CLCExt", "bskinned", 0) != 0;
-			for (int i = 0; i < SIZEOF(_buttons); i++) {
+			for (int i = 0; i < _countof(_buttons); i++) {
 				HWND hwndButton = GetDlgItem(hwnd, _buttons[i].btn_id);
-				SendMessage(hwndButton, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_GetIcon(_buttons[i].icon));
+				SendMessage(hwndButton, BM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIcon(_buttons[i].icon));
 				CustomizeButton(hwndButton, bSkinned, !bSkinned, bSkinned);
 			}
 		}
@@ -1029,7 +1028,7 @@ void CreateViewModeFrame()
 	frame.cbSize = sizeof(frame);
 	frame.tname = _T("View modes");
 	frame.TBtname = TranslateT("View modes");
-	frame.hIcon = LoadSkinnedIcon(SKINICON_OTHER_FRAME);
+	frame.hIcon = Skin_LoadIcon(SKINICON_OTHER_FRAME);
 	frame.height = 22;
 	frame.Flags = F_VISIBLE | F_SHOWTBTIP | F_NOBORDER | F_TCHAR;
 	frame.align = alBottom;
@@ -1048,7 +1047,7 @@ void ApplyViewMode(const char *name)
 
 	cfg::dat.bFilterEffective = 0;
 
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_PF", 246, name);
+	mir_snprintf(szSetting, "%c%s_PF", 246, name);
 	if (!cfg::getString(NULL, CLVM_MODULE, szSetting, &dbv)) {
 		if (mir_strlen(dbv.pszVal) >= 2) {
 			strncpy(cfg::dat.protoFilter, dbv.pszVal, sizeof(cfg::dat.protoFilter));
@@ -1057,21 +1056,21 @@ void ApplyViewMode(const char *name)
 		}
 		mir_free(dbv.pszVal);
 	}
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_GF", 246, name);
+	mir_snprintf(szSetting, "%c%s_GF", 246, name);
 	if (!cfg::getTString(NULL, CLVM_MODULE, szSetting, &dbv)) {
 		if (mir_tstrlen(dbv.ptszVal) >= 2) {
-			_tcsncpy(cfg::dat.groupFilter, dbv.ptszVal, SIZEOF(cfg::dat.groupFilter));
-			cfg::dat.groupFilter[SIZEOF(cfg::dat.groupFilter) - 1] = 0;
+			_tcsncpy(cfg::dat.groupFilter, dbv.ptszVal, _countof(cfg::dat.groupFilter));
+			cfg::dat.groupFilter[_countof(cfg::dat.groupFilter) - 1] = 0;
 			cfg::dat.bFilterEffective |= CLVM_FILTER_GROUPS;
 		}
 		mir_free(dbv.ptszVal);
 	}
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_SM", 246, name);
+	mir_snprintf(szSetting, "%c%s_SM", 246, name);
 	cfg::dat.statusMaskFilter = cfg::getDword(CLVM_MODULE, szSetting, -1);
 	if (cfg::dat.statusMaskFilter >= 1)
 		cfg::dat.bFilterEffective |= CLVM_FILTER_STATUS;
 
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_SSM", 246, name);
+	mir_snprintf(szSetting, "%c%s_SSM", 246, name);
 	cfg::dat.stickyMaskFilter = cfg::getDword(CLVM_MODULE, szSetting, -1);
 	if (cfg::dat.stickyMaskFilter != -1)
 		cfg::dat.bFilterEffective |= CLVM_FILTER_STICKYSTATUS;
@@ -1082,7 +1081,7 @@ void ApplyViewMode(const char *name)
 
 	if (cfg::dat.filterFlags & CLVM_AUTOCLEAR) {
 		DWORD timerexpire;
-		mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_OPT", 246, name);
+		mir_snprintf(szSetting, "%c%s_OPT", 246, name);
 		timerexpire = LOWORD(cfg::getDword(CLVM_MODULE, szSetting, 0));
 		strncpy(cfg::dat.old_viewmode, cfg::dat.current_viewmode, 256);
 		cfg::dat.old_viewmode[255] = 0;
@@ -1103,7 +1102,7 @@ void ApplyViewMode(const char *name)
 		cfg::dat.sortOrder[0] = bSaved;
 
 		cfg::dat.bFilterEffective |= CLVM_FILTER_LASTMSG;
-		mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_LM", 246, name);
+		mir_snprintf(szSetting, "%c%s_LM", 246, name);
 		cfg::dat.lastMsgFilter = cfg::getDword(CLVM_MODULE, szSetting, 0);
 		if (LOBYTE(HIWORD(cfg::dat.lastMsgFilter)))
 			cfg::dat.bFilterEffective |= CLVM_FILTER_LASTMSG_NEWERTHAN;

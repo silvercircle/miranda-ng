@@ -5,8 +5,8 @@
 ;  Version: 0.1.2.4
 ;  Authors: Mataes, George Hazan
 ;============================================================
-[Plugin updater for Miranda NG.]
-Aktualizator wtyczek dla Mirandy NG.
+[Install and update plugins and other Miranda NG components.]
+Instaluje i aktualizuje wtyczki oraz inne komponenty Mirandy NG.
 ;file \plugins\PluginUpdater\res\Resource.rc
 [Updates found!]
 Znaleziono aktualizacje!
@@ -48,8 +48,6 @@ Wersja rozwojowa z symbolami debugowania
 Niestandardowa wersja
 [Some component(s) was updated.\nYou need to restart your Miranda to apply installed updates.]
 Niektóre komponenty zostały zaktualizowane.\nMusisz zrestartować Mirande, aby zainstalować pobrane aktualizacje.
-[Switch to Stable version is now impossible due to incompatibility with currrent Dev version!]
-Przełączenie się do wersji Stabilnej jest aktualnie niemożliwe z powodu braku kompatybilności z obecną wersją Rozwojową!
 [Notifications]
 Powiadomienia
 [Restart]
@@ -68,8 +66,8 @@ Kolory
 Użyj nie&standardowych kolorów
 [Use &Windows colors]
 Użyj kolorów &Windows
-[Use Pop&up colors]
-Użyj kolorów Pop&up
+[Use defa&ult colors]
+&Używaj domyślnych kolorów
 [Preview]
 Podgląd
 [Click action]
@@ -166,6 +164,8 @@ Nic nie rób
 godziny
 [days]
 dni
+[Stable version (incompatible with current development version)]
+Wersja stabilna (niekompatybilna z obecną wersją rozwojową)
 [Test]
 Test
 [Services]
@@ -182,7 +182,8 @@ Aktualizacja nie powiodła się
 ;file \plugins\PluginUpdater\src\Utils.cpp
 [Plugin info]
 Informacje o wtyczkach
-[Plugin Updater HTTP connection]
-Połączenie HTTP Plugin Updater
+[Plugin Updater HTTP connections]
+Połączenia http Plugin Updater
 [An error occurred while checking for new updates.]
 Wystąpił błąd podczas sprawdzania aktualizacji.
+;file \plugins\PluginUpdater\src\Compat\compat.h

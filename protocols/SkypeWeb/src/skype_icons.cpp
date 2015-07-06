@@ -37,37 +37,37 @@ void CSkypeProto::InitIcons()
 	char szSettingName[100];
 	TCHAR szSectionName[100];
 
-	SKINICONDESC sid = { sizeof(SKINICONDESC) };
+	SKINICONDESC sid = { 0 };
 	sid.flags = SIDF_ALL_TCHAR;
-	sid.ptszDefaultFile = szFile;
+	sid.defaultFile.t = szFile;
 	sid.pszName = szSettingName;
-	sid.ptszSection = szSectionName;
+	sid.section.t = szSectionName;
 
-	mir_sntprintf(szSectionName, SIZEOF(szSectionName), _T("%s/%s"), LPGENT("Protocols"), LPGENT(MODULE));
-	for (int i = 0; i < SIZEOF(Icons); i++)
+	mir_sntprintf(szSectionName, _countof(szSectionName), _T("%s/%s"), LPGENT("Protocols"), LPGENT(MODULE));
+	for (int i = 0; i < _countof(Icons); i++)
 	{
-		mir_snprintf(szSettingName, SIZEOF(szSettingName), "%s_%s", MODULE, Icons[i].Name);
+		mir_snprintf(szSettingName, _countof(szSettingName), "%s_%s", MODULE, Icons[i].Name);
 
-		sid.ptszDescription = Icons[i].Description;
+		sid.description.t = Icons[i].Description;
 		sid.iDefaultIndex = -Icons[i].IconId;
-		Icons[i].Handle = Skin_AddIcon(&sid);
+		Icons[i].Handle = IcoLib_AddIcon(&sid);
 	}
 
 }
 
 HANDLE CSkypeProto::GetIconHandle(const char *name)
 {
-	for (size_t i = 0; i < SIZEOF(Icons); i++)
+	for (size_t i = 0; i < _countof(Icons); i++)
 		if (mir_strcmpi(Icons[i].Name, name) == 0)
 			return Icons[i].Handle;
 	return 0;
 }
 
-HANDLE CSkypeProto::GetSkinIconHandle(const char *name)
+HANDLE CSkypeProto::Skin_GetIconHandle(const char *name)
 {
 	char iconName[100];
-	mir_snprintf(iconName, SIZEOF(iconName), "%s_%s", MODULE, name);
-	HANDLE hIcon = Skin_GetIconHandle(iconName);
+	mir_snprintf(iconName, _countof(iconName), "%s_%s", MODULE, name);
+	HANDLE hIcon = IcoLib_GetIconHandle(iconName);
 	if (hIcon == NULL)
 		hIcon = GetIconHandle(name);
 	return hIcon;
@@ -75,6 +75,6 @@ HANDLE CSkypeProto::GetSkinIconHandle(const char *name)
 
 void CSkypeProto::UninitIcons()
 {
-	for (size_t i = 0; i < SIZEOF(Icons); i++)
-		Skin_RemoveIcon(Icons[i].Name);
+	for (size_t i = 0; i < _countof(Icons); i++)
+		IcoLib_RemoveIcon(Icons[i].Name);
 }

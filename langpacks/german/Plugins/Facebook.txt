@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Facebook.dll
 ;  Plugin: Facebook RM
-;  Version: 0.2.10.8
+;  Version: 0.2.11.3
 ;  Authors: Michal Zelinka, Robert Pösel
 ;============================================================
 [Facebook protocol support for Miranda NG.]
@@ -62,6 +62,8 @@ Clientbenachrichtigungen
 Freundschaftsbenachrichtigungen
 [Ticker feeds]
 Ticker-Feeds
+[Show "On this day" posts at login]
+Beiträge "an diesem Tag" beim Anmelden anzeigen
 [Use this server for opening links:]
 Öffne Links auf diesem Server:
 [Use balloon notifications in system tray instead of popups]
@@ -128,7 +130,7 @@ Benutzer&details
 Kontakt&verlauf
 ;file \protocols\FacebookRM\src\communication.cpp
 [Login error: %s]
-Loginfehler: %s
+Anmeldefehler: %s
 [Unknown error]
 Unbekannter Fehler
 [Login error: Invalid request.]
@@ -140,15 +142,15 @@ Anmeldefehler: Ihr Konto ist vorrübergehend gesperrt. Sie müssen dieses Gerät
 [Login error: Captcha code is required. You need to confirm this device from web browser.]
 Anmeldefehler: Captcha-Code wird benötigt. Sie müssen dieses Gerät in Ihrem Webbrowser bestätigen.
 [Facebook required computer cleaning and plugin correctly skipped it. Please report this to the plugin developer!]
-
+Facebook erforderte Computerbereinigung und das Plugin hat diese korrekt übersprungen. Bitte melden Sie dies dem Pluginentwickler!
 [Login error, probably bad login credentials.]
-Loginfehler, wahrscheinlich falsche Anmeldeinformationen.
+Anmeldefehler, wahrscheinlich falsche Anmeldeinformationen.
 [Could not load communication token. You should report this and wait for plugin update.]
 Konnte Verbindungstoken nicht laden. Sie sollten dies melden und auf ein Update des Plugins warten.
 [Could not load all required data. Plugin may still work correctly, but you should report this and wait for plugin update.]
 Konnte nicht alle benötigten Daten laden. Plugin kann immer noch funktionieren, Sie sollten dies aber melden und auf ein Update des Plugins warten.
 [Contact doesn't have required data in database.]
-
+Kontakt hat die benötigten Daten nicht in der Datenbank.
 [Need confirmation for sending messages to other clients.\nOpen Facebook website and try to send message to this contact again!]
 Eine Bestätigung zum Nachrichtenversand zu anderen Clients wird benötigt.\nÖffnen Sie die Facebook-Seite und senden Sie dem Kontakt die Nachricht erneut!
 [User cancel captcha challenge.]
@@ -227,9 +229,13 @@ Beispielbenachrichtigung
 Beispielfreundschaft
 [Sample ticker]
 Beispielticker
+[Sample on this day]
+Beispiel "an diesem Tag"
 ;file \protocols\FacebookRM\src\json.cpp
 [a sticker]
 ein Sticker
+[a link]
+ein Link
 [files]
 Dateien
 [a file]
@@ -254,11 +260,13 @@ Nachrichten senden ist nicht möglich, wenn Sie offline sind.
 Kontakt ist wieder in Ihrer Server-Liste.
 [Contact is no longer on server-list.]
 Kontakt ist nicht mehr in Ihrer Server-Liste.
+[On this day]
+An diesem Tag
 ;file \protocols\FacebookRM\src\proto.cpp
 [%s server connection]
 %s Serververbindung
-[Unable to get Netlib connection for Facebook]
-Es konnte keine Netlib-Verbindung zu Facebook hergestellt werden
+[Unable to initialize Netlib for %s.]
+Kann Netlib-Verbindung für %s nicht initialisieren.
 [Video call]
 Videoanruf
 [Facebook ID must be numeric value.]
@@ -287,6 +295,8 @@ Möchten Sie Ihre Freundschaft mit "%s" beenden?
 Newsfeeds
 [Friendship events]
 Freundschaftsereignisse
+[On this day posts]
+Beiträge an diesem Tag
 [Visit profile]
 Profil besuchen
 [Visit notifications]
@@ -295,12 +305,16 @@ Benachrichtigungen besuchen
 'Status teilen'-Fenster anzeigen
 [Notification]
 Benachrichtigung
-[News Feed]
-Newsfeed
-[Other Event]
-Andere Ereignisse
-[Friendship Event]
+[Newsfeed event]
+Newsfeed-Ereignis
+[Other event]
+Anderes Ereignis
+[Friendship event]
 Freundschaftsereignis
+[Ticker event]
+Ticker-Ereignis
+[On this day event]
+Ereignis an diesem Tag
 [Message read: %s by %s]
 Nachricht gelesen: %s von %s
 [Message read: %s]

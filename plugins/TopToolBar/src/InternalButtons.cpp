@@ -63,21 +63,17 @@ int OnSettingChanging(WPARAM hContact, LPARAM lParam)
 
 INT_PTR TTBInternalMainMenuButt(WPARAM wParam, LPARAM lParam)
 {
-	HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUGETMAIN, 0, 0);
-
 	POINT pt;
 	GetCursorPos(&pt);
-	TrackPopupMenu(hMenu, TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, pt.x, pt.y, 0, (HWND)CallService(MS_CLUI_GETHWND, 0, 0), NULL);
+	TrackPopupMenu(Menu_GetMainMenu(), TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, pt.x, pt.y, 0, pcli->hwndContactList, NULL);
 	return 0;
 }
 
 INT_PTR TTBInternalStatusMenuButt(WPARAM wParam, LPARAM lParam)
 {
-	HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUGETSTATUS, 0, 0);
-
 	POINT pt;
 	GetCursorPos(&pt);
-	TrackPopupMenu(hMenu, TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, pt.x, pt.y, 0, (HWND)CallService(MS_CLUI_GETHWND, 0, 0), NULL);
+	TrackPopupMenu(Menu_GetStatusMenu(), TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, pt.x, pt.y, 0, pcli->hwndContactList, NULL);
 	return 0;
 }
 
@@ -106,7 +102,7 @@ INT_PTR TTBInternalShowHideOffline(WPARAM wParam, LPARAM lParam)
 
 void InitInternalButtons()
 {
-	hwndContactTree = (HWND)CallService(MS_CLUI_GETHWNDTREE, 0, 0);
+	hwndContactTree = pcli->hwndContactTree;
 
 	CreateServiceFunction(TTBI_GROUPSHOWHIDE, TTBInternalGroupShowHide);
 	CreateServiceFunction(TTBI_SOUNDSONOFF, TTBInternalSoundsOnOff);
@@ -114,9 +110,8 @@ void InitInternalButtons()
 	CreateServiceFunction(TTBI_STATUSMENUBUTT, TTBInternalStatusMenuButt);
 	CreateServiceFunction(TTBI_SHOWHIDEOFFLINE, TTBInternalShowHideOffline);
 
-	for (int i = 0; i < SIZEOF(stdButtons); i++) {
-		TTBButton ttb = {0};
-		ttb.cbSize = sizeof(ttb);
+	for (int i = 0; i < _countof(stdButtons); i++) {
+		TTBButton ttb = { 0 };
 		ttb.name = stdButtons[i].name;
 		ttb.pszService = stdButtons[i].pszService;
 		ttb.dwFlags = TTBBF_INTERNAL;
@@ -135,10 +130,10 @@ void InitInternalButtons()
 				ttb.hIconDn = NULL;
 		}
 		else {
-			ttb.hIconHandleUp = LoadSkinnedIconHandle(stdButtons[i].iconidUp);
+			ttb.hIconHandleUp = Skin_GetIconHandle(stdButtons[i].iconidUp);
 			if (stdButtons[i].iconidDn) {
 				ttb.dwFlags |= TTBBF_ASPUSHBUTTON;
-				ttb.hIconHandleDn = LoadSkinnedIconHandle(stdButtons[i].iconidDn);
+				ttb.hIconHandleDn = Skin_GetIconHandle(stdButtons[i].iconidDn);
 			}
 			else
 				ttb.hIconHandleDn = ttb.hIconDn = NULL;

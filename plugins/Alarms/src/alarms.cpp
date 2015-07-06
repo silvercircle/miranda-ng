@@ -19,6 +19,7 @@ There is no warranty.
 
 TCHAR szGamePrefix[] = COMMANDPREFIX;
 
+CLIST_INTERFACE *pcli;
 HINSTANCE hInst;
 int hLangpack;
 
@@ -67,7 +68,7 @@ static LRESULT CALLBACK PopupDlgProc(HWND hWnd, UINT message, WPARAM wParam, LPA
 void ShowPopup(MCONTACT hContact, const TCHAR *msg)
 {
 	if (ServiceExists(MS_POPUP_ADDPOPUPT)) {
-		TCHAR *lpzContactName = (TCHAR *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR);
+		TCHAR *lpzContactName = (TCHAR *)pcli->pfnGetContactDisplayName(hContact, 0);
 
 		POPUPDATAT ppd = { 0 };
 		ppd.lchContact = hContact; //Be sure to use a GOOD handle, since this will not be checked.
@@ -122,7 +123,7 @@ HBITMAP LoadBmpFromIcon(int IdRes)
 
 static int InitTopToolbarButton(WPARAM, LPARAM)
 {
-	TTBButton ttb = { sizeof(ttb) };
+	TTBButton ttb = { 0 };
 	ttb.hIconUp = LoadIcon(hInst, MAKEINTRESOURCE(IDI_TBUP));
 	ttb.hIconDn = LoadIcon(hInst, MAKEINTRESOURCE(IDI_TBDN));
 	ttb.pszService = MODULE "/NewAlarm";
@@ -151,6 +152,7 @@ static int MainDeInit(WPARAM, LPARAM)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
+	mir_getCLI();
 
 	// ensure datetime picker is loaded
 	INITCOMMONCONTROLSEX ccx;

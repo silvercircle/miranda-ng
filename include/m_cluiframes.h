@@ -23,8 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef M_CLUIFRAMES_H__
 #define M_CLUIFRAMES_H__ 1
 
-#if !defined(M_GENMENU_H)
-#include "m_genmenu.h"
+#if !defined(M_GENMENU_H__)
+#include <m_genmenu.h>
 #endif
 
 /************************************************************************/
@@ -231,9 +231,9 @@ typedef struct tagCLISTFrame {
 //popupposition=frameid
 //contactowner=advanced parameter
 
-__forceinline HGENMENU Menu_AddContextFrameMenuItem(CLISTMENUITEM *mi)
-{	mi->hLangpack = hLangpack;
-	return (HGENMENU)CallService("CList/AddContextFrameMenuItem", 0, (LPARAM)mi);
+__forceinline HGENMENU Menu_AddContextFrameMenuItem(TMO_MenuItem *pmi)
+{	pmi->hLangpack = hLangpack;
+	return (HGENMENU)CallService("CList/AddContextFrameMenuItem", 0, (LPARAM)pmi);
 }
 
 //////////////////////////////////////////////////////////////////////////

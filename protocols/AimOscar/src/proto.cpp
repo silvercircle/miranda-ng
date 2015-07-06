@@ -32,9 +32,9 @@ CAimProto::CAimProto(const char* aProtoName, const TCHAR* aUserName) :
 
 	CreateProtoService(PS_GETMYAWAYMSG,   &CAimProto::GetMyAwayMsg);
 
-	CreateProtoService(PS_GETAVATARINFOT, &CAimProto::GetAvatarInfo);
-	CreateProtoService(PS_GETMYAVATART,   &CAimProto::GetAvatar);
-	CreateProtoService(PS_SETMYAVATART,   &CAimProto::SetAvatar);
+	CreateProtoService(PS_GETAVATARINFO, &CAimProto::GetAvatarInfo);
+	CreateProtoService(PS_GETMYAVATAR,   &CAimProto::GetAvatar);
+	CreateProtoService(PS_SETMYAVATAR,   &CAimProto::SetAvatar);
 	CreateProtoService(PS_GETAVATARCAPS,  &CAimProto::GetAvatarCaps);
 
 	CreateProtoService(PS_JOINCHAT,       &CAimProto::OnJoinChat);
@@ -52,14 +52,14 @@ CAimProto::CAimProto(const char* aProtoName, const TCHAR* aUserName) :
 	nlu.cbSize = sizeof(nlu);
 	nlu.flags = NUF_OUTGOING | NUF_HTTPCONNS | NUF_TCHAR;
 	nlu.szSettingsModule = m_szModuleName;
-	mir_sntprintf(descr, SIZEOF(descr), TranslateT("%s server connection"), m_tszUserName);
+	mir_sntprintf(descr, TranslateT("%s server connection"), m_tszUserName);
 	nlu.ptszDescriptiveName = descr;
 	m_hNetlibUser = (HANDLE) CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
 
 	char szP2P[128];
-	mir_snprintf(szP2P, SIZEOF(szP2P), "%sP2P", m_szModuleName);
+	mir_snprintf(szP2P, _countof(szP2P), "%sP2P", m_szModuleName);
 	nlu.flags = NUF_OUTGOING | NUF_INCOMING | NUF_TCHAR;
-	mir_sntprintf(descr, SIZEOF(descr), TranslateT("%s Client-to-client connection"), m_tszUserName);
+	mir_sntprintf(descr, TranslateT("%s Client-to-client connection"), m_tszUserName);
 	nlu.szSettingsModule = szP2P;
 	nlu.minIncomingPorts = 1;
 	hNetlibPeer = (HANDLE) CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
@@ -67,9 +67,6 @@ CAimProto::CAimProto(const char* aProtoName, const TCHAR* aUserName) :
 
 CAimProto::~CAimProto()
 {
-	RemoveMainMenus();
-	RemoveContactMenus();
-
 	if (hServerConn)
 		Netlib_CloseHandle(hServerConn);
 	if (hAvatarConn && hAvatarConn != (HANDLE)1)
@@ -123,7 +120,7 @@ int CAimProto::OnModulesLoaded(WPARAM, LPARAM)
 MCONTACT CAimProto::AddToList(int flags, PROTOSEARCHRESULT* psr)
 {
 	if (state != 1) return 0;
-	TCHAR *id = psr->id ? psr->id : psr->nick;
+	TCHAR *id = psr->id.t ? psr->id.t : psr->nick.t;
 	char *sn = psr->flags & PSR_UNICODE ? mir_u2a((wchar_t*)id) : mir_strdup((char*)id);
 	MCONTACT hContact = contact_from_sn(sn, true, (flags & PALF_TEMPORARY) != 0);
 	mir_free(sn);
@@ -153,7 +150,7 @@ int __cdecl CAimProto::AuthRequest(MCONTACT hContact, const TCHAR*)
 ////////////////////////////////////////////////////////////////////////////////////////
 // FileAllow - starts a file transfer
 
-HANDLE __cdecl CAimProto::FileAllow(MCONTACT, HANDLE hTransfer, const PROTOCHAR* szPath)
+HANDLE __cdecl CAimProto::FileAllow(MCONTACT, HANDLE hTransfer, const TCHAR* szPath)
 {
 	file_transfer *ft = (file_transfer*)hTransfer;
 	if (ft && ft_list.find_by_ft(ft))
@@ -204,7 +201,7 @@ int __cdecl CAimProto::FileCancel(MCONTACT, HANDLE hTransfer)
 ////////////////////////////////////////////////////////////////////////////////////////
 // FileDeny - denies a file transfer
 
-int __cdecl CAimProto::FileDeny(MCONTACT, HANDLE hTransfer, const PROTOCHAR* /*szReason*/)
+int __cdecl CAimProto::FileDeny(MCONTACT, HANDLE hTransfer, const TCHAR* /*szReason*/)
 {
 	file_transfer *ft = (file_transfer*)hTransfer;
 	if (!ft_list.find_by_ft(ft)) return 0;
@@ -218,7 +215,7 @@ int __cdecl CAimProto::FileDeny(MCONTACT, HANDLE hTransfer, const PROTOCHAR* /*s
 ////////////////////////////////////////////////////////////////////////////////////////
 // FileResume - processes file renaming etc
 
-int __cdecl CAimProto::FileResume(HANDLE hTransfer, int* action, const PROTOCHAR** szFilename)
+int __cdecl CAimProto::FileResume(HANDLE hTransfer, int* action, const TCHAR** szFilename)
 {
 	file_transfer *ft = (file_transfer*)hTransfer;
 	if (!ft_list.find_by_ft(ft)) return 0;
@@ -313,7 +310,7 @@ void __cdecl CAimProto::basic_search_ack_success(void* p)
 		{
 			PROTOSEARCHRESULT psr = {0};
 			psr.cbSize = sizeof(psr);
-			psr.id = (TCHAR*)sn;
+			psr.id.t = (TCHAR*)sn;
 			ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE) 1, (LPARAM) & psr);
 			ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE) 1, 0);
 		}
@@ -322,7 +319,7 @@ void __cdecl CAimProto::basic_search_ack_success(void* p)
 	mir_free(p);
 }
 
-HANDLE __cdecl CAimProto::SearchBasic(const PROTOCHAR* szId)
+HANDLE __cdecl CAimProto::SearchBasic(const TCHAR* szId)
 {
 	if (state != 1)
 		return 0;
@@ -335,7 +332,7 @@ HANDLE __cdecl CAimProto::SearchBasic(const PROTOCHAR* szId)
 ////////////////////////////////////////////////////////////////////////////////////////
 // SearchByEmail - searches the contact by its e-mail
 
-HANDLE __cdecl CAimProto::SearchByEmail(const PROTOCHAR* email)
+HANDLE __cdecl CAimProto::SearchByEmail(const TCHAR* email)
 {
 	// Maximum email size should really be 320, but the char string is limited to 255.
 	if (state != 1 || email == NULL || mir_tstrlen(email) >= 254)
@@ -371,7 +368,7 @@ int __cdecl CAimProto::RecvMsg(MCONTACT hContact, PROTORECVEVENT* pre)
 ////////////////////////////////////////////////////////////////////////////////////////
 // SendFile - sends a file
 
-HANDLE __cdecl CAimProto::SendFile(MCONTACT hContact, const PROTOCHAR* szDescription, PROTOCHAR** ppszFiles)
+HANDLE __cdecl CAimProto::SendFile(MCONTACT hContact, const TCHAR* szDescription, TCHAR** ppszFiles)
 {
 	if (state != 1) return 0;
 
@@ -701,17 +698,8 @@ int __cdecl CAimProto::OnEvent(PROTOEVENTTYPE eventType, WPARAM wParam, LPARAM l
 	case EV_PROTO_ONERASE:
 		{
 			char szDbsettings[64];
-			mir_snprintf(szDbsettings, SIZEOF(szDbsettings), "%sP2P", m_szModuleName);
+			mir_snprintf(szDbsettings, _countof(szDbsettings), "%sP2P", m_szModuleName);
 			CallService(MS_DB_MODULE_DELETE, 0, (LPARAM)szDbsettings);
-		}
-		break;
-
-	case EV_PROTO_ONRENAME:
-		if (hMenuRoot) {
-			CLISTMENUITEM clmi = { sizeof(clmi) };
-			clmi.flags = CMIM_NAME | CMIF_TCHAR | CMIF_KEEPUNTRANSLATED;
-			clmi.ptszName = m_tszUserName;
-			Menu_ModifyItem(hMenuRoot, &clmi);
 		}
 		break;
 

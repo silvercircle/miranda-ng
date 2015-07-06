@@ -53,14 +53,6 @@ extern "C" __declspec(dllexport) PLUGININFOEX *MirandaPluginInfoEx(DWORD)
 extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = {MIID_PROTOCOL, MIID_LAST};
 
 /////////////////////////////////////////////////////////////////////////////////////////
-// OnModulesLoaded - execute some code when all plugins are initialized
-
-static int OnModulesLoaded(WPARAM, LPARAM)
-{
-	return 0;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
 // OnLoad - initialize the plugin instance
 
 static CVkProto* vkProtoInit(const char* pszProtoName, const TCHAR *tszUserName)
@@ -83,14 +75,13 @@ extern "C" int __declspec(dllexport) Load()
 	InitIcons();
 
 	// Register protocol module
-	PROTOCOLDESCRIPTOR pd = { sizeof(pd) };
+	PROTOCOLDESCRIPTOR pd = { 0 };
+	pd.cbSize = sizeof(pd);
 	pd.szName = "VKontakte";
 	pd.fnInit = (pfnInitProto)vkProtoInit;
 	pd.fnUninit = (pfnUninitProto)vkProtoUninit;
 	pd.type = PROTOTYPE_PROTOCOL;
-	CallService(MS_PROTO_REGISTERMODULE, 0, (LPARAM)&pd);
-
-	HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
+	Proto_RegisterModule(&pd);
 	return 0;
 }
 

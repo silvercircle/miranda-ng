@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "msn_global.h"
+#include "stdafx.h"
 #include "msn_proto.h"
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -46,7 +46,7 @@ void CMsnProto::setStringUtf(MCONTACT hContact, const char* name, const char* va
 TCHAR* CMsnProto::GetContactNameT(MCONTACT hContact)
 {
 	if (hContact)
-		return (TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, WPARAM(hContact), GCDNF_TCHAR);
+		return (TCHAR*)pcli->pfnGetContactDisplayName(WPARAM(hContact), 0);
 
 	CONTACTINFO ci = { 0 };
 	ci.cbSize = sizeof(ci);
@@ -63,6 +63,6 @@ TCHAR* CMsnProto::GetContactNameT(MCONTACT hContact)
 unsigned MSN_GenRandom(void)
 {
 	unsigned rndnum;
-	CallService(MS_UTILS_GETRANDOM, sizeof(rndnum), (LPARAM)&rndnum);
+	Utils_GetRandom(&rndnum, sizeof(rndnum));
 	return rndnum & 0x7FFFFFFF;
 }

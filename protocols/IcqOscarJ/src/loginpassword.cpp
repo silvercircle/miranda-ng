@@ -36,13 +36,13 @@ INT_PTR CALLBACK LoginPasswdDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 		ppro = (CIcqProto*)lParam;
 		SetWindowLongPtr( hwndDlg, GWLP_USERDATA, lParam );
 
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)Skin_GetIconByHandle(ppro->m_hProtoIcon, true));
-		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)Skin_GetIconByHandle(ppro->m_hProtoIcon));
+		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon, true));
+		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon));
 		{
 			DWORD dwUin = ppro->getContactUin(NULL);
 
 			TCHAR pszUIN[MAX_PATH];
-			mir_sntprintf(pszUIN, SIZEOF(pszUIN), TranslateT("Enter a password for UIN %u:"), dwUin);
+			mir_sntprintf(pszUIN, _countof(pszUIN), TranslateT("Enter a password for UIN %u:"), dwUin);
 			SetDlgItemText(hwndDlg, IDC_INSTRUCTION, pszUIN);
 
 			SendDlgItemMessage(hwndDlg, IDC_LOGINPW, EM_LIMITTEXT, PASSWORDMAXLEN - 1, 0);
@@ -52,8 +52,8 @@ INT_PTR CALLBACK LoginPasswdDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 		break;
 
 	case WM_DESTROY:
-		Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_BIG, 0));
-		Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_BIG, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
 		break;
 
 	case WM_CLOSE:
@@ -66,7 +66,7 @@ INT_PTR CALLBACK LoginPasswdDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			ppro->m_bRememberPwd = (BYTE)IsDlgButtonChecked(hwndDlg, IDC_SAVEPASS);
 			ppro->setByte("RememberPass", ppro->m_bRememberPwd);
 
-			GetDlgItemTextA(hwndDlg, IDC_LOGINPW, ppro->m_szPassword, SIZEOF(ppro->m_szPassword));
+			GetDlgItemTextA(hwndDlg, IDC_LOGINPW, ppro->m_szPassword, _countof(ppro->m_szPassword));
 
 			ppro->icq_login(ppro->m_szPassword);
 

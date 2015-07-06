@@ -5,8 +5,8 @@
 ;  Version: 0.1.2.4
 ;  Authors: Mataes, George Hazan
 ;============================================================
-[Plugin updater for Miranda NG.]
-Оновлення плагінів та інших компонентів Miranda NG.
+[Install and update plugins and other Miranda NG components.]
+Встановлення й оновлення плагінів та інших компонентів Miranda NG.
 [Updates found!]
 Знайдені оновлення!
 [PluginUpdater has detected updated versions of some Miranda components. Click on Details button to view more information.]
@@ -47,8 +47,6 @@
 Задана користувачем версія
 [Some component(s) was updated.\nYou need to restart your Miranda to apply installed updates.]
 Оновлено деякі компоненти.\nОновлення будуть застосовані після перезапуску програми.
-[Switch to Stable version is now impossible due to incompatibility with currrent Dev version!]
-Перехід на стабільну версію неможливий через несумісність з версією в розробці!
 [Notifications]
 Сповіщення
 [Restart]
@@ -67,8 +65,8 @@
 Налаштувати кольори
 [Use &Windows colors]
 Кольори Windows
-[Use Pop&up colors]
-Кольори сплив. вікон
+[Use defa&ult colors]
+Кольори за &замовчанням
 [Preview]
 Тест
 [Click action]
@@ -159,6 +157,8 @@
 годин
 [days]
 днів
+[Stable version (incompatible with current development version)]
+Стабільна версія (несумісна з версією в розробці)
 [Test]
 Тест
 [Services]
@@ -173,7 +173,7 @@
 Помилка оновлення
 [Plugin info]
 Інформація
-[Plugin Updater HTTP connection]
+[Plugin Updater HTTP connections]
 HTTP-з'єднання PluginUpdater
 [An error occurred while checking for new updates.]
 Під час перевірки оновлень сталася помилка.

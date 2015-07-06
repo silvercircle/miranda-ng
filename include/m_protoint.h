@@ -26,8 +26,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define M_PROTOINT_H__ 1
 
 #include <m_system_cpp.h>
-#include <m_protomod.h>
+#include <m_protosvc.h>
 #include <m_database.h>
+#include <m_genmenu.h>
+#include <m_utils.h>
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// data types
 
 typedef enum
 {
@@ -43,20 +48,53 @@ typedef enum
 }
 	PROTOEVENTTYPE;
 
-#define PROTOCHAR TCHAR
-#define PROTOFILEEVENT PROTORECVFILET
+/////////////////////////////////////////////////////////////////////////////////////////
+// protocol helpers
 
-struct MIR_CORE_EXPORT PROTO_INTERFACE : public MZeroedObject
+struct PROTO_INTERFACE;
+
+// Call it in the very beginning of your proto's constructor
+EXTERN_C MIR_APP_DLL(void) ProtoConstructor(PROTO_INTERFACE *pThis, const char *pszModuleName, const TCHAR *ptszUserName);
+
+// Call it in the very end of your proto's destructor
+EXTERN_C MIR_APP_DLL(void) ProtoDestructor(PROTO_INTERFACE *pThis);
+
+#if defined( __cplusplus )
+typedef void (__cdecl PROTO_INTERFACE::*ProtoThreadFunc)(void*);
+EXTERN_C MIR_APP_DLL(void)   ProtoForkThread(PROTO_INTERFACE *pThis, ProtoThreadFunc, void *param);
+EXTERN_C MIR_APP_DLL(HANDLE) ProtoForkThreadEx(PROTO_INTERFACE *pThis, ProtoThreadFunc, void *param, UINT* threadID);
+EXTERN_C MIR_APP_DLL(void)   ProtoWindowAdd(PROTO_INTERFACE *pThis, HWND hwnd);
+EXTERN_C MIR_APP_DLL(void)   ProtoWindowRemove(PROTO_INTERFACE *pThis, HWND hwnd);
+
+typedef int (__cdecl PROTO_INTERFACE::*ProtoEventFunc)(WPARAM, LPARAM);
+EXTERN_C MIR_APP_DLL(void)   ProtoHookEvent(PROTO_INTERFACE *pThis, const char* szName, ProtoEventFunc pFunc);
+EXTERN_C MIR_APP_DLL(HANDLE) ProtoCreateHookableEvent(PROTO_INTERFACE *pThis, const char* szService);
+
+typedef INT_PTR (__cdecl PROTO_INTERFACE::*ProtoServiceFunc)(WPARAM, LPARAM);
+EXTERN_C MIR_APP_DLL(void) ProtoCreateService(PROTO_INTERFACE *pThis, const char* szService, ProtoServiceFunc);
+
+typedef INT_PTR (__cdecl PROTO_INTERFACE::*ProtoServiceFuncParam)(WPARAM, LPARAM, LPARAM);
+EXTERN_C MIR_APP_DLL(void) ProtoCreateServiceParam(PROTO_INTERFACE *pThis, const char* szService, ProtoServiceFuncParam, LPARAM);
+#endif
+
+EXTERN_C MIR_APP_DLL(void) ProtoLogA(PROTO_INTERFACE *pThis, LPCSTR szFormat, va_list args);
+EXTERN_C MIR_APP_DLL(void) ProtoLogW(PROTO_INTERFACE *pThis, LPCWSTR wszFormat, va_list args);
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// interface declaration
+
+struct MIR_APP_EXPORT PROTO_INTERFACE : public MZeroedObject
 {
-	int    m_iStatus,         // current protocol status
-	       m_iDesiredStatus,  // status to be set after logging in
-	       m_iXStatus,		  // extanded status
-	       m_iVersion;        // version 2 or higher designate support of Unicode services
-	TCHAR* m_tszUserName;     // human readable protocol's name
-	char*  m_szModuleName;    // internal protocol name, also its database module name
-	HANDLE m_hProtoIcon;      // icon to be displayed in the account manager
-	HANDLE m_hNetlibUser;     // network agent
-	HANDLE m_hWindowList;     // list of all windows which belong to this protocol's instance
+	int         m_iStatus,         // current protocol status
+	            m_iDesiredStatus,  // status to be set after logging in
+	            m_iXStatus,        // extanded status
+	            m_iVersion;        // version 2 or higher designate support of Unicode services
+	TCHAR*      m_tszUserName;     // human readable protocol's name
+	char*       m_szModuleName;    // internal protocol name, also its database module name
+	HANDLE      m_hProtoIcon;      // icon to be displayed in the account manager
+	HANDLE      m_hNetlibUser;     // network agent
+	MWindowList m_hWindowList;     // list of all windows which belong to this protocol's instance
+	HGENMENU    m_hMainMenuItem;	 // if protocol menus are displayed in the main menu, this is the root
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// Helpers
@@ -79,32 +117,32 @@ struct MIR_CORE_EXPORT PROTO_INTERFACE : public MZeroedObject
 	__forceinline void WindowUnsubscribe(HWND hwnd) {
 		::ProtoWindowRemove(this, hwnd); }
 
-	__forceinline INT_PTR ProtoBroadcastAck(MCONTACT hContact, int type, int hResult, HANDLE hProcess, LPARAM lParam) {
+	__forceinline INT_PTR ProtoBroadcastAck(MCONTACT hContact, int type, int hResult, HANDLE hProcess, LPARAM lParam = 0) {
 		return ::ProtoBroadcastAck(m_szModuleName, hContact, type, hResult, hProcess, lParam); }
 
 	__forceinline INT_PTR delSetting(const char *name) { return db_unset(NULL, m_szModuleName, name); }
 	__forceinline INT_PTR delSetting(MCONTACT hContact, const char *name) { return db_unset(hContact, m_szModuleName, name); }
 
-	__forceinline bool getBool(const char *name, bool defaultValue) {
+	__forceinline bool getBool(const char *name, bool defaultValue = false) {
 		return db_get_b(NULL, m_szModuleName, name, defaultValue) != 0; }
-	__forceinline bool getBool(MCONTACT hContact, const char *name, bool defaultValue) {
+	__forceinline bool getBool(MCONTACT hContact, const char *name, bool defaultValue = false) {
 		return db_get_b(hContact, m_szModuleName, name, defaultValue) != 0; }
 
 	__forceinline bool isChatRoom(MCONTACT hContact) { return getBool(hContact, "ChatRoom", false); }
 
-	__forceinline int getByte(const char *name, BYTE defaultValue) {
+	__forceinline int getByte(const char *name, BYTE defaultValue = 0) {
 		return db_get_b(NULL, m_szModuleName, name, defaultValue); }
-	__forceinline int getByte(MCONTACT hContact, const char *name, BYTE defaultValue) {
+	__forceinline int getByte(MCONTACT hContact, const char *name, BYTE defaultValue = 0) {
 		return db_get_b(hContact, m_szModuleName, name, defaultValue); }
 
-	__forceinline int getWord(const char *name, WORD defaultValue) {
+	__forceinline int getWord(const char *name, WORD defaultValue = 0) {
 		return db_get_w(NULL, m_szModuleName, name, defaultValue); }
-	__forceinline int getWord(MCONTACT hContact, const char *name, WORD defaultValue) {
+	__forceinline int getWord(MCONTACT hContact, const char *name, WORD defaultValue = 0) {
 		return db_get_w(hContact, m_szModuleName, name, defaultValue); }
 
-	__forceinline DWORD getDword(const char *name, DWORD defaultValue)  {
+	__forceinline DWORD getDword(const char *name, DWORD defaultValue = 0)  {
 		return db_get_dw(NULL, m_szModuleName, name, defaultValue); }
-	__forceinline DWORD getDword(MCONTACT hContact, const char *name, DWORD defaultValue) {
+	__forceinline DWORD getDword(MCONTACT hContact, const char *name, DWORD defaultValue = 0) {
 		return db_get_dw(hContact, m_szModuleName, name, defaultValue); }
 
 	__forceinline INT_PTR getString(const char *name, DBVARIANT *result) {
@@ -161,31 +199,31 @@ struct MIR_CORE_EXPORT PROTO_INTERFACE : public MZeroedObject
 	virtual	MCONTACT  __cdecl AddToListByEvent(int flags, int iContact, MEVENT hDbEvent);
 						    
 	virtual	int       __cdecl Authorize(MEVENT hDbEvent);
-	virtual	int       __cdecl AuthDeny(MEVENT hDbEvent, const PROTOCHAR* szReason);
+	virtual	int       __cdecl AuthDeny(MEVENT hDbEvent, const TCHAR* szReason);
 	virtual	int       __cdecl AuthRecv(MCONTACT hContact, PROTORECVEVENT*);
-	virtual	int       __cdecl AuthRequest(MCONTACT hContact, const PROTOCHAR* szMessage);
+	virtual	int       __cdecl AuthRequest(MCONTACT hContact, const TCHAR* szMessage);
 						    
-	virtual	HANDLE    __cdecl FileAllow(MCONTACT hContact, HANDLE hTransfer, const PROTOCHAR* szPath);
+	virtual	HANDLE    __cdecl FileAllow(MCONTACT hContact, HANDLE hTransfer, const TCHAR* szPath);
 	virtual	int       __cdecl FileCancel(MCONTACT hContact, HANDLE hTransfer);
-	virtual	int       __cdecl FileDeny(MCONTACT hContact, HANDLE hTransfer, const PROTOCHAR* szReason);
-	virtual	int       __cdecl FileResume(HANDLE hTransfer, int* action, const PROTOCHAR** szFilename);
+	virtual	int       __cdecl FileDeny(MCONTACT hContact, HANDLE hTransfer, const TCHAR* szReason);
+	virtual	int       __cdecl FileResume(HANDLE hTransfer, int* action, const TCHAR** szFilename);
 
 	virtual	DWORD_PTR __cdecl GetCaps(int type, MCONTACT hContact = NULL);
 	virtual	int       __cdecl GetInfo(MCONTACT hContact, int infoType);
 
-	virtual	HANDLE    __cdecl SearchBasic(const PROTOCHAR* id);
-	virtual	HANDLE    __cdecl SearchByEmail(const PROTOCHAR* email);
-	virtual	HANDLE    __cdecl SearchByName(const PROTOCHAR* nick, const PROTOCHAR* firstName, const PROTOCHAR* lastName);
+	virtual	HANDLE    __cdecl SearchBasic(const TCHAR* id);
+	virtual	HANDLE    __cdecl SearchByEmail(const TCHAR* email);
+	virtual	HANDLE    __cdecl SearchByName(const TCHAR* nick, const TCHAR* firstName, const TCHAR* lastName);
 	virtual	HWND      __cdecl SearchAdvanced(HWND owner);
 	virtual	HWND      __cdecl CreateExtendedSearchUI(HWND owner);
 
 	virtual	int       __cdecl RecvContacts(MCONTACT hContact, PROTORECVEVENT*);
-	virtual	int       __cdecl RecvFile(MCONTACT hContact, PROTOFILEEVENT*);
+	virtual	int       __cdecl RecvFile(MCONTACT hContact, PROTORECVFILET*);
 	virtual	int       __cdecl RecvMsg(MCONTACT hContact, PROTORECVEVENT*);
 	virtual	int       __cdecl RecvUrl(MCONTACT hContact, PROTORECVEVENT*);
 
 	virtual	int       __cdecl SendContacts(MCONTACT hContact, int flags, int nContacts, MCONTACT *hContactsList);
-	virtual	HANDLE    __cdecl SendFile(MCONTACT hContact, const PROTOCHAR *szDescription, PROTOCHAR **ppszFiles);
+	virtual	HANDLE    __cdecl SendFile(MCONTACT hContact, const TCHAR *szDescription, TCHAR **ppszFiles);
 	virtual	int       __cdecl SendMsg(MCONTACT hContact, int flags, const char *msg);
 	virtual	int       __cdecl SendUrl(MCONTACT hContact, int flags, const char *url);
 
@@ -194,7 +232,7 @@ struct MIR_CORE_EXPORT PROTO_INTERFACE : public MZeroedObject
 
 	virtual	HANDLE    __cdecl GetAwayMsg(MCONTACT hContact);
 	virtual	int       __cdecl RecvAwayMsg(MCONTACT hContact, int mode, PROTORECVEVENT* evt);
-	virtual	int       __cdecl SetAwayMsg(int iStatus, const PROTOCHAR* msg);
+	virtual	int       __cdecl SetAwayMsg(int iStatus, const TCHAR* msg);
 
 	virtual	int       __cdecl UserIsTyping(MCONTACT hContact, int type);
 

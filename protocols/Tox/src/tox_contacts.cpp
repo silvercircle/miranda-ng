@@ -63,18 +63,21 @@ MCONTACT CToxProto::GetContact(const char *pubKey)
 	return hContact;
 }
 
-MCONTACT CToxProto::AddContact(const char *address, const TCHAR *dnsId, bool isTemporary)
+MCONTACT CToxProto::AddContact(const char *address, const char *nick, const char *dnsId, bool isTemporary)
 {
 	MCONTACT hContact = GetContact(address);
 	if (!hContact)
 	{
 		hContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
-		CallService(MS_PROTO_ADDTOCONTACT, hContact, (LPARAM)m_szModuleName);
+		Proto_AddToContact(hContact, m_szModuleName);
 
 		setString(hContact, TOX_SETTINGS_ID, address);
 
-		if (dnsId && mir_tstrlen(dnsId))
-			setTString(hContact, TOX_SETTINGS_DNS, dnsId);
+		if (mir_strlen(nick))
+			setTString(hContact, "Nick", ptrT(mir_utf8decodeT(nick)));
+
+		if (mir_strlen(dnsId))
+			setTString(hContact, TOX_SETTINGS_DNS, ptrT(mir_utf8decodeT(dnsId)));
 
 		DBVARIANT dbv;
 		if (!getTString(TOX_SETTINGS_GROUP, &dbv))
@@ -87,9 +90,7 @@ MCONTACT CToxProto::AddContact(const char *address, const TCHAR *dnsId, bool isT
 		setByte(hContact, "Grant", 1);
 
 		if (isTemporary)
-		{
 			db_set_b(hContact, "CList", "NotOnList", 1);
-		}
 	}
 	return hContact;
 }
@@ -98,7 +99,7 @@ uint32_t CToxProto::GetToxFriendNumber(MCONTACT hContact)
 {
 	ToxBinAddress pubKey = ptrA(getStringA(hContact, TOX_SETTINGS_ID));
 	TOX_ERR_FRIEND_BY_PUBLIC_KEY error;
-	uint32_t friendNumber = tox_friend_by_public_key(tox, pubKey, &error);
+	uint32_t friendNumber = tox_friend_by_public_key(tox, pubKey.GetPubKey(), &error);
 	if (error != TOX_ERR_FRIEND_BY_PUBLIC_KEY_OK)
 		debugLogA(__FUNCTION__": failed to get friend number (%d)", error);
 	return friendNumber;
@@ -123,7 +124,7 @@ void CToxProto::LoadFriendList(void*)
 				continue;
 			}
 			ToxHexAddress pubKey(data, TOX_PUBLIC_KEY_SIZE);
-			MCONTACT hContact = AddContact(pubKey, _T(""));
+			MCONTACT hContact = AddContact(pubKey);
 			if (hContact)
 			{
 				delSetting(hContact, "Auth");
@@ -132,7 +133,7 @@ void CToxProto::LoadFriendList(void*)
 				TOX_ERR_FRIEND_QUERY getNameResult;
 				uint8_t nick[TOX_MAX_NAME_LENGTH] = { 0 };
 				if (tox_friend_get_name(tox, friendNumber, nick, &getNameResult))
-					setWString(hContact, "Nick", ptrT(mir_utf8decodeW((char*)nick)));
+					setTString(hContact, "Nick", ptrT(mir_utf8decodeT((char*)nick)));
 				else
 					debugLogA(__FUNCTION__": failed to get friend name (%d)", getNameResult);
 
@@ -151,13 +152,11 @@ void CToxProto::LoadFriendList(void*)
 INT_PTR CToxProto::OnRequestAuth(WPARAM hContact, LPARAM lParam)
 {
 	if (!IsOnline())
-	{
-		return -1; // ???
-	}
+		return 0;
 
 	char *reason = lParam ? (char*)lParam : " ";
 	size_t length = mir_strlen(reason);
-	ToxBinAddress address(ptrA(getStringA(hContact, TOX_SETTINGS_ID)));
+	ToxBinAddress address = ptrA(getStringA(hContact, TOX_SETTINGS_ID));
 
 	TOX_ERR_FRIEND_ADD addFriendResult;
 	int32_t friendNumber = tox_friend_add(tox, address, (uint8_t*)reason, length, &addFriendResult);
@@ -167,15 +166,13 @@ INT_PTR CToxProto::OnRequestAuth(WPARAM hContact, LPARAM lParam)
 		return addFriendResult;
 	}
 
-	// trim address to public key
-	setString(hContact, TOX_SETTINGS_ID, address.ToHex().GetPubKey());
 	db_unset(hContact, "CList", "NotOnList");
 	delSetting(hContact, "Grant");
 
 	uint8_t nick[TOX_MAX_NAME_LENGTH] = { 0 };
 	TOX_ERR_FRIEND_QUERY errorFriendQuery;
 	if (tox_friend_get_name(tox, friendNumber, nick, &errorFriendQuery))
-		setWString(hContact, "Nick", ptrT(mir_utf8decodeW((char*)nick)));
+		setTString(hContact, "Nick", ptrT(mir_utf8decodeT((char*)nick)));
 	else
 		debugLogA(__FUNCTION__": failed to get friend name (%d)", errorFriendQuery);
 
@@ -185,12 +182,9 @@ INT_PTR CToxProto::OnRequestAuth(WPARAM hContact, LPARAM lParam)
 INT_PTR CToxProto::OnGrantAuth(WPARAM hContact, LPARAM)
 {
 	if (!IsOnline())
-	{
-		// TODO: warn
 		return 0;
-	}
 
-	ToxBinAddress pubKey(ptrA(getStringA(hContact, TOX_SETTINGS_ID)));
+	ToxBinAddress pubKey = ptrA(getStringA(hContact, TOX_SETTINGS_ID));
 	TOX_ERR_FRIEND_ADD error;
 	tox_friend_add_norequest(tox, pubKey, &error);
 	if (error != TOX_ERR_FRIEND_ADD_OK)
@@ -199,8 +193,6 @@ INT_PTR CToxProto::OnGrantAuth(WPARAM hContact, LPARAM)
 		return error;
 	}
 
-	// trim address to public key
-	// setString(hContact, TOX_SETTINGS_ID, pubKey.ToHex());
 	db_unset(hContact, "CList", "NotOnList");
 	delSetting(hContact, "Grant");
 
@@ -212,10 +204,7 @@ INT_PTR CToxProto::OnGrantAuth(WPARAM hContact, LPARAM)
 int CToxProto::OnContactDeleted(MCONTACT hContact, LPARAM)
 {
 	if (!IsOnline())
-	{
-		// TODO: warn
 		return 0;
-	}
 
 	if (!isChatRoom(hContact))
 	{
@@ -226,6 +215,7 @@ int CToxProto::OnContactDeleted(MCONTACT hContact, LPARAM)
 			debugLogA(__FUNCTION__": failed to delete friend (%d)", error);
 			return error;
 		}
+		SaveToxProfile();
 	}
 	/*else
 	{
@@ -244,8 +234,8 @@ void CToxProto::OnFriendRequest(Tox*, const uint8_t *pubKey, const uint8_t *mess
 {
 	CToxProto *proto = (CToxProto*)arg;
 
-	ToxHexAddress address(pubKey, TOX_ADDRESS_SIZE);
-	MCONTACT hContact = proto->AddContact(address, _T(""));
+	ToxHexAddress address(pubKey);
+	MCONTACT hContact = proto->AddContact(address);
 	if (!hContact)
 	{
 		proto->debugLogA(__FUNCTION__": failed to create contact");
@@ -329,22 +319,8 @@ void CToxProto::OnConnectionStatusChanged(Tox*, uint32_t friendNumber, TOX_CONNE
 			proto->delSetting(hContact, "Auth");
 			proto->delSetting(hContact, "Grant");
 
-			// resume transfers
-			for (size_t i = 0; i < proto->transfers.Count(); i++)
-			{
-				// only for receiving
-				FileTransferParam *transfer = proto->transfers.GetAt(i);
-				if (transfer->friendNumber == friendNumber && transfer->GetDirection() == 1)
-				{
-					proto->debugLogA(__FUNCTION__": sending ask to resume the transfer of file (%d)", transfer->fileNumber);
-					TOX_ERR_FILE_CONTROL error;
-					if (!tox_file_control(proto->tox, transfer->friendNumber, transfer->fileNumber, TOX_FILE_CONTROL_RESUME, &error))
-					{
-						proto->debugLogA(__FUNCTION__": failed to resume the transfer (%d)", error);
-						tox_file_control(proto->tox, transfer->friendNumber, transfer->fileNumber, TOX_FILE_CONTROL_CANCEL, NULL);
-					}
-				}
-			}
+			// resume incoming transfers
+			proto->ResumeIncomingTransfers(friendNumber);
 
 			// update avatar
 			std::tstring avatarPath = proto->GetAvatarFilePath();
@@ -391,13 +367,16 @@ void CToxProto::OnConnectionStatusChanged(Tox*, uint32_t friendNumber, TOX_CONNE
 		{
 			proto->SetContactStatus(hContact, ID_STATUS_OFFLINE);
 			proto->setDword(hContact, "LastEventDateTS", time(NULL));
+
+			// pause outgoing transfers
+			proto->PauseOutgoingTransfers(friendNumber);
 		}
 	}
 }
 
 int CToxProto::OnUserInfoInit(WPARAM wParam, LPARAM lParam)
 {
-	if (!CallService(MS_PROTO_ISPROTOCOLLOADED, 0, (LPARAM)m_szModuleName))
+	if (!Proto_IsProtocolLoaded(m_szModuleName))
 		return 0;
 
 	MCONTACT hContact = lParam;

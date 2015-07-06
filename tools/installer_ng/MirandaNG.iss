@@ -73,12 +73,14 @@ Source: "Files\Icons\Toolbar_icons.dll"; DestDir: "{app}\Icons"; Components: cli
 
 ; Core and core modules
 Source: "Files\{#MirName}"; DestDir: "{app}"; Components: program; Flags: ignoreversion; AfterInstall: ShowPercent() 
-Source: "Files\mir_core.dll"; DestDir: "{app}"; Components: program; Flags: ignoreversion; AfterInstall: ShowPercent() 
-Source: "Files\Pcre16.dll"; DestDir: "{app}"; Components: program; Flags: ignoreversion; AfterInstall: ShowPercent() 
-Source: "Files\Zlib.dll"; DestDir: "{app}"; Components: program; Flags: ignoreversion; AfterInstall: ShowPercent() 
 Source: "Files\DbChecker.bat"; DestDir: "{app}"; Components: program; Check: IsPortable(); Flags: ignoreversion; AfterInstall: ShowPercent() 
 Source: "Files\msvcp100.dll"; DestDir: "{app}"; Components: program; Check: IsPortable(); Flags: ignoreversion; AfterInstall: ShowPercent() 
 Source: "Files\msvcr100.dll"; DestDir: "{app}"; Components: program; Check: IsPortable(); Flags: ignoreversion; AfterInstall: ShowPercent()
+Source: "Files\Libs\libjson.mir"; DestDir: "{app}\Libs"; Components: program; Flags: ignoreversion; AfterInstall: ShowPercent() 
+Source: "Files\Libs\mir_app.mir"; DestDir: "{app}\Libs"; Components: program; Flags: ignoreversion; AfterInstall: ShowPercent() 
+Source: "Files\Libs\mir_core.mir"; DestDir: "{app}\Libs"; Components: program; Flags: ignoreversion; AfterInstall: ShowPercent() 
+Source: "Files\Libs\Pcre16.mir"; DestDir: "{app}\Libs"; Components: program; Flags: ignoreversion; AfterInstall: ShowPercent() 
+Source: "Files\Libs\Zlib.mir"; DestDir: "{app}\Libs"; Components: program; Flags: ignoreversion; AfterInstall: ShowPercent() 
 Source: "Files\Core\StdAuth.dll"; DestDir: "{app}\Core"; Components: program; Flags: ignoreversion; AfterInstall: ShowPercent() 
 Source: "Files\Core\StdAutoAway.dll"; DestDir: "{app}\Core"; Components: program; Flags: ignoreversion; AfterInstall: ShowPercent() 
 Source: "Files\Core\StdAway.dll"; DestDir: "{app}\Core"; Components: program; Flags: ignoreversion; AfterInstall: ShowPercent() 
@@ -166,7 +168,7 @@ Name: "messagewin"; Description: "{cm:MessageWin}"; Types: extended regular mini
 Name: "messagewin\stdmsg"; Description: "{cm:StdMsg}"; Types: minimal; Flags: exclusive 
 Name: "messagewin\scriver"; Description: "{cm:Scriver}"; Types: custom; Flags: exclusive 
 Name: "messagewin\tabsrmm"; Description: "{cm:Tabsrmm}"; Types: extended regular; Flags: exclusive 
-Name: "dbx_mmap"; Description: "{cm:Dbx_Mmap}"; Types: extended regular minimal
+Name: "dbx_mmap"; Description: "{cm:Dbx_Mmap}"; Types: extended regular minimal; Flags: fixed 
 Name: "lang"; Description: "{cm:Lang}"; Types: extended regular custom minimal; Flags: fixed 
 Name: "lang\russian"; Description: "{cm:LangRussian}"; Flags: exclusive 
 Name: "lang\czech"; Description: "{cm:LangCzech}"; Flags: exclusive 
@@ -967,7 +969,7 @@ begin
     ExpandConstant('{cm:LangEnglishDescription}') + ';' +
     '');
 
-    if DirExists(WizardForm.DirEdit.Text) and (FileExists(WizardForm.DirEdit.Text+'\{#MirName}') or FileExists(WizardForm.DirEdit.Text+'\mir_core.dll'))  then
+    if DirExists(WizardForm.DirEdit.Text) and (FileExists(WizardForm.DirEdit.Text+'\{#MirName}') or FileExists(WizardForm.DirEdit.Text+'\Libs\mir_core.mir'))  then
     begin
       SuppressibleMsgBox(ExpandConstant('{cm:FolderExists1}')+#10+#10+WizardForm.DirEdit.Text+#10+#10+ExpandConstant('{cm:FolderExists2}'), mbError, MB_OK, MB_OK);
       Result := False;

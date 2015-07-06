@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "msn_global.h"
+#include "stdafx.h"
 #include "msn_proto.h"
 #include <netfw.h>
 #ifdef OBSOLETE
@@ -76,7 +76,7 @@ static void DiscardExtraPackets(SOCKET s)
 	unsigned buf;
 
 	for (;;) {
-		if (Miranda_Terminated()) break;
+		if (g_bTerminated) break;
 
 		fd_set fd;
 		FD_ZERO(&fd);
@@ -142,7 +142,7 @@ void CMsnProto::MSNatDetect(void)
 	// NAT detection
 	unsigned i;
 	for (i = 0; i < 4; ++i) {
-		if (Miranda_Terminated()) break;
+		if (g_bTerminated) break;
 
 		// Send echo request to server 1
 		debugLogA("P2PNAT Request 1 attempt %d sent", i);
@@ -207,7 +207,7 @@ void CMsnProto::MSNatDetect(void)
 	addr2.sin_addr.S_un.S_addr = rpkt.testIP;
 	addr2.sin_port = rpkt.discardPort;
 	for (i = 0; i < 4; ++i) {
-		if (Miranda_Terminated()) break;
+		if (g_bTerminated) break;
 
 		debugLogA("P2PNAT Request 2 attempt %d sent", i);
 		// Remove IP restriction for server 2
@@ -243,7 +243,7 @@ void CMsnProto::MSNatDetect(void)
 	// Symmetric NAT detection
 	addr2.sin_port = rpkt.testPort;
 	for (i = 0; i < 4; ++i) {
-		if (Miranda_Terminated()) break;
+		if (g_bTerminated) break;
 
 		debugLogA("P2PNAT Request 3 attempt %d sent", i);
 		// Send echo request to server 1
@@ -312,7 +312,7 @@ static bool IsIcfEnabled(void)
 	if (FAILED(hr)) goto error;
 
 	TCHAR szFileName[MAX_PATH];
-	GetModuleFileName(NULL, szFileName, SIZEOF(szFileName));
+	GetModuleFileName(NULL, szFileName, _countof(szFileName));
 
 	wszFileName = mir_t2u(szFileName);
 

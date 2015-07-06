@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "msn_global.h"
+#include "stdafx.h"
 #include "msn_proto.h"
 
 static const COLORREF crCols[16] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
@@ -47,7 +47,6 @@ CMsnProto::CMsnProto(const char* aProtoName, const TCHAR* aUserName) :
 	lsAvatarQueue(1),
 	msgCache(5, CompareId)
 {
-	db_set_resident(m_szModuleName, "Status");
 	db_set_resident(m_szModuleName, "IdleTS");
 	db_set_resident(m_szModuleName, "p2pMsgId");
 	db_set_resident(m_szModuleName, "MobileEnabled");
@@ -57,13 +56,13 @@ CMsnProto::CMsnProto(const char* aProtoName, const TCHAR* aUserName) :
 
 	CreateProtoService(PS_CREATEACCMGRUI, &CMsnProto::SvcCreateAccMgrUI);
 
-	CreateProtoService(PS_GETAVATARINFOT, &CMsnProto::GetAvatarInfo);
+	CreateProtoService(PS_GETAVATARINFO, &CMsnProto::GetAvatarInfo);
 	CreateProtoService(PS_GETMYAWAYMSG, &CMsnProto::GetMyAwayMsg);
 
 	CreateProtoService(PS_LEAVECHAT, &CMsnProto::OnLeaveChat);
 
-	CreateProtoService(PS_GETMYAVATART, &CMsnProto::GetAvatar);
-	CreateProtoService(PS_SETMYAVATART, &CMsnProto::SetAvatar);
+	CreateProtoService(PS_GETMYAVATAR, &CMsnProto::GetAvatar);
+	CreateProtoService(PS_SETMYAVATAR, &CMsnProto::SetAvatar);
 	CreateProtoService(PS_GETAVATARCAPS, &CMsnProto::GetAvatarCaps);
 
 	CreateProtoService(PS_SETMYNICKNAME, &CMsnProto::SetNickName);
@@ -129,8 +128,8 @@ CMsnProto::CMsnProto(const char* aProtoName, const TCHAR* aUserName) :
 	nlu1.szSettingsModule = szDbsettings;
 	nlu1.ptszDescriptiveName = szBuffer;
 
-	mir_snprintf(szDbsettings, SIZEOF(szDbsettings), "%s_HTTPS", m_szModuleName);
-	mir_sntprintf(szBuffer, SIZEOF(szBuffer), TranslateT("%s plugin HTTPS connections"), m_tszUserName);
+	mir_snprintf(szDbsettings, _countof(szDbsettings), "%s_HTTPS", m_szModuleName);
+	mir_sntprintf(szBuffer, TranslateT("%s plugin HTTPS connections"), m_tszUserName);
 	hNetlibUserHttps = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu1);
 
 	NETLIBUSER nlu = { 0 };
@@ -144,7 +143,7 @@ CMsnProto::CMsnProto(const char* aProtoName, const TCHAR* aUserName) :
 	nlu.pfnHttpGatewayWrapSend = msn_httpGatewayWrapSend;
 	nlu.pfnHttpGatewayUnwrapRecv = msn_httpGatewayUnwrapRecv;
 
-	mir_sntprintf(szBuffer, SIZEOF(szBuffer), TranslateT("%s plugin connections"), m_tszUserName);
+	mir_sntprintf(szBuffer, TranslateT("%s plugin connections"), m_tszUserName);
 	m_hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
 
 	m_DisplayNameCache = NULL;
@@ -152,8 +151,6 @@ CMsnProto::CMsnProto(const char* aProtoName, const TCHAR* aUserName) :
 
 CMsnProto::~CMsnProto()
 {
-	MsnRemoveMainMenus();
-
 	MSN_FreeGroups();
 	Threads_Uninit();
 	AvatarQueue_Uninit();
@@ -212,7 +209,8 @@ int CMsnProto::OnModulesLoaded(WPARAM, LPARAM)
 
 int CMsnProto::OnPreShutdown(WPARAM, LPARAM)
 {
-	SetEvent(hevAvatarQueue);
+	g_bTerminated = true;
+	ReleaseSemaphore(hevAvatarQueue, 1, NULL);
 
 	Popup_UnregisterClass(hPopupError);
 	Popup_UnregisterClass(hPopupHotmail);
@@ -252,10 +250,10 @@ MCONTACT CMsnProto::AddToListByEmail(const char *email, const char *nick, DWORD 
 
 MCONTACT __cdecl CMsnProto::AddToList(int flags, PROTOSEARCHRESULT* psr)
 {
-	TCHAR *id = psr->id ? psr->id : psr->email;
+	TCHAR *id = psr->id.t ? psr->id.t : psr->email.t;
 	return AddToListByEmail(
 		psr->flags & PSR_UNICODE ? UTF8((wchar_t*)id) : UTF8((char*)id),
-		psr->flags & PSR_UNICODE ? UTF8((wchar_t*)psr->nick) : UTF8((char*)psr->nick),
+		psr->flags & PSR_UNICODE ? UTF8((wchar_t*)psr->nick.t) : UTF8((char*)psr->nick.t),
 		flags);
 }
 
@@ -406,44 +404,47 @@ void __cdecl CMsnProto::MsnSearchAckThread(void* arg)
 		return;
 	}
 
-	unsigned res = MSN_ABContactAdd(email, NULL, NETID_MSN, NULL, 1, true);
-	switch (res) {
-	case 0:
-	case 2:
-	case 3:
-	{
-		PROTOSEARCHRESULT isr = { 0 };
-		isr.cbSize = sizeof(isr);
-		isr.flags = PSR_TCHAR;
-		isr.id = (TCHAR*)emailT;
-		isr.nick = (TCHAR*)emailT;
-		isr.email = (TCHAR*)emailT;
+	if (MyOptions.netId == NETID_SKYPE) MSN_SKYABSearch(email, arg);
+	else {
+		unsigned res = MSN_ABContactAdd(email, NULL, NETID_MSN, NULL, 1, true);
+		switch (res) {
+		case 0:
+		case 2:
+		case 3:
+		{
+			PROTOSEARCHRESULT psr = { 0 };
+			psr.cbSize = sizeof(psr);
+			psr.flags = PSR_TCHAR;
+			psr.id.t = (TCHAR*)emailT;
+			psr.nick.t = (TCHAR*)emailT;
+			psr.email.t = (TCHAR*)emailT;
 
-		ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, arg, (LPARAM)&isr);
-		ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, arg, 0);
-	}
-	break;
-
-	case 1:
-		if (strstr(email, "@yahoo.com") == NULL)
+			ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, arg, (LPARAM)&psr);
 			ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, arg, 0);
-#ifdef OBSOLETE
-		else {
-			msnSearchId = arg;
-			MSN_FindYahooUser(email);
 		}
-#endif
 		break;
 
-	default:
-		ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, arg, 0);
-		break;
+		case 1:
+			if (strstr(email, "@yahoo.com") == NULL)
+				ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, arg, 0);
+	#ifdef OBSOLETE
+			else {
+				msnSearchId = arg;
+				MSN_FindYahooUser(email);
+			}
+	#endif
+			break;
+
+		default:
+			ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, arg, 0);
+			break;
+		}
 	}
 	mir_free(arg);
 }
 
 
-HANDLE __cdecl CMsnProto::SearchBasic(const PROTOCHAR* id)
+HANDLE __cdecl CMsnProto::SearchBasic(const TCHAR* id)
 {
 	if (!msnLoggedIn) return 0;
 
@@ -453,48 +454,137 @@ HANDLE __cdecl CMsnProto::SearchBasic(const PROTOCHAR* id)
 	return email;
 }
 
-HANDLE __cdecl CMsnProto::SearchByEmail(const PROTOCHAR* email)
+HANDLE __cdecl CMsnProto::SearchByEmail(const TCHAR* email)
 {
 	return SearchBasic(email);
 }
 
-#ifdef OBSOLETE
 /////////////////////////////////////////////////////////////////////////////////////////
 // MsnFileAllow - starts the file transfer
+
+// stolen from netlibhttp.cpp
+static void MyNetlibConnFromUrl(const char* szUrl, NETLIBOPENCONNECTION &nloc)
+{
+	bool secur =_strnicmp(szUrl, "https", 5) == 0;
+	const char* phost = strstr(szUrl, "://");
+
+	char* szHost = mir_strdup(phost ? phost + 3 : szUrl);
+
+	char* ppath = strchr(szHost, '/');
+	if (ppath) *ppath = '\0';
+
+	memset(&nloc, 0, sizeof(nloc));
+	nloc.cbSize = sizeof(nloc);
+	nloc.szHost = szHost;
+
+	char* pcolon = strrchr(szHost, ':');
+	if (pcolon) {
+		*pcolon = '\0';
+		nloc.wPort = (WORD)strtol(pcolon+1, NULL, 10);
+	}
+	else nloc.wPort = secur ? 443 : 80;
+	nloc.flags = (secur ? NLOCF_SSL : 0);
+}
+
 
 void __cdecl CMsnProto::MsnFileAckThread(void* arg)
 {
 	filetransfer* ft = (filetransfer*)arg;
 
 	TCHAR filefull[MAX_PATH];
-	mir_sntprintf(filefull, SIZEOF(filefull), _T("%s\\%s"), ft->std.tszWorkingDir, ft->std.tszCurrentFile);
+	mir_sntprintf(filefull, _countof(filefull), _T("%s\\%s"), ft->std.tszWorkingDir, ft->std.tszCurrentFile);
 	replaceStrT(ft->std.tszCurrentFile, filefull);
 
+	ResetEvent(ft->hResumeEvt);
 	if (ProtoBroadcastAck(ft->std.hContact, ACKTYPE_FILE, ACKRESULT_FILERESUME, ft, (LPARAM)&ft->std))
-		return;
+		WaitForSingleObject(ft->hResumeEvt, INFINITE);
 
-	bool fcrt = ft->create() != -1;
+	ft->create();
 
-	if (ft->p2p_appID != 0) {
-		if (fcrt)
-			p2p_sendFeedStart(ft);
-		p2p_sendStatus(ft, fcrt ? 200 : 603);
+#ifdef OBSOLETE
+	if (ft->tType != SERVER_HTTP) {
+		if (ft->p2p_appID != 0) {
+			if (fcrt)
+				p2p_sendFeedStart(ft);
+			p2p_sendStatus(ft, fcrt ? 200 : 603);
+		}
+		else msnftp_sendAcceptReject(ft, fcrt);
 	}
-	else msnftp_sendAcceptReject(ft, fcrt);
+#endif
 
 	ProtoBroadcastAck(ft->std.hContact, ACKTYPE_FILE, ACKRESULT_INITIALISING, ft, 0);
+
+	if (ft->tType == SERVER_HTTP) {
+		const char *pszSkypeToken;
+
+		if (ft->fileId != -1 && (pszSkypeToken=GetSkypeToken(true))) {
+			NETLIBHTTPHEADER nlbhHeaders[3] = { 0 };
+			NETLIBHTTPREQUEST nlhr = { 0 }, *nlhrReply;
+			char szRange[32];
+
+			nlbhHeaders[0].szName = "User-Agent";		nlbhHeaders[0].szValue = (LPSTR)MSN_USER_AGENT;
+			nlbhHeaders[1].szName = "Authorization";	nlbhHeaders[1].szValue = (char*)pszSkypeToken;
+			nlhr.headersCount = 2;
+			if (ft->std.currentFileProgress) {
+				mir_snprintf(szRange, sizeof(szRange), "bytes=%I64d-", ft->std.currentFileProgress);
+				nlbhHeaders[2].szName = "Range";
+				nlbhHeaders[2].szValue = szRange;
+				nlhr.headersCount++;
+			}
+
+			nlhr.cbSize = sizeof(nlhr);
+			nlhr.requestType = REQUEST_GET;
+			nlhr.flags = NLHRF_GENERATEHOST | NLHRF_SMARTREMOVEHOST | NLHRF_SMARTAUTHHEADER | NLHRF_HTTP11;
+			nlhr.szUrl = ft->szInvcookie;
+			nlhr.headers = (NETLIBHTTPHEADER*)&nlbhHeaders;
+
+			NETLIBOPENCONNECTION nloc = { 0 };
+			MyNetlibConnFromUrl(nlhr.szUrl, nloc);
+			nloc.flags |= NLOCF_HTTP;
+			if (nloc.flags & NLOCF_SSL) nlhr.flags |= NLHRF_SSL;
+			HANDLE nlc = (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)m_hNetlibUser, (LPARAM)&nloc);
+
+			if (nlc && CallService(MS_NETLIB_SENDHTTPREQUEST, (WPARAM)nlc, (LPARAM)&nlhr) != SOCKET_ERROR &&
+				(nlhrReply = (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_RECVHTTPHEADERS, (WPARAM)nlc, 0))) 
+			{
+					if (nlhrReply->resultCode == 200 || nlhrReply->resultCode == 206) {
+						INT_PTR dw;
+						char buf[1024];
+
+						ProtoBroadcastAck(ft->std.hContact, ACKTYPE_FILE, ACKRESULT_CONNECTED, ft, 0);
+						while (!ft->bCanceled && ft->std.currentFileProgress < ft->std.currentFileSize &&
+							(dw = Netlib_Recv(nlc, buf, sizeof(buf), MSG_NODUMP))>0 && dw!=SOCKET_ERROR) 
+						{
+							_write(ft->fileId, buf, dw);
+							ft->std.totalProgress += dw;
+							ft->std.currentFileProgress += dw;
+							ProtoBroadcastAck(ft->std.hContact, ACKTYPE_FILE, ACKRESULT_DATA, ft, (LPARAM)&ft->std);
+						}
+						if (ft->std.currentFileProgress == ft->std.currentFileSize) ft->std.currentFileNumber++;
+
+					}
+					CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)nlhrReply);
+			}
+			Netlib_CloseHandle(nlc);
+			mir_free((char*)nloc.szHost);
+			if (ft->std.currentFileNumber >= ft->std.totalFiles) ft->complete();
+		}
+		delete ft;
+	}
 }
 
-HANDLE __cdecl CMsnProto::FileAllow(MCONTACT, HANDLE hTransfer, const PROTOCHAR* szPath)
+HANDLE __cdecl CMsnProto::FileAllow(MCONTACT, HANDLE hTransfer, const TCHAR* szPath)
 {
 	filetransfer* ft = (filetransfer*)hTransfer;
 
-	if (!msnLoggedIn || !p2p_sessionRegistered(ft))
+#ifdef OBSOLETE
+	if (ft->tType != SERVER_HTTP && (!msnLoggedIn || !p2p_sessionRegistered(ft)))
 		return 0;
+#endif
 
 	if ((ft->std.tszWorkingDir = mir_tstrdup(szPath)) == NULL) {
 		TCHAR szCurrDir[MAX_PATH];
-		GetCurrentDirectory(SIZEOF(szCurrDir), szCurrDir);
+		GetCurrentDirectory(_countof(szCurrDir), szCurrDir);
 		ft->std.tszWorkingDir = mir_tstrdup(szCurrDir);
 	}
 	else {
@@ -515,50 +605,60 @@ int __cdecl CMsnProto::FileCancel(MCONTACT, HANDLE hTransfer)
 {
 	filetransfer* ft = (filetransfer*)hTransfer;
 
-	if (!msnLoggedIn || !p2p_sessionRegistered(ft))
-		return 0;
-
-	if (!(ft->std.flags & PFTS_SENDING) && ft->fileId == -1) {
-		if (ft->p2p_appID != 0)
-			p2p_sendStatus(ft, 603);
-		else
-			msnftp_sendAcceptReject(ft, false);
-	}
+	if (ft->tType == SERVER_HTTP) ft->bCanceled = true;
+#ifdef OBSOLETE
 	else {
-		ft->bCanceled = true;
-		if (ft->p2p_appID != 0) {
-			p2p_sendCancel(ft);
-			if (!(ft->std.flags & PFTS_SENDING) && ft->p2p_isV2)
-				p2p_sessionComplete(ft);
-		}
-	}
+		if (!msnLoggedIn || !p2p_sessionRegistered(ft))
+			return 0;
 
-	ft->std.ptszFiles = NULL;
-	ft->std.totalFiles = 0;
+		if (!(ft->std.flags & PFTS_SENDING) && ft->fileId == -1) {
+			if (ft->p2p_appID != 0)
+				p2p_sendStatus(ft, 603);
+			else
+				msnftp_sendAcceptReject(ft, false);
+		}
+		else {
+			ft->bCanceled = true;
+			if (ft->p2p_appID != 0) {
+				p2p_sendCancel(ft);
+				if (!(ft->std.flags & PFTS_SENDING) && ft->p2p_isV2)
+					p2p_sessionComplete(ft);
+			}
+		}
+
+		ft->std.ptszFiles = NULL;
+		ft->std.totalFiles = 0;
+	}
+#endif
 	return 0;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // MsnFileDeny - rejects the file transfer request
 
-int __cdecl CMsnProto::FileDeny(MCONTACT, HANDLE hTransfer, const PROTOCHAR* /*szReason*/)
+int __cdecl CMsnProto::FileDeny(MCONTACT, HANDLE hTransfer, const TCHAR* /*szReason*/)
 {
 	filetransfer* ft = (filetransfer*)hTransfer;
 
-	if (!msnLoggedIn || !p2p_sessionRegistered(ft))
-		return 1;
-
-	if (!(ft->std.flags & PFTS_SENDING) && ft->fileId == -1) {
-		if (ft->p2p_appID != 0)
-			p2p_sendStatus(ft, 603);
-		else
-			msnftp_sendAcceptReject(ft, false);
-	}
+	if (ft->tType == SERVER_HTTP) delete ft;
+#ifdef OBSOLETE
 	else {
-		ft->bCanceled = true;
-		if (ft->p2p_appID != 0)
-			p2p_sendCancel(ft);
+		if (!msnLoggedIn || !p2p_sessionRegistered(ft))
+			return 1;
+
+		if (!(ft->std.flags & PFTS_SENDING) && ft->fileId == -1) {
+			if (ft->p2p_appID != 0)
+				p2p_sendStatus(ft, 603);
+			else
+				msnftp_sendAcceptReject(ft, false);
+		}
+		else {
+			ft->bCanceled = true;
+			if (ft->p2p_appID != 0)
+				p2p_sendCancel(ft);
+		}
 	}
+#endif
 
 	return 0;
 }
@@ -566,42 +666,67 @@ int __cdecl CMsnProto::FileDeny(MCONTACT, HANDLE hTransfer, const PROTOCHAR* /*s
 /////////////////////////////////////////////////////////////////////////////////////////
 // MsnFileResume - renames a file
 
-int __cdecl CMsnProto::FileResume(HANDLE hTransfer, int* action, const PROTOCHAR** szFilename)
+int __cdecl CMsnProto::FileResume(HANDLE hTransfer, int* action, const TCHAR** szFilename)
 {
 	filetransfer* ft = (filetransfer*)hTransfer;
 
-	if (!msnLoggedIn || !p2p_sessionRegistered(ft))
-		return 1;
-
-	switch (*action) {
-	case FILERESUME_SKIP:
-		if (ft->p2p_appID != 0)
-			p2p_sendStatus(ft, 603);
-		else
-			msnftp_sendAcceptReject(ft, false);
-		break;
-
-	case FILERESUME_RENAME:
-		replaceStrT(ft->std.tszCurrentFile, *szFilename);
-
-	default:
-		bool fcrt = ft->create() != -1;
-		if (ft->p2p_appID != 0) {
-			if (fcrt)
-				p2p_sendFeedStart(ft);
-
-			p2p_sendStatus(ft, fcrt ? 200 : 603);
+	if (ft->tType == SERVER_HTTP) {
+		switch (*action) {
+			case FILERESUME_SKIP:
+				ft->close();
+				ft->bCanceled = true;
+				break;
+			case FILERESUME_RENAME:
+				replaceStrT(ft->std.tszCurrentFile, *szFilename);
+				break;
+			case FILERESUME_OVERWRITE:
+				ft->std.currentFileProgress = 0;
+				break;
+			case FILERESUME_RESUME:
+				{
+					struct _stati64 statbuf;
+					_tstati64(ft->std.tszCurrentFile, &statbuf);
+					ft->std.currentFileProgress = statbuf.st_size;
+				}
+				break;
 		}
-		else
-			msnftp_sendAcceptReject(ft, fcrt);
-
-		ProtoBroadcastAck(ft->std.hContact, ACKTYPE_FILE, ACKRESULT_INITIALISING, ft, 0);
-		break;
+		SetEvent(ft->hResumeEvt);
 	}
+#ifdef OBSOLETE
+	else {
+		if (!msnLoggedIn || !p2p_sessionRegistered(ft))
+			return 1;
+
+		switch (*action) {
+		case FILERESUME_SKIP:
+			if (ft->p2p_appID != 0)
+				p2p_sendStatus(ft, 603);
+			else
+				msnftp_sendAcceptReject(ft, false);
+			break;
+
+		case FILERESUME_RENAME:
+			replaceStrT(ft->std.tszCurrentFile, *szFilename);
+
+		default:
+			bool fcrt = ft->create() != -1;
+			if (ft->p2p_appID != 0) {
+				if (fcrt)
+					p2p_sendFeedStart(ft);
+
+				p2p_sendStatus(ft, fcrt ? 200 : 603);
+			}
+			else
+				msnftp_sendAcceptReject(ft, fcrt);
+
+			ProtoBroadcastAck(ft->std.hContact, ACKTYPE_FILE, ACKRESULT_INITIALISING, ft, 0);
+			break;
+		}
+	}
+#endif
 
 	return 0;
 }
-#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // MsnGetAwayMsg - reads the current status message for a user
@@ -646,7 +771,7 @@ DWORD_PTR __cdecl CMsnProto::GetCaps(int type, MCONTACT)
 	case PFLAGNUM_1:
 		return PF1_IM | PF1_SERVERCLIST | PF1_AUTHREQ | PF1_BASICSEARCH |
 			PF1_ADDSEARCHRES | PF1_CHAT | PF1_CONTACT | 
-			/*PF1_FILESEND | PF1_FILERECV | */PF1_URLRECV | PF1_VISLIST | PF1_MODEMSG;
+			/*PF1_FILESEND |*/ PF1_FILERECV | PF1_URLRECV | PF1_VISLIST | PF1_MODEMSG;
 
 	case PFLAGNUM_2:
 		return PF2_ONLINE | PF2_SHORTAWAY | PF2_LIGHTDND | PF2_INVISIBLE | PF2_ONTHEPHONE | PF2_IDLE;
@@ -691,6 +816,20 @@ int __cdecl CMsnProto::RecvMsg(MCONTACT hContact, PROTORECVEVENT* pre)
 	return Proto_RecvMessage(hContact, pre);
 }
 
+int CMsnProto::GetInfo(MCONTACT hContact, int)
+{
+	if (MyOptions.netId == NETID_SKYPE) {
+		char tEmail[MSN_MAX_EMAIL_LEN];
+		if (db_get_static(hContact, m_szModuleName, "wlid", tEmail, sizeof(tEmail)))
+			db_get_static(hContact, m_szModuleName, "e-mail", tEmail, sizeof(tEmail));
+
+		MSN_SKYABGetProfile(tEmail);
+		return 1;
+	}
+	return 0;
+}
+
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // MsnRecvContacts - creates a database event from the contacts received
 
@@ -702,12 +841,12 @@ int CMsnProto::RecvContacts(MCONTACT hContact, PROTORECVEVENT* pre)
 	int i;
 
 	for (i = 0; i < pre->lParam; i++)
-		dbei.cbBlob += int(mir_tstrlen(isrList[i]->nick) + 2 + mir_tstrlen(isrList[i]->id));
+		dbei.cbBlob += int(mir_tstrlen(isrList[i]->nick.t) + 2 + mir_tstrlen(isrList[i]->id.t));
 	dbei.pBlob = (PBYTE)_alloca(dbei.cbBlob);
 	for (i = 0, pCurBlob = dbei.pBlob; i < pre->lParam; i++) {
-		mir_strcpy((char*)pCurBlob, _T2A(isrList[i]->nick));
+		mir_strcpy((char*)pCurBlob, _T2A(isrList[i]->nick.t));
 		pCurBlob += mir_strlen((char*)pCurBlob) + 1;
-		mir_strcpy((char*)pCurBlob, _T2A(isrList[i]->id));
+		mir_strcpy((char*)pCurBlob, _T2A(isrList[i]->id.t));
 		pCurBlob += mir_strlen((char*)pCurBlob) + 1;
 	}
 
@@ -724,7 +863,7 @@ int CMsnProto::RecvContacts(MCONTACT hContact, PROTORECVEVENT* pre)
 /////////////////////////////////////////////////////////////////////////////////////////
 // MsnSendFile - initiates a file transfer
 
-HANDLE __cdecl CMsnProto::SendFile(MCONTACT hContact, const PROTOCHAR*, PROTOCHAR** ppszFiles)
+HANDLE __cdecl CMsnProto::SendFile(MCONTACT hContact, const TCHAR*, TCHAR** ppszFiles)
 {
 	if (!msnLoggedIn)
 		return 0;
@@ -859,14 +998,14 @@ int __cdecl CMsnProto::SendMsg(MCONTACT hContact, int flags, const char* pszSrc)
 			ForkThread(&CMsnProto::MsnFakeAck, new TFakeAckParams(hContact, seq, errMsg, this));
 		}
 		else {
+#ifdef OBSOLETE
 			const char msgType = MyOptions.SlowSend ? 'A' : 'N';
 			bool isOffline;
-			ThreadData* thread;
-#ifdef OBSOLETE
-			thread = MSN_StartSB(tEmail, isOffline);
+			ThreadData *thread = MSN_StartSB(tEmail, isOffline);
 #else
 			/* MSNP24 doesn't have a switchboard anymore */
-			thread = NULL; isOffline = true;
+			bool isOffline = true;
+			ThreadData *thread = NULL;
 #endif
 
 			if (thread == NULL) {
@@ -900,7 +1039,7 @@ int __cdecl CMsnProto::SendMsg(MCONTACT hContact, int flags, const char* pszSrc)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // MsnSendContacts - sends contacts to a certain user
-int __cdecl CMsnProto::SendContacts(MCONTACT hContact, int flags, int nContacts, MCONTACT *hContactsList)
+int __cdecl CMsnProto::SendContacts(MCONTACT hContact, int, int nContacts, MCONTACT *hContactsList)
 {
 	if (!msnLoggedIn)
 		return 0;
@@ -1085,17 +1224,8 @@ int __cdecl CMsnProto::OnEvent(PROTOEVENTTYPE eventType, WPARAM wParam, LPARAM l
 
 	case EV_PROTO_ONERASE:
 		char szDbsettings[64];
-		mir_snprintf(szDbsettings, SIZEOF(szDbsettings), "%s_HTTPS", m_szModuleName);
+		mir_snprintf(szDbsettings, _countof(szDbsettings), "%s_HTTPS", m_szModuleName);
 		CallService(MS_DB_MODULE_DELETE, 0, (LPARAM)szDbsettings);
-		break;
-
-	case EV_PROTO_ONRENAME:
-		if (mainMenuRoot) {
-			CLISTMENUITEM clmi = { sizeof(clmi) };
-			clmi.flags = CMIM_NAME | CMIF_TCHAR;
-			clmi.ptszName = m_tszUserName;
-			Menu_ModifyItem(mainMenuRoot, &clmi);
-		}
 		break;
 
 	case EV_PROTO_ONCONTACTDELETED:

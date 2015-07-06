@@ -20,14 +20,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "msn_global.h"
+#include "stdafx.h"
 #include "msn_proto.h"
 #include "version.h"
 
+CLIST_INTERFACE *pcli;
 HINSTANCE hInst;
-
 int hLangpack;
-TIME_API tmi;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Initialization routines
@@ -38,6 +37,7 @@ void MsnLinks_Destroy(void);
 /////////////////////////////////////////////////////////////////////////////////////////
 // Global variables
 
+bool g_bTerminated = false;
 int avsPresent = -1;
 
 static const PLUGININFOEX pluginInfo =
@@ -110,17 +110,18 @@ static int msnProtoUninit(CMsnProto* ppro)
 
 extern "C" int __declspec(dllexport) Load(void)
 {
-	mir_getTMI(&tmi);
 	mir_getLP(&pluginInfo);
+	mir_getCLI();
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
 
-	PROTOCOLDESCRIPTOR pd = { sizeof(pd) };
+	PROTOCOLDESCRIPTOR pd = { 0 };
+	pd.cbSize = sizeof(pd);
 	pd.szName = "MSN";
 	pd.fnInit = (pfnInitProto)msnProtoInit;
 	pd.fnUninit = (pfnUninitProto)msnProtoUninit;
 	pd.type = PROTOTYPE_PROTOCOL;
-	CallService(MS_PROTO_REGISTERMODULE, 0, (LPARAM)&pd);
+	Proto_RegisterModule(&pd);
 
 	MsnInitIcons();
 	MSN_InitContactMenu();

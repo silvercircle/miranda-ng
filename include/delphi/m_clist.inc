@@ -33,125 +33,23 @@ const
   }
   MS_CLIST_GETSTATUSMODE:PAnsiChar = 'CList/GetStatusMode';
 
-  GSMDF_UNICODE      = 2; // will return TCHAR* instead of AnsiChar*
-  GSMDF_UNTRANSLATED = 4;
+function Menu_BuildContactMenu(hContact:TMCONTACT) : HMENU; stdcall;
+             external AppDll name 'Menu_BuildContactMenu';
 
-  {
-    wParam : status_mode
-    lParam : flags
-    Affect : Get a textual description of the given status mode
-    Returns: pointer to a static buffer of the description of the given status mode
-             or NULL(0) if the mode was unknown.
-    Version: v0.1.0.1+
-  }
-  MS_CLIST_GETSTATUSMODEDESCRIPTION:PAnsiChar = 'CList/GetStatusModeDescription';
+{
+  Affect : Modify an existing menu item, see notes
+  Returns: 0 on success, [non zero] on failure
+}
 
-type
-// WARNING: do not use Translate(TS) for p(t)szName or p(t)szPopupName as they
-// are translated by the core, which may lead to double translation.
-// Use LPGEN instead which are just dummy wrappers/markers for "lpgen.pl".
-  PCLISTMENUITEM = ^TCLISTMENUITEM;
-  TCLISTMENUITEM = record
-    cbSize         : int;     // size in bytes of this structure
-    szName         : TChar;   // [TRANSLATED-BY-CORE] text of the menu item
-    flags          : dword;
-    position       : int;     // approx position on the menu, lower numbers go nearer the top
-    hIcon          : THANDLE; // icon to put by the item, if this was *not* loaded from
-                              // a resource, you can delete it straight after the call
-    //icolibItem:THANDLE;  if CMIF_ICONFROMICOLIB used
-    pszService     : PAnsiChar;   // name of the service to call when the service is clicked
-    szPopupName    : TChar;   // [TRANSLATED-BY-CORE] name of the popup menu that this item is on, if this
-                              // is NULL the iteem is on the root of the menu
-		// or hParentMenu:HGENMENU - valid if CMIF_ROOTHANDLE is set. NULL or (HGENMENU)-1 means the root menu
-    popupPosition  : int;     // position of the popup menu on the root menu, ignored
-                              // if pszPopupName is NULL(0) or if the popup menu already exists
-    hotKey         : dword;   // keyboard accelerator, same as lParam of WM_HOTKEY, 0 for none
-    pszContactOwner: PAnsiChar;   // contact menus only, the protocol module that owns
-                              // the contacts to which this to which this menu item
-                              // applies, NULL(0) if it applies to all contacts.
-                              // if it applies to multiple but not all protocols
-                              // add multiple menu items or use ME_CLIST_PREBUILDCONTACTMENU
-    hLangpack      : int;     // plugin's hLangpack (added automatically)
-  end;
+function Menu_ModifyItem(hMenu:HGENMENU; const name:PWideChar; icon:THANDLE=INVALID_HANDLE_VALUE; flags:int=-1) : int; stdcall;
+             external AppDll name 'Menu_ModifyItem';
 
-const
-  HGENMENU_ROOT = HGENMENU(-1);
+{
+  Notes  : changes menu item's visibility
+}
 
-const
-  CMIF_GRAYED     = 1;
-  CMIF_CHECKED    = 2;
-  CMIF_HIDDEN     = 4;   // only works on contact menus
-  CMIF_NOTOFFLINE = 8;   // item won't appear for contacts that are offline
-  CMIF_NOTONLINE  = 16;  //          "      online
-  CMIF_NOTONLIST  = 32;  // item won't appear on standard contacts
-  CMIF_NOTOFFLIST = 64;  // item won't appear on contacts that have the 'NotOnList' setting
-  CMIF_ROOTHANDLE = 384; // means that hParentMenu member is set (since 0.8#26)
-  CMIF_UNICODE    = 512; // will return TCHAR* instead of AnsiChar*
-  CMIF_KEEPUNTRANSLATED = 1024; // don't translate a menu item
-
-  CMIF_DEFAULT = 4096; // this menu item is the default one
-
-// for compatibility. since 0.8.0 they both mean nothing
-  CMIF_ROOTPOPUP  = 128; // root item for new popup (save return id for childs)
-  CMIF_CHILDPOPUP = 256; // child for rootpopup menu
-
-  {
-    wParam : 0
-    lParam : Pointer to a initalised TCLISTMENUITEM structure
-    Affect : Add a new menu item to the main menu, see notes
-    Returns: A handle to the new MENU item or NULL(0) on failure
-    Notes  : The given TCLISTMENUITEM.pszService in is called when the item
-             get clicked with :
-             -
-             wParam = 0, lParam = hwndContactList
-  }
-  MS_CLIST_ADDMAINMENUITEM:PAnsiChar = 'CList/AddMainMenuItem';
-
-  {
-    wParam : 0
-    lParam : Pointer to a initalised TCLISTMENUITEM structure
-    Affect : Add a new item to the user contact menus, see notes
-    Notes  : exactly the same as MS_CLIST_ADDMAINMENUITEM except when an item
-             is selected, the service gets called with wParam=hContact,
-             pszContactOwner is obeyed.
-             -
-             Popup menus are not supported, pszPopupName and popupPosition
-             are ignored. If CTRL is held down when right clicking the menu
-             position numbers will be displayed in brackets after the menu item
-             text, this only works in debug builds!
-  }
-  MS_CLIST_ADDCONTACTMENUITEM:PAnsiChar = 'CList/AddContactMenuItem';
-  MS_CLIST_ADDSTATUSMENUITEM :PAnsiChar = 'CList/AddStatusMenuItem';
-//adds a protocol menu item        v0.9+
-  MS_CLIST_ADDPROTOMENUITEM  :PAnsiChar = 'CList/AddProtoMenuItem';
-
-  CMIM_NAME   = $80000000;
-  CMIM_FLAGS  = $40000000;
-  CMIM_ICON   = $20000000;
-  CMIM_HOTKEY = $10000000;
-  CMIM_ALL    = $F0000000;
-
-  {
-    wParam : HMENUITEM
-    lParam : Pointer to a initalised TCLISTMENUITEM
-    Affect : Modify an existing menu item, see notes
-    Returns: 0 on success, [non zero] on failure
-    Notes  : hMenuItem will have been returned by MS_CLIST_ADD[MAIN]MENUITEM
-             TCLISTMENUITEM.flags should contain CMIM_* constants (see above)
-             to mark which fields should be updated, if it's not present, they
-             can't be updated -- if flags do not exist for a field it can not
-             be updated.
-    Version: v0.1.0.1+
-  }
-  MS_CLIST_MODIFYMENUITEM:PAnsiChar = 'CList/ModifyMenuItem';
-
-  {
-    wParam : (HGENMENU)hMenuItem
-    lParam : (bool) enable = TRUE, disable = FALSE
-    Notes  : changes menu item's visibility
-    Version: v0.94.2+
-  }
-  MS_CLIST_SHOWHIDEMENUITEM:PAnsiChar = 'CList/ShowHideMenuItem';
+procedure Menu_ShowItem(hMenu:HGENMENU; bShow:BYTE); stdcall;
+             external AppDll name 'Menu_ShowItem';
 
   {
     wParam : TMCONTACT
@@ -161,6 +59,7 @@ const
              to the contact that has them
     Version: v0.1.0.1+
   }
+const
   ME_CLIST_PREBUILDCONTACTMENU:PAnsiChar = 'CList/PreBuildContactMenu';
 
 type
@@ -197,24 +96,6 @@ const
     Version: 0.3.0.0
   }
   ME_CLIST_DOUBLECLICKED:PAnsiChar = 'CList/DoubleClicked';
-
-  GCDNF_NOMYHANDLE = 1; // will never return the user's custom name
-  GCDNF_UNICODE    = 2; // will return TCHAR* instead of AnsiChar*
-  GCDNF_NOCACHE    = 4; // will not use the cache
-  {
-    wParam : TMCONTACT
-    lParam : flags
-    Affect : Gets the string that the contact list will use to represent a contact
-    Returns: Always a pointer
-    Notes  : Returns a pointer to the name, will always succeed, even if it needs
-             to return "(Unknown Contact)"
-             -
-             this pointer is a statically allocated buffer which will
-             be overwritten on every call to this service, callers should make
-             sure that they copy the information before they call it again
-    Version: v0.1.2.0+, 0.2.0+ ONLY (0.3a supports the contacts module)
-  }
-  MS_CLIST_GETCONTACTDISPLAYNAME:PAnsiChar = 'CList/GetContactDisplayName';
 
   {
     Invalidates the display name cache
@@ -312,16 +193,6 @@ const
   MS_CLIST_MENUDRAWITEM:PAnsiChar = 'CList/MenuDrawItem';
 
   {
-    wParam : TMCONTACT
-    lParam : 0
-    Affect : Built the context menu for a specific contact
-    Returns: A HMENU handle identifying the menu, this should be DestroyMenu()ed
-             when done.
-    Version: v0.1.1.0+
-  }
-  MS_CLIST_MENUBUILDCONTACT:PAnsiChar = 'CList/MenuBuildContact';
-
-  {
     wParam : 0
     lParam : 0
     Affect : Get the image list handle with all the useful icons in it
@@ -352,22 +223,6 @@ const
   ME_CLIST_CONTACTICONCHANGED:PAnsiChar = 'CList/ContactIconChanged';
 
 //******************************* CLUI only *********************************
-
-  {
-    wParam : 0
-    lParam : 0
-    Affect : Get the handle to Miranda's main menu
-    Version: v0.1.1.0+
-  }
-  MS_CLIST_MENUGETMAIN:PAnsiChar = 'CList/MenuGetMain';
-
-  {
-    wParam : 0
-    lParam : 0
-    Affect : Get a handle to Miranda's status menu
-    Version: v0.1.1.0+
-  }
-  MS_CLIST_MENUGETSTATUS:PAnsiChar = 'CList/MenuGetStatus';
 
   CLISTMENUIDMIN = $4000; // reserved range for clist menu ids
   CLISTMENUIDMAX = $7FFF;

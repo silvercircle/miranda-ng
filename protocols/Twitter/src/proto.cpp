@@ -45,7 +45,7 @@ TwitterProto::TwitterProto(const char *proto_name, const TCHAR *username) :
 
 	// Initialize hotkeys
 	char text[512];
-	mir_snprintf(text, SIZEOF(text), "%s/Tweet", m_szModuleName);
+	mir_snprintf(text, _countof(text), "%s/Tweet", m_szModuleName);
 
 	HOTKEYDESC hkd = { sizeof(hkd) };
 	hkd.pszName = text;
@@ -217,13 +217,14 @@ INT_PTR TwitterProto::GetStatus(WPARAM, LPARAM)
 	return m_iStatus;
 }
 
-INT_PTR TwitterProto::ReplyToTweet(WPARAM hContact, LPARAM)
+INT_PTR TwitterProto::ReplyToTweet(WPARAM wParam, LPARAM)
 {
+	MCONTACT hContact = (MCONTACT) wParam;
 	// TODO: support replying to tweets instead of just users
 	HWND hDlg = CreateDialogParam(g_hInstance, MAKEINTRESOURCE(IDD_TWEET), 0, tweet_proc, reinterpret_cast<LPARAM>(this));
 
 	DBVARIANT dbv;
-	if (!db_get_s(hContact, m_szModuleName, TWITTER_KEY_UN, &dbv)) {
+	if (!getString(hContact, TWITTER_KEY_UN, &dbv)) {
 		SendMessage(hDlg, WM_SETREPLY, reinterpret_cast<WPARAM>(dbv.pszVal), 0);
 		db_free(&dbv);
 	}
@@ -233,15 +234,16 @@ INT_PTR TwitterProto::ReplyToTweet(WPARAM hContact, LPARAM)
 	return 0;
 }
 
-INT_PTR TwitterProto::VisitHomepage(WPARAM hContact, LPARAM)
+INT_PTR TwitterProto::VisitHomepage(WPARAM wParam, LPARAM)
 {
+	MCONTACT hContact = (MCONTACT) wParam;
 	DBVARIANT dbv;
 	// TODO: remove this
-	if (!db_get_s(hContact, m_szModuleName, TWITTER_KEY_UN, &dbv)) {
+	if (!getString(hContact, TWITTER_KEY_UN, &dbv)) {
 		std::string url = profile_base_url("https://twitter.com/") + http::url_encode(dbv.pszVal);
-		db_set_s(hContact, m_szModuleName, "Homepage", url.c_str());
+		setString(hContact, "Homepage", url.c_str());
 
-		CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, reinterpret_cast<LPARAM>(url.c_str()));
+		Utils_OpenUrl(url.c_str());
 		db_free(&dbv);
 	}
 
@@ -252,30 +254,20 @@ INT_PTR TwitterProto::VisitHomepage(WPARAM hContact, LPARAM)
 
 int TwitterProto::OnBuildStatusMenu(WPARAM, LPARAM)
 {
-	HGENMENU hRoot = pcli->pfnGetProtocolMenu(m_szModuleName);
-	if (hRoot == NULL)
-		return 0;
-
-	char text[200];
-	mir_strcpy(text, m_szModuleName);
-	char *tDest = text + mir_strlen(text);
-
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.pszService = text;
-
-	mi.hParentMenu = hRoot;
-	mi.flags = CMIF_ROOTHANDLE | CMIF_TCHAR;
+	CMenuItem mi;
+	mi.root = Menu_GetProtocolRoot(this);
+	mi.flags = CMIF_TCHAR;
 	mi.position = 1001;
-	Menu_AddStatusMenuItem(&mi);
+	Menu_AddStatusMenuItem(&mi, m_szModuleName);
 
 	// TODO: Disable this menu item when offline
 	// "Send Tweet..."
-	CreateProtoService("/Tweet", &TwitterProto::OnTweet);
-	mir_strcpy(tDest, "/Tweet");
-	mi.ptszName = LPGENT("Send Tweet...");
-	mi.popupPosition = 200001;
-	mi.icolibItem = GetIconHandle("tweet");
-	Menu_AddStatusMenuItem(&mi);
+	mi.pszService = "/Tweet";
+	CreateProtoService(mi.pszService, &TwitterProto::OnTweet);
+	mi.name.t = LPGENT("Send Tweet...");
+	mi.position = 200001;
+	mi.hIcolibItem = GetIconHandle("tweet");
+	Menu_AddStatusMenuItem(&mi, m_szModuleName);
 	return 0;
 }
 
@@ -321,21 +313,27 @@ int TwitterProto::OnModulesLoaded(WPARAM, LPARAM)
 	nlu.szSettingsModule = m_szModuleName;
 
 	// Create standard network connection
-	mir_sntprintf(descr, SIZEOF(descr), TranslateT("%s server connection"), m_tszUserName);
+	mir_sntprintf(descr, TranslateT("%s server connection"), m_tszUserName);
 	nlu.ptszDescriptiveName = descr;
 	m_hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
-	if (m_hNetlibUser == 0)
-		MessageBox(0, TranslateT("Unable to get Netlib connection for Twitter"), TranslateT("Twitter"), 0);
+	if (m_hNetlibUser == NULL) {
+		TCHAR error[200];
+		mir_sntprintf(error, TranslateT("Unable to initialize Netlib for %s."), m_tszUserName);
+		MessageBox(NULL, error, _T("Miranda NG"), MB_OK | MB_ICONERROR);
+	}
 
 	// Create avatar network connection (TODO: probably remove this)
 	char module[512];
-	mir_snprintf(module, SIZEOF(module), "%sAv", m_szModuleName);
+	mir_snprintf(module, _countof(module), "%sAv", m_szModuleName);
 	nlu.szSettingsModule = module;
-	mir_sntprintf(descr, SIZEOF(descr), TranslateT("%s avatar connection"), m_tszUserName);
+	mir_sntprintf(descr, TranslateT("%s avatar connection"), m_tszUserName);
 	nlu.ptszDescriptiveName = descr;
 	hAvatarNetlib_ = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
-	if (hAvatarNetlib_ == 0)
-		MessageBox(0, TranslateT("Unable to get avatar Netlib connection for Twitter"), TranslateT("Twitter"), 0);
+	if (hAvatarNetlib_ == NULL) {
+		TCHAR error[200];
+		mir_sntprintf(error, TranslateT("Unable to initialize Netlib for %s."), TranslateT("Twitter (avatars)"));
+		MessageBox(NULL, error, _T("Miranda NG"), MB_OK | MB_ICONERROR);
+	}
 
 	twit_.set_handle(this, m_hNetlibUser);
 
@@ -363,8 +361,9 @@ int TwitterProto::OnPreShutdown(WPARAM, LPARAM)
 	return 0;
 }
 
-int TwitterProto::OnPrebuildContactMenu(WPARAM hContact, LPARAM)
+int TwitterProto::OnPrebuildContactMenu(WPARAM wParam, LPARAM)
 {
+	MCONTACT hContact = (MCONTACT) wParam;
 	if (IsMyContact(hContact))
 		ShowContactMenus(true);
 
@@ -381,7 +380,7 @@ int TwitterProto::ShowPinDialog()
 void TwitterProto::ShowPopup(const wchar_t *text, int Error)
 {
 	POPUPDATAT popup = {};
-	mir_sntprintf(popup.lptzContactName, SIZEOF(popup.lptzContactName), TranslateT("%s Protocol"), m_tszUserName);
+	mir_sntprintf(popup.lptzContactName, _countof(popup.lptzContactName), TranslateT("%s Protocol"), m_tszUserName);
 	wcsncpy_s(popup.lptzText, text, _TRUNCATE);
 
 	if (Error) {
@@ -399,8 +398,8 @@ void TwitterProto::ShowPopup(const wchar_t *text, int Error)
 void TwitterProto::ShowPopup(const char *text, int Error)
 {
 	POPUPDATAT popup = {};
-	mir_sntprintf(popup.lptzContactName, SIZEOF(popup.lptzContactName), TranslateT("%s Protocol"), m_tszUserName);
-	mbcs_to_tcs(CP_UTF8, text, popup.lptzText, SIZEOF(popup.lptzText));
+	mir_sntprintf(popup.lptzContactName, _countof(popup.lptzContactName), TranslateT("%s Protocol"), m_tszUserName);
+	mbcs_to_tcs(CP_UTF8, text, popup.lptzText, _countof(popup.lptzText));
 	if (Error) {
 		popup.iSeconds = -1;
 		popup.colorBack = 0x000000FF;
@@ -421,9 +420,9 @@ void TwitterProto::SendTweetWorker(void *p)
 		return;
 
 	char *text = static_cast<char*>(p);
-	if (mir_strlen(text) > 140) { // looks like the chat max outgoing msg thing doesn't work, so i'll do it here.
+	if (mir_strlen(mir_utf8decodeA(text)) > 140) { // looks like the chat max outgoing msg thing doesn't work, so i'll do it here.
 		TCHAR errorPopup[280];
-		mir_sntprintf(errorPopup, SIZEOF(errorPopup), _T("Don't be crazy! Everyone knows the max tweet size is 140, and you're trying to fit %d chars in there?"), mir_strlen(text));
+		mir_sntprintf(errorPopup, _countof(errorPopup), TranslateT("Don't be crazy! Everyone knows the max tweet size is 140, and you're trying to fit %d chars in there?"), mir_strlen(text));
 		ShowPopup(errorPopup, 1);
 		return;
 	}
@@ -436,7 +435,7 @@ void TwitterProto::SendTweetWorker(void *p)
 
 void TwitterProto::UpdateSettings()
 {
-	if (db_get_b(0, m_szModuleName, TWITTER_KEY_CHATFEED, 0)) {
+	if (getByte(TWITTER_KEY_CHATFEED)) {
 		if (!in_chat_)
 			OnJoinChat(0, 0);
 	}
@@ -456,7 +455,7 @@ void TwitterProto::UpdateSettings()
 std::tstring TwitterProto::GetAvatarFolder()
 {
 	TCHAR path[MAX_PATH];
-	mir_sntprintf(path, SIZEOF(path), _T("%s\\%s"), VARST(_T("%miranda_avatarcache%")), m_tszUserName);
+	mir_sntprintf(path, _countof(path), _T("%s\\%s"), VARST(_T("%miranda_avatarcache%")), m_tszUserName);
 	return path;
 }
 

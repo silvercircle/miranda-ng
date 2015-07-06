@@ -166,7 +166,7 @@ INT_PTR CALLBACK CSend::ResultDialogProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LP
 					memcpy(tmp+len,_T("[/img][/url]"),13*sizeof(TCHAR)); len+=12;
 				}
 			}else
-				len=GetDlgItemText(hwndDlg,edtID,tmp,SIZEOF(tmp));
+				len=GetDlgItemText(hwndDlg,edtID,tmp,_countof(tmp));
 			int retries=3;
 			do{
 				if(!OpenClipboard(hwndDlg)){
@@ -233,15 +233,15 @@ void CSend::svcSendMsgExit(const char* szMessage) {
 		Exit(res); return;
 	}else{
 		mir_freeAndNil(m_szEventMsg);
-		m_cbEventMsg=mir_strlen(szMessage)+1;
-		m_szEventMsg=(char*)mir_realloc(m_szEventMsg, (sizeof(char) * m_cbEventMsg));
+		m_cbEventMsg = (DWORD)mir_strlen(szMessage)+1;
+		m_szEventMsg = (char*)mir_realloc(m_szEventMsg, (sizeof(char) * m_cbEventMsg));
 		memset(m_szEventMsg, 0, (sizeof(char) * m_cbEventMsg));
 		mir_strcpy(m_szEventMsg,szMessage);
 		if (m_pszFileDesc && m_pszFileDesc[0] != NULL) {
 			char *temp = mir_t2a(m_pszFileDesc);
 			mir_stradd(m_szEventMsg, "\r\n");
 			mir_stradd(m_szEventMsg, temp);
-			m_cbEventMsg = mir_strlen(m_szEventMsg)+1;
+			m_cbEventMsg = (DWORD)mir_strlen(m_szEventMsg)+1;
 			mir_free(temp);
 		}
 		//create a HookEventObj on ME_PROTO_ACK
@@ -272,13 +272,13 @@ void CSend::svcSendFileExit() {
 	}
 	mir_freeAndNil(m_szEventMsg);
 	char* szFile = mir_t2a(m_pszFile);
-	m_cbEventMsg=mir_strlen(szFile)+2;
+	m_cbEventMsg = (DWORD)mir_strlen(szFile)+2;
 	m_szEventMsg=(char*)mir_realloc(m_szEventMsg, (sizeof(char) * m_cbEventMsg));
 	memset(m_szEventMsg, 0, (sizeof(char) * m_cbEventMsg));
 	mir_strcpy(m_szEventMsg,szFile);
 	if (m_pszFileDesc && m_pszFileDesc[0] != NULL) {
 		char* temp = mir_t2a(m_pszFileDesc);
-		m_cbEventMsg += mir_strlen(temp);
+		m_cbEventMsg += (DWORD)mir_strlen(temp);
 		m_szEventMsg=(char*)mir_realloc(m_szEventMsg, sizeof(char)*m_cbEventMsg);
 		mir_strcpy(m_szEventMsg+mir_strlen(szFile)+1,temp);
 		m_szEventMsg[m_cbEventMsg-1] = 0;
@@ -296,7 +296,7 @@ void CSend::svcSendFileExit() {
 	TCHAR* pDesc = mir_tstrdup(m_pszFileDesc);
 	ppFile[0] = mir_tstrdup (m_pszFile);
 	ppFile[1] = NULL;
-	m_hSend = (HANDLE)CallContactService(m_hContact, PSS_FILET, (WPARAM)pDesc, (LPARAM)ppFile);
+	m_hSend = (HANDLE)CallContactService(m_hContact, PSS_FILE, (WPARAM)pDesc, (LPARAM)ppFile);
 	mir_free(pDesc);
 	mir_free(ppFile[0]);
 
@@ -382,12 +382,12 @@ void CSend::DB_EventAdd(WORD EventType)
 void CSend::Error(LPCTSTR pszFormat, ...) {
 	TCHAR tszMsg[MAX_SECONDLINE];
 
-	mir_sntprintf(tszMsg, SIZEOF(tszMsg),_T("%s - %s") ,_T(SZ_SENDSS), TranslateT("Error"));
+	mir_sntprintf(tszMsg, _countof(tszMsg),_T("%s - %s") ,_T(SZ_SENDSS), TranslateT("Error"));
 	mir_free(m_ErrorTitle), m_ErrorTitle = mir_tstrdup(tszMsg);
 
 	va_list vl;
 	va_start(vl, pszFormat);
-	mir_vsntprintf(tszMsg, SIZEOF(tszMsg), TranslateTS(pszFormat), vl);
+	mir_vsntprintf(tszMsg, _countof(tszMsg), TranslateTS(pszFormat), vl);
 	va_end(vl);
 	mir_free(m_ErrorMsg), m_ErrorMsg = mir_tstrdup(tszMsg);
 
@@ -611,7 +611,7 @@ static void HTTPFormAppendData(NETLIBHTTPREQUEST* nlhr, size_t* dataMax, char** 
 	}
 	if(data){
 		memcpy(*dataPos,data,sizeof(char)*len); *dataPos+=len;
-		nlhr->dataLength+=len; // not necessary
+		nlhr->dataLength += (int)len; // not necessary
 	}
 }
 void CSend::HTTPFormDestroy(NETLIBHTTPREQUEST* nlhr)

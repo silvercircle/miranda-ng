@@ -3,552 +3,17 @@
 ;  Module: Miranda Core
 ;  Version: 0.95.5
 ;============================================================
-[Enter account name (for example, My Google)]
-Naziv naloga (recimo, Moj Gugl)
-[Choose the protocol type]
-Odaberite protokol
-[Specify the internal account name (optional)]
-Interno ime naloga (po nahođenju)
-[Cancel]
-Otkazivanje
-[Add contact]
-Dodaj kontakt
-[&Add]
-&Dodati
-[&Cancel]
-&Otkazivanje
-[Send "You were added"]
-Poslati "Dodat Vaš kontakt"
-[Send authorization request]
-Slanje zahteva za autorizaciju
-[Open contact's chat window]
-Razgovor s kontaktom u prozoru
-[Custom name:]
-Izmenjeno ime:
-[Group:]
-Grupa:
-[Options]
-Podešavanja
+;file \src\core\stdauth\res\resource.rc
 [Authorization request]
 Zahtev za autorizaciju.
-[Delete contact]
-Brisanje kontakta
-[&Yes]
-&Da
-[&No]
-&Ne
-[Hide from list only, in order to keep their history and ignore/visibility settings]
-Brisanje iz liste vidljivih kontakata, čuvanje istorije i ignorisanje kontakta
-[Use Options->Contacts->Ignore to unhide contacts.]
-Putem Podešavanja->Kontakti->Ignorisani podešavaš vidljivost.
-[Are you sure you want to delete %s?]
-%s se briše sa spiska. Potvrda?
-[This will erase all history and settings for this contact!]
-Ovim se brišu sva podešavanja i istorija datog kontakta!
-[Contact display options]
-Podešavanja vidljivosti kontakta
-[Instead of displaying contacts by their nickname,\ndrag to choose another order:]
-Umesto po redosledu slova nadimaka, \nručno podesiti redosled u listi:
-[Miranda NG profile manager]
-Odabir profila programa Miranda NG
-[&Run]
-&Započeti
-[&Exit]
-&Izlaz
-[Start in service mode with]
-U servisnom režimu početi sa
-[Find/add contacts]
-Pronađi/Dodaj kontakt
-[Search:]
-Pretraga:
-[E-mail address]
-E-mail adresa
-[Name]
-Naziv
-[Nick:]
-Nadimak:
-[First:]
-Ime:
-[Last:]
-Prezime:
-[Advanced]
-Napredno
-[Advanced >>]
-Napredno >>
-[&Search]
-&Pretraga
-[More options]
-Dodatne opcije
-[Add to list]
-Dodaj u listu
-[Custom]
-Izmenjeno
-[Here you can add contacts to your contact list]
-Ovde dodaješ kontakte u listu
-[Configure your Miranda NG options]
-Konfiguracija programa Miranda NG
-[Apply]
-Primeni
-[Switch to simple options]
-Obična podešavanja
-[Please select a subentry from the list]
-Odabir pojedinačnog unosa
-[Install database settings]
-Instalacija podešavanja baze podataka
-[Yes]
-Da
-[No]
-Ne
-[A file containing new database settings has been placed in the Miranda NG directory.]
-Datotke sa novim podešavanjima baze podataka se nalazi u Miranda NG folderu.
-[Do you want to import the settings now?]
-Uvoz novih podešavanja?
-[No to all]
-Ne ka svim upitima
-[&View contents]
-&Sadržaj
-[Security systems to prevent malicious changes are in place and you will be warned before changes that are not known to be safe.]
-Sistem zaštite je ustanovljen i obaveštava o poznatim opasnostima po sigurnost.
-[Database setting change]
-Izmena podešavanja baze podataka
-[Database settings are being imported from]
-Podeđavanja se uvoze iz
-[This file wishes to change the setting]
-Datoteka želi da izmeni podešavanje
-[to the value]
-na vrednost
-[Do you want to allow this change?]
-Zapamtiti izmenu?
-[&Allow all further changes to this section]
-&Zapamtiti kao odeljak podložan izmenama
-[Cancel import]
-Otkazivanje uvoza
-[Database import complete]
-Uvoz baze podataka završen
-[The import has completed from]
-Uvoz je završen iz
-[What do you want to do with the file now?]
-Manipulacija preostalom datotekom:
-[&Recycle]
-&Obnavljanje
-[&Delete]
-&Brisanje
-[&Move/Rename]
-&Premeštanje/Preimenovanje
-[&Leave]
-&Nema Izmene
-[Netlib log options]
-Podešavanja Netlib loga
-[Show]
-Prikaz
-[Received bytes]
-Preuzeti bajtovi
-[Sent bytes]
-Poslati bajtovi
-[Additional data due to proxy communication]
-Razlika usled veze sa proxy serverom
-[SSL traffic]
-SSL protok
-[Text dumps where available]
-Dobavljanje u tekst-fajl, po mogućnosti
-[Auto-detect text]
-Auto-detekcija teksta
-[Calling modules' names]
-Nazivi modula
-[Log to]
-Logovati u
-[OutputDebugString()]
-Funkcija OutputDebugString()
-[File]
-Datoteka
-[Run program when Miranda NG starts (e.g., tail -f, dbgview, etc.):]
-Pokretanje programa uz Mirandu NG (kao npr. tail -f, dbgview, itd.):
-[Run now]
-Pokreni sada
-[Show this dialog box when Miranda NG starts]
-Prikazati dijalog po pokretanju Mirande NG
-[Sounds]
-Zvukovi
-[&Change...]
-&Izmena...
-[&Preview]
-&Proba
-[Download more sounds]
-Pronađi još na Miranda NG sajtu
-[Sound information]
-Informacije o zvukovima
-[Location:]
-Mesto:
-[Name:]
-Ime:
-[Enable sound events]
-Dozvoliti audio obaveštenja
-[Icons]
-Ikonice
-[Show category:]
-Kategorija
-[&Load icon set...]
-&Učitavanje kompleta ikonica...
-[&Import icons >>]
-&Uvoz ikonica >>
-[Download more icons]
-Pronađi još ikonica na Miranda NG sajtu
-[The following events are being ignored:]
-Ignorišu se događaji:
-[Messages]
-Poruke
-[URLs]
-Linkovi
-[Files]
-Datoteke
-[Online notification]
-Obaveštenja (onlajn)
-[Auth requests]
-Zahtevi za autorizaciju
-[All events]
-Svi događaji
-[None]
-Nema
-[Only the ticked contacts will be shown on the main contact list]
-Štiklirani kontakti su prikazani u kontakt listi
-[Ignore]
-Ignorisati
-[Added notification]
-Dodato obaveštenje
-[Typing]
-Kucanje
-[Visibility]
-Vidljivost
-[You are visible to this person even when in invisible mode]
-Vidljivost odabranom kontaktu čak i u nevidljivom režimu
-[You are never visible to this person]
-Uvek nevidljiv odabranom kontaktu
-[Icon index]
-Redni broj ikonice
-[Icon library:]
-Biblioteka ikonice:
-[Drag icons to main list to assign them:]
-Prevuci ikonicu radi dodele:
-[Import multiple]
-Uvoz više ikonica
-[To main icons]
-U glavni odeljak ikonica
-[To]
-U
-[<< &Import]
-<< &Uvoz
-[To default status icons]
-U odeljak glavnih ikonica statusa
-[Logging...]
-Logovanje...
-[Outgoing connections]
-Odlazne konekcije
-[Use proxy server]
-Upotreba proxy servera
-[Type:]
-Vrsta:
-[Host:]
-Host:
-[Port:]
-Port:
-[(often %d)]
-(uglavnom %d)
-[Use custom login (domain login picked up automatically)]
-Prijavi se drugačije (automatska prijava na domen)
-[Username:]
-Korisničko ime:
-[Password:]
-Šifra
-[Resolve hostnames through proxy]
-Dozvoliti DNS preko proxy servera
-[Port range:]
-Raspon portova:
-[Example: 1050-1070, 2000-2010, 2500]
-Na primer: 1050-1070, 2000-2010, 2500
-[Validate SSL certificates]
-Potvrditi SSL sertifikate
-[Incoming connections]
-Dolazne konekcije
-[Enable UPnP port mapping]
-Dozvoliti mapiranje portova putem UPnP
-[You will need to reconnect for the changes you have made on this page to take effect.]
-Kako bi podešavanja stupila na snagu, morate se ponovo konektovati.
-[Please complete the following form to create a new user profile]
-Popunite obrazac profla i kreirajte novi profil
-[Profile]
-Profil
-[e.g., Workplace]
-Radno mesto
-[You can select a different profile driver from the default, it may offer more features or abilities, if in doubt use the default.]
-Odabir posebnog drajvera baze je dozvoljen, kao i dodatne mogućnosti istih. Bez više informacija izaberi obične.
-[e.g., dbx mmap]
-Npr. dbx map
-[Driver]
-Drajver
-[Problem: Unable to find any database drivers, this means you cannot create a new profile, you need to get dbx_mmap.dll]
-Problem: drajver baze nije na raspolaganju i kreiranje profila nije moguće. Neophodan dbx_mmap.dll
-[Download more plugins]
-Preuzimanje plug-inova
-[Description:]
-Opis:
-[Author(s):]
-Autor(i):
-[E-mail:]
-E-mail:
-[Homepage:]
-Web Stranica:
-[Unique ID:]
-Jedinstveni ID:
-[Copyright:]
-Prava (Licenca):
-[Please restart Miranda NG for your changes to take effect.]
-Restart Mirande NG neophodan radi čuvanja izmena.
-[Fonts and colors]
-Fontovi i boje
-[Undo]
-Undo
-[Reset]
-Reset
-[Export...]
-Izvoz
-[Color/background]
-Boja/pozadina
-[Text effect]
-Dekoracija teksta
-[Text color]
-Boja teksta
-[Choose font]
-Izbor fonta
-[Menu objects]
-Celine Menija
-[Menu items]
-Opcije Menija
-[Protocol menus]
-Meni Protokola
-[Move to the main menu]
-U glavni meni
-[Move to the status bar]
-U status traku
-[Warning!\r\nThis menu object not support user defined options.]
-Upozorenje!\r\nNavedeni objekat u meniju ne podržava zadatu opciju.
-[Insert separator]
-Ubaci razdelnik
-[Service:]
-Služi za:
-[Default]
-Standardno
-[Set]
-Izbor
-[Disable icons]
-Ukloniti ikonice
-[Show accounts in the following order,\ndrag to choose another order:]
-Nalozi će biti prikazani ovim redom,\nručno podesiti redosled u listi:
-[Account order and visibility]
-Vidljivost i redosled naloga
-[Note: Miranda NG will have to be restarted for changes to take effect.]
-Važno: Restart Mirande NG neophodan radi čuvanja izmena.
-[Key bindings]
-Dodela tastera
-[Shortcut:]
-Skraćenica
-[Add]
-Dodaj
-[Remove]
-Ukloni
-[Undo changes]
-Ne pamti izmene
-[Reset to default]
-Vrati na standardno
-[Hotkeys]
-Dostupne skraćenice
-[Accounts]
-Nalozi
-[Configure your IM accounts]
-Podešavanja IM naloga
-[Account information:]
-Podaci o nalogu:
-[Additional:]
-Dodatne informacije:
-[Configure network...]
-Mrežna podešavanja...
-[Get more protocols...]
-Preuzmi dodatne protokole...
-[&Add...]
-&Dodaj...
-[&Edit]
-&Izmeni
-[&Options]
-&Podešavanja
-[&Upgrade]
-&Unapredi
-[&Remove...]
-&Obriši
-[Miranda NG is being restarted.\nPlease wait...]
-Restartujem Mirandu NG.\nMolim sačekajte...
-[Error console]
-Konzola za prikaz greški
-[Error notifications]
-Obaveštenja o greškama
-[Headers:]
-Naslovi:
-[This font is used to display main section titles or text elements.]
-Ovaj font koristi se za prikaz većih naslova i delova teksta.
-[Normal text:]
-Običan tekst:
-[This font is used to display most text elements or section bodies.]
-Ovaj font koristi se za prikaz teksta u celosti.
-[Minor notes:]
-Manje bitne naznake:
-[This font is used to display various additional notes.]
-Ovaj font koristi se za obaveštenja i fusnote.
-[Welcome to Miranda NG's account manager!\nHere you can set up your IM accounts.\n\nSelect an account from the list on the left to see the available options. Alternatively, just click on the Plus sign underneath the list to set up a new IM account.]
-Dobrodošli u izbornik naloga Mirande NG!\nPodešavanja svakog od naloga se nalaze ovde.\nOdabir naloga levo omogućava dalja podešavanja. Ukoliko želite, klikom na znak 'plus' možete napraviti nov IM nalog.
-[Event icon legend:]
-Opis ikonica događaja
-[Choose events you wish to ignore:]
-Ignorisani događaji:
-[Font effect]
-Dekoracija teksta
-[Effect:]
-Tip dekoracije:
-[Base color:]
-Osnovna boja:
-[opacity:]
-Neprozirnost:
-[Secondary color:]
-Sekundarna boja:
-[Select the extra icons to be shown in the contact list:]
-Odabir dodatnih ikonica za prikaz u listi kontakata:
-[*only the first %d icons will be shown]
-*prikazuje samo prvih %d
-[You can group/ungroup icons by selecting them (CTRL+left click) and using the popup menu (right click)]
-Ikonice grupišeš pomoću 'CTRL i Levi Klik' ili putem menija desnog dugmeta miša
-[Add to existing metacontact]
-Dodaj postojećem metakontaktu
-[Please select a metacontact:]
-Odabir metakontakta:
-[Sort alphabetically]
-Po alfabetnom redu
-[Editing]
-Izmena
-[Information]
-Obaveštenje
-[Contacts]
-Kontakti
-[&Remove]
-&Obriši
-[&Set as default]
-&Stavi kao standardni
-[Move &up]
-&Ka vrhu
-[Move &down]
-Ka &dnu
-[Send &offline]
-Šalji &oflajn
-[&Apply]
-&Zapamti
-[Context menu]
-Kontekstni meni
-[Use contact's unique ID]
-Koristi jedinstveni ID broj kontakta
-[Use contact's display name]
-Koristi se prikazanim imenom
-[Contact labels]
-Odlike kontakta
-[When I click on a sub in the popup menu...]
-Pri izboru podkontakta u popup meniju...
-[Set default and open message window]
-Podesiti standardno i otvoriti obaveštenje
-[Show subcontact context menu]
-Prikazati kontekstni meni podkontakta
-[Show user information]
-Prikazati informacije o korisniku
-[Contact list]
-Spisak kontakata
-[Display subcontact nickname]
-Ispisati nadimak podkontakta
-[Display subcontact display name]
-Ispisati dodeljeno ime podkontakta
-[Lock name to first contact]
-Nepromenljivo ime prvog kontakta
-[Current language:]
-Izabrani jezik interfejsa:
-[Last modified using:]
-Poslednja promena verzijom:
-[Date:]
-Datum:
-[Locale:]
-Jezik:
-[Reload langpack]
-Osvežiti jezički paket
-[Download more language packs]
-Preuzimanje jezičkih paketa
-[Tray]
-Tray
-[&Hide/Show]
-&Sakriti/Prikazati
-[E&xit]
-&Izlaz
-[Nowhere]
-Nigde
-[&New group]
-&Nova grupa
-[&Hide offline users]
-S&kloniti odsutne
-[Hide &offline users out here]
-Skloniti &odsutne kontakte pri grupi
-[Hide &empty groups]
-Skloniti &prazne grupe
-[Disable &groups]
-Ne koristiti &grupe
-[Hide Miranda]
-Sakriti Miranda prozor
-[Group]
-Grupa
-[&New subgroup]
-&Napravi grupu
-[&Hide offline users in here]
-Skloniti &odsutne kontakte ove grupe
-[&Rename group]
-&Preimenovati grupu
-[&Delete group]
-&Izbrisati grupu
-[&Reset to default]
-&Vratiti na standardno
-[find/add]
-pronađi/dodaj
-[&Add to list]
-&Dodaj na spisak
-[User &details]
-Detalji &korisnika
-[Send &message]
-&Slanje poruke
-[Log]
-Log
-[&Copy]
-&Kopiranje
-[Co&py all]
-Ko&piranje svega
-[Select &all]
-&Izaberi sve
-[C&lear log]
-Izbriši &log
-[Open in &new window]
-Otvoriti &u novom prozoru
-[&Open in existing window]
-Otvoriti u &trenutnom prozoru
-[&Copy link]
-Kopiraj li&nk
-[Cancel change]
-Otkazati izmene
-[Ungroup]
-Izdvoj iz grupe
 [&Authorize]
 &Potvrdi autorizaciju
 [&Deny]
 &Odbij autorizaciju
 [Decide &later]
 Odluči &kasnije
+[User &details]
+Detalji &korisnika
 [Reason:]
 Razlog:
 [Denial reason:]
@@ -559,8 +24,13 @@ Ubaciti na spisak kontakata po autorizaciji
 Vaš kontakt je dodat
 [&Close]
 &Zatvori
+[&Add]
+&Dodati
+;file \src\core\stdaway\res\resource.rc
 [%s message for %s]
 %s poruka za %s
+[&Cancel]
+&Otkazivanje
 [Retrieving %s message...]
 Preuzimanje poruke od "%s"...
 [Status messages]
@@ -581,6 +51,7 @@ Statusne poruke:
 IZmeniti poruku - "%s"
 [Closing in %d]
 Zatvaram (%d)
+;file \src\core\stdchat\res\chat.rc
 [&Send]
 &Slanje
 [&Emoticons]
@@ -607,6 +78,8 @@ Prikazati/sakriti spis&ak
 Prikazati samo događaje:
 [Actions]
 Akcije
+[Messages]
+Poruke
 [Nick changes]
 Promene nadimka
 [Users joining]
@@ -617,12 +90,16 @@ Otišle korisnike
 Izmene tema
 [Status changes]
 Izmene statusa
+[Information]
+Obaveštenje
 [Disconnects]
 Prekide veze
 [User kicks]
 Izbačene korisnike
 [Notices]
 naznake
+[Options]
+Podešavanja
 [Log options]
 Log opcije
 [Log timestamp]
@@ -671,8 +148,12 @@ Pozadina
 Spisak
 [&Message]
 &Poruka
+[Log]
+Log
 [Clear lo&g]
 &Obrisati log
+[Co&py all]
+Ko&piranje svega
 [Word lookup]
 Pronađi reč
 [Wikipedia]
@@ -683,8 +164,12 @@ Link
 Otvoriti u &novom prozoru brauzera
 [&Open in current browser window]
 Otvoriti u &trenutnom prozoru brauzera
+[&Copy link]
+Kopiraj li&nk
 [Message]
 Poruka
+[Undo]
+Undo
 [Redo]
 Ponovo
 [Copy]
@@ -705,6 +190,21 @@ Jezičci
 Z&atvori ostale jezičke
 [&Open at this position]
 &Otvori na ovom mestu
+;file \src\core\stdclist\res\resource.rc
+[Delete contact]
+Brisanje kontakta
+[No]
+Ne
+[Yes]
+Da
+[Hide from list only, in order to keep their history and ignore/visibility settings]
+Brisanje iz liste vidljivih kontakata, čuvanje istorije i ignorisanje kontakta
+[Use Options->Contacts->Ignore to unhide contacts.]
+Putem Podešavanja->Kontakti->Ignorisani podešavaš vidljivost.
+[Are you sure you want to delete %s?]
+%s se briše sa spiska. Potvrda?
+[This will erase all history and settings for this contact!]
+Ovim se brišu sva podešavanja i istorija datog kontakta!
 [Hide offline users]
 Sakrij odsutne
 [Hide empty groups]
@@ -727,6 +227,8 @@ Prikazati sve statuse u balonu
 Isključi žmiganje ikonica
 [ms delay]
 Kašnjenje (ms)
+[Show]
+Prikaz
 [icon when statuses differ]
 Ikonica različitih statusa
 [Cycle icons every]
@@ -737,6 +239,8 @@ U sekundama, kod različitih statusa
 Više ikonica odjednom
 [Only when statuses differ]
 Samo kada su statusi različiti
+[Contact list]
+Spisak kontakata
 [System tray icon]
 Ikonica u tray-u
 [System tray icon when using multiple protocols]
@@ -895,6 +399,8 @@ prozor:
 Pozadina spiska kontakata
 [&Main menu]
 Glavni &meni
+[E&xit]
+&Izlaz
 [&Status]
 &Status
 [&Offline\tCtrl+0]
@@ -917,8 +423,39 @@ Ne&vidljiv\tCtrl+7
 Na &telefonu\tCtrl+8
 [Out to &lunch\tCtrl+9]
 N&a ručku\tCtrl+9
+[Tray]
+Tray
+[&Hide/Show]
+&Sakriti/Prikazati
+[Nowhere]
+Nigde
+[&New group]
+&Nova grupa
+[&Hide offline users]
+S&kloniti odsutne
+[Hide &offline users out here]
+Skloniti &odsutne kontakte pri grupi
+[Hide &empty groups]
+Skloniti &prazne grupe
+[Disable &groups]
+Ne koristiti &grupe
+[Hide Miranda]
+Sakriti Miranda prozor
+[Group]
+Grupa
+[&New subgroup]
+&Napravi grupu
+[&Hide offline users in here]
+Skloniti &odsutne kontakte ove grupe
+[&Rename group]
+&Preimenovati grupu
+[&Delete group]
+&Izbrisati grupu
+;file \src\core\stdfile\res\resource.rc
 [Send file(s)]
 Šalji datoteke
+[Cancel]
+Otkazivanje
 [To:]
 Kome:
 [File(s):]
@@ -927,6 +464,8 @@ Datoteke:
 &Ponovi odabir
 [Total size:]
 Ukupna veličina
+[Description:]
+Opis:
 [&User menu]
 &Korisnički meni
 [Incoming file transfer]
@@ -937,6 +476,8 @@ Pristigla datoteka
 &Odbij
 [From:]
 Od koga:
+[Date:]
+Datum:
 [Files:]
 Datoteke:
 [Save to:]
@@ -975,6 +516,8 @@ Postojeća datoteka
 Veličina:
 [Last modified:]
 Poslednji put izmenjena:
+[Type:]
+Vrsta:
 [Open file]
 Otvori datoteku:
 [Open folder]
@@ -1027,10 +570,12 @@ Pitaj me
 Preimenuj (dodaj " (1)", itd)
 [You will always be asked about files from people not on your contact list]
 Pitanje će uvek biti postavljeno ako je datoteka stigla od nepoznatog kontakta
+;file \src\core\stdhelp\res\resource.rc
 [About Miranda NG]
 O programu
 [Credits >]
 Autori >
+;file \src\core\stdidle\res\resource.rc
 [Become idle if the following is left unattended:]
 Pasivni režim usled navedenih događaja:
 [Become idle if the screen saver is active]
@@ -1059,6 +604,7 @@ Pasivni režim bez zvukova
 Pasivni režim posle:
 [Idle (auto-away):]
 Pasivni režim (auto-neaktivan):
+;file \src\core\stdmsg\res\resource.rc
 [Automatically popup window when:]
 Odmah prikaži prozor kada:
 [In background]
@@ -1149,12 +695,19 @@ Zapamti položaj prozora svakog kontakta
 Navike prozora za poruke
 [Messaging:]
 Komunikacija:
+[C&lear log]
+Izbriši &log
+[&Copy]
+&Kopiranje
+[Select &all]
+&Izaberi sve
 [&Open link]
 &Otvori link
 [Paste and send]
 Ubaci i pošalji
 [Delete]
 Briši
+;file \src\core\stduihist\res\resource.rc
 [Find]
 Pronađi
 [&Find next]
@@ -1165,6 +718,7 @@ Pronaći šta:
 Ranije poruke
 [&Find...]
 &Pronađi...
+;file \src\core\stduserinfo\res\resource.rc
 [Add phone number]
 Dodaj broj telefona
 [Enter country, area code and phone number:]
@@ -1193,6 +747,8 @@ Pol:
 Prezime:
 [Age:]
 Godine:
+[E-mail:]
+E-mail:
 [Date of birth:]
 Datum rođenja:
 [Marital status:]
@@ -1235,6 +791,464 @@ Služba:
 Pozicija:
 [Website:]
 Web sajt:
+;file \src\mir_app\res\resource.rc
+[Enter account name (for example, My Google)]
+Naziv naloga (recimo, Moj Gugl)
+[Choose the protocol type]
+Odaberite protokol
+[Specify the internal account name (optional)]
+Interno ime naloga (po nahođenju)
+[Add contact]
+Dodaj kontakt
+[Send "You were added"]
+Poslati "Dodat Vaš kontakt"
+[Send authorization request]
+Slanje zahteva za autorizaciju
+[Open contact's chat window]
+Razgovor s kontaktom u prozoru
+[Custom name:]
+Izmenjeno ime:
+[Group:]
+Grupa:
+[&Yes]
+&Da
+[&No]
+&Ne
+[Contact display options]
+Podešavanja vidljivosti kontakta
+[Instead of displaying contacts by their nickname,\ndrag to choose another order:]
+Umesto po redosledu slova nadimaka, \nručno podesiti redosled u listi:
+[Miranda NG profile manager]
+Odabir profila programa Miranda NG
+[Manage your Miranda NG profile]
+Kontrole Miranda NG profila
+[&Run]
+&Započeti
+[&Exit]
+&Izlaz
+[Start in service mode with]
+U servisnom režimu početi sa
+[Find/add contacts]
+Pronađi/Dodaj kontakt
+[Search:]
+Pretraga:
+[E-mail address]
+E-mail adresa
+[Name]
+Naziv
+[Nick:]
+Nadimak:
+[First:]
+Ime:
+[Last:]
+Prezime:
+[Advanced]
+Napredno
+[Advanced >>]
+Napredno >>
+[&Search]
+&Pretraga
+[More options]
+Dodatne opcije
+[Add to list]
+Dodaj u listu
+[Custom]
+Izmenjeno
+[Here you can add contacts to your contact list]
+Ovde dodaješ kontakte u listu
+[Configure your Miranda NG options]
+Konfiguracija programa Miranda NG
+[Apply]
+Primeni
+[Switch to simple options]
+Obična podešavanja
+[Please select a subentry from the list]
+Odabir pojedinačnog unosa
+[Install database settings]
+Instalacija podešavanja baze podataka
+[A file containing new database settings has been placed in the Miranda NG directory.]
+Datotke sa novim podešavanjima baze podataka se nalazi u Miranda NG folderu.
+[Do you want to import the settings now?]
+Uvoz novih podešavanja?
+[No to all]
+Ne ka svim upitima
+[&View contents]
+&Sadržaj
+[Security systems to prevent malicious changes are in place and you will be warned before changes that are not known to be safe.]
+Sistem zaštite je ustanovljen i obaveštava o poznatim opasnostima po sigurnost.
+[Database setting change]
+Izmena podešavanja baze podataka
+[Database settings are being imported from]
+Podeđavanja se uvoze iz
+[This file wishes to change the setting]
+Datoteka želi da izmeni podešavanje
+[to the value]
+na vrednost
+[Do you want to allow this change?]
+Zapamtiti izmenu?
+[&Allow all further changes to this section]
+&Zapamtiti kao odeljak podložan izmenama
+[Cancel import]
+Otkazivanje uvoza
+[Database import complete]
+Uvoz baze podataka završen
+[The import has completed from]
+Uvoz je završen iz
+[What do you want to do with the file now?]
+Manipulacija preostalom datotekom:
+[&Recycle]
+&Obnavljanje
+[&Delete]
+&Brisanje
+[&Move/Rename]
+&Premeštanje/Preimenovanje
+[&Leave]
+&Nema Izmene
+[Netlib log options]
+Podešavanja Netlib loga
+[Received bytes]
+Preuzeti bajtovi
+[Sent bytes]
+Poslati bajtovi
+[Additional data due to proxy communication]
+Razlika usled veze sa proxy serverom
+[SSL traffic]
+SSL protok
+[Text dumps where available]
+Dobavljanje u tekst-fajl, po mogućnosti
+[Auto-detect text]
+Auto-detekcija teksta
+[Calling modules' names]
+Nazivi modula
+[Log to]
+Logovati u
+[OutputDebugString()]
+Funkcija OutputDebugString()
+[File]
+Datoteka
+[Run program when Miranda NG starts (e.g., tail -f, dbgview, etc.):]
+Pokretanje programa uz Mirandu NG (kao npr. tail -f, dbgview, itd.):
+[Run now]
+Pokreni sada
+[Show this dialog box when Miranda NG starts]
+Prikazati dijalog po pokretanju Mirande NG
+[Sounds]
+Zvukovi
+[&Change...]
+&Izmena...
+[&Preview]
+&Proba
+[Download more sounds]
+Pronađi još na Miranda NG sajtu
+[Sound information]
+Informacije o zvukovima
+[Location:]
+Mesto:
+[Name:]
+Ime:
+[Enable sound events]
+Dozvoliti audio obaveštenja
+[Icons]
+Ikonice
+[Show category:]
+Kategorija
+[&Load icon set...]
+&Učitavanje kompleta ikonica...
+[&Import icons >>]
+&Uvoz ikonica >>
+[Download more icons]
+Pronađi još ikonica na Miranda NG sajtu
+[The following events are being ignored:]
+Ignorišu se događaji:
+[URLs]
+Linkovi
+[Files]
+Datoteke
+[Online notification]
+Obaveštenja (onlajn)
+[Auth requests]
+Zahtevi za autorizaciju
+[All events]
+Svi događaji
+[None]
+Nema
+[Only the ticked contacts will be shown on the main contact list]
+Štiklirani kontakti su prikazani u kontakt listi
+[Ignore]
+Ignorisati
+[Added notification]
+Dodato obaveštenje
+[Typing]
+Kucanje
+[Visibility]
+Vidljivost
+[You are visible to this person even when in invisible mode]
+Vidljivost odabranom kontaktu čak i u nevidljivom režimu
+[You are never visible to this person]
+Uvek nevidljiv odabranom kontaktu
+[Icon index]
+Redni broj ikonice
+[Icon library:]
+Biblioteka ikonice:
+[Drag icons to main list to assign them:]
+Prevuci ikonicu radi dodele:
+[Import multiple]
+Uvoz više ikonica
+[To main icons]
+U glavni odeljak ikonica
+[To]
+U
+[<< &Import]
+<< &Uvoz
+[To default status icons]
+U odeljak glavnih ikonica statusa
+[Logging...]
+Logovanje...
+[Outgoing connections]
+Odlazne konekcije
+[Use proxy server]
+Upotreba proxy servera
+[Host:]
+Host:
+[Port:]
+Port:
+[(often %d)]
+(uglavnom %d)
+[Use custom login (domain login picked up automatically)]
+Prijavi se drugačije (automatska prijava na domen)
+[Username:]
+Korisničko ime:
+[Password:]
+Šifra
+[Resolve hostnames through proxy]
+Dozvoliti DNS preko proxy servera
+[Port range:]
+Raspon portova:
+[Example: 1050-1070, 2000-2010, 2500]
+Na primer: 1050-1070, 2000-2010, 2500
+[Validate SSL certificates]
+Potvrditi SSL sertifikate
+[Incoming connections]
+Dolazne konekcije
+[Enable UPnP port mapping]
+Dozvoliti mapiranje portova putem UPnP
+[You will need to reconnect for the changes you have made on this page to take effect.]
+Kako bi podešavanja stupila na snagu, morate se ponovo konektovati.
+[Please complete the following form to create a new user profile]
+Popunite obrazac profla i kreirajte novi profil
+[Profile]
+Profil
+[e.g., Workplace]
+Radno mesto
+[You can select a different profile driver from the default, it may offer more features or abilities, if in doubt use the default.]
+Odabir posebnog drajvera baze je dozvoljen, kao i dodatne mogućnosti istih. Bez više informacija izaberi obične.
+[e.g., dbx mmap]
+Npr. dbx map
+[Driver]
+Drajver
+[Problem: Unable to find any database drivers, this means you cannot create a new profile, you need to get dbx_mmap.dll]
+Problem: drajver baze nije na raspolaganju i kreiranje profila nije moguće. Neophodan dbx_mmap.dll
+[Download more plugins]
+Preuzimanje plug-inova
+[Author(s):]
+Autor(i):
+[Homepage:]
+Web Stranica:
+[Unique ID:]
+Jedinstveni ID:
+[Copyright:]
+Prava (Licenca):
+[Please restart Miranda NG for your changes to take effect.]
+Restart Mirande NG neophodan radi čuvanja izmena.
+[Fonts and colors]
+Fontovi i boje
+[Reset]
+Reset
+[Export...]
+Izvoz
+[Color/background]
+Boja/pozadina
+[Text effect]
+Dekoracija teksta
+[Text color]
+Boja teksta
+[Choose font]
+Izbor fonta
+[Menu objects]
+Celine Menija
+[Menu items]
+Opcije Menija
+[Protocol menus]
+Meni Protokola
+[Move to the main menu]
+U glavni meni
+[Move to the status bar]
+U status traku
+[Warning!\r\nThis menu object not support user defined options.]
+Upozorenje!\r\nNavedeni objekat u meniju ne podržava zadatu opciju.
+[Insert separator]
+Ubaci razdelnik
+[Service:]
+Služi za:
+[Default]
+Standardno
+[Set]
+Izbor
+[Enable icons]
+
+[Show accounts in the following order,\ndrag to choose another order:]
+Nalozi će biti prikazani ovim redom,\nručno podesiti redosled u listi:
+[Account order and visibility]
+Vidljivost i redosled naloga
+[Note: Miranda NG will have to be restarted for changes to take effect.]
+Važno: Restart Mirande NG neophodan radi čuvanja izmena.
+[Key bindings]
+Dodela tastera
+[Shortcut:]
+Skraćenica
+[Add]
+Dodaj
+[Remove]
+Ukloni
+[Undo changes]
+Ne pamti izmene
+[Reset to default]
+Vrati na standardno
+[Hotkeys]
+Dostupne skraćenice
+[Accounts]
+Nalozi
+[Configure your IM accounts]
+Podešavanja IM naloga
+[Account information:]
+Podaci o nalogu:
+[Additional:]
+Dodatne informacije:
+[Configure network...]
+Mrežna podešavanja...
+[Get more protocols...]
+Preuzmi dodatne protokole...
+[&Add...]
+&Dodaj...
+[&Edit]
+&Izmeni
+[&Options]
+&Podešavanja
+[&Upgrade]
+&Unapredi
+[&Remove...]
+&Obriši
+[Miranda NG is being restarted.\nPlease wait...]
+Restartujem Mirandu NG.\nMolim sačekajte...
+[Error console]
+Konzola za prikaz greški
+[Error notifications]
+Obaveštenja o greškama
+[Headers:]
+Naslovi:
+[This font is used to display main section titles or text elements.]
+Ovaj font koristi se za prikaz većih naslova i delova teksta.
+[Normal text:]
+Običan tekst:
+[This font is used to display most text elements or section bodies.]
+Ovaj font koristi se za prikaz teksta u celosti.
+[Minor notes:]
+Manje bitne naznake:
+[This font is used to display various additional notes.]
+Ovaj font koristi se za obaveštenja i fusnote.
+[Welcome to Miranda NG's account manager!\nHere you can set up your IM accounts.\n\nSelect an account from the list on the left to see the available options. Alternatively, just click on the Plus sign underneath the list to set up a new IM account.]
+Dobrodošli u izbornik naloga Mirande NG!\nPodešavanja svakog od naloga se nalaze ovde.\nOdabir naloga levo omogućava dalja podešavanja. Ukoliko želite, klikom na znak 'plus' možete napraviti nov IM nalog.
+[Event icon legend:]
+Opis ikonica događaja
+[Choose events you wish to ignore:]
+Ignorisani događaji:
+[Font effect]
+Dekoracija teksta
+[Effect:]
+Tip dekoracije:
+[Base color:]
+Osnovna boja:
+[opacity:]
+Neprozirnost:
+[Secondary color:]
+Sekundarna boja:
+[Select the extra icons to be shown in the contact list:]
+Odabir dodatnih ikonica za prikaz u listi kontakata:
+[*only the first %d icons will be shown]
+*prikazuje samo prvih %d
+[You can group/ungroup icons by selecting them (CTRL+left click) and using the popup menu (right click)]
+Ikonice grupišeš pomoću 'CTRL i Levi Klik' ili putem menija desnog dugmeta miša
+[Add to existing metacontact]
+Dodaj postojećem metakontaktu
+[Please select a metacontact:]
+Odabir metakontakta:
+[Sort alphabetically]
+Po alfabetnom redu
+[Editing]
+Izmena
+[Contacts]
+Kontakti
+[&Remove]
+&Obriši
+[&Set as default]
+&Stavi kao standardni
+[Move &up]
+&Ka vrhu
+[Move &down]
+Ka &dnu
+[Send &offline]
+Šalji &oflajn
+[&Apply]
+&Zapamti
+[Context menu]
+Kontekstni meni
+[Use contact's unique ID]
+Koristi jedinstveni ID broj kontakta
+[Use contact's display name]
+Koristi se prikazanim imenom
+[Contact labels]
+Odlike kontakta
+[When I click on a sub in the popup menu...]
+Pri izboru podkontakta u popup meniju...
+[Set default and open message window]
+Podesiti standardno i otvoriti obaveštenje
+[Show subcontact context menu]
+Prikazati kontekstni meni podkontakta
+[Show user information]
+Prikazati informacije o korisniku
+[Display subcontact nickname]
+Ispisati nadimak podkontakta
+[Display subcontact display name]
+Ispisati dodeljeno ime podkontakta
+[Lock name to first contact]
+Nepromenljivo ime prvog kontakta
+[Current language:]
+Izabrani jezik interfejsa:
+[Last modified using:]
+Poslednja promena verzijom:
+[Locale:]
+Jezik:
+[Reload langpack]
+Osvežiti jezički paket
+[Download more language packs]
+Preuzimanje jezičkih paketa
+[&Reset to default]
+&Vratiti na standardno
+[find/add]
+pronađi/dodaj
+[&Add to list]
+&Dodaj na spisak
+[Send &message]
+&Slanje poruke
+[Open in &new window]
+Otvoriti &u novom prozoru
+[&Open in existing window]
+Otvoriti u &trenutnom prozoru
+[Cancel change]
+Otkazati izmene
+[Ungroup]
+Izdvoj iz grupe
+;file \src\core\stdauth\src\auth.cpp
 [%s requests authorization]
 &s zahteva autorizaciju
 [%u requests authorization]
@@ -1247,6 +1261,7 @@ Web sajt:
 Upozorenja
 [Added event]
 Dodat događaj
+;file \src\core\stdauth\src\authdialogs.cpp
 [View user's details]
 Pregled detalja o korisniku
 [Add contact permanently to list]
@@ -1269,10 +1284,12 @@ Zapamtiti kontakt na spisku
 %s šalje zahtev za autorizaciju\n%s na %s
 [Feature is not supported by protocol]
 Protokol ne podržava zahtevanu opciju
+;file \src\core\stdaway\src\awaymsg.cpp
 [Re&ad %s message]
 Čitaj &poruku od: "%s"
 [Re&ad status message]
 Čitaj &statusnu poruku
+;file \src\core\stdaway\src\sendmsg.cpp
 [I've been away since %time%.]
 Nisam tu još od %time%.
 [Give it up, I'm not in!]
@@ -1297,6 +1314,7 @@ Mmm... hrana.
 neaktivnooo
 [Status]
 Status
+;file \src\core\stdchat\src\main.cpp
 [Chat module]
 Modul za komunikaciju
 [Group chat log background]
@@ -1309,6 +1327,7 @@ Pozadina spiska korisnika
 Međulinije spiska nadimaka
 [Nick list background (selected)]
 Pozadina spiska nadimaka (odabrano)
+;file \src\core\stdchat\src\options.cpp
 [Use a tabbed interface]
 Upotreba interfesa sa jezičcima
 [Close tab on double click]
@@ -1509,6 +1528,8 @@ Poslata poruka (10х10)
 Akcija (10x10)
 [Add status (10x10)]
 Postavljen status (10х10)
+[Remove status (10x10)]
+
 [Join (10x10)]
 Dolazak (10x10)
 [Leave (10x10)]
@@ -1557,12 +1578,14 @@ Uopšteno
 Log-ovi razgovora
 [Popups]
 Balončići
+;file \src\core\stdchat\src\tools.cpp
 [Look up '%s':]
 Pronađi '%s':
 [No word to look up]
 Nije navedena reč za pretragu
 [&Message %s]
 &Poruka %s
+;file \src\core\stdchat\src\window.cpp
 [Insert a smiley]
 Ubaci smeška
 [Make the text bold (CTRL+B)]
@@ -1597,6 +1620,7 @@ Jedinstveni broj (ID)
 %s: razgovor
 [%s: message session (%u users)]
 %s: razgovor (%u korisnik(a))
+;file \src\core\stdclist\src\clcfonts.cpp
 [Standard contacts]
 Klasični kontakti
 [Online contacts to whom you have a different visibility]
@@ -1617,6 +1641,7 @@ Odabran tekst
 Tekst 'pod kursorom'
 [Quicksearch text]
 Brzo pretraži tekst
+;file \src\core\stdclist\src\clcopts.cpp
 [Not focused]
 Van fokusa
 [Offline]
@@ -1641,14 +1666,21 @@ Na ručku
 Telefoniram
 [List background]
 Pozadina spiska
+;file \src\core\stdclist\src\clistopts.cpp
 [Global]
 Standardno
+;file \src\core\stdclist\src\cluiopts.cpp
+;file \src\core\stdcrypt\src\encrypt.cpp
 [Standard crypto provider]
 Standardni protokol enkripcije
+;file \src\core\stdemail\src\email.cpp
 [User has not registered an e-mail address]
 Korisnik nije registrovan e-mail adresom
 [Send e-mail]
 Slanje e-maila
+[&E-mail]
+
+;file \src\core\stdfile\src\file.cpp
 [File from %s]
 Datoteka od: %s
 [bytes]
@@ -1665,14 +1697,17 @@ Dovršene
 Greška
 [Denied]
 Odbijeno
+;file \src\core\stdfile\src\fileexistsdlg.cpp
 [%s file]
 %s datoteka
 [All files]
 Sve datoteke
+;file \src\core\stdfile\src\fileopts.cpp
 [Executable files]
 Izvršne datoteke
 [Events]
 Događaji
+;file \src\core\stdfile\src\filerecvdlg.cpp
 [My received files]
 Pristigle datoteke (lokalno)
 [View user's history]
@@ -1683,10 +1718,12 @@ Korisnički meni
 Otkazano
 [This file transfer has been canceled by the other side]
 Slanje/prijem datoteke je već otkazano od strane drugog korisnika
+;file \src\core\stdfile\src\filesenddlg.cpp
 [%d files]
 %d datoteka
 [%d directories]
 %d direktorijuma
+;file \src\core\stdfile\src\filexferdlg.cpp
 [This file has not yet been scanned for viruses. Are you certain you want to open it?]
 Datoteka nije bezbedna od virusa. Potvrda otvaranja:
 [File received]
@@ -1737,10 +1774,13 @@ Prenos podataka završen, otvori folder.
 Proveravam viruse...
 [Transfer and virus scan complete]
 Prenos podataka i provera virusa dovršeni
+;file \src\core\stdfile\src\ftmanager.cpp
 [Outgoing]
 Odlazni
+;file \src\core\stdhelp\src\about.cpp
 [< Copyright]
 < Zaštita prava
+;file \src\core\stdhelp\src\help.cpp
 [&Help]
 &Pomoć
 [&About...]
@@ -1751,22 +1791,28 @@ Odlazni
 &Sajt Miranda NG
 [&Report bug]
 Prijavi &grešku
+;file \src\core\stdidle\src\idle.cpp
 [Idle]
 Pasivni režim
+;file \src\core\stdmsg\src\cmdlist.cpp
 [The message send timed out.]
 Rok poruke istekao.
+;file \src\core\stdmsg\src\globals.cpp
 [Incoming message (10x10)]
 Prijem poruke(10x10)
 [Outgoing message (10x10)]
 Slanje poruke (10x10)
+;file \src\core\stdmsg\src\msgdialog.cpp
 [Last message received on %s at %s.]
 Poslednja poruka primljena %s u %s.
 [%s is typing a message...]
 %s kuca poruku...
+;file \src\core\stdmsg\src\msglog.cpp
 [Me]
 Ja
 [File sent]
 Datoteka je poslata
+;file \src\core\stdmsg\src\msgoptions.cpp
 [Outgoing messages]
 Odlazne poruke
 [Incoming messages]
@@ -1799,6 +1845,7 @@ Prikaži balončiće (sistem nepodržan)
 Log razgovora
 [Typing notify]
 Obaveštenja o kucanju
+;file \src\core\stdmsg\src\msgs.cpp
 [Message from %s]
 Poruka od: %s
 [%s is typing a message]
@@ -1821,12 +1868,15 @@ Greška pri slanju poruke
 Kontakt kuca poruku
 [Contact stopped typing]
 Kontakt prestaje sa kucanjem
+;file \src\core\stdmsg\src\msgtimedout.cpp
 [An unknown error has occurred.]
 Desila se nepoznata greška.
+;file \src\core\stdssl\src\netlibssl.cpp
 [Client cannot decode host message. Possible causes: host does not support SSL or requires not existing security package]
 Klijent ne razume poruku host-a. Postoji mogućnost da host ne podržava SSL ili podržava drugi oblik sigurnosti
 [Host we are connecting to is not the one certificate was issued for]
 Host koji prihvata vezu nije u vezi sa deklaracijom sertifikata
+;file \src\core\stduihist\src\history.cpp
 [Invalid message]
 Neodgovarajuća poruka
 [Outgoing message]
@@ -1849,16 +1899,19 @@ Potvrda brisanja istorije korisnika: %s?
 Briši istoriju
 [View &history]
 Pregledaj %istoriju
+;file \src\core\stdurl\url.cpp
 [URL from %s]
 Linkovi od: %s
 [Web page address (&URL)]
 Internet stranica (&URL)
 [URL]
 Link
+;file \src\core\stdurl\urldialogs.cpp
 [Send URL to]
 Pošalji link kome:
 [Send timed out]
 Rok za slanje istekao
+;file \src\core\stduserinfo\src\contactinfo.cpp
 [Edit E-Mail address]
 Izmeni E-Mail adresu
 [Edit phone number]
@@ -1879,6 +1932,7 @@ Mobilni
 Kontakt na poslu
 [Work fax]
 Faks na poslu
+;file \src\core\stduserinfo\src\stdinfo.cpp
 [Male]
 Muško
 [Female]
@@ -1897,16 +1951,54 @@ Posao
 Bio
 [Notes]
 Beleške
+;file \src\core\stduserinfo\src\userinfo.cpp
 [Owner]
 Vlasnik
 [View/change my &details...]
 Pregledaj/menjaj &detalje...
+;file \src\core\stduseronline\src\useronline.cpp
 [%s is online]
 %s je prisutan
+;file \src\mir_app\src\addcontact.cpp
 [Add %s]
 Dodaj %s
 [Please authorize my request and add me to your contact list.]
 Dodaj me na spisak i daj mi autorizaciju, molim.
+;file \src\mir_app\src\chat_clist.cpp
+[&Join chat]
+&Počni razgovor
+[&Open chat window]
+&Otvori prozor za razgovor
+;file \src\mir_app\src\chat_log.cpp
+[%s has joined]
+Ulazak: %s
+[You have joined %s]
+Ulaziš na : %s
+[%s has left]
+Izlazak: %s
+[%s has disconnected]
+%s je prekinuo vezu
+[%s is now known as %s]
+%s menja nadimak u: %s
+[You are now known as %s]
+Menjaš nadimak u: %s
+[%s kicked %s]
+%s izbacuje: %s
+[Notice from %s: ]
+%s ostavlja naznaku:
+[The topic is '%s%s']
+Tema je '%s%s'
+[ (set by %s on %s)]
+ (%s je postavlja u: %s)
+[ (set by %s)]
+ (%s je postavlja)
+[%s enables '%s' status for %s]
+%s postavlja '%s' status za: %s
+[%s disables '%s' status for %s]
+%s uklanja '%s' status za: %s
+[<invalid>]
+<pogrešno>
+;file \src\mir_app\src\chat_opts.cpp
 [Others nicknames]
 Tuđi nadimci
 [Your nickname]
@@ -1957,40 +2049,10 @@ Korisnik je promenio nadimak
 Korisnik je poslao naznaku
 [The topic has been changed]
 Tema je promenjena
-[&Join chat]
-&Počni razgovor
+;file \src\mir_app\src\chat_svc.cpp
 [&Leave chat]
 &Završi razgovor
-[&Open chat window]
-&Otvori prozor za razgovor
-[%s has joined]
-Ulazak: %s
-[You have joined %s]
-Ulaziš na : %s
-[%s has left]
-Izlazak: %s
-[%s has disconnected]
-%s je prekinuo vezu
-[%s is now known as %s]
-%s menja nadimak u: %s
-[You are now known as %s]
-Menjaš nadimak u: %s
-[%s kicked %s]
-%s izbacuje: %s
-[Notice from %s: ]
-%s ostavlja naznaku:
-[The topic is '%s%s']
-Tema je '%s%s'
-[ (set by %s on %s)]
- (%s je postavlja u: %s)
-[ (set by %s)]
- (%s je postavlja)
-[%s enables '%s' status for %s]
-%s postavlja '%s' status za: %s
-[%s disables '%s' status for %s]
-%s uklanja '%s' status za: %s
-[<invalid>]
-<pogrešno>
+;file \src\mir_app\src\chat_tools.cpp
 [%s wants your attention in %s]
 %s traži tvoje prisustvo u: %s
 [%s speaks in %s]
@@ -2025,6 +2087,8 @@ Naznka od: %s - %s
 Tema je '%s'
 [The topic is '%s' (set by %s)]
 Tema je '%s' (od strane: %s)
+;file \src\mir_app\src\clcitems.cpp
+;file \src\mir_app\src\clistmenus.cpp
 [Custom status]
 Poseban status
 [%s (locked)]
@@ -2033,12 +2097,16 @@ Poseban status
 Izbor statusa
 [Main menu]
 Glavni meni
+;file \src\mir_app\src\clistmod.cpp
 [Connecting]
 Povezivanje
 [Connecting (attempt %d)]
 Povezivanje (pokušaj br. %d)
+;file \src\mir_app\src\clistsettings.cpp
 [(Unknown contact)]
 (Nepoznat kontakt)
+;file \src\mir_app\src\clisttray.cpp
+;file \src\mir_app\src\clui.cpp
 [This contact is on an instant messaging system which stores its contact list on a central server. The contact will be removed from the server and from your contact list when you next connect to that network.]
 Kontakt je registrovan na IM serveru sa centralizovanom korisničkom bazom. Biće uklonjen sa servera i sa lokalnog spiska kontakata po sledećem povezivanju na mrežu sa koje je server.
 [De&lete]
@@ -2047,6 +2115,8 @@ Kontakt je registrovan na IM serveru sa centralizovanom korisničkom bazom. Bić
 &Promeni naziv
 [&Add permanently to list]
 &Dodaj na spisak zauvek
+;file \src\mir_app\src\colorchooser.cpp
+;file \src\mir_app\src\contacts.cpp
 [My custom name (not movable)]
 Moje izmenjeno ime (neprenosivo)
 [Nick]
@@ -2069,38 +2139,7 @@ Prezime Ime
 '(Nepoznat kontakt)'
 [Contact names]
 Kontakti
-[Menu icons]
-Ikonice menija
-[Menus]
-Meniji
-[Customize]
-Podešavanja
-[New group]
-Nova grupa
-[Are you sure you want to delete group '%s'? This operation cannot be undone.]
-Potvrdi brisanje grupe '%s' i svih zapamćenih izmena:
-[Delete group]
-Briši grupu
-[You already have a group with that name. Please enter a unique name for the group.]
-Već postoji grupa sa tim imenom. Unesi jedinstveno ime grupe.
-[Rename group]
-Promeni ime grupe
-[This group]
-Ova grupa
-[Show/Hide contact list]
-Prikaži/Sakrij spisak kontakata
-[Read message]
-Čitaj poruku
-[Open Options page]
-Pregledaj podešavanja
-[Open logging options]
-Pregledaj podešavanja log-a
-[Open 'Find user' dialog]
-Otvori prozor za pretragu korisnika
-[&Move to group]
-&Stavi u grupu
-[<Root group>]
-<Glavna grupa (root)>
+;file \src\mir_app\src\database.cpp
 [Miranda is trying to upgrade your profile structure.\nIt cannot move profile %s to the new location %s\nBecause profile with this name already exists. Please resolve the issue manually.]
 Miranda ne uspeva da poboljša organizaciju profila.\nProfil %s ne može da bude sačuvan u: %s\nVeć postoji istoimeni profil. Ovaj problem morate da rešite ručno.
 [Miranda is trying to upgrade your profile structure.\nIt cannot move profile %s to the new location %s automatically\nMost likely this is due to insufficient privileges. Please move profile manually.]
@@ -2119,6 +2158,7 @@ Miranda ne razume sadržaj datog profila
 Miranda ne uspeva da otvori '%s'\nNedostupnu datoteku koristi druga aplikacija, ili još jedna instanca Mirande
 [Miranda can't open that profile]
 Miranda ne može da otvori taj profil
+;file \src\mir_app\src\dbini.cpp
 [Security systems to prevent malicious changes are in place and you will be warned before every change that is made.]
 Sistem(i) zaštite za prevenciju štetnih promena su pokrenuti i obaveštavaju korisnika o svakoj promeni.
 [Security systems to prevent malicious changes are in place and you will be warned before changes that are known to be unsafe.]
@@ -2133,12 +2173,362 @@ Ova izmena ume da bude vrlo štetna.
 Ova izmena može biti štetna.
 [Invalid setting type for '%s'. The first character of every value must be b, w, d, l, s, e, u, g, h or n.]
 Nedozvoljen tip podešavanja za: '%s'. Prvi znak svake vrednosti mora biti b, w, d, l, s, e, u, g, h ili n.
+;file \src\mir_app\src\dbutils.cpp
 [Authorization request from %s%s: %s]
 Zahtev za autorizaciju od %s%s: %s
 [You were added by %s%s]
 %s%s vas dodaje na spisak kontakata.
 [Contacts: ]
 Kontakti:
+;file \src\mir_app\src\DefaultExtraIcons.cpp
+[Chat activity]
+Aktivnosti razgovora
+;file \src\mir_app\src\extraicons.cpp
+;file \src\mir_app\src\findadd.cpp
+[You haven't filled in the search field. Please enter a search term and try again.]
+Polje za pretragu je prazno. Pokušajte ponovo unosom odgovarajućih reči.
+[Search]
+Pretraga
+[Ctrl+Search add contact]
+Ctrl+Pretraga dodavanja kontakta
+[Results]
+Rezultati
+[There are no results to display.]
+Bez rezultata pretrage.
+[Searching]
+Pretražujem
+[All networks]
+Sve mreže
+[Handle]
+Koristeći
+[&Find/add contacts...]
+%Pretraži/dodaj kontakte...
+;file \src\mir_app\src\FontOptions.cpp
+[Failed to create file]
+Datoteka nije kreirana
+[<none>]
+<ništa>
+[Shadow at left]
+Senčenje - levo
+[Shadow at right]
+Senčenje - desno
+[Outline]
+Kontura
+[Outline smooth]
+Glatka kontura
+[Smooth bump]
+Blagi pomeraj
+[Contour thin]
+Tanka kontura
+[Contour heavy]
+Jača kontura
+[Configuration files]
+Datoteke podešavanja
+[Text files]
+Tekstualne datoteke
+[Error writing file]
+Greška pri upisu datoteke
+[Customize]
+Podešavanja
+[Sample text]
+Primer teksta
+[Fonts]
+Fontovi
+;file \src\mir_app\src\FontService.cpp
+[Headers]
+Zaglavlja
+[Generic text]
+Bazični tekst
+[Small text]
+Dodatni tekst
+;file \src\mir_app\src\genmenu.cpp
+[Menu icons]
+Ikonice menija
+;file \src\mir_app\src\genmenuopt.cpp
+[Menus]
+Meniji
+;file \src\mir_app\src\groups.cpp
+[New group]
+Nova grupa
+[Are you sure you want to delete group '%s'? This operation cannot be undone.]
+Potvrdi brisanje grupe '%s' i svih zapamćenih izmena:
+[Delete group]
+Briši grupu
+[You already have a group with that name. Please enter a unique name for the group.]
+Već postoji grupa sa tim imenom. Unesi jedinstveno ime grupe.
+[Rename group]
+Promeni ime grupe
+[This group]
+Ova grupa
+;file \src\mir_app\src\hotkey_opts.cpp
+[Browser: Back]
+
+[Browser: Forward]
+
+[Browser: Refresh]
+
+[Browser: Stop]
+
+[Browser: Search]
+
+[Browser: Fav]
+
+[Browser: Home]
+
+[Mute]
+
+[Vol-]
+
+[Vol+]
+
+[Media: Next Track]
+
+[Media: Prev. Track]
+
+[Media: Stop]
+
+[Media: Play/Pause]
+
+[Mail]
+
+[Media: Select]
+
+[App 1]
+
+[App 2]
+
+[Ctrl + ]
+
+[Alt + ]
+
+[Shift + ]
+
+[Win + ]
+
+[Remove shortcut]
+Ukloni prečicu
+[Add another shortcut]
+Još jedna prečica
+[Scope:]
+Gde:
+[System]
+Sistem
+[Actions:]
+Akcije:
+[Add binding]
+Dodaj poveznicu
+[Modify]
+Izmeni
+[System scope]
+Sistemsko očitavanje
+[Miranda scope]
+Miranda očitavanje
+;file \src\mir_app\src\ignore.cpp
+[** All contacts **]
+** Svi kontakti **
+;file \src\mir_app\src\keyboard.cpp
+[Show/Hide contact list]
+Prikaži/Sakrij spisak kontakata
+[Read message]
+Čitaj poruku
+[Open Options page]
+Pregledaj podešavanja
+[Open logging options]
+Pregledaj podešavanja log-a
+[Open 'Find user' dialog]
+Otvori prozor za pretragu korisnika
+;file \src\mir_app\src\lpopts.cpp
+[(incompatible)]
+(nekompatibilni)
+[Unknown]
+Nepoznati
+[built-in]
+predefinisani
+[Languages]
+Jezici
+;file \src\mir_app\src\metacontacts.h
+[You are going to remove all the contacts associated with this metacontact.\nThis will delete the metacontact.\n\nProceed anyway?]
+Ovim se uklanjaju svi kontakti u vezi sa navedenim metakontaktom.\nTakođe, metakontakt će biti izbrisan.\nNastaviti?
+;file \src\mir_app\src\meta_addto.cpp
+[Either there is no metacontact in the database (in this case you should first convert a contact into one)\nor there is none that can host this contact.\nAnother solution could be to convert this contact into a new metacontact.\n\nConvert this contact into a new metacontact?]
+U bazi podataka nema metakontakata (u tom slučaju potrebno je stvoriti jedan na osnovu postojećeg kontakta)\nili ne postoji metakontakt kome možeš pridodati ovaj kontakt.\nAlternativno rešenje je pretvaranje ovog kontakta u metakontakt.\n\nKonvertovati kontakt u metakontakt?
+[This contact is a metacontact.\nYou can't add a metacontact to another metacontact.\n\nPlease choose another.]
+Navedeni kontakt je metakontakt.\nMetakontakt ne može sadržati druge metakontakte.\n\nMolim promenite odabir.
+[Metacontact conflict]
+Konflikt između metakontakata
+[This contact is already associated to a metacontact.\nYou cannot add a contact to multiple metacontacts.]
+Navedeni kontakt je već pridružen drugom metakontaktu.\nOvo nije dozvoljeno.
+[Multiple metacontacts]
+Više metakontakata
+[No suitable metacontact found]
+Nije pronađen odgovarajući metakontakt
+[a contact]
+kontakt
+[Adding %s...]
+Dodajem %s...
+[Please select a metacontact]
+Odabir metakontakta
+[No metacontact selected]
+Metakontakt nije odabran
+[Assignment to the metacontact failed.]
+Neuspelo dodeljivanje metakontaktu-
+[Assignment failure]
+Dodeljivanje nije uspelo
+;file \src\mir_app\src\meta_edit.cpp
+[ID]
+
+[Protocol]
+Protokol
+[Send offline]
+Slanje bez konekcije
+[Send &online]
+Slanje &na vezi
+[Delete metacontact?]
+Brisanje metakontakta?
+;file \src\mir_app\src\meta_main.cpp
+[Toggle off]
+Isključi
+[Toggle on]
+Uključi
+[Convert to metacontact]
+Pretvori u metakontakt
+[Add to existing]
+Dodeli u postojeći
+[Edit]
+Izmeni
+[Set to default]
+Vrati na standardno
+[MetaContacts]
+Metakontakti
+;file \src\mir_app\src\meta_menu.cpp
+[There was a problem in assigning the contact to the metacontact]
+Prijavljen je problem pri dodeljivanju kontakta metakontaktu
+[This will remove the metacontact permanently.\n\nProceed anyway?]
+Komanda uklanja metakontakt za stalno\nNastaviti?
+[Are you sure?]
+Potpuno ste sigurni?
+[Remove from metacontact]
+Ukloni iz metakontakta
+[Toggle metacontacts off]
+Isključi metakontakte
+[Toggle metacontacts on]
+Uključi metakontakte
+[Add to existing metacontact...]
+Dodeli postojećem metakontaktu...
+[Edit metacontact...]
+Izmeni metakontakt...
+[Set as metacontact default]
+Utvrdi kao glavni metakontakt
+[Delete metacontact]
+Briši metakontakt
+[Subcontacts]
+Podkontakti
+;file \src\mir_app\src\meta_options.cpp
+[Metacontacts]
+Metakontakti
+;file \src\mir_app\src\meta_services.cpp
+[No online contacts found.]
+Nijedan kontakt nije na vezi.
+[Select metacontact]
+Odaberite metakontakt
+;file \src\mir_app\src\meta_utils.cpp
+[Sender]
+Pošiljalac
+[Could not retrieve contact protocol]
+Protokol ovog kontakta ne odgovara na zahtev
+[Assignment error]
+Greška pri dodeljivanju
+[Could not get unique ID of contact]
+Neuspešan zahtev za ID-om kontakta
+[Contact is 'not on list' - please add the contact to your contact list before assigning.]
+Kontakt ne postoji 'na spisku' - pre dodeljivanja potrebno je osvežiti spisak tim kontaktom.
+[Metacontact is full]
+Metakontakt je popunjen
+[Could not write contact protocol to metacontact]
+Neuspešan upis protokola kontakta u metakontakt
+[Could not write unique ID of contact to metacontact]
+Neuspešan upis protokola kontakta u metakontakt
+[Could not write nickname of contact to metacontact]
+Neuspešan upis nadimka kontakta u metakontakt
+;file \src\mir_app\src\movetogroup.cpp
+[&Move to group]
+&Stavi u grupu
+[<Root group>]
+<Glavna grupa (root)>
+;file \src\mir_app\src\netliblog.cpp
+[Standard netlib log]
+Tipičan netlib log
+[No times]
+Bez vremenskih odrednica
+[Standard hh:mm:ss times]
+Tipičan čč:mm:ss format
+[Times in milliseconds]
+Milisekunde
+[Times in microseconds]
+Mikrosekunde
+[(Miranda core logging)]
+(Log jezgra Miranda programa)
+[Select where log file will be created]
+Mesto postavljanja i čuvanja log-a
+[Select program to be run]
+Odabir programa za pokretanje
+;file \src\mir_app\src\netlibopts.cpp
+[<mixed>]
+<pomešano>
+[<All connections>]
+<Sve veze>
+[Network]
+Mreža
+;file \src\mir_app\src\newplugins.cpp
+[No messaging plugins loaded. Please install/enable one of the messaging plugins, for instance, "StdMsg.dll"]
+Nije odabran ni jedan plug-in. Potrebna instalacija/uključivanje makar jednog protokola komunikacije, kao "StdMsg.dll"
+['%s' is disabled, re-enable?]
+'%s' je isključen, ponovo uključiti?
+[Re-enable Miranda plugin?]
+Ponovo uključiti plug-in?
+[Core plugin '%s' cannot be loaded or missing. Miranda will exit now]
+Jezgarni plug-in '%s' nije pronađen ili ne odgovara Mirandi. Zatvaram program
+[Fatal error]
+Kritična greška
+[Unable to load plugin in service mode!]
+Plug-in nije učitan u režimu održavanja!
+[Unable to start any of the installed contact list plugins, I even ignored your preferences for which contact list couldn't load any.]
+Ne mogu da učitam ni jedan plug-in za listu kontakata. Pokušao sam da zaobiđem vaša podešavanja kontakt liste, ali bez uspeha.
+[Can't find a contact list plugin! You need StdClist or any other contact list plugin.]
+Nije pronađen ni jedan plug-in za listu kontakata! StdClist.dll ili neki clist_*.dll plug-in moraju biti instalirani.
+;file \src\mir_app\src\options.cpp
+[<all modules>]
+<svi moduli>
+[<core modules>]
+<jezgarni moduli>
+[Loading... %d%%]
+Učitavam... %d%%
+[%s options]
+%s podešavanja
+[Miranda NG options]
+Miranda NG podešavanja
+[&Options...]
+&Podešavanja...
+;file \src\mir_app\src\options_ei.cpp
+[Extra icons]
+Dodatne ikonice
+;file \src\mir_app\src\path.cpp
+[Avatars]
+Avatari
+[Avatars root folder]
+Početni (root) folder za avatare
+;file \src\mir_app\src\pluginopts.cpp
+[Plugin]
+Plug-in
+[Version]
+Verzija
+[Miranda NG must be restarted to apply changes for these plugins:]
+Miranda NG mora biti ponovo pokrenuta kako bi bila zapamćena podešavanja plug-inova:
+[Do you want to restart it now?]
+Odmah restartovati?
+[Plugins]
+Plug-inovi
+;file \src\mir_app\src\profilemanager.cpp
 [The profile '%s' already exists. Do you want to move it to the Recycle Bin?\n\nWARNING: The profile will be deleted if Recycle Bin is disabled.\nWARNING: A profile may contain confidential information and should be properly deleted.]
 Profil '%s' već postoji. Otpremiti u Kantu za Otpatke?\n\nUPOZORENJE: Profil će biti izgubljen ukoliko Kanta za Otpatke nije u funkciji.\nUPOZORENJE: Poverljivi podaci sadržani u profilu, preporučeno sigurno uklanjanje.
 [The profile already exists]
@@ -2173,248 +2563,11 @@ Veličina
 Napravljeno
 [Modified]
 Izmenjeno
-[Manage your Miranda NG profile]
-Kontrole Miranda NG profila
 [My profiles]
 Moji profili
 [New profile]
 Napravi profil
-[Chat activity]
-Aktivnosti razgovora
-[Extra icons]
-Dodatne ikonice
-[You haven't filled in the search field. Please enter a search term and try again.]
-Polje za pretragu je prazno. Pokušajte ponovo unosom odgovarajućih reči.
-[Search]
-Pretraga
-[Ctrl+Search add contact]
-Ctrl+Pretraga dodavanja kontakta
-[Results]
-Rezultati
-[There are no results to display.]
-Bez rezultata pretrage.
-[Searching]
-Pretražujem
-[All networks]
-Sve mreže
-[Handle]
-Koristeći
-[&Find/add contacts...]
-%Pretraži/dodaj kontakte...
-[Could not start a search on '%s', there was a problem - is %s connected?]
-Pretraga '%s' bez uspeha, primećen problem - da li je %s na vezi?
-[Could not search on any of the protocols, are you online?]
-Neuspešna pretraga svih protokola, da li ste na vezi?
-[Problem with search]
-Problem s pretragom
-[1 %s user found]
-Pronađen jedan %s korisnik
-[%d %s users found]
-Pronađeno %d %s korisnika
-[%d users found (]
-Pronađeno %d korisnika (
-[No users found]
-Pretraga nije pronašla korisnike
-[Failed to create file]
-Datoteka nije kreirana
-[<none>]
-<ništa>
-[Shadow at left]
-Senčenje - levo
-[Shadow at right]
-Senčenje - desno
-[Outline]
-Kontura
-[Outline smooth]
-Glatka kontura
-[Smooth bump]
-Blagi pomeraj
-[Contour thin]
-Tanka kontura
-[Contour heavy]
-Jača kontura
-[Configuration files]
-Datoteke podešavanja
-[Text files]
-Tekstualne datoteke
-[Error writing file]
-Greška pri upisu datoteke
-[Sample text]
-Primer teksta
-[Fonts]
-Fontovi
-[Headers]
-Zaglavlja
-[Generic text]
-Bazični tekst
-[Small text]
-Dodatni tekst
-[Icon sets]
-Kompleti ikonica
-[** All contacts **]
-** Svi kontakti **
-[(incompatible)]
-(nekompatibilni)
-[Unknown]
-Nepoznati
-[built-in]
-predefinisani
-[Languages]
-Jezici
-[You are going to remove all the contacts associated with this metacontact.\nThis will delete the metacontact.\n\nProceed anyway?]
-Ovim se uklanjaju svi kontakti u vezi sa navedenim metakontaktom.\nTakođe, metakontakt će biti izbrisan.\nNastaviti?
-[Either there is no metacontact in the database (in this case you should first convert a contact into one)\nor there is none that can host this contact.\nAnother solution could be to convert this contact into a new metacontact.\n\nConvert this contact into a new metacontact?]
-U bazi podataka nema metakontakata (u tom slučaju potrebno je stvoriti jedan na osnovu postojećeg kontakta)\nili ne postoji metakontakt kome možeš pridodati ovaj kontakt.\nAlternativno rešenje je pretvaranje ovog kontakta u metakontakt.\n\nKonvertovati kontakt u metakontakt?
-[This contact is a metacontact.\nYou can't add a metacontact to another metacontact.\n\nPlease choose another.]
-Navedeni kontakt je metakontakt.\nMetakontakt ne može sadržati druge metakontakte.\n\nMolim promenite odabir.
-[Metacontact conflict]
-Konflikt između metakontakata
-[This contact is already associated to a metacontact.\nYou cannot add a contact to multiple metacontacts.]
-Navedeni kontakt je već pridružen drugom metakontaktu.\nOvo nije dozvoljeno.
-[Multiple metacontacts]
-Više metakontakata
-[No suitable metacontact found]
-Nije pronađen odgovarajući metakontakt
-[a contact]
-kontakt
-[Adding %s...]
-Dodajem %s...
-[Please select a metacontact]
-Odabir metakontakta
-[No metacontact selected]
-Metakontakt nije odabran
-[Assignment to the metacontact failed.]
-Neuspelo dodeljivanje metakontaktu-
-[Assignment failure]
-Dodeljivanje nije uspelo
-[Protocol]
-Protokol
-[Send offline]
-Slanje bez konekcije
-[Send &online]
-Slanje &na vezi
-[Delete metacontact?]
-Brisanje metakontakta?
-[Toggle off]
-Isključi
-[Toggle on]
-Uključi
-[Convert to metacontact]
-Pretvori u metakontakt
-[Add to existing]
-Dodeli u postojeći
-[Edit]
-Izmeni
-[Set to default]
-Vrati na standardno
-[MetaContacts]
-Metakontakti
-[There was a problem in assigning the contact to the metacontact]
-Prijavljen je problem pri dodeljivanju kontakta metakontaktu
-[This will remove the metacontact permanently.\n\nProceed anyway?]
-Komanda uklanja metakontakt za stalno\nNastaviti?
-[Are you sure?]
-Potpuno ste sigurni?
-[Remove from metacontact]
-Ukloni iz metakontakta
-[Toggle metacontacts off]
-Isključi metakontakte
-[Toggle metacontacts on]
-Uključi metakontakte
-[Add to existing metacontact...]
-Dodeli postojećem metakontaktu...
-[Edit metacontact...]
-Izmeni metakontakt...
-[Set as metacontact default]
-Utvrdi kao glavni metakontakt
-[Delete metacontact]
-Briši metakontakt
-[Subcontacts]
-Podkontakti
-[Metacontacts]
-Metakontakti
-[No online contacts found.]
-Nijedan kontakt nije na vezi.
-[Select metacontact]
-Odaberite metakontakt
-[Sender]
-Pošiljalac
-[Could not retrieve contact protocol]
-Protokol ovog kontakta ne odgovara na zahtev
-[Assignment error]
-Greška pri dodeljivanju
-[Could not get unique ID of contact]
-Neuspešan zahtev za ID-om kontakta
-[Contact is 'not on list' - please add the contact to your contact list before assigning.]
-Kontakt ne postoji 'na spisku' - pre dodeljivanja potrebno je osvežiti spisak tim kontaktom.
-[Metacontact is full]
-Metakontakt je popunjen
-[Could not write contact protocol to metacontact]
-Neuspešan upis protokola kontakta u metakontakt
-[Could not write unique ID of contact to metacontact]
-Neuspešan upis protokola kontakta u metakontakt
-[Could not write nickname of contact to metacontact]
-Neuspešan upis nadimka kontakta u metakontakt
-[Standard netlib log]
-Tipičan netlib log
-[No times]
-Bez vremenskih odrednica
-[Standard hh:mm:ss times]
-Tipičan čč:mm:ss format
-[Times in milliseconds]
-Milisekunde
-[Times in microseconds]
-Mikrosekunde
-[(Miranda core logging)]
-(Log jezgra Miranda programa)
-[Select where log file will be created]
-Mesto postavljanja i čuvanja log-a
-[Select program to be run]
-Odabir programa za pokretanje
-[<mixed>]
-<pomešano>
-[<All connections>]
-<Sve veze>
-[Network]
-Mreža
-[<all modules>]
-<svi moduli>
-[<core modules>]
-<jezgarni moduli>
-[Loading... %d%%]
-Učitavam... %d%%
-[%s options]
-%s podešavanja
-[Miranda NG options]
-Miranda NG podešavanja
-[&Options...]
-&Podešavanja...
-[No messaging plugins loaded. Please install/enable one of the messaging plugins, for instance, "StdMsg.dll"]
-Nije odabran ni jedan plug-in. Potrebna instalacija/uključivanje makar jednog protokola komunikacije, kao "StdMsg.dll"
-['%s' is disabled, re-enable?]
-'%s' je isključen, ponovo uključiti?
-[Re-enable Miranda plugin?]
-Ponovo uključiti plug-in?
-[Core plugin '%s' cannot be loaded or missing. Miranda will exit now]
-Jezgarni plug-in '%s' nije pronađen ili ne odgovara Mirandi. Zatvaram program
-[Fatal error]
-Kritična greška
-[Unable to load plugin in service mode!]
-Plug-in nije učitan u režimu održavanja!
-[Unable to start any of the installed contact list plugins, I even ignored your preferences for which contact list couldn't load any.]
-Ne mogu da učitam ni jedan plug-in za listu kontakata. Pokušao sam da zaobiđem vaša podešavanja kontakt liste, ali bez uspeha.
-[Can't find a contact list plugin! You need StdClist or any other contact list plugin.]
-Nije pronađen ni jedan plug-in za listu kontakata! StdClist.dll ili neki clist_*.dll plug-in moraju biti instalirani.
-[Plugin]
-Plug-in
-[Version]
-Verzija
-[Miranda NG must be restarted to apply changes for these plugins:]
-Miranda NG mora biti ponovo pokrenuta kako bi bila zapamćena podešavanja plug-inova:
-[Do you want to restart it now?]
-Odmah restartovati?
-[Plugins]
-Plug-inovi
+;file \src\mir_app\src\proto_opts.cpp
 [WARNING! The account is going to be deleted. It means that all its settings, contacts and histories will be also erased.\n\nAre you absolutely sure?]
 UPOZORENJE! Nalog će biti izbrisan. Sva podešavanja, kontakti i istorije razgovora će nestati.\n\nPotpuno ste sigurni?
 [Your account was successfully upgraded. To activate it, restart of Miranda is needed.\n\nIf you want to restart Miranda now, press Yes, if you want to upgrade another account, press No]
@@ -2465,24 +2618,29 @@ Nalog %s je obrisan.
 Za brisanje naloga potrebno je isključiti plug-in
 [&Accounts...]
 &Nalozi...
-[Remove shortcut]
-Ukloni prečicu
-[Add another shortcut]
-Još jedna prečica
-[Scope:]
-Gde:
-[System]
-Sistem
-[Actions:]
-Akcije:
-[Add binding]
-Dodaj poveznicu
-[Modify]
-Izmeni
-[System scope]
-Sistemsko očitavanje
-[Miranda scope]
-Miranda očitavanje
+;file \src\mir_app\src\proto_order.cpp
+;file \src\mir_app\src\proto_ui.cpp
+[Account]
+
+;file \src\mir_app\src\searchresults.cpp
+[Could not start a search on '%s', there was a problem - is %s connected?]
+Pretraga '%s' bez uspeha, primećen problem - da li je %s na vezi?
+[Could not search on any of the protocols, are you online?]
+Neuspešna pretraga svih protokola, da li ste na vezi?
+[Problem with search]
+Problem s pretragom
+[1 %s user found]
+Pronađen jedan %s korisnik
+[%d %s users found]
+Pronađeno %d %s korisnika
+[%d users found (]
+Pronađeno %d korisnika (
+[No users found]
+Pretraga nije pronašla korisnike
+;file \src\mir_app\src\skin2opts.cpp
+[Icon sets]
+Kompleti ikonica
+;file \src\mir_app\src\skinicons.cpp
 [User online]
 Korisnik na vezi
 [Group (open)]
@@ -2561,28 +2719,12 @@ Ikonica statusa
 %s ikonica
 [Main icons]
 Glavne ikonice
+;file \src\mir_app\src\sounds.cpp
 [Sound files]
 Zvučne datoteke
 [WAV files]
 WAV datoteke
-[You need an image services plugin to process PNG images.]
-Potreban je plug-in za baratanje PNG slikama.
-[All bitmaps]
-Sve bitmap slike
-[Windows bitmaps]
-Bitmap slike Windows OS-a
-[JPEG bitmaps]
-JPEG slike
-[GIF bitmaps]
-GIF slike
-[PNG bitmaps]
-PNG slike
-[Avatars]
-Avatari
-[Avatars root folder]
-Početni (root) folder za avatare
-[<unspecified>]
-<nije navedeno>
+;file \src\mir_app\src\utils.cpp
 [Unspecified]
 Nije navedeno
 [Afghanistan]
@@ -3083,3 +3225,18 @@ Jemen
 Zambija
 [Zimbabwe]
 Zimbabve
+;file \src\mir_app\src\visibility.cpp
+;file \src\mir_core\src\bitmaps.cpp
+[All Files]
+Sve datoteke
+[Windows bitmaps]
+Bitmap slike Windows OS-a
+[JPEG bitmaps]
+JPEG slike
+[GIF bitmaps]
+GIF slike
+[PNG bitmaps]
+PNG slike
+;file \src\mir_core\src\timezones.cpp
+[<unspecified>]
+<nije navedeno>

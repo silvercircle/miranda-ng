@@ -20,13 +20,46 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "msn_global.h"
+#include "stdafx.h"
 #include "msn_proto.h"
 
 int CMsnProto::MSN_HandleErrors(ThreadData* info, char* cmdString)
 {
 	int errorCode, packetID = -1;
 	sscanf(cmdString, "%d %d", &errorCode, &packetID);
+
+	char* params = "";
+	int trid = -1;
+
+	if (cmdString[3]) {
+		if (isdigit((BYTE)cmdString[4])) {
+			trid = strtol(cmdString + 4, &params, 10);
+			switch (*params) {
+			case ' ':	case '\0':	case '\t':	case '\n':
+				while (*params == ' ' || *params == '\t')
+					params++;
+				break;
+
+			default:
+				params = cmdString + 4;
+			}
+		}
+		else params = cmdString + 4;
+	}
+
+	union {
+		char* tWords[2];
+		struct { char *typeId, *strMsgBytes; } data;
+	};
+
+	if (sttDivideWords(params, _countof(tWords), tWords) < 2) {
+		debugLogA("Invalid %.3s command, ignoring", cmdString);
+		return 0;
+	}
+
+	HReadBuffer buf(info, 0);
+//	char* msgBody = (char*)buf.surelyRead(atol(data.strMsgBytes));
+
 
 	debugLogA("Server error:%s", cmdString);
 
@@ -57,7 +90,7 @@ int CMsnProto::MSN_HandleErrors(ThreadData* info, char* cmdString)
 	case ERR_DETAILED_ERR_IN_PAYLOAD:
 	case ERR_LIST_UNAVAILABLE:
 		char* tWords[4];
-		if (sttDivideWords(cmdString, SIZEOF(tWords), tWords) == SIZEOF(tWords))
+		if (sttDivideWords(cmdString, _countof(tWords), tWords) == _countof(tWords))
 			HReadBuffer(info, 0).surelyRead(atol(tWords[3]));
 		return 0;
 

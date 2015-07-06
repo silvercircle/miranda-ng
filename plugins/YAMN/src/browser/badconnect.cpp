@@ -33,9 +33,9 @@ LRESULT CALLBACK BadConnectPopupProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 				if (ActualAccount->BadConnectN.App != NULL) {
 					WCHAR *Command;
 					if (ActualAccount->BadConnectN.AppParam != NULL)
-						Command = new WCHAR[wcslen(ActualAccount->BadConnectN.App) + wcslen(ActualAccount->BadConnectN.AppParam) + 6];
+						Command = new WCHAR[mir_wstrlen(ActualAccount->BadConnectN.App) + mir_wstrlen(ActualAccount->BadConnectN.AppParam) + 6];
 					else
-						Command = new WCHAR[wcslen(ActualAccount->BadConnectN.App) + 6];
+						Command = new WCHAR[mir_wstrlen(ActualAccount->BadConnectN.App) + 6];
 
 					if (Command != NULL) {
 						mir_wstrcpy(Command, L"\"");
@@ -119,7 +119,7 @@ INT_PTR CALLBACK DlgProcYAMNBadConnection(HWND hDlg, UINT msg, WPARAM wParam, LP
 
 			BadConnectPopup.PluginWindowProc = BadConnectPopupProc;
 			BadConnectPopup.PluginData = ActualAccount;
-			mir_tstrncpy(BadConnectPopup.lptzContactName, _A2T(ActualAccount->Name), SIZEOF(BadConnectPopup.lptzContactName));
+			mir_tstrncpy(BadConnectPopup.lptzContactName, _A2T(ActualAccount->Name), _countof(BadConnectPopup.lptzContactName));
 		}
 
 		if (ActualAccount->Plugin->Fcn != NULL && ActualAccount->Plugin->Fcn->GetErrorStringWFcnPtr != NULL) {

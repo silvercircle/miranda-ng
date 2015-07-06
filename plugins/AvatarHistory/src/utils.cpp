@@ -24,24 +24,24 @@ Avatar History Plugin
 
 #include "stdafx.h"
 
-BOOL ProtocolEnabled(const char *proto)
+bool ProtocolEnabled(const char *proto)
 {
 	if (proto == NULL)
 		return FALSE;
 
 	char setting[256];
-	mir_snprintf(setting, SIZEOF(setting), "%sEnabled", proto);
-	return (BOOL) db_get_b(NULL, MODULE_NAME, setting, TRUE);
+	mir_snprintf(setting, "%sEnabled", proto);
+	return 0 != db_get_b(NULL, MODULE_NAME, setting, true);
 }
 
-BOOL ContactEnabled(MCONTACT hContact, char *setting, int def)
+bool ContactEnabled(MCONTACT hContact, char *setting, int def)
 {
 	if (hContact == NULL)
-		return FALSE;
+		return false;
 
 	char *proto = GetContactProto(hContact);
 	if (!ProtocolEnabled(proto))
-		return FALSE;
+		return false;
 
 	BYTE globpref = db_get_b(NULL, MODULE_NAME, setting, def);
 	BYTE userpref = db_get_b(hContact, MODULE_NAME, setting, BST_INDETERMINATE);
@@ -144,14 +144,14 @@ TCHAR* GetContactFolder(TCHAR *fn, MCONTACT hContact)
 	GetProtocolFolder(fn, proto);
 	
 	TCHAR uin[MAX_PATH];
-	GetUIDFromHContact(hContact, uin, SIZEOF(uin));
+	GetUIDFromHContact(hContact, uin, _countof(uin));
 	ConvertToFilename(uin, MAX_PATH); //added so that weather id's like "yw/CI0000" work
 	mir_sntprintf(fn, MAX_PATH, _T("%s\\%s"), fn, uin);
 	CreateDirectoryTreeT(fn);
 	
 #ifdef DBGPOPUPS
 	TCHAR log[1024];
-	mir_sntprintf(log, SIZEOF(log), _T("Path: %s\nProto: %S\nUIN: %s"), fn, proto, uin);
+	mir_sntprintf(log, _countof(log), _T("Path: %s\nProto: %S\nUIN: %s"), fn, proto, uin);
 	ShowPopup(hContact, _T("AVH Debug: GetContactFolder"), log);
 #endif
 
@@ -178,7 +178,7 @@ void CreateOldStyleShortcut(MCONTACT hContact, TCHAR *history_filename)
 
 	GetOldStyleAvatarName(shortcut, hContact);
 
-	mir_sntprintf(shortcut, SIZEOF(shortcut), _T("%s.%s.lnk"), shortcut,
+	mir_sntprintf(shortcut, _countof(shortcut), _T("%s.%s.lnk"), shortcut,
 		GetExtension(history_filename));
 
 	if (!CreateShortcut(history_filename, shortcut))
@@ -208,7 +208,7 @@ TCHAR * GetCachedAvatar(char *proto, TCHAR *hash)
 	else
 		GetProtocolFolder(file, proto);
 
-	mir_sntprintf(search, SIZEOF(search), _T("%s\\%s.*"), file, hash);
+	mir_sntprintf(search, _countof(search), _T("%s\\%s.*"), file, hash);
 
 	WIN32_FIND_DATA finddata;
 	HANDLE hFind = FindFirstFile(search, &finddata);
@@ -225,7 +225,7 @@ TCHAR * GetCachedAvatar(char *proto, TCHAR *hash)
 				|| !mir_tstrcmpi(&finddata.cFileName[len-4], _T(".jpg"))
 				|| !mir_tstrcmpi(&finddata.cFileName[len-5], _T(".jpeg"))))
 		{
-			mir_sntprintf(file, SIZEOF(file), _T("%s\\%s"), file, finddata.cFileName);
+			mir_sntprintf(file, _countof(file), _T("%s\\%s"), file, finddata.cFileName);
 			ret = mir_tstrdup(file);
 			break;
 		}

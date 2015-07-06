@@ -2,30 +2,34 @@
 ;============================================================
 ;  File: LotusNotify.dll
 ;  Plugin: LotusNotify
-;  Version: 0.1.21.0
+;  Version: 0.1.23.0
 ;  Authors: MaKaRSoFT - http://maciej.wycik.pl/miranda
 ;============================================================
+[Database:]
+База данни:
+[Password:]
+Парола:
 [Set popup colors]
 Избор на цветове
-[Popup options]
-Popup настройки
 [Background]
 Фон
 [Text]
 Текст
 [Close after:]
 Затваряне след:
-[version:]
-Версия:
+[sec (0 default, -1 disabled)]
+сек (0=стандарт, -1=постоянно)
 [Sender]
 Изпращач
 [Subject]
 Тема
-[Database:]
-База данни:
-[Password:]
-Парола:
 [Status]
 Състояние
 [Plugins]
 Приставки
+[Connection]
+Връзка
+[Popup]
+Рopup
+[Miscellaneous]
+Разни

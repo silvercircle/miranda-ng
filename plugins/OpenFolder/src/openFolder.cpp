@@ -30,7 +30,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 static INT_PTR MenuCommand_OpenFolder(WPARAM, LPARAM)
 {
 	TCHAR szMirandaPath[MAX_PATH];
-	GetModuleFileName(GetModuleHandle(NULL), szMirandaPath, SIZEOF(szMirandaPath));
+	GetModuleFileName(GetModuleHandle(NULL), szMirandaPath, _countof(szMirandaPath));
 	TCHAR *p = _tcsrchr(szMirandaPath, '\\');
 	if (p)
 		p[1] = 0;
@@ -46,7 +46,7 @@ static INT_PTR MenuCommand_OpenFolder(WPARAM, LPARAM)
 // toptoolbar (if plugin is installed)
 static int ToptoolBarHook(WPARAM, LPARAM)
 {
-	TTBButton ttb = { sizeof(ttb) };
+	TTBButton ttb = { 0 };
 	ttb.hIconHandleUp = icon.hIcolib;
 	ttb.pszService = MS_OPENFOLDER_OPEN;
 	ttb.dwFlags = TTBBF_VISIBLE | TTBBF_SHOWTOOLTIP;
@@ -64,8 +64,8 @@ static int ModulesLoaded(WPARAM, LPARAM)
 HICON LoadIconExEx(const char* IcoLibName, int NonIcoLibIcon)
 {
 	char szSettingName[64];
-	mir_snprintf(szSettingName, SIZEOF(szSettingName), "%s_%s", OPENFOLDER_MODULE_NAME, IcoLibName);
-	return Skin_GetIcon(szSettingName);
+	mir_snprintf(szSettingName, _countof(szSettingName), "%s_%s", OPENFOLDER_MODULE_NAME, IcoLibName);
+	return IcoLib_GetIcon(szSettingName);
 }
 
 extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
@@ -97,11 +97,11 @@ extern "C" int __declspec(dllexport) Load()
 	hotkey.DefHotKey = MAKEWORD( 'O', HOTKEYF_SHIFT | HOTKEYF_ALT );
 	Hotkey_Register(&hotkey);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = 0x7FFFFFFF;
 	mi.flags = CMIF_TCHAR;
-	mi.icolibItem = icon.hIcolib;
-	mi.ptszName = LPGENT("Open Folder");
+	mi.hIcolibItem = icon.hIcolib;
+	mi.name.t = LPGENT("Open Folder");
 	mi.pszService = MS_OPENFOLDER_OPEN;
 	Menu_AddMainMenuItem(&mi);
 

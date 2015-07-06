@@ -18,10 +18,9 @@
 #include <newpluginapi.h>
 #include <m_system.h>
 #include <m_clist.h>
-#include <m_clistint.h>
+#include <m_clist.h>
 #include <m_clui.h>
 #include <m_database.h>
-#include <m_protomod.h>
 #include <m_protocols.h>
 #include <m_protosvc.h>
 #include <m_button.h>

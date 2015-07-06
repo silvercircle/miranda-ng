@@ -117,31 +117,31 @@ void TabSRMMHTMLBuilder::loadMsgDlgFont(int i, LOGFONTA * lf, COLORREF * colour)
 	int style;
 	DBVARIANT dbv;
 	if (colour) {
-		mir_snprintf(str, SIZEOF(str), "Font%dCol", i);
+		mir_snprintf(str, "Font%dCol", i);
 		*colour = db_get_dw(NULL, TABSRMM_FONTMODULE, str, 0x000000);
 	}
 	if (lf) {
 		HDC hdc = GetDC(NULL);
-		mir_snprintf(str, SIZEOF(str), "Font%dSize", i);
+		mir_snprintf(str, "Font%dSize", i);
 		lf->lfHeight = (char)db_get_b(NULL, TABSRMM_FONTMODULE, str, 10);
 		ReleaseDC(NULL, hdc);
 
 		lf->lfWidth = 0;
 		lf->lfEscapement = 0;
 		lf->lfOrientation = 0;
-		mir_snprintf(str, SIZEOF(str), "Font%dSty", i);
+		mir_snprintf(str, "Font%dSty", i);
 		style = db_get_b(NULL, TABSRMM_FONTMODULE, str, 0);
 		lf->lfWeight = style & FONTF_BOLD ? FW_BOLD : FW_NORMAL;
 		lf->lfItalic = style & FONTF_ITALIC ? 1 : 0;
 		lf->lfUnderline = style & FONTF_UNDERLINE ? 1 : 0;
 		lf->lfStrikeOut = 0;
-		mir_snprintf(str, SIZEOF(str), "Font%dSet", i);
+		mir_snprintf(str, "Font%dSet", i);
 		lf->lfCharSet = db_get_b(NULL, TABSRMM_FONTMODULE, str, DEFAULT_CHARSET);
 		lf->lfOutPrecision = OUT_DEFAULT_PRECIS;
 		lf->lfClipPrecision = CLIP_DEFAULT_PRECIS;
 		lf->lfQuality = DEFAULT_QUALITY;
 		lf->lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
-		mir_snprintf(str, SIZEOF(str), "Font%d", i);
+		mir_snprintf(str, "Font%d", i);
 		if (db_get(NULL, TABSRMM_FONTMODULE, str, &dbv))
 			mir_strcpy(lf->lfFaceName, "Verdana");
 		else {
@@ -155,18 +155,14 @@ char* TabSRMMHTMLBuilder::timestampToString(DWORD dwFlags, time_t check, int isG
 {
 	static char szResult[512];
 	char str[80];
-
-	DBTIMETOSTRING dbtts;
+	const char *szFormat;
 
 	struct tm tm_now, tm_today;
 	time_t now = time(NULL);
 	time_t today;
 
-	dbtts.cbDest = 70;
-	dbtts.szDest = str;
-
 	if (!isGroupBreak || !(dwFlags & MWF_LOG_SHOWDATES)) {
-		dbtts.szFormat = (dwFlags & MWF_LOG_SHOWSECONDS) ? (char *)"s" : (char *)"t";
+		szFormat = (dwFlags & MWF_LOG_SHOWSECONDS) ? "s" : "t";
 		szResult[0] = '\0';
 	}
 	else {
@@ -176,25 +172,25 @@ char* TabSRMMHTMLBuilder::timestampToString(DWORD dwFlags, time_t check, int isG
 		today = mktime(&tm_today);
 
 		if (dwFlags & MWF_LOG_USERELATIVEDATES && check >= today) {
-			dbtts.szFormat = (dwFlags & MWF_LOG_SHOWSECONDS) ? (char *)"s" : (char *)"t";
+			szFormat = (dwFlags & MWF_LOG_SHOWSECONDS) ? "s" : "t";
 			mir_strcpy(szResult, Translate("Today"));
-			strcat(szResult, ", ");
+			mir_strcat(szResult, ", ");
 		}
 		else if (dwFlags & MWF_LOG_USERELATIVEDATES && check > (today - 86400)) {
-			dbtts.szFormat = (dwFlags & MWF_LOG_SHOWSECONDS) ? (char *)"s" : (char *)"t";
+			szFormat = (dwFlags & MWF_LOG_SHOWSECONDS) ? "s" : "t";
 			mir_strcpy(szResult, Translate("Yesterday"));
-			strcat(szResult, ", ");
+			mir_strcat(szResult, ", ");
 		}
 		else {
 			if (dwFlags & MWF_LOG_LONGDATES)
-				dbtts.szFormat = (dwFlags & MWF_LOG_SHOWSECONDS) ? (char *)"D s" : (char *)"D t";
+				szFormat = (dwFlags & MWF_LOG_SHOWSECONDS) ? "D s" : "D t";
 			else
-				dbtts.szFormat = (dwFlags & MWF_LOG_SHOWSECONDS) ? (char *)"d s" : (char *)"d t";
+				szFormat = (dwFlags & MWF_LOG_SHOWSECONDS) ? "d s" : "d t";
 			szResult[0] = '\0';
 		}
 	}
-	CallService(MS_DB_TIME_TIMESTAMPTOSTRING, check, (LPARAM)& dbtts);
-	strncat(szResult, str, SIZEOF(szResult) - mir_strlen(szResult));
+	TimeZone_ToString(check, szFormat, str, _countof(str));
+	mir_strncat(szResult, str, _countof(szResult) - mir_strlen(szResult));
 	mir_strncpy(szResult, ptrA(mir_utf8encode(szResult)), 500);
 	return szResult;
 }

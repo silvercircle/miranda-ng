@@ -34,7 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_langpack.h>
 #include <m_system_cpp.h>
 #include <m_database.h>
-#include <m_protomod.h>
+#include <m_protosvc.h>
 #include <m_icolib.h>
 #include <m_clist.h>
 #include <m_db_int.h>
@@ -105,6 +105,6 @@ extern int nImportOptions;
 extern TCHAR importFile[];
 extern time_t dwSinceDate;
 
-HICON  GetIcon(int iIconId);
+HICON  GetIcon(int iIconId, bool size = false);
 HANDLE GetIconHandle(int iIconId);
 void   RegisterIcons(void);

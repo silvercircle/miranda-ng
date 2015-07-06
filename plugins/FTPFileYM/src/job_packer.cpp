@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "common.h"
 
 Event PackerJob::jobDone;
-Mutex PackerJob::mutexJobCount;
+mir_cs PackerJob::mutexJobCount;
 int PackerJob::iRunningJobCount = 0;
 
 extern UploadDialog *uDlg;
@@ -55,9 +55,9 @@ void PackerJob::getZipFilePath()
 	if (stzFileName[0] == '\0')
 		mir_tstrcpy(stzFileName, _T("archive"));
 
-	GetTempPath(SIZEOF(buff), buff);
+	GetTempPath(_countof(buff), buff);
 
-	mir_sntprintf(this->stzFilePath, SIZEOF(this->stzFilePath), _T("%s%s.zip"), buff, stzFileName);
+	mir_sntprintf(this->stzFilePath, _countof(this->stzFilePath), _T("%s%s.zip"), buff, stzFileName);
 	mir_tstrcpy(this->stzFileName, Utils::getFileNameFromPath(this->stzFilePath));
 
 	if (opt.bSetZipName)
@@ -79,23 +79,23 @@ void PackerJob::waitingThread(void *arg)
 
 	while(!Miranda_Terminated())
 	{
-		Lock *lock = new Lock(mutexJobCount);
+		mir_cslockfull lock(mutexJobCount);
 		if (iRunningJobCount < MAX_RUNNING_JOBS)
 		{
 			iRunningJobCount++;
-			delete lock;
+			lock.unlock();
 			job->pack();
 			delete job;
 
-			Lock *lock = new Lock(mutexJobCount);
+			lock.lock();
 			iRunningJobCount--;
-			delete lock;
+			lock.unlock();
 
 			jobDone.release();
 			return;
 		}
 
-		delete lock;	
+		lock.unlock();
 		jobDone.wait();
 		job->status = GenericJob::STATUS_WAITING;
 	}
@@ -254,10 +254,10 @@ void PackerJob::updateStats()
 		this->lastUpdateTick = dwNewTick;
 
 		double speed = ((double)this->uiReaded / 1024)/(time(NULL) - this->startTS);
-		mir_sntprintf(this->tab->stzSpeed, SIZEOF(this->tab->stzSpeed), TranslateT("%0.1f kB/s"), speed);
+		mir_sntprintf(this->tab->stzSpeed, _countof(this->tab->stzSpeed), TranslateT("%0.1f kB/s"), speed);
 
 		double perc = this->uiFileSize ? ((double)this->uiReaded / this->uiFileSize) * 100 : 0;
-		mir_sntprintf(this->tab->stzComplet, SIZEOF(this->tab->stzComplet), TranslateT("%0.1f%% (%d kB/%d kB)"), perc, (int)this->uiReaded/1024, (int)this->uiFileSize/1024);
+		mir_sntprintf(this->tab->stzComplet, _countof(this->tab->stzComplet), TranslateT("%0.1f%% (%d kB/%d kB)"), perc, (int)this->uiReaded/1024, (int)this->uiFileSize/1024);
 
 		TCHAR buff[256];
 		long s = (this->uiFileSize - this->uiReaded) / (long)(speed * 1024); 
@@ -266,9 +266,9 @@ void PackerJob::updateStats()
 		int m = (s  - d * 60 * 60 * 24 - h * 60 * 60) / 60;
 		s = s - (d * 24 * 60 * 60) - (h * 60 * 60) - (m * 60);
 
-		if (d > 0) mir_sntprintf(buff, SIZEOF(buff), _T("%dd %02d:%02d:%02d"), d, h, m, s);
-		else mir_sntprintf(buff, SIZEOF(buff), _T("%02d:%02d:%02d"), h, m, s);
-		mir_sntprintf(this->tab->stzRemain, SIZEOF(this->tab->stzRemain), TranslateT("%s (%d kB/%d kB)"), buff, (this->uiFileSize - this->uiReaded)/1024, this->uiFileSize/1024);
+		if (d > 0) mir_sntprintf(buff, _T("%dd %02d:%02d:%02d"), d, h, m, s);
+		else mir_sntprintf(buff, _T("%02d:%02d:%02d"), h, m, s);
+		mir_sntprintf(this->tab->stzRemain, _countof(this->tab->stzRemain), TranslateT("%s (%d kB/%d kB)"), buff, (this->uiFileSize - this->uiReaded)/1024, this->uiFileSize/1024);
 
 		this->refreshTab(false);		
 	}
@@ -338,7 +338,7 @@ void PackerJob::closeAllTabs()
 void PackerJob::createToolTip()
 {
 	TCHAR *server = mir_a2t(this->ftp->szServer);
-	mir_sntprintf(uDlg->stzToolTipText, SIZEOF(uDlg->stzToolTipText), 
+	mir_sntprintf(uDlg->stzToolTipText, _countof(uDlg->stzToolTipText), 
 		TranslateT("Status: %s\r\nFile: %s\r\nServer: %s"), 
 		this->getStatusString(), 
 		this->stzFileName, 

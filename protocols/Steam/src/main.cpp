@@ -38,15 +38,16 @@ extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
 
-	PROTOCOLDESCRIPTOR pd = { sizeof(pd) };
+	PROTOCOLDESCRIPTOR pd = { 0 };
+	pd.cbSize = sizeof(pd);
 	pd.szName = "STEAM";
 	pd.type = PROTOTYPE_PROTOCOL;
 	pd.fnInit = (pfnInitProto)CSteamProto::InitProtoInstance;
 	pd.fnUninit = (pfnUninitProto)CSteamProto::UninitProtoInstance;
-	CallService(MS_PROTO_REGISTERMODULE, 0, (LPARAM)&pd);
+	Proto_RegisterModule(&pd);
 
 	char iconName[100];
-	mir_snprintf(iconName, SIZEOF(iconName), "%s_%s", MODULE, "gaming");
+	mir_snprintf(iconName, _countof(iconName), "%s_%s", MODULE, "gaming");
 
 	// extra statuses
 	HookEvent(ME_SKIN2_ICONSCHANGED, OnReloadIcons);

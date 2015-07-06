@@ -78,15 +78,15 @@ public:
 	virtual	MCONTACT __cdecl AddToList(int flags, PROTOSEARCHRESULT* psr);
 
 	virtual	int      __cdecl Authorize(MEVENT hDbEvent);
-	virtual	int      __cdecl AuthDeny(MEVENT hDbEvent, const PROTOCHAR* szReason);
-	virtual	int      __cdecl AuthRequest(MCONTACT hContact, const PROTOCHAR* szMessage);
+	virtual	int      __cdecl AuthDeny(MEVENT hDbEvent, const TCHAR* szReason);
+	virtual	int      __cdecl AuthRequest(MCONTACT hContact, const TCHAR* szMessage);
 
 	virtual	DWORD_PTR __cdecl GetCaps(int type, MCONTACT hContact = NULL);
 	virtual	int       __cdecl GetInfo(MCONTACT hContact, int infoType);
 
-	virtual	HANDLE    __cdecl SearchBasic(const PROTOCHAR* id);
-	virtual	HANDLE    __cdecl SearchByEmail(const PROTOCHAR* email);
-	virtual	HANDLE    __cdecl SearchByName(const PROTOCHAR* nick, const PROTOCHAR* firstName, const PROTOCHAR* lastName);
+	virtual	HANDLE    __cdecl SearchBasic(const TCHAR* id);
+	virtual	HANDLE    __cdecl SearchByEmail(const TCHAR* email);
+	virtual	HANDLE    __cdecl SearchByName(const TCHAR* nick, const TCHAR* firstName, const TCHAR* lastName);
 
 	virtual	int       __cdecl RecvMsg(MCONTACT hContact, PROTORECVEVENT*);
 	virtual	int       __cdecl SendMsg(MCONTACT hContact, int flags, const char* msg);
@@ -94,7 +94,7 @@ public:
 	virtual	int       __cdecl SetStatus(int iNewStatus);
 
 	virtual	HANDLE    __cdecl GetAwayMsg(MCONTACT hContact);
-	virtual	int       __cdecl SetAwayMsg(int iStatus, const PROTOCHAR* msg);
+	virtual	int       __cdecl SetAwayMsg(int iStatus, const TCHAR* msg);
 
 	virtual	int       __cdecl UserIsTyping(MCONTACT hContact, int type);
 
@@ -169,6 +169,7 @@ public:
 	void __cdecl ProcessPages(void*);
 	void __cdecl LoadLastMessages(void*);
 	void __cdecl SyncThreads(void*);
+	void __cdecl ProcessOnThisDay(void*);
 
 	// Worker threads
 	void __cdecl SignOn(void*);
@@ -191,7 +192,7 @@ public:
 	// Contacts handling
 	bool		IsMyContact(MCONTACT, bool include_chat = false);
 	MCONTACT	ContactIDToHContact(const std::string&);
-	MCONTACT	ChatIDToHContact(const std::tstring&);
+	MCONTACT	ChatIDToHContact(const std::string&);
 	std::string	ThreadIDToContactID(const std::string&);
 	void		LoadContactInfo(facebook_user* fbu);
 	MCONTACT	AddToContactList(facebook_user*, ContactType type, bool force_add = false, bool add_temporarily = false);
@@ -201,13 +202,13 @@ public:
 	void		StopTyping(MCONTACT hContact);
 
 	// Chats handling
- 	void AddChat(const TCHAR *id, const TCHAR *name);
-	void UpdateChat(const TCHAR *chat_id, const char *id, const char *name, const char *message, DWORD timestamp = 0, bool is_old = false);
+	void AddChat(const char *chat_id, const TCHAR *name);
+	void UpdateChat(const char *chat_id, const char *id, const char *name, const char *message, DWORD timestamp = 0, bool is_old = false);
 	void RenameChat(const char *chat_id, const char *name);
-	bool IsChatContact(const TCHAR *chat_id, const char *id);
-	void AddChatContact(const TCHAR *chat_id, const char *id, const char *name);
-	void RemoveChatContact(const TCHAR *chat_id, const char *id, const char *name);
-	char *GetChatUsers(const TCHAR *chat_id);
+	bool IsChatContact(const char *chat_id, const char *id);
+	void AddChatContact(const char *chat_id, const char *id, const char *name);
+	void RemoveChatContact(const char *chat_id, const char *id, const char *name);
+	char *GetChatUsers(const char *chat_id);
 	void ReceiveMessages(std::vector<facebook_message*> messages, bool check_duplicates = false);
 	void LoadChatInfo(facebook_chatroom* fbc);
 	void LoadParticipantsNames(facebook_chatroom *fbc);
@@ -221,9 +222,9 @@ public:
 
 	// Helpers
 	std::tstring GetAvatarFolder();
-	bool GetDbAvatarInfo(PROTO_AVATAR_INFORMATIONT &ai, std::string *url);
+	bool GetDbAvatarInfo(PROTO_AVATAR_INFORMATION &ai, std::string *url);
 	void CheckAvatarChange(MCONTACT hContact, const std::string &image_url);
-	void ToggleStatusMenuItems(BOOL bEnable);
+	void ToggleStatusMenuItems(bool bEnable);
 	void StickerAsSmiley(std::string stickerId, const std::string &url, MCONTACT hContact);
 	void SaveName(MCONTACT hContact, const facebook_user *fbu);	
 	std::string PrepareUrl(std::string url);
@@ -233,7 +234,6 @@ public:
 	bool RunCaptchaForm(std::string imageUrl, std::string &result);
 
 	// Menu items
-	HGENMENU m_hMenuRoot;
 	HGENMENU m_hMenuServicesRoot;
 	HGENMENU m_hStatusMind;
 

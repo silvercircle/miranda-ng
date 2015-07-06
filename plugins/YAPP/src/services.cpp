@@ -10,7 +10,7 @@ void StripBBCodesInPlace(wchar_t *text)
 		return;
 
 	int read = 0, write = 0;
-	int len = (int)wcslen(text);
+	int len = (int)mir_wstrlen(text);
 
 	while(read <= len) { // copy terminating null too
 		while(read <= len && text[read] != L'[') {
@@ -194,15 +194,14 @@ static INT_PTR GetOpaque(WPARAM wParam, LPARAM lParam)
 void UpdateMenu()
 {
 	bool isEnabled = db_get_b(0, "Popup", "ModuleIsEnabled", 1) == 1;
-
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.ptszName = (isEnabled ? LPGENT("Disable Popups") : LPGENT("Enable Popups"));
-	mi.hIcon = IcoLib_GetIcon(isEnabled ? ICO_POPUP_ON : ICO_POPUP_OFF, 0);
-	mi.flags = CMIM_NAME | CMIM_ICON | CMIF_TCHAR;
-	Menu_ModifyItem(hMenuItem, &mi);
-
-	mi.flags = CMIM_ICON;
-	Menu_ModifyItem(hMenuRoot, &mi);
+	if (isEnabled) {
+		Menu_ModifyItem(hMenuItem, LPGENT("Disable Popups"), IcoLib_GetIcon(ICO_POPUP_ON));
+		Menu_ModifyItem(hMenuRoot, NULL, IcoLib_GetIcon(ICO_POPUP_ON));
+	}
+	else {
+		Menu_ModifyItem(hMenuItem, LPGENT("Enable Popups"), IcoLib_GetIcon(ICO_POPUP_OFF));
+		Menu_ModifyItem(hMenuRoot, NULL, IcoLib_GetIcon(ICO_POPUP_OFF));
+	}
 
 	if (hTTButton)
 		CallService(MS_TTB_SETBUTTONSTATE, (WPARAM)hTTButton, isEnabled ? TTBST_PUSHED : 0);
@@ -305,7 +304,7 @@ static INT_PTR ShowMessageW(WPARAM wParam, LPARAM lParam)
 
 	if (db_get_b(0, "Popup", "ModuleIsEnabled", 1)) {
 		POPUPDATAW pd = {0};
-		wcscpy(pd.lpwzContactName, lParam == SM_WARNING ? L"Warning" : L"Notification");
+		mir_wstrcpy(pd.lpwzContactName, lParam == SM_WARNING ? L"Warning" : L"Notification");
 		pd.lchIcon = LoadIcon(0, lParam == SM_WARNING ? IDI_WARNING : IDI_INFORMATION);
 		wcsncpy(pd.lpwzText, (wchar_t *)wParam, MAX_SECONDLINE);
 		CallService(MS_POPUP_ADDPOPUPW, (WPARAM)&pd, 0);
@@ -338,12 +337,12 @@ static INT_PTR RegisterPopupClass(WPARAM wParam, LPARAM lParam)
 		pc->pszDescription = mir_strdup(pc->pszDescription);
 	
 	char setting[256];
-	mir_snprintf(setting, SIZEOF(setting), "%s/Timeout", pc->pszName);
+	mir_snprintf(setting, "%s/Timeout", pc->pszName);
 	pc->iSeconds = db_get_w(0, MODULE, setting, pc->iSeconds);
 	if (pc->iSeconds == (WORD)-1) pc->iSeconds = -1;
-	mir_snprintf(setting, SIZEOF(setting), "%s/TextCol", pc->pszName);
+	mir_snprintf(setting, "%s/TextCol", pc->pszName);
 	pc->colorText = (COLORREF)db_get_dw(0, MODULE, setting, (DWORD)pc->colorText);
-	mir_snprintf(setting, SIZEOF(setting), "%s/BgCol", pc->pszName);
+	mir_snprintf(setting, "%s/BgCol", pc->pszName);
 	pc->colorBack = (COLORREF)db_get_dw(0, MODULE, setting, (DWORD)pc->colorBack);
 
 	arClasses.insert(pc);

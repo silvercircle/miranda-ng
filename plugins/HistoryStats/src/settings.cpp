@@ -21,7 +21,7 @@ Settings::CharMapper::CharMapper(const Settings& settings)
 	}
 
 	LCID lcid = GetUserDefaultLCID();
-	int  len = LCMapString(
+	int len = LCMapString(
 		lcid, LCMAP_LINGUISTIC_CASING | LCMAP_LOWERCASE,
 		m_CharMap + 1, array_len(m_CharMap) - 1,
 		m_CharMap + 1, array_len(m_CharMap) - 1);
@@ -524,7 +524,7 @@ ext::string Settings::getOutputPrefix(DWORD timeStarted) const
 
 bool Settings::isPNGOutputActiveAndAvailable() const
 {
-	return (m_GraphicsMode == gmPNG && Canvas::hasPNG());
+	return (m_GraphicsMode == gmPNG);
 }
 
 DWORD Settings::getIgnoreBefore() const

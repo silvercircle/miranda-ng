@@ -46,10 +46,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_langpack.h>
 #include <m_skin.h>
 #include <m_button.h>
-#include <m_protomod.h>
 #include <m_protosvc.h>
 #include <m_clist.h>
-#include <m_clistint.h>
 #include <m_clui.h>
 #include <m_message.h>
 #include <m_icolib.h>
@@ -151,7 +149,7 @@ SESSION_INFO* SM_GetNextWindow(SESSION_INFO *si);
 // options.c
 int OptionsInitialize(WPARAM wParam, LPARAM lParam);
 void AddIcons(void);
-HICON LoadIconEx(char* pszIcoLibName, BOOL big);
+HICON LoadIconEx(const char *pszIcoLibName, bool big);
 
 // services.c
 void ShowRoom(SESSION_INFO *si, WPARAM wp, BOOL bSetForeground);

@@ -33,7 +33,7 @@ static void OptTree_TranslateItem(HWND hwndTree, HTREEITEM hItem)
 	tvi.mask = TVIF_HANDLE | TVIF_TEXT;
 	tvi.hItem = hItem;
 	tvi.pszText = buf;
-	tvi.cchTextMax = SIZEOF(buf);
+	tvi.cchTextMax = _countof(buf);
 	SendMessage(hwndTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
 	tvi.pszText = TranslateTS(tvi.pszText);
 	SendMessage(hwndTree, TVM_SETITEMW, 0, (LPARAM)&tvi);
@@ -80,7 +80,7 @@ HTREEITEM OptTree_FindNamedTreeItemAt(HWND hwndTree, HTREEITEM hItem, const TCHA
 
 	tvi.mask = TVIF_TEXT;
 	tvi.pszText = str;
-	tvi.cchTextMax = SIZEOF(str);
+	tvi.cchTextMax = _countof(str);
 
 	while (tvi.hItem) {
 		TreeView_GetItem(hwndTree, &tvi);
@@ -162,12 +162,12 @@ BOOL OptTree_ProcessMessage(HWND hwnd, UINT msg, WPARAM, LPARAM lparam, int *res
 
 		hImgLst = ImageList_Create(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), ILC_COLOR | ILC_COLOR32 | ILC_MASK, 5, 1);
 		ImageList_ReplaceIcon(hImgLst, -1, (HICON)LoadImage(hInst, MAKEINTRESOURCE(IDI_POPUP), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR | LR_SHARED));
-		ImageList_ReplaceIcon(hImgLst, -1, (HICON)LoadSkinnedIcon(SKINICON_OTHER_TICK));
-		ImageList_ReplaceIcon(hImgLst, -1, (HICON)LoadSkinnedIcon(SKINICON_OTHER_NOTICK));
-		ImageList_ReplaceIcon(hImgLst, -1, (HICON)LoadSkinnedIcon(SKINICON_OTHER_TICK));
-		ImageList_ReplaceIcon(hImgLst, -1, (HICON)LoadSkinnedIcon(SKINICON_OTHER_NOTICK));
-		ImageList_ReplaceIcon(hImgLst, -1, (HICON)LoadSkinnedIcon(SKINICON_OTHER_GROUPOPEN));
-		ImageList_ReplaceIcon(hImgLst, -1, (HICON)LoadSkinnedIcon(SKINICON_OTHER_GROUPSHUT));
+		ImageList_ReplaceIcon(hImgLst, -1, (HICON)Skin_LoadIcon(SKINICON_OTHER_TICK));
+		ImageList_ReplaceIcon(hImgLst, -1, (HICON)Skin_LoadIcon(SKINICON_OTHER_NOTICK));
+		ImageList_ReplaceIcon(hImgLst, -1, (HICON)Skin_LoadIcon(SKINICON_OTHER_TICK));
+		ImageList_ReplaceIcon(hImgLst, -1, (HICON)Skin_LoadIcon(SKINICON_OTHER_NOTICK));
+		ImageList_ReplaceIcon(hImgLst, -1, (HICON)Skin_LoadIcon(SKINICON_OTHER_GROUPOPEN));
+		ImageList_ReplaceIcon(hImgLst, -1, (HICON)Skin_LoadIcon(SKINICON_OTHER_GROUPSHUT));
 		TreeView_SetImageList(hwndTree, hImgLst, TVSIL_NORMAL);
 
 		/* build options tree. based on code from IcoLib */

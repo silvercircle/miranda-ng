@@ -22,7 +22,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 static char  szMirandaPath[MAX_PATH];
 static WCHAR szMirandaPathW[MAX_PATH];
@@ -77,12 +77,15 @@ MIR_CORE_DLL(int) PathToAbsolute(const char *pSrc, char *pOut, const char *base)
 
 	if (pSrc[0] == '\\')
 		pSrc++;
-	mir_snprintf(buf, SIZEOF(buf), "%s%s", base, pSrc);
-	return GetFullPathNameA(buf, SIZEOF(buf), pOut, NULL);
+	mir_snprintf(buf, "%s%s", base, pSrc);
+	return GetFullPathNameA(buf, _countof(buf), pOut, NULL);
 }
 
 MIR_CORE_DLL(void) CreatePathToFile(char *szFilePath)
 {
+	if (szFilePath == NULL)
+		return;
+
 	char *pszLastBackslash = strrchr(szFilePath, '\\');
 	if (pszLastBackslash == NULL)
 		return;
@@ -94,8 +97,11 @@ MIR_CORE_DLL(void) CreatePathToFile(char *szFilePath)
 
 MIR_CORE_DLL(int) CreateDirectoryTree(const char *szDir)
 {
+	if (szDir == NULL)
+		return 1;
+
 	char szTestDir[MAX_PATH];
-	mir_strncpy(szTestDir, szDir, SIZEOF(szTestDir));
+	mir_strncpy(szTestDir, szDir, _countof(szTestDir));
 
 	DWORD dwAttributes = GetFileAttributesA(szTestDir);
 	if (dwAttributes != INVALID_FILE_ATTRIBUTES && (dwAttributes & FILE_ATTRIBUTE_DIRECTORY))
@@ -167,6 +173,9 @@ MIR_CORE_DLL(int) PathToAbsoluteW(const WCHAR *pSrc, WCHAR *pOut, const WCHAR *b
 
 MIR_CORE_DLL(void) CreatePathToFileW(WCHAR *wszFilePath)
 {
+	if (wszFilePath == NULL)
+		return;
+
 	WCHAR *pszLastBackslash = wcsrchr(wszFilePath, '\\');
 	if (pszLastBackslash == NULL)
 		return;
@@ -178,8 +187,11 @@ MIR_CORE_DLL(void) CreatePathToFileW(WCHAR *wszFilePath)
 
 MIR_CORE_DLL(int) CreateDirectoryTreeW(const WCHAR *szDir)
 {
+	if (szDir == NULL)
+		return 1;
+
 	WCHAR szTestDir[MAX_PATH];
-	mir_wstrncpy(szTestDir, szDir, SIZEOF(szTestDir));
+	mir_wstrncpy(szTestDir, szDir, _countof(szTestDir));
 
 	DWORD dwAttributes = GetFileAttributesW(szTestDir);
 	if (dwAttributes != INVALID_FILE_ATTRIBUTES && (dwAttributes & FILE_ATTRIBUTE_DIRECTORY))
@@ -197,12 +209,12 @@ MIR_CORE_DLL(int) CreateDirectoryTreeW(const WCHAR *szDir)
 
 int InitPathUtils(void)
 {
-	GetModuleFileNameA(hInst, szMirandaPath, SIZEOF(szMirandaPath));
+	GetModuleFileNameA(NULL, szMirandaPath, _countof(szMirandaPath));
 	char *p = strrchr(szMirandaPath, '\\');
 	if (p)
 		p[1] = 0;
 
-	GetModuleFileNameW(hInst, szMirandaPathW, SIZEOF(szMirandaPathW));
+	GetModuleFileNameW(NULL, szMirandaPathW, _countof(szMirandaPathW));
 	WCHAR *tp = wcsrchr(szMirandaPathW, '\\');
 	if (tp)
 		tp[1] = 0;

@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Steam.dll
 ;  Plugin: Steam protocol
-;  Version: 0.11.3.3
+;  Version: 0.11.4.1
 ;  Authors: unsane, Robert Pösel
 ;============================================================
 [Steam protocol support for Miranda NG.]
@@ -24,7 +24,7 @@
 [Cancel]
 Отмена
 [As an added account security measure, you'll need to grant access by entering the special code we've just sent to your email address.]
-На этой учётной записи включен Steam Guard, поэтому необходимо ввести специальный код, который был выслан на ваш адрес электронной почты.
+На этой учётной записи включён Steam Guard, поэтому необходимо ввести специальный код, который был выслан на ваш адрес электронной почты.
 [Go to email domain]
 Перейти в почтовый ящик
 [Block]
@@ -37,8 +37,6 @@
 Введите пароль, чтобы продолжить.
 [Steam game]
 Игра Steam
-[Connection token expired. Please login again.]
-Токен соединения устарел. Пожалуйста, войдите заново.
 [Looking to play]
 Хотите играть
 [Looking to trade]
@@ -61,12 +59,12 @@
 Служба аватар
 [Name]
 Имя
-[%s connection]
-%s подключение
 [Network]
 Сеть
 [Blocked contacts]
 Заблокированные контакты
+[Connection token expired. Please login again.]
+Токен соединения устарел. Пожалуйста, войдите заново.
 [Steam menu chooser]
 Выбор меню Steam
 [Request authorization]
@@ -81,5 +79,7 @@
 Значок протокола
 [Gaming icon]
 Игровой значок
+[%s connection]
+%s подключение
 [You cannot send messages when you are offline.]
 Вы не можете посылать сообщения, когда вы оффлайн.

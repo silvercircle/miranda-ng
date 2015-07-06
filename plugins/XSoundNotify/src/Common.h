@@ -31,7 +31,7 @@ struct XSN_Data
 	__forceinline XSN_Data(MCONTACT _aContact, TCHAR *_path, BYTE _ignore) :
 		hContact(_aContact)
 	{
-		_tcsncpy(path, _path, SIZEOF(path));
+		_tcsncpy(path, _path, _countof(path));
 		ignore = _ignore;
 	}
 };
@@ -39,7 +39,7 @@ struct XSN_Data
 extern LIST<XSN_Data> XSN_Users;
 
 extern HINSTANCE hInst;
-extern HANDLE hChangeSoundDlgList;
+extern MWindowList hChangeSoundDlgList;
 extern BYTE isIgnoreSound, isOwnSound;
 
 bool IsSuitableProto(PROTOACCOUNT *pa);

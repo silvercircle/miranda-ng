@@ -82,8 +82,8 @@ static void TlenFileReceiveParse(TLEN_FILE_TRANSFER *ft)
 			fullFileName = (char *) mir_alloc(mir_strlen(ft->szSavePath) + mir_strlen(ft->files[ft->currentFile]) + 2);
 			mir_strcpy(fullFileName, ft->szSavePath);
 			if (fullFileName[mir_strlen(fullFileName)-1] != '\\')
-				strcat(fullFileName, "\\");
-			strcat(fullFileName, ft->files[ft->currentFile]);
+				mir_strcat(fullFileName, "\\");
+			mir_strcat(fullFileName, ft->files[ft->currentFile]);
 			ft->fileId = _open(fullFileName, _O_BINARY|_O_WRONLY|_O_CREAT|_O_TRUNC, _S_IREAD|_S_IWRITE);
 			ft->fileReceivedBytes = 0;
 			ft->fileTotalSize = ft->filesSize[ft->currentFile];
@@ -558,7 +558,7 @@ void TlenProcessF(XmlNode *node, ThreadData *info)
 	char *from=TlenXmlGetAttrValue(node, "f");
 	if (from != NULL) {
 		if (strchr(from, '@') == NULL) {
-			mir_snprintf(jid, SIZEOF(jid), "%s@%s", from, info->server);
+			mir_snprintf(jid, _countof(jid), "%s@%s", from, info->server);
 		} else {
 			strncpy_s(jid, from, _TRUNCATE);
 		}
@@ -585,7 +585,7 @@ void TlenProcessF(XmlNode *node, ThreadData *info)
 						}
 					}
 					else if (numFiles > 1) {
-						mir_snprintf(szFilename, SIZEOF(szFilename), Translate("%d Files"), numFiles);
+						mir_snprintf(szFilename, _countof(szFilename), Translate("%d Files"), numFiles);
 					}
 				}
 
@@ -595,8 +595,8 @@ void TlenProcessF(XmlNode *node, ThreadData *info)
 					pre.dwFlags = PRFF_TCHAR;
 					pre.fileCount = 1;
 					pre.timestamp = time(NULL);
-					pre.tszDescription = filenameT;
-					pre.ptszFiles = &filenameT;
+					pre.descr.t = filenameT;
+					pre.files.t = &filenameT;
 					pre.lParam = (LPARAM)ft;
 					ft->proto->debugLogA("sending chainrecv");
 					ProtoChainRecvFile(ft->hContact, &pre);

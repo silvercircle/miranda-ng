@@ -21,33 +21,30 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
-
-#include <m_icolib.h>
-#include "..\src\core\stdplug.h"
+#include "stdafx.h"
 
 MIR_CORE_DLL(void) Icon_Register(HINSTANCE hInst, const char *szSection, IconItem *pIcons, size_t iCount, char *prefix, int hLangpack)
 {
 	TCHAR szFile[MAX_PATH];
 	GetModuleFileName(hInst, szFile, MAX_PATH);
 
-	SKINICONDESC sid = { sizeof(sid) };
-	sid.ptszDefaultFile = szFile;
-	sid.pszSection = (char*)szSection;
+	SKINICONDESC sid = { 0 };
+	sid.defaultFile.t = szFile;
+	sid.section.a = (char*)szSection;
 	sid.flags = SIDF_PATH_TCHAR;
 
 	for (unsigned i = 0; i < iCount; i++) {
 		char szSetting[100];
 		if (prefix) {
-			mir_snprintf(szSetting, SIZEOF(szSetting), "%s_%s", prefix, pIcons[i].szName);
+			mir_snprintf(szSetting, "%s_%s", prefix, pIcons[i].szName);
 			sid.pszName = szSetting;
 		}
 		else sid.pszName = pIcons[i].szName;
 
 		sid.cx = sid.cy = pIcons[i].size;
-		sid.pszDescription = pIcons[i].szDescr;
+		sid.description.a = pIcons[i].szDescr;
 		sid.iDefaultIndex = -pIcons[i].defIconID;
-		pIcons[i].hIcolib = (HANDLE)CallService("Skin2/Icons/AddIcon", hLangpack, (LPARAM)&sid);
+		pIcons[i].hIcolib = IcoLib_AddIcon(&sid, hLangpack);
 	}
 }
 
@@ -56,22 +53,22 @@ MIR_CORE_DLL(void) Icon_RegisterT(HINSTANCE hInst, const TCHAR *szSection, IconI
 	TCHAR szFile[MAX_PATH];
 	GetModuleFileName(hInst, szFile, MAX_PATH);
 
-	SKINICONDESC sid = { sizeof(sid) };
-	sid.ptszDefaultFile = szFile;
-	sid.ptszSection = (TCHAR*)szSection;
+	SKINICONDESC sid = { 0 };
+	sid.defaultFile.t = szFile;
+	sid.section.t = (TCHAR*)szSection;
 	sid.flags = SIDF_ALL_TCHAR;
 
 	for (unsigned i = 0; i < iCount; i++) {
 		char szSetting[100];
 		if (prefix) {
-			mir_snprintf(szSetting, SIZEOF(szSetting), "%s_%s", prefix, pIcons[i].szName);
+			mir_snprintf(szSetting, "%s_%s", prefix, pIcons[i].szName);
 			sid.pszName = szSetting;
 		}
 		else sid.pszName = pIcons[i].szName;
 
 		sid.cx = sid.cy = pIcons[i].size;
-		sid.ptszDescription = pIcons[i].tszDescr;
+		sid.description.t = pIcons[i].tszDescr;
 		sid.iDefaultIndex = -pIcons[i].defIconID;
-		pIcons[i].hIcolib = (HANDLE)CallService("Skin2/Icons/AddIcon", hLangpack, (LPARAM)&sid);
+		pIcons[i].hIcolib = IcoLib_AddIcon(&sid, hLangpack);
 	}
 }

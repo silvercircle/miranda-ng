@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 HINSTANCE hInst;
+CLIST_INTERFACE *pcli;
 
 //PLUGINLINK *pluginLink=NULL;
 HANDLE hOptInit = NULL;
@@ -96,17 +97,17 @@ void saveSettingsConnections(struct CONNECTION *connHead)
 	while (tmp != NULL)
 	{
 
-		mir_snprintf(buff, SIZEOF(buff), "%dFilterIntIp", i);
+		mir_snprintf(buff, "%dFilterIntIp", i);
 		db_set_ts(NULL, PLUGINNAME, buff, tmp->strIntIp);
-		mir_snprintf(buff, SIZEOF(buff), "%dFilterExtIp", i);
+		mir_snprintf(buff, "%dFilterExtIp", i);
 		db_set_ts(NULL, PLUGINNAME, buff, tmp->strExtIp);
-		mir_snprintf(buff, SIZEOF(buff), "%dFilterPName", i);
+		mir_snprintf(buff, "%dFilterPName", i);
 		db_set_ws(NULL, PLUGINNAME, buff, tmp->PName);
-		mir_snprintf(buff, SIZEOF(buff), "%dFilterIntPort", i);
+		mir_snprintf(buff, "%dFilterIntPort", i);
 		db_set_dw(NULL, PLUGINNAME, buff, tmp->intIntPort);
-		mir_snprintf(buff, SIZEOF(buff), "%dFilterExtPort", i);
+		mir_snprintf(buff, "%dFilterExtPort", i);
 		db_set_dw(NULL, PLUGINNAME, buff, tmp->intExtPort);
-		mir_snprintf(buff, SIZEOF(buff), "%dFilterAction", i);
+		mir_snprintf(buff, "%dFilterAction", i);
 		db_set_dw(NULL, PLUGINNAME, buff, tmp->Pid);
 		i++;
 		tmp = tmp->next;
@@ -126,26 +127,26 @@ struct CONNECTION* LoadSettingsConnections()
 	for (i = settingFiltersCount - 1; i >= 0; i--)
 	{
 		struct CONNECTION *conn = (struct CONNECTION*)mir_alloc(sizeof(struct CONNECTION));
-		mir_snprintf(buff, SIZEOF(buff), "%dFilterIntIp", i);
+		mir_snprintf(buff, "%dFilterIntIp", i);
 		if (!db_get_ts(NULL, PLUGINNAME, buff, &dbv))
 			wcsncpy(conn->strIntIp, dbv.ptszVal, _countof(conn->strIntIp));
 		db_free(&dbv);
-		mir_snprintf(buff, SIZEOF(buff), "%dFilterExtIp", i);
+		mir_snprintf(buff, "%dFilterExtIp", i);
 		if (!db_get_ts(NULL, PLUGINNAME, buff, &dbv))
 			wcsncpy(conn->strExtIp, dbv.ptszVal, _countof(conn->strExtIp));
 		db_free(&dbv);
-		mir_snprintf(buff, SIZEOF(buff), "%dFilterPName", i);
+		mir_snprintf(buff, "%dFilterPName", i);
 		if (!db_get_ts(NULL, PLUGINNAME, buff, &dbv))
 			wcsncpy(conn->PName, dbv.ptszVal, _countof(conn->PName));
 		db_free(&dbv);
 
-		mir_snprintf(buff, SIZEOF(buff), "%dFilterIntPort", i);
+		mir_snprintf(buff, "%dFilterIntPort", i);
 		conn->intIntPort = db_get_dw(0, PLUGINNAME, buff, -1);
 
-		mir_snprintf(buff, SIZEOF(buff), "%dFilterExtPort", i);
+		mir_snprintf(buff, "%dFilterExtPort", i);
 		conn->intExtPort = db_get_dw(0, PLUGINNAME, buff, -1);
 
-		mir_snprintf(buff, SIZEOF(buff), "%dFilterAction", i);
+		mir_snprintf(buff, "%dFilterAction", i);
 		conn->Pid = db_get_dw(0, PLUGINNAME, buff, 0);
 
 		conn->next = connHead;
@@ -169,7 +170,7 @@ void LoadSettings()
 	for (int i = 0; i < STATUS_COUNT; i++)
 	{
 		char buff[128];
-		mir_snprintf(buff, SIZEOF(buff), "Status%d", i);
+		mir_snprintf(buff, "Status%d", i);
 		settingStatus[i] = (db_get_b(0, PLUGINNAME, buff, 0) == 1);
 	}
 	//lookupLotusDefaultSettings();
@@ -197,16 +198,16 @@ void fillExceptionsListView(HWND hwndDlg)
 		ListView_InsertItem(hwndList, &lvI);
 		lvI.iSubItem = 1;
 		if (tmp->intIntPort == -1)
-			mir_sntprintf(tmpAddress, SIZEOF(tmpAddress), _T("%s:*"), tmp->strIntIp);
+			mir_sntprintf(tmpAddress, _countof(tmpAddress), _T("%s:*"), tmp->strIntIp);
 		else
-			mir_sntprintf(tmpAddress, SIZEOF(tmpAddress), _T("%s:%d"), tmp->strIntIp, tmp->intIntPort);
+			mir_sntprintf(tmpAddress, _countof(tmpAddress), _T("%s:%d"), tmp->strIntIp, tmp->intIntPort);
 		lvI.pszText = tmpAddress;
 		ListView_SetItem(hwndList, &lvI);
 		lvI.iSubItem = 2;
 		if (tmp->intExtPort == -1)
-			mir_sntprintf(tmpAddress, SIZEOF(tmpAddress), _T("%s:*"), tmp->strExtIp);
+			mir_sntprintf(tmpAddress, _countof(tmpAddress), _T("%s:*"), tmp->strExtIp);
 		else
-			mir_sntprintf(tmpAddress, SIZEOF(tmpAddress), _T("%s:%d"), tmp->strExtIp, tmp->intExtPort);
+			mir_sntprintf(tmpAddress, _countof(tmpAddress), _T("%s:%d"), tmp->strExtIp, tmp->intExtPort);
 		lvI.pszText = tmpAddress;
 		ListView_SetItem(hwndList, &lvI);
 		lvI.iSubItem = 3;
@@ -252,20 +253,20 @@ static INT_PTR CALLBACK FilterEditProc(HWND hWnd, UINT message, WPARAM wParam, L
 		case ID_OK:
 		{
 			TCHAR tmpPort[6];
-			GetDlgItemText(hWnd, ID_TXT_LOCAL_PORT, tmpPort, SIZEOF(tmpPort));
+			GetDlgItemText(hWnd, ID_TXT_LOCAL_PORT, tmpPort, _countof(tmpPort));
 			if (tmpPort[0] == '*')
 				connCurrentEditModal->intIntPort = -1;
 			else
 				connCurrentEditModal->intIntPort = GetDlgItemInt(hWnd, ID_TXT_LOCAL_PORT, NULL, FALSE);
-			GetDlgItemText(hWnd, ID_TXT_REMOTE_PORT, tmpPort, SIZEOF(tmpPort));
+			GetDlgItemText(hWnd, ID_TXT_REMOTE_PORT, tmpPort, _countof(tmpPort));
 			if (tmpPort[0] == '*')
 				connCurrentEditModal->intExtPort = -1;
 			else
 				connCurrentEditModal->intExtPort = GetDlgItemInt(hWnd, ID_TXT_REMOTE_PORT, NULL, FALSE);
 
-			GetDlgItemText(hWnd, ID_TXT_LOCAL_IP, connCurrentEditModal->strIntIp, SIZEOF(connCurrentEditModal->strIntIp));
-			GetDlgItemText(hWnd, ID_TXT_REMOTE_IP, connCurrentEditModal->strExtIp, SIZEOF(connCurrentEditModal->strExtIp));
-			GetDlgItemText(hWnd, ID_TEXT_NAME, connCurrentEditModal->PName, SIZEOF(connCurrentEditModal->PName));
+			GetDlgItemText(hWnd, ID_TXT_LOCAL_IP, connCurrentEditModal->strIntIp, _countof(connCurrentEditModal->strIntIp));
+			GetDlgItemText(hWnd, ID_TXT_REMOTE_IP, connCurrentEditModal->strExtIp, _countof(connCurrentEditModal->strExtIp));
+			GetDlgItemText(hWnd, ID_TEXT_NAME, connCurrentEditModal->PName, _countof(connCurrentEditModal->PName));
 
 			connCurrentEditModal->Pid = !(BOOL)SendDlgItemMessage(hWnd, ID_CBO_ACTION, CB_GETCURSEL, 0, 0);
 
@@ -303,9 +304,9 @@ INT_PTR CALLBACK DlgProcConnectionNotifyOpts(HWND hwndDlg, UINT msg, WPARAM wPar
 		bOptionsOpen = TRUE;
 		TranslateDialogDefault(hwndDlg);//translate miranda function
 #ifdef _WIN64
-		mir_sntprintf(buff,SIZEOF(buff),_T("%d.%d.%d.%d/64"), HIBYTE(HIWORD(pluginInfo.version)), LOBYTE(HIWORD(pluginInfo.version)), HIBYTE(LOWORD(pluginInfo.version)), LOBYTE(LOWORD(pluginInfo.version)));
+		mir_sntprintf(buff,_countof(buff),_T("%d.%d.%d.%d/64"), HIBYTE(HIWORD(pluginInfo.version)), LOBYTE(HIWORD(pluginInfo.version)), HIBYTE(LOWORD(pluginInfo.version)), LOBYTE(LOWORD(pluginInfo.version)));
 #else
-		mir_sntprintf(buff, SIZEOF(buff), _T("%d.%d.%d.%d/32"), HIBYTE(HIWORD(pluginInfo.version)), LOBYTE(HIWORD(pluginInfo.version)), HIBYTE(LOWORD(pluginInfo.version)), LOBYTE(LOWORD(pluginInfo.version)));
+		mir_sntprintf(buff, _T("%d.%d.%d.%d/32"), HIBYTE(HIWORD(pluginInfo.version)), LOBYTE(HIWORD(pluginInfo.version)), HIBYTE(LOWORD(pluginInfo.version)), LOBYTE(LOWORD(pluginInfo.version)));
 #endif
 		SetDlgItemText(hwndDlg, IDC_VERSION, buff);
 		LoadSettings();
@@ -347,7 +348,7 @@ INT_PTR CALLBACK DlgProcConnectionNotifyOpts(HWND hwndDlg, UINT msg, WPARAM wPar
 		// items. 
 		lvI.mask = LVIF_TEXT;
 		for (int i = 0; i < STATUS_COUNT; i++) {
-			lvI.pszText = (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, ID_STATUS_ONLINE + i, GSMDF_TCHAR);
+			lvI.pszText = pcli->pfnGetStatusModeDescription(ID_STATUS_ONLINE + i, 0);
 			lvI.iItem = i;
 			ListView_InsertItem(hwndList, &lvI);
 			ListView_SetCheckState(hwndList, i, settingStatus[i]);
@@ -534,7 +535,7 @@ INT_PTR CALLBACK DlgProcConnectionNotifyOpts(HWND hwndDlg, UINT msg, WPARAM wPar
 
 				for (int i = 0; i < STATUS_COUNT; i++) {
 					char buff[128];
-					mir_snprintf(buff, SIZEOF(buff), "Status%d", i);
+					mir_snprintf(buff, "Status%d", i);
 					settingStatus[i] = (ListView_GetCheckState(GetDlgItem(hwndDlg, IDC_STATUS), i) ? TRUE : FALSE);
 					db_set_b(0, PLUGINNAME, buff, settingStatus[i] ? 1 : 0);
 				}
@@ -717,10 +718,10 @@ static unsigned __stdcall checkthread(void *)
 
 #ifdef _DEBUG
 				TCHAR msg[1024];
-				mir_sntprintf(msg, SIZEOF(msg), _T("%s:%d\n%s:%d"), cur->strIntIp, cur->intIntPort, cur->strExtIp, cur->intExtPort);
+				mir_sntprintf(msg, _countof(msg), _T("%s:%d\n%s:%d"), cur->strIntIp, cur->intIntPort, cur->strExtIp, cur->intExtPort);
 				_OutputDebugString(_T("New connection: %s"), msg);
 #endif
-				pid2name(cur->Pid, cur->PName, SIZEOF(cur->PName));
+				pid2name(cur->Pid, cur->PName, _countof(cur->PName));
 				if (WAIT_OBJECT_0 == WaitForSingleObject(hExceptionsMutex, 100))
 				{
 					if (checkFilter(connExceptions, cur))
@@ -798,12 +799,12 @@ void showMsg(TCHAR *pName, DWORD pid, TCHAR *intIp, TCHAR *extIp, int intPort, i
 	ppd.lchIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_ICON1));
 	if (settingResolveIp) {
 		TCHAR hostName[128];
-		getDnsName(extIp, hostName, SIZEOF(hostName));
-		mir_sntprintf(ppd.lptzText, SIZEOF(ppd.lptzText), _T("%s:%d\n%s:%d"), hostName, extPort, intIp, intPort);
+		getDnsName(extIp, hostName, _countof(hostName));
+		mir_sntprintf(ppd.lptzText, _countof(ppd.lptzText), _T("%s:%d\n%s:%d"), hostName, extPort, intIp, intPort);
 	}
-	else mir_sntprintf(ppd.lptzText, SIZEOF(ppd.lptzText), _T("%s:%d\n%s:%d"), extIp, extPort, intIp, intPort);
+	else mir_sntprintf(ppd.lptzText, _countof(ppd.lptzText), _T("%s:%d\n%s:%d"), extIp, extPort, intIp, intPort);
 
-	mir_sntprintf(ppd.lptzContactName, SIZEOF(ppd.lptzContactName), _T("%s (%s)"), pName, tcpStates[state - 1]);
+	mir_sntprintf(ppd.lptzContactName, _countof(ppd.lptzContactName), _T("%s (%s)"), pName, tcpStates[state - 1]);
 
 	if (settingSetColours) {
 		ppd.colorBack = settingBgColor;
@@ -864,44 +865,36 @@ extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD, LPVOID)
 	hInst = hinstDLL;
 	return TRUE;
 }
+
 extern "C" int __declspec(dllexport) Load(void)
 {
-	char service[100] = { "" };
-
-	PROTOCOLDESCRIPTOR pd = { PROTOCOLDESCRIPTOR_V3_SIZE };
-
 #ifdef _DEBUG
 	_OutputDebugString(_T("Entering Load dll"));
 #endif
 
 	mir_getLP(&pluginInfo);
-	//hCurrentEditMutex=CreateMutex(NULL,FALSE,_T("CurrentEditMutex"));
+	mir_getCLI();
+
 	hExceptionsMutex = CreateMutex(NULL, FALSE, _T("ExceptionsMutex"));
 
 	LoadSettings();
 	connExceptions = LoadSettingsConnections();
-	//create protocol
-	//memset(&pd, 0, sizeof(pd));
-	//pd.cbSize=sizeof(pd);
+
+	PROTOCOLDESCRIPTOR pd = { 0 };
+	pd.cbSize = sizeof(pd);
 	pd.szName = PLUGINNAME;
 	pd.type = PROTOTYPE_PROTOCOL;
-	CallService(MS_PROTO_REGISTERMODULE, 0, (LPARAM)&pd);
-	//set all contacts to offline
+	Proto_RegisterModule(&pd);
 
+	//set all contacts to offline
 	for (MCONTACT hContact = db_find_first(PLUGINNAME); hContact != NULL; hContact = db_find_next(hContact, PLUGINNAME))
 		db_set_w(hContact, PLUGINNAME, "status", ID_STATUS_OFFLINE);
 
-	mir_snprintf(service, SIZEOF(service), "%s%s", PLUGINNAME, PS_GETCAPS);
-	CreateServiceFunction(service, GetCaps);
-	mir_snprintf(service, SIZEOF(service), "%s%s", PLUGINNAME, PS_GETNAME);
-	CreateServiceFunction(service, GetName);
-	mir_snprintf(service, SIZEOF(service), "%s%s", PLUGINNAME, PS_LOADICON);
-	CreateServiceFunction(service, TMLoadIcon);
-	mir_snprintf(service, SIZEOF(service), "%s%s", PLUGINNAME, PS_SETSTATUS);
-	CreateServiceFunction(service, SetStatus);
-	mir_snprintf(service, SIZEOF(service), "%s%s", PLUGINNAME, PS_GETSTATUS);
-	CreateServiceFunction(service, GetStatus);
-
+	CreateProtoServiceFunction(PLUGINNAME, PS_GETCAPS, GetCaps);
+	CreateProtoServiceFunction(PLUGINNAME, PS_GETNAME, GetName);
+	CreateProtoServiceFunction(PLUGINNAME, PS_LOADICON, TMLoadIcon);
+	CreateProtoServiceFunction(PLUGINNAME, PS_SETSTATUS, SetStatus);
+	CreateProtoServiceFunction(PLUGINNAME, PS_GETSTATUS, GetStatus);
 
 	SkinAddNewSoundEx(PLUGINNAME_NEWSOUND, PLUGINNAME, LPGEN("New Connection Notification"));
 	hOptInit = HookEvent(ME_OPT_INITIALISE, ConnectionNotifyOptInit);//register service to hook option call

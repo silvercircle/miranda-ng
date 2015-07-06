@@ -206,7 +206,7 @@ namespace
 		case WM_INITDIALOG:
 		{
 			hContact = MCONTACT(lParam);
-			HANDLE hWL = CModuleInfo::GetInstance().GetWindowList(WINDOW_PREFIX_INFO, false);
+			MWindowList hWL = CModuleInfo::GetInstance().GetWindowList(WINDOW_PREFIX_INFO, false);
 			assert(hWL);
 			WindowList_Add(hWL, hdlg, hContact);
 
@@ -225,7 +225,7 @@ namespace
 			{
 				SetWindowLongPtr(hdlg, GWLP_USERDATA, 0);
 
-				HANDLE hWL = CModuleInfo::GetInstance().GetWindowList(WINDOW_PREFIX_INFO, false);
+				MWindowList hWL = CModuleInfo::GetInstance().GetWindowList(WINDOW_PREFIX_INFO, false);
 				assert(hWL);
 				WindowList_Remove(hWL, hdlg);
 				Utils_SaveWindowPosition(hdlg, hContact, QUOTES_MODULE_NAME, WINDOW_PREFIX_INFO);
@@ -253,7 +253,7 @@ int Quotes_OnContactDoubleClick(WPARAM wp, LPARAM/* lp*/)
 	MCONTACT hContact = MCONTACT(wp);
 	if (CModuleInfo::GetQuoteProvidersPtr()->GetContactProviderPtr(hContact))
 	{
-		HANDLE hWL = CModuleInfo::GetInstance().GetWindowList(WINDOW_PREFIX_INFO, true);
+		MWindowList hWL = CModuleInfo::GetInstance().GetWindowList(WINDOW_PREFIX_INFO, true);
 		assert(hWL);
 		HWND hWnd = WindowList_Find(hWL, hContact);
 		if (NULL != hWnd) {
@@ -269,27 +269,14 @@ int Quotes_OnContactDoubleClick(WPARAM wp, LPARAM/* lp*/)
 	return 0;
 }
 
-namespace
-{
-	void enable_menu(HGENMENU hMenu, bool bEnable)
-	{
-		CLISTMENUITEM clmi = { sizeof(clmi) };
-		clmi.flags = CMIM_FLAGS;
-		if (false == bEnable)
-			clmi.flags |= CMIF_GRAYED;
-
-		Menu_ModifyItem(hMenu, &clmi);
-	}
-}
-
 int Quotes_PrebuildContactMenu(WPARAM wp, LPARAM)
 {
-	enable_menu(g_hMenuEditSettings, false);
-	enable_menu(g_hMenuOpenLogFile, false);
+	Menu_EnableItem(g_hMenuEditSettings, false);
+	Menu_EnableItem(g_hMenuOpenLogFile, false);
 #ifdef CHART_IMPLEMENT
-	enable_menu(g_hMenuChart,false);
+	Menu_EnableItem(g_hMenuChart,false);
 #endif
-	enable_menu(g_hMenuRefresh, false);
+	Menu_EnableItem(g_hMenuRefresh, false);
 
 	MCONTACT hContact = MCONTACT(wp);
 	if (NULL == hContact)
@@ -297,9 +284,9 @@ int Quotes_PrebuildContactMenu(WPARAM wp, LPARAM)
 		return 0;
 	}
 
-	enable_menu(g_hMenuEditSettings, true);
+	Menu_EnableItem(g_hMenuEditSettings, true);
 
-	enable_menu(g_hMenuRefresh, true);
+	Menu_EnableItem(g_hMenuRefresh, true);
 
 	tstring sLogFileName;
 	bool bThereIsLogFile = (true == get_log_file(hContact, sLogFileName))
@@ -307,9 +294,9 @@ int Quotes_PrebuildContactMenu(WPARAM wp, LPARAM)
 	if (true == bThereIsLogFile)
 	{
 #ifdef CHART_IMPLEMENT
-		enable_menu(g_hMenuChart,true);
+		Menu_EnableItem(g_hMenuChart,true);
 #endif
-		enable_menu(g_hMenuOpenLogFile, true);
+		Menu_EnableItem(g_hMenuOpenLogFile, true);
 	}
 
 	return 0;

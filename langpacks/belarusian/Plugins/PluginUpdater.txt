@@ -5,8 +5,6 @@
 ;  Version: 0.1.2.4
 ;  Authors: Mataes, George Hazan
 ;============================================================
-[Plugin updater for Miranda NG.]
-Абнаўленне Miranda NG.
 ;file \plugins\PluginUpdater\res\Resource.rc
 [Updates found!]
 Знойдзены абнаўленні!
@@ -46,6 +44,8 @@
 Зададзеная версія
 [Notifications]
 Абвесткі
+[Restart]
+Перазапуск
 [Errors]
 Памылкі
 [Info messages]
@@ -60,8 +60,8 @@
 Наладзіць колеры
 [Use &Windows colors]
 Колеры Windows
-[Use Pop&up colors]
-Колеры Pop&up
+[Use defa&ult colors]
+Колеры па змаўчанні
 [Preview]
 Прагляд
 [Click action]
@@ -135,6 +135,10 @@
 ;file \plugins\PluginUpdater\src\Events.cpp
 ;file \plugins\PluginUpdater\src\Notifications.cpp
 ;file \plugins\PluginUpdater\src\Notifications.h
+[Close popup]
+Зачыніць вакно
+[Do nothing]
+Нічога не рабіць
 ;file \plugins\PluginUpdater\src\Options.cpp
 [hours]
 гадзін(ы)
@@ -152,7 +156,8 @@
 ;file \plugins\PluginUpdater\src\Utils.cpp
 [Plugin info]
 Пра плагін
-[Plugin Updater HTTP connection]
-HTTP падлучэнне Plugin Updater
+[Plugin Updater HTTP connections]
+HTTP падлучэння Plugin Updater
 [An error occurred while checking for new updates.]
 Пры праверцы абнаўленняў адбылася памылка.
+;file \plugins\PluginUpdater\src\Compat\compat.h

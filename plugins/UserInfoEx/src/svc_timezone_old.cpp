@@ -95,7 +95,7 @@ class CTzBias : public LIST<CTimeZone>
 		return (result || !tz1->ptszDisplay || !tz2->ptszDisplay) ? result : mir_tstrcmpi(tz1->ptszDisplay, tz2->ptszDisplay);
 	}
 public:
-	CTzBias() : LIST<CTimeZone>(50, (FTSortFunc) CTzBias::sortFunc)
+	CTzBias() : LIST<CTimeZone>(50, &CTzBias::sortFunc)
 	{
 	}
 
@@ -145,7 +145,7 @@ public:
 	const CTzBias& Bias;
 
 	CTzMgr() 
-		:LIST<CTimeZone>(50, (FTSortFunc) CTzMgr::sortFunc),
+		:LIST<CTimeZone>(50, CTzMgr::sortFunc),
 		_bias(), Bias(_bias)
 	{
 	}
@@ -185,7 +185,7 @@ public:
 		if (result == ERROR_SUCCESS) {
 			// clear out old list
 			this->destroy(); _bias.destroy();
-			for (i = 0; ERROR_SUCCESS == RegEnumKey(hKeyRoot, i, szName, SIZEOF(szName)); i++) {
+			for (i = 0; ERROR_SUCCESS == RegEnumKey(hKeyRoot, i, szName, _countof(szName)); i++) {
 				result = RegOpenKey(hKeyRoot, szName, &hKeyTz);
 				if (result == ERROR_SUCCESS) {
 					pTimeZone = new CTimeZone();
@@ -412,7 +412,7 @@ CTimeZone* GetContactTimeZone(MCONTACT hContact, LPCSTR pszProto)
 
 CTimeZone* GetContactTimeZone(MCONTACT hContact)
 {
-	return GetContactTimeZone(hContact, DB::Contact::Proto(hContact));
+	return GetContactTimeZone(hContact, Proto_GetBaseAccountName(hContact));
 }
 
 /**
@@ -531,13 +531,13 @@ void SvcTimezoneSyncWithWindows()
 
 	PROTOACCOUNT **pAcc;
 	int nAccCount;
-	if (MIRSUCCEEDED(ProtoEnumAccounts(&nAccCount, &pAcc))) {
-		for (int i = 0; i < nAccCount; i++) {
-			// update local timezone as database setting
-			if (IsProtoAccountEnabled(pAcc[i]) && SvcTimezoneSyncWithWindowsProc(pAcc[i]->szModuleName, tzi.Bias))
-				// update my contact information on icq server
-				CallProtoService(pAcc[i]->szModuleName, PS_CHANGEINFOEX, CIXT_LOCATION, NULL);
-		}
+	Proto_EnumAccounts(&nAccCount, &pAcc);
+
+	for (int i = 0; i < nAccCount; i++) {
+		// update local timezone as database setting
+		if (IsProtoAccountEnabled(pAcc[i]) && SvcTimezoneSyncWithWindowsProc(pAcc[i]->szModuleName, tzi.Bias))
+			// update my contact information on icq server
+			CallProtoService(pAcc[i]->szModuleName, PS_CHANGEINFOEX, CIXT_LOCATION, NULL);
 	}
 }
 
@@ -590,16 +590,3 @@ INT_PTR GetContactLocalTime_old(WPARAM wParam, LPARAM lParam)
 /***********************************************************************************************************
  * initialization
  ***********************************************************************************************************/
-
-/**
-* This function initially loads the module upon startup.
-**/
-
-void SvcTimezoneLoadModule_old()
-{
-	TzMgr.Init();
-	CreateServiceFunction(MS_USERINFO_TIMEZONEINFO, GetContactTimeZoneInformation);
-	CreateServiceFunction(MS_USERINFO_LOCALTIME, GetContactLocalTime);
-	if (db_get_b(NULL, MODNAME, SET_OPT_AUTOTIMEZONE, TRUE))
-		SvcTimezoneSyncWithWindows();
-}

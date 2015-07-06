@@ -26,7 +26,6 @@
 #include <m_gui.h>
 
 #include <m_protoint.h>
-#include <m_protomod.h>
 #include <m_protosvc.h>
 
 #include <m_dropbox.h>
@@ -64,7 +63,7 @@ extern HINSTANCE g_hInstance;
 
 // icons
 void   InitializeIcons();
-HANDLE GetIconHandle(int iconId);
+HANDLE GetIconHandleByName(const char *name);
 HICON  LoadIconEx(int iconId, bool big = false);
 
 #endif //_COMMON_H_

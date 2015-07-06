@@ -160,7 +160,7 @@ begin
     if si^.icon<>0 then
       Icon:=si^.icon
     else
-      Icon:=LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
+      Icon:=Skin_LoadIcon(SKINICON_OTHER_MIRANDA,0);
     if PopupDelay<0 then
       sec:=-1
     else if PopupDelay>0 then
@@ -312,7 +312,6 @@ end;
 
 function NewPlStatus(wParam:WPARAM;lParam:LPARAM):int;cdecl;
 var
-  mi:TCListMenuItem;
   flag:integer;
 begin
   result:=0;
@@ -333,24 +332,14 @@ begin
       else // like 1
         exit
       end;
-      FillChar(mi,sizeof(mi),0);
-      mi.cbSize:=sizeof(mi);
-      mi.flags :=CMIM_FLAGS+flag;
-      CallService(MS_CLIST_MODIFYMENUITEM,hMenuInfo,tlparam(@mi));
+      Menu_ModifyItem(hMenuInfo, nil, INVALID_HANDLE_VALUE, flag);
     end;
   end;
 end;
 
 function IconChanged(wParam:WPARAM;lParam:LPARAM):int;cdecl;
-var
-  mi:TCListMenuItem;
 begin
   result:=0;
-  FillChar(mi,SizeOf(mi),0);
-  mi.cbSize:=sizeof(mi);
-  mi.flags :=CMIM_ICON;
-  mi.hIcon :=CallService(MS_SKIN2_GETICON,0,tlparam(IcoBtnInfo));
-  CallService(MS_CLIST_MODIFYMENUITEM,hMenuInfo,tlparam(@mi));
   if ActionList<>nil then
   begin
     mFreeMem(ActionList);
@@ -385,9 +374,8 @@ begin
     UnhookEvent(onttbhook);
   // get info button
   FillChar(ttb,SizeOf(ttb),0);
-  ttb.cbSize    :=SizeOf(ttb);
   ttb.dwFlags   :=TTBBF_VISIBLE{ or TTBBF_SHOWTOOLTIP};
-  ttb.hIconUp   :=CallService(MS_SKIN2_GETICON,0,tlparam(IcoBtnInfo));
+  ttb.hIconUp   :=IcoLib_GetIcon(IcoBtnInfo,0);
   ttb.hIconDn   :=ttb.hIconUp;
   ttb.pszService:=MS_WAT_SHOWMUSICINFO;
   ttb.name      :='Music Info';
@@ -455,7 +443,7 @@ end;
 
 function InitProc(aGetStatus:boolean=false):integer;
 var
-  mi:TCListMenuItem;
+  mi:TMO_MenuItem;
   sid:TSKINICONDESC;
 begin
   if aGetStatus then
@@ -473,7 +461,6 @@ begin
   ssmi:=CreateServiceFunction(MS_WAT_SHOWMUSICINFO,@OpenPopup);
 
   FillChar(sid,SizeOf(TSKINICONDESC),0);
-  sid.cbSize:=SizeOf(TSKINICONDESC);
   sid.cx:=16;
   sid.cy:=16;
   sid.szSection.a:='WATrack';
@@ -482,16 +469,15 @@ begin
   sid.szDescription.a:='Music Info';
   Skin_AddIcon(@sid);
   DestroyIcon(sid.hDefaultIcon);
-  sic:=HookEvent(ME_SKIN2_ICONSCHANGED,@IconChanged);
+  HookEvent(ME_SKIN2_ICONSCHANGED,@IconChanged);
 
   FillChar(mi,SizeOf(mi),0);
-  mi.cbSize       :=SizeOf(mi);
-  mi.szPopupName.a:=PluginShort;
-  mi.hIcon        :=CallService(MS_SKIN2_GETICON,0,lparam(IcoBtnInfo));
-  mi.szName.a     :='Music Info';
-  mi.pszService   :=MS_WAT_SHOWMUSICINFO;
-  mi.popupPosition:=MenuInfoPos;
-  hMenuInfo       :=Menu_AddMainMenuItem(@mi);
+  mi.root      :=Menu_CreateRoot(MO_MAIN, 'Watrack', MenuInfoPos, 0, 0);
+  mi.hIcon     :=IcoLib_GetIcon(IcoBtnInfo,0);
+  mi.szName.a  :='Music Info';
+  mi.pszService:=MS_WAT_SHOWMUSICINFO;
+  mi.position  :=MenuInfoPos;
+  hMenuInfo:=Menu_AddMainMenuItem(@mi);
 
   ActionList:=nil;
   if ServiceExists(MS_POPUP_ADDPOPUPW)<>0 then
@@ -537,10 +523,9 @@ begin
   if aSetDisable then
     SetModStatus(0);
 
-  CallService(MO_REMOVEMENUITEM,hMenuInfo,0);
+  Menu_RemoveItem(hMenuInfo);
   UnhookEvent(plStatusHook);
   DestroyServiceFunction(ssmi);
-  UnhookEvent(sic);
 
   freepopup;
 

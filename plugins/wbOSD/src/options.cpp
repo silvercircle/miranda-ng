@@ -23,7 +23,7 @@ void FillCheckBoxTree(HWND hwndTree,DWORD style)
 	tvis.item.mask = TVIF_PARAM|TVIF_TEXT|TVIF_STATE;
 	for ( WORD status = ID_STATUS_OFFLINE; status <=ID_STATUS_OUTTOLUNCH; status++ ) {
 		tvis.item.lParam = status - ID_STATUS_OFFLINE;
-		tvis.item.pszText = (TCHAR*) CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION,(WPARAM) status,GSMDF_TCHAR);
+		tvis.item.pszText = pcli->pfnGetStatusModeDescription(status, 0);
 		tvis.item.stateMask = TVIS_STATEIMAGEMASK;
 		tvis.item.state = INDEXTOSTATEIMAGEMASK(( style & ( 1 << tvis.item.lParam )) != 0 ? 2 : 1 );
 		TreeView_InsertItem( hwndTree, &tvis );
@@ -250,7 +250,7 @@ INT_PTR CALLBACK OptDlgProc(HWND hDlg,UINT msg,WPARAM wparam,LPARAM lparam)
 
 			{
 				TCHAR buf[20];
-				mir_sntprintf(buf, SIZEOF(buf), _T("%d %%"), ps->alpha*100/255);
+				mir_sntprintf(buf, _T("%d %%"), ps->alpha*100/255);
 				SetDlgItemText(hDlg, IDC_ALPHATXT, buf);
 			}
 
@@ -266,7 +266,7 @@ INT_PTR CALLBACK OptDlgProc(HWND hDlg,UINT msg,WPARAM wparam,LPARAM lparam)
 			ps->alpha=SendDlgItemMessage(hDlg, IDC_SLIDER1, TBM_GETPOS, 0, 0);
 			{
 				TCHAR buf[20];
-				mir_sntprintf(buf, SIZEOF(buf), _T("%d %%"), ps->alpha*100/255);
+				mir_sntprintf(buf, _T("%d %%"), ps->alpha*100/255);
 				SetDlgItemText(hDlg, IDC_ALPHATXT, buf);
 			}
 			goto xxx;

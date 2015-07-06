@@ -60,7 +60,7 @@ static INT_PTR CALLBACK DlgProcKSBasicOpts(HWND hwndDlg, UINT msg, WPARAM wParam
 
 			int count;
 			PROTOACCOUNT** protos;
-			ProtoEnumAccounts(&count, &protos);
+			Proto_EnumAccounts(&count, &protos);
 
 			for (i = 0; i < count; i++) {
 				if (!IsSuitableProto(protos[i]))
@@ -71,7 +71,7 @@ static INT_PTR CALLBACK DlgProcKSBasicOpts(HWND hwndDlg, UINT msg, WPARAM wParam
 				ListView_InsertItem(hList, &lvItem);
 
 				char dbSetting[128];
-				mir_snprintf(dbSetting, SIZEOF(dbSetting), "%s_enabled", protos[i]->szModuleName);
+				mir_snprintf(dbSetting, _countof(dbSetting), "%s_enabled", protos[i]->szModuleName);
 				ListView_SetCheckState(hList, lvItem.iItem, db_get_b(NULL, MODULENAME, dbSetting, TRUE));
 				lvItem.iItem++;
 			}
@@ -152,7 +152,7 @@ static INT_PTR CALLBACK DlgProcKSBasicOpts(HWND hwndDlg, UINT msg, WPARAM wParam
 				ListView_GetItem(hList, &lvItem);
 
 				char dbSetting[128];
-				mir_snprintf(dbSetting, SIZEOF(dbSetting), "%s_enabled", (char *)lvItem.lParam);
+				mir_snprintf(dbSetting, _countof(dbSetting), "%s_enabled", (char *)lvItem.lParam);
 				db_set_b(NULL, MODULENAME, dbSetting, (BYTE)ListView_GetCheckState(hList, lvItem.iItem));
 			}
 		}
@@ -479,7 +479,7 @@ INT_PTR CALLBACK PopupOptDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 			POPUPDATAT ppd = { NULL };
 
 			ppd.lchContact = NULL;
-			ppd.lchIcon = LoadSkinnedIcon(SKINICON_STATUS_OFFLINE);
+			ppd.lchIcon = Skin_LoadIcon(SKINICON_STATUS_OFFLINE);
 			_tcsncpy(ppd.lptzContactName, TranslateT("KeepStatus"), MAX_CONTACTNAME);
 			_tcsncpy(ppd.lptzText, TranslateT("You broke the Internet!"), MAX_SECONDLINE);
 			if (IsDlgButtonChecked(hwndDlg, IDC_WINCOLORS))

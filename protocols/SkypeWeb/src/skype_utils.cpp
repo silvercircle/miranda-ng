@@ -17,6 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
+#pragma warning(disable:4566)
+
 bool CSkypeProto::IsOnline()
 {
 	return m_iStatus > ID_STATUS_OFFLINE && m_hPollingThread;
@@ -30,25 +32,25 @@ void CSkypeProto::SetSrmmReadStatus(MCONTACT hContact)
 
 	TCHAR ttime[64];
 	_locale_t locale = _create_locale(LC_ALL, "");
-	_tcsftime_l(ttime, SIZEOF(ttime), _T("%X - %x"), localtime(&time), locale);
+	_tcsftime_l(ttime, _countof(ttime), _T("%X - %x"), localtime(&time), locale);
 	_free_locale(locale);
 
 	StatusTextData st = { 0 };
 	st.cbSize = sizeof(st);
-	st.hIcon = LoadSkinnedIcon(SKINICON_OTHER_HISTORY);
-	mir_sntprintf(st.tszText, SIZEOF(st.tszText), TranslateT("Message read: %s"), ttime);
+	st.hIcon = Skin_LoadIcon(SKINICON_OTHER_HISTORY);
+	mir_sntprintf(st.tszText, _countof(st.tszText), TranslateT("Message read: %s"), ttime);
 	CallService(MS_MSG_SETSTATUSTEXT, (WPARAM)hContact, (LPARAM)&st);
 }
 
-time_t CSkypeProto::IsoToUnixTime(const TCHAR *stamp)
+time_t CSkypeProto::IsoToUnixTime(const char *stamp)
 {
-	TCHAR date[9];
+	char date[9];
 	int i, y;
 
 	if (stamp == NULL)
 		return 0;
 
-	TCHAR *p = NEWTSTR_ALLOCA(stamp);
+	char *p = NEWSTR_ALLOCA(stamp);
 
 	// skip '-' chars
 	int si = 0, sj = 0;
@@ -89,7 +91,7 @@ time_t CSkypeProto::IsoToUnixTime(const TCHAR *stamp)
 	for (; *p != '\0' && !isdigit(*p); p++);
 
 	// Parse time
-	if (_stscanf(p, _T("%d:%d:%d"), &timestamp.tm_hour, &timestamp.tm_min, &timestamp.tm_sec) != 3)
+	if (sscanf(p, "%d:%d:%d", &timestamp.tm_hour, &timestamp.tm_min, &timestamp.tm_sec) != 3)
 		return (time_t)0;
 
 	timestamp.tm_isdst = 0;	// DST is already present in _timezone below
@@ -392,7 +394,7 @@ char *CSkypeProto::RemoveHtml(const char *text)
 				std::string entity = data.substr(begin + 1, i - begin - 1);
 
 				bool found = false;
-				for (int j = 0; j < SIZEOF(htmlEntities); j++)
+				for (int j = 0; j < _countof(htmlEntities); j++)
 				{
 					if (!mir_strcmpi(entity.c_str(), htmlEntities[j].entity))
 					{
@@ -417,11 +419,7 @@ char *CSkypeProto::RemoveHtml(const char *text)
 
 bool CSkypeProto::IsMe(const char *skypeName)
 {
-	ptrA mySkypeName(getStringA(SKYPE_SETTINGS_ID));
-	ptrA SelfEndpointName(getStringA("SelfEndpointName"));
-	if (!mir_strcmp(skypeName, mySkypeName) || !mir_strcmp(skypeName, SelfEndpointName))
-		return true;
-	return false;
+	return (!mir_strcmpi(skypeName, m_szSelfSkypeName) || !mir_strcmp(skypeName, ptrA(getStringA("SelfEndpointName"))));
 }
 
 char *CSkypeProto::MirandaToSkypeStatus(int status)
@@ -459,7 +457,7 @@ int CSkypeProto::SkypeToMirandaStatus(const char *status)
 		return ID_STATUS_OFFLINE;
 }
 
-void CSkypeProto::ShowNotification(const TCHAR *caption, const TCHAR *message, int flags, MCONTACT hContact, int type)
+void CSkypeProto::ShowNotification(const TCHAR *caption, const TCHAR *message, MCONTACT hContact, int type)
 {
 	if (Miranda_Terminated())
 		return;
@@ -516,9 +514,9 @@ LRESULT CSkypeProto::PopupDlgProcCall(HWND hPopup, UINT uMsg, WPARAM wParam, LPA
 	return DefWindowProc(hPopup, uMsg, wParam, lParam);
 }
 
-void CSkypeProto::ShowNotification(const TCHAR *message, int flags, MCONTACT hContact)
+void CSkypeProto::ShowNotification(const TCHAR *message, MCONTACT hContact)
 {
-	ShowNotification(_T(MODULE), message, flags, hContact);
+	ShowNotification(_T(MODULE), message, hContact);
 }
 
 bool CSkypeProto::IsFileExists(std::tstring path)
@@ -528,34 +526,48 @@ bool CSkypeProto::IsFileExists(std::tstring path)
 
 // url parsing
 
-char *CSkypeProto::ParseUrl(const char *url, const char *token)
+CMStringA CSkypeProto::ParseUrl(const char *url, const char *token)
 {
 	const char *start = strstr(url, token);
 	if (start == NULL)
-		return NULL;
+		return CMStringA();
+	
 	start = start + mir_strlen(token);
 	const char *end = strchr(start, '/');
 	if (end == NULL)
-		return mir_strdup(start);
-	return mir_strndup(start, end - start);
+		return CMStringA(start);
+	return CMStringA(start, end - start);
 }
 
-char *CSkypeProto::ContactUrlToName(const char *url)
+CMStringA CSkypeProto::GetStringChunk(const char *haystack, const char *start, const char *end)
+{
+	const char *sstart = strstr(haystack, start);
+	if (sstart == NULL)
+		return CMStringA();
+	
+	sstart = sstart + mir_strlen(start);
+	const char *send = strstr(sstart, end);
+	if (send == NULL)
+		return CMStringA(sstart);
+	return CMStringA(sstart, send - sstart);
+}
+
+CMStringA CSkypeProto::ContactUrlToName(const char *url)
 {
 	return ParseUrl(url, "/8:");
 }
 
-char *CSkypeProto::SelfUrlToName(const char *url)
+CMStringA CSkypeProto::SelfUrlToName(const char *url)
 {
 	return ParseUrl(url, "/1:");
 }
 
-char *CSkypeProto::ChatUrlToName(const char *url)
+CMStringA CSkypeProto::ChatUrlToName(const char *url)
 {
 	return ParseUrl(url, "/19:");
 }
 
-char *CSkypeProto::GetServerFromUrl(const char *url)
+CMStringA CSkypeProto::GetServerFromUrl(const char *url)
 {
 	return ParseUrl(url, "://");
 }
@@ -621,8 +633,8 @@ INT_PTR CSkypeProto::ParseSkypeUriService(WPARAM, LPARAM lParam)
 		if (hContact == NULL)
 		{
 			PROTOSEARCHRESULT psr = { 0 };
-			psr.id = mir_tstrdup(szJid);
-			psr.nick = mir_tstrdup(szJid);
+			psr.id.t = mir_tstrdup(szJid);
+			psr.nick.t = mir_tstrdup(szJid);
 			psr.flags = PSR_TCHAR;
 
 			ADDCONTACTSTRUCT acs;
@@ -655,110 +667,12 @@ INT_PTR CSkypeProto::GlobalParseSkypeUriService(WPARAM wParam, LPARAM lParam)
 	return 1;
 }
 
-LPCTSTR CSkypeProto::ClearText(CMString &result, const TCHAR *message)
-{
-	BSTR bstrHtml = SysAllocString(message), bstrRes = SysAllocString(_T(""));
-	HRESULT hr = TestMarkupServices(bstrHtml, &TestDocumentText, bstrRes);
-	if (SUCCEEDED(hr))
-		result = bstrRes;
-	else
-		result = message;
-	SysFreeString(bstrHtml);
-	SysFreeString(bstrRes);
-
-	return result;
-}
-
-HRESULT TestDocumentText(IHTMLDocument3 *pHtmlDoc, BSTR &message)
-{
-	IHTMLDocument2 *pDoc = NULL;
-	IHTMLElement *pElem = NULL;
-	BSTR bstrId = SysAllocString(L"test");
-
-	HRESULT hr = pHtmlDoc->QueryInterface(IID_PPV_ARGS(&pDoc));
-	if (SUCCEEDED(hr) && pDoc) {
-		hr = pDoc->get_body(&pElem);
-		if (SUCCEEDED(hr) && pElem) {
-			BSTR bstrText = NULL;
-			pElem->get_innerText(&bstrText);
-			message = SysAllocString(bstrText);
-			SysFreeString(bstrText);
-			pElem->Release();
-		}
-
-		pDoc->Release();
-	}
-
-	SysFreeString(bstrId);
-	return hr;
-}
-
-
-
-HRESULT TestMarkupServices(BSTR bstrHtml, MarkupCallback *pCallback, BSTR &message)
-{
-	IHTMLDocument3 *pHtmlDocRoot = NULL;
-
-	// Create the root document -- a "workspace" for parsing.
-	HRESULT hr = CoCreateInstance(CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pHtmlDocRoot));
-	if (SUCCEEDED(hr) && pHtmlDocRoot) {
-		IPersistStreamInit *pPersistStreamInit = NULL;
-
-		HRESULT hr = pHtmlDocRoot->QueryInterface(IID_PPV_ARGS(&pPersistStreamInit));
-		if (SUCCEEDED(hr)) {
-			// Initialize the root document to a default state -- ready for parsing.
-			pPersistStreamInit->InitNew();
-
-			IMarkupServices *pMarkupServices = NULL;
-			hr = pHtmlDocRoot->QueryInterface(IID_PPV_ARGS(&pMarkupServices));
-			if (SUCCEEDED(hr)) {
-				IMarkupPointer *pMarkupBegin = NULL;
-				IMarkupPointer *pMarkupEnd = NULL;
-
-				// These markup pointers indicate the insertion point.
-				hr = pMarkupServices->CreateMarkupPointer(&pMarkupBegin);
-				if (SUCCEEDED(hr))
-					hr = pMarkupServices->CreateMarkupPointer(&pMarkupEnd);
-
-				if (SUCCEEDED(hr) && pMarkupBegin && pMarkupEnd) {
-					IMarkupContainer *pMarkupContainer = NULL;
-
-					// Parse the string -- the markup container contains the parsed HTML.
-					// Markup pointers are updated to point to begining and end of new container.
-					hr = pMarkupServices->ParseString(bstrHtml, 0, &pMarkupContainer, pMarkupBegin, pMarkupEnd);
-					if (SUCCEEDED(hr) && pMarkupContainer) {
-						IHTMLDocument3 *pHtmlDoc = NULL;
-
-						// Retrieve the document interface to the markup container.
-						hr = pMarkupContainer->QueryInterface(IID_PPV_ARGS(&pHtmlDoc));
-						if (SUCCEEDED(hr) && pHtmlDoc) {
-							// Invoke the user-defined action for this new fragment.
-							hr = pCallback(pHtmlDoc, message);
-
-							// Clean up.
-							pHtmlDoc->Release();
-						}
-						pMarkupContainer->Release();
-					}
-					pMarkupEnd->Release();
-				}
-				if (pMarkupBegin)
-					pMarkupBegin->Release();
-				pMarkupServices->Release();
-			}
-			pPersistStreamInit->Release();
-		}
-		pHtmlDocRoot->Release();
-	}
-	return hr;
-}
-
 void CSkypeProto::ProcessTimer()
 {
 	if (IsOnline())
 	{
-		PushRequest(new GetContactListRequest(TokenSecret), &CSkypeProto::LoadContactList);
-
+		PushRequest(new GetContactListRequest(m_szTokenSecret), &CSkypeProto::LoadContactList);
+		SendPresence(false);
 		if (!m_hTrouterThread)
 			SendRequest(new CreateTrouterRequest(), &CSkypeProto::OnCreateTrouter);
 	}

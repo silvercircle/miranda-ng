@@ -13,9 +13,10 @@ HINSTANCE hInst;
 int hLangpack;
 LIST<XSN_Data> XSN_Users(10, NumericKeySortT);
 HGENMENU hChangeSound = NULL;
-HANDLE hChangeSoundDlgList = NULL;
+MWindowList hChangeSoundDlgList = NULL;
 BYTE isIgnoreSound = 0, isOwnSound = 0;
 
+CLIST_INTERFACE *pcli;
 CHAT_MANAGER *pci;
 
 PLUGININFOEX pluginInfo = {
@@ -69,15 +70,15 @@ void InitSelfSounds()
 	int protoCount = 0;
 	PROTOACCOUNT** protos = 0;
 
-	ProtoEnumAccounts(&protoCount, &protos);
+	Proto_EnumAccounts(&protoCount, &protos);
 	for (int i = 0; i < protoCount; i++) {
-		for (int j = 0; j < SIZEOF(selfSounds); j++) {
+		for (int j = 0; j < _countof(selfSounds); j++) {
 			char namebuf[128];
-			mir_snprintf(namebuf, SIZEOF(namebuf), "%s%s", protos[i]->szModuleName, selfSounds[j].szName);
+			mir_snprintf(namebuf, _countof(namebuf), "%s%s", protos[i]->szModuleName, selfSounds[j].szName);
 
 			TCHAR infobuf[256];
-			mir_sntprintf(infobuf, SIZEOF(infobuf), _T("%s [%s]"), TranslateT("Self status"), protos[i]->tszAccountName);
-			SkinAddNewSoundExT(namebuf, infobuf, (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, selfSounds[j].iStatus, GSMDF_TCHAR));
+			mir_sntprintf(infobuf, _countof(infobuf), _T("%s [%s]"), TranslateT("Self status"), protos[i]->tszAccountName);
+			SkinAddNewSoundExT(namebuf, infobuf, pcli->pfnGetStatusModeDescription(selfSounds[j].iStatus, 0));
 		}
 	}
 }
@@ -86,10 +87,10 @@ static int ProtoAck(WPARAM, LPARAM lParam)
 {
 	ACKDATA *ack = (ACKDATA*)lParam;
 	if (ack != 0 && ack->szModule && ack->type == ACKTYPE_STATUS && ack->result == ACKRESULT_SUCCESS) {
-		for (int i = 0; i < SIZEOF(selfSounds); i++) {
+		for (int i = 0; i < _countof(selfSounds); i++) {
 			if (selfSounds[i].iStatus == ack->lParam) {
 				char buf[128];
-				mir_snprintf(buf, SIZEOF(buf), "%s%s", ack->szModule, selfSounds[i].szName);
+				mir_snprintf(buf, "%s%s", ack->szModule, selfSounds[i].szName);
 				SkinPlaySound(buf);
 				break;
 			}
@@ -176,11 +177,11 @@ static int OnLoadInit(WPARAM, LPARAM)
 {
 	mir_getCI(NULL);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = -0x7FFFFFFF;
 	mi.flags = CMIF_TCHAR;
-	mi.hIcon = LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
-	mi.ptszName = LPGENT("Custom contact sound");
+	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
+	mi.name.t = LPGENT("Custom contact sound");
 	mi.pszService = "XSoundNotify/ContactMenuCommand";
 	hChangeSound = Menu_AddContactMenuItem(&mi);
 
@@ -193,7 +194,7 @@ static int PrebuildContactMenu(WPARAM wParam, LPARAM)
 	MCONTACT hContact = wParam;
 	if (hContact) {
 		char *szProto = GetContactProto(hContact);
-		PROTOACCOUNT *pa = ProtoGetAccount(szProto);
+		PROTOACCOUNT *pa = Proto_GetAccount(szProto);
 		Menu_ShowItem(hChangeSound, IsSuitableProto(pa));
 	}
 	return 0;
@@ -208,6 +209,7 @@ static int OnPreShutdown(WPARAM, LPARAM)
 extern "C" int __declspec(dllexport) Load()
 {
 	mir_getLP(&pluginInfo);
+	mir_getCLI();
 
 	CreateServiceFunction("XSoundNotify/ContactMenuCommand", ShowDialog);
 

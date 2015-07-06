@@ -29,7 +29,7 @@ procedure CheckStatusList(list:HWND;ProtoNum:uint_ptr);
 function  CreateProtoList(deepscan:boolean=false):integer;
 procedure FreeProtoList;
 
-function SetStatus(proto:PAnsiChar;status:integer;txt:PAnsiChar=pointer(-1)):integer;
+function SetStatus(proto:PAnsiChar;status:integer;txt:PWideChar=pointer(-1)):integer;
 function SetXStatus(proto:PAnsiChar;newstatus:integer;
                     txt:PWideChar=nil;title:PWideChar=nil):integer;
 function GetXStatus(proto:PAnsiChar;txt:pointer=nil;title:pointer=nil):integer;
@@ -219,13 +219,11 @@ var
   item:TLVITEMW;
   lvc:TLVCOLUMN;
   i,newItem:integer;
-  cli:PCLIST_INTERFACE;
 begin
   FillChar(lvc,SizeOf(lvc),0);
   ListView_SetExtendedListViewStyle(list, LVS_EX_CHECKBOXES);
   if withIcons then
   begin
-    cli:=PCLIST_INTERFACE(CallService(MS_CLIST_RETRIEVE_INTERFACE,0,0));
     SetWindowLongPtrW(list,GWL_STYLE,
         GetWindowLongPtrW(list,GWL_STYLE) or LVS_SHAREIMAGELISTS);
     ListView_SetImageList(list,
@@ -277,7 +275,7 @@ end;
 
 procedure FillStatusList(proto:uint_ptr;list:HWND;withIcons:bool=false);
 
-  procedure AddString(num:integer;enabled:boolean;cli:PCLIST_INTERFACE);
+  procedure AddString(num:integer;enabled:boolean);
   var
     item:LV_ITEMW;
     newItem:integer;
@@ -300,7 +298,6 @@ procedure FillStatusList(proto:uint_ptr;list:HWND;withIcons:bool=false);
 
 var
   lvc:TLVCOLUMN;
-  cli:PCLIST_INTERFACE;
 begin
   if proto=0 then
     withIcons:=false;
@@ -310,7 +307,6 @@ begin
   ListView_SetExtendedListViewStyle(list, LVS_EX_CHECKBOXES);
   if withIcons then
   begin
-    cli:=PCLIST_INTERFACE(CallService(MS_CLIST_RETRIEVE_INTERFACE,0,0));
     SetWindowLongPtrW(list,GWL_STYLE,
         GetWindowLongPtrW(list,GWL_STYLE) or LVS_SHAREIMAGELISTS);
     ListView_SetImageList(list,
@@ -328,19 +324,19 @@ begin
   lvc.fmt:={LVCFMT_IMAGE or} LVCFMT_LEFT;
   ListView_InsertColumn(list,0,lvc);
 
-  AddString(0,true,nil);
+  AddString(0,true);
   ListView_SetItemState (list,0,LVIS_FOCUSED or LVIS_SELECTED,$000F);
   with protos^[proto] do
   begin
-    if (status and psf_online    )<>0 then AddString(1,(enabled and psf_online    )<>0,cli);
-    if (status and psf_invisible )<>0 then AddString(2,(enabled and psf_invisible )<>0,cli);
-    if (status and psf_shortaway )<>0 then AddString(3,(enabled and psf_shortaway )<>0,cli);
-    if (status and psf_longaway  )<>0 then AddString(4,(enabled and psf_longaway  )<>0,cli);
-    if (status and psf_lightdnd  )<>0 then AddString(5,(enabled and psf_lightdnd  )<>0,cli);
-    if (status and psf_heavydnd  )<>0 then AddString(6,(enabled and psf_heavydnd  )<>0,cli);
-    if (status and psf_freechat  )<>0 then AddString(7,(enabled and psf_freechat  )<>0,cli);
-    if (status and psf_outtolunch)<>0 then AddString(8,(enabled and psf_outtolunch)<>0,cli);
-    if (status and psf_onthephone)<>0 then AddString(9,(enabled and psf_onthephone)<>0,cli);
+    if (status and psf_online    )<>0 then AddString(1,(enabled and psf_online    )<>0);
+    if (status and psf_invisible )<>0 then AddString(2,(enabled and psf_invisible )<>0);
+    if (status and psf_shortaway )<>0 then AddString(3,(enabled and psf_shortaway )<>0);
+    if (status and psf_longaway  )<>0 then AddString(4,(enabled and psf_longaway  )<>0);
+    if (status and psf_lightdnd  )<>0 then AddString(5,(enabled and psf_lightdnd  )<>0);
+    if (status and psf_heavydnd  )<>0 then AddString(6,(enabled and psf_heavydnd  )<>0);
+    if (status and psf_freechat  )<>0 then AddString(7,(enabled and psf_freechat  )<>0);
+    if (status and psf_outtolunch)<>0 then AddString(8,(enabled and psf_outtolunch)<>0);
+    if (status and psf_onthephone)<>0 then AddString(9,(enabled and psf_onthephone)<>0);
   end;
   ListView_SetColumnWidth(list,0,LVSCW_AUTOSIZE);
 end;
@@ -411,7 +407,7 @@ var
   p:pAnsichar;
 //  hContract:THANDLE;
 begin
-  CallService(MS_PROTO_ENUMACCOUNTS,wparam(@protoCount),lparam(@proto));
+  Proto_EnumAccounts(protoCount, proto);
 
   mGetMem(protos,(protoCount+1)*SizeOf(tMyProto)); // 0 - default
   NumProto:=0;
@@ -495,33 +491,15 @@ begin
   NumProto:=0;
 end;
 
-function SetStatus(proto:PAnsiChar;status:integer;txt:PAnsiChar=pointer(-1)):integer;
-//var  nas:TNAS_PROTOINFO;
+function SetStatus(proto:PAnsiChar;status:integer;txt:PWideChar=pointer(-1)):integer;
 begin
   if status>0 then
     result:=CallProtoService(proto,PS_SETSTATUS,status,0)
   else
     result:=-1;
-  if txt<>PAnsiChar(-1) then
+  if txt<>PWideChar(-1) then
   begin
-//    if ServiceExists(MS_NAS_SETSTATEA)=0 then
-      result:=CallProtoService(proto,PS_SETAWAYMSG,abs(status),lparam(txt))
-(*
-    else
-    begin
-  {
-      nas.Msg.w:=mmi.malloc((StrLenW(txt)+1)*SizeOf(WideChar));
-      nas.Msg.w^:=#0;
-      StrCopyW(nas.Msg.w,txt);
-  }
-      StrDup(nas.Msg.a,txt);
-      nas.Flags  :=0;
-      nas.cbSize :=SizeOf(nas);
-      nas.szProto:=proto;
-      nas.status :=abs(status){0};
-      result:=CallService(MS_NAS_SETSTATEA,LPARAM(@nas),1);
-    end;
-*)
+    result:=CallProtoService(proto,PS_SETAWAYMSG,abs(status),lparam(txt))
   end;
 end;
 

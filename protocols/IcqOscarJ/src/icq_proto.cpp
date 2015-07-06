@@ -94,7 +94,6 @@ CIcqProto::CIcqProto(const char* aProtoName, const TCHAR* aUserName) :
 	wCookieSeq = 2;
 
 	// Initialize temporary DB settings
-	db_set_resident(m_szModuleName, "Status"); // NOTE: XStatus cannot be temporary
 	db_set_resident(m_szModuleName, "TemporaryVisible");
 	db_set_resident(m_szModuleName, "TickTS");
 	db_set_resident(m_szModuleName, "IdleTS");
@@ -120,10 +119,10 @@ CIcqProto::CIcqProto(const char* aProtoName, const TCHAR* aUserName) :
 	CreateProtoService(PS_CHANGEINFOEX, &CIcqProto::ChangeInfoEx);
 
 	// Avatar API
-	CreateProtoService(PS_GETAVATARINFOT, &CIcqProto::GetAvatarInfo);
+	CreateProtoService(PS_GETAVATARINFO, &CIcqProto::GetAvatarInfo);
 	CreateProtoService(PS_GETAVATARCAPS, &CIcqProto::GetAvatarCaps);
-	CreateProtoService(PS_GETMYAVATART, &CIcqProto::GetMyAvatar);
-	CreateProtoService(PS_SETMYAVATART, &CIcqProto::SetMyAvatar);
+	CreateProtoService(PS_GETMYAVATAR, &CIcqProto::GetMyAvatar);
+	CreateProtoService(PS_SETMYAVATAR, &CIcqProto::SetMyAvatar);
 
 	// Custom Status API
 	CreateProtoService(PS_SETCUSTOMSTATUSEX, &CIcqProto::SetXStatusEx);
@@ -159,7 +158,7 @@ CIcqProto::CIcqProto(const char* aProtoName, const TCHAR* aUserName) :
 	// Register netlib users
 	NETLIBUSER nlu = { 0 };
 	TCHAR szBuffer[MAX_PATH + 64];
-	mir_sntprintf(szBuffer, SIZEOF(szBuffer), TranslateT("%s server connection"), m_tszUserName);
+	mir_sntprintf(szBuffer, TranslateT("%s server connection"), m_tszUserName);
 	nlu.cbSize = sizeof(nlu);
 	nlu.flags = NUF_OUTGOING | NUF_HTTPCONNS | NUF_TCHAR;
 	nlu.ptszDescriptiveName = szBuffer;
@@ -173,8 +172,8 @@ CIcqProto::CIcqProto(const char* aProtoName, const TCHAR* aUserName) :
 	m_hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
 
 	char szP2PModuleName[MAX_PATH];
-	mir_snprintf(szP2PModuleName, SIZEOF(szP2PModuleName), "%sP2P", m_szModuleName);
-	mir_sntprintf(szBuffer, SIZEOF(szBuffer), TranslateT("%s client-to-client connections"), m_tszUserName);
+	mir_snprintf(szP2PModuleName, _countof(szP2PModuleName), "%sP2P", m_szModuleName);
+	mir_sntprintf(szBuffer, TranslateT("%s client-to-client connections"), m_tszUserName);
 	nlu.flags = NUF_OUTGOING | NUF_INCOMING | NUF_TCHAR;
 	nlu.ptszDescriptiveName = szBuffer;
 	nlu.szSettingsModule = szP2PModuleName;
@@ -242,9 +241,9 @@ int CIcqProto::OnModulesLoaded(WPARAM, LPARAM)
 	char pszSrvGroupsName[MAX_PATH];
 	char* modules[5] = { 0, 0, 0, 0, 0 };
 
-	mir_snprintf(pszP2PName, SIZEOF(pszP2PName), "%sP2P", m_szModuleName);
-	mir_snprintf(pszGroupsName, SIZEOF(pszGroupsName), "%sGroups", m_szModuleName);
-	mir_snprintf(pszSrvGroupsName, SIZEOF(pszSrvGroupsName), "%sSrvGroups", m_szModuleName);
+	mir_snprintf(pszP2PName, _countof(pszP2PName), "%sP2P", m_szModuleName);
+	mir_snprintf(pszGroupsName, _countof(pszGroupsName), "%sGroups", m_szModuleName);
+	mir_snprintf(pszSrvGroupsName, _countof(pszSrvGroupsName), "%sSrvGroups", m_szModuleName);
 	modules[0] = m_szModuleName;
 	modules[1] = pszP2PName;
 	modules[2] = pszGroupsName;
@@ -293,17 +292,17 @@ MCONTACT CIcqProto::AddToList(int flags, PROTOSEARCHRESULT *psr)
 		
 		// aim contact
 		if (isr->hdr.flags & PSR_UNICODE)
-			unicode_to_ansi_static((WCHAR*)isr->hdr.id, szUid, MAX_PATH);
+			unicode_to_ansi_static((WCHAR*)isr->hdr.id.t, szUid, MAX_PATH);
 		else
-			null_strcpy(szUid, (char*)isr->hdr.id, MAX_PATH);
+			null_strcpy(szUid, (char*)isr->hdr.id.t, MAX_PATH);
 
 		return (szUid[0] == 0) ? 0 : AddToListByUID(szUid, flags);
 	}
 
 	if (psr->flags & PSR_UNICODE)
-		unicode_to_ansi_static((WCHAR*)psr->id, szUid, MAX_PATH);
+		unicode_to_ansi_static((WCHAR*)psr->id.t, szUid, MAX_PATH);
 	else
-		null_strcpy(szUid, (char*)psr->id, MAX_PATH);
+		null_strcpy(szUid, (char*)psr->id.t, MAX_PATH);
 
 	if (szUid[0] == 0)
 		return 0;
@@ -719,10 +718,10 @@ void CIcqProto::CheekySearchThread(void*)
 
 	if (cheekySearchUin) {
 		_itoa(cheekySearchUin, szUin, 10);
-		isr.hdr.id = (FNAMECHAR*)szUin;
+		isr.hdr.id.t = (TCHAR*)szUin;
 	}
 	else {
-		isr.hdr.id = (FNAMECHAR*)cheekySearchUid;
+		isr.hdr.id.t = (TCHAR*)cheekySearchUid;
 	}
 	isr.uin = cheekySearchUin;
 
@@ -732,7 +731,7 @@ void CIcqProto::CheekySearchThread(void*)
 }
 
 
-HANDLE __cdecl CIcqProto::SearchBasic(const PROTOCHAR *pszSearch)
+HANDLE __cdecl CIcqProto::SearchBasic(const TCHAR *pszSearch)
 {
 	if (mir_wstrlen(pszSearch) == 0)
 		return 0;
@@ -790,7 +789,7 @@ HANDLE __cdecl CIcqProto::SearchBasic(const PROTOCHAR *pszSearch)
 ////////////////////////////////////////////////////////////////////////////////////////
 // SearchByEmail - searches the contact by its e-mail
 
-HANDLE __cdecl CIcqProto::SearchByEmail(const PROTOCHAR *email)
+HANDLE __cdecl CIcqProto::SearchByEmail(const TCHAR *email)
 {
 	if (email && icqOnline() && mir_wstrlen(email) > 0) {
 		char *szEmail = tchar_to_ansi(email);
@@ -813,7 +812,7 @@ HANDLE __cdecl CIcqProto::SearchByEmail(const PROTOCHAR *email)
 ////////////////////////////////////////////////////////////////////////////////////////
 // PS_SearchByName - searches the contact by its first or last name, or by a nickname
 
-HANDLE __cdecl CIcqProto::SearchByName(const PROTOCHAR *nick, const PROTOCHAR *firstName, const PROTOCHAR *lastName)
+HANDLE __cdecl CIcqProto::SearchByName(const TCHAR *nick, const TCHAR *firstName, const TCHAR *lastName)
 {
 	if (icqOnline()) {
 		if (nick || firstName || lastName) {
@@ -872,15 +871,15 @@ int __cdecl CIcqProto::RecvContacts(MCONTACT hContact, PROTORECVEVENT* pre)
 	DWORD flags = DBEF_UTF;
 
 	for (i = 0; i < pre->lParam; i++) {
-		cbBlob += mir_strlen((char*)isrList[i]->hdr.nick) + 2; // both trailing zeros
+		cbBlob += mir_strlen((char*)isrList[i]->hdr.nick.t) + 2; // both trailing zeros
 		if (isrList[i]->uin)
 			cbBlob += getUINLen(isrList[i]->uin);
 		else
-			cbBlob += mir_strlen((char*)isrList[i]->hdr.id);
+			cbBlob += mir_strlen((char*)isrList[i]->hdr.id.t);
 	}
 	PBYTE pBlob = (PBYTE)_alloca(cbBlob), pCurBlob;
 	for (i = 0, pCurBlob = pBlob; i < pre->lParam; i++) {
-		mir_strcpy((char*)pCurBlob, (char*)isrList[i]->hdr.nick);
+		mir_strcpy((char*)pCurBlob, (char*)isrList[i]->hdr.nick.t);
 		pCurBlob += mir_strlen((char*)pCurBlob) + 1;
 		if (isrList[i]->uin) {
 			char szUin[UINMAXLEN];
@@ -888,7 +887,7 @@ int __cdecl CIcqProto::RecvContacts(MCONTACT hContact, PROTORECVEVENT* pre)
 			mir_strcpy((char*)pCurBlob, szUin);
 		}
 		else // aim contact
-			mir_strcpy((char*)pCurBlob, (char*)isrList[i]->hdr.id);
+			mir_strcpy((char*)pCurBlob, (char*)isrList[i]->hdr.id.t);
 
 		pCurBlob += mir_strlen((char*)pCurBlob) + 1;
 	}
@@ -1216,7 +1215,7 @@ HANDLE __cdecl CIcqProto::SendFile(MCONTACT hContact, const TCHAR* szDescription
 					}
 					else {
 						char tmp[64];
-						mir_snprintf(szFiles, SIZEOF(szFiles), ICQTranslateUtfStatic("%d Files", tmp, SIZEOF(tmp)), ft->dwFileCount);
+						mir_snprintf(szFiles, _countof(szFiles), ICQTranslateUtfStatic("%d Files", tmp, _countof(tmp)), ft->dwFileCount);
 						pszFiles = szFiles;
 					}
 
@@ -1270,10 +1269,7 @@ int __cdecl CIcqProto::SendMsg(MCONTACT hContact, int, const char* pszSrc)
 	WORD wRecipientStatus = getContactStatus(hContact);
 
 	BOOL plain_ascii = IsUSASCII(puszText, mir_strlen(puszText));
-
-	BOOL oldAnsi = plain_ascii || !m_bUtfEnabled ||
-		!CheckContactCapabilities(hContact, CAPF_UTF) ||
-		!getByte(hContact, "UnicodeSend", 1);
+	BOOL oldAnsi = plain_ascii || !CheckContactCapabilities(hContact, CAPF_UTF) || !getByte(hContact, "UnicodeSend", 1);
 
 	if (m_bTempVisListEnabled && m_iStatus == ID_STATUS_INVISIBLE)
 		makeContactTemporaryVisible(hContact);  // make us temporarily visible to contact
@@ -1320,7 +1316,7 @@ int __cdecl CIcqProto::SendMsg(MCONTACT hContact, int, const char* pszSrc)
 			mng = (char*)SAFE_REALLOC(mng, len + 28);
 			memmove(mng + 12, mng, len + 1);
 			memcpy(mng, "<HTML><BODY>", 12);
-			strcat(mng, "</BODY></HTML>");
+			mir_strcat(mng, "</BODY></HTML>");
 			puszText = mng;
 			bNeedFreeU = 1;
 		}
@@ -1861,11 +1857,11 @@ int __cdecl CIcqProto::OnEvent(PROTOEVENTTYPE eventType, WPARAM wParam, LPARAM l
 	case EV_PROTO_ONERASE:
 		{
 			char szDbSetting[MAX_PATH];
-			mir_snprintf(szDbSetting, SIZEOF(szDbSetting), "%sP2P", m_szModuleName);
+			mir_snprintf(szDbSetting, _countof(szDbSetting), "%sP2P", m_szModuleName);
 			CallService(MS_DB_MODULE_DELETE, 0, (LPARAM)szDbSetting);
-			mir_snprintf(szDbSetting, SIZEOF(szDbSetting), "%sSrvGroups", m_szModuleName);
+			mir_snprintf(szDbSetting, _countof(szDbSetting), "%sSrvGroups", m_szModuleName);
 			CallService(MS_DB_MODULE_DELETE, 0, (LPARAM)szDbSetting);
-			mir_snprintf(szDbSetting, SIZEOF(szDbSetting), "%sGroups", m_szModuleName);
+			mir_snprintf(szDbSetting, _countof(szDbSetting), "%sGroups", m_szModuleName);
 			CallService(MS_DB_MODULE_DELETE, 0, (LPARAM)szDbSetting);
 		}
 		break;

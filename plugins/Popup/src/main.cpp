@@ -37,6 +37,7 @@ void UpgradeDb();
 static int OkToExit(WPARAM, LPARAM);
 bool OptionLoaded = false;
 int hLangpack = 0;
+CLIST_INTERFACE *pcli;
 
 //===== Global variables ================================================================
 HMODULE  hUserDll = 0;
@@ -110,36 +111,33 @@ static int IconsChanged(WPARAM, LPARAM)
 {
 	LoadActions();
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	HICON hIcon;
 	if (PopupOptions.ModuleIsEnabled == TRUE) { // The module is enabled.
 		// The action to do is "disable popups" (show disabled) and we must write "enable popup" in the new item.
-		mi.hIcon = IcoLib_GetIcon(ICO_POPUP_ON, 0);
+		hIcon = IcoLib_GetIcon(ICO_POPUP_ON, 0);
 	}
 	else { // The module is disabled.
 		// The action to do is enable popups (show enabled), then write "disable popup" in the new item.
-		mi.hIcon = IcoLib_GetIcon(ICO_POPUP_OFF, 0);
+		hIcon = IcoLib_GetIcon(ICO_POPUP_OFF, 0);
 	}
-	mi.flags = CMIM_ICON;
-	Menu_ModifyItem(hMenuItem, &mi);
-	Menu_ModifyItem(hMenuRoot, &mi);
+	Menu_ModifyItem(hMenuItem, NULL, hIcon);
+	Menu_ModifyItem(hMenuRoot, NULL, hIcon);
 
-	mi.hIcon = IcoLib_GetIcon(ICO_HISTORY, 0);
-	mi.flags = CMIM_ICON;
-	Menu_ModifyItem(hMenuItemHistory, &mi);
+	Menu_ModifyItem(hMenuItemHistory, NULL, IcoLib_GetIcon(ICO_HISTORY, 0));
 	return 0;
 }
 
 static int TTBLoaded(WPARAM, LPARAM)
 {
-	TTBButton ttb = { sizeof(ttb) };
+	TTBButton ttb = { 0 };
 	ttb.pszService = MENUCOMMAND_SVC;
 	ttb.lParamUp = 1;
 	ttb.dwFlags = TTBBF_VISIBLE | TTBBF_SHOWTOOLTIP | TTBBF_ASPUSHBUTTON;
 	if (PopupOptions.ModuleIsEnabled)
 		ttb.dwFlags |= TTBBF_PUSHED;
 	ttb.name = LPGEN("Toggle Popups");
-	ttb.hIconHandleUp = Skin_GetIconHandle(ICO_TB_POPUP_OFF);
-	ttb.hIconHandleDn = Skin_GetIconHandle(ICO_TB_POPUP_ON);
+	ttb.hIconHandleUp = IcoLib_GetIconHandle(ICO_TB_POPUP_OFF);
+	ttb.hIconHandleDn = IcoLib_GetIconHandle(ICO_TB_POPUP_ON);
 	ttb.pszTooltipUp = LPGEN("Enable Popups");
 	ttb.pszTooltipDn = LPGEN("Disable Popups");
 	hTTButton = TopToolbar_AddButton(&ttb);
@@ -149,27 +147,23 @@ static int TTBLoaded(WPARAM, LPARAM)
 //===== EnableDisableMenuCommand ========================================================
 INT_PTR svcEnableDisableMenuCommand(WPARAM, LPARAM)
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
+	HICON hIcon;
 	if (PopupOptions.ModuleIsEnabled) {
 		// The module is enabled.
 		// The action to do is "disable popups" (show disabled) and we must write "enable popup" in the new item.
 		PopupOptions.ModuleIsEnabled = FALSE;
 		db_set_b(NULL, "Popup", "ModuleIsEnabled", FALSE);
-		mi.ptszName = LPGENT("Enable Popups");
-		mi.hIcon = IcoLib_GetIcon(ICO_POPUP_OFF, 0);
+		Menu_ModifyItem(hMenuItem, LPGENT("Enable Popups"), hIcon = IcoLib_GetIcon(ICO_POPUP_OFF, 0));
 	}
 	else {
 		// The module is disabled.
 		// The action to do is enable popups (show enabled), then write "disable popup" in the new item.
 		PopupOptions.ModuleIsEnabled = TRUE;
 		db_set_b(NULL, "Popup", "ModuleIsEnabled", TRUE);
-		mi.ptszName = LPGENT("Disable Popups");
-		mi.hIcon = IcoLib_GetIcon(ICO_POPUP_ON, 0);
+		Menu_ModifyItem(hMenuItem, LPGENT("Disable Popups"), hIcon = IcoLib_GetIcon(ICO_POPUP_ON, 0));
 	}
-	mi.flags = CMIM_NAME | CMIM_ICON | CMIF_TCHAR;
-	Menu_ModifyItem(hMenuItem, &mi);
-	mi.flags = CMIM_ICON;
-	Menu_ModifyItem(hMenuRoot, &mi);
+
+	Menu_ModifyItem(hMenuRoot, NULL, hIcon);
 
 	if (hTTButton)
 		CallService(MS_TTB_SETBUTTONSTATE, (WPARAM)hTTButton, (PopupOptions.ModuleIsEnabled) ? TTBST_PUSHED : 0);
@@ -185,32 +179,28 @@ INT_PTR svcShowHistory(WPARAM, LPARAM)
 
 void InitMenuItems(void)
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
-	// support new genmenu style
-	mi.flags = CMIF_ROOTHANDLE | CMIF_TCHAR;
-	mi.hParentMenu = HGENMENU_ROOT;
+	CMenuItem mi;
+	mi.flags = CMIF_TCHAR;
 
 	// Build main menu
 	mi.position = -1000000000 /*1000001*/;
-	mi.ptszName = LPGENT(MODULNAME_PLU);
-	mi.hIcon = IcoLib_GetIcon(PopupOptions.ModuleIsEnabled ? ICO_POPUP_ON : ICO_POPUP_OFF, 0);
+	mi.name.t = LPGENT(MODULNAME_PLU);
+	mi.hIcolibItem = IcoLib_GetIcon(PopupOptions.ModuleIsEnabled ? ICO_POPUP_ON : ICO_POPUP_OFF, 0);
 	hMenuRoot = Menu_AddMainMenuItem(&mi);
 
 	// Add item to main menu
-	mi.hParentMenu = (HGENMENU)hMenuRoot;
-
-	CreateServiceFunction(MENUCOMMAND_SVC, svcEnableDisableMenuCommand);
-	mi.ptszName = PopupOptions.ModuleIsEnabled ? LPGENT("Disable Popups") : LPGENT("Enable Popups");
+	mi.root = (HGENMENU)hMenuRoot;
 	mi.pszService = MENUCOMMAND_SVC;
+	CreateServiceFunction(mi.pszService, svcEnableDisableMenuCommand);
+	mi.name.t = PopupOptions.ModuleIsEnabled ? LPGENT("Disable Popups") : LPGENT("Enable Popups");
 	hMenuItem = Menu_AddMainMenuItem(&mi);
 
 	// Popup History
-	CreateServiceFunction(MENUCOMMAND_HISTORY, svcShowHistory);
-	mi.position = 1000000000;
-	mi.popupPosition = 1999990000;
-	mi.ptszName = LPGENT("Popup History");
-	mi.hIcon = IcoLib_GetIcon(ICO_HISTORY, 0);
 	mi.pszService = MENUCOMMAND_HISTORY;
+	CreateServiceFunction(mi.pszService, svcShowHistory);
+	mi.position = 1000000000;
+	mi.name.t = LPGENT("Popup History");
+	mi.hIcolibItem = IcoLib_GetIcon(ICO_HISTORY, 0);
 	hMenuItemHistory = Menu_AddMainMenuItem(&mi);
 }
 
@@ -332,6 +322,7 @@ MIRAPI int Load(void)
 	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &hMainThread, THREAD_SET_CONTEXT, FALSE, 0);
 
 	mir_getLP(&pluginInfoEx);
+	mir_getCLI();
 
 	CreateServiceFunction(MS_POPUP_GETSTATUS, GetStatus);
 
@@ -449,6 +440,5 @@ MIRAPI int Unload(void)
 	UnloadTreeData();
 
 	CloseHandle(hMainThread);
-
 	return 0;
 }

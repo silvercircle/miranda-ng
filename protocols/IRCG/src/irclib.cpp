@@ -178,7 +178,7 @@ void CIrcProto::SendIrcMessage(const TCHAR* msg, bool bNotify, int codepage)
 		rtrim(str);
 		int cbLen = (int)mir_strlen(str);
 		str = (char*)mir_realloc(str, cbLen + 3);
-		strcat(str, "\r\n");
+		mir_strcat(str, "\r\n");
 		NLSend((const BYTE*)str, cbLen + 2);
 		mir_free(str);
 
@@ -201,7 +201,7 @@ bool CIrcProto::Connect(const CIrcSessionInfo& info)
 	con = (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)m_hNetlibUser, (LPARAM)&ncon);
 	if (con == NULL) {
 		TCHAR szTemp[300];
-		mir_sntprintf(szTemp, SIZEOF(szTemp), _T("\0035%s \002%s\002 (%S: %u)."),
+		mir_sntprintf(szTemp, _T("\0035%s \002%s\002 (%S: %u)."),
 			TranslateT("Failed to connect to"), si.sNetwork.c_str(), si.sServer.c_str(), si.iPort);
 		DoEvent(GC_EVENT_INFORMATION, SERVERWINDOW, NULL, szTemp, NULL, NULL, NULL, true, false);
 		return false;
@@ -234,7 +234,7 @@ bool CIrcProto::Connect(const CIrcSessionInfo& info)
 
 	CMString m_userID = GetWord(info.sUserID.c_str(), 0);
 	TCHAR szHostName[MAX_PATH];
-	DWORD cbHostName = SIZEOF(szHostName);
+	DWORD cbHostName = _countof(szHostName);
 	GetComputerName(szHostName, &cbHostName);
 	CMString HostName = GetWord(szHostName, 0);
 	if (m_userID.IsEmpty())
@@ -289,7 +289,7 @@ int CIrcProto::NLSend(const TCHAR* fmt, ...)
 	va_start(marker, fmt);
 
 	TCHAR szBuf[1024 * 4];
-	mir_vsntprintf(szBuf, SIZEOF(szBuf), fmt, marker);
+	mir_vsntprintf(szBuf, _countof(szBuf), fmt, marker);
 	va_end(marker);
 
 	char* buf = mir_t2a_cp(szBuf, getCodepage());
@@ -304,7 +304,7 @@ int CIrcProto::NLSend(const char* fmt, ...)
 	va_start(marker, fmt);
 
 	char szBuf[1024 * 4];
-	int cbLen = mir_vsnprintf(szBuf, SIZEOF(szBuf), fmt, marker);
+	int cbLen = mir_vsnprintf(szBuf, _countof(szBuf), fmt, marker);
 	va_end(marker);
 
 	return NLSend((unsigned char*)szBuf, cbLen);
@@ -1430,18 +1430,18 @@ LBL_Parse:
 		char buf[1024 * 4];
 
 		if (iParamCnt != 2)
-			cbLen = mir_snprintf(buf, SIZEOF(buf), "%s : ERROR : UNKNOWN-ERROR\r\n", szBuf);
+			cbLen = mir_snprintf(buf, "%s : ERROR : UNKNOWN-ERROR\r\n", szBuf);
 		else {
 			for (int i = 0; i < g_Instances.getCount(); i++) {
 				if (PeerPortNrRcvd == g_Instances[i]->m_info.iPort && LocalPortNrRcvd == g_Instances[i]->m_myLocalPort) {
-					cbLen = mir_snprintf(buf, SIZEOF(buf), "%s : USERID : %S : %S\r\n",
+					cbLen = mir_snprintf(buf, "%s : USERID : %S : %S\r\n",
 						szBuf, g_Instances[i]->m_info.sIdentServerType.c_str(), g_Instances[i]->m_info.sUserID.c_str());
 					break;
 				}
 			}
 
 			if (cbLen == 0)
-				cbLen = mir_snprintf(buf, SIZEOF(buf), "%s : ERROR : INVALID-PORT\r\n", szBuf);
+				cbLen = mir_snprintf(buf, "%s : ERROR : INVALID-PORT\r\n", szBuf);
 		}
 
 		if (Netlib_Send(hConnection, (const char*)buf, cbLen, 0) > 0)

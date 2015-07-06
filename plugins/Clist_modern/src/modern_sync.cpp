@@ -1,5 +1,5 @@
-#include "hdr/modern_commonheaders.h"
-#include "hdr/modern_sync.h"
+#include "stdafx.h"
+#include "modern_sync.h"
 
 static INT_PTR SyncCaller(WPARAM proc, LPARAM lParam)
 {
@@ -84,7 +84,7 @@ int SyncCall(void * vproc, int count, ...)
 	int i;
 	params[0] = (LPARAM)count;
 	va_start(va, count);
-	for (i = 0; i < count && i < SIZEOF(params) - 1; i++)
+	for (i = 0; i < count && i < _countof(params) - 1; i++)
 		params[i + 1] = va_arg(va, LPARAM);
 
 	va_end(va);

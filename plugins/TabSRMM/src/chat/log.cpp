@@ -115,7 +115,7 @@ static int Log_AppendIEView(LOGSTREAMDATA* streamData, BOOL simpleMode, TCHAR **
 						szTemp3[1] = line[2];
 						szTemp3[2] = '\0';
 						col = _ttoi(szTemp3);
-						mir_sntprintf(szTemp, SIZEOF(szTemp), _T("%%%c#%02X%02X%02X"), c, GetRValue(mi->crColors[col]), GetGValue(mi->crColors[col]), GetBValue(mi->crColors[col]));
+						mir_sntprintf(szTemp, _T("%%%c#%02X%02X%02X"), c, GetRValue(mi->crColors[col]), GetGValue(mi->crColors[col]), GetBValue(mi->crColors[col]));
 					}
 				}
 				line += 2;
@@ -123,7 +123,7 @@ static int Log_AppendIEView(LOGSTREAMDATA* streamData, BOOL simpleMode, TCHAR **
 			case 'C':
 			case 'F':
 				if (!g_Settings.bStripFormat && !streamData->bStripFormat) {
-					mir_sntprintf(szTemp, SIZEOF(szTemp), _T("%%%c"), *line);
+					mir_sntprintf(szTemp, _T("%%%c"), *line);
 				}
 				break;
 			case 'b':
@@ -134,7 +134,7 @@ static int Log_AppendIEView(LOGSTREAMDATA* streamData, BOOL simpleMode, TCHAR **
 			case 'I':
 			case 'r':
 				if (!streamData->bStripFormat) {
-					mir_sntprintf(szTemp, SIZEOF(szTemp), _T("%%%c"), *line);
+					mir_sntprintf(szTemp, _T("%%%c"), *line);
 				}
 				break;
 			}
@@ -537,12 +537,12 @@ static void AddEventToBuffer(CMStringA &str, LOGSTREAMDATA *streamData)
 		else _tcsncpy_s(szTemp, streamData->lin->ptszNick, _TRUNCATE);
 
 		if (g_Settings.bClickableNicks)
-			mir_sntprintf(szTemp2, SIZEOF(szTemp2), _T("~~++#%s#++~~"), szTemp);
+			mir_sntprintf(szTemp2, _countof(szTemp2), _T("~~++#%s#++~~"), szTemp);
 		else
 			_tcsncpy_s(szTemp2, szTemp, _TRUNCATE);
 
 		if (streamData->lin->ptszUserInfo && streamData->lin->iType != GC_EVENT_TOPIC)
-			mir_sntprintf(szTemp, SIZEOF(szTemp), _T("%s (%s)"), szTemp2, streamData->lin->ptszUserInfo);
+			mir_sntprintf(szTemp, _T("%s (%s)"), szTemp2, streamData->lin->ptszUserInfo);
 		else
 			_tcsncpy_s(szTemp, szTemp2, _TRUNCATE);
 		pszNick = szTemp;
@@ -693,7 +693,7 @@ char* Log_CreateRtfHeader(MODULEINFO *mi)
 	}
 	str.AppendFormat("\\fi-%u\\li%u", iIndent, iIndent);
 
-	return str.Detouch();
+	return str.Detach();
 }
 
 static char* Log_CreateRTF(LOGSTREAMDATA *streamData)
@@ -723,7 +723,7 @@ static char* Log_CreateRTF(LOGSTREAMDATA *streamData)
 			if (streamData->dat->dwFlags & MWF_DIVIDERWANTED || lin->dwFlags & MWF_DIVIDERWANTED) {
 				static char szStyle_div[128] = "\0";
 				if (szStyle_div[0] == 0)
-					mir_snprintf(szStyle_div, SIZEOF(szStyle_div), "\\f%u\\cf%u\\ul0\\b%d\\i%d\\fs%u", 17, 18, 0, 0, 5);
+					mir_snprintf(szStyle_div, _countof(szStyle_div), "\\f%u\\cf%u\\ul0\\b%d\\i%d\\fs%u", 17, 18, 0, 0, 5);
 
 				lin->dwFlags |= MWF_DIVIDERWANTED;
 				if (lin->prev || !streamData->bRedraw)
@@ -750,13 +750,13 @@ static char* Log_CreateRTF(LOGSTREAMDATA *streamData)
 				int iii;
 				if (lin->ptszNick && lin->iType == GC_EVENT_MESSAGE) {
 					iii = lin->bIsHighlighted ? 16 : (lin->bIsMe ? 2 : 1);
-					mir_snprintf(szStyle, SIZEOF(szStyle), "\\f0\\cf%u\\ul0\\highlight0\\b%d\\i%d\\ul%d\\fs%u",
+					mir_snprintf(szStyle, _countof(szStyle), "\\f0\\cf%u\\ul0\\highlight0\\b%d\\i%d\\ul%d\\fs%u",
 						iii + 1, F.lfWeight >= FW_BOLD ? 1 : 0, F.lfItalic, F.lfUnderline, 2 * abs(F.lfHeight) * 74 / pci->logPixelSY);
 					str.Append(szStyle);
 				}
 				else {
 					iii = lin->bIsHighlighted ? 16 : EventToIndex(lin);
-					mir_snprintf(szStyle, SIZEOF(szStyle), "\\f0\\cf%u\\ul0\\highlight0\\b%d\\i%d\\ul%d\\fs%u",
+					mir_snprintf(szStyle, _countof(szStyle), "\\f0\\cf%u\\ul0\\highlight0\\b%d\\i%d\\ul%d\\fs%u",
 						iii + 1, F.lfWeight >= FW_BOLD ? 1 : 0, F.lfItalic, F.lfUnderline, 2 * abs(F.lfHeight) * 74 / pci->logPixelSY);
 					str.Append(szStyle);
 				}
@@ -824,7 +824,7 @@ static char* Log_CreateRTF(LOGSTREAMDATA *streamData)
 		str.Append("\\par}");
 	else
 		str.Append("}");
-	return str.Detouch();
+	return str.Detach();
 }
 
 static DWORD CALLBACK Log_StreamCallback(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG cb, LONG * pcb)
@@ -982,7 +982,7 @@ void Log_StreamInEvent(HWND hwndDlg, LOGINFO* lin, SESSION_INFO *si, bool bRedra
 	// this uses hidden marks in the rich text to find the events which should be deleted
 	if (si->bTrimmed) {
 		TCHAR szPattern[50];
-		mir_sntprintf(szPattern, SIZEOF(szPattern), _T("~-+%d+-~"), si->pLogEnd);
+		mir_sntprintf(szPattern, _countof(szPattern), _T("~-+%d+-~"), si->pLogEnd);
 
 		FINDTEXTEX fi;
 		fi.lpstrText = szPattern;

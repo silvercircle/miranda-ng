@@ -19,6 +19,7 @@ Boston, MA 02111-1307, USA.
 
 #include "commons.h"
 
+CLIST_INTERFACE *pcli;
 HINSTANCE hInst;
 int hLangpack = 0;
 
@@ -86,41 +87,40 @@ static int MainInit(WPARAM, LPARAM)
 	InitProtocolData();
 
 	// Add options to menu
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.popupPosition = 500050000;
-	mi.flags = CMIF_ROOTPOPUP | CMIF_TCHAR;
-	mi.icolibItem = LoadSkinnedIconHandle(SKINICON_OTHER_USERDETAILS);
-	mi.ptszName = LPGENT("My details");
-	HANDLE hMenuRoot = Menu_AddMainMenuItem(&mi);
+	CMenuItem mi;
+	mi.position = 500050000;
+	mi.flags =  CMIF_TCHAR;
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_OTHER_USERDETAILS);
+	mi.name.t = LPGENT("My details");
+	HGENMENU hMenuRoot = Menu_AddMainMenuItem(&mi);
 
-	mi.flags = CMIF_CHILDPOPUP | CMIF_TCHAR;
-	mi.ptszPopupName = (TCHAR *)hMenuRoot;
-	mi.popupPosition = 0;
-	mi.icolibItem = NULL;
+	mi.flags =  CMIF_TCHAR;
+	mi.root = hMenuRoot;
+	mi.hIcolibItem = NULL;
 
 	if (protocols->CanSetAvatars()) {
 		mi.position = 100001;
-		mi.ptszName = LPGENT("Set my avatar...");
+		mi.name.t = LPGENT("Set my avatar...");
 		CreateServiceFunction("MENU_" MS_MYDETAILS_SETMYAVATARUI, Menu_SetMyAvatarUI);
 		mi.pszService = "MENU_" MS_MYDETAILS_SETMYAVATARUI;
 		Menu_AddMainMenuItem(&mi);
 	}
 
 	mi.position = 100002;
-	mi.ptszName = LPGENT("Set my nickname...");
+	mi.name.t = LPGENT("Set my nickname...");
 	CreateServiceFunction("MENU_" MS_MYDETAILS_SETMYNICKNAMEUI, Menu_SetMyNicknameUI);
 	mi.pszService = "MENU_" MS_MYDETAILS_SETMYNICKNAMEUI;
 	Menu_AddMainMenuItem(&mi);
 
 	mi.position = 100003;
-	mi.ptszName = LPGENT("Set my status message...");
+	mi.name.t = LPGENT("Set my status message...");
 	CreateServiceFunction("MENU_" MS_MYDETAILS_SETMYSTATUSMESSAGEUI, Menu_SetMyStatusMessageUI);
 	mi.pszService = "MENU_" MS_MYDETAILS_SETMYSTATUSMESSAGEUI;
 	Menu_AddMainMenuItem(&mi);
 
 	// Set protocols to show frame
 	mi.position = 200001;
-	mi.ptszName = LPGENT("Show next account");
+	mi.name.t = LPGENT("Show next account");
 	mi.pszService = MS_MYDETAILS_SHOWNEXTPROTOCOL;
 	Menu_AddMainMenuItem(&mi);
 
@@ -139,6 +139,7 @@ static int MainUninit(WPARAM, LPARAM)
 extern "C" __declspec(dllexport) int Load()
 {
 	mir_getLP(&pluginInfo);
+	mir_getCLI();
 
 	// Hook event to load messages and show first one
 	HookEvent(ME_SYSTEM_MODULESLOADED, MainInit);
@@ -147,10 +148,10 @@ extern "C" __declspec(dllexport) int Load()
 	// Options
 	InitOptions();
 
-	if (Skin_GetIcon("LISTENING_TO_ICON") == NULL)
+	if (IcoLib_GetIcon("LISTENING_TO_ICON") == NULL)
 		Icon_Register(hInst, LPGEN("Contact list"), iconList, 1);
 
-	Icon_Register(hInst, LPGEN("My details"), iconList + 1, SIZEOF(iconList) - 1);
+	Icon_Register(hInst, LPGEN("My details"), iconList + 1, _countof(iconList) - 1);
 
 	// Register services
 	CreateServiceFunction(MS_MYDETAILS_SETMYNICKNAME, PluginCommand_SetMyNickname);

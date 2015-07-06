@@ -111,76 +111,72 @@ void g_MenuInit(void)
 	char str[MAXMODULELABELLENGTH], *pszDest = str + 3;
 	mir_strcpy(str, "ICQ");
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.pszService = str;
 
 	// "Request authorization"
 	mir_strcpy(pszDest, MS_REQ_AUTH); CreateServiceFunction(str, IcqMenuHandleRequestAuth );
 
-	mi.pszName = LPGEN("Request authorization");
+	mi.name.a = LPGEN("Request authorization");
 	mi.position = 1000030000;
-	mi.icolibItem = LoadSkinnedIconHandle(SKINICON_AUTH_REQUEST);
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_AUTH_REQUEST);
 	g_hContactMenuItems[ICMI_AUTH_REQUEST] = Menu_AddContactMenuItem(&mi);
 	
 	// "Grant authorization"
 	mir_strcpy(pszDest, MS_GRANT_AUTH); CreateServiceFunction(str, IcqMenuHandleGrantAuth);
 
-	mi.pszName = LPGEN("Grant authorization");
+	mi.name.a = LPGEN("Grant authorization");
 	mi.position = 1000029999;
-	mi.icolibItem = LoadSkinnedIconHandle(SKINICON_AUTH_GRANT);
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_AUTH_GRANT);
 	g_hContactMenuItems[ICMI_AUTH_GRANT] = Menu_AddContactMenuItem(&mi);
 	
 	// "Revoke authorization"
 	mir_strcpy(pszDest, MS_REVOKE_AUTH); CreateServiceFunction(str, IcqMenuHandleRevokeAuth);
 
-	mi.pszName = LPGEN("Revoke authorization");
+	mi.name.a = LPGEN("Revoke authorization");
 	mi.position = 1000029998;
-	mi.icolibItem = LoadSkinnedIconHandle(SKINICON_AUTH_REVOKE);
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_AUTH_REVOKE);
 	g_hContactMenuItems[ICMI_AUTH_REVOKE] = Menu_AddContactMenuItem(&mi);
 	
 	// "Add to server list"
 	mir_strcpy(pszDest, MS_ICQ_ADDSERVCONTACT); CreateServiceFunction(str, IcqMenuHandleAddServContact);
 
-	mi.pszName = LPGEN("Add to server list");
+	mi.name.a = LPGEN("Add to server list");
 	mi.position = -2049999999;
-	mi.icolibItem = LoadSkinnedIconHandle(SKINICON_AUTH_ADD);
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_AUTH_ADD);
 	g_hContactMenuItems[ICMI_ADD_TO_SERVLIST] = Menu_AddContactMenuItem(&mi);
 	
 	// "Show custom status details"
  	mir_strcpy(pszDest, MS_XSTATUS_SHOWDETAILS); CreateServiceFunction(str, IcqMenuHandleXStatusDetails);
 
-	mi.pszName = LPGEN("Show custom status details");
+	mi.name.a = LPGEN("Show custom status details");
 	mi.position = -2000004999;
-	mi.icolibItem = 0;
+	mi.hIcolibItem = 0;
 	g_hContactMenuItems[ICMI_XSTATUS_DETAILS] = Menu_AddContactMenuItem(&mi);
 	
 	// "Open ICQ profile"
 	mir_strcpy(pszDest, MS_OPEN_PROFILE); CreateServiceFunction(str, IcqMenuHandleOpenProfile);
 
-	mi.pszName = LPGEN("Open ICQ profile");
+	mi.name.a = LPGEN("Open ICQ profile");
 	mi.position = 1000029997;
 	g_hContactMenuItems[ICMI_OPEN_PROFILE] = Menu_AddContactMenuItem(&mi);
 }
 
 void g_MenuUninit(void)
 {
-	CallService(MO_REMOVEMENUITEM, (WPARAM)g_hContactMenuItems[ICMI_AUTH_REQUEST], 0);
-	CallService(MO_REMOVEMENUITEM, (WPARAM)g_hContactMenuItems[ICMI_AUTH_GRANT], 0);
-	CallService(MO_REMOVEMENUITEM, (WPARAM)g_hContactMenuItems[ICMI_AUTH_REVOKE], 0);
-	CallService(MO_REMOVEMENUITEM, (WPARAM)g_hContactMenuItems[ICMI_ADD_TO_SERVLIST], 0);
-	CallService(MO_REMOVEMENUITEM, (WPARAM)g_hContactMenuItems[ICMI_XSTATUS_DETAILS], 0);
-	CallService(MO_REMOVEMENUITEM, (WPARAM)g_hContactMenuItems[ICMI_OPEN_PROFILE], 0);
+	Menu_RemoveItem(g_hContactMenuItems[ICMI_AUTH_REQUEST]);
+	Menu_RemoveItem(g_hContactMenuItems[ICMI_AUTH_GRANT]);
+	Menu_RemoveItem(g_hContactMenuItems[ICMI_AUTH_REVOKE]);
+	Menu_RemoveItem(g_hContactMenuItems[ICMI_ADD_TO_SERVLIST]);
+	Menu_RemoveItem(g_hContactMenuItems[ICMI_XSTATUS_DETAILS]);
+	Menu_RemoveItem(g_hContactMenuItems[ICMI_OPEN_PROFILE]);
 }
-
 
 INT_PTR CIcqProto::OpenWebProfile(WPARAM hContact, LPARAM)
 {
-	DWORD dwUin = getContactUin(hContact);
-	char url[256];
-	mir_snprintf(url, SIZEOF(url), "http://www.icq.com/people/%d",dwUin);
-	return CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)url);
+	Utils_OpenUrl(CMStringA(FORMAT, "http://www.icq.com/people/%d", getContactUin(hContact)));
+	return 0;
 }
-
 
 int CIcqProto::OnPreBuildContactMenu(WPARAM hContact, LPARAM)
 {
@@ -208,13 +204,10 @@ int CIcqProto::OnPreBuildContactMenu(WPARAM hContact, LPARAM)
 
 	Menu_ShowItem(g_hContactMenuItems[ICMI_XSTATUS_DETAILS], m_bHideXStatusUI ? 0 : bXStatus != 0);
 	if (bXStatus && !m_bHideXStatusUI) {
-		CLISTMENUITEM clmi = { sizeof(clmi) };
-		clmi.flags = CMIM_ICON;
 		if (bXStatus > 0 && bXStatus <= XSTATUS_COUNT)
-			clmi.hIcon = getXStatusIcon(bXStatus, LR_SHARED);
+			Menu_ModifyItem(g_hContactMenuItems[ICMI_XSTATUS_DETAILS], NULL, getXStatusIcon(bXStatus, LR_SHARED));
 		else
-			clmi.hIcon = LoadSkinnedIcon(SKINICON_OTHER_SMALLDOT);
-		Menu_ModifyItem(g_hContactMenuItems[ICMI_XSTATUS_DETAILS], &clmi);
+			Menu_ModifyItem(g_hContactMenuItems[ICMI_XSTATUS_DETAILS], NULL, Skin_LoadIcon(SKINICON_OTHER_SMALLDOT));
 	}
 
 	return 0;

@@ -146,19 +146,19 @@ static HICON GetAnnivIcon(const CEvent &evt)
 	switch (evt._eType) {
 	case CEvent::BIRTHDAY:
 		if (evt._wDaysLeft > 9)
-			hIcon = Skin_GetIcon(ICO_RMD_DTBX);
+			hIcon = IcoLib_GetIcon(ICO_RMD_DTBX);
 		else {
-			mir_snprintf(szIcon, SIZEOF(szIcon), MODNAME"_rmd_dtb%u", evt._wDaysLeft);
-			hIcon = Skin_GetIcon(szIcon);
+			mir_snprintf(szIcon, _countof(szIcon), MODNAME"_rmd_dtb%u", evt._wDaysLeft);
+			hIcon = IcoLib_GetIcon(szIcon);
 		}
 		break;
 
 	case CEvent::ANNIVERSARY:
 		if (evt._wDaysLeft > 9)
-			hIcon = Skin_GetIcon(ICO_RMD_DTAX);
+			hIcon = IcoLib_GetIcon(ICO_RMD_DTAX);
 		else {
-			mir_snprintf(szIcon, SIZEOF(szIcon), MODNAME"_rmd_dta%u", evt._wDaysLeft);
-			hIcon = Skin_GetIcon(szIcon);
+			mir_snprintf(szIcon, _countof(szIcon), MODNAME"_rmd_dta%u", evt._wDaysLeft);
+			hIcon = IcoLib_GetIcon(szIcon);
 		}
 	}
 	return hIcon;
@@ -183,7 +183,7 @@ static void NotifyWithExtraIcon(MCONTACT hContact, const CEvent &evt)
 			if (evt._wDaysLeft > 9)
 				icoName = ICO_RMD_DTAX;
 			else {
-				mir_snprintf(szIcon, SIZEOF(szIcon), MODNAME"_rmd_dtb%u", evt._wDaysLeft);
+				mir_snprintf(szIcon, _countof(szIcon), MODNAME"_rmd_dtb%u", evt._wDaysLeft);
 				icoName = szIcon;
 			}
 			break;
@@ -192,7 +192,7 @@ static void NotifyWithExtraIcon(MCONTACT hContact, const CEvent &evt)
 			if (evt._wDaysLeft > 9)
 				icoName = ICO_RMD_DTAX;
 			else {
-				mir_snprintf(szIcon, SIZEOF(szIcon), MODNAME"_rmd_dta%u", evt._wDaysLeft);
+				mir_snprintf(szIcon, _countof(szIcon), MODNAME"_rmd_dta%u", evt._wDaysLeft);
 				icoName = szIcon;
 			}
 			break;
@@ -255,10 +255,10 @@ static int NotifyWithPopup(MCONTACT hContact, CEvent::EType eventType, int DaysT
 
 	if (hContact) {
 		ppd.lchContact = hContact;
-		mir_sntprintf(ppd.lptzContactName, SIZEOF(ppd.lptzContactName),
+		mir_sntprintf(ppd.lptzContactName, _countof(ppd.lptzContactName),
 			_T("%s - %s"), TranslateTS(pszDesc), DB::Contact::DisplayName(hContact));
 	}
-	else mir_tstrncpy(ppd.lptzContactName, TranslateT("Reminder"), SIZEOF(ppd.lptzContactName));
+	else mir_tstrncpy(ppd.lptzContactName, TranslateT("Reminder"), _countof(ppd.lptzContactName));
 
 	mir_tstrncpy(ppd.lptzText, pszMsg, MAX_SECONDLINE);
 
@@ -318,13 +318,13 @@ static void NotifyFlashCListIcon(MCONTACT hContact, const CEvent &evt)
 
 	switch (evt._eType) {
 	case CEvent::BIRTHDAY:
-		mir_sntprintf(szMsg, SIZEOF(szMsg), TranslateT("%s has %s today."), DB::Contact::DisplayName(hContact), TranslateT("Birthday"));
-		cle.hIcon = Skin_GetIcon(ICO_COMMON_BIRTHDAY);
+		mir_sntprintf(szMsg, _countof(szMsg), TranslateT("%s has %s today."), DB::Contact::DisplayName(hContact), TranslateT("Birthday"));
+		cle.hIcon = IcoLib_GetIcon(ICO_COMMON_BIRTHDAY);
 		break;
 
 	case CEvent::ANNIVERSARY:
-		mir_sntprintf(szMsg, SIZEOF(szMsg), TranslateT("%s has %s today."), DB::Contact::DisplayName(hContact), TranslateT("an anniversary"));
-		cle.hIcon = Skin_GetIcon(ICO_COMMON_ANNIVERSARY);
+		mir_sntprintf(szMsg, _countof(szMsg), TranslateT("%s has %s today."), DB::Contact::DisplayName(hContact), TranslateT("an anniversary"));
+		cle.hIcon = IcoLib_GetIcon(ICO_COMMON_ANNIVERSARY);
 		break;
 
 	default:
@@ -483,29 +483,29 @@ static bool CheckBirthday(MCONTACT hContact, MTime &Now, CEvent &evt, BYTE bNoti
 
 						switch (Diff) {
 						case 0:
-							cchMsg = mir_sntprintf(szMsg, SIZEOF(szMsg), TranslateT("%s has birthday today."), DB::Contact::DisplayName(hContact));
+							cchMsg = mir_sntprintf(szMsg, _countof(szMsg), TranslateT("%s has birthday today."), DB::Contact::DisplayName(hContact));
 							break;
 						case 1:
-							cchMsg = mir_sntprintf(szMsg, SIZEOF(szMsg), TranslateT("%s has birthday tomorrow."), DB::Contact::DisplayName(hContact));
+							cchMsg = mir_sntprintf(szMsg, _countof(szMsg), TranslateT("%s has birthday tomorrow."), DB::Contact::DisplayName(hContact));
 							break;
 						default:
-							cchMsg = mir_sntprintf(szMsg, SIZEOF(szMsg), TranslateT("%s has birthday in %d days."), DB::Contact::DisplayName(hContact), Diff);
+							cchMsg = mir_sntprintf(szMsg, _countof(szMsg), TranslateT("%s has birthday in %d days."), DB::Contact::DisplayName(hContact), Diff);
 						}
 						int age = mtb.Age(&Now);
 						if (age > 0)
 							switch (GenderOf(hContact)){
 							case 0:
-								mir_sntprintf(szMsg + cchMsg, SIZEOF(szMsg) - cchMsg,
+								mir_sntprintf(szMsg + cchMsg, _countof(szMsg) - cchMsg,
 									TranslateT("\nHe/she becomes %d years old."),
 									age + (Diff > 0));
 								break;
 							case 'M':
-								mir_sntprintf(szMsg + cchMsg, SIZEOF(szMsg) - cchMsg,
+								mir_sntprintf(szMsg + cchMsg, _countof(szMsg) - cchMsg,
 									TranslateT("\nHe becomes %d years old."),
 									age + (Diff > 0));
 								break;
 							case 'F':
-								mir_sntprintf(szMsg + cchMsg, SIZEOF(szMsg) - cchMsg,
+								mir_sntprintf(szMsg + cchMsg, _countof(szMsg) - cchMsg,
 									TranslateT("\nShe becomes %d years old."),
 									age + (Diff > 0));
 								break;
@@ -600,10 +600,10 @@ void SvcReminderCheckAll(const ENotify notify)
 
 static int OnCListRebuildIcons(WPARAM, LPARAM)
 {
-	for (int i = 0; i < SIZEOF(ghCListAnnivIcons); i++)
+	for (int i = 0; i < _countof(ghCListAnnivIcons); i++)
 		ghCListAnnivIcons[i] = INVALID_HANDLE_VALUE;
 
-	for (int k = 0; k < SIZEOF(ghCListBirthdayIcons); k++)
+	for (int k = 0; k < _countof(ghCListBirthdayIcons); k++)
 		ghCListBirthdayIcons[k] = INVALID_HANDLE_VALUE;
 
 	return 0;
@@ -680,11 +680,11 @@ static int OnContactSettingChanged(MCONTACT hContact, DBCONTACTWRITESETTING* pdb
 
 void SvcReminderOnTopToolBarLoaded()
 {
-	TTBButton ttb = { sizeof(ttb) };
+	TTBButton ttb = { 0 };
 	ttb.dwFlags = TTBBF_VISIBLE | TTBBF_SHOWTOOLTIP;
 	ttb.pszService = MS_USERINFO_REMINDER_CHECK;
 	ttb.name = ttb.pszTooltipUp = LPGEN("Check anniversaries");
-	ttb.hIconHandleUp = Skin_GetIconHandle(ICO_COMMON_BIRTHDAY);
+	ttb.hIconHandleUp = IcoLib_GetIconHandle(ICO_COMMON_BIRTHDAY);
 	TopToolbar_AddButton(&ttb);
 }
 
@@ -738,7 +738,7 @@ static INT_PTR BackupBirthdayService(WPARAM hContact, LPARAM lParam)
 		MSGBOX mBox;
 		mBox.cbSize = sizeof(MSGBOX);
 		mBox.hParent = NULL;
-		mBox.hiLogo = Skin_GetIcon(ICO_COMMON_BIRTHDAY);
+		mBox.hiLogo = IcoLib_GetIcon(ICO_COMMON_BIRTHDAY);
 		mBox.uType = MB_ICON_INFO;
 		mBox.ptszTitle = TranslateT("Update custom birthday");
 		mBox.ptszMsg = TranslateT("Backing up and syncing all birthdays complete!");

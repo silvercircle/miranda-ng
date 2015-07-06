@@ -70,24 +70,22 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				pwd->iIndent = opt.iTextIndent;
 				pwd->iSidebarWidth = opt.iSidebarWidth;
 
-				if (ServiceExists(MS_PROTO_GETACCOUNT)) {
-					PROTOACCOUNT *pa = ProtoGetAccount(pwd->clcit.szProto);
-					if (pa)
-						mir_tstrcpy(pwd->swzTitle, pa->tszAccountName);
-				}
+				PROTOACCOUNT *pa = Proto_GetAccount(pwd->clcit.szProto);
+				if (pa)
+					mir_tstrcpy(pwd->swzTitle, pa->tszAccountName);
 
 				if (mir_tstrlen(pwd->swzTitle) == 0)
 					a2t(pwd->clcit.szProto, pwd->swzTitle, TITLE_TEXT_LEN);
 
-				if (CallService(MS_PROTO_ISACCOUNTLOCKED, 0, (LPARAM)pwd->clcit.szProto))
-					mir_sntprintf(pwd->swzTitle, SIZEOF(pwd->swzTitle), TranslateT("%s (locked)"), pwd->swzTitle);
+				if (Proto_IsAccountLocked(pa))
+					mir_sntprintf(pwd->swzTitle, _countof(pwd->swzTitle), TranslateT("%s (locked)"), pwd->swzTitle);
 
 				// protocol status
 				WORD wStatus = (WORD)CallProtoService(pwd->clcit.szProto, PS_GETSTATUS, 0, 0);
 
 				// get status icon
 				if (pwd->bIsIconVisible[0]) {
-					pwd->extraIcons[0].hIcon = LoadSkinnedProtoIcon(pwd->clcit.szProto, wStatus);
+					pwd->extraIcons[0].hIcon = Skin_LoadProtoIcon(pwd->clcit.szProto, wStatus);
 					pwd->extraIcons[0].bDestroy = false;
 				}
 
@@ -100,7 +98,7 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				// uid info
 				TCHAR swzUid[256], swzUidName[256];
 				if (Uid(0, pwd->clcit.szProto, swzUid, 256) && UidName(pwd->clcit.szProto, swzUidName, 253)) {
-					_tcscat(swzUidName, _T(": "));
+					mir_tstrcat(swzUidName, _T(": "));
 					AddRow(pwd, swzUidName, swzUid, NULL, false, false, false);
 				}
 
@@ -108,14 +106,14 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				TCHAR swzLogon[64];
 				if (TimestampToTimeDifference(NULL, pwd->clcit.szProto, "LogonTS", swzLogon, 59)) {
 					TCHAR ago[96];
-					mir_sntprintf(ago, SIZEOF(ago), TranslateT("%s ago"), swzLogon);
+					mir_sntprintf(ago, _countof(ago), TranslateT("%s ago"), swzLogon);
 					AddRow(pwd, TranslateT("Log on:"), ago, NULL, false, false, false);
 				}
 
 				// number of unread emails
 				TCHAR swzEmailCount[64];
 				if (ProtoServiceExists(pwd->clcit.szProto, PS_GETUNREADEMAILCOUNT)) {
-					int iCount = (int)ProtoCallService(pwd->clcit.szProto, PS_GETUNREADEMAILCOUNT, 0, 0);
+					int iCount = (int)CallProtoService(pwd->clcit.szProto, PS_GETUNREADEMAILCOUNT, 0, 0);
 					if (iCount > 0) {
 						_itot(iCount, swzEmailCount, 10);
 						AddRow(pwd, TranslateT("Unread emails:"), swzEmailCount, NULL, false, false, false);
@@ -364,9 +362,9 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 							iGender = db_get_b(pwd->hContact, szProto, "Gender", 0);
 
 						if (iGender == GEN_FEMALE)
-							pwd->extraIcons[i].hIcon = Skin_GetIcon("gender_female");
+							pwd->extraIcons[i].hIcon = IcoLib_GetIcon("gender_female");
 						else if (iGender == GEN_MALE)
-							pwd->extraIcons[i].hIcon = Skin_GetIcon("gender_male");
+							pwd->extraIcons[i].hIcon = IcoLib_GetIcon("gender_male");
 						pwd->extraIcons[i].bDestroy = false;
 					}
 
@@ -777,7 +775,7 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 						if (iLen > MAX_VALUE_LEN) {
 							_tcsncpy(buff, pwd->rows[i].swzValue, MAX_VALUE_LEN);
 							buff[MAX_VALUE_LEN] = 0;
-							_tcscat(buff, _T("..."));
+							mir_tstrcat(buff, _T("..."));
 						}
 						else mir_tstrcpy(buff, pwd->rows[i].swzValue);
 
@@ -829,25 +827,25 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 						for (int i = 0; i < pwd->iRowCount; i++) {
 							if ((pwd->rows[i].swzLabel && pwd->rows[i].swzLabel[0]) || (pwd->rows[i].swzValue && pwd->rows[i].swzValue[0])) {
 								if (pwd->rows[i].swzLabel && pwd->rows[i].swzLabel[0]) {
-									_tcscat(pchData, pwd->rows[i].swzLabel);
-									_tcscat(pchData, _T(" "));
+									mir_tstrcat(pchData, pwd->rows[i].swzLabel);
+									mir_tstrcat(pchData, _T(" "));
 								}
-								else _tcscat(pchData, TranslateT("<No Label>: "));
+								else mir_tstrcat(pchData, TranslateT("<No Label>: "));
 
 								if (pwd->rows[i].swzValue && pwd->rows[i].swzValue[0])
-									_tcscat(pchData, pwd->rows[i].swzValue);
+									mir_tstrcat(pchData, pwd->rows[i].swzValue);
 								else
-									_tcscat(pchData, TranslateT("<No Value>"));
+									mir_tstrcat(pchData, TranslateT("<No Value>"));
 
-								_tcscat(pchData, _T("\r\n"));
+								mir_tstrcat(pchData, _T("\r\n"));
 							}
 						}
 					}
 					else if (iSelItem == COPYMENU_ALLITEMS) { // copy all items		
 						for (int i = 0; i < pwd->iRowCount; i++) {
 							if (pwd->rows[i].swzValue && pwd->rows[i].swzValue[0]) {
-								_tcscat(pchData, pwd->rows[i].swzValue);
-								_tcscat(pchData, _T("\r\n"));
+								mir_tstrcat(pchData, pwd->rows[i].swzValue);
+								mir_tstrcat(pchData, _T("\r\n"));
 							}
 						}
 					}
@@ -935,7 +933,7 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			if (pwd->extraIcons[i].bDestroy)
 				DestroyIcon(pwd->extraIcons[i].hIcon);
 			else
-				Skin_ReleaseIcon(pwd->extraIcons[i].hIcon);
+				IcoLib_ReleaseIcon(pwd->extraIcons[i].hIcon);
 		}
 
 		mir_free(pwd->clcit.swzText);
@@ -1467,7 +1465,7 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 		int oldOrder = -1, iProtoCount = 0;
 		PROTOACCOUNT **accs;
-		ProtoEnumAccounts(&iProtoCount, &accs);
+		Proto_EnumAccounts(&iProtoCount, &accs);
 
 		for (int j = 0; j < iProtoCount; j++) {
 			PROTOACCOUNT *pa = NULL;
@@ -1484,7 +1482,7 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			if (opt.bHideOffline && wStatus == ID_STATUS_OFFLINE)
 				continue;
 
-			if (!IsAccountEnabled(pa) || !IsTrayProto(pa->tszAccountName, (BOOL)wParam))
+			if (!Proto_IsAccountEnabled(pa) || !IsTrayProto(pa->tszAccountName, (BOOL)wParam))
 				continue;
 
 			if (dwItems & TRAYTIP_NUMCONTACTS) {
@@ -1494,29 +1492,29 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 						iCountOnline++;
 					iCount++;
 				}
-				mir_sntprintf(buff, SIZEOF(buff), _T("(%d/%d)"), iCountOnline, iCount);
+				mir_sntprintf(buff, _T("(%d/%d)"), iCountOnline, iCount);
 			}
 			else buff[0] = 0;
 
 			TCHAR swzProto[256];
 			mir_tstrcpy(swzProto, pa->tszAccountName);
 			if (dwItems & TRAYTIP_LOCKSTATUS)
-				if (CallService(MS_PROTO_ISACCOUNTLOCKED, 0, (LPARAM)pa->szModuleName))
-					mir_sntprintf(swzProto, SIZEOF(swzProto), TranslateT("%s (locked)"), pa->tszAccountName);
+				if (Proto_IsAccountLocked(pa))
+					mir_sntprintf(swzProto, _countof(swzProto), TranslateT("%s (locked)"), pa->tszAccountName);
 
-			AddRow(pwd, swzProto, buff, NULL, false, false, !bFirstItem, true, LoadSkinnedProtoIcon(pa->szModuleName, wStatus));
+			AddRow(pwd, swzProto, buff, NULL, false, false, !bFirstItem, true, Skin_LoadProtoIcon(pa->szModuleName, wStatus));
 			bFirstItem = false;
 
 			if (dwItems & TRAYTIP_LOGON) {
 				if (TimestampToTimeDifference(NULL, pa->szModuleName, "LogonTS", buff, 59)) {
 					TCHAR ago[96];
-					mir_sntprintf(ago, SIZEOF(ago), TranslateT("%s ago"), buff);
+					mir_sntprintf(ago, _countof(ago), TranslateT("%s ago"), buff);
 					AddRow(pwd, TranslateT("Log on:"), ago, NULL, false, false, false);
 				}
 			}
 
 			if (dwItems & TRAYTIP_UNREAD_EMAILS && ProtoServiceExists(pa->szModuleName, PS_GETUNREADEMAILCOUNT)) {
-				int iCount = (int)ProtoCallService(pa->szModuleName, PS_GETUNREADEMAILCOUNT, 0, 0);
+				int iCount = (int)CallProtoService(pa->szModuleName, PS_GETUNREADEMAILCOUNT, 0, 0);
 				if (iCount > 0) {
 					_itot(iCount, buff, 10);
 					AddRow(pwd, TranslateT("Unread emails:"), buff, NULL, false, false, false);
@@ -1628,10 +1626,10 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 								bTitlePainted = true;
 							}
 
-							TCHAR *swzNick = (TCHAR *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR);
+							TCHAR *swzNick = (TCHAR *)pcli->pfnGetContactDisplayName(hContact, 0);
 							if (opt.iFavoriteContFlags & FAVCONT_APPEND_PROTO) {
 								TCHAR *swzProto = a2t(proto);
-								mir_sntprintf(swzName, SIZEOF(swzName), _T("%s (%s)"), swzNick, swzProto);
+								mir_sntprintf(swzName, _countof(swzName), _T("%s (%s)"), swzNick, swzProto);
 								mir_free(swzProto);
 							}
 							else mir_tstrcpy(swzName, swzNick);
@@ -1648,7 +1646,7 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 					index -= iCount;
 
 				if (index >= 0 && (dwItems & TRAYTIP_NUMCONTACTS) && !((opt.iFavoriteContFlags & FAVCONT_HIDE_OFFLINE) && iCountOnline == 0)) {
-					mir_sntprintf(buff, SIZEOF(buff), _T("(%d/%d)"), iCountOnline, iCount);
+					mir_sntprintf(buff, _T("(%d/%d)"), iCountOnline, iCount);
 					pwd->rows[index].swzValue = mir_tstrdup(buff);
 				}
 			}
@@ -1669,7 +1667,7 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				TCHAR swzText[256];
 				mir_tstrcpy(swzText, pwd->clcit.swzText);
 				if (pchBr) swzText[pchBr - pwd->clcit.swzText] = 0;
-				AddRow(pwd, swzText, _T(""), NULL, false, true, false, true, LoadSkinnedIcon(SKINICON_OTHER_FILLEDBLOB));
+				AddRow(pwd, swzText, _T(""), NULL, false, true, false, true, Skin_LoadIcon(SKINICON_OTHER_FILLEDBLOB));
 			}
 		}
 

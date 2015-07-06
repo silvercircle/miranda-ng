@@ -32,14 +32,14 @@ INT_PTR doubleClick(WPARAM wParam, LPARAM lParam)
 	if (proto && !mir_strcmp(proto, MODNAME)) {
 		if (GetKeyState(VK_CONTROL) & 0x8000) // ctrl is pressed
 			editContact(wParam, 0);		// for later when i add a second double click setting
-		else if (db_get_static(wParam, MODNAME, "Program", program, SIZEOF(program)) && mir_strcmp(program, "")) {
-			if (!db_get_static(wParam, MODNAME, "ProgramParams", params, SIZEOF(params)))
+		else if (db_get_static(wParam, MODNAME, "Program", program, _countof(program)) && mir_strcmp(program, "")) {
+			if (!db_get_static(wParam, MODNAME, "ProgramParams", params, _countof(params)))
 				mir_strcpy(params, "");
 			if (strstr(program, "http://") || strstr(program, "https://"))
-				CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)program);
+				Utils_OpenUrl(program);
 			else shellEXEerror = (int)ShellExecuteA(NULL, NULL, program, params, NULL, SW_SHOW);  //ignore the warning, its M$'s backwards compatabilty screwup :)
 			if (shellEXEerror == ERROR_FILE_NOT_FOUND || shellEXEerror == ERROR_PATH_NOT_FOUND)
-				CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)program);
+				Utils_OpenUrl(program);
 		}
 		else editContact(wParam, 0);
 		return 1;
@@ -118,20 +118,20 @@ extern "C" __declspec(dllexport) int Load()
 	mir_getLP(&pluginInfoEx);
 	mir_getCLI();
 
-	Icon_Register(hInst, LPGEN("Non-IM Contact"), icoList, SIZEOF(icoList));
+	Icon_Register(hInst, LPGEN("Non-IM Contact"), icoList, _countof(icoList));
 
 	HookEvent(ME_CLIST_DOUBLECLICKED, (MIRANDAHOOK)doubleClick);
 	HookEvent(ME_OPT_INITIALISE, NimcOptInit);
 	HookEvent(ME_CLIST_STATUSMODECHANGE, SetLCStatus);
 
 	PROTOCOLDESCRIPTOR pd = { PROTOCOLDESCRIPTOR_V3_SIZE, MODNAME, PROTOTYPE_VIRTUAL };
-	CallService(MS_PROTO_REGISTERMODULE, 0, (LPARAM)&pd);
+	Proto_RegisterModule(&pd);
 
 	//load services (the first 5 are the basic ones needed to make a new protocol)
-	CreateServiceFunction(MODNAME PS_GETCAPS, GetLCCaps);
-	CreateServiceFunction(MODNAME PS_GETNAME, GetLCName);
-	CreateServiceFunction(MODNAME PS_LOADICON, LoadLCIcon);
-	CreateServiceFunction(MODNAME PS_GETSTATUS, GetLCStatus);
+	CreateProtoServiceFunction(MODNAME, PS_GETCAPS, GetLCCaps);
+	CreateProtoServiceFunction(MODNAME, PS_GETNAME, GetLCName);
+	CreateProtoServiceFunction(MODNAME, PS_LOADICON, LoadLCIcon);
+	CreateProtoServiceFunction(MODNAME, PS_GETSTATUS, GetLCStatus);
 
 	CreateServiceFunction("AddLCcontact", addContact);
 	CreateServiceFunction("EditLCcontact", editContact);
@@ -141,46 +141,43 @@ extern "C" __declspec(dllexport) int Load()
 	CreateServiceFunction("TestStringReplaceLine", testStringReplacer);
 	CreateServiceFunction("NIM_Contact/DoubleClick", doubleClick);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = 600090000;
-	mi.pszPopupName = LPGEN("&Non-IM Contact");
-	mi.popupPosition = 600090000;
-	mi.pszName = LPGEN("&Add Non-IM Contact");
+	mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("&Non-IM Contact"), 600090000);
+	mi.name.a = LPGEN("&Add Non-IM Contact");
 	mi.pszService = "AddLCcontact";
-	mi.icolibItem = icoList[0].hIcolib;
+	mi.hIcolibItem = icoList[0].hIcolib;
 	Menu_AddMainMenuItem(&mi);
 
 	mi.position = 600090001;
-	mi.pszName = LPGEN("&View/Edit Files");
+	mi.name.a = LPGEN("&View/Edit Files");
 	mi.pszService = "LoadFilesDlg";
 	Menu_AddMainMenuItem(&mi);
 
 	if (db_get_b(NULL, MODNAME, "Beta", 0)) {
 		mi.position = 600090002;
-		mi.pszName = LPGEN("&Export all Non-IM Contacts");
+		mi.name.a = LPGEN("&Export all Non-IM Contacts");
 		mi.pszService = "ExportLCcontacts";
 		Menu_AddMainMenuItem(&mi);
 
 		mi.position = 600090003;
-		mi.pszName = LPGEN("&Import Non-IM Contacts");
+		mi.name.a = LPGEN("&Import Non-IM Contacts");
 		mi.pszService = "ImportLCcontacts";
 		Menu_AddMainMenuItem(&mi);
 	}
 
 	mi.position = 600090000;
-	mi.pszPopupName = LPGEN("&Non-IM Contact");
-	mi.pszName = LPGEN("&String Maker");
+	mi.name.a = LPGEN("&String Maker");
 	mi.pszService = "TestStringReplaceLine";
 	Menu_AddMainMenuItem(&mi);
 
+	mi.root = NULL;
 	mi.position = -2000080000;
-	mi.pszContactOwner = MODNAME;
-	mi.pszName = LPGEN("E&dit Contact Settings");
+	mi.name.a = LPGEN("E&dit Contact Settings");
 	mi.pszService = "EditLCcontact";
-	Menu_AddContactMenuItem(&mi);
+	Menu_AddContactMenuItem(&mi, MODNAME);
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, ModulesLoaded);
-
 	return 0;
 }
 

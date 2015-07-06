@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 int DetailsInit(WPARAM wParam, LPARAM lParam);
 static INT_PTR CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
-static HANDLE hWindowList = NULL;
+static MWindowList hWindowList = NULL;
 static HANDLE hDetailsInitEvent;
 
 struct DetailsPageInit
@@ -254,8 +254,8 @@ static INT_PTR CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			else
 				name = pcli->pfnGetContactDisplayName(dat->hContact, 0);
 
-			GetWindowText(hwndDlg, oldTitle, SIZEOF(oldTitle));
-			mir_sntprintf(newTitle, SIZEOF(newTitle), oldTitle, name);
+			GetWindowText(hwndDlg, oldTitle, _countof(oldTitle));
+			mir_sntprintf(newTitle, _countof(newTitle), oldTitle, name);
 			SetWindowText(hwndDlg, newTitle);
 
 			//////////////////////////////////////////////////////////////////////
@@ -341,7 +341,7 @@ static INT_PTR CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 			//////////////////////////////////////////////////////////////////////
 			dat->updateAnimFrame = 0;
-			GetDlgItemText(hwndDlg, IDC_UPDATING, dat->szUpdating, SIZEOF(dat->szUpdating));
+			GetDlgItemText(hwndDlg, IDC_UPDATING, dat->szUpdating, _countof(dat->szUpdating));
 			SendMessage(hwndDlg, M_CHECKONLINE, 0, 0);
 			if (!CallContactService(dat->hContact, PSS_GETINFO, SGIF_ONOPEN, 0)) {
 				EnableWindow(GetDlgItem(hwndDlg, IDC_UPDATE), FALSE);
@@ -355,7 +355,7 @@ static INT_PTR CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 	case WM_TIMER:
 		TCHAR str[128];
-		mir_sntprintf(str, SIZEOF(str), _T("%.*s%s%.*s"), dat->updateAnimFrame % 10, _T("........."), dat->szUpdating, dat->updateAnimFrame % 10, _T("........."));
+		mir_sntprintf(str, _countof(str), _T("%.*s%s%.*s"), dat->updateAnimFrame % 10, _T("........."), dat->szUpdating, dat->updateAnimFrame % 10, _T("........."));
 		SetDlgItemText(hwndDlg, IDC_UPDATING, str);
 		if (++dat->updateAnimFrame == UPDATEANIMFRAMES)
 			dat->updateAnimFrame = 0;
@@ -584,7 +584,7 @@ static INT_PTR CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 		tvi.mask = TVIF_TEXT;
 		tvi.hItem = dat->opd[dat->currentPage].hItem;
 		tvi.pszText = name;
-		tvi.cchTextMax = SIZEOF(name);
+		tvi.cchTextMax = _countof(name);
 		TreeView_GetItem(GetDlgItem(hwndDlg, IDC_PAGETREE), &tvi);
 		db_set_ts(NULL, "UserInfo", "LastTab", name);
 
@@ -628,15 +628,15 @@ int LoadUserInfoModule(void)
 	HookEvent(ME_DB_CONTACT_DELETED, UserInfoContactDelete);
 	HookEvent(ME_SYSTEM_PRESHUTDOWN, ShutdownUserInfo);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = 1000050000;
-	mi.icolibItem = GetSkinIconHandle(SKINICON_OTHER_USERDETAILS);
-	mi.pszName = LPGEN("User &details");
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_OTHER_USERDETAILS);
+	mi.name.a = LPGEN("User &details");
 	mi.pszService = MS_USERINFO_SHOWDIALOG;
 	Menu_AddContactMenuItem(&mi);
 
 	mi.position = 500050000;
-	mi.pszName = LPGEN("View/change my &details...");
+	mi.name.a = LPGEN("View/change my &details...");
 	Menu_AddMainMenuItem(&mi);
 
 	hWindowList = WindowList_Create();

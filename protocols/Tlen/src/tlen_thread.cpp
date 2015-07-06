@@ -72,13 +72,13 @@ static INT_PTR CALLBACK TlenPasswordDlgProc(HWND hwndDlg, UINT msg, WPARAM wPara
 	switch (msg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
-		mir_snprintf(text, SIZEOF(text), Translate("Enter password for %s"), (char *) lParam);
+		mir_snprintf(text, _countof(text), Translate("Enter password for %s"), (char *) lParam);
 		SetDlgItemTextA(hwndDlg, IDC_JID, text);
 		return TRUE;
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case IDOK:
-			GetDlgItemTextA(hwndDlg, IDC_PASSWORD, onlinePassword, SIZEOF(onlinePassword));
+			GetDlgItemTextA(hwndDlg, IDC_PASSWORD, onlinePassword, _countof(onlinePassword));
 			//EndDialog(hwndDlg, (int) onlinePassword);
 			//return TRUE;
 			// Fall through
@@ -207,7 +207,7 @@ void __cdecl TlenServerThread(ThreadData *info)
 		return;
 	}
 	
-	mir_snprintf(jidStr, SIZEOF(jidStr), "%s@%s", info->username, info->server);
+	mir_snprintf(jidStr, _countof(jidStr), "%s@%s", info->username, info->server);
 	db_set_s(NULL, info->proto->m_szModuleName, "jid", jidStr);
 
 	if (!db_get(NULL, info->proto->m_szModuleName, "ManualHost", &dbv)) {
@@ -340,11 +340,9 @@ void __cdecl TlenServerThread(ThreadData *info)
 			info->proto->isOnline = FALSE;
 			info->proto->isConnected = FALSE;
 
-			CLISTMENUITEM mi = { sizeof(mi) };
-			mi.flags = CMIM_FLAGS | CMIF_GRAYED;
-			Menu_ModifyItem(info->proto->hMenuMUC, &mi);
+			Menu_EnableItem(info->proto->hMenuMUC, false);
 			if (info->proto->hMenuChats != NULL)
-				Menu_ModifyItem(info->proto->hMenuChats, &mi);
+				Menu_EnableItem(info->proto->hMenuChats, false);
 
 			// Set status to offline
 			char *szProto = info->proto->m_szModuleName;
@@ -402,7 +400,7 @@ static void TlenSendAuth(TlenProtocol *proto) {
 	int iqId;
 	char text[128];
 	char *str = TlenPasswordHash(proto->threadData->password);
-	mir_snprintf(text, SIZEOF(text), "%s%s", proto->threadData->streamId, str);
+	mir_snprintf(text, _countof(text), "%s%s", proto->threadData->streamId, str);
 	mir_free(str);
 	str = TlenSha1(text);
 	char *p=TlenTextEncode(proto->threadData->username);
@@ -476,7 +474,7 @@ static void TlenProcessStreamClosing(XmlNode *node, ThreadData *info)
 	Netlib_CloseHandle(info->proto);
 	if (node->name && !mir_strcmp(node->name, "stream:error") && node->text){
 		char buffer[1024];
-		mir_snprintf(buffer, SIZEOF(buffer), "%s\n%s", Translate("Tlen Connection Error"), Translate(node->text));
+		mir_snprintf(buffer, "%s\n%s", Translate("Tlen Connection Error"), Translate(node->text));
 		PUShowMessage(buffer, SM_WARNING);
 	} else if (!mir_strcmp(node->name, "s")){
 		info->proto->debugLogA("Disconnected server message");
@@ -565,9 +563,9 @@ static void TlenProcessIqGetVersion(TlenProtocol *proto, XmlNode *node)
 
 	mir_strcpy(mversion, "Miranda NG ");
 	CallService(MS_SYSTEM_GETVERSIONTEXT, sizeof( mversion ) - 11, ( LPARAM )mversion + 11 );
-	strcat(mversion, " (Tlen v.");
-	strcat(mversion, TLEN_VERSION_STRING);
-	strcat(mversion, ")");
+	mir_strcat(mversion, " (Tlen v.");
+	mir_strcat(mversion, TLEN_VERSION_STRING);
+	mir_strcat(mversion, ")");
 	mver = TlenTextEncode( mversion );
 	TlenSend( proto, "<message to='%s' type='iq'><iq type='result'><query xmlns='jabber:iq:version'><name>%s</name><version>%s</version><os>%s</os></query></iq></message>", from, mver?mver:"", version?version:"", os?os:"" );
 	if (!item->versionRequested) {
@@ -912,7 +910,7 @@ static void TlenProcessW(XmlNode *node, ThreadData *info)
 	char *f = TlenXmlGetAttrValue(node, "f");
 	if (f != NULL) {
 		char webContactName[128];
-		mir_snprintf(webContactName, SIZEOF(webContactName), Translate("%s Web Messages"), info->proto->m_szModuleName);
+		mir_snprintf(webContactName, _countof(webContactName), Translate("%s Web Messages"), info->proto->m_szModuleName);
 		MCONTACT hContact = TlenHContactFromJID(info->proto, webContactName);
 		if (hContact == NULL) {
 			hContact = TlenDBCreateContact(info->proto, webContactName, webContactName, TRUE);
@@ -1132,8 +1130,8 @@ static void TlenProcessP(XmlNode *node, ThreadData *info)
 			iStr = TlenXmlGetAttrValue(iNode, "i");
 			temp = (char*)mir_alloc(mir_strlen(f)+mir_strlen(iStr)+2);
 			mir_strcpy(temp, f);
-			strcat(temp, "/");
-			strcat(temp, iStr);
+			mir_strcat(temp, "/");
+			mir_strcat(temp, iStr);
 			f = TlenTextDecode(temp);
 			mir_free(temp);
 			node = iNode;
@@ -1198,7 +1196,7 @@ static void TlenProcessV(XmlNode *node, ThreadData *info)
 	char *from=TlenXmlGetAttrValue(node, "f");
 	if (from != NULL) {
 		if (strchr(from, '@') == NULL) {
-			mir_snprintf(jid, SIZEOF(jid), "%s@%s", from, info->server);
+			mir_snprintf(jid, _countof(jid), "%s@%s", from, info->server);
 		} else {
 			strncpy_s(jid, from, _TRUNCATE);
 		}

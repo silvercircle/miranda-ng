@@ -368,8 +368,6 @@ int SplitmsgShutdown(void)
 	DestroyMenu(PluginConfig.g_hMenuContext);
 	if (PluginConfig.g_hMenuContainer)
 		DestroyMenu(PluginConfig.g_hMenuContainer);
-	if (PluginConfig.g_hMenuEncoding)
-		DestroyMenu(PluginConfig.g_hMenuEncoding);
 
 	UnloadIcons();
 	FreeTabConfig();
@@ -455,14 +453,10 @@ HWND TSAPI CreateNewTabForContact(TContainerData *pContainer, MCONTACT hContact,
 	}
 
 	// if we have a max # of tabs/container set and want to open something in the default container...
-	if (hContact != 0 && M.GetByte("limittabs", 0) && !_tcsncmp(pContainer->szName, _T("default"), 6)) {
-		if ((pContainer = FindMatchingContainer(_T("default"))) == NULL) {
-			TCHAR szName[CONTAINER_NAMELEN + 1];
-			mir_sntprintf(szName, SIZEOF(szName), _T("default"));
-			if ((pContainer = CreateContainer(szName, CNT_CREATEFLAG_CLONED, hContact)) == NULL)
+	if (hContact != 0 && M.GetByte("limittabs", 0) && !_tcsncmp(pContainer->szName, _T("default"), 6))
+		if ((pContainer = FindMatchingContainer(_T("default"))) == NULL)
+			if ((pContainer = CreateContainer(_T("default"), CNT_CREATEFLAG_CLONED, hContact)) == NULL)
 				return 0;
-		}
-	}
 
 	TNewWindowData newData = { 0 };
 	newData.hContact = hContact;
@@ -479,7 +473,7 @@ HWND TSAPI CreateNewTabForContact(TContainerData *pContainer, MCONTACT hContact,
 	TCHAR newcontactname[128], tabtitle[128];
 	if (contactName && mir_tstrlen(contactName) > 0) {
 		if (M.GetByte("cuttitle", 0))
-			CutContactName(contactName, newcontactname, SIZEOF(newcontactname));
+			CutContactName(contactName, newcontactname, _countof(newcontactname));
 		else
 			_tcsncpy_s(newcontactname, contactName, _TRUNCATE);
 
@@ -490,14 +484,14 @@ HWND TSAPI CreateNewTabForContact(TContainerData *pContainer, MCONTACT hContact,
 	TCHAR *szStatus = pcli->pfnGetStatusModeDescription(szProto == NULL ? ID_STATUS_OFFLINE : db_get_w(newData.hContact, szProto, "Status", ID_STATUS_OFFLINE), 0);
 
 	if (M.GetByte("tabstatus", 1))
-		mir_sntprintf(tabtitle, SIZEOF(tabtitle), _T("%s (%s)  "), newcontactname, szStatus);
+		mir_sntprintf(tabtitle, _countof(tabtitle), _T("%s (%s)  "), newcontactname, szStatus);
 	else
-		mir_sntprintf(tabtitle, SIZEOF(tabtitle), _T("%s   "), newcontactname);
+		mir_sntprintf(tabtitle, _countof(tabtitle), _T("%s   "), newcontactname);
 
 	newData.item.pszText = tabtitle;
 	newData.item.mask = TCIF_TEXT | TCIF_IMAGE | TCIF_PARAM;
 	newData.item.iImage = 0;
-	newData.item.cchTextMax = SIZEOF(tabtitle);
+	newData.item.cchTextMax = _countof(tabtitle);
 
 	HWND hwndTab = GetDlgItem(pContainer->hwnd, IDC_MSGTABS);
 	// hide the active tab
@@ -552,7 +546,7 @@ HWND TSAPI CreateNewTabForContact(TContainerData *pContainer, MCONTACT hContact,
 		}
 		else {
 			if (pContainer->dwFlags & CNT_NOFLASH)
-				SendMessage(pContainer->hwnd, DM_SETICON, 0, (LPARAM)LoadSkinnedIcon(SKINICON_EVENT_MESSAGE));
+				SendMessage(pContainer->hwnd, DM_SETICON, 0, (LPARAM)Skin_LoadIcon(SKINICON_EVENT_MESSAGE));
 			else
 				FlashContainer(pContainer, 1, 0);
 		}
@@ -633,12 +627,12 @@ void TSAPI CreateImageList(BOOL bInitial)
 		DestroyIcon(hIcon);
 	}
 
-	PluginConfig.g_IconFileEvent = LoadSkinnedIcon(SKINICON_EVENT_FILE);
-	PluginConfig.g_IconMsgEvent = LoadSkinnedIcon(SKINICON_EVENT_MESSAGE);
-	PluginConfig.g_IconMsgEventBig = LoadSkinnedIconBig(SKINICON_EVENT_MESSAGE);
+	PluginConfig.g_IconFileEvent = Skin_LoadIcon(SKINICON_EVENT_FILE);
+	PluginConfig.g_IconMsgEvent = Skin_LoadIcon(SKINICON_EVENT_MESSAGE);
+	PluginConfig.g_IconMsgEventBig = Skin_LoadIcon(SKINICON_EVENT_MESSAGE, true);
 	if ((HICON)CALLSERVICE_NOTFOUND == PluginConfig.g_IconMsgEventBig)
 		PluginConfig.g_IconMsgEventBig = 0;
-	PluginConfig.g_IconTypingEventBig = LoadSkinnedIconBig(SKINICON_OTHER_TYPING);
+	PluginConfig.g_IconTypingEventBig = Skin_LoadIcon(SKINICON_OTHER_TYPING, true);
 	if ((HICON)CALLSERVICE_NOTFOUND == PluginConfig.g_IconTypingEventBig)
 		PluginConfig.g_IconTypingEventBig = 0;
 	PluginConfig.g_IconSend = PluginConfig.g_buttonBarIcons[9];
@@ -747,12 +741,12 @@ struct {
 	int nItems;
 }
 static ICONBLOCKS[] = {
-	{ LPGEN("Message Sessions")"/"LPGEN("Default"), _deficons, SIZEOF(_deficons) },
-	{ LPGEN("Message Sessions")"/"LPGEN("Toolbar"), _toolbaricons, SIZEOF(_toolbaricons) },
-	{ LPGEN("Message Sessions")"/"LPGEN("Toolbar"), _exttoolbaricons, SIZEOF(_exttoolbaricons) },
-	{ LPGEN("Message Sessions")"/"LPGEN("Toolbar"), _chattoolbaricons, SIZEOF(_chattoolbaricons) },
-	{ LPGEN("Message Sessions")"/"LPGEN("Message Log"), _logicons, SIZEOF(_logicons) },
-	{ LPGEN("Message Sessions")"/"LPGEN("Animated Tray"), _trayIcon, SIZEOF(_trayIcon) }
+	{ LPGEN("Message Sessions")"/"LPGEN("Default"), _deficons, _countof(_deficons) },
+	{ LPGEN("Message Sessions")"/"LPGEN("Toolbar"), _toolbaricons, _countof(_toolbaricons) },
+	{ LPGEN("Message Sessions")"/"LPGEN("Toolbar"), _exttoolbaricons, _countof(_exttoolbaricons) },
+	{ LPGEN("Message Sessions")"/"LPGEN("Toolbar"), _chattoolbaricons, _countof(_chattoolbaricons) },
+	{ LPGEN("Message Sessions")"/"LPGEN("Message Log"), _logicons, _countof(_logicons) },
+	{ LPGEN("Message Sessions")"/"LPGEN("Animated Tray"), _trayIcon, _countof(_trayIcon) }
 };
 
 static int GetIconPackVersion(HMODULE hDLL)
@@ -800,41 +794,41 @@ static int TSAPI SetupIconLibConfig()
 	FreeLibrary(g_hIconDLL);
 	g_hIconDLL = 0;
 
-	SKINICONDESC sid = { sizeof(sid) };
-	sid.ptszDefaultFile = szFilename;
+	SKINICONDESC sid = { 0 };
+	sid.defaultFile.t = szFilename;
 	sid.flags = SIDF_PATH_TCHAR;
 
-	for (int n = 0; n < SIZEOF(ICONBLOCKS); n++) {
-		sid.pszSection = ICONBLOCKS[n].szSection;
+	for (int n = 0; n < _countof(ICONBLOCKS); n++) {
+		sid.section.a = ICONBLOCKS[n].szSection;
 		for (int i = 0; i < ICONBLOCKS[n].nItems; i++) {
 			sid.pszName = ICONBLOCKS[n].idesc[i].szName;
-			sid.pszDescription = ICONBLOCKS[n].idesc[i].szDesc;
+			sid.description.a = ICONBLOCKS[n].idesc[i].szDesc;
 			sid.iDefaultIndex = ICONBLOCKS[n].idesc[i].uId == -IDI_HISTORY ? 0 : ICONBLOCKS[n].idesc[i].uId;        // workaround problem /w icoLib and a resource id of 1 (actually, a Windows problem)
 
 			if (n > 0 && n < 4)
-				PluginConfig.g_buttonBarIconHandles[j++] = Skin_AddIcon(&sid);
+				PluginConfig.g_buttonBarIconHandles[j++] = IcoLib_AddIcon(&sid);
 			else
-				Skin_AddIcon(&sid);
+				IcoLib_AddIcon(&sid);
 		}
 	}
 
-	sid.pszSection = LPGEN("Message Sessions")"/"LPGEN("Default");
+	sid.section.a = LPGEN("Message Sessions")"/"LPGEN("Default");
 	sid.pszName = "tabSRMM_clock_symbol";
-	sid.pszDescription = LPGEN("Clock symbol (for the info panel clock)");
+	sid.description.a = LPGEN("Clock symbol (for the info panel clock)");
 	sid.iDefaultIndex = -IDI_CLOCK;
-	Skin_AddIcon(&sid);
+	IcoLib_AddIcon(&sid);
 
 	_tcsncpy(szFilename, _T("plugins\\tabsrmm.dll"), MAX_PATH);
 
 	sid.pszName = "tabSRMM_overlay_disabled";
-	sid.pszDescription = LPGEN("Feature disabled (used as overlay)");
+	sid.description.a = LPGEN("Feature disabled (used as overlay)");
 	sid.iDefaultIndex = -IDI_FEATURE_DISABLED;
-	Skin_AddIcon(&sid);
+	IcoLib_AddIcon(&sid);
 
 	sid.pszName = "tabSRMM_overlay_enabled";
-	sid.pszDescription = LPGEN("Feature enabled (used as overlay)");
+	sid.description.a = LPGEN("Feature enabled (used as overlay)");
 	sid.iDefaultIndex = -IDI_FEATURE_ENABLED;
-	Skin_AddIcon(&sid);
+	IcoLib_AddIcon(&sid);
 	return 1;
 }
 
@@ -842,27 +836,27 @@ static int TSAPI SetupIconLibConfig()
 
 static int TSAPI LoadFromIconLib()
 {
-	for (int n = 0; n < SIZEOF(ICONBLOCKS); n++)
+	for (int n = 0; n < _countof(ICONBLOCKS); n++)
 		for (int i = 0; i < ICONBLOCKS[n].nItems; i++)
-			*(ICONBLOCKS[n].idesc[i].phIcon) = Skin_GetIcon(ICONBLOCKS[n].idesc[i].szName);
+			*(ICONBLOCKS[n].idesc[i].phIcon) = IcoLib_GetIcon(ICONBLOCKS[n].idesc[i].szName);
 
-	PluginConfig.g_buttonBarIcons[0] = LoadSkinnedIcon(SKINICON_OTHER_ADDCONTACT);
-	PluginConfig.g_buttonBarIcons[1] = LoadSkinnedIcon(SKINICON_OTHER_HISTORY);
-	PluginConfig.g_buttonBarIconHandles[0] = LoadSkinnedIconHandle(SKINICON_OTHER_HISTORY);
-	PluginConfig.g_buttonBarIconHandles[1] = LoadSkinnedIconHandle(SKINICON_OTHER_ADDCONTACT);
-	PluginConfig.g_buttonBarIconHandles[20] = LoadSkinnedIconHandle(SKINICON_OTHER_USERDETAILS);
+	PluginConfig.g_buttonBarIcons[0] = Skin_LoadIcon(SKINICON_OTHER_ADDCONTACT);
+	PluginConfig.g_buttonBarIcons[1] = Skin_LoadIcon(SKINICON_OTHER_HISTORY);
+	PluginConfig.g_buttonBarIconHandles[0] = Skin_GetIconHandle(SKINICON_OTHER_HISTORY);
+	PluginConfig.g_buttonBarIconHandles[1] = Skin_GetIconHandle(SKINICON_OTHER_ADDCONTACT);
+	PluginConfig.g_buttonBarIconHandles[20] = Skin_GetIconHandle(SKINICON_OTHER_USERDETAILS);
 
 	PluginConfig.g_buttonBarIcons[ICON_DEFAULT_TYPING] =
-		PluginConfig.g_buttonBarIcons[12] = LoadSkinnedIcon(SKINICON_OTHER_TYPING);
-	PluginConfig.g_IconChecked = LoadSkinnedIcon(SKINICON_OTHER_TICK);
-	PluginConfig.g_IconUnchecked = LoadSkinnedIcon(SKINICON_OTHER_NOTICK);
-	PluginConfig.g_IconGroupOpen = LoadSkinnedIcon(SKINICON_OTHER_GROUPOPEN);
-	PluginConfig.g_IconGroupClose = LoadSkinnedIcon(SKINICON_OTHER_GROUPSHUT);
+		PluginConfig.g_buttonBarIcons[12] = Skin_LoadIcon(SKINICON_OTHER_TYPING);
+	PluginConfig.g_IconChecked = Skin_LoadIcon(SKINICON_OTHER_TICK);
+	PluginConfig.g_IconUnchecked = Skin_LoadIcon(SKINICON_OTHER_NOTICK);
+	PluginConfig.g_IconGroupOpen = Skin_LoadIcon(SKINICON_OTHER_GROUPOPEN);
+	PluginConfig.g_IconGroupClose = Skin_LoadIcon(SKINICON_OTHER_GROUPSHUT);
 
-	PluginConfig.g_iconOverlayEnabled = Skin_GetIcon("tabSRMM_overlay_enabled");
-	PluginConfig.g_iconOverlayDisabled = Skin_GetIcon("tabSRMM_overlay_disabled");
+	PluginConfig.g_iconOverlayEnabled = IcoLib_GetIcon("tabSRMM_overlay_enabled");
+	PluginConfig.g_iconOverlayDisabled = IcoLib_GetIcon("tabSRMM_overlay_disabled");
 
-	PluginConfig.g_iconClock = Skin_GetIcon("tabSRMM_clock_symbol");
+	PluginConfig.g_iconClock = IcoLib_GetIcon("tabSRMM_clock_symbol");
 
 	CacheMsgLogIcons();
 	M.BroadcastMessage(DM_LOADBUTTONBARICONS, 0, 0);
@@ -884,7 +878,7 @@ void TSAPI LoadIconTheme()
 
 static void UnloadIcons()
 {
-	for (int n = 0; n < SIZEOF(ICONBLOCKS); n++)
+	for (int n = 0; n < _countof(ICONBLOCKS); n++)
 		for (int i = 0; i < ICONBLOCKS[n].nItems; i++)
 			if (*(ICONBLOCKS[n].idesc[i].phIcon) != 0) {
 				DestroyIcon(*(ICONBLOCKS[n].idesc[i].phIcon));
@@ -981,8 +975,6 @@ int LoadSendRecvMessageModule(void)
 
 	db_set_b(0, TEMPLATES_MODULE, "setup", 2);
 	LoadDefaultTemplates();
-
-	BuildCodePageList();
 	return 0;
 }
 
@@ -1054,7 +1046,7 @@ STDMETHODIMP CREOleCallback::GetInPlaceContext(LPOLEINPLACEFRAME*, LPOLEINPLACEU
 STDMETHODIMP CREOleCallback::GetNewStorage(LPSTORAGE *lplpstg)
 {
 	TCHAR sztName[64];
-	mir_sntprintf(sztName, SIZEOF(sztName), _T("s%u"), nextStgId++);
+	mir_sntprintf(sztName, _countof(sztName), _T("s%u"), nextStgId++);
 	if (pictStg == NULL)
 		return STG_E_MEDIUMFULL;
 	return pictStg->CreateStorage(sztName, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE, 0, 0, lplpstg);

@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "msn_global.h"
+#include "stdafx.h"
 #include "msn_proto.h"
 
 #include <commdlg.h>
@@ -47,19 +47,19 @@ static IconItem iconList[] =
 
 void MsnInitIcons(void)
 {
-	Icon_Register(hInst, "Protocols/MSN", iconList, SIZEOF(iconList), "MSN");
+	Icon_Register(hInst, "Protocols/MSN", iconList, _countof(iconList), "MSN");
 }
 
 HICON LoadIconEx(const char* name, bool big)
 {
 	char szSettingName[100];
-	mir_snprintf(szSettingName, SIZEOF(szSettingName), "MSN_%s", name);
-	return Skin_GetIcon(szSettingName, big);
+	mir_snprintf(szSettingName, _countof(szSettingName), "MSN_%s", name);
+	return IcoLib_GetIcon(szSettingName, big);
 }
 
 HANDLE GetIconHandle(int iconId)
 {
-	for (unsigned i = 0; i < SIZEOF(iconList); i++)
+	for (unsigned i = 0; i < _countof(iconList); i++)
 		if (iconList[i].defIconID == iconId)
 			return iconList[i].hIcolib;
 
@@ -69,8 +69,8 @@ HANDLE GetIconHandle(int iconId)
 void  ReleaseIconEx(const char* name, bool big)
 {
 	char szSettingName[100];
-	mir_snprintf(szSettingName, SIZEOF(szSettingName), "MSN_%s", name);
-	Skin_ReleaseIcon(szSettingName, big);
+	mir_snprintf(szSettingName, _countof(szSettingName), "MSN_%s", name);
+	IcoLib_Release(szSettingName, big);
 }
 
 INT_PTR CALLBACK DlgProcMsnServLists(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -128,7 +128,7 @@ static INT_PTR CALLBACK DlgProcMsnOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDC_NEWMSNACCOUNTLINK) {
-			CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)"https://signup.live.com");
+			Utils_OpenUrl("https://signup.live.com");
 			return TRUE;
 		}
 
@@ -174,7 +174,7 @@ static INT_PTR CALLBACK DlgProcMsnOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				{
 					HWND tEditField = GetDlgItem(hwndDlg, IDC_MAILER_APP);
 
-					GetWindowTextA(tEditField, szFile, SIZEOF(szFile));
+					GetWindowTextA(tEditField, szFile, _countof(szFile));
 
 					size_t tSelectLen = 0;
 
@@ -196,7 +196,7 @@ LBL_Continue:
 					OPENFILENAMEA ofn = { 0 };
 					ofn.lStructSize = sizeof(ofn);
 					ofn.hwndOwner = hwndDlg;
-					ofn.nMaxFile = SIZEOF(szFile);
+					ofn.nMaxFile = _countof(szFile);
 					ofn.lpstrFile = szFile;
 					ofn.Flags = OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
 					if (GetOpenFileNameA(&ofn) != TRUE)
@@ -204,7 +204,7 @@ LBL_Continue:
 
 					if (strchr(szFile, ' ') != NULL) {
 						char tmpBuf[MAX_PATH + 2];
-						mir_snprintf(tmpBuf, SIZEOF(tmpBuf), "\"%s\"", szFile);
+						mir_snprintf(tmpBuf, _countof(tmpBuf), "\"%s\"", szFile);
 						mir_strcpy(szFile, tmpBuf);
 					}
 
@@ -225,16 +225,16 @@ LBL_Continue:
 
 			CMsnProto* proto = (CMsnProto*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
 
-			GetDlgItemTextA(hwndDlg, IDC_HANDLE, szEmail, SIZEOF(szEmail));
+			GetDlgItemTextA(hwndDlg, IDC_HANDLE, szEmail, _countof(szEmail));
 			if (mir_strcmp(_strlwr(szEmail), proto->MyOptions.szEmail)) {
 				reconnectRequired = true;
 				mir_strcpy(proto->MyOptions.szEmail, szEmail);
 				proto->setString("e-mail", szEmail);
 				proto->setString("wlid", szEmail);
-				proto->setDword("netId", proto->GetMyNetID());
+				proto->setDword("netId", (proto->MyOptions.netId = proto->GetMyNetID()));
 			}
 
-			GetDlgItemTextA(hwndDlg, IDC_PASSWORD, password, SIZEOF(password));
+			GetDlgItemTextA(hwndDlg, IDC_PASSWORD, password, _countof(password));
 			if (!proto->getString("Password", &dbv)) {
 				if (mir_strcmp(password, dbv.pszVal)) {
 					reconnectRequired = true;
@@ -247,7 +247,8 @@ LBL_Continue:
 				proto->setString("Password", password);
 			}
 
-			GetDlgItemText(hwndDlg, IDC_HANDLE2, screenStr, SIZEOF(screenStr));
+#ifdef OBSOLETE
+			GetDlgItemText(hwndDlg, IDC_HANDLE2, screenStr, _countof(screenStr));
 			if (!proto->getTString("Nick", &dbv)) {
 				if (mir_tstrcmp(dbv.ptszVal, screenStr))
 					proto->MSN_SendNickname(screenStr);
@@ -268,12 +269,13 @@ LBL_Continue:
 				proto->MSN_ABUpdateAttr(NULL, "MSN.IM.BLP", tValue ? "0" : "1");
 				break;
 			}
+#endif
 
 			proto->setByte("SendFontInfo", (BYTE)IsDlgButtonChecked(hwndDlg, IDC_SENDFONTINFO));
 			proto->setByte("RunMailerOnHotmail", (BYTE)IsDlgButtonChecked(hwndDlg, IDC_RUN_APP_ON_HOTMAIL));
 			proto->setByte("ManageServer", (BYTE)IsDlgButtonChecked(hwndDlg, IDC_MANAGEGROUPS));
 
-			GetDlgItemText(hwndDlg, IDC_MAILER_APP, screenStr, SIZEOF(screenStr));
+			GetDlgItemText(hwndDlg, IDC_MAILER_APP, screenStr, _countof(screenStr));
 			proto->setTString("MailerPath", screenStr);
 
 			if (reconnectRequired && proto->msnLoggedIn)
@@ -376,18 +378,17 @@ static INT_PTR CALLBACK DlgProcMsnConnOpts(HWND hwndDlg, UINT msg, WPARAM wParam
 
 	case WM_NOTIFY:
 		if (((LPNMHDR)lParam)->code == (UINT)PSN_APPLY) {
-			bool reconnectRequired = false;
 			char str[MAX_PATH];
 
 			CMsnProto* proto = (CMsnProto*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
 
-			GetDlgItemTextA(hwndDlg, IDC_DIRECTSERVER, str, SIZEOF(str));
+			GetDlgItemTextA(hwndDlg, IDC_DIRECTSERVER, str, _countof(str));
 			if (mir_strcmp(str, MSN_DEFAULT_LOGIN_SERVER))
 				proto->setString("DirectServer", str);
 			else
 				proto->delSetting("DirectServer");
 
-			GetDlgItemTextA(hwndDlg, IDC_GATEWAYSERVER, str, SIZEOF(str));
+			GetDlgItemTextA(hwndDlg, IDC_GATEWAYSERVER, str, _countof(str));
 			if (mir_strcmp(str, MSN_DEFAULT_GATEWAY))
 				proto->setString("GatewayServer", str);
 			else
@@ -401,14 +402,17 @@ static INT_PTR CALLBACK DlgProcMsnConnOpts(HWND hwndDlg, UINT msg, WPARAM wParam
 						TranslateT("MSN Protocol"), MB_OK | MB_ICONINFORMATION);
 				}
 			}
-
+			
+#ifdef OBSOLETE
 			unsigned gethst2 = proto->getByte("AutoGetHost", 1);
+
+#endif
 			unsigned gethst = SendDlgItemMessage(hwndDlg, IDC_HOSTOPT, CB_GETCURSEL, 0, 0);
 			if (gethst < 2) gethst = !gethst;
 			proto->setByte("AutoGetHost", (BYTE)gethst);
 
 			if (gethst == 0) {
-				GetDlgItemTextA(hwndDlg, IDC_YOURHOST, str, SIZEOF(str));
+				GetDlgItemTextA(hwndDlg, IDC_YOURHOST, str, _countof(str));
 				proto->setString("YourHost", str);
 			}
 			else proto->delSetting("YourHost");
@@ -417,10 +421,6 @@ static INT_PTR CALLBACK DlgProcMsnConnOpts(HWND hwndDlg, UINT msg, WPARAM wParam
 			if (gethst != gethst2)
 				proto->ForkThread(&CMsnProto::MSNConnDetectThread, NULL);
 #endif
-
-			if (reconnectRequired && proto->msnLoggedIn)
-				MessageBox(hwndDlg, TranslateT("The changes you have made require you to reconnect to the MSN Messenger network before they take effect"),
-				TranslateT("MSN Options"), MB_OK);
 
 			proto->LoadOptions();
 			return TRUE;
@@ -531,7 +531,7 @@ static INT_PTR CALLBACK DlgProcAccMgrUI(HWND hwndDlg, UINT msg, WPARAM wParam, L
 
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDC_NEWMSNACCOUNTLINK) {
-			CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)"https://signup.live.com");
+			Utils_OpenUrl("https://signup.live.com");
 			return TRUE;
 		}
 
@@ -551,15 +551,15 @@ static INT_PTR CALLBACK DlgProcAccMgrUI(HWND hwndDlg, UINT msg, WPARAM wParam, L
 
 			CMsnProto* proto = (CMsnProto*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
 
-			GetDlgItemTextA(hwndDlg, IDC_HANDLE, szEmail, SIZEOF(szEmail));
+			GetDlgItemTextA(hwndDlg, IDC_HANDLE, szEmail, _countof(szEmail));
 			if (mir_strcmp(szEmail, proto->MyOptions.szEmail)) {
 				mir_strcpy(proto->MyOptions.szEmail, szEmail);
 				proto->setString("e-mail", szEmail);
 				proto->setString("wlid", szEmail);
-				proto->setDword("netId", proto->GetMyNetID());
+				proto->setDword("netId", (proto->MyOptions.netId = proto->GetMyNetID()));
 			}
 
-			GetDlgItemTextA(hwndDlg, IDC_PASSWORD, password, SIZEOF(password));
+			GetDlgItemTextA(hwndDlg, IDC_PASSWORD, password, _countof(password));
 			if (!proto->getString("Password", &dbv)) {
 				if (mir_strcmp(password, dbv.pszVal))
 					proto->setString("Password", password);
@@ -568,7 +568,7 @@ static INT_PTR CALLBACK DlgProcAccMgrUI(HWND hwndDlg, UINT msg, WPARAM wParam, L
 			else proto->setString("Password", password);
 
 			TCHAR szPlace[64];
-			GetDlgItemText(hwndDlg, IDC_PLACE, szPlace, SIZEOF(szPlace));
+			GetDlgItemText(hwndDlg, IDC_PLACE, szPlace, _countof(szPlace));
 			if (szPlace[0])
 				proto->setTString("Place", szPlace);
 			else

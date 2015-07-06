@@ -134,7 +134,7 @@ LPTSTR IcoLib_GetDefaultIconFileName()
 	};
 	TCHAR absolute[MAX_PATH];
 
-	for (int i = 0; i < SIZEOF(path); i++) {
+	for (int i = 0; i < _countof(path); i++) {
 		PathToAbsoluteT(path[i], absolute);
 		if (PathFileExists(absolute))
 			return path[i];
@@ -186,7 +186,7 @@ static void IcoLib_CheckIconPackVersion(LPTSTR szIconPack)
 void IcoLib_SetCtrlIcons(HWND hDlg, const ICONCTRL *pCtrl, BYTE numCtrls)
 {
 	for (int i = 0; i < numCtrls; i++) {
-		HICON	hIcon = Skin_GetIcon(pCtrl[i].pszIcon);
+		HICON	hIcon = IcoLib_GetIcon(pCtrl[i].pszIcon);
 		if (pCtrl[i].idCtrl) {
 			HWND hCtrl = GetDlgItem(hDlg, pCtrl[i].idCtrl);
 			switch (pCtrl[i].Message) {
@@ -226,13 +226,13 @@ static HANDLE IcoLib_RegisterIconHandleEx(LPSTR szIconID, LPSTR szDescription, L
 	HANDLE hIconHandle = NULL;
 
 	if (szIconID && szDescription && szSection) {
-		SKINICONDESC sid = { sizeof(sid) };
+		SKINICONDESC sid = { 0 };
 		sid.flags = SIDF_ALL_TCHAR;
 		sid.pszName = szIconID;
-		sid.ptszDescription = mir_a2t(szDescription);
-		sid.ptszSection = mir_a2t(szSection);
+		sid.description.t = mir_a2t(szDescription);
+		sid.section.t = mir_a2t(szSection);
 
-		if (sid.ptszDescription && sid.ptszSection) {
+		if (sid.description.t && sid.section.t) {
 			switch (Size) {
 			// small icons (16x16)
 			case 0:
@@ -252,17 +252,17 @@ static HANDLE IcoLib_RegisterIconHandleEx(LPSTR szIconID, LPSTR szDescription, L
 				break;
 			}
 
-			sid.ptszDefaultFile = szDefaultFile;
-			if (sid.ptszDefaultFile && sid.ptszDefaultFile[0])
+			sid.defaultFile.t = szDefaultFile;
+			if (sid.defaultFile.t && sid.defaultFile.t[0])
 				sid.iDefaultIndex = -idIcon;
 			else {
 				sid.hDefaultIcon = hDefIcon;
 				sid.iDefaultIndex = -1;
 			}
-			hIconHandle = Skin_AddIcon(&sid);
+			hIconHandle = IcoLib_AddIcon(&sid);
 		}
-		MIR_FREE(sid.ptszDescription);
-		MIR_FREE(sid.ptszSection);
+		MIR_FREE(sid.description.t);
+		MIR_FREE(sid.section.t);
 	}
 	return hIconHandle;
 }
@@ -304,7 +304,7 @@ HANDLE IcoLib_RegisterIconHandle(LPSTR szIconID, LPSTR szDescription, LPSTR szSe
  **/
 HICON IcoLib_RegisterIcon(LPSTR szIconID, LPSTR szDescription, LPSTR szSection, int idIcon, int Size)
 {
-	return Skin_GetIconByHandle(IcoLib_RegisterIconHandle(szIconID, szDescription, szSection, idIcon, Size));
+	return IcoLib_GetIconByHandle(IcoLib_RegisterIconHandle(szIconID, szDescription, szSection, idIcon, Size));
 }
 
 /**
@@ -326,7 +326,7 @@ void IcoLib_LoadModule()
 	// load default icon if required
 	ghDefIcon = (HICON)LoadImage(ghInst, MAKEINTRESOURCE(IDI_DEFAULT), IMAGE_ICON,  GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), 0);
 
-	for (int i = 0; i < SIZEOF(icoDesc); i++)
+	for (int i = 0; i < _countof(icoDesc); i++)
 		IcoLib_RegisterIconHandleEx(
 			icoDesc[i].pszName, icoDesc[i].pszDesc, icoDesc[i].pszSection, 
 			szDefaultFile, icoDesc[i].idResource, icoDesc[i].size, ghDefIcon);

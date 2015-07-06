@@ -121,18 +121,15 @@ extern "C" int __declspec(dllexport) Load()
 {
 	mir_getLP(&pluginInfo);
 
-	CLISTMENUITEM mi;
 	char *strTmp;
 
-	CreateServiceFunction("RemovePersonalSettings/RemoveAll",RemoveAllService);
-	memset(&mi, 0, sizeof(mi));
-	mi.cbSize=sizeof(mi);
-	mi.position=-0x7FFFFFFF;
-	mi.flags=0;
-	mi.hIcon=LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
-	mi.pszName = LPGEN("Remove Personal Settings...");
+	CMenuItem mi;
+	mi.position = -0x7FFFFFFF;
+	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
+	mi.name.a = LPGEN("Remove Personal Settings...");
 	mi.pszService="RemovePersonalSettings/RemoveAll";
 	Menu_AddMainMenuItem(&mi);
+	CreateServiceFunction(mi.pszService, RemoveAllService);
 
 	// Get ini file name
 	gMirandaDir[0] = '\0';
@@ -144,7 +141,7 @@ extern "C" int __declspec(dllexport) Load()
 		*strTmp = '\0';
 
 	// Set vars
-	strcat(gMirandaDir, "\\");
+	mir_strcat(gMirandaDir, "\\");
 	mir_strcpy(gIniFile, gMirandaDir);
 
 	// Store last pos
@@ -198,11 +195,10 @@ void SetProtocolsOffline()
 {
 	if ( GetSettingBool("GlobalSettings", "SetProtocolsOffline", TRUE) ) {
 		PROTOACCOUNT **accounts;
-		int i,count;
+		int count;
+		Proto_EnumAccounts(&count, &accounts);
 
-		CallService(MS_PROTO_ENUMACCOUNTS, (WPARAM)&count, (LPARAM)&accounts);
-
-		for (i = 0; i < count; i++) {
+		for (int i = 0; i < count; i++) {
 			/*if (protos[i]->type != PROTOTYPE_PROTOCOL)
 				continue;*/
 			if (!accounts[i]->bIsEnabled)
@@ -306,7 +302,7 @@ void RemoveProtocolSettings(const char * protocolName)
 
 			// Delete it
 			if (name[0] != '\0') {
-				mir_snprintf(moduleName, SIZEOF(moduleName), "%s%s", protocolName, name);
+				mir_snprintf(moduleName, _countof(moduleName), "%s%s", protocolName, name);
 				DeleteSettingEx(moduleName, NULL);
 			}
 
@@ -324,9 +320,7 @@ void RemoveSettings()
 	if ( GetSettingBool("GlobalSettings", "RemoveProtocolSettings", TRUE) ) {
 		PROTOACCOUNT **accounts;
 		int i,count;
-
-		// TODO MS_PROTO_ENUMACCOUNTS
-		CallService(MS_PROTO_ENUMACCOUNTS, (WPARAM)&count, (LPARAM)&accounts);
+		Proto_EnumAccounts(&count, &accounts);
 
 		for (i = 0; i < count; i++) {
 			/*if (protos[i]->type != PROTOTYPE_PROTOCOL)
@@ -434,11 +428,10 @@ void RemoveDirectories()
 	// Remove protocol folders
 	if (GetSettingBool("GlobalSettings", "RemoveProtocolFolders", TRUE)) {
 		PROTOACCOUNT **accounts;
-		int i,count;
+		int count;
+		Proto_EnumAccounts(&count, &accounts);
 
-		CallService(MS_PROTO_ENUMACCOUNTS, (WPARAM)&count, (LPARAM)&accounts);
-
-		for (i = 0; i < count; i++) {
+		for (int i = 0; i < count; i++) {
 			/*if (protos[i]->type != PROTOTYPE_PROTOCOL)
 				continue;*/
 			if (!accounts[i]->bIsEnabled)
@@ -447,7 +440,7 @@ void RemoveDirectories()
 			if (accounts[i]->szModuleName == NULL || accounts[i]->szModuleName[0] == '\0')
 				continue;
 
-			mir_snprintf(dir, SIZEOF(dir), "%s%s", gMirandaDir, accounts[i]->szModuleName);
+			mir_snprintf(dir, _countof(dir), "%s%s", gMirandaDir, accounts[i]->szModuleName);
 			DeleteFileOrFolder(dir);
 		}
 	}
@@ -471,7 +464,7 @@ void RemoveDirectories()
 
 			// Delete it
 			if (name[0] != '\0') {
-				mir_snprintf(dir, SIZEOF(dir), "%s%s", gMirandaDir, name);
+				mir_snprintf(dir, _countof(dir), "%s%s", gMirandaDir, name);
 				DeleteFileOrFolder(dir);
 			}
 
@@ -561,7 +554,7 @@ void DeleteFileOrFolder(const char *name)
 				*strTmp = '\0';
 			}
 			else {
-				strcat(tmp, "\\");
+				mir_strcat(tmp, "\\");
 				strTmp = &tmp[mir_strlen(tmp)];
 			}
 
@@ -579,7 +572,7 @@ void DeleteFileOrFolder(const char *name)
 	else if (attibs & FILE_ATTRIBUTE_DIRECTORY)	{ // Is a directory
 												  // Get all files and delete then
 		char tmp[MAX_PATH];
-		mir_snprintf(tmp, SIZEOF(tmp), "%s\\*.*", name);
+		mir_snprintf(tmp, "%s\\*.*", name);
 
 		// Delete files
 		WIN32_FIND_DATAA findData;
@@ -587,7 +580,7 @@ void DeleteFileOrFolder(const char *name)
 		if (hwnd != INVALID_HANDLE_VALUE) {
 			do {
 				if (mir_strcmp(findData.cFileName, ".") && mir_strcmp(findData.cFileName, "..")) {
-					mir_snprintf(tmp, SIZEOF(tmp), "%s\\%s", name, findData.cFileName);
+					mir_snprintf(tmp, "%s\\%s", name, findData.cFileName);
 					DeleteFileOrFolder(tmp);
 				}
 			}

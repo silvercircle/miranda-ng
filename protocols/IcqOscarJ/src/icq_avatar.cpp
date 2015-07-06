@@ -76,10 +76,10 @@ void CIcqProto::GetFullAvatarFileName(int dwUin, const char *szUid, int dwFormat
 void CIcqProto::GetAvatarFileName(int dwUin, const char *szUid, TCHAR *pszDest, size_t cbLen)
 {
 	TCHAR szPath[MAX_PATH * 2];
-	mir_sntprintf(szPath, SIZEOF(szPath), _T("%s\\%S\\"), VARST(_T("%miranda_avatarcache%")), m_szModuleName);
+	mir_sntprintf(szPath, _T("%s\\%S\\"), VARST(_T("%miranda_avatarcache%")), m_szModuleName);
 
 	FOLDERSGETDATA fgd = { sizeof(fgd) };
-	fgd.nMaxPathSize = SIZEOF(szPath);
+	fgd.nMaxPathSize = _countof(szPath);
 	fgd.szPathT = szPath;
 	fgd.flags = FF_TCHAR;
 
@@ -107,7 +107,7 @@ void CIcqProto::GetAvatarFileName(int dwUin, const char *szUid, TCHAR *pszDest, 
 				szLastDot[0] = '\0';
 
 			mir_tstrcpy(pszDest + tPathLen, szBuf);
-			_tcscat(pszDest + tPathLen, _T("_avt"));
+			mir_tstrcat(pszDest + tPathLen, _T("_avt"));
 		}
 	}
 }
@@ -115,7 +115,7 @@ void CIcqProto::GetAvatarFileName(int dwUin, const char *szUid, TCHAR *pszDest, 
 void AddAvatarExt(int dwFormat, TCHAR *pszDest)
 {
 	const TCHAR *ext = ProtoGetAvatarExtension(dwFormat);
-	_tcscat(pszDest, (*ext == 0) ? _T(".dat") : ext);
+	mir_tstrcat(pszDest, (*ext == 0) ? _T(".dat") : ext);
 }
 
 #define MD5_BLOCK_SIZE 1024*1024 /* use 1MB blocks */
@@ -1155,10 +1155,10 @@ void avatars_server_connection::handleAvatarFam(BYTE *pBuffer, size_t wBufferLen
 				}
 			}
 
-			PROTO_AVATAR_INFORMATIONT ai = { sizeof(ai) };
+			PROTO_AVATAR_INFORMATION ai = { 0 };
 			ai.format = PA_FORMAT_JPEG; // this is for error only
 			ai.hContact = pCookieData->hContact;
-			mir_tstrncpy(ai.filename, pCookieData->szFile, SIZEOF(ai.filename));
+			mir_tstrncpy(ai.filename, pCookieData->szFile, _countof(ai.filename));
 			AddAvatarExt(PA_FORMAT_JPEG, ai.filename);
 
 			ppro->FreeCookie(pSnacHeader->dwRef);
@@ -1211,11 +1211,11 @@ void avatars_server_connection::handleAvatarFam(BYTE *pBuffer, size_t wBufferLen
 					const TCHAR *ptszExt;
 					int dwPaFormat = ProtoGetBufferFormat(pBuffer, &ptszExt);
 					TCHAR tszImageFile[MAX_PATH];
-					mir_sntprintf(tszImageFile, SIZEOF(tszImageFile), _T("%s%s"), pCookieData->szFile, ptszExt);
+					mir_sntprintf(tszImageFile, _countof(tszImageFile), _T("%s%s"), pCookieData->szFile, ptszExt);
 
 					ppro->setByte(pCookieData->hContact, "AvatarType", (BYTE)dwPaFormat);
 					ai.format = dwPaFormat; // set the format
-					mir_tstrncpy(ai.filename, tszImageFile, SIZEOF(ai.filename));
+					mir_tstrncpy(ai.filename, tszImageFile, _countof(ai.filename));
 
 					int out = _topen(tszImageFile, _O_BINARY | _O_CREAT | _O_TRUNC | _O_WRONLY, _S_IREAD | _S_IWRITE);
 					if (out != -1) {

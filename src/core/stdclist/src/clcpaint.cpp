@@ -83,7 +83,7 @@ static void __inline SetHotTrackColour(HDC hdc, struct ClcData *dat)
 			newCol = RGB(r, g, b);
 		}
 		else newCol = dat->hotTextColour;
-		
+
 		SetTextColor(hdc, newCol);
 	}
 	else SetTextColor(hdc, dat->hotTextColour);
@@ -92,15 +92,15 @@ static void __inline SetHotTrackColour(HDC hdc, struct ClcData *dat)
 static int GetStatusOnlineness(int status)
 {
 	switch (status) {
-		case ID_STATUS_FREECHAT:    return 110;
-		case ID_STATUS_ONLINE:      return 100;
-		case ID_STATUS_OCCUPIED:    return 60;
-		case ID_STATUS_ONTHEPHONE:  return 50;
-		case ID_STATUS_DND:         return 40;
-		case ID_STATUS_AWAY:        return 30;
-		case ID_STATUS_OUTTOLUNCH:  return 20;
-		case ID_STATUS_NA:          return 10;
-		case ID_STATUS_INVISIBLE:   return 5;
+	case ID_STATUS_FREECHAT:    return 110;
+	case ID_STATUS_ONLINE:      return 100;
+	case ID_STATUS_OCCUPIED:    return 60;
+	case ID_STATUS_ONTHEPHONE:  return 50;
+	case ID_STATUS_DND:         return 40;
+	case ID_STATUS_AWAY:        return 30;
+	case ID_STATUS_OUTTOLUNCH:  return 20;
+	case ID_STATUS_NA:          return 10;
+	case ID_STATUS_INVISIBLE:   return 5;
 	}
 	return 0;
 }
@@ -513,7 +513,7 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint)
 		pts[6].y = pts[5].y;
 		pts[7].x = pts[0].x;
 		pts[7].y = pts[4].y;
-		HRGN hRgn = CreatePolygonRgn(pts, SIZEOF(pts), ALTERNATE);
+		HRGN hRgn = CreatePolygonRgn(pts, _countof(pts), ALTERNATE);
 		HBRUSH hBrush = CreateSolidBrush(dat->fontInfo[FONTID_CONTACTS].colour);
 		FillRgn(hdcMem, hRgn, hBrush);
 		DeleteObject(hBrush);
@@ -526,7 +526,7 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint)
 	DeleteDC(hdcMem);
 	if (hBrushAlternateGrey)
 		DeleteObject(hBrushAlternateGrey);
-	
+
 	if (grey) {
 		BITMAPINFOHEADER bmih = { 0 };
 		bmih.biBitCount = 32;
@@ -537,13 +537,13 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint)
 		bmih.biWidth = clRect.right;
 		PBYTE bits = (PBYTE)malloc(4 * bmih.biWidth * -bmih.biHeight);
 		GetDIBits(hdc, hBmpOsb, 0, clRect.bottom, bits, (BITMAPINFO *)& bmih, DIB_RGB_COLORS);
-		
+
 		COLORREF greyColour = GetSysColor(COLOR_3DFACE);
 		int greyRed = GetRValue(greyColour) * 2;
 		int greyGreen = GetGValue(greyColour) * 2;
 		int greyBlue = GetBValue(greyColour) * 2;
 		if (divide3[0] == 255) {
-			for (i = 0; i < SIZEOF(divide3); i++)
+			for (i = 0; i < _countof(divide3); i++)
 				divide3[i] = (i + 1) / 3;
 		}
 		for (int i = 4 * clRect.right * clRect.bottom - 4; i >= 0; i -= 4) {

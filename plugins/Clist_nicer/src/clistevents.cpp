@@ -22,8 +22,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include <commonheaders.h>
-#include "../cluiframes/cluiframes.h"
+#include "stdafx.h"
+#include "cluiframes.h"
 
 static HWND hwndEventFrame = 0;
 HFONT __fastcall ChangeToFont(HDC hdc, struct ClcData *dat, int id, int *fontHeight);
@@ -55,7 +55,7 @@ extern HIMAGELIST hCListImages;
 
 HANDLE hNotifyFrame = (HANDLE)-1;
 
-CListEvent* fnCreateEvent( void )
+CListEvent* fnCreateEvent(void)
 {
 	CListEvent *p = reinterpret_cast<CListEvent *>(mir_alloc(sizeof(CListEvent)));
 	if (p)
@@ -67,15 +67,15 @@ CListEvent* fnCreateEvent( void )
 void HideShowNotifyFrame()
 {
 	int dwVisible = CallService(MS_CLIST_FRAMES_GETFRAMEOPTIONS, MAKEWPARAM(FO_FLAGS, hNotifyFrame), 0) & F_VISIBLE;
-    int desired;
+	int desired;
 
-    if (cfg::dat.dwFlags & CLUI_FRAME_AUTOHIDENOTIFY)
-        desired = cfg::dat.notifyActive ? TRUE : FALSE;
-    else
-        desired = dwVisible;
+	if (cfg::dat.dwFlags & CLUI_FRAME_AUTOHIDENOTIFY)
+		desired = cfg::dat.notifyActive ? TRUE : FALSE;
+	else
+		desired = dwVisible;
 
-    if (desired) {
-		if ( !dwVisible)
+	if (desired) {
+		if (!dwVisible)
 			CallService(MS_CLIST_FRAMES_SHFRAME, (WPARAM)hNotifyFrame, 0);
 	}
 	else {
@@ -98,15 +98,15 @@ static CLISTEVENT* MyGetEvent(int iSelection)
 
 LRESULT CALLBACK EventAreaWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    switch(msg) {
+	switch (msg) {
 	case WM_CREATE:
 		hwndEventFrame = hwnd;
 		return FALSE;
 
 	case WM_MEASUREITEM:
 		{
-			MEASUREITEMSTRUCT *lpi = (LPMEASUREITEMSTRUCT) lParam;
-			MENUITEMINFOA mii = {0};
+			MEASUREITEMSTRUCT *lpi = (LPMEASUREITEMSTRUCT)lParam;
+			MENUITEMINFOA mii = { 0 };
 
 			mii.cbSize = sizeof(mii);
 			mii.fMask = MIIM_DATA | MIIM_ID;
@@ -119,18 +119,18 @@ LRESULT CALLBACK EventAreaWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 			}
 			break;
 		}
-    case WM_NCCALCSIZE:
-        return FrameNCCalcSize(hwnd, DefWindowProc, wParam, lParam,
-			  wndFrameEventArea ? wndFrameEventArea->TitleBar.ShowTitleBar : 0);
-    case WM_NCPAINT:
-        return FrameNCPaint(hwnd, DefWindowProc, wParam, lParam,
-			  wndFrameEventArea ? wndFrameEventArea->TitleBar.ShowTitleBar : 0);
+	case WM_NCCALCSIZE:
+		return FrameNCCalcSize(hwnd, DefWindowProc, wParam, lParam,
+			wndFrameEventArea ? wndFrameEventArea->TitleBar.ShowTitleBar : 0);
+	case WM_NCPAINT:
+		return FrameNCPaint(hwnd, DefWindowProc, wParam, lParam,
+			wndFrameEventArea ? wndFrameEventArea->TitleBar.ShowTitleBar : 0);
 	case WM_DRAWITEM:
 		{
-			LPDRAWITEMSTRUCT dis = (LPDRAWITEMSTRUCT) lParam;
+			LPDRAWITEMSTRUCT dis = (LPDRAWITEMSTRUCT)lParam;
 
-			if (dis->hwndItem == (HWND) cfg::dat.hMenuNotify) {
-				MENUITEMINFOA mii = {0};
+			if (dis->hwndItem == (HWND)cfg::dat.hMenuNotify) {
+				MENUITEMINFOA mii = { 0 };
 
 				struct NotifyMenuItemExData *nmi = 0;
 				int iIcon;
@@ -138,7 +138,7 @@ LRESULT CALLBACK EventAreaWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
 				mii.cbSize = sizeof(mii);
 				mii.fMask = MIIM_DATA;
-				if (GetMenuItemInfoA(cfg::dat.hMenuNotify, (UINT) dis->itemID, FALSE, &mii) != 0) {
+				if (GetMenuItemInfoA(cfg::dat.hMenuNotify, (UINT)dis->itemID, FALSE, &mii) != 0) {
 					nmi = (struct NotifyMenuItemExData *) mii.dwItemData;
 					if (nmi) {
 						iIcon = pcli->pfnGetContactIcon(nmi->hContact);
@@ -154,41 +154,43 @@ LRESULT CALLBACK EventAreaWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 		if (cfg::dat.bEventAreaEnabled)
 			SendMessage(hwnd, WM_COMMAND, MAKEWPARAM(IDC_NOTIFYBUTTON, 0), 0);
 		break;
+
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDC_NOTIFYBUTTON) {
 			int iSelection;
-			MENUITEMINFO mii = {0};
-			POINT pt;
 			struct NotifyMenuItemExData *nmi = 0;
 			int iCount = GetMenuItemCount(cfg::dat.hMenuNotify);
-			BOOL result;
 
+			POINT pt;
 			GetCursorPos(&pt);
+
+			MENUITEMINFO mii = { 0 };
 			mii.cbSize = sizeof(mii);
 			mii.fMask = MIIM_DATA;
 			if (iCount > 1)
 				iSelection = TrackPopupMenu(cfg::dat.hMenuNotify, TPM_RETURNCMD, pt.x, pt.y, 0, hwnd, NULL);
 			else
 				iSelection = GetMenuItemID(cfg::dat.hMenuNotify, 0);
-			result = GetMenuItemInfo(cfg::dat.hMenuNotify, (UINT) iSelection, FALSE, &mii);
+			
+			BOOL result = GetMenuItemInfo(cfg::dat.hMenuNotify, (UINT)iSelection, FALSE, &mii);
 			if (result != 0) {
 				nmi = (struct NotifyMenuItemExData *) mii.dwItemData;
 				if (nmi) {
 					CLISTEVENT *cle = MyGetEvent(iSelection);
 					if (cle) {
 						CLISTEVENT *cle1 = NULL;
-						CallService(cle->pszService, (WPARAM) NULL, (LPARAM) cle);
+						CallService(cle->pszService, (WPARAM)NULL, (LPARAM)cle);
 						// re-obtain the pointer, it may already be invalid/point to another event if the
 						// event we're interested in was removed by the service (nasty one...)
 						cle1 = MyGetEvent(iSelection);
 						if (cle1 != NULL)
-							CallService(MS_CLIST_REMOVEEVENT, (WPARAM) cle->hContact, (LPARAM) cle->hDbEvent);
+							CallService(MS_CLIST_REMOVEEVENT, (WPARAM)cle->hContact, (LPARAM)cle->hDbEvent);
 					}
 				}
 			}
-			break;
 		}
 		break;
+
 	case WM_ERASEBKGND:
 		return TRUE;
 
@@ -243,8 +245,9 @@ LRESULT CALLBACK EventAreaWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 			DeleteDC(hdcMem);
 			ps.fErase = FALSE;
 			EndPaint(hwnd, &ps);
-			return 0;
 		}
+		return 0;
+
 	default:
 		return DefWindowProc(hwnd, msg, wParam, lParam);
 	}
@@ -258,21 +261,24 @@ CListEvent* AddEvent(CLISTEVENT *cle)
 		return NULL;
 
 	if (p->cle.hContact != 0 && p->cle.hDbEvent != 1 && !(p->cle.flags & CLEF_ONLYAFEW)) {
-		MENUITEMINFO mii = { sizeof(mii) };
+		MENUITEMINFO mii = { 0 };
+		mii.cbSize = sizeof(mii);
 		mii.fMask = MIIM_DATA | MIIM_BITMAP | MIIM_ID;
 		if (p->cle.pszService && !strncmp("SRMsg/ReadMessage", p->cle.pszService, 17)) {
 			// dup check only for msg events
 			for (int j = 0; j < GetMenuItemCount(cfg::dat.hMenuNotify); j++) {
 				if (GetMenuItemInfo(cfg::dat.hMenuNotify, j, TRUE, &mii) != 0) {
-					NotifyMenuItemExData *nmi = (NotifyMenuItemExData*) mii.dwItemData;
+					NotifyMenuItemExData *nmi = (NotifyMenuItemExData*)mii.dwItemData;
 					if (nmi != 0 && (HANDLE)nmi->hContact == (HANDLE)p->cle.hContact && nmi->iIcon == p->imlIconIndex)
 						return p;
-		}	}	}
+				}
+			}
+		}
 
 		char *szProto = GetContactProto(p->cle.hContact);
 		TCHAR *szName = pcli->pfnGetContactDisplayName(p->cle.hContact, 0);
 		if (szProto && szName) {
-			NotifyMenuItemExData *nmi = (NotifyMenuItemExData*) malloc(sizeof(NotifyMenuItemExData));
+			NotifyMenuItemExData *nmi = (NotifyMenuItemExData*)malloc(sizeof(NotifyMenuItemExData));
 			if (nmi) {
 				TCHAR szBuffer[128];
 				TCHAR* szStatus = pcli->pfnGetStatusModeDescription(cfg::getWord(p->cle.hContact, szProto, "Status", ID_STATUS_OFFLINE), 0);
@@ -280,7 +286,7 @@ CListEvent* AddEvent(CLISTEVENT *cle)
 				TCHAR szwProto[64];
 				MultiByteToWideChar(CP_ACP, 0, szProto, -1, szwProto, 64);
 				szwProto[63] = 0;
-				mir_sntprintf(szBuffer, SIZEOF(szBuffer), _T("%s: %s (%s)"), szwProto, szName, szStatus);
+				mir_sntprintf(szBuffer, _T("%s: %s (%s)"), szwProto, szName, szStatus);
 
 				szBuffer[127] = 0;
 				AppendMenu(cfg::dat.hMenuNotify, MF_BYCOMMAND | MF_STRING, cfg::dat.wNextMenuID, szBuffer);
@@ -306,10 +312,10 @@ CListEvent* AddEvent(CLISTEVENT *cle)
 	}
 
 	if (cfg::dat.dwFlags & CLUI_STICKYEVENTS) {
-		HANDLE hItem = (HANDLE)SendMessage(pcli->hwndContactTree, CLM_FINDCONTACT, (WPARAM) p->cle.hContact, 0);
+		HANDLE hItem = (HANDLE)SendMessage(pcli->hwndContactTree, CLM_FINDCONTACT, (WPARAM)p->cle.hContact, 0);
 		if (hItem) {
-			SendMessage(pcli->hwndContactTree, CLM_SETSTICKY, (WPARAM) hItem, 1);
-			pcli->pfnClcBroadcast(INTM_PROTOCHANGED, (WPARAM) p->cle.hContact, 0);
+			SendMessage(pcli->hwndContactTree, CLM_SETSTICKY, (WPARAM)hItem, 1);
+			pcli->pfnClcBroadcast(INTM_PROTOCHANGED, (WPARAM)p->cle.hContact, 0);
 		}
 	}
 
@@ -343,7 +349,7 @@ int RemoveEvent(MCONTACT hContact, MEVENT hDbEvent)
 
 	// remove event from the notify menu
 	if (pcli->events.items[i]->menuId > 0) {
-		MENUITEMINFO mii = {0};
+		MENUITEMINFO mii = { 0 };
 		mii.cbSize = sizeof(mii);
 		mii.fMask = MIIM_DATA;
 		if (GetMenuItemInfo(cfg::dat.hMenuNotify, pcli->events.items[i]->menuId, FALSE, &mii) != 0) {
@@ -351,7 +357,9 @@ int RemoveEvent(MCONTACT hContact, MEVENT hDbEvent)
 			if (nmi && nmi->hContact == hContact && nmi->hDbEvent == hDbEvent) {
 				free(nmi);
 				DeleteMenu(cfg::dat.hMenuNotify, pcli->events.items[i]->menuId, MF_BYCOMMAND);
-	}	}	}
+			}
+		}
+	}
 
 	coreCli.pfnRemoveEvent(hContact, hDbEvent);
 
@@ -360,7 +368,8 @@ int RemoveEvent(MCONTACT hContact, MEVENT hDbEvent)
 		if (cfg::dat.dwFlags & CLUI_FRAME_AUTOHIDENOTIFY) {
 			cfg::dat.notifyActive = 0;
 			HideShowNotifyFrame();
-	}	}
+		}
+	}
 
 	// clear "sticky" (sort) status
 	HANDLE hItem = (HANDLE)SendMessage(pcli->hwndContactTree, CLM_FINDCONTACT, hContact, 0);

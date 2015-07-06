@@ -31,8 +31,8 @@ INT_PTR CALLBACK VKAccountProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 		ppro = (CVkProto*)lParam;
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
 
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)Skin_GetIconByHandle(ppro->m_hProtoIcon, 1));
-		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)Skin_GetIconByHandle(ppro->m_hProtoIcon));
+		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon, 1));
+		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon));
 		{
 			ptrT tszLogin(ppro->getTStringA("Login"));
 			if (tszLogin != NULL)
@@ -47,7 +47,7 @@ INT_PTR CALLBACK VKAccountProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case IDC_URL:
-			CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)"http://vk.com");
+			Utils_OpenUrl("http://vk.com");
 			break;
 
 		case IDC_LOGIN:
@@ -63,10 +63,10 @@ INT_PTR CALLBACK VKAccountProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 		switch (((LPNMHDR)lParam)->code) {
 		case PSN_APPLY:
 			TCHAR str[1025];
-			GetDlgItemText(hwndDlg, IDC_LOGIN, str, SIZEOF(str));
+			GetDlgItemText(hwndDlg, IDC_LOGIN, str, _countof(str));
 			ppro->setTString("Login", str);
 			
-			GetDlgItemText(hwndDlg, IDC_PASSWORD, str, SIZEOF(str));
+			GetDlgItemText(hwndDlg, IDC_PASSWORD, str, _countof(str));
 			T2Utf szRawPasswd(str);
 			if (szRawPasswd != NULL)
 				ppro->setString("Password", szRawPasswd);
@@ -78,8 +78,8 @@ INT_PTR CALLBACK VKAccountProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 		break;
 
 	case WM_DESTROY:
-		Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_BIG, 0));
-		Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_BIG, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
 		break;
 	}
 
@@ -105,8 +105,8 @@ INT_PTR CALLBACK CVkProto::OptionsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 		ppro = (CVkProto*)lParam;
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
 
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)Skin_GetIconByHandle(ppro->m_hProtoIcon, 1));
-		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)Skin_GetIconByHandle(ppro->m_hProtoIcon));
+		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon, 1));
+		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon));
 		{
 			ptrT tszLogin(ppro->getTStringA("Login"));
 			if (tszLogin != NULL)
@@ -121,7 +121,7 @@ INT_PTR CALLBACK CVkProto::OptionsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 
 		CheckDlgButton(hwndDlg, IDC_DELIVERY, ppro->m_bServerDelivery ? BST_CHECKED : BST_UNCHECKED);
 		CheckDlgButton(hwndDlg, IDC_USE_LOCAL_TIME, ppro->m_bUseLocalTime ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_AUTOCLEAN, ppro->getByte("AutoClean", 0) ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hwndDlg, IDC_AUTOCLEAN, ppro->getBool("AutoClean") ? BST_CHECKED : BST_UNCHECKED);
 		
 		CheckDlgButton(hwndDlg, IDC_ONREAD, (ppro->m_iMarkMessageReadOn == markOnRead) ? BST_CHECKED : BST_UNCHECKED);
 		CheckDlgButton(hwndDlg, IDC_ONRECEIVE, (ppro->m_iMarkMessageReadOn == markOnReceive) ? BST_CHECKED : BST_UNCHECKED);
@@ -138,7 +138,7 @@ INT_PTR CALLBACK CVkProto::OptionsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case IDC_URL:
-			CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)"http://vk.com");
+			Utils_OpenUrl("http://vk.com");
 			break;
 
 		case IDC_LOGIN:
@@ -170,16 +170,16 @@ INT_PTR CALLBACK CVkProto::OptionsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 	case WM_NOTIFY:
 		if (((LPNMHDR)lParam)->code == PSN_APPLY) {
 			TCHAR str[1025];
-			GetDlgItemText(hwndDlg, IDC_LOGIN, str, SIZEOF(str));
+			GetDlgItemText(hwndDlg, IDC_LOGIN, str, _countof(str));
 			ppro->setTString("Login", str);
 
-			GetDlgItemText(hwndDlg, IDC_GROUPNAME, str, SIZEOF(str));
+			GetDlgItemText(hwndDlg, IDC_GROUPNAME, str, _countof(str));
 			if (mir_tstrcmp(ppro->getGroup(), str)) {
 				ppro->setGroup(str);
 				ppro->setTString("ProtoGroup", str);
 			}
 			
-			GetDlgItemText(hwndDlg, IDC_PASSWORD, str, SIZEOF(str));
+			GetDlgItemText(hwndDlg, IDC_PASSWORD, str, _countof(str));
 			T2Utf szRawPasswd(str);
 			if (szRawPasswd != NULL)
 				ppro->setString("Password", szRawPasswd);
@@ -220,8 +220,8 @@ INT_PTR CALLBACK CVkProto::OptionsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 		break;
 
 	case WM_DESTROY:
-		Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_BIG, 0));
-		Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_BIG, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
 		break;
 	}
 
@@ -239,8 +239,8 @@ INT_PTR CALLBACK CVkProto::OptionsAdvProc(HWND hwndDlg, UINT uMsg, WPARAM wParam
 		ppro = (CVkProto*)lParam;
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
 
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)Skin_GetIconByHandle(ppro->m_hProtoIcon, 1));
-		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)Skin_GetIconByHandle(ppro->m_hProtoIcon));
+		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon, 1));
+		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon));
 
 		CheckDlgButton(hwndDlg, IDC_HIDECHATS, ppro->m_bHideChats ? BST_CHECKED : BST_UNCHECKED);
 		CheckDlgButton(hwndDlg, IDC_MESASUREAD, ppro->m_bMesAsUnread ? BST_CHECKED : BST_UNCHECKED);
@@ -327,10 +327,10 @@ INT_PTR CALLBACK CVkProto::OptionsAdvProc(HWND hwndDlg, UINT uMsg, WPARAM wParam
 			ppro->setByte("MusicSendMetod", ppro->m_iMusicSendMetod);
 			CMStringA szListeningTo(ppro->m_szModuleName);
 			szListeningTo += "Enabled";
-			db_set_b(NULL, "ListeningTo", szListeningTo.GetBuffer(), ppro->m_iMusicSendMetod == 0 ? 0 : 1);
+			db_set_b(NULL, "ListeningTo", szListeningTo, ppro->m_iMusicSendMetod == 0 ? 0 : 1);
 
 			TCHAR buffer[5] = { 0 };
-			GetDlgItemText(hwndDlg, IDC_ED_INT_INVIS, buffer, SIZEOF(buffer));
+			GetDlgItemText(hwndDlg, IDC_ED_INT_INVIS, buffer, _countof(buffer));
 			ppro->setDword("InvisibleInterval", ppro->m_iInvisibleInterval = _ttoi(buffer));
 		}
 		break;
@@ -340,8 +340,8 @@ INT_PTR CALLBACK CVkProto::OptionsAdvProc(HWND hwndDlg, UINT uMsg, WPARAM wParam
 		break;
 
 	case WM_DESTROY:
-		Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_BIG, 0));
-		Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_BIG, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
 		break;
 	}
 
@@ -359,8 +359,8 @@ INT_PTR CALLBACK CVkProto::OptionsFeedsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
 		ppro = (CVkProto*)lParam;
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
 
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)Skin_GetIconByHandle(ppro->m_hProtoIcon, 1));
-		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)Skin_GetIconByHandle(ppro->m_hProtoIcon));
+		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon, 1));
+		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon));
 
 		CheckDlgButton(hwndDlg, IDC_NEWS_ENBL, ppro->m_bNewsEnabled ? BST_CHECKED : BST_UNCHECKED);
 		CheckDlgButton(hwndDlg, IDC_NOTIF_ENBL, ppro->m_bNotificationsEnabled ? BST_CHECKED : BST_UNCHECKED);
@@ -494,10 +494,10 @@ INT_PTR CALLBACK CVkProto::OptionsFeedsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
 			ppro->setByte("NotificationFilterInvites", ppro->m_bNotificationFilterInvites);
 
 			TCHAR buffer[5] = { 0 };
-			GetDlgItemText(hwndDlg, IDC_ED_INT_NEWS, buffer, SIZEOF(buffer));
+			GetDlgItemText(hwndDlg, IDC_ED_INT_NEWS, buffer, _countof(buffer));
 			ppro->setDword("NewsInterval", ppro->m_iNewsInterval = _ttoi(buffer));
 
-			GetDlgItemText(hwndDlg, IDC_ED_INT_NOTIF, buffer, SIZEOF(buffer));
+			GetDlgItemText(hwndDlg, IDC_ED_INT_NOTIF, buffer, _countof(buffer));
 			ppro->setDword("NotificationsInterval", ppro->m_iNotificationsInterval = _ttoi(buffer));
 			
 		}
@@ -508,8 +508,8 @@ INT_PTR CALLBACK CVkProto::OptionsFeedsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
 		break;
 
 	case WM_DESTROY:
-		Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_BIG, 0));
-		Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_BIG, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
 		break;
 	}
 
@@ -527,8 +527,8 @@ INT_PTR CALLBACK CVkProto::OptionsViewProc(HWND hwndDlg, UINT uMsg, WPARAM wPara
 		ppro = (CVkProto*)lParam;
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
 
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)Skin_GetIconByHandle(ppro->m_hProtoIcon, 1));
-		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)Skin_GetIconByHandle(ppro->m_hProtoIcon));
+		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon, 1));
+		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon));
 
 		CheckDlgButton(hwndDlg, IDC_IMG_OFF, (ppro->m_iIMGBBCSupport == imgNo) ? BST_CHECKED : BST_UNCHECKED);
 		CheckDlgButton(hwndDlg, IDC_IMG_FULLSIZE, (ppro->m_iIMGBBCSupport == imgFullSize) ? BST_CHECKED : BST_UNCHECKED);
@@ -546,6 +546,7 @@ INT_PTR CALLBACK CVkProto::OptionsViewProc(HWND hwndDlg, UINT uMsg, WPARAM wPara
 		CheckDlgButton(hwndDlg, IDC_ATTBBC_ADV, (ppro->m_iBBCForAttachments == bbcAdvanced) ? BST_CHECKED : BST_UNCHECKED);
 
 		CheckDlgButton(hwndDlg, IDC_STICKERS_AS_SMYLES, ppro->m_bStikersAsSmyles ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hwndDlg, IDC_SHOTEN_LINKS_FOR_AUDIO, ppro->m_bShortenLinksForAudio ? BST_CHECKED : BST_UNCHECKED);	
 
 		return TRUE;
 
@@ -563,6 +564,7 @@ INT_PTR CALLBACK CVkProto::OptionsViewProc(HWND hwndDlg, UINT uMsg, WPARAM wPara
 		case IDC_ATTBBC_BASIC:
 		case IDC_ATTBBC_ADV:
 		case IDC_STICKERS_AS_SMYLES:
+		case IDC_SHOTEN_LINKS_FOR_AUDIO:
 			if (HIWORD(wParam) == BN_CLICKED && (HWND)lParam == GetFocus())
 				SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 			break;
@@ -602,6 +604,9 @@ INT_PTR CALLBACK CVkProto::OptionsViewProc(HWND hwndDlg, UINT uMsg, WPARAM wPara
 
 			ppro->m_bStikersAsSmyles = IsDlgButtonChecked(hwndDlg, IDC_STICKERS_AS_SMYLES) == BST_CHECKED;
 			ppro->setByte("StikersAsSmyles", ppro->m_bStikersAsSmyles);
+
+			ppro->m_bShortenLinksForAudio = IsDlgButtonChecked(hwndDlg, IDC_SHOTEN_LINKS_FOR_AUDIO) == BST_CHECKED;
+			ppro->setByte("ShortenLinksForAudio", ppro->m_bShortenLinksForAudio);
 		}
 		break;
 
@@ -610,8 +615,8 @@ INT_PTR CALLBACK CVkProto::OptionsViewProc(HWND hwndDlg, UINT uMsg, WPARAM wPara
 		break;
 
 	case WM_DESTROY:
-		Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_BIG, 0));
-		Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_BIG, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
 		break;
 	}
 

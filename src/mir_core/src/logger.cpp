@@ -22,7 +22,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 #define SECRET_SIGNATURE 0x87654321
 
@@ -37,15 +37,12 @@ struct Logger
 		m_out(NULL),
 		m_lastwrite(0)
 	{
-		InitializeCriticalSection(&m_cs);
 	}
 
 	~Logger()
 	{
 		if (m_out)
 			fclose(m_out);
-
-		DeleteCriticalSection(&m_cs);
 	}
 
 	int      m_signature;
@@ -54,8 +51,7 @@ struct Logger
 	FILE    *m_out;
 	__int64  m_lastwrite;
 	unsigned m_options;
-
-	CRITICAL_SECTION m_cs;
+	mir_cs   m_cs;
 };
 
 static int CompareLoggers(const Logger *p1, const Logger *p2)

@@ -58,7 +58,7 @@ int Log(char*, ...)
 	va_end(vararg);
 	if (str[mir_strlen(str) - 1] != '\n')
 		{
-			strcat(str, "\n");
+			mir_strcat(str, "\n");
 		}
 	fputs(str, fout);
 	fclose(fout);
@@ -112,20 +112,19 @@ int GetStringFromDatabase(char *szSettingName, TCHAR *szError, TCHAR *szResult, 
 {
 	DBVARIANT dbv = {0};
 	int res = 1;
-	int len;
 	dbv.type = DBVT_ASCIIZ;
 	if (db_get_ts(NULL, ModuleName, szSettingName, &dbv) == 0) {
 		res = 0;
-		int tmp = mir_tstrlen(dbv.ptszVal);
-		len = (tmp < size - 1) ? tmp : size - 1;
+		size_t tmp = mir_tstrlen(dbv.ptszVal);
+		size_t len = (tmp < size - 1) ? tmp : size - 1;
 		_tcsncpy(szResult, dbv.ptszVal, len);
 		szResult[len] = '\0';
 		mir_free(dbv.ptszVal);
 	}
 	else {
 		res = 1;
-		int tmp = mir_tstrlen(szError);
-		len = (tmp < size - 1) ? tmp : size - 1;
+		size_t tmp = mir_tstrlen(szError);
+		size_t len = (tmp < size - 1) ? tmp : size - 1;
 		_tcsncpy(szResult, szError, len);
 		szResult[len] = '\0';
 	}

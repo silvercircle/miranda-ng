@@ -198,7 +198,7 @@ int CLStreamRTFInfo::nWriteHeader(char *pszTarget, int nLen)
 
 				*/
 	char szRtfHeader[400];
-	int nSrcLen = mir_snprintf(szRtfHeader, SIZEOF(szRtfHeader),
+	int nSrcLen = mir_snprintf(szRtfHeader, _countof(szRtfHeader),
 		"{\\rtf1\\ansi\r\n"
 		"{\\colortbl ;\\red%d\\green%d\\blue%d;\\red%d\\green%d\\blue%d;}\r\n"
 		"\\viewkind4\\uc1\\pard\\cf2 ",
@@ -625,9 +625,9 @@ bool bLoadFile(HWND hwndDlg, CLHistoryDlg * pclDlg)
 		TCHAR szTmp[1500];
 
 		if (nDBCount == -1)
-			mir_sntprintf(szTmp, SIZEOF(szTmp), TranslateT("Failed to open file\r\n%s\r\n\r\nContact handle is invalid"), pclDlg->sPath.c_str());
+			mir_sntprintf(szTmp, _countof(szTmp), TranslateT("Failed to open file\r\n%s\r\n\r\nContact handle is invalid"), pclDlg->sPath.c_str());
 		else
-			mir_sntprintf(szTmp, SIZEOF(szTmp), TranslateT("Failed to open file\r\n%s\r\n\r\nMiranda database contains %d events"), pclDlg->sPath.c_str(), nDBCount);
+			mir_sntprintf(szTmp, _countof(szTmp), TranslateT("Failed to open file\r\n%s\r\n\r\nMiranda database contains %d events"), pclDlg->sPath.c_str(), nDBCount);
 
 		SETTEXTEX stText = { 0 };
 		stText.codepage = 1200;
@@ -674,11 +674,10 @@ bool bLoadFile(HWND hwndDlg, CLHistoryDlg * pclDlg)
 	CloseHandle(hFile);
 
 	TCHAR szTmp[100];
-	mir_sntprintf(szTmp, SIZEOF(szTmp), _T("File open time %d\n"), GetTickCount() - dwStart);
+	mir_sntprintf(szTmp, _countof(szTmp), _T("File open time %d\n"), GetTickCount() - dwStart);
 	OutputDebugString(szTmp);
 
 	GETTEXTLENGTHEX sData = { 0 };
-	sData.flags = GTL_NUMCHARS;
 	sData.flags = GTL_DEFAULT;
 
 	DWORD dwDataRead = (DWORD)SendMessage(hRichEdit, EM_GETTEXTLENGTHEX, (WPARAM)&sData, 0);
@@ -687,7 +686,7 @@ bool bLoadFile(HWND hwndDlg, CLHistoryDlg * pclDlg)
 	if (!bScrollToBottom)
 		SendMessage(hRichEdit, EM_SETSCROLLPOS, 0, (LPARAM)&ptOldPos);
 
-	mir_sntprintf(szTmp, SIZEOF(szTmp), TranslateT("With scroll to bottom %d\n"), GetTickCount() - dwStart);
+	mir_sntprintf(szTmp, _countof(szTmp), TranslateT("With scroll to bottom %d\n"), GetTickCount() - dwStart);
 	OutputDebugString(szTmp);
 	return true;
 }
@@ -712,37 +711,38 @@ bool bAdvancedCopy(HWND hwnd)
 	int nSelLenght = sSelectRange.cpMax - sSelectRange.cpMin + 1; // +1 for null termination
 	if (nSelLenght > 1)
 	{
-		OpenClipboard(NULL);
-		EmptyClipboard();
+		if (OpenClipboard(NULL)) {
+			EmptyClipboard();
 
-		TCHAR *pszSrcBuf = new TCHAR[nSelLenght];
-		pszSrcBuf[0] = 0;
-		SendMessage(hwnd, EM_GETSELTEXT, 0, (LPARAM)pszSrcBuf);
+			TCHAR *pszSrcBuf = new TCHAR[nSelLenght];
+			pszSrcBuf[0] = 0;
+			SendMessage(hwnd, EM_GETSELTEXT, 0, (LPARAM)pszSrcBuf);
 
-		HANDLE hDecMem = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, nSelLenght);
-		TCHAR *pszCurDec = (TCHAR*)GlobalLock(hDecMem);
+			HANDLE hDecMem = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, nSelLenght);
+			TCHAR *pszCurDec = (TCHAR*)GlobalLock(hDecMem);
 
-		bool bInSpaces = false;
-		for (TCHAR *pszCur = pszSrcBuf; pszCur[0]; pszCur++) {
-			if (bInSpaces) {
-				if (pszCur[0] == ' ')
-					continue;
-				bInSpaces = false;
+			bool bInSpaces = false;
+			for (TCHAR *pszCur = pszSrcBuf; pszCur[0]; pszCur++) {
+				if (bInSpaces) {
+					if (pszCur[0] == ' ')
+						continue;
+					bInSpaces = false;
+				}
+
+				if (pszCur[0] == '\n')
+					bInSpaces = true;
+
+				pszCurDec[0] = pszCur[0];
+				pszCurDec++;
 			}
+			pszCurDec[0] = 0;
+			GlobalUnlock(hDecMem);
 
-			if (pszCur[0] == '\n')
-				bInSpaces = true;
-
-			pszCurDec[0] = pszCur[0];
-			pszCurDec++;
+			SetClipboardData(CF_TEXT, hDecMem);
+			delete[] pszSrcBuf;
+			CloseClipboard();
+			return true;
 		}
-		pszCurDec[0] = 0;
-		GlobalUnlock(hDecMem);
-
-		SetClipboardData(CF_TEXT, hDecMem);
-		delete[] pszSrcBuf;
-		CloseClipboard();
-		return true;
 	}
 	return false;
 }
@@ -985,14 +985,14 @@ static INT_PTR CALLBACK DlgProcFileViewer(HWND hwndDlg, UINT msg, WPARAM wParam,
 
 			TCHAR szFormat[200];
 			TCHAR szTitle[200];
-			if (GetWindowText(hwndDlg, szFormat, SIZEOF(szFormat))) {
+			if (GetWindowText(hwndDlg, szFormat, _countof(szFormat))) {
 				const TCHAR *pszNick = NickFromHandle(pclDlg->hContact);
 				tstring sPath = pclDlg->sPath;
 				string::size_type n = sPath.find_last_of('\\');
 				if (n != sPath.npos)
 					sPath.erase(0, n + 1);
 
-				if (mir_sntprintf(szTitle, SIZEOF(szTitle), szFormat, pszNick, sPath.c_str(), (pclDlg->bUtf8File ? _T("UTF8") : _T("ANSI"))) > 0)
+				if (mir_sntprintf(szTitle, szFormat, pszNick, sPath.c_str(), (pclDlg->bUtf8File ? _T("UTF8") : _T("ANSI"))) > 0)
 					SetWindowText(hwndDlg, szTitle);
 			}
 
@@ -1167,7 +1167,7 @@ static INT_PTR CALLBACK DlgProcFileViewer(HWND hwndDlg, UINT msg, WPARAM wParam,
 					stToGet.chrg = pstLink->chrg;
 					stToGet.lpstrText = szUrl;
 					if (SendMessage(pstLink->nmhdr.hwndFrom, EM_GETTEXTRANGE, 0, (LPARAM)&stToGet) > 0)
-						CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)szUrl);
+						Utils_OpenUrlT(szUrl);
 
 					return TRUE;
 				}

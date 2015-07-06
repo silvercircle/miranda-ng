@@ -94,55 +94,41 @@ int GetRichTextLength(HWND hwnd, int codepage, BOOL inBytes)
 	return (int)SendMessage(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
 }
 
-
-TCHAR *GetRichText(HWND hwnd, int codepage)
+char* GetRichTextUtf(HWND hwnd)
 {
+	int textBufferSize = GetRichTextLength(hwnd, CP_UTF8, TRUE);
+	if (textBufferSize == 0)
+		return NULL;
+		
+	textBufferSize++;
+	char *textBuffer = (char*)mir_alloc(textBufferSize);
+
 	GETTEXTEX  gt = { 0 };
-	TCHAR *textBuffer = NULL;
-	int textBufferSize;
-	codepage = 1200;
-	textBufferSize = GetRichTextLength(hwnd, codepage, TRUE);
-	if (textBufferSize > 0) {
-		textBufferSize += sizeof(TCHAR);
-		textBuffer = (TCHAR*)mir_alloc(textBufferSize);
-		gt.cb = textBufferSize;
-		gt.flags = GT_USECRLF;
-		gt.codepage = codepage;
-		SendMessage(hwnd, EM_GETTEXTEX, (WPARAM)&gt, (LPARAM)textBuffer);
-	}
+	gt.cb = textBufferSize;
+	gt.flags = GT_USECRLF;
+	gt.codepage = CP_UTF8;
+	SendMessage(hwnd, EM_GETTEXTEX, (WPARAM)&gt, (LPARAM)textBuffer);
 	return textBuffer;
 }
 
-char *GetRichTextEncoded(HWND hwnd, int codepage)
+int SetRichText(HWND hwnd, const TCHAR *text)
 {
-	TCHAR *textBuffer = GetRichText(hwnd, codepage);
-	char *textUtf = NULL;
-	if (textBuffer != NULL) {
-		textUtf = mir_utf8encodeW(textBuffer);
-		mir_free(textBuffer);
-	}
-	return textUtf;
-}
-
-int SetRichTextEncoded(HWND hwnd, const char *text)
-{
-	TCHAR *textToSet;
-	SETTEXTEX  st;
+	SETTEXTEX st;
 	st.flags = ST_DEFAULT;
 	st.codepage = 1200;
-	textToSet = mir_utf8decodeW(text);
-	SendMessage(hwnd, EM_SETTEXTEX, (WPARAM)&st, (LPARAM)textToSet);
-	mir_free(textToSet);
-	return GetRichTextLength(hwnd, st.codepage, FALSE);
+	SendMessage(hwnd, EM_SETTEXTEX, (WPARAM)&st, (LPARAM)text);
+	
+	return GetRichTextLength(hwnd, 1200, FALSE);
 }
 
 int SetRichTextRTF(HWND hwnd, const char *text)
 {
-	SETTEXTEX  st;
+	SETTEXTEX st;
 	st.flags = ST_DEFAULT;
-	st.codepage = CP_ACP;
+	st.codepage = CP_UTF8;
 	SendMessage(hwnd, EM_SETTEXTEX, (WPARAM)&st, (LPARAM)text);
-	return GetRichTextLength(hwnd, st.codepage, FALSE);
+	
+	return GetRichTextLength(hwnd, 1200, FALSE);
 }
 
 static DWORD CALLBACK RichTextStreamCallback(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG cb, LONG * pcb)
@@ -158,7 +144,7 @@ static DWORD CALLBACK RichTextStreamCallback(DWORD_PTR dwCookie, LPBYTE pbBuff, 
 		dwRead = cb;
 	}
 	else {
-		char  *p = (char*)mir_alloc(dwRead + cb + 1);
+		char *p = (char*)mir_alloc(dwRead + cb + 1);
 		memcpy(p, *ppText, dwRead);
 		memcpy(p + dwRead, pbBuff, cb);
 		p[dwRead + cb] = 0;
@@ -213,8 +199,8 @@ TCHAR* GetRichTextWord(HWND hwnd, POINTL *ptl)
 	if (pszWord == NULL) {
 		iCharIndex = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM)ptl);
 		if (iCharIndex >= 0) {
-			start = SendMessage(hwnd, EM_FINDWORDBREAK, WB_LEFT, iCharIndex);//-iChars;
-			end = SendMessage(hwnd, EM_FINDWORDBREAK, WB_RIGHT, iCharIndex);//-iChars;
+			start = SendMessage(hwnd, EM_FINDWORDBREAK, WB_LEFT, iCharIndex); //-iChars;
+			end = SendMessage(hwnd, EM_FINDWORDBREAK, WB_RIGHT, iCharIndex); //-iChars;
 			if (end - start > 0) {
 				TEXTRANGE tr;
 				CHARRANGE cr;
@@ -388,44 +374,45 @@ void SearchWord(TCHAR * word, int engine)
 		ptrA wordURL(mir_urlEncode(wordUTF));
 		switch (engine) {
 		case SEARCHENGINE_WIKIPEDIA:
-			mir_snprintf(szURL, SIZEOF(szURL), "http://en.wikipedia.org/wiki/%s", wordURL);
+			mir_snprintf(szURL, _countof(szURL), "http://en.wikipedia.org/wiki/%s", wordURL);
 			break;
 		case SEARCHENGINE_YAHOO:
-			mir_snprintf(szURL, SIZEOF(szURL), "http://search.yahoo.com/search?p=%s&ei=UTF-8", wordURL);
+			mir_snprintf(szURL, _countof(szURL), "http://search.yahoo.com/search?p=%s&ei=UTF-8", wordURL);
 			break;
 		case SEARCHENGINE_FOODNETWORK:
-			mir_snprintf(szURL, SIZEOF(szURL), "http://search.foodnetwork.com/search/delegate.do?fnSearchString=%s", wordURL);
+			mir_snprintf(szURL, _countof(szURL), "http://search.foodnetwork.com/search/delegate.do?fnSearchString=%s", wordURL);
 			break;
 		case SEARCHENGINE_BING:
-			mir_snprintf(szURL, SIZEOF(szURL), "http://www.bing.com/search?q=%s&form=OSDSRC", wordURL);
+			mir_snprintf(szURL, _countof(szURL), "http://www.bing.com/search?q=%s&form=OSDSRC", wordURL);
 			break;
 		case SEARCHENGINE_GOOGLE_MAPS:
-			mir_snprintf(szURL, SIZEOF(szURL), "http://maps.google.com/maps?q=%s&ie=utf-8&oe=utf-8", wordURL);
+			mir_snprintf(szURL, _countof(szURL), "http://maps.google.com/maps?q=%s&ie=utf-8&oe=utf-8", wordURL);
 			break;
 		case SEARCHENGINE_GOOGLE_TRANSLATE:
-			mir_snprintf(szURL, SIZEOF(szURL), "http://translate.google.com/?q=%s&ie=utf-8&oe=utf-8", wordURL);
+			mir_snprintf(szURL, _countof(szURL), "http://translate.google.com/?q=%s&ie=utf-8&oe=utf-8", wordURL);
 			break;
 		case SEARCHENGINE_YANDEX:
-			mir_snprintf(szURL, SIZEOF(szURL), "http://yandex.ru/yandsearch?text=%s", wordURL);
+			mir_snprintf(szURL, _countof(szURL), "http://yandex.ru/yandsearch?text=%s", wordURL);
 			break;
 		case SEARCHENGINE_GOOGLE:
 		default:
-			mir_snprintf(szURL, SIZEOF(szURL), "http://www.google.com/search?q=%s&ie=utf-8&oe=utf-8", wordURL);
+			mir_snprintf(szURL, _countof(szURL), "http://www.google.com/search?q=%s&ie=utf-8&oe=utf-8", wordURL);
 			break;
 		}
 
-		CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)szURL);
+		Utils_OpenUrl(szURL);
 	}
 }
 
 void SetSearchEngineIcons(HMENU hMenu, HIMAGELIST hImageList)
 {
 	for (int i = 0; i < IDI_LASTICON - IDI_GOOGLE; i++) {
-		MENUITEMINFO minfo = { sizeof(minfo) };
-		minfo.fMask = MIIM_BITMAP | MIIM_DATA;
-		minfo.hbmpItem = HBMMENU_CALLBACK;
-		minfo.dwItemData = (ULONG_PTR)hImageList;
-		SetMenuItemInfo(hMenu, IDM_SEARCH_GOOGLE + i, FALSE, &minfo);
+		MENUITEMINFO mii = { 0 };
+		mii.cbSize = sizeof(mii);
+		mii.fMask = MIIM_BITMAP | MIIM_DATA;
+		mii.hbmpItem = HBMMENU_CALLBACK;
+		mii.dwItemData = (ULONG_PTR)hImageList;
+		SetMenuItemInfo(hMenu, IDM_SEARCH_GOOGLE + i, FALSE, &mii);
 	}
 }
 
@@ -469,7 +456,7 @@ HWND CreateToolTip(HWND hwndParent, LPTSTR ptszText, LPTSTR ptszTitle, RECT* rec
 	ti.hinst = g_hInst;
 	ti.lpszText = ptszText;
 	ti.rect = *rect;
-	SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)&ti);
+	SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM)&ti);
 	SendMessage(hwndTT, TTM_SETTITLE, TTI_NONE, (LPARAM)ptszTitle);
 	return hwndTT;
 }
@@ -480,7 +467,7 @@ void SetToolTipText(HWND hwndParent, HWND hwndTT, LPTSTR ptszText, LPTSTR ptszTi
 	ti.hinst = g_hInst;
 	ti.hwnd = hwndParent;
 	ti.lpszText = ptszText;
-	SendMessage(hwndTT, TTM_UPDATETIPTEXT, 0, (LPARAM)(LPTOOLINFO)&ti);
+	SendMessage(hwndTT, TTM_UPDATETIPTEXT, 0, (LPARAM)&ti);
 	SendMessage(hwndTT, TTM_SETTITLE, TTI_NONE, (LPARAM)ptszTitle);
 }
 
@@ -490,7 +477,7 @@ void SetToolTipRect(HWND hwndParent, HWND hwndTT, RECT* rect)
 	ti.hinst = g_hInst;
 	ti.hwnd = hwndParent;
 	ti.rect = *rect;
-	SendMessage(hwndTT, TTM_NEWTOOLRECT, 0, (LPARAM)(LPTOOLINFO)&ti);
+	SendMessage(hwndTT, TTM_NEWTOOLRECT, 0, (LPARAM)&ti);
 }
 
 /* toolbar-related stuff, to be moved to a separate file */

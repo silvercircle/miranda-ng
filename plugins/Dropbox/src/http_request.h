@@ -31,7 +31,7 @@ public:
 	}
 };
 
-class HttpRequest : protected NETLIBHTTPREQUEST//, public MZeroedObject
+class HttpRequest : protected NETLIBHTTPREQUEST
 {
 private:
 	CMStringA m_szUrl;
@@ -69,7 +69,7 @@ protected:
 		char cPair[128];
 		mir_snprintf(
 			cPair,
-			SIZEOF(cPair),
+			_countof(cPair),
 			"%s:%s",
 			szLogin,
 			szPassword);
@@ -79,7 +79,7 @@ protected:
 		char value[128];
 		mir_snprintf(
 			value,
-			SIZEOF(value),
+			_countof(value),
 			"Basic %s",
 			ePair);
 
@@ -96,7 +96,7 @@ protected:
 		char value[128];
 		mir_snprintf(
 			value,
-			SIZEOF(value),
+			_countof(value),
 			"Bearer %s",
 			szValue);
 
@@ -121,9 +121,8 @@ protected:
 			mir_free(pData);
 
 		dataLength = (int)size;
-		pData = (char*)mir_alloc(size + 1);
+		pData = (char*)mir_alloc(size);
 		memcpy(pData, data, size);
-		pData[size] = 0;
 	}
 
 public:

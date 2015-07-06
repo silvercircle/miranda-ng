@@ -172,12 +172,8 @@ end;
 function TimeToStrW(data:dword):PWideChar;
 var
   strdatetime:array [0..63] of WideChar;
-  dbtts:TDBTIMETOSTRING;
 begin
-  dbtts.cbDest    :=sizeof(strdatetime);
-  dbtts.szDest.w  :=@strdatetime;
-  dbtts.szFormat.w:='d - t';
-  CallService(MS_DB_TIME_TIMESTAMPTOSTRINGT,data,lparam(@dbtts));
+  TimeZone_ToStringW(data, 'd - t', @strdatetime, Length(strdatetime));
   StrDupW(result,strdatetime);
 end;
 
@@ -270,7 +266,6 @@ begin
   mFreeMem(res.text);
   with column^ do
   begin
-
     case setting_type of
       QST_SCRIPT: begin
         res.text:=ParseVarString(script,hContact);
@@ -394,10 +389,15 @@ begin
         end;
       end;
 
-      QST_OTHER: case other of
+      QST_OTHER: 
+        case other of
         QSTO_LASTSEEN: begin
           res.data:=BuildLastSeenTimeInt(hContact,'SeenModule');
-          res.text:=BuildLastSeenTime   (res.data);
+          res.text:=BuildLastSeenTime(res.data);
+        end;
+
+        QSTO_DISPLAYNAME: begin
+          StrDupW(res.text,cli^.pfnGetContactDisplayName(hContact, 0));
         end;
 
         QSTO_LASTEVENT: begin
@@ -423,7 +423,6 @@ begin
           res.text:=int2strw(res.data);
         end;
       end;
-
     end;
   end;
 end;
@@ -577,11 +576,11 @@ begin
   begin
     if ((SBData[i].flags and (QSF_ACCDEL or QSF_ACCOFF))<>0) then
     begin
-      icon:=CallService(MS_SKIN_LOADPROTOICON,0,ID_STATUS_OFFLINE);
+      icon:=Skin_LoadProtoIcon(nil,ID_STATUS_OFFLINE,0);
     end
     else
     begin
-      icon:=CallService(MS_SKIN_LOADPROTOICON,wparam(GetProtoName(i)),ID_STATUS_ONLINE);
+      icon:=Skin_LoadProtoIcon(GetProtoName(i),ID_STATUS_ONLINE,0);
     end;
 
     FastAnsiToWideBuf(GetProtoName(i),fmtstr);

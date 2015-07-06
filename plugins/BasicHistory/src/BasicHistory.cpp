@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
+CLIST_INTERFACE *pcli;
 HINSTANCE hInst;
 
 #define MS_HISTORY_DELETEALLCONTACTHISTORY       "BasicHistory/DeleteAllContactHistory"
@@ -59,7 +60,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	return TRUE;
 }
 
-TIME_API tmi = { 0 };
 int hLangpack = 0;
 
 extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
@@ -86,21 +86,21 @@ int PrebuildContactMenu(WPARAM hContact, LPARAM lParam)
 
 int ToolbarModuleLoaded(WPARAM wParam,LPARAM lParam)
 {
-	TTBButton ttb = { sizeof(ttb) };
+	TTBButton ttb = { 0 };
 	ttb.pszService = MS_HISTORY_SHOWCONTACTHISTORY;
 	ttb.name = ttb.pszTooltipUp = LPGEN("Open History");
 	ttb.dwFlags = TTBBF_SHOWTOOLTIP;
-	ttb.hIconHandleUp = LoadSkinnedIconHandle(SKINICON_OTHER_HISTORY);
+	ttb.hIconHandleUp = Skin_GetIconHandle(SKINICON_OTHER_HISTORY);
 	hToolbarButton = TopToolbar_AddButton(&ttb);
 	return 0;
 }
 
 void InitMenuItems()
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = 1000090000;
-	mi.icolibItem = LoadSkinnedIconHandle(SKINICON_OTHER_HISTORY);
-	mi.pszName = LPGEN("View &History");
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_OTHER_HISTORY);
+	mi.name.a = LPGEN("View &History");
 	mi.pszService = MS_HISTORY_SHOWCONTACTHISTORY;
 	hContactMenu = Menu_AddContactMenuItem(&mi);
 
@@ -109,8 +109,8 @@ void InitMenuItems()
 	Menu_AddMainMenuItem(&mi);
 
 	mi.position = 1000090001;
-	mi.icolibItem = LoadSkinnedIconHandle(SKINICON_OTHER_DELETE);
-	mi.pszName = LPGEN("Delete All User History");
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_OTHER_DELETE);
+	mi.name.a = LPGEN("Delete All User History");
 	mi.pszService = MS_HISTORY_DELETEALLCONTACTHISTORY;
 	hDeleteContactMenu = Menu_AddContactMenuItem(&mi);
 
@@ -120,52 +120,36 @@ void InitMenuItems()
 void InitTaskMenuItems()
 {
 	if (Options::instance->taskOptions.size() > 0) {
-		CLISTMENUITEM mi = { sizeof(mi) };
 		if (hTaskMainMenu == NULL) {
+			CMenuItem mi;
 			mi.position = 500060005;
-			mi.flags = CMIF_ROOTPOPUP;
-			mi.icolibItem = LoadSkinnedIconHandle(SKINICON_OTHER_HISTORY);
-			mi.pszName = LPGEN("Execute history task");
+			mi.hIcolibItem = Skin_GetIconHandle(SKINICON_OTHER_HISTORY);
+			mi.name.a = LPGEN("Execute history task");
 			hTaskMainMenu = Menu_AddMainMenuItem(&mi);
 		}
 
 		std::vector<TaskOptions>::iterator taskIt = Options::instance->taskOptions.begin();
 		std::vector<HGENMENU>::iterator it = taskMenus.begin();
-		for (; it != taskMenus.end() && taskIt != Options::instance->taskOptions.end(); ++it, ++taskIt) {
-			memset(&mi, 0, sizeof(mi));
-			mi.cbSize = sizeof(mi);
-			mi.flags = CMIM_FLAGS | CMIM_NAME | CMIF_CHILDPOPUP | CMIF_ROOTHANDLE | CMIF_TCHAR | CMIF_KEEPUNTRANSLATED;
-			mi.hParentMenu = hTaskMainMenu;
-			mi.ptszName = (TCHAR*)taskIt->taskName.c_str();
-			Menu_ModifyItem((HGENMENU)*it, &mi);
-		}
+		for (; it != taskMenus.end() && taskIt != Options::instance->taskOptions.end(); ++it, ++taskIt)
+			Menu_ModifyItem(*it, taskIt->taskName.c_str());
 
-		for (; it != taskMenus.end(); ++it) {
-			memset(&mi, 0, sizeof(mi));
-			mi.cbSize = sizeof(mi);
-			mi.flags = CMIM_FLAGS | CMIF_CHILDPOPUP | CMIF_ROOTHANDLE | CMIF_TCHAR | CMIF_KEEPUNTRANSLATED | CMIF_HIDDEN;
-			mi.hParentMenu = hTaskMainMenu;
-			Menu_ModifyItem((HGENMENU)*it, &mi);
-		}
+		for (; it != taskMenus.end(); ++it)
+			Menu_ShowItem(*it, false);
 
 		int pos = (int)taskMenus.size();
 		for (; taskIt != Options::instance->taskOptions.end(); ++taskIt) {
-			memset(&mi, 0, sizeof(mi));
-			mi.cbSize = sizeof(mi);
-			mi.flags = CMIF_CHILDPOPUP | CMIF_ROOTHANDLE | CMIF_TCHAR | CMIF_KEEPUNTRANSLATED;
+			CMenuItem mi;
+			mi.flags = CMIF_TCHAR | CMIF_KEEPUNTRANSLATED;
 			mi.pszService = MS_HISTORY_EXECUTE_TASK;
-			mi.hParentMenu = hTaskMainMenu;
-			mi.popupPosition = pos++;
-			mi.ptszName = (TCHAR*)taskIt->taskName.c_str();
+			mi.root = hTaskMainMenu;
+			mi.name.t = (TCHAR*)taskIt->taskName.c_str();
 			HGENMENU menu = Menu_AddMainMenuItem(&mi);
+			Menu_ConfigureItem(menu, MCI_OPT_EXECPARAM, pos++);
 			taskMenus.push_back(menu);
 		}
 	}
-	else if (hTaskMainMenu != NULL) {
-		CLISTMENUITEM mi = { sizeof(mi) };
-		mi.flags = CMIM_FLAGS | CMIF_ROOTPOPUP | CMIF_HIDDEN;
-		Menu_ModifyItem(hTaskMainMenu, &mi);
-	}
+	else if (hTaskMainMenu != NULL)
+		Menu_ShowItem(hTaskMainMenu, false);
 }
 
 IconItem iconList[] =
@@ -185,11 +169,11 @@ void InitIcolib()
 {
 }
 
-HICON LoadIconEx(int iconId, int big)
+HICON LoadIconEx(int iconId, bool big)
 {
-	for (int i=0; i < SIZEOF(iconList); i++)
+	for (int i=0; i < _countof(iconList); i++)
 		if ( iconList[i].defIconID == iconId)
-			return Skin_GetIconByHandle(iconList[i].hIcolib, big);
+			return IcoLib_GetIconByHandle(iconList[i].hIcolib, big);
 
 	return 0;
 }
@@ -256,10 +240,11 @@ int ModulesLoaded(WPARAM wParam, LPARAM lParam)
 
 extern "C" int __declspec(dllexport) Load(void)
 {
+	mir_getLP(&pluginInfo);
+	mir_getCLI();
+
 	hTaskMainMenu = NULL;
 	DuplicateHandle(GetCurrentProcess(),GetCurrentThread(),GetCurrentProcess(),&g_hMainThread,0,FALSE,DUPLICATE_SAME_ACCESS);
-	mir_getTMI(&tmi);
-	mir_getLP(&pluginInfo);
 
 	hCurSplitNS = LoadCursor(NULL, IDC_SIZENS);
 	hCurSplitWE = LoadCursor(NULL, IDC_SIZEWE);
@@ -273,9 +258,9 @@ extern "C" int __declspec(dllexport) Load(void)
 	HookEvent(ME_SYSTEM_MODULESLOADED, ModulesLoaded);
 	HookEvent(ME_OPT_INITIALISE, Options::InitOptions);
 
-	EventList::Init();
+	HistoryEventList::Init();
 	
-	Icon_Register(hInst, LPGEN("History"), iconList, SIZEOF(iconList));
+	Icon_Register(hInst, LPGEN("History"), iconList, _countof(iconList));
 	return 0;
 }
 

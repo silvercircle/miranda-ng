@@ -652,7 +652,7 @@ WCHAR *ParseMultipartBody(char *src, char *bond)
 FailBackRaw:
 				ConvertStringToUnicode(partData[i].body,partData[i].CodePage,&partData[i].wBody);
 			}
-			resultSize += wcslen(partData[i].wBody);
+			resultSize += mir_wstrlen(partData[i].wBody);
 		}// if (partData[i].body)
 		resultSize += 100+4+3; //cr+nl+100+ 3*bullet
 	}
@@ -661,51 +661,51 @@ FailBackRaw:
 	for (i=0;i<numparts;i++) {
 		if (i) { // part before first boudary should not have headers
 			char infoline[1024]; size_t linesize = 0;
-			mir_snprintf(infoline, SIZEOF(infoline), "%s %d", Translate("Part"), i);
+			mir_snprintf(infoline, _countof(infoline), "%s %d", Translate("Part"), i);
 			linesize = mir_strlen(infoline);
 			if (partData[i].TransEnc) {
-				mir_snprintf(infoline + linesize, SIZEOF(infoline) - linesize, "; %s", partData[i].TransEnc);
+				mir_snprintf(infoline + linesize, _countof(infoline) - linesize, "; %s", partData[i].TransEnc);
 				linesize = mir_strlen(infoline);
 			}
 			if (partData[i].ContType) {
 				char *CharSetStr=strchr(partData[i].ContType,';');
 				if (CharSetStr) {
 					CharSetStr[0]=0;
-					mir_snprintf(infoline + linesize, SIZEOF(infoline) - linesize, "; %s", partData[i].ContType);
+					mir_snprintf(infoline + linesize, _countof(infoline) - linesize, "; %s", partData[i].ContType);
 					linesize = mir_strlen(infoline);
 					partData[i].ContType=CharSetStr+1;
 					if (NULL != (CharSetStr=ExtractFromContentType(partData[i].ContType,"charset="))) {
-						mir_snprintf(infoline + linesize, SIZEOF(infoline) - linesize, "; %s", CharSetStr);
+						mir_snprintf(infoline + linesize, _countof(infoline) - linesize, "; %s", CharSetStr);
 						linesize = mir_strlen(infoline);
 						delete[] CharSetStr;
 					}
 					if (NULL != (CharSetStr=ExtractFromContentType(partData[i].ContType,"name="))) {
-						mir_snprintf(infoline + linesize, SIZEOF(infoline) - linesize, "; \"%s\"", CharSetStr);
+						mir_snprintf(infoline + linesize, _countof(infoline) - linesize, "; \"%s\"", CharSetStr);
 						linesize = mir_strlen(infoline);
 						delete[] CharSetStr;
 					}
 				}
 				else {
-					mir_snprintf(infoline + linesize, SIZEOF(infoline) - linesize, "; %s", partData[i].ContType);
+					mir_snprintf(infoline + linesize, _countof(infoline) - linesize, "; %s", partData[i].ContType);
 					linesize = mir_strlen(infoline);
 				}
 			}
-			mir_snprintf(infoline + linesize, SIZEOF(infoline) - linesize, ".\r\n");
+			mir_snprintf(infoline + linesize, _countof(infoline) - linesize, ".\r\n");
 			{
 				WCHAR *temp=0;
 				dest[destpos] = dest[destpos+1] = dest[destpos+2] = 0x2022; // bullet;
 				destpos += 3;
 				ConvertStringToUnicode(infoline,CP_ACP,&temp);
-				size_t wsize = wcslen(temp);
-				wcscpy(&dest[destpos],temp);
+				size_t wsize = mir_wstrlen(temp);
+				mir_wstrcpy(&dest[destpos],temp);
 				destpos += wsize;
 				delete[] temp;
 			}
 		} // if (i)
 
 		if (partData[i].wBody) {
-			size_t wsize = wcslen(partData[i].wBody);
-			wcscpy(&dest[destpos],partData[i].wBody);
+			size_t wsize = mir_wstrlen(partData[i].wBody);
+			mir_wstrcpy(&dest[destpos],partData[i].wBody);
 			destpos += wsize;
 			delete[] partData[i].wBody;
 		}

@@ -25,7 +25,7 @@ static TCHAR* parseCodeToStatus(ARGUMENTSINFO *ai)
 		return NULL;
 
 	unsigned int status = ttoi(ai->targv[1]);
-	TCHAR *szStatus = (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, (WPARAM)status, GSMDF_TCHAR);
+	TCHAR *szStatus = pcli->pfnGetStatusModeDescription(status, 0);
 	if (szStatus != NULL)
 		return mir_tstrdup(szStatus);
 
@@ -154,7 +154,7 @@ static TCHAR* parseDBProfileName(ARGUMENTSINFO *ai)
 		return NULL;
 
 	TCHAR name[MAX_PATH];
-	if (CallService(MS_DB_GETPROFILENAMET, SIZEOF(name), (LPARAM)name))
+	if (CallService(MS_DB_GETPROFILENAMET, _countof(name), (LPARAM)name))
 		return NULL;
 
 	return mir_tstrdup(name);
@@ -166,7 +166,7 @@ static TCHAR* parseDBProfilePath(ARGUMENTSINFO *ai)
 		return NULL;
 
 	TCHAR path[MAX_PATH];
-	if (CallService(MS_DB_GETPROFILEPATHT, SIZEOF(path), (LPARAM)path))
+	if (CallService(MS_DB_GETPROFILEPATHT, _countof(path), (LPARAM)path))
 		return NULL;
 
 	return mir_tstrdup(path);
@@ -178,7 +178,7 @@ static TCHAR* getDBSetting(MCONTACT hContact, char* module, char* setting, TCHAR
 	if (db_get_s(hContact, module, setting, &dbv, 0))
 		return defaultValue;
 
-	TCHAR* var = NULL;
+	TCHAR *var = NULL;
 	switch (dbv.type) {
 	case DBVT_BYTE:
 		var = itot(dbv.bVal);
@@ -376,7 +376,7 @@ static TCHAR* parseLastSeenStatus(ARGUMENTSINFO *ai)
 	if (status == 0)
 		return NULL;
 
-	TCHAR *szStatus = (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, (WPARAM)status, GSMDF_TCHAR);
+	TCHAR *szStatus = pcli->pfnGetStatusModeDescription(status, 0);
 	if (szStatus != NULL)
 		return mir_tstrdup(szStatus);
 
@@ -390,7 +390,7 @@ static TCHAR* parseMirandaPath(ARGUMENTSINFO *ai)
 
 	ai->flags |= AIF_DONTPARSE;
 	TCHAR path[MAX_PATH];
-	if (GetModuleFileName(NULL, path, SIZEOF(path)) == 0)
+	if (GetModuleFileName(NULL, path, _countof(path)) == 0)
 		return NULL;
 
 	return mir_tstrdup(path);
@@ -407,7 +407,7 @@ static TCHAR* parseMyStatus(ARGUMENTSINFO *ai)
 	else
 		status = CallProtoService(_T2A(ai->targv[1]), PS_GETSTATUS, 0, 0);
 
-	TCHAR *szStatus = (TCHAR*)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, (WPARAM)status, GSMDF_TCHAR);
+	TCHAR *szStatus = pcli->pfnGetStatusModeDescription(status, 0);
 	return (szStatus != NULL) ? mir_tstrdup(szStatus) : NULL;
 }
 
@@ -423,16 +423,14 @@ static TCHAR* parseProtoInfo(ARGUMENTSINFO *ai)
 	if (!mir_tstrcmp(ai->targv[2], _T(STR_PINAME)))
 		tszRes = Hlp_GetProtocolName(szProto);
 	else if (!mir_tstrcmp(ai->targv[2], _T(STR_PIUIDTEXT))) {
-		if (!ProtoServiceExists(szProto, PS_GETCAPS))
-			return NULL;
-
 		szRes = (char *)CallProtoService(szProto, PS_GETCAPS, (WPARAM)PFLAG_UNIQUEIDTEXT, 0);
+		if (INT_PTR(szRes) == CALLSERVICE_NOTFOUND)
+			return NULL;
 	}
 	else if (!mir_tstrcmp(ai->targv[2], _T(STR_PIUIDSETTING))) {
-		if (!ProtoServiceExists(szProto, PS_GETCAPS))
-			return NULL;
-
 		szRes = (char *)CallProtoService(szProto, PS_GETCAPS, (WPARAM)PFLAG_UNIQUEIDSETTING, 0);
+		if (INT_PTR(szRes) == CALLSERVICE_NOTFOUND)
+			return NULL;
 	}
 	else if (!mir_tstrcmp(ai->targv[2], _T(STR_PINICK))) {
 		CONTACTINFO ci;
@@ -475,13 +473,7 @@ static TCHAR* parseSpecialContact(ARGUMENTSINFO *ai)
 	if (szUniqueID == NULL)
 		return NULL;
 
-	size_t size = mir_strlen(szProto) + mir_tstrlen(szUniqueID) + 4;
-	TCHAR *res = (TCHAR*)mir_alloc(size * sizeof(TCHAR));
-	if (res == NULL)
-		return NULL;
-
-	mir_sntprintf(res, size, _T("<%S:%s>"), szProto, szUniqueID);
-	return res;
+	return CMString(FORMAT, _T("<%S:%s>"), szProto, szUniqueID).Detach();
 }
 
 static BOOL isValidDbEvent(DBEVENTINFO *dbe, int flags)
@@ -708,7 +700,7 @@ static TCHAR *parseContactNameString(ARGUMENTSINFO *ai)
 		return NULL;
 
 	ai->flags |= AIF_DONTPARSE;
-	TCHAR *ret = (TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)ai->fi->hContact, GCDNF_TCHAR);
+	TCHAR *ret = (TCHAR*)pcli->pfnGetContactDisplayName(ai->fi->hContact, 0);
 	return (ret == NULL) ? NULL : mir_tstrdup(ret);
 }
 
@@ -720,14 +712,7 @@ static TCHAR *parseMirDateString(ARGUMENTSINFO *ai)
 	ai->flags |= AIF_DONTPARSE;
 
 	TCHAR ret[128];
-	DBTIMETOSTRINGT tst = { 0 };
-	tst.szFormat = _T("d s");
-	tst.szDest = ret;
-	tst.cbDest = 128;
-	if (CallService(MS_DB_TIME_TIMESTAMPTOSTRINGT, (WPARAM)time(NULL), (LPARAM)&tst))
-		return NULL;
-
-	return mir_tstrdup(ret);
+	return mir_tstrdup(TimeZone_ToStringT(time(NULL), _T("d s"), ret, _countof(ret)));
 }
 
 static TCHAR *parseMirandaCoreVar(ARGUMENTSINFO *ai)
@@ -738,7 +723,7 @@ static TCHAR *parseMirandaCoreVar(ARGUMENTSINFO *ai)
 	ai->flags |= AIF_DONTPARSE;
 
 	TCHAR corevar[MAX_PATH];
-	mir_sntprintf(corevar, SIZEOF(corevar), _T("%%%s%%"), ai->targv[0]);
+	mir_sntprintf(corevar, _countof(corevar), _T("%%%s%%"), ai->targv[0]);
 	return Utils_ReplaceVarsT(corevar);
 }
 

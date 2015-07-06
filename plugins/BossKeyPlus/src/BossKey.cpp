@@ -118,7 +118,7 @@ INT_PTR CALLBACK DlgStdInProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 		uid = LOWORD(wParam);
 		if (uid == IDOK){
 			char password[MAXPASSLEN + 1] = { 0 };
-			int passlen = GetDlgItemTextA(hDlg, IDC_EDIT1, password, SIZEOF(password));
+			int passlen = GetDlgItemTextA(hDlg, IDC_EDIT1, password, _countof(password));
 			if (passlen == 0) {
 				SetDlgItemText(hDlg, IDC_HEADERBAR, TranslateT("Miranda NG is locked.\nEnter password to unlock it."));
 				SendDlgItemMessage(hDlg, IDC_HEADERBAR, WM_NCPAINT, 0, 0);
@@ -202,14 +202,8 @@ TCHAR* GetDefStatusMsg(unsigned uStatus, const char* szProto)
 void SetStatus(const char* szProto, unsigned status, TCHAR *tszAwayMsg)
 {
 	if (tszAwayMsg && CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGSEND)
-	{
-		if (CallProtoService(szProto, PS_SETAWAYMSGT, status, (LPARAM)tszAwayMsg) == CALLSERVICE_NOTFOUND)
-		{
-			char *szAwayMsg = mir_t2a(tszAwayMsg);
-			CallProtoService(szProto, PS_SETAWAYMSG, status, (LPARAM)szAwayMsg);
-			mir_free(szAwayMsg);
-		}
-	}
+		CallProtoService(szProto, PS_SETAWAYMSG, status, (LPARAM)tszAwayMsg);
+
 	CallProtoService(szProto, PS_SETSTATUS, status, 0);
 }
 
@@ -227,7 +221,7 @@ static int ChangeAllProtoStatuses(unsigned statusMode, TCHAR *msg)
 			if (g_wMask & OPT_SETONLINEBACK){ // need to save old statuses & status messages
 				oldStatus[i] = status;
 				if (ProtoServiceExists(proto[i]->szModuleName, PS_GETMYAWAYMSG))
-					oldStatusMsg[i] = (TCHAR*)ProtoCallService(proto[i]->szModuleName, PS_GETMYAWAYMSG, 0, SGMA_TCHAR);
+					oldStatusMsg[i] = (TCHAR*)CallProtoService(proto[i]->szModuleName, PS_GETMYAWAYMSG, 0, SGMA_TCHAR);
 				else
 					oldStatusMsg[i] = GetDefStatusMsg(status, proto[i]->szModuleName);
 			}
@@ -270,7 +264,7 @@ static void CreateTrayIcon(bool create)
 	nim.hWnd = g_hListenWindow;
 	nim.uID = 100;
 	nim.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
-	nim.hIcon = Skin_GetIcon("hidemim");
+	nim.hIcon = IcoLib_GetIcon("hidemim");
 	nim.uCallbackMessage = WM_USER + 24;
 	Shell_NotifyIcon(create ? NIM_ADD : NIM_DELETE, &nim);
 	g_TrayIcon = create;
@@ -497,7 +491,7 @@ static TCHAR *HokeyVkToName(WORD vkKey)
 		code |= (1UL << 24);
 	}
 
-	GetKeyNameText(code, buf, SIZEOF(buf));
+	GetKeyNameText(code, buf, _countof(buf));
 	return buf;
 }
 
@@ -509,7 +503,7 @@ static TCHAR *GetBossKeyText(void)
 	BYTE shift = HIBYTE(wHotKey);
 	static TCHAR buf[128] = { 0 };
 
-	mir_sntprintf(buf, SIZEOF(buf), _T("%s%s%s%s%s"),
+	mir_sntprintf(buf, _T("%s%s%s%s%s"),
 		(shift & HOTKEYF_CONTROL) ? _T("Ctrl + ") : _T(""),
 		(shift & HOTKEYF_SHIFT) ? _T("Shift + ") : _T(""),
 		(shift & HOTKEYF_ALT) ? _T("Alt + ") : _T(""),
@@ -527,28 +521,21 @@ static IconItem iconList[] =
 static int GenMenuInit(WPARAM, LPARAM) // Modify menu item text before to show the main menu
 {
 	if (g_hMenuItem) {
-		TCHAR buf[128] = { 0 };
-		mir_sntprintf(buf, SIZEOF(buf), _T("%s [%s]"), TranslateT("Hide"), GetBossKeyText());
-
-		CLISTMENUITEM mi = { sizeof(mi) };
-		mi.flags = CMIM_FLAGS | CMIF_TCHAR | CMIM_NAME;
-		mi.ptszName = buf;
-
-		Menu_ModifyItem(g_hMenuItem, &mi);
+		TCHAR buf[128];
+		mir_sntprintf(buf, _T("%s [%s]"), TranslateT("Hide"), GetBossKeyText());
+		Menu_ModifyItem(g_hMenuItem, buf);
 	}
 	return 0;
 }
 
 void BossKeyMenuItemInit(void) // Add menu item
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.flags = CMIF_TCHAR;
 	mi.position = 2000100000;
-	mi.pszPopupName = 0;
-	mi.hIcon = Skin_GetIcon("hidemim");
-	mi.ptszName = LPGENT("Hide");
+	mi.hIcolibItem = IcoLib_GetIcon("hidemim");
+	mi.name.t = LPGENT("Hide");
 	mi.pszService = MS_BOSSKEY_HIDE;
-
 	g_hMenuItem = Menu_AddMainMenuItem(&mi);
 
 	HookEvent(ME_CLIST_PREBUILDMAINMENU, GenMenuInit);
@@ -556,7 +543,7 @@ void BossKeyMenuItemInit(void) // Add menu item
 
 void BossKeyMenuItemUnInit(void) // Remove menu item
 {
-	CallService(MO_REMOVEMENUITEM, (WPARAM)g_hMenuItem, 0);
+	Menu_RemoveItem(g_hMenuItem);
 	g_hMenuItem = 0;
 }
 
@@ -575,7 +562,7 @@ void RegisterCoreHotKeys(void)
 
 static int TopToolbarInit(WPARAM, LPARAM)
 {
-	TTBButton ttb = { sizeof(ttb) };
+	TTBButton ttb = { 0 };
 	ttb.pszService = MS_BOSSKEY_HIDE;
 	ttb.pszTooltipUp = ttb.name = LPGEN("Hide Miranda NG");
 	ttb.dwFlags = TTBBF_VISIBLE | TTBBF_SHOWTOOLTIP;
@@ -621,7 +608,7 @@ static TCHAR *VariablesBossKey(ARGUMENTSINFO *ai) {
 
 static int EnumProtos(WPARAM, LPARAM)
 {
-	ProtoEnumAccounts(&protoCount, &proto);
+	Proto_EnumAccounts(&protoCount, &proto);
 
 	delete[] oldStatus;
 	delete[] oldStatusMsg;
@@ -719,7 +706,7 @@ extern "C" int __declspec(dllexport) Load(void)
 		db_set_b(NULL, "Popup", "ModuleIsEnabled", 0);
 	}
 
-	Icon_Register(g_hInstance, "BossKey", iconList, SIZEOF(iconList));
+	Icon_Register(g_hInstance, "BossKey", iconList, _countof(iconList));
 
 	g_hHideService = CreateServiceFunction(MS_BOSSKEY_HIDE, BossKeyHideMiranda); // Create service
 

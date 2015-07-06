@@ -89,7 +89,7 @@ static BOOL sttMeasureItem_Contact(LPMEASUREITEMSTRUCT lpmis, Options *options)
 			mir_free(title);
 	}
 
-	TCHAR *name = (TCHAR *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR);
+	TCHAR *name = (TCHAR *)pcli->pfnGetContactDisplayName(hContact, 0);
 
 	if (!options->bSysColors) SelectObject(hdc, g_Options.hfntName);
 	GetTextExtentPoint32(hdc, name, (int)mir_tstrlen(name), &sz);
@@ -259,7 +259,7 @@ static BOOL sttDrawItem_Contact(LPDRAWITEMSTRUCT lpdis, Options *options = NULL)
 
 	if (options->wMaxRecent && db_get_b(hContact, "FavContacts", "IsFavourite", 0)) {
 		DrawIconEx(hdcTemp, lpdis->rcItem.right - 18, (lpdis->rcItem.top + lpdis->rcItem.bottom - 16) / 2,
-					  Skin_GetIconByHandle(iconList[0].hIcolib), 16, 16, 0, NULL, DI_NORMAL);
+					  IcoLib_GetIconByHandle(iconList[0].hIcolib), 16, 16, 0, NULL, DI_NORMAL);
 		lpdis->rcItem.right -= 20;
 	}
 
@@ -301,7 +301,7 @@ static BOOL sttDrawItem_Contact(LPDRAWITEMSTRUCT lpdis, Options *options = NULL)
 	}
 
 	if (true) {
-		TCHAR *name = (TCHAR *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR);
+		TCHAR *name = (TCHAR *)pcli->pfnGetContactDisplayName(hContact, 0);
 
 		if (!options->bSysColors)
 			SelectObject(hdcTemp, g_Options.hfntName);
@@ -368,7 +368,7 @@ static LRESULT CALLBACK MenuHostWndProc(HWND hwnd, UINT message, WPARAM wParam, 
 			return FALSE;
 
 		if ((lpmis->itemID >= CLISTMENUIDMIN) && (lpmis->itemID <= CLISTMENUIDMAX))
-			return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
+			return Menu_MeasureItem(lpmis);
 
 		return MenuMeasureItem(lpmis);
 	}
@@ -380,7 +380,7 @@ static LRESULT CALLBACK MenuHostWndProc(HWND hwnd, UINT message, WPARAM wParam, 
 			return FALSE;
 
 		if ((lpdis->itemID >= CLISTMENUIDMIN) && (lpdis->itemID <= CLISTMENUIDMAX))
-			return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
+			return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
 
 		return MenuDrawItem(lpdis);
 	}
@@ -394,7 +394,7 @@ static LRESULT CALLBACK MenuHostWndProc(HWND hwnd, UINT message, WPARAM wParam, 
 				g_filter[l-1] = 0;
 		}
 		else if (_istalnum(LOWORD(wParam))) {
-			if (mir_tstrlen(g_filter) < SIZEOF(g_filter) - 1) {
+			if (mir_tstrlen(g_filter) < _countof(g_filter) - 1) {
 				TCHAR s[] = { LOWORD(wParam), 0 };
 				mir_tstrcat(g_filter, s);
 			}
@@ -413,14 +413,15 @@ static LRESULT CALLBACK MenuHostWndProc(HWND hwnd, UINT message, WPARAM wParam, 
 		return MAKELRESULT(1, MNC_SELECT);
 
 	case WM_MENURBUTTONUP:
-		MENUITEMINFO mii = { sizeof(mii) };
+		MENUITEMINFO mii = { 0 };
+		mii.cbSize = sizeof(mii);
 		mii.fMask = MIIM_DATA;
 		GetMenuItemInfo((HMENU)lParam, wParam, TRUE, &mii);
 		MCONTACT hContact = (MCONTACT)mii.dwItemData;
 		if (!CallService(MS_DB_CONTACT_IS, mii.dwItemData, 0))
 			return FALSE;
 
-		HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDCONTACT, hContact, 0);
+		HMENU hMenu = Menu_BuildContactMenu(hContact);
 
 		POINT pt;
 		GetCursorPos(&pt);

@@ -17,14 +17,14 @@ int inline _DebugPopup(MCONTACT hContact, TCHAR *fmt, ...)
 	TCHAR debug[1024];
 
 	va_start(va, fmt);
-	mir_sntprintf(debug, SIZEOF(debug), fmt, va);
+	mir_sntprintf(debug, _countof(debug), fmt, va);
     
 	if(CallService(MS_POPUP_QUERY, PUQS_GETSTATUS, 0) == 1) {
 		POPUPDATAT ppd = { 0 };
 		ppd.lchContact = hContact;
-		ppd.lchIcon = LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
+		ppd.lchIcon = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
 		if(hContact != 0)
-			mir_tstrncpy(ppd.lptzContactName, (TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR), MAX_CONTACTNAME);
+			mir_tstrncpy(ppd.lptzContactName, (TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0), MAX_CONTACTNAME);
 		else
 			mir_tstrncpy(ppd.lptzContactName, _T(PlugName), MAX_CONTACTNAME);
 		mir_tstrncpy(ppd.lptzText, debug, MAX_SECONDLINE - 20);

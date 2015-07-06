@@ -47,34 +47,34 @@ void CSkypeProto::ReloadAvatarInfo(MCONTACT hContact)
 		CallService(MS_AV_REPORTMYAVATARCHANGED, (WPARAM)m_szModuleName, 0);
 		return;
 	}
-	PROTO_AVATAR_INFORMATIONT AI = { sizeof(AI) };
-	AI.hContact = hContact;
-	SvcGetAvatarInfo(0, (LPARAM)&AI);
+	PROTO_AVATAR_INFORMATION ai = { 0 };
+	ai.hContact = hContact;
+	SvcGetAvatarInfo(0, (LPARAM)&ai);
 }
 
 void CSkypeProto::OnReceiveAvatar(const NETLIBHTTPREQUEST *response, void *arg)
 {
-	if (response == NULL)
+	if (response == NULL || response->pData == NULL)
 		return;
 	MCONTACT hContact = (MCONTACT)arg;
 	if (response->resultCode != 200)
 		return;
 
-	PROTO_AVATAR_INFORMATIONT AI = { sizeof(AI) };
-	AI.format = ProtoGetBufferFormat(response->pData);
-	setByte(hContact, "AvatarType", AI.format);
-	GetAvatarFileName(hContact, AI.filename, SIZEOF(AI.filename));
+	PROTO_AVATAR_INFORMATION ai = { 0 };
+	ai.format = ProtoGetBufferFormat(response->pData);
+	setByte(hContact, "AvatarType", ai.format);
+	GetAvatarFileName(hContact, ai.filename, _countof(ai.filename));
 
-	FILE *out = _tfopen(AI.filename, _T("wb"));
+	FILE *out = _tfopen(ai.filename, _T("wb"));
 	if (out == NULL) {
-		ProtoBroadcastAck(hContact, ACKTYPE_AVATAR, ACKRESULT_FAILED, &AI, 0);
+		ProtoBroadcastAck(hContact, ACKTYPE_AVATAR, ACKRESULT_FAILED, &ai, 0);
 		return;
 	}
 
 	fwrite(response->pData, 1, response->dataLength, out);
 	fclose(out);
 	setByte(hContact, "NeedNewAvatar", 0);
-	ProtoBroadcastAck(hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, &AI, 0);
+	ProtoBroadcastAck(hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, &ai, 0);
 }
 
 void CSkypeProto::OnSentAvatar(const NETLIBHTTPREQUEST *response)
@@ -82,30 +82,30 @@ void CSkypeProto::OnSentAvatar(const NETLIBHTTPREQUEST *response)
 	if (response == NULL)
 		return;
 
-	JSONROOT root(response->pData);
-	if (root == NULL)
+	JSONNode root = JSONNode::parse(response->pData);
+	if (!root)
 		return;
 }
 
 INT_PTR CSkypeProto::SvcGetAvatarInfo(WPARAM, LPARAM lParam)
 {
-	PROTO_AVATAR_INFORMATIONT* AI = (PROTO_AVATAR_INFORMATIONT*)lParam;
+	PROTO_AVATAR_INFORMATION *pai = (PROTO_AVATAR_INFORMATION*)lParam;
 
-	ptrA szUrl(getStringA(AI->hContact, "AvatarUrl"));
+	ptrA szUrl(getStringA(pai->hContact, "AvatarUrl"));
 	if (szUrl == NULL)
 		return GAIR_NOAVATAR;
 
-	AI->format = getByte(AI->hContact, "AvatarType", PA_FORMAT_JPEG);
+	pai->format = getByte(pai->hContact, "AvatarType", PA_FORMAT_JPEG);
 
 	TCHAR tszFileName[MAX_PATH];
-	GetAvatarFileName(AI->hContact, tszFileName, SIZEOF(tszFileName));
-	_tcsncpy(AI->filename, tszFileName, SIZEOF(AI->filename));
+	GetAvatarFileName(pai->hContact, tszFileName, _countof(tszFileName));
+	_tcsncpy(pai->filename, tszFileName, _countof(pai->filename));
 
-	if (::_taccess(AI->filename, 0) == 0 && !getBool(AI->hContact, "NeedNewAvatar", 0))
+	if (::_taccess(pai->filename, 0) == 0 && !getBool(pai->hContact, "NeedNewAvatar", 0))
 		return GAIR_SUCCESS;
 
 	if (IsOnline()) {
-		PushRequest(new GetAvatarRequest(szUrl), &CSkypeProto::OnReceiveAvatar, (void*)AI->hContact);
+		PushRequest(new GetAvatarRequest(szUrl), &CSkypeProto::OnReceiveAvatar, (void*)pai->hContact);
 		debugLogA("Requested to read an avatar from '%s'", szUrl);
 		return GAIR_WAITFOR;
 	}
@@ -117,7 +117,7 @@ INT_PTR CSkypeProto::SvcGetAvatarInfo(WPARAM, LPARAM lParam)
 INT_PTR CSkypeProto::SvcGetMyAvatar(WPARAM wParam, LPARAM lParam)
 {
 	TCHAR path[MAX_PATH];
-	GetAvatarFileName(NULL, path, SIZEOF(path));
+	GetAvatarFileName(NULL, path, _countof(path));
 	_tcsncpy((TCHAR*)wParam, path, (int)lParam);
 	return 0;
 }
@@ -133,16 +133,18 @@ void CSkypeProto::GetAvatarFileName(MCONTACT hContact, TCHAR* pszDest, size_t cb
 	pszDest[tPathLen++] = '\\';
 
 	const TCHAR* szFileType = ProtoGetAvatarExtension(getByte(hContact, "AvatarType", PA_FORMAT_JPEG));
-	ptrA username(getStringA(hContact, SKYPE_SETTINGS_ID));
-	mir_sntprintf(pszDest + tPathLen, MAX_PATH - tPathLen, _T("%s%s"), _A2T(username), szFileType);
+	CMStringA username(ptrA(getStringA(hContact, SKYPE_SETTINGS_ID)));
+	username.Replace("live:", "__live_");
+	username.Replace("facebook:", "__facebook_");
+	mir_sntprintf(pszDest + tPathLen, MAX_PATH - tPathLen, _T("%S%s"), username.c_str(), szFileType);
 }
 
 void CSkypeProto::SetAvatarUrl(MCONTACT hContact, CMString &tszUrl)
 {
-	CMString oldUrl(getTStringA(hContact, "AvatarUrl"));
-
-	if (tszUrl == oldUrl)
-		return;
+	ptrT oldUrl(getTStringA(hContact, "AvatarUrl"));
+	if (oldUrl != NULL)
+		if (tszUrl == oldUrl)
+			return;
 
 	if (tszUrl.IsEmpty()) {
 		delSetting(hContact, "AvatarUrl");
@@ -151,11 +153,11 @@ void CSkypeProto::SetAvatarUrl(MCONTACT hContact, CMString &tszUrl)
 	else {
 		setTString(hContact, "AvatarUrl", tszUrl.GetBuffer());
 		setByte(hContact, "NeedNewAvatar", 1);
-		PROTO_AVATAR_INFORMATIONT AI = { sizeof(AI) };
-		AI.hContact = hContact;
-		GetAvatarFileName(AI.hContact, AI.filename, SIZEOF(AI.filename));
-		AI.format = ProtoGetAvatarFormat(AI.filename);
-		ProtoBroadcastAck(hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, (HANDLE)&AI, 0);
+		PROTO_AVATAR_INFORMATION ai = { 0 };
+		ai.hContact = hContact;
+		GetAvatarFileName(ai.hContact, ai.filename, _countof(ai.filename));
+		ai.format = ProtoGetAvatarFormat(ai.filename);
+		ProtoBroadcastAck(hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, (HANDLE)&ai, 0);
 	}
 }
 
@@ -163,7 +165,7 @@ INT_PTR CSkypeProto::SvcSetMyAvatar(WPARAM, LPARAM lParam)
 {
 	TCHAR *path = (TCHAR*)lParam;
 	TCHAR avatarPath[MAX_PATH];
-	GetAvatarFileName(NULL, avatarPath, SIZEOF(avatarPath));
+	GetAvatarFileName(NULL, avatarPath, _countof(avatarPath));
 	if (path != NULL)
 	{
 		if (!CopyFile(path, avatarPath, FALSE))

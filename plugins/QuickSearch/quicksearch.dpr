@@ -47,22 +47,15 @@ end;
 
 function IconChanged(wParam:WPARAM;lParam:LPARAM):int;cdecl;
 var
-  mi:TCListMenuItem;
   ttb:TTBButton;
 begin
   result:=0;
-  FillChar(mi,SizeOf(mi),0);
-  mi.cbSize:=sizeof(mi);
-  mi.flags :=CMIM_ICON;
-
-  mi.hIcon:=CallService(MS_SKIN2_GETICON,0,tlparam(QS_QS));
-  CallService(MS_CLIST_MODIFYMENUITEM,MainMenuItem,tlparam(@mi));
 
 // toptoolbar
   if ServiceExists(MS_TTB_GETBUTTONOPTIONS)<>0 then
   begin
     CallService(MS_TTB_GETBUTTONOPTIONS,(hTTBButton shl 16)+TTBO_ALLDATA,TLPARAM(@ttb));
-    ttb.hIconUp:=CallService(MS_SKIN2_GETICON,0,TLPARAM(QS_QS));
+    ttb.hIconUp:=IcoLib_GetIcon(QS_QS,0);
     ttb.hIconDn:=ttb.hIconUp;
     CallService(MS_TTB_SETBUTTONOPTIONS,(hTTBButton shl 16)+TTBO_ALLDATA,TLPARAM(@ttb));
   end;
@@ -74,7 +67,6 @@ var
   sid:TSKINICONDESC;
 begin
   FillChar(sid,SizeOf(TSKINICONDESC),0);
-  sid.cbSize     :=SizeOf(TSKINICONDESC);
   sid.cx         :=16;
   sid.cy         :=16;
   sid.szSection.a:=qs_module;

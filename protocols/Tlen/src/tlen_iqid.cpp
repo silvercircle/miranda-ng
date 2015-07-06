@@ -54,7 +54,7 @@ void TlenIqResultAuth(TlenProtocol *proto, XmlNode *iqNode)
 		char text[128];
 
 		TlenSend(proto, "</s>");
-		mir_snprintf(text, SIZEOF(text), Translate("Authentication failed for %s@%s."), proto->threadData->username, proto->threadData->server);
+		mir_snprintf(text, _countof(text), Translate("Authentication failed for %s@%s."), proto->threadData->username, proto->threadData->server);
 		MessageBoxA(NULL, text, Translate("Tlen Authentication"), MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
 		ProtoBroadcastAck(proto->m_szModuleName, NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_WRONGPASSWORD);
 		proto->threadData = NULL;	// To disallow auto reconnect
@@ -220,11 +220,9 @@ void TlenIqResultRoster(TlenProtocol *proto, XmlNode *iqNode)
 				}
 			}
 
-			CLISTMENUITEM mi = { sizeof(mi) };
-			mi.flags = CMIM_FLAGS;
-			Menu_ModifyItem(proto->hMenuMUC, &mi);
+			Menu_ModifyItem(proto->hMenuMUC, NULL, INVALID_HANDLE_VALUE, 0);
 			if (proto->hMenuChats != NULL)
-				Menu_ModifyItem(proto->hMenuChats, &mi);
+				Menu_ModifyItem(proto->hMenuChats, NULL, INVALID_HANDLE_VALUE, 0);
 
 			proto->isOnline = TRUE;
 			proto->debugLogA("Status changed via THREADSTART");
@@ -260,7 +258,7 @@ void TlenIqResultVcard(TlenProtocol *proto, XmlNode *iqNode)
 			if (strchr(jid, '@') != NULL) {
 				strncpy_s(text, jid, _TRUNCATE);
 			} else {
-				mir_snprintf(text, SIZEOF(text),  "%s@%s", jid, dbv.pszVal);	// Add @tlen.pl
+				mir_snprintf(text, _countof(text),  "%s@%s", jid, dbv.pszVal);	// Add @tlen.pl
 			}
 			db_free(&dbv);
 			if ((hContact=TlenHContactFromJID(proto, text)) == NULL) {
@@ -421,67 +419,58 @@ void TlenIqResultSearch(TlenProtocol *proto, XmlNode *iqNode)
 						if (strchr(jid, '@') != NULL) {
 							strncpy_s(jsr.jid, jid, _TRUNCATE);
 						} else {
-							mir_snprintf(jsr.jid, SIZEOF(jsr.jid), "%s@%s", jid, dbv.pszVal);
+							mir_snprintf(jsr.jid, _countof(jsr.jid), "%s@%s", jid, dbv.pszVal);
 						}
 						jsr.jid[sizeof(jsr.jid)-1] = '\0';
-						jsr.hdr.id = mir_a2t(jid);
+						jsr.hdr.id.t = mir_a2t(jid);
 						if ((n=TlenXmlGetChild(itemNode, "nick")) != NULL && n->text != NULL){
 							char* buf = TlenTextDecode(n->text);
-							jsr.hdr.nick = mir_a2t(buf);
+							jsr.hdr.nick.t = mir_a2t(buf);
 							mir_free(buf);
 						} else {
-							jsr.hdr.nick = mir_tstrdup(TEXT(""));
+							jsr.hdr.nick.t = mir_tstrdup(TEXT(""));
 						}
 						if ((n=TlenXmlGetChild(itemNode, "first")) != NULL && n->text != NULL){
 							char* buf = TlenTextDecode(n->text);
-							jsr.hdr.firstName = mir_a2t(buf);
+							jsr.hdr.firstName.t = mir_a2t(buf);
 							mir_free(buf);
 						} else {
-							jsr.hdr.firstName = mir_tstrdup(TEXT(""));
+							jsr.hdr.firstName.t = mir_tstrdup(TEXT(""));
 						}
 						if ((n=TlenXmlGetChild(itemNode, "last")) != NULL && n->text != NULL){
 							char* buf = TlenTextDecode(n->text);
-							jsr.hdr.lastName = mir_a2t(buf);
+							jsr.hdr.lastName.t = mir_a2t(buf);
 							mir_free(buf);
 						} else {
-							jsr.hdr.lastName = mir_tstrdup(TEXT(""));
+							jsr.hdr.lastName.t = mir_tstrdup(TEXT(""));
 						}
 						if ((n=TlenXmlGetChild(itemNode, "email"))!=NULL && n->text!=NULL){
 							char* buf = TlenTextDecode(n->text);
-							jsr.hdr.email = mir_a2t(buf);
+							jsr.hdr.email.t = mir_a2t(buf);
 							mir_free(buf);
 						} else {
-							jsr.hdr.email = mir_tstrdup(TEXT(""));
+							jsr.hdr.email.t = mir_tstrdup(TEXT(""));
 						}
 
 						ProtoBroadcastAck(proto->m_szModuleName, NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE) id, (LPARAM) &jsr);
 						found = 1;
-						mir_free(jsr.hdr.id);
-						mir_free(jsr.hdr.nick);
-						mir_free(jsr.hdr.firstName);
-						mir_free(jsr.hdr.lastName);
-						mir_free(jsr.hdr.email);
+						mir_free(jsr.hdr.id.t);
+						mir_free(jsr.hdr.nick.t);
+						mir_free(jsr.hdr.firstName.t);
+						mir_free(jsr.hdr.lastName.t);
+						mir_free(jsr.hdr.email.t);
 					}
 				}
 			}
 			if (proto->searchJID != NULL) {
 				if (!found) {
-					if (strchr(proto->searchJID, '@') != NULL) {
+					if (strchr(proto->searchJID, '@') != NULL)
 						strncpy_s(jsr.jid, proto->searchJID, _TRUNCATE);
-					} else {
-						mir_snprintf(jsr.jid, SIZEOF(jsr.jid), "%s@%s", proto->searchJID, dbv.pszVal);
-					}
-					jsr.jid[sizeof(jsr.jid)-1] = '\0';
-					jsr.hdr.nick = mir_tstrdup(TEXT(""));
-					jsr.hdr.firstName = mir_tstrdup(TEXT(""));
-					jsr.hdr.lastName = mir_tstrdup(TEXT(""));
-					jsr.hdr.email = mir_tstrdup(TEXT(""));
-					jsr.hdr.id = mir_tstrdup(TEXT(""));
+					else
+						mir_snprintf(jsr.jid, _countof(jsr.jid), "%s@%s", proto->searchJID, dbv.pszVal);
+
+					jsr.hdr.nick.t = jsr.hdr.firstName.t = jsr.hdr.lastName.t = jsr.hdr.email.t = jsr.hdr.id.t = TEXT("");
 					ProtoBroadcastAck(proto->m_szModuleName, NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE) id, (LPARAM) &jsr);
-					mir_free(jsr.hdr.nick);
-					mir_free(jsr.hdr.firstName);
-					mir_free(jsr.hdr.lastName);
-					mir_free(jsr.hdr.email);
 				}
 				mir_free(proto->searchJID);
 				proto->searchJID = NULL;
@@ -605,7 +594,7 @@ void TlenIqResultInfo(TlenProtocol *proto, XmlNode *iqNode)
 					if (hContact != NULL) {
 						if (item->software == NULL) {
 							char str[128];
-							mir_snprintf(str, SIZEOF(str), "Tlen Protocol %s", item->protocolVersion);
+							mir_snprintf(str, "Tlen Protocol %s", item->protocolVersion);
 							db_set_s(hContact, proto->m_szModuleName, "MirVer", str);
 						}
 					}

@@ -21,19 +21,18 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 typedef void(CSkypeProto::*SkypeResponseCallback)(const NETLIBHTTPREQUEST *response);
 typedef void(CSkypeProto::*SkypeResponseWithArgCallback)(const NETLIBHTTPREQUEST *response, void *arg);
 
-typedef HRESULT(MarkupCallback)(IHTMLDocument3 *pHtmlDoc, BSTR &message);
-
 struct TRInfo
 {
-	char *socketIo;
-	char *connId;
-	char *st;
-	char *se;
-	char *instance;
-	char *ccid;
-	char *sessId;
-	char *sig;
-	char *url;
+	std::string 
+				socketIo,
+				connId,
+				st,
+				se,
+				instance,
+				ccid,
+				sessId,
+				sig,
+				url;
 };
 
 struct CSkypeProto : public PROTO < CSkypeProto >
@@ -51,19 +50,18 @@ public:
 	//////////////////////////////////////////////////////////////////////////////////////
 	// Virtual functions
 
-	virtual	MCONTACT __cdecl AddToList(int flags, PROTOSEARCHRESULT* psr);
-	virtual	MCONTACT __cdecl AddToListByEvent(int flags, int iContact, MEVENT hDbEvent);
-	virtual int      __cdecl AuthRequest(MCONTACT hContact, const PROTOCHAR* szMessage);
-	virtual	int      __cdecl Authorize(MEVENT hDbEvent);
-	virtual	int      __cdecl AuthDeny(MEVENT hDbEvent, const PROTOCHAR* szReason);
-	virtual	int      __cdecl AuthRecv(MCONTACT hContact, PROTORECVEVENT*);
+	virtual	MCONTACT  __cdecl AddToList(int flags, PROTOSEARCHRESULT* psr);
+	virtual	MCONTACT  __cdecl AddToListByEvent(int flags, int iContact, MEVENT hDbEvent);
+	virtual  int       __cdecl AuthRequest(MCONTACT hContact, const TCHAR* szMessage);
+	virtual	int       __cdecl Authorize(MEVENT hDbEvent);
+	virtual	int       __cdecl AuthDeny(MEVENT hDbEvent, const TCHAR* szReason);
+	virtual	int       __cdecl AuthRecv(MCONTACT hContact, PROTORECVEVENT*);
 
 	virtual	DWORD_PTR __cdecl GetCaps(int type, MCONTACT hContact = NULL);
 	virtual	int       __cdecl GetInfo(MCONTACT hContact, int infoType);
 
-	virtual	HANDLE    __cdecl SearchBasic(const PROTOCHAR* id);
+	virtual	HANDLE    __cdecl SearchBasic(const TCHAR* id);
 
-	virtual	int       __cdecl RecvMsg(MCONTACT hContact, PROTORECVEVENT *pre);
 	virtual	int       __cdecl SendMsg(MCONTACT hContact, int flags, const char* msg);
 
 	virtual	int       __cdecl SetStatus(int iNewStatus);
@@ -98,9 +96,9 @@ public:
 	void __cdecl SearchBasicThread(void* id);
 
 	////////////////////////////////////////////
-	UINT_PTR m_timer;
+	static UINT_PTR m_timer;
 	static int CompareAccounts(const CSkypeProto *p1, const CSkypeProto *p2);
-	void CSkypeProto::ProcessTimer();
+	void ProcessTimer();
 	static INT_PTR EventGetIcon(WPARAM wParam, LPARAM lParam);
 	static INT_PTR GetCallEventText(WPARAM, LPARAM lParam);
 
@@ -109,7 +107,7 @@ private:
 	RequestQueue *requestQueue;
 	bool isTerminated;
 	std::map<std::string, std::string> cookies;
-	HANDLE m_pollingConnection, m_hPollingThread, m_hTrouterThread, m_TrouterConnection, m_hCallHook;
+	HANDLE m_pollingConnection, m_hPollingThread, m_hTrouterThread, m_TrouterConnection, m_hTrouterEvent, m_hCallHook;
 	static std::map<std::tstring, std::tstring> languages;
 
 	static INT_PTR CALLBACK PasswordEditorProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -123,13 +121,7 @@ private:
 		m_hPopupClassNotify;
 
 	// accounts
-
-	char
-		*Server,
-		*RegToken,
-		*TokenSecret,
-		*EndpointId,
-		*SelfSkypeName;
+	ptrA m_szServer, m_szRegToken, m_szTokenSecret, m_szEndpointId, m_szSelfSkypeName;
 
 	static CSkypeProto* GetContactAccount(MCONTACT hContact);
 
@@ -158,7 +150,7 @@ private:
 	// icons
 	static IconInfo Icons[];
 	static HANDLE GetIconHandle(const char *name);
-	static HANDLE GetSkinIconHandle(const char *name);
+	static HANDLE Skin_GetIconHandle(const char *name);
 
 	// menus
 	static HGENMENU ContactMenuItems[CMI_MAX];
@@ -171,10 +163,15 @@ private:
 	int __cdecl OnOptionsInit(WPARAM wParam, LPARAM lParam);
 
 	// login
-	void OnLoginFirst(const NETLIBHTTPREQUEST *response);
-	void OnLoginSecond(const NETLIBHTTPREQUEST *response);
+	void Login();
+	void OnMSLoginFirst(const NETLIBHTTPREQUEST *response);
+	void OnMSLoginSecond(const NETLIBHTTPREQUEST *response);
+	void OnMSLoginThird(const NETLIBHTTPREQUEST *response);
+	void OnMSLoginEnd(const NETLIBHTTPREQUEST *response);
+	void OnLoginOAuth(const NETLIBHTTPREQUEST *response);
 	void OnLoginSuccess();
 	void OnEndpointCreated(const NETLIBHTTPREQUEST *response);
+	void SendPresence(bool isLogin = false);
 	void OnSubscriptionsCreated(const NETLIBHTTPREQUEST *response);
 	void OnCapabilitiesSended(const NETLIBHTTPREQUEST *response);
 	void OnStatusChanged(const NETLIBHTTPREQUEST *response);
@@ -185,28 +182,28 @@ private:
 	void OnTrouterPoliciesCreated(const NETLIBHTTPREQUEST *response);
 	void OnGetTrouter(const NETLIBHTTPREQUEST *response, void *p);
 	void OnHealth(const NETLIBHTTPREQUEST *response);
-	void OnTrouterEvent(JSONNODE *body, JSONNODE *headers);
-	void __cdecl CSkypeProto::TRouterThread(void*);
+	void OnTrouterEvent(const JSONNode &body, const JSONNode &headers);
+	void __cdecl TRouterThread(void*);
 
 	// profile
-	void UpdateProfileFirstName(JSONNODE *root, MCONTACT hContact = NULL);
-	void UpdateProfileLastName(JSONNODE *root, MCONTACT hContact = NULL);
-	void UpdateProfileDisplayName(JSONNODE *root, MCONTACT hContact = NULL);
-	void UpdateProfileGender(JSONNODE *root, MCONTACT hContact = NULL);
-	void UpdateProfileBirthday(JSONNODE *root, MCONTACT hContact = NULL);
-	void UpdateProfileCountry(JSONNODE *node, MCONTACT hContact = NULL);
-	void UpdateProfileState(JSONNODE *node, MCONTACT hContact = NULL);
-	void UpdateProfileCity(JSONNODE *node, MCONTACT hContact = NULL);
-	void UpdateProfileLanguage(JSONNODE *root, MCONTACT hContact = NULL);
-	void UpdateProfileHomepage(JSONNODE *root, MCONTACT hContact = NULL);
-	void UpdateProfileAbout(JSONNODE *node, MCONTACT hContact = NULL);
-	void UpdateProfileEmails(JSONNODE *root, MCONTACT hContact = NULL);
-	void UpdateProfilePhoneMobile(JSONNODE *root, MCONTACT hContact = NULL);
-	void UpdateProfilePhoneHome(JSONNODE *root, MCONTACT hContact = NULL);
-	void UpdateProfilePhoneOffice(JSONNODE *root, MCONTACT hContact = NULL);
-	void UpdateProfileStatusMessage(JSONNODE *root, MCONTACT hContact = NULL);
-	void UpdateProfileXStatusMessage(JSONNODE *root, MCONTACT hContact = NULL);
-	void UpdateProfileAvatar(JSONNODE *root, MCONTACT hContact = NULL);
+	void UpdateProfileFirstName(const JSONNode &root, MCONTACT hContact = NULL);
+	void UpdateProfileLastName(const JSONNode &root, MCONTACT hContact = NULL);
+	void UpdateProfileDisplayName(const JSONNode &root, MCONTACT hContact = NULL);
+	void UpdateProfileGender(const JSONNode &root, MCONTACT hContact = NULL);
+	void UpdateProfileBirthday(const JSONNode &root, MCONTACT hContact = NULL);
+	void UpdateProfileCountry(const JSONNode &node, MCONTACT hContact = NULL);
+	void UpdateProfileState(const JSONNode &node, MCONTACT hContact = NULL);
+	void UpdateProfileCity(const JSONNode &node, MCONTACT hContact = NULL);
+	void UpdateProfileLanguage(const JSONNode &root, MCONTACT hContact = NULL);
+	void UpdateProfileHomepage(const JSONNode &root, MCONTACT hContact = NULL);
+	void UpdateProfileAbout(const JSONNode &node, MCONTACT hContact = NULL);
+	void UpdateProfileEmails(const JSONNode &root, MCONTACT hContact = NULL);
+	void UpdateProfilePhoneMobile(const JSONNode &root, MCONTACT hContact = NULL);
+	void UpdateProfilePhoneHome(const JSONNode &root, MCONTACT hContact = NULL);
+	void UpdateProfilePhoneOffice(const JSONNode &root, MCONTACT hContact = NULL);
+	void UpdateProfileStatusMessage(const JSONNode &root, MCONTACT hContact = NULL);
+	void UpdateProfileXStatusMessage(const JSONNode &root, MCONTACT hContact = NULL);
+	void UpdateProfileAvatar(const JSONNode &root, MCONTACT hContact = NULL);
 
 	void LoadProfile(const NETLIBHTTPREQUEST *response);
 
@@ -245,7 +242,6 @@ private:
 	MEVENT AddCallToDb(MCONTACT hContact, DWORD timestamp, DWORD flags, const char *callId, const char *gp);
 	MEVENT AddCallInfoToDb(MCONTACT hContact, DWORD timestamp, DWORD flags, const char *messageId, char *content);
 	int OnReceiveMessage(const char *messageId, const char *url, time_t timestamp, char *content, int emoteOffset = 0, bool isRead = false);
-	int SaveMessageToDb(MCONTACT hContact, PROTORECVEVENT *pre);
 
 	int OnSendMessage(MCONTACT hContact, int flags, const char *message);
 	void OnMessageSent(const NETLIBHTTPREQUEST *response, void *arg);
@@ -253,7 +249,7 @@ private:
 
 	void MarkMessagesRead(MCONTACT hContact, MEVENT hDbEvent);
 
-	void OnPrivateMessageEvent(JSONNODE *node);
+	void OnPrivateMessageEvent(const JSONNode &node);
 
 	// sync
 	void OnGetServerHistory(const NETLIBHTTPREQUEST *response);
@@ -278,7 +274,7 @@ private:
 
 	INT_PTR __cdecl OnJoinChatRoom(WPARAM hContact, LPARAM);
 	INT_PTR __cdecl OnLeaveChatRoom(WPARAM hContact, LPARAM);
-	void OnChatEvent(JSONNODE *node);
+	void OnChatEvent(const JSONNode &node);
 	void OnSendChatMessage(const TCHAR *chat_id, const TCHAR * tszMessage);
 	char *GetChatUsers(const TCHAR *chat_id);
 	bool IsChatContact(const TCHAR *chat_id, const char *id);
@@ -298,47 +294,46 @@ private:
 
 	//polling
 	void __cdecl PollingThread(void*);
-	void ParsePollData(JSONNODE *data);
-	void ProcessEndpointPresenceRes(JSONNODE *node);
-	void ProcessUserPresenceRes(JSONNODE *node);
-	void ProcessNewMessageRes(JSONNODE *node);
-	void ProcessConversationUpdateRes(JSONNODE *node);
-	void ProcessThreadUpdateRes(JSONNODE *node);
+	void ParsePollData(const JSONNode &data);
+	void ProcessEndpointPresenceRes(const JSONNode &node);
+	void ProcessUserPresenceRes(const JSONNode &node);
+	void ProcessNewMessageRes(const JSONNode &node);
+	void ProcessConversationUpdateRes(const JSONNode &node);
+	void ProcessThreadUpdateRes(const JSONNode &node);
 
 	// utils
 	bool IsOnline();
 	bool IsMe(const char *skypeName);
 
 	MEVENT AddEventToDb(MCONTACT hContact, WORD type, DWORD timestamp, DWORD flags, DWORD cbBlob, PBYTE pBlob);
-	time_t IsoToUnixTime(const TCHAR *stamp);
+	time_t IsoToUnixTime(const char *stamp);
 	char *RemoveHtml(const char *text);
-	char *GetStringChunk(const char *haystack, size_t len, const char *start, const char *end);
+	CMStringA GetStringChunk(const char *haystack, const char *start, const char *end);
 
 	int SkypeToMirandaStatus(const char *status);
 	char *MirandaToSkypeStatus(int status);
 
-	void ShowNotification(const TCHAR *message, int flags = 0, MCONTACT hContact = NULL);
-	void ShowNotification(const TCHAR *caption, const TCHAR *message, int flags = 0, MCONTACT hContact = NULL, int type = 0);
+	void ShowNotification(const TCHAR *message, MCONTACT hContact = NULL);
+	void ShowNotification(const TCHAR *caption, const TCHAR *message, MCONTACT hContact = NULL, int type = 0);
 	static bool IsFileExists(std::tstring path);
 
 	static LRESULT CALLBACK PopupDlgProcCall(HWND hPopup, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-	char *ParseUrl(const char *url, const char *token);
+	CMStringA ParseUrl(const char *url, const char *token);
 
 	void SetSrmmReadStatus(MCONTACT hContact);
 
-	char *ChatUrlToName(const char *url);
-	char *ContactUrlToName(const char *url);
-	char *SelfUrlToName(const char *url);
-	char *GetServerFromUrl(const char *url);
-
-	LPCTSTR ClearText(CMString &value, const TCHAR *message);
+	CMStringA ChatUrlToName(const char *url);
+	CMStringA ContactUrlToName(const char *url);
+	CMStringA SelfUrlToName(const char *url);
+	CMStringA GetServerFromUrl(const char *url);
 
 	void CALLBACK SkypeUnsetTimer(void*);
 	void CALLBACK SkypeSetTimer(void*);
 
 	time_t GetLastMessageTime(MCONTACT hContact);
-
+	CMString RunConfirmationCode();
+	CMString ChangeTopicForm();
 	//events
 	void InitDBEvents();
 	int __cdecl ProcessSrmmEvent(WPARAM, LPARAM);
@@ -362,8 +357,5 @@ private:
 		return proto ? (proto->*Service)(wParam, lParam) : 0;
 	}
 };
-
-HRESULT TestDocumentText(IHTMLDocument3 *pHtmlDoc, BSTR &message);
-HRESULT TestMarkupServices(BSTR bstrHtml, MarkupCallback *pCallback, BSTR &message);
 
 #endif //_SKYPE_PROTO_H_

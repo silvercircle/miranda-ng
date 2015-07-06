@@ -2,29 +2,11 @@
 ;============================================================
 ;  File: CmdLine.dll
 ;  Plugin: Command line
-;  Version: 0.0.4.2
+;  Version: 0.0.4.5
 ;  Authors: Cristian Libotean
 ;============================================================
 [This plugin lets you control Miranda from the command line.]
 Плагин позволяет управлять Miranda через командную строку.
-[No help for '%s'.]
-Нет помощи для '%s'.
-[Available commands: ]
-Доступные команды:\s
-[Miranda has been closed or an error has occurred while waiting for the result, could not process request.]
-Miranda была закрыта или произошла ошибка при ожидании результата, невозможно обработать запрос.
-[%s usage:\n]
-%s использование:\n
-[%s <command> [<param> [<param> [...]]].\n]
-%s <команда> [<аргумент> [<аргумент> [...]]].\n
-[This will tell Miranda to run the specified command. The commands can have zero, one or more parameters. Use '%s help' to get a list of possible commands.\n]
-Передача Miranda указанной команды на выполнение. Команды могут иметь или не иметь аргумент(ы). Используйте '%s help' для получения списка доступных команд.\n
-[No command can have more than %d parameters.\n]
-Команды не могут иметь больше %d аргументов.\n
-[%s version %s]
-%s версия %s
-[Unknown command '%s'.\n]
-Неизвестная команда '%s'.\n
 [Error]
 Ошибка
 [Changes account status either globally or per account.\nUsage: status <status> [<account>].\nPossible values for <status> are: offline, online, away, dnd, na, occupied, freechat, invisible, onthephone, outtolunch.\n<Account> is an optional parameter specifying the account to set the status for. If it's not specified then the command will issue a global status change.]
@@ -50,7 +32,7 @@ Miranda была закрыта или произошла ошибка при о
 [Calls a Miranda service.\nUsage: callservice <service> (d|s)<wParam> (d|s)<lParam>.\nThe command will call Miranda <service> service using wParam and lParam as arguments; the first letter of the parameter must be either 'd' if the parameter is a decimal number or 's' if the parameter is a string. Be careful when you use this function as you can only pass numbers and strings as data.\nNOTE: If you pass invalid data to a service, Miranda might crash.]
 Вызывает сервис Miranda.\nИспользование: callservice <сервис> (d|s)<wParam> (d|s)<lParam>.\nКоманда вызывает <сервис> Miranda с использованием в качестве аргументов wParam и lParam. Первая буква параметра должна быть либо 'd' (если параметр - десятичный), либо 's' (если параметр - строка). Будьте осторожны с использованием этой команды, т.к. в качестве значений параметров можно передавать только цифры и строки.\nЗАМЕЧАНИЕ: Если вы укажете неверные данные в параметрах сервиса, Miranda может аварийно завершиться.
 [Sends a message to the specified contact(s).\nUsage: message <contact> [<contact> [<contact> [...]]] <message>.\nThe command will send <message> to the specified contact(s) - at least one contact must be specified - all parameters except the last one are considered recipients.\n<Contact> has the following format: <name>[:<account>]. <Name> is the contact display name or unique ID and <account> is an optional parameter representing the account of the contact (useful in case there is more than one contact with the same name).\nNOTE: The message string cannot exceed 512 characters. You can use \\n for new line (and \\\\n for \\n).]
-Отправляет сообщение указанному контакту или контактам.\nИспользование: message <контакт> [<контакт> [<контакт>] [...]]] <сообщение>.\nКоманда отправит <сообщение> указанным контактам. Должен быть указан как минимум один контакт - все параметры за исключением последнего считаются получателями.\n<Контакт> имеет следующий формат: <имя>[:<учётная запись>]. <имя> - отображаемое имя контакта или его уникальный ID, <учётная запись> - дополнительный параметр, указывающий протокол контакта (используется, если есть несколько контактов с одинаковым именем).\nЗАМЕЧАНИЕ: <сообщение> не должно превышать 512 символов. Вы можете использовать \\n для начала новой строки (и \\\\n для \\n).
+Отправляет сообщение указанному контакту или контактам.\nИспользование: message <контакт> [<контакт> [<контакт> [...]]] <сообщение>.\nКоманда отправит <сообщение> указанным контактам. Должен быть указан как минимум один контакт - все параметры за исключением последнего считаются получателями.\n<Контакт> имеет следующий формат: <имя>[:<учётная запись>]. <имя> - отображаемое имя контакта или его уникальный ID, <учётная запись> - дополнительный параметр, указывающий протокол контакта (используется, если есть несколько контактов с одинаковым именем).\nЗАМЕЧАНИЕ: <сообщение> не должно превышать 512 символов. Вы можете использовать \\n для начала новой строки (и \\\\n для \\n).
 [Allows you to manage database settings.\nUsage:\n  db set <module> <name> (b|i|d|s|w)<value>\n  db delete <module> <name>\n  db get <module> <name>.\nThe command can set a database entry to the specified value (if the entry does not exist, it will be created) as well as read or delete a specified database entry. <Module> is the name of the module where the key should be located, <name> is the name of the key and <value> is the value to be written. A character must be placed before <value> in order to specify what kind of data to write: b - byte, i - integer (word), d - double word, s - string, w - wide string.]
 Позволяет управлять настройками в базе данных.\nИспользование:\n  db set <модуль> <имя> (b|i|d|s|w)<значение>\n  db delete <модуль> <имя>\n  db get <модуль> <имя>.\nКоманда позволяет считывать, удалять и устанавливать значения параметров в базе (если указанного параметра нет, он будет создан).\n<Модуль> - имя модуля, в котором находится ключ, <имя> - имя ключа, а <значение> это данные ключа. Перед <значение> должен быть указан символ для указания типа данных ключа: b - байт, i - целое (слово), d - двойное слово, s - строка, w - юникод.
 [Configures proxy settings either globally or per account.\nUsage: proxy (global|<account>) <setting> [<params>].\n<Setting> is one of the following settings:\n  status (disable | enable | toggle)\n  server <proxy type> <server> <port>.]
@@ -72,9 +54,9 @@ Miranda была закрыта или произошла ошибка при о
 [Current global status: %s.%s]
 Текущий глобальный статус: %s.%s
 [Changed global status to '%s' (previous status was '%s').]
-Изменен глобальный статус на '%s' (предыдущий был '%s').
+Изменён глобальный статус на '%s' (предыдущий был '%s').
 [Changed '%s' status to '%s' (previous status was '%s').]
-Изменен '%s' статус на '%s' (предыдущий был '%s').
+Изменён '%s' статус на '%s' (предыдущий был '%s').
 ['%s' doesn't seem to be a valid account.]
 Учётная запись '%s' указана неправильно или не существует.
 [Failed to change status for account '%s' to '%s'.]
@@ -129,6 +111,8 @@ Miranda была закрыта или произошла ошибка при о
 Отправлена команда проверки почты для плагина YAMN.
 [YAMN plugin is not running.]
 Плагин YAMN не запущен.
+[CallService call successful: service '%s' returned %p.]
+Успешный вызов CallService: служба '%s' вернула %p.
 [Invalid parameter '%s' passed to CallService command.]
 Неправильный аргумент '%s' отправлен команде CallService.
 [Service '%s' does not exist.]

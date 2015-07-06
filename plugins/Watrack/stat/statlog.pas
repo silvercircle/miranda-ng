@@ -515,7 +515,6 @@ end;
 function NewPlStatus(wParam:WPARAM;lParam:LPARAM):int;cdecl;
 var
   flag:integer;
-  mi:tClistMenuItem;
   CurTime:dword;
 begin
   result:=0;
@@ -543,31 +542,16 @@ begin
       else // like 1
         exit
       end;
-      FillChar(mi,sizeof(mi),0);
-      mi.cbSize:=sizeof(mi);
-      mi.flags :=CMIM_FLAGS+flag;
-      CallService(MS_CLIST_MODIFYMENUITEM,hMenuReport,tlparam(@mi));
+      Menu_ModifyItem(hMenuReport, nil, INVALID_HANDLE_VALUE, flag);
     end;
   end;
-end;
-
-function IconChanged(wParam:WPARAM;lParam:LPARAM):int;cdecl;
-var
-  mi:TCListMenuItem;
-begin
-  result:=0;
-  FillChar(mi,SizeOf(mi),0);
-  mi.cbSize:=sizeof(mi);
-  mi.flags :=CMIM_ICON;
-  mi.hIcon :=CallService(MS_SKIN2_GETICON,0,tlparam(IcoBtnReport));
-  CallService(MS_CLIST_MODIFYMENUITEM,hMenuReport,tlparam(@mi));
 end;
 
 // ------------ base interface functions -------------
 
 function InitProc(aGetStatus:boolean=false):integer;
 var
-  mi:TCListMenuItem;
+  mi:TMO_MenuItem;
   sid:TSKINICONDESC;
 begin
   if aGetStatus then
@@ -588,7 +572,6 @@ begin
   loadstat;
 
   FillChar(sid,SizeOf(TSKINICONDESC),0);
-  sid.cbSize:=SizeOf(TSKINICONDESC);
   sid.cx:=16;
   sid.cy:=16;
   sid.szSection.a:='WATrack';
@@ -597,17 +580,14 @@ begin
   sid.szDescription.a:='Create Report';
   Skin_AddIcon(@sid);
   DestroyIcon(sid.hDefaultIcon);
-  sic:=HookEvent(ME_SKIN2_ICONSCHANGED,@IconChanged);
 
   FillChar(mi, sizeof(mi), 0);
-  mi.cbSize       :=sizeof(mi);
-  mi.flags        :=0;
-  mi.szPopupName.a:=PluginShort;
-  mi.hIcon        :=CallService(MS_SKIN2_GETICON,0,tlparam(IcoBtnReport));
-  mi.szName.a     :='Create WATrack report';
-  mi.pszService   :=MS_WAT_MAKEREPORT;
-  mi.popupPosition:=MenuReportPos;
-  hMenuReport :=Menu_AddMainMenuItem(@mi);
+  mi.root      :=Menu_CreateRoot(MO_MAIN, 'Watrack', MenuReportPos, 0, 0);
+  mi.hIcon     :=IcoLib_GetIcon(IcoBtnReport,0);
+  mi.szName.a  :='Create WATrack report';
+  mi.pszService:=MS_WAT_MAKEREPORT;
+  mi.position  :=MenuReportPos;
+  hMenuReport:=Menu_AddMainMenuItem(@mi);
   plStatusHook:=HookEvent(ME_WAT_NEWSTATUS,@NewPlStatus);
 end;
 
@@ -616,9 +596,7 @@ begin
   if aSetDisable then
     SetModStatus(0);
 
-  CallService(MO_REMOVEMENUITEM,hMenuReport,0);
-  UnhookEvent(plStatusHook);
-  UnhookEvent(sic);
+  Menu_RemoveItem(hMenuReport);
   DestroyServiceFunction(hPackLog);
   DestroyServiceFunction(hMakeReport);
   DestroyServiceFunction(hAddToLog);

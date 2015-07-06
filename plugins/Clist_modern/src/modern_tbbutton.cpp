@@ -1,7 +1,7 @@
-#include "hdr/modern_commonheaders.h"
-#include "hdr/modern_commonprototypes.h"
+#include "stdafx.h"
+#include "modern_commonprototypes.h"
 #include "m_skinbutton.h"
-#include "hdr/modern_clcpaint.h"
+#include "modern_clcpaint.h"
 
 #include <m_button_int.h>
 #include <m_toptoolbar.h>
@@ -34,7 +34,7 @@ static mir_cs csTips;
 static HWND hwndToolTips = NULL;
 static BOOL	bThemed = FALSE;
 
-static HANDLE hButtonWindowList = NULL;
+static MWindowList hButtonWindowList = NULL;
 
 static int OnIconLibIconChanged(WPARAM, LPARAM)
 {
@@ -101,7 +101,7 @@ static void PaintWorker(TBBUTTONDATA *bct, HDC hdcPaint, POINT *pOffset)
 	if (!g_CluiData.fDisableSkinEngine) {
 		char szRequest[128];
 		/* painting */
-		mir_snprintf(szRequest, SIZEOF(szRequest), "Button,ID=%s,Hovered=%s,Pressed=%s,Focused=%s",
+		mir_snprintf(szRequest, _countof(szRequest), "Button,ID=%s,Hovered=%s,Pressed=%s,Focused=%s",
 			bct->szButtonID,				// ID		
 			b2str(bct->stateId == PBS_HOT),	// Hovered
 			b2str(bct->stateId == PBS_PRESSED || bct->bIsPushed == TRUE),	// Pressed
@@ -239,7 +239,7 @@ static LRESULT CALLBACK ToolbarButtonProc(HWND hwndDlg, UINT  msg, WPARAM wParam
 		break;
 
 	case WM_SETTEXT:
-		mir_tstrncpy(bct->szText, (TCHAR*)lParam, SIZEOF(bct->szText));
+		mir_tstrncpy(bct->szText, (TCHAR*)lParam, _countof(bct->szText));
 		break;
 
 	case WM_SETFONT:
@@ -423,12 +423,12 @@ static LRESULT CALLBACK ToolbarButtonProc(HWND hwndDlg, UINT  msg, WPARAM wParam
 
 	case MBM_SETICOLIBHANDLE:
 		bct->hIcolibHandle = (HANDLE)lParam;
-		bct->hIcon = (bct->hIcolibHandle) ? Skin_GetIconByHandle(bct->hIcolibHandle) : NULL;
+		bct->hIcon = (bct->hIcolibHandle) ? IcoLib_GetIconByHandle(bct->hIcolibHandle) : NULL;
 		return 1;
 
 	case MBM_REFRESHICOLIBICON:
 		if (bct->hIcolibHandle)
-			bct->hIcon = Skin_GetIconByHandle(bct->hIcolibHandle);
+			bct->hIcon = IcoLib_GetIconByHandle(bct->hIcolibHandle);
 		else
 			bct->hIcon = NULL;
 		InvalidateRect(hwndDlg, NULL, TRUE);

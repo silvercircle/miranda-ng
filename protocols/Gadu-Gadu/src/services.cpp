@@ -27,23 +27,22 @@
 char *gg_status2db(int status, const char *suffix)
 {
 	char *prefix;
-	static char str[64];
-
 	switch(status) {
-		case ID_STATUS_AWAY:		prefix = "Away"; break;
-		case ID_STATUS_NA:			prefix = "Na"; break;
-		case ID_STATUS_DND:			prefix = "Dnd"; break;
-		case ID_STATUS_OCCUPIED:	prefix = "Occupied"; break;
-		case ID_STATUS_FREECHAT:	prefix = "FreeChat"; break;
-		case ID_STATUS_ONLINE:		prefix = "On"; break;
-		case ID_STATUS_OFFLINE:		prefix = "Off"; break;
-		case ID_STATUS_INVISIBLE:	prefix = "Inv"; break;
-		case ID_STATUS_ONTHEPHONE:	prefix = "Otp"; break;
-		case ID_STATUS_OUTTOLUNCH:	prefix = "Otl"; break;
+		case ID_STATUS_AWAY:       prefix = "Away"; break;
+		case ID_STATUS_NA:         prefix = "Na"; break;
+		case ID_STATUS_DND:        prefix = "Dnd"; break;
+		case ID_STATUS_OCCUPIED:   prefix = "Occupied"; break;
+		case ID_STATUS_FREECHAT:   prefix = "FreeChat"; break;
+		case ID_STATUS_ONLINE:     prefix = "On"; break;
+		case ID_STATUS_OFFLINE:    prefix = "Off"; break;
+		case ID_STATUS_INVISIBLE:  prefix = "Inv"; break;
+		case ID_STATUS_ONTHEPHONE: prefix = "Otp"; break;
+		case ID_STATUS_OUTTOLUNCH: prefix = "Otl"; break;
 		default: return NULL;
 	}
-	strncpy(str, prefix, sizeof(str));
-	strncat(str, suffix, sizeof(str) - mir_strlen(str));
+
+	static char str[64];
+	mir_snprintf(str, _countof(str), "%s%s", prefix, suffix);
 	return str;
 }
 
@@ -168,11 +167,11 @@ INT_PTR GGPROTO::getavatarcaps(WPARAM wParam, LPARAM lParam)
 
 //////////////////////////////////////////////////////////
 // gets avatar information
-// registered as ProtoService PS_GETAVATARINFOT
+// registered as ProtoService PS_GETAVATARINFO
 
 INT_PTR GGPROTO::getavatarinfo(WPARAM wParam, LPARAM lParam)
 {
-	PROTO_AVATAR_INFORMATIONT *pai = (PROTO_AVATAR_INFORMATIONT *)lParam;
+	PROTO_AVATAR_INFORMATION *pai = (PROTO_AVATAR_INFORMATION *)lParam;
 	pai->filename[0] = 0;
 	pai->format = PA_FORMAT_UNKNOWN;
 
@@ -192,7 +191,7 @@ INT_PTR GGPROTO::getavatarinfo(WPARAM wParam, LPARAM lParam)
 	if (!db_get_ts(pai->hContact, "ContactPhoto", "Backup", &dbv)) {
 		if ((mir_tstrlen(dbv.ptszVal)>0) && db_get_b(pai->hContact, "ContactPhoto", "Locked", 0)){
 			debugLogA("getavatarinfo(): Incoming request for avatar information. Contact has assigned Locked ContactPhoto. return GAIR_SUCCESS");
-			_tcscpy_s(pai->filename, SIZEOF(pai->filename) ,dbv.ptszVal);
+			_tcscpy_s(pai->filename, _countof(pai->filename) ,dbv.ptszVal);
 			pai->format = ProtoGetAvatarFormat(pai->filename);
 			db_free(&dbv);
 			return GAIR_SUCCESS;
@@ -220,13 +219,13 @@ INT_PTR GGPROTO::getavatarinfo(WPARAM wParam, LPARAM lParam)
 		char *AvatarName = strrchr(AvatarURL, '/');
 		AvatarName++;
 		char AvatarNameWithTS[128];
-		mir_snprintf(AvatarNameWithTS, SIZEOF(AvatarNameWithTS), "%s%s", AvatarName, AvatarTs);
+		mir_snprintf(AvatarNameWithTS, _countof(AvatarNameWithTS), "%s%s", AvatarName, AvatarTs);
 		AvatarHash = gg_avatarhash(AvatarNameWithTS);
 	}
 
 	ptrA AvatarSavedHash( getStringA(pai->hContact, GG_KEY_AVATARHASH));
 	if (AvatarHash != NULL && AvatarSavedHash != NULL) {
-		getAvatarFilename(pai->hContact, pai->filename, SIZEOF(pai->filename));
+		getAvatarFilename(pai->hContact, pai->filename, _countof(pai->filename));
 		if (!mir_strcmp(AvatarHash, AvatarSavedHash)) {
 			if (_taccess(pai->filename, 0) == 0){
 				debugLogA("getavatarinfo(): Incoming request for avatar information. uin=%d. Avatar hash unchanged. return GAIR_SUCCESS", uin);
@@ -241,7 +240,7 @@ INT_PTR GGPROTO::getavatarinfo(WPARAM wParam, LPARAM lParam)
 			if (_tremove(pai->filename) != 0){
 				debugLog(_T("getavatarinfo(): refresh. _tremove 1 file %s error. errno=%d: %s"), pai->filename, errno, strerror(errno));
 				TCHAR error[512];
-				mir_sntprintf(error, SIZEOF(error), TranslateT("Cannot remove old avatar file before refresh. ERROR: %d: %s\n%s"), errno, _tcserror(errno), pai->filename);
+				mir_sntprintf(error, TranslateT("Cannot remove old avatar file before refresh. ERROR: %d: %s\n%s"), errno, _tcserror(errno), pai->filename);
 				showpopup(m_tszUserName, error, GG_POPUP_ERROR);
 			}
 			setString(pai->hContact, GG_KEY_AVATARHASH, AvatarHash);
@@ -252,11 +251,11 @@ INT_PTR GGPROTO::getavatarinfo(WPARAM wParam, LPARAM lParam)
 	}
 	else if ((wParam & GAIF_FORCE) != 0) {
 		if (AvatarHash == NULL && AvatarSavedHash != NULL) {
-			getAvatarFilename(pai->hContact, pai->filename, sizeof(pai->filename));
+			getAvatarFilename(pai->hContact, pai->filename, _countof(pai->filename));
 			if (_tremove(pai->filename) != 0){
 				debugLog(_T("getavatarinfo(): delete. _tremove file %s error. errno=%d: %s"), pai->filename, errno, strerror(errno));
 				TCHAR error[512];
-				mir_sntprintf(error, SIZEOF(error), TranslateT("Cannot remove old avatar file. ERROR: %d: %s\n%s"), errno, _tcserror(errno), pai->filename);
+				mir_sntprintf(error, TranslateT("Cannot remove old avatar file. ERROR: %d: %s\n%s"), errno, _tcserror(errno), pai->filename);
 				showpopup(m_tszUserName, error, GG_POPUP_ERROR);
 			}
 			delSetting(pai->hContact, GG_KEY_AVATARHASH);
@@ -279,7 +278,7 @@ INT_PTR GGPROTO::getavatarinfo(WPARAM wParam, LPARAM lParam)
 
 //////////////////////////////////////////////////////////
 // gets avatar
-// registered as ProtoService PS_GETMYAVATART
+// registered as ProtoService PS_GETMYAVATAR
 
 INT_PTR GGPROTO::getmyavatar(WPARAM wParam, LPARAM lParam)
 {
@@ -309,7 +308,7 @@ INT_PTR GGPROTO::getmyavatar(WPARAM wParam, LPARAM lParam)
 
 //////////////////////////////////////////////////////////
 // sets avatar
-// registered as ProtoService PS_SETMYAVATART
+// registered as ProtoService PS_SETMYAVATAR
 
 INT_PTR GGPROTO::setmyavatar(WPARAM wParam, LPARAM lParam)
 {
@@ -335,7 +334,7 @@ INT_PTR GGPROTO::setmyavatar(WPARAM wParam, LPARAM lParam)
 	setByte(GG_KEY_AVATARTYPE, (BYTE)iAvType);
 
 	TCHAR szMyFilename[MAX_PATH];
-	getAvatarFilename(NULL, szMyFilename, SIZEOF(szMyFilename));
+	getAvatarFilename(NULL, szMyFilename, _countof(szMyFilename));
 	if ( mir_tstrcmp(szFilename, szMyFilename) && !CopyFile(szFilename, szMyFilename, FALSE)) {
 		debugLogA("setmyavatar(): Failed to set user avatar. File with type %d could not be created/overwritten.", iAvType);
 		return -1;
@@ -352,10 +351,9 @@ INT_PTR GGPROTO::setmyavatar(WPARAM wParam, LPARAM lParam)
 INT_PTR GGPROTO::getmyawaymsg(WPARAM wParam, LPARAM lParam)
 {
 	INT_PTR res = 0;
-	TCHAR *szMsg;
 
 	gg_EnterCriticalSection(&modemsg_mutex, "refreshstatus", 72, "modemsg_mutex", 1);
-	szMsg = getstatusmsg(wParam ? gg_normalizestatus(wParam) : m_iStatus);
+	TCHAR *szMsg = getstatusmsg(wParam ? gg_normalizestatus(wParam) : m_iStatus);
 	if (isonline() && szMsg)
 		res = (lParam & SGMA_UNICODE) ? (INT_PTR)mir_t2u(szMsg) : (INT_PTR)mir_t2a(szMsg);
 	gg_LeaveCriticalSection(&modemsg_mutex, "refreshstatus", 72, 1, "modemsg_mutex", 1);

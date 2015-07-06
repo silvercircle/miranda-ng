@@ -47,14 +47,14 @@ TSSSetting::TSSSetting(int profile, PROTOACCOUNT *pa)
 
 	// load status
 	char setting[80];
-	mir_snprintf(setting, SIZEOF(setting), "%d_%s", profile, pa->szModuleName);
+	mir_snprintf(setting, "%d_%s", profile, pa->szModuleName);
 	int iStatus = db_get_w(NULL, MODULENAME, setting, 0);
 	if (iStatus < MIN_STATUS || iStatus > MAX_STATUS)
 		iStatus = DEFAULT_STATUS;
 	status = iStatus;
 
 	// load last status
-	mir_snprintf(setting, SIZEOF(setting), "%s%s", PREFIX_LAST, szName);
+	mir_snprintf(setting, "%s%s", PREFIX_LAST, szName);
 	iStatus = db_get_w(NULL, MODULENAME, setting, 0);
 	if (iStatus < MIN_STATUS || iStatus > MAX_STATUS)
 		iStatus = DEFAULT_STATUS;
@@ -168,7 +168,7 @@ static void SetLastStatusMessages(TSettingsList &ps)
 			continue;
 
 		char dbSetting[128];
-		mir_snprintf(dbSetting, SIZEOF(dbSetting), "%s%s", PREFIX_LASTMSG, ps[i].szName);
+		mir_snprintf(dbSetting, _countof(dbSetting), "%s%s", PREFIX_LASTMSG, ps[i].szName);
 
 		DBVARIANT dbv;
 		if (ps[i].szMsg == NULL && !db_get_ts(NULL, MODULENAME, dbSetting, &dbv)) {
@@ -290,20 +290,20 @@ static int OnOkToExit(WPARAM, LPARAM)
 	// save last protocolstatus
 	int count;
 	PROTOACCOUNT** protos;
-	ProtoEnumAccounts(&count, &protos);
+	Proto_EnumAccounts(&count, &protos);
 
 	for (int i = 0; i < count; i++) {
 		PROTOACCOUNT *pa = protos[i];
 		if (!IsSuitableProto(pa))
 			continue;
 
-		if (!ProtoGetAccount(pa->szModuleName))
+		if (!Proto_GetAccount(pa->szModuleName))
 			continue;
 
 		char lastName[128], lastMsg[128];
-		mir_snprintf(lastName, SIZEOF(lastName), "%s%s", PREFIX_LAST, pa->szModuleName);
+		mir_snprintf(lastName, _countof(lastName), "%s%s", PREFIX_LAST, pa->szModuleName);
 		db_set_w(NULL, MODULENAME, lastName, (WORD)CallProtoService(pa->szModuleName, PS_GETSTATUS, 0, 0));
-		mir_snprintf(lastMsg, SIZEOF(lastMsg), "%s%s", PREFIX_LASTMSG, pa->szModuleName);
+		mir_snprintf(lastMsg, _countof(lastMsg), "%s%s", PREFIX_LASTMSG, pa->szModuleName);
 		db_unset(NULL, MODULENAME, lastMsg);
 
 		if (!(CallProtoService(pa->szModuleName, PS_GETCAPS, (WPARAM)PFLAGNUM_1, 0) & PF1_MODEMSGSEND & ~PF1_INDIVMODEMSG))
@@ -347,7 +347,7 @@ static int OnShutdown(WPARAM wParam, LPARAM lParam)
 	// set windowstate and docked for next startup
 	if (db_get_b(NULL, MODULENAME, SETTING_SETWINSTATE, 0)) {
 		int state = db_get_b(NULL, MODULENAME, SETTING_WINSTATE, SETTING_STATE_NORMAL);
-		HWND hClist = (HWND)CallService(MS_CLUI_GETHWND, 0, 0);
+		HWND hClist = pcli->hwndContactList;
 		BOOL isHidden = !IsWindowVisible(hClist);
 		switch (state) {
 		case SETTING_STATE_HIDDEN:
@@ -448,7 +448,7 @@ int CSModuleLoaded(WPARAM wParam, LPARAM lParam)
 
 	// win size and location
 	if (db_get_b(NULL, MODULENAME, SETTING_SETWINLOCATION, 0) || db_get_b(NULL, MODULENAME, SETTING_SETWINSIZE, 0)) {
-		HWND hClist = (HWND)CallService(MS_CLUI_GETHWND, 0, 0);
+		HWND hClist = pcli->hwndContactList;
 
 		// store in db
 		if (db_get_b(NULL, MODULENAME, SETTING_SETWINLOCATION, 0)) {

@@ -22,10 +22,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "hdr/modern_commonheaders.h"
-#include "hdr/modern_clc.h"
-#include "hdr/modern_commonprototypes.h"
-#include "hdr/modern_defsettings.h"
+#include "stdafx.h"
+#include "modern_clc.h"
+#include "modern_commonprototypes.h"
+#include "modern_defsettings.h"
 
 typedef struct _StatusBarProtocolOptions
 {
@@ -163,7 +163,7 @@ INT_PTR CALLBACK DlgProcSBarOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 
 			int count;
 			PROTOACCOUNT **accs;
-			ProtoEnumAccounts(&count, &accs);
+			Proto_EnumAccounts(&count, &accs);
 
 			SendMessage(hwndComboBox, CB_ADDSTRING, 0, (LPARAM)TranslateT("<<Global>>"));
 			SendMessage(hwndComboBox, CB_SETITEMDATA, 0, 0);
@@ -180,31 +180,31 @@ INT_PTR CALLBACK DlgProcSBarOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 				SendMessage(hwndComboBox, CB_SETITEMDATA, dwNewId, (LPARAM)dat);
 
 				char buf[256];
-				mir_snprintf(buf, SIZEOF(buf), "SBarAccountIsCustom_%s", szName);
+				mir_snprintf(buf, "SBarAccountIsCustom_%s", szName);
 				dat->AccountIsCustomized = db_get_b(NULL, "CLUI", buf, SETTING_SBARACCOUNTISCUSTOM_DEFAULT);
 
-				mir_snprintf(buf, SIZEOF(buf), "HideAccount_%s", szName);
+				mir_snprintf(buf, "HideAccount_%s", szName);
 				dat->HideAccount = db_get_b(NULL, "CLUI", buf, SETTING_SBARHIDEACCOUNT_DEFAULT);
 
-				mir_snprintf(buf, SIZEOF(buf), "SBarShow_%s", szName);
+				mir_snprintf(buf, "SBarShow_%s", szName);
 				dat->SBarShow = db_get_b(NULL, "CLUI", buf, SETTING_SBARSHOW_DEFAULT);
 
-				mir_snprintf(buf, SIZEOF(buf), "SBarRightClk_%s", szName);
+				mir_snprintf(buf, "SBarRightClk_%s", szName);
 				dat->SBarRightClk = db_get_b(NULL, "CLUI", buf, SETTING_SBARRIGHTCLK_DEFAULT);
 
-				mir_snprintf(buf, SIZEOF(buf), "ShowUnreadEmails_%s", szName);
+				mir_snprintf(buf, "ShowUnreadEmails_%s", szName);
 				dat->ShowUnreadEmails = db_get_b(NULL, "CLUI", buf, SETTING_SHOWUNREADEMAILS_DEFAULT);
 
-				mir_snprintf(buf, SIZEOF(buf), "ShowXStatus_%s", szName);
+				mir_snprintf(buf, "ShowXStatus_%s", szName);
 				dat->ShowXStatus = db_get_b(NULL, "CLUI", buf, SETTING_SHOWXSTATUS_DEFAULT);
 
-				mir_snprintf(buf, SIZEOF(buf), "UseConnectingIcon_%s", szName);
+				mir_snprintf(buf, "UseConnectingIcon_%s", szName);
 				dat->UseConnectingIcon = db_get_b(NULL, "CLUI", buf, SETTING_USECONNECTINGICON_DEFAULT);
 
-				mir_snprintf(buf, SIZEOF(buf), "PaddingLeft_%s", szName);
+				mir_snprintf(buf, "PaddingLeft_%s", szName);
 				dat->PaddingLeft = db_get_dw(NULL, "CLUI", buf, SETTING_PADDINGLEFT_DEFAULT);
 
-				mir_snprintf(buf, SIZEOF(buf), "PaddingRight_%s", szName);
+				mir_snprintf(buf, "PaddingRight_%s", szName);
 				dat->PaddingRight = db_get_dw(NULL, "CLUI", buf, SETTING_PADDINGRIGHT_DEFAULT);
 			}
 
@@ -241,14 +241,14 @@ INT_PTR CALLBACK DlgProcSBarOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 
 		{
 			TCHAR *align[] = { LPGENT("Left"), LPGENT("Center"), LPGENT("Right") };
-			for (int i = 0; i < SIZEOF(align); i++)
+			for (int i = 0; i < _countof(align); i++)
 				SendDlgItemMessage(hwndDlg, IDC_SBAR_HORIZ_ALIGN, CB_ADDSTRING, 0, (LPARAM)TranslateTS(align[i]));
 			SendDlgItemMessage(hwndDlg, IDC_SBAR_HORIZ_ALIGN, CB_SETCURSEL, db_get_b(NULL, "CLUI", "Align", SETTING_ALIGN_DEFAULT), 0);
 		}
 
 		{
 			TCHAR *align[] = { LPGENT("Top"), LPGENT("Center"), LPGENT("Bottom") };
-			for (int i = 0; i < SIZEOF(align); i++)
+			for (int i = 0; i < _countof(align); i++)
 				SendDlgItemMessage(hwndDlg, IDC_SBAR_VERT_ALIGN, CB_ADDSTRING, 0, (LPARAM)TranslateTS(align[i]));
 			SendDlgItemMessage(hwndDlg, IDC_SBAR_VERT_ALIGN, CB_SETCURSEL, db_get_b(NULL, "CLUI", "VAlign", SETTING_VALIGN_DEFAULT), 0);
 		}
@@ -403,25 +403,25 @@ INT_PTR CALLBACK DlgProcSBarOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 				StatusBarProtocolOptions *sbpo = (StatusBarProtocolOptions*)SendMessage(hwndComboBox, CB_GETITEMDATA, i, 0);
 
 				char settingBuf[256];
-				mir_snprintf(settingBuf, SIZEOF(settingBuf), "SBarAccountIsCustom_%s", sbpo->szName);
+				mir_snprintf(settingBuf, _countof(settingBuf), "SBarAccountIsCustom_%s", sbpo->szName);
 				db_set_b(NULL, "CLUI", settingBuf, (BYTE)sbpo->AccountIsCustomized);
 
-				mir_snprintf(settingBuf, SIZEOF(settingBuf), "HideAccount_%s", sbpo->szName);
+				mir_snprintf(settingBuf, _countof(settingBuf), "HideAccount_%s", sbpo->szName);
 				db_set_b(NULL, "CLUI", settingBuf, (BYTE)sbpo->HideAccount);
 
-				mir_snprintf(settingBuf, SIZEOF(settingBuf), "SBarShow_%s", sbpo->szName);
+				mir_snprintf(settingBuf, _countof(settingBuf), "SBarShow_%s", sbpo->szName);
 				db_set_b(NULL, "CLUI", settingBuf, (BYTE)sbpo->SBarShow);
-				mir_snprintf(settingBuf, SIZEOF(settingBuf), "SBarRightClk_%s", sbpo->szName);
+				mir_snprintf(settingBuf, _countof(settingBuf), "SBarRightClk_%s", sbpo->szName);
 				db_set_b(NULL, "CLUI", settingBuf, (BYTE)sbpo->SBarRightClk);
-				mir_snprintf(settingBuf, SIZEOF(settingBuf), "UseConnectingIcon_%s", sbpo->szName);
+				mir_snprintf(settingBuf, _countof(settingBuf), "UseConnectingIcon_%s", sbpo->szName);
 				db_set_b(NULL, "CLUI", settingBuf, (BYTE)sbpo->UseConnectingIcon);
-				mir_snprintf(settingBuf, SIZEOF(settingBuf), "ShowUnreadEmails_%s", sbpo->szName);
+				mir_snprintf(settingBuf, _countof(settingBuf), "ShowUnreadEmails_%s", sbpo->szName);
 				db_set_b(NULL, "CLUI", settingBuf, (BYTE)sbpo->ShowUnreadEmails);
-				mir_snprintf(settingBuf, SIZEOF(settingBuf), "ShowXStatus_%s", sbpo->szName);
+				mir_snprintf(settingBuf, _countof(settingBuf), "ShowXStatus_%s", sbpo->szName);
 				db_set_b(NULL, "CLUI", settingBuf, sbpo->ShowXStatus);
-				mir_snprintf(settingBuf, SIZEOF(settingBuf), "PaddingLeft_%s", sbpo->szName);
+				mir_snprintf(settingBuf, _countof(settingBuf), "PaddingLeft_%s", sbpo->szName);
 				db_set_dw(NULL, "CLUI", settingBuf, sbpo->PaddingLeft);
-				mir_snprintf(settingBuf, SIZEOF(settingBuf), "PaddingRight_%s", sbpo->szName);
+				mir_snprintf(settingBuf, _countof(settingBuf), "PaddingRight_%s", sbpo->szName);
 				db_set_dw(NULL, "CLUI", settingBuf, sbpo->PaddingRight);
 			}
 

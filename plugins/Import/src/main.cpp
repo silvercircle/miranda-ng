@@ -88,7 +88,7 @@ static int ModulesLoaded(WPARAM wParam, LPARAM lParam)
 	// Only autorun import wizard if at least one protocol is installed
 	int nProtocols = 0;
 	PROTOACCOUNT **ppProtos = NULL;
-	ProtoEnumAccounts(&nProtocols, &ppProtos);
+	Proto_EnumAccounts(&nProtocols, &ppProtos);
 	if (nProtocols > 0) {
 		CallService(IMPORT_SERVICE, 0, 0);
 		db_set_b(NULL, IMPORT_MODULE, IMP_KEY_FR, 1);
@@ -114,10 +114,9 @@ extern "C" __declspec(dllexport) int Load(void)
 	RegisterIcons();
 
 	// menu item
-	CLISTMENUITEM mi = { 0 };
-	mi.cbSize = sizeof(mi);
-	mi.icolibItem = GetIconHandle(IDI_IMPORT);
-	mi.pszName = LPGEN("&Import...");
+	CMenuItem mi;
+	mi.hIcolibItem = GetIconHandle(IDI_IMPORT);
+	mi.name.a = LPGEN("&Import...");
 	mi.position = 500050000;
 	mi.pszService = IMPORT_SERVICE;
 	Menu_AddMainMenuItem(&mi);

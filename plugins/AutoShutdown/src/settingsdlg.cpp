@@ -45,7 +45,7 @@ static BOOL CALLBACK DisplayCpuUsageProc(BYTE nCpuUsage,LPARAM lParam)
 	/* dialog closed? */
 	if (!IsWindow((HWND)lParam)) return FALSE; /* stop poll thread */
 	TCHAR str[64];
-	mir_sntprintf(str,SIZEOF(str),TranslateT("(current: %u%%)"),nCpuUsage);
+	mir_sntprintf(str,_countof(str),TranslateT("(current: %u%%)"),nCpuUsage);
 	SetWindowText((HWND)lParam,str);
 	return TRUE;
 }
@@ -54,10 +54,11 @@ static bool AnyProtoHasCaps(DWORD caps1)
 {
 	int nProtoCount;
 	PROTOACCOUNT **protos;
-	if (!ProtoEnumAccounts(&nProtoCount, &protos))
-		for(int i=0;i<nProtoCount;++i)
-			if (CallProtoService(protos[i]->szModuleName,PS_GETCAPS,(WPARAM)PFLAGNUM_1,0)&caps1)
-				return true; /* CALLSERVICE_NOTFOUND also handled gracefully */
+	Proto_EnumAccounts(&nProtoCount, &protos);
+
+	for(int i=0;i<nProtoCount;++i)
+		if (CallProtoService(protos[i]->szModuleName,PS_GETCAPS,(WPARAM)PFLAGNUM_1,0)&caps1)
+			return true; /* CALLSERVICE_NOTFOUND also handled gracefully */
 	return false;
 }
 
@@ -72,8 +73,8 @@ static INT_PTR CALLBACK SettingsDlgProc(HWND hwndDlg,UINT msg,WPARAM wParam,LPAR
 			LCID locale;
 			hwndSettingsDlg=hwndDlg;
 			TranslateDialogDefault(hwndDlg);
-			locale=CallService(MS_LANGPACK_GETLOCALE,0,0);
-			SendDlgItemMessage(hwndDlg,IDC_ICON_HEADER,STM_SETIMAGE,IMAGE_ICON,(LPARAM)Skin_GetIcon("AutoShutdown_Header"));
+			locale = Langpack_GetDefaultLocale();
+			SendDlgItemMessage(hwndDlg,IDC_ICON_HEADER,STM_SETIMAGE,IMAGE_ICON,(LPARAM)IcoLib_GetIcon("AutoShutdown_Header"));
 			{
 				HFONT hBoldFont;
 				LOGFONT lf;
@@ -115,8 +116,8 @@ static INT_PTR CALLBACK SettingsDlgProc(HWND hwndDlg,UINT msg,WPARAM wParam,LPAR
 				HWND hwndCombo=GetDlgItem(hwndDlg,IDC_COMBO_COUNTDOWNUNIT);
 				DWORD lastUnit=db_get_dw(NULL,"AutoShutdown","CountdownUnit",SETTING_COUNTDOWNUNIT_DEFAULT);
 				SendMessage(hwndCombo,CB_SETLOCALE,(WPARAM)locale,0); /* sort order */
-				SendMessage(hwndCombo,CB_INITSTORAGE,SIZEOF(unitNames),SIZEOF(unitNames)*16); /* approx. */
-				for(int i=0;i<SIZEOF(unitNames);++i) {
+				SendMessage(hwndCombo,CB_INITSTORAGE,_countof(unitNames),_countof(unitNames)*16); /* approx. */
+				for(int i=0;i<_countof(unitNames);++i) {
 					int index=SendMessage(hwndCombo,CB_ADDSTRING,0,(LPARAM)TranslateTS(unitNames[i]));
 					if (index != LB_ERR) {
 						SendMessage(hwndCombo,CB_SETITEMDATA,index,(LPARAM)unitValues[i]);
@@ -410,7 +411,7 @@ static HANDLE hToolbarButton;
 
 int ToolbarLoaded(WPARAM,LPARAM)
 {
-	TTBButton ttb = { sizeof(ttb) };
+	TTBButton ttb = { 0 };
 	ttb.hIconHandleUp = iconList[2].hIcolib;
 	ttb.hIconHandleDn = iconList[1].hIcolib;
 	ttb.pszService = "AutoShutdown/MenuCommand";
@@ -435,33 +436,31 @@ static HGENMENU hMainMenuItem,hTrayMenuItem;
 void SetShutdownMenuItem(bool fActive)
 {
 	/* main menu */
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = 2001090000;
 	if (fActive)
 	{
-		mi.icolibItem = iconList[1].hIcolib;
-		mi.ptszName = LPGENT("Stop automatic &shutdown");
+		mi.hIcolibItem = iconList[1].hIcolib;
+		mi.name.t = LPGENT("Stop automatic &shutdown");
 	}
 	else
 	{
-		mi.icolibItem = iconList[2].hIcolib;
-		mi.ptszName = LPGENT("Automatic &shutdown...");
+		mi.hIcolibItem = iconList[2].hIcolib;
+		mi.name.t = LPGENT("Automatic &shutdown...");
 	}
 	mi.pszService = "AutoShutdown/MenuCommand";
 	mi.flags = CMIF_TCHAR;
-	if (hMainMenuItem != NULL) {
-		mi.flags |= CMIM_NAME | CMIM_ICON;
-		Menu_ModifyItem(hMainMenuItem, &mi);
-	}
-	else hMainMenuItem = Menu_AddMainMenuItem(&mi);
+	if (hMainMenuItem != NULL)
+		Menu_ModifyItem(hMainMenuItem, mi.name.t, mi.hIcolibItem);
+	else
+		hMainMenuItem = Menu_AddMainMenuItem(&mi);
 
 	/* tray menu */
 	mi.position = 899999;
-	if (hTrayMenuItem != NULL) {
-		mi.flags |= CMIM_NAME | CMIM_ICON;
-		Menu_ModifyItem(hTrayMenuItem, &mi);
-	}
-	else hTrayMenuItem = Menu_AddTrayMenuItem(&mi);
+	if (hTrayMenuItem != NULL)
+		Menu_ModifyItem(hTrayMenuItem, mi.name.t, mi.hIcolibItem);
+	else
+		hTrayMenuItem = Menu_AddTrayMenuItem(&mi);
 }
 
 static INT_PTR MenuItemCommand(WPARAM,LPARAM)

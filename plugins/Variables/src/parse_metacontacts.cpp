@@ -51,11 +51,11 @@ static TCHAR *parseGetParent(ARGUMENTSINFO *ai)
 	if (szUniqueID == NULL) {
 		szProto = PROTOID_HANDLE;
 		TCHAR tszID[40];
-		mir_sntprintf(tszID, SIZEOF(tszID), _T("%p"), hContact);
+		mir_sntprintf(tszID, _countof(tszID), _T("%p"), hContact);
 		szUniqueID = mir_tstrdup(tszID);
 	}
 
-	return CMString(FORMAT, _T("<%S:%s>"), szProto, szUniqueID).Detouch();
+	return CMString(FORMAT, _T("<%S:%s>"), szProto, szUniqueID).Detach();
 }
 
 static TCHAR *parseGetDefault(ARGUMENTSINFO *ai)
@@ -91,11 +91,11 @@ static TCHAR *parseGetDefault(ARGUMENTSINFO *ai)
 	if (szUniqueID == NULL) {
 		szProto = PROTOID_HANDLE;
 		TCHAR tszID[40];
-		mir_sntprintf(tszID, SIZEOF(tszID), _T("%p"), hContact);
+		mir_sntprintf(tszID, _countof(tszID), _T("%p"), hContact);
 		szUniqueID = mir_tstrdup(tszID);
 	}
 
-	return CMString(FORMAT, _T("<%S:%s>"), szProto, szUniqueID).Detouch();
+	return CMString(FORMAT, _T("<%S:%s>"), szProto, szUniqueID).Detach();
 }
 
 static TCHAR *parseGetMostOnline(ARGUMENTSINFO *ai)
@@ -131,11 +131,11 @@ static TCHAR *parseGetMostOnline(ARGUMENTSINFO *ai)
 	if (szUniqueID == NULL) {
 		szProto = PROTOID_HANDLE;
 		TCHAR tszID[40];
-		mir_sntprintf(tszID, SIZEOF(tszID), _T("%p"), hContact);
+		mir_sntprintf(tszID, _countof(tszID), _T("%p"), hContact);
 		szUniqueID = mir_tstrdup(tszID);
 	}
 
-	return CMString(FORMAT, _T("<%S:%s>"), szProto, szUniqueID).Detouch();
+	return CMString(FORMAT, _T("<%S:%s>"), szProto, szUniqueID).Detach();
 }
 
 void registerMetaContactsTokens()

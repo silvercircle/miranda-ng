@@ -20,8 +20,6 @@ Boston, MA 02111-1307, USA.
 #include "Common.h"
 
 HANDLE hNetlibUser = NULL, hPipe = NULL;
-POPUP_OPTIONS PopupOptions = {0};
-extern DWORD g_mirandaVersion;
 
 /////////////////////////////////////////////////////////////////////////////////////
 #if MIRANDA_VER >= 0x0A00
@@ -34,7 +32,7 @@ IconItemT iconList[] =
 
 void InitIcoLib()
 {
-	Icon_RegisterT(hInst,MODULE,iconList, SIZEOF(iconList));
+	Icon_RegisterT(hInst,MODULE,iconList, _countof(iconList));
 }
 #endif
 
@@ -43,7 +41,7 @@ void InitNetlib()
 	NETLIBUSER nlu = {0};
 	nlu.cbSize = sizeof(nlu);
 	nlu.flags = NUF_OUTGOING | NUF_INCOMING | NUF_HTTPCONNS | NUF_TCHAR;	// | NUF_HTTPGATEWAY;
-	nlu.ptszDescriptiveName = TranslateT("Plugin Updater HTTP connection");
+	nlu.ptszDescriptiveName = TranslateT("Plugin Updater HTTP connections");
 	nlu.szSettingsModule = MODNAME;
 	hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
 }
@@ -52,22 +50,6 @@ void UnloadNetlib()
 {
 	Netlib_CloseHandle(hNetlibUser);
 	hNetlibUser = NULL;
-}
-
-void LoadOptions()
-{
-	PopupOptions.DefColors = db_get_b(NULL, MODNAME, "DefColors", DEFAULT_COLORS);
-	PopupOptions.LeftClickAction= db_get_b(NULL, MODNAME, "LeftClickAction", DEFAULT_POPUP_LCLICK);
-	PopupOptions.RightClickAction = db_get_b(NULL, MODNAME, "RightClickAction", DEFAULT_POPUP_RCLICK);
-	PopupOptions.Timeout = db_get_dw(NULL, MODNAME, "Timeout", DEFAULT_TIMEOUT_VALUE);
-
-	opts.bUpdateOnStartup = db_get_b(NULL, MODNAME, "UpdateOnStartup", DEFAULT_UPDATEONSTARTUP);
-	opts.bOnlyOnceADay = db_get_b(NULL, MODNAME, "OnlyOnceADay", DEFAULT_ONLYONCEADAY);
-	opts.bUpdateOnPeriod = db_get_b(NULL, MODNAME, "UpdateOnPeriod", DEFAULT_UPDATEONPERIOD);
-	opts.Period = db_get_dw(NULL, MODNAME, "Period", DEFAULT_PERIOD);
-	opts.bPeriodMeasure = db_get_b(NULL, MODNAME, "PeriodMeasure", DEFAULT_PERIODMEASURE);
-	opts.bForceRedownload = db_get_b(NULL, MODNAME, DB_SETTING_REDOWNLOAD, 0);
-	opts.bSilentMode = db_get_b(NULL, MODNAME, "SilentMode", 0);
 }
 
 ULONG crc32_table[256];
@@ -123,48 +105,6 @@ int Get_CRC(unsigned char* buffer, ULONG bufsize)
 	return crc^0xffffffff;
 }
 
-int GetUpdateMode()
-{
-	int UpdateMode = db_get_b(NULL, MODNAME, DB_SETTING_UPDATE_MODE, -1);
-
-	// Check if there is url for custom mode
-	if (UpdateMode == UPDATE_MODE_CUSTOM) {
-		ptrT url(db_get_tsa(NULL, MODNAME, DB_SETTING_UPDATE_URL));
-		if (url == NULL || !_tcslen(url)) {
-			// No url for custom mode, reset that setting so it will be determined automatically			
-			db_unset(NULL, MODNAME, DB_SETTING_UPDATE_MODE);
-			UpdateMode = -1;
-		}
-	}
-
-	if (UpdateMode < 0 || UpdateMode > UPDATE_MODE_MAX_VALUE) {
-		// Missing or unknown mode, determine correct from version of running core
-		char coreVersion[512];
-		CallService(MS_SYSTEM_GETVERSIONTEXT, (WPARAM)SIZEOF(coreVersion), (LPARAM)coreVersion);
-		UpdateMode = (strstr(coreVersion, "alpha") == NULL) ? UPDATE_MODE_STABLE : UPDATE_MODE_TRUNK;
-	}
-
-	return UpdateMode;
-}
-
-TCHAR* GetDefaultUrl()
-{
-#if MIRANDA_VER < 0x0A00
-	return mir_tstrdup(_T("http://miranda-ng.org/distr/deprecated/0.94.9/x%platform%"));
-#else
-	switch (GetUpdateMode()) {
-	case UPDATE_MODE_STABLE:
-		return mir_tstrdup(_T(DEFAULT_UPDATE_URL));
-	case UPDATE_MODE_TRUNK:
-		return mir_tstrdup(_T(DEFAULT_UPDATE_URL_TRUNK));
-	case UPDATE_MODE_TRUNK_SYMBOLS:
-		return mir_tstrdup(_T(DEFAULT_UPDATE_URL_TRUNK_SYMBOLS));
-	default:
-		return db_get_tsa(NULL, MODNAME, DB_SETTING_UPDATE_URL);
-	}
-#endif
-}
-
 int CompareHashes(const ServListEntry *p1, const ServListEntry *p2)
 {
 	return _tcsicmp(p1->m_name, p2->m_name);
@@ -173,6 +113,15 @@ int CompareHashes(const ServListEntry *p1, const ServListEntry *p2)
 bool ParseHashes(const TCHAR *ptszUrl, ptrT &baseUrl, SERVLIST &arHashes)
 {
 	REPLACEVARSARRAY vars[2];
+#if MIRANDA_VER >=0x0A00
+	vars[0].key.t = _T("platform");
+#ifdef _WIN64
+	vars[0].value.t = _T("64");
+#else
+	vars[0].value.t = _T("32");
+#endif
+	vars[1].key.t = vars[1].value.t = 0;
+#else
 	vars[0].lptzKey = _T("platform");
 #ifdef _WIN64
 	vars[0].lptzValue = _T("64");
@@ -180,16 +129,13 @@ bool ParseHashes(const TCHAR *ptszUrl, ptrT &baseUrl, SERVLIST &arHashes)
 	vars[0].lptzValue = _T("32");
 #endif
 	vars[1].lptzKey = vars[1].lptzValue = 0;
-
-	REPLACEVARSDATA dat = { sizeof(REPLACEVARSDATA) };
-	dat.dwFlags = RVF_TCHAR;
-	dat.variables = vars;
-	baseUrl = (TCHAR*)CallService(MS_UTILS_REPLACEVARS, (WPARAM)ptszUrl, (LPARAM)&dat);
+#endif
+	baseUrl = Utils_ReplaceVarsT(ptszUrl, 0, vars);
 
 	// Download version info
 	FILEURL pFileUrl;
-	mir_sntprintf(pFileUrl.tszDownloadURL, SIZEOF(pFileUrl.tszDownloadURL), _T("%s/hashes.zip"), baseUrl);
-	mir_sntprintf(pFileUrl.tszDiskPath, SIZEOF(pFileUrl.tszDiskPath), _T("%s\\hashes.zip"), tszTempPath);
+	mir_sntprintf(pFileUrl.tszDownloadURL, _countof(pFileUrl.tszDownloadURL), _T("%s/hashes.zip"), baseUrl);
+	mir_sntprintf(pFileUrl.tszDiskPath, _countof(pFileUrl.tszDiskPath), _T("%s\\hashes.zip"), tszTempPath);
 	pFileUrl.CRCsum = 0;
 
 	HANDLE nlc;
@@ -213,7 +159,7 @@ bool ParseHashes(const TCHAR *ptszUrl, ptrT &baseUrl, SERVLIST &arHashes)
 	DeleteFile(pFileUrl.tszDiskPath);
 
 	TCHAR tszTmpIni[MAX_PATH] = {0};
-	mir_sntprintf(tszTmpIni, SIZEOF(tszTmpIni), _T("%s\\hashes.txt"), tszTempPath);
+	mir_sntprintf(tszTmpIni, _countof(tszTmpIni), _T("%s\\hashes.txt"), tszTempPath);
 	FILE *fp = _tfopen(tszTmpIni, _T("r"));
 	if (!fp) {
 		Netlib_LogfT(hNetlibUser,_T("Opening %s failed"), tszTempPath);
@@ -223,7 +169,7 @@ bool ParseHashes(const TCHAR *ptszUrl, ptrT &baseUrl, SERVLIST &arHashes)
 
 	bool bDoNotSwitchToStable = false;
 	char str[200];
-	while(fgets(str, SIZEOF(str), fp) != NULL) {
+	while(fgets(str, _countof(str), fp) != NULL) {
 		rtrim(str);
 		// Do not allow the user to switch back to stable
 		if (!strcmp(str, "DoNotSwitchToStable")) {
@@ -270,13 +216,14 @@ bool DownloadFile(FILEURL *pFileURL, HANDLE &nlc)
 	NETLIBHTTPREQUEST nlhr = {0};
 #if MIRANDA_VER < 0x0A00
 	nlhr.cbSize = NETLIBHTTPREQUEST_V1_SIZE;
-#else
-	nlhr.cbSize = sizeof(nlhr);
-#endif
-	nlhr.requestType = REQUEST_GET;
 	nlhr.flags = NLHRF_DUMPASTEXT | NLHRF_HTTP11;
 	if (g_mirandaVersion >= PLUGIN_MAKE_VERSION(0, 9, 0, 0))
 		nlhr.flags |= NLHRF_PERSISTENT;
+#else
+	nlhr.cbSize = sizeof(nlhr);
+	nlhr.flags = NLHRF_DUMPASTEXT | NLHRF_HTTP11 | NLHRF_PERSISTENT;
+#endif
+	nlhr.requestType = REQUEST_GET;
 	nlhr.nlc = nlc;
 	char *szUrl = mir_t2a(pFileURL->tszDownloadURL);
 	nlhr.szUrl = szUrl;
@@ -320,7 +267,7 @@ bool DownloadFile(FILEURL *pFileURL, HANDLE &nlc)
 				else {
 					// try to write it via PU stub
 					TCHAR tszTempFile[MAX_PATH];
-					mir_sntprintf(tszTempFile, SIZEOF(tszTempFile), _T("%s\\pulocal.tmp"), tszTempPath);
+					mir_sntprintf(tszTempFile, _countof(tszTempFile), _T("%s\\pulocal.tmp"), tszTempPath);
 					hFile = CreateFile(tszTempFile, GENERIC_READ | GENERIC_WRITE, NULL, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 					if (hFile != INVALID_HANDLE_VALUE) {
 						DWORD dwBytes;
@@ -527,7 +474,7 @@ bool PrepareEscalation()
 {
 	// First try to create a file near Miranda32.exe
 	TCHAR szPath[MAX_PATH];
-	GetModuleFileName(NULL, szPath, SIZEOF(szPath));
+	GetModuleFileName(NULL, szPath, _countof(szPath));
 	TCHAR *ext = _tcsrchr(szPath, '.');
 	if (ext != NULL)
 		*ext = '\0';
@@ -546,7 +493,7 @@ bool PrepareEscalation()
 	else {
 		// Elevate the process. Create a pipe for a stub first
 		TCHAR tszPipeName[MAX_PATH];
-		mir_sntprintf(tszPipeName, SIZEOF(tszPipeName), _T("\\\\.\\pipe\\Miranda_Pu_%d"), GetCurrentProcessId());
+		mir_sntprintf(tszPipeName, _countof(tszPipeName), _T("\\\\.\\pipe\\Miranda_Pu_%d"), GetCurrentProcessId());
 		hPipe = CreateNamedPipe(tszPipeName, PIPE_ACCESS_DUPLEX, PIPE_READMODE_BYTE | PIPE_WAIT, 1, 1024, 1024, NMPWAIT_USE_DEFAULT_WAIT, NULL);
 		if (hPipe == INVALID_HANDLE_VALUE) {
 			hPipe = NULL;
@@ -556,7 +503,7 @@ bool PrepareEscalation()
 			GetModuleFileName(NULL, szPath, ARRAYSIZE(szPath));
 			if ((p = _tcsrchr(szPath, '\\')) != 0)
 				_tcscpy(p+1, _T("pu_stub.exe"));
-			mir_sntprintf(cmdLine, SIZEOF(cmdLine), _T("%d"), GetCurrentProcessId());
+			mir_sntprintf(cmdLine, _countof(cmdLine), _T("%d"), GetCurrentProcessId());
 
 			// Launch a stub
 			SHELLEXECUTEINFO sei = { sizeof(sei) };

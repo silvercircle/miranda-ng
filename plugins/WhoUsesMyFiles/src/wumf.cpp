@@ -108,15 +108,7 @@ INT_PTR CALLBACK ConnDlgProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_SIZE:
-		{
-			UTILRESIZEDIALOG urd = { sizeof(urd) };
-			urd.hwndDlg = hWnd;
-			urd.hInstance = hInst;
-			urd.lpTemplate = MAKEINTRESOURCEA(IDD_CONNLIST);
-			urd.lParam = (LPARAM)NULL;
-			urd.pfnResizer = DlgResizer;
-			CallService(MS_UTILS_RESIZEDIALOG, 0, (LPARAM)&urd);
-		}
+		Utils_ResizeDialog(hWnd, hInst, MAKEINTRESOURCEA(IDD_CONNLIST), DlgResizer);
 		Utils_SaveWindowPosition(hWnd, NULL, MODULENAME,"conn");
 		return TRUE;
 
@@ -148,7 +140,7 @@ void LogWumf(PWumf w)
 		hLogger = mir_createLog("wumf", _T("WhoIsUsingMyFiles log file"), WumfOptions.LogFile, 0);
 		if (hLogger == NULL) {
 			TCHAR str[256];
-			mir_sntprintf(str, SIZEOF(str), _T("Can't open log file %s"), WumfOptions.LogFile);
+			mir_sntprintf(str, _countof(str), _T("Can't open log file %s"), WumfOptions.LogFile);
 			MessageBox(NULL, str, TranslateT("Error opening file"), MB_OK | MB_ICONSTOP);
 			WumfOptions.LogToFile = FALSE;
 			return;

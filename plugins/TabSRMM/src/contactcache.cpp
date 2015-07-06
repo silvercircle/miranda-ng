@@ -61,7 +61,7 @@ void CContactCache::initPhaseTwo()
 {
 	m_szAccount = 0;
 	if (cc->szProto) {
-		PROTOACCOUNT *acc = ProtoGetAccount(cc->szProto);
+		PROTOACCOUNT *acc = Proto_GetAccount(cc->szProto);
 		if (acc && acc->tszAccountName)
 			m_szAccount = acc->tszAccountName;
 	}
@@ -152,7 +152,7 @@ void CContactCache::updateMeta()
 		m_hSub = db_mc_getSrmmSub(cc->contactID);
 		m_szMetaProto = GetContactProto(m_hSub);
 		m_wMetaStatus = (WORD)db_get_w(m_hSub, m_szMetaProto, "Status", ID_STATUS_OFFLINE);
-		PROTOACCOUNT *pa = ProtoGetAccount(m_szMetaProto);
+		PROTOACCOUNT *pa = Proto_GetAccount(m_szMetaProto);
 		if (pa)
 			m_szAccount = pa->tszAccountName;
 
@@ -190,7 +190,7 @@ bool CContactCache::updateUIN()
 				mir_free(ci.pszVal);
 				break;
 			case CNFT_DWORD:
-				mir_sntprintf(m_szUIN, SIZEOF(m_szUIN), _T("%u"), ci.dVal);
+				mir_sntprintf(m_szUIN, _countof(m_szUIN), _T("%u"), ci.dVal);
 				break;
 			}
 		}
@@ -471,7 +471,7 @@ void CContactCache::updateStatusMsg(const char *szKey)
 		m_ListeningInfo = 0;
 		ptrT szListeningTo(db_get_tsa(hContact, cc->szProto, "ListeningTo"));
 		if (szListeningTo != 0 && *szListeningTo)
-			m_ListeningInfo = szListeningTo.detouch();
+			m_ListeningInfo = szListeningTo.detach();
 	}
 	if (szKey == 0 || (szKey && !mir_strcmp("XStatusMsg", szKey))) {
 		if (m_xStatusMsg)
@@ -479,7 +479,7 @@ void CContactCache::updateStatusMsg(const char *szKey)
 		m_xStatusMsg = 0;
 		ptrT szXStatusMsg(db_get_tsa(hContact, cc->szProto, "XStatusMsg"));
 		if (szXStatusMsg != 0 && *szXStatusMsg)
-			m_xStatusMsg = szXStatusMsg.detouch();
+			m_xStatusMsg = szXStatusMsg.detach();
 	}
 	m_xStatus = db_get_b(hContact, cc->szProto, "XStatusId", 0);
 }
@@ -566,7 +566,7 @@ TCHAR* CContactCache::getNormalizedStatusMsg(const TCHAR *src, bool fStripAll)
 HICON CContactCache::getIcon(int& iSize) const
 {
 	if (!m_dat || !m_hwnd)
-		return LoadSkinnedProtoIcon(cc->szProto, m_wStatus);
+		return Skin_LoadProtoIcon(cc->szProto, m_wStatus);
 
 	if (m_dat->dwFlags & MWF_ERRORSTATE)
 		return PluginConfig.g_iconErr;

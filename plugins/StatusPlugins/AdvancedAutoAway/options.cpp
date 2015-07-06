@@ -34,17 +34,17 @@ static BOOL bSettingSame = FALSE;
 static int WriteAutoAwaySetting(TAAAProtoSetting &autoAwaySetting, char *protoName)
 {
 	char setting[128];
-	mir_snprintf(setting, SIZEOF(setting), "%s_OptionFlags", protoName);
+	mir_snprintf(setting, "%s_OptionFlags", protoName);
 	db_set_w(NULL, MODULENAME, setting, (WORD)autoAwaySetting.optionFlags);
-	mir_snprintf(setting, SIZEOF(setting), "%s_AwayTime", protoName);
+	mir_snprintf(setting, "%s_AwayTime", protoName);
 	db_set_w(NULL, MODULENAME, setting, (WORD)autoAwaySetting.awayTime);
-	mir_snprintf(setting, SIZEOF(setting), "%s_NATime", protoName);
+	mir_snprintf(setting, "%s_NATime", protoName);
 	db_set_w(NULL, MODULENAME, setting, (WORD)autoAwaySetting.naTime);
-	mir_snprintf(setting, SIZEOF(setting), "%s_StatusFlags", protoName);
+	mir_snprintf(setting, "%s_StatusFlags", protoName);
 	db_set_w(NULL, MODULENAME, setting, (WORD)autoAwaySetting.statusFlags);
-	mir_snprintf(setting, SIZEOF(setting), "%s_Lv1Status", protoName);
+	mir_snprintf(setting, "%s_Lv1Status", protoName);
 	db_set_w(NULL, MODULENAME, setting, (WORD)autoAwaySetting.lv1Status);
-	mir_snprintf(setting, SIZEOF(setting), "%s_Lv2Status", protoName);
+	mir_snprintf(setting, "%s_Lv2Status", protoName);
 	db_set_w(NULL, MODULENAME, setting, (WORD)autoAwaySetting.lv2Status);
 
 	return 0;
@@ -183,7 +183,7 @@ static INT_PTR CALLBACK DlgProcAutoAwayRulesOpts(HWND hwndDlg, UINT msg, WPARAM 
 				lvItem.mask = LVIF_TEXT | LVIF_PARAM;
 				lvItem.iItem = 0;
 				lvItem.iSubItem = 0;
-				for (int i = 0; i < SIZEOF(statusModeList); i++) {
+				for (int i = 0; i < _countof(statusModeList); i++) {
 					if ((flags & statusModePf2List[i]) || (statusModePf2List[i] == PF2_OFFLINE) || (bSettingSame)) {
 						lvItem.pszText = pcli->pfnGetStatusModeDescription(statusModeList[i], 0);
 						lvItem.lParam = (LPARAM)statusModePf2List[i];
@@ -203,7 +203,7 @@ static INT_PTR CALLBACK DlgProcAutoAwayRulesOpts(HWND hwndDlg, UINT msg, WPARAM 
 				// clear box and add new status, loop status and check if compatible with proto
 				SendDlgItemMessage(hwndDlg, IDC_LV1STATUS, CB_RESETCONTENT, 0, 0);
 				SendDlgItemMessage(hwndDlg, IDC_LV2STATUS, CB_RESETCONTENT, 0, 0);
-				for (int i=0; i < SIZEOF(statusModeList); i++) {
+				for (int i=0; i < _countof(statusModeList); i++) {
 					if ((flags & statusModePf2List[i]) || statusModePf2List[i] == PF2_OFFLINE || bSettingSame) {
 						TCHAR *statusMode = pcli->pfnGetStatusModeDescription(statusModeList[i], 0);
 						int item = SendDlgItemMessage(hwndDlg, IDC_LV1STATUS, CB_ADDSTRING, 0, (LPARAM)statusMode);

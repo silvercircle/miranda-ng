@@ -123,14 +123,14 @@ public:
 		int cxIcon = GetSystemMetrics(SM_CXSMICON);
 		int cyIcon = GetSystemMetrics(SM_CYSMICON);
 		int i;
-		for (i = 0; i < SIZEOF(Icons); i++) {
+		for (i = 0; i < _countof(Icons); i++) {
 			if (IconList.GetSize() > i && IconList[i])
 				DestroyIcon(IconList[i]);
 
 			if (Icons[i] & IL_SKINICON)
-				IconList.SetAtGrow(i) = (HICON)CopyImage(LoadSkinnedIcon(Icons[i] & ~IL_SKINICON), IMAGE_ICON, cxIcon, cyIcon, LR_COPYFROMRESOURCE);
+				IconList.SetAtGrow(i) = (HICON)CopyImage(Skin_LoadIcon(Icons[i] & ~IL_SKINICON), IMAGE_ICON, cxIcon, cyIcon, LR_COPYFROMRESOURCE);
 			else if (Icons[i] & IL_PROTOICON)
-				IconList.SetAtGrow(i) = (HICON)CopyImage(LoadSkinnedProtoIcon(NULL, Icons[i] & ~IL_PROTOICON), IMAGE_ICON, cxIcon, cyIcon, LR_COPYFROMRESOURCE);
+				IconList.SetAtGrow(i) = (HICON)CopyImage(Skin_LoadProtoIcon(NULL, Icons[i] & ~IL_PROTOICON), IMAGE_ICON, cxIcon, cyIcon, LR_COPYFROMRESOURCE);
 			else
 				IconList.SetAtGrow(i) = (HICON)LoadImage(g_hInstance, MAKEINTRESOURCE(Icons[i]), IMAGE_ICON, cxIcon, cyIcon, 0);
 		}
@@ -261,7 +261,7 @@ public:
 		if (!szProto) { 
 			int numAccs;
 			PROTOACCOUNT **accs;
-			ProtoEnumAccounts(&numAccs, &accs);
+			Proto_EnumAccounts(&numAccs, &accs);
 			for (int i = 0; i < numAccs; i++)
 				(*this)[accs[i]->szModuleName]; // add a protocol if it isn't in the list yet
 		}
@@ -317,7 +317,7 @@ public:
 	CString ProtoStatusToDBSetting(const char *Prefix, int MoreOpt_PerStatusID = 0)
 	{
 		if (!MoreOpt_PerStatusID || g_MoreOptPage.GetDBValueCopy(MoreOpt_PerStatusID)) {
-			for (int i = 0; i < SIZEOF(StatusSettings); i++)
+			for (int i = 0; i < _countof(StatusSettings); i++)
 				if (Status == StatusSettings[i].Status)
 					return szProto ? (CString(Prefix) + "_" + szProto + "_" + StatusSettings[i].Setting) : (CString(Prefix) + StatusSettings[i].Setting);
 		}
@@ -381,7 +381,7 @@ public:
 __inline CString StatusToDBSetting(int Status, const char *Prefix, int MoreOpt_PerStatusID = 0)
 {
 	if (!MoreOpt_PerStatusID || g_MoreOptPage.GetDBValueCopy(MoreOpt_PerStatusID))
-		for (int i = 0; i < SIZEOF(StatusSettings); i++)
+		for (int i = 0; i < _countof(StatusSettings); i++)
 			if (Status == StatusSettings[i].Status)
 				return CString(Prefix) + StatusSettings[i].Setting;
 

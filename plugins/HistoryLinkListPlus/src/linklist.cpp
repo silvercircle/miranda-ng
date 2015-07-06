@@ -19,9 +19,9 @@
 
 // Global variables
 HINSTANCE hInst;
-                             
+CLIST_INTERFACE *pcli;
 
-HANDLE hWindowList;
+MWindowList hWindowList;
 HCURSOR splitCursor;
 int hLangpack;
 
@@ -48,6 +48,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfo);
+	mir_getCLI();
 
 #ifdef DEBUG
 	{
@@ -59,10 +60,10 @@ extern "C" __declspec(dllexport) int Load(void)
 
 	CreateServiceFunction("Linklist/MenuCommand", LinkList_Main);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.flags = CMIF_TCHAR;
-	mi.hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_LINKLISTICON));
-	mi.ptszName = LPGENT("&Create Linklist");
+	mi.hIcolibItem = LoadIcon(hInst, MAKEINTRESOURCE(IDI_LINKLISTICON));
+	mi.name.t = LPGENT("&Create Linklist");
 	mi.pszService = "Linklist/MenuCommand";
 	Menu_AddContactMenuItem(&mi);
 

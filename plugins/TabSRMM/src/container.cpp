@@ -166,7 +166,7 @@ static LRESULT CALLBACK ContainerWndProc(HWND hwndDlg, UINT msg, WPARAM wParam, 
 			CSkin::DrawItem(dcMem, &rcWindow, item);
 
 			TCHAR szWindowText[512];
-			GetWindowText(hwndDlg, szWindowText, SIZEOF(szWindowText));
+			GetWindowText(hwndDlg, szWindowText, _countof(szWindowText));
 			szWindowText[511] = 0;
 			hOldFont = (HFONT)SelectObject(dcMem, PluginConfig.hFontCaption);
 			GetTextMetrics(dcMem, &tm);
@@ -609,7 +609,7 @@ static INT_PTR CALLBACK DlgProcContainer(HWND hwndDlg, UINT msg, WPARAM wParam, 
 			}
 			else {
 				char szCName[CONTAINER_NAMELEN + 20];
-				mir_snprintf(szCName, SIZEOF(szCName), "%s%d", CONTAINER_PREFIX, pContainer->iContainerIndex);
+				mir_snprintf(szCName, _countof(szCName), "%s%d", CONTAINER_PREFIX, pContainer->iContainerIndex);
 				if (Utils_RestoreWindowPosition(hwndDlg, NULL, SRMSGMOD_T, szCName)) {
 					if (Utils_RestoreWindowPositionNoMove(hwndDlg, NULL, SRMSGMOD_T, szCName))
 						if (Utils_RestoreWindowPosition(hwndDlg, NULL, SRMSGMOD_T, "split"))
@@ -757,7 +757,7 @@ static INT_PTR CALLBACK DlgProcContainer(HWND hwndDlg, UINT msg, WPARAM wParam, 
 					SendMessage(pContainer->hwndActive, DM_QUERYHCONTACT, 0, (LPARAM)&hContact);
 					if (hContact) {
 						int iSel = 0;
-						HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDCONTACT, hContact, 0);
+						HMENU hMenu = Menu_BuildContactMenu(hContact);
 						iSel = TrackPopupMenu(hMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hwndDlg, NULL);
 						if (iSel)
 							CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(LOWORD(iSel), MPCF_CONTACTMENU), hContact);
@@ -1029,8 +1029,8 @@ static INT_PTR CALLBACK DlgProcContainer(HWND hwndDlg, UINT msg, WPARAM wParam, 
 			if (lParam) {               // lParam != 0 means sent by a chat window
 				TCHAR szText[512];
 				dat = (TWindowData*)GetWindowLongPtr((HWND)wParam, GWLP_USERDATA);
-				GetWindowText((HWND)wParam, szText, SIZEOF(szText));
-				szText[SIZEOF(szText) - 1] = 0;
+				GetWindowText((HWND)wParam, szText, _countof(szText));
+				szText[_countof(szText) - 1] = 0;
 				SetWindowText(hwndDlg, szText);
 				if (dat)
 					SendMessage(hwndDlg, DM_SETICON, (WPARAM)dat, (LPARAM)(dat->hTabIcon != dat->hTabStatusIcon ? dat->hTabIcon : dat->hTabStatusIcon));
@@ -1344,14 +1344,14 @@ static INT_PTR CALLBACK DlgProcContainer(HWND hwndDlg, UINT msg, WPARAM wParam, 
 				pContainer->settings = &PluginConfig.globalContainerSettings;
 
 				pContainer->szRelThemeFile[0] = pContainer->szAbsThemeFile[0] = 0;
-				mir_snprintf(szCname, SIZEOF(szCname), "%s_theme", CONTAINER_PREFIX);
+				mir_snprintf(szCname, _countof(szCname), "%s_theme", CONTAINER_PREFIX);
 				if (!db_get_ts(pContainer->hContactFrom, SRMSGMOD_T, szCname, &dbv))
 					szThemeName = dbv.ptszVal;
 			}
 			else {
 				Utils::ReadPrivateContainerSettings(pContainer);
 				if (szThemeName == NULL) {
-					mir_snprintf(szCname, SIZEOF(szCname), "%s%d_theme", CONTAINER_PREFIX, pContainer->iContainerIndex);
+					mir_snprintf(szCname, _countof(szCname), "%s%d_theme", CONTAINER_PREFIX, pContainer->iContainerIndex);
 					if (!db_get_ts(NULL, SRMSGMOD_T, szCname, &dbv))
 						szThemeName = dbv.ptszVal;
 				}
@@ -1529,7 +1529,7 @@ static INT_PTR CALLBACK DlgProcContainer(HWND hwndDlg, UINT msg, WPARAM wParam, 
 		{
 			TWindowData *dat = (TWindowData*)wParam;
 			HICON hIconMsg = PluginConfig.g_IconMsgEvent;
-			HICON hIconBig = (dat && dat->cache) ? LoadSkinnedProtoIconBig(dat->cache->getProto(), dat->cache->getStatus()) : 0;
+			HICON hIconBig = (dat && dat->cache) ? Skin_LoadProtoIcon(dat->cache->getProto(), dat->cache->getStatus(), true) : 0;
 
 			if (Win7Taskbar->haveLargeIcons()) {
 				if ((HICON)lParam == PluginConfig.g_buttonBarIcons[ICON_DEFAULT_TYPING] || (HICON)lParam == hIconMsg) {
@@ -1580,11 +1580,11 @@ static INT_PTR CALLBACK DlgProcContainer(HWND hwndDlg, UINT msg, WPARAM wParam, 
 				break;
 			}
 			if (reinterpret_cast<HICON>(lParam) == hIconMsg)
-				hIconBig = LoadSkinnedIconBig(SKINICON_EVENT_MESSAGE);
+				hIconBig = Skin_LoadIcon(SKINICON_EVENT_MESSAGE, true);
 
 			if (pContainer->hIcon == STICK_ICON_MSG && (HICON)lParam != hIconMsg && pContainer->dwFlags & CNT_NEED_UPDATETITLE) {
 				lParam = (LPARAM)hIconMsg;
-				hIconBig = LoadSkinnedIconBig(SKINICON_EVENT_MESSAGE);
+				hIconBig = Skin_LoadIcon(SKINICON_EVENT_MESSAGE, true);
 			}
 			SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, lParam);
 			if (0 != hIconBig && reinterpret_cast<HICON>(CALLSERVICE_NOTFOUND) != hIconBig)
@@ -1603,10 +1603,10 @@ static INT_PTR CALLBACK DlgProcContainer(HWND hwndDlg, UINT msg, WPARAM wParam, 
 				return TRUE;
 			}
 		}
-		return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
+		return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
 
 	case WM_MEASUREITEM:
-		return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
+		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
 
 	case DM_QUERYCLIENTAREA:
 		{
@@ -1725,13 +1725,13 @@ static INT_PTR CALLBACK DlgProcContainer(HWND hwndDlg, UINT msg, WPARAM wParam, 
 					}
 					else {
 						char szCName[40];
-						mir_snprintf(szCName, SIZEOF(szCName), "%s%dx", CONTAINER_PREFIX, pContainer->iContainerIndex);
+						mir_snprintf(szCName, _countof(szCName), "%s%dx", CONTAINER_PREFIX, pContainer->iContainerIndex);
 						db_set_dw(0, SRMSGMOD_T, szCName, wp.rcNormalPosition.left);
-						mir_snprintf(szCName, SIZEOF(szCName), "%s%dy", CONTAINER_PREFIX, pContainer->iContainerIndex);
+						mir_snprintf(szCName, _countof(szCName), "%s%dy", CONTAINER_PREFIX, pContainer->iContainerIndex);
 						db_set_dw(0, SRMSGMOD_T, szCName, wp.rcNormalPosition.top);
-						mir_snprintf(szCName, SIZEOF(szCName), "%s%dwidth", CONTAINER_PREFIX, pContainer->iContainerIndex);
+						mir_snprintf(szCName, _countof(szCName), "%s%dwidth", CONTAINER_PREFIX, pContainer->iContainerIndex);
 						db_set_dw(0, SRMSGMOD_T, szCName, wp.rcNormalPosition.right - wp.rcNormalPosition.left);
-						mir_snprintf(szCName, SIZEOF(szCName), "%s%dheight", CONTAINER_PREFIX, pContainer->iContainerIndex);
+						mir_snprintf(szCName, _countof(szCName), "%s%dheight", CONTAINER_PREFIX, pContainer->iContainerIndex);
 						db_set_dw(0, SRMSGMOD_T, szCName, wp.rcNormalPosition.bottom - wp.rcNormalPosition.top);
 
 						db_set_b(0, SRMSGMOD_T, "splitmax", (BYTE)((wp.showCmd == SW_SHOWMAXIMIZED) ? 1 : 0));
@@ -1750,7 +1750,7 @@ static INT_PTR CALLBACK DlgProcContainer(HWND hwndDlg, UINT msg, WPARAM wParam, 
 						SendMessage((HWND)item.lParam, DM_QUERYHCONTACT, 0, (LPARAM)&hContact);
 
 						char szCName[40];
-						mir_snprintf(szCName, SIZEOF(szCName), "%s_theme", CONTAINER_PREFIX);
+						mir_snprintf(szCName, _countof(szCName), "%s_theme", CONTAINER_PREFIX);
 						if (mir_tstrlen(pContainer->szRelThemeFile) > 1) {
 							if (pContainer->fPrivateThemeChanged == TRUE) {
 								PathToRelativeT(pContainer->szRelThemeFile, pContainer->szAbsThemeFile, M.getDataPath());
@@ -1913,7 +1913,7 @@ int TSAPI CutContactName(const TCHAR *oldname, TCHAR *newname, unsigned int size
 		_tcsncpy_s(newname, size, oldname, _TRUNCATE);
 	else {
 		TCHAR fmt[30];
-		mir_sntprintf(fmt, SIZEOF(fmt), _T("%%%d.%ds..."), cutMax, cutMax);
+		mir_sntprintf(fmt, _countof(fmt), _T("%%%d.%ds..."), cutMax, cutMax);
 		mir_sntprintf(newname, size, fmt, oldname);
 	}
 	return 0;
@@ -2086,17 +2086,17 @@ void TSAPI DeleteContainer(int iIndex)
 	}
 
 	char szSetting[CONTAINER_NAMELEN + 30];
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%s%d_Flags", CONTAINER_PREFIX, iIndex);
+	mir_snprintf(szSetting, "%s%d_Flags", CONTAINER_PREFIX, iIndex);
 	db_unset(NULL, SRMSGMOD_T, szSetting);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%s%d_Trans", CONTAINER_PREFIX, iIndex);
+	mir_snprintf(szSetting, "%s%d_Trans", CONTAINER_PREFIX, iIndex);
 	db_unset(NULL, SRMSGMOD_T, szSetting);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%s%dwidth", CONTAINER_PREFIX, iIndex);
+	mir_snprintf(szSetting, "%s%dwidth", CONTAINER_PREFIX, iIndex);
 	db_unset(NULL, SRMSGMOD_T, szSetting);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%s%dheight", CONTAINER_PREFIX, iIndex);
+	mir_snprintf(szSetting, "%s%dheight", CONTAINER_PREFIX, iIndex);
 	db_unset(NULL, SRMSGMOD_T, szSetting);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%s%dx", CONTAINER_PREFIX, iIndex);
+	mir_snprintf(szSetting, "%s%dx", CONTAINER_PREFIX, iIndex);
 	db_unset(NULL, SRMSGMOD_T, szSetting);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%s%dy", CONTAINER_PREFIX, iIndex);
+	mir_snprintf(szSetting, "%s%dy", CONTAINER_PREFIX, iIndex);
 	db_unset(NULL, SRMSGMOD_T, szSetting);
 }
 

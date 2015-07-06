@@ -35,7 +35,7 @@ INT_PTR CALLBACK ModernOptHome_DlgProc(HWND hwndDlg, UINT  msg, WPARAM wParam, L
 	switch (msg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
-		for (i = 0; i < SIZEOF(g_ModernOptPages); ++i) {
+		for (i = 0; i < _countof(g_ModernOptPages); ++i) {
 			if (g_ModernOptPages[i].idcButton) {
 				HWND hwndCtrl = GetDlgItem(hwndDlg, g_ModernOptPages[i].idcButton);
 				if (g_ModernOptPages[i].bShow) {
@@ -53,11 +53,11 @@ INT_PTR CALLBACK ModernOptHome_DlgProc(HWND hwndDlg, UINT  msg, WPARAM wParam, L
 	case WM_COMMAND:
 		switch ( LOWORD(wParam)) {
 		case IDC_BTN_HELP:
-			CallService(MS_UTILS_OPENURL,OUF_TCHAR,(LPARAM)_T("http://miranda-ng.org/"));
+			Utils_OpenUrl("http://miranda-ng.org/");
 			break;
 
 		default:
-			for (i = 0; i < SIZEOF(g_ModernOptPages); ++i) {
+			for (i = 0; i < _countof(g_ModernOptPages); ++i) {
 				if (g_ModernOptPages[i].idcButton == LOWORD(wParam))
 				{
 					CallService(MS_MODERNOPT_SELECTPAGE, i, 0);

@@ -27,7 +27,7 @@ void facebook_client::client_notify(TCHAR* message)
 	parent->NotifyEvent(parent->m_tszUserName, message, NULL, FACEBOOK_EVENT_CLIENT);
 }
 
-http::response facebook_client::flap(RequestType request_type, std::string *post_data, std::string *get_data, int)
+http::response facebook_client::flap(RequestType request_type, std::string *post_data, std::string *get_data)
 {
 	http::response resp;
 
@@ -261,6 +261,7 @@ std::string facebook_client::choose_server(RequestType request_type)
 		//	case REQUEST_CANCEL_FRIENDSHIP:
 		//	case REQUEST_FRIENDSHIP:
 		//	case REQUEST_UNREAD_THREADS:
+		//	case REQUEST_ON_THIS_DAY:
 	default:
 		return FACEBOOK_SERVER_REGULAR;
 	}
@@ -375,11 +376,7 @@ std::string facebook_client::choose_action(RequestType request_type, std::string
 
 	case REQUEST_NOTIFICATIONS:
 	{
-		std::string action = "/ajax/notifications/get.php?__a=1&user=%s&time=0&version=2&__user=%s";
-		// TODO: use better format notifications request
-		// std::string action = "/ajax/notifications/client/get.php?__a=1&user=%s&time=0&version=2&__user=%s";
-		utils::text::replace_all(&action, "%s", self_.user_id);
-		return action;
+		return "/ajax/notifications/client/get.php?__a=1";
 	}
 
 	case REQUEST_RECONNECT:
@@ -449,10 +446,10 @@ std::string facebook_client::choose_action(RequestType request_type, std::string
 		action += "&cap=0"; // TODO: what's this item?
 		// action += "&wtc=0,0,0.000,0,0"; // TODO: what's this item? It's numbers grows with every new request...		
 
+		action += "&msgs_recv=" + utils::conversion::to_string(&this->chat_msgs_recv_, UTILS_CONV_UNSIGNED_NUMBER);
+
 		action += "&uid=" + self_.user_id;
 		action += "&viewer_uid=" + self_.user_id;
-
-		action += "&msgs_recv=" + utils::conversion::to_string(&this->chat_msgs_recv_, UTILS_CONV_UNSIGNED_NUMBER);
 
 		if (!this->chat_sticky_num_.empty())
 			action += "&sticky_token=" + this->chat_sticky_num_;
@@ -491,6 +488,15 @@ std::string facebook_client::choose_action(RequestType request_type, std::string
 
 	case REQUEST_TYPING_SEND:
 		return "/ajax/messaging/typ.php?__a=1";
+
+	case REQUEST_ON_THIS_DAY:
+	{
+		std::string action = "/onthisday/story/query/?__a=1";
+		if (get_data != NULL) {
+			action += "&" + (*get_data);
+		}
+		return action;
+	}
 
 	default:
 		return "/?_fb_noscript=1";
@@ -540,7 +546,7 @@ NETLIBHTTPHEADER *facebook_client::get_request_headers(int request_type, int *he
 std::string facebook_client::get_newsfeed_type()
 {
 	BYTE feed_type = parent->getByte(FACEBOOK_KEY_FEED_TYPE, 0);
-	if (feed_type >= SIZEOF(feed_types))
+	if (feed_type >= _countof(feed_types))
 		feed_type = 0;
 
 	std::string ret = "sk=";
@@ -553,7 +559,7 @@ std::string facebook_client::get_newsfeed_type()
 std::string facebook_client::get_server_type()
 {
 	BYTE server_type = parent->getByte(FACEBOOK_KEY_SERVER_TYPE, 0);
-	if (server_type >= SIZEOF(server_types))
+	if (server_type >= _countof(server_types))
 		server_type = 0;
 	return server_types[server_type].id;
 }
@@ -561,7 +567,7 @@ std::string facebook_client::get_server_type()
 std::string facebook_client::get_privacy_type()
 {
 	BYTE privacy_type = parent->getByte(FACEBOOK_KEY_PRIVACY_TYPE, 0);
-	if (privacy_type >= SIZEOF(privacy_types))
+	if (privacy_type >= _countof(privacy_types))
 		privacy_type = 0;
 	return privacy_types[privacy_type].id;
 }
@@ -619,7 +625,7 @@ void facebook_client::clear_notifications()
 {
 	ScopedLock s(notifications_lock_);
 
-	for (std::map<std::string, facebook_notification*>::iterator it = notifications.begin(); it != notifications.end();) {
+	for (auto it = notifications.begin(); it != notifications.end();) {
 		if (it->second->hWndPopup != NULL)
 			PUDeletePopup(it->second->hWndPopup); // close popup
 
@@ -632,7 +638,7 @@ void facebook_client::clear_notifications()
 
 void facebook_client::clear_chatrooms()
 {
-	for (std::map<std::tstring, facebook_chatroom*>::iterator it = chat_rooms.begin(); it != chat_rooms.end();) {
+	for (auto it = chat_rooms.begin(); it != chat_rooms.end();) {
 		delete it->second;
 		it = chat_rooms.erase(it);
 	}
@@ -645,9 +651,8 @@ void facebook_client::clear_chatrooms()
 void facebook_client::clear_readers()
 {
 	for (std::map<MCONTACT, time_t>::iterator it = readers.begin(); it != readers.end();) {
-		if (parent->isChatRoom(it->first)) {
+		if (parent->isChatRoom(it->first))
 			parent->delSetting(it->first, FACEBOOK_KEY_MESSAGE_READERS);
-		}
 
 		parent->delSetting(it->first, FACEBOOK_KEY_MESSAGE_READ);
 		it = readers.erase(it);
@@ -686,10 +691,11 @@ void facebook_client::erase_reader(MCONTACT hContact)
 	if (parent->isChatRoom(hContact)) {
 		parent->delSetting(hContact, FACEBOOK_KEY_MESSAGE_READERS);
 	}
+	if (!ServiceExists("MessageState/DummyService"))
+		parent->delSetting(hContact, FACEBOOK_KEY_MESSAGE_READ);
 
-	parent->delSetting(hContact, FACEBOOK_KEY_MESSAGE_READ);
 	readers.erase(hContact);
-	CallService(MS_MSG_SETSTATUSTEXT, (WPARAM)hContact, NULL);
+	CallService(MS_MSG_SETSTATUSTEXT, (WPARAM)hContact);
 }
 
 void loginError(FacebookProto *proto, std::string error_str) {
@@ -701,7 +707,7 @@ void loginError(FacebookProto *proto, std::string error_str) {
 	proto->debugLogA("!!! Login error: %s", !error_str.empty() ? error_str.c_str() : "Unknown error");
 
 	TCHAR buf[200];
-	mir_sntprintf(buf, SIZEOF(buf), TranslateT("Login error: %s"),
+	mir_sntprintf(buf, TranslateT("Login error: %s"),
 		(error_str.empty()) ? TranslateT("Unknown error") : ptrT(mir_utf8decodeT(error_str.c_str())));
 	proto->facy.client_notify(buf);
 }
@@ -759,7 +765,7 @@ bool facebook_client::login(const char *username, const char *password)
 		// Check whether setting Machine name is required
 		if (location.find("/checkpoint/") != std::string::npos)
 		{
-			resp = flap(REQUEST_SETUP_MACHINE, NULL, NULL, REQUEST_GET);
+			resp = flap(REQUEST_SETUP_MACHINE, NULL, NULL);
 
 			if (resp.data.find("login_approvals_no_phones") != std::string::npos) {
 				// Code approval - but no phones in account

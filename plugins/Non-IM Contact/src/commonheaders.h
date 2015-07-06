@@ -11,6 +11,7 @@
 #include <winsock.h>
 #include <shlobj.h>
 
+#include <malloc.h>
 #include <stdio.h>
 #include <time.h>
 #include <stddef.h>
@@ -33,11 +34,9 @@ struct DLGTEMPLATEEX
 
 #include <newpluginapi.h>
 #include <m_clist.h>
-#include <m_clistint.h>
 #include <m_clui.h>
 #include <m_skin.h>
 #include <m_langpack.h>
-#include <m_protomod.h>
 #include <m_database.h>
 #include <m_system.h>
 #include <m_icolib.h>
@@ -48,6 +47,7 @@ struct DLGTEMPLATEEX
 #include <m_utils.h>
 #include <m_ignore.h>
 #include <m_netlib.h>
+#include <m_string.h>
 #include <win2k.h>
 
 #include "resource.h"
@@ -105,7 +105,7 @@ void ExportContact(MCONTACT hContact);
 INT_PTR ImportContacts(WPARAM wParam, LPARAM lParam);
 
 // stringreplacer.c
-int stringReplacer(const char* oldString, char* newString, MCONTACT hContact);
+int stringReplacer(const char *oldString, CMStringA &szNewString, MCONTACT hContact);
 void replaceAllStrings(MCONTACT hContact);
 void WriteSetting(MCONTACT hContact, char* module1, char* setting1 , char* module12, char* setting2);
 

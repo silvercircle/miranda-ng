@@ -33,7 +33,7 @@
 LPTSTR CreateAvaFile(HANDLE *hFile)
 {
 	TCHAR name[MAX_PATH + 2];
-	if (CallService(MS_DB_GETPROFILENAMET, (WPARAM)SIZEOF(name), (LPARAM)&name))
+	if (CallService(MS_DB_GETPROFILENAMET, (WPARAM)_countof(name), (LPARAM)&name))
 		return NULL;
 
 	TCHAR *p = _tcsrchr(name, '.');
@@ -41,11 +41,11 @@ LPTSTR CreateAvaFile(HANDLE *hFile)
 		*p = 0;
 
 	TCHAR path[MAX_PATH + 2];
-	if (CallService(MS_DB_GETPROFILEPATHT, (WPARAM)SIZEOF(path), (LPARAM)&path))
+	if (CallService(MS_DB_GETPROFILEPATHT, (WPARAM)_countof(path), (LPARAM)&path))
 		return NULL;
 
 	TCHAR full[MAX_PATH + 2];
-	mir_sntprintf(full, SIZEOF(full), AVA_FILE_NAME_FORMAT, path, name);
+	mir_sntprintf(full, AVA_FILE_NAME_FORMAT, path, name);
 	CreateDirectoryTreeT(full);
 
 	HANDLE h = CreateFile(full, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
@@ -127,13 +127,12 @@ BOOL InitAvaUnit(BOOL init)
 		hAvaChanged = HookEvent(ME_AV_AVATARCHANGED, AvaChanged);
 		return hAvaChanged != 0;
 	}
-	else {
-		if (hAvaChanged) {
-			UnhookEvent(hAvaChanged);
-			hAvaChanged = 0;
-		}
-		return TRUE;
+
+	if (hAvaChanged) {
+		UnhookEvent(hAvaChanged);
+		hAvaChanged = 0;
 	}
+	return TRUE;
 }
 
 void SetAvatar(MCONTACT hContact)

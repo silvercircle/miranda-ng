@@ -192,7 +192,7 @@ static void __fastcall PaintThemeButton(BTNCTRL *ctl, HDC hdcMem, LPRECT rcClien
 		RECT	sizeText;
 		HFONT	hOldFont;
 
-		ccText = GetWindowTextW(ctl->hwnd, wszText, SIZEOF(wszText));
+		ccText = GetWindowTextW(ctl->hwnd, wszText, _countof(wszText));
 
 		if (ccText > 0) {
 			hOldFont = (HFONT)SelectObject(hdcMem, ctl->hFont);
@@ -301,7 +301,7 @@ static void __fastcall PaintButton(BTNCTRL *ctl, HDC hdcMem, LPRECT rcClient)
 		SIZE	sizeText;
 		HFONT	hOldFont;
 
-		ccText = GetWindowText(ctl->hwnd, szText, SIZEOF(szText));
+		ccText = GetWindowText(ctl->hwnd, szText, _countof(szText));
 
 		if (ccText > 0) {
 			hOldFont = (HFONT)SelectObject(hdcMem, ctl->hFont);
@@ -371,7 +371,7 @@ static LRESULT CALLBACK Button_WndProc(HWND hwndBtn, UINT uMsg, WPARAM wParam, L
 			bct->hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 			bct->dwStyle = cs->style;
 			if (cs->style & MBS_DOWNARROW)
-				bct->arrow = Skin_GetIcon(ICO_BTN_DOWNARROW);
+				bct->arrow = IcoLib_GetIcon(ICO_BTN_DOWNARROW);
 			LoadTheme(bct);
 			SetWindowLongPtr(hwndBtn, 0, (LONG_PTR)bct);
 			if (cs->lpszName) SetWindowText(hwndBtn, cs->lpszName);
@@ -480,11 +480,6 @@ static LRESULT CALLBACK Button_WndProc(HWND hwndBtn, UINT uMsg, WPARAM wParam, L
 			bct->hBitmap = (HBITMAP)lParam;
 			InvalidateRect(bct->hwnd, NULL, TRUE);
 		}
-		else if (wParam == NULL && lParam == NULL) {
-			bct->hIcon = NULL;
-			bct->hBitmap = NULL;
-			InvalidateRect(bct->hwnd, NULL, TRUE);
-		}
 		break;
 	case BM_SETCHECK:
 		if (!(bct->dwStyle & MBS_PUSHBUTTON)) break;
@@ -509,7 +504,7 @@ static LRESULT CALLBACK Button_WndProc(HWND hwndBtn, UINT uMsg, WPARAM wParam, L
 		if (wParam) {			
 			mir_cslock lck(csTips);
 			if (!hwndToolTips)
-				hwndToolTips = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL, WS_POPUP, 0, 0, 0, 0, NULL, NULL, GetModuleHandle(NULL), NULL);
+				hwndToolTips = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL, WS_POPUP, 0, 0, 0, 0, NULL, NULL, GetModuleHandleA("mir_app.mir"), NULL);
 
 			if (lParam == MBBF_UNICODE) {
 				TOOLINFOW ti;
@@ -548,7 +543,7 @@ static LRESULT CALLBACK Button_WndProc(HWND hwndBtn, UINT uMsg, WPARAM wParam, L
 	case BUTTONTRANSLATE:
 		{
 			TCHAR szButton[MAX_PATH];
-			GetWindowText(bct->hwnd, szButton, SIZEOF(szButton));
+			GetWindowText(bct->hwnd, szButton, _countof(szButton));
 			SetWindowText(bct->hwnd, TranslateTS(szButton));
 		}
 		break;

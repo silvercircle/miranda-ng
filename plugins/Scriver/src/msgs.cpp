@@ -120,16 +120,16 @@ static int MessageEventAdded(WPARAM hContact, LPARAM lParam)
 		}
 	}
 	if (hwnd == NULL || !IsWindowVisible(GetParent(hwnd))) {
-		TCHAR *contactName = (TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR);
+		TCHAR *contactName = (TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0);
 		TCHAR toolTip[256];
 
 		CLISTEVENT cle = { sizeof(cle) };
 		cle.flags = CLEF_TCHAR;
 		cle.hContact = hContact;
 		cle.hDbEvent = hDbEvent;
-		cle.hIcon = LoadSkinnedIcon(SKINICON_EVENT_MESSAGE);
+		cle.hIcon = Skin_LoadIcon(SKINICON_EVENT_MESSAGE);
 		cle.pszService = "SRMsg/ReadMessage";
-		mir_sntprintf(toolTip, SIZEOF(toolTip), TranslateT("Message from %s"), contactName);
+		mir_sntprintf(toolTip, _countof(toolTip), TranslateT("Message from %s"), contactName);
 		cle.ptszTooltip = toolTip;
 		CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
 	}
@@ -208,7 +208,7 @@ static int TypingMessage(WPARAM hContact, LPARAM lParam)
 	else if (lParam && (g_dat.flags2 & SMF2_SHOWTYPINGTRAY)) {
 		TCHAR szTip[256];
 
-		mir_sntprintf(szTip, SIZEOF(szTip), TranslateT("%s is typing a message"), CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR));
+		mir_sntprintf(szTip, _countof(szTip), TranslateT("%s is typing a message"), pcli->pfnGetContactDisplayName(hContact, 0));
 		if ( ServiceExists(MS_CLIST_SYSTRAY_NOTIFY) && !(g_dat.flags2 & SMF2_SHOWTYPINGCLIST)) {
 			MIRANDASYSTRAYNOTIFY tn;
 			tn.szProto = NULL;
@@ -258,7 +258,7 @@ static void RestoreUnreadMessageAlerts(void)
 	DBEVENTINFO dbei = { sizeof(dbei) };
 
 	CLISTEVENT cle = { sizeof(cle) };
-	cle.hIcon = LoadSkinnedIcon(SKINICON_EVENT_MESSAGE);
+	cle.hIcon = Skin_LoadIcon(SKINICON_EVENT_MESSAGE);
 	cle.pszService = "SRMsg/ReadMessage";
 	cle.flags = CLEF_TCHAR;
 	cle.ptszTooltip = toolTip;
@@ -282,7 +282,7 @@ static void RestoreUnreadMessageAlerts(void)
 				else {
 					cle.hContact = hContact;
 					cle.hDbEvent = hDbEvent;
-					mir_sntprintf(toolTip, SIZEOF(toolTip), TranslateT("Message from %s"), CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR));
+					mir_sntprintf(toolTip, _countof(toolTip), TranslateT("Message from %s"), pcli->pfnGetContactDisplayName(hContact, 0));
 					CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
 				}
 			}
@@ -410,35 +410,15 @@ void ChangeStatusIcons()
 int StatusIconPressed(WPARAM wParam, LPARAM lParam)
 {
 	StatusIconClickData *sicd = (StatusIconClickData *) lParam;
+	if (mir_strcmp(SRMMMOD, sicd->szModule))
+		return 0;
+
 	HWND hwnd = WindowList_Find(g_dat.hMessageWindowList, wParam);
 	if (hwnd == NULL)
 		hwnd = SM_FindWindowByContact(wParam);
 
-	if (hwnd != NULL) {
-		if (!mir_strcmp(SRMMMOD, sicd->szModule)) {
-			if (sicd->dwId == 0 && g_dat.hMenuANSIEncoding) {
-				if (sicd->flags & MBCF_RIGHTBUTTON) {
-					int codePage = (int) SendMessage(hwnd, DM_GETCODEPAGE, 0, 0);
-					if (codePage != 1200) {
-						for (int i = 0; i < GetMenuItemCount(g_dat.hMenuANSIEncoding); i++)
-							CheckMenuItem (g_dat.hMenuANSIEncoding, i, MF_BYPOSITION | MF_UNCHECKED);
-
-						if (codePage == CP_ACP)
-							CheckMenuItem(g_dat.hMenuANSIEncoding, 0, MF_BYPOSITION | MF_CHECKED);
-						else
-							CheckMenuItem(g_dat.hMenuANSIEncoding, codePage, MF_BYCOMMAND | MF_CHECKED);
-
-						int iSel = TrackPopupMenu(g_dat.hMenuANSIEncoding, TPM_RETURNCMD, sicd->clickLocation.x, sicd->clickLocation.y, 0, GetParent(hwnd), NULL);
-						if (iSel >= 500) {
-							if (iSel == 500) iSel = CP_ACP;
-							SendMessage(hwnd, DM_SETCODEPAGE, 0, iSel);
-						}
-					}
-				}
-			}
-			else SendMessage(hwnd, DM_SWITCHTYPING, 0, 0);
-		}
-	}
+	if (hwnd != NULL)
+		SendMessage(hwnd, DM_SWITCHTYPING, 0, 0);
 	return 0;
 }
 
@@ -460,21 +440,21 @@ static int MetaContactChanged(WPARAM hMeta, LPARAM)
 	return 0;
 }
 
-static int OnModulesLoaded(WPARAM wParam, LPARAM lParam)
+static int OnModulesLoaded(WPARAM, LPARAM)
 {
 	ReloadGlobals();
 	LoadGlobalIcons();
 	LoadMsgLogIcons();
 	ModuleLoad(0, 0);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = -2000090000;
 	mi.flags = CMIF_DEFAULT;
-	mi.icolibItem = LoadSkinnedIconHandle( SKINICON_EVENT_MESSAGE );
-	mi.pszName = LPGEN("&Message");
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_EVENT_MESSAGE);
+	mi.name.a = LPGEN("&Message");
 	mi.pszService = MS_MSG_SENDMESSAGE;
 	hMsgMenuItem = Menu_AddContactMenuItem(&mi);
-	Skin_ReleaseIcon(mi.hIcon);
+	IcoLib_ReleaseIcon((HICON)mi.hIcolibItem);
 
 	HookEvent(ME_SMILEYADD_OPTIONSCHANGED, SmileySettingsChanged);
 	HookEvent(ME_IEVIEW_OPTIONSCHANGED, SmileySettingsChanged);
@@ -484,7 +464,7 @@ static int OnModulesLoaded(WPARAM wParam, LPARAM lParam)
 	HookEvent(ME_MC_DEFAULTTCHANGED, MetaContactChanged);
 
 	RestoreUnreadMessageAlerts();
-	Chat_ModulesLoaded(wParam, lParam);
+	OptionsInit();
 	RegisterStatusIcons();
 	return 0;
 }
@@ -568,7 +548,7 @@ int OnLoadModule(void)
 	SkinAddNewSoundEx("AlertMsg", LPGEN("Instant messages"), LPGEN("Incoming (new session)"));
 	SkinAddNewSoundEx("SendMsg", LPGEN("Instant messages"), LPGEN("Outgoing"));
 	SkinAddNewSoundEx("TNStart", LPGEN("Instant messages"), LPGEN("Contact started typing"));
-	SkinAddNewSoundEx("TNStop",  LPGEN("Instant messages"), LPGEN("Contact stopped typing"));
+	SkinAddNewSoundEx("TNStop", LPGEN("Instant messages"), LPGEN("Contact stopped typing"));
 
 	hCurSplitNS = LoadCursor(NULL, IDC_SIZENS);
 	hCurSplitWE = LoadCursor(NULL, IDC_SIZEWE);
@@ -586,11 +566,11 @@ int OnLoadModule(void)
 CREOleCallback  reOleCallback;
 CREOleCallback2 reOleCallback2;
 
-STDMETHODIMP CREOleCallback::QueryInterface(REFIID riid, LPVOID * ppvObj) 
-{ 
-	if (IsEqualIID(riid, IID_IRichEditOleCallback)) { 
-		*ppvObj = this; 
-		AddRef(); 
+STDMETHODIMP CREOleCallback::QueryInterface(REFIID riid, LPVOID * ppvObj)
+{
+	if (IsEqualIID(riid, IID_IRichEditOleCallback)) {
+		*ppvObj = this;
+		AddRef();
 		return S_OK;
 	}
 	*ppvObj = NULL;
@@ -649,7 +629,7 @@ STDMETHODIMP CREOleCallback::GetInPlaceContext(LPOLEINPLACEFRAME*, LPOLEINPLACEU
 STDMETHODIMP CREOleCallback::GetNewStorage(LPSTORAGE *lplpstg)
 {
 	TCHAR sztName[64];
-	mir_sntprintf(sztName, SIZEOF(sztName), _T("s%u"), nextStgId++);
+	mir_sntprintf(sztName, _countof(sztName), _T("s%u"), nextStgId++);
 	if (pictStg == NULL)
 		return STG_E_MEDIUMFULL;
 	return pictStg->CreateStorage(sztName, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE, 0, 0, lplpstg);

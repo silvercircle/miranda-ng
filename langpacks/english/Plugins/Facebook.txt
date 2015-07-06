@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Facebook.dll
 ;  Plugin: Facebook RM
-;  Version: 0.2.10.8
+;  Version: 0.2.11.3
 ;  Authors: Michal Zelinka, Robert Pösel
 ;============================================================
 [Facebook protocol support for Miranda NG.]
@@ -34,6 +34,7 @@
 [Client notifications]
 [Friendship notifications]
 [Ticker feeds]
+[Show "On this day" posts at login]
 [Use this server for opening links:]
 [Use balloon notifications in system tray instead of popups]
 [Use logging notifications into special chatroom]
@@ -120,8 +121,10 @@
 [Sample notification]
 [Sample friendship]
 [Sample ticker]
+[Sample on this day]
 ;file \protocols\FacebookRM\src\json.cpp
 [a sticker]
+[a link]
 [files]
 [a file]
 [photos]
@@ -135,9 +138,10 @@
 ;file \protocols\FacebookRM\src\process.cpp
 [Contact is back on server-list.]
 [Contact is no longer on server-list.]
+[On this day]
 ;file \protocols\FacebookRM\src\proto.cpp
 [%s server connection]
-[Unable to get Netlib connection for Facebook]
+[Unable to initialize Netlib for %s.]
 [Video call]
 [Facebook ID must be numeric value.]
 [Network]
@@ -152,13 +156,16 @@
 [Do you want to cancel your friendship with '%s'?]
 [News feeds]
 [Friendship events]
+[On this day posts]
 [Visit profile]
 [Visit notifications]
 [Show 'Share status' window]
 [Notification]
-[News Feed]
-[Other Event]
-[Friendship Event]
+[Newsfeed event]
+[Other event]
+[Friendship event]
+[Ticker event]
+[On this day event]
 [Message read: %s by %s]
 [Message read: %s]
 ;file \protocols\FacebookRM\src\theme.cpp

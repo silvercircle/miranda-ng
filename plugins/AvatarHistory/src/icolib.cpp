@@ -14,21 +14,19 @@ static IconItem iconList[] =
 
 static HICON LoadIconEx(IconIndex i)
 {
-	return Skin_GetIconByHandle(iconList[(int)i].hIcolib);
+	return IcoLib_GetIconByHandle(iconList[(int)i].hIcolib);
 }
 
 static void ReleaseIconEx(HICON hIcon)
 {
-	Skin_ReleaseIcon(hIcon);
+	IcoLib_ReleaseIcon(hIcon);
 }
 
 static void IcoLibUpdateMenus()
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.flags = CMIM_FLAGS | CMIM_ICON;
-	mi.hIcon = createDefaultOverlayedIcon(FALSE);
-	Menu_ModifyItem(hMenu, &mi);
-	DestroyIcon(mi.hIcon);
+	HICON hIcon = createDefaultOverlayedIcon(FALSE);
+	Menu_ModifyItem(hMenu, 0, hIcon, 0);
+	DestroyIcon(hIcon);
 }
 
 int IcoLibIconsChanged(WPARAM, LPARAM)
@@ -39,8 +37,8 @@ int IcoLibIconsChanged(WPARAM, LPARAM)
 
 void SetupIcoLib()
 {
-	iconList[0].hIcolib = LoadSkinnedIconHandle(SKINICON_OTHER_HISTORY);
-	Icon_Register(hInst, LPGEN("Avatar History"), iconList+1, SIZEOF(iconList)-1);
+	iconList[0].hIcolib = Skin_GetIconHandle(SKINICON_OTHER_HISTORY);
+	Icon_Register(hInst, LPGEN("Avatar History"), iconList+1, _countof(iconList)-1);
 	IcoLibUpdateMenus();
 }
 
@@ -79,11 +77,11 @@ HICON createProtoOverlayedIcon(MCONTACT hContact)
 	HICON icon1 = LoadIconEx(I_OVERLAY);
 
 	char *szProto = GetContactProto(hContact);
-	HICON icon0 = LoadSkinnedProtoIcon(szProto, ID_STATUS_ONLINE);
+	HICON icon0 = Skin_LoadProtoIcon(szProto, ID_STATUS_ONLINE);
 
 	HICON resIcon = getOverlayedIcon(icon0, icon1, FALSE);
 
 	ReleaseIconEx(icon1);
-	Skin_ReleaseIcon(icon0);
+	IcoLib_ReleaseIcon(icon0);
 	return resIcon;
 }

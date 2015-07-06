@@ -82,18 +82,16 @@ struct GlobalMessageData
 {
 	unsigned int flags;
 	unsigned int flags2;
-	HANDLE hMessageWindowList;
+	MWindowList hMessageWindowList;
 	DWORD openFlags;
-	HANDLE hParentWindowList;
+	MWindowList hParentWindowList;
 	ParentWindowData *lastParent;
 	ParentWindowData *lastChatParent;
 	DWORD limitNamesLength;
 	int activeAlpha;
 	int inactiveAlpha;
-	HMENU hMenuANSIEncoding;
 	int tabIconListUsageSize;
 	ImageListUsageEntry *tabIconListUsage;
-	TCmdList *draftList;
 	int smileyAddInstalled;
 	int popupInstalled;
 	int ieviewInstalled;

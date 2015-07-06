@@ -88,7 +88,7 @@ void CVkProto::OnLoggedOut()
 	m_bOnline = false;
 
 	if (m_pollingConn)
-		CallService(MS_NETLIB_SHUTDOWN, (WPARAM)m_pollingConn, 0);
+		CallService(MS_NETLIB_SHUTDOWN, (WPARAM)m_pollingConn);
 
 	ProtoBroadcastAck(NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, (HANDLE)m_iStatus, ID_STATUS_OFFLINE);
 	m_iStatus = m_iDesiredStatus = ID_STATUS_OFFLINE;
@@ -141,7 +141,7 @@ void CVkProto::OnOAuthAuthorize(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq
 				pReq->AddHeader("Referer", m_prevUrl);
 				pReq->Redirect(reply);
 				if (!pReq->m_szUrl.IsEmpty()) {
-					if (pReq->m_szUrl.GetBuffer()[0] == '/')
+					if (pReq->m_szUrl[0] == '/')
 						pReq->m_szUrl = VK_LOGIN_DOMAIN + pReq->m_szUrl;
 					ApplyCookies(pReq);
 					m_prevUrl = pReq->m_szUrl;
@@ -181,9 +181,8 @@ void CVkProto::OnOAuthAuthorize(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq
 	pReq->flags = NLHRF_DUMPASTEXT | NLHRF_HTTP11;
 	pReq->m_szParam = szBody;
 	pReq->m_szUrl = szAction;
-	if (!pReq->m_szUrl.IsEmpty()) 
-		if (pReq->m_szUrl.GetBuffer()[0] == '/')
-			pReq->m_szUrl = VK_LOGIN_DOMAIN + pReq->m_szUrl;
+	if (!pReq->m_szUrl.IsEmpty() && pReq->m_szUrl[0] == '/')
+		pReq->m_szUrl = VK_LOGIN_DOMAIN + pReq->m_szUrl;
 	m_prevUrl = pReq->m_szUrl;
 	pReq->m_pFunc = &CVkProto::OnOAuthAuthorize;
 	pReq->AddHeader("Content-Type", "application/x-www-form-urlencoded");
@@ -211,12 +210,15 @@ void CVkProto::OnReceiveMyInfo(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
 		return;
 	}
 
-	JSONROOT pRoot;
-	JSONNODE *pResponse = CheckJsonResponse(pReq, reply, pRoot);
-	if (pResponse == NULL)
+	JSONNode jnRoot;
+	const JSONNode &jnResponse = CheckJsonResponse(pReq, reply, jnRoot);
+	if (!jnResponse)
 		return;
 	
-	m_myUserId = json_as_int(json_get(json_at(pResponse, 0), "id"));
+	const JSONNode &jnUser = *(jnResponse.begin());
+
+
+	m_myUserId = jnUser["id"].as_int();
 	setDword("ID", m_myUserId);
 		
 	OnLoggedIn();
@@ -226,14 +228,14 @@ void CVkProto::OnReceiveMyInfo(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
 	RetrievePollingInfo();	
 }
 
-MCONTACT CVkProto::SetContactInfo(JSONNODE* pItem, bool flag, bool self)
+MCONTACT CVkProto::SetContactInfo(const JSONNode &jnItem, bool flag, bool self)
 {
-	if (pItem == NULL) {
+	if (!jnItem) {
 		debugLogA("CVkProto::SetContactInfo pItem == NULL");
 		return INVALID_CONTACT_ID;
 	}
 
-	LONG userid = json_as_int(json_get(pItem, "id"));
+	LONG userid = jnItem["id"].as_int();
 	debugLogA("CVkProto::SetContactInfo %d", userid);
 	if (userid == 0 || userid == VK_FEED_USER)
 		return NULL;
@@ -245,7 +247,7 @@ MCONTACT CVkProto::SetContactInfo(JSONNODE* pItem, bool flag, bool self)
 			if (self)
 				hContact = NULL;
 			else
-				SetContactInfo(pItem, flag, true);
+				SetContactInfo(jnItem, flag, true);
 	}
 	else if (hContact == NULL)
 		return NULL;
@@ -253,30 +255,30 @@ MCONTACT CVkProto::SetContactInfo(JSONNODE* pItem, bool flag, bool self)
 	CMString tszNick, tszValue;
 	int iValue;
 
-	tszValue = json_as_CMString(json_get(pItem, "first_name"));
+	tszValue = jnItem["first_name"].as_mstring();
 	if (!tszValue.IsEmpty()) {
-		setTString(hContact, "FirstName", tszValue.GetBuffer());
+		setTString(hContact, "FirstName", tszValue);
 		tszNick.Append(tszValue);
 		tszNick.AppendChar(' ');
 	}
 
-	tszValue = json_as_CMString(json_get(pItem, "last_name"));
+	tszValue = jnItem["last_name"].as_mstring();
 	if (!tszValue.IsEmpty()) {
-		setTString(hContact, "LastName", tszValue.GetBuffer());
+		setTString(hContact, "LastName", tszValue);
 		tszNick.Append(tszValue);
 	}
 
 	if (!tszNick.IsEmpty())
 		setTString(hContact, "Nick", tszNick);
 
-	int sex = json_as_int(json_get(pItem, "sex"));
+	int sex = jnItem["sex"].as_int();
 	if (sex)
 		setByte(hContact, "Gender", sex == 2 ? 'M' : 'F');
 
-	tszValue = json_as_CMString(json_get(pItem, "bdate"));
+	tszValue = jnItem["bdate"].as_mstring();
 	if (!tszValue.IsEmpty()) {
 		int d, m, y, iReadCount;
-		iReadCount = _stscanf(tszValue.GetBuffer(), _T("%d.%d.%d"), &d, &m, &y);
+		iReadCount = _stscanf(tszValue, _T("%d.%d.%d"), &d, &m, &y);
 		if (iReadCount > 1) {
 			if (iReadCount == 3)
 				setWord(hContact, "BirthYear", y);
@@ -285,19 +287,19 @@ MCONTACT CVkProto::SetContactInfo(JSONNODE* pItem, bool flag, bool self)
 		}
 	}
 
-	tszValue = json_as_CMString(json_get(pItem, "photo_100"));
+	tszValue = jnItem["photo_100"].as_mstring();
 	if (!tszValue.IsEmpty()) {
 		SetAvatarUrl(hContact, tszValue);
 		ReloadAvatarInfo(hContact);
 	}
 
-	int iNewStatus = (json_as_int(json_get(pItem, "online")) == 0) ? ID_STATUS_OFFLINE : ID_STATUS_ONLINE;
+	int iNewStatus = (jnItem["online"].as_int() == 0) ? ID_STATUS_OFFLINE : ID_STATUS_ONLINE;
 	if (getWord(hContact, "Status", ID_STATUS_OFFLINE) != iNewStatus)
 		setWord(hContact, "Status", iNewStatus);
 
 	if (iNewStatus == ID_STATUS_ONLINE) {
-		int online_app = _ttoi(json_as_CMString(json_get(pItem, "online_app")));
-		int online_mobile = json_as_int(json_get(pItem, "online_mobile"));
+		int online_app = _ttoi(jnItem["online_app"].as_mstring());
+		int online_mobile = jnItem["online_mobile"].as_int();
 		
 		if (online_app == 0 && online_mobile == 0)
 			SetMirVer(hContact, 7); // vk.com
@@ -309,45 +311,45 @@ MCONTACT CVkProto::SetContactInfo(JSONNODE* pItem, bool flag, bool self)
 	else
 		SetMirVer(hContact, -1); // unset MinVer
 		
-	if ((iValue = json_as_int(json_get(pItem, "timezone"))) != 0)
+	if ((iValue = jnItem["timezone"].as_int()) != 0)
 		setByte(hContact, "Timezone", iValue * -2);
 
-	tszValue = json_as_CMString(json_get(pItem, "mobile_phone"));
+	tszValue = jnItem["mobile_phone"].as_mstring();
 	if (!tszValue.IsEmpty())
-		setTString(hContact, "Cellular", tszValue.GetBuffer());
+		setTString(hContact, "Cellular", tszValue);
 	
-	tszValue = json_as_CMString(json_get(pItem, "home_phone"));
+	tszValue = jnItem["home_phone"].as_mstring();
 	if (!tszValue.IsEmpty())
-		setTString(hContact, "Phone", tszValue.GetBuffer());
+		setTString(hContact, "Phone", tszValue);
 
-	tszValue = json_as_CMString(json_get(pItem, "status"));
+	tszValue = jnItem["status"].as_mstring();
 	CMString tszOldStatus(ptrT(db_get_tsa(hContact, hContact ? "CList" : m_szModuleName, "StatusMsg")));
 	if (tszValue != tszOldStatus) {
-		db_set_ts(hContact, hContact ? "CList" : m_szModuleName, "StatusMsg", tszValue.GetBuffer());
+		db_set_ts(hContact, hContact ? "CList" : m_szModuleName, "StatusMsg", tszValue);
 		db_unset(hContact, m_szModuleName, "AudioUrl");
-		JSONNODE* pAudio = json_get(pItem, "status_audio");
-		if (pAudio != NULL) {
-			db_set_ts(hContact, m_szModuleName, "ListeningTo", tszValue.GetBuffer());
-			tszValue = json_as_CMString(json_get(pAudio, "url"));
-			db_set_ts(hContact, m_szModuleName, "AudioUrl", tszValue.GetBuffer());
+		const JSONNode &jnAudio = jnItem["status_audio"];
+		if (!jnAudio.isnull()) {
+			db_set_ts(hContact, m_szModuleName, "ListeningTo", tszValue);
+			tszValue = jnAudio["url"].as_mstring();
+			db_set_ts(hContact, m_szModuleName, "AudioUrl", tszValue);
 		}
-		else if (tszValue.GetBuffer()[0] == TCHAR(9835) && tszValue.GetLength() > 2)
+		else if (tszValue[0] == TCHAR(9835) && tszValue.GetLength() > 2)
 			db_set_ts(hContact, m_szModuleName, "ListeningTo", &(tszValue.GetBuffer())[2]);
 		else
 			db_unset(hContact, m_szModuleName, "ListeningTo");
 	}
 
-	tszValue = json_as_CMString(json_get(pItem, "about"));
-	
-	if (!tszValue.IsEmpty())
-		setTString(hContact, "About", tszValue.GetBuffer());
+	tszValue = jnItem["about"].as_mstring();
 
-	tszValue = json_as_CMString(json_get(pItem, "domain"));
+	if (!tszValue.IsEmpty())
+		setTString(hContact, "About", tszValue);
+
+	tszValue = jnItem["domain"].as_mstring();
 	if (!tszValue.IsEmpty()) {
-		setTString(hContact, "domain", tszValue.GetBuffer());
+		setTString(hContact, "domain", tszValue);
 		CMString tszUrl("https://vk.com/");
 		tszUrl.Append(tszValue);
-		setTString(hContact, "Homepage", tszUrl.GetBuffer());
+		setTString(hContact, "Homepage", tszUrl);
 	}
 
 	return hContact;
@@ -363,7 +365,7 @@ void CVkProto::RetrieveUserInfo(LONG userID)
 	userIDs.AppendFormat(_T("%i"), userID);
 			
 	code.AppendFormat(_T("var userIDs=\"%s\";return{\"freeoffline\":0,\"users\":API.users.get({\"user_ids\":userIDs,\"fields\":\"%s\",\"name_case\":\"nom\"})};"), 
-		userIDs.GetBuffer(), CMString(fieldsName).GetBuffer());
+		userIDs, CMString(fieldsName));
 	Push(new AsyncHttpRequest(this, REQUEST_POST, "/method/execute.json", true, &CVkProto::OnReceiveUserInfo)
 		<< TCHAR_PARAM("code", code)
 		<< VER_API);
@@ -397,7 +399,7 @@ void CVkProto::RetrieveUsersInfo(bool flag)
 	else
 		codeformat += CMString("var res=API.users.get({\"user_ids\":userIDs,\"fields\":\"%s\",\"name_case\":\"nom\"});"
 			"return{\"freeoffline\":0,\"users\":res};");
-	code.AppendFormat(codeformat, userIDs.GetBuffer(), CMString(flag ? "online,status" : fieldsName).GetBuffer());
+	code.AppendFormat(codeformat, userIDs, CMString(flag ? "online,status" : fieldsName));
 
 	Push(new AsyncHttpRequest(this, REQUEST_POST, "/method/execute.json", true, &CVkProto::OnReceiveUserInfo)
 		<< TCHAR_PARAM("code", code)
@@ -411,13 +413,13 @@ void CVkProto::OnReceiveUserInfo(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pRe
 	if (reply->resultCode != 200 || !IsOnline())
 		return;
 	
-	JSONROOT pRoot;
-	JSONNODE *pResponse = CheckJsonResponse(pReq, reply, pRoot);
-	if (pResponse == NULL)
+	JSONNode jnRoot;
+	const JSONNode &jnResponse = CheckJsonResponse(pReq, reply, jnRoot);
+	if (!jnResponse)
 		return;
 
-	JSONNODE *pUsers = json_get(pResponse, "users");
-	if (pUsers == NULL)
+	const JSONNode &jnUsers = jnResponse["users"];
+	if (!jnUsers)
 		return;
 
 	LIST<void> arContacts(10, PtrKeySortT);
@@ -427,11 +429,13 @@ void CVkProto::OnReceiveUserInfo(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pRe
 		if (!isChatRoom(hContact))
 			arContacts.insert((HANDLE)hContact);
 
-	for (size_t i = 0; (hContact = SetContactInfo(json_at(pUsers, i))) != INVALID_CONTACT_ID; i++)
+	for (auto it = jnUsers.begin(); it != jnUsers.end(); ++it) {
+		hContact = SetContactInfo((*it));
 		if (hContact)
 			arContacts.remove((HANDLE)hContact);
+	}
 	
-	if (json_as_int(json_get(pResponse, "freeoffline")))
+	if (jnResponse["freeoffline"].as_bool())
 		for (int i = 0; i < arContacts.getCount(); i++) {
 			hContact = (MCONTACT)arContacts[i];
 			LONG userID = getDword(hContact, "ID", -1);
@@ -451,22 +455,22 @@ void CVkProto::OnReceiveUserInfo(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pRe
 	arContacts.destroy();
 	AddFeedSpecialUser();
 
-	JSONNODE *pRequests = json_get(pResponse, "requests");
-	if (pRequests == NULL)
+	const JSONNode &jnRequests = jnResponse["requests"];
+	if (!jnRequests)
 		return;
 	
-	int iCount = json_as_int(json_get(pRequests, "count"));
-	JSONNODE *pItems = json_get(pRequests, "items"), *pInfo;
-	if (!iCount || pItems == NULL)
+	int iCount = jnRequests["count"].as_int();
+	const JSONNode &jnItems = jnRequests["items"];
+	if (!iCount || !jnItems)
 		return;
 
 	debugLogA("CVkProto::OnReceiveUserInfo AuthRequests");
-	for (int i = 0; (pInfo = json_at(pItems, i)) != NULL; i++) {
-		LONG userid = json_as_int(pInfo);
+	for (auto it = jnItems.begin(); it != jnItems.end(); ++it) {
+		LONG userid = (*it).as_int();
 		if (userid == 0)
 			break;
 		hContact = FindUser(userid, true);
-		if (!getBool(hContact, "ReqAuth", false)) {
+		if (!getBool(hContact, "ReqAuth")) {
 			RetrieveUserInfo(userid);
 			setByte(hContact, "ReqAuth", 1);	
 			ForkThread(&CVkProto::DBAddAuthRequestThread, (void *)hContact);		
@@ -491,12 +495,12 @@ void CVkProto::OnReceiveFriends(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq
 	if (reply->resultCode != 200 || !IsOnline())
 		return;
 
-	JSONROOT pRoot;
-	JSONNODE *pResponse = CheckJsonResponse(pReq, reply, pRoot);
-	if (pResponse == NULL)
+	JSONNode jnRoot;
+	const JSONNode &jnResponse = CheckJsonResponse(pReq, reply, jnRoot);
+	if (!jnResponse)
 		return;
 
-	bool bCleanContacts = getBool("AutoClean", false);
+	bool bCleanContacts = getBool("AutoClean");
 	LIST<void> arContacts(10, PtrKeySortT);
 		
 	for (MCONTACT hContact = db_find_first(m_szModuleName); hContact; hContact = db_find_next(hContact, m_szModuleName)) {
@@ -508,12 +512,12 @@ void CVkProto::OnReceiveFriends(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq
 			arContacts.insert((HANDLE)hContact);
 	}
 
-	int iCount = json_as_int(json_get(pResponse, "count"));
-	JSONNODE *pItems = json_get(pResponse, "items");
 
-	if (pItems)
-		for (int i = 0; i < iCount; i++) {
-			MCONTACT hContact = SetContactInfo(json_at(pItems, i), true);
+	const JSONNode &jnItems = jnResponse["items"];
+
+	if (!jnItems.isnull())
+		for (auto it = jnItems.begin(); it != jnItems.end(); ++it) {
+			MCONTACT hContact = SetContactInfo((*it), true);
 
 			if (hContact == NULL || hContact == INVALID_CONTACT_ID)
 				continue;
@@ -528,7 +532,7 @@ void CVkProto::OnReceiveFriends(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq
 			LONG userID = getDword(hContact, "ID", -1);
 			if (userID == m_myUserId || userID == VK_FEED_USER)
 				continue;
-			CallService(MS_DB_CONTACT_DELETE, (WPARAM)hContact, 0);
+			CallService(MS_DB_CONTACT_DELETE, (WPARAM)hContact);
 		}
 	
 	arContacts.destroy();
@@ -542,7 +546,7 @@ INT_PTR __cdecl CVkProto::SvcAddAsFriend(WPARAM hContact, LPARAM)
 	LONG userID = getDword(hContact, "ID", -1);
 	if (!IsOnline() || userID == -1 || userID == VK_FEED_USER)
 		return 1;
-	CallContactService(hContact, PSS_AUTHREQUESTW, 0, (LPARAM)TranslateT("Please authorize me to add you to my friend list."));
+	CallContactService(hContact, PSS_AUTHREQUEST, 0, (LPARAM)TranslateT("Please authorize me to add you to my friend list."));
 	return 0;
 }
 
@@ -558,7 +562,7 @@ INT_PTR __cdecl CVkProto::SvcDeleteFriend(WPARAM hContact, LPARAM flag)
 	CMString ptszMsg;
 	if (flag == 0) {
 		ptszMsg.AppendFormat(TranslateT("Are you sure to delete %s from your friend list?"), IsEmpty(ptszNick) ? TranslateT("(Unknown contact)") : ptszNick);
-		if (IDNO == MessageBox(NULL, ptszMsg.GetBuffer(), TranslateT("Attention!"), MB_ICONWARNING | MB_YESNO))
+		if (IDNO == MessageBox(NULL, ptszMsg, TranslateT("Attention!"), MB_ICONWARNING | MB_YESNO))
 			return 1;
 	}
 	Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/friends.delete.json", true, &CVkProto::OnReceiveDeleteFriend)
@@ -573,31 +577,31 @@ void CVkProto::OnReceiveDeleteFriend(NETLIBHTTPREQUEST* reply, AsyncHttpRequest*
 	debugLogA("CVkProto::OnReceiveDeleteFriend %d", reply->resultCode);
 	CVkSendMsgParam *param = (CVkSendMsgParam*)pReq->pUserInfo;
 	if (reply->resultCode == 200) {
-		JSONROOT pRoot;
-		JSONNODE *pResponse = CheckJsonResponse(pReq, reply, pRoot);
-		if (pResponse != NULL) {
+		JSONNode jnRoot;
+		const JSONNode &jnResponse = CheckJsonResponse(pReq, reply, jnRoot);
+		if (!jnResponse.isnull()) {
 			CMString tszNick = ptrT(db_get_tsa(param->hContact, m_szModuleName, "Nick"));
 			if (tszNick.IsEmpty())
 				tszNick = TranslateT("(Unknown contact)");
 			CMString msgformat, msg;
 
-			if (json_as_int(json_get(pResponse, "success"))) {
-				if (json_as_int(json_get(pResponse, "friend_deleted")))
+			if (jnResponse["success"].as_bool()) {
+				if (jnResponse["friend_deleted"].as_bool())
 					msgformat = TranslateT("User %s was deleted from your friend list");
-				else if (json_as_int(json_get(pResponse, "out_request_deleted")))
+				else if (jnResponse["out_request_deleted"].as_bool())
 					msgformat = TranslateT("Your request to the user %s was deleted");
-				else if (json_as_int(json_get(pResponse, "in_request_deleted")))
+				else if (jnResponse["in_request_deleted"].as_bool())
 					msgformat = TranslateT("Friend request from the user %s declined");
-				else if (json_as_int(json_get(pResponse, "suggestion_deleted")))
+				else if (jnResponse["suggestion_deleted"].as_bool())
 					msgformat = TranslateT("Friend request suggestion for the user %s deleted");
 				
 				msg.AppendFormat(msgformat, tszNick);
-				MsgPopup(param->hContact, msg.GetBuffer(), tszNick.GetBuffer());
+				MsgPopup(param->hContact, msg, tszNick);
 				setByte(param->hContact, "Auth", 1);			
 			}
 			else {
 				msg = TranslateT("User or request was not deleted");
-				MsgPopup(param->hContact, msg.GetBuffer(), tszNick.GetBuffer());
+				MsgPopup(param->hContact, msg, tszNick);
 			}	
 		}
 	}
@@ -651,9 +655,9 @@ INT_PTR __cdecl CVkProto::SvcBanUser(WPARAM hContact, LPARAM)
 	ptszMsg.AppendFormat(TranslateT("Are you sure to ban %s? %s%sContinue?"), 
 		IsEmpty(ptszNick) ? TranslateT("(Unknown contact)") : ptszNick, 
 		tszVarWarning.IsEmpty() ? _T(" ") : TranslateT("\nIt will also"),
-		tszVarWarning.IsEmpty() ? _T("\n") : tszVarWarning.GetBuffer());
+		tszVarWarning.IsEmpty() ? _T("\n") : tszVarWarning);
 
-	if (IDNO == MessageBox(NULL, ptszMsg.GetBuffer(), TranslateT("Attention!"), MB_ICONWARNING | MB_YESNO))
+	if (IDNO == MessageBox(NULL, ptszMsg, TranslateT("Attention!"), MB_ICONWARNING | MB_YESNO))
 		return 1;
 	
 	Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/execute.json", true, &CVkProto::OnReceiveSmth)
@@ -661,7 +665,7 @@ INT_PTR __cdecl CVkProto::SvcBanUser(WPARAM hContact, LPARAM)
 		<< VER_API);
 
 	if (m_bRemoveFromClist)
-		CallService(MS_DB_CONTACT_DELETE, (WPARAM)hContact, 0);
+		CallService(MS_DB_CONTACT_DELETE, (WPARAM)hContact);
 
 	return 0;
 }
@@ -677,7 +681,7 @@ INT_PTR __cdecl CVkProto::SvcReportAbuse(WPARAM hContact, LPARAM)
 		tszNick = ptrT(db_get_tsa(hContact, m_szModuleName, "Nick")),
 		ptszMsg;
 	ptszMsg.AppendFormat(formatstr, tszNick.IsEmpty() ? TranslateT("(Unknown contact)") : tszNick);
-	if (IDNO == MessageBox(NULL, ptszMsg.GetBuffer(), TranslateT("Attention!"), MB_ICONWARNING | MB_YESNO))
+	if (IDNO == MessageBox(NULL, ptszMsg, TranslateT("Attention!"), MB_ICONWARNING | MB_YESNO))
 		return 1;
 
 	Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/users.report.json", true, &CVkProto::OnReceiveSmth)
@@ -691,10 +695,10 @@ INT_PTR __cdecl CVkProto::SvcReportAbuse(WPARAM hContact, LPARAM)
 INT_PTR __cdecl CVkProto::SvcOpenBroadcast(WPARAM hContact, LPARAM)
 {
 	debugLogA("CVkProto::SvcOpenBroadcast");
+
 	CMString tszAudio(ptrT(db_get_tsa(hContact, m_szModuleName, "AudioUrl")));
-	
 	if (!tszAudio.IsEmpty())
-		CallService(MS_UTILS_OPENURL, (WPARAM)OUF_TCHAR, (LPARAM)tszAudio.GetBuffer());
+		Utils_OpenUrlT(tszAudio);
 	
 	return 0;
 }
@@ -704,14 +708,13 @@ INT_PTR __cdecl CVkProto::SvcVisitProfile(WPARAM hContact, LPARAM)
 	debugLogA("CVkProto::SvcVisitProfile");
 	LONG userID = getDword(hContact, "ID", -1);
 	ptrT tszDomain(db_get_tsa(hContact, m_szModuleName, "domain"));
-	CMString tszUrl("https://vk.com/");
 
+	CMString tszUrl("https://vk.com/");
 	if (tszDomain)
 		tszUrl.Append(tszDomain);
 	else
 		tszUrl.AppendFormat(_T("id%i"), userID);
 	
-	CallService(MS_UTILS_OPENURL, (WPARAM)OUF_TCHAR, (LPARAM)tszUrl.GetBuffer());
-	
+	Utils_OpenUrlT(tszUrl);
 	return 0;
 }

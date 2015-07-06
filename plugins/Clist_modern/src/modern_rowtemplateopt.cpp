@@ -22,10 +22,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "hdr/modern_commonheaders.h"
-#include "hdr/modern_clist.h"
-#include "hdr/modern_commonprototypes.h"
-#include "hdr/modern_row.h"
+#include "stdafx.h"
+#include "modern_clist.h"
+#include "modern_commonprototypes.h"
+#include "modern_row.h"
 
 void RefreshTree(HWND hwndDlg, HTREEITEM hti);
 static char* rowOptTmplStr;
@@ -315,18 +315,18 @@ void RefreshTree(HWND hwndDlg, HTREEITEM hti)
 			if (!cell->child)
 			{
 				if (cell->type == 0)
-					mir_sntprintf(buf, SIZEOF(buf), TranslateT("Empty %s cell"), cell->cont == TC_COL ? TranslateT("column") : TranslateT("line"));
+					mir_sntprintf(buf, TranslateT("Empty %s cell"), cell->cont == TC_COL ? TranslateT("column") : TranslateT("line"));
 				else
-					mir_tstrncpy(buf, TranslateTS(types[cell->type]), SIZEOF(buf));
+					mir_tstrncpy(buf, TranslateTS(types[cell->type]), _countof(buf));
 			}
 			else
 			{
 				if (cell->type == 0)
-					mir_tstrncpy(buf, (cell->cont != TC_COL ? TranslateT("columns") : TranslateT("lines")), SIZEOF(buf));
+					mir_tstrncpy(buf, (cell->cont != TC_COL ? TranslateT("columns") : TranslateT("lines")), _countof(buf));
 				else
-					mir_sntprintf(buf, SIZEOF(buf), TranslateT("%s, contain %s"), TranslateTS(types[cell->type]), cell->cont != TC_COL ? TranslateT("columns") : TranslateT("lines"));
+					mir_sntprintf(buf, TranslateT("%s, contain %s"), TranslateTS(types[cell->type]), cell->cont != TC_COL ? TranslateT("columns") : TranslateT("lines"));
 			}
-			if (cell->layer) mir_tstrncat(buf, TranslateT(" layered"), SIZEOF(buf) - mir_tstrlen(buf));
+			if (cell->layer) mir_tstrncat(buf, TranslateT(" layered"), _countof(buf) - mir_tstrlen(buf));
 			tvi.mask = TVIF_HANDLE | TVIF_TEXT;
 			tvi.pszText = buf;
 			TreeView_SetItem(htree, &tvi);
@@ -359,21 +359,21 @@ INT_PTR CALLBACK DlgTmplEditorOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
 
 		int i, item;
 
-		for (i = 0; i < SIZEOF(types); i++) {
+		for (i = 0; i < _countof(types); i++) {
 			item = SendDlgItemMessage(hwndDlg, IDC_CONTTYPE, CB_ADDSTRING, 0, (LPARAM)TranslateTS(types[i]));
 			SendDlgItemMessage(hwndDlg, IDC_CONTTYPE, CB_SETITEMDATA, item, 0);
 		}
 		SendDlgItemMessage(hwndDlg, IDC_CONTTYPE, CB_SETCURSEL, 0, 0);
 
 		TCHAR *h_alignment[] = { _T("left"), _T("hCenter"), _T("right") };
-		for (i = 0; i < SIZEOF(h_alignment); i++) {
+		for (i = 0; i < _countof(h_alignment); i++) {
 			item = SendDlgItemMessage(hwndDlg, IDC_HALIGN, CB_ADDSTRING, 0, (LPARAM)TranslateTS(h_alignment[i]));
 			SendDlgItemMessage(hwndDlg, IDC_HALIGN, CB_SETITEMDATA, item, 0);
 		}
 		SendDlgItemMessage(hwndDlg, IDC_HALIGN, CB_SETCURSEL, 0, 0);
 
 		TCHAR *v_alignment[] = { _T("top"), _T("vCenter"), _T("bottom") };
-		for (i = 0; i < SIZEOF(v_alignment); i++) {
+		for (i = 0; i < _countof(v_alignment); i++) {
 			item = SendDlgItemMessage(hwndDlg, IDC_VALIGN, CB_ADDSTRING, 0, (LPARAM)TranslateTS(v_alignment[i]));
 			SendDlgItemMessage(hwndDlg, IDC_VALIGN, CB_SETITEMDATA, item, 0);
 		}

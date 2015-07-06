@@ -7,7 +7,7 @@ DWORD pop_start_x, pop_start_y;
 int global_mouse_in = 0;
 
 void trimW(wchar_t *str) {
-	int len = (int)wcslen(str), pos;
+	int len = (int)mir_wstrlen(str), pos;
 	// trim whitespace (e.g. from OTR detection)
 	for (pos = len - 1; pos >= 0; pos--) {
 		if (str[pos] == L' ' || str[pos] == L'\t' || str[pos] == L'\r' || str[pos] == L'\n') str[pos] = 0;
@@ -81,7 +81,7 @@ void AddWindowToStack(HWND hwnd) {
 	SystemParametersInfo(SPI_GETWORKAREA, 0, &wa_rect, 0);
 	if (options.use_mim_monitor) {
 		RECT clr;
-		GetWindowRect((HWND)CallService(MS_CLUI_GETHWND, 0, 0), &clr);
+		GetWindowRect(pcli->hwndContactList, &clr);
 		HMONITOR hMonitor = MonitorFromRect(&clr, MONITOR_DEFAULTTONEAREST);
 		if (hMonitor) {
 			MONITORINFO mi;
@@ -736,14 +736,14 @@ LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 void PopupData::SetIcon(HICON hNewIcon)
 {
 	if (flags & PDF_ICOLIB) {
-		Skin_ReleaseIcon(hIcon);
+		IcoLib_ReleaseIcon(hIcon);
 		flags &= ~PDF_ICOLIB;
 	}
 
 	hIcon = hNewIcon;
 
-	if ( CallService(MS_SKIN2_ISMANAGEDICON, (WPARAM)hIcon, 0)) {
-		CallService(MS_SKIN2_ADDREFICON, (WPARAM)hIcon, 0);
+	if (IcoLib_IsManaged(hIcon)) {
+		IcoLib_AddRef(hIcon);
 		flags |= PDF_ICOLIB;
 	}
 }

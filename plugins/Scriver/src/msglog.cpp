@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern int RTL_Detect(WCHAR *pszwText);
 static int logPixelSY;
 static char* pLogIconBmpBits[3];
-static size_t logIconBmpSize[SIZEOF(pLogIconBmpBits)];
+static size_t logIconBmpSize[_countof(pLogIconBmpBits)];
 static HIMAGELIST g_hImageList;
 
 #define STREAMSTAGE_HEADER  0
@@ -66,7 +66,6 @@ struct EventData
 	};
 	DWORD	time;
 	DWORD	eventType;
-	int   codePage;
 	BOOL  custom;
 	EventData *next;
 };
@@ -182,7 +181,6 @@ EventData* getEventFromDB(SrmmWindowData *dat, MCONTACT hContact, MEVENT hDbEven
 
 	evt->time = dbei.timestamp;
 	evt->pszNick = NULL;
-	evt->codePage = dat->codePage;
 
 	if (evt->dwFlags & IEEDF_SENT)
 		evt->pszNickT = GetNickname(NULL, dat->szProto);
@@ -196,7 +194,7 @@ EventData* getEventFromDB(SrmmWindowData *dat, MCONTACT hContact, MEVENT hDbEven
 		if (*descr != 0)
 			evt->pszText2T = DbGetEventStringT(&dbei, descr);
 	}
-	else evt->pszTextT = DbGetEventTextT(&dbei, dat->codePage);
+	else evt->pszTextT = DbGetEventTextT(&dbei, CP_UTF8);
 
 	if (!(dat->flags & SMF_RTL) && RTL_Detect(evt->pszTextT))
 		evt->dwFlags |= IEEDF_RTL;
@@ -212,7 +210,6 @@ static EventData* GetTestEvent(DWORD flags)
 	evt->dwFlags = IEEDF_READ | flags;
 	evt->dwFlags |= IEEDF_UNICODE_TEXT | IEEDF_UNICODE_NICK | IEEDF_UNICODE_TEXT2;
 	evt->time = time(NULL);
-	evt->codePage = CP_ACP;
 	return evt;
 }
 
@@ -254,7 +251,7 @@ static void freeEvent(EventData *evt)
 static int AppendUnicodeOrAnsiiToBufferL(char *&buffer, size_t &cbBufferEnd, size_t &cbBufferAlloced, const WCHAR *line, size_t maxLen, BOOL isAnsii)
 {
 	if (maxLen == -1)
-		maxLen = wcslen(line);
+		maxLen = mir_wstrlen(line);
 	
 	const WCHAR *maxLine = line + maxLen;
 	size_t lineLen = maxLen*9 + 8;
@@ -382,7 +379,7 @@ static char* SetToStyle(int style)
 	static char szStyle[128];
 	LOGFONT lf;
 	LoadMsgDlgFont(style, &lf, NULL);
-	mir_snprintf(szStyle, SIZEOF(szStyle), "\\f%u\\cf%u\\b%d\\i%d\\fs%u", style, style, lf.lfWeight >= FW_BOLD ? 1 : 0, lf.lfItalic, 2 * abs(lf.lfHeight) * 74 / logPixelSY);
+	mir_snprintf(szStyle, _countof(szStyle), "\\f%u\\cf%u\\b%d\\i%d\\fs%u", style, style, lf.lfWeight >= FW_BOLD ? 1 : 0, lf.lfItalic, 2 * abs(lf.lfHeight) * 74 / logPixelSY);
 	return szStyle;
 }
 
@@ -428,8 +425,8 @@ TCHAR* TimestampToString(DWORD dwFlags, time_t check, int mode)
 		mir_tstrcat(format, (dwFlags & SMF_SHOWSECONDS) ? _T("s") : _T("t"));
 	}
 	if (format[0] != '\0') {
-		tmi.printTimeStamp(NULL, check, format, str, SIZEOF(str), 0);
-		_tcsncat(szResult, str, SIZEOF(szResult) - mir_tstrlen(szResult));
+		TimeZone_PrintTimeStamp(NULL, check, format, str, _countof(str), 0);
+		mir_tstrncat(szResult, str, _countof(szResult) - mir_tstrlen(szResult));
 	}
 	return szResult;
 }
@@ -468,7 +465,7 @@ static int DetectURL(wchar_t *text, BOOL firstChar) {
 	if (!((c >= '0' && c<='9') || (c >= 'A' && c<='Z') || (c >= 'a' && c<='z'))) {
 		int found = 0;
 		int i, len = 0;
-		int prefixlen = SIZEOF(prefixes);
+		int prefixlen = _countof(prefixes);
 		for (i = 0; i < prefixlen; i++) {
 			if (!wcsncmp(text, prefixes[i].text, prefixes[i].length)) {
 				len = prefixes[i].length;
@@ -503,7 +500,7 @@ static void AppendWithCustomLinks(EventData *evt, int style, char *&buffer, size
 	}
 	else {
 		wText = evt->pszTextW;
-		len = (int)wcslen(evt->pszTextW);
+		len = (int)mir_wstrlen(evt->pszTextW);
 	}
 	for (size_t j = 0; j < len; j++) {
 		int newtoken = 0;
@@ -821,7 +818,6 @@ void StreamInEvents(HWND hwndDlg, MEVENT hDbEventFirst, int count, int fAppend)
 		evt.dwFlags = ((dat->flags & SMF_RTL) ? IEEF_RTL : 0);
 		evt.hwnd = dat->hwndLog;
 		evt.hContact = dat->hContact;
-		evt.codepage = dat->codePage;
 		evt.pszProto = dat->szProto;
 		if (!fAppend) {
 			evt.iType = IEE_CLEAR_LOG;
@@ -849,7 +845,7 @@ void StreamInEvents(HWND hwndDlg, MEVENT hDbEventFirst, int count, int fAppend)
 	streamData.hDbEventLast = dat->hDbEventLast;
 	streamData.dlgDat = dat;
 	streamData.eventsToInsert = count;
-	streamData.isFirst = fAppend ? GetRichTextLength(GetDlgItem(hwndDlg, IDC_LOG), dat->codePage, FALSE) == 0 : 1;
+	streamData.isFirst = fAppend ? GetRichTextLength(GetDlgItem(hwndDlg, IDC_LOG), CP_ACP, FALSE) == 0 : 1;
 	streamData.gdat = &g_dat;
 	stream.pfnCallback = LogStreamInEvents;
 	stream.dwCookie = (DWORD_PTR)& streamData;
@@ -859,14 +855,14 @@ void StreamInEvents(HWND hwndDlg, MEVENT hDbEventFirst, int count, int fAppend)
 		gtxl.flags = GTL_DEFAULT | GTL_PRECISE | GTL_NUMCHARS;
 		gtxl.codepage = 1200;
 		fi.chrg.cpMin = SendDlgItemMessage(hwndDlg, IDC_LOG, EM_GETTEXTLENGTHEX, (WPARAM)&gtxl, 0);
-		sel.cpMin = sel.cpMax = GetRichTextLength(GetDlgItem(hwndDlg, IDC_LOG), dat->codePage, FALSE);
+		sel.cpMin = sel.cpMax = GetRichTextLength(GetDlgItem(hwndDlg, IDC_LOG), 1200, FALSE);
 		SendDlgItemMessage(hwndDlg, IDC_LOG, EM_EXSETSEL, 0, (LPARAM)&sel);
 	}
 	else {
 		SendDlgItemMessage(hwndDlg, IDC_LOG, WM_SETREDRAW, FALSE, 0);
 		SetDlgItemText(hwndDlg, IDC_LOG, _T(""));
 		sel.cpMin = 0;
-		sel.cpMax = GetRichTextLength(GetDlgItem(hwndDlg, IDC_LOG), dat->codePage, FALSE);
+		sel.cpMax = GetRichTextLength(GetDlgItem(hwndDlg, IDC_LOG), 1200, FALSE);
 		SendDlgItemMessage(hwndDlg, IDC_LOG, EM_EXSETSEL, 0, (LPARAM)&sel);
 		fi.chrg.cpMin = 0;
 		dat->isMixed = 0;
@@ -896,7 +892,7 @@ void StreamInEvents(HWND hwndDlg, MEVENT hDbEventFirst, int count, int fAppend)
 		CallService(MS_SMILEYADD_REPLACESMILEYS, 0, (LPARAM)&smre);
 	}
 
-	int len = GetRichTextLength(GetDlgItem(hwndDlg, IDC_LOG), dat->codePage, FALSE);
+	int len = GetRichTextLength(GetDlgItem(hwndDlg, IDC_LOG), 1200, FALSE);
 	SendDlgItemMessage(hwndDlg, IDC_LOG, EM_SETSEL, len - 1, len - 1);
 
 	if (!fAppend)
@@ -913,7 +909,7 @@ void LoadMsgLogIcons(void)
 	HICON hIcon = NULL;
 	RECT rc;
 
-	g_hImageList = ImageList_Create(10, 10, ILC_COLOR32 | ILC_MASK, SIZEOF(pLogIconBmpBits), 0);
+	g_hImageList = ImageList_Create(10, 10, ILC_COLOR32 | ILC_MASK, _countof(pLogIconBmpBits), 0);
 	HBRUSH hBkgBrush = CreateSolidBrush(db_get_dw(NULL, SRMMMOD, SRMSGSET_BKGCOLOUR, SRMSGDEFSET_BKGCOLOUR));
 	HBRUSH hInBkgBrush = CreateSolidBrush(db_get_dw(NULL, SRMMMOD, SRMSGSET_INCOMINGBKGCOLOUR, SRMSGDEFSET_INCOMINGBKGCOLOUR));
 	HBRUSH hOutBkgBrush = CreateSolidBrush(db_get_dw(NULL, SRMMMOD, SRMSGSET_OUTGOINGBKGCOLOUR, SRMSGDEFSET_OUTGOINGBKGCOLOUR));
@@ -933,7 +929,7 @@ void LoadMsgLogIcons(void)
 	HDC hdcMem = CreateCompatibleDC(hdc);
 	PBYTE pBmpBits = (PBYTE)mir_alloc(widthBytes * bih.biHeight);
 	HBRUSH hBrush = hBkgBrush;
-	for (int i = 0; i < SIZEOF(pLogIconBmpBits); i++) {
+	for (int i = 0; i < _countof(pLogIconBmpBits); i++) {
 		switch (i) {
 		case LOGICON_MSG_IN:
 			ImageList_AddIcon(g_hImageList, GetCachedIcon("scriver_INCOMING"));
@@ -980,7 +976,7 @@ void LoadMsgLogIcons(void)
 
 void FreeMsgLogIcons(void)
 {
-	for (int i = 0; i < SIZEOF(pLogIconBmpBits); i++)
+	for (int i = 0; i < _countof(pLogIconBmpBits); i++)
 		mir_free(pLogIconBmpBits[i]);
 
 	ImageList_RemoveAll(g_hImageList);

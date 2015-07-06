@@ -22,10 +22,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "hdr/modern_commonheaders.h"
-#include "hdr/modern_clc.h"
-#include "hdr/modern_commonprototypes.h"
-#include "hdr/modern_defsettings.h"
+#include "stdafx.h"
+#include "modern_clc.h"
+#include "modern_commonprototypes.h"
+#include "modern_defsettings.h"
 
 //loads of stuff that didn't really fit anywhere else
 
@@ -332,7 +332,7 @@ void cliBeginRenameSelection(HWND hwnd, ClcData *dat)
 	mir_subclassWindow(dat->hwndRenameEdit, RenameEditSubclassProc);
 	SendMessage(dat->hwndRenameEdit, WM_SETFONT, (WPARAM)(contact->type == CLCIT_GROUP ? dat->fontModernInfo[FONTID_OPENGROUPS].hFont : dat->fontModernInfo[FONTID_CONTACTS].hFont), 0);
 	SendMessage(dat->hwndRenameEdit, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN | EC_USEFONTINFO, 0);
-	SendMessage(dat->hwndRenameEdit, EM_SETSEL, 0, (LPARAM)(-1));
+	SendMessage(dat->hwndRenameEdit, EM_SETSEL, 0, -1);
 
 	r.top = 1;
 	r.bottom = h - 1;
@@ -341,7 +341,7 @@ void cliBeginRenameSelection(HWND hwnd, ClcData *dat)
 
 	//ES_MULTILINE
 
-	SendMessage(dat->hwndRenameEdit, EM_SETRECT, 0, (LPARAM)(&r));
+	SendMessage(dat->hwndRenameEdit, EM_SETRECT, 0, (LPARAM)&r);
 
 	CLUI_ShowWindowMod(dat->hwndRenameEdit, SW_SHOW);
 	SetWindowPos(dat->hwndRenameEdit, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
@@ -524,14 +524,14 @@ void LoadCLCOptions(HWND hwnd, ClcData *dat, BOOL bFirst)
 		int defItemsOrder[NUM_ITEM_TYPE] = SETTINS_ROWITEMORDER_DEFAULT;
 		for (int i = 0; i < NUM_ITEM_TYPE; i++) {
 			char tmp[128];
-			mir_snprintf(tmp, SIZEOF(tmp), "RowPos%d", i);
+			mir_snprintf(tmp, "RowPos%d", i);
 			dat->row_items[i] = db_get_w(NULL, "CList", tmp, defItemsOrder[i]);
 		}
 	}
 	else {
 		int defItems[] = { ITEM_ICON, ITEM_TEXT, ITEM_EXTRA_ICONS, };
 		for (int i = 0; i < NUM_ITEM_TYPE; i++)
-			dat->row_items[i] = (i < SIZEOF(defItems)) ? defItems[i] : -1;
+			dat->row_items[i] = (i < _countof(defItems)) ? defItems[i] : -1;
 	}
 
 	// Avatar
@@ -611,7 +611,7 @@ void LoadCLCOptions(HWND hwnd, ClcData *dat, BOOL bFirst)
 
 		ptrT tszLineText(db_get_tsa(NULL, "CList", "SecondLineText"));
 		if (tszLineText)
-			mir_tstrncpy(dat->second_line_text, tszLineText, SIZEOF(dat->second_line_text));
+			mir_tstrncpy(dat->second_line_text, tszLineText, _countof(dat->second_line_text));
 		else
 			dat->second_line_text[0] = _T('\0');
 
@@ -639,7 +639,7 @@ void LoadCLCOptions(HWND hwnd, ClcData *dat, BOOL bFirst)
 
 		ptrT tszLineText(db_get_tsa(NULL, "CList", "ThirdLineText"));
 		if (tszLineText)
-			mir_tstrncpy(dat->third_line_text, tszLineText, SIZEOF(dat->third_line_text));
+			mir_tstrncpy(dat->third_line_text, tszLineText, _countof(dat->third_line_text));
 		else
 			dat->third_line_text[0] = _T('\0');
 
@@ -673,9 +673,9 @@ void LoadCLCOptions(HWND hwnd, ClcData *dat, BOOL bFirst)
 		dat->MenuTextHiColor = sttGetColor("Menu", "SelTextColour", CLCDEFAULT_MODERN_SELTEXTCOLOUR);
 
 		if (db_get_b(NULL, "Menu", "UseBitmap", CLCDEFAULT_USEBITMAP)) {
-			ptrA szBitmap(db_get_sa(NULL, "Menu", "BkBitmap"));
-			if (szBitmap)
-				dat->hMenuBackground = (HBITMAP)CallService(MS_UTILS_LOADBITMAP, 0, szBitmap);
+			ptrT tszBitmap(db_get_tsa(NULL, "Menu", "BkBitmap"));
+			if (tszBitmap != NULL)
+				dat->hMenuBackground = Bitmap_Load(tszBitmap);
 		}
 		dat->MenuBmpUse = db_get_w(NULL, "Menu", "BkBmpUse", CLCDEFAULT_BKBMPUSE);
 	}

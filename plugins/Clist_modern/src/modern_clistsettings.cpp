@@ -22,11 +22,11 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "hdr/modern_commonheaders.h"
-#include "hdr/modern_clist.h"
-#include "hdr/modern_commonprototypes.h"
-#include "hdr/modern_awaymsg.h"
-#include "hdr/modern_gettextasync.h"
+#include "stdafx.h"
+#include "modern_clist.h"
+#include "modern_commonprototypes.h"
+#include "modern_awaymsg.h"
+#include "modern_gettextasync.h"
 
 void InsertContactIntoTree(MCONTACT hContact, int status);
 void CListSettings_FreeCacheItemDataOption(ClcCacheEntry *pDst, DWORD flag);
@@ -203,7 +203,7 @@ void cliCheckCacheItem(ClcCacheEntry *pdnce)
 		pdnce->getName();
 
 	else if (pdnce->isUnknown && pdnce->m_cache_cszProto && pdnce->m_bProtoNotExists == TRUE && g_flag_bOnModulesLoadedCalled) {
-		if (ProtoGetAccount(pdnce->m_cache_cszProto) == NULL) {
+		if (Proto_GetAccount(pdnce->m_cache_cszProto) == NULL) {
 			pdnce->m_bProtoNotExists = FALSE;
 			pdnce->getName();
 		}

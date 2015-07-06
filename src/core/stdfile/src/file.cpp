@@ -27,8 +27,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 HANDLE hDlgSucceeded, hDlgCanceled;
 
-TCHAR* PFTS_StringToTchar(int flags, const PROTOCHAR* s);
-int PFTS_CompareWithTchar(PROTOFILETRANSFERSTATUS* ft, const PROTOCHAR* s, TCHAR *r);
+TCHAR* PFTS_StringToTchar(int flags, const TCHAR* s);
+int PFTS_CompareWithTchar(PROTOFILETRANSFERSTATUS* ft, const TCHAR* s, TCHAR *r);
 
 static HGENMENU hSRFileMenuItem;
 
@@ -123,11 +123,11 @@ void PushFileEvent(MCONTACT hContact, MEVENT hdbe, LPARAM lParam)
 		SkinPlaySound("RecvFile");
 
 		TCHAR szTooltip[256];
-		mir_sntprintf(szTooltip, SIZEOF(szTooltip), TranslateT("File from %s"), pcli->pfnGetContactDisplayName(hContact, 0));
+		mir_sntprintf(szTooltip, _countof(szTooltip), TranslateT("File from %s"), pcli->pfnGetContactDisplayName(hContact, 0));
 		cle.ptszTooltip = szTooltip;
 
 		cle.flags |= CLEF_TCHAR;
-		cle.hIcon = LoadSkinIcon(SKINICON_EVENT_FILE);
+		cle.hIcon = Skin_LoadIcon(SKINICON_EVENT_FILE);
 		cle.pszService = "SRFile/RecvFile";
 		CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
 	}
@@ -336,10 +336,10 @@ static int SRFileProtoAck(WPARAM, LPARAM lParam)
 
 static int SRFileModulesLoaded(WPARAM, LPARAM)
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = -2000020000;
-	mi.icolibItem = GetSkinIconHandle(SKINICON_EVENT_FILE);
-	mi.pszName = LPGEN("&File");
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_EVENT_FILE);
+	mi.name.a = LPGEN("&File");
 	mi.pszService = MS_FILE_SENDFILE;
 	hSRFileMenuItem = Menu_AddContactMenuItem(&mi);
 
@@ -356,7 +356,7 @@ INT_PTR FtMgrShowCommand(WPARAM, LPARAM)
 INT_PTR openContRecDir(WPARAM hContact, LPARAM)
 {
 	TCHAR szContRecDir[MAX_PATH];
-	GetContactReceivedFilesDir(hContact, szContRecDir, SIZEOF(szContRecDir), TRUE);
+	GetContactReceivedFilesDir(hContact, szContRecDir, _countof(szContRecDir), TRUE);
 	ShellExecute(0, _T("open"), szContRecDir, 0, 0, SW_SHOW);
 	return 0;
 }
@@ -364,7 +364,7 @@ INT_PTR openContRecDir(WPARAM hContact, LPARAM)
 INT_PTR openRecDir(WPARAM, LPARAM)
 {
 	TCHAR szContRecDir[MAX_PATH];
-	GetReceivedFilesDir(szContRecDir, SIZEOF(szContRecDir));
+	GetReceivedFilesDir(szContRecDir, _countof(szContRecDir));
 	ShellExecute(0, _T("open"), szContRecDir, 0, 0, SW_SHOW);
 	return 0;
 }
@@ -381,8 +381,10 @@ static INT_PTR Proto_RecvFileT(WPARAM, LPARAM lParam)
 	DBEVENTINFO dbei = { sizeof(dbei) };
 	dbei.szModule = GetContactProto(ccs->hContact);
 	dbei.timestamp = pre->timestamp;
-	dbei.flags = DBEF_UTF | (pre->dwFlags & PREF_CREATEREAD) ? DBEF_READ : 0;
 	dbei.eventType = EVENTTYPE_FILE;
+	dbei.flags = DBEF_UTF;
+	if (pre->dwFlags & PREF_CREATEREAD)
+		dbei.flags |= DBEF_READ;
 
 	bool bUnicode = (pre->dwFlags & PRFF_UNICODE) == PRFF_UNICODE;
 
@@ -390,13 +392,13 @@ static INT_PTR Proto_RecvFileT(WPARAM, LPARAM lParam)
 	if (bUnicode) {
 		pszFiles = (char**)alloca(pre->fileCount * sizeof(char*));
 		for (int i = 0; i < pre->fileCount; i++)
-			pszFiles[i] = Utf8EncodeT(pre->ptszFiles[i]);
+			pszFiles[i] = Utf8EncodeT(pre->files.t[i]);
 		
-		szDescr = Utf8EncodeT(pre->tszDescription);
+		szDescr = Utf8EncodeT(pre->descr.t);
 	}
 	else {
-		pszFiles = pre->pszFiles;
-		szDescr = pre->szDescription;
+		pszFiles = pre->files.a;
+		szDescr = pre->descr.a;
 	}
 
 	dbei.cbBlob = sizeof(DWORD);
@@ -432,10 +434,10 @@ int LoadSendRecvFileModule(void)
 {
 	CreateServiceFunction("FtMgr/Show", FtMgrShowCommand);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.icolibItem = GetSkinIconHandle(SKINICON_EVENT_FILE);
+	CMenuItem mi;
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_EVENT_FILE);
 	mi.position = 1900000000;
-	mi.pszName = LPGEN("File &transfers...");
+	mi.name.a = LPGEN("File &transfers...");
 	mi.pszService = "FtMgr/Show"; //MS_PROTO_SHOWFTMGR;
 	Menu_AddMainMenuItem(&mi);
 

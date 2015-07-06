@@ -45,10 +45,10 @@ static INT_PTR CALLBACK DlgProc_AnniversaryEditor(HWND hDlg, UINT uMsg, WPARAM w
 
 		// set icons
 		if (db_get_b(NULL, MODNAME, SET_ICONS_BUTTONS, 1)) {
-			SendDlgItemMessage(hDlg, IDOK, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_GetIcon(ICO_BTN_OK));
-			SendDlgItemMessage(hDlg, IDCANCEL, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_GetIcon(ICO_BTN_CANCEL));
+			SendDlgItemMessage(hDlg, IDOK, BM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIcon(ICO_BTN_OK));
+			SendDlgItemMessage(hDlg, IDCANCEL, BM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIcon(ICO_BTN_CANCEL));
 		}
-		SendDlgItemMessage(hDlg, IDC_HEADERBAR, WM_SETICON, 0, (LPARAM)Skin_GetIcon(ICO_DLG_ANNIVERSARY, TRUE));
+		SendDlgItemMessage(hDlg, IDC_HEADERBAR, WM_SETICON, 0, (LPARAM)IcoLib_GetIcon(ICO_DLG_ANNIVERSARY, TRUE));
 
 		// translate controls
 		SendDlgItemMessage(hDlg, IDOK, BUTTONTRANSLATE, NULL, NULL);
@@ -148,7 +148,7 @@ INT_PTR CALLBACK PSPProcAnniversary(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 						{ ICO_BTN_ADD, BM_SETIMAGE, BTN_ADD },
 						{ ICO_BTN_DELETE, BM_SETIMAGE, BTN_DELETE }
 					};
-					IcoLib_SetCtrlIcons(hDlg, idIcon, SIZEOF(idIcon));
+					IcoLib_SetCtrlIcons(hDlg, idIcon, _countof(idIcon));
 				}
 				return FALSE;
 			}

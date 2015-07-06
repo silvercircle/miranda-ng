@@ -68,19 +68,13 @@ int gg_img_remove(GGIMAGEDLGDATA *dat);
 
 int GGPROTO::img_init()
 {
-	char service[64];
-	mir_snprintf(service, SIZEOF(service), "%s%s", m_szModuleName, GGS_SENDIMAGE);
-	CreateProtoService(GGS_SENDIMAGE, &GGPROTO::img_sendimg);
-
 	// Send image contact menu item
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.flags = CMIF_TCHAR;
+	CMenuItem mi;
 	mi.position = -2000010000;
-	mi.icolibItem = iconList[11].hIcolib;
-	mi.ptszName = LPGENT("&Image");
-	mi.pszService = service;
-	mi.pszContactOwner = m_szModuleName;
-	hImageMenuItem = Menu_AddContactMenuItem(&mi);
+	mi.hIcolibItem = iconList[11].hIcolib;
+	mi.name.a = LPGEN("&Image");
+	mi.pszService = GGS_SENDIMAGE;
+	hImageMenuItem = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
 	// Receive image
 	CreateProtoService(GGS_RECVIMAGE, &GGPROTO::img_recvimage);
@@ -127,8 +121,7 @@ int GGPROTO::img_destroy()
 
 	// Destroy list
 	list_destroy(imagedlgs, 1);
-	CallService(MO_REMOVEMENUITEM, (WPARAM)hImageMenuItem, 0);
-
+	Menu_RemoveItem(hImageMenuItem);
 	return FALSE;
 }
 
@@ -248,10 +241,10 @@ int gg_img_saveimage(HWND hwnd, GGIMAGEENTRY *dat)
 	GGPROTO* gg = ((GGIMAGEDLGDATA *)GetWindowLongPtr(hwnd, GWLP_USERDATA))->gg;
 
 	TCHAR szFilter[128];
-	gg_img_getfilter(szFilter, SIZEOF(szFilter));
+	gg_img_getfilter(szFilter, _countof(szFilter));
 
 	TCHAR szFileName[MAX_PATH];
-	_tcsncpy(szFileName, dat->lpszFileName, SIZEOF(szFileName));
+	_tcsncpy(szFileName, dat->lpszFileName, _countof(szFileName));
 
 	OPENFILENAME ofn = {0};
 	ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400;
@@ -422,9 +415,9 @@ static INT_PTR CALLBACK gg_img_dlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			
 			TCHAR *szName = pcli->pfnGetContactDisplayName(dat->hContact, 0), szTitle[128];
 			if (dat->bReceiving)
-				mir_sntprintf(szTitle, SIZEOF(szTitle), TranslateT("Image from %s"), szName);
+				mir_sntprintf(szTitle, TranslateT("Image from %s"), szName);
 			else
-				mir_sntprintf(szTitle, SIZEOF(szTitle), TranslateT("Image for %s"), szName);
+				mir_sntprintf(szTitle, TranslateT("Image for %s"), szName);
 			SetWindowText(hwndDlg, szTitle);
 
 			// Store client extents
@@ -435,18 +428,10 @@ static INT_PTR CALLBACK gg_img_dlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 		return TRUE;
 
 	case WM_SIZE:
-		{
-			UTILRESIZEDIALOG urd = {0};
-			urd.cbSize = sizeof(urd);
-			urd.hInstance = hInstance;
-			urd.hwndDlg = hwndDlg;
-			urd.lpTemplate = dat->bReceiving ? MAKEINTRESOURCEA(IDD_IMAGE_RECV) : MAKEINTRESOURCEA(IDD_IMAGE_SEND);
-			urd.pfnResizer = sttImageDlgResizer;
-			CallService(MS_UTILS_RESIZEDIALOG, 0, (LPARAM)&urd);
-			if (wParam == SIZE_RESTORED || wParam == SIZE_MAXIMIZED)
-				InvalidateRect(hwndDlg, NULL, FALSE);
-			return 0;
-		}
+		Utils_ResizeDialog(hwndDlg, hInstance, dat->bReceiving ? MAKEINTRESOURCEA(IDD_IMAGE_RECV) : MAKEINTRESOURCEA(IDD_IMAGE_SEND), sttImageDlgResizer);
+		if (wParam == SIZE_RESTORED || wParam == SIZE_MAXIMIZED)
+			InvalidateRect(hwndDlg, NULL, FALSE);
+		return 0;
 
 	case WM_SIZING:
 		{
@@ -505,7 +490,7 @@ static INT_PTR CALLBACK gg_img_dlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			if (dat->bReceiving)
 			{
 				TCHAR szTitle[128];
-				mir_sntprintf(szTitle, SIZEOF(szTitle), _T("%s (%d / %d)"), img->lpszFileName, dat->nImg, dat->nImgTotal);
+				mir_sntprintf(szTitle, _T("%s (%d / %d)"), img->lpszFileName, dat->nImg, dat->nImgTotal);
 				SetDlgItemText(hwndDlg, IDC_IMG_NAME, szTitle);
 			}
 			else
@@ -677,7 +662,7 @@ static INT_PTR CALLBACK gg_img_dlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			TCHAR szFileName[MAX_PATH];
 			OPENFILENAME ofn = {0};
 
-			gg_img_getfilter(szFilter, SIZEOF(szFilter));
+			gg_img_getfilter(szFilter, _countof(szFilter));
 			*szFileName = 0;
 			ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400;
 			ofn.hwndOwner = hwndDlg;
@@ -716,7 +701,7 @@ static INT_PTR CALLBACK gg_img_dlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 void __cdecl GGPROTO::img_dlgcallthread(void *param)
 {
-	HWND hMIWnd = 0; //(HWND) CallService(MS_CLUI_GETHWND, 0, 0);
+	HWND hMIWnd = 0;
 
 	debugLogA("img_dlgcallthread(): started.");
 	GGIMAGEDLGDATA *dat = (GGIMAGEDLGDATA *)param;
@@ -813,7 +798,7 @@ int GGPROTO::img_displayasmsg(MCONTACT hContact, void *img)
 
 	if (hImagesFolder == NULL || FoldersGetCustomPathT(hImagesFolder, path, MAX_PATH, _T(""))) {
 		TCHAR *tmpPath = Utils_ReplaceVarsT( _T("%miranda_userdata%"));
-		tPathLen = mir_sntprintf(szPath, SIZEOF(szPath), _T("%s\\%s\\ImageCache"), tmpPath, m_tszUserName);
+		tPathLen = mir_sntprintf(szPath, _T("%s\\%s\\ImageCache"), tmpPath, m_tszUserName);
 		mir_free(tmpPath);
 	}
 	else {
@@ -828,7 +813,7 @@ int GGPROTO::img_displayasmsg(MCONTACT hContact, void *img)
 		} else {
 			debugLog(_T("img_displayasmsg(): Can not create directory for image cache: %s. errno=%d: %s"), szPath, errno, strerror(errno));
 			TCHAR error[512];
-			mir_sntprintf(error, SIZEOF(error), TranslateT("Cannot create image cache directory. ERROR: %d: %s\n%s"), errno, _tcserror(errno), szPath);
+			mir_sntprintf(error, TranslateT("Cannot create image cache directory. ERROR: %d: %s\n%s"), errno, _tcserror(errno), szPath);
 			showpopup(m_tszUserName, error, GG_POPUP_ERROR | GG_POPUP_ALLOW_MSGBOX | GG_POPUP_ONCE);
 		}
 	}
@@ -840,7 +825,7 @@ int GGPROTO::img_displayasmsg(MCONTACT hContact, void *img)
 	for (i = 1; ; ++i)
 	{
 		if ((res = gg_img_isexists(szPath, dat)) != -1) break;
-		mir_sntprintf(szPath, SIZEOF(szPath), _T("%.*s (%u)%s"), pImgext - szPath, szPath, i, imgext);
+		mir_sntprintf(szPath, _T("%.*s (%u)%s"), pImgext - szPath, szPath, i, imgext);
 	}
 
 	if (res == 0) {
@@ -852,7 +837,7 @@ int GGPROTO::img_displayasmsg(MCONTACT hContact, void *img)
 		} else {
 			debugLog(_T("img_displayasmsg(): Cannot open file %s for write image. errno=%d: %s"), szPath, errno, strerror(errno));
 			TCHAR error[512];
-			mir_sntprintf(error, SIZEOF(error), TranslateT("Cannot save received image to file. ERROR: %d: %s\n%s"), errno, _tcserror(errno), szPath);
+			mir_sntprintf(error, TranslateT("Cannot save received image to file. ERROR: %d: %s\n%s"), errno, _tcserror(errno), szPath);
 			showpopup(m_tszUserName, error, GG_POPUP_ERROR);
 			return 0;
 		}
@@ -860,7 +845,7 @@ int GGPROTO::img_displayasmsg(MCONTACT hContact, void *img)
 
 	if (res != 0) {
 		TCHAR image_msg[MAX_PATH + 11];
-		mir_sntprintf(image_msg, SIZEOF(image_msg), _T("[img]%s[/img]"), szPath);
+		mir_sntprintf(image_msg, _countof(image_msg), _T("[img]%s[/img]"), szPath);
 
 		T2Utf szMessage(image_msg);
 		PROTORECVEVENT pre = {0};
@@ -975,7 +960,7 @@ void* GGPROTO::img_loadpicture(gg_event* e, TCHAR *szFileName)
 			free(dat);
 			debugLog(_T("img_loadpicture(): fopen(\"%s\", \"rb\") failed. errno=%d: %s"), szFileName, errno, strerror(errno));
 			TCHAR error[512];
-			mir_sntprintf(error, SIZEOF(error), TranslateT("Cannot open image file. ERROR: %d: %s\n%s"), errno, _tcserror(errno), szFileName);
+			mir_sntprintf(error, TranslateT("Cannot open image file. ERROR: %d: %s\n%s"), errno, _tcserror(errno), szFileName);
 			showpopup(m_tszUserName, error, GG_POPUP_ERROR);
 			return NULL;
 		}
@@ -1025,7 +1010,7 @@ void* GGPROTO::img_loadpicture(gg_event* e, TCHAR *szFileName)
 				dat->lpszFileName = (TCHAR*)calloc(sizeof(TCHAR), mir_tstrlen(tmpFileName) + mir_tstrlen(szImgType) + 1);
 				if (dat->lpszFileName != NULL) {
 					mir_tstrcpy(dat->lpszFileName, tmpFileName);
-					_tcscat(dat->lpszFileName, szImgType);
+					mir_tstrcat(dat->lpszFileName, szImgType);
 				}
 			}
 		}

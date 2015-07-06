@@ -271,7 +271,7 @@ namespace
 			MCONTACT hContact = MCONTACT(lp);
 			TranslateDialogDefault(hWnd);
 
-			HANDLE hWL = CModuleInfo::GetInstance().GetWindowList(WINDOW_PREFIX_SETTINGS, false);
+			MWindowList hWL = CModuleInfo::GetInstance().GetWindowList(WINDOW_PREFIX_SETTINGS, false);
 			assert(hWL);
 			WindowList_Add(hWL, hWnd, hContact);
 
@@ -493,7 +493,7 @@ namespace
 			CSettingWindowParam* pParam = get_param(hWnd);
 			SetWindowLongPtr(hWnd, GWLP_USERDATA, 0);
 
-			HANDLE hWL = CModuleInfo::GetInstance().GetWindowList(WINDOW_PREFIX_SETTINGS, false);
+			MWindowList hWL = CModuleInfo::GetInstance().GetWindowList(WINDOW_PREFIX_SETTINGS, false);
 			assert(hWL);
 			WindowList_Remove(hWL, hWnd);
 			Utils_SaveWindowPosition(hWnd, pParam->m_hContact, QUOTES_MODULE_NAME, WINDOW_PREFIX_SETTINGS);
@@ -509,7 +509,7 @@ namespace
 
 void ShowSettingsDlg(MCONTACT hContact)
 {
-	HANDLE hWL = CModuleInfo::GetInstance().GetWindowList(WINDOW_PREFIX_SETTINGS, true);
+	MWindowList hWL = CModuleInfo::GetInstance().GetWindowList(WINDOW_PREFIX_SETTINGS, true);
 	assert(hWL);
 	HWND hWnd = WindowList_Find(hWL, hContact);
 	if (NULL != hWnd)
@@ -1070,14 +1070,9 @@ tstring GenerateLogFileName(const tstring& rsLogFilePattern,
 		}
 	}
 
-	if (nFlags&glfnResolveUserProfile)
+	if (nFlags & glfnResolveUserProfile)
 	{
-		REPLACEVARSDATA dat = { 0 };
-		dat.cbSize = sizeof(dat);
-		dat.dwFlags = RVF_TCHAR;
-
-		TCHAR* ptszParsedName = reinterpret_cast<TCHAR*>(CallService(MS_UTILS_REPLACEVARS,
-			reinterpret_cast<WPARAM>(sPath.c_str()), reinterpret_cast<LPARAM>(&dat)));
+		TCHAR* ptszParsedName = Utils_ReplaceVarsT(sPath.c_str());
 		if (ptszParsedName)
 		{
 			sPath = ptszParsedName;

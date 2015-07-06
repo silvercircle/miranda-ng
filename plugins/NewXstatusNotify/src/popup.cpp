@@ -36,7 +36,7 @@ void ShowChangePopup(MCONTACT hContact, HICON hIcon, WORD newStatus, const TCHAR
 	}
 	_tcsncpy_s(ppd.lptzContactName, buf, _TRUNCATE);
 
-	_tcsncpy(ppd.lptzText, stzText, SIZEOF(ppd.lptzText));
+	_tcsncpy(ppd.lptzText, stzText, _countof(ppd.lptzText));
 
 	switch (opt.Colors) {
 	case POPUP_COLOR_OWN:
@@ -85,9 +85,9 @@ static int AwayMsgHook(WPARAM, LPARAM lParam, LPARAM pObj)
 
 	TCHAR stzText[1024];
 	if (pstzLast)
-		mir_sntprintf(stzText, SIZEOF(stzText), _T("%s\n%s"), pstzLast, tszStatus);
+		mir_sntprintf(stzText, _countof(stzText), _T("%s\n%s"), pstzLast, tszStatus);
 	else
-		_tcsncpy(stzText, tszStatus, SIZEOF(stzText));
+		_tcsncpy(stzText, tszStatus, _countof(stzText));
 	SendMessage(pdp->hWnd, WM_SETREDRAW, FALSE, 0);
 	PUChangeTextT(pdp->hWnd, stzText);
 	SendMessage(pdp->hWnd, WM_SETREDRAW, TRUE, 0);
@@ -123,8 +123,8 @@ void PopupAction(HWND hWnd, BYTE action)
 		case PCA_OPENMENU:
 		{
 			POINT pt = { 0 };
-			HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDCONTACT, hContact, 0);
 			GetCursorPos(&pt);
+			HMENU hMenu = Menu_BuildContactMenu(hContact);
 			TrackPopupMenu(hMenu, 0, pt.x, pt.y, 0, hWnd, NULL);
 			DestroyMenu(hMenu);
 		}
@@ -155,10 +155,10 @@ LRESULT CALLBACK PopupDlgProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
 	switch (message) {
 	case WM_MEASUREITEM: //Needed by the contact's context menu
-		return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
+		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
 
 	case WM_DRAWITEM: //Needed by the contact's context menu
-		return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
+		return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
 
 	case WM_COMMAND:
 		//This one returns TRUE if it processed the menu command, and FALSE if it did not process it.

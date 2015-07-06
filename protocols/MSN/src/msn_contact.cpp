@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "msn_global.h"
+#include "stdafx.h"
 #include "msn_proto.h"
 
 MCONTACT CMsnProto::MSN_HContactFromEmail(const char* wlid, const char* msnNick, bool addIfNeeded, bool temporary)
@@ -37,9 +37,9 @@ MCONTACT CMsnProto::MSN_HContactFromEmail(const char* wlid, const char* msnNick,
 	if (hContact == NULL && addIfNeeded) {
 		int netId = (msc && msc->netId)?msc->netId:(szNet?atoi(szNet):NETID_MSN);
 		hContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
-		CallService(MS_PROTO_ADDTOCONTACT, hContact, (LPARAM)m_szModuleName);
+		Proto_AddToContact(hContact, m_szModuleName);
 		if (netId != NETID_SKYPE) setString(hContact, "e-mail", szEmail);
-		setStringUtf(hContact, "Nick", msnNick ? msnNick : wlid);
+		setStringUtf(hContact, "Nick", msnNick ? msnNick : szEmail);
 		setWord(hContact, "netId", netId);
 		setString(hContact, "wlid", szEmail);
 		if (temporary)
@@ -76,6 +76,8 @@ MCONTACT CMsnProto::MSN_HContactFromChatID(const char* wlid)
 void CMsnProto::MSN_SetContactDb(MCONTACT hContact, const char *szEmail)
 {
 	MsnContact *cont = Lists_Get(szEmail);
+	if (cont == NULL)
+		return;
 	const int listId = cont->list;
 
 	if (listId & LIST_FL) {
@@ -113,13 +115,13 @@ void CMsnProto::AddDelUserContList(const char* email, const int list, const int 
 	if (list < LIST_RL) {
 		const char* dom = strchr(email, '@');
 		if (dom == NULL) {
-			sz = mir_snprintf(buf, SIZEOF(buf),
+			sz = mir_snprintf(buf,
 				"<ml><t><c n=\"%s\" l=\"%d\"/></t></ml>",
 				email, list);
 		}
 		else {
 			*(char*)dom = 0;
-			sz = mir_snprintf(buf, SIZEOF(buf),
+			sz = mir_snprintf(buf,
 				"<ml><d n=\"%s\"><c n=\"%s\" l=\"%d\" t=\"%d\"/></d></ml>",
 				dom + 1, email, list, netId);
 			*(char*)dom = '@';
@@ -148,88 +150,102 @@ bool CMsnProto::MSN_AddUser(MCONTACT hContact, const char* email, int netId, int
 		return true;
 
 	bool res = false;
-	if (flags == LIST_FL) {
-		if (needRemove) {
-			if (hContact == NULL) {
-				hContact = MSN_HContactFromEmail(email);
-				if (hContact == NULL)
-					return false;
-			}
+	if (MyOptions.netId == NETID_SKYPE) {
+		if (flags & LIST_BL) {
+			if (needRemove) return MSN_SKYABBlockContact(email, "unblock");
+			return MSN_SKYABBlockContact(email, "block");
+		}
+		else if ((flags & LIST_FL)) {
+			if (!needRemove) return MSN_SKYABAuthRq(email, msg);
+			if (!leaveHotmail) return MSN_SKYABDeleteContact(email);
+			return true;
+		}
+		else if ((flags & LIST_AL) && !needRemove) return MSN_SKYABAuthRsp(email, "accept");
+		else if ((flags & LIST_RL) && !needRemove) return MSN_SKYABAuthRsp(email, "decline");
+	} else {
+		if (flags == LIST_FL) {
+			if (needRemove) {
+				if (hContact == NULL) {
+					hContact = MSN_HContactFromEmail(email);
+					if (hContact == NULL)
+						return false;
+				}
 
-			char id[MSN_GUID_LEN];
-			if (!db_get_static(hContact, m_szModuleName, "ID", id, sizeof(id))) {
-				int netId = Lists_GetNetId(email);
-				if (leaveHotmail)
-					res = MSN_ABAddRemoveContact(id, netId, false);
-				else
-					res = MSN_ABAddDelContactGroup(id, NULL, "ABContactDelete");
-				if (res) AddDelUserContList(email, flags, netId, true);
+				char id[MSN_GUID_LEN];
+				if (!db_get_static(hContact, m_szModuleName, "ID", id, sizeof(id))) {
+					int netId = Lists_GetNetId(email);
+					if (leaveHotmail)
+						res = MSN_ABAddRemoveContact(id, netId, false);
+					else
+						res = MSN_ABAddDelContactGroup(id, NULL, "ABContactDelete");
+					if (res) AddDelUserContList(email, flags, netId, true);
 
-				delSetting(hContact, "GroupID");
-				delSetting(hContact, "ID");
-				MSN_RemoveEmptyGroups();
+					delSetting(hContact, "GroupID");
+					delSetting(hContact, "ID");
+					MSN_RemoveEmptyGroups();
+				}
 			}
+			else {
+				DBVARIANT dbv = { 0 };
+				if (!mir_strcmp(email, MyOptions.szEmail))
+					getStringUtf("Nick", &dbv);
+
+				unsigned res1 = MSN_ABContactAdd(email, dbv.pszVal, netId, msg, false);
+				if (netId == NETID_MSN && res1 == 2) {
+					netId = NETID_LCS;
+					res = MSN_ABContactAdd(email, dbv.pszVal, netId, msg, false) == 0;
+				}
+				else if (netId == NETID_MSN && res1 == 3) {
+					char szContactID[100];
+					hContact = MSN_HContactFromEmail(email);
+					if (db_get_static(hContact, m_szModuleName, "ID", szContactID, sizeof(szContactID)) == 0) {
+						MSN_ABAddRemoveContact(szContactID, netId, true);
+						res = true;
+					}
+				}
+				else res = (res1 == 0);
+
+				if (res) {
+					DBVARIANT dbv;
+					if (!db_get_utf(hContact, "CList", "Group", &dbv)) {
+						MSN_MoveContactToGroup(hContact, dbv.pszVal);
+						db_free(&dbv);
+					}
+
+					char szContactID[100];
+					if (db_get_static(hContact, m_szModuleName, "ID", szContactID, sizeof(szContactID)) == 0)
+						MSN_ABFind("ABFindByContacts", szContactID);
+
+					MSN_SharingFindMembership(true);
+					AddDelUserContList(email, flags, netId, false);
+				}
+	#ifdef OBSOLETE
+				else if (netId == 1 && strstr(email, "@yahoo.com") != 0)
+					MSN_FindYahooUser(email);
+	#endif
+
+				db_free(&dbv);
+			}
+		}
+		else if (flags == LIST_LL) {
+			if (needRemove)
+				Lists_Remove(LIST_LL, email);
+			else
+				Lists_Add(LIST_LL, NETID_MSN, email);
 		}
 		else {
-			DBVARIANT dbv = { 0 };
-			if (!mir_strcmp(email, MyOptions.szEmail))
-				getStringUtf("Nick", &dbv);
-
-			unsigned res1 = MSN_ABContactAdd(email, dbv.pszVal, netId, msg, false);
-			if (netId == NETID_MSN && res1 == 2) {
-				netId = NETID_LCS;
-				res = MSN_ABContactAdd(email, dbv.pszVal, netId, msg, false) == 0;
+			if (netId == 0)
+				netId = Lists_GetNetId(email);
+			res = MSN_SharingAddDelMember(email, flags, netId, needRemove ? "DeleteMember" : "AddMember");
+			AddDelUserContList(email, flags, netId, needRemove);
+			if ((flags & LIST_BL) && !needRemove) {
+				ThreadData* thread = MSN_GetThreadByContact(email, SERVER_SWITCHBOARD);
+				if (thread) thread->sendTerminate();
 			}
-			else if (netId == NETID_MSN && res1 == 3) {
-				char szContactID[100];
-				hContact = MSN_HContactFromEmail(email);
-				if (db_get_static(hContact, m_szModuleName, "ID", szContactID, sizeof(szContactID)) == 0) {
-					MSN_ABAddRemoveContact(szContactID, netId, true);
-					res = true;
-				}
-			}
-			else res = (res1 == 0);
 
-			if (res) {
-				DBVARIANT dbv;
-				if (!db_get_utf(hContact, "CList", "Group", &dbv)) {
-					MSN_MoveContactToGroup(hContact, dbv.pszVal);
-					db_free(&dbv);
-				}
-
-				char szContactID[100];
-				if (db_get_static(hContact, m_szModuleName, "ID", szContactID, sizeof(szContactID)) == 0)
-					MSN_ABFind("ABFindByContacts", szContactID);
-
-				MSN_SharingFindMembership(true);
-				AddDelUserContList(email, flags, netId, false);
-			}
-#ifdef OBSOLETE
-			else if (netId == 1 && strstr(email, "@yahoo.com") != 0)
-				MSN_FindYahooUser(email);
-#endif
-
-			db_free(&dbv);
+			if ((flags & LIST_PL) && needRemove)
+				MSN_AddUser(hContact, email, netId, LIST_RL);
 		}
-	}
-	else if (flags == LIST_LL) {
-		if (needRemove)
-			Lists_Remove(LIST_LL, email);
-		else
-			Lists_Add(LIST_LL, NETID_MSN, email);
-	}
-	else {
-		if (netId == 0)
-			netId = Lists_GetNetId(email);
-		res = MSN_SharingAddDelMember(email, flags, netId, needRemove ? "DeleteMember" : "AddMember");
-		AddDelUserContList(email, flags, netId, needRemove);
-		if ((flags & LIST_BL) && !needRemove) {
-			ThreadData* thread = MSN_GetThreadByContact(email, SERVER_SWITCHBOARD);
-			if (thread) thread->sendTerminate();
-		}
-
-		if ((flags & LIST_PL) && needRemove)
-			MSN_AddUser(hContact, email, netId, LIST_RL);
 	}
 	return res;
 }
@@ -243,7 +259,7 @@ void CMsnProto::MSN_FindYahooUser(const char* email)
 		size_t sz;
 
 		*(char*)dom = '\0';
-		sz = mir_snprintf(buf, SIZEOF(buf), "<ml><d n=\"%s\"><c n=\"%s\"/></d></ml>", dom + 1, email);
+		sz = mir_snprintf(buf, "<ml><d n=\"%s\"><c n=\"%s\"/></d></ml>", dom + 1, email);
 		*(char*)dom = '@';
 		msnNsThread->sendPacket("FQY", "%d\r\n%s", sz, buf);
 	}
@@ -285,7 +301,10 @@ bool CMsnProto::MSN_RefreshContactList(void)
 	}
 	else
 	{
-		/* TODO: Add pulling Skype contacts from event server or skypeweb or other unknown method.. */
+		// Refresh Skype contact list
+		MSN_SKYABRefreshClist();
+		
+		// Populate Contact list on MSN network to get status updates of contacts
 		MSN_CreateContList();
 	}
 

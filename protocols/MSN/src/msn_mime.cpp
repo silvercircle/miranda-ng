@@ -20,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "msn_global.h"
+#include "stdafx.h"
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // constructors and destructor
@@ -339,7 +339,7 @@ static const struct _tag_cpltbl
 static unsigned FindCP(const char* mimecp)
 {
 	unsigned cp = CP_ACP;
-	for (unsigned i = 0; i < SIZEOF(cptbl); ++i) {
+	for (unsigned i = 0; i < _countof(cptbl); ++i) {
 		if (_stricmp(mimecp, cptbl[i].mimecp) == 0) {
 			cp = cptbl[i].cp;
 			break;
@@ -392,9 +392,9 @@ static size_t utf8toutf16(char* str, wchar_t* res)
 {
 	wchar_t *dec = mir_utf8decodeW(str);
 	if (dec == NULL) dec = mir_a2u(str);
-	wcscpy(res, dec);
+	mir_wstrcpy(res, dec);
 	mir_free(dec);
-	return wcslen(res);
+	return mir_wstrlen(res);
 }
 
 

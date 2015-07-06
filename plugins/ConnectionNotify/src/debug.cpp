@@ -27,36 +27,36 @@ void _OutputDebugString(TCHAR* lpOutputString, ...)
 		case 's':
 		{
 			TCHAR* s = va_arg(argptr, TCHAR *);
-			mir_sntprintf(OutMsg, SIZEOF(OutMsg), format, s);
+			mir_sntprintf(OutMsg, _countof(OutMsg), format, s);
 			_tcsncpy(format, OutMsg, _countof(OutMsg));
 			j = (int)mir_tstrlen(format);
-			_tcscat(format, _T(" "));
+			mir_tstrcat(format, _T(" "));
 			break;
 		}
 		// character
 		case 'c':
 		{
 			char c = (char)va_arg(argptr, int);
-			mir_sntprintf(OutMsg, SIZEOF(OutMsg), format, c);
+			mir_sntprintf(OutMsg, _countof(OutMsg), format, c);
 			_tcsncpy(format, OutMsg, _countof(OutMsg));
 			j = (int)mir_tstrlen(format);
-			_tcscat(format, _T(" "));
+			mir_tstrcat(format, _T(" "));
 			break;
 		}
 		// integer
 		case 'd':
 		{
 			int d = va_arg(argptr, int);
-			mir_sntprintf(OutMsg, SIZEOF(OutMsg), format, d);
+			mir_sntprintf(OutMsg, _countof(OutMsg), format, d);
 			_tcsncpy(format, OutMsg, _countof(OutMsg));
 			j = (int)mir_tstrlen(format);
-			_tcscat(format, _T(" "));
+			mir_tstrcat(format, _T(" "));
 			break;
 		}
 		}
 		format[j + 1] = '\0';
 	}
-	_tcscat(format, _T("\n"));
+	mir_tstrcat(format, _T("\n"));
 	OutputDebugString(format);
 
 	va_end(argptr);

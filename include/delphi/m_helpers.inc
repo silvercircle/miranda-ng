@@ -11,7 +11,6 @@ function CLCDEFAULT_SELBKCOLOUR:dword;
 function CLCDEFAULT_SELTEXTCOLOUR:dword;
 function CLCDEFAULT_HOTTEXTCOLOUR:dword;
 
-
 function CreateVersionString(version:dword;buf:PAnsiChar):PAnsiChar;
 function CreateVersionStringPlugin(pluginInfo:PPluginInfoEx;buf:PAnsiChar):PAnsiChar;
 function PLUGIN_MAKE_VERSION(a,b,c,d: Cardinal): int;
@@ -27,13 +26,6 @@ function Netlib_GetBase64EncodedBufferSize(const cbDecoded: int): int;
 function Netlib_Send(hConn: THANDLE; const buf: PAnsiChar; len: int; flags: int): int_ptr;
 function Netlib_Recv(hConn: THANDLE; const buf: PAnsiChar; len: int; flags: int): int_ptr;
 procedure Netlib_Log(hNetLib: THANDLE; const sz: PAnsiChar);
-
-function WindowList_Add      (hList:THANDLE; hWnd:HWND; hContact:TMCONTACT): int_ptr;
-function WindowList_Remove   (hList:THANDLE; hWnd:HWND): int_ptr;
-function WindowList_Find     (hList:THANDLE; hContact:TMCONTACT): int_ptr;
-function WindowList_Broadcast(hList:THANDLE; message: int; wParam: WPARAM; lParam: LPARAM): int_ptr;
-function Utils_SaveWindowPosition   (hWnd:HWND; hContact:TMCONTACT; const szModule, szNamePrefix: PAnsiChar): int_ptr;
-function Utils_RestoreWindowPosition(hWnd:HWND; hContact:TMCONTACT; Flags: int; const szModule, szNamePrefix: PAnsiChar): int_ptr;
 
 function mir_hashstr (const key:PAnsiChar):uint; {inline;}
 function mir_hashstrW(const key:PWideChar):uint; {inline;}
@@ -57,23 +49,15 @@ procedure Srmm_RemoveIcon(sid: PStatusIconData);
 procedure Srmm_ModifyIcon(hContact:TMCONTACT; sid:PStatusIconData);
 function  Srmm_GetNthIcon(hContact:TMCONTACT; index:int):pStatusIconData;
 
-function LoadSkinnedIcon      (id: int): HICON;
-function LoadSkinnedIconHandle(id: int): THANDLE;
-function LoadSkinnedIconBig   (id: int): HICON;
-function LoadSkinnedIconName  (id: int): PAnsiChar;
-
-function LoadSkinnedProtoIcon(const szProto: PAnsiChar; status: int): THANDLE;
 function SkinAddNewSound(const name, description, defaultFile: PAnsiChar): int_ptr;
 function SkinPlaySound  (const name: PAnsiChar): int_ptr;
 
-function Menu_AddContextFrameMenuItem(mi:PCLISTMENUITEM):HGENMENU;
-function Menu_AddMainMenuItem        (mi:PCLISTMENUITEM):HGENMENU;
-function Menu_AddContactMenuItem     (mi:PCLISTMENUITEM):HGENMENU;
-function Menu_AddStatusMenuItem      (mi:PCLISTMENUITEM):HGENMENU;
-function Menu_AddProtoMenuItem       (mi:PCLISTMENUITEM):HGENMENU;
-function Menu_AddSubGroupMenuItem    (mi:PCLISTMENUITEM):HGENMENU;
-function Menu_AddGroupMenuItem       (mi:PCLISTMENUITEM):HGENMENU;
-function Menu_AddTrayMenuItem        (mi:PCLISTMENUITEM):HGENMENU;
+function Menu_AddContextFrameMenuItem(mi:PMO_MenuItem):HGENMENU;
+function Menu_AddMainMenuItem        (mi:PMO_MenuItem):HGENMENU;
+function Menu_AddContactMenuItem     (mi:PMO_MenuItem):HGENMENU;
+function Menu_AddStatusMenuItem      (mi:PMO_MenuItem):HGENMENU;
+function Menu_AddProtoMenuItem       (mi:PMO_MenuItem):HGENMENU;
+function Menu_AddTrayMenuItem        (mi:PMO_MenuItem):HGENMENU;
 
 function UserInfo_AddPage(wParam:WPARAM; odp:POPTIONSDIALOGPAGE):int_ptr;
 function Options_AddPage (wParam:WPARAM; odp:POPTIONSDIALOGPAGE):int_ptr;
@@ -108,6 +92,21 @@ function  Crypto_GetProvider(pszName:PAnsiChar):PCRYPTO_PROVIDER;
 
 var
   hLangpack:int = 0;
+
+function _AddMainMenuItem(mi:PMO_MenuItem) : HGENMENU; stdcall;
+             external AppDll name 'Menu_AddMainMenuItem';
+
+function _AddContactMenuItem(mi:PMO_MenuItem; pszProto:PAnsiChar) : HGENMENU; stdcall;
+             external AppDll name 'Menu_AddContactMenuItem';
+
+function _AddProtoMenuItem(mi:PMO_MenuItem; pszProto:PAnsiChar) : HGENMENU; stdcall;
+             external AppDll name 'Menu_AddProtoMenuItem';
+
+function _AddStatusMenuItem(mi:PMO_MenuItem; pszProto:PAnsiChar) : HGENMENU; stdcall;
+             external AppDll name 'Menu_AddStatusMenuItem';
+
+function _AddTrayMenuItem(mi:PMO_MenuItem) : HGENMENU; stdcall;
+             external AppDll name 'Menu_AddTrayMenuItem';
 
 //----- CListint -----
 
@@ -252,61 +251,6 @@ begin
 end;
 
 
-function WindowList_Add(hList: THANDLE; hWnd: HWND; hContact: TMCONTACT): int_ptr;
-var
-  wle: TWINDOWLISTENTRY;
-begin
-  wle.hList    := hList;
-  wle.hWnd     := hWnd;
-  wle.hContact := hContact;
-  Result := CallService(MS_UTILS_ADDTOWINDOWLIST, 0, lParam(@wle));
-end;
-
-function WindowList_Remove(hList: THANDLE; hWnd: HWND): int_ptr;
-  {$IFDEF AllowInline}inline;{$ENDIF}
-begin
-  Result := CallService(MS_UTILS_REMOVEFROMWINDOWLIST, hList, hWnd);
-end;
-
-function WindowList_Find(hList: THANDLE; hContact: TMCONTACT): int_ptr;
-  {$IFDEF AllowInline}inline;{$ENDIF}
-begin
-  Result := CallService(MS_UTILS_FINDWINDOWINLIST, hList, hContact);
-end;
-
-function WindowList_Broadcast(hList: THANDLE; message: int; wParam: WPARAM; lParam: LPARAM): int_ptr;
-var
-  msg: TMSG;
-begin
-  msg.message := message;
-  msg.wParam  := wParam;
-  msg.lParam  := lParam;
-  Result := CallService(MS_UTILS_BROADCASTTOWINDOWLIST, hList, tLparam(@Msg));
-end;
-
-function Utils_SaveWindowPosition(hWnd:HWND; hContact:TMCONTACT; const szModule, szNamePrefix: PAnsiChar): int_ptr;
-var
-  swp: TSAVEWINDOWPOS;
-begin
-  swp.hWnd     := hWnd;
-  swp.hContact := hContact;
-  swp.szModule := szModule;
-  swp.szNamePrefix := szNamePrefix;
-  Result := CallService(MS_UTILS_SAVEWINDOWPOSITION, 0, lParam(@swp));
-end;
-
-function Utils_RestoreWindowPosition(hWnd:HWND; hContact:TMCONTACT; Flags:int; const szModule, szNamePrefix: PAnsiChar): int_ptr;
-var
-  swp: TSAVEWINDOWPOS;
-begin
-  swp.hWnd         := hWnd;
-  swp.hContact     := hContact;
-  swp.szModule     := szModule;
-  swp.szNamePrefix := szNamePrefix;
-  Result := CallService(MS_UTILS_RESTOREWINDOWPOSITION, Flags, lParam(@swp));
-end;
-
-
 function mir_hashstr(const key:PAnsiChar):uint; {inline;}
 var
   len:int;
@@ -393,7 +337,7 @@ end;
 
 function Langpack_Register:int_ptr;
 begin
-  CallService(MS_LANGPACK_REGISTER,WPARAM(@hLangpack),LPARAM(@PluginInfo));
+  mir_getLP(PluginInfo, hLangpack);
   result:=hLangpack;
 end;
 
@@ -436,36 +380,6 @@ begin
   result:=PStatusIconData(CallService(MS_MSG_GETNTHICON, hContact, index));
 end;
 
-function LoadSkinnedIcon(id: int): HICON;
-  {$IFDEF AllowInline}inline;{$ENDIF}
-begin
-  Result := HICON(CallService(MS_SKIN_LOADICON, id, 0));
-end;
-
-function LoadSkinnedIconHandle(id: int): THANDLE;
-  {$IFDEF AllowInline}inline;{$ENDIF}
-begin
-  Result := THANDLE(CallService(MS_SKIN_LOADICON, id, 1));
-end;
-
-function LoadSkinnedIconBig(id: int): HICON;
-  {$IFDEF AllowInline}inline;{$ENDIF}
-begin
-  Result := HICON(CallService(MS_SKIN_LOADICON, id, 2));
-end;
-
-function LoadSkinnedIconName(id: int): PAnsiChar;
-  {$IFDEF AllowInline}inline;{$ENDIF}
-begin
-  Result := PAnsiChar(CallService(MS_SKIN_LOADICON, id, 3));
-end;
-
-function LoadSkinnedProtoIcon(const szProto: PAnsiChar; status: int): THANDLE;
-  {$IFDEF AllowInline}inline;{$ENDIF}
-begin
-  Result := CallService(MS_SKIN_LOADPROTOICON, wParam(szProto), status);
-end;
-
 function SkinAddNewSound(const name, description, defaultFile: PAnsiChar): int_ptr;
 var
   ssd: TSKINSOUNDDESCEX;
@@ -485,52 +399,40 @@ begin
 end;
 
 
-function Menu_AddContextFrameMenuItem(mi:PCLISTMENUITEM):HGENMENU;
+function Menu_AddContextFrameMenuItem(mi:PMO_MenuItem):HGENMENU;
 begin
   mi^.hLangpack:=hLangpack;
   result:=CallService(MS_CLIST_ADDCONTEXTFRAMEMENUITEM, 0,LPARAM(mi));
 end;
 
-function Menu_AddMainMenuItem(mi:PCLISTMENUITEM):HGENMENU;
+function Menu_AddMainMenuItem(mi:PMO_MenuItem):HGENMENU;
 begin
   mi^.hLangpack:=hLangpack;
-  result:=CallService(MS_CLIST_ADDMAINMENUITEM, 0,LPARAM(mi));
+  result:=_AddMainMenuItem(mi);
 end;
 
-function Menu_AddContactMenuItem(mi:PCLISTMENUITEM):HGENMENU;
+function Menu_AddContactMenuItem(mi:PMO_MenuItem):HGENMENU;
 begin
   mi^.hLangpack:=hLangpack;
-  result:=CallService(MS_CLIST_ADDCONTACTMENUITEM, 0,LPARAM(mi));
+  result:=_AddContactMenuItem(mi, nil);
 end;
 
-function Menu_AddStatusMenuItem(mi:PCLISTMENUITEM):HGENMENU;
+function Menu_AddStatusMenuItem(mi:PMO_MenuItem):HGENMENU;
 begin
   mi^.hLangpack:=hLangpack;
-  result:=CallService(MS_CLIST_ADDSTATUSMENUITEM, 0,LPARAM(mi));
+  result:=_AddStatusMenuItem(mi, nil);
 end;
 
-function Menu_AddProtoMenuItem(mi:PCLISTMENUITEM):HGENMENU;
+function Menu_AddProtoMenuItem(mi:PMO_MenuItem):HGENMENU;
 begin
   mi^.hLangpack:=hLangpack;
-  result:=CallService(MS_CLIST_ADDPROTOMENUITEM, 0,LPARAM(mi));
+  result:=_AddProtoMenuItem(mi, nil);
 end;
 
-function Menu_AddSubGroupMenuItem(mi:PCLISTMENUITEM):HGENMENU;
+function Menu_AddTrayMenuItem(mi:PMO_MenuItem):HGENMENU;
 begin
   mi^.hLangpack:=hLangpack;
-  result:=CallService(MS_CLIST_ADDSUBGROUPMENUITEM, 0,LPARAM(mi));
-end;
-
-function Menu_AddGroupMenuItem(mi:PCLISTMENUITEM):HGENMENU;
-begin
-  mi^.hLangpack:=hLangpack;
-  result:=CallService(MS_CLIST_ADDGROUPMENUITEM, 0,LPARAM(mi));
-end;
-
-function Menu_AddTrayMenuItem(mi:PCLISTMENUITEM):HGENMENU;
-begin
-  mi^.hLangpack:=hLangpack;
-  result:=CallService(MS_CLIST_ADDTRAYMENUITEM, 0,LPARAM(mi));
+  result:=_AddTrayMenuItem(mi);
 end;
 
 
@@ -553,7 +455,7 @@ end;
 
 function Skin_AddIcon(si:PSKINICONDESC):THANDLE;
 begin
-  result:=CallService(MS_SKIN2_ADDICON, hLangpack, LPARAM(si));
+  result:=IcoLib_AddIcon(si, hLangpack);
 end;
 
 procedure Icon_Register(hInst:HINST; const szSection:PAnsiChar; pIcons:pIconItem; iCount:size_t; prefix:PAnsiChar);
@@ -651,5 +553,8 @@ function Crypto_GetProvider(pszName:PAnsiChar):PCRYPTO_PROVIDER;
 begin
 	result:=PCRYPTO_PROVIDER(CallService(MS_CRYPTO_GET_PROVIDER, 0, LPARAM(pszName)));
 end;
+
+initialization
+   cli:=PCLIST_INTERFACE(CallService(MS_CLIST_RETRIEVE_INTERFACE,0,0));
 
 {$ENDIF}

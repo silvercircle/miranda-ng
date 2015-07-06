@@ -13,16 +13,14 @@ void MirandaHistory::populateProtocols()
 
 	PROTOACCOUNT **protoList;
 	int protoCount;
+	Proto_EnumAccounts(&protoCount, &protoList);
+	upto_each_(i, protoCount) 
+	{
+		ext::a::string protoName = protoList[i]->szModuleName;
 
-	if (mu::proto::enumProtocols(&protoCount, &protoList) == 0) {				
-		upto_each_(i, protoCount) 
-		{
-			ext::a::string protoName = protoList[i]->szModuleName;
+		Protocol& curProto = m_Protocols[protoName];
 
-			Protocol& curProto = m_Protocols[protoName];
-
-			curProto.displayName = Protocol::getDisplayName(protoName);
-		}
+		curProto.displayName = Protocol::getDisplayName(protoName);
 	}
 
 	m_DefaultProtocol.displayName = TranslateT("(Unknown)");
@@ -78,7 +76,7 @@ void MirandaHistory::readContacts()
 			if (!pProtoName)
 				pProtoName = con::ProtoUnknown; // MEMO: alternative would be "break;"
 
-			ext::string curNick = mu::clist::getContactDisplayName(hContact);
+			ext::string curNick = pcli->pfnGetContactDisplayName(hContact, 0);
 
 			// retrieve protocol
 			const ext::a::string curProtoName = pProtoName;

@@ -41,13 +41,7 @@ FacebookProto::FacebookProto(const char* proto_name, const TCHAR* username) :
 	// Initialize random seed for this client
 	facy.random_ = ::time(NULL) + PtrToUint(&facy);
 
-	m_hMenuRoot = m_hMenuServicesRoot = m_hStatusMind = NULL;
-
-	m_invisible = false;
-	m_signingOut = false;
 	m_enableChat = DEFAULT_ENABLE_CHATS;
-	m_idleTS = 0;
-	m_pingTS = 0;
 
 	// Load custom locale, if set
 	ptrA locale(getStringA(FACEBOOK_KEY_LOCALE));
@@ -59,17 +53,13 @@ FacebookProto::FacebookProto(const char* proto_name, const TCHAR* username) :
 
 	CreateProtoService(PS_CREATEACCMGRUI, &FacebookProto::SvcCreateAccMgrUI);
 	CreateProtoService(PS_GETMYAWAYMSG, &FacebookProto::GetMyAwayMsg);
-	CreateProtoService(PS_GETMYAVATART, &FacebookProto::GetMyAvatar);
-	CreateProtoService(PS_GETAVATARINFOT, &FacebookProto::GetAvatarInfo);
+	CreateProtoService(PS_GETMYAVATAR, &FacebookProto::GetMyAvatar);
+	CreateProtoService(PS_GETAVATARINFO, &FacebookProto::GetAvatarInfo);
 	CreateProtoService(PS_GETAVATARCAPS, &FacebookProto::GetAvatarCaps);
 	CreateProtoService(PS_GETUNREADEMAILCOUNT, &FacebookProto::GetNotificationsCount);
 
 	CreateProtoService(PS_JOINCHAT, &FacebookProto::OnJoinChat);
 	CreateProtoService(PS_LEAVECHAT, &FacebookProto::OnLeaveChat);
-
-	CreateProtoService("/Mind", &FacebookProto::OnMind);
-	CreateProtoService("/VisitProfile", &FacebookProto::VisitProfile);
-	CreateProtoService("/VisitNotifications", &FacebookProto::VisitNotifications);
 
 	HookProtoEvent(ME_CLIST_PREBUILDSTATUSMENU, &FacebookProto::OnBuildStatusMenu);
 	HookProtoEvent(ME_OPT_INITIALISE, &FacebookProto::OnOptionsInit);
@@ -79,7 +69,6 @@ FacebookProto::FacebookProto(const char* proto_name, const TCHAR* username) :
 	HookProtoEvent(ME_GC_BUILDMENU, &FacebookProto::OnGCMenuHook);
 	HookProtoEvent(ME_DB_EVENT_MARKED_READ, &FacebookProto::OnDbEventRead);
 
-	db_set_resident(m_szModuleName, "Status");
 	db_set_resident(m_szModuleName, "IdleTS");
 	db_set_resident(m_szModuleName, FACEBOOK_KEY_MESSAGE_READ);
 	db_set_resident(m_szModuleName, FACEBOOK_KEY_MESSAGE_READERS);
@@ -93,11 +82,14 @@ FacebookProto::FacebookProto(const char* proto_name, const TCHAR* username) :
 	NETLIBUSER nlu = { sizeof(nlu) };
 	nlu.flags = NUF_INCOMING | NUF_OUTGOING | NUF_HTTPCONNS | NUF_TCHAR;
 	nlu.szSettingsModule = m_szModuleName;
-	mir_sntprintf(descr, SIZEOF(descr), TranslateT("%s server connection"), m_tszUserName);
+	mir_sntprintf(descr, TranslateT("%s server connection"), m_tszUserName);
 	nlu.ptszDescriptiveName = descr;
 	m_hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
-	if (m_hNetlibUser == NULL)
-		MessageBox(NULL, TranslateT("Unable to get Netlib connection for Facebook"), m_tszUserName, MB_OK);
+	if (m_hNetlibUser == NULL) {
+		TCHAR error[200];
+		mir_sntprintf(error, TranslateT("Unable to initialize Netlib for %s."), m_tszUserName);
+		MessageBox(NULL, error, _T("Miranda NG"), MB_OK | MB_ICONERROR);
+	}
 
 	facy.set_handle(m_hNetlibUser);
 
@@ -154,7 +146,7 @@ DWORD_PTR FacebookProto::GetCaps(int type, MCONTACT)
 	{
 		DWORD_PTR flags = PF1_IM | PF1_CHAT | PF1_SERVERCLIST | PF1_AUTHREQ | /*PF1_ADDED |*/ PF1_BASICSEARCH | PF1_SEARCHBYEMAIL | PF1_SEARCHBYNAME | PF1_ADDSEARCHRES; // | PF1_VISLIST | PF1_INVISLIST;
 
-		if (getByte(FACEBOOK_KEY_SET_MIRANDA_STATUS, 0))
+		if (getByte(FACEBOOK_KEY_SET_MIRANDA_STATUS))
 			return flags |= PF1_MODEMSG;
 		else
 			return flags |= PF1_MODEMSGRECV;
@@ -162,12 +154,12 @@ DWORD_PTR FacebookProto::GetCaps(int type, MCONTACT)
 	case PFLAGNUM_2:
 		return PF2_ONLINE | PF2_INVISIBLE | PF2_ONTHEPHONE | PF2_IDLE; // | PF2_SHORTAWAY;
 	case PFLAGNUM_3:
-		if (getByte(FACEBOOK_KEY_SET_MIRANDA_STATUS, 0))
+		if (getByte(FACEBOOK_KEY_SET_MIRANDA_STATUS))
 			return PF2_ONLINE; // | PF2_SHORTAWAY;
 		else
 			return 0;
 	case PFLAGNUM_4:
-		return PF4_NOCUSTOMAUTH | PF4_FORCEADDED | PF4_AVATARS | PF4_SUPPORTTYPING | PF4_NOAUTHDENYREASON | PF4_IMSENDOFFLINE;
+		return PF4_NOCUSTOMAUTH | PF4_FORCEADDED | PF4_AVATARS | PF4_SUPPORTTYPING | PF4_NOAUTHDENYREASON | PF4_IMSENDOFFLINE | PF4_READNOTIFY;
 	case PFLAGNUM_5:
 		return PF2_ONTHEPHONE;
 	case PFLAG_MAXLENOFMESSAGE:
@@ -220,7 +212,7 @@ int FacebookProto::SetStatus(int new_status)
 	return 0;
 }
 
-int FacebookProto::SetAwayMsg(int, const PROTOCHAR *msg)
+int FacebookProto::SetAwayMsg(int, const TCHAR *msg)
 {
 	if (!msg) {
 		last_status_msg_.clear();
@@ -252,7 +244,7 @@ void FacebookProto::SetAwayMsgWorker(void *p)
 	}
 }
 
-HANDLE FacebookProto::SearchBasic(const PROTOCHAR* id)
+HANDLE FacebookProto::SearchBasic(const TCHAR* id)
 {
 	if (isOffline())
 		return 0;
@@ -262,7 +254,7 @@ HANDLE FacebookProto::SearchBasic(const PROTOCHAR* id)
 	return tid;
 }
 
-HANDLE FacebookProto::SearchByEmail(const PROTOCHAR* email)
+HANDLE FacebookProto::SearchByEmail(const TCHAR* email)
 {
 	if (isOffline())
 		return 0;
@@ -272,18 +264,18 @@ HANDLE FacebookProto::SearchByEmail(const PROTOCHAR* email)
 	return temail;
 }
 
-HANDLE FacebookProto::SearchByName(const PROTOCHAR* nick, const PROTOCHAR* firstName, const PROTOCHAR* lastName)
+HANDLE FacebookProto::SearchByName(const TCHAR* nick, const TCHAR* firstName, const TCHAR* lastName)
 {
 	TCHAR arg[200];
-	mir_sntprintf(arg, SIZEOF(arg), _T("%s %s %s"), nick, firstName, lastName);
+	mir_sntprintf(arg, _countof(arg), _T("%s %s %s"), nick, firstName, lastName);
 	return SearchByEmail(arg); // Facebook is using one search method for everything (except IDs)
 }
 
 MCONTACT FacebookProto::AddToList(int flags, PROTOSEARCHRESULT* psr)
 {
-	ptrA id(mir_t2a_cp(psr->id, CP_UTF8));
-	ptrA name(mir_t2a_cp(psr->firstName, CP_UTF8));
-	ptrA surname(mir_t2a_cp(psr->lastName, CP_UTF8));
+	ptrA id(mir_t2a_cp(psr->id.t, CP_UTF8));
+	ptrA name(mir_t2a_cp(psr->firstName.t, CP_UTF8));
+	ptrA surname(mir_t2a_cp(psr->lastName.t, CP_UTF8));
 
 	if (id == NULL)
 		return NULL;
@@ -314,7 +306,7 @@ MCONTACT FacebookProto::AddToList(int flags, PROTOSEARCHRESULT* psr)
 	return hContact;
 }
 
-int FacebookProto::AuthRequest(MCONTACT hContact, const PROTOCHAR *)
+int FacebookProto::AuthRequest(MCONTACT hContact, const TCHAR *)
 {
 	return RequestFriendship(hContact, NULL);
 }
@@ -331,7 +323,7 @@ int FacebookProto::Authorize(MEVENT hDbEvent)
 	return ApproveFriendship(hContact, NULL);
 }
 
-int FacebookProto::AuthDeny(MEVENT hDbEvent, const PROTOCHAR *)
+int FacebookProto::AuthDeny(MEVENT hDbEvent, const TCHAR *)
 {
 	if (!hDbEvent || isOffline())
 		return 1;
@@ -525,15 +517,15 @@ int FacebookProto::OnOptionsInit(WPARAM wParam, LPARAM)
 
 int FacebookProto::OnToolbarInit(WPARAM, LPARAM)
 {
-	TTBButton ttb = { sizeof(ttb) };
+	TTBButton ttb = { 0 };
 	ttb.dwFlags = TTBBF_SHOWTOOLTIP | TTBBF_VISIBLE;
 
 	char service[100];
-	mir_snprintf(service, SIZEOF(service), "%s%s", m_szModuleName, "/Mind");
+	mir_snprintf(service, _countof(service), "%s%s", m_szModuleName, "/Mind");
 
 	ttb.pszService = service;
 	ttb.pszTooltipUp = ttb.name = LPGEN("Share status...");
-	ttb.hIconHandleUp = Skin_GetIconByHandle(GetIconHandle("mind"));
+	ttb.hIconHandleUp = IcoLib_GetIconByHandle(GetIconHandle("mind"));
 	TopToolbar_AddButton(&ttb);
 
 	return 0;
@@ -759,7 +751,7 @@ INT_PTR FacebookProto::CancelFriendship(WPARAM wParam, LPARAM lParam)
 	MCONTACT hContact = MCONTACT(wParam);
 
 	// Ignore groupchats and, if deleting, also not-friends
-	if (isChatRoom(hContact) || (deleting && getByte(hContact, FACEBOOK_KEY_CONTACT_TYPE, 0) != CONTACT_FRIEND))
+	if (isChatRoom(hContact) || (deleting && getByte(hContact, FACEBOOK_KEY_CONTACT_TYPE) != CONTACT_FRIEND))
 		return 0;
 
 	ptrT tname(getTStringA(hContact, FACEBOOK_KEY_NICK));
@@ -770,7 +762,7 @@ INT_PTR FacebookProto::CancelFriendship(WPARAM wParam, LPARAM lParam)
 		return 1;
 
 	TCHAR tstr[256];
-	mir_sntprintf(tstr, SIZEOF(tstr), TranslateT("Do you want to cancel your friendship with '%s'?"), tname);
+	mir_sntprintf(tstr, _countof(tstr), TranslateT("Do you want to cancel your friendship with '%s'?"), tname);
 	if (MessageBox(0, tstr, m_tszUserName, MB_ICONWARNING | MB_YESNO | MB_DEFBUTTON2) == IDYES) {
 
 		ptrA id(getStringA(hContact, FACEBOOK_KEY_ID));
@@ -873,25 +865,30 @@ void FacebookProto::OpenUrlThread(void *p) {
 std::string FacebookProto::PrepareUrl(std::string url) {
 	std::string::size_type pos = url.find(FACEBOOK_SERVER_DOMAIN);
 	bool isFacebookUrl = (pos != std::string::npos);
-	bool isRelativeUrl = (url.substr(0, 4) != "http");
+	bool isAbsoluteUrl = (url.find("://") != std::string::npos);
 
-	if (isFacebookUrl || isRelativeUrl) {
+	// Do nothing with absolute non-Facebook URLs
+	if (isAbsoluteUrl && !isFacebookUrl)
+		return url;
+	
+	// Transform absolute URL to relative
+	if (isAbsoluteUrl) {
+		// Check and ignore special subdomains
+		std::string subdomain = utils::text::source_get_value(&url, 2, "://", "."FACEBOOK_SERVER_DOMAIN);
+		if (subdomain == "developers")
+			return url;
+		
+		// Make relative url
+		url = url.substr(pos + mir_strlen(FACEBOOK_SERVER_DOMAIN));
 
-		// Make realtive url
-		if (!isRelativeUrl) {
-			url = url.substr(pos + mir_strlen(FACEBOOK_SERVER_DOMAIN));
-
-			// Strip eventual port
-			pos = url.find("/");
-			if (pos != std::string::npos && pos != 0)
-				url = url.substr(pos);
-		}
-
-		// Make absolute url
-		url = HTTP_PROTO_SECURE + facy.get_server_type() + url;
+		// Strip eventual port
+		pos = url.find("/");
+		if (pos != std::string::npos && pos != 0)
+			url = url.substr(pos);
 	}
 
-	return url;
+	// URL is relative now, make and return absolute
+	return HTTP_PROTO_SECURE + facy.get_server_type() + url;
 }
 
 void FacebookProto::OpenUrl(std::string url)
@@ -906,7 +903,7 @@ void FacebookProto::OpenUrl(std::string url)
 		ForkThread(&FacebookProto::OpenUrlThread, new open_url(browser, data));
 	else
 		// Or use Miranda's service
-		CallService(MS_UTILS_OPENURL, (WPARAM)OUF_TCHAR, (LPARAM)data);
+		Utils_OpenUrlT(data);
 }
 
 void FacebookProto::ReadNotificationWorker(void *p)
@@ -983,66 +980,77 @@ void FacebookProto::InitPopups()
 	char name[256];
 
 	// Client
-	mir_sntprintf(desc, SIZEOF(desc), _T("%s/%s"), m_tszUserName, TranslateT("Client notifications"));
-	mir_snprintf(name, SIZEOF(name), "%s_%s", m_szModuleName, "Client");
+	mir_sntprintf(desc, _T("%s/%s"), m_tszUserName, TranslateT("Client notifications"));
+	mir_snprintf(name, "%s_%s", m_szModuleName, "Client");
 	ppc.ptszDescription = desc;
 	ppc.pszName = name;
-	ppc.hIcon = Skin_GetIconByHandle(GetIconHandle("facebook"));
+	ppc.hIcon = IcoLib_GetIconByHandle(GetIconHandle("facebook"));
 	ppc.colorBack = RGB(191, 0, 0); // red
 	ppc.colorText = RGB(255, 255, 255); // white
 	ppc.iSeconds = 0;
 	popupClasses.push_back(Popup_RegisterClass(&ppc));
 
 	// Newsfeeds
-	mir_sntprintf(desc, SIZEOF(desc), _T("%s/%s"), m_tszUserName, TranslateT("News feeds"));
-	mir_snprintf(name, SIZEOF(name), "%s_%s", m_szModuleName, "Newsfeed");
+	mir_sntprintf(desc, _T("%s/%s"), m_tszUserName, TranslateT("News feeds"));
+	mir_snprintf(name, "%s_%s", m_szModuleName, "Newsfeed");
 	ppc.ptszDescription = desc;
 	ppc.pszName = name;
-	ppc.hIcon = Skin_GetIconByHandle(GetIconHandle("newsfeed"));
+	ppc.hIcon = IcoLib_GetIconByHandle(GetIconHandle("newsfeed"));
 	ppc.colorBack = RGB(255, 255, 255); // white
 	ppc.colorText = RGB(0, 0, 0); // black
 	ppc.iSeconds = 0;
 	popupClasses.push_back(Popup_RegisterClass(&ppc));
 
 	// Notifications
-	mir_sntprintf(desc, SIZEOF(desc), _T("%s/%s"), m_tszUserName, TranslateT("Notifications"));
-	mir_snprintf(name, SIZEOF(name), "%s_%s", m_szModuleName, "Notification");
+	mir_sntprintf(desc, _T("%s/%s"), m_tszUserName, TranslateT("Notifications"));
+	mir_snprintf(name, "%s_%s", m_szModuleName, "Notification");
 	ppc.ptszDescription = desc;
 	ppc.pszName = name;
-	ppc.hIcon = Skin_GetIconByHandle(GetIconHandle("notification"));
+	ppc.hIcon = IcoLib_GetIconByHandle(GetIconHandle("notification"));
 	ppc.colorBack = RGB(59, 89, 152); // Facebook's blue
 	ppc.colorText = RGB(255, 255, 255); // white
 	ppc.iSeconds = 0;
 	popupClasses.push_back(Popup_RegisterClass(&ppc));
 
 	// Others
-	mir_sntprintf(desc, SIZEOF(desc), _T("%s/%s"), m_tszUserName, TranslateT("Other events"));
-	mir_snprintf(name, SIZEOF(name), "%s_%s", m_szModuleName, "Other");
+	mir_sntprintf(desc, _T("%s/%s"), m_tszUserName, TranslateT("Other events"));
+	mir_snprintf(name, "%s_%s", m_szModuleName, "Other");
 	ppc.ptszDescription = desc;
 	ppc.pszName = name;
-	ppc.hIcon = Skin_GetIconByHandle(GetIconHandle("facebook"));
+	ppc.hIcon = IcoLib_GetIconByHandle(GetIconHandle("facebook"));
 	ppc.colorBack = RGB(255, 255, 255); // white
 	ppc.colorText = RGB(0, 0, 0); // black
 	ppc.iSeconds = 0;
 	popupClasses.push_back(Popup_RegisterClass(&ppc));
 
 	// Friendship changes
-	mir_sntprintf(desc, SIZEOF(desc), _T("%s/%s"), m_tszUserName, TranslateT("Friendship events"));
-	mir_snprintf(name, SIZEOF(name), "%s_%s", m_szModuleName, "Friendship");
+	mir_sntprintf(desc, _T("%s/%s"), m_tszUserName, TranslateT("Friendship events"));
+	mir_snprintf(name, "%s_%s", m_szModuleName, "Friendship");
 	ppc.ptszDescription = desc;
 	ppc.pszName = name;
-	ppc.hIcon = Skin_GetIconByHandle(GetIconHandle("friendship"));
+	ppc.hIcon = IcoLib_GetIconByHandle(GetIconHandle("friendship"));
 	ppc.colorBack = RGB(47, 71, 122); // Facebook's darker blue
 	ppc.colorText = RGB(255, 255, 255); // white
 	ppc.iSeconds = 0;
 	popupClasses.push_back(Popup_RegisterClass(&ppc));
 
 	// Ticker
-	mir_sntprintf(desc, SIZEOF(desc), _T("%s/%s"), m_tszUserName, TranslateT("Ticker feeds"));
-	mir_snprintf(name, SIZEOF(name), "%s_%s", m_szModuleName, "Ticker");
+	mir_sntprintf(desc, _T("%s/%s"), m_tszUserName, TranslateT("Ticker feeds"));
+	mir_snprintf(name, "%s_%s", m_szModuleName, "Ticker");
 	ppc.ptszDescription = desc;
 	ppc.pszName = name;
-	ppc.hIcon = Skin_GetIconByHandle(GetIconHandle("newsfeed"));
+	ppc.hIcon = IcoLib_GetIconByHandle(GetIconHandle("newsfeed"));
+	ppc.colorBack = RGB(255, 255, 255); // white
+	ppc.colorText = RGB(0, 0, 0); // black
+	ppc.iSeconds = 0;
+	popupClasses.push_back(Popup_RegisterClass(&ppc));
+
+	// On this day
+	mir_sntprintf(desc, _T("%s/%s"), m_tszUserName, TranslateT("On this day posts"));
+	mir_snprintf(name, "%s_%s", m_szModuleName, "OnThisDay");
+	ppc.ptszDescription = desc;
+	ppc.pszName = name;
+	ppc.hIcon = IcoLib_GetIconByHandle(GetIconHandle("newsfeed"));
 	ppc.colorBack = RGB(255, 255, 255); // white
 	ppc.colorText = RGB(0, 0, 0); // black
 	ppc.iSeconds = 0;
@@ -1084,9 +1092,11 @@ void FacebookProto::InitHotkeys()
 void FacebookProto::InitSounds()
 {
 	SkinAddNewSoundExT("Notification", m_tszUserName, LPGENT("Notification"));
-	SkinAddNewSoundExT("NewsFeed", m_tszUserName, LPGENT("News Feed"));
-	SkinAddNewSoundExT("OtherEvent", m_tszUserName, LPGENT("Other Event"));
-	SkinAddNewSoundExT("Friendship", m_tszUserName, LPGENT("Friendship Event"));
+	SkinAddNewSoundExT("NewsFeed", m_tszUserName, LPGENT("Newsfeed event"));
+	SkinAddNewSoundExT("OtherEvent", m_tszUserName, LPGENT("Other event"));
+	SkinAddNewSoundExT("Friendship", m_tszUserName, LPGENT("Friendship event"));
+	SkinAddNewSoundExT("Ticker", m_tszUserName, LPGENT("Ticker event"));
+	SkinAddNewSoundExT("OnThisDay", m_tszUserName, LPGENT("On this day event"));
 }
 
 /**
@@ -1104,19 +1114,19 @@ void FacebookProto::MessageRead(MCONTACT hContact)
 		return;
 
 	TCHAR ttime[64];
-	_tcsftime(ttime, SIZEOF(ttime), _T("%X"), localtime(&time));
+	_tcsftime(ttime, _countof(ttime), _T("%X"), localtime(&time));
 
 	StatusTextData st = { 0 };
 	st.cbSize = sizeof(st);
-	st.hIcon = Skin_GetIconByHandle(GetIconHandle("read"));
+	st.hIcon = IcoLib_GetIconByHandle(GetIconHandle("read"));
 
 	if (isChatRoom(hContact)) {
 		// Load readers names
 		ptrT treaders(getTStringA(hContact, FACEBOOK_KEY_MESSAGE_READERS));
-		mir_sntprintf(st.tszText, SIZEOF(st.tszText), TranslateT("Message read: %s by %s"), ttime, treaders ? treaders : _T("???"));
-	} else {
-		mir_sntprintf(st.tszText, SIZEOF(st.tszText), TranslateT("Message read: %s"), ttime);
+		mir_sntprintf(st.tszText, _countof(st.tszText), TranslateT("Message read: %s by %s"), ttime, treaders ? treaders : _T("???"));
+		CallService(MS_MSG_SETSTATUSTEXT, (WPARAM)hContact, (LPARAM)&st);
+	} else if (!ServiceExists("MessageState/DummyService")){
+		mir_sntprintf(st.tszText, _countof(st.tszText), TranslateT("Message read: %s"), ttime);
+		CallService(MS_MSG_SETSTATUSTEXT, (WPARAM)hContact, (LPARAM)&st);
 	}
-
-	CallService(MS_MSG_SETSTATUSTEXT, (WPARAM)hContact, (LPARAM)&st);
 }

@@ -25,8 +25,8 @@ CMraProto::CMraProto(const char* _module, const TCHAR* _displayName) :
 
 	CreateProtoService(PS_CREATEACCMGRUI, &CMraProto::MraCreateAccMgrUI);
 	CreateProtoService(PS_GETAVATARCAPS, &CMraProto::MraGetAvatarCaps);
-	CreateProtoService(PS_GETAVATARINFOT, &CMraProto::MraGetAvatarInfo);
-	CreateProtoService(PS_GETMYAVATART, &CMraProto::MraGetMyAvatar);
+	CreateProtoService(PS_GETAVATARINFO, &CMraProto::MraGetAvatarInfo);
+	CreateProtoService(PS_GETMYAVATAR, &CMraProto::MraGetMyAvatar);
 
 	CreateProtoService(MS_ICQ_SENDSMS, &CMraProto::MraSendSMS);
 	CreateProtoService(PS_SEND_NUDGE, &CMraProto::MraSendNudge);
@@ -36,7 +36,7 @@ CMraProto::CMraProto(const char* _module, const TCHAR* _displayName) :
 		m_heNudgeReceived = CreateProtoEvent(PE_NUDGE);
 
 	TCHAR name[MAX_PATH];
-	mir_sntprintf(name, SIZEOF(name), TranslateT("%s connection"), m_tszUserName);
+	mir_sntprintf(name, _countof(name), TranslateT("%s connection"), m_tszUserName);
 
 	NETLIBUSER nlu = { sizeof(nlu) };
 	nlu.flags = NUF_INCOMING | NUF_OUTGOING | NUF_HTTPCONNS | NUF_TCHAR;
@@ -46,7 +46,7 @@ CMraProto::CMraProto(const char* _module, const TCHAR* _displayName) :
 
 	InitMenus();
 
-	mir_snprintf(szNewMailSound, SIZEOF(szNewMailSound), "%s_new_email", m_szModuleName);
+	mir_snprintf(szNewMailSound, _countof(szNewMailSound), "%s_new_email", m_szModuleName);
 	SkinAddNewSoundEx(szNewMailSound, m_szModuleName, MRA_SOUND_NEW_EMAIL);
 
 	HookProtoEvent(ME_CLIST_PREBUILDSTATUSMENU, &CMraProto::MraRebuildStatusMenu);
@@ -94,7 +94,6 @@ int CMraProto::OnModulesLoaded(WPARAM, LPARAM)
 		SetContactBasicInfoW(hContact, SCBIFSI_LOCK_CHANGES_EVENTS, (SCBIF_ID | SCBIF_GROUP_ID | SCBIF_SERVER_FLAG | SCBIF_STATUS), -1, -1, 0, 0, ID_STATUS_OFFLINE, 0, 0, 0);
 
 	// unsaved values
-	db_set_resident(m_szModuleName, "Status");// NOTE: XStatus cannot be temporary
 	db_set_resident(m_szModuleName, "LogonTS");
 	db_set_resident(m_szModuleName, "ContactID");
 	db_set_resident(m_szModuleName, "GroupID");
@@ -156,7 +155,7 @@ MCONTACT CMraProto::AddToList(int flags, PROTOSEARCHRESULT *psr)
 	if (psr->cbSize != sizeof(PROTOSEARCHRESULT))
 		return 0;
 
-	return AddToListByEmail(psr->email, psr->nick, psr->firstName, psr->lastName, flags);
+	return AddToListByEmail(psr->email.t, psr->nick.t, psr->firstName.t, psr->lastName.t, flags);
 }
 
 MCONTACT CMraProto::AddToListByEvent(int, int, MEVENT hDbEvent)
@@ -358,7 +357,7 @@ int CMraProto::SendContacts(MCONTACT hContact, int, int nContacts, MCONTACT *hCo
 			for (int i = 0; i < nContacts; i++) {
 				if (IsContactMra(hContactsList[i]))
 					if (mraGetStringW(hContactsList[i], "e-mail", wszEmail))
-						wszData += wszEmail + ';' + GetContactNameW(hContactsList[i]) + ';';
+						wszData += wszEmail + ';' + pcli->pfnGetContactDisplayName(hContactsList[i], 0) + ';';
 			}
 
 			bSlowSend = getByte("SlowSend", MRA_DEFAULT_SLOW_SEND);
@@ -526,11 +525,11 @@ HANDLE CMraProto::GetAwayMsg(MCONTACT hContact)
 		SYSTEMTIME tt = { 0 };
 		dwTime = getDword(hContact, DBSETTING_BLOGSTATUSTIME, 0);
 		if (dwTime && MakeLocalSystemTimeFromTime32(dwTime, &tt))
-			mir_sntprintf(szTime, SIZEOF(szTime), _T("%04ld.%02ld.%02ld %02ld:%02ld: "), tt.wYear, tt.wMonth, tt.wDay, tt.wHour, tt.wMinute);
+			mir_sntprintf(szTime, _countof(szTime), _T("%04ld.%02ld.%02ld %02ld:%02ld: "), tt.wYear, tt.wMonth, tt.wDay, tt.wHour, tt.wMinute);
 		else
 			szTime[0] = 0;
 
-		mir_sntprintf(szStatusDesc, SIZEOF(szStatusDesc), _T("%s%s"), szTime, szBlogStatus.c_str());
+		mir_sntprintf(szStatusDesc, _countof(szStatusDesc), _T("%s%s"), szTime, szBlogStatus.c_str());
 		iRet = GetTickCount();
 		ProtoBroadcastAck(hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, (HANDLE)iRet, (LPARAM)szStatusDesc);
 	}

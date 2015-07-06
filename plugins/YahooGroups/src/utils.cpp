@@ -57,7 +57,7 @@ int Log(char *format, ...)
 	va_end(vararg);
 	if (str[mir_strlen(str) - 1] != '\n')
 		{
-			strcat(str, "\n");
+			mir_strcat(str, "\n");
 		}
 	fputs(str, fout);
 	fclose(fout);
@@ -102,12 +102,12 @@ char *BinToHex(int size, PBYTE data)
 	int maxSize = size * 2 + HEX_SIZE + 1;
 	szresult = (char *) new char[ maxSize ];
 	memset(szresult, 0, maxSize);
-	mir_snprintf(buffer, SIZEOF(buffer), "%0*X", HEX_SIZE, size);
+	mir_snprintf(buffer, "%0*X", HEX_SIZE, size);
 	mir_strcpy(szresult, buffer);
 	int i;
 	for (i = 0; i < size; i++)
 		{
-			mir_snprintf(buffer, SIZEOF(buffer), "%02X", data[i]);
+			mir_snprintf(buffer, "%02X", data[i]);
 			mir_strcpy(szresult + (HEX_SIZE + i * 2), buffer);
 		}
 	return szresult; 
@@ -174,7 +174,7 @@ int GetStringFromDatabase(MCONTACT hContact, char *szModule, char *szSettingName
 		if (dbv.type != DBVT_WCHAR)
 			MultiByteToWideChar(CP_ACP, 0, dbv.pszVal, -1, szResult, count);
 		else {
-			int tmp = (int)wcslen(dbv.pwszVal);
+			int tmp = (int)mir_wstrlen(dbv.pwszVal);
 			len = (tmp < count - 1) ? tmp : count - 1;
 			wcsncpy(szResult, dbv.pwszVal, len);
 			szResult[len] = L'\0';
@@ -184,7 +184,7 @@ int GetStringFromDatabase(MCONTACT hContact, char *szModule, char *szSettingName
 	else {
 		res = 1;
 		if (szError) {
-			int tmp = (int)wcslen(szError);
+			int tmp = (int)mir_wstrlen(szError);
 			len = (tmp < count - 1) ? tmp : count - 1;
 			wcsncpy(szResult, szError, len);
 			szResult[len] = L'\0';
@@ -271,7 +271,7 @@ TCHAR *GetContactID(MCONTACT hContact, char *szProto)
 				{
 					case CNFT_BYTE:
 						{
-							mir_sntprintf(tmp, SIZEOF(tmp), _T("%d"), ctInfo.bVal);
+							mir_sntprintf(tmp, _countof(tmp), _T("%d"), ctInfo.bVal);
 							buffer = _tcsdup(tmp);
 						
 							break;
@@ -279,7 +279,7 @@ TCHAR *GetContactID(MCONTACT hContact, char *szProto)
 						
 					case CNFT_WORD:
 						{
-							mir_sntprintf(tmp, SIZEOF(tmp), _T("%d"), ctInfo.wVal);
+							mir_sntprintf(tmp, _countof(tmp), _T("%d"), ctInfo.wVal);
 							buffer = _tcsdup(tmp);
 						
 							break;
@@ -287,7 +287,7 @@ TCHAR *GetContactID(MCONTACT hContact, char *szProto)
 						
 					case CNFT_DWORD:
 						{
-							mir_sntprintf(tmp, SIZEOF(tmp), _T("%ld"), ctInfo.dVal);
+							mir_sntprintf(tmp, _countof(tmp), _T("%ld"), ctInfo.dVal);
 							buffer = _tcsdup(tmp);
 							
 							break;
@@ -326,8 +326,8 @@ MCONTACT GetContactFromID(TCHAR *szID, char *szProto)
 		GetContactProtocol(hContact, cProtocol, sizeof(cProtocol));
 		szHandle = GetContactID(hContact, cProtocol);
 		
-		tmp = (TCHAR *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR);
-		_tcsncpy(dispName, tmp, SIZEOF(dispName));
+		tmp = pcli->pfnGetContactDisplayName(hContact, 0);
+		_tcsncpy(dispName, tmp, _countof(dispName));
 		
 		if ((szHandle) && ((mir_tstrcmpi(szHandle, szID) == 0) || (mir_tstrcmpi(dispName, szID) == 0)) && ((szProto == NULL) || (_stricmp(szProto, cProtocol) == 0)))
 			found = 1;

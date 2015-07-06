@@ -22,7 +22,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include <commonheaders.h>
+#include "stdafx.h"
 
 extern int AddEvent(WPARAM wParam, LPARAM lParam);
 extern int RemoveEvent(WPARAM wParam, LPARAM lParam);
@@ -55,19 +55,19 @@ int IconFromStatusMode(const char *szProto, int status, MCONTACT hContact, HICON
 	if (szProto != NULL && !mir_strcmp(szProto, META_PROTO) && hContact != 0 && !(cfg::dat.dwFlags & CLUI_USEMETAICONS)) {
 		MCONTACT hSubContact = db_mc_getMostOnline(hContact);
 		szFinalProto = GetContactProto(hSubContact);
-		finalStatus = (status == 0) ? (WORD) cfg::getWord(hSubContact, szFinalProto, "Status", ID_STATUS_OFFLINE) : status;
+		finalStatus = (status == 0) ? (WORD)cfg::getWord(hSubContact, szFinalProto, "Status", ID_STATUS_OFFLINE) : status;
 		hContact = hSubContact;
 	}
 	else {
-		szFinalProto = (char*) szProto;
+		szFinalProto = (char*)szProto;
 		finalStatus = status;
 	}
 
 	if (status >= ID_STATUS_CONNECTING && status < ID_STATUS_OFFLINE && phIcon != NULL) {
 		if (szProto) {
 			char szBuf[128];
-			mir_snprintf(szBuf, SIZEOF(szBuf), "%s_conn", szProto);
-			*phIcon = Skin_GetIcon(szBuf);
+			mir_snprintf(szBuf, _countof(szBuf), "%s_conn", szProto);
+			*phIcon = IcoLib_GetIcon(szBuf);
 		}
 	}
 
@@ -98,7 +98,7 @@ static INT_PTR GetCaps(WPARAM wParam, LPARAM)
 	case CLUICAPS_FLAGS1:
 		return CLUIF_HIDEEMPTYGROUPS | CLUIF_DISABLEGROUPS | CLUIF_HASONTOPOPTION | CLUIF_HASAUTOHIDEOPTION;
 	case CLUICAPS_FLAGS2:
-		return MAKELONG(EXTRA_ICON_COUNT,1);
+		return MAKELONG(EXTRA_ICON_COUNT, 1);
 	}
 	return 0;
 }

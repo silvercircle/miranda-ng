@@ -21,7 +21,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 struct DlgChangePassParam
 {
@@ -100,7 +100,7 @@ static INT_PTR CALLBACK sttEnterPassword(HWND hwndDlg, UINT uMsg, WPARAM wParam,
 			break;
 
 		case IDOK:
-			GetDlgItemText(hwndDlg, IDC_USERPASS, param->newPass, SIZEOF(param->newPass));
+			GetDlgItemText(hwndDlg, IDC_USERPASS, param->newPass, _countof(param->newPass));
 			EndDialog(hwndDlg, IDOK);
 		}
 		break;
@@ -142,7 +142,7 @@ static bool CheckOldPassword(HWND hwndDlg, CDb3Mmap *db)
 {
 	if (db->usesPassword()) {
 		TCHAR buf[100];
-		GetDlgItemText(hwndDlg, IDC_OLDPASS, buf, SIZEOF(buf));
+		GetDlgItemText(hwndDlg, IDC_OLDPASS, buf, _countof(buf));
 		if (!db->m_crypto->checkPassword(T2Utf(buf))) {
 			SetDlgItemText(hwndDlg, IDC_HEADERBAR, TranslateT("Wrong old password entered!"));
 			return false;
@@ -159,7 +159,7 @@ static INT_PTR CALLBACK sttChangePassword(HWND hwndDlg, UINT uMsg, WPARAM wParam
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
-		SendDlgItemMessage(hwndDlg, IDC_HEADERBAR, WM_SETICON, ICON_SMALL, (LPARAM)Skin_GetIconByHandle(iconList[0].hIcolib, true));
+		SendDlgItemMessage(hwndDlg, IDC_HEADERBAR, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIconByHandle(iconList[0].hIcolib, true));
 
 		param = (DlgChangePassParam*)lParam;
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
@@ -200,13 +200,13 @@ static INT_PTR CALLBACK sttChangePassword(HWND hwndDlg, UINT uMsg, WPARAM wParam
 
 		case IDOK:
 			TCHAR buf2[100];
-			GetDlgItemText(hwndDlg, IDC_USERPASS1, buf2, SIZEOF(buf2));
+			GetDlgItemText(hwndDlg, IDC_USERPASS1, buf2, _countof(buf2));
 			if (mir_tstrlen(buf2) < 3) {
 				SetDlgItemText(hwndDlg, IDC_HEADERBAR, TranslateT("Password is too short!"));
 				goto LBL_Error;
 			}
 
-			GetDlgItemText(hwndDlg, IDC_USERPASS2, buf, SIZEOF(buf));
+			GetDlgItemText(hwndDlg, IDC_USERPASS2, buf, _countof(buf));
 			if (mir_tstrcmp(buf2, buf)) {
 				SetDlgItemText(hwndDlg, IDC_HEADERBAR, TranslateT("Passwords do not match!"));
 				goto LBL_Error;
@@ -229,7 +229,7 @@ static INT_PTR CALLBACK sttChangePassword(HWND hwndDlg, UINT uMsg, WPARAM wParam
 
 	case WM_DESTROY:
 		KillTimer(hwndDlg, 1);
-		Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
 	}
 
 	return FALSE;
@@ -299,32 +299,28 @@ static int OnOptionsInit(PVOID obj, WPARAM wParam, LPARAM)
 
 void CDb3Mmap::UpdateMenuItem()
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.flags = CMIM_NAME;
-	mi.icolibItem = iconList[1].hIcolib;
-	mi.pszName = GetMenuTitle();
-	Menu_ModifyItem(hSetPwdMenu, &mi);
+	Menu_ModifyItem(hSetPwdMenu, GetMenuTitle(), iconList[1].hIcolib);
 }
 
 static int OnModulesLoaded(PVOID obj, WPARAM, LPARAM)
 {
 	CDb3Mmap *db = (CDb3Mmap*)obj;
 
-	Icon_Register(g_hInst, LPGEN("Database"), iconList, SIZEOF(iconList), "mmap");
+	Icon_Register(g_hInst, LPGEN("Database"), iconList, _countof(iconList), "mmap");
 
 	HookEventObj(ME_OPT_INITIALISE, OnOptionsInit, db);
 
 	// main menu item
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.pszName = LPGEN("Database");
+	CMenuItem mi;
+	mi.name.t = LPGENT("Database");
 	mi.position = 500000000;
-	mi.flags = CMIF_ROOTHANDLE;
-	mi.icolibItem = iconList[0].hIcolib;
+	mi.flags = CMIF_TCHAR;
+	mi.hIcolibItem = iconList[0].hIcolib;
 	HGENMENU hMenuRoot = Menu_AddMainMenuItem(&mi);
 
-	mi.icolibItem = iconList[1].hIcolib;
-	mi.pszName = db->GetMenuTitle();
-	mi.hParentMenu = hMenuRoot;
+	mi.hIcolibItem = iconList[1].hIcolib;
+	mi.name.t = db->GetMenuTitle();
+	mi.root = hMenuRoot;
 	mi.pszService = MS_DB_CHANGEPASSWORD;
 	hSetPwdMenu = Menu_AddMainMenuItem(&mi);
 	return 0;

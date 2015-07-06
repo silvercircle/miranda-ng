@@ -358,8 +358,8 @@ static LRESULT CALLBACK FrameWndProc(HWND hwndFrame,UINT msg,WPARAM wParam,LPARA
 			else {
 				TCHAR szOutput[256];
 				if (dat->fTimeFlags&SDWTF_ST_TIME)
-					GetFormatedDateTime(szOutput,SIZEOF(szOutput),dat->settingLastTime,TRUE);
-				else GetFormatedCountdown(szOutput,SIZEOF(szOutput),dat->countdown);
+					GetFormatedDateTime(szOutput,_countof(szOutput),dat->settingLastTime,TRUE);
+				else GetFormatedCountdown(szOutput,_countof(szOutput),dat->countdown);
 				SetWindowText(dat->hwndTime,szOutput);
 				PostMessage(hwndFrame,M_CHECK_CLIPPED,0,0);
 				/* update tooltip text (if shown) */
@@ -443,7 +443,7 @@ static LRESULT CALLBACK FrameWndProc(HWND hwndFrame,UINT msg,WPARAM wParam,LPARA
 			HFONT hFontPrev=NULL;
 			TCHAR szOutput[256];
 			dat->flags&=~FWPDF_TIMEISCLIPPED;
-			if (GetWindowText(dat->hwndTime,szOutput,SIZEOF(szOutput)))
+			if (GetWindowText(dat->hwndTime,szOutput,_countof(szOutput)))
 				if (GetClientRect(dat->hwndTime,&rc)) {
 					hdc=GetDC(dat->hwndTime);
 					if (hdc != NULL) {
@@ -484,17 +484,17 @@ static LRESULT CALLBACK FrameWndProc(HWND hwndFrame,UINT msg,WPARAM wParam,LPARA
 					case TTN_NEEDTEXT:
 					{	NMTTDISPINFO *ttdi=(NMTTDISPINFO*)lParam;
 						if (dat->flags&FWPDF_TIMEISCLIPPED && (HWND)wParam==dat->hwndTime) {
-							if (GetWindowText(dat->hwndTime,ttdi->szText,SIZEOF(ttdi->szText)))
+							if (GetWindowText(dat->hwndTime,ttdi->szText,_countof(ttdi->szText)))
 								ttdi->lpszText=ttdi->szText;
 						}
 						else if ((HWND)wParam==dat->hwndIcon)
 							ttdi->lpszText=TranslateT("Automatic Shutdown");
 						else {
-							TCHAR szTime[SIZEOF(ttdi->szText)];
+							TCHAR szTime[_countof(ttdi->szText)];
 							if (dat->fTimeFlags&SDWTF_ST_TIME)
-								GetFormatedDateTime(szTime,SIZEOF(szTime),dat->settingLastTime,FALSE);
-							else GetFormatedCountdown(szTime,SIZEOF(szTime),dat->countdown);
-							mir_sntprintf(ttdi->szText,SIZEOF(ttdi->szText),_T("%s %s"),(dat->fTimeFlags&SDWTF_ST_TIME)?TranslateT("Shutdown at:"):TranslateT("Time left:"),szTime);
+								GetFormatedDateTime(szTime,_countof(szTime),dat->settingLastTime,FALSE);
+							else GetFormatedCountdown(szTime,_countof(szTime),dat->countdown);
+							mir_sntprintf(ttdi->szText,_countof(ttdi->szText),_T("%s %s"),(dat->fTimeFlags&SDWTF_ST_TIME)?TranslateT("Shutdown at:"):TranslateT("Time left:"),szTime);
 							ttdi->lpszText=ttdi->szText;
 						}
 						return 0;
@@ -516,7 +516,7 @@ void ShowCountdownFrame(WORD fTimeFlags)
 	                                  0, 0,
 	                                  GetSystemMetrics(SM_CXICON)+103,
 	                                  GetSystemMetrics(SM_CYICON)+2,
-	                                  (HWND)CallService(MS_CLUI_GETHWND,0,0),
+	                                  pcli->hwndContactList,
 	                                  NULL,
 	                                  hInst,
 	                                  &fTimeFlags);
@@ -524,7 +524,7 @@ void ShowCountdownFrame(WORD fTimeFlags)
 
 	if (ServiceExists(MS_CLIST_FRAMES_ADDFRAME)) {
 		CLISTFrame clf = { sizeof(clf) };
-		clf.hIcon=Skin_GetIcon("AutoShutdown_Active"); /* CListFrames does not make a copy */
+		clf.hIcon=IcoLib_GetIcon("AutoShutdown_Active"); /* CListFrames does not make a copy */
 		clf.align=alBottom;
 		clf.height=GetSystemMetrics(SM_CYICON);
 		clf.Flags=F_VISIBLE|F_SHOWTBTIP|F_NOBORDER|F_SKINNED;
@@ -538,7 +538,7 @@ void ShowCountdownFrame(WORD fTimeFlags)
 			/* HACKS TO FIX CLUI FRAMES:
 			 * *** why is CLUIFrames is horribly buggy??! *** date: sept 2005, nothing changed until sept 2006
 			 * workaround #1: MS_CLIST_FRAMES_REMOVEFRAME does not finish with destroy cycle (clist_modern, clist_nicer crashes) */
-			SendMessage((HWND)CallService(MS_CLUI_GETHWND,0,0),WM_SIZE,0,0);
+			SendMessage(pcli->hwndContactList, WM_SIZE, 0, 0);
 			/* workaround #2: drawing glitch after adding a frame (frame positioned wrongly when hidden) */
 			CallService(MS_CLIST_FRAMES_UPDATEFRAME,hFrame,FU_FMPOS|FU_FMREDRAW);
 			/* workaround #3: MS_CLIST_FRAMES_SETFRAMEOPTIONS does cause redrawing problems */

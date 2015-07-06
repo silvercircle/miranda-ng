@@ -45,7 +45,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "m_system.h"
 #include "m_system_cpp.h"
 #include "m_protocols.h"
-#include "m_protomod.h"
 #include "m_protosvc.h"
 #include "m_protoint.h"
 #include "m_clist.h"
@@ -219,7 +218,7 @@ struct CIrcProto : public PROTO<CIrcProto>
 
 	virtual	DWORD_PTR __cdecl GetCaps( int type, MCONTACT hContact = NULL);
 
-	virtual	HANDLE    __cdecl SearchBasic(const PROTOCHAR* id);
+	virtual	HANDLE    __cdecl SearchBasic(const TCHAR* id);
 
 	virtual	HANDLE    __cdecl SendFile(MCONTACT hContact, const TCHAR *szDescription, TCHAR **ppszFiles);
 	virtual	int       __cdecl SendMsg(MCONTACT hContact, int flags, const char* msg);
@@ -338,7 +337,7 @@ struct CIrcProto : public PROTO<CIrcProto>
 	DWORD     m_bConnectRequested;
 	DWORD     m_bConnectThreadRunning;
 
-	HGENMENU hMenuRoot, hMenuQuick, hMenuServer, hMenuJoin, hMenuNick, hMenuList;
+	HGENMENU hMenuQuick, hMenuServer, hMenuJoin, hMenuNick, hMenuList;
 	HANDLE   hNetlibDCC;
 
 	bool  bTempDisableCheck, bTempForceCheck, bEcho;

@@ -38,6 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 HINSTANCE hInst;
 
 int hLangpack;
+unsigned int g_nTempFileId;
 
 int g_cbCountries;
 CountryListEntry *g_countries;
@@ -56,9 +57,6 @@ PLUGININFOEX pluginInfo = {
 	UNICODE_AWARE,
     {0x144e80a2, 0xd198, 0x428b, {0xac, 0xbe, 0x9d, 0x55, 0xda, 0xcc, 0x7f, 0xde}} // {144E80A2-D198-428b-ACBE-9D55DACC7FDE}
 };
-
-XML_API  xi;
-TIME_API tmi;
 
 CLIST_INTERFACE* pcli;
 FI_INTERFACE *FIP = NULL;
@@ -136,7 +134,7 @@ static int OnModulesLoaded(WPARAM, LPARAM)
 	fontid.deffontsettings.charset = DEFAULT_CHARSET;
 	fontid.deffontsettings.colour = GetSysColor(COLOR_WINDOWTEXT);
 	fontid.deffontsettings.size = -11;
-	mir_tstrncpy(fontid.deffontsettings.szFace, _T("MS Shell Dlg"), SIZEOF(fontid.deffontsettings.szFace));
+	mir_tstrncpy(fontid.deffontsettings.szFace, _T("MS Shell Dlg"), _countof(fontid.deffontsettings.szFace));
 	fontid.deffontsettings.style = 0;
 
 	_tcsncpy_s(fontid.name, LPGENT("Frame title"), _TRUNCATE);
@@ -182,8 +180,6 @@ static int jabberProtoUninit(CJabberProto *ppro)
 extern "C" int __declspec(dllexport) Load()
 {
 	// set the memory, lists & utf8 managers
-	mir_getXI(&xi);
-	mir_getTMI(&tmi);
 	mir_getLP(&pluginInfo);
 	mir_getCLI();
 
@@ -197,7 +193,7 @@ extern "C" int __declspec(dllexport) Load()
 
 	WORD v[4];
 	CallService(MS_SYSTEM_GETFILEVERSION, 0, (LPARAM)v);
-	mir_sntprintf(szCoreVersion, SIZEOF(szCoreVersion), _T("%d.%d.%d.%d"), v[0], v[1], v[2], v[3]);
+	mir_sntprintf(szCoreVersion, _countof(szCoreVersion), _T("%d.%d.%d.%d"), v[0], v[1], v[2], v[3]);
 
 	CallService(MS_UTILS_GETCOUNTRYLIST, (WPARAM)&g_cbCountries, (LPARAM)&g_countries);
 
@@ -205,12 +201,13 @@ extern "C" int __declspec(dllexport) Load()
 	hDiscoInfoResult = CreateHookableEvent(ME_JABBER_SRVDISCOINFO);
 
 	// Register protocol module
-	PROTOCOLDESCRIPTOR pd = { sizeof(pd) };
+	PROTOCOLDESCRIPTOR pd = { 0 };
+	pd.cbSize = sizeof(pd);
 	pd.szName = "JABBER";
 	pd.fnInit = (pfnInitProto)jabberProtoInit;
 	pd.fnUninit = (pfnUninitProto)jabberProtoUninit;
 	pd.type = PROTOTYPE_PROTOCOL;
-	CallService(MS_PROTO_REGISTERMODULE, 0, (LPARAM)&pd);
+	Proto_RegisterModule(&pd);
 
 	g_IconsInit();
 	g_XstatusIconsInit();
@@ -232,6 +229,23 @@ extern "C" int __declspec(dllexport) Unload(void)
 
 	DestroyHookableEvent(hExtListInit);
 	DestroyHookableEvent(hDiscoInfoResult);
+
+	if (g_nTempFileId != 0) {
+		TCHAR tszTempPath[MAX_PATH], tszFilePath[MAX_PATH];
+		GetTempPath(_countof(tszTempPath), tszTempPath);
+		mir_sntprintf(tszFilePath, _countof(tszFilePath), _T("%sjab*.tmp.*"), tszTempPath);
+
+		WIN32_FIND_DATA findData;
+		HANDLE hFind = FindFirstFile(tszFilePath, &findData);
+		if (hFind != INVALID_HANDLE_VALUE) {
+			do {
+				mir_sntprintf(tszFilePath, _countof(tszFilePath), _T("%s%s"), tszTempPath, findData.cFileName);
+				DeleteFile(tszFilePath);
+			} while (FindNextFile(hFind, &findData));
+			
+			FindClose(hFind);
+		}
+	}
 
 	g_MenuUninit();
 	return 0;

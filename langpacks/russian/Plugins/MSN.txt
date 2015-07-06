@@ -76,7 +76,7 @@
 [Mobile Device (used for SMS)]
 Мобильное устройство (SMS)
 [Spouse/Partner]
-Супруг(а)/Партнер
+Супруг(а)/Партнёр
 [Middle Name]
 Отчество
 [First Name]
@@ -116,17 +116,17 @@
 [User &history]
 &История пользователя
 [&Kick user]
-&Выгнать пользователя
+&Выкинуть пользователя
 [&Op user]
 &Сделать пользователя админом
 [&Deop user]
 &Снять с пользователя админ права
+[%I64u bytes]
+%I64u байт
 [MSN Alert]
 MSN уведомление
 [Contact tried to open an audio conference (not currently supported)]
 Контакт пытался открыть аудиоконференцию (не поддерживается)
-[%I64u bytes]
-%I64u байт
 [Accept NetMeeting request from %s?]
 Принять запрос NetMeeting от %s?
 [MSN Protocol]
@@ -154,7 +154,7 @@ MSN Чат
 [MSN Link Protocol]
 Протокол MSN
 [Contact %s has been removed from the server.\nWould you like to keep it as "Local Only" contact to preserve history?]
-Контакт %s был удален с сервера.\nХотите ли вы оставить его в локальном списке, чтобы сохранить историю?
+Контакт %s был удалён с сервера.\nХотите ли вы оставить его в локальном списке, чтобы сохранить историю?
 [%s protocol]
 Протокол %s
 [Subject: %s]

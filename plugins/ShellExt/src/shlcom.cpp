@@ -90,12 +90,12 @@ BOOL AddToList(TAddArgList& args)
 			HANDLE hFind = FindFirstFileA(szBuf, &fd);
 			while (true) {
 				if (fd.cFileName[0] != '.') {
-					mir_snprintf(szBuf, SIZEOF(szBuf),"%s\\%s", args.szFile, fd.cFileName);
+					mir_snprintf(szBuf, _countof(szBuf),"%s\\%s", args.szFile, fd.cFileName);
 					// keep a copy of the current thing being processed
 					szThis = args.szFile;
 					args.szFile = szBuf;
 					int cchThis = args.cch;
-					args.cch = (int)mir_strlen(szBuf) + 1;
+					args.cch = (int)strlen(szBuf) + 1;
 					// recurse
 					BOOL Result = AddToList(args);
 					// restore
@@ -183,7 +183,7 @@ struct TSlotInfo
 
 int __cdecl SortContact(const void *Item1, const void *Item2)
 {
-	return CallService(MS_CLIST_CONTACTSCOMPARE, (WPARAM)((TSlotInfo*)Item1)->hContact, (LPARAM)((TSlotInfo*)Item2)->hContact);
+	return CallService(MS_CLIST_CONTACTSCOMPARE, ((TSlotInfo*)Item1)->hContact, ((TSlotInfo*)Item2)->hContact);
 }
 
 void ipcGetSkinIcons(THeaderIPC *ipch)
@@ -193,7 +193,8 @@ void ipcGetSkinIcons(THeaderIPC *ipch)
 
 	int protoCount;
 	PROTOACCOUNT **pp;
-	if (ProtoEnumAccounts(&protoCount,&pp) == 0 && protoCount != 0) {
+	Proto_EnumAccounts(&protoCount,&pp);
+	if (protoCount != 0) {
 		spi.pid = GetCurrentProcessId();
 		while (protoCount > 0) {
 			PROTOACCOUNT *pa = *pp;
@@ -206,7 +207,7 @@ void ipcGetSkinIcons(THeaderIPC *ipch)
 					// capture all the icons!
 					spi.hProto = murmur_hash(pa->szModuleName);
 					for (int j = 0; j <= 10; j++)
-						spi.hIcons[j] = LoadSkinnedProtoIcon(pa->szModuleName, ID_STATUS_OFFLINE + j);
+						spi.hIcons[j] = Skin_LoadProtoIcon(pa->szModuleName, ID_STATUS_OFFLINE + j);
 
 					pct->fType = REQUEST_NEWICONS;
 					memcpy(LPSTR(pct) + sizeof(TSlotIPC), &spi, sizeof(TSlotProtoIcons));
@@ -224,7 +225,7 @@ void ipcGetSkinIcons(THeaderIPC *ipch)
 	if (pct != NULL) {
 		memset(&spi.hIcons, 0, sizeof(spi.hIcons));
 		spi.hProto = 0; // no protocol
-		spi.hIcons[0] = LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
+		spi.hIcons[0] = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
 		pct->fType = REQUEST_NEWICONS;
 		memcpy(LPSTR(pct) + sizeof(TSlotIPC), &spi, sizeof(TSlotProtoIcons));
 		if (ipch->NewIconsBegin == NULL)
@@ -234,7 +235,6 @@ void ipcGetSkinIcons(THeaderIPC *ipch)
 
 bool ipcGetSortedContacts(THeaderIPC *ipch, int *pSlot, bool bGroupMode)
 {
-	bool Result = false;
 	// hide offliners?
 	bool bHideOffline = db_get_b(0, "CList", "HideOffline", 0) == 1;
 	// do they wanna hide the offline people anyway?
@@ -260,7 +260,7 @@ bool ipcGetSortedContacts(THeaderIPC *ipch, int *pSlot, bool bGroupMode)
 		char *szProto = GetContactProto(hContact);
 		if (szProto != NULL) {
 			// does it support file sends?
-			DWORD dwCaps = ProtoCallService(szProto, PS_GETCAPS, PFLAGNUM_1, 0);
+			DWORD dwCaps = CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_1, 0);
 			if ((dwCaps & PF1_FILESEND) == 0)
 				continue;
 
@@ -299,25 +299,19 @@ bool ipcGetSortedContacts(THeaderIPC *ipch, int *pSlot, bool bGroupMode)
 	dwContacts = i;
 	qsort(pContacts, dwContacts, sizeof(TSlotInfo), SortContact);
 	
-	DBVARIANT dbv;
-	int n, rc;
 	// create an IPC slot for each contact and store display name, etc
 	for (i=0; i < dwContacts; i++) {
-		char *szContact = (char*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)pContacts[i].hContact, 0);
+		ptrA szContact(mir_t2a(pcli->pfnGetContactDisplayName(pContacts[i].hContact, 0)));
 		if (szContact != NULL) {
-			n = 0;
-			rc = 1;
-			if (bGroupMode) {
-				rc = db_get_s(pContacts[i].hContact, "CList", "Group", &dbv);
-				if (!rc)
-					n = mir_strlen(dbv.pszVal) + 1;
-			}
-			int cch = mir_strlen(szContact) + 1;
-			TSlotIPC *pct = ipcAlloc(ipch, cch + 1 + n);
-			if (pct == NULL) {
-				db_free(&dbv);
+			ptrA szGroup;
+			if (bGroupMode)
+				szGroup = db_get_sa(pContacts[i].hContact, "CList", "Group");
+
+			int cch = lstrlenA(szContact) + 1;
+			TSlotIPC *pct = ipcAlloc(ipch, cch + 1 + lstrlenA(szGroup) + 1);
+			if (pct == NULL)
 				break;
-			}
+
 			// lie about the actual size of the TSlotIPC
 			pct->cbStrSection = cch;
 			LPSTR szSlot = LPSTR(pct) + sizeof(TSlotIPC);
@@ -330,10 +324,9 @@ bool ipcGetSortedContacts(THeaderIPC *ipch, int *pSlot, bool bGroupMode)
 			if (ipch->ContactsBegin == NULL)
 				ipch->ContactsBegin = pct;
 			szSlot += cch + 1;
-			if (rc == 0) {
-				pct->hGroup = murmur_hash(dbv.pszVal);
-				lstrcpyA(szSlot, dbv.pszVal);
-				db_free(&dbv);
+			if (szGroup != 0) {
+				pct->hGroup = murmur_hash(szGroup);
+				lstrcpyA(szSlot, szGroup);
 			}
 			else {
 				pct->hGroup = 0;
@@ -355,10 +348,9 @@ void __cdecl ClearMRUThread(void*)
 }
 
 // this function is called from an APC into the main thread
-void __stdcall ipcService(ULONG_PTR dwParam)
+void __stdcall ipcService(ULONG_PTR)
 {
 	HANDLE hSignal;
-	TSlotIPC *pct;
 	LPSTR szBuf;
 	char szGroupStr[32];
 	DBVARIANT dbv;
@@ -383,7 +375,7 @@ void __stdcall ipcService(ULONG_PTR dwParam)
 			pMMT->pServerBaseAddress = pMMT->pClientBaseAddress;
 			pMMT->pClientBaseAddress = cloned;
 			memcpy(cloned, pMMT, IPC_PACKET_SIZE);
-			ipcFixupAddresses(true, cloned);
+			ipcFixupAddresses(cloned);
 			DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &cloned->Param, THREAD_SET_CONTEXT, false, 0);
 			mir_forkthread(&IssueTransferThread, cloned);
 			goto Reply;
@@ -401,7 +393,7 @@ void __stdcall ipcService(ULONG_PTR dwParam)
 		pMMT->pServerBaseAddress = pMMT->pClientBaseAddress;
 		pMMT->pClientBaseAddress = pMMT;
 		// translate to the server space map
-		ipcFixupAddresses(true, pMMT);
+		ipcFixupAddresses(pMMT);
 		// store the address map offset so the caller can retranslate
 		pMMT->pServerBaseAddress = pMMT;
 		// return some options to the client
@@ -425,6 +417,7 @@ void __stdcall ipcService(ULONG_PTR dwParam)
 		if (bGroupMode && BST_CHECKED == db_get_b(0, SHLExt_Name, SHLExt_UseCListSetting, BST_UNCHECKED)) 
 			bGroupMode = db_get_b(0, "CList", "UseGroups", true) != 0;
 
+		TSlotIPC *pct = NULL;
 		int iSlot = 0;
 		// return profile if set
 		if (BST_UNCHECKED == db_get_b(0, SHLExt_Name, SHLExt_ShowNoProfile, BST_UNCHECKED)) {
@@ -444,7 +437,7 @@ void __stdcall ipcService(ULONG_PTR dwParam)
 				_itoa(iSlot, szGroupStr, 10);
 				if ( db_get_s(0, "CListGroups", szGroupStr, &dbv) != 0)
 					break;
-				pct = ipcAlloc(pMMT, mir_strlen(dbv.pszVal + 1) + 1);
+				pct = ipcAlloc(pMMT, lstrlenA(dbv.pszVal + 1) + 1);
 				// first byte has flags, need null term
 				if (pct != NULL) {
 					if (pMMT->GroupsBegin == NULL)
@@ -558,8 +551,8 @@ void CheckUnregisterServer()
 	if (bIsVistaPlus) {
 		// launches regsvr to remove the dll under admin.
 		TCHAR szFileName[MAX_PATH], szBuf[MAX_PATH * 2];
-		GetModuleFileName(hInst, szFileName, SIZEOF(szFileName));
-		mir_sntprintf(szBuf, SIZEOF(szBuf), _T("/s /u \"%s\""), szFileName);
+		GetModuleFileName(hInst, szFileName, _countof(szFileName));
+		mir_sntprintf(szBuf, _countof(szBuf), _T("/s /u \"%s\""), szFileName);
 
 		SHELLEXECUTEINFO sei = { sizeof(sei) };
 		sei.lpVerb = _T("runas");
@@ -587,8 +580,8 @@ void CheckRegisterServer()
 			TranslateT("Shell context menus requires your permission to register with Windows Explorer (one time only)."),
 			TranslateT("Miranda NG - Shell context menus (shellext.dll)"), MB_OK | MB_ICONINFORMATION);
 		// /s = silent
-		GetModuleFileName(hInst, szFileName, SIZEOF(szFileName));
-		mir_sntprintf(szBuf, SIZEOF(szBuf), _T("/s \"%s\""), szFileName);
+		GetModuleFileName(hInst, szFileName, _countof(szFileName));
+		mir_sntprintf(szBuf, _countof(szBuf), _T("/s \"%s\""), szFileName);
 
 		SHELLEXECUTEINFO sei = { sizeof(sei) };
 		sei.lpVerb = _T("runas");

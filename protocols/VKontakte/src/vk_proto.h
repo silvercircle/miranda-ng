@@ -116,11 +116,12 @@ struct CVkChatMessage : public MZeroedObject
 		m_mid(_id),
 		m_uid(0),
 		m_date(0),
-		m_bHistory(false)
+		m_bHistory(false),
+		m_bIsAction(false)
 	{}
 
 	int m_mid, m_uid, m_date;
-	bool m_bHistory;
+	bool m_bHistory, m_bIsAction;
 	ptrT m_tszBody;
 };
 
@@ -168,7 +169,7 @@ struct CVkFileUploadParam {
 	VKFileType filetype;
 	int iErrorCode;
 	
-	CVkFileUploadParam(MCONTACT _hContact, const PROTOCHAR* _desc, PROTOCHAR** _files);
+	CVkFileUploadParam(MCONTACT _hContact, const TCHAR* _desc, TCHAR** _files);
 	~CVkFileUploadParam();
 	VKFileType GetType();
 	__forceinline bool IsAccess() { return ::_taccess(FileName, 0) == 0; }
@@ -226,7 +227,7 @@ struct CVKNewsItem : public MZeroedObject {
 	bool bIsRepost;
 };
 
-enum VKBBCType { vkbbcB, vkbbcI, vkbbcS, vkbbcU, vkbbcUrl, vkbbcSize, vkbbcColor };
+enum VKBBCType { vkbbcB, vkbbcI, vkbbcS, vkbbcU, vkbbcImg, vkbbcUrl, vkbbcSize, vkbbcColor };
 enum BBCSupport { bbcNo, bbcBasic, bbcAdvanced };
 
 struct CVKBBCItem {
@@ -352,14 +353,14 @@ struct CVkProto : public PROTO<CVkProto>
 	void AddFeedEvent(CMString& tszBody, time_t tTime);
 	
 	CVkUserInfo* GetVkUserInfo(LONG iUserId, OBJLIST<CVkUserInfo> &vkUsers);
-	void CreateVkUserInfoList(OBJLIST<CVkUserInfo> &vkUsers, JSONNODE *pResponse);	
+	void CreateVkUserInfoList(OBJLIST<CVkUserInfo> &vkUsers, const JSONNode &jnResponse);	
 		
-	CVKNewsItem* GetVkNewsItem(JSONNODE *pItem, OBJLIST<CVkUserInfo> &vkUsers, bool isRepost = false);
+	CVKNewsItem* GetVkNewsItem(const JSONNode &jnItem, OBJLIST<CVkUserInfo> &vkUsers, bool isRepost = false);
 
-	CVKNewsItem* GetVkGroupInvates(JSONNODE *pItem, OBJLIST<CVkUserInfo> &vkUsers);
-	CVKNewsItem* GetVkNotificationsItem(JSONNODE *pItem, OBJLIST<CVkUserInfo> &vkUsers);
-	CMString GetVkFeedback(JSONNODE *pFeedback, VKObjType vkFeedbackType, OBJLIST<CVkUserInfo> &vkUsers, CVkUserInfo *vkUser);
-	CVKNewsItem* GetVkParent(JSONNODE *pParent, VKObjType vkParentType, TCHAR *ptszReplyText = NULL, TCHAR *ptszReplyLink = NULL);
+	CVKNewsItem* GetVkGroupInvates(const JSONNode &jnItem, OBJLIST<CVkUserInfo> &vkUsers);
+	CVKNewsItem* GetVkNotificationsItem(const JSONNode &jnItem, OBJLIST<CVkUserInfo> &vkUsers);
+	CMString GetVkFeedback(const JSONNode &jnFeedback, VKObjType vkFeedbackType, OBJLIST<CVkUserInfo> &vkUsers, CVkUserInfo *vkUser);
+	CVKNewsItem* GetVkParent(const JSONNode &jnParent, VKObjType vkParentType, LPCTSTR ptszReplyText = NULL, LPCTSTR ptszReplyLink = NULL);
 	
 	void RetrieveUnreadNews(time_t tLastNewsTime);
 	void OnReceiveUnreadNews(NETLIBHTTPREQUEST*, AsyncHttpRequest*);
@@ -382,9 +383,10 @@ struct CVkProto : public PROTO<CVkProto>
 	MCONTACT FindChat(LONG dwUserid);
 
 	bool CheckMid(LIST<void> &lList, int guid);
+		
+	JSONNode& CheckJsonResponse(AsyncHttpRequest *pReq, NETLIBHTTPREQUEST *reply, JSONNode &root);	
+	bool CheckJsonResult(AsyncHttpRequest *pReq, const JSONNode &Node);
 
-	JSONNODE* CheckJsonResponse(AsyncHttpRequest *pReq, NETLIBHTTPREQUEST *reply, JSONROOT&);
-	bool CheckJsonResult(AsyncHttpRequest *pReq, JSONNODE*);
 	void OnReceiveSmth(NETLIBHTTPREQUEST*, AsyncHttpRequest*);
 
 	bool AutoFillForm(char*, CMStringA&, CMStringA&);
@@ -405,12 +407,13 @@ struct CVkProto : public PROTO<CVkProto>
 	char* GetStickerId(const char* Msg, int& stickerid);
 
 	CMString SpanVKNotificationType(CMString& tszType, VKObjType& vkFeedback, VKObjType& vkParent);
-	CMString GetVkPhotoItem(JSONNODE *pPhotoItem, BBCSupport iBBC);
-	CMString SetBBCString(TCHAR *tszString, BBCSupport iBBC, VKBBCType bbcType, TCHAR *tszAddString = NULL);
+	CMString GetVkPhotoItem(const JSONNode &jnPhoto, BBCSupport iBBC);
+
+	CMString SetBBCString(LPCTSTR tszString, BBCSupport iBBC, VKBBCType bbcType, LPCTSTR tszAddString = NULL);
 	CMString& ClearFormatNick(CMString& tszText);
 
-	CMString GetAttachmentDescr(JSONNODE*, BBCSupport iBBC = bbcNo);
-	CMString GetFwdMessages(JSONNODE *pMessages, BBCSupport iBBC = bbcNo);
+	CMString GetAttachmentDescr(const JSONNode &jnAttachments, BBCSupport iBBC = bbcNo);
+	CMString GetFwdMessages(const JSONNode &jnMessages, BBCSupport iBBC = bbcNo);
 
 	void SetInvisible(MCONTACT hContact);
 
@@ -421,7 +424,7 @@ struct CVkProto : public PROTO<CVkProto>
 	void OnReceiveStatus(NETLIBHTTPREQUEST*, AsyncHttpRequest*);
 	void OnReceiveStatusMsg(NETLIBHTTPREQUEST*, AsyncHttpRequest*);
 
-	MCONTACT SetContactInfo(JSONNODE* Item, bool flag = false, bool self = false);
+	MCONTACT SetContactInfo(const JSONNode &jnItem, bool flag = false, bool self = false);
 	void RetrieveMyInfo(void);
 	void OnReceiveMyInfo(NETLIBHTTPREQUEST*, AsyncHttpRequest*);
 	void RetrieveUserInfo(LONG userId);
@@ -450,7 +453,7 @@ struct CVkProto : public PROTO<CVkProto>
 	void OnReceivePollingInfo(NETLIBHTTPREQUEST*, AsyncHttpRequest*);
 	void __cdecl PollingThread(void*);
 	int PollServer();
-	void PollUpdates(JSONNODE*);
+	void PollUpdates(const JSONNode&);
 	void OnReceivePolling(NETLIBHTTPREQUEST*, AsyncHttpRequest*);
 
 	void OnReceiveAuthRequest(NETLIBHTTPREQUEST*, AsyncHttpRequest*);
@@ -535,7 +538,7 @@ private:
 	AsyncHttpRequest* Push(AsyncHttpRequest*, int iTimeout = 10000);
 
 	bool RunCaptchaForm(LPCSTR szUrl, CMStringA&);
-	bool ApplyCaptcha(AsyncHttpRequest *pReq, JSONNODE*);
+	bool ApplyCaptcha(AsyncHttpRequest *pReq, const JSONNode&);
 
 	void ConnectionFailed(int iReason);
 	void OnLoggedIn();
@@ -586,7 +589,8 @@ private:
 		m_bNotificationFilterInvites,
 		m_bUseBBCOnAttacmentsAsNews,
 		m_bUseNonStandardUrlEncode,
-		m_bSetBroadcast;
+		m_bSetBroadcast,
+		m_bShortenLinksForAudio;
 
 	int m_iNewsInterval, 
 		m_iNotificationsInterval, 
@@ -613,8 +617,8 @@ private:
 	ptrT	m_defaultGroup;
 
 	ptrA
-		m_pollingServer, 
-		m_pollingKey, 
+		m_pollingServer,
+		m_pollingKey,
 		m_pollingTs,
 		m_szAccessToken;
 
@@ -635,9 +639,10 @@ private:
 	static INT_PTR CALLBACK OptionsViewProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	OBJLIST<CVkChatInfo> m_chats;
-	CVkChatInfo* AppendChat(int id, JSONNODE *pNode);
-	void AppendChatMessage(int id, JSONNODE *pMsg, bool bIsHistory);
-	void AppendChatMessage(CVkChatInfo *cc, int uid, int msgTime, LPCTSTR ptszBody, bool bIsHistory);
+	CVkChatInfo* AppendChat(int id, const JSONNode &jnNode);
+	void SetChatTitle(CVkChatInfo *cc, LPCTSTR tszTopic);
+	void AppendChatMessage(int id, const JSONNode &jnMsg, bool bIsHistory);
+	void AppendChatMessage(CVkChatInfo *cc, int uid, int msgTime, LPCTSTR ptszBody, bool bIsHistory, bool bIsAction = false);
 	void RetrieveChatInfo(CVkChatInfo*);
 	void OnReceiveChatInfo(NETLIBHTTPREQUEST*, AsyncHttpRequest*);
 	void OnSendChatMsg(NETLIBHTTPREQUEST*, AsyncHttpRequest*);
@@ -645,7 +650,7 @@ private:
 	void OnChatDestroy(NETLIBHTTPREQUEST*, AsyncHttpRequest*);
 	int __cdecl OnChatEvent(WPARAM, LPARAM);
 	int __cdecl OnGcMenuHook(WPARAM, LPARAM);
-	void KickFromChat(int chat_id, int user_id, JSONNODE* pMsg);
+	void KickFromChat(int chat_id, int user_id, const JSONNode &jnMsg);
 	void LeaveChat(int chat_id, bool close_window = true, bool delete_chat = false);
 	INT_PTR __cdecl OnLeaveChat(WPARAM, LPARAM);
 	INT_PTR __cdecl OnJoinChat(WPARAM, LPARAM);

@@ -83,7 +83,7 @@ void DeleteCListGroupsByName(TCHAR* szGroupName)
 
 	TCHAR *szGroup;
 	for (int i=1; (szGroup = pcli->pfnGetGroupName(i, NULL)) != NULL; i++)
-		if( !wcscmp(szGroupName, szGroup))
+		if( !mir_wstrcmp(szGroupName, szGroup))
 			CallService(MS_CLIST_GROUPDELETE, i, 0);
 
 	if(ConfirmDelete)
@@ -129,8 +129,8 @@ const int Stricmp(const TCHAR *str, const TCHAR *substr)
 	TCHAR *str_up = NEWTSTR_MALLOC(str);
 	TCHAR *substr_up = NEWTSTR_MALLOC(substr);
 
-	CharUpperBuff(str_up, mir_tstrlen(str_up));
-	CharUpperBuff(substr_up, mir_tstrlen(substr_up));
+	CharUpperBuff(str_up, (int)mir_tstrlen(str_up));
+	CharUpperBuff(substr_up, (int)mir_tstrlen(substr_up));
 
 	i = mir_tstrcmp(str_up, substr_up);
 
@@ -189,7 +189,7 @@ BOOL IsUrlContains(TCHAR * Str)
 
 	if(Str && mir_tstrlen(Str)>0) {
 		TCHAR *StrLower = NEWTSTR_MALLOC(Str);
-		CharLowerBuff(StrLower, mir_tstrlen(StrLower));
+		CharLowerBuff(StrLower, (int)mir_tstrlen(StrLower));
 		for (int i=0; i<CountUrl; i++)
 			if(_tcsstr (StrLower, URL[i]))
 			{
@@ -247,7 +247,7 @@ void LogSpamToFile(MCONTACT hContact, tstring message)
 	if (hStopSpamLogDirH)
 		FoldersGetCustomPathT(hStopSpamLogDirH, pszName, MAX_PATH, _T(""));
 	else
-		mir_tstrncpy(pszName, VARST( _T("%miranda_logpath%")), SIZEOF(pszName));
+		mir_tstrncpy(pszName, VARST( _T("%miranda_logpath%")), _countof(pszName));
 
 	filename = pszName;
 	filename = filename + _T("\\stopspam_mod.log");
@@ -264,7 +264,7 @@ void LogSpamToFile(MCONTACT hContact, tstring message)
 
 	// Name, UID and Protocol Log line
 	LogProtocol=DBGetContactSettingStringPAN(hContact,"Protocol","p",_T(""));
-	LogContactName=(TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR);
+	LogContactName=(TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0);
 	LogContactId=(LogProtocol==_T(""))?_T(""):GetContactUid(hContact,LogProtocol);
 	// Name, UID  and Protocol Log line
 
@@ -342,7 +342,7 @@ void CleanThread()
 	std::list<std::string> protocols;
 	int count = 0;
 	PROTOACCOUNT **accounts;
-	ProtoEnumAccounts(&count, &accounts);
+	Proto_EnumAccounts(&count, &accounts);
 	for(int i = 0; i < count; i++)
 	{
 		if(!strstr(accounts[i]->szModuleName, "MetaContacts") && !strstr(accounts[i]->szModuleName, "Weather")) //not real protocols
@@ -380,7 +380,7 @@ void HistoryLogFunc(MCONTACT hContact, std::string message)
 		std::string msg = message;
 		msg.append("\n");
 		msg.append("Protocol: ").append(GetContactProto(hContact)).append(" Contact: ");
-		msg.append(toUTF8((TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR))).append(" ID: ");
+		msg.append(toUTF8((TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0))).append(" ID: ");
 		msg.append(toUTF8(GetContactUid(hContact,toUTF16(GetContactProto(hContact)))));
 		HistoryLog(NULL, (char*)msg.c_str(), EVENTTYPE_MESSAGE, DBEF_READ);
 	}

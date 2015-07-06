@@ -21,7 +21,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 //the cache has not been loaded when these functions are used
 
@@ -71,7 +71,7 @@ int CDb3Mmap::CheckDbHeaders(bool bInteractive)
 			if (bInteractive)
 				if (IDYES == MessageBox(NULL, TranslateTS(tszOldHeaders), TranslateT("Obsolete database format"), MB_YESNO | MB_ICONWARNING)) {
 					TCHAR tszCurPath[MAX_PATH];
-					GetModuleFileName(NULL, tszCurPath, SIZEOF(tszCurPath));
+					GetModuleFileName(NULL, tszCurPath, _countof(tszCurPath));
 					TCHAR *p = _tcsrchr(tszCurPath, '\\');
 					if (p) *p = 0;
 
@@ -81,7 +81,7 @@ int CDb3Mmap::CheckDbHeaders(bool bInteractive)
 						RegCloseKey(hPathSetting);
 					}
 
-					CallService(MS_UTILS_OPENURL, 0, LPARAM("http://wiki.miranda-ng.org/index.php?title=Updating_pre-0.94.9_version_to_0.95.1_and_later"));
+					Utils_OpenUrl("http://wiki.miranda-ng.org/index.php?title=Updating_pre-0.94.9_version_to_0.95.1_and_later");
 					Sleep(1000);
 					exit(0);
 				}

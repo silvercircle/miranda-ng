@@ -131,15 +131,15 @@ void CGlobals::reloadSystemModulesChanged()
 	else db_set_b(0, SRMSGMOD_T, "ieview_installed", 0);
 
 	m_iButtonsBarGap = M.GetByte("ButtonsBarGap", 1);
-	m_hwndClist = (HWND)CallService(MS_CLUI_GETHWND, 0, 0);
+	m_hwndClist = pcli->hwndContactList;
 
 	g_bPopupAvail = ServiceExists(MS_POPUP_ADDPOPUPT) != 0;
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = -2000090000;
 	mi.flags = CMIF_DEFAULT;
-	mi.icolibItem = LoadSkinnedIconHandle(SKINICON_EVENT_MESSAGE);
-	mi.pszName = LPGEN("&Message");
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_EVENT_MESSAGE);
+	mi.name.a = LPGEN("&Message");
 	mi.pszService = MS_MSG_SENDMESSAGE;
 	PluginConfig.m_hMenuItem = Menu_AddContactMenuItem(&mi);
 
@@ -186,7 +186,7 @@ void CGlobals::reloadSettings(bool fReloadSkins)
 	m_bIdleDetect = M.GetBool("dimIconsForIdleContacts", true);
 	m_smcxicon = m_smcyicon = 16;
 	m_PasteAndSend = M.GetByte("pasteandsend", 1);
-	m_LangPackCP = ServiceExists(MS_LANGPACK_GETCODEPAGE) ? CallService(MS_LANGPACK_GETCODEPAGE, 0, 0) : CP_ACP;
+	m_LangPackCP = Langpack_GetDefaultCodePage();
 	m_visualMessageSizeIndicator = M.GetByte("msgsizebar", 0);
 	m_autoSplit = M.GetByte("autosplit", 0);
 	m_FlashOnMTN = M.GetByte(SRMSGMOD, SRMSGSET_SHOWTYPINGWINFLASH, SRMSGDEFSET_SHOWTYPINGWINFLASH);
@@ -266,18 +266,17 @@ void CGlobals::hookSystemEvents()
 int CGlobals::TopToolbarLoaded(WPARAM, LPARAM)
 {
 	TTBButton ttb = { 0 };
-	ttb.cbSize = sizeof(ttb);
 	ttb.dwFlags = TTBBF_SHOWTOOLTIP | TTBBF_VISIBLE;
 	ttb.pszService = MS_TABMSG_TRAYSUPPORT;
 	ttb.name = "TabSRMM session list";
 	ttb.pszTooltipUp = LPGEN("TabSRMM session list");
-	ttb.hIconHandleUp = Skin_GetIcon("tabSRMM_sb_slist");
+	ttb.hIconHandleUp = IcoLib_GetIcon("tabSRMM_sb_slist");
 	TopToolbar_AddButton(&ttb);
 
 	ttb.name = "TabSRMM Menu";
 	ttb.pszTooltipUp = LPGEN("TabSRMM menu");
 	ttb.lParamUp = ttb.lParamDown = 1;
-	ttb.hIconHandleUp = Skin_GetIcon("tabSRMM_container");
+	ttb.hIconHandleUp = IcoLib_GetIcon("tabSRMM_container");
 	TopToolbar_AddButton(&ttb);
 
 	return 0;
@@ -325,19 +324,17 @@ int CGlobals::ModulesLoaded(WPARAM, LPARAM)
 	if (nen_options.bTraySupport)
 		::CreateSystrayIcon(TRUE);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = -500050005;
-	mi.hIcon = PluginConfig.g_iconContainer;
-	mi.pszContactOwner = NULL;
-	mi.pszName = LPGEN("&Messaging settings...");
+	mi.hIcolibItem = PluginConfig.g_iconContainer;
+	mi.name.a = LPGEN("&Messaging settings...");
 	mi.pszService = MS_TABMSG_SETUSERPREFS;
 	PluginConfig.m_UserMenuItem = Menu_AddContactMenuItem(&mi);
 
 	if (sendLater->isAvail()) {
 		mi.position = -500050006;
-		mi.hIcon = 0;
-		mi.pszContactOwner = NULL;
-		mi.pszName = LPGEN("&Send later job list...");
+		mi.hIcolibItem = 0;
+		mi.name.a = LPGEN("&Send later job list...");
 		mi.pszService = MS_TABMSG_SLQMGR;
 		PluginConfig.m_UserMenuItem = Menu_AddMainMenuItem(&mi);
 	}
@@ -543,7 +540,7 @@ int CGlobals::OkToExit(WPARAM, LPARAM)
 void CGlobals::RestoreUnreadMessageAlerts(void)
 {
 	CLISTEVENT cle = { sizeof(cle) };
-	cle.hIcon = LoadSkinnedIcon(SKINICON_EVENT_MESSAGE);
+	cle.hIcon = Skin_LoadIcon(SKINICON_EVENT_MESSAGE);
 	cle.pszService = "SRMsg/ReadMessage";
 	cle.flags = CLEF_TCHAR;
 
@@ -562,7 +559,7 @@ void CGlobals::RestoreUnreadMessageAlerts(void)
 				cle.hDbEvent = hDbEvent;
 
 				TCHAR toolTip[256];
-				mir_sntprintf(toolTip, SIZEOF(toolTip), TranslateT("Message from %s"), pcli->pfnGetContactDisplayName(hContact, 0));
+				mir_sntprintf(toolTip, _countof(toolTip), TranslateT("Message from %s"), pcli->pfnGetContactDisplayName(hContact, 0));
 				cle.ptszTooltip = toolTip;
 				CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
 			}

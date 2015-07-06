@@ -652,7 +652,7 @@ void updateXstatusProto(PROTOCOL_INFO *protoInfo)
 void createProtocolList(void)
 {
 	PROTOACCOUNT **proto;
-	ProtoEnumAccounts(&ProtoList.protoCount, &proto);
+	Proto_EnumAccounts(&ProtoList.protoCount, &proto);
 	ProtoList.protoInfo = (PROTOCOL_INFO *)malloc(ProtoList.protoCount * sizeof(PROTOCOL_INFO));
 	if (!ProtoList.protoInfo) {
 		ProtoList.protoCount = 0;
@@ -697,7 +697,7 @@ void createEventPrefix(TCHAR *prefixName, size_t maxLen)
 	else {
 		str = profileName + len - maxLen / 2;
 		_tcsncpy_s(prefixName, (maxLen / 2), profileName, _TRUNCATE);
-		_tcscat(prefixName, str);
+		mir_tstrcat(prefixName, str);
 	}
 }
 
@@ -721,9 +721,9 @@ static int ModulesLoaded(WPARAM, LPARAM)
 
 	// Create some synchronisation objects
 	createEventPrefix(eventPrefix, MAX_PATH - 11);
-	mir_sntprintf(eventName, SIZEOF(eventName), _T("%s/FlashEvent"), eventPrefix);
+	mir_sntprintf(eventName, _countof(eventName), _T("%s/FlashEvent"), eventPrefix);
 	hFlashEvent = CreateEvent(NULL, FALSE, FALSE, eventName);
-	mir_sntprintf(eventName, SIZEOF(eventName), _T("%s/ExitEvent"), eventPrefix);
+	mir_sntprintf(eventName, _countof(eventName), _T("%s/ExitEvent"), eventPrefix);
 	hExitEvent = CreateEvent(NULL, FALSE, FALSE, eventName);
 
 	hThread = mir_forkthread(FlashThreadFunction, 0);

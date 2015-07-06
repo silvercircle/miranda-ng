@@ -28,16 +28,16 @@ bool LoadMessageFont(LOGFONT *lf, COLORREF *colour)
 	int i = 8; // MSGFONTID_MESSAGEAREA
 
 	if (colour) {
-		mir_snprintf(str, SIZEOF(str), "SRMFont%dCol", i);
+		mir_snprintf(str, "SRMFont%dCol", i);
 		*colour = db_get_dw(NULL, "SRMM", str, 0);
 	}
 	if (lf) {
-		mir_snprintf(str, SIZEOF(str), "SRMFont%dSize", i);
+		mir_snprintf(str, "SRMFont%dSize", i);
 		lf->lfHeight = (char)db_get_b(NULL, "SRMM", str, -12);
 		lf->lfWidth = 0;
 		lf->lfEscapement = 0;
 		lf->lfOrientation = 0;
-		mir_snprintf(str, SIZEOF(str), "SRMFont%dSty", i);
+		mir_snprintf(str, "SRMFont%dSty", i);
 		int style = db_get_b(NULL, "SRMM", str, 0);
 		lf->lfWeight = style & DBFONTF_BOLD ? FW_BOLD : FW_NORMAL;
 		lf->lfItalic = style & DBFONTF_ITALIC ? 1 : 0;
@@ -47,16 +47,16 @@ bool LoadMessageFont(LOGFONT *lf, COLORREF *colour)
 		lf->lfClipPrecision = CLIP_DEFAULT_PRECIS;
 		lf->lfQuality = DEFAULT_QUALITY;
 		lf->lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
-		mir_snprintf(str, SIZEOF(str), "SRMFont%d", i);
+		mir_snprintf(str, "SRMFont%d", i);
 
 		DBVARIANT dbv;
 		if (db_get_ts(NULL, "SRMM", str, &dbv))
 			mir_tstrcpy(lf->lfFaceName, _T("Arial"));
 		else {
-			mir_tstrncpy(lf->lfFaceName, dbv.ptszVal, SIZEOF(lf->lfFaceName));
+			mir_tstrncpy(lf->lfFaceName, dbv.ptszVal, _countof(lf->lfFaceName));
 			db_free(&dbv);
 		}
-		mir_snprintf(str, SIZEOF(str), "SRMFont%dSet", i);
+		mir_snprintf(str, "SRMFont%dSet", i);
 		lf->lfCharSet = db_get_b(NULL, "SRMM", str, DEFAULT_CHARSET);
 	}
 	return true;
@@ -135,7 +135,7 @@ UINT CreateGCMenu(HWND hwndDlg, HMENU *hMenu, int iIndex, POINT pt, SESSION_INFO
 
 		if (pszWordText && pszWordText[0]) {
 			TCHAR szMenuText[4096];
-			mir_sntprintf(szMenuText, SIZEOF(szMenuText), TranslateT("Look up '%s':"), pszWordText);
+			mir_sntprintf(szMenuText, _countof(szMenuText), TranslateT("Look up '%s':"), pszWordText);
 			ModifyMenu(*hMenu, 4, MF_STRING | MF_BYPOSITION, 4, szMenuText);
 		}
 		else ModifyMenu(*hMenu, 4, MF_STRING | MF_GRAYED | MF_BYPOSITION, 4, TranslateT("No word to look up"));
@@ -144,9 +144,9 @@ UINT CreateGCMenu(HWND hwndDlg, HMENU *hMenu, int iIndex, POINT pt, SESSION_INFO
 	else if (iIndex == 0) {
 		TCHAR szTemp[50];
 		if (pszWordText)
-			mir_sntprintf(szTemp, SIZEOF(szTemp), TranslateT("&Message %s"), pszWordText);
+			mir_sntprintf(szTemp, TranslateT("&Message %s"), pszWordText);
 		else
-			mir_tstrncpy(szTemp, TranslateT("&Message"), SIZEOF(szTemp) - 1);
+			mir_tstrncpy(szTemp, TranslateT("&Message"), _countof(szTemp) - 1);
 
 		if (mir_tstrlen(szTemp) > 40)
 			mir_tstrcpy(szTemp + 40, _T("..."));
@@ -189,12 +189,12 @@ UINT CreateGCMenu(HWND hwndDlg, HMENU *hMenu, int iIndex, POINT pt, SESSION_INFO
 
 void DestroyGCMenu(HMENU *hMenu, int iIndex)
 {
-	MENUITEMINFO mi;
-	mi.cbSize = sizeof(mi);
-	mi.fMask = MIIM_SUBMENU;
-	while (GetMenuItemInfo(*hMenu, iIndex, TRUE, &mi)) {
-		if (mi.hSubMenu != NULL)
-			DestroyMenu(mi.hSubMenu);
+	MENUITEMINFO mii = { 0 };
+	mii.cbSize = sizeof(mii);
+	mii.fMask = MIIM_SUBMENU;
+	while (GetMenuItemInfo(*hMenu, iIndex, TRUE, &mii)) {
+		if (mii.hSubMenu != NULL)
+			DestroyMenu(mii.hSubMenu);
 		RemoveMenu(*hMenu, iIndex, MF_BYPOSITION);
 	}
 }

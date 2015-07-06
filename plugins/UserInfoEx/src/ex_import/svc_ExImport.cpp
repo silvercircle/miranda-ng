@@ -52,7 +52,7 @@ static void DisplayNameToFileName(lpExImParam ExImContact, LPSTR pszFileName, WO
 				return;
 			}
 			else {
-				disp = (LPCSTR)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)ExImContact->hContact, NULL);
+				disp = (LPCSTR)pcli->pfnGetContactDisplayName(ExImContact->hContact, NULL);
 			}
 			break;
 		case EXIM_SUBGROUP:
@@ -60,7 +60,7 @@ static void DisplayNameToFileName(lpExImParam ExImContact, LPSTR pszFileName, WO
 			disp = temp;
 			break;
 		case EXIM_ACCOUNT:
-			PROTOACCOUNT* acc = ProtoGetAccount(ExImContact->pszName);
+			PROTOACCOUNT* acc = Proto_GetAccount(ExImContact->pszName);
 			temp = mir_t2a(acc->tszAccountName);
 			disp = temp;
 			break;
@@ -115,7 +115,7 @@ INT_PTR SvcExImport_Export(lpExImParam ExImContact, HWND hwndParent)
 {
 	CHAR szFileName[MAX_PATH] = { 0 };
 	// create the filename to suggest the user for the to export contact
-	DisplayNameToFileName(ExImContact, szFileName, SIZEOF(szFileName));
+	DisplayNameToFileName(ExImContact, szFileName, _countof(szFileName));
 	int nIndex = DlgExIm_SaveFileName(hwndParent, 
 		Translate("Select a destination file..."),
 		FilterString(ExImContact),
@@ -158,7 +158,7 @@ INT_PTR SvcExImport_Import(lpExImParam ExImContact, HWND hwndParent)
 	CHAR szFileName[MAX_PATH] = { 0 };
 
 	// create the filename to suggest the user for the to export contact
-	DisplayNameToFileName(ExImContact, szFileName, SIZEOF(szFileName));
+	DisplayNameToFileName(ExImContact, szFileName, _countof(szFileName));
 
 	int nIndex = DlgExIm_OpenFileName(hwndParent, 
 		Translate("Import User Details from VCard"),
@@ -272,7 +272,7 @@ INT_PTR svcExIm_Group_Service(WPARAM wParam, LPARAM lParam)
 	LPTSTR ptszGroup = tszGroup;
 	LPTSTR ptszItem = tszItem;
 
-	HWND hClist = (HWND)CallService(MS_CLUI_GETHWNDTREE,0,0);
+	HWND hClist = pcli->hwndContactTree;
 	// get clist selection
 	hItem = SendMessage(hClist,CLM_GETSELECTION,0,0);
 	hRoot = SendMessage(hClist,CLM_GETNEXTITEM, (WPARAM)CLGN_ROOT, (LPARAM)hItem);
@@ -280,7 +280,7 @@ INT_PTR svcExIm_Group_Service(WPARAM wParam, LPARAM lParam)
 		if (SendMessage(hClist,CLM_GETITEMTYPE, (WPARAM)hItem, 0) == CLCIT_GROUP) {
 			SendMessage(hClist,CLM_GETITEMTEXT, (WPARAM)hItem, (LPARAM)ptszItem);
 			LPTSTR temp = mir_tstrdup(ptszGroup);
-			mir_sntprintf(tszGroup, SIZEOF(tszGroup),_T("%s%s%s"), ptszItem, mir_tstrlen(temp)? _T("\\"):_T(""), temp);
+			mir_sntprintf(tszGroup, _countof(tszGroup),_T("%s%s%s"), ptszItem, mir_tstrlen(temp)? _T("\\"):_T(""), temp);
 			mir_free (temp);
 		}
 		hParent = SendMessage(hClist,CLM_GETNEXTITEM, (WPARAM)CLGN_PARENT, (LPARAM)hItem);
@@ -326,12 +326,13 @@ typedef struct
  *
  * @return	always 0
  **/
+
 INT_PTR svcExIm_Account_Service(WPARAM wParam, LPARAM lParam)
 {
 	ExImParam ExIm;
 	memset(&ExIm, 0, sizeof(ExIm));
-	HWND hClist = (HWND)CallService(MS_CLUI_GETHWNDTREE,0,0);
-	lpStatusMenuExecParam smep = (lpStatusMenuExecParam) CallService(MO_MENUITEMGETOWNERDATA, (WPARAM) lParam, NULL);
+	HWND hClist = pcli->hwndContactTree;
+	lpStatusMenuExecParam smep = (lpStatusMenuExecParam)Menu_GetItemData((HGENMENU)lParam);
 	ExIm.pszName = mir_strdup(smep->proto);
 	ExIm.Typ = EXIM_ACCOUNT;
 

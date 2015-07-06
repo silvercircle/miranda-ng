@@ -52,7 +52,7 @@ std::wstring& MirandaUtils::getProfileName()
 	}
 	
 	wchar_t mirandaProfileNameW[128] = {0};
-	CallService(MS_DB_GETPROFILENAMEW, SIZEOF(mirandaProfileNameW), (WPARAM)mirandaProfileNameW);
+	CallService(MS_DB_GETPROFILENAMEW, _countof(mirandaProfileNameW), (WPARAM)mirandaProfileNameW);
 	profileName.append(mirandaProfileNameW);
 
 	return profileName;
@@ -68,7 +68,7 @@ std::wstring& MirandaUtils::getDisplayName()
 
 	displayName.append(L"Miranda NG v.");
 	char mirandaVersion[128];
-	CallService(MS_SYSTEM_GETVERSIONTEXT, (WPARAM)SIZEOF(mirandaVersion), (LPARAM)mirandaVersion);
+	CallService(MS_SYSTEM_GETVERSIONTEXT, (WPARAM)_countof(mirandaVersion), (LPARAM)mirandaVersion);
 	displayName.append(_A2T(mirandaVersion));
 	displayName.append(L" (");
 	displayName.append(getProfileName());
@@ -370,20 +370,13 @@ void MirandaUtils::setStatusOnAccount(ActionThreadArgStruct* args)
 
 	INT_PTR result = -1;
 
-	if (!(CallProtoService(args->accountSzModuleName, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_INDIVMODEMSG)){
-		result = CallProtoService(args->accountSzModuleName, PS_SETAWAYMSGW, (WPARAM)status, (LPARAM)args->userActionSelection);
-		if (result == CALLSERVICE_NOTFOUND){
-			char *szMsg = mir_u2a(args->userActionSelection);
-			result = CallProtoService(args->accountSzModuleName, PS_SETAWAYMSG, (WPARAM)status, (LPARAM)szMsg);
-			mir_free(szMsg);
-		}
-	}
+	if (!(CallProtoService(args->accountSzModuleName, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_INDIVMODEMSG))
+		result = CallProtoService(args->accountSzModuleName, PS_SETAWAYMSG, status, (LPARAM)args->userActionSelection);
 
 	MirandaAccount* mirandaAccount = args->mirfoxDataPtr->getMirandaAccountPtrBySzModuleName(args->accountSzModuleName);
 	TCHAR* tszAccountName = NULL;
-	if (mirandaAccount){
+	if (mirandaAccount)
 		tszAccountName = mirandaAccount->tszAccountName;
-	}
 
 	wchar_t* buffer = new wchar_t[1024 * sizeof(wchar_t)];
 	if(result == 0){
@@ -488,9 +481,9 @@ void MirandaUtils::translateOldDBNames() {
 	//account's settings		"ACCOUNTSTATE_"
 	int accountsTmpCount = 0;
 	PROTOACCOUNT **accountsTmp;
-	CallService(MS_PROTO_ENUMACCOUNTS, (WPARAM)&accountsTmpCount, (LPARAM)&accountsTmp);
-	for(int i=0; i<accountsTmpCount; i++) {
+	Proto_EnumAccounts(&accountsTmpCount, &accountsTmp);
 
+	for(int i=0; i<accountsTmpCount; i++) {
 		logger->log_p(L"TranslateOldDBNames: found ACCOUNT: [%s]  protocol: [%S]", accountsTmp[i]->tszAccountName, accountsTmp[i]->szProtoName);
 
 		std::string mirandaAccountDBKey("ACCOUNTSTATE_");
@@ -503,7 +496,7 @@ void MirandaUtils::translateOldDBNames() {
 		}
 	}
 
-	//contacts		"state"
+	//contacts "state"
 	for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact)){
 		logger->log_p(L"TranslateOldDBNames: found CONTACT: [" SCNuPTR L"]", hContact);
 

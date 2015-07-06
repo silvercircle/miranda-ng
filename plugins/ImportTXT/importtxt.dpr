@@ -50,9 +50,6 @@ var
   hwndDialog:HWND;
   //Services
   SrvITxt,SrvIWiz:THANDLE;
-  //hooks
-  onLoadHook:THANDLE;
-  onAccChangHook:THANDLE;
 
 function MirandaPluginInfoEx(mirandaVersion:DWORD):PPLUGININFOEX; cdecl;
 begin
@@ -105,8 +102,6 @@ end;
 
 function OnModulesLoaded(wParam: wParam; lParam: lParam): int; cdecl;
 begin
-  UnhookEvent(onLoadHook);
-  result := 0;
   EnumProtocols;
   // check for AutoStart
   if (DBReadByte(0, IMPORT_TXT_MODULE, IMPORT_TXT_AS) = 1) and (ProtoCount > 0) then
@@ -114,38 +109,34 @@ begin
     CallService(IMPORT_WIZ_SERVICE, 0, 0);
     DBWriteByte(0, IMPORT_TXT_MODULE, IMPORT_TXT_AS, 0);
   end;
+  result := 0;
 end;
 
 function Load(): int; cdecl;
 var
-  mi: TCListMenuItem;
+  mi:TMO_MenuItem;
 begin
-  cp := CallService(MS_LANGPACK_GETCODEPAGE, 0, 0);
+  cp := Langpack_GetDefaultCodePage;
   SrvITxt := CreateServiceFunction(IMPORT_TXT_SERVICE, @ContactMenuCommand);
   SrvIWiz := CreateServiceFunction(IMPORT_WIZ_SERVICE, @MainMenuCommand);
   FillChar(mi, sizeof(mi), 0);
-  mi.cbSize := sizeof(mi);
-  mi.flags := 0;
   mi.position := 1000090050;
   mi.hIcon := LoadIcon(hInstance, MAKEINTRESOURCE(IDI_DEFAULT));
   mi.szName.a := 'Import history';
   mi.pszService := IMPORT_TXT_SERVICE;
-  mi.pszContactOwner := nil; // All contacts
   Menu_AddContacTMenuItem(@mi);
 
   mi.position := 500050010;
   mi.pszService := IMPORT_WIZ_SERVICE;
-  mi.pszContactOwner := nil;
   Menu_AddMainMenuItem(@mi);
 
-  onLoadHook := HookEvent(ME_SYSTEM_MODULESLOADED, @OnModulesLoaded);
-  onAccChangHook := HookEvent(ME_PROTO_ACCLISTCHANGED, @OnAccountChanged);
+  HookEvent(ME_SYSTEM_MODULESLOADED, @OnModulesLoaded);
+  HookEvent(ME_PROTO_ACCLISTCHANGED, @OnAccountChanged);
   result := 0;
 end;
 
 function Unload: int; cdecl;
 begin
-  UnhookEvent(onAccChangHook);
   DestroyServiceFunction(SrvITxt);
   DestroyServiceFunction(SrvIWiz);
   Result := 0;

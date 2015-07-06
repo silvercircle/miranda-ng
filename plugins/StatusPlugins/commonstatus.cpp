@@ -135,7 +135,7 @@ static int equalsGlobalStatus(PROTOCOLSETTINGEX **ps)
 
 	int count;
 	PROTOACCOUNT **protos;
-	ProtoEnumAccounts(&count, &protos);
+	Proto_EnumAccounts(&count, &protos);
 
 	for (i = 0; i < count; i++) {
 		if (!IsSuitableProto(protos[i]))
@@ -177,9 +177,9 @@ static void SetStatusMsg(PROTOCOLSETTINGEX *ps, int newstatus)
 
 			TCHAR substituteStr[128];
 			if (!_tcsnicmp(tszMsg + j, _T("%time%"), 6))
-				GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, 0, 0, substituteStr, SIZEOF(substituteStr));
+				GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, 0, 0, substituteStr, _countof(substituteStr));
 			else if (!_tcsnicmp(tszMsg + j, _T("%date%"), 6))
-				GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, 0, 0, substituteStr, SIZEOF(substituteStr));
+				GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, 0, 0, substituteStr, _countof(substituteStr));
 			else
 				continue;
 
@@ -196,11 +196,7 @@ static void SetStatusMsg(PROTOCOLSETTINGEX *ps, int newstatus)
 		}
 	}
 	log_debugA("CommonStatus sets status message for %s directly", ps->szName);
-	if (CALLSERVICE_NOTFOUND == CallProtoService(ps->szName, PS_SETAWAYMSGT, newstatus, (LPARAM)tszMsg)) {
-		char* sMsg = mir_t2a(tszMsg);
-		CallProtoService(ps->szName, PS_SETAWAYMSG, newstatus, (LPARAM)sMsg);
-		mir_free(sMsg);
-	}
+	CallProtoService(ps->szName, PS_SETAWAYMSG, newstatus, (LPARAM)tszMsg);
 	mir_free(tszMsg);
 }
 
@@ -220,7 +216,7 @@ INT_PTR SetStatusEx(WPARAM wParam, LPARAM)
 	// set all status messages first
 	for (int i = 0; i < protoList->getCount(); i++) {
 		char *szProto = protoSettings[i]->szName;
-		if (!ProtoGetAccount(szProto)) {
+		if (!Proto_GetAccount(szProto)) {
 			log_debugA("CommonStatus: %s is not loaded", szProto);
 			continue;
 		}
@@ -294,7 +290,7 @@ int GetProtoCount()
 {
 	int pCount = 0, count;
 	PROTOACCOUNT **accs;
-	ProtoEnumAccounts(&count, &accs);
+	Proto_EnumAccounts(&count, &accs);
 
 	for (int i = 0; i < count; i++)
 		if (IsSuitableProto(accs[i]))

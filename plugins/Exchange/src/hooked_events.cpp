@@ -60,14 +60,13 @@ int OnModulesLoaded(WPARAM, LPARAM)
 {
 
 	UpdateTimers();
-	CLISTMENUITEM cl = {0};
-	cl.cbSize = sizeof(CLISTMENUITEM);
-	cl.hIcon = hiMailIcon;
-	cl.position = 10000000;
-	cl.pszService = MS_EXCHANGE_CHECKEMAIL;
-	cl.flags = CMIF_TCHAR;
-	cl.ptszName = LPGENT("Check exchange mailbox");
-	Menu_AddMainMenuItem (&cl);
+	CMenuItem mi;
+	mi.hIcolibItem = hiMailIcon;
+	mi.position = 10000000;
+	mi.pszService = MS_EXCHANGE_CHECKEMAIL;
+	mi.flags = CMIF_TCHAR;
+	mi.name.t = LPGENT("Check exchange mailbox");
+	Menu_AddMainMenuItem(&mi);
 	
 	hEmailsDlg = NULL; //CreateDialog(hInstance, MAKEINTRESOURCE(IDD_EMAILS), NULL, DlgProcEmails); //create emails window
 	FirstTimeCheck();	

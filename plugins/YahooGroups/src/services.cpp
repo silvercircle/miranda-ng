@@ -53,7 +53,7 @@ void ReadAvailableGroups()
 	
 	while (ok)
 	{
-		mir_snprintf(tmp, SIZEOF(tmp), "%d", index);
+		mir_snprintf(tmp, "%d", index);
 		GetStringFromDatabase(NULL, CLIST_GROUPS, tmp, NULL, group, sizeof(group));
 		if (mir_strlen(group) > 0)
 		{
@@ -76,7 +76,7 @@ int GetNextGroupIndex()
 	
 	while (!found)
 	{
-		mir_snprintf(tmp, SIZEOF(tmp), "%d", index++);
+		mir_snprintf(tmp, "%d", index++);
 		
 		if (GetStringFromDatabase(NULL, CLIST_GROUPS, tmp, NULL, buffer, sizeof(buffer)))
 		{
@@ -87,7 +87,7 @@ int GetNextGroupIndex()
 	return index - 1;
 }
 
-void AddNewGroup(char *newGroup)
+void AddNewGroup(const char *newGroup)
 {
 	int index = GetNextGroupIndex();
 	
@@ -95,9 +95,9 @@ void AddNewGroup(char *newGroup)
 	char group[1024];
 
 	*group = 1;
-	strncpy_s((group + 1), (SIZEOF(group) - 1), newGroup, _TRUNCATE);
+	strncpy_s((group + 1), (_countof(group) - 1), newGroup, _TRUNCATE);
 	
-	mir_snprintf(tmp, SIZEOF(tmp), "%d", index);
+	mir_snprintf(tmp, "%d", index);
 	const int MAX_SIZE = 1024;
 	wchar_t wide[MAX_SIZE] = {0};
 	*wide = 1;
@@ -119,44 +119,29 @@ void CreateGroup(char *group)
 {
 	char *p = group;
 	char *sub = group;
-	char buffer[1024] = {0};
-	
+
+	CMStringA buf;
 	while ((p = strchr(sub, '\\')))
 	{
 		*p = 0;
-		if (mir_strlen(buffer) > 0)
-		{
-			strncat(buffer, "\\", SIZEOF(buffer) - mir_strlen(buffer));
-			strncat(buffer, sub, SIZEOF(buffer) - mir_strlen(buffer));
-		}
-		else{
-			strncpy_s(buffer, sub, _TRUNCATE);
-		}
+		if (!buf.IsEmpty())
+			buf.AppendChar('\\');
+		buf.Append(sub);
 		
-		if (!availableGroups.Contains(buffer))
-		{
-			AddNewGroup(buffer);
-		}
+		if (!availableGroups.Contains(buf))
+			AddNewGroup(buf);
 		
 		*p++ = '\\';
 		sub = p;
 	}
 	
-	if (sub)
-	{
-		if (mir_strlen(buffer) > 0)
-		{
-			strncat(buffer, "\\", SIZEOF(buffer) - mir_strlen(buffer));
-			strncat(buffer, sub, SIZEOF(buffer) - mir_strlen(buffer));
-		}
-		else{
-			strncpy_s(buffer, sub, _TRUNCATE);
-		}
+	if (sub) {
+		if (!buf.IsEmpty())
+			buf.AppendChar('\\');
+		buf.Append(sub);
 		
-		if (!availableGroups.Contains(buffer))
-		{
-			AddNewGroup(buffer);
-		}
+		if (!availableGroups.Contains(buf))
+			AddNewGroup(buf);
 	}
 }
 

@@ -76,7 +76,7 @@ static const FontOptionsList fontOptionsList[] = {
 	{ LPGENT("Info bar status message"), RGB(50, 50, 50), _T("Arial"), FONTF_ITALIC, -11, LPGENT("Info bar background")}
 };
 
-int fontOptionsListSize = SIZEOF(fontOptionsList);
+int fontOptionsListSize = _countof(fontOptionsList);
 
 struct ColourOptionsList
 {
@@ -108,37 +108,37 @@ void RegisterFontServiceFonts()
 	FontIDT fid = { sizeof(fid) };
 	_tcsncpy_s(fid.group, LPGENT("Messaging"), _TRUNCATE);
 	_tcsncpy_s(fid.backgroundGroup, LPGENT("Messaging"), _TRUNCATE);
-	strncpy(fid.dbSettingsGroup, SRMMMOD, SIZEOF(fid.dbSettingsGroup));
+	strncpy(fid.dbSettingsGroup, SRMMMOD, _countof(fid.dbSettingsGroup));
 	fid.flags = FIDF_DEFAULTVALID | FIDF_DEFAULTVALID;
-	for (int i = 0; i < SIZEOF(fontOptionsList); i++) {
+	for (int i = 0; i < _countof(fontOptionsList); i++) {
 		fid.order = i;
 
 		char szTemp[100];
-		mir_snprintf(szTemp, SIZEOF(szTemp), "SRMFont%d", i);
-		strncpy(fid.prefix, szTemp, SIZEOF(fid.prefix));
-		_tcsncpy(fid.name, fontOptionsList[i].szDescr, SIZEOF(fid.name));
+		mir_snprintf(szTemp, "SRMFont%d", i);
+		strncpy(fid.prefix, szTemp, _countof(fid.prefix));
+		_tcsncpy(fid.name, fontOptionsList[i].szDescr, _countof(fid.name));
 		fid.deffontsettings.colour = fontOptionsList[i].defColour;
 		fid.deffontsettings.size = fontOptionsList[i].defSize;
 		fid.deffontsettings.style = fontOptionsList[i].defStyle;
 		fid.deffontsettings.charset = DEFAULT_CHARSET;
-		_tcsncpy(fid.deffontsettings.szFace, fontOptionsList[i].szDefFace, SIZEOF(fid.deffontsettings.szFace));
-		_tcsncpy(fid.backgroundName, fontOptionsList[i].szBkgName, SIZEOF(fid.backgroundName));
+		_tcsncpy(fid.deffontsettings.szFace, fontOptionsList[i].szDefFace, _countof(fid.deffontsettings.szFace));
+		_tcsncpy(fid.backgroundName, fontOptionsList[i].szBkgName, _countof(fid.backgroundName));
 		FontRegisterT(&fid);
 	}
 
 	ColourIDT cid = { sizeof(cid) };
 	_tcsncpy_s(cid.group, LPGENT("Messaging"), _TRUNCATE);
-	strncpy(cid.dbSettingsGroup, SRMMMOD, SIZEOF(fid.dbSettingsGroup));
+	strncpy(cid.dbSettingsGroup, SRMMMOD, _countof(fid.dbSettingsGroup));
 	cid.flags = 0;
-	for (int i = 0; i < SIZEOF(colourOptionsList); i++) {
+	for (int i = 0; i < _countof(colourOptionsList); i++) {
 		cid.order = i;
-		_tcsncpy(cid.name, colourOptionsList[i].szName, SIZEOF(cid.name));
+		_tcsncpy(cid.name, colourOptionsList[i].szName, _countof(cid.name));
 		if (colourOptionsList[i].systemColor != -1)
 			cid.defcolour = GetSysColor(colourOptionsList[i].systemColor);
 		else
 			cid.defcolour = colourOptionsList[i].defColour;
 
-		strncpy(cid.setting, colourOptionsList[i].szSettingName, SIZEOF(cid.setting));
+		strncpy(cid.setting, colourOptionsList[i].szSettingName, _countof(cid.setting));
 		ColourRegisterT(&cid);
 	}
 }
@@ -166,17 +166,17 @@ void LoadMsgDlgFont(int i, LOGFONT *lf, COLORREF *colour)
 	char str[32];
 
 	if (colour) {
-		mir_snprintf(str, SIZEOF(str), "%s%dCol", "SRMFont", i);
+		mir_snprintf(str, "%s%dCol", "SRMFont", i);
 		*colour = db_get_dw(NULL, SRMMMOD, str, fontOptionsList[i].defColour);
 	}
 
 	if (lf) {
-		mir_snprintf(str, SIZEOF(str), "%s%dSize", "SRMFont", i);
+		mir_snprintf(str, "%s%dSize", "SRMFont", i);
 		lf->lfHeight = (char)db_get_b(NULL, SRMMMOD, str, fontOptionsList[i].defSize);
 		lf->lfWidth = 0;
 		lf->lfEscapement = 0;
 		lf->lfOrientation = 0;
-		mir_snprintf(str, SIZEOF(str), "%s%dSty", "SRMFont", i);
+		mir_snprintf(str, "%s%dSty", "SRMFont", i);
 		int style = db_get_b(NULL, SRMMMOD, str, fontOptionsList[i].defStyle);
 		lf->lfWeight = style & FONTF_BOLD ? FW_BOLD : FW_NORMAL;
 		lf->lfItalic = style & FONTF_ITALIC ? 1 : 0;
@@ -186,15 +186,15 @@ void LoadMsgDlgFont(int i, LOGFONT *lf, COLORREF *colour)
 		lf->lfClipPrecision = CLIP_DEFAULT_PRECIS;
 		lf->lfQuality = DEFAULT_QUALITY;
 		lf->lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
-		mir_snprintf(str, SIZEOF(str), "%s%d", "SRMFont", i);
+		mir_snprintf(str, "%s%d", "SRMFont", i);
 
 		ptrT tszFace(db_get_tsa(NULL, SRMMMOD, str));
 		if (tszFace == NULL)
 			mir_tstrcpy(lf->lfFaceName, fontOptionsList[i].szDefFace);
 		else
-			_tcsncpy(lf->lfFaceName, tszFace, SIZEOF(lf->lfFaceName));
+			_tcsncpy(lf->lfFaceName, tszFace, _countof(lf->lfFaceName));
 
-		mir_snprintf(str, SIZEOF(str), "%s%dSet", "SRMFont", i);
+		mir_snprintf(str, "%s%dSet", "SRMFont", i);
 		lf->lfCharSet = db_get_b(NULL, SRMMMOD, str, DEFAULT_CHARSET);
 	}
 }
@@ -407,9 +407,9 @@ static INT_PTR CALLBACK DlgProcLayoutOptions(HWND hwndDlg, UINT msg, WPARAM wPar
 			SendDlgItemMessage(hwndDlg, IDC_ATRANSPARENCYVALUE, TBM_SETPOS, TRUE, db_get_dw(NULL, SRMMMOD, SRMSGSET_ACTIVEALPHA, SRMSGDEFSET_ACTIVEALPHA));
 			SendDlgItemMessage(hwndDlg, IDC_ITRANSPARENCYVALUE, TBM_SETRANGE, FALSE, MAKELONG(0,255));
 			SendDlgItemMessage(hwndDlg, IDC_ITRANSPARENCYVALUE, TBM_SETPOS, TRUE, db_get_dw(NULL, SRMMMOD, SRMSGSET_INACTIVEALPHA, SRMSGDEFSET_INACTIVEALPHA));
-			mir_snprintf(str, SIZEOF(str), "%d%%", (int)(100 * SendDlgItemMessage(hwndDlg, IDC_ATRANSPARENCYVALUE, TBM_GETPOS, 0, 0) / 255));
+			mir_snprintf(str, "%d%%", (int)(100 * SendDlgItemMessage(hwndDlg, IDC_ATRANSPARENCYVALUE, TBM_GETPOS, 0, 0) / 255));
 			SetDlgItemTextA(hwndDlg, IDC_ATRANSPARENCYPERC, str);
-			mir_snprintf(str, SIZEOF(str), "%d%%", (int)(100 * SendDlgItemMessage(hwndDlg, IDC_ITRANSPARENCYVALUE, TBM_GETPOS, 0, 0) / 255));
+			mir_snprintf(str, "%d%%", (int)(100 * SendDlgItemMessage(hwndDlg, IDC_ITRANSPARENCYVALUE, TBM_GETPOS, 0, 0) / 255));
 			SetDlgItemTextA(hwndDlg, IDC_ITRANSPARENCYPERC, str);
 			SendDlgItemMessage(hwndDlg, IDC_INPUTLINESSPIN, UDM_SETRANGE, 0, MAKELONG(100, 1));
 			SendDlgItemMessage(hwndDlg, IDC_INPUTLINESSPIN, UDM_SETPOS, 0, db_get_w(NULL, SRMMMOD, SRMSGSET_AUTORESIZELINES, SRMSGDEFSET_AUTORESIZELINES));
@@ -451,9 +451,9 @@ static INT_PTR CALLBACK DlgProcLayoutOptions(HWND hwndDlg, UINT msg, WPARAM wPar
 	case WM_HSCROLL:
 		{
 			char str[10];
-			mir_snprintf(str, SIZEOF(str), "%d%%", (int)(100 * SendDlgItemMessage(hwndDlg, IDC_ATRANSPARENCYVALUE, TBM_GETPOS, 0, 0) / 256));
+			mir_snprintf(str, "%d%%", (int)(100 * SendDlgItemMessage(hwndDlg, IDC_ATRANSPARENCYVALUE, TBM_GETPOS, 0, 0) / 256));
 			SetDlgItemTextA(hwndDlg, IDC_ATRANSPARENCYPERC, str);
-			mir_snprintf(str, SIZEOF(str), "%d%%", (int)(100 * SendDlgItemMessage(hwndDlg, IDC_ITRANSPARENCYVALUE, TBM_GETPOS, 0, 0) / 256));
+			mir_snprintf(str, "%d%%", (int)(100 * SendDlgItemMessage(hwndDlg, IDC_ITRANSPARENCYVALUE, TBM_GETPOS, 0, 0) / 256));
 			SetDlgItemTextA(hwndDlg, IDC_ITRANSPARENCYPERC, str);
 			MarkChanges(16, hwndDlg);
 		}
@@ -957,7 +957,7 @@ int OptInitialise(WPARAM wParam, LPARAM)
 	odp.hInstance = g_hInst;
 	odp.pszTitle = LPGEN("Message sessions");
 	odp.flags = ODPF_BOLDGROUPS;
-	for (int i = 0; i < SIZEOF(tabPages); i++) {
+	for (int i = 0; i < _countof(tabPages); i++) {
 		odp.pszTemplate = MAKEINTRESOURCEA(tabPages[i].dlgId);
 		odp.pfnDlgProc = tabPages[i].dlgProc;
 		odp.pszTab = (char *)tabPages[i].tabName;

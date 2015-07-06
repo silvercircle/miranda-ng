@@ -59,13 +59,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 ***********************************************************************************************************/
 
 static BYTE bInitIcons = INIT_ICONS_NONE;
-static HANDLE ghWindowList = NULL;
-static HANDLE ghDetailsInitEvent = NULL;
+static MWindowList g_hWindowList = NULL;
+static HANDLE g_hDetailsInitEvent = NULL;
 
 static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-CPsHdr::CPsHdr() :
-_ignore(10, (LIST<TCHAR>::FTSortFunc)mir_tstrcmp)
+CPsHdr::CPsHdr()
+	: _ignore(10, _tcscmp)
 {
 	_dwSize = sizeof(*this);
 	_hContact = NULL;
@@ -137,7 +137,7 @@ private:
 
 				EnableWindow(GetDlgItem(_pPs->hDlg, IDOK), FALSE);
 				EnableWindow(GetDlgItem(_pPs->hDlg, IDAPPLY), FALSE);
-				mir_snprintf(_pPs->szUpdating, SIZEOF(_pPs->szUpdating), "%s (%s)", Translate("Uploading"), (*_pPd)->szModuleName);
+				mir_snprintf(_pPs->szUpdating, _countof(_pPs->szUpdating), "%s (%s)", Translate("Uploading"), (*_pPd)->szModuleName);
 				ShowWindow(GetDlgItem(_pPs->hDlg, TXT_UPDATING), SW_SHOW);
 				SetTimer(_pPs->hDlg, TIMERID_UPDATING, 100, NULL);
 				return 0;
@@ -167,8 +167,7 @@ public:
 	int UploadFirst()
 	{
 		// create a list of all protocols which support uploading contact information
-		if ( ProtoEnumAccounts(&_numProto, &_pPd))
-			return _bExitAfterUploading ? UPLOAD_FINISH_CLOSE : UPLOAD_FINISH;
+		Proto_EnumAccounts(&_numProto, &_pPd);
 		return UploadNext();
 	}
 
@@ -249,7 +248,7 @@ static INT_PTR ShowDialog(WPARAM wParam, LPARAM lParam)
 	myGlobals.WantAeroAdaption = db_get_b(NULL, MODNAME, SET_PROPSHEET_AEROADAPTION, TRUE);
 
 	// allow only one dialog per user
-	if (HWND hWnd = WindowList_Find(ghWindowList, wParam)) {
+	if (HWND hWnd = WindowList_Find(g_hWindowList, wParam)) {
 		SetForegroundWindow(hWnd);
 		SetFocus(hWnd);
 		return 0;
@@ -273,7 +272,7 @@ static INT_PTR ShowDialog(WPARAM wParam, LPARAM lParam)
 		return 1;
 	}
 
-	HICON hDefIcon = Skin_GetIcon(ICO_TREE_DEFAULT);
+	HICON hDefIcon = IcoLib_GetIcon(ICO_TREE_DEFAULT);
 	if (!hDefIcon)
 		hDefIcon = (HICON)LoadImage(ghInst, MAKEINTRESOURCE(IDI_DEFAULT), IMAGE_ICON, metrics.x, metrics.y, 0);
 
@@ -290,7 +289,7 @@ static INT_PTR ShowDialog(WPARAM wParam, LPARAM lParam)
 	}
 	else {
 		// get contact's protocol
-		psh._pszPrefix = psh._pszProto = DB::Contact::Proto(wParam);
+		psh._pszPrefix = psh._pszProto = Proto_GetBaseAccountName(wParam);
 		if (psh._pszProto == NULL) {
 			MsgErr(NULL, LPGENT("Could not find contact's protocol. Maybe it is not active!"));
 			return 1;
@@ -301,7 +300,7 @@ static INT_PTR ShowDialog(WPARAM wParam, LPARAM lParam)
 	}
 
 	// add the pages
-	NotifyEventHooks(ghDetailsInitEvent, (WPARAM)&psh, wParam);
+	NotifyEventHooks(g_hDetailsInitEvent, (WPARAM)&psh, wParam);
 	if (!psh._pPages || !psh._numPages) {
 		MsgErr(NULL, LPGENT("No pages have been added. Canceling dialog creation!"));
 		return 1;
@@ -317,9 +316,9 @@ static INT_PTR ShowDialog(WPARAM wParam, LPARAM lParam)
 			psh._hContact = db_mc_getSub(wParam, i);
 			psh._nSubContact = i;
 			if (psh._hContact) {
-				psh._pszProto = DB::Contact::Proto(psh._hContact);
+				psh._pszProto = Proto_GetBaseAccountName(psh._hContact);
 				if ((INT_PTR)psh._pszProto != CALLSERVICE_NOTFOUND)
-					NotifyEventHooks(ghDetailsInitEvent, (WPARAM)&psh, (LPARAM)psh._hContact);
+					NotifyEventHooks(g_hDetailsInitEvent, (WPARAM)&psh, (LPARAM)psh._hContact);
 			}
 		}
 		psh._hContact = wParam;
@@ -400,7 +399,7 @@ static INT_PTR AddPage(WPARAM wParam, LPARAM lParam)
 **/
 static int OnDeleteContact(WPARAM wParam, LPARAM lParam)
 {
-	HWND hWnd = WindowList_Find(ghWindowList, wParam);
+	HWND hWnd = WindowList_Find(g_hWindowList, wParam);
 	if (hWnd != NULL)
 		DestroyWindow(hWnd);
 	return 0;
@@ -414,7 +413,7 @@ static int OnDeleteContact(WPARAM wParam, LPARAM lParam)
 **/
 static int OnShutdown(WPARAM wParam, LPARAM lParam)
 {
-	WindowList_BroadcastAsync(ghWindowList, WM_DESTROY, 0, 0);
+	WindowList_BroadcastAsync(g_hWindowList, WM_DESTROY, 0, 0);
 	return 0;
 }
 
@@ -430,7 +429,7 @@ static int OnShutdown(WPARAM wParam, LPARAM lParam)
 static int AddProtocolPages(OPTIONSDIALOGPAGE& odp, WPARAM wParam, LPSTR pszProto = NULL)
 {
 	TCHAR szTitle[MAX_PATH];
-	const BYTE ofs = (pszProto) ? mir_sntprintf(szTitle, SIZEOF(szTitle), _T("%S\\"), pszProto) : 0;
+	const BYTE ofs = (pszProto) ? mir_sntprintf(szTitle, _T("%S\\"), pszProto) : 0;
 
 	odp.ptszTitle = szTitle;
 	
@@ -438,56 +437,56 @@ static int AddProtocolPages(OPTIONSDIALOGPAGE& odp, WPARAM wParam, LPSTR pszProt
 	odp.position = 0x8000000;
 	odp.pfnDlgProc = PSPProcGeneral;
 	odp.hIcon = (HICON)ICONINDEX(IDI_TREE_GENERAL);
-	mir_tstrncpy(szTitle + ofs, LPGENT("General"), SIZEOF(szTitle) - ofs);
+	mir_tstrncpy(szTitle + ofs, LPGENT("General"), _countof(szTitle) - ofs);
 	AddPage(wParam, (LPARAM)&odp);
 
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_CONTACT_ADDRESS);
 	odp.position = 0x8000001;
 	odp.pfnDlgProc = PSPProcContactHome;
 	odp.hIcon = (HICON)ICONINDEX(IDI_TREE_ADDRESS);
-	mir_tstrncpy(szTitle + ofs, LPGENT("General") _T("\\") LPGENT("Contact (private)"), SIZEOF(szTitle) - ofs);
+	mir_tstrncpy(szTitle + ofs, LPGENT("General") _T("\\") LPGENT("Contact (private)"), _countof(szTitle) - ofs);
 	AddPage(wParam, (LPARAM)&odp);
 
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_CONTACT_ORIGIN);
 	odp.position = 0x8000002;
 	odp.pfnDlgProc = PSPProcOrigin;
 	odp.hIcon = (HICON)ICONINDEX(IDI_TREE_ADVANCED);
-	mir_tstrncpy(szTitle + ofs, LPGENT("General") _T("\\") LPGENT("Origin"), SIZEOF(szTitle) - ofs);
+	mir_tstrncpy(szTitle + ofs, LPGENT("General") _T("\\") LPGENT("Origin"), _countof(szTitle) - ofs);
 	AddPage(wParam, (LPARAM)&odp);
 		
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_CONTACT_ANNIVERSARY);
 	odp.position = 0x8000003;
 	odp.pfnDlgProc = PSPProcAnniversary;
 	odp.hIcon = (HICON)ICONINDEX(IDI_BIRTHDAY);
-	mir_tstrncpy(szTitle + ofs,  LPGENT("General") _T("\\") LPGENT("Anniversaries"), SIZEOF(szTitle) - ofs);
+	mir_tstrncpy(szTitle + ofs,  LPGENT("General") _T("\\") LPGENT("Anniversaries"), _countof(szTitle) - ofs);
 	AddPage(wParam, (LPARAM)&odp);
 
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_CONTACT_COMPANY);
 	odp.position = 0x8000004;
 	odp.pfnDlgProc = PSPProcCompany;
 	odp.hIcon = (HICON)ICONINDEX(IDI_TREE_COMPANY);
-	mir_tstrncpy(szTitle + ofs, LPGENT("Work"), SIZEOF(szTitle) - ofs);
+	mir_tstrncpy(szTitle + ofs, LPGENT("Work"), _countof(szTitle) - ofs);
 	AddPage(wParam, (LPARAM)&odp);
 
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_CONTACT_ADDRESS);
 	odp.position = 0x8000005;
 	odp.pfnDlgProc = PSPProcContactWork;
 	odp.hIcon = (HICON)ICONINDEX(IDI_TREE_ADDRESS);
-	mir_tstrncpy(szTitle + ofs, LPGENT("Work") _T("\\") LPGENT("Contact (work)"), SIZEOF(szTitle) - ofs);
+	mir_tstrncpy(szTitle + ofs, LPGENT("Work") _T("\\") LPGENT("Contact (work)"), _countof(szTitle) - ofs);
 	AddPage(wParam, (LPARAM)&odp);
 		
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_CONTACT_ABOUT);
 	odp.position = 0x8000006;
 	odp.pfnDlgProc = PSPProcAbout;
 	odp.hIcon = (HICON)ICONINDEX(IDI_TREE_ABOUT);
-	mir_tstrncpy(szTitle + ofs, LPGENT("About"), SIZEOF(szTitle) - ofs);
+	mir_tstrncpy(szTitle + ofs, LPGENT("About"), _countof(szTitle) - ofs);
 	AddPage(wParam, (LPARAM)&odp);
 
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_CONTACT_PROFILE);
 	odp.position = 0x8000007;
 	odp.pfnDlgProc = PSPProcContactProfile;
 	odp.hIcon = (HICON)ICONINDEX(IDI_TREE_PROFILE);
-	mir_tstrncpy(szTitle + ofs, LPGENT("About") _T("\\") LPGENT("Profile"), SIZEOF(szTitle) - ofs);
+	mir_tstrncpy(szTitle + ofs, LPGENT("About") _T("\\") LPGENT("Profile"), _countof(szTitle) - ofs);
 	AddPage(wParam, (LPARAM)&odp);
 	return 0;
 }
@@ -551,7 +550,7 @@ void DlgContactInfoInitTreeIcons()
 		metrics.x = GetSystemMetrics(SM_CXSMICON);
 		metrics.y = GetSystemMetrics(SM_CYSMICON);
 		if (psh._hImages = ImageList_Create(metrics.x, metrics.y, ILC_COLOR32 | ILC_MASK, 0, 1)) {
-			HICON hDefIcon = Skin_GetIcon(ICO_TREE_DEFAULT);
+			HICON hDefIcon = IcoLib_GetIcon(ICO_TREE_DEFAULT);
 			if (!hDefIcon)
 				hDefIcon = (HICON)LoadImage(ghInst, MAKEINTRESOURCE(IDI_DEFAULT), IMAGE_ICON, metrics.x, metrics.y, 0);
 
@@ -561,28 +560,25 @@ void DlgContactInfoInitTreeIcons()
 
 		// avoid pages from loading doubled
 		if (!(bInitIcons & INIT_ICONS_CONTACT)) {
-			LPCSTR pszContactProto = NULL;
-			PROTOACCOUNT **pd;
-			int ProtoCount = 0;
-
 			psh._dwFlags |= PSF_PROTOPAGESONLY_INIT;
 			
 			// enumerate all protocols
-			if (!ProtoEnumAccounts(&ProtoCount, &pd)) {
-				for (i = 0; i < ProtoCount; i++) {
-					// enumerate all contacts
-					for (psh._hContact = db_find_first(); psh._hContact != NULL; psh._hContact = db_find_next(psh._hContact)) {
-						// compare contact's protocol to the current one, to add
-						pszContactProto = DB::Contact::Proto(psh._hContact);
-						if ((INT_PTR)pszContactProto != CALLSERVICE_NOTFOUND && !mir_strcmp(pd[i]->szModuleName, pszContactProto)) {
-							// call a notification for the contact to retrieve all protocol specific tree items
-							NotifyEventHooks(ghDetailsInitEvent, (WPARAM)&psh, (LPARAM)psh._hContact);
-							if (psh._pPages) {
-								psh.Free_pPages();
-								psh._dwFlags = PSTVF_INITICONS | PSF_PROTOPAGESONLY;
-							}
-							break;
+			PROTOACCOUNT **pd;
+			int ProtoCount = 0;
+			Proto_EnumAccounts(&ProtoCount, &pd);
+			for (i = 0; i < ProtoCount; i++) {
+				// enumerate all contacts
+				for (psh._hContact = db_find_first(); psh._hContact != NULL; psh._hContact = db_find_next(psh._hContact)) {
+					// compare contact's protocol to the current one, to add
+					LPCSTR pszContactProto = Proto_GetBaseAccountName(psh._hContact);
+					if ((INT_PTR)pszContactProto != CALLSERVICE_NOTFOUND && !mir_strcmp(pd[i]->szModuleName, pszContactProto)) {
+						// call a notification for the contact to retrieve all protocol specific tree items
+						NotifyEventHooks(g_hDetailsInitEvent, (WPARAM)&psh, (LPARAM)psh._hContact);
+						if (psh._pPages) {
+							psh.Free_pPages();
+							psh._dwFlags = PSTVF_INITICONS | PSF_PROTOPAGESONLY;
 						}
+						break;
 					}
 				}
 			}
@@ -592,7 +588,7 @@ void DlgContactInfoInitTreeIcons()
 		if (!(bInitIcons & INIT_ICONS_OWNER)) {
 			psh._hContact = NULL;
 			psh._pszProto = NULL;
-			NotifyEventHooks(ghDetailsInitEvent, (WPARAM)&psh, (LPARAM)psh._hContact);
+			NotifyEventHooks(g_hDetailsInitEvent, (WPARAM)&psh, (LPARAM)psh._hContact);
 			if (psh._pPages) {
 				psh.Free_pPages();
 			}
@@ -610,8 +606,8 @@ void DlgContactInfoInitTreeIcons()
 **/
 void DlgContactInfoUnLoadModule()
 {
-	WindowList_Destroy(ghWindowList);
-	DestroyHookableEvent(ghDetailsInitEvent);
+	WindowList_Destroy(g_hWindowList);
+	DestroyHookableEvent(g_hDetailsInitEvent);
 }
 
 /**
@@ -622,7 +618,7 @@ void DlgContactInfoUnLoadModule()
 **/
 void DlgContactInfoLoadModule()
 {
-	ghDetailsInitEvent = CreateHookableEvent(ME_USERINFO_INITIALISE);
+	g_hDetailsInitEvent = CreateHookableEvent(ME_USERINFO_INITIALISE);
 
 	CreateServiceFunction(MS_USERINFO_SHOWDIALOG, ShowDialog);
 	CreateServiceFunction("UserInfo/AddPage", AddPage);
@@ -630,17 +626,17 @@ void DlgContactInfoLoadModule()
 	HookEvent(ME_DB_CONTACT_DELETED, OnDeleteContact);
 	HookEvent(ME_SYSTEM_PRESHUTDOWN, OnShutdown);
 	HookEvent(ME_USERINFO_INITIALISE, InitDetails);
-	ghWindowList = WindowList_Create();
+	g_hWindowList = WindowList_Create();
 
 	// check whether changing my details via UserInfoEx is basically possible
 	myGlobals.CanChangeDetails = FALSE;
 
 	PROTOACCOUNT **pAcc;
 	int nAccCount;
-	if (MIRSUCCEEDED(ProtoEnumAccounts(&nAccCount, &pAcc)))
-		for (int i = 0; (i < nAccCount) && !myGlobals.CanChangeDetails; i++)
-			if (IsProtoAccountEnabled(pAcc[i])) // update my contact information on icq server
-				myGlobals.CanChangeDetails = MIREXISTS(CallProtoService(pAcc[i]->szModuleName, PS_CHANGEINFOEX, NULL, NULL));
+	Proto_EnumAccounts(&nAccCount, &pAcc);
+	for (int i = 0; (i < nAccCount) && !myGlobals.CanChangeDetails; i++)
+		if (IsProtoAccountEnabled(pAcc[i])) // update my contact information on icq server
+			myGlobals.CanChangeDetails = MIREXISTS(CallProtoService(pAcc[i]->szModuleName, PS_CHANGEINFOEX, NULL, NULL));
 }
 
 static void ResetUpdateInfo(LPPS pPs)
@@ -715,8 +711,8 @@ static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 			ShowWindow(GetDlgItem(hDlg, IDC_PAGETITLEBG2), !IsAeroMode());
 
 			// set icons
-			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)Skin_GetIcon(ICO_COMMON_MAIN));
-			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)Skin_GetIcon(ICO_COMMON_MAIN, 32));
+			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIcon(ICO_COMMON_MAIN, false));
+			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIcon(ICO_COMMON_MAIN, true));
 			DlgProc(hDlg, HM_RELOADICONS, NULL, NULL);
 
 			// load basic protocol for current contact (for faster load later on and better handling for owner protocol)
@@ -798,14 +794,14 @@ static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 					static const WORD idMove[] = { IDC_PAGETITLE, IDC_PAGETITLEBG, IDC_PAGETITLEBG2, IDOK, IDCANCEL, IDAPPLY };
 					HWND hCtrl;
 
-					for (int i = 0; i < SIZEOF(idResize); i++) {
+					for (int i = 0; i < _countof(idResize); i++) {
 						if (hCtrl = GetDlgItem(hDlg, idResize[i])) {
 							GetWindowRect(hCtrl, &rc);
 							OffsetRect(&rc, -pt.x, -pt.y);
 							MoveWindow(hCtrl, rc.left, rc.top, rc.right - rc.left + addWidth, rc.bottom - rc.top, FALSE);
 						}
 					}
-					for (int k = 0; k < SIZEOF(idMove); k++) {
+					for (int k = 0; k < _countof(idMove); k++) {
 						if (hCtrl = GetDlgItem(hDlg, idMove[k])) {
 							GetWindowRect(hCtrl, &rc);
 							OffsetRect(&rc, -pt.x, -pt.y);
@@ -821,7 +817,7 @@ static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 			// show the first propsheetpage
 			//
 			// finally add the dialog to the window list
-			WindowList_Add(ghWindowList, hDlg, pPs->hContact);
+			WindowList_Add(g_hWindowList, hDlg, pPs->hContact);
 
 			// show the dialog
 			pPs->dwFlags &= ~PSF_LOCKED;
@@ -832,7 +828,7 @@ static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 			//
 			pPs->updateAnimFrame = 0;
 			if (pPs->hContact && *pPs->pszProto) {
-				GetDlgItemTextA(hDlg, TXT_UPDATING, pPs->szUpdating, SIZEOF(pPs->szUpdating));
+				GetDlgItemTextA(hDlg, TXT_UPDATING, pPs->szUpdating, _countof(pPs->szUpdating));
 				ShowWindow(GetDlgItem(hDlg, TXT_UPDATING), SW_HIDE);
 				
 				if (DlgProc(hDlg, M_CHECKONLINE, NULL, NULL)) 
@@ -1139,17 +1135,17 @@ static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 			{ ICO_BTN_APPLY,	BM_SETIMAGE,	IDAPPLY		}
 		};
 		
-		const int numIconsToSet = db_get_b(NULL, MODNAME, SET_ICONS_BUTTONS, 1) ? SIZEOF(idIcon) : 1;
+		const int numIconsToSet = db_get_b(NULL, MODNAME, SET_ICONS_BUTTONS, 1) ? _countof(idIcon) : 1;
 		
 		IcoLib_SetCtrlIcons(hDlg, idIcon, numIconsToSet);
 		
 		if (hCtrl = GetDlgItem(hDlg, BTN_IMPORT)) {
-			hIcon = Skin_GetIcon(ICO_BTN_IMPORT);
+			hIcon = IcoLib_GetIcon(ICO_BTN_IMPORT);
 			SendMessage(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
 			SetWindowText(hCtrl, hIcon ? _T("") : _T("I"));
 		}
 		if (hCtrl = GetDlgItem(hDlg, BTN_EXPORT)) {
-			hIcon = Skin_GetIcon(ICO_BTN_EXPORT);
+			hIcon = IcoLib_GetIcon(ICO_BTN_EXPORT);
 			SendMessage(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
 			SetWindowText(hCtrl, hIcon ? _T("") : _T("E"));
 		}
@@ -1545,7 +1541,7 @@ static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 			if (pPs->hContact != NULL) {
 				ResetUpdateInfo(pPs);
 
-				mir_snprintf(pPs->szUpdating, SIZEOF(pPs->szUpdating), "%s (%s)", Translate("updating"), pPs->pszProto);
+				mir_snprintf(pPs->szUpdating, _countof(pPs->szUpdating), "%s (%s)", Translate("updating"), pPs->pszProto);
 
 				// need meta contact's subcontact information
 				if (DB::Module::IsMetaAndScan(pPs->pszProto)) {
@@ -1554,7 +1550,7 @@ static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 					for (int i = 0; i < numSubs; i++) {
 						MCONTACT hSubContact = db_mc_getSub(pPs->hContact, i);
 						if (hSubContact != NULL) {
-							if (ProtoServiceExists(DB::Contact::Proto(hSubContact), PSS_GETINFO)) {
+							if (ProtoServiceExists(Proto_GetBaseAccountName(hSubContact), PSS_GETINFO)) {
 								pPs->infosUpdated = (TAckInfo *)mir_realloc(pPs->infosUpdated, sizeof(TAckInfo) * (pPs->nSubContacts + 1));
 								pPs->infosUpdated[pPs->nSubContacts].hContact = hSubContact;
 								pPs->infosUpdated[pPs->nSubContacts].acks = NULL;
@@ -1615,7 +1611,7 @@ static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 		ResetUpdateInfo(pPs);
 
 		// avoid any further message processing for this dialog page
-		WindowList_Remove(ghWindowList, hDlg);
+		WindowList_Remove(g_hWindowList, hDlg);
 		SetUserData(hDlg, NULL);
 
 		// unhook events and stop timers

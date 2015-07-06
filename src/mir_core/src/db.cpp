@@ -22,7 +22,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 MIDatabase *currDb = NULL;
 
@@ -364,6 +364,6 @@ MIR_CORE_DLL(BOOL) db_set_resident(const char *szModule, const char *szService, 
 		return FALSE;
 
 	char str[MAXMODULELABELLENGTH * 2];
-	mir_snprintf(str, SIZEOF(str), "%s/%s", szModule, szService);
+	mir_snprintf(str, "%s/%s", szModule, szService);
 	return currDb->SetSettingResident(bEnable, str);
 }

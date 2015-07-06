@@ -526,8 +526,8 @@ char* CIcqProto::buildUinList(int subtype, size_t wMaxLen, MCONTACT *hContactRes
 					return szList;
 				}
 
-				strcat(szList, szLen);
-				strcat(szList, szUID);
+				mir_strcat(szList, szLen);
+				mir_strcat(szList, szUID);
 			}
 		}
 
@@ -584,8 +584,7 @@ void CIcqProto::setUserInfo()
 #ifdef DBG_CAPMTN
 	wAdditionalData += 16;
 #endif
-	if (m_bUtfEnabled)
-		wAdditionalData += 16;
+	wAdditionalData += 16; // unicode
 #ifdef DBG_NEWCAPS
 	wAdditionalData += 16;
 #endif
@@ -634,8 +633,7 @@ void CIcqProto::setUserInfo()
 	packShortCapability(&packet, 0x1349);  // AIM_CAPS_ICQSERVERRELAY
 
 	// Broadcasts the capability to receive UTF8 encoded messages
-	if (m_bUtfEnabled)
-		packShortCapability(&packet, 0x134E);  // CAP_UTF8MSGS
+	packShortCapability(&packet, 0x134E);  // CAP_UTF8MSGS
 
 #ifdef DBG_NEWCAPS
 	// Tells server we understand to new format of caps
@@ -737,7 +735,7 @@ void CIcqProto::handleServUINSettings(int nPort, serverthread_info *info)
 
 		// prepare mood id
 		if (m_bMoodsEnabled && bXStatus && moodXStatus[bXStatus - 1] != -1)
-			mir_snprintf(szMoodData, SIZEOF(szMoodData), "icqmood%d", moodXStatus[bXStatus - 1]);
+			mir_snprintf(szMoodData, _countof(szMoodData), "icqmood%d", moodXStatus[bXStatus - 1]);
 		else
 			szMoodData[0] = '\0';
 

@@ -10,6 +10,7 @@ CNudgeElement DefaultNudge;
 CShake shake;
 CNudge GlobalNudge;
 
+CLIST_INTERFACE *pcli;
 int hLangpack = 0;
 
 //========================
@@ -50,7 +51,7 @@ INT_PTR NudgeSend(WPARAM hContact, LPARAM lParam)
 	int diff = time(NULL) - db_get_dw(hContact, "Nudge", "LastSent", time(NULL) - 30);
 	if (diff < GlobalNudge.sendTimeSec) {
 		TCHAR msg[500];
-		mir_sntprintf(msg, SIZEOF(msg), TranslateT("You are not allowed to send too much nudge (only 1 each %d sec, %d sec left)"), GlobalNudge.sendTimeSec, 30 - diff);
+		mir_sntprintf(msg, _countof(msg), TranslateT("You are not allowed to send too much nudge (only 1 each %d sec, %d sec left)"), GlobalNudge.sendTimeSec, 30 - diff);
 		if (GlobalNudge.useByProtocol) {
 			for (int i = 0; i < arNudges.getCount(); i++) {
 				CNudgeElement &p = arNudges[i];
@@ -82,7 +83,7 @@ INT_PTR NudgeSend(WPARAM hContact, LPARAM lParam)
 
 void OpenContactList()
 {
-	HWND hWnd = (HWND) CallService(MS_CLUI_GETHWND,0,0);
+	HWND hWnd = pcli->hwndContactList;
 	ShowWindow(hWnd, SW_RESTORE);
 	ShowWindow(hWnd, SW_SHOW);
 }
@@ -207,8 +208,8 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD miranda
 void LoadProtocols(void)
 {
 	//Load the default nudge
-	mir_snprintf(DefaultNudge.ProtocolName, SIZEOF(DefaultNudge.ProtocolName), "Default");
-	mir_snprintf(DefaultNudge.NudgeSoundname, SIZEOF(DefaultNudge.NudgeSoundname), "Nudge : Default");
+	mir_snprintf(DefaultNudge.ProtocolName, _countof(DefaultNudge.ProtocolName), "Default");
+	mir_snprintf(DefaultNudge.NudgeSoundname, _countof(DefaultNudge.NudgeSoundname), "Nudge : Default");
 	SkinAddNewSoundEx(DefaultNudge.NudgeSoundname, LPGEN("Nudge"), LPGEN("Default Nudge"));
 	DefaultNudge.Load();
 
@@ -216,8 +217,7 @@ void LoadProtocols(void)
 
 	int numberOfProtocols = 0;
 	PROTOACCOUNT **ppProtocolDescriptors;
-	INT_PTR ret = ProtoEnumAccounts(&numberOfProtocols, &ppProtocolDescriptors);
-	if (ret == 0)
+	Proto_EnumAccounts(&numberOfProtocols, &ppProtocolDescriptors);
 	for (int i = 0; i < numberOfProtocols; i++)
 		Nudge_AddAccount(ppProtocolDescriptors[i]);
 
@@ -232,7 +232,7 @@ static IconItem iconList[] =
 // Load icons
 void LoadIcons(void)
 {
-	Icon_Register(hInst, LPGEN("Nudge"), iconList, SIZEOF(iconList));
+	Icon_Register(hInst, LPGEN("Nudge"), iconList, _countof(iconList));
 }
 
 // Nudge support
@@ -321,6 +321,7 @@ int AccListChanged(WPARAM wParam, LPARAM lParam)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
+	mir_getCLI();
 
 	LoadIcons();
 
@@ -335,13 +336,11 @@ extern "C" int __declspec(dllexport) Load(void)
 	CreateServiceFunction(MS_NUDGE_SHOWMENU, NudgeShowMenu);
 
 	// Add contact menu entry
-	CLISTMENUITEM mi = { 0 };
-	mi.cbSize = sizeof(mi);
-	mi.popupPosition = 500085000;
+	CMenuItem mi;
 	mi.flags = CMIF_NOTOFFLINE | CMIF_TCHAR;
 	mi.position = -500050004;
-	mi.icolibItem = iconList[0].hIcolib;
-	mi.ptszName = LPGENT("Send &Nudge");
+	mi.hIcolibItem = iconList[0].hIcolib;
+	mi.name.t = LPGENT("Send &Nudge");
 	mi.pszService = MS_NUDGE_SEND;
 	g_hContactMenu = Menu_AddContactMenuItem(&mi);
 
@@ -394,7 +393,7 @@ void LoadPopupClass()
 	ppc.flags = PCF_TCHAR;
 	ppc.pszName = "Nudge";
 	ppc.ptszDescription = LPGENT("Show Nudge");
-	ppc.hIcon = Skin_GetIconByHandle(iconList[0].hIcolib);
+	ppc.hIcon = IcoLib_GetIconByHandle(iconList[0].hIcolib);
 	ppc.colorBack = NULL;
 	ppc.colorText = NULL;
 	ppc.iSeconds = 0;
@@ -445,7 +444,7 @@ int Preview()
 void Nudge_ShowPopup(CNudgeElement *n, MCONTACT hContact, TCHAR * Message)
 {
 	hContact = db_mc_tryMeta(hContact);
-	TCHAR *lpzContactName = (TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR);
+	TCHAR *lpzContactName = (TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0);
 
 	if (ServiceExists(MS_POPUP_ADDPOPUPCLASS)) {
 		POPUPDATACLASS NudgePopup = { 0 };
@@ -459,7 +458,7 @@ void Nudge_ShowPopup(CNudgeElement *n, MCONTACT hContact, TCHAR * Message)
 	else if (ServiceExists(MS_POPUP_ADDPOPUPT)) {
 		POPUPDATAT NudgePopup = { 0 };
 		NudgePopup.lchContact = hContact;
-		NudgePopup.lchIcon = Skin_GetIconByHandle(iconList[0].hIcolib);
+		NudgePopup.lchIcon = IcoLib_GetIconByHandle(iconList[0].hIcolib);
 		NudgePopup.colorBack = 0;
 		NudgePopup.colorText = 0;
 		NudgePopup.iSeconds = 0;
@@ -505,7 +504,7 @@ void Nudge_ShowStatus(CNudgeElement *n, MCONTACT hContact, DWORD timestamp)
 void Nudge_AddAccount(PROTOACCOUNT *proto)
 {
 	char str[MAXMODULELABELLENGTH + 10];
-	mir_snprintf(str, SIZEOF(str), "%s/Nudge", proto->szModuleName);
+	mir_snprintf(str, "%s/Nudge", proto->szModuleName);
 	HANDLE hevent = HookEvent(str, NudgeReceived);
 	if (hevent == NULL)
 		return;
@@ -514,7 +513,7 @@ void Nudge_AddAccount(PROTOACCOUNT *proto)
 
 	// Add a specific sound per protocol
 	CNudgeElement *p = new CNudgeElement();
-	mir_snprintf(p->NudgeSoundname, SIZEOF(p->NudgeSoundname), "%s: Nudge", proto->szModuleName);
+	mir_snprintf(p->NudgeSoundname, _countof(p->NudgeSoundname), "%s: Nudge", proto->szModuleName);
 
 	strcpy_s(p->ProtocolName, proto->szModuleName);
 	_tcscpy_s(p->AccountName, proto->tszAccountName);
@@ -523,7 +522,7 @@ void Nudge_AddAccount(PROTOACCOUNT *proto)
 	p->hEvent = hevent;
 
 	TCHAR soundDesc[MAXMODULELABELLENGTH + 10];
-	mir_sntprintf(soundDesc, SIZEOF(soundDesc), LPGENT("Nudge for %s"), proto->tszAccountName);
+	mir_sntprintf(soundDesc, _countof(soundDesc), LPGENT("Nudge for %s"), proto->tszAccountName);
 	SkinAddNewSoundExT(p->NudgeSoundname, LPGENT("Nudge"), soundDesc);
 
 	arNudges.insert(p);

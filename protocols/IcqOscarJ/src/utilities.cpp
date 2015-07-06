@@ -448,7 +448,7 @@ MCONTACT CIcqProto::HContactFromUIN(DWORD dwUin, int *Added)
 			return INVALID_CONTACT_ID;
 		}
 
-		if (CallService(MS_PROTO_ADDTOCONTACT, hContact, (LPARAM)m_szModuleName) != 0) {
+		if (Proto_AddToContact(hContact, m_szModuleName) != 0) {
 			// For some reason we failed to register the protocol to this contact
 			CallService(MS_DB_CONTACT_DELETE, hContact, 0);
 			debugLogA("Failed to register ICQ contact %u", dwUin);
@@ -514,7 +514,7 @@ MCONTACT CIcqProto::HContactFromUID(DWORD dwUin, const char *szUid, int *Added)
 		debugLogA("Attempt to create ICQ contact by string <%s>", szUid);
 
 		hContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
-		CallService(MS_PROTO_ADDTOCONTACT, hContact, (LPARAM)m_szModuleName);
+		Proto_AddToContact(hContact, m_szModuleName);
 
 		setString(hContact, UNIQUEIDSETTING, szUid);
 
@@ -561,7 +561,7 @@ char* NickFromHandle(MCONTACT hContact)
 	if (hContact == INVALID_CONTACT_ID)
 		return null_strdup(Translate("<invalid>"));
 
-	return null_strdup((char *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, 0));
+	return null_strdup((char *)pcli->pfnGetContactDisplayName(hContact, 0));
 }
 
 char* NickFromHandleUtf(MCONTACT hContact)
@@ -569,7 +569,7 @@ char* NickFromHandleUtf(MCONTACT hContact)
 	if (hContact == INVALID_CONTACT_ID)
 		return ICQTranslateUtf(LPGEN("<invalid>"));
 
-	return tchar_to_utf8((TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR));
+	return tchar_to_utf8((TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0));
 }
 
 char* strUID(DWORD dwUIN, char *pszUID)

@@ -55,7 +55,7 @@ extern "C" __declspec(dllexport) int Load(void)
 	mir_getLP(&pluginInfoEx);
 
 	TCHAR* tszFolder = Utils_ReplaceVarsT(_T("%miranda_userdata%\\"DEFAULT_UPDATES_FOLDER));
-	mir_tstrncpy(tszRoot, tszFolder, SIZEOF(tszRoot));
+	mir_tstrncpy(tszRoot, tszFolder, _countof(tszRoot));
 
 	hPackUpdaterFolder = FoldersRegisterCustomPathT(MODULEA, LPGEN("Pack Updater"), MIRANDA_USERDATAT _T("\\")DEFAULT_UPDATES_FOLDER);
 	if (hPackUpdaterFolder)
@@ -70,21 +70,20 @@ extern "C" __declspec(dllexport) int Load(void)
 	// Add cheking update menu item
 	CreateServiceFunction(MODNAME"/CheckUpdates", MenuCommand);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = -0x7FFFFFFF;
 	mi.flags = CMIF_TCHAR;
-	mi.hIcon = Skin_GetIcon("check_update");
-	mi.ptszName = LPGENT("Check for pack updates");
+	mi.hIcolibItem = IcoLib_GetIcon("check_update");
+	mi.name.t = LPGENT("Check for pack updates");
 	mi.pszService = MODNAME"/CheckUpdates";
 	Menu_AddMainMenuItem(&mi);
 	// Add empty updates folder menu item
 	CreateServiceFunction(MODNAME"/EmptyFolder", EmptyFolder);
 	memset(&mi, 0, sizeof(mi));
-	mi.cbSize = sizeof(mi);
 	mi.position = -0x7FFFFFFF;
 	mi.flags = CMIF_TCHAR;
-	mi.hIcon = Skin_GetIcon("empty_folder");
-	mi.ptszName = LPGENT("Clear pack updates folder");
+	mi.hIcolibItem = IcoLib_GetIcon("empty_folder");
+	mi.name.t = LPGENT("Clear pack updates folder");
 	mi.pszService = MODNAME"/EmptyFolder";
 	Menu_AddMainMenuItem(&mi);
 

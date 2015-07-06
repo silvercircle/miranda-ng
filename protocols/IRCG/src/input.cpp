@@ -121,7 +121,7 @@ CMString CIrcProto::DoAlias(const TCHAR *text, TCHAR *window)
 
 				for (int index = 1; index < 8; index++) {
 					TCHAR str[5];
-					mir_sntprintf(str, SIZEOF(str), _T("#$%u"), index);
+					mir_sntprintf(str, _countof(str), _T("#$%u"), index);
 					if (!GetWord(line, index).IsEmpty() && IsChannel(GetWord(line, index)))
 						S.Replace(str, GetWord(line, index).c_str());
 					else {
@@ -132,12 +132,12 @@ CMString CIrcProto::DoAlias(const TCHAR *text, TCHAR *window)
 				}
 				for (int index2 = 1; index2 < 8; index2++) {
 					TCHAR str[5];
-					mir_sntprintf(str, SIZEOF(str), _T("$%u-"), index2);
+					mir_sntprintf(str, _countof(str), _T("$%u-"), index2);
 					S.Replace(str, GetWordAddress(line, index2));
 				}
 				for (int index3 = 1; index3 < 8; index3++) {
 					TCHAR str[5];
-					mir_sntprintf(str, SIZEOF(str), _T("$%u"), index3);
+					mir_sntprintf(str, _countof(str), _T("$%u"), index3);
 					S.Replace(str, GetWord(line, index3).c_str());
 				}
 				Messageout += GetWordAddress(S.c_str(), 1);
@@ -176,7 +176,7 @@ CMString CIrcProto::DoIdentifiers(CMString text, const TCHAR*)
 	text.Replace(_T("%me"), m_info.sNick.c_str());
 
 	char mirver[100];
-	CallService(MS_SYSTEM_GETVERSIONTEXT, SIZEOF(mirver), LPARAM(mirver));
+	CallService(MS_SYSTEM_GETVERSIONTEXT, _countof(mirver), LPARAM(mirver));
 	text.Replace(_T("%mirver"), _A2T(mirver));
 
 	text.Replace(_T("%version"), _T(__VERSION_STRING_DOTS));
@@ -310,7 +310,7 @@ BOOL CIrcProto::DoHardcodedCommand(CMString text, TCHAR* window, MCONTACT hConta
 
 			AddIgnore(one.c_str(), IgnoreFlags.c_str(), m_network.c_str());
 
-			mir_sntprintf(temp, SIZEOF(temp), TranslateT("%s on %s is now ignored (+%s)"), one.c_str(), m_network.c_str(), IgnoreFlags.c_str());
+			mir_sntprintf(temp, TranslateT("%s on %s is now ignored (+%s)"), one.c_str(), m_network.c_str(), IgnoreFlags.c_str());
 			DoEvent(GC_EVENT_INFORMATION, NULL, m_info.sNick.c_str(), temp, NULL, NULL, NULL, true, false);
 		}
 		return true;
@@ -322,9 +322,9 @@ BOOL CIrcProto::DoHardcodedCommand(CMString text, TCHAR* window, MCONTACT hConta
 
 		TCHAR temp[500];
 		if (RemoveIgnore(one.c_str()))
-			mir_sntprintf(temp, SIZEOF(temp), TranslateT("%s is not ignored now"), one.c_str());
+			mir_sntprintf(temp, TranslateT("%s is not ignored now"), one.c_str());
 		else
-			mir_sntprintf(temp, SIZEOF(temp), TranslateT("%s was not ignored"), one.c_str());
+			mir_sntprintf(temp, TranslateT("%s was not ignored"), one.c_str());
 		DoEvent(GC_EVENT_INFORMATION, NULL, m_info.sNick.c_str(), temp, NULL, NULL, NULL, true, false);
 		return true;
 	}
@@ -375,7 +375,7 @@ BOOL CIrcProto::DoHardcodedCommand(CMString text, TCHAR* window, MCONTACT hConta
 		gci.pszModule = m_szModuleName;
 		gci.pszID = S.c_str();
 		if (!CallServiceSync(MS_GC_GETINFO, 0, (LPARAM)&gci))
-			mir_sntprintf(szTemp, SIZEOF(szTemp), _T("users: %u"), gci.iCount);
+			mir_sntprintf(szTemp, _T("users: %u"), gci.iCount);
 
 		DoEvent(GC_EVENT_INFORMATION, NULL, m_info.sNick.c_str(), szTemp, NULL, NULL, NULL, true, false);
 		return true;
@@ -425,7 +425,7 @@ BOOL CIrcProto::DoHardcodedCommand(CMString text, TCHAR* window, MCONTACT hConta
 				DoEvent(GC_EVENT_INFORMATION, NULL, m_info.sNick.c_str(), TranslateT("The time interval for the buddy check function is now at default setting"), NULL, NULL, NULL, true, false);
 			else {
 				TCHAR temp[200];
-				mir_sntprintf(temp, SIZEOF(temp), TranslateT("The time interval for the buddy check function is now %u seconds"), m_iTempCheckTime);
+				mir_sntprintf(temp, TranslateT("The time interval for the buddy check function is now %u seconds"), m_iTempCheckTime);
 				DoEvent(GC_EVENT_INFORMATION, NULL, m_info.sNick.c_str(), temp, NULL, NULL, NULL, true, false);
 			}
 		}
@@ -499,7 +499,7 @@ BOOL CIrcProto::DoHardcodedCommand(CMString text, TCHAR* window, MCONTACT hConta
 		int minutes2 = (int)m_noOfChannels / 9000;
 
 		TCHAR text[256];
-		mir_sntprintf(text, SIZEOF(text), TranslateT("This command is not recommended on a network of this size!\r\nIt will probably cause high CPU usage and/or high bandwidth\r\nusage for around %u to %u minute(s).\r\n\r\nDo you want to continue?"), minutes2, minutes);
+		mir_sntprintf(text, TranslateT("This command is not recommended on a network of this size!\r\nIt will probably cause high CPU usage and/or high bandwidth\r\nusage for around %u to %u minute(s).\r\n\r\nDo you want to continue?"), minutes2, minutes);
 		if (m_noOfChannels < 4000 || (m_noOfChannels >= 4000 && MessageBox(NULL, text, TranslateT("IRC warning"), MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2) == IDYES)) {
 			ListView_DeleteAllItems(GetDlgItem(m_listDlg->GetHwnd(), IDC_INFO_LISTVIEW));
 			PostIrcMessage(_T("/lusers"));
@@ -514,7 +514,7 @@ BOOL CIrcProto::DoHardcodedCommand(CMString text, TCHAR* window, MCONTACT hConta
 			return true;
 
 		TCHAR szTemp[4000];
-		mir_sntprintf(szTemp, SIZEOF(szTemp), _T("\001ACTION %s\001"), GetWordAddress(text.c_str(), 1));
+		mir_sntprintf(szTemp, _T("\001ACTION %s\001"), GetWordAddress(text.c_str(), 1));
 		PostIrcMessageWnd(window, hContact, szTemp);
 		return true;
 	}
@@ -544,7 +544,7 @@ BOOL CIrcProto::DoHardcodedCommand(CMString text, TCHAR* window, MCONTACT hConta
 			return true;
 
 		TCHAR szTemp[4000];
-		mir_sntprintf(szTemp, SIZEOF(szTemp), _T("/PRIVMSG %s"), GetWordAddress(text.c_str(), 1));
+		mir_sntprintf(szTemp, _T("/PRIVMSG %s"), GetWordAddress(text.c_str(), 1));
 
 		PostIrcMessageWnd(window, hContact, szTemp);
 		return true;
@@ -579,7 +579,7 @@ BOOL CIrcProto::DoHardcodedCommand(CMString text, TCHAR* window, MCONTACT hConta
 
 		if (!two.IsEmpty()) {
 			TCHAR szTemp[4000];
-			mir_sntprintf(szTemp, SIZEOF(szTemp), _T("/PRIVMSG %s"), GetWordAddress(text.c_str(), 1));
+			mir_sntprintf(szTemp, _T("/PRIVMSG %s"), GetWordAddress(text.c_str(), 1));
 			PostIrcMessageWnd(window, hContact, szTemp);
 		}
 		return true;
@@ -599,14 +599,14 @@ BOOL CIrcProto::DoHardcodedCommand(CMString text, TCHAR* window, MCONTACT hConta
 		// if it is not dcc or if it is dcc and a local ip exist
 		if (mir_tstrcmpi(two.c_str(), _T("dcc")) != 0 || ulAdr) {
 			if (mir_tstrcmpi(two.c_str(), _T("ping")) == 0)
-				mir_sntprintf(szTemp, SIZEOF(szTemp), _T("/PRIVMSG %s \001%s %u\001"), one.c_str(), two.c_str(), time(0));
+				mir_sntprintf(szTemp, _T("/PRIVMSG %s \001%s %u\001"), one.c_str(), two.c_str(), time(0));
 			else
-				mir_sntprintf(szTemp, SIZEOF(szTemp), _T("/PRIVMSG %s \001%s\001"), one.c_str(), GetWordAddress(text.c_str(), 2));
+				mir_sntprintf(szTemp, _T("/PRIVMSG %s \001%s\001"), one.c_str(), GetWordAddress(text.c_str(), 2));
 			PostIrcMessageWnd(window, hContact, szTemp);
 		}
 
 		if (mir_tstrcmpi(two.c_str(), _T("dcc")) != 0) {
-			mir_sntprintf(szTemp, SIZEOF(szTemp), TranslateT("CTCP %s request sent to %s"), two.c_str(), one.c_str());
+			mir_sntprintf(szTemp, TranslateT("CTCP %s request sent to %s"), two.c_str(), one.c_str());
 			DoEvent(GC_EVENT_INFORMATION, SERVERWINDOW, m_info.sNick.c_str(), szTemp, NULL, NULL, NULL, true, false);
 		}
 
@@ -661,7 +661,7 @@ BOOL CIrcProto::DoHardcodedCommand(CMString text, TCHAR* window, MCONTACT hConta
 				}
 			}
 			else {
-				mir_sntprintf(szTemp, SIZEOF(szTemp), TranslateT("DCC ERROR: Unable to automatically resolve external IP"));
+				mir_sntprintf(szTemp, TranslateT("DCC ERROR: Unable to automatically resolve external IP"));
 				DoEvent(GC_EVENT_INFORMATION, 0, m_info.sNick.c_str(), szTemp, NULL, NULL, NULL, true, false);
 			}
 			return true;
@@ -700,16 +700,16 @@ BOOL CIrcProto::DoHardcodedCommand(CMString text, TCHAR* window, MCONTACT hConta
 
 				if (iPort != 0) {
 					PostIrcMessage(_T("/CTCP %s DCC CHAT chat %u %u"), two.c_str(), ulAdr, iPort);
-					mir_sntprintf(szTemp, SIZEOF(szTemp), TranslateT("DCC CHAT request sent to %s"), two.c_str(), one.c_str());
+					mir_sntprintf(szTemp, TranslateT("DCC CHAT request sent to %s"), two.c_str(), one.c_str());
 					DoEvent(GC_EVENT_INFORMATION, 0, m_info.sNick.c_str(), szTemp, NULL, NULL, NULL, true, false);
 				}
 				else {
-					mir_sntprintf(szTemp, SIZEOF(szTemp), TranslateT("DCC ERROR: Unable to bind port"));
+					mir_sntprintf(szTemp, TranslateT("DCC ERROR: Unable to bind port"));
 					DoEvent(GC_EVENT_INFORMATION, 0, m_info.sNick.c_str(), szTemp, NULL, NULL, NULL, true, false);
 				}
 			}
 			else {
-				mir_sntprintf(szTemp, SIZEOF(szTemp), TranslateT("DCC ERROR: Unable to automatically resolve external IP"));
+				mir_sntprintf(szTemp, TranslateT("DCC ERROR: Unable to automatically resolve external IP"));
 				DoEvent(GC_EVENT_INFORMATION, 0, m_info.sNick.c_str(), szTemp, NULL, NULL, NULL, true, false);
 			}
 		}
@@ -799,7 +799,7 @@ bool CIrcProto::PostIrcMessage(const TCHAR* fmt, ...)
 	va_list marker;
 	va_start(marker, fmt);
 	static TCHAR szBuf[4 * 1024];
-	mir_vsntprintf(szBuf, SIZEOF(szBuf), fmt, marker);
+	mir_vsntprintf(szBuf, _countof(szBuf), fmt, marker);
 	va_end(marker);
 
 	return PostIrcMessageWnd(NULL, NULL, szBuf);

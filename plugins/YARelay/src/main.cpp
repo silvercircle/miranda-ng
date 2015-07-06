@@ -158,13 +158,13 @@ static int MessageEventAdded(WPARAM hContact, LPARAM hDBEvent)
 					if (ci.type == CNFT_ASCIIZ)
 						_tcsncpy_s(buf, ci.pszVal, _TRUNCATE);
 					else if (ci.type == CNFT_BYTE)
-						mir_sntprintf(buf, SIZEOF(buf), _T("%u"), ci.bVal);
+						mir_sntprintf(buf, _T("%u"), ci.bVal);
 					else if (ci.type == CNFT_WORD)
-						mir_sntprintf(buf, SIZEOF(buf), _T("%u"), ci.wVal);
+						mir_sntprintf(buf, _T("%u"), ci.wVal);
 					else if (ci.type == CNFT_DWORD)
-						mir_sntprintf(buf, SIZEOF(buf), _T("%u"), ci.dVal);
+						mir_sntprintf(buf, _T("%u"), ci.dVal);
 				}
-				else mir_sntprintf(buf, SIZEOF(buf), _T("%p"), hContact);
+				else mir_sntprintf(buf, _T("%p"), hContact);
 			}
 			szUtfMsg.append(T2Utf(buf));
 			break;
@@ -241,7 +241,7 @@ extern "C" int __declspec(dllexport) Load()
 
 	TCHAR *szForwardTemplate = db_get_tsa(NULL, "yaRelay", "ForwardTemplate");
 	if (szForwardTemplate){
-		_tcsncpy(tszForwardTemplate, szForwardTemplate, SIZEOF(tszForwardTemplate));
+		_tcsncpy(tszForwardTemplate, szForwardTemplate, _countof(tszForwardTemplate));
 		mir_free(szForwardTemplate);
 	}
 	else _tcsncpy(tszForwardTemplate, _T("%u: %m"), MAXTEMPLATESIZE-1);

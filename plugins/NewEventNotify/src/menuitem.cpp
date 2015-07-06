@@ -39,17 +39,10 @@ static INT_PTR MenuitemNotifyCmd(WPARAM wParam,LPARAM lParam)
 
 int MenuitemUpdate(BOOL bStatus)
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
-	if (bStatus) {
-		mi.hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_ENABLED));
-		mi.pszName = MENUITEM_DISABLE;
-	} else {
-		mi.hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_DISABLED));
-		mi.pszName = MENUITEM_ENABLE;
-	}
-	mi.flags = CMIM_ICON | CMIM_NAME;
-	Menu_ModifyItem(hMenuitemNotify, &mi);
-
+	if (bStatus)
+		Menu_ModifyItem(hMenuitemNotify, _T(MENUITEM_DISABLE), LoadIcon(hInst, MAKEINTRESOURCE(IDI_ENABLED)));
+	else
+		Menu_ModifyItem(hMenuitemNotify, _T(MENUITEM_ENABLE), LoadIcon(hInst, MAKEINTRESOURCE(IDI_DISABLED)));
 	return 0;
 }
 
@@ -57,16 +50,15 @@ int MenuitemInit(BOOL bStatus)
 {
 	CreateServiceFunction(MS_NEN_MENUNOTIFY, MenuitemNotifyCmd);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
+	mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Popups"), 0);
 	mi.position = 1;
-	mi.hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_ENABLED));
-	mi.pszPopupName = LPGEN("Popups");
+	mi.hIcolibItem = LoadIcon(hInst, MAKEINTRESOURCE(IDI_ENABLED));
 	mi.pszService = MS_NEN_MENUNOTIFY;
 	mi.flags = 0;
 	hMenuitemNotify = Menu_AddMainMenuItem(&mi);
 
 	bNotify = bStatus;
 	MenuitemUpdate(bNotify);
-
 	return 0;
 }

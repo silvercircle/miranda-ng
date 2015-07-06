@@ -190,7 +190,7 @@ void SmileyType::CallSmileyService(MCONTACT hContact)
 		proto = (const char*)GetContactProto(hContact);
 		if (proto == NULL) return;
 	}
-	mir_snprintf(str, SIZEOF(str), "%s%s", proto, T2A_SM(name.c_str()));
+	mir_snprintf(str, "%s%s", proto, T2A_SM(name.c_str()));
 	CallService(str,
 		ConvertServiceParam(hContact, par1.c_str()), 
 		ConvertServiceParam(hContact, par2.c_str()));
@@ -292,7 +292,7 @@ void SmileyPackType::Clear(void)
 	errorFound = false;
 }
 
-bool SmileyPackType::LoadSmileyFile(const CMString& filename, bool onlyInfo, bool noerr)
+bool SmileyPackType::LoadSmileyFile(const CMString& filename, const CMString& packname, bool onlyInfo, bool noerr)
 {
 	Clear();
 
@@ -308,9 +308,9 @@ bool SmileyPackType::LoadSmileyFile(const CMString& filename, bool onlyInfo, boo
 	int fh = _topen(modpath.c_str(), _O_BINARY | _O_RDONLY);
 	if (fh == -1) {
 		if (!noerr) {
-			static const TCHAR errmsg[] = LPGENT("Smiley pack %s not found.\nSelect correct smiley pack in the Options -> Customize -> Smileys.");
+			static const TCHAR errmsg[] = LPGENT("Smiley pack %s for category \"%s\" not found.\nSelect correct smiley pack in the Options -> Customize -> Smileys.");
 			TCHAR msgtxt[1024];
-			mir_sntprintf(msgtxt, SIZEOF(msgtxt), TranslateTS(errmsg), modpath.c_str());
+			mir_sntprintf(msgtxt, _countof(msgtxt), TranslateTS(errmsg), modpath.c_str(), packname);
 			ReportError(msgtxt);
 		}
 
@@ -473,8 +473,8 @@ bool SmileyPackType::LoadSmileyFileMSL(CMString& tbuf, bool onlyInfo, CMString& 
 			if (!noerr) {
 				static const TCHAR errmsg[] = LPGENT("Smiley #%u in file %s for smiley pack %s not found."); 
 				TCHAR msgtxt[1024];
-				mir_sntprintf(msgtxt, SIZEOF(msgtxt), TranslateTS(errmsg), smnum, resname.c_str(), modpath.c_str());
-				CallService(MS_NETLIB_LOG,(WPARAM) hNetlibUser, (LPARAM)(char*)T2A_SM(msgtxt));
+				mir_sntprintf(msgtxt, _countof(msgtxt), TranslateTS(errmsg), smnum, resname.c_str(), modpath.c_str());
+				CallService(MS_NETLIB_LOG, (WPARAM)hNetlibUser, _T2A(msgtxt));
 				errorFound = true;
 			}
 			smnum++;
@@ -675,14 +675,14 @@ bool SmileyPackType::LoadSmileyFileXEP(CMString& tbuf, bool onlyInfo, CMString& 
 //
 
 
-bool SmileyPackListType::AddSmileyPack(CMString& filename)
+bool SmileyPackListType::AddSmileyPack(CMString& filename, CMString& packname)
 {
 	bool res = true;
 	if (GetSmileyPack(filename) == NULL)
 	{  //not exist yet, so add
 		SmileyPackType *smileyPack = new SmileyPackType;
 
-		res = smileyPack->LoadSmileyFile(filename, FALSE);
+		res = smileyPack->LoadSmileyFile(filename, packname, FALSE);
 		if (res)
 			m_SmileyPacks.insert(smileyPack);
 		else
@@ -732,8 +732,16 @@ SmileyCategoryType::SmileyCategoryType(SmileyPackListType* pSPS, const CMString&
 
 void SmileyCategoryType::Load(void)
 {
-	if (!opt.UseOneForAll || !IsProto())
-		m_pSmileyPackStore->AddSmileyPack(m_Filename);
+	bool visiblecat = opt.UsePhysProto ? !IsAcc() : !IsPhysProto();
+	bool visible = opt.UseOneForAll ? !IsProto() : visiblecat;
+
+	if (visible && !m_Filename.IsEmpty()){
+		bool loaded = m_pSmileyPackStore->AddSmileyPack(m_Filename, m_DisplayName);
+		if (!loaded){
+			ClearFilename();
+			SaveSettings();
+		}
+	}
 }
 
 
@@ -832,7 +840,7 @@ bool SmileyCategoryListType::DeleteCustomCategory(int index)
 
 void SmileyCategoryListType::AddAccountAsCategory(PROTOACCOUNT *acc, const CMString& defaultFile)
 {
-	if (IsAccountEnabled(acc) && acc->szProtoName && IsSmileyProto(acc->szModuleName))
+	if (Proto_IsAccountEnabled(acc) && acc->szProtoName && IsSmileyProto(acc->szModuleName))
 	{
 		CMString displayName(acc->tszAccountName ? acc->tszAccountName : A2T_SM(acc->szModuleName));
 		CMString PhysProtoName, paths;
@@ -855,7 +863,7 @@ void SmileyCategoryListType::AddAccountAsCategory(PROTOACCOUNT *acc, const CMStr
 				packnam = "MSN";
 
 			char path[MAX_PATH];
-			mir_snprintf(path, SIZEOF(path), "Smileys\\nova\\%s.msl", packnam);
+			mir_snprintf(path, _countof(path), "Smileys\\nova\\%s.msl", packnam);
 
 			paths = A2T_SM(path); 
 			CMString patha;
@@ -882,7 +890,7 @@ void SmileyCategoryListType::AddProtoAsCategory(char *acc, const CMString& defau
 		packnam = "MSN";
 
 	char path[MAX_PATH];
-	mir_snprintf(path, SIZEOF(path), "Smileys\\nova\\%s.msl", packnam);
+	mir_snprintf(path, _countof(path), "Smileys\\nova\\%s.msl", packnam);
 
 	CMString paths = A2T_SM(path), patha;
 	pathToAbsolute(paths, patha);
@@ -953,7 +961,7 @@ void SmileyCategoryListType::AddContactTransportAsCategory(MCONTACT hContact, co
 		CMString displayName = dbv.ptszVal;
 		if (packname != NULL) {
 			char path[MAX_PATH];
-			mir_snprintf(path, SIZEOF(path), "Smileys\\nova\\%s.msl", packname);
+			mir_snprintf(path, _countof(path), "Smileys\\nova\\%s.msl", packname);
 
 			CMString paths = A2T_SM(path), patha; 
 			pathToAbsolute(paths, patha);
@@ -977,13 +985,11 @@ void SmileyCategoryListType::AddAllProtocolsAsCategory(void)
 
 	const CMString& defaultFile = GetSmileyCategory(tname)->GetFilename();
 
-
-	unsigned lpcp = (unsigned)CallService(MS_LANGPACK_GETCODEPAGE, 0, 0);
-	if (lpcp == CALLSERVICE_NOTFOUND) lpcp = CP_ACP;
+	unsigned lpcp = Langpack_GetDefaultCodePage();
 
 	PROTOCOLDESCRIPTOR **proto;
 	int protoCount = 0;
-	CallService(MS_PROTO_ENUMPROTOS, (WPARAM)&protoCount, (LPARAM)&proto);
+	Proto_EnumProtocols(&protoCount, &proto);
 
 	for (int i = 0; i < protoCount; i++){
 		PROTOCOLDESCRIPTOR* pd = proto[i];
@@ -992,7 +998,7 @@ void SmileyCategoryListType::AddAllProtocolsAsCategory(void)
 	}
 
 	PROTOACCOUNT **accList;	
-	ProtoEnumAccounts(&protoCount, &accList);
+	Proto_EnumAccounts(&protoCount, &accList);
 	for (int i = 0; i < protoCount; i++)
 		AddAccountAsCategory(accList[i], defaultFile);
 
@@ -1035,17 +1041,17 @@ SmileyLookup::SmileyLookup(const CMString& str, const bool regexs, const int ind
 				matcher->getStartingIndex() != matcher->getEndingIndex());
 			if (!m_valid) {
 				static const TCHAR errmsg[] = LPGENT("Regular expression \"%s\" in smiley pack \"%s\" could produce \"empty matches\".");
-				mir_sntprintf(msgtxt, SIZEOF(msgtxt), TranslateTS(errmsg), str.c_str(), smpt.c_str());
+				mir_sntprintf(msgtxt, _countof(msgtxt), TranslateTS(errmsg), str.c_str(), smpt.c_str());
 			}
 			delete matcher;
 		}
 		else {
 			static const TCHAR errmsg[] = LPGENT("Regular expression \"%s\" in smiley pack \"%s\" malformed.") ;
-			mir_sntprintf(msgtxt, SIZEOF(msgtxt), TranslateTS(errmsg), str.c_str(), smpt.c_str());
+			mir_sntprintf(msgtxt, _countof(msgtxt), TranslateTS(errmsg), str.c_str(), smpt.c_str());
 		}
 
 		if (!m_valid)
-			CallService(MS_NETLIB_LOG, (WPARAM)hNetlibUser, (LPARAM)(char*)T2A_SM(msgtxt));
+			CallService(MS_NETLIB_LOG, (WPARAM)hNetlibUser, _T2A(msgtxt));
 	} 
 	else {
 		m_text = str;

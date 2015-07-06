@@ -68,7 +68,7 @@ void VerifyFingerprintMessage(ConnContext *context, bool verify) {
 	MCONTACT hContact = (MCONTACT)context->app_data;
 	TCHAR msg[1024];
 
-	mir_sntprintf(msg, SIZEOF(msg), (verify)?TranslateT(LANG_FINGERPRINT_VERIFIED):TranslateT(LANG_FINGERPRINT_NOT_VERIFIED), contact_get_nameT(hContact));
+	mir_sntprintf(msg, _countof(msg), (verify)?TranslateT(LANG_FINGERPRINT_VERIFIED):TranslateT(LANG_FINGERPRINT_NOT_VERIFIED), contact_get_nameT(hContact));
 	ShowMessage(hContact, msg);
 	SetEncryptionStatus(hContact, otr_context_get_trust(context));
 }
@@ -118,20 +118,14 @@ char* contact_get_id(MCONTACT hContact, bool bNameOnError) {
 		}
 	}
 	if (!pszUniqueID && bNameOnError) {
-		char *name = (char *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, 0);
+		char *name = (char *)pcli->pfnGetContactDisplayName(hContact, 0);
 		if (name) pszUniqueID = mir_strdup(name);
 	}
 	return pszUniqueID;
 }
 
 __inline const TCHAR* contact_get_nameT(MCONTACT hContact) {
-	return (TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR);
-}
-
-
-__inline const char* contact_get_account(MCONTACT hContact) {
-	char *uacc = (char *)CallService(MS_PROTO_GETCONTACTBASEACCOUNT, hContact, 0);
-	return uacc;
+	return (TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0);
 }
 
 TCHAR* ProtoGetNickname(const char* proto)
@@ -161,7 +155,7 @@ void ShowPopup(const TCHAR* line1, const TCHAR* line2, int timeout, const MCONTA
 
 	if ( !options.bHavePopups) {	
 		TCHAR title[256];
-		mir_sntprintf(title, SIZEOF(title), _T("%s Message"), _T(MODULENAME));
+		mir_sntprintf(title, _countof(title), _T("%s Message"), _T(MODULENAME));
 
 		if(line1 && line2) {
 			int size = int(mir_tstrlen(line1) + mir_tstrlen(line2) + 3);
@@ -211,7 +205,7 @@ void ShowWarning(TCHAR *msg) {
 	if(disp == ED_POP && !options.bHavePopups) disp = ED_BAL;
 	if(disp == ED_BAL && !ServiceExists(MS_CLIST_SYSTRAY_NOTIFY)) disp = ED_MB;
 
-	mir_sntprintf(buffer, SIZEOF(buffer), _T("%s Warning"), _T(MODULENAME));
+	mir_sntprintf(buffer, _countof(buffer), _T("%s Warning"), _T(MODULENAME));
 
 	TCHAR *message;
 	switch(disp) {
@@ -257,7 +251,7 @@ void ShowError(TCHAR *msg) {
 	if(disp == ED_POP && !options.bHavePopups) disp = ED_BAL;
 	if(disp == ED_BAL && !ServiceExists(MS_CLIST_SYSTRAY_NOTIFY)) disp = ED_MB;
 
-	mir_sntprintf(buffer, SIZEOF(buffer), _T("%s Error"), _T(MODULENAME));
+	mir_sntprintf(buffer, _countof(buffer), _T("%s Error"), _T(MODULENAME));
 
 
 	TCHAR *message;
@@ -315,7 +309,7 @@ void ShowErrorUtf(char* msg) {
 
 void ShowMessageInline(const MCONTACT hContact, const TCHAR *msg) {
 	TCHAR buff[1024];
-	mir_sntprintf(buff, SIZEOF(buff), _T("%s%s"), TranslateT(LANG_INLINE_PREFIX), msg);
+	mir_sntprintf(buff, _T("%s%s"), _T(LANG_INLINE_PREFIX), msg);
 	T2Utf utf(buff);
 
 	PROTORECVEVENT pre = {0};
@@ -327,7 +321,7 @@ void ShowMessageInline(const MCONTACT hContact, const TCHAR *msg) {
 
 void ShowMessageInlineUtf(const MCONTACT hContact, const char *msg) {
 	char buff[1024];
-	mir_snprintf(buff, SIZEOF(buff), "%s%s", Translate(LANG_INLINE_PREFIX), msg);
+	mir_snprintf(buff, "%s%s", LANG_INLINE_PREFIX, msg);
 
 	PROTORECVEVENT pre = {0};
 	pre.timestamp = time(0);

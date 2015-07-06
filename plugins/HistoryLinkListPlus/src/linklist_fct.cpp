@@ -19,7 +19,7 @@
 #include "linklist.h"
 
 extern HINSTANCE hInst;
-extern HANDLE hWindowList;
+extern MWindowList hWindowList;
 
 /*
 The hyperlink detection in this function is taken from the
@@ -41,7 +41,7 @@ int ExtractURI(DBEVENTINFO *dbei, MEVENT hEvent, LISTELEMENT *listStart)
 	static LPCTSTR hyperlinkSubstrings[] = {
 		_T(".com"),_T(".net"),_T(".org"),_T(".co.uk"),_T(".ru")
 	};
-	DBTIMETOSTRINGT dbtimestring;
+
 	LISTELEMENT *newElement, *actualElement;
 	BYTE type = LINK_UNKNOWN;
 	int direction, isLink, linkFound = 0;
@@ -115,14 +115,14 @@ int ExtractURI(DBEVENTINFO *dbei, MEVENT hEvent, LISTELEMENT *listStart)
 		_tcsncpy_s(wordsearch, wordlen, msg + wordStart, (wordlen - 1));
 		CharLower(wordsearch);
 
-		for (j = 0; j < SIZEOF(hyperlinkPrefixes); j ++) {
+		for (j = 0; j < _countof(hyperlinkPrefixes); j ++) {
 			if (!_tcsncmp(wordsearch, hyperlinkPrefixes[j], mir_tstrlen(hyperlinkPrefixes[j]))) {
 				isLink = 1;
 				break;
 			}
 		}
 		if (!isLink) {
-			for (j = 0; j < SIZEOF(hyperlinkSubstrings); j ++) {
+			for (j = 0; j < _countof(hyperlinkSubstrings); j ++) {
 				if (_tcsstr(wordsearch + 1,hyperlinkSubstrings[j])) {
 					isLink = 1;
 					break;
@@ -142,17 +142,14 @@ int ExtractURI(DBEVENTINFO *dbei, MEVENT hEvent, LISTELEMENT *listStart)
 				_tcsncpy_s(link, _T("http://"), _mstrlen(_T("http://")));
 				// Link longer than defined max -> cut link to max
 				if (wordlen > (LINK_MAX - _mstrlen(_T("http://"))))
-					_tcsncpy_s((link + _mstrlen(_T("http://"))), (SIZEOF(link) - _mstrlen(_T("http://"))), word, LINK_MAX - _mstrlen(_T("http://")));
+					_tcsncpy_s((link + _mstrlen(_T("http://"))), (_countof(link) - _mstrlen(_T("http://"))), word, LINK_MAX - _mstrlen(_T("http://")));
 				else
-					_tcsncpy_s((link + _mstrlen(_T("http://"))), (SIZEOF(link) - _mstrlen(_T("http://"))), word, wordlen);
+					_tcsncpy_s((link + _mstrlen(_T("http://"))), (_countof(link) - _mstrlen(_T("http://"))), word, wordlen);
 			} else {
 				_tcsncpy_s(link, word, ((wordlen > LINK_MAX) ? LINK_MAX : wordlen));
 			}
 
-			dbtimestring.szFormat = _T("d-t");
-			dbtimestring.szDest = dbdate;
-			dbtimestring.cbDest = SIZEOF(dbdate);
-			CallService(MS_DB_TIME_TIMESTAMPTOSTRINGT,(WPARAM)dbei->timestamp, (LPARAM)&dbtimestring);
+			TimeZone_ToStringT(dbei->timestamp, _T("d-t"), dbdate, _countof(dbdate));
 			date_ptr = _tcstok_s(dbdate, _T("-"), &tok_ctx);
 			time_ptr = _tcstok_s(NULL, _T("-"), &tok_ctx);
 			_tcsncpy_s(date, date_ptr, _TRUNCATE);
@@ -167,7 +164,7 @@ int ExtractURI(DBEVENTINFO *dbei, MEVENT hEvent, LISTELEMENT *listStart)
 			if (type == LINK_MAIL && _tcsstr(link, _T("mailto:")) == NULL) {
 				_tcsncpy_s(templink, link, _TRUNCATE);
 				_tcsncpy_s(link, _T("mailto:"), _TRUNCATE);
-				_tcsncpy_s((link + _mstrlen(_T("mailto:"))), (SIZEOF(link) - _mstrlen(_T("mailto:"))), templink, _TRUNCATE);
+				_tcsncpy_s((link + _mstrlen(_T("mailto:"))), (_countof(link) - _mstrlen(_T("mailto:"))), templink, _TRUNCATE);
 			}
 
 			// Add new Element to list:
@@ -279,7 +276,7 @@ void WriteLinkList(HWND hDlg, BYTE params, LISTELEMENT *listStart, LPCTSTR searc
 
 	if ( GetDlgItem(hDlg, IDC_MAIN) && GetDlgItem(hDlg, IDC_MESSAGE))
 	{
-		SendDlgItemMessage( hDlg, IDC_MAIN, EM_SETEVENTMASK, 0, (LPARAM)(ENM_LINK));
+		SendDlgItemMessage( hDlg, IDC_MAIN, EM_SETEVENTMASK, 0, (LPARAM)ENM_LINK);
 		SendDlgItemMessage( hDlg, IDC_MAIN, EM_AUTOURLDETECT, TRUE, 0 );
 		SendDlgItemMessage( hDlg, IDC_MAIN, EM_SETBKGNDCOLOR, FALSE, colourSet.background);
 		
@@ -313,7 +310,7 @@ void WriteLinkList(HWND hDlg, BYTE params, LISTELEMENT *listStart, LPCTSTR searc
 				_tcscpy_s(cf.szFaceName, _T("Arial"));
 				SendDlgItemMessage( hDlg, IDC_MAIN, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM) &cf);
 				
-				mir_sntprintf(searchText, SIZEOF(searchText), _T("%s '%s': %d\n\n"), TranslateT("Matches for searchtext"), searchString, listCount);
+				mir_sntprintf(searchText, _countof(searchText), _T("%s '%s': %d\n\n"), TranslateT("Matches for searchtext"), searchString, listCount);
 				SendDlgItemMessage(hDlg, IDC_MAIN, EM_REPLACESEL, FALSE, (LPARAM)searchText);
 				linePos += 2;
 			}
@@ -462,7 +459,7 @@ void WriteLinkList(HWND hDlg, BYTE params, LISTELEMENT *listStart, LPCTSTR searc
 					type = _T("[UNK ]");
 				}
 
-				mir_sntprintf(textLine, SIZEOF(textLine), _T("%s%s%s%s%s%s%s\n"),
+				mir_sntprintf(textLine, _countof(textLine), _T("%s%s%s%s%s%s%s\n"),
 					options.showDirection ? (actualElement->direction==DIRECTION_IN?_T("[in ]"):_T("[out]")) : _T(""),
 					options.showDirection? _T(" ") : _T(""),
 					options.showType ? type : _T(""),
@@ -524,7 +521,7 @@ int WriteOptionExample(HWND hDlg, DWORD InColourSel, DWORD OutColourSel, DWORD B
 	pf.dwMask = PFM_ALIGNMENT;
 	pf.wAlignment = PFA_LEFT;
 	SendDlgItemMessage(hDlg, IDC_OPTIONS_RE, EM_SETPARAFORMAT, FALSE, (LPARAM)&pf);
-	SendDlgItemMessage(hDlg, IDC_OPTIONS_RE, EM_SETEVENTMASK, 0, (LPARAM)(ENM_LINK));
+	SendDlgItemMessage(hDlg, IDC_OPTIONS_RE, EM_SETEVENTMASK, 0, (LPARAM)ENM_LINK);
 	SendDlgItemMessage(hDlg, IDC_OPTIONS_RE, EM_AUTOURLDETECT, TRUE, 0);
 	SendDlgItemMessage(hDlg, IDC_OPTIONS_RE, EM_SETBKGNDCOLOR, FALSE, BGColourSel);
 	SetDlgItemText(hDlg, IDC_OPTIONS_RE, NULL);
@@ -1254,10 +1251,10 @@ BOOL SaveEditAsStream( HWND hDlg )
 	ofn.lStructSize = sizeof(OPENFILENAME);      
 	ofn.hwndOwner = hDlg;
 	TCHAR temp[MAX_PATH]; 
-	mir_sntprintf(temp, SIZEOF(temp), _T("%s (*.rtf)%c*.rtf%c%s (*.*)%c*.*%c%c"), TranslateT("RTF file"), 0, 0, TranslateT("All files"), 0, 0, 0);
+	mir_sntprintf(temp, _T("%s (*.rtf)%c*.rtf%c%s (*.*)%c*.*%c%c"), TranslateT("RTF file"), 0, 0, TranslateT("All files"), 0, 0, 0);
 	ofn.lpstrFilter = temp;
 	ofn.lpstrFile = szFilename;
-	ofn.nMaxFile = SIZEOF(szFilename);
+	ofn.nMaxFile = _countof(szFilename);
 	ofn.lpstrTitle = TranslateT("Save RTF File");
 	ofn.Flags = OFN_OVERWRITEPROMPT;
 	// Get a filename or quit

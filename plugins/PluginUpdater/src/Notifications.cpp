@@ -71,7 +71,7 @@ static LRESULT CALLBACK PopupDlgProc(HWND hPopup, UINT uMsg, WPARAM wParam, LPAR
 static void _stdcall RestartPrompt(void *)
 {
 	TCHAR tszText[200];
-	mir_sntprintf(tszText, SIZEOF(tszText), _T("%s\n\n%s"), TranslateT("You need to restart your Miranda to apply installed updates."), TranslateT("Would you like to restart it now?"));
+	mir_sntprintf(tszText, _countof(tszText), _T("%s\n\n%s"), TranslateT("You need to restart your Miranda to apply installed updates."), TranslateT("Would you like to restart it now?"));
 
 	if (MessageBox(0, tszText, TranslateT("Plugin Updater"), MB_YESNO | MB_ICONQUESTION | MB_TOPMOST) == IDYES)
 		CallService(MS_SYSTEM_RESTART, db_get_b(NULL, MODNAME, "RestartCurrentProfile", 1) ? 1 : 0, 0);
@@ -97,14 +97,14 @@ void ShowPopup(LPCTSTR ptszTitle, LPCTSTR ptszText, int Number)
 {
 	if (ServiceExists(MS_POPUP_ADDPOPUPT) && db_get_b(NULL, "Popup", "ModuleIsEnabled", 1)) {
 		char setting[100];
-		mir_snprintf(setting, SIZEOF(setting), "Popups%d", Number);
+		mir_snprintf(setting, "Popups%d", Number);
 		if (db_get_b(NULL, MODNAME, setting, DEFAULT_POPUP_ENABLED)) {
 			POPUPDATAT pd = { 0 };
 			pd.lchContact = NULL;
 #if MIRANDA_VER >= 0x0A00
-			pd.lchIcon = Skin_GetIconByHandle(iconList[0].hIcolib);
+			pd.lchIcon = IcoLib_GetIconByHandle(iconList[0].hIcolib);
 #else
-			pd.lchIcon = Skin_GetIcon("check_update");
+			pd.lchIcon = IcoLib_GetIcon("check_update");
 #endif
 			if (Number == POPUP_TYPE_MSG) {
 				pd.PluginWindowProc = PopupDlgProcRestart;

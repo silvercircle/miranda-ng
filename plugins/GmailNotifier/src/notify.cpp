@@ -3,7 +3,7 @@
 int OpenBrowser(WPARAM hContact, LPARAM lParam)
 {
 	char *proto = GetContactProto(hContact);
-	if (proto && !mir_strcmp(proto, pluginName)) {
+	if (proto && !mir_strcmp(proto, MODULE_NAME)) {
 		Account *curAcc = GetAccountByContact(hContact);
 		PUDeletePopup(curAcc->popUpHwnd);
 		CallServiceSync(MS_CLIST_REMOVEEVENT, (WPARAM)curAcc->hContact, (LPARAM)1);
@@ -11,7 +11,7 @@ int OpenBrowser(WPARAM hContact, LPARAM lParam)
 			return FALSE;
 
 		if (curAcc->oldResults_num != 0) {
-			db_set_w(curAcc->hContact, pluginName, "Status", ID_STATUS_NONEW);
+			db_set_w(curAcc->hContact, MODULE_NAME, "Status", ID_STATUS_NONEW);
 			curAcc->oldResults_num = 0;
 			DeleteResults(curAcc->results.next);
 			curAcc->results.next = NULL;
@@ -61,26 +61,26 @@ void NotifyUser(Account *curAcc)
 		PUDeletePopup(curAcc->popUpHwnd);
 		CallServiceSync(MS_CLIST_REMOVEEVENT, (WPARAM)curAcc->hContact, (LPARAM)1);
 		if (curAcc->oldResults_num != 0)
-			db_set_w(curAcc->hContact, pluginName, "Status", ID_STATUS_NONEW);
+			db_set_w(curAcc->hContact, MODULE_NAME, "Status", ID_STATUS_NONEW);
 		break;
 	
 	case -1:
-		db_set_w(curAcc->hContact, pluginName, "Status", ID_STATUS_AWAY);
+		db_set_w(curAcc->hContact, MODULE_NAME, "Status", ID_STATUS_AWAY);
 		break;
 	
 	default:
-		db_set_w(curAcc->hContact, pluginName, "Status", ID_STATUS_OCCUPIED);
+		db_set_w(curAcc->hContact, MODULE_NAME, "Status", ID_STATUS_OCCUPIED);
 		int newMails = (curAcc->oldResults_num == -1) ? (curAcc->results_num) : (curAcc->results_num - curAcc->oldResults_num);
 		if (opt.LogThreads&&newMails > 0) {
 			DBEVENTINFO dbei = { sizeof(dbei) };
 			dbei.eventType = EVENTTYPE_MESSAGE;
 			dbei.flags = DBEF_READ;
-			dbei.szModule = pluginName;
+			dbei.szModule = MODULE_NAME;
 			dbei.timestamp = time(NULL);
 
 			resultLink *prst = curAcc->results.next;
 			for (int i = 0; i < newMails; i++) {
-				dbei.cbBlob = mir_strlen(prst->content) + 1;
+				dbei.cbBlob = (DWORD)mir_strlen(prst->content) + 1;
 				dbei.pBlob = (PBYTE)prst->content;
 				db_event_add(curAcc->hContact, &dbei);
 				prst = prst->next;
@@ -91,7 +91,7 @@ void NotifyUser(Account *curAcc)
 			cle.hContact = curAcc->hContact;
 			cle.hDbEvent = 1;
 			cle.flags = CLEF_URGENT;
-			cle.hIcon = LoadSkinnedProtoIcon(pluginName, ID_STATUS_OCCUPIED);
+			cle.hIcon = Skin_LoadProtoIcon(MODULE_NAME, ID_STATUS_OCCUPIED);
 			cle.pszService = "GmailMNotifier/Notifying";
 			cle.pszTooltip = curAcc->results.next->content;
 			CallServiceSync(MS_CLIST_REMOVEEVENT, (WPARAM)curAcc->hContact, (LPARAM)1);
@@ -102,12 +102,12 @@ void NotifyUser(Account *curAcc)
 			POPUPDATA ppd = { 0 };
 
 			ppd.lchContact = curAcc->hContact;
-			ppd.lchIcon = LoadSkinnedProtoIcon(pluginName, ID_STATUS_OCCUPIED);
+			ppd.lchIcon = Skin_LoadProtoIcon(MODULE_NAME, ID_STATUS_OCCUPIED);
 			mir_strcpy(ppd.lpzContactName, curAcc->results.content);
 			resultLink *prst = curAcc->results.next;
 			for (int i = 0; i < 5 && i < newMails; i++) {
-				strcat(ppd.lpzText, prst->content);
-				strcat(ppd.lpzText, "\n");
+				mir_strcat(ppd.lpzText, prst->content);
+				mir_strcat(ppd.lpzText, "\n");
 				prst = prst->next;
 			}
 			ppd.colorBack = opt.popupBgColor;
@@ -177,7 +177,7 @@ void __cdecl Login_ThreadFunc(void *lpParam)
 				mir_strcat(buffer, "><input type=hidden name=password value=");
 				mir_strcat(buffer, curAcc->pass);
 				mir_strcat(buffer, "></form></body>");
-				WriteFile(hTempFile, buffer, mir_strlen(buffer), &dwBytesWritten, NULL);
+				WriteFile(hTempFile, buffer, (DWORD)mir_strlen(buffer), &dwBytesWritten, NULL);
 				CloseHandle(hTempFile);
 				mir_strcat(lpPathBuffer, szTempName);
 			}

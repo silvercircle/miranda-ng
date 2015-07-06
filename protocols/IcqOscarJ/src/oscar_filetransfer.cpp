@@ -474,7 +474,7 @@ void CIcqProto::handleRecvServMsgOFT(BYTE *buf, size_t wLen, DWORD dwUin, char *
 						pszFileName = (char*)_alloca(64);
 
 						char tmp[64];
-						mir_snprintf(pszFileName, 64, ICQTranslateUtfStatic(LPGEN("%d Files"), tmp, SIZEOF(tmp)), ft->wFilesCount);
+						mir_snprintf(pszFileName, 64, ICQTranslateUtfStatic(LPGEN("%d Files"), tmp, _countof(tmp)), ft->wFilesCount);
 					}
 				}
 				// Total Size TLV (ICQ 6 and AIM 6)
@@ -505,12 +505,12 @@ void CIcqProto::handleRecvServMsgOFT(BYTE *buf, size_t wLen, DWORD dwUin, char *
 				pre.dwFlags = PRFF_TCHAR;
 				pre.fileCount = 1;
 				pre.timestamp = time(NULL);
-				pre.tszDescription = mir_utf8decodeT(pszDescription);
-				pre.ptszFiles = &ptszFileName;
+				pre.descr.t = mir_utf8decodeT(pszDescription);
+				pre.files.t = &ptszFileName;
 				pre.lParam = (LPARAM)ft;
 				ProtoChainRecvFile(hContact, &pre);
 
-				mir_free(pre.tszDescription);
+				mir_free(pre.descr.t);
 				mir_free(ptszFileName);
 			}
 			else if (wAckType == 2) { // First attempt failed, reverse requested
@@ -873,7 +873,7 @@ HANDLE CIcqProto::oftFileAllow(MCONTACT hContact, HANDLE hTransfer, const TCHAR 
 	if (ft->szThisPath) { // Append Directory name to the save path, when transfering a directory
 		ft->szSavePath = (char*)SAFE_REALLOC(ft->szSavePath, mir_strlen(ft->szSavePath) + mir_strlen(ft->szThisPath) + 4);
 		NormalizeBackslash(ft->szSavePath);
-		strcat(ft->szSavePath, ft->szThisPath);
+		mir_strcat(ft->szSavePath, ft->szThisPath);
 		NormalizeBackslash(ft->szSavePath);
 	}
 
@@ -1586,7 +1586,7 @@ int CIcqProto::oft_handleFileData(oscar_connection *oc, BYTE *buf, size_t len)
 			char *pszMsg = ICQTranslateUtf(LPGEN("The checksum of file \"%s\" does not match, the file is probably damaged."));
 			char szBuf[MAX_PATH];
 
-			mir_snprintf(szBuf, SIZEOF(szBuf), pszMsg, ExtractFileName(ft->szThisFile));
+			mir_snprintf(szBuf, _countof(szBuf), pszMsg, ExtractFileName(ft->szThisFile));
 			icq_LogMessage(LOG_ERROR, szBuf);
 
 			SAFE_FREE(&pszMsg);
@@ -1755,13 +1755,13 @@ void CIcqProto::handleOFT2FramePacket(oscar_connection *oc, WORD datatype, BYTE 
 		char *szFullPath = (char*)SAFE_MALLOC(mir_strlen(ft->szSavePath) + mir_strlen(ft->szThisPath) + mir_strlen(ft->szThisFile) + 3);
 		mir_strcpy(szFullPath, ft->szSavePath);
 		NormalizeBackslash(szFullPath);
-		strcat(szFullPath, ft->szThisPath);
+		mir_strcat(szFullPath, ft->szThisPath);
 		NormalizeBackslash(szFullPath);
 		// make sure the dest dir exists
 		if (MakeDirUtf(szFullPath))
 			NetLog_Direct("Failed to create destination directory!");
 
-		strcat(szFullPath, ft->szThisFile);
+		mir_strcat(szFullPath, ft->szThisFile);
 		// we joined the full path to dest file
 		SAFE_FREE(&ft->szThisFile);
 		ft->szThisFile = szFullPath;
@@ -2040,7 +2040,7 @@ void CIcqProto::oft_sendPeerInit(oscar_connection *oc)
 	char *pszThisFileName = (char*)SAFE_MALLOC(mir_strlen(ft->szThisFile) + mir_strlen(szThisContainer) + 4);
 	mir_strcpy(pszThisFileName, szThisContainer);
 	NormalizeBackslash(pszThisFileName);
-	strcat(pszThisFileName, ExtractFileName(ft->szThisFile));
+	mir_strcat(pszThisFileName, ExtractFileName(ft->szThisFile));
 	
 	// convert backslashes to dir markings
 	for (size_t i = 0; i < mir_strlen(pszThisFileName); i++)

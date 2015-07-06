@@ -20,11 +20,11 @@ INT_PTR CALLBACK DlgProcOptsAccount(HWND hWndDlg, UINT msg, WPARAM wParam, LPARA
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case IDC_NEW_ACCOUNT_LINK:
-			CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW | OUF_TCHAR, (LPARAM)MRA_REGISTER_URL);
+			Utils_OpenUrl(MRA_REGISTER_URL);
 			return TRUE;
 
 		case IDC_LOOKUPLINK:
-			CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW | OUF_TCHAR, (LPARAM)MRA_FORGOT_PASSWORD_URL);
+			Utils_OpenUrl(MRA_FORGOT_PASSWORD_URL);
 			return TRUE;
 		}
 		if ((LOWORD(wParam) == IDC_LOGIN || LOWORD(wParam) == IDC_PASSWORD) && (HIWORD(wParam) != EN_CHANGE || (HWND)lParam != GetFocus()))
@@ -37,10 +37,10 @@ INT_PTR CALLBACK DlgProcOptsAccount(HWND hWndDlg, UINT msg, WPARAM wParam, LPARA
 		switch (((LPNMHDR)lParam)->code) {
 		case PSN_APPLY:
 			TCHAR szBuff[MAX_EMAIL_LEN];
-			GetDlgItemText(hWndDlg, IDC_LOGIN, szBuff, SIZEOF(szBuff));
+			GetDlgItemText(hWndDlg, IDC_LOGIN, szBuff, _countof(szBuff));
 			ppro->setTString(NULL, "e-mail", szBuff);
 
-			if (GetDlgItemText(hWndDlg, IDC_PASSWORD, szBuff, SIZEOF(szBuff))) {
+			if (GetDlgItemText(hWndDlg, IDC_PASSWORD, szBuff, _countof(szBuff))) {
 				ppro->setTString("Password", szBuff);
 				SecureZeroMemory(szBuff, sizeof(szBuff));
 			}
@@ -71,7 +71,7 @@ INT_PTR CALLBACK DlgProcAccount(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lP
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case IDC_NEW_ACCOUNT_LINK:
-			CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW | OUF_TCHAR, (LPARAM)MRA_REGISTER_URL);
+			Utils_OpenUrl(MRA_REGISTER_URL);
 			return TRUE;
 		}
 		if (HIWORD(wParam) == EN_CHANGE && (HWND)lParam == GetFocus()) {
@@ -87,10 +87,10 @@ INT_PTR CALLBACK DlgProcAccount(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lP
 		switch (((LPNMHDR)lParam)->code) {
 		case PSN_APPLY:
 			TCHAR szBuff[MAX_EMAIL_LEN];
-			GetDlgItemText(hWndDlg, IDC_LOGIN, szBuff, SIZEOF(szBuff));
+			GetDlgItemText(hWndDlg, IDC_LOGIN, szBuff, _countof(szBuff));
 			ppro->mraSetStringW(NULL, "e-mail", szBuff);
 
-			if (GetDlgItemText(hWndDlg, IDC_PASSWORD, szBuff, SIZEOF(szBuff))) {
+			if (GetDlgItemText(hWndDlg, IDC_PASSWORD, szBuff, _countof(szBuff))) {
 				ppro->setTString("Password", szBuff);
 				SecureZeroMemory(szBuff, sizeof(szBuff));
 			}
@@ -186,7 +186,7 @@ INT_PTR CALLBACK DlgProcOptsConnections(HWND hWndDlg, UINT msg, WPARAM wParam, L
 		switch (((LPNMHDR)lParam)->code) {
 		case PSN_APPLY:
 			TCHAR szBuff[MAX_PATH];
-			GetDlgItemText(hWndDlg, IDC_SERVER, szBuff, SIZEOF(szBuff));
+			GetDlgItemText(hWndDlg, IDC_SERVER, szBuff, _countof(szBuff));
 			ppro->mraSetStringW(NULL, "Server", szBuff);
 			ppro->setWord("ServerPort", (WORD)GetDlgItemInt(hWndDlg, IDC_SERVERPORT, NULL, FALSE));
 			ppro->setByte("AutoAddContactsToServer", IsDlgButtonChecked(hWndDlg, IDC_AUTO_ADD_CONTACTS_TO_SERVER));

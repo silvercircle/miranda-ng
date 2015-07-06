@@ -31,7 +31,7 @@ char* u2a(const WCHAR *pszUnicode)
 	DWORD flags;
 
 	if (pszUnicode==NULL) return NULL;
-	codepage=CallService(MS_LANGPACK_GETCODEPAGE,0,0);
+	codepage = Langpack_GetDefaultCodePage();
 	/* without WC_COMPOSITECHECK some characters might get out strange (see MS blog) */
 	cch=WideCharToMultiByte(codepage,flags=WC_COMPOSITECHECK,pszUnicode,-1,NULL,0,NULL,NULL);
 	if (!cch) cch=WideCharToMultiByte(codepage,flags=0,pszUnicode,-1,NULL,0,NULL,NULL);
@@ -49,7 +49,7 @@ void TrimString(TCHAR *pszStr)
 {
 	int i;
 	TCHAR *psz,szChars[]=_T(" \r\n\t");
-	for(i=0;i<SIZEOF(szChars);++i) {
+	for(i=0;i<_countof(szChars);++i) {
 		/* trim end */
 		psz=&pszStr[mir_tstrlen(pszStr)-1];
 		while(pszStr[0] && *psz==szChars[i]) {
@@ -80,7 +80,7 @@ void ShowInfoMessage(BYTE flags,const char *pszTitle,const char *pszTextFmt,...)
 
 	va_list va;
 	va_start(va,pszTextFmt);
-	mir_vsnprintf(szText,SIZEOF(szText),pszTextFmt,va);
+	mir_vsnprintf(szText,_countof(szText),pszTextFmt,va);
 	va_end(va);
 
 	if (ServiceExists(MS_CLIST_SYSTRAY_NOTIFY)) {
@@ -97,11 +97,11 @@ void ShowInfoMessage(BYTE flags,const char *pszTitle,const char *pszTextFmt,...)
 
 	mbp=(MSGBOXPARAMSA*)mir_calloc(sizeof(*mbp));
 	if (mbp==NULL) return;
-	mbp->cbSize=sizeof(*mbp);
-	mbp->lpszCaption=mir_strdup(pszTitle);
-	mbp->lpszText=mir_strdup(szText);
-	mbp->dwStyle=MB_OK|MB_SETFOREGROUND|MB_TASKMODAL;
-	mbp->dwLanguageId=LANGIDFROMLCID((LCID)CallService(MS_LANGPACK_GETLOCALE,0,0));
+	mbp->cbSize = sizeof(*mbp);
+	mbp->lpszCaption = mir_strdup(pszTitle);
+	mbp->lpszText = mir_strdup(szText);
+	mbp->dwStyle = MB_OK|MB_SETFOREGROUND|MB_TASKMODAL;
+	mbp->dwLanguageId = LANGIDFROMLCID(Langpack_GetDefaultLocale());
 	switch(flags&NIIF_ICON_MASK) {
 		case NIIF_INFO:    mbp->dwStyle|=MB_ICONINFORMATION; break;
 		case NIIF_WARNING: mbp->dwStyle|=MB_ICONWARNING; break;
@@ -115,7 +115,7 @@ char* GetWinErrorDescription(DWORD dwLastError)
 {
 	char *buf=NULL;
 	DWORD flags=FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM;
-	if (!FormatMessageA(flags,NULL,dwLastError,LANGIDFROMLCID((LCID)CallService(MS_LANGPACK_GETLOCALE,0,0)),(char*)&buf,0,NULL))
+	if (!FormatMessageA(flags,NULL,dwLastError,LANGIDFROMLCID(Langpack_GetDefaultLocale()),(char*)&buf,0,NULL))
 		if (GetLastError()==ERROR_RESOURCE_LANG_NOT_FOUND)
 			FormatMessageA(flags,NULL,dwLastError,0,(char*)&buf,0,NULL);
 	return buf;
@@ -170,22 +170,22 @@ BOOL GetFormatedCountdown(TCHAR *pszOut,int nSize,time_t countdown)
 	if (pfnGetDurationFormat != NULL) {
 		SYSTEMTIME st;
 		LCID locale;
-		locale=(LCID)CallService(MS_LANGPACK_GETLOCALE,0,0);
+		locale=Langpack_GetDefaultLocale();
 		if (TimeStampToSystemTime(countdown,&st))
 			if (pfnGetDurationFormat(locale,0,&st,0,NULL,pszOut,nSize))
 				return TRUE;
 		return FALSE;
-	} else
+	}
+
 	/* Win9x/NT/XP */
-		return StrFromTimeInterval(pszOut,nSize,(countdown>(MAXDWORD/1000))?MAXDWORD:(countdown*1000),10) != 0;
-	return FALSE;
+	return StrFromTimeInterval(pszOut,nSize,(countdown>(MAXDWORD/1000))?MAXDWORD:(countdown*1000),10) != 0;
 }
 
 BOOL GetFormatedDateTime(TCHAR *pszOut,int nSize,time_t timestamp,BOOL fShowDateEvenToday)
 {
 	SYSTEMTIME st,stNow;
 	LCID locale;
-	locale=(LCID)CallService(MS_LANGPACK_GETLOCALE,0,0);
+	locale=Langpack_GetDefaultLocale();
 	GetLocalTime(&stNow);
 	TimeStampToSystemTime(timestamp,&st);
 	/* today: no need to show the date */
@@ -193,9 +193,9 @@ BOOL GetFormatedDateTime(TCHAR *pszOut,int nSize,time_t timestamp,BOOL fShowDate
 		return GetTimeFormat(locale,((st.wSecond==0)?TIME_NOSECONDS:0)|TIME_FORCE24HOURFORMAT,&st,NULL,pszOut,nSize) != 0;
 	/* show both date and time */
 	{	TCHAR szDate[128],szTime[128];
-		if (!GetTimeFormat(locale,((st.wSecond==0)?TIME_NOSECONDS:0)|TIME_FORCE24HOURFORMAT,&st,NULL,szTime,SIZEOF(szTime)))
+		if (!GetTimeFormat(locale,((st.wSecond==0)?TIME_NOSECONDS:0)|TIME_FORCE24HOURFORMAT,&st,NULL,szTime,_countof(szTime)))
 			return FALSE;
-		if (!GetDateFormat(locale,DATE_SHORTDATE,&st,NULL,szDate,SIZEOF(szDate)))
+		if (!GetDateFormat(locale,DATE_SHORTDATE,&st,NULL,szDate,_countof(szDate)))
 			return FALSE;
 		mir_sntprintf(pszOut,nSize,_T("%s %s"),szTime,szDate);
 		return TRUE;
@@ -207,18 +207,18 @@ BOOL GetFormatedDateTime(TCHAR *pszOut,int nSize,time_t timestamp,BOOL fShowDate
 HANDLE IcoLib_AddIconRes(const char *pszDbName,const TCHAR *pszSection,const TCHAR *pszDesc,HINSTANCE hInst,WORD idRes,BOOL fLarge)
 {
 	TCHAR szFileName[MAX_PATH];
-	GetModuleFileName(hInst,szFileName,SIZEOF(szFileName));
+	GetModuleFileName(hInst,szFileName,_countof(szFileName));
 
-	SKINICONDESC sid = { sizeof(sid) };
+	SKINICONDESC sid = { 0 };
 	sid.pszName = (char*)pszDbName;
-	sid.ptszSection = (TCHAR*)pszSection;
-	sid.ptszDescription = (TCHAR*)pszDesc;
-	sid.ptszDefaultFile = szFileName;
+	sid.section.t = (TCHAR*)pszSection;
+	sid.description.t = (TCHAR*)pszDesc;
+	sid.defaultFile.t = szFileName;
 	sid.iDefaultIndex = -idRes;
 	sid.cx = GetSystemMetrics(fLarge?SM_CXICON:SM_CXSMICON);
 	sid.cy = GetSystemMetrics(fLarge?SM_CYICON:SM_CYSMICON);
 	sid.flags = SIDF_SORTED | SIDF_ALL_TCHAR;
-	return Skin_AddIcon(&sid);
+	return IcoLib_AddIcon(&sid);
 }
 
 void AddHotkey()

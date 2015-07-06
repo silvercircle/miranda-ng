@@ -28,13 +28,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static void sttApplySkin(MODERNOPTOBJECT *obj, TCHAR *fn)
 {
-	ProtoCallService(obj->lpzThemeModuleName, TS_SKIN_APPLY, NULL, (LPARAM)fn);
+	CallProtoService(obj->lpzThemeModuleName, TS_SKIN_APPLY, NULL, (LPARAM)fn);
 }
 
 static TCHAR *sttGetActiveSkin(MODERNOPTOBJECT *obj)
 {
 	return ProtoServiceExists(obj->lpzThemeModuleName, TS_SKIN_ACTIVE) ?
-		(TCHAR*)ProtoCallService(obj->lpzThemeModuleName, TS_SKIN_ACTIVE, 0, 0) : 0;
+		(TCHAR*)CallProtoService(obj->lpzThemeModuleName, TS_SKIN_ACTIVE, 0, 0) : 0;
 }
 
 static void sttPreviewSkin(MODERNOPTOBJECT *obj, TCHAR *fn, LPDRAWITEMSTRUCT lps)
@@ -42,19 +42,13 @@ static void sttPreviewSkin(MODERNOPTOBJECT *obj, TCHAR *fn, LPDRAWITEMSTRUCT lps
 	if (!fn) return;
 
 	if ( ProtoServiceExists(obj->lpzThemeModuleName, TS_SKIN_PREVIEW)) {
-		ProtoCallService(obj->lpzThemeModuleName, TS_SKIN_PREVIEW, (WPARAM)lps, (LPARAM)fn);
+		CallProtoService(obj->lpzThemeModuleName, TS_SKIN_PREVIEW, (WPARAM)lps, (LPARAM)fn);
 		return;
 	}
 
-	char *afn = mir_t2a(fn);
-	char *fnpreview = (char *)mir_alloc(mir_strlen(afn) + 10);
-	mir_strcpy(fnpreview, afn);
-	mir_strcat(fnpreview, ".png");
-	HBITMAP hbmPreview = (HBITMAP)CallService(MS_UTILS_LOADBITMAP, 0, (LPARAM)fnpreview);
-	mir_free(afn);
-	mir_free(fnpreview);
-
-	if (!hbmPreview) return;
+	HBITMAP hbmPreview = Bitmap_Load(CMString(fn) + _T(".png"));
+	if (!hbmPreview)
+		return;
 
 	BITMAP bmp;
 	GetObject(hbmPreview, sizeof(bmp), &bmp);
@@ -91,7 +85,7 @@ struct TSkinListItem
 		if (TCHAR *p = _tcsrchr(title, _T('.'))) *p = 0;
 
 		TCHAR curPath[MAX_PATH];
-		GetCurrentDirectory(SIZEOF(curPath), curPath);
+		GetCurrentDirectory(_countof(curPath), curPath);
 
 		path = (TCHAR *)mir_alloc(MAX_PATH * sizeof(TCHAR));
 		PathToRelativeT(curPath, path);
@@ -136,7 +130,7 @@ static void BuildSkinList(HWND hwndList, TCHAR *szExt, int nExtLength = -1, bool
 {
 	if (start) {
 		static TCHAR mirPath[MAX_PATH];
-		GetModuleFileName(NULL, mirPath, SIZEOF(mirPath));
+		GetModuleFileName(NULL, mirPath, _countof(mirPath));
 		if (TCHAR *p = _tcsrchr(mirPath, _T('\\'))) *p = 0;
 		SetCurrentDirectory(mirPath);
 		SendMessage(hwndList, LB_RESETCONTENT, 0, 0);
@@ -317,12 +311,12 @@ INT_PTR CALLBACK ModernOptSelector_DlgProc(HWND hwndDlg, UINT  msg, WPARAM wPara
 
 				if (sd->active && !mir_tstrcmp(sd->active, dat->filename)) {
 					DrawIconEx(lps->hDC, lps->rcItem.left, (lps->rcItem.top+lps->rcItem.bottom-cyIcon)/2,
-						LoadSkinnedIcon(SKINICON_OTHER_EMPTYBLOB),
+						Skin_LoadIcon(SKINICON_OTHER_EMPTYBLOB),
 						cxIcon, cyIcon, 0, NULL, DI_NORMAL);
 				}
 				else {
 					DrawIconEx(lps->hDC, lps->rcItem.left, (lps->rcItem.top+lps->rcItem.bottom-cyIcon)/2,
-						LoadSkinnedIcon(SKINICON_OTHER_SMALLDOT),
+						Skin_LoadIcon(SKINICON_OTHER_SMALLDOT),
 						cxIcon, cyIcon, 0, NULL, DI_NORMAL);
 				}
 				lps->rcItem.left += cxIcon;

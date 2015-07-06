@@ -45,7 +45,7 @@ void ServerList::saveToDb() const
 	ServerList::FTP *ftp = ftpList.getSelected();
 	char buff[256];
 
-	mir_snprintf(buff, SIZEOF(buff), "Password%d", opt.selected);
+	mir_snprintf(buff, "Password%d", opt.selected);
 	DB::setAStringF(0, MODULE, buff, opt.selected, ftp->szPass);
 
 	DB::setStringF(0, MODULE, "Name%d", opt.selected, ftp->stzName);
@@ -65,7 +65,7 @@ void ServerList::saveToDb() const
 ServerList::FTP::FTP(int index)
 {
 	if (DB::getStringF(0, MODULE, "Name%d", index, this->stzName))
-		mir_sntprintf(this->stzName, SIZEOF(this->stzName), TranslateT("FTP Server %d"), index + 1);
+		mir_sntprintf(this->stzName, _countof(this->stzName), TranslateT("FTP Server %d"), index + 1);
 
 	DB::getAStringF(0, MODULE, "Password%d", index, this->szPass);
 	DB::getAStringF(0, MODULE, "Server%d", index, this->szServer);

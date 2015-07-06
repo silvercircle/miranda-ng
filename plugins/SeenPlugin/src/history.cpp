@@ -20,15 +20,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "seen.h"
 
-static HANDLE hWindowList;
+static MWindowList hWindowList;
 
 char* BuildSetting(int historyLast)
 {
 	static char setting[15];
 	static char sztemp[15];
 	*setting = '\0';
-	strcat(setting, "History_");
-	strcat(setting, _itoa(historyLast, sztemp, 10));
+	mir_strcat(setting, "History_");
+	mir_strcat(setting, _itoa(historyLast, sztemp, 10));
 	return setting;
 }
 
@@ -174,19 +174,19 @@ INT_PTR CALLBACK HistoryDlgProc(HWND hwndDlg, UINT Message, WPARAM wparam, LPARA
 		TranslateDialogDefault(hwndDlg);
 		hContact = (MCONTACT)lparam;
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lparam);
-		mir_sntprintf(sztemp, SIZEOF(sztemp), _T("%s: %s"),
-			CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR),
+		mir_sntprintf(sztemp, _countof(sztemp), _T("%s: %s"),
+			pcli->pfnGetContactDisplayName(hContact, 0),
 			TranslateT("last seen history"));
 		SetWindowText(hwndDlg, sztemp);
-		SendMessage(hwndDlg, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadSkinnedIcon(SKINICON_OTHER_MIRANDA));
-		SendMessage(hwndDlg, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)LoadSkinnedIcon(SKINICON_OTHER_MIRANDA));
+		SendMessage(hwndDlg, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_MIRANDA));
+		SendMessage(hwndDlg, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_MIRANDA));
 
 		if (db_get_b(hContact, S_MOD, "OnlineAlert", 0))
 			CheckDlgButton(hwndDlg, IDC_STATUSCHANGE, BST_CHECKED);
 
-		SendDlgItemMessage(hwndDlg, IDC_DETAILS, BM_SETIMAGE, IMAGE_ICON, (WPARAM)LoadSkinnedIcon(SKINICON_OTHER_USERDETAILS));
-		SendDlgItemMessage(hwndDlg, IDC_USERMENU, BM_SETIMAGE, IMAGE_ICON, (WPARAM)LoadSkinnedIcon(SKINICON_OTHER_DOWNARROW));
-		SendDlgItemMessage(hwndDlg, IDC_SENDMSG, BM_SETIMAGE, IMAGE_ICON, (WPARAM)LoadSkinnedIcon(SKINICON_EVENT_MESSAGE));
+		SendDlgItemMessage(hwndDlg, IDC_DETAILS, BM_SETIMAGE, IMAGE_ICON, (WPARAM)Skin_LoadIcon(SKINICON_OTHER_USERDETAILS));
+		SendDlgItemMessage(hwndDlg, IDC_USERMENU, BM_SETIMAGE, IMAGE_ICON, (WPARAM)Skin_LoadIcon(SKINICON_OTHER_DOWNARROW));
+		SendDlgItemMessage(hwndDlg, IDC_SENDMSG, BM_SETIMAGE, IMAGE_ICON, (WPARAM)Skin_LoadIcon(SKINICON_EVENT_MESSAGE));
 
 		//set-up tooltips
 		SendDlgItemMessage(hwndDlg, IDC_DETAILS, BUTTONADDTOOLTIP, (WPARAM)TranslateT("View User's Details"), BATF_TCHAR);
@@ -198,10 +198,10 @@ INT_PTR CALLBACK HistoryDlgProc(HWND hwndDlg, UINT Message, WPARAM wparam, LPARA
 		return TRUE;
 
 	case WM_MEASUREITEM:
-		return CallService(MS_CLIST_MENUMEASUREITEM, wparam, lparam);
+		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lparam);
 
 	case WM_DRAWITEM:
-		return CallService(MS_CLIST_MENUDRAWITEM, wparam, lparam);
+		return Menu_DrawItem((LPDRAWITEMSTRUCT)lparam);
 
 	case WM_COMMAND:
 		hContact = (MCONTACT)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
@@ -222,8 +222,8 @@ INT_PTR CALLBACK HistoryDlgProc(HWND hwndDlg, UINT Message, WPARAM wparam, LPARA
 		case IDC_USERMENU:
 			{
 				RECT rc;
-				HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDCONTACT, hContact, 0);
 				GetWindowRect(GetDlgItem(hwndDlg, IDC_USERMENU), &rc);
+				HMENU hMenu = Menu_BuildContactMenu(hContact);
 				TrackPopupMenu(hMenu, 0, rc.left, rc.bottom, 0, hwndDlg, NULL);
 				DestroyMenu(hMenu);
 			}

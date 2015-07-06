@@ -180,7 +180,6 @@ void CChatScreen::UpdateLabels()
 {
 	tstring strNickname = CAppletManager::GetContactDisplayname(m_hContact);
 	char *szProto = GetContactProto(m_hContact);
-	char *szStatus = NULL;
 	m_iStatus = ID_STATUS_OFFLINE;
 
 	tstring strProto = _T("");
@@ -191,7 +190,7 @@ void CChatScreen::UpdateLabels()
 		m_iStatus = db_get_w(m_hContact,szProto,"Status",ID_STATUS_OFFLINE);
 	}
 	
-	szStatus = (char *) CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, m_iStatus, 0);
+	TCHAR *szStatus = pcli->pfnGetStatusModeDescription(m_iStatus, 0);
 	if(szStatus != NULL)
 		strStatus = toTstring(szStatus);
 
@@ -455,9 +454,9 @@ void CChatScreen::AddIncomingMessage(tstring strMessage,tm *time,bool bIRC)
 	EScrollMode eMode;
 	switch(CConfig::GetIntSetting(SESSION_AUTOSCROLL))
 	{
-	case SESSION_AUTOSCROLL_NONE: eMode = SCROLL_NONE; break;
 	case SESSION_AUTOSCROLL_FIRST: eMode = SCROLL_MESSAGE; break;
 	case SESSION_AUTOSCROLL_LAST: eMode = SCROLL_LINE; break;
+	default: eMode = SCROLL_NONE;
 	}
 	m_TextLog.SetAutoscrollMode(eMode);
 
@@ -756,10 +755,8 @@ void CChatScreen::OnLCDButtonRepeated(int iButton)
 		if(iButton < 2)
 		{
 			bool bRes = false;
-			if(iButton == LGLCDBUTTON_BUTTON0 || iButton == LGLCDBUTTON_UP) {
+			if(iButton == LGLCDBUTTON_BUTTON0) {
 				bRes = m_TextLog.ScrollUp();
-			} else if(iButton == LGLCDBUTTON_BUTTON1 || iButton == LGLCDBUTTON_DOWN) {
-				bRes = m_TextLog.ScrollDown();
 			}
 
 			if(bRes && CConfig::GetBoolSetting(SESSION_SCROLL_MAXIMIZED))

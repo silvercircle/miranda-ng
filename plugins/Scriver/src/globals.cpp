@@ -45,16 +45,14 @@ static IconItem iconList[] =
 	{ LPGEN("Send message"),           "scriver_SEND",         IDI_SEND        }, //  4
 	{ LPGEN("Smiley button"),          "scriver_SMILEY",       IDI_SMILEY      }, //  5
 	{ LPGEN("User is typing"),         "scriver_TYPING",       IDI_TYPING      }, //  6
-	{ LPGEN("Typing notification off"), "scriver_TYPINGOFF",    IDI_TYPINGOFF   }, //  7
-	{ LPGEN("Unicode is on"),          "scriver_UNICODEON",    IDI_UNICODEON   }, //  8
-	{ LPGEN("Unicode is off"),         "scriver_UNICODEOFF",   IDI_UNICODEOFF  }, //  9
-	{ LPGEN("Sending"),                "scriver_DELIVERING",   IDI_TIMESTAMP   }, // 10
-	{ LPGEN("Quote button"),           "scriver_QUOTE",        IDI_QUOTE       }, // 11
-	{ LPGEN("Close button"),           "scriver_CLOSEX",       IDI_CLOSEX      }, // 12
-	{ LPGEN("Icon overlay"),           "scriver_OVERLAY",      IDI_OVERLAY     }, // 13
-	{ LPGEN("Incoming message (10x10)"),"scriver_INCOMING",    IDI_INCOMING, 10}, // 14
-	{ LPGEN("Outgoing message (10x10)"),"scriver_OUTGOING",    IDI_OUTGOING, 10}, // 15
-	{ LPGEN("Notice (10x10)"),         "scriver_NOTICE",       IDI_NOTICE,   10}, // 16
+	{ LPGEN("Typing notification off"), "scriver_TYPINGOFF",   IDI_TYPINGOFF   }, //  7
+	{ LPGEN("Sending"),                "scriver_DELIVERING",   IDI_TIMESTAMP   }, //  8
+	{ LPGEN("Quote button"),           "scriver_QUOTE",        IDI_QUOTE       }, //  9
+	{ LPGEN("Close button"),           "scriver_CLOSEX",       IDI_CLOSEX      }, // 10
+	{ LPGEN("Icon overlay"),           "scriver_OVERLAY",      IDI_OVERLAY     }, // 11
+	{ LPGEN("Incoming message (10x10)"),"scriver_INCOMING",    IDI_INCOMING, 10}, // 12
+	{ LPGEN("Outgoing message (10x10)"),"scriver_OUTGOING",    IDI_OUTGOING, 10}, // 13  
+	{ LPGEN("Notice (10x10)"),         "scriver_NOTICE",       IDI_NOTICE,   10}, // 14  
 
 	{ LPGEN("Window Icon"),            "chat_window",          IDI_CHANMGR     }, //  1 
 	{ LPGEN("Text color"),             "chat_fgcol",           IDI_COLOR       }, //  2
@@ -97,9 +95,9 @@ void RegisterIcons(void)
 {
 	HookEvent(ME_SKIN2_ICONSCHANGED, IconsChanged);
 
-	Icon_Register(g_hInst, LPGEN("Single Messaging"), iconList,    16);
-	Icon_Register(g_hInst, LPGEN("Group chats"),      iconList+16, 20);
-	Icon_Register(g_hInst, LPGEN("Single Messaging"), iconList+36, 14);
+	Icon_Register(g_hInst, LPGEN("Single Messaging"), iconList,    14);
+	Icon_Register(g_hInst, LPGEN("Group chats"),      iconList+14, 20);
+	Icon_Register(g_hInst, LPGEN("Single Messaging"), iconList+34, 14);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -176,47 +174,47 @@ static int ackevent(WPARAM, LPARAM lParam)
 
 int ImageList_AddIcon_Ex(HIMAGELIST hIml, int id)
 {
-	HICON hIcon = LoadSkinnedIcon(id);
+	HICON hIcon = Skin_LoadIcon(id);
 	int res = ImageList_AddIcon(hIml, hIcon);
-	Skin_ReleaseIcon(hIcon);
+	IcoLib_ReleaseIcon(hIcon);
 	return res;
 }
 
 int ImageList_AddIcon_Ex2(HIMAGELIST hIml, HICON hIcon)
 {
 	int res = ImageList_AddIcon(hIml, hIcon);
-	Skin_ReleaseIcon(hIcon);
+	IcoLib_ReleaseIcon(hIcon);
 	return res;
 }
 
 int ImageList_ReplaceIcon_Ex(HIMAGELIST hIml, int nIndex, int id)
 {
-	HICON hIcon = LoadSkinnedIcon(id);
+	HICON hIcon = Skin_LoadIcon(id);
 	int res = ImageList_ReplaceIcon(hIml, nIndex, hIcon);
-	Skin_ReleaseIcon(hIcon);
+	IcoLib_ReleaseIcon(hIcon);
 	return res;
 }
 
 int ImageList_AddIcon_ProtoEx(HIMAGELIST hIml, const char* szProto, int status)
 {
-	HICON hIcon = LoadSkinnedProtoIcon(szProto, status);
+	HICON hIcon = Skin_LoadProtoIcon(szProto, status);
 	int res = ImageList_AddIcon(hIml, hIcon);
-	Skin_ReleaseIcon(hIcon);
+	IcoLib_ReleaseIcon(hIcon);
 	return res;
 }
 
 void ReleaseIcons()
 {
-	Skin_ReleaseIcon(g_dat.hMsgIcon);
-	Skin_ReleaseIcon(g_dat.hMsgIconBig);
-	Skin_ReleaseIcon(g_dat.hIconChatBig);
+	IcoLib_ReleaseIcon(g_dat.hMsgIcon);
+	IcoLib_ReleaseIcon(g_dat.hMsgIconBig);
+	IcoLib_ReleaseIcon(g_dat.hIconChatBig);
 }
 
 HICON GetCachedIcon(const char *name)
 {
-	for (int i = 0; i < SIZEOF(iconList); i++)
-	if (!mir_strcmp(iconList[i].szName, name))
-		return Skin_GetIconByHandle(iconList[i].hIcolib);
+	for (int i = 0; i < _countof(iconList); i++)
+		if (!mir_strcmp(iconList[i].szName, name))
+			return IcoLib_GetIconByHandle(iconList[i].hIcolib);
 
 	return NULL;
 }
@@ -225,21 +223,21 @@ void LoadGlobalIcons()
 {
 	int i;
 
-	g_dat.hMsgIcon = LoadSkinnedIcon(SKINICON_EVENT_MESSAGE);
-	g_dat.hMsgIconBig = LoadSkinnedIconBig(SKINICON_EVENT_MESSAGE);
-	g_dat.hIconChatBig = Skin_GetIcon("chat_window", true);
+	g_dat.hMsgIcon = Skin_LoadIcon(SKINICON_EVENT_MESSAGE);
+	g_dat.hMsgIconBig = Skin_LoadIcon(SKINICON_EVENT_MESSAGE, true);
+	g_dat.hIconChatBig = IcoLib_GetIcon("chat_window", true);
 
 	ImageList_RemoveAll(g_dat.hButtonIconList);
 	ImageList_RemoveAll(g_dat.hChatButtonIconList);
 	ImageList_RemoveAll(g_dat.hHelperIconList);
 	ImageList_RemoveAll(g_dat.hSearchEngineIconList);
-	for (i = 0; i < SIZEOF(buttonIcons); i++) {
+	for (i = 0; i < _countof(buttonIcons); i++) {
 		if (buttonIcons[i] == NULL)
 			ImageList_AddIcon_ProtoEx(g_dat.hButtonIconList, NULL, ID_STATUS_OFFLINE);
 		else
 			ImageList_AddIcon(g_dat.hButtonIconList, GetCachedIcon(buttonIcons[i]));
 	}
-	for (i = 0; i < SIZEOF(chatButtonIcons); i++)
+	for (i = 0; i < _countof(chatButtonIcons); i++)
 		ImageList_AddIcon(g_dat.hChatButtonIconList, GetCachedIcon(chatButtonIcons[i]));
 
 	ImageList_AddIcon(g_dat.hHelperIconList, GetCachedIcon("scriver_OVERLAY"));
@@ -302,7 +300,6 @@ void InitGlobals()
 	g_dat.hTabIconList = ImageList_Create(16, 16, ILC_COLOR32 | ILC_MASK, 0, 0);
 	g_dat.hHelperIconList = ImageList_Create(16, 16, ILC_COLOR32 | ILC_MASK, 0, 0);
 	g_dat.hSearchEngineIconList = ImageList_Create(16, 16, ILC_COLOR32 | ILC_MASK, 0, 0);
-	g_dat.draftList = NULL;
 	g_dat.logPixelSX = GetDeviceCaps(hdc, LOGPIXELSX);
 	g_dat.logPixelSY = GetDeviceCaps(hdc, LOGPIXELSY);
 	LoadInfobarFonts();
@@ -313,8 +310,6 @@ void FreeGlobals()
 {
 	if (g_dat.hInfobarBrush != NULL)
 		DeleteObject(g_dat.hInfobarBrush);
-	if (g_dat.draftList != NULL)
-		tcmdlist_free(g_dat.draftList);
 	if (g_dat.hTabIconList)
 		ImageList_Destroy(g_dat.hTabIconList);
 	if (g_dat.hButtonIconList)
@@ -325,10 +320,8 @@ void FreeGlobals()
 		ImageList_Destroy(g_dat.hHelperIconList);
 	if (g_dat.hSearchEngineIconList)
 		ImageList_Destroy(g_dat.hSearchEngineIconList);
-	if (g_dat.hMenuANSIEncoding)
-		DestroyMenu(g_dat.hMenuANSIEncoding);
 	mir_free(g_dat.tabIconListUsage);
-	
+
 	WindowList_Destroy(g_dat.hMessageWindowList);
 	WindowList_Destroy(g_dat.hParentWindowList);
 

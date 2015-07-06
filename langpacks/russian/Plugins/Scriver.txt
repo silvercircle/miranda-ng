@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Scriver.dll
 ;  Plugin: Scriver
-;  Version: 2.12.1.2
+;  Version: 2.12.2.1
 ;  Authors: Miranda NG Development Team
 ;============================================================
 [Scriver - send and receive instant messages.]
@@ -30,7 +30,7 @@
 [Delete temporary contacts on closing]
 При включении удалять временные контакты
 [Show warning when message has not been received after]
-Сообщать, если сообщение не удалось отправить в течение
+Сообщать, если сообщение не удалось отправить за
 [seconds]
 секунд
 [Tabs]
@@ -178,7 +178,7 @@
 [&Italic]
 &Курсив
 [&Underline]
-&Подчеркнутый
+&Подчёркнутый
 [&Color]
 &Цвет
 [&Background color]
@@ -325,10 +325,6 @@ Google Карты
 Пишет сообщение
 [Typing notification off]
 "Уведомление о наборе" выкл.
-[Unicode is on]
-Юникод включён
-[Unicode is off]
-Юникод выключен
 [Sending]
 Отправка сообщения
 [Quote button]
@@ -396,7 +392,7 @@ Google Карты
 [Quit (10x10)]
 Выход (10х10)
 [Kick (10x10)]
-Выгнать (10х10)
+Выкинуть (10х10)
 [Nickchange (10x10)]
 Смена псевдонима (10х10)
 [Topic (10x10)]
@@ -708,7 +704,7 @@ Miranda не смогла загрузить встроенную систему
 [Show icon in tray for status changes]
 Смены статусов
 [Show popups only when the chat room is not active]
-Смена темы
+Показывать всплывающие окна если окно чата не активно
 [Show popup for topic changes]
 Смена темы
 [Show popup for users joining]
@@ -738,13 +734,13 @@ Miranda не смогла загрузить встроенную систему
 [Icons to display in the tray]
 Значки в трее
 [nick of current contact (if defined)]
-ник текущего контакта (если определен)
+ник текущего контакта (если определён)
 [protocol name of current contact (if defined). Account name is used when protocol supports multiple accounts]
 название протокола текущего контакта (если определено). Имя учётной записи используется когда протокол поддерживает несколько учётных записей
 [user-defined account name of current contact (if defined).]
 имя учётной записи текущего контакта (если определено).
 [user ID of current contact (if defined). It is like UIN for ICQ, JID for Jabber, etc.]
-ID текущего контакта (если определен). Например, UIN для ICQ, JID для Jabber и т.д.
+ID текущего контакта (если определён). Например, UIN для ICQ, JID для Jabber и т.д.
 [path to Miranda root folder]
 путь к папке программы
 [path to folder containing Miranda profiles]

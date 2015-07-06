@@ -22,6 +22,7 @@ char AIM_CAP_MIRANDA[16] = "MirandaA";
 
 int hLangpack;
 
+CLIST_INTERFACE *pcli;
 HINSTANCE hInstance;
 
 /////////////////////////////////////////////////////////////////////////////
@@ -100,15 +101,17 @@ static int protoUninit(PROTO_INTERFACE* ppro)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
+	mir_getCLI();
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
 
-	PROTOCOLDESCRIPTOR pd = { sizeof(pd) };
+	PROTOCOLDESCRIPTOR pd = { 0 };
+	pd.cbSize = sizeof(pd);
 	pd.szName = "AIM";
 	pd.type = PROTOTYPE_PROTOCOL;
 	pd.fnInit = protoInit;
 	pd.fnUninit = protoUninit;
-	CallService(MS_PROTO_REGISTERMODULE, 0, (LPARAM) & pd);
+	Proto_RegisterModule( & pd);
 
 	InitIcons();
 	InitExtraIcons();

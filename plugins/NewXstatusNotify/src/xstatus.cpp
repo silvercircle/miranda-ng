@@ -172,9 +172,9 @@ void ShowXStatusPopup(XSTATUSCHANGE *xsc)
 	case TYPE_JABBER_ACTIVITY:
 		DBVARIANT dbv;
 		char szSetting[64];
-		mir_snprintf(szSetting, SIZEOF(szSetting), "%s/%s/icon", xsc->szProto, (xsc->type == TYPE_JABBER_MOOD) ? "mood" : "activity");
+		mir_snprintf(szSetting, "%s/%s/icon", xsc->szProto, (xsc->type == TYPE_JABBER_MOOD) ? "mood" : "activity");
 		if (!db_get_s(xsc->hContact, "AdvStatus", szSetting, &dbv)) {
-			hIcon = Skin_GetIcon(dbv.pszVal);
+			hIcon = IcoLib_GetIcon(dbv.pszVal);
 			db_free(&dbv);
 		}
 		break;
@@ -185,7 +185,7 @@ void ShowXStatusPopup(XSTATUSCHANGE *xsc)
 	}
 
 	if (hIcon == NULL)
-		hIcon = LoadSkinnedProtoIcon(xsc->szProto, db_get_w(xsc->hContact, xsc->szProto, "Status", ID_STATUS_ONLINE));
+		hIcon = Skin_LoadProtoIcon(xsc->szProto, db_get_w(xsc->hContact, xsc->szProto, "Status", ID_STATUS_ONLINE));
 
 	// cut message if needed
 	TCHAR *copyText = NULL;
@@ -194,7 +194,7 @@ void ShowXStatusPopup(XSTATUSCHANGE *xsc)
 		copyText = mir_tstrdup(xsc->stzText);
 		_tcsncpy(buff, xsc->stzText, opt.PXMsgLen);
 		buff[opt.PXMsgLen] = 0;
-		_tcscat(buff, _T("..."));
+		mir_tstrcat(buff, _T("..."));
 		replaceStrT(xsc->stzText, buff);
 	}
 
@@ -226,7 +226,7 @@ void BlinkXStatusIcon(XSTATUSCHANGE *xsc)
 	HICON hIcon = NULL;
 	TCHAR str[256] = { 0 };
 	TCHAR stzType[32];
-	mir_sntprintf(str, SIZEOF(str), TranslateT("%s changed %s"), pcli->pfnGetContactDisplayName(xsc->hContact, 0), GetStatusTypeAsString(xsc->type, stzType));
+	mir_sntprintf(str, _countof(str), TranslateT("%s changed %s"), pcli->pfnGetContactDisplayName(xsc->hContact, 0), GetStatusTypeAsString(xsc->type, stzType));
 
 	if (opt.BlinkIcon_Status) {
 		DBVARIANT dbv;
@@ -235,9 +235,9 @@ void BlinkXStatusIcon(XSTATUSCHANGE *xsc)
 		switch (xsc->type) {
 		case TYPE_JABBER_MOOD:
 		case TYPE_JABBER_ACTIVITY:
-			mir_snprintf(szSetting, SIZEOF(szSetting), "%s/%s/icon", xsc->szProto, (xsc->type == TYPE_JABBER_MOOD) ? "mood" : "activity");
+			mir_snprintf(szSetting, "%s/%s/icon", xsc->szProto, (xsc->type == TYPE_JABBER_MOOD) ? "mood" : "activity");
 			if (!db_get_s(xsc->hContact, "AdvStatus", szSetting, &dbv)) {
-				hIcon = Skin_GetIcon(dbv.pszVal);
+				hIcon = IcoLib_GetIcon(dbv.pszVal);
 				db_free(&dbv);
 			}
 			break;
@@ -248,7 +248,7 @@ void BlinkXStatusIcon(XSTATUSCHANGE *xsc)
 	}
 
 	if (hIcon == NULL)
-		hIcon = LoadSkinnedIcon(SKINICON_OTHER_USERONLINE);
+		hIcon = Skin_LoadIcon(SKINICON_OTHER_USERONLINE);
 
 	BlinkIcon(xsc->hContact, hIcon, str);
 	mir_free(str);
@@ -289,7 +289,7 @@ void LogChangeToDB(XSTATUSCHANGE *xsc)
 
 	TCHAR stzLastLog[2 * MAX_TEXT_LEN];
 	CMString stzLogText(ReplaceVars(xsc, Template));
-	DBGetStringDefault(xsc->hContact, MODULE, DB_LASTLOG, stzLastLog, SIZEOF(stzLastLog), _T(""));
+	DBGetStringDefault(xsc->hContact, MODULE, DB_LASTLOG, stzLastLog, _countof(stzLastLog), _T(""));
 
 	if (opt.XLogToDB) {
 		db_set_ws(xsc->hContact, MODULE, DB_LASTLOG, stzLogText);
@@ -322,8 +322,8 @@ void LogChangeToFile(XSTATUSCHANGE *xsc)
 
 	TCHAR stzDate[32], stzTime[32], stzText[MAX_TEXT_LEN];
 
-	GetTimeFormat(LOCALE_USER_DEFAULT, 0, NULL, _T("HH':'mm"), stzTime, SIZEOF(stzTime));
-	GetDateFormat(LOCALE_USER_DEFAULT, 0, NULL, _T("dd/MM/yyyy"), stzDate, SIZEOF(stzDate));
+	GetTimeFormat(LOCALE_USER_DEFAULT, 0, NULL, _T("HH':'mm"), stzTime, _countof(stzTime));
+	GetDateFormat(LOCALE_USER_DEFAULT, 0, NULL, _T("dd/MM/yyyy"), stzDate, _countof(stzDate));
 
 	TCHAR *Template = _T("");
 	switch (xsc->action) {
@@ -337,7 +337,7 @@ void LogChangeToFile(XSTATUSCHANGE *xsc)
 		Template = templates.LogXMsgRemoved; break;
 	}
 
-	mir_sntprintf(stzText, SIZEOF(stzText), _T("%s, %s. %s %s\r\n"), stzDate, stzTime, 
+	mir_sntprintf(stzText, _countof(stzText), _T("%s, %s. %s %s\r\n"), stzDate, stzTime, 
 		pcli->pfnGetContactDisplayName(xsc->hContact, 0), ReplaceVars(xsc, Template).GetString());
 
 	LogToFile(stzText);
@@ -351,7 +351,7 @@ void ExtraStatusChanged(XSTATUSCHANGE *xsc)
 	BOOL bEnablePopup = true, bEnableSound = true, bEnableLog = opt.XLogToDB;
 
 	char buff[12] = { 0 };
-	mir_snprintf(buff, SIZEOF(buff), "%d", ID_STATUS_EXTRASTATUS);
+	mir_snprintf(buff, "%d", ID_STATUS_EXTRASTATUS);
 	if ((db_get_b(0, MODULE, buff, 1) == 0)
 		|| (db_get_w(xsc->hContact, xsc->szProto, "Status", ID_STATUS_OFFLINE) == ID_STATUS_OFFLINE)
 		|| (!opt.HiddenContactsToo && (db_get_b(xsc->hContact, "CList", "Hidden", 0) == 1))
@@ -369,8 +369,8 @@ void ExtraStatusChanged(XSTATUSCHANGE *xsc)
 	if (opt.AutoDisable) {
 		char statusIDs[12], statusIDp[12];
 		WORD myStatus = (WORD)CallProtoService(xsc->szProto, PS_GETSTATUS, 0, 0);
-		mir_snprintf(statusIDs, SIZEOF(statusIDs), "s%d", myStatus);
-		mir_snprintf(statusIDp, SIZEOF(statusIDp), "p%d", myStatus);
+		mir_snprintf(statusIDs, _countof(statusIDs), "s%d", myStatus);
+		mir_snprintf(statusIDp, _countof(statusIDp), "p%d", myStatus);
 		bEnableSound = db_get_b(0, MODULE, statusIDs, 1) ? FALSE : bEnableSound;
 		bEnablePopup = db_get_b(0, MODULE, statusIDp, 1) ? FALSE : bEnablePopup;
 	}
@@ -452,7 +452,7 @@ TCHAR* GetJabberAdvStatusText(MCONTACT hContact, char *szProto, char *szSlot, ch
 	char szSetting[128];
 	buff[0] = 0;
 
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%s/%s/%s", szProto, szSlot, szValue);
+	mir_snprintf(szSetting, "%s/%s/%s", szProto, szSlot, szValue);
 	if (!db_get_ts(hContact, "AdvStatus", szSetting, &dbv)) {
 		_tcsncpy(buff, dbv.ptszVal, bufflen);
 		buff[bufflen - 1] = 0;
@@ -480,22 +480,22 @@ void AddXStatusEventThread(void *arg)
 
 	TCHAR stzTitle[MAX_TITLE_LEN], stzText[MAX_TEXT_LEN];
 	if (ProtoServiceExists(szProto, JS_PARSE_XMPP_URI)) {
-		GetJabberAdvStatusText(hContact, szProto, "mood", "title", stzTitle, SIZEOF(stzTitle));
+		GetJabberAdvStatusText(hContact, szProto, "mood", "title", stzTitle, _countof(stzTitle));
 		if (stzTitle[0]) {
-			GetJabberAdvStatusText(hContact, szProto, "mood", "text", stzText, SIZEOF(stzText));
+			GetJabberAdvStatusText(hContact, szProto, "mood", "text", stzText, _countof(stzText));
 			LogXstatusChange(hContact, szProto, TYPE_JABBER_MOOD, stzTitle, stzText);
 		}
 
-		GetJabberAdvStatusText(hContact, szProto, "activity", "title", stzTitle, SIZEOF(stzTitle));
+		GetJabberAdvStatusText(hContact, szProto, "activity", "title", stzTitle, _countof(stzTitle));
 		if (stzTitle[0]) {
-			GetJabberAdvStatusText(hContact, szProto, "activity", "text", stzText, SIZEOF(stzText));
+			GetJabberAdvStatusText(hContact, szProto, "activity", "text", stzText, _countof(stzText));
 			LogXstatusChange(hContact, szProto, TYPE_JABBER_ACTIVITY, stzTitle, stzText);
 		}
 	}
 	else {
-		GetIcqXStatus(hContact, szProto, "XStatusName", stzTitle, SIZEOF(stzTitle));
+		GetIcqXStatus(hContact, szProto, "XStatusName", stzTitle, _countof(stzTitle));
 		if (stzTitle[0]) {
-			GetIcqXStatus(hContact, szProto, "XStatusMsg", stzText, SIZEOF(stzText));
+			GetIcqXStatus(hContact, szProto, "XStatusMsg", stzText, _countof(stzText));
 			LogXstatusChange(hContact, szProto, TYPE_ICQ_XSTATUS, stzTitle, stzText);
 		}
 	}

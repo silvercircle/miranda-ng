@@ -40,7 +40,7 @@ int NewsAggrInit(WPARAM, LPARAM)
 	if (hNewsAggregatorFolder = FoldersRegisterCustomPathT(LPGEN("Avatars"), LPGEN("News Aggregator"), MIRANDA_USERDATAT _T("\\Avatars\\")_T(DEFAULT_AVATARS_FOLDER)))
 		FoldersGetCustomPathT(hNewsAggregatorFolder, tszRoot, MAX_PATH, _T(""));
 	else
-		mir_tstrncpy(tszRoot, VARST( _T("%miranda_userdata%\\Avatars\\"_T(DEFAULT_AVATARS_FOLDER))), SIZEOF(tszRoot));
+		mir_tstrncpy(tszRoot, VARST( _T("%miranda_userdata%\\Avatars\\"_T(DEFAULT_AVATARS_FOLDER))), _countof(tszRoot));
 
 	for (MCONTACT hContact = db_find_first(MODULE); hContact; hContact = db_find_next(hContact, MODULE)) {
 		if (!db_get_b(NULL, MODULE, "StartupRetrieve", 1))
@@ -202,7 +202,7 @@ INT_PTR CheckFeed(WPARAM hContact, LPARAM)
 
 INT_PTR NewsAggrGetAvatarInfo(WPARAM wParam, LPARAM lParam)
 {
-	PROTO_AVATAR_INFORMATIONT *pai = (PROTO_AVATAR_INFORMATIONT *)lParam;
+	PROTO_AVATAR_INFORMATION *pai = (PROTO_AVATAR_INFORMATION *)lParam;
 	if (!IsMyContact(pai->hContact))
 		return GAIR_NOAVATAR;
 
@@ -229,19 +229,11 @@ INT_PTR NewsAggrRecvMessage(WPARAM, LPARAM lParam)
 
 void UpdateMenu(bool State)
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
+	if (!State) // to enable auto-update
+		Menu_ModifyItem(hService2[0], LPGENT("Auto Update Enabled"), GetIconHandle("enabled"));
+	else  // to disable auto-update
+		Menu_ModifyItem(hService2[0], LPGENT("Auto Update Disabled"), GetIconHandle("disabled"));
 
-	if (!State) { // to enable auto-update
-		mi.ptszName = LPGENT("Auto Update Enabled");
-		mi.icolibItem = GetIconHandle("enabled");
-	}
-	else { // to disable auto-update
-		mi.ptszName = LPGENT("Auto Update Disabled");
-		mi.icolibItem = GetIconHandle("disabled");
-	}
-
-	mi.flags = CMIM_ICON | CMIM_NAME | CMIF_TCHAR;
-	Menu_ModifyItem(hService2[0], &mi);
 	CallService(MS_TTB_SETBUTTONSTATE, (WPARAM)hTBButton, State ? TTBST_PUSHED : 0);
 	db_set_b(NULL, MODULE, "AutoUpdate", !State);
 }
@@ -256,7 +248,7 @@ INT_PTR EnableDisable(WPARAM, LPARAM)
 
 int OnToolbarLoaded(WPARAM, LPARAM)
 {
-	TTBButton ttb = { sizeof(ttb) };
+	TTBButton ttb = { 0 };
 	ttb.name = LPGEN("Enable/disable auto update");
 	ttb.pszService = MS_NEWSAGGREGATOR_ENABLED;
 	ttb.pszTooltipUp = LPGEN("Auto Update Enabled");

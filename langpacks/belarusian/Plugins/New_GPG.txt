@@ -134,6 +134,8 @@ ID ключа:
 [GPG encryption status]
 Статус шыфравання GPG
 ;file \plugins\New_GPG\src\main.cpp
+[Email]
+Пошта
 [Name]
 Імя
 [Creation date]

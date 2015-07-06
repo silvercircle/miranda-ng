@@ -194,7 +194,7 @@ MCONTACT CAimProto::contact_from_sn(const char* sn, bool addIfNeeded, bool tempo
 	if (addIfNeeded) {
 		MCONTACT hContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
 		if (hContact) {
-			if (CallService(MS_PROTO_ADDTOCONTACT, hContact, (LPARAM)m_szModuleName) == 0) {
+			if (Proto_AddToContact(hContact, m_szModuleName) == 0) {
 				setString(hContact, AIM_KEY_SN, norm_sn);
 				setString(hContact, AIM_KEY_NK, sn);
 				debugLogA("Adding contact %s to client side list.",norm_sn);
@@ -496,42 +496,42 @@ void BdList::remove_by_id(unsigned short id)
 unsigned short CAimProto::getBuddyId(MCONTACT hContact, int i)
 {
 	char item[sizeof(AIM_KEY_BI)+10];
-	mir_snprintf(item, SIZEOF(item), AIM_KEY_BI"%d", i);
+	mir_snprintf(item, _countof(item), AIM_KEY_BI"%d", i);
 	return getWord(hContact, item, 0);
 }
 
 void CAimProto::setBuddyId(MCONTACT hContact, int i, unsigned short id)
 {
 	char item[sizeof(AIM_KEY_BI)+10];
-	mir_snprintf(item, SIZEOF(item), AIM_KEY_BI"%d", i);
+	mir_snprintf(item, _countof(item), AIM_KEY_BI"%d", i);
 	setWord(hContact, item, id);
 }
 
 int CAimProto::deleteBuddyId(MCONTACT hContact, int i)
 {
 	char item[sizeof(AIM_KEY_BI)+10];
-	mir_snprintf(item, SIZEOF(item), AIM_KEY_BI"%d", i);
+	mir_snprintf(item, _countof(item), AIM_KEY_BI"%d", i);
 	return delSetting(hContact, item);
 }
 
 unsigned short CAimProto::getGroupId(MCONTACT hContact, int i)
 {
 	char item[sizeof(AIM_KEY_GI)+10];
-	mir_snprintf(item, SIZEOF(item), AIM_KEY_GI"%d", i);
+	mir_snprintf(item, _countof(item), AIM_KEY_GI"%d", i);
 	return getWord(hContact, item, 0);
 }
 
 void CAimProto::setGroupId(MCONTACT hContact, int i, unsigned short id)
 {
 	char item[sizeof(AIM_KEY_GI)+10];
-	mir_snprintf(item, SIZEOF(item), AIM_KEY_GI"%d", i);
+	mir_snprintf(item, _countof(item), AIM_KEY_GI"%d", i);
 	setWord(hContact, item, id);
 }
 
 int CAimProto::deleteGroupId(MCONTACT hContact, int i)
 {
 	char item[sizeof(AIM_KEY_GI)+10];
-	mir_snprintf(item, SIZEOF(item), AIM_KEY_GI"%d", i);
+	mir_snprintf(item, _countof(item), AIM_KEY_GI"%d", i);
 	return delSetting(hContact, item);
 }
 
@@ -553,7 +553,7 @@ int CAimProto::open_contact_file(const char*, const TCHAR* file, const char*, TC
 	if (fid < 0)
 	{
 		TCHAR errmsg[512];
-		mir_sntprintf(errmsg, SIZEOF(errmsg), TranslateT("Failed to open file: %s %s"), path, __tcserror(NULL));
+		mir_sntprintf(errmsg, _countof(errmsg), TranslateT("Failed to open file: %s %s"), path, __tcserror(NULL));
 		ShowPopup((char*)errmsg, ERROR_POPUP | TCHAR_POPUP);
 	}
 	return fid;
@@ -674,7 +674,7 @@ unsigned long char_ip_to_long_ip(char* ip)
 unsigned short get_random(void)
 {
 	unsigned short id;
-	CallService(MS_UTILS_GETRANDOM, sizeof(id), (LPARAM)&id);
+	Utils_GetRandom(&id, sizeof(id));
 	id &= 0x7fff;
 	return id;
 }

@@ -41,33 +41,33 @@ extern IconItem iconList[] =
 	{ LPGEN("Concurrent sessions"),        "sessions",      IDI_SESSIONS         }
 };
 
-HANDLE hIconLibItem[SIZEOF(iconList)];
+HANDLE hIconLibItem[_countof(iconList)];
 
 void gg_icolib_init()
 {
-	Icon_Register(hInstance, "Protocols/" GGDEF_PROTO, iconList, SIZEOF(iconList), GGDEF_PROTO);
+	Icon_Register(hInstance, "Protocols/" GGDEF_PROTO, iconList, _countof(iconList), GGDEF_PROTO);
 }
 
-HICON LoadIconEx(const char* name, BOOL big)
+HICON LoadIconEx(const char* name, bool big)
 {
 	char szSettingName[100];
-	mir_snprintf(szSettingName, SIZEOF(szSettingName), "%s_%s", GGDEF_PROTO, name);
-	return Skin_GetIcon(szSettingName, big);
+	mir_snprintf(szSettingName, _countof(szSettingName), "%s_%s", GGDEF_PROTO, name);
+	return IcoLib_GetIcon(szSettingName, big);
 }
 
 HANDLE GetIconHandle(int iconId)
 {
-	for(int i = 0; i < SIZEOF(iconList); i++)
+	for(int i = 0; i < _countof(iconList); i++)
 		if (iconList[i].defIconID == iconId)
 			return hIconLibItem[i];
 	return NULL;
 }
 
-void ReleaseIconEx(const char* name, BOOL big)
+void ReleaseIconEx(const char* name, bool big)
 {
 	char szSettingName[100];
-	mir_snprintf(szSettingName, SIZEOF(szSettingName), "%s_%s", GGDEF_PROTO, name);
-	Skin_ReleaseIcon(szSettingName, big);
+	mir_snprintf(szSettingName, _countof(szSettingName), "%s_%s", GGDEF_PROTO, name);
+	IcoLib_Release(szSettingName, big);
 }
 
 void WindowSetIcon(HWND hWnd, const char* name)
@@ -78,6 +78,6 @@ void WindowSetIcon(HWND hWnd, const char* name)
 
 void WindowFreeIcon(HWND hWnd)
 {
-	Skin_ReleaseIcon((HICON)SendMessage(hWnd, WM_SETICON, ICON_BIG, 0));
-	Skin_ReleaseIcon((HICON)SendMessage(hWnd, WM_SETICON, ICON_SMALL, 0));
+	IcoLib_ReleaseIcon((HICON)SendMessage(hWnd, WM_SETICON, ICON_BIG, 0));
+	IcoLib_ReleaseIcon((HICON)SendMessage(hWnd, WM_SETICON, ICON_SMALL, 0));
 }

@@ -1,6 +1,7 @@
 // dllmain.cpp : Definiert den Einstiegspunkt für die DLL-Anwendung.
 #include "stdafx.h"
 
+CLIST_INTERFACE *pcli;
 HANDLE hEventWindow;
 HINSTANCE hInst;
 
@@ -59,9 +60,8 @@ extern "C" __declspec(dllexport) int Load(void)
 {
 	DEBUGOUT_T("LOAD MIROTR");
 
-	mir_getLP( &pluginInfo );
-	/* for timezones
-	 mir_getTMI(&tmi);  */
+	mir_getLP(&pluginInfo);
+	mir_getCLI();
 
 	InitIcons();
 
@@ -73,17 +73,18 @@ extern "C" __declspec(dllexport) int Load(void)
 
 	db_set_resident(MODULENAME, "TrustLevel");
 
-	/////////////
-	////// init plugin
-	PROTOCOLDESCRIPTOR pd = { sizeof(pd) };
+	////////////////////////////////////////////////////////////////////////////
+	// init plugin
+	PROTOCOLDESCRIPTOR pd = { 0 };
+	pd.cbSize = sizeof(pd);
 	pd.szName = MODULENAME;
 	pd.type = PROTOTYPE_ENCRYPTION;
-	CallService(MS_PROTO_REGISTERMODULE,0,(LPARAM)&pd);
+	Proto_RegisterModule(&pd);
 
 	// remove us as a filter to all contacts - fix filter type problem
 	if(db_get_b(0, MODULENAME, "FilterOrderFix", 0) != 2) {
 		for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact))
-			CallService(MS_PROTO_REMOVEFROMCONTACT, hContact, (LPARAM)MODULENAME);
+			Proto_RemoveFromContact(hContact, MODULENAME);
 		db_set_b(0, MODULENAME, "FilterOrderFix", 2);
 	}
 

@@ -39,7 +39,6 @@
 #include <m_chat.h>        // not used
 #include <m_clc.h>
 #include <m_clist.h>
-#include <m_clistint.h>    // not used
 #include <m_clui.h>        // not used
 #include <m_contacts.h>
 #include <m_database.h>
@@ -56,10 +55,8 @@
 #include <m_message.h>     // not used
 #include <m_netlib.h>      // not used
 #include <m_options.h>
-#include <m_png.h>
 #include <m_popup.h>       // not used
 #include <m_protocols.h>
-#include <m_protomod.h>    // not used
 #include <m_protosvc.h>
 #include <m_skin.h>
 #include <m_system.h>
@@ -67,6 +64,8 @@
 #include <m_url.h>         // not used
 #include <m_userinfo.h>    // not used
 #include <m_utils.h>
+#include <m_imgsrvc.h>
+#include <m_timezones.h>
 
 #include <m_addcontact.h>  // not used, depends on m_protosvc.h
 #include <m_icq.h>         // depends on m_protosvc.h

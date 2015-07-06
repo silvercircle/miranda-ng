@@ -278,7 +278,7 @@ INT_PTR GGPROTO::import_server(WPARAM wParam, LPARAM lParam)
 	{
 		TCHAR error[128];
 		gg_LeaveCriticalSection(&sess_mutex, "import_server", 65, 1, "sess_mutex", 1);
-		mir_sntprintf(error, SIZEOF(error), TranslateT("List cannot be imported because of error:\n\t%s (Error: %d)"), _tcserror(errno), errno);
+		mir_sntprintf(error, TranslateT("List cannot be imported because of error:\n\t%s (Error: %d)"), _tcserror(errno), errno);
 		MessageBox(NULL, error, m_tszUserName, MB_OK | MB_ICONSTOP);
 		debugLogA("import_server(): Cannot import list. errno:%d: %s", errno, strerror(errno));
 	}
@@ -316,7 +316,7 @@ INT_PTR GGPROTO::remove_server(WPARAM wParam, LPARAM lParam)
 	{
 		TCHAR error[128];
 		gg_LeaveCriticalSection(&sess_mutex, "remove_server", 66, 1, "sess_mutex", 1);
-		mir_sntprintf(error, SIZEOF(error), TranslateT("List cannot be removed because of error: %s (Error: %d)"), _tcserror(errno), errno);
+		mir_sntprintf(error, TranslateT("List cannot be removed because of error: %s (Error: %d)"), _tcserror(errno), errno);
 		MessageBox(NULL, error, m_tszUserName, MB_OK | MB_ICONSTOP);
 		debugLogA("remove_server(): Cannot remove list. errno=%d: %s", errno, strerror(errno));
 	}
@@ -336,26 +336,26 @@ INT_PTR GGPROTO::import_text(WPARAM wParam, LPARAM lParam)
 
 	OPENFILENAME ofn = {0};
 	ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400;
-	_tcsncpy(filter, TranslateT("Text files"), SIZEOF(filter));
-	_tcsncat(filter, _T(" (*.txt)"), SIZEOF(filter) - mir_tstrlen(filter));
+	_tcsncpy(filter, TranslateT("Text files"), _countof(filter));
+	mir_tstrncat(filter, _T(" (*.txt)"), _countof(filter) - mir_tstrlen(filter));
 	pfilter = filter + mir_tstrlen(filter) + 1;
-	if (pfilter >= filter + SIZEOF(filter))
+	if (pfilter >= filter + _countof(filter))
 		return 0;
 
-	_tcsncpy(pfilter, _T("*.TXT"), SIZEOF(filter) - (pfilter - filter));
+	_tcsncpy(pfilter, _T("*.TXT"), _countof(filter) - (pfilter - filter));
 	pfilter = pfilter + mir_tstrlen(pfilter) + 1;
-	if (pfilter >= filter + SIZEOF(filter))
+	if (pfilter >= filter + _countof(filter))
 		return 0;
-	_tcsncpy(pfilter, TranslateT("All Files"), SIZEOF(filter) - (pfilter - filter));
-	_tcsncat(pfilter, _T(" (*)"), SIZEOF(filter) - (pfilter - filter) - mir_tstrlen(pfilter));
+	_tcsncpy(pfilter, TranslateT("All Files"), _countof(filter) - (pfilter - filter));
+	mir_tstrncat(pfilter, _T(" (*)"), _countof(filter) - (pfilter - filter) - mir_tstrlen(pfilter));
 	pfilter = pfilter + mir_tstrlen(pfilter) + 1;
 
-	if (pfilter >= filter + SIZEOF(filter))
+	if (pfilter >= filter + _countof(filter))
 		return 0;
 
-	_tcsncpy(pfilter, _T("*"), SIZEOF(filter) - (pfilter - filter));
+	_tcsncpy(pfilter, _T("*"), _countof(filter) - (pfilter - filter));
 	pfilter = pfilter + mir_tstrlen(pfilter) + 1;
-	if (pfilter >= filter + SIZEOF(filter))
+	if (pfilter >= filter + _countof(filter))
 		return 0;
 
 	*pfilter = '\0';
@@ -364,7 +364,7 @@ INT_PTR GGPROTO::import_text(WPARAM wParam, LPARAM lParam)
 	ofn.lpstrFilter = filter;
 	ofn.lpstrFile = str;
 	ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
-	ofn.nMaxFile = SIZEOF(str);
+	ofn.nMaxFile = _countof(str);
 	ofn.nMaxFileTitle = MAX_PATH;
 	ofn.lpstrDefExt = _T("txt");
 
@@ -385,16 +385,18 @@ INT_PTR GGPROTO::import_text(WPARAM wParam, LPARAM lParam)
 		mir_free(contacts);
 
 		MessageBox(NULL, TranslateT("List import successful."), m_tszUserName, MB_OK | MB_ICONINFORMATION);
+		return 0;
 	}
 	else
 	{
 		TCHAR error[256];
-		mir_sntprintf(error, SIZEOF(error), TranslateT("List cannot be imported from file \"%s\" because of error:\n\t%s (Error: %d)"), str, _tcserror(errno), errno);
+		mir_sntprintf(error, TranslateT("List cannot be imported from file \"%s\" because of error:\n\t%s (Error: %d)"), str, _tcserror(errno), errno);
 		MessageBox(NULL, error, m_tszUserName, MB_OK | MB_ICONSTOP);
 		debugLog(_T("import_text(): Cannot import list from file \"%s\". errno=%d: %s"), str, errno, strerror(errno));
+		if (f)
+			fclose(f);
+		return 0;
 	}
-
-	return 0;
 }
 
 INT_PTR GGPROTO::export_text(WPARAM wParam, LPARAM lParam)
@@ -403,33 +405,33 @@ INT_PTR GGPROTO::export_text(WPARAM wParam, LPARAM lParam)
 	OPENFILENAME ofn = {0};
 	TCHAR filter[512], *pfilter;
 
-	_tcsncpy(str, TranslateT("contacts"), SIZEOF(str));
-	_tcsncat(str, _T(".txt"), SIZEOF(str) - mir_tstrlen(str));
+	_tcsncpy(str, TranslateT("contacts"), _countof(str));
+	mir_tstrncat(str, _T(".txt"), _countof(str) - mir_tstrlen(str));
 
 	ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400;
-	_tcsncpy(filter, TranslateT("Text files"), SIZEOF(filter));
-	_tcsncat(filter, _T(" (*.txt)"), SIZEOF(filter) - mir_tstrlen(filter));
+	_tcsncpy(filter, TranslateT("Text files"), _countof(filter));
+	mir_tstrncat(filter, _T(" (*.txt)"), _countof(filter) - mir_tstrlen(filter));
 	pfilter = filter + mir_tstrlen(filter) + 1;
-	if (pfilter >= filter + SIZEOF(filter))
+	if (pfilter >= filter + _countof(filter))
 		return 0;
-	_tcsncpy(pfilter, _T("*.TXT"), SIZEOF(filter) - (pfilter - filter));
+	_tcsncpy(pfilter, _T("*.TXT"), _countof(filter) - (pfilter - filter));
 	pfilter = pfilter + mir_tstrlen(pfilter) + 1;
-	if (pfilter >= filter + SIZEOF(filter))
+	if (pfilter >= filter + _countof(filter))
 		return 0;
-	_tcsncpy(pfilter, TranslateT("All Files"), SIZEOF(filter) - (pfilter - filter));
-	_tcsncat(pfilter, _T(" (*)"), SIZEOF(filter) - (pfilter - filter) - mir_tstrlen(pfilter));
+	_tcsncpy(pfilter, TranslateT("All Files"), _countof(filter) - (pfilter - filter));
+	mir_tstrncat(pfilter, _T(" (*)"), _countof(filter) - (pfilter - filter) - mir_tstrlen(pfilter));
 	pfilter = pfilter + mir_tstrlen(pfilter) + 1;
-	if (pfilter >= filter + SIZEOF(filter))
+	if (pfilter >= filter + _countof(filter))
 		return 0;
-	_tcsncpy(pfilter, _T("*"), SIZEOF(filter) - (pfilter - filter));
+	_tcsncpy(pfilter, _T("*"), _countof(filter) - (pfilter - filter));
 	pfilter = pfilter + mir_tstrlen(pfilter) + 1;
-	if (pfilter >= filter + SIZEOF(filter))
+	if (pfilter >= filter + _countof(filter))
 		return 0;
 	*pfilter = '\0';
 	ofn.lpstrFilter = filter;
 	ofn.lpstrFile = str;
 	ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
-	ofn.nMaxFile = SIZEOF(str);
+	ofn.nMaxFile = _countof(str);
 	ofn.nMaxFileTitle = MAX_PATH;
 	ofn.lpstrDefExt = _T("txt");
 
@@ -450,7 +452,7 @@ INT_PTR GGPROTO::export_text(WPARAM wParam, LPARAM lParam)
 	else
 	{
 		TCHAR error[128];
-		mir_sntprintf(error, SIZEOF(error), TranslateT("List cannot be exported to file \"%s\" because of error:\n\t%s (Error: %d)"), str, _tcserror(errno), errno);
+		mir_sntprintf(error, TranslateT("List cannot be exported to file \"%s\" because of error:\n\t%s (Error: %d)"), str, _tcserror(errno), errno);
 		MessageBox(NULL, error, m_tszUserName, MB_OK | MB_ICONSTOP);
 		debugLogA("export_text(): Cannot export list to file \"%s\". errno=%d: %s", str, errno, strerror(errno));
 	}
@@ -494,7 +496,7 @@ INT_PTR GGPROTO::export_server(WPARAM wParam, LPARAM lParam)
 	{
 		TCHAR error[128];
 		gg_LeaveCriticalSection(&sess_mutex, "export_server", 67, 1, "sess_mutex", 1);
-		mir_sntprintf(error, SIZEOF(error), TranslateT("List cannot be exported because of error:\n\t%s (Error: %d)"), _tcserror(errno), errno);
+		mir_sntprintf(error, TranslateT("List cannot be exported because of error:\n\t%s (Error: %d)"), _tcserror(errno), errno);
 		MessageBox(NULL, error, m_tszUserName, MB_OK | MB_ICONSTOP);
 		debugLogA("export_server(): Cannot export list. errno=%d: %s", errno, strerror(errno));
 	}
@@ -512,57 +514,47 @@ INT_PTR GGPROTO::export_server(WPARAM wParam, LPARAM lParam)
 
 void GGPROTO::import_init(HGENMENU hRoot)
 {
-	// Import from server item
-	char service[64];
-	mir_snprintf(service, SIZEOF(service), "%s%s", m_szModuleName, GGS_IMPORT_SERVER);
-	CreateProtoService(GGS_IMPORT_SERVER, &GGPROTO::import_server);
+	CMenuItem mi;
+	mi.flags = CMIF_TCHAR;
+	mi.root = hRoot;
 
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.flags = CMIF_ROOTHANDLE | CMIF_TCHAR;
-	mi.hParentMenu = hRoot;
+	// Import from server item
+	mi.pszService = GGS_IMPORT_SERVER;
+	CreateProtoService(mi.pszService, &GGPROTO::import_server);
 	mi.position = 2000500001;
-	mi.icolibItem = iconList[1].hIcolib;
-	mi.ptszName = LPGENT("Import List From &Server");
-	mi.pszService = service;
- 	hMainMenu[2] = Menu_AddProtoMenuItem(&mi);
+	mi.hIcolibItem = iconList[1].hIcolib;
+	mi.name.t = LPGENT("Import List From &Server");
+ 	hMainMenu[2] = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 
 	// Import from textfile
-	mir_snprintf(service, SIZEOF(service), "%s%s", m_szModuleName, GGS_IMPORT_TEXT);
-	CreateProtoService(GGS_IMPORT_TEXT, &GGPROTO::import_text);
-
+	mi.pszService = GGS_IMPORT_TEXT;
+	CreateProtoService(mi.pszService, &GGPROTO::import_text);
 	mi.position = 2000500002;
-	mi.icolibItem = iconList[2].hIcolib;
-	mi.ptszName = LPGENT("Import List From &Text File...");
-	mi.pszService = service;
-	hMainMenu[3] = Menu_AddProtoMenuItem(&mi);
+	mi.hIcolibItem = iconList[2].hIcolib;
+	mi.name.t = LPGENT("Import List From &Text File...");
+	hMainMenu[3] = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 
 	// Remove from server
-	mir_snprintf(service, SIZEOF(service), "%s%s", m_szModuleName, GGS_REMOVE_SERVER);
-	CreateProtoService(GGS_REMOVE_SERVER, &GGPROTO::remove_server);
-
+	mi.pszService = GGS_REMOVE_SERVER;
+	CreateProtoService(mi.pszService, &GGPROTO::remove_server);
 	mi.position = 2000500003;
-	mi.icolibItem = iconList[3].hIcolib;
-	mi.ptszName = LPGENT("&Remove List From Server");
-	mi.pszService = service;
-	hMainMenu[4] = Menu_AddProtoMenuItem(&mi);
+	mi.hIcolibItem = iconList[3].hIcolib;
+	mi.name.t = LPGENT("&Remove List From Server");
+	hMainMenu[4] = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 
 	// Export to server
-	mir_snprintf(service, SIZEOF(service), "%s%s", m_szModuleName, GGS_EXPORT_SERVER);
-	CreateProtoService(GGS_EXPORT_SERVER, &GGPROTO::export_server);
-
+	mi.pszService = GGS_EXPORT_SERVER;
+	CreateProtoService(mi.pszService, &GGPROTO::export_server);
 	mi.position = 2005000001;
-	mi.icolibItem = iconList[4].hIcolib;
-	mi.ptszName = LPGENT("Export List To &Server");
-	mi.pszService = service;
-	hMainMenu[5] = Menu_AddProtoMenuItem(&mi);
+	mi.hIcolibItem = iconList[4].hIcolib;
+	mi.name.t = LPGENT("Export List To &Server");
+	hMainMenu[5] = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 
 	// Export to textfile
-	mir_snprintf(service, SIZEOF(service), "%s%s", m_szModuleName, GGS_EXPORT_TEXT);
-	CreateProtoService(GGS_EXPORT_TEXT, &GGPROTO::export_text);
-
+	mi.pszService = GGS_EXPORT_TEXT;
+	CreateProtoService(mi.pszService, &GGPROTO::export_text);
 	mi.position = 2005000002;
-	mi.icolibItem = iconList[5].hIcolib;
-	mi.ptszName = LPGENT("Export List To &Text File...");
-	mi.pszService = service;
-	hMainMenu[6] = Menu_AddProtoMenuItem(&mi);
+	mi.hIcolibItem = iconList[5].hIcolib;
+	mi.name.t = LPGENT("Export List To &Text File...");
+	hMainMenu[6] = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 }

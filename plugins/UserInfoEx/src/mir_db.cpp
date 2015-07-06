@@ -30,22 +30,6 @@ namespace DB {
 namespace Contact {
 
 /**
-* This function is used to retrieve a contact's basic protocol
-* @param	hContact	- handle to the contact
-* @return	This function returns the basic protocol of a contact.
-**/
-
-LPSTR	Proto(MCONTACT hContact)
-{
-	if (hContact) {
-		INT_PTR result;
-		result = CallService(MS_PROTO_GETCONTACTBASEACCOUNT, hContact, NULL);
-		return (LPSTR) ((result == CALLSERVICE_NOTFOUND) ? NULL : result);
-	}
-	return NULL;
-}
-
-/**
  * Gets the number of contacts in the database, which does not count the user
  * @param	hContact	- handle to the contact
  * @return	Returns the number of contacts. They can be retrieved using
@@ -262,7 +246,7 @@ BYTE GetEx(MCONTACT hContact, LPCSTR pszModule, LPCSTR pszProto, LPCSTR pszSetti
 			if (def > -1 && def < INT_MAX) {
 				hSubContact = db_mc_getSub(hContact, def);
 				if (hSubContact != NULL)
-					result = DB::Setting::GetEx(hSubContact, pszModule, DB::Contact::Proto(hSubContact), pszSetting, dbv, destType) != 0;
+					result = DB::Setting::GetEx(hSubContact, pszModule, Proto_GetBaseAccountName(hSubContact), pszSetting, dbv, destType) != 0;
 			}
 			// scan all subcontacts for the setting
 			if (result) {
@@ -273,7 +257,7 @@ BYTE GetEx(MCONTACT hContact, LPCSTR pszModule, LPCSTR pszProto, LPCSTR pszSetti
 						if (i != def) {
 							hSubContact = db_mc_getSub(hContact, i);
 							if (hSubContact != NULL)
-								result = DB::Setting::GetEx(hSubContact, pszModule, DB::Contact::Proto(hSubContact), pszSetting, dbv, destType) != 0;
+								result = DB::Setting::GetEx(hSubContact, pszModule, Proto_GetBaseAccountName(hSubContact), pszSetting, dbv, destType) != 0;
 	}	}	}	}	}	}
 
 	return result;
@@ -317,7 +301,7 @@ WORD GetCtrl(MCONTACT hContact, LPCSTR pszModule, LPCSTR pszSubModule, LPCSTR ps
 			if (def > -1 && def < INT_MAX) {
 				hSubContact = db_mc_getSub(hContact, def);
 				if (hSubContact != NULL) {
-					wFlags = GetCtrl(hSubContact, pszSubModule, NULL, DB::Contact::Proto(hSubContact), pszSetting, dbv, destType);
+					wFlags = GetCtrl(hSubContact, pszSubModule, NULL, Proto_GetBaseAccountName(hSubContact), pszSetting, dbv, destType);
 					if (wFlags != 0) {
 						wFlags &= ~CTRLF_HASCUSTOM;
 						wFlags |= CTRLF_HASMETA;
@@ -332,7 +316,7 @@ WORD GetCtrl(MCONTACT hContact, LPCSTR pszModule, LPCSTR pszSubModule, LPCSTR ps
 					if (i != def) {
 						hSubContact = db_mc_getSub(hContact, i);
 						if (hSubContact != NULL) {
-							wFlags = GetCtrl(hSubContact, pszSubModule, NULL, DB::Contact::Proto(hSubContact), pszSetting, dbv, destType);
+							wFlags = GetCtrl(hSubContact, pszSubModule, NULL, Proto_GetBaseAccountName(hSubContact), pszSetting, dbv, destType);
 							if (wFlags != 0) {
 								wFlags &= ~CTRLF_HASCUSTOM;
 								wFlags |= CTRLF_HASMETA;
@@ -378,7 +362,7 @@ void DeleteArray(MCONTACT hContact, LPCSTR pszModule, LPCSTR pszFormat, int iSta
 {
 	char pszSetting[MAXSETTING];
 	do {
-		mir_snprintf(pszSetting, SIZEOF(pszSetting), pszFormat, iStart++);
+		mir_snprintf(pszSetting, _countof(pszSetting), pszFormat, iStart++);
 	}
 		while (!db_unset(hContact, pszModule, pszSetting));
 }
@@ -739,7 +723,7 @@ int CEnumList::CompareProc(LPCSTR p1, LPCSTR p2)
 	return 0;
 }
 
-CEnumList::CEnumList()	: LIST<CHAR>(50, (FTSortFunc)CEnumList::CompareProc)
+CEnumList::CEnumList()	: LIST<CHAR>(50, CEnumList::CompareProc)
 {
 }
 

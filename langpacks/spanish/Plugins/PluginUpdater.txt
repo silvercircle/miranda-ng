@@ -5,8 +5,6 @@
 ;  Version: 0.1.2.4
 ;  Authors: Mataes, George Hazan
 ;============================================================
-[Plugin updater for Miranda NG.]
-Plugin actualizador de Miranda NG
 [Updates found!]
 ¡Actualizaciones encontradas!
 [PluginUpdater has detected updated versions of some Miranda components. Click on Details button to view more information.]
@@ -45,6 +43,8 @@ Versión en desarrollo con símbolos de depuración
 Versión personalizada
 [Notifications]
 Notificaciones
+[Restart]
+Reiniciar
 [Errors]
 Errores
 [Info messages]
@@ -59,8 +59,6 @@ Colores
 &Personalizados
 [Use &Windows colors]
 Usar colores de &Windows
-[Use Pop&up colors]
-Usar colores de &ventanas emergentes
 [Preview]
 Previsualizar
 [Click action]
@@ -127,6 +125,10 @@ Comprobando nuevas versiones...
 No se encontraron actualizaciones.
 [Update checking already started!]
 ¡La comprobación de actualización ya ha comenzado!
+[Close popup]
+Cerrar popup
+[Do nothing]
+No hacer nada
 [hours]
 horas
 [days]
@@ -141,7 +143,5 @@ Buscar actualizaciones de plugin
 Mostrar lista de plugins completa
 [Plugin info]
 Información del plugin
-[Plugin Updater HTTP connection]
-Plugin actualizador conexión HTTP
 [An error occurred while checking for new updates.]
 Se ha producido un error al comprobar nuevas actualizaciones.

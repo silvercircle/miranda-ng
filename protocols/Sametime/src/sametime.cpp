@@ -17,7 +17,7 @@ PLUGININFOEX pluginInfo =
 	{ 0xf1b0ba1b, 0xc91, 0x4313, { 0x85, 0xeb, 0x22, 0x50, 0x69, 0xd4, 0x4d, 0x1 } } // {F1B0BA1B-0C91-4313-85EB-225069D44D01}
 };
 
-
+CLIST_INTERFACE *pcli;
 HINSTANCE hInst;
 LIST<CSametimeProto> g_Instances(1, PtrKeySortT);
 int hLangpack;
@@ -94,29 +94,29 @@ static IconItem iconList[] =
 
 void SametimeInitIcons(void)
 {
-	Icon_Register(hInst, "Protocols/Sametime", iconList, SIZEOF(iconList), "SAMETIME");
+	Icon_Register(hInst, "Protocols/Sametime", iconList, _countof(iconList), "SAMETIME");
 }
 
 HANDLE GetIconHandle(int iconId)
 {
-	for (int i = 0; i < SIZEOF(iconList); i++)
+	for (int i = 0; i < _countof(iconList); i++)
 		if (iconList[i].defIconID == iconId)
 			return iconList[i].hIcolib;
 	return NULL;
 }
 
-HICON LoadIconEx(const char* name, BOOL big)
+HICON LoadIconEx(const char* name, bool big)
 {
 	char szSettingName[100];
-	mir_snprintf(szSettingName, SIZEOF(szSettingName), "%s_%s", "SAMETIME", name);
-	return Skin_GetIcon(szSettingName, big);
+	mir_snprintf(szSettingName, _countof(szSettingName), "%s_%s", "SAMETIME", name);
+	return IcoLib_GetIcon(szSettingName, big);
 }
 
-void ReleaseIconEx(const char* name, BOOL big)
+void ReleaseIconEx(const char* name, bool big)
 {
 	char szSettingName[100];
-	mir_snprintf(szSettingName, SIZEOF(szSettingName), "%s_%s", "SAMETIME", name);
-	Skin_ReleaseIcon(szSettingName, big);
+	mir_snprintf(szSettingName, _countof(szSettingName), "%s_%s", "SAMETIME", name);
+	IcoLib_Release(szSettingName, big);
 }
 
 // Copied from MSN plugin - sent acks need to be from different thread
@@ -265,12 +265,16 @@ static int sametime_proto_uninit(PROTO_INTERFACE* ppro)
 
 extern "C" int __declspec(dllexport) Load(void)
 {
-	PROTOCOLDESCRIPTOR pd = { sizeof(pd) };
+	mir_getLP(&pluginInfo);
+	mir_getCLI();
+
+	PROTOCOLDESCRIPTOR pd = { 0 };
+	pd.cbSize = sizeof(pd);
 	pd.type = PROTOTYPE_PROTOCOL;
 	pd.szName = "Sametime";
 	pd.fnInit = (pfnInitProto)sametime_proto_init;
 	pd.fnUninit = (pfnUninitProto)sametime_proto_uninit;
-	CallService(MS_PROTO_REGISTERMODULE, 0, (LPARAM)&pd);
+	Proto_RegisterModule(&pd);
 	return 0;
 }
 

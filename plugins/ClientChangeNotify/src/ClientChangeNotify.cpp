@@ -19,6 +19,7 @@
 
 #include "Common.h"
 
+CLIST_INTERFACE *pcli;
 HINSTANCE g_hInstance;
 HANDLE    g_hMainThread;
 HGENMENU  g_hTogglePopupsMenuItem;
@@ -56,10 +57,10 @@ static int CALLBACK MenuWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 {
 	switch (uMsg) {
 	case WM_MEASUREITEM:
-		return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
+		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
 
 	case WM_DRAWITEM:
-		return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
+		return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
 	}
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
@@ -71,7 +72,7 @@ static VOID NTAPI ShowContactMenu(ULONG_PTR wParam)
 	POINT pt;
 	HWND hMenuWnd = CreateWindowEx(WS_EX_TOOLWINDOW, _T("static"), _T(MOD_NAME)_T("_MenuWindow"), 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP, NULL, g_hInstance, NULL);
 	SetWindowLongPtr(hMenuWnd, GWLP_WNDPROC, (LONG_PTR)MenuWndProc);
-	HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDCONTACT, (WPARAM)wParam, 0);
+	HMENU hMenu = Menu_BuildContactMenu(wParam);
 	GetCursorPos(&pt);
 	SetForegroundWindow(hMenuWnd);
 	CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y, 0, hMenuWnd, NULL), MPCF_CONTACTMENU), (LPARAM)wParam);
@@ -87,7 +88,7 @@ void Popup_DoAction(HWND hWnd, BYTE Action, PLUGIN_DATA *pdata)
 	switch (Action) {
 	case PCA_OPENMESSAGEWND: // open message window
 		if (hContact && hContact != INVALID_CONTACT_ID)
-			CallServiceSync(ServiceExists("SRMsg/LaunchMessageWindow") ? "SRMsg/LaunchMessageWindow" : MS_MSG_SENDMESSAGE, hContact, 0);
+			CallServiceSync(MS_MSG_SENDMESSAGE, hContact, 0);
 		break;
 
 	case PCA_OPENMENU: // open contact menu
@@ -164,10 +165,10 @@ void ShowPopup(SHOWPOPUP_DATA *sd)
 	_ASSERT(ppd.lchIcon);
 	if (!ppd.lchIcon || (DWORD)ppd.lchIcon == CALLSERVICE_NOTFOUND) {
 		// if we didn't succeed retrieving client icon, show the usual status icon instead
-		ppd.lchIcon = LoadSkinnedProtoIcon(szProto, db_get_w(sd->hContact, szProto, "Status", ID_STATUS_OFFLINE));
+		ppd.lchIcon = Skin_LoadProtoIcon(szProto, db_get_w(sd->hContact, szProto, "Status", ID_STATUS_OFFLINE));
 		pdata->hIcon = NULL;
 	}
-	_tcsncpy(ppd.lptzContactName, (TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)sd->hContact, GCDNF_TCHAR), lengthof(ppd.lptzContactName) - 1);
+	_tcsncpy(ppd.lptzContactName, (TCHAR*)pcli->pfnGetContactDisplayName(sd->hContact, 0), lengthof(ppd.lptzContactName) - 1);
 	_tcsncpy(ppd.lptzText, PopupText, lengthof(ppd.lptzText) - 1);
 	ppd.colorBack = (sd->PopupOptPage->GetValue(IDC_POPUPOPTDLG_DEFBGCOLOUR) ? 0 : sd->PopupOptPage->GetValue(IDC_POPUPOPTDLG_BGCOLOUR));
 	ppd.colorText = (sd->PopupOptPage->GetValue(IDC_POPUPOPTDLG_DEFTEXTCOLOUR) ? 0 : sd->PopupOptPage->GetValue(IDC_POPUPOPTDLG_TEXTCOLOUR));
@@ -275,18 +276,10 @@ static int PrebuildMainMenu(WPARAM wParam, LPARAM lParam)
 {
 	// we have to use ME_CLIST_PREBUILDMAINMENU instead of updating menu items only on settings change, because "popup_enabled" and "popup_disabled" icons are not always available yet in ModulesLoaded
 	if (bPopupExists) {
-		CLISTMENUITEM mi = { sizeof(mi) };
-		mi.flags = CMIF_TCHAR | CMIM_NAME | CMIM_ICON;
-		if (g_PopupOptPage.GetDBValueCopy(IDC_POPUPOPTDLG_POPUPNOTIFY)) {
-			mi.ptszName = LPGENT("Disable c&lient change notification");
-			mi.hIcon = Skin_GetIcon("popup_enabled");
-		}
-		else {
-			mi.ptszName = LPGENT("Enable c&lient change notification");
-			mi.hIcon = Skin_GetIcon("popup_disabled");
-		}
-		mi.ptszPopupName = LPGENT("Popups");
-		Menu_ModifyItem(g_hTogglePopupsMenuItem, &mi);
+		if (g_PopupOptPage.GetDBValueCopy(IDC_POPUPOPTDLG_POPUPNOTIFY))
+			Menu_ModifyItem(g_hTogglePopupsMenuItem, LPGENT("Disable c&lient change notification"), IcoLib_GetIcon("popup_enabled"));
+		else
+			Menu_ModifyItem(g_hTogglePopupsMenuItem, LPGENT("Enable c&lient change notification"), IcoLib_GetIcon("popup_disabled"));
 	}
 	return 0;
 }
@@ -335,15 +328,15 @@ int MirandaLoaded(WPARAM wParam, LPARAM lParam)
 		CreateServiceFunction(MS_CCN_TOGGLEPOPUPS, srvTogglePopups);
 		HookEvent(ME_CLIST_PREBUILDMAINMENU, PrebuildMainMenu);
 	
-		CLISTMENUITEM mi = { sizeof(mi) };
+		CMenuItem mi;
+		mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Popups"), 0);
 		mi.flags = CMIF_TCHAR;
 		if (g_PopupOptPage.GetDBValueCopy(IDC_POPUPOPTDLG_POPUPNOTIFY))
-			mi.ptszName = LPGENT("Disable c&lient change notification");
+			mi.name.t = LPGENT("Disable c&lient change notification");
 		else
-			mi.ptszName = LPGENT("Enable c&lient change notification");
+			mi.name.t = LPGENT("Enable c&lient change notification");
 
 		mi.pszService = MS_CCN_TOGGLEPOPUPS;
-		mi.ptszPopupName = LPGENT("Popups");
 		g_hTogglePopupsMenuItem = Menu_AddMainMenuItem(&mi);
 	}
 
@@ -356,7 +349,8 @@ int MirandaLoaded(WPARAM wParam, LPARAM lParam)
 
 extern "C" int __declspec(dllexport) Load(void)
 {
-	mir_getLP( &pluginInfo );
+	mir_getLP(&pluginInfo);
+	mir_getCLI();
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, MirandaLoaded);
 	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &g_hMainThread, THREAD_SET_CONTEXT, false, 0);

@@ -54,7 +54,7 @@ CMenuBar::CMenuBar(HWND hwndParent, const TContainerData *pContainer)
 
 	if (m_MimIcon == 0) {
 		HDC		hdc = ::GetDC(m_pContainer->hwnd);
-		HANDLE 	hIcon = LoadSkinnedIconHandle(SKINICON_OTHER_MIRANDA);
+		HANDLE 	hIcon = Skin_GetIconHandle(SKINICON_OTHER_MIRANDA);
 
 		HDC hdcTemp = ::CreateCompatibleDC(hdc);
 
@@ -319,7 +319,7 @@ LONG_PTR CMenuBar::customDrawWorker(NMCUSTOMDRAW *nm)
 			}
 			if (iIndex == 0)
 				::DrawIconEx(m_hdcDraw, (nmtb->nmcd.rc.left + nmtb->nmcd.rc.right) / 2 - 8,
-				(nmtb->nmcd.rc.top + nmtb->nmcd.rc.bottom) / 2 - 8, LoadSkinnedIcon(SKINICON_OTHER_MIRANDA),
+				(nmtb->nmcd.rc.top + nmtb->nmcd.rc.bottom) / 2 - 8, Skin_LoadIcon(SKINICON_OTHER_MIRANDA),
 				16, 16, 0, 0, DI_NORMAL);
 
 			return CDRF_SKIPDEFAULT;
@@ -389,15 +389,14 @@ void CMenuBar::invoke(const int id)
 	MCONTACT hContact = dat ? dat->hContact : 0;
 
 	if (index == 3 && hContact != 0) {
-		hMenu = reinterpret_cast<HMENU>(::CallService(MS_CLIST_MENUBUILDCONTACT, hContact, 0));
+		hMenu = Menu_BuildContactMenu(hContact);
 		m_isContactMenu = true;
 	}
 	else if (index == 0) {
-		hMenu = reinterpret_cast<HMENU>(::CallService(MS_CLIST_MENUBUILDMAIN, 0, 0));
+		hMenu = Menu_BuildMainMenu();
 		m_isMainMenu = true;
 	}
-	else
-		hMenu = reinterpret_cast<HMENU>(m_TbButtons[index].dwData);
+	else hMenu = reinterpret_cast<HMENU>(m_TbButtons[index].dwData);
 
 	RECT  rcButton;
 	POINT pt;
@@ -584,7 +583,7 @@ void CMenuBar::checkButtons()
 		m_buttonsInit = true;
 	}
 
-	::SendMessage(m_hwndToolbar, TB_ADDBUTTONS, SIZEOF(m_TbButtons), (LPARAM)m_TbButtons);
+	::SendMessage(m_hwndToolbar, TB_ADDBUTTONS, _countof(m_TbButtons), (LPARAM)m_TbButtons);
 
 	m_size_y = HIWORD(::SendMessage(m_hwndToolbar, TB_GETBUTTONSIZE, 0, 0));
 
@@ -967,19 +966,19 @@ LONG_PTR CALLBACK StatusBarSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPAR
 
 				if (!mir_strcmp(sid->szModule, MSG_ICON_MODULE)) {
 					if (sid->dwId == MSG_ICON_SOUND)
-						mir_sntprintf(wBuf, SIZEOF(wBuf), TranslateT("Sounds are %s. Click to toggle status, hold SHIFT and click to set for all open containers"),
+						mir_sntprintf(wBuf, _countof(wBuf), TranslateT("Sounds are %s. Click to toggle status, hold SHIFT and click to set for all open containers"),
 						pContainer->dwFlags & CNT_NOSOUND ? TranslateT("disabled") : TranslateT("enabled"));
 
 					else if (sid->dwId == MSG_ICON_UTN && dat && (dat->bType == SESSIONTYPE_IM || dat->si->iType == GCW_PRIVMESS)) {
 						int mtnStatus = db_get_b(dat->hContact, SRMSGMOD, SRMSGSET_TYPING, M.GetByte(SRMSGMOD, SRMSGSET_TYPINGNEW, SRMSGDEFSET_TYPINGNEW));
-						mir_sntprintf(wBuf, SIZEOF(wBuf), TranslateT("Sending typing notifications is %s."),
+						mir_sntprintf(wBuf, _countof(wBuf), TranslateT("Sending typing notifications is %s."),
 							mtnStatus ? TranslateT("enabled") : TranslateT("disabled"));
 					}
 					else if (sid->dwId == MSG_ICON_SESSION)
 						_tcsncpy_s(wBuf, TranslateT("Session list.\nClick left for a list of open sessions.\nClick right to access favorites and quickly configure message window behavior"), _TRUNCATE);
 				}
 				else if (sid->tszTooltip)
-					_tcsncpy(wBuf, sid->tszTooltip, SIZEOF(wBuf));
+					_tcsncpy(wBuf, sid->tszTooltip, _countof(wBuf));
 
 				if (wBuf[0]) {
 					CallService("mToolTip/ShowTipW", (WPARAM)wBuf, (LPARAM)&ti);
@@ -998,7 +997,7 @@ LONG_PTR CALLBACK StatusBarSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPAR
 
 				const TCHAR *szFormat = TranslateT("There are %d pending send jobs. Message length: %d bytes, message length limit: %d bytes\n\n%d messages are queued for later delivery");
 
-				mir_sntprintf(wBuf, SIZEOF(wBuf), szFormat, dat->iOpenJobs, iLength, dat->nMax ? dat->nMax : 20000, iQueued);
+				mir_sntprintf(wBuf, _countof(wBuf), szFormat, dat->iOpenJobs, iLength, dat->nMax ? dat->nMax : 20000, iQueued);
 				CallService("mToolTip/ShowTipW", (WPARAM)wBuf, (LPARAM)&ti);
 			}
 

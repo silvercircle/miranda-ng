@@ -88,29 +88,29 @@ void ScriverHTMLBuilder::loadMsgDlgFont(int i, LOGFONTA * lf, COLORREF * colour)
 	int style;
 	DBVARIANT dbv;
 	if (colour) {
-		mir_snprintf(str, SIZEOF(str), "SRMFont%dCol", i);
+		mir_snprintf(str, "SRMFont%dCol", i);
 		*colour = db_get_dw(NULL, SRMMMOD, str, 0x000000);
 	}
 	if (lf) {
-		mir_snprintf(str, SIZEOF(str), "SRMFont%dSize", i);
+		mir_snprintf(str, "SRMFont%dSize", i);
 		lf->lfHeight = (char)db_get_b(NULL, SRMMMOD, str, 10);
 		lf->lfHeight = abs(lf->lfHeight);
 		lf->lfWidth = 0;
 		lf->lfEscapement = 0;
 		lf->lfOrientation = 0;
-		mir_snprintf(str, SIZEOF(str), "SRMFont%dSty", i);
+		mir_snprintf(str, "SRMFont%dSty", i);
 		style = db_get_b(NULL, SRMMMOD, str, 0);
 		lf->lfWeight = style & FONTF_BOLD ? FW_BOLD : FW_NORMAL;
 		lf->lfItalic = style & FONTF_ITALIC ? 1 : 0;
 		lf->lfUnderline = style & FONTF_UNDERLINE ? 1 : 0;
 		lf->lfStrikeOut = 0;
-		mir_snprintf(str, SIZEOF(str), "SRMFont%dSet", i);
+		mir_snprintf(str, "SRMFont%dSet", i);
 		lf->lfCharSet = db_get_b(NULL, SRMMMOD, str, DEFAULT_CHARSET);
 		lf->lfOutPrecision = OUT_DEFAULT_PRECIS;
 		lf->lfClipPrecision = CLIP_DEFAULT_PRECIS;
 		lf->lfQuality = DEFAULT_QUALITY;
 		lf->lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
-		mir_snprintf(str, SIZEOF(str), "SRMFont%d", i);
+		mir_snprintf(str, "SRMFont%d", i);
 		if (db_get(NULL, SRMMMOD, str, &dbv))
 			mir_strcpy(lf->lfFaceName, "Verdana");
 		else {
@@ -120,19 +120,11 @@ void ScriverHTMLBuilder::loadMsgDlgFont(int i, LOGFONTA * lf, COLORREF * colour)
 	}
 }
 
-char *ScriverHTMLBuilder::timestampToString(DWORD dwFlags, time_t check, int mode)
+char* ScriverHTMLBuilder::timestampToString(DWORD dwFlags, time_t check, int mode)
 {
-	static char szResult[512];
+	static char szResult[512]; szResult[0] = '\0';
 	char str[80];
-	char format[20];
-	DBTIMETOSTRING dbtts;
-
-	szResult[0] = '\0';
-	format[0] = '\0';
-
-	dbtts.cbDest = 70;
-	dbtts.szDest = str;
-	dbtts.szFormat = format;
+	char format[20]; format[0] = '\0';
 
 	if ((mode == 0 || mode == 1) && (dwFlags & SMF_LOG_SHOWDATE)) {
 		struct tm tm_now, tm_today;
@@ -144,15 +136,15 @@ char *ScriverHTMLBuilder::timestampToString(DWORD dwFlags, time_t check, int mod
 		today = mktime(&tm_today);
 
 		if (dwFlags & SMF_LOG_USERELATIVEDATE && check >= today) {
-			strncpy(szResult, Translate("Today"), SIZEOF(szResult)-1);
+			strncpy(szResult, Translate("Today"), _countof(szResult)-1);
 			if (mode == 0) {
-				strcat(szResult, ",");
+				mir_strcat(szResult, ",");
 			}
 		}
 		else if (dwFlags & SMF_LOG_USERELATIVEDATE && check > (today - 86400)) {
-			strncpy(szResult, Translate("Yesterday"), SIZEOF(szResult)-1);
+			strncpy(szResult, Translate("Yesterday"), _countof(szResult)-1);
 			if (mode == 0) {
-				strcat(szResult, ",");
+				mir_strcat(szResult, ",");
 			}
 		}
 		else {
@@ -163,16 +155,14 @@ char *ScriverHTMLBuilder::timestampToString(DWORD dwFlags, time_t check, int mod
 		}
 	}
 	if (mode == 0 || mode == 2) {
-		if (mode == 0 && (dwFlags & SMF_LOG_SHOWDATE)) {
-			strcat(format, " ");
-		}
-		strcat(format, (dwFlags & SMF_LOG_SHOWSECONDS) ? "s" : "t");
+		if (mode == 0 && (dwFlags & SMF_LOG_SHOWDATE))
+			mir_strcat(format, " ");
+
+		mir_strcat(format, (dwFlags & SMF_LOG_SHOWSECONDS) ? "s" : "t");
 	}
 	if (format[0] != '\0') {
-		//		CallService(MS_DB_TIME_TIMESTAMPTOSTRINGT, check, (LPARAM) & dbtts);
-		CallService(MS_DB_TIME_TIMESTAMPTOSTRING, check, (LPARAM)& dbtts);
-		//_tcsncat(szResult, str, 500);
-		strncat(szResult, str, SIZEOF(szResult) - mir_strlen(szResult));
+		TimeZone_ToString(check, format, str, _countof(str));
+		mir_strncat(szResult, str, _countof(szResult) - mir_strlen(szResult));
 	}
 	mir_strncpy(szResult, ptrA(mir_utf8encode(szResult)), 500);
 	return szResult;

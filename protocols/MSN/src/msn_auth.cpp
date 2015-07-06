@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "msn_global.h"
+#include "stdafx.h"
 #include "msn_proto.h"
 #include "des.h"
 
@@ -153,8 +153,8 @@ int CMsnProto::MSN_GetPassportAuth(void)
 	time_t ts = time(NULL);
 
 	TCHAR szTs1[64], szTs2[64];
-	tmi.printTimeStamp(UTC_TIME_HANDLE, ts, _T("I"), szTs1, SIZEOF(szTs1), 0);
-	tmi.printTimeStamp(UTC_TIME_HANDLE, ts + 20 * 60, _T("I"), szTs2, SIZEOF(szTs2), 0);
+	TimeZone_PrintTimeStamp(UTC_TIME_HANDLE, ts, _T("I"), szTs1, _countof(szTs1), 0);
+	TimeZone_PrintTimeStamp(UTC_TIME_HANDLE, ts + 20 * 60, _T("I"), szTs2, _countof(szTs2), 0);
 
 	CMStringA szAuthInfo(FORMAT, authPacket, int(ts), MyOptions.szEmail, ptrA(HtmlEncode(szPassword)), szTs1, szTs2);
 
@@ -247,7 +247,7 @@ int CMsnProto::MSN_GetPassportAuth(void)
 				if (retVal != 0) {
 					if (errurl) {
 						debugLogA("Starting URL: '%s'", errurl);
-						CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)errurl);
+						Utils_OpenUrl(errurl);
 					}
 
 					ezxml_t tokf = ezxml_get(xml, "S:Body", 0, "S:Fault", 0, "S:Detail", -1);
@@ -266,7 +266,7 @@ int CMsnProto::MSN_GetPassportAuth(void)
 						}
 						else if (retVal != 3 && retVal != 7) {
 							char err[512];
-							mir_snprintf(err, SIZEOF(err), "Unknown Authentication error: %s", szFault);
+							mir_snprintf(err, _countof(err), "Unknown Authentication error: %s", szFault);
 							MSN_ShowError(err);
 						}
 					}
@@ -288,7 +288,7 @@ int CMsnProto::MSN_GetPassportAuth(void)
 	}
 
 	if (retVal != 0) {
-		if (!Miranda_Terminated()) {
+		if (!g_bTerminated) {
 			switch (retVal) {
 			case 3:
 				MSN_ShowError("Your username or password is incorrect");
@@ -405,7 +405,7 @@ char* CMsnProto::GenerateLoginBlob(char* challenge)
 	p += sizeof(MsgrUsrKeyHdr);
 
 	unsigned char iv[8];
-	CallService(MS_UTILS_GETRANDOM, sizeof(iv), (LPARAM)iv);
+	Utils_GetRandom(iv, sizeof(iv));
 
 	memcpy(p, iv, sizeof(iv));
 	p += sizeof(iv);
@@ -423,11 +423,10 @@ char* CMsnProto::GenerateLoginBlob(char* challenge)
 	return mir_base64_encode(userKey, (unsigned)pktsz);
 }
 
-
 CMStringA CMsnProto::HotmailLogin(const char* url)
 {
 	unsigned char nonce[24];
-	CallService(MS_UTILS_GETRANDOM, sizeof(nonce), (LPARAM)nonce);
+	Utils_GetRandom(nonce, sizeof(nonce));
 
 	unsigned key1len;
 	BYTE *key1 = (BYTE*)mir_base64_decode(hotSecretToken, &key1len);
@@ -573,8 +572,8 @@ static int CopyCookies(NETLIBHTTPREQUEST *nlhrReply, NETLIBHTTPHEADER *hdr)
 			continue;
 		if (p=strchr(nlhrReply->headers[i].szValue, ';')) *p=0;
 		if (hdr) {
-			if (*hdr->szValue) strcat (hdr->szValue, "; ");
-			strcat (hdr->szValue, nlhrReply->headers[i].szValue);
+			if (*hdr->szValue) mir_strcat (hdr->szValue, "; ");
+			mir_strcat (hdr->szValue, nlhrReply->headers[i].szValue);
 		}
 		else nSize += (int)mir_strlen(nlhrReply->headers[i].szValue) + 2;
 	}
@@ -692,6 +691,18 @@ void CMsnProto::LoadAuthTokensDB(void)
 		replaceStr(authStorageToken, dbv.pszVal);
 		db_free(&dbv);
 	}
+	if (getString("authRefreshToken", &dbv) == 0) {
+		replaceStr(authRefreshToken, dbv.pszVal);
+		db_free(&dbv);
+	}
+	if (getString("authSkypeComToken", &dbv) == 0) {
+		replaceStr(authSkypeComToken, dbv.pszVal);
+		db_free(&dbv);
+	}
+	if (getString("authSkypeToken", &dbv) == 0) {
+		replaceStr(authSkypeToken, dbv.pszVal);
+		db_free(&dbv);
+	}
 }
 
 void CMsnProto::SaveAuthTokensDB(void)
@@ -703,6 +714,7 @@ void CMsnProto::SaveAuthTokensDB(void)
 	setString("authUIC", authUIC);
 	setString("authCookies", authCookies);
 	setString("authStrToken", authStrToken);
+	setString("authRefreshToken", authRefreshToken);
 }
 
 // -1 - Error on login sequence 
@@ -797,32 +809,33 @@ int CMsnProto::MSN_AuthOAuth(void)
 						char *pAccessToken;
 
 						/* Extract access_token from Location can be found */
-						for (int i = 0; i < nlhrReply->headersCount; i++)
+						for (int i = 0; i < nlhrReply->headersCount; i++) {
 							if (!mir_strcmpi(nlhrReply->headers[i].szName, "Location") &&
-								(pAccessToken = strstr(nlhrReply->headers[i].szValue, "access_token=")) && 
-								(pEnd=strchr(pAccessToken+13, '&')))
-							{
+								(pAccessToken = strstr(nlhrReply->headers[i].szValue, "access_token=")) &&
+								(pEnd = strchr(pAccessToken + 13, '&'))) {
 								char *pRefreshToken, *pExpires, szToken[1024];
-								bool bLogin=false;
+								bool bLogin = false;
 
 								*pEnd = 0;
-								pAccessToken+=13;
+								pAccessToken += 13;
 								UrlDecode(pAccessToken);
 								replaceStr(authAccessToken, pAccessToken);
 
 								/* Extract refresh token */
-								if ((pRefreshToken = strstr(pEnd+1, "refresh_token=")) && (pEnd=strchr(pRefreshToken+14, '&'))) {
+								if ((pRefreshToken = strstr(pEnd + 1, "refresh_token=")) && (pEnd = strchr(pRefreshToken + 14, '&'))) {
 									*pEnd = 0;
-									pRefreshToken+=14;
+									pRefreshToken += 14;
 								}
+								replaceStr(authRefreshToken, pRefreshToken);
 
 								/* Extract expire time */
 								time(&authTokenExpiretime);
-								if ((pExpires = strstr(pEnd+1, "expires_in=")) && (pEnd=strchr(pExpires+11, '&'))) {
+								if ((pExpires = strstr(pEnd + 1, "expires_in=")) && (pEnd = strchr(pExpires + 11, '&'))) {
 									*pEnd = 0;
-									pExpires+=11;
-									authTokenExpiretime+=atoi(pExpires);
-								} else authTokenExpiretime+=86400;
+									pExpires += 11;
+									authTokenExpiretime += atoi(pExpires);
+								}
+								else authTokenExpiretime += 86400;
 
 								/* Copy auth Cookies to class for other web requests like contact list fetching to avoid ActiveSync */
 								mir_free(authCookies);
@@ -831,16 +844,19 @@ int CMsnProto::MSN_AuthOAuth(void)
 
 								int loginRet;
 								/* Do Login via Skype login server, if not possible switch to SkypeWebExperience login */
-								if ((loginRet = LoginSkypeOAuth(pRefreshToken))<1) {
-									if (loginRet<0) bLogin=true; else retVal = 0;
-								} else {
+								if ((loginRet = LoginSkypeOAuth(pRefreshToken)) < 1) {
+									if (loginRet < 0) bLogin = true; else retVal = 0;
+								}
+								else {
 									/* SkyLogin succeeded, request required tokens */
 									if (RefreshOAuth(pRefreshToken, "service::ssl.live.com::MBI_SSL", szToken)) {
 										replaceStr(authSSLToken, szToken);
 										replaceStr(authUser, MyOptions.szEmail);
-										authMethod=retVal=1;
+										authMethod = retVal = 1;
 									}
 								}
+								mir_free(authSkypeComToken); authSkypeComToken = NULL;
+								mir_free(authSkypeToken); authSkypeToken = NULL;
 
 
 								/* If you need Skypewebexperience login, as i.e. skylogin.dll is not available, we do this here */
@@ -851,39 +867,43 @@ int CMsnProto::MSN_AuthOAuth(void)
 									nlhr.dataLength = (int)mir_strlen(nlhr.pData);
 									nlhr.szUrl = "https://skypewebexperience.live.com/v1/User/Initialization";
 									nlhr.nlc = hHttpsConnection;
-								
+
 									/* Request MappingContainer */
 									mHttpsTS = clock();
 									CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)nlhrReply);
 									nlhrReply = (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)hNetlibUserHttps, (LPARAM)&nlhr);
 									mHttpsTS = clock();
-									if (nlhrReply)  {
+									if (nlhrReply) {
 										hHttpsConnection = nlhrReply->nlc;
 
 										if (nlhrReply->resultCode == 200 && nlhrReply->pData) {
 											/* Parse JSON stuff for MappingContainer */
 											char *pMappingContainer;
 
-											if ((pMappingContainer = strstr(nlhrReply->pData, "\"MappingContainer\":\"")) && 
-												(pEnd=strchr(pMappingContainer+20, '"')))
-											{
+											if ((pMappingContainer = strstr(nlhrReply->pData, "\"MappingContainer\":\"")) &&
+												(pEnd = strchr(pMappingContainer + 20, '"'))) {
 												*pEnd = 0;
-												pMappingContainer+=20;
+												pMappingContainer += 20;
 												UrlDecode(pMappingContainer);
 												replaceStr(authUIC, pMappingContainer);
 												replaceStr(authUser, MyOptions.szEmail);
 												authMethod = retVal = 2;
-											} else retVal = 0;
-										} else retVal = 0;
-									} else hHttpsConnection = NULL;
+											}
+											else retVal = 0;
+										}
+										else retVal = 0;
+									}
+									else hHttpsConnection = NULL;
 								}
 							}
-					} else {
+						}
+					}
+					else {
 						/* There may be a problem with login, i.e. M$ security measures. Open up browser
 						 * window with same URL in order to let user correct this */
-						if (nlhrReply->resultCode == 200 && nlhrReply->pData && strstr(nlhrReply->pData, "ar/cancel")) {
+						if (nlhrReply->resultCode == 200 && nlhrReply->pData) {
 							url.Format("https://login.live.com/oauth20_authorize.srf?%s", pszPostParams);
-							CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)url.GetString());
+							Utils_OpenUrl(url);
 						}
 						hHttpsConnection = NULL;
 					}
@@ -920,6 +940,87 @@ const char *CMsnProto::GetMyUsername(int netId)
 	return MyOptions.szEmail;
 }
 
+const char *CMsnProto::GetSkypeToken(bool bAsAuthHeader)
+{
+	char szToken[1024];
+
+	// Ensure that token isn't expired
+	if (MyOptions.netId == NETID_MSN) MSN_AuthOAuth();
+
+	// No token available, fetch it
+	if (!authSkypeToken) {
+		NETLIBHTTPREQUEST nlhr = { 0 };
+		NETLIBHTTPREQUEST *nlhrReply;
+		NETLIBHTTPHEADER headers[1];
+		char szPOST[2048];
+
+		nlhr.cbSize = sizeof(nlhr);
+		nlhr.requestType = REQUEST_POST;
+		nlhr.flags = NLHRF_HTTP11 | NLHRF_DUMPASTEXT | NLHRF_PERSISTENT | NLHRF_REDIRECT;
+		nlhr.nlc = hHttpsConnection;
+		nlhr.headersCount = _countof(headers);
+		nlhr.headers = headers;
+		nlhr.headers[0].szName = "User-Agent";
+		nlhr.headers[0].szValue = (char*)MSN_USER_AGENT;
+		nlhr.pData = szPOST;
+
+		if (MyOptions.netId == NETID_SKYPE) {
+			BYTE digest[16];
+			int cbPasswd;
+			char szPassword[100]={0};
+
+			cbPasswd=mir_snprintf(szPassword, sizeof(szPassword), "%s\nskyper\n", MyOptions.szEmail);
+			db_get_static(NULL, m_szModuleName, "Password", szPassword+cbPasswd, sizeof(szPassword)-cbPasswd-1);
+			mir_md5_hash((BYTE*)szPassword, mir_strlen(szPassword), digest);
+			mir_base64_encodebuf(digest, sizeof(digest), szPassword, sizeof(szPassword));
+			nlhr.szUrl = "https://api.skype.com/login/skypetoken";
+			nlhr.dataLength = mir_snprintf(szPOST, sizeof(szPOST), "scopes=client&clientVersion=%s&username=%s&passwordHash=%s", 
+				msnProductVer, MyOptions.szEmail, szPassword);
+		} else {
+			// Get skype.com OAuth token needed to acquire skype_token
+			if (!authSkypeComToken) {
+				if (RefreshOAuth(authRefreshToken, "service::skype.com::MBI_SSL", szToken))
+					replaceStr(authSkypeComToken, szToken);
+				else return NULL;
+			}
+
+			// Get skype_token
+			nlhr.szUrl = "https://api.skype.com/rps/skypetoken";
+			nlhr.dataLength = mir_snprintf(szPOST, sizeof(szPOST), "scopes=client&clientVersion=%s&access_token=%s&partner=999", 
+				msnProductVer, authSkypeComToken);
+		}
+
+		mHttpsTS = clock();
+		nlhrReply = (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)hNetlibUserHttps, (LPARAM)&nlhr);
+		mHttpsTS = clock();
+
+		if (nlhrReply)  {
+			hHttpsConnection = nlhrReply->nlc;
+
+			if (nlhrReply->resultCode == 200 && nlhrReply->pData) {
+				char *pSkypeToken, *pEnd;
+
+				if ((pSkypeToken = strstr(nlhrReply->pData, "\"skypetoken\":\"")) && 
+					(pEnd=strchr(pSkypeToken+15, '"')))
+				{
+					*pEnd = 0;
+					pSkypeToken+=14;
+					mir_snprintf (szToken, sizeof(szToken), "skype_token %s", pSkypeToken);
+					replaceStr(authSkypeToken, szToken);
+					setString("authSkypeToken", authSkypeToken);
+				}
+
+			}
+			CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)nlhrReply);
+		} else hHttpsConnection = NULL;
+	}
+	if (!bAsAuthHeader && authSkypeToken) {
+		char *pszRet = strchr(authSkypeToken, ' ');
+		if (pszRet) return pszRet+1;
+	}
+	return authSkypeToken;
+}
+
 void CMsnProto::FreeAuthTokens(void)
 {
 	mir_free(pAuthToken);
@@ -933,7 +1034,10 @@ void CMsnProto::FreeAuthTokens(void)
 	mir_free(authUIC);
 	mir_free(authCookies);
 	mir_free(authSSLToken);
+	mir_free(authSkypeComToken);
+	mir_free(authSkypeToken);
 	mir_free(authUser);
 	mir_free(authAccessToken);
+	mir_free(authRefreshToken);
 	free(hotAuthToken);
 }

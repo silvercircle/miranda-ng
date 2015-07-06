@@ -59,11 +59,11 @@
 #include "m_smileyadd.h"
 #include "m_metacontacts.h"
 
-#include "..\zlib\src\zconf.h"
-#include "..\zlib\src\ioapi.h"
-#include "..\zlib\src\zip.h"
-#include "..\zlib\src\unzip.h"
-#include "..\zlib\src\iowin32.h"
+#include "..\..\libs\zlib\src\zconf.h"
+#include "..\..\libs\zlib\src\ioapi.h"
+#include "..\..\libs\zlib\src\zip.h"
+#include "..\..\libs\zlib\src\unzip.h"
+#include "..\..\libs\zlib\src\iowin32.h"
 
 #include "version.h"
 #include "HistoryWindow.h"
@@ -89,4 +89,4 @@
 #define HISTORY_HK_IMPDAT 116
 #define HISTORY_HK_ALLCONTACTS 117
 
-HICON LoadIconEx(int iconId, int big = 0);
+HICON LoadIconEx(int iconId, bool big = false);

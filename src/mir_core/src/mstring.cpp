@@ -22,7 +22,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // CMBaseString
@@ -45,7 +45,7 @@ CNilMStringData::CNilMStringData()
 	achNil[1] = 0;
 }
 
-static CNilMStringData m_nil;
+static CNilMStringData *m_nil = NULL;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // CMBaseString
@@ -87,8 +87,10 @@ MIR_CORE_DLL(CMStringData*) mirstr_realloc(CMStringData* pData, int nChars, int 
 
 MIR_CORE_DLL(CMStringData*) mirstr_getNil()
 {
-	m_nil.AddRef();
-	return &m_nil;
+	if (m_nil == NULL)
+		m_nil = new CNilMStringData();
+	m_nil->AddRef();
+	return m_nil;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

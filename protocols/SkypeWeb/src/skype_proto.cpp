@@ -23,7 +23,7 @@ PROTO<CSkypeProto>(protoName, userName), password(NULL)
 	m_hProtoIcon = Icons[0].Handle;
 
 	wchar_t name[128];
-	mir_sntprintf(name, SIZEOF(name), TranslateT("%s connection"), m_tszUserName);
+	mir_sntprintf(name, _countof(name), TranslateT("%s connection"), m_tszUserName);
 	NETLIBUSER nlu = { 0 };
 	nlu.cbSize = sizeof(nlu);
 	nlu.flags = NUF_OUTGOING | NUF_INCOMING | NUF_HTTPCONNS | NUF_UNICODE;
@@ -34,10 +34,10 @@ PROTO<CSkypeProto>(protoName, userName), password(NULL)
 
 	CreateProtoService(PS_CREATEACCMGRUI, &CSkypeProto::OnAccountManagerInit);
 
-	CreateProtoService(PS_GETAVATARINFOT, &CSkypeProto::SvcGetAvatarInfo);
+	CreateProtoService(PS_GETAVATARINFO, &CSkypeProto::SvcGetAvatarInfo);
 	CreateProtoService(PS_GETAVATARCAPS, &CSkypeProto::SvcGetAvatarCaps);
-	CreateProtoService(PS_GETMYAVATART, &CSkypeProto::SvcGetMyAvatar);
-	CreateProtoService(PS_SETMYAVATART, &CSkypeProto::SvcSetMyAvatar);
+	CreateProtoService(PS_GETMYAVATAR, &CSkypeProto::SvcGetMyAvatar);
+	CreateProtoService(PS_SETMYAVATAR, &CSkypeProto::SvcSetMyAvatar);
 
 	CreateProtoService("/IncomingCallCLE", &CSkypeProto::OnIncomingCallCLE);
 	CreateProtoService("/IncomingCallPP", &CSkypeProto::OnIncomingCallPP);
@@ -49,7 +49,6 @@ PROTO<CSkypeProto>(protoName, userName), password(NULL)
 	if (dwAttributes == 0xffffffff || (dwAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
 		CreateDirectoryTreeT(m_tszAvatarFolder.c_str());
 
-	db_set_resident(m_szModuleName, "Status");
 	db_set_resident(m_szModuleName, "LastAuthRequestTime");
 
 	//hooks
@@ -58,6 +57,8 @@ PROTO<CSkypeProto>(protoName, userName), password(NULL)
 	//sounds
 	SkinAddNewSoundEx("skype_inc_call", "SkypeWeb", LPGEN("Incoming call sound"));
 	SkinAddNewSoundEx("skype_call_canceled", "SkypeWeb", LPGEN("Incoming call canceled sound"));
+
+	m_hTrouterEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 }
 
 CSkypeProto::~CSkypeProto()
@@ -98,12 +99,10 @@ MCONTACT CSkypeProto::AddToList(int, PROTOSEARCHRESULT *psr)
 {
 	debugLogA("CSkypeProto::AddToList");
 
-
-	ptrA skypeName(mir_t2a(ptrT(psr->id)));
-	if (skypeName == NULL)
+	if (psr->id.a == NULL)
 		return NULL;
 
-	MCONTACT hContact = AddContact(skypeName);
+	MCONTACT hContact = AddContact(psr->id.a);
 	return hContact;
 }
 
@@ -144,7 +143,7 @@ int CSkypeProto::Authorize(MEVENT hDbEvent)
 	return 0;
 }
 
-int CSkypeProto::AuthDeny(MEVENT hDbEvent, const PROTOCHAR*)
+int CSkypeProto::AuthDeny(MEVENT hDbEvent, const TCHAR*)
 {
 	MCONTACT hContact = GetContactFromAuthEvent(hDbEvent);
 	if (hContact == INVALID_CONTACT_ID)
@@ -161,7 +160,7 @@ int CSkypeProto::AuthRecv(MCONTACT, PROTORECVEVENT* pre)
 	return Proto_AuthRecv(m_szModuleName, pre);
 }
 
-int CSkypeProto::AuthRequest(MCONTACT hContact, const PROTOCHAR *szMessage)
+int CSkypeProto::AuthRequest(MCONTACT hContact, const TCHAR *szMessage)
 {
 	if (hContact == INVALID_CONTACT_ID)
 		return 1;
@@ -174,15 +173,11 @@ int CSkypeProto::AuthRequest(MCONTACT hContact, const PROTOCHAR *szMessage)
 
 int CSkypeProto::GetInfo(MCONTACT hContact, int)
 {
-	PushRequest(
-		new GetProfileRequest(ptrA(getStringA("TokenSecret")), ptrA(db_get_sa(hContact, m_szModuleName, SKYPE_SETTINGS_ID))),
-		&CSkypeProto::LoadProfile);
+	if (!isChatRoom(hContact))
+		PushRequest(
+			new GetProfileRequest(ptrA(getStringA("TokenSecret")), ptrA(db_get_sa(hContact, m_szModuleName, SKYPE_SETTINGS_ID))),
+			&CSkypeProto::LoadProfile);
 	return 0;
-}
-
-int CSkypeProto::RecvMsg(MCONTACT hContact, PROTORECVEVENT *pre)
-{
-	return SaveMessageToDb(hContact, pre);
 }
 
 int CSkypeProto::SendMsg(MCONTACT hContact, int flags, const char *msg)
@@ -228,7 +223,7 @@ int CSkypeProto::SetStatus(int iNewStatus)
 
 		if (m_iStatus > ID_STATUS_CONNECTING + 1)
 		{
-			SendRequest(new DeleteEndpointRequest(RegToken, EndpointId, Server));
+			SendRequest(new DeleteEndpointRequest(m_szRegToken, m_szEndpointId, m_szServer));
 			delSetting("registrationRoken");
 			delSetting("endpointId");
 			delSetting("expires");
@@ -251,19 +246,11 @@ int CSkypeProto::SetStatus(int iNewStatus)
 
 		if (old_status == ID_STATUS_OFFLINE && m_iStatus == ID_STATUS_OFFLINE)
 		{
-			// login
-			m_iStatus = ID_STATUS_CONNECTING;
-			requestQueue->Start();
-			int tokenExpires(getDword("TokenExpiresIn", 0));
-			HistorySynced = false;
-			if ((tokenExpires - 1800) > time(NULL))
-				OnLoginSuccess();
-			else
-				SendRequest(new LoginRequest(), &CSkypeProto::OnLoginFirst);
+			Login();
 		}
 		else
 		{
-			SendRequest(new SetStatusRequest(RegToken, MirandaToSkypeStatus(m_iDesiredStatus)), &CSkypeProto::OnStatusChanged);
+			SendRequest(new SetStatusRequest(m_szRegToken, MirandaToSkypeStatus(m_iDesiredStatus)), &CSkypeProto::OnStatusChanged);
 		}
 	}
 
@@ -273,7 +260,7 @@ int CSkypeProto::SetStatus(int iNewStatus)
 
 int CSkypeProto::UserIsTyping(MCONTACT hContact, int type)
 {
-	SendRequest(new SendTypingRequest(RegToken, ptrA(getStringA(hContact, SKYPE_SETTINGS_ID)), type, Server));
+	SendRequest(new SendTypingRequest(m_szRegToken, ptrA(getStringA(hContact, SKYPE_SETTINGS_ID)), type, m_szServer));
 	return 0;
 }
 

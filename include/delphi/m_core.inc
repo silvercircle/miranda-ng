@@ -25,7 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 const
-  CoreDLL = 'mir_core.dll';
+  CoreDLL = 'mir_core.mir';
+  AppDLL = 'mir_app.mir';
 
 ///////////////////////////////////////////////////////////////////////////////
 // command line support
@@ -140,10 +141,10 @@ procedure KillModuleServices(hInst:HINST); stdcall;
 procedure KillObjectServices(var ptr); stdcall;
                  external CoreDLL name 'KillObjectServices';
 
-function CallContactService(hContact:TMCONTACT;const name:PAnsiChar;wParam:WPARAM;lParam:LPARAM):int_ptr; cdecl;
-                 external CoreDLL name 'CallContactService';
-function CallProtoService(const szModule:PAnsiChar;const szService:PAnsiChar;wParam:WPARAM;lParam:LPARAM):int_ptr; cdecl;
-                 external CoreDLL name 'CallProtoService';
+function CallContactService(hContact:TMCONTACT;const name:PAnsiChar;wParam:WPARAM;lParam:LPARAM):int_ptr; stdcall;
+                 external AppDLL name 'CallContactService';
+function CallProtoService(const szModule:PAnsiChar;const szService:PAnsiChar;wParam:WPARAM;lParam:LPARAM):int_ptr; stdcall;
+                 external AppDLL name 'CallProtoService';
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -387,32 +388,6 @@ function GetInstByAddress(codePtr:pointer):HINST; stdcall;
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// path utils
-
-procedure CreatePathToFile(wszFilePath:PAnsiChar); stdcall;
-                 external CoreDLL name 'CreatePathToFile';
-function CreateDirectoryTree(const szDir:PAnsiChar):int; stdcall;
-                 external CoreDLL name 'CreateDirectoryTree';
-function PathIsAbsolute(const pSrc:PAnsiChar):int; stdcall;
-                 external CoreDLL name 'PathIsAbsolute';
-function PathToAbsolute(const pSrc:PAnsiChar; pOut:PAnsiChar; base:PAnsiChar=nil):int; stdcall;
-                 external CoreDLL name 'PathToAbsolute';
-function PathToRelative(const pSrc:PAnsiChar; pOut:PAnsiChar; base:PAnsiChar=nil):int; stdcall;
-                 external CoreDLL name 'PathToRelative';
-
-procedure CreatePathToFileW(wszFilePath:PWideChar); stdcall;
-                 external CoreDLL name 'CreatePathToFileW';
-function CreateDirectoryTreeW(const szDir:PWideChar):int; stdcall;
-                 external CoreDLL name 'CreateDirectoryTreeW';
-function PathIsAbsoluteW(const pSrc:PWideChar):int; stdcall;
-                 external CoreDLL name 'PathIsAbsoluteW';
-function PathToAbsoluteW(const pSrc:PWideChar; pOut:PWideChar; base:PWideChar=nil):int; stdcall;
-                 external CoreDLL name 'PathToAbsoluteW';
-function PathToRelativeW(const pSrc:PWideChar; pOut:PWideChar; base:PWideChar=nil):int; stdcall;
-                 external CoreDLL name 'PathToRelativeW';
-
-
-///////////////////////////////////////////////////////////////////////////////
 // print functions
 
 function mir_snprintf(buffer:PAnsiChar;count:size_t;fmt:PAnsiChar{, ...}):int; stdcall;
@@ -429,66 +404,46 @@ function mir_vsnwprintf(buffer:PWideChar;count:size_t;fmt:PWideChar;va:va_list):
 // protocol functions
 
 function ProtoBroadcastAck(const szModule:PAnsiChar; hContact:TMCONTACT; type_:int; result_:int; hProcess:THANDLE; lParam:LPARAM): int_ptr; stdcall;
-                 external CoreDLL name 'ProtoBroadcastAck';
+                 external AppDLL name 'ProtoBroadcastAck';
 
 function ProtoServiceExists(const szModule, szName:PAnsiChar):int; stdcall;
-                 external CoreDLL name 'ProtoServiceExists';
-
-function ProtoCallService(const szModule, szName:PAnsiChar; wParam:WPARAM; lParam:LPARAM):int_ptr; stdcall;
-                 external CoreDLL name 'ProtoServiceExists';
+                 external AppDLL name 'ProtoServiceExists';
 
 procedure ProtoWindowAdd(pThis:pointer; wnd:HWND); stdcall;
-                 external CoreDLL name 'ProtoWindowAdd';
+                 external AppDLL name 'ProtoWindowAdd';
 
 procedure ProtoWindowRemove(pThis:pointer; wnd:HWND); stdcall;
-                 external CoreDLL name 'ProtoWindowRemove';
+                 external AppDLL name 'ProtoWindowRemove';
 
 // Call it in the very beginning of your proto's constructor
-procedure ProtoConstructor(pThis:pointer{PPROTO_INTERFACE}; const pszModuleName:PAnsiChar;
-                           ptszUserName:PWideChar); stdcall;
-                 external CoreDLL name 'ProtoConstructor';
+procedure ProtoConstructor(pThis:pointer{PPROTO_INTERFACE}; const pszModuleName:PAnsiChar; ptszUserName:PWideChar); stdcall;
+                 external AppDLL name 'ProtoConstructor';
 
 // Call it in the very end of your proto's destructor
 procedure ProtoDestructor(pThis:pointer{PPROTO_INTERFACE}); stdcall;
-                 external CoreDLL name 'ProtoDestructor';
-
-{!!
-typedef void (__cdecl PROTO_INTERFACE::*ProtoThreadFunc)(void*);
-procedure   ProtoForkThread(PROTO_INTERFACE *pThis, ProtoThreadFunc, void *param);
-function ProtoForkThreadEx(PROTO_INTERFACE *pThis, ProtoThreadFunc, void *param, uint* threadID):THANDLE;
-
-typedef int (__cdecl PROTO_INTERFACE::*ProtoEventFunc)(WPARAM, LPARAM);
-procedure   ProtoHookEvent(PROTO_INTERFACE *pThis, const char* szName, ProtoEventFunc pFunc);
-function ProtoCreateHookableEvent(PROTO_INTERFACE *pThis, const char* szService):THANDLE;
-
-typedef INT_PTR (__cdecl PROTO_INTERFACE::*ProtoServiceFunc)(WPARAM, LPARAM);
-procedure ProtoCreateService(PROTO_INTERFACE *pThis, const char* szService, ProtoServiceFunc);
-
-typedef INT_PTR (__cdecl PROTO_INTERFACE::*ProtoServiceFuncParam)(WPARAM, LPARAM, LPARAM);
-procedure ProtoCreateServiceParam(PROTO_INTERFACE *pThis, const char* szService, ProtoServiceFuncParam, LPARAM);
-}
+                 external AppDLL name 'ProtoDestructor';
 
 procedure ProtoLogA(pThis:pointer{PPROTO_INTERFACE}; szFormat :PAnsiChar; args:va_list); stdcall;
-                 external CoreDLL name 'ProtoLogA';
+                 external AppDLL name 'ProtoLogA';
 procedure ProtoLogW(pThis:pointer{PPROTO_INTERFACE}; wszFormat:PWideChar; args:va_list); stdcall;
-                 external CoreDLL name 'ProtoLogW';
+                 external AppDLL name 'ProtoLogW';
 
 // returns image extension by a PA_* constant or empty string for PA_FORMAT_UNKNOWN
 function ProtoGetAvatarExtension(format:int):PWideChar; stdcall;
-                 external CoreDLL name 'ProtoGetAvatarExtension';
+                 external AppDLL name 'ProtoGetAvatarExtension';
 
 // detects image format by extension
 function ProtoGetAvatarFormat(const szFileName:PWideChar):int; stdcall;
-                 external CoreDLL name 'ProtoGetAvatarFormat';
+                 external AppDLL name 'ProtoGetAvatarFormat';
 
 // detects image format by its contents
 function ProtoGetAvatarFileFormat(const szFileName:PWideChar):int; stdcall;
-                 external CoreDLL name 'ProtoGetAvatarFileFormat';
+                 external AppDLL name 'ProtoGetAvatarFileFormat';
 
 // returns the image format and extension by the first bytes of picture
 // ptszExtension might be NULL
 function ProtoGetBufferFormat(const buf:PByte; var ext:PWideChar):int; stdcall;
-                 external CoreDLL name 'ProtoGetBufferFormat';
+                 external AppDLL name 'ProtoGetBufferFormat';
 
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -1,8 +1,6 @@
 
 #include "common.h"
 
-#define OLD_TBBUTTON_SIZE	(offsetof(TTBButton, pszTooltipUp))
-
 pfnCustomProc g_CustomProc = NULL;
 LPARAM g_CustomProcParam = 0;
 TTBCtrl *g_ctrl = NULL;
@@ -42,8 +40,7 @@ TopButtonInt *idtopos(int id, int *pPos)
 //----- Service buttons -----
 void InsertSBut(int i)
 {
-	TTBButton ttb = {0};
-	ttb.cbSize = sizeof(ttb);
+	TTBButton ttb = { 0 };
 	ttb.hIconDn = (HICON)LoadImage(hInst, MAKEINTRESOURCE(IDI_RUN), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
 	ttb.hIconUp = (HICON)LoadImage(hInst, MAKEINTRESOURCE(IDI_RUN), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
 	ttb.dwFlags = TTBBF_VISIBLE | TTBBF_ISSBUTTON | TTBBF_INTERNAL;
@@ -78,8 +75,7 @@ INT_PTR LaunchService(WPARAM, LPARAM lParam)
 
 void InsertLBut(int i)
 {
-	TTBButton ttb = {0};
-	ttb.cbSize = sizeof(ttb);
+	TTBButton ttb = { 0 };
 	ttb.hIconDn = (HICON)LoadImage(hInst, MAKEINTRESOURCE(IDI_RUN), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
 	ttb.dwFlags = TTBBF_VISIBLE | TTBBF_ISLBUTTON | TTBBF_INTERNAL;
 	ttb.name = LPGEN("Default");
@@ -99,8 +95,7 @@ void LoadAllLButs()
 //----- Separators -----
 void InsertSeparator(int i)
 {
-	TTBButton ttb = {0};
-	ttb.cbSize = sizeof(ttb);
+	TTBButton ttb = { 0 };
 	ttb.dwFlags = TTBBF_VISIBLE | TTBBF_ISSEPARATOR | TTBBF_INTERNAL;
 	ttb.wParamDown = i;
 	TTBAddButton((WPARAM)&ttb, 0);
@@ -148,21 +143,22 @@ static void Icon2button(TTBButton *but, HANDLE &hIcoLib, HICON &hIcon, bool bIsU
 		return;
 	}
 
-	hIcoLib = (HANDLE)CallService(MS_SKIN2_ISMANAGEDICON, WPARAM(hSrc), 0);
+	hIcoLib = IcoLib_IsManaged((HICON)hSrc);
 	if (!hIcoLib) {
 		char buf[256];
-		mir_snprintf(buf, SIZEOF(buf), "toptoolbar_%s%s", but->name, bIsUp ? (but->hIconDn ? "%s_up" : "%s") : "%s_dn");
-		SKINICONDESC sid = { sizeof(sid) };
-		sid.pszSection = "Toolbar";
+		mir_snprintf(buf, "toptoolbar_%s%s", but->name, bIsUp ? (but->hIconDn ? "%s_up" : "%s") : "%s_dn");
+
+		SKINICONDESC sid = { 0 };
+		sid.section.a = "Toolbar";
 		sid.pszName = buf;
-		sid.pszDefaultFile = NULL;
-		mir_snprintf(buf, SIZEOF(buf), "%s%s", but->name, bIsUp ? "" : " (pressed)");
-		sid.pszDescription = buf;
+		sid.defaultFile.a = NULL;
+		mir_snprintf(buf, "%s%s", but->name, bIsUp ? "" : " (pressed)");
+		sid.description.a = buf;
 		sid.hDefaultIcon = bIsUp ? but->hIconUp : but->hIconDn;
-		hIcoLib = Skin_AddIcon(&sid);
+		hIcoLib = IcoLib_AddIcon(&sid);
 	}
 
-	hIcon = Skin_GetIconByHandle(hIcoLib);
+	hIcon = IcoLib_GetIconByHandle(hIcoLib);
 }
 
 TopButtonInt *CreateButton(TTBButton *but)
@@ -194,10 +190,8 @@ TopButtonInt *CreateButton(TTBButton *but)
 		Icon2button(but, b->hIconHandleUp, b->hIconUp, true);
 		Icon2button(but, b->hIconHandleDn, b->hIconDn, false);
 
-		if (but->cbSize > OLD_TBBUTTON_SIZE) {
-			b->ptszTooltipUp = mir_a2t(but->pszTooltipUp);
-			b->ptszTooltipDn = mir_a2t(but->pszTooltipDn);
-		}
+		b->ptszTooltipUp = mir_a2t(but->pszTooltipUp);
+		b->ptszTooltipDn = mir_a2t(but->pszTooltipDn);
 	}
 	return b;
 }
@@ -305,9 +299,6 @@ INT_PTR TTBAddButton(WPARAM wParam, LPARAM lParam)
 		return -1;
 
 	TTBButton *but = (TTBButton *)wParam;
-	if (but->cbSize != sizeof(TTBButton) && but->cbSize != OLD_TBBUTTON_SIZE)
-		return -1;
-
 	if (!(but->dwFlags & TTBBF_ISLBUTTON) && nameexists(but->name))
 		return -1;
 
@@ -396,10 +387,7 @@ INT_PTR TTBGetOptions(WPARAM wParam, LPARAM lParam)
 
 	case TTBO_ALLDATA:
 		if (lParam) {
-			lpTTBButton lpTTB = (lpTTBButton)lParam;
-			if (lpTTB->cbSize != sizeof(TTBButton))
-				return -1;
-
+			TTBButton *lpTTB = (TTBButton*)lParam;
 			lpTTB->dwFlags = b->dwFlags & (~TTBBF_PUSHED);
 			if (b->bPushed)
 				lpTTB->dwFlags |= TTBBF_PUSHED;
@@ -460,10 +448,7 @@ INT_PTR TTBSetOptions(WPARAM wParam, LPARAM lParam)
 
 	case TTBO_ALLDATA:
 		if (lParam) {
-			lpTTBButton lpTTB = (lpTTBButton)lParam;
-			if (lpTTB->cbSize != sizeof(TTBButton))
-				return 0;
-
+			TTBButton *lpTTB = (TTBButton*)lParam;
 			DWORD retval = b->CheckFlags(lpTTB->dwFlags);
 
 			bool changed = false;
@@ -515,12 +500,12 @@ int OnIconChange(WPARAM, LPARAM)
 			continue;
 
 		if (b->hIconHandleUp) {
-			Skin_ReleaseIcon(b->hIconUp);
-			b->hIconUp = Skin_GetIconByHandle(b->hIconHandleUp);
+			IcoLib_ReleaseIcon(b->hIconUp);
+			b->hIconUp = IcoLib_GetIconByHandle(b->hIconHandleUp);
 		}
 		if (b->hIconHandleDn) {
-			Skin_ReleaseIcon(b->hIconDn);
-			b->hIconDn = Skin_GetIconByHandle(b->hIconHandleDn);
+			IcoLib_ReleaseIcon(b->hIconDn);
+			b->hIconDn = IcoLib_GetIconByHandle(b->hIconHandleDn);
 		}
 		DestroyWindow(b->hwnd);
 		b->CreateWnd();
@@ -563,7 +548,7 @@ int OnPluginLoad(WPARAM, LPARAM lParam)
 
 int OnPluginUnload(WPARAM, LPARAM lParam)
 {
-	int hLangpack = CallService(MS_LANGPACK_LOOKUPHANDLE, 0, lParam);
+	int hLangpack = GetPluginLangByInstance((HINSTANCE)lParam);
 	if (hLangpack) {
 		bool bNeedUpdate = false;
 		mir_cslock lck(csButtonsHook);
@@ -598,7 +583,7 @@ static int OnModulesLoad(WPARAM, LPARAM)
 
 	if (HookEvent(ME_BACKGROUNDCONFIG_CHANGED, OnBGChange)) {
 		char buf[256];
-		mir_snprintf(buf, SIZEOF(buf), "%s/%s", LPGEN("TopToolBar background"), TTB_OPTDIR);
+		mir_snprintf(buf, "%s/%s", LPGEN("TopToolBar background"), TTB_OPTDIR);
 		CallService(MS_BACKGROUNDCONFIG_REGISTER, (WPARAM)buf, 0);
 	}
 	return 0;

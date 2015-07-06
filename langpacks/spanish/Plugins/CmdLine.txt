@@ -2,11 +2,13 @@
 ;============================================================
 ;  File: CmdLine.dll
 ;  Plugin: Command line
-;  Version: 0.0.4.2
+;  Version: 0.0.4.5
 ;  Authors: Cristian Libotean
 ;============================================================
 [Error]
 Error
+[dword]
+dword
 [Notify]
 Notificar
 [Warning]

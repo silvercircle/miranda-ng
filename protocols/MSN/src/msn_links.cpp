@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "msn_global.h"
+#include "stdafx.h"
 #include "msn_proto.h"
 
 #include <m_addcontact.h>
@@ -96,8 +96,8 @@ static INT_PTR ServiceParseMsnimLink(WPARAM, LPARAM lParam)
 		if (hContact == NULL) {
 			PROTOSEARCHRESULT psr = { sizeof(psr) };
 			psr.flags = PSR_TCHAR;
-			psr.nick = email;
-			psr.email = email;
+			psr.nick.t = email;
+			psr.email.t = email;
 
 			ADDCONTACTSTRUCT acs = { 0 };
 			acs.handleType = HANDLE_SEARCHRESULT;

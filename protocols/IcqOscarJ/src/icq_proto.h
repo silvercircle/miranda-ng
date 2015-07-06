@@ -70,9 +70,9 @@ struct CIcqProto : public PROTO<CIcqProto>
 	virtual	DWORD_PTR __cdecl GetCaps(int type, MCONTACT hContact = NULL);
 	virtual	int       __cdecl GetInfo(MCONTACT hContact, int infoType);
 
-	virtual	HANDLE    __cdecl SearchBasic(const PROTOCHAR *id);
-	virtual	HANDLE    __cdecl SearchByEmail(const PROTOCHAR *email);
-	virtual	HANDLE    __cdecl SearchByName(const PROTOCHAR *nick, const PROTOCHAR *firstName, const PROTOCHAR *lastName);
+	virtual	HANDLE    __cdecl SearchBasic(const TCHAR *id);
+	virtual	HANDLE    __cdecl SearchByEmail(const TCHAR *email);
+	virtual	HANDLE    __cdecl SearchByName(const TCHAR *nick, const TCHAR *firstName, const TCHAR *lastName);
 	virtual	HWND      __cdecl SearchAdvanced(HWND owner);
 	virtual	HWND      __cdecl CreateExtendedSearchUI(HWND owner);
 
@@ -147,7 +147,6 @@ struct CIcqProto : public PROTO<CIcqProto>
 	BYTE m_bSecureConnection;
 	BYTE m_bLegacyFix;
 	BYTE m_bAimEnabled;
-	BYTE m_bUtfEnabled;
 	WORD m_wAnsiCodepage;
 	BYTE m_bDCMsgEnabled;
 	BYTE m_bTempVisListEnabled;
@@ -532,8 +531,6 @@ struct CIcqProto : public PROTO<CIcqProto>
 	rates_queue *m_ratesQueue_Response; // rate queue for msg responses
 
 	int    handleRateItem(rates_queue_item *item, int nQueueType = RQT_DEFAULT, int nMinDelay = 0, BOOL bAllowDelay = TRUE);
-
-	void   __cdecl rateDelayThread(struct rate_delay_args *pArgs);
 
 	//----| icq_server.cpp |--------------------------------------------------------------
 	HANDLE hServerConn;

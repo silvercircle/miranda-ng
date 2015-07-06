@@ -43,7 +43,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_folders.h>
 #include <m_metacontacts.h>
 #include <m_avatarhistory.h>
-#include <m_clistint.h>
 
 #include "resource.h"
 #include "version.h"
@@ -153,7 +152,7 @@ INT_PTR ReportMyAvatarChanged(WPARAM wParam, LPARAM lParam);
 
 MCONTACT GetContactThatHaveTheAvatar(MCONTACT hContact, int locked = -1);
 
-void ProcessAvatarInfo(MCONTACT hContact, int type, PROTO_AVATAR_INFORMATIONT *pai, const char *szProto);
+void ProcessAvatarInfo(MCONTACT hContact, int type, PROTO_AVATAR_INFORMATION *pai, const char *szProto);
 
 int  Proto_GetDelayAfterFail(const char *proto);
 BOOL Proto_NeedDelaysForAvatars(const char *proto);

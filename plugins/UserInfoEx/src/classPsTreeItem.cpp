@@ -88,7 +88,7 @@ CPsTreeItem::~CPsTreeItem()
 LPCSTR CPsTreeItem::PropertyKey(LPCSTR pszProperty)
 {
 	static CHAR pszSetting[MAXSETTING];
-	mir_snprintf(pszSetting, SIZEOF(pszSetting), "{%s\\%s}_%s", _pszPrefix, _pszName, pszProperty);
+	mir_snprintf(pszSetting, _countof(pszSetting), "{%s\\%s}_%s", _pszPrefix, _pszName, pszProperty);
 	return pszSetting;
 }
 
@@ -121,7 +121,7 @@ LPCSTR CPsTreeItem::GlobalName()
 LPCSTR CPsTreeItem::GlobalPropertyKey(LPCSTR pszProperty)
 {
 	static CHAR pszSetting[MAXSETTING];
-	mir_snprintf(pszSetting, SIZEOF(pszSetting), "{Global\\%s}_%s", GlobalName(), pszProperty);
+	mir_snprintf(pszSetting, _countof(pszSetting), "{Global\\%s}_%s", GlobalName(), pszProperty);
 	return pszSetting;
 }
 
@@ -138,7 +138,7 @@ LPCSTR CPsTreeItem::IconKey()
 	if (pszIconName)
 	{
 		static CHAR pszSetting[MAXSETTING];
-		mir_snprintf(pszSetting, SIZEOF(pszSetting), MODNAME"_{%s}", pszIconName);
+		mir_snprintf(pszSetting, _countof(pszSetting), MODNAME"_{%s}", pszIconName);
 		return pszSetting;
 	}
 	return NULL;
@@ -274,21 +274,21 @@ int CPsTreeItem::ItemLabel(const BYTE bReadDBValue)
  **/
 HICON CPsTreeItem::ProtoIcon()
 {
+	if (!_pszName)
+		return NULL;
+
 	PROTOACCOUNT **pa;
 	int ProtoCount;
-	if (!CallService(MS_PROTO_ENUMACCOUNTS, (WPARAM)&ProtoCount, (LPARAM)&pa)) {
-		if (_pszName) {
-			for (int i = 0; i < ProtoCount; i++) {
-				if (!mir_tcsnicmp(pa[i]->tszAccountName, _A2T(_pszName), mir_tstrlen(pa[i]->tszAccountName))) {
-					CHAR szIconID[MAX_PATH];
-					mir_snprintf(szIconID, SIZEOF(szIconID), "core_status_%s1", pa[i]->szModuleName);
-					HICON hIco = Skin_GetIcon(szIconID);
-					if (!hIco)
-						hIco = (HICON)CallProtoService(pa[i]->szModuleName, PS_LOADICON, PLI_PROTOCOL, NULL);
+	Proto_EnumAccounts(&ProtoCount, &pa);
+	for (int i = 0; i < ProtoCount; i++) {
+		if (!mir_tcsnicmp(pa[i]->tszAccountName, _A2T(_pszName), mir_tstrlen(pa[i]->tszAccountName))) {
+			CHAR szIconID[MAX_PATH];
+			mir_snprintf(szIconID, _countof(szIconID), "core_status_%s1", pa[i]->szModuleName);
+			HICON hIco = IcoLib_GetIcon(szIconID);
+			if (!hIco)
+				hIco = (HICON)CallProtoService(pa[i]->szModuleName, PS_LOADICON, PLI_PROTOCOL, NULL);
 
-					return hIco;
-				}
-			}
+			return hIco;
 		}
 	}
 	return NULL;
@@ -305,8 +305,6 @@ HICON CPsTreeItem::ProtoIcon()
  **/
 int CPsTreeItem::Icon(HIMAGELIST hIml, OPTIONSDIALOGPAGE *odp, BYTE bInitIconsOnly)
 {
-	HICON hIcon;
-
 	// check parameter
 	if (!_pszName || !odp)
 		return 1;
@@ -315,16 +313,17 @@ int CPsTreeItem::Icon(HIMAGELIST hIml, OPTIONSDIALOGPAGE *odp, BYTE bInitIconsOn
 	LPCSTR pszIconName = IconKey();
 
 	// use icolib to handle icons
-	if (!(hIcon = Skin_GetIcon(pszIconName))) {
+	HICON hIcon = IcoLib_GetIcon(pszIconName);
+	if (!hIcon) {
 		bool bNeedFree = false;
 
-		SKINICONDESC sid = { sizeof(sid) };
+		SKINICONDESC sid = { 0 };
 		sid.flags = SIDF_ALL_TCHAR;
 		sid.cx = GetSystemMetrics(SM_CXSMICON);
 		sid.cy = GetSystemMetrics(SM_CYSMICON);
 		sid.pszName = (LPSTR)pszIconName;
-		sid.ptszDescription = _ptszLabel;
-		sid.ptszSection = LPGENT(SECT_TREE);
+		sid.description.t = _ptszLabel;
+		sid.section.t = LPGENT(SECT_TREE);
 
 		// the item to insert brings along an icon?
 		if (odp->flags & ODPF_ICON) {
@@ -332,10 +331,10 @@ int CPsTreeItem::Icon(HIMAGELIST hIml, OPTIONSDIALOGPAGE *odp, BYTE bInitIconsOn
 			if (odp->hInstance == ghInst) {
 
 				// the pszGroup holds the iconfile for items added by uinfoex
-				sid.ptszDefaultFile = odp->ptszGroup;
+				sid.defaultFile.t = odp->ptszGroup;
 
 				// icon library exists?
-				if (sid.ptszDefaultFile)
+				if (sid.defaultFile.t)
 					sid.iDefaultIndex = (INT_PTR)odp->hIcon;
 				// no valid icon library
 				else {
@@ -361,10 +360,10 @@ int CPsTreeItem::Icon(HIMAGELIST hIml, OPTIONSDIALOGPAGE *odp, BYTE bInitIconsOn
 				sid.hDefaultIcon = ImageList_GetIcon(hIml, 0, ILD_NORMAL), bNeedFree = true;
 		}
 		// add file to icolib
-		Skin_AddIcon(&sid);
+		IcoLib_AddIcon(&sid);
 
 		if (!bInitIconsOnly)
-			hIcon = Skin_GetIcon(pszIconName);
+			hIcon = IcoLib_GetIcon(pszIconName);
 		if (bNeedFree)
 			DestroyIcon(sid.hDefaultIcon);
 	}
@@ -408,13 +407,13 @@ int CPsTreeItem::Create(CPsHdr* pPsh, OPTIONSDIALOGPAGE *odp)
 
 		if (pPsh->_dwFlags & PSF_PROTOPAGESONLY) {
 			if (_dwFlags & ODPF_USERINFOTAB)
-				mir_sntprintf(szTitle, SIZEOF(szTitle), _T("%s %d\\%s"), odp->ptszTitle, pPsh->_nSubContact+1, odp->ptszTab);
+				mir_sntprintf(szTitle, _T("%s %d\\%s"), odp->ptszTitle, pPsh->_nSubContact+1, odp->ptszTab);
 			else
-				mir_sntprintf(szTitle, SIZEOF(szTitle), _T("%s %d"), odp->ptszTitle, pPsh->_nSubContact+1);
+				mir_sntprintf(szTitle, _T("%s %d"), odp->ptszTitle, pPsh->_nSubContact+1);
 		}
 		else {
 			if (_dwFlags & ODPF_USERINFOTAB)
-				mir_sntprintf(szTitle, SIZEOF(szTitle), _T("%s\\%s"), odp->ptszTitle, odp->ptszTab);
+				mir_sntprintf(szTitle, _T("%s\\%s"), odp->ptszTitle, odp->ptszTab);
 			else
 				mir_tstrcpy(szTitle, odp->ptszTitle);
 		}
@@ -601,7 +600,7 @@ void CPsTreeItem::OnIconsChanged(CPsTree *pTree)
 	RECT rc;
 
 	// update tree item icons
-	if (pTree->ImageList() && (hIcon = Skin_GetIcon(IconKey())) != NULL) {
+	if (pTree->ImageList() && (hIcon = IcoLib_GetIcon(IconKey())) != NULL) {
 		_iImage = (_iImage > 0)
 			? ImageList_ReplaceIcon(pTree->ImageList(), _iImage, hIcon)
 			: ImageList_AddIcon(pTree->ImageList(), hIcon);

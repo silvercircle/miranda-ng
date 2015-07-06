@@ -27,8 +27,8 @@ $Id: viewmodes.c 2998 2006-06-01 07:11:52Z nightwish2004 $
 
 */
 
-#include "hdr/modern_commonheaders.h"
-#include "CLUIFrames/cluiframes.h"
+#include "stdafx.h"
+#include "cluiframes.h"
 #include "m_skinbutton.h"
 
 #define TIMERID_VIEWMODEEXPIRE 100
@@ -216,7 +216,7 @@ static int FillDialog(HWND hwnd)
 	ListView_InsertColumn(GetDlgItem(hwnd, IDC_PROTOCOLS), 0, &lvc);
 
 	// fill protocols...
-	ProtoEnumAccounts(&protoCount, &accs);
+	Proto_EnumAccounts(&protoCount, &accs);
 
 	item.mask = LVIF_TEXT;
 	item.iItem = 1000;
@@ -349,17 +349,17 @@ void SaveViewMode(const char *name, const TCHAR *szGroupFilter, const char *szPr
 	CLVM_EnumModes(DeleteAutoModesCallback);
 
 	char szSetting[512];
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_PF", 246, name);
+	mir_snprintf(szSetting, "%c%s_PF", 246, name);
 	db_set_s(NULL, CLVM_MODULE, szSetting, szProtoFilter);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_GF", 246, name);
+	mir_snprintf(szSetting, "%c%s_GF", 246, name);
 	db_set_ws(NULL, CLVM_MODULE, szSetting, szGroupFilter);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_SM", 246, name);
+	mir_snprintf(szSetting, "%c%s_SM", 246, name);
 	db_set_dw(NULL, CLVM_MODULE, szSetting, statusMask);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_SSM", 246, name);
+	mir_snprintf(szSetting, "%c%s_SSM", 246, name);
 	db_set_dw(NULL, CLVM_MODULE, szSetting, stickyStatusMask);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_OPT", 246, name);
+	mir_snprintf(szSetting, "%c%s_OPT", 246, name);
 	db_set_dw(NULL, CLVM_MODULE, szSetting, options);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_LM", 246, name);
+	mir_snprintf(szSetting, "%c%s_LM", 246, name);
 	db_set_dw(NULL, CLVM_MODULE, szSetting, lmdat);
 
 	db_set_dw(NULL, CLVM_MODULE, name, MAKELONG((unsigned short)operators, (unsigned short)stickies));
@@ -388,11 +388,11 @@ void SaveState()
 			if (ListView_GetCheckState(hwndList, i)) {
 				item.mask = LVIF_TEXT;
 				item.pszText = szTemp;
-				item.cchTextMax = SIZEOF(szTemp);
+				item.cchTextMax = _countof(szTemp);
 				item.iItem = i;
 				SendMessageA(hwndList, LVM_GETITEMA, 0, (LPARAM)&item);
-				mir_strncat(newProtoFilter, szTemp, SIZEOF(newProtoFilter) - mir_strlen(newProtoFilter));
-				mir_strncat(newProtoFilter, "|", SIZEOF(newProtoFilter) - mir_strlen(newProtoFilter));
+				mir_strncat(newProtoFilter, szTemp, _countof(newProtoFilter) - mir_strlen(newProtoFilter));
+				mir_strncat(newProtoFilter, "|", _countof(newProtoFilter) - mir_strlen(newProtoFilter));
 				newProtoFilter[2047] = 0;
 			}
 		}
@@ -409,11 +409,11 @@ void SaveState()
 			if (ListView_GetCheckState(hwndList, i)) {
 				item.mask = LVIF_TEXT;
 				item.pszText = szTemp;
-				item.cchTextMax = SIZEOF(szTemp);
+				item.cchTextMax = _countof(szTemp);
 				item.iItem = i;
 				SendMessage(hwndList, LVM_GETITEM, 0, (LPARAM)&item);
-				mir_tstrncat(newGroupFilter, szTemp, SIZEOF(newGroupFilter) - mir_tstrlen(newGroupFilter));
-				mir_tstrncat(newGroupFilter, _T("|"), SIZEOF(newGroupFilter) - mir_tstrlen(newGroupFilter));
+				mir_tstrncat(newGroupFilter, szTemp, _countof(newGroupFilter) - mir_tstrlen(newGroupFilter));
+				mir_tstrncat(newGroupFilter, _T("|"), _countof(newGroupFilter) - mir_tstrlen(newGroupFilter));
 				newGroupFilter[2047] = 0;
 			}
 		}
@@ -499,28 +499,28 @@ static void UpdateFilters()
 	SendDlgItemMessage(clvmHwnd, IDC_VIEWMODES, LB_GETTEXT, clvm_curItem, (LPARAM)szTempBuf);
 
 	T2Utf szBuf(szTempBuf);
-	mir_strncpy(g_szModename, szBuf, SIZEOF(g_szModename));
+	mir_strncpy(g_szModename, szBuf, _countof(g_szModename));
 
-	mir_sntprintf(szTemp, SIZEOF(szTemp), TranslateT("Configuring view mode: %s"), szTempBuf);
+	mir_sntprintf(szTemp, TranslateT("Configuring view mode: %s"), szTempBuf);
 	SetDlgItemText(clvmHwnd, IDC_CURVIEWMODE2, szTemp);
 
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_PF", 246, szBuf);
+	mir_snprintf(szSetting, "%c%s_PF", 246, szBuf);
 	ptrA szPF(db_get_sa(NULL, CLVM_MODULE, szSetting));
 	if (szPF == NULL)
 		return;
 
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_GF", 246, szBuf);
+	mir_snprintf(szSetting, "%c%s_GF", 246, szBuf);
 	ptrT szGF(db_get_tsa(NULL, CLVM_MODULE, szSetting));
 	if (szGF == NULL)
 		return;
 
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_OPT", 246, szBuf);
+	mir_snprintf(szSetting, "%c%s_OPT", 246, szBuf);
 	if ((opt = db_get_dw(NULL, CLVM_MODULE, szSetting, -1)) != -1)
 		SendDlgItemMessage(clvmHwnd, IDC_AUTOCLEARSPIN, UDM_SETPOS, 0, MAKELONG(LOWORD(opt), 0));
 	
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_SM", 246, szBuf);
+	mir_snprintf(szSetting, "%c%s_SM", 246, szBuf);
 	DWORD statusMask = db_get_dw(NULL, CLVM_MODULE, szSetting, 0);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_SSM", 246, szBuf);
+	mir_snprintf(szSetting, "%c%s_SSM", 246, szBuf);
 	stickyStatusMask = db_get_dw(NULL, CLVM_MODULE, szSetting, -1);
 	dwFlags = db_get_dw(NULL, CLVM_MODULE, szBuf, 0);
 	{
@@ -532,12 +532,12 @@ static void UpdateFilters()
 
 		item.mask = LVIF_TEXT;
 		item.pszText = szTemp;
-		item.cchTextMax = SIZEOF(szTemp);
+		item.cchTextMax = _countof(szTemp);
 
 		for (i = 0; i < ListView_GetItemCount(hwndList); i++) {
 			item.iItem = i;
 			SendMessageA(hwndList, LVM_GETITEMA, 0, (LPARAM)&item);
-			mir_snprintf(szMask, SIZEOF(szMask), "%s|", szTemp);
+			mir_snprintf(szMask, _countof(szMask), "%s|", szTemp);
 			if (szPF && strstr(szPF, szMask))
 				ListView_SetCheckState(hwndList, i, TRUE)
 			else
@@ -553,14 +553,14 @@ static void UpdateFilters()
 
 		item.mask = LVIF_TEXT;
 		item.pszText = szTemp;
-		item.cchTextMax = SIZEOF(szTemp);
+		item.cchTextMax = _countof(szTemp);
 
 		ListView_SetCheckState(hwndList, 0, dwFlags & CLVM_INCLUDED_UNGROUPED ? TRUE : FALSE);
 
 		for (i = 1; i < ListView_GetItemCount(hwndList); i++) {
 			item.iItem = i;
 			SendMessage(hwndList, LVM_GETITEM, 0, (LPARAM)&item);
-			mir_sntprintf(szMask, SIZEOF(szMask), _T("%s|"), szTemp);
+			mir_sntprintf(szMask, _countof(szMask), _T("%s|"), szTemp);
 			if (szGF && _tcsstr(szGF, szMask))
 				ListView_SetCheckState(hwndList, i, TRUE)
 			else
@@ -593,7 +593,7 @@ static void UpdateFilters()
 		EnableWindow(GetDlgItem(clvmHwnd, IDC_LASTMSGVALUE), useLastMsg);
 		EnableWindow(GetDlgItem(clvmHwnd, IDC_LASTMESSAGEUNIT), useLastMsg);
 
-		mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_LM", 246, szBuf);
+		mir_snprintf(szSetting, "%c%s_LM", 246, szBuf);
 		DWORD lmdat = db_get_dw(NULL, CLVM_MODULE, szSetting, 0);
 
 		SetDlgItemInt(clvmHwnd, IDC_LASTMSGVALUE, LOWORD(lmdat), FALSE);
@@ -610,15 +610,15 @@ void DeleteViewMode(char * szName)
 {
 	char szSetting[256];
 
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_PF", 246, szName);
+	mir_snprintf(szSetting, "%c%s_PF", 246, szName);
 	db_unset(NULL, CLVM_MODULE, szSetting);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_GF", 246, szName);
+	mir_snprintf(szSetting, "%c%s_GF", 246, szName);
 	db_unset(NULL, CLVM_MODULE, szSetting);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_SM", 246, szName);
+	mir_snprintf(szSetting, "%c%s_SM", 246, szName);
 	db_unset(NULL, CLVM_MODULE, szSetting);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_VA", 246, szName);
+	mir_snprintf(szSetting, "%c%s_VA", 246, szName);
 	db_unset(NULL, CLVM_MODULE, szSetting);
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_SSM", 246, szName);
+	mir_snprintf(szSetting, "%c%s_SSM", 246, szName);
 	db_unset(NULL, CLVM_MODULE, szSetting);
 	db_unset(NULL, CLVM_MODULE, szName);
 
@@ -644,12 +644,12 @@ INT_PTR CALLBACK DlgProcViewModesSetup(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 		{
 			int i;
 			for (i = ID_STATUS_OFFLINE; i <= ID_STATUS_OUTTOLUNCH; i++) {
-				HICON hIcon = LoadSkinnedProtoIcon(NULL, i);
+				HICON hIcon = Skin_LoadProtoIcon(NULL, i);
 				ImageList_AddIcon(himlViewModes, hIcon);
-				Skin_ReleaseIcon(hIcon);
+				IcoLib_ReleaseIcon(hIcon);
 			}
 
-			HICON hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_SMALLDOT), IMAGE_ICON, 16, 16, 0);
+			HICON hIcon = (HICON)LoadImage(g_hMirApp, MAKEINTRESOURCE(IDI_SMALLDOT), IMAGE_ICON, 16, 16, 0);
 			nullImage = ImageList_AddIcon(himlViewModes, hIcon);
 			DestroyIcon(hIcon);
 
@@ -770,7 +770,7 @@ INT_PTR CALLBACK DlgProcViewModesSetup(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 		{
 			TCHAR szBuf[256];
 			szBuf[0] = 0;
-			GetDlgItemText(hwndDlg, IDC_NEWVIEMODE, szBuf, SIZEOF(szBuf));
+			GetDlgItemText(hwndDlg, IDC_NEWVIEMODE, szBuf, _countof(szBuf));
 			szBuf[255] = 0;
 
 			if (szBuf[0] != 0) {
@@ -1086,7 +1086,8 @@ LRESULT CALLBACK ViewModeFrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 						goto clvm_reset_command;
 
 					TCHAR szTemp[256];
-					MENUITEMINFO mii = { sizeof(mii) };
+					MENUITEMINFO mii = { 0 };
+					mii.cbSize = sizeof(mii);
 					mii.fMask = MIIM_STRING;
 					mii.dwTypeData = szTemp;
 					mii.cch = 256;
@@ -1165,13 +1166,11 @@ static int  ehhViewModeBackgroundSettingsChanged(WPARAM, LPARAM)
 	}
 
 	if (g_CluiData.fDisableSkinEngine) {
-		DBVARIANT dbv;
 		view_mode.bkColour = sttGetColor("ViewMode", "BkColour", CLCDEFAULT_BKCOLOUR);
 		if (db_get_b(NULL, "ViewMode", "UseBitmap", CLCDEFAULT_USEBITMAP)) {
-			if (!db_get_s(NULL, "ViewMode", "BkBitmap", &dbv)) {
-				view_mode.hBmpBackground = (HBITMAP)CallService(MS_UTILS_LOADBITMAP, 0, (LPARAM)dbv.pszVal);
-				db_free(&dbv);
-			}
+			ptrT tszBitmapName(db_get_tsa(NULL, "ViewMode", "BkBitmap"));
+			if (tszBitmapName)
+				view_mode.hBmpBackground = Bitmap_Load(tszBitmapName);
 		}
 		view_mode.useWinColors = db_get_b(NULL, "ViewMode", "UseWinColours", CLCDEFAULT_USEWINDOWSCOLOURS);
 		view_mode.backgroundBmpUse = db_get_w(NULL, "ViewMode", "BkBmpUse", CLCDEFAULT_BKBMPUSE);
@@ -1201,7 +1200,7 @@ void CreateViewModeFrame()
 	CLISTFrame frame = { 0 };
 	frame.cbSize = sizeof(frame);
 	frame.tname = _T("View modes");
-	frame.hIcon = LoadSkinnedIcon(SKINICON_OTHER_FRAME);
+	frame.hIcon = Skin_LoadIcon(SKINICON_OTHER_FRAME);
 	frame.height = 18;
 	frame.TBtname = TranslateT("View modes");
 	frame.Flags = F_VISIBLE | F_SHOWTBTIP | F_NOBORDER | F_NO_SUBCONTAINER | F_TCHAR;
@@ -1225,7 +1224,7 @@ void ApplyViewMode(const char *Name, bool onlySelector)
 
 	g_CluiData.bFilterEffective = 0;
 
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%c_LastMode", 246);
+	mir_snprintf(szSetting, "%c_LastMode", 246);
 
 	if (!Name) { // Name is null - apply last stored view mode
 		if (!db_get_s(NULL, CLVM_MODULE, szSetting, &dbv)) {
@@ -1240,7 +1239,7 @@ void ApplyViewMode(const char *Name, bool onlySelector)
 		g_CluiData.bFilterEffective = 0;
 
 		// remove last applied view mode
-		mir_snprintf(szSetting, SIZEOF(szSetting), "%c_LastMode", 246);
+		mir_snprintf(szSetting, "%c_LastMode", 246);
 		db_unset(NULL, CLVM_MODULE, szSetting);
 
 		if (g_CluiData.bOldUseGroups != (BYTE)-1)
@@ -1261,30 +1260,30 @@ void ApplyViewMode(const char *Name, bool onlySelector)
 	}
 
 	if (!onlySelector) {
-		mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_PF", 246, Name);
+		mir_snprintf(szSetting, "%c%s_PF", 246, Name);
 		if (!db_get_s(NULL, CLVM_MODULE, szSetting, &dbv)) {
 			if (mir_strlen(dbv.pszVal) >= 2) {
-				mir_strncpy(g_CluiData.protoFilter, dbv.pszVal, SIZEOF(g_CluiData.protoFilter));
-				g_CluiData.protoFilter[SIZEOF(g_CluiData.protoFilter) - 1] = 0;
+				mir_strncpy(g_CluiData.protoFilter, dbv.pszVal, _countof(g_CluiData.protoFilter));
+				g_CluiData.protoFilter[_countof(g_CluiData.protoFilter) - 1] = 0;
 				g_CluiData.bFilterEffective |= CLVM_FILTER_PROTOS;
 			}
 			mir_free(dbv.pszVal);
 		}
-		mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_GF", 246, Name);
+		mir_snprintf(szSetting, "%c%s_GF", 246, Name);
 		if (!db_get_ts(NULL, CLVM_MODULE, szSetting, &dbv)) {
 			if (mir_tstrlen(dbv.ptszVal) >= 2) {
-				mir_tstrncpy(g_CluiData.groupFilter, dbv.ptszVal, SIZEOF(g_CluiData.groupFilter));
-				g_CluiData.groupFilter[SIZEOF(g_CluiData.groupFilter) - 1] = 0;
+				mir_tstrncpy(g_CluiData.groupFilter, dbv.ptszVal, _countof(g_CluiData.groupFilter));
+				g_CluiData.groupFilter[_countof(g_CluiData.groupFilter) - 1] = 0;
 				g_CluiData.bFilterEffective |= CLVM_FILTER_GROUPS;
 			}
 			mir_free(dbv.ptszVal);
 		}
-		mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_SM", 246, Name);
+		mir_snprintf(szSetting, "%c%s_SM", 246, Name);
 		g_CluiData.statusMaskFilter = db_get_dw(NULL, CLVM_MODULE, szSetting, -1);
 		if (g_CluiData.statusMaskFilter >= 1)
 			g_CluiData.bFilterEffective |= CLVM_FILTER_STATUS;
 
-		mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_SSM", 246, Name);
+		mir_snprintf(szSetting, "%c%s_SSM", 246, Name);
 		g_CluiData.stickyMaskFilter = db_get_dw(NULL, CLVM_MODULE, szSetting, -1);
 		if (g_CluiData.stickyMaskFilter != -1)
 			g_CluiData.bFilterEffective |= CLVM_FILTER_STICKYSTATUS;
@@ -1294,17 +1293,17 @@ void ApplyViewMode(const char *Name, bool onlySelector)
 		KillTimer(g_hwndViewModeFrame, TIMERID_VIEWMODEEXPIRE);
 
 		if (g_CluiData.filterFlags & CLVM_AUTOCLEAR) {
-			mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_OPT", 246, Name);
+			mir_snprintf(szSetting, "%c%s_OPT", 246, Name);
 			DWORD timerexpire = LOWORD(db_get_dw(NULL, CLVM_MODULE, szSetting, 0));
-			mir_strncpy(g_CluiData.old_viewmode, g_CluiData.current_viewmode, SIZEOF(g_CluiData.old_viewmode));
+			mir_strncpy(g_CluiData.old_viewmode, g_CluiData.current_viewmode, _countof(g_CluiData.old_viewmode));
 			g_CluiData.old_viewmode[255] = 0;
 			CLUI_SafeSetTimer(g_hwndViewModeFrame, TIMERID_VIEWMODEEXPIRE, timerexpire * 1000, NULL);
 		}
 		else { //store last selected view mode only if it is not autoclear
-			mir_snprintf(szSetting, SIZEOF(szSetting), "%c_LastMode", 246);
+			mir_snprintf(szSetting, "%c_LastMode", 246);
 			db_set_s(NULL, CLVM_MODULE, szSetting, Name);
 		}
-		mir_strncpy(g_CluiData.current_viewmode, Name, SIZEOF(g_CluiData.current_viewmode));
+		mir_strncpy(g_CluiData.current_viewmode, Name, _countof(g_CluiData.current_viewmode));
 		g_CluiData.current_viewmode[255] = 0;
 
 		if (g_CluiData.filterFlags & CLVM_USELASTMSG) {
@@ -1318,7 +1317,7 @@ void ApplyViewMode(const char *Name, bool onlySelector)
 			g_CluiData.bSortByOrder[0] = bSaved;
 
 			g_CluiData.bFilterEffective |= CLVM_FILTER_LASTMSG;
-			mir_snprintf(szSetting, SIZEOF(szSetting), "%c%s_LM", 246, Name);
+			mir_snprintf(szSetting, "%c%s_LM", 246, Name);
 			g_CluiData.lastMsgFilter = db_get_dw(NULL, CLVM_MODULE, szSetting, 0);
 			if (LOBYTE(HIWORD(g_CluiData.lastMsgFilter)))
 				g_CluiData.bFilterEffective |= CLVM_FILTER_LASTMSG_NEWERTHAN;

@@ -19,7 +19,7 @@
 #include "linklist.h"
 
 extern HINSTANCE hInst;
-extern HANDLE hWindowList;
+extern MWindowList hWindowList;
 extern HCURSOR splitCursor;
 
 MYCOLOURSET colourSet;
@@ -76,9 +76,9 @@ INT_PTR CALLBACK MainDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		SetClassLongPtr(hDlg, GCLP_HICON, (LONG_PTR)LoadIcon(hInst, MAKEINTRESOURCE(IDI_LINKLISTICON))); 
 		WindowList_Add(hWindowList, hDlg, DlgParam->hContact);
-		mir_sntprintf(title, SIZEOF(title), _T("%s [%s]"), TranslateT("Linklist plugin"), (LPCTSTR)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)DlgParam->hContact, GCDNF_TCHAR));
+		mir_sntprintf(title, _countof(title), _T("%s [%s]"), TranslateT("Linklist plugin"), pcli->pfnGetContactDisplayName(DlgParam->hContact, 0));
 		SetWindowText(hDlg, title);
-		GetFilterText(listMenu, filter, SIZEOF(filter));
+		GetFilterText(listMenu, filter, _countof(filter));
 		SetDlgItemText(hDlg, IDC_STATUS, filter);
 			
 		mir_subclassWindow(GetDlgItem(hDlg, IDC_SPLITTER), SplitterProc);
@@ -104,7 +104,7 @@ INT_PTR CALLBACK MainDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 		if (((LPNMHDR)lParam)->code != EN_LINK)
 			break;
 		LPTSTR link;
-		BYTE openNewWindow, mouseEvent;
+		BYTE mouseEvent;
 		ENLINK *pENLink = (ENLINK*)lParam;
 
 		mouseEvent = db_get_b(NULL, LINKLIST_MODULE, LINKLIST_MOUSE_EVENT, 0xFF);
@@ -121,18 +121,13 @@ INT_PTR CALLBACK MainDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			link = (LPTSTR)mir_alloc((pENLink->chrg.cpMax - pENLink->chrg.cpMin + 2) * sizeof(TCHAR));
 			if (link == NULL)
 				break;
-			SendDlgItemMessage(hDlg, IDC_MAIN, EM_EXSETSEL, 0, (LPARAM)(&pENLink->chrg)); 
+			SendDlgItemMessage(hDlg, IDC_MAIN, EM_EXSETSEL, 0, (LPARAM)&pENLink->chrg); 
 			SendDlgItemMessage(hDlg, IDC_MAIN, EM_GETSELTEXT, 0, (LPARAM)link);
-			if (_tcsstr(link, _T("mailto:")) != NULL) {
+			if (_tcsstr(link, _T("mailto:")) != NULL)
 				ShellExecute(HWND_TOP, NULL, link, NULL, NULL, SW_SHOWNORMAL); 
-			} else {
-				openNewWindow = db_get_b(NULL, LINKLIST_MODULE, LINKLIST_OPEN_WINDOW, 0xFF);
-				if (openNewWindow == 0xFF)
-					openNewWindow = 0;
-				else
-					openNewWindow = OUF_NEWWINDOW;
-
-				CallService(MS_UTILS_OPENURL, openNewWindow | OUF_TCHAR, (LPARAM)link);
+			else {
+				bool openNewWindow = db_get_b(NULL, LINKLIST_MODULE, LINKLIST_OPEN_WINDOW, 0xFF) != 0xFF;
+				Utils_OpenUrlT(link,openNewWindow);
 			}
 			mir_free(link);
 			break;
@@ -150,7 +145,7 @@ INT_PTR CALLBACK MainDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			link = (LPTSTR)mir_alloc((pENLink->chrg.cpMax - pENLink->chrg.cpMin + 2) * sizeof(TCHAR));
 			if (link == NULL)
 				break;
-			SendDlgItemMessage(hDlg, IDC_MAIN, EM_EXSETSEL, 0, (LPARAM)(&(pENLink->chrg))); 
+			SendDlgItemMessage(hDlg, IDC_MAIN, EM_EXSETSEL, 0, (LPARAM)&pENLink->chrg); 
 			SendDlgItemMessage(hDlg, IDC_MAIN, EM_GETSELTEXT, 0, (LPARAM)link);
 
 			pt.x = (short)LOWORD(pENLink->lParam);
@@ -162,13 +157,13 @@ INT_PTR CALLBACK MainDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 				if (_tcsstr(link, _T("mailto:")) != NULL)
 					ShellExecute(HWND_TOP, NULL, link, NULL, NULL, SW_SHOWNORMAL); 
 				else
-					CallService(MS_UTILS_OPENURL, OUF_TCHAR, (LPARAM)link);
+					Utils_OpenUrlT(link,false);
 				break;
 			case IDM_LINK_OPENNEW:
 				if (_tcsstr(link, _T("mailto:")) != NULL)
 					ShellExecute(HWND_TOP, NULL, link, NULL, NULL, SW_SHOWNORMAL); 
 				else
-					CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW | OUF_TCHAR, (LPARAM)link);
+					Utils_OpenUrlT(link);
 				break;
 			case IDM_LINK_COPY: {
 				size_t dataLen;
@@ -207,7 +202,7 @@ INT_PTR CALLBACK MainDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 		case IDM_CLEARSEARCH: // clear search results
-			GetFilterText(listMenu, filter, SIZEOF(filter));
+			GetFilterText(listMenu, filter, _countof(filter));
 			SetDlgItemText(hDlg, IDC_STATUS, filter);
 			SetDlgItemText(hDlg, IDC_MAIN, _T(""));
 			WriteLinkList(hDlg, GetFlags(listMenu), DlgParam->listStart, NULL, 0);
@@ -221,7 +216,7 @@ INT_PTR CALLBACK MainDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 			SendMessage(hDlg, WM_CLOSE, 0, 0);
 			break;
 		case IDM_DIR_IN: // view only incoming messages
-			GetFilterText(listMenu, filter, SIZEOF(filter));
+			GetFilterText(listMenu, filter, _countof(filter));
 			SetDlgItemText(hDlg, IDC_STATUS, filter);
 			if ((GetMenuState(listMenu, IDM_SEARCH, MF_BYCOMMAND) & MF_DISABLED))
 				break; // not possible if search dialog is open
@@ -234,11 +229,11 @@ INT_PTR CALLBACK MainDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 				CheckMenuItem(listMenu, IDM_DIR_OUT, MF_UNCHECKED);
 				WriteLinkList(hDlg, GetFlags(listMenu), DlgParam->listStart, NULL, 0);
 			}		
-			GetFilterText(GetMenu(hDlg), filter, SIZEOF(filter));
+			GetFilterText(GetMenu(hDlg), filter, _countof(filter));
 			SetDlgItemText(hDlg, IDC_STATUS, filter);
 			break;
 		case IDM_DIR_OUT: // view only outgoing messages
-			GetFilterText(listMenu, filter, SIZEOF(filter));
+			GetFilterText(listMenu, filter, _countof(filter));
 			SetDlgItemText(hDlg, IDC_STATUS, filter);
 			if ((GetMenuState(listMenu, IDM_SEARCH, MF_BYCOMMAND) & MF_DISABLED))
 				break; // not possible if search dialog is open
@@ -251,11 +246,11 @@ INT_PTR CALLBACK MainDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 				CheckMenuItem(listMenu, IDM_DIR_IN, MF_UNCHECKED);
 				WriteLinkList(hDlg, GetFlags(listMenu), DlgParam->listStart, NULL, 0);
 			}
-			GetFilterText(listMenu, filter, SIZEOF(filter));
+			GetFilterText(listMenu, filter, _countof(filter));
 			SetDlgItemText(hDlg, IDC_STATUS, filter);
 			break;
 		case IDM_TYPE_WEB: // view only e-mail addresses
-			GetFilterText(listMenu, filter, SIZEOF(filter));
+			GetFilterText(listMenu, filter, _countof(filter));
 			SetDlgItemText(hDlg, IDC_STATUS, filter);
 			// not possible if search dialog is open
 			if ((GetMenuState(listMenu, IDM_SEARCH, MF_BYCOMMAND) & MF_DISABLED))
@@ -269,7 +264,7 @@ INT_PTR CALLBACK MainDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 				CheckMenuItem(listMenu, IDM_TYPE_MAIL, MF_UNCHECKED);
 				WriteLinkList(hDlg, GetFlags(listMenu), DlgParam->listStart, NULL, 0);
 			}
-			GetFilterText(listMenu, filter, SIZEOF(filter));
+			GetFilterText(listMenu, filter, _countof(filter));
 			SetDlgItemText(hDlg, IDC_STATUS, filter);
 			break;
 		case IDM_TYPE_MAIL: // view only URLs
@@ -284,7 +279,7 @@ INT_PTR CALLBACK MainDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 				CheckMenuItem(listMenu, IDM_TYPE_WEB, MF_UNCHECKED);
 				WriteLinkList(hDlg, GetFlags(listMenu), DlgParam->listStart, NULL, 0);
 			}
-			GetFilterText(listMenu, filter, SIZEOF(filter));
+			GetFilterText(listMenu, filter, _countof(filter));
 			SetDlgItemText(hDlg, IDC_STATUS, filter);
 			break;
 		}
@@ -302,20 +297,13 @@ INT_PTR CALLBACK MainDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 		mmi->ptMinTrackSize.x = rcWindow.right - rcWindow.left - ((rcMain.right - rcMain.left) - DlgParam->minSize.cx);
 		mmi->ptMinTrackSize.y = rcWindow.bottom - rcWindow.top - ((rcMain.bottom - rcMain.top) - DlgParam->minSize.cy);
 		} break;
-	case WM_SIZE: {
-		UTILRESIZEDIALOG urd = {0};
-
-		urd.cbSize = sizeof(urd);
-		urd.hwndDlg = hDlg;
-		urd.hInstance = hInst;
-		urd.lpTemplate = MAKEINTRESOURCEA(IDD_MAIN_DLG);
-		urd.pfnResizer = LinklistResizer;
-		urd.lParam = (LPARAM)DlgParam;
-		CallService(MS_UTILS_RESIZEDIALOG, 0, (LPARAM)&urd);
+	case WM_SIZE:
+		Utils_ResizeDialog(hDlg, hInst, MAKEINTRESOURCEA(IDD_MAIN_DLG), LinklistResizer, (LPARAM)DlgParam);
 		// To get some scrollbars if needed...
 		RedrawWindow(GetDlgItem(hDlg, IDC_MAIN), NULL, NULL, RDW_INVALIDATE);
 		RedrawWindow(GetDlgItem(hDlg, IDC_MESSAGE), NULL, NULL, RDW_INVALIDATE);
-		} break;
+		break;
+	
 	case DM_LINKSPLITTER: {
 		POINT pt;
 		RECT rc;
@@ -413,7 +401,7 @@ INT_PTR CALLBACK SearchDlgProc( HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
 				WriteLinkList(hListDlg, flags, DlgParam->listStart, buffer, 0);
 				mir_free(buffer);
 			}		
-			mir_sntprintf(filter, SIZEOF(filter), _T("%s: %s"), TXT_FILTER, TXT_SEARCHFILTER);
+			mir_sntprintf(filter, _countof(filter), _T("%s: %s"), TXT_FILTER, TXT_SEARCHFILTER);
 			SetDlgItemText(hWndMain, IDC_STATUS, filter);
 			} break;
 		}

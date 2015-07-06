@@ -22,10 +22,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include <commonheaders.h>
+#include "stdafx.h"
 #include <m_findadd.h>
-#include "../cluiframes/cluiframes.h"
-#include "../coolsb/coolscroll.h"
+#include "cluiframes.h"
+#include "coolscroll.h"
 
 #define TM_AUTOALPHA  1
 #define TIMERID_AUTOSIZE 100
@@ -73,12 +73,11 @@ void InitGroupMenus();
 void FS_RegisterFonts();
 void LoadExtraIconModule();
 void RemoveFromTaskBar(HWND hWnd);
-void DestroyTrayMenu(HMENU hMenu);
 
 extern LONG g_cxsmIcon, g_cysmIcon;
 
-SIZE g_oldSize = {0};
-POINT g_oldPos = {0};
+SIZE g_oldSize = { 0 };
+POINT g_oldPos = { 0 };
 int during_sizing = 0;
 extern int dock_prevent_moving;
 
@@ -88,20 +87,20 @@ static HBITMAP hbmLockedPoint = 0, hbmOldLockedPoint = 0;
 HICON overlayicons[10];
 
 static IconItem myIcons[] = {
-	{ LPGEN("Toggle show online/offline"),	"CLN_online",		IDI_HIDEOFFLINE },
-	{ LPGEN("Toggle groups"),				"CLN_groups",		IDI_HIDEGROUPS },
-	{ LPGEN("Find contacts"),				"CLN_findadd",		IDI_FINDANDADD },
-	{ LPGEN("Open preferences"),			"CLN_options",		IDI_TBOPTIONS },
-	{ LPGEN("Toggle sounds"),				"CLN_sound",		IDI_SOUNDSON },
-	{ LPGEN("Minimize contact list"),		"CLN_minimize",		IDI_MINIMIZE },
-	{ LPGEN("Show TabSRMM session list"),	"CLN_slist",		IDI_TABSRMMSESSIONLIST },
-	{ LPGEN("Show TabSRMM menu"),			"CLN_menu",			IDI_TABSRMMMENU },
-	{ LPGEN("Sounds are off"),				"CLN_soundsoff",	IDI_SOUNDSOFF },
-	{ LPGEN("Select view mode"),			"CLN_CLVM_select",	IDI_CLVM_SELECT },
-	{ LPGEN("Reset view mode"),				"CLN_CLVM_reset",	IDI_DELETE },
-	{ LPGEN("Configure view modes"),		"CLN_CLVM_options",	IDI_CLVM_OPTIONS },
-	{ LPGEN("Show menu"),					"CLN_topmenu",		IDI_TBTOPMENU },
-	{ LPGEN("Setup accounts"),				"CLN_accounts",		IDI_TBACCOUNTS }
+	{ LPGEN("Toggle show online/offline"), "CLN_online", IDI_HIDEOFFLINE },
+	{ LPGEN("Toggle groups"), "CLN_groups", IDI_HIDEGROUPS },
+	{ LPGEN("Find contacts"), "CLN_findadd", IDI_FINDANDADD },
+	{ LPGEN("Open preferences"), "CLN_options", IDI_TBOPTIONS },
+	{ LPGEN("Toggle sounds"), "CLN_sound", IDI_SOUNDSON },
+	{ LPGEN("Minimize contact list"), "CLN_minimize", IDI_MINIMIZE },
+	{ LPGEN("Show TabSRMM session list"), "CLN_slist", IDI_TABSRMMSESSIONLIST },
+	{ LPGEN("Show TabSRMM menu"), "CLN_menu", IDI_TABSRMMMENU },
+	{ LPGEN("Sounds are off"), "CLN_soundsoff", IDI_SOUNDSOFF },
+	{ LPGEN("Select view mode"), "CLN_CLVM_select", IDI_CLVM_SELECT },
+	{ LPGEN("Reset view mode"), "CLN_CLVM_reset", IDI_DELETE },
+	{ LPGEN("Configure view modes"), "CLN_CLVM_options", IDI_CLVM_OPTIONS },
+	{ LPGEN("Show menu"), "CLN_topmenu", IDI_TBTOPMENU },
+	{ LPGEN("Setup accounts"), "CLN_accounts", IDI_TBACCOUNTS }
 };
 
 HWND hTbMenu, hTbGlobalStatus;
@@ -187,7 +186,7 @@ static int CreateCLC()
 		frame.cbSize = sizeof(frame);
 		frame.tname = _T("EventArea");
 		frame.TBtname = TranslateT("Event area");
-		frame.hIcon = LoadSkinnedIcon(SKINICON_OTHER_FRAME);
+		frame.hIcon = Skin_LoadIcon(SKINICON_OTHER_FRAME);
 		frame.height = 20;
 		frame.Flags = F_VISIBLE | F_SHOWTBTIP | F_NOBORDER | F_TCHAR;
 		frame.align = alBottom;
@@ -203,7 +202,7 @@ static int CreateCLC()
 		Frame.cbSize = sizeof(CLISTFrame);
 		Frame.hWnd = pcli->hwndContactTree;
 		Frame.align = alClient;
-		Frame.hIcon = LoadSkinnedIcon(SKINICON_OTHER_FRAME);
+		Frame.hIcon = Skin_LoadIcon(SKINICON_OTHER_FRAME);
 		Frame.Flags = F_VISIBLE | F_SHOWTB | F_SHOWTBTIP | F_NOBORDER | F_TCHAR;
 		Frame.tname = _T("My contacts");
 		Frame.TBtname = TranslateT("My contacts");
@@ -247,31 +246,31 @@ static void CacheClientIcons()
 
 	for (int i = IDI_OVL_OFFLINE; i <= IDI_OVL_OUTTOLUNCH; i++) {
 		char szBuffer[128];
-		mir_snprintf(szBuffer, SIZEOF(szBuffer), "cln_ovl_%d", ID_STATUS_OFFLINE + (i - IDI_OVL_OFFLINE));
-		overlayicons[i - IDI_OVL_OFFLINE] = Skin_GetIcon(szBuffer);
+		mir_snprintf(szBuffer, _countof(szBuffer), "cln_ovl_%d", ID_STATUS_OFFLINE + (i - IDI_OVL_OFFLINE));
+		overlayicons[i - IDI_OVL_OFFLINE] = IcoLib_GetIcon(szBuffer);
 	}
 }
 
 static void InitIcoLib()
 {
-	Icon_Register(g_hInst, LPGEN("Contact list")"/"LPGEN("Default"), myIcons, SIZEOF(myIcons));
+	Icon_Register(g_hInst, LPGEN("Contact list")"/"LPGEN("Default"), myIcons, _countof(myIcons));
 
 	for (int i = IDI_OVL_OFFLINE; i <= IDI_OVL_OUTTOLUNCH; i++) {
 		char szBuffer[128];
-		mir_snprintf(szBuffer, SIZEOF(szBuffer), "cln_ovl_%d", ID_STATUS_OFFLINE + (i - IDI_OVL_OFFLINE));
-		IconItemT icon = { pcli->pfnGetStatusModeDescription(ID_STATUS_OFFLINE + (i - IDI_OVL_OFFLINE), GSMDF_TCHAR), szBuffer, i };
+		mir_snprintf(szBuffer, _countof(szBuffer), "cln_ovl_%d", ID_STATUS_OFFLINE + (i - IDI_OVL_OFFLINE));
+		IconItemT icon = { pcli->pfnGetStatusModeDescription(ID_STATUS_OFFLINE + (i - IDI_OVL_OFFLINE), 0), szBuffer, i };
 		Icon_RegisterT(g_hInst, LPGENT("Contact list")_T("/")LPGENT("Overlay icons"), &icon, 1);
 	}
 
 	PROTOACCOUNT **accs = NULL;
 	int p_count = 0;
-	ProtoEnumAccounts(&p_count, &accs);
+	Proto_EnumAccounts(&p_count, &accs);
 	for (int k = 0; k < p_count; k++) {
-		if (!IsAccountEnabled(accs[k]) || CallProtoService(accs[k]->szModuleName, PS_GETCAPS, PFLAGNUM_2, 0) == 0)
+		if (!Proto_IsAccountEnabled(accs[k]) || CallProtoService(accs[k]->szModuleName, PS_GETCAPS, PFLAGNUM_2, 0) == 0)
 			continue;
 
 		TCHAR szDescr[128];
-		mir_sntprintf(szDescr, SIZEOF(szDescr), TranslateT("%s connecting"), accs[k]->tszAccountName);
+		mir_sntprintf(szDescr, _countof(szDescr), TranslateT("%s connecting"), accs[k]->tszAccountName);
 		IconItemT icon = { szDescr, "conn", IDI_PROTOCONNECTING };
 		Icon_RegisterT(g_hInst, LPGENT("Contact list")_T("/")LPGENT("Connecting icons"), &icon, 1, accs[k]->szModuleName);
 	}
@@ -288,14 +287,14 @@ void CreateButtonBar(HWND hWnd)
 	hTbMenu = CreateWindowEx(0, MIRANDABUTTONCLASS, _T(""), BS_PUSHBUTTON | WS_CHILD | WS_TABSTOP, 0, 0, 20, 20, hWnd, (HMENU)IDC_TBMENU, g_hInst, NULL);
 	CustomizeButton(hTbMenu, false, false, false);
 	SetWindowText(hTbMenu, TranslateT("Menu"));
-	SendMessage(hTbMenu, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadSkinnedIcon(SKINICON_OTHER_MAINMENU));
+	SendMessage(hTbMenu, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_MAINMENU));
 	SendMessage(hTbMenu, BUTTONSETSENDONDOWN, TRUE, 0);
 	SendMessage(hTbMenu, BUTTONADDTOOLTIP, (WPARAM)LPGEN("Open main menu"), 0);
 
 	hTbGlobalStatus = CreateWindowEx(0, MIRANDABUTTONCLASS, _T(""), BS_PUSHBUTTON | WS_CHILD | WS_TABSTOP, 0, 0, 20, 20, hWnd, (HMENU)IDC_TBGLOBALSTATUS, g_hInst, NULL);
 	CustomizeButton(hTbGlobalStatus, false, false, false);
 	SetWindowText(hTbGlobalStatus, TranslateT("Offline"));
-	SendMessage(hTbGlobalStatus, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadSkinnedIcon(SKINICON_STATUS_OFFLINE));
+	SendMessage(hTbGlobalStatus, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(SKINICON_STATUS_OFFLINE));
 	SendMessage(hTbGlobalStatus, BUTTONSETSENDONDOWN, TRUE, 0);
 	SendMessage(hTbGlobalStatus, BUTTONADDTOOLTIP, (WPARAM)LPGEN("Set status modes"), 0);
 }
@@ -333,7 +332,7 @@ void ConfigureEventArea()
 void ConfigureFrame()
 {
 	int show = cfg::dat.dwFlags & CLUI_FRAME_SHOWBOTTOMBUTTONS ? SW_SHOW : SW_HIDE;
-	ShowWindow(hTbMenu,show);
+	ShowWindow(hTbMenu, show);
 	ShowWindow(hTbGlobalStatus, show);
 }
 
@@ -415,7 +414,7 @@ void SetDBButtonStates(MCONTACT hPassedContact)
 			hFinalContact = 0;
 
 		if (buttonItem->type == DBVT_ASCIIZ) {
-			DBVARIANT dbv = {0};
+			DBVARIANT dbv = { 0 };
 
 			if (!cfg::getString(hFinalContact, szModule, szSetting, &dbv)) {
 				result = !mir_strcmp((char *)buttonItem->bValuePush, dbv.pszVal);
@@ -425,15 +424,15 @@ void SetDBButtonStates(MCONTACT hPassedContact)
 		else {
 			switch (buttonItem->type) {
 			case DBVT_BYTE: {
-				BYTE val = cfg::getByte(hFinalContact, szModule, szSetting, 0);
-				result = (val == buttonItem->bValuePush[0]);
-				break;
-			}
+					BYTE val = cfg::getByte(hFinalContact, szModule, szSetting, 0);
+					result = (val == buttonItem->bValuePush[0]);
+					break;
+				}
 			case DBVT_WORD: {
-				WORD val = cfg::getWord(hFinalContact, szModule, szSetting, 0);
-				result = (val == *((WORD *)&buttonItem->bValuePush));
-				break;
-			}
+					WORD val = cfg::getWord(hFinalContact, szModule, szSetting, 0);
+					result = (val == *((WORD *)&buttonItem->bValuePush));
+					break;
+				}
 			case DBVT_DWORD:
 				DWORD val = cfg::getDword(hFinalContact, szModule, szSetting, 0);
 				result = (val == *((DWORD *)&buttonItem->bValuePush));
@@ -498,47 +497,49 @@ void BlitWallpaper(HDC hdc, RECT *rc, struct ClcData *dat)
 	maxx = dat->backgroundBmpUse & CLBF_TILEH ? rc->right : rc->left + 1;
 	maxy = dat->backgroundBmpUse & CLBF_TILEV ? rc->bottom : y + 1;
 	switch (dat->backgroundBmpUse & CLBM_TYPE) {
-		case CLB_STRETCH:
-			if (dat->backgroundBmpUse & CLBF_PROPORTIONAL) {
-				if (width * bmp->bmHeight < height * bmp->bmWidth) {
-					desth = height;
-					destw = desth * bmp->bmWidth / bmp->bmHeight;
-				}
-				else {
-					destw = width;
-					desth = destw * bmp->bmHeight / bmp->bmWidth;
-				}
-			}
-			else {
-				destw = width;
-				desth = height;
-			}
-			break;
-		case CLB_STRETCHH:
-			if (dat->backgroundBmpUse & CLBF_PROPORTIONAL) {
-				destw = width;
-				desth = destw * bmp->bmHeight / bmp->bmWidth;
-			}
-			else {
-				destw = width;
-				desth = bmp->bmHeight;
-			}
-			break;
-		case CLB_STRETCHV:
-			if (dat->backgroundBmpUse & CLBF_PROPORTIONAL) {
+	case CLB_STRETCH:
+		if (dat->backgroundBmpUse & CLBF_PROPORTIONAL) {
+			if (width * bmp->bmHeight < height * bmp->bmWidth) {
 				desth = height;
 				destw = desth * bmp->bmWidth / bmp->bmHeight;
 			}
 			else {
-				destw = bmp->bmWidth;
-				desth = height;
+				destw = width;
+				desth = destw * bmp->bmHeight / bmp->bmWidth;
 			}
-			break;
-		default:
-			//clb_topleft
-			destw = bmp->bmWidth;
+		}
+		else {
+			destw = width;
+			desth = height;
+		}
+		break;
+	case CLB_STRETCHH:
+		if (dat->backgroundBmpUse & CLBF_PROPORTIONAL) {
+			destw = width;
+			desth = destw * bmp->bmHeight / bmp->bmWidth;
+		}
+		else {
+			destw = width;
 			desth = bmp->bmHeight;
-			break;
+		}
+		break;
+
+	case CLB_STRETCHV:
+		if (dat->backgroundBmpUse & CLBF_PROPORTIONAL) {
+			desth = height;
+			destw = desth * bmp->bmWidth / bmp->bmHeight;
+		}
+		else {
+			destw = bmp->bmWidth;
+			desth = height;
+		}
+		break;
+
+	default:
+		//clb_topleft
+		destw = bmp->bmWidth;
+		desth = bmp->bmHeight;
+		break;
 	}
 
 	bitx = 0;
@@ -553,26 +554,26 @@ void BlitWallpaper(HDC hdc, RECT *rc, struct ClcData *dat)
 
 void ReloadThemedOptions()
 {
-	cfg::dat.bSkinnedStatusBar = 	cfg::getByte("CLUI", "sb_skinned", 0);
-	cfg::dat.bUsePerProto = 		cfg::getByte("CLCExt", "useperproto", 0);
+	cfg::dat.bSkinnedStatusBar = cfg::getByte("CLUI", "sb_skinned", 0);
+	cfg::dat.bUsePerProto = cfg::getByte("CLCExt", "useperproto", 0);
 	cfg::dat.bOverridePerStatusColors = cfg::getByte("CLCExt", "override_status", 0);
-	cfg::dat.bRowSpacing = 			cfg::getByte("CLC", "RowGap", 0);
-	cfg::dat.bApplyIndentToBg = 	cfg::getByte("CLCExt", "applyindentbg", 0);
-	cfg::dat.bWallpaperMode = 		cfg::getByte("CLUI", "UseBkSkin", 1);
-	cfg::dat.bClipBorder = 			cfg::getByte("CLUI", "clipborder", 0);
-	cfg::dat.cornerRadius = 		cfg::getByte("CLCExt", "CornerRad", 6);
-	cfg::dat.gapBetweenFrames = 	(BYTE)cfg::getDword("CLUIFrames", "GapBetweenFrames", 1);
-	cfg::dat.bUseDCMirroring = 		cfg::getByte("CLC", "MirrorDC", 0);
-	cfg::dat.bGroupAlign = 			cfg::getByte("CLC", "GroupAlign", 0);
+	cfg::dat.bRowSpacing = cfg::getByte("CLC", "RowGap", 0);
+	cfg::dat.bApplyIndentToBg = cfg::getByte("CLCExt", "applyindentbg", 0);
+	cfg::dat.bWallpaperMode = cfg::getByte("CLUI", "UseBkSkin", 1);
+	cfg::dat.bClipBorder = cfg::getByte("CLUI", "clipborder", 0);
+	cfg::dat.cornerRadius = cfg::getByte("CLCExt", "CornerRad", 6);
+	cfg::dat.gapBetweenFrames = (BYTE)cfg::getDword("CLUIFrames", "GapBetweenFrames", 1);
+	cfg::dat.bUseDCMirroring = cfg::getByte("CLC", "MirrorDC", 0);
+	cfg::dat.bGroupAlign = cfg::getByte("CLC", "GroupAlign", 0);
 	if (cfg::dat.hBrushColorKey)
 		DeleteObject(cfg::dat.hBrushColorKey);
 	cfg::dat.hBrushColorKey = CreateSolidBrush(RGB(255, 0, 255));
-	cfg::dat.bWantFastGradients = 	cfg::getByte("CLCExt", "FastGradients", 0);
-	cfg::dat.titleBarHeight = 		cfg::getByte("CLCExt", "frame_height", DEFAULT_TITLEBAR_HEIGHT);
-	cfg::dat.group_padding = 		cfg::getDword("CLCExt", "grp_padding", 0);
+	cfg::dat.bWantFastGradients = cfg::getByte("CLCExt", "FastGradients", 0);
+	cfg::dat.titleBarHeight = cfg::getByte("CLCExt", "frame_height", DEFAULT_TITLEBAR_HEIGHT);
+	cfg::dat.group_padding = cfg::getDword("CLCExt", "grp_padding", 0);
 }
 
-static RECT rcWindow = {0};
+static RECT rcWindow = { 0 };
 
 static void sttProcessResize(HWND hwnd, NMCLISTCONTROL *nmc)
 {
@@ -706,7 +707,7 @@ int CustomDrawScrollBars(NMCSBCUSTOMDRAW *nmcsbcd)
 				arrowItem = arStatusItems[ID_EXTBKSCROLLARROWDOWN - ID_STATUS_OFFLINE];
 			if (arrowItem && !arrowItem->IGNORED)
 				DrawAlpha(hdcScroll, &nmcsbcd->rect, arrowItem->COLOR, arrowItem->ALPHA, arrowItem->COLOR2, arrowItem->COLOR2_TRANSPARENT,
-					arrowItem->GRADIENT, arrowItem->CORNER, arrowItem->BORDERSTYLE, arrowItem->imageItem);
+				arrowItem->GRADIENT, arrowItem->CORNER, arrowItem->BORDERSTYLE, arrowItem->imageItem);
 			else if (arrowItem)
 				DrawFrameControl(hdcScroll, &nmcsbcd->rect, DFC_SCROLL, (nmcsbcd->uItem == HTSCROLL_UP ? DFCS_SCROLLUP : DFCS_SCROLLDOWN) | dfcFlags);
 
@@ -776,6 +777,8 @@ static void GetButtonRect(HWND hwnd, RECT *rc)
 
 LRESULT CALLBACK ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	RECT rc;
+
 	switch (msg) {
 	case WM_CREATE:
 		{
@@ -827,84 +830,84 @@ LRESULT CALLBACK ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 		break;
 
 	case M_CREATECLC: {
-		if (cfg::getByte("CLUI", "useskin", 0))
-			IMG_LoadItems();
-		CreateButtonBar(hwnd);
-		//FYR: to be checked: otherwise it raises double xStatus items
-		//NotifyEventHooks(pcli->hPreBuildStatusMenuEvent, 0, 0);
-		SendMessage(hwnd, WM_SETREDRAW, FALSE, FALSE);
-		{
-			LONG style;
-			BYTE windowStyle = cfg::getByte("CLUI", "WindowStyle", SETTING_WINDOWSTYLE_TOOLWINDOW);
-			ShowWindow(pcli->hwndContactList, SW_HIDE);
-			style = GetWindowLongPtr(pcli->hwndContactList, GWL_EXSTYLE);
-			if (windowStyle != SETTING_WINDOWSTYLE_DEFAULT) {
-				style |= WS_EX_TOOLWINDOW | WS_EX_WINDOWEDGE;
-				style &= ~WS_EX_APPWINDOW;
-			}
-			else {
-				style &= ~(WS_EX_TOOLWINDOW | WS_EX_WINDOWEDGE);
-				if (cfg::getByte("CList", "AlwaysHideOnTB", 1))
+			if (cfg::getByte("CLUI", "useskin", 0))
+				IMG_LoadItems();
+			CreateButtonBar(hwnd);
+			//FYR: to be checked: otherwise it raises double xStatus items
+			//NotifyEventHooks(pcli->hPreBuildStatusMenuEvent, 0, 0);
+			SendMessage(hwnd, WM_SETREDRAW, FALSE, FALSE);
+			{
+				LONG style;
+				BYTE windowStyle = cfg::getByte("CLUI", "WindowStyle", SETTING_WINDOWSTYLE_TOOLWINDOW);
+				ShowWindow(pcli->hwndContactList, SW_HIDE);
+				style = GetWindowLongPtr(pcli->hwndContactList, GWL_EXSTYLE);
+				if (windowStyle != SETTING_WINDOWSTYLE_DEFAULT) {
+					style |= WS_EX_TOOLWINDOW | WS_EX_WINDOWEDGE;
 					style &= ~WS_EX_APPWINDOW;
-				else
-					style |= WS_EX_APPWINDOW;
-			}
-
-			SetWindowLongPtr(pcli->hwndContactList, GWL_EXSTYLE, style);
-			ApplyCLUIBorderStyle();
-
-			SetWindowPos(pcli->hwndContactList, 0, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED | SWP_NOACTIVATE);
-		}
-
-		if (cfg::dat.bSkinnedButtonMode)
-			SetButtonToSkinned();
-		ConfigureFrame();
-		SetButtonStates();
-
-		CreateCLC();
-		cfg::clcdat = (struct ClcData *)GetWindowLongPtr(pcli->hwndContactTree, 0);
-
-		if (cfg::dat.bFullTransparent) {
-			if (g_CLUISkinnedBkColorRGB)
-				Tweak_It(g_CLUISkinnedBkColorRGB);
-			else if (cfg::dat.bClipBorder || (cfg::dat.dwFlags & CLUI_FRAME_ROUNDEDFRAME))
-				Tweak_It(RGB(255, 0, 255));
-			else
-				Tweak_It(cfg::clcdat->bkColour);
-		}
-
-		cfg::writeByte("CList", "State", old_cliststate);
-
-		if (cfg::getByte("CList", "AutoApplyLastViewMode", 0)) {
-			DBVARIANT dbv = {0};
-			if (!db_get(NULL, "CList", "LastViewMode", &dbv)) {
-				if (mir_strlen(dbv.pszVal) > 2) {
-					if (cfg::getDword(NULL, CLVM_MODULE, dbv.pszVal, -1) != 0xffffffff)
-						ApplyViewMode((char *)dbv.pszVal);
 				}
-				db_free(&dbv);
+				else {
+					style &= ~(WS_EX_TOOLWINDOW | WS_EX_WINDOWEDGE);
+					if (cfg::getByte("CList", "AlwaysHideOnTB", 1))
+						style &= ~WS_EX_APPWINDOW;
+					else
+						style |= WS_EX_APPWINDOW;
+				}
+
+				SetWindowLongPtr(pcli->hwndContactList, GWL_EXSTYLE, style);
+				ApplyCLUIBorderStyle();
+
+				SetWindowPos(pcli->hwndContactList, 0, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED | SWP_NOACTIVATE);
 			}
+
+			if (cfg::dat.bSkinnedButtonMode)
+				SetButtonToSkinned();
+			ConfigureFrame();
+			SetButtonStates();
+
+			CreateCLC();
+			cfg::clcdat = (struct ClcData *)GetWindowLongPtr(pcli->hwndContactTree, 0);
+
+			if (cfg::dat.bFullTransparent) {
+				if (g_CLUISkinnedBkColorRGB)
+					Tweak_It(g_CLUISkinnedBkColorRGB);
+				else if (cfg::dat.bClipBorder || (cfg::dat.dwFlags & CLUI_FRAME_ROUNDEDFRAME))
+					Tweak_It(RGB(255, 0, 255));
+				else
+					Tweak_It(cfg::clcdat->bkColour);
+			}
+
+			cfg::writeByte("CList", "State", old_cliststate);
+
+			if (cfg::getByte("CList", "AutoApplyLastViewMode", 0)) {
+				DBVARIANT dbv = { 0 };
+				if (!db_get(NULL, "CList", "LastViewMode", &dbv)) {
+					if (mir_strlen(dbv.pszVal) > 2) {
+						if (cfg::getDword(NULL, CLVM_MODULE, dbv.pszVal, -1) != 0xffffffff)
+							ApplyViewMode((char *)dbv.pszVal);
+					}
+					db_free(&dbv);
+				}
+			}
+			if (!cfg::dat.autosize)
+				ShowCLUI(hwnd);
+			else {
+				show_on_first_autosize = TRUE;
+				RecalcScrollBar(pcli->hwndContactTree, cfg::clcdat);
+			}
+			return 0;
 		}
-		if (!cfg::dat.autosize)
-			ShowCLUI(hwnd);
-		else {
-			show_on_first_autosize = TRUE;
-			RecalcScrollBar(pcli->hwndContactTree, cfg::clcdat);
-		}
-		return 0;
-	}
 	case WM_ERASEBKGND:
 		return TRUE;
 		/*
 		if (cfg::dat.bSkinnedButtonMode)
-			return TRUE;
+		return TRUE;
 		return DefWindowProc(hwnd, msg, wParam, lParam);
 		*/
 
 	case WM_PAINT:
 		{
 			PAINTSTRUCT ps;
-			RECT rc, rcFrame, rcClient;
+			RECT rcFrame, rcClient;
 			HDC hdc;
 			HRGN rgn = 0;
 			HDC hdcReal = BeginPaint(hwnd, &ps);
@@ -1020,8 +1023,7 @@ skipbg:
 
 	case WM_ENTERSIZEMOVE:
 		{
-			RECT rc;
-			POINT pt = {0};
+			POINT pt = { 0 };
 
 			GetWindowRect(hwnd, &g_PreSizeRect);
 			GetClientRect(hwnd, &rc);
@@ -1096,9 +1098,8 @@ skipbg:
 
 			if (pcli->hwndContactList != 0) {
 				SendMessage(hwnd, WM_ENTERSIZEMOVE, 0, 0);
-				RECT rc;
 				GetWindowRect(hwnd, &rc);
-				WINDOWPOS wp = {0};
+				WINDOWPOS wp = { 0 };
 				wp.cx = rc.right - rc.left;
 				wp.cy = rc.bottom - rc.top;
 				wp.x = rc.left;
@@ -1111,7 +1112,6 @@ skipbg:
 
 	case WM_MOVE:
 		if (!IsIconic(hwnd)) {
-			RECT rc;
 			GetWindowRect(hwnd, &rc);
 
 			if (!Docking_IsDocked(0, 0)) {
@@ -1121,7 +1121,6 @@ skipbg:
 			}
 			cluiPos.right = rc.right - rc.left;
 			if (cfg::dat.realTimeSaving) {
-				RECT rc;
 				GetWindowRect(hwnd, &rc);
 
 				// if docked, dont remember pos (except for width)
@@ -1140,11 +1139,11 @@ skipbg:
 		return 0;
 
 	case CLUIINTM_REMOVEFROMTASKBAR: {
-		BYTE windowStyle = cfg::getByte("CLUI", "WindowStyle", SETTING_WINDOWSTYLE_DEFAULT);
-		if (windowStyle == SETTING_WINDOWSTYLE_DEFAULT && cfg::getByte("CList", "AlwaysHideOnTB", 0))
-			RemoveFromTaskBar(hwnd);
-		return 0;
-	}
+			BYTE windowStyle = cfg::getByte("CLUI", "WindowStyle", SETTING_WINDOWSTYLE_DEFAULT);
+			if (windowStyle == SETTING_WINDOWSTYLE_DEFAULT && cfg::getByte("CList", "AlwaysHideOnTB", 0))
+				RemoveFromTaskBar(hwnd);
+			return 0;
+		}
 	case WM_ACTIVATE:
 		if (g_fading_active) {
 			if (wParam != WA_INACTIVE && cfg::dat.isTransparent)
@@ -1179,40 +1178,40 @@ skipbg:
 		return DefWindowProc(hwnd, msg, wParam, lParam);
 
 	case WM_NCHITTEST: {
-		LRESULT result;
-		RECT r;
-		POINT pt;
-		int clip = cfg::dat.bClipBorder;
+			LRESULT result;
+			RECT r;
+			POINT pt;
+			int clip = cfg::dat.bClipBorder;
 
-		GetWindowRect(hwnd, &r);
-		GetCursorPos(&pt);
-		if (pt.y <= r.bottom && pt.y >= r.bottom - clip - 6 && !cfg::getByte("CLUI", "AutoSize", 0)) {
-			if (pt.x > r.left + clip + 10 && pt.x < r.right - clip - 10)
-				return HTBOTTOM;
-			if (pt.x < r.left + clip + 10)
-				return HTBOTTOMLEFT;
-			if (pt.x > r.right - clip - 10)
-				return HTBOTTOMRIGHT;
-		}
-		else if (pt.y >= r.top && pt.y <= r.top + 3 && !cfg::getByte("CLUI", "AutoSize", 0)) {
-			if (pt.x > r.left + clip + 10 && pt.x < r.right - clip - 10)
-				return HTTOP;
-			if (pt.x < r.left + clip + 10)
-				return HTTOPLEFT;
-			if (pt.x > r.right - clip - 10)
-				return HTTOPRIGHT;
-		}
-		else if (pt.x >= r.left && pt.x <= r.left + clip + 6)
-			return HTLEFT;
-		else if (pt.x >= r.right - clip - 6 && pt.x <= r.right)
-			return HTRIGHT;
+			GetWindowRect(hwnd, &r);
+			GetCursorPos(&pt);
+			if (pt.y <= r.bottom && pt.y >= r.bottom - clip - 6 && !cfg::getByte("CLUI", "AutoSize", 0)) {
+				if (pt.x > r.left + clip + 10 && pt.x < r.right - clip - 10)
+					return HTBOTTOM;
+				if (pt.x < r.left + clip + 10)
+					return HTBOTTOMLEFT;
+				if (pt.x > r.right - clip - 10)
+					return HTBOTTOMRIGHT;
+			}
+			else if (pt.y >= r.top && pt.y <= r.top + 3 && !cfg::getByte("CLUI", "AutoSize", 0)) {
+				if (pt.x > r.left + clip + 10 && pt.x < r.right - clip - 10)
+					return HTTOP;
+				if (pt.x < r.left + clip + 10)
+					return HTTOPLEFT;
+				if (pt.x > r.right - clip - 10)
+					return HTTOPRIGHT;
+			}
+			else if (pt.x >= r.left && pt.x <= r.left + clip + 6)
+				return HTLEFT;
+			else if (pt.x >= r.right - clip - 6 && pt.x <= r.right)
+				return HTRIGHT;
 
-		result = DefWindowProc(hwnd, WM_NCHITTEST, wParam, lParam);
-		if (result == HTSIZE || result == HTTOP || result == HTTOPLEFT || result == HTTOPRIGHT || result == HTBOTTOM || result == HTBOTTOMRIGHT || result == HTBOTTOMLEFT)
-			if (cfg::dat.autosize)
-				return HTCLIENT;
-		return result;
-	}
+			result = DefWindowProc(hwnd, WM_NCHITTEST, wParam, lParam);
+			if (result == HTSIZE || result == HTTOP || result == HTTOPLEFT || result == HTTOPRIGHT || result == HTBOTTOM || result == HTBOTTOMRIGHT || result == HTBOTTOMLEFT)
+				if (cfg::dat.autosize)
+					return HTCLIENT;
+			return result;
+		}
 
 	case WM_TIMER:
 		if (wParam == TM_AUTOALPHA) {
@@ -1284,7 +1283,7 @@ skipbg:
 				sourceAlpha = cfg::dat.isTransparent ? (transparentFocus ? cfg::dat.alpha : cfg::dat.autoalpha) : 255;
 				destAlpha = 0;
 			}
-			for (startTick = GetTickCount(); ;) {
+			for (startTick = GetTickCount();;) {
 				thisTick = GetTickCount();
 				if (thisTick >= startTick + 200) {
 					SetLayeredWindowAttributes(hwnd, cfg::dat.bFullTransparent ? cfg::dat.colorkey : RGB(0, 0, 0), (BYTE)destAlpha, LWA_ALPHA | (cfg::dat.bFullTransparent ? LWA_COLORKEY : 0));
@@ -1344,9 +1343,8 @@ skipbg:
 
 					if (cfg::clcdat) {
 						pcli->pfnGetRowByIndex(cfg::clcdat, cfg::clcdat->selection, &contact, NULL);
-						if (contact && contact->type == CLCIT_CONTACT) {
+						if (contact && contact->type == CLCIT_CONTACT)
 							hContact = contact->hContact;
-						}
 					}
 					while (item) {
 						if (item->uId == (DWORD)LOWORD(wParam)) {
@@ -1362,7 +1360,7 @@ skipbg:
 								if (contactOK) {
 									char *szProto = GetContactProto(hContact);
 									if (ProtoServiceExists(szProto, item->szService))
-										ProtoCallService(szProto, item->szService, wwParam, llParam);
+										CallProtoService(szProto, item->szService, wwParam, llParam);
 									else
 										serviceFailure = TRUE;
 								}
@@ -1422,7 +1420,7 @@ skipbg:
 							if (serviceFailure) {
 								char szError[512];
 
-								mir_snprintf(szError, SIZEOF(szError), Translate("The service %s specified by the %s button definition was not found. You may need to install additional plugins."), item->szService, item->szName);
+								mir_snprintf(szError, _countof(szError), Translate("The service %s specified by the %s button definition was not found. You may need to install additional plugins."), item->szService, item->szName);
 								MessageBoxA(0, szError, Translate("Service failure"), MB_OK);
 							}
 							break;
@@ -1436,25 +1434,16 @@ skipbg:
 				case IDC_TBMENU:
 				case IDC_TBTOPMENU:
 				case IDC_STBTOPMENU:
-					{
-						RECT rc;
-						HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUGETMAIN, 0, 0);
-						GetButtonRect(GetDlgItem(hwnd, LOWORD(wParam)), &rc);
-						TrackPopupMenu(hMenu, TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, rc.left, LOWORD(wParam) == IDC_TBMENU ? rc.top : rc.bottom, 0, hwnd, NULL);
-					}
+					GetButtonRect(GetDlgItem(hwnd, LOWORD(wParam)), &rc);
+					TrackPopupMenu(Menu_GetMainMenu(), TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, rc.left, LOWORD(wParam) == IDC_TBMENU ? rc.top : rc.bottom, 0, hwnd, NULL);
 					return 0;
 
 				case IDC_TBTOPSTATUS:
 				case IDC_STBTOPSTATUS:
 				case IDC_TBGLOBALSTATUS:
-					{
-						RECT rc;
-						HMENU hmenu = (HMENU)CallService(MS_CLIST_MENUGETSTATUS, 0, 0);
-						GetButtonRect(GetDlgItem(hwnd, LOWORD(wParam)), &rc);
-						TrackPopupMenu(hmenu, TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, rc.left, LOWORD(wParam) == IDC_TBGLOBALSTATUS ? rc.top : rc.bottom, 0, hwnd, NULL);
-					}
+					GetButtonRect(GetDlgItem(hwnd, LOWORD(wParam)), &rc);
+					TrackPopupMenu(Menu_GetStatusMenu(), TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, rc.left, LOWORD(wParam) == IDC_TBGLOBALSTATUS ? rc.top : rc.bottom, 0, hwnd, NULL);
 					return 0;
-
 
 				case IDC_TBSOUND:
 				case IDC_STBSOUND:
@@ -1489,7 +1478,7 @@ skipbg:
 					return 0;
 				}
 			}
-			else if (CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(LOWORD(wParam), MPCF_MAINMENU), (LPARAM)(HANDLE)NULL))
+			else if (CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(LOWORD(wParam), MPCF_MAINMENU), NULL))
 				return 0;
 
 buttons_done:
@@ -1541,7 +1530,7 @@ buttons_done:
 				break;
 			case POPUP_SHOWMETAICONS:
 				cfg::dat.dwFlags ^= CLUI_USEMETAICONS;
-				pcli->pfnInitAutoRebuild(hwnd);
+				pcli->pfnInitAutoRebuild(pcli->hwndContactTree);
 				break;
 			case POPUP_FRAME:
 				cfg::dat.dwFlags ^= CLUI_FRAME_CLISTSUNKEN;
@@ -1611,10 +1600,8 @@ buttons_done:
 		break;
 
 	case WM_CONTEXTMENU:
+		GetWindowRect(pcli->hwndContactTree, &rc);
 		{
-			RECT rc;
-			GetWindowRect(pcli->hwndContactTree, &rc);
-
 			// x/y might be -1 if it was generated by a kb click
 			POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 			if (pt.x == -1 && pt.y == -1) {
@@ -1627,19 +1614,18 @@ buttons_done:
 				}
 			}
 			if (PtInRect(&rc, pt)) {
-				HMENU hMenu;
-				hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDGROUP, 0, 0);
+				HMENU hMenu = Menu_BuildGroupMenu();
 				TrackPopupMenu(hMenu, TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, pt.x, pt.y, 0, hwnd, NULL);
-				DestroyTrayMenu(hMenu);
+				Menu_DestroyNestedMenu(hMenu);
 				return 0;
 			}
 			GetWindowRect(pcli->hwndStatus, &rc);
 			if (PtInRect(&rc, pt)) {
 				HMENU hMenu;
 				if (cfg::getByte("CLUI", "SBarRightClk", 0))
-					hMenu = (HMENU)CallService(MS_CLIST_MENUGETMAIN, 0, 0);
+					hMenu = Menu_GetMainMenu();
 				else
-					hMenu = (HMENU)CallService(MS_CLIST_MENUGETSTATUS, 0, 0);
+					hMenu = Menu_GetStatusMenu();
 				TrackPopupMenu(hMenu, TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, pt.x, pt.y, 0, hwnd, NULL);
 				return 0;
 			}
@@ -1652,7 +1638,7 @@ buttons_done:
 			((LPMEASUREITEMSTRUCT)lParam)->itemHeight = 0;
 			return TRUE;
 		}
-		return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
+		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
 
 	case WM_DRAWITEM:
 		{
@@ -1683,21 +1669,21 @@ buttons_done:
 
 					if (status >= ID_STATUS_CONNECTING && status < ID_STATUS_OFFLINE) {
 						char szBuffer[128];
-						mir_snprintf(szBuffer, SIZEOF(szBuffer), "%s_conn", pd->RealName);
-						hIcon = Skin_GetIcon(szBuffer);
+						mir_snprintf(szBuffer, _countof(szBuffer), "%s_conn", pd->RealName);
+						hIcon = IcoLib_GetIcon(szBuffer);
 					}
 					else if (cfg::dat.bShowXStatusOnSbar && status > ID_STATUS_OFFLINE) {
 						int xStatus;
 						CUSTOM_STATUS cst = { sizeof(cst) };
 						cst.flags = CSSF_MASK_STATUS;
 						cst.status = &xStatus;
-						if (ProtoServiceExists(pd->RealName, PS_GETCUSTOMSTATUSEX) && !ProtoCallService(pd->RealName, PS_GETCUSTOMSTATUSEX, 0, (LPARAM)&cst) && xStatus > 0)
+						if (ProtoServiceExists(pd->RealName, PS_GETCUSTOMSTATUSEX) && !CallProtoService(pd->RealName, PS_GETCUSTOMSTATUSEX, 0, (LPARAM)&cst) && xStatus > 0)
 							hIcon = (HICON)CallProtoService(pd->RealName, PS_GETCUSTOMSTATUSICON, 0, LR_SHARED); // get OWN xStatus icon (if set)
 						else
-							hIcon = LoadSkinnedProtoIcon(szProto, status);
+							hIcon = Skin_LoadProtoIcon(szProto, status);
 					}
 					else
-						hIcon = LoadSkinnedProtoIcon(szProto, status);
+						hIcon = Skin_LoadProtoIcon(szProto, status);
 
 					if (!(showOpts & 6) && cfg::dat.bEqualSections)
 						x = (dis->rcItem.left + dis->rcItem.right - 16) >> 1;
@@ -1706,14 +1692,14 @@ buttons_done:
 					else if (pd->protopos == nParts - 1)
 						x -= (cfg::dat.bCRight / 2);
 					DrawIconEx(dis->hDC, x, (dis->rcItem.top + dis->rcItem.bottom - 16) >> 1, hIcon, 16, 16, 0, NULL, DI_NORMAL);
-					Skin_ReleaseIcon(hIcon);
+					IcoLib_ReleaseIcon(hIcon);
 
 					if (cfg::getByte("CLUI", "sbar_showlocked", 1)) {
 						if (cfg::getByte(szProto, "LockMainStatus", 0)) {
-							hIcon = LoadSkinnedIcon(SKINICON_OTHER_STATUS_LOCKED);
+							hIcon = Skin_LoadIcon(SKINICON_OTHER_STATUS_LOCKED);
 							if (hIcon != NULL) {
 								DrawIconEx(dis->hDC, x, (dis->rcItem.top + dis->rcItem.bottom - 16) >> 1, hIcon, 16, 16, 0, NULL, DI_NORMAL);
-								Skin_ReleaseIcon(hIcon);
+								IcoLib_ReleaseIcon(hIcon);
 							}
 						}
 					}
@@ -1729,10 +1715,10 @@ buttons_done:
 
 				if (showOpts & 2) {
 					TCHAR szName[64];
-					PROTOACCOUNT *pa = ProtoGetAccount(szProto);
+					PROTOACCOUNT *pa = Proto_GetAccount(szProto);
 					if (pa) {
-						mir_tstrncpy(szName, pa->tszAccountName, SIZEOF(szName));
-						szName[SIZEOF(szName) - 1] = 0;
+						mir_tstrncpy(szName, pa->tszAccountName, _countof(szName));
+						szName[_countof(szName) - 1] = 0;
 					}
 					else
 						szName[0] = 0;
@@ -1752,7 +1738,7 @@ buttons_done:
 			else if (dis->CtlType == ODT_MENU) {
 				if (dis->itemData == MENU_MIRANDAMENU)
 					break;
-				return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
+				return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
 			}
 		}
 		return 0;
@@ -1849,7 +1835,7 @@ INT_PTR CALLBACK DlgProcAbout(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 		{
 			char str[64];
 			DWORD v = pluginInfo.version;
-			mir_snprintf(str, SIZEOF(str), "%s %d.%d.%d.%d", Translate("Version"), HIBYTE(HIWORD(v)), LOBYTE(HIWORD(v)), HIBYTE(LOWORD(v)), LOBYTE(LOWORD(v)));
+			mir_snprintf(str, "%s %d.%d.%d.%d", Translate("Version"), HIBYTE(HIWORD(v)), LOBYTE(HIWORD(v)), HIBYTE(LOWORD(v)), LOBYTE(LOWORD(v)));
 			SetDlgItemTextA(hwndDlg, IDC_VERSION, str);
 		}
 		{
@@ -1867,7 +1853,7 @@ INT_PTR CALLBACK DlgProcAbout(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 			DestroyWindow(hwndDlg);
 			return TRUE;
 		case IDC_SUPPORT:
-			CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)"http://miranda-ng.org/");
+			Utils_OpenUrl("http://miranda-ng.org/");
 			break;
 		}
 		break;
@@ -1879,8 +1865,7 @@ INT_PTR CALLBACK DlgProcAbout(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 			|| (HWND)lParam == GetDlgItem(hwndDlg, IDC_VERSION)
 			|| (HWND)lParam == GetDlgItem(hwndDlg, IDC_COPYRIGHT)
 			|| (HWND)lParam == GetDlgItem(hwndDlg, IDC_SUPPORT)
-			|| (HWND)lParam == GetDlgItem(hwndDlg, IDC_LOGO))
-		{
+			|| (HWND)lParam == GetDlgItem(hwndDlg, IDC_LOGO)) {
 			if ((HWND)lParam == GetDlgItem(hwndDlg, IDC_CLNICER))
 				SetTextColor((HDC)wParam, RGB(180, 10, 10));
 			else if ((HWND)lParam == GetDlgItem(hwndDlg, IDC_VERSION))
@@ -1916,23 +1901,17 @@ static INT_PTR CLN_ShowAbout(WPARAM, LPARAM)
 
 static INT_PTR CLN_ShowMainMenu(WPARAM, LPARAM)
 {
-	HMENU hMenu;
 	POINT pt;
-
-	hMenu = (HMENU)CallService(MS_CLIST_MENUGETMAIN, 0, 0);
 	GetCursorPos(&pt);
-	TrackPopupMenu(hMenu, TPM_TOPALIGN | TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, 0, pcli->hwndContactList, NULL);
+	TrackPopupMenu(Menu_GetMainMenu(), TPM_TOPALIGN | TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, 0, pcli->hwndContactList, NULL);
 	return 0;
 }
 
 static INT_PTR CLN_ShowStatusMenu(WPARAM, LPARAM)
 {
-	HMENU hMenu;
 	POINT pt;
-
-	hMenu = (HMENU)CallService(MS_CLIST_MENUGETSTATUS, 0, 0);
 	GetCursorPos(&pt);
-	TrackPopupMenu(hMenu, TPM_TOPALIGN | TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, 0, pcli->hwndContactList, NULL);
+	TrackPopupMenu(Menu_GetStatusMenu(), TPM_TOPALIGN | TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, 0, pcli->hwndContactList, NULL);
 	return 0;
 }
 
@@ -1992,30 +1971,31 @@ struct
 	const TCHAR *tszName;
 	int iMask;
 }
-static clistFontDescr[] = {
-	{ LPGENT("Standard contacts"),											FIDF_CLASSGENERAL },
-	{ LPGENT("Online contacts to whom you have a different visibility"),	FIDF_CLASSGENERAL },
-	{ LPGENT("Offline contacts"),											FIDF_CLASSGENERAL },
-	{ LPGENT("Contacts which are 'not on list'"),							FIDF_CLASSGENERAL },
-	{ LPGENT("Groups"),														FIDF_CLASSHEADER  },
-	{ LPGENT("Group member counts"),										FIDF_CLASSHEADER  },
-	{ LPGENT("Dividers"),													FIDF_CLASSSMALL   },
-	{ LPGENT("Offline contacts to whom you have a different visibility"),	FIDF_CLASSGENERAL },
-	{ LPGENT("Status mode"),												FIDF_CLASSGENERAL },
-	{ LPGENT("Frame titles"),												FIDF_CLASSGENERAL },
-	{ LPGENT("Event area"),													FIDF_CLASSGENERAL },
-	{ LPGENT("Contact list local time"),									FIDF_CLASSGENERAL }
+static clistFontDescr[] =
+{
+	{ LPGENT("Standard contacts"), FIDF_CLASSGENERAL },
+	{ LPGENT("Online contacts to whom you have a different visibility"), FIDF_CLASSGENERAL },
+	{ LPGENT("Offline contacts"), FIDF_CLASSGENERAL },
+	{ LPGENT("Contacts which are 'not on list'"), FIDF_CLASSGENERAL },
+	{ LPGENT("Groups"), FIDF_CLASSHEADER },
+	{ LPGENT("Group member counts"), FIDF_CLASSHEADER },
+	{ LPGENT("Dividers"), FIDF_CLASSSMALL },
+	{ LPGENT("Offline contacts to whom you have a different visibility"), FIDF_CLASSGENERAL },
+	{ LPGENT("Status mode"), FIDF_CLASSGENERAL },
+	{ LPGENT("Frame titles"), FIDF_CLASSGENERAL },
+	{ LPGENT("Event area"), FIDF_CLASSGENERAL },
+	{ LPGENT("Contact list local time"), FIDF_CLASSGENERAL }
 };
 
 void FS_RegisterFonts()
 {
 	FontIDT fid = { sizeof(fid) };
-	_tcsncpy(fid.group, LPGENT("Contact list"), SIZEOF(fid.group));
+	_tcsncpy(fid.group, LPGENT("Contact list"), _countof(fid.group));
 	strncpy(fid.dbSettingsGroup, "CLC", 5);
 	fid.flags = FIDF_DEFAULTVALID | FIDF_ALLOWEFFECTS | FIDF_APPENDNAME | FIDF_SAVEPOINTSIZE;
 
 	HDC hdc = GetDC(NULL);
-	for (int i = 0; i < SIZEOF(clistFontDescr); i++) {
+	for (int i = 0; i < _countof(clistFontDescr); i++) {
 		LOGFONT lf;
 		pcli->pfnGetFontSetting(i, &lf, &fid.deffontsettings.colour);
 		lf.lfHeight = -MulDiv(lf.lfHeight, GetDeviceCaps(hdc, LOGPIXELSY), 72);
@@ -2028,49 +2008,49 @@ void FS_RegisterFonts()
 		fid.flags &= ~FIDF_CLASSMASK;
 		fid.flags |= clistFontDescr[i].iMask;
 
-		_tcsncpy(fid.name, clistFontDescr[i].tszName, SIZEOF(fid.name));
-		
+		_tcsncpy(fid.name, clistFontDescr[i].tszName, _countof(fid.name));
+
 		char idstr[10];
-		mir_snprintf(idstr, SIZEOF(idstr), "Font%d", i);
-		strncpy(fid.prefix, idstr, SIZEOF(fid.prefix));
+		mir_snprintf(idstr, "Font%d", i);
+		strncpy(fid.prefix, idstr, _countof(fid.prefix));
 		fid.order = i;
 		FontRegisterT(&fid);
 	}
 	ReleaseDC(NULL, hdc);
 
 	// and colours
-	ColourIDT colourid = {0};
+	ColourIDT colourid = { 0 };
 	colourid.cbSize = sizeof(colourid);
 	colourid.order = 0;
 	strncpy(colourid.dbSettingsGroup, "CLC", sizeof(colourid.dbSettingsGroup));
 
 	strncpy(colourid.setting, "BkColour", sizeof(colourid.setting));
-	_tcsncpy(colourid.name, LPGENT("Background"), SIZEOF(colourid.name));
-	_tcsncpy(colourid.group, LPGENT("Contact list"), SIZEOF(colourid.group));
+	_tcsncpy(colourid.name, LPGENT("Background"), _countof(colourid.name));
+	_tcsncpy(colourid.group, LPGENT("Contact list"), _countof(colourid.group));
 	colourid.defcolour = CLCDEFAULT_BKCOLOUR;
 	ColourRegisterT(&colourid);
 
 	strncpy(colourid.setting, "SelTextColour", sizeof(colourid.setting));
-	_tcsncpy(colourid.name, LPGENT("Selected text"), SIZEOF(colourid.name));
+	_tcsncpy(colourid.name, LPGENT("Selected text"), _countof(colourid.name));
 	colourid.order = 1;
 	colourid.defcolour = CLCDEFAULT_SELTEXTCOLOUR;
 	ColourRegisterT(&colourid);
 
 	strncpy(colourid.setting, "HotTextColour", sizeof(colourid.setting));
-	_tcsncpy(colourid.name, LPGENT("Hottrack text"), SIZEOF(colourid.name));
+	_tcsncpy(colourid.name, LPGENT("Hottrack text"), _countof(colourid.name));
 	colourid.order = 1;
 	colourid.defcolour = CLCDEFAULT_HOTTEXTCOLOUR;
 	ColourRegisterT(&colourid);
 
 	strncpy(colourid.setting, "QuickSearchColour", sizeof(colourid.setting));
-	_tcsncpy(colourid.name, LPGENT("Quicksearch text"), SIZEOF(colourid.name));
+	_tcsncpy(colourid.name, LPGENT("Quicksearch text"), _countof(colourid.name));
 	colourid.order = 1;
 	colourid.defcolour = CLCDEFAULT_QUICKSEARCHCOLOUR;
 	ColourRegisterT(&colourid);
 
 	strncpy(colourid.dbSettingsGroup, "CLUI", sizeof(colourid.dbSettingsGroup));
 	strncpy(colourid.setting, "clr_frameborder", sizeof(colourid.setting));
-	_tcsncpy(colourid.name, LPGENT("Embedded frames border"), SIZEOF(colourid.name));
+	_tcsncpy(colourid.name, LPGENT("Embedded frames border"), _countof(colourid.name));
 	colourid.order = 1;
 	colourid.defcolour = RGB(40, 40, 40);
 	ColourRegisterT(&colourid);

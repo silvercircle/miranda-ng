@@ -22,12 +22,13 @@ TCHAR *inopentag = NULL, *inclosetag = NULL, *outopentag = NULL, *outclosetag = 
 
 list <JabberAccount*> Accounts;
 
+CLIST_INTERFACE *pcli;
 HINSTANCE hInst;
 HFONT bold_font = NULL;
 HANDLE hLoadPubKey = NULL, g_hCLIcon = NULL, hExportGpgKeys = NULL, hImportGpgKeys = NULL;
 HGENMENU hSendKey = NULL, hToggleEncryption = NULL;
 RECT key_from_keyserver_rect = {0}, firstrun_rect = {0}, new_key_rect = {0}, key_gen_rect = {0}, load_key_rect = {0}, import_key_rect = {0}, key_password_rect = {0}, load_existing_key_rect = {0};
-XML_API xi = {0};
+
 int hLangpack = 0;
 logtofile debuglog;
 bool gpg_valid = false, gpg_keyexist = false;
@@ -124,18 +125,16 @@ static int OnModulesLoaded(WPARAM wParam,LPARAM lParam)
 	if(!db_get_b(NULL, szGPGModuleName, "FirstRun", 1))
 		InitCheck();
 
-	HICON IconLibGetIcon(const char* ident);
-
 	StatusIconData sid = { sizeof(sid) };
 	sid.szModule = szGPGModuleName;
 	sid.flags = MBF_HIDDEN;
 	sid.dwId = 0x00000001;
-	sid.hIcon = IconLibGetIcon("secured");
+	sid.hIcon = IcoLib_GetIcon("secured");
 	sid.szTooltip = LPGEN("GPG Turn off encryption");
 	Srmm_AddIcon(&sid);
 
 	sid.dwId = 0x00000002;
-	sid.hIcon = IconLibGetIcon("unsecured");
+	sid.hIcon = IcoLib_GetIcon("unsecured");
 	sid.szTooltip = LPGEN("GPG Turn on encryption");
 	Srmm_AddIcon(&sid);
 
@@ -154,10 +153,11 @@ static int OnModulesLoaded(WPARAM wParam,LPARAM lParam)
 	HookEvent(ME_MSG_WINDOWEVENT, onWindowEvent);
 	HookEvent(ME_MSG_ICONPRESSED, onIconPressed);
 
-	PROTOCOLDESCRIPTOR pd = { sizeof(pd) };
+	PROTOCOLDESCRIPTOR pd = { 0 };
+	pd.cbSize = sizeof(pd);
 	pd.szName = szGPGModuleName;
 	pd.type = PROTOTYPE_ENCRYPTION;
-	CallService(MS_PROTO_REGISTERMODULE,0,(LPARAM)&pd);
+	Proto_RegisterModule(&pd);
 	
 	CreateProtoServiceFunction(szGPGModuleName, PSR_MESSAGE, RecvMsgSvc);
 	CreateProtoServiceFunction(szGPGModuleName, PSS_MESSAGE, SendMsgSvc);
@@ -168,9 +168,11 @@ static int OnModulesLoaded(WPARAM wParam,LPARAM lParam)
 
 extern "C" int __declspec(dllexport) Load()
 {
-	HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
-	mir_getXI(&xi);	//TODO: check if we have access to api
 	mir_getLP(&pluginInfo);
+	mir_getCLI();
+
+	HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
+
 	init_vars();
 	CreateServiceFunction("/LoadPubKey",LoadKey);
 	CreateServiceFunction("/ToggleEncryption",ToggleEncryption);
@@ -178,49 +180,36 @@ extern "C" int __declspec(dllexport) Load()
 	CreateServiceFunction("/ExportGPGKeys",ExportGpGKeys);
 	CreateServiceFunction("/ImportGPGKeys",ImportGpGKeys);
 
-   // !!!!!!!! check it later
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.position=-0x7FFFFFFF;
-	mi.flags=CMIF_TCHAR;
-	mi.hIcon=LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
-	mi.ptszName=LPGENT("Load GPG public key");
-	mi.pszService="/LoadPubKey";
+	CMenuItem mi;
+	mi.position = -0x7FFFFFFF;
+	mi.flags = CMIF_TCHAR;
+	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
+	mi.name.t = LPGENT("Load GPG public key");
+	mi.pszService = "/LoadPubKey";
 	hLoadPubKey = Menu_AddContactMenuItem(&mi);
 
-	memset(&mi, 0, sizeof(mi));
-	mi.cbSize=sizeof(mi);
-	mi.position=-0x7FFFFFFe;
-	mi.flags=CMIF_TCHAR;
-	mi.hIcon=LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
-	mi.ptszName=LPGENT("Toggle GPG encryption");
-	mi.pszService="/ToggleEncryption";
+	mi.position = -0x7FFFFFFe;
+	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
+	mi.name.t = LPGENT("Toggle GPG encryption");
+	mi.pszService = "/ToggleEncryption";
 	hToggleEncryption = Menu_AddContactMenuItem(&mi);
 
-	memset(&mi, 0, sizeof(mi));
-	mi.cbSize=sizeof(mi);
-	mi.position=-0x7FFFFFFd;
-	mi.flags=CMIF_TCHAR;
-	mi.hIcon=LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
-	mi.ptszName=LPGENT("Send public key");
-	mi.pszService="/SendKey";
+	mi.position = -0x7FFFFFFd;
+	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
+	mi.name.t = LPGENT("Send public key");
+	mi.pszService = "/SendKey";
 	hSendKey = Menu_AddContactMenuItem(&mi);
 
-	memset(&mi, 0, sizeof(mi));
-	mi.cbSize=sizeof(mi);
-	mi.position=-0x7FFFFFFe;
-	mi.flags=CMIF_TCHAR;
-	mi.hIcon=LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
-	mi.ptszName=LPGENT("Export GPG Public keys");
-	mi.pszService="/ExportGPGKeys";
+	mi.position = -0x7FFFFFFe;
+	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
+	mi.name.t = LPGENT("Export GPG Public keys");
+	mi.pszService = "/ExportGPGKeys";
 	hExportGpgKeys = Menu_AddMainMenuItem(&mi);
 
-	memset(&mi, 0, sizeof(mi));
-	mi.cbSize=sizeof(mi);
-	mi.position=-0x7FFFFFFF;
-	mi.flags=CMIF_TCHAR;
-	mi.hIcon=LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
-	mi.ptszName=LPGENT("Import GPG Public keys");
-	mi.pszService="/ImportGPGKeys";
+	mi.position = -0x7FFFFFFF;
+	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
+	mi.name.t = LPGENT("Import GPG Public keys");
+	mi.pszService = "/ImportGPGKeys";
 	hImportGpgKeys = Menu_AddMainMenuItem(&mi);
 
 	InitIconLib();

@@ -48,7 +48,7 @@ DWORD MraAvatarsHttpTransaction(HANDLE hConnection, DWORD dwRequestType, LPCSTR 
 
 DWORD CMraProto::MraAvatarsQueueInitialize(HANDLE *phAvatarsQueueHandle)
 {
-	mir_snprintf(szAvtSectName, SIZEOF(szAvtSectName), "%s Avatars", m_szModuleName);
+	mir_snprintf(szAvtSectName, _countof(szAvtSectName), "%s Avatars", m_szModuleName);
 
 	if (phAvatarsQueueHandle == NULL)
 		return ERROR_INVALID_HANDLE;
@@ -56,7 +56,7 @@ DWORD CMraProto::MraAvatarsQueueInitialize(HANDLE *phAvatarsQueueHandle)
 	MRA_AVATARS_QUEUE *pmraaqAvatarsQueue = new MRA_AVATARS_QUEUE();
 
 	TCHAR szBuffer[MAX_PATH];
-	mir_sntprintf(szBuffer, SIZEOF(szBuffer), _T("%s %s"), m_tszUserName, TranslateT("Avatars' plugin connections"));
+	mir_sntprintf(szBuffer, _T("%s %s"), m_tszUserName, TranslateT("Avatars' plugin connections"));
 
 	NETLIBUSER nlu = { sizeof(nlu) };
 	nlu.flags = NUF_OUTGOING | NUF_HTTPCONNS | NUF_TCHAR;
@@ -87,13 +87,12 @@ void CMraProto::MraAvatarsQueueClear(HANDLE hAvatarsQueueHandle)
 	MRA_AVATARS_QUEUE *pmraaqAvatarsQueue = (MRA_AVATARS_QUEUE*)hAvatarsQueueHandle;
 	MRA_AVATARS_QUEUE_ITEM *pmraaqiAvatarsQueueItem;
 
-	PROTO_AVATAR_INFORMATIONT pai = { 0 };
-	pai.cbSize = sizeof(pai);
-	pai.format = PA_FORMAT_UNKNOWN;
+	PROTO_AVATAR_INFORMATION ai = { 0 };
+	ai.format = PA_FORMAT_UNKNOWN;
 
 	while (FifoMTItemPop(pmraaqAvatarsQueue, NULL, (LPVOID*)&pmraaqiAvatarsQueueItem) == NO_ERROR) {
-		pai.hContact = pmraaqiAvatarsQueueItem->hContact;
-		ProtoBroadcastAck(pmraaqiAvatarsQueueItem->hContact, ACKTYPE_AVATAR, ACKRESULT_FAILED, (HANDLE)&pai, 0);
+		ai.hContact = pmraaqiAvatarsQueueItem->hContact;
+		ProtoBroadcastAck(pmraaqiAvatarsQueueItem->hContact, ACKTYPE_AVATAR, ACKRESULT_FAILED, (HANDLE)&ai, 0);
 		mir_free(pmraaqiAvatarsQueueItem);
 	}
 }
@@ -156,11 +155,9 @@ void CMraProto::MraAvatarsThreadProc(LPVOID lpParameter)
 	HANDLE hConnection = NULL;
 	NETLIBSELECT nls = { 0 };
 	INTERNET_TIME itAvatarLastModifiedTimeServer;
-	PROTO_AVATAR_INFORMATIONT pai;
 	WCHAR szErrorText[2048];
 
 	nls.cbSize = sizeof(nls);
-	pai.cbSize = sizeof(pai);
 
 	HANDLE hThreadEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 	{
@@ -233,7 +230,7 @@ void CMraProto::MraAvatarsThreadProc(LPVOID lpParameter)
 							break;
 
 						default:
-							mir_sntprintf(szErrorText, SIZEOF(szErrorText), TranslateT("Avatars: server return HTTP code: %lu"), dwResultCode);
+							mir_sntprintf(szErrorText, _countof(szErrorText), TranslateT("Avatars: server return HTTP code: %lu"), dwResultCode);
 							ShowFormattedErrorMessage(szErrorText, NO_ERROR);
 							break;
 						}
@@ -265,7 +262,7 @@ void CMraProto::MraAvatarsThreadProc(LPVOID lpParameter)
 											bContinue = FALSE;
 											break;
 										case 1:
-											dwReceived = Netlib_Recv(hConnection, (LPSTR)&btBuff, SIZEOF(btBuff), 0);
+											dwReceived = Netlib_Recv(hConnection, (LPSTR)&btBuff, _countof(btBuff), 0);
 											if (dwReceived == 0 || dwReceived == SOCKET_ERROR) {
 												dwErrorCode = GetLastError();
 												ShowFormattedErrorMessage(L"Avatars: error on receive file data", dwErrorCode);
@@ -291,7 +288,7 @@ void CMraProto::MraAvatarsThreadProc(LPVOID lpParameter)
 								}
 								else {
 									dwErrorCode = GetLastError();
-									mir_sntprintf(szErrorText, SIZEOF(szErrorText), TranslateT("Avatars: can't open file %s, error"), wszFileName);
+									mir_sntprintf(szErrorText, _countof(szErrorText), TranslateT("Avatars: can't open file %s, error"), wszFileName);
 									ShowFormattedErrorMessage(szErrorText, dwErrorCode);
 								}
 							}
@@ -305,20 +302,21 @@ void CMraProto::MraAvatarsThreadProc(LPVOID lpParameter)
 			}
 		}
 
+		PROTO_AVATAR_INFORMATION ai;
 		if (bFailed) {
 			DeleteFile(wszFileName);
-			pai.hContact = pmraaqiAvatarsQueueItem->hContact;
-			pai.format = PA_FORMAT_UNKNOWN;
-			pai.filename[0] = 0;
-			ProtoBroadcastAck(pmraaqiAvatarsQueueItem->hContact, ACKTYPE_AVATAR, ACKRESULT_FAILED, (HANDLE)&pai, 0);
+			ai.hContact = pmraaqiAvatarsQueueItem->hContact;
+			ai.format = PA_FORMAT_UNKNOWN;
+			ai.filename[0] = 0;
+			ProtoBroadcastAck(pmraaqiAvatarsQueueItem->hContact, ACKTYPE_AVATAR, ACKRESULT_FAILED, (HANDLE)&ai, 0);
 		}
 		else {
-			pai.hContact = pmraaqiAvatarsQueueItem->hContact;
-			pai.format = dwAvatarFormat;
+			ai.hContact = pmraaqiAvatarsQueueItem->hContact;
+			ai.format = dwAvatarFormat;
 			if (db_get_b(NULL, MRA_AVT_SECT_NAME, "ReturnAbsolutePath", MRA_AVT_DEFAULT_RET_ABC_PATH))
-				mir_tstrncpy(pai.filename, wszFileName, SIZEOF(pai.filename));
+				_tcsncpy_s(ai.filename, wszFileName, _TRUNCATE);
 			else
-				PathToRelativeT(wszFileName, pai.filename);
+				PathToRelativeT(wszFileName, ai.filename);
 
 			SetContactAvatarFormat(pmraaqiAvatarsQueueItem->hContact, dwAvatarFormat);
 			MraAvatarsSetContactTime(pmraaqiAvatarsQueueItem->hContact, "AvatarLastModifiedTime", &itAvatarLastModifiedTimeServer.stTime);
@@ -326,7 +324,7 @@ void CMraProto::MraAvatarsThreadProc(LPVOID lpParameter)
 			if (pmraaqiAvatarsQueueItem->hContact == NULL) // proto avatar
 				CallService(MS_AV_REPORTMYAVATARCHANGED, (WPARAM)m_szModuleName, 0);
 
-			ProtoBroadcastAck(pmraaqiAvatarsQueueItem->hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, (HANDLE)&pai, 0);
+			ProtoBroadcastAck(pmraaqiAvatarsQueueItem->hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, (HANDLE)&ai, 0);
 		}
 		mir_free(pmraaqiAvatarsQueueItem);
 	}
@@ -377,7 +375,7 @@ DWORD MraAvatarsHttpTransaction(HANDLE hConnection, DWORD dwRequestType, LPCSTR 
 	}
 
 	char szBuff[4096];
-	mir_snprintf(szBuff, SIZEOF(szBuff), "http://%s/%s/%s/%s", lpszHost, lpszDomain, lpszUser, lpszReqObj);
+	mir_snprintf(szBuff, _countof(szBuff), "http://%s/%s/%s/%s", lpszHost, lpszDomain, lpszUser, lpszReqObj);
 	CMStringA szSelfVersionString = MraGetSelfVersionString();
 
 	NETLIBHTTPHEADER nlbhHeaders[8] = { 0 };
@@ -475,7 +473,7 @@ DWORD CMraProto::MraAvatarsGetFileName(HANDLE hAvatarsQueueHandle, MCONTACT hCon
 		return ERROR_NOT_SUPPORTED;
 
 	TCHAR tszBase[MAX_PATH];
-	mir_sntprintf(tszBase, SIZEOF(tszBase), _T("%s\\%s\\"), VARST(_T("%miranda_avatarcache%")), m_tszUserName);
+	mir_sntprintf(tszBase, _countof(tszBase), _T("%s\\%s\\"), VARST(_T("%miranda_avatarcache%")), m_tszUserName);
 	res = tszBase;
 
 	// some path in buff and free space for file name is avaible
@@ -553,17 +551,16 @@ DWORD CMraProto::MraAvatarsQueueGetAvatarSimple(HANDLE hAvatarsQueueHandle, DWOR
 	if ( !hAvatarsQueueHandle)
 		return GAIR_NOAVATAR;
 
-	PROTO_AVATAR_INFORMATIONT pai = { 0 };
-	pai.cbSize = sizeof(pai);
-	pai.hContact = hContact;
-	DWORD dwRetCode = MraAvatarsQueueGetAvatar(hAvatarsQueueHandle, dwFlags, hContact, NULL, (DWORD*)&pai.format, pai.filename);
+	PROTO_AVATAR_INFORMATION ai = { 0 };
+	ai.hContact = hContact;
+	DWORD dwRetCode = MraAvatarsQueueGetAvatar(hAvatarsQueueHandle, dwFlags, hContact, NULL, (DWORD*)&ai.format, ai.filename);
 	if (dwRetCode != GAIR_SUCCESS)
 		return dwRetCode;
 	
 	// write owner avatar file name to DB
 	if (hContact == NULL)
 		CallService(MS_AV_REPORTMYAVATARCHANGED, (WPARAM)m_szModuleName, 0);
-	ProtoBroadcastAck(hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, (HANDLE)&pai, 0);
+	ProtoBroadcastAck(hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, (HANDLE)&ai, 0);
 	return GAIR_SUCCESS;
 }
 
@@ -604,13 +601,13 @@ INT_PTR CALLBACK MraAvatarsQueueDlgProcOpts(HWND hWndDlg, UINT msg, WPARAM wPara
 			CheckDlgButton(hWndDlg, IDC_RETURN_ABC_PATH, db_get_b(NULL, MRA_AVT_SECT_NAME, "ReturnAbsolutePath", MRA_AVT_DEFAULT_RET_ABC_PATH) ? BST_CHECKED : BST_UNCHECKED);
 			CheckDlgButton(hWndDlg, IDC_DELETE_AVT_ON_CONTACT_DELETE, db_get_b(NULL, MRA_AVT_SECT_NAME, "DeleteAvtOnContactDelete", MRA_DELETE_AVT_ON_CONTACT_DELETE) ? BST_CHECKED : BST_UNCHECKED);
 
-			EnableControlsArray(hWndDlg, (WORD*)&wMraAvatarsControlsList, SIZEOF(wMraAvatarsControlsList), IsDlgButtonChecked(hWndDlg, IDC_ENABLE));
+			EnableControlsArray(hWndDlg, (WORD*)&wMraAvatarsControlsList, _countof(wMraAvatarsControlsList), IsDlgButtonChecked(hWndDlg, IDC_ENABLE));
 		}
 		return TRUE;
 
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDC_ENABLE)
-			EnableControlsArray(hWndDlg, (WORD*)&wMraAvatarsControlsList, SIZEOF(wMraAvatarsControlsList), IsDlgButtonChecked(hWndDlg, IDC_ENABLE));
+			EnableControlsArray(hWndDlg, (WORD*)&wMraAvatarsControlsList, _countof(wMraAvatarsControlsList), IsDlgButtonChecked(hWndDlg, IDC_ENABLE));
 
 		if (LOWORD(wParam) == IDC_BUTTON_DEFAULT) {
 			SetDlgItemTextA(hWndDlg, IDC_SERVER, MRA_AVT_DEFAULT_SERVER);
@@ -632,7 +629,7 @@ INT_PTR CALLBACK MraAvatarsQueueDlgProcOpts(HWND hWndDlg, UINT msg, WPARAM wPara
 			db_set_dw(NULL, MRA_AVT_SECT_NAME, "ServerPort", GetDlgItemInt(hWndDlg, IDC_SERVERPORT, NULL, FALSE));
 
 			TCHAR szServer[MAX_PATH];
-			GetDlgItemText(hWndDlg, IDC_SERVER, szServer, SIZEOF(szServer));
+			GetDlgItemText(hWndDlg, IDC_SERVER, szServer, _countof(szServer));
 			db_set_ts(NULL, MRA_AVT_SECT_NAME, "Server", szServer);
 			return TRUE;
 		}

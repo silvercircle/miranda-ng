@@ -86,12 +86,13 @@ extern "C" __declspec(dllexport) int Load(void)
 
 	HookEvent(ME_SYSTEM_PRESHUTDOWN, OnPreShutdown);
 
-	PROTOCOLDESCRIPTOR pd = { sizeof(pd) };
+	PROTOCOLDESCRIPTOR pd = { 0 };
+	pd.cbSize = sizeof(pd);
 	pd.szName = "MRA";
 	pd.type = PROTOTYPE_PROTOCOL;
 	pd.fnInit = (pfnInitProto)mraProtoInit;
 	pd.fnUninit = (pfnUninitProto)mraProtoUninit;
-	CallService(MS_PROTO_REGISTERMODULE, 0, (LPARAM)&pd);
+	Proto_RegisterModule(&pd);
 	return 0;
 }
 

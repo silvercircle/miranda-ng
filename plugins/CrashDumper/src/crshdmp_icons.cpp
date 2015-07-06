@@ -30,21 +30,21 @@ static IconItem iconList[] =
 
 void InitIcons(void)
 {
-	Icon_Register(hInst, LPGEN("Crash Dumper"), iconList, SIZEOF(iconList), PluginName);
+	Icon_Register(hInst, LPGEN("Crash Dumper"), iconList, _countof(iconList), PluginName);
 }
 
 HICON LoadIconEx(int iconId, bool big)
 {
-	for (int i = 0; i < SIZEOF(iconList); i++)
+	for (int i = 0; i < _countof(iconList); i++)
 		if (iconList[i].defIconID == iconId)
-			return Skin_GetIconByHandle(iconList[i].hIcolib, big);
+			return IcoLib_GetIconByHandle(iconList[i].hIcolib, big);
 
 	return NULL;
 }
 
 HANDLE GetIconHandle(int iconId)
 {
-	for (int i = 0; i < SIZEOF(iconList); i++)
+	for (int i = 0; i < _countof(iconList); i++)
 		if (iconList[i].defIconID == iconId)
 			return iconList[i].hIcolib;
 

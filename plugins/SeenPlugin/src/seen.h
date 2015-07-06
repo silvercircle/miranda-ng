@@ -34,6 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <newpluginapi.h>
 #include <m_database.h>
 #include <m_langpack.h>
+#include <m_genmenu.h>
 #include <m_skin.h>
 #include <m_userinfo.h>
 #include <m_clist.h>
@@ -41,6 +42,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_message.h>
 #include <m_protosvc.h>
 #include <m_popup.h>
+#include <m_timezones.h>
 #include <m_ignore.h>
 #include <m_button.h>
 #include <m_string.h>
@@ -119,7 +121,7 @@ extern HINSTANCE hInstance;
 extern DWORD StatusColors15bits[];
 extern BOOL includeIdle;
 extern HANDLE ehmissed, ehuserinfo, ehmissed_proto;
-extern HANDLE g_pUserInfo;
+extern MWindowList g_pUserInfo;
 extern HGENMENU hmenuitem;
 extern DWORD dwmirver;
 

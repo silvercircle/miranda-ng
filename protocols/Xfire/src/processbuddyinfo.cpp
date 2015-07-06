@@ -54,28 +54,28 @@ void ProcessBuddyInfo(xfirelib::BuddyInfoPacket *buddyinfo, MCONTACT hcontact, c
 
 	switch (buddyinfo->avatarmode) {
 	case 1:
-		strcat(filename, username);
-		strcat(filename, ".gif");
+		mir_strcat(filename, username);
+		mir_strcat(filename, ".gif");
 		type = PA_FORMAT_GIF;
 
-		mir_snprintf(temp, SIZEOF(temp), "/xfire/xf/images/avatars/gallery/default/%03d.gif", buddyinfo->avatarid);
+		mir_snprintf(temp, _countof(temp), "/xfire/xf/images/avatars/gallery/default/%03d.gif", buddyinfo->avatarid);
 
 		dl = GetWWWContent("media.xfire.com", temp, filename, FALSE);
 		break;
 	case 2:
-		strcat(filename, username);
-		strcat(filename, ".jpg");
+		mir_strcat(filename, username);
+		mir_strcat(filename, ".jpg");
 		type = PA_FORMAT_JPEG;
 
-		mir_snprintf(temp, SIZEOF(temp), "/avatar/100/%s.jpg?%d", username, buddyinfo->avatarid);
+		mir_snprintf(temp, _countof(temp), "/avatar/100/%s.jpg?%d", username, buddyinfo->avatarid);
 
 		dl = GetWWWContent("screenshot.xfire.com", temp, filename, FALSE);
 		break;
 	case 3:
 		type = PA_FORMAT_GIF;
-		strcat(filename, "xfire.gif");
+		mir_strcat(filename, "xfire.gif");
 
-		mir_snprintf(temp, SIZEOF(temp), "/xfire/xf/images/avatars/gallery/default/xfire.gif", buddyinfo->avatarid);
+		mir_snprintf(temp, _countof(temp), "/xfire/xf/images/avatars/gallery/default/xfire.gif", buddyinfo->avatarid);
 
 		dl = GetWWWContent("media.xfire.com", temp, filename, TRUE);
 		break;
@@ -90,12 +90,11 @@ void ProcessBuddyInfo(xfirelib::BuddyInfoPacket *buddyinfo, MCONTACT hcontact, c
 		{
 			db_set_dw(hcontact, "ContactPhoto", "XFireAvatarId", buddyinfo->avatarid);
 			db_set_b(hcontact, "ContactPhoto", "XFireAvatarMode", buddyinfo->avatarmode);
-			PROTO_AVATAR_INFORMATIONT AI;
-			AI.cbSize = sizeof(AI);
-			AI.format = type;
-			AI.hContact = hcontact;
-			mir_tstrcpy(AI.filename, _A2T(filename));
-			ProtoBroadcastAck(protocolname, hcontact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, (HANDLE)&AI, 0);
+			PROTO_AVATAR_INFORMATION ai;
+			ai.format = type;
+			ai.hContact = hcontact;
+			_tcsncpy_s(ai.filename, _A2T(filename), _TRUNCATE);
+			ProtoBroadcastAck(protocolname, hcontact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, (HANDLE)&ai, 0);
 		}
 		else //eigenen avatar setzen
 		{

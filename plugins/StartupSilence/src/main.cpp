@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 HINSTANCE hInst;
 int hLangpack;
-HANDLE hSSMenuToggleOnOff;
+HGENMENU hSSMenuToggleOnOff;
 HANDLE GetIconHandle(char *szIcon);
 HANDLE hOptionsInitialize;
 HANDLE hTTBarloaded = NULL;
@@ -120,7 +120,7 @@ int ModulesLoaded(WPARAM wParam, LPARAM lParam)
 	HookEvent(ME_POPUP_FILTER, DisablePopup);
 	hTTBarloaded = HookEvent(ME_TTB_MODULELOADED, CreateTTButtons);
 	if (TTBButtons == 1 && hTTBarloaded != NULL) {
-		Icon_Register(hInst, "Toolbar/"MENU_NAME, iconttbList, SIZEOF(iconttbList), MENU_NAME);
+		Icon_Register(hInst, "Toolbar/"MENU_NAME, iconttbList, _countof(iconttbList), MENU_NAME);
 		RemoveTTButtons();
 		CreateTTButtons(0,0);
 	}
@@ -160,17 +160,17 @@ void EnablePopupModule()
 
 void InitSettings()
 {
-	if(gethostname(hostname, SIZEOF(hostname)) == 0){
-		mir_snprintf(EnabledComp, SIZEOF(EnabledComp), "%s_Enabled", hostname);
-		mir_snprintf(DelayComp, SIZEOF(DelayComp), "%s_Delay", hostname);
-		mir_snprintf(PopUpComp, SIZEOF(PopUpComp), "%s_PopUp", hostname);
-		mir_snprintf(PopUpTimeComp, SIZEOF(PopUpTimeComp), "%s_PopUpTime", hostname);
-		mir_snprintf(MenuitemComp, SIZEOF(MenuitemComp), "%s_MenuItem", hostname);
-		mir_snprintf(TTBButtonsComp, SIZEOF(TTBButtonsComp), "%s_TTBButtons", hostname);
-		mir_snprintf(DefSoundComp, SIZEOF(DefSoundComp), "%s_DefSound", hostname);
-		mir_snprintf(DefPopupComp, SIZEOF(DefPopupComp), "%s_DefPopup", hostname);
-		mir_snprintf(DefEnabledComp, SIZEOF(DefEnabledComp), "%s_DefEnabled", hostname);
-		mir_snprintf(NonStatusAllowComp, SIZEOF(NonStatusAllowComp), "%s_NonStatusAllow", hostname);
+	if(gethostname(hostname, _countof(hostname)) == 0){
+		mir_snprintf(EnabledComp, _countof(EnabledComp), "%s_Enabled", hostname);
+		mir_snprintf(DelayComp, _countof(DelayComp), "%s_Delay", hostname);
+		mir_snprintf(PopUpComp, _countof(PopUpComp), "%s_PopUp", hostname);
+		mir_snprintf(PopUpTimeComp, _countof(PopUpTimeComp), "%s_PopUpTime", hostname);
+		mir_snprintf(MenuitemComp, _countof(MenuitemComp), "%s_MenuItem", hostname);
+		mir_snprintf(TTBButtonsComp, _countof(TTBButtonsComp), "%s_TTBButtons", hostname);
+		mir_snprintf(DefSoundComp, _countof(DefSoundComp), "%s_DefSound", hostname);
+		mir_snprintf(DefPopupComp, _countof(DefPopupComp), "%s_DefPopup", hostname);
+		mir_snprintf(DefEnabledComp, _countof(DefEnabledComp), "%s_DefEnabled", hostname);
+		mir_snprintf(NonStatusAllowComp, _countof(NonStatusAllowComp), "%s_NonStatusAllow", hostname);
 	}
 	//first run on the host, initial setting
 	if (!(delay = db_get_dw(NULL, MODULE_NAME, DelayComp, 0)))
@@ -219,7 +219,7 @@ void LoadSettings()
 void IsMenu()
 {
 	if (MenuItem == 1) {
-		Icon_Register(hInst, MENU_NAME, iconList, SIZEOF(iconList), MENU_NAME);
+		Icon_Register(hInst, MENU_NAME, iconList, _countof(iconList), MENU_NAME);
 		InitMenu();
 	}
 }
@@ -234,7 +234,7 @@ static INT_PTR AdvSt()
 
 			if (PopUp == 1) {
 				lptzText = NonStatusAllow == 1 ? ALL_DISABLED_FLT : ALL_DISABLED;
-				ppd.lchIcon = (HICON)CallService(MS_SKIN2_GETICONBYHANDLE, 0, (LPARAM)(NonStatusAllow == 1 ? GetIconHandle(ALL_ENABLED_FLT) : GetIconHandle(MENU_NAME)));
+				ppd.lchIcon = IcoLib_GetIconByHandle((NonStatusAllow == 1) ? GetIconHandle(ALL_ENABLED_FLT) : GetIconHandle(MENU_NAME));
 				ppd.lchContact = NULL;
 				ppd.iSeconds = PopUpTime;
 				wcsncpy_s(ppd.lptzText, lptzText, _TRUNCATE);
@@ -249,7 +249,7 @@ static INT_PTR AdvSt()
 
 			if (PopUp == 1) {
 				lptzText = (DefEnabled == 1 && DefPopup == 1) ? TranslateT(ALL_ENABLED_FLT) : ALL_ENABLED;
-				ppd.lchIcon = (HICON)CallService(MS_SKIN2_GETICONBYHANDLE, 0, (LPARAM)((DefEnabled == 1 && DefPopup == 1) ? GetIconHandle(ALL_ENABLED_FLT) : GetIconHandle(MENU_NAME)));
+				ppd.lchIcon = IcoLib_GetIconByHandle((DefEnabled == 1 && DefPopup == 1) ? GetIconHandle(ALL_ENABLED_FLT) : GetIconHandle(MENU_NAME));
 				wcsncpy_s(ppd.lptzText, lptzText, _TRUNCATE);
 				PUAddPopupT(&ppd);
 			}
@@ -270,7 +270,7 @@ static INT_PTR SturtupSilenceEnabled(WPARAM wParam, LPARAM lParam)
 	if (PopUp == 1) {
 		TCHAR * lptzText = Enabled == 1 ? S_MODE_CHANGEDON : S_MODE_CHANGEDOFF;
 		POPUPDATAT ppd = {0};
-		ppd.lchIcon = (HICON)CallService(MS_SKIN2_GETICONBYHANDLE, 0, (LPARAM)(Enabled == 1 ? GetIconHandle(ENABLE_SILENCE) : GetIconHandle(DISABLE_SILENCE)));
+		ppd.lchIcon = IcoLib_GetIconByHandle((Enabled == 1) ? GetIconHandle(ENABLE_SILENCE) : GetIconHandle(DISABLE_SILENCE));
 		ppd.lchContact = NULL;
 		ppd.iSeconds = PopUpTime;
 		wcsncpy_s(ppd.lptzText, lptzText, _TRUNCATE);
@@ -284,19 +284,15 @@ static INT_PTR SturtupSilenceEnabled(WPARAM wParam, LPARAM lParam)
 static INT_PTR SilenceConnection(WPARAM wParam, LPARAM lParam)
 {
 	timer = (BYTE)wParam;
-//	if (timer == 2) //commented for now
-//		db_set_b(NULL, "Skin", "UseSound", 0);
-//	else db_set_b(NULL, "Skin", "UseSound", 1);
 	return 0;
 }
 
 static INT_PTR InitMenu()
 {
-	CLISTMENUITEM mi = {sizeof(mi)};
-	mi.flags = CMIM_ALL;
+	CMenuItem mi;
 	mi.position = 100000000;
-	mi.icolibItem = GetIconHandle(MENU_NAME);
-	mi.pszPopupName = MENU_NAME;
+	mi.hIcolibItem = GetIconHandle(MENU_NAME);
+	mi.name.a = MENU_NAME;
 	mi.pszService = SS_SERVICE_NAME;
 	hSSMenuToggleOnOff = Menu_AddMainMenuItem(&mi);
 	UpdateMenu();
@@ -305,11 +301,11 @@ static INT_PTR InitMenu()
 
 void UpdateMenu()
 {
-	CLISTMENUITEM mi = {sizeof(mi)};
-	mi.pszName = (Enabled == 1 ? DISABLE_SILENCE : ENABLE_SILENCE);
-	mi.flags = CMIM_NAME | CMIM_ALL;
-	mi.icolibItem = (Enabled == 1 ? GetIconHandle(DISABLE_SILENCE) : GetIconHandle(ENABLE_SILENCE));
-	CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hSSMenuToggleOnOff, (LPARAM)&mi);
+	if (Enabled == 1)
+		Menu_ModifyItem(hSSMenuToggleOnOff, _T(DISABLE_SILENCE), GetIconHandle(DISABLE_SILENCE));
+	else
+		Menu_ModifyItem(hSSMenuToggleOnOff, _T(ENABLE_SILENCE), GetIconHandle(ENABLE_SILENCE));
+
 	UpdateTTB();
 }
 
@@ -321,7 +317,7 @@ void UpdateTTB()
 
 static int CreateTTButtons(WPARAM wParam, LPARAM lParam)
 {
-	TTBButton ttb = {sizeof(ttb)};
+	TTBButton ttb = { 0 };
 	ttb.dwFlags = (Enabled == 1 ? 0 : TTBBF_PUSHED) | TTBBF_VISIBLE | TTBBF_ASPUSHBUTTON;
 	ttb.pszService = SS_SERVICE_NAME;
 	ttb.hIconHandleDn = GetIconHandle(DISABLE_SILENCETTB);
@@ -345,8 +341,8 @@ void RemoveTTButtons()
 HANDLE GetIconHandle(char *szIcon)
 {
 	char szSettingName[64];
-	mir_snprintf(szSettingName, SIZEOF(szSettingName), "%s_%s", MENU_NAME, szIcon);
-	return Skin_GetIconHandle(szSettingName);
+	mir_snprintf(szSettingName, _countof(szSettingName), "%s_%s", MENU_NAME, szIcon);
+	return IcoLib_GetIconHandle(szSettingName);
 }
 
 int InitializeOptions(WPARAM wParam,LPARAM lParam)

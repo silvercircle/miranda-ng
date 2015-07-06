@@ -39,7 +39,7 @@ static TSettingsList* GetCurrentProtoSettings()
 {
 	int count;
 	PROTOACCOUNT **protos;
-	ProtoEnumAccounts(&count, &protos);
+	Proto_EnumAccounts(&count, &protos);
 
 	TSettingsList *result = new TSettingsList(count, CompareSettings);
 	if (result == NULL)
@@ -119,7 +119,7 @@ static char* GetCMDL(TSettingsList& protoSettings)
 	char* args = GetCMDLArguments(protoSettings);
 	if ( args ) {
 		cmdl = ( char* )realloc(cmdl, mir_strlen(cmdl) + mir_strlen(args) + 1);
-		strcat(cmdl, args);
+		mir_strcat(cmdl, args);
 		free(args);
 	}
 	return cmdl;
@@ -161,9 +161,9 @@ HRESULT CreateLink(TSettingsList& protoSettings)
 {
 	TCHAR savePath[MAX_PATH];
 	if (SHGetSpecialFolderPath(NULL, savePath, 0x10, FALSE))
-		_tcsncat_s(savePath, SHORTCUT_FILENAME, SIZEOF(savePath) - mir_tstrlen(savePath));
+		_tcsncat_s(savePath, SHORTCUT_FILENAME, _countof(savePath) - mir_tstrlen(savePath));
 	else
-		mir_sntprintf(savePath, SIZEOF(savePath), _T(".\\%s"), SHORTCUT_FILENAME);
+		mir_sntprintf(savePath, _countof(savePath), _T(".\\%s"), SHORTCUT_FILENAME);
 
 	// Get a pointer to the IShellLink interface.
 	IShellLink *psl;
@@ -175,7 +175,7 @@ HRESULT CreateLink(TSettingsList& protoSettings)
 		// Set the path to the shortcut target, and add the
 		// description.
 		TCHAR path[MAX_PATH];
-		GetModuleFileName(NULL, path, SIZEOF(path));
+		GetModuleFileName(NULL, path, _countof(path));
 		psl->SetPath(path);
 		psl->SetDescription(desc);
 		psl->SetArguments( _A2T(args));
@@ -220,7 +220,7 @@ INT_PTR CALLBACK CmdlOptionsDlgProc(HWND hwndDlg,UINT msg,WPARAM wParam,LPARAM l
 				EmptyClipboard();
 
 				char cmdl[2048];
-				GetDlgItemTextA(hwndDlg,IDC_CMDL, cmdl, SIZEOF(cmdl));
+				GetDlgItemTextA(hwndDlg,IDC_CMDL, cmdl, _countof(cmdl));
 				HGLOBAL cmdlGlob = GlobalAlloc(GMEM_MOVEABLE, sizeof(cmdl));
 				if (cmdlGlob == NULL) {
 					CloseClipboard();
@@ -322,12 +322,12 @@ static INT_PTR CALLBACK StartupStatusOptDlgProc(HWND hwndDlg,UINT msg,WPARAM wPa
 		}
 		else {
 			TCHAR text[128];
-			mir_sntprintf(text, SIZEOF(text), TranslateT("size: %d x %d"),
+			mir_sntprintf(text, TranslateT("size: %d x %d"),
 				db_get_dw(NULL, MODULE_CLIST, SETTING_WIDTH, 0),
 				db_get_dw(NULL, MODULE_CLIST, SETTING_HEIGHT, 0));
 			SetDlgItemText(hwndDlg, IDC_CURWINSIZE, text);
 
-			mir_sntprintf(text, SIZEOF(text), TranslateT("loc: %d x %d"),
+			mir_sntprintf(text, TranslateT("loc: %d x %d"),
 				db_get_dw(NULL, MODULE_CLIST, SETTING_XPOS, 0),
 				db_get_dw(NULL, MODULE_CLIST, SETTING_YPOS, 0));
 			SetDlgItemText(hwndDlg, IDC_CURWINLOC, text);
@@ -610,7 +610,7 @@ static INT_PTR CALLBACK StatusProfilesOptDlgProc(HWND hwndDlg,UINT msg,WPARAM wP
 
 				int flags = (CallProtoService(ps->szName, PS_GETCAPS, PFLAGNUM_2, 0))&~(CallProtoService(ps->szName, PS_GETCAPS, PFLAGNUM_5, 0));
 				SendDlgItemMessage(hwndDlg, IDC_STATUS, LB_RESETCONTENT, 0, 0);
-				for ( int i=0; i < SIZEOF(statusModeList); i++ ) {
+				for ( int i=0; i < _countof(statusModeList); i++ ) {
 					if ( (flags&statusModePf2List[i]) || (statusModeList[i] == ID_STATUS_OFFLINE)) {
 						int item = SendDlgItemMessage(hwndDlg, IDC_STATUS, LB_ADDSTRING, 0, (LPARAM)pcli->pfnGetStatusModeDescription(statusModeList[i], 0));
 						SendDlgItemMessage(hwndDlg, IDC_STATUS, LB_SETITEMDATA, (WPARAM)item, (LPARAM)statusModeList[i]);
@@ -812,7 +812,7 @@ static INT_PTR CALLBACK StatusProfilesOptDlgProc(HWND hwndDlg,UINT msg,WPARAM wP
 			char setting[128];
 			int i, oldCount = db_get_w(NULL, MODULENAME, SETTING_PROFILECOUNT, 0);
 			for (i=0; i < oldCount; i++) {
-				mir_snprintf(setting, SIZEOF(setting), "%d_", i);
+				mir_snprintf(setting, "%d_", i);
 				ClearDatabase(setting);
 			}
 			for (i=0; i < arProfiles.getCount(); i++) {
@@ -828,7 +828,7 @@ static INT_PTR CALLBACK StatusProfilesOptDlgProc(HWND hwndDlg,UINT msg,WPARAM wP
 				TSettingsList& ar = *po.ps;
 				for (int j=0; j < ar.getCount(); j++) {
 					if ( ar[j].szMsg != NULL ) {
-						mir_snprintf(setting, SIZEOF(setting), "%s_%s", ar[j].szName, SETTING_PROFILE_STSMSG);
+						mir_snprintf(setting, "%s_%s", ar[j].szName, SETTING_PROFILE_STSMSG);
 						db_set_ts(NULL, MODULENAME, OptName(i, setting), ar[j].szMsg);
 					}
 					db_set_w(NULL, MODULENAME, OptName(i, ar[j].szName), ar[j].status);
@@ -866,7 +866,7 @@ INT_PTR CALLBACK addProfileDlgProc(HWND hwndDlg,UINT msg,WPARAM wParam,LPARAM lP
 		case WM_COMMAND:
 			if (LOWORD(wParam) == IDC_OK) {
 				TCHAR profileName[128];
-				GetDlgItemText(hwndDlg, IDC_PROFILENAME, profileName, SIZEOF(profileName));
+				GetDlgItemText(hwndDlg, IDC_PROFILENAME, profileName, _countof(profileName));
 				SendMessage(hwndParent, UM_ADDPROFILE, 0, (LPARAM)profileName);
 				// done and exit
 				DestroyWindow(hwndDlg);
@@ -955,6 +955,6 @@ static int DeleteSetting(const char *szSetting,LPARAM lParam)
 char* OptName(int i, const char* setting)
 {
 	static char buf[100];
-	mir_snprintf(buf, SIZEOF(buf), "%d_%s", i, setting);
+	mir_snprintf(buf, "%d_%s", i, setting);
 	return buf;
 }

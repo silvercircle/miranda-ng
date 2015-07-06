@@ -19,7 +19,7 @@
 
 #include "m_folders.h"
 
-#include "..\pcre16\src\pcre.h"
+#include "..\..\libs\pcre16\src\pcre.h"
 
 #include "resource.h"
 #include "version.h"
@@ -115,13 +115,6 @@ int LogToSystemHistory(char *message, char *origmessage);
 #define POPUP_BLOCKED 1
 #define POPUP_APPROVED 2
 #define POPUP_CHALLENGE 3
-
-#ifdef _UNICODE
-#define CONTACT_NAME(a) CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)a, GCDNF_NOMYHANDLE | GCDNF_UNICODE | GCDNF_NOCACHE)
-#else
-#define CONTACT_NAME(a) CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)a, GCDNF_NOMYHANDLE | GCDNF_NOCACHE)
-#endif
-
 
 /* bayes.c */
 

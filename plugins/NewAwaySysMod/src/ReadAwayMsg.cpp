@@ -30,7 +30,7 @@ struct READAWAYMSGDATA
 
 #define RAMDLGSIZESETTING "ReadAwayMsgDlg"
 
-HANDLE g_hReadWndList = NULL;
+MWindowList g_hReadWndList = NULL;
 
 static int ReadAwayMsgDlgResize(HWND hwndDlg, LPARAM lParam, UTILRESIZECONTROL *urc)
 {
@@ -53,7 +53,7 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
 		{
-			HICON hTitleIcon = LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
+			HICON hTitleIcon = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
 			SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)hTitleIcon);
 			SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)hTitleIcon);
 			Utils_RestoreWindowPosition(hwndDlg, NULL, MOD_NAME, RAMDLGSIZESETTING);
@@ -69,11 +69,11 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam
 			TCHAR *contactName = pcli->pfnGetContactDisplayName(awayData->hContact, 0);
 			char *szProto = GetContactProto(awayData->hContact);
 			TCHAR *status = pcli->pfnGetStatusModeDescription(db_get_w(awayData->hContact, szProto, "Status", ID_STATUS_OFFLINE), 0);
-			GetWindowText(hwndDlg, format, SIZEOF(format));
-			mir_sntprintf(str, SIZEOF(str), format, status, contactName);
+			GetWindowText(hwndDlg, format, _countof(format));
+			mir_sntprintf(str, _countof(str), format, status, contactName);
 			SetWindowText(hwndDlg, str);
-			GetDlgItemText(hwndDlg, IDC_READAWAYMSG_RETRIEVE, format, SIZEOF(format));
-			mir_sntprintf(str, SIZEOF(str), format, status);
+			GetDlgItemText(hwndDlg, IDC_READAWAYMSG_RETRIEVE, format, _countof(format));
+			mir_sntprintf(str, _countof(str), format, status);
 			SetDlgItemText(hwndDlg, IDC_READAWAYMSG_RETRIEVE, str);
 		}
 		return true;
@@ -91,11 +91,12 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam
 				UnhookEvent(awayData->hAwayMsgEvent);
 				awayData->hAwayMsgEvent = NULL;
 			}
-			SetDlgItemText(hwndDlg, IDC_READAWAYMSG_MSG, (const TCHAR*)ack->lParam);
+			const TCHAR *ptszStatusMsg = (const TCHAR*)ack->lParam;
+			SetDlgItemText(hwndDlg, IDC_READAWAYMSG_MSG, ptszStatusMsg);
 			ShowWindow(GetDlgItem(hwndDlg, IDC_READAWAYMSG_RETRIEVE), SW_HIDE);
 			ShowWindow(GetDlgItem(hwndDlg, IDC_READAWAYMSG_MSG), SW_SHOW);
 			SetDlgItemText(hwndDlg, IDOK, TranslateT("&Close"));
-			db_set_s(awayData->hContact, "CList", "StatusMsg", (const char*)ack->lParam);
+			db_set_ts(awayData->hContact, "CList", "StatusMsg", ptszStatusMsg);
 		}
 		break;
 
@@ -112,14 +113,7 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam
 		break;
 
 	case WM_SIZE:
-		{
-			UTILRESIZEDIALOG urd = { sizeof(urd) };
-			urd.hInstance = g_hInstance;
-			urd.hwndDlg = hwndDlg;
-			urd.lpTemplate = MAKEINTRESOURCEA(IDD_READAWAYMSG);
-			urd.pfnResizer = ReadAwayMsgDlgResize;
-			CallService(MS_UTILS_RESIZEDIALOG, 0, (LPARAM)&urd);
-		}
+		Utils_ResizeDialog(hwndDlg, g_hInstance, MAKEINTRESOURCEA(IDD_READAWAYMSG), ReadAwayMsgDlgResize);
 		break;
 
 	case WM_CLOSE:

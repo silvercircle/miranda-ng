@@ -18,21 +18,19 @@
 #include <time.h>
 #include <commctrl.h>
 
-#include "../../plugins/zlib/src/zlib.h"
+#include "../../libs/zlib/src/zlib.h"
 
 #include <newpluginapi.h>
 #include <m_system.h>
 #include <m_system_cpp.h>
 #include <m_protocols.h>
 #include <m_clist.h>
-#include <m_clistint.h>
 #include <m_cluiframes.h>
 #include <m_clui.h>
 #include <m_genmenu.h>
 #include <m_ignore.h>
 #include <m_message.h>
 #include <m_options.h>
-#include <m_protomod.h>
 #include <m_protosvc.h>
 #include <m_protoint.h>
 #include <m_skin.h>
@@ -179,9 +177,6 @@ extern HANDLE hXStatusAdvancedStatusIcons[];
 void    InitExtraIcons();
 
 CMStringA MraGetSelfVersionString();
-
-#define GetContactNameA(Contact) (LPSTR)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)Contact, 0)
-#define GetContactNameW(Contact) (LPWSTR)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)Contact, GCDNF_UNICODE)
 
 #define SetBit(bytes, bitpos) bytes |= (1<<bitpos)
 #define GetBit(bytes, bitpos) ((bytes&(1<<bitpos))? TRUE:FALSE)

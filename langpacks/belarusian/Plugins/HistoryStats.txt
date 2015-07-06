@@ -134,6 +134,10 @@ URL (усё)
 Спасылкі
 [Files]
 Файлы
+[Incoming URLs]
+Уваходныя URL
+[Incoming files]
+Уваходныя файлы
 ;file \plugins\HistoryStats\src\column_events.h
 [Events]
 Падзеі
@@ -182,6 +186,12 @@ URL (усё)
 Паведамленні
 [Chats]
 Чатаў
+[day]
+дзень
+[week]
+тыдзень
+[month]
+месяц
 ;file \plugins\HistoryStats\src\column_inout.h
 [In/out]
 Уваходнае/Выходнае
@@ -264,6 +274,10 @@ URL (усё)
 Выраўнаваць на мяжы тыдня
 [Details for every bar (tooltip)]
 Дэталі для кожнай калонкі (падказка)
+[Hours]
+Гадзін
+[Days]
+Дзён
 [Weeks]
 Тыдняў
 [Details for every bar (tooltip) are only available with HTML output.]
@@ -423,10 +437,16 @@ HistoryStats - Папярэджанне
 Выключаць
 [Exclude contacts]
 Выключаць кантакты
+[Input]
+Увод
 [Input settings]
 Налады ўводу
+[Columns]
+Слупкі
 [Column settings]
 Налады калонак
+[Output]
+Выснова
 [Output settings]
 Налады высновы
 [Create statistics]

@@ -44,21 +44,21 @@ static void SetFileListAndSizeControls(HWND hwndDlg, FileDlgData *dat)
 		}
 	}
 
-	GetSensiblyFormattedSize(totalSize, str, SIZEOF(str), 0, 1, NULL);
+	GetSensiblyFormattedSize(totalSize, str, _countof(str), 0, 1, NULL);
 	SetDlgItemText(hwndDlg, IDC_TOTALSIZE, str);
 	if (i > 1) {
 		TCHAR szFormat[32];
 		if (fileCount && dirCount) {
-			mir_sntprintf(szFormat, SIZEOF(szFormat), _T("%s, %s"), TranslateTS(fileCount == 1 ? _T("%d file") : _T("%d files")), TranslateTS(dirCount == 1 ? _T("%d directory") : _T("%d directories")));
-			mir_sntprintf(str, SIZEOF(str), szFormat, fileCount, dirCount);
+			mir_sntprintf(szFormat, _countof(szFormat), _T("%s, %s"), TranslateTS(fileCount == 1 ? _T("%d file") : _T("%d files")), TranslateTS(dirCount == 1 ? _T("%d directory") : _T("%d directories")));
+			mir_sntprintf(str, _countof(str), szFormat, fileCount, dirCount);
 		}
 		else if (fileCount) {
 			mir_tstrcpy(szFormat, TranslateT("%d files"));
-			mir_sntprintf(str, SIZEOF(str), szFormat, fileCount);
+			mir_sntprintf(str, _countof(str), szFormat, fileCount);
 		}
 		else {
 			mir_tstrcpy(szFormat, TranslateT("%d directories"));
-			mir_sntprintf(str, SIZEOF(str), szFormat, dirCount);
+			mir_sntprintf(str, _countof(str), szFormat, dirCount);
 		}
 		SetDlgItemText(hwndDlg, IDC_FILE, str);
 	}
@@ -141,7 +141,7 @@ void __cdecl ChooseFilesThread(void* param)
 
 	TCHAR *buf = (TCHAR*)mir_alloc(sizeof(TCHAR) * 32767);
 	if (buf == NULL) {
-		PostMessage(hwndDlg, M_FILECHOOSEDONE, 0, (LPARAM)(TCHAR*)NULL);
+		PostMessage(hwndDlg, M_FILECHOOSEDONE, 0, NULL);
 		return;
 	}
 
@@ -256,7 +256,7 @@ INT_PTR CALLBACK DlgProcSendFile(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 						break;
 					case CNFT_DWORD:
 						hasName = 1;
-						mir_snprintf(buf, SIZEOF(buf), "%u", ci.dVal);
+						mir_snprintf(buf, "%u", ci.dVal);
 						break;
 					}
 				}
@@ -276,7 +276,7 @@ INT_PTR CALLBACK DlgProcSendFile(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 		return TRUE;
 
 	case WM_MEASUREITEM:
-		return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
+		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
 
 	case WM_DRAWITEM:
 		{
@@ -292,7 +292,7 @@ INT_PTR CALLBACK DlgProcSendFile(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 				}
 			}
 		}
-		return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
+		return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
 
 	case M_FILECHOOSEDONE:
 		if (lParam != 0) {
@@ -323,9 +323,9 @@ INT_PTR CALLBACK DlgProcSendFile(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 			EnableWindow(GetDlgItem(hwndDlg, IDC_MSG), FALSE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_CHOOSE), FALSE);
 
-			GetDlgItemText(hwndDlg, IDC_FILEDIR, dat->szSavePath, SIZEOF(dat->szSavePath));
-			GetDlgItemText(hwndDlg, IDC_FILE, dat->szFilenames, SIZEOF(dat->szFilenames));
-			GetDlgItemText(hwndDlg, IDC_MSG, dat->szMsg, SIZEOF(dat->szMsg));
+			GetDlgItemText(hwndDlg, IDC_FILEDIR, dat->szSavePath, _countof(dat->szSavePath));
+			GetDlgItemText(hwndDlg, IDC_FILE, dat->szFilenames, _countof(dat->szFilenames));
+			GetDlgItemText(hwndDlg, IDC_MSG, dat->szMsg, _countof(dat->szMsg));
 			dat->hwndTransfer = FtMgr_AddTransfer(dat);
 			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, 0);
 			DestroyWindow(hwndDlg);
@@ -338,9 +338,9 @@ INT_PTR CALLBACK DlgProcSendFile(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 
 		case IDC_USERMENU:
 			{
-				HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDCONTACT, (WPARAM)dat->hContact, 0);
 				RECT rc;
 				GetWindowRect((HWND)lParam, &rc);
+				HMENU hMenu = Menu_BuildContactMenu(dat->hContact);
 				TrackPopupMenu(hMenu, 0, rc.left, rc.bottom, 0, hwndDlg, NULL);
 				DestroyMenu(hMenu);
 			}

@@ -69,8 +69,8 @@ void CAimProto::chat_event(const char* id, const char* sn, int evt, const TCHAR*
 	TCHAR* snt = mir_a2t(sn);
 
 	MCONTACT hContact = contact_from_sn(sn);
-	TCHAR* nick = hContact ? (TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, 
-		WPARAM(hContact), GCDNF_TCHAR) : snt;
+	TCHAR* nick = hContact ? (TCHAR*)pcli->pfnGetContactDisplayName(
+		WPARAM(hContact), 0) : snt;
 
 	GCDEST gcd = { m_szModuleName, idt, evt };
 	GCEVENT gce = { sizeof(gce), &gcd };
@@ -197,7 +197,7 @@ int CAimProto::OnGCMenuHook(WPARAM, LPARAM lParam)
 			{ TranslateT("&Invite user..."), 10, MENU_ITEM, FALSE },
 			{ TranslateT("&Leave chat session"), 20, MENU_ITEM, FALSE }
 		};
-		gcmi->nItems = SIZEOF(Items);
+		gcmi->nItems = _countof(Items);
 		gcmi->Item = (gc_item*)Items;
 	}
 	else if ( gcmi->Type == MENU_ON_NICKLIST ) 
@@ -211,7 +211,7 @@ int CAimProto::OnGCMenuHook(WPARAM, LPARAM lParam)
 				{ _T(""), 100, MENU_SEPARATOR, FALSE },
 				{ TranslateT("&Leave chat session"), 110, MENU_ITEM, FALSE }
 			};
-			gcmi->nItems = SIZEOF(Items);
+			gcmi->nItems = _countof(Items);
 			gcmi->Item = (gc_item*)Items;
 		}
 		else {
@@ -219,7 +219,7 @@ int CAimProto::OnGCMenuHook(WPARAM, LPARAM lParam)
 				{ TranslateT("User &details"), 10, MENU_ITEM, FALSE },
 				{ TranslateT("User &history"), 20, MENU_ITEM, FALSE }
 			};
-			gcmi->nItems = SIZEOF(Items);
+			gcmi->nItems = _countof(Items);
 			gcmi->Item = (gc_item*)Items;
 		}	
 		mir_free(sn);

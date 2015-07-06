@@ -9,7 +9,6 @@ uses
 
 //----- Contact info -----
 
-function GetContactProtoAcc(hContact:TMCONTACT):PAnsiChar;
 function GetContactProto(hContact: TMCONTACT): PAnsiChar; overload;
 function GetContactProto(hContact: TMCONTACT; var SubContact: TMCONTACT; var SubProtocol: PAnsiChar): PAnsiChar; overload;
 function GetContactDisplayName(hContact: TMCONTACT; Proto: PAnsiChar = nil; Contact: boolean = false): PWideChar;
@@ -63,27 +62,19 @@ uses
 
 //----- Contact info -----
 
-function GetContactProtoAcc(hContact:TMCONTACT):PAnsiChar;
-begin
-  if ServiceExists(MS_PROTO_GETCONTACTBASEACCOUNT)<>0 then
-    result:=PAnsiChar(CallService(MS_PROTO_GETCONTACTBASEACCOUNT,hContact,0))
-  else
-    result:=PAnsiChar(CallService(MS_PROTO_GETCONTACTBASEPROTO,hContact,0));
-end;
-
 function GetContactProto(hContact: TMCONTACT): PAnsiChar;
 {$IFDEF AllowInline}inline;{$ENDIF}
 begin
-  Result := PAnsiChar(CallService(MS_PROTO_GETCONTACTBASEPROTO, hContact, 0));
+  Result := Proto_GetProtoName(hContact);
 end;
 
 function GetContactProto(hContact: TMCONTACT; var SubContact: TMCONTACT; var SubProtocol: PAnsiChar): PAnsiChar;
 begin
-  Result := GetContactProto(hContact);
+  Result := Proto_GetProtoName(hContact);
   if StrCmp(Result, META_PROTO)=0 then
   begin
     SubContact  := CallService(MS_MC_GETMOSTONLINECONTACT, hContact, 0);
-    SubProtocol := PAnsiChar(CallService(MS_PROTO_GETCONTACTBASEPROTO, SubContact, 0));
+    SubProtocol := Proto_GetProtoName(SubContact);
   end
   else
   begin
@@ -124,7 +115,7 @@ begin
         AnsiToWide(GetContactID(hContact, Proto), Result);
 
       if (Result = nil) or (Result^ = #0) then
-        AnsiToWide(Translate(Proto), Result, CallService(MS_LANGPACK_GETCODEPAGE, 0, 0));
+        AnsiToWide(Translate(Proto), Result, Langpack_GetDefaultCodePage);
     end;
   end;
 end;
@@ -155,7 +146,7 @@ begin
           DBVT_ASCIIZ: StrDup(Result, dbv.szVal.a);
           DBVT_UTF8,
           DBVT_WCHAR:  begin
-            cp := CallService(MS_LANGPACK_GETCODEPAGE, 0, 0);
+            cp := Langpack_GetDefaultCodePage;
             if dbv._type = DBVT_UTF8 then
               UTF8ToAnsi(dbv.szVal.a, Result, cp)
             else // dbv._type = DBVT_WCHAR then
@@ -174,7 +165,7 @@ begin
   if Proto = nil then
     Proto := GetContactProto(hContact);
   if Proto = nil then
-    Result := CallService(MS_LANGPACK_GETCODEPAGE, 0, 0)
+    Result := Langpack_GetDefaultCodePage
   else
   begin
     Result := DBReadWord(hContact, Proto, 'AnsiCodePage', $FFFF);
@@ -246,7 +237,7 @@ begin
   begin
     result:=0;
 
-    p:=PPROTOACCOUNT(CallService(MS_PROTO_GETACCOUNT,0,lparam(@name)));
+    p:=Proto_GetAccount(@name);
     if p=nil then
       result:=-2 // deleted
     else if (not p^.bIsEnabled) or p^.bDynDisabled then
@@ -371,7 +362,7 @@ var
   is_chat:boolean;
 begin
   result:=0;
-  Proto:=GetContactProtoAcc(hContact);
+  Proto:=Proto_GetBaseAccountName(hContact);
   if Proto<>nil then
   begin
     p:=StrCopyE(section,setting);
@@ -410,16 +401,14 @@ function SetCListSelContact(hContact:TMCONTACT):TMCONTACT;
 var
   wnd:HWND;
 begin
-  wnd:=CallService(MS_CLUI_GETHWNDTREE,0,0);
+  wnd:=cli^.hwndContactTree;
   result:=hContact;
-//  hContact:=SendMessage(wnd,CLM_FINDCONTACT  ,hContact,0);
   SendMessage(wnd,CLM_SELECTITEM   ,hContact,0);
-//  SendMessage(wnd,CLM_ENSUREVISIBLE,hContact,0);
 end;
 
 function GetCListSelContact:TMCONTACT;
 begin
-  result:=SendMessageW(CallService(MS_CLUI_GETHWNDTREE,0,0),CLM_GETSELECTION,0,0);
+  result:=SendMessageW(cli^.hwndContactTree,CLM_GETSELECTION,0,0);
 end;
 
 function WndToContact(wnd:HWND):TMCONTACT;
@@ -581,8 +570,7 @@ begin
     begin
       StrCopyW(buf,format);
       if lName then
-        StrReplaceW(buf,'%name%',
-          PWideChar(CallService(MS_CLIST_GETCONTACTDISPLAYNAME,hContact,GCDNF_UNICODE)));
+        StrReplaceW(buf,'%name%', cli^.pfnGetContactDisplayName(hContact,0));
 
       if lGroup then
       begin
@@ -593,7 +581,7 @@ begin
 
       if lAccount then
       begin
-        acc:=GetContactProtoAcc(hContact);
+        acc:=Proto_GetBaseAccountName(hContact);
         StrReplaceW(buf,'%account%',FastAnsiToWideBuf(acc,buf1));
       end
       else
@@ -602,7 +590,7 @@ begin
       if lUID then
       begin
         if acc=nil then
-          acc:=GetContactProtoAcc(hContact);
+          acc:=Proto_GetBaseAccountName(hContact);
         if IsChat(hContact) then
         begin
           p:=DBReadUnicode(hContact,acc,'ChatRoomID');
@@ -622,7 +610,7 @@ begin
                 DBVT_WORD   : p:=IntToStr(buf1,ldbv.wVal);
                 DBVT_DWORD  : p:=IntToStr(buf1,ldbv.dVal);
                 DBVT_UTF8   : UTF8ToWide(ldbv.szVal.A,p);
-                DBVT_ASCIIZ : AnsiToWide(ldbv.szVal.A,p,CallService(MS_LANGPACK_GETCODEPAGE,0,0));
+                DBVT_ASCIIZ : AnsiToWide(ldbv.szVal.A,p,Langpack_GetDefaultCodePage);
                 DBVT_WCHAR  : p:=ldbv.szVal.W;
                 DBVT_BLOB   : p:='blob';
               end;

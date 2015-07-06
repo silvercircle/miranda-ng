@@ -172,7 +172,7 @@ ID клиента
 [LastEvent]
 Последнее событие
 [EventCount]
-Счетчик событий
+Счётчик событий
 [Script Editor]
 Редактор скриптов
 [Normal background]
@@ -220,7 +220,7 @@ ID клиента
 [Warning]
 Предупреждение
 [One or more contacts in same Meta already. Try to convert anyway?]
-Один или несколько контактов в похожем метаконтакте. Все равно преобразовать?
+Один или несколько контактов в похожем метаконтакте. Всё равно преобразовать?
 [Editing of column ]
 Изменение колонки\s
 [%i users found (%i) Online: %i]
@@ -249,6 +249,8 @@ ID клиента
 Содержит информацию метаконтакта.
 [Content is count of ALL contact events (not messages only)]
 Содержит количество ВСЕХ событий контакта (не только сообщений)
+[Other info]
+Прочие сведения
 [Change setting through QS]
 Изменить с помощью QuickSearch
 [default]

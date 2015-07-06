@@ -309,7 +309,7 @@ void CIcqProto::handleRecvServMsgType1(BYTE *buf, size_t wLen, DWORD dwUin, char
 						// Append the new message part
 						szMsg = (char*)SAFE_REALLOC(szMsg, mir_strlen(szMsg) + mir_strlen(szMsgPart) + 1);
 
-						strcat(szMsg, szMsgPart);
+						mir_strcat(szMsg, szMsgPart);
 						SAFE_FREE(&szMsgPart);
 					}
 					wMsgPart++;
@@ -950,8 +950,8 @@ void CIcqProto::handleRecvServMsgContacts(BYTE *buf, size_t wLen, DWORD dwUin, c
 						contacts[iContact] = (ICQSEARCHRESULT*)SAFE_MALLOC(sizeof(ICQSEARCHRESULT));
 						contacts[iContact]->hdr.cbSize = sizeof(ICQSEARCHRESULT);
 						contacts[iContact]->hdr.flags = PSR_TCHAR;
-						contacts[iContact]->hdr.nick = null_strdup(_T(""));
-						contacts[iContact]->hdr.id = ansi_to_tchar(szUid);
+						contacts[iContact]->hdr.nick.t = null_strdup(_T(""));
+						contacts[iContact]->hdr.id.t = ansi_to_tchar(szUid);
 
 						if (IsStringUIN(szUid)) { // icq contact
 							contacts[iContact]->uin = atoi(szUid);
@@ -978,8 +978,8 @@ void CIcqProto::handleRecvServMsgContacts(BYTE *buf, size_t wLen, DWORD dwUin, c
 				debugLogA("Malformed '%s' message", "contacts");
 				disposeChain(&chain);
 				for (int i = 0; i < iContact; i++) {
-					SAFE_FREE(&contacts[i]->hdr.id);
-					SAFE_FREE(&contacts[i]->hdr.nick);
+					SAFE_FREE(&contacts[i]->hdr.id.t);
+					SAFE_FREE(&contacts[i]->hdr.nick.t);
 					SAFE_FREE((void**)&contacts[i]);
 				}
 				SAFE_FREE((void**)&contacts);
@@ -1017,8 +1017,8 @@ void CIcqProto::handleRecvServMsgContacts(BYTE *buf, size_t wLen, DWORD dwUin, c
 
 							unpackTypedTLV(pBuffer, wNickLen, 0x01, &wNickTLV, &wNickTLVLen, (LPBYTE*)&pNick);
 							if (wNickTLV == 0x01) {
-								SAFE_FREE(&contacts[iContact]->hdr.nick);
-								contacts[iContact]->hdr.nick = utf8_to_tchar(pNick);
+								SAFE_FREE(&contacts[iContact]->hdr.nick.t);
+								contacts[iContact]->hdr.nick.t = utf8_to_tchar(pNick);
 							}
 							else
 								SAFE_FREE(&pNick);
@@ -1053,8 +1053,8 @@ void CIcqProto::handleRecvServMsgContacts(BYTE *buf, size_t wLen, DWORD dwUin, c
 			}
 
 			for (int i = 0; i < iContact; i++) {
-				SAFE_FREE(&contacts[i]->hdr.id);
-				SAFE_FREE(&contacts[i]->hdr.nick);
+				SAFE_FREE(&contacts[i]->hdr.id.t);
+				SAFE_FREE(&contacts[i]->hdr.nick.t);
 				SAFE_FREE((void**)&contacts[i]);
 			}
 			SAFE_FREE((void**)&contacts);
@@ -1517,7 +1517,7 @@ void CIcqProto::handleMessageTypes(DWORD dwUin, char *szUID, DWORD dwTimestamp, 
 			if ((BYTE)*pszMsg == 0xFE) {
 				*pszMsg = '\0';
 				pszMsgField[nMsgFields++] = pszMsg + 1;
-				if (nMsgFields >= SIZEOF(pszMsgField))
+				if (nMsgFields >= _countof(pszMsgField))
 					break;
 			}
 		}
@@ -1605,10 +1605,10 @@ void CIcqProto::handleMessageTypes(DWORD dwUin, char *szUID, DWORD dwTimestamp, 
 			char *szDataUrl = ansi_to_utf8(pszMsgField[1]);
 			char *szBlob = (char *)SAFE_MALLOC(mir_strlen(szTitle) + mir_strlen(szDataDescr) + mir_strlen(szDataUrl) + 8);
 			mir_strcpy(szBlob, szTitle);
-			strcat(szBlob, " ");
-			strcat(szBlob, szDataDescr); // Description
-			strcat(szBlob, "\r\n");
-			strcat(szBlob, szDataUrl); // URL
+			mir_strcat(szBlob, " ");
+			mir_strcat(szBlob, szDataDescr); // Description
+			mir_strcat(szBlob, "\r\n");
+			mir_strcat(szBlob, szDataUrl); // URL
 			SAFE_FREE(&szTitle);
 			SAFE_FREE(&szDataDescr);
 			SAFE_FREE(&szDataUrl);
@@ -1694,8 +1694,8 @@ void CIcqProto::handleMessageTypes(DWORD dwUin, char *szUID, DWORD dwTimestamp, 
 						if (!mir_strlen(pszMsgField[1 + i * 2]))
 							valid = 0;
 					}
-					isrList[i]->hdr.id = ansi_to_tchar(pszMsgField[1 + i * 2]);
-					isrList[i]->hdr.nick = ansi_to_tchar(pszMsgField[2 + i * 2]);
+					isrList[i]->hdr.id.t = ansi_to_tchar(pszMsgField[1 + i * 2]);
+					isrList[i]->hdr.nick.t = ansi_to_tchar(pszMsgField[2 + i * 2]);
 				}
 
 				if (!valid)
@@ -1712,8 +1712,8 @@ void CIcqProto::handleMessageTypes(DWORD dwUin, char *szUID, DWORD dwTimestamp, 
 				}
 
 				for (int i = 0; i < nContacts; i++) {
-					SAFE_FREE(&isrList[i]->hdr.id);
-					SAFE_FREE(&isrList[i]->hdr.nick);
+					SAFE_FREE(&isrList[i]->hdr.id.t);
+					SAFE_FREE(&isrList[i]->hdr.nick.t);
 					SAFE_FREE((void**)&isrList[i]);
 				}
 			}
@@ -2605,7 +2605,7 @@ void CIcqProto::handleTypingNotification(BYTE *buf, size_t wLen)
 			char szMsg[MAX_PATH];
 			char *nick = NickFromHandleUtf(hContact);
 
-			mir_snprintf(szMsg, SIZEOF(szMsg), ICQTranslateUtfStatic(LPGEN("Contact \"%s\" has closed the message window."), szFormat, MAX_PATH), nick);
+			mir_snprintf(szMsg, _countof(szMsg), ICQTranslateUtfStatic(LPGEN("Contact \"%s\" has closed the message window."), szFormat, MAX_PATH), nick);
 			ShowPopupMsg(hContact, ICQTranslateUtfStatic(LPGEN("ICQ Note"), szFormat, MAX_PATH), szMsg, LOG_NOTE);
 			SAFE_FREE((void**)&nick);
 

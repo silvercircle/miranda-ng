@@ -47,7 +47,7 @@ INT_PTR CALLBACK OptsPopupsDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lp
 		EnableWindow(GetDlgItem(hdlg, IDC_POPUPSTAMPTEXT), hasPopups);
 		for (int i = ID_STATUS_OFFLINE; i <= ID_STATUS_OUTTOLUNCH; i++) {
 			char szSetting[100];
-			mir_snprintf(szSetting, SIZEOF(szSetting), "Col_%d", i - ID_STATUS_OFFLINE);
+			mir_snprintf(szSetting, "Col_%d", i - ID_STATUS_OFFLINE);
 			DWORD sett = db_get_dw(NULL, S_MOD, szSetting, StatusColors15bits[i - ID_STATUS_OFFLINE]);
 
 			COLORREF back, text;
@@ -90,12 +90,12 @@ INT_PTR CALLBACK OptsPopupsDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lp
 			GetColorsFromDWord(&ppd.colorBack, &ppd.colorText, temp);
 			SendDlgItemMessage(hdlg, idBack, CPM_SETCOLOUR, 0, ppd.colorBack);
 			SendDlgItemMessage(hdlg, idText, CPM_SETCOLOUR, 0, ppd.colorText);
-			ppd.lchIcon = LoadSkinnedProtoIcon(NULL, idBack);
+			ppd.lchIcon = Skin_LoadProtoIcon(NULL, idBack);
 
-			GetDlgItemText(hdlg, IDC_POPUPSTAMP, szstamp, SIZEOF(szstamp));
+			GetDlgItemText(hdlg, IDC_POPUPSTAMP, szstamp, _countof(szstamp));
 			_tcsncpy(ppd.lptzContactName, ParseString(szstamp, NULL, 0), MAX_CONTACTNAME);
 
-			GetDlgItemText(hdlg, IDC_POPUPSTAMPTEXT, szstamp, SIZEOF(szstamp));
+			GetDlgItemText(hdlg, IDC_POPUPSTAMPTEXT, szstamp, _countof(szstamp));
 			_tcsncpy(ppd.lptzText, ParseString(szstamp, NULL, 0), MAX_SECONDLINE);
 
 			PUAddPopupT(&ppd);
@@ -131,10 +131,10 @@ INT_PTR CALLBACK OptsPopupsDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lp
 		case 0:
 			switch (((LPNMHDR)lparam)->code) {
 			case PSN_APPLY:
-				GetDlgItemText(hdlg, IDC_POPUPSTAMP, szstamp, SIZEOF(szstamp));
+				GetDlgItemText(hdlg, IDC_POPUPSTAMP, szstamp, _countof(szstamp));
 				db_set_ts(NULL, S_MOD, "PopupStamp", szstamp);
 
-				GetDlgItemText(hdlg, IDC_POPUPSTAMPTEXT, szstamp, SIZEOF(szstamp));
+				GetDlgItemText(hdlg, IDC_POPUPSTAMPTEXT, szstamp, _countof(szstamp));
 				db_set_ts(NULL, S_MOD, "PopupStampText", szstamp);
 
 				bchecked = (BYTE)IsDlgButtonChecked(hdlg, IDC_POPUPS);
@@ -147,7 +147,7 @@ INT_PTR CALLBACK OptsPopupsDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lp
 					DWORD sett = GetDWordFromColors(back, text);
 
 					char szSetting[100];
-					mir_snprintf(szSetting, SIZEOF(szSetting), "Col_%d", i - ID_STATUS_OFFLINE);
+					mir_snprintf(szSetting, "Col_%d", i - ID_STATUS_OFFLINE);
 					if (sett != StatusColors15bits[i - ID_STATUS_OFFLINE])
 						db_set_dw(NULL, S_MOD, szSetting, sett);
 					else
@@ -234,7 +234,7 @@ INT_PTR CALLBACK OptsSettingsDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM 
 
 			PROTOACCOUNT **protos;
 			int numberOfProtocols;
-			ProtoEnumAccounts(&numberOfProtocols, &protos);
+			Proto_EnumAccounts(&numberOfProtocols, &protos);
 
 			for (int i = 0; i < numberOfProtocols; i++) {
 				if (CallProtoService(protos[i]->szModuleName, PS_GETCAPS, PFLAGNUM_2, 0) == 0)
@@ -278,7 +278,7 @@ INT_PTR CALLBACK OptsSettingsDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM 
 
 		if (LOWORD(wparam) == IDC_VARIABLES) {
 			char szout[2048];
-			mir_snprintf(szout, SIZEOF(szout), VARIABLE_LIST);
+			mir_snprintf(szout, _countof(szout), VARIABLE_LIST);
 			MessageBoxA(hdlg, szout, Translate("Last Seen Variables"), MB_OK | MB_TOPMOST);
 		}
 		break; //case WM_COMMAND
@@ -288,19 +288,19 @@ INT_PTR CALLBACK OptsSettingsDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM 
 		case 0:
 			switch (((LPNMHDR)lparam)->code) {
 			case PSN_APPLY:
-				GetDlgItemText(hdlg, IDC_MENUSTAMP, szstamp, SIZEOF(szstamp));
+				GetDlgItemText(hdlg, IDC_MENUSTAMP, szstamp, _countof(szstamp));
 				db_set_ts(NULL, S_MOD, "MenuStamp", szstamp);
 
-				GetDlgItemText(hdlg, IDC_USERSTAMP, szstamp, SIZEOF(szstamp));
+				GetDlgItemText(hdlg, IDC_USERSTAMP, szstamp, _countof(szstamp));
 				db_set_ts(NULL, S_MOD, "UserStamp", szstamp);
 
-				GetDlgItemText(hdlg, IDC_FILESTAMP, szstamp, SIZEOF(szstamp));
+				GetDlgItemText(hdlg, IDC_FILESTAMP, szstamp, _countof(szstamp));
 				db_set_ts(NULL, S_MOD, "FileStamp", szstamp);
 
-				GetDlgItemText(hdlg, IDC_FILENAME, szstamp, SIZEOF(szstamp));
+				GetDlgItemText(hdlg, IDC_FILENAME, szstamp, _countof(szstamp));
 				db_set_ts(NULL, S_MOD, "FileName", szstamp);
 
-				GetDlgItemText(hdlg, IDC_HISTORYSTAMP, szstamp, SIZEOF(szstamp));
+				GetDlgItemText(hdlg, IDC_HISTORYSTAMP, szstamp, _countof(szstamp));
 				db_set_ts(NULL, S_MOD, "HistoryStamp", szstamp);
 
 				db_set_w(NULL, S_MOD, "HistoryMax", (WORD)(GetDlgItemInt(hdlg, IDC_HISTORYSIZE, NULL, FALSE) + 1));

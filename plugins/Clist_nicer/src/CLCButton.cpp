@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "commonheaders.h"
+#include "stdafx.h"
 
 #include <m_button_int.h>
 #include <m_toptoolbar.h>
@@ -45,8 +45,8 @@ static int g_index = -1;
 
 static void InitDefaultButtons()
 {
-	for (int i = 0; i < SIZEOF(BTNS); i++ ) {
-		TTBButton tbb = { sizeof(tbb) };
+	for (int i = 0; i < _countof(BTNS); i++) {
+		TTBButton tbb = { 0 };
 
 		g_index = i;
 		if (BTNS[i].pszButtonID) {
@@ -54,9 +54,9 @@ static void InitDefaultButtons()
 				tbb.dwFlags |= TTBBF_ASPUSHBUTTON;
 
 			tbb.pszTooltipUp = tbb.name = LPGEN(BTNS[i].pszButtonName);
-			tbb.hIconHandleUp = Skin_GetIconHandle(BTNS[i].pszButtonID);
+			tbb.hIconHandleUp = IcoLib_GetIconHandle(BTNS[i].pszButtonID);
 			if (BTNS[i].pszButtonDn)
-				tbb.hIconHandleDn = Skin_GetIconHandle(BTNS[i].pszButtonDn);
+				tbb.hIconHandleDn = IcoLib_GetIconHandle(BTNS[i].pszButtonDn);
 		}
 		else tbb.dwFlags |= TTBBF_ISSEPARATOR;
 
@@ -72,7 +72,7 @@ static void InitDefaultButtons()
 
 void ClcSetButtonState(int ctrlid, int status)
 {
-	for (int i = 0; i < SIZEOF(BTNS); i++)
+	for (int i = 0; i < _countof(BTNS); i++)
 		if (BTNS[i].ctrlid == ctrlid) {
 			CallService(MS_TTB_SETBUTTONSTATE, (WPARAM)BTNS[i].hButton, status ? TTBST_PUSHED : 0);
 			break;
@@ -81,7 +81,7 @@ void ClcSetButtonState(int ctrlid, int status)
 
 HWND ClcGetButtonWindow(int ctrlid)
 {
-	for (int i = 0; i < SIZEOF(BTNS); i++)
+	for (int i = 0; i < _countof(BTNS); i++)
 		if (BTNS[i].ctrlid == ctrlid)
 			return BTNS[i].hwndButton;
 
@@ -90,7 +90,7 @@ HWND ClcGetButtonWindow(int ctrlid)
 
 int ClcGetButtonId(HWND hwnd)
 {
-	for (int i = 0; i < SIZEOF(BTNS); i++)
+	for (int i = 0; i < _countof(BTNS); i++)
 		if (BTNS[i].hwndButton == hwnd)
 			return BTNS[i].ctrlid;
 
@@ -352,7 +352,7 @@ static void PaintWorker(MButtonExtension *ctl, HDC hdcPaint)
 				ix++;
 				iy++;
 			}
-			DrawState(hdcMem, NULL, NULL, (LPARAM) ctl->hBitmap, 0, ix, iy, bminfo.bmWidth, bminfo.bmHeight, IsWindowEnabled(ctl->hwnd) ? DST_BITMAP : DST_BITMAP | DSS_DISABLED);
+			DrawState(hdcMem, NULL, NULL, (LPARAM)ctl->hBitmap, 0, ix, iy, bminfo.bmWidth, bminfo.bmHeight, IsWindowEnabled(ctl->hwnd) ? DST_BITMAP : DST_BITMAP | DSS_DISABLED);
 		}
 		if (GetWindowTextLength(ctl->hwnd)) {
 			// Draw the text and optinally the arrow
@@ -403,27 +403,27 @@ static LRESULT CALLBACK TSButtonWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 		bct->hIml = 0;
 		bct->iIcon = 0;
 		if (wParam == IMAGE_ICON) {
-			ICONINFO ii = {0};
-			BITMAP bm = {0};
+			ICONINFO ii = { 0 };
+			BITMAP bm = { 0 };
 
 			if (bct->hIconPrivate) {
 				DestroyIcon(bct->hIconPrivate);
 				bct->hIconPrivate = 0;
 			}
 
-			GetIconInfo((HICON) lParam, &ii);
+			GetIconInfo((HICON)lParam, &ii);
 			GetObject(ii.hbmColor, sizeof(bm), &bm);
 			if (bm.bmWidth > g_cxsmIcon || bm.bmHeight > g_cysmIcon) {
 				HIMAGELIST hImageList;
 				hImageList = ImageList_Create(g_cxsmIcon, g_cysmIcon, ILC_COLOR32 | ILC_MASK, 1, 0);
-				ImageList_AddIcon(hImageList, (HICON) lParam);
+				ImageList_AddIcon(hImageList, (HICON)lParam);
 				bct->hIconPrivate = ImageList_GetIcon(hImageList, 0, ILD_NORMAL);
 				ImageList_RemoveAll(hImageList);
 				ImageList_Destroy(hImageList);
 				bct->hIcon = 0;
 			}
 			else {
-				bct->hIcon = (HICON) lParam;
+				bct->hIcon = (HICON)lParam;
 				bct->hIconPrivate = 0;
 			}
 
@@ -433,7 +433,7 @@ static LRESULT CALLBACK TSButtonWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 			InvalidateRect(bct->hwnd, NULL, TRUE);
 		}
 		else if (wParam == IMAGE_BITMAP) {
-			bct->hBitmap = (HBITMAP) lParam;
+			bct->hBitmap = (HBITMAP)lParam;
 			if (bct->hIconPrivate)
 				DestroyIcon(bct->hIconPrivate);
 			bct->hIcon = bct->hIconPrivate = NULL;
@@ -567,7 +567,7 @@ static void CustomizeToolbar(HANDLE hButton, HWND hWnd, LPARAM)
 		SetButtonToSkinned();
 		return;
 	}
-	
+
 	SendMessage(hWnd, BUTTONSETCUSTOMPAINT, sizeof(MButtonExtension), (LPARAM)PaintWorker);
 	mir_subclassWindow(hWnd, TSButtonWndProc);
 
@@ -597,13 +597,13 @@ void CustomizeButton(HWND hWnd, bool bIsSkinned, bool bIsThemed, bool bIsFlat, b
 }
 
 static int Nicer_CustomizeToolbar(WPARAM, LPARAM)
-{	
+{
 	TopToolbar_SetCustomProc(CustomizeToolbar, 0);
 	return 0;
 }
 
 static int Nicer_ReloadToolbar(WPARAM wParam, LPARAM)
-{	
+{
 	PLUGININFOEX *pInfo = (PLUGININFOEX*)wParam;
 	if (!_stricmp(pInfo->shortName, "TopToolBar"))
 		TopToolbar_SetCustomProc(CustomizeToolbar, 0);

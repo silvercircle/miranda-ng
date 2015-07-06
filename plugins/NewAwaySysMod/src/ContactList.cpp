@@ -23,7 +23,7 @@
 
 #define EXTRAICON_XSTEP (GetSystemMetrics(SM_CXSMICON) + 1)
 
-static HANDLE hCLWindowList;
+static MWindowList hCLWindowList;
 
 static int CLContactDeleted(WPARAM wParam, LPARAM lParam)
 {
@@ -284,12 +284,12 @@ static LRESULT CALLBACK ContactListSubclassProc(HWND hWnd, UINT Msg, WPARAM wPar
 
 	case WM_MEASUREITEM:
 		if (!wParam) // if the message was sent by a menu
-			return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
+			return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
 		break;
 
 	case WM_DRAWITEM:
 		if (!wParam) // if the message was sent by a menu
-			return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
+			return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
 		break;
 
 	case WM_CONTEXTMENU:
@@ -316,7 +316,7 @@ static LRESULT CALLBACK ContactListSubclassProc(HWND hWnd, UINT Msg, WPARAM wPar
 			if (hItem) {
 				MCONTACT hContact = dat->GetItemData(hItem).hContact;
 				if (IsHContactContact(hContact)) {
-					HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDCONTACT, hContact, 0);
+					HMENU hMenu = Menu_BuildContactMenu(hContact);
 					if (hMenu) {
 						ClientToScreen(hWnd, &pt);
 						CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y, 0, hWnd, NULL), MPCF_CONTACTMENU), hContact);

@@ -216,18 +216,18 @@ static IconItem iconList[] =
 	{ LPGEN("Import..."), "import_main", IDI_IMPORT }
 };
 
-HICON GetIcon(int iIconId)
+HICON GetIcon(int iIconId, bool size)
 {
-	for (int i = 0; i < SIZEOF(iconList); i++)
+	for (int i = 0; i < _countof(iconList); i++)
 		if (iconList[i].defIconID == iIconId)
-			return Skin_GetIconByHandle(iconList[i].hIcolib);
+			return IcoLib_GetIconByHandle(iconList[i].hIcolib, size);
 
 	return NULL;
 }
 
 HANDLE GetIconHandle(int iIconId)
 {
-	for (int i = 0; i < SIZEOF(iconList); i++)
+	for (int i = 0; i < _countof(iconList); i++)
 		if (iconList[i].defIconID == iIconId)
 			return iconList[i].hIcolib;
 
@@ -236,5 +236,5 @@ HANDLE GetIconHandle(int iIconId)
 
 void RegisterIcons()
 {
-	Icon_Register(hInst, "Import", iconList, SIZEOF(iconList));
+	Icon_Register(hInst, "Import", iconList, _countof(iconList));
 }

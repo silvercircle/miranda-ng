@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: VKontakte.dll
 ;  Plugin: VKontakte protocol
-;  Version: 0.1.1.2
+;  Version: 0.1.1.8
 ;  Authors: Miranda NG Team
 ;============================================================
 [VKontakte protocol support for Miranda NG.]
@@ -32,6 +32,8 @@ Inne
 Wsparcie BBCode dla załączników
 [Process stickers as smileys]
 Przetwarzaj naklejki jako uśmieszki
+[Shorten links for audio attachments]
+Skracaj linki do załączników audio
 [News and event notifications]
 Powiadomienia o aktualnościach i zdarzeniach
 [WARNING: Causes excessive network traffic!!!]
@@ -295,6 +297,20 @@ Wprowadź tekst, który widzisz
 Uczestnicy
 [Owners]
 Właściciele
+[create chat]
+Stwórz czat
+[kick user]
+Wyrzuć użytkownika
+[left chat]
+opuścił/a czat
+[invite user]
+Zaproś użytkownika
+[returned to chat]
+powrócił do czatu
+[change chat title to]
+Zmień temat czatu na
+[chat action not supported]
+Akcja czatu niewspierana
 [Unknown]
 Nieznany
 [Enter new chat title]
@@ -317,6 +333,8 @@ Pokaż/Zmień &nazwę
 &Zniszcz pokój
 [&User details]
 Dane &kontaktu
+[Visit profile]
+Odwiedź profil
 [&Kick]
 &Wyrzuć
 ;file \protocols\VKontakte\src\vk_feed.cpp
@@ -378,8 +396,6 @@ Opis
 Wyślij posta na moją tablicę
 [Load news from VK]
 Załaduj aktualności z VK
-[Visit profile]
-Odwiedź profil
 [Send message to user\'s wall]
 Wyślij posta na tablicę użytkownika
 [Add as friend]

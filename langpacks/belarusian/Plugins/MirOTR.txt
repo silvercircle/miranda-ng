@@ -125,8 +125,6 @@ OTR-шыфраванне: завершана
 OTR не можа шыфраваць падчас адпраўкі паведамлення
 [OTR Information]
 OTR Інфармацыя
-[[OTR INFO] ]
-OTR INFO\s
 [OTR encrypted session with '%s' is now using a VERIFIED fingerprint]
 Шыфраваная сесія з '%s' зараз выкарыстоўвае ПРАВЕРАНЫ адбітак.
 [OTR encrypted session with '%s' is now using a NOT VERIFIED fingerprint]
@@ -141,6 +139,8 @@ OTR завершаны
 OTR не з'яўляецца бяспечным
 [OTR]
 OTR
+[Refresh]
+Абнавіць
 [Generating new private key for protocol '%s'.\nPlease Wait...]
 Стварэнне новага прыватнага ключа для пратаколу '%s'.\n Пачакайце...
 [General]
@@ -153,6 +153,8 @@ OTR
 Адбіткі
 [Contact]
 Кантакт
+[Account]
+Конт
 [Policy]
 Палітыка
 [Verified]

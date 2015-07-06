@@ -22,31 +22,15 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include <commonheaders.h>
+#include "stdafx.h"
 #include <m_genmenu.h>
 #include <m_ignore.h>
-#include "../CLUIFrames/cluiframes.h"
+#include "cluiframes.h"
 
 #pragma hdrstop
 
-static HMENU hMainMenu, hMainStatusMenu;
-
-void InitIconLibMenuIcons();
 extern IconItemT iconItem[];
-
-void DestroyTrayMenu(HMENU hMenu)
-{
-	int i, cnt;
-
-	cnt = GetMenuItemCount(hMenu);
-	for (i = 0; i < cnt; ++i)
-	{
-		HMENU hSubMenu = GetSubMenu(hMenu, i);
-		if (hSubMenu == hMainStatusMenu || hSubMenu == hMainMenu)
-			RemoveMenu(hMenu, i--, MF_BYPOSITION);
-	}
-	DestroyMenu(hMenu);
-}
+void InitIconLibMenuIcons();
 
 INT_PTR CloseAction(WPARAM, LPARAM)
 {
@@ -62,7 +46,7 @@ INT_PTR CloseAction(WPARAM, LPARAM)
 	return 0;
 }
 
-static HANDLE hWindowListIGN = 0;
+static MWindowList hWindowListIGN = 0;
 
 // dialog procedure for handling the contact ignore dialog (available from the contact menu
 static INT_PTR CALLBACK IgnoreDialogProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -86,14 +70,14 @@ static INT_PTR CALLBACK IgnoreDialogProc(HWND hWnd, UINT msg, WPARAM wParam, LPA
 			hwndAdd = GetDlgItem(hWnd, IDC_IGN_ADDPERMANENTLY); // CreateWindowEx(0, _T("CLCButtonClass"), _T("FOO"), WS_VISIBLE | BS_PUSHBUTTON | WS_CHILD | WS_TABSTOP, 200, 276, 106, 24, hWnd, (HMENU)IDC_IGN_ADDPERMANENTLY, g_hInst, NULL);
 			CustomizeButton(hwndAdd, false, true, false);
 
-			SendMessage(hwndAdd, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadSkinnedIcon(SKINICON_OTHER_ADDCONTACT));
+			SendMessage(hwndAdd, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_ADDCONTACT));
 			SetWindowText(hwndAdd, TranslateT("Add permanently"));
 			EnableWindow(hwndAdd, cfg::getByte(hContact, "CList", "NotOnList", 0));
 
 			hwndAdd = GetDlgItem(hWnd, IDC_DSP_LOADDEFAULT); // CreateWindowEx(0, _T("CLCButtonClass"), _T("FOO"), WS_VISIBLE | BS_PUSHBUTTON | WS_CHILD | WS_TABSTOP, 200, 276, 106, 24, hWnd, (HMENU)IDC_IGN_ADDPERMANENTLY, g_hInst, NULL);
 			CustomizeButton(hwndAdd, false, true, false);
 
-			SendMessage(hwndAdd, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadSkinnedIcon(SKINICON_OTHER_DELETE));
+			SendMessage(hwndAdd, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_DELETE));
 			SetWindowText(hwndAdd, TranslateT("Revert to default"));
 			EnableWindow(hwndAdd, TRUE);
 
@@ -118,10 +102,10 @@ static INT_PTR CALLBACK IgnoreDialogProc(HWND hWnd, UINT msg, WPARAM wParam, LPA
 					DWORD dwFlags = cfg::getDword(hContact, "CList", "CLN_Flags", 0);
 					BYTE bSecondLine = cfg::getByte(hContact, "CList", "CLN_2ndline", -1);
 
-					mir_sntprintf(szTitle, SIZEOF(szTitle), TranslateT("Contact list display and ignore options for %s"), contact ? contact->szText : (TCHAR *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR));
+					mir_sntprintf(szTitle, TranslateT("Contact list display and ignore options for %s"), contact ? contact->szText : pcli->pfnGetContactDisplayName(hContact, 0));
 
 					SetWindowText(hWnd, szTitle);
-					SendMessage(hWnd, WM_SETICON, ICON_BIG, (LPARAM)LoadSkinnedIcon(SKINICON_OTHER_MIRANDA));
+					SendMessage(hWnd, WM_SETICON, ICON_BIG, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_MIRANDA));
 					pCaps = CallProtoService(contact ? contact->proto : GetContactProto(hContact), PS_GETCAPS, PFLAGNUM_1, 0);
 					Utils::enableDlgControl(hWnd, IDC_IGN_ALWAYSONLINE, pCaps & PF1_INVISLIST ? TRUE : FALSE);
 					Utils::enableDlgControl(hWnd, IDC_IGN_ALWAYSOFFLINE, pCaps & PF1_VISLIST ? TRUE : FALSE);
@@ -191,7 +175,7 @@ static INT_PTR CALLBACK IgnoreDialogProc(HWND hWnd, UINT msg, WPARAM wParam, LPA
 
 		case IDC_IGN_ADDPERMANENTLY:
 			{
-				ADDCONTACTSTRUCT acs = {0};
+				ADDCONTACTSTRUCT acs = { 0 };
 				acs.hContact = hContact;
 				acs.handleType = HANDLE_CONTACT;
 				CallService(MS_ADDCONTACT_SHOW, (WPARAM)hWnd, (LPARAM)&acs);
@@ -279,20 +263,19 @@ static INT_PTR CALLBACK IgnoreDialogProc(HWND hWnd, UINT msg, WPARAM wParam, LPA
 			break;
 		}
 		break;
+
 	case WM_USER + 100:	// fill dialog (wParam = hContact, lParam = mask)
-		{
-			CheckDlgButton(hWnd, IDC_IGN_MSGEVENTS, lParam & (1 << (IGNOREEVENT_MESSAGE - 1)) ? BST_CHECKED : BST_UNCHECKED);
-			CheckDlgButton(hWnd, IDC_IGN_FILEEVENTS, lParam & (1 << (IGNOREEVENT_FILE - 1)) ? BST_CHECKED : BST_UNCHECKED);
-			CheckDlgButton(hWnd, IDC_IGN_URLEVENTS, lParam & (1 << (IGNOREEVENT_URL - 1)) ? BST_CHECKED : BST_UNCHECKED);
-			CheckDlgButton(hWnd, IDC_IGN_AUTH, lParam & (1 << (IGNOREEVENT_AUTHORIZATION - 1)) ? BST_CHECKED : BST_UNCHECKED);
-			CheckDlgButton(hWnd, IDC_IGN_ADD, lParam & (1 << (IGNOREEVENT_YOUWEREADDED - 1)) ? BST_CHECKED : BST_UNCHECKED);
-			CheckDlgButton(hWnd, IDC_IGN_ONLINE, lParam & (1 << (IGNOREEVENT_USERONLINE - 1)) ? BST_CHECKED : BST_UNCHECKED);
-			return 0;
-		}
+		CheckDlgButton(hWnd, IDC_IGN_MSGEVENTS, lParam & (1 << (IGNOREEVENT_MESSAGE - 1)) ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hWnd, IDC_IGN_FILEEVENTS, lParam & (1 << (IGNOREEVENT_FILE - 1)) ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hWnd, IDC_IGN_URLEVENTS, lParam & (1 << (IGNOREEVENT_URL - 1)) ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hWnd, IDC_IGN_AUTH, lParam & (1 << (IGNOREEVENT_AUTHORIZATION - 1)) ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hWnd, IDC_IGN_ADD, lParam & (1 << (IGNOREEVENT_YOUWEREADDED - 1)) ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hWnd, IDC_IGN_ONLINE, lParam & (1 << (IGNOREEVENT_USERONLINE - 1)) ? BST_CHECKED : BST_UNCHECKED);
+		return 0;
+
 	case WM_USER + 110:	// retrieve value
 		{
 			DWORD *dwNewMask = (DWORD *)lParam, dwMask = 0;
-
 			dwMask = (IsDlgButtonChecked(hWnd, IDC_IGN_MSGEVENTS) ? (1 << (IGNOREEVENT_MESSAGE - 1)) : 0) |
 				(IsDlgButtonChecked(hWnd, IDC_IGN_FILEEVENTS) ? (1 << (IGNOREEVENT_FILE - 1)) : 0) |
 				(IsDlgButtonChecked(hWnd, IDC_IGN_URLEVENTS) ? (1 << (IGNOREEVENT_URL - 1)) : 0) |
@@ -302,8 +285,9 @@ static INT_PTR CALLBACK IgnoreDialogProc(HWND hWnd, UINT msg, WPARAM wParam, LPA
 
 			if (dwNewMask)
 				*dwNewMask = dwMask;
-			return 0;
 		}
+		return 0;
+
 	case WM_USER + 120:	// set visibility status
 		{
 			ClcContact *contact = NULL;
@@ -315,8 +299,9 @@ static INT_PTR CALLBACK IgnoreDialogProc(HWND hWnd, UINT msg, WPARAM wParam, LPA
 					CheckDlgButton(hWnd, IDC_IGN_ALWAYSONLINE, wApparentMode == ID_STATUS_ONLINE ? BST_CHECKED : BST_UNCHECKED);
 				}
 			}
-			return 0;
 		}
+		return 0;
+
 	case WM_USER + 130:	// update apparent mode
 		{
 			ClcContact *contact = NULL;
@@ -334,8 +319,9 @@ static INT_PTR CALLBACK IgnoreDialogProc(HWND hWnd, UINT msg, WPARAM wParam, LPA
 					SendMessage(hWnd, WM_USER + 120, 0, 0);
 				}
 			}
-			return 0;
 		}
+		return 0;
+
 	case WM_DESTROY:
 		SetWindowLongPtr(hWnd, GWLP_USERDATA, 0);
 		WindowList_Remove(hWindowListIGN, hWnd);
@@ -354,7 +340,8 @@ static INT_PTR CALLBACK IgnoreDialogProc(HWND hWnd, UINT msg, WPARAM wParam, LPA
  * of this type to the contacts database record).
  *
  * if dialog is already open, focus it.
-*/
+ */
+
 static INT_PTR SetContactIgnore(WPARAM wParam, LPARAM)
 {
 	HWND hWnd = 0;
@@ -379,17 +366,12 @@ int InitCustomMenus(void)
 	CreateServiceFunction("CloseAction", CloseAction);
 	CreateServiceFunction("CList/SetContactIgnore", SetContactIgnore);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = 200000;
-	mi.pszPopupName = (char *)-1;
 	mi.pszService = "CList/SetContactIgnore";
-	mi.icolibItem = iconItem[1].hIcolib;
-	mi.pszName = LPGEN("&Contact list settings...");
+	mi.hIcolibItem = iconItem[0].hIcolib;
+	mi.name.a = LPGEN("&Contact list settings...");
 	Menu_AddContactMenuItem(&mi);
-
-	hMainStatusMenu = (HMENU)CallService(MS_CLIST_MENUGETSTATUS, 0, 0);
-	hMainMenu = (HMENU)CallService(MS_CLIST_MENUGETMAIN, 0, 0);
-
 	return 0;
 }
 

@@ -21,6 +21,7 @@
 
 #include "stdafx.h"
 
+CLIST_INTERFACE *pcli;
 HINSTANCE hInst;
 int hLangpack;
 
@@ -228,13 +229,13 @@ bool isContactGoneFor(MCONTACT hContact, int days)
 				POPUPDATAT_V2 ppd = { 0 };
 				ppd.cbSize = sizeof(ppd);
 				ppd.lchContact = hContact;
-				ppd.lchIcon = Skin_GetIcon("enabled_icon");
+				ppd.lchIcon = IcoLib_GetIcon("enabled_icon");
 
-				mir_sntprintf(ppd.lptzContactName, SIZEOF(ppd.lptzContactName), TranslateT("Hiding %s (%S)"),
-					CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR),
+				mir_sntprintf(ppd.lptzContactName, _countof(ppd.lptzContactName), TranslateT("Hiding %s (%S)"),
+					pcli->pfnGetContactDisplayName(hContact, 0),
 					GetContactProto(hContact));
 
-				mir_sntprintf(ppd.lptzText, SIZEOF(ppd.lptzText), TranslateT("%d days since last message"), daysSinceMessage);
+				mir_sntprintf(ppd.lptzText, _countof(ppd.lptzText), TranslateT("%d days since last message"), daysSinceMessage);
 
 				if (!options.iUsePopupColors) {
 					ppd.colorBack = options.iPopupColorBack;
@@ -267,7 +268,7 @@ void ReturnNotify(MCONTACT hContact, TCHAR *message)
 		POPUPDATAT ppd = { 0 };
 		ppd.lchContact = hContact;
 		ppd.lchIcon = hIcon;
-		_tcsncpy(ppd.lptzContactName, (TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR), MAX_CONTACTNAME);
+		_tcsncpy(ppd.lptzContactName, (TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0), MAX_CONTACTNAME);
 		_tcsncpy(ppd.lptzText, message, MAX_SECONDLINE);
 		if (!options.iUsePopupColors) {
 			ppd.colorBack = options.iPopupColorBack;
@@ -286,9 +287,9 @@ void ReturnNotify(MCONTACT hContact, TCHAR *message)
 		cle.pszService = "BuddyExpectator/actionReturned";
 		cle.flags = CLEF_TCHAR;
 
-		TCHAR* nick = (TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR);
+		TCHAR* nick = (TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0);
 		TCHAR tmpMsg[512];
-		mir_sntprintf(tmpMsg, SIZEOF(tmpMsg), _T("%s %s"), nick, message);
+		mir_sntprintf(tmpMsg, _countof(tmpMsg), _T("%s %s"), nick, message);
 		cle.ptszTooltip = tmpMsg;
 
 		CallServiceSync(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
@@ -305,7 +306,7 @@ void GoneNotify(MCONTACT hContact, TCHAR *message)
 		POPUPDATAT ppd = { 0 };
 		ppd.lchContact = hContact;
 		ppd.lchIcon = hIcon;
-		_tcsncpy(ppd.lptzContactName, (TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR), MAX_CONTACTNAME);
+		_tcsncpy(ppd.lptzContactName, (TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0), MAX_CONTACTNAME);
 		_tcsncpy(ppd.lptzText, message, MAX_SECONDLINE);
 		if (!options.iUsePopupColors) {
 			ppd.colorBack = options.iPopupColorBack;
@@ -324,9 +325,9 @@ void GoneNotify(MCONTACT hContact, TCHAR *message)
 		cle.hIcon = hIcon;
 		cle.pszService = "BuddyExpectator/actionStillAbsent";
 
-		TCHAR* nick = (TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR);
+		TCHAR* nick = (TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0);
 		TCHAR tmpMsg[512];
-		mir_sntprintf(tmpMsg, SIZEOF(tmpMsg), _T("%s %s"), nick, message);
+		mir_sntprintf(tmpMsg, _countof(tmpMsg), _T("%s %s"), nick, message);
 		cle.ptszTooltip = tmpMsg;
 		cle.flags = CLEF_TCHAR;
 
@@ -408,7 +409,7 @@ INT_PTR ContactStillAbsentAction(WPARAM hContact, LPARAM lParam)
  */
 int onIconsChanged(WPARAM, LPARAM)
 {
-	hIcon = Skin_GetIcon("main_icon");
+	hIcon = IcoLib_GetIcon("main_icon");
 	return 0;
 }
 
@@ -438,17 +439,11 @@ int onPrebuildContactMenu(WPARAM hContact, LPARAM)
 	if (!proto)
 		return 0;
 
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.flags = CMIM_ICON | CMIM_NAME | CMIF_TCHAR;
-	if (db_get_b(hContact, MODULE_NAME, "MissYou", 0)) {
-		mi.ptszName = LPGENT("Disable Miss You");
-		mi.icolibItem = iconList[1].hIcolib;
-	}
-	else {
-		mi.ptszName = LPGENT("Enable Miss You");
-		mi.icolibItem = iconList[2].hIcolib;
-	}
-	Menu_ModifyItem(hContactMenu, &mi);
+	if (db_get_b(hContact, MODULE_NAME, "MissYou", 0))
+		Menu_ModifyItem(hContactMenu, LPGENT("Disable Miss You"), iconList[1].hIcolib);
+	else
+		Menu_ModifyItem(hContactMenu, LPGENT("Enable Miss You"), iconList[2].hIcolib);
+
 	Menu_ShowItem(hContactMenu, !db_get_b(hContact, proto, "ChatRoom", 0) && (CallProtoService(proto, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_IMSEND));
 	return 0;
 }
@@ -494,8 +489,8 @@ int SettingChanged(WPARAM hContact, LPARAM lParam)
 			ppd.cbSize = sizeof(ppd);
 
 			ppd.lchContact = hContact;
-			ppd.lchIcon = Skin_GetIcon("enabled_icon");
-			_tcsncpy(ppd.lptzContactName, (TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR), MAX_CONTACTNAME);
+			ppd.lchIcon = IcoLib_GetIcon("enabled_icon");
+			_tcsncpy(ppd.lptzContactName, (TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0), MAX_CONTACTNAME);
 			_tcsncpy(ppd.lptzText, TranslateT("You awaited this contact!"), MAX_SECONDLINE);
 			if (!options.iUsePopupColors) {
 				ppd.colorBack = options.iPopupColorBack;
@@ -617,27 +612,27 @@ int ModulesLoaded(WPARAM, LPARAM)
 	if (options.enableMissYou) {
 		HookEvent(ME_CLIST_PREBUILDCONTACTMENU, onPrebuildContactMenu);
 
-		CLISTMENUITEM mi = { sizeof(mi) };
+		CMenuItem mi;
 		mi.flags = CMIF_TCHAR;
-		mi.icolibItem = iconList[2].hIcolib;
+		mi.hIcolibItem = iconList[2].hIcolib;
 		mi.position = 200000;
-		mi.ptszName = LPGENT("Enable Miss You");
+		mi.name.t = LPGENT("Enable Miss You");
 		mi.pszService = "BuddyExpectator/actionMissYouClick";
 		hContactMenu = Menu_AddContactMenuItem(&mi);
 	}
 
 	missyouactions[0].cbSize = sizeof(POPUPACTION);
-	missyouactions[0].lchIcon = Skin_GetIcon("disabled_icon");
+	missyouactions[0].lchIcon = IcoLib_GetIcon("disabled_icon");
 	mir_strcpy(missyouactions[0].lpzTitle, LPGEN("Disable Miss You"));
 	missyouactions[0].wParam = missyouactions[0].lParam = 1;
 
 	hideactions[0].cbSize = sizeof(POPUPACTION);
-	hideactions[0].lchIcon = Skin_GetIcon("hide_icon");
+	hideactions[0].lchIcon = IcoLib_GetIcon("hide_icon");
 	mir_strcpy(hideactions[0].lpzTitle, LPGEN("Hide contact"));
 	hideactions[0].wParam = hideactions[0].lParam = 2;
 
 	hideactions[1].cbSize = sizeof(POPUPACTION);
-	hideactions[1].lchIcon = Skin_GetIcon("neverhide_icon");
+	hideactions[1].lchIcon = IcoLib_GetIcon("neverhide_icon");
 	mir_strcpy(hideactions[1].lpzTitle, LPGEN("Never hide this contact"));
 	hideactions[1].wParam = hideactions[1].lParam = 3;
 
@@ -662,13 +657,14 @@ int onShutdown(WPARAM, LPARAM)
 	DestroyServiceFunction(hMissYouAction);
 	DestroyServiceFunction(hMenuMissYouClick);
 
-	Skin_ReleaseIcon(hIcon);
+	IcoLib_ReleaseIcon(hIcon);
 	return 0;
 }
 
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
+	mir_getCLI();
 
 	InitOptions();
 
@@ -694,7 +690,7 @@ extern "C" int __declspec(dllexport) Load(void)
 			db_set_dw(hContact, MODULE_NAME, "CreationTime", current_time);
 	}
 
-	Icon_Register(hInst, "BuddyExpectator", iconList, SIZEOF(iconList));
+	Icon_Register(hInst, "BuddyExpectator", iconList, _countof(iconList));
 
 	HookEvent(ME_SKIN2_ICONSCHANGED, onIconsChanged);
 

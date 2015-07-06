@@ -37,7 +37,7 @@ HWND CreateNewRoom(TContainerData *pContainer, SESSION_INFO *si, BOOL bActivateT
 	if (hContact != 0 && M.GetByte("limittabs", 0) && !_tcsncmp(pContainer->szName, _T("default"), 6)) {
 		if ((pContainer = FindMatchingContainer(_T("default"))) == NULL) {
 			TCHAR szName[CONTAINER_NAMELEN + 1];
-			mir_sntprintf(szName, SIZEOF(szName), _T("default"));
+			mir_sntprintf(szName, _T("default"));
 			if ((pContainer = CreateContainer(szName, CNT_CREATEFLAG_CLONED, hContact)) == NULL)
 				return 0;
 		}
@@ -55,7 +55,7 @@ HWND CreateNewRoom(TContainerData *pContainer, SESSION_INFO *si, BOOL bActivateT
 	TCHAR newcontactname[128];
 	if (mir_tstrlen(contactName) > 0) {
 		if (M.GetByte("cuttitle", 0))
-			CutContactName(contactName, newcontactname, SIZEOF(newcontactname));
+			CutContactName(contactName, newcontactname, _countof(newcontactname));
 		else
 			_tcsncpy_s(newcontactname, contactName, _TRUNCATE);
 	}
@@ -116,7 +116,7 @@ HWND CreateNewRoom(TContainerData *pContainer, SESSION_INFO *si, BOOL bActivateT
 		}
 		else {
 			if (pContainer->dwFlags & CNT_NOFLASH)
-				SendMessage(pContainer->hwnd, DM_SETICON, 0, (LPARAM)LoadSkinnedIcon(SKINICON_EVENT_MESSAGE));
+				SendMessage(pContainer->hwnd, DM_SETICON, 0, (LPARAM)Skin_LoadIcon(SKINICON_EVENT_MESSAGE));
 			else
 				FlashContainer(pContainer, 1, 0);
 		}

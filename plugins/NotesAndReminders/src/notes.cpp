@@ -381,7 +381,7 @@ void LoadNotes(BOOL bIsStartup)
 	{
 		char *DelPos;
 
-		mir_snprintf(ValueName, SIZEOF(ValueName), "NotesData%d", I);
+		mir_snprintf(ValueName, _countof(ValueName), "NotesData%d", I);
 
 		if (Value)
 		{
@@ -694,7 +694,7 @@ void PurgeNotes(void)
 	NotesCount = db_get_dw(0,MODULENAME,"NotesData",0);
 	for(I = 0; I < NotesCount; I++)
 	{
-		mir_snprintf(ValueName, SIZEOF(ValueName), "NotesData%d", I);
+		mir_snprintf(ValueName, _countof(ValueName), "NotesData%d", I);
 		db_unset(0,MODULENAME,ValueName);
 	}
 }
@@ -940,7 +940,7 @@ static void JustSaveNotesEx(STICKYNOTE *pModified)
 			Value[0xffff] = 0;
 		}
 
-		mir_snprintf(ValueName, SIZEOF(ValueName), "NotesData%d", NotesCount - I - 1); // we do not reverse notes in DB
+		mir_snprintf(ValueName, _countof(ValueName), "NotesData%d", NotesCount - I - 1); // we do not reverse notes in DB
 
 		db_set_blob(0, MODULENAME, ValueName, Value, n+1);
 
@@ -956,7 +956,7 @@ static void JustSaveNotesEx(STICKYNOTE *pModified)
 	// delete any left over DB note entries
 	for(; I < OldNotesCount; I++)
 	{
-		mir_snprintf(ValueName, SIZEOF(ValueName), "NotesData%d", I);
+		mir_snprintf(ValueName, _countof(ValueName), "NotesData%d", I);
 		db_unset(0,MODULENAME,ValueName);
 	}
 
@@ -1024,17 +1024,16 @@ static BOOL DoContextMenu(HWND AhWnd,WPARAM wParam,LPARAM lParam)
 		HMENU hBg = GetSubMenu(hSub, FindMenuItem(hSub, _T("Background Color")));
 		HMENU hFg = GetSubMenu(hSub, FindMenuItem(hSub, _T("Text Color")));
 
-		for (i=0; i<SIZEOF(clrPresets); i++)
+		for (i=0; i<_countof(clrPresets); i++)
 			InsertMenu(hBg, i, MF_BYPOSITION|MF_OWNERDRAW, IDM_COLORPRESET_BG+i, TranslateTS(clrPresets[i].szName));
 
-		for (i=0; i<SIZEOF(clrPresets); i++)
+		for (i=0; i<_countof(clrPresets); i++)
 			InsertMenu(hFg, i, MF_BYPOSITION|MF_OWNERDRAW, IDM_COLORPRESET_FG+i, TranslateTS(clrPresets[i].szName));
 	}
 
-    CallService(MS_LANGPACK_TRANSLATEMENU,(DWORD)FhMenu,0);
+	TranslateMenu(FhMenu);
 	TrackPopupMenu(FhMenu,TPM_LEFTALIGN | TPM_RIGHTBUTTON,LOWORD(lParam),HIWORD(lParam),0,AhWnd,0);
 	DestroyMenu(hMenuLoad);
-
 	return TRUE;
 }
 
@@ -1296,19 +1295,19 @@ INT_PTR CALLBACK StickyNoteWndProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM l
 			if (g_ShowNoteButtons) {
 				HICON hcIcon;
 				if (SN->OnTop)
-					hcIcon = Skin_GetIconByHandle(iconList[4].hIcolib);
+					hcIcon = IcoLib_GetIconByHandle(iconList[4].hIcolib);
 				else
-					hcIcon = Skin_GetIconByHandle(iconList[7].hIcolib);
+					hcIcon = IcoLib_GetIconByHandle(iconList[7].hIcolib);
 				DrawIcon(hdc, wr.right - wr.left - 16, 0 + 3, hcIcon);
-				Skin_ReleaseIcon(hcIcon);
+				IcoLib_ReleaseIcon(hcIcon);
 
-				hcIcon = Skin_GetIconByHandle(iconList[9].hIcolib);
+				hcIcon = IcoLib_GetIconByHandle(iconList[9].hIcolib);
 				DrawIcon(hdc, wr.right - wr.left - 32, 1 + 3, hcIcon);
-				Skin_ReleaseIcon(hcIcon);
+				IcoLib_ReleaseIcon(hcIcon);
 
-				hcIcon = Skin_GetIconByHandle(iconList[8].hIcolib);
+				hcIcon = IcoLib_GetIconByHandle(iconList[8].hIcolib);
 				DrawIcon(hdc, wr.right - wr.left - 48, 1 + 3, hcIcon);
-				Skin_ReleaseIcon(hcIcon);
+				IcoLib_ReleaseIcon(hcIcon);
 			}
 
 			if (wParam && wParam != 1)
@@ -1405,12 +1404,12 @@ INT_PTR CALLBACK StickyNoteWndProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM l
 			if (lpMeasureItem->CtlType != ODT_MENU)
 				break;
 
-			if (lpMeasureItem->itemID >= IDM_COLORPRESET_BG && lpMeasureItem->itemID <= IDM_COLORPRESET_BG+SIZEOF(clrPresets))
+			if (lpMeasureItem->itemID >= IDM_COLORPRESET_BG && lpMeasureItem->itemID <= IDM_COLORPRESET_BG+_countof(clrPresets))
 			{
 				MeasureColorPresetMenuItem(hdlg, lpMeasureItem, clrPresets + (lpMeasureItem->itemID - IDM_COLORPRESET_BG));
 				return TRUE;
 			}
-			else if (lpMeasureItem->itemID >= IDM_COLORPRESET_FG && lpMeasureItem->itemID <= IDM_COLORPRESET_FG+SIZEOF(clrPresets))
+			else if (lpMeasureItem->itemID >= IDM_COLORPRESET_FG && lpMeasureItem->itemID <= IDM_COLORPRESET_FG+_countof(clrPresets))
 			{
 				MeasureColorPresetMenuItem(hdlg, lpMeasureItem, clrPresets + (lpMeasureItem->itemID - IDM_COLORPRESET_FG));
 				return TRUE;
@@ -1425,12 +1424,12 @@ INT_PTR CALLBACK StickyNoteWndProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM l
 			if (lpDrawItem->CtlType != ODT_MENU)
 				break;
 
-			if (lpDrawItem->itemID >= IDM_COLORPRESET_BG && lpDrawItem->itemID <= IDM_COLORPRESET_BG+SIZEOF(clrPresets))
+			if (lpDrawItem->itemID >= IDM_COLORPRESET_BG && lpDrawItem->itemID <= IDM_COLORPRESET_BG+_countof(clrPresets))
 			{
 				PaintColorPresetMenuItem(lpDrawItem, clrPresets + (lpDrawItem->itemID - IDM_COLORPRESET_BG));
 				return TRUE;
 			}
-			else if (lpDrawItem->itemID >= IDM_COLORPRESET_FG && lpDrawItem->itemID <= IDM_COLORPRESET_FG+SIZEOF(clrPresets))
+			else if (lpDrawItem->itemID >= IDM_COLORPRESET_FG && lpDrawItem->itemID <= IDM_COLORPRESET_FG+_countof(clrPresets))
 			{
 				PaintColorPresetMenuItem(lpDrawItem, clrPresets + (lpDrawItem->itemID - IDM_COLORPRESET_FG));
 				return TRUE;
@@ -1460,15 +1459,15 @@ INT_PTR CALLBACK StickyNoteWndProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM l
 
 			H = SN->REHwnd;
 
-			if (id >= IDM_COLORPRESET_BG && id <= IDM_COLORPRESET_BG+SIZEOF(clrPresets))
+			if (id >= IDM_COLORPRESET_BG && id <= IDM_COLORPRESET_BG+_countof(clrPresets))
 			{
 				SN->BgColor = clrPresets[id-IDM_COLORPRESET_BG].color | 0xff000000;
-				SendMessage(H, EM_SETBKGNDCOLOR, 0, (LPARAM)(SN->BgColor&0xffffff));
+				SendMessage(H, EM_SETBKGNDCOLOR, 0, SN->BgColor & 0xffffff);
 				RedrawWindow(SN->SNHwnd, NULL, NULL, RDW_INVALIDATE|RDW_FRAME|RDW_UPDATENOW);
 				JustSaveNotes();
 				return FALSE;
 			}
-			else if (id >= IDM_COLORPRESET_FG && id <= IDM_COLORPRESET_FG+SIZEOF(clrPresets))
+			else if (id >= IDM_COLORPRESET_FG && id <= IDM_COLORPRESET_FG+_countof(clrPresets))
 			{
 				CHARFORMAT CF = {0};
 				SN->FgColor = clrPresets[id-IDM_COLORPRESET_FG].color | 0xff000000;
@@ -1502,7 +1501,7 @@ INT_PTR CALLBACK StickyNoteWndProc(HWND hdlg,UINT message,WPARAM wParam,LPARAM l
 					if (ChooseColor(&cc) && cc.rgbResult != orgclr)
 					{
 						SN->BgColor = cc.rgbResult | 0xff000000;
-						SendMessage(H, EM_SETBKGNDCOLOR, 0, (LPARAM)(SN->BgColor&0xffffff));
+						SendMessage(H, EM_SETBKGNDCOLOR, 0, SN->BgColor&0xffffff);
 						RedrawWindow(SN->SNHwnd, NULL, NULL, RDW_INVALIDATE|RDW_FRAME|RDW_UPDATENOW);
 						JustSaveNotes();
 					}
@@ -1834,15 +1833,14 @@ static void InitListView(HWND AHLV)
 
 static BOOL DoListContextMenu(HWND AhWnd,WPARAM wParam,LPARAM lParam,STICKYNOTE *pNote)
 {
-	HWND hwndListView;
-    HMENU hMenuLoad,FhMenu;
-	MENUITEMINFO mii;
+	HWND hwndListView = (HWND)wParam;
+	if (hwndListView != GetDlgItem(AhWnd,IDC_LISTREMINDERS))
+		return FALSE;
+	
+	HMENU hMenuLoad = LoadMenu(hinstance,"MNU_NOTELISTPOPUP");
+	HMENU FhMenu = GetSubMenu(hMenuLoad,0);
 
-	hwndListView = (HWND)wParam;
-	if (hwndListView != GetDlgItem(AhWnd,IDC_LISTREMINDERS)) return FALSE;
-	hMenuLoad = LoadMenu(hinstance,"MNU_NOTELISTPOPUP");
-	FhMenu = GetSubMenu(hMenuLoad,0);
-
+	MENUITEMINFO mii = { 0 };
 	mii.cbSize = sizeof(mii);
 	mii.fMask = MIIM_STATE;
 	mii.fState = MFS_DEFAULT;
@@ -1864,10 +1862,9 @@ static BOOL DoListContextMenu(HWND AhWnd,WPARAM wParam,LPARAM lParam,STICKYNOTE 
 			CheckMenuItem(FhMenu, IDM_TOGGLEONTOP, MF_CHECKED|MF_BYCOMMAND);
 	}
 
-    CallService(MS_LANGPACK_TRANSLATEMENU,(DWORD)FhMenu,0);
+	TranslateMenu(FhMenu);
 	TrackPopupMenu(FhMenu,TPM_LEFTALIGN | TPM_RIGHTBUTTON,LOWORD(lParam),HIWORD(lParam),0,AhWnd,0);
 	DestroyMenu(hMenuLoad);
-
 	return TRUE;
 }
 
@@ -1926,9 +1923,9 @@ INT_PTR CALLBACK DlgProcViewNotes(HWND Dialog,UINT Message,WPARAM wParam,LPARAM 
 		{
 			HWND H;
 
-			HICON hIcon = Skin_GetIconByHandle(iconList[13].hIcolib, ICON_SMALL);
+			HICON hIcon = IcoLib_GetIconByHandle(iconList[13].hIcolib, ICON_SMALL);
 			SendMessage(Dialog, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)hIcon);
-			hIcon = Skin_GetIconByHandle(iconList[13].hIcolib, ICON_BIG);
+			hIcon = IcoLib_GetIconByHandle(iconList[13].hIcolib, ICON_BIG);
 			SendMessage(Dialog, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)hIcon);
 
 			SetWindowText(Dialog, LPGENT("Notes"));
@@ -1987,8 +1984,8 @@ INT_PTR CALLBACK DlgProcViewNotes(HWND Dialog,UINT Message,WPARAM wParam,LPARAM 
 
 	case WM_DESTROY:
 		ListNotesVisible = FALSE;
-		Skin_ReleaseIcon((HICON)SendMessage(Dialog, WM_SETICON, ICON_BIG, 0));
-		Skin_ReleaseIcon((HICON)SendMessage(Dialog, WM_SETICON, ICON_SMALL, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(Dialog, WM_SETICON, ICON_BIG, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(Dialog, WM_SETICON, ICON_SMALL, 0));
 		return TRUE;
 
 	case WM_NOTIFY:
@@ -2027,7 +2024,7 @@ INT_PTR CALLBACK DlgProcViewNotes(HWND Dialog,UINT Message,WPARAM wParam,LPARAM 
 				switch (NM->hdr.code)
 				{
 				case HDN_ENDTRACK:
-					UpdateGeomFromWnd(Dialog, NULL, g_notesListColGeom, SIZEOF(g_notesListColGeom));
+					UpdateGeomFromWnd(Dialog, NULL, g_notesListColGeom, _countof(g_notesListColGeom));
 					break;
 				}
 			}

@@ -43,6 +43,7 @@ const //types
   QSTO_LASTEVENT   = 1;
   QSTO_METACONTACT = 2;
   QSTO_EVENTCOUNT  = 3;
+  QSTO_DISPLAYNAME = 4;
 
 const
   COL_ON      = $0001; // Show column
@@ -223,9 +224,8 @@ begin
   if ServiceExists(MS_TTB_ADDBUTTON)>0 then
   begin
     ZeroMemory(@ttbopt,sizeof(ttbopt));
-    ttbopt.cbSize    :=sizeof(ttbopt);
     ttbopt.pszService:=QS_SHOWSERVICE;
-    ttbopt.hIconUp   :=CallService(MS_SKIN2_GETICON,0,lparam(QS_QS));
+    ttbopt.hIconUp   :=IcoLib_GetIcon(QS_QS,0);
     ttbopt.hIconDn   :=ttbopt.hIconUp;
     ttbopt.dwFlags   :=TTBBF_VISIBLE;
     ttbopt.name      :=qs_module;
@@ -237,29 +237,16 @@ end;
 
 procedure AddRemoveMenuItemToMainMenu;
 var
-  cmi:TCLISTMENUITEM;
+  mi:TMO_MenuItem;
 begin
   if MainMenuItem<>0 then exit;
 
-  ZeroMemory(@cmi,sizeof(cmi));
-  cmi.cbSize      :=sizeof(cmi) ;
-  cmi.szName.a    :=qs_name;
-  cmi.position    :=500050000;
-//    cmi.pszPopupName:=nil;
-//    cmi.flags       :=0;
-  cmi.pszService  :=QS_SHOWSERVICE;
-  cmi.hIcon       :=CallService(MS_SKIN2_GETICON,0,lparam(QS_QS));
-  MainMenuItem    :=Menu_AddMainMenuItem(@cmi);
-
-  begin
-{
-    if (MainMenuItem<>0) then
-    begin
-      CallService(MO_REMOVEMENUITEM,MainMenuItem,0);
-      MainMenuItem:=0;
-    end;
-}
-  end;
+  ZeroMemory(@mi,sizeof(mi));
+  mi.szName.a    :=qs_name;
+  mi.position    :=500050000;
+  mi.pszService  :=QS_SHOWSERVICE;
+  mi.hIcon       :=IcoLib_GetIcon(QS_QS,0);
+  MainMenuItem    :=Menu_AddMainMenuItem(@mi);
 end;
 
 // -------- column functions ---------
@@ -373,7 +360,7 @@ begin
     width          :=82;
     flags          :=COL_ON;
     setting_type   :=QST_SERVICE;
-    StrDup (service.service,MS_PROTO_GETCONTACTBASEACCOUNT);
+    StrDup (service.service,'Proto/GetContactBaseAccount');
     service.flags  :=ACF_TYPE_STRING;
     service.w_flags:=ACF_TYPE_PARAM;
     service.l_flags:=ACF_TYPE_NUMBER;
@@ -409,12 +396,8 @@ begin
     StrDupW(title,TranslateW('Nickname'));
     width          :=76;
     flags          :=COL_ON+COL_FILTER;
-    setting_type   :=QST_SERVICE;
-    StrDup(service.service,MS_CLIST_GETCONTACTDISPLAYNAME);
-    service.flags  :=ACF_TYPE_UNICODE;
-    service.w_flags:=ACF_TYPE_PARAM;
-    service.l_flags:=ACF_TYPE_NUMBER;
-    StrDupW(pWideChar(service.lparam),'2'); // 0 for ANSI
+    setting_type   :=QST_OTHER;
+    other          :=QSTO_DISPLAYNAME;
   end;
   inc(i);
 
@@ -754,6 +737,13 @@ begin
         StrCopy(p,so__title); title:=GetUnicode(buf);
         StrCopy(p,so__width); width:=GetWord(buf,20);
         StrCopy(p,so__flags); flags:=GetWord(buf,COL_ON) and not COL_REFRESH;
+
+        if (title='Nickname') then begin
+          setting_type:=QST_OTHER;
+          other:=QSTO_DISPLAYNAME;
+          continue;
+        end;
+
         case setting_type of
           QST_SETTING: begin
             StrCopy(p,so__datatype); datatype:=GetWord(buf,0);

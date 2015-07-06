@@ -1,8 +1,6 @@
-LIBRARY mir_core
+LIBRARY mir_core.mir
 
 EXPORTS
-CallContactService              @1
-CallProtoService                @2
 Langpack_LookupUuid             @3
 Langpack_MarkPluginLoaded       @4
 CallFunctionAsync               @5
@@ -161,67 +159,9 @@ wildcmpi                      @158
 wildcmpiw                     @159
 mir_base64_encode             @160
 mir_base64_decode             @161
-ProtoServiceExists            @162
-ProtoBroadcastAck             @163
-ProtoCallService              @164
 db_set_resident               @165
 db_set                        @166
-ProtoConstructor              @167
-ProtoDestructor               @168
-ProtoCreateService            @169
-ProtoCreateServiceParam       @170
-ProtoHookEvent                @171
-ProtoCreateHookableEvent      @172
-ProtoForkThread               @173
-ProtoForkThreadEx             @174
-json_as_array                 @175
-json_as_bool                  @176
-json_as_float                 @177
-json_as_int                   @178
-json_as_node                  @179
-json_as_string                @180
-json_as_pstring               @181
-json_at                       @182
-json_cast                     @183
-json_clear                    @184
-json_copy                     @185
-json_delete                   @186
-json_duplicate                @187
-json_empty                    @188
-json_equal                    @189
-json_free                     @190
-json_get                      @191
-json_merge                    @192
-json_name                     @193
-json_new                      @194
-json_new_a                    @195
-json_new_b                    @196
-json_new_f                    @197
-json_new_i                    @198
-json_nullify                  @199
-json_parse                    @200
-json_pop_back                 @201
-json_pop_back_at              @202
-json_preparse                 @203
-json_push_back                @204
-json_reserve                  @205
-json_set_a                    @206
-json_set_b                    @207
-json_set_f                    @208
-json_set_i                    @209
-json_set_n                    @210
-json_set_name                 @211
-json_size                     @212
-json_strip_white_space        @213
-json_swap                     @214
-json_type                     @215
-json_write                    @216
-json_write_formatted          @217
 mir_subclassWindowFull        @218
-ProtoGetAvatarFormat          @219
-ProtoGetAvatarExtension       @220
-ProtoGetBufferFormat          @221
-ProtoGetAvatarFileFormat      @222
 mir_createLog                 @223
 mir_writeLogA                 @224
 mir_writeLogW                 @225
@@ -243,8 +183,6 @@ IsWinVer7Plus                 @240
 IsFullScreen                  @241
 IsWorkstationLocked           @242
 IsScreenSaverRunning          @243
-ProtoLogA                     @244
-ProtoLogW                     @245
 db_get_static                 @246
 db_get_wstatic                @247
 db_get_static_utf             @248
@@ -372,8 +310,6 @@ mir_wstrcmpi                  @280
 ??Y?$CMStringT@_WV?$ChTraitsCRT@_W@@@@QAEAAV0@PBD@Z @370 NONAME
 ??Y?$CMStringT@_WV?$ChTraitsCRT@_W@@@@QAEAAV0@PB_W@Z @371 NONAME
 ??Y?$CMStringT@_WV?$ChTraitsCRT@_W@@@@QAEAAV0@_W@Z @372 NONAME
-?AllocSysString@?$CMStringT@DV?$ChTraitsCRT@D@@@@QBEPA_WXZ @373 NONAME
-?AllocSysString@?$CMStringT@_WV?$ChTraitsCRT@_W@@@@QBEPA_WXZ @374 NONAME
 ?Append@?$CMSimpleStringT@D@@QAEXABV1@@Z @375 NONAME
 ?Append@?$CMSimpleStringT@D@@QAEXPBD@Z @376 NONAME
 ?Append@?$CMSimpleStringT@D@@QAEXPBDH@Z @377 NONAME
@@ -500,8 +436,6 @@ mir_wstrcmpi                  @280
 ?SetString@?$CMSimpleStringT@D@@QAEXPBDH@Z @498 NONAME
 ?SetString@?$CMSimpleStringT@_W@@QAEXPB_W@Z @499 NONAME
 ?SetString@?$CMSimpleStringT@_W@@QAEXPB_WH@Z @500 NONAME
-?SetSysString@?$CMStringT@DV?$ChTraitsCRT@D@@@@QBEPA_WPAPA_W@Z @501 NONAME
-?SetSysString@?$CMStringT@_WV?$ChTraitsCRT@_W@@@@QBEPA_WPAPA_W@Z @502 NONAME
 ?SpanExcluding@?$CMStringT@DV?$ChTraitsCRT@D@@@@QBE?AV1@PBD@Z @503 NONAME
 ?SpanExcluding@?$CMStringT@_WV?$ChTraitsCRT@_W@@@@QBE?AV1@PB_W@Z @504 NONAME
 ?SpanIncluding@?$CMStringT@DV?$ChTraitsCRT@D@@@@QBE?AV1@PBD@Z @505 NONAME
@@ -540,74 +474,6 @@ mir_wstrcmpi                  @280
 ?UnlockBuffer@?$CMSimpleStringT@_W@@QAEXXZ @538 NONAME
 ?c_str@?$CMSimpleStringT@D@@QBEPBDXZ @539 NONAME
 ?c_str@?$CMSimpleStringT@_W@@QBEPB_WXZ @540 NONAME
-??0PROTO_INTERFACE@@QAE@ABU0@@Z @541 NONAME
-??0PROTO_INTERFACE@@QAE@XZ @542 NONAME
-??4PROTO_INTERFACE@@QAEAAU0@ABU0@@Z @543 NONAME
-??_7PROTO_INTERFACE@@6B@ @544 NONAME
-?AddToList@PROTO_INTERFACE@@UAAIHPAUPROTOSEARCHRESULT@@@Z @545 NONAME
-?AddToListByEvent@PROTO_INTERFACE@@UAAIHHI@Z @546 NONAME
-?AuthDeny@PROTO_INTERFACE@@UAAHIPB_W@Z @547 NONAME
-?AuthRecv@PROTO_INTERFACE@@UAAHIPAUPROTORECVEVENT@@@Z @548 NONAME
-?AuthRequest@PROTO_INTERFACE@@UAAHIPB_W@Z @549 NONAME
-?Authorize@PROTO_INTERFACE@@UAAHI@Z @550 NONAME
-?CreateExtendedSearchUI@PROTO_INTERFACE@@UAAPAUHWND__@@PAU2@@Z @551 NONAME
-?FileAllow@PROTO_INTERFACE@@UAAPAXIPAXPB_W@Z @552 NONAME
-?FileCancel@PROTO_INTERFACE@@UAAHIPAX@Z @553 NONAME
-?FileDeny@PROTO_INTERFACE@@UAAHIPAXPB_W@Z @554 NONAME
-?FileResume@PROTO_INTERFACE@@UAAHPAXPAHPAPB_W@Z @555 NONAME
-?GetAwayMsg@PROTO_INTERFACE@@UAAPAXI@Z @556 NONAME
-?GetCaps@PROTO_INTERFACE@@UAAKHI@Z @557 NONAME
-?GetInfo@PROTO_INTERFACE@@UAAHIH@Z @558 NONAME
-?OnEvent@PROTO_INTERFACE@@UAAHW4PROTOEVENTTYPE@@IJ@Z @559 NONAME
-?ProtoBroadcastAck@PROTO_INTERFACE@@QAEHIHHPAXJ@Z @560 NONAME
-?RecvAwayMsg@PROTO_INTERFACE@@UAAHIHPAUPROTORECVEVENT@@@Z @561 NONAME
-?RecvContacts@PROTO_INTERFACE@@UAAHIPAUPROTORECVEVENT@@@Z @562 NONAME
-?RecvFile@PROTO_INTERFACE@@UAAHIPAUPROTORECVFILET@@@Z @563 NONAME
-?RecvMsg@PROTO_INTERFACE@@UAAHIPAUPROTORECVEVENT@@@Z @564 NONAME
-?RecvUrl@PROTO_INTERFACE@@UAAHIPAUPROTORECVEVENT@@@Z @565 NONAME
-?SearchAdvanced@PROTO_INTERFACE@@UAAPAUHWND__@@PAU2@@Z @566 NONAME
-?SearchBasic@PROTO_INTERFACE@@UAAPAXPB_W@Z @567 NONAME
-?SearchByEmail@PROTO_INTERFACE@@UAAPAXPB_W@Z @568 NONAME
-?SearchByName@PROTO_INTERFACE@@UAAPAXPB_W00@Z @569 NONAME
-?SendContacts@PROTO_INTERFACE@@UAAHIHHPAI@Z @570 NONAME
-?SendFile@PROTO_INTERFACE@@UAAPAXIPB_WPAPA_W@Z @571 NONAME
-?SendMsg@PROTO_INTERFACE@@UAAHIHPBD@Z @572 NONAME
-?SendUrl@PROTO_INTERFACE@@UAAHIHPBD@Z @573 NONAME
-?SetApparentMode@PROTO_INTERFACE@@UAAHIH@Z @574 NONAME
-?SetAwayMsg@PROTO_INTERFACE@@UAAHHPB_W@Z @575 NONAME
-?SetStatus@PROTO_INTERFACE@@UAAHH@Z @576 NONAME
-?UserIsTyping@PROTO_INTERFACE@@UAAHIH@Z @577 NONAME
-?debugLogA@PROTO_INTERFACE@@QAAXPBDZZ @578 NONAME
-?debugLogW@PROTO_INTERFACE@@QAAXPB_WZZ @579 NONAME
-?delSetting@PROTO_INTERFACE@@QAEHIPBD@Z @580 NONAME
-?delSetting@PROTO_INTERFACE@@QAEHPBD@Z @581 NONAME
-?getBool@PROTO_INTERFACE@@QAE_NIPBD_N@Z @582 NONAME
-?getBool@PROTO_INTERFACE@@QAE_NPBD_N@Z @583 NONAME
-?getByte@PROTO_INTERFACE@@QAEHIPBDE@Z @584 NONAME
-?getByte@PROTO_INTERFACE@@QAEHPBDE@Z @585 NONAME
-?getDword@PROTO_INTERFACE@@QAEKIPBDK@Z @586 NONAME
-?getDword@PROTO_INTERFACE@@QAEKPBDK@Z @587 NONAME
-?getString@PROTO_INTERFACE@@QAEHIPBDPAUDBVARIANT@@@Z @588 NONAME
-?getString@PROTO_INTERFACE@@QAEHPBDPAUDBVARIANT@@@Z @589 NONAME
-?getStringA@PROTO_INTERFACE@@QAEPADIPBD@Z @590 NONAME
-?getStringA@PROTO_INTERFACE@@QAEPADPBD@Z @591 NONAME
-?getWString@PROTO_INTERFACE@@QAEHIPBDPAUDBVARIANT@@@Z @592 NONAME
-?getWString@PROTO_INTERFACE@@QAEHPBDPAUDBVARIANT@@@Z @593 NONAME
-?getWStringA@PROTO_INTERFACE@@QAEPA_WIPBD@Z @594 NONAME
-?getWStringA@PROTO_INTERFACE@@QAEPA_WPBD@Z @595 NONAME
-?getWord@PROTO_INTERFACE@@QAEHIPBDG@Z @596 NONAME
-?getWord@PROTO_INTERFACE@@QAEHPBDG@Z @597 NONAME
-?isChatRoom@PROTO_INTERFACE@@QAE_NI@Z @598 NONAME
-?setByte@PROTO_INTERFACE@@QAEXIPBDE@Z @599 NONAME
-?setByte@PROTO_INTERFACE@@QAEXPBDE@Z @600 NONAME
-?setDword@PROTO_INTERFACE@@QAEXIPBDK@Z @601 NONAME
-?setDword@PROTO_INTERFACE@@QAEXPBDK@Z @602 NONAME
-?setString@PROTO_INTERFACE@@QAEXIPBD0@Z @603 NONAME
-?setString@PROTO_INTERFACE@@QAEXPBD0@Z @604 NONAME
-?setWString@PROTO_INTERFACE@@QAEXIPBDPB_W@Z @605 NONAME
-?setWString@PROTO_INTERFACE@@QAEXPBDPB_W@Z @606 NONAME
-?setWord@PROTO_INTERFACE@@QAEXIPBDG@Z @607 NONAME
-?setWord@PROTO_INTERFACE@@QAEXPBDG@Z @608 NONAME
 ??0CCtrlBase@@QAE@ABV0@@Z @609 NONAME
 ??0CCtrlBase@@QAE@PAVCDlgBase@@H@Z @610 NONAME
 ??0CCtrlButton@@QAE@ABV0@@Z @611 NONAME
@@ -642,8 +508,6 @@ mir_wstrcmpi                  @280
 ??0CDbLink@@QAE@PBD0EPA_W@Z @640 NONAME
 ??0CDlgBase@@QAE@ABV0@@Z @641 NONAME
 ??0CDlgBase@@QAE@PAUHINSTANCE__@@H@Z @642 NONAME
-??0CProtoIntDlgBase@@QAE@ABV0@@Z @643 NONAME
-??0CProtoIntDlgBase@@QAE@PAUPROTO_INTERFACE@@H_N@Z @644 NONAME
 ??1CCtrlBase@@UAE@XZ @645 NONAME
 ??1CCtrlButton@@UAE@XZ @646 NONAME
 ??1CCtrlCheck@@UAE@XZ @647 NONAME
@@ -660,7 +524,6 @@ mir_wstrcmpi                  @280
 ??1CDataLink@@UAE@XZ @658 NONAME
 ??1CDbLink@@UAE@XZ @659 NONAME
 ??1CDlgBase@@UAE@XZ @660 NONAME
-??1CProtoIntDlgBase@@UAE@XZ @661 NONAME
 ??4CCtrlBase@@QAEAAV0@ABV0@@Z @662 NONAME
 ??4CCtrlButton@@QAEAAV0@ABV0@@Z @663 NONAME
 ??4CCtrlCheck@@QAEAAV0@ABV0@@Z @664 NONAME
@@ -677,7 +540,6 @@ mir_wstrcmpi                  @280
 ??4CDataLink@@QAEAAV0@ABV0@@Z @675 NONAME
 ??4CDbLink@@QAEAAV0@ABV0@@Z @676 NONAME
 ??4CDlgBase@@QAEAAV0@ABV0@@Z @677 NONAME
-??4CProtoIntDlgBase@@QAEAAV0@ABV0@@Z @678 NONAME
 ??_7CCtrlBase@@6B@ @679 NONAME
 ??_7CCtrlButton@@6B@ @680 NONAME
 ??_7CCtrlCheck@@6B@ @681 NONAME
@@ -694,7 +556,6 @@ mir_wstrcmpi                  @280
 ??_7CDataLink@@6B@ @692 NONAME
 ??_7CDbLink@@6B@ @693 NONAME
 ??_7CDlgBase@@6B@ @694 NONAME
-??_7CProtoIntDlgBase@@6B@ @695 NONAME
 ?ActivatePage@CCtrlPages@@QAEXH@Z @696 NONAME
 ?AddColumn@CCtrlListView@@QAEXHPA_WH@Z @698 NONAME
 ?AddContact@CCtrlClc@@QAEXI@Z @699 NONAME
@@ -719,8 +580,6 @@ mir_wstrcmpi                  @280
 ?CreateDragImage@CCtrlListView@@QAEPAU_IMAGELIST@@HPAUtagPOINT@@@Z @719 NONAME
 ?CreateDragImage@CCtrlTreeView@@QAEPAU_IMAGELIST@@PAU_TREEITEM@@@Z @720 NONAME
 ?CreateImageList@CCtrlListView@@QAEPAU_IMAGELIST@@H@Z @721 NONAME
-?CreateLink@CProtoIntDlgBase@@QAEXAAVCCtrlData@@PADEK@Z @722 NONAME
-?CreateLink@CProtoIntDlgBase@@QAEXAAVCCtrlData@@PBDPA_W@Z @723 NONAME
 ?CustomWndProc@CCtrlBase@@MAEJIIJ@Z @724 NONAME
 ?CustomWndProc@CCtrlPages@@MAEJIIJ@Z @725 NONAME
 ?DeleteAllItems@CCtrlListView@@QAEXXZ @726 NONAME
@@ -731,11 +590,10 @@ mir_wstrcmpi                  @280
 ?DeleteItem@CCtrlTreeView@@QAEXPAU_TREEITEM@@@Z @731 NONAME
 ?DeleteString@CCtrlCombo@@QAEXH@Z @732 NONAME
 ?DeleteString@CCtrlListBox@@QAEXH@Z @733 NONAME
-?Detouch@?$CMStringT@DV?$ChTraitsCRT@D@@@@QBEPADXZ @734 NONAME
-?Detouch@?$CMStringT@_WV?$ChTraitsCRT@_W@@@@QBEPA_WXZ @735 NONAME
+?Detach@?$CMStringT@DV?$ChTraitsCRT@D@@@@QBEPADXZ @734 NONAME
+?Detach@?$CMStringT@_WV?$ChTraitsCRT@_W@@@@QBEPA_WXZ @735 NONAME
 ?Disable@CCtrlBase@@QAEXXZ @736 NONAME
 ?DlgProc@CDlgBase@@MAEHIIJ@Z @737 NONAME
-?DlgProc@CProtoIntDlgBase@@MAEHIIJ@Z @738 NONAME
 ?DoModal@CDlgBase@@QAEHXZ @739 NONAME
 ?SetParent@CDlgBase@@QAEXPAUHWND__@@@Z @740 NONAME
 ?EditLabel@CCtrlClc@@QAEXPAX@Z @741 NONAME
@@ -847,7 +705,6 @@ mir_wstrcmpi                  @280
 ?GetParent@CCtrlTreeView@@QAEPAU_TREEITEM@@PAU2@@Z @847 NONAME
 ?GetPrevSibling@CCtrlTreeView@@QAEPAU_TREEITEM@@PAU2@@Z @848 NONAME
 ?GetPrevVisible@CCtrlTreeView@@QAEPAU_TREEITEM@@PAU2@@Z @849 NONAME
-?GetProtoInterface@CProtoIntDlgBase@@QAEPAUPROTO_INTERFACE@@XZ @850 NONAME
 ?GetRoot@CCtrlTreeView@@QAEPAU_TREEITEM@@XZ @851 NONAME
 ?GetScrollTime@CCtrlTreeView@@QAEKXZ @852 NONAME
 ?GetSel@CCtrlListBox@@QAE_NH@Z @853 NONAME
@@ -940,9 +797,6 @@ mir_wstrcmpi                  @280
 ?OnNotify@CCtrlListView@@MAEHHPAUtagNMHDR@@@Z @942 NONAME
 ?OnNotify@CCtrlPages@@MAEHHPAUtagNMHDR@@@Z @943 NONAME
 ?OnNotify@CCtrlTreeView@@MAEHHPAUtagNMHDR@@@Z @944 NONAME
-?OnProtoActivate@CProtoIntDlgBase@@MAEXIJ@Z @945 NONAME
-?OnProtoCheckOnline@CProtoIntDlgBase@@MAEXIJ@Z @946 NONAME
-?OnProtoRefresh@CProtoIntDlgBase@@MAEXIJ@Z @947 NONAME
 ?OnReset@CCtrlBase@@UAEXXZ @948 NONAME
 ?OnReset@CCtrlCheck@@UAEXXZ @949 NONAME
 ?OnReset@CCtrlCombo@@UAEXXZ @950 NONAME
@@ -1030,7 +884,6 @@ mir_wstrcmpi                  @280
 ?SetSelectedColumn@CCtrlListView@@QAEXH@Z @1032 NONAME
 ?SetSelectionMark@CCtrlListView@@QAEHH@Z @1033 NONAME
 ?SetState@CCtrlCheck@@QAEXH@Z @1034 NONAME
-?SetStatusText@CProtoIntDlgBase@@QAEXPB_W@Z @1035 NONAME
 ?SetText@CCtrlBase@@QAEXPB_W@Z @1036 NONAME
 ?SetTextA@CCtrlBase@@QAEXPBD@Z @1037 NONAME
 ?SetTextBkColor@CCtrlListView@@QAEHK@Z @1038 NONAME
@@ -1061,14 +914,6 @@ mir_wstrcmpi                  @280
 ?TranslateTree@CCtrlTreeView@@QAEXXZ @1063 NONAME
 ?Unsubclass@CCtrlBase@@IAEXXZ @1064 NONAME
 ?Update@CCtrlListView@@QAEHH@Z @1065 NONAME
-?UpdateProtoTitle@CProtoIntDlgBase@@AAEXPB_W@Z @1066 NONAME
-?UpdateStatusBar@CProtoIntDlgBase@@AAEXXZ @1067 NONAME
-?WindowSubscribe@PROTO_INTERFACE@@QAEXPAUHWND__@@@Z @1068 NONAME
-?WindowUnsubscribe@PROTO_INTERFACE@@QAEXPAUHWND__@@@Z @1069 NONAME
-ProtoWindowAdd @1071 NONAME
-ProtoWindowRemove @1072 NONAME
-Proto_IsProtocolLoaded @1073 NONAME
-Proto_RegisterModule @1074 NONAME
 ?GetInst@CDlgBase@@QBEPAUHINSTANCE__@@XZ @1075 NONAME
 ?Find@CDlgBase@@SAPAV1@PAUHWND__@@@Z @1076 NONAME
 ?SetCaption@CDlgBase@@QAEXPB_W@Z @1077 NONAME
@@ -1093,3 +938,38 @@ Proto_RegisterModule @1074 NONAME
 ?Fail@CDlgBase@@QAEXXZ @1096 NONAME
 ?OnApply@CCtrlPages@@MAEXXZ @1097 NONAME
 ?OnReset@CCtrlPages@@MAEXXZ @1098 NONAME
+Bitmap_GetFilter @1099
+Bitmap_Load @1100
+CreateProtoServiceFunction @1101
+WindowList_Add @1102
+WindowList_Broadcast @1103
+WindowList_BroadcastAsync @1104
+WindowList_Create @1105
+WindowList_Destroy @1106
+WindowList_Find @1107
+WindowList_Remove @1108
+?SetSilent@CCtrlBase@@QAEXXZ @1109 NONAME
+Utils_AssertInsideScreen @1110
+Utils_RestoreWindowPosition @1111
+Utils_SaveWindowPosition @1112
+mir_getLP @1113
+TimeZone_CreateByContact @1114
+TimeZone_CreateByName @1115
+TimeZone_GetDescription @1116
+TimeZone_GetInfo @1117
+TimeZone_GetName @1118
+TimeZone_GetTimeZoneTime @1119
+TimeZone_PrepareList @1120
+TimeZone_PrintDateTime @1121
+TimeZone_PrintTimeStamp @1122
+TimeZone_SelectListItem @1123
+TimeZone_StoreByContact @1124
+TimeZone_StoreListResult @1125
+TimeZone_ToLocal @1126
+TimeZone_ToString @1127
+TimeZone_ToStringW @1128
+TimeZone_UtcToLocal @1129
+Utils_ResizeDialog @1130
+Utils_GetRandom @1131
+Utils_OpenUrl @1132
+Utils_OpenUrlW @1133

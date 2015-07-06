@@ -30,7 +30,7 @@ static void accountLoadDetails(CIcqProto *ppro, HWND hwndDlg)
 	char pszUIN[20];
 	DWORD dwUIN = ppro->getContactUin(NULL);
 	if (dwUIN) {
-		mir_snprintf(pszUIN, SIZEOF(pszUIN), "%u", dwUIN);
+		mir_snprintf(pszUIN, _countof(pszUIN), "%u", dwUIN);
 		SetDlgItemTextA(hwndDlg, IDC_UIN, pszUIN);
 	}
 
@@ -50,8 +50,8 @@ INT_PTR CALLBACK icq_FirstRunDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 		ppro = (CIcqProto*)lParam;
 		SetWindowLongPtr( hwndDlg, GWLP_USERDATA, lParam );
 
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)Skin_GetIconByHandle(ppro->m_hProtoIcon, true));
-		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)Skin_GetIconByHandle(ppro->m_hProtoIcon));
+		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon, true));
+		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon));
 
 		SendDlgItemMessage(hwndDlg, IDC_PW, EM_LIMITTEXT, PASSWORDMAXLEN - 1, 0);
 
@@ -59,8 +59,8 @@ INT_PTR CALLBACK icq_FirstRunDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 		return TRUE;
 
 	case WM_DESTROY:
-		Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_BIG, 0));
-		Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_BIG, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
 		break;
 
 	case WM_CLOSE:
@@ -70,7 +70,7 @@ INT_PTR CALLBACK icq_FirstRunDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case IDC_REGISTER:
-			CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)URL_REGISTER);
+			Utils_OpenUrl(URL_REGISTER);
 			break;
 
 		case IDC_UIN:
@@ -86,10 +86,10 @@ INT_PTR CALLBACK icq_FirstRunDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 		switch (((LPNMHDR)lParam)->code) {
 		case PSN_APPLY:
 			char str[128];
-			GetDlgItemTextA(hwndDlg, IDC_UIN, str, SIZEOF(str));
+			GetDlgItemTextA(hwndDlg, IDC_UIN, str, _countof(str));
 			ppro->setDword(UNIQUEIDSETTING, atoi(str));
 
-			GetDlgItemTextA(hwndDlg, IDC_PW, str, SIZEOF(ppro->m_szPassword));
+			GetDlgItemTextA(hwndDlg, IDC_PW, str, _countof(ppro->m_szPassword));
 			mir_strcpy(ppro->m_szPassword, str);
 			ppro->setString("Password", str);
 			break;

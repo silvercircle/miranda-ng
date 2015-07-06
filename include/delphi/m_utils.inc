@@ -57,16 +57,6 @@ type
 
   TDIALOGRESIZERPROC = function(hwndDlg: THANDLE; lParam: LPARAM; urc: PUTILRESIZECONTROL): int; cdecl;
 
-  PUTILRESIZEDIALOG = ^TUTILRESIZEDIALOG;
-  TUTILRESIZEDIALOG = record
-    cbSize    : int;
-    hwndDlg   : HWND;
-    hInstance : HINST;
-    lpTemplate: PAnsiChar;
-    lParam    : LPARAM;
-    pfnResizer: TDIALOGRESIZERPROC;
-  end;
-
   PCountryListEntry = ^TCountryListEntry;
   TCountryListEntry = record
     id     : int;
@@ -74,39 +64,19 @@ type
     ISOcode: array [0..2] of AnsiChar;
   end;
 
-  PWINDOWLISTENTRY = ^TWINDOWLISTENTRY;
-  TWINDOWLISTENTRY = record
-    hList   : THANDLE;
-    hWnd    : HWND;
-    hContact: TMCONTACT;
-  end;
-
-  PSAVEWINDOWPOS = ^TSAVEWINDOWPOS;
-  TSAVEWINDOWPOS = record
-    hWnd        : HWND;
-    hContact    : TMCONTACT;
-    szModule    : PAnsiChar;        // module name eto store the settings in
-    szNamePrefix: PAnsiChar;        // text to prefix on 'x', 'width', etc
-  end;
-
-const
-  OUF_NEWWINDOW = 1;
-  OUF_UNICODE   = 2;
   {
-    wParam : OUF_* flag
-    lParam : Pointer to a null terminated string containing Url
     Affect : Open a URL in the user's default web browser, see notes
-    Returns: 0 on success, [non zero on failure]
     Notes  : bOpenInWindow should be zero to open the URL in the browoser window
              the user last used, or nonzero to open in a new browser window,
              if there's no browser running, it will be started to show the URL
-    Version: v0.1.0.1+
   }
-  MS_UTILS_OPENURL:PAnsiChar = 'Utils/OpenURL';
 
+procedure Utils_OpenUrl(const url:PAnsiChar; bOpenInWindow:BYTE=1); stdcall;
+                 external CoreDLL name 'Utils_OpenUrl';
+
+procedure Utils_OpenUrlW(const url:PWideChar; bOpenInWindow:BYTE=1); stdcall;
+                 external CoreDLL name 'Utils_OpenUrlW';
   {
-    wParam : 0
-    lParam : Pointer to an initalised TUTILRESIZEDIALOG structure
     Affect : Resize a dialog by calling a custom routine to move each control, see notes
     Returns: 0 on success, [non zero] on failure
     Notes  : Does not support DIALOGTEMPLATEEX dialogboxes, and will return
@@ -116,7 +86,9 @@ const
              .pfnResizer should return a combination of one RD_ANCHORx_ and one RD_ANCHORy constant
     Version: v0.1.0.1+
   }
-  MS_UTILS_RESIZEDIALOG:PAnsiChar = 'Utils/ResizeDialog';
+
+function Utils_ResizeDialog(hwndDlg:THANDLE; hInst:HINST; pTemplate:PAnsiChar; pFunc:TDIALOGRESIZERPROC; lParam:LPARAM=0) : int; stdcall;
+                 external CoreDLL name 'Utils_ResizeDialog';
 
   {
     wParam : countryID
@@ -126,6 +98,7 @@ const
              NULL(0) on failure
     Version: v0.1.2.0+
   }
+const
   MS_UTILS_GETCOUNTRYBYNUMBER:PAnsiChar = 'Utils/GetCountryByNumber';
 
   {
@@ -159,172 +132,172 @@ const
   }
   MS_UTILS_GETCOUNTRYLIST:PAnsiChar = 'Utils/GetCountryList';
 
-
 //******************************* Window lists *******************************
 
-  {
-    wParam : 0
-    lParam : 0
-    Affect : Allocate a window list
-    Returns: A handle to the new window list
-  }
-  MS_UTILS_ALLOCWINDOWLIST:PAnsiChar = 'Utils/AllocWindowList';
+{
+  Affect : Allocate a window list
+  Returns: A handle to the new window list
+}
 
-  {
-    wParam : 0
-    lParam : Pointer to an initalised TWINDOWLISTENTRY structure
-    Affect : Add a window to a given window list handle
-    Returns: 0 on success, [non zero] on failure
-  }
-  MS_UTILS_ADDTOWINDOWLIST:PAnsiChar = 'Utils/AddToWindowList';
+function WindowList_Create() : Thandle; stdcall;
+                 external CoreDLL name 'WindowList_Create';
 
-  {
-    wParam : Handle to window list to remove from
-    lParam : Window handle to remove
-    Affect : Remove a window from the specified window list
-    Returns: 0 on success, [non zero] on failure
-  }
-  MS_UTILS_REMOVEFROMWINDOWLIST:PAnsiChar = 'Utils/RemoveFromWindowList';
-
-  {
-    wParam : Handle to the window list to look in
-    lParam : Handle to a TMCONTACT to find in the window list
-    Affect : Find a window handle given the hContact
-    Returns: The found window handle or NULL(0) on failure
-  }
-  MS_UTILS_FINDWINDOWINLIST:PAnsiChar = 'Utils/FindWindowInList';
-
-  {
-    wParam : Handle to window list
-    lParam : Pointer to TMSG (initalised with what to broadcast)
-    Affect : sends a message to all windows in a list using SendMessage
-    Returns: 0 on success, [non zero] on failure
-    Notes  : only TMSG.Message, .wParam, .lParam are used
-  }
-  MS_UTILS_BROADCASTTOWINDOWLIST:PAnsiChar = 'Utils/BroadcastToWindowList';
-
-  {
-  Inline helper: WindowList_BroadcastAsync
-  wParam : Handle to window list
-  lParam : Pointer to TMSG (initalised with what to broadcast)
-  Affect : Sends a message to all windows in a list using PostMessage
-  Returns: 0 on success, nonzero on failure, this service does not fail,
-           even if PostMessage() fails for whatever reason
-  }
-  MS_UTILS_BROADCASTTOWINDOWLIST_ASYNC:PAnsiChar = 'Utils/BroadcastToWindowListAsync';
-
-  {
-    There aren't any services here, there's no need for them, the control class
-    will obey the SS_LEFT (0), SS_CENTER (1), SS_RIGHT(2) styles
-    the control will send STN_CLICKED via WM_COMMAND when the link itself is clicked
-    -
-    These are defined by STATIC controls and STN_CLICKED is sent to standard
-    STATIC classes when they're clicked -- look at WINAPI docs for more info
-  }
-  WNDCLASS_HYPERLINK = 'Hyperlink';
-
-  {
-    wParam : 0
-    lParam : Pointer to a initialised TSAVEWINDOWPOS structure
-    Affect :
-    Returns: 0 on success, [non zero] on failure
-    Notes  :
-    Version: v0.1.1.0+
-  }
-  MS_UTILS_SAVEWINDOWPOSITION:PAnsiChar = 'Utils/SaveWindowPos';
-
-  {
-    wParam : see RWPF_* flags
-    lParam : Pointer to a initalised TSAVEWINDOWPOS
-    Affect : Restores the position of a window from the database, see notes
-    Returns: 0 on success, [non zero] on failure
-    Notes  : If no position info was found, the service will return 1.
-             The NoSize version won't use stored information size, the window
-             is left the same size
-             -
-             See Utils_RestoreWindowPosition() Helper function, this function is
-             a bit different from the C function (which can be inlined too! dammit)
-             that there's only one function and not three (which just passed different flags)
-    Version: v0.1.1.0+
-  }
-  MS_UTILS_RESTOREWINDOWPOSITION:PAnsiChar = 'Utils/RestoreWindowPos';
+procedure WindowList_Destroy(hList:Thandle); stdcall;
+                 external CoreDLL name 'WindowList_Destroy';
 
 {
-    wParam : pointer to RECT
-    lParam : 0
+  Affect : Add a window to a given window list handle
+  Returns: 0 on success, [non zero] on failure
+}
+
+function WindowList_Add(hList:Thandle; hwnd:HWND; hContact:TMCONTACT) : int; stdcall;
+                 external CoreDLL name 'WindowList_Add';
+
+{
+  Affect : Remove a window from the specified window list
+  Returns: 0 on success, [non zero] on failure
+}
+
+function WindowList_Remove(hList:Thandle; hwnd:HWND) : int; stdcall;
+                 external CoreDLL name 'WindowList_Remove';
+
+{
+  Affect : Find a window handle given the hContact
+  Returns: The found window handle or NULL(0) on failure
+}
+
+function WindowList_Find(hList:Thandle; hContact:TMCONTACT) : HWND; stdcall;
+                 external CoreDLL name 'WindowList_Find';
+
+{
+  Affect : sends a message to all windows in a list using SendMessage
+  Returns: 0 on success, [non zero] on failure
+}
+
+function WindowList_Broadcast(hList:Thandle; message:UINT; wParam:TWPARAM; lParam:TLPARAM) : int; stdcall;
+                 external CoreDLL name 'WindowList_Broadcast';
+
+{
+  Affect : Sends a message to all windows in a list using PostMessage
+  Returns: 0 on success, nonzero on failure, this service does not fail,
+         even if PostMessage() fails for whatever reason
+}
+
+function WindowList_BroadcastAsync(hList:Thandle; message:UINT; wParam:TWPARAM; lParam:TLPARAM) : int; stdcall;
+                 external CoreDLL name 'WindowList_BroadcastAsync';
+
+{
+  There aren't any services here, there's no need for them, the control class
+  will obey the SS_LEFT (0), SS_CENTER (1), SS_RIGHT(2) styles
+  the control will send STN_CLICKED via WM_COMMAND when the link itself is clicked
+  -
+  These are defined by STATIC controls and STN_CLICKED is sent to standard
+  STATIC classes when they're clicked -- look at WINAPI docs for more info
+}
+
+const
+  WNDCLASS_HYPERLINK = 'Hyperlink';
+
+{
+  Returns: 0 on success, [non zero] on failure
+}
+
+function Utils_SaveWindowPosition(hwnd:HWND; hContact:TMCONTACT; const szModule,szNamePrefix:PAnsiChar) : int; stdcall;
+                 external CoreDLL name 'Utils_SaveWindowPosition';
+
+{
+  Affect : Restores the position of a window from the database, see notes
+  Returns: 0 on success, [non zero] on failure
+  Notes  : If no position info was found, the service will return 1.
+           The NoSize version won't use stored information size, the window
+           is left the same size
+           -
+           See Utils_RestoreWindowPosition() Helper function, this function is
+           a bit different from the C function (which can be inlined too! dammit)
+           that there's only one function and not three (which just passed different flags)
+}
+
+function Utils_RestoreWindowPosition(hwnd:HWND; hContact:TMCONTACT; const szModule,szNamePrefix:PAnsiChar; flags:int) : int; stdcall;
+                 external CoreDLL name 'Utils_RestoreWindowPosition';
+
+{
     Affect : Moves a RECT inside screen if it is outside.It works with multiple monitors (v0.9.0.4+)
     Returns: <0 on error, 0 if not changed the rect, 1 if changed the rect
 }
-  MS_UTILS_ASSERTINSIDESCREEN:PAnsiChar = 'Utils/AssertInsideScreen';
 
-  {
-    wParam : 0
-    lParam : Pointer to a null terminated string containing filename
-    Affect : Loads a bitmap (or other graphic type, see Notes
-    Returns: HBITMAP on success, NULL(0) on failure
-    Notes  : This function also supports JPEG, GIF (and maybe PNG too)
-             For speed, if the file extention is .bmp or .rle it will use LoadImage()
-             and not load OLE for the extra image support
-             -
-             Remember to delete the returned handle with DeleteObject (see GDI documentation for WINAPI)
-    Version: v0.1.2.1+
-  }
+function Utils_AssertInsideScreen(var rc:TRECT) : int; stdcall;
+                 external CoreDLL name 'Utils_AssertInsideScreen';
+
+{
+  wParam : 0
+  lParam : Pointer to a null terminated string containing filename
+  Affect : Loads a bitmap (or other graphic type, see Notes
+  Returns: HBITMAP on success, NULL(0) on failure
+  Notes  : This function also supports JPEG, GIF (and maybe PNG too)
+           For speed, if the file extention is .bmp or .rle it will use LoadImage()
+           and not load OLE for the extra image support
+           -
+           Remember to delete the returned handle with DeleteObject (see GDI documentation for WINAPI)
+}
+
+const
   MS_UTILS_LOADBITMAP :PAnsiChar = 'Utils/LoadBitmap';
   MS_UTILS_LOADBITMAPW:PAnsiChar = 'Utils/LoadBitmapW';
 
-  {
-      wParam : byte length of buffer (not to be confused with byte range)
-      lParam : Pointer to buffer
-      Affect : Get the filter strings for use in the open file dialog, see notes
-      Returns: 0 on success [non zero] on failure
-      Notes  : See the WINAPI under OPENFILENAME.lpStrFiler for formatting,
-               an 'All bitmaps' item is alway first, and 'All files' is always last
-               -
-               The returned string is always formatted
-               -
-               To build this filter, the filter string consists of
-               filter followed by a descriptive text
-               followed by more filters and their descriptive texts -- end with double NULL(0)
-               e.g. *.bmp' #0 'All bitmaps' #0 '*.*' #0 'All Files' #0 #0
-  }
-  MS_UTILS_GETBITMAPFILTERSTRINGS :PAnsiChar = 'Utils/GetBitmapFilterStrings';
-  MS_UTILS_GETBITMAPFILTERSTRINGSW:PAnsiChar = 'Utils/GetBitmapFilterStringsW';
+{
+  Affect : Saves a path to a relative path (from the miranda directory)
+           Only saves as a relative path if the file is in the miranda
+           directory (or sub directory)
+  Notes  : pszPath is the path to convert and pszNewPath is the buffer that
+           the new path is copied too. pszNewPath MUST be of the size MAX_PATH.
+  Returns: numbers of chars copied.
+}
 
-  {
-    wParam : pszPath
-    lParam : pszNewPath
-    Affect : Saves a path to a relative path (from the miranda directory)
-             Only saves as a relative path if the file is in the miranda
-             directory (or sub directory)
-    Notes  : pszPath is the path to convert and pszNewPath is the buffer that
-             the new path is copied too. pszNewPath MUST be of the size MAX_PATH.
-    Returns: numbers of chars copied.
-  }
-  MS_UTILS_PATHTORELATIVE :PAnsiChar = 'Utils/PathToRelative';
-//Unicode versions (0.6.2+)
-  MS_UTILS_PATHTORELATIVEW:PAnsiChar = 'Utils/PathToRelativeW';
+function PathToRelative(const pSrc:PAnsiChar; pOut:PAnsiChar; base:PAnsiChar=nil):int; stdcall;
+                 external CoreDLL name 'PathToRelative';
+function PathToRelativeW(const pSrc:PWideChar; pOut:PWideChar; base:PWideChar=nil):int; stdcall;
+                 external CoreDLL name 'PathToRelativeW';
 
-  {
-    Affect : Saves a path to a absolute path (from the miranda directory)
-    wParam : pszPath
-    lParam : pszNewPath
-    Notes  : pszPath is the path to convert and pszNewPath is the buffer that
-             the new path is copied too. pszNewPath MUST be of the size MAX_PATH.
-    Returns: numbers of chars copied.
-  }
-  MS_UTILS_PATHTOABSOLUTE :PAnsiChar = 'Utils/PathToAbsolute';
-//Unicode versions (0.6.2+)
-  MS_UTILS_PATHTOABSOLUTEW:PAnsiChar = 'Utils/PathToAbsoluteW';
+{
+  Affect : Saves a path to a absolute path (from the miranda directory)
+  Notes  : pszPath is the path to convert and pszNewPath is the buffer that
+           the new path is copied too. pszNewPath MUST be of the size MAX_PATH.
+  Returns: numbers of chars copied.
+}
+
+function PathToAbsolute(const pSrc:PAnsiChar; pOut:PAnsiChar; base:PAnsiChar=nil):int; stdcall;
+                 external CoreDLL name 'PathToAbsolute';
+function PathToAbsoluteW(const pSrc:PWideChar; pOut:PWideChar; base:PWideChar=nil):int; stdcall;
+                 external CoreDLL name 'PathToAbsoluteW';
 
 {
   Creates a directory tree (even more than one directories levels are missing) 0.7.0+
-  wParam=0 (unused)
-  lParam=pszPath - directory to be created
   Returns 0 on success error code otherwise
-  Unicode version is available since 0.7.0
 }
-  MS_UTILS_CREATEDIRTREE :PAnsiChar = 'Utils/CreateDirTree';
-  MS_UTILS_CREATEDIRTREEW:PAnsiChar = 'Utils/CreateDirTreeW';
+
+function CreateDirectoryTree(const szDir:PAnsiChar):int; stdcall;
+                 external CoreDLL name 'CreateDirectoryTree';
+function CreateDirectoryTreeW(const szDir:PWideChar):int; stdcall;
+                 external CoreDLL name 'CreateDirectoryTreeW';
+
+{
+  Creates all subdirectories required to create a file with the file name given
+  Returns 0 on success or an error code otherwise
+}
+
+procedure CreatePathToFile(wszFilePath:PAnsiChar); stdcall;
+                 external CoreDLL name 'CreatePathToFile';
+procedure CreatePathToFileW(wszFilePath:PWideChar); stdcall;
+                 external CoreDLL name 'CreatePathToFileW';
+{
+  Checks if a file name is absolute or not
+  returns TRUE if yes or FALSE if not
+}
+
+function PathIsAbsolute(const pSrc:PAnsiChar):int; stdcall;
+                 external CoreDLL name 'PathIsAbsolute';
+function PathIsAbsoluteW(const pSrc:PWideChar):int; stdcall;
+                 external CoreDLL name 'PathIsAbsoluteW';
 
 {
    Generates Random number of any length
@@ -332,12 +305,13 @@ const
   lParam=(LPARAM)(char*)pszArray - pointer to array to fill with random number
   Always returns 0
 }
-  MS_UTILS_GETRANDOM:PAnsiChar = 'Utils/GetRandom';
 
-//Replace variables in text
-//wParam=(char*/TCHAR*/WCHAR*)string (depends on RVF_UNICODE/RVF_TCHAR flag)
-//lParam=(REPLACEVARSDATA *) data about variables, item with key=0 terminates the list
-//returns new string, use mir_free to destroy
+procedure Utils_GetRandom(pSrc:pointer; size:size_t); stdcall;
+                 external CoreDLL name 'Utils_GetRandom';
+
+// Replace variables in text
+// returns new string, use mir_free to destroy
+
 type
   PREPLACEVARSARRAY = ^TREPLACEVARSARRAY;
   TREPLACEVARSARRAY = record
@@ -345,18 +319,10 @@ type
     szValue:TCHAR;
   end;
 
-type
-  TREPLACEVARSDATA = record
-    cbSize   :int;
-    dwFlags  :dword;
-    hContact :TMCONTACT;
-    variables:PREPLACEVARSARRAY;
-  end;
-
-const
-  RVF_UNICODE = 1;
-
-  MS_UTILS_REPLACEVARS:PAnsiChar = 'Utils/ReplaceVars';
+function Utils_ReplaceVars(const pSrc:PAnsiChar; hContact:TMCONTACT = 0; vars:PREPLACEVARSARRAY = nil):PAnsiChar; stdcall;
+                 external AppDLL name 'Utils_ReplaceVars';
+function Utils_ReplaceVarsW(const pSrc:PWideChar; hContact:TMCONTACT = 0; vars:PREPLACEVARSARRAY = nil):PWideChar; stdcall;
+                 external AppDLL name 'Utils_ReplaceVarsW';
 
 {
   variables known by the core:

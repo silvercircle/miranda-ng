@@ -234,19 +234,19 @@ int CreateFrame()
 		memset(&font_id[i], 0, sizeof(font_id[i]));
 
 		font_id[i].cbSize = sizeof(FontIDT);
-		mir_tstrncpy(font_id[i].group, LPGENT("My details"), SIZEOF(font_id[i].group));
-		mir_tstrncpy(font_id[i].name, font_names[i], SIZEOF(font_id[i].name));
-		mir_strncpy(font_id[i].dbSettingsGroup, MODULE_NAME, SIZEOF(font_id[i].dbSettingsGroup));
-		mir_tstrncpy(font_id[i].backgroundName, LPGENT("Background"), SIZEOF(font_id[i].backgroundName));
-		mir_tstrncpy(font_id[i].backgroundGroup, LPGENT("My details"), SIZEOF(font_id[i].backgroundGroup));
+		mir_tstrncpy(font_id[i].group, LPGENT("My details"), _countof(font_id[i].group));
+		mir_tstrncpy(font_id[i].name, font_names[i], _countof(font_id[i].name));
+		mir_strncpy(font_id[i].dbSettingsGroup, MODULE_NAME, _countof(font_id[i].dbSettingsGroup));
+		mir_tstrncpy(font_id[i].backgroundName, LPGENT("Background"), _countof(font_id[i].backgroundName));
+		mir_tstrncpy(font_id[i].backgroundGroup, LPGENT("My details"), _countof(font_id[i].backgroundGroup));
 
-		mir_strncpy(font_id[i].prefix, font_settings[i], SIZEOF(font_id[i].prefix));
+		mir_strncpy(font_id[i].prefix, font_settings[i], _countof(font_id[i].prefix));
 
 		font_id[i].deffontsettings.colour = font_colors[i];
 		font_id[i].deffontsettings.size = -MulDiv(font_sizes[i], GetDeviceCaps(hdc, LOGPIXELSY), 72);
 		font_id[i].deffontsettings.style = font_styles[i];
 		font_id[i].deffontsettings.charset = DEFAULT_CHARSET;
-		mir_tstrncpy(font_id[i].deffontsettings.szFace, _T("Tahoma"), SIZEOF(font_id[i].deffontsettings.szFace));
+		mir_tstrncpy(font_id[i].deffontsettings.szFace, _T("Tahoma"), _countof(font_id[i].deffontsettings.szFace));
 		font_id[i].order = i;
 		font_id[i].flags = FIDF_DEFAULTVALID;
 		FontRegisterT(&font_id[i]);
@@ -272,7 +272,7 @@ int CreateFrame()
 
 	if (g_bFramesExist) {
 		hwnd_frame = CreateWindow(WINDOW_CLASS_NAME, TranslateT("My details"), WS_CHILD | WS_VISIBLE,
-			0, 0, 10, 10, (HWND)CallService(MS_CLUI_GETHWND, 0, 0), NULL, hInst, NULL);
+			0, 0, 10, 10, pcli->hwndContactList, NULL, hInst, NULL);
 
 		CLISTFrame Frame = { 0 };
 
@@ -281,7 +281,7 @@ int CreateFrame()
 		Frame.cbSize = sizeof(CLISTFrame);
 		Frame.hWnd = hwnd_frame;
 		Frame.align = alTop;
-		Frame.hIcon = LoadSkinnedIcon(SKINICON_OTHER_FRAME);
+		Frame.hIcon = Skin_LoadIcon(SKINICON_OTHER_FRAME);
 		Frame.Flags = F_VISIBLE | F_SHOWTB | F_SHOWTBTIP | F_NOBORDER | F_SKINNED | F_TCHAR;
 		Frame.height = 100;
 		frame_id = CallService(MS_CLIST_FRAMES_ADDFRAME, (WPARAM)&Frame, 0);
@@ -317,7 +317,7 @@ int CreateFrame()
 
 		hwnd_container = CreateWindowEx(WS_EX_TOOLWINDOW, CONTAINER_CLASS_NAME, TranslateT("My details"),
 			(WS_THICKFRAME | WS_CAPTION | WS_SYSMENU) & ~WS_VISIBLE,
-			0, 0, 200, 130, (HWND)CallService(MS_CLUI_GETHWND, 0, 0), NULL, hInst, NULL);
+			0, 0, 200, 130, pcli->hwndContactList, NULL, hInst, NULL);
 
 		hwnd_frame = CreateWindow(WINDOW_CLASS_NAME, TranslateT("My details"), WS_CHILD | WS_VISIBLE,
 			0, 0, 10, 10, hwnd_container, NULL, hInst, NULL);
@@ -327,15 +327,15 @@ int CreateFrame()
 
 		// Create menu item
 
-		CLISTMENUITEM mi = { sizeof(mi) };
+		CMenuItem mi;
 		mi.flags = CMIF_TCHAR;
-		mi.popupPosition = -0x7FFFFFFF;
-		mi.ptszPopupName = LPGENT("My details");
-		mi.position = 1; // 500010000
-		mi.hIcon = LoadSkinnedIcon(SKINICON_OTHER_USERDETAILS);
-		mi.ptszName = LPGENT("Show my details");
+		mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("My details"), 500010000);
+		mi.position = 1;
+		mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_USERDETAILS);
+		mi.name.t = LPGENT("Show my details");
 		mi.pszService = MODULE_NAME"/ShowHideMyDetails";
 		hMenuShowHideFrame = Menu_AddMainMenuItem(&mi);
+		Menu_ConfigureItem(hMenuShowHideFrame, MCI_OPT_EXECPARAM, -0x7FFFFFFF);
 
 		if (db_get_b(0, MODULE_NAME, SETTING_FRAME_VISIBLE, 1) == 1) {
 			ShowWindow(hwnd_container, SW_SHOW);
@@ -542,8 +542,8 @@ HWND CreateTooltip(HWND hwnd, RECT &rect)
 	ti.rect.bottom = rect.bottom;
 
 	/* SEND AN ADDTOOL MESSAGE TO THE TOOLTIP CONTROL WINDOW */
-	SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM)(LPTOOLINFO)&ti);
-	SendMessage(hwndTT, TTM_SETDELAYTIME, (WPARAM)(DWORD)TTDT_AUTOPOP, (LPARAM)MAKELONG(24 * 60 * 60 * 1000, 0));
+	SendMessage(hwndTT, TTM_ADDTOOL, 0, (LPARAM)&ti);
+	SendMessage(hwndTT, TTM_SETDELAYTIME, TTDT_AUTOPOP, MAKELONG(24 * 60 * 60 * 1000, 0));
 
 	return hwndTT;
 }
@@ -971,8 +971,8 @@ void CalcRectangles(HWND hwnd)
 			else if (IsWindowVisible(hwnd)) {
 				int flags = CallService(MS_CLIST_FRAMES_GETFRAMEOPTIONS, MAKEWPARAM(FO_FLAGS, frame_id), 0);
 				if (flags & F_VISIBLE) {
-					CallService(MS_CLIST_FRAMES_SETFRAMEOPTIONS, MAKEWPARAM(FO_HEIGHT, frame_id), (LPARAM)(size));
-					CallService(MS_CLIST_FRAMES_UPDATEFRAME, (WPARAM)frame_id, (LPARAM)(FU_TBREDRAW | FU_FMREDRAW | FU_FMPOS));
+					CallService(MS_CLIST_FRAMES_SETFRAMEOPTIONS, MAKEWPARAM(FO_HEIGHT, frame_id), size);
+					CallService(MS_CLIST_FRAMES_UPDATEFRAME, (WPARAM)frame_id, FU_TBREDRAW | FU_FMREDRAW | FU_FMPOS);
 				}
 			}
 		}
@@ -1181,11 +1181,11 @@ void Draw(HWND hwnd, HDC hdc_orig)
 		HRGN rgn = CreateRectRgnIndirect(&rc);
 		SelectClipRgn(hdc, rgn);
 
-		HICON icon = Skin_GetIcon("MYDETAILS_NEXT_PROTOCOL");
+		HICON icon = IcoLib_GetIcon("MYDETAILS_NEXT_PROTOCOL");
 		if (icon == NULL)
 			icon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_RIGHT_ARROW));
 		DrawIconEx(hdc, data->next_proto_rect.left, data->next_proto_rect.top, icon, ICON_SIZE, ICON_SIZE, 0, NULL, DI_NORMAL);
-		Skin_ReleaseIcon(icon);
+		IcoLib_ReleaseIcon(icon);
 
 		SelectClipRgn(hdc, NULL);
 		DeleteObject(rgn);
@@ -1194,11 +1194,11 @@ void Draw(HWND hwnd, HDC hdc_orig)
 		rgn = CreateRectRgnIndirect(&rc);
 		SelectClipRgn(hdc, rgn);
 
-		icon = Skin_GetIcon("MYDETAILS_PREV_PROTOCOL");
+		icon = IcoLib_GetIcon("MYDETAILS_PREV_PROTOCOL");
 		if (icon == NULL)
 			icon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_RIGHT_ARROW));
 		DrawIconEx(hdc, data->prev_proto_rect.left, data->prev_proto_rect.top, icon, ICON_SIZE, ICON_SIZE, 0, NULL, DI_NORMAL);
-		Skin_ReleaseIcon(icon);
+		IcoLib_ReleaseIcon(icon);
 
 		SelectClipRgn(hdc, NULL);
 		DeleteObject(rgn);
@@ -1246,11 +1246,11 @@ void Draw(HWND hwnd, HDC hdc_orig)
 		if (proto->custom_status != 0 && ProtoServiceExists(proto->name, PS_GETCUSTOMSTATUSICON))
 			status_icon = (HICON)CallProtoService(proto->name, PS_GETCUSTOMSTATUSICON, proto->custom_status, LR_SHARED);
 		else
-			status_icon = LoadSkinnedProtoIcon(proto->name, proto->status);
+			status_icon = Skin_LoadProtoIcon(proto->name, proto->status);
 
 		if (status_icon != NULL) {
 			DrawIconEx(hdc, data->status_icon_rect.left, data->status_icon_rect.top, status_icon, ICON_SIZE, ICON_SIZE, 0, NULL, DI_NORMAL);
-			Skin_ReleaseIcon(status_icon);
+			IcoLib_ReleaseIcon(status_icon);
 		}
 
 		SelectClipRgn(hdc, NULL);
@@ -1318,11 +1318,11 @@ void Draw(HWND hwnd, HDC hdc_orig)
 			HRGN rgn = CreateRectRgnIndirect(&rc);
 			SelectClipRgn(hdc, rgn);
 
-			HICON icon = Skin_GetIcon("LISTENING_TO_ICON");
+			HICON icon = IcoLib_GetIcon("LISTENING_TO_ICON");
 			if (icon == NULL)
 				icon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_LISTENINGTO));
 			DrawIconEx(hdc, data->listening_to_icon_rect.left, data->listening_to_icon_rect.top, icon, ICON_SIZE, ICON_SIZE, 0, NULL, DI_NORMAL);
-			Skin_ReleaseIcon(icon);
+			IcoLib_ReleaseIcon(icon);
 
 			SelectClipRgn(hdc, NULL);
 			DeleteObject(rgn);
@@ -1384,7 +1384,7 @@ void MakeHover(HWND hwnd, bool draw, bool *hover, POINT *p, RECT *r)
 
 void ShowGlobalStatusMenu(HWND hwnd, MyDetailsFrameData *data, POINT &p)
 {
-	HMENU submenu = (HMENU)CallService(MS_CLIST_MENUGETSTATUS, 0, 0);
+	HMENU submenu = Menu_GetStatusMenu();
 
 	p.x = (opts.draw_text_align_right ? data->status_rect.right : data->status_rect.left);
 	p.y = data->status_rect.bottom + 1;
@@ -1399,7 +1399,7 @@ void ShowGlobalStatusMenu(HWND hwnd, MyDetailsFrameData *data, POINT &p)
 
 void ShowProtocolStatusMenu(HWND hwnd, MyDetailsFrameData *data, Protocol *proto, POINT &p)
 {
-	HMENU menu = (HMENU)CallService(MS_CLIST_MENUGETSTATUS, 0, 0);
+	HMENU menu = Menu_GetStatusMenu();
 	HMENU submenu = NULL;
 
 	if (menu != NULL) {
@@ -1407,7 +1407,6 @@ void ShowProtocolStatusMenu(HWND hwnd, MyDetailsFrameData *data, Protocol *proto
 		int count = GetMenuItemCount(menu);
 		for (int i = 0; i < count && submenu == NULL; i++) {
 			MENUITEMINFO mii = { 0 };
-
 			mii.cbSize = sizeof(mii);
 			mii.fMask = MIIM_STRING;
 
@@ -1475,7 +1474,7 @@ void ShowListeningToMenu(HWND hwnd, MyDetailsFrameData *data, Protocol *proto, P
 
 	// Add this proto to menu
 	TCHAR tmp[128];
-	mir_sntprintf(tmp, SIZEOF(tmp), TranslateT("Enable listening to for %s"), proto->description);
+	mir_sntprintf(tmp, _countof(tmp), TranslateT("Enable listening to for %s"), proto->description);
 
 	MENUITEMINFO mii = { 0 };
 	mii.cbSize = sizeof(mii);
@@ -1660,7 +1659,8 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				HMENU menu = CreatePopupMenu();
 
 				for (int i = protocols->GetSize() - 1; i >= 0; i--) {
-					MENUITEMINFO mii = { sizeof(mii) };
+					MENUITEMINFO mii = { 0 };
+					mii.cbSize = sizeof(mii);
 					mii.fMask = MIIM_ID | MIIM_TYPE;
 					mii.fType = MFT_STRING;
 					mii.dwTypeData = protocols->Get(i)->description;
@@ -1694,10 +1694,10 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 		break;
 
 	case WM_MEASUREITEM:
-		return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
+		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
 
 	case WM_DRAWITEM:
-		return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
+		return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
 
 	case WM_CONTEXTMENU:
 		proto = protocols->Get(data->protocol_number);
@@ -1715,7 +1715,7 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 				// Add this proto to menu
 				TCHAR tmp[128];
-				mir_sntprintf(tmp, SIZEOF(tmp), TranslateT("Set my avatar for %s..."), proto->description);
+				mir_sntprintf(tmp, _countof(tmp), TranslateT("Set my avatar for %s..."), proto->description);
 
 				MENUITEMINFO mii = { 0 };
 				mii.cbSize = sizeof(mii);
@@ -1755,7 +1755,7 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 				// Add this proto to menu
 				TCHAR tmp[128];
-				mir_sntprintf(tmp, SIZEOF(tmp), TranslateT("Set my nickname for %s..."), proto->description);
+				mir_sntprintf(tmp, _countof(tmp), TranslateT("Set my nickname for %s..."), proto->description);
 
 				MENUITEMINFO mii = { 0 };
 				mii.cbSize = sizeof(mii);
@@ -1803,7 +1803,7 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 				if (protocols->CanSetStatusMsgPerProtocol()) {
 					// Add this proto to menu
-					mir_sntprintf(tmp, SIZEOF(tmp), TranslateT("Set my status message for %s..."), proto->description);
+					mir_sntprintf(tmp, _countof(tmp), TranslateT("Set my status message for %s..."), proto->description);
 
 					MENUITEMINFO mii = { 0 };
 					mii.cbSize = sizeof(mii);
@@ -1822,8 +1822,7 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				}
 
 				// Add this to menu
-				mir_sntprintf(tmp, SIZEOF(tmp), TranslateT("Set my status message for %s..."),
-					CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, proto->status, GSMDF_TCHAR));
+				mir_sntprintf(tmp, _countof(tmp), TranslateT("Set my status message for %s..."), pcli->pfnGetStatusModeDescription(proto->status, 0));
 
 				MENUITEMINFO mii = { 0 };
 				mii.cbSize = sizeof(mii);
@@ -1886,11 +1885,9 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 				// Add this proto to menu
 				TCHAR tmp[128];
+				mir_sntprintf(tmp, _countof(tmp), TranslateT("Enable listening to for %s"), proto->description);
+
 				MENUITEMINFO mii = { 0 };
-
-				mir_sntprintf(tmp, SIZEOF(tmp), TranslateT("Enable listening to for %s"), proto->description);
-
-				memset(&mii, 0, sizeof(mii));
 				mii.cbSize = sizeof(mii);
 				mii.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE;
 				mii.fType = MFT_STRING;
@@ -1904,8 +1901,7 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				InsertMenuItem(submenu, 0, TRUE, &mii);
 
 				// Add this to menu
-				mir_sntprintf(tmp, SIZEOF(tmp), TranslateT("Set my status message for %s..."),
-					CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, proto->status, GSMDF_TCHAR));
+				mir_sntprintf(tmp, _countof(tmp), TranslateT("Set my status message for %s..."), pcli->pfnGetStatusModeDescription(proto->status, 0));
 
 				memset(&mii, 0, sizeof(mii));
 				mii.cbSize = sizeof(mii);
@@ -1924,7 +1920,7 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 				if (protocols->CanSetStatusMsgPerProtocol()) {
 					// Add this proto to menu
-					mir_sntprintf(tmp, SIZEOF(tmp), TranslateT("Set my status message for %s..."), proto->description);
+					mir_sntprintf(tmp, _countof(tmp), TranslateT("Set my status message for %s..."), proto->description);
 
 					memset(&mii, 0, sizeof(mii));
 					mii.cbSize = sizeof(mii);
@@ -1942,7 +1938,7 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 					InsertMenuItem(submenu, 0, TRUE, &mii);
 				}
 
-				mir_sntprintf(tmp, SIZEOF(tmp), TranslateT("Set my nickname for %s..."), proto->description);
+				mir_sntprintf(tmp, _countof(tmp), TranslateT("Set my nickname for %s..."), proto->description);
 
 				memset(&mii, 0, sizeof(mii));
 				mii.cbSize = sizeof(mii);
@@ -1959,7 +1955,7 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 				InsertMenuItem(submenu, 0, TRUE, &mii);
 
-				mir_sntprintf(tmp, SIZEOF(tmp), TranslateT("Set my avatar for %s..."), proto->description);
+				mir_sntprintf(tmp, _countof(tmp), TranslateT("Set my avatar for %s..."), proto->description);
 
 				memset(&mii, 0, sizeof(mii));
 				mii.cbSize = sizeof(mii);
@@ -2240,15 +2236,7 @@ INT_PTR HideFrameFunc(WPARAM, LPARAM)
 
 void FixMainMenu()
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.flags = CMIM_NAME | CMIF_TCHAR;
-
-	if (MyDetailsFrameVisible())
-		mi.ptszName = LPGENT("Hide my details");
-	else
-		mi.ptszName = LPGENT("Show my details");
-
-	Menu_ModifyItem(hMenuShowHideFrame, &mi);
+	Menu_ModifyItem(hMenuShowHideFrame, MyDetailsFrameVisible() ? LPGENT("Hide my details") : LPGENT("Show my details"));
 }
 
 #include <math.h>

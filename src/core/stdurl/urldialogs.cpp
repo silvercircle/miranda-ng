@@ -26,8 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 INT_PTR CALLBACK DlgProcUrlSend(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 
-extern HANDLE hUrlWindowList;
-
 static void sttUpdateTitle(HWND hwndDlg, MCONTACT hContact)
 {
 	TCHAR newtitle[256], oldtitle[256];
@@ -37,11 +35,10 @@ static void sttUpdateTitle(HWND hwndDlg, MCONTACT hContact)
 	if (hContact) {
 		szProto = GetContactProto(hContact);
 		if (szProto) {
-			CONTACTINFO ci;
+			CONTACTINFO ci = { 0 };
 			int hasName = 0;
 			char buf[128];
 			memset(&ci, 0, sizeof(ci));
-
 			ci.cbSize = sizeof(ci);
 			ci.hContact = hContact;
 			ci.szProto = szProto;
@@ -55,7 +52,7 @@ static void sttUpdateTitle(HWND hwndDlg, MCONTACT hContact)
 					break;
 				case CNFT_DWORD:
 					hasName = 1;
-					mir_snprintf(buf, SIZEOF(buf), "%u", ci.dVal);
+					mir_snprintf(buf, _countof(buf), "%u", ci.dVal);
 					break;
 				}
 			}
@@ -67,12 +64,12 @@ static void sttUpdateTitle(HWND hwndDlg, MCONTACT hContact)
 				SetDlgItemText(hwndDlg, IDC_NAME, contactName);
 
 			szStatus = pcli->pfnGetStatusModeDescription(db_get_w(hContact, szProto, "Status", ID_STATUS_OFFLINE), 0);
-			mir_sntprintf(newtitle, SIZEOF(newtitle), _T("%s %s (%s)"), pszNewTitleStart, contactName, szStatus);
+			mir_sntprintf(newtitle, _countof(newtitle), _T("%s %s (%s)"), pszNewTitleStart, contactName, szStatus);
 		}
 	}
-	else mir_tstrncpy(newtitle, pszNewTitleStart, SIZEOF(newtitle));
+	else mir_tstrncpy(newtitle, pszNewTitleStart, _countof(newtitle));
 
-	GetWindowText(hwndDlg, oldtitle, SIZEOF(oldtitle));
+	GetWindowText(hwndDlg, oldtitle, _countof(oldtitle));
 
 	if (mir_tstrcmp(newtitle, oldtitle))	   //swt() flickers even if the title hasn't actually changed
 		SetWindowText(hwndDlg, newtitle);
@@ -110,13 +107,13 @@ INT_PTR CALLBACK DlgProcUrlRecv(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 			db_event_markRead(dat->hContact, dat->hDbEvent);
 
 			TCHAR *contactName = pcli->pfnGetContactDisplayName(dat->hContact, 0), msg[128];
-			mir_sntprintf(msg, SIZEOF(msg), TranslateT("URL from %s"), contactName);
+			mir_sntprintf(msg, _countof(msg), TranslateT("URL from %s"), contactName);
 			SetWindowText(hwndDlg, msg);
 			SetDlgItemText(hwndDlg, IDC_FROM, contactName);
 			SendDlgItemMessage(hwndDlg, IDOK, BUTTONSETARROW, 1, 0);
 
 			TCHAR str[128];
-			tmi.printTimeStamp(NULL, dbei.timestamp, _T("t d"), str, SIZEOF(str), 0);
+			TimeZone_PrintTimeStamp(NULL, dbei.timestamp, _T("t d"), str, _countof(str), 0);
 			SetDlgItemText(hwndDlg, IDC_DATE, str);
 		}
 
@@ -131,7 +128,7 @@ INT_PTR CALLBACK DlgProcUrlRecv(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 		return TRUE;
 
 	case WM_MEASUREITEM:
-		return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
+		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
 
 	case WM_DRAWITEM:
 		{
@@ -147,7 +144,7 @@ INT_PTR CALLBACK DlgProcUrlRecv(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 				}
 			}
 		}
-		return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
+		return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
 
 	case DM_UPDATETITLE:
 		sttUpdateTitle(hwndDlg, dat->hContact);
@@ -168,13 +165,13 @@ INT_PTR CALLBACK DlgProcUrlRecv(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 				HMENU hSubMenu = GetSubMenu(hMenu, 6);
 				TranslateMenu(hSubMenu);
 				GetWindowRect((HWND)lParam, &rc);
-				GetDlgItemTextA(hwndDlg, IDC_URL, url, SIZEOF(url));
+				GetDlgItemTextA(hwndDlg, IDC_URL, url, _countof(url));
 				switch(TrackPopupMenu(hSubMenu, TPM_RETURNCMD, rc.left, rc.bottom, 0, hwndDlg, NULL)) {
 					case IDM_OPENNEW:
-						CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)url);
+						Utils_OpenUrl(url);
 						break;
 					case IDM_OPENEXISTING:
-						CallService(MS_UTILS_OPENURL, 0, (LPARAM)url);
+						Utils_OpenUrl(url);
 						break;
 					case IDM_COPYLINK:
 					{
@@ -195,7 +192,7 @@ INT_PTR CALLBACK DlgProcUrlRecv(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 		case IDC_USERMENU:
 			{
 				RECT rc;
-				HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDCONTACT, (WPARAM)dat->hContact, 0);
+				HMENU hMenu = Menu_BuildContactMenu(dat->hContact);
 				GetWindowRect(GetDlgItem(hwndDlg, IDC_USERMENU), &rc);
 				TrackPopupMenu(hMenu, 0, rc.left, rc.bottom, 0, hwndDlg, NULL);
 				DestroyMenu(hMenu);
@@ -348,7 +345,7 @@ static void AddBrowserPageToCombo(char *url, HWND hwndCombo)
 		char szExistingUrl[1024];
 
 		for (i = SendMessage(hwndCombo, CB_GETCOUNT, 0, 0)-1;i>=0;i--) {
-			if (SendMessage(hwndCombo, CB_GETLBTEXTLEN, i, 0) >= SIZEOF(szExistingUrl))
+			if (SendMessage(hwndCombo, CB_GETLBTEXTLEN, i, 0) >= _countof(szExistingUrl))
 				continue;
 			SendMessageA(hwndCombo, CB_GETLBTEXT, i, (LPARAM)szExistingUrl);
 			if ( !mir_strcmp(szExistingUrl, url)) return;
@@ -384,7 +381,7 @@ static void GetOpenBrowserUrlsForBrowser(const char *szBrowser, HWND hwndDlg, HW
 	}
 	int dataLength = GlobalSize(hData)-offsetof(DDEDATA, Value);
 	DDEDATA *data = (DDEDATA*)GlobalLock(hData);
-	windowCount = dataLength/sizeof(DWORD);
+	windowCount = dataLength / sizeof(DWORD);
 	windowId = (PDWORD)mir_alloc(sizeof(DWORD)*windowCount);
 	memcpy(windowId, data->Value, windowCount*sizeof(DWORD));
 	GlobalUnlock(hData);
@@ -404,7 +401,7 @@ static void GetOpenBrowserUrlsForBrowser(const char *szBrowser, HWND hwndDlg, HW
 	for (i=0;i<windowCount;i++) {
 		if (windowId[i] == 0) break;
 		{	char str[16];
-			mir_snprintf(str, SIZEOF(str), "%d", windowId[i]);
+			mir_snprintf(str, _countof(str), "%d", windowId[i]);
 			hData = DoDdeRequest(str, hwndDlg);
 		}
 		if (hData != NULL) {
@@ -505,7 +502,7 @@ INT_PTR CALLBACK DlgProcUrlSend(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 		break;
 
 	case WM_MEASUREITEM:
-		return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
+		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
 
 	case WM_DRAWITEM:
 		{
@@ -521,7 +518,7 @@ INT_PTR CALLBACK DlgProcUrlSend(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 				}
 			}
 		}
-		return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
+		return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
 
 	case DM_UPDATETITLE:
 		sttUpdateTitle(hwndDlg, dat->hContact);
@@ -587,7 +584,7 @@ INT_PTR CALLBACK DlgProcUrlSend(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 		case IDC_USERMENU:
 			{
 				RECT rc;
-				HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDCONTACT, (WPARAM)dat->hContact, 0);
+				HMENU hMenu = Menu_BuildContactMenu(dat->hContact);
 				GetWindowRect(GetDlgItem(hwndDlg, IDC_USERMENU), &rc);
 				TrackPopupMenu(hMenu, 0, rc.left, rc.bottom, 0, hwndDlg, NULL);
 				DestroyMenu(hMenu);
@@ -621,7 +618,8 @@ INT_PTR CALLBACK DlgProcUrlSend(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 			if (ack->hContact != dat->hContact) break;
 			if (ack->type != ACKTYPE_URL || ack->result != ACKRESULT_SUCCESS) break;
 
-			DBEVENTINFO dbei = { sizeof(dbei) };
+			DBEVENTINFO dbei = { 0 };
+			dbei.cbSize = sizeof(dbei);
 			dbei.eventType = EVENTTYPE_URL;
 			dbei.flags = DBEF_SENT;
 			dbei.szModule = GetContactProto(dat->hContact);

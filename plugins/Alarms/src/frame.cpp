@@ -140,9 +140,9 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 			TCHAR buff[100];
 			if (min >= 60)
-				mir_sntprintf(buff, SIZEOF(buff), TranslateT("%dh %dm"), min / 60, min % 60);
+				mir_sntprintf(buff, TranslateT("%dh %dm"), min / 60, min % 60);
 			else
-				mir_sntprintf(buff, SIZEOF(buff), TranslateT("%dm"), min);
+				mir_sntprintf(buff, TranslateT("%dm"), min);
 
 			GetTextExtentPoint32(dis->hDC,buff,(int)mir_tstrlen(buff),&timeSize);
 
@@ -155,7 +155,7 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 					len--;
 					_tcsncpy(titlebuff, alarm.szTitle, len);
 					titlebuff[len] = 0;
-					_tcscat(titlebuff, _T("..."));
+					mir_tstrcat(titlebuff, _T("..."));
 					GetTextExtentPoint32(dis->hDC,titlebuff,(int)mir_tstrlen(titlebuff),&textSize);
 				}
 				TextOut(dis->hDC,dis->rcItem.left + 16 + 4,(dis->rcItem.top + dis->rcItem.bottom - textSize.cy)>>1,titlebuff,(int)mir_tstrlen(titlebuff));
@@ -195,7 +195,7 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 			if (GetUpdateRect(hwnd, &r, FALSE)) {
 				PAINTSTRUCT ps;
 				HDC hdc = BeginPaint(hwnd, &ps);
-				SendMessage(hwnd, WM_PRINTCLIENT, (WPARAM)hdc, (LPARAM)(PRF_CLIENT | PRF_CHILDREN));
+				SendMessage(hwnd, WM_PRINTCLIENT, (WPARAM)hdc, PRF_CLIENT | PRF_CHILDREN);
 				EndPaint(hwnd, &ps);
 			}
 		}
@@ -209,10 +209,9 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 		if (IsWindowVisible(hwnd)) {
 			SendMessage(hwnd, WMU_SIZE_LIST, 0, 0);
 
-			if (frame_id != -1) {
-				//CallService(MS_CLIST_FRAMES_UPDATEFRAME, (WPARAM)frame_id, (LPARAM)(FU_TBREDRAW | FU_FMREDRAW));
-				CallService(MS_CLIST_FRAMES_UPDATEFRAME, (WPARAM)frame_id, (LPARAM)FU_TBREDRAW);
-			}
+			if (frame_id != -1)
+				CallService(MS_CLIST_FRAMES_UPDATEFRAME, (WPARAM)frame_id, FU_TBREDRAW);
+
 			InvalidateRect(hwnd, 0, TRUE);
 		}
 		break;
@@ -239,8 +238,8 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 					SetWindowPos(GetParent(hwnd), 0, 0, 0, rp_window.right - rp_window.left, height, SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
 				}
 				else if (ServiceExists(MS_CLIST_FRAMES_ADDFRAME) && frame_id != -1) {
-					CallService(MS_CLIST_FRAMES_SETFRAMEOPTIONS, MAKEWPARAM(FO_HEIGHT, frame_id), (LPARAM)(count * itemheight));
-					CallService(MS_CLIST_FRAMES_UPDATEFRAME, (WPARAM)frame_id, (LPARAM)(FU_TBREDRAW | FU_FMREDRAW | FU_FMPOS));
+					CallService(MS_CLIST_FRAMES_SETFRAMEOPTIONS, MAKEWPARAM(FO_HEIGHT, frame_id), count * itemheight);
+					CallService(MS_CLIST_FRAMES_UPDATEFRAME, (WPARAM)frame_id, FU_TBREDRAW | FU_FMREDRAW | FU_FMPOS);
 				}
 			}
 
@@ -265,9 +264,9 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 					}
 					else if (!IsWindowVisible(hwnd) && count > 0) {
 						// we have reminders - show if not linked to clist or if clist is visible
-						if ((!options.hide_with_clist && FrameIsFloating()) || IsWindowVisible((HWND)CallService(MS_CLUI_GETHWND, 0, 0))) {
+						if ((!options.hide_with_clist && FrameIsFloating()) || IsWindowVisible(pcli->hwndContactList)) {
 							CallService(MS_CLIST_FRAMES_SHFRAME, (WPARAM)frame_id, 0);						
-							CallService(MS_CLIST_FRAMES_UPDATEFRAME, (WPARAM)frame_id, (LPARAM)(FU_FMREDRAW | FU_FMPOS));
+							CallService(MS_CLIST_FRAMES_UPDATEFRAME, (WPARAM)frame_id, FU_FMREDRAW | FU_FMPOS);
 						}
 					}
 				}
@@ -276,7 +275,7 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 						SetReminderFrameVisible(false);
 					else if (!IsWindowVisible(hwnd) && count > 0)
 						// we have reminders - show if not linked to clist or if clist is visible
-						if (!options.hide_with_clist || IsWindowVisible((HWND)CallService(MS_CLUI_GETHWND, 0, 0)))
+						if (!options.hide_with_clist || IsWindowVisible(pcli->hwndContactList))
 							SetReminderFrameVisible(true);
 				}
 			}
@@ -321,14 +320,14 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 			SendMessage(hwnd, WMU_FILL_LIST, 0, 0);
 		else if (wParam == ID_FRAME_SHOWHIDE_TIMER && options.hide_with_clist) { // link show/hide with clist
 			// hide if we're visible and clist isn't (possible only when floating if frames are present)
-			if (!IsWindowVisible((HWND)CallService(MS_CLUI_GETHWND, 0, 0)) && IsWindowVisible(hwnd)) {
+			if (!IsWindowVisible(pcli->hwndContactList) && IsWindowVisible(hwnd)) {
 				if (ServiceExists(MS_CLIST_FRAMES_SHFRAME))
 					CallService(MS_CLIST_FRAMES_SHFRAME, (WPARAM)frame_id, 0);
 				else
 					SetReminderFrameVisible(false);
 			}
 			// we're not visible but clist is - show depending on hide_with_clist and auto_showhide options
-			if (!IsWindowVisible(hwnd) && IsWindowVisible((HWND)CallService(MS_CLUI_GETHWND, 0, 0))) {
+			if (!IsWindowVisible(hwnd) && IsWindowVisible(pcli->hwndContactList)) {
 				// if not auto show/hide, show (reminders or not) if we're not visible and the clist is
 				// otherwise, show only if there are reminders
 				int count = SendMessage(hwnd_list, LB_GETCOUNT, 0, 0);
@@ -449,20 +448,13 @@ int ReloadFont(WPARAM, LPARAM)
 
 void FixMainMenu()
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
 	if (!ServiceExists(MS_CLIST_FRAMES_ADDFRAME)) {
 		if (options.hide_with_clist || options.auto_showhide)
-			mi.flags = CMIM_FLAGS | CMIF_GRAYED;
-		else {
-			mi.flags = CMIM_NAME | CMIM_FLAGS;
-
-			if (ReminderFrameVisible())
-				mi.pszName = Translate("Hide reminders");
-			else
-				mi.pszName = Translate("Show reminders");
-		}
+			Menu_EnableItem(hMenuShowReminders, false);
+		else
+			Menu_ModifyItem(hMenuShowReminders,
+				ReminderFrameVisible() ? LPGENT("Hide reminders") : LPGENT("Show reminders"), INVALID_HANDLE_VALUE, 0);
 	}
-	Menu_ModifyItem(hMenuShowReminders, &mi);
 }
 
 /////////////////////////
@@ -510,7 +502,7 @@ int CreateFrame()
 	if (ServiceExists(MS_CLIST_FRAMES_ADDFRAME)) {
 		hwnd_plugin = CreateWindow(_T("AlarmsFrame"), TranslateT("Alarms"), 
 			WS_CHILD | WS_CLIPCHILDREN, 
-			0,0,10,10, (HWND)CallService(MS_CLUI_GETHWND, 0, 0), NULL,hInst,NULL);
+			0,0,10,10, pcli->hwndContactList, NULL,hInst,NULL);
 
 		CLISTFrame Frame = { sizeof(CLISTFrame) };
 		Frame.tname = TranslateT("Alarms");
@@ -536,7 +528,7 @@ int CreateFrame()
 
 		hwnd_frame = CreateWindowEx(WS_EX_TOOLWINDOW, _T("AlarmsFrameContainer"), TranslateT("Alarms"), 
 			(WS_POPUPWINDOW | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN) & ~WS_VISIBLE,
-			0,0,200,100, (HWND)CallService(MS_CLUI_GETHWND, 0, 0), NULL,hInst,NULL);
+			0,0,200,100, pcli->hwndContactList, NULL,hInst,NULL);
 			//0,0,200,100, GetDesktopWindow(), NULL,hInst,NULL);
 	
 		hwnd_plugin = CreateWindow(_T("AlarmsFrame"), TranslateT("Alarms"), 
@@ -549,19 +541,18 @@ int CreateFrame()
 		// create menu item
 		CreateServiceFunction(MODULE "/ShowHideReminders", ShowHideMenuFunc);
 
-		CLISTMENUITEM mi = { sizeof(mi) };
-		mi.flags = CMIM_ALL;
-		mi.hIcon = hIconMenuShowHide;
-		mi.pszName = LPGEN("Show reminders");
+		CMenuItem mi;
+		mi.hIcolibItem = hIconMenuShowHide;
+		mi.name.a = LPGEN("Show reminders");
 		mi.pszService = MODULE "/ShowHideReminders";
-		mi.pszPopupName = LPGEN("Alarms");
+		mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Alarms"), 0);
 		mi.position = 500010000;
 		hMenuShowReminders = Menu_AddMainMenuItem(&mi);
 		/////////////////////
 
 		if (!options.auto_showhide) {
 			if (options.hide_with_clist) {
-				if (IsWindowVisible((HWND)CallService(MS_CLUI_GETHWND, 0, 0))) {
+				if (IsWindowVisible(pcli->hwndContactList)) {
 					ShowWindow(hwnd_frame, SW_SHOW);
 					RefreshReminderFrame();
 				}

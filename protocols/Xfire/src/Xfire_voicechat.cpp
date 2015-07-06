@@ -151,7 +151,7 @@ void Xfire_voicechat::writeToDatabase(SendGameStatus2Packet* packet) {
 		return;
 	}
 	//ip speichern
-	mir_snprintf(temp, SIZEOF(temp), "%d.%d.%d.%d:%d", (unsigned char)packet->ip[3], (unsigned char)packet->ip[2], (unsigned char)packet->ip[1], (unsigned char)packet->ip[0], packet->port);
+	mir_snprintf(temp, _countof(temp), "%d.%d.%d.%d:%d", (unsigned char)packet->ip[3], (unsigned char)packet->ip[2], (unsigned char)packet->ip[1], (unsigned char)packet->ip[0], packet->port);
 	db_set_s(NULL, protocolname, "VServerIP", temp);
 	//namen jeh nach id schreiben
 	switch (packet->gameid) {
@@ -329,12 +329,11 @@ BOOL Xfire_voicechat::checkforMumble(SendGameStatus2Packet* packet) {
 	}
 
 	DWORD size = 0;
-	MIB_TCPTABLE_OWNER_PID* ptab = NULL;
 	//tcptabelle holen
 	GetExtendedTcpTable(NULL, &size, FALSE, AF_INET, TCP_TABLE_OWNER_PID_CONNECTIONS, 0);
 	//überhaupt was drin?
 	if (size) {
-		ptab = (MIB_TCPTABLE_OWNER_PID*)malloc(size);
+		MIB_TCPTABLE_OWNER_PID *ptab = (MIB_TCPTABLE_OWNER_PID*)malloc(size);
 		//liste auslesen
 		if (GetExtendedTcpTable(ptab, &size, FALSE, AF_INET, TCP_TABLE_OWNER_PID_CONNECTIONS, 0) == NO_ERROR)
 		{
@@ -355,7 +354,7 @@ BOOL Xfire_voicechat::checkforMumble(SendGameStatus2Packet* packet) {
 					packet->gameid = XFIREVOICECHAT_MUMBLE;
 					this->currentvoice = XFIREVOICECHAT_MUMBLE;
 					//table wieder freigeben
-					delete ptab;
+					free(ptab);
 					//mumble läuft + ip gefunden also TRUE
 					return TRUE;
 				}

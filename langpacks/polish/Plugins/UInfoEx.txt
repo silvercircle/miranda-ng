@@ -409,9 +409,6 @@ Krytyczny: nie można edytować obecnego wpisu!\nNie powinno się to zdarzyć!
 Czy na prawdę chcesz skasować obecnie zaznaczony element?\n\t%s\n\t%s
 [Other]
 Inne
-;file \plugins\UserInfoEx\src\ctrl_tzcombo.cpp
-[<Unspecified>]
-<Nieokreślony>
 ;file \plugins\UserInfoEx\src\dlg_anniversarylist.cpp
 [ETA]
 ETA
@@ -490,7 +487,7 @@ Właściciel
 [edit contact information]
 edytuj informacje o kontakcie
 [View personal user details and more]
-Zobacz osobiste dane użytkownika %s.
+Zobacz osobiste dane użytkownika
 [Upload ICQ details]
 Załaduj informacje ICQ
 [Upload failed]

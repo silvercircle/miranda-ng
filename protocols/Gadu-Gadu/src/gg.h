@@ -50,7 +50,6 @@
 #include <m_database.h>
 #include <m_netlib.h>
 #include <m_protocols.h>
-#include <m_protomod.h>
 #include <m_protosvc.h>
 #include <m_protoint.h>
 #include <m_langpack.h>
@@ -58,7 +57,6 @@
 #include <m_utils.h>
 #include <m_ignore.h>
 #include <m_clist.h>
-#include <m_clistint.h>
 #include <m_options.h>
 #include <m_userinfo.h>
 #include <m_clui.h>
@@ -322,9 +320,9 @@ char *gg_avatarhash(char *param);
 
 /* IcoLib functions */
 void gg_icolib_init();
-HICON LoadIconEx(const char* name, BOOL big);
+HICON LoadIconEx(const char* name, bool big);
 HANDLE GetIconHandle(int iconId);
-void ReleaseIconEx(const char* name, BOOL big);
+void ReleaseIconEx(const char* name, bool big);
 void WindowSetIcon(HWND hWnd, const char* name);
 void WindowFreeIcon(HWND hWnd);
 

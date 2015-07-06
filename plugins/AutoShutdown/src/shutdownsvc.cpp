@@ -146,7 +146,7 @@ static DWORD ShutdownNow(BYTE shutdownType)
 				OutputDebugStringA("Not ready to exit. Waiting...\n"); /* tell others, all ascii */
 			}
 			/* shutdown service must be called from main thread anyway */
-			if (!DestroyWindow((HWND)CallService(MS_CLUI_GETHWND,0,0)))
+			if (!DestroyWindow(pcli->hwndContactList))
 				dwErrCode=GetLastError();
 		}
 		break;
@@ -307,7 +307,7 @@ static INT_PTR CALLBACK ShutdownDlgProc(HWND hwndDlg,UINT msg,WPARAM wParam,LPAR
 
 		if (lParam==SDSDT_SHUTDOWN || lParam==SDSDT_REBOOT || lParam==SDSDT_LOGOFF)
 			ShowWindow(GetDlgItem(hwndDlg,IDC_TEXT_UNSAVEDWARNING),SW_SHOW);
-		SendDlgItemMessage(hwndDlg,IDC_ICON_HEADER,STM_SETIMAGE,IMAGE_ICON,(LPARAM)Skin_GetIcon("AutoShutdown_Header"));
+		SendDlgItemMessage(hwndDlg,IDC_ICON_HEADER,STM_SETIMAGE,IMAGE_ICON,(LPARAM)IcoLib_GetIcon("AutoShutdown_Header"));
 		{
 			HFONT hBoldFont;
 			LOGFONT lf;
@@ -379,7 +379,7 @@ static INT_PTR CALLBACK ShutdownDlgProc(HWND hwndDlg,UINT msg,WPARAM wParam,LPAR
 	case M_UPDATE_COUNTDOWN:  /* lParam=(WORD)countdown */
 		{
 			TCHAR szText[256];
-			mir_sntprintf(szText,SIZEOF(szText),TranslateTS(desc[shutdownType-1]),lParam);
+			mir_sntprintf(szText,_countof(szText),TranslateTS(desc[shutdownType-1]),lParam);
 			SetDlgItemText(hwndDlg,IDC_TEXT_HEADER,szText);
 			/* countdown finished */
 			if (!lParam)
@@ -425,7 +425,7 @@ INT_PTR ServiceShutdown(WPARAM wParam,LPARAM lParam)
 	NotifyEventHooks(hEventShutdown,wParam,lParam);
 	/* show dialog */
 	if (lParam && db_get_b(NULL,"AutoShutdown","ShowConfirmDlg",SETTING_SHOWCONFIRMDLG_DEFAULT))
-		if (CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_SHUTDOWNNOW), NULL, ShutdownDlgProc, (LPARAM)(BYTE)wParam) != NULL)
+		if (CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_SHUTDOWNNOW), NULL, ShutdownDlgProc, (BYTE)wParam) != NULL)
 			return 0;
 	/* show error */
 

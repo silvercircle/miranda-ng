@@ -42,9 +42,9 @@ extern HANDLE hNetlib;
 	for(int i=0;i<size;i++)
 	{
 	if (i%16==0&&i!=0)
-	mir_snprintf(buffer, SIZEOF(buffer), "%s\n%02x ", buffer, buf[i]);
+	mir_snprintf(buffer, "%s\n%02x ", buffer, buf[i]);
 	else
-	mir_snprintf(buffer, SIZEOF(buffer), "%s%02x ", buffer, buf[i]);
+	mir_snprintf(buffer, "%s%02x ", buffer, buf[i]);
 	}
 
 	return buffer;
@@ -70,8 +70,8 @@ BOOL str_replace(char*src, char*find, char*rep)
 		mir_strcpy(temp, src);
 		*(temp + pos) = 0;
 
-		strcat(temp, rep);
-		strcat(temp, (src + pos + mir_strlen(find)));
+		mir_strcat(temp, rep);
+		mir_strcat(temp, (src + pos + mir_strlen(find)));
 		mir_strcpy(src, temp);
 
 		delete[] temp;
@@ -94,14 +94,14 @@ int displayPopup(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType, HICON h
 		ppd.lchIcon = hicon;
 
 		if (bIconsNotLoaded) {
-			hicNotify = Skin_GetIcon("popup_notify");
-			hicWarning = Skin_GetIcon("popup_warning");
-			hicError = Skin_GetIcon("popup_error");
+			hicNotify = IcoLib_GetIcon("popup_notify");
+			hicWarning = IcoLib_GetIcon("popup_warning");
+			hicError = IcoLib_GetIcon("popup_error");
 			bIconsNotLoaded = FALSE;
 		}
 
-		mir_tstrncpy(ppd.lptzContactName, _A2T(lpCaption), SIZEOF(ppd.lptzContactName));
-		mir_tstrncpy(ppd.lptzText, _A2T(lpText), SIZEOF(ppd.lptzText));
+		mir_tstrncpy(ppd.lptzContactName, _A2T(lpCaption), _countof(ppd.lptzContactName));
+		mir_tstrncpy(ppd.lptzText, _A2T(lpText), _countof(ppd.lptzText));
 
 		if ((uType & MB_ICONMASK) == MB_ICONSTOP) {
 			ppd.lchIcon = hicError;
@@ -766,8 +766,9 @@ BOOL checkCommandLine(HANDLE hProcess, char * mustcontain, char * mustnotcontain
 	char * buffer2;
 	PPEB peb = NULL;
 	PPROCESS_PARAMETERS proc_params = NULL;
-	PVOID UserPool = (PVOID)LocalAlloc(LPTR, 8192);
+	HLOCAL UserPool = LocalAlloc(LPTR, 8192);
 	PROCESS_BASIC_INFORMATION ProcessInfo;
+	HMODULE hNt = GetModuleHandle(_T("ntdll.dll"));
 
 	//strings leer abbruch
 	if (!mustcontain&&!mustnotcontain)
@@ -776,17 +777,19 @@ BOOL checkCommandLine(HANDLE hProcess, char * mustcontain, char * mustnotcontain
 	//prüfe und lade nötige funktionen
 	if (_ZwQueryInformationProcess == NULL)
 	{
-		_ZwQueryInformationProcess = (pZwQueryInformationProcess)GetProcAddress(GetModuleHandle(_T("ntdll.dll")), "ZwQueryInformationProcess");
+		_ZwQueryInformationProcess = (pZwQueryInformationProcess)GetProcAddress(hNt, "ZwQueryInformationProcess");
 		if (_ZwQueryInformationProcess == NULL)
 		{
+			LocalFree(UserPool);
 			return TRUE;
 		}
 	}
 	if (_ZwReadVirtualMemory == NULL)
 	{
-		_ZwReadVirtualMemory = (pZwReadVirtualMemory)GetProcAddress(GetModuleHandle(_T("ntdll.dll")), "ZwReadVirtualMemory");
+		_ZwReadVirtualMemory = (pZwReadVirtualMemory)GetProcAddress(hNt, "ZwReadVirtualMemory");
 		if (_ZwReadVirtualMemory == NULL)
 		{
+			LocalFree(UserPool);
 			return TRUE;
 		}
 	}
@@ -839,24 +842,21 @@ BOOL checkCommandLine(HANDLE hProcess, char * mustcontain, char * mustnotcontain
 	//lowercase mustcontain/mustnotcontain
 	if (mustcontain)
 		for (unsigned int i = 0; i < mir_strlen(mustcontain); i++)
-		{
-		mustcontain[i] = tolower(mustcontain[i]);
-		}
+			mustcontain[i] = tolower(mustcontain[i]);
+
 	if (mustnotcontain)
 		for (unsigned int i = 0; i < mir_strlen(mustnotcontain); i++)
-		{
-		mustnotcontain[i] = tolower(mustnotcontain[i]);
-		}
+			mustnotcontain[i] = tolower(mustnotcontain[i]);
 
 	string cmdline = buffer2;
 
 	if (mustcontain)
 		if (cmdline.find(mustcontain) != string::npos)
 		{
-		delete[] buffer;
-		delete[] buffer2;
-		LocalFree(UserPool);
-		return TRUE;
+			delete[] buffer;
+			delete[] buffer2;
+			LocalFree(UserPool);
+			return TRUE;
 		}
 		else
 		{
@@ -995,8 +995,8 @@ BOOL GetWWWContent2(char*address, char*filename, BOOL dontoverwrite, char**tobuf
 //eigener www downloader, da winet exceptions erzeugt
 BOOL GetWWWContent(char*host, char* request, char*filename, BOOL dontoverwrite) {
 	char add[1024] = "http://";
-	strcat(add, host);
-	strcat(add, request);
+	mir_strcat(add, host);
+	mir_strcat(add, request);
 
 	return GetWWWContent2(add, filename, dontoverwrite);
 }

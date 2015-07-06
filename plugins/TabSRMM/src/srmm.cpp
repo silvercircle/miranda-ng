@@ -36,7 +36,6 @@ LOGFONT lfDefault = { 0 };
  */
 
 int hLangpack;
-TIME_API tmi = { 0 };
 CLIST_INTERFACE *pcli;
 
 PLUGININFOEX pluginInfo = {
@@ -74,7 +73,6 @@ extern "C" int __declspec(dllexport) Load(void)
 	}
 
 	mir_getCLI();
-	mir_getTMI(&tmi);
 	mir_getLP(&pluginInfo);
 
 	SystemParametersInfo(SPI_GETICONTITLELOGFONT, sizeof(lfDefault), &lfDefault, FALSE);
@@ -110,7 +108,7 @@ int _DebugTraceW(const wchar_t *fmt, ...)
 
 	GetLocalTime(&st);
 
-	mir_snprintf(tszTime, SIZEOF(tszTime), "%02d.%02d.%04d - %02d:%02d:%02d.%04d: ", st.wDay, st.wMonth, st.wYear, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+	mir_snprintf(tszTime, _countof(tszTime), "%02d.%02d.%04d - %02d:%02d:%02d.%04d: ", st.wDay, st.wMonth, st.wYear, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 
 
 	mir_vsntprintf(debug, ibsize - 10, fmt, va);
@@ -122,7 +120,7 @@ int _DebugTraceW(const wchar_t *fmt, ...)
 		FILE *f;
 
 		CallService(MS_DB_GETPROFILEPATH, MAX_PATH, (LPARAM)szDataPath);
-		mir_snprintf(szLogFileName, SIZEOF(szLogFileName), "%s\\%s", szDataPath, "tabsrmm_debug.log");
+		mir_snprintf(szLogFileName, _countof(szLogFileName), "%s\\%s", szDataPath, "tabsrmm_debug.log");
 		f = fopen(szLogFileName, "a+");
 		if (f) {
 			fputs(tszTime, f);
@@ -156,7 +154,7 @@ int _DebugPopup(MCONTACT hContact, const TCHAR *fmt, ...)
 	if (ServiceExists(MS_CLIST_SYSTRAY_NOTIFY)) {
 		MIRANDASYSTRAYNOTIFY tn;
 		TCHAR	szTitle[128];
-		mir_sntprintf(szTitle, SIZEOF(szTitle), TranslateT("TabSRMM message (%s)"),
+		mir_sntprintf(szTitle, TranslateT("TabSRMM message (%s)"),
 			(hContact != 0) ? pcli->pfnGetContactDisplayName(hContact, 0) : TranslateT("Global"));
 
 		tn.szProto = NULL;

@@ -270,15 +270,13 @@ static int __cdecl ListSortProc(const LPIDSTRLIST p1, const LPIDSTRLIST p2)
 
 static void SvcConstantsTranslateList(LPIDSTRLIST pList, UINT nListCount/*, SortedList *pSorted*/)
 {
-	if (!pList[0].ptszTranslated)
-	{
+	if (!pList[0].ptszTranslated) {
 		for (UINT i = 0; i < nListCount; i++)	
-		{
-			pList[i].ptszTranslated = (LPTSTR)CallService(MS_LANGPACK_PCHARTOTCHAR, 0, (LPARAM)pList[i].pszText);
-		}
+			pList[i].ptszTranslated = Langpack_PcharToTchar(pList[i].pszText);
+
 		// Ignore last item, if it is a "Other" item.
 		if (!mir_strcmp(pList[nListCount-1].pszText, LPGEN("Other"))) nListCount--;
-	
+
 		// Sort list according translated text and ignore first item.
 		qsort(pList+1, nListCount-1, sizeof(pList[0]), 
 			(int (*)(const void*, const void*))ListSortProc);
@@ -309,7 +307,7 @@ INT_PTR GetCountryList(LPUINT pnListSize, LPIDSTRLIST *pList)
 				for (UINT i = 0; i < MyCountriesCount; i++) {
 					MyCountries[i].nID = country[i].id;
 					MyCountries[i].pszText = country[i].szName;
-					MyCountries[i].ptszTranslated = (LPTSTR)CallService(MS_LANGPACK_PCHARTOTCHAR, 0, (LPARAM)country[i].szName);
+					MyCountries[i].ptszTranslated = Langpack_PcharToTchar(country[i].szName);
 				}
 				// Sort list according translated text and ignore first item.
 				qsort(MyCountries+1, MyCountriesCount-1, sizeof(MyCountries[0]), 
@@ -326,7 +324,7 @@ INT_PTR GetCountryList(LPUINT pnListSize, LPIDSTRLIST *pList)
 
 INT_PTR GetMaritalList(LPUINT pnListSize, LPIDSTRLIST *pList)
 {
-	*pnListSize = SIZEOF(TmplMarital);
+	*pnListSize = _countof(TmplMarital);
 	*pList = TmplMarital;
 	SvcConstantsTranslateList(TmplMarital, *pnListSize);
 	return MIR_OK;
@@ -334,7 +332,7 @@ INT_PTR GetMaritalList(LPUINT pnListSize, LPIDSTRLIST *pList)
 
 INT_PTR GetLanguageList(LPUINT pnListSize, LPIDSTRLIST *pList)
 {
-	*pnListSize = SIZEOF(TmplLanguages);
+	*pnListSize = _countof(TmplLanguages);
 	*pList = TmplLanguages;
 	SvcConstantsTranslateList(TmplLanguages, *pnListSize);
 	return MIR_OK;
@@ -342,7 +340,7 @@ INT_PTR GetLanguageList(LPUINT pnListSize, LPIDSTRLIST *pList)
 
 INT_PTR GetOccupationList(LPUINT pnListSize, LPIDSTRLIST *pList)
 {
-	*pnListSize = SIZEOF(TmplOccupations);
+	*pnListSize = _countof(TmplOccupations);
 	*pList = TmplOccupations;
 	SvcConstantsTranslateList(TmplOccupations, *pnListSize);
 	return MIR_OK;
@@ -350,7 +348,7 @@ INT_PTR GetOccupationList(LPUINT pnListSize, LPIDSTRLIST *pList)
 
 INT_PTR GetInterestsList(LPUINT pnListSize, LPIDSTRLIST *pList)
 {
-	*pnListSize = SIZEOF(TmplInterests);
+	*pnListSize = _countof(TmplInterests);
 	*pList = TmplInterests;
 	SvcConstantsTranslateList(TmplInterests, *pnListSize);
 	return MIR_OK;
@@ -358,7 +356,7 @@ INT_PTR GetInterestsList(LPUINT pnListSize, LPIDSTRLIST *pList)
 
 INT_PTR GetPastList(LPUINT pnListSize, LPIDSTRLIST *pList)
 {
-	*pnListSize = SIZEOF(TmplPast);
+	*pnListSize = _countof(TmplPast);
 	*pList = TmplPast;
 	SvcConstantsTranslateList(TmplPast, *pnListSize);
 	return MIR_OK;
@@ -366,7 +364,7 @@ INT_PTR GetPastList(LPUINT pnListSize, LPIDSTRLIST *pList)
 
 INT_PTR GetAffiliationsList(LPUINT pnListSize, LPIDSTRLIST *pList)
 {
-	*pnListSize = SIZEOF(TmplAffiliations);
+	*pnListSize = _countof(TmplAffiliations);
 	*pList = TmplAffiliations;
 	SvcConstantsTranslateList(TmplAffiliations, *pnListSize);
 	return MIR_OK;
@@ -374,7 +372,7 @@ INT_PTR GetAffiliationsList(LPUINT pnListSize, LPIDSTRLIST *pList)
 
 INT_PTR GetNamePrefixList(LPUINT pnListSize, LPIDSTRLIST *pList)
 {
-	*pnListSize = SIZEOF(TmplPrefixes);
+	*pnListSize = _countof(TmplPrefixes);
 	*pList = TmplPrefixes;
 	SvcConstantsTranslateList(TmplPrefixes, *pnListSize);
 	return MIR_OK;
@@ -405,13 +403,13 @@ static void FORCEINLINE SvcConstantsClearList(UINT pnListSize, LPIDSTRLIST pList
 
 void SvcConstantsUnloadModule(void)
 {
-	SvcConstantsClearList(SIZEOF(TmplMarital), TmplMarital);
-	SvcConstantsClearList(SIZEOF(TmplLanguages), TmplLanguages);
-	SvcConstantsClearList(SIZEOF(TmplOccupations), TmplOccupations);
-	SvcConstantsClearList(SIZEOF(TmplInterests), TmplInterests);
-	SvcConstantsClearList(SIZEOF(TmplPast), TmplPast);
-	SvcConstantsClearList(SIZEOF(TmplAffiliations), TmplAffiliations);
-	SvcConstantsClearList(SIZEOF(TmplPrefixes), TmplPrefixes);
+	SvcConstantsClearList(_countof(TmplMarital), TmplMarital);
+	SvcConstantsClearList(_countof(TmplLanguages), TmplLanguages);
+	SvcConstantsClearList(_countof(TmplOccupations), TmplOccupations);
+	SvcConstantsClearList(_countof(TmplInterests), TmplInterests);
+	SvcConstantsClearList(_countof(TmplPast), TmplPast);
+	SvcConstantsClearList(_countof(TmplAffiliations), TmplAffiliations);
+	SvcConstantsClearList(_countof(TmplPrefixes), TmplPrefixes);
 	SvcConstantsClearList(MyCountriesCount, MyCountries);
 	MIR_FREE(MyCountries);
 }

@@ -241,20 +241,18 @@ void Xfire_gamelist::clearGamelist() {
 //erstellt ein dummyeintrag
 void Xfire_gamelist::createDummyMenuItem()
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
+	mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Start game"), 500084000);
 	mi.position = 500090001;
-	mi.pszName = Translate("Please wait...");
-	mi.hIcon = LoadIcon(hinstance, MAKEINTRESOURCE(ID_OP));
-	mi.popupPosition = 500084000;
-	mi.pszPopupName = Translate("Start game");
-	mi.pszContactOwner = protocolname;
+	mi.name.a = Translate("Please wait...");
+	mi.hIcolibItem = LoadIcon(hinstance, MAKEINTRESOURCE(ID_OP));
 	dummymenuitem = Menu_AddMainMenuItem(&mi);
 }
 
 //entfernt dummymenueintrag
 void Xfire_gamelist::removeDummyMenuItem()
 {
-	CallService(MO_REMOVEMENUITEM, (WPARAM)dummymenuitem, 0);
+	Menu_RemoveItem(dummymenuitem);
 }
 
 //säubert die datenbank spiel einträge udn trägt custom spiele vorher nach

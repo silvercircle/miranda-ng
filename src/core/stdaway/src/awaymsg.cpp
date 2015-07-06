@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 int LoadAwayMessageSending(void);
 
 static HGENMENU hAwayMsgMenuItem;
-static HANDLE hWindowList;
+static MWindowList hWindowList;
 
 struct AwayMsgDlgData {
 	MCONTACT hContact;
@@ -60,12 +60,12 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 			WORD dwStatus = db_get_w(dat->hContact, szProto, "Status", ID_STATUS_OFFLINE);
 			TCHAR *status = pcli->pfnGetStatusModeDescription(dwStatus, 0);
 
-			GetWindowText(hwndDlg, format, SIZEOF(format));
-			mir_sntprintf(str, SIZEOF(str), format, status, contactName);
+			GetWindowText(hwndDlg, format, _countof(format));
+			mir_sntprintf(str, _countof(str), format, status, contactName);
 			SetWindowText(hwndDlg, str);
 
-			GetDlgItemText(hwndDlg, IDC_RETRIEVING, format, SIZEOF(format));
-			mir_sntprintf(str, SIZEOF(str), format, status);
+			GetDlgItemText(hwndDlg, IDC_RETRIEVING, format, _countof(format));
+			mir_sntprintf(str, _countof(str), format, status);
 			SetDlgItemText(hwndDlg, IDC_RETRIEVING, str);
 
 			Window_SetProtoIcon_IcoLib(hwndDlg, szProto, dwStatus);
@@ -133,29 +133,23 @@ static INT_PTR GetMessageCommand(WPARAM wParam, LPARAM)
 
 static int AwayMsgPreBuildMenu(WPARAM hContact, LPARAM)
 {
-	TCHAR str[128];
 	char *szProto = GetContactProto(hContact);
-
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.flags = CMIM_FLAGS | CMIF_NOTOFFLINE | CMIF_HIDDEN | CMIF_TCHAR;
-
 	if (szProto != NULL) {
 		int chatRoom = db_get_b(hContact, szProto, "ChatRoom", 0);
 		if (!chatRoom) {
 			int status = db_get_w(hContact, szProto, "Status", ID_STATUS_OFFLINE);
-			mir_sntprintf(str, SIZEOF(str), TranslateT("Re&ad %s message"), pcli->pfnGetStatusModeDescription(status, 0));
-			mi.ptszName = str;
 			if (CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGRECV) {
 				if (CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_3, 0) & Proto_Status2Flag(status)) {
-					mi.flags = CMIM_FLAGS | CMIM_NAME | CMIF_NOTOFFLINE | CMIM_ICON | CMIF_TCHAR;
-					mi.hIcon = LoadSkinProtoIcon(szProto, status);
+					TCHAR str[128];
+					mir_sntprintf(str, _countof(str), TranslateT("Re&ad %s message"), pcli->pfnGetStatusModeDescription(status, 0));
+					Menu_ModifyItem(hAwayMsgMenuItem, str, Skin_LoadProtoIcon(szProto, status), CMIF_NOTOFFLINE);
+					return 0;
 				}
 			}
 		}
 	}
 
-	Menu_ModifyItem(hAwayMsgMenuItem, &mi);
-	IcoLib_ReleaseIcon(mi.hIcon, 0);
+	Menu_ShowItem(hAwayMsgMenuItem, false);
 	return 0;
 }
 
@@ -173,10 +167,10 @@ int LoadAwayMsgModule(void)
 	hWindowList = WindowList_Create();
 	CreateServiceFunction(MS_AWAYMSG_SHOWAWAYMSG, GetMessageCommand);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = -2000005000;
 	mi.flags = CMIF_NOTOFFLINE;
-	mi.pszName = LPGEN("Re&ad status message");
+	mi.name.a = LPGEN("Re&ad status message");
 	mi.pszService = MS_AWAYMSG_SHOWAWAYMSG;
 	hAwayMsgMenuItem = Menu_AddContactMenuItem(&mi);
 	HookEvent(ME_CLIST_PREBUILDCONTACTMENU, AwayMsgPreBuildMenu);

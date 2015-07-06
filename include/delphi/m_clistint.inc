@@ -273,6 +273,10 @@ const
    * CLIST_INTERFACE structure definition
    ************************************************************************** }
 
+const
+  GCDNF_NOMYHANDLE = 1; // will never return the user's custom name
+  GCDNF_NOCACHE    = 4; // will not use the cache
+
 type
   PClcProtoStatus = ^TClcProtoStatus;
   TClcProtoStatus = record
@@ -396,7 +400,7 @@ type
   (* clistmod.c *)
     pfnIconFromStatusMode       : function (szProto:PAnsiChar; status:int; hContact:TMCONTACT):int; cdecl;
     pfnShowHide                 : function (_para1:WPARAM; _para2:LPARAM):int; cdecl;
-    pfnGetStatusModeDescription : function (mode:int; flags:int):TChar; cdecl;
+    pfnGetStatusModeDescription : function (mode:int; flags:int) : PWideChar; cdecl;
 
   (* clistsettings.c *)
     pfnGetCacheEntry   : function (hContact:TMCONTACT):PClcCacheEntry; cdecl;
@@ -404,12 +408,11 @@ type
     pfnCheckCacheItem  : procedure (_para1:PClcCacheEntry); cdecl;
     pfnFreeCacheItem   : procedure (_para1:PClcCacheEntry); cdecl;
 
-    pfnGetContactDisplayName           : function  (hContact:TMCONTACT; mode:int):TChar; cdecl;
+    pfnGetContactDisplayName           : function  (hContact:TMCONTACT; mode:int):PWideChar; cdecl;
     pfnInvalidateDisplayNameCacheEntry : procedure (hContact:TMCONTACT); cdecl;
 
   (* clisttray.c *)
-    pfnTrayIconUpdateWithImageList : procedure (iImage:int; szNewTip:TChar;
-                                     szPreferredProto:PAnsiChar); cdecl;
+    pfnTrayIconUpdateWithImageList : procedure (iImage:int; szNewTip:TChar; szPreferredProto:PAnsiChar); cdecl;
     pfnTrayIconUpdateBase          : procedure (szChangedProto:PAnsiChar); cdecl;
     pfnTrayIconSetToBase           : procedure (szPreferredProto:PAnsiChar); cdecl;
     pfnTrayIconIconsChanged        : procedure ; cdecl;
@@ -520,7 +523,6 @@ type
   * version 6 additions (0.8.0.x) - accounts
   *************************************************************************************)
     pfnGetAccountIndexByPos : function (pos:int):int; cdecl;
-    pfnConvertMenu: function( clitem:PCLISTMENUITEM; moitem:PMO_MenuItem):int; cdecl;
 
 	(*************************************************************************************
 	 * version 7 additions (0.11.0.x) - extra images
@@ -539,9 +541,7 @@ type
     pfnSetContactCheckboxes:procedure(cc:PClcContact; checked:int); cdecl;
   end;
 
-{
 var
-  cli : CLIST_INTERFACE;cvar;external;
-}
+  cli : PCLIST_INTERFACE;
 
 {$ENDIF}

@@ -223,11 +223,11 @@ static HotkeyOptionsList g_HotkeyOptionsList[] = {
 	{ "basichistory_hot_impdat", LPGENT("Import From Dat (mContacts)"), LPGENT("History"), 0, 0, HISTORY_HK_IMPDAT },
 };
 
-const int g_fontsSize = SIZEOF(g_FontOptionsList);
+const int g_fontsSize = _countof(g_FontOptionsList);
 
-const int g_colorsSize = SIZEOF(g_ColorOptionsList);
+const int g_colorsSize = _countof(g_ColorOptionsList);
 
-const int g_hotkeysSize = SIZEOF(g_HotkeyOptionsList);
+const int g_hotkeysSize = _countof(g_HotkeyOptionsList);
 
 void Options::Load(void)
 {
@@ -247,7 +247,7 @@ void Options::Load(void)
 		fid.deffontsettings.colour = g_FontOptionsList[i].defColour;
 		fid.deffontsettings.style = g_FontOptionsList[i].defStyle;
 		fid.deffontsettings.charset = DEFAULT_CHARSET;
-		mir_snprintf(fid.prefix, SIZEOF(fid.prefix), "Font%d", i);
+		mir_snprintf(fid.prefix, _countof(fid.prefix), "Font%d", i);
 		_tcsncpy_s(fid.name, g_FontOptionsList[i].szDescr, _TRUNCATE);
 		_tcsncpy_s(fid.backgroundName, g_FontOptionsList[i].szBackgroundName, _TRUNCATE);
 		fid.flags = FIDF_DEFAULTVALID | FIDF_CLASSGENERAL | g_FontOptionsList[i].flags;
@@ -258,7 +258,7 @@ void Options::Load(void)
 	_tcsncpy_s(cid.group, LPGENT("History"), _TRUNCATE);
 	for (int i = 0; i < g_colorsSize; ++i) {
 		_tcsncpy_s(cid.name, g_ColorOptionsList[i].tszName, _TRUNCATE);
-		mir_snprintf(cid.setting, SIZEOF(cid.setting), "Color%d", i);
+		mir_snprintf(cid.setting, _countof(cid.setting), "Color%d", i);
 		cid.order = i;
 		cid.defcolour = g_ColorOptionsList[i].def;
 		ColourRegisterT(&cid);
@@ -311,20 +311,20 @@ void Options::Load(void)
 	for (int i = 0; i < filtersCount; ++i) {
 		char buf[256];
 		FilterOptions fo;
-		mir_snprintf(buf, SIZEOF(buf), "filterName_%d", i);
+		mir_snprintf(buf, "filterName_%d", i);
 		DBVARIANT nameV;
 		if (!db_get_ws(0, MODULE, buf, &nameV)) {
 			fo.name = nameV.pwszVal;
 			db_free(&nameV);
 		}
 		else break;
-		mir_snprintf(buf, SIZEOF(buf), "filterInOut_%d", i);
+		mir_snprintf(buf, "filterInOut_%d", i);
 		int inOut = db_get_b(0, MODULE, buf, 0);
 		if (inOut == 1)
 			fo.onlyIncomming = true;
 		else if (inOut == 2)
 			fo.onlyOutgoing = true;
-		mir_snprintf(buf, SIZEOF(buf), "filterEvents_%d", i);
+		mir_snprintf(buf, "filterEvents_%d", i);
 		DBVARIANT eventsV;
 		if (!db_get_s(0, MODULE, buf, &eventsV)) {
 			int k = 0;
@@ -467,9 +467,9 @@ void Options::Save()
 	db_set_dw(0, MODULE, "customFiltersCount", (DWORD)customFilters.size());
 	for (int i = 0 ; i < (int)customFilters.size(); ++i) {
 		char buf[256];
-		mir_snprintf(buf, SIZEOF(buf), "filterName_%d", i);
+		mir_snprintf(buf, "filterName_%d", i);
 		db_set_ws(0, MODULE, buf, customFilters[i].name.c_str());
-		mir_snprintf(buf, SIZEOF(buf), "filterInOut_%d", i);
+		mir_snprintf(buf, "filterInOut_%d", i);
 		db_set_b(0, MODULE, buf, customFilters[i].onlyIncomming ? 1 : (customFilters[i].onlyOutgoing ? 2 : 0));
 		std::string events;
 		for (std::vector<int>::iterator it = customFilters[i].events.begin(); it != customFilters[i].events.end(); ++it) {
@@ -478,7 +478,7 @@ void Options::Save()
 			events += ";";
 		}
 
-		mir_snprintf(buf, SIZEOF(buf), "filterEvents_%d", i);
+		mir_snprintf(buf, "filterEvents_%d", i);
 		db_set_s(0, MODULE, buf, events.c_str());
 	}
 
@@ -507,54 +507,54 @@ void Options::SaveTasks(std::list<TaskOptions>* tasks)
 	int i = 0;
 	char buf[256];
 	for (std::list<TaskOptions>::iterator it = tasks->begin(); it != tasks->end(); ++it) {
-		mir_snprintf(buf, SIZEOF(buf), "Task_compress_%d", i);
+		mir_snprintf(buf, "Task_compress_%d", i);
 		db_set_b(0, MODULE, buf, it->compress);
-		mir_snprintf(buf, SIZEOF(buf), "Task_useFtp_%d", i);
+		mir_snprintf(buf, "Task_useFtp_%d", i);
 		db_set_b(0, MODULE, buf, it->useFtp);
-		mir_snprintf(buf, SIZEOF(buf), "Task_isSystem_%d", i);
+		mir_snprintf(buf, "Task_isSystem_%d", i);
 		db_set_b(0, MODULE, buf, it->isSystem);
-		mir_snprintf(buf, SIZEOF(buf), "Task_active_%d", i);
+		mir_snprintf(buf, "Task_active_%d", i);
 		db_set_b(0, MODULE, buf, it->active);
-		mir_snprintf(buf, SIZEOF(buf), "Task_exportImported_%d", i);
+		mir_snprintf(buf, "Task_exportImported_%d", i);
 		db_set_b(0, MODULE, buf, it->exportImported);
-		mir_snprintf(buf, SIZEOF(buf), "Task_type_%d", i);
+		mir_snprintf(buf, "Task_type_%d", i);
 		db_set_b(0, MODULE, buf, it->type);
-		mir_snprintf(buf, SIZEOF(buf), "Task_eventUnit_%d", i);
+		mir_snprintf(buf, "Task_eventUnit_%d", i);
 		db_set_b(0, MODULE, buf, it->eventUnit);
-		mir_snprintf(buf, SIZEOF(buf), "Task_trigerType_%d", i);
+		mir_snprintf(buf, "Task_trigerType_%d", i);
 		db_set_b(0, MODULE, buf, it->trigerType);
-		mir_snprintf(buf, SIZEOF(buf), "Task_exportType_%d", i);
+		mir_snprintf(buf, "Task_exportType_%d", i);
 		db_set_b(0, MODULE, buf, it->exportType);
-		mir_snprintf(buf, SIZEOF(buf), "Task_importType_%d", i);
+		mir_snprintf(buf, "Task_importType_%d", i);
 		db_set_b(0, MODULE, buf, it->importType);
-		mir_snprintf(buf, SIZEOF(buf), "Task_eventDeltaTime_%d", i);
+		mir_snprintf(buf, "Task_eventDeltaTime_%d", i);
 		db_set_dw(0, MODULE, buf, it->eventDeltaTime);
-		mir_snprintf(buf, SIZEOF(buf), "Task_filterId_%d", i);
+		mir_snprintf(buf, "Task_filterId_%d", i);
 		db_set_dw(0, MODULE, buf, it->filterId);
-		mir_snprintf(buf, SIZEOF(buf), "Task_dayTime_%d", i);
+		mir_snprintf(buf, "Task_dayTime_%d", i);
 		db_set_dw(0, MODULE, buf, it->dayTime);
-		mir_snprintf(buf, SIZEOF(buf), "Task_dayOfWeek_%d", i);
+		mir_snprintf(buf, "Task_dayOfWeek_%d", i);
 		db_set_dw(0, MODULE, buf, it->dayOfWeek);
-		mir_snprintf(buf, SIZEOF(buf), "Task_dayOfMonth_%d", i);
+		mir_snprintf(buf, "Task_dayOfMonth_%d", i);
 		db_set_dw(0, MODULE, buf, it->dayOfMonth);
-		mir_snprintf(buf, SIZEOF(buf), "Task_deltaTime_%d", i);
+		mir_snprintf(buf, "Task_deltaTime_%d", i);
 		db_set_dw(0, MODULE, buf, it->deltaTime);
-		mir_snprintf(buf, SIZEOF(buf), "Task_lastExport_low_%d", i);
+		mir_snprintf(buf, "Task_lastExport_low_%d", i);
 		db_set_dw(0, MODULE, buf, (int)it->lastExport);
-		mir_snprintf(buf, SIZEOF(buf), "Task_lastExport_hi_%d", i);
+		mir_snprintf(buf, "Task_lastExport_hi_%d", i);
 		db_set_dw(0, MODULE, buf, ((unsigned long long int)it->lastExport) >> 32);
-		mir_snprintf(buf, SIZEOF(buf), "Task_ftpName_%d", i);
+		mir_snprintf(buf, "Task_ftpName_%d", i);
 		db_set_ws(0, MODULE, buf, it->ftpName.c_str());
-		mir_snprintf(buf, SIZEOF(buf), "Task_filterName_%d", i);
+		mir_snprintf(buf, "Task_filterName_%d", i);
 		db_set_ws(0, MODULE, buf, it->filterName.c_str());
-		mir_snprintf(buf, SIZEOF(buf), "Task_filePath_%d", i);
+		mir_snprintf(buf, "Task_filePath_%d", i);
 		db_set_ws(0, MODULE, buf, it->filePath.c_str());
-		mir_snprintf(buf, SIZEOF(buf), "Task_taskName_%d", i);
+		mir_snprintf(buf, "Task_taskName_%d", i);
 		db_set_ws(0, MODULE, buf, it->taskName.c_str());
-		mir_snprintf(buf, SIZEOF(buf), "Task_zipPassword_%d", i);
+		mir_snprintf(buf, "Task_zipPassword_%d", i);
 		db_set_s(0, MODULE, buf, it->zipPassword.c_str());
 
-		mir_snprintf(buf, SIZEOF(buf), "IsInTask_%d", i);
+		mir_snprintf(buf, "IsInTask_%d", i);
 		for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact))
 			db_unset(hContact, MODULE, buf);
 
@@ -568,48 +568,48 @@ void Options::SaveTasks(std::list<TaskOptions>* tasks)
 	db_set_dw(0, MODULE, "Task_count", i);
 	
 	for (i = (int)tasks->size(); i < oldTaskNr; ++i) {
-		mir_snprintf(buf, SIZEOF(buf), "Task_compress_%d", i);
+		mir_snprintf(buf, "Task_compress_%d", i);
 		db_unset(NULL, MODULE, buf);
-		mir_snprintf(buf, SIZEOF(buf), "Task_useFtp_%d", i);
+		mir_snprintf(buf, "Task_useFtp_%d", i);
 		db_unset(NULL, MODULE, buf);
-		mir_snprintf(buf, SIZEOF(buf), "Task_isSystem_%d", i);
+		mir_snprintf(buf, "Task_isSystem_%d", i);
 		db_unset(NULL, MODULE, buf);
-		mir_snprintf(buf, SIZEOF(buf), "Task_active_%d", i);
+		mir_snprintf(buf, "Task_active_%d", i);
 		db_unset(NULL, MODULE, buf);
-		mir_snprintf(buf, SIZEOF(buf), "Task_type_%d", i);
+		mir_snprintf(buf, "Task_type_%d", i);
 		db_unset(NULL, MODULE, buf);
-		mir_snprintf(buf, SIZEOF(buf), "Task_eventUnit_%d", i);
+		mir_snprintf(buf, "Task_eventUnit_%d", i);
 		db_unset(NULL, MODULE, buf);
-		mir_snprintf(buf, SIZEOF(buf), "Task_trigerType_%d", i);
+		mir_snprintf(buf, "Task_trigerType_%d", i);
 		db_unset(NULL, MODULE, buf);
-		mir_snprintf(buf, SIZEOF(buf), "Task_exportType_%d", i);
+		mir_snprintf(buf, "Task_exportType_%d", i);
 		db_unset(NULL, MODULE, buf);
-		mir_snprintf(buf, SIZEOF(buf), "Task_eventDeltaTime_%d", i);
+		mir_snprintf(buf, "Task_eventDeltaTime_%d", i);
 		db_unset(NULL, MODULE, buf);
-		mir_snprintf(buf, SIZEOF(buf), "Task_filterId_%d", i);
+		mir_snprintf(buf, "Task_filterId_%d", i);
 		db_unset(NULL, MODULE, buf);
-		mir_snprintf(buf, SIZEOF(buf), "Task_dayTime_%d", i);
+		mir_snprintf(buf, "Task_dayTime_%d", i);
 		db_unset(NULL, MODULE, buf);
-		mir_snprintf(buf, SIZEOF(buf), "Task_dayOfWeek_%d", i);
+		mir_snprintf(buf, "Task_dayOfWeek_%d", i);
 		db_unset(NULL, MODULE, buf);
-		mir_snprintf(buf, SIZEOF(buf), "Task_dayOfMonth_%d", i);
+		mir_snprintf(buf, "Task_dayOfMonth_%d", i);
 		db_unset(NULL, MODULE, buf);
-		mir_snprintf(buf, SIZEOF(buf), "Task_deltaTime_%d", i);
+		mir_snprintf(buf, "Task_deltaTime_%d", i);
 		db_unset(NULL, MODULE, buf);
-		mir_snprintf(buf, SIZEOF(buf), "Task_lastExport_low_%d", i);
+		mir_snprintf(buf, "Task_lastExport_low_%d", i);
 		db_unset(NULL, MODULE, buf);
-		mir_snprintf(buf, SIZEOF(buf), "Task_lastExport_hi_%d", i);
+		mir_snprintf(buf, "Task_lastExport_hi_%d", i);
 		db_unset(NULL, MODULE, buf);
-		mir_snprintf(buf, SIZEOF(buf), "Task_ftpName_%d", i);
+		mir_snprintf(buf, "Task_ftpName_%d", i);
 		db_unset(NULL, MODULE, buf);
-		mir_snprintf(buf, SIZEOF(buf), "Task_filterName_%d", i);
+		mir_snprintf(buf, "Task_filterName_%d", i);
 		db_unset(NULL, MODULE, buf);
-		mir_snprintf(buf, SIZEOF(buf), "Task_filePath_%d", i);
+		mir_snprintf(buf, "Task_filePath_%d", i);
 		db_unset(NULL, MODULE, buf);
-		mir_snprintf(buf, SIZEOF(buf), "Task_taskName_%d", i);
+		mir_snprintf(buf, "Task_taskName_%d", i);
 		db_unset(NULL, MODULE, buf);
 
-		mir_snprintf(buf, SIZEOF(buf), "IsInTask_%d", i);
+		mir_snprintf(buf, "IsInTask_%d", i);
 		for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact))
 			db_unset(hContact, MODULE, buf);
 	}
@@ -619,9 +619,9 @@ void Options::SaveTaskTime(TaskOptions& to)
 {
 	int i = to.orderNr;
 	char buf[256];
-	mir_snprintf(buf, SIZEOF(buf), "Task_lastExport_low_%d", i);
+	mir_snprintf(buf, "Task_lastExport_low_%d", i);
 	db_set_dw(0, MODULE, buf, (int)to.lastExport);
-	mir_snprintf(buf, SIZEOF(buf), "Task_lastExport_hi_%d", i);
+	mir_snprintf(buf, "Task_lastExport_hi_%d", i);
 	db_set_dw(0, MODULE, buf, ((unsigned long long int)to.lastExport) >> 32);
 }
 
@@ -631,71 +631,71 @@ void Options::LoadTasks()
 	char buf[256];
 	for (int i = 0; i < taskCount; ++i) {
 		TaskOptions to;
-		mir_snprintf(buf, SIZEOF(buf), "Task_compress_%d", i);
+		mir_snprintf(buf, "Task_compress_%d", i);
 		to.compress = db_get_b(0, MODULE, buf, to.compress) != 0;
-		mir_snprintf(buf, SIZEOF(buf), "Task_useFtp_%d", i);
+		mir_snprintf(buf, "Task_useFtp_%d", i);
 		to.useFtp = db_get_b(0, MODULE, buf, to.useFtp) != 0;
-		mir_snprintf(buf, SIZEOF(buf), "Task_isSystem_%d", i);
+		mir_snprintf(buf, "Task_isSystem_%d", i);
 		to.isSystem = db_get_b(0, MODULE, buf, to.isSystem) != 0;
-		mir_snprintf(buf, SIZEOF(buf), "Task_active_%d", i);
+		mir_snprintf(buf, "Task_active_%d", i);
 		to.active = db_get_b(0, MODULE, buf, to.active) != 0;
-		mir_snprintf(buf, SIZEOF(buf), "Task_exportImported_%d", i);
+		mir_snprintf(buf, "Task_exportImported_%d", i);
 		to.exportImported = db_get_b(0, MODULE, buf, to.exportImported) != 0;
-		mir_snprintf(buf, SIZEOF(buf), "Task_type_%d", i);
+		mir_snprintf(buf, "Task_type_%d", i);
 		to.type = (TaskOptions::TaskType)db_get_b(0, MODULE, buf, to.type);
-		mir_snprintf(buf, SIZEOF(buf), "Task_eventUnit_%d", i);
+		mir_snprintf(buf, "Task_eventUnit_%d", i);
 		to.eventUnit = (TaskOptions::EventUnit)db_get_b(0, MODULE, buf, to.eventUnit);
-		mir_snprintf(buf, SIZEOF(buf), "Task_trigerType_%d", i);
+		mir_snprintf(buf, "Task_trigerType_%d", i);
 		to.trigerType = (TaskOptions::TrigerType)db_get_b(0, MODULE, buf, to.trigerType);
-		mir_snprintf(buf, SIZEOF(buf), "Task_exportType_%d", i);
+		mir_snprintf(buf, "Task_exportType_%d", i);
 		to.exportType = (IExport::ExportType)db_get_b(0, MODULE, buf, to.exportType);
-		mir_snprintf(buf, SIZEOF(buf), "Task_importType_%d", i);
+		mir_snprintf(buf, "Task_importType_%d", i);
 		to.importType = (IImport::ImportType)db_get_b(0, MODULE, buf, to.importType);
-		mir_snprintf(buf, SIZEOF(buf), "Task_eventDeltaTime_%d", i);
+		mir_snprintf(buf, "Task_eventDeltaTime_%d", i);
 		to.eventDeltaTime = db_get_dw(0, MODULE, buf, to.eventDeltaTime);
-		mir_snprintf(buf, SIZEOF(buf), "Task_filterId_%d", i);
+		mir_snprintf(buf, "Task_filterId_%d", i);
 		to.filterId = db_get_dw(0, MODULE, buf, to.filterId);
-		mir_snprintf(buf, SIZEOF(buf), "Task_dayTime_%d", i);
+		mir_snprintf(buf, "Task_dayTime_%d", i);
 		to.dayTime = db_get_dw(0, MODULE, buf, to.dayTime);
-		mir_snprintf(buf, SIZEOF(buf), "Task_dayOfWeek_%d", i);
+		mir_snprintf(buf, "Task_dayOfWeek_%d", i);
 		to.dayOfWeek = db_get_dw(0, MODULE, buf, to.dayOfWeek);
-		mir_snprintf(buf, SIZEOF(buf), "Task_dayOfMonth_%d", i);
+		mir_snprintf(buf, "Task_dayOfMonth_%d", i);
 		to.dayOfMonth = db_get_dw(0, MODULE, buf, to.dayOfMonth);
-		mir_snprintf(buf, SIZEOF(buf), "Task_deltaTime_%d", i);
+		mir_snprintf(buf, "Task_deltaTime_%d", i);
 		to.deltaTime = db_get_dw(0, MODULE, buf, to.deltaTime);
 		unsigned long long int le = to.lastExport;
-		mir_snprintf(buf, SIZEOF(buf), "Task_lastExport_low_%d", i);
+		mir_snprintf(buf, "Task_lastExport_low_%d", i);
 		to.lastExport = db_get_dw(0, MODULE, buf, (int)le) & 0xffffffff;
-		mir_snprintf(buf, SIZEOF(buf), "Task_lastExport_hi_%d", i);
+		mir_snprintf(buf, "Task_lastExport_hi_%d", i);
 		to.lastExport |= ((unsigned long long int)db_get_dw(0, MODULE, buf, le >> 32)) << 32;
-		mir_snprintf(buf, SIZEOF(buf), "Task_ftpName_%d", i);
+		mir_snprintf(buf, "Task_ftpName_%d", i);
 		DBVARIANT var;
 		if (!db_get_ws(0, MODULE, buf, &var)) {
 			to.ftpName = var.ptszVal;
 			db_free(&var);
 		}
-		mir_snprintf(buf, SIZEOF(buf), "Task_filterName_%d", i);
+		mir_snprintf(buf, "Task_filterName_%d", i);
 		if (!db_get_ws(0, MODULE, buf, &var)) {
 			to.filterName = var.ptszVal;
 			db_free(&var);
 		}
-		mir_snprintf(buf, SIZEOF(buf), "Task_filePath_%d", i);
+		mir_snprintf(buf, "Task_filePath_%d", i);
 		if (!db_get_ws(0, MODULE, buf, &var)) {
 			to.filePath = var.ptszVal;
 			db_free(&var);
 		}
-		mir_snprintf(buf, SIZEOF(buf), "Task_taskName_%d", i);
+		mir_snprintf(buf, "Task_taskName_%d", i);
 		if (!db_get_ws(0, MODULE, buf, &var)) {
 			to.taskName = var.ptszVal;
 			db_free(&var);
 		}
-		mir_snprintf(buf, SIZEOF(buf), "Task_zipPassword_%d", i);
+		mir_snprintf(buf, "Task_zipPassword_%d", i);
 		if (!db_get_s(0, MODULE, buf, &var)) {
 			to.zipPassword = var.pszVal;
 			db_free(&var);
 		}
 
-		mir_snprintf(buf, SIZEOF(buf), "IsInTask_%d", i);
+		mir_snprintf(buf, "IsInTask_%d", i);
 		for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact))
 			if (db_get_b(hContact, MODULE, buf, 0) == 1)
 				to.contacts.push_back(hContact);
@@ -714,7 +714,7 @@ void InitTaskMenuItems();
 
 void SetEventCB(HWND hwndCB, int eventId)
 {
-	int cpCount = SIZEOF(EventNames);
+	int cpCount = _countof(EventNames);
 	int selCpIdx = -1;
 	for (int i = 0; i < cpCount; ++i)
 		if (EventNames[i].id == eventId)
@@ -722,7 +722,7 @@ void SetEventCB(HWND hwndCB, int eventId)
 
 	if (selCpIdx == -1) {
 		TCHAR buf[24];
-		mir_sntprintf(buf, SIZEOF(buf), _T("%d"), eventId);
+		mir_sntprintf(buf, _T("%d"), eventId);
 		ComboBox_SetText(hwndCB, buf);	
 	}
 	else ComboBox_SetCurSel(hwndCB, selCpIdx);	
@@ -769,7 +769,7 @@ void ReloadEventLB(HWND hwndLB, const FilterOptions &sel)
 		ListBox_AddString(hwndLB, TranslateT("Outgoing events"));
 
 	for (std::vector<int>::const_iterator it = sel.events.begin(); it != sel.events.end(); ++it) {
-		int cpCount = SIZEOF(EventNames);
+		int cpCount = _countof(EventNames);
 		int selCpIdx = -1;
 		for (int i = 0; i < cpCount; ++i)
 			if (EventNames[i].id == *it)
@@ -777,7 +777,7 @@ void ReloadEventLB(HWND hwndLB, const FilterOptions &sel)
 
 		if (selCpIdx == -1) {
 			TCHAR buf[24];
-			mir_sntprintf(buf, SIZEOF(buf), _T("%d"), *it);
+			mir_sntprintf(buf, _T("%d"), *it);
 			ListBox_AddString(hwndLB, buf);	
 		}
 		else ListBox_AddString(hwndLB, TranslateTS(EventNames[selCpIdx].name));	
@@ -805,9 +805,9 @@ bool OpenFileDlg(HWND hwndDlg, HWND hwndEdit, const TCHAR* defName, const TCHAR*
 	TCHAR extUpper[32];
 	_tcscpy_s(extUpper, ext);
 	extUpper[0] = std::toupper(ext[0], loc);
-	mir_sntprintf(filter, SIZEOF(filter), TranslateT("%s Files (*.%s)"), extUpper, ext);
+	mir_sntprintf(filter, _countof(filter), TranslateT("%s Files (*.%s)"), extUpper, ext);
 	size_t len = mir_tstrlen(filter) + 1;
-	mir_sntprintf(filter + len, SIZEOF(filter) - len, _T("*.%s"), ext);
+	mir_sntprintf(filter + len, _countof(filter) - len, _T("*.%s"), ext);
 	len += mir_tstrlen(filter + len) + 1;
 	_tcscpy_s(filter + len, 1024 - len, TranslateT("All Files (*.*)"));
 	len += mir_tstrlen(filter + len) + 1;
@@ -834,7 +834,7 @@ bool OpenFileDlg(HWND hwndDlg, HWND hwndEdit, const TCHAR* defName, const TCHAR*
 	ofn.nFilterIndex = 1;
 	ofn.lpstrFile = stzFilePath;
 	ofn.lpstrTitle = title;
-	ofn.nMaxFile = SIZEOF(stzFilePath);
+	ofn.nMaxFile = _countof(stzFilePath);
 	ofn.lpstrDefExt = ext;
 	if (open) {
 		ofn.Flags = OFN_PATHMUSTEXIST | OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
@@ -871,7 +871,7 @@ INT_PTR CALLBACK Options::DlgProcOptsMain(HWND hwndDlg, UINT msg, WPARAM wParam,
 			HWND ftpLog = GetDlgItem(hwndDlg, IDC_WINSCPLOG);
 			ComboBox_AddString(events, TranslateT("Incoming events"));
 			ComboBox_AddString(events, TranslateT("Outgoing events"));
-			for (int i = 0 ; i < SIZEOF(EventNames); ++i)
+			for (int i = 0 ; i < _countof(EventNames); ++i)
 				ComboBox_AddString(events, TranslateTS(EventNames[i].name));
 
 			ComboBox_AddString(defFilter, TranslateT("Default history events"));
@@ -1283,7 +1283,7 @@ void InitCodepageCB(HWND hwndCB, unsigned int codepage, const std::wstring& name
 
 	if (selCpIdx == -1) {
 		TCHAR buf[300];
-		mir_sntprintf(buf, SIZEOF(buf), _T("%d;%s"), codepage, name.c_str());
+		mir_sntprintf(buf, _T("%d;%s"), codepage, name.c_str());
 		ComboBox_SetText(hwndCB, buf);	
 	}
 	else ComboBox_SetCurSel(hwndCB, selCpIdx);	
@@ -1702,7 +1702,7 @@ INT_PTR CALLBACK Options::DlgProcOptsTask(HWND hwndDlg, UINT msg, WPARAM wParam,
 				TCHAR sep = _T(':');
 				if (GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_STIME, timeFormat, 10) > 0)
 					sep = timeFormat[0];
-				mir_sntprintf(timeFormat, SIZEOF(timeFormat), _T("HH%cmm"), sep);
+				mir_sntprintf(timeFormat, _countof(timeFormat), _T("HH%cmm"), sep);
 			}
 
 			SYSTEMTIME st;
@@ -1749,7 +1749,7 @@ INT_PTR CALLBACK Options::DlgProcOptsTask(HWND hwndDlg, UINT msg, WPARAM wParam,
 				toCp.eventDeltaTime = GetDlgItemInt(hwndDlg, IDC_EVENT_TIME, &isOK, TRUE);
 				if (!isOK) {
 					TCHAR msg[256];
-					mir_sntprintf(msg, SIZEOF(msg), TranslateT("Invalid '%s' value."), TranslateT("Events older than"));
+					mir_sntprintf(msg, _countof(msg), TranslateT("Invalid '%s' value."), TranslateT("Events older than"));
 					MessageBox(hwndDlg, msg, TranslateT("Error"), MB_ICONERROR);
 					break;
 				}
@@ -1759,7 +1759,7 @@ INT_PTR CALLBACK Options::DlgProcOptsTask(HWND hwndDlg, UINT msg, WPARAM wParam,
 				toCp.importType = (enum IImport::ImportType)ComboBox_GetCurSel(GetDlgItem(hwndDlg, IDC_IMPORT_TYPE));
 				toCp.compress = Button_GetCheck(GetDlgItem(hwndDlg, IDC_COMPRESS)) != 0;
 				char bufC[100];
-				GetDlgItemTextA(hwndDlg, IDC_PASSWORD, bufC, SIZEOF(bufC));
+				GetDlgItemTextA(hwndDlg, IDC_PASSWORD, bufC, _countof(bufC));
 				toCp.zipPassword = bufC;
 				HWND exportPath = GetDlgItem(hwndDlg, IDC_EXPORT_PATH);
 				int exLen = Edit_GetTextLength(exportPath);
@@ -1780,7 +1780,7 @@ INT_PTR CALLBACK Options::DlgProcOptsTask(HWND hwndDlg, UINT msg, WPARAM wParam,
 				if (!isOK) {
 					if (toCp.trigerType == TaskOptions::Monthly) {
 						TCHAR msg[256];
-						mir_sntprintf(msg, SIZEOF(msg), TranslateT("Invalid '%s' value."), TranslateT("Day"));
+						mir_sntprintf(msg, _countof(msg), TranslateT("Invalid '%s' value."), TranslateT("Day"));
 						MessageBox(hwndDlg, msg, TranslateT("Error"), MB_ICONERROR);
 						break;
 					}
@@ -1790,7 +1790,7 @@ INT_PTR CALLBACK Options::DlgProcOptsTask(HWND hwndDlg, UINT msg, WPARAM wParam,
 				if (!isOK) {
 					if (toCp.trigerType == TaskOptions::DeltaMin || toCp.trigerType == TaskOptions::DeltaHour) {
 						TCHAR msg[256];
-						mir_sntprintf(msg, SIZEOF(msg), TranslateT("Invalid '%s' value."), TranslateT("Delta time"));
+						mir_sntprintf(msg, _countof(msg), TranslateT("Invalid '%s' value."), TranslateT("Delta time"));
 						MessageBox(hwndDlg, msg, TranslateT("Error"), MB_ICONERROR);
 						break;
 					}
@@ -1807,9 +1807,9 @@ INT_PTR CALLBACK Options::DlgProcOptsTask(HWND hwndDlg, UINT msg, WPARAM wParam,
 					if (err.empty())
 						_tcscpy_s(msg, TranslateT("Some value is invalid"));
 					else if (errDescr.empty())
-						mir_sntprintf(msg, SIZEOF(msg), TranslateT("Invalid '%s' value."), err.c_str());
+						mir_sntprintf(msg, _countof(msg), TranslateT("Invalid '%s' value."), err.c_str());
 					else
-						mir_sntprintf(msg, SIZEOF(msg), TranslateT("Invalid '%s' value.\n%s"), err.c_str(), errDescr.c_str());
+						mir_sntprintf(msg, _countof(msg), TranslateT("Invalid '%s' value.\n%s"), err.c_str(), errDescr.c_str());
 					MessageBox(hwndDlg, msg, TranslateT("Error"), MB_ICONERROR);
 					break;
 				}

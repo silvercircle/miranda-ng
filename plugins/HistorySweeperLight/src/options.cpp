@@ -52,23 +52,23 @@ static IconItem iconList[] =
 	{ LPGEN("Delete All"), "actDel", IDI_ACTDEL }
 };
 
-static HANDLE hIconLibItem[SIZEOF(iconList)];
+static HANDLE hIconLibItem[_countof(iconList)];
 
 void InitIcons(void)
 {
-	Icon_Register(hInst, ModuleName, iconList, SIZEOF(iconList), ModuleName);
+	Icon_Register(hInst, ModuleName, iconList, _countof(iconList), ModuleName);
 }
 
 HICON LoadIconEx(const char* name)
 {
 	char szSettingName[100];
-	mir_snprintf(szSettingName, SIZEOF(szSettingName), "%s_%s", ModuleName, name);
-	return Skin_GetIcon(szSettingName);
+	mir_snprintf(szSettingName, _countof(szSettingName), "%s_%s", ModuleName, name);
+	return IcoLib_GetIcon(szSettingName);
 }
 
 HANDLE GetIconHandle(const char* name)
 {
-	for (int i = 0; i < SIZEOF(iconList); i++)
+	for (int i = 0; i < _countof(iconList); i++)
 		if (mir_strcmp(iconList[i].szName, name) == 0)
 			return hIconLibItem[i];
 
@@ -78,8 +78,8 @@ HANDLE GetIconHandle(const char* name)
 void  ReleaseIconEx(const char* name)
 {
 	char szSettingName[100];
-	mir_snprintf(szSettingName, SIZEOF(szSettingName), "%s_%s", ModuleName, name);
-	Skin_ReleaseIcon(szSettingName);
+	mir_snprintf(szSettingName, _countof(szSettingName), "%s_%s", ModuleName, name);
+	IcoLib_Release(szSettingName);
 }
 
 HANDLE hAllContacts, hSystemHistory;
@@ -118,16 +118,14 @@ void LoadSettings(HWND hwndDlg)
 	SendDlgItemMessage(hwndDlg, IDC_SSOLDER, CB_RESETCONTENT, 0, 0);
 	SendDlgItemMessage(hwndDlg, IDC_SSKEEP, CB_RESETCONTENT, 0, 0);
 
-	for (i = 0; i < SIZEOF(time_stamp_strings); i++) {
-		TCHAR* ptszTimeStr = (TCHAR*)CallService(MS_LANGPACK_PCHARTOTCHAR, 0, (LPARAM)time_stamp_strings[i]);
+	for (i = 0; i < _countof(time_stamp_strings); i++) {
+		ptrT ptszTimeStr(Langpack_PcharToTchar(time_stamp_strings[i]));
 		SendDlgItemMessage(hwndDlg, IDC_SSOLDER, CB_ADDSTRING, 0, (LPARAM)ptszTimeStr);
-		mir_free(ptszTimeStr);
 	}
 
-	for (i = 0; i < SIZEOF(keep_strings); i++) {
-		TCHAR* ptszTimeStr = (TCHAR*)CallService(MS_LANGPACK_PCHARTOTCHAR, 0, (LPARAM)keep_strings[i]);
+	for (i = 0; i < _countof(keep_strings); i++) {
+		ptrT ptszTimeStr(Langpack_PcharToTchar(keep_strings[i]));
 		SendDlgItemMessage(hwndDlg, IDC_SSKEEP, CB_ADDSTRING, 0, (LPARAM)ptszTimeStr);
-		mir_free(ptszTimeStr);
 	}
 
 	SendDlgItemMessage(hwndDlg, IDC_SSOLDER, CB_SETCURSEL, db_get_b(NULL, ModuleName, "StartupShutdownOlder", 0), 0);
@@ -200,9 +198,9 @@ INT_PTR CALLBACK DlgProcHSOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPa
 		{
 			HIMAGELIST hIml = ImageList_Create(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), ILC_MASK | ILC_COLOR32, 2, 2);
 
-			HICON hIcon = LoadSkinnedIcon(SKINICON_OTHER_SMALLDOT);
+			HICON hIcon = Skin_LoadIcon(SKINICON_OTHER_SMALLDOT);
 			ImageList_AddIcon(hIml, hIcon);
-			Skin_ReleaseIcon(hIcon);
+			IcoLib_ReleaseIcon(hIcon);
 
 			hIcon = LoadIconEx("act1");
 			ImageList_AddIcon(hIml, hIcon);

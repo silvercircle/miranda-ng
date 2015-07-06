@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
 //Start of header
-#include "global.h"
+#include "stdafx.h"
 
 static UINT g_LPCodePage;
 static TCHAR g_szSkinLib[MAX_PATH];
@@ -51,7 +51,7 @@ void __fastcall Prepare(KN_FP_MASK* mask, bool bEnable)
 	mask->szMaskUpper = NULL;
 
 	if (mask->hIcolibItem)
-		Skin_RemoveIcon(mask->szIconName);
+		IcoLib_RemoveIcon(mask->szIconName);
 	mask->hIcolibItem = NULL;
 
 	if (!mask->szMask || !bEnable)
@@ -78,15 +78,15 @@ void __fastcall Prepare(KN_FP_MASK* mask, bool bEnable)
 	if (SectName == NULL)
 		return;
 
-	SKINICONDESC sid = { sizeof(sid) };
+	SKINICONDESC sid = { 0 };
 	sid.flags = SIDF_ALL_TCHAR;
-	sid.ptszSection = SectName;
+	sid.section.t = SectName;
 	sid.pszName = mask->szIconName;
-	sid.ptszDescription = mask->szClientDescription;
-	sid.ptszDefaultFile = destfile;
+	sid.description.t = mask->szClientDescription;
+	sid.defaultFile.t = destfile;
 	sid.iDefaultIndex = -mask->iIconIndex;
 	sid.cx = sid.cy = 16;
-	mask->hIcolibItem = Skin_AddIcon(&sid);
+	mask->hIcolibItem = IcoLib_AddIcon(&sid);
 }
 
 /*
@@ -216,7 +216,7 @@ BOOL __fastcall WildCompareW(LPWSTR wszName, LPWSTR wszMask)
 		return wildcmpw(wszName, wszMask);
 
 	size_t s = 1, e = 1;
-	LPWSTR wszTemp = (LPWSTR)_alloca(wcslen(wszMask) * sizeof(WCHAR) + sizeof(WCHAR));
+	LPWSTR wszTemp = (LPWSTR)_alloca(mir_wstrlen(wszMask) * sizeof(WCHAR) + sizeof(WCHAR));
 	BOOL bExcept;
 
 	while (wszMask[e] != L'\0')
@@ -343,7 +343,7 @@ void __fastcall GetIconsIndexesA(LPSTR szMirVer, short *base, short *overlay, sh
 
 void __fastcall GetIconsIndexesW(LPWSTR wszMirVer, short *base, short *overlay, short *overlay2, short *overlay3, short *overlay4)
 {
-	if (wcscmp(wszMirVer, L"?") == 0)
+	if (mir_wstrcmp(wszMirVer, L"?") == 0)
 	{
 		*base = UNKNOWN_MASK_NUMBER;
 		*overlay = -1;
@@ -374,17 +374,17 @@ HICON __fastcall CreateIconFromIndexes(short base, short overlay, short overlay2
 	HICON icOverlay4 = NULL;
 
 	KN_FP_MASK* mainMask = &(def_kn_fp_mask[base]);
-	icMain = Skin_GetIconByHandle(mainMask->hIcolibItem);
+	icMain = IcoLib_GetIconByHandle(mainMask->hIcolibItem);
 
 	if (icMain) {
 		KN_FP_MASK* overlayMask = (overlay != -1) ? &(def_kn_fp_overlays_mask[overlay]) : NULL;
 		KN_FP_MASK* overlay2Mask = (overlay2 != -1) ? &(def_kn_fp_overlays2_mask[overlay2]) : NULL;
 		KN_FP_MASK* overlay3Mask = (overlay3 != -1) ? &(def_kn_fp_overlays3_mask[overlay3]) : NULL;
 		KN_FP_MASK* overlay4Mask = (overlay4 != -1) ? &(def_kn_fp_overlays4_mask[overlay4]) : NULL;
-		icOverlay = (overlayMask == NULL) ? NULL : Skin_GetIconByHandle(overlayMask->hIcolibItem);
-		icOverlay2 = (overlay2Mask == NULL) ? NULL : Skin_GetIconByHandle(overlay2Mask->hIcolibItem);
-		icOverlay3 = (overlay3Mask == NULL) ? NULL : Skin_GetIconByHandle(overlay3Mask->hIcolibItem);
-		icOverlay4 = (overlay4Mask == NULL) ? NULL : Skin_GetIconByHandle(overlay4Mask->hIcolibItem);
+		icOverlay = (overlayMask == NULL) ? NULL : IcoLib_GetIconByHandle(overlayMask->hIcolibItem);
+		icOverlay2 = (overlay2Mask == NULL) ? NULL : IcoLib_GetIconByHandle(overlay2Mask->hIcolibItem);
+		icOverlay3 = (overlay3Mask == NULL) ? NULL : IcoLib_GetIconByHandle(overlay3Mask->hIcolibItem);
+		icOverlay4 = (overlay4Mask == NULL) ? NULL : IcoLib_GetIconByHandle(overlay4Mask->hIcolibItem);
 
 		hIcon = icMain;
 
@@ -412,11 +412,11 @@ HICON __fastcall CreateIconFromIndexes(short base, short overlay, short overlay2
 	if (hIcon == icMain)
 		hIcon = CopyIcon(icMain);
 
-	Skin_ReleaseIcon(icMain);
-	Skin_ReleaseIcon(icOverlay);
-	Skin_ReleaseIcon(icOverlay2);
-	Skin_ReleaseIcon(icOverlay3);
-	Skin_ReleaseIcon(icOverlay4);
+	IcoLib_ReleaseIcon(icMain);
+	IcoLib_ReleaseIcon(icOverlay);
+	IcoLib_ReleaseIcon(icOverlay2);
+	IcoLib_ReleaseIcon(icOverlay3);
+	IcoLib_ReleaseIcon(icOverlay4);
 	return hIcon;
 }
 
@@ -787,7 +787,7 @@ static INT_PTR ServiceGetClientDescrW(WPARAM wParam, LPARAM)
 		return 0;
 
 	LPWSTR wszMirVerUp = NEWWSTR_ALLOCA(wszMirVer); _wcsupr(wszMirVerUp);
-	if (wcscmp(wszMirVerUp, L"?") == 0)
+	if (mir_wstrcmp(wszMirVerUp, L"?") == 0)
 		return (INT_PTR)def_kn_fp_mask[UNKNOWN_MASK_NUMBER].szClientDescription;
 
 	for (int index = 0; index < DEFAULT_KN_FP_MASK_COUNT; index++)
@@ -940,7 +940,7 @@ static int OnSrmmWindowEvent(WPARAM, LPARAM lParam)
 
 int OnModulesLoaded(WPARAM, LPARAM)
 {
-	g_LPCodePage = CallService(MS_LANGPACK_GETCODEPAGE, 0, 0);
+	g_LPCodePage = Langpack_GetDefaultCodePage();
 
 	//Hook necessary events
 	HookEvent(ME_SKIN2_ICONSCHANGED, OnIconsChanged);

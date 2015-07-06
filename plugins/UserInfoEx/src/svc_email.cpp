@@ -43,7 +43,7 @@ static LPSTR Get(MCONTACT hContact)
 {
 	// ignore owner
 	if (hContact != NULL) {
-		LPCSTR pszProto = DB::Contact::Proto(hContact);
+		LPCSTR pszProto = Proto_GetBaseAccountName(hContact);
 		
 		if (pszProto != NULL) {
 			LPCSTR e[2][4] = {
@@ -96,7 +96,7 @@ static INT_PTR MenuCommand(WPARAM wParam,LPARAM lParam)
 			mir_snprintf(szUrl, len + 1, "mailto:%s", val);
 			mir_free(val);
 
-			result = CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW, (LPARAM)szUrl);
+			Utils_OpenUrl(szUrl);
 		}
 		else {
 			result = 1;
@@ -183,10 +183,10 @@ void SvcEMailRebuildMenu()
 
 		if (!ghMenuItem) {
 			// insert contact menuitem
-			CLISTMENUITEM mi = { sizeof(mi) };
+			CMenuItem mi;
 			mi.position = -2000010000;
-			mi.hIcon = Skin_GetIcon(ICO_BTN_EMAIL);
-			mi.pszName = "&E-mail";
+			mi.hIcolibItem = IcoLib_GetIcon(ICO_BTN_EMAIL);
+			mi.name.a = "&E-mail";
 			mi.pszService = MS_EMAIL_SENDEMAIL;
 			ghMenuItem = Menu_AddContactMenuItem(&mi);
 		}
@@ -196,7 +196,7 @@ void SvcEMailRebuildMenu()
 			UnhookEvent(ME_CLIST_PREBUILDCONTACTMENU), hPrebuildMenuHook = NULL;
 
 		if (ghMenuItem) {
-			CallService(MO_REMOVEMENUITEM, (WPARAM)ghMenuItem, NULL);
+			Menu_RemoveItem(ghMenuItem);
 			ghMenuItem = NULL;
 		}
 	}

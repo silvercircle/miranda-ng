@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "shlcom.h"
 
+CLIST_INTERFACE *pcli;
 HINSTANCE hInst;
 int hLangpack;
 bool bIsVistaPlus;
@@ -21,13 +22,13 @@ PLUGININFOEX pluginInfoEx = {
 	{0x7993ab24, 0x1fda, 0x428c, {0xa8, 0x9b, 0xbe, 0x37, 0x7a, 0x10, 0xbe, 0x3a}}
 };
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID)
 {
 	if (fdwReason == DLL_PROCESS_ATTACH) {
 		bIsVistaPlus = GetProcAddress( GetModuleHandleA("kernel32.dll"), "GetProductInfo") != NULL;
 
-		GetTempPath(SIZEOF(tszLogPath), tszLogPath);
-		_tcscat_s(tszLogPath, SIZEOF(tszLogPath), _T("shlext.log"));
+		GetTempPath(_countof(tszLogPath), tszLogPath);
+		_tcscat_s(tszLogPath, _countof(tszLogPath), _T("shlext.log"));
 
 		hInst = hinstDLL;
 		DisableThreadLibraryCalls(hinstDLL);
@@ -36,7 +37,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	return TRUE;
 }
 
-extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
+extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 {
 	return &pluginInfoEx;
 }
@@ -127,8 +128,8 @@ STDAPI DllRegisterServer()
 		return E_FAIL;
 
 	TCHAR tszFileName[MAX_PATH];
-	GetModuleFileName(hInst, tszFileName, SIZEOF(tszFileName));
-	if ( RegSetValueEx(kInprocServer, NULL, 0, REG_SZ, (LPBYTE)tszFileName, sizeof(TCHAR)*(mir_tstrlen(tszFileName)+1)))
+	GetModuleFileName(hInst, tszFileName, _countof(tszFileName));
+	if ( RegSetValueEx(kInprocServer, NULL, 0, REG_SZ, (LPBYTE)tszFileName, sizeof(TCHAR)*(lstrlen(tszFileName)+1)))
 		return E_FAIL;
 	if ( RegSetValueExA(kInprocServer, "ThreadingModel", 0, REG_SZ, (PBYTE)str4, sizeof(str4)))
 		return E_FAIL;
@@ -161,6 +162,7 @@ STDAPI DllUnregisterServer()
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfoEx);
+	mir_getCLI();
 
 	InvokeThreadServer();
 	HookEvent(ME_OPT_INITIALISE, OnOptionsInit);

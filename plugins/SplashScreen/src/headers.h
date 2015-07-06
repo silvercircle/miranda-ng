@@ -30,9 +30,10 @@
 #include <win2k.h>
 #include <newpluginapi.h>
 #include <m_database.h>
+#include <m_clist.h>
 #include <m_options.h>
 #include <m_langpack.h>
-#include <m_png.h>
+#include <m_imgsrvc.h>
 
 #include <m_splash.h>
 
@@ -41,7 +42,6 @@
 #include "bitmap_funcs.h"
 
 #ifdef _DEBUG
-	#include <m_clist.h>
 	#include <m_skin.h>
 	#include <m_popup.h>
 	#include "debug.h"
@@ -72,12 +72,7 @@ extern TCHAR szSplashFile[MAX_PATH], szSoundFile[MAX_PATH], szPrefix[128];
 extern TCHAR *szMirDir;
 extern char szVersion[MAX_PATH];
 extern BOOL bserviceinvoked, bmodulesloaded, png2dibavail;
-extern HANDLE hSplashThread;
 extern HINSTANCE hInst;
-
-// png2dib interface
-typedef BOOL ( *pfnConvertPng2dib )( char*, size_t, BITMAPINFOHEADER** );
-extern pfnConvertPng2dib png2dibConvertor;
 
 extern int OptInit(WPARAM wParam, LPARAM lParam);
 extern BOOL ShowSplash(BOOL bpreview);

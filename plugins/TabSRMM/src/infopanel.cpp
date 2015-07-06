@@ -496,7 +496,7 @@ void CInfoPanel::RenderIPUIN(const HDC hdc, RECT& rcItem)
 			time_t diff = time(NULL) - m_dat->idle;
 			int i_hrs = diff / 3600;
 			int i_mins = (diff - i_hrs * 3600) / 60;
-			mir_sntprintf(szBuf, SIZEOF(szBuf), TranslateT("%s    Idle: %dh,%02dm"), tszUin, i_hrs, i_mins);
+			mir_sntprintf(szBuf, _countof(szBuf), TranslateT("%s    Idle: %dh,%02dm"), tszUin, i_hrs, i_mins);
 		}
 		else _tcscpy_s(szBuf, 256, tszUin);
 
@@ -504,9 +504,9 @@ void CInfoPanel::RenderIPUIN(const HDC hdc, RECT& rcItem)
 			TCHAR	temp[256];
 			ptrT szVersion(db_get_tsa(m_dat->cache->getActiveContact(), m_dat->cache->getActiveProto(), "MirVer"));
 			if (szVersion)
-				mir_sntprintf(temp, SIZEOF(temp), TranslateT("  Client: %s"), szVersion);
+				mir_sntprintf(temp, TranslateT("  Client: %s"), szVersion);
 			else
-				mir_sntprintf(temp, SIZEOF(temp), TranslateT("  Client not cached yet"));
+				mir_sntprintf(temp, TranslateT("  Client not cached yet"));
 			_tcscat_s(szBuf, 256, temp);
 		}
 
@@ -543,7 +543,7 @@ void CInfoPanel::RenderIPStatus(const HDC hdc, RECT& rcItem)
 
 	TCHAR szResult[80]; szResult[0] = 0;
 	if (m_dat->hTimeZone) {
-		tmi.printDateTime(m_dat->hTimeZone, _T("t"), szResult, SIZEOF(szResult), 0);
+		TimeZone_PrintDateTime(m_dat->hTimeZone, _T("t"), szResult, _countof(szResult), 0);
 		GetTextExtentPoint32(hdc, szResult, (int)mir_tstrlen(szResult), &sTime);
 	}
 
@@ -613,7 +613,7 @@ void CInfoPanel::Chat_RenderIPNickname(const HDC hdc, RECT& rcItem)
 
 	if (m_height < DEGRADE_THRESHOLD) {
 		TCHAR	tszText[2048];
-		mir_sntprintf(tszText, SIZEOF(tszText), TranslateT("Topic is: %s"),
+		mir_sntprintf(tszText, _countof(tszText), TranslateT("Topic is: %s"),
 			si->ptszTopic ? si->ptszTopic : TranslateT("no topic set."));
 
 		hOldFont = reinterpret_cast<HFONT>(::SelectObject(hdc, m_ipConfig.hFonts[IPFONTID_UIN]));
@@ -670,7 +670,7 @@ void CInfoPanel::Chat_RenderIPSecondLine(const HDC hdc, RECT& rcItem)
 
 	SIZE szTitle;
 	TCHAR	szPrefix[100];
-	mir_sntprintf(szPrefix, SIZEOF(szPrefix), TranslateT("Topic is: %s"), _T(""));
+	mir_sntprintf(szPrefix, _countof(szPrefix), TranslateT("Topic is: %s"), _T(""));
 	::GetTextExtentPoint32(hdc, szPrefix, (int)mir_tstrlen(szPrefix), &szTitle);
 	mapRealRect(rcItem, m_rcUIN, szTitle);
 	if (m_hoverFlags & HOVER_UIN)
@@ -719,8 +719,8 @@ HMENU CInfoPanel::constructContextualMenu() const
 	HMENU m = ::CreatePopupMenu();
 
 	if (m_hoverFlags & HOVER_NICK) {
-		Utils::addMenuItem(m, mii, ::LoadSkinnedIcon(SKINICON_OTHER_USERDETAILS), TranslateT("Open user details..."), IDC_NAME, 0);
-		Utils::addMenuItem(m, mii, ::LoadSkinnedIcon(SKINICON_OTHER_HISTORY), TranslateT("Open history..."), m_isChat ? IDC_CHAT_HISTORY : IDC_HISTORY, 0);
+		Utils::addMenuItem(m, mii, ::Skin_LoadIcon(SKINICON_OTHER_USERDETAILS), TranslateT("Open user details..."), IDC_NAME, 0);
+		Utils::addMenuItem(m, mii, ::Skin_LoadIcon(SKINICON_OTHER_HISTORY), TranslateT("Open history..."), m_isChat ? IDC_CHAT_HISTORY : IDC_HISTORY, 0);
 		if (!m_isChat)
 			Utils::addMenuItem(m, mii, PluginConfig.g_iconContainer, TranslateT("Messaging settings..."), ID_MESSAGELOGSETTINGS_FORTHISCONTACT, 1);
 		else {
@@ -1061,11 +1061,11 @@ INT_PTR CALLBACK CInfoPanel::ConfigDlgProc(HWND hwnd, UINT msg, WPARAM wParam, L
 	case WM_INITDIALOG:
 	{
 		TCHAR	tszTitle[100];
-		mir_sntprintf(tszTitle, SIZEOF(tszTitle), TranslateT("Set panel visibility for this %s"),
+		mir_sntprintf(tszTitle, _countof(tszTitle), TranslateT("Set panel visibility for this %s"),
 			m_isChat ? TranslateT("chat room") : TranslateT("contact"));
 		::SetDlgItemText(hwnd, IDC_STATIC_VISIBILTY, tszTitle);
 
-		mir_sntprintf(tszTitle, SIZEOF(tszTitle), m_isChat ? TranslateT("Do not synchronize the panel height with IM windows") :
+		mir_sntprintf(tszTitle, _countof(tszTitle), m_isChat ? TranslateT("Do not synchronize the panel height with IM windows") :
 			TranslateT("Do not synchronize the panel height with group chat windows"));
 
 		::SetDlgItemText(hwnd, IDC_NOSYNC, tszTitle);
@@ -1507,7 +1507,7 @@ INT_PTR CALLBACK CTip::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 			LONG cy = rc.bottom;
 			HANDLE hTheme = 0;
 
-			mir_sntprintf(szTitle, SIZEOF(szTitle), m_szTitle ? _T("%s (%s)") : _T("%s%s"), c->getNick(), m_szTitle ? m_szTitle : _T(""));
+			mir_sntprintf(szTitle, m_szTitle ? _T("%s (%s)") : _T("%s%s"), c->getNick(), m_szTitle ? m_szTitle : _T(""));
 
 			if (m_panel) {
 				HDC hdcMem = ::CreateCompatibleDC(hdc);
@@ -1574,7 +1574,7 @@ INT_PTR CALLBACK CTip::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 				ENLINK *e = reinterpret_cast<ENLINK *>(lParam);
 				ptrT tszUrl(Utils::extractURLFromRichEdit(e, m_hRich));
 				if (tszUrl)
-					CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW | OUF_TCHAR, tszUrl);
+					Utils_OpenUrlT(tszUrl);
 
 				::DestroyWindow(hwnd);
 			}

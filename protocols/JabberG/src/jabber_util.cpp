@@ -298,20 +298,20 @@ TCHAR* __stdcall JabberErrorMsg(HXML errorNode, int* pErrorCode)
 	}
 
 	int errorCode = -1;
-	const TCHAR *str = xmlGetAttrValue(errorNode, _T("code"));
+	const TCHAR *str = XmlGetAttrValue(errorNode, _T("code"));
 	if (str != NULL)
 		errorCode = _ttoi(str);
 
-	str = xmlGetText(errorNode);
+	str = XmlGetText(errorNode);
 	if (str == NULL)
-		str = xmlGetText(xmlGetChild(errorNode, _T("text")));
+		str = XmlGetText(XmlGetChild(errorNode, _T("text")));
 	if (str == NULL) {
 		for (int i = 0;; i++) {
-			HXML c = xmlGetChild(errorNode, i);
+			HXML c = XmlGetChild(errorNode, i);
 			if (c == NULL) break;
-			const TCHAR *attr = xmlGetAttrValue(c, _T("xmlns"));
+			const TCHAR *attr = XmlGetAttrValue(c, _T("xmlns"));
 			if (attr && !mir_tstrcmp(attr, _T("urn:ietf:params:xml:ns:xmpp-stanzas"))) {
-				str = xmlGetName(c);
+				str = XmlGetName(c);
 				break;
 			}
 		}
@@ -416,7 +416,7 @@ void CJabberProto::SendPresenceTo(int status, const TCHAR* to, HXML extra, const
 		p << XATTR(_T("to"), to);
 
 	if (extra)
-		xmlAddChild(p, extra);
+		XmlAddChild(p, extra);
 
 	// XEP-0115:Entity Capabilities
 	HXML c = p << XCHILDNS(_T("c"), JABBER_FEAT_ENTITY_CAPS) << XATTR(_T("node"), JABBER_CAPS_MIRANDA_NODE)
@@ -465,7 +465,7 @@ void CJabberProto::SendPresenceTo(int status, const TCHAR* to, HXML extra, const
 			szExtCaps.AppendChar(' ');
 			szExtCaps += arrExtCaps[i];
 		}
-		xmlAddAttr(c, _T("ext"), szExtCaps);
+		XmlAddAttr(c, _T("ext"), szExtCaps);
 	}
 
 	if (m_options.EnableAvatars) {
@@ -528,7 +528,7 @@ void CJabberProto::SendPresence(int status, bool bSendToAll)
 			JABBER_LIST_ITEM *item = ListGetItemPtrFromIndex(i);
 			if (item != NULL) {
 				TCHAR text[1024];
-				mir_sntprintf(text, SIZEOF(text), _T("%s/%s"), item->jid, item->nick);
+				mir_sntprintf(text, _T("%s/%s"), item->jid, item->nick);
 				SendPresenceTo(status == ID_STATUS_INVISIBLE ? ID_STATUS_ONLINE : status, text, NULL);
 			}
 		}
@@ -540,10 +540,10 @@ void CJabberProto::SendPresence(int status, bool bSendToAll)
 
 int __stdcall JabberGetPacketID(HXML n)
 {
-	const TCHAR *str = xmlGetAttrValue(n, _T("id"));
+	const TCHAR *str = XmlGetAttrValue(n, _T("id"));
 	if (str)
-		if (!_tcsncmp(str, _T(JABBER_IQID), SIZEOF(JABBER_IQID) - 1))
-			return _ttoi(str + SIZEOF(JABBER_IQID) - 1);
+		if (!_tcsncmp(str, _T(JABBER_IQID), _countof(JABBER_IQID) - 1))
+			return _ttoi(str + _countof(JABBER_IQID) - 1);
 
 	return -1;
 }
@@ -551,7 +551,7 @@ int __stdcall JabberGetPacketID(HXML n)
 TCHAR* __stdcall JabberId2string(int id)
 {
 	TCHAR text[100];
-	mir_sntprintf(text, SIZEOF(text), _T(JABBER_IQID) _T("%d"), id);
+	mir_sntprintf(text, _T(JABBER_IQID) _T("%d"), id);
 	return mir_tstrdup(text);
 }
 
@@ -616,7 +616,7 @@ TCHAR* __stdcall JabberStripJid(const TCHAR *jid, TCHAR *dest, size_t destLen)
 
 LPCTSTR __stdcall JabberGetPictureType(HXML node, const char *picBuf)
 {
-	if (LPCTSTR ptszType = xmlGetText(xmlGetChild(node, "TYPE")))
+	if (LPCTSTR ptszType = XmlGetText(XmlGetChild(node, "TYPE")))
 		if (!mir_tstrcmp(ptszType, _T("image/jpeg")) ||
 			 !mir_tstrcmp(ptszType, _T("image/png")) ||
 			 !mir_tstrcmp(ptszType, _T("image/gif")) ||
@@ -692,7 +692,7 @@ void CJabberProto::ComboLoadRecentStrings(HWND hwndDlg, UINT idcCombo, char *par
 {
 	for (int i = 0; i < recentCount; i++) {
 		char setting[MAXMODULELABELLENGTH];
-		mir_snprintf(setting, SIZEOF(setting), "%s%d", param, i);
+		mir_snprintf(setting, "%s%d", param, i);
 		ptrT tszRecent(getTStringA(setting));
 		if (tszRecent != NULL)
 			SendDlgItemMessage(hwndDlg, idcCombo, CB_ADDSTRING, 0, tszRecent);
@@ -716,7 +716,7 @@ void CJabberProto::ComboAddRecentString(HWND hwndDlg, UINT idcCombo, char *param
 
 	id = getByte(param, 0);
 	char setting[MAXMODULELABELLENGTH];
-	mir_snprintf(setting, SIZEOF(setting), "%s%d", param, id);
+	mir_snprintf(setting, "%s%d", param, id);
 	setTString(setting, string);
 	setByte(param, (id + 1) % recentCount);
 }
@@ -734,10 +734,10 @@ static VOID CALLBACK sttRebuildInfoFrameApcProc(void* param)
 	if (!ppro->m_bJabberOnline) {
 		ppro->m_pInfoFrame->RemoveInfoItem("$/PEP");
 		ppro->m_pInfoFrame->RemoveInfoItem("$/Transports");
-		ppro->m_pInfoFrame->UpdateInfoItem("$/JID", LoadSkinnedIconHandle(SKINICON_OTHER_USERDETAILS), TranslateT("Offline"));
+		ppro->m_pInfoFrame->UpdateInfoItem("$/JID", Skin_GetIconHandle(SKINICON_OTHER_USERDETAILS), TranslateT("Offline"));
 	}
 	else {
-		ppro->m_pInfoFrame->UpdateInfoItem("$/JID", LoadSkinnedIconHandle(SKINICON_OTHER_USERDETAILS), ppro->m_szJabberJID);
+		ppro->m_pInfoFrame->UpdateInfoItem("$/JID", Skin_GetIconHandle(SKINICON_OTHER_USERDETAILS), ppro->m_szJabberJID);
 
 		if (!ppro->m_bPepSupported)
 			ppro->m_pInfoFrame->RemoveInfoItem("$/PEP");
@@ -748,11 +748,11 @@ static VOID CALLBACK sttRebuildInfoFrameApcProc(void* param)
 
 			ppro->m_pInfoFrame->CreateInfoItem("$/PEP/mood", true);
 			ppro->m_pInfoFrame->SetInfoItemCallback("$/PEP/mood", &CJabberProto::InfoFrame_OnUserMood);
-			ppro->m_pInfoFrame->UpdateInfoItem("$/PEP/mood", LoadSkinnedIconHandle(SKINICON_OTHER_SMALLDOT), TranslateT("Set mood..."));
+			ppro->m_pInfoFrame->UpdateInfoItem("$/PEP/mood", Skin_GetIconHandle(SKINICON_OTHER_SMALLDOT), TranslateT("Set mood..."));
 
 			ppro->m_pInfoFrame->CreateInfoItem("$/PEP/activity", true);
 			ppro->m_pInfoFrame->SetInfoItemCallback("$/PEP/activity", &CJabberProto::InfoFrame_OnUserActivity);
-			ppro->m_pInfoFrame->UpdateInfoItem("$/PEP/activity", LoadSkinnedIconHandle(SKINICON_OTHER_SMALLDOT), TranslateT("Set activity..."));
+			ppro->m_pInfoFrame->UpdateInfoItem("$/PEP/activity", Skin_GetIconHandle(SKINICON_OTHER_SMALLDOT), TranslateT("Set activity..."));
 		}
 
 		ppro->m_pInfoFrame->RemoveInfoItem("$/Transports/");
@@ -769,7 +769,7 @@ static VOID CALLBACK sttRebuildInfoFrameApcProc(void* param)
 
 					char name[128];
 					char *jid_copy = mir_t2a(item->jid);
-					mir_snprintf(name, SIZEOF(name), "$/Transports/%s", jid_copy);
+					mir_snprintf(name, "$/Transports/%s", jid_copy);
 					ppro->m_pInfoFrame->CreateInfoItem(name, true, hContact);
 					ppro->m_pInfoFrame->UpdateInfoItem(name, ppro->GetIconHandle(IDI_TRANSPORTL), (TCHAR *)item->jid);
 					ppro->m_pInfoFrame->SetInfoItemCallback(name, &CJabberProto::InfoFrame_OnTransport);
@@ -872,11 +872,11 @@ BOOL CJabberProto::EnterString(CMString &result, LPCTSTR caption, int type, char
 
 bool JabberReadXep203delay(HXML node, time_t &msgTime)
 {
-	HXML n = xmlGetChildByTag(node, "delay", "xmlns", _T("urn:xmpp:delay"));
+	HXML n = XmlGetChildByTag(node, "delay", "xmlns", _T("urn:xmpp:delay"));
 	if (n == NULL)
 		return false;
 
-	const TCHAR *ptszTimeStamp = xmlGetAttrValue(n, _T("stamp"));
+	const TCHAR *ptszTimeStamp = XmlGetAttrValue(n, _T("stamp"));
 	if (ptszTimeStamp == NULL)
 		return false;
 
@@ -935,18 +935,17 @@ void __cdecl CJabberProto::LoadHttpAvatars(void* param)
 			if (res->resultCode == 200 && res->dataLength) {
 				int pictureType = ProtoGetBufferFormat(res->pData);
 				if (pictureType != PA_FORMAT_UNKNOWN) {
-					PROTO_AVATAR_INFORMATIONT AI;
-					AI.cbSize = sizeof(AI);
-					AI.format = pictureType;
-					AI.hContact = avs[i].hContact;
+					PROTO_AVATAR_INFORMATION ai;
+					ai.format = pictureType;
+					ai.hContact = avs[i].hContact;
 
-					if (getByte(AI.hContact, "AvatarType", PA_FORMAT_UNKNOWN) != (unsigned char)pictureType) {
+					if (getByte(ai.hContact, "AvatarType", PA_FORMAT_UNKNOWN) != (unsigned char)pictureType) {
 						TCHAR tszFileName[MAX_PATH];
-						GetAvatarFileName(AI.hContact, tszFileName, SIZEOF(tszFileName));
+						GetAvatarFileName(ai.hContact, tszFileName, _countof(tszFileName));
 						DeleteFile(tszFileName);
 					}
 
-					setByte(AI.hContact, "AvatarType", pictureType);
+					setByte(ai.hContact, "AvatarType", pictureType);
 
 					char buffer[2 * MIR_SHA1_HASH_SIZE + 1];
 					BYTE digest[MIR_SHA1_HASH_SIZE];
@@ -956,20 +955,20 @@ void __cdecl CJabberProto::LoadHttpAvatars(void* param)
 					mir_sha1_finish(&sha, digest);
 					bin2hex(digest, sizeof(digest), buffer);
 
-					ptrA cmpsha(getStringA(AI.hContact, "AvatarSaved"));
+					ptrA cmpsha(getStringA(ai.hContact, "AvatarSaved"));
 					if (cmpsha == NULL || strnicmp(cmpsha, buffer, sizeof(buffer))) {
 						TCHAR tszFileName[MAX_PATH];
-						GetAvatarFileName(AI.hContact, tszFileName, SIZEOF(tszFileName));
-						_tcsncpy_s(AI.filename, tszFileName, _TRUNCATE);
+						GetAvatarFileName(ai.hContact, tszFileName, _countof(tszFileName));
+						_tcsncpy_s(ai.filename, tszFileName, _TRUNCATE);
 						FILE* out = _tfopen(tszFileName, _T("wb"));
 						if (out != NULL) {
 							fwrite(res->pData, res->dataLength, 1, out);
 							fclose(out);
-							setString(AI.hContact, "AvatarSaved", buffer);
-							ProtoBroadcastAck(AI.hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, &AI, 0);
-							debugLog(_T("Broadcast new avatar: %s"), AI.filename);
+							setString(ai.hContact, "AvatarSaved", buffer);
+							ProtoBroadcastAck(ai.hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, &ai, 0);
+							debugLog(_T("Broadcast new avatar: %s"), ai.filename);
 						}
-						else ProtoBroadcastAck(AI.hContact, ACKTYPE_AVATAR, ACKRESULT_FAILED, &AI, 0);
+						else ProtoBroadcastAck(ai.hContact, ACKTYPE_AVATAR, ACKRESULT_FAILED, &ai, 0);
 					}
 				}
 			}

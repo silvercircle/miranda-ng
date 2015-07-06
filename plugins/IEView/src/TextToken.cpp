@@ -78,7 +78,7 @@ static int countNoWhitespace(const wchar_t *str)
 
 TextToken* TextToken::tokenizeBBCodes(const wchar_t *text)
 {
-	return tokenizeBBCodes(text, (int)wcslen(text));
+	return tokenizeBBCodes(text, (int)mir_wstrlen(text));
 }
 
 // TODO: Add the following BBCodes: code
@@ -239,7 +239,7 @@ TextToken* TextToken::tokenizeLinks(const wchar_t *text)
 {
 	TextToken *firstToken = NULL, *lastToken = NULL;
 	int textLen = 0;
-	int l = (int)wcslen(text);
+	int l = (int)mir_wstrlen(text);
 	for (int i = 0; i <= l;) {
 		int newTokenType, newTokenSize;
 		int urlLen = Utils::detectURL(text + i);
@@ -295,7 +295,7 @@ TextToken* TextToken::tokenizeLinks(const wchar_t *text)
 TextToken* TextToken::tokenizeSmileys(MCONTACT hContact, const char *proto, const wchar_t *text, bool isSent)
 {
 	TextToken *firstToken = NULL, *lastToken = NULL;
-	int l = (int)wcslen(text);
+	int l = (int)mir_wstrlen(text);
 	if (!Options::isSmileyAdd())
 		return new TextToken(TEXT, text, l);
 
@@ -352,7 +352,7 @@ TextToken* TextToken::tokenizeChatFormatting(const wchar_t *text)
 {
 	TextToken *firstToken = NULL, *lastToken = NULL;
 	int textLen = 0;
-	int l = (int)wcslen(text);
+	int l = (int)mir_wstrlen(text);
 	wchar_t* tokenBuffer = new wchar_t[l + 1];
 	for (int i = 0; i <= l;) {
 		int newTokenType = TEXT;
@@ -479,18 +479,18 @@ wchar_t *TextToken::htmlEncode(const wchar_t *str)
 	wchar_t *output = new wchar_t[c + 1];
 	for (out = output, ptr = str; *ptr != '\0'; ptr++) {
 		if (*ptr == ' ' && wasSpace) {
-			wcscpy(out, L"&nbsp;");
+			mir_wstrcpy(out, L"&nbsp;");
 			out += 6;
 		}
 		else {
 			wasSpace = false;
 			switch (*ptr) {
-			case '\n': wcscpy(out, L"<br>"); out += 4; break;
+			case '\n': mir_wstrcpy(out, L"<br>"); out += 4; break;
 			case '\r': break;
-			case '&': wcscpy(out, L"&amp;"); out += 5; break;
-			case '>': wcscpy(out, L"&gt;"); out += 4; break;
-			case '<': wcscpy(out, L"&lt;"); out += 4; break;
-			case '"': wcscpy(out, L"&quot;"); out += 6; break;
+			case '&': mir_wstrcpy(out, L"&amp;"); out += 5; break;
+			case '>': mir_wstrcpy(out, L"&gt;"); out += 4; break;
+			case '<': mir_wstrcpy(out, L"&lt;"); out += 4; break;
+			case '"': mir_wstrcpy(out, L"&quot;"); out += 6; break;
 			case ' ': wasSpace = true;
 			default: *out = *ptr; out++;
 			}
@@ -521,7 +521,7 @@ void TextToken::toString(CMStringW &str)
 					if (match != NULL) {
 						match += 2;
 						wchar_t *match2 = wcsstr(match, L"&");
-						int len = match2 != NULL ? match2 - match : (int)wcslen(match);
+						int len = match2 != NULL ? match2 - match : (int)mir_wstrlen(match);
 						match = mir_wstrdup(match);
 						match[len] = 0;
 						int width = 0;

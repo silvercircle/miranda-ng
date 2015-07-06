@@ -134,12 +134,8 @@ DWORD LastMessageTimestamp(MCONTACT hContact, bool received)
 void FormatTimestamp(DWORD ts, char *szFormat, TCHAR *buff, int bufflen)
 {
 	TCHAR swzForm[16];
-	DBTIMETOSTRINGT dbt = {0};
-	dbt.cbDest = bufflen;
-	dbt.szDest = buff;
 	a2t(szFormat, swzForm, 16);
-	dbt.szFormat = swzForm;
-	CallService(MS_DB_TIME_TIMESTAMPTOSTRINGT, (WPARAM)ts, (LPARAM)&dbt);
+	TimeZone_ToStringT(ts, swzForm, buff, bufflen);
 }
 
 bool Uid(MCONTACT hContact, char *szProto, TCHAR *buff, int bufflen)
@@ -265,12 +261,12 @@ bool GetSysSubstText(MCONTACT hContact, TCHAR *swzRawSpec, TCHAR *buff, int buff
 		}
 	}
 	else if (!mir_tstrcmp(swzRawSpec, _T("account"))) {
-		char *szProto = (char*)CallService(MS_PROTO_GETCONTACTBASEACCOUNT, hContact, 0);
+		char *szProto = Proto_GetBaseAccountName(hContact);
 		if ((INT_PTR)szProto == CALLSERVICE_NOTFOUND) {
 			return GetSysSubstText(hContact, _T("proto"), buff, bufflen);
 		}
 		else if (szProto) {
-			PROTOACCOUNT *pa = ProtoGetAccount(szProto);
+			PROTOACCOUNT *pa = Proto_GetAccount(szProto);
 			if (pa && pa->tszAccountName) {
 				_tcsncpy(buff, pa->tszAccountName, bufflen);
 				return true;
@@ -280,7 +276,7 @@ bool GetSysSubstText(MCONTACT hContact, TCHAR *swzRawSpec, TCHAR *buff, int buff
 		}
 	}
 	else if (!mir_tstrcmp(swzRawSpec, _T("time"))) {
-		if (tmi.printDateTime && !tmi.printDateTimeByContact(hContact, _T("t"), buff, bufflen, TZF_KNOWNONLY))
+		if (!printDateTimeByContact(hContact, _T("t"), buff, bufflen, TZF_KNOWNONLY))
 			return true;
 	}
 	else if (!mir_tstrcmp(swzRawSpec, _T("uidname"))) {
@@ -309,7 +305,7 @@ bool GetSysSubstText(MCONTACT hContact, TCHAR *swzRawSpec, TCHAR *buff, int buff
 		if (!hSubContact)
 			return false;
 		
-		TCHAR *swzNick = (TCHAR *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, (WPARAM)hSubContact, GCDNF_TCHAR);
+		TCHAR *swzNick = (TCHAR *)pcli->pfnGetContactDisplayName(hSubContact, 0);
 		if (swzNick) _tcsncpy(buff, swzNick, bufflen);
 		return true;
 	}
@@ -512,7 +508,7 @@ bool ApplySubst(MCONTACT hContact, const TCHAR *swzSource, bool parseTipperVarsF
 					if (*p) {
 						char *cp = GetContactProto(hContact);
 						if (cp != NULL) {
-							PROTOACCOUNT *acc = ProtoGetAccount(cp);
+							PROTOACCOUNT *acc = Proto_GetAccount(cp);
 							if (acc != NULL) {
 								cp = acc->szProtoName;
 							}
@@ -682,7 +678,7 @@ void TruncateString(TCHAR *swzText)
 	if (swzText && opt.iLimitCharCount > 3) {
 		if ((int)mir_tstrlen(swzText) > opt.iLimitCharCount) {
 			swzText[opt.iLimitCharCount - 3] = 0;
-			_tcscat(swzText, _T("..."));
+			mir_tstrcat(swzText, _T("..."));
 		}
 	}
 }
@@ -814,7 +810,7 @@ TCHAR *GetJabberAdvStatusText(char *szProto, const char *szSlot, const char *szV
 		return NULL;
 
 	char szSetting[128];
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%s/%s/%s", szProto, szSlot, szValue);
+	mir_snprintf(szSetting, "%s/%s/%s", szProto, szSlot, szValue);
 	if (!db_get_ts(0, "AdvStatus", szSetting, &dbv)) {
 		if (mir_tstrlen(dbv.ptszVal) != 0)
 			swzText = mir_tstrdup(dbv.ptszVal);
@@ -836,9 +832,9 @@ HICON GetJabberActivityIcon(MCONTACT hContact, char *szProto)
 		return NULL;
 
 	char szSetting[128];
-	mir_snprintf(szSetting, SIZEOF(szSetting), "%s/%s/%s", szProto, "activity", "icon");
+	mir_snprintf(szSetting, "%s/%s/%s", szProto, "activity", "icon");
 	if (!db_get_s(hContact, "AdvStatus", szSetting, &dbv)) {
-		hIcon = Skin_GetIcon(dbv.pszVal);
+		hIcon = IcoLib_GetIcon(dbv.pszVal);
 		db_free(&dbv);
 	}
 

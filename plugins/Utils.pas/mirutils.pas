@@ -62,7 +62,7 @@ const
 
 function SetButtonIcon(btn:HWND;name:PAnsiChar):HICON;
 begin
-  result:=CallService(MS_SKIN2_GETICON,0,LPARAM(name));
+  result:=IcoLib_GetIcon(name,0);
   SendMessage(btn,BM_SETIMAGE,IMAGE_ICON,result);
 end;
 
@@ -132,7 +132,7 @@ const
 function MirandaCP:integer;
 begin
   if MirCP<0 then
-    MirCP:=CallService(MS_LANGPACK_GETCODEPAGE,0,0);
+    MirCP:=Langpack_GetDefaultCodePage;
   result:=MirCP;
 end;
 
@@ -146,19 +146,11 @@ function ParseVarString(astr:PAnsiChar;aContact:TMCONTACT=0;extra:PAnsiChar=nil)
 var
   tfi:TFORMATINFO;
   tmp,pc:PAnsiChar;
-  dat:TREPLACEVARSDATA;
 begin
   if (astr=nil) or (astr^=#0) then exit;
 
-  if ServiceExists(MS_UTILS_REPLACEVARS)<>0 then
-  begin
-    FillChar(dat,SizeOf(TREPLACEVARSDATA),0);
-    dat.cbSize :=SizeOf(TREPLACEVARSDATA);
-    pc:=PAnsiChar(CallService(MS_UTILS_REPLACEVARS,wparam(astr),lparam(@dat)));
-    astr:=pc;
-  end
-  else
-    pc:=nil;
+  pc:=Utils_ReplaceVars(astr);
+  astr:=pc;
 
   if isVarsInstalled then
   begin
@@ -185,20 +177,11 @@ function ParseVarString(astr:PWideChar;aContact:TMCONTACT=0;extra:PWideChar=nil)
 var
   tfi:TFORMATINFO;
   tmp,pc:PWideChar;
-  dat:TREPLACEVARSDATA;
 begin
   if (astr=nil) or (astr^=#0) then exit;
 
-  if ServiceExists(MS_UTILS_REPLACEVARS)<>0 then
-  begin
-    FillChar(dat,SizeOf(TREPLACEVARSDATA),0);
-    dat.cbSize :=SizeOf(TREPLACEVARSDATA);
-    dat.dwflags:=RVF_UNICODE;
-    pc:=PWideChar(CallService(MS_UTILS_REPLACEVARS,wparam(astr),lparam(@dat)));
-    astr:=pc;
-  end
-  else
-    pc:=nil;
+  pc:=Utils_ReplaceVarsW(astr);
+  astr:=pc;
 
   if isVarsInstalled then
   begin
@@ -701,7 +684,6 @@ var
   sid:TSKINICONDESC;
 begin
   FillChar(sid,SizeOf(TSKINICONDESC),0);
-  sid.cbSize     :=SizeOf(TSKINICONDESC);
   sid.cx         :=16;
   sid.cy         :=16;
   sid.flags      :=0;

@@ -7,6 +7,7 @@ HINSTANCE hInst;
 HHOOK hHook;
 HWND hDummyWnd = NULL, hHelperWnd = NULL, hMirandaWnd = NULL;
 int hLangpack;
+CLIST_INTERFACE *pcli;
 
 PLUGININFOEX pluginInfo = {
 	sizeof(PLUGININFOEX),
@@ -74,12 +75,12 @@ void CreateHelperWnd()
 	wcex.cbClsExtra = 0;
 	wcex.cbWndExtra = 0;
 	wcex.hInstance = hInst;
-	wcex.hIcon = LoadSkinnedIconBig(SKINICON_OTHER_MIRANDA);
+	wcex.hIcon = Skin_LoadIcon(SKINICON_OTHER_MIRANDA, true);
 	wcex.hCursor = NULL;
 	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	wcex.lpszMenuName = NULL;
 	wcex.lpszClassName = _T("ZeroSwitchHlp");
-	wcex.hIconSm = LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
+	wcex.hIconSm = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
 
 	if (NULL == RegisterClassEx(&wcex))
 		return; // wtf
@@ -113,7 +114,7 @@ LRESULT CALLBACK CallWndRetProc(int nCode, WPARAM wParam, LPARAM lParam)
 	{
 		pMes = (PCWPRETSTRUCT)lParam; // Get message details
 		if (!hMirandaWnd)
-			hMirandaWnd = (HWND) CallService(MS_CLUI_GETHWND,0,0);//FindWindow(_T("Miranda"), NULL);
+			hMirandaWnd = pcli->hwndContactList;
 
 		if (pMes->hwnd == hMirandaWnd)
 		{
@@ -132,6 +133,7 @@ LRESULT CALLBACK CallWndRetProc(int nCode, WPARAM wParam, LPARAM lParam)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
+ 	mir_getCLI();
 
 	if (IsWinVerVistaPlus()) {
 		MessageBox(NULL, TranslateT("Plugin works under Windows XP only"), TranslateT("ZeroSwitch plugin failed"), MB_ICONSTOP);

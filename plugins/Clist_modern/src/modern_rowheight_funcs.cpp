@@ -24,11 +24,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 Created by Pescuma, modified by Artem Shpynov
 */
 
-#include "hdr/modern_commonheaders.h"
-#include "hdr/modern_rowheight_funcs.h"
-#include "hdr/modern_commonprototypes.h"
-#include "hdr/modern_row.h"
-#include "hdr/modern_clcpaint.h"
+#include "stdafx.h"
+#include "modern_rowheight_funcs.h"
+#include "modern_commonprototypes.h"
+#include "modern_row.h"
+#include "modern_clcpaint.h"
 
 int g_mutex_nCalcRowHeightLock = 0;
 int mod_CalcRowHeight_worker(ClcData *dat, HWND hwnd, ClcContact *contact, int item);
@@ -288,7 +288,7 @@ int mod_CalcRowHeight_worker(ClcData *dat, HWND hwnd, ClcContact *contact, int i
 					if (item == -1) {
 						TCHAR szResult[80];
 
-						if (!tmi.printDateTime(pdnce->hTimeZone, _T("t"), szResult, SIZEOF(szResult), 0)) {
+						if (!TimeZone_PrintDateTime(pdnce->hTimeZone, _T("t"), szResult, _countof(szResult), 0)) {
 							SIZE text_size = { 0 };
 							RECT rc = { 0 };
 							// Select font
@@ -397,7 +397,7 @@ int RowHeights_GetMaxRowHeight(ClcData *dat, HWND hwnd)
 	if (!dat->text_ignore_size_for_row_height) {
 		// Get contact font size
 		tmp = 0;
-		for (i = 0; i < SIZEOF(contact_fonts); i++)
+		for (i = 0; i < _countof(contact_fonts); i++)
 			if (tmp < dat->fontModernInfo[contact_fonts[i]].fontHeight)
 				tmp = dat->fontModernInfo[contact_fonts[i]].fontHeight;
 
@@ -421,7 +421,7 @@ int RowHeights_GetMaxRowHeight(ClcData *dat, HWND hwnd)
 		}
 
 		// Get other font sizes
-		for (i = 0; i < SIZEOF(other_fonts); i++)
+		for (i = 0; i < _countof(other_fonts); i++)
 			if (max_height < dat->fontModernInfo[other_fonts[i]].fontHeight)
 				max_height = dat->fontModernInfo[other_fonts[i]].fontHeight;
 	}

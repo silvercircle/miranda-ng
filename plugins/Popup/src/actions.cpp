@@ -48,11 +48,11 @@ void LoadActions()
 #if defined(_DEBUG)
 		{ sizeof(POPUPACTION), IcoLib_GetIcon(ICO_POPUP_ON, 0), "Popup Plus/Test action", PAF_ENABLED },
 		{ sizeof(POPUPACTION), IcoLib_GetIcon(ICO_ACT_CLOSE, 0), "Popup Plus/Second test action", 0 },
-		{ sizeof(POPUPACTION), LoadSkinnedIcon(SKINICON_OTHER_MIRANDA), "Popup Plus/One more action", PAF_ENABLED },
+		{ sizeof(POPUPACTION), Skin_LoadIcon(SKINICON_OTHER_MIRANDA), "Popup Plus/One more action", PAF_ENABLED },
 #endif
 	};
 
-	for (int i = 0; i < SIZEOF(actions); ++i)
+	for (int i = 0; i < _countof(actions); ++i)
 		RegisterAction(&actions[i]);
 }
 
@@ -143,7 +143,8 @@ DWORD MouseOverride(HWND hCombo, int number)
 
 // options
 
-void LoadOption_Actions() {
+void LoadOption_Actions()
+{
 	PopupOptions.actions = db_get_dw(NULL, MODULNAME, "Actions",
 		ACT_ENABLE | ACT_RIGHTICONS | ACT_DEF_KEEPWND | ACT_DEF_IMONLY |
 		ACT_DEF_NOGLOBAL | ACT_DEF_MESSAGE | ACT_DEF_DETAILS | ACT_DEF_MENU |
@@ -238,9 +239,7 @@ INT_PTR CALLBACK DlgProcPopupActions(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 				mir_strncpy(szGroup, gActions[i]->lpzTitle, szName - gActions[i]->lpzTitle);
 
 				int grpId = 0;
-
-				if ((grpId = groups.getIndex(szGroup)) < 0)
-				{
+				if ((grpId = groups.getIndex(szGroup)) < 0) {
 					LVGROUP group = { 0 };
 					group.cbSize = sizeof(group);
 					group.mask = LVGF_HEADER | LVGF_GROUPID;
@@ -269,7 +268,7 @@ INT_PTR CALLBACK DlgProcPopupActions(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 			}
 
 			BOOL enabled = (PopupOptions.actions & ACT_ENABLE) ? TRUE : FALSE;
-			for (i = 0; i < SIZEOF(controls); ++i)
+			for (i = 0; i < _countof(controls); ++i)
 				EnableWindow(GetDlgItem(hwnd, controls[i]), enabled);
 		}
 		windowInitialized = true;
@@ -283,7 +282,7 @@ INT_PTR CALLBACK DlgProcPopupActions(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 			SendMessage(GetParent(hwnd), PSM_CHANGED, 0, 0);
 			{
 				BOOL enabled = (PopupOptions.actions & ACT_ENABLE) ? TRUE : FALSE;
-				for (i = 0; i < SIZEOF(controls); ++i)
+				for (i = 0; i < _countof(controls); ++i)
 					EnableWindow(GetDlgItem(hwnd, controls[i]), enabled);
 			}
 			break;

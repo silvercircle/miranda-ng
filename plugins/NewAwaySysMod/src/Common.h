@@ -153,8 +153,8 @@
 
 #define DB_SETTINGSVER "SettingsVer"
 
-#ifndef SIZEOF
-#define SIZEOF(s) (sizeof(s) / sizeof(*s))
+#ifndef _countof
+#define _countof(s) (sizeof(s) / sizeof(*s))
 #endif
 
 #define UM_ICONSCHANGED (WM_USER + 121)
@@ -294,7 +294,7 @@ TCString VariablesEscape(TCString Str);
 INT_PTR CALLBACK SetAwayMsgDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 // ReadAwayMsg.cpp
-extern HANDLE g_hReadWndList;
+extern MWindowList g_hReadWndList;
 INT_PTR GetContactStatMsg(WPARAM wParam, LPARAM lParam);
 
 // AwayOpt.cpp
@@ -322,15 +322,15 @@ static __inline int LogMessage(const char *Format, ...)
 	char szText[8096];
 	mir_strcpy(szText, LOG_PREFIX);
 	va_start(va, Format);
-	mir_vsnprintf(szText + (SIZEOF(LOG_PREFIX) - 1), sizeof(szText) - (SIZEOF(LOG_PREFIX) - 1), Format, va);
+	mir_vsnprintf(szText + (_countof(LOG_PREFIX) - 1), sizeof(szText) - (_countof(LOG_PREFIX) - 1), Format, va);
 	va_end(va);
 	return CallService(MS_NETLIB_LOG, NULL, (LPARAM)szText);
 }
 
-__inline int CallAllowedPS_SETAWAYMSG(const char *szProto, int iMode, const char *szMsg)
+__inline int CallAllowedPS_SETAWAYMSG(const char *szProto, int iMode, const TCHAR *szMsg)
 { // we must use this function everywhere we want to call PS_SETAWAYMSG, otherwise NAS won't allow to change the message!
-	LogMessage("PS_SETAWAYMSG called by NAS. szProto=%s, Status=%d, Msg:\n%s", szProto, iMode, szMsg ? szMsg : "NULL");
-	return CallProtoService(szProto, PS_SETAWAYMSG, (WPARAM)iMode, (LPARAM)szMsg);
+	LogMessage("PS_SETAWAYMSG called by NAS. szProto=%s, Status=%d, Msg:\n%S", szProto, iMode, szMsg ? szMsg : _T("NULL"));
+	return CallProtoService(szProto, PS_SETAWAYMSG, iMode, (LPARAM)szMsg);
 }
 
 static __inline int my_variables_showhelp(HWND hwndDlg, UINT uIDEdit, int flags = 0, char *szSubjectDesc = NULL, char *szExtraDesc = NULL)

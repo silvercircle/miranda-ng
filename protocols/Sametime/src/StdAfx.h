@@ -37,7 +37,6 @@ extern "C" {
 #include <mw_session.h>
 #include <mw_cipher.h>
 #include <mw_st_list.h>
-//#include <mw_util.h>
 #include <mw_service.h>
 #include <mw_channel.h>
 #include <mw_srvc_im.h>
@@ -65,7 +64,6 @@ extern "C" {
 #include <m_netlib.h>
 #include <m_database.h>
 #include <m_protocols.h>
-#include <m_protomod.h>
 #include <m_protosvc.h>
 #include <m_ignore.h>
 #include <m_clui.h>

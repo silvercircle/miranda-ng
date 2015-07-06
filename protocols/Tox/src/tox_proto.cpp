@@ -1,10 +1,10 @@
 #include "stdafx.h"
 
 CToxProto::CToxProto(const char* protoName, const TCHAR* userName) :
-	PROTO<CToxProto>(protoName, userName),
-	tox(NULL), toxAv(NULL), password(NULL),
-	isTerminated(false), isConnected(false),
-	hPollingThread(NULL), hOutDevice(NULL)
+PROTO<CToxProto>(protoName, userName),
+tox(NULL), toxAv(NULL), password(NULL),
+isTerminated(false), isConnected(false),
+hPollingThread(NULL), hOutDevice(NULL)
 {
 	InitNetlib();
 
@@ -20,9 +20,9 @@ CToxProto::CToxProto(const char* protoName, const TCHAR* userName) :
 
 	// avatars
 	CreateProtoService(PS_GETAVATARCAPS, &CToxProto::GetAvatarCaps);
-	CreateProtoService(PS_GETAVATARINFOT, &CToxProto::GetAvatarInfo);
-	CreateProtoService(PS_GETMYAVATART, &CToxProto::GetMyAvatar);
-	CreateProtoService(PS_SETMYAVATART, &CToxProto::SetMyAvatar);
+	CreateProtoService(PS_GETAVATARINFO, &CToxProto::GetAvatarInfo);
+	CreateProtoService(PS_GETMYAVATAR, &CToxProto::GetMyAvatar);
+	CreateProtoService(PS_SETMYAVATAR, &CToxProto::SetMyAvatar);
 
 	// nick
 	CreateProtoService(PS_SETMYNICKNAME, &CToxProto::SetMyNickname);
@@ -63,21 +63,18 @@ DWORD_PTR CToxProto::GetCaps(int type, MCONTACT)
 
 MCONTACT CToxProto::AddToList(int flags, PROTOSEARCHRESULT *psr)
 {
-	ptrA address(mir_t2a(psr->id));
 	ptrA myAddress(getStringA(NULL, TOX_SETTINGS_ID));
-	if (strnicmp(address, myAddress, TOX_PUBLIC_KEY_SIZE) == 0)
+	if (strnicmp(psr->id.a, myAddress, TOX_PUBLIC_KEY_SIZE) == 0)
 	{
 		ShowNotification(TranslateT("You cannot add yourself to your contact list"), 0);
 		return NULL;
 	}
-	MCONTACT hContact = GetContact((char*)address);
-	if (hContact)
+	if (MCONTACT hContact = GetContact(psr->id.a))
 	{
 		ShowNotification(TranslateT("Contact already in your contact list"), 0, hContact);
 		return NULL;
 	}
-	// set tox address as contact public key
-	return AddContact(address, _T(""), flags & PALF_TEMPORARY);
+	return AddContact(psr->id.a, psr->nick.a, psr->email.a, flags & PALF_TEMPORARY);
 }
 
 int CToxProto::Authorize(MEVENT hDbEvent)
@@ -94,13 +91,13 @@ int CToxProto::AuthRecv(MCONTACT, PROTORECVEVENT* pre)
 	return Proto_AuthRecv(m_szModuleName, pre);
 }
 
-int CToxProto::AuthRequest(MCONTACT hContact, const PROTOCHAR *szMessage)
+int CToxProto::AuthRequest(MCONTACT hContact, const TCHAR *szMessage)
 {
 	ptrA reason(mir_utf8encodeW(szMessage));
 	return OnRequestAuth(hContact, (LPARAM)reason);
 }
 
-HANDLE CToxProto::FileAllow(MCONTACT hContact, HANDLE hTransfer, const PROTOCHAR *tszPath)
+HANDLE CToxProto::FileAllow(MCONTACT hContact, HANDLE hTransfer, const TCHAR *tszPath)
 {
 	return OnFileAllow(hContact, hTransfer, tszPath);
 }
@@ -110,12 +107,12 @@ int CToxProto::FileCancel(MCONTACT hContact, HANDLE hTransfer)
 	return OnFileCancel(hContact, hTransfer);
 }
 
-int CToxProto::FileDeny(MCONTACT hContact, HANDLE hTransfer, const PROTOCHAR*)
+int CToxProto::FileDeny(MCONTACT hContact, HANDLE hTransfer, const TCHAR*)
 {
 	return FileCancel(hContact, hTransfer);
 }
 
-int CToxProto::FileResume(HANDLE hTransfer, int *action, const PROTOCHAR **szFilename)
+int CToxProto::FileResume(HANDLE hTransfer, int *action, const TCHAR **szFilename)
 {
 	return OnFileResume(hTransfer, action, szFilename);
 }
@@ -140,7 +137,7 @@ int CToxProto::SendMsg(MCONTACT hContact, int, const char *msg)
 	return OnSendMessage(hContact, msg);
 }
 
-HANDLE CToxProto::SendFile(MCONTACT hContact, const PROTOCHAR *msg, PROTOCHAR **ppszFiles)
+HANDLE CToxProto::SendFile(MCONTACT hContact, const TCHAR *msg, TCHAR **ppszFiles)
 {
 	return OnSendFile(hContact, msg, ppszFiles);
 }
@@ -215,7 +212,7 @@ int CToxProto::SetStatus(int iNewStatus)
 
 HANDLE CToxProto::GetAwayMsg(MCONTACT) { return 0; }
 
-int CToxProto::SetAwayMsg(int, const PROTOCHAR *msg)
+int CToxProto::SetAwayMsg(int, const TCHAR *msg)
 {
 	if (IsOnline())
 	{

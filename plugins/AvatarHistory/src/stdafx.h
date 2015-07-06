@@ -16,6 +16,7 @@
 #include <m_langpack.h>
 #include <m_history.h>
 #include <m_imgsrvc.h>
+#include <m_timezones.h>
 #include <m_icolib.h>
 #include <win2k.h>
 
@@ -33,7 +34,7 @@
 extern HINSTANCE hInst;
 extern HGENMENU hMenu;
 extern DWORD mirVer;
-extern HANDLE hAvatarWindowsList;
+extern MWindowList hAvatarWindowsList;
 extern Options opts;
 extern HANDLE hFolder;
 extern TCHAR basedir[];
@@ -69,8 +70,8 @@ int OpenAvatarDialog(MCONTACT hContact, char* fn);
 // utils
 
 TCHAR* GetCachedAvatar(char *proto, TCHAR *hash);
-BOOL   ProtocolEnabled(const char *proto);
-BOOL   ContactEnabled(MCONTACT hContact, char *setting, int def);
+bool   ProtocolEnabled(const char *proto);
+bool   ContactEnabled(MCONTACT hContact, char *setting, int def);
 BOOL   CopyImageFile(TCHAR *old_file, TCHAR *new_file);
 void   ConvertToFilename(TCHAR *str, size_t size);
 

@@ -85,7 +85,7 @@ void TlenResetSearchQuery(TlenProtocol *proto) {
 	proto->searchID = TlenSerialNext(proto);
 }
 
-HANDLE TlenProtocol::SearchBasic(const PROTOCHAR* id)
+HANDLE TlenProtocol::SearchBasic(const TCHAR* id)
 {
 	int iqId = 0;
 	if (!isOnline) return 0;
@@ -103,7 +103,7 @@ HANDLE TlenProtocol::SearchBasic(const PROTOCHAR* id)
 	return (HANDLE)iqId;
 }
 
-HANDLE TlenProtocol::SearchByEmail(const PROTOCHAR* email)
+HANDLE TlenProtocol::SearchByEmail(const TCHAR* email)
 {
 	int iqId = 0;
 
@@ -122,7 +122,7 @@ HANDLE TlenProtocol::SearchByEmail(const PROTOCHAR* email)
 	return (HANDLE)iqId;
 }
 
-HANDLE TlenProtocol::SearchByName(const PROTOCHAR* nickT, const PROTOCHAR* firstNameT, const PROTOCHAR* lastNameT)
+HANDLE TlenProtocol::SearchByName(const TCHAR* nickT, const TCHAR* firstNameT, const TCHAR* lastNameT)
 {
 	if (!isOnline) return 0;
 
@@ -183,7 +183,7 @@ static MCONTACT AddToListByJID(TlenProtocol *proto, const char *newJid, DWORD fl
 		// not already there: add
 		char *jid = mir_strdup(newJid); _strlwr(jid);
 		hContact = (MCONTACT) CallService(MS_DB_CONTACT_ADD, 0, 0);
-		CallService(MS_PROTO_ADDTOCONTACT, hContact, (LPARAM) proto->m_szModuleName);
+		Proto_AddToContact(hContact, proto->m_szModuleName);
 		db_set_s(hContact, proto->m_szModuleName, "jid", jid);
 		char *nick=TlenNickFromJID(newJid);
 		if (nick == NULL)
@@ -309,7 +309,7 @@ int TlenProtocol::Authorize(MEVENT hDbEvent)
 	return 0;
 }
 
-int TlenProtocol::AuthDeny(MEVENT hDbEvent, const PROTOCHAR* szReason)
+int TlenProtocol::AuthDeny(MEVENT hDbEvent, const TCHAR* szReason)
 {
 	if (!isOnline)
 		return 1;
@@ -411,7 +411,7 @@ INT_PTR TlenProtocol::GetStatus(WPARAM wParam, LPARAM lParam)
 	return m_iStatus;
 }
 
-int TlenProtocol::SetAwayMsg(int iStatus, const PROTOCHAR* msg)
+int TlenProtocol::SetAwayMsg(int iStatus, const TCHAR* msg)
 {
 	char **szMsg;
 	char *newModeMsg;
@@ -569,7 +569,7 @@ static void __cdecl TlenGetAwayMsgThread(void *ptr)
 		if (item != NULL) {
 			db_free(&dbv);
 			ProtoBroadcastAck(data->proto->m_szModuleName, data->hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, (HANDLE)1,
-				item->statusMessage==NULL ? (LPARAM)NULL : (LPARAM)(TCHAR*)_A2T(item->statusMessage));
+				item->statusMessage == NULL ? NULL : _A2T(item->statusMessage));
 		} else {
 			ptrA ownJid(db_get_sa(NULL, data->proto->m_szModuleName, "jid"));
 			if (!mir_strcmp(ownJid, dbv.pszVal)){
@@ -665,10 +665,10 @@ INT_PTR TlenProtocol::GetAvatarInfo(WPARAM wParam, LPARAM lParam)
 	char *avatarHash = NULL;
 	TLEN_LIST_ITEM *item = NULL;
 	DBVARIANT dbv;
-	PROTO_AVATAR_INFORMATIONT* AI = ( PROTO_AVATAR_INFORMATIONT* )lParam;
+	PROTO_AVATAR_INFORMATION *pai = (PROTO_AVATAR_INFORMATION*)lParam;
 
-	if (AI->hContact != NULL) {
-		if (!db_get(AI->hContact, m_szModuleName, "jid", &dbv)) {
+	if (pai->hContact != NULL) {
+		if (!db_get(pai->hContact, m_szModuleName, "jid", &dbv)) {
 			item = TlenListGetItemPtr(this, LIST_ROSTER, dbv.pszVal);
 			db_free(&dbv);
 			if (item != NULL) {
@@ -684,13 +684,13 @@ INT_PTR TlenProtocol::GetAvatarInfo(WPARAM wParam, LPARAM lParam)
 		return GAIR_NOAVATAR;
 
 	if (avatarHash != NULL && !downloadingAvatar) {
-		TlenGetAvatarFileName(this, item, AI->filename, SIZEOF(AI->filename)-1);
-		AI->format = ( AI->hContact == NULL ) ? threadData->avatarFormat : item->avatarFormat;
+		TlenGetAvatarFileName(this, item, pai->filename, _countof(pai->filename)-1);
+		pai->format = ( pai->hContact == NULL ) ? threadData->avatarFormat : item->avatarFormat;
 		return GAIR_SUCCESS;
 	}
 
 	/* get avatar */
-	if (( wParam & GAIF_FORCE ) != 0 && AI->hContact != NULL && isOnline)
+	if (( wParam & GAIF_FORCE ) != 0 && pai->hContact != NULL && isOnline)
 		return GAIR_WAITFOR;
 
 	return GAIR_NOAVATAR;
@@ -708,12 +708,12 @@ int TlenProtocol::RecvAwayMsg(MCONTACT hContact, int mode, PROTORECVEVENT* evt)
 	return 0;
 }
 
-HANDLE TlenProtocol::FileAllow(MCONTACT hContact, HANDLE hTransfer, const PROTOCHAR* szPath)
+HANDLE TlenProtocol::FileAllow(MCONTACT hContact, HANDLE hTransfer, const TCHAR* szPath)
 {
 	if (!isOnline) return 0;
 
 	TLEN_FILE_TRANSFER *ft = (TLEN_FILE_TRANSFER *) hTransfer;
-	ft->szSavePath = mir_strdup(mir_t2a(szPath));	//TODO convert to PROTOCHAR*
+	ft->szSavePath = mir_strdup(mir_t2a(szPath));	//TODO convert to TCHAR*
 	TLEN_LIST_ITEM *item = TlenListAdd(this, LIST_FILE, ft->iqId);
 	if (item != NULL) {
 		item->ft = ft;
@@ -728,7 +728,7 @@ HANDLE TlenProtocol::FileAllow(MCONTACT hContact, HANDLE hTransfer, const PROTOC
 	return (HANDLE)hTransfer;
 }
 
-int TlenProtocol::FileDeny(MCONTACT hContact, HANDLE hTransfer, const PROTOCHAR* szReason)
+int TlenProtocol::FileDeny(MCONTACT hContact, HANDLE hTransfer, const TCHAR* szReason)
 {
 	if (!isOnline) return 1;
 
@@ -744,7 +744,7 @@ int TlenProtocol::FileDeny(MCONTACT hContact, HANDLE hTransfer, const PROTOCHAR*
 	return 0;
 }
 
-int TlenProtocol::FileResume(HANDLE hTransfer, int* action, const PROTOCHAR** szFilename) {
+int TlenProtocol::FileResume(HANDLE hTransfer, int* action, const TCHAR** szFilename) {
 	return 0;
 }
 
@@ -767,7 +767,7 @@ int TlenProtocol::FileCancel(MCONTACT hContact, HANDLE hTransfer)
 	return 0;
 }
 
-HANDLE TlenProtocol::SendFile(MCONTACT hContact, const PROTOCHAR* szDescription, PROTOCHAR** ppszFiles)
+HANDLE TlenProtocol::SendFile(MCONTACT hContact, const TCHAR* szDescription, TCHAR** ppszFiles)
 {
 	int i, j;
 	struct _stat statbuf;
@@ -800,7 +800,7 @@ HANDLE TlenProtocol::SendFile(MCONTACT hContact, const PROTOCHAR* szDescription,
 	db_free(&dbv);
 
 	int id = TlenSerialNext(this);
-	mir_snprintf(idStr, SIZEOF(idStr), "%d", id);
+	mir_snprintf(idStr, _countof(idStr), "%d", id);
 	TLEN_LIST_ITEM *item = TlenListAdd(this, LIST_FILE, idStr);
 	if (item != NULL) {
 		ft->iqId = mir_strdup(idStr);
@@ -846,7 +846,7 @@ int TlenProtocol::RecvMsg(MCONTACT hContact, PROTORECVEVENT* evt)
 	return Proto_RecvMessage(hContact, evt);
 }
 
-int TlenProtocol::RecvFile(MCONTACT hContact, PROTOFILEEVENT* evt)
+int TlenProtocol::RecvFile(MCONTACT hContact, PROTORECVFILET* evt)
 {
 	return Proto_RecvFile(hContact, evt);
 }
@@ -934,7 +934,7 @@ int TlenProtocol::TlenDbSettingChanged(WPARAM wParam, LPARAM lParam)
 				jid = dbv.pszVal;
 				if ((item=TlenListGetItemPtr(this, LIST_ROSTER, dbv.pszVal)) != NULL) {
 					if (cws->value.type == DBVT_DELETED) {
-						newNick = mir_strdup((char *) CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_NOMYHANDLE));
+						newNick = mir_strdup((char *) pcli->pfnGetContactDisplayName(hContact, GCDNF_NOMYHANDLE));
 					} else if (cws->value.pszVal != NULL) {
 						newNick = settingToChar(cws);
 					} else {
@@ -1160,29 +1160,8 @@ int TlenProtocol::OnEvent(PROTOEVENTTYPE iEventType, WPARAM wParam, LPARAM lPara
 	case EV_PROTO_ONEXIT:    return PreShutdown(0, 0);
 
 	case EV_PROTO_ONRENAME:
-		CLISTMENUITEM mi = { sizeof(mi) };
-		mi.flags = CMIM_NAME | CMIF_TCHAR;
-		mi.ptszName = m_tszUserName;
-		Menu_ModifyItem(hMenuRoot, &mi);
-		/* FIXME: Rename network user as well */
+		Menu_ModifyItem(hMenuRoot, m_tszUserName);
 	}
-	return 1;
-}
-
-// PSS_ADDED
-int TlenProtocol::AuthRecv(MCONTACT hContact, PROTORECVEVENT* evt)
-{
-	return 1;
-}
-
-// PSS_AUTHREQUEST
-int TlenProtocol::AuthRequest(MCONTACT hContact, const PROTOCHAR* szMessage)
-{
-	return 1;
-}
-
-int TlenProtocol::RecvContacts(MCONTACT hContact, PROTORECVEVENT* evt)
-{
 	return 1;
 }
 
@@ -1196,11 +1175,11 @@ INT_PTR TlenProtocol::AccMgrUI(WPARAM wParam, LPARAM lParam)
 void TlenInitServicesVTbl(TlenProtocol *proto)
 {
 	proto->CreateProtoService(PS_GETNAME,        &TlenProtocol::GetName);
-	proto->CreateProtoService(PS_GETAVATARINFOT, &TlenProtocol::GetAvatarInfo);
+	proto->CreateProtoService(PS_GETAVATARINFO, &TlenProtocol::GetAvatarInfo);
 	proto->CreateProtoService(PS_SEND_NUDGE,     &TlenProtocol::SendAlert);
 	proto->CreateProtoService(PS_GETAVATARCAPS,  &TlenProtocol::GetAvatarCaps);
-	proto->CreateProtoService(PS_SETMYAVATART,   &TlenProtocol::SetMyAvatar);
-	proto->CreateProtoService(PS_GETMYAVATART,   &TlenProtocol::GetMyAvatar);
+	proto->CreateProtoService(PS_SETMYAVATAR,   &TlenProtocol::SetMyAvatar);
+	proto->CreateProtoService(PS_GETMYAVATAR,   &TlenProtocol::GetMyAvatar);
 	proto->CreateProtoService(PS_GETSTATUS,      &TlenProtocol::GetStatus);
 	proto->CreateProtoService(PS_CREATEACCMGRUI, &TlenProtocol::AccMgrUI);
 }

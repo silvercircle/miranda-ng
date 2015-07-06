@@ -36,6 +36,7 @@ PLUGININFOEX pluginInfo={
 	{0xf93ba59c, 0x4f48, 0x4f2e, {0x8a, 0x91, 0x77, 0xa2, 0x80, 0x15, 0x27, 0xa3}}
 };
 
+CLIST_INTERFACE *pcli;
 HINSTANCE hInst;
 HIMAGELIST hIml;
 int hLangpack = 0;
@@ -78,6 +79,7 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD miranda
 extern "C" __declspec(dllexport) int Load() 
 {
 	mir_getLP(&pluginInfo);
+	mir_getCLI();
 
 	hQSShowDialog = CreateServiceFunction(MS_QC_SHOW_DIALOG, ShowDialog);
 
@@ -112,7 +114,7 @@ int ModulesLoaded(WPARAM wParam, LPARAM lParam)
 	int pcount = 0;
 	PROTOACCOUNT** pdesc;
 
-	ProtoEnumAccounts(&pcount,&pdesc);
+	Proto_EnumAccounts(&pcount,&pdesc);
 
 	opts.num_protos = pcount;
 
@@ -184,10 +186,10 @@ int ModulesLoaded(WPARAM wParam, LPARAM lParam)
 	hIml = (HIMAGELIST)CallService(MS_CLIST_GETICONSIMAGELIST,0,0);
 
 	// Add menu item
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = 500100001;
 	mi.flags = CMIF_TCHAR;
-	mi.ptszName = LPGENT("Quick Contacts...");
+	mi.name.t = LPGENT("Quick Contacts...");
 	mi.pszService = MS_QC_SHOW_DIALOG;
 	Menu_AddMainMenuItem(&mi);
 	return 0;
@@ -246,7 +248,7 @@ TCHAR *GetListName(c_struct *cs)
 {
 	if (opts.group_append && cs->szgroup[0] != _T('\0'))
 	{
-		mir_sntprintf(tmp_list_name, SIZEOF(tmp_list_name), _T("%s (%s)"), cs->szname, cs->szgroup);
+		mir_sntprintf(tmp_list_name, _countof(tmp_list_name), _T("%s (%s)"), cs->szname, cs->szgroup);
 		return tmp_list_name;
 	}
 	else
@@ -361,7 +363,7 @@ void LoadContacts(HWND hwndDlg, BOOL show_all)
 			{
 				// See if has to show
 				char setting[128];
-				mir_snprintf(setting, SIZEOF(setting), "ShowOffline%s", pszProto);
+				mir_snprintf(setting, "ShowOffline%s", pszProto);
 
 				if (!db_get_b(NULL, MODULE_NAME, setting, FALSE))
 					continue;
@@ -383,7 +385,7 @@ void LoadContacts(HWND hwndDlg, BOOL show_all)
 					continue;
 
 				char setting[128];
-				mir_snprintf(setting, SIZEOF(setting), "ShowOffline%s", META_PROTO);
+				mir_snprintf(setting, "ShowOffline%s", META_PROTO);
 				if (db_get_b(NULL, MODULE_NAME, setting, FALSE))
 					continue;
 			}
@@ -400,19 +402,19 @@ void LoadContacts(HWND hwndDlg, BOOL show_all)
 			if (db_get_ts(hMeta == NULL ? hContact : hMeta, "CList", "Group", &dbv) == 0)
 			{
 				if (dbv.ptszVal != NULL)
-					mir_tstrncpy(contact->szgroup, dbv.ptszVal, SIZEOF(contact->szgroup));
+					mir_tstrncpy(contact->szgroup, dbv.ptszVal, _countof(contact->szgroup));
 
 				db_free(&dbv);
 			}
 		}
 
 		// Make contact name
-		TCHAR *tmp = (TCHAR *) CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR);
-		mir_tstrncpy(contact->szname, tmp, SIZEOF(contact->szname));
+		TCHAR *tmp = (TCHAR *) pcli->pfnGetContactDisplayName(hContact, 0);
+		mir_tstrncpy(contact->szname, tmp, _countof(contact->szname));
 
-		PROTOACCOUNT *acc = ProtoGetAccount(pszProto);
+		PROTOACCOUNT *acc = Proto_GetAccount(pszProto);
 		if (acc != NULL)
-			mir_tstrncpy(contact->proto, acc->tszAccountName, SIZEOF(contact->proto));
+			mir_tstrncpy(contact->proto, acc->tszAccountName, _countof(contact->proto));
 
 		contact->hcontact = hContact;
 		contacts.insert(contact);
@@ -526,7 +528,7 @@ MCONTACT GetSelectedContact(HWND hwndDlg)
 	// Now try the name
 	TCHAR cname[120] = _T("");
 
-	GetDlgItemText(hwndDlg, IDC_USERNAME, cname, SIZEOF(cname));
+	GetDlgItemText(hwndDlg, IDC_USERNAME, cname, _countof(cname));
 			
 	for(int loop = 0; loop < contacts.getCount(); loop++)
 	{
@@ -565,7 +567,7 @@ LRESULT CALLBACK EditProc(HWND hdlg,UINT msg,WPARAM wparam,LPARAM lparam)
 
 			int ret = SendMessage(hdlg,EM_GETSEL,(WPARAM)&start,(LPARAM)&end);
 
-			GetWindowText(hdlg, sztext, SIZEOF(sztext));
+			GetWindowText(hdlg, sztext, _countof(sztext));
 
 			BOOL at_end = (mir_tstrlen(sztext) == (int)end);
 
@@ -585,7 +587,7 @@ LRESULT CALLBACK EditProc(HWND hdlg,UINT msg,WPARAM wparam,LPARAM lparam)
 				}
 
 				SendMessage(hdlg,EM_REPLACESEL,0,(LPARAM)sztext);
-				GetWindowText(hdlg, sztext, SIZEOF(sztext));
+				GetWindowText(hdlg, sztext, _countof(sztext));
 			}
 
 			CheckText(hdlg, sztext, !at_end);
@@ -611,7 +613,7 @@ LRESULT CALLBACK EditProc(HWND hdlg,UINT msg,WPARAM wparam,LPARAM lparam)
 			}
 			else if (wparam == VK_DELETE)
 			{
-				GetWindowText(hdlg, sztext, SIZEOF(sztext));
+				GetWindowText(hdlg, sztext, _countof(sztext));
 				CheckText(hdlg, sztext, TRUE);
 			}
 
@@ -713,7 +715,7 @@ static void FillButton(HWND hwndDlg, int dlgItem, TCHAR *name, TCHAR *key, HICON
 	if (key == NULL)
 		full = TranslateTS(name);
 	else
-		mir_sntprintf(tmp, SIZEOF(tmp), _T("%s (%s)"), TranslateTS(name), key);
+		mir_sntprintf(tmp, _countof(tmp), _T("%s (%s)"), TranslateTS(name), key);
 
 	SendDlgItemMessage(hwndDlg, dlgItem, BUTTONSETASFLATBTN, 0, 0);
 	SendDlgItemMessage(hwndDlg, dlgItem, BUTTONADDTOOLTIP, (LPARAM)full, BATF_TCHAR);
@@ -729,7 +731,7 @@ static void FillCheckbox(HWND hwndDlg, int dlgItem, TCHAR *name, TCHAR *key)
 	if (key == NULL)
 		full = TranslateTS(name);
 	else
-		mir_sntprintf(tmp, SIZEOF(tmp), _T("%s (%s)"), TranslateTS(name), key);
+		mir_sntprintf(tmp, _countof(tmp), _T("%s (%s)"), TranslateTS(name), key);
 
 	SetDlgItemText(hwndDlg, dlgItem, full);
 }
@@ -760,12 +762,12 @@ static INT_PTR CALLBACK MainDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 
 			// Buttons
 			FillCheckbox(hwndDlg, IDC_SHOW_ALL_CONTACTS, LPGENT("Show all contacts"), hasNewHotkeyModule ? NULL : _T("Ctrl+A"));
-			FillButton(hwndDlg, IDC_MESSAGE, LPGENT("Send message"), NULL, LoadSkinnedIcon(SKINICON_EVENT_MESSAGE));
-			FillButton(hwndDlg, IDC_FILE, LPGENT("Send file"), hasNewHotkeyModule ? NULL : _T("Ctrl+F"), LoadSkinnedIcon(SKINICON_EVENT_FILE));
-			FillButton(hwndDlg, IDC_URL, LPGENT("Send URL"), hasNewHotkeyModule ? NULL : _T("Ctrl+U"), LoadSkinnedIcon(SKINICON_EVENT_URL));
-			FillButton(hwndDlg, IDC_USERINFO, LPGENT("Open user info"), hasNewHotkeyModule ? NULL : _T("Ctrl+I"), LoadSkinnedIcon(SKINICON_OTHER_USERDETAILS));
-			FillButton(hwndDlg, IDC_HISTORY, LPGENT("Open history"), hasNewHotkeyModule ? NULL : _T("Ctrl+H"), LoadSkinnedIcon(SKINICON_OTHER_HISTORY));
-			FillButton(hwndDlg, IDC_MENU, LPGENT("Open contact menu"), hasNewHotkeyModule ? NULL : _T("Ctrl+M"), LoadSkinnedIcon(SKINICON_OTHER_DOWNARROW));
+			FillButton(hwndDlg, IDC_MESSAGE, LPGENT("Send message"), NULL, Skin_LoadIcon(SKINICON_EVENT_MESSAGE));
+			FillButton(hwndDlg, IDC_FILE, LPGENT("Send file"), hasNewHotkeyModule ? NULL : _T("Ctrl+F"), Skin_LoadIcon(SKINICON_EVENT_FILE));
+			FillButton(hwndDlg, IDC_URL, LPGENT("Send URL"), hasNewHotkeyModule ? NULL : _T("Ctrl+U"), Skin_LoadIcon(SKINICON_EVENT_URL));
+			FillButton(hwndDlg, IDC_USERINFO, LPGENT("Open user info"), hasNewHotkeyModule ? NULL : _T("Ctrl+I"), Skin_LoadIcon(SKINICON_OTHER_USERDETAILS));
+			FillButton(hwndDlg, IDC_HISTORY, LPGENT("Open history"), hasNewHotkeyModule ? NULL : _T("Ctrl+H"), Skin_LoadIcon(SKINICON_OTHER_HISTORY));
+			FillButton(hwndDlg, IDC_MENU, LPGENT("Open contact menu"), hasNewHotkeyModule ? NULL : _T("Ctrl+M"), Skin_LoadIcon(SKINICON_OTHER_DOWNARROW));
 
 			SendDlgItemMessage(hwndDlg, IDC_USERNAME, CB_SETEXTENDEDUI, TRUE, 0);
 
@@ -934,7 +936,7 @@ static INT_PTR CALLBACK MainDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 
 				RECT rc;
 				GetWindowRect(GetDlgItem(hwndDlg, IDC_MENU), &rc);
-				HMENU hMenu = (HMENU) CallService(MS_CLIST_MENUBUILDCONTACT, hContact, 0);
+				HMENU hMenu = Menu_BuildContactMenu(hContact);
 				int ret = TrackPopupMenu(hMenu, TPM_TOPALIGN|TPM_RIGHTBUTTON|TPM_RETURNCMD, rc.left, rc.bottom, 0, hwndDlg, NULL);
 				DestroyMenu(hMenu);
 
@@ -958,7 +960,7 @@ static INT_PTR CALLBACK MainDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				if (SendMessage(hEdit, EM_GETSEL, 0, 0) != -1)
 					SendMessage(hEdit, EM_REPLACESEL, 0, (LPARAM)_T(""));
 
-				GetWindowText(hEdit, sztext, SIZEOF(sztext));
+				GetWindowText(hEdit, sztext, _countof(sztext));
 
 				// Fill combo			
 				BOOL all = IsDlgButtonChecked(hwndDlg, IDC_SHOW_ALL_CONTACTS);
@@ -999,9 +1001,8 @@ static INT_PTR CALLBACK MainDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			if(lpdis->CtlID != IDC_USERNAME) 
 			{
 				if (lpdis->CtlType == ODT_MENU)
-					return CallService(MS_CLIST_MENUDRAWITEM,wParam,lParam);
-				else
-					break;
+					return Menu_DrawItem(lpdis);
+				break;
 			}
 
 			// Handle combo
@@ -1094,12 +1095,10 @@ static INT_PTR CALLBACK MainDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			LPMEASUREITEMSTRUCT lpmis = (LPMEASUREITEMSTRUCT)lParam;
 
 			// Handle contact menu
-			if(lpmis->CtlID != IDC_USERNAME) 
-			{
+			if(lpmis->CtlID != IDC_USERNAME) {
 				if (lpmis->CtlType == ODT_MENU)
-					return CallService(MS_CLIST_MENUMEASUREITEM,wParam,lParam);
-				else
-					break;
+					return Menu_MeasureItem(lpmis);
+				break;
 			}
 
 			// Handle combo

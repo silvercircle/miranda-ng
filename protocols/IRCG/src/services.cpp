@@ -23,62 +23,41 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void CIrcProto::InitMainMenus(void)
 {
-	char temp[MAXMODULELABELLENGTH];
-	char *d = temp + mir_snprintf(temp, SIZEOF(temp), m_szModuleName);
+	CMenuItem mi;
+	mi.root = Menu_GetProtocolRoot(this);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.pszService = temp;
-
-	HGENMENU hRoot = MO_GetProtoRootMenu(m_szModuleName);
-	if (hRoot == NULL) {
-		// Root popupmenuitem
-		mi.ptszName = m_tszUserName;
-		mi.position = -1999901010;
-		mi.hParentMenu = HGENMENU_ROOT;
-		mi.flags = CMIF_ROOTPOPUP | CMIF_TCHAR | CMIF_KEEPUNTRANSLATED;
-		mi.icolibItem = GetIconHandle(IDI_MAIN);
-		hRoot = hMenuRoot = Menu_AddProtoMenuItem(&mi);
-	}
-	else {
-		if (hMenuRoot)
-			CallService(MO_REMOVEMENUITEM, (WPARAM)hMenuRoot, 0);
-		hMenuRoot = NULL;
-	}
-
-	mi.flags = CMIF_CHILDPOPUP;
-	mi.pszName = LPGEN("&Quick connect");
-	mi.icolibItem = GetIconHandle(IDI_QUICK);
-	mir_strcpy(d, IRC_QUICKCONNECT);
+	mi.name.a = LPGEN("&Quick connect");
+	mi.hIcolibItem = GetIconHandle(IDI_QUICK);
+	mi.pszService = IRC_QUICKCONNECT;
 	mi.position = 201001;
-	mi.hParentMenu = hRoot;
-	hMenuQuick = Menu_AddProtoMenuItem(&mi);
+	hMenuQuick = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 
 	if (m_iStatus != ID_STATUS_OFFLINE) mi.flags |= CMIF_GRAYED;
 
-	mi.pszName = LPGEN("&Join channel");
-	mi.icolibItem = LoadSkinnedIconHandle(SKINICON_CHAT_JOIN);//GetIconHandle(IDI_JOIN);
-	mir_strcpy(d, IRC_JOINCHANNEL);
+	mi.name.a = LPGEN("&Join channel");
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_CHAT_JOIN);//GetIconHandle(IDI_JOIN);
+	mi.pszService = IRC_JOINCHANNEL;
 	mi.position = 201002;
-	hMenuJoin = Menu_AddProtoMenuItem(&mi);
+	hMenuJoin = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 
-	mi.pszName = LPGEN("&Change your nickname");
-	mi.icolibItem = GetIconHandle(IDI_RENAME);
-	mir_strcpy(d, IRC_CHANGENICK);
+	mi.name.a = LPGEN("&Change your nickname");
+	mi.hIcolibItem = GetIconHandle(IDI_RENAME);
+	mi.pszService = IRC_CHANGENICK;
 	mi.position = 201003;
-	hMenuNick = Menu_AddProtoMenuItem(&mi);
+	hMenuNick = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 
-	mi.pszName = LPGEN("Show the &list of available channels");
-	mi.icolibItem = GetIconHandle(IDI_LIST);
-	mir_strcpy(d, IRC_SHOWLIST);
+	mi.name.a = LPGEN("Show the &list of available channels");
+	mi.hIcolibItem = GetIconHandle(IDI_LIST);
+	mi.pszService = IRC_SHOWLIST;
 	mi.position = 201004;
-	hMenuList = Menu_AddProtoMenuItem(&mi);
+	hMenuList = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 
 	if (m_useServer) mi.flags &= ~CMIF_GRAYED;
-	mi.pszName = LPGEN("&Show the server window");
-	mi.icolibItem = GetIconHandle(IDI_SERVER);
-	mir_strcpy(d, IRC_SHOWSERVER);
+	mi.name.a = LPGEN("&Show the server window");
+	mi.hIcolibItem = GetIconHandle(IDI_SERVER);
+	mi.pszService = IRC_SHOWSERVER;
 	mi.position = 201005;
-	hMenuServer = Menu_AddProtoMenuItem(&mi);
+	hMenuServer = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -137,36 +116,36 @@ int IrcPrebuildContactMenu(WPARAM wParam, LPARAM lParam)
 void InitContactMenus(void)
 {
 	char temp[MAXMODULELABELLENGTH];
-	char *d = temp + mir_snprintf(temp, SIZEOF(temp), "IRC");
+	char *d = temp + mir_snprintf(temp, _countof(temp), "IRC");
 
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.pszService = temp;
 
-	mi.pszName = LPGEN("Channel &settings");
-	mi.icolibItem = GetIconHandle(IDI_MANAGER);
+	mi.name.a = LPGEN("Channel &settings");
+	mi.hIcolibItem = GetIconHandle(IDI_MANAGER);
 	mir_strcpy(d, IRC_UM_CHANSETTINGS);
-	mi.popupPosition = 500090002;
+	mi.position = 500090002;
 	hUMenuChanSettings = Menu_AddContactMenuItem(&mi);
 	hMenuChanSettings = CreateServiceFunction(temp, IrcMenuChanSettings);
 
-	mi.pszName = LPGEN("&WhoIs info");
-	mi.icolibItem = GetIconHandle(IDI_WHOIS);
+	mi.name.a = LPGEN("&WhoIs info");
+	mi.hIcolibItem = GetIconHandle(IDI_WHOIS);
 	mir_strcpy(d, IRC_UM_WHOIS);
-	mi.popupPosition = 500090001;
+	mi.position = 500090001;
 	hUMenuWhois = Menu_AddContactMenuItem(&mi);
 	hMenuWhois = CreateServiceFunction(temp, IrcMenuWhois);
 
-	mi.pszName = LPGEN("Di&sconnect");
-	mi.icolibItem = GetIconHandle(IDI_DELETE);
+	mi.name.a = LPGEN("Di&sconnect");
+	mi.hIcolibItem = GetIconHandle(IDI_DELETE);
 	mir_strcpy(d, IRC_UM_DISCONNECT);
-	mi.popupPosition = 500090001;
+	mi.position = 500090001;
 	hUMenuDisconnect = Menu_AddContactMenuItem(&mi);
 	hMenuDisconnect = CreateServiceFunction(temp, IrcMenuDisconnect);
 
-	mi.pszName = LPGEN("&Add to ignore list");
-	mi.icolibItem = GetIconHandle(IDI_BLOCK);
+	mi.name.a = LPGEN("&Add to ignore list");
+	mi.hIcolibItem = GetIconHandle(IDI_BLOCK);
 	mir_strcpy(d, IRC_UM_IGNORE);
-	mi.popupPosition = 500090002;
+	mi.position = 500090002;
 	hUMenuIgnore = Menu_AddContactMenuItem(&mi);
 	hMenuIgnore = CreateServiceFunction(temp, IrcMenuIgnore);
 
@@ -175,10 +154,10 @@ void InitContactMenus(void)
 
 void UninitContactMenus(void)
 {
-	CallService(MO_REMOVEMENUITEM, (WPARAM)hUMenuChanSettings, 0);
-	CallService(MO_REMOVEMENUITEM, (WPARAM)hUMenuWhois, 0);
-	CallService(MO_REMOVEMENUITEM, (WPARAM)hUMenuDisconnect, 0);
-	CallService(MO_REMOVEMENUITEM, (WPARAM)hUMenuIgnore, 0);
+	Menu_RemoveItem(hUMenuChanSettings);
+	Menu_RemoveItem(hUMenuWhois);
+	Menu_RemoveItem(hUMenuDisconnect);
+	Menu_RemoveItem(hUMenuIgnore);
 	
 	DestroyServiceFunction(hMenuChanSettings);
 	DestroyServiceFunction(hMenuWhois);
@@ -199,7 +178,7 @@ INT_PTR __cdecl CIrcProto::OnDoubleclicked(WPARAM, LPARAM lParam)
 		dlg->Show();
 		HWND hWnd = dlg->GetHwnd();
 		TCHAR szTemp[500];
-		mir_sntprintf(szTemp, SIZEOF(szTemp), TranslateT("%s (%s) is requesting a client-to-client chat connection."),
+		mir_sntprintf(szTemp, TranslateT("%s (%s) is requesting a client-to-client chat connection."),
 			pdci->sContactName.c_str(), pdci->sHostmask.c_str());
 		SetDlgItemText(hWnd, IDC_TEXT, szTemp);
 		ShowWindow(hWnd, SW_SHOW);
@@ -459,7 +438,7 @@ static void DoChatFormatting(TCHAR* pszText)
 				if (p1 - 3 >= pszText && p1[-3] == '\003')
 					mir_tstrcpy(InsertThis, _T(","));
 				else if (iFG >= 0)
-					mir_sntprintf(InsertThis, SIZEOF(InsertThis), _T("\x03%u,"), iFG);
+					mir_sntprintf(InsertThis, _countof(InsertThis), _T("\x03%u,"), iFG);
 				else
 					mir_tstrcpy(InsertThis, _T("\x0399,"));
 
@@ -468,7 +447,7 @@ static void DoChatFormatting(TCHAR* pszText)
 
 			case 'F':
 				if (iFG >= 0)
-					mir_sntprintf(InsertThis, SIZEOF(InsertThis), _T("\x03%u,99"), iFG);
+					mir_sntprintf(InsertThis, _countof(InsertThis), _T("\x03%u,99"), iFG);
 				else
 					mir_tstrcpy(InsertThis, _T("\x0399,99"));
 				iRemoveChars = 2;
@@ -532,7 +511,7 @@ int __cdecl CIrcProto::GCEventHook(WPARAM, LPARAM lParam)
 			case GC_USER_PRIVMESS:
 			{
 				TCHAR szTemp[4000];
-				mir_sntprintf(szTemp, SIZEOF(szTemp), _T("/QUERY %s"), gch->ptszUID);
+				mir_sntprintf(szTemp, _T("/QUERY %s"), gch->ptszUID);
 				PostIrcMessageWnd(p1, NULL, szTemp);
 			}
 				break;
@@ -744,8 +723,8 @@ int __cdecl CIrcProto::GCEventHook(WPARAM, LPARAM lParam)
 					PROTOSEARCHRESULT psr = { 0 };
 					psr.cbSize = sizeof(psr);
 					psr.flags = PSR_TCHAR;
-					psr.id = gch->ptszUID;
-					psr.nick = gch->ptszUID;
+					psr.id.t = gch->ptszUID;
+					psr.nick.t = gch->ptszUID;
 
 					ADDCONTACTSTRUCT acs = { 0 };
 					acs.handleType = HANDLE_SEARCHRESULT;
@@ -853,7 +832,7 @@ int __cdecl CIrcProto::GCMenuHook(WPARAM, LPARAM lParam)
 		if (!mir_strcmpi(gcmi->pszModule, m_szModuleName)) {
 			if (gcmi->Type == MENU_ON_LOG) {
 				if (mir_tstrcmpi(gcmi->pszID, SERVERWINDOW)) {
-					gcmi->nItems = SIZEOF(logItems);
+					gcmi->nItems = _countof(logItems);
 					gcmi->Item = logItems;
 				}
 				else gcmi->nItems = 0;
@@ -863,7 +842,7 @@ int __cdecl CIrcProto::GCMenuHook(WPARAM, LPARAM lParam)
 				CONTACT user = { (TCHAR*)gcmi->pszUID, NULL, NULL, false, false, false };
 				MCONTACT hContact = CList_FindContact(&user);
 
-				gcmi->nItems = SIZEOF(nickItems);
+				gcmi->nItems = _countof(nickItems);
 				gcmi->Item = nickItems;
 				BOOL bIsInList = (hContact && db_get_b(hContact, "CList", "NotOnList", 0) == 0);
 				gcmi->Item[gcmi->nItems - 1].bDisabled = bIsInList;
@@ -877,7 +856,7 @@ int __cdecl CIrcProto::GCMenuHook(WPARAM, LPARAM lParam)
 
 				TCHAR stzChanName[100];
 				const TCHAR* temp = _tcschr(gcmi->pszID, ' ');
-				size_t len = min(((temp == NULL) ? mir_tstrlen(gcmi->pszID) : (int)(temp - gcmi->pszID + 1)), SIZEOF(stzChanName) - 1);
+				size_t len = min(((temp == NULL) ? mir_tstrlen(gcmi->pszID) : (int)(temp - gcmi->pszID + 1)), _countof(stzChanName) - 1);
 				mir_tstrncpy(stzChanName, gcmi->pszID, len);
 				stzChanName[len] = 0;
 				CHANNELINFO *wi = (CHANNELINFO *)DoEvent(GC_EVENT_GETITEMDATA, stzChanName, NULL, NULL, NULL, NULL, NULL, false, false, 0);
@@ -1069,7 +1048,7 @@ void CIrcProto::ConnectToServer(void)
 		InterlockedIncrement((long *)&m_bConnectRequested);
 
 	TCHAR szTemp[300];
-	mir_sntprintf(szTemp, SIZEOF(szTemp), _T("\033%s \002%s\002 (%S: %u)"),
+	mir_sntprintf(szTemp, _T("\033%s \002%s\002 (%S: %u)"),
 		TranslateT("Connecting to"), si.sNetwork.c_str(), si.sServer.c_str(), si.iPort);
 	DoEvent(GC_EVENT_INFORMATION, SERVERWINDOW, NULL, szTemp, NULL, NULL, NULL, true, false);
 }

@@ -21,7 +21,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 DBSignature dbSignatureU = { "Miranda NG DBu", 0x1A }; // unencrypted database
 DBSignature dbSignatureE = { "Miranda NG DBe", 0x1A }; // encrypted database
@@ -61,7 +61,7 @@ CDb3Mmap::CDb3Mmap(const TCHAR *tszFileName, int iMode) :
 	GetSystemInfo(&sinf);
 	m_ChunkSize = sinf.dwAllocationGranularity;
 
-	m_codePage = CallService(MS_LANGPACK_GETCODEPAGE, 0, 0);
+	m_codePage = Langpack_GetDefaultCodePage();
 	m_hModHeap = HeapCreate(0, 0, 0);
 }
 
@@ -219,7 +219,7 @@ int CDb3Mmap::Start(DBCHeckCallback *callback)
 
 int CDb3Mmap::CheckDb(int phase, int firstTime)
 {
-	if (phase >= SIZEOF(Workers))
+	if (phase >= _countof(Workers))
 		return ERROR_OUT_OF_PAPER;
 
 	return (this->*Workers[phase])(firstTime);

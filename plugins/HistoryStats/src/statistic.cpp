@@ -434,7 +434,7 @@ bool Statistic::stepReadDB()
 			// filter logged status messages from tabSRMM
 			if (dbei.eventType == etMessage) {
 				// convert to local time (everything in this plugin is done in local time)
-				DWORD localTimestamp = utils::toLocalTime(dbei.timestamp);
+				DWORD localTimestamp = TimeZone_ToLocal(dbei.timestamp);
 
 				if (localTimestamp >= m_TimeMin && localTimestamp <= m_TimeMax) {
 					if (dbei.flags & DBEF_UTF) {
@@ -1235,7 +1235,7 @@ Statistic::Statistic(const Settings& settings, InvocationSource invokedFrom, HIN
 	m_nFirstTime(0),
 	m_nLastTime(0)
 {
-	m_TimeStarted = utils::toLocalTime(time(NULL));
+	m_TimeStarted = TimeZone_ToLocal(time(NULL));
 	m_MSecStarted = GetTickCount();
 	m_AverageMinTime = settings.m_AverageMinTime * 24 * 60 * 60; // calculate seconds from days
 }
@@ -1303,7 +1303,6 @@ bool Statistic::createStatistics()
 	/*
 	 * Cleanup.
 	 */
-	CloseHandle(hThread);
 	CloseHandle(m_hCancelEvent);
 	m_hCancelEvent = NULL;
 	m_hWndProgress = NULL;
@@ -1372,8 +1371,10 @@ bool Statistic::createStatisticsSteps()
 void __cdecl Statistic::threadProc(void *lpParameter)
 {
 	Statistic* pStats = reinterpret_cast<Statistic*>(lpParameter);
-
 	SetEvent(pStats->m_hThreadPushEvent);
+
+	// perform action
+	pStats->createStatistics();
 
 	// check for errors
 	if (!pStats->m_ErrorText.empty() && !mu::system::terminated())

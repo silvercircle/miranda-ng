@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 static int dwWinVer;
 
@@ -55,7 +55,7 @@ MIR_CORE_DLL(BOOL) IsFullScreen()
 	HWND hWnd = GetForegroundWindow();
 	if (hWnd && hWnd != hWndDesktop && hWnd != hWndShell) {
 		TCHAR tszClassName[128] = _T("");
-		GetClassName(hWnd, tszClassName, SIZEOF(tszClassName));
+		GetClassName(hWnd, tszClassName, _countof(tszClassName));
 		if (_tcscmp(tszClassName, _T("WorkerW"))) {
 			RECT rect, rectw, recti;
 			GetWindowRect(hWnd, &rectw);
@@ -80,7 +80,7 @@ MIR_CORE_DLL(BOOL) IsWorkstationLocked(void)
 
 	TCHAR tszName[100];
 	DWORD cbName;
-	BOOL bLocked = (!GetUserObjectInformation(hDesk, UOI_NAME, tszName, SIZEOF(tszName), &cbName) || mir_tstrcmpi(tszName, _T("default")) != 0);
+	BOOL bLocked = (!GetUserObjectInformation(hDesk, UOI_NAME, tszName, _countof(tszName), &cbName) || mir_tstrcmpi(tszName, _T("default")) != 0);
 	CloseDesktop(hDesk);
 	return bLocked;
 }

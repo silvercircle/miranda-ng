@@ -39,8 +39,8 @@ static INT_PTR CALLBACK CaptchaFormDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam
 	switch (msg) {
 	case WM_INITDIALOG: {
 		TranslateDialogDefault(hwndDlg);
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)Skin_GetIconByHandle(GetIconHandle("key"), TRUE));
-		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)Skin_GetIconByHandle(GetIconHandle("key")));
+		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIconByHandle(GetIconHandle("key"), TRUE));
+		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIconByHandle(GetIconHandle("key")));
 		params = (CAPTCHA_FORM_PARAMS*)lParam;
 
 		SetDlgItemText(hwndDlg, IDC_INSTRUCTION, TranslateT("Enter the text you see"));
@@ -85,7 +85,7 @@ static INT_PTR CALLBACK CaptchaFormDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam
 			return TRUE;
 
 		case IDOK:
-			GetDlgItemTextA(hwndDlg, IDC_VALUE, params->Result, SIZEOF(params->Result));
+			GetDlgItemTextA(hwndDlg, IDC_VALUE, params->Result, _countof(params->Result));
 			EndDialog(hwndDlg, 1);
 			return TRUE;
 		}
@@ -96,8 +96,8 @@ static INT_PTR CALLBACK CaptchaFormDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam
 		break;
 
 	case WM_DESTROY:
-		Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_BIG, 0));
-		Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_BIG, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, 0));
 		break;
 	}
 	return FALSE;
@@ -128,7 +128,7 @@ bool FacebookProto::RunCaptchaForm(std::string captchaUrl, std::string &result)
 	memio.iLen = reply->dataLength;
 	memio.pBuf = reply->pData;
 	memio.fif = FIF_UNKNOWN; /* detect */
-	param.bmp = (HBITMAP)CallService(MS_IMG_LOADFROMMEM, (WPARAM)&memio, 0);
+	param.bmp = (HBITMAP)CallService(MS_IMG_LOADFROMMEM, (WPARAM)&memio);
 
 	BITMAP bmp = { 0 };
 	GetObject(param.bmp, sizeof(bmp), &bmp);

@@ -22,11 +22,11 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "hdr/modern_commonheaders.h"
-#include "hdr/modern_clc.h"
-#include "hdr/modern_clist.h"
+#include "stdafx.h"
+#include "modern_clc.h"
+#include "modern_clist.h"
 #include "m_metacontacts.h"
-#include "hdr/modern_commonprototypes.h"
+#include "modern_commonprototypes.h"
 
 void AddSubcontacts(ClcData *dat, ClcContact *cont, BOOL showOfflineHereGroup)
 {
@@ -248,7 +248,7 @@ void* AddTempGroup(HWND hwnd, ClcData *dat, const TCHAR *szName)
 	_itoa_s(i - 1, buf, 10);
 
 	TCHAR b2[255];
-	mir_sntprintf(b2, SIZEOF(b2), _T("#%s"), szName);
+	mir_sntprintf(b2, _countof(b2), _T("#%s"), szName);
 	b2[0] = 1 | GROUPF_EXPANDED;
 	db_set_ws(NULL, "CListGroups", buf, b2);
 	pcli->pfnGetGroupName(i, &groupFlags);
@@ -285,13 +285,14 @@ void cli_DeleteItemFromTree(HWND hwnd, MCONTACT hItem)
 	ClearRowByIndexCache();
 }
 
-__inline BOOL CLCItems_IsShowOfflineGroup(ClcGroup* group)
+bool CLCItems_IsShowOfflineGroup(ClcGroup *group)
 {
+	if (!group) return false;
+	if (group->hideOffline) return false;
+
 	DWORD groupFlags = 0;
-	if (!group) return FALSE;
-	if (group->hideOffline) return FALSE;
 	pcli->pfnGetGroupName(group->groupId, &groupFlags);
-	return (groupFlags&GROUPF_SHOWOFFLINE) != 0;
+	return (groupFlags & GROUPF_SHOWOFFLINE) != 0;
 }
 
 MCONTACT SaveSelection(ClcData *dat)
@@ -712,12 +713,12 @@ int __fastcall CLVM_GetContactHiddenStatus(MCONTACT hContact, char *szProto, Clc
 		}
 		// check the proto, use it as a base filter result for all further checks
 		if (g_CluiData.bFilterEffective & CLVM_FILTER_PROTOS) {
-			mir_snprintf(szTemp, SIZEOF(szTemp), "%s|", szProto);
+			mir_snprintf(szTemp, "%s|", szProto);
 			filterResult = strstr(g_CluiData.protoFilter, szTemp) ? 1 : 0;
 		}
 		if (g_CluiData.bFilterEffective & CLVM_FILTER_GROUPS) {
 			if (!db_get_ts(hContact, "CList", "Group", &dbv)) {
-				mir_sntprintf(szGroupMask, SIZEOF(szGroupMask), _T("%s|"), &dbv.ptszVal[0]);
+				mir_sntprintf(szGroupMask, _countof(szGroupMask), _T("%s|"), &dbv.ptszVal[0]);
 				filterResult = (g_CluiData.filterFlags & CLVM_PROTOGROUP_OP) ? (filterResult | (_tcsstr(g_CluiData.groupFilter, szGroupMask) ? 1 : 0)) : (filterResult & (_tcsstr(g_CluiData.groupFilter, szGroupMask) ? 1 : 0));
 				mir_free(dbv.ptszVal);
 			}

@@ -52,11 +52,10 @@ using namespace std;
 #include <newpluginapi.h>
 #include <m_button.h>
 #include <m_clui.h>
-#include <m_clistint.h>
+#include <m_clist.h>
 #include <m_database.h>
 #include <m_hotkeys.h>
 #include <m_langpack.h>
-#include <m_protomod.h>
 #include <m_options.h>
 #include <m_xml.h>
 #include <m_timezones.h>
@@ -89,8 +88,6 @@ using namespace std;
  * UserInfoEx plugin includes and macros
  ***********************************************************************************************************/
 
-#pragma intrinsic(memcmp, memcpy, memset, mir_strcmp, mir_strlen)
-
 #ifndef MIR_OK
 #define MIR_OK		0		// success value of a miranda service function
 #define MIR_FAIL	1		// general failure value of a miranda service function
@@ -102,7 +99,7 @@ using namespace std;
 
 #define PtrIsValid(p)		(((p)!=0)&&(((HANDLE)(p))!=INVALID_HANDLE_VALUE))
 #define FREE(p)				{if (PtrIsValid(p)){free((void*)p);(p)=NULL;}}
-#define MIR_DELETE(p)		{LPVOID ptr = (LPVOID)(p);if (PtrIsValid(ptr)){delete(ptr);(ptr)=NULL;}}
+#define MIR_DELETE(p)		{if (PtrIsValid(p)){delete(p);(p)=NULL;}}
 #define MIR_FREE(p)			{if (PtrIsValid(p)){mir_free((void*)p);(p)=NULL;}}
 
 #define GetUserData(p)		GetWindowLongPtr((p), GWLP_USERDATA)
@@ -224,7 +221,7 @@ static FORCEINLINE BOOL IsProtoOnline(LPSTR pszProto)
 
 static FORCEINLINE BOOL IsProtoAccountEnabled(PROTOACCOUNT *pAcc)
 {
-	return (pAcc->bIsEnabled && ProtoGetAccount(pAcc->szModuleName));
+	return (pAcc->bIsEnabled && Proto_GetAccount(pAcc->szModuleName));
 }
 
 typedef HRESULT (STDAPICALLTYPE *pfnDwmIsCompositionEnabled)(BOOL *);

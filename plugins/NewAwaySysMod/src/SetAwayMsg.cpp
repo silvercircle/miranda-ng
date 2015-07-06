@@ -434,8 +434,8 @@ void UpdateCheckboxesState(CCList *CList)
 HICON g_LoadIconEx(const char* name, bool big)
 {
 	char szSettingName[100];
-	mir_snprintf(szSettingName, SIZEOF(szSettingName), "%s_%s", "", name);
-	return Skin_GetIcon(szSettingName, big);
+	mir_snprintf(szSettingName, _countof(szSettingName), "%s_%s", "", name);
+	return IcoLib_GetIcon(szSettingName, big);
 }
 
 struct {
@@ -480,13 +480,13 @@ INT_PTR CALLBACK SetAwayMsgDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 			g_SetAwayMsgPage.SetWnd(hwndDlg);
 			g_SetAwayMsgPage.DBToMemToPage();
 
-			HICON hTitleIconBigElse = LoadSkinnedIconBig(SKINICON_OTHER_MIRANDA);
+			HICON hTitleIconBigElse = Skin_LoadIcon(SKINICON_OTHER_MIRANDA, true);
 
 			char *szProto = dat->hInitContact ? GetContactProto(dat->hInitContact) : dat->szProtocol;
 			int Status = 0;
 			Status = g_ProtoStates[dat->szProtocol].Status;
-			HICON hTitleIcon = LoadSkinnedProtoIcon(szProto, Status);
-			HICON hTitleIconBig = LoadSkinnedProtoIconBig(szProto, Status);
+			HICON hTitleIcon = Skin_LoadProtoIcon(szProto, Status);
+			HICON hTitleIconBig = Skin_LoadProtoIcon(szProto, Status, true);
 
 			if (hTitleIconBig == NULL || (HICON)CALLSERVICE_NOTFOUND == hTitleIconBig)
 				SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)hTitleIconBigElse);
@@ -601,7 +601,7 @@ INT_PTR CALLBACK SetAwayMsgDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 			}
 
 			// init image buttons
-			for (int i = 0; i < SIZEOF(Buttons); i++) {
+			for (int i = 0; i < _countof(Buttons); i++) {
 				HWND hButton = GetDlgItem(hwndDlg, Buttons[i].DlgItem);
 				SendMessage(hButton, BUTTONADDTOOLTIP, (WPARAM)TranslateTS(Buttons[i].Text), BATF_TCHAR);
 				SendMessage(hButton, BUTTONSETASFLATBTN, TRUE, 0);
@@ -609,10 +609,10 @@ INT_PTR CALLBACK SetAwayMsgDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 
 			// init tooltips
 			TOOLINFO ti = { 0 };
-			hWndTooltips = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, _T(""), WS_POPUP, 0, 0, 0, 0, NULL, NULL, GetModuleHandle(NULL), NULL);
+			hWndTooltips = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, _T(""), WS_POPUP, 0, 0, 0, 0, NULL, NULL, GetModuleHandleA("mir_app.mir"), NULL);
 			ti.cbSize = sizeof(ti);
 			ti.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
-			for (int i = 0; i < SIZEOF(Tooltips); i++) {
+			for (int i = 0; i < _countof(Tooltips); i++) {
 				ti.uId = (UINT_PTR)GetDlgItem(hwndDlg, Tooltips[i].DlgItemID);
 				ti.lpszText = TranslateTS(Tooltips[i].Text);
 				SendMessage(hWndTooltips, TTM_ADDTOOL, 0, (LPARAM)&ti);
@@ -795,7 +795,7 @@ INT_PTR CALLBACK SetAwayMsgDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 								WindowTitle += _T(" ");
 							}
 
-							WindowTitle += (TCHAR*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR);
+							WindowTitle += pcli->pfnGetContactDisplayName(hContact, 0);
 							if (!IsAnICQProto(GetContactProto(hContact))) {
 								WindowTitle += _T(" ");
 								WindowTitle += TranslateT("available autoreply only");
@@ -809,7 +809,7 @@ INT_PTR CALLBACK SetAwayMsgDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 								WindowTitle += _T(")");
 							}
 							else {
-								PROTOACCOUNT *acc = ProtoGetAccount(szProto);
+								PROTOACCOUNT *acc = Proto_GetAccount(szProto);
 								WindowTitle += acc->tszAccountName;
 								WindowTitle += _T(")");
 							}
@@ -849,7 +849,7 @@ INT_PTR CALLBACK SetAwayMsgDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 				return true;
 			}
 			TCHAR BtnTitle[64];
-			mir_sntprintf(BtnTitle, SIZEOF(BtnTitle), TranslateT("Closing in %d"), Countdown);
+			mir_sntprintf(BtnTitle, _countof(BtnTitle), TranslateT("Closing in %d"), Countdown);
 			SetDlgItemText(hwndDlg, IDC_OK, BtnTitle);
 			Countdown--;
 		}
@@ -869,16 +869,16 @@ INT_PTR CALLBACK SetAwayMsgDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 			CList->SetExtraImageList(hil);
 
 			HTREEITEM hSelItem;
-			HTREEITEM hItem = hSelItem = CList->AddInfo(TranslateT("** All contacts **"), CLC_ROOT, CLC_ROOT, NULL, LoadSkinnedProtoIcon(NULL, g_ProtoStates[(char*)NULL].Status));
+			HTREEITEM hItem = hSelItem = CList->AddInfo(TranslateT("** All contacts **"), CLC_ROOT, CLC_ROOT, NULL, Skin_LoadProtoIcon(NULL, g_ProtoStates[(char*)NULL].Status));
 			int numAccs;
 			PROTOACCOUNT **accs;
-			ProtoEnumAccounts(&numAccs, &accs);
+			Proto_EnumAccounts(&numAccs, &accs);
 			for (int i = 0; i < numAccs; i++) {
 				PROTOACCOUNT *p = accs[i];
 				// don't forget to change Recent Message Save loop in the UM_SAM_APPLYANDCLOSE if you're changing something here
 				if (CallProtoService(p->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGSEND) {
-					PROTOACCOUNT * acc = ProtoGetAccount(p->szModuleName);
-					hItem = CList->AddInfo(TCString(_T("* ")) + acc->tszAccountName + _T(" *"), CLC_ROOT, hItem, (LPARAM)p->szModuleName, LoadSkinnedProtoIcon(p->szModuleName, g_ProtoStates[p->szModuleName].Status));
+					PROTOACCOUNT * acc = Proto_GetAccount(p->szModuleName);
+					hItem = CList->AddInfo(TCString(_T("* ")) + acc->tszAccountName + _T(" *"), CLC_ROOT, hItem, (LPARAM)p->szModuleName, Skin_LoadProtoIcon(p->szModuleName, g_ProtoStates[p->szModuleName].Status));
 					if (dat->szProtocol && !mir_strcmp(p->szModuleName, dat->szProtocol))
 						hSelItem = hItem;
 				}
@@ -928,7 +928,7 @@ INT_PTR CALLBACK SetAwayMsgDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 			// save Recent Messages
 			int numAccs;
 			PROTOACCOUNT **accs;
-			ProtoEnumAccounts(&numAccs, &accs);
+			Proto_EnumAccounts(&numAccs, &accs);
 			for (int i = 0; i < numAccs; i++) {
 				PROTOACCOUNT *p = accs[i];
 				if (CallProtoService(p->szModuleName, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGSEND) {
@@ -997,7 +997,7 @@ INT_PTR CALLBACK SetAwayMsgDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 				if (CList->GetItemType(hItem) == MCLCIT_INFO) {
 					char *szProto = (char*)CList->GetItemParam(hItem);
 					if (!wParam || !mir_strcmp(szProto, (char*)wParam)) {
-						CList->SetInfoIcon(hItem, LoadSkinnedProtoIcon(szProto, g_ProtoStates[szProto].Status));
+						CList->SetInfoIcon(hItem, Skin_LoadProtoIcon(szProto, g_ProtoStates[szProto].Status));
 					}
 				}
 				SetExtraIcon(CList, EXTRACOLUMN_IGNORE, hItem, -1);
@@ -1013,7 +1013,7 @@ INT_PTR CALLBACK SetAwayMsgDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 		break;
 
 	case UM_ICONSCHANGED:
-		for (int i = 0; i < SIZEOF(Buttons); i++)
+		for (int i = 0; i < _countof(Buttons); i++)
 			if (Buttons[i].IconIndex != ILI_NOICON)
 				SendDlgItemMessage(hwndDlg, Buttons[i].DlgItem, BM_SETIMAGE, IMAGE_ICON, (LPARAM)g_IconList[Buttons[i].IconIndex]);
 
@@ -1273,34 +1273,28 @@ INT_PTR CALLBACK SetAwayMsgDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 		return true;
 
 	case WM_SIZE:
-		{
-			UTILRESIZEDIALOG urd = { sizeof(urd) };
-			urd.hInstance = g_hInstance;
-			urd.hwndDlg = hwndDlg;
-			urd.lParam = (LPARAM)&g_SetAwayMsgPage;
-			urd.lpTemplate = MAKEINTRESOURCEA(IDD_SETAWAYMSG);
-			urd.pfnResizer = SetAwayMsgDlgResize;
-			CallService(MS_UTILS_RESIZEDIALOG, 0, (LPARAM)&urd);
+		Utils_ResizeDialog(hwndDlg, g_hInstance, MAKEINTRESOURCEA(IDD_SETAWAYMSG), SetAwayMsgDlgResize, (LPARAM)&g_SetAwayMsgPage);
 			
-			// means that we sent WM_SIZE message to apply new settings to the dialog; probably it's somewhat a misuse, but who cares ;-P
-			if (!wParam && !lParam) {
-				int bShow;
-				bShow = g_SetAwayMsgPage.GetValue(IDS_SAWAYMSG_SHOWMSGTREE) ? SW_SHOW : SW_HIDE;
-				ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_TREE), bShow);
-				ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_SAVEMSG), bShow);
-				ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_SAVEASNEW), bShow);
-				ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_NEWCATEGORY), bShow);
-				ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_DELETE), bShow);
-				ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_MSGSPLITTER), bShow);
-				bShow = g_SetAwayMsgPage.GetValue(IDS_SAWAYMSG_SHOWCONTACTTREE) ? SW_SHOW : SW_HIDE;
-				ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_CONTACTSTREE), bShow);
-				ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_IGNOREREQ), bShow);
-				ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_SENDMSG), bShow);
-				ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_CONTACTSPLITTER), bShow);
-				ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_STATIC_IGNOREICON), bShow);
-				ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_STATIC_REPLYICON), bShow);
-			}
-		} // go through
+		// means that we sent WM_SIZE message to apply new settings to the dialog; probably it's somewhat a misuse, but who cares ;-P
+		if (!wParam && !lParam) {
+			int bShow;
+			bShow = g_SetAwayMsgPage.GetValue(IDS_SAWAYMSG_SHOWMSGTREE) ? SW_SHOW : SW_HIDE;
+			ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_TREE), bShow);
+			ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_SAVEMSG), bShow);
+			ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_SAVEASNEW), bShow);
+			ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_NEWCATEGORY), bShow);
+			ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_DELETE), bShow);
+			ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_MSGSPLITTER), bShow);
+			bShow = g_SetAwayMsgPage.GetValue(IDS_SAWAYMSG_SHOWCONTACTTREE) ? SW_SHOW : SW_HIDE;
+			ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_CONTACTSTREE), bShow);
+			ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_IGNOREREQ), bShow);
+			ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_SENDMSG), bShow);
+			ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_CONTACTSPLITTER), bShow);
+			ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_STATIC_IGNOREICON), bShow);
+			ShowWindow(GetDlgItem(hwndDlg, IDC_SAWAYMSG_STATIC_REPLYICON), bShow);
+		}
+		// go through
+	
 	case UM_SAM_KILLTIMER:
 	case WM_LBUTTONDOWN:
 	case WM_MOUSEACTIVATE:

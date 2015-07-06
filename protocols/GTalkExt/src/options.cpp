@@ -157,8 +157,8 @@ INT_PTR CALLBACK AccOptionsDlgProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lPa
 void ShowTestPopup(HWND wnd)
 {
 	POPUPDATAT data = { 0 };
-	mir_sntprintf(data.lptzContactName, SIZEOF(data.lptzContactName), TranslateTS(TEST_LETTER_INBOX));
-	mir_sntprintf(data.lptzText, SIZEOF(data.lptzText), TranslateTS(FULL_NOTIFICATION_FORMAT), TranslateTS(TEST_LETTER_SUBJECT), TranslateTS(TEST_LETTER_SENDER), TranslateTS(TEST_LETTER_SNIP));
+	mir_sntprintf(data.lptzContactName, TranslateTS(TEST_LETTER_INBOX));
+	mir_sntprintf(data.lptzText, TranslateTS(FULL_NOTIFICATION_FORMAT), TranslateTS(TEST_LETTER_SUBJECT), TranslateTS(TEST_LETTER_SENDER), TranslateTS(TEST_LETTER_SNIP));
 
 	int len = SendDlgItemMessage(wnd, IDC_TIMEOUTEDIT, WM_GETTEXTLENGTH, 0, 0) + 1;
 	LPTSTR timeout = (LPTSTR)malloc(len * sizeof(TCHAR));
@@ -218,7 +218,7 @@ INT_PTR CALLBACK PopupsOptionsDlgProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM 
 			db_set_dw(0, SHORT_PLUGIN_NAME, BACK_COLOR_SETTING, (DWORD)SendDlgItemMessage(wnd, IDC_BACKCOLORPICKER, CPM_GETCOLOUR, 0, 0));
 		db_set_dw(0, SHORT_PLUGIN_NAME, TEXT_COLOR_SETTING, (DWORD)SendDlgItemMessage(wnd, IDC_TEXTCOLORPICKER, CPM_GETCOLOUR, 0, 0));
 
-		GetDlgItemText(wnd, IDC_TIMEOUTEDIT, timeout, SIZEOF(timeout));
+		GetDlgItemText(wnd, IDC_TIMEOUTEDIT, timeout, _countof(timeout));
 		db_set_dw(0, SHORT_PLUGIN_NAME, TIMEOUT_SETTING, _ttoi(timeout));
 	}
 	return 0;
@@ -241,7 +241,7 @@ int OptionsInitialization(WPARAM wParam, LPARAM)
 
 	for (int i = 0; i < g_accs.getCount(); i++) {
 		LPCSTR szProto = g_accs[i]->m_pa->szModuleName;
-		PROTOACCOUNT *pa = ProtoGetAccount(szProto);
+		PROTOACCOUNT *pa = Proto_GetAccount(szProto);
 		if (pa != NULL) {
 			OPTIONSDIALOGPAGE odp = { 0 };
 			odp.ptszTitle = pa->tszAccountName;

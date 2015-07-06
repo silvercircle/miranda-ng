@@ -40,23 +40,22 @@ struct CMsnProto : public PROTO<CMsnProto>
 	virtual	int       __cdecl AuthRecv(MCONTACT hContact, PROTORECVEVENT*);
 	virtual	int       __cdecl AuthRequest(MCONTACT hContact, const TCHAR* szMessage);
 
-#ifdef OBSOLETE
-	virtual	HANDLE    __cdecl FileAllow(MCONTACT hContact, HANDLE hTransfer, const PROTOCHAR* szPath);
+	virtual	HANDLE    __cdecl FileAllow(MCONTACT hContact, HANDLE hTransfer, const TCHAR* szPath);
 	virtual	int       __cdecl FileCancel(MCONTACT hContact, HANDLE hTransfer);
-	virtual	int       __cdecl FileDeny(MCONTACT hContact, HANDLE hTransfer, const PROTOCHAR* szReason);
-	virtual	int       __cdecl FileResume(HANDLE hTransfer, int* action, const PROTOCHAR** szFilename);
-#endif
+	virtual	int       __cdecl FileDeny(MCONTACT hContact, HANDLE hTransfer, const TCHAR* szReason);
+	virtual	int       __cdecl FileResume(HANDLE hTransfer, int* action, const TCHAR** szFilename);
 
 	virtual	DWORD_PTR __cdecl GetCaps(int type, MCONTACT hContact = NULL);
+	virtual	int       __cdecl GetInfo(MCONTACT hContact, int infoType);
 
-	virtual	HANDLE    __cdecl SearchBasic(const PROTOCHAR* id);
-	virtual	HANDLE    __cdecl SearchByEmail(const PROTOCHAR* email);
+	virtual	HANDLE    __cdecl SearchBasic(const TCHAR* id);
+	virtual	HANDLE    __cdecl SearchByEmail(const TCHAR* email);
 
 	virtual	int       __cdecl RecvMsg(MCONTACT hContact, PROTORECVEVENT*);
 	virtual	int       __cdecl RecvContacts(MCONTACT hContact, PROTORECVEVENT*);
 
 #ifdef OBSOLETE
-	virtual	HANDLE    __cdecl SendFile(MCONTACT hContact, const PROTOCHAR* szDescription, PROTOCHAR** ppszFiles);
+	virtual	HANDLE    __cdecl SendFile(MCONTACT hContact, const TCHAR* szDescription, TCHAR** ppszFiles);
 #endif
 	virtual	int       __cdecl SendMsg(MCONTACT hContact, int flags, const char* msg);
 	virtual	int       __cdecl SendContacts(MCONTACT hContact, int flags, int nContacts, MCONTACT *hContactsList);
@@ -118,7 +117,7 @@ struct CMsnProto : public PROTO<CMsnProto>
 	char *authContactToken;
 	char *authStorageToken;
 	char *hotSecretToken, *hotAuthToken;
-	char *authUser, *authUIC, *authCookies, *authSSLToken, *authAccessToken;
+	char *authUser, *authUIC, *authCookies, *authSSLToken, *authAccessToken, *authRefreshToken, *authSkypeComToken, *authSkypeToken;
 	int  authMethod;
 	time_t authTokenExpiretime;
 	bool bSentBND;
@@ -172,7 +171,7 @@ struct CMsnProto : public PROTO<CMsnProto>
 	char*       alertsoundname;
 
 	unsigned    langpref;
-	unsigned    emailEnabled;
+	bool        emailEnabled;
 	unsigned    abchMigrated;
 	unsigned    myFlags;
 
@@ -222,6 +221,7 @@ struct CMsnProto : public PROTO<CMsnProto>
 	void        MSN_ProcessRemove(char* buf, size_t len);
 	void        MSN_ProcessAdd(char* buf, size_t len);
 	void        MSN_ProcessYFind(char* buf, size_t len);
+	void		MSN_ProcessURIObject(MCONTACT hContact, ezxml_t xmli);
 	void        MSN_CustomSmiley(const char* msgBody, char* email, char* nick, int iSmileyType);
 	void        MSN_InviteMessage(ThreadData* info, char* msgBody, char* email, char* nick);
 	void        MSN_SetMirVer(MCONTACT hContact, DWORD dwValue, bool always);
@@ -233,7 +233,9 @@ struct CMsnProto : public PROTO<CMsnProto>
 	void        MSN_ShowPopup(const MCONTACT hContact, const TCHAR* msg, int flags);
 	void        MSN_ShowError(const char* msgtext, ...);
 
+#ifdef OBSOLETE
 	void        MSN_SetNicknameUtf(const char* nickname);
+#endif
 	void        MSN_SendNicknameUtf(const char* nickname);
 
 	typedef struct { TCHAR *szName; const char *szMimeType; unsigned char *data; size_t dataSize; } StoreAvatarData;
@@ -252,11 +254,9 @@ struct CMsnProto : public PROTO<CMsnProto>
 	/////////////////////////////////////////////////////////////////////////////////////////
 	// MSN menus
 
-	HGENMENU mainMenuRoot;
 	HGENMENU menuItemsMain[4];
 
 	void MsnInitMainMenu(void);
-	void MsnRemoveMainMenus(void);
 	void MSN_EnableMenuItems(bool parEnable);
 	void MsnInvokeMyURL(bool ismail, const char* url);
 
@@ -498,6 +498,7 @@ struct CMsnProto : public PROTO<CMsnProto>
 	CMStringA HotmailLogin(const char* url);
 	void	    FreeAuthTokens(void);
 	int       GetMyNetID(void);
+	const char *GetSkypeToken(bool bAsAuthHeader);
 	LPCSTR    GetMyUsername(int netId);
 
 	/////////////////////////////////////////////////////////////////////////////////////////
@@ -526,6 +527,19 @@ struct CMsnProto : public PROTO<CMsnProto>
 	void processMailData(char* mailData);
 	void sttNotificationMessage(char* msgBody, bool isInitial);
 	void displayEmailCount(MCONTACT hContact);
+
+	/////////////////////////////////////////////////////////////////////////////////////////
+	//	SKYPE JSON Address Book
+	bool MSN_SKYABRefreshClist(void);
+	bool MSN_SKYABBlockContact(const char *wlid, const char *pszAction);
+	bool MSN_SKYABAuthRq(const char *wlid, const char *pszGreeting);
+	bool MSN_SKYABAuthRsp(const char *wlid, const char *pszAction);
+	bool MSN_SKYABDeleteContact(const char *wlid);
+	bool MSN_SKYABSearch(const char *keyWord, HANDLE hSearch);
+	bool MSN_SKYABGetProfiles(const char *pszPOST);
+	bool MSN_SKYABGetProfile(const char *wlid);
+
+	bool APISkypeComRequest(NETLIBHTTPREQUEST *nlhr, NETLIBHTTPHEADER *headers);
 
 	/////////////////////////////////////////////////////////////////////////////////////////
 	//	MSN SOAP Address Book

@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "stdafx.h"
 
 static MCONTACT hContactToActivate;
-static HANDLE hDialogsList;
+static MWindowList hDialogsList;
 
 INT_PTR svcShowMenu(WPARAM, LPARAM)
 {
@@ -112,7 +112,7 @@ static __forceinline COLORREF sttShadeColor(COLORREF clLine1, COLORREF clBack)
 
 int ProcessTBLoaded(WPARAM, LPARAM)
 {
-	TTBButton ttb = { sizeof(ttb) };
+	TTBButton ttb = { 0 };
 	ttb.pszTooltipUp = ttb.name = LPGEN("Favorite Contacts");
 	ttb.pszService = MS_FAVCONTACTS_SHOWMENU;
 	ttb.dwFlags = TTBBF_SHOWTOOLTIP | TTBBF_VISIBLE;
@@ -161,8 +161,8 @@ int ProcessModulesLoaded(WPARAM, LPARAM)
 	StatusIconData sid = { sizeof(sid) };
 	sid.szModule = "FavContacts";
 	sid.szTooltip = LPGEN("Favorite Contacts");
-	sid.hIcon = Skin_GetIconByHandle(iconList[0].hIcolib);
-	sid.hIconDisabled = Skin_GetIconByHandle(iconList[1].hIcolib);
+	sid.hIcon = IcoLib_GetIconByHandle(iconList[0].hIcolib);
+	sid.hIconDisabled = IcoLib_GetIconByHandle(iconList[1].hIcolib);
 	Srmm_AddIcon(&sid);
 
 	HookEvent(ME_MSG_ICONPRESSED, ProcessSrmmIconClick);

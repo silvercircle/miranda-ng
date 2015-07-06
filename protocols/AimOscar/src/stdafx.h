@@ -35,7 +35,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <m_avatars.h>
 #include <m_button.h>
 #include <m_chat.h>
-#include <m_clistint.h>
+#include <m_clist.h>
 #include <m_database.h>
 #include <m_history.h>
 #include <m_idle.h>
@@ -44,7 +44,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <m_netlib.h>
 #include <m_options.h>
 #include <m_popup.h>
-#include <m_protomod.h>
 #include <m_userinfo.h>
 #include <m_icolib.h>
 #include <m_imgsrvc.h>

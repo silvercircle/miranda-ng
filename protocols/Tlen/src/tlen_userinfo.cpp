@@ -99,7 +99,7 @@ static void FetchField(HWND hwndDlg, UINT idCtrl, char *fieldName, char **str, i
 
 	if (hwndDlg == NULL || fieldName == NULL || str == NULL || strSize == NULL)
 		return;
-	GetDlgItemTextA(hwndDlg, idCtrl, text, SIZEOF(text));
+	GetDlgItemTextA(hwndDlg, idCtrl, text, _countof(text));
 	if (text[0]) {
 		if ((localFieldName=TlenTextEncode(fieldName)) != NULL) {
 			if ((localText=TlenTextEncode(text)) != NULL) {
@@ -127,7 +127,7 @@ static void FetchCombo(HWND hwndDlg, UINT idCtrl, char *fieldName, char **str, i
 
 int TlenProtocol::UserInfoInit(WPARAM wParam, LPARAM lParam)
 {
-	if (!ProtoGetAccount(m_szModuleName))
+	if (!Proto_GetAccount(m_szModuleName))
 		return 0;
 
 	MCONTACT hContact = (MCONTACT) lParam;

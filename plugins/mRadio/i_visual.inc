@@ -4,63 +4,40 @@ var
   hCMenuItemPlay:THANDLE;
 
 function OnContactMenu(hContact:WPARAM;lParam:LPARAM):int;cdecl;
-var
-  mi:TCListMenuItem;
 begin
-  FillChar(mi,SizeOf(mi),0);
-  mi.cbSize:=sizeof(mi);
-  if StrCmp(PAnsiChar(CallService(MS_PROTO_GETCONTACTBASEPROTO,hContact,0)),
-     PluginName)<>0 then
+  if StrCmp(Proto_GetProtoName(hContact),PluginName)<>0 then
   begin
-    mi.flags:=CMIM_FLAGS or CMIF_HIDDEN;
-    CallService(MS_CLIST_MODIFYMENUITEM,hCMenuItemPlay,tlparam(@mi));
+    Menu_ShowItem(hCMenuItemRec, 0);
+    Menu_ShowItem(hCMenuItemPlay, 0);
   end
   else
   begin
     // play/Stop
-    mi.flags:=CMIM_FLAGS or CMIM_ICON or CMIM_NAME;
     if THANDLE(hContact)<>ActiveContact then
-    begin
-      mi.szName.a:='Start broadcasting';
-      mi.hIcon:=CallService(MS_SKIN2_GETICON,0,tlparam(IcoBtnOn));
-    end
+      Menu_ModifyItem(hCMenuItemPlay, 'Start broadcasting', IcoLib_GetIcon(IcoBtnOn,0))
     else
-    begin
-      mi.szName.a:='Stop broadcasting';
-      mi.hIcon:=CallService(MS_SKIN2_GETICON,0,tlparam(IcoBtnOff));
-    end;
-    CallService(MS_CLIST_MODIFYMENUITEM,hCMenuItemPlay,tlparam(@mi));
+      Menu_ModifyItem(hCMenuItemPlay, 'Stop broadcasting', IcoLib_GetIcon(IcoBtnOff,0));
 
     // record
-    mi.flags:=CMIM_FLAGS or CMIM_ICON or CMIM_NAME;
     if Service_RadioRecord(0,1)<>0 then
-    begin
-      mi.szName.a:='Stop record';
-      mi.hIcon:=CallService(MS_SKIN2_GETICON,0,tlparam(IcoBtnRecDn));
-    end
+      Menu_ModifyItem(hCMenuItemRec, 'Stop record', IcoLib_GetIcon(IcoBtnRecDn,0))
     else
-    begin
-      mi.szName.a:='Start record';
-      mi.hIcon:=CallService(MS_SKIN2_GETICON,0,tlparam(IcoBtnRecUp));
-    end;
+      Menu_ModifyItem(hCMenuItemRec, 'Start record', IcoLib_GetIcon(IcoBtnRecUp,0));
   end;
-  CallService(MS_CLIST_MODIFYMENUITEM,hCMenuItemRec,tlparam(@mi));
+
   result:=0;
 end;
 
 procedure CreateMenu;
 var
-  mi:TCListMenuItem;
+  mi:TMO_MenuItem;
 begin
   FillChar(mi, sizeof(mi), 0);
-  mi.cbSize    :=sizeof(mi);
-//  mi.popupPosition:=MenuUserInfoPos;
   mi.pszService:=MS_RADIO_RECORD;
   mi.szName.a  :='Start/Stop Record';
   hCMenuItemRec:=Menu_AddContactMenuItem(@mi);
 
-//!!  mi.flags        :=CMIF_NOTOFFLINE or CMIF_NOTOFFLIST;
-  mi.hIcon      :=CallService(MS_SKIN2_GETICON,0,lparam(IcoBtnOn));
+  mi.hIcon      :=IcoLib_GetIcon(IcoBtnOn,0);
   mi.pszService :=MS_RADIO_PLAYSTOP;
   mi.szName.a   :='Start/Stop broadcasting';
   hCMenuItemPlay:=Menu_AddContactMenuItem(@mi);
@@ -71,7 +48,6 @@ var
   sid:TSKINICONDESC;
 begin
   FillChar(sid,SizeOf(TSKINICONDESC),0);
-  sid.cbSize:=SizeOf(TSKINICONDESC);
   sid.cx:=16;
   sid.cy:=16;
   sid.szSection.a:='Protocols/mRadio';

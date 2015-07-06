@@ -40,7 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <newpluginapi.h>
 #include <m_avatars.h>
 #include <m_chat.h>
-#include <m_clistint.h>
+#include <m_clist.h>
 #include <m_database.h>
 #include <m_idle.h>
 #include <m_ignore.h>
@@ -51,7 +51,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <m_popup.h>
 #include <m_protosvc.h>
 #include <m_protoint.h>
-#include <m_protomod.h>
 #include <m_skin.h>
 #include <m_icolib.h>
 #include <m_hotkeys.h>
@@ -60,6 +59,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <m_toptoolbar.h>
 #include <m_json.h>
 #include <m_imgsrvc.h>
+#include <m_http.h>
 
 class FacebookProto;
 

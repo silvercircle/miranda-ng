@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "msn_global.h"
+#include "stdafx.h"
 #include "msn_proto.h"
 
 static const char oimRecvUrl[] = "https://rsi.hotmail.com/rsi/rsi.asmx";
@@ -255,14 +255,14 @@ void CMsnProto::sttNotificationMessage(char* msgBody, bool isInitial)
 		wchar_t* mimeSubjectW = tFileInfo.decode(Subject);
 
 
-		mir_sntprintf(tBuffer2, SIZEOF(tBuffer2), TranslateT("Subject: %s"), mimeSubjectW);
+		mir_sntprintf(tBuffer2, _countof(tBuffer2), TranslateT("Subject: %s"), mimeSubjectW);
 
 
 
 		TCHAR* msgtxt = _stricmp(From, Fromaddr) ?
 			TranslateT("Hotmail from %s (%S)") : TranslateT("Hotmail from %s");
 
-		mir_sntprintf(tBuffer, SIZEOF(tBuffer), msgtxt, mimeFromW, Fromaddr);
+		mir_sntprintf(tBuffer, _countof(tBuffer), msgtxt, mimeFromW, Fromaddr);
 		mir_free(mimeFromW);
 		mir_free(mimeSubjectW);
 		ShowPopup = true;
@@ -271,8 +271,8 @@ void CMsnProto::sttNotificationMessage(char* msgBody, bool isInitial)
 		const char* MailData = tFileInfo["Mail-Data"];
 		if (MailData != NULL) processMailData((char*)MailData);
 
-		mir_sntprintf(tBuffer, SIZEOF(tBuffer), m_tszUserName);
-		mir_sntprintf(tBuffer2, SIZEOF(tBuffer2), TranslateT("Unread mail is available: %d in Inbox and %d in other folders."), mUnreadMessages, mUnreadJunkEmails);
+		mir_sntprintf(tBuffer, _countof(tBuffer), m_tszUserName);
+		mir_sntprintf(tBuffer2, _countof(tBuffer2), TranslateT("Unread mail is available: %d in Inbox and %d in other folders."), mUnreadMessages, mUnreadJunkEmails);
 	}
 
 	if (UnreadMessages == mUnreadMessages && UnreadJunkEmails == mUnreadJunkEmails  && !isInitial)
@@ -292,10 +292,10 @@ void CMsnProto::sttNotificationMessage(char* msgBody, bool isInitial)
 			cle.hContact = hContact;
 			cle.hDbEvent = 1;
 			cle.flags = CLEF_URGENT | CLEF_TCHAR;
-			cle.hIcon = LoadSkinnedIcon(SKINICON_OTHER_SENDEMAIL);
+			cle.hIcon = Skin_LoadIcon(SKINICON_OTHER_SENDEMAIL);
 			cle.ptszTooltip = tBuffer2;
 			char buf[64];
-			mir_snprintf(buf, SIZEOF(buf), "%s%s", m_szModuleName, MS_GOTO_INBOX);
+			mir_snprintf(buf, "%s%s", m_szModuleName, MS_GOTO_INBOX);
 			cle.pszService = buf;
 
 			CallService(MS_CLIST_ADDEVENT, hContact, (LPARAM)&cle);
@@ -317,7 +317,7 @@ void CMsnProto::sttNotificationMessage(char* msgBody, bool isInitial)
 			msgurl = "inbox";
 
 		char szUrl[256];
-		mir_snprintf(szUrl, SIZEOF(szUrl), "http://mail.live.com?rru=%s", msgurl);
+		mir_snprintf(szUrl, "http://mail.live.com?rru=%s", msgurl);
 
 		MSN_ShowPopup(tBuffer, tBuffer2,
 			MSN_ALLOW_ENTER | MSN_ALLOW_MSGBOX | MSN_HOTMAIL_POPUP,
@@ -390,7 +390,7 @@ void CMsnProto::displayEmailCount(MCONTACT hContact)
 	rtrimt(name);
 
 	TCHAR szNick[128];
-	mir_sntprintf(szNick, SIZEOF(szNick),
+	mir_sntprintf(szNick, _countof(szNick),
 		getByte("DisableHotmailJunk", 0) ? _T("%s [%d]") : _T("%s [%d][%d]"), name, mUnreadMessages, mUnreadJunkEmails);
 
 	nickChg = true;

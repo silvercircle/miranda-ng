@@ -79,12 +79,12 @@ int OnShutdown(WPARAM, LPARAM)
 
 static void OnCreateModule(MODULEINFO *mi)
 {
-	mi->OnlineIconIndex = ImageList_AddIcon(hIconsList, LoadSkinnedProtoIcon(mi->pszModule, ID_STATUS_ONLINE));
+	mi->OnlineIconIndex = ImageList_AddIcon(hIconsList, Skin_LoadProtoIcon(mi->pszModule, ID_STATUS_ONLINE));
 	mi->hOnlineIcon = ImageList_GetIcon(hIconsList, mi->OnlineIconIndex, ILD_TRANSPARENT);
 	mi->hOnlineTalkIcon = ImageList_GetIcon(hIconsList, mi->OnlineIconIndex, ILD_TRANSPARENT | INDEXTOOVERLAYMASK(1));
 	ImageList_AddIcon(hIconsList, mi->hOnlineTalkIcon);
 
-	mi->OfflineIconIndex = ImageList_AddIcon(hIconsList, LoadSkinnedProtoIcon(mi->pszModule, ID_STATUS_OFFLINE));
+	mi->OfflineIconIndex = ImageList_AddIcon(hIconsList, Skin_LoadProtoIcon(mi->pszModule, ID_STATUS_OFFLINE));
 	mi->hOfflineIcon = ImageList_GetIcon(hIconsList, mi->OfflineIconIndex, ILD_TRANSPARENT);
 	mi->hOfflineTalkIcon = ImageList_GetIcon(hIconsList, mi->OfflineIconIndex, ILD_TRANSPARENT | INDEXTOOVERLAYMASK(1));
 	ImageList_AddIcon(hIconsList, mi->hOfflineTalkIcon);
@@ -287,30 +287,30 @@ static void RegisterFonts()
 {
 	ColourIDT colourid = { sizeof(colourid) };
 	strncpy(colourid.dbSettingsGroup, CHAT_MODULE, sizeof(colourid.dbSettingsGroup));
-	_tcsncpy(colourid.group, LPGENT("Chat module"), SIZEOF(colourid.group));
+	_tcsncpy(colourid.group, LPGENT("Chat module"), _countof(colourid.group));
 
-	strncpy(colourid.setting, "ColorLogBG", SIZEOF(colourid.setting));
-	_tcsncpy(colourid.name, LPGENT("Group chat log background"), SIZEOF(colourid.name));
+	strncpy(colourid.setting, "ColorLogBG", _countof(colourid.setting));
+	_tcsncpy(colourid.name, LPGENT("Group chat log background"), _countof(colourid.name));
 	colourid.defcolour = GetSysColor(COLOR_WINDOW);
 	ColourRegisterT(&colourid);
 
-	strncpy(colourid.setting, "ColorMessageBG", SIZEOF(colourid.setting));
-	_tcsncpy(colourid.name, LPGENT("Message background"), SIZEOF(colourid.name));
+	strncpy(colourid.setting, "ColorMessageBG", _countof(colourid.setting));
+	_tcsncpy(colourid.name, LPGENT("Message background"), _countof(colourid.name));
 	colourid.defcolour = GetSysColor(COLOR_WINDOW);
 	ColourRegisterT(&colourid);
 
-	strncpy(colourid.setting, "ColorNicklistBG", SIZEOF(colourid.setting));
-	_tcsncpy(colourid.name, LPGENT("Nick list background"), SIZEOF(colourid.name));
+	strncpy(colourid.setting, "ColorNicklistBG", _countof(colourid.setting));
+	_tcsncpy(colourid.name, LPGENT("Nick list background"), _countof(colourid.name));
 	colourid.defcolour = GetSysColor(COLOR_WINDOW);
 	ColourRegisterT(&colourid);
 
-	strncpy(colourid.setting, "ColorNicklistLines", SIZEOF(colourid.setting));
-	_tcsncpy(colourid.name, LPGENT("Nick list lines"), SIZEOF(colourid.name));
+	strncpy(colourid.setting, "ColorNicklistLines", _countof(colourid.setting));
+	_tcsncpy(colourid.name, LPGENT("Nick list lines"), _countof(colourid.name));
 	colourid.defcolour = GetSysColor(COLOR_INACTIVEBORDER);
 	ColourRegisterT(&colourid);
 
-	strncpy(colourid.setting, "ColorNicklistSelectedBG", SIZEOF(colourid.setting));
-	_tcsncpy(colourid.name, LPGENT("Nick list background (selected)"), SIZEOF(colourid.name));
+	strncpy(colourid.setting, "ColorNicklistSelectedBG", _countof(colourid.setting));
+	_tcsncpy(colourid.name, LPGENT("Nick list background (selected)"), _countof(colourid.name));
 	colourid.defcolour = GetSysColor(COLOR_HIGHLIGHT);
 	ColourRegisterT(&colourid);
 }
@@ -398,7 +398,7 @@ extern "C" __declspec(dllexport) int Unload(void)
 void LoadIcons(void)
 {
 	hIconsList = ImageList_Create(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), ILC_COLOR32 | ILC_MASK, 0, 100);
-	ImageList_AddIcon(hIconsList, LoadSkinnedIcon(SKINICON_EVENT_MESSAGE));
+	ImageList_AddIcon(hIconsList, Skin_LoadIcon(SKINICON_EVENT_MESSAGE));
 	ImageList_AddIcon(hIconsList, LoadIconEx("overlay", FALSE));
 	ImageList_SetOverlayImage(hIconsList, 1, 1);
 }
@@ -471,8 +471,8 @@ STDMETHODIMP CREOleCallback::GetNewStorage(LPSTORAGE * lplpstg)
 {
 	WCHAR szwName[64];
 	char szName[64];
-	mir_snprintf(szName, SIZEOF(szName), "s%u", nextStgId++);
-	MultiByteToWideChar(CP_ACP, 0, szName, -1, szwName, SIZEOF(szwName));
+	mir_snprintf(szName, _countof(szName), "s%u", nextStgId++);
+	MultiByteToWideChar(CP_ACP, 0, szName, -1, szwName, _countof(szwName));
 	if (pictStg == NULL)
 		return STG_E_MEDIUMFULL;
 	return pictStg->CreateStorage(szwName, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE, 0, 0, lplpstg);

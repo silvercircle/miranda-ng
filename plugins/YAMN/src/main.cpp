@@ -62,8 +62,8 @@ static void GetProfileDirectory(TCHAR *szPath, int cbPath)
 //This is copied from Miranda's sources. In 0.2.1.0 it is needed, in newer vesions of Miranda use MS_DB_GETPROFILEPATH service
 {
 	TCHAR tszOldPath[MAX_PATH];
-	CallService(MS_DB_GETPROFILEPATHT, SIZEOF(tszOldPath), (LPARAM)tszOldPath);
-	_tcscat(tszOldPath, _T("\\*.book"));
+	CallService(MS_DB_GETPROFILEPATHT, _countof(tszOldPath), (LPARAM)tszOldPath);
+	mir_tstrcat(tszOldPath, _T("\\*.book"));
 
 	VARST ptszNewPath( _T("%miranda_userdata%"));
 
@@ -125,8 +125,8 @@ BOOL CALLBACK EnumSystemCodePagesProc(LPTSTR cpStr)
 		}
 		#ifdef _DEBUG
 		if (!found) {
-			_tcscat(unknownCP, info.CodePageName);
-			_tcscat(unknownCP, _T("\n"));
+			mir_tstrcat(unknownCP, info.CodePageName);
+			mir_tstrcat(unknownCP, _T("\n"));
 		}
 		#endif
 	}
@@ -141,24 +141,21 @@ void CheckMenuItems()
 int SystemModulesLoaded(WPARAM, LPARAM)
 {
 	//Insert "Check mail (YAMN)" item to Miranda's menu
-	CLISTMENUITEM mi = { sizeof(mi) };
+	CMenuItem mi;
 	mi.position = 0xb0000000;
-	mi.icolibItem = g_GetIconHandle(0);
-	mi.pszName = LPGEN("Check &mail (All Account)");
-	mi.pszPopupName = NULL;//YAMN_DBMODULE;
+	mi.hIcolibItem = g_GetIconHandle(0);
+	mi.name.a = LPGEN("Check &mail (All Account)");
 	mi.pszService = MS_YAMN_FORCECHECK;
 	hMenuItemMain = Menu_AddMainMenuItem(&mi);
 
-	mi.pszName = LPGEN("Check &mail (This Account)");
-	mi.pszContactOwner = YAMN_DBMODULE;
+	mi.name.a = LPGEN("Check &mail (This Account)");
 	mi.pszService = MS_YAMN_CLISTCONTEXT;
-	hMenuItemCont = Menu_AddContactMenuItem(&mi);
+	hMenuItemCont = Menu_AddContactMenuItem(&mi, YAMN_DBMODULE);
 
-	mi.icolibItem = g_GetIconHandle(1);
-	mi.pszName = LPGEN("Launch application");
-	mi.pszContactOwner = YAMN_DBMODULE;
+	mi.hIcolibItem = g_GetIconHandle(1);
+	mi.name.a = LPGEN("Launch application");
 	mi.pszService = MS_YAMN_CLISTCONTEXTAPP;
-	hMenuItemContApp = Menu_AddContactMenuItem(&mi);
+	hMenuItemContApp = Menu_AddContactMenuItem(&mi, YAMN_DBMODULE);
 
 	CheckMenuItems();
 
@@ -181,32 +178,32 @@ static IconItem iconList[] =
 
 static void LoadIcons()
 {
-	Icon_Register(YAMNVar.hInst, "YAMN", iconList, SIZEOF(iconList));
+	Icon_Register(YAMNVar.hInst, "YAMN", iconList, _countof(iconList));
 }
 
 HANDLE WINAPI g_GetIconHandle( int idx )
 {
-	if ( idx >= SIZEOF(iconList))
+	if ( idx >= _countof(iconList))
 		return NULL;
 	return iconList[idx].hIcolib;
 }
 
 HICON WINAPI g_LoadIconEx( int idx, bool big )
 {
-	if ( idx >= SIZEOF(iconList))
+	if ( idx >= _countof(iconList))
 		return NULL;
-	return Skin_GetIcon(iconList[idx].szName, big);
+	return IcoLib_GetIcon(iconList[idx].szName, big);
 }
 
 void WINAPI g_ReleaseIcon( HICON hIcon )
 {
-	if ( hIcon ) Skin_ReleaseIcon(hIcon);
+	if ( hIcon ) IcoLib_ReleaseIcon(hIcon);
 }
 
 static void LoadPlugins()
 {
 	TCHAR szSearchPath[MAX_PATH];
-	mir_sntprintf(szSearchPath, SIZEOF(szSearchPath), _T("%s\\Plugins\\YAMN\\*.dll"), szMirandaDir);
+	mir_sntprintf(szSearchPath, _countof(szSearchPath), _T("%s\\Plugins\\YAMN\\*.dll"), szMirandaDir);
 
 	hDllPlugins = NULL;
 
@@ -220,7 +217,7 @@ static void LoadPlugins()
 				continue;
 
 			// we have a dot
-			int len = mir_tstrlen(fd.cFileName); // find the length of the string
+			int len = (int)mir_tstrlen(fd.cFileName); // find the length of the string
 			TCHAR* end = fd.cFileName+len; // get a pointer to the NULL
 			int safe = (end-dot)-1;	// figure out how many chars after the dot are "safe", not including NULL
 
@@ -228,7 +225,7 @@ static void LoadPlugins()
 				continue;
 
 			TCHAR szPluginPath[MAX_PATH];
-			mir_sntprintf(szPluginPath, SIZEOF(szPluginPath),_T("%s\\Plugins\\YAMN\\%s"), szMirandaDir, fd.cFileName);
+			mir_sntprintf(szPluginPath, _countof(szPluginPath),_T("%s\\Plugins\\YAMN\\%s"), szMirandaDir, fd.cFileName);
 			HINSTANCE hDll = LoadLibrary(szPluginPath);
 			if (hDll == NULL)
 				continue;
@@ -266,12 +263,12 @@ extern "C" int __declspec(dllexport) Load(void)
 	PathToAbsoluteT( _T("."), szMirandaDir);
 
 	// retrieve the current profile name
-	CallService(MS_DB_GETPROFILENAMET, (WPARAM)SIZEOF(ProfileName), (LPARAM)ProfileName);	//not to pass entire array to fcn
+	CallService(MS_DB_GETPROFILENAMET, (WPARAM)_countof(ProfileName), (LPARAM)ProfileName);	//not to pass entire array to fcn
 	TCHAR *fc = _tcsrchr(ProfileName, '.');
 	if ( fc != NULL ) *fc = 0;
 
 	//	we get the user path where our yamn-account.book.ini is stored from mirandaboot.ini file
-	GetProfileDirectory(UserDirectory, SIZEOF(UserDirectory));
+	GetProfileDirectory(UserDirectory, _countof(UserDirectory));
 
 	// Enumerate all the code pages available for the System Locale
 	EnumSystemCodePages(EnumSystemCodePagesProc, CP_INSTALLED);
@@ -286,7 +283,7 @@ extern "C" int __declspec(dllexport) Load(void)
 	PROTOCOLDESCRIPTOR pd = { PROTOCOLDESCRIPTOR_V3_SIZE };
 	pd.szName = YAMN_DBMODULE;
 	pd.type = PROTOTYPE_VIRTUAL;
-	CallService(MS_PROTO_REGISTERMODULE, 0, (LPARAM)&pd);
+	Proto_RegisterModule(&pd);
 
 	InitializeCriticalSection(&AccountStatusCS);
 	InitializeCriticalSection(&FileWritingCS);

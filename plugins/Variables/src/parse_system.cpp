@@ -105,7 +105,7 @@ static TCHAR *parseCpuLoad(ARGUMENTSINFO *ai)
 		pdhStatus = PdhCloseQuery(hQuery);
 		return NULL;
 	}
-	mir_sntprintf(szVal, SIZEOF(szVal), _T("%.0f"), cValue.doubleValue);
+	mir_sntprintf(szVal, _countof(szVal), _T("%.0f"), cValue.doubleValue);
 	//PdhRemoveCounter(*hCounter);
 	PdhCloseQuery(hQuery);
 	mir_free(szCounter);
@@ -282,7 +282,7 @@ static TCHAR *parseDiffTime(ARGUMENTSINFO *ai)
 		return NULL;
 
 	diff = difftime(mktime(&t1), mktime(&t0));
-	mir_sntprintf(szTime, SIZEOF(szTime), _T("%.0f"), diff);
+	mir_sntprintf(szTime, _countof(szTime), _T("%.0f"), diff);
 
 	return mir_tstrdup(szTime);
 }
@@ -371,7 +371,7 @@ static TCHAR *parseListDir(ARGUMENTSINFO *ai)
 	tszRes = NULL;
 
 	if (ai->argc > 1)
-		_tcsncpy(tszFirst, ai->targv[1], SIZEOF(tszFirst) - 1);
+		_tcsncpy(tszFirst, ai->targv[1], _countof(tszFirst) - 1);
 
 	if (ai->argc > 2)
 		tszFilter = ai->targv[2];
@@ -387,10 +387,10 @@ static TCHAR *parseListDir(ARGUMENTSINFO *ai)
 			bFiles = FALSE;
 	}
 	if (tszFirst[mir_tstrlen(tszFirst) - 1] == '\\')
-		_tcsncat(tszFirst, tszFilter, SIZEOF(tszFirst) - mir_tstrlen(tszFirst) - 1);
+		mir_tstrncat(tszFirst, tszFilter, _countof(tszFirst) - mir_tstrlen(tszFirst) - 1);
 	else {
-		_tcsncat(tszFirst, _T("\\"), SIZEOF(tszFirst) - mir_tstrlen(tszFirst) - 1);
-		_tcsncat(tszFirst, tszFilter, SIZEOF(tszFirst) - mir_tstrlen(tszFirst) - 1);
+		mir_tstrncat(tszFirst, _T("\\"), _countof(tszFirst) - mir_tstrlen(tszFirst) - 1);
+		mir_tstrncat(tszFirst, tszFilter, _countof(tszFirst) - mir_tstrlen(tszFirst) - 1);
 	}
 
 	WIN32_FIND_DATA ffd;
@@ -405,14 +405,14 @@ static TCHAR *parseListDir(ARGUMENTSINFO *ai)
 	while (FindNextFile(hFind, &ffd) != 0) {
 		if (((ffd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) && (bDirs)) || ((!(ffd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)) && (bFiles))) {
 			if (tszRes != NULL) {
-				_tcscat(tszRes, tszSeperator);
+				mir_tstrcat(tszRes, tszSeperator);
 				tszRes = (TCHAR*)mir_realloc(tszRes, (mir_tstrlen(tszRes) + mir_tstrlen(ffd.cFileName) + mir_tstrlen(tszSeperator) + 1)*sizeof(TCHAR));
 			}
 			else {
 				tszRes = (TCHAR*)mir_alloc((mir_tstrlen(ffd.cFileName) + mir_tstrlen(tszSeperator) + 1)*sizeof(TCHAR));
 				mir_tstrcpy(tszRes, _T(""));
 			}
-			_tcscat(tszRes, ffd.cFileName);
+			mir_tstrcat(tszRes, ffd.cFileName);
 		}
 	}
 	FindClose(hFind);
@@ -819,7 +819,7 @@ static TCHAR *parseUpTime(ARGUMENTSINFO *ai)
 	}
 
 	TCHAR szVal[32];
-	mir_sntprintf(szVal, SIZEOF(szVal), _T("%u"), cValue.largeValue);
+	mir_sntprintf(szVal, _countof(szVal), _T("%u"), cValue.largeValue);
 	PdhRemoveCounter(hCounter);
 	PdhCloseQuery(hQuery);
 	return mir_tstrdup(szVal);
@@ -894,12 +894,8 @@ void registerSystemTokens()
 	registerIntToken(TXTFILE, parseTextFile, TRF_FUNCTION, LPGEN("System Functions")"\t(x,y)\t"LPGEN("y > 0: line number y from file x, y = 0: the whole file, y < 0: line y counted from the end, y = r: random line"));
 	registerIntToken(UPTIME, parseUpTime, TRF_FIELD, LPGEN("System Functions")"\t"LPGEN("uptime in seconds"));
 
-	if (!ServiceExists(MS_UTILS_REPLACEVARS))
-		registerIntToken(ENVIRONMENTVARIABLE, parseEnvironmentVariable, TRF_FUNCTION, LPGEN("Miranda Core OS")"\t(%xxxxxxx%)\t"LPGEN("any environment variable defined in current Windows session (like %systemroot%, %allusersprofile%, etc.)"));
-	else {
-		registerIntToken(ENVIRONMENTVARIABLE, parseEnvironmentVariable, TRF_FUNCTION, LPGEN("System Functions")"\t(x)\t"LPGEN("expand environment variable x"));
-		registerIntToken(USERNAME, parseUserName, TRF_FIELD, LPGEN("System Functions")"\t"LPGEN("user name"));
-	}
+	registerIntToken(ENVIRONMENTVARIABLE, parseEnvironmentVariable, TRF_FUNCTION, LPGEN("System Functions")"\t(x)\t"LPGEN("expand environment variable x"));
+	registerIntToken(USERNAME, parseUserName, TRF_FIELD, LPGEN("System Functions")"\t"LPGEN("user name"));
 
 	srand((unsigned int)GetTickCount());
 

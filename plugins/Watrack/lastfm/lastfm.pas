@@ -17,7 +17,6 @@ const
   IcoLastFM:pAnsiChar = 'WATrack_lasfm';
 var
   lfm_tries:integer;
-  sic:THANDLE;
   slastinf:THANDLE;
   slast:THANDLE;
 const
@@ -81,7 +80,6 @@ end;
 function NewPlStatus(wParam:WPARAM;lParam:LPARAM):int;cdecl;
 var
   flag:integer;
-  mi:TCListMenuItem;
 begin
   result:=0;
   case wParam of
@@ -113,10 +111,7 @@ begin
       else // like 1
         exit
       end;
-      FillChar(mi,sizeof(mi),0);
-      mi.cbSize:=sizeof(mi);
-      mi.flags :=CMIM_FLAGS+flag;
-      CallService(MS_CLIST_MODIFYMENUITEM,hMenuLast,tlparam(@mi));
+      Menu_ModifyItem(hMenuLast, nil, INVALID_HANDLE_VALUE, flag);
     end;
 
     WAT_EVENT_PLAYERSTATUS: begin
@@ -136,18 +131,6 @@ end;
 
 {$i i_last_dlg.inc}
 
-function IconChanged(wParam:WPARAM;lParam:LPARAM):int;cdecl;
-var
-  mi:TCListMenuItem;
-begin
-  result:=0;
-  FillChar(mi,SizeOf(mi),0);
-  mi.cbSize:=sizeof(mi);
-  mi.flags :=CMIM_ICON;
-  mi.hIcon :=CallService(MS_SKIN2_GETICON,0,tlparam(IcoLastFM));
-  CallService(MS_CLIST_MODIFYMENUITEM,hMenuLast,tlparam(@mi));
-end;
-
 function SrvLastFMInfo(wParam:WPARAM;lParam:LPARAM):int;cdecl;
 var
   data:tLastFMInfo;
@@ -162,20 +145,15 @@ begin
 end;
 
 function SrvLastFM(wParam:WPARAM;lParam:LPARAM):int;cdecl;
-var
-  mi:TCListMenuItem;
 begin
-  FillChar(mi,sizeof(mi),0);
-  mi.cbSize:=sizeof(mi);
-  mi.flags :=CMIM_NAME;
   if odd(lfm_on) then
   begin
-    mi.szName.a:='Disable scrobbling';
+    Menu_ModifyItem(hMenuLast,'Disable scrobbling');
     lfm_on:=lfm_on and not 1;
   end
   else
   begin
-    mi.szName.a:='Enable scrobbling';
+    Menu_ModifyItem(hMenuLast,'Enable scrobbling');
     lfm_on:=lfm_on or 1;
     if hTimer<>0 then
     begin
@@ -183,17 +161,15 @@ begin
       hTimer:=0;
     end;
   end;
-  CallService(MS_CLIST_MODIFYMENUITEM,hMenuLast,tlparam(@mi));
   result:=ord(not odd(lfm_on));
 end;
 
 procedure CreateMenus;
 var
-  mi:TCListMenuItem;
+  mi:TMO_MenuItem;
   sid:TSKINICONDESC;
 begin
   FillChar(sid,SizeOf(TSKINICONDESC),0);
-  sid.cbSize:=SizeOf(TSKINICONDESC);
   sid.cx:=16;
   sid.cy:=16;
   sid.szSection.a:='WATrack';
@@ -205,13 +181,11 @@ begin
   DestroyIcon(sid.hDefaultIcon);
 
   FillChar(mi, sizeof(mi), 0);
-  mi.cbSize       :=sizeof(mi);
-  mi.szPopupName.a:=PluginShort;
-
-  mi.hIcon        :=CallService(MS_SKIN2_GETICON,0,lparam(IcoLastFM));
-  mi.szName.a     :='Disable scrobbling';
-  mi.pszService   :=MS_WAT_LASTFM;
-  mi.popupPosition:=500050000;
+  mi.root      :=Menu_CreateRoot(MO_MAIN, 'Watrack', 500050000, 0, 0);
+  mi.hIcon     :=IcoLib_GetIcon(IcoLastFM,0);
+  mi.szName.a  :='Disable scrobbling';
+  mi.pszService:=MS_WAT_LASTFM;
+  mi.position  :=500050000;
   hMenuLast:=Menu_AddMainMenuItem(@mi);
 end;
 
@@ -224,9 +198,6 @@ begin
   name:='LastFM';
   result:=0;
 end;
-
-var
-  plStatusHook:THANDLE;
 
 function InitProc(aGetStatus:boolean=false):integer;
 begin
@@ -251,9 +222,8 @@ begin
   slast:=CreateServiceFunction(MS_WAT_LASTFM,@SrvLastFM);
   if hMenuLast=0 then
     CreateMenus;
-  sic:=HookEvent(ME_SKIN2_ICONSCHANGED,@IconChanged);
   if (lfm_on and 4)=0 then
-    plStatusHook:=HookEvent(ME_WAT_NEWSTATUS,@NewPlStatus);
+    HookEvent(ME_WAT_NEWSTATUS,@NewPlStatus);
 end;
 
 procedure DeInitProc(aSetDisable:boolean);
@@ -263,11 +233,9 @@ begin
   else
     DestroyServiceFunction(slastinf);
 
-  CallService(MO_REMOVEMENUITEM,hMenuLast,0);
+  Menu_RemoveItem(hMenuLast);
   hMenuLast:=0;
   DestroyServiceFunction(slast);
-  UnhookEvent(plStatusHook);
-  UnhookEvent(sic);
 
   if hTimer<>0 then
   begin

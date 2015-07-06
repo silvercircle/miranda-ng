@@ -22,19 +22,19 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "hdr/modern_commonheaders.h"
-#include "hdr/modern_clist.h"
-#include "hdr/modern_commonprototypes.h"
-#include "hdr/modern_gettextasync.h"
-#include "hdr/modern_sync.h"
-#include "hdr/modern_clui.h"
+#include "stdafx.h"
+#include "modern_clist.h"
+#include "modern_commonprototypes.h"
+#include "modern_gettextasync.h"
+#include "modern_sync.h"
+#include "modern_clui.h"
 #include <m_modernopt.h>
 
 int OnLoadLangpack(WPARAM, LPARAM);
+int UnloadFavoriteContactMenu();
 
 int CListMod_HideWindow();
 
-void GroupMenus_Init(void);
 int AddMainMenuItem(WPARAM wParam, LPARAM lParam);
 int AddContactMenuItem(WPARAM wParam, LPARAM lParam);
 void UninitCListEvents(void);
@@ -47,9 +47,6 @@ int EventsProcessContactDoubleClick(MCONTACT hContact);
 
 INT_PTR TrayIconPauseAutoHide(WPARAM wParam, LPARAM lParam);
 
-void InitTrayMenus(void);
-void UninitTrayMenu();
-
 // returns normal icon or combined with status overlay. Needs to be destroyed.
 
 HICON cliGetIconFromStatusMode(MCONTACT hContact, const char *szProto, int status)
@@ -61,7 +58,7 @@ HICON cliGetIconFromStatusMode(MCONTACT hContact, const char *szProto, int statu
 			// check status is online
 			if (status > ID_STATUS_OFFLINE) {
 				// get xicon
-				HICON hXIcon = (HICON)ProtoCallService(szProto, PS_GETCUSTOMSTATUSICON, 0, 0);
+				HICON hXIcon = (HICON)CallProtoService(szProto, PS_GETCUSTOMSTATUSICON, 0, 0);
 				if (hXIcon) {
 					// check overlay mode
 					if (trayOption & 2) {
@@ -102,7 +99,7 @@ int cli_IconFromStatusMode(const char *szProto, int nStatus, MCONTACT hContact)
 
 		int result = -1;
 		if (ProtoServiceExists(szActProto, PS_GETADVANCEDSTATUSICON))
-			result = ProtoCallService(szActProto, PS_GETADVANCEDSTATUSICON, (WPARAM)hActContact, 0);
+			result = CallProtoService(szActProto, PS_GETADVANCEDSTATUSICON, (WPARAM)hActContact, 0);
 
 		if (result == -1 || !(LOWORD(result))) {
 			//Get normal Icon
@@ -136,8 +133,7 @@ int GetContactIconC(ClcCacheEntry *p)
 
 void UnLoadContactListModule()  //unhooks noncritical events
 {
-	UninitTrayMenu();
-	UninitCustomMenus();
+	UnloadFavoriteContactMenu();
 }
 
 int CListMod_ContactListShutdownProc(WPARAM, LPARAM)
@@ -184,8 +180,7 @@ HRESULT CluiLoadModule()
 	CreateServiceFunction(MS_CLIST_SETUSEGROUPS, SetUseGroups);
 
 	InitCustomMenus();
-	InitTrayMenus();
-
+	
 	CLUI::InitClui();
 	return S_OK;
 }
@@ -299,7 +294,7 @@ int GetWindowVisibleState(HWND hWnd, int iStepX, int iStepY)
 					hAux = GetAncestor(hAux, GA_ROOTOWNER);
 					if (hAuxOld == hAux) {
 						TCHAR buf[255];
-						GetClassName(hAux, buf, SIZEOF(buf));
+						GetClassName(hAux, buf, _countof(buf));
 						if (!mir_tstrcmp(buf, CLUIFrameSubContainerClassName)) {
 							hWndFound = TRUE;
 							break;

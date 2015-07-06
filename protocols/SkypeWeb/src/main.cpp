@@ -18,8 +18,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "stdafx.h"
 
 int hLangpack;
-XML_API  xi;
-TIME_API tmi = { 0 };
 HINSTANCE g_hInstance;
 CLIST_INTERFACE *pcli;
 char g_szMirVer[100];
@@ -55,19 +53,18 @@ extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = { MIID_PROTOC
 
 extern "C" int __declspec(dllexport) Load(void)
 {
-	mir_getTMI(&tmi);
 	mir_getLP(&pluginInfo);
-	mir_getXI(&xi);
 	mir_getCLI();
 
 	CallService(MS_SYSTEM_GETVERSIONTEXT, sizeof(g_szMirVer), LPARAM(g_szMirVer));
 
-	PROTOCOLDESCRIPTOR pd = { sizeof(pd) };
+	PROTOCOLDESCRIPTOR pd = { 0 };
+	pd.cbSize = sizeof(pd);
 	pd.szName = "SKYPE";
 	pd.type = PROTOTYPE_PROTOCOL;
 	pd.fnInit = (pfnInitProto)CSkypeProto::InitAccount;
 	pd.fnUninit = (pfnUninitProto)CSkypeProto::UninitAccount;
-	CallService(MS_PROTO_REGISTERMODULE, 0, (LPARAM)&pd);
+	Proto_RegisterModule(&pd);
 
 	CSkypeProto::InitIcons();
 	CSkypeProto::InitMenus();

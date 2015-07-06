@@ -74,7 +74,6 @@ end;
 
 function RadioFrameProc(Dialog:HWND;hMessage:uint;wParam:WPARAM;lParam:LPARAM):LRESULT; stdcall;
 var
-  urd:TUTILRESIZEDIALOG;
   rc:TRECT;
   tmp:pAnsiChar;
 begin
@@ -103,14 +102,7 @@ begin
     end;
 
     WM_SIZE: begin
-      FillChar(urd,SizeOf(TUTILRESIZEDIALOG),0);
-      urd.cbSize    :=SizeOf(urd);
-      urd.hwndDlg   :=Dialog;
-      urd.hInstance :=hInstance;
-      urd.lpTemplate:=MAKEINTRESOURCEA(IDD_FRAME);
-      urd.lParam    :=0;
-      urd.pfnResizer:=@QSDlgResizer;
-      CallService(MS_UTILS_RESIZEDIALOG,0,tlparam(@urd));
+      Utils_ResizeDialog(Dialog, hInstance, MAKEINTRESOURCEA(IDD_FRAME), @QSDlgResizer);
     end;
 
     WM_ERASEBKGND: begin
@@ -124,7 +116,7 @@ begin
         IDC_RADIO_OPEN: begin
           result:=1;
           DrawIconEx(PDRAWITEMSTRUCT(lParam)^.hDC,0,0,
-              CallService(MS_SKIN2_GETICON,0,TLPARAM(IcoBtnOpen)),
+              IcoLib_GetIcon(IcoBtnOpen,0),
               16,16,0,hbr,DI_NORMAL);
         end;
 
@@ -135,7 +127,7 @@ begin
           else
             tmp:=IcoBtnOn;
           DrawIconEx(PDRAWITEMSTRUCT(lParam)^.hDC,0,0,
-              CallService(MS_SKIN2_GETICON,0,TLPARAM(tmp)),
+              IcoLib_GetIcon(tmp,0),
               16,16,0,hbr,DI_NORMAL);
         end;
       end;
@@ -179,7 +171,6 @@ begin
     end;
 
     WM_HSCROLL: begin
-//      gVolume:=SendMessage(lParam,TBM_GETPOS,0,0);
       CallService(MS_RADIO_SETVOL,SendMessage(lParam,TBM_GETPOS,0,0){gVolume},2)
     end;
 
@@ -219,7 +210,7 @@ begin
   if ServiceExists(MS_CLIST_FRAMES_ADDFRAME)=0 then
     exit;
   if parent=0 then
-    parent:=CallService(MS_CLUI_GETHWND,0,0);
+    parent:=cli^.hwndContactList;
 
   if FrameWnd=0 then
     FrameWnd:=CreateDialog(hInstance,MAKEINTRESOURCE(IDD_FRAME),parent,@RadioFrameProc);
@@ -232,7 +223,7 @@ begin
     begin
       cbSize  :=SizeOf(Frame);
       hWnd    :=FrameWnd;
-      hIcon   :=CallService(MS_SKIN2_GETICON,0,lparam(IcoBtnSettings));
+      hIcon   :=IcoLib_GetIcon(IcoBtnSettings,0);
       align   :=alTop;
       height  :=tr.bottom-tr.top+2;
       Flags   :=F_VISIBLE or F_NOBORDER or F_UNICODE;
@@ -245,7 +236,7 @@ begin
     begin
       CallService(MS_CLIST_FRAMES_UPDATEFRAME,FrameId, FU_FMPOS);
 
-      wnd:=CallService(MS_CLUI_GETHWND{MS_CLUI_GETHWNDTREE},0,0);
+      wnd:=cli^.hwndContactList;
       tmp:=SendMessage(wnd,CLM_GETEXSTYLE,0,0);
       SendMessage(wnd,CLM_SETEXSTYLE,tmp or CLS_EX_SHOWSELALWAYS,0);
 

@@ -40,8 +40,8 @@ void *gg_doregister(GGPROTO *gg, char *newPass, char *newEmail)
 
 	if (!(h = gg_register3(newEmail, newPass, token.id, token.val, 0)) || !(s = (gg_pubdir*)h->data) || !s->success || !s->uin) {
 		TCHAR error[128];
-		mir_sntprintf(error, SIZEOF(error), TranslateT("Cannot register new account because of error:\n\t%s"),
-			(h && !s) ? http_error_string(h ? h->error : 0) :
+		mir_sntprintf(error, TranslateT("Cannot register new account because of error:\n\t%s"),
+			(h && !s) ? http_error_string(h->error) :
 			(s ? TranslateT("Registration rejected") : _tcserror(errno)));
 		MessageBox(NULL, error, gg->m_tszUserName, MB_OK | MB_ICONSTOP);
 		gg->debugLogA("gg_doregister(): Cannot register. errno=%d: %s", errno, strerror(errno));
@@ -85,8 +85,8 @@ void *gg_dounregister(GGPROTO *gg, uin_t uin, char *password)
 	if (!(h = gg_unregister3(uin, password, token.id, token.val, 0)) || !(s = (gg_pubdir*)h->data) || !s->success || s->uin != uin)
 	{
 		TCHAR error[128];
-		mir_sntprintf(error, SIZEOF(error), TranslateT("Your account cannot be removed because of error:\n\t%s"),
-			(h && !s) ? http_error_string(h ? h->error : 0) :
+		mir_sntprintf(error, TranslateT("Your account cannot be removed because of error:\n\t%s"),
+			(h && !s) ? http_error_string(h->error) :
 			(s ? TranslateT("Bad number or password") : _tcserror(errno)));
 		MessageBox(NULL, error, gg->m_tszUserName, MB_OK | MB_ICONSTOP);
 		gg->debugLogA("gg_dounregister(): Cannot remove account. errno=%d: %s", errno, strerror(errno));
@@ -137,8 +137,8 @@ void *gg_dochpass(GGPROTO *gg, uin_t uin, char *password, char *newPass)
 	if (!(h = gg_change_passwd4(uin, email, password, newPass, token.id, token.val, 0)) || !(s = (gg_pubdir*)h->data) || !s->success)
 	{
 		TCHAR error[128];
-		mir_sntprintf(error, SIZEOF(error), TranslateT("Your password cannot be changed because of error:\n\t%s"),
-			(h && !s) ? http_error_string(h ? h->error : 0) :
+		mir_sntprintf(error, TranslateT("Your password cannot be changed because of error:\n\t%s"),
+			(h && !s) ? http_error_string(h->error) :
 			(s ? TranslateT("Invalid data entered") : _tcserror(errno)));
 		MessageBox(NULL, error, gg->m_tszUserName, MB_OK | MB_ICONSTOP);
 		gg->debugLogA("gg_dochpass(): Cannot change password. errno=%d: %s", errno, strerror(errno));
@@ -163,24 +163,24 @@ void *gg_dochpass(GGPROTO *gg, uin_t uin, char *password, char *newPass)
 
 void *gg_dochemail(GGPROTO *gg, uin_t uin, char *password, char *email, char *newEmail)
 {
-	// Connection handles
-	struct gg_http *h;
-	struct gg_pubdir *s;
-	GGTOKEN token;
-
 #ifdef DEBUGMODE
 	gg->debugLogA("gg_dochemail(): Starting.");
 #endif
 	if (!uin || !email || !newEmail) return NULL;
 
 	// Load token
-	if (!gg->gettoken(&token)) return NULL;
+	GGTOKEN token;
+	if (!gg->gettoken(&token))
+		return NULL;
 
-	if (!(h = gg_change_passwd4(uin, newEmail, password, password, token.id, token.val, 0)) || !(s = (gg_pubdir*)h->data) || !s->success)
+	// Connection handles
+	struct gg_pubdir *s;
+	struct gg_http *h = gg_change_passwd4(uin, newEmail, password, password, token.id, token.val, 0);
+	if (!h || !(s = (gg_pubdir*)h->data) || !s->success)
 	{
 		TCHAR error[128];
-		mir_sntprintf(error, SIZEOF(error), TranslateT("Your e-mail cannot be changed because of error:\n\t%s"),
-			(h && !s) ? http_error_string(h ? h->error : 0) : (s ? TranslateT("Bad old e-mail or password") : _tcserror(errno)));
+		mir_sntprintf(error, TranslateT("Your e-mail cannot be changed because of error:\n\t%s"),
+			(h && !s) ? http_error_string(h->error) : (s ? TranslateT("Bad old e-mail or password") : _tcserror(errno)));
 		MessageBox(NULL, error, gg->m_tszUserName, MB_OK | MB_ICONSTOP);
 		gg->debugLogA("gg_dochemail(): Cannot change e-mail. errno=%d: %s", errno, strerror(errno));
 	}
@@ -224,8 +224,8 @@ INT_PTR CALLBACK gg_userutildlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				{
 					char pass[128], cpass[128];
 					BOOL enable;
-					GetDlgItemTextA(hwndDlg, IDC_PASSWORD, pass, SIZEOF(pass));
-					GetDlgItemTextA(hwndDlg, IDC_CPASSWORD, cpass, SIZEOF(cpass));
+					GetDlgItemTextA(hwndDlg, IDC_PASSWORD, pass, _countof(pass));
+					GetDlgItemTextA(hwndDlg, IDC_CPASSWORD, cpass, _countof(cpass));
 					enable = mir_strlen(pass) && mir_strlen(cpass) && !mir_strcmp(cpass, pass);
 					if (dat && dat->mode == GG_USERUTIL_REMOVE)
 						EnableWindow(GetDlgItem(hwndDlg, IDOK), IsDlgButtonChecked(hwndDlg, IDC_CONFIRM) ? enable : FALSE);
@@ -237,9 +237,9 @@ INT_PTR CALLBACK gg_userutildlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				case IDOK:
 				{
 					char pass[128], cpass[128], email[128];
-					GetDlgItemTextA(hwndDlg, IDC_PASSWORD, pass, SIZEOF(pass));
-					GetDlgItemTextA(hwndDlg, IDC_CPASSWORD, cpass, SIZEOF(cpass));
-					GetDlgItemTextA(hwndDlg, IDC_EMAIL, email, SIZEOF(email));
+					GetDlgItemTextA(hwndDlg, IDC_PASSWORD, pass, _countof(pass));
+					GetDlgItemTextA(hwndDlg, IDC_CPASSWORD, cpass, _countof(cpass));
+					GetDlgItemTextA(hwndDlg, IDC_EMAIL, email, _countof(email));
 					EndDialog(hwndDlg, IDOK);
 
 					// Check dialog box mode

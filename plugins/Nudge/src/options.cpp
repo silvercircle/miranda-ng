@@ -94,14 +94,14 @@ static INT_PTR CALLBACK DlgProcShakeOpt(HWND hwnd,UINT msg,WPARAM wParam,LPARAM 
 		TranslateDialogDefault(hwnd);
 		{
 			TCHAR szBuf[20];
-			mir_sntprintf(szBuf, SIZEOF(szBuf), _T("%d"), shake.nMoveClist);
+			mir_sntprintf(szBuf, _countof(szBuf), _T("%d"), shake.nMoveClist);
 			SetDlgItemText(hwnd, IDC_LNUMBER_CLIST, szBuf);
-			mir_sntprintf(szBuf, SIZEOF(szBuf), _T("%d"), shake.nMoveChat);
+			mir_sntprintf(szBuf, _countof(szBuf), _T("%d"), shake.nMoveChat);
 			SetDlgItemText(hwnd, IDC_LNUMBER_CHAT, szBuf);
 
-			mir_sntprintf(szBuf, SIZEOF(szBuf), _T("%d"), shake.nScaleClist);
+			mir_sntprintf(szBuf, _countof(szBuf), _T("%d"), shake.nScaleClist);
 			SetDlgItemText(hwnd, IDC_LSCALE_CLIST, szBuf);
-			mir_sntprintf(szBuf, SIZEOF(szBuf), _T("%d"), shake.nScaleChat);
+			mir_sntprintf(szBuf, _countof(szBuf), _T("%d"), shake.nScaleChat);
 			SetDlgItemText(hwnd, IDC_LSCALE_CHAT, szBuf);
 		}
 
@@ -132,7 +132,7 @@ static INT_PTR CALLBACK DlgProcShakeOpt(HWND hwnd,UINT msg,WPARAM wParam,LPARAM 
 		{
 			TCHAR szBuf[20];
 			DWORD dwPos = SendMessage((HWND)lParam, TBM_GETPOS, 0, 0);
-			mir_sntprintf(szBuf, SIZEOF(szBuf), _T("%d"), dwPos);
+			mir_sntprintf(szBuf, _countof(szBuf), _T("%d"), dwPos);
 			if ((HWND)lParam == GetDlgItem(hwnd, IDC_SNUMBER_CLIST))
 				SetDlgItemText(hwnd, IDC_LNUMBER_CLIST, szBuf);
 			if ((HWND)lParam == GetDlgItem(hwnd, IDC_SNUMBER_CHAT))
@@ -214,7 +214,7 @@ static void CreateImageList(HWND hWnd)
 		CNudgeElement &p = arNudges[i];
 		INT_PTR res = CallProtoService(p.ProtocolName, PS_LOADICON, PLI_PROTOCOL | PLIF_SMALL | PLIF_ICOLIB, 0);
 		if (res == CALLSERVICE_NOTFOUND)
-			res = (INT_PTR)Skin_GetIcon("Nudge_Default");
+			res = (INT_PTR)IcoLib_GetIcon("Nudge_Default");
 
 		HICON hIcon = (HICON)res;
 		ImageList_AddIcon(hImList, hIcon);

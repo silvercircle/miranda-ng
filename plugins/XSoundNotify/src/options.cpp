@@ -30,7 +30,7 @@ static INT_PTR CALLBACK OptsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 		TranslateDialogDefault(hwndDlg);
 		int count;
 		PROTOACCOUNT **protos;
-		ProtoEnumAccounts(&count, &protos);
+		Proto_EnumAccounts(&count, &protos);
 		for (int i = 0; i < count; i++)
 			if (IsSuitableProto(protos[i]))
 				SendDlgItemMessage(hwndDlg, IDC_OPT_COMBO_PROTO, CB_SETITEMDATA, SendDlgItemMessage(hwndDlg, IDC_OPT_COMBO_PROTO, CB_ADDSTRING, 0, (LPARAM)protos[i]->tszAccountName), (LPARAM)protos[i]);
@@ -77,7 +77,7 @@ static INT_PTR CALLBACK OptsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 								mir_tstrcpy(uid, TranslateT("(Unknown contact)"));
 							}
 
-							TCHAR *nick = (TCHAR *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, GCDNF_TCHAR);
+							TCHAR *nick = (TCHAR *)pcli->pfnGetContactDisplayName(hContact, 0);
 							size_t value_max_len = (mir_tstrlen(uid) + mir_tstrlen(nick) + 4);
 							TCHAR *value = (TCHAR *)mir_alloc(sizeof(TCHAR) * value_max_len);
 							mir_sntprintf(value, value_max_len, _T("%s (%s)"), nick, uid);
@@ -122,9 +122,9 @@ static INT_PTR CALLBACK OptsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 			ofn.lStructSize = sizeof(ofn);
 			TCHAR tmp[MAX_PATH];
 			if (GetModuleHandle(_T("bass_interface.dll")))
-				mir_sntprintf(tmp, SIZEOF(tmp), _T("%s (*.wav, *.mp3, *.ogg)%c*.wav;*.mp3;*.ogg%c%c"), TranslateT("Sound files"), 0, 0, 0);
+				mir_sntprintf(tmp, _countof(tmp), _T("%s (*.wav, *.mp3, *.ogg)%c*.wav;*.mp3;*.ogg%c%c"), TranslateT("Sound files"), 0, 0, 0);
 			else
-				mir_sntprintf(tmp, SIZEOF(tmp), _T("%s (*.wav)%c*.wav%c%c"), TranslateT("WAV files"), 0, 0, 0);
+				mir_sntprintf(tmp, _countof(tmp), _T("%s (*.wav)%c*.wav%c%c"), TranslateT("WAV files"), 0, 0, 0);
 			ofn.lpstrFilter = tmp;
 			ofn.hwndOwner = 0;
 			ofn.lpstrFile = FileName;
@@ -144,7 +144,7 @@ static INT_PTR CALLBACK OptsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 					XSN_Users.insert(new XSN_Data(hContact, FileName, IsDlgButtonChecked(hwndDlg, IDC_OPT_IGNORE_SOUND) ? 1 : 0));
 				else
 				{
-					_tcsncpy(p->path, FileName, SIZEOF(p->path));
+					_tcsncpy(p->path, FileName, _countof(p->path));
 					p->ignore = IsDlgButtonChecked(hwndDlg, IDC_OPT_IGNORE_SOUND) ? 1 : 0;
 				}
 				EnableWindow(GetDlgItem(hwndDlg, IDC_OPT_BUTTON_TEST_PLAY), TRUE);

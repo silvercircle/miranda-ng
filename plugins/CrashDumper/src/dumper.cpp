@@ -85,14 +85,14 @@ BOOL CALLBACK LoadedModulesFind64(LPCSTR ModuleName, DWORD64 ModuleBase, ULONG M
 	FindData* data = (FindData*)UserContext;
 
 	if ((DWORD)(data->Offset - ModuleBase) < ModuleSize) {
-		const size_t len = SIZEOF(data->pModule->ModuleName);
+		const size_t len = _countof(data->pModule->ModuleName);
 		strncpy(data->pModule->ModuleName, ModuleName, len);
 		data->pModule->ModuleName[len - 1] = 0;
 
 		data->pModule->BaseOfImage = ModuleBase;
 
 		const HMODULE hModule = (HMODULE)ModuleBase;
-		GetModuleFileNameA(hModule, data->pModule->LoadedImageName, SIZEOF(data->pModule->LoadedImageName));
+		GetModuleFileNameA(hModule, data->pModule->LoadedImageName, _countof(data->pModule->LoadedImageName));
 
 		return FALSE;
 	}
@@ -302,11 +302,11 @@ static void GetProtocolStrings(CMString& buffer)
 	int accCount;
 	int i, j;
 
-	ProtoEnumAccounts(&accCount, &accList);
+	Proto_EnumAccounts(&accCount, &accList);
 
 	int protoCount;
 	PROTOCOLDESCRIPTOR **protoList;
-	CallService(MS_PROTO_ENUMPROTOS, (WPARAM)&protoCount, (LPARAM)&protoList);
+	Proto_EnumProtocols(&protoCount, &protoList);
 
 	int protoCountMy = 0;
 	char** protoListMy = (char**)alloca((protoCount + accCount) * sizeof(char*));
@@ -333,7 +333,7 @@ static void GetProtocolStrings(CMString& buffer)
 		for (i = 0; i < protoCountMy; i++)
 			if (!mir_strcmp(protoListMy[i], accList[j]->szProtoName)) {
 				protos[i].nloaded = accList[j]->bDynDisabled != 0;
-				if (IsAccountEnabled(accList[j]))
+				if (Proto_IsAccountEnabled(accList[j]))
 					++protos[i].countse;
 				else
 					++protos[i].countsd;
@@ -475,7 +475,7 @@ void PrintVersionInfo(CMString& buffer, unsigned flags)
 	buffer.AppendFormat(TEXT("Build time: %s\r\n"), mirtime);
 
 	TCHAR profpn[MAX_PATH];
-	mir_sntprintf(profpn, SIZEOF(profpn), TEXT("%s\\%s"), profpathfull, profname);
+	mir_sntprintf(profpn, _countof(profpn), TEXT("%s\\%s"), profpathfull, profname);
 
 	buffer.AppendFormat(TEXT("Profile: %s\r\n"), profpn);
 

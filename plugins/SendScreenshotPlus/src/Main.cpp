@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include "Main.h"
 
 // Prototypes ///////////////////////////////////////////////////////////////////////////
+CLIST_INTERFACE *pcli;
 HINSTANCE		g_hSendSS;
 MGLOBAL			g_myGlobals;
 HANDLE			g_hNetlibUser=0;//!< Netlib Register User
@@ -250,6 +251,8 @@ ATOM g_clsTargetHighlighter=0;
 DLL_EXPORT int Load(void)
 {
 	mir_getLP(&pluginInfo);
+	mir_getCLI();
+
 	INT_PTR result=CallService(MS_IMG_GETINTERFACE,FI_IF_VERSION,(LPARAM)&FIP);
 	if(FIP==NULL || result!=S_OK) {
 		MessageBox(NULL, TranslateT("Image services (AdvaImg) not found.\nSendSS disabled."), TranslateT("SendSS"), MB_OK | MB_ICONERROR | MB_APPLMODAL);
@@ -270,16 +273,27 @@ DLL_EXPORT int Load(void)
 	srv_reg(SendDesktop);
 	srv_reg(EditBitmap);
 	srv_reg(Send2ImageShack);
-	/// menu items
-	CLISTMENUITEM mi={sizeof(mi)};
-	mi.flags=CMIF_ROOTHANDLE|CMIF_TCHAR/*|CMIF_ICONFROMICOLIB*/;
-	mi.hParentMenu=HGENMENU_ROOT;
-	mi.icolibItem=GetIconHandle(ICO_MAINXS);
-	#define _Menu_AddMainMenuItemEx(name,srv,pos) do{mi.ptszName=name;mi.pszService=srv;mi.position=pos;Menu_AddMainMenuItem(&mi);}while(0)
-	#define _Menu_AddContactMenuItemEx(name,srv,pos) do{mi.ptszName=name;mi.pszService=srv;mi.position=pos;Menu_AddContactMenuItem(&mi);}while(0)
-	_Menu_AddMainMenuItemEx(LPGENT("Take a screenshot"),MS_SENDSS_OPENDIALOG,1000001);
-	_Menu_AddContactMenuItemEx(LPGENT("Send screenshot"),MS_SENDSS_OPENDIALOG,1000000);
-	_Menu_AddContactMenuItemEx(LPGENT("Send desktop screenshot"),MS_SENDSS_SENDDESKTOP,1000001);
+	
+	// menu items
+	CMenuItem mi;
+	mi.flags = CMIF_TCHAR;
+	mi.hIcolibItem = GetIconHandle(ICO_MAINXS);
+	
+	mi.name.t = LPGENT("Take a screenshot");
+	mi.pszService = MS_SENDSS_OPENDIALOG;
+	mi.position = 1000001;
+	Menu_AddMainMenuItem(&mi);
+
+	mi.name.t = LPGENT("Send screenshot");
+	mi.pszService = MS_SENDSS_OPENDIALOG;
+	mi.position = 1000000;
+	Menu_AddContactMenuItem(&mi);
+
+	mi.name.t = LPGENT("Send desktop screenshot");
+	mi.pszService = MS_SENDSS_SENDDESKTOP;
+	mi.position = 1000001;
+	Menu_AddContactMenuItem(&mi);
+
 	/// hotkey's
 	HOTKEYDESC hkd={sizeof(hkd)};
 	hkd.pszName="Open SendSS+";

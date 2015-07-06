@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: VKontakte.dll
 ;  Plugin: VKontakte protocol
-;  Version: 0.1.1.2
+;  Version: 0.1.1.8
 ;  Authors: Miranda NG Team
 ;============================================================
 [VKontakte protocol support for Miranda NG.]
@@ -31,6 +31,8 @@
 Поддержка BB-кодов для вложений
 [Process stickers as smileys]
 Обрабатывать стикеры как смайлы
+[Shorten links for audio attachments]
+Короткие ссылки для вложений с аудио
 [News and event notifications]
 Новости и уведомления
 [WARNING: Causes excessive network traffic!!!]
@@ -289,6 +291,20 @@ Cоздать комнату чата
 Участники
 [Owners]
 Владельцы
+[create chat]
+создал чат
+[kick user]
+выкинул(а) пользователя
+[left chat]
+вышел
+[invite user]
+пригласил(а) пользователя
+[returned to chat]
+вернулся
+[change chat title to]
+установил(а) тему
+[chat action not supported]
+действие не поддерживается
 [Unknown]
 Неизвестный
 [Enter new chat title]
@@ -311,6 +327,8 @@ Cоздать комнату чата
 &Удалить комнату чата
 [&User details]
 Информация о &контакте
+[Visit profile]
+Профиль на сайте
 [&Kick]
 &Выкинуть
 [User was tagged in these photos:]
@@ -367,8 +385,6 @@ Cоздать комнату чата
 Опубликовать на своей стене
 [Load news from VK]
 Загрузить новости с VK
-[Visit profile]
-Профиль на сайте
 [Send message to user\'s wall]
 Сообщение на стене
 [Add as friend]

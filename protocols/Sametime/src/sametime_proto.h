@@ -17,29 +17,29 @@ struct CSametimeProto : public PROTO<CSametimeProto>
 
 	virtual	MCONTACT  __cdecl AddToList(int flags, PROTOSEARCHRESULT* psr);
 
-	virtual	HANDLE    __cdecl FileAllow(MCONTACT hContact, HANDLE hTransfer, const PROTOCHAR* szPath);
+	virtual	HANDLE    __cdecl FileAllow(MCONTACT hContact, HANDLE hTransfer, const TCHAR* szPath);
 	virtual	int       __cdecl FileCancel(MCONTACT hContact, HANDLE hTransfer);
-	virtual	int       __cdecl FileDeny(MCONTACT hContact, HANDLE hTransfer, const PROTOCHAR* szReason);
-	virtual	int       __cdecl FileResume(HANDLE hTransfer, int* action, const PROTOCHAR** szFilename);
+	virtual	int       __cdecl FileDeny(MCONTACT hContact, HANDLE hTransfer, const TCHAR* szReason);
+	virtual	int       __cdecl FileResume(HANDLE hTransfer, int* action, const TCHAR** szFilename);
 
 	virtual	DWORD_PTR __cdecl GetCaps(int type, MCONTACT hContact = NULL);
 	virtual	int       __cdecl GetInfo(MCONTACT hContact, int infoType);
 
-	virtual	HANDLE    __cdecl SearchBasic(const PROTOCHAR* id);
+	virtual	HANDLE    __cdecl SearchBasic(const TCHAR* id);
 	virtual	HWND      __cdecl SearchAdvanced(HWND owner);
 	virtual	HWND      __cdecl CreateExtendedSearchUI(HWND owner);
 
-	virtual	int       __cdecl RecvFile(MCONTACT hContact, PROTOFILEEVENT*);
+	virtual	int       __cdecl RecvFile(MCONTACT hContact, PROTORECVFILET*);
 	virtual	int       __cdecl RecvMsg(MCONTACT hContact, PROTORECVEVENT*);
 
-	virtual	HANDLE    __cdecl SendFile(MCONTACT hContact, const PROTOCHAR* szDescription, PROTOCHAR** ppszFiles);
+	virtual	HANDLE    __cdecl SendFile(MCONTACT hContact, const TCHAR* szDescription, TCHAR** ppszFiles);
 	virtual	int       __cdecl SendMsg(MCONTACT hContact, int flags, const char* msg);
 
 	virtual	int       __cdecl SetStatus(int iNewStatus);
 
 	virtual	HANDLE    __cdecl GetAwayMsg(MCONTACT hContact);
 	virtual	int       __cdecl RecvAwayMsg(MCONTACT hContact, int mode, PROTORECVEVENT* evt);
-	virtual	int       __cdecl SetAwayMsg(int iStatus, const PROTOCHAR* msg);
+	virtual	int       __cdecl SetAwayMsg(int iStatus, const TCHAR* msg);
 
 	virtual	int       __cdecl UserIsTyping(MCONTACT hContact, int type);
 
@@ -93,13 +93,12 @@ struct CSametimeProto : public PROTO<CSametimeProto>
 	HANDLE AcceptFileTransfer(MCONTACT hContact, HANDLE hFt, char* save_path);
 	void RejectFileTransfer(HANDLE hFt);
 	void CancelFileTransfer(HANDLE hFt);
-	HANDLE SendFilesToUser(MCONTACT hContact, PROTOCHAR** files, const PROTOCHAR* pszDesc);
+	HANDLE SendFilesToUser(MCONTACT hContact, TCHAR** files, const TCHAR* pszDesc);
 
 	// conference.cpp
 	void InitConference();
 	void InitConferenceMenu();
 	void DeinitConference();
-	void DeinitConferenceMenu();
 	void ClearInviteQueue();
 	void TerminateConference(char* name);
 	int __cdecl GcEventHook(WPARAM wParam, LPARAM lParam);
@@ -112,13 +111,12 @@ struct CSametimeProto : public PROTO<CSametimeProto>
 	void SessionStarted();
 	void SessionStopping();
 	void InitSessionMenu();
-	void DeinitSessionMenu();
 	int LogIn(int status, HANDLE hNetlibUser);
 	int LogOut();
 	int SetSessionStatus(int status);
 	void UpdateSelfStatus();
 	int SetIdle(bool idle);
-	void SetSessionAwayMessage(int status, const PROTOCHAR* msg);
+	void SetSessionAwayMessage(int status, const TCHAR* msg);
 	WORD GetClientVersion();
 	WORD GetServerVersion();
 	INT_PTR __cdecl SessionAnnounce(WPARAM wParam, LPARAM lParam);
@@ -172,7 +170,6 @@ struct CSametimeProto : public PROTO<CSametimeProto>
 
 	// sametime_session.cpp
 	bool first_online; // set our status after the first online status comes from the server
-	HANDLE hSessionAnnounceMenuItem;
 	int login_status;
 	bool idle_status;
 	int idle_timerid;
@@ -183,8 +180,7 @@ struct CSametimeProto : public PROTO<CSametimeProto>
 	mwServiceConference* service_conference;
 	mwLoginInfo* my_login_info;
 	mwConference* my_conference;
-	HANDLE hLeaveChatMenuItem;
-	HANDLE hCreateChatMenuItem;
+	HGENMENU hLeaveChatMenuItem, hCreateChatMenuItem;
 
 	// options.cpp
 	SametimeOptions options;

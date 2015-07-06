@@ -41,19 +41,19 @@ static INT_PTR AboutCommand(WPARAM wParam, LPARAM)
 
 static INT_PTR IndexCommand(WPARAM, LPARAM)
 {
-	CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW | OUF_TCHAR, (LPARAM)_T("http://wiki.miranda-ng.org"));
+	Utils_OpenUrl("http://wiki.miranda-ng.org");
 	return 0;
 }
 
 static INT_PTR WebsiteCommand(WPARAM, LPARAM)
 {
-	CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW | OUF_TCHAR, (LPARAM)_T("http://miranda-ng.org"));
+	Utils_OpenUrl("http://miranda-ng.org");
 	return 0;
 }
 
 static INT_PTR BugCommand(WPARAM, LPARAM)
 {
-	CallService(MS_UTILS_OPENURL, OUF_NEWWINDOW | OUF_TCHAR, (LPARAM)_T("http://trac.miranda-ng.org/newticket"));
+	Utils_OpenUrl("http://trac.miranda-ng.org/newticket");
 	return 0;
 }
 
@@ -73,30 +73,30 @@ int LoadHelpModule(void)
 	CreateServiceFunction("Help/WebsiteCommand", WebsiteCommand);
 	CreateServiceFunction("Help/BugCommand", BugCommand);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.icolibItem = GetSkinIconHandle(SKINICON_OTHER_MIRANDA);
-	mi.pszPopupName = LPGEN("&Help");
-	mi.popupPosition = 2000090000;
+	CMenuItem mi;
+	mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("&Help"), 2000090000);
+
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_OTHER_MIRANDA);
 	mi.position = 2000090000;
-	mi.pszName = LPGEN("&About...");
+	mi.name.a = LPGEN("&About...");
 	mi.pszService = "Help/AboutCommand";
 	Menu_AddMainMenuItem(&mi);
 
-	mi.icolibItem = GetSkinIconHandle(SKINICON_OTHER_HELP);
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_OTHER_HELP);
 	mi.position = -500050000;
-	mi.pszName = LPGEN("&Support");
+	mi.name.a = LPGEN("&Support");
 	mi.pszService = "Help/IndexCommand";
 	Menu_AddMainMenuItem(&mi);
 
-	mi.icolibItem = GetSkinIconHandle(SKINICON_OTHER_MIRANDAWEB);
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_OTHER_MIRANDAWEB);
 	mi.position = 2000050000;
-	mi.pszName = LPGEN("&Miranda NG homepage");
+	mi.name.a = LPGEN("&Miranda NG homepage");
 	mi.pszService = "Help/WebsiteCommand";
 	Menu_AddMainMenuItem(&mi);
 
-	mi.icolibItem = GetSkinIconHandle(SKINICON_EVENT_URL);
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_EVENT_URL);
 	mi.position = 2000040000;
-	mi.pszName = LPGEN("&Report bug");
+	mi.name.a = LPGEN("&Report bug");
 	mi.pszService = "Help/BugCommand";
 	Menu_AddMainMenuItem(&mi);
 	return 0;

@@ -27,7 +27,7 @@
 #define GGS_PARSELINK "GG/ParseLink"
 #define GGS_MENUCHOOSE "GG/MenuChoose"
 
-static HANDLE hInstanceMenu;
+static int hInstanceMenu;
 
 static INT_PTR gg_menuchoose(WPARAM wParam, LPARAM lParam)
 {
@@ -63,61 +63,45 @@ static INT_PTR gg_parselink(WPARAM wParam, LPARAM lParam)
 	for (int i=0; i < g_Instances.getCount(); i++) {
 		gg = g_Instances[i];
 
-		CLISTMENUITEM mi = { sizeof(mi) };
-		mi.flags = CMIM_FLAGS;
 		if (gg->m_iStatus > ID_STATUS_OFFLINE) {
 			++items;
-			mi.flags |= CMIM_ICON;
-			mi.hIcon = LoadSkinnedProtoIcon(gg->m_szModuleName, gg->m_iStatus);
+			Menu_ModifyItem(gg->hInstanceMenuItem, NULL, Skin_LoadProtoIcon(gg->m_szModuleName, gg->m_iStatus));
 		}
-		else mi.flags |= CMIF_HIDDEN;
-
-		Menu_ModifyItem(gg->hInstanceMenuItem, &mi);
-		if (mi.hIcon)
-			Skin_ReleaseIcon(mi.hIcon);
+		else Menu_ShowItem(gg->hInstanceMenuItem, false);
 	}
 
 	if (items > 1) {
-		ListParam param = {0};
-		HMENU hMenu = CreatePopupMenu();
 		POINT pt;
-		int cmd = 0;
-
-		param.MenuObjectHandle = hInstanceMenu;
-		CallService(MO_BUILDMENU, (WPARAM)hMenu, (LPARAM)&param);
-
 		GetCursorPos(&pt);
-		cmd = TrackPopupMenu(hMenu, TPM_RETURNCMD, pt.x, pt.y, 0, pcli->hwndContactList, NULL);
+
+		HMENU hMenu = CreatePopupMenu();
+		Menu_Build(hMenu, hInstanceMenu);
+		int cmd = TrackPopupMenu(hMenu, TPM_RETURNCMD, pt.x, pt.y, 0, pcli->hwndContactList, NULL);
 		DestroyMenu(hMenu);
 
 		if (cmd)
-			CallService(MO_PROCESSCOMMANDBYMENUIDENT, cmd, (LPARAM)&gg);
+			Menu_ProcessCommandById(cmd, (LPARAM)&gg);
 	}
 
 	if (gg == NULL)
 		return 0;
 
-	if (ServiceExists(MS_MSG_SENDMESSAGE))
-	{
-		MCONTACT hContact = gg->getcontact(uin, 1, 0, NULL);
-		if (hContact != NULL)
-			CallService(MS_MSG_SENDMESSAGE, hContact, 0);
-	}
-
+	MCONTACT hContact = gg->getcontact(uin, 1, 0, NULL);
+	if (hContact != NULL)
+		CallService(MS_MSG_SENDMESSAGE, hContact, 0);
 	return 0;
 }
 
 void gg_links_instancemenu_init()
 {
 	CreateServiceFunction(GGS_MENUCHOOSE, gg_menuchoose);
-	hInstanceMenu = MO_CreateMenuObject("GGAccountChooser", LPGEN("Gadu-Gadu account chooser"), 0, GGS_MENUCHOOSE);
+	hInstanceMenu = Menu_AddObject("GGAccountChooser", LPGEN("Gadu-Gadu account chooser"), 0, GGS_MENUCHOOSE);
 
-	TMO_MenuItem tmi = {0};
-	tmi.cbSize = sizeof(tmi);
-	tmi.pszName = "Cancel";
-	tmi.position = 9999999;
-	tmi.hIcolibItem = LoadSkinnedIconHandle(SKINICON_OTHER_DELETE);
-	CallService(MO_ADDNEWMENUITEM, (WPARAM)hInstanceMenu, (LPARAM)&tmi);
+	CMenuItem mi;
+	mi.name.a = "Cancel";
+	mi.position = 9999999;
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_OTHER_DELETE);
+	Menu_AddItem(hInstanceMenu, &mi, NULL);
 }
 
 void gg_links_init()
@@ -131,11 +115,10 @@ void gg_links_init()
 void GGPROTO::links_instance_init()
 {
 	if (ServiceExists(MS_ASSOCMGR_ADDNEWURLTYPE)) {
-		TMO_MenuItem tmi = { sizeof(tmi) };
-		tmi.flags = CMIF_TCHAR;
-		tmi.ownerdata = this;
-		tmi.position = g_Instances.getCount();
-		tmi.ptszName = m_tszUserName;
-		hInstanceMenuItem = (HGENMENU)CallService(MO_ADDNEWMENUITEM, (WPARAM)hInstanceMenu, (LPARAM)&tmi);
+		CMenuItem mi;
+		mi.flags = CMIF_TCHAR;
+		mi.position = g_Instances.getCount();
+		mi.name.t = m_tszUserName;
+		hInstanceMenuItem = Menu_AddItem(hInstanceMenu, &mi, this);
 	}
 }

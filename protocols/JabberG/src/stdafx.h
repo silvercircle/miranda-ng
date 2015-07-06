@@ -66,7 +66,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_button.h>
 #include <m_chat.h>
 #include <m_clist.h>
-#include <m_clistint.h>
 #include <m_cluiframes.h>
 #include <m_contacts.h>
 #include <m_database.h>
@@ -81,7 +80,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_message.h>
 #include <m_netlib.h>
 #include <m_options.h>
-#include <m_protomod.h>
 #include <m_protosvc.h>
 #include <m_protoint.h>
 #include <m_skin.h>
@@ -106,7 +104,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_skin_eng.h>
 #include <m_gui.h>
 
-#include "../../plugins/zlib/src/zlib.h"
+#include "../../libs/zlib/src/zlib.h"
 
 #include "resource.h"
 #include "version.h"
@@ -468,12 +466,6 @@ struct filetransfer
 	CJabberProto *ppro;
 };
 
-struct JABBER_SEARCH_RESULT
-{
-	PROTOSEARCHRESULT hdr;
-	TCHAR jid[JABBER_MAX_JID_LEN];
-};
-
 struct JABBER_GCLOG_FONT
 {
 	char face[LF_FACESIZE];		// LF_FACESIZE is from LOGFONT struct
@@ -596,6 +588,7 @@ extern HANDLE hExtraActivity;
 
 extern TCHAR szCoreVersion[];
 
+extern unsigned int g_nTempFileId;
 extern int g_cbCountries;
 extern struct CountryListEntry* g_countries;
 

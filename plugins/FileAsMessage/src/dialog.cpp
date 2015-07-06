@@ -106,7 +106,7 @@ void MakePopupMsg(HWND hDlg, MCONTACT hContact, char *msg)
 	POPUPDATA ppd = { 0 };
 	ppd.lchContact = hContact;
 	ppd.lchIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_SMALLICON));
-	mir_tstrcpy(ppd.lpzContactName, (char *)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, 0));
+	mir_tstrcpy(ppd.lpzContactName, (char *)pcli->pfnGetContactDisplayName(hContact, 0));
 	mir_tstrcpy(ppd.lpzText, msg);
 	ppd.colorBack = GetSysColor(COLOR_INFOBK);
 	ppd.colorText = GetSysColor(COLOR_INFOTEXT);
@@ -193,7 +193,7 @@ void FILEECHO::setState(DWORD state)
 	iState = state;
 	int indx;
 
-	for (indx = 0; indx < SIZEOF(controlEnabled); indx++)
+	for (indx = 0; indx < _countof(controlEnabled); indx++)
 	{
 		EnableWindow(GetDlgItem(hDlg, controlEnabled[indx][0]), (iState & controlEnabled[indx][1]) != 0);
 	}
@@ -241,11 +241,11 @@ void FILEECHO::updateTitle()
 {
 	char newtitle[256], *contactName;
 
-	contactName = (char*)CallService(MS_CLIST_GETCONTACTDISPLAYNAME, hContact, 0);
+	contactName = (char*)pcli->pfnGetContactDisplayName(hContact, 0);
 	if (iState == STATE_OPERATE && chunkCount != 0)
-		mir_snprintf(newtitle, SIZEOF(newtitle), "%d%% - %s: %s", chunkSent * 100 / chunkCount, Translate(szFEMode[inSend]), contactName);
+		mir_snprintf(newtitle, _countof(newtitle), "%d%% - %s: %s", chunkSent * 100 / chunkCount, Translate(szFEMode[inSend]), contactName);
 	else
-		mir_snprintf(newtitle, SIZEOF(newtitle), "%s: %s", Translate(szFEMode[inSend]), contactName);
+		mir_snprintf(newtitle, _countof(newtitle), "%s: %s", Translate(szFEMode[inSend]), contactName);
 	SetWindowText(hDlg, newtitle);
 }
 
@@ -412,9 +412,9 @@ void FILEECHO::sendReq()
 	if (*p == '\\')
 		mir_strcpy(filename, p + 1);
 
-	mir_snprintf(sendbuf, SIZEOF(sendbuf), Translate("Size: %d bytes"), fileSize);
+	mir_snprintf(sendbuf, _countof(sendbuf), Translate("Size: %d bytes"), fileSize);
 	SetDlgItemText(hDlg, IDC_FILESIZE, sendbuf);
-	mir_snprintf(sendbuf, SIZEOF(sendbuf), "?%c%c%d:%d \n" NOPLUGIN_MESSAGE, asBinary + '0', codeSymb, chunkCount, fileSize);
+	mir_snprintf(sendbuf, _countof(sendbuf), "?%c%c%d:%d \n" NOPLUGIN_MESSAGE, asBinary + '0', codeSymb, chunkCount, fileSize);
 	sendCmd(0, CMD_REQ, sendbuf, filename);
 
 	SetDlgItemText(hDlg, IDC_STATUS, Translate("Request sent. Awaiting of acceptance.."));
@@ -429,7 +429,7 @@ void FILEECHO::incomeRequest(char *param)
 	char *p = strchr(param, '?');
 	if (p == NULL) return; *p++ = 0;
 	CallService(MS_FILE_GETRECEIVEDFILESFOLDER, hContact, (LPARAM)buf);
-	mir_strncat(buf, param, SIZEOF(buf) - mir_strlen(buf));
+	mir_strncat(buf, param, _countof(buf) - mir_strlen(buf));
 	free(filename);
 	filename = mir_strdup(buf);
 	// p == &c
@@ -443,7 +443,7 @@ void FILEECHO::incomeRequest(char *param)
 	chunkCountx = atoi(p);
 	fileSize = atoi(param);
 
-	mir_snprintf(buf, SIZEOF(buf), Translate("Size: %d bytes"), fileSize);
+	mir_snprintf(buf, Translate("Size: %d bytes"), fileSize);
 	SetDlgItemText(hDlg, IDC_FILENAME, filename);
 	SetDlgItemText(hDlg, IDC_FILESIZE, buf);
 
@@ -618,7 +618,7 @@ void FILEECHO::onSendTimer()
 	}
 
 	char prefix[128];
-	mir_snprintf(prefix, SIZEOF(prefix), "%X,%X,%X>", chunkIndx + 1, chunkPos[chunkIndx], chksum);
+	mir_snprintf(prefix, _countof(prefix), "%X,%X,%X>", chunkIndx + 1, chunkPos[chunkIndx], chksum);
 #ifdef DEBUG
 	overhead += mir_tstrlen((char*)buffer);
 #endif
@@ -869,7 +869,7 @@ void CreateDirectoryTree(char *szDir)
 	DWORD dwAttributes;
 	char *pszLastBackslash, szTestDir[MAX_PATH];
 
-	mir_strncpy(szTestDir, szDir, SIZEOF(szTestDir));
+	mir_strncpy(szTestDir, szDir, _countof(szTestDir));
 	if ((dwAttributes = GetFileAttributes(szTestDir)) != 0xffffffff && (dwAttributes & FILE_ATTRIBUTE_DIRECTORY))
 		return;
 	pszLastBackslash = strrchr(szTestDir, '\\');
@@ -1151,7 +1151,7 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			memset(&ofn, 0, sizeof(ofn));
 			*str = 0;
-			GetDlgItemText(hDlg, IDC_FILENAME, str, SIZEOF(str));
+			GetDlgItemText(hDlg, IDC_FILENAME, str, _countof(str));
 			//ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400;
 			ofn.lStructSize = sizeof(ofn);
 			ofn.hwndOwner = hDlg;
@@ -1159,7 +1159,7 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			ofn.lpstrFile = str;
 			ofn.Flags = dat->inSend ? OFN_FILEMUSTEXIST : 0;
 			ofn.lpstrTitle = dat->inSend ? Translate("Select a file") : Translate("Save as");
-			ofn.nMaxFile = SIZEOF(str);
+			ofn.nMaxFile = _countof(str);
 			ofn.nMaxFileTitle = MAX_PATH;
 			if (!GetOpenFileName(&ofn)) break;
 			if (!dat->inSend && dat->iState == STATE_FINISHED) break;
@@ -1167,9 +1167,9 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			int size = RetrieveFileSize(str);
 			if (size != -1)
-				mir_snprintf(str, SIZEOF(str), Translate("Size: %d bytes"), size);
+				mir_snprintf(str, Translate("Size: %d bytes"), size);
 			else
-				mir_strncpy(str, Translate("Can't get a file size"), SIZEOF(str));
+				mir_strncpy(str, Translate("Can't get a file size"), _countof(str));
 			SetDlgItemText(hDlg, IDC_FILESIZE, str);
 
 			break;

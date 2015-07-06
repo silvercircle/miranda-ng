@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "msn_global.h"
+#include "stdafx.h"
 #include "msn_proto.h"
 
 static const char storeReqHdr[] =
@@ -71,7 +71,7 @@ ezxml_t CMsnProto::storeSoapHdr(const char* service, const char* scenario, ezxml
 char* CMsnProto::GetStoreHost(const char* service)
 {
 	char hostname[128];
-	mir_snprintf(hostname, SIZEOF(hostname), "StoreHost-%s", service);
+	mir_snprintf(hostname, _countof(hostname), "StoreHost-%s", service);
 
 	char* host = (char*)mir_alloc(256);
 	if (db_get_static(NULL, m_szModuleName, hostname, host, 256) || !*host)
@@ -83,7 +83,7 @@ char* CMsnProto::GetStoreHost(const char* service)
 void CMsnProto::UpdateStoreHost(const char* service, const char* url)
 {
 	char hostname[128];
-	mir_snprintf(hostname, SIZEOF(hostname), "StoreHost-%s", service);
+	mir_snprintf(hostname, _countof(hostname), "StoreHost-%s", service);
 
 	setString(hostname, url);
 }
@@ -165,10 +165,9 @@ bool CMsnProto::MSN_StoreShareItem(const char* id, bool allowRecurse)
 	ezxml_free(xmlp);
 
 	unsigned status = 0;
-	char *storeUrl, *tResult = NULL;
 
-	storeUrl = mir_strdup("https://storage.msn.com/storageservice/SchematizedStore.asmx");
-	tResult = getSslResult(&storeUrl, szData, reqHdr, status);
+	char *storeUrl = mir_strdup("https://storage.msn.com/storageservice/SchematizedStore.asmx");
+	char *tResult = getSslResult(&storeUrl, szData, reqHdr, status);
 
 	mir_free(reqHdr);
 	free(szData);
@@ -243,8 +242,10 @@ bool CMsnProto::MSN_StoreGetProfile(bool allowRecurse)
 		mir_free(storeUrl);
 		storeUrl = GetStoreHost("GetProfile");
 		tResult = getSslResult(&storeUrl, szData, reqHdr, status);
-		if (tResult == NULL) UpdateStoreHost("GetProfile", NULL);
-		else break;
+		if (tResult == NULL)
+			UpdateStoreHost("GetProfile", NULL);
+		else
+			break;
 	}
 
 	mir_free(reqHdr);

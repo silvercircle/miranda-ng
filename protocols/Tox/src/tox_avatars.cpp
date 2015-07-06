@@ -3,11 +3,11 @@
 std::tstring CToxProto::GetAvatarFilePath(MCONTACT hContact)
 {
 	TCHAR path[MAX_PATH];
-	mir_sntprintf(path, SIZEOF(path), _T("%s\\%S"), VARST(_T("%miranda_avatarcache%")), m_szModuleName);
+	mir_sntprintf(path, _countof(path), _T("%s\\%S"), VARST(_T("%miranda_avatarcache%")), m_szModuleName);
 
 	DWORD dwAttributes = GetFileAttributes(path);
 	if (dwAttributes == 0xffffffff || (dwAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
-		CallService(MS_UTILS_CREATEDIRTREET, 0, (LPARAM)path);
+		CreateDirectoryTreeT(path);
 
 	ptrT address(getTStringA(hContact, TOX_SETTINGS_ID));
 	if (address == NULL)
@@ -66,34 +66,37 @@ void CToxProto::SetToxAvatar(std::tstring path)
 
 	db_set_blob(NULL, m_szModuleName, TOX_SETTINGS_AVATAR_HASH, (void*)hash, TOX_HASH_LENGTH);
 
-	for (MCONTACT hContact = db_find_first(m_szModuleName); hContact; hContact = db_find_next(hContact, m_szModuleName))
+	if (IsOnline())
 	{
-		if (GetContactStatus(hContact) == ID_STATUS_OFFLINE)
-			continue;
-
-		int32_t friendNumber = GetToxFriendNumber(hContact);
-		if (friendNumber == UINT32_MAX)
+		for (MCONTACT hContact = db_find_first(m_szModuleName); hContact; hContact = db_find_next(hContact, m_szModuleName))
 		{
-			mir_free(data);
-			debugLogA(__FUNCTION__": failed to set new avatar");
-			return;
-		}
+			if (GetContactStatus(hContact) == ID_STATUS_OFFLINE)
+				continue;
 
-		TOX_ERR_FILE_SEND error;
-		uint32_t fileNumber = tox_file_send(tox, friendNumber, TOX_FILE_KIND_AVATAR, length, hash, NULL, 0, &error);
-		if (error != TOX_ERR_FILE_SEND_OK)
-		{
-			mir_free(data);
-			debugLogA(__FUNCTION__": failed to set new avatar");
-			return;
-		}
+			int32_t friendNumber = GetToxFriendNumber(hContact);
+			if (friendNumber == UINT32_MAX)
+			{
+				mir_free(data);
+				debugLogA(__FUNCTION__": failed to set new avatar");
+				return;
+			}
 
-		AvatarTransferParam *transfer = new AvatarTransferParam(friendNumber, fileNumber, NULL, length);
-		transfer->pfts.flags |= PFTS_SENDING;
-		memcpy(transfer->hash, hash, TOX_HASH_LENGTH);
-		transfer->pfts.hContact = hContact;
-		transfer->hFile = _tfopen(path.c_str(), L"rb");
-		transfers.Add(transfer);
+			TOX_ERR_FILE_SEND error;
+			uint32_t fileNumber = tox_file_send(tox, friendNumber, TOX_FILE_KIND_AVATAR, length, hash, NULL, 0, &error);
+			if (error != TOX_ERR_FILE_SEND_OK)
+			{
+				mir_free(data);
+				debugLogA(__FUNCTION__": failed to set new avatar");
+				return;
+			}
+
+			AvatarTransferParam *transfer = new AvatarTransferParam(friendNumber, fileNumber, NULL, length);
+			transfer->pfts.flags |= PFTS_SENDING;
+			memcpy(transfer->hash, hash, TOX_HASH_LENGTH);
+			transfer->pfts.hContact = hContact;
+			transfer->hFile = _tfopen(path.c_str(), L"rb");
+			transfers.Add(transfer);
+		}
 	}
 
 	mir_free(data);
@@ -109,6 +112,11 @@ INT_PTR CToxProto::GetAvatarCaps(WPARAM wParam, LPARAM lParam)
 	case AF_FORMATSUPPORTED:
 		return lParam == PA_FORMAT_PNG;
 
+	case AF_MAXSIZE:
+		((POINT*)lParam)->x = 300;
+		((POINT*)lParam)->y = 300;
+		return 0;
+
 	case AF_MAXFILESIZE:
 		return TOX_MAX_AVATAR_SIZE;
 	}
@@ -118,7 +126,7 @@ INT_PTR CToxProto::GetAvatarCaps(WPARAM wParam, LPARAM lParam)
 
 INT_PTR CToxProto::GetAvatarInfo(WPARAM, LPARAM lParam)
 {
-	PROTO_AVATAR_INFORMATIONW *pai = (PROTO_AVATAR_INFORMATIONW *)lParam;
+	PROTO_AVATAR_INFORMATION *pai = (PROTO_AVATAR_INFORMATION *)lParam;
 
 	ptrA address(getStringA(pai->hContact, TOX_SETTINGS_ID));
 	if (address != NULL)
@@ -126,7 +134,7 @@ INT_PTR CToxProto::GetAvatarInfo(WPARAM, LPARAM lParam)
 		std::tstring path = GetAvatarFilePath(pai->hContact);
 		if (IsFileExists(path))
 		{
-			mir_tstrncpy(pai->filename, path.c_str(), SIZEOF(pai->filename));
+			mir_tstrncpy(pai->filename, path.c_str(), _countof(pai->filename));
 			pai->format = PA_FORMAT_PNG;
 
 			return GAIR_SUCCESS;
@@ -147,18 +155,19 @@ INT_PTR CToxProto::GetMyAvatar(WPARAM wParam, LPARAM lParam)
 
 INT_PTR CToxProto::SetMyAvatar(WPARAM, LPARAM lParam)
 {
+	debugLogA("CToxProto::SetMyAvatar: setting avatar");
 	TCHAR *path = (TCHAR*)lParam;
 	std::tstring avatarPath = GetAvatarFilePath();
 	if (path != NULL)
 	{
+		debugLogA("CToxProto::SetMyAvatar: copy new avatar");
 		if (!CopyFile(path, avatarPath.c_str(), FALSE))
 		{
 			debugLogA("CToxProto::SetMyAvatar: failed to copy new avatar to avatar cache");
 			return 0;
 		}
 
-		if (IsOnline())
-			SetToxAvatar(avatarPath);
+		SetToxAvatar(avatarPath);
 
 		return 0;
 	}
@@ -220,7 +229,7 @@ void CToxProto::OnGotFriendAvatarInfo(AvatarTransferParam *transfer)
 	}
 
 	TCHAR path[MAX_PATH];
-	mir_sntprintf(path, SIZEOF(path), _T("%s\\%S"), VARST(_T("%miranda_avatarcache%")), m_szModuleName);
+	mir_sntprintf(path, _countof(path), _T("%s\\%S"), VARST(_T("%miranda_avatarcache%")), m_szModuleName);
 	OnFileAllow(transfer->pfts.hContact, transfer, path);
 }
 
@@ -228,14 +237,14 @@ void CToxProto::OnGotFriendAvatarData(AvatarTransferParam *transfer)
 {
 	db_set_blob(transfer->pfts.hContact, m_szModuleName, TOX_SETTINGS_AVATAR_HASH, transfer->hash, TOX_HASH_LENGTH);
 
-	PROTO_AVATAR_INFORMATIONT pai = { sizeof(pai) };
-	pai.format = PA_FORMAT_PNG;
-	pai.hContact = transfer->pfts.hContact;
-	mir_tstrcpy(pai.filename, transfer->pfts.tszCurrentFile);
+	PROTO_AVATAR_INFORMATION ai = { 0 };
+	ai.format = PA_FORMAT_PNG;
+	ai.hContact = transfer->pfts.hContact;
+	mir_tstrcpy(ai.filename, transfer->pfts.tszCurrentFile);
 
 	fclose(transfer->hFile);
 	transfer->hFile = NULL;
 
-	ProtoBroadcastAck(transfer->pfts.hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, (HANDLE)&pai, 0);
+	ProtoBroadcastAck(transfer->pfts.hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, (HANDLE)&ai, 0);
 	transfers.Remove(transfer);
 }

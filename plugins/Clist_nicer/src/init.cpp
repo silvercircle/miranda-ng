@@ -22,8 +22,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include <commonheaders.h>
-#include "../cluiframes/cluiframes.h"
+#include "stdafx.h"
+#include "cluiframes.h"
+
+#pragma comment(lib, "shlwapi.lib")
 
 HINSTANCE g_hInst = 0;
 CLIST_INTERFACE *pcli, coreCli;
@@ -37,11 +39,6 @@ extern HICON overlayicons[10];
 extern int Docking_ProcessWindowMessage(WPARAM wParam, LPARAM lParam);
 extern int SetHideOffline(WPARAM wParam, LPARAM lParam);
 
-extern DWORD g_gdiplusToken;
-
-TIME_API tmi;
-
-HMENU BuildGroupPopupMenu(ClcGroup *group);
 ClcContact *CreateClcContact(void);
 CListEvent *fnCreateEvent(void);
 void ReloadThemedOptions();
@@ -79,53 +76,8 @@ PLUGININFOEX pluginInfo =
 	__AUTHORWEB,
 	UNICODE_AWARE,
 	// {8F79B4EE-EB48-4A03-873E-27BE6B7E9A25}
-	{0x8f79b4ee, 0xeb48, 0x4a03, {0x87, 0x3e, 0x27, 0xbe, 0x6b, 0x7e, 0x9a, 0x25}}
+	{ 0x8f79b4ee, 0xeb48, 0x4a03, { 0x87, 0x3e, 0x27, 0xbe, 0x6b, 0x7e, 0x9a, 0x25 } }
 };
-
-
-void _DebugTraceW(const wchar_t *fmt, ...)
-{
-#ifdef _DEBUG
-	wchar_t debug[2048];
-	int ibsize = 2047;
-	va_list va;
-	va_start(va, fmt);
-
-	mir_wstrcpy(debug, L"CLN: ");
-
-	mir_vsnwprintf(&debug[5], ibsize - 10, fmt, va);
-	OutputDebugStringW(debug);
-#endif
-}
-
-
-void _DebugTraceA(const char *fmt, ...)
-{
-	char debug[2048];
-	int ibsize = 2047;
-	va_list va;
-	va_start(va, fmt);
-
-	mir_strcpy(debug, "CLN: ");
-	mir_vsnprintf(&debug[5], ibsize - 10, fmt, va);
-#ifdef _DEBUG
-	OutputDebugStringA(debug);
-#else
-	{
-		char szLogFileName[MAX_PATH], szDataPath[MAX_PATH];
-		FILE *f;
-
-		CallService(MS_DB_GETPROFILEPATH, MAX_PATH, (LPARAM)szDataPath);
-		mir_snprintf(szLogFileName, SIZEOF(szLogFileName), "%s\\%s", szDataPath, "clist_nicer.log");
-		f = fopen(szLogFileName, "a+");
-		if (f) {
-			fputs(debug, f);
-			fputs("\n", f);
-			fclose(f);
-		}
-	}
-#endif
-}
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD, LPVOID)
 {
@@ -172,8 +124,7 @@ static int fnIconFromStatusMode(const char *szProto, int status, MCONTACT hConta
 
 extern "C" int __declspec(dllexport) CListInitialise()
 {
-	mir_getLP( &pluginInfo );
-	mir_getTMI(&tmi);
+	mir_getLP(&pluginInfo);
 
 	mir_getCLI();
 	coreCli = *pcli;
@@ -217,7 +168,7 @@ extern "C" int __declspec(dllexport) CListInitialise()
 	cfg::dat.bShowXStatusOnSbar = cfg::getByte("CLUI", "xstatus_sbar", 0);
 	cfg::dat.bLayeredHack = cfg::getByte("CLUI", "layeredhack", 1);
 	cfg::dat.bFirstRun = cfg::getByte("CLUI", "firstrun", 1);
-	cfg::dat.langPackCP = CallService(MS_LANGPACK_GETCODEPAGE, 0, 0);
+	cfg::dat.langPackCP = Langpack_GetDefaultCodePage();
 	cfg::dat.realTimeSaving = cfg::getByte("CLUI", "save_pos_always", 0);
 
 	DWORD sortOrder = cfg::getDword("CList", "SortOrder", SORTBY_NAME);
@@ -242,7 +193,6 @@ extern "C" int __declspec(dllexport) CListInitialise()
 
 	// get the clist interface
 	pcli->hInst = g_hInst;
-	pcli->pfnBuildGroupPopupMenu = BuildGroupPopupMenu;
 	pcli->pfnCluiProtocolStatusChanged = CluiProtocolStatusChanged;
 	pcli->pfnCompareContacts = CompareContacts;
 	pcli->pfnCreateClcContact = CreateClcContact;

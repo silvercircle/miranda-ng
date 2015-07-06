@@ -46,29 +46,29 @@ void MUCCHTMLBuilder::loadMsgDlgFont(int i, LOGFONTA * lf, COLORREF * colour)
 	int style;
 	DBVARIANT dbv;
 	if (colour) {
-		mir_snprintf(str, SIZEOF(str), "Font%dCol", i);
+		mir_snprintf(str, "Font%dCol", i);
 		*colour = db_get_dw(NULL, MUCCMOD, str, 0x000000);
 	}
 	if (lf) {
-		mir_snprintf(str, SIZEOF(str), "Font%dSize", i);
+		mir_snprintf(str, "Font%dSize", i);
 		lf->lfHeight = (char)db_get_b(NULL, MUCCMOD, str, 10);
 		lf->lfHeight = abs(lf->lfHeight);
 		lf->lfWidth = 0;
 		lf->lfEscapement = 0;
 		lf->lfOrientation = 0;
-		mir_snprintf(str, SIZEOF(str), "Font%dStyle", i);
+		mir_snprintf(str, "Font%dStyle", i);
 		style = db_get_b(NULL, MUCCMOD, str, 0);
 		lf->lfWeight = style & FONTF_BOLD ? FW_BOLD : FW_NORMAL;
 		lf->lfItalic = style & FONTF_ITALIC ? 1 : 0;
 		lf->lfUnderline = style & FONTF_UNDERLINE ? 1 : 0;
 		lf->lfStrikeOut = 0;
-		mir_snprintf(str, SIZEOF(str), "Font%dSet", i);
+		mir_snprintf(str, "Font%dSet", i);
 		lf->lfCharSet = db_get_b(NULL, MUCCMOD, str, DEFAULT_CHARSET);
 		lf->lfOutPrecision = OUT_DEFAULT_PRECIS;
 		lf->lfClipPrecision = CLIP_DEFAULT_PRECIS;
 		lf->lfQuality = DEFAULT_QUALITY;
 		lf->lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
-		mir_snprintf(str, SIZEOF(str), "Font%dFace", i);
+		mir_snprintf(str, "Font%dFace", i);
 		if (db_get(NULL, MUCCMOD, str, &dbv))
 			mir_strcpy(lf->lfFaceName, "Verdana");
 		else {
@@ -82,11 +82,7 @@ char *MUCCHTMLBuilder::timestampToString(DWORD dwData, time_t check)
 {
 	static char szResult[512];
 	char str[80];
-
-	DBTIMETOSTRING dbtts;
-
-	dbtts.cbDest = 70;
-	dbtts.szDest = str;
+	const char *szFormat;
 
 	szResult[0] = '\0';
 	struct tm tm_now, tm_today;
@@ -96,25 +92,21 @@ char *MUCCHTMLBuilder::timestampToString(DWORD dwData, time_t check)
 	tm_today = tm_now;
 	tm_today.tm_hour = tm_today.tm_min = tm_today.tm_sec = 0;
 	today = mktime(&tm_today);
-	if (dwData&IEEDD_MUCC_SHOW_DATE && dwData&IEEDD_MUCC_SHOW_TIME) {
-		if (dwData&IEEDD_MUCC_LONG_DATE) {
-			dbtts.szFormat = dwData&IEEDD_MUCC_SECONDS ? (char *)"D s" : (char *)"D t";
-		}
-		else {
-			dbtts.szFormat = dwData&IEEDD_MUCC_SECONDS ? (char *)"d s" : (char *)"d t";
-		}
+	if (dwData & IEEDD_MUCC_SHOW_DATE && dwData & IEEDD_MUCC_SHOW_TIME) {
+		if (dwData & IEEDD_MUCC_LONG_DATE)
+			szFormat = (dwData & IEEDD_MUCC_SECONDS) ? "D s" : "D t";
+		else
+			szFormat = (dwData & IEEDD_MUCC_SECONDS) ? "d s" : "d t";
 	}
-	else if (dwData&IEEDD_MUCC_SHOW_DATE) {
-		dbtts.szFormat = dwData&IEEDD_MUCC_LONG_DATE ? (char *)"D" : (char *)"d";
-	}
-	else if (dwData&IEEDD_MUCC_SHOW_TIME) {
-		dbtts.szFormat = dwData&IEEDD_MUCC_SECONDS ? (char *)"s" : (char *)"t";
-	}
-	else {
-		dbtts.szFormat = (char *)"";
-	}
-	CallService(MS_DB_TIME_TIMESTAMPTOSTRING, check, (LPARAM)& dbtts);
-	strncat(szResult, str, SIZEOF(szResult) - mir_strlen(szResult));
+	else if (dwData & IEEDD_MUCC_SHOW_DATE)
+		szFormat = dwData & IEEDD_MUCC_LONG_DATE ? "D" : "d";
+	else if (dwData & IEEDD_MUCC_SHOW_TIME)
+		szFormat = dwData & IEEDD_MUCC_SECONDS ? "s" : "t";
+	else
+		szFormat = (char *)"";
+
+	TimeZone_ToString(check, szFormat, str, _countof(str));
+	mir_strncat(szResult, str, _countof(szResult) - mir_strlen(szResult));
 	mir_strncpy(szResult, ptrA(mir_utf8encode(szResult)), 500);
 	return szResult;
 }

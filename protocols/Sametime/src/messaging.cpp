@@ -74,7 +74,7 @@ void mwIm_conversation_recv(mwConversation* conv, mwImSendType type, gconstpoint
 	proto->debugLog(_T("mwIm_conversation_recv() type=[%d] hContact=[%x]"), type, hContact);
 
 	if (type == mwImSend_TYPING) {
-		CallService(MS_PROTO_CONTACTISTYPING, hContact, (LPARAM)(GPOINTER_TO_UINT(msg) == 0 ? 0 : 2));
+		CallService(MS_PROTO_CONTACTISTYPING, hContact, (GPOINTER_TO_UINT(msg) == 0 ? 0 : 2));
 		return;
 	}
 
@@ -98,7 +98,7 @@ void mwIm_place_invite(struct mwConversation* conv, const char* message, const c
 	TCHAR* tszMessage = mir_utf8decodeT(message);
 
 	TCHAR msg[512];
-	mir_sntprintf(msg, SIZEOF(msg), TranslateT("SERVICE NOT IMPLEMENTED. %s"), tszMessage);
+	mir_sntprintf(msg, _countof(msg), TranslateT("SERVICE NOT IMPLEMENTED. %s"), tszMessage);
 	proto->showPopup(msg, SAMETIME_POPUP_INFO);
 
 	mir_free(tszMessage);

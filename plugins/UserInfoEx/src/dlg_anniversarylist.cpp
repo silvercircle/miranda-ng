@@ -242,15 +242,15 @@ class CAnnivList
 			case COLUMN_CONTACT:
 			case COLUMN_PROTO:
 			case COLUMN_DESC:
-				ListView_GetItemText(pDlg->_hList, iItem1, pDlg->_sortHeader, szText1, SIZEOF(szText1));
-				ListView_GetItemText(pDlg->_hList, iItem2, pDlg->_sortHeader, szText2, SIZEOF(szText2));
+				ListView_GetItemText(pDlg->_hList, iItem1, pDlg->_sortHeader, szText1, _countof(szText1));
+				ListView_GetItemText(pDlg->_hList, iItem2, pDlg->_sortHeader, szText2, _countof(szText2));
 				result = pDlg->_sortOrder * mir_tstrcmp(szText1, szText2);
 				break;
 
 			case COLUMN_AGE:
 			case COLUMN_ETA:
-				ListView_GetItemText(pDlg->_hList, iItem1, pDlg->_sortHeader, szText1, SIZEOF(szText1));
-				ListView_GetItemText(pDlg->_hList, iItem2, pDlg->_sortHeader, szText2, SIZEOF(szText2));
+				ListView_GetItemText(pDlg->_hList, iItem1, pDlg->_sortHeader, szText1, _countof(szText1));
+				ListView_GetItemText(pDlg->_hList, iItem2, pDlg->_sortHeader, szText2, _countof(szText2));
 				result = pDlg->_sortOrder * (_ttoi(szText1) - _ttoi(szText2));
 				break;
 
@@ -307,7 +307,7 @@ class CAnnivList
 					break;
 
 				// set icons
-				hIcon = Skin_GetIcon(ICO_DLG_ANNIVERSARY);
+				hIcon = IcoLib_GetIcon(ICO_DLG_ANNIVERSARY);
 				SendDlgItemMessage(hDlg, IDC_HEADERBAR, WM_SETICON, 0, (LPARAM)hIcon);
 				SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
 
@@ -411,7 +411,7 @@ class CAnnivList
 					{
 						CItemData *pid = pDlg->ItemData(pDlg->_curSel);
 						if (pid) {
-							HMENU hPopup = (HMENU)CallService(MS_CLIST_MENUBUILDCONTACT, (WPARAM)pid->_hContact, 0);
+							HMENU hPopup = Menu_BuildContactMenu(pid->_hContact);
 							if (hPopup) {
 								POINT pt;
 								GetCursorPos(&pt);
@@ -498,10 +498,10 @@ class CAnnivList
 			break;
 
 		case WM_DRAWITEM:
-			return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
+			return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
 
 		case WM_MEASUREITEM:
-			return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
+			return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
 
 		case WM_WINDOWPOSCHANGING:
 			if (PtrIsValid(pDlg)) {
@@ -598,7 +598,7 @@ class CAnnivList
 		LVCOLUMN lvc;
 		CHAR pszSetting[MAXSETTING];
 
-		mir_snprintf(pszSetting, SIZEOF(pszSetting), "AnnivDlg_Col%d", iSubItem);
+		mir_snprintf(pszSetting, _countof(pszSetting), "AnnivDlg_Col%d", iSubItem);
 		lvc.cx = db_get_w(NULL, MODNAME, pszSetting, defaultWidth);
 		lvc.mask = LVCF_WIDTH | LVCF_TEXT;
 		lvc.iSubItem = iSubItem;
@@ -713,7 +713,7 @@ class CAnnivList
 					AddSubItem(iItem, COLUMN_DESC, (LPTSTR)ad.Description());
 
 					// sixth line: date
-					ad.DateFormatAlt(szText, SIZEOF(szText));
+					ad.DateFormatAlt(szText, _countof(szText));
 					AddSubItem(iItem, COLUMN_DATE, szText);
 					
 					_numRows++;
@@ -746,7 +746,7 @@ class CAnnivList
 			// ignore meta subcontacts here, as they are not interesting.
 			if (!db_mc_isSub(hContact)) {
 				// filter protocol
-				pszProto = DB::Contact::Proto(hContact);
+				pszProto = Proto_GetBaseAccountName(hContact);
 				if (pszProto) {
 					numContacts++;
 					switch (GenderOf(hContact, pszProto)) {
@@ -782,7 +782,7 @@ class CAnnivList
 		SetDlgItemInt(_hDlg, TXT_NUMCONTACT, numContacts, FALSE);
 		SetDlgItemInt(_hDlg, TXT_FEMALE, numFemale, FALSE);
 		SetDlgItemInt(_hDlg, TXT_MALE, numMale, FALSE);
-		SetDlgItemInt(_hDlg, TXT_AGE, numBirthContacts > 0 ? max(0, (age - (age % numBirthContacts)) / numBirthContacts) : 0, FALSE);
+		SetDlgItemInt(_hDlg, TXT_AGE, numBirthContacts > 0 ? (age - (age % numBirthContacts)) / numBirthContacts : 0, FALSE);
 	}
 
 	// This method deletes all items from the listview
@@ -877,7 +877,7 @@ public:
 				int c, cc = Header_GetItemCount(ListView_GetHeader(_hList));
 
 				for (c = 0; c < cc; c++) {
-					mir_snprintf(pszSetting, SIZEOF(pszSetting), "AnnivDlg_Col%d", c);
+					mir_snprintf(pszSetting, _countof(pszSetting), "AnnivDlg_Col%d", c);
 					db_set_w(NULL, MODNAME, pszSetting, (WORD)ListView_GetColumnWidth(_hList, c));
 				}
 				DeleteAllItems();
@@ -925,7 +925,7 @@ public:
  *
  * @return	always 0
  **/
-INT_PTR DlgAnniversaryListShow(WPARAM wParam, LPARAM lParam)
+INT_PTR DlgAnniversaryListShow(WPARAM, LPARAM)
 {
 	if (!gpDlg) {
 		try {
@@ -959,10 +959,10 @@ INT_PTR DlgAnniversaryListShow(WPARAM wParam, LPARAM lParam)
  **/
 void DlgAnniversaryListOnTopToolBarLoaded()
 {
-	TTBButton ttb = { sizeof(ttb) };
+	TTBButton ttb = { 0 };
 	ttb.dwFlags = TTBBF_VISIBLE | TTBBF_SHOWTOOLTIP;
 	ttb.pszService = MS_USERINFO_REMINDER_LIST;
-	ttb.hIconHandleUp = Skin_GetIconHandle(ICO_COMMON_ANNIVERSARY);
+	ttb.hIconHandleUp = IcoLib_GetIconHandle(ICO_COMMON_ANNIVERSARY);
 	ttb.name = ttb.pszTooltipUp = LPGEN("Anniversary list");
 	TopToolbar_AddButton(&ttb);
 }

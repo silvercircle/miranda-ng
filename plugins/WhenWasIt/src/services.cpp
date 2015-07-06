@@ -179,7 +179,7 @@ INT_PTR AddBirthdayService(WPARAM hContact, LPARAM lParam)
 void ShowPopupMessage(TCHAR *title, TCHAR *message, HANDLE icon)
 {
 	POPUPDATAT pd = { 0 };
-	pd.lchIcon = Skin_GetIconByHandle(icon);
+	pd.lchIcon = IcoLib_GetIconByHandle(icon);
 	_tcsncpy(pd.lptzContactName, title, MAX_CONTACTNAME - 1);
 	_tcsncpy(pd.lptzText, message, MAX_SECONDLINE - 1);
 	pd.colorText = commonData.foreground;
@@ -220,16 +220,16 @@ INT_PTR ImportBirthdaysService(WPARAM wParam, LPARAM lParam)
 	of.lStructSize = sizeof(OPENFILENAME);
 	//of.hInstance = hInstance;
 	TCHAR filter[MAX_PATH];
-	mir_sntprintf(filter, SIZEOF(filter), _T("%s (*") _T(BIRTHDAY_EXTENSION) _T(")%c*") _T(BIRTHDAY_EXTENSION) _T("%c"), TranslateT("Birthdays files"), 0, 0);
+	mir_sntprintf(filter, _countof(filter), _T("%s (*") _T(BIRTHDAY_EXTENSION) _T(")%c*") _T(BIRTHDAY_EXTENSION) _T("%c"), TranslateT("Birthdays files"), 0, 0);
 	of.lpstrFilter = filter;
 	of.lpstrFile = fileName;
-	of.nMaxFile = SIZEOF(fileName);
+	of.nMaxFile = _countof(fileName);
 	of.lpstrTitle = TranslateT("Please select a file to import birthdays from...");
 	of.Flags = OFN_FILEMUSTEXIST;
 
 	if (GetOpenFileName(&of)) {
 		TCHAR buffer[2048];
-		mir_sntprintf(buffer, SIZEOF(buffer), TranslateT("Importing birthdays from file: %s"), fileName);
+		mir_sntprintf(buffer, _countof(buffer), TranslateT("Importing birthdays from file: %s"), fileName);
 		ShowPopupMessage(TranslateT("WhenWasIt"), buffer, hImportBirthdays);
 		DoImport(fileName);
 		ShowPopupMessage(TranslateT("WhenWasIt"), TranslateT("Done importing birthdays"), hImportBirthdays);
@@ -245,19 +245,19 @@ INT_PTR ExportBirthdaysService(WPARAM wParam, LPARAM lParam)
 	of.lStructSize = sizeof(OPENFILENAME);
 	//of.hInstance = hInstance;
 	TCHAR filter[MAX_PATH];
-	mir_sntprintf(filter, SIZEOF(filter), _T("%s (*") _T(BIRTHDAY_EXTENSION) _T(")%c*") _T(BIRTHDAY_EXTENSION) _T("%c%s (*.*)%c*.*%c"), TranslateT("Birthdays files"), 0, 0, TranslateT("All Files"), 0, 0);
+	mir_sntprintf(filter, _countof(filter), _T("%s (*") _T(BIRTHDAY_EXTENSION) _T(")%c*") _T(BIRTHDAY_EXTENSION) _T("%c%s (*.*)%c*.*%c"), TranslateT("Birthdays files"), 0, 0, TranslateT("All Files"), 0, 0);
 	of.lpstrFilter = filter;
 	of.lpstrFile = fileName;
-	of.nMaxFile = SIZEOF(fileName);
+	of.nMaxFile = _countof(fileName);
 	of.lpstrTitle = TranslateT("Please select a file to export birthdays to...");
 
 	if (GetSaveFileName(&of)) {
 		TCHAR buffer[2048];
 		TCHAR *fn = _tcsrchr(fileName, _T('\\')) + 1;
 		if (!_tcschr(fn, _T('.')))
-			_tcscat(fileName, _T(BIRTHDAY_EXTENSION));
+			mir_tstrcat(fileName, _T(BIRTHDAY_EXTENSION));
 
-		mir_sntprintf(buffer, SIZEOF(buffer), TranslateT("Exporting birthdays to file: %s"), fileName);
+		mir_sntprintf(buffer, _countof(buffer), TranslateT("Exporting birthdays to file: %s"), fileName);
 		ShowPopupMessage(TranslateT("WhenWasIt"), buffer, hExportBirthdays);
 		DoExport(fileName);
 		ShowPopupMessage(TranslateT("WhenWasIt"), TranslateT("Done exporting birthdays"), hExportBirthdays);
@@ -278,7 +278,7 @@ int DoImport(TCHAR *fileName)
 
 	while (!feof(fin)) {
 		TCHAR buffer[4096];
-		_fgetts(buffer, SIZEOF(buffer), fin);
+		_fgetts(buffer, _countof(buffer), fin);
 		if (buffer[0] == _T(COMMENT_CHAR))
 			continue;
 
@@ -304,7 +304,7 @@ int DoImport(TCHAR *fileName)
 				}
 				else {
 					TCHAR tmp[2048];
-					mir_sntprintf(tmp, SIZEOF(tmp), TranslateT(NOTFOUND_FORMAT), szHandle, szProto);
+					mir_sntprintf(tmp, _countof(tmp), TranslateT(NOTFOUND_FORMAT), szHandle, szProto);
 					ShowPopupMessage(TranslateT("Warning"), tmp, hImportBirthdays);
 				}
 			}

@@ -1,8 +1,9 @@
 #include "stdafx.h"
 
+CLIST_INTERFACE *pcli;
 int hLangpack;
 HINSTANCE hInst;
-HANDLE hWindowList;
+MWindowList hWindowList;
 
 PLUGININFOEX pluginInfo={
 	sizeof(PLUGININFOEX),
@@ -43,14 +44,11 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 
 int MainInit(WPARAM, LPARAM)
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.position=10;
-	mi.flags=0;
-	mi.hIcon= LoadIcon(hInst,MAKEINTRESOURCE(IDI_POUNCE));
-	mi.pszName=LPGEN("&Buddy Pounce");
-	mi.pszService="BuddyPounce/MenuCommand";
-	mi.pszContactOwner=NULL;
-
+	CMenuItem mi;
+	mi.position = 10;
+	mi.hIcolibItem = LoadIcon(hInst,MAKEINTRESOURCE(IDI_POUNCE));
+	mi.name.a = LPGEN("&Buddy Pounce");
+	mi.pszService = "BuddyPounce/MenuCommand";
 	Menu_AddContactMenuItem(&mi);
 	return 0;
 }
@@ -219,7 +217,7 @@ INT_PTR AddToPounce(WPARAM wParam, LPARAM lParam)
 		TCHAR* newPounce = (TCHAR*)mir_alloc(mir_tstrlen(dbv.ptszVal) + mir_tstrlen(message) + 1);
 		if (!newPounce) return 1;
 		mir_tstrcpy(newPounce, dbv.ptszVal);
-		_tcscat(newPounce, message);
+		mir_tstrcat(newPounce, message);
 		db_set_ws(hContact, modname, "PounceMsg", newPounce);
 		mir_free(newPounce);
 		db_free(&dbv);
@@ -234,18 +232,20 @@ INT_PTR AddToPounce(WPARAM wParam, LPARAM lParam)
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfo);
+	mir_getCLI();
+
 	HookEvent(ME_SYSTEM_MODULESLOADED, MainInit);
 	HookEvent(ME_DB_CONTACT_SETTINGCHANGED, UserOnlineSettingChanged); 
 	HookEvent(ME_OPT_INITIALISE, BuddyPounceOptInit);
 	HookEvent(ME_PROTO_ACK, MsgAck);
+
 	CreateServiceFunction("BuddyPounce/MenuCommand", BuddyPounceMenuCommand);
+
 	hWindowList = WindowList_Create();
 
 	/*     service funcitons for other devs...					*/
 	CreateServiceFunction("BuddyPounce/AddSimplePounce", AddSimpleMessage); // add a simple pounce to a contact
 	CreateServiceFunction("BuddyPounce/AddToPounce", AddToPounce); // add to the exsisitng pounce, if there isnt 1 then add a new simple pounce.
-	/* ******************************************************** */
-
 	return 0; 
 }
 

@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Facebook.dll
 ;  Plugin: Facebook RM
-;  Version: 0.2.10.8
+;  Version: 0.2.11.3
 ;  Authors: Michal Zelinka, Robert Pösel
 ;============================================================
 [Facebook protocol support for Miranda NG.]
@@ -14,7 +14,7 @@
 [Create a new Facebook account]
 Создать новую учётную запись Facebook
 [What's on your mind?]
-О чем вы думаете?
+О чём вы думаете?
 [Wall:]
 Стена:
 [Visibility:]
@@ -57,6 +57,10 @@
 Уведомления клиента
 [Friendship notifications]
 Уведомления о дружбе
+[Ticker feeds]
+Тиккер
+[Show "On this day" posts at login]
+При входе показывать события "В этот день"
 [Use this server for opening links:]
 Тип сайта для открытия ссылок:
 [Use balloon notifications in system tray instead of popups]
@@ -178,7 +182,7 @@ Facebook потребовал чистки компьютера и плагин 
 [%s and more (%d)]
 %s и ещё (%d)
 [Contact was removed from your server list.]
-Контакт удален из списка на сервере.
+Контакт удалён из списка на сервере.
 [Error occurred when removing contact from server.]
 Ошибка удаления контакта из списка на сервере.
 [Request for friendship was sent.]
@@ -213,8 +217,14 @@ Facebook потребовал чистки компьютера и плагин 
 Пример уведомления
 [Sample friendship]
 Пример уведомления о дружбе
+[Sample ticker]
+Пример тиккера
+[Sample on this day]
+Пример события "В этот день"
 [a sticker]
 стикер
+[a link]
+ссылку
 [files]
 файлы
 [a file]
@@ -237,10 +247,12 @@ Facebook потребовал чистки компьютера и плагин 
 Контакт снова в списке на сервере.
 [Contact is no longer on server-list.]
 Контакта больше нет в списке на сервере.
+[On this day]
+В этот день
 [%s server connection]
-%s подключение к серверу
-[Unable to get Netlib connection for Facebook]
-Не удается установить соединение с Facebook
+Подключение к серверу %s
+[Unable to initialize Netlib for %s.]
+Невозможно создать подключение Netlib для %s.
 [Video call]
 Видеовызов
 [Facebook ID must be numeric value.]
@@ -269,6 +281,8 @@ Facebook потребовал чистки компьютера и плагин 
 Новости
 [Friendship events]
 События дружбы
+[On this day posts]
+События "В этот день"
 [Visit profile]
 Профиль на сайте
 [Visit notifications]
@@ -277,12 +291,16 @@ Facebook потребовал чистки компьютера и плагин 
 Сообщение статуса Facebook
 [Notification]
 Уведомление
-[News Feed]
+[Newsfeed event]
 Новости
-[Other Event]
+[Other event]
 Другое событие
-[Friendship Event]
+[Friendship event]
 Событие дружбы
+[Ticker event]
+Тиккер
+[On this day event]
+Событие "В этот день"
 [Message read: %s by %s]
 Сообщение прочтено в: %s пользователем %s
 [Message read: %s]

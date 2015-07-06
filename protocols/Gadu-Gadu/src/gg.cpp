@@ -41,7 +41,6 @@ PLUGININFOEX pluginInfo = {
 // Other variables
 HINSTANCE hInstance;
 
-XML_API xi;
 SSL_API si;
 CLIST_INTERFACE *pcli;
 int hLangpack;
@@ -64,11 +63,11 @@ TCHAR* ws_strerror(int code)
    if (code == 0)
    {
       TCHAR buff[128];
-      int len = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, WSAGetLastError(), 0, buff, SIZEOF(buff), NULL);
+      int len = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, WSAGetLastError(), 0, buff, _countof(buff), NULL);
       if (len == 0)
-         mir_sntprintf(err_desc, SIZEOF(err_desc), _T("WinSock %u: Unknown error."), WSAGetLastError());
+         mir_sntprintf(err_desc, _countof(err_desc), _T("WinSock %u: Unknown error."), WSAGetLastError());
       else
-         mir_sntprintf(err_desc, SIZEOF(err_desc), _T("WinSock %d: %s"), WSAGetLastError(), buff);
+         mir_sntprintf(err_desc, _countof(err_desc), _T("WinSock %d: %s"), WSAGetLastError(), buff);
       return err_desc;
    }
 
@@ -147,38 +146,34 @@ extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = {MIID_PROTOCO
 
 void GGPROTO::cleanuplastplugin(DWORD version)
 {
-   // Store current plugin version
-   setDword(GG_PLUGINVERSION, pluginInfo.version);
+	// Store current plugin version
+	setDword(GG_PLUGINVERSION, pluginInfo.version);
 
-   //1. clean files: %miranda_avatarcache%\GG\*.(null)
-   if (version < PLUGIN_MAKE_VERSION(0, 11, 0, 2)){
-      debugLogA("cleanuplastplugin() 1: version=%d Cleaning junk avatar files from < 0.11.0.2", version);
+	//1. clean files: %miranda_avatarcache%\GG\*.(null)
+	if (version < PLUGIN_MAKE_VERSION(0, 11, 0, 2)){
+		debugLogA("cleanuplastplugin() 1: version=%d Cleaning junk avatar files from < 0.11.0.2", version);
 
-      TCHAR avatarsPath[MAX_PATH];
-      mir_sntprintf(avatarsPath, SIZEOF(avatarsPath), _T("%s\\%s"), VARST( _T("%miranda_avatarcache%")), m_tszUserName);
+		TCHAR avatarsPath[MAX_PATH];
+		mir_sntprintf(avatarsPath, _countof(avatarsPath), _T("%s\\%s"), VARST( _T("%miranda_avatarcache%")), m_tszUserName);
 
-      debugLog(_T("cleanuplastplugin() 1: miranda_avatarcache = %s"), avatarsPath);
+		debugLog(_T("cleanuplastplugin() 1: miranda_avatarcache = %s"), avatarsPath);
 
-      if (avatarsPath !=  NULL){
-         HANDLE hFind = INVALID_HANDLE_VALUE;
-         TCHAR spec[MAX_PATH + 10];
-         mir_sntprintf(spec, SIZEOF(spec), _T("%s\\*.(null)"), avatarsPath);
-         WIN32_FIND_DATA ffd;
-         hFind = FindFirstFile(spec, &ffd);
-         if (hFind != INVALID_HANDLE_VALUE) {
-            do {
-               TCHAR filePathT [2*MAX_PATH + 10];
-               mir_sntprintf(filePathT, SIZEOF(filePathT), _T("%s\\%s"), avatarsPath, ffd.cFileName);
-               if (!_taccess(filePathT, 0)){
-                  debugLog(_T("cleanuplastplugin() 1: remove file = %s"), filePathT);
-                  _tremove(filePathT);
-               }
-            } while (FindNextFile(hFind, &ffd) != 0);
-            FindClose(hFind);
-         }
-      }
-   }
-
+		TCHAR spec[MAX_PATH + 10];
+		mir_sntprintf(spec, _countof(spec), _T("%s\\*.(null)"), avatarsPath);
+		WIN32_FIND_DATA ffd;
+		HANDLE hFind = FindFirstFile(spec, &ffd);
+		if (hFind != INVALID_HANDLE_VALUE) {
+			do {
+				TCHAR filePathT [2*MAX_PATH + 10];
+				mir_sntprintf(filePathT, _countof(filePathT), _T("%s\\%s"), avatarsPath, ffd.cFileName);
+				if (!_taccess(filePathT, 0)){
+					debugLog(_T("cleanuplastplugin() 1: remove file = %s"), filePathT);
+					_tremove(filePathT);
+				}
+			} while (FindNextFile(hFind, &ffd) != 0);
+			FindClose(hFind);
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////
@@ -217,13 +212,10 @@ static int gg_prebuildcontactmenu(WPARAM hContact, LPARAM lParam)
    if (gg == NULL)
       return 0;
 
-   CLISTMENUITEM mi = { sizeof(mi) };
-   mi.flags = CMIM_NAME | CMIM_FLAGS | CMIF_TCHAR;
-   if ( gg->getDword(hContact, GG_KEY_UIN, 0) == gg->getByte(GG_KEY_UIN, 0) ||
-        gg->isChatRoom(hContact) || db_get_b(hContact, "CList", "NotOnList", 0))
-      mi.flags |= CMIF_HIDDEN;
-   mi.ptszName = gg->getByte(hContact, GG_KEY_BLOCK, 0) ? LPGENT("&Unblock") : LPGENT("&Block");
-   Menu_ModifyItem(gg->hBlockMenuItem, &mi);
+   if (gg->getDword(hContact, GG_KEY_UIN, 0) == gg->getByte(GG_KEY_UIN, 0) || gg->isChatRoom(hContact) || db_get_b(hContact, "CList", "NotOnList", 0))
+      Menu_ShowItem(gg->hBlockMenuItem, false);
+	else
+		Menu_ModifyItem(gg->hBlockMenuItem, gg->getByte(hContact, GG_KEY_BLOCK, 0) ? LPGENT("&Unblock") : LPGENT("&Block"));
    return 0;
 }
 
@@ -243,18 +235,12 @@ INT_PTR GGPROTO::blockuser(WPARAM hContact, LPARAM lParam)
 #define GGS_BLOCKUSER "/BlockUser"
 void GGPROTO::block_init()
 {
-   char service[64];
-   mir_snprintf(service, SIZEOF(service), "%s%s", m_szModuleName, GGS_BLOCKUSER);
-   CreateProtoService(GGS_BLOCKUSER, &GGPROTO::blockuser);
-
-   CLISTMENUITEM mi = { sizeof(mi) };
-   mi.flags = CMIF_TCHAR;
+   CMenuItem mi;
    mi.position = -500050000;
-   mi.icolibItem = iconList[8].hIcolib;
-   mi.ptszName = LPGENT("&Block");
-   mi.pszService = service;
-   mi.pszContactOwner = m_szModuleName;
-   hBlockMenuItem = Menu_AddContactMenuItem(&mi);
+   mi.hIcolibItem = iconList[8].hIcolib;
+   mi.name.a = LPGEN("&Block");
+	mi.pszService = GGS_BLOCKUSER;
+	hBlockMenuItem = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
    ::HookEvent(ME_CLIST_PREBUILDCONTACTMENU, gg_prebuildcontactmenu);
 }
@@ -264,42 +250,28 @@ void GGPROTO::block_init()
 
 void GGPROTO::block_uninit()
 {
-   CallService(MO_REMOVEMENUITEM, (WPARAM)hBlockMenuItem, 0);
+   Menu_RemoveItem(hBlockMenuItem);
 }
 
 //////////////////////////////////////////////////////////
 // Menus initialization
 void GGPROTO::menus_init()
 {
-   CLISTMENUITEM mi = { sizeof(mi) };
+	HGENMENU hRoot = Menu_GetProtocolRoot(this);
+	
+	CMenuItem mi;
+	mi.root = hRoot;
+   mi.flags = CMIF_TCHAR;
 
-   HGENMENU hGCRoot, hCLRoot, hRoot = MO_GetProtoRootMenu(m_szModuleName);
-   if (hRoot == NULL) {
-      mi.ptszName = m_tszUserName;
-      mi.position = 500090000;
-      mi.hParentMenu = HGENMENU_ROOT;
-      mi.flags = CMIF_ROOTPOPUP | CMIF_TCHAR | CMIF_KEEPUNTRANSLATED;
-      mi.icolibItem = iconList[0].hIcolib;
-      hGCRoot = hCLRoot = hRoot = hMenuRoot = Menu_AddProtoMenuItem(&mi);
-   }
-   else {
-      mi.hParentMenu = hRoot;
-      mi.flags = CMIF_ROOTHANDLE | CMIF_TCHAR;
+   mi.name.t = LPGENT("Conference");
+   mi.position = 200001;
+   mi.hIcolibItem = iconList[14].hIcolib;
+	HGENMENU hGCRoot = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 
-      mi.ptszName = LPGENT("Conference");
-      mi.position = 200001;
-      mi.icolibItem = iconList[14].hIcolib;
-      hGCRoot = Menu_AddProtoMenuItem(&mi);
-
-      mi.ptszName = LPGENT("Contact list");
-      mi.position = 200002;
-      mi.icolibItem = iconList[7].hIcolib;
-      hCLRoot = Menu_AddProtoMenuItem(&mi);
-
-      if (hMenuRoot)
-         CallService(MO_REMOVEMENUITEM, (WPARAM)hMenuRoot, 0);
-      hMenuRoot = NULL;
-   }
+   mi.name.t = LPGENT("Contact list");
+   mi.position = 200002;
+   mi.hIcolibItem = iconList[7].hIcolib;
+   HGENMENU hCLRoot = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 
    gc_menus_init(hGCRoot);
    import_init(hCLRoot);
@@ -332,7 +304,6 @@ static int gg_proto_uninit(PROTO_INTERFACE *proto)
 
 extern "C" int __declspec(dllexport) Load(void)
 {
-   mir_getXI(&xi);
    mir_getLP(&pluginInfo);
    mir_getCLI();
 
@@ -340,15 +311,15 @@ extern "C" int __declspec(dllexport) Load(void)
    hHookModulesLoaded = HookEvent(ME_SYSTEM_MODULESLOADED, gg_modulesloaded);
 
    // Prepare protocol name
-   PROTOCOLDESCRIPTOR pd = { sizeof(pd) };
+	PROTOCOLDESCRIPTOR pd = { 0 };
+	pd.cbSize = sizeof(pd);
    pd.szName = GGDEF_PROTO;
    pd.fnInit = (pfnInitProto)gg_proto_init;
    pd.fnUninit = (pfnUninitProto)gg_proto_uninit;
    pd.type = PROTOTYPE_PROTOCOL;
+   Proto_RegisterModule( &pd);
 
-   // Register module
-   CallService(MS_PROTO_REGISTERMODULE, 0, (LPARAM) &pd);
-   gg_links_instancemenu_init();
+	gg_links_instancemenu_init();
    return 0;
 }
 
@@ -439,7 +410,7 @@ void gg_debughandler(int level, const char *format, va_list ap)
    strncpy(szText + PREFIXLEN, "[libgadu] \0", sizeof(szText) - PREFIXLEN);
 
    char prefix[6];
-   mir_snprintf(prefix, SIZEOF(prefix), "%lu", GetCurrentThreadId());
+   mir_snprintf(prefix, _countof(prefix), "%lu", GetCurrentThreadId());
    size_t prefixLen = mir_strlen(prefix);
    if (prefixLen < PREFIXLEN) memset(prefix + prefixLen, ' ', PREFIXLEN - prefixLen);
    memcpy(szText, prefix, PREFIXLEN);

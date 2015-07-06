@@ -54,9 +54,9 @@ static void Finalize(time_t& ts)
 		}
 		for (int i = 1;; i++) {
 			if (i == 1)
-				mir_sntprintf(opts.backupFilename, SIZEOF(opts.backupFilename), TranslateT("%s\\Backup of %s"), dbPath, dbFile);
+				mir_sntprintf(opts.backupFilename, _countof(opts.backupFilename), TranslateT("%s\\Backup of %s"), dbPath, dbFile);
 			else
-				mir_sntprintf(opts.backupFilename, SIZEOF(opts.backupFilename), TranslateT("%s\\Backup (%d) of %s"), dbPath, i, dbFile);
+				mir_sntprintf(opts.backupFilename, _countof(opts.backupFilename), TranslateT("%s\\Backup (%d) of %s"), dbPath, i, dbFile);
 			if (_taccess(opts.backupFilename, 0) == -1) break;
 		}
 
@@ -88,7 +88,7 @@ void __cdecl WorkerThread(void *)
 	else {
 		mir_tstrcpy(opts.outputFilename, opts.filename);
 		*_tcsrchr(opts.outputFilename, '.') = 0;
-		_tcscat(opts.outputFilename, TranslateT(" (Output).dat"));
+		mir_tstrcat(opts.outputFilename, TranslateT(" (Output).dat"));
 		opts.hOutFile = CreateFile(opts.outputFilename, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
 		if (opts.hOutFile == INVALID_HANDLE_VALUE) {
 			AddToStatus(STATUS_FATAL, TranslateT("Can't create output file (%u)"), GetLastError());

@@ -68,7 +68,7 @@ INT_PTR StoreVersionInfoToFile(WPARAM, LPARAM lParam)
 	CreateDirectoryTree(VersionInfoFolder);
 
 	TCHAR path[MAX_PATH];
-	mir_sntprintf(path, SIZEOF(path), TEXT("%s\\VersionInfo.txt"), VersionInfoFolder);
+	mir_sntprintf(path, _countof(path), TEXT("%s\\VersionInfo.txt"), VersionInfoFolder);
 
 	HANDLE hDumpFile = CreateFile(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hDumpFile != INVALID_HANDLE_VALUE) {
@@ -159,7 +159,7 @@ INT_PTR CopyLinkToClipboard(WPARAM, LPARAM)
 	ptrT tmp(db_get_wsa(NULL, PluginName, "Username"));
 	if (tmp != NULL) {
 		TCHAR buffer[MAX_PATH];
-		mir_sntprintf(buffer, SIZEOF(buffer), _T("http://vi.miranda-ng.org/detail/%s"), tmp);
+		mir_sntprintf(buffer, _countof(buffer), _T("http://vi.miranda-ng.org/detail/%s"), tmp);
 
 		int bufLen = (sizeof(buffer) + 1) * sizeof(TCHAR);
 		HANDLE hData = GlobalAlloc(GMEM_MOVEABLE, bufLen);
@@ -213,7 +213,7 @@ int OptionsInit(WPARAM wParam, LPARAM)
 
 static int ToolbarModulesLoaded(WPARAM, LPARAM)
 {
-	TTBButton ttb = { sizeof(ttb) };
+	TTBButton ttb = { 0 };
 	ttb.pszService = MS_CRASHDUMPER_STORETOCLIP;
 	ttb.name = ttb.pszTooltipUp = LPGEN("Version Information To Clipboard");
 	ttb.hIconHandleUp = GetIconHandle(IDI_VITOCLIP);
@@ -241,7 +241,7 @@ static int ToolbarModulesLoaded(WPARAM, LPARAM)
 static int ModulesLoaded(WPARAM, LPARAM)
 {
 	char temp[MAX_PATH];
-	CallService(MS_SYSTEM_GETVERSIONTEXT, (WPARAM)SIZEOF(temp), (LPARAM)temp);
+	CallService(MS_SYSTEM_GETVERSIONTEXT, (WPARAM)_countof(temp), (LPARAM)temp);
 	crs_a2t(vertxt, temp);
 
 	if (ServiceExists(MS_FOLDERS_REGISTER_PATH)) {
@@ -255,72 +255,58 @@ static int ModulesLoaded(WPARAM, LPARAM)
 		FoldersPathChanged(0, 0);
 	}
 
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.popupPosition = 2000089999;
-	mi.position = 2000089999;
-	mi.flags = CMIF_ROOTPOPUP | CMIF_TCHAR;
-	mi.icolibItem = GetIconHandle(IDI_VI);
-	mi.ptszName = LPGENT("Version Information");
-	mi.pszPopupName = (char *)-1;
-	HANDLE hMenuRoot = Menu_AddMainMenuItem(&mi);
-
-	mi.flags = CMIF_CHILDPOPUP | CMIF_TCHAR;
-	mi.pszPopupName = (char *)hMenuRoot;
-	mi.popupPosition = 0;
+	CMenuItem mi;
+	mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Version Information"), 2000089999, GetIconHandle(IDI_VI));
 
 	mi.position = 2000089995;
-	mi.ptszName = LPGENT("Copy to clipboard");
-	mi.icolibItem = GetIconHandle(IDI_VITOCLIP);
+	mi.name.a = LPGEN("Copy to clipboard");
+	mi.hIcolibItem = GetIconHandle(IDI_VITOCLIP);
 	mi.pszService = MS_CRASHDUMPER_STORETOCLIP;
 	Menu_AddMainMenuItem(&mi);
 
 	mi.position = 2000089996;
-	mi.ptszName = LPGENT("Store to file");
-	mi.icolibItem = GetIconHandle(IDI_VITOFILE);
+	mi.name.a = LPGEN("Store to file");
+	mi.hIcolibItem = GetIconHandle(IDI_VITOFILE);
 	mi.pszService = MS_CRASHDUMPER_STORETOFILE;
 	Menu_AddMainMenuItem(&mi);
 
 	mi.position = 2000089997;
-	mi.ptszName = LPGENT("Show");
-	mi.icolibItem = GetIconHandle(IDI_VISHOW);
+	mi.name.a = LPGEN("Show");
+	mi.hIcolibItem = GetIconHandle(IDI_VISHOW);
 	mi.pszService = MS_CRASHDUMPER_VIEWINFO;
 	Menu_AddMainMenuItem(&mi);
 
-	mi.popupPosition = 1;
 	mi.position = 2000089998;
-	mi.ptszName = LPGENT("Show with DLLs");
-	mi.icolibItem = GetIconHandle(IDI_VIUPLOAD);
+	mi.name.a = LPGEN("Show with DLLs");
+	mi.hIcolibItem = GetIconHandle(IDI_VIUPLOAD);
 	mi.pszService = MS_CRASHDUMPER_VIEWINFO;
-	Menu_AddMainMenuItem(&mi);
+	Menu_ConfigureItem(Menu_AddMainMenuItem(&mi), MCI_OPT_EXECPARAM, 1);
 
-	mi.popupPosition = 0;
 	mi.position = 2000089999;
-	mi.ptszName = LPGENT("Upload");
-	mi.icolibItem = GetIconHandle(IDI_VIUPLOAD);
+	mi.name.a = LPGEN("Upload");
+	mi.hIcolibItem = GetIconHandle(IDI_VIUPLOAD);
 	mi.pszService = MS_CRASHDUMPER_UPLOAD;
 	Menu_AddMainMenuItem(&mi);
 
-	mi.popupPosition = 0;
 	mi.position = 2000089999;
-	mi.ptszName = LPGENT("Copy link to clipboard");
-	mi.icolibItem = GetIconHandle(IDI_LINKTOCLIP);//need icon
+	mi.name.a = LPGEN("Copy link to clipboard");
+	mi.hIcolibItem = GetIconHandle(IDI_LINKTOCLIP);//need icon
 	mi.pszService = MS_CRASHDUMPER_URLTOCLIP;
 	Menu_AddMainMenuItem(&mi);
 
 	if (catchcrashes && !needrestart) {
 		mi.position = 2000099990;
-		mi.ptszName = LPGENT("Open crash report directory");
-		mi.icolibItem = LoadSkinnedIconHandle(SKINICON_EVENT_FILE);
+		mi.name.a = LPGEN("Open crash report directory");
+		mi.hIcolibItem = Skin_GetIconHandle(SKINICON_EVENT_FILE);
 		mi.pszService = MS_CRASHDUMPER_URL;
 		Menu_AddMainMenuItem(&mi);
 	}
 
-	mi.popupPosition = 1;
 	mi.position = 2000099991;
-	mi.ptszName = LPGENT("Open online Version Info");
-	mi.icolibItem = LoadSkinnedIconHandle(SKINICON_EVENT_URL);
+	mi.name.a = LPGEN("Open online Version Info");
+	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_EVENT_URL);
 	mi.pszService = MS_CRASHDUMPER_URL;
-	Menu_AddMainMenuItem(&mi);
+	Menu_ConfigureItem(Menu_AddMainMenuItem(&mi), MCI_OPT_EXECPARAM, 1);
 
 	HOTKEYDESC hk = { 0 };
 	hk.cbSize = sizeof(hk);
@@ -373,7 +359,7 @@ extern "C" int __declspec(dllexport) Load(void)
 	profname = Utils_ReplaceVarsT(_T("%miranda_profilename%.dat"));
 	profpath = Utils_ReplaceVarsT(_T("%miranda_userdata%"));
 	if (catchcrashes && !needrestart)
-		mir_sntprintf(CrashLogFolder, SIZEOF(CrashLogFolder), TEXT("%s\\CrashLog"), profpath);
+		mir_sntprintf(CrashLogFolder, _countof(CrashLogFolder), TEXT("%s\\CrashLog"), profpath);
 	_tcsncpy_s(VersionInfoFolder, profpath, _TRUNCATE);
 
 

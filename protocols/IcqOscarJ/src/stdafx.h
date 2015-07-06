@@ -63,7 +63,6 @@
 #include <m_message.h>
 #include <m_netlib.h>
 #include <m_protocols.h>
-#include <m_protomod.h>
 #include <m_protosvc.h>
 #include <m_options.h>
 #include <m_system.h>
@@ -73,7 +72,6 @@
 #include <m_idle.h>
 #include <m_skin.h>
 #include <m_popup.h>
-#include <m_clistint.h>
 #include <m_cluiframes.h>
 #include <m_ignore.h>
 #include <m_icolib.h>
@@ -81,6 +79,7 @@
 #include <m_xstatus.h>
 #include <m_timezones.h>
 #include <win2k.h>
+#include <m_gui.h>
 
 // Project resources
 #include "resource.h"

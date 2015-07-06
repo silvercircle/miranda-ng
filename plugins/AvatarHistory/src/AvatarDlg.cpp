@@ -25,7 +25,7 @@ void __cdecl AvatarDialogThread(void *param);
 static INT_PTR CALLBACK AvatarDlgProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 int ShowSaveDialog(HWND hwnd, TCHAR* fn,MCONTACT hContact = NULL);
 
-BOOL ProtocolEnabled(const char *proto);
+bool ProtocolEnabled(const char *proto);
 int FillAvatarListFromDB(HWND list, MCONTACT hContact);
 int FillAvatarListFromFolder(HWND list, MCONTACT hContact);
 int FillAvatarListFromFiles(HWND list, MCONTACT hContact);
@@ -84,7 +84,7 @@ int OpenAvatarDialog(MCONTACT hContact, char* fn)
 	}
 	else
 	{
-		MultiByteToWideChar(CP_ACP, 0, fn, -1, avdlg->fn, SIZEOF(avdlg->fn));
+		MultiByteToWideChar(CP_ACP, 0, fn, -1, avdlg->fn, _countof(avdlg->fn));
 	}
 
 	CloseHandle(mir_forkthread(AvatarDialogThread, (void*)avdlg));
@@ -133,12 +133,10 @@ static INT_PTR CALLBACK AvatarDlgProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM l
 			else
 				FillAvatarListFromFiles(hwndList, data->hContact);
 
-			TCHAR *displayName = (TCHAR*) CallService(MS_CLIST_GETCONTACTDISPLAYNAME,(WPARAM)data->hContact,GCDNF_TCHAR);
-			if (displayName)
-			{
+			TCHAR *displayName = pcli->pfnGetContactDisplayName(data->hContact, 0);
+			if (displayName) {
 				TCHAR title[MAX_PATH];
-
-				mir_sntprintf(title, SIZEOF(title), TranslateT("Avatar History for %s"), displayName);
+				mir_sntprintf(title, _countof(title), TranslateT("Avatar History for %s"), displayName);
 				SetWindowText(hwnd, title);
 			}
 
@@ -376,7 +374,7 @@ int FillAvatarListFromFiles(HWND list, MCONTACT hContact)
 	WIN32_FIND_DATA finddata;
 
 	GetContactFolder(dir, hContact);
-	mir_sntprintf(path, SIZEOF(path), _T("%s\\*.*"), dir);
+	mir_sntprintf(path, _countof(path), _T("%s\\*.*"), dir);
 
 	HANDLE hFind = FindFirstFile(path, &finddata);
 	if (hFind == INVALID_HANDLE_VALUE)
@@ -386,7 +384,7 @@ int FillAvatarListFromFiles(HWND list, MCONTACT hContact)
 	{
 		if (finddata.cFileName[0] != '.')
 		{
-			mir_sntprintf(path, SIZEOF(path), _T("%s\\%s"), dir, finddata.cFileName);
+			mir_sntprintf(path, _countof(path), _T("%s\\%s"), dir, finddata.cFileName);
 			max_pos = AddFileToList(path,finddata.cFileName,finddata.cFileName,list);
 		}
 	}
@@ -403,7 +401,7 @@ int FillAvatarListFromFolder(HWND list, MCONTACT hContact)
 	WIN32_FIND_DATA finddata;
 
 	GetContactFolder(dir, hContact);
-	mir_sntprintf(path, SIZEOF(path), _T("%s\\*.lnk"), dir);
+	mir_sntprintf(path, _countof(path), _T("%s\\*.lnk"), dir);
 
 	HANDLE hFind = FindFirstFile(path, &finddata);
 	if (hFind == INVALID_HANDLE_VALUE)
@@ -414,7 +412,7 @@ int FillAvatarListFromFolder(HWND list, MCONTACT hContact)
 		if (finddata.cFileName[0] != '.')
 		{
 			TCHAR lnk[MAX_PATH];
-			mir_sntprintf(lnk, SIZEOF(lnk), _T("%s\\%s"), dir, finddata.cFileName);
+			mir_sntprintf(lnk, _countof(lnk), _T("%s\\%s"), dir, finddata.cFileName);
 			if (ResolveShortcut(lnk, path))
 				max_pos = AddFileToList(path,lnk,finddata.cFileName,list);
 		}
@@ -438,11 +436,7 @@ int FillAvatarListFromDB(HWND list, MCONTACT hContact)
 
 		// Get time
 		TCHAR date[64];
-		DBTIMETOSTRINGT tts = {0};
-		tts.szFormat = _T("d s");
-		tts.szDest = date;
-		tts.cbDest = sizeof(date);
-		CallService(MS_DB_TIME_TIMESTAMPTOSTRINGT, (WPARAM)dbei.timestamp, (LPARAM)&tts);
+		TimeZone_ToStringT(dbei.timestamp, _T("d s"), date, _countof(date));
 
 		// Get file in disk
 		TCHAR path[MAX_PATH];
@@ -510,7 +504,7 @@ int CleanupAvatarPic(HWND hwnd)
 int PreBuildContactMenu(WPARAM wParam, LPARAM) 
 {
 	char *proto = GetContactProto(wParam);
-	Menu_ShowItem(hMenu, ProtocolEnabled(proto));
+	Menu_ShowItem(hMenu, 0 != ProtocolEnabled(proto));
 	return 0;
 }
 
@@ -518,14 +512,14 @@ void InitMenuItem()
 {
 	CreateServiceFunction(MS_AVATARHISTORY_SHOWDIALOG, ShowDialogSvc);
 
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.ptszName = LPGENT("View Avatar History");
+	CMenuItem mi;
+	mi.name.t = LPGENT("View Avatar History");
 	mi.flags = CMIF_TCHAR;
 	mi.position = 1000090010;
-	mi.hIcon = createDefaultOverlayedIcon(FALSE);
+	mi.hIcolibItem = createDefaultOverlayedIcon(FALSE);
 	mi.pszService = MS_AVATARHISTORY_SHOWDIALOG;
 	hMenu = Menu_AddContactMenuItem(&mi);
-	DestroyIcon(mi.hIcon);
+	DestroyIcon((HICON)mi.hIcolibItem);
 }
 
 static INT_PTR ShowDialogSvc(WPARAM wParam, LPARAM lParam)
@@ -537,26 +531,25 @@ static INT_PTR ShowDialogSvc(WPARAM wParam, LPARAM lParam)
 
 int ShowSaveDialog(HWND hwnd, TCHAR* fn, MCONTACT hContact)
 {
-	TCHAR filter[MAX_PATH];
-	TCHAR file[MAX_PATH];
-	OPENFILENAME ofn;
-	memset(&ofn, 0, sizeof(OPENFILENAME));
-	ofn.lStructSize = sizeof(OPENFILENAME);
+	TCHAR filter[MAX_PATH], file[MAX_PATH];
+	Bitmap_GetFilter(filter, _countof(filter));
+
+	OPENFILENAME ofn = { 0 };
+	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = hwnd;
 	ofn.hInstance = hInst;
 
-	CallService(MS_UTILS_GETBITMAPFILTERSTRINGST, MAX_PATH, (LPARAM)filter);
 	ofn.lpstrFilter = filter;
 	
 	ofn.nFilterIndex = 1;
 	_tcsncpy_s(file, (_tcsrchr(fn, '\\') + 1), _TRUNCATE);
 	ofn.lpstrFile = file;
 
-	TCHAR *displayName = (TCHAR*) CallService(MS_CLIST_GETCONTACTDISPLAYNAME,hContact,GCDNF_TCHAR);
+	TCHAR *displayName = pcli->pfnGetContactDisplayName(hContact, 0);
 	TCHAR title[MAX_PATH];
 	if (displayName)
 	{
-		mir_sntprintf(title, SIZEOF(title), TranslateT("Save Avatar for %s"), displayName);
+		mir_sntprintf(title, _countof(title), TranslateT("Save Avatar for %s"), displayName);
 		ofn.lpstrTitle = title;
 	}
 	else

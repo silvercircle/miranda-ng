@@ -47,9 +47,9 @@ public:
 	TCString Reply;
 };
 
-
+// _ad must be allocated using "new CAutoreplyData()"
 void __cdecl AutoreplyDelayThread(void *_ad)
-{ // _ad must be allocated using "new CAutoreplyData()"
+{
 	CAutoreplyData *ad = (CAutoreplyData*)_ad;
 	_ASSERT(ad && ad->hContact && ad->Reply.GetLen());
 	char *szProto = GetContactProto(ad->hContact);
@@ -66,7 +66,7 @@ void __cdecl AutoreplyDelayThread(void *_ad)
 		DBEVENTINFO dbeo = { 0 };
 		dbeo.cbSize = sizeof(dbeo);
 		dbeo.eventType = EVENTTYPE_MESSAGE;
-		dbeo.flags = DBEF_SENT;
+		dbeo.flags = DBEF_SENT | DBEF_UTF;
 		dbeo.szModule = szProto;
 		dbeo.timestamp = time(NULL);
 
@@ -175,7 +175,7 @@ int MsgEventAdded(WPARAM hContact, LPARAM lParam)
 
 	unsigned int iMode = CallProtoService(szProto, PS_GETSTATUS, 0, 0);
 	int i;
-	for (i = SIZEOF(StatusModeList) - 1; i >= 0; i--)
+	for (i = _countof(StatusModeList) - 1; i >= 0; i--)
 		if (iMode == StatusModeList[i].Status)
 			break;
 

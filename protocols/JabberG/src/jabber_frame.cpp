@@ -79,7 +79,7 @@ CJabberInfoFrame::CJabberInfoFrame(CJabberProto *proto):
 		InitClass();
 
 		CLISTFrame frame = { sizeof(frame) };
-		HWND hwndClist = (HWND)CallService(MS_CLUI_GETHWND, 0, 0);
+		HWND hwndClist = pcli->hwndContactList;
 		frame.hWnd = CreateWindowEx(0, _T("JabberInfoFrameClass"), NULL, WS_CHILD|WS_VISIBLE, 0, 0, 100, 100, hwndClist, NULL, hInst, this);
 		frame.align = alBottom;
 		frame.height = 2 * SZ_FRAMEPADDING + GetSystemMetrics(SM_CYSMICON) + SZ_LINEPADDING; // compact height by default
@@ -106,7 +106,7 @@ CJabberInfoFrame::CJabberInfoFrame(CJabberProto *proto):
 		UpdateInfoItem("$", proto->GetIconHandle(IDI_JABBER), proto->m_tszUserName);
 
 		CreateInfoItem("$/JID", true);
-		UpdateInfoItem("$/JID", LoadSkinnedIconHandle(SKINICON_OTHER_USERDETAILS), _T("Offline"));
+		UpdateInfoItem("$/JID", Skin_GetIconHandle(SKINICON_OTHER_USERDETAILS), _T("Offline"));
 		SetInfoItemCallback("$/JID", &CJabberProto::InfoFrame_OnSetup);
 	}
 }
@@ -181,7 +181,7 @@ LRESULT CJabberInfoFrame::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 			POINT pt = { LOWORD(lParam), HIWORD(lParam) };
 			MapWindowPoints(m_hwnd, NULL, &pt, 1);
 			HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDFRAMECONTEXT, m_frameId, 0);
-			int res = TrackPopupMenu(hMenu, TPM_RETURNCMD, pt.x, pt.y, 0, (HWND)CallService(MS_CLUI_GETHWND, 0, 0), NULL);
+			int res = TrackPopupMenu(hMenu, TPM_RETURNCMD, pt.x, pt.y, 0, pcli->hwndContactList, NULL);
 			CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(res, 0), m_frameId);
 			return 0;
 		}
@@ -360,7 +360,7 @@ void CJabberInfoFrame::PaintCompact(HDC hdc)
 
 		if (depth == 0) {
 			if (item.m_hIcolibIcon) {
-				HICON hIcon = Skin_GetIconByHandle(item.m_hIcolibIcon);
+				HICON hIcon = IcoLib_GetIconByHandle(item.m_hIcolibIcon);
 				if (hIcon) {
 					DrawIconEx(hdc, SZ_FRAMEPADDING, (rc.bottom-cy_icon)/2, hIcon, cx_icon, cy_icon, 0, NULL, DI_NORMAL);
 					g_ReleaseIcon(hIcon);
@@ -372,7 +372,7 @@ void CJabberInfoFrame::PaintCompact(HDC hdc)
 		}
 		else {
 			if (item.m_hIcolibIcon) {
-				HICON hIcon = Skin_GetIconByHandle(item.m_hIcolibIcon);
+				HICON hIcon = IcoLib_GetIconByHandle(item.m_hIcolibIcon);
 				if (hIcon) {
 					SetRect(&item.m_rcItem, cx, (rc.bottom-cy_icon)/2, cx+cx_icon, (rc.bottom-cy_icon)/2+cy_icon);
 					DrawIconEx(hdc, cx, (rc.bottom-cy_icon)/2, hIcon, cx_icon, cy_icon, 0, NULL, DI_NORMAL);
@@ -418,7 +418,7 @@ void CJabberInfoFrame::PaintNormal(HDC hdc)
 		SetRect(&item.m_rcItem, cx, cy, rc.right - SZ_FRAMEPADDING, cy + line_height);
 
 		if (item.m_hIcolibIcon) {
-			HICON hIcon = Skin_GetIconByHandle(item.m_hIcolibIcon);
+			HICON hIcon = IcoLib_GetIconByHandle(item.m_hIcolibIcon);
 			if (hIcon) {
 				DrawIconEx(hdc, cx, cy + (line_height-cy_icon)/2, hIcon, cx_icon, cy_icon, 0, NULL, DI_NORMAL);
 				cx += cx_icon + SZ_ICONSPACING;

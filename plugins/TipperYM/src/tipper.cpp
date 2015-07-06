@@ -37,7 +37,6 @@ TCHAR SKIN_FOLDER[256];
 
 CLIST_INTERFACE *pcli = NULL;
 FI_INTERFACE *fii = NULL;
-TIME_API tmi;
 int hLangpack;
 
 PLUGININFOEX pluginInfoEx =
@@ -118,7 +117,7 @@ int EventDeleted(WPARAM wParam, LPARAM lParam)
 
 int ReloadSkinFolder(WPARAM wParam, LPARAM lParam)
 {
-	FoldersGetCustomPathT(hSkinFolder, SKIN_FOLDER, SIZEOF(SKIN_FOLDER), _T(DEFAULT_SKIN_FOLDER));
+	FoldersGetCustomPathT(hSkinFolder, SKIN_FOLDER, _countof(SKIN_FOLDER), _T(DEFAULT_SKIN_FOLDER));
 	return 0;
 }
 
@@ -256,7 +255,7 @@ int ModulesLoaded(WPARAM, LPARAM)
 	hFolderChanged = HookEvent(ME_FOLDERS_PATH_CHANGED, ReloadSkinFolder);
 
 	hSkinFolder = FoldersRegisterCustomPathT(LPGEN("Skins"), LPGEN("Tipper"), MIRANDA_PATHT _T("\\") _T(DEFAULT_SKIN_FOLDER));
-	FoldersGetCustomPathT(hSkinFolder, SKIN_FOLDER, SIZEOF(SKIN_FOLDER), _T(DEFAULT_SKIN_FOLDER));
+	FoldersGetCustomPathT(hSkinFolder, SKIN_FOLDER, _countof(SKIN_FOLDER), _T(DEFAULT_SKIN_FOLDER));
 
 	InitTipperSmileys();
 	LoadOptions();
@@ -299,10 +298,8 @@ extern "C" int __declspec(dllexport) Load(void)
 	CallService(MS_IMG_GETINTERFACE, FI_IF_VERSION, (LPARAM)&fii);
 	mir_getLP(&pluginInfoEx);
 	mir_getCLI();
-	mir_getTMI(&tmi);
 
-	if (ServiceExists(MS_LANGPACK_GETCODEPAGE))
-		iCodePage = CallService(MS_LANGPACK_GETCODEPAGE, 0, 0);
+	iCodePage = Langpack_GetDefaultCodePage();
 
 	InitTranslations();
 	InitMessagePump();

@@ -53,7 +53,7 @@ HICON IconLibGetIconEx(HANDLE hIcon, DWORD dwFlags)
 {
 	HICON hiIcon = NULL;
 	if (hIcon) {
-		hiIcon = Skin_GetIconByHandle(hIcon);
+		hiIcon = IcoLib_GetIconByHandle(hIcon);
 		if ((dwFlags & LR_SHARED) == 0)
 			hiIcon = CopyIcon(hiIcon);
 	}
@@ -75,7 +75,7 @@ void InitXStatusIcons()
 {
 	// load libs
 	TCHAR szBuff[MAX_FILEPATH];
-	if (GetModuleFileName(NULL, szBuff, SIZEOF(szBuff))) {
+	if (GetModuleFileName(NULL, szBuff, _countof(szBuff))) {
 		LPWSTR lpwszFileName;
 		g_dwMirWorkDirPathLen = GetFullPathName(szBuff, MAX_FILEPATH, g_szMirWorkDirPath, &lpwszFileName);
 		if (g_dwMirWorkDirPathLen) {
@@ -84,7 +84,7 @@ void InitXStatusIcons()
 
 			// load xstatus icons lib
 			DWORD dwBuffLen;
-			DWORD dwErrorCode = FindFile(g_szMirWorkDirPath, (DWORD)g_dwMirWorkDirPathLen, _T("xstatus_MRA.dll"), -1, szBuff, SIZEOF(szBuff), &dwBuffLen);
+			DWORD dwErrorCode = FindFile(g_szMirWorkDirPath, (DWORD)g_dwMirWorkDirPathLen, _T("xstatus_MRA.dll"), -1, szBuff, _countof(szBuff), &dwBuffLen);
 			if (dwErrorCode == NO_ERROR) {
 				g_hDLLXStatusIcons = LoadLibraryEx(szBuff, NULL, 0);
 				if (g_hDLLXStatusIcons) {
@@ -98,25 +98,25 @@ void InitXStatusIcons()
 		}
 	}
 
-	GetModuleFileName((g_hDLLXStatusIcons != NULL) ? g_hDLLXStatusIcons : g_hInstance, szBuff, SIZEOF(szBuff));
+	GetModuleFileName((g_hDLLXStatusIcons != NULL) ? g_hDLLXStatusIcons : g_hInstance, szBuff, _countof(szBuff));
 
-	SKINICONDESC sid = { sizeof(sid) };
-	sid.ptszSection = LPGENT("Protocols")_T("/")LPGENT("MRA")_T("/")LPGENT("Custom Status");
-	sid.ptszDefaultFile = szBuff;
+	SKINICONDESC sid = { 0 };
+	sid.section.t = LPGENT("Protocols")_T("/")LPGENT("MRA")_T("/")LPGENT("Custom Status");
+	sid.defaultFile.t = szBuff;
 	sid.cx = sid.cy = 16;
 	sid.flags = SIDF_ALL_TCHAR;
 
 	hXStatusAdvancedStatusIcons[0] = NULL;
 	for (DWORD i = 1; i < MRA_XSTATUS_COUNT+1; i++) {
 		char szBuff[MAX_PATH];
-		mir_snprintf(szBuff, SIZEOF(szBuff), "mra_xstatus%ld", i);
+		mir_snprintf(szBuff, _countof(szBuff), "mra_xstatus%ld", i);
 		sid.pszName = szBuff;
 
 		int iCurIndex = i+IDI_XSTATUS1-1;
-		sid.ptszDescription = (TCHAR*)lpcszXStatusNameDef[i];
+		sid.description.t = (TCHAR*)lpcszXStatusNameDef[i];
 		sid.iDefaultIndex = -iCurIndex;
 
-		hXStatusAdvancedStatusIcons[i] = Skin_AddIcon(&sid);
+		hXStatusAdvancedStatusIcons[i] = IcoLib_AddIcon(&sid);
 	}
 }
 
@@ -125,8 +125,8 @@ void DestroyXStatusIcons()
 	char szBuff[MAX_PATH];
 
 	for (DWORD i = 1; i < MRA_XSTATUS_COUNT+1; i++) {
-		mir_snprintf(szBuff, SIZEOF(szBuff), "mra_xstatus%ld", i);
-		Skin_RemoveIcon(szBuff);
+		mir_snprintf(szBuff, _countof(szBuff), "mra_xstatus%ld", i);
+		IcoLib_RemoveIcon(szBuff);
 	}
 
 	memset(hXStatusAdvancedStatusIcons, 0, sizeof(hXStatusAdvancedStatusIcons));

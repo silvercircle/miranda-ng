@@ -53,7 +53,6 @@ PLUGININFOEX pluginInfo = {
 
 static IconItem icon = { LPGEN("Paste It"), "PasteIt_main", IDI_MENU };
 
-XML_API xi = { 0 };
 int hLangpack = 0;
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
@@ -72,7 +71,7 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD miranda
 std::wstring GetFile()
 {
 	TCHAR filter[512];
-	mir_tstrncpy(filter, TranslateT("All Files (*.*)"), SIZEOF(filter));
+	mir_tstrncpy(filter, TranslateT("All Files (*.*)"), _countof(filter));
 	memcpy(filter + mir_tstrlen(filter), _T("\0*.*\0"), 6 * sizeof(TCHAR));
 	TCHAR stzFilePath[1024];
 	stzFilePath[0] = 0;
@@ -84,7 +83,7 @@ std::wstring GetFile()
 	ofn.nFilterIndex = 1;
 	ofn.lpstrFile = stzFilePath;
 	ofn.lpstrTitle = TranslateT("Paste It - Select file");
-	ofn.nMaxFile = SIZEOF(stzFilePath);
+	ofn.nMaxFile = _countof(stzFilePath);
 	ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_EXPLORER | OFN_NOCHANGEDIR;
 	if (GetOpenFileName(&ofn))
 	{
@@ -164,7 +163,7 @@ void PasteIt(MCONTACT hContact, int mode)
 							gce.dwFlags = GCEF_ADDTOLOG;
 							gce.ptszText = mir_a2u_cp(pasteToWeb->szFileLink, CP_ACP);
 							gce.time = time(NULL);
-							CallService(MS_GC_EVENT, 0, (LPARAM)(GCEVENT *)&gce);
+							CallService(MS_GC_EVENT, 0, (LPARAM)&gce);
 							mir_free((void*)gce.ptszText);
 							break;
 						}
@@ -292,42 +291,39 @@ INT_PTR ContactMenuService(WPARAM hContact, LPARAM lParam)
 
 void InitMenuItems()
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.flags = CMIF_ROOTPOPUP | CMIF_TCHAR;
-	mi.icolibItem = icon.hIcolib;
+	CMenuItem mi;
+	mi.flags = CMIF_TCHAR;
+	mi.hIcolibItem = icon.hIcolib;
 	mi.position = 3000090005;
-	mi.ptszName = LPGENT("Paste It");
+	mi.name.t = LPGENT("Paste It");
 
 	hContactMenu = Menu_AddContactMenuItem(&mi);
 
 	memset(&mi, 0, sizeof(mi));
-	mi.cbSize = sizeof(mi);
-	mi.flags = CMIF_CHILDPOPUP | CMIF_ROOTHANDLE | CMIF_TCHAR;
+	mi.flags =  CMIF_TCHAR;
 	mi.pszService = MS_PASTEIT_CONTACTMENU;
-	mi.hParentMenu = hContactMenu;
-	mi.popupPosition = FROM_CLIPBOARD;
-	mi.ptszName = LPGENT("Paste from clipboard");
-	Menu_AddContactMenuItem(&mi);
+	mi.root = hContactMenu;
+	mi.name.t = LPGENT("Paste from clipboard");
+	Menu_ConfigureItem(Menu_AddContactMenuItem(&mi), MCI_OPT_EXECPARAM, FROM_CLIPBOARD);
 
-	mi.popupPosition = FROM_FILE;
-	mi.ptszName = LPGENT("Paste from file");
-	Menu_AddContactMenuItem(&mi);
+	mi.name.t = LPGENT("Paste from file");
+	Menu_ConfigureItem(Menu_AddContactMenuItem(&mi), MCI_OPT_EXECPARAM, FROM_FILE);
 
-	mi.popupPosition = DEF_PAGES_START - 1;
-	mi.ptszName = LPGENT("Default web page");
+	mi.name.t = LPGENT("Default web page");
 	HGENMENU hDefWebMenu = Menu_AddContactMenuItem(&mi);
+	Menu_ConfigureItem(hDefWebMenu, MCI_OPT_EXECPARAM, DEF_PAGES_START - 1);
 
-	CLISTMENUITEM mi2 = { sizeof(mi2) };
+	CMenuItem mi2;
 	mi2.pszService = MS_PASTEIT_CONTACTMENU;
-	mi2.hParentMenu = hDefWebMenu;
+	mi2.root = hDefWebMenu;
 	for (int i = 0; i < PasteToWeb::pages; ++i)
 	{
-		mi2.flags = CMIF_CHILDPOPUP | CMIF_ROOTHANDLE | CMIF_TCHAR;
+		mi2.flags =  CMIF_TCHAR;
 		if (Options::instance->defWeb == i)
 			mi2.flags |= CMIF_CHECKED;
-		mi2.ptszName = pasteToWebs[i]->GetName();
-		mi2.popupPosition = mi2.position = DEF_PAGES_START + i;
+		mi2.name.t = pasteToWebs[i]->GetName();
 		hWebPageMenus[i] = Menu_AddContactMenuItem(&mi2);
+		Menu_ConfigureItem(hWebPageMenus[i], MCI_OPT_EXECPARAM, mi2.position = DEF_PAGES_START + i);
 	}
 
 	hPrebuildContactMenu = HookEvent(ME_CLIST_PREBUILDCONTACTMENU, PrebuildContactMenu);
@@ -335,13 +331,9 @@ void InitMenuItems()
 
 void DefWebPageChanged()
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
 	for (int i = 0; i < PasteToWeb::pages; i++) {
-		mi.flags = CMIM_FLAGS;
-		if (Options::instance->defWeb == i)
-			mi.flags |= CMIF_CHECKED;
-
-		Menu_ModifyItem(hWebPageMenus[i], &mi);
+		int flags = (Options::instance->defWeb == i) ? CMIF_CHECKED : 0;
+		Menu_ModifyItem(hWebPageMenus[i], NULL, INVALID_HANDLE_VALUE, flags);
 	}
 }
 
@@ -402,7 +394,6 @@ int ModulesLoaded(WPARAM wParam, LPARAM lParam)
 
 extern "C" int __declspec(dllexport) Load(void)
 {
-	mir_getXI(&xi);
 	mir_getLP(&pluginInfo);
 
 	Icon_Register(hInst, LPGEN("Paste It"), &icon, 1);

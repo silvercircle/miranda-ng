@@ -340,7 +340,7 @@ void CIcqProto::parseSearchReplies(unsigned char *databuf, size_t wPacketLen, WO
 			wPacketLen -= 4;
 			sr.uin = dwUin;
 			_itoa(dwUin, szUin, 10);
-			sr.hdr.id = (FNAMECHAR*)szUin;
+			sr.hdr.id.t = (TCHAR*)szUin;
 
 			// Nick
 			if (wPacketLen < 2)
@@ -350,11 +350,11 @@ void CIcqProto::parseSearchReplies(unsigned char *databuf, size_t wPacketLen, WO
 			if (wLen > 0) {
 				if (wPacketLen < wLen || (databuf[wLen - 1] != 0))
 					break;
-				sr.hdr.nick = (FNAMECHAR*)databuf;
+				sr.hdr.nick.t = (TCHAR*)databuf;
 				databuf += wLen;
 			}
 			else {
-				sr.hdr.nick = NULL;
+				sr.hdr.nick.t = NULL;
 			}
 
 			// First name
@@ -365,10 +365,10 @@ void CIcqProto::parseSearchReplies(unsigned char *databuf, size_t wPacketLen, WO
 			if (wLen > 0) {
 				if (wPacketLen < wLen || (databuf[wLen - 1] != 0))
 					break;
-				sr.hdr.firstName = (FNAMECHAR*)databuf;
+				sr.hdr.firstName.t = (TCHAR*)databuf;
 				databuf += wLen;
 			}
-			else sr.hdr.firstName = NULL;
+			else sr.hdr.firstName.t = NULL;
 
 			// Last name
 			if (wPacketLen < 2)
@@ -378,10 +378,10 @@ void CIcqProto::parseSearchReplies(unsigned char *databuf, size_t wPacketLen, WO
 			if (wLen > 0) {
 				if (wPacketLen < wLen || (databuf[wLen - 1] != 0))
 					break;
-				sr.hdr.lastName = (FNAMECHAR*)databuf;
+				sr.hdr.lastName.t = (TCHAR*)databuf;
 				databuf += wLen;
 			}
-			else sr.hdr.lastName = NULL;
+			else sr.hdr.lastName.t = NULL;
 
 			// E-mail name
 			if (wPacketLen < 2)
@@ -391,10 +391,10 @@ void CIcqProto::parseSearchReplies(unsigned char *databuf, size_t wPacketLen, WO
 			if (wLen > 0) {
 				if (wPacketLen < wLen || (databuf[wLen - 1] != 0))
 					break;
-				sr.hdr.email = (FNAMECHAR*)databuf;
+				sr.hdr.email.t = (TCHAR*)databuf;
 				databuf += wLen;
 			}
-			else sr.hdr.email = NULL;
+			else sr.hdr.email.t = NULL;
 
 			// Authentication needed flag
 			if (wPacketLen < 1)
@@ -525,7 +525,7 @@ int CIcqProto::parseUserInfoRecord(MCONTACT hContact, oscar_tlv *pData, UserInfo
 
 			for (int i = 0; i < nRecordDef; i++) {
 				char szItemKey[MAX_PATH];
-				mir_snprintf(szItemKey, SIZEOF(szItemKey), pRecordDef[i].szDbSetting, nRecords);
+				mir_snprintf(szItemKey, _countof(szItemKey), pRecordDef[i].szDbSetting, nRecords);
 
 				switch (pRecordDef[i].dbType) {
 				case DBVT_UTF8:
@@ -550,7 +550,7 @@ int CIcqProto::parseUserInfoRecord(MCONTACT hContact, oscar_tlv *pData, UserInfo
 		for (int i = nRecords; i <= nMaxRecords; i++)
 			for (int j = 0; j < nRecordDef; j++) {
 				char szItemKey[MAX_PATH];
-				mir_snprintf(szItemKey, SIZEOF(szItemKey), pRecordDef[j].szDbSetting, i);
+				mir_snprintf(szItemKey, _countof(szItemKey), pRecordDef[j].szDbSetting, i);
 				delSetting(hContact, szItemKey);
 			}
 
@@ -784,9 +784,9 @@ void CIcqProto::parseDirectoryUserDetailsData(MCONTACT hContact, oscar_tlv_chain
 	writeDbInfoSettingTLVStringUtf(hContact, "LastName", cDetails, 0x6E);
 	writeDbInfoSettingTLVStringUtf(hContact, "Nick", cDetails, 0x78);
 	// Home Address
-	parseUserInfoRecord(hContact, cDetails->getTLV(0x96, 1), rAddress, SIZEOF(rAddress), 1);
+	parseUserInfoRecord(hContact, cDetails->getTLV(0x96, 1), rAddress, _countof(rAddress), 1);
 	// Origin Address
-	parseUserInfoRecord(hContact, cDetails->getTLV(0xA0, 1), rOriginAddress, SIZEOF(rOriginAddress), 1);
+	parseUserInfoRecord(hContact, cDetails->getTLV(0xA0, 1), rOriginAddress, _countof(rOriginAddress), 1);
 	// Phones
 	pTLV = cDetails->getTLV(0xC8, 1);
 	if (pTLV && pTLV->wLen >= 2) {
@@ -825,13 +825,13 @@ void CIcqProto::parseDirectoryUserDetailsData(MCONTACT hContact, oscar_tlv_chain
 		delSetting(hContact, "CompanyFax");
 	}
 	// Emails
-	parseUserInfoRecord(hContact, cDetails->getTLV(0x8C, 1), rEmail, SIZEOF(rEmail), 4);
+	parseUserInfoRecord(hContact, cDetails->getTLV(0x8C, 1), rEmail, _countof(rEmail), 4);
 
 	writeDbInfoSettingTLVByte(hContact, "Timezone", cDetails, 0x17C);
 	// Company
-	parseUserInfoRecord(hContact, cDetails->getTLV(0x118, 1), rCompany, SIZEOF(rCompany), 1);
+	parseUserInfoRecord(hContact, cDetails->getTLV(0x118, 1), rCompany, _countof(rCompany), 1);
 	// Education
-	parseUserInfoRecord(hContact, cDetails->getTLV(0x10E, 1), rEducation, SIZEOF(rEducation), 1);
+	parseUserInfoRecord(hContact, cDetails->getTLV(0x10E, 1), rEducation, _countof(rEducation), 1);
 
 	switch (cDetails->getNumber(0x82, 1)) {
 	case 1:
@@ -853,7 +853,7 @@ void CIcqProto::parseDirectoryUserDetailsData(MCONTACT hContact, oscar_tlv_chain
 
 	writeDbInfoSettingTLVByte(hContact, "MaritalStatus", cDetails, 0x12C);
 	// Interests
-	parseUserInfoRecord(hContact, cDetails->getTLV(0x122, 1), rInterest, SIZEOF(rInterest), 4);
+	parseUserInfoRecord(hContact, cDetails->getTLV(0x122, 1), rInterest, _countof(rInterest), 4);
 
 	writeDbInfoSettingTLVStringUtf(hContact, "About", cDetails, 0x186);
 
@@ -932,15 +932,13 @@ void CIcqProto::parseDirectorySearchData(oscar_tlv_chain *cDetails, DWORD dwCook
 
 	ICQSEARCHRESULT isr = { 0 };
 	isr.hdr.cbSize = sizeof(ICQSEARCHRESULT);
-	isr.hdr.flags = PSR_TCHAR;
-	isr.hdr.id = ansi_to_tchar(szUid);
+	isr.hdr.flags = PSR_UTF8;
+	isr.hdr.id.a = szUid;
 
 	if (IsStringUIN(szUid))
 		isr.uin = atoi(szUid);
 	else
 		isr.uin = 0;
-
-	SAFE_FREE(&szUid);
 
 	oscar_tlv *pTLV = cDetails->getTLV(0x50, 1);
 	char *szData = NULL;
@@ -949,27 +947,22 @@ void CIcqProto::parseDirectorySearchData(oscar_tlv_chain *cDetails, DWORD dwCook
 		szData = cDetails->getString(0x50, 1); // Verified e-mail
 	else
 		szData = cDetails->getString(0x55, 1); // Pending e-mail
-	if (mir_strlen(szData))
-		isr.hdr.email = ansi_to_tchar(szData);
-	SAFE_FREE(&szData);
+	if (szData != NULL)
+		isr.hdr.email.a = szData;
 
 	szData = cDetails->getString(0x64, 1); // First Name
-	if (mir_strlen(szData))
-		isr.hdr.firstName = utf8_to_tchar(szData);
-	SAFE_FREE(&szData);
+	if (szData != NULL)
+		isr.hdr.firstName.a = szData;
 
 	szData = cDetails->getString(0x6E, 1); // Last Name
-	if (mir_strlen(szData))
-		isr.hdr.lastName = utf8_to_tchar(szData);
-	SAFE_FREE(&szData);
+	if (szData != NULL)
+		isr.hdr.lastName.a = szData;
 
 	szData = cDetails->getString(0x78, 1); // Nick
-	if (mir_strlen(szData))
-		isr.hdr.nick = utf8_to_tchar(szData);
-	SAFE_FREE(&szData);
+	if (szData != NULL)
+		isr.hdr.nick.a = szData;
 
-	switch (cDetails->getNumber(0x82, 1)) // Gender
-	{
+	switch (cDetails->getNumber(0x82, 1)) { // Gender
 	case 1:
 		isr.gender = 'F';
 		break;
@@ -997,11 +990,11 @@ void CIcqProto::parseDirectorySearchData(oscar_tlv_chain *cDetails, DWORD dwCook
 	ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)dwCookie, (LPARAM)&isr);
 
 	// Release memory
-	SAFE_FREE(&isr.hdr.id);
-	SAFE_FREE(&isr.hdr.nick);
-	SAFE_FREE(&isr.hdr.firstName);
-	SAFE_FREE(&isr.hdr.lastName);
-	SAFE_FREE(&isr.hdr.email);
+	SAFE_FREE(&isr.hdr.id.a);
+	SAFE_FREE(&isr.hdr.nick.a);
+	SAFE_FREE(&isr.hdr.firstName.a);
+	SAFE_FREE(&isr.hdr.lastName.a);
+	SAFE_FREE(&isr.hdr.email.a);
 
 	// Search is over, broadcast final ack
 	if (wReplySubType == META_DIRECTORY_RESPONSE)

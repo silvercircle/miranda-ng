@@ -24,8 +24,7 @@ HINSTANCE hInst = NULL;
 int hLangpack;
 HANDLE hPrebuildMenuHook = NULL;
 HWND hAddFeedDlg;
-HANDLE hChangeFeedDlgList = NULL;
-XML_API xi = {0};
+MWindowList hChangeFeedDlgList = NULL;
 TCHAR tszRoot[MAX_PATH] = {0};
 HANDLE hUpdateMutex;
 
@@ -57,7 +56,6 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfoEx);
-	mir_getXI(&xi);
 
 	// Add options hook
 	HookEvent(ME_OPT_INITIALISE, OptInit);
@@ -68,10 +66,11 @@ extern "C" __declspec(dllexport) int Load(void)
 	hChangeFeedDlgList = WindowList_Create();
 
 	// register weather protocol
-	PROTOCOLDESCRIPTOR pd = { PROTOCOLDESCRIPTOR_V3_SIZE };
+	PROTOCOLDESCRIPTOR pd = { 0 };
+	pd.cbSize = sizeof(pd);
 	pd.szName = MODULE;
 	pd.type = PROTOTYPE_VIRTUAL;
-	CallService(MS_PROTO_REGISTERMODULE, 0, (LPARAM)&pd);
+	Proto_RegisterModule(&pd);
 
 	CreateProtoServiceFunction(MODULE, PS_GETNAME, NewsAggrGetName);
 	CreateProtoServiceFunction(MODULE, PS_GETCAPS, NewsAggrGetCaps);
@@ -79,7 +78,7 @@ extern "C" __declspec(dllexport) int Load(void)
 	CreateProtoServiceFunction(MODULE, PS_GETSTATUS, NewsAggrGetStatus);
 	CreateProtoServiceFunction(MODULE, PS_LOADICON, NewsAggrLoadIcon);
 	CreateProtoServiceFunction(MODULE, PSS_GETINFO, NewsAggrGetInfo);
-	CreateProtoServiceFunction(MODULE, PS_GETAVATARINFOT, NewsAggrGetAvatarInfo);
+	CreateProtoServiceFunction(MODULE, PS_GETAVATARINFO, NewsAggrGetAvatarInfo);
 	CreateProtoServiceFunction(MODULE, PSR_MESSAGE, NewsAggrRecvMessage);
 
 	CreateServiceFunction(MS_NEWSAGGREGATOR_CHECKALLFEEDS, CheckAllFeeds);

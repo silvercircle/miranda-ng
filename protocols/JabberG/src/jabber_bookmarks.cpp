@@ -104,12 +104,12 @@ static INT_PTR CALLBACK JabberAddBookmarkDlgProc(HWND hwndDlg, UINT msg, WPARAM 
 		switch (LOWORD(wParam)) {
 		case IDC_ROOM_JID:
 			if ((HWND)lParam==GetFocus() && HIWORD(wParam)==EN_CHANGE)
-				EnableWindow(GetDlgItem(hwndDlg, IDOK), GetDlgItemText(hwndDlg, IDC_ROOM_JID, text, SIZEOF(text)));
+				EnableWindow(GetDlgItem(hwndDlg, IDOK), GetDlgItemText(hwndDlg, IDC_ROOM_JID, text, _countof(text)));
 			break;
 
 		case IDOK:
 			{
-				GetDlgItemText(hwndDlg, IDC_ROOM_JID, text, SIZEOF(text));
+				GetDlgItemText(hwndDlg, IDC_ROOM_JID, text, _countof(text));
 				TCHAR *roomJID = NEWTSTR_ALLOCA(text);
 
 				if (param->m_item)
@@ -122,13 +122,13 @@ static INT_PTR CALLBACK JabberAddBookmarkDlgProc(HWND hwndDlg, UINT msg, WPARAM 
 				else
 					replaceStrT(item->type, _T("conference"));
 
-				GetDlgItemText(hwndDlg, IDC_NICK, text, SIZEOF(text));
+				GetDlgItemText(hwndDlg, IDC_NICK, text, _countof(text));
 				replaceStrT(item->nick, text);
 
-				GetDlgItemText(hwndDlg, IDC_PASSWORD, text, SIZEOF(text));
+				GetDlgItemText(hwndDlg, IDC_PASSWORD, text, _countof(text));
 				replaceStrT(item->password, text);
 
-				GetDlgItemText(hwndDlg, IDC_NAME, text, SIZEOF(text));
+				GetDlgItemText(hwndDlg, IDC_NAME, text, _countof(text));
 				replaceStrT(item->name, (text[0] == 0) ? roomJID : text);
 
 				item->bAutoJoin = (IsDlgButtonChecked(hwndDlg, IDC_CHECK_BM_AUTOJOIN) == BST_CHECKED);
@@ -282,7 +282,7 @@ void CJabberDlgBookmarks::OnInitDialog()
 
 	HIMAGELIST hIml = m_lvBookmarks.CreateImageList(LVSIL_SMALL);
 	ImageList_AddIcon_Icolib(hIml, m_proto->LoadIconEx("group"));
-	ImageList_AddIcon_Icolib(hIml, LoadSkinnedIcon(SKINICON_EVENT_URL));
+	ImageList_AddIcon_Icolib(hIml, Skin_LoadIcon(SKINICON_EVENT_URL));
 
 	m_lvBookmarks.AddColumn(0, TranslateT("Bookmark Name"),        m_proto->getWord("bookmarksWnd_cx0", 120));
 	m_lvBookmarks.AddColumn(1, TranslateT("Address (JID or URL)"), m_proto->getWord("bookmarksWnd_cx1", 210));
@@ -347,7 +347,7 @@ void CJabberDlgBookmarks::OpenBookmark()
 				m_proto->GroupchatJoinRoom(server, room, ptrT(JabberNickFromJID(m_proto->m_szJabberJID)), item->password);
 		}
 	}
-	else CallService(MS_UTILS_OPENURL, OUF_TCHAR, (LPARAM)item->jid);
+	else Utils_OpenUrlT(item->jid);
 }
 
 INT_PTR CJabberDlgBookmarks::DlgProc(UINT msg, WPARAM wParam, LPARAM lParam)

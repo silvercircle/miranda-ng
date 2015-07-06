@@ -94,7 +94,7 @@ BYTE CExImContactBase::fromDB(MCONTACT hContact)
 	if (!_hContact) return TRUE;
 	
 	// Proto
-	if (!(pszProto = DB::Contact::Proto(_hContact))) return FALSE;
+	if (!(pszProto = Proto_GetBaseAccountName(_hContact))) return FALSE;
 	_pszProto = mir_strdup(pszProto);
 
 	// AM_BaseProto
@@ -229,21 +229,19 @@ MCONTACT CExImContactBase::toDB()
 {
 	// create new contact if none exists
 	if (_hContact == INVALID_CONTACT_ID && _pszProto && _pszUIDKey && _dbvUID.type != DBVT_DELETED) {
-		PROTOACCOUNT* pszAccount = 0;
-		if (NULL == (pszAccount = ProtoGetAccount( _pszProto ))) {
+		PROTOACCOUNT *pszAccount = Proto_GetAccount(_pszProto);
+		if (pszAccount == NULL) {
 			//account does not exist
 			return _hContact = INVALID_CONTACT_ID;
 		}
-		if (!IsAccountEnabled(pszAccount)) {
-			;
-		}
+
 		// create new contact
 		_hContact = DB::Contact::Add();
 		if (!_hContact) {
 			return _hContact = INVALID_CONTACT_ID;
 		}
 		// Add the protocol to the new contact
-		if (CallService(MS_PROTO_ADDTOCONTACT, _hContact, (LPARAM)_pszProto)) {
+		if (Proto_AddToContact(_hContact, _pszProto)) {
 			DB::Contact::Delete(_hContact);
 			return _hContact = INVALID_CONTACT_ID;
 		}
@@ -292,9 +290,9 @@ void CExImContactBase::toIni(FILE* file, int modCount)
 		if (_pszProto == NULL || !loaded) {
 			if (_pszProto){
 				if (_pszNick)
-					mir_snprintf(name, SIZEOF(name),"%s (%s)", _pszNick, _pszProto);
+					mir_snprintf(name,"%s (%s)", _pszNick, _pszProto);
 				else
-					mir_snprintf(name, SIZEOF(name),"(UNKNOWN) (%s)", _pszProto);
+					mir_snprintf(name,"(UNKNOWN) (%s)", _pszProto);
 			}
 			else
 				strncpy_s(name, "(UNKNOWN)", _TRUNCATE);
@@ -316,9 +314,9 @@ void CExImContactBase::toIni(FILE* file, int modCount)
 			}
 			LPSTR pszUID = uid2String(FALSE);
 			if (_pszUIDKey && pszUID)
-				mir_snprintf(name, SIZEOF(name), "%s *(%s)*<%s>*{%s}*", pszCI, _pszProto, _pszUIDKey, pszUID);
+				mir_snprintf(name, "%s *(%s)*<%s>*{%s}*", pszCI, _pszProto, _pszUIDKey, pszUID);
 			else 
-				mir_snprintf(name, SIZEOF(name), "%s (%s)", pszCI, _pszProto);
+				mir_snprintf(name, "%s (%s)", pszCI, _pszProto);
 
 			mir_free(pszCI);
 			mir_free(pszUID);
@@ -457,10 +455,6 @@ LPSTR CExImContactBase::uid2String(BYTE bPrependType)
 					return NULL;
 				memset(r, 0, baselen);
 				ptr = r;
-				if (bPrependType) { // XXX dead code.
-					ptr[0] = 'n';
-					ptr ++;
-				}
 				for (SIZE_T j = 0; j < _dbvUID.cpbVal; j ++, ptr += 3) {
 					mir_snprintf(ptr, ((r + baselen) - ptr), "%02X ", (BYTE)_dbvUID.pbVal[j]);
 				}
@@ -488,7 +482,7 @@ BYTE CExImContactBase::isHandle(MCONTACT hContact)
 	if (!_pszProto) return hContact == NULL;
 
 	// compare protocols
-	pszProto = DB::Contact::Proto(hContact);
+	pszProto = Proto_GetBaseAccountName(hContact);
 	if (pszProto == NULL || (INT_PTR)pszProto == CALLSERVICE_NOTFOUND || mir_strcmp(pszProto, _pszProto))
 		return FALSE;
 
