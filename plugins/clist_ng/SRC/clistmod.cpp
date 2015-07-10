@@ -54,7 +54,7 @@ int CLC::IconFromStatusMode(const char *szProto, int status, MCONTACT hContact, 
 
 	if (szProto != NULL && !strcmp(szProto, cfg::dat.szMetaName) && cfg::dat.bMetaAvail && hContact != 0) {
 		MCONTACT hSubContact = db_mc_getMostOnline(hContact);
-		szFinalProto = (char*) CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM) hSubContact, 0);
+		szFinalProto = GetContactProto(hSubContact);
 		finalStatus = (status == 0) ? (WORD) cfg::getWord(hSubContact, szFinalProto, "Status", ID_STATUS_OFFLINE) : status;
 	} else {
 		szFinalProto = (char*) szProto;
@@ -65,7 +65,7 @@ int CLC::IconFromStatusMode(const char *szProto, int status, MCONTACT hContact, 
 		if(szProto) {
 			char szBuf[128];
 			mir_snprintf(szBuf, 128, "%s_conn", szProto);
-			*phIcon = (HICON)CallService(MS_SKIN2_GETICON, 0, (LPARAM)szBuf);
+			*phIcon = IcoLib_GetIcon(szBuf);
 		}
 	}
 	return coreCli.pfnIconFromStatusMode(szFinalProto, finalStatus, hContact);

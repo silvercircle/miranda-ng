@@ -17,94 +17,112 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
+#pragma once
+
+#ifndef _CLUIFRAMES_H_
+#define _CLUIFRAMES_H_
+
 #include <vector>
 #include <memory>
 
 int LoadCLUIFramesModule(void);
 int UnLoadCLUIFramesModule(void);
 int CLUIFramesGetMinHeight();
-int CLUIFramesOnClistResize(WPARAM wParam,LPARAM lParam);
+int CLUIFramesOnClistResize(WPARAM wParam, LPARAM lParam);
 int SizeFramesByWindowRect(RECT *r);
 int CLUIFramesResizeFrames(RECT *rc);
-void RegisterCLUIFrameClasses();
 
 typedef struct tagProtocolData {
 	char *RealName;
-	int statusbarpos;
+	int protopos;
 	boolean show;
 } ProtocolData;
+
+typedef struct
+{
+	int order;
+	int realpos;
+}SortData;
+
+//============
+#define CLUIFRAMESSETALIGN			"CLUIFramesSetAlign"
+
+#define CLUIFRAMESSETALIGNALTOP		"CLUIFramesSetAlignalTop"
+#define CLUIFRAMESSETALIGNALCLIENT	"CLUIFramesSetAlignalClient"
+#define CLUIFRAMESSETALIGNALBOTTOM	"CLUIFramesSetAlignalBottom"
+#define CLUIFRAMESMOVEUP			"CLUIFramesMoveUp"
+#define CLUIFRAMESMOVEDOWN			"CLUIFramesMoveDown"
+
+struct FrameMenuHandles
+{
+	HGENMENU MainMenuItem;
+	HGENMENU MIVisible, MITitle, MITBVisible, MILock, MIColl, MIFloating, MIAlignRoot;
+	HGENMENU MIAlignTop, MIAlignClient, MIAlignBottom;
+	HGENMENU MIBorder, MISkinned;
+};
+
+struct FrameTitleBar
+{
+	HWND hwnd;
+	HWND TitleBarbutt;
+	HWND hwndTip;
+
+	LPTSTR tbname;
+	LPTSTR tooltip;
+
+	HMENU hmenu;
+	HICON hicon;
+
+	bool ShowTitleBar;
+	bool ShowTitleBarTip;
+	int oldstyles;
+	POINT oldpos;
+	RECT wndSize;
+};
+
+struct DockOpt
+{
+	HWND hwndLeft;
+	HWND hwndRight;
+};
+
+struct FRAMEWND
+{
+	int id;
+	HWND hWnd;
+	RECT wndSize;
+	LPTSTR name;
+	int align;
+	int height;
+	int dwFlags;
+	bool Locked;
+	bool visible;
+	bool needhide;
+	bool collapsed;
+	bool floating;
+	bool minmaxenabled;
+	bool UseBorder;
+	int prevvisframe;
+	int HeightWhenCollapsed;
+	FrameTitleBar TitleBar;
+	FrameMenuHandles MenuHandles;
+	int oldstyles;
+	HWND ContainerWnd;
+	POINT FloatingPos;
+	POINT FloatingSize;
+	int order;
+	DockOpt dockOpt;
+	HWND OwnerWindow;
+	bool Skinned;
+	RECT oldWndSize;
+	WNDPROC wndProc;
+};
 
 #define OFFSET_PROTOPOS 200
 #define OFFSET_VISIBLE 400
 
-#define CLUIFrameTitleBarClassName				_T("CLUIFrameTitleBar")
-#define CLUIFrameModule							"CLUIFrames"
-
-//integrated menu module
-#define MS_INT_MENUMEASUREITEM "CLUIFrames/IntMenuMeasureItem"
-#define MS_INT_MENUDRAWITEM "CLUIFrames/IntMenuDrawItem"
-#define MS_INT_MENUPROCESSCOMMAND "CLUIFrames/IntMenuProcessCommand"
-#define MS_INT_MODIFYMENUITEM "CLUIFrames/IntModifyMenuItem"
-
-typedef struct _DockOpt {
-    HWND    hwndLeft;
-    HWND    hwndRight;
-}
-DockOpt;
-
-typedef struct tagMenuHandles {
-    HANDLE MainMenuItem;
-    HANDLE MIVisible,MITitle,MITBVisible,MILock,MIColl,MIFloating,MIAlignRoot;
-    HANDLE MIAlignTop,MIAlignClient,MIAlignBottom;
-    HANDLE MIBorder, MISkinned;
-} FrameMenuHandles;
-
-typedef struct tagFrameTitleBar {
-    HWND hwnd;
-    HWND TitleBarbutt;
-    HWND hwndTip;
-
-    LPTSTR tbname;
-    LPTSTR tooltip;
-    HMENU hmenu;
-    HICON hicon;
-
-    BOOLEAN ShowTitleBar;
-    BOOLEAN ShowTitleBarTip;
-    int oldstyles;
-    POINT oldpos;
-    RECT wndSize;
-} FrameTitleBar;
-
-typedef struct {
-    int id;
-    HWND hWnd ;
-    RECT wndSize;
-    RECT oldWndSize;
-    LPTSTR name;
-    int align;
-    int height;
-    int dwFlags;
-    BOOLEAN Locked;
-    BOOLEAN Skinned;
-    BOOLEAN visible;
-    BOOLEAN needhide;
-    BOOLEAN collapsed;
-    int prevvisframe;
-    int HeightWhenCollapsed;
-    FrameTitleBar TitleBar;
-    FrameMenuHandles MenuHandles;
-    int oldstyles;
-    BOOLEAN floating;
-    HWND ContainerWnd;
-    POINT FloatingPos;
-    POINT FloatingSize;
-    BOOLEAN minmaxenabled;
-    int order;
-    DockOpt dockOpt;
-    HWND OwnerWindow;
-    WNDPROC wndProc;
-} wndFrame;
+#define CLUIFrameTitleBarClassName		_T("CLUIFrameTitleBar")
+#define CLUIFrameModule					"CLUIFrames"
 
 class CLUIFrames {
 
@@ -125,12 +143,12 @@ public:
 private:
 	bool				isRunning = false;
 
-	wndFrame			*Frames = nullptr;
-	wndFrame			*wndFrameCLC = nullptr, *wndFrameEventArea = nullptr, *wndFrameViewMode = nullptr;
+	FRAMEWND			*Frames = nullptr;
+	FRAMEWND			*wndFrameCLC = nullptr, *wndFrameEventArea = nullptr, *wndFrameViewMode = nullptr;
 
 	size_t				nFramescount = 0;
 	CRITICAL_SECTION	csFrameHook;
-	std::vector<std::unique_ptr<wndFrame>> m_Frames;
+	std::vector<std::unique_ptr<FRAMEWND>> m_Frames;
 
 	// inline functions
 	int __forceinline btoint(BOOLEAN b)
@@ -149,3 +167,5 @@ private:
 		LeaveCriticalSection(&csFrameHook);
 	}
 };
+#endif
+

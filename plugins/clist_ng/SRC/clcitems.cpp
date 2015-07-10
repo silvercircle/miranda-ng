@@ -119,7 +119,7 @@ int CLC::AddContactToGroup(struct ClcData *dat, struct ClcGroup *group, MCONTACT
 		p->bIsMeta = FALSE;
 	if (p->bIsMeta && cfg::dat.bMetaAvail) {
 		p->hSubContact = db_mc_getMostOnline(hContact);
-		p->metaProto = (char*) CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM) p->hSubContact, 0);
+		p->metaProto = GetContactProto(p->hSubContact);
 		p->iImage = CallService(MS_CLIST_GETCONTACTICON, (WPARAM) p->hSubContact, 0);
 	} else {
 		p->iImage = CallService(MS_CLIST_GETCONTACTICON, (WPARAM) hContact, 0);
@@ -200,7 +200,7 @@ void CLC::RebuildEntireList(HWND hwnd, ClcData *dat)
 			if (group != NULL) {
 				group->totalMembers++;
 				if (!(style & CLS_NOHIDEOFFLINE) && (style & CLS_HIDEOFFLINE || group->hideOffline)) {
-					szProto = (char*) CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM) hContact, 0);
+					szProto = GetContactProto(hContact);
 					if (szProto == NULL) {
 						if (!pcli->pfnIsHiddenMode(dat, ID_STATUS_OFFLINE))
 							AddContactToGroup(dat, group, hContact);
@@ -263,8 +263,8 @@ BYTE GetCachedStatusMsg(int iExtraCacheEntry, char *szProto)
 	if ( !result && lstrlen(dbv.ptszVal) > 1)
 		cEntry->bStatusMsgValid = STATUSMSG_CLIST;
 	else {
-		if(!szProto)
-			szProto = (char *)CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM)hContact, 0);
+		if (!szProto)
+			szProto = GetContactProto(hContact);
 		if(szProto) {
 			if ( !result )
 				db_free(&dbv);
@@ -294,7 +294,7 @@ BYTE GetCachedStatusMsg(int iExtraCacheEntry, char *szProto)
 			CUSTOM_STATUS cst = { sizeof(cst) };
 			cst.flags = CSSF_MASK_STATUS;
 			cst.status = &xStatus;
-			if (ProtoServiceExists(szProto, PS_GETCUSTOMSTATUSEX) && !ProtoCallService(szProto, PS_GETCUSTOMSTATUSEX, hContact, (LPARAM)&cst) && xStatus > 0) {
+			if (ProtoServiceExists(szProto, PS_GETCUSTOMSTATUSEX) && !CallProtoService(szProto, PS_GETCUSTOMSTATUSEX, hContact, (LPARAM)&cst) && xStatus > 0) {
 				cst.flags = CSSF_MASK_NAME | CSSF_DEFAULT_NAME | CSSF_TCHAR;
  				cst.wParam = &xStatus2;
 				cst.ptszName = xStatusName;
@@ -354,7 +354,7 @@ static void TZ_LoadTimeZone(MCONTACT hContact, TExtraCache *c, const char *szPro
 {
 	DWORD flags = 0;
 	if (cfg::dat.bShowLocalTimeSelective) flags |= TZF_DIFONLY;
-		c->hTimeZone = tmi.createByContact(hContact, 0, flags);
+		c->hTimeZone = TimeZone_CreateByContact(hContact, 0, flags);
 }
 
 void ReloadExtraInfo(MCONTACT hContact)
@@ -362,7 +362,7 @@ void ReloadExtraInfo(MCONTACT hContact)
 	if(hContact && pcli->hwndContactTree) {
 		int index = cfg::getCache(hContact, NULL);
 		if(index >= 0 && index < cfg::nextCacheEntry) {
-			char *szProto = (char *)CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM)hContact, 0);
+			char *szProto = GetContactProto(hContact);
 
 			TZ_LoadTimeZone(hContact, &cfg::eCache[index], szProto);
 			InvalidateRect(pcli->hwndContactTree, NULL, FALSE);
@@ -492,8 +492,8 @@ int __fastcall CLVM_GetContactHiddenStatus(MCONTACT hContact, char *szProto, str
         return 1;
 
     if(cfg::dat.bFilterEffective) {
-        if(szProto == NULL)
-            szProto = (char *)CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM)hContact, 0);
+		if (szProto == NULL)
+			szProto = GetContactProto(hContact);
 		// check stickies first (priority), only if we really have stickies defined (CLVM_STICKY_CONTACTS is set).
         if(cfg::dat.bFilterEffective & CLVM_STICKY_CONTACTS) {
             if((dwLocalMask = cfg::getDword(hContact, "CLVM", cfg::dat.current_viewmode, 0)) != 0) {

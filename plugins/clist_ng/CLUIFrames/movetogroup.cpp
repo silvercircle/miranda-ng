@@ -41,20 +41,18 @@
 #include <commonheaders.h>
 
 HANDLE hOnCntMenuBuild;
-HANDLE hPriorityItem = 0, hFloatingItem = 0;
+HGENMENU hPriorityItem = 0, hFloatingItem = 0;
 
-static int OnContactMenuBuild(WPARAM wParam,LPARAM lParam)
+static int OnContactMenuBuild(WPARAM wParam, LPARAM lParam)
 {
-	CLISTMENUITEM 	mi = {0};
+	CMenuItem 	mi;
 	BYTE 			bSetting;
 
 	bSetting = cfg::getByte("CList", "flt_enabled", 0);
 	if (bSetting && !hFloatingItem) {
-		mi.cbSize=sizeof(mi);
 		mi.position=200000;
-		mi.pszPopupName=(char *)-1;
 		mi.pszService="CList/SetContactFloating";
-		mi.pszName=LPGEN("&Floating Contact");
+		mi.name.a = LPGEN("&Floating Contact");
 		if (pcli) {
 			if (SendMessage(pcli->hwndContactTree, CLM_QUERYFLOATINGCONTACT, wParam, 0))
 				mi.flags=CMIF_CHECKED;
@@ -66,13 +64,12 @@ static int OnContactMenuBuild(WPARAM wParam,LPARAM lParam)
 		hFloatingItem = 0;
 	}
 	else {
-		mi.cbSize=sizeof(mi);
-		mi.flags=CMIM_FLAGS;
 		if (pcli) {
-			if (SendMessage(pcli->hwndContactTree, CLM_QUERYFLOATINGCONTACT, wParam, 0))
+			if (SendMessage(pcli->hwndContactTree, CLM_QUERYFLOATINGCONTACT, wParam, 0)) {
 				mi.flags |= CMIF_CHECKED;
+				Menu_SetChecked(hFloatingItem, true);
+			}
 		}
-		CallService(MS_CLIST_MODIFYMENUITEM, (WPARAM)hFloatingItem, (LPARAM)&mi);
 	}
 	return 0;
 }

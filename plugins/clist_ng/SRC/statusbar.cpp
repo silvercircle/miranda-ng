@@ -178,15 +178,15 @@ LRESULT CALLBACK NewStatusBarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 							else if(cfg::getDword("mToolTip", "ShowStatusTip", 0)) {
 								CLCINFOTIP ti = {0};
 								BYTE isLocked = 0;
-								char szTipText[256], *szStatus = NULL;
+								wchar_t szTipText[256], *szStatus = NULL;
 								WORD wStatus;
 
 								ti.cbSize = sizeof(ti);
 								ti.isTreeFocused = GetFocus() == pcli->hwndContactList ? 1 : 0;
 								wStatus = (WORD)CallProtoService(PD->RealName, PS_GETSTATUS, 0, 0);
 								isLocked = cfg::getByte(PD->RealName, "LockMainStatus", 0);
-								szStatus = (char *)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, (WPARAM)wStatus, 0);
-								mir_snprintf(szTipText, 256, "<b>%s</b>: %s%s", PD->RealName, szStatus, isLocked ? "  (LOCKED)" : "");
+								szStatus = pcli->pfnGetStatusModeDescription(wStatus, 0);
+								mir_snwprintf(szTipText, 256, L"<b>%s</b>: %s%s", PD->RealName, szStatus, isLocked ? L"  (LOCKED)" : L"");
 								CallService("mToolTip/ShowTip", (WPARAM)szTipText, (LPARAM)&ti);
 							}
 						}

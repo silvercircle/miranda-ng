@@ -450,11 +450,10 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Level1</WarningLevel>
     </ClCompile>
     <ClCompile Include="CLUIFrames\cluiframes.cpp" />
-    <ClCompile Include="CLUIFrames\framesmenu.cpp" />
-    <ClCompile Include="CLUIFrames\groupmenu.cpp" />
     <ClCompile Include="CLUIFrames\movetogroup.cpp" />
     <ClCompile Include="coolsb\coolsblib.cpp" />
     <ClCompile Include="coolsb\coolscroll.cpp" />
+    <ClCompile Include="groupmenu.cpp" />
     <ClCompile Include="skineditor\skinedit.cpp" />
     <ClCompile Include="SRC\clc.cpp" />
     <ClCompile Include="SRC\CLCButton.cpp" />

@@ -508,7 +508,7 @@ INT_PTR CALLBACK cfg::DlgProcSkinOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPA
                 }
 
 				case IDC_HELP_GENERAL:
-					CallService(MS_UTILS_OPENURL, 1, (LPARAM)"http://blog.miranda.or.at/tabsrmm/skin-selection-changes/");
+					//CallService(MS_UTILS_OPENURL, 1, (LPARAM)"http://blog.miranda.or.at/tabsrmm/skin-selection-changes/");
 					break;
 
 				case IDC_RESCANSKIN:

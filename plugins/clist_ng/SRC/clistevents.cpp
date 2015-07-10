@@ -34,7 +34,7 @@
 
 static HWND hwndEventFrame = 0;
 
-extern wndFrame *wndFrameEventArea;
+extern FRAMEWND *wndFrameEventArea;
 
 extern HPEN g_hPenCLUIFrames;
 
@@ -334,7 +334,7 @@ CListEvent* CLC::AddEvent(CLISTEVENT *cle)
 			}
 		}
 
-		szProto = (char*) CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM) p->cle.hContact, 0);
+		szProto = GetContactProto(p->cle.hContact);
 		szName = pcli->pfnGetContactDisplayName(p->cle.hContact, 0);
 		if(szProto && szName) {
 			nmi = (struct NotifyMenuItemExData *) malloc(sizeof(struct NotifyMenuItemExData));
@@ -344,7 +344,7 @@ CListEvent* CLC::AddEvent(CLISTEVENT *cle)
 				wchar_t szwProto[64];
 				MultiByteToWideChar(CP_ACP, 0, szProto, -1, szwProto, 64);
 				szwProto[63] = 0;
-				_snwprintf(szBuffer, SIZEOF(szBuffer), L"%s: %s (%s)", szwProto, szName, szStatus);
+				_snwprintf(szBuffer, _countof(szBuffer), L"%s: %s (%s)", szwProto, szName, szStatus);
 				szBuffer[127] = 0;
 				AppendMenu(cfg::dat.hMenuNotify, MF_BYCOMMAND | MF_STRING, cfg::dat.wNextMenuID, szBuffer);
 				mii.hbmpItem = HBMMENU_CALLBACK;

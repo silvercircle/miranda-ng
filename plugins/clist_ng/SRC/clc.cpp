@@ -61,7 +61,7 @@ int 		CLC::_status2onlineness[] = {
 };
 
 extern HANDLE hExtraImageApplying;
-extern wndFrame *wndFrameCLC;
+extern FRAMEWND *wndFrameCLC;
 
 extern int during_sizing;
 
@@ -69,7 +69,7 @@ HANDLE hSoundHook = 0, hIcoLibChanged = 0, hSvc_GetContactStatusMsg = 0;
 
 HMENU BuildGroupPopupMenu(struct ClcGroup* group)
 {
-	return (HMENU)CallService(MS_CLIST_MENUBUILDSUBGROUP, (WPARAM)group, 0);
+	return Menu_BuildSubGroupMenu(group);
 }
 
 int AvatarChanged(WPARAM wParam, LPARAM lParam)
@@ -128,10 +128,12 @@ int CLC::SettingChanged(WPARAM hContact, LPARAM lParam)
 		if (!__strcmp(cws->szModule, "CList")) {
 			if (!__strcmp(cws->szSetting, "StatusMsg"))
 				SendMessage(pcli->hwndContactTree, INTM_STATUSMSGCHANGED, hContact, lParam);
-		} else if (!__strcmp(cws->szModule, "UserInfo")) {
+		}
+		else if (!__strcmp(cws->szModule, "UserInfo")) {
 			if (!__strcmp(cws->szSetting, "Timezone") || !__strcmp(cws->szSetting, "TzName"))
 				ReloadExtraInfo(hContact);
-		} else if (hContact != 0 && (szProto = (char *)CallService(MS_PROTO_GETCONTACTBASEPROTO, hContact, 0)) != NULL) {
+		}
+		else if (hContact != 0 && (szProto = GetContactProto(hContact)) != NULL) {
 			if (!__strcmp(cws->szModule, "Protocol") && !__strcmp(cws->szSetting, "p")) {
 				char *szProto_s;
 				pcli->pfnClcBroadcast(INTM_PROTOCHANGED, hContact, lParam);
@@ -385,7 +387,7 @@ LBL_Def:
 			DWORD hSelItem = 0;
 			struct ClcContact *selcontact = NULL;
 
-			szProto = (char*) CallService(MS_PROTO_GETCONTACTBASEPROTO, wParam, 0);
+			szProto = GetContactProto(wParam);
 			if (szProto == NULL)
 				status = ID_STATUS_OFFLINE;
 			else
@@ -443,7 +445,7 @@ LBL_Def:
 				break;
 			if (contact->bIsMeta && cfg::dat.bMetaAvail) {
 				contact->hSubContact = (MCONTACT) CallService(MS_MC_GETMOSTONLINECONTACT, (WPARAM) contact->hContact, 0);
-				contact->metaProto = (char*) CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM) contact->hSubContact, 0);
+				contact->metaProto = GetContactProto(contact->hSubContact);
 				contact->iImage = CallService(MS_CLIST_GETCONTACTICON, (WPARAM) contact->hSubContact, 0);
 				if (contact->extraCacheEntry >= 0 && contact->extraCacheEntry < cfg::nextCacheEntry) {
 					int subIndex = cfg::getCache(contact->hSubContact, contact->metaProto);
@@ -539,7 +541,7 @@ LBL_Def:
 
 			if (!findItem(hwnd, dat, (HANDLE) wParam, &contact, NULL, NULL))
 				break;
-			contact->proto = (char*) CallService(MS_PROTO_GETCONTACTBASEPROTO, wParam, 0);
+			contact->proto = GetContactProto(wParam);
 			CallService(MS_CLIST_INVALIDATEDISPLAYNAME, wParam, 0);
 			lstrcpyn(contact->szText, pcli->pfnGetContactDisplayName(wParam, 0), safe_sizeof(contact->szText));
 			RTL_DetectAndSet(contact, 0);
@@ -764,14 +766,15 @@ LBL_Def:
 
 			if (dat->selection != -1 && hitFlags & (CLCHT_ONITEMICON | CLCHT_ONITEMCHECK | CLCHT_ONITEMLABEL)) {
 				if (contact->type == CLCIT_GROUP) {
-					hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDSUBGROUP, (WPARAM)contact->group, 0);
+					HMENU hMenu = Menu_BuildSubGroupMenu(contact->group);
 					ClientToScreen(hwnd, &pt);
 					TrackPopupMenu(hMenu, TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, pt.x, pt.y, 0, pcli->hwndContactList, NULL);
 					CheckMenuItem(hMenu, POPUP_GROUPHIDEOFFLINE, contact->group->hideOffline ? MF_CHECKED : MF_UNCHECKED);
                     DestroyMenu(hMenu);
 					return 0;
-				} else if (contact->type == CLCIT_CONTACT)
-					hMenu = (HMENU) CallService(MS_CLIST_MENUBUILDCONTACT, (WPARAM) contact->hContact, 0);
+				}
+				else if (contact->type == CLCIT_CONTACT)
+					hMenu = Menu_BuildContactMenu(contact->hContact);
 			} else {
 				//call parent for new group/hide offline menu
 				PostMessage(GetParent(hwnd), WM_CONTEXTMENU, wParam, lParam);

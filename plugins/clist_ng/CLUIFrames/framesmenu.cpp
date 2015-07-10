@@ -24,7 +24,7 @@ INT_PTR FreeOwnerDataFrameMenu(WPARAM wParam, LPARAM lParam)
 
 static INT_PTR AddContextFrameMenuItem(WPARAM wParam, LPARAM lParam)
 {
-	CLISTMENUITEM *mi = (CLISTMENUITEM *)lParam;
+	CMenuItem *mi = (CMenuItem *)lParam;
 
 	TMO_MenuItem tmi;
 	if (!pcli->pfnConvertMenu(mi, &tmi))

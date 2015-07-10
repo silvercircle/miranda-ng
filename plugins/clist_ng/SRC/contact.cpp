@@ -51,7 +51,7 @@ static int GetContactStatus(MCONTACT hContact)
 {
     char *szProto;
 
-    szProto = (char*) CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM) hContact, 0);
+	szProto = GetContactProto(hContact);
     if (szProto == NULL)
         return ID_STATUS_OFFLINE;
     return cfg::getWord(hContact, szProto, "Status", ID_STATUS_OFFLINE);
@@ -169,7 +169,7 @@ void CLC::LoadContactTree()
     while (hContact != NULL) {
         status = GetContactStatus(hContact);
         if ((!hideOffline || status != ID_STATUS_OFFLINE) && !CLVM_GetContactHiddenStatus(hContact, NULL, NULL))
-            pcli->pfnChangeContactIcon(hContact, IconFromStatusMode((char*) CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM) hContact, 0), status, hContact, NULL), 1);
+            pcli->pfnChangeContactIcon(hContact, IconFromStatusMode(GetContactProto(hContact), status, hContact, NULL), 1);
 
         // build initial data for message frequency
         if(!bMsgFrequency)
@@ -199,7 +199,7 @@ int __forceinline GetProtoIndex(char * szName)
 	if ( !szName )
 		return -1;
 	else {
-		PROTOACCOUNT* pa = ProtoGetAccount( szName );
+		PROTOACCOUNT* pa = Proto_GetAccount( szName );
 		return ( pa == NULL ) ? -1 : pa->iOrder;
 	}
 }

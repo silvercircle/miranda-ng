@@ -494,7 +494,7 @@ LRESULT CALLBACK StatusFloaterClassProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 			}
 		case WM_LBUTTONUP:
 			{
-                HMENU hmenu = (HMENU)CallService(MS_CLIST_MENUGETSTATUS, 0, 0);
+				HMENU hmenu = Menu_GetStatusMenu();
 				RECT rcWindow;
 				POINT pt;
 
@@ -512,7 +512,7 @@ LRESULT CALLBACK StatusFloaterClassProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 			}
 		case WM_CONTEXTMENU:
 			{
-                HMENU hmenu = (HMENU)CallService(MS_CLIST_MENUGETMAIN, 0, 0);
+				HMENU hmenu = Menu_GetMainMenu();
 				RECT rcWindow;
 
 				GetWindowRect(hwnd, &rcWindow);
@@ -678,15 +678,15 @@ LRESULT CALLBACK ContactFloaterClassProc(HWND hwnd, UINT msg, WPARAM wParam, LPA
 				break;
 			}
 		case WM_MEASUREITEM:
-			return(CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam));
+			return(Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam));
 		case WM_DRAWITEM:
-			return(CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam));
+			return(Menu_DrawItem((LPDRAWITEMSTRUCT)lParam));
 		case WM_COMMAND:
 			return(CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKELONG(LOWORD(wParam), MPCF_CONTACTMENU), (LPARAM)centry->hContact));
 		case WM_CONTEXTMENU:
 			{
 				if(centry) {
-					HMENU hContactMenu = (HMENU)CallService(MS_CLIST_MENUBUILDCONTACT, (WPARAM)centry->hContact, 0);
+					HMENU hContactMenu = Menu_BuildContactMenu(centry->hContact);
 					RECT rcWindow;
 
 					GetWindowRect(hwnd, &rcWindow);
@@ -852,7 +852,7 @@ void SFL_SetSize()
 	LONG lWidth;
 	RECT rcWindow;
 	SIZE sz;
-	char *szStatusMode;
+	wchar_t *szStatusMode;
 	HFONT oldFont;
 	int i;
 
@@ -862,8 +862,8 @@ void SFL_SetSize()
 	hdc = GetDC(g_hwndSFL);
 	oldFont = reinterpret_cast<HFONT>(SelectObject(hdc, GetStockObject(DEFAULT_GUI_FONT)));
 	for(i = ID_STATUS_OFFLINE; i <= ID_STATUS_OUTTOLUNCH; i++) {
-		szStatusMode = Translate((char *)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, (WPARAM)i, 0));
-		GetTextExtentPoint32A(hdc, szStatusMode, lstrlenA(szStatusMode), &sz);
+		szStatusMode = TranslateTS(pcli->pfnGetStatusModeDescription(i, 0));
+		GetTextExtentPoint32W(hdc, szStatusMode, lstrlenW(szStatusMode), &sz);
 		lWidth = max(lWidth, sz.cx + 16 + 8);
 	}
 	SetWindowPos(g_hwndSFL, g_floatoptions.dwFlags & FLT_ONTOP ? HWND_TOPMOST : HWND_NOTOPMOST, rcWindow.left, rcWindow.top, lWidth, max(cfg::dat.bUseFloater & CLUI_FLOATER_EVENTS ? 36 : 20, sz.cy + 4), SWP_SHOWWINDOW);

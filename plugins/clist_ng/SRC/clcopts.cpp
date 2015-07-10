@@ -95,8 +95,8 @@ static HIMAGELIST himlCheckBoxes = 0;
 static HIMAGELIST CreateStateImageList()
 {
 	if(0 == himlCheckBoxes) {
-		HICON hIconNoTick = reinterpret_cast<HICON>(CallService(MS_SKIN2_GETICON, 0, (LPARAM)"core_main_20"));
-		HICON hIconTick = reinterpret_cast<HICON>(CallService(MS_SKIN2_GETICON, 0, (LPARAM)"core_main_19"));
+		HICON hIconNoTick = Skin_LoadIcon(SKINICON_OTHER_NOTICK);
+		HICON hIconTick = Skin_LoadIcon(SKINICON_OTHER_TICK);
 
 		himlCheckBoxes = ImageList_Create(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), ILC_COLOR32 | ILC_MASK, 2, 2);
 		ImageList_AddIcon(himlCheckBoxes, hIconNoTick);

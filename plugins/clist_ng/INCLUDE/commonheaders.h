@@ -129,7 +129,6 @@ int _DebugTraceA(const char *fmt, ...);
 #include  <m_file.h>
 #include  <m_fontservice.h>
 #include  <m_acc.h>
-#include  <m_protomod.h>
 #include  <m_hotkeys.h>
 #include  <m_genmenu.h>
 #include  <m_timezones.h>

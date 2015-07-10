@@ -299,19 +299,19 @@ void cfg::FS_RegisterFonts()
 	int 		j = 0;
 
 	fid.cbSize = sizeof(fid);
-	wcsncpy(fid.group, L"Contact List", SIZEOF(fid.group));
+	wcsncpy(fid.group, L"Contact List", _countof(fid.group));
 	strncpy(fid.dbSettingsGroup, "CLC", 5);
 	fid.flags = FIDF_DEFAULTVALID | FIDF_ALLOWEFFECTS | FIDF_APPENDNAME | FIDF_SAVEPOINTSIZE;
-	wcsncpy(fid.backgroundGroup, L"Contact List", SIZEOF(fid.backgroundGroup));
+	wcsncpy(fid.backgroundGroup, L"Contact List", _countof(fid.backgroundGroup));
 	while(_tagFSINFO[j].name != 0) {
 		if(FONTID_EVENTAREA == _tagFSINFO[j].id)
-			wcsncpy(fid.backgroundName, L"Event area background", SIZEOF(fid.backgroundName));
+			wcsncpy(fid.backgroundName, L"Event area background", _countof(fid.backgroundName));
 		else if(FONTID_FRAMETITLE == _tagFSINFO[j].id)
-			wcsncpy(fid.backgroundName, L"Frame title background", SIZEOF(fid.backgroundName));
+			wcsncpy(fid.backgroundName, L"Frame title background", _countof(fid.backgroundName));
 		else if(FONTID_GROUPCOUNTS == _tagFSINFO[j].id || FONTID_GROUPS == _tagFSINFO[j].id)
-			_tcsncpy(fid.backgroundName, L"Group header background", SIZEOF(fid.backgroundName));
+			_tcsncpy(fid.backgroundName, L"Group header background", _countof(fid.backgroundName));
 		else
-			wcsncpy(fid.backgroundName, L"List background", SIZEOF(fid.backgroundName));
+			wcsncpy(fid.backgroundName, L"List background", _countof(fid.backgroundName));
 
 		mir_snprintf(szTemp, sizeof(szTemp), "Font%d", _tagFSINFO[j].id);
 		strncpy(fid.prefix, szTemp, sizeof(fid.prefix));
@@ -341,11 +341,11 @@ void cfg::FS_RegisterFonts()
 	colourid.order = 0;
 	strncpy(colourid.dbSettingsGroup, "CLC", sizeof(colourid.dbSettingsGroup));
 	colourid.cbSize = sizeof(ColourIDT);
-	mir_sntprintf(colourid.group, SIZEOF(colourid.group), L"%s", L"Contact List");
-	for(int i = 0; i < SIZEOF(_clrs); i++) {
+	mir_sntprintf(colourid.group, _countof(colourid.group), L"%s", L"Contact List");
+	for (int i = 0; i < _countof(_clrs); i++) {
 		colourid.order = _clrs[i].order;
 		mir_snprintf(colourid.setting, sizeof(colourid.setting), "%s", _clrs[i].szSetting);
-		mir_sntprintf(colourid.name, SIZEOF(colourid.name), L"%s", _clrs[i].tszName);
+		mir_sntprintf(colourid.name, _countof(colourid.name), L"%s", _clrs[i].tszName);
 		colourid.defcolour = (_clrs[i].def & 0xff000000 ? GetSysColor(_clrs[i].def & 0x00ffffff) : _clrs[i].def);
 		ColourRegisterT(&colourid);
 	}
@@ -378,8 +378,7 @@ int cfg::onInit()
 
 	Utils::ensureTralingBackslash(szProfileDir);
 	mir_sntprintf(szBaseSkin, MAX_PATH, L"%s%s", szProfileDir, L"skin\\clng\\base");
-	CallService(MS_UTILS_CREATEDIRTREET, 0, (LPARAM)szBaseSkin);
-
+	CreateDirectoryTreeW(szBaseSkin);
 	extractBaseSkin(false);
 
 	return(fBaseSkinValid ? S_OK : -S_FALSE);

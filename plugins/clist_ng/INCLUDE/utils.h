@@ -130,7 +130,7 @@ private:
 	static  __int64			getMask				();		// get bit mask for disabled message classes
 
 private:
-	static	HANDLE			hWindowList;
+	static	MWindowList		hWindowList;
 	static	wchar_t*		m_warnings[WARN_LAST];
 };
 

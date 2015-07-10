@@ -25,10 +25,4 @@
   <ImportGroup Label="PropertySheets">
     <Import Project="$(ProjectDir)..\..\build\vc.common\plugin.props" />
   </ImportGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\libs\zlib\zlib.vcxproj">
-      <Project>{e2a369cd-eda3-414f-8ad0-e732cd7ee68c}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-  </ItemGroup>
 </Project>

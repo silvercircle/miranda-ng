@@ -42,7 +42,7 @@ void TrayIconUpdateBase(const char *szChangedProto)
 	if (pcli->cycleTimerId)
 		KillTimer(NULL, pcli->cycleTimerId); pcli->cycleTimerId = 0;
 
-	ProtoEnumAccounts( &count, &accs );
+	Proto_EnumAccounts( &count, &accs );
 	for (i = 0,netProtoCount = 0; i < count; i++) {
 		if ( !pcli->pfnGetProtocolVisibility( accs[i]->szModuleName ))
 			continue;

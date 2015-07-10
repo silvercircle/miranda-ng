@@ -71,7 +71,7 @@ extern HWND g_hwndViewModeFrame, g_hwndEventArea;
 extern HBRUSH g_CLUISkinnedBkColor;
 extern HWND g_hwndSFL;
 extern COLORREF g_CLUISkinnedBkColorRGB;
-extern wndFrame *wndFrameCLC;
+extern FRAMEWND *wndFrameCLC;
 
 static BYTE old_cliststate;
 
@@ -258,7 +258,7 @@ int CLUI::createCLC(HWND parent)
 		Frame.cbSize = sizeof(CLISTFrame);
 		Frame.hWnd = pcli->hwndContactTree;
 		Frame.align = alClient;
-		Frame.hIcon = LoadSkinnedIcon(SKINICON_OTHER_MIRANDA);
+		Frame.hIcon = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
 		Frame.Flags = F_VISIBLE | F_SHOWTB | F_SHOWTBTIP | F_NOBORDER | F_TCHAR;
 		Frame.tname = _T("My Contacts");
 		Frame.TBtname = TranslateT("My Contacts");
@@ -311,39 +311,39 @@ static void CacheClientIcons()
 
 	for (i = IDI_OVL_OFFLINE; i <= IDI_OVL_OUTTOLUNCH; i++) {
 		mir_snprintf(szBuffer, sizeof(szBuffer), "cln_ovl_%d", ID_STATUS_OFFLINE + (i - IDI_OVL_OFFLINE));
-		overlayicons[i - IDI_OVL_OFFLINE] = (HICON) CallService(MS_SKIN2_GETICON, 0, (LPARAM) szBuffer);
+		overlayicons[i - IDI_OVL_OFFLINE] = IcoLib_GetIcon(szBuffer);
 	}
-	ImageList_AddIcon(CLUI::hExtraImages, (HICON)CallService(MS_SKIN2_GETICON, 0, (LPARAM) "core_main_14"));
-	ImageList_AddIcon(CLUI::hExtraImages, (HICON)LoadSkinnedIcon(SKINICON_EVENT_URL));
-	ImageList_AddIcon(CLUI::hExtraImages, (HICON)CallService(MS_SKIN2_GETICON, 0, (LPARAM) "core_main_17"));
+	ImageList_AddIcon(CLUI::hExtraImages, IcoLib_GetIcon("core_main_14"));
+	ImageList_AddIcon(CLUI::hExtraImages, Skin_LoadIcon(SKINICON_EVENT_URL));
+	ImageList_AddIcon(CLUI::hExtraImages, IcoLib_GetIcon("core_main_17"));
 	if (hIconSaved != 0) {
 		ImageList_AddIcon(CLUI::hExtraImages, hIconSaved);
 		DestroyIcon(hIconSaved);
 		hIconSaved = 0;
 	} else
-		ImageList_AddIcon(CLUI::hExtraImages, (HICON)CallService(MS_SKIN2_GETICON, 0, (LPARAM) "core_main_17"));
+		ImageList_AddIcon(CLUI::hExtraImages, IcoLib_GetIcon("core_main_17"));
 }
 
 static void InitIcoLib()
 {
-	Icon_Register(g_hInst, LPGEN("Contact list")"/"LPGEN("Default"), myIcons, SIZEOF(myIcons));
+	Icon_Register(g_hInst, LPGEN("Contact list")"/"LPGEN("Default"), myIcons, _countof(myIcons));
 
 	for (int i = IDI_OVL_OFFLINE; i <= IDI_OVL_OUTTOLUNCH; i++) {
 		char szBuffer[128];
-		mir_snprintf(szBuffer, sizeof(szBuffer), "cln_ovl_%d", ID_STATUS_OFFLINE + (i - IDI_OVL_OFFLINE));
-		IconItemT icon = { pcli->pfnGetStatusModeDescription(ID_STATUS_OFFLINE + (i - IDI_OVL_OFFLINE), GSMDF_TCHAR), szBuffer, i };
+		mir_snprintf(szBuffer, _countof(szBuffer), "cln_ovl_%d", ID_STATUS_OFFLINE + (i - IDI_OVL_OFFLINE));
+		IconItemT icon = { pcli->pfnGetStatusModeDescription(ID_STATUS_OFFLINE + (i - IDI_OVL_OFFLINE), 0), szBuffer, i };
 		Icon_RegisterT(g_hInst, LPGENT("Contact list")_T("/")LPGENT("Overlay icons"), &icon, 1);
 	}
 
 	PROTOACCOUNT **accs = NULL;
 	int p_count = 0;
-	ProtoEnumAccounts(&p_count, &accs);
+	Proto_EnumAccounts(&p_count, &accs);
 	for (int k = 0; k < p_count; k++) {
-		if (!IsAccountEnabled(accs[k]) || CallProtoService(accs[k]->szModuleName, PS_GETCAPS, PFLAGNUM_2, 0) == 0)
+		if (!Proto_IsAccountEnabled(accs[k]) || CallProtoService(accs[k]->szModuleName, PS_GETCAPS, PFLAGNUM_2, 0) == 0)
 			continue;
 
 		TCHAR szDescr[128];
-		mir_sntprintf(szDescr, SIZEOF(szDescr), TranslateT("%s connecting"), accs[k]->tszAccountName);
+		mir_sntprintf(szDescr, _countof(szDescr), TranslateT("%s connecting"), accs[k]->tszAccountName);
 		IconItemT icon = { szDescr, "conn", IDI_PROTOCONNECTING };
 		Icon_RegisterT(g_hInst, LPGENT("Contact list")_T("/")LPGENT("Connecting icons"), &icon, 1, accs[k]->szModuleName);
 	}
@@ -429,15 +429,15 @@ void IcoLibReloadIcons()
 		if (top_buttons[i].id == IDC_TBMENU || top_buttons[i].id == IDC_TBGLOBALSTATUS || top_buttons[i].id == IDC_TBTOPSTATUS)
 			continue;
 
-		hIcon = (HICON) CallService(MS_SKIN2_GETICON, 0, (LPARAM) top_buttons[i].szIcoLibIcon);
+		hIcon = IcoLib_GetIcon(top_buttons[i].szIcoLibIcon);
 		if (top_buttons[i].hwnd && IsWindow(top_buttons[i].hwnd)) {
 			SendMessage(top_buttons[i].hwnd, BM_SETIMAGE, IMAGE_ICON, (LPARAM) hIcon);
 			InvalidateRect(top_buttons[i].hwnd, NULL, TRUE);
 		}
 	}
-	cfg::dat.hIconVisible = (HICON) CallService(MS_SKIN2_GETICON, 0, (LPARAM) "CLN_visible");
-	cfg::dat.hIconInvisible = (HICON) CallService(MS_SKIN2_GETICON, 0, (LPARAM) "CLN_invisible");
-	cfg::dat.hIconChatactive = (HICON) CallService(MS_SKIN2_GETICON, 0, (LPARAM) "CLN_chatactive");
+	cfg::dat.hIconVisible = IcoLib_GetIcon("CLN_visible");
+	cfg::dat.hIconInvisible = IcoLib_GetIcon("CLN_invisible");
+	cfg::dat.hIconChatactive = IcoLib_GetIcon("CLN_chatactive");
 	CacheClientIcons();
 	CLUI::reloadExtraIcons();
 
@@ -471,17 +471,17 @@ void CreateButtonBar(HWND hWnd)
 
 		top_buttons[i].hwnd = CreateWindowEx(0, _T("CLCButtonClass"), _T(""), BS_PUSHBUTTON | WS_CHILD | WS_TABSTOP, 0, 0, 20, 20, hWnd, (HMENU) top_buttons[i].id, g_hInst, NULL);
 
-		hIcon = top_buttons[i].hIcon = (HICON) CallService(MS_SKIN2_GETICON, 0, (LPARAM) top_buttons[i].szIcoLibIcon);
+		hIcon = top_buttons[i].hIcon = IcoLib_GetIcon(top_buttons[i].szIcoLibIcon);
 		if (top_buttons[i].szIcoLibAltIcon)
-			top_buttons[i].hAltIcon = (HICON) CallService(MS_SKIN2_GETICON, 0, (LPARAM) top_buttons[i].szIcoLibAltIcon);
+			top_buttons[i].hAltIcon = IcoLib_GetIcon(top_buttons[i].szIcoLibAltIcon);
 
 		if (top_buttons[i].id == IDC_TBMENU) {
 			SetWindowText(top_buttons[i].hwnd, TranslateT("Menu"));
-			SendMessage(top_buttons[i].hwnd, BM_SETIMAGE, IMAGE_ICON, (LPARAM) LoadSkinnedIcon(SKINICON_OTHER_MIRANDA));
+			SendMessage(top_buttons[i].hwnd, BM_SETIMAGE, IMAGE_ICON, (LPARAM) Skin_LoadIcon(SKINICON_OTHER_MIRANDA));
 		}
 		if (top_buttons[i].id == IDC_TBGLOBALSTATUS) {
 			SetWindowText(top_buttons[i].hwnd, TranslateT("Offline"));
-			SendMessage(top_buttons[i].hwnd, BM_SETIMAGE, IMAGE_ICON, (LPARAM) LoadSkinnedIcon(SKINICON_STATUS_OFFLINE));
+			SendMessage(top_buttons[i].hwnd, BM_SETIMAGE, IMAGE_ICON, (LPARAM) Skin_LoadIcon(SKINICON_STATUS_OFFLINE));
 		}
 		SendMessage(top_buttons[i].hwnd, BUTTONADDTOOLTIP, (WPARAM) TranslateTS(top_buttons[i].szTooltip), 0);
 	}
@@ -564,7 +564,7 @@ void CLUI::setFrameButtonStates(MCONTACT hPassedContact)
 				continue;
 			}
 			if (buttonItem->dwFlags & BUTTON_ISCONTACTDBACTION)
-				szModule = (char *)CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM)hContact, 0);
+				szModule = GetContactProto(hContact);
 			hFinalContact = hContact;
 		} else
 			hFinalContact = 0;
@@ -886,7 +886,7 @@ LRESULT CALLBACK CLUI::wndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 			CluiProtocolStatusChanged(0, 0);
 
 			for (i = ID_STATUS_OFFLINE; i <= ID_STATUS_OUTTOLUNCH; i++)
-				statusNames[i - ID_STATUS_OFFLINE] = reinterpret_cast<wchar_t *>(CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, (WPARAM)i, GSMDF_TCHAR));
+				statusNames[i - ID_STATUS_OFFLINE] = pcli->pfnGetStatusModeDescription(i, 0);
 
 			SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | (WS_EX_LAYERED));
 
@@ -895,7 +895,7 @@ LRESULT CALLBACK CLUI::wndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 #endif
 			transparentFocus = 1;
 
-            CallService(MS_LANGPACK_TRANSLATEMENU, (WPARAM) GetMenu(hwnd), 0);
+			TranslateMenu(GetMenu(hwnd));
 			PostMessage(hwnd, M_CREATECLC, 0, 0);
 			bf.BlendOp = AC_SRC_OVER;
 			bf.AlphaFormat = AC_SRC_ALPHA;
@@ -1410,7 +1410,7 @@ skipbg:
 								if (contactOK) {
 									char szFinalService[512];
 
-									mir_snprintf(szFinalService, 512, "%s/%s", (char *)CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM)hContact, 0), item->szService);
+									mir_snprintf(szFinalService, 512, "%s/%s", GetContactProto(hContact), item->szService);
 									if (ServiceExists(szFinalService))
 										CallService(szFinalService, wwParam, llParam);
 									else
@@ -1425,7 +1425,7 @@ skipbg:
 								if (item->dwFlags & BUTTON_ISCONTACTDBACTION || item->dwFlags & BUTTON_DBACTIONONCONTACT) {
 									contactOK = ServiceParamsOK(item, &wwParam, &llParam, hContact);
 									if (contactOK && item->dwFlags & BUTTON_ISCONTACTDBACTION)
-										szModule = (char *)CallService(MS_PROTO_GETCONTACTBASEPROTO, (WPARAM)hContact, 0);
+										szModule = GetContactProto(hContact);
 									finalhContact = hContact;
 								} else
 									contactOK = 1;
@@ -1483,7 +1483,7 @@ skipbg:
 					case IDC_TBMENU:
 					case IDC_TBTOPMENU: {
 						RECT rc;
-						HMENU hMenu = (HMENU) CallService(MS_CLIST_MENUGETMAIN, 0, 0);
+						HMENU hMenu = Menu_GetMainMenu();
 
 						GetWindowRect(GetDlgItem(hwnd, LOWORD(wParam)), &rc);
 						TrackPopupMenu(hMenu, TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, rc.left, LOWORD(wParam) == IDC_TBMENU ? rc.top : rc.bottom, 0, hwnd, NULL);
@@ -1492,7 +1492,7 @@ skipbg:
 					case IDC_TBGLOBALSTATUS:
 					case IDC_TBTOPSTATUS: {
 						RECT rc;
-						HMENU hmenu = (HMENU)CallService(MS_CLIST_MENUGETSTATUS, 0, 0);
+						HMENU hmenu = Menu_GetStatusMenu();
 						GetWindowRect(GetDlgItem(hwnd, LOWORD(wParam)), &rc);
 						TrackPopupMenu(hmenu, TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, rc.left, rc.top, 0, hwnd, NULL);
 						return 0;
@@ -1677,7 +1677,7 @@ buttons_done:
 			}
 			if (PtInRect(&rc, pt)) {
 				HMENU hMenu;
-				hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDGROUP, 0, 0);
+				hMenu = Menu_BuildGroupMenu();
 				TrackPopupMenu(hMenu, TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, pt.x, pt.y, 0, hwnd, NULL);
                 DestroyTrayMenu(hMenu);
 				return 0;
@@ -1686,9 +1686,9 @@ buttons_done:
 			if (PtInRect(&rc, pt)) {
 				HMENU hMenu;
 				if (cfg::getByte("CLUI", "SBarRightClk", 0))
-					hMenu = (HMENU) CallService(MS_CLIST_MENUGETMAIN, 0, 0);
+					hMenu = Menu_GetMainMenu();
 				else
-					hMenu = (HMENU) CallService(MS_CLIST_MENUGETSTATUS, 0, 0);
+					hMenu = Menu_GetStatusMenu();
 				TrackPopupMenu(hMenu, TPM_TOPALIGN | TPM_LEFTALIGN | TPM_RIGHTBUTTON, pt.x, pt.y, 0, hwnd, NULL);
 				return 0;
 			}
@@ -1701,7 +1701,7 @@ buttons_done:
 				((LPMEASUREITEMSTRUCT) lParam)->itemHeight = 0;
 				return TRUE;
 			}
-			return CallService(MS_CLIST_MENUMEASUREITEM, wParam, lParam);
+			return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
 		case WM_DRAWITEM: {
 			LPDRAWITEMSTRUCT dis = (LPDRAWITEMSTRUCT) lParam;
 
@@ -1732,43 +1732,43 @@ buttons_done:
 					if (status >= ID_STATUS_CONNECTING && status < ID_STATUS_OFFLINE) {
 						char szBuffer[128];
 						mir_snprintf(szBuffer, 128, "%s_conn", pd->RealName);
-						hIcon = (HICON)CallService(MS_SKIN2_GETICON, 0, (LPARAM)szBuffer);
+						hIcon = IcoLib_GetIcon(szBuffer);
 					} else
-						hIcon = LoadSkinnedProtoIcon(szProto, status);
+						hIcon = Skin_LoadProtoIcon(szProto, status);
 
 					if (!(showOpts & 6) && cfg::dat.bEqualSections)
 						x = (dis->rcItem.left + dis->rcItem.right - 16) >> 1;
-					if (pd->statusbarpos == 0)
+					if (pd->protopos == 0)
 						x += (cfg::dat.bEqualSections ? (Skin::metrics.cLeft / 2) : Skin::metrics.cLeft);
-					else if (pd->statusbarpos == nParts - 1)
+					else if (pd->protopos == nParts - 1)
 						x -= (Skin::metrics.cRight / 2);
 					DrawIconEx(dis->hDC, x, 2, hIcon, 16, 16, 0, NULL, DI_NORMAL);
-					CallService(MS_SKIN2_RELEASEICON, (WPARAM)hIcon, 0);
+					IcoLib_ReleaseIcon(hIcon);
 
 					if (cfg::getByte("CLUI", "sbar_showlocked", 1)) {
 						if (cfg::getByte(szProto, "LockMainStatus", 0)) {
-							hIcon = LoadSkinnedIcon(SKINICON_OTHER_STATUS_LOCKED);
+							hIcon = Skin_LoadIcon(SKINICON_OTHER_STATUS_LOCKED);
 							if (hIcon != NULL) {
 								DrawIconEx(dis->hDC, x, 2, hIcon, 16, 16, 0, NULL, DI_NORMAL);
-								CallService(MS_SKIN2_RELEASEICON, (WPARAM)hIcon, 0);
+								IcoLib_ReleaseIcon(hIcon);
 							}
 						}
 					}
 					x += 18;
 				} else {
 					x += 2;
-					if (pd->statusbarpos == 0)
+					if (pd->protopos == 0)
 						x += (cfg::dat.bEqualSections ? (Skin::metrics.cLeft / 2) : Skin::metrics.cLeft);
-					else if (pd->statusbarpos == nParts - 1)
+					else if (pd->protopos == nParts - 1)
 						x -= (Skin::metrics.cRight / 2);
 				}
 				dis->rcItem.bottom += (dis->rcItem.top + 16);
 				if (showOpts & 2) {
 					wchar_t szName[64];
-					PROTOACCOUNT* pa = ProtoGetAccount( szProto );
+					PROTOACCOUNT* pa = Proto_GetAccount( szProto );
 					if ( pa ) {
-						lstrcpyn( szName, pa->tszAccountName, SIZEOF(szName));
-						szName[ SIZEOF(szName)-1 ] = 0;
+						lstrcpyn(szName, pa->tszAccountName, _countof(szName));
+						szName[_countof(szName) - 1] = 0;
 					}
 					else szName[0] = 0;
 
@@ -1787,7 +1787,7 @@ buttons_done:
 			} else if (dis->CtlType == ODT_MENU) {
 				if (dis->itemData == MENU_MIRANDAMENU)
 					break;
-				return CallService(MS_CLIST_MENUDRAWITEM, wParam, lParam);
+				return Menu_DrawItem(dis);
 			}
 			return 0;
 		}
@@ -1898,7 +1898,7 @@ INT_PTR CALLBACK DlgProcAbout(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 					DestroyWindow(hwndDlg);
 					return TRUE;
 				case IDC_SUPPORT:
-					CallService(MS_UTILS_OPENURL, 1, (LPARAM)"http://miranda-im.org/download/details.php?action=viewfile&id=2365");
+					//CallService(MS_UTILS_OPENURL, 1, (LPARAM)"http://miranda-im.org/download/details.php?action=viewfile&id=2365");
 					break;
 			}
 			break;
@@ -1947,7 +1947,7 @@ static INT_PTR CLN_ShowMainMenu(WPARAM wParam, LPARAM lParam)
 	HMENU hMenu;
 	POINT pt;
 
-	hMenu = (HMENU)CallService(MS_CLIST_MENUGETMAIN, 0, 0);
+	hMenu = Menu_GetMainMenu();
 	GetCursorPos(&pt);
 	TrackPopupMenu(hMenu, TPM_TOPALIGN | TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, 0, pcli->hwndContactList, NULL);
 	return 0;
@@ -1958,7 +1958,7 @@ static INT_PTR CLN_ShowStatusMenu(WPARAM wParam, LPARAM lParam)
 	HMENU hMenu;
 	POINT pt;
 
-	hMenu = (HMENU)CallService(MS_CLIST_MENUGETSTATUS, 0, 0);
+	hMenu = Menu_GetStatusMenu();
 	GetCursorPos(&pt);
 	TrackPopupMenu(hMenu, TPM_TOPALIGN | TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, 0, pcli->hwndContactList, NULL);
 	return 0;

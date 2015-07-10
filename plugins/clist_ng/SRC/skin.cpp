@@ -422,7 +422,7 @@ void SkinLoader::loadBaseItems()
 	PROTOACCOUNT**		accs = 0;
 	char*				p = 0;
 
-	ProtoEnumAccounts(&protoCount, &accs);
+	Proto_EnumAccounts(&protoCount, &accs);
 
 	if(Skin::statusItems) {
 		free(Skin::statusItems);

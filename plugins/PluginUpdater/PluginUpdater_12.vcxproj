@@ -207,11 +207,6 @@
     <Image Include="res\menu.ico" />
     <Image Include="res\PlgList.ico" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\libs\zlib\zlib.vcxproj">
-      <Project>{e2a369cd-eda3-414f-8ad0-e732cd7ee68c}</Project>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

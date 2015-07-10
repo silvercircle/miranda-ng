@@ -31,7 +31,7 @@ $Id: viewmodes.cpp 131 2010-09-29 04:50:58Z silvercircle $
 #define TIMERID_VIEWMODEEXPIRE 100
 
 extern HPEN g_hPenCLUIFrames;
-extern wndFrame *wndFrameViewMode;
+extern FRAMEWND *wndFrameViewMode;
 
 typedef int (__cdecl *pfnEnumCallback)(char *szName);
 static HWND clvmHwnd = 0;
@@ -195,7 +195,7 @@ static int FillDialog(HWND hwnd)
 
 	// fill protocols...
 
-	ProtoEnumAccounts( &protoCount, &accs );
+	Proto_EnumAccounts( &protoCount, &accs );
 	item.mask = LVIF_TEXT;
 	item.iItem = 1000;
 	for (i = 0; i < protoCount; i++) {
@@ -242,10 +242,15 @@ static int FillDialog(HWND hwnd)
 	lvc.mask = LVCF_FMT;
 	lvc.fmt = LVCFMT_IMAGE | LVCFMT_LEFT;
 	ListView_InsertColumn(hwndList, 0, &lvc);
-	for(i = ID_STATUS_OFFLINE; i <= ID_STATUS_OUTTOLUNCH; i++) {
-		item.pszText = Translate((char *)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, (WPARAM)i, 0));
-		item.iItem = i - ID_STATUS_OFFLINE;
-		newItem = SendMessageA(hwndList, LVM_INSERTITEMA, 0, (LPARAM)&item);
+	{
+		LVITEMW item = { 0 };
+		item.mask = LVIF_TEXT;
+		item.iItem = 1000;
+		for (i = ID_STATUS_OFFLINE; i <= ID_STATUS_OUTTOLUNCH; i++) {
+			item.pszText = TranslateTS(pcli->pfnGetStatusModeDescription(i, 0));
+			item.iItem = i - ID_STATUS_OFFLINE;
+			newItem = SendMessageA(hwndList, LVM_INSERTITEMA, 0, (LPARAM)&item);
+		}
 	}
 	ListView_SetColumnWidth(hwndList, 0, LVSCW_AUTOSIZE);
 	ListView_Arrange(hwndList, LVA_ALIGNLEFT | LVA_ALIGNTOP);
@@ -610,7 +615,7 @@ INT_PTR CALLBACK DlgProcViewModesSetup(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
             himlViewModes = ImageList_Create(16, 16, ILC_MASK | ILC_COLOR32, 12, 0);
             for(i = ID_STATUS_OFFLINE; i <= ID_STATUS_OUTTOLUNCH; i++)
-                ImageList_AddIcon(himlViewModes, LoadSkinnedProtoIcon(NULL, i));
+                ImageList_AddIcon(himlViewModes, Skin_LoadProtoIcon(NULL, i));
 
             hIcon = (HICON)LoadImage(g_hInst, MAKEINTRESOURCE(IDI_MINIMIZE), IMAGE_ICON, 16, 16, 0);
             nullImage = ImageList_AddIcon(himlViewModes, hIcon);
@@ -935,9 +940,9 @@ LRESULT CALLBACK ViewModeFrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 			break;
 		}
 	case WM_USER + 100:
-			SendMessage(GetDlgItem(hwnd, IDC_RESETMODES), BM_SETIMAGE, IMAGE_ICON, (LPARAM)CallService(MS_SKIN2_GETICON, 0, (LPARAM)"core_main_15"));
-			SendMessage(GetDlgItem(hwnd, IDC_CONFIGUREMODES), BM_SETIMAGE, IMAGE_ICON, (LPARAM)CallService(MS_SKIN2_GETICON, 0, (LPARAM)"core_main_32"));
-			SendMessage(GetDlgItem(hwnd, IDC_SELECTMODE), BM_SETIMAGE, IMAGE_ICON, (LPARAM)CallService(MS_SKIN2_GETICON, 0, (LPARAM)"core_main_11"));
+			SendMessage(GetDlgItem(hwnd, IDC_RESETMODES), BM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIcon("core_main_15"));
+			SendMessage(GetDlgItem(hwnd, IDC_CONFIGUREMODES), BM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIcon("core_main_32"));
+			SendMessage(GetDlgItem(hwnd, IDC_SELECTMODE), BM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIcon("core_main_11"));
 		{
 			int bSkinned = cfg::getByte("CLCExt", "bskinned", 0);
 			int i = 0;

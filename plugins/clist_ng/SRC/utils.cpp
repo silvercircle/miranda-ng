@@ -41,7 +41,7 @@ wchar_t* WarningDlg::m_warnings[WarningDlg::WARN_LAST] = {
 		LPGENT("Overwrite skin file|You are about to save your customized settings to the \\b1 original skin file.\\b0  This could cause problems and may require to reinstall the skin.\nYou should use \\b1 Save as user modification\\b0  to keep the original skin untouched.\n\nContinue?")
 };
 
-HANDLE	WarningDlg::hWindowList = 0;
+MWindowList	WarningDlg::hWindowList = 0;
 
 /**
  * ensure that a path name ends on a trailing backslash
@@ -199,7 +199,7 @@ size_t Utils::pathToRelative(const wchar_t* pSrc, wchar_t* pOut, const wchar_t* 
 	} else {
 		wchar_t	szTmp[MAX_PATH];
 
-		mir_sntprintf(szTmp, SIZEOF(szTmp), L"%s", pSrc);
+		mir_sntprintf(szTmp, _countof(szTmp), L"%s", pSrc);
 		if (striStr(szTmp, tszBase)) {
 			if(tszBase[lstrlenW(tszBase) - 1] == '\\')
 				mir_sntprintf(pOut, MAX_PATH, L"%s", pSrc + lstrlenW(tszBase));
@@ -341,8 +341,8 @@ LRESULT WarningDlg::show(const int uId, DWORD dwFlags, const wchar_t* tszTxt)
 	LRESULT 	result = 0;
 	wchar_t*	_s = 0;
 
-	if(0 == hWindowList)
-		hWindowList = reinterpret_cast<HANDLE>(::CallService(MS_UTILS_ALLOCWINDOWLIST, 0, 0));
+	if (0 == hWindowList)
+		hWindowList = WindowList_Create();
 
 	/*
 	 * don't open new warnings when shutdown was initiated (modal ones will otherwise
@@ -459,8 +459,8 @@ INT_PTR CALLBACK WarningDlg::dlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 			m_hwnd = hwnd;
 
 			::SetWindowTextW(hwnd, L"Clist NG warning");
-			::SendMessage(hwnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(::LoadSkinnedIconBig(SKINICON_OTHER_MIRANDA)));
-			::SendMessage(hwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(::LoadSkinnedIcon(SKINICON_OTHER_MIRANDA)));
+			::SendMessage(hwnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(Skin_LoadIcon(SKINICON_OTHER_MIRANDA, true)));
+			::SendMessage(hwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(Skin_LoadIcon(SKINICON_OTHER_MIRANDA)));
 			::SendDlgItemMessage(hwnd, IDC_WARNTEXT, EM_AUTOURLDETECT, (WPARAM) TRUE, 0);
 			::SendDlgItemMessage(hwnd, IDC_WARNTEXT, EM_SETEVENTMASK, 0, ENM_LINK);
 
@@ -511,7 +511,7 @@ INT_PTR CALLBACK WarningDlg::dlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 			if(uResId)
 				hIcon = reinterpret_cast<HICON>(::LoadImage(0, MAKEINTRESOURCE(uResId), IMAGE_ICON, 0, 0, LR_SHARED | LR_DEFAULTSIZE));
 			else
-				hIcon = ::LoadSkinnedIconBig(SKINICON_EVENT_MESSAGE);
+				hIcon = Skin_LoadIcon(SKINICON_EVENT_MESSAGE, true);
 
 			::SendDlgItemMessageW(hwnd, IDC_WARNICON, STM_SETICON, reinterpret_cast<WPARAM>(hIcon), 0);
 			if(!(m_dwFlags & MB_YESNO || m_dwFlags & MB_YESNOCANCEL))
@@ -595,7 +595,7 @@ INT_PTR CALLBACK WarningDlg::dlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 							if(wszUrl) {
 								char* szUrl = mir_t2a(wszUrl);
 
-								CallService(MS_UTILS_OPENURL, 1, (LPARAM)szUrl);
+								Utils_OpenUrl(szUrl);
 								mir_free(szUrl);
 								mir_free(const_cast<TCHAR *>(wszUrl));
 							}

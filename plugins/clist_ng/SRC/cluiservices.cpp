@@ -86,7 +86,7 @@ void CluiProtocolStatusChanged( int parStatus, const char* szProto )
 	if (pcli->hwndStatus == 0 || cfg::shutDown)
 		return;
 
-	ProtoEnumAccounts( &protoCount, &accs );
+	Proto_EnumAccounts( &protoCount, &accs );
 	if (protoCount == 0)
 		return;
 
@@ -146,8 +146,8 @@ void CluiProtocolStatusChanged( int parStatus, const char* szProto )
 			if (showOpts & 1)
 				x += 16;
 			if (showOpts & 2) {
-				lstrcpyn( szName, pa->tszAccountName, SIZEOF(szName));
-				szName[ SIZEOF(szName)-1 ] = 0;
+				lstrcpyn( szName, pa->tszAccountName, _countof(szName));
+				szName[ _countof(szName)-1 ] = 0;
 				if (( showOpts & 4 ) && lstrlen(szName) < sizeof(szName)-1 )
 					lstrcat( szName, _T(" "));
 				GetTextExtentPoint32( hdc, szName, lstrlen(szName), &textSize );
@@ -191,7 +191,7 @@ void CluiProtocolStatusChanged( int parStatus, const char* szProto )
 		status = CallProtoService( pa->szModuleName,PS_GETSTATUS,0,0);
 		PD = ( ProtocolData* )mir_alloc(sizeof(ProtocolData));
 		PD->RealName = mir_strdup( pa->szModuleName );
-		PD->statusbarpos = partCount;
+		PD->protopos = partCount;
 		{
 			int flags;
 			flags = SBT_OWNERDRAW;
@@ -236,7 +236,7 @@ void CluiProtocolStatusChanged( int parStatus, const char* szProto )
 	*/
 	//g_isConnecting = (wStatus >= ID_STATUS_CONNECTING && wStatus < ID_STATUS_OFFLINE);
 
-	szStatus = (wchar_t *)CallService(MS_CLIST_GETSTATUSMODEDESCRIPTION, (WPARAM) wStatus, GSMDF_TCHAR);
+	szStatus = pcli->pfnGetStatusModeDescription(wStatus, 0);
 
 	/*
 	* set the global status icon and display the global (most online) status mode on the

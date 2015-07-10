@@ -36,7 +36,7 @@ HANDLE						CLC::hTheme = 0;
 
 extern 	ORDERTREEDATA 		OrderTreeData[];
 extern 	HICON 				overlayicons[];
-extern  wndFrame*			wndFrameCLC;
+extern  FRAMEWND*			wndFrameCLC;
 extern wchar_t*				statusNames[];
 
 int 						g_center, g_ignoreselforgroups, g_selectiveIcon, g_exIconSpacing;
@@ -954,7 +954,8 @@ text:
 				RECT 		rc = rcContent;
 				COLORREF 	oldColor = 0;
 
-				if (tmi.printDateTime(cEntry->hTimeZone, _T("t"), szResult, SIZEOF(szResult), 0))
+				if (TimeZone_PrintDateTime(cEntry->hTimeZone, _T("t"), szResult, _countof(szResult), 0))
+					goto nodisplay;
 
 				oldColor = Gfx::getTextColor();
 				idOldFont = dat->currentFontID;
@@ -997,6 +998,7 @@ text:
 
 			}
 			else {
+nodisplay:
 				verticalfit = (rowHeight - m_fontHeight >= cfg::dat.exIconScale + 1);
 				if(avatar_done) {
 					if(verticalfit && av_right)

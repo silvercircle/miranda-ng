@@ -585,7 +585,7 @@ __inline static int variables_skin_helpbutton(HWND hwndDlg, UINT uIDButton) {
 	if (ServiceExists(MS_VARS_GETSKINITEM))
 		hIcon = (HICON)CallService(MS_VARS_GETSKINITEM, 0, (LPARAM)VSI_HELPICON);
 
-	GetClassName(GetDlgItem(hwndDlg, uIDButton), tszClass, SIZEOF(tszClass));
+	GetClassName(GetDlgItem(hwndDlg, uIDButton), tszClass, _countof(tszClass));
 	if (!_tcscmp(tszClass, _T("Button"))) {
 		if (hIcon != NULL) {
 			SetWindowLong(GetDlgItem(hwndDlg, uIDButton), GWL_STYLE, GetWindowLong(GetDlgItem(hwndDlg, uIDButton), GWL_STYLE)|BS_ICON);

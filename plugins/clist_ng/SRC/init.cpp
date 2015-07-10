@@ -35,7 +35,6 @@
 HINSTANCE 			g_hInst 	=  0;
 CLIST_INTERFACE		*pcli, coreCli;
 int hLangpack;
-TIME_API 			tmi = { 0 };
 
 #define DEFAULT_TB_VISIBILITY (1 | 2 | 4 | 8 | 16 | 32 | 64 | 8192)
 
@@ -43,6 +42,7 @@ wchar_t*			szNoevents = L"No events...";
 extern HICON 		overlayicons[10];
 
 extern int Docking_ProcessWindowMessage(WPARAM wParam, LPARAM lParam);
+extern void RegisterCLUIFrameClasses();
 
 HMENU  BuildGroupPopupMenu(struct ClcGroup* group);
 void   ReloadThemedOptions();
@@ -201,8 +201,6 @@ extern "C" int __declspec(dllexport) CListInitialise()
 #endif
 
 	mir_getLP( &pluginInfo );
-	mir_getTMI(&tmi);
-
 	mir_getCLI();
 	coreCli = *pcli;
 
@@ -255,7 +253,7 @@ extern "C" int __declspec(dllexport) CListInitialise()
 	cfg::dat.bShowLocalTimeSelective = 	cfg::getByte("CLC", "SelectiveLocalTime", 1);
 	cfg::dat.bDontSeparateOffline = 	cfg::getByte("CList", "DontSeparateOffline", 0);
 	cfg::dat.bFirstRun = 				cfg::getByte("CLUI", "firstrun", 1);
-	cfg::dat.langPackCP = 				CallService(MS_LANGPACK_GETCODEPAGE, 0, 0);
+	cfg::dat.langPackCP =				Langpack_GetDefaultCodePage();
 	cfg::dat.realTimeSaving = 			cfg::getByte("CLUI", "save_pos_always", 0);
 
 	DWORD sortOrder = cfg::getDword("CList", "SortOrder", SORTBY_NAME);
