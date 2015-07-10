@@ -60,7 +60,8 @@ extern HANDLE hNetlib;
 	#define CUSTOM_SCRIPTS_PATHT MIRANDA_USERDATA "\\Scripts"
 #endif
 
-#include "m_core.h"
+#define MLUA_CORE	"m"
+LUAMOD_API int (luaopen_m)(lua_State *L);
 
 #define MLUA_CLIST	"m_clist"
 LUAMOD_API int (luaopen_m_clist)(lua_State *L);
@@ -94,7 +95,7 @@ LUAMOD_API int (luaopen_m_windows)(lua_State *L);
 int luaM_print(lua_State *L);
 int luaM_atpanic(lua_State *L);
 
-bool luaM_checkboolean(lua_State *L, int idx);
+bool luaM_toboolean(lua_State *L, int idx);
 WPARAM luaM_towparam(lua_State *L, int idx);
 LPARAM luaM_tolparam(lua_State *L, int idx);
 

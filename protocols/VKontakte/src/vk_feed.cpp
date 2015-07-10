@@ -154,7 +154,7 @@ CVKNewsItem* CVkProto::GetVkNewsItem(const JSONNode &jnItem, OBJLIST<CVkUserInfo
 	if (!tszText.IsEmpty())
 		tszText += _T("\n");
 
-	debugLog(_T("CVkProto::GetVkNewsItem %d %d %s <%s>"), iSourceId, iPostId, vkNewsItem->tszType, tszText);
+	debugLog(_T("CVkProto::GetVkNewsItem %d %d %s"), iSourceId, iPostId, vkNewsItem->tszType);
 
 	if (vkNewsItem->tszType == _T("photo_tag")) {
 		bPostLink = false;
@@ -229,7 +229,7 @@ CVKNewsItem* CVkProto::GetVkNewsItem(const JSONNode &jnItem, OBJLIST<CVkUserInfo
 		vkNewsItem->tszText += SetBBCString(TranslateT("Link"), m_iBBCForNews, vkbbcUrl, vkNewsItem->tszLink);
 	}
 
-	debugLog(_T("CVkProto::GetVkNewsItem %d %d <%s> <%s>"), iSourceId, iPostId, vkNewsItem->tszText, tszText);
+	debugLog(_T("CVkProto::GetVkNewsItem %d %d <\n%s\n>"), iSourceId, iPostId, vkNewsItem->tszText);
 
 	return vkNewsItem;
 }
@@ -324,9 +324,9 @@ CVKNewsItem* CVkProto::GetVkParent(const JSONNode &jnParent, VKObjType vkParentT
 		vkNotificationItem->tszText.AppendFormat(_T("\n%s"), SetBBCString(tszTitle, m_iBBCForNews, vkbbcUrl, vkNotificationItem->tszLink));
 	}
 	else if (vkParentType == vkPost) {
-		LONG iOwnerId = jnParent["from_id"].as_int();
+		LONG iToId = jnParent["to_id"].as_int();
 		LONG iId = jnParent["id"].as_int();
-		vkNotificationItem->tszId.AppendFormat(_T("%d_%d"), iOwnerId, iId);
+		vkNotificationItem->tszId.AppendFormat(_T("%d_%d"), iToId, iId);
 		vkNotificationItem->tszLink.AppendFormat(_T("https://vk.com/wall%s%s"), vkNotificationItem->tszId, ptszReplyLink ? ptszReplyLink : _T(""));
 		
 		CMString tszText(jnParent["text"].as_mstring());
@@ -488,6 +488,10 @@ void CVkProto::RetrieveUnreadNews(time_t tLastNewsTime)
 	debugLogA("CVkProto::RetrieveUnreadNews");
 	if (!IsOnline())
 		return;
+
+	time_t tLastNewsReqTime = getDword("LastNewsReqTime", time(NULL) - 24 * 60 * 60);
+	if (time(NULL) - tLastNewsReqTime < 3 * 60)
+		return;
 		
 	CMStringA szFilter;
 	szFilter = m_bNewsFilterPosts ? "post" : "";
@@ -523,22 +527,25 @@ void CVkProto::RetrieveUnreadNews(time_t tLastNewsTime)
 		return;
 	}
 			
-	Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/newsfeed.get.json", true, &CVkProto::OnReceiveUnreadNews)
+	Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/newsfeed.get.json", true, &CVkProto::OnReceiveUnreadNews))
 		<< INT_PARAM("count", 100)
 		<< INT_PARAM("return_banned", m_bNewsSourceIncludeBanned ? 1 : 0)
 		<< INT_PARAM("max_photos", m_iMaxLoadNewsPhoto)
 		<< INT_PARAM("start_time", tLastNewsTime + 1)
 		<< CHAR_PARAM("filters", szFilter)
 		<< CHAR_PARAM("source_ids", szSource)
-		<< VER_API);
+		<< VER_API;
+
+	setDword("LastNewsReqTime", (DWORD)time(NULL));
 }
 
 static int sttCompareVKNewsItems(const CVKNewsItem *p1, const CVKNewsItem *p2)
 {	
 	int compareId = p1->tszId.Compare(p2->tszId);
+	LONG compareUserId = p1->vkUser->m_UserId - p2->vkUser->m_UserId;
 	LONG compareDate = (LONG)p1->tDate - (LONG)p2->tDate;
-
-	return compareId ? compareDate : 0;
+	
+	return compareId ? (compareDate ? compareDate : compareUserId) : 0;
 }
 
 static int sttCompareVKNotificationItems(const CVKNewsItem *p1, const CVKNewsItem *p2)
@@ -553,6 +560,7 @@ static int sttCompareVKNotificationItems(const CVKNewsItem *p1, const CVKNewsIte
 void CVkProto::OnReceiveUnreadNews(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
 {
 	debugLogA("CVkProto::OnReceiveUnreadNews %d", reply->resultCode);
+	db_unset(NULL, m_szModuleName, "LastNewsReqTime");
 	if (reply->resultCode != 200)
 		return;
 
@@ -572,10 +580,15 @@ void CVkProto::OnReceiveUnreadNews(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *p
 			CVKNewsItem *vkNewsItem = GetVkNewsItem((*it), vkUsers);
 			if (!vkNewsItem)
 				continue;
-			if (vkNews.find(vkNewsItem) == NULL)
+			CVKNewsItem *vkNewsFoundItem = vkNews.find(vkNewsItem);
+			if (vkNewsFoundItem == NULL)
 				vkNews.insert(vkNewsItem);
-			else
-				delete vkNewsItem;
+			else if (vkNewsFoundItem->tszType == _T("wall_photo") && vkNewsItem->tszType == _T("post")) {
+				vkNews.remove(vkNewsFoundItem);
+				vkNews.insert(vkNewsItem);
+			}
+			else 
+				delete vkNewsItem;		
 		}
 
 	for (int i = 0; i < vkNews.getCount(); i++)
@@ -596,14 +609,20 @@ void CVkProto::RetrieveUnreadNotifications(time_t tLastNotificationsTime)
 	if (!IsOnline())
 		return;
 
+	time_t tLastNotificationsReqTime = getDword("LastNotificationsReqTime", time(NULL) - 24 * 60 * 60);
+	if (time(NULL) - tLastNotificationsReqTime < 3 * 60)
+		return;
+
 	CMString code;
 	code.AppendFormat(_T("return{\"notifications\":API.notifications.get({\"count\": 100, \"start_time\":%d})%s"),
 		(LONG)(tLastNotificationsTime + 1),
 		m_bNotificationFilterInvites ? _T(",\"groupinvates\":API.groups.getInvites({\"extended\":1})};") : _T("};"));
 
-	Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/execute.json", true, &CVkProto::OnReceiveUnreadNotifications)
+	Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/execute.json", true, &CVkProto::OnReceiveUnreadNotifications))
 		<< TCHAR_PARAM("code", code)		
-		<< VER_API);	
+		<< VER_API;	
+
+	setDword("LastNotificationsReqTime", (DWORD)time(NULL));
 }
 
 bool CVkProto::FilterNotification(CVKNewsItem* vkNotificationItem, bool& isCommented)
@@ -642,6 +661,7 @@ void CVkProto::NotificationMarkAsViewed()
 void CVkProto::OnReceiveUnreadNotifications(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
 {
 	debugLogA("CVkProto::OnReceiveUnreadNotifications %d", reply->resultCode);
+	db_unset(NULL, m_szModuleName, "LastNotificationsReqTime");
 	if (reply->resultCode != 200)
 		return;
 

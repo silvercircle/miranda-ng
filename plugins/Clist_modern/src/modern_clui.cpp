@@ -1537,7 +1537,6 @@ HANDLE RegisterIcolibIconHandle(char *szIcoID, char *szSectionName, char *szDesc
 	TCHAR fileFull[MAX_PATH] = { 0 };
 
 	SKINICONDESC sid = { 0 };
-	sid.cx = sid.cy = 16;
 	sid.section.a = szSectionName;
 	sid.pszName = szIcoID;
 	sid.flags |= SIDF_PATH_TCHAR;
@@ -1808,7 +1807,7 @@ LRESULT CLUI::OnUpdate(UINT /*msg*/, WPARAM /*wParam*/, LPARAM /*lParam*/)
 LRESULT CLUI::OnInitMenu(UINT /*msg*/, WPARAM /*wParam*/, LPARAM /*lParam*/)
 {
 	if (!CLUI::IsMainMenuInited()) {
-		Menu_BuildMainMenu();
+		Menu_GetMainMenu();
 		CLUI::m_fMainMenuInited = TRUE;
 	}
 	return FALSE;
