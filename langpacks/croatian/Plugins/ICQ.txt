@@ -159,7 +159,7 @@ opcije
 [Note]
 
 [Warning]
-
+Upozorenje
 [Error]
 
 [Fatal]
@@ -558,29 +558,29 @@ Zatvaranje za %d
 
 ;file \protocols\IcqOscarJ\src\icq_fieldnames.cpp
 [Afghanistan]
-
+Avganistan
 [Albania]
-
+Albanija
 [Algeria]
-
+Alžir
 [Andorra]
-
+Andora
 [Angola]
-
+Angola
 [Anguilla]
-
+Angvila
 [Antigua and Barbuda]
-
+Antigva i barbuda
 [Argentina]
-
+Argentina
 [Armenia]
-
+Armenija
 [Aruba]
-
+Aruba
 [Ascension Island]
 
 [Australia]
-
+Australija
 [Australia, Antarctic Territory]
 
 [Australia, Christmas Island]
@@ -590,281 +590,281 @@ Zatvaranje za %d
 [Australia, Norfolk Island]
 
 [Austria]
-
+Austrija
 [Azerbaijan]
-
+Azerbejdžan
 [Bahamas]
-
+Bahami
 [Bahrain]
-
+Bahrein
 [Bangladesh]
-
+Bangladeš
 [Barbados]
-
+Barbados
 [Belarus]
-
+Bjelorusija
 [Belgium]
-
+belgija
 [Belize]
-
+Belize
 [Benin]
-
+Benin
 [Bermuda]
-
+Bermuda
 [Bhutan]
-
+Butan
 [Bolivia]
-
+Bolivija
 [Bosnia and Herzegovina]
-
+Bosna i Hercegovina
 [Botswana]
-
+Bocvana
 [Brazil]
-
+Brazil
 [British Virgin Islands]
 
 [Brunei]
-
+Brunei
 [Bulgaria]
-
+Bugarska
 [Burkina Faso]
-
+Burkina Faso
 [Burundi]
-
+Burundi
 [Cambodia]
-
+Kambodža
 [Cameroon]
-
+Kamerun
 [Canada]
-
+Kanada
 [Canary Islands]
 
 [Cape Verde]
-
+Cape Verde
 [Cayman Islands]
-
+Kajmanski otoci
 [Central African Republic]
-
+Srednjoafrička republika
 [Chad]
-
+Čad
 [Chile]
-
+Čile
 [China]
-
+Kina
 [Colombia]
-
+Kolumbija
 [Comoros]
-
+Komori
 [Congo, Democratic Republic of the]
-
+Demokratska republika kongo
 [Congo, Republic of the]
-
+Republika kongo
 [Cook Islands]
-
+Kukovi otoci
 [Costa Rica]
-
+Kosta rika
 [Cote d'Ivoire]
-
+Cote d'Ivoire
 [Croatia]
-
+Hrvatska
 [Cuba]
-
+Kuba
 [Greek, Republic of South Cyprus]
 
 [Czech Republic]
-
+češka
 [Denmark]
-
+danska
 [Diego Garcia]
 
 [Djibouti]
-
+džibuti
 [Dominica]
-
+dominika
 [Dominican Republic]
-
+Dominikanska republika
 [Ecuador]
-
+Ekvador
 [Egypt]
-
+Egipat
 [El Salvador]
-
+El Salvador
 [Equatorial Guinea]
-
+Ekvatorijalna gvineja
 [Eritrea]
-
+Eritreja
 [Estonia]
-
+Estonija
 [Ethiopia]
-
+Etiopija
 [Europe]
 
 [Faroe Islands]
-
+Farski otoci
 [Falkland Islands]
 
 [Fiji]
-
+Fidži
 [Finland]
-
+Finska
 [France]
-
+Francuska
 [French Antilles]
 
 [French Guiana]
-
+Francuska gvajana
 [French Polynesia]
-
+Francuska polinezija
 [Gabon]
-
+Gabon
 [Gambia]
-
+Gambija
 [Georgia]
-
+Gruzija
 [Germany]
-
+Njemačka
 [Ghana]
-
+Gana
 [Gibraltar]
-
+Gibraltar
 [Greece]
-
+Grčka
 [Greenland]
-
+Grenland
 [Grenada]
-
+Grenada
 [Guadeloupe]
-
+Gvadalupa
 [Guam, US Territory of]
 
 [Guatemala]
-
+gvatemala
 [Guinea]
-
+gvineja
 [Guinea-Bissau]
-
+gvinea bisao
 [Guyana]
-
+giana
 [Haiti]
-
+Haiti
 [Honduras]
-
+Honduras
 [Hong Kong]
-
+Hong Kong
 [Hungary]
-
+Mađarska
 [Iceland]
-
+Island
 [India]
-
+Indija
 [Indonesia]
-
+Indonezija
 [Iran]
-
+Iran
 [Iraq]
-
+Irak
 [Ireland]
-
+Irska
 [Israel]
-
+Izrael
 [Italy]
-
+Italija
 [Jamaica]
-
+Jamajka
 [Japan]
-
+Japan
 [Jordan]
-
+Jordan
 [Kazakhstan]
-
+Kazahstan
 [Kenya]
-
+Kenija
 [Kiribati]
-
+Kiribati
 [Korea, North]
 
 [Korea, South]
 
 [Kuwait]
-
+Kuvajt
 [Kyrgyzstan]
-
+Kirgistan
 [Laos]
-
+Laos
 [Latvia]
-
+Letonija
 [Lebanon]
-
+Libanon
 [Lesotho]
-
+Lesoto
 [Liberia]
-
+Liberija
 [Libya]
-
+Libija
 [Liechtenstein]
-
+Lihtenštajn
 [Lithuania]
-
+Litva
 [Luxembourg]
-
+Luksemburg
 [Macau]
-
+Makao
 [Macedonia, Republic of]
 
 [Madagascar]
-
+Madagaskar
 [Malawi]
-
+Malawi
 [Malaysia]
-
+Malezija
 [Maldives]
-
+Maldivi
 [Mali]
-
+Mali
 [Malta]
-
+malta
 [Marshall Islands]
-
+Maršalovi otoci
 [Martinique]
-
+Martinik
 [Mauritania]
-
+Mauritania
 [Mauritius]
-
+Mauricijus
 [Mayotte]
-
+Majot
 [Mexico]
-
+Meksiko
 [Micronesia, Federated States of]
-
+Federativne države mikronezije
 [Moldova]
-
+Moldavija
 [Monaco]
-
+Monako
 [Mongolia]
-
+Mongolija
 [Montserrat]
-
+Moncerat
 [Morocco]
-
+Maroko
 [Mozambique]
-
+Mozambik
 [Myanmar]
-
+Myanmar (burma)
 [Namibia]
-
+Namibija
 [Nauru]
-
+Nauru
 [Nepal]
-
+Nepal
 [Netherlands]
-
+Nizozemska
 [Netherlands Antilles]
 
 [St. Maarten]
 
 [Curacao]
-
+Kurakao
 [Netherlands (Bonaire Island)]
 
 [Netherlands (Saba Island)]
@@ -872,27 +872,27 @@ Zatvaranje za %d
 [Netherlands (St. Eustatius Island)]
 
 [New Caledonia]
-
+Nova kaledonija
 [New Zealand]
-
+Novi zeland
 [Nicaragua]
-
+Nikaragva
 [Niger]
-
+Niger
 [Nigeria]
-
+Nigerija
 [Niue]
-
+Niue
 [Northern Mariana Islands, US Territory of]
 
 [Norway]
-
+norveška
 [Oman]
-
+Oman
 [Pakistan]
-
+Pakistan
 [Palau]
-
+Palau
 [Panama]
 Panama
 [Papua New Guinea]
@@ -1046,7 +1046,7 @@ Srbija
 [Kosovo, Republic of]
 
 [Montenegro]
-
+Crna gora
 [Zambia]
 zambija
 [Zimbabwe]
@@ -1467,11 +1467,11 @@ zimbabve
 
 ;file \protocols\IcqOscarJ\src\icq_menu.cpp
 [Request authorization]
-
+Zahtjevaj autorizaciju
 [Grant authorization]
-
+Autoriziraj
 [Revoke authorization]
-
+Odbaci autorizaciju
 [Add to server list]
 
 [Show custom status details]

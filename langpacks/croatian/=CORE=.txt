@@ -2640,449 +2640,449 @@ sve datoteke
 [Could not start a search on '%s', there was a problem - is %s connected?]
 
 [Could not search on any of the protocols, are you online?]
-
+Nije moguće traženje na bilo kojem od protokola. Jeste li na mreži?
 [Problem with search]
-
+Problem sa traženjem
 [1 %s user found]
-
+1 %s korisnik je pronađen
 [%d %s users found]
-
+%d %s pronađenih korisnika
 [%d users found (]
-
+%d pronađenih korisnika (
 [No users found]
-
+Nema pronađenih korisnika
 ;file \src\mir_app\src\skin2opts.cpp
 [Icon sets]
-
+Setovi ikona
 ;file \src\mir_app\src\skinicons.cpp
 [User online]
-
+Korisnik je na mreži
 [Group (open)]
-
+Grupa je otvorena
 [Group (closed)]
-
+Grupa je zattvorena
 [User details]
-
+Pojedinosti o korisniku
 [History]
-
+Povijest
 [Down arrow]
-
+Strelica dolje
 [Find user]
-
+Pronađi korisnika
 [Search all]
-
+Traži sve
 [Tick]
-
+Kvačica
 [No tick]
-
+nema kvačice
 [Help]
-
+Pomoć
 [Miranda website]
-
+Web stranica mirande
 [Small dot]
-
+Mala točka
 [Filled blob]
-
+popunjeni blob
 [Empty blob]
-
+prazni blob
 [Unicode plugin]
-
+unicode kodirani dodatak
 [ANSI plugin]
-
+Dodatak u kodiranju ansi
 [Running plugin]
-
+Pokrenuti Dodatak
 [Unloaded plugin]
-
+Ugašen dodatak
 [Show/Hide]
-
+Prikaži / Sakrij
 [Exit]
-
+Izlaz
 [Join chat]
-
+Uđi u čavrljanje
 [Leave chat]
-
+Napusti čavrljanje
 [Move to group]
-
+Premjesti na grupu
 [On]
-
+Uključen
 [Off]
-
+isključen
 [Running core plugin]
-
+Pokrenut glavni dodatak
 [Non-loadable plugin]
-
+Dodatak koji nije moguće pokrenuti
 [Frames]
-
+Okviri
 [Add group]
-
+Dodaj grupu
 [Request authorization]
-
+Zahtjevaj autorizaciju
 [Grant authorization]
-
+Autoriziraj
 [Revoke authorization]
-
+Odbaci autorizaciju
 [Warning]
-
+Upozorenje
 [Always visible]
-
+Uvijek vidljiv
 [Always invisible]
-
+Uvjek nevidljiv
 [Locked status]
-
+Zaključani status
 [Status icons]
-
+Statusne ikone
 [%s icons]
-
+%s Ikone
 [Main icons]
-
+Glavne ikone
 ;file \src\mir_app\src\sounds.cpp
 [Sound files]
-
+zvučne datoteke
 [WAV files]
-
+WAV datoteke
 ;file \src\mir_app\src\utils.cpp
 [Unspecified]
-
+Nespecificirano
 [Afghanistan]
-
+Avganistan
 [Aland Islands]
-
+Alandski otoci
 [Albania]
-
+Albanija
 [Algeria]
-
+Alžir
 [American Samoa]
-
+Američka samoa
 [Andorra]
-
+Andora
 [Angola]
-
+Angola
 [Anguilla]
-
+Angvila
 [Antarctica]
-
+Anktarktika
 [Antigua and Barbuda]
-
+Antigva i barbuda
 [Argentina]
-
+Argentina
 [Armenia]
-
+Armenija
 [Aruba]
-
+Aruba
 [Australia]
-
+Australija
 [Austria]
-
+Austrija
 [Azerbaijan]
-
+Azerbejdžan
 [Bahamas]
-
+Bahami
 [Bahrain]
-
+Bahrein
 [Bangladesh]
-
+Bangladeš
 [Barbados]
-
+Barbados
 [Belarus]
-
+Bjelorusija
 [Belgium]
-
+belgija
 [Belize]
-
+Belize
 [Benin]
-
+Benin
 [Bermuda]
-
+Bermuda
 [Bhutan]
-
+Butan
 [Bolivia]
-
+Bolivija
 [Bonaire, Sint Eustatius and Saba]
-
+Boner, Sveti evstatije i sava
 [Bosnia and Herzegovina]
-
+Bosna i Hercegovina
 [Botswana]
-
+Bocvana
 [Bouvet Island]
-
+Buvetov otok
 [Brazil]
-
+Brazil
 [British Indian Ocean Territory]
-
+Britanski teritorij indijskog oceana
 [Brunei]
-
+Brunei
 [Bulgaria]
-
+Bugarska
 [Burkina Faso]
-
+Burkina Faso
 [Burundi]
-
+Burundi
 [Cambodia]
-
+Kambodža
 [Cameroon]
-
+Kamerun
 [Canada]
-
+Kanada
 [Cape Verde]
-
+Cape Verde
 [Cayman Islands]
-
+Kajmanski otoci
 [Central African Republic]
-
+Srednjoafrička republika
 [Chad]
-
+Čad
 [Chile]
-
+Čile
 [China]
-
+Kina
 [Christmas Island]
-
+Božični otok
 [Cocos (Keeling) Islands]
-
+Kokosovi otoci
 [Colombia]
-
+Kolumbija
 [Comoros]
-
+Komori
 [Congo, Republic of the]
-
+Republika kongo
 [Congo, Democratic Republic of the]
-
+Demokratska republika kongo
 [Cook Islands]
-
+Kukovi otoci
 [Costa Rica]
-
+Kosta rika
 [Cote d'Ivoire]
-
+Cote d'Ivoire
 [Croatia]
-
+Hrvatska
 [Cuba]
-
+Kuba
 [Curacao]
-
+Kurakao
 [Cyprus]
-
+cipar
 [Czech Republic]
-
+češka
 [Denmark]
-
+danska
 [Djibouti]
-
+džibuti
 [Dominica]
-
+dominika
 [Dominican Republic]
-
+Dominikanska republika
 [East Timor]
-
+Istočni timor
 [Ecuador]
-
+Ekvador
 [Egypt]
-
+Egipat
 [El Salvador]
-
+El Salvador
 [Equatorial Guinea]
-
+Ekvatorijalna gvineja
 [Eritrea]
-
+Eritreja
 [Estonia]
-
+Estonija
 [Ethiopia]
-
+Etiopija
 [Falkland Islands (Malvinas)]
-
+Falklandovo otočje
 [Faroe Islands]
-
+Farski otoci
 [Fiji]
-
+Fidži
 [Finland]
-
+Finska
 [France]
-
+Francuska
 [French Guiana]
-
+Francuska gvajana
 [French Polynesia]
-
+Francuska polinezija
 [French Southern and Antarctic Lands]
-
+Francuske južne i anktartičke zemlje
 [Gabon]
-
+Gabon
 [Gambia]
-
+Gambija
 [Georgia]
-
+Gruzija
 [Germany]
-
+Njemačka
 [Ghana]
-
+Gana
 [Gibraltar]
-
+Gibraltar
 [Greece]
-
+Grčka
 [Greenland]
-
+Grenland
 [Grenada]
-
+Grenada
 [Guadeloupe]
-
+Gvadalupa
 [Guam]
-
+Guam
 [Guatemala]
-
+gvatemala
 [Guernsey]
-
+Guernsey
 [Guinea]
-
+gvineja
 [Guinea-Bissau]
-
+gvinea bisao
 [Guyana]
-
+giana
 [Haiti]
-
+Haiti
 [Heard Island and McDonald Islands]
-
+Heard Island and McDonald Islands
 [Honduras]
-
+Honduras
 [Hong Kong]
-
+Hong Kong
 [Hungary]
-
+Mađarska
 [Iceland]
-
+Island
 [India]
-
+Indija
 [Indonesia]
-
+Indonezija
 [Iran]
-
+Iran
 [Iraq]
-
+Irak
 [Ireland]
-
+Irska
 [Isle of Man]
-
+Isle of Man
 [Israel]
-
+Izrael
 [Italy]
-
+Italija
 [Jamaica]
-
+Jamajka
 [Japan]
-
+Japan
 [Jersey]
-
+Jersey
 [Jordan]
-
+Jordan
 [Kazakhstan]
-
+Kazahstan
 [Kenya]
-
+Kenija
 [Kiribati]
-
+Kiribati
 [North Korea]
-
+Sjeverna koreja
 [South Korea]
-
+Južna koreja
 [Kuwait]
-
+Kuvajt
 [Kyrgyzstan]
-
+Kirgistan
 [Laos]
-
+Laos
 [Latvia]
-
+Letonija
 [Lebanon]
-
+Libanon
 [Lesotho]
-
+Lesoto
 [Liberia]
-
+Liberija
 [Libya]
-
+Libija
 [Liechtenstein]
-
+Lihtenštajn
 [Lithuania]
-
+Litva
 [Luxembourg]
-
+Luksemburg
 [Macau]
-
+Makao
 [Macedonia]
-
+Makedonija
 [Madagascar]
-
+Madagaskar
 [Malawi]
-
+Malawi
 [Malaysia]
-
+Malezija
 [Maldives]
-
+Maldivi
 [Mali]
-
+Mali
 [Malta]
-
+malta
 [Marshall Islands]
-
+Maršalovi otoci
 [Martinique]
-
+Martinik
 [Mauritania]
-
+Mauritania
 [Mauritius]
-
+Mauricijus
 [Mayotte]
-
+Majot
 [Mexico]
-
+Meksiko
 [Micronesia, Federated States of]
-
+Federativne države mikronezije
 [Moldova]
-
+Moldavija
 [Monaco]
-
+Monako
 [Mongolia]
-
+Mongolija
 [Montenegro]
-
+Crna gora
 [Montserrat]
-
+Moncerat
 [Morocco]
-
+Maroko
 [Mozambique]
-
+Mozambik
 [Myanmar]
-
+Myanmar (burma)
 [Namibia]
-
+Namibija
 [Nauru]
-
+Nauru
 [Nepal]
-
+Nepal
 [Netherlands]
-
+Nizozemska
 [New Caledonia]
-
+Nova kaledonija
 [New Zealand]
-
+Novi zeland
 [Nicaragua]
-
+Nikaragva
 [Niger]
-
+Niger
 [Nigeria]
-
+Nigerija
 [Niue]
-
+Niue
 [Norfolk Island]
-
+Norfolkovo otočje
 [Northern Mariana Islands]
-
+Sjeverni Marijanini otoci
 [Norway]
-
+norveška
 [Oman]
-
+Oman
 [Pakistan]
-
+Pakistan
 [Palau]
-
+Palau
 [Palestinian Territories]
-
+Palestinski teritoriji
 [Panama]
 Panama
 [Papua New Guinea]
