@@ -22,16 +22,99 @@ INT_PTR CSkypeProto::GetCallEventText(WPARAM, LPARAM lParam)
 	DBEVENTGETTEXT *pEvent = (DBEVENTGETTEXT *)lParam;
 
 	INT_PTR nRetVal = 0;
-	char *pszText = Translate("Incoming call");
+
+	ptrA pszText;
+	
+	switch (pEvent->dbei->eventType)
+	{
+	case SKYPE_DB_EVENT_TYPE_CALL_INFO:
+		{
+			CMStringA text;
+			HXML xml = xmlParseString(ptrT(mir_utf8decodeT((char*)pEvent->dbei->pBlob)), 0, _T("partlist"));
+			if (xml != NULL)
+			{
+				ptrA type(mir_t2a(xmlGetAttrValue(xml, _T("type"))));
+				bool bType = (!mir_strcmpi(type, "started")) ? 1 : 0;
+
+				for (int i = 0; i < xmlGetChildCount(xml); i++)
+				{
+					HXML xmlPart = xmlGetNthChild(xml, _T("part"), i);
+					if (xmlPart != NULL)
+					{
+						HXML xmlName = xmlGetChildByPath(xmlPart, _T("name"), 0);
+						if (xmlName != NULL)
+						{
+							text.AppendFormat(Translate("%s %s this call. \n"), _T2A(xmlGetText(xmlName)), bType ? Translate("enter") : Translate("left"));
+							xmlDestroyNode(xmlName);
+						}
+						xmlDestroyNode(xmlPart);
+					}
+				}
+				xmlDestroyNode(xml);
+			}
+			pszText = mir_strdup(text.GetBuffer());
+			break;
+		}
+	case SKYPE_DB_EVENT_TYPE_FILETRANSFER_INFO:
+		{
+			CMStringA text;
+			HXML xml = xmlParseString(ptrT(mir_utf8decodeT((char*)pEvent->dbei->pBlob)), 0, _T("files"));
+			if (xml != NULL)
+			{
+				for (int i = 0; i < xmlGetChildCount(xml); i++)
+				{
+					size_t fileSize = 0;
+					HXML xmlNode = xmlGetNthChild(xml, _T("file"), i);
+					if (xmlNode != NULL)
+					{
+						fileSize = _ttoi(ptrT((TCHAR*)xmlGetAttrValue(xmlNode, _T("size"))));
+						ptrA fileName(mir_utf8encodeT(ptrT((TCHAR*)xmlGetText(xmlNode))));
+						if (fileName != NULL)
+						{
+							CMStringA msg(FORMAT, "%s:\n\t%s: %s\n\t%s: %d %s", Translate("File transfer"), Translate("File name"), fileName, Translate("Size"), fileSize, Translate("bytes"));
+							text.AppendFormat("%s\n", msg);
+						}
+
+						xmlDestroyNode(xmlNode);
+					}
+				}
+				xmlDestroyNode(xml);
+			}
+			pszText = mir_strdup(text.GetBuffer());
+			break;
+		}
+	case SKYPE_DB_EVENT_TYPE_URIOBJ:
+		{
+			CMStringA text;
+			HXML xml = xmlParseString(ptrT(mir_utf8decodeT((char*)pEvent->dbei->pBlob)), 0, _T("URIObject"));
+			if (xml != NULL)
+			{
+				text.Append(_T2A(xmlGetText(xml)));
+				xmlDestroyNode(xml);
+			}
+			pszText = mir_strdup(text.GetBuffer());
+			break;
+
+		}
+	case SKYPE_DB_EVENT_TYPE_INCOMING_CALL:
+		{
+			pszText = Translate("Incoming call.");
+			break;
+		}
+	default:
+		{
+			pszText = mir_strdup((char*)pEvent->dbei->pBlob);
+		}
+	}
+
 
 	if (pEvent->datatype == DBVT_TCHAR)
 	{
 		TCHAR *pwszText = _A2T(pszText);
 		nRetVal = (INT_PTR)mir_tstrdup(pwszText);
 	}
-
 	else if (pEvent->datatype == DBVT_ASCIIZ)
-		nRetVal = (INT_PTR)mir_strdup(Translate(pszText));
+		nRetVal = (INT_PTR)mir_strdup(pszText);
 
 	return nRetVal;
 }
@@ -71,6 +154,7 @@ void CSkypeProto::InitDBEvents()
 	dbEventType.module = m_szModuleName;
 	dbEventType.flags = DETF_HISTORY | DETF_MSGWINDOW;
 	dbEventType.iconService = MODULE"/GetEventIcon";
+	dbEventType.textService = MODULE"/GetCallText";
 
 	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_ACTION;
 	dbEventType.descr = Translate("Action");
@@ -80,9 +164,16 @@ void CSkypeProto::InitDBEvents()
 	dbEventType.descr = Translate("Call information.");
 	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
 
+	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_FILETRANSFER_INFO;
+	dbEventType.descr = Translate("File transfer information.");
+	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
+
+	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_URIOBJ;
+	dbEventType.descr = Translate("Uri object.");
+	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
+
 	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_INCOMING_CALL;
 	dbEventType.descr = Translate("Incoming call");
-	dbEventType.textService = MODULE"/GetCallText";
 	dbEventType.flags |= DETF_NONOTIFY;
 	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
 }
@@ -135,4 +226,44 @@ int CSkypeProto::ProcessSrmmEvent(WPARAM, LPARAM lParam)
 		SetSrmmReadStatus(event->hContact);
 
 	return 0;
+}
+
+//Timers
+
+mir_cs timerLock;
+mir_cs CSkypeProto::accountsLock;
+
+void CSkypeProto::ProcessTimer()
+{
+	if (IsOnline())
+	{
+		PushRequest(new GetContactListRequest(m_szTokenSecret), &CSkypeProto::LoadContactList);
+		SendPresence(false);
+		if (!m_hTrouterThread)
+			SendRequest(new CreateTrouterRequest(), &CSkypeProto::OnCreateTrouter);
+	}
+}
+
+static VOID CALLBACK TimerProc(HWND, UINT, UINT_PTR, DWORD)
+{
+	mir_cslock lck(CSkypeProto::accountsLock);
+	for (int i = 0; i < Accounts.getCount(); i++)
+	{
+		Accounts[i]->ProcessTimer();
+	}
+}
+
+void CSkypeProto::SkypeSetTimer(void*)
+{
+	mir_cslock lck(timerLock);
+	if (!CSkypeProto::m_timer)
+		CSkypeProto::m_timer = SetTimer(NULL, 0, 600000, TimerProc);
+}
+
+void CSkypeProto::SkypeUnsetTimer(void*)
+{
+	mir_cslock lck(timerLock);
+	if (CSkypeProto::m_timer)
+		KillTimer(NULL, CSkypeProto::m_timer);
+	CSkypeProto::m_timer = 0;
 }
