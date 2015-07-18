@@ -178,7 +178,12 @@ int CSkypeProto::OnGroupChatEventHook(WPARAM, LPARAM lParam)
 		switch (gch->dwData)
 		{
 		case 10: {
-			MCONTACT hContact = (MCONTACT)DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_GC_INVITE), NULL, InviteDlgProc, (LPARAM)this);
+			CSkypeInviteDlg dlg(this);
+			if(!dlg.DoModal())
+			{
+				break;
+			}
+			MCONTACT hContact = dlg.m_hContact;
 			if (hContact != NULL)
 			{
 				ptrA username(db_get_sa(hContact, m_szModuleName, SKYPE_SETTINGS_ID));
@@ -554,10 +559,28 @@ void CSkypeProto::RemoveChatContact(const TCHAR *tchat_id, const char *id, const
 
 INT_PTR CSkypeProto::SvcCreateChat(WPARAM, LPARAM)
 {
-	if (!IsOnline())
-		return 1;
-	DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_GC_CREATE), NULL, GcCreateDlgProc, (LPARAM)this);
-	return 0;
+	if (IsOnline())
+	{
+		CSkypeGCCreateDlg dlg(this);
+		if (!dlg.DoModal())
+		{
+			return 1;
+		}
+		LIST<char>uids(1);
+		for (std::vector<MCONTACT>::size_type i = 0; i < dlg.m_hContacts.size(); i++)
+		{
+			uids.insert(db_get_sa(dlg.m_hContacts[i], m_szModuleName, SKYPE_SETTINGS_ID));
+		}
+		uids.insert(getStringA(SKYPE_SETTINGS_ID));
+
+		SendRequest(new CreateChatroomRequest(m_szRegToken, uids, ptrA(getStringA(SKYPE_SETTINGS_ID)), m_szServer));
+
+		for (int i = 0; i < uids.getCount(); i++)
+			mir_free(uids[i]);
+		uids.destroy();
+		return 0;
+	}
+	return 1;
 }
 
 /* Menus */
@@ -602,125 +625,6 @@ int CSkypeProto::OnGroupChatMenuHook(WPARAM, LPARAM lParam)
 
 
 	return 0;
-}
-
-/* Dialogs */
-
-INT_PTR CSkypeProto::GcCreateDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	CSkypeProto *ppro = (CSkypeProto*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
-	NMCLISTCONTROL* nmc;
-
-	switch (msg)
-	{
-	case WM_INITDIALOG:
-		TranslateDialogDefault(hwndDlg);
-
-		ppro = (CSkypeProto*)lParam;
-		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
-		{
-			HWND hwndClist = GetDlgItem(hwndDlg, IDC_CLIST);
-			SetWindowLongPtr(hwndClist, GWL_STYLE,
-				GetWindowLongPtr(hwndClist, GWL_STYLE) | CLS_CHECKBOXES | CLS_HIDEEMPTYGROUPS | CLS_USEGROUPS | CLS_GREYALTERNATE | CLS_GROUPCHECKBOXES);
-			SendMessage(hwndClist, CLM_SETEXSTYLE, CLS_EX_DISABLEDRAGDROP | CLS_EX_TRACKSELECT, 0);
-
-			ResetOptions(hwndDlg);
-		}
-		return TRUE;
-
-	case WM_NOTIFY:
-		nmc = (NMCLISTCONTROL*)lParam;
-		if (nmc->hdr.idFrom == IDC_CLIST && nmc->hdr.code == CLN_LISTREBUILT)
-			FilterContacts(hwndDlg, ppro);
-		break;
-
-	case WM_COMMAND:
-		switch (LOWORD(wParam)) {
-		case IDCANCEL:
-			EndDialog(hwndDlg, 0);
-			return TRUE;
-
-		case IDOK:
-			HWND hwndClist = GetDlgItem(hwndDlg, IDC_CLIST);
-			LIST<char>uids(1);
-			for (MCONTACT hContact = db_find_first(ppro->m_szModuleName); hContact; hContact = db_find_next(hContact, ppro->m_szModuleName)) {
-				if (ppro->isChatRoom(hContact))
-					continue;
-
-				if (int hItem = SendMessage(hwndClist, CLM_FINDCONTACT, hContact, 0)) {
-					if (SendMessage(hwndClist, CLM_GETCHECKMARK, (WPARAM)hItem, 0)) {
-						uids.insert(db_get_sa(hContact, ppro->m_szModuleName, SKYPE_SETTINGS_ID));
-					}
-				}
-			}
-			uids.insert(ppro->getStringA(SKYPE_SETTINGS_ID));
-
-			TCHAR tszTitle[1024];
-			GetDlgItemText(hwndDlg, IDC_TITLE, tszTitle, _countof(tszTitle));
-			ppro->SendRequest(new CreateChatroomRequest(ppro->m_szRegToken, uids, ptrA(ppro->getStringA(SKYPE_SETTINGS_ID)), ppro->m_szServer));
-			for (int i = 0; i < uids.getCount(); i++)
-				mir_free(uids[i]);
-			uids.destroy();
-			EndDialog(hwndDlg, 0);
-			return TRUE;
-		}
-	}
-	return FALSE;
-}
-
-INT_PTR CSkypeProto::InviteDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	switch (msg) {
-	case WM_INITDIALOG:
-		TranslateDialogDefault(hwndDlg);
-		{
-			CSkypeProto *ppro = (CSkypeProto*)lParam;
-			HWND hwndCombo = GetDlgItem(hwndDlg, IDC_CONTACT);
-			for (MCONTACT hContact = db_find_first(ppro->m_szModuleName); hContact; hContact = db_find_next(hContact, ppro->m_szModuleName)) {
-				if (ppro->isChatRoom(hContact)) continue;
-				TCHAR *ptszNick = pcli->pfnGetContactDisplayName(hContact, 0);
-				int idx = SendMessage(hwndCombo, CB_ADDSTRING, 0, LPARAM(ptszNick));
-				SendMessage(hwndCombo, CB_SETITEMDATA, idx, hContact);
-			}
-			SendMessage(hwndCombo, CB_SETCURSEL, 0, 0);
-		}
-		return TRUE;
-
-	case WM_COMMAND:
-		switch (LOWORD(wParam)) {
-		case IDCANCEL:
-			EndDialog(hwndDlg, 0);
-			return TRUE;
-
-		case IDOK:
-			int idx = SendDlgItemMessage(hwndDlg, IDC_CONTACT, CB_GETCURSEL, 0, 0);
-			if (idx != -1)
-				EndDialog(hwndDlg, SendDlgItemMessage(hwndDlg, IDC_CONTACT, CB_GETITEMDATA, idx, 0));
-			else
-				EndDialog(hwndDlg, 0);
-			return TRUE;
-		}
-	}
-
-	return 0;
-}
-
-void CSkypeProto::FilterContacts(HWND hwndDlg, CSkypeProto *ppro)
-{
-	HWND hwndClist = GetDlgItem(hwndDlg, IDC_CLIST);
-	for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact)) {
-		char *proto = GetContactProto(hContact);
-		if (mir_strcmp(proto, ppro->m_szModuleName) || ppro->isChatRoom(hContact))
-			if (HANDLE hItem = (HANDLE)SendMessage(hwndClist, CLM_FINDCONTACT, hContact, 0))
-				SendMessage(hwndClist, CLM_DELETEITEM, (WPARAM)hItem, 0);
-	}
-}
-
-void CSkypeProto::ResetOptions(HWND hwndDlg)
-{
-	HWND hwndClist = GetDlgItem(hwndDlg, IDC_CLIST);
-	SendMessage(hwndClist, CLM_SETHIDEEMPTYGROUPS, 1, 0);
-	SendMessage(hwndClist, CLM_GETHIDEOFFLINEROOT, 1, 0);
 }
 
 CMString CSkypeProto::ChangeTopicForm()

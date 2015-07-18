@@ -71,12 +71,26 @@
 Введите новую тему комнаты чата
 [Are you sure?]
 Вы уверены?
-[Incoming call]
-Входящий звонок
+[%s %s this call.\n]
+%s %s вызов.\n
+[enters]
+начинает
+[leaves]
+завершает
+[File transfer:\n\tFile name: %s\n\tSize: %d bytes]
+Передача файлов:\n\tНазвание: %s\n\tРазмер: %d Байт
+[Incoming call.]
+Входящий звонок.
 [Action]
 Действие
 [Call information.]
 Информация о звонке.
+[File transfer information.]
+Информация о передаче файла.
+[Uri object.]
+URI объект.
+[Incoming call]
+Входящий звонок
 [Calls]
 Звонки
 [Notifications]
@@ -85,22 +99,6 @@
 Ошибки
 [Edited at]
 Отредактировано в
-[Call started]
-Начало беседы
-[Call ended]
-Окончание беседы
-[Duration]
-Продолжительность
-[File transfer]
-Передача файла
-[File name]
-Имя файла
-[Size]
-Размер
-[bytes]
-байт
-[Image]
-Изображение
 [Protocol icon]
 Значок протокола
 [Create new chat icon]

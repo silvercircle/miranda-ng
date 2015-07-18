@@ -27,9 +27,9 @@ void CMLua::Load()
 	luaL_openlibs(L);
 
 	lua_getglobal(L, "package");
-	lua_pushstring(L, "");
+	lua_pushliteral(L, "");
 	lua_setfield(L, -2, "path");
-	lua_pushstring(L, "");
+	lua_pushliteral(L, "");
 	lua_setfield(L, -2, "cpath");
 	lua_pop(L, 1);
 
@@ -59,7 +59,8 @@ void CMLua::Unload()
 	CallService(MS_NETLIB_LOG, (WPARAM)hNetlib, (LPARAM)"Unloading lua engine");
 
 	NotifyEventHooks(hUnloadEvent);
-
+	
+	::KillModuleIcons(hScriptsLangpack);
 	::KillModuleMenus(hScriptsLangpack);
 	CMLua::KillModuleServices();
 	CMLua::KillModuleEventHooks();
@@ -73,6 +74,11 @@ void CMLua::Reload()
 {
 	Unload();
 	Load();
+}
+
+void CMLua::Reload(const TCHAR* path)
+{
+	CLuaScriptLoader::Reload(g_mLua->L, path);
 }
 
 void CMLua::KillModuleEventHooks()

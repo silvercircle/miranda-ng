@@ -1,0 +1,6 @@
+﻿[%s %s this call. \n]
+[enter]
+[left]
+[bytes]
+[File transfer information.]
+[Uri object.]
