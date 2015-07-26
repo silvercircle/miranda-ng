@@ -18,13 +18,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AVS", "..\plugins\AVS\avs.v
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Zlib", "..\libs\zlib\zlib.vcxproj", "{E2A369CD-EDA3-414F-8AD0-E732CD7EE68C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Import", "..\plugins\Import\import_12.vcxproj", "{9299B507-1AF9-4C93-9560-5F637D1E0C9E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Import", "..\plugins\Import\import.vcxproj", "{9299B507-1AF9-4C93-9560-5F637D1E0C9E}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Dbx_mmap", "..\plugins\db3x_mmap\db3x_mmap.vcxproj", "{20D781FB-4A20-4B75-B863-304A47182966}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AdvaImg", "..\plugins\AdvaImg\AdvaImg_12.vcxproj", "{D0C4EACD-F264-4CFA-9AFC-3918FEC31A9A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ModernOpt", "..\plugins\modernopt\modernopt_12.vcxproj", "{153DD132-084C-4DE4-8F40-A088BCB22723}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ModernOpt", "..\plugins\modernopt\modernopt.vcxproj", "{153DD132-084C-4DE4-8F40-A088BCB22723}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TabSRMM", "..\plugins\TabSRMM\tabsrmm_12.vcxproj", "{99D26CA1-BFD4-4E77-9A1E-919E54CF33F7}"
 EndProject

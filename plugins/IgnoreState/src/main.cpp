@@ -18,7 +18,7 @@
 
    */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 HINSTANCE g_hInst;
 
@@ -74,7 +74,7 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-inline BOOL checkState(int type)
+BOOL checkState(int type)
 {
 	return ((currentFilter >> (type - 1)) & 1);
 }
@@ -97,13 +97,13 @@ void applyExtraImage(MCONTACT hContact)
 {
 	int ignore = isIgnored(hContact, IGNOREEVENT_ALL);
 	if (ignore == 1)
-		ExtraIcon_SetIcon(hExtraIcon, hContact, "ignore_full");
+		ExtraIcon_SetIconByName(hExtraIcon, hContact, "ignore_full");
 	else if (ignore == 0)
 		ExtraIcon_Clear(hExtraIcon, hContact);
 	else if (isIgnored(hContact, IGNOREEVENT_MESSAGE))
-		ExtraIcon_SetIcon(hExtraIcon, hContact, "ignore_mess");
+		ExtraIcon_SetIconByName(hExtraIcon, hContact, "ignore_mess");
 	else
-		ExtraIcon_SetIcon(hExtraIcon, hContact, "ignore_part");
+		ExtraIcon_SetIconByName(hExtraIcon, hContact, "ignore_part");
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -169,7 +169,7 @@ extern "C" int __declspec(dllexport) Load(void)
 	//IcoLib support
 	Icon_Register(g_hInst, LPGEN("Ignore State"), iconList, _countof(iconList));
 
-	hExtraIcon = ExtraIcon_Register("ignore", LPGEN("Ignore State"), "ignore_full");
+	hExtraIcon = ExtraIcon_RegisterIcolib("ignore", LPGEN("Ignore State"), "ignore_full");
 
 	return 0;
 }

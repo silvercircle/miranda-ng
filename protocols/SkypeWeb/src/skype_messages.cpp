@@ -141,11 +141,8 @@ void CSkypeProto::OnPrivateMessageEvent(const JSONNode &node)
 	std::string composeTime = node["composetime"].as_string();
 	time_t timestamp = getByte("UseLocalTime", 0) ? time(NULL) : IsoToUnixTime(composeTime.c_str());
 
-	std::string conversationLink = node["conversationLink"].as_string();
-	std::string fromLink = node["from"].as_string();
-
-	CMStringA skypename(ContactUrlToName(conversationLink.c_str()));
-	CMStringA from(ContactUrlToName(fromLink.c_str()));
+	CMStringA skypename(ContactUrlToName(node["conversationLink"].as_string().c_str()));
+	CMStringA from(ContactUrlToName(node["from"].as_string().c_str()));
 
 	std::string content = node["content"].as_string();
 	int emoteOffset = node["skypeemoteoffset"].as_int();
@@ -171,7 +168,7 @@ void CSkypeProto::OnPrivateMessageEvent(const JSONNode &node)
 			int hMessage = atoi(clientMsgId.c_str());
 			ProtoBroadcastAck(hContact, ACKTYPE_MESSAGE, ACKRESULT_SUCCESS, (HANDLE)hMessage, 0);
 			debugLogA(__FUNCTION__" timestamp = %d clientmsgid = %s", timestamp, clientMsgId);
-			AddDbEvent(emoteOffset == 0 ? EVENTTYPE_MESSAGE : SKYPE_DB_EVENT_TYPE_ACTION, hContact, timestamp, DBEF_UTF | DBEF_SENT, &content.c_str()[emoteOffset], clientMsgId.c_str());
+			AddDbEvent(emoteOffset == 0 ? EVENTTYPE_MESSAGE : SKYPE_DB_EVENT_TYPE_ACTION, hContact, timestamp, DBEF_UTF | DBEF_SENT, &message[emoteOffset], clientMsgId.c_str());
 			return;
 		}
 		CallService(MS_PROTO_CONTACTISTYPING, hContact, PROTOTYPE_CONTACTTYPING_OFF);
@@ -180,27 +177,9 @@ void CSkypeProto::OnPrivateMessageEvent(const JSONNode &node)
 		MEVENT dbevent = GetMessageFromDb(hContact, skypeEditedId.c_str());
 		if (isEdited && dbevent != NULL)
 		{
-			DBEVENTINFO dbei = { sizeof(dbei) };
-			CMStringA msg;
-			dbei.cbBlob = db_event_getBlobSize(dbevent);
-			dbei.pBlob = mir_ptr<BYTE>((PBYTE)mir_alloc(dbei.cbBlob));
-
-			db_event_get(dbevent, &dbei);
-
-			time_t dbEventTimestamp = dbei.timestamp;
-
-			char *dbMsgText = NEWSTR_ALLOCA((char *)dbei.pBlob);
-
-			TCHAR time[64];
-			_locale_t locale = _create_locale(LC_ALL, "");
-			_tcsftime_l(time, sizeof(time), L"%X %x", localtime(&timestamp), locale);
-			_free_locale(locale);
-
-			msg.AppendFormat("%s\n%s %s:\n%s", mir_utf8decodeA(dbMsgText), Translate("Edited at"), T2Utf(time), mir_utf8decodeA(message));
-			db_event_delete(hContact, dbevent);
-			AddDbEvent(EVENTTYPE_MESSAGE, hContact, dbEventTimestamp, DBEF_UTF, ptrA(mir_utf8encode(msg.GetBuffer())), skypeEditedId.c_str());
+			AppendDBEvent(hContact, dbevent, message, skypeEditedId.c_str(), timestamp);
 		}
-		else OnReceiveMessage(clientMsgId.c_str(), conversationLink.c_str(), timestamp, message, emoteOffset);
+		else OnReceiveMessage(clientMsgId.c_str(), node["conversationLink"].as_string().c_str(), timestamp, message, emoteOffset);
 	}
 	else if (!mir_strcmpi(messageType.c_str(), "Event/SkypeVideoMessage")) {}
 	else if (!mir_strcmpi(messageType.c_str(), "Event/Call"))
@@ -231,11 +210,11 @@ void CSkypeProto::MarkMessagesRead(MCONTACT hContact, MEVENT hDbEvent)
 {
 	debugLogA(__FUNCTION__);
 	ptrA username(db_get_sa(hContact, m_szModuleName, SKYPE_SETTINGS_ID));
+	
 	DBEVENTINFO dbei = { sizeof(dbei) };
-
 	db_event_get(hDbEvent, &dbei);
-
 	time_t timestamp = dbei.timestamp;
 
-	PushRequest(new MarkMessageReadRequest(username, m_szRegToken, timestamp, timestamp, false, m_szServer));
+	if(db_get_dw(hContact, m_szModuleName, "LastMsgTime", 0) > (timestamp - 300))
+		PushRequest(new MarkMessageReadRequest(username, m_szRegToken, timestamp, timestamp, false, m_szServer));
 }

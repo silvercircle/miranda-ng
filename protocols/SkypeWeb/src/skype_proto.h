@@ -21,23 +21,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 typedef void(CSkypeProto::*SkypeResponseCallback)(const NETLIBHTTPREQUEST *response);
 typedef void(CSkypeProto::*SkypeResponseWithArgCallback)(const NETLIBHTTPREQUEST *response, void *arg);
 
-struct TRInfo
-{
-	std::string 
-				socketIo,
-				connId,
-				st,
-				se,
-				instance,
-				ccid,
-				sessId,
-				sig,
-				url;
-};
-
 struct CSkypeProto : public PROTO < CSkypeProto >
 {
-	friend CSkypePasswordEditor;
+	friend CSkypeGCCreateDlg;
 
 public:
 
@@ -56,18 +42,12 @@ public:
 	virtual	int       __cdecl Authorize(MEVENT hDbEvent);
 	virtual	int       __cdecl AuthDeny(MEVENT hDbEvent, const TCHAR* szReason);
 	virtual	int       __cdecl AuthRecv(MCONTACT hContact, PROTORECVEVENT*);
-
 	virtual	DWORD_PTR __cdecl GetCaps(int type, MCONTACT hContact = NULL);
 	virtual	int       __cdecl GetInfo(MCONTACT hContact, int infoType);
-
 	virtual	HANDLE    __cdecl SearchBasic(const TCHAR* id);
-
 	virtual	int       __cdecl SendMsg(MCONTACT hContact, int flags, const char* msg);
-
 	virtual	int       __cdecl SetStatus(int iNewStatus);
-
 	virtual	int       __cdecl UserIsTyping(MCONTACT hContact, int type);
-
 	virtual	int       __cdecl OnEvent(PROTOEVENTTYPE iEventType, WPARAM wParam, LPARAM lParam);
 
 	// accounts
@@ -100,33 +80,41 @@ public:
 	static int CompareAccounts(const CSkypeProto *p1, const CSkypeProto *p2);
 	void ProcessTimer();
 	static INT_PTR EventGetIcon(WPARAM wParam, LPARAM lParam);
-	static INT_PTR GetCallEventText(WPARAM, LPARAM lParam);
+	static INT_PTR GetEventText(WPARAM, LPARAM lParam);
 	static mir_cs accountsLock;
 
 private:
-	char *password;
 	RequestQueue *requestQueue;
-	bool isTerminated;
+
+	bool isTerminated,
+		HistorySynced;
 	std::map<std::string, std::string> cookies;
-	HANDLE m_pollingConnection, m_hPollingThread, m_hTrouterThread, m_TrouterConnection, m_hTrouterEvent, m_hCallHook;
 	static std::map<std::tstring, std::tstring> languages;
 
-	static INT_PTR CALLBACK PasswordEditorProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-	bool HistorySynced;
+	HANDLE m_pollingConnection,
+		m_hPollingThread,
+		m_hTrouterThread,
+		m_TrouterConnection,
+		m_hTrouterEvent,
+		m_hCallHook;
 
 	TRInfo TRouter;
 
-	HANDLE
-		m_hPopupClassCall,
-		m_hPopupClassNotify;
+	LIST<void> m_PopupClasses;
 
+	LIST<CSkypeInviteDlg> m_InviteDialogs;
+	LIST<CSkypeGCCreateDlg> m_GCCreateDialogs;
+	mir_cs m_InviteDialogsLock;
+	mir_cs m_GCCreateDialogsLock;
 	// accounts
 
-	ptrA m_szServer, m_szRegToken, m_szTokenSecret, m_szEndpointId, m_szSelfSkypeName;
+	ptrA m_szServer,
+		m_szRegToken,
+		m_szTokenSecret,
+		m_szEndpointId,
+		m_szSelfSkypeName;
 
 	static CSkypeProto* GetContactAccount(MCONTACT hContact);
-
 	int __cdecl OnAccountLoaded(WPARAM, LPARAM);
 
 	INT_PTR __cdecl OnAccountManagerInit(WPARAM, LPARAM);
@@ -241,6 +229,7 @@ private:
 
 	MEVENT GetMessageFromDb(MCONTACT hContact, const char *messageId, LONGLONG timestamp = 0);
 	MEVENT AddDbEvent(WORD type, MCONTACT hContact, DWORD timestamp, DWORD flags, const char *content, const char *uid);
+	MEVENT AppendDBEvent(MCONTACT hContact, MEVENT hEvent, const char *szContent, const char *szUid, time_t edit_time);
 	int OnReceiveMessage(const char *messageId, const char *url, time_t timestamp, char *content, int emoteOffset = 0, bool isRead = false);
 
 	int OnSendMessage(MCONTACT hContact, int flags, const char *message);
@@ -329,6 +318,7 @@ private:
 	time_t GetLastMessageTime(MCONTACT hContact);
 	CMString RunConfirmationCode();
 	CMString ChangeTopicForm();
+	void CloseDialogs();
 	//events
 	void InitDBEvents();
 	int __cdecl ProcessSrmmEvent(WPARAM, LPARAM);

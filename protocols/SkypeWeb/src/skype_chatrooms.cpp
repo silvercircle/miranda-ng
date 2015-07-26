@@ -179,16 +179,19 @@ int CSkypeProto::OnGroupChatEventHook(WPARAM, LPARAM lParam)
 		{
 		case 10: {
 			CSkypeInviteDlg dlg(this);
-			if(!dlg.DoModal())
-			{
-				break;
-			}
+
+			{ mir_cslock lck(m_InviteDialogsLock); m_InviteDialogs.insert(&dlg); }
+
+			if(!dlg.DoModal()) break;
 			MCONTACT hContact = dlg.m_hContact;
 			if (hContact != NULL)
 			{
 				ptrA username(db_get_sa(hContact, m_szModuleName, SKYPE_SETTINGS_ID));
 				SendRequest(new InviteUserToChatRequest(m_szRegToken, chat_id, username, "User", m_szServer));
 			}
+
+			{ mir_cslock lck(m_InviteDialogsLock); m_InviteDialogs.remove(&dlg); }
+
 			break;
 		}
 		case 20:
@@ -562,22 +565,14 @@ INT_PTR CSkypeProto::SvcCreateChat(WPARAM, LPARAM)
 	if (IsOnline())
 	{
 		CSkypeGCCreateDlg dlg(this);
-		if (!dlg.DoModal())
-		{
-			return 1;
-		}
-		LIST<char>uids(1);
-		for (std::vector<MCONTACT>::size_type i = 0; i < dlg.m_hContacts.size(); i++)
-		{
-			uids.insert(db_get_sa(dlg.m_hContacts[i], m_szModuleName, SKYPE_SETTINGS_ID));
-		}
-		uids.insert(getStringA(SKYPE_SETTINGS_ID));
 
-		SendRequest(new CreateChatroomRequest(m_szRegToken, uids, ptrA(getStringA(SKYPE_SETTINGS_ID)), m_szServer));
+		{ mir_cslock lck(m_GCCreateDialogsLock); m_GCCreateDialogs.insert(&dlg); }
 
-		for (int i = 0; i < uids.getCount(); i++)
-			mir_free(uids[i]);
-		uids.destroy();
+		if (!dlg.DoModal()) { return 1; }
+
+		SendRequest(new CreateChatroomRequest(m_szRegToken, dlg.m_ContactsList, ptrA(getStringA(SKYPE_SETTINGS_ID)), m_szServer));
+		
+		{ mir_cslock lck(m_GCCreateDialogsLock); m_GCCreateDialogs.remove(&dlg); }
 		return 0;
 	}
 	return 1;

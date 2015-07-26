@@ -17,8 +17,22 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-//CSkypeInvideDlg
+void CSkypeProto::CloseDialogs()
+{
+	{
+		mir_cslock lck(m_GCCreateDialogsLock);
+		for (int i = 0; i < m_GCCreateDialogs.getCount(); i++)
+			m_GCCreateDialogs[i]->Close();
+	}
 
+	{
+		mir_cslock lck(m_InviteDialogsLock);
+		for (int i = 0; i < m_InviteDialogs.getCount(); i++)
+			m_InviteDialogs[i]->Close();
+	}
+}
+
+//CSkypeInvideDlg
 CSkypeInviteDlg::CSkypeInviteDlg(CSkypeProto *proto) :
 	CSkypeDlgBase(proto, IDD_GC_INVITE, false), m_ok(this, IDOK), m_cancel(this, IDCANCEL), m_combo(this, IDC_CONTACT)
 {
@@ -43,11 +57,16 @@ void CSkypeInviteDlg::btnOk_OnOk(CCtrlButton*)
 }
 
 //CSkypeGCCreateDlg
-
 CSkypeGCCreateDlg::CSkypeGCCreateDlg(CSkypeProto *proto) :
-	CSkypeDlgBase(proto, IDD_GC_CREATE, false), m_ok(this, IDOK), m_cancel(this, IDCANCEL), m_clc(this, IDC_CLIST)
+	CSkypeDlgBase(proto, IDD_GC_CREATE, false), m_ok(this, IDOK), m_cancel(this, IDCANCEL), m_clc(this, IDC_CLIST), m_ContactsList(1)
 {
 	m_ok.OnClick = Callback(this, &CSkypeGCCreateDlg::btnOk_OnOk);
+}
+CSkypeGCCreateDlg::~CSkypeGCCreateDlg()
+{
+	for (int i = 0; i < m_ContactsList.getCount(); i++)
+		mir_free(m_ContactsList[i]);
+	m_ContactsList.destroy();
 }
 
 void CSkypeGCCreateDlg::OnInitDialog()
@@ -70,12 +89,15 @@ void CSkypeGCCreateDlg::btnOk_OnOk(CCtrlButton*)
 			{
 				if (m_clc.GetCheck(hItem)) 
 				{
-					m_hContacts.push_back(hContact);
+					char *szName = db_get_sa(hContact, m_proto->m_szModuleName, SKYPE_SETTINGS_ID);
+					if (szName != NULL)
+						m_ContactsList.insert(szName);
 				}
 			}
 		}
 	}
-	EndDialog(m_hwnd, 1);
+	m_ContactsList.insert(m_proto->m_szSelfSkypeName);
+	EndDialog(m_hwnd, m_ContactsList.getCount());
 }
 
 void CSkypeGCCreateDlg::FilterList(CCtrlClc *)

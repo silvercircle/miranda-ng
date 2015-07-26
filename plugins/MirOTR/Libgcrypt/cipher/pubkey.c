@@ -96,10 +96,10 @@ spec_from_name (const char *name)
 
   for (idx=0; (spec = pubkey_list[idx]); idx++)
     {
-      if (!stricmp (name, spec->name))
+      if (!_stricmp (name, spec->name))
         return spec;
       for (aliases = spec->aliases; *aliases; aliases++)
-        if (!stricmp (name, *aliases))
+        if (!_stricmp (name, *aliases))
           return spec;
     }
 
@@ -689,7 +689,7 @@ _gcry_pk_get_keygrip (gcry_sexp_t key, unsigned char *array)
           if (! data)
             goto fail;
 
-          snprintf (buf, sizeof buf, "(1:%c%u:", *s, (unsigned int)datalen);
+          _snprintf (buf, sizeof buf, "(1:%c%u:", *s, (unsigned int)datalen);
           _gcry_md_write (md, buf, strlen (buf));
           _gcry_md_write (md, data, datalen);
           sexp_release (l2);

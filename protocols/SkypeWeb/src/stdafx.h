@@ -67,6 +67,7 @@ extern LIST<CSkypeProto> Accounts;
 #include "skype_menus.h"
 #include "skype_dialogs.h"
 #include "skype_options.h"
+#include "skype_trouter.h"
 #include "http_request.h"
 #include "requests\login.h"
 #include "requests\profile.h"
@@ -102,7 +103,8 @@ enum SKYPE_DB_EVENT_TYPE
 	SKYPE_DB_EVENT_TYPE_INCOMING_CALL,
 	SKYPE_DB_EVENT_TYPE_CALL_INFO,
 	SKYPE_DB_EVENT_TYPE_FILETRANSFER_INFO,
-	SKYPE_DB_EVENT_TYPE_URIOBJ
+	SKYPE_DB_EVENT_TYPE_URIOBJ,
+	SKYPE_DB_EVENT_TYPE_EDITED_MESSAGE
 };
 
 #define SKYPE_SETTINGS_ID "Skypename"

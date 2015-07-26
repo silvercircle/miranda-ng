@@ -42,7 +42,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xStatus_MRA", "..\protocols
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Proto_Yahoo", "..\protocols\Yahoo\proto_yahoo\Proto_Yahoo.vcxproj", "{BFEBA9D5-CAB7-42C0-BE0B-0888A7A458AB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HistoryPP_icons", "..\plugins\HistoryPlusPlus\historypp_icons\HistoryPP_icons_10.vcxproj", "{B2E0D5C5-D418-4962-812A-FBC5C7FFC4B6}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HistoryPP_icons", "..\plugins\HistoryPlusPlus\historypp_icons\HistoryPP_icons.vcxproj", "{B2E0D5C5-D418-4962-812A-FBC5C7FFC4B6}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Proto_Omegle", "..\protocols\Omegle\proto_omegle\omegle_icons.vcxproj", "{C5AB34D2-15F5-4CBA-8F42-DB48A4E52910}"
 EndProject
@@ -52,9 +52,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TabSRMM_icons_XP", "..\plug
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Proto_Tlen", "..\protocols\Tlen\proto_tlen\Proto_Tlen.vcxproj", "{1AA0A504-0644-4F00-A1AD-F55D69E50DD1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Proto_mRadio", "..\plugins\mRadio\proto_mradio\Proto_mRadio_10.vcxproj", "{2BCC460C-E7C0-4AA8-B680-B9DE561A8408}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Proto_mRadio", "..\plugins\mRadio\proto_mradio\Proto_mRadio.vcxproj", "{2BCC460C-E7C0-4AA8-B680-B9DE561A8408}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Proto_NewsAggregator", "..\plugins\NewsAggregator\proto_newsaggregator\Proto_NewsAggregator_10.vcxproj", "{B97882DC-7462-41DB-A390-BDFCE5295265}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Proto_NewsAggregator", "..\plugins\NewsAggregator\proto_newsaggregator\Proto_NewsAggregator.vcxproj", "{B97882DC-7462-41DB-A390-BDFCE5295265}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Proto_Quotes", "..\plugins\Quotes\proto_Quotes\proto_Quotes_10.vcxproj", "{5A0A9761-78E1-4E0F-AD8C-8931A667A5F2}"
 EndProject
