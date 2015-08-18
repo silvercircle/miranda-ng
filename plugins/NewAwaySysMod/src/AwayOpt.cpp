@@ -71,20 +71,20 @@ COptPage g_MessagesOptPage(MOD_NAME, NULL);
 
 void EnableMessagesOptDlgControls(CMsgTree* MsgTree)
 {
-	int IsNotGroup = false;
-	int Selected = false;
+	bool bIsNotGroup = false;
+	bool bSelected = false;
 	CBaseTreeItem *TreeItem = MsgTree->GetSelection();
 	if (TreeItem && !(TreeItem->Flags & TIF_ROOTITEM)) {
-		IsNotGroup = !(TreeItem->Flags & TIF_GROUP);
-		Selected = true;
+		bIsNotGroup = !(TreeItem->Flags & TIF_GROUP);
+		bSelected = true;
 	}
-	g_MessagesOptPage.Enable(IDC_MESSAGEDLG_DEL, Selected);
-	g_MessagesOptPage.Enable(IDC_MESSAGEDLG_MSGTITLE, Selected);
+	g_MessagesOptPage.Enable(IDC_MESSAGEDLG_DEL, bSelected);
+	g_MessagesOptPage.Enable(IDC_MESSAGEDLG_MSGTITLE, bSelected);
 	for (int i = 0; i < g_MessagesOptPage.Items.GetSize(); i++)
 		if (g_MessagesOptPage.Items[i]->GetParam() == IDC_MESSAGEDLG_MSGTREE)
-			g_MessagesOptPage.Items[i]->Enable(IsNotGroup);
+			g_MessagesOptPage.Items[i]->Enable(bIsNotGroup);
 
-	SendDlgItemMessage(g_MessagesOptPage.GetWnd(), IDC_MESSAGEDLG_MSGDATA, EM_SETREADONLY, !IsNotGroup, 0);
+	SendDlgItemMessage(g_MessagesOptPage.GetWnd(), IDC_MESSAGEDLG_MSGDATA, EM_SETREADONLY, !bIsNotGroup, 0);
 	g_MessagesOptPage.MemToPage(true);
 }
 
@@ -333,13 +333,13 @@ COptPage g_MoreOptPage(MOD_NAME, NULL);
 
 void EnableMoreOptDlgControls()
 {
-	g_MoreOptPage.Enable(IDC_MOREOPTDLG_PERSTATUSPERSONAL, g_MoreOptPage.GetWndValue(IDC_MOREOPTDLG_SAVEPERSONALMSGS));
-	int Enabled = g_MoreOptPage.GetWndValue(IDC_MOREOPTDLG_RECENTMSGSCOUNT);
-	g_MoreOptPage.Enable(IDC_MOREOPTDLG_PERSTATUSMRM, Enabled);
-	g_MoreOptPage.Enable(IDC_MOREOPTDLG_USELASTMSG, Enabled);
-	g_MoreOptPage.Enable(IDC_MOREOPTDLG_USEDEFMSG, Enabled);
-	g_MoreOptPage.Enable(IDC_MOREOPTDLG_PERSTATUSPERSONAL, g_MoreOptPage.GetWndValue(IDC_MOREOPTDLG_SAVEPERSONALMSGS));
-	g_MoreOptPage.Enable(IDC_MOREOPTDLG_UPDATEMSGSPERIOD, g_MoreOptPage.GetWndValue(IDC_MOREOPTDLG_UPDATEMSGS));
+	g_MoreOptPage.Enable(IDC_MOREOPTDLG_PERSTATUSPERSONAL, g_MoreOptPage.GetWndValue(IDC_MOREOPTDLG_SAVEPERSONALMSGS) != 0);
+	bool bEnabled = g_MoreOptPage.GetWndValue(IDC_MOREOPTDLG_RECENTMSGSCOUNT) != 0;
+	g_MoreOptPage.Enable(IDC_MOREOPTDLG_PERSTATUSMRM, bEnabled);
+	g_MoreOptPage.Enable(IDC_MOREOPTDLG_USELASTMSG, bEnabled);
+	g_MoreOptPage.Enable(IDC_MOREOPTDLG_USEDEFMSG, bEnabled);
+	g_MoreOptPage.Enable(IDC_MOREOPTDLG_PERSTATUSPERSONAL, g_MoreOptPage.GetWndValue(IDC_MOREOPTDLG_SAVEPERSONALMSGS) != 0);
+	g_MoreOptPage.Enable(IDC_MOREOPTDLG_UPDATEMSGSPERIOD, g_MoreOptPage.GetWndValue(IDC_MOREOPTDLG_UPDATEMSGS) != 0);
 	InvalidateRect(GetDlgItem(g_MoreOptPage.GetWnd(), IDC_MOREOPTDLG_UPDATEMSGSPERIOD_SPIN), NULL, false); // update spin control
 	g_MoreOptPage.MemToPage(true);
 }
@@ -454,15 +454,15 @@ COptPage g_AutoreplyOptPage(MOD_NAME, NULL);
 void EnableAutoreplyOptDlgControls()
 {
 	g_AutoreplyOptPage.PageToMem();
-	int Autoreply = g_AutoreplyOptPage.GetValue(IDC_REPLYDLG_ENABLEREPLY);
+	bool bAutoreply = g_AutoreplyOptPage.GetValue(IDC_REPLYDLG_ENABLEREPLY) != 0;
 
 	for (int i = 0; i < g_AutoreplyOptPage.Items.GetSize(); i++) {
 		switch (g_AutoreplyOptPage.Items[i]->GetParam()) {
 		case IDC_REPLYDLG_ENABLEREPLY:
-			g_AutoreplyOptPage.Items[i]->Enable(Autoreply);
+			g_AutoreplyOptPage.Items[i]->Enable(bAutoreply);
 			break;
 		case IDC_REPLYDLG_SENDCOUNT:
-			g_AutoreplyOptPage.Items[i]->Enable(Autoreply && g_AutoreplyOptPage.GetValue(IDC_REPLYDLG_SENDCOUNT) > 0);
+			g_AutoreplyOptPage.Items[i]->Enable(bAutoreply && g_AutoreplyOptPage.GetValue(IDC_REPLYDLG_SENDCOUNT) > 0);
 			break;
 		}
 	}
@@ -543,7 +543,7 @@ INT_PTR CALLBACK AutoreplyOptDlg(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 
 			// init tooltips
 			struct {
-				int DlgItemID;
+				int m_dlgItemID;
 				TCHAR *Text;
 			}
 			Tooltips[] = {
@@ -558,7 +558,7 @@ INT_PTR CALLBACK AutoreplyOptDlg(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 			ti.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
 			ti.hwnd = hwndDlg;
 			for (int i = 0; i < _countof(Tooltips); i++) {
-				ti.uId = (UINT_PTR)GetDlgItem(hwndDlg, Tooltips[i].DlgItemID);
+				ti.uId = (UINT_PTR)GetDlgItem(hwndDlg, Tooltips[i].m_dlgItemID);
 				ti.lpszText = TranslateTS(Tooltips[i].Text);
 				SendMessage(hWndTooltips, TTM_ADDTOOL, 0, (LPARAM)&ti);
 			}
@@ -904,27 +904,27 @@ INT_PTR CALLBACK MessagesModernOptDlg(HWND hwndDlg, UINT msg, WPARAM wParam, LPA
 
 static WNDPROC g_OrigContactsProc;
 
-__inline int DBValueToIgnoreIcon(int Value)
+__inline int DBValueToIgnoreIcon(int m_value)
 {
-	switch (Value) {
+	switch (m_value) {
 		case VAL_INDEFINITE: return EXTRAICON_INDEFINITE;
 		case 0: return EXTRAICON_DOT;
 		default: return EXTRAICON_IGNORE;
 	}
 }
 
-__inline int IgnoreIconToDBValue(int Value)
+__inline int IgnoreIconToDBValue(int m_value)
 {
-	switch (Value) {
+	switch (m_value) {
 		case EXTRAICON_DOT: return 0;
 		case EXTRAICON_IGNORE: return 1;
 		default: return VAL_INDEFINITE; // EXTRAICON_INDEFINITE and 0xFF
 	}
 }
 
-__inline int DBValueToOptReplyIcon(int Value)
+__inline int DBValueToOptReplyIcon(int m_value)
 {
-	switch (Value) {
+	switch (m_value) {
 		case VAL_INDEFINITE: return EXTRAICON_INDEFINITE;
 		case VAL_USEDEFAULT: return EXTRAICON_DOT;
 		case 0: return EXTRAICON_AUTOREPLYOFF;
@@ -932,9 +932,9 @@ __inline int DBValueToOptReplyIcon(int Value)
 	}
 }
 
-__inline int ReplyIconToDBValue(int Value)
+__inline int ReplyIconToDBValue(int m_value)
 {
-	switch (Value) {
+	switch (m_value) {
 		case EXTRAICON_DOT: return VAL_USEDEFAULT;
 		case EXTRAICON_AUTOREPLYOFF: return 0;
 		case EXTRAICON_AUTOREPLYON: return 1;
@@ -944,7 +944,7 @@ __inline int ReplyIconToDBValue(int Value)
 
 static void SetListGroupIcons(HWND hwndList, HANDLE hFirstItem, HANDLE hParentItem)
 {
-	int Icons[EXTRACOLUMNSCOUNT] = { 0xFF, 0xFF, 0xFF };
+	int GroupIcons[EXTRACOLUMNSCOUNT] = { 0xFF, 0xFF, 0xFF };
 	int FirstItemType = SendMessage(hwndList, CLM_GETITEMTYPE, (WPARAM)hFirstItem, 0);
 	HANDLE hItem = (FirstItemType == CLCIT_GROUP) ? hFirstItem : (HANDLE)SendMessage(hwndList, CLM_GETNEXTITEM, CLGN_NEXTGROUP, (LPARAM)hFirstItem);
 	while (hItem) {
@@ -952,30 +952,31 @@ static void SetListGroupIcons(HWND hwndList, HANDLE hFirstItem, HANDLE hParentIt
 		if (hChildItem)
 			SetListGroupIcons(hwndList, hChildItem, hItem);
 
-		for (int i = 0; i < _countof(Icons); i++) {
+		for (int i = 0; i < _countof(GroupIcons); i++) {
 			int Icon = SendMessage(hwndList, CLM_GETEXTRAIMAGE, (WPARAM)hItem, MAKELPARAM(i, 0));
-			if (Icons[i] == 0xFF)
-				Icons[i] = Icon;
-			else if (Icon != 0xFF && Icons[i] != Icon)
-				Icons[i] = EXTRAICON_INDEFINITE;
+			if (GroupIcons[i] == 0xFF)
+				GroupIcons[i] = Icon;
+			else if (Icon != 0xFF && GroupIcons[i] != Icon)
+				GroupIcons[i] = EXTRAICON_INDEFINITE;
 		}
 		hItem = (HANDLE)SendMessage(hwndList, CLM_GETNEXTITEM, CLGN_NEXTGROUP, (LPARAM)hItem);
 	}
+	
 	hItem = (FirstItemType == CLCIT_CONTACT) ? hFirstItem : (HANDLE)SendMessage(hwndList, CLM_GETNEXTITEM, CLGN_NEXTCONTACT, (LPARAM)hFirstItem);
 	while (hItem) {
-		for (int i = 0; i < _countof(Icons); i++) {
+		for (int i = 0; i < _countof(GroupIcons); i++) {
 			int Icon = SendMessage(hwndList, CLM_GETEXTRAIMAGE, (WPARAM)hItem, MAKELPARAM(i, 0));
-			if (Icons[i] == 0xFF)
-				Icons[i] = Icon;
-			else if (Icon != 0xFF && Icons[i] != Icon)
-				Icons[i] = EXTRAICON_INDEFINITE;
+			if (GroupIcons[i] == 0xFF)
+				GroupIcons[i] = Icon;
+			else if (Icon != 0xFF && GroupIcons[i] != Icon)
+				GroupIcons[i] = EXTRAICON_INDEFINITE;
 		}
 		hItem = (HANDLE)SendMessage(hwndList, CLM_GETNEXTITEM, CLGN_NEXTCONTACT, (LPARAM)hItem);
 	}
 	
 	// set icons
-	for (int i = 0; i < _countof(Icons); i++)
-		SendMessage(hwndList, CLM_SETEXTRAIMAGE, (WPARAM)hParentItem, MAKELPARAM(i, Icons[i]));
+	for (int i = 0; i < _countof(GroupIcons); i++)
+		SendMessage(hwndList, CLM_SETEXTRAIMAGE, (WPARAM)hParentItem, MAKELPARAM(i, GroupIcons[i]));
 }
 
 static void SetAllChildIcons(HWND hwndList, HANDLE hFirstItem, int iColumn, int iImage)
@@ -1065,7 +1066,6 @@ static void SetAllContactIcons(HWND hwndList, HANDLE hItemUnknown)
 	do {
 		HANDLE hItem = (HANDLE)SendMessage(hwndList, CLM_FINDCONTACT, hContact, 0);
 		if (hItem) {
-			char *szProto = GetContactProto(hContact);
 			int Ignore = CContactSettings(ID_STATUS_ONLINE, hContact).Ignore;
 			int Reply = CContactSettings(ID_STATUS_ONLINE, hContact).Autoreply;
 			if (g_MoreOptPage.GetDBValueCopy(IDC_MOREOPTDLG_PERSTATUSPERSONALSETTINGS)) {
@@ -1098,7 +1098,7 @@ static LRESULT CALLBACK ContactsSubclassProc(HWND hWnd, UINT Msg, WPARAM wParam,
 	return CallWindowProc(g_OrigContactsProc, hWnd, Msg, wParam, lParam);
 }
 
-INT_PTR CALLBACK ContactsOptDlg(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK ContactsOptDlg(HWND hwndDlg, UINT msg, WPARAM, LPARAM lParam)
 {
 	HWND hwndList = GetDlgItem(hwndDlg, IDC_CONTACTSDLG_LIST);
 	static HANDLE hItemAll, hItemUnknown;
@@ -1360,7 +1360,7 @@ void InitOptions()
 }
 
 // NightFox
-int ModernOptInitialise(WPARAM wParam, LPARAM lParam)
+int ModernOptInitialise(WPARAM wParam, LPARAM)
 {
 	static int iBoldControls[] =
 	{

@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  * System Includes:
  **/
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 /**
 * The CEvent structure describes the next anniversary to remind of.
@@ -372,7 +372,7 @@ static BYTE NotifyWithSound(const CEvent &evt)
 static BYTE CheckAnniversaries(MCONTACT hContact, MTime &Now, CEvent &evt, BYTE bNotify)
 {
 	int numAnniversaries = 0;
-	int Diff;
+	int Diff = 0;
 	MAnnivDate mta;
 	CMString tszMsg;
 

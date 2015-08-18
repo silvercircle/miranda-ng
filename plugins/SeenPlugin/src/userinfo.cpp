@@ -18,7 +18,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "seen.h"
+#include "stdafx.h"
 
 LRESULT CALLBACK EditProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -42,7 +42,7 @@ INT_PTR CALLBACK UserinfoDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lpar
 	case WM_REFRESH_UI:
 		{
 			ptrT szout(db_get_tsa(NULL, S_MOD, "UserStamp"));
-			TCHAR *str = ParseString((szout != NULL) ? szout : DEFAULT_USERSTAMP, wparam, 0);
+			TCHAR *str = ParseString((szout != NULL) ? szout : DEFAULT_USERSTAMP, wparam);
 			SetDlgItemText(hdlg, IDC_INFOTEXT, str);
 
 			if (!mir_tstrcmp(str, TranslateT("<unknown>")))

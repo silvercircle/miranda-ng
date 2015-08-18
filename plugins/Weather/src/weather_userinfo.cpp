@@ -25,7 +25,7 @@ information, including the one shows in user detail and the brief
 information
 */
 
-#include "weather.h"
+#include "stdafx.h"
 
 //============  CONTACT INFORMATION  ============
 
@@ -132,7 +132,7 @@ INT_PTR CALLBACK DlgProcUIPage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPa
 
 //============  BRIEF INFORMATION  ============
 
-static int BriefDlgResizer(HWND hwnd, LPARAM lParam, UTILRESIZECONTROL *urc)
+static int BriefDlgResizer(HWND, LPARAM, UTILRESIZECONTROL *urc)
 {
 	switch (urc->wId) {
 	case IDC_HEADERBAR:

@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 static PLUGININFOEX pluginInfo = {
 	sizeof(PLUGININFOEX),
@@ -226,7 +226,7 @@ extern "C" int __declspec(dllexport) Load(void)
  *
  * @return	TRUE
  **/
-BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID)
 {
 	if (fdwReason == DLL_PROCESS_ATTACH)
 		ghInst = hinst;

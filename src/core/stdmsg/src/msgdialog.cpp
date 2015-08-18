@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 #include "statusicon.h"
 
 #define TIMERID_FLASHWND     1
@@ -66,7 +66,7 @@ static int RTL_Detect(const TCHAR *ptszText)
 	return 0;
 }
 
-int SendMessageDirect(const TCHAR *szMsg, MCONTACT hContact, char *szProto)
+int SendMessageDirect(const TCHAR *szMsg, MCONTACT hContact, char*)
 {
 	if (hContact == NULL)
 		return NULL;
@@ -441,18 +441,16 @@ static LRESULT CALLBACK MessageEditSubclassProc(HWND hwnd, UINT msg, WPARAM wPar
 
 static LRESULT CALLBACK SplitterSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	SrmmWindowData *pdat = (SrmmWindowData *)GetWindowLongPtr(GetParent(hwnd), GWLP_USERDATA);
-
 	switch (msg) {
 	case WM_NCHITTEST:
 		return HTCLIENT;
 
 	case WM_SETCURSOR:
-	{
-		RECT rc;
-		GetClientRect(hwnd, &rc);
-		SetCursor(rc.right > rc.bottom ? hCurSplitNS : hCurSplitWE);
-	}
+		{
+			RECT rc;
+			GetClientRect(hwnd, &rc);
+			SetCursor(rc.right > rc.bottom ? hCurSplitNS : hCurSplitWE);
+		}
 		return TRUE;
 
 	case WM_LBUTTONDOWN:

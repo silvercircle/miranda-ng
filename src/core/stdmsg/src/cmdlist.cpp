@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 static LIST<TMsgQueue> msgQueue(5, NumericKeySortT);
 static mir_cs csMsgQueue;
@@ -27,7 +27,7 @@ static UINT_PTR timerId;
 
 void MessageFailureProcess(TMsgQueue *item, const char* err);
 
-static VOID CALLBACK MsgTimer(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
+static VOID CALLBACK MsgTimer(HWND, UINT, UINT_PTR, DWORD dwTime)
 {
 	LIST<TMsgQueue> arTimedOut(1);
 	{
@@ -97,7 +97,7 @@ void msgQueue_processack(MCONTACT hContact, int id, BOOL success, const char *sz
 	dbei.flags = DBEF_SENT | DBEF_UTF | (p->flags & PREF_RTL ? DBEF_RTL : 0);
 	dbei.szModule = GetContactProto(hContact);
 	dbei.timestamp = time(0);
-	dbei.cbBlob = (DWORD)mir_strlen(p->szMsg);
+	dbei.cbBlob = (DWORD)(mir_strlen(p->szMsg) + 1);
 	dbei.pBlob = (PBYTE)p->szMsg;
 
 	MessageWindowEvent evt = { sizeof(evt), id, hContact, &dbei };

@@ -18,26 +18,23 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "stdafx.h"
 
 CSkypeProto::CSkypeProto(const char* protoName, const TCHAR* userName) :
-	PROTO<CSkypeProto>(protoName, userName), m_PopupClasses(1), m_InviteDialogs(1), m_GCCreateDialogs(1)
+	PROTO<CSkypeProto>(protoName, userName),
+		m_PopupClasses(1), 
+		m_InviteDialogs(1),
+		m_GCCreateDialogs(1),
+		m_OutMessages(3, PtrKeySortT)
 {
 	m_hProtoIcon = Icons[0].Handle;
 
-	wchar_t name[128];
-	mir_sntprintf(name, _countof(name), TranslateT("%s connection"), m_tszUserName);
-	NETLIBUSER nlu = { 0 };
-	nlu.cbSize = sizeof(nlu);
-	nlu.flags = NUF_OUTGOING | NUF_INCOMING | NUF_HTTPCONNS | NUF_UNICODE;
-	nlu.ptszDescriptiveName = name;
-	nlu.szSettingsModule = m_szModuleName;
-	m_hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
+	InitNetwork();
+
 	requestQueue = new RequestQueue(m_hNetlibUser);
 
 	CreateProtoService(PS_CREATEACCMGRUI, &CSkypeProto::OnAccountManagerInit);
-
-	CreateProtoService(PS_GETAVATARINFO, &CSkypeProto::SvcGetAvatarInfo);
-	CreateProtoService(PS_GETAVATARCAPS, &CSkypeProto::SvcGetAvatarCaps);
-	CreateProtoService(PS_GETMYAVATAR, &CSkypeProto::SvcGetMyAvatar);
-	CreateProtoService(PS_SETMYAVATAR, &CSkypeProto::SvcSetMyAvatar);
+	CreateProtoService(PS_GETAVATARINFO,  &CSkypeProto::SvcGetAvatarInfo);
+	CreateProtoService(PS_GETAVATARCAPS,  &CSkypeProto::SvcGetAvatarCaps);
+	CreateProtoService(PS_GETMYAVATAR,    &CSkypeProto::SvcGetMyAvatar);
+	CreateProtoService(PS_SETMYAVATAR,    &CSkypeProto::SvcSetMyAvatar);
 
 	CreateProtoService("/IncomingCallCLE", &CSkypeProto::OnIncomingCallCLE);
 	CreateProtoService("/IncomingCallPP", &CSkypeProto::OnIncomingCallPP);
@@ -47,42 +44,26 @@ CSkypeProto::CSkypeProto(const char* protoName, const TCHAR* userName) :
 	if (dwAttributes == 0xffffffff || (dwAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
 		CreateDirectoryTreeT(m_tszAvatarFolder.c_str());
 
-	db_set_resident(m_szModuleName, "LastAuthRequestTime");
-
-	//hooks
-	m_hCallHook = CreateHookableEvent(MODULE"/IncomingCall");
-
 	//sounds
 	SkinAddNewSoundEx("skype_inc_call", "SkypeWeb", LPGEN("Incoming call sound"));
 	SkinAddNewSoundEx("skype_call_canceled", "SkypeWeb", LPGEN("Incoming call canceled sound"));
 
 	m_hTrouterEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-	SkypeSetTimer(this);
+	SkypeSetTimer();
 }
 
 CSkypeProto::~CSkypeProto()
 {
 	requestQueue->Stop();
 	delete requestQueue;
-
-	if (m_pollingConnection)
-		CallService(MS_NETLIB_SHUTDOWN, (WPARAM)m_pollingConnection, 0);
-	if (m_TrouterConnection)
-		CallService(MS_NETLIB_SHUTDOWN, (WPARAM)m_TrouterConnection, 0);
-
-	Netlib_CloseHandle(m_hNetlibUser); m_hNetlibUser = NULL;
-	CloseHandle(m_hTrouterEvent); m_hTrouterEvent = NULL;
-
-	if (m_hCallHook)
-		DestroyHookableEvent(m_hCallHook);
-
-	for (int i = 0; i < m_PopupClasses.getCount(); i++)
-	{
-		Popup_UnregisterClass(m_PopupClasses[i]);
-	}
 	
-	SkypeUnsetTimer(this);
+	UnInitNetwork();
+	UninitPopups();
+
+	CloseHandle(m_hTrouterEvent); m_hTrouterEvent = NULL;
+	
+	SkypeUnsetTimer();
 }
 
 DWORD_PTR CSkypeProto::GetCaps(int type, MCONTACT)
@@ -136,12 +117,9 @@ MCONTACT CSkypeProto::AddToListByEvent(int, int, MEVENT hDbEvent)
 	if (dbei.eventType != EVENTTYPE_AUTHREQUEST)
 		return NULL;
 
-	char *nick = (char*)(dbei.pBlob + sizeof(DWORD) * 2);
-	char *firstName = nick + mir_strlen(nick) + 1;
-	char *lastName = firstName + mir_strlen(firstName) + 1;
-	char *skypename = lastName + mir_strlen(lastName) + 1;
-
-	MCONTACT hContact = AddContact(skypename);
+	DB_AUTH_BLOB blob(dbei.pBlob);
+	
+	MCONTACT hContact = AddContact(ptrA(blob.get_id()));
 	return hContact;
 }
 
@@ -153,7 +131,7 @@ int CSkypeProto::Authorize(MEVENT hDbEvent)
 
 	ptrA token(getStringA("TokenSecret"));
 	ptrA skypename(getStringA(hContact, SKYPE_SETTINGS_ID));
-	PushRequest(new AuthAcceptRequest(token, skypename));
+	PushRequest(new AuthAcceptRequest(li, skypename));
 	return 0;
 }
 
@@ -165,7 +143,7 @@ int CSkypeProto::AuthDeny(MEVENT hDbEvent, const TCHAR*)
 
 	ptrA token(getStringA("TokenSecret"));
 	ptrA skypename(getStringA(hContact, SKYPE_SETTINGS_ID));
-	PushRequest(new AuthDeclineRequest(token, skypename));
+	PushRequest(new AuthDeclineRequest(li, skypename));
 	return 0;
 }
 
@@ -181,7 +159,7 @@ int CSkypeProto::AuthRequest(MCONTACT hContact, const TCHAR *szMessage)
 
 	ptrA token(getStringA("TokenSecret"));
 	ptrA skypename(getStringA(hContact, SKYPE_SETTINGS_ID));
-	PushRequest(new AddContactRequest(token, skypename, T2Utf(szMessage)));
+	PushRequest(new AddContactRequest(li, skypename, T2Utf(szMessage)));
 	return 0;
 }
 
@@ -189,7 +167,7 @@ int CSkypeProto::GetInfo(MCONTACT hContact, int)
 {
 	if (!isChatRoom(hContact))
 		PushRequest(
-			new GetProfileRequest(ptrA(getStringA("TokenSecret")), ptrA(db_get_sa(hContact, m_szModuleName, SKYPE_SETTINGS_ID))),
+			new GetProfileRequest(li, ptrA(db_get_sa(hContact, m_szModuleName, SKYPE_SETTINGS_ID))),
 			&CSkypeProto::LoadProfile);
 	return 0;
 }
@@ -221,6 +199,8 @@ int CSkypeProto::SetStatus(int iNewStatus)
 		break;
 	}
 
+	mir_cslock lck(m_StatusLock);
+
 	debugLogA(__FUNCTION__ ": changing status from %i to %i", m_iStatus, iNewStatus);
 
 	int old_status = m_iStatus;
@@ -230,19 +210,17 @@ int CSkypeProto::SetStatus(int iNewStatus)
 	{
 		// logout
 		isTerminated = true;
-		if (m_pollingConnection)
-			CallService(MS_NETLIB_SHUTDOWN, (WPARAM)m_pollingConnection, 0);
-		if (m_TrouterConnection)
-			CallService(MS_NETLIB_SHUTDOWN, (WPARAM)m_TrouterConnection, 0);
+		requestQueue->Stop();
+		ShutdownConnections();
 
 		if (m_iStatus > ID_STATUS_CONNECTING + 1)
 		{
-			SendRequest(new DeleteEndpointRequest(m_szRegToken, m_szEndpointId, m_szServer));
+			SendRequest(new DeleteEndpointRequest(li));
 			delSetting("registrationRoken");
 			delSetting("endpointId");
 			delSetting("expires");
 		}
-		requestQueue->Stop();
+		
 		CloseDialogs();
 		ProtoBroadcastAck(NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, (HANDLE)m_iStatus, ID_STATUS_OFFLINE);
 		m_iStatus = m_iDesiredStatus = ID_STATUS_OFFLINE;
@@ -262,7 +240,7 @@ int CSkypeProto::SetStatus(int iNewStatus)
 		}
 		else
 		{
-			SendRequest(new SetStatusRequest(m_szRegToken, MirandaToSkypeStatus(m_iDesiredStatus)), &CSkypeProto::OnStatusChanged);
+			SendRequest(new SetStatusRequest(MirandaToSkypeStatus(m_iDesiredStatus), li), &CSkypeProto::OnStatusChanged);
 		}
 	}
 
@@ -272,7 +250,7 @@ int CSkypeProto::SetStatus(int iNewStatus)
 
 int CSkypeProto::UserIsTyping(MCONTACT hContact, int type)
 {
-	SendRequest(new SendTypingRequest(m_szRegToken, ptrA(getStringA(hContact, SKYPE_SETTINGS_ID)), type, m_szServer));
+	SendRequest(new SendTypingRequest(ptrA(getStringA(hContact, SKYPE_SETTINGS_ID)), type, li));
 	return 0;
 }
 
@@ -301,5 +279,6 @@ int CSkypeProto::OnPreShutdown(WPARAM, LPARAM)
 	debugLogA(__FUNCTION__);
 	isTerminated = true;
 	requestQueue->Stop();
+	ShutdownConnections();
 	return 0;
 }

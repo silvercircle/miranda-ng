@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "../commonheaders.h"
+#include "../stdafx.h"
 
 static ToolbarButton toolbarButtons[] = {
 	{ LPGENT("Bold"), IDC_CHAT_BOLD, 0, 4, 24 },
@@ -1555,14 +1555,14 @@ LABEL_SHOWWINDOW:
 
 	case GC_SCROLLTOBOTTOM:
 		if ((GetWindowLongPtr(GetDlgItem(hwndDlg, IDC_CHAT_LOG), GWL_STYLE) & WS_VSCROLL) != 0) {
-			SCROLLINFO si = { 0 };
-			si.cbSize = sizeof(si);
-			si.fMask = SIF_PAGE | SIF_RANGE;
-			GetScrollInfo(GetDlgItem(hwndDlg, IDC_CHAT_LOG), SB_VERT, &si);
+			SCROLLINFO sci = { 0 };
+			sci.cbSize = sizeof(sci);
+			sci.fMask = SIF_PAGE | SIF_RANGE;
+			GetScrollInfo(GetDlgItem(hwndDlg, IDC_CHAT_LOG), SB_VERT, &sci);
 
-			si.fMask = SIF_POS;
-			si.nPos = si.nMax - si.nPage + 1;
-			SetScrollInfo(GetDlgItem(hwndDlg, IDC_CHAT_LOG), SB_VERT, &si, TRUE);
+			sci.fMask = SIF_POS;
+			sci.nPos = sci.nMax - sci.nPage + 1;
+			SetScrollInfo(GetDlgItem(hwndDlg, IDC_CHAT_LOG), SB_VERT, &sci, TRUE);
 
 			CHARRANGE sel;
 			sel.cpMin = sel.cpMax = GetRichTextLength(GetDlgItem(hwndDlg, IDC_CHAT_LOG), CP_ACP, FALSE);

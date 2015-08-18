@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 Автор: Mironych
 =======================================================================================*/
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 OPTTREE_OPTION *pOptions; // Через этот указатель модуль opttree.c может добраться до списка опций.
 
@@ -339,7 +339,7 @@ static INT_PTR CALLBACK DlgProcTCOptions(HWND hwndDlg, UINT msg, WPARAM wParam, 
 	return 0;
 }
 
-int TrafficCounterOptInitialise(WPARAM wParam,LPARAM lParam)
+int TrafficCounterOptInitialise(WPARAM wParam, LPARAM)
 {
 	// Main options page
 	OPTIONSDIALOGPAGE odp = { 0 };

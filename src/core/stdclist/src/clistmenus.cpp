@@ -22,9 +22,9 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
-static INT_PTR CloseAction(WPARAM wParam, LPARAM lParam)
+static INT_PTR CloseAction(WPARAM, LPARAM)
 {
 	if (CallService(MS_SYSTEM_OKTOEXIT, 0, 0))
 		DestroyWindow(pcli->hwndContactList);

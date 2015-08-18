@@ -1,12 +1,25 @@
 #include "stdafx.h"
 
+static LIST<void> TBButtons(1, PtrKeySortT);
+
+void KillModuleTTBButton()
+{
+	while (TBButtons.getCount())
+	{
+		HANDLE hTTButton = TBButtons[0];
+		::CallService(MS_TTB_REMOVEBUTTON, (WPARAM)hTTButton, 0);
+		TBButtons.remove(0);
+	}
+}
+
 static TTBButton* MakeTBButton(lua_State *L)
 {
 	TTBButton *tbb = (TTBButton*)mir_calloc(sizeof(TTBButton));
+	tbb->dwFlags = TTBBF_ISLBUTTON;
 
 	lua_pushliteral(L, "Name");
 	lua_gettable(L, -2);
-	tbb->name = mir_utf8decode((char*)luaL_checkstring(L, -1), NULL);
+	tbb->name = mir_utf8decodeA(luaL_checkstring(L, -1));
 	lua_pop(L, 1);
 
 	lua_pushliteral(L, "Service");
@@ -19,6 +32,9 @@ static TTBButton* MakeTBButton(lua_State *L)
 	tbb->dwFlags = lua_tointeger(L, -1);
 	lua_pop(L, 1);
 
+	if (!(tbb->dwFlags & TTBBF_ISLBUTTON))
+		tbb->dwFlags |= TTBBF_ISLBUTTON;
+
 	// up state
 	lua_pushliteral(L, "IconUp");
 	lua_gettable(L, -2);
@@ -27,7 +43,7 @@ static TTBButton* MakeTBButton(lua_State *L)
 
 	lua_pushliteral(L, "TooltipUp");
 	lua_gettable(L, -2);
-	tbb->pszTooltipUp = mir_utf8decode((char*)lua_tostring(L, -1), NULL);
+	tbb->pszTooltipUp = mir_utf8decodeA(lua_tostring(L, -1));
 	lua_pop(L, 1);
 
 	lua_pushliteral(L, "wParamUp");
@@ -48,7 +64,7 @@ static TTBButton* MakeTBButton(lua_State *L)
 
 	lua_pushliteral(L, "TooltipDown");
 	lua_gettable(L, -2);
-	tbb->pszTooltipDn = mir_utf8decode((char*)lua_tostring(L, -1), NULL);
+	tbb->pszTooltipDn = mir_utf8decodeA(lua_tostring(L, -1));
 	lua_pop(L, 1);
 
 	lua_pushliteral(L, "wParamDown");
@@ -72,10 +88,18 @@ static int lua_AddButton(lua_State *L)
 		return 1;
 	}
 
-	mir_ptr<TTBButton> tbb(MakeTBButton(L));
+	TTBButton* tbb = MakeTBButton(L);
 
 	HANDLE res = ::TopToolbar_AddButton(tbb);
 	lua_pushlightuserdata(L, res);
+
+	if (res != INVALID_HANDLE_VALUE)
+		TBButtons.insert(res);
+
+	mir_free(tbb->name);
+	mir_free(tbb->pszTooltipUp);
+	mir_free(tbb->pszTooltipDn);
+	mir_free(tbb);
 
 	return 1;
 }
@@ -86,6 +110,9 @@ static int lua_RemoveButton(lua_State *L)
 
 	INT_PTR res = ::CallService(MS_TTB_REMOVEBUTTON, (WPARAM)hTTButton, 0);
 	lua_pushinteger(L, res);
+
+	if (!res)
+		TBButtons.remove(hTTButton);
 
 	return 1;
 }

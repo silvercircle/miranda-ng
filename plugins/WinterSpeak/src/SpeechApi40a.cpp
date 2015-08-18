@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "stdafx.h"
 #include "SpeechApi40a.h"
 
 #include "SpeechApi40aLexicon.h"
@@ -12,7 +12,7 @@
 #include <ObjError.h>
 #include <Ole2Ver.h>
 
-#include <speech.h>
+#include "SAPI 4.0\Include\speech.h"
 //#include <spchwrap.h>
 
 #include <sstream>
@@ -218,7 +218,7 @@ std::wstring SpeechApi40a::getDescription()
 //------------------------------------------------------------------------------
 // private:
 //------------------------------------------------------------------------------
-bool SpeechApi40a::loadWithVoice(std::wstring &voice)
+bool SpeechApi40a::loadWithVoice(const std::wstring &voice)
 {
 	CoInitialize(NULL);
 	
@@ -228,18 +228,12 @@ bool SpeechApi40a::loadWithVoice(std::wstring &voice)
 
 	// create the enumerator
 	if (FAILED(CoCreateInstance(CLSID_TTSEnumerator, NULL, CLSCTX_ALL, IID_ITTSEnum, (void**)&pITTSEnum)))
-	{
 		return false;
-	}
 
 	// iterate through the voices until we find the right one
 	while (!pITTSEnum->Next(1, &inf, NULL))
-	{
 		if (inf.szModeName == voice)
-		{
 			break;
-		}
-	}
 
 	if (FAILED(CoCreateInstance(CLSID_MMAudioDest, NULL, CLSCTX_ALL, IID_IAudioMultiMediaDevice, (void**)&pAudioDest)))
 	{

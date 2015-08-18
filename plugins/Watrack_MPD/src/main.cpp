@@ -14,7 +14,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 HANDLE ghConnection;
 HANDLE ghPacketReciever;
@@ -22,7 +22,7 @@ BOOL Connected;
 int gbState;
 SONGINFO SongInfo = {0};
 
-void Start(void* param)
+void Start(void*)
 {
 	NETLIBOPENCONNECTION nloc = { sizeof(nloc) };
 	char *tmp = (char*)mir_u2a(gbHost);
@@ -36,7 +36,7 @@ void Start(void* param)
 		ghPacketReciever = (HANDLE)CallService(MS_NETLIB_CREATEPACKETRECVER,(WPARAM)ghConnection,2048);
 }
 
-void ReStart(void *param)
+void ReStart(void*)
 {
 	if(ghPacketReciever)
 		Netlib_CloseHandle(ghPacketReciever);

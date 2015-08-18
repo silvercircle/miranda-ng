@@ -666,7 +666,7 @@ bool bLoadFile(HWND hwndDlg, CLHistoryDlg * pclDlg)
 		pclDlg->bUtf8File = clInfo.bUtf8File;
 	}
 	else {
-		eds.dwCookie = (DWORD)hFile;
+		eds.dwCookie = (DWORD_PTR)hFile;
 		eds.pfnCallback = RichEditStreamLoadFile;
 
 		SendMessage(hRichEdit, EM_STREAMIN, (WPARAM)SF_TEXT, (LPARAM)&eds);
@@ -1049,7 +1049,7 @@ static INT_PTR CALLBACK DlgProcFileViewer(HWND hwndDlg, UINT msg, WPARAM wParam,
 			cf.Flags = CF_EFFECTS | CF_SCREENFONTS | CF_INITTOLOGFONTSTRUCT;
 
 			if (ChooseFont(&cf)) {
-				DWORD dwEffects = (lf.lfWeight == FW_BOLD ? CFE_BOLD : 0) |
+				dwEffects = (lf.lfWeight == FW_BOLD ? CFE_BOLD : 0) |
 					(lf.lfItalic ? CFE_ITALIC : 0) |
 					(lf.lfStrikeOut ? CFE_STRIKEOUT : 0) |
 					(lf.lfUnderline ? CFE_UNDERLINE : 0);
@@ -1116,7 +1116,7 @@ static INT_PTR CALLBACK DlgProcFileViewer(HWND hwndDlg, UINT msg, WPARAM wParam,
 			}
 
 			EDITSTREAM eds;
-			eds.dwCookie = (DWORD)hFile;
+			eds.dwCookie = (DWORD_PTR)hFile;
 			eds.dwError = 0;
 			eds.pfnCallback = RichEditStreamSaveFile;
 			LRESULT nWriteOk = SendMessage(hRichEdit, EM_STREAMOUT, (WPARAM)SF_RTF, (LPARAM)&eds);

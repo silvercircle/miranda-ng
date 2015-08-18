@@ -11,7 +11,7 @@
  * and for answering some of my questions during development of this plugin.
  */
 
-#include "yahoo.h"
+#include "stdafx.h"
 
 #include <m_options.h>
 #include <m_skin.h>
@@ -21,7 +21,7 @@
 
 #include <commctrl.h>
 
-static INT_PTR CALLBACK YahooUserInfoDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK YahooUserInfoDlgProc(HWND hwndDlg, UINT msg, WPARAM, LPARAM lParam)
 {
 	switch (msg) {
 	case WM_INITDIALOG:

@@ -21,25 +21,26 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 class CreateSubscriptionsRequest : public HttpRequest
 {
 public:
-	CreateSubscriptionsRequest(const char *regToken, const char *server = SKYPE_ENDPOINTS_HOST) :
-		HttpRequest(REQUEST_POST, FORMAT, "%s/v1/users/ME/endpoints/SELF/subscriptions", server)
+	CreateSubscriptionsRequest(LoginInfo &li) :
+	  HttpRequest(REQUEST_POST, FORMAT, "%s/v1/users/ME/endpoints/SELF/subscriptions", li.endpoint.szServer)
 	{
 		Headers
 			<< CHAR_VALUE("Accept", "application/json, text/javascript")
-			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", regToken)
+			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", li.endpoint.szToken)
 			<< CHAR_VALUE("Content-Type", "application/json; charset=UTF-8");
 
-		JSONNode interestedResources(JSON_ARRAY);
-		interestedResources.set_name("interestedResources");
-		interestedResources.push_back(JSONNode("", "/v1/users/ME/conversations/ALL/properties"));
-		interestedResources.push_back(JSONNode("", "/v1/users/ME/conversations/ALL/messages"));
-		interestedResources.push_back(JSONNode("", "/v1/users/ME/contacts/ALL"));
-		interestedResources.push_back(JSONNode("", "/v1/threads/ALL"));
+		JSONNode interestedResources(JSON_ARRAY); interestedResources.set_name("interestedResources");
+		interestedResources 
+			<< JSONNode("", "/v1/users/ME/conversations/ALL/properties")
+			<< JSONNode("", "/v1/users/ME/conversations/ALL/messages")
+			<< JSONNode("", "/v1/users/ME/contacts/ALL")
+			<< JSONNode("", "/v1/threads/ALL");
 
-		JSONNode node(JSON_NODE);
-		node.push_back(JSONNode("channelType", "httpLongPoll"));
-		node.push_back(JSONNode("template", "raw"));
-		node.push_back(interestedResources);
+		JSONNode node;
+		node 
+			<< JSONNode("channelType", "httpLongPoll")
+			<< JSONNode("template", "raw")
+			<< interestedResources;
 
 		Body << VALUE(node.write().c_str());
 	}
@@ -48,27 +49,25 @@ public:
 class CreateContactsSubscriptionRequest : public HttpRequest
 {
 public:
-	CreateContactsSubscriptionRequest(const char *regToken, const LIST<char> &skypenames, const char *server = SKYPE_ENDPOINTS_HOST) :
-		HttpRequest(REQUEST_POST, FORMAT, "%s/v1/users/ME/contacts", server)
+	CreateContactsSubscriptionRequest(const LIST<char> &skypenames, LoginInfo &li) :
+	  HttpRequest(REQUEST_POST, FORMAT, "%s/v1/users/ME/contacts", li.endpoint.szServer)
 	{
 		Headers
 			<< CHAR_VALUE("Accept", "application/json, text/javascript")
 			<< CHAR_VALUE("Content-Type", "application/json; charset=UTF-8")
-			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", regToken);
+			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", li.endpoint.szToken);
 
 
-		JSONNode node(JSON_NODE);
-		JSONNode contacts(JSON_ARRAY);
-
-		contacts.set_name("contacts");
+		JSONNode node;
+		JSONNode contacts(JSON_ARRAY); contacts.set_name("contacts");
 
 		for (int i = 0; i < skypenames.getCount(); i++)
 		{
-			JSONNode contact(JSON_NODE);
-			contact.push_back(JSONNode("id", CMStringA(::FORMAT, "8:%s", skypenames[i]).GetBuffer()));
-			contacts.push_back(contact);
+			JSONNode contact;
+			contact << JSONNode("id", CMStringA(::FORMAT, "8:%s", skypenames[i]));
+			contacts << contact;
 		}
-		node.push_back(contacts);
+		node << contacts;
 
 		Body << VALUE(node.write().c_str());
 	}

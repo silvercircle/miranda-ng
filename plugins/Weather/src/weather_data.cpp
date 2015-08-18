@@ -23,7 +23,7 @@ This file contain the source related loading, obtaining, and
 saving individual weather data for a weather contact.
 */
 
-#include "weather.h"
+#include "stdafx.h"
 
 //============  LOAD WEATHER INFO FROM A CONTACT  ============
 // get station ID from DB
@@ -424,7 +424,7 @@ int GetWeatherDataFromDB(const char *szSetting, LPARAM lparam)
 // remove or display the weather information for a contact
 // hContact - the contact in which the info is going to be removed
 
-void DBDataManage(MCONTACT hContact, WORD Mode, WPARAM wParam, LPARAM lParam)
+void DBDataManage(MCONTACT hContact, WORD Mode, WPARAM wParam, LPARAM)
 {
 	LIST<char> arSettings(10);
 

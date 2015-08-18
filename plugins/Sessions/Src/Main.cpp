@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "sessions.h"
+#include "stdafx.h"
 
 CLIST_INTERFACE *pcli;
 HINSTANCE g_hInst = NULL;
@@ -229,11 +229,9 @@ INT_PTR CALLBACK SaveSessionDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM l
 						DestroyWindow(hdlg);
 						g_hSDlg = 0;
 					}
-					else
-						MessageBox(NULL, TranslateT("Current session is empty!"), TranslateT("Sessions Manager"), MB_OK | MB_ICONWARNING);
+					else MessageBox(NULL, TranslateT("Current session is empty!"), TranslateT("Sessions Manager"), MB_OK | MB_ICONWARNING);
 				}
-				else
-					MessageBox(NULL, TranslateT("Session name is empty, enter the name and try again"), TranslateT("Sessions Manager"), MB_OK | MB_ICONWARNING);
+				else MessageBox(NULL, TranslateT("Session name is empty, enter the name and try again"), TranslateT("Sessions Manager"), MB_OK | MB_ICONWARNING);
 			}
 			break;
 

@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 /**
  * System Includes:
  **/
-#include "commonheaders.h"
+#include "stdafx.h"
 #include "svc_gender.h"
 #include "svc_reminder.h"
 #include "dlg_anniversarylist.h"
@@ -289,7 +289,6 @@ class CAnnivList
 		switch (uMsg) {
 		case WM_INITDIALOG:
 			{
-				int i = 0;
 				HWND hCtrl;
 				HICON hIcon;
 				RECT rc;

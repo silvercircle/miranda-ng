@@ -1,4 +1,4 @@
-#include "common.h"
+#include "stdafx.h"
 
 BOOL DB_GetStaticStringW(MCONTACT hContact,LPSTR lpszModule,LPSTR lpszValueName,LPWSTR lpwszRetBuff,size_t dwRetBuffSize,size_t *pdwRetBuffSize)
 {// sizes in wchars
@@ -433,7 +433,7 @@ DWORD EncodeXML(LPTSTR lptszMessage,size_t dwMessageSize,LPTSTR lptszMessageConv
 
 
 //(Taken from Miranda-IM source code:)
-BYTE MsgDlgGetFontDefaultCharset(const TCHAR* szFont)
+BYTE MsgDlgGetFontDefaultCharset(const TCHAR*)
 {
 	return(DEFAULT_CHARSET);
 }
@@ -497,7 +497,7 @@ LRESULT CALLBACK MessageSubclassProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM
 
 //This function refresh account list. 
 //It called when SMS plugin loaded and upon change in the account list.
-int RefreshAccountList(WPARAM eventCode,LPARAM lParam)
+int RefreshAccountList(WPARAM, LPARAM)
 {
 	int dwAccCount=0,dwSMSAccountsCount=0;
 	PROTOACCOUNT **ppaAccounts;

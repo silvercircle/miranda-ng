@@ -19,15 +19,15 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "..\commonheaders.h"
+#include "..\stdafx.h"
 
 #define XMLCARD_VERSION	"1.1"
 
 INT_PTR CALLBACK DlgProc_DataHistory(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	switch (msg) 
-	{
-		case WM_INITDIALOG:
+	switch (msg) {
+	case WM_INITDIALOG:
+		TranslateDialogDefault(hDlg);
 		{
 			const ICONCTRL idIcon[] = {
 				{ ICO_DLG_EXPORT,	WM_SETICON,		NULL		},
@@ -38,39 +38,39 @@ INT_PTR CALLBACK DlgProc_DataHistory(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 			const int numIconsToSet = db_get_b(NULL, MODNAME, SET_ICONS_BUTTONS, 1) ? _countof(idIcon) : 2;
 			IcoLib_SetCtrlIcons(hDlg, idIcon, numIconsToSet);
 
-			TranslateDialogDefault(hDlg);
 			SendDlgItemMessage(hDlg, IDOK, BUTTONTRANSLATE, NULL, NULL);
 			SendDlgItemMessage(hDlg, IDCANCEL, BUTTONTRANSLATE, NULL, NULL);
-			break;
 		}
-		case WM_CTLCOLORSTATIC:
-			switch (GetWindowLongPtr((HWND)lParam, GWLP_ID)) {
-				case STATIC_WHITERECT:
-				case ICO_DLGLOGO:
-				case IDC_INFO:
-					SetBkColor((HDC)wParam, RGB(255, 255, 255));
-					return (INT_PTR)GetStockObject(WHITE_BRUSH);
-			}
-			return FALSE;
-		case WM_COMMAND:
-			if (HIWORD(wParam) == BN_CLICKED) {
-				switch (LOWORD(wParam)) {
-					case IDCANCEL:
-						EndDialog(hDlg, 0);
-						break;
-					case IDOK: {
-						WORD hiWord = 0;
+		break;
 
-						if (IsDlgButtonChecked(hDlg, IDC_CHECK1))
-							hiWord |= EXPORT_DATA;
-						if (IsDlgButtonChecked(hDlg, IDC_CHECK2))
-							hiWord |= EXPORT_HISTORY;
-						EndDialog(hDlg, (INT_PTR)MAKELONG(IDOK, hiWord));
-						break;
-					}
-				}
+	case WM_CTLCOLORSTATIC:
+		switch (GetWindowLongPtr((HWND)lParam, GWLP_ID)) {
+		case STATIC_WHITERECT:
+		case ICO_DLGLOGO:
+		case IDC_INFO:
+			SetBkColor((HDC)wParam, RGB(255, 255, 255));
+			return (INT_PTR)GetStockObject(WHITE_BRUSH);
+		}
+		return FALSE;
+
+	case WM_COMMAND:
+		if (HIWORD(wParam) == BN_CLICKED) {
+			switch (LOWORD(wParam)) {
+			case IDCANCEL:
+				EndDialog(hDlg, 0);
+				break;
+
+			case IDOK:
+				WORD hiWord = 0;
+				if (IsDlgButtonChecked(hDlg, IDC_CHECK1))
+					hiWord |= EXPORT_DATA;
+				if (IsDlgButtonChecked(hDlg, IDC_CHECK2))
+					hiWord |= EXPORT_HISTORY;
+				EndDialog(hDlg, (INT_PTR)MAKELONG(IDOK, hiWord));
+				break;
 			}
-			break;
+		}
+		break;
 	}
 	return FALSE;
 }
@@ -164,7 +164,7 @@ int CFileXml::Export(lpExImParam ExImContact, LPCSTR pszFileName)
 						// dont export meta subcontacts by default and
 						// export only contact with selectet group name
 						if (!db_mc_isSub(hContact) && 
-							mir_tcsncmp(ExImContact->ptszName, DB::Setting::GetTString(hContact, "CList", "Group"), mir_tstrlen(ExImContact->ptszName))== 0)
+							mir_tstrncmp(ExImContact->ptszName, DB::Setting::GetTString(hContact, "CList", "Group"), mir_tstrlen(ExImContact->ptszName))== 0)
 							{
 							if (vContact.fromDB(hContact)) {
 								vContact.Export(xmlfile, &Modules);

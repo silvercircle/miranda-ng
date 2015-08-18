@@ -25,7 +25,7 @@ weather ini files and store them into memory.  Also containing
 code for unloading and getting weather data from the ini settings.
 */
 
-#include "weather.h"
+#include "stdafx.h"
 
 HWND hWndSetup;
 
@@ -94,9 +94,7 @@ void WIItemListAdd(WIDATAITEM *DataItem, WIDATA *Data)
 // name = the string to store in the "name" field
 void ResetDataItem(WIDATAITEM *Item, const TCHAR *name)
 {
-	TCHAR str[] = _T("ID Search - Station Name");
-	Item->Name = ( TCHAR* )mir_alloc( sizeof(str));
-	mir_tstrcpy(Item->Name, str);
+	Item->Name = mir_tstrdup(name);
 	Item->Start = _T("");
 	Item->End = _T("");
 	Item->Unit = _T("");

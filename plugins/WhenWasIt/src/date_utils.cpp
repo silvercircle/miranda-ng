@@ -18,7 +18,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 time_t Today()
 {
@@ -28,7 +28,7 @@ time_t Today()
 	return mktime(date);
 }
 
-bool IsDOBValid(int year, int month, int day)
+bool IsDOBValid(int, int month, int day)
 {
 	return (month != 0 && day != 0);
 }

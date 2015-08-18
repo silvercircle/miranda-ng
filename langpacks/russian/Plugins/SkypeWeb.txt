@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: SkypeWeb.dll
 ;  Plugin: Skype protocol (Web)
-;  Version: 0.12.1.2
+;  Version: 0.12.2.2
 ;  Authors: Miranda NG Team
 ;============================================================
 [Skype protocol support for Miranda NG. Based on new Skype for Web.]
@@ -37,6 +37,8 @@
 Место:
 [Use hostname]
 Использовать имя хоста
+[Use BBCode]
+Использовать BBCode
 [Enter password]
 Введите пароль
 [Save password]
@@ -71,34 +73,40 @@
 Введите новую тему комнаты чата
 [Are you sure?]
 Вы уверены?
-[%s %s this call.\n]
-%s %s вызов.\n
-[enters]
-начинает
-[leaves]
-завершает
-[File transfer:\n\tFile name: %s\n\tSize: %d bytes]
-Передача файлов:\n\tИмя: %s\n\tРазмер: %d байт
-[Incoming call.]
-Входящий звонок.
+[Edited message]
+Изменённое сообщение
 [Action]
 Действие
-[Call information.]
-Информация о звонке.
-[File transfer information.]
-Информация о передаче файла.
-[Uri object.]
-URI объект.
+[Call information]
+Информация о звонке
+[File transfer information]
+Информация о передаче файла
+[URI object]
+URI объект
+[Unknown event]
+Неизвестное событие
 [Incoming call]
 Входящий звонок
-[Calls]
-Звонки
-[Notifications]
-Уведомления
-[Errors]
-Ошибки
-[Edited at]
-Отредактировано в
+[Invalid data!]
+Неверные данные!
+[[b]Original message:[/b]\n%s\n]
+\[b]Оригинальное сообщение:[/b]\n%s\n
+[Original message:\n%s\n]
+Оригинальное сообщение:\n%s\n
+[[b]Edited at %s:[/b]\n%s\n]
+\[b]Отредактировано в %s:[/b]\n%s\n
+[Edited at %s:\n%s\n]
+Отредактировано в %s:\n%s\n
+[Call]
+Звонок
+[Call missed]
+Звонок пропущен
+[Call ended (%s)]
+Звонок завершён (%s)
+[File transfer:\n\tFile name: %s \n\tSize: %lld bytes \n]
+Передача файла:\n\tИмя файла: %s \n\tРазмер: %lld байт \n
+[Unknown event, please send this text for developer: "%s"]
+Неизвестное событие, пожалуйста, отправьте этот текст разработчику: "%s"
 [Protocol icon]
 Значок протокола
 [Create new chat icon]
@@ -139,12 +147,22 @@ URI объект.
 Разблокировать контакт
 [Create new chat]
 Создать новый чат
+[Unknown error!]
+Неизвестная ошибка!
+[Network error!]
+Ошибка сети!
 [Enter confirmation code]
 Введите код подтверждения
-[Network]
-Сеть
 [%s connection]
 %s подключение
+[Network]
+Сеть
+[Notifications]
+Уведомления
+[Errors]
+Ошибки
+[Calls]
+Звонки
 [Incoming call sound]
 Звук входящего звонка
 [Incoming call canceled sound]

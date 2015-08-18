@@ -26,7 +26,7 @@
 //
 // The dialog to customize per container options
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 static void MY_CheckDlgButton(HWND hWnd, UINT id, int iCheck)
 {
@@ -222,11 +222,11 @@ INT_PTR CALLBACK DlgProcContainerOptions(HWND hwndDlg, UINT msg, WPARAM wParam, 
 		HWND hwndChild = (HWND)lParam;
 		UINT id = GetDlgCtrlID(hwndChild);
 
-		if (hwndChild == GetDlgItem(hwndDlg, IDC_TITLEBOX)) {
+		if (hwndChild == GetDlgItem(hwndDlg, IDC_TITLEBOX))
 			::SetTextColor((HDC)wParam, RGB(60, 60, 150));
-		}
 		else if (hwndChild == GetDlgItem(hwndDlg, IDC_DESC))
 			::SetTextColor((HDC)wParam, RGB(160, 50, 50));
+		
 		if (id == IDC_TSLABEL_REOPENWARN)
 			break;
 		SetBkColor((HDC)wParam, GetSysColor(COLOR_WINDOW));
@@ -308,7 +308,7 @@ INT_PTR CALLBACK DlgProcContainerOptions(HWND hwndDlg, UINT msg, WPARAM wParam, 
 		}
 
 		case IDC_O_HELP_TITLEFORMAT:
-			Utils_OpenUrl("http://miranda.or.at/TabSRMM/TitleBarFormatting");
+			Utils_OpenUrl("http://wiki.miranda-ng.org/index.php?title=Plugin:TabSRMM/en/Title_bar_formatting");
 			break;
 
 		case IDOK:

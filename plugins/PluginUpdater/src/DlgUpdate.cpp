@@ -17,7 +17,7 @@ not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 */
 
-#include "common.h"
+#include "stdafx.h"
 
 #define UM_ERROR (WM_USER+1)
 
@@ -544,6 +544,7 @@ static renameTable[] =
 	{ _T("clist_classic.dll"),              NULL },
 	{ _T("chat.dll"),                       NULL },
 	{ _T("srmm.dll"),                       NULL },
+	{ _T("stdurl.dll"),                     NULL },
 	{ _T("extraicons.dll"),                 NULL },
 	{ _T("firstrun.dll"),                   NULL },
 	{ _T("flashavatars.dll"),               NULL },

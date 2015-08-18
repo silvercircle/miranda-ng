@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include "plugins.h"
 #include "profilemanager.h"
 #include "langpack.h"
+#include "netlib.h"
 
 void LoadExtraIconsModule();
 
@@ -113,7 +114,8 @@ static const MUUID pluginBannedList[] =
 	{ 0x28f45248, 0x8c9c, 0x4bee, { 0x93, 0x07, 0x7b, 0xcf, 0x3e, 0x12, 0xbf, 0x99 } },  // dbx_tree
 	{ 0x4c4a27cf, 0x5e64, 0x4242, { 0xa3, 0x32, 0xb9, 0x8b, 0x08, 0x24, 0x3e, 0x89 } },  // metacontacts
 	{ 0x9c448c61, 0xfc3f, 0x42f9, { 0xb9, 0xf0, 0x4a, 0x30, 0xe1, 0xcf, 0x86, 0x71 } },  // skypekit based skype
-	{ 0x49c2cf54, 0x7898, 0x44de, { 0xbe, 0x3a, 0x6d, 0x2e, 0x4e, 0xf9, 0x00, 0x79 } }   // firstrun
+	{ 0x49c2cf54, 0x7898, 0x44de, { 0xbe, 0x3a, 0x6d, 0x2e, 0x4e, 0xf9, 0x00, 0x79 } },  // firstrun
+	{ 0x0ca63eee, 0xeb2c, 0x4aed, { 0xb3, 0xd0, 0xbc, 0x8e, 0x6e, 0xb3, 0xbf, 0xb8 } }   // stdurl
 };
 
 static bool isPluginBanned(const MUUID& u1)
@@ -131,19 +133,18 @@ static bool isPluginBanned(const MUUID& u1)
 static MuuidReplacement pluginDefault[] =
 {
 	{ MIID_UIUSERINFO, _T("stduserinfo"),   NULL }, // 0
-	{ MIID_SRURL,      _T("stdurl"),        NULL }, // 1
-	{ MIID_SREMAIL,    _T("stdemail"),      NULL }, // 2
-	{ MIID_SRAUTH,     _T("stdauth"),       NULL }, // 3
-	{ MIID_SRFILE,     _T("stdfile"),       NULL }, // 4
-	{ MIID_UIHELP,     _T("stdhelp"),       NULL }, // 5
-	{ MIID_UIHISTORY,  _T("stduihist"),     NULL }, // 6
-	{ MIID_IDLE,       _T("stdidle"),       NULL }, // 7
-	{ MIID_AUTOAWAY,   _T("stdautoaway"),   NULL }, // 8
-	{ MIID_USERONLINE, _T("stduseronline"), NULL }, // 9
-	{ MIID_SRAWAY,     _T("stdaway"),       NULL }, // 10
-	{ MIID_CLIST,      _T("stdclist"),      NULL }, // 11
-	{ MIID_CHAT,       _T("stdchat"),       NULL }, // 12
-	{ MIID_SRMM,       _T("stdmsg"),        NULL }  // 13
+	{ MIID_SREMAIL,    _T("stdemail"),      NULL }, // 1
+	{ MIID_SRAUTH,     _T("stdauth"),       NULL }, // 2
+	{ MIID_SRFILE,     _T("stdfile"),       NULL }, // 3
+	{ MIID_UIHELP,     _T("stdhelp"),       NULL }, // 4
+	{ MIID_UIHISTORY,  _T("stduihist"),     NULL }, // 5
+	{ MIID_IDLE,       _T("stdidle"),       NULL }, // 6
+	{ MIID_AUTOAWAY,   _T("stdautoaway"),   NULL }, // 7
+	{ MIID_USERONLINE, _T("stduseronline"), NULL }, // 8
+	{ MIID_SRAWAY,     _T("stdaway"),       NULL }, // 9
+	{ MIID_CLIST,      _T("stdclist"),      NULL }, // 10
+	{ MIID_CHAT,       _T("stdchat"),       NULL }, // 11
+	{ MIID_SRMM,       _T("stdmsg"),        NULL }  // 12
 };
 
 int getDefaultPluginIdx(const MUUID &muuid)
@@ -165,7 +166,7 @@ int LoadStdPlugins()
 			return 1;
 	}
 
-	if (pluginDefault[13].pImpl == NULL)
+	if (pluginDefault[12].pImpl == NULL)
 		MessageBox(NULL, TranslateT("No messaging plugins loaded. Please install/enable one of the messaging plugins, for instance, \"StdMsg.dll\""), _T("Miranda NG"), MB_OK | MB_ICONWARNING);
 
 	return 0;
@@ -200,7 +201,7 @@ MIR_APP_DLL(int) GetPluginLangByInstance(HINSTANCE hInstance)
 	return NULL;
 }
 
-MIR_APP_DLL(int) GetPluginLangId(const MUUID &uuid, int hLangpack)
+MIR_APP_DLL(int) GetPluginLangId(const MUUID &uuid, int _hLang)
 {
 	if (equalUUID(uuid, miid_last))
 		return --sttFakeID;
@@ -211,7 +212,7 @@ MIR_APP_DLL(int) GetPluginLangId(const MUUID &uuid, int hLangpack)
 			continue;
 
 		if (equalUUID(p->bpi.pluginInfo->uuid, uuid))
-			return p->hLangpack = (hLangpack) ? hLangpack : --sttFakeID;
+			return p->hLangpack = (_hLang) ? _hLang : --sttFakeID;
 	}
 
 	return 0;
@@ -246,7 +247,7 @@ static int checkPI(BASIC_PLUGIN_INFO* bpi, PLUGININFOEX* pi)
 	return TRUE;
 }
 
-int checkAPI(TCHAR* plugin, BASIC_PLUGIN_INFO* bpi, DWORD mirandaVersion, int checkTypeAPI)
+int checkAPI(TCHAR* plugin, BASIC_PLUGIN_INFO* bpi, DWORD dwMirVer, int checkTypeAPI)
 {
 	HINSTANCE h = LoadLibrary(plugin);
 	if (h == NULL)
@@ -272,7 +273,7 @@ LBL_Error:
 			bpi->Interfaces = pFunc();
 	}
 
-	PLUGININFOEX* pi = bpi->InfoEx(mirandaVersion);
+	PLUGININFOEX* pi = bpi->InfoEx(dwMirVer);
 	if (!checkPI(bpi, pi))
 		goto LBL_Error;
 
@@ -333,17 +334,17 @@ int Plugin_UnloadDyn(pluginEntry *p)
 		KillModuleServices(p->bpi.hInst);
 	}
 
-	int hLangpack = p->hLangpack;
-	if (hLangpack != 0) {
-		KillModuleMenus(hLangpack);
-		KillModuleFonts(hLangpack);
-		KillModuleColours(hLangpack);
-		KillModuleEffects(hLangpack);
-		KillModuleIcons(hLangpack);
-		KillModuleHotkeys(hLangpack);
-		KillModuleSounds(hLangpack);
-		KillModuleExtraIcons(hLangpack);
-		KillModuleSrmmIcons(hLangpack);
+	int _hLang = p->hLangpack;
+	if (_hLang != 0) {
+		KillModuleMenus(_hLang);
+		KillModuleFonts(_hLang);
+		KillModuleColours(_hLang);
+		KillModuleEffects(_hLang);
+		KillModuleIcons(_hLang);
+		KillModuleHotkeys(_hLang);
+		KillModuleSounds(_hLang);
+		KillModuleExtraIcons(_hLang);
+		KillModuleSrmmIcons(_hLang);
 	}
 
 	NotifyFastHook(hevUnloadModule, (WPARAM)p->bpi.pluginInfo, (LPARAM)p->bpi.hInst);
@@ -594,7 +595,7 @@ static bool loadClistModule(TCHAR* exe, pluginEntry *p)
 		if (bpi.clistlink() == 0) {
 			p->bpi = bpi;
 			p->pclass |= PCLASS_LOADED;
-			pluginDefault[11].pImpl = p;
+			pluginDefault[10].pImpl = p;
 
 			LoadExtraIconsModule();
 			return true;
@@ -618,7 +619,7 @@ static pluginEntry* getCListModule(TCHAR *exe)
 			return p;
 	}
 
-	MuuidReplacement& stdClist = pluginDefault[11];
+	MuuidReplacement& stdClist = pluginDefault[10];
 	if (LoadCorePlugin(stdClist)) {
 		mir_sntprintf(tszFullPath, _countof(tszFullPath), _T("%s\\Core\\%s.dll"), exe, stdClist.stdplugname);
 		if (loadClistModule(tszFullPath, stdClist.pImpl))
@@ -733,7 +734,7 @@ int LoadSslModule(void)
 			return 1;
 	}
 
-	mir_getSI(&si);
+	mir_getSI(&sslApi);
 	return 0;
 }
 

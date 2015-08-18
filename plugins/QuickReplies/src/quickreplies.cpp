@@ -17,7 +17,7 @@ not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  
 */
 
-#include "common.h"
+#include "stdafx.h"
 
 HINSTANCE hInstance = NULL;
 int hLangpack;
@@ -39,14 +39,13 @@ PLUGININFOEX pluginInfoEx = {
 	{0xa6a031b6, 0xd32f, 0x4842, {0x98, 0xc6, 0xec, 0x71, 0x6c, 0x57, 0x6b, 0x77}}
 };
 
-BOOL WINAPI DllMain(HINSTANCE hInstanceDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hInstanceDLL, DWORD, LPVOID)
 {
 	hInstance = hInstanceDLL;
-
 	return TRUE;
 }
 
-extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
+extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 {
 	return &pluginInfoEx;
 }

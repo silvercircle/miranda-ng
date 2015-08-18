@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "quickmessages.h"
+#include "stdafx.h"
 
 ListData* ButtonsList[100];
 
@@ -372,7 +372,7 @@ TCHAR* getMenuEntry(int buttonnum, int entrynum, BYTE mode)
 	return buffer; 
 }
 
-int RegisterCustomButton(WPARAM wParam,LPARAM lParam)
+int RegisterCustomButton(WPARAM, LPARAM)
 {
 	if ( !ServiceExists(MS_BB_ADDBUTTON))
 		return 1;
@@ -397,7 +397,7 @@ int RegisterCustomButton(WPARAM wParam,LPARAM lParam)
 
 TCHAR* ParseString(MCONTACT hContact,TCHAR* ptszQValIn,TCHAR* ptszText,TCHAR* ptszClip,int QVSize,int TextSize ,int ClipSize)
 {
-	int i = 0, iOffset = 0, iCount = 0;
+	int i = 0, iOffset = 0;
 	TCHAR* tempPointer = NULL;
 	TCHAR* ptszQValue = _tcsdup(ptszQValIn);
 	TCHAR* tempQValue = ptszQValue;

@@ -4,7 +4,7 @@
  * (c) majvan 2002-2004
  */
 
-#include "yamn.h"
+#include "stdafx.h"
 
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
@@ -157,7 +157,7 @@ INT_PTR UnregisterProtocolPlugin(HYAMNPROTOPLUGIN Plugin)
 	return 1;
 }
 
-INT_PTR UnregisterProtocolPluginSvc(WPARAM wParam,LPARAM lParam)
+INT_PTR UnregisterProtocolPluginSvc(WPARAM wParam,LPARAM)
 {
 	HYAMNPROTOPLUGIN Plugin=(HYAMNPROTOPLUGIN)wParam;
 

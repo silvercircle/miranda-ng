@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "stdafx.h"
 #include "SpeechInterface.h"
 #include "SpeechApi51.h"
 #include "SpeechApi40a.h"
@@ -14,7 +14,7 @@ SpeechInterface::~SpeechInterface()
 }
 
 //------------------------------------------------------------------------------
-TextToSpeech * SpeechInterface::createTts(std::wstring &engine) const
+TextToSpeech * SpeechInterface::createTts(const std::wstring &engine) const
 {
 	TextToSpeech *tts = 0;
 

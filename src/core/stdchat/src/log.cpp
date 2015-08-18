@@ -18,7 +18,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "chat.h"
+#include "stdafx.h"
 
 // The code for streaming the text is to a large extent copied from
 // the srmm module and then modified to fit the chat module.
@@ -49,7 +49,7 @@ static DWORD CALLBACK Log_StreamCallback(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG
 	return 0;
 }
 
-void Log_StreamInEvent(HWND hwndDlg,  LOGINFO* lin, SESSION_INFO *si, BOOL bRedraw, BOOL bPhaseTwo)
+void Log_StreamInEvent(HWND hwndDlg,  LOGINFO* lin, SESSION_INFO *si, BOOL bRedraw, BOOL)
 {
 	CHARRANGE oldsel, sel, newsel;
 	POINT point ={0};

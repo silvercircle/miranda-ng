@@ -17,14 +17,14 @@ not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  
 */
 
-#include "..\commons.h"
+#include "..\stdafx.h"
 
 static TCHAR *wcs[] = {
-		_T("Winamp v1.x")
+	_T("Winamp v1.x")
 };
 
 Winamp::Winamp()
-{ 
+{
 	name = _T("Winamp");
 	window_classes = wcs;
 	num_window_classes = _countof(wcs);

@@ -17,7 +17,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "variables.h"
+#include "stdafx.h"
 
 static TCHAR *parseComputerName(ARGUMENTSINFO *ai)
 {
@@ -421,7 +421,7 @@ static TCHAR *parseListDir(ARGUMENTSINFO *ai)
 }
 
 #ifndef WINE
-static BOOL CALLBACK MyProcessEnumerator(DWORD dwPID, WORD wTask, char *szProcess, LPARAM lParam)
+static BOOL CALLBACK MyProcessEnumerator(DWORD, WORD, char *szProcess, LPARAM lParam)
 {
 	char **szProc = (char **)lParam;
 	if ((*szProc != NULL) && (!_stricmp(*szProc, szProcess)))

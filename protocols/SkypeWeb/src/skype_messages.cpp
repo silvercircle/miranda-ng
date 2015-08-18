@@ -20,21 +20,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 /* MESSAGE RECEIVING */
 
 // incoming message flow
-int CSkypeProto::OnReceiveMessage(const char *messageId, const char *url, time_t timestamp, char *content, int emoteOffset, bool isRead)
+int CSkypeProto::OnReceiveMessage(MCONTACT hContact, const char *szContent, const char *szMessageId, time_t timestamp,  int emoteOffset, bool isRead)
 {
-	CMStringA skypename(ContactUrlToName(url));
-	debugLogA("Incoming message from %s", skypename);
-
-	MCONTACT hContact = AddContact(skypename, true);
-	if (hContact == NULL)
-		return 0;
-
 	PROTORECVEVENT recv = { 0 };
 	recv.timestamp = timestamp;
-	recv.szMessage = content;
+	recv.szMessage = mir_strdup(szContent);
 	recv.lParam = emoteOffset;
-	recv.pCustomData = (void*)messageId;
-	recv.cbCustomDataSize = (DWORD)mir_strlen(messageId);
+	recv.pCustomData = (void*)mir_strdup(szMessageId);
+	recv.cbCustomDataSize = (DWORD)mir_strlen(szMessageId);
 
 	if (isRead)
 		recv.flags |= PREF_CREATEREAD;
@@ -55,7 +48,7 @@ int CSkypeProto::OnSendMessage(MCONTACT hContact, int, const char *szMessage)
 {
 	if (!IsOnline())
 	{
-		ProtoBroadcastAck(hContact, ACKTYPE_MESSAGE, ACKRESULT_FAILED, NULL, (LPARAM)"You cannot send when you are offline.");
+		ProtoBroadcastAck(hContact, ACKTYPE_MESSAGE, ACKRESULT_FAILED, NULL, (LPARAM)Translate("You cannot send when you are offline."));
 		return 0;
 	}
 
@@ -65,21 +58,15 @@ int CSkypeProto::OnSendMessage(MCONTACT hContact, int, const char *szMessage)
 
 	ptrA username(getStringA(hContact, "Skypename"));
 
-	debugLogA(__FUNCTION__ " clientmsgid = %d", param->hMessage);
-
-	/*TCHAR *tszMessage = mir_utf8decodeT(szMessage);
-	int len = EscapeXML(tszMessage, _tcslen(tszMessage), NULL, 0);	
-	TCHAR *buff = new TCHAR[len+1];
-	buff[len] = '\0';
-	EscapeXML(tszMessage, _tcslen(tszMessage), buff, len);
-	char *szNewMessage = mir_utf8encodeT(buff);
-	delete[] buff;*/
-
 	if (strncmp(szMessage, "/me ", 4) == 0)
-		SendRequest(new SendActionRequest(m_szRegToken, username, m_szSelfSkypeName, param->hMessage, &szMessage[4], m_szServer), &CSkypeProto::OnMessageSent, param);
+		SendRequest(new SendActionRequest(username, param->hMessage, &szMessage[4], li), &CSkypeProto::OnMessageSent, param);
 	else
-		SendRequest(new SendMessageRequest(m_szRegToken, username, param->hMessage, szMessage, m_szServer), &CSkypeProto::OnMessageSent, param);
+		SendRequest(new SendMessageRequest(username, param->hMessage, szMessage, li), &CSkypeProto::OnMessageSent, param);
 
+	{
+		mir_cslock lck(m_lckOutMessagesList);
+		m_OutMessages.insert((void*)param->hMessage);
+	}
 	return param->hMessage;
 }
 
@@ -90,19 +77,49 @@ void CSkypeProto::OnMessageSent(const NETLIBHTTPREQUEST *response, void *arg)
 	HANDLE hMessage = (HANDLE)param->hMessage;
 	delete param;
 
-	if (response == NULL || response->resultCode != 201)
+	if (response != NULL)
 	{
-		std::string error("Unknown error");
-		if (response && response->pData != NULL)
+		if (response->resultCode == 201)
 		{
-			JSONNode root = JSONNode::parse(response->pData);
-			const JSONNode &node = root["errorCode"];
-			if (!node.isnull())
-				error = node.as_string();
+			if (m_OutMessages.getIndex(hMessage) != -1)
+			{
+				if (response->pData != NULL)
+				{
+					JSONNode jRoot = JSONNode::parse(response->pData);
+					auto it = m_mpOutMessages.find(hMessage);
+					if (it == m_mpOutMessages.end())
+					{
+						m_mpOutMessages[hMessage] = (jRoot["OriginalArrivalTime"].as_int() / 1000);
+					}
+				}
+				ProtoBroadcastAck(hContact, ACKTYPE_MESSAGE, ACKRESULT_SUCCESS, hMessage, 0);
+				{
+					mir_cslock lck(m_lckOutMessagesList);
+					m_OutMessages.remove(hMessage);
+				}
+			}
 		}
-		ptrT username(getTStringA(hContact, "Skypename"));
-		debugLogA(__FUNCTION__": failed to send message for %s (%s)", username, error.c_str());
-		ProtoBroadcastAck(hContact, ACKTYPE_MESSAGE, ACKRESULT_FAILED, hMessage, (LPARAM)error.c_str());
+		else
+		{
+			std::string strError = Translate("Unknown error!");
+
+			if (response->pData != NULL)
+			{
+				JSONNode jRoot = JSONNode::parse(response->pData);
+				const JSONNode &jErr = jRoot["errorCode"];
+
+				if(jErr)
+				{
+					strError = jErr.as_string();
+				}
+			}
+
+			ProtoBroadcastAck(hContact, ACKTYPE_MESSAGE, ACKRESULT_FAILED, hMessage, (LPARAM)strError.c_str());
+		}
+	}
+	else
+	{
+		ProtoBroadcastAck(hContact, ACKTYPE_MESSAGE, ACKRESULT_FAILED, hMessage, (LPARAM)(Translate("Network error!")));
 	}
 }
 
@@ -126,6 +143,13 @@ int CSkypeProto::OnPreCreateMessage(WPARAM, LPARAM lParam)
 	memcpy(&evt->dbei->pBlob[evt->dbei->cbBlob], messageId, messageId.GetLength());
 	evt->dbei->cbBlob += messageId.GetLength();
 
+	auto it = m_mpOutMessages.find((HANDLE)evt->seq);
+	if (it != m_mpOutMessages.end())
+	{
+		evt->dbei->timestamp = it->second;
+		m_mpOutMessages.erase(it);
+	}
+
 	return 0;
 }
 
@@ -133,69 +157,90 @@ int CSkypeProto::OnPreCreateMessage(WPARAM, LPARAM lParam)
 
 void CSkypeProto::OnPrivateMessageEvent(const JSONNode &node)
 {
-	std::string clientMsgId = node["clientmessageid"].as_string();
-	std::string skypeEditedId = node["skypeeditedid"].as_string();
+	CMStringA szMessageId = node["clientmessageid"] ? node["clientmessageid"].as_string().c_str() : node["skypeeditedid"].as_string().c_str();
+	CMStringA szConversationName(UrlToSkypename(node["conversationLink"].as_string().c_str()));
+	CMStringA szFromSkypename(UrlToSkypename(node["from"].as_string().c_str()));
 
-	bool isEdited = node["skypeeditedid"];
+	std::string strMessageType = node["messagetype"].as_string();
+	std::string strContent = node["content"].as_string();
+	ptrA szClearedContent(RemoveHtml(strContent.c_str()));
 
-	std::string composeTime = node["composetime"].as_string();
-	time_t timestamp = getByte("UseLocalTime", 0) ? time(NULL) : IsoToUnixTime(composeTime.c_str());
+	bool bEdited = node["skypeeditedid"];
+	time_t timestamp =  IsoToUnixTime(node["composetime"].as_string().c_str());
 
-	CMStringA skypename(ContactUrlToName(node["conversationLink"].as_string().c_str()));
-	CMStringA from(ContactUrlToName(node["from"].as_string().c_str()));
+	int nEmoteOffset = node["skypeemoteoffset"].as_int();
 
-	std::string content = node["content"].as_string();
-	int emoteOffset = node["skypeemoteoffset"].as_int();
-
-	ptrA message(RemoveHtml(content.c_str()));
-
-	std::string messageType= node["messagetype"].as_string();
-	MCONTACT hContact = AddContact(skypename, true);
+	MCONTACT hContact = AddContact(szConversationName, true);
 
 	if (HistorySynced)
 		db_set_dw(hContact, m_szModuleName, "LastMsgTime", (DWORD)timestamp);
 
-	if (!mir_strcmpi(messageType.c_str(), "Control/Typing"))
+	if (strMessageType == "Control/Typing")
+	{
 		CallService(MS_PROTO_CONTACTISTYPING, hContact, PROTOTYPE_CONTACTTYPING_INFINITE);
-
-	else if (!mir_strcmpi(messageType.c_str(), "Control/ClearTyping"))
-		CallService(MS_PROTO_CONTACTISTYPING, hContact, PROTOTYPE_CONTACTTYPING_OFF);
-
-	else if (!mir_strcmpi(messageType.c_str(), "Text") || !mir_strcmpi(messageType.c_str(), "RichText"))
-	{
-		if (IsMe(from))
-		{
-			int hMessage = atoi(clientMsgId.c_str());
-			ProtoBroadcastAck(hContact, ACKTYPE_MESSAGE, ACKRESULT_SUCCESS, (HANDLE)hMessage, 0);
-			debugLogA(__FUNCTION__" timestamp = %d clientmsgid = %s", timestamp, clientMsgId);
-			AddDbEvent(emoteOffset == 0 ? EVENTTYPE_MESSAGE : SKYPE_DB_EVENT_TYPE_ACTION, hContact, timestamp, DBEF_UTF | DBEF_SENT, &message[emoteOffset], clientMsgId.c_str());
-			return;
-		}
-		CallService(MS_PROTO_CONTACTISTYPING, hContact, PROTOTYPE_CONTACTTYPING_OFF);
-
-		debugLogA(__FUNCTION__" timestamp = %d clientmsgid = %s", timestamp, clientMsgId);
-		MEVENT dbevent = GetMessageFromDb(hContact, skypeEditedId.c_str());
-		if (isEdited && dbevent != NULL)
-		{
-			AppendDBEvent(hContact, dbevent, message, skypeEditedId.c_str(), timestamp);
-		}
-		else OnReceiveMessage(clientMsgId.c_str(), node["conversationLink"].as_string().c_str(), timestamp, message, emoteOffset);
 	}
-	else if (!mir_strcmpi(messageType.c_str(), "Event/SkypeVideoMessage")) {}
-	else if (!mir_strcmpi(messageType.c_str(), "Event/Call"))
+	else if (strMessageType == "Control/ClearTyping")
 	{
-		AddDbEvent(SKYPE_DB_EVENT_TYPE_CALL_INFO, hContact, timestamp, DBEF_UTF, content.c_str(), clientMsgId.c_str());
+		CallService(MS_PROTO_CONTACTISTYPING, hContact, PROTOTYPE_CONTACTTYPING_OFF);
 	}
-	else if (!mir_strcmpi(messageType.c_str(), "RichText/Files"))
+	else if (strMessageType == "Text" || strMessageType == "RichText")
+	{
+		if (IsMe(szFromSkypename))
+		{
+			HANDLE hMessage = (HANDLE)atol(szMessageId);
+			if (m_OutMessages.getIndex(hMessage) != -1)
+			{
+				auto it = m_mpOutMessages.find(hMessage);
+				if (it == m_mpOutMessages.end())
+				{
+					m_mpOutMessages[hMessage] = timestamp;
+				}
+				ProtoBroadcastAck(hContact, ACKTYPE_MESSAGE, ACKRESULT_SUCCESS, hMessage, 0);
+				{
+					mir_cslock lck(m_lckOutMessagesList);
+					m_OutMessages.remove(hMessage);
+				}
+			}
+			else
+			{
+				AddDbEvent(nEmoteOffset == 0 ? EVENTTYPE_MESSAGE : SKYPE_DB_EVENT_TYPE_ACTION, hContact, 
+					timestamp, DBEF_UTF | DBEF_SENT, &szClearedContent[nEmoteOffset], szMessageId);
+			}
+		}
+		else
+		{
+			CallService(MS_PROTO_CONTACTISTYPING, hContact, PROTOTYPE_CONTACTTYPING_OFF);
+			MEVENT hDbEvent = GetMessageFromDb(hContact, szMessageId);
+
+			if (bEdited && hDbEvent != NULL)
+			{
+				AppendDBEvent(hContact, hDbEvent, szClearedContent, szMessageId, timestamp);
+			}
+			else 
+			{
+				OnReceiveMessage(hContact, szClearedContent, szMessageId, timestamp, nEmoteOffset);
+			}
+		}
+	}
+	else if (strMessageType == "Event/Call")
+	{
+		AddDbEvent(SKYPE_DB_EVENT_TYPE_CALL_INFO, hContact, timestamp, DBEF_UTF, strContent.c_str(), szMessageId);
+	}
+	else if (strMessageType == "RichText/Files")
 	{		
-		AddDbEvent(SKYPE_DB_EVENT_TYPE_FILETRANSFER_INFO, hContact, timestamp, DBEF_UTF, content.c_str(), clientMsgId.c_str());
+		AddDbEvent(SKYPE_DB_EVENT_TYPE_FILETRANSFER_INFO, hContact, timestamp, DBEF_UTF, strContent.c_str(), szMessageId);
 	}
-	else if (!mir_strcmpi(messageType.c_str(), "RichText/Location")) {}
-	else if (!mir_strcmpi(messageType.c_str(), "RichText/UriObject"))
+	else if (strMessageType == "RichText/UriObject")
 	{
-		AddDbEvent(SKYPE_DB_EVENT_TYPE_URIOBJ, hContact, timestamp, DBEF_UTF, content.c_str(), clientMsgId.c_str());
+		AddDbEvent(SKYPE_DB_EVENT_TYPE_URIOBJ, hContact, timestamp, DBEF_UTF, strContent.c_str(), szMessageId);
 	}
-	else if (!mir_strcmpi(messageType.c_str(), "RichText/Contacts")) {}
+	//else if (messageType == "Event/SkypeVideoMessage") {}
+	//else if (messageType.c_str() == "RichText/Contacts") {}
+	//else if (messageType.c_str() == "RichText/Location") {}
+	else
+	{
+		AddDbEvent(SKYPE_DB_EVENT_TYPE_UNKNOWN, hContact, timestamp, DBEF_UTF, strContent.c_str(), szMessageId);
+	}
 }
 
 int CSkypeProto::OnDbEventRead(WPARAM hContact, LPARAM hDbEvent)
@@ -216,5 +261,5 @@ void CSkypeProto::MarkMessagesRead(MCONTACT hContact, MEVENT hDbEvent)
 	time_t timestamp = dbei.timestamp;
 
 	if(db_get_dw(hContact, m_szModuleName, "LastMsgTime", 0) > (timestamp - 300))
-		PushRequest(new MarkMessageReadRequest(username, m_szRegToken, timestamp, timestamp, false, m_szServer));
+		PushRequest(new MarkMessageReadRequest(username, timestamp, timestamp, false, li));
 }

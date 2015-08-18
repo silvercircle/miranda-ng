@@ -168,13 +168,13 @@ int CIrcProto::getCodepage() const
 	return (con != NULL) ? codepage : CP_ACP;
 }
 
-void CIrcProto::SendIrcMessage(const TCHAR* msg, bool bNotify, int codepage)
+void CIrcProto::SendIrcMessage(const TCHAR* msg, bool bNotify, int cp)
 {
-	if (codepage == -1)
-		codepage = getCodepage();
+	if (cp == -1)
+		cp = getCodepage();
 
 	if (this) {
-		char* str = mir_t2a_cp(msg, codepage);
+		char* str = mir_t2a_cp(msg, cp);
 		rtrim(str);
 		int cbLen = (int)mir_strlen(str);
 		str = (char*)mir_realloc(str, cbLen + 3);
@@ -183,7 +183,7 @@ void CIrcProto::SendIrcMessage(const TCHAR* msg, bool bNotify, int codepage)
 		mir_free(str);
 
 		if (bNotify) {
-			CIrcMessage ircMsg(this, msg, codepage);
+			CIrcMessage ircMsg(this, msg, cp);
 			if (!ircMsg.sCommand.IsEmpty() && ircMsg.sCommand != _T("QUIT"))
 				Notify(&ircMsg);
 		}
@@ -232,16 +232,16 @@ bool CIrcProto::Connect(const CIrcSessionInfo& info)
 		NLSend("PASS %s\r\n", info.sPassword.c_str());
 	NLSend(_T("NICK %s\r\n"), info.sNick.c_str());
 
-	CMString m_userID = GetWord(info.sUserID.c_str(), 0);
+	CMString userID = GetWord(info.sUserID.c_str(), 0);
 	TCHAR szHostName[MAX_PATH];
 	DWORD cbHostName = _countof(szHostName);
 	GetComputerName(szHostName, &cbHostName);
 	CMString HostName = GetWord(szHostName, 0);
-	if (m_userID.IsEmpty())
-		m_userID = _T("Miranda");
+	if (userID.IsEmpty())
+		userID = _T("Miranda");
 	if (HostName.IsEmpty())
 		HostName = _T("host");
-	NLSend(_T("USER %s %s %s :%s\r\n"), m_userID.c_str(), HostName.c_str(), _T("server"), info.sFullName.c_str());
+	NLSend(_T("USER %s %s %s :%s\r\n"), userID.c_str(), HostName.c_str(), _T("server"), info.sFullName.c_str());
 
 	return con != NULL;
 }
@@ -926,11 +926,11 @@ int CDccSession::SetupConnection()
 					int i = di->sFileAndPath.ReverseFind('\\');
 					if (i != -1) {
 						di->sPath = di->sFileAndPath.Mid(0, i + 1);
-						di->sFile = di->sFileAndPath.Mid(i + 1, di->sFileAndPath.GetLength());
+						di->sFile = di->sFileAndPath.Mid(i + 1);
 					}
 
-					pfts.tszCurrentFile = (TCHAR*)di->sFileAndPath.c_str();
-					pfts.tszWorkingDir = (TCHAR*)di->sPath.c_str();
+					pfts.tszCurrentFile = di->sFileAndPath.GetBuffer();
+					pfts.tszWorkingDir = di->sPath.GetBuffer();
 					pfts.totalBytes = di->dwSize;
 					pfts.currentFileSize = pfts.totalBytes;
 

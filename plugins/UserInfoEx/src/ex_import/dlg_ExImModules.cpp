@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "..\commonheaders.h"
+#include "..\stdafx.h"
 
 /***********************************************************************************************************
  * typedefs
@@ -301,7 +301,7 @@ INT_PTR CALLBACK SelectModulesToExport_DlgProc(HWND hDlg, UINT uMsg, WPARAM wPar
 												case EXIM_GROUP:
 													break;
 												case EXIM_SUBGROUP:
-													if (mir_tcsncmp(pDat->ExImContact->ptszName, DB::Setting::GetTString(hContact, "CList", "Group"), mir_tstrlen(pDat->ExImContact->ptszName))) {
+													if (mir_tstrncmp(pDat->ExImContact->ptszName, DB::Setting::GetTString(hContact, "CList", "Group"), mir_tstrlen(pDat->ExImContact->ptszName))) {
 														continue;
 													}
 													break;

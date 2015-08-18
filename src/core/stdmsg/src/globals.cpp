@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 GlobalMessageData g_dat;
 
@@ -73,7 +73,7 @@ static int dbaddedevent(WPARAM hContact, LPARAM hDbEvent)
 	return 0;
 }
 
-static int ackevent(WPARAM wParam, LPARAM lParam)
+static int ackevent(WPARAM, LPARAM lParam)
 {
 	ACKDATA *pAck = (ACKDATA *)lParam;
 	if (pAck && pAck->type == ACKTYPE_MESSAGE) {

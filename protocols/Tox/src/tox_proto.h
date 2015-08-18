@@ -73,6 +73,7 @@ private:
 	ToxAv *toxAv;
 	char *password;
 	mir_cs toxLock;
+	mir_cs profileLock;
 	TCHAR *accountName;
 	HANDLE hNetlib, hPollingThread;
 	bool isTerminated, isConnected;
@@ -214,6 +215,8 @@ private:
 
 	static void OnFriendMessage(Tox *tox, uint32_t friendNumber, TOX_MESSAGE_TYPE type, const uint8_t *message, size_t length, void *arg);
 	static void OnReadReceipt(Tox *tox, uint32_t friendNumber, uint32_t messageId, void *arg);
+
+	void __cdecl GetStatusMessageAsync(void* arg);
 
 	int OnUserIsTyping(MCONTACT hContact, int type);
 	static void OnTypingChanged(Tox *tox, uint32_t friendNumber, bool isTyping, void *arg);

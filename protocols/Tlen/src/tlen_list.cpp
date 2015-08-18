@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#include "tlen.h"
+#include "stdafx.h"
 #include "tlen_list.h"
 
 
@@ -202,7 +202,7 @@ void TlenListRemoveByIndex(TlenProtocol *proto, int index)
 	}
 }
 
-void TlenListAddResource(TlenProtocol *proto, TLEN_LIST list, const char *jid, int status, const char *statusMessage)
+void TlenListAddResource(TlenProtocol *proto, TLEN_LIST list, const char *jid, int, const char *statusMessage)
 {
 	int i;
 

@@ -49,7 +49,7 @@ void CSkypeProto::OnCreateTrouter(const NETLIBHTTPREQUEST *response)
 	TRouter.socketIo = socketio.as_string();
 	TRouter.url = url.as_string();
 
-	SendRequest(new CreateTrouterPoliciesRequest(m_szTokenSecret, TRouter.connId.c_str()), &CSkypeProto::OnTrouterPoliciesCreated);
+	SendRequest(new CreateTrouterPoliciesRequest(li, TRouter.connId.c_str()), &CSkypeProto::OnTrouterPoliciesCreated);
 }
 
 void CSkypeProto::OnTrouterPoliciesCreated(const NETLIBHTTPREQUEST *response)
@@ -88,18 +88,16 @@ void CSkypeProto::OnTrouterPoliciesCreated(const NETLIBHTTPREQUEST *response)
 		TRouter.se,
 		TRouter.sig,
 		TRouter.instance,
-		TRouter.ccid), &CSkypeProto::OnGetTrouter, NULL);
+		TRouter.ccid), &CSkypeProto::OnGetTrouter);
 }
 
-void CSkypeProto::OnGetTrouter(const NETLIBHTTPREQUEST *response, void *p)
+void CSkypeProto::OnGetTrouter(const NETLIBHTTPREQUEST *response)
 {
 	if (response == NULL || response->pData == NULL)
 	{
 		ShowNotification(m_tszUserName, TranslateT("Failed establish a TRouter connection."), NULL, 1);
 		return;
 	}
-
-	bool isHealth = p != NULL;
 
 	CMStringA data(response->pData);
 	int iStart = 0;
@@ -110,8 +108,11 @@ void CSkypeProto::OnGetTrouter(const NETLIBHTTPREQUEST *response, void *p)
 	else 
 		SetEvent(m_hTrouterEvent);
 
-	if (!isHealth)
-		SendRequest(new RegisterTrouterRequest(m_szTokenSecret, TRouter.url.c_str(), TRouter.sessId.c_str()));
+	if ((time(NULL) - TRouter.lastRegistrationTime) >= 3600)
+	{
+		SendRequest(new RegisterTrouterRequest(li, TRouter.url.c_str(), TRouter.sessId.c_str()));
+		TRouter.lastRegistrationTime = time(NULL);
+	}
 }
 
 void CSkypeProto::OnHealth(const NETLIBHTTPREQUEST*)
@@ -124,7 +125,7 @@ void CSkypeProto::OnHealth(const NETLIBHTTPREQUEST*)
 		TRouter.sig,
 		TRouter.instance,
 		TRouter.ccid),
-		&CSkypeProto::OnGetTrouter, (void *)1);
+		&CSkypeProto::OnGetTrouter);
 }
 
 void CSkypeProto::TRouterThread(void*)
@@ -224,7 +225,7 @@ void CSkypeProto::OnTrouterEvent(const JSONNode &body, const JSONNode &)
 INT_PTR CSkypeProto::OnIncomingCallCLE(WPARAM, LPARAM lParam)
 {
 	CLISTEVENT *cle = (CLISTEVENT*)lParam;
-	NotifyEventHooks(m_hCallHook, (WPARAM)cle->hContact, (LPARAM)0);
+	NotifyEventHooks(g_hCallEvent, (WPARAM)cle->hContact, (LPARAM)0);
 	return 0;
 }
 
@@ -241,7 +242,7 @@ INT_PTR CSkypeProto::OnIncomingCallPP(WPARAM wParam, LPARAM hContact)
 	}
 
 	if (wParam == 1)
-		NotifyEventHooks(m_hCallHook, (WPARAM)hContact, (LPARAM)0);
+		NotifyEventHooks(g_hCallEvent, (WPARAM)hContact, (LPARAM)0);
 
 	return 0;
 }

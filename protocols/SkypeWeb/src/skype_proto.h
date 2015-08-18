@@ -24,6 +24,8 @@ typedef void(CSkypeProto::*SkypeResponseWithArgCallback)(const NETLIBHTTPREQUEST
 struct CSkypeProto : public PROTO < CSkypeProto >
 {
 	friend CSkypeGCCreateDlg;
+	//friend CSkypeChatroom;
+	//friend ChatUser;
 
 public:
 
@@ -38,7 +40,7 @@ public:
 
 	virtual	MCONTACT  __cdecl AddToList(int flags, PROTOSEARCHRESULT* psr);
 	virtual	MCONTACT  __cdecl AddToListByEvent(int flags, int iContact, MEVENT hDbEvent);
-	virtual  int       __cdecl AuthRequest(MCONTACT hContact, const TCHAR* szMessage);
+	virtual int       __cdecl AuthRequest(MCONTACT hContact, const TCHAR* szMessage);
 	virtual	int       __cdecl Authorize(MEVENT hDbEvent);
 	virtual	int       __cdecl AuthDeny(MEVENT hDbEvent, const TCHAR* szReason);
 	virtual	int       __cdecl AuthRecv(MCONTACT hContact, PROTORECVEVENT*);
@@ -64,6 +66,7 @@ public:
 
 	//popups
 	void InitPopups();
+	void UninitPopups();
 
 	// languages
 	static void InitLanguages();
@@ -76,43 +79,53 @@ public:
 	void __cdecl SearchBasicThread(void* id);
 
 	////////////////////////////////////////////
-	static UINT_PTR m_timer;
-	static int CompareAccounts(const CSkypeProto *p1, const CSkypeProto *p2);
-	void ProcessTimer();
 	static INT_PTR EventGetIcon(WPARAM wParam, LPARAM lParam);
 	static INT_PTR GetEventText(WPARAM, LPARAM lParam);
-	static mir_cs accountsLock;
 
 private:
+
+	LoginInfo li;
+
+	static UINT_PTR m_timer;
+
+	//---Accounts
+	static LIST<CSkypeProto> CSkypeProto::Accounts; 
+	static int CompareAccounts(const CSkypeProto *p1, const CSkypeProto *p2);
+	//---/
+
 	RequestQueue *requestQueue;
 
 	bool isTerminated,
-		HistorySynced;
+		 HistorySynced;
+
+	std::map<HANDLE, time_t> m_mpOutMessages;
+
 	std::map<std::string, std::string> cookies;
 	static std::map<std::tstring, std::tstring> languages;
 
 	HANDLE m_pollingConnection,
-		m_hPollingThread,
-		m_hTrouterThread,
-		m_TrouterConnection,
-		m_hTrouterEvent,
-		m_hCallHook;
+		   m_hPollingThread,
+		   m_hTrouterThread,
+		   m_TrouterConnection,
+		   m_hTrouterEvent;
 
 	TRInfo TRouter;
 
 	LIST<void> m_PopupClasses;
-
+	LIST<void> m_OutMessages;
+	//dialogs
 	LIST<CSkypeInviteDlg> m_InviteDialogs;
 	LIST<CSkypeGCCreateDlg> m_GCCreateDialogs;
+
+	//locks
+	mir_cs m_lckOutMessagesList;
 	mir_cs m_InviteDialogsLock;
 	mir_cs m_GCCreateDialogsLock;
-	// accounts
-
-	ptrA m_szServer,
-		m_szRegToken,
-		m_szTokenSecret,
-		m_szEndpointId,
-		m_szSelfSkypeName;
+	mir_cs messageSyncLock;
+	mir_cs m_StatusLock;
+	mir_cs m_AppendMessageLock;
+	static mir_cs accountsLock;
+	static mir_cs timerLock;
 
 	static CSkypeProto* GetContactAccount(MCONTACT hContact);
 	int __cdecl OnAccountLoaded(WPARAM, LPARAM);
@@ -129,6 +142,11 @@ private:
 	int InternalSetAvatar(MCONTACT hContact, const char *szJid, const TCHAR *ptszFileName);
 
 	// requests
+
+	void InitNetwork();
+	void UnInitNetwork();
+	void ShutdownConnections();
+
 	void PushRequest(HttpRequest *request);
 	void PushRequest(HttpRequest *request, SkypeResponseCallback response);
 	void PushRequest(HttpRequest *request, SkypeResponseWithArgCallback response, void *arg);
@@ -170,7 +188,7 @@ private:
 
 	void OnCreateTrouter(const NETLIBHTTPREQUEST *response);
 	void OnTrouterPoliciesCreated(const NETLIBHTTPREQUEST *response);
-	void OnGetTrouter(const NETLIBHTTPREQUEST *response, void *p);
+	void OnGetTrouter(const NETLIBHTTPREQUEST *response);
 	void OnHealth(const NETLIBHTTPREQUEST *response);
 	void OnTrouterEvent(const JSONNode &body, const JSONNode &headers);
 	void __cdecl TRouterThread(void*);
@@ -225,12 +243,11 @@ private:
 	void OnUnblockContact(const NETLIBHTTPREQUEST *response, void *p);
 
 	// messages
-	mir_cs messageSyncLock;
 
 	MEVENT GetMessageFromDb(MCONTACT hContact, const char *messageId, LONGLONG timestamp = 0);
 	MEVENT AddDbEvent(WORD type, MCONTACT hContact, DWORD timestamp, DWORD flags, const char *content, const char *uid);
 	MEVENT AppendDBEvent(MCONTACT hContact, MEVENT hEvent, const char *szContent, const char *szUid, time_t edit_time);
-	int OnReceiveMessage(const char *messageId, const char *url, time_t timestamp, char *content, int emoteOffset = 0, bool isRead = false);
+	int OnReceiveMessage(MCONTACT hContact, const char *szContent, const char *szMessageId, time_t timestamp,  int emoteOffset = 0, bool isRead = false);
 
 	int OnSendMessage(MCONTACT hContact, int flags, const char *message);
 	void OnMessageSent(const NETLIBHTTPREQUEST *response, void *arg);
@@ -246,6 +263,7 @@ private:
 	void SyncHistory();
 
 	//chats
+
 	void InitGroupChatModule();
 	void CloseAllChatChatSessions();
 
@@ -254,15 +272,13 @@ private:
 
 	int __cdecl OnGroupChatEventHook(WPARAM, LPARAM lParam);
 	int __cdecl OnGroupChatMenuHook(WPARAM, LPARAM lParam);
-
-	void StartChatRoom(const TCHAR *tid, const TCHAR *tname);
-
-	void OnLoadChats(const NETLIBHTTPREQUEST *response);
-
-	void OnGetChatInfo(const NETLIBHTTPREQUEST *response, void *p);
-
 	INT_PTR __cdecl OnJoinChatRoom(WPARAM hContact, LPARAM);
 	INT_PTR __cdecl OnLeaveChatRoom(WPARAM hContact, LPARAM);
+
+	void StartChatRoom(const TCHAR *tid, const TCHAR *tname);
+	void OnLoadChats(const NETLIBHTTPREQUEST *response);
+	void OnGetChatInfo(const NETLIBHTTPREQUEST *response, void *p);
+
 	void OnChatEvent(const JSONNode &node);
 	void OnSendChatMessage(const TCHAR *chat_id, const TCHAR * tszMessage);
 	char *GetChatUsers(const TCHAR *chat_id);
@@ -277,25 +293,32 @@ private:
 	void SetChatStatus(MCONTACT hContact, int iStatus);
 
 	//polling
-	void __cdecl PollingThread(void*);
-	void ParsePollData(const JSONNode &data);
-	void ProcessEndpointPresenceRes(const JSONNode &node);
-	void ProcessUserPresenceRes(const JSONNode &node);
-	void ProcessNewMessageRes(const JSONNode &node);
-	void ProcessConversationUpdateRes(const JSONNode &node);
-	void ProcessThreadUpdateRes(const JSONNode &node);
+	void __cdecl PollingThread     (void*);
+	void __cdecl ParsePollData     (void *pData);
+	void ProcessEndpointPresence   (const JSONNode &node);
+	void ProcessUserPresence       (const JSONNode &node);
+	void ProcessNewMessage         (const JSONNode &node);
+	void ProcessConversationUpdate (const JSONNode &node);
+	void ProcessThreadUpdate       (const JSONNode &node);
 
 	// utils
-	bool IsOnline();
-	bool IsMe(const char *skypeName);
+	static void FreeCharList(const LIST<char> &lst);
+
+	__forceinline bool IsOnline()
+	{	return (m_iStatus > ID_STATUS_OFFLINE && m_hPollingThread);
+	}
+
+	__forceinline bool IsMe(const char *szSkypename)
+	{	return (!mir_strcmpi(szSkypename, li.szSkypename) || !mir_strcmp(szSkypename, ptrA(getStringA("SelfEndpointName"))));
+	}
 
 	MEVENT AddEventToDb(MCONTACT hContact, WORD type, DWORD timestamp, DWORD flags, DWORD cbBlob, PBYTE pBlob);
-	time_t IsoToUnixTime(const char *stamp);
-	char *RemoveHtml(const char *text);
-	CMStringA GetStringChunk(const char *haystack, const char *start, const char *end);
+	static time_t IsoToUnixTime(const char *stamp);
+	static char *RemoveHtml(const char *text);
+	static CMStringA GetStringChunk(const char *haystack, const char *start, const char *end);
 
-	int SkypeToMirandaStatus(const char *status);
-	char *MirandaToSkypeStatus(int status);
+	static int SkypeToMirandaStatus(const char *status);
+	static const char *MirandaToSkypeStatus(int status);
 
 	void ShowNotification(const TCHAR *message, MCONTACT hContact = NULL);
 	void ShowNotification(const TCHAR *caption, const TCHAR *message, MCONTACT hContact = NULL, int type = 0);
@@ -303,17 +326,17 @@ private:
 
 	static LRESULT CALLBACK PopupDlgProcCall(HWND hPopup, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-	CMStringA ParseUrl(const char *url, const char *token);
+	static CMStringA ParseUrl(const char *url, const char *token);
 
-	void SetSrmmReadStatus(MCONTACT hContact);
+	static CMStringA UrlToSkypename(const char *url);
+	static CMStringA GetServerFromUrl(const char *url);
 
-	CMStringA ChatUrlToName(const char *url);
-	CMStringA ContactUrlToName(const char *url);
-	CMStringA SelfUrlToName(const char *url);
-	CMStringA GetServerFromUrl(const char *url);
-
-	void CALLBACK SkypeUnsetTimer(void*);
-	void CALLBACK SkypeSetTimer(void*);
+	//---Timers
+	void CALLBACK SkypeUnsetTimer();
+	void CALLBACK SkypeSetTimer();
+	void ProcessTimer();
+	static void CALLBACK TimerProc(HWND, UINT, UINT_PTR, DWORD);
+	//---/
 
 	time_t GetLastMessageTime(MCONTACT hContact);
 	CMString RunConfirmationCode();
@@ -321,7 +344,6 @@ private:
 	void CloseDialogs();
 	//events
 	void InitDBEvents();
-	int __cdecl ProcessSrmmEvent(WPARAM, LPARAM);
 
 	//services
 	INT_PTR __cdecl OnIncomingCallCLE(WPARAM wParam, LPARAM lParam);
@@ -338,7 +360,7 @@ private:
 	template<INT_PTR(__cdecl CSkypeProto::*Service)(WPARAM, LPARAM)>
 	static INT_PTR __cdecl GlobalService(WPARAM wParam, LPARAM lParam)
 	{
-		CSkypeProto *proto = CSkypeProto::GetContactAccount((MCONTACT)wParam);
+		CSkypeProto *proto = GetContactAccount((MCONTACT)wParam);
 		return proto ? (proto->*Service)(wParam, lParam) : 0;
 	}
 };

@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 Автор: Mironych
 =======================================================================================*/
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 WORD Stat_SelAcc; // Выбранные аккаунты в окне статистики
 
@@ -240,7 +240,7 @@ INT_PTR CALLBACK DlgProcOptStatistics(HWND hwndDlg, UINT msg, WPARAM wParam, LPA
 				case NM_CLICK:
 				case LVN_ITEMCHANGED:
 					{
-						DWORD i, j = -1, dwTotalIncoming = 0, dwTotalOutgoing = 0;
+						DWORD j = -1, dwTotalIncoming = 0, dwTotalOutgoing = 0;
 
 						i = SendDlgItemMessage(hwndDlg, IDC_LIST_DATA, LVM_GETSELECTEDCOUNT, 0, 0);
 						for (; i--;) {
@@ -298,7 +298,7 @@ void Stat_ReadFile(BYTE n)
 	LARGE_INTEGER Size;
 	DWORD BytesRead;
 	TCHAR FileName[MAX_PATH], *pszPath;
-	SYSTEMTIME stNow, stLast = { 0 };
+	SYSTEMTIME stNow;
 
 	pszPath = Utils_ReplaceVarsT(_T("%miranda_userdata%\\statistics"));
 	CreateDirectoryTreeT(pszPath);
@@ -608,7 +608,8 @@ DWORD Stat_GetItemValue(WORD SelectedAccs, BYTE Interval, DWORD ItemNum, BYTE Su
 			}
 
 			IndexM++; IndexP++; // Переходим к следующей записи.
-			if (IndexM == ProtoList[a].NumberOfRecords) break;
+			if (IndexM == ProtoList[a].NumberOfRecords)
+				break;
 
 			// Когда остановиться?
 			switch (Interval) {

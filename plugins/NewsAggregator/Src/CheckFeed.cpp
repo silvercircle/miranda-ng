@@ -37,7 +37,8 @@ LPCTSTR CheckFeed(TCHAR *tszURL, HWND hwndDlg)
 			int childcount = 0;
 			HXML node;
 			if (!mir_tstrcmpi(xmlGetName(hXml), _T("xml"))) {
-				for (int i = 0; xmlGetAttrCount(hXml); i++) {
+				int attrcount = xmlGetAttrCount(hXml);
+				for (int i = 0; i < attrcount; i++) {
 					LPCTSTR szAttrName = xmlGetAttrName(hXml, i);
 					if (!mir_tstrcmpi(szAttrName, _T("encoding"))) {
 						codepage = xmlGetAttrValue(hXml, szAttrName);
@@ -78,10 +79,10 @@ LPCTSTR CheckFeed(TCHAR *tszURL, HWND hwndDlg)
 							if (!mir_tstrcmpi(codepage, _T("koi8-r"))) {
 								TCHAR buf[MAX_PATH];
 								MultiByteToWideChar(20866, 0, _T2A(xmlGetText(child)), -1, buf, _countof(buf));
-								return buf;
+								return mir_tstrdup(buf);
 							}
 							else
-								return xmlGetText(child);
+								return mir_tstrdup(xmlGetText(child));
 						}
 					}
 				}
@@ -207,7 +208,8 @@ void CheckCurrentFeed(MCONTACT hContact)
 			int childcount = 0;
 			HXML node;
 			if (!mir_tstrcmpi(xmlGetName(hXml), _T("xml"))) {
-				for (int i = 0; xmlGetAttrCount(hXml); i++) {
+				int attrcount = xmlGetAttrCount(hXml);
+				for (int i = 0; i < attrcount; i++) {
 					LPCTSTR szAttrName = xmlGetAttrName(hXml, i);
 					if (!mir_tstrcmpi(szAttrName, _T("encoding"))) {
 						codepage = xmlGetAttrValue(hXml, szAttrName);
@@ -367,8 +369,7 @@ void CheckCurrentFeed(MCONTACT hContact)
 							else
 								szChildText = xmlGetText(child);
 							if (szChildText) {
-								TCHAR *lastupdtime = (TCHAR *)xmlGetText(child);
-								time_t stamp = DateToUnixTime(lastupdtime, 0);
+								time_t stamp = DateToUnixTime(szChildText, 0);
 								double deltaupd = difftime(time(NULL), stamp);
 								double deltacheck = difftime(time(NULL), (time_t)db_get_dw(hContact, MODULE, "LastCheck", 0));
 								if (deltaupd - deltacheck >= 0) {

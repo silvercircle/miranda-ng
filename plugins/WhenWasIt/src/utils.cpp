@@ -18,7 +18,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 int LogInit()
 {
@@ -102,7 +102,7 @@ void HexToBin(char *inData, ULONG &size, LPBYTE &outData)
 	buffer[4] = '\0'; //mark the end of the string
 	for (UINT i = 0; i < size; i++) {
 		strncpy(buffer + 2, &tmp[i * 2], 2);
-		sscanf(buffer, "%x", &outData[i]);
+		sscanf(buffer, "%hhx", &outData[i]);
 	}
 }
 

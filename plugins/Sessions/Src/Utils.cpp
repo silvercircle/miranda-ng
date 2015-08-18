@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "sessions.h"
+#include "stdafx.h"
 
 void AddSessionMark(MCONTACT hContact, int mode, char bit)
 {
@@ -50,7 +50,7 @@ void AddSessionMark(MCONTACT hContact, int mode, char bit)
 			else pszBuffer = szValue.detach();
 
 			char temp_1 = pszBuffer[0];
-			for (size_t i = 0; i < g_ses_count; i++) {
+			for (int i = 0; i < g_ses_count; i++) {
 				char temp_2 = pszBuffer[i + 1];
 				pszBuffer[i + 1] = temp_1;
 				temp_1 = temp_2;

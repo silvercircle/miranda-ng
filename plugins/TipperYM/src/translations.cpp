@@ -18,7 +18,7 @@ not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  
 */
 
-#include "common.h"
+#include "stdafx.h"
 
 int iTransFuncsCount = 0;
 DBVTranslation *translations = 0;
@@ -671,7 +671,7 @@ TCHAR *ByteToLanguage(MCONTACT hContact, const char *szModuleName, const char *s
 	return 0;
 }
 
-INT_PTR ServiceAddTranslation(WPARAM wParam, LPARAM lParam) 
+INT_PTR ServiceAddTranslation(WPARAM, LPARAM lParam) 
 {
 	if (!lParam) return 1;
 

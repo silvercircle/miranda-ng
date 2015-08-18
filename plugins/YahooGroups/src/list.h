@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef M_YAHOOGROUPS_LIST_H
 #define M_YAHOOGROUPS_LIST_H
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 class CGroupsList
 {
@@ -48,6 +48,6 @@ class CGroupsList
 		char *operator [](int index);
 };
 
-extern CGroupsList &availableGroups;
+extern CGroupsList availableGroups;
 
 #endif //M_VIUPLOADER_LIST_H

@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "stdafx.h"
 #include "SpeechApi51Lexicon.h"
 #include "SpeechApi51.h"
 
@@ -50,8 +50,7 @@ bool SpeechApi51Lexicon::display()
 }
 
 //------------------------------------------------------------------------------
-INT_PTR CALLBACK SpeechApi51Lexicon::dialogEvent(HWND hwndDlg, UINT uMsg, WPARAM wParam, 
-	LPARAM lParam)
+INT_PTR CALLBACK SpeechApi51Lexicon::dialogEvent(HWND, UINT, WPARAM, LPARAM)
 {
 
 	return TRUE;

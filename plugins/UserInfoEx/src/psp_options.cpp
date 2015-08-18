@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 #define PSM_ENABLE_TABITEM	(WM_USER+106)
 
@@ -459,7 +459,7 @@ static INT_PTR CALLBACK DlgProc_AdvancedOpts(HWND hDlg, UINT uMsg, WPARAM wParam
 				if (!Settings.EnumSettings(NULL, "SkinIcons"))
 					for (int i = 0; i < Settings.getCount(); i++) {
 						LPSTR s = Settings[i];
-						if (!mir_strnicmp(s, "UserInfoEx", 10))
+						if (mir_strncmpi(s, "UserInfoEx", 10) == 0)
 							db_unset(NULL, "SkinIcons", s);
 					}
 
@@ -1025,7 +1025,7 @@ static INT_PTR CALLBACK DlgProc_Popups(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 * @retval	MIR_OK
 **/
 
-static int OnInitOptions(WPARAM wParam, LPARAM lParam)
+static int OnInitOptions(WPARAM wParam, LPARAM)
 {
 	DlgContactInfoInitTreeIcons();
 

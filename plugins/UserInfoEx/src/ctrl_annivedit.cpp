@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 CBaseCtrl* CAnnivEditCtrl::CreateObj(HWND hDlg, WORD idCtrl, LPCSTR pszSetting)
 {
@@ -615,7 +615,7 @@ BOOL CAnnivEditCtrl::OnInfoChanged(MCONTACT hContact, LPCSTR pszProto)
 	return bChanged;
 }
 
-void CAnnivEditCtrl::OnApply(MCONTACT hContact, LPCSTR pszProto)
+void CAnnivEditCtrl::OnApply(MCONTACT hContact, LPCSTR)
 {
 	DBWriteBirthDay(hContact);
 	DBWriteAnniversaries(hContact);

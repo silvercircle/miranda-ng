@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 void UpDate_CountryIcon(HWND hCtrl, int countryID)
 {
@@ -43,10 +43,9 @@ INT_PTR CALLBACK PSPBaseProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		// set propertysheet page's background white in aero mode
 		case WM_CTLCOLORSTATIC:
 		case WM_CTLCOLORDLG:
-			{
-				if (IsAeroMode())
-					return (INT_PTR)GetStockBrush(WHITE_BRUSH);
-			} break;
+			if (IsAeroMode())
+				return (INT_PTR)GetStockBrush(WHITE_BRUSH);
+			break;
 
 		// Set text color of edit boxes according to the source of information they display.
 		case WM_CTLCOLOREDIT:

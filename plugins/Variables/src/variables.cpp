@@ -17,7 +17,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "variables.h"
+#include "stdafx.h"
 
 /* some handles */
 static HANDLE
@@ -381,7 +381,7 @@ static TCHAR* replaceDynVars(TCHAR* szTemplate, FORMATINFO* fi)
 /*
 	MS_VARS_FORMATSTRING
 */
-static INT_PTR formatStringService(WPARAM wParam, LPARAM lParam)
+static INT_PTR formatStringService(WPARAM wParam, LPARAM)
 {
  	INT_PTR res;
  	int i;

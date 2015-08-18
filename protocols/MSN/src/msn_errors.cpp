@@ -58,9 +58,6 @@ int CMsnProto::MSN_HandleErrors(ThreadData* info, char* cmdString)
 	}
 
 	HReadBuffer buf(info, 0);
-//	char* msgBody = (char*)buf.surelyRead(atol(data.strMsgBytes));
-
-
 	debugLogA("Server error:%s", cmdString);
 
 	switch (errorCode) {
@@ -71,6 +68,7 @@ int CMsnProto::MSN_HandleErrors(ThreadData* info, char* cmdString)
 
 	case ERR_SERVER_BUSY:
 	case ERR_SERVER_UNAVAILABLE:
+	case ERR_TIMEDOUT:
 		MSN_ShowError("MSN Services are too busy, please try to connect later");
 		ProtoBroadcastAck(NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_NOSERVER);
 		return 1;
@@ -89,9 +87,9 @@ int CMsnProto::MSN_HandleErrors(ThreadData* info, char* cmdString)
 
 	case ERR_DETAILED_ERR_IN_PAYLOAD:
 	case ERR_LIST_UNAVAILABLE:
-		char* tWords[4];
-		if (sttDivideWords(cmdString, _countof(tWords), tWords) == _countof(tWords))
-			HReadBuffer(info, 0).surelyRead(atol(tWords[3]));
+		char* tErrWords[4];
+		if (sttDivideWords(cmdString, _countof(tErrWords), tErrWords) == _countof(tErrWords))
+			HReadBuffer(info, 0).surelyRead(atol(tErrWords[3]));
 		return 0;
 
 	case ERR_NOT_ONLINE:

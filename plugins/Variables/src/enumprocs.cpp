@@ -21,7 +21,7 @@
 // EnumProc.c
 //
 
-#include "variables.h"
+#include "stdafx.h"
 
 typedef struct {
 	DWORD          dwPID;
@@ -44,8 +44,6 @@ typedef struct {
 
 BOOL WINAPI EnumProcs(PROCENUMPROC lpProc, LPARAM lParam)
 {
-	LPDWORD        lpdwPIDs  = NULL;
-
 	// Retrieve the OS version
 	OSVERSIONINFO  osver;
 	osver.dwOSVersionInfoSize = sizeof(osver);

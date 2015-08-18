@@ -27,7 +27,7 @@
 // Plugin configuration variables and functions. Implemented as a class
 // though there will always be only a single instance.
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 void Chat_ModulesLoaded();
 
@@ -49,20 +49,6 @@ char             CGlobals::m_exSzFile[MAX_PATH] = "\0";
 wchar_t          CGlobals::m_exReason[256] = L"\0";
 int              CGlobals::m_exLine = 0;
 bool             CGlobals::m_exAllowContinue = false;
-
-#if defined(_WIN64)
-static char szCurrentVersion[30];
-static char *szVersionUrl = "http://download.miranda.or.at/tabsrmm/3/version.txt";
-static char *szUpdateUrl = "http://miranda-ng.org/distr/x64/Plugins/tabsrmm.zip";
-static char *szFLVersionUrl = "http://miranda-ng.org/";
-static char *szFLUpdateurl = "http://miranda-ng.org/";
-#else
-static char szCurrentVersion[30];
-static char *szVersionUrl = "http://download.miranda.or.at/tabsrmm/3/version.txt";
-static char *szUpdateUrl = "http://miranda-ng.org/distr/x32/Plugins/tabsrmm.zip";
-static char *szFLVersionUrl = "http://miranda-ng.org/";
-static char *szFLUpdateurl = "http://miranda-ng.org/";
-#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // reload system values. These are read ONCE and are not allowed to change

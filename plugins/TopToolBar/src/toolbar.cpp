@@ -1,5 +1,5 @@
 
-#include "common.h"
+#include "stdafx.h"
 
 pfnCustomProc g_CustomProc = NULL;
 LPARAM g_CustomProcParam = 0;
@@ -207,8 +207,8 @@ int ArrangeButtons()
 		return 0;
 
 	int nLineCount = 0;
-	int i, ypos = 1, xpos = g_ctrl->nButtonSpace, nextX = 0, y = 0;
-	int newheight = g_ctrl->nButtonHeight + 1, nButtonCount = 0;
+	int i, nextX = 0, y = 0;
+	int nButtonCount = 0;
 
 	for (i = 0; i < Buttons.getCount(); i++)
 		if (Buttons[i]->hwnd)
@@ -242,8 +242,6 @@ int ArrangeButtons()
 			iLastButtonId = i + 1;
 			bWasButttonBefore = !b->isSep();
 		}
-
-		int nFreeSpace = nBarSize - nUsedWidth;
 
 		for (i = iFirstButtonId; i < iLastButtonId; i++) {
 			TopButtonInt *b = Buttons[i];
@@ -358,7 +356,7 @@ INT_PTR TTBSetState(WPARAM wParam, LPARAM lParam)
 // wparam = hTTBButton
 // lparam = 0
 //return = state
-INT_PTR TTBGetState(WPARAM wParam, LPARAM lParam)
+INT_PTR TTBGetState(WPARAM wParam, LPARAM)
 {
 	mir_cslock lck(csButtonsHook);
 	TopButtonInt *b = idtopos(wParam);

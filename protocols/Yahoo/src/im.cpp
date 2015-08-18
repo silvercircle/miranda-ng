@@ -11,7 +11,7 @@
  * and for answering some of my questions during development of this plugin.
  */
 
-#include "yahoo.h"
+#include "stdafx.h"
 #include <m_langpack.h>
 #include <m_protosvc.h>
 
@@ -217,7 +217,7 @@ int __cdecl CYahooProto::RecvMsg(MCONTACT hContact, PROTORECVEVENT* pre)
 // Send a nudge
 //=======================================================
 
-INT_PTR __cdecl CYahooProto::SendNudge(WPARAM hContact, LPARAM lParam)
+INT_PTR __cdecl CYahooProto::SendNudge(WPARAM hContact, LPARAM)
 {
 	debugLogA("[YAHOO_SENDNUDGE]");
 

@@ -16,24 +16,24 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "stdafx.h"
+#define INVALID_DATA Translate("Invalid data!")
 
 INT_PTR CSkypeProto::GetEventText(WPARAM, LPARAM lParam)
 {
 	DBEVENTGETTEXT *pEvent = (DBEVENTGETTEXT *)lParam;
 
-	INT_PTR nRetVal = 0;
-
-	ptrA pszText;
-	
+	CMStringA szText; 
+	BOOL bUseBB = db_get_b(NULL, pEvent->dbei->szModule, "UseBBCodes", 1);
 	switch (pEvent->dbei->eventType)
 	{
 	case SKYPE_DB_EVENT_TYPE_EDITED_MESSAGE:
 		{
-			CMStringA text; 
+			
 			JSONNode jMsg = JSONNode::parse((char*)pEvent->dbei->pBlob);
 			if (jMsg)
 			{
-				text.AppendFormat(Translate("Original message:\n\t%s\n"), jMsg["original_message"]["text"].as_string());
+				JSONNode &jOriginalMsg = jMsg["original_message"];
+				szText.AppendFormat(bUseBB ? Translate("[b]Original message:[/b]\n%s\n") : Translate("Original message:\n%s\n"), mir_utf8decodeA(jOriginalMsg["text"].as_string().c_str()));
 				JSONNode &jEdits = jMsg["edits"];
 				for (auto it = jEdits.begin(); it != jEdits.end(); ++it)
 				{
@@ -43,69 +43,85 @@ INT_PTR CSkypeProto::GetEventText(WPARAM, LPARAM lParam)
 					char szTime[MAX_PATH];
 					strftime(szTime, sizeof(szTime), "%X %x", localtime(&time));
 
-					text.AppendFormat(Translate("Edited at %s:\n\t%s\n"), szTime, jEdit["text"].as_string());
+					szText.AppendFormat(bUseBB ? Translate("[b]Edited at %s:[/b]\n%s\n") : Translate("Edited at %s:\n%s\n"), szTime, mir_utf8decodeA(jEdit["text"].as_string().c_str()));
 				}
 				
 			}
 			else 
 			{
-#ifdef _DEBUG
-				text = (char*)pEvent->dbei->pBlob;
-#else
-				text = Translate("Invalid data!");
-#endif
+				szText = INVALID_DATA;
 			}
-
-			pszText = mir_utf8decodeA(text);
 			break;
 		}
 
 	case SKYPE_DB_EVENT_TYPE_CALL_INFO:
 		{
-			CMStringA text;
 			HXML xml = xmlParseString(ptrT(mir_utf8decodeT((char*)pEvent->dbei->pBlob)), 0, _T("partlist"));
 			if (xml != NULL)
 			{
 				ptrA type(mir_t2a(xmlGetAttrValue(xml, _T("type"))));
 				bool bType = (!mir_strcmpi(type, "started")) ? 1 : 0;
+				time_t callDuration = 0;
 
 				for (int i = 0; i < xmlGetChildCount(xml); i++)
 				{
-					HXML xmlPart = xmlGetNthChild(xml, _T("part"), i);
+					HXML xmlPart = xmlGetNthChild(xml, _T("part"), i);		
 					if (xmlPart != NULL)
 					{
-						HXML xmlName = xmlGetChildByPath(xmlPart, _T("name"), 0);
-						if (xmlName != NULL)
+						HXML xmlDuration = xmlGetChildByPath(xmlPart, _T("duration"), 0);
+						
+						if (xmlDuration != NULL)
 						{
-							text.AppendFormat(Translate("%s %s this call.\n"), _T2A(xmlGetText(xmlName)), bType ? Translate("enters") : Translate("leaves"));
-							xmlDestroyNode(xmlName);
+							callDuration = _ttol(xmlGetText(xmlDuration));
+							xmlDestroyNode(xmlDuration);
+							xmlDestroyNode(xmlPart);
+							break;
 						}
 						xmlDestroyNode(xmlPart);
 					}
 				}
+
+				if (bType)
+				{
+					szText = Translate("Call");
+				}
+				else 
+				{
+					if (callDuration == 0)
+					{
+						szText = Translate("Call missed");
+					}
+					else
+					{
+						char szTime[100];
+						strftime(szTime, sizeof(szTime), "%X", gmtime(&callDuration));
+						szText.Format(Translate("Call ended (%s)"), szTime);
+					}
+				}
 				xmlDestroyNode(xml);
 			}
-			pszText = mir_strdup(text);
+			else
+			{
+				szText = INVALID_DATA;
+			}
 			break;
 		}
 	case SKYPE_DB_EVENT_TYPE_FILETRANSFER_INFO:
 		{
-			CMStringA text;
 			HXML xml = xmlParseString(ptrT(mir_utf8decodeT((char*)pEvent->dbei->pBlob)), 0, _T("files"));
 			if (xml != NULL)
 			{
 				for (int i = 0; i < xmlGetChildCount(xml); i++)
 				{
-					size_t fileSize = 0;
+					LONGLONG fileSize = 0;
 					HXML xmlNode = xmlGetNthChild(xml, _T("file"), i);
 					if (xmlNode != NULL)
 					{
-						fileSize = _ttoi(ptrT((TCHAR*)xmlGetAttrValue(xmlNode, _T("size"))));
-						ptrA fileName(mir_utf8encodeT(ptrT((TCHAR*)xmlGetText(xmlNode))));
+						fileSize = _ttol(xmlGetAttrValue(xmlNode, _T("size")));
+						char *fileName = _T2A(xmlGetText(xmlNode));
 						if (fileName != NULL)
 						{
-							CMStringA msg(FORMAT, Translate("File transfer:\n\tFile name: %s\n\tSize: %d bytes"), fileName, fileSize);
-							text.AppendFormat("%s\n", msg);
+							szText.AppendFormat(Translate("File transfer:\n\tFile name: %s \n\tSize: %lld bytes \n"), fileName, fileSize);
 						}
 
 						xmlDestroyNode(xmlNode);
@@ -113,43 +129,62 @@ INT_PTR CSkypeProto::GetEventText(WPARAM, LPARAM lParam)
 				}
 				xmlDestroyNode(xml);
 			}
-			pszText = mir_strdup(text);
+			else
+			{
+				szText = INVALID_DATA;
+			}
 			break;
 		}
 	case SKYPE_DB_EVENT_TYPE_URIOBJ:
 		{
-			CMStringA text;
 			HXML xml = xmlParseString(ptrT(mir_utf8decodeT((char*)pEvent->dbei->pBlob)), 0, _T("URIObject"));
 			if (xml != NULL)
 			{
-				text.Append(_T2A(xmlGetText(xml)));
+				szText.Append(_T2A(xmlGetText(xml)));
 				xmlDestroyNode(xml);
 			}
-			pszText = mir_strdup(text);
+			else 
+			{
+				szText = INVALID_DATA;
+			}
 			break;
 
 		}
 	case SKYPE_DB_EVENT_TYPE_INCOMING_CALL:
 		{
-			pszText = Translate("Incoming call.");
+			szText = Translate("Incoming call");
+			break;
+		}
+	case SKYPE_DB_EVENT_TYPE_UNKNOWN:
+		{
+			szText.Format(Translate("Unknown event, please send this text for developer: \"%s\""), mir_utf8decodeA((char*)pEvent->dbei->pBlob));
 			break;
 		}
 	default:
 		{
-			pszText = mir_strdup((char*)pEvent->dbei->pBlob);
+			szText = (char*)pEvent->dbei->pBlob;
 		}
 	}
 
-
-	if (pEvent->datatype == DBVT_TCHAR)
+	switch(pEvent->datatype)
 	{
-		TCHAR *pwszText = _A2T(pszText);
-		nRetVal = (INT_PTR)mir_tstrdup(pwszText);
+	case DBVT_TCHAR:
+		{
+			return (INT_PTR)mir_a2t(szText);
+		}
+	case DBVT_ASCIIZ:
+		{
+			return (INT_PTR)szText.Detach();
+		}
+	case DBVT_UTF8:
+		{
+			return (INT_PTR)mir_utf8encode(szText);
+		}
+	default:
+		{
+			return NULL;
+		}
 	}
-	else if (pEvent->datatype == DBVT_ASCIIZ)
-		nRetVal = (INT_PTR)mir_strdup(pszText);
-
-	return nRetVal;
 }
 
 INT_PTR CSkypeProto::EventGetIcon(WPARAM wParam, LPARAM lParam)
@@ -170,6 +205,21 @@ INT_PTR CSkypeProto::EventGetIcon(WPARAM wParam, LPARAM lParam)
 			icon = IcoLib_GetIconByHandle(GetIconHandle("me_action"));
 			break;
 		}
+	case SKYPE_DB_EVENT_TYPE_FILETRANSFER_INFO:
+		{
+			icon = Skin_LoadIcon(SKINICON_EVENT_FILE);
+			break;
+		}
+	case SKYPE_DB_EVENT_TYPE_URIOBJ:
+		{
+			icon = Skin_LoadIcon(SKINICON_EVENT_URL);
+			break;
+		}
+	case SKYPE_DB_EVENT_TYPE_UNKNOWN:
+		{
+			icon = Skin_LoadIcon(SKINICON_WARNING);
+			break;
+		}
 	default:
 		{
 			icon = Skin_LoadIcon(SKINICON_EVENT_MESSAGE);
@@ -180,127 +230,3 @@ INT_PTR CSkypeProto::EventGetIcon(WPARAM wParam, LPARAM lParam)
 	return (INT_PTR)((wParam & LR_SHARED) ? icon : CopyIcon(icon));
 }
 
-void CSkypeProto::InitDBEvents()
-{
-	// custom event
-	DBEVENTTYPEDESCR dbEventType = { sizeof(dbEventType) };
-	dbEventType.module = m_szModuleName;
-	dbEventType.flags = DETF_HISTORY | DETF_MSGWINDOW;
-	dbEventType.iconService = MODULE "/GetEventIcon";
-	dbEventType.textService = MODULE "/GetEventText";
-
-	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_EDITED_MESSAGE;
-	dbEventType.descr = Translate("Edited message");
-	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
-
-	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_ACTION;
-	dbEventType.descr = Translate("Action");
-	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
-
-	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_CALL_INFO;
-	dbEventType.descr = Translate("Call information");
-	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
-
-	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_FILETRANSFER_INFO;
-	dbEventType.descr = Translate("File transfer information");
-	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
-
-	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_URIOBJ;
-	dbEventType.descr = Translate("URI object");
-	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
-
-	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_INCOMING_CALL;
-	dbEventType.descr = Translate("Incoming call");
-	dbEventType.flags |= DETF_NONOTIFY;
-	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
-}
-
-void CSkypeProto::InitPopups()
-{
-	TCHAR desc[256];
-	char name[256];
-	POPUPCLASS ppc = { sizeof(ppc) };
-	ppc.flags = PCF_TCHAR;
-
-	mir_sntprintf(desc, _T("%s %s"), m_tszUserName, TranslateT("Calls"));
-	mir_snprintf(name, "%s_%s", m_szModuleName, "Call");
-	ppc.ptszDescription = desc;
-	ppc.pszName = name;
-	ppc.hIcon = IcoLib_GetIconByHandle(GetIconHandle("inc_call"));
-	ppc.colorBack = RGB(255, 255, 255);
-	ppc.colorText = RGB(0, 0, 0);
-	ppc.iSeconds = 30;
-	ppc.PluginWindowProc = PopupDlgProcCall;
-	m_PopupClasses.insert(Popup_RegisterClass(&ppc));
-
-	mir_sntprintf(desc, _T("%s %s"), m_tszUserName, TranslateT("Notifications"));
-	mir_snprintf(name, "%s_%s", m_szModuleName, "Notification");
-	ppc.ptszDescription = desc;
-	ppc.pszName = name;
-	ppc.hIcon = IcoLib_GetIconByHandle(GetIconHandle("notify"));
-	ppc.colorBack = RGB(255, 255, 255);
-	ppc.colorText = RGB(0, 0, 0);
-	ppc.iSeconds = 5;
-	m_PopupClasses.insert(Popup_RegisterClass(&ppc));
-
-	mir_sntprintf(desc, _T("%s %s"), m_tszUserName, TranslateT("Errors"));
-	mir_snprintf(name, "%s_%s", m_szModuleName, "Error");
-	ppc.ptszDescription = desc;
-	ppc.pszName = name;
-	ppc.hIcon = IcoLib_GetIconByHandle(GetIconHandle("error"));
-	ppc.colorBack = RGB(255, 255, 255);
-	ppc.colorText = RGB(0, 0, 0);
-	ppc.iSeconds = -1;
-	m_PopupClasses.insert(Popup_RegisterClass(&ppc));
-}
-
-int CSkypeProto::ProcessSrmmEvent(WPARAM, LPARAM lParam)
-{
-	debugLogA(__FUNCTION__);
-	MessageWindowEventData *event = (MessageWindowEventData *)lParam;
-
-	if (event->uType == MSG_WINDOW_EVT_OPENING)
-		SetSrmmReadStatus(event->hContact);
-
-	return 0;
-}
-
-//Timers
-
-mir_cs timerLock;
-mir_cs CSkypeProto::accountsLock;
-
-void CSkypeProto::ProcessTimer()
-{
-	if (IsOnline())
-	{
-		PushRequest(new GetContactListRequest(m_szTokenSecret), &CSkypeProto::LoadContactList);
-		SendPresence(false);
-		if (!m_hTrouterThread)
-			SendRequest(new CreateTrouterRequest(), &CSkypeProto::OnCreateTrouter);
-	}
-}
-
-static VOID CALLBACK TimerProc(HWND, UINT, UINT_PTR, DWORD)
-{
-	mir_cslock lck(CSkypeProto::accountsLock);
-	for (int i = 0; i < Accounts.getCount(); i++)
-	{
-		Accounts[i]->ProcessTimer();
-	}
-}
-
-void CSkypeProto::SkypeSetTimer(void*)
-{
-	mir_cslock lck(timerLock);
-	if (!CSkypeProto::m_timer)
-		CSkypeProto::m_timer = SetTimer(NULL, 0, 600000, TimerProc);
-}
-
-void CSkypeProto::SkypeUnsetTimer(void*)
-{
-	mir_cslock lck(timerLock);
-	if (CSkypeProto::m_timer && Accounts.getCount() == 0)
-		KillTimer(NULL, CSkypeProto::m_timer);
-	CSkypeProto::m_timer = 0;
-}

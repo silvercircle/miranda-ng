@@ -21,7 +21,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "headers.h"
+#include "stdafx.h"
 #include "bitmap_funcs.h"
 #include <math.h>
 
@@ -1129,7 +1129,7 @@ LRESULT CALLBACK PopupWnd2::WindowProc(UINT message, WPARAM wParam, LPARAM lPara
 			break;
 
 		case CURSOR_TIMER:
-			POINT pt; GetCursorPos(&pt);
+			GetCursorPos(&pt);
 			if (abs(pt.x - m_ptPrevCursor.x) + abs(pt.y - m_ptPrevCursor.y) > 4) {
 				SetWindowLongPtr(m_hwnd, GWL_EXSTYLE, GetWindowLongPtr(m_hwnd, GWL_EXSTYLE) & ~WS_EX_TRANSPARENT);
 				KillTimer(m_hwnd, CURSOR_TIMER);

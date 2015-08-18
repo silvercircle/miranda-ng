@@ -10,10 +10,10 @@
  * I want to thank Robert Rainwater and George Hazan for their code and support
  * and for answering some of my questions during development of this plugin.
  */
-#include "yahoo.h"
+#include "stdafx.h"
 #include <time.h>
 
-int PASCAL send(SOCKET s, const char FAR *buf, int len, int flags)
+int PASCAL send(SOCKET s, const char FAR *buf, int len, int)
 {
 	int rlen = Netlib_Send((HANDLE)s, buf, len, 0);
 
@@ -30,7 +30,7 @@ int PASCAL send(SOCKET s, const char FAR *buf, int len, int flags)
 	return len;
 }
 
-int PASCAL recv(SOCKET s, char FAR *buf, int len, int flags)
+int PASCAL recv(SOCKET s, char FAR *buf, int len, int)
 {
 	int RecvResult = Netlib_Recv((HANDLE)s, buf, len, (len == 1) ? MSG_NODUMP : 0);
 

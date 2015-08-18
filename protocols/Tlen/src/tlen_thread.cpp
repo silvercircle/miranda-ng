@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#include "tlen.h"
+#include "stdafx.h"
 
 #include "commons.h"
 #include "tlen_list.h"
@@ -57,7 +57,7 @@ static void TlenProcessV(XmlNode *node, ThreadData *info);
 static void TlenProcessAvatar(XmlNode* node, ThreadData *info);
 static void TlenProcessCipher(XmlNode *node, ThreadData *info);
 
-static VOID NTAPI TlenDummyApcFunc(ULONG_PTR param)
+static VOID NTAPI TlenDummyApcFunc(ULONG_PTR)
 {
 	return;
 }
@@ -511,9 +511,8 @@ static void TlenProcessProtocol(XmlNode *node, ThreadData *info)
 
 }
 
-static void TlenProcessCipher(XmlNode *node, ThreadData *info)
+static void TlenProcessCipher(XmlNode*, ThreadData *info)
 {
-	char *type=TlenXmlGetAttrValue(node, "type");
 	info->useAES = TRUE;
 	TlenSend(info->proto, "<cipher type='ok'/>");
 	TlenSendAuth(info->proto);
@@ -1119,7 +1118,7 @@ static void TlenProcessN(XmlNode *node, ThreadData *info)
 /*
  * Presence is chat rooms
  */
-static void TlenProcessP(XmlNode *node, ThreadData *info)
+static void TlenProcessP(XmlNode *node, ThreadData*)
 {
 	char *f, *a, *k;
 	XmlNode *sNode, *xNode, *iNode, *kNode;

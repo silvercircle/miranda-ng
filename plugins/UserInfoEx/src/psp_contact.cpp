@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 /**
  * Dialog procedure for the home contact information propertysheetpage
@@ -39,7 +39,6 @@ INT_PTR CALLBACK PSPProcContactHome(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			CCtrlList *pCtrlList = CCtrlList::CreateObj(hDlg);
 			if (pCtrlList) {
 				TCHAR szAddr[MAX_PATH];
-				MCONTACT hContact = lParam;
 				LPIDSTRLIST pList;
 				UINT nList;
 
@@ -186,7 +185,6 @@ INT_PTR CALLBACK PSPProcContactWork(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			if (pCtrlList)
 			{
 				TCHAR szAddr[MAX_PATH];
-				MCONTACT hContact = lParam;
 				LPIDSTRLIST pList;
 				UINT nList;
 

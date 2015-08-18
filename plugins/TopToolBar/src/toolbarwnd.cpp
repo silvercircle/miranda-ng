@@ -1,5 +1,5 @@
 
-#include "common.h"
+#include "stdafx.h"
 
 COLORREF bkColour;
 HBITMAP hBmpBackground, hBmpSeparator;
@@ -22,7 +22,6 @@ static void PaintToolbar(HWND hwnd)
 	GetClientRect(hwnd, &clRect);
 
 	int yScroll = 0;
-	int y = -yScroll;
 
 	HDC hdcMem = CreateCompatibleDC(hdc);
 	HBITMAP hBmpOsb = CreateBitmap(clRect.right, clRect.bottom, 1, GetDeviceCaps(hdc, BITSPIXEL), NULL);
@@ -239,7 +238,7 @@ LRESULT CALLBACK TopToolBarProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-INT_PTR OnEventFire(WPARAM wParam, LPARAM lParam)
+INT_PTR OnEventFire(WPARAM wParam, LPARAM)
 {
 	CallService(MS_SYSTEM_REMOVEWAIT, wParam, 0);
 	CloseHandle((HANDLE)wParam);

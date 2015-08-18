@@ -82,7 +82,7 @@ void __cdecl CJabberProto::FileReceiveThread(filetransfer *ft)
 
 int CJabberProto::FileReceiveParse(filetransfer *ft, char* buffer, int datalen)
 {
-	char* p, *q, *s, *eob;
+	char* p, *q, *eob;
 	int num, code;
 
 	eob = buffer + datalen;
@@ -127,7 +127,7 @@ int CJabberProto::FileReceiveParse(filetransfer *ft, char* buffer, int datalen)
 					ft->std.currentFileProgress = 0;
 					debugLogA("Change to FT_RECEIVING");
 				}
-				else if ((s = strchr(str, ':')) != NULL) {
+				else if (char *s = strchr(str, ':')) {
 					*s = '\0';
 					if (!mir_strcmp(str, "Content-Length"))
 						ft->std.totalBytes = ft->std.currentFileSize = _atoi64(s + 1);
@@ -178,7 +178,7 @@ void JabberFileServerConnection(JABBER_SOCKET hConnection, DWORD /*dwRemoteIP*/,
 	CallService(MS_NETLIB_GETCONNECTIONINFO, (WPARAM)hConnection, (LPARAM)&connInfo);
 
 	TCHAR szPort[10];
-	mir_sntprintf(szPort, _countof(szPort), _T("%d"), connInfo.wPort);
+	mir_sntprintf(szPort, _T("%d"), connInfo.wPort);
 	ppro->debugLogA("File server incoming connection accepted: %s", connInfo.szIpPort);
 
 	JABBER_LIST_ITEM *item = ppro->ListGetItemPtr(LIST_FILE, szPort);
@@ -258,7 +258,7 @@ void __cdecl CJabberProto::FileServerThread(filetransfer *ft)
 	ft->hFileEvent = hEvent;
 
 	TCHAR szPort[20];
-	mir_sntprintf(szPort, _countof(szPort), _T("%d"), nlb.wPort);
+	mir_sntprintf(szPort, _T("%d"), nlb.wPort);
 	JABBER_LIST_ITEM *item = ListAdd(LIST_FILE, szPort);
 	item->ft = ft;
 
@@ -336,7 +336,7 @@ void __cdecl CJabberProto::FileServerThread(filetransfer *ft)
 
 int CJabberProto::FileSendParse(JABBER_SOCKET s, filetransfer *ft, char* buffer, int datalen)
 {
-	char* p, *q, *t, *eob;
+	char* p, *q, *eob;
 	char* str;
 	int num;
 	int currentFile;
@@ -360,6 +360,7 @@ int CJabberProto::FileSendParse(JABBER_SOCKET s, filetransfer *ft, char* buffer,
 		if (ft->state == FT_CONNECTING) {
 			// looking for "GET filename.ext HTTP/1.1"
 			if (!strncmp(str, "GET ", 4)) {
+				char *t;
 				for (t = str + 4; *t != '\0' && *t != ' '; t++);
 				*t = '\0';
 				for (t = str + 4; *t != '\0' && *t == '/'; t++);
@@ -439,7 +440,7 @@ int CJabberProto::FileSendParse(JABBER_SOCKET s, filetransfer *ft, char* buffer,
 /////////////////////////////////////////////////////////////////////////////////////////
 // filetransfer class members
 
-filetransfer::filetransfer(CJabberProto* proto)
+filetransfer::filetransfer(CJabberProto *proto)
 {
 	memset(this, 0, sizeof(filetransfer));
 	ppro = proto;
@@ -498,7 +499,7 @@ int filetransfer::create()
 		return fileId;
 
 	TCHAR filefull[MAX_PATH];
-	mir_sntprintf(filefull, _countof(filefull), _T("%s\\%s"), std.tszWorkingDir, std.tszCurrentFile);
+	mir_sntprintf(filefull, _T("%s\\%s"), std.tszWorkingDir, std.tszCurrentFile);
 	replaceStrT(std.tszCurrentFile, filefull);
 
 	if (hWaitEvent != INVALID_HANDLE_VALUE)

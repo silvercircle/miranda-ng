@@ -57,9 +57,26 @@ struct CSkypeProto;
 
 extern HINSTANCE g_hInstance;
 extern char g_szMirVer[];
-extern LIST<CSkypeProto> Accounts;
+extern HANDLE g_hCallEvent;
 
 #define SKYPE_ENDPOINTS_HOST "client-s.gateway.messenger.live.com"
+
+struct LoginInfo
+{
+	struct
+	{
+		ptrA szToken;
+	} api;
+
+	struct
+	{
+		ptrA szToken;
+		ptrA szId;
+		ptrA szServer;
+	} endpoint;
+
+	ptrA szSkypename;
+};
 
 #include "version.h"
 #include "resource.h"
@@ -68,6 +85,9 @@ extern LIST<CSkypeProto> Accounts;
 #include "skype_dialogs.h"
 #include "skype_options.h"
 #include "skype_trouter.h"
+#include "skype_db.h"
+//#include "skype_chatrooms.h"
+#include "skype_utils.h"
 #include "http_request.h"
 #include "requests\login.h"
 #include "requests\profile.h"
@@ -96,20 +116,6 @@ enum SKYPE_LOGIN_ERROR
 	LOGIN_ERROR_UNKNOWN = 1001,
 	LOGIN_ERROR_TOOMANY_REQUESTS
 };
-
-enum SKYPE_DB_EVENT_TYPE
-{
-	SKYPE_DB_EVENT_TYPE_ACTION = 10001,
-	SKYPE_DB_EVENT_TYPE_INCOMING_CALL,
-	SKYPE_DB_EVENT_TYPE_CALL_INFO,
-	SKYPE_DB_EVENT_TYPE_FILETRANSFER_INFO,
-	SKYPE_DB_EVENT_TYPE_URIOBJ,
-	SKYPE_DB_EVENT_TYPE_EDITED_MESSAGE
-};
-
-#define SKYPE_SETTINGS_ID "Skypename"
-#define SKYPE_SETTINGS_PASSWORD "Password"
-#define SKYPE_SETTINGS_GROUP "DefaultGroup"
 
 #define POLLING_ERRORS_LIMIT 3
 

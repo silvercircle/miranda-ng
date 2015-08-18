@@ -21,32 +21,32 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 class SendCapabilitiesRequest : public HttpRequest
 {
 public:
-	SendCapabilitiesRequest(const char *regToken, const char *endpointID, const char *hostname, const char *server = SKYPE_ENDPOINTS_HOST) :
-		HttpRequest(REQUEST_PUT, FORMAT, "%s/v1/users/ME/endpoints/%s/presenceDocs/messagingService", server, ptrA(mir_urlEncode(endpointID)))
+	SendCapabilitiesRequest(const char *hostname, LoginInfo &li) :
+	  HttpRequest(REQUEST_PUT, FORMAT, "%s/v1/users/ME/endpoints/%s/presenceDocs/messagingService", li.endpoint.szServer, ptrA(mir_urlEncode(li.endpoint.szId)))
 	{
 		Headers
 			<< CHAR_VALUE("Accept", "application/json, text/javascript")
 			<< CHAR_VALUE("Content-Type", "application/json; charset=UTF-8")
-			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", regToken);
+			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", li.endpoint.szToken);
 
-		JSONNode privateInfo(JSON_NODE);
-		privateInfo.set_name("privateInfo");
-		privateInfo.push_back(JSONNode("epname", hostname));
+		JSONNode privateInfo; privateInfo.set_name("privateInfo");
+		privateInfo << JSONNode("epname", hostname);
 
-		JSONNode publicInfo(JSON_NODE);
-		publicInfo.set_name("publicInfo");
-		publicInfo.push_back(JSONNode("capabilities", "Audio|Video"));
-		publicInfo.push_back(JSONNode("typ", 125));
-		publicInfo.push_back(JSONNode("skypeNameVersion", "Miranda NG Skype"));
-		publicInfo.push_back(JSONNode("nodeInfo", "xx"));
-		publicInfo.push_back(JSONNode("version", g_szMirVer));
+		JSONNode publicInfo; publicInfo.set_name("publicInfo");
+		publicInfo 
+			<< JSONNode("capabilities", "Audio|Video")
+			<< JSONNode("typ", 125)
+			<< JSONNode("skypeNameVersion", "Miranda NG Skype")
+			<< JSONNode("nodeInfo", "xx")
+			<< JSONNode("version", g_szMirVer);
 
-		JSONNode node(JSON_NODE);
-		node.push_back(JSONNode("id", "messagingService"));
-		node.push_back(JSONNode("type", "EndpointPresenceDoc"));
-		node.push_back(JSONNode("selfLink", "uri"));
-		node.push_back(privateInfo);
-		node.push_back(publicInfo);
+		JSONNode node;
+		node
+			<< JSONNode("id", "messagingService") 
+			<< JSONNode("type", "EndpointPresenceDoc")
+			<< JSONNode("selfLink", "uri")
+			<< privateInfo 
+			<< publicInfo;
 
 		Body << VALUE(node.write().c_str());
 	}

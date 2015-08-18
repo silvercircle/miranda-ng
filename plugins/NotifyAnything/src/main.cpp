@@ -1,4 +1,4 @@
-#include "common.h"
+#include "stdafx.h"
 
 void cslog(const TCHAR *what, const TCHAR *file, int line)
 {
@@ -971,7 +971,7 @@ void stop_threads()
 	WaitForSingleObject(g_tcp_thread, INFINITE);
 }
 
-extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
+extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 {
 	return &pluginInfo;
 }

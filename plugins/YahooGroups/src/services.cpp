@@ -18,7 +18,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 #define CLIST_GROUPS "CListGroups"
 
@@ -151,7 +151,7 @@ void ProcessContacts(void (*callback)(MCONTACT, char *), char *protocol)
 		callback(hContact, protocol);
 }
 
-void YahooMoveCallback(MCONTACT hContact, char *unused)
+void YahooMoveCallback(MCONTACT hContact, char*)
 {
 	char protocol[128] = {0};
 	GetContactProtocol(hContact, protocol, sizeof(protocol));
@@ -180,13 +180,13 @@ void ResetGroupCallback(MCONTACT hContact, char *protocol)
 	}
 }
 
-INT_PTR YahooGroupsMoveService(WPARAM wParam, LPARAM lParam)
+INT_PTR YahooGroupsMoveService(WPARAM, LPARAM)
 {
 	ProcessContacts(YahooMoveCallback, NULL);
 	return 0;
 }
 
-INT_PTR YahooGroupsResetService(WPARAM wParam, LPARAM lParam)
+INT_PTR YahooGroupsResetService(WPARAM, LPARAM)
 {
 	ProcessContacts(ResetGroupCallback, NULL);
 	return 0;

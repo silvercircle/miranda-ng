@@ -1047,6 +1047,8 @@
 В панели статусов
 [Warning!\r\nThis menu object not support user defined options.]
 Внимание!\r\nЭтот вид меню не поддаётся настройке.
+[Insert submenu]
+Вставить вложенное меню
 [Insert separator]
 Вставить разделитель
 [Service:]
@@ -1853,16 +1855,6 @@ Miranda не смогла загрузить встроенную систему
 Удалить историю
 [View &history]
 &История
-[URL from %s]
-URL от %s
-[Web page address (&URL)]
-Ссылка (&URL)
-[URL]
-Ссылка
-[Send URL to]
-Отправить URL
-[Send timed out]
-Время отправки истекло
 [Edit E-Mail address]
 Редактировать адрес e-mail
 [Edit phone number]
@@ -2227,6 +2219,8 @@ xСтатус
 Меню групп
 [Subgroup menu]
 Меню подгрупп
+[New submenu]
+Новое вложенное меню
 [Menus]
 Меню
 [Tray menu]
@@ -2507,6 +2501,8 @@ ID учётной записи
 Пользователи не найдены
 [Icon sets]
 Наборы значков
+[URL]
+Ссылка
 [User online]
 Пользователь в сети
 [Group (open)]

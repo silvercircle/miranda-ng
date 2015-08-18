@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "stdafx.h"
 
 CLIST_INTERFACE *pcli;
 HINSTANCE g_hInst;
@@ -67,7 +67,7 @@ int protocolAck(WPARAM, LPARAM lParam)
 	return 0;
 }
 
-int dialogOptionsInitialise(WPARAM wParam, LPARAM lParam)
+int dialogOptionsInitialise(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = g_hInst;
@@ -161,7 +161,7 @@ extern "C" __declspec(dllexport) int Unload(void)
 	return 0;
 }
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD, LPVOID)
 {
 	DisableThreadLibraryCalls(hinstDLL);
 	g_hInst = hinstDLL;

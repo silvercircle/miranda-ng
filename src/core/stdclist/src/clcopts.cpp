@@ -22,7 +22,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 #define DBFONTF_BOLD       1
 #define DBFONTF_ITALIC     2
@@ -425,7 +425,7 @@ static INT_PTR CALLBACK DlgProcClcBkgOpts(HWND hwndDlg, UINT msg, WPARAM wParam,
 
 /****************************************************************************************/
 
-int ClcOptInit(WPARAM wParam, LPARAM lParam)
+int ClcOptInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = g_hInst;
@@ -444,7 +444,7 @@ int ClcOptInit(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-int ClcModernOptInit(WPARAM wParam, LPARAM lParam)
+int ClcModernOptInit(WPARAM wParam, LPARAM)
 {
 	static int iBoldControls[] =
 	{

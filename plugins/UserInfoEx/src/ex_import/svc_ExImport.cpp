@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "..\commonheaders.h"
+#include "..\stdafx.h"
 
 /***********************************************************************************************************
  * internal functions
@@ -46,23 +46,24 @@ static void DisplayNameToFileName(lpExImParam ExImContact, LPSTR pszFileName, WO
 		case EXIM_GROUP:
 			mir_strncpy(pszFileName, Translate("all Contacts"), cchFileName);
 			return;
+
 		case EXIM_CONTACT:
 			if (ExImContact->hContact == NULL) {
 				mir_strncpy(pszFileName, Translate("Owner"), cchFileName);
 				return;
 			}
-			else {
-				disp = (LPCSTR)pcli->pfnGetContactDisplayName(ExImContact->hContact, NULL);
-			}
+			
+			disp = temp = mir_t2a(pcli->pfnGetContactDisplayName(ExImContact->hContact, NULL));
 			break;
+
 		case EXIM_SUBGROUP:
 			temp = mir_t2a(ExImContact->ptszName);
 			disp = temp;
 			break;
+
 		case EXIM_ACCOUNT:
 			PROTOACCOUNT* acc = Proto_GetAccount(ExImContact->pszName);
-			temp = mir_t2a(acc->tszAccountName);
-			disp = temp;
+			disp = temp = mir_t2a(acc->tszAccountName);
 			break;
 	}
 
@@ -207,7 +208,7 @@ if (ExImContact->Typ == EXIM_ACCOUNT ||
 /*********************************
  * Ex/import All (MainMenu)
  *********************************/
-INT_PTR svcExIm_MainExport_Service(WPARAM wParam, LPARAM lParam)
+INT_PTR svcExIm_MainExport_Service(WPARAM, LPARAM lParam)
 {
 	ExImParam ExIm;
 	memset(&ExIm, 0, sizeof(ExIm));
@@ -216,7 +217,7 @@ INT_PTR svcExIm_MainExport_Service(WPARAM wParam, LPARAM lParam)
 	return SvcExImport_Export(&ExIm, (HWND)lParam);
 }
 
-INT_PTR svcExIm_MainImport_Service(WPARAM wParam, LPARAM lParam)
+INT_PTR svcExIm_MainImport_Service(WPARAM, LPARAM lParam)
 {
 	ExImParam ExIm;
 	memset(&ExIm, 0, sizeof(ExIm));
@@ -261,7 +262,7 @@ INT_PTR svcExIm_ContactImport_Service(WPARAM hContact, LPARAM lParam)
   *
  * @return	always 0
  **/
-INT_PTR svcExIm_Group_Service(WPARAM wParam, LPARAM lParam)
+INT_PTR svcExIm_Group_Service(WPARAM wParam, LPARAM)
 {
 	ExImParam ExIm;
 	INT_PTR hItem = 0, hRoot = 0, hParent = 0;
@@ -327,7 +328,7 @@ typedef struct
  * @return	always 0
  **/
 
-INT_PTR svcExIm_Account_Service(WPARAM wParam, LPARAM lParam)
+INT_PTR svcExIm_Account_Service(WPARAM, LPARAM lParam)
 {
 	ExImParam ExIm;
 	memset(&ExIm, 0, sizeof(ExIm));

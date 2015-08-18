@@ -65,8 +65,9 @@ MEVENT CSkypeProto::AddDbEvent(WORD type, MCONTACT hContact, DWORD timestamp, DW
 
 MEVENT CSkypeProto::AppendDBEvent(MCONTACT hContact, MEVENT hEvent, const char *szContent, const char *szUid, time_t edit_time)
 {
+	mir_cslock lck(m_AppendMessageLock);
 	DBEVENTINFO dbei = { sizeof(dbei) };
-	dbei.cbBlob = db_event_getBlobSize(hEvent);	
+	dbei.cbBlob = db_event_getBlobSize(hEvent);
 	dbei.pBlob = mir_ptr<BYTE>((PBYTE)mir_alloc(dbei.cbBlob));
 	db_event_get(hEvent, &dbei);
 
@@ -84,45 +85,89 @@ MEVENT CSkypeProto::AppendDBEvent(MCONTACT hContact, MEVENT hEvent, const char *
 					return hEvent;
 			}
 			JSONNode jEdit;
-			jEdit.push_back(JSONNode("time", (long)edit_time));
-			jEdit.push_back(JSONNode("text", szContent));
+			jEdit 
+				<< JSONNode("time", (long)edit_time)
+				<< JSONNode("text", szContent);
 
-			jEdits.push_back(jEdit);
+			jEdits << jEdit;
 		}
 	}
 	else
 	{
 		jMsg = JSONNode();
-		JSONNode jOriginalMsg;
-		JSONNode jEdits(JSON_ARRAY);
+		JSONNode jOriginalMsg; jOriginalMsg.set_name("original_message");
+		JSONNode jEdits(JSON_ARRAY); jEdits.set_name("edits");
 		JSONNode jEdit;
 
-		jOriginalMsg.set_name("original_message");
-		jOriginalMsg.push_back(JSONNode("time", (long)dbei.timestamp));
-		jOriginalMsg.push_back(JSONNode("text", (char*)dbei.pBlob));
-		jMsg.push_back(jOriginalMsg);
+		jOriginalMsg
+			<< JSONNode("time", (long)dbei.timestamp)
+			<< JSONNode("text", (char*)dbei.pBlob);
 
-		jEdit.push_back(JSONNode("time", (long)edit_time));
-		jEdit.push_back(JSONNode("text", szContent));
+		jMsg << jOriginalMsg;
 
-		jEdits.push_back(jEdit);
-		jEdits.set_name("edits");
-		jMsg.push_back(jEdits);
+		jEdit 
+			<< JSONNode("time", (long)edit_time)
+			<< JSONNode("text", szContent);
+
+		jEdits << jEdit;	
+		jMsg   << jEdits;
 
 
 	}
-	int r = db_event_delete(hContact, hEvent);	
+	db_event_delete(hContact, hEvent);	
 	return AddDbEvent(SKYPE_DB_EVENT_TYPE_EDITED_MESSAGE, hContact, dbei.timestamp, DBEF_UTF, jMsg.write().c_str(), szUid);
 }
 
 MEVENT CSkypeProto::AddEventToDb(MCONTACT hContact, WORD type, DWORD timestamp, DWORD flags, DWORD cbBlob, PBYTE pBlob)
 {
-	DBEVENTINFO dbei = { sizeof(dbei) };
-	dbei.szModule = this->m_szModuleName;
+	DBEVENTINFO dbei;
+	dbei.cbSize    = sizeof(dbei);
+	dbei.szModule  = m_szModuleName;
 	dbei.timestamp = timestamp;
 	dbei.eventType = type;
-	dbei.cbBlob = cbBlob;
-	dbei.pBlob = pBlob;
-	dbei.flags = flags;
+	dbei.cbBlob    = cbBlob;
+	dbei.pBlob     = pBlob;
+	dbei.flags     = flags;
 	return db_event_add(hContact, &dbei);
+}
+
+void CSkypeProto::InitDBEvents()
+{
+	db_set_resident(m_szModuleName, "LastAuthRequestTime");
+
+	// custom event
+	DBEVENTTYPEDESCR dbEventType = { sizeof(dbEventType) };
+	dbEventType.module = m_szModuleName;
+	dbEventType.flags = DETF_HISTORY | DETF_MSGWINDOW;
+	dbEventType.iconService = MODULE "/GetEventIcon";
+	dbEventType.textService = MODULE "/GetEventText";
+
+	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_EDITED_MESSAGE;
+	dbEventType.descr = Translate("Edited message");
+	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
+
+	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_ACTION;
+	dbEventType.descr = Translate("Action");
+	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
+
+	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_CALL_INFO;
+	dbEventType.descr = Translate("Call information");
+	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
+
+	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_FILETRANSFER_INFO;
+	dbEventType.descr = Translate("File transfer information");
+	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
+
+	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_URIOBJ;
+	dbEventType.descr = Translate("URI object");
+	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
+
+	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_UNKNOWN;
+	dbEventType.descr = Translate("Unknown event");
+	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
+
+	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_INCOMING_CALL;
+	dbEventType.descr = Translate("Incoming call");
+	dbEventType.flags |= DETF_NONOTIFY;
+	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
 }

@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  * system & local includes:
  **/
 
-#include "..\commonheaders.h"
+#include "..\stdafx.h"
 
 /***********************************************************************************************************
  * exporting stuff
@@ -293,7 +293,7 @@ static DWORD ImportreadLine(FILE* file, LPSTR &str)
  *			cchBuf		- character count of the buffer
  * return:	handle to the contact that matches the information or NULL if no match
  **/
-static MCONTACT ImportFindContact(MCONTACT hContact, LPSTR &strBuf, BYTE bCanCreate)
+static MCONTACT ImportFindContact(MCONTACT, LPSTR &strBuf, BYTE bCanCreate)
 {
 	CExImContactBase vcc;
 
@@ -321,12 +321,11 @@ int ImportSetting(MCONTACT hContact, LPCSTR pszModule, LPSTR &strLine)
 {
 	DBVARIANT dbv;
 	LPSTR end, value;
-	size_t numLines = 0;
 	size_t brk;
 	LPSTR pszLine = strLine;
 
 	// check Module and filter "Protocol"
-	if (!pszModule || !*pszModule || mir_strncmp(pszModule,"Protocol",8) == 0)
+	if (!pszModule || !*pszModule || mir_strncmp(pszModule, "Protocol", 8) == 0)
 		return 1;
 	if ((end = value = mir_strchr(pszLine, '=')) == NULL)
 		return 1;

@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 /**
  * System Includes:
  **/
-#include "commonheaders.h"
+#include "stdafx.h"
 
 /**
  * name:	MAnnivDate
@@ -73,7 +73,7 @@ void MAnnivDate::Clear()
  * param:	none
  * return:	nothing
  **/
-void MAnnivDate::SetDate(SYSTEMTIME &st)
+void MAnnivDate::SetDate(const SYSTEMTIME &st)
 {
 	ZeroDate();
 	Year(st.wYear);
@@ -88,7 +88,7 @@ void MAnnivDate::SetDate(SYSTEMTIME &st)
  * param:	none
  * return:	nothing
  **/
-void MAnnivDate::SetDate(MAnnivDate &mda)
+void MAnnivDate::SetDate(const MAnnivDate &mda)
 {
 	SetDate(mda.SystemTime());
 	_wID = mda.Id();
@@ -210,9 +210,10 @@ int MAnnivDate::Age(MTime *pNow)
  * return:	structure, holding zodiac information
  **/
 
-struct {
-	const WORD startDays;
-	const WORD endDays;
+struct
+{
+	WORD startDays;
+	WORD endDays;
 	LPCTSTR szZodiac;
 	LPCSTR szZodiacIcon;
 }
@@ -524,7 +525,7 @@ int MAnnivDate::DBGetBirthDate(MCONTACT hContact, LPSTR pszProto)
  * return:	0 on success, 1 otherwise
  **/
 
-int MAnnivDate::DBMoveBirthDate(MCONTACT hContact, BYTE bOld, BYTE bNew)
+int MAnnivDate::DBMoveBirthDate(MCONTACT hContact, BYTE bOld, BYTE)
 {
 	Clear();
 	switch(bOld) {

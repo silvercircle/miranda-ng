@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 extern IconItem iconList[];
 
@@ -167,7 +167,7 @@ static int AppendToBufferWithRTF(char *&buffer, size_t &cbBufferEnd, size_t &cbB
 
 #define FONT_FORMAT "{\\f%u\\fnil\\fcharset%u %S;}"
 
-static char *CreateRTFHeader(SrmmWindowData *dat)
+static char *CreateRTFHeader(SrmmWindowData*)
 {
 	HDC hdc = GetDC(NULL);
 	logPixelSY = GetDeviceCaps(hdc, LOGPIXELSY);
@@ -196,7 +196,7 @@ static char *CreateRTFHeader(SrmmWindowData *dat)
 }
 
 //mir_free() the return value
-static char *CreateRTFTail(SrmmWindowData *dat)
+static char *CreateRTFTail(SrmmWindowData*)
 {
 	size_t bufferEnd = 0, bufferAlloced = 1024;
 	char *buffer = (char *)mir_alloc(bufferAlloced);

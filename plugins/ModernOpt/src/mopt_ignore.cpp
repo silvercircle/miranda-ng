@@ -30,10 +30,11 @@ static HWND g_hwndModernOptIgnore = NULL;
 
 void ModernOptIgnore_AddItem(MODERNOPTOBJECT *obj)
 {
-	if ( g_hwndModernOptIgnore )
+	if (g_hwndModernOptIgnore)
 		SendMessage(g_hwndModernOptIgnore, WM_APP, 0, (LPARAM)obj);
 }
 
+/*
 static void ResetListOptions(HWND hwndList)
 {
 	SendMessage(hwndList, CLM_SETHIDEEMPTYGROUPS, 1, 0);
@@ -49,3 +50,4 @@ static void SetAllContactIcons(HWND hwndList, int count)
 			SendMessage(hwndList,CLM_SETCHECKMARK,hItem,1);
 	}
 }
+*/

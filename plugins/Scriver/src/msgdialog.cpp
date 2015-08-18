@@ -21,7 +21,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 #define VALID_AVATAR(x)      (x==PA_FORMAT_PNG||x==PA_FORMAT_JPEG||x==PA_FORMAT_ICON||x==PA_FORMAT_BMP||x==PA_FORMAT_GIF)
 
@@ -1010,7 +1010,7 @@ INT_PTR CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 		}
 		break;
 
-	case DM_UPDATETABCONTROL:
+	case DM_UPDATETABCONTROL: {
 		TabControlData tcd;
 		tcd.iFlags = TCDF_TEXT | TCDF_ICON;
 		tcd.hIcon = GetTabIcon(dat);
@@ -1018,6 +1018,7 @@ INT_PTR CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 		SendMessage(dat->hwndParent, CM_UPDATETABCONTROL, (WPARAM)&tcd, (LPARAM)hwndDlg);
 		mir_free(tcd.pszText);
 		break;
+	}
 
 	case DM_UPDATETITLEBAR:
 		{
@@ -1699,7 +1700,7 @@ INT_PTR CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 					dbei.pBlob = (PBYTE)mir_alloc(dbei.cbBlob);
 					db_event_get(dat->hDbEventLast, &dbei);
 					if (DbEventIsMessageOrCustom(&dbei)) {
-						TCHAR *buffer = DbGetEventTextT(&dbei, CP_ACP);
+						buffer = DbGetEventTextT(&dbei, CP_ACP);
 						if (buffer != NULL) {
 							TCHAR *quotedBuffer = GetQuotedTextW(buffer);
 							SendDlgItemMessage(hwndDlg, IDC_MESSAGE, EM_SETTEXTEX, (WPARAM)&st, (LPARAM)quotedBuffer);

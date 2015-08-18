@@ -4,7 +4,7 @@
  * (c) majvan 2002-2004
  */
 
-#include "yamn.h"
+#include "stdafx.h"
 
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
@@ -103,7 +103,7 @@ INT_PTR UnregisterFilterPlugin(HYAMNFILTERPLUGIN Plugin)
 	return 1;
 }
 
-INT_PTR UnregisterFilterPluginSvc(WPARAM wParam,LPARAM lParam)
+INT_PTR UnregisterFilterPluginSvc(WPARAM wParam,LPARAM)
 {
 	HYAMNFILTERPLUGIN Plugin=(HYAMNFILTERPLUGIN)wParam;
 

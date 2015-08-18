@@ -57,7 +57,7 @@ static VOID CALLBACK TimerProc(HWND, UINT, UINT_PTR, DWORD)
 			vk_Instances[i]->debugLogA("Tic timer for %i - %s", i, vk_Instances[i]->m_szModuleName);
 			vk_Instances[i]->SetServerStatus(vk_Instances[i]->m_iDesiredStatus);
 			vk_Instances[i]->RetrieveUsersInfo(true);
-			vk_Instances[i]->RetrieveUnreadEvents();			
+			vk_Instances[i]->RetrieveUnreadEvents();
 		}
 }
 
@@ -238,7 +238,7 @@ void CVkProto::OnReceiveMyInfo(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
 	RetrieveUserInfo(m_myUserId);
 	RetrieveUnreadMessages();
 	RetrieveFriends();
-	RetrievePollingInfo();	
+	RetrievePollingInfo();
 }
 
 MCONTACT CVkProto::SetContactInfo(const JSONNode &jnItem, bool flag, bool self)
@@ -342,8 +342,8 @@ MCONTACT CVkProto::SetContactInfo(const JSONNode &jnItem, bool flag, bool self)
 
 	CMString tszOldListeningTo(ptrT(db_get_tsa(hContact, m_szModuleName, "ListeningTo")));
 	const JSONNode &jnAudio = jnItem["status_audio"];
-	if (!jnAudio.isnull()) {
-		CMString tszListeningTo(FORMAT, _T("%s - %s"), jnAudio["artist"].as_mstring(), jnAudio["title"].as_mstring());	
+	if (jnAudio) {
+		CMString tszListeningTo(FORMAT, _T("%s - %s"), jnAudio["artist"].as_mstring(), jnAudio["title"].as_mstring());
 		if (tszListeningTo != tszOldListeningTo) {
 			setTString(hContact, "ListeningTo", tszListeningTo);
 			setTString(hContact, "AudioUrl", jnAudio["url"].as_mstring());
@@ -491,8 +491,8 @@ void CVkProto::OnReceiveUserInfo(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pRe
 		hContact = FindUser(userid, true);
 		if (!getBool(hContact, "ReqAuth")) {
 			RetrieveUserInfo(userid);
-			setByte(hContact, "ReqAuth", 1);	
-			ForkThread(&CVkProto::DBAddAuthRequestThread, (void *)hContact);		
+			setByte(hContact, "ReqAuth", 1);
+			ForkThread(&CVkProto::DBAddAuthRequestThread, (void *)hContact);
 		}
 	}
 }
@@ -534,7 +534,7 @@ void CVkProto::OnReceiveFriends(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq
 
 	const JSONNode &jnItems = jnResponse["items"];
 
-	if (!jnItems.isnull())
+	if (jnItems)
 		for (auto it = jnItems.begin(); it != jnItems.end(); ++it) {
 			MCONTACT hContact = SetContactInfo((*it), true);
 
@@ -598,7 +598,7 @@ void CVkProto::OnReceiveDeleteFriend(NETLIBHTTPREQUEST* reply, AsyncHttpRequest*
 	if (reply->resultCode == 200) {
 		JSONNode jnRoot;
 		const JSONNode &jnResponse = CheckJsonResponse(pReq, reply, jnRoot);
-		if (!jnResponse.isnull()) {
+		if (jnResponse) {
 			CMString tszNick(ptrT(db_get_tsa(param->hContact, m_szModuleName, "Nick")));
 			if (tszNick.IsEmpty())
 				tszNick = TranslateT("(Unknown contact)");
@@ -616,7 +616,7 @@ void CVkProto::OnReceiveDeleteFriend(NETLIBHTTPREQUEST* reply, AsyncHttpRequest*
 				
 				msg.AppendFormat(msgformat, tszNick);
 				MsgPopup(param->hContact, msg, tszNick);
-				setByte(param->hContact, "Auth", 1);			
+				setByte(param->hContact, "Auth", 1);
 			}
 			else {
 				msg = TranslateT("User or request was not deleted");

@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  * system & local includes:
  **/
 
-#include "../commonheaders.h"
+#include "../stdafx.h"
 
 #define BLOCKSIZE 260
 
@@ -159,9 +159,7 @@ size_t CLineBuffer::operator + (const CHAR *szVal)
 size_t CLineBuffer::operator + (const WCHAR *wszVal)
 {
 	if (wszVal) {
-		size_t cbLength = mir_wstrlen(wszVal);
 		CHAR* szVal = mir_u2a(wszVal);
-
 		if (szVal) {
 			size_t cbLength = mir_strlen(szVal);
 
@@ -670,10 +668,7 @@ CVCardFileVCF::CVCardFileVCF()
  **/
 size_t CVCardFileVCF::packList(LPIDSTRLIST pList, UINT nList, int iID, size_t *cbRew)
 {
-	UINT i;
-	WORD wAdd = 0;
-
-	for (i = 0; i < nList; i++) {
+	for (UINT i = 0; i < nList; i++) {
 		if (pList[i].nID == iID) {
 			return (_clVal + pList[i].ptszTranslated);
 		}

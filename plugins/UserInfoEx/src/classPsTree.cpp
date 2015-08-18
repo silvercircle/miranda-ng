@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 /***********************************************************************************************************
  * construction and destruction
@@ -584,7 +584,7 @@ void CPsTree::DBResetState()
 		{
 			s = Settings[i];
 
-			if (s && *s == '{' && !mir_strnicmp(s + 1, p, c)) 
+			if (s && *s == '{' && !mir_strncmpi(s + 1, p, c)) 
 			{
 				db_unset(NULL, MODNAME, s);
 			}
@@ -718,7 +718,6 @@ void CPsTree::PopupMenu()
 {
 	HMENU hPopup;
 	TVHITTESTINFO hti;
-	TVITEM tvi;
 	POINT pt;
 	int iItem, i;
 
@@ -728,17 +727,18 @@ void CPsTree::PopupMenu()
 
 	MENUITEMINFO mii = { 0 };
 	mii.cbSize = sizeof(mii);
-	mii.fMask = MIIM_STRING|MIIM_ID;
+	mii.fMask = MIIM_STRING | MIIM_ID;
 
 	// get cursor postion
 	GetCursorPos(&pt);
 	hti.pt = pt;
 	ScreenToClient(_hWndTree, &hti.pt);
 
-	tvi.mask = TVIF_PARAM|TVIF_CHILDREN;
+	TVITEM tvi = { 0 };
+	tvi.mask = TVIF_PARAM | TVIF_CHILDREN;
 	// find treeitem under cursor
 	TreeView_HitTest(_hWndTree, &hti);
-	if (hti.flags & (TVHT_ONITEM|TVHT_ONITEMRIGHT)) {
+	if (hti.flags & (TVHT_ONITEM | TVHT_ONITEMRIGHT)) {
 		tvi.hItem = hti.hItem;
 		TreeView_GetItem(_hWndTree, &tvi);
 
@@ -747,7 +747,7 @@ void CPsTree::PopupMenu()
 			mii.wID = 32001;
 			InsertMenuItem(hPopup, 0, FALSE, &mii);
 		}
-		
+
 		// do not allow hiding groups
 		if (tvi.cChildren) {
 			mii.fMask |= MIIM_STATE;
@@ -779,7 +779,7 @@ void CPsTree::PopupMenu()
 			InsertMenuItem(hPopup, 1, TRUE, &mii);
 			InsertMenuItem(hPopup, ++i, TRUE, &mii);
 		}
-		mii.fMask &= ~(MIIM_FTYPE|MIIM_STATE);
+		mii.fMask &= ~(MIIM_FTYPE | MIIM_STATE);
 		mii.dwTypeData = TranslateT("Reset to defaults");
 		mii.wID = 32004;
 		InsertMenuItem(hPopup, ++i, TRUE, &mii);
@@ -787,25 +787,21 @@ void CPsTree::PopupMenu()
 	// show the popup menu
 	iItem = TrackPopupMenu(hPopup, TPM_RETURNCMD, pt.x, pt.y, 0, _hWndTree, NULL);
 	DestroyMenu(hPopup);
-	
+
 	switch (iItem) {
-		// hide the item
-		case 32000:
-			HideItem(tvi.lParam);
-			break;
-		// rename the item
-		case 32001:
-			BeginLabelEdit(tvi.hItem);
-			break;
-		// reset current tree
-		case 32004:
-			DBResetState();
-			break;
-		// show a hidden item
-		default:
-			if ((iItem -= 100) >= 0 && ShowItem(iItem, NULL))
-				AddFlags(PSTVF_STATE_CHANGED|PSTVF_POS_CHANGED);
-			break;
+	case 32000: // hide the item
+		HideItem(tvi.lParam);
+		break;
+	case 32001: // rename the item
+		BeginLabelEdit(tvi.hItem);
+		break;
+	case 32004: // reset current tree
+		DBResetState();
+		break;
+	default: // show a hidden item
+		if ((iItem -= 100) >= 0 && ShowItem(iItem, NULL))
+			AddFlags(PSTVF_STATE_CHANGED | PSTVF_POS_CHANGED);
+		break;
 	}
 }
 
@@ -837,12 +833,11 @@ void CPsTree::OnIconsChanged()
 BYTE CPsTree::OnInfoChanged()
 {
 	PSHNOTIFY pshn;
-	int i;
 	BYTE bChanged = 0;
 
 	pshn.hdr.idFrom = 0;
 	pshn.hdr.code = PSN_INFOCHANGED;
-	for (i = 0; i < _numItems; i++) {
+	for (int i = 0; i < _numItems; i++) {
 		pshn.hdr.hwndFrom = _pItems[i]->Wnd();
 		if (pshn.hdr.hwndFrom != NULL) {
 			pshn.lParam = (LPARAM)_pItems[i]->hContact();
@@ -864,9 +859,9 @@ BYTE CPsTree::OnInfoChanged()
  * return:	nothing
  **/
 BYTE CPsTree::OnSelChanging()
-{	 
+{
 	CPsTreeItem *pti = CurrentItem();
-	
+
 	if (pti != NULL) {
 		TreeView_SetItemState(_hWndTree, pti->Hti(), 0, TVIS_SELECTED);
 		if (pti->Wnd() != NULL) {
@@ -922,11 +917,9 @@ void CPsTree::OnSelChanged(LPNMTREEVIEW lpnmtv)
 void CPsTree::OnCancel()
 {
 	PSHNOTIFY pshn;
-	int i;
-
 	pshn.hdr.idFrom = 0;
 	pshn.hdr.code = PSN_RESET;
-	for (i = 0; i < _numItems; i++) {
+	for (int i = 0; i < _numItems; i++) {
 		pshn.hdr.hwndFrom = _pItems[i]->Wnd();
 		if (pshn.hdr.hwndFrom && (_pItems[i]->Flags() & PSPF_CHANGED)) {
 			pshn.lParam = (LPARAM)_pItems[i]->hContact();
@@ -945,12 +938,10 @@ void CPsTree::OnCancel()
 int CPsTree::OnApply()
 {
 	CPsTreeItem *pti = CurrentItem();
-	PSHNOTIFY pshn;
-	int i;
-
 	if (pti == NULL)
 		return 1;
 
+	PSHNOTIFY pshn;
 	pshn.hdr.idFrom = 0;
 	pshn.hdr.code = PSN_KILLACTIVE;
 	pshn.hdr.hwndFrom = pti->Wnd();
@@ -958,12 +949,11 @@ int CPsTree::OnApply()
 		return 1;
 	// save everything to database
 	pshn.hdr.code = PSN_APPLY;
-	for (i = 0; i < _numItems; i++) {
+	for (int i = 0; i < _numItems; i++) {
 		if (_pItems[i] && _pItems[i]->Wnd() && _pItems[i]->Flags() & PSPF_CHANGED) {
 			pshn.lParam = (LPARAM)_pItems[i]->hContact();
 			pshn.hdr.hwndFrom = _pItems[i]->Wnd();
 			if (SendMessage(pshn.hdr.hwndFrom, WM_NOTIFY, 0, (LPARAM)&pshn) == PSNRET_INVALID_NOCHANGEPAGE) {
-				CPsTreeItem *pti;
 				if (pti = CurrentItem())
 					ShowWindow(pti->Wnd(), SW_HIDE);
 				_curItem = i;

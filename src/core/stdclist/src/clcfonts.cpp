@@ -22,7 +22,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 #include "m_fontservice.h"
 
@@ -43,7 +43,7 @@ static clistFontDescr[] =
 	{ LPGENT("Offline contacts to whom you have a different visibility"), FIDF_CLASSGENERAL }
 };
 
-static int FS_FontsChanged(WPARAM wParam, LPARAM lParam)
+static int FS_FontsChanged(WPARAM, LPARAM)
 {
 	pcli->pfnClcOptionsChanged();
 	return 0;

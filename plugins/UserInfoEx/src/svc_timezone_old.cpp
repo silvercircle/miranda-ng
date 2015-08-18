@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 #define TZREG		"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones"
 #define TZREG_9X	"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Time Zones"
@@ -119,6 +119,8 @@ public:
 
 class CTzMgr : public LIST<CTimeZone>
 {
+	CTzMgr& operator=(const CTzMgr&);
+
 	CTzBias _bias;
 
 	static int sortFunc(const CTimeZone *tz1, const CTimeZone *tz2)

@@ -17,7 +17,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "variables.h"
+#include "stdafx.h"
 
 static TCHAR *parseAdd(ARGUMENTSINFO *ai)
 {
@@ -158,7 +158,7 @@ static TCHAR *parseNum(ARGUMENTSINFO *ai)
 	return res;
 }
 
-static TCHAR *parseRand(ARGUMENTSINFO *ai)
+static TCHAR *parseRand(ARGUMENTSINFO *)
 {
 	return itot(rand());
 }

@@ -7,7 +7,7 @@ This plugin tries to become miranda's standard OSD ;-)
 Distributed under GNU's GPL 2 or later
 */
 
-#include "wbOSD.h"
+#include "stdafx.h"
 
 HINSTANCE hI;
 
@@ -72,7 +72,7 @@ extern "C" __declspec(dllexport) int Unload()
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD, LPVOID)
 {
 	hI = hinst;
 	return TRUE;

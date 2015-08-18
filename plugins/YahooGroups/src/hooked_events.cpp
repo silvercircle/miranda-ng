@@ -18,7 +18,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 HANDLE hModulesLoaded;
 HANDLE hOptionsInitialize;
@@ -40,13 +40,11 @@ int UnhookEvents()
 	return 0;
 }
 
-int OnModulesLoaded(WPARAM wParam, LPARAM lParam)
+int OnModulesLoaded(WPARAM, LPARAM)
 {
 	int autoMove = db_get_b(NULL, ModuleName, "MoveAutomatically", 0);
 	if (autoMove)
-	{
 		YahooGroupsMoveService(0,0);
-	}
 	
 	return 0;
 }

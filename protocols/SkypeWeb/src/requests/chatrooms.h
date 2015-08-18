@@ -21,8 +21,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 class LoadChatsRequest : public HttpRequest
 {
 public:
-	LoadChatsRequest(const char *regToken, const char *server = SKYPE_ENDPOINTS_HOST) :
-		HttpRequest(REQUEST_GET, FORMAT, "%s/v1/users/ME/conversations", server)
+	LoadChatsRequest(LoginInfo &li) :
+	  HttpRequest(REQUEST_GET, FORMAT, "%s/v1/users/ME/conversations", li.endpoint.szServer)
 	{
 		Url
 			<< INT_VALUE("startTime", 0)
@@ -32,7 +32,7 @@ public:
 
 		Headers
 			<< CHAR_VALUE("Accept", "application/json, text/javascript")
-			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", regToken)
+			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", li.endpoint.szToken)
 			<< CHAR_VALUE("Content-Type", "application/json; charset = UTF-8");
 	}
 };
@@ -40,19 +40,20 @@ public:
 class SendChatMessageRequest : public HttpRequest
 {
 public:
-	SendChatMessageRequest(const char *regToken, const char *username, time_t timestamp, const char *message, const char *server = SKYPE_ENDPOINTS_HOST) :
-		HttpRequest(REQUEST_POST, FORMAT, "%s/v1/users/ME/conversations/19:%s/messages", server, username)
+	SendChatMessageRequest(const char *to, time_t timestamp, const char *message, LoginInfo &li) :
+	  HttpRequest(REQUEST_POST, FORMAT, "%s/v1/users/ME/conversations/19:%s/messages", li.endpoint.szServer, to)
 	{
 		Headers
 			<< CHAR_VALUE("Accept", "application/json, text/javascript")
-			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", regToken)
+			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", li.endpoint.szToken)
 			<< CHAR_VALUE("Content-Type", "application/json; charset=UTF-8");
 
-		JSONNode node(JSON_NODE);
-		node.push_back(JSONNode("clientmessageid", (long)timestamp));
-		node.push_back(JSONNode("messagetype", "RichText"));
-		node.push_back(JSONNode("contenttype", "text"));
-		node.push_back(JSONNode("content", message));
+		JSONNode node;
+		node 
+			<< JSONNode("clientmessageid", (long)timestamp) 
+			<< JSONNode("messagetype", "RichText") 
+			<< JSONNode("contenttype", "text")
+			<< JSONNode("content", message);
 
 		Body << VALUE(node.write().c_str());
 	}
@@ -61,20 +62,21 @@ public:
 class SendChatActionRequest : public HttpRequest
 {
 public:
-	SendChatActionRequest(const char *regToken, const char *id, time_t timestamp, const char *message, const char *server = SKYPE_ENDPOINTS_HOST) :
-		HttpRequest(REQUEST_POST, FORMAT, "%s/v1/users/ME/conversations/19:%s/messages", server, id)
+	SendChatActionRequest(const char *to, time_t timestamp, const char *message, LoginInfo &li) :
+	  HttpRequest(REQUEST_POST, FORMAT, "%s/v1/users/ME/conversations/19:%s/messages", li.endpoint.szServer, to)
 	{
 		Headers
 			<< CHAR_VALUE("Accept", "application/json, text/javascript")
-			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", regToken)
+			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", li.endpoint.szToken)
 			<< CHAR_VALUE("Content-Type", "application/json; charset=UTF-8");
 
 		JSONNode node(JSON_NODE);
-		node.push_back(JSONNode("clientmessageid", (long)timestamp));
-		node.push_back(JSONNode("messagetype", "RichText"));
-		node.push_back(JSONNode("contenttype", "text"));
-		node.push_back(JSONNode("content", message));
-		node.push_back(JSONNode("skypeemoteoffset", 4));
+		node 
+			<< JSONNode("clientmessageid", (long)timestamp)
+			<< JSONNode("messagetype", "RichText")
+			<< JSONNode("contenttype", "text")
+			<< JSONNode("content", message)
+			<< JSONNode("skypeemoteoffset", 4);
 
 		Body << VALUE(node.write().c_str());
 	}
@@ -83,29 +85,28 @@ public:
 class CreateChatroomRequest : public HttpRequest
 {
 public:
-	CreateChatroomRequest(const char *regToken, const LIST<char> &skypenames, const char *selfname, const char *server = SKYPE_ENDPOINTS_HOST) :
-		HttpRequest(REQUEST_POST, FORMAT, "%s/v1/threads", server)
+	CreateChatroomRequest(const LIST<char> &skypenames, LoginInfo &li) :
+	  HttpRequest(REQUEST_POST, FORMAT, "%s/v1/threads", li.endpoint.szServer)
 	{
 		//{"members":[{"id":"8:user3","role":"User"},{"id":"8:user2","role":"User"},{"id":"8:user1","role":"Admin"}]}
 
 		Headers
 			<< CHAR_VALUE("Accept", "application/json, text/javascript")
 			<< CHAR_VALUE("Content-Type", "application/json; charset=UTF-8")
-			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", regToken);
+			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", li.endpoint.szToken);
 
-		JSONNode node(JSON_NODE);
-		JSONNode members(JSON_ARRAY);
-
-		members.set_name("members");
+		JSONNode node;
+		JSONNode members(JSON_ARRAY); members.set_name("members");
 
 		for (int i = 0; i < skypenames.getCount(); i++)
 		{
-			JSONNode member(JSON_NODE);
-			member.push_back(JSONNode("id", CMStringA(::FORMAT, "8:%s", skypenames[i]).GetBuffer()));
-			member.push_back(JSONNode("role", !mir_strcmpi(skypenames[i], selfname) ? "Admin" : "User"));
-			members.push_back(member);
+			JSONNode member;
+			member 
+				<< JSONNode("id", CMStringA(::FORMAT, "8:%s", skypenames[i]).GetBuffer())
+				<< JSONNode("role", !mir_strcmpi(skypenames[i], li.szSkypename) ? "Admin" : "User");
+			members << member;
 		}
-		node.push_back(members);
+		node << members;
 
 		Body << VALUE(node.write().c_str());
 	}
@@ -114,32 +115,32 @@ public:
 class GetChatInfoRequest : public HttpRequest
 {
 public:
-	GetChatInfoRequest(const char *regToken, const char *chatId, const char *server = SKYPE_ENDPOINTS_HOST) :
-		HttpRequest(REQUEST_GET, FORMAT, "%s/v1/threads/19:%s", server, chatId)
+	GetChatInfoRequest(const char *chatId, LoginInfo &li) :
+	  HttpRequest(REQUEST_GET, FORMAT, "%s/v1/threads/19:%s", li.endpoint.szServer, chatId)
 	{
 		Url << CHAR_VALUE("view", "msnp24Equivalent");
 
 		Headers
 			<< CHAR_VALUE("Accept", "application/json, text/javascript")
 			<< CHAR_VALUE("Content-Type", "application/json; charset=UTF-8")
-			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", regToken);
+			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", li.endpoint.szToken);
 	}
 };
 
 class InviteUserToChatRequest : public HttpRequest
 {
 public:
-	InviteUserToChatRequest(const char *regToken, const char *chatId, const char *skypename, const char* role, const char *server = SKYPE_ENDPOINTS_HOST) :
-		HttpRequest(REQUEST_PUT, FORMAT, "%s/v1/threads/19:%s/members/8:%s", server, chatId, skypename)
+	InviteUserToChatRequest(const char *chatId, const char *skypename, const char* role, LoginInfo &li) :
+	  HttpRequest(REQUEST_PUT, FORMAT, "%s/v1/threads/19:%s/members/8:%s", li.endpoint.szServer, chatId, skypename)
 	{
 		Headers
 			<< CHAR_VALUE("Accept", "application/json, text/javascript")
 			<< CHAR_VALUE("Content-Type", "application/json; charset=UTF-8")
-			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", regToken);
+			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", li.endpoint.szToken);
 
-		JSONNode node(JSON_NODE);
+		JSONNode node;
 
-		node.push_back(JSONNode("role", role));
+		node << JSONNode("role", role);
 
 		Body << VALUE(node.write().c_str());
 	}
@@ -148,29 +149,29 @@ public:
 class KickUserRequest : public HttpRequest
 {
 public:
-	KickUserRequest(const char *regToken, const char *chatId, const char *skypename, const char *server = SKYPE_ENDPOINTS_HOST) :
-		HttpRequest(REQUEST_DELETE, FORMAT, "%s/v1/threads/19:%s/members/8:%s", server, chatId, skypename)
+	KickUserRequest(const char *chatId, const char *skypename, LoginInfo &li) :
+	  HttpRequest(REQUEST_DELETE, FORMAT, "%s/v1/threads/19:%s/members/8:%s", li.endpoint.szServer, chatId, skypename)
 	{
 		Headers
 			<< CHAR_VALUE("Accept", "application/json, text/javascript")
 			<< CHAR_VALUE("Content-Type", "application/json; charset=UTF-8")
-			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", regToken);
+			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", li.endpoint.szToken);
 	}
 };
 
 class SetChatPropertiesRequest : public HttpRequest
 {
 public:
-	SetChatPropertiesRequest(const char *regToken, const char *chatId, const char *propname, const char *value, const char *server = SKYPE_ENDPOINTS_HOST) :
-		HttpRequest(REQUEST_PUT, FORMAT, "%s/v1/threads/19:%s/properties?name=%s", server, chatId, propname)
+	SetChatPropertiesRequest(const char *chatId, const char *propname, const char *value, LoginInfo &li) :
+		HttpRequest(REQUEST_PUT, FORMAT, "%s/v1/threads/19:%s/properties?name=%s", li.endpoint.szServer, chatId, propname)
 	{
 		Headers
 			<< CHAR_VALUE("Accept", "application/json, text/javascript")
 			<< CHAR_VALUE("Content-Type", "application/json; charset=UTF-8")
-			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", regToken);
+			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", li.endpoint.szToken);
 
-		JSONNode node(JSON_NODE);
-		node.push_back(JSONNode(propname, value));
+		JSONNode node;
+		node << JSONNode(propname, value);
 
 		Body << VALUE(node.write().c_str());
 	}

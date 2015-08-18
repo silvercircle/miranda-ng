@@ -24,16 +24,16 @@ CSkypeOptionsMain::CSkypeOptionsMain(CSkypeProto *proto, int idDialog)
 	m_group(this, IDC_GROUP),
 	m_place(this, IDC_PLACE),
 	m_autosync(this, IDC_AUTOSYNC),
-	m_localtime(this, IDC_LOCALTIME),
 	m_allasunread(this, IDC_MESASUREAD),
-	m_usehostname(this, IDC_USEHOST)
+	m_usehostname(this, IDC_USEHOST),
+	m_usebb(this, IDC_BBCODES)
 {
 	CreateLink(m_group, SKYPE_SETTINGS_GROUP, _T("Skype"));
 	CreateLink(m_autosync, "AutoSync", DBVT_BYTE, 1);
-	CreateLink(m_localtime, "UseLocalTime", DBVT_BYTE, 0);
 	CreateLink(m_allasunread, "MarkMesUnread", DBVT_BYTE, 1);
 	CreateLink(m_place, "Place", _T(""));
 	CreateLink(m_usehostname, "UseHostName", DBVT_BYTE, 0);
+	CreateLink(m_usebb, "UseBBCodes", DBVT_BYTE, 1);
 	m_usehostname.OnChange = Callback(this, &CSkypeOptionsMain::OnUsehostnameCheck);
 }
 
@@ -42,22 +42,24 @@ void CSkypeOptionsMain::OnInitDialog()
 	CSkypeDlgBase::OnInitDialog();
 
 	m_skypename.SetTextA(ptrA(m_proto->getStringA(SKYPE_SETTINGS_ID)));
-	m_password.SetTextA(ptrA(m_proto->getStringA("Password")));
+	m_password.SetTextA(pass_ptrA(m_proto->getStringA("Password")));
 	m_place.Enable(!m_proto->getBool("UseHostName", false));
 	SendMessage(m_skypename.GetHwnd(), EM_LIMITTEXT, 32, 0);
-	SendMessage(m_password.GetHwnd(), EM_LIMITTEXT, 20, 0);
+	SendMessage(m_password.GetHwnd(), EM_LIMITTEXT, 128, 0);
 	SendMessage(m_group.GetHwnd(), EM_LIMITTEXT, 64, 0);
 }
 
 
 void CSkypeOptionsMain::OnApply()
 {
-	ptrA tszNewSkypename(m_skypename.GetTextA()), tszNewPassword(m_password.GetTextA()),
-		tszOldSkypename(m_proto->getStringA(SKYPE_SETTINGS_ID)), tszOldPassword(m_proto->getStringA("Password"));
-	if (mir_strcmpi(tszNewSkypename, tszOldSkypename) || mir_strcmp(tszNewPassword, tszOldPassword))
+	ptrA szNewSkypename(m_skypename.GetTextA()),	 
+		 szOldSkypename(m_proto->getStringA(SKYPE_SETTINGS_ID));
+	pass_ptrA szNewPassword(m_password.GetTextA()),
+			szOldPassword(m_proto->getStringA("Password"));
+	if (mir_strcmpi(szNewSkypename, szOldSkypename) || mir_strcmp(szNewPassword, szOldPassword))
 		m_proto->delSetting("TokenExpiresIn");
-	m_proto->setString(SKYPE_SETTINGS_ID, tszNewSkypename);
-	m_proto->setString("Password", tszNewPassword);
+	m_proto->setString(SKYPE_SETTINGS_ID, szNewSkypename);
+	m_proto->setString("Password", szNewPassword);
 	ptrT group(m_group.GetText());
 	if (mir_tstrlen(group) > 0 && !Clist_GroupExists(group))
 		Clist_CreateGroup(0, group);

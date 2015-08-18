@@ -22,7 +22,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 static INT_PTR CALLBACK DlgProcGenOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -235,7 +235,7 @@ static INT_PTR CALLBACK DlgProcGenOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 /****************************************************************************************/
 
-int CListOptInit(WPARAM wParam, LPARAM lParam)
+int CListOptInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.position = -1000000000;
@@ -248,7 +248,7 @@ int CListOptInit(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-int CListModernOptInit(WPARAM wParam, LPARAM lParam)
+int CListModernOptInit(WPARAM wParam, LPARAM)
 {
 	static int iBoldControls[] =
 	{

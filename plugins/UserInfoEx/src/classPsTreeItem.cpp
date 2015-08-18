@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 /**
  * name:	BoldGroupTitlesEnumChildren()
@@ -281,7 +281,7 @@ HICON CPsTreeItem::ProtoIcon()
 	int ProtoCount;
 	Proto_EnumAccounts(&ProtoCount, &pa);
 	for (int i = 0; i < ProtoCount; i++) {
-		if (!mir_tcsnicmp(pa[i]->tszAccountName, _A2T(_pszName), mir_tstrlen(pa[i]->tszAccountName))) {
+		if (!mir_tstrncmpi(pa[i]->tszAccountName, _A2T(_pszName), mir_tstrlen(pa[i]->tszAccountName))) {
 			CHAR szIconID[MAX_PATH];
 			mir_snprintf(szIconID, _countof(szIconID), "core_status_%s1", pa[i]->szModuleName);
 			HICON hIco = IcoLib_GetIcon(szIconID);

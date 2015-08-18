@@ -17,7 +17,7 @@ not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 */
 
-#include "common.h"
+#include "stdafx.h"
 
 aPopups PopupsList[POPUPS];
 
@@ -97,7 +97,11 @@ void ShowPopup(LPCTSTR ptszTitle, LPCTSTR ptszText, int Number)
 {
 	if (ServiceExists(MS_POPUP_ADDPOPUPT) && db_get_b(NULL, "Popup", "ModuleIsEnabled", 1)) {
 		char setting[100];
+#if MIRANDA_VER < 0x0A00
+		mir_snprintf(setting, sizeof(setting), "Popups%d", Number);
+#else
 		mir_snprintf(setting, "Popups%d", Number);
+#endif
 		if (db_get_b(NULL, MODNAME, setting, DEFAULT_POPUP_ENABLED)) {
 			POPUPDATAT pd = { 0 };
 			pd.lchContact = NULL;

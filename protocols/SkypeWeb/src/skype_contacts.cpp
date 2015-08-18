@@ -127,36 +127,25 @@ void CSkypeProto::LoadContactsAuth(const NETLIBHTTPREQUEST *response)
 			break;
 
 		std::string skypename = item["sender"].as_string();
-		std::string reason = root["greeting"].as_string();
-		time_t eventTime = IsoToUnixTime(root["event_time_iso"].as_string().c_str());
+		std::string reason = item["greeting"].as_string();
+		time_t eventTime = IsoToUnixTime(item["event_time_iso"].as_string().c_str());
 
 		MCONTACT hContact = AddContact(skypename.c_str());
 		if (hContact)
 		{
 			time_t lastEventTime = db_get_dw(hContact, m_szModuleName, "LastAuthRequestTime", 0);
 
-			if (lastEventTime == 0 || lastEventTime < eventTime)
+			if (lastEventTime < eventTime)
 			{
 				db_set_dw(hContact, m_szModuleName, "LastAuthRequestTime", eventTime);
 				delSetting(hContact, "Auth");
 
+				DB_AUTH_BLOB blob(hContact, NULL, NULL, NULL, skypename.c_str(), reason.c_str());
+
 				PROTORECVEVENT pre = { 0 };
 				pre.timestamp = time(NULL);
-				pre.lParam = (DWORD)(sizeof(DWORD) * 2 + skypename.size() + reason.size() + 5);
-
-				/*blob is: 0(DWORD), hContact(DWORD), nick(ASCIIZ), firstName(ASCIIZ), lastName(ASCIIZ), id(ASCIIZ), reason(ASCIIZ)*/
-				PBYTE pBlob, pCurBlob;
-				pCurBlob = pBlob = (PBYTE)mir_calloc(pre.lParam);
-
-				*((PDWORD)pCurBlob) = 0;
-				pCurBlob += sizeof(DWORD);
-				*((PDWORD)pCurBlob) = (DWORD)hContact;
-				pCurBlob += sizeof(DWORD);
-				pCurBlob += 3;
-				mir_strcpy((char*)pCurBlob, skypename.c_str());
-				pCurBlob += skypename.size() + 1;
-				mir_strcpy((char*)pCurBlob, reason.c_str());
-				pre.szMessage = (char*)pBlob;
+				pre.lParam = blob.size();
+				pre.szMessage = blob;
 
 				ProtoChainRecv(hContact, PSR_AUTH, 0, (LPARAM)&pre);
 			}
@@ -282,36 +271,31 @@ void CSkypeProto::LoadContactList(const NETLIBHTTPREQUEST *response)
 					}
 				}
 
-				if (type == "skype" || type == "msn") skypenames.insert(mir_strdup(skypename.c_str()));
+				if (type == "skype") skypenames.insert(mir_strdup(skypename.c_str()));
 			}
 		}
 	}
 
-	ptrA token(getStringA("TokenSecret"));
 	if (skypenames.getCount() > 0)
 	{
 		int i = 0;
 		do
 		{
 			LIST<char> users(1);
-			for (; i < skypenames.getCount() && users.getCount() < 25; i++)
-			{
-				users.insert(skypenames[i]);
-			}
+			for (; i < skypenames.getCount() && users.getCount() <= 50; i++)
+				users.insert(mir_strdup(skypenames[i]));
 
-			PushRequest(new GetContactsInfoRequest(token, users), &CSkypeProto::LoadContactsInfo);
+			PushRequest(new GetContactsInfoRequest(li, users), &CSkypeProto::LoadContactsInfo);
 
-			for (int j = 0; i < users.getCount(); j++)
-				mir_free(users[j]);
+			FreeCharList(users);
 			users.destroy();
 		}
 		while(i < skypenames.getCount());
 
-		for (int i = 0; i < skypenames.getCount(); i++)
-			mir_free(skypenames[i]);
+		FreeCharList(skypenames);
 		skypenames.destroy();
 	}
-	PushRequest(new GetContactsAuthRequest(token), &CSkypeProto::LoadContactsAuth);
+	PushRequest(new GetContactsAuthRequest(li), &CSkypeProto::LoadContactsAuth);
 }
 
 INT_PTR CSkypeProto::OnRequestAuth(WPARAM hContact, LPARAM)
@@ -320,7 +304,7 @@ INT_PTR CSkypeProto::OnRequestAuth(WPARAM hContact, LPARAM)
 		return 1;
 
 	ptrA skypename(getStringA(hContact, SKYPE_SETTINGS_ID));
-	PushRequest(new AddContactRequest(m_szTokenSecret, skypename));
+	PushRequest(new AddContactRequest(li, skypename));
 	return 0;
 }
 
@@ -330,7 +314,7 @@ INT_PTR CSkypeProto::OnGrantAuth(WPARAM hContact, LPARAM)
 		return 1;
 
 	ptrA skypename(getStringA(hContact, SKYPE_SETTINGS_ID));
-	PushRequest(new AuthAcceptRequest(m_szTokenSecret, skypename));
+	PushRequest(new AuthAcceptRequest(li, skypename));
 	return 0;
 }
 
@@ -339,7 +323,7 @@ int CSkypeProto::OnContactDeleted(MCONTACT hContact, LPARAM)
 	if (!IsOnline()) return 1;
 
 	if (hContact && !isChatRoom(hContact))
-		PushRequest(new DeleteContactRequest(m_szTokenSecret, db_get_sa(hContact, m_szModuleName, SKYPE_SETTINGS_ID)));
+		PushRequest(new DeleteContactRequest(li, ptrA(db_get_sa(hContact, m_szModuleName, SKYPE_SETTINGS_ID))));
 	return 0;
 }
 
@@ -348,7 +332,7 @@ INT_PTR CSkypeProto::BlockContact(WPARAM hContact, LPARAM)
 	if (!IsOnline()) return 1;
 
 	if (IDYES == MessageBox(NULL, TranslateT("Are you sure?"), TranslateT("Warning"), MB_YESNO | MB_ICONQUESTION))
-		SendRequest(new BlockContactRequest(m_szTokenSecret, ptrA(db_get_sa(hContact, m_szModuleName, SKYPE_SETTINGS_ID))), &CSkypeProto::OnBlockContact, (void *)hContact);
+		SendRequest(new BlockContactRequest(li, ptrA(db_get_sa(hContact, m_szModuleName, SKYPE_SETTINGS_ID))), &CSkypeProto::OnBlockContact, (void *)hContact);
 	return 0;
 }
 
@@ -363,7 +347,7 @@ void CSkypeProto::OnBlockContact(const NETLIBHTTPREQUEST *response, void *p)
 
 INT_PTR CSkypeProto::UnblockContact(WPARAM hContact, LPARAM)
 {
-	SendRequest(new UnblockContactRequest(m_szTokenSecret, ptrA(db_get_sa(hContact, m_szModuleName, SKYPE_SETTINGS_ID))), &CSkypeProto::OnUnblockContact, (void *)hContact);
+	SendRequest(new UnblockContactRequest(li, ptrA(db_get_sa(hContact, m_szModuleName, SKYPE_SETTINGS_ID))), &CSkypeProto::OnUnblockContact, (void *)hContact);
 	return 0;
 }
 

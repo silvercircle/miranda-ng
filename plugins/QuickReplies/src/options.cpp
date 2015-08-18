@@ -17,7 +17,7 @@ not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  
 */
 
-#include "common.h"
+#include "stdafx.h"
 
 static LRESULT CALLBACK MessageEditSubclassProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {
@@ -166,7 +166,7 @@ INT_PTR CALLBACK DlgProcOptionsPage(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPAR
 	return FALSE;
 }
 
-int OnOptInitialized(WPARAM wParam, LPARAM lParam)
+int OnOptInitialized(WPARAM wParam, LPARAM)
 {
 	char tabName[32];
 	mir_snprintf(tabName, _countof(tabName), "%s %x", Translate("Button"), iNumber + 1);

@@ -31,6 +31,13 @@ struct INT_VALUE : public VALUE
 		: VALUE(_name), iValue(_value) { }
 };
 
+struct LONG_VALUE : public VALUE
+{
+	LONGLONG llValue;
+	__forceinline LONG_VALUE(LPCSTR _name, LONGLONG _value)
+		: VALUE(_name), llValue(_value) { }
+};
+
 struct CHAR_VALUE : public VALUE
 {
 	LPCSTR szValue;
@@ -92,6 +99,12 @@ protected:
 		HttpRequestUrl &operator<<(const INT_VALUE &param)
 		{
 			request.AddUrlParameter("%s=%i", param.szName, param.iValue);
+			return *this;
+		}
+
+		HttpRequestUrl &operator<<(const LONG_VALUE &param)
+		{
+			request.AddUrlParameter("%s=%lld", param.szName, param.llValue);
 			return *this;
 		}
 
@@ -179,6 +192,13 @@ protected:
 			return *this;
 		}
 
+		HttpRequestBody & operator<<(const LONG_VALUE &param)
+		{
+			AppendSeparator();
+			content.AppendFormat("%s=%lld", param.szName, param.llValue);
+			return *this;
+		}
+
 		HttpRequestBody & operator<<(const CHAR_VALUE &param)
 		{
 			AppendSeparator();
@@ -248,7 +268,7 @@ public:
 	NETLIBHTTPREQUEST * Send(HANDLE hConnection)
 	{
 		if (url.Find("://") == -1)
-			url.Insert(0, flags & NLHRF_SSL ? "https://" : "http://");
+			url.Insert(0, ((flags & NLHRF_SSL) ? "https://" : "http://"));
 		szUrl = url.GetBuffer();
 
 		if (!pData) {

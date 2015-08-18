@@ -40,10 +40,10 @@ static IconItem iconList[] =
 
 static HGENMENU hSetPwdMenu;
 
-static UINT oldLangID;
+static ULONG_PTR oldLangID;
 void LanguageChanged(HWND hwndDlg)
 {
-	UINT LangID = (UINT)GetKeyboardLayout(0);
+	ULONG_PTR LangID = (ULONG_PTR)GetKeyboardLayout(0);
 	char Lang[3] = { 0 };
 	if (LangID != oldLangID) {
 		oldLangID = LangID;
@@ -89,7 +89,7 @@ static INT_PTR CALLBACK sttEnterPassword(HWND hwndDlg, UINT uMsg, WPARAM wParam,
 		if ((HWND)lParam == GetDlgItem(hwndDlg, IDC_LANG)) {
 			SetTextColor((HDC)wParam, GetSysColor(COLOR_HIGHLIGHTTEXT));
 			SetBkMode((HDC)wParam, TRANSPARENT);
-			return (BOOL)GetSysColorBrush(COLOR_HIGHLIGHT);
+			return (INT_PTR)GetSysColorBrush(COLOR_HIGHLIGHT);
 		}
 		return FALSE;
 
@@ -173,7 +173,7 @@ static INT_PTR CALLBACK sttChangePassword(HWND hwndDlg, UINT uMsg, WPARAM wParam
 		if ((HWND)lParam == GetDlgItem(hwndDlg, IDC_LANG)) {
 			SetTextColor((HDC)wParam, GetSysColor(COLOR_HIGHLIGHTTEXT));
 			SetBkMode((HDC)wParam, TRANSPARENT);
-			return (BOOL)GetSysColorBrush(COLOR_HIGHLIGHT);
+			return (INT_PTR)GetSysColorBrush(COLOR_HIGHLIGHT);
 		}
 		return FALSE;
 

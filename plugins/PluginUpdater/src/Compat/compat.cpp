@@ -19,13 +19,15 @@ Boston, MA 02111-1307, USA.
   This file contains some compatibility functions for Miranda IM
 */
 
-#include "Common.h"
+#include "stdafx.h"
 
 PLUGINLINK *pluginLink;
 MM_INTERFACE mmi;
 LIST_INTERFACE li;
 MD5_INTERFACE md5i;
 UTF8_INTERFACE utfi;
+PlugOptions opts;
+POPUP_OPTIONS PopupOptions = {0};
 
 static const MUUID interfaces[] = {MIID_UPDATER, MIID_LAST};
 
@@ -132,6 +134,10 @@ void InitIcoLib()
 		sid.pszName = iconList[i].szIconName;
 		sid.pszDescription = iconList[i].szDescr;
 		sid.iDefaultIndex = -iconList[i].IconID;
-		Skin_AddIcon(&sid);
+		IcoLib_AddIcon(&sid);
 	}
+}
+
+TCHAR *GetDefaultUrl() {
+	return mir_tstrdup(_T("http://miranda-ng.org/distr/deprecated/0.94.9/x%platform%"));
 }

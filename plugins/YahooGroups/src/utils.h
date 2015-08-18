@@ -22,10 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef M_YAHOOGROUPS_UTILS_H
 #define M_YAHOOGROUPS_UTILS_H
 
-#include "commonheaders.h"
-
-//#define USE_LOG
-#define LOG_FILE "yahoogroups.log"
+#include "stdafx.h"
 
 #define ANCHOR_LEFT     0x000001
 #define ANCHOR_RIGHT		0x000002
@@ -33,8 +30,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define ANCHOR_BOTTOM   0x000008
 #define ANCHOR_ALL      ANCHOR_LEFT | ANCHOR_RIGHT | ANCHOR_TOP | ANCHOR_BOTTOM
 
-int LogInit();
-int Log(char *format, ...);
 int Info(char *title, char *format, ...);
 
 char *BinToHex(int size, PBYTE data);

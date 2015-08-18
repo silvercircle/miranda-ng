@@ -19,27 +19,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #pragma warning(disable:4566)
 
-bool CSkypeProto::IsOnline()
+void CSkypeProto::FreeCharList(const LIST<char> &lst)
 {
-	return m_iStatus > ID_STATUS_OFFLINE && m_hPollingThread;
-}
-
-void CSkypeProto::SetSrmmReadStatus(MCONTACT hContact)
-{
-	time_t time = getDword(hContact, "LastMsgReadTime", 0);
-	if (!time)
-		return;
-
-	TCHAR ttime[64];
-	_locale_t locale = _create_locale(LC_ALL, "");
-	_tcsftime_l(ttime, _countof(ttime), _T("%X - %x"), localtime(&time), locale);
-	_free_locale(locale);
-
-	StatusTextData st = { 0 };
-	st.cbSize = sizeof(st);
-	st.hIcon = Skin_LoadIcon(SKINICON_OTHER_HISTORY);
-	mir_sntprintf(st.tszText, _countof(st.tszText), TranslateT("Message read: %s"), ttime);
-	CallService(MS_MSG_SETSTATUSTEXT, (WPARAM)hContact, (LPARAM)&st);
+	for (int i = 0; i < lst.getCount(); i++)
+		mir_free(lst[i]);
 }
 
 time_t CSkypeProto::IsoToUnixTime(const char *stamp)
@@ -417,12 +400,7 @@ char *CSkypeProto::RemoveHtml(const char *text)
 	return mir_strdup(new_string.c_str());
 }
 
-bool CSkypeProto::IsMe(const char *skypeName)
-{
-	return (!mir_strcmpi(skypeName, m_szSelfSkypeName) || !mir_strcmp(skypeName, ptrA(getStringA("SelfEndpointName"))));
-}
-
-char *CSkypeProto::MirandaToSkypeStatus(int status)
+const char *CSkypeProto::MirandaToSkypeStatus(int status)
 {
 	switch (status)
 	{
@@ -455,68 +433,6 @@ int CSkypeProto::SkypeToMirandaStatus(const char *status)
 		return ID_STATUS_DND;
 	else
 		return ID_STATUS_OFFLINE;
-}
-
-void CSkypeProto::ShowNotification(const TCHAR *caption, const TCHAR *message, MCONTACT hContact, int type)
-{
-	if (Miranda_Terminated())
-		return;
-
-	if (ServiceExists(MS_POPUP_ADDPOPUPCLASS)) {
-		CMStringA className(FORMAT, "%s_", m_szModuleName);
-
-		switch (type)
-		{
-		case 1:
-		{
-			className.Append("Error");
-			break;
-		}
-		case SKYPE_DB_EVENT_TYPE_INCOMING_CALL:
-		{
-			className.Append("Call");
-			break;
-		}
-		default:
-		{
-			className.Append("Notification");
-			break;
-		}
-		}
-
-		POPUPDATACLASS ppd = { sizeof(ppd) };
-		ppd.ptszTitle = caption;
-		ppd.ptszText = message;
-		ppd.pszClassName = className.GetBuffer();
-		ppd.hContact = hContact;
-
-		CallService(MS_POPUP_ADDPOPUPCLASS, 0, (LPARAM)&ppd);
-	}
-	else {
-		DWORD mtype = MB_OK | MB_SETFOREGROUND | MB_ICONSTOP;
-		MessageBox(NULL, message, caption, mtype);
-	}
-}
-
-LRESULT CSkypeProto::PopupDlgProcCall(HWND hPopup, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	switch (uMsg) {
-	case WM_CONTEXTMENU:
-		PUDeletePopup(hPopup);
-		CallService(MODULE"/IncomingCallPP", 0, PUGetContact(hPopup));
-		break;
-	case WM_COMMAND:
-		PUDeletePopup(hPopup);
-		CallService(MODULE"/IncomingCallPP", 1, PUGetContact(hPopup));
-		break;
-	}
-
-	return DefWindowProc(hPopup, uMsg, wParam, lParam);
-}
-
-void CSkypeProto::ShowNotification(const TCHAR *message, MCONTACT hContact)
-{
-	ShowNotification(_T(MODULE), message, hContact);
 }
 
 bool CSkypeProto::IsFileExists(std::tstring path)
@@ -552,19 +468,18 @@ CMStringA CSkypeProto::GetStringChunk(const char *haystack, const char *start, c
 	return CMStringA(sstart, send - sstart);
 }
 
-CMStringA CSkypeProto::ContactUrlToName(const char *url)
+CMStringA CSkypeProto::UrlToSkypename(const char *url)
 {
-	return ParseUrl(url, "/8:");
-}
+	CMStringA szResult;
 
-CMStringA CSkypeProto::SelfUrlToName(const char *url)
-{
-	return ParseUrl(url, "/1:");
-}
+	if (strstr(url, "/1:"))
+		szResult = ParseUrl(url, "/1:");
+	else if (strstr(url, "/8:"))
+		szResult = ParseUrl(url, "/8:");
+	else if (strstr(url, "/19:"))
+		szResult = ParseUrl(url, "/19:");
 
-CMStringA CSkypeProto::ChatUrlToName(const char *url)
-{
-	return ParseUrl(url, "/19:");
+	return szResult;
 }
 
 CMStringA CSkypeProto::GetServerFromUrl(const char *url)
@@ -584,9 +499,6 @@ INT_PTR CSkypeProto::ParseSkypeUriService(WPARAM, LPARAM lParam)
 	TCHAR *szJid = _tcschr(szUri, _T(':'));
 	if (szJid == NULL)
 		return 1;
-
-	// skip //
-	for (++szJid; *szJid == _T('/'); ++szJid);
 
 	// empty jid?
 	if (!*szJid)
@@ -623,7 +535,7 @@ INT_PTR CSkypeProto::ParseSkypeUriService(WPARAM, LPARAM lParam)
 	else if (!mir_tstrcmpi(szCommand, _T("call")))
 	{
 		MCONTACT hContact = AddContact(_T2A(szJid), true);
-		NotifyEventHooks(m_hCallHook, (WPARAM)hContact, (LPARAM)0);
+		NotifyEventHooks(g_hCallEvent, (WPARAM)hContact, (LPARAM)0);
 		return 0;
 	}
 	else if (!mir_tstrcmpi(szCommand, _T("userinfo"))){ return 0; }
@@ -632,14 +544,17 @@ INT_PTR CSkypeProto::ParseSkypeUriService(WPARAM, LPARAM lParam)
 		MCONTACT hContact = FindContact(_T2A(szJid));
 		if (hContact == NULL)
 		{
-			PROTOSEARCHRESULT psr = { 0 };
+			PROTOSEARCHRESULT psr;
+			psr.cbSize = sizeof(psr);
 			psr.id.t = mir_tstrdup(szJid);
 			psr.nick.t = mir_tstrdup(szJid);
-			psr.flags = PSR_TCHAR;
+			psr.flags = PSR_UNICODE;
+
 			ADDCONTACTSTRUCT acs;
 			acs.handleType = HANDLE_SEARCHRESULT;
 			acs.szProto = m_szModuleName;
 			acs.psr = &psr;
+
 			CallService(MS_ADDCONTACT_SHOW, 0, (LPARAM)&acs);
 		}
 		return 0;
@@ -654,7 +569,7 @@ INT_PTR CSkypeProto::ParseSkypeUriService(WPARAM, LPARAM lParam)
 	{
 		return 1;
 	}
-	return 1; /* parse failed */
+	return 1;
 }
 
 INT_PTR CSkypeProto::GlobalParseSkypeUriService(WPARAM wParam, LPARAM lParam)

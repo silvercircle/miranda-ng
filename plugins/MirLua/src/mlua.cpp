@@ -64,7 +64,10 @@ void CMLua::Unload()
 		script->Unload();
 		delete script;
 	}
-	
+
+	::KillModuleMBButtons();
+	::KillModuleTTBButton();
+
 	::KillModuleIcons(hScriptsLangpack);
 	::KillModuleMenus(hScriptsLangpack);
 	::KillModuleHotkeys(hScriptsLangpack);

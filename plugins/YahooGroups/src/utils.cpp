@@ -18,52 +18,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
-
-int LogInit()
-{
-#ifdef USE_LOG
-	//FILE *fout = fopen(LOG_FILE, "wt");
-	//fclose(fout);
-	Log("********************** Miranda started **********************");
-#endif
-	return 0;
-}
-
-int Log(char *format, ...)
-{
-#ifdef USE_LOG
-	char		str[4096];
-	va_list	vararg;
-	int tBytes;
-	FILE *fout = fopen(LOG_FILE, "at");
-	if (!fout)
-		{
-//			MessageBox(0, "can't open file", NULL, MB_OK);
-			return -1;
-		}
-	time_t tNow = time(NULL);
-	struct tm *now = localtime(&tNow);
-	strftime(str, sizeof(str), "%d %b %Y @ %H:%M:%S: ", now);
-	fputs(str, fout);
-	va_start(vararg, format);
-	
-	tBytes = mir_vsnprintf(str, sizeof(str), format, vararg);
-	if (tBytes > 0)
-		{
-			str[tBytes] = 0;
-		}
-
-	va_end(vararg);
-	if (str[mir_strlen(str) - 1] != '\n')
-		{
-			mir_strcat(str, "\n");
-		}
-	fputs(str, fout);
-	fclose(fout);
-#endif
-	return 0;
-}
+#include "stdafx.h"
 
 int Info(char *title, char *format, ...)
 {
@@ -73,9 +28,8 @@ int Info(char *title, char *format, ...)
 	va_start(vararg, format);
 	tBytes = mir_vsnprintf(str, sizeof(str), format, vararg);
 	if (tBytes > 0)
-		{
-			str[tBytes] = 0;
-		}
+		str[tBytes] = 0;
+
 	va_end(vararg);
 	return MessageBoxA(0, str, title, MB_OK | MB_ICONINFORMATION);		
 }
@@ -127,7 +81,7 @@ void HexToBin(char *inData, ULONG &size, LPBYTE &outData)
 	for (i = 0; i < size; i++)
 		{
 			strncpy(buffer + 2, &tmp[i * 2], 2);
-			sscanf(buffer, "%x", &outData[i]);
+			sscanf(buffer, "%hhx", &outData[i]);
 		}
 	i = size;
 }
@@ -226,18 +180,13 @@ TCHAR *GetContactName(MCONTACT hContact, char *szProto)
 	//_debug_message("	contact name %s", ctInfo.pszVal);
 	TCHAR *buffer;
 	if (!ret)
-		{
-			buffer = _tcsdup(ctInfo.pszVal);
-		}
+		buffer = _tcsdup(ctInfo.pszVal);
+
 	mir_free(ctInfo.pszVal);
 	if (!ret)
-		{
-			return buffer;
-		}
-		else{
-			return NULL;
-		}
-	return buffer;
+		return buffer;
+
+	return NULL;
 }
 
 void GetContactProtocol(MCONTACT hContact, char *szProto, int size)
@@ -306,12 +255,9 @@ TCHAR *GetContactID(MCONTACT hContact, char *szProto)
 		}
 	mir_free(ctInfo.pszVal);
 	if (!ret)
-		{
-			return buffer;
-		}
-		else{
-			return NULL;
-		}
+		return buffer;
+
+	return NULL;
 }
 
 MCONTACT GetContactFromID(TCHAR *szID, char *szProto)

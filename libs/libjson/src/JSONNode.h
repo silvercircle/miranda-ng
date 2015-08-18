@@ -150,6 +150,7 @@ public:
 	#else
 		void push_back(const JSONNode & node);
 	#endif
+	JSONNode& operator<<(const JSONNode & node);
 	void reserve(json_index_t size);
 	JSONNode JSON_PTR_LIB pop_back(json_index_t pos);
 	JSONNode JSON_PTR_LIB pop_back(const json_string & name_t);
@@ -423,8 +424,8 @@ public:
 	#endif
 
 	#ifdef JSON_WRITER
-		json_string write(void);
-		json_string write_formatted(void);
+		json_string write(void) const;
+		json_string write_formatted(void) const;
 	#endif
 
 	#ifdef JSON_DEBUG

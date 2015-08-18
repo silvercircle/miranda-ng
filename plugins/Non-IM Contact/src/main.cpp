@@ -7,7 +7,7 @@
 #include "Version.h"
 
 CLIST_INTERFACE *pcli;
-HINSTANCE hInst;
+HINSTANCE g_hInst;
 int hLangpack;
 
 PLUGININFOEX pluginInfoEx = {
@@ -24,10 +24,10 @@ PLUGININFOEX pluginInfoEx = {
 	{ 0x2e0d2ae3, 0xe123, 0x4607, {0x85, 0x39, 0xd4, 0x44, 0x8d, 0x67, 0x5d, 0xdb} }
 };
 
-INT_PTR doubleClick(WPARAM wParam, LPARAM lParam)
+INT_PTR doubleClick(WPARAM wParam, LPARAM)
 {
 	char program[MAX_PATH], params[MAX_PATH];
-	int shellEXEerror = 0;
+	INT_PTR shellEXEerror = 0;
 	char* proto = GetContactProto(wParam);
 	if (proto && !mir_strcmp(proto, MODNAME)) {
 		if (GetKeyState(VK_CONTROL) & 0x8000) // ctrl is pressed
@@ -37,7 +37,8 @@ INT_PTR doubleClick(WPARAM wParam, LPARAM lParam)
 				mir_strcpy(params, "");
 			if (strstr(program, "http://") || strstr(program, "https://"))
 				Utils_OpenUrl(program);
-			else shellEXEerror = (int)ShellExecuteA(NULL, NULL, program, params, NULL, SW_SHOW);  //ignore the warning, its M$'s backwards compatabilty screwup :)
+			else
+				shellEXEerror = (INT_PTR)ShellExecuteA(NULL, NULL, program, params, NULL, SW_SHOW);  //ignore the warning, its M$'s backwards compatabilty screwup :)
 			if (shellEXEerror == ERROR_FILE_NOT_FOUND || shellEXEerror == ERROR_PATH_NOT_FOUND)
 				Utils_OpenUrl(program);
 		}
@@ -62,7 +63,7 @@ int LCStatus = ID_STATUS_OFFLINE;
 int NimcOptInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
-	odp.hInstance = hInst;
+	odp.hInstance = g_hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONS);
 	odp.pszGroup = LPGEN("Plugins");
 	odp.pszTitle = LPGEN("Non-IM Contacts");
@@ -77,7 +78,7 @@ int NimcOptInit(WPARAM wParam, LPARAM)
 // Description : Sets plugin info
 //=====================================================
 
-extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
+extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 {
 	return &pluginInfoEx;
 }
@@ -89,13 +90,13 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD miranda
 // Description :
 //=====================================================
 
-BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD, LPVOID)
 {
-	hInst = hinst;
+	g_hInst = hinst;
 	return TRUE;
 }
 
-int ModulesLoaded(WPARAM wParam, LPARAM lParam)
+int ModulesLoaded(WPARAM, LPARAM)
 {
 	NetlibInit();
 	return 0;
@@ -118,7 +119,7 @@ extern "C" __declspec(dllexport) int Load()
 	mir_getLP(&pluginInfoEx);
 	mir_getCLI();
 
-	Icon_Register(hInst, LPGEN("Non-IM Contact"), icoList, _countof(icoList));
+	Icon_Register(g_hInst, LPGEN("Non-IM Contact"), icoList, _countof(icoList));
 
 	HookEvent(ME_CLIST_DOUBLECLICKED, (MIRANDAHOOK)doubleClick);
 	HookEvent(ME_OPT_INITIALISE, NimcOptInit);

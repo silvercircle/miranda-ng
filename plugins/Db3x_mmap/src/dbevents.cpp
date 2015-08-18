@@ -38,11 +38,6 @@ STDMETHODIMP_(MEVENT) CDb3Mmap::AddEvent(MCONTACT contactID, DBEVENTINFO *dbei)
 	DBEvent dbe;
 	dbe.signature = DBEVENT_SIGNATURE;
 	dbe.contactID = contactID; // store native or subcontact's id
-	dbe.timestamp = dbei->timestamp;
-	dbe.flags = dbei->flags;
-	dbe.wEventType = dbei->eventType;
-	dbe.cbBlob = dbei->cbBlob;
-	BYTE *pBlob = dbei->pBlob;
 
 	MCONTACT contactNotifyID = contactID;
 	DBCachedContact *ccSub = NULL;
@@ -64,6 +59,12 @@ STDMETHODIMP_(MEVENT) CDb3Mmap::AddEvent(MCONTACT contactID, DBEVENTINFO *dbei)
 
 	if (NotifyEventHooks(hEventFilterAddedEvent, contactNotifyID, (LPARAM)dbei))
 		return NULL;
+
+	dbe.timestamp = dbei->timestamp;
+	dbe.flags = dbei->flags;
+	dbe.wEventType = dbei->eventType;
+	dbe.cbBlob = dbei->cbBlob;
+	BYTE *pBlob = dbei->pBlob;
 
 	mir_ptr<BYTE> pCryptBlob;
 	if (m_bEncrypted) {

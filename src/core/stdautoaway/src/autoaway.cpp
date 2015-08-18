@@ -22,13 +22,13 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 #define AA_MODULE "AutoAway"
 
 static int iBreakSounds = 0;
 
-static int AutoAwaySound(WPARAM, LPARAM lParam)
+static int AutoAwaySound(WPARAM, LPARAM)
 {
 	return iBreakSounds;
 }

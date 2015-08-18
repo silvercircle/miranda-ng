@@ -20,7 +20,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 #include <Commdlg.h>
 #include <m_clui.h>
 #include <m_skin.h>
@@ -482,7 +482,7 @@ static INT_PTR CALLBACK MsgBoxProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 * this set call function in wait stait and do not freece miranda main thread
 * the window is outside the desktop
 */
-static INT_PTR CALLBACK MsgBoxPop(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK MsgBoxPop(HWND hDlg, UINT uMsg, WPARAM, LPARAM lParam)
 {
 	switch (uMsg) {
 	case WM_INITDIALOG:
@@ -587,7 +587,7 @@ static INT_PTR CALLBACK MsgBoxPop(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 *
 * @return	TRUE, FALSE, IDOK, IDYES, IDALL, IDNO or IDCANCEL
 **/
-static LRESULT CALLBACK PopupProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK PopupProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg) {
 	case UM_POPUPACTION:
@@ -635,7 +635,7 @@ static LRESULT CALLBACK PopupProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lP
 * @return	The function returns the ID of the clicked button (IDOK, IDCANCEL, ...)
 *			or -1 on error.
 **/
-INT_PTR MsgBoxService(WPARAM wParam, LPARAM lParam)
+INT_PTR MsgBoxService(WPARAM, LPARAM lParam)
 {
 	LPMSGBOX pMsgBox = (LPMSGBOX)lParam;
 

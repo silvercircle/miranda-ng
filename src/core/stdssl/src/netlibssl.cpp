@@ -22,7 +22,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 #pragma comment(lib, "secur32.lib")
 #pragma comment(lib, "crypt32.lib")
@@ -62,7 +62,7 @@ struct SslHandle
 	SocketState state;
 };
 
-static void ReportSslError(SECURITY_STATUS scRet, int line, bool showPopup = false)
+static void ReportSslError(SECURITY_STATUS scRet, int line, bool = false)
 {
 	TCHAR szMsgBuf[256];
 	switch (scRet) {

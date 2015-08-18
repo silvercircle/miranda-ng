@@ -57,7 +57,7 @@ MCONTACT CToxProto::GetContact(const char *pubKey)
 	{
 		ptrA contactPubKey(getStringA(hContact, TOX_SETTINGS_ID));
 		// check only public key part of address
-		if (strnicmp(pubKey, contactPubKey, TOX_PUBLIC_KEY_SIZE) == 0)
+		if (mir_strncmpi(pubKey, contactPubKey, TOX_PUBLIC_KEY_SIZE) == 0)
 			break;
 	}
 	return hContact;
@@ -184,7 +184,7 @@ INT_PTR CToxProto::OnGrantAuth(WPARAM hContact, LPARAM)
 	if (!IsOnline())
 		return 0;
 
-	ToxBinAddress pubKey = ptrA(getStringA(hContact, TOX_SETTINGS_ID));
+	ToxBinAddress pubKey(ptrA(getStringA(hContact, TOX_SETTINGS_ID)));
 	TOX_ERR_FRIEND_ADD error;
 	tox_friend_add_norequest(tox, pubKey, &error);
 	if (error != TOX_ERR_FRIEND_ADD_OK)

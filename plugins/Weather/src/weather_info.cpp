@@ -25,7 +25,7 @@ ini files, as well as function that are used for debug purpose
 regrading the loading of ini contents
 */
 
-#include "weather.h"
+#include "stdafx.h"
 
 //============  INI INFORMATION  ============
 
@@ -103,7 +103,7 @@ columns[] =
 };
 
 
-INT_PTR CALLBACK DlgProcINIPage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam) 
+INT_PTR CALLBACK DlgProcINIPage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM) 
 {
 	switch (msg) 
 	{

@@ -64,8 +64,7 @@ CSkypeGCCreateDlg::CSkypeGCCreateDlg(CSkypeProto *proto) :
 }
 CSkypeGCCreateDlg::~CSkypeGCCreateDlg()
 {
-	for (int i = 0; i < m_ContactsList.getCount(); i++)
-		mir_free(m_ContactsList[i]);
+	CSkypeProto::FreeCharList(m_ContactsList);
 	m_ContactsList.destroy();
 }
 
@@ -96,7 +95,7 @@ void CSkypeGCCreateDlg::btnOk_OnOk(CCtrlButton*)
 			}
 		}
 	}
-	m_ContactsList.insert(m_proto->m_szSelfSkypeName);
+	m_ContactsList.insert(m_proto->li.szSkypename);
 	EndDialog(m_hwnd, m_ContactsList.getCount());
 }
 

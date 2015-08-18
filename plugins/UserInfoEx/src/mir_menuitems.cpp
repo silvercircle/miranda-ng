@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 enum ECascadeType {
 	MCAS_DISABLED	= 2,
@@ -65,8 +65,6 @@ INT_PTR RemoveMenuItems(HGENMENU *pItems, int Count)
  **/
 void RebuildContact()
 {
-	BYTE item = 0;
-
 	HGENMENU mhRoot = NULL;
 	HGENMENU mhExIm = NULL;
 	static HGENMENU hMenuItem[4] = { NULL, NULL, NULL, NULL };
@@ -280,7 +278,6 @@ void RebuildGroup()
 {
 	int flag = 0;
 	BYTE item = 0;
-	GroupMenuParam gmp = { 0 };
 
 	HGENMENU mhRoot = NULL;
 	HGENMENU mhExIm = NULL;
@@ -302,7 +299,6 @@ void RebuildGroup()
 
 	CMenuItem mi;
 	mi.pszService = text;
-	char* tDest = text + mir_strlen(text);
 
 	switch (flag) {
 	case 3:
@@ -459,7 +455,7 @@ void RebuildSubGroup()
  *
  * @return	always 0
  **/
-INT_PTR RebuildAccount(WPARAM wParam, LPARAM lParam)
+INT_PTR RebuildAccount(WPARAM, LPARAM lParam)
 {
 	const BYTE mItems = 3;				// menuitems to create
 	BYTE item = 0;

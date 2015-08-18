@@ -22,9 +22,12 @@ INT_PTR CSkypeProto::SvcGetAvatarCaps(WPARAM wParam, LPARAM lParam)
 	switch (wParam)
 	{
 	case AF_MAXSIZE:
-		((POINT*)lParam)->x = 96;
-		((POINT*)lParam)->y = 96;
+		((POINT*)lParam)->x = 150;
+		((POINT*)lParam)->y = 150;
 		return 0;
+
+	case AF_MAXFILESIZE:
+		return 32000;
 
 	case AF_PROPORTION:
 		return PIP_SQUARE;
@@ -36,7 +39,6 @@ INT_PTR CSkypeProto::SvcGetAvatarCaps(WPARAM wParam, LPARAM lParam)
 	case AF_FETCHIFCONTACTOFFLINE:
 		return 1;
 	}
-
 	return 0;
 }
 
@@ -191,21 +193,16 @@ INT_PTR CSkypeProto::SvcSetMyAvatar(WPARAM, LPARAM lParam)
 		}
 		rewind(hFile);
 
-		char *data = (char*)mir_alloc(length);
-		if (fread(data, sizeof(char), length, hFile) != length)
+		ptrA data((char*)mir_alloc(length));
+
+		if (data == NULL || fread(data, sizeof(char), length, hFile) != length)
 		{
 			debugLogA("CSkypeProto::SvcSetMyAvatar: failed to read avatar file");
-			mir_free(data);
 			fclose(hFile);
 			return -1;
 		}
 		fclose(hFile);
-
-		ptrA token(getStringA("TokenSecret"));
-		ptrA skypename(getStringA(SKYPE_SETTINGS_ID));
-		PushRequest(new SetAvatarRequest(token, skypename, data, length), &CSkypeProto::OnSentAvatar);
-
-		mir_free(data);
+		PushRequest(new SetAvatarRequest(data, length, li), &CSkypeProto::OnSentAvatar);
 	}
 	else
 	{

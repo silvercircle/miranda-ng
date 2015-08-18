@@ -22,7 +22,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 #define SUMMARY     0
 #define DETAIL      1
@@ -271,7 +271,6 @@ static INT_PTR CALLBACK DlgProcHistory(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				int sel = SendDlgItemMessage(hwndDlg, IDC_LIST, LB_GETCURSEL, 0, 0);
 				if (sel == LB_ERR) { EnableWindow(GetDlgItem(hwndDlg, IDC_DELETEHISTORY), FALSE); break; }
 				EnableWindow(GetDlgItem(hwndDlg, IDC_DELETEHISTORY), TRUE);
-				TCHAR *contactName = pcli->pfnGetContactDisplayName(hContact, 0);
 				MEVENT hDbEvent = SendDlgItemMessage(hwndDlg, IDC_LIST, LB_GETITEMDATA, sel, 0);
 
 				DBEVENTINFO dbei = { sizeof(dbei) };
@@ -384,7 +383,7 @@ static int HistoryContactDelete(WPARAM wParam, LPARAM)
 	return 0;
 }
 
-static int PrebuildContactMenu(WPARAM hContact, LPARAM lParam)
+static int PrebuildContactMenu(WPARAM hContact, LPARAM)
 {
 	Menu_ShowItem(hContactMenu, db_event_last(hContact) != NULL);
 	return 0;

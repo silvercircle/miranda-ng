@@ -11,7 +11,7 @@
  * and for answering some of my questions during development of this plugin.
  */
 
-#include "yahoo.h"
+#include "stdafx.h"
 
 #include "m_addcontact.h"
 #include "m_message.h"
@@ -72,7 +72,7 @@ static char* get_buddy(TCHAR ** arg)
 	send message:   ymsgr:sendim?ID&m=MESSAGE
 	add chatroom:   ymsgr:chat?ROOM
 	*/
-static INT_PTR ServiceParseYmsgrLink(WPARAM wParam, LPARAM lParam)
+static INT_PTR ServiceParseYmsgrLink(WPARAM, LPARAM lParam)
 {
 	TCHAR *arg = (TCHAR*)lParam;
 	if (arg == NULL) return 1; /* sanity check */

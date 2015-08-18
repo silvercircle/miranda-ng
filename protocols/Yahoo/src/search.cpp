@@ -11,7 +11,7 @@
  * and for answering some of my questions during development of this plugin.
  */
 
-#include "yahoo.h"
+#include "stdafx.h"
 #include <m_protosvc.h>
 #include <m_langpack.h>
 
@@ -117,7 +117,7 @@ void CYahooProto::ext_got_search_result(int found, int start, int total, YList *
  * Returns: 0 on failure or HWND on success
  */
 
-static INT_PTR CALLBACK YahooSearchAdvancedDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK YahooSearchAdvancedDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM)
 {
 	switch (msg) {
 	case WM_INITDIALOG:

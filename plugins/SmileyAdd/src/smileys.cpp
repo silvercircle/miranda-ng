@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "general.h"
+#include "stdafx.h"
 
 SmileyPackListType g_SmileyPacks;
 SmileyCategoryListType g_SmileyCategories;
@@ -985,8 +985,6 @@ void SmileyCategoryListType::AddAllProtocolsAsCategory(void)
 
 	const CMString& defaultFile = GetSmileyCategory(tname)->GetFilename();
 
-	unsigned lpcp = Langpack_GetDefaultCodePage();
-
 	PROTOCOLDESCRIPTOR **proto;
 	int protoCount = 0;
 	Proto_EnumProtocols(&protoCount, &proto);
@@ -1020,7 +1018,7 @@ void SmileyCategoryListType::AddAllProtocolsAsCategory(void)
 	}
 
 	if (cppv != cats.GetLength()) {
-		displayName = cats.Mid(cppv, cats.GetLength() - cppv);
+		displayName = cats.Mid(cppv);
 		AddCategory(displayName, displayName, smcCustom, defaultFile);
 	}
 }

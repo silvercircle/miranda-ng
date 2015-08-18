@@ -21,7 +21,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "headers.h"
+#include "stdafx.h"
 
 //---------------------------------------------------------------------------
 // Workaround for MS bug ComboBox_SelectItemData
@@ -315,7 +315,7 @@ INT_PTR CALLBACK DlgProcOptsClasses(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 			} // end if (tvi.lParam)
 			else {
 				// enable / disable controls
-				for (int i = 0; i < _countof(ctrlsAll); ++i) {
+				for (i = 0; i < _countof(ctrlsAll); ++i) {
 					ShowWindow(GetDlgItem(hwnd, ctrlsAll[i].idCtrl), ctrlsAll[i].onTyp0 ? SW_SHOW : SW_HIDE);
 					EnableWindow(GetDlgItem(hwnd, ctrlsAll[i].idCtrl), ctrlsAll[i].onTyp0);
 				}

@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 static HGENMENU ghMenuItem = NULL;
 static HANDLE ghExtraIconDef = INVALID_HANDLE_VALUE;
@@ -79,7 +79,7 @@ static LPSTR Get(MCONTACT hContact)
 
 static INT_PTR MenuCommand(WPARAM wParam,LPARAM lParam)
 {
-	int result;
+	int result = 0;
 	LPSTR val = NULL;
 
 	__try 
@@ -124,7 +124,7 @@ static INT_PTR MenuCommand(WPARAM wParam,LPARAM lParam)
 * @param	lParam			- not used
 **/
 
-static int OnCListApplyIcons(WPARAM wParam, LPARAM lParam)
+static int OnCListApplyIcons(WPARAM wParam, LPARAM)
 {
 	LPSTR val = Get(wParam);
 	ExtraIcon_SetIconByName(ghExtraIconSvc, wParam, (val) ? ICO_BTN_EMAIL : 0);
@@ -161,7 +161,7 @@ static int OnContactSettingChanged(MCONTACT hContact, DBCONTACTWRITESETTING* pdb
 * @return	always 0
 **/
 
-static int OnPreBuildMenu(WPARAM wParam, LPARAM lParam)
+static int OnPreBuildMenu(WPARAM wParam, LPARAM)
 {
 	LPSTR val = Get(wParam);
 	Menu_ShowItem(ghMenuItem, val != NULL);

@@ -89,12 +89,12 @@ void CVkProto::OnSendMessage(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
 	if (reply->resultCode == 200) {
 		JSONNode jnRoot;
 		const JSONNode &jnResponse = CheckJsonResponse(pReq, reply, jnRoot);
-		if (!jnResponse.isnull()) {
+		if (jnResponse) {
 			UINT mid;
 			if (jnResponse.type() != JSON_STRING) 
 				mid = jnResponse.as_int();
 			else if (_stscanf(jnResponse.as_mstring(), _T("%d"), &mid) != 1)
-				mid = 0;				
+				mid = 0;
 
 			if (param->iMsgID != -1)
 				m_sendIds.insert((HANDLE)mid);
@@ -130,7 +130,7 @@ int CVkProto::OnDbEventRead(WPARAM, LPARAM hDbEvent)
 	if (!hContact)
 		return 0;
 
-	CMString szProto(ptrA(db_get_sa(hContact, "Protocol", "p")));
+	CMStringA szProto(ptrA(db_get_sa(hContact, "Protocol", "p")));
 	if (szProto.IsEmpty() || szProto != m_szModuleName)
 		return 0;
 
@@ -216,7 +216,7 @@ void CVkProto::OnReceiveMessages(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pRe
 		int uid = jnMsg["user_id"].as_int();
 
 		const JSONNode &jnFwdMessages = jnMsg["fwd_messages"];
-		if (!jnFwdMessages.isnull()) {
+		if (jnFwdMessages) {
 			CMString tszFwdMessages = GetFwdMessages(jnFwdMessages, m_iBBCForAttachments);
 			if (!tszBody.IsEmpty())
 				tszFwdMessages = _T("\n") + tszFwdMessages;
@@ -224,7 +224,7 @@ void CVkProto::OnReceiveMessages(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pRe
 		}
 
 		const JSONNode &jnAttachments = jnMsg["attachments"];
-		if (!jnAttachments.isnull()) {
+		if (jnAttachments) {
 			CMString tszAttachmentDescr = GetAttachmentDescr(jnAttachments, m_iBBCForAttachments);
 			if (!tszBody.IsEmpty())
 				tszAttachmentDescr = _T("\n") + tszAttachmentDescr;

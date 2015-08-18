@@ -17,7 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 /* Функция разбирает строку и возвращает список тегов и соответствующих им строк.
 Аргументы:
@@ -47,7 +47,7 @@ WORD GetRowItems(TCHAR *InputString, RowItemInfo **RowItemsList)
 		*RowItemsList = (RowItemInfo*)mir_realloc(*RowItemsList, sizeof(RowItemInfo) * (c + 1));
 
 		// Разбираем тег.
-		_stscanf(begin + 1, _T("%c%d"),
+		_stscanf(begin + 1, _T("%c%hd"),
 			&((*RowItemsList)[c].Alignment),
 			&((*RowItemsList)[c].Interval));
 

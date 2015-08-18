@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-LIST<CSkypeProto> Accounts(1, CSkypeProto::CompareAccounts);
+LIST<CSkypeProto> CSkypeProto::Accounts(1, CSkypeProto::CompareAccounts);
 
 int CSkypeProto::CompareAccounts(const CSkypeProto *p1, const CSkypeProto *p2)
 {
@@ -55,8 +55,8 @@ int CSkypeProto::OnAccountLoaded(WPARAM, LPARAM)
 
 	HookProtoEvent(ME_OPT_INITIALISE, &CSkypeProto::OnOptionsInit);
 	HookProtoEvent(ME_MSG_PRECREATEEVENT, &CSkypeProto::OnPreCreateMessage);
-
 	HookProtoEvent(ME_DB_EVENT_MARKED_READ, &CSkypeProto::OnDbEventRead);
+
 	InitDBEvents();
 	InitPopups();
 	InitGroupChatModule();

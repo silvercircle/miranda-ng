@@ -21,6 +21,7 @@ int hLangpack;
 HINSTANCE g_hInstance;
 CLIST_INTERFACE *pcli;
 char g_szMirVer[100];
+HANDLE g_hCallEvent;
 
 PLUGININFOEX pluginInfo =
 {
@@ -69,8 +70,12 @@ extern "C" int __declspec(dllexport) Load(void)
 	CSkypeProto::InitIcons();
 	CSkypeProto::InitMenus();
 	CSkypeProto::InitLanguages();
-	CreateServiceFunction(MODULE"/GetEventIcon", &CSkypeProto::EventGetIcon);
-	CreateServiceFunction(MODULE"/GetEventText", &CSkypeProto::GetEventText);
+
+	CreateServiceFunction(MODULE "/GetEventIcon", &CSkypeProto::EventGetIcon);
+	CreateServiceFunction(MODULE "/GetEventText", &CSkypeProto::GetEventText);
+
+	g_hCallEvent = CreateHookableEvent(MODULE "/IncomingCall");
+
 	HookEvent(ME_SYSTEM_MODULESLOADED, &CSkypeProto::OnModulesLoaded);
 
 	return 0;
@@ -80,6 +85,8 @@ extern "C" int __declspec(dllexport) Unload(void)
 {
 	CSkypeProto::UninitIcons();
 	CSkypeProto::UninitMenus();
+
+	DestroyHookableEvent(g_hCallEvent);
 
 	return 0;
 }

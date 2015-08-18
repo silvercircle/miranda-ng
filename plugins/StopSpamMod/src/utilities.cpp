@@ -16,7 +16,7 @@
 */
 
 
-#include "headers.h"
+#include "stdafx.h"
 
 tstring DBGetContactSettingStringPAN(MCONTACT hContact, char const * szModule, char const * szSetting, tstring errorValue)
 {
@@ -352,9 +352,9 @@ void CleanThread()
 	for(std::list<std::string>::iterator i = protocols.begin(); i != end; ++i)
 	{
 		if(gbDelAllTempory)
-			boost::thread *thr = new boost::thread(boost::bind(&CleanProtocolTmpThread, *i));
+			new boost::thread(boost::bind(&CleanProtocolTmpThread, *i));
 		if(gbDelExcluded)
-			boost::thread *thr = new boost::thread(boost::bind(&CleanProtocolExclThread, *i));
+			new boost::thread(boost::bind(&CleanProtocolExclThread, *i));
 	}
 }
 
