@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>Yahoo</ProjectName>
-    <ProjectGuid>{E42870DB-9FED-44E7-9C93-4E64D0C87F51}</ProjectGuid>
+    <ProjectGuid>{7436423B-FB37-4BFC-9B66-D049F18C775A}</ProjectGuid>
   </PropertyGroup>
   <ImportGroup Label="PropertySheets">
     <Import Project="$(ProjectDir)..\..\build\vc.common\plugin.props" />

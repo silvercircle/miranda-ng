@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>StdAutoAway</ProjectName>
-    <ProjectGuid>{a8f23706-e590-4a87-96cc-5f8e5082503f}</ProjectGuid>
+    <ProjectGuid>{82169162-52BD-416E-BC58-1698AAAB35EA}</ProjectGuid>
   </PropertyGroup>
   <ImportGroup Label="PropertySheets">
     <Import Project="$(ProjectDir)..\..\..\build\vc.common\core.props" />

@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>StdChat</ProjectName>
-    <ProjectGuid>{268BD296-8DD3-4715-A386-CF120398EC98}</ProjectGuid>
+    <ProjectGuid>{0F6E8112-6AF4-4AAF-9B51-70C0F26FAA09}</ProjectGuid>
   </PropertyGroup>
   <ImportGroup Label="PropertySheets">
     <Import Project="$(ProjectDir)..\..\..\build\vc.common\core.props" />

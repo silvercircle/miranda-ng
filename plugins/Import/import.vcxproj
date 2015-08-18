@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>Import</ProjectName>
-    <ProjectGuid>{9299B507-1AF9-4C93-9560-5F637D1E0C9E}</ProjectGuid>
+    <ProjectGuid>{795BB998-70E6-4550-8B03-89BE9D73588C}</ProjectGuid>
   </PropertyGroup>
   <ImportGroup Label="PropertySheets">
     <Import Project="$(ProjectDir)..\..\build\vc.common\plugin.props" />

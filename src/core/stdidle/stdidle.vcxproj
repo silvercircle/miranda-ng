@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>StdIdle</ProjectName>
-    <ProjectGuid>{36c40ba6-e0b5-438a-919c-6a991933b313}</ProjectGuid>
+    <ProjectGuid>{CC5AB4C8-C402-4638-B34C-D015277452BF}</ProjectGuid>
   </PropertyGroup>
   <ImportGroup Label="PropertySheets">
     <Import Project="$(ProjectDir)..\..\..\build\vc.common\core.props" />

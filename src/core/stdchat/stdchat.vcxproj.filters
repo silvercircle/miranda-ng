@@ -1,4 +1,116 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(ProjectDir)..\..\..\build\vc.common\common.filters" />
+  <ItemGroup>
+    <ClCompile Include="src\stdafx.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\manager.cpp" />
+    <ClCompile Include="src\message.cpp" />
+    <ClCompile Include="src\options.cpp" />
+    <ClCompile Include="src\services.cpp" />
+    <ClCompile Include="src\tools.cpp" />
+    <ClCompile Include="src\window.cpp" />
+    <ClCompile Include="src\log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\manager.cpp" />
+    <ClCompile Include="src\message.cpp" />
+    <ClCompile Include="src\options.cpp" />
+    <ClCompile Include="src\services.cpp" />
+    <ClCompile Include="src\tools.cpp" />
+    <ClCompile Include="src\window.cpp" />
+    <ClCompile Include="src\log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\manager.cpp" />
+    <ClCompile Include="src\message.cpp" />
+    <ClCompile Include="src\options.cpp" />
+    <ClCompile Include="src\services.cpp" />
+    <ClCompile Include="src\tools.cpp" />
+    <ClCompile Include="src\window.cpp" />
+    <ClCompile Include="src\log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\manager.cpp" />
+    <ClCompile Include="src\message.cpp" />
+    <ClCompile Include="src\options.cpp" />
+    <ClCompile Include="src\services.cpp" />
+    <ClCompile Include="src\tools.cpp" />
+    <ClCompile Include="src\window.cpp" />
+    <ClCompile Include="src\log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\manager.cpp" />
+    <ClCompile Include="src\message.cpp" />
+    <ClCompile Include="src\options.cpp" />
+    <ClCompile Include="src\services.cpp" />
+    <ClCompile Include="src\tools.cpp" />
+    <ClCompile Include="src\window.cpp" />
+    <ClCompile Include="src\log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\manager.cpp" />
+    <ClCompile Include="src\message.cpp" />
+    <ClCompile Include="src\options.cpp" />
+    <ClCompile Include="src\services.cpp" />
+    <ClCompile Include="src\tools.cpp" />
+    <ClCompile Include="src\window.cpp" />
+    <ClCompile Include="src\log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\manager.cpp" />
+    <ClCompile Include="src\message.cpp" />
+    <ClCompile Include="src\options.cpp" />
+    <ClCompile Include="src\services.cpp" />
+    <ClCompile Include="src\tools.cpp" />
+    <ClCompile Include="src\window.cpp" />
+    <ClCompile Include="src\log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\manager.cpp" />
+    <ClCompile Include="src\message.cpp" />
+    <ClCompile Include="src\options.cpp" />
+    <ClCompile Include="src\services.cpp" />
+    <ClCompile Include="src\tools.cpp" />
+    <ClCompile Include="src\window.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\version.h" />
+    <ClInclude Include="src\resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\version.h" />
+    <ClInclude Include="src\resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\version.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="res\chat.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="res\version.rc" />
+    <ResourceCompile Include="res\chat.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="res\version.rc" />
+  </ItemGroup>
 </Project>

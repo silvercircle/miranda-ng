@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>StdUserOnline</ProjectName>
-    <ProjectGuid>{d22c1bbb-e06a-4a28-8f33-17d1ea3e8563}</ProjectGuid>
+    <ProjectGuid>{72B61C03-A7D1-458A-B8D6-80591A5520F1}</ProjectGuid>
   </PropertyGroup>
   <ImportGroup Label="PropertySheets">
     <Import Project="$(ProjectDir)..\..\..\build\vc.common\core.props" />

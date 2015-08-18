@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>ModernOpt</ProjectName>
-    <ProjectGuid>{153DD132-084C-4DE4-8F40-A088BCB22723}</ProjectGuid>
+    <ProjectGuid>{A1C9D41B-932F-45AC-9AC0-A18D0E5D1852}</ProjectGuid>
   </PropertyGroup>
   <ImportGroup Label="PropertySheets">
     <Import Project="$(ProjectDir)..\..\build\vc.common\plugin.props" />

@@ -1,4 +1,291 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(ProjectDir)..\..\build\vc.common\common.filters" />
+  <ItemGroup>
+    <ClCompile Include="src\stdafx.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\weather.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\weather_addstn.cpp" />
+    <ClCompile Include="src\weather_contacts.cpp" />
+    <ClCompile Include="src\weather_conv.cpp" />
+    <ClCompile Include="src\weather_data.cpp" />
+    <ClCompile Include="src\weather_http.cpp" />
+    <ClCompile Include="src\weather_icons.cpp" />
+    <ClCompile Include="src\weather_info.cpp" />
+    <ClCompile Include="src\weather_ini.cpp" />
+    <ClCompile Include="src\weather_mwin.cpp" />
+    <ClCompile Include="src\weather_opt.cpp" />
+    <ClCompile Include="src\weather_popup.cpp" />
+    <ClCompile Include="src\weather_svcs.cpp" />
+    <ClCompile Include="src\weather_update.cpp" />
+    <ClCompile Include="src\weather_userinfo.cpp" />
+    <ClCompile Include="src\weather.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\weather_addstn.cpp" />
+    <ClCompile Include="src\weather_contacts.cpp" />
+    <ClCompile Include="src\weather_conv.cpp" />
+    <ClCompile Include="src\weather_data.cpp" />
+    <ClCompile Include="src\weather_http.cpp" />
+    <ClCompile Include="src\weather_icons.cpp" />
+    <ClCompile Include="src\weather_info.cpp" />
+    <ClCompile Include="src\weather_ini.cpp" />
+    <ClCompile Include="src\weather_mwin.cpp" />
+    <ClCompile Include="src\weather_opt.cpp" />
+    <ClCompile Include="src\weather_popup.cpp" />
+    <ClCompile Include="src\weather_svcs.cpp" />
+    <ClCompile Include="src\weather_update.cpp" />
+    <ClCompile Include="src\weather_userinfo.cpp" />
+    <ClCompile Include="src\weather.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\weather_addstn.cpp" />
+    <ClCompile Include="src\weather_contacts.cpp" />
+    <ClCompile Include="src\weather_conv.cpp" />
+    <ClCompile Include="src\weather_data.cpp" />
+    <ClCompile Include="src\weather_http.cpp" />
+    <ClCompile Include="src\weather_icons.cpp" />
+    <ClCompile Include="src\weather_info.cpp" />
+    <ClCompile Include="src\weather_ini.cpp" />
+    <ClCompile Include="src\weather_mwin.cpp" />
+    <ClCompile Include="src\weather_opt.cpp" />
+    <ClCompile Include="src\weather_popup.cpp" />
+    <ClCompile Include="src\weather_svcs.cpp" />
+    <ClCompile Include="src\weather_update.cpp" />
+    <ClCompile Include="src\weather_userinfo.cpp" />
+    <ClCompile Include="src\weather.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\weather_addstn.cpp" />
+    <ClCompile Include="src\weather_contacts.cpp" />
+    <ClCompile Include="src\weather_conv.cpp" />
+    <ClCompile Include="src\weather_data.cpp" />
+    <ClCompile Include="src\weather_http.cpp" />
+    <ClCompile Include="src\weather_icons.cpp" />
+    <ClCompile Include="src\weather_info.cpp" />
+    <ClCompile Include="src\weather_ini.cpp" />
+    <ClCompile Include="src\weather_mwin.cpp" />
+    <ClCompile Include="src\weather_opt.cpp" />
+    <ClCompile Include="src\weather_popup.cpp" />
+    <ClCompile Include="src\weather_svcs.cpp" />
+    <ClCompile Include="src\weather_update.cpp" />
+    <ClCompile Include="src\weather_userinfo.cpp" />
+    <ClCompile Include="src\weather.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\weather_addstn.cpp" />
+    <ClCompile Include="src\weather_contacts.cpp" />
+    <ClCompile Include="src\weather_conv.cpp" />
+    <ClCompile Include="src\weather_data.cpp" />
+    <ClCompile Include="src\weather_http.cpp" />
+    <ClCompile Include="src\weather_icons.cpp" />
+    <ClCompile Include="src\weather_info.cpp" />
+    <ClCompile Include="src\weather_ini.cpp" />
+    <ClCompile Include="src\weather_mwin.cpp" />
+    <ClCompile Include="src\weather_opt.cpp" />
+    <ClCompile Include="src\weather_popup.cpp" />
+    <ClCompile Include="src\weather_svcs.cpp" />
+    <ClCompile Include="src\weather_update.cpp" />
+    <ClCompile Include="src\weather_userinfo.cpp" />
+    <ClCompile Include="src\weather.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\weather_addstn.cpp" />
+    <ClCompile Include="src\weather_contacts.cpp" />
+    <ClCompile Include="src\weather_conv.cpp" />
+    <ClCompile Include="src\weather_data.cpp" />
+    <ClCompile Include="src\weather_http.cpp" />
+    <ClCompile Include="src\weather_icons.cpp" />
+    <ClCompile Include="src\weather_info.cpp" />
+    <ClCompile Include="src\weather_ini.cpp" />
+    <ClCompile Include="src\weather_mwin.cpp" />
+    <ClCompile Include="src\weather_opt.cpp" />
+    <ClCompile Include="src\weather_popup.cpp" />
+    <ClCompile Include="src\weather_svcs.cpp" />
+    <ClCompile Include="src\weather_update.cpp" />
+    <ClCompile Include="src\weather_userinfo.cpp" />
+    <ClCompile Include="src\weather.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\weather_addstn.cpp" />
+    <ClCompile Include="src\weather_contacts.cpp" />
+    <ClCompile Include="src\weather_conv.cpp" />
+    <ClCompile Include="src\weather_data.cpp" />
+    <ClCompile Include="src\weather_http.cpp" />
+    <ClCompile Include="src\weather_icons.cpp" />
+    <ClCompile Include="src\weather_info.cpp" />
+    <ClCompile Include="src\weather_ini.cpp" />
+    <ClCompile Include="src\weather_mwin.cpp" />
+    <ClCompile Include="src\weather_opt.cpp" />
+    <ClCompile Include="src\weather_popup.cpp" />
+    <ClCompile Include="src\weather_svcs.cpp" />
+    <ClCompile Include="src\weather_update.cpp" />
+    <ClCompile Include="src\weather_userinfo.cpp" />
+    <ClCompile Include="src\weather.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\weather_addstn.cpp" />
+    <ClCompile Include="src\weather_contacts.cpp" />
+    <ClCompile Include="src\weather_conv.cpp" />
+    <ClCompile Include="src\weather_data.cpp" />
+    <ClCompile Include="src\weather_http.cpp" />
+    <ClCompile Include="src\weather_icons.cpp" />
+    <ClCompile Include="src\weather_info.cpp" />
+    <ClCompile Include="src\weather_ini.cpp" />
+    <ClCompile Include="src\weather_mwin.cpp" />
+    <ClCompile Include="src\weather_opt.cpp" />
+    <ClCompile Include="src\weather_popup.cpp" />
+    <ClCompile Include="src\weather_svcs.cpp" />
+    <ClCompile Include="src\weather_update.cpp" />
+    <ClCompile Include="src\weather_userinfo.cpp" />
+    <ClCompile Include="src\weather.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\weather_addstn.cpp" />
+    <ClCompile Include="src\weather_contacts.cpp" />
+    <ClCompile Include="src\weather_conv.cpp" />
+    <ClCompile Include="src\weather_data.cpp" />
+    <ClCompile Include="src\weather_http.cpp" />
+    <ClCompile Include="src\weather_icons.cpp" />
+    <ClCompile Include="src\weather_info.cpp" />
+    <ClCompile Include="src\weather_ini.cpp" />
+    <ClCompile Include="src\weather_mwin.cpp" />
+    <ClCompile Include="src\weather_opt.cpp" />
+    <ClCompile Include="src\weather_popup.cpp" />
+    <ClCompile Include="src\weather_svcs.cpp" />
+    <ClCompile Include="src\weather_update.cpp" />
+    <ClCompile Include="src\weather_userinfo.cpp" />
+    <ClCompile Include="src\weather.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\weather_addstn.cpp" />
+    <ClCompile Include="src\weather_contacts.cpp" />
+    <ClCompile Include="src\weather_conv.cpp" />
+    <ClCompile Include="src\weather_data.cpp" />
+    <ClCompile Include="src\weather_http.cpp" />
+    <ClCompile Include="src\weather_icons.cpp" />
+    <ClCompile Include="src\weather_info.cpp" />
+    <ClCompile Include="src\weather_ini.cpp" />
+    <ClCompile Include="src\weather_mwin.cpp" />
+    <ClCompile Include="src\weather_opt.cpp" />
+    <ClCompile Include="src\weather_popup.cpp" />
+    <ClCompile Include="src\weather_svcs.cpp" />
+    <ClCompile Include="src\weather_update.cpp" />
+    <ClCompile Include="src\weather_userinfo.cpp" />
+    <ClCompile Include="src\weather.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\weather_addstn.cpp" />
+    <ClCompile Include="src\weather_contacts.cpp" />
+    <ClCompile Include="src\weather_conv.cpp" />
+    <ClCompile Include="src\weather_data.cpp" />
+    <ClCompile Include="src\weather_http.cpp" />
+    <ClCompile Include="src\weather_icons.cpp" />
+    <ClCompile Include="src\weather_info.cpp" />
+    <ClCompile Include="src\weather_ini.cpp" />
+    <ClCompile Include="src\weather_mwin.cpp" />
+    <ClCompile Include="src\weather_opt.cpp" />
+    <ClCompile Include="src\weather_popup.cpp" />
+    <ClCompile Include="src\weather_svcs.cpp" />
+    <ClCompile Include="src\weather_update.cpp" />
+    <ClCompile Include="src\weather_userinfo.cpp" />
+    <ClCompile Include="src\weather.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\weather_addstn.cpp" />
+    <ClCompile Include="src\weather_contacts.cpp" />
+    <ClCompile Include="src\weather_conv.cpp" />
+    <ClCompile Include="src\weather_data.cpp" />
+    <ClCompile Include="src\weather_http.cpp" />
+    <ClCompile Include="src\weather_icons.cpp" />
+    <ClCompile Include="src\weather_info.cpp" />
+    <ClCompile Include="src\weather_ini.cpp" />
+    <ClCompile Include="src\weather_mwin.cpp" />
+    <ClCompile Include="src\weather_opt.cpp" />
+    <ClCompile Include="src\weather_popup.cpp" />
+    <ClCompile Include="src\weather_svcs.cpp" />
+    <ClCompile Include="src\weather_update.cpp" />
+    <ClCompile Include="src\weather_userinfo.cpp" />
+    <ClCompile Include="src\weather.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\weather_addstn.cpp" />
+    <ClCompile Include="src\weather_contacts.cpp" />
+    <ClCompile Include="src\weather_conv.cpp" />
+    <ClCompile Include="src\weather_data.cpp" />
+    <ClCompile Include="src\weather_http.cpp" />
+    <ClCompile Include="src\weather_icons.cpp" />
+    <ClCompile Include="src\weather_info.cpp" />
+    <ClCompile Include="src\weather_ini.cpp" />
+    <ClCompile Include="src\weather_mwin.cpp" />
+    <ClCompile Include="src\weather_opt.cpp" />
+    <ClCompile Include="src\weather_popup.cpp" />
+    <ClCompile Include="src\weather_svcs.cpp" />
+    <ClCompile Include="src\weather_update.cpp" />
+    <ClCompile Include="src\weather_userinfo.cpp" />
+    <ClCompile Include="src\weather.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\weather_addstn.cpp" />
+    <ClCompile Include="src\weather_contacts.cpp" />
+    <ClCompile Include="src\weather_conv.cpp" />
+    <ClCompile Include="src\weather_data.cpp" />
+    <ClCompile Include="src\weather_http.cpp" />
+    <ClCompile Include="src\weather_icons.cpp" />
+    <ClCompile Include="src\weather_info.cpp" />
+    <ClCompile Include="src\weather_ini.cpp" />
+    <ClCompile Include="src\weather_mwin.cpp" />
+    <ClCompile Include="src\weather_opt.cpp" />
+    <ClCompile Include="src\weather_popup.cpp" />
+    <ClCompile Include="src\weather_svcs.cpp" />
+    <ClCompile Include="src\weather_update.cpp" />
+    <ClCompile Include="src\weather_userinfo.cpp" />
+    <ClCompile Include="src\weather.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\weather_addstn.cpp" />
+    <ClCompile Include="src\weather_contacts.cpp" />
+    <ClCompile Include="src\weather_conv.cpp" />
+    <ClCompile Include="src\weather_data.cpp" />
+    <ClCompile Include="src\weather_http.cpp" />
+    <ClCompile Include="src\weather_icons.cpp" />
+    <ClCompile Include="src\weather_info.cpp" />
+    <ClCompile Include="src\weather_ini.cpp" />
+    <ClCompile Include="src\weather_mwin.cpp" />
+    <ClCompile Include="src\weather_opt.cpp" />
+    <ClCompile Include="src\weather_popup.cpp" />
+    <ClCompile Include="src\weather_svcs.cpp" />
+    <ClCompile Include="src\weather_update.cpp" />
+    <ClCompile Include="src\weather_userinfo.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\version.h" />
+    <ClInclude Include="src\resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\version.h" />
+    <ClInclude Include="src\resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\version.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="res\resource.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="res\Version.rc" />
+    <ResourceCompile Include="res\resource.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="res\Version.rc" />
+  </ItemGroup>
 </Project>

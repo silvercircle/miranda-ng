@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>StdUIHist</ProjectName>
-    <ProjectGuid>{DADAC956-3A54-440A-8B56-A07234DEE861}</ProjectGuid>
+    <ProjectGuid>{280EDD25-7003-4A4B-BD16-A56993F31D11}</ProjectGuid>
   </PropertyGroup>
   <ImportGroup Label="PropertySheets">
     <Import Project="$(ProjectDir)..\..\..\build\vc.common\core.props" />

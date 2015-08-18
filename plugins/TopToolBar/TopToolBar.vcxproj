@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{ECE691D0-BFB3-483B-A699-084269EFCE89}</ProjectGuid>
+    <ProjectGuid>{FF62FA8E-8ACB-43CF-8BA9-5ED2425DCF5D}</ProjectGuid>
     <ProjectName>TopToolBar</ProjectName>
   </PropertyGroup>
   <ImportGroup Label="PropertySheets">

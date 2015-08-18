@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>TabSRMM</ProjectName>
-    <ProjectGuid>{99D26CA1-BFD4-4E77-9A1E-919E54CF33F7}</ProjectGuid>
+    <ProjectGuid>{97D1FD0C-A124-46CC-94FA-D8BA005FF6E0}</ProjectGuid>
   </PropertyGroup>
   <ImportGroup Label="PropertySheets">
     <Import Project="$(ProjectDir)..\..\build\vc.common\plugin.props" />

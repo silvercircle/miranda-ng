@@ -1,4 +1,116 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(ProjectDir)..\..\..\build\vc.common\common.filters" />
+  <ItemGroup>
+    <ClCompile Include="src\stdafx.cxx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\file.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fileexistsdlg.cpp" />
+    <ClCompile Include="src\fileopts.cpp" />
+    <ClCompile Include="src\filerecvdlg.cpp" />
+    <ClCompile Include="src\filesenddlg.cpp" />
+    <ClCompile Include="src\filexferdlg.cpp" />
+    <ClCompile Include="src\ftmanager.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\file.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fileexistsdlg.cpp" />
+    <ClCompile Include="src\fileopts.cpp" />
+    <ClCompile Include="src\filerecvdlg.cpp" />
+    <ClCompile Include="src\filesenddlg.cpp" />
+    <ClCompile Include="src\filexferdlg.cpp" />
+    <ClCompile Include="src\ftmanager.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\file.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fileexistsdlg.cpp" />
+    <ClCompile Include="src\fileopts.cpp" />
+    <ClCompile Include="src\filerecvdlg.cpp" />
+    <ClCompile Include="src\filesenddlg.cpp" />
+    <ClCompile Include="src\filexferdlg.cpp" />
+    <ClCompile Include="src\ftmanager.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\file.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fileexistsdlg.cpp" />
+    <ClCompile Include="src\fileopts.cpp" />
+    <ClCompile Include="src\filerecvdlg.cpp" />
+    <ClCompile Include="src\filesenddlg.cpp" />
+    <ClCompile Include="src\filexferdlg.cpp" />
+    <ClCompile Include="src\ftmanager.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\file.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fileexistsdlg.cpp" />
+    <ClCompile Include="src\fileopts.cpp" />
+    <ClCompile Include="src\filerecvdlg.cpp" />
+    <ClCompile Include="src\filesenddlg.cpp" />
+    <ClCompile Include="src\filexferdlg.cpp" />
+    <ClCompile Include="src\ftmanager.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\file.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fileexistsdlg.cpp" />
+    <ClCompile Include="src\fileopts.cpp" />
+    <ClCompile Include="src\filerecvdlg.cpp" />
+    <ClCompile Include="src\filesenddlg.cpp" />
+    <ClCompile Include="src\filexferdlg.cpp" />
+    <ClCompile Include="src\ftmanager.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\file.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fileexistsdlg.cpp" />
+    <ClCompile Include="src\fileopts.cpp" />
+    <ClCompile Include="src\filerecvdlg.cpp" />
+    <ClCompile Include="src\filesenddlg.cpp" />
+    <ClCompile Include="src\filexferdlg.cpp" />
+    <ClCompile Include="src\ftmanager.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\file.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fileexistsdlg.cpp" />
+    <ClCompile Include="src\fileopts.cpp" />
+    <ClCompile Include="src\filerecvdlg.cpp" />
+    <ClCompile Include="src\filesenddlg.cpp" />
+    <ClCompile Include="src\filexferdlg.cpp" />
+    <ClCompile Include="src\ftmanager.cpp" />
+    <ClCompile Include="src\main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\file.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\version.h" />
+    <ClInclude Include="src\file.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\version.h" />
+    <ClInclude Include="src\file.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\version.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="res\resource.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="res\version.rc" />
+    <ResourceCompile Include="res\resource.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="res\version.rc" />
+  </ItemGroup>
 </Project>
