@@ -19,51 +19,19 @@ PLUGININFOEX pluginInfo = {
 	{ 0x81c220a6, 0x226, 0x4ad6, { 0xbf, 0xca, 0x21, 0x7b, 0x17, 0xa1, 0x60, 0x53 } }
 };
 
-int ModulesLoad(WPARAM, LPARAM);
-int PreShutdown(WPARAM, LPARAM);
-
-
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD, LPVOID)
 {
 	g_hInstance = hInstance;
 	return TRUE;
 }
 
-extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
-{
-	return &pluginInfo;
-}
-
-extern "C" __declspec(dllexport) int Load(void)
-{
-	mir_getLP(&pluginInfo);
-
-	HookEvent(ME_SYSTEM_PRESHUTDOWN, PreShutdown);
-	HookEvent(ME_SYSTEM_MODULESLOADED, ModulesLoad);
-
-	Icon_Register(g_hInstance, LPGEN("Database") "/" LPGEN("Database backups"), iconList, _countof(iconList));
-
-	return 0;
-}
-
-extern "C" __declspec(dllexport) int Unload(void)
-{
-	return 0;
-}
-
-
-
-static int FoldersGetBackupPath(WPARAM, LPARAM)
-{
-	FoldersGetCustomPathT(hFolder, options.folder, _countof(options.folder), DIR SUB_DIR);
-	return 0;
-}
-INT_PTR ABService(WPARAM, LPARAM)
+static INT_PTR ABService(WPARAM, LPARAM)
 {
 	BackupStart(NULL);
 	return 0;
 }
-INT_PTR DBSaveAs(WPARAM, LPARAM)
+
+static INT_PTR DBSaveAs(WPARAM, LPARAM)
 {
 	TCHAR fname_buff[MAX_PATH], tszFilter[200];
 	OPENFILENAME ofn = { 0 };
@@ -87,18 +55,14 @@ INT_PTR DBSaveAs(WPARAM, LPARAM)
 	return 0;
 }
 
-int ModulesLoad(WPARAM, LPARAM)
+static int FoldersGetBackupPath(WPARAM, LPARAM)
 {
-	profilePath = Utils_ReplaceVarsT(_T("%miranda_userdata%"));
+	FoldersGetCustomPathT(hFolder, options.folder, _countof(options.folder), DIR SUB_DIR);
+	return 0;
+}
 
-	if (hFolder = FoldersRegisterCustomPathT(LPGEN("Database backups"), LPGEN("Backup folder"), DIR SUB_DIR)) {
-		HookEvent(ME_FOLDERS_PATH_CHANGED, FoldersGetBackupPath);
-		FoldersGetBackupPath(0, 0);
-	}
-
-	CreateServiceFunction(MS_AB_BACKUP, ABService);
-	CreateServiceFunction(MS_AB_SAVEAS, DBSaveAs);
-
+static int ModulesLoad(WPARAM, LPARAM)
+{
 	CMenuItem mi;
 	mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Database"), 500100000);
 
@@ -114,8 +78,12 @@ int ModulesLoad(WPARAM, LPARAM)
 	mi.position = 500100001;
 	Menu_AddMainMenuItem(&mi);
 
-	HookEvent(ME_OPT_INITIALISE, OptionsInit);
-	LoadOptions();
+	profilePath = Utils_ReplaceVarsT(_T("%miranda_userdata%"));
+
+	if (hFolder = FoldersRegisterCustomPathT(LPGEN("Database backups"), LPGEN("Backup folder"), DIR SUB_DIR)) {
+		HookEvent(ME_FOLDERS_PATH_CHANGED, FoldersGetBackupPath);
+		FoldersGetBackupPath(0, 0);
+	}
 
 	if (options.backup_types & BT_START)
 		BackupStart(NULL);
@@ -124,7 +92,7 @@ int ModulesLoad(WPARAM, LPARAM)
 
 // can't do this on unload, since other plugins will be have already been unloaded, but their hooks
 // for setting changed event not cleared. the backup on exit function will write to the db, calling those hooks.
-int PreShutdown(WPARAM, LPARAM)
+static int PreShutdown(WPARAM, LPARAM)
 {
 	if (options.backup_types & BT_EXIT) {
 		options.disable_popups = 1; // Don't try to show popups on exit
@@ -132,4 +100,33 @@ int PreShutdown(WPARAM, LPARAM)
 	}
 	return 0;
 }
+
+extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
+{
+	return &pluginInfo;
+}
+
+extern "C" __declspec(dllexport) int Load(void)
+{
+	mir_getLP(&pluginInfo);
+
+	HookEvent(ME_SYSTEM_PRESHUTDOWN, PreShutdown);
+	HookEvent(ME_SYSTEM_MODULESLOADED, ModulesLoad);
+
+	Icon_Register(g_hInstance, LPGEN("Database") "/" LPGEN("Database backups"), iconList, _countof(iconList));
+
+	CreateServiceFunction(MS_AB_BACKUP, ABService);
+	CreateServiceFunction(MS_AB_SAVEAS, DBSaveAs);
+
+	HookEvent(ME_OPT_INITIALISE, OptionsInit);
+	LoadOptions();
+
+	return 0;
+}
+
+extern "C" __declspec(dllexport) int Unload(void)
+{
+	return 0;
+}
+
 

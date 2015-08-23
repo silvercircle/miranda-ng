@@ -95,8 +95,7 @@ private:
 
 	RequestQueue *requestQueue;
 
-	bool isTerminated,
-		 HistorySynced;
+	bool HistorySynced;
 
 	std::map<HANDLE, time_t> m_mpOutMessages;
 
@@ -104,10 +103,9 @@ private:
 	static std::map<std::tstring, std::tstring> languages;
 
 	HANDLE m_pollingConnection,
-		   m_hPollingThread,
-		   m_hTrouterThread,
-		   m_TrouterConnection,
-		   m_hTrouterEvent;
+		m_hPollingThread,
+		m_hTrouterThread,
+		m_TrouterConnection;
 
 	TRInfo TRouter;
 
@@ -126,6 +124,13 @@ private:
 	mir_cs m_AppendMessageLock;
 	static mir_cs accountsLock;
 	static mir_cs timerLock;
+
+	bool m_bThreadsTerminated;
+
+	HANDLE m_hPollingEvent;
+	HANDLE m_hTrouterEvent;
+
+	HANDLE m_hTrouterHealthEvent;
 
 	static CSkypeProto* GetContactAccount(MCONTACT hContact);
 	int __cdecl OnAccountLoaded(WPARAM, LPARAM);
@@ -302,7 +307,12 @@ private:
 	void ProcessThreadUpdate       (const JSONNode &node);
 
 	// utils
-	static void FreeCharList(const LIST<char> &lst);
+	template <typename T>
+	__inline static void FreeList(const LIST<T> &lst)
+	{
+		for (int i = 0; i < lst.getCount(); i++)
+			mir_free(lst[i]);
+	}
 
 	__forceinline bool IsOnline()
 	{	return (m_iStatus > ID_STATUS_OFFLINE && m_hPollingThread);
