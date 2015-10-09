@@ -3,7 +3,7 @@
 Facebook plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2009-11 Michal Zelinka, 2011-15 Robert Pösel
+Copyright ï¿½ 2009-11 Michal Zelinka, 2011-15 Robert Pï¿½sel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -48,12 +48,13 @@ void FacebookProto::SendMsgWorker(void *p)
 		ProtoBroadcastAck(data->hContact, ACKTYPE_MESSAGE, ACKRESULT_FAILED, (HANDLE)data->msgid, 0);
 	}
 	else {
-		int retries = 5;
+		int tries = getByte(FACEBOOK_KEY_SEND_MESSAGE_TRIES, 1);
+		tries = min(max(tries, 1), 5);
+
 		std::string error_text;
 		int result = SEND_MESSAGE_ERROR;
-		while (result == SEND_MESSAGE_ERROR && retries > 0) {
+		while (result == SEND_MESSAGE_ERROR && tries-- > 0) {
 			result = facy.send_message(data->msgid, data->hContact, data->msg, &error_text);
-			retries--;
 		}
 		if (result == SEND_MESSAGE_OK) {
 			ProtoBroadcastAck(data->hContact, ACKTYPE_MESSAGE, ACKRESULT_SUCCESS, (HANDLE)data->msgid, 0);
@@ -88,12 +89,16 @@ void FacebookProto::SendChatMsgWorker(void *p)
 			tid = tid_;
 		}
 		else {
-			std::string post_data = "threads[thread_ids][0]=" + utils::url::encode(data->chat_id);
-			post_data += "&fb_dtsg=" + facy.dtsg_;
+			std::string post_data = "client=mercury";
 			post_data += "&__user=" + facy.self_.user_id;
-			post_data += "&phstamp=" + facy.phstamp(post_data);
+			post_data += "&__dyn=" + facy.__dyn();
+			post_data += "&__req=" + facy.__req();
+			post_data += "&fb_dtsg=" + facy.dtsg_;
+			post_data += "&ttstamp=" + facy.ttstamp_;
+			post_data += "&__rev=" + facy.__rev();
+			post_data += "&threads[thread_ids][0]=" + utils::url::encode(data->chat_id);
 
-			http::response resp = facy.flap(REQUEST_THREAD_INFO, &post_data);
+			http::response resp = facy.flap(REQUEST_THREAD_INFO, &post_data); // NOTE: Request revised 1.9.2015
 
 			tid = utils::text::source_get_value(&resp.data, 2, "\"thread_id\":\"", "\"");
 			if (!tid.empty() && tid.compare("null"))
@@ -114,12 +119,11 @@ void FacebookProto::SendChatMsgWorker(void *p)
 
 int FacebookProto::SendMsg(MCONTACT hContact, int, const char *msg)
 {
-	// TODO: msg comes as Unicode (retyped wchar_t*), why should we convert it as ANSI to UTF-8? o_O
 	std::string message = msg;
-
-	facy.msgid_ = (facy.msgid_ % 1024) + 1;
-	ForkThread(&FacebookProto::SendMsgWorker, new send_direct(hContact, message, facy.msgid_));
-	return facy.msgid_;
+	unsigned int msgId = InterlockedIncrement(&facy.msgid_);
+	
+	ForkThread(&FacebookProto::SendMsgWorker, new send_direct(hContact, message, msgId));
+	return msgId;
 }
 
 int FacebookProto::UserIsTyping(MCONTACT hContact, int type)
@@ -143,31 +147,25 @@ void FacebookProto::SendTypingWorker(void *p)
 		return;
 	}
 
-	// TODO RM: maybe better send typing optimalization
-	facy.is_typing_ = (typing->status == PROTOTYPE_SELFTYPING_ON);
-	SleepEx(2000, true);
-
-	if (!facy.is_typing_ == (typing->status == PROTOTYPE_SELFTYPING_ON)) {
-		delete typing;
-		return;
-	}
-
 	const char *value = (isChatRoom(typing->hContact) ? FACEBOOK_KEY_TID : FACEBOOK_KEY_ID);
 	ptrA id(getStringA(typing->hContact, value));
 	if (id != NULL) {
-		std::string data = "&source=mercury-chat";
-		data += (typing->status == PROTOTYPE_SELFTYPING_ON ? "&typ=1" : "&typ=0");
+		bool isChat = isChatRoom(typing->hContact);
+		std::string idEncoded = utils::url::encode(std::string(id));
 
-		data += "&to=";
-		if (isChatRoom(typing->hContact))
-			data += "&thread=";
-		data += utils::url::encode(std::string(id));
+		std::string data = (typing->status == PROTOTYPE_SELFTYPING_ON ? "typ=1" : "typ=0");
+		data += "&to=" + (isChat ? "" : idEncoded);
+		data += "&source=mercury-chat";
+		data += "&thread=" + idEncoded;
+		data += "&__user=" + facy.self_.user_id;
+		data += "&__dyn=" + facy.__dyn();
+		data += "&__req=" + facy.__req();
 
 		data += "&fb_dtsg=" + facy.dtsg_;
-		data += "&lsd=&__user=" + facy.self_.user_id;
-		data += "&phstamp=" + facy.phstamp(data);
+		data += "&ttsamp=" + facy.ttstamp_;
+		data += "&__rev=" + facy.__rev();
 
-		http::response resp = facy.flap(REQUEST_TYPING_SEND, &data);
+		http::response resp = facy.flap(REQUEST_TYPING_SEND, &data); // NOTE: Request revised 1.9.2015
 	}
 
 	delete typing;
@@ -190,7 +188,7 @@ void FacebookProto::ReadMessageWorker(void *p)
 
 	std::string data = "fb_dtsg=" + facy.dtsg_;
 	data += "&__user=" + facy.self_.user_id;
-	data += "&__a=1&__dyn=&__req=&ttstamp=" + facy.ttstamp();
+	data += "&__a=1&__dyn=&__req=&ttstamp=" + facy.ttstamp_;
 
 	for (std::set<MCONTACT>::iterator it = hContacts->begin(); it != hContacts->end(); ++it) {
 		MCONTACT hContact = *it;

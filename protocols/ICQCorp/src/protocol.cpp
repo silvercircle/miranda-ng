@@ -863,7 +863,7 @@ unsigned short ICQ::processUdpPacket(Packet &packet)
     case ICQ_CMDxRCV_WRONGxPASSWD: // incorrect password sent in logon
         T("[udp] incorrect password.\n");
         ProtoBroadcastAck(protoName, NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_WRONGPASSWORD);
-        MessageBox(NULL, Translate("Your ICQ Corp number and password combination was rejected by the ICQ Corporate server. Please go to M->Options->ICQCorp and try again."), protoName, MB_ICONERROR|MB_OK);
+        MessageBox(NULL, Translate("Your ICQ Corp number and password combination was rejected by the ICQ Corporate server. Please go to Options -> Network -> ICQCorp and try again."), protoName, MB_ICONERROR|MB_OK);
         break;
 
     case ICQ_CMDxRCV_BUSY: // server too busy to respond
@@ -2301,7 +2301,7 @@ void ICQ::addFileReq(ICQUser *u, char *m, char *filename, unsigned long size, un
     // Send chain event
     szBlob = new char[sizeof(DWORD) + mir_strlen(filename) + mir_strlen(m) + 2];
 
-    *(PDWORD)szBlob = (DWORD)transfer;
+    *(PDWORD)szBlob = (UINT_PTR)transfer;
     mir_strcpy(szBlob + sizeof(DWORD), filename);
     mir_strcpy(szBlob + sizeof(DWORD) + mir_strlen(filename) + 1, m);
 

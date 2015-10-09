@@ -1,5 +1,5 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
+# Visual Studio Express 14 for Windows Desktop
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Miranda", "..\src\miranda32\miranda32.vcxproj", "{F9916510-9055-4C9F-997A-3755DEC1511B}"
@@ -301,8 +301,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QuickContacts", "..\plugins
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tlen", "..\protocols\Tlen\tlen.vcxproj", "{F3208C96-3C21-46AA-8695-C794E28CDC34}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Xfire", "..\protocols\Xfire\xfire.vcxproj", "{E4CD8BBA-B580-4584-AC3E-B4E9915026AE}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MobileState", "..\plugins\MobileState\mobilestate.vcxproj", "{AE677E3A-DAC5-42FD-8762-47370C57639B}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NoHistory", "..\plugins\NoHistory\NoHistory.vcxproj", "{ABF05E2C-C335-4BD1-8C3E-4C63285362CF}"
@@ -430,6 +428,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MessageState", "..\plugins\MessageState\MessageState.vcxproj", "{D7F4D0B3-7B2C-4DB9-B9CB-0C93491E38E4}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MirLua", "..\plugins\MirLua\MirLua.vcxproj", "{27D41D81-991F-4DC6-8749-B0321C87E694}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Toaster", "..\plugins\Toaster\Toaster.vcxproj", "{1FDBD8F0-3929-41BC-92D1-020779460769}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -1437,14 +1437,6 @@ Global
 		{F3208C96-3C21-46AA-8695-C794E28CDC34}.Release|Win32.Build.0 = Release|Win32
 		{F3208C96-3C21-46AA-8695-C794E28CDC34}.Release|x64.ActiveCfg = Release|x64
 		{F3208C96-3C21-46AA-8695-C794E28CDC34}.Release|x64.Build.0 = Release|x64
-		{E4CD8BBA-B580-4584-AC3E-B4E9915026AE}.Debug|Win32.ActiveCfg = Debug|Win32
-		{E4CD8BBA-B580-4584-AC3E-B4E9915026AE}.Debug|Win32.Build.0 = Debug|Win32
-		{E4CD8BBA-B580-4584-AC3E-B4E9915026AE}.Debug|x64.ActiveCfg = Debug|x64
-		{E4CD8BBA-B580-4584-AC3E-B4E9915026AE}.Debug|x64.Build.0 = Debug|x64
-		{E4CD8BBA-B580-4584-AC3E-B4E9915026AE}.Release|Win32.ActiveCfg = Release|Win32
-		{E4CD8BBA-B580-4584-AC3E-B4E9915026AE}.Release|Win32.Build.0 = Release|Win32
-		{E4CD8BBA-B580-4584-AC3E-B4E9915026AE}.Release|x64.ActiveCfg = Release|x64
-		{E4CD8BBA-B580-4584-AC3E-B4E9915026AE}.Release|x64.Build.0 = Release|x64
 		{AE677E3A-DAC5-42FD-8762-47370C57639B}.Debug|Win32.ActiveCfg = Debug|Win32
 		{AE677E3A-DAC5-42FD-8762-47370C57639B}.Debug|Win32.Build.0 = Debug|Win32
 		{AE677E3A-DAC5-42FD-8762-47370C57639B}.Debug|x64.ActiveCfg = Debug|x64
@@ -1947,6 +1939,14 @@ Global
 		{27D41D81-991F-4DC6-8749-B0321C87E694}.Release|Win32.Build.0 = Release|Win32
 		{27D41D81-991F-4DC6-8749-B0321C87E694}.Release|x64.ActiveCfg = Release|x64
 		{27D41D81-991F-4DC6-8749-B0321C87E694}.Release|x64.Build.0 = Release|x64
+		{1FDBD8F0-3929-41BC-92D1-020779460769}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1FDBD8F0-3929-41BC-92D1-020779460769}.Debug|Win32.Build.0 = Debug|Win32
+		{1FDBD8F0-3929-41BC-92D1-020779460769}.Debug|x64.ActiveCfg = Debug|x64
+		{1FDBD8F0-3929-41BC-92D1-020779460769}.Debug|x64.Build.0 = Debug|x64
+		{1FDBD8F0-3929-41BC-92D1-020779460769}.Release|Win32.ActiveCfg = Release|Win32
+		{1FDBD8F0-3929-41BC-92D1-020779460769}.Release|Win32.Build.0 = Release|Win32
+		{1FDBD8F0-3929-41BC-92D1-020779460769}.Release|x64.ActiveCfg = Release|x64
+		{1FDBD8F0-3929-41BC-92D1-020779460769}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

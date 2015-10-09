@@ -496,7 +496,7 @@ void CInfoPanel::RenderIPUIN(const HDC hdc, RECT& rcItem)
 			time_t diff = time(NULL) - m_dat->idle;
 			int i_hrs = diff / 3600;
 			int i_mins = (diff - i_hrs * 3600) / 60;
-			mir_sntprintf(szBuf, _countof(szBuf), TranslateT("%s    Idle: %dh,%02dm"), tszUin, i_hrs, i_mins);
+			mir_sntprintf(szBuf, TranslateT("%s    Idle: %dh,%02dm"), tszUin, i_hrs, i_mins);
 		}
 		else _tcscpy_s(szBuf, 256, tszUin);
 
@@ -613,7 +613,7 @@ void CInfoPanel::Chat_RenderIPNickname(const HDC hdc, RECT& rcItem)
 
 	if (m_height < DEGRADE_THRESHOLD) {
 		TCHAR	tszText[2048];
-		mir_sntprintf(tszText, _countof(tszText), TranslateT("Topic is: %s"),
+		mir_sntprintf(tszText, TranslateT("Topic is: %s"),
 			si->ptszTopic ? si->ptszTopic : TranslateT("no topic set."));
 
 		hOldFont = reinterpret_cast<HFONT>(::SelectObject(hdc, m_ipConfig.hFonts[IPFONTID_UIN]));
@@ -670,7 +670,7 @@ void CInfoPanel::Chat_RenderIPSecondLine(const HDC hdc, RECT& rcItem)
 
 	SIZE szTitle;
 	TCHAR	szPrefix[100];
-	mir_sntprintf(szPrefix, _countof(szPrefix), TranslateT("Topic is: %s"), _T(""));
+	mir_sntprintf(szPrefix, TranslateT("Topic is: %s"), _T(""));
 	::GetTextExtentPoint32(hdc, szPrefix, (int)mir_tstrlen(szPrefix), &szTitle);
 	mapRealRect(rcItem, m_rcUIN, szTitle);
 	if (m_hoverFlags & HOVER_UIN)
@@ -873,11 +873,11 @@ void CInfoPanel::showTip(UINT ctrlId, const LPARAM lParam)
 		return;
 
 	HWND hwndDlg = m_dat->hwnd;
-
-	RECT rc;
-	::GetWindowRect(GetDlgItem(hwndDlg, ctrlId), &rc);
-
-	::SendMessage(m_dat->hwndTip, TTM_TRACKPOSITION, 0, (LPARAM)MAKELONG(rc.left, rc.bottom));
+	{
+		RECT rc;
+		::GetWindowRect(GetDlgItem(hwndDlg, ctrlId), &rc);
+		::SendMessage(m_dat->hwndTip, TTM_TRACKPOSITION, 0, (LPARAM)MAKELONG(rc.left, rc.bottom));
+	}
 	if (lParam)
 		m_dat->ti.lpszText = reinterpret_cast<TCHAR *>(lParam);
 	else {
@@ -1061,11 +1061,11 @@ INT_PTR CALLBACK CInfoPanel::ConfigDlgProc(HWND hwnd, UINT msg, WPARAM wParam, L
 	case WM_INITDIALOG:
 	{
 		TCHAR	tszTitle[100];
-		mir_sntprintf(tszTitle, _countof(tszTitle), TranslateT("Set panel visibility for this %s"),
+		mir_sntprintf(tszTitle, TranslateT("Set panel visibility for this %s"),
 			m_isChat ? TranslateT("chat room") : TranslateT("contact"));
 		::SetDlgItemText(hwnd, IDC_STATIC_VISIBILTY, tszTitle);
 
-		mir_sntprintf(tszTitle, _countof(tszTitle), m_isChat ? TranslateT("Do not synchronize the panel height with IM windows") :
+		mir_sntprintf(tszTitle, m_isChat ? TranslateT("Do not synchronize the panel height with IM windows") :
 			TranslateT("Do not synchronize the panel height with group chat windows"));
 
 		::SetDlgItemText(hwnd, IDC_NOSYNC, tszTitle);
@@ -1243,7 +1243,7 @@ INT_PTR CALLBACK CInfoPanel::ConfigDlgProc(HWND hwnd, UINT msg, WPARAM wParam, L
 // @param pt : mouse coordinates (screen)
 // @return   : always 0
 
-int CInfoPanel::invokeConfigDialog(const POINT& pt)
+int CInfoPanel::invokeConfigDialog(const POINT &pt)
 {
 	if (!m_active)
 		return 0;
@@ -1262,19 +1262,15 @@ int CInfoPanel::invokeConfigDialog(const POINT& pt)
 		m_hwndConfig = ::CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_INFOPANEL), 0 /*m_dat->pContainer->hwnd */,
 			ConfigDlgProcStub, (LPARAM)this);
 		if (m_hwndConfig) {
-			RECT	rc, rcLog;
-			POINT	pt;
-
 			TranslateDialogDefault(m_hwndConfig);
 
 			::GetClientRect(m_hwndConfig, &rc);
+
+			RECT rcLog;
 			::GetWindowRect(GetDlgItem(m_dat->hwnd, m_isChat ? IDC_CHAT_LOG : IDC_LOG), &rcLog);
-			pt.x = rcLog.left;
-			pt.y = rcLog.top;
-			//::ScreenToClient(m_dat->pContainer->hwnd, &pt);
 
 			m_fDialogCreated = true;
-			::SetWindowPos(m_hwndConfig, HWND_TOP, pt.x + 10, pt.y - (m_active ? 10 : 0), 0, 0, SWP_NOSIZE | SWP_SHOWWINDOW);
+			::SetWindowPos(m_hwndConfig, HWND_TOP, rcLog.left + 10, rcLog.top - (m_active ? 10 : 0), 0, 0, SWP_NOSIZE | SWP_SHOWWINDOW);
 			return 1;
 		}
 	}

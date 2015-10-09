@@ -30,14 +30,16 @@ Konto
 Inne
 [Automatic messages synchronization]
 Automatyczna synchronizacja wiadomości
-[Use local time for received messages]
-Używaj czasu lokalnego dla odebranych wiadomości
 [Always notify as unread for all incoming message]
 Zawsze powiadamiaj o nieprzeczytanych wiadomościach dla wszystkich przychodzących
 [Place:]
 Miejsce:
 [Use hostname]
 Używaj nazwy hosta
+[Use BBCode]
+Używaj BBCode
+[Change password]
+Zmień hasło
 [Enter password]
 Wprowadź hasło
 [Save password]
@@ -77,7 +79,7 @@ Wprowadź nowy temat pokoju
 Jesteś pewien?
 ;file \protocols\SkypeWeb\src\skype_db.cpp
 [Edited message]
-
+Wiadomość edytowana
 [Action]
 Akcja
 [Call information]
@@ -92,21 +94,25 @@ Nieznane zdarzenie
 Połączenie przychodzące
 ;file \protocols\SkypeWeb\src\skype_events.cpp
 [Invalid data!]
-
-[Original message:\n\t%s\n]
-
-[Edited at %s:\n\t%s\n]
-edytowana %s:\n\t%s\n
+Nieprawidłowe dane!
+[[b]Original message:[/b]\n%s\n]
+\[b]Wiadomość oryginalna:[/b]\n%s\n
+[Original message:\n%s\n]
+Wiadomość oryginalna:\n%s\n
+[[b]Edited at %s:[/b]\n%s\n]
+\[b]edytowana %s:[/b]\n%s\n
+[Edited at %s:\n%s\n]
+edytowana %s:\n%s\n
 [Call]
-
+Zadzwoń
 [Call missed]
-
+Rozmowa nieodebrana
 [Call ended (%s)]
-
+Rozmowa zakończona (%s)
 [File transfer:\n\tFile name: %s \n\tSize: %lld bytes \n]
 Transfer pliku:\n\tNazwa pliku: %s \n\tRozmiar: %lld bajtów \n
 [Unknown event, please send this text for developer: "%s"]
-
+Nieznane zdarzenie, proszę prześlij ten tekst programistom: "%s"
 ;file \protocols\SkypeWeb\src\skype_icons.cpp
 [Protocol icon]
 Ikona protokołu
@@ -151,8 +157,12 @@ Odblokuj kontakt
 [Create new chat]
 Utwórz nowy czat
 ;file \protocols\SkypeWeb\src\skype_messages.cpp
+[You cannot send when you are offline.]
+Nie możesz wysyłać będąc rozłączony.
 [Unknown error!]
-
+Nieznany błąd!
+[Network error!]
+Błąd sieciowy!
 ;file \protocols\SkypeWeb\src\skype_mslogin.cpp
 [Enter confirmation code]
 Wprowadź kod weryfikacyjny
@@ -175,10 +185,7 @@ Dźwięk rozmowy przychodzącej
 [Incoming call canceled sound]
 Dźwięk anulowania rozmowy przychodzącej
 ;file \protocols\SkypeWeb\src\skype_trouter.cpp
-[Failed establish a TRouter connection.]
+[Failed to establish a TRouter connection.]
 Nie udało się ustanowić połączenia TRouter.
 [Incoming call from %s]
 Przychodząca rozmowa od %s
-;file \protocols\SkypeWeb\src\skype_utils.cpp
-[Message read: %s]
-Wiadomość odczytana: %s

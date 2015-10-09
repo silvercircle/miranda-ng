@@ -3,7 +3,7 @@
 void CToxProto::InitNetlib()
 {
 	wchar_t name[128];
-	mir_sntprintf(name, _countof(name), TranslateT("%s connection"), m_tszUserName);
+	mir_sntprintf(name, TranslateT("%s connection"), m_tszUserName);
 
 	NETLIBUSER nlu = {0};
 	nlu.cbSize = sizeof(nlu);
@@ -12,7 +12,9 @@ void CToxProto::InitNetlib()
 	nlu.szSettingsModule = m_szModuleName;
 	hNetlib = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
 
-	debugLogA("Setting protocol/module name to '%s'", m_szModuleName);
+	logger = new CLogger(hNetlib);
+
+	logger->Log("Setting protocol/module name to '%s'", m_szModuleName);
 }
 
 void CToxProto::UninitNetlib()

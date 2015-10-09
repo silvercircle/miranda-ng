@@ -2,16 +2,15 @@
 
 int LoadServices(void)
 {
-	char szServiceFunction[MAX_PATH],*pszServiceFunctionName;
+	char szServiceFunction[MAX_PATH], *pszServiceFunctionName;
 
-	memcpy(szServiceFunction,PROTOCOL_NAMEA,PROTOCOL_NAME_SIZE);
-	pszServiceFunctionName=szServiceFunction+PROTOCOL_NAME_LEN;
+	memcpy(szServiceFunction, PROTOCOL_NAMEA, PROTOCOL_NAME_SIZE);
+	pszServiceFunctionName = szServiceFunction + PROTOCOL_NAME_LEN;
 
 	// Service creation
-	for (size_t i=0;i<_countof(siPluginServices);i++)
-	{
-		memcpy(pszServiceFunctionName,siPluginServices[i].lpszName,(mir_strlen(siPluginServices[i].lpszName)+1));
-		CreateServiceFunction(szServiceFunction,(MIRANDASERVICE)siPluginServices[i].lpFunc);
+	for (size_t i = 0; i < _countof(siPluginServices); i++) {
+		memcpy(pszServiceFunctionName, siPluginServices[i].lpszName, (mir_strlen(siPluginServices[i].lpszName) + 1));
+		CreateServiceFunction(szServiceFunction, (MIRANDASERVICE)siPluginServices[i].lpFunc);
 	}
 	return 0;
 }
@@ -19,16 +18,18 @@ int LoadServices(void)
 
 int LoadModules(void)
 {
-	HookEvent(ME_OPT_INITIALISE,OptInitialise);
-	HookEvent(ME_CLIST_PREBUILDCONTACTMENU,SmsRebuildContactMenu);
-	HookEvent(ME_PROTO_ACK,handleAckSMS);
-	HookEvent(ME_DB_EVENT_ADDED,handleNewMessage);
-	HookEvent(ME_PROTO_ACCLISTCHANGED,RefreshAccountList);
+	HookEvent(ME_OPT_INITIALISE, OptInitialise);
+	HookEvent(ME_CLIST_PREBUILDCONTACTMENU, SmsRebuildContactMenu);
+	HookEvent(ME_PROTO_ACK, handleAckSMS);
+	HookEvent(ME_DB_EVENT_ADDED, handleNewMessage);
+	HookEvent(ME_PROTO_ACCLISTCHANGED, RefreshAccountList);
 
 	char szServiceFunction[MAX_PATH];
-	mir_snprintf(szServiceFunction,_countof(szServiceFunction),"%s%s",PROTOCOL_NAMEA,SMS_SEND);
+	mir_snprintf(szServiceFunction, "%s%s", PROTOCOL_NAMEA, SMS_SEND);
 
 	CMenuItem mi;
+
+	SET_UID(mi, 0x3ce387db, 0xbaac, 0x490f, 0xac, 0xab, 0x8c, 0xf7, 0xe9, 0xcd, 0x86, 0xa1);
 	mi.position = 300050000;
 	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_SMS);
 	mi.name.t = SMS_SEND_STR;
@@ -36,17 +37,18 @@ int LoadModules(void)
 	mi.flags = CMIF_TCHAR;
 	Menu_AddMainMenuItem(&mi);
 
+	SET_UID(mi, 0x736e4cff, 0x769e, 0x45dc, 0x8b, 0x78, 0x83, 0xf9, 0xe4, 0xbb, 0x81, 0x9e);
 	mi.position = -2000070000;
 	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_SMS);
 	mi.name.t = SMS_SEND_CM_STR;
 	mi.pszService = szServiceFunction;
-	mi.flags = CMIF_TCHAR;	
+	mi.flags = CMIF_TCHAR;
 	ssSMSSettings.hContactMenuItems[0] = Menu_AddContactMenuItem(&mi);
 
-	SkinAddNewSoundEx("RecvSMSMsg",PROTOCOL_NAMEA,LPGEN("Incoming SMS Message"));
-	SkinAddNewSoundEx("RecvSMSConfirmation",PROTOCOL_NAMEA,LPGEN("Incoming SMS Confirmation"));
+	SkinAddNewSoundEx("RecvSMSMsg", PROTOCOL_NAMEA, LPGEN("Incoming SMS Message"));
+	SkinAddNewSoundEx("RecvSMSConfirmation", PROTOCOL_NAMEA, LPGEN("Incoming SMS Confirmation"));
 
-	RefreshAccountList(NULL,NULL);
+	RefreshAccountList(NULL, NULL);
 
 	RestoreUnreadMessageAlerts();
 	return 0;
@@ -72,23 +74,22 @@ int SendSMSMenuCommand(WPARAM wParam, LPARAM)
 			hwndSendSms = SendSMSWindowAdd(wParam);
 	}
 	// user clicked on the "SMS Send" in the Main Menu
-	else{
+	else {
 		hwndSendSms = SendSMSWindowAdd(NULL);
-		EnableWindow(GetDlgItem(hwndSendSms,IDC_NAME),TRUE);
-		EnableWindow(GetDlgItem(hwndSendSms,IDC_SAVENUMBER),FALSE);
+		EnableWindow(GetDlgItem(hwndSendSms, IDC_NAME), TRUE);
+		EnableWindow(GetDlgItem(hwndSendSms, IDC_SAVENUMBER), FALSE);
 
 		for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact)) {
 			if (GetContactPhonesCount(hContact)) {
 				SendDlgItemMessage(hwndSendSms, IDC_NAME, CB_ADDSTRING, 0, (LPARAM)pcli->pfnGetContactDisplayName(hContact, 0));
-				SendSMSWindowSMSContactAdd(hwndSendSms,hContact);
+				SendSMSWindowSMSContactAdd(hwndSendSms, hContact);
 			}
 		}
 	}
 	return 0;
 }
 
-
-//This function used to popup a read SMS window after the user clicked on the received SMS message.
+// This function used to popup a read SMS window after the user clicked on the received SMS message.
 int ReadMsgSMS(WPARAM, LPARAM lParam)
 {
 	CLISTEVENT *cle = (CLISTEVENT*)lParam;
@@ -99,17 +100,17 @@ int ReadMsgSMS(WPARAM, LPARAM lParam)
 	dbei.pBlob = (PBYTE)_alloca(dbei.cbBlob);
 
 	if (db_event_get(cle->hDbEvent, &dbei) == 0)
-	if (dbei.eventType == ICQEVENTTYPE_SMS || dbei.eventType == ICQEVENTTYPE_SMSCONFIRMATION)
-	if (dbei.cbBlob > MIN_SMS_DBEVENT_LEN) {
-		if (RecvSMSWindowAdd(cle->hContact,ICQEVENTTYPE_SMS,NULL,0,(LPSTR)dbei.pBlob,dbei.cbBlob)) {
-			db_event_markRead(cle->hContact, cle->hDbEvent);
-			return 0;
-		}
-	}
+		if (dbei.eventType == ICQEVENTTYPE_SMS || dbei.eventType == ICQEVENTTYPE_SMSCONFIRMATION)
+			if (dbei.cbBlob > MIN_SMS_DBEVENT_LEN) {
+				if (RecvSMSWindowAdd(cle->hContact, ICQEVENTTYPE_SMS, NULL, 0, (LPSTR)dbei.pBlob, dbei.cbBlob)) {
+					db_event_markRead(cle->hContact, cle->hDbEvent);
+					return 0;
+				}
+			}
 	return 1;
 }
 
-//This function used to popup a read SMS window after the user clicked on the received SMS confirmation.
+// This function used to popup a read SMS window after the user clicked on the received SMS confirmation.
 int ReadAckSMS(WPARAM, LPARAM lParam)
 {
 	CLISTEVENT *cle = (CLISTEVENT*)lParam;
@@ -138,16 +139,16 @@ void RestoreUnreadMessageAlerts(void)
 		for (MEVENT hDbEvent = db_event_firstUnread(hContact); hDbEvent; hDbEvent = db_event_next(hContact, hDbEvent)) {
 			dbei.cbBlob = 0;
 			if (db_event_get(hDbEvent, &dbei) == 0)
-			if ((dbei.flags & (DBEF_SENT|DBEF_READ))==0 && ((dbei.eventType==ICQEVENTTYPE_SMS) || (dbei.eventType==ICQEVENTTYPE_SMSCONFIRMATION)))
-			if (dbei.cbBlob>MIN_SMS_DBEVENT_LEN)
-				handleNewMessage(hContact,(LPARAM)hDbEvent);
+			if ((dbei.flags & (DBEF_SENT | DBEF_READ)) == 0 && ((dbei.eventType == ICQEVENTTYPE_SMS) || (dbei.eventType == ICQEVENTTYPE_SMSCONFIRMATION)))
+			if (dbei.cbBlob > MIN_SMS_DBEVENT_LEN)
+				handleNewMessage(hContact, (LPARAM)hDbEvent);
 		}
 
 	for (MEVENT hDbEvent = db_event_firstUnread(NULL); hDbEvent; hDbEvent = db_event_next(NULL, hDbEvent)) {
 		dbei.cbBlob = 0;
 		if (db_event_get(hDbEvent, &dbei) == 0)
-		if ((dbei.flags & (DBEF_SENT|DBEF_READ))==0 && ((dbei.eventType==ICQEVENTTYPE_SMS) || (dbei.eventType==ICQEVENTTYPE_SMSCONFIRMATION)))
-		if (dbei.cbBlob > MIN_SMS_DBEVENT_LEN)
-			handleNewMessage(NULL, (LPARAM)hDbEvent);
+			if ((dbei.flags & (DBEF_SENT | DBEF_READ)) == 0 && ((dbei.eventType == ICQEVENTTYPE_SMS) || (dbei.eventType == ICQEVENTTYPE_SMSCONFIRMATION)))
+				if (dbei.cbBlob > MIN_SMS_DBEVENT_LEN)
+					handleNewMessage(NULL, (LPARAM)hDbEvent);
 	}
 }

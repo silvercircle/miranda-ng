@@ -135,12 +135,19 @@ INT_PTR CSkypeProto::GetEventText(WPARAM, LPARAM lParam)
 			}
 			break;
 		}
+	case SKYPE_DB_EVENT_TYPE_MOJI:
 	case SKYPE_DB_EVENT_TYPE_URIOBJ:
 		{
 			HXML xml = xmlParseString(ptrT(mir_utf8decodeT((char*)pEvent->dbei->pBlob)), 0, _T("URIObject"));
 			if (xml != NULL)
 			{
 				szText.Append(_T2A(xmlGetText(xml)));
+				HXML xmlA = xmlGetChildByPath(xml, _T("a"), 0);
+				if (xmlA != NULL)
+				{
+					szText += _T2A(xmlGetAttrValue(xmlA, _T("href")));
+					xmlDestroyNode(xmlA);
+				}
 				xmlDestroyNode(xml);
 			}
 			else 
@@ -150,6 +157,7 @@ INT_PTR CSkypeProto::GetEventText(WPARAM, LPARAM lParam)
 			break;
 
 		}
+
 	case SKYPE_DB_EVENT_TYPE_INCOMING_CALL:
 		{
 			szText = Translate("Incoming call");
@@ -197,12 +205,12 @@ INT_PTR CSkypeProto::EventGetIcon(WPARAM wParam, LPARAM lParam)
 	case SKYPE_DB_EVENT_TYPE_CALL_INFO:
 	case SKYPE_DB_EVENT_TYPE_INCOMING_CALL:
 		{
-			icon = IcoLib_GetIconByHandle(GetIconHandle("inc_call"));
+			icon = GetIcon(IDI_CALL);
 			break;
 		}
 	case SKYPE_DB_EVENT_TYPE_ACTION:
 		{
-			icon = IcoLib_GetIconByHandle(GetIconHandle("me_action"));
+			icon = GetIcon(IDI_ACTION_ME);
 			break;
 		}
 	case SKYPE_DB_EVENT_TYPE_FILETRANSFER_INFO:

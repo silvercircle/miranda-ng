@@ -342,12 +342,13 @@ MIR_APP_DLL(int) ProtoGetAvatarFileFormat(const TCHAR *ptszFileName);
 
 #define MIR_SHA1_HASH_SIZE 20
 
-typedef struct {
+struct mir_sha1_ctx
+{
   ULONG H[5];
   ULONG W[80];
   int lenW;
   ULONG sizeHi, sizeLo;
-} mir_sha1_ctx;
+};
 
 MIR_CORE_DLL(void) mir_sha1_init(mir_sha1_ctx *ctx);
 MIR_CORE_DLL(void) mir_sha1_append(mir_sha1_ctx *ctx, const BYTE *dataIn, int len);
@@ -355,6 +356,24 @@ MIR_CORE_DLL(void) mir_sha1_finish(mir_sha1_ctx *ctx, BYTE hashout[MIR_SHA1_HASH
 MIR_CORE_DLL(void) mir_sha1_hash(BYTE *dataIn, int len, BYTE hashout[MIR_SHA1_HASH_SIZE]);
 
 MIR_CORE_DLL(void) mir_hmac_sha1(BYTE hashout[MIR_SHA1_HASH_SIZE], const BYTE *key, size_t keylen, const BYTE *text, size_t textlen);
+
+///////////////////////////////////////////////////////////////////////////////
+// sha256 functions
+
+#define MIR_SHA256_HASH_SIZE 32
+
+struct SHA256_CONTEXT
+{
+	UINT32  h0, h1, h2, h3, h4, h5, h6, h7;
+	UINT32  nblocks;
+	BYTE buf[64];
+	int  count;
+};
+
+MIR_CORE_DLL(void) mir_sha256_init(SHA256_CONTEXT *ctx);
+MIR_CORE_DLL(void) mir_sha256_write(SHA256_CONTEXT *ctx, const void *dataIn, size_t len);
+MIR_CORE_DLL(void) mir_sha256_final(SHA256_CONTEXT *ctx, BYTE hashout[MIR_SHA256_HASH_SIZE]);
+MIR_CORE_DLL(void) mir_sha256_hash(const void *dataIn, size_t len, BYTE hashout[MIR_SHA256_HASH_SIZE]);
 
 ///////////////////////////////////////////////////////////////////////////////
 // strings
@@ -376,6 +395,9 @@ MIR_CORE_DLL(wchar_t*) ltrimw(wchar_t *str);
 
 MIR_CORE_DLL(char*)  ltrimp(char *str);  // returns pointer to the trimmed portion of string
 MIR_CORE_DLL(wchar_t*) ltrimpw(wchar_t *str);
+
+MIR_CORE_DLL(char*) strdel(char *str, size_t len);
+MIR_CORE_DLL(wchar_t*) strdelw(wchar_t *str, size_t len);
 
 MIR_CORE_DLL(int) wildcmp(const char *name, const char *mask);
 MIR_CORE_DLL(int) wildcmpw(const wchar_t *name, const wchar_t *mask);
@@ -442,6 +464,8 @@ typedef union {
 	#define ltrimt  ltrimw
 	#define ltrimpt ltrimpw
 
+	#define strdelt strdelw
+
 	#define wildcmpt  wildcmpw
 	#define wildcmpit wildcmpiw
 
@@ -479,6 +503,8 @@ typedef union {
 	#define rtrimt rtrim
 	#define ltrimt ltrim
 	#define ltrimpt ltrimp
+
+	#define strdelt strdel
 
 	#define wildcmpt wildcmp
 	#define wildcmpit wildcmpi
@@ -671,7 +697,9 @@ inline int mir_snprintf(char(&buffer)[_Size], const char* fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
-	return mir_vsnprintf(buffer, _Size, fmt, args);
+	int ret = mir_vsnprintf(buffer, _Size, fmt, args);
+	va_end(args);
+	return ret;
 }
 
 template <size_t _Size>
@@ -679,7 +707,9 @@ inline int mir_snwprintf(wchar_t(&buffer)[_Size], const wchar_t* fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
-	return mir_vsnwprintf(buffer, _Size, fmt, args);
+	int ret = mir_vsnwprintf(buffer, _Size, fmt, args);
+	va_end(args);
+	return ret;
 }
 
 template <size_t _Size>

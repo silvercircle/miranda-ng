@@ -483,7 +483,7 @@ Jabber настроение
 Поддържа OTR (Off-the-Record Messaging)
 [Supports New_GPG plugin for Miranda NG]
 Поддържа приставката New_GPG за Miranda NG
-[Blocks packets from other users/groupchats using Privacy lists]
+[Blocks packets from other users/group chats using Privacy lists]
 Блокира пакети от потребители/групови чатове посредством списък за поверителност
 [Can report information about the music to which a user is listening]
 Може да докладва каква музика слуша потребителя
@@ -1227,10 +1227,6 @@ Jabber източник
 Промените ще бъдат осъществени при следващо свързване с мрежата Jabber.
 [Jabber Protocol Option]
 Настройки на протокола Jabber
-[Confirm password]
-Потвърдете паролата
-[Passwords do not match.]
-Паролите не съвпадат
 [This operation will kill your account, roster and all other information stored at the server. Are you ready to do that?]
 Акаунтът ви ще бъде заличен от сървъра, списъкът с хора и цялата информация, която сте съхранили на сървъра. Наистина ли желаете това?
 [Account removal warning]
@@ -1277,8 +1273,8 @@ Jabber източник
 Поправяне на грешните времеви марки във входящите съобщения
 [Disable frame]
 Без рамка
-[Enable XMPP link processing (requires Association Manager)]
-Асоцииране с XMPP връзки (изисква приставка Association Manager)
+[Enable XMPP link processing (requires AssocMgr)]
+Асоцииране с XMPP връзки (изисква приставка AssocMgr)
 [Keep contacts assigned to local groups (ignore roster group)]
 Назначавай контактите към местните групи (игнориране на списъка с хора)
 [Security]

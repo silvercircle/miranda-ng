@@ -621,7 +621,7 @@ static INT_PTR CALLBACK ConsoleDlgProc(HWND hwndDlg, UINT message, WPARAM wParam
 
 		CallService(MS_DB_GETPROFILEPATHT, (WPARAM)_countof(path), (LPARAM)path);
 
-		mir_sntprintf(title, _countof(title), _T("%s - %s\\%s"), TranslateT("Miranda Console"), path, name);
+		mir_sntprintf(title, _T("%s - %s\\%s"), TranslateT("Miranda Console"), path, name);
 
 		SetWindowText(hwndDlg, title);
 		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)hIcons[0]);
@@ -1160,6 +1160,7 @@ static int OnSystemModulesLoaded(WPARAM, LPARAM)
 		HookEvent(ME_TTB_MODULELOADED, OnTTBLoaded);
 
 		CMenuItem mi;
+		SET_UID(mi, 0x6d97694e, 0x2024, 0x4560, 0xbb, 0xbc, 0x20, 0x62, 0x7e, 0x5, 0xdf, 0xb3);
 		mi.flags = CMIF_TCHAR;
 		mi.hIcolibItem = hIcons[0];
 		mi.position = 1900000000;
@@ -1198,6 +1199,7 @@ static int stringCompare(LOGWIN *lw1, LOGWIN *lw2)
 
 static UINT logicons[] = { IDI_EMPTY, IDI_ARROW, IDI_IN, IDI_OUT, IDI_INFO };
 
+static HANDLE hConsoleThread = NULL;
 
 void InitConsole()
 {
@@ -1229,7 +1231,7 @@ void InitConsole()
 
 	LoadSettings();
 
-	mir_forkthread(ConsoleThread, 0);
+	hConsoleThread = mir_forkthread(ConsoleThread, 0);
 
 	HookEvent(ME_SYSTEM_PRESHUTDOWN, PreshutdownConsole);
 	HookEvent(ME_SYSTEM_MODULESLOADED, OnSystemModulesLoaded);
@@ -1248,6 +1250,10 @@ void ShutdownConsole(void)
 	for (i = 0; i < _countof(hIcons); i++) {
 		if (hIcons[i]) DestroyIcon(hIcons[i]);
 	}
+
+	if(hwndConsole)
+		EndDialog(hwndConsole, TRUE);
+	WaitForSingleObject(hConsoleThread, INFINITE);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

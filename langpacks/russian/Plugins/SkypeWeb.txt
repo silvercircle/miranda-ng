@@ -29,8 +29,6 @@
 Другое
 [Automatic messages synchronization]
 Автоматическая синхронизация сообщений
-[Use local time for received messages]
-Локальное время для принятых сообщений
 [Always notify as unread for all incoming message]
 Помечать все входящие сообщения как "Непрочитанное"
 [Place:]
@@ -39,6 +37,8 @@
 Использовать имя хоста
 [Use BBCode]
 Использовать BBCode
+[Change password]
+Изменить пароль
 [Enter password]
 Введите пароль
 [Save password]
@@ -90,9 +90,9 @@ URI объект
 [Invalid data!]
 Неверные данные!
 [[b]Original message:[/b]\n%s\n]
-\[b]Оригинальное сообщение:[/b]\n%s\n
+\[b]Исходное сообщение:[/b]\n%s\n
 [Original message:\n%s\n]
-Оригинальное сообщение:\n%s\n
+Исходное сообщение:\n%s\n
 [[b]Edited at %s:[/b]\n%s\n]
 \[b]Отредактировано в %s:[/b]\n%s\n
 [Edited at %s:\n%s\n]
@@ -147,6 +147,8 @@ URI объект
 Разблокировать контакт
 [Create new chat]
 Создать новый чат
+[You cannot send when you are offline.]
+Вы не можете отправлять сообщения без подключения к сети.
 [Unknown error!]
 Неизвестная ошибка!
 [Network error!]
@@ -167,9 +169,7 @@ URI объект
 Звук входящего звонка
 [Incoming call canceled sound]
 Звук отмены входящего звонка
-[Failed establish a TRouter connection.]
+[Failed to establish a TRouter connection.]
 Невозможно установить соединение для TRouter.
 [Incoming call from %s]
 Входящий звонок от %s
-[Message read: %s]
-Сообщение прочтено в: %s

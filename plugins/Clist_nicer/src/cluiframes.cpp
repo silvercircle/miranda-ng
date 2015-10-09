@@ -468,7 +468,7 @@ int LocateStorePosition(int Frameid, int maxstored)
 
 	for (int i = 0; i < maxstored; i++) {
 		char settingname[255];
-		mir_snprintf(settingname, _countof(settingname), "Name%d", i);
+		mir_snprintf(settingname, "Name%d", i);
 		ptrT frmname(db_get_tsa(0, CLUIFrameModule, settingname));
 		if (frmname == NULL) continue;
 		if (mir_tstrcmpi(frmname, Frames[Frameid].name) == 0)
@@ -1409,7 +1409,6 @@ static int UpdateTBToolTip(int framepos)
 
 int FrameNCPaint(HWND hwnd, WNDPROC oldWndProc, WPARAM wParam, LPARAM lParam, BOOL hasTitleBar)
 {
-	HDC hdc;
 	RECT rcWindow, rc;
 	HWND hwndParent = GetParent(hwnd);
 	LRESULT result = 0;
@@ -1457,7 +1456,7 @@ int FrameNCPaint(HWND hwnd, WNDPROC oldWndProc, WPARAM wParam, LPARAM lParam, BO
 	}
 
 	if (GetWindowLongPtr(hwnd, GWL_STYLE) & WS_BORDER) {
-		hdc = GetWindowDC(hwnd);
+		HDC hdc = GetWindowDC(hwnd);
 		HPEN hPenOld = reinterpret_cast<HPEN>(SelectObject(hdc, g_hPenCLUIFrames));
 		GetWindowRect(hwnd, &rcWindow);
 		rc.left = rc.top = 0;
@@ -2446,7 +2445,7 @@ LRESULT CALLBACK CLUIFrameTitleBarProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			if (pos != -1) {
 				int oldflags;
 				char TBcapt[255];
-				mir_snprintf(TBcapt, _countof(TBcapt), "%s - h:%d, vis:%d, fl:%d, fl:(%d,%d,%d,%d),or: %d",
+				mir_snprintf(TBcapt, "%s - h:%d, vis:%d, fl:%d, fl:(%d,%d,%d,%d),or: %d",
 					Frames[pos].name, Frames[pos].height, Frames[pos].visible, Frames[pos].floating,
 					Frames[pos].FloatingPos.x, Frames[pos].FloatingPos.y,
 					Frames[pos].FloatingSize.x, Frames[pos].FloatingSize.y,
@@ -2812,7 +2811,6 @@ LRESULT CALLBACK CLUIFrameContainerWndProc(HWND hwnd, UINT msg, WPARAM wParam, L
 
 			CLUIFrameResizeFloatingFrame(framepos);
 
-			RECT rect;
 			GetWindowRect(Frames[framepos].ContainerWnd, &rect);
 			Frames[framepos].FloatingPos.x = rect.left;
 			Frames[framepos].FloatingPos.y = rect.top;
@@ -2931,7 +2929,7 @@ TCHAR g_ptszEventName[100];
 
 static int CLUIFrameOnModulesLoad(WPARAM, LPARAM)
 {
-	mir_sntprintf(g_ptszEventName, _countof(g_ptszEventName), _T("mf_update_evt_%d"), GetCurrentThreadId());
+	mir_sntprintf(g_ptszEventName, _T("mf_update_evt_%d"), GetCurrentThreadId());
 	g_hEventThread = CreateEvent(NULL, TRUE, FALSE, g_ptszEventName);
 	hThreadMFUpdate = mir_forkthread(MF_UpdateThread, NULL);
 	SetThreadPriority(hThreadMFUpdate, THREAD_PRIORITY_IDLE);

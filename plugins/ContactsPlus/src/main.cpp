@@ -74,7 +74,7 @@ static int HookDBEventAdded(WPARAM hContact, LPARAM hDbEvent)
 	{
 		//add event to the contact list
 		TCHAR caToolTip[128];
-		mir_sntprintf(caToolTip, _countof(caToolTip), _T("%s %s"), TranslateT("Contacts received from"), pcli->pfnGetContactDisplayName(hContact, 0));
+		mir_sntprintf(caToolTip, _T("%s %s"), TranslateT("Contacts received from"), pcli->pfnGetContactDisplayName(hContact, 0));
 
 		CLISTEVENT cle = { sizeof(cle) };
 		cle.hContact = hContact;
@@ -136,6 +136,7 @@ static int HookModulesLoaded(WPARAM, LPARAM)
 	CallService("DBEditorpp/RegisterModule", (WPARAM)modules, 1);
 
 	CMenuItem mi;
+	SET_UID(mi, 0x94a4ed39, 0xabd0, 0x4c70, 0x89, 0xeb, 0x1b, 0x2, 0xf0, 0xac, 0x6, 0x4c);
 	mi.name.a = LPGEN("Contacts");
 	mi.position = -2000009990;  //position in menu
 	mi.pszService = MS_CONTACTS_SEND;

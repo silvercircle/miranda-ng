@@ -779,11 +779,11 @@ void checkthread(void*)
 
 		if (attSize) {
 			WCHAR field_attachments_UNICODE[MAX_FIELD];
-			mir_sntprintf(field_attachments_UNICODE, _countof(field_attachments_UNICODE), TranslateW(L"Attachments: %d bytes"), attSize);
-			mir_sntprintf(msgSubject, _countof(msgSubject), L"%S\n%s\n%s", field_date, field_subject_UNICODE, field_attachments_UNICODE);
+			mir_sntprintf(field_attachments_UNICODE, TranslateW(L"Attachments: %d bytes"), attSize);
+			mir_sntprintf(msgSubject, L"%S\n%s\n%s", field_date, field_subject_UNICODE, field_attachments_UNICODE);
 		}
 		else {
-			mir_sntprintf(msgSubject, _countof(msgSubject), L"%S\n%s", field_date, field_subject_UNICODE);
+			mir_sntprintf(msgSubject, L"%S\n%s", field_date, field_subject_UNICODE);
 		}
 
 		//check if this is not filtered msg
@@ -1708,6 +1708,7 @@ extern "C" int __declspec(dllexport) Load(void)
 		hMenuService = CreateServiceFunction("LotusNotify/MenuCommand", PluginMenuCommand);
 
 		CMenuItem mi;
+		SET_UID(mi, 0x4519458, 0xb55a, 0x4e22, 0xac, 0x95, 0x5e, 0xa4, 0x4d, 0x92, 0x65, 0x65);
 		mi.position = -0x7FFFFFFF; //on top menu position
 		mi.flags = CMIF_TCHAR;
 		mi.hIcolibItem = LoadIcon(hInst, MAKEINTRESOURCE(IDI_ICON1));

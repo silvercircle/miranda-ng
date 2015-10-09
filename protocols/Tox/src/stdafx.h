@@ -5,14 +5,19 @@
 #include <windns.h>
 #include <time.h>
 #include <commctrl.h>
+#include <msapi/comptr.h>
 
 #include <mmreg.h>
+#include <MMDeviceAPI.h>
 
-#include <string>
+#define EXIT_ON_ERROR(hres) if (FAILED(hres)) { goto Exit; }
+
+DEFINE_PROPERTYKEY(PKEY_Device_FriendlyName, 0xa45c254e, 0xdf1c, 0x4efd, 0x80, 0x20, 0x67, 0xd1, 0x46, 0xa8, 0x50, 0xe0, 14);
+
 #include <vector>
 #include <regex>
-#include <queue>
 #include <map>
+#include <algorithm>
 
 #include <newpluginapi.h>
 
@@ -47,8 +52,9 @@ struct CToxProto;
 
 #include "version.h"
 #include "resource.h"
-#include "tox_icons.h"
 #include "tox_menus.h"
+#include "tox_logger.h"
+#include "tox_thread.h"
 #include "tox_address.h"
 #include "tox_dialogs.h"
 #include "tox_profile.h"

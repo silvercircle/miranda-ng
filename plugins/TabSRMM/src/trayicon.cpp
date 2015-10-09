@@ -90,7 +90,7 @@ static void TrayAnimThread(LPVOID)
 void TSAPI CreateTrayMenus(int mode)
 {
 	if (mode) {
-		mir_sntprintf(g_eventName, _countof(g_eventName), _T("tsr_evt_%d"), GetCurrentThreadId());
+		mir_sntprintf(g_eventName, _T("tsr_evt_%d"), GetCurrentThreadId());
 		g_hEvent = CreateEvent(NULL, FALSE, FALSE, g_eventName);
 		isAnimThreadRunning = TRUE;
 		hTrayAnimThread = mir_forkthread(TrayAnimThread, NULL);
@@ -126,10 +126,10 @@ void TSAPI CreateTrayMenus(int mode)
 		}
 	}
 }
+
 /*
  * create a system tray icon, create all necessary submenus
  */
-
 void TSAPI CreateSystrayIcon(int create)
 {
 	NOTIFYICONDATA nim;
@@ -158,7 +158,6 @@ void TSAPI CreateSystrayIcon(int create)
  * mode = 0 - continue to flash
  * mode = 1 - restore the original icon
  */
-
 void TSAPI FlashTrayIcon(HICON hIcon)
 {
 	NOTIFYICONDATA nim;
@@ -188,7 +187,6 @@ void TSAPI FlashTrayIcon(HICON hIcon)
  * maximum number of allowed entries (20 at the moment). The oldest (topmost) entry
  * is deleted, if necessary.
  */
-
 void TSAPI AddContactToFavorites(MCONTACT hContact, const TCHAR *szNickname, const char *szProto, TCHAR *szStatus, WORD wStatus, HICON hIcon, BOOL mode, HMENU hMenu)
 {
 	TCHAR szMenuEntry[80];
@@ -203,7 +201,7 @@ void TSAPI AddContactToFavorites(MCONTACT hContact, const TCHAR *szNickname, con
 		szProto = GetContactProto(hContact);
 	if (szProto) {
 		if (wStatus == 0)
-			wStatus = db_get_w((MCONTACT)hContact, szProto, "Status", ID_STATUS_OFFLINE);
+			wStatus = db_get_w(hContact, szProto, "Status", ID_STATUS_OFFLINE);
 		if (szStatus == NULL)
 			szStatus = pcli->pfnGetStatusModeDescription(wStatus, 0);
 	}
@@ -217,7 +215,7 @@ void TSAPI AddContactToFavorites(MCONTACT hContact, const TCHAR *szNickname, con
 	if (acc && acc->tszAccountName) {
 		MENUITEMINFO mii = { 0 };
 		mii.cbSize = sizeof(mii);
-		mir_sntprintf(szMenuEntry, _countof(szMenuEntry), _T("%s: %s (%s)"), acc->tszAccountName, szFinalNick, szStatus);
+		mir_sntprintf(szMenuEntry, _T("%s: %s (%s)"), acc->tszAccountName, szFinalNick, szStatus);
 		if (mode) {
 			if (hMenu == PluginConfig.g_hMenuRecent) {
 				if (CheckMenuItem(hMenu, (UINT_PTR)hContact, MF_BYCOMMAND | MF_UNCHECKED) == 0) {
@@ -277,7 +275,6 @@ void TSAPI AddContactToFavorites(MCONTACT hContact, const TCHAR *szNickname, con
  * at runtime.
  * scans the contact db for favorites or recent session entries and builds the menus.
  */
-
 typedef struct _recentEntry {
 	DWORD dwTimestamp;
 	MCONTACT hContact;

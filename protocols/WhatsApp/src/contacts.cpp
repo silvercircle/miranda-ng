@@ -104,39 +104,41 @@ void WhatsAppProto::ProcessBuddyList(void*)
 	CODE_BLOCK_CATCH_ALL
 }
 
-void WhatsAppProto::onAvailable(const std::string &paramString, bool paramBoolean)
+void WhatsAppProto::onAvailable(const std::string &paramString, bool paramBoolean, DWORD lastSeenTime)
 {
 	MCONTACT hContact = AddToContactList(paramString);
 	if (hContact != NULL) {
-		if (paramBoolean)
+		if (paramBoolean) {
 			setWord(hContact, "Status", ID_STATUS_ONLINE);
+			setDword(hContact, WHATSAPP_KEY_LAST_SEEN, time(NULL));
+		}
 		else {
 			setWord(hContact, "Status", ID_STATUS_OFFLINE);
-			UpdateStatusMsg(hContact);
+			if (lastSeenTime != 0) {
+				setDword(hContact, WHATSAPP_KEY_LAST_SEEN, lastSeenTime);
+				setByte(hContact, WHATSAPP_KEY_LAST_SEEN_DENIED, 0);
+			}
+			else
+				setByte(hContact, WHATSAPP_KEY_LAST_SEEN_DENIED, 1);
 		}
+		UpdateStatusMsg(hContact);
 	}
-
-	setDword(hContact, WHATSAPP_KEY_LAST_SEEN, time(NULL));
-	UpdateStatusMsg(hContact);
-}
-
-void WhatsAppProto::onLastSeen(const std::string &paramString1, int paramInt, const string &paramString2)
-{
-	MCONTACT hContact = AddToContactList(paramString1);
-	setDword(hContact, WHATSAPP_KEY_LAST_SEEN, time(NULL) - paramInt);
-
-	UpdateStatusMsg(hContact);
 }
 
 void WhatsAppProto::UpdateStatusMsg(MCONTACT hContact)
 {
 	std::wstringstream ss;
-
-	int lastSeen = getDword(hContact, WHATSAPP_KEY_LAST_SEEN, -1);
-	if (lastSeen != -1) {
+	DWORD lastSeen = getDword(hContact, WHATSAPP_KEY_LAST_SEEN, 0);
+	WORD status = getWord(hContact, "Status", ID_STATUS_OFFLINE);
+	bool denied = getBool(hContact, WHATSAPP_KEY_LAST_SEEN_DENIED, false);
+	if (lastSeen > 0) {
 		time_t ts = lastSeen;
 		TCHAR stzLastSeen[MAX_PATH];
-		_tcsftime(stzLastSeen, _countof(stzLastSeen), TranslateT("Last seen on %x at %X"), localtime(&ts));
+		if (status == ID_STATUS_ONLINE)
+			 _tcsftime(stzLastSeen, _countof(stzLastSeen), TranslateT("Last online on %x at %X"), localtime(&ts));
+		else
+			_tcsftime(stzLastSeen, _countof(stzLastSeen), denied ? TranslateT("Denied: Last online on %x at %X") : TranslateT("Last seen on %x at %X"), localtime(&ts));
+
 		ss << stzLastSeen;
 	}
 

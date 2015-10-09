@@ -512,7 +512,7 @@ Wsparcie dla wtyczki SecureIM w Mirandzie NG
 Wsparcie dla wtyczki MirOtr w Mirandzie NG
 [Supports New_GPG plugin for Miranda NG]
 Wsparcie dla wtyczki New_GPG w Mirandzie NG
-[Blocks packets from other users/groupchats using Privacy lists]
+[Blocks packets from other users/group chats using Privacy lists]
 Możliwość blokowania komunikacji z innymi użytkownikami za pomocą list prywatności
 [Supports Message Receipts]
 Wsparcie dla potwierdzenia dostarczenia wiadomości
@@ -1384,10 +1384,6 @@ Zulu
 Te zmiany przyniosą efekt po następnym połączeniu z siecią Jabber
 [Jabber Protocol Option]
 Opcje protokołu Jabber
-[Confirm password]
-Powtórz hasło
-[Passwords do not match.]
-Hasła różnią się od siebie.
 [This operation will kill your account, roster and all other information stored at the server. Are you ready to do that?]
 To polecenie usunie twoje konto, listę kontaktów i wszystkie inne informacje z serwera. Jesteś pewien, że chcesz to zrobić?
 [Account removal warning]
@@ -1440,7 +1436,7 @@ Automatycznie akceptuj prośby o autoryzację
 Naprawiaj błędne czasy przychodzących wiadomości
 [Disable frame]
 Wyłącz ramkę
-[Enable XMPP link processing (requires Association Manager)]
+[Enable XMPP link processing (requires AssocMgr)]
 Włącz powiązanie XMPP (wymagany wtyczka AssocMgr.dll)
 [Keep contacts assigned to local groups (ignore roster group)]
 Utrzymuj kontakty przypisane do grup lokalnych (ignoruj grupy rostera)

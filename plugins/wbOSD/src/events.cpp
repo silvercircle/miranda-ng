@@ -27,7 +27,7 @@ LRESULT ShowOSD(TCHAR *str, int timeout, COLORREF color, MCONTACT user)
 {
 	logmsg("ShowOSD");
 
-	if (!hwnd)
+	if (!g_hWnd)
 		return 0;
 
 	if (timeout==0)
@@ -40,7 +40,7 @@ LRESULT ShowOSD(TCHAR *str, int timeout, COLORREF color, MCONTACT user)
 	om.param=(unsigned int)user;
 	om.callback=showmsgwnd;
 	
-	return SendMessage(hwnd, WM_USER+4, (WPARAM)&om, 0);
+	return SendMessage(g_hWnd, WM_USER+4, (WPARAM)&om, 0);
 }
 
 int ProtoAck(WPARAM,LPARAM lparam)
@@ -63,7 +63,7 @@ int ProtoAck(WPARAM,LPARAM lparam)
 			DWORD ann = db_get_dw( NULL, THIS_MODULE, "announce", DEFAULT_ANNOUNCE );
 			if ( ann & ( 1 << ( ack->lParam - ID_STATUS_OFFLINE ))) {
 				TCHAR buffer[512];
-				mir_sntprintf(buffer, _countof(buffer), TranslateT("%s is %s"), pcli->pfnGetContactDisplayName(ack->hContact, 0), pcli->pfnGetStatusModeDescription(ack->lParam, 0));
+				mir_sntprintf(buffer, TranslateT("%s is %s"), pcli->pfnGetContactDisplayName(ack->hContact, 0), pcli->pfnGetStatusModeDescription(ack->lParam, 0));
 				ShowOSD(buffer, 0, db_get_dw(NULL,THIS_MODULE, "clr_status", DEFAULT_CLRSTATUS), ack->hContact);
 	}	}	}
 
@@ -121,7 +121,7 @@ int ContactStatusChanged(WPARAM wParam, LPARAM lParam)
 		return 0;
 
 	TCHAR bufferW[512];
-	mir_sntprintf(bufferW, _countof(bufferW), TranslateT("%s is %s"), pcli->pfnGetContactDisplayName(wParam, 0), pcli->pfnGetStatusModeDescription(newStatus, 0));
+	mir_sntprintf(bufferW, TranslateT("%s is %s"), pcli->pfnGetContactDisplayName(wParam, 0), pcli->pfnGetStatusModeDescription(newStatus, 0));
 	ShowOSD(bufferW, 0, db_get_dw(NULL,THIS_MODULE, "clr_status", DEFAULT_CLRSTATUS), hContact);
 	return 0;
 }
@@ -193,7 +193,7 @@ int HookedNewEvent(WPARAM wParam, LPARAM hDBEvent)
 		c2 = DbGetEventTextT( &dbe, 0 );
 
 	TCHAR buffer[512];
-	mir_sntprintf(buffer, _countof(buffer), buf, c1, c2);
+	mir_sntprintf(buffer, buf, c1, c2);
 	ShowOSD(buffer, 0, db_get_dw(NULL,THIS_MODULE, "clr_msg", DEFAULT_CLRMSG), wParam);
 
 	mir_free( c1 );

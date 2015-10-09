@@ -136,7 +136,7 @@ static int TlenVoicePlaybackStart(TLEN_VOICE_CONTROL *control)
 		control->proto->debugLogA("Playback device ID #%u: %s\r\n", iSelDev, wic.szPname);
 	}
 
-	MMRESULT mmres = waveOutOpen(&control->hWaveOut, iSelDev, &wfm, (DWORD_PTR)&TlenVoicePlaybackCallback, (DWORD)control, CALLBACK_FUNCTION);
+	MMRESULT mmres = waveOutOpen(&control->hWaveOut, iSelDev, &wfm, (UINT_PTR)&TlenVoicePlaybackCallback, (UINT_PTR)control, CALLBACK_FUNCTION);
 	if (mmres != MMSYSERR_NOERROR) {
 		control->proto->debugLogA("TlenVoiceStart FAILED!");
 		return 1;
@@ -493,7 +493,7 @@ static void TlenVoiceReceiveParse(TLEN_FILE_TRANSFER *ft)
 		}
 		{
 			char ttt[2048];
-			mir_snprintf(ttt, _countof(ttt), "%s %d %d ", statusTxt, ft->proto->framesAvailableForPlayback, ft->proto->availOverrunValue);
+			mir_snprintf(ttt, "%s %d %d ", statusTxt, ft->proto->framesAvailableForPlayback, ft->proto->availOverrunValue);
 			SetDlgItemTextA(ft->proto->voiceDlgHWND, IDC_STATUS, ttt);
 		}
 		TlenP2PPacketFree(packet);
@@ -546,11 +546,11 @@ void __cdecl TlenVoiceSendingThread(TLEN_FILE_TRANSFER *ft)
 			NETLIBOPENCONNECTION nloc = { sizeof(nloc) };
 			nloc.szHost = ft->hostName;
 			nloc.wPort = ft->wPort;
-			HANDLE s = (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)ft->proto->m_hNetlibUser, (LPARAM)&nloc);
-			if (s != NULL) {
+			HANDLE sock = (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)ft->proto->m_hNetlibUser, (LPARAM)&nloc);
+			if (sock != NULL) {
 				SetDlgItemText(ft->proto->voiceDlgHWND, IDC_STATUS, TranslateT("...Connecting..."));
 				//ProtoBroadcastAck(ft->proto->m_szModuleName, ft->hContact, ACKTYPE_FILE, ACKRESULT_CONNECTING, ft, 0);
-				ft->s = s;
+				ft->s = sock;
 				TlenP2PEstablishOutgoingConnection(ft, FALSE);
 				if (ft->state != FT_ERROR) {
 					ft->proto->debugLogA("Entering send loop for this file connection...");
@@ -563,7 +563,7 @@ void __cdecl TlenVoiceSendingThread(TLEN_FILE_TRANSFER *ft)
 					}
 				}
 				ft->proto->debugLogA("Closing connection for this file transfer... ");
-				Netlib_CloseHandle(s);
+				Netlib_CloseHandle(sock);
 			}
 			else ft->state = FT_ERROR;
 		}
@@ -683,7 +683,7 @@ INT_PTR TlenProtocol::VoiceContactMenuHandleVoice(WPARAM wParam, LPARAM)
 		DBVARIANT dbv;
 		if (!db_get(hContact, m_szModuleName, "jid", &dbv)) {
 			char serialId[32];
-			mir_snprintf(serialId, _countof(serialId), "%d", TlenSerialNext(this));
+			mir_snprintf(serialId, "%d", TlenSerialNext(this));
 			TLEN_LIST_ITEM *item = TlenListAdd(this, LIST_VOICE, serialId);
 			if (item != NULL) {
 				TLEN_FILE_TRANSFER *ft = TlenFileCreateFT(this, dbv.pszVal);
@@ -931,7 +931,7 @@ static char *getDisplayName(TlenProtocol *proto, const char *id)
 	MCONTACT hContact;
 	DBVARIANT dbv;
 	if (!db_get(NULL, proto->m_szModuleName, "LoginServer", &dbv)) {
-		mir_snprintf(jid, _countof(jid), "%s@%s", id, dbv.pszVal);
+		mir_snprintf(jid, "%s@%s", id, dbv.pszVal);
 		db_free(&dbv);
 		if ((hContact = TlenHContactFromJID(proto, jid)) != NULL)
 			return mir_strdup((char *)pcli->pfnGetContactDisplayName(hContact, 0));
@@ -1012,7 +1012,7 @@ int TlenVoiceAccept(TlenProtocol *proto, const char *id, const char *from)
 				char jid[256];
 				DBVARIANT dbv;
 				if (!db_get(NULL, proto->m_szModuleName, "LoginServer", &dbv)) {
-					mir_snprintf(jid, _countof(jid), "%s@%s", from, dbv.pszVal);
+					mir_snprintf(jid, "%s@%s", from, dbv.pszVal);
 					db_free(&dbv);
 				}
 				else {
@@ -1025,7 +1025,7 @@ int TlenVoiceAccept(TlenProtocol *proto, const char *id, const char *from)
 				char jid[256];
 				DBVARIANT dbv;
 				if (!db_get(NULL, proto->m_szModuleName, "LoginServer", &dbv)) {
-					mir_snprintf(jid, _countof(jid), "%s@%s", from, dbv.pszVal);
+					mir_snprintf(jid, "%s@%s", from, dbv.pszVal);
 					db_free(&dbv);
 				}
 				else {

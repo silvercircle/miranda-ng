@@ -25,14 +25,7 @@ public:
 	template <size_t _>
 	StringReferenceWrapper(_In_reads_(_) wchar_t(&stringRef)[_]) throw()
 	{
-		UINT32 length;
-		HRESULT hr = SizeTToUInt32(wcslen(stringRef), &length);
-
-		if (FAILED(hr))
-		{
-			RaiseException(static_cast<DWORD>(STATUS_INVALID_PARAMETER), EXCEPTION_NONCONTINUABLE, 0, nullptr);
-		}
-
+		size_t length = mir_wstrlen(stringRef);
 		WindowsCreateStringReference(stringRef, length, &_header, &_hstring);
 	}
 

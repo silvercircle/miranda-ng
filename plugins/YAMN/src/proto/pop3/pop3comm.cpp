@@ -380,7 +380,7 @@ DWORD WINAPI ReadPOP3Options(HACCOUNT Which, char **Parser, char *End)
 	if (*Parser >= End)
 		return EACC_FILECOMPATIBILITY;
 #ifdef DEBUG_FILEREAD
-	mir_sntprintf(Debug, _countof(Debug), _T("CodePage: %d, remaining %d chars"), ((HPOP3ACCOUNT)Which)->CP, End-*Parser);
+	mir_sntprintf(Debug, _T("CodePage: %d, remaining %d chars"), ((HPOP3ACCOUNT)Which)->CP, End-*Parser);
 	MessageBox(NULL,Debug,_T("debug"),MB_OK);
 #endif
 	return 0;
@@ -713,7 +713,7 @@ DWORD WINAPI SynchroPOP3(struct CheckParam * WhichTemp)
 				for (NewMsgsPtr = (HYAMNMAIL)NewMails; NewMsgsPtr != NULL; NewMsgsPtr = NewMsgsPtr->Next) {
 					if (!mir_strcmp(MsgQueuePtr->ID, NewMsgsPtr->ID)) {
 						TCHAR accstatus[512];
-						mir_sntprintf(accstatus, _countof(accstatus), TranslateT("Reading body %s"), NewMsgsPtr->ID);
+						mir_sntprintf(accstatus, TranslateT("Reading body %s"), NewMsgsPtr->ID);
 						SetAccountStatus(ActualAccount, accstatus);
 						DataRX = MyClient->Top(MsgQueuePtr->Number, 100);
 #ifdef DEBUG_DECODE
@@ -786,7 +786,7 @@ DWORD WINAPI SynchroPOP3(struct CheckParam * WhichTemp)
 			{
 				BOOL autoretr = (ActualAccount->Flags & YAMN_ACC_BODY) != 0;
 				DataRX = MyClient->Top(MsgQueuePtr->Number, autoretr ? 100 : 0);
-				mir_sntprintf(accstatus, _countof(accstatus), TranslateT("Reading new mail messages (%d%% done)"), 100 * i / msgs);
+				mir_sntprintf(accstatus, TranslateT("Reading new mail messages (%d%% done)"), 100 * i / msgs);
 				SetAccountStatus(ActualAccount, accstatus);
 
 #ifdef DEBUG_DECODE
@@ -975,13 +975,10 @@ void __cdecl DeleteMailsPOP3(void *param)
 {
 	DeleteParam *WhichTemp = (DeleteParam *)param;
 
-	HPOP3ACCOUNT ActualAccount;
-	LPVOID YAMNParam;
-	UINT_PTR POP3PluginParam;
 	CPop3Client *MyClient;
-	HYAMNMAIL DeleteMails, NewMails = NULL, MsgQueuePtr;
+	HYAMNMAIL DeleteMails, NewMails = NULL, MsgQueuePtr = NULL;
 	char* DataRX = NULL;
-	int mboxsize, msgs, i;
+	int mboxsize = 0, msgs = 0, i;
 	BOOL UsingInternet = FALSE;
 	struct {
 		char *ServerName;
@@ -1004,9 +1001,9 @@ void __cdecl DeleteMailsPOP3(void *param)
 	//			//and then we can in our GetErrorStringFcn e.g. return string "Uncompatible version of YAMN".
 	//	}
 
-	ActualAccount = (HPOP3ACCOUNT)((struct DeleteParam *)WhichTemp)->AccountParam;			//copy address of structure from calling thread to stack of this thread
-	YAMNParam = ((struct DeleteParam *)WhichTemp)->BrowserParam;
-	POP3PluginParam = (UINT_PTR)((struct DeleteParam *)WhichTemp)->CustomParam;
+	HPOP3ACCOUNT ActualAccount = (HPOP3ACCOUNT)WhichTemp->AccountParam;			//copy address of structure from calling thread to stack of this thread
+	LPVOID YAMNParam = WhichTemp->BrowserParam;
+	UINT_PTR POP3PluginParam = (UINT_PTR)((struct DeleteParam *)WhichTemp)->CustomParam;
 #ifdef DEBUG_SYNCHRO
 	DebugLog(SynchroFile,"DeleteMailsPOP3:Incrementing \"using threads\" %x (account %x)\n",ActualAccount->UsingThreads,ActualAccount);
 #endif

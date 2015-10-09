@@ -83,7 +83,7 @@ struct OptionsPageData : public MZeroedObject
 	OptionsPageData(OPTIONSDIALOGPAGE *src)
 	{
 		if (src->hInstance != NULL && src->pszTemplate != NULL)
-			pDialog = new COptionPageDialog(src->hInstance, (int)src->pszTemplate, src->pfnDlgProc, src->dwInitParam);
+			pDialog = new COptionPageDialog(src->hInstance, (INT_PTR)src->pszTemplate, src->pfnDlgProc, src->dwInitParam);
 		else
 			pDialog = src->pDialog;
 		assert(pDialog != NULL);
@@ -1151,7 +1151,7 @@ void OpenAccountOptions(PROTOACCOUNT *pa)
 		return;
 
 	TCHAR tszTitle[100];
-	mir_sntprintf(tszTitle, _countof(tszTitle), TranslateT("%s options"), pa->tszAccountName);
+	mir_sntprintf(tszTitle, TranslateT("%s options"), pa->tszAccountName);
 
 	OPENOPTIONSDIALOG ood = { sizeof(ood) };
 	ood.pszGroup = LPGEN("Network");
@@ -1294,6 +1294,7 @@ static INT_PTR AddOptionsPage(WPARAM wParam, LPARAM lParam)
 static int OptModulesLoaded(WPARAM, LPARAM)
 {
 	CMenuItem mi;
+	SET_UID(mi, 0xc1284523, 0x548d, 0x4744, 0xb0, 0x9, 0xfb, 0xa0, 0x4, 0x8e, 0xa8, 0x67);
 	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_OTHER_OPTIONS);
 	mi.position = 1900000000;
 	mi.name.a = LPGEN("&Options...");

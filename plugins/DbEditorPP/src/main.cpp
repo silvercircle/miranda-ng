@@ -115,12 +115,14 @@ int ModulesLoaded(WPARAM, LPARAM)
 	CMenuItem mi;
 	mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Database"), 1900000001);
 
+	SET_UID(mi, 0xe298849c, 0x1a8c, 0x4fc7, 0xa0, 0xf4, 0x78, 0x18, 0xf, 0xe2, 0xf7, 0xc9);
 	mi.position = 1900000001;
 	mi.hIcolibItem = GetIcoLibHandle(ICO_DBE_BUTT);
 	mi.name.a = modFullname;
 	mi.pszService = "DBEditorpp/MenuCommand";
 	Menu_AddMainMenuItem(&mi);
 
+	SET_UID(mi, 0x2fed8613, 0xac43, 0x4148, 0xbd, 0x5c, 0x44, 0x88, 0xaf, 0x68, 0x69, 0x10);
 	mi.root = NULL;
 	mi.hIcolibItem = GetIcoLibHandle(ICO_REGUSER);
 	mi.name.a = LPGEN("Open user tree in DBE++");
@@ -225,7 +227,7 @@ char *StringFromBlob(BYTE *blob, WORD len)
 	data[0] = 0;
 
 	for (j = 0; j < len; j++) {
-		mir_snprintf(tmp, _countof(tmp), "%02X ", blob[j]);
+		mir_snprintf(tmp, "%02X ", blob[j]);
 		mir_strcat(data, tmp);
 	}
 	return data;
@@ -542,7 +544,7 @@ void saveListSettings(HWND hwnd, ColumnsSettings *cs)
 	int i = 0;
 	while (cs[i].name) {
 		if (ListView_GetColumn(hwnd, cs[i].index, &sLC)) {
-			mir_snprintf(tmp, _countof(tmp), cs[i].dbname, i);
+			mir_snprintf(tmp, cs[i].dbname, i);
 			db_set_w(NULL, modname, tmp, (WORD)sLC.cx);
 		}
 		i++;

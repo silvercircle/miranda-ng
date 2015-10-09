@@ -62,7 +62,7 @@ void InitIcons(void)
 HICON LoadIconEx(const char* name)
 {
 	char szSettingName[100];
-	mir_snprintf(szSettingName, _countof(szSettingName), "%s_%s", ModuleName, name);
+	mir_snprintf(szSettingName, "%s_%s", ModuleName, name);
 	return IcoLib_GetIcon(szSettingName);
 }
 
@@ -78,7 +78,7 @@ HANDLE GetIconHandle(const char* name)
 void  ReleaseIconEx(const char* name)
 {
 	char szSettingName[100];
-	mir_snprintf(szSettingName, _countof(szSettingName), "%s_%s", ModuleName, name);
+	mir_snprintf(szSettingName, "%s_%s", ModuleName, name);
 	IcoLib_Release(szSettingName);
 }
 
@@ -163,7 +163,7 @@ void SaveSettings(HWND hwndDlg)
 	}
 
 	for (int i = 0; i < g_hWindows.getCount(); i++)
-		SetSrmmIcon(MCONTACT(g_hWindows[i]));
+		SetSrmmIcon(UINT_PTR(g_hWindows[i]));
 
 	// set tooltips
 	int st = db_get_b(NULL, ModuleName, "SweepHistory", 0);

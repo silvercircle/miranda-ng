@@ -1,5 +1,27 @@
 #include "stdafx.h"
 
+int CToxProto::MapStatus(int status)
+{
+	switch (status)
+	{
+	case ID_STATUS_FREECHAT:
+	case ID_STATUS_ONTHEPHONE:
+		status = ID_STATUS_ONLINE;
+		break;
+
+	case ID_STATUS_NA:
+	case ID_STATUS_OUTTOLUNCH:
+		status = ID_STATUS_AWAY;
+		break;
+
+	case ID_STATUS_DND:
+	case ID_STATUS_INVISIBLE:
+		status = ID_STATUS_OCCUPIED;
+		break;
+	}
+	return status;
+}
+
 TOX_USER_STATUS CToxProto::MirandaToToxStatus(int status)
 {
 	TOX_USER_STATUS userstatus = TOX_USER_STATUS_NONE;
@@ -33,6 +55,33 @@ int CToxProto::ToxToMirandaStatus(TOX_USER_STATUS userstatus)
 	return status;
 }
 
+TCHAR* CToxProto::ToxErrorToString(TOX_ERR_NEW error)
+{
+	switch (error)
+	{
+	case TOX_ERR_NEW_NULL:
+		return TranslateT("One of the arguments is missing");
+	case TOX_ERR_NEW_MALLOC:
+		return TranslateT("Unable to allocate enough memory");
+	case TOX_ERR_NEW_PORT_ALLOC:
+		return TranslateT("Unable to bind to a port");
+	case TOX_ERR_NEW_PROXY_BAD_TYPE:
+		return TranslateT("The proxy type is not valid");
+	case TOX_ERR_NEW_PROXY_BAD_HOST:
+		return TranslateT("The proxy host is not valid");
+	case TOX_ERR_NEW_PROXY_BAD_PORT:
+		return TranslateT("The proxy port is not valid");
+	case TOX_ERR_NEW_PROXY_NOT_FOUND:
+		return TranslateT("The proxy address could not be resolved");
+	case TOX_ERR_NEW_LOAD_ENCRYPTED:
+		return TranslateT("The profile is encrypted");
+	case TOX_ERR_NEW_LOAD_BAD_FORMAT:
+		return TranslateT("The data format is not valid");
+	default:
+		return TranslateT("Unknown error");
+	}
+}
+
 void CToxProto::ShowNotification(const TCHAR *caption, const TCHAR *message, int flags, MCONTACT hContact)
 {
 	if (Miranda_Terminated())
@@ -60,9 +109,9 @@ void CToxProto::ShowNotification(const TCHAR *message, int flags, MCONTACT hCont
 	ShowNotification(_T(MODULE), message, flags, hContact);
 }
 
-bool CToxProto::IsFileExists(std::tstring path)
+bool CToxProto::IsFileExists(const TCHAR* path)
 {
-	return _taccess(path.c_str(), 0) == 0;
+	return _taccess(path, 0) == 0;
 }
 
 MEVENT CToxProto::AddEventToDb(MCONTACT hContact, WORD type, DWORD timestamp, DWORD flags, PBYTE pBlob, size_t cbBlob)

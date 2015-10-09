@@ -87,9 +87,7 @@ CSideBarButton::CSideBarButton(const UINT id, CSideBar *sideBar)
 	_create();
 }
 
-/**
- * Internal method to create the button item and configure the associated button control
- */
+// Internal method to create the button item and configure the associated button control
 void CSideBarButton::_create()
 {
 	m_hwnd = 0;
@@ -330,18 +328,15 @@ int CSideBarButton::testCloseButton() const
 	}
 	return -1;
 }
-/**
- * call back from the button window procedure. Activate my session
- */
+
+// call back from the button window procedure. Activate my session
 void CSideBarButton::activateSession() const
 {
 	if (m_dat)
 		::SendMessage(m_dat->hwnd, DM_ACTIVATEME, 0, 0);					// the child window will activate itself
 }
 
-/**
- * show the context menu (same as on tabs
- */
+// show the context menu (same as on tabs
 void CSideBarButton::invokeContextMenu()
 {
 	const TContainerData *pContainer = m_sideBar->getContainer();
@@ -357,7 +352,7 @@ void CSideBarButton::invokeContextMenu()
 }
 
 CSideBar::CSideBar(TContainerData *pContainer) :
-m_buttonlist(1, PtrKeySortT)
+	m_buttonlist(1, PtrKeySortT)
 {
 	m_pContainer = pContainer;
 	m_up = m_down = 0;
@@ -396,7 +391,7 @@ void CSideBar::Init()
 	if (m_pContainer->dwFlags & CNT_SIDEBAR) {
 		if (m_hwndScrollWnd == 0)
 			m_hwndScrollWnd = ::CreateWindowEx(0, _T("TS_SideBarClass"), _T(""), WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE | WS_CHILD,
-			0, 0, m_width, 40, m_pContainer->hwnd, reinterpret_cast<HMENU>(5000), g_hInst, this);
+				0, 0, m_width, 40, m_pContainer->hwnd, reinterpret_cast<HMENU>(5000), g_hInst, this);
 
 		m_isActive = true;
 		m_isVisible = m_isActive ? m_isVisible : true;
@@ -479,7 +474,6 @@ void CSideBar::destroyScroller()
  * Does not remove the sessions. This is basically only used when switching
  * from a sidebar to a tabbed interface
  */
-
 void CSideBar::removeAll()
 {
 	m_buttonlist.destroy();
@@ -754,7 +748,7 @@ void CSideBar::Layout(const RECT *rc, bool fOnlyCalc)
 			if (m_totalItemHeight <= m_firstVisibleOffset) {				// partially visible
 				if (!fOnlyCalc && NULL != hwnd) /* Wine fix. */
 					hdwp = ::DeferWindowPos(hdwp, hwnd, 0, 2, -(m_firstVisibleOffset - m_totalItemHeight),
-					m_elementWidth, height, SWP_SHOWWINDOW | dwFlags);
+						m_elementWidth, height, SWP_SHOWWINDOW | dwFlags);
 				spaceUsed += ((height + 1) - (m_firstVisibleOffset - m_totalItemHeight));
 				m_totalItemHeight += (height + 1);
 			}
@@ -969,8 +963,8 @@ void __fastcall CSideBar::m_DefaultBackgroundRenderer(const HDC hdc, const RECT 
 
 	if (CSkin::m_skinEnabled) {
 		TContainerData *pContainer = const_cast<TContainerData *>(item->m_sideBar->getContainer());
-		int id = stateId == PBS_PRESSED || fIsActiveItem ? ID_EXTBKBUTTONSPRESSED : (stateId == PBS_HOT ? ID_EXTBKBUTTONSMOUSEOVER : ID_EXTBKBUTTONSNPRESSED);
-		CSkinItem *skinItem = &SkinItems[id];
+		int ctrlId = stateId == PBS_PRESSED || fIsActiveItem ? ID_EXTBKBUTTONSPRESSED : (stateId == PBS_HOT ? ID_EXTBKBUTTONSMOUSEOVER : ID_EXTBKBUTTONSNPRESSED);
+		CSkinItem *skinItem = &SkinItems[ctrlId];
 		HWND hwnd = item->m_buttonControl->hwnd;
 
 		CSkin::SkinDrawBG(hwnd, pContainer->hwnd, pContainer, const_cast<RECT *>(rc), hdc);
@@ -985,10 +979,10 @@ void __fastcall CSideBar::m_DefaultBackgroundRenderer(const HDC hdc, const RECT 
 
 			if (stateId == PBS_HOT || stateId == PBS_PRESSED)
 				DrawAlpha(hdc, const_cast<RECT *>(rc), 0xf0f0f0, 70, 0x000000, 0, 9,
-				31, 4, 0);
+					31, 4, 0);
 			else
 				DrawAlpha(hdc, const_cast<RECT *>(rc), 0xf0f0f0, 30, 0x707070, 0, 9,
-				31, 4, 0);
+					31, 4, 0);
 		}
 		else {
 			if (PluginConfig.m_fillColor)
@@ -1152,10 +1146,9 @@ void __fastcall CSideBar::m_AdvancedContentRenderer(const HDC hdc, const RECT *r
  */
 const SIZE& __fastcall CSideBar::m_measureAdvancedVertical(CSideBarButton* item)
 {
-	const TWindowData*	dat = item->getDat();
-
 	SIZE sz = { 0 };
 
+	const TWindowData *dat = item->getDat();
 	if (dat) {
 		SIZE szFirstLine, szSecondLine;
 

@@ -71,7 +71,7 @@ void __cdecl CVkProto::SearchThread(void* p)
 	PROTOSEARCHBYNAME *pParam = (PROTOSEARCHBYNAME *)p;
 		
 	TCHAR arg[200];
-	mir_sntprintf(arg, _countof(arg), _T("%s %s %s"), pParam->pszFirstName, pParam->pszNick, pParam->pszLastName);
+	mir_sntprintf(arg, _T("%s %s %s"), pParam->pszFirstName, pParam->pszNick, pParam->pszLastName);
 	debugLog(_T("CVkProto::SearchThread %s"), arg);
 	if (!IsOnline())
 		return;
@@ -85,17 +85,23 @@ void __cdecl CVkProto::SearchThread(void* p)
 	Push(pReq);
 }
 
+void CVkProto::FreeProtoShearchStruct(PROTOSEARCHBYNAME *pParam)
+{
+	if (!pParam)
+		return;
+	
+	mir_free(pParam->pszFirstName);
+	mir_free(pParam->pszLastName);
+	mir_free(pParam->pszNick);
+	delete pParam;
+}
+
 void CVkProto::OnSearch(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
 {
 	PROTOSEARCHBYNAME *pParam = (PROTOSEARCHBYNAME *)pReq->pUserInfo;
 	debugLogA("CVkProto::OnSearch %d", reply->resultCode);
 	if (reply->resultCode != 200) {
-		if (pParam) {
-			mir_free(pParam->pszFirstName);
-			mir_free(pParam->pszLastName);
-			mir_free(pParam->pszNick);
-			delete pParam;
-		}
+		FreeProtoShearchStruct(pParam);
 		ProtoBroadcastAck(0, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE)1);
 		return;
 	}
@@ -103,12 +109,7 @@ void CVkProto::OnSearch(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
 	JSONNode jnRoot;
 	const JSONNode &jnResponse = CheckJsonResponse(pReq, reply, jnRoot);
 	if (!jnResponse) {
-		if (pParam) {
-			mir_free(pParam->pszFirstName);
-			mir_free(pParam->pszLastName);
-			mir_free(pParam->pszNick);
-			delete pParam;
-		}
+		FreeProtoShearchStruct(pParam);
 		ProtoBroadcastAck(0, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE)1);
 		return;
 	}
@@ -122,8 +123,7 @@ void CVkProto::OnSearch(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
 		PROTOSEARCHRESULT psr = { sizeof(psr) };
 		psr.flags = PSR_TCHAR;
 
-		CMString Id;
-		Id.AppendFormat(_T("%d"), jnRecord["id"].as_int());
+		CMString Id(FORMAT, _T("%d"), jnRecord["id"].as_int());
 		CMString FirstName(jnRecord["first_name"].as_mstring());
 		CMString LastName(jnRecord["last_name"].as_mstring());
 		CMString Nick(jnRecord["nickname"].as_mstring());
@@ -149,12 +149,7 @@ void CVkProto::OnSearch(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
 	}
 
 	ProtoBroadcastAck(0, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE)1);
-	if (pParam) {
-		mir_free(pParam->pszFirstName);
-		mir_free(pParam->pszLastName);
-		mir_free(pParam->pszNick);
-		delete pParam;
-	}
+	FreeProtoShearchStruct(pParam);
 }
 
 void CVkProto::OnSearchByMail(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
@@ -186,8 +181,7 @@ void CVkProto::OnSearchByMail(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
 		PROTOSEARCHRESULT psr = { sizeof(psr) };
 		psr.flags = PSR_TCHAR;
 		
-		CMString Id;
-		Id.AppendFormat(_T("%d"), jnRecord["id"].as_int());
+		CMString Id(FORMAT, _T("%d"), jnRecord["id"].as_int());
 		CMString FirstName(jnRecord["first_name"].as_mstring());
 		CMString LastName(jnRecord["last_name"].as_mstring());
 		CMString Nick(jnRecord["nickname"].as_mstring());

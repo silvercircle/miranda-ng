@@ -345,7 +345,6 @@ void Chat_AddIcons(void)
 /*
  * get icon by name from the core icon library service
  */
-
 HICON LoadIconEx(char *pszIcoLibName)
 {
 	char szTemp[256];
@@ -691,7 +690,7 @@ INT_PTR CALLBACK DlgProcOptions2(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 
 			TCHAR tszTooltipText[2048];
 
-			mir_sntprintf(tszTooltipText, _countof(tszTooltipText),
+			mir_sntprintf(tszTooltipText,
 				_T("%s - %s\n%s - %s\n%s - %s\n%s - %s\n\n")
 				_T("%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n\n")
 				_T("%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s\n%s - %s"),
@@ -757,12 +756,12 @@ INT_PTR CALLBACK DlgProcOptions2(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 					*p1 = 0;
 
 			TCHAR tszInitialDir[_MAX_DRIVE + _MAX_PATH + 10];
-			mir_sntprintf(tszInitialDir, _countof(tszInitialDir), _T("%s%s"), M.getChatLogPath(), p);
+			mir_sntprintf(tszInitialDir, _T("%s%s"), M.getChatLogPath(), p);
 			if (!PathFileExists(tszInitialDir))
 				_tcsncpy_s(tszInitialDir, M.getChatLogPath(), _TRUNCATE);
 
 			TCHAR	tszReturnName[MAX_PATH]; tszReturnName[0] = 0;
-			mir_sntprintf(tszTemp, _countof(tszTemp), _T("%s%c*.*%c%c"), TranslateT("All files"), 0, 0, 0);
+			mir_sntprintf(tszTemp, _T("%s%c*.*%c%c"), TranslateT("All files"), 0, 0, 0);
 
 			OPENFILENAME ofn = { 0 };
 			ofn.lpstrInitialDir = tszInitialDir;
@@ -936,12 +935,7 @@ static UINT _eventorder[] =
 	GC_EVENT_PART | GC_EVENT_TOPIC | GC_EVENT_ADDSTATUS | GC_EVENT_INFORMATION | GC_EVENT_QUIT | \
 	GC_EVENT_KICK | GC_EVENT_NOTICE)
 
-/**
- * Dialog procedure for group chat options tab #3 (event filter configuration)
- *
- * @return
- */
-
+// Dialog procedure for group chat options tab #3 (event filter configuration)
 INT_PTR CALLBACK DlgProcOptions3(HWND hwndDlg, UINT uMsg, WPARAM, LPARAM lParam)
 {
 	switch (uMsg) {

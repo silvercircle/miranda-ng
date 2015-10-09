@@ -45,7 +45,7 @@ struct TCpTable cpTable[] = {
 	{ 1257, LPGENT("Baltic") },
 	{ 1258, LPGENT("Vietnamese") },
 	{ 1361, LPGENT("Korean (Johab)") },
-	{ -1, NULL }
+	{ (UINT)-1, NULL }
 };
 
 wchar_t* weekDays[7] = { LPGENT("Sunday"), LPGENT("Monday"), LPGENT("Tuesday"), LPGENT("Wednesday"), LPGENT("Thursday"), LPGENT("Friday"), LPGENT("Saturday") };
@@ -107,7 +107,6 @@ __forceinline char *GetRTFFont(DWORD dwIndex)
  * the highlight code (individual background colors).
  * Doesn't touch the message for sure, but empty lines at the end are ugly anyway.
  */
-
 static void TrimMessage(TCHAR *msg)
 {
 	size_t iLen = mir_tstrlen(msg) - 1;
@@ -129,9 +128,9 @@ void TSAPI CacheLogFonts()
 	memset(logfonts, 0, (sizeof(LOGFONTA) * (MSGDLGFONTCOUNT + 2)));
 	for (int i = 0; i < MSGDLGFONTCOUNT; i++) {
 		LoadLogfont(i, &logfonts[i], &fontcolors[i], FONTMODULE);
-		mir_snprintf(rtfFontsGlobal[i], _countof(rtfFontsGlobal[i]), "\\f%u\\cf%u\\b%d\\i%d\\ul%d\\fs%u", i, i, logfonts[i].lfWeight >= FW_BOLD ? 1 : 0, logfonts[i].lfItalic, logfonts[i].lfUnderline, 2 * abs(logfonts[i].lfHeight) * 74 / logPixelSY);
+		mir_snprintf(rtfFontsGlobal[i], "\\f%u\\cf%u\\b%d\\i%d\\ul%d\\fs%u", i, i, logfonts[i].lfWeight >= FW_BOLD ? 1 : 0, logfonts[i].lfItalic, logfonts[i].lfUnderline, 2 * abs(logfonts[i].lfHeight) * 74 / logPixelSY);
 	}
-	mir_snprintf(rtfFontsGlobal[MSGDLGFONTCOUNT], _countof(rtfFontsGlobal[MSGDLGFONTCOUNT]), "\\f%u\\cf%u\\b%d\\i%d\\fs%u", MSGDLGFONTCOUNT, MSGDLGFONTCOUNT, 0, 0, 0);
+	mir_snprintf(rtfFontsGlobal[MSGDLGFONTCOUNT], "\\f%u\\cf%u\\b%d\\i%d\\fs%u", MSGDLGFONTCOUNT, MSGDLGFONTCOUNT, 0, 0, 0);
 
 	_tcsncpy(szToday, TranslateT("Today"), 20);
 	_tcsncpy(szYesterday, TranslateT("Yesterday"), 20);
@@ -460,7 +459,7 @@ static char* Template_CreateRTFFromDbEvent(TWindowData *dat, MCONTACT hContact, 
 	if (dwEffectiveFlags & MWF_DIVIDERWANTED) {
 		static char szStyle_div[128] = "\0";
 		if (szStyle_div[0] == 0)
-			mir_snprintf(szStyle_div, _countof(szStyle_div), "\\f%u\\cf%u\\ul0\\b%d\\i%d\\fs%u", H_MSGFONTID_DIVIDERS, H_MSGFONTID_DIVIDERS, 0, 0, 5);
+			mir_snprintf(szStyle_div, "\\f%u\\cf%u\\ul0\\b%d\\i%d\\fs%u", H_MSGFONTID_DIVIDERS, H_MSGFONTID_DIVIDERS, 0, 0, 5);
 
 		str.AppendFormat("\\sl-1\\slmult0\\highlight%d\\cf%d\\-\\par\\sl0", H_MSGFONTID_DIVIDERS, H_MSGFONTID_DIVIDERS);
 		dat->dwFlags &= ~MWF_DIVIDERWANTED;
@@ -1029,7 +1028,7 @@ static void SetupLogFormatting(TWindowData *dat)
 	if (dat->hHistoryEvents)
 		strncpy_s(dat->szMicroLf, "\\v\\cf%d \\ ~-+%d+-~\\v0 ", _TRUNCATE);
 	else
-		mir_snprintf(dat->szMicroLf, _countof(dat->szMicroLf), "%s\\par\\ltrpar\\sl-1%s ", GetRTFFont(MSGDLGFONTCOUNT), GetRTFFont(MSGDLGFONTCOUNT));
+		mir_snprintf(dat->szMicroLf, "%s\\par\\ltrpar\\sl-1%s ", GetRTFFont(MSGDLGFONTCOUNT), GetRTFFont(MSGDLGFONTCOUNT));
 }
 
 static void ReplaceIcons(HWND hwndDlg, TWindowData *dat, LONG startAt, int fAppend, BOOL isSent)
@@ -1139,17 +1138,17 @@ static void ReplaceIcons(HWND hwndDlg, TWindowData *dat, LONG startAt, int fAppe
 
 	if (dat->hHistoryEvents && dat->curHistory == dat->maxHistory) {
 		char szPattern[50];
-		mir_snprintf(szPattern, _countof(szPattern), "~-+%d+-~", (INT_PTR)dat->hHistoryEvents[0]);
+		mir_snprintf(szPattern, "~-+%d+-~", (INT_PTR)dat->hHistoryEvents[0]);
 
-		FINDTEXTEXA fi;
-		fi.lpstrText = szPattern;
-		fi.chrg.cpMin = 0;
-		fi.chrg.cpMax = -1;
-		if (SendMessageA(hwndrtf, EM_FINDTEXTEX, FR_DOWN, (LPARAM)&fi) != 0) {
+		FINDTEXTEXA ft;
+		ft.lpstrText = szPattern;
+		ft.chrg.cpMin = 0;
+		ft.chrg.cpMax = -1;
+		if (SendMessageA(hwndrtf, EM_FINDTEXTEX, FR_DOWN, (LPARAM)&ft) != 0) {
 			CHARRANGE sel;
 			sel.cpMin = 0;
 			sel.cpMax = 20;
-			SendMessage(hwndrtf, EM_SETSEL, 0, fi.chrgText.cpMax + 1);
+			SendMessage(hwndrtf, EM_SETSEL, 0, ft.chrgText.cpMax + 1);
 			SendMessageA(hwndrtf, EM_REPLACESEL, TRUE, (LPARAM)"");
 		}
 	}

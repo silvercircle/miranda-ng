@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: WhatsApp.dll
 ;  Plugin: WhatsApp protocol
-;  Version: 0.1.2.15
+;  Version: 0.1.3.1
 ;  Authors: Uli Hecht
 ;============================================================
 [WhatsApp protocol support for Miranda NG.]
@@ -18,13 +18,15 @@
 [Automatically open group chats]
 Автоматически открывать комнаты чата
 [Registration]
-Регистрация
-[SMS code]
-Код SMS
-[Request code]
-Код запроса
-[Register code]
 Код регистрации
+[Enter code]
+Ввести
+[Request SMS code]
+Запрос по SMS
+[Request Voice code]
+Запрос звонка
+[Register code]
+Подтвердить
 [Including country code, without '+' or '00']
 Включая код страны, без '+' или '00'
 [Invite users]
@@ -81,10 +83,12 @@
 Последнее появление %x в %X
 [An SMS with registration code will be sent to your mobile phone.\nNotice that you are not able to use the real WhatsApp and this plugin simultaneously!\nContinue?]
 Код регистрации придёт на ваш телефон в SMS.\nУчтите, что одновременное использование этого плагина и настоящего WhatsApp невозможно!\nПродолжить?
-[Your password has been set automatically. You can proceed with login now]
+[A call with registration code will be made to your mobile phone.\nNotice that you are not able to use the real WhatsApp and this plugin simultaneously!\nContinue?]
+Код регистрации будет сообщён во время звонка на ваш телефон.\nУчтите, что одновременное использование этого плагина и настоящего WhatsApp невозможно!\nПродолжить?
+[Your password has been set automatically. You can proceed with login now.]
 Ваш пароль был установлен автоматически. Теперь вы можете подключиться.
-[Please correctly specify your registration code received by SMS]
-Пожалуйста, верно укажите свой код регистрации, полученный в SMS
+[Please correctly specify your registration code received by SMS/Voice.]
+Пожалуйста, верно укажите свой код регистрации, полученный через SMS/звонок.
 [Changes will be applied after protocol restart]
 Изменения будут применены после перезапуска протокола
 [Network]
@@ -105,12 +109,14 @@
 Неудачная регистрация. Неверный ответ сервера.
 [Registration failed due to stale code. Please request a new code]
 Неудачная регистрация вследствие устаревшего кода. Пожалуйста, запросите новый код
-[Registration failed.]
-Неудачная регистрация.
+[Registration failed. Reason: %s]
+Неудачная регистрация. Причина: %s
 [Please try again in %i seconds]
 Пожалуйста, попробуйте ещё раз через %i секунд
 [Registration code has been sent to your phone.]
 Код регистрации был выслан на ваш телефон.
+[Registration failed.]
+Неудачная регистрация.
 [WhatsApp icon]
 Значок WhatsApp
 [Create chat group]

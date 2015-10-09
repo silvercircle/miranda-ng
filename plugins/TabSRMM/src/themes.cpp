@@ -181,8 +181,8 @@ AeroEffect  CSkin::m_aeroEffects[AERO_EFFECT_LAST] = {
 		1,
 		0,
 		0xc0c0c0,
-		-1,
-		-1,
+		DWORD(-1),
+		DWORD(-1),
 		AeroEffectCallback_Solid
 	}
 };
@@ -314,7 +314,6 @@ static DWORD __inline argb_from_cola(COLORREF col, UINT32 alpha)
 {
 	return((BYTE)percent_to_byte(alpha) << 24 | col);
 }
-
 
 void TSAPI  DrawAlpha(HDC hDC, PRECT rc, DWORD clr_base, int alpha, DWORD clr_dest, BYTE clr_dest_trans, BYTE bGradient,
 	BYTE bCorner, DWORD dwRadius, CImageItem *imageItem)
@@ -586,8 +585,6 @@ void __inline gradientHorizontal(UCHAR *ubRedFinal, UCHAR *ubGreenFinal, UCHAR *
 
 void __inline gradientVertical(UCHAR *ubRedFinal, UCHAR *ubGreenFinal, UCHAR *ubBlueFinal, ULONG ulBitmapHeight, UCHAR ubRed, UCHAR ubGreen, UCHAR ubBlue, UCHAR ubRed2, UCHAR ubGreen2, UCHAR ubBlue2, DWORD FLG_GRADIENT, BOOL transparent, UINT32 y, UCHAR *ubAlpha)
 {
-	FLOAT fSolidMulti, fInvSolidMulti;
-
 	// solid to transparent
 	if (transparent) {
 		*ubAlpha = (UCHAR)((float)y / (float)ulBitmapHeight * 255);
@@ -597,6 +594,7 @@ void __inline gradientVertical(UCHAR *ubRedFinal, UCHAR *ubGreenFinal, UCHAR *ub
 		*ubBlueFinal = ubBlue;
 	}
 	else { // solid to solid2
+		FLOAT fSolidMulti, fInvSolidMulti;
 		if (FLG_GRADIENT & GRADIENT_BT) {
 			fSolidMulti = ((float)y / (float)ulBitmapHeight);
 			fInvSolidMulti = 1 - fSolidMulti;
@@ -1008,7 +1006,6 @@ HBITMAP TSAPI CImageItem::LoadPNG(const TCHAR *szFilename)
 	return hBitmap;
 }
 
-
 /////////////////////////////////////////////////////////////////////////////////////////
 // set filename and load parameters from the database
 // called on:
@@ -1056,7 +1053,6 @@ void CSkin::Init(bool fStartup)
 // throws a warning to close all message windows before a skin can
 // be loaded. user can cancel it
 // @return: bool: true if windows were closed (or none was open) -> skin can be loaded
-//
 
 bool CSkin::warnToClose() const
 {
@@ -1212,7 +1208,7 @@ void CSkin::LoadIcon(const TCHAR *szSection, const TCHAR *name, HICON &hIcon)
 		TCHAR szDrive[MAX_PATH], szDir[MAX_PATH], szImagePath[MAX_PATH];
 
 		_tsplitpath(m_tszFileName, szDrive, szDir, NULL, NULL);
-		mir_sntprintf(szImagePath, _countof(szImagePath), _T("%s\\%s\\%s"), szDrive, szDir, buffer);
+		mir_sntprintf(szImagePath, _T("%s\\%s\\%s"), szDrive, szDir, buffer);
 		hIcon = (HICON)LoadImage(0, szImagePath, IMAGE_ICON, 16, 16, LR_LOADFROMFILE);
 	}
 	else hIcon = NULL;
@@ -1241,12 +1237,12 @@ void CSkin::ReadItem(const int id, const TCHAR *szItem)
 	this_item->ALPHA = min(this_item->ALPHA, 100);
 
 	clr = RGB(GetBValue(defaults->COLOR), GetGValue(defaults->COLOR), GetRValue(defaults->COLOR));
-	mir_sntprintf(def_color, _countof(def_color), _T("%6.6x"), clr);
+	mir_sntprintf(def_color, _T("%6.6x"), clr);
 	GetPrivateProfileString(szItem, _T("Color1"), def_color, buffer, 400, m_tszFileName);
 	this_item->COLOR = HexStringToLong(buffer);
 
 	clr = RGB(GetBValue(defaults->COLOR2), GetGValue(defaults->COLOR2), GetRValue(defaults->COLOR2));
-	mir_sntprintf(def_color, _countof(def_color), _T("%6.6x"), clr);
+	mir_sntprintf(def_color, _T("%6.6x"), clr);
 	GetPrivateProfileString(szItem, _T("Color2"), def_color, buffer, 400, m_tszFileName);
 	this_item->COLOR2 = HexStringToLong(buffer);
 
@@ -1316,7 +1312,7 @@ void CSkin::ReadImageItem(const TCHAR *itemname)
 
 	// handle the assignments of image items to skin items
 	for (int n = 0;; n++) {
-		mir_sntprintf(szItemNr, _countof(szItemNr), _T("Item%d"), n);
+		mir_sntprintf(szItemNr, _T("Item%d"), n);
 		GetPrivateProfileString(itemname, szItemNr, _T("None"), buffer, 500, m_tszFileName);
 		if (!mir_tstrcmp(buffer, _T("None")))
 			break;
@@ -1481,7 +1477,7 @@ void CSkin::Load(void)
 	GetPrivateProfileString(_T("Theme"), _T("File"), _T("None"), buffer, MAX_PATH, m_tszFileName);
 
 	_tsplitpath(m_tszFileName, szDrive, szPath, NULL, NULL);
-	mir_sntprintf(szFinalName, _countof(szFinalName), _T("%s\\%s\\%s"), szDrive, szPath, buffer);
+	mir_sntprintf(szFinalName, _T("%s\\%s\\%s"), szDrive, szPath, buffer);
 	if (PathFileExists(szFinalName)) {
 		ReadThemeFromINI(szFinalName, 0, FALSE, m_fLoadOnStartup ? 0 : M.GetByte("skin_loadmode", 0));
 		CacheLogFonts();

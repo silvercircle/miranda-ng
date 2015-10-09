@@ -74,10 +74,10 @@ void InitSelfSounds()
 	for (int i = 0; i < protoCount; i++) {
 		for (int j = 0; j < _countof(selfSounds); j++) {
 			char namebuf[128];
-			mir_snprintf(namebuf, _countof(namebuf), "%s%s", protos[i]->szModuleName, selfSounds[j].szName);
+			mir_snprintf(namebuf, "%s%s", protos[i]->szModuleName, selfSounds[j].szName);
 
 			TCHAR infobuf[256];
-			mir_sntprintf(infobuf, _countof(infobuf), _T("%s [%s]"), TranslateT("Self status"), protos[i]->tszAccountName);
+			mir_sntprintf(infobuf, _T("%s [%s]"), TranslateT("Self status"), protos[i]->tszAccountName);
 			SkinAddNewSoundExT(namebuf, infobuf, pcli->pfnGetStatusModeDescription(selfSounds[j].iStatus, 0));
 		}
 	}
@@ -178,6 +178,7 @@ static int OnLoadInit(WPARAM, LPARAM)
 	mir_getCI(NULL);
 
 	CMenuItem mi;
+	SET_UID(mi, 0x5d72ca1f, 0xc52, 0x436d, 0x81, 0x47, 0x29, 0xf6, 0xc3, 0x28, 0xb5, 0xd1);
 	mi.position = -0x7FFFFFFF;
 	mi.flags = CMIF_TCHAR;
 	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);

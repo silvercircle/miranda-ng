@@ -330,6 +330,8 @@ HRESULT CLUI::RegisterAvatarMenu()
 	Icon_RegisterT(g_hInst, LPGENT("Contact list"), iconItem, _countof(iconItem));
 
 	CMenuItem mi;
+
+	SET_UID(mi, 0x1cc99858, 0x40ca, 0x4558, 0xae, 0x10, 0xba, 0x81, 0xaf, 0x4c, 0x67, 0xb5);
 	CreateServiceFunction("CList/ShowContactAvatar", CLUI::Service_Menu_ShowContactAvatar);
 	mi.position = 2000150000;
 	mi.hIcolibItem = iconItem[0].hIcolib;
@@ -337,6 +339,7 @@ HRESULT CLUI::RegisterAvatarMenu()
 	mi.pszService = "CList/ShowContactAvatar";
 	hShowAvatarMenuItem = Menu_AddContactMenuItem(&mi);
 
+	SET_UID(mi, 0x13f93d1b, 0xd470, 0x45de, 0x86, 0x8f, 0x22, 0x3b, 0x89, 0x4f, 0x4f, 0xa3);
 	CreateServiceFunction("CList/HideContactAvatar", CLUI::Service_Menu_HideContactAvatar);
 	mi.position = 2000150001;
 	mi.hIcolibItem = iconItem[1].hIcolib;
@@ -896,7 +899,7 @@ static int CLUI_GetConnectingIconForProtoCount(char *szAccoName)
 
 	if (szAccoName) {
 		// first of all try to find by account name( or empty - global )
-		mir_sntprintf(fileFull, _countof(fileFull), _T("%s\\Icons\\proto_conn_%S.dll"), tszFolderPath, szAccoName);
+		mir_sntprintf(fileFull, _T("%s\\Icons\\proto_conn_%S.dll"), tszFolderPath, szAccoName);
 		if (count = ExtractIconEx(fileFull, -1, NULL, NULL, 1))
 			return count;
 
@@ -904,7 +907,7 @@ static int CLUI_GetConnectingIconForProtoCount(char *szAccoName)
 			// second try to find by protocol name
 			PROTOACCOUNT *acc = Proto_GetAccount(szAccoName);
 			if (acc && !acc->bOldProto) {
-				mir_sntprintf(fileFull, _countof(fileFull), _T("%s\\Icons\\proto_conn_%S.dll"), tszFolderPath, acc->szProtoName);
+				mir_sntprintf(fileFull, _T("%s\\Icons\\proto_conn_%S.dll"), tszFolderPath, acc->szProtoName);
 				if (count = ExtractIconEx(fileFull, -1, NULL, NULL, 1))
 					return count;
 			}
@@ -912,7 +915,7 @@ static int CLUI_GetConnectingIconForProtoCount(char *szAccoName)
 	}
 
 	// third try global
-	mir_sntprintf(fileFull, _countof(fileFull), _T("%s\\Icons\\proto_conn.dll"), tszFolderPath);
+	mir_sntprintf(fileFull, _T("%s\\Icons\\proto_conn.dll"), tszFolderPath);
 	if (count = ExtractIconEx(fileFull, -1, NULL, NULL, 1))
 		return count;
 
@@ -938,7 +941,7 @@ static HICON CLUI_GetConnectingIconForProto(char *szAccoName, int idx)
 	HICON hIcon;
 
 	if (szAccoName) {
-		mir_sntprintf(szFullPath, _countof(szFullPath), _T("proto_conn_%S.dll"), szAccoName);
+		mir_sntprintf(szFullPath, _T("proto_conn_%S.dll"), szAccoName);
 		if (hIcon = CLUI_LoadIconFromExternalFile(szFullPath, idx))
 			return hIcon;
 
@@ -946,7 +949,7 @@ static HICON CLUI_GetConnectingIconForProto(char *szAccoName, int idx)
 			// second try to find by protocol name
 			PROTOACCOUNT *acc = Proto_GetAccount(szAccoName);
 			if (acc && !acc->bOldProto) {
-				mir_sntprintf(szFullPath, _countof(szFullPath), _T("proto_conn_%S.dll"), acc->szProtoName);
+				mir_sntprintf(szFullPath, _T("proto_conn_%S.dll"), acc->szProtoName);
 				if (hIcon = CLUI_LoadIconFromExternalFile(szFullPath, idx))
 					return hIcon;
 			}
@@ -1582,7 +1585,7 @@ LRESULT CLUI::PreProcessWndProc(UINT msg, WPARAM wParam, LPARAM lParam, BOOL& bH
 	if (msg == uMsgGetProfile && wParam != 0) { // got IPC message
 		int rc = 0;
 		char szName[MAX_PATH];
-		mir_snprintf(szName, _countof(szName), "Miranda::%u", wParam); // caller will tell us the ID of the map
+		mir_snprintf(szName, "Miranda::%u", wParam); // caller will tell us the ID of the map
 		HANDLE hMap = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, szName);
 		if (hMap != NULL) {
 			void *hView = NULL;

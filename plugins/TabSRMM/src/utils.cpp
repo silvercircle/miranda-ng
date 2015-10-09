@@ -1,4 +1,4 @@
-/////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
 // Copyright (с) 2012-15 Miranda NG project,
@@ -62,39 +62,6 @@ static TCHAR *formatting_strings_end[] = { _T("b0 "), _T("i0 "), _T("u0 "), _
 
 #define NR_CODES 5
 
-TCHAR* Utils::FilterEventMarkers(TCHAR *wszText)
-{
-	tstring text(wszText);
-	size_t beginmark = 0, endmark = 0;
-
-	while (true) {
-		if ((beginmark = text.find(_T("~-+"))) != text.npos) {
-			endmark = text.find(_T("+-~"), beginmark);
-			if (endmark != text.npos && (endmark - beginmark) > 5) {
-				text.erase(beginmark, (endmark - beginmark) + 3);
-				continue;
-			}
-			break;
-		}
-		break;
-	}
-
-	while (true) {
-		if ((beginmark = text.find(_T("\xAA"))) != text.npos) {
-			endmark = beginmark + 2;
-			if (endmark != text.npos && (endmark - beginmark) > 1) {
-				text.erase(beginmark, endmark - beginmark);
-				continue;
-			}
-			break;
-		}
-		break;
-	}
-
-	mir_tstrcpy(wszText, text.c_str());
-	return wszText;
-}
-
 /////////////////////////////////////////////////////////////////////////////////////////
 // this translates formatting tags into rtf sequences...
 // flags: loword = words only for simple  * /_ formatting
@@ -133,7 +100,7 @@ const TCHAR* Utils::FormatRaw(TWindowData *dat, const TCHAR *msg, int flags, BOO
 				}
 
 				tstring colorname = message.substr(beginmark + 7, 8);
-			search_again:
+search_again:
 				bool clr_found = false;
 				for (int ii = 0; ii < rtf_ctable_size; ii++) {
 					if (!_tcsnicmp((TCHAR*)colorname.c_str(), rtf_ctable[ii].szName, mir_tstrlen(rtf_ctable[ii].szName))) {
@@ -152,7 +119,7 @@ const TCHAR* Utils::FormatRaw(TWindowData *dat, const TCHAR *msg, int flags, BOO
 						clr_found = true;
 						if (was_added) {
 							TCHAR wszTemp[100];
-							mir_sntprintf(wszTemp, _countof(wszTemp), _T("##col##%06u:%04u"), endmark - closing, ii);
+							mir_sntprintf(wszTemp, _T("##col##%06u:%04u"), endmark - closing, ii);
 							wszTemp[99] = 0;
 							message.insert(beginmark, wszTemp);
 						}
@@ -173,7 +140,7 @@ const TCHAR* Utils::FormatRaw(TWindowData *dat, const TCHAR *msg, int flags, BOO
 						else goto invalid_code;
 					}
 					else {
-					invalid_code:
+invalid_code:
 						if (endmark != message.npos)
 							message.erase(endmark, 8);
 						if (closing != message.npos && closing < (size_t)endmark)
@@ -205,11 +172,11 @@ const TCHAR* Utils::FormatRaw(TWindowData *dat, const TCHAR *msg, int flags, BOO
 			}
 
 			// search a corresponding endmarker which fulfills the criteria
-			INT_PTR tempmark = beginmark + 1;
-			while ((endmark = message.find(endmarker, tempmark)) != message.npos) {
+			INT_PTR mark = beginmark + 1;
+			while ((endmark = message.find(endmarker, mark)) != message.npos) {
 				if (_istpunct(message[endmark + 1]) || _istspace(message[endmark + 1]) || message[endmark + 1] == 0 || _tcschr(_T("*/_"), message[endmark + 1]) != NULL)
 					goto ok;
-				tempmark = endmark + 1;
+				mark = endmark + 1;
 			}
 			break;
 		}
@@ -217,7 +184,7 @@ const TCHAR* Utils::FormatRaw(TWindowData *dat, const TCHAR *msg, int flags, BOO
 			if ((endmark = message.find(endmarker, beginmark + 1)) == message.npos)
 				break;
 		}
-	ok:
+ok:
 		if ((endmark - beginmark) < 2) {
 			beginmark++;
 			continue;
@@ -267,197 +234,138 @@ const TCHAR* Utils::FormatRaw(TWindowData *dat, const TCHAR *msg, int flags, BOO
 // format the title bar string for IM chat sessions using placeholders.
 // the caller must mir_free() the returned string
 
-TCHAR* Utils::FormatTitleBar(const TWindowData *dat, const TCHAR *szFormat)
+static TCHAR* Trunc500(TCHAR *str)
 {
-	INT_PTR tempmark = 0;
-	TCHAR szTemp[512];
+	if (mir_tstrlen(str) > 500)
+		str[500] = 0;
+	return str;
+}
 
+bool Utils::FormatTitleBar(const TWindowData *dat, const TCHAR *szFormat, CMString &dest)
+{
 	if (dat == 0)
-		return 0;
+		return false;
 
-	tstring title(szFormat);
-
-	for (size_t curpos = 0; curpos < title.length();) {
-		if (title[curpos] != '%') {
-			curpos++;
+	for (const TCHAR *src = szFormat; *src; src++) {
+		if (*src != '%') {
+			dest.AppendChar(*src);
 			continue;
 		}
-		tempmark = curpos;
-		curpos++;
-		if (title[curpos] == 0)
+
+		switch (*++src) {
+		case 'n':
+			dest.Append(dat->cache->getNick());
 			break;
 
-		switch (title[curpos]) {
-		case 'n': {
-			const	TCHAR *tszNick = dat->cache->getNick();
-			if (tszNick[0])
-				title.insert(tempmark + 2, tszNick);
-			title.erase(tempmark, 2);
-			curpos = tempmark + mir_tstrlen(tszNick);
-			break;
-		}
 		case 'p':
-		case 'a': {
-			const	TCHAR *szAcc = dat->cache->getRealAccount();
-			if (szAcc)
-				title.insert(tempmark + 2, szAcc);
-			title.erase(tempmark, 2);
-			curpos = tempmark + mir_tstrlen(szAcc);
+		case 'a':
+			dest.Append(dat->cache->getRealAccount());
 			break;
-		}
-		case 's': {
-			if (dat->szStatus[0])
-				title.insert(tempmark + 2, dat->szStatus);
-			title.erase(tempmark, 2);
-			curpos = tempmark + mir_tstrlen(dat->szStatus);
-			break;
-		}
-		case 'u': {
-			const TCHAR	*szUIN = dat->cache->getUIN();
-			if (szUIN[0])
-				title.insert(tempmark + 2, szUIN);
-			title.erase(tempmark, 2);
-			curpos = tempmark + mir_tstrlen(szUIN);
-			break;
-		}
-		case 'c': {
-			TCHAR	*c = (!mir_tstrcmp(dat->pContainer->szName, _T("default")) ? TranslateT("Default container") : dat->pContainer->szName);
-			title.insert(tempmark + 2, c);
-			title.erase(tempmark, 2);
-			curpos = tempmark + mir_tstrlen(c);
-			break;
-		}
-		case 'o': {
-			const char *szProto = dat->cache->getActiveProto();
-			if (szProto)
-				title.insert(tempmark + 2, _A2T(szProto));
-			title.erase(tempmark, 2);
-			curpos = tempmark + (szProto ? mir_strlen(szProto) : 0);
-			break;
-		}
-		case 'x': {
-			BYTE xStatus = dat->cache->getXStatusId();
 
-			if (dat->wStatus != ID_STATUS_OFFLINE && xStatus > 0 && xStatus <= 31) {
-				DBVARIANT dbv = { 0 };
+		case 's':
+			dest.Append(dat->szStatus);
+			break;
 
-				if (!db_get_ts(dat->hContact, (char *)dat->szProto, "XStatusName", &dbv)) {
-					_tcsncpy(szTemp, dbv.ptszVal, 500);
-					szTemp[500] = 0;
-					db_free(&dbv);
-					title.insert(tempmark + 2, szTemp);
-					curpos = tempmark + mir_tstrlen(szTemp);
-				}
-				else {
-					title.insert(tempmark + 2, xStatusDescr[xStatus - 1]);
-					curpos = tempmark + mir_tstrlen(xStatusDescr[xStatus - 1]);
+		case 'u':
+			dest.Append(dat->cache->getUIN());
+			break;
+
+		case 'c':
+			dest.Append(!mir_tstrcmp(dat->pContainer->szName, _T("default")) ? TranslateT("Default container") : dat->pContainer->szName);
+			break;
+
+		case 'o':
+			{
+				const char *szProto = dat->cache->getActiveProto();
+				if (szProto)
+					dest.Append(_A2T(szProto));
+			}
+			break;
+
+		case 'x':
+			{
+				BYTE xStatus = dat->cache->getXStatusId();
+				if (dat->wStatus != ID_STATUS_OFFLINE && xStatus > 0 && xStatus <= 31) {
+					ptrT szXStatus(db_get_tsa(dat->hContact, dat->szProto, "XStatusName"));
+					dest.Append((szXStatus != NULL) ? Trunc500(szXStatus) : xStatusDescr[xStatus - 1]);
 				}
 			}
-			title.erase(tempmark, 2);
 			break;
-		}
-		case 'm': {
-			TCHAR *szFinalStatus = NULL;
-			BYTE  xStatus = dat->cache->getXStatusId();
-			if (dat->wStatus != ID_STATUS_OFFLINE && xStatus > 0 && xStatus <= 31) {
-				DBVARIANT dbv = { 0 };
 
-				if (!db_get_ts(dat->hContact, (char *)dat->szProto, "XStatusName", &dbv)) {
-					_tcsncpy(szTemp, dbv.ptszVal, 500);
-					szTemp[500] = 0;
-					db_free(&dbv);
-					title.insert(tempmark + 2, szTemp);
+		case 'm':
+			{
+				BYTE xStatus = dat->cache->getXStatusId();
+				if (dat->wStatus != ID_STATUS_OFFLINE && xStatus > 0 && xStatus <= 31) {
+					ptrT szXStatus(db_get_tsa(dat->hContact, dat->szProto, "XStatusName"));
+					dest.Append((szXStatus != NULL) ? Trunc500(szXStatus) : xStatusDescr[xStatus - 1]);
 				}
-				else szFinalStatus = xStatusDescr[xStatus - 1];
+				else dest.Append(dat->szStatus && dat->szStatus[0] ? dat->szStatus : _T("(undef)"));
 			}
-			else szFinalStatus = (TCHAR*)(dat->szStatus && dat->szStatus[0] ? dat->szStatus : _T("(undef)"));
-
-			if (szFinalStatus) {
-				title.insert(tempmark + 2, szFinalStatus);
-				curpos = tempmark + mir_tstrlen(szFinalStatus);
-			}
-
-			title.erase(tempmark, 2);
 			break;
-		}
 
-				  // status message (%T will skip the "No status message" for empty messages)
+		// status message (%T will skip the "No status message" for empty messages)
 		case 't':
-		case 'T': {
-			TCHAR	*tszStatusMsg = dat->cache->getNormalizedStatusMsg(dat->cache->getStatusMsg(), true);
-			if (tszStatusMsg) {
-				title.insert(tempmark + 2, tszStatusMsg);
-				curpos = tempmark + mir_tstrlen(tszStatusMsg);
+		case 'T':
+			{
+				ptrT tszStatus(dat->cache->getNormalizedStatusMsg(dat->cache->getStatusMsg(), true));
+				if (tszStatus)
+					dest.Append(tszStatus);
+				else if (*src == 't')
+					dest.Append(TranslateT("No status message"));
 			}
-			else if (title[curpos] == 't') {
-				const TCHAR* tszStatusMsg = TranslateT("No status message");
-				title.insert(tempmark + 2, tszStatusMsg);
-				curpos = tempmark + mir_tstrlen(tszStatusMsg);
+			break;
+
+		case 'g':
+			{
+				ptrT tszGroup(db_get_tsa(dat->hContact, "CList", "Group"));
+				if (tszGroup != NULL)
+					dest.Append(tszGroup);
 			}
-			title.erase(tempmark, 2);
-			if (tszStatusMsg)
-				mir_free(tszStatusMsg);
 			break;
-		}
-		default:
-			title.erase(tempmark, 1);
-			break;
+
+		case 0: // wrongly formed format string
+			return true;
 		}
 	}
 
-	return mir_tstrndup(title.c_str(), title.length());
+	return true;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////
 
 char* Utils::FilterEventMarkers(char *szText)
 {
-	std::string text(szText);
-	size_t beginmark = 0, endmark = 0;
-
-	while (true) {
-		if ((beginmark = text.find("~-+")) != text.npos) {
-			endmark = text.find("+-~", beginmark);
-			if (endmark != text.npos && (endmark - beginmark) > 5) {
-				text.erase(beginmark, (endmark - beginmark) + 3);
-				continue;
-			}
+	for (char *p = strstr(szText, "~-+"); p != NULL; p = strstr(p, "~-+")) {
+		char *pEnd = strstr(p + 3, "+-~");
+		if (pEnd == NULL)
 			break;
-		}
-		break;
+
+		strdel(p, (pEnd - p) + 3);
 	}
 
-	while (true) {
-		if ((beginmark = text.find("\xAA")) != text.npos) {
-			endmark = beginmark + 2;
-			if (endmark != text.npos && (endmark - beginmark) > 1) {
-				text.erase(beginmark, endmark - beginmark);
-				continue;
-			}
-			break;
-		}
-		break;
-	}
-	//
-	mir_strcpy(szText, text.c_str());
 	return szText;
 }
 
-const TCHAR* Utils::DoubleAmpersands(TCHAR *pszText)
+WCHAR* Utils::FilterEventMarkers(WCHAR *wszText)
 {
-	tstring text(pszText);
+	for (WCHAR *p = wcsstr(wszText, L"~-+"); p != NULL; p = wcsstr(p, L"~-+")) {
+		WCHAR *pEnd = wcsstr(p + 3, L"+-~");
+		if (pEnd == NULL)
+			break;
 
-	size_t textPos = 0;
-
-	while (true) {
-		if ((textPos = text.find(_T("&"), textPos)) != text.npos) {
-			text.insert(textPos, _T("%"));
-			text.replace(textPos, 2, _T("&&"));
-			textPos += 2;
-			continue;
-		}
-		break;
+		strdelw(p, (pEnd - p) + 3);
 	}
-	mir_tstrcpy(pszText, text.c_str());
-	return pszText;
+
+	return wszText;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+void Utils::DoubleAmpersands(TCHAR *pszText, size_t len)
+{
+	CMString text(pszText);
+	text.Replace(_T("&"), _T("&&"));
+	mir_tstrncpy(pszText, text.c_str(), len);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -641,7 +549,7 @@ void Utils::ReadPrivateContainerSettings(TContainerData *pContainer, bool fForce
 	char szCname[50];
 	TContainerSettings csTemp = { 0 };
 
-	mir_snprintf(szCname, _countof(szCname), "%s%d_Blob", CNT_BASEKEYNAME, pContainer->iContainerIndex);
+	mir_snprintf(szCname, "%s%d_Blob", CNT_BASEKEYNAME, pContainer->iContainerIndex);
 	Utils::ReadContainerSettingsFromDB(0, &csTemp, szCname);
 	if (csTemp.fPrivate || fForce) {
 		if (pContainer->settings == 0 || pContainer->settings == &PluginConfig.globalContainerSettings)
@@ -658,10 +566,10 @@ void Utils::SaveContainerSettings(TContainerData *pContainer, const char *szSett
 
 	pContainer->dwFlags &= ~(CNT_DEFERREDCONFIGURE | CNT_CREATE_MINIMIZED | CNT_DEFERREDSIZEREQUEST | CNT_CREATE_CLONED);
 	if (pContainer->settings->fPrivate) {
-		mir_snprintf(szCName, _countof(szCName), "%s%d_Blob", szSetting, pContainer->iContainerIndex);
+		mir_snprintf(szCName, "%s%d_Blob", szSetting, pContainer->iContainerIndex);
 		WriteContainerSettingsToDB(0, pContainer->settings, szCName);
 	}
-	mir_snprintf(szCName, _countof(szCName), "%s%d_theme", szSetting, pContainer->iContainerIndex);
+	mir_snprintf(szCName, "%s%d_theme", szSetting, pContainer->iContainerIndex);
 	if (mir_tstrlen(pContainer->szRelThemeFile) > 1) {
 		if (pContainer->fPrivateThemeChanged == TRUE) {
 			PathToRelativeT(pContainer->szRelThemeFile, pContainer->szAbsThemeFile, M.getDataPath());
@@ -862,14 +770,13 @@ void Utils::showDlgControl(const HWND hwnd, UINT id, int showCmd)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // stream function to write the contents of the message log to an rtf file
-
 DWORD CALLBACK Utils::StreamOut(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG cb, LONG * pcb)
 {
 	TCHAR *szFilename = (TCHAR*)dwCookie;
 	HANDLE hFile = CreateFile(szFilename, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile != INVALID_HANDLE_VALUE) {
 		SetFilePointer(hFile, 0, NULL, FILE_END);
-		FilterEventMarkers(reinterpret_cast<TCHAR *>(pbBuff));
+		FilterEventMarkers((char*)pbBuff);
 		WriteFile(hFile, pbBuff, cb, (DWORD *)pcb, NULL);
 		*pcb = cb;
 		CloseHandle(hFile);
@@ -880,7 +787,7 @@ DWORD CALLBACK Utils::StreamOut(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG cb, LONG
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // extract a resource from the given module
-// tszPath must end with \
+// tszPath must end with \ 
 
 bool Utils::extractResource(const HMODULE h, const UINT uID, const TCHAR *tszName, const TCHAR *tszPath,
 	const TCHAR *tszFilename, bool fForceOverwrite)
@@ -893,7 +800,7 @@ bool Utils::extractResource(const HMODULE h, const UINT uID, const TCHAR *tszNam
 			DWORD	dwSize = SizeofResource(g_hInst, hRes), written = 0;
 
 			TCHAR	szFilename[MAX_PATH];
-			mir_sntprintf(szFilename, _countof(szFilename), _T("%s%s"), tszPath, tszFilename);
+			mir_sntprintf(szFilename, _T("%s%s"), tszPath, tszFilename);
 			if (!fForceOverwrite)
 				if (PathFileExists(szFilename))
 					return true;
@@ -1071,23 +978,22 @@ void Utils::AddToFileList(TCHAR ***pppFiles, int *totalCount, LPCTSTR szFilename
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // implementation of the CWarning class
-
-/** IMPORTANT note to translators for translation of the warning dialogs:
- *
- * Make sure to NOT remove the pipe character ( | ) from the strings. This separates the
- * warning title from the actual warning text.
- *
- * Also, do NOT insert multiple | characters in the translated string. Not well-formatted
- * warnings cannot be translated and the plugin will show the untranslated versions.
- *
- * strings marked with a NOT TRANSLATABLE comment cannot be translated at all. This
- * will be used for important and critical error messages only.
- *
- * some strings are empty, this is intentional and used for error messages that share
- * the message with other possible error notifications (popups, tool tips etc.)
- *
- * Entries that do not use the LPGENT() macro are NOT TRANSLATABLE, so don't bother translating them.
- */
+//
+// IMPORTANT note to translators for translation of the warning dialogs:
+// 
+//  Make sure to NOT remove the pipe character ( | ) from the strings. This separates the
+//  warning title from the actual warning text.
+// 
+//  Also, do NOT insert multiple | characters in the translated string. Not well-formatted
+//  warnings cannot be translated and the plugin will show the untranslated versions.
+// 
+//  strings marked with a NOT TRANSLATABLE comment cannot be translated at all. This
+//  will be used for important and critical error messages only.
+// 
+//  some strings are empty, this is intentional and used for error messages that share
+//  the message with other possible error notifications (popups, tool tips etc.)
+// 
+//  Entries that do not use the LPGENT() macro are NOT TRANSLATABLE, so don't bother translating them.
 
 static wchar_t* warnings[] = {
 	LPGENT("Important release notes|A test warning message"),							/* WARN_TEST */ /* reserved for important notes after upgrade - NOT translatable */
@@ -1096,16 +1002,16 @@ static wchar_t* warnings[] = {
 	LPGENT("Missing component|The icon pack is missing. Please install it to the default icons folder.\n\nNo icons will be available"),		/* WARN_ICONPACKMISSING */
 	LPGENT("Aero peek warning|You have enabled Aero Peek features and loaded a custom container window skin\n\nThis can result in minor visual anomalies in the live preview feature."),	/* WARN_AEROPEEKSKIN */
 	LPGENT("File transfer problem|Sending the image by file transfer failed.\n\nPossible reasons: File transfers not supported, either you or the target contact is offline, or you are invisible and the target contact is not on your visibility list."), /* WARN_IMGSVC_MISSING */
-	LPGENT("Settings problem|The option \\b1 History->Imitate IEView API\\b0  is enabled and the History++ plugin is active. This can cause problems when using IEView as message log viewer.\n\nShould I correct the option (a restart is required)?"), /* WARN_HPP_APICHECK */
-	L" ", /* WARN_NO_SENDLATER */ /*uses "Configuration issue|The unattended send feature is disabled. The \\b1 send later\\b0  and \\b1 send to multiple contacts\\b0  features depend on it.\n\nYou must enable it under \\b1Options->Message sessions->Advanced tweaks\\b0. Changing this option requires a restart." */
+	LPGENT("Settings problem|The option \\b1 History -> Imitate IEView API\\b0  is enabled and the History++ plugin is active. This can cause problems when using IEView as message log viewer.\n\nShould I correct the option (a restart is required)?"), /* WARN_HPP_APICHECK */
+	L" ", /* WARN_NO_SENDLATER */ /*uses "Configuration issue|The unattended send feature is disabled. The \\b1 send later\\b0  and \\b1 send to multiple contacts\\b0  features depend on it.\n\nYou must enable it under \\b1Options -> Message sessions -> Advanced tweaks\\b0. Changing this option requires a restart." */
 	LPGENT("Closing Window|You are about to close a window with multiple tabs open.\n\nProceed?"),		/* WARN_CLOSEWINDOW */
 	LPGENT("Closing options dialog|To reflect the changes done by importing a theme in the options dialog, the dialog must be closed after loading a theme \\b1 and unsaved changes might be lost\\b0 .\n\nDo you want to continue?"), /* WARN_OPTION_CLOSE */
 	LPGENT("Loading a theme|Loading a color and font theme can overwrite the settings defined by your skin.\n\nDo you want to continue?"), /* WARN_THEME_OVERWRITE */
 };
 
 CWarning::CWarning(const wchar_t *tszTitle, const wchar_t *tszText, const UINT uId, const DWORD dwFlags) :
-m_szTitle(mir_wstrdup(tszTitle)),
-m_szText(mir_wstrdup(tszText))
+	m_szTitle(mir_wstrdup(tszTitle)),
+	m_szText(mir_wstrdup(tszText))
 {
 	m_uId = uId;
 	m_hFontCaption = 0;
@@ -1141,22 +1047,23 @@ __int64 CWarning::getMask()
 	return(mask);
 }
 
-/**
- * send cancel message to all open warning dialogs so they are destroyed
- * before TabSRMM is unloaded.
- *
- * called by the OkToExit handler in globals.cpp
- */
+/////////////////////////////////////////////////////////////////////////////////////////
+// send cancel message to all open warning dialogs so they are destroyed
+// before TabSRMM is unloaded.
+// 
+// called by the OkToExit handler in globals.cpp
+
 void CWarning::destroyAll()
 {
 	if (hWindowList)
 		WindowList_Broadcast(hWindowList, WM_COMMAND, MAKEWPARAM(IDCANCEL, 0), 0);
 }
-/**
- * show a CWarning dialog using the id value. Check whether the user has chosen to
- * not show this message again. This has room for 64 different warning dialogs, which
- * should be enough in the first place. Extending it should not be too hard though.
- */
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// show a CWarning dialog using the id value. Check whether the user has chosen to
+// not show this message again. This has room for 64 different warning dialogs, which
+// should be enough in the first place. Extending it should not be too hard though.
+
 LRESULT CWarning::show(const int uId, DWORD dwFlags, const wchar_t* tszTxt)
 {
 	wchar_t*	separator_pos = 0;
@@ -1167,10 +1074,8 @@ LRESULT CWarning::show(const int uId, DWORD dwFlags, const wchar_t* tszTxt)
 	if (0 == hWindowList)
 		hWindowList = WindowList_Create();
 
-	/*
-	* don't open new warnings when shutdown was initiated (modal ones will otherwise
-	* block the shutdown)
-	*/
+	// don't open new warnings when shutdown was initiated (modal ones will otherwise
+	// block the shutdown)
 	if (CMimAPI::m_shutDown)
 		return -1;
 
@@ -1181,10 +1086,8 @@ LRESULT CWarning::show(const int uId, DWORD dwFlags, const wchar_t* tszTxt)
 			if (dwFlags & CWF_UNTRANSLATED)
 				_s = TranslateTS(warnings[uId]);
 			else {
-				/*
-				* revert to untranslated warning when the translated message
-				* is not well-formatted.
-				*/
+				// revert to untranslated warning when the translated message
+				// is not well-formatted.
 				_s = TranslateTS(warnings[uId]);
 
 				if (mir_wstrlen(_s) < 3 || 0 == wcschr(_s, '|'))
@@ -1228,9 +1131,9 @@ LRESULT CWarning::show(const int uId, DWORD dwFlags, const wchar_t* tszTxt)
 	return -1;
 }
 
-/**
- * stub dlg procedure. Just register the object pointer in WM_INITDIALOG
- */
+/////////////////////////////////////////////////////////////////////////////////////////
+// stub dlg procedure.Just register the object pointer in WM_INITDIALOG
+
 INT_PTR CALLBACK CWarning::stubDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	CWarning	*w = reinterpret_cast<CWarning *>(::GetWindowLongPtr(hwnd, GWLP_USERDATA));
@@ -1246,117 +1149,117 @@ INT_PTR CALLBACK CWarning::stubDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		}
 		break;
 
-#if defined(__LOGDEBUG_)
+	#if defined(__LOGDEBUG_)
 	case WM_NCDESTROY:
 		_DebugTraceW(L"window destroyed");
 		break;
-#endif
+	#endif
 	}
 	return FALSE;
 }
 
-/**
- * dialog procedure for the warning dialog box
- */
+/////////////////////////////////////////////////////////////////////////////////////////
+// dialog procedure for the warning dialog box
+
 INT_PTR CALLBACK CWarning::dlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg) {
 	case WM_INITDIALOG:
-	{
-		HICON		hIcon = 0;
-		UINT		uResId = 0;
-		TCHAR		temp[1024];
-		SETTEXTEX	stx = { ST_SELECTION, CP_UTF8 };
-		size_t		pos = 0;
+		{
+			HICON		hIcon = 0;
+			UINT		uResId = 0;
+			TCHAR		temp[1024];
+			SETTEXTEX	stx = { ST_SELECTION, CP_UTF8 };
+			size_t		pos = 0;
 
-		m_hwnd = hwnd;
+			m_hwnd = hwnd;
 
-		::SetWindowTextW(hwnd, TranslateT("TabSRMM warning message"));
-		::SendMessage(hwnd, WM_SETICON, ICON_BIG, LPARAM(::Skin_LoadIcon(SKINICON_OTHER_MIRANDA, true)));
-		::SendMessage(hwnd, WM_SETICON, ICON_SMALL, LPARAM(::Skin_LoadIcon(SKINICON_OTHER_MIRANDA)));
-		::SendDlgItemMessage(hwnd, IDC_WARNTEXT, EM_AUTOURLDETECT, TRUE, 0);
-		::SendDlgItemMessage(hwnd, IDC_WARNTEXT, EM_SETEVENTMASK, 0, ENM_LINK);
+			::SetWindowTextW(hwnd, TranslateT("TabSRMM warning message"));
+			::SendMessage(hwnd, WM_SETICON, ICON_BIG, LPARAM(::Skin_LoadIcon(SKINICON_OTHER_MIRANDA, true)));
+			::SendMessage(hwnd, WM_SETICON, ICON_SMALL, LPARAM(::Skin_LoadIcon(SKINICON_OTHER_MIRANDA)));
+			::SendDlgItemMessage(hwnd, IDC_WARNTEXT, EM_AUTOURLDETECT, TRUE, 0);
+			::SendDlgItemMessage(hwnd, IDC_WARNTEXT, EM_SETEVENTMASK, 0, ENM_LINK);
 
-		mir_sntprintf(temp, RTF_DEFAULT_HEADER, 0, 0, 0, 30 * 15);
-		tstring *str = new tstring(temp);
+			mir_sntprintf(temp, RTF_DEFAULT_HEADER, 0, 0, 0, 30 * 15);
+			tstring *str = new tstring(temp);
 
-		str->append(m_szText);
-		str->append(L"}");
+			str->append(m_szText);
+			str->append(L"}");
 
-		TranslateDialogDefault(hwnd);
+			TranslateDialogDefault(hwnd);
 
-		/*
-		* convert normal line breaks to rtf
-		*/
-		while ((pos = str->find(L"\n")) != str->npos) {
-			str->erase(pos, 1);
-			str->insert(pos, L"\\line ");
+			/*
+			* convert normal line breaks to rtf
+			*/
+			while ((pos = str->find(L"\n")) != str->npos) {
+				str->erase(pos, 1);
+				str->insert(pos, L"\\line ");
+			}
+
+			::SendDlgItemMessage(hwnd, IDC_WARNTEXT, EM_SETTEXTEX, (WPARAM)&stx, T2Utf(str->c_str()));
+			delete str;
+
+			::SetDlgItemTextW(hwnd, IDC_CAPTION, m_szTitle);
+
+			if (m_dwFlags & CWF_NOALLOWHIDE)
+				Utils::showDlgControl(hwnd, IDC_DONTSHOWAGAIN, SW_HIDE);
+			if (m_dwFlags & MB_YESNO || m_dwFlags & MB_YESNOCANCEL) {
+				Utils::showDlgControl(hwnd, IDOK, SW_HIDE);
+				::SetFocus(::GetDlgItem(hwnd, IDCANCEL));
+			}
+			else {
+				Utils::showDlgControl(hwnd, IDCANCEL, SW_HIDE);
+				Utils::showDlgControl(hwnd, IDYES, SW_HIDE);
+				Utils::showDlgControl(hwnd, IDNO, SW_HIDE);
+				::SetFocus(::GetDlgItem(hwnd, IDOK));
+			}
+			if (m_dwFlags & MB_ICONERROR || m_dwFlags & MB_ICONHAND)
+				uResId = 32513;
+			else if (m_dwFlags & MB_ICONEXCLAMATION || m_dwFlags & MB_ICONWARNING)
+				uResId = 32515;
+			else if (m_dwFlags & MB_ICONASTERISK || m_dwFlags & MB_ICONINFORMATION)
+				uResId = 32516;
+			else if (m_dwFlags & MB_ICONQUESTION)
+				uResId = 32514;
+
+			if (uResId)
+				hIcon = reinterpret_cast<HICON>(::LoadImage(0, MAKEINTRESOURCE(uResId), IMAGE_ICON, 0, 0, LR_SHARED | LR_DEFAULTSIZE));
+			else
+				hIcon = ::Skin_LoadIcon(SKINICON_EVENT_MESSAGE, true);
+
+			::SendDlgItemMessageW(hwnd, IDC_WARNICON, STM_SETICON, reinterpret_cast<WPARAM>(hIcon), 0);
+			if (!(m_dwFlags & MB_YESNO || m_dwFlags & MB_YESNOCANCEL))
+				::ShowWindow(hwnd, SW_SHOWNORMAL);
+
+			WindowList_Add(hWindowList, hwnd, (UINT_PTR)hwnd);
 		}
-
-		::SendDlgItemMessage(hwnd, IDC_WARNTEXT, EM_SETTEXTEX, (WPARAM)&stx, T2Utf(str->c_str()));
-		delete str;
-
-		::SetDlgItemTextW(hwnd, IDC_CAPTION, m_szTitle);
-
-		if (m_dwFlags & CWF_NOALLOWHIDE)
-			Utils::showDlgControl(hwnd, IDC_DONTSHOWAGAIN, SW_HIDE);
-		if (m_dwFlags & MB_YESNO || m_dwFlags & MB_YESNOCANCEL) {
-			Utils::showDlgControl(hwnd, IDOK, SW_HIDE);
-			::SetFocus(::GetDlgItem(hwnd, IDCANCEL));
-		}
-		else {
-			Utils::showDlgControl(hwnd, IDCANCEL, SW_HIDE);
-			Utils::showDlgControl(hwnd, IDYES, SW_HIDE);
-			Utils::showDlgControl(hwnd, IDNO, SW_HIDE);
-			::SetFocus(::GetDlgItem(hwnd, IDOK));
-		}
-		if (m_dwFlags & MB_ICONERROR || m_dwFlags & MB_ICONHAND)
-			uResId = 32513;
-		else if (m_dwFlags & MB_ICONEXCLAMATION || m_dwFlags & MB_ICONWARNING)
-			uResId = 32515;
-		else if (m_dwFlags & MB_ICONASTERISK || m_dwFlags & MB_ICONINFORMATION)
-			uResId = 32516;
-		else if (m_dwFlags & MB_ICONQUESTION)
-			uResId = 32514;
-
-		if (uResId)
-			hIcon = reinterpret_cast<HICON>(::LoadImage(0, MAKEINTRESOURCE(uResId), IMAGE_ICON, 0, 0, LR_SHARED | LR_DEFAULTSIZE));
-		else
-			hIcon = ::Skin_LoadIcon(SKINICON_EVENT_MESSAGE, true);
-
-		::SendDlgItemMessageW(hwnd, IDC_WARNICON, STM_SETICON, reinterpret_cast<WPARAM>(hIcon), 0);
-		if (!(m_dwFlags & MB_YESNO || m_dwFlags & MB_YESNOCANCEL))
-			::ShowWindow(hwnd, SW_SHOWNORMAL);
-
-		WindowList_Add(hWindowList, hwnd, (MCONTACT)hwnd);
-	}
-	return TRUE;
+		return TRUE;
 
 	case WM_CTLCOLORSTATIC:
-	{
-		HWND hwndChild = reinterpret_cast<HWND>(lParam);
-		UINT id = ::GetDlgCtrlID(hwndChild);
-		if (0 == m_hFontCaption) {
-			HFONT hFont = reinterpret_cast<HFONT>(::SendDlgItemMessage(hwnd, IDC_CAPTION, WM_GETFONT, 0, 0));
-			LOGFONT lf = { 0 };
+		{
+			HWND hwndChild = reinterpret_cast<HWND>(lParam);
+			UINT id = ::GetDlgCtrlID(hwndChild);
+			if (0 == m_hFontCaption) {
+				HFONT hFont = reinterpret_cast<HFONT>(::SendDlgItemMessage(hwnd, IDC_CAPTION, WM_GETFONT, 0, 0));
+				LOGFONT lf = { 0 };
 
-			::GetObject(hFont, sizeof(lf), &lf);
-			lf.lfHeight = (int)((double)lf.lfHeight * 1.7f);
-			m_hFontCaption = ::CreateFontIndirect(&lf);
-			::SendDlgItemMessage(hwnd, IDC_CAPTION, WM_SETFONT, (WPARAM)m_hFontCaption, FALSE);
-		}
+				::GetObject(hFont, sizeof(lf), &lf);
+				lf.lfHeight = (int)((double)lf.lfHeight * 1.7f);
+				m_hFontCaption = ::CreateFontIndirect(&lf);
+				::SendDlgItemMessage(hwnd, IDC_CAPTION, WM_SETFONT, (WPARAM)m_hFontCaption, FALSE);
+			}
 
-		if (IDC_CAPTION == id) {
-			::SetTextColor(reinterpret_cast<HDC>(wParam), ::GetSysColor(COLOR_HIGHLIGHT));
-			::SendMessage(hwndChild, WM_SETFONT, (WPARAM)m_hFontCaption, FALSE);
-		}
+			if (IDC_CAPTION == id) {
+				::SetTextColor(reinterpret_cast<HDC>(wParam), ::GetSysColor(COLOR_HIGHLIGHT));
+				::SendMessage(hwndChild, WM_SETFONT, (WPARAM)m_hFontCaption, FALSE);
+			}
 
-		if (IDC_WARNGROUP != id && IDC_DONTSHOWAGAIN != id) {
-			::SetBkColor((HDC)wParam, ::GetSysColor(COLOR_WINDOW));
-			return reinterpret_cast<INT_PTR>(::GetSysColorBrush(COLOR_WINDOW));
+			if (IDC_WARNGROUP != id && IDC_DONTSHOWAGAIN != id) {
+				::SetBkColor((HDC)wParam, ::GetSysColor(COLOR_WINDOW));
+				return reinterpret_cast<INT_PTR>(::GetSysColorBrush(COLOR_WINDOW));
+			}
 		}
-	}
-	break;
+		break;
 
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {

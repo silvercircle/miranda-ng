@@ -56,9 +56,9 @@ public:
 	static TCHAR*   GetPreviewWithEllipsis(TCHAR *szText, size_t iMaxLen);
 	static TCHAR*   FilterEventMarkers(TCHAR *wszText);
 	static LPCTSTR  FormatRaw(TWindowData *dat, const TCHAR *msg, int flags, BOOL isSent);
-	static LPTSTR   FormatTitleBar(const TWindowData *dat, const TCHAR *szFormat);
+	static bool     FormatTitleBar(const TWindowData *dat, const TCHAR *szFormat, CMString &dest);
 	static char*    FilterEventMarkers(char *szText);
-	static LPCTSTR  DoubleAmpersands(TCHAR *pszText);
+	static void     DoubleAmpersands(TCHAR *pszText, size_t len);
 	static void     RTF_CTableInit();
 	static void     RTF_ColorAdd(const TCHAR *tszColname, size_t length);
 	static int      ReadContainerSettingsFromDB(const MCONTACT hContact, TContainerSettings *cs, const char *szKey = 0);
@@ -68,7 +68,7 @@ public:
 	static void     ReadPrivateContainerSettings(TContainerData *pContainer, bool fForce = false);
 	static void     SaveContainerSettings(TContainerData *pContainer, const char *szSetting);
 
-	static DWORD CALLBACK StreamOut(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG cb, LONG * pcb);
+	static DWORD    CALLBACK StreamOut(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG cb, LONG * pcb);
 	static LRESULT  CmdDispatcher(UINT uType, HWND hwndDlg, UINT cmd, WPARAM wParam, LPARAM lParam, TWindowData *dat = 0, TContainerData *pContainer = 0);
 
 	static void     addMenuItem(const HMENU& m, MENUITEMINFO& mii, HICON hIcon, const TCHAR *szText, UINT uID, UINT pos);

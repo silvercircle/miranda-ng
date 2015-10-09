@@ -175,12 +175,16 @@ std::string FacebookProto::ThreadIDToContactID(const std::string &thread_id)
 
 	std::string data = "client=mercury";
 	data += "&__user=" + facy.self_.user_id;
+	data += "&__dyn=" + facy.__dyn();
+	data += "&__req=" + facy.__req();
 	data += "&fb_dtsg=" + facy.dtsg_;
-	data += "&__a=1&__dyn=&__req=&ttstamp=" + facy.ttstamp();
+	data += "&ttstamp=" + facy.ttstamp_;
+	data += "&__rev=" + facy.__rev();
+
 	data += "&threads[thread_ids][0]=" + utils::url::encode(thread_id);
 
 	std::string user_id;
-	http::response resp = facy.flap(REQUEST_THREAD_INFO, &data);
+	http::response resp = facy.flap(REQUEST_THREAD_INFO, &data); // NOTE: Request revised 1.9.2015
 
 	if (resp.code == HTTP_CODE_OK) {
 		CODE_BLOCK_TRY
@@ -210,18 +214,25 @@ void FacebookProto::LoadContactInfo(facebook_user* fbu)
 		return;
 
 	// TODO: support for more friends at once
-	std::string get_query = "&ids[0]=" + utils::url::encode(fbu->user_id);
+	std::string data = "ids[0]=" + utils::url::encode(fbu->user_id);
 
-	http::response resp = facy.flap(REQUEST_USER_INFO, NULL, &get_query);
+	data += "&__user=" + facy.self_.user_id;
+	data += "&__dyn=" + facy.__dyn();
+	data += "&__req=" + facy.__req();
+	data += "&fb_dtsg=" + facy.dtsg_;
+	data += "&ttstamp=" + facy.ttstamp_;
+	data += "&__rev=" + facy.__rev();
+
+	http::response resp = facy.flap(REQUEST_USER_INFO, &data); // NOTE: Request revised 1.9.2015
 
 	if (resp.code == HTTP_CODE_OK) {
 		CODE_BLOCK_TRY
 
 			facebook_json_parser* p = new facebook_json_parser(this);
-		p->parse_user_info(&resp.data, fbu);
-		delete p;
+			p->parse_user_info(&resp.data, fbu);
+			delete p;
 
-		debugLogA("*** Contact thread info processed");
+			debugLogA("*** Contact thread info processed");
 
 		CODE_BLOCK_CATCH
 
@@ -266,15 +277,18 @@ void FacebookProto::LoadChatInfo(facebook_chatroom *fbc)
 
 	std::string data = "client=mercury";
 	data += "&__user=" + facy.self_.user_id;
+	data += "&__dyn=" + facy.__dyn();
+	data += "&__req=" + facy.__req();
 	data += "&fb_dtsg=" + facy.dtsg_;
-	data += "&__a=1&__dyn=&__req=&ttstamp=" + facy.ttstamp();
+	data += "&ttstamp=" + facy.ttstamp_;
+	data += "&__rev=" + facy.__rev();
 
 	std::string thread_id = utils::url::encode(fbc->thread_id);
 
 	// request info about thread
 	data += "&threads[thread_ids][0]=" + thread_id;
 
-	http::response resp = facy.flap(REQUEST_THREAD_INFO, &data);
+	http::response resp = facy.flap(REQUEST_THREAD_INFO, &data); // NOTE: Request revised 1.9.2015
 
 	if (resp.code != HTTP_CODE_OK) {
 		facy.handle_error("LoadChatInfo");
@@ -313,7 +327,7 @@ void FacebookProto::LoadChatInfo(facebook_chatroom *fbc)
 
 			if (fbc->participants.size() > namesUsed) {
 				TCHAR more[200];
-				mir_sntprintf(more, _countof(more), TranslateT("%s and more (%d)"), fbc->chat_name.c_str(), fbc->participants.size() - namesUsed);
+				mir_sntprintf(more, TranslateT("%s and more (%d)"), fbc->chat_name.c_str(), fbc->participants.size() - namesUsed);
 				fbc->chat_name = more;
 			}
 
@@ -424,7 +438,7 @@ void FacebookProto::DeleteContactFromServer(void *data)
 	query += "&fb_dtsg=" + facy.dtsg_;
 	query += "&uid=" + id;
 	query += "&__user=" + facy.self_.user_id;
-	query += "&phstamp=" + facy.phstamp(query);
+	query += "&ttstamp=" + facy.ttstamp_;
 
 	std::string get_query = "norefresh=true&unref=button_dropdown&uid=" + id;
 
@@ -622,7 +636,7 @@ void FacebookProto::SendPokeWorker(void *p)
 	data += "&do_confirm=0";
 	data += "&fb_dtsg=" + facy.dtsg_;
 	data += "&__user=" + facy.self_.user_id;
-	data += "&phstamp=" + facy.phstamp(data);
+	data += "&ttstamp=" + facy.ttstamp_;
 
 	// Send poke
 	http::response resp = facy.flap(REQUEST_POKE, &data);

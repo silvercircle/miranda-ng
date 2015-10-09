@@ -34,38 +34,27 @@ static int NextObjectId = 0x100, NextObjectMenuItemId = CLISTMENUIDMIN;
 #if defined(_DEBUG)
 static void DumpMenuItem(TMO_IntMenuItem* pParent, int level = 0)
 {
-	char temp[ 30 ];
+	char temp[30];
 	memset(temp, '\t', level);
-	temp[ level ] = 0;
+	temp[level] = 0;
 
 	for (TMO_IntMenuItem *pimi = pParent; pimi != NULL; pimi = pimi->next) {
 		Netlib_Logf(NULL, "%sMenu item %08p [%08p]: %S", temp, pimi, pimi->mi.root, pimi->mi.name.t);
 
 		TMO_IntMenuItem *submenu = pimi->submenu.first;
 		if (submenu)
-			DumpMenuItem(submenu, level+1);
+			DumpMenuItem(submenu, level + 1);
 	}
 }
 
 #endif
 
-static int CompareMenus(const TIntMenuObject* p1, const TIntMenuObject* p2)
+static int CompareMenus(const TIntMenuObject *p1, const TIntMenuObject *p2)
 {
 	return mir_strcmp(p1->pszName, p2->pszName);
 }
 
 LIST<TIntMenuObject> g_menus(10, NumericKeySortT);
-
-void FreeAndNil(void **p)
-{
-	if (p == NULL)
-		return;
-
-	if (*p != NULL) {
-		mir_free(*p);
-		*p = NULL;
-	}
-}
 
 TIntMenuObject* GetMenuObjbyId(int id)
 {
@@ -611,7 +600,8 @@ struct KillMenuItemsParam
 	KillMenuItemsParam(int _hLangpack) :
 		hLangpack(_hLangpack),
 		arItems(10)
-	{}
+	{
+	}
 
 	int hLangpack;
 	LIST<TMO_IntMenuItem> arItems;
@@ -950,7 +940,7 @@ static HMENU BuildRecursiveMenu(HMENU hMenu, TMO_IntMenuItem *pRootMenu, WPARAM 
 #ifdef PUTPOSITIONSONMENU
 			if (GetKeyState(VK_CONTROL) & 0x8000) {
 				TCHAR str[256];
-				mir_sntprintf(str, _countof(str), _T("%s (%d, id %x)"), mi->name.a, mi->position, mii.dwItemData);
+				mir_sntprintf(str, _T("%s (%d, id %x)"), mi->name.a, mi->position, mii.dwItemData);
 				mii.dwTypeData = str;
 			}
 #endif
@@ -964,7 +954,7 @@ static HMENU BuildRecursiveMenu(HMENU hMenu, TMO_IntMenuItem *pRootMenu, WPARAM 
 #ifdef PUTPOSITIONSONMENU
 			if (GetKeyState(VK_CONTROL) & 0x8000) {
 				TCHAR str[256];
-				mir_sntprintf(str, _countof(str), _T("%s (%d, id %x)"), mi->name.a, mi->position, mii.dwItemData);
+				mir_sntprintf(str, _T("%s (%d, id %x)"), mi->name.a, mi->position, mii.dwItemData);
 				mii.dwTypeData = str;
 			}
 #endif
@@ -996,9 +986,9 @@ EXTERN_C MIR_APP_DLL(HMENU) Menu_Build(HMENU parent, int hMenuObject, WPARAM wPa
 	if (pmo == NULL)
 		return NULL;
 
-	#if defined(_DEBUG)
-		// DumpMenuItem(pmo->m_items.first);
-	#endif
+#if defined(_DEBUG)
+	// DumpMenuItem(pmo->m_items.first);
+#endif
 
 	return BuildRecursiveMenu(parent, pmo->m_items.first, wParam, lParam);
 }
@@ -1046,10 +1036,10 @@ static int MO_RegisterIcon(TMO_IntMenuItem *pmi, void*)
 		HICON hIcon = ImageList_GetIcon(pmi->parent->m_hMenuIcons, pmi->iconId, 0);
 
 		TCHAR sectionName[256];
-		mir_sntprintf(sectionName, _countof(sectionName), LPGENT("Menu icons") _T("/%s"), TranslateTS(pmi->parent->ptszDisplayName));
+		mir_sntprintf(sectionName, LPGENT("Menu icons") _T("/%s"), TranslateTS(pmi->parent->ptszDisplayName));
 
 		char iconame[256];
-		mir_snprintf(iconame, _countof(iconame), "genmenu_%s_%s", pmi->parent->pszName, uname && *uname ? uname : descr);
+		mir_snprintf(iconame, "genmenu_%s_%s", pmi->parent->pszName, uname && *uname ? uname : descr);
 
 		// remove '&'
 		if (descr) {
@@ -1161,12 +1151,12 @@ TIntMenuObject::~TIntMenuObject()
 {
 	MO_RecursiveWalkMenu(m_items.first, FreeMenuItem, NULL);
 
-	FreeAndNil((void**)&FreeService);
-	FreeAndNil((void**)&onAddService);
-	FreeAndNil((void**)&CheckService);
-	FreeAndNil((void**)&ExecService);
-	FreeAndNil((void**)&ptszDisplayName);
-	FreeAndNil((void**)&pszName);
+	mir_free(FreeService);
+	mir_free(onAddService);
+	mir_free(CheckService);
+	mir_free(ExecService);
+	mir_free(ptszDisplayName);
+	mir_free(pszName);
 
 	ImageList_Destroy(m_hMenuIcons);
 }
@@ -1177,9 +1167,9 @@ void TIntMenuObject::freeItem(TMO_IntMenuItem *p)
 		CallService(FreeService, (WPARAM)p, (LPARAM)p->pUserData);
 
 	p->signature = 0;
-	FreeAndNil((void**)&p->mi.name.t);
-	FreeAndNil((void**)&p->UniqName);
-	FreeAndNil((void**)&p->CustomName);
+	mir_free(p->mi.name.t);
+	mir_free(p->UniqName);
+	mir_free(p->CustomName);
 	if (p->hBmp) DeleteObject(p->hBmp);
 	mir_free(p);
 }

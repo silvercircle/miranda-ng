@@ -57,11 +57,9 @@ public:
 
 	// icons
 	static void InitIcons();
-	static void UninitIcons();
 
 	// menus
 	static void InitMenus();
-	static void UninitMenus();
 
 	// events
 	void InitCustomDbEvents();
@@ -69,21 +67,18 @@ public:
 	static int OnModulesLoaded(WPARAM, LPARAM);
 
 private:
-	Tox *tox;
-	ToxAv *toxAv;
-	char *password;
-	mir_cs toxLock;
+	CToxThread *toxThread;
 	mir_cs profileLock;
 	TCHAR *accountName;
 	HANDLE hNetlib, hPollingThread;
-	bool isTerminated, isConnected;
 	CTransferList transfers;
+	CLogger *logger;
 
 	static HANDLE hProfileFolderPath;
 
 	// tox profile
-	std::tstring GetToxProfilePath();
-	static std::tstring CToxProto::GetToxProfilePath(const TCHAR *accountName);
+	TCHAR* GetToxProfilePath();
+	static TCHAR* GetToxProfilePath(const TCHAR *accountName);
 
 	bool LoadToxProfile(Tox_Options *options);
 	void SaveToxProfile();
@@ -91,6 +86,7 @@ private:
 	INT_PTR __cdecl OnCopyToxID(WPARAM, LPARAM);
 
 	// tox core
+	Tox_Options* GetToxOptions();
 	bool InitToxCore();
 	void UninitToxCore();
 
@@ -103,7 +99,6 @@ private:
 	void BootstrapNodes();
 	void TryConnect();
 	void CheckConnection(int &retriesCount);
-	void DoTox();
 
 	void __cdecl PollingThread(void*);
 
@@ -123,10 +118,8 @@ private:
 	void UninitNetlib();
 
 	// icons
-	static IconInfo Icons[];
-	static HICON GetIcon(const char *name, bool size = false);
-	static HANDLE GetIconHandle(const char *name);
-	static HANDLE Skin_GetIconHandle(const char *name);
+	static IconItemT Icons[];
+	static HANDLE GetIconHandle(int iconId);
 
 	// menus
 	static HGENMENU ContactMenuItems[CMI_MAX];
@@ -136,7 +129,7 @@ private:
 	int OnInitStatusMenu();
 
 	//services
-	INT_PTR __cdecl CToxProto::SetMyNickname(WPARAM wParam, LPARAM lParam);
+	INT_PTR __cdecl SetMyNickname(WPARAM wParam, LPARAM lParam);
 
 	// options
 	int __cdecl OnOptionsInit(WPARAM wParam, LPARAM lParam);
@@ -224,7 +217,6 @@ private:
 	int __cdecl OnPreCreateMessage(WPARAM wParam, LPARAM lParam);
 
 	// transfer
-
 	HANDLE OnFileAllow(MCONTACT hContact, HANDLE hTransfer, const TCHAR *tszPath);
 	int OnFileResume(HANDLE hTransfer, int *action, const TCHAR **szFilename);
 	int OnFileCancel(MCONTACT hContact, HANDLE hTransfer);
@@ -240,10 +232,11 @@ private:
 
 	void PauseOutgoingTransfers(uint32_t friendNumber);
 	void ResumeIncomingTransfers(uint32_t friendNumber);
+	void CancelAllTransfers();
 
 	// avatars
-	std::tstring GetAvatarFilePath(MCONTACT hContact = NULL);
-	void SetToxAvatar(std::tstring path);
+	TCHAR* GetAvatarFilePath(MCONTACT hContact = NULL);
+	void SetToxAvatar(const TCHAR* path);
 
 	INT_PTR __cdecl GetAvatarCaps(WPARAM wParam, LPARAM lParam);
 	INT_PTR __cdecl GetAvatarInfo(WPARAM, LPARAM lParam);
@@ -275,13 +268,16 @@ private:
 	static void OnAvPeerTimeout(void*, int32_t callId, void *arg);
 
 	// utils
-	TOX_USER_STATUS MirandaToToxStatus(int status);
-	int ToxToMirandaStatus(TOX_USER_STATUS userstatus);
+	static int MapStatus(int status);
+	static TOX_USER_STATUS MirandaToToxStatus(int status);
+	static int ToxToMirandaStatus(TOX_USER_STATUS userstatus);
+
+	static TCHAR* ToxErrorToString(TOX_ERR_NEW error);
 
 	static void ShowNotification(const TCHAR *message, int flags = 0, MCONTACT hContact = NULL);
 	static void ShowNotification(const TCHAR *caption, const TCHAR *message, int flags = 0, MCONTACT hContact = NULL);
 
-	static bool IsFileExists(std::tstring path);
+	static bool IsFileExists(const TCHAR* path);
 
 	MEVENT AddEventToDb(MCONTACT hContact, WORD type, DWORD timestamp, DWORD flags, PBYTE pBlob, size_t cbBlob);
 

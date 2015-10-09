@@ -421,7 +421,7 @@ static TCHAR* ShortenPreview(DBEVENTINFO* dbe)
 	if (iPreviewLimit > 500 || iPreviewLimit == 0)
 		iPreviewLimit = 500;
 
-	TCHAR* buf = DbGetEventTextT(dbe, CP_ACP);
+	TCHAR *buf = DbGetEventTextT(dbe, CP_ACP);
 	if (mir_tstrlen(buf) > iPreviewLimit) {
 		fAddEllipsis = true;
 		size_t iIndex = iPreviewLimit;
@@ -500,7 +500,7 @@ static int PopupUpdateT(MCONTACT hContact, MEVENT hEvent)
 
 	TCHAR szHeader[256];
 	if (pdata->pluginOptions->bShowHeaders)
-		mir_sntprintf(szHeader, _countof(szHeader), _T("%s %d\n"), TranslateT("New messages: "), pdata->nrMerged + 1);
+		mir_sntprintf(szHeader, _T("%s %d\n"), TranslateT("New messages: "), pdata->nrMerged + 1);
 	else
 		szHeader[0] = 0;
 
@@ -513,7 +513,7 @@ static int PopupUpdateT(MCONTACT hContact, MEVENT hEvent)
 
 	TCHAR timestamp[MAX_DATASIZE];
 	_tcsftime(timestamp, MAX_DATASIZE, _T("%Y.%m.%d %H:%M"), _localtime32((__time32_t *)&dbe.timestamp));
-	mir_sntprintf(pdata->eventData[pdata->nrMerged].tszText, _countof(pdata->eventData[pdata->nrMerged].tszText), _T("\n\n%s\n"), timestamp);
+	mir_sntprintf(pdata->eventData[pdata->nrMerged].tszText, _T("\n\n%s\n"), timestamp);
 
 	TCHAR *szPreview = GetPreviewT(dbe.eventType, &dbe);
 	if (szPreview) {
@@ -651,10 +651,8 @@ static int TSAPI PopupPreview(NEN_OPTIONS *pluginOptions)
 	return 0;
 }
 
-/*
-* updates the menu entry...
-* bForced is used to only update the status, nickname etc. and does NOT update the unread count
-*/
+// updates the menu entry...
+// bForced is used to only update the status, nickname etc. and does NOT update the unread count
 void TSAPI UpdateTrayMenuState(TWindowData *dat, BOOL bForced)
 {
 	if (PluginConfig.g_hMenuTrayUnread == 0 || dat->hContact == NULL)
@@ -672,7 +670,7 @@ void TSAPI UpdateTrayMenuState(TWindowData *dat, BOOL bForced)
 		PluginConfig.m_UnreadInTray -= (mii.dwItemData & 0x0000ffff);
 	if (mii.dwItemData > 0 || bForced) {
 		TCHAR szMenuEntry[80];
-		mir_sntprintf(szMenuEntry, _countof(szMenuEntry), _T("%s: %s (%s) [%d]"), tszProto,
+		mir_sntprintf(szMenuEntry, _T("%s: %s (%s) [%d]"), tszProto,
 			dat->cache->getNick(), dat->szStatus[0] ? dat->szStatus : _T("(undef)"), mii.dwItemData & 0x0000ffff);
 
 		if (!bForced)
@@ -685,10 +683,7 @@ void TSAPI UpdateTrayMenuState(TWindowData *dat, BOOL bForced)
 	SetMenuItemInfo(PluginConfig.g_hMenuTrayUnread, (UINT_PTR)dat->hContact, FALSE, &mii);
 }
 
-/*
- * if we want tray support, add the contact to the list of unread sessions in the tray menu
- */
-
+// if we want tray support, add the contact to the list of unread sessions in the tray menu
 int TSAPI UpdateTrayMenu(const TWindowData *dat, WORD wStatus, const char *szProto, const TCHAR *szStatus, MCONTACT hContact, DWORD fromEvent)
 {
 	if (!PluginConfig.g_hMenuTrayUnread || hContact == 0 || szProto == NULL)
@@ -717,7 +712,7 @@ int TSAPI UpdateTrayMenu(const TWindowData *dat, WORD wStatus, const char *szPro
 		if (fromEvent == 2)                         // from chat...
 			mii.dwItemData |= 0x10000000;
 		DeleteMenu(PluginConfig.g_hMenuTrayUnread, (UINT_PTR)hContact, MF_BYCOMMAND);
-		mir_sntprintf(szMenuEntry, _countof(szMenuEntry), _T("%s: %s (%s) [%d]"), tszFinalProto, szNick, szMyStatus, mii.dwItemData & 0x0000ffff);
+		mir_sntprintf(szMenuEntry, _T("%s: %s (%s) [%d]"), tszFinalProto, szNick, szMyStatus, mii.dwItemData & 0x0000ffff);
 		AppendMenu(PluginConfig.g_hMenuTrayUnread, MF_BYCOMMAND | MF_STRING, (UINT_PTR)hContact, szMenuEntry);
 		PluginConfig.m_UnreadInTray++;
 		if (PluginConfig.m_UnreadInTray)
@@ -727,7 +722,7 @@ int TSAPI UpdateTrayMenu(const TWindowData *dat, WORD wStatus, const char *szPro
 	else {
 		szNick = pcli->pfnGetContactDisplayName(hContact, 0);
 		if (CheckMenuItem(PluginConfig.g_hMenuTrayUnread, (UINT_PTR)hContact, MF_BYCOMMAND | MF_UNCHECKED) == -1) {
-			mir_sntprintf(szMenuEntry, _countof(szMenuEntry), _T("%s: %s (%s) [%d]"), tszFinalProto, szNick, szMyStatus, fromEvent ? 1 : 0);
+			mir_sntprintf(szMenuEntry, _T("%s: %s (%s) [%d]"), tszFinalProto, szNick, szMyStatus, fromEvent ? 1 : 0);
 			AppendMenu(PluginConfig.g_hMenuTrayUnread, MF_BYCOMMAND | MF_STRING, (UINT_PTR)hContact, szMenuEntry);
 			mii.dwItemData = fromEvent ? 1 : 0;
 			PluginConfig.m_UnreadInTray += (mii.dwItemData & 0x0000ffff);
@@ -745,7 +740,7 @@ int TSAPI UpdateTrayMenu(const TWindowData *dat, WORD wStatus, const char *szPro
 			mii.fMask |= MIIM_STRING;
 			if (fromEvent == 2)
 				mii.dwItemData |= 0x10000000;
-			mir_sntprintf(szMenuEntry, _countof(szMenuEntry), _T("%s: %s (%s) [%d]"), tszFinalProto, szNick, szMyStatus, mii.dwItemData & 0x0000ffff);
+			mir_sntprintf(szMenuEntry, _T("%s: %s (%s) [%d]"), tszFinalProto, szNick, szMyStatus, mii.dwItemData & 0x0000ffff);
 			mii.cch = (int)mir_tstrlen(szMenuEntry) + 1;
 			mii.dwTypeData = (LPTSTR)szMenuEntry;
 		}
@@ -810,10 +805,7 @@ passed:
 	return 0;
 }
 
-/**
-* remove all popups for hContact, but only if the mask matches the current "mode"
-*/
-
+// remove all popups for hContact, but only if the mask matches the current "mode"
 void TSAPI DeletePopupsForContact(MCONTACT hContact, DWORD dwMask)
 {
 	if (!(dwMask & nen_options.dwRemoveMask) || nen_options.iDisable || !PluginConfig.g_bPopupAvail)

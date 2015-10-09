@@ -246,7 +246,7 @@ static void CacheClientIcons()
 
 	for (int i = IDI_OVL_OFFLINE; i <= IDI_OVL_OUTTOLUNCH; i++) {
 		char szBuffer[128];
-		mir_snprintf(szBuffer, _countof(szBuffer), "cln_ovl_%d", ID_STATUS_OFFLINE + (i - IDI_OVL_OFFLINE));
+		mir_snprintf(szBuffer, "cln_ovl_%d", ID_STATUS_OFFLINE + (i - IDI_OVL_OFFLINE));
 		overlayicons[i - IDI_OVL_OFFLINE] = IcoLib_GetIcon(szBuffer);
 	}
 }
@@ -257,7 +257,7 @@ static void InitIcoLib()
 
 	for (int i = IDI_OVL_OFFLINE; i <= IDI_OVL_OUTTOLUNCH; i++) {
 		char szBuffer[128];
-		mir_snprintf(szBuffer, _countof(szBuffer), "cln_ovl_%d", ID_STATUS_OFFLINE + (i - IDI_OVL_OFFLINE));
+		mir_snprintf(szBuffer, "cln_ovl_%d", ID_STATUS_OFFLINE + (i - IDI_OVL_OFFLINE));
 		IconItemT icon = { pcli->pfnGetStatusModeDescription(ID_STATUS_OFFLINE + (i - IDI_OVL_OFFLINE), 0), szBuffer, i };
 		Icon_RegisterT(g_hInst, LPGENT("Contact list") _T("/") LPGENT("Overlay icons"), &icon, 1);
 	}
@@ -270,7 +270,7 @@ static void InitIcoLib()
 			continue;
 
 		TCHAR szDescr[128];
-		mir_sntprintf(szDescr, _countof(szDescr), TranslateT("%s connecting"), accs[k]->tszAccountName);
+		mir_sntprintf(szDescr, TranslateT("%s connecting"), accs[k]->tszAccountName);
 		IconItemT icon = { szDescr, "conn", IDI_PROTOCONNECTING };
 		Icon_RegisterT(g_hInst, LPGENT("Contact list") _T("/") LPGENT("Connecting icons"), &icon, 1, accs[k]->szModuleName);
 	}
@@ -659,13 +659,14 @@ int CustomDrawScrollBars(NMCSBCUSTOMDRAW *nmcsbcd)
 			HDC hdc = nmcsbcd->hdc;
 			StatusItems_t *item = 0, *arrowItem = 0;
 			UINT uItemID = ID_EXTBKSCROLLBACK;
-			RECT rcWindow;
-			POINT pt;
-			DWORD dfcFlags;
 			HRGN rgn = 0;
-			GetWindowRect(pcli->hwndContactTree, &rcWindow);
-			pt.x = rcWindow.left;
-			pt.y = rcWindow.top;
+
+			RECT rc;
+			GetWindowRect(pcli->hwndContactTree, &rc);
+
+			POINT pt;
+			pt.x = rc.left;
+			pt.y = rc.top;
 			ScreenToClient(pcli->hwndContactList, &pt);
 			hdcScroll = hdc;
 			BitBlt(hdcScroll, nmcsbcd->rect.left, nmcsbcd->rect.top, nmcsbcd->rect.right - nmcsbcd->rect.left,
@@ -697,9 +698,8 @@ int CustomDrawScrollBars(NMCSBCUSTOMDRAW *nmcsbcd)
 				DrawAlpha(hdcScroll, &nmcsbcd->rect, item->COLOR, alpha, item->COLOR2, item->COLOR2_TRANSPARENT,
 					item->GRADIENT, item->CORNER, item->BORDERSTYLE, item->imageItem);
 			}
-			dfcFlags = DFCS_FLAT | (nmcsbcd->uState == CDIS_DISABLED ? DFCS_INACTIVE :
-				(nmcsbcd->uState == CDIS_HOT ? DFCS_HOT :
-				(nmcsbcd->uState == CDIS_SELECTED ? DFCS_PUSHED : 0)));
+			DWORD dfcFlags = DFCS_FLAT | (nmcsbcd->uState == CDIS_DISABLED ? DFCS_INACTIVE :
+				(nmcsbcd->uState == CDIS_HOT ? DFCS_HOT : (nmcsbcd->uState == CDIS_SELECTED ? DFCS_PUSHED : 0)));
 
 			if (nmcsbcd->uItem == HTSCROLL_UP)
 				arrowItem = arStatusItems[ID_EXTBKSCROLLARROWUP - ID_STATUS_OFFLINE];
@@ -707,7 +707,7 @@ int CustomDrawScrollBars(NMCSBCUSTOMDRAW *nmcsbcd)
 				arrowItem = arStatusItems[ID_EXTBKSCROLLARROWDOWN - ID_STATUS_OFFLINE];
 			if (arrowItem && !arrowItem->IGNORED)
 				DrawAlpha(hdcScroll, &nmcsbcd->rect, arrowItem->COLOR, arrowItem->ALPHA, arrowItem->COLOR2, arrowItem->COLOR2_TRANSPARENT,
-				arrowItem->GRADIENT, arrowItem->CORNER, arrowItem->BORDERSTYLE, arrowItem->imageItem);
+					arrowItem->GRADIENT, arrowItem->CORNER, arrowItem->BORDERSTYLE, arrowItem->imageItem);
 			else if (arrowItem)
 				DrawFrameControl(hdcScroll, &nmcsbcd->rect, DFC_SCROLL, (nmcsbcd->uItem == HTSCROLL_UP ? DFCS_SCROLLUP : DFCS_SCROLLDOWN) | dfcFlags);
 
@@ -1420,7 +1420,7 @@ skipbg:
 							if (serviceFailure) {
 								char szError[512];
 
-								mir_snprintf(szError, _countof(szError), Translate("The service %s specified by the %s button definition was not found. You may need to install additional plugins."), item->szService, item->szName);
+								mir_snprintf(szError, Translate("The service %s specified by the %s button definition was not found. You may need to install additional plugins."), item->szService, item->szName);
 								MessageBoxA(0, szError, Translate("Service failure"), MB_OK);
 							}
 							break;
@@ -1669,7 +1669,7 @@ buttons_done:
 
 					if (status >= ID_STATUS_CONNECTING && status < ID_STATUS_OFFLINE) {
 						char szBuffer[128];
-						mir_snprintf(szBuffer, _countof(szBuffer), "%s_conn", pd->RealName);
+						mir_snprintf(szBuffer, "%s_conn", pd->RealName);
 						hIcon = IcoLib_GetIcon(szBuffer);
 					}
 					else if (cfg::dat.bShowXStatusOnSbar && status > ID_STATUS_OFFLINE) {

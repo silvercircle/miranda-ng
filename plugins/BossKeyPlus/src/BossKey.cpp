@@ -83,7 +83,7 @@ INT_PTR CALLBACK DlgStdInProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 	case WM_INITDIALOG:
 		g_hDlgPass = hDlg;
 		hIcon = LoadIcon(g_hInstance, MAKEINTRESOURCE(IDI_DLGPASSWD));
-		dwOldIcon = SetClassLongPtr(hDlg, GCLP_HICON, (LONG)hIcon); // set alt+tab icon
+		dwOldIcon = SetClassLongPtr(hDlg, GCLP_HICON, (INT_PTR)hIcon); // set alt+tab icon
 		SendDlgItemMessage(hDlg, IDC_EDIT1, EM_LIMITTEXT, MAXPASSLEN, 0);
 
 		if (IsAeroMode())
@@ -531,6 +531,7 @@ static int GenMenuInit(WPARAM, LPARAM) // Modify menu item text before to show t
 void BossKeyMenuItemInit(void) // Add menu item
 {
 	CMenuItem mi;
+	SET_UID(mi, 0x42428114, 0xfac7, 0x44c2, 0x9a, 0x11, 0x18, 0xbe, 0x81, 0xd4, 0xa9, 0xe3);
 	mi.flags = CMIF_TCHAR;
 	mi.position = 2000100000;
 	mi.hIcolibItem = IcoLib_GetIcon("hidemim");

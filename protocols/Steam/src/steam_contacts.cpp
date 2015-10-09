@@ -96,10 +96,8 @@ MCONTACT CSteamProto::FindContact(const char *steamId)
 
 void CSteamProto::UpdateContact(MCONTACT hContact, JSONNode *data)
 {
-	JSONNode *node = NULL;
-
 	// set common data
-	node = json_get(data, "personaname");
+	JSONNode *node = json_get(data, "personaname");
 	setTString(hContact, "Nick", ptrT(json_as_string(node)));
 
 	node = json_get(data, "profileurl");
@@ -112,7 +110,7 @@ void CSteamProto::UpdateContact(MCONTACT hContact, JSONNode *data)
 	node = json_get(data, "realname");
 	if (node != NULL)
 	{
-		std::wstring realname = ptrT(json_as_string(node));
+		std::wstring realname = (TCHAR*)ptrT(json_as_string(node));
 		if (!realname.empty())
 		{
 			size_t pos = realname.find(L' ', 1);
@@ -137,7 +135,7 @@ void CSteamProto::UpdateContact(MCONTACT hContact, JSONNode *data)
 	// avatar
 	bool biggerAvatars = getBool("UseBigAvatars", false);
 	node = json_get(data, biggerAvatars ? "avatarfull" : "avatarmedium");
-	std::string avatarUrl = _T2A(ptrT(json_as_string(node)));
+	std::string avatarUrl = (char*)_T2A(ptrT(json_as_string(node)));
 	CheckAvatarChange(hContact, avatarUrl);
 
 	// set country
@@ -189,19 +187,24 @@ void CSteamProto::UpdateContact(MCONTACT hContact, JSONNode *data)
 		WORD status = getWord(hContact, "Status", ID_STATUS_OFFLINE);
 		if (status == ID_STATUS_ONLINE || status == ID_STATUS_OUTTOLUNCH || status == ID_STATUS_FREECHAT)
 			setTString(hContact, "MirVer", _T("Steam"));
-	} else if (stateflags & 2) {
+	}
+	else if (stateflags & 2) {
 		// game
 		setTString(hContact, "MirVer", _T("Steam (in game)"));
-	} else if (stateflags & 256) {
+	}
+	else if (stateflags & 256) {
 		// on website
 		setTString(hContact, "MirVer", _T("Steam (website)"));
-	} else if (stateflags & 512) {
+	}
+	else if (stateflags & 512) {
 		// on mobile
 		setTString(hContact, "MirVer", _T("Steam (mobile)"));
-	} else if (stateflags & 1024) {
+	}
+	else if (stateflags & 1024) {
 		// big picture mode
 		setTString(hContact, "MirVer", _T("Steam (Big Picture)"));
-	} else {
+	}
+	else {
 		// none/unknown (e.g. when contact is offline)
 		delSetting(hContact, "MirVer");
 	}
@@ -357,14 +360,14 @@ void CSteamProto::ProcessContact(std::map<std::string, JSONNode*>::iterator *it,
 
 void CSteamProto::OnGotFriendList(const NETLIBHTTPREQUEST *response)
 {
-	if (response == NULL)
+	if (!CheckResponse(response))
 		return;
 
 	JSONROOT root(response->pData);
 	if (root == NULL)
 		return;
 
-	std::string steamIds = ptrA(getStringA("SteamID"));
+	std::string steamIds = (char*)ptrA(getStringA("SteamID"));
 
 	std::map<std::string, JSONNode*> friends;
 
@@ -383,7 +386,7 @@ void CSteamProto::OnGotFriendList(const NETLIBHTTPREQUEST *response)
 			if (node == NULL)
 				continue;
 
-			std::string steamId = _T2A(ptrT(json_as_string(node)));
+			std::string steamId = (char*)_T2A(ptrT(json_as_string(node)));
 			friends.insert(std::make_pair(steamId, child));
 		}		
 	}
@@ -442,7 +445,7 @@ void CSteamProto::OnGotFriendList(const NETLIBHTTPREQUEST *response)
 
 void CSteamProto::OnGotBlockList(const NETLIBHTTPREQUEST *response)
 {
-	if (response == NULL)
+	if (!CheckResponse(response))
 		return;
 
 	JSONROOT root(response->pData);
@@ -486,7 +489,7 @@ void CSteamProto::OnGotBlockList(const NETLIBHTTPREQUEST *response)
 
 void CSteamProto::OnGotUserSummaries(const NETLIBHTTPREQUEST *response)
 {
-	if (response == NULL)
+	if (!CheckResponse(response))
 		return;
 
 	JSONROOT root(response->pData);
@@ -522,10 +525,10 @@ void CSteamProto::OnGotUserSummaries(const NETLIBHTTPREQUEST *response)
 void CSteamProto::OnGotAvatar(const NETLIBHTTPREQUEST *response, void *arg)
 {
 	PROTO_AVATAR_INFORMATION ai = { 0 };
-	ai.hContact = (MCONTACT)arg;
+	ai.hContact = (UINT_PTR)arg;
 	GetDbAvatarInfo(ai);
 
-	if (response == NULL || response->resultCode != HTTP_CODE_OK)
+	if (!ResponseHttpOk(response))
 	{
 		ptrA steamId(getStringA(ai.hContact, "SteamID"));
 		debugLogA("CSteamProto::OnGotAvatar: failed to get avatar %s", steamId);
@@ -552,7 +555,7 @@ void CSteamProto::OnFriendAdded(const NETLIBHTTPREQUEST *response, void *arg)
 {
 	SendAuthParam *param = (SendAuthParam*)arg;
 
-	if (response == NULL || response->resultCode != HTTP_CODE_OK || lstrcmpiA(response->pData, "true"))
+	if (!response || response->resultCode != HTTP_CODE_OK || lstrcmpiA(response->pData, "true"))
 	{
 		ptrA steamId(getStringA(param->hContact, "SteamID"));
 		debugLogA("CSteamProto::OnFriendAdded: failed to add friend %s", steamId);
@@ -571,7 +574,7 @@ void CSteamProto::OnFriendAdded(const NETLIBHTTPREQUEST *response, void *arg)
 
 void CSteamProto::OnFriendBlocked(const NETLIBHTTPREQUEST *response, void *arg)
 {
-	if (response == NULL || response->resultCode != HTTP_CODE_OK || lstrcmpiA(response->pData, "true"))
+	if (!response || response->resultCode != HTTP_CODE_OK || lstrcmpiA(response->pData, "true"))
 	{
 		debugLogA("CSteamProto::OnFriendIgnored: failed to ignore friend %s", (char*)arg);
 		return;
@@ -580,9 +583,9 @@ void CSteamProto::OnFriendBlocked(const NETLIBHTTPREQUEST *response, void *arg)
 
 void CSteamProto::OnFriendRemoved(const NETLIBHTTPREQUEST *response, void *arg)
 {
-	if (response == NULL || response->resultCode != HTTP_CODE_OK || lstrcmpiA(response->pData, "true"))
+	if (!response || response->resultCode != HTTP_CODE_OK || lstrcmpiA(response->pData, "true"))
 	{
-		MCONTACT hContact = (MCONTACT)arg;
+		MCONTACT hContact = (UINT_PTR)arg;
 		ptrA who(getStringA(hContact, "SteamID"));
 
 		debugLogA("CSteamProto::OnFriendRemoved: failed to remove friend %s", who);
@@ -592,7 +595,7 @@ void CSteamProto::OnFriendRemoved(const NETLIBHTTPREQUEST *response, void *arg)
 
 void CSteamProto::OnAuthRequested(const NETLIBHTTPREQUEST *response, void *arg)
 {
-	if (response == NULL || response->resultCode != HTTP_CODE_OK)
+	if (!ResponseHttpOk(response))
 	{
 		debugLogA("CSteamProto::OnAuthRequested: failed to request info for %s", (char*)arg);
 		return;
@@ -626,7 +629,7 @@ void CSteamProto::OnAuthRequested(const NETLIBHTTPREQUEST *response, void *arg)
 			lastName = mir_strdup("");
 
 		char reason[MAX_PATH];
-		mir_snprintf(reason, _countof(reason), Translate("%s has added you to his or her Friend List"), nickName);
+		mir_snprintf(reason, Translate("%s has added you to his or her Friend List"), nickName);
 
 		// blob is: 0(DWORD), hContact(DWORD), nick(ASCIIZ), firstName(ASCIIZ), lastName(ASCIIZ), sid(ASCIIZ), reason(ASCIIZ)
 		DWORD cbBlob = (DWORD)(sizeof(DWORD)* 2 + mir_strlen(nickName) + mir_strlen(firstName) + mir_strlen(lastName) + mir_strlen(steamId) + mir_strlen(reason) + 5);
@@ -656,7 +659,7 @@ void CSteamProto::OnAuthRequested(const NETLIBHTTPREQUEST *response, void *arg)
 
 void CSteamProto::OnPendingApproved(const NETLIBHTTPREQUEST *response, void *arg)
 {
-	if (response == NULL || response->resultCode != HTTP_CODE_OK)
+	if (!ResponseHttpOk(response))
 	{
 		debugLogA("CSteamProto::OnPendingApproved: failed to approve pending from %s", (char*)arg);
 		return;
@@ -676,7 +679,7 @@ void CSteamProto::OnPendingApproved(const NETLIBHTTPREQUEST *response, void *arg
 
 void CSteamProto::OnPendingIgnoreded(const NETLIBHTTPREQUEST *response, void *arg)
 {
-	if (response == NULL || response->resultCode != HTTP_CODE_OK)
+	if (!ResponseHttpOk(response))
 	{
 		debugLogA("CSteamProto::OnPendingApproved: failed to ignore pending from %s", (char*)arg);
 		return;
@@ -696,7 +699,7 @@ void CSteamProto::OnPendingIgnoreded(const NETLIBHTTPREQUEST *response, void *ar
 
 void CSteamProto::OnSearchByIdEnded(const NETLIBHTTPREQUEST *response, void *arg)
 {
-	if (response == NULL || response->resultCode != HTTP_CODE_OK)
+	if (!ResponseHttpOk(response))
 	{
 		ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_FAILED, (HANDLE)STEAM_SEARCH_BYID, 0);
 		debugLogA("CSteamProto::OnSearchByIdEnded: failed to get summaries for %s", (char*)arg);
@@ -725,7 +728,7 @@ void CSteamProto::OnSearchByIdEnded(const NETLIBHTTPREQUEST *response, void *arg
 		node = json_get(nroot, "realname");
 		if (node != NULL)
 		{
-			std::wstring realname = ptrT(json_as_string(node));
+			std::wstring realname = (TCHAR*)ptrT(json_as_string(node));
 			if (!realname.empty())
 			{
 				size_t pos = realname.find(' ', 1);

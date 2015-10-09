@@ -129,7 +129,7 @@ static int MessageEventAdded(WPARAM hContact, LPARAM lParam)
 		cle.hDbEvent = hDbEvent;
 		cle.hIcon = Skin_LoadIcon(SKINICON_EVENT_MESSAGE);
 		cle.pszService = "SRMsg/ReadMessage";
-		mir_sntprintf(toolTip, _countof(toolTip), TranslateT("Message from %s"), contactName);
+		mir_sntprintf(toolTip, TranslateT("Message from %s"), contactName);
 		cle.ptszTooltip = toolTip;
 		CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
 	}
@@ -208,7 +208,7 @@ static int TypingMessage(WPARAM hContact, LPARAM lParam)
 	else if (lParam && (g_dat.flags2 & SMF2_SHOWTYPINGTRAY)) {
 		TCHAR szTip[256];
 
-		mir_sntprintf(szTip, _countof(szTip), TranslateT("%s is typing a message"), pcli->pfnGetContactDisplayName(hContact, 0));
+		mir_sntprintf(szTip, TranslateT("%s is typing a message"), pcli->pfnGetContactDisplayName(hContact, 0));
 		if ( ServiceExists(MS_CLIST_SYSTRAY_NOTIFY) && !(g_dat.flags2 & SMF2_SHOWTYPINGCLIST)) {
 			MIRANDASYSTRAYNOTIFY tn;
 			tn.szProto = NULL;
@@ -282,7 +282,7 @@ static void RestoreUnreadMessageAlerts(void)
 				else {
 					cle.hContact = hContact;
 					cle.hDbEvent = hDbEvent;
-					mir_sntprintf(toolTip, _countof(toolTip), TranslateT("Message from %s"), pcli->pfnGetContactDisplayName(hContact, 0));
+					mir_sntprintf(toolTip, TranslateT("Message from %s"), pcli->pfnGetContactDisplayName(hContact, 0));
 					CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
 				}
 			}
@@ -448,6 +448,7 @@ static int OnModulesLoaded(WPARAM, LPARAM)
 	ModuleLoad(0, 0);
 
 	CMenuItem mi;
+	SET_UID(mi, 0x58d8dc1, 0x1c25, 0x49c0, 0xb8, 0x7c, 0xa3, 0x22, 0x2b, 0x3d, 0xf1, 0xd8);
 	mi.position = -2000090000;
 	mi.flags = CMIF_DEFAULT;
 	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_EVENT_MESSAGE);
@@ -629,7 +630,7 @@ STDMETHODIMP CREOleCallback::GetInPlaceContext(LPOLEINPLACEFRAME*, LPOLEINPLACEU
 STDMETHODIMP CREOleCallback::GetNewStorage(LPSTORAGE *lplpstg)
 {
 	TCHAR sztName[64];
-	mir_sntprintf(sztName, _countof(sztName), _T("s%u"), nextStgId++);
+	mir_sntprintf(sztName, _T("s%u"), nextStgId++);
 	if (pictStg == NULL)
 		return STG_E_MEDIUMFULL;
 	return pictStg->CreateStorage(sztName, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE, 0, 0, lplpstg);

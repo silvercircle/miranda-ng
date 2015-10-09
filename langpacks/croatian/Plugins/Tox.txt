@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Tox.dll
 ;  Plugin: Tox protocol
-;  Version: 0.11.1.12
+;  Version: 0.11.1.14
 ;  Authors: Miranda NG Team
 ;============================================================
 [Tox protocol support for Miranda NG.]
@@ -26,13 +26,13 @@
 
 [Tox]
 
-[Create tox profile]
+[Create Tox profile]
 
-[Import tox profile]
+[Import Tox profile]
 
 [Copy Tox ID]
 
-[Export tox profile]
+[Export Tox profile]
 
 [Connection settings]
 
@@ -40,9 +40,9 @@
 
 [Enable IPv6]
 
-[If this field contains tox address (76 hex characters), you will be prompted to add it in your friend list. Otherwise, Miranda will search this query via tox dns discovery.]
+[If this field contains Tox address (76 hex characters), you will be prompted to add it in your friend list. Otherwise, Miranda will search this query via Tox DNS discovery.]
 
-[Dns name:]
+[DNS name:]
 
 [Enter password]
 
@@ -101,7 +101,10 @@ p&ovijest
 [To:]
 
 ;file \protocols\Tox\src\tox_chatrooms.cpp
-[Groupchat]
+[Group chat]
+
+;file \protocols\Tox\src\tox_core.cpp
+[Unable to initialize Tox core]
 
 ;file \protocols\Tox\src\tox_events.cpp
 [Profiles folder]
@@ -128,6 +131,9 @@ p&ovijest
 Zahtjevaj autorizaciju
 [Grant authorization]
 Autoriziraj
+;file \protocols\Tox\src\tox_messages.cpp
+[You cannot send when you are offline.]
+
 ;file \protocols\Tox\src\tox_multimedia.cpp
 [Incoming call from %s]
 
@@ -153,9 +159,9 @@ Autoriziraj
 
 [All files]
 sve datoteke
-[Select tox profile]
+[Select Tox profile]
 
-[Save tox profile]
+[Save Tox profile]
 
 [Add node]
 
@@ -181,6 +187,13 @@ sve datoteke
 
 [Nodes]
 
+;file \protocols\Tox\src\tox_profile.cpp
+[Unable to open Tox profile]
+
+[Unable to read Tox profile]
+
+[Unable to decrypt Tox profile]
+
 ;file \protocols\Tox\src\tox_proto.cpp
 [You cannot add yourself to your contact list]
 
@@ -188,4 +201,25 @@ sve datoteke
 
 ;file \protocols\Tox\src\tox_search.cpp
 [Query]
+
+;file \protocols\Tox\src\tox_utils.cpp
+[One of the arguments is missing]
+
+[Unable to allocate enough memory]
+
+[Unable to bind to a port]
+
+[The proxy type is not valid]
+
+[The proxy host is not valid]
+
+[The proxy port is not valid]
+
+[The proxy address could not be resolved]
+
+[The profile is encrypted]
+
+[The data format is not valid]
+
+[Unknown error]
 

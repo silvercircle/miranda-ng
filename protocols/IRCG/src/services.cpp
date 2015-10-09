@@ -116,11 +116,12 @@ int IrcPrebuildContactMenu(WPARAM wParam, LPARAM lParam)
 void InitContactMenus(void)
 {
 	char temp[MAXMODULELABELLENGTH];
-	char *d = temp + mir_snprintf(temp, _countof(temp), "IRC");
+	char *d = temp + mir_snprintf(temp, "IRC");
 
 	CMenuItem mi;
 	mi.pszService = temp;
 
+	SET_UID(mi, 0x5f01196f, 0xfbcd, 0x4034, 0xbd, 0x90, 0x12, 0xa0, 0x20, 0x68, 0x15, 0xc0);
 	mi.name.a = LPGEN("Channel &settings");
 	mi.hIcolibItem = GetIconHandle(IDI_MANAGER);
 	mir_strcpy(d, IRC_UM_CHANSETTINGS);
@@ -128,6 +129,7 @@ void InitContactMenus(void)
 	hUMenuChanSettings = Menu_AddContactMenuItem(&mi);
 	hMenuChanSettings = CreateServiceFunction(temp, IrcMenuChanSettings);
 
+	SET_UID(mi, 0x778eb1f6, 0x73c4, 0x4951, 0xb2, 0xca, 0xa1, 0x69, 0x94, 0x7b, 0xb7, 0x87);
 	mi.name.a = LPGEN("&WhoIs info");
 	mi.hIcolibItem = GetIconHandle(IDI_WHOIS);
 	mir_strcpy(d, IRC_UM_WHOIS);
@@ -135,6 +137,7 @@ void InitContactMenus(void)
 	hUMenuWhois = Menu_AddContactMenuItem(&mi);
 	hMenuWhois = CreateServiceFunction(temp, IrcMenuWhois);
 
+	SET_UID(mi, 0x1c51ae05, 0x9eee, 0x4887, 0x88, 0x96, 0x55, 0xd2, 0xdd, 0xf9, 0x25, 0x6f);
 	mi.name.a = LPGEN("Di&sconnect");
 	mi.hIcolibItem = GetIconHandle(IDI_DELETE);
 	mir_strcpy(d, IRC_UM_DISCONNECT);
@@ -142,6 +145,7 @@ void InitContactMenus(void)
 	hUMenuDisconnect = Menu_AddContactMenuItem(&mi);
 	hMenuDisconnect = CreateServiceFunction(temp, IrcMenuDisconnect);
 
+	SET_UID(mi, 0xc6169b8f, 0x53ab, 0x4242, 0xbe, 0x90, 0xe2, 0x4a, 0xa5, 0x73, 0x88, 0x32);
 	mi.name.a = LPGEN("&Add to ignore list");
 	mi.hIcolibItem = GetIconHandle(IDI_BLOCK);
 	mir_strcpy(d, IRC_UM_IGNORE);
@@ -438,7 +442,7 @@ static void DoChatFormatting(TCHAR* pszText)
 				if (p1 - 3 >= pszText && p1[-3] == '\003')
 					mir_tstrcpy(InsertThis, _T(","));
 				else if (iFG >= 0)
-					mir_sntprintf(InsertThis, _countof(InsertThis), _T("\x03%u,"), iFG);
+					mir_sntprintf(InsertThis, _T("\x03%u,"), iFG);
 				else
 					mir_tstrcpy(InsertThis, _T("\x0399,"));
 
@@ -447,7 +451,7 @@ static void DoChatFormatting(TCHAR* pszText)
 
 			case 'F':
 				if (iFG >= 0)
-					mir_sntprintf(InsertThis, _countof(InsertThis), _T("\x03%u,99"), iFG);
+					mir_sntprintf(InsertThis, _T("\x03%u,99"), iFG);
 				else
 					mir_tstrcpy(InsertThis, _T("\x0399,99"));
 				iRemoveChars = 2;

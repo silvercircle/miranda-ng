@@ -54,10 +54,29 @@ bool g_fNoProcessing = false; // tells the status change proc not to do anything
 int g_bIsIdle = false;
 VAR_PARSE_DATA VarParseData;
 
-static IconItem iconList[] = {
-	{ LPGEN("Toggle On"),  "on",  IDI_SOE_DISABLED },
-	{ LPGEN("Toggle Off"), "off", IDI_SOE_ENABLED  }
+IconItem iconList[] = {
+	{ LPGEN("Toggle Off"),			"off",			IDI_SOE_DISABLED },
+	{ LPGEN("Toggle On"),			"on",			IDI_SOE_ENABLED		},
+	{ LPGEN("New message"),			"new_msg",		IDI_NEWMESSAGE		},
+	{ LPGEN("New category"),		"new_cat",		IDI_NEWCATEGORY		},
+	{ LPGEN("Delete"),				"delete",		IDI_DELETE			},
+	{ LPGEN("Dot"),					"dot",			IDI_DOT				},
+	{ LPGEN("Ignore"),				"ignore",		IDI_IGNORE			},
+	{ LPGEN("Indefinite"),			"indefinite",	IDI_INDEFINITE		},
+	{ LPGEN("Set status message"),	"msg_icon",		IDI_MSGICON			},
+	{ LPGEN("Add"),					"add",			IDI_SAVEASNEW		},
+	{ LPGEN("Save"),				"save",			IDI_SAVE			},
+	{ LPGEN("Settings"),			"settings",		IDI_SETTINGS		}
 };
+
+HICON GetIcon(int iconId, bool size)
+{
+	for (size_t i = 0; i < _countof(iconList); i++)
+		if (iconList[i].defIconID == iconId)
+			return IcoLib_GetIconByHandle(iconList[i].hIcolib, size);
+
+	return NULL;
+}
 
 PLUGININFOEX pluginInfo = {
 	sizeof(PLUGININFOEX),
@@ -306,11 +325,11 @@ int PreBuildContactMenu(WPARAM hContact, LPARAM)
 		// the protocol supports status message sending for current status, or autoreplying
 		if ((Flag1 & PF1_MODEMSGSEND && CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_3, 0) & Proto_Status2Flag(iMode)) || 
 			((Flag1 & PF1_IM) == PF1_IM && (i < 0 || !g_AutoreplyOptPage.GetDBValueCopy(StatusModeList[i].DisableReplyCtlID))))
-			mir_sntprintf(szSetStr, _countof(szSetStr), TranslateT("Set %s message for the contact"), pcli->pfnGetStatusModeDescription(iMode, 0), pcli->pfnGetContactDisplayName(hContact, 0));
+			mir_sntprintf(szSetStr, TranslateT("Set %s message for the contact"), pcli->pfnGetStatusModeDescription(iMode, 0), pcli->pfnGetContactDisplayName(hContact, 0));
 
 		// the protocol supports status message reading for contact's status
 		if (Flag1 & PF1_MODEMSGRECV && CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_3, 0) & Proto_Status2Flag(iContactMode)) {
-			mir_sntprintf(szReadStr, _countof(szReadStr), TranslateT("Re&ad %s message"), pcli->pfnGetStatusModeDescription(iContactMode, 0));
+			mir_sntprintf(szReadStr, TranslateT("Re&ad %s message"), pcli->pfnGetStatusModeDescription(iContactMode, 0));
 			hReadMsgIcon = Skin_LoadProtoIcon(szProto, iContactMode);
 		}
 	}
@@ -318,21 +337,21 @@ int PreBuildContactMenu(WPARAM hContact, LPARAM)
 		if (szSetStr[0] == 0)
 			Menu_ShowItem(g_hContactMenuItem, false);
 		else 
-			Menu_ModifyItem(g_hContactMenuItem, szSetStr, INVALID_HANDLE_VALUE, 0);
+			Menu_ModifyItem(g_hContactMenuItem, szSetStr, iconList[8].hIcolib, 0);
 
 		// if this contact supports sending/receiving messages
 		if ((Flag1 & PF1_IM) == PF1_IM) {
 			int iAutoreply = CContactSettings(g_ProtoStates[szProto].m_status, hContact).Autoreply;
 			HANDLE hIcon;
 			switch (iAutoreply) {
-				case VAL_USEDEFAULT: hIcon = LoadIcon(g_hInstance, MAKEINTRESOURCE(IDI_DOT)); break;
+				case VAL_USEDEFAULT: hIcon = Skin_LoadIcon(IDI_DOT); break;
 				case 0: hIcon = iconList[0].hIcolib; break;
 				default: iAutoreply = 1; hIcon = iconList[1].hIcolib; break;
 			}
 			Menu_ModifyItem(g_hToggleSOEContactMenuItem, NULL, hIcon, 0);
-			Menu_ModifyItem(g_hAutoreplyOnContactMenuItem, NULL, INVALID_HANDLE_VALUE, (iAutoreply == 1) ? CMIF_CHECKED : 0);
-			Menu_ModifyItem(g_hAutoreplyOffContactMenuItem, NULL, INVALID_HANDLE_VALUE, (iAutoreply == 0) ? CMIF_CHECKED : 0);
-			Menu_ModifyItem(g_hAutoreplyUseDefaultContactMenuItem, NULL, INVALID_HANDLE_VALUE, (iAutoreply == VAL_USEDEFAULT) ? CMIF_CHECKED : 0);
+			Menu_ModifyItem(g_hAutoreplyOnContactMenuItem, NULL, iconList[1].hIcolib, (iAutoreply == 1) ? CMIF_CHECKED : 0);
+			Menu_ModifyItem(g_hAutoreplyOffContactMenuItem, NULL, iconList[0].hIcolib, (iAutoreply == 0) ? CMIF_CHECKED : 0);
+			Menu_ModifyItem(g_hAutoreplyUseDefaultContactMenuItem, NULL, iconList[5].hIcolib, (iAutoreply == VAL_USEDEFAULT) ? CMIF_CHECKED : 0);
 		}
 		else // hide the Autoreply menu item
 			Menu_ShowItem(g_hToggleSOEContactMenuItem, false);
@@ -612,6 +631,7 @@ int MirandaLoaded(WPARAM, LPARAM)
 	int SendOnEvent = CContactSettings(g_ProtoStates[(char*)NULL].m_status).Autoreply;
 
 	CMenuItem mi;
+	SET_UID(mi, 0xa379c361, 0x9e3f, 0x468d, 0xb2, 0xac, 0xc4, 0x89, 0xbb, 0xfc, 0x81, 0x15);
 	mi.position = 1000020000;
 	mi.flags = CMIF_TCHAR | CMIF_NOTOFFLINE;
 	mi.hIcolibItem = iconList[SendOnEvent ? 1 : 0].hIcolib;
@@ -620,22 +640,25 @@ int MirandaLoaded(WPARAM, LPARAM)
 	g_hToggleSOEMenuItem = Menu_AddMainMenuItem(&mi);
 
 	memset(&mi, 0, sizeof(mi));
+	SET_UID(mi, 0xd3282acc, 0x9ff1, 0x4ede, 0x8a, 0x1e, 0x36, 0x72, 0x3f, 0x44, 0x4f, 0x84);
 	mi.position = -2000005000;
 	mi.flags = CMIF_TCHAR | CMIF_NOTOFFLINE | CMIF_HIDDEN;
 	mi.name.t = LPGENT("Read status message"); // never seen...
 	mi.pszService = MS_AWAYMSG_SHOWAWAYMSG;
 	g_hReadStatMenuItem = Menu_AddContactMenuItem(&mi);
-	
+
 	if (g_MoreOptPage.GetDBValueCopy(IDC_MOREOPTDLG_USEMENUITEM)) {
 		memset(&mi, 0, sizeof(mi));
+		SET_UID(mi, 0xc42a4fdb, 0x51b8, 0x4bbe, 0x83, 0xee, 0x2d, 0x32, 0x29, 0x5c, 0x2, 0xb3);
 		mi.flags = CMIF_TCHAR | CMIF_HIDDEN;
 		mi.name.t = LPGENT("Set status message"); // will never be shown
 		mi.position = 1000020000;
-		mi.hIcolibItem = LoadIcon(g_hInstance, MAKEINTRESOURCE(IDI_MSGICON));
+		mi.hIcolibItem = iconList[8].hIcolib;
 		mi.pszService = MS_AWAYSYS_SETCONTACTSTATMSG;
 		g_hContactMenuItem = Menu_AddContactMenuItem(&mi);
 
 		memset(&mi, 0, sizeof(mi));
+		SET_UID(mi, 0x47a3c631, 0x8ca9, 0x4b7e, 0x84, 0x6e, 0x29, 0xbf, 0x53, 0x30, 0x6f, 0x83);
 		mi.flags = CMIF_TCHAR;
 		mi.hIcolibItem = NULL;
 		mi.position = 1000020000;
@@ -646,17 +669,20 @@ int MirandaLoaded(WPARAM, LPARAM)
 		mi.root = g_hToggleSOEContactMenuItem;
 		mi.position = 1000020000;
 
+		SET_UID(mi, 0x1054c863, 0xfb0c, 0x4e90, 0xb9, 0xe5, 0x89, 0x95, 0x25, 0xb3, 0x5b, 0x6d);
 		mi.hIcolibItem = iconList[1].hIcolib;
 		mi.name.t = LPGENT("On");
 		mi.pszService = MS_AWAYSYS_AUTOREPLY_ON;
 		g_hAutoreplyOnContactMenuItem = Menu_AddContactMenuItem(&mi);
 
+		SET_UID(mi, 0xdb66409, 0x8d44, 0x43e7, 0x99, 0xa1, 0x1c, 0x48, 0xab, 0x73, 0x4d, 0xe8);
 		mi.hIcolibItem = iconList[0].hIcolib;
 		mi.name.t = LPGENT("Off");
 		mi.pszService = MS_AWAYSYS_AUTOREPLY_OFF;
 		g_hAutoreplyOffContactMenuItem = Menu_AddContactMenuItem(&mi);
 
-		mi.hIcolibItem = LoadIcon(g_hInstance, MAKEINTRESOURCE(IDI_DOT));
+		SET_UID(mi, 0x101471b9, 0x4309, 0x4062, 0xa8, 0x5e, 0xa2, 0xae, 0x14, 0x7e, 0x4a, 0xb3);
+		mi.hIcolibItem = iconList[5].hIcolib;
 		mi.name.t = LPGENT("Use the default setting");
 		mi.pszService = MS_AWAYSYS_AUTOREPLY_USEDEFAULT;
 		g_hAutoreplyUseDefaultContactMenuItem = Menu_AddContactMenuItem(&mi);

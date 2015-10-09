@@ -176,12 +176,12 @@ INT_PTR AddBirthdayService(WPARAM hContact, LPARAM)
 	return ShowWindow(hWnd, SW_SHOW);
 }
 
-void ShowPopupMessage(TCHAR *title, TCHAR *message, HANDLE icon)
+void ShowPopupMessage(const TCHAR *title, const TCHAR *message, HANDLE icon)
 {
 	POPUPDATAT pd = { 0 };
 	pd.lchIcon = IcoLib_GetIconByHandle(icon);
-	_tcsncpy(pd.lptzContactName, title, MAX_CONTACTNAME - 1);
-	_tcsncpy(pd.lptzText, message, MAX_SECONDLINE - 1);
+	_tcsncpy_s(pd.lptzContactName, title, _TRUNCATE);
+	_tcsncpy_s(pd.lptzText, message, _TRUNCATE);
 	pd.colorText = commonData.foreground;
 	pd.colorBack = commonData.background;
 	PUAddPopupT(&pd);
@@ -191,11 +191,10 @@ void __cdecl RefreshUserDetailsWorkerThread(void*)
 {
 	ShowPopupMessage(TranslateT("WhenWasIt"), TranslateT("Starting to refresh user details"), hRefreshUserDetails);
 	int delay = db_get_w(NULL, ModuleName, "UpdateDelay", REFRESH_DETAILS_DELAY);
-	int res;
 
 	MCONTACT hContact = db_find_first();
 	while (hContact != NULL) {
-		res = CallContactService(hContact, PSS_GETINFO, 0, 0);
+		CallContactService(hContact, PSS_GETINFO, 0, 0);
 		hContact = db_find_next(hContact);
 		if (hContact)
 			Sleep(delay); //sleep for a few seconds between requests
@@ -216,7 +215,7 @@ INT_PTR ImportBirthdaysService(WPARAM, LPARAM)
 	of.lStructSize = sizeof(OPENFILENAME);
 	//of.hInstance = hInstance;
 	TCHAR filter[MAX_PATH];
-	mir_sntprintf(filter, _countof(filter), _T("%s (*") _T(BIRTHDAY_EXTENSION) _T(")%c*") _T(BIRTHDAY_EXTENSION) _T("%c"), TranslateT("Birthdays files"), 0, 0);
+	mir_sntprintf(filter, _T("%s (*") _T(BIRTHDAY_EXTENSION) _T(")%c*") _T(BIRTHDAY_EXTENSION) _T("%c"), TranslateT("Birthdays files"), 0, 0);
 	of.lpstrFilter = filter;
 	of.lpstrFile = fileName;
 	of.nMaxFile = _countof(fileName);
@@ -225,7 +224,7 @@ INT_PTR ImportBirthdaysService(WPARAM, LPARAM)
 
 	if (GetOpenFileName(&of)) {
 		TCHAR buffer[2048];
-		mir_sntprintf(buffer, _countof(buffer), TranslateT("Importing birthdays from file: %s"), fileName);
+		mir_sntprintf(buffer, TranslateT("Importing birthdays from file: %s"), fileName);
 		ShowPopupMessage(TranslateT("WhenWasIt"), buffer, hImportBirthdays);
 		DoImport(fileName);
 		ShowPopupMessage(TranslateT("WhenWasIt"), TranslateT("Done importing birthdays"), hImportBirthdays);
@@ -241,7 +240,7 @@ INT_PTR ExportBirthdaysService(WPARAM, LPARAM)
 	of.lStructSize = sizeof(OPENFILENAME);
 	//of.hInstance = hInstance;
 	TCHAR filter[MAX_PATH];
-	mir_sntprintf(filter, _countof(filter), _T("%s (*") _T(BIRTHDAY_EXTENSION) _T(")%c*") _T(BIRTHDAY_EXTENSION) _T("%c%s (*.*)%c*.*%c"), TranslateT("Birthdays files"), 0, 0, TranslateT("All Files"), 0, 0);
+	mir_sntprintf(filter, _T("%s (*") _T(BIRTHDAY_EXTENSION) _T(")%c*") _T(BIRTHDAY_EXTENSION) _T("%c%s (*.*)%c*.*%c"), TranslateT("Birthdays files"), 0, 0, TranslateT("All Files"), 0, 0);
 	of.lpstrFilter = filter;
 	of.lpstrFile = fileName;
 	of.nMaxFile = _countof(fileName);
@@ -253,7 +252,7 @@ INT_PTR ExportBirthdaysService(WPARAM, LPARAM)
 		if (!_tcschr(fn, _T('.')))
 			mir_tstrcat(fileName, _T(BIRTHDAY_EXTENSION));
 
-		mir_sntprintf(buffer, _countof(buffer), TranslateT("Exporting birthdays to file: %s"), fileName);
+		mir_sntprintf(buffer, TranslateT("Exporting birthdays to file: %s"), fileName);
 		ShowPopupMessage(TranslateT("WhenWasIt"), buffer, hExportBirthdays);
 		DoExport(fileName);
 		ShowPopupMessage(TranslateT("WhenWasIt"), TranslateT("Done exporting birthdays"), hExportBirthdays);
@@ -298,9 +297,8 @@ int DoImport(TCHAR *fileName)
 					SaveBirthday(hContact, year, month, day, mode);
 				}
 				else {
-					TCHAR tmp[2048];
-					mir_sntprintf(tmp, _countof(tmp), TranslateT(NOTFOUND_FORMAT), szHandle, szProto);
-					ShowPopupMessage(TranslateT("Warning"), tmp, hImportBirthdays);
+					CMString msg(FORMAT, TranslateT(NOTFOUND_FORMAT), szHandle, szProto);
+					ShowPopupMessage(TranslateT("Warning"), msg, hImportBirthdays);
 				}
 			}
 		}

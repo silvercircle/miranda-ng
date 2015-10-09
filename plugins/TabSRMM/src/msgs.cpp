@@ -31,9 +31,9 @@
 
 #define IDI_CORE_LOAD	132					// icon id for the "connecting" icon
 
-NEN_OPTIONS    nen_options;
-static HANDLE  hUserPrefsWindowLis = 0;
-HMODULE        g_hIconDLL = 0;
+NEN_OPTIONS nen_options;
+static HANDLE hUserPrefsWindowLis = 0;
+HMODULE g_hIconDLL = 0, g_hMsftedit;
 
 static void UnloadIcons();
 
@@ -207,7 +207,7 @@ static INT_PTR GetWindowAPI(WPARAM, LPARAM)
 // thanks to bio for the suggestion of this service
 // if wParam == 0, then lParam is considered to be a valid window handle and
 // the function tests the popup mode of the target container
-
+//
 // returns the hwnd if there is an open window or tab for the given hcontact (wParam),
 // or (if lParam was specified) the hwnd if the window exists.
 // 0 if there is none (or the popup mode of the target container was configured to "hide"
@@ -353,7 +353,7 @@ int SplitmsgShutdown(void)
 	DestroyCursor(PluginConfig.hCurHyperlinkHand);
 	DestroyCursor(PluginConfig.hCurSplitWE);
 
-	FreeLibrary(GetModuleHandleA("Msftedit.dll"));
+	FreeLibrary(g_hMsftedit);
 
 	if (g_hIconDLL) {
 		FreeLibrary(g_hIconDLL);
@@ -477,16 +477,16 @@ HWND TSAPI CreateNewTabForContact(TContainerData *pContainer, MCONTACT hContact,
 		else
 			_tcsncpy_s(newcontactname, contactName, _TRUNCATE);
 
-		Utils::DoubleAmpersands(newcontactname);
+		Utils::DoubleAmpersands(newcontactname, _countof(newcontactname));
 	}
 	else _tcsncpy_s(newcontactname, _T("_U_"), _TRUNCATE);
 
 	TCHAR *szStatus = pcli->pfnGetStatusModeDescription(szProto == NULL ? ID_STATUS_OFFLINE : db_get_w(newData.hContact, szProto, "Status", ID_STATUS_OFFLINE), 0);
 
 	if (M.GetByte("tabstatus", 1))
-		mir_sntprintf(tabtitle, _countof(tabtitle), _T("%s (%s)  "), newcontactname, szStatus);
+		mir_sntprintf(tabtitle, _T("%s (%s)  "), newcontactname, szStatus);
 	else
-		mir_sntprintf(tabtitle, _countof(tabtitle), _T("%s   "), newcontactname);
+		mir_sntprintf(tabtitle, _T("%s   "), newcontactname);
 
 	newData.item.pszText = tabtitle;
 	newData.item.mask = TCIF_TEXT | TCIF_IMAGE | TCIF_PARAM;
@@ -833,7 +833,6 @@ static int TSAPI SetupIconLibConfig()
 }
 
 // load the icon theme from IconLib - check if it exists...
-
 static int TSAPI LoadFromIconLib()
 {
 	for (int n = 0; n < _countof(ICONBLOCKS); n++)
@@ -953,7 +952,7 @@ int LoadSendRecvMessageModule(void)
 	icex.dwICC = ICC_COOL_CLASSES | ICC_BAR_CLASSES | ICC_LISTVIEW_CLASSES;
 	InitCommonControlsEx(&icex);
 
-	Utils::loadSystemLibrary(L"\\Msftedit.dll");
+	g_hMsftedit = Utils::loadSystemLibrary(L"\\Msftedit.dll");
 
 	Win7Taskbar = new CTaskbarInteract;
 	Win7Taskbar->updateMetrics();
@@ -1046,7 +1045,7 @@ STDMETHODIMP CREOleCallback::GetInPlaceContext(LPOLEINPLACEFRAME*, LPOLEINPLACEU
 STDMETHODIMP CREOleCallback::GetNewStorage(LPSTORAGE *lplpstg)
 {
 	TCHAR sztName[64];
-	mir_sntprintf(sztName, _countof(sztName), _T("s%u"), nextStgId++);
+	mir_sntprintf(sztName, _T("s%u"), nextStgId++);
 	if (pictStg == NULL)
 		return STG_E_MEDIUMFULL;
 	return pictStg->CreateStorage(sztName, STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE, 0, 0, lplpstg);

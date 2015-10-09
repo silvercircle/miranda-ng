@@ -33,7 +33,7 @@ static __inline LONG regchk(LONG res, const char *pszFunc, const void *pszInfo, 
 		char *pszErr;
 		pszErr = GetWinErrorDescription(res);
 		pszInfo2 = s2t(pszInfo, fInfoUnicode, FALSE);  /* does NULL check */
-		mir_sntprintf(szMsg, _countof(szMsg), TranslateT("Access failed:\n%.64hs(%.128s)\n%.250hs(%u)\n%.256hs (%u)"), pszFunc, pszInfo2, pszFile, nLine, pszErr, res);
+		mir_sntprintf(szMsg, TranslateT("Access failed:\n%.64hs(%.128s)\n%.250hs(%u)\n%.256hs (%u)"), pszFunc, pszInfo2, pszFile, nLine, pszErr, res);
 		MessageBox(NULL, szMsg, TranslateT("Registry warning"), MB_OK | MB_ICONINFORMATION | MB_SETFOREGROUND | MB_TOPMOST | MB_TASKMODAL);
 		if (pszErr != NULL) LocalFree(pszErr);
 		mir_free(pszInfo2);  /* does NULL check */
@@ -156,7 +156,7 @@ TCHAR *MakeRunCommand(BOOL fMirExe,BOOL fFixedDbProfile)
 	}
 
 	TCHAR tszBuffer[1024];
-	mir_sntprintf(tszBuffer, _countof(tszBuffer), pszFmt, szExe, szDbFile);
+	mir_sntprintf(tszBuffer, pszFmt, szExe, szDbFile);
 	return mir_tstrdup(tszBuffer);
 }
 
@@ -435,14 +435,15 @@ static void BackupRegTree_Worker(HKEY hKey,const char *pszSubKey,struct BackupRe
 
 static void BackupRegTree(HKEY hKey, const char *pszSubKey, const char *pszDbPrefix)
 {
+	char *prefix = mir_strdup(pszDbPrefix);
 	struct BackupRegTreeParam param;
 	DWORD dwDbPrefixSize;
 	param.level = 0;
 	param.pdwDbPrefixSize = &dwDbPrefixSize;
-	param.ppszDbPrefix = (char**)&pszDbPrefix;
-	pszDbPrefix = NEWSTR_ALLOCA(pszDbPrefix);
-	dwDbPrefixSize = (int)mir_strlen(pszDbPrefix)+1;
+	param.ppszDbPrefix = (char**)&prefix;
+	dwDbPrefixSize = (int)mir_strlen(prefix) + 1;
 	BackupRegTree_Worker(hKey, pszSubKey, &param);
+	mir_free(prefix);
 }
 
 static LONG RestoreRegTree(HKEY hKey,const char *pszSubKey,const char *pszDbPrefix)

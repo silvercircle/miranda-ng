@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Tox.dll
 ;  Plugin: Tox protocol
-;  Version: 0.11.1.12
+;  Version: 0.11.1.14
 ;  Authors: Miranda NG Team
 ;============================================================
 [Tox protocol support for Miranda NG.]
@@ -16,15 +16,15 @@
 [Password:]
 [Default group:]
 [Tox]
-[Create tox profile]
-[Import tox profile]
+[Create Tox profile]
+[Import Tox profile]
 [Copy Tox ID]
-[Export tox profile]
+[Export Tox profile]
 [Connection settings]
 [Enable UDP (otherwise force Tox to use TCP)]
 [Enable IPv6]
-[If this field contains tox address (76 hex characters), you will be prompted to add it in your friend list. Otherwise, Miranda will search this query via tox dns discovery.]
-[Dns name:]
+[If this field contains Tox address (76 hex characters), you will be prompted to add it in your friend list. Otherwise, Miranda will search this query via Tox DNS discovery.]
+[DNS name:]
 [Enter password]
 [Save password]
 [Cancel]
@@ -54,7 +54,9 @@
 [Outgoing call]
 [To:]
 ;file \protocols\Tox\src\tox_chatrooms.cpp
-[Groupchat]
+[Group chat]
+;file \protocols\Tox\src\tox_core.cpp
+[Unable to initialize Tox core]
 ;file \protocols\Tox\src\tox_events.cpp
 [Profiles folder]
 [Tox URI scheme]
@@ -69,6 +71,8 @@
 ;file \protocols\Tox\src\tox_menus.cpp
 [Request authorization]
 [Grant authorization]
+;file \protocols\Tox\src\tox_messages.cpp
+[You cannot send when you are offline.]
 ;file \protocols\Tox\src\tox_multimedia.cpp
 [Incoming call from %s]
 [Outgoing call to %s]
@@ -83,8 +87,8 @@
 ;file \protocols\Tox\src\tox_options.cpp
 [Tox profile]
 [All files]
-[Select tox profile]
-[Save tox profile]
+[Select Tox profile]
+[Save Tox profile]
 [Add node]
 [Change node]
 [Enter IPv4]
@@ -97,8 +101,23 @@
 [Network]
 [Account]
 [Nodes]
+;file \protocols\Tox\src\tox_profile.cpp
+[Unable to open Tox profile]
+[Unable to read Tox profile]
+[Unable to decrypt Tox profile]
 ;file \protocols\Tox\src\tox_proto.cpp
 [You cannot add yourself to your contact list]
 [Contact already in your contact list]
 ;file \protocols\Tox\src\tox_search.cpp
 [Query]
+;file \protocols\Tox\src\tox_utils.cpp
+[One of the arguments is missing]
+[Unable to allocate enough memory]
+[Unable to bind to a port]
+[The proxy type is not valid]
+[The proxy host is not valid]
+[The proxy port is not valid]
+[The proxy address could not be resolved]
+[The profile is encrypted]
+[The data format is not valid]
+[Unknown error]

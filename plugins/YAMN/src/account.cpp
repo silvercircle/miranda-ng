@@ -41,7 +41,6 @@ INT_PTR CreatePluginAccountSvc(WPARAM wParam, LPARAM lParam)
 {
 	HYAMNPROTOPLUGIN Plugin = (HYAMNPROTOPLUGIN)wParam;
 	DWORD AccountVersion = (DWORD)lParam;
-	HACCOUNT NewAccount;
 
 	//test if we are going to initialize members of suitable structure (structures of plugin and YAMN must match)
 	if (AccountVersion != YAMN_ACCOUNTVERSION)
@@ -49,21 +48,19 @@ INT_PTR CreatePluginAccountSvc(WPARAM wParam, LPARAM lParam)
 
 	if (Plugin != NULL)
 	{
+		HACCOUNT NewAccount;
 		if (Plugin->Fcn->NewAccountFcnPtr != NULL)
-		{
 			//Let plugin create its own structure, which can be derived from CAccount structure
 			NewAccount = Plugin->Fcn->NewAccountFcnPtr(Plugin, YAMN_ACCOUNTVERSION);
-			NewAccount->Plugin = Plugin;
-		}
 		else
-		{
 			//We suggest plugin uses standard CAccount structure, so we create it
 			NewAccount = new struct CAccount;
-			NewAccount->Plugin = Plugin;
-		}
+
 		//If not created successfully
 		if (NewAccount == NULL)
 			return NULL;
+			
+		NewAccount->Plugin = Plugin;
 		//Init every members of structure, used by YAMN
 		InitAccount(NewAccount);
 
@@ -227,7 +224,7 @@ DWORD ReadStringFromMemory(char **Parser,TCHAR *End,char **StoreTo,TCHAR *DebugS
 
 	Finder=*Parser;
 	while((*Finder != (TCHAR)0) && (Finder<=End)) Finder++;
-	mir_sntprintf(Debug, _countof(Debug), _T("%s: %s,length is %d, remaining %d chars"), DebugString, *Parser, Finder-*Parser, End-Finder);
+	mir_sntprintf(Debug, _T("%s: %s,length is %d, remaining %d chars"), DebugString, *Parser, Finder-*Parser, End-Finder);
 	MessageBox(NULL,Debug,_T("debug"),MB_OK);
 	if (Finder>=End)
 		return EACC_FILECOMPATIBILITY;
@@ -282,7 +279,7 @@ DWORD ReadStringFromMemoryW(WCHAR **Parser,TCHAR *End,WCHAR **StoreTo,WCHAR *Deb
 
 	Finder=*Parser;
 	while((*Finder != (WCHAR)0) && (Finder<=(WCHAR *)End)) Finder++;
-	mir_sntprintf(Debug, _countof(Debug), L"%s: %s,length is %d, remaining %d chars", DebugString, *Parser, Finder-*Parser, (WCHAR *)End-Finder);
+	mir_sntprintf(Debug, L"%s: %s,length is %d, remaining %d chars", DebugString, *Parser, Finder-*Parser, (WCHAR *)End-Finder);
 	MessageBoxW(NULL,Debug,L"debug",MB_OK);
 	if (Finder>=(WCHAR *)End)
 		return EACC_FILECOMPATIBILITY;
@@ -338,7 +335,7 @@ static DWORD ReadNotificationFromMemory(char **Parser, char *End, YAMN_NOTIFICAT
 	if (*Parser >= End)
 		return EACC_FILECOMPATIBILITY;
 #ifdef DEBUG_FILEREAD
-	mir_sntprintf(Debug, _countof(Debug), _T("NFlags: %04x, remaining %d chars"), Which->Flags, End-*Parser);
+	mir_sntprintf(Debug, _T("NFlags: %04x, remaining %d chars"), Which->Flags, End-*Parser);
 	MessageBox(NULL,Debug,_T("debug"),MB_OK);
 #endif
 
@@ -347,7 +344,7 @@ static DWORD ReadNotificationFromMemory(char **Parser, char *End, YAMN_NOTIFICAT
 	if (*Parser >= End)
 		return EACC_FILECOMPATIBILITY;
 #ifdef DEBUG_FILEREAD
-	mir_sntprintf(Debug, _countof(Debug), _T("PopupB: %04x, remaining %d chars"), Which->PopupB, End-*Parser);
+	mir_sntprintf(Debug, _T("PopupB: %04x, remaining %d chars"), Which->PopupB, End-*Parser);
 	MessageBox(NULL,Debug,_T("debug"),MB_OK);
 #endif
 	Which->PopupT = *(COLORREF *)(*Parser);
@@ -355,7 +352,7 @@ static DWORD ReadNotificationFromMemory(char **Parser, char *End, YAMN_NOTIFICAT
 	if (*Parser >= End)
 		return EACC_FILECOMPATIBILITY;
 #ifdef DEBUG_FILEREAD
-	mir_sntprintf(Debug, _countof(Debug), _T("PopupT: %04x, remaining %d chars"), Which->PopupT, End-*Parser);
+	mir_sntprintf(Debug, _T("PopupT: %04x, remaining %d chars"), Which->PopupT, End-*Parser);
 	MessageBox(NULL,Debug,_T("debug"),MB_OK);
 #endif
 	Which->PopupTime = *(DWORD *)(*Parser);
@@ -363,7 +360,7 @@ static DWORD ReadNotificationFromMemory(char **Parser, char *End, YAMN_NOTIFICAT
 	if (*Parser >= End)
 		return EACC_FILECOMPATIBILITY;
 #ifdef DEBUG_FILEREAD
-	mir_sntprintf(Debug, _countof(Debug), _T("PopupTime: %04x, remaining %d chars"), Which->PopupTime, End-*Parser);
+	mir_sntprintf(Debug, _T("PopupTime: %04x, remaining %d chars"), Which->PopupTime, End-*Parser);
 	MessageBox(NULL,Debug,_T("debug"),MB_OK);
 #endif
 
@@ -513,7 +510,7 @@ DWORD ReadAccountFromMemory(HACCOUNT Which, char **Parser, char *End)
 	if (*Parser >= End)
 		return EACC_FILECOMPATIBILITY;
 #ifdef	DEBUG_FILEREAD
-	mir_sntprintf(Debug, _countof(Debug), _T("Port: %d, remaining %d chars"), Which->Server->Port, End-*Parser);
+	mir_sntprintf(Debug, _T("Port: %d, remaining %d chars"), Which->Server->Port, End-*Parser);
 	MessageBox(NULL,Debug,_T("debug"),MB_OK);
 #endif
 #ifdef	DEBUG_FILEREAD
@@ -536,19 +533,19 @@ DWORD ReadAccountFromMemory(HACCOUNT Which, char **Parser, char *End)
 	if (*Parser >= End)
 		return EACC_FILECOMPATIBILITY;
 #ifdef DEBUG_FILEREAD
-	mir_sntprintf(Debug, _countof(Debug), _T("Flags: %04x, remaining %d chars"), Which->Flags, End-*Parser);
+	mir_sntprintf(Debug, _T("Flags: %04x, remaining %d chars"), Which->Flags, End-*Parser);
 	MessageBox(NULL,Debug,_T("debug"),MB_OK);
 #endif
 	Which->StatusFlags = *(DWORD *)(*Parser);
 	(*Parser) += sizeof(DWORD);
 #ifdef DEBUG_FILEREAD
-	mir_sntprintf(Debug, _countof(Debug), _T("STFlags: %04x, remaining %d chars"), Which->StatusFlags, End-*Parser);
+	mir_sntprintf(Debug, _T("STFlags: %04x, remaining %d chars"), Which->StatusFlags, End-*Parser);
 	MessageBox(NULL,Debug,_T("debug"),MB_OK);
 #endif
 	Which->PluginFlags = *(DWORD *)(*Parser);
 	(*Parser) += sizeof(DWORD);
 #ifdef DEBUG_FILEREAD
-	mir_sntprintf(Debug, _countof(Debug), _T("PFlags: %04x, remaining %d chars"), Which->PluginFlags, End-*Parser);
+	mir_sntprintf(Debug, _T("PFlags: %04x, remaining %d chars"), Which->PluginFlags, End-*Parser);
 	MessageBox(NULL,Debug,_T("debug"),MB_OK);
 #endif
 
@@ -559,7 +556,7 @@ DWORD ReadAccountFromMemory(HACCOUNT Which, char **Parser, char *End)
 	if (*Parser >= End)
 		return EACC_FILECOMPATIBILITY;
 #ifdef DEBUG_FILEREAD
-	mir_sntprintf(Debug, _countof(Debug), _T("Interval: %d, remaining %d chars"), Which->Interval, End-*Parser);
+	mir_sntprintf(Debug, _T("Interval: %d, remaining %d chars"), Which->Interval, End-*Parser);
 	MessageBox(NULL,Debug,_T("debug"),MB_OK);
 #endif
 
@@ -602,7 +599,7 @@ DWORD ReadAccountFromMemory(HACCOUNT Which, char **Parser, char *End)
 	if (*Parser >= End)
 		return EACC_FILECOMPATIBILITY;
 #ifdef DEBUG_FILEREAD
-	mir_sntprintf(Debug, _countof(Debug), _T("LastChecked: %04x, remaining %d chars"), Which->LastChecked, End-*Parser);
+	mir_sntprintf(Debug, _T("LastChecked: %04x, remaining %d chars"), Which->LastChecked, End-*Parser);
 	MessageBox(NULL,Debug,_T("debug"),MB_OK);
 #endif
 	Which->LastSChecked = *(SYSTEMTIME *)(*Parser);
@@ -610,7 +607,7 @@ DWORD ReadAccountFromMemory(HACCOUNT Which, char **Parser, char *End)
 	if (*Parser >= End)
 		return EACC_FILECOMPATIBILITY;
 #ifdef DEBUG_FILEREAD
-	mir_sntprintf(Debug, _countof(Debug), _T("LastSChecked: %04x, remaining %d chars"), Which->LastSChecked, End-*Parser);
+	mir_sntprintf(Debug, _T("LastSChecked: %04x, remaining %d chars"), Which->LastSChecked, End-*Parser);
 	MessageBox(NULL,Debug,_T("debug"),MB_OK);
 #endif
 	Which->LastSynchronised = *(SYSTEMTIME *)(*Parser);
@@ -618,7 +615,7 @@ DWORD ReadAccountFromMemory(HACCOUNT Which, char **Parser, char *End)
 	if (*Parser >= End)
 		return EACC_FILECOMPATIBILITY;
 #ifdef DEBUG_FILEREAD
-	mir_sntprintf(Debug, _countof(Debug), _T("LastSynchronised: %04x, remaining %d chars"), Which->LastSynchronised, End-*Parser);
+	mir_sntprintf(Debug, _T("LastSynchronised: %04x, remaining %d chars"), Which->LastSynchronised, End-*Parser);
 	MessageBox(NULL,Debug,_T("debug"),MB_OK);
 #endif
 	Which->LastMail = *(SYSTEMTIME *)(*Parser);
@@ -626,7 +623,7 @@ DWORD ReadAccountFromMemory(HACCOUNT Which, char **Parser, char *End)
 	if (*Parser > End)		//WARNING! There's only > at the end of testing
 		return EACC_FILECOMPATIBILITY;
 #ifdef DEBUG_FILEREAD
-	mir_sntprintf(Debug, _countof(Debug), _T("LastMail: %04x, remaining %d chars"), Which->LastMail, End-*Parser);
+	mir_sntprintf(Debug, _T("LastMail: %04x, remaining %d chars"), Which->LastMail, End-*Parser);
 	MessageBox(NULL,Debug,_T("debug"),MB_OK);
 #endif
 	if (*Parser == End)

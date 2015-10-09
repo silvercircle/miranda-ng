@@ -22,10 +22,9 @@ CSkypeProto::CSkypeProto(const char* protoName, const TCHAR* userName) :
 		m_PopupClasses(1), 
 		m_InviteDialogs(1),
 		m_GCCreateDialogs(1),
-		m_OutMessages(3, PtrKeySortT)
+		m_OutMessages(3, PtrKeySortT),
+		m_bThreadsTerminated(0)
 {
-	m_hProtoIcon = Icons[0].Handle;
-
 	InitNetwork();
 
 	requestQueue = new RequestQueue(m_hNetlibUser);
@@ -48,10 +47,6 @@ CSkypeProto::CSkypeProto(const char* protoName, const TCHAR* userName) :
 	SkinAddNewSoundEx("skype_inc_call", "SkypeWeb", LPGEN("Incoming call sound"));
 	SkinAddNewSoundEx("skype_call_canceled", "SkypeWeb", LPGEN("Incoming call canceled sound"));
 
-	m_hTrouterEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-	m_hPollingEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-	m_hTrouterHealthEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-
 	SkypeSetTimer();
 
 	m_hPollingThread = ForkThreadEx(&CSkypeProto::PollingThread, NULL, NULL);
@@ -71,16 +66,12 @@ CSkypeProto::~CSkypeProto()
 		TerminateThread(m_hPollingThread, NULL);
 		m_hPollingThread = NULL;
 	}
-	CloseHandle(m_hPollingEvent); m_hPollingEvent = NULL;
 
 	if (m_hTrouterThread)
 	{
 		TerminateThread(m_hTrouterThread, NULL);
 		m_hTrouterThread = NULL;
 	}
-	CloseHandle(m_hTrouterEvent); m_hTrouterEvent = NULL;
-	
-	CloseHandle(m_hTrouterHealthEvent);
 
 	SkypeUnsetTimer();
 }
@@ -95,7 +86,7 @@ int CSkypeProto::OnPreShutdown(WPARAM, LPARAM)
 
 	ShutdownConnections();
 
-	SetEvent(m_hPollingEvent);
+	m_hPollingEvent.Set();
 	
 	return 0;
 }
@@ -249,13 +240,13 @@ int CSkypeProto::SetStatus(int iNewStatus)
 			delSetting("endpointId");
 			delSetting("expires");
 		}
+		m_iStatus = m_iDesiredStatus = ID_STATUS_OFFLINE;
 		// logout
 		requestQueue->Stop();
 		ShutdownConnections();
 		
 		CloseDialogs();
-		ProtoBroadcastAck(NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, (HANDLE)m_iStatus, ID_STATUS_OFFLINE);
-		m_iStatus = m_iDesiredStatus = ID_STATUS_OFFLINE;
+		ProtoBroadcastAck(NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, (HANDLE)old_status, ID_STATUS_OFFLINE);
 
 		if (!Miranda_Terminated())
 			SetAllContactsStatus(ID_STATUS_OFFLINE);
@@ -304,4 +295,40 @@ int CSkypeProto::OnEvent(PROTOEVENTTYPE iEventType, WPARAM wParam, LPARAM lParam
 	}
 
 	return 1;
+}
+
+int CSkypeProto::RecvContacts(MCONTACT hContact, PROTORECVEVENT* pre)
+{
+	PROTOSEARCHRESULT **isrList = (PROTOSEARCHRESULT**)pre->szMessage;
+	DWORD cbBlob = 0;
+	BYTE *pBlob;
+	BYTE *pCurBlob;
+	int i;
+
+	int nCount = *((LPARAM*)pre->lParam);
+	char* szMessageId = ((char*)pre->lParam + sizeof(LPARAM));
+
+	//if (GetMessageFromDb(hContact, szMessageId, pre->timestamp)) return 0;
+
+	for (i = 0; i < nCount; i++)
+		cbBlob += int(/*mir_tstrlen(isrList[i]->nick.t)*/0 + 2 + mir_tstrlen(isrList[i]->id.t) + mir_strlen(szMessageId));
+
+	pBlob = (PBYTE)mir_calloc(cbBlob);
+
+	for (i = 0, pCurBlob = pBlob; i < nCount; i++)
+	{
+		//mir_strcpy((char*)pCurBlob, _T2A(isrList[i]->nick.t));
+		pCurBlob += mir_strlen((PCHAR)pCurBlob) + 1;
+
+		mir_strcpy((char*)pCurBlob, _T2A(isrList[i]->id.t));
+		pCurBlob += mir_strlen((char*)pCurBlob) + 1;
+	}
+
+	//memcpy(pCurBlob + 1, szMessageId, mir_strlen(szMessageId));
+
+	AddEventToDb(hContact, EVENTTYPE_CONTACTS, pre->timestamp, (pre->flags & PREF_CREATEREAD) ? DBEF_READ : 0, cbBlob, pBlob);
+
+	mir_free(pBlob);
+
+	return 0;
 }

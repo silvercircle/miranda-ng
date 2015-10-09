@@ -1,7 +1,7 @@
 #define __MAJOR_VERSION          0
 #define __MINOR_VERSION          1
-#define __RELEASE_NUM            2
-#define __BUILD_NUM              15
+#define __RELEASE_NUM            3
+#define __BUILD_NUM              1
 
 #include <stdver.h>
 
@@ -11,4 +11,4 @@
 #define __AUTHOR                 "Uli Hecht"
 #define __AUTHOREMAIL            ""
 #define __AUTHORWEB              "http://miranda-ng.org/p/WhatsApp/"
-#define __COPYRIGHT              "© 2013-14 Uli Hecht"
+#define __COPYRIGHT              "© 2013-14 Uli Hecht, 2015 Miranda NG Team"

@@ -27,7 +27,7 @@ INT_PTR CToxCallDlgBase::DlgProc(UINT msg, WPARAM wParam, LPARAM lParam)
 void CToxCallDlgBase::SetIcon(const char *name)
 {
 	char iconName[100];
-	mir_snprintf(iconName, _countof(iconName), "%s_%s", MODULE, name);
+	mir_snprintf(iconName, "%s_%s", MODULE, name);
 	SendMessage(m_hwnd, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIcon(iconName, false));
 	SendMessage(m_hwnd, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIcon(iconName, true));
 }
@@ -56,14 +56,14 @@ void CToxIncomingCall::OnInitDialog()
 	from.SetText(nick);
 
 	TCHAR title[MAX_PATH];
-	mir_sntprintf(title, _countof(title), TranslateT("Incoming call from %s"), nick);
+	mir_sntprintf(title, TranslateT("Incoming call from %s"), nick);
 	SetTitle(title);
 	SetIcon("audio_ring");
 }
 
 void CToxIncomingCall::OnClose()
 {
-	toxav_reject(m_proto->toxAv, m_proto->calls[hContact], NULL);
+	toxav_reject(m_proto->toxThread->toxAv, m_proto->calls[hContact], NULL);
 	Utils_SaveWindowPosition(m_hwnd, NULL, m_proto->m_szModuleName, "IncomingCallWindow_");
 	CToxCallDlgBase::OnClose();
 }
@@ -74,8 +74,8 @@ void CToxIncomingCall::OnAnswer(CCtrlBase*)
 	if (cSettings == NULL)
 		return;
 
-	if (toxav_answer(m_proto->toxAv, m_proto->calls[hContact], cSettings) == TOX_ERROR)
-		m_proto->debugLogA(__FUNCTION__": failed to start call");
+	if (toxav_answer(m_proto->toxThread->toxAv, m_proto->calls[hContact], cSettings) == TOX_ERROR)
+		m_proto->logger->Log(__FUNCTION__": failed to start call");
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -98,7 +98,7 @@ void CToxOutgoingCall::OnInitDialog()
 	to.SetText(nick);
 
 	TCHAR title[MAX_PATH];
-	mir_sntprintf(title, _countof(title), TranslateT("Outgoing call to %s"), nick);
+	mir_sntprintf(title, TranslateT("Outgoing call to %s"), nick);
 	SetTitle(title);
 	SetIcon("audio_end");
 }
@@ -127,10 +127,10 @@ void CToxOutgoingCall::OnCall(CCtrlBase*)
 	}
 
 	int32_t callId;
-	if (toxav_call(m_proto->toxAv, &callId, friendNumber, cSettings, 10) == TOX_ERROR)
+	if (toxav_call(m_proto->toxThread->toxAv, &callId, friendNumber, cSettings, 10) == TOX_ERROR)
 	{
 		mir_free(cSettings);
-		m_proto->debugLogA(__FUNCTION__": failed to start outgoing call");
+		m_proto->logger->Log(__FUNCTION__": failed to start outgoing call");
 		return;
 	}
 	mir_free(cSettings);
@@ -151,7 +151,7 @@ void CToxOutgoingCall::OnCall(CCtrlBase*)
 void CToxOutgoingCall::OnCancel(CCtrlBase*)
 {
 	if (!call.Enabled())
-		toxav_cancel(m_proto->toxAv, m_proto->calls[hContact], 0, NULL);
+		toxav_cancel(m_proto->toxThread->toxAv, m_proto->calls[hContact], 0, NULL);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -170,7 +170,7 @@ void CToxCallDialog::OnInitDialog()
 
 void CToxCallDialog::OnClose()
 {
-	toxav_hangup(m_proto->toxAv, m_proto->calls[hContact]);
+	toxav_hangup(m_proto->toxThread->toxAv, m_proto->calls[hContact]);
 	Utils_SaveWindowPosition(m_hwnd, NULL, m_proto->m_szModuleName, "CallWindow_");
 	CToxCallDlgBase::OnClose();
 }
@@ -188,7 +188,7 @@ ToxAvCSettings* CToxProto::GetAudioCSettings()
 	MMRESULT error = waveInGetDevCaps(deviceId, &wic, sizeof(WAVEINCAPS));
 	if (error != MMSYSERR_NOERROR)
 	{
-		debugLogA(__FUNCTION__": failed to get input device caps (%d)", error);
+		logger->Log(__FUNCTION__": failed to get input device caps (%d)", error);
 
 		TCHAR errorMessage[MAX_PATH];
 		waveInGetErrorText(error, errorMessage, _countof(errorMessage));
@@ -243,7 +243,7 @@ ToxAvCSettings* CToxProto::GetAudioCSettings()
 	}
 	else
 	{
-		debugLogA(__FUNCTION__": failed to parse input device caps");
+		logger->Log(__FUNCTION__": failed to parse input device caps");
 		mir_free(cSettings);
 		return NULL;
 	}
@@ -258,39 +258,39 @@ void CToxProto::OnAvInvite(void*, int32_t callId, void *arg)
 {
 	CToxProto *proto = (CToxProto*)arg;
 
-	int friendNumber = toxav_get_peer_id(proto->toxAv, callId, 0);
+	int friendNumber = toxav_get_peer_id(proto->toxThread->toxAv, callId, 0);
 	if (friendNumber == TOX_ERROR)
 	{
-		proto->debugLogA(__FUNCTION__": failed to get friend number");
-		toxav_reject(proto->toxAv, callId, NULL);
+		proto->logger->Log(__FUNCTION__": failed to get friend number");
+		toxav_reject(proto->toxThread->toxAv, callId, NULL);
 		return;
 	}
 
 	MCONTACT hContact = proto->GetContact(friendNumber);
 	if (hContact == NULL)
 	{
-		proto->debugLogA(__FUNCTION__": failed to find contact");
-		toxav_reject(proto->toxAv, callId, NULL);
+		proto->logger->Log(__FUNCTION__": failed to find contact");
+		toxav_reject(proto->toxThread->toxAv, callId, NULL);
 		return;
 	}
 
 	ToxAvCSettings cSettings;
-	if (toxav_get_peer_csettings(proto->toxAv, callId, 0, &cSettings) != av_ErrorNone)
+	if (toxav_get_peer_csettings(proto->toxThread->toxAv, callId, 0, &cSettings) != av_ErrorNone)
 	{
-		proto->debugLogA(__FUNCTION__": failed to get codec settings");
-		toxav_reject(proto->toxAv, callId, NULL);
+		proto->logger->Log(__FUNCTION__": failed to get codec settings");
+		toxav_reject(proto->toxThread->toxAv, callId, NULL);
 		return;
 	}
 
 	if (cSettings.call_type != av_TypeAudio)
 	{
-		proto->debugLogA(__FUNCTION__": video call is unsupported");
-		toxav_reject(proto->toxAv, callId, Translate("Video call is unsupported"));
+		proto->logger->Log(__FUNCTION__": video call is unsupported");
+		toxav_reject(proto->toxThread->toxAv, callId, Translate("Video call is unsupported"));
 		return;
 	}
 
 	TCHAR message[MAX_PATH];
-	mir_sntprintf(message, _countof(message), TranslateT("Incoming call from %s"), pcli->pfnGetContactDisplayName(hContact, 0));
+	mir_sntprintf(message, TranslateT("Incoming call from %s"), pcli->pfnGetContactDisplayName(hContact, 0));
 	T2Utf szMessage(message);
 
 	PROTORECVEVENT recv = { 0 };
@@ -314,10 +314,10 @@ INT_PTR CToxProto::OnRecvAudioCall(WPARAM hContact, LPARAM lParam)
 	cle.hContact = hContact;
 	cle.hDbEvent = hEvent;
 	cle.lParam = DB_EVENT_CALL;
-	cle.hIcon = IcoLib_GetIconByHandle(GetIconHandle("audio_ring"));
+	cle.hIcon = IcoLib_GetIconByHandle(GetIconHandle(IDI_AUDIO_RING));
 
 	TCHAR szTooltip[MAX_PATH];
-	mir_sntprintf(szTooltip, _countof(szTooltip), TranslateT("Incoming call from %s"), pcli->pfnGetContactDisplayName(hContact, 0));
+	mir_sntprintf(szTooltip, TranslateT("Incoming call from %s"), pcli->pfnGetContactDisplayName(hContact, 0));
 	cle.ptszTooltip = szTooltip;
 
 	char szService[MAX_PATH];
@@ -343,17 +343,17 @@ void CToxProto::OnAvCancel(void*, int32_t callId, void *arg)
 {
 	CToxProto *proto = (CToxProto*)arg;
 
-	int friendNumber = toxav_get_peer_id(proto->toxAv, callId, 0);
+	int friendNumber = toxav_get_peer_id(proto->toxThread->toxAv, callId, 0);
 	if (friendNumber == TOX_ERROR)
 	{
-		proto->debugLogA(__FUNCTION__": failed to get friend number");
+		proto->logger->Log(__FUNCTION__": failed to get friend number");
 		return;
 	}
 
 	MCONTACT hContact = proto->GetContact(friendNumber);
 	if (hContact == NULL)
 	{
-		proto->debugLogA(__FUNCTION__": failed to find contact");
+		proto->logger->Log(__FUNCTION__": failed to find contact");
 		return;
 	}
 
@@ -388,17 +388,17 @@ void CToxProto::OnAvReject(void*, int32_t callId, void *arg)
 {
 	CToxProto *proto = (CToxProto*)arg;
 
-	int friendNumber = toxav_get_peer_id(proto->toxAv, callId, 0);
+	int friendNumber = toxav_get_peer_id(proto->toxThread->toxAv, callId, 0);
 	if (friendNumber == TOX_ERROR)
 	{
-		proto->debugLogA(__FUNCTION__": failed to get friend number");
+		proto->logger->Log(__FUNCTION__": failed to get friend number");
 		return;
 	}
 
 	MCONTACT hContact = proto->GetContact(friendNumber);
 	if (hContact == NULL)
 	{
-		proto->debugLogA(__FUNCTION__": failed to find contact");
+		proto->logger->Log(__FUNCTION__": failed to find contact");
 		return;
 	}
 
@@ -412,17 +412,17 @@ void CToxProto::OnAvCallTimeout(void*, int32_t callId, void *arg)
 {
 	CToxProto *proto = (CToxProto*)arg;
 
-	int friendNumber = toxav_get_peer_id(proto->toxAv, callId, 0);
+	int friendNumber = toxav_get_peer_id(proto->toxThread->toxAv, callId, 0);
 	if (friendNumber == TOX_ERROR)
 	{
-		proto->debugLogA(__FUNCTION__": failed to get friend number");
+		proto->logger->Log(__FUNCTION__": failed to get friend number");
 		return;
 	}
 
 	MCONTACT hContact = proto->GetContact(friendNumber);
 	if (hContact == NULL)
 	{
-		proto->debugLogA(__FUNCTION__": failed to find contact");
+		proto->logger->Log(__FUNCTION__": failed to find contact");
 		return;
 	}
 
@@ -457,18 +457,18 @@ void CToxProto::OnAvStart(void*, int32_t callId, void *arg)
 	CToxProto *proto = (CToxProto*)arg;
 
 	ToxAvCSettings cSettings;
-	int cSettingsError = toxav_get_peer_csettings(proto->toxAv, callId, 0, &cSettings);
+	int cSettingsError = toxav_get_peer_csettings(proto->toxThread->toxAv, callId, 0, &cSettings);
 	if (cSettingsError != av_ErrorNone)
 	{
-		proto->debugLogA(__FUNCTION__": failed to get codec settings (%d)", cSettingsError);
-		toxav_hangup(proto->toxAv, callId);
+		proto->logger->Log(__FUNCTION__": failed to get codec settings (%d)", cSettingsError);
+		toxav_hangup(proto->toxThread->toxAv, callId);
 		return;
 	}
 
 	if (cSettings.call_type != av_TypeAudio)
 	{
-		proto->debugLogA(__FUNCTION__": video call is unsupported");
-		toxav_hangup(proto->toxAv, callId);
+		proto->logger->Log(__FUNCTION__": video call is unsupported");
+		toxav_hangup(proto->toxThread->toxAv, callId);
 		return;
 	}
 
@@ -484,8 +484,8 @@ void CToxProto::OnAvStart(void*, int32_t callId, void *arg)
 	MMRESULT error = waveOutOpen(&proto->hOutDevice, deviceId, &wfx, (DWORD_PTR)WaveOutCallback, (DWORD_PTR)proto, CALLBACK_FUNCTION);
 	if (error != MMSYSERR_NOERROR)
 	{
-		proto->debugLogA(__FUNCTION__": failed to open audio device (%d)", error);
-		toxav_hangup(proto->toxAv, callId);
+		proto->logger->Log(__FUNCTION__": failed to open audio device (%d)", error);
+		toxav_hangup(proto->toxThread->toxAv, callId);
 
 		TCHAR errorMessage[MAX_PATH];
 		waveInGetErrorText(error, errorMessage, _countof(errorMessage));
@@ -496,26 +496,26 @@ void CToxProto::OnAvStart(void*, int32_t callId, void *arg)
 		return;
 	}
 
-	int friendNumber = toxav_get_peer_id(proto->toxAv, callId, 0);
+	int friendNumber = toxav_get_peer_id(proto->toxThread->toxAv, callId, 0);
 	if (friendNumber == TOX_ERROR)
 	{
-		proto->debugLogA(__FUNCTION__": failed to get friend number");
-		toxav_hangup(proto->toxAv, callId);
+		proto->logger->Log(__FUNCTION__": failed to get friend number");
+		toxav_hangup(proto->toxThread->toxAv, callId);
 		return;
 	}
 
 	MCONTACT hContact = proto->GetContact(friendNumber);
 	if (hContact == NULL)
 	{
-		proto->debugLogA(__FUNCTION__": failed to find contact");
-		toxav_hangup(proto->toxAv, callId);
+		proto->logger->Log(__FUNCTION__": failed to find contact");
+		toxav_hangup(proto->toxThread->toxAv, callId);
 		return;
 	}
 
-	if (toxav_prepare_transmission(proto->toxAv, callId, false) == TOX_ERROR)
+	if (toxav_prepare_transmission(proto->toxThread->toxAv, callId, false) == TOX_ERROR)
 	{
-		proto->debugLogA(__FUNCTION__": failed to prepare audio transmition");
-		toxav_hangup(proto->toxAv, callId);
+		proto->logger->Log(__FUNCTION__": failed to prepare audio transmition");
+		toxav_hangup(proto->toxThread->toxAv, callId);
 		return;
 	}
 
@@ -534,19 +534,19 @@ void CToxProto::OnAvEnd(void*, int32_t callId, void *arg)
 
 	waveOutReset(proto->hOutDevice);
 	waveOutClose(proto->hOutDevice);
-	toxav_kill_transmission(proto->toxAv, callId);
+	toxav_kill_transmission(proto->toxThread->toxAv, callId);
 
-	int friendNumber = toxav_get_peer_id(proto->toxAv, callId, 0);
+	int friendNumber = toxav_get_peer_id(proto->toxThread->toxAv, callId, 0);
 	if (friendNumber == TOX_ERROR)
 	{
-		proto->debugLogA(__FUNCTION__": failed to get friend number");
+		proto->logger->Log(__FUNCTION__": failed to get friend number");
 		return;
 	}
 
 	MCONTACT hContact = proto->GetContact(friendNumber);
 	if (hContact == NULL)
 	{
-		proto->debugLogA(__FUNCTION__": failed to find contact");
+		proto->logger->Log(__FUNCTION__": failed to find contact");
 		return;
 	}
 
@@ -560,7 +560,7 @@ void CToxProto::OnAvPeerTimeout(void *av, int32_t callId, void *arg)
 {
 	CToxProto *proto = (CToxProto*)arg;
 
-	ToxAvCallState callState = toxav_get_call_state(proto->toxAv, callId);
+	ToxAvCallState callState = toxav_get_call_state(proto->toxThread->toxAv, callId);
 	switch (callState)
 	{
 	case av_CallStarting:
@@ -572,7 +572,7 @@ void CToxProto::OnAvPeerTimeout(void *av, int32_t callId, void *arg)
 		return;
 
 	default:
-		proto->debugLogA(__FUNCTION__": failed to handle callState");
+		proto->logger->Log(__FUNCTION__": failed to handle callState");
 		break;
 	}
 }
@@ -591,14 +591,14 @@ void CToxProto::OnFriendAudio(void*, int32_t, const int16_t *PCM, uint16_t size,
 	MMRESULT error = waveOutPrepareHeader(proto->hOutDevice, header, sizeof(WAVEHDR));
 	if (error != MMSYSERR_NOERROR)
 	{
-		proto->debugLogA(__FUNCTION__": failed to prepare audio buffer (%d)", error);
+		proto->logger->Log(__FUNCTION__": failed to prepare audio buffer (%d)", error);
 		return;
 	}
 
 	error = waveOutWrite(proto->hOutDevice, header, sizeof(WAVEHDR));
 	if (error != MMSYSERR_NOERROR)
 	{
-		proto->debugLogA(__FUNCTION__": failed to play audio samples (%d)", error);
+		proto->logger->Log(__FUNCTION__": failed to play audio samples (%d)", error);
 		return;
 	}
 }

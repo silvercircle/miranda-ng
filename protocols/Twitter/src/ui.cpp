@@ -98,11 +98,11 @@ INT_PTR CALLBACK first_run_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 	return false;
 }
 
-INT_PTR CALLBACK tweet_proc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK tweet_proc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	TwitterProto *proto;
 
-	switch (msg) {
+	switch (uMsg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
 
@@ -113,7 +113,7 @@ INT_PTR CALLBACK tweet_proc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam
 
 		// Set window title
 		TCHAR title[512];
-		mir_sntprintf(title, _countof(title), _T("Send Tweet for %s"), proto->m_tszUserName);
+		mir_sntprintf(title, _T("Send Tweet for %s"), proto->m_tszUserName);
 		SetWindowText(hwndDlg, title);
 		return true;
 
@@ -140,14 +140,13 @@ INT_PTR CALLBACK tweet_proc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam
 			char str[16];
 			mir_snprintf(str, "%d", 140 - len);
 			SetDlgItemTextA(hwndDlg, IDC_CHARACTERS, str);
-
 			return true;
 		}
-
 		break;
+
 	case WM_SETREPLY:
 		char foo[512];
-		mir_snprintf(foo, _countof(foo), "@%s ", (char*)wParam);
+		mir_snprintf(foo, "@%s ", (char*)wParam);
 		size_t len = mir_strlen(foo);
 
 		SetDlgItemTextA(hwndDlg, IDC_TWEETMSG, foo);
@@ -191,17 +190,16 @@ INT_PTR CALLBACK options_proc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 		else SendDlgItemMessage(hwndDlg, IDC_BASEURL, CB_SETCURSEL, 0, 0);
 
 		char pollrate_str[32];
-		mir_snprintf(pollrate_str, _countof(pollrate_str), "%d", proto->getDword(TWITTER_KEY_POLLRATE, 80));
+		mir_snprintf(pollrate_str, "%d", proto->getDword(TWITTER_KEY_POLLRATE, 80));
 		SetDlgItemTextA(hwndDlg, IDC_POLLRATE, pollrate_str);
 
 		CheckDlgButton(hwndDlg, IDC_TWEET_MSG, proto->getByte(TWITTER_KEY_TWEET_TO_MSG, 0) ? BST_CHECKED : BST_UNCHECKED);
 
-
 		// Do this last so that any events propagated by pre-filling the form don't
 		// instigate a PSM_CHANGED message
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
-
 		break;
+
 	case WM_COMMAND:
 		if (GetWindowLongPtr(hwndDlg, GWLP_USERDATA)) // Window is done initializing
 		{

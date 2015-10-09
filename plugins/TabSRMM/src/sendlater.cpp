@@ -31,7 +31,6 @@
 CSendLater *sendLater = 0;
 
 // implementation of the CSendLaterJob class
-//
 CSendLaterJob::CSendLaterJob()
 {
 	memset(this, 0, sizeof(CSendLaterJob));
@@ -40,14 +39,12 @@ CSendLaterJob::CSendLaterJob()
 
 // return true if this job is persistent (saved to the database).
 // such a job will survive a restart of Miranda
-//
 bool CSendLaterJob::isPersistentJob()
 {
 	return(szId[0] == 'S' ? true : false);
 }
 
 // check conditions for deletion
-//
 bool CSendLaterJob::mustDelete()
 {
 	if (fSuccess)
@@ -60,7 +57,6 @@ bool CSendLaterJob::mustDelete()
 }
 
 // clean database entries for a persistent job (currently: manual send later jobs)
-//
 void CSendLaterJob::cleanDB()
 {
 	if (isPersistentJob()) {
@@ -73,21 +69,20 @@ void CSendLaterJob::cleanDB()
 		db_set_dw(hContact, "SendLater", "count", iCount);
 
 		// delete flags
-		mir_snprintf(szKey, _countof(szKey), "$%s", szId);
+		mir_snprintf(szKey, "$%s", szId);
 		db_unset(hContact, "SendLater", szKey);
 	}
 }
 
 // read flags for a persistent jobs from the db
 // flag key name is the job id with a "$" prefix.
-//
 void CSendLaterJob::readFlags()
 {
 	if (isPersistentJob()) {
 		char szKey[100];
 		DWORD localFlags;
 
-		mir_snprintf(szKey, _countof(szKey), "$%s", szId);
+		mir_snprintf(szKey, "$%s", szId);
 		localFlags = db_get_dw(hContact, "SendLater", szKey, 0);
 
 		if (localFlags & SLF_SUSPEND)
@@ -97,20 +92,18 @@ void CSendLaterJob::readFlags()
 
 // write flags for a persistent jobs from the db
 // flag key name is the job id with a "$" prefix.
-//
 void CSendLaterJob::writeFlags()
 {
 	if (isPersistentJob()) {
 		DWORD localFlags = (bCode == JOB_HOLD ? SLF_SUSPEND : 0);
 		char szKey[100];
 
-		mir_snprintf(szKey, _countof(szKey), "$%s", szId);
+		mir_snprintf(szKey, "$%s", szId);
 		db_set_dw(hContact, "SendLater", szKey, localFlags);
 	}
 }
 
 // delete a send later job
-//
 CSendLaterJob::~CSendLaterJob()
 {
 	if (fSuccess || fFailed) {
@@ -130,12 +123,12 @@ CSendLaterJob::~CSendLaterJob()
 				_tcsncpy_s(ppd.lptzContactName, (tszName ? tszName : TranslateT("'(Unknown contact)'")), _TRUNCATE);
 				TCHAR *msgPreview = Utils::GetPreviewWithEllipsis(reinterpret_cast<TCHAR *>(&pBuf[mir_strlen((char *)pBuf) + 1]), 100);
 				if (fSuccess) {
-					mir_sntprintf(ppd.lptzText, _countof(ppd.lptzText), TranslateT("A send later job completed successfully.\nThe original message: %s"),
+					mir_sntprintf(ppd.lptzText, TranslateT("A send later job completed successfully.\nThe original message: %s"),
 						msgPreview);
 					mir_free(msgPreview);
 				}
 				else if (fFailed) {
-					mir_sntprintf(ppd.lptzText, _countof(ppd.lptzText), TranslateT("A send later job failed to complete.\nThe original message: %s"),
+					mir_sntprintf(ppd.lptzText, TranslateT("A send later job failed to complete.\nThe original message: %s"),
 						msgPreview);
 					mir_free(msgPreview);
 				}
@@ -174,7 +167,6 @@ m_currJob(-1)
 // clear all open send jobs. Only called on system shutdown to remove
 // the jobs from memory. Must _NOT_ delete any sendlater related stuff from
 // the database (only successful sends may do this).
-//
 CSendLater::~CSendLater()
 {
 	if (m_hwndDlg)
@@ -209,7 +201,6 @@ void CSendLater::startJobListProcess()
 // hotkeyhandler.cpp.
 //
 // returns true if more jobs are awaiting processing, false otherwise.
-//
 bool CSendLater::processCurrentJob()
 {
 	if (!m_sendLaterJobList.getCount() || m_currJob == -1)
@@ -241,7 +232,6 @@ bool CSendLater::processCurrentJob()
 // stub used as enum proc for the database enumeration, collecting
 // all entries in the SendLater module
 // (static function)
-//
 int _cdecl CSendLater::addStub(const char *szSetting, LPARAM lParam)
 {
 	return(sendLater->addJob(szSetting, lParam));
@@ -251,7 +241,6 @@ int _cdecl CSendLater::addStub(const char *szSetting, LPARAM lParam)
 // enum the "SendLater" module and add all jobs to the list of open jobs.
 // addJob() will deal with possible duplicates
 // @param hContact HANDLE: contact's handle
-//
 void CSendLater::processSingleContact(const MCONTACT hContact)
 {
 	int iCount = db_get_dw(hContact, "SendLater", "count", 0);
@@ -268,12 +257,11 @@ void CSendLater::processSingleContact(const MCONTACT hContact)
 
 // called periodically from a timer, check if new contacts were added
 // and process them
-//
 void CSendLater::processContacts()
 {
 	if (m_fAvail && m_sendLaterContactList.getCount() != 0) {
 		for (int i = 0; i < m_sendLaterContactList.getCount(); i++)
-			processSingleContact((MCONTACT)m_sendLaterContactList[i]);
+			processSingleContact((UINT_PTR)m_sendLaterContactList[i]);
 
 		m_sendLaterContactList.destroy();
 	}
@@ -288,7 +276,6 @@ void CSendLater::processContacts()
 //
 // @param 	lParam: a contact handle for which the job should be scheduled
 // @return 	0 on failure, 1 otherwise
-//
 int CSendLater::addJob(const char *szSetting, LPARAM lParam)
 {
 	MCONTACT	hContact = lParam;
@@ -451,7 +438,6 @@ void CSendLater::addContact(const MCONTACT hContact)
 //
 // Add the message to the database and mark it as successful. The job will be
 // removed later by the job list processing code.
-//
 HANDLE CSendLater::processAck(const ACKDATA *ack)
 {
 	if (m_sendLaterJobList.getCount() == 0 || !m_fAvail)
@@ -507,7 +493,6 @@ LRESULT CSendLater::qMgrAddFilter(const MCONTACT hContact, const TCHAR* tszNick)
 
 // fills the list of jobs with current contents of the job queue
 // filters by m_hFilter (contact handle)
-//
 void CSendLater::qMgrFillList(bool fClear)
 {
 	TCHAR *formatTime = _T("%Y.%m.%d - %H:%M");
@@ -538,7 +523,7 @@ void CSendLater::qMgrFillList(bool fClear)
 
 			lvItem.mask = LVIF_TEXT | LVIF_PARAM;
 			TCHAR tszBuf[255];
-			mir_sntprintf(tszBuf, _countof(tszBuf), _T("%s [%s]"), tszNick, c->getRealAccount());
+			mir_sntprintf(tszBuf, _T("%s [%s]"), tszNick, c->getRealAccount());
 			lvItem.pszText = tszBuf;
 			lvItem.cchTextMax = _countof(tszBuf);
 			lvItem.iItem = uIndex++;
@@ -590,7 +575,7 @@ void CSendLater::qMgrFillList(bool fClear)
 				bCode = p->bCode;
 
 			TCHAR tszStatus[20];
-			mir_sntprintf(tszStatus, _countof(tszStatus), _T("X/%s[%c] (%d)"), tszStatusText, bCode, p->iSendCount);
+			mir_sntprintf(tszStatus, _T("X/%s[%c] (%d)"), tszStatusText, bCode, p->iSendCount);
 			tszStatus[0] = p->szId[0];
 			lvItem.pszText = tszStatus;
 			lvItem.iSubItem = 3;
@@ -664,7 +649,6 @@ void CSendLater::qMgrSetupColumns()
 }
 
 // save user defined column widths to the database
-//
 void CSendLater::qMgrSaveColumns()
 {
 	char		szColFormatNew[100];
@@ -857,7 +841,6 @@ INT_PTR CALLBACK CSendLater::DlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 }
 
 // invoke queue manager dialog - do nothing if this dialog is already open
-//
 void CSendLater::invokeQueueMgrDlg()
 {
 	if (m_hwndDlg == 0)
@@ -865,7 +848,6 @@ void CSendLater::invokeQueueMgrDlg()
 }
 
 // service function to invoke the queue manager
-//
 INT_PTR CSendLater::svcQMgr(WPARAM, LPARAM)
 {
 	sendLater->invokeQueueMgrDlg();

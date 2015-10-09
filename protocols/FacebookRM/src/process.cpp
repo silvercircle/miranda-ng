@@ -49,19 +49,28 @@ void FacebookProto::ProcessBuddyList(void*)
 
 	facy.handle_entry("ProcessBuddyList");
 
-	// Prepare update data
-	std::string post_data = "user=" + facy.self_.user_id + "&fetch_mobile=true&fb_dtsg=" + facy.dtsg_ + "&__user=" + facy.self_.user_id + "&cached_user_info_ids=";
+	std::string data = "user=" + facy.self_.user_id;
 
+	data += "&cached_user_info_ids=";
 	int counter = 0;
-	for (List::Item< facebook_user >* i = facy.buddies.begin(); i != NULL; i = i->next, counter++)
-	{
-		post_data += i->data->user_id + "%2C";
+	for (List::Item< facebook_user >* i = facy.buddies.begin(); i != NULL; i = i->next, counter++) {
+		data += i->data->user_id + "%2C";
 	}
 
-	post_data += "&phstamp=" + facy.phstamp(post_data);
+	data += "&fetch_mobile=true";
+	// data += "&additional_buddies[0]=" + some_user_id; // FIXME: I'm not sure what this is for
+	// data += "&additional_buddies[1]=" + some_user_id;
+	data += "&get_now_available_list=true";
+
+	data += "&__user=" + facy.self_.user_id;
+	data += "&__dyn=" + facy.__dyn();
+	data += "&__req=" + facy.__req();
+	data += "&fb_dtsg=" + facy.dtsg_;
+	data += "&ttstamp=" + facy.ttstamp_;
+	data += "&__rev=" + facy.__rev();
 
 	// Get buddy list
-	http::response resp = facy.flap(REQUEST_BUDDY_LIST, &post_data);
+	http::response resp = facy.flap(REQUEST_BUDDY_LIST, &data); // NOTE: Request revised 1.9.2015
 
 	if (resp.code != HTTP_CODE_OK) {
 		facy.handle_error("buddy_list");
@@ -158,8 +167,15 @@ void FacebookProto::ProcessFriendList(void*)
 
 	facy.handle_entry("load_friends");
 
-	// Get buddy list
-	http::response resp = facy.flap(REQUEST_USER_INFO_ALL);
+	// Get friends list
+	std::string data = "__user=" + facy.self_.user_id;
+	data += "&__dyn=" + facy.__dyn();
+	data += "&__req=" + facy.__req();
+	data += "&fb_dtsg=" + facy.dtsg_;
+	data += "&ttstamp=" + facy.ttstamp_;
+	data += "&__rev=" + facy.__rev();
+
+	http::response resp = facy.flap(REQUEST_USER_INFO_ALL, &data); // NOTE: Request revised 1.9.2015
 
 	if (resp.code != HTTP_CODE_OK) {
 		facy.handle_error("load_friends");
@@ -299,9 +315,9 @@ void FacebookProto::ProcessUnreadMessages(void*)
 	if (!inboxOnly)
 		data += "&folders[1]=other";
 	data += "&client=mercury";
-	data += "__user=" + facy.self_.user_id;
+	data += "&__user=" + facy.self_.user_id;
 	data += "&fb_dtsg=" + facy.dtsg_;
-	data += "&__a=1&__dyn=&__req=&ttstamp=" + facy.ttstamp();
+	data += "&__a=1&__dyn=&__req=&ttstamp=" + facy.ttstamp_;
 
 	http::response resp = facy.flap(REQUEST_UNREAD_THREADS, &data);
 
@@ -314,13 +330,13 @@ void FacebookProto::ProcessUnreadMessages(void*)
 
 		std::vector<std::string> threads;
 
-	facebook_json_parser* p = new facebook_json_parser(this);
-	p->parse_unread_threads(&resp.data, &threads, inboxOnly);
-	delete p;
+		facebook_json_parser* p = new facebook_json_parser(this);
+		p->parse_unread_threads(&resp.data, &threads, inboxOnly);
+		delete p;
 
-	ForkThread(&FacebookProto::ProcessUnreadMessage, new std::vector<std::string>(threads));
+		ForkThread(&FacebookProto::ProcessUnreadMessage, new std::vector<std::string>(threads));
 
-	debugLogA("*** Unread threads list processed");
+		debugLogA("*** Unread threads list processed");
 
 	CODE_BLOCK_CATCH
 
@@ -331,12 +347,12 @@ void FacebookProto::ProcessUnreadMessages(void*)
 		facy.handle_success("ProcessUnreadMessages");
 }
 
-void FacebookProto::ProcessUnreadMessage(void *data)
+void FacebookProto::ProcessUnreadMessage(void *pParam)
 {
-	if (data == NULL)
+	if (pParam == NULL)
 		return;
 
-	std::vector<std::string> *threads = (std::vector<std::string>*)data;
+	std::vector<std::string> *threads = (std::vector<std::string>*)pParam;
 
 	if (isOffline()) {
 		delete threads;
@@ -353,11 +369,16 @@ void FacebookProto::ProcessUnreadMessage(void *data)
 
 	http::response resp;
 
-	while (!threads->empty()) {
+	// TODO: First load info about amount of unread messages, then load exactly this amount for each thread
+
+	while (!threads->empty()) {		
 		std::string data = "client=mercury";
 		data += "&__user=" + facy.self_.user_id;
+		data += "&__dyn=" + facy.__dyn();
+		data += "&__req=" + facy.__req();
 		data += "&fb_dtsg=" + facy.dtsg_;
-		data += "&__a=1&__dyn=&__req=&ttstamp=" + facy.ttstamp();
+		data += "&ttstamp=" + facy.ttstamp_;
+		data += "&__rev=" + facy.__rev();
 
 		for (std::vector<std::string>::size_type i = 0; i < threads->size(); i++) {
 			std::string thread_id = utils::url::encode(threads->at(i));
@@ -373,7 +394,7 @@ void FacebookProto::ProcessUnreadMessage(void *data)
 			data += "]=" + thread_id;
 		}
 
-		resp = facy.flap(REQUEST_THREAD_INFO, &data);
+		resp = facy.flap(REQUEST_THREAD_INFO, &data); // NOTE: Request revised 1.9.2015
 
 		if (resp.code == HTTP_CODE_OK) {
 
@@ -440,28 +461,28 @@ void FacebookProto::ProcessUnreadMessage(void *data)
 	delete threads;
 }
 
-void FacebookProto::LoadLastMessages(void *p)
+void FacebookProto::LoadLastMessages(void *pParam)
 {
-	if (p == NULL)
+	if (pParam == NULL)
 		return;
 
-	if (isOffline()) {
-		delete (MCONTACT*)p;
+	MCONTACT hContact = *(MCONTACT*)pParam;
+	delete (MCONTACT*)pParam;
+
+	if (isOffline())
 		return;
-	}
 
 	facy.handle_entry("LoadLastMessages");
-
-	MCONTACT hContact = *(MCONTACT*)p;
-	delete (MCONTACT*)p;
-
 	if (!isOnline())
 		return;
 
 	std::string data = "client=mercury";
 	data += "&__user=" + facy.self_.user_id;
+	data += "&__dyn=" + facy.__dyn();
+	data += "&__req=" + facy.__req();
 	data += "&fb_dtsg=" + facy.dtsg_;
-	data += "&__a=1&__dyn=&__req=&ttstamp=" + facy.ttstamp();
+	data += "&ttstamp=" + facy.ttstamp_;
+	data += "&__rev=" + facy.__rev();
 
 	bool isChat = isChatRoom(hContact);
 
@@ -488,7 +509,7 @@ void FacebookProto::LoadLastMessages(void *p)
 	// request info about thread
 	data += "&threads[" + type + "][0]=" + id;
 
-	http::response resp = facy.flap(REQUEST_THREAD_INFO, &data);
+	http::response resp = facy.flap(REQUEST_THREAD_INFO, &data); // NOTE: Request revised 1.9.2015
 
 	if (resp.code != HTTP_CODE_OK || resp.data.empty()) {
 		facy.handle_error("LoadLastMessages");
@@ -580,18 +601,21 @@ void FacebookProto::SyncThreads(void*)
 	// Get milli timestamp string for Facebook
 	std::string time = utils::conversion::to_string((void*)&timestamp, UTILS_CONV_TIME_T) + "000";
 
-	std::string data = "client=mercury";
-	data += "&last_action_timestamp=" + time;
-	data += "&__user=" + facy.self_.user_id;
-	data += "&fb_dtsg=" + facy.dtsg_;
+	std::string data = "last_action_timestamp=" + time;
 	data += "&folders[0]=inbox";
 	if (!inboxOnly)
 		data += "&folders[1]=other";
-	data += "&__req=7&__a=1&__dyn=&__req=&__rev=&ttstamp=" + facy.ttstamp();
+	data += "&client=mercury_sync";
+	data += "&__user=" + facy.self_.user_id;
+	data += "&__dyn=" + facy.__dyn();
+	data += "&__req=" + facy.__req();
+	data += "&fb_dtsg=" + facy.dtsg_;
+	data += "&ttstamp=" + facy.ttstamp_;
+	data += "&__rev=" + facy.__rev();
 
 	debugLogA("    Facebook's milli timestamp for sync: %s", time.c_str());
 
-	http::response resp = facy.flap(REQUEST_THREAD_SYNC, &data);
+	http::response resp = facy.flap(REQUEST_THREAD_SYNC, &data); // NOTE: Request revised 1.9.2015
 
 	if (resp.code != HTTP_CODE_OK || resp.data.empty()) {
 		facy.handle_error("LoadLastMessages");
@@ -1073,7 +1097,7 @@ void FacebookProto::ProcessNotifications(void*)
 	data += "&cursor="; // when loading more
 	data += "&length=" + utils::conversion::to_string(&count, UTILS_CONV_UNSIGNED_NUMBER); // number of items to load
 	data += "&businessID="; // probably for pages?
-	data += "&ttstamp=" + facy.ttstamp();
+	data += "&ttstamp=" + facy.ttstamp_;
 
 	// Get notifications
 	http::response resp = facy.flap(REQUEST_NOTIFICATIONS, &data);
@@ -1120,7 +1144,7 @@ void FacebookProto::ProcessFriendRequests(void*)
 	}
 
 	// Parse it
-	std::string reqs = utils::text::source_get_value(&resp.data, 3, "id=\"friend_requests_section\"", "</h4>", "<h4");
+	std::string reqs = utils::text::source_get_value(&resp.data, 3, "id=\"friends_center_main\"", "</h3>", "/friends/center/suggestions/");
 
 	std::string::size_type pos = 0;
 	std::string::size_type pos2 = 0;
@@ -1128,21 +1152,21 @@ void FacebookProto::ProcessFriendRequests(void*)
 
 	while (!last && !reqs.empty()) {
 		std::string req;
-		if ((pos2 = reqs.find("<img src=", pos)) != std::string::npos) {
+		if ((pos2 = reqs.find("</table>", pos)) != std::string::npos) {
 			req = reqs.substr(pos, pos2 - pos);
-			pos = pos2 + 9;
+			pos = pos2 + 8;
 		} else {
 			req = reqs.substr(pos);
 			last = true;
 		}
-
-		std::string get = utils::text::source_get_value(&req, 3, "<form", "action=\"", "\">");
+		
+		std::string get = utils::text::source_get_value(&req, 2, "notifications.php?", "\"");
 		std::string time = utils::text::source_get_value2(&get, "seenrequesttime=", "&\"");
-		std::string reason = utils::text::remove_html(utils::text::source_get_value(&req, 3, "<span", ">", "</span>"));
+		std::string reason = utils::text::remove_html(utils::text::source_get_value(&req, 4, "</a>", "<div", ">", "</div>"));
 
 		facebook_user fbu;
-		fbu.real_name = utils::text::remove_html(utils::text::source_get_value(&req, 3, "<strong", ">", "</strong>"));
-		fbu.user_id = utils::text::source_get_value2(&get, "id=", "&\"");
+		fbu.real_name = utils::text::remove_html(utils::text::source_get_value(&req, 3, "<a", ">", "</a>"));
+		fbu.user_id = utils::text::source_get_value2(&get, "confirm=", "&\"");
 
 		if (!fbu.user_id.empty() && !fbu.real_name.empty()) {
 			MCONTACT hContact = AddToContactList(&fbu, CONTACT_APPROVE);

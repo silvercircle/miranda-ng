@@ -1,0 +1,359 @@
+﻿#muuid {9b8e1735-970d-4ce0-930c-a561956bdca2}
+;============================================================
+;  File: Xfire.dll
+;  Plugin: Xfire protocol
+;  Version: 0.1.9.0
+;  Authors: dufte
+;============================================================
+[Xfire protocol support for Miranda NG.]
+Поддержка протокола XFire в Miranda NG.
+[Password:]
+Пароль:
+[Login name:]
+Логин
+[Nick:]
+Ник:
+[Current protocol version:]
+Текущая версия протокола
+[Note: You can only change these settings if you are connected to Xfire.]
+Примечание: Вы можете изменить настройки, только если подключены к Xfire.
+[Create a new Xfire account on website]
+Создать учётную запись на сайте
+[Lost password?]
+Забыли пароль?
+[Account options]
+Настройки учётной записи
+[Show my friends]
+Показывать моих друзей
+[Game Status]
+Статусы игр
+[Show on my profile and miniprofile]
+Показывать мой профиль и минипрофиль
+[Show my game server data]
+Показывать данные сервера моей игры
+[Other Activity]
+Другие активности
+[Show my voice chat server to my friends]
+Показывать мой сервер голосового чата моим друзьям
+[Show people when I type to them]
+Показывать уведомление о моём наборе текста
+[Show nicknames when available]
+Показывать ники, если доступно
+[Show friends of my friends]
+Показывать друзей моих друзей
+[Options]
+Настройки
+[More options]
+Ещё настройки
+[Display Error and Info message:]
+Ошибки и информация:
+[Main group for clan groups:]
+Группа для группы кланов:
+[Automatically scan for games:]
+Автоматический поиск игр:
+[Main group for Friends of Friends:]
+Основная группа для друзей друзей:
+[Files]
+Файлы
+[Blocked User List]
+Список заблокированных пользователей
+[This list contains all your blocked Xfire users. You can remove one if you wanna allow him to send you a friend request.]
+Эти пользователи заблокированы. Чтобы позволить кому-нибудь снова отправлять вам сообщения, удалите его из этого списка.
+[You can simply block someone if you right click on his friend request in contact list and choose Block User...]
+Вы можете просто заблокировать кого-нибудь щелчком правой кнопки по пользователю в списке контактов.
+[This file is used for the game search, game detection and game ID resolving. It contains all Xfire supported games.]
+Этот файл используется для поиска и обнаружения игры. Файл содержит поддерживаемые игры Xfire.
+[This file contains all original game icons. You can also activate the option for icon downloading if you don't have it.]
+Этот файл содержит оригинальные значки игр. Вы можете также включить автоматическую загрузку значков, если этого файла у вас нет.
+[Be sure you put these files in following folder:]
+Будьте внимательны, вы поместите файлы в эту папку:
+[Status Message]
+Статусное сообщение
+[Enable]
+Включено
+[With this feature, following status message will be set on your other protocol plugins if you are in game. So your other buddies can also see what you play. It will also change the status to occupied if this option is enabled.]
+Позволяет установить указанное статусное сообщение на другие протоколы, если вы в игре. Друзья будут видеть, во что вы играете. Кроме того, если эта функция включена, ваш статус изменится на "Занят".
+[Following Variables are available: %myxfiregame%, %myxfirevoice%, %myxfireserverip%, %myxfirevoiceip%]
+Доступны следующие переменные: %myxfiregame%, %myxfirevoice%, %myxfireserverip%, %myxfirevoiceip%
+[Status message:]
+Статусное сообщение:
+[Change the status to occupied or dnd]
+Менять статус на Занят или Не беспокоить
+[The status message and status will be reset if you close the game.]
+Статусное сообщение и статус будут сброшены, если вы закроете игру.
+[Prefer dnd when it is available]
+"Не беспокоить", если возможно
+[Games]
+Игры
+[Game:]
+Игра:
+[Don't detect this game as running]
+Не обнаруживать игру когда запущена
+[Apply]
+Применить
+[Don't set status message for other protocols]
+Не ставить сообщение статуса другим протоколам
+[Add new game]
+Добавить игру
+[Remove]
+Удалить
+[Don't show in start menu]
+Отключить пункт в главном меню
+[(manual added)]
+(добавлено вручную)
+[Extra Command Line Parameters:]
+Дополнит. параметры командной строки:
+[Edit...]
+Правка...
+[Username:]
+Пользователь:
+[Game]
+Игра
+[Voice chat]
+Голосовой чат
+[Name:]
+Имя:
+[Port:]
+Порт:
+[User details]
+Детали пользователя
+[Copy]
+Копировать
+[Enter Password]
+Введите пароль
+[Join]
+Присоединиться
+[Set Nickname]
+Ввод ника
+[Cancel]
+Отмена
+[New xfire_games.ini]
+Новый xfire_games.ini
+[Update]
+Обновить
+[Add game]
+Добавить игру
+[Search:]
+Искать:
+[Custom...]
+Изменить...
+[Game name:]
+Название:
+[Game exe:]
+exe игры:
+[Browse...]
+Обзор...
+[Game ID:]
+ID игры:
+[Add a new game]
+Добавить новую игру
+[Searching games...]
+Поиск игр...
+[All Files]
+Все файлы
+[XFire Options]
+Настройки XFire
+[Please choose one game in the list!]
+Пожалуйста, выберите игру из списка!
+[Please enter a game name.]
+Введите название игры.
+[Please enter a game ID.]
+Введите ID игры.
+[Please enter a game ID above 1.]
+ID игры должен быть больше 1.
+[This game ID is already in use.]
+Такой ID игры уже используется.
+[Yep, I'm here.]
+Да, я здесь.
+[I've been away since %time%.]
+Отошёл в %time%.
+[Give it up, I'm not in!]
+Ну нет меня сейчас, нет...
+[Not right now.]
+Не сейчас.
+[Give a guy some peace, would ya?]
+Прошу не тревожить...
+[That'll be the phone.]
+Дайте же человеку поговорить по телефону.
+[Mmm... food.]
+Ммм... поесть бы.
+[XFire Protocol]
+Протокол XFire
+[The xfire_games.ini was updated.]
+Xfire_games.ini обновлён.
+[Protocol icon]
+Значок протокола
+[The protocol version is too old. Changed current version from %d to %d. You can reconnect now.]
+Старая версия протокола. Измените текущую версию %d на %d. Вы должны переподключиться.
+[Do you really want to add %s to your friend list?]
+Вы уверены, что хотите добавить %s в список друзей?
+[Add me to your friend list.]
+Добавьте меня в свой список друзей.
+[Current Game]
+Текущая игра
+[ServerIP]
+IP сервера
+[Voice]
+Голос
+[Xfire Link Protocol]
+Протокол Xfire
+[Buddy start a game]
+Начало игры
+[It seems that is the first time you use this plugin. Do you want to automatically download the latest available xfire_games.ini and icons.dll?\r\nWithout the xfire_games.ini Xfire can't detect any games on your computer.]
+Вы впервые запустили плагин. Загрузить xfire_games.ini и icons.dll?\r\nБез xfire_games.ini не удастся обнаружить установленные игры.
+[&XFire Online Profile]
+Онлайн профиль &XFire
+[XFire &Clan Site]
+Сайт &клана Xfire
+[C&opy Server Address and Port]
+Ко&пировать адрес и порт сервера
+[Cop&y Voice Server Address and Port]
+Копи&ровать адрес и порт сервера общения
+[Join &Game...]
+Зайти в &игру...
+[Play this game...]
+Играть в эту игру...
+[Remove F&riend...]
+Удалить из др&узей...
+[Block U&ser...]
+Заблокировать по&льзователя...
+[&My XFire Online Profile]
+&Мой профиль XFire
+[&Rescan my games...]
+&Пересканировать мои игры...
+[Set &Nickname]
+&Псевдоним
+[Protocols]
+Протоколы
+[XFire game icon]
+Значок игры XFire
+[XFire voice icon]
+Значок голоса XFire
+[Username]
+Имя пользователя
+[Unable to connect to XFire.]
+Не могу подключится к XFire.
+[No Login name is set!]
+Логин не установлен!
+[No Password is set!]
+Пароль не установлен!
+[%s is playing %s.]
+%s играет в %s.
+[%s is playing %s on server %d.%d.%d.%d:%d.]
+%s играет в %s на сервере %d.%d.%d.%d:%d.
+[Playing]
+Играет
+[Do you really want to delete your friend %s?]
+Вы действительно хотите удалить %s?
+[Confirm Delete]
+Подтвердите удаление
+[Block this user from ever contacting you again?]
+Навсегда прекратить общение с этим пользователем?
+[Block Confirmation]
+Подтверждение блокировки
+[Avatars]
+Аватары
+[Disable avatars]
+Выключить аватары
+[Don't download avatars of clan members]
+Не загружать аватары пользователей из клана
+[Use alternate way for Avatar download]
+Использовать альтернативный путь скачивания аватаров
+[General]
+Общее
+[Automatically reconnect on protocol version changes]
+Автоматически переподключаться при смене версии протокола
+[No IP/Port in StatusMsg]
+Не показывать IP/Port в статусных сообщениях
+[Use Online status for unsupported global statuses]
+Использовать статус "В сети" для неподдерживаемых глобальных статусов
+[Don't move friends to clan groups]
+Не перемещать друзей в группу кланов
+[GameServerQuery support]
+Поддержка GameServerQuery
+[No custom away message]
+Без статуса отсутствия
+[Remove friend of friend buddies from database]
+Удалять друзей из базы данных
+[Hide yourself in buddylist]
+Скрыть себя в списке друзей
+[Don't display game search results]
+Не показывать результаты поиска игр
+[Don't display game search status window]
+Не показывать окно при поиске игр
+[Display popup if someone starts a game]
+Всплывающие окна, если кто-нибудь начинает игру
+[Don't automatically create clan groups]
+Не создавать автоматически группы кланов
+[Enable MBot support]
+Поддержка MBot
+[Game detection]
+Обнаружение игры
+[Disable game detection]
+Выключить обнаружение игр
+[Use TSRemote.dll to get TeamSpeak server info]
+Использовать TSRemote.dll для получения инф. с сервера
+[Disable popups when ingame]
+Выключить всплывающие окна когда в игре
+[Disable sound events when ingame]
+Выключить звуки когда в игре
+[Automatically update xfire_games.ini (pro-laming.de)]
+Автоматически обновлять xfire_games.ini (pro-laming.de)
+[Automatically update icons.dll (pro-laming.de)]
+Автоматически обновлять icons.dll (pro-laming.de)
+[Download missing game icons from Xfire website]
+Скачивать отсутствующие значки игр с вебсайта Xfire
+[No backup on update]
+Не создавать бекапы при обновлении
+[Background updating]
+Обновлять фон
+[The username must be lowercase, so it will be lowercased saved.]
+Имя пользователя должно быть в нижнем регистре, поэтому оно будет сохранено в таком виде.
+[The changes you have made require you to reconnect to the XFire network before they take effect]
+Для вступления в силу сделанных вами изменений необходимо переподключиться к сети XFire
+[Hidden]
+Скрыть
+[Message box]
+Окно сообщений
+[Popup]
+Всплывающее окно
+[No]
+Нет
+[On every start]
+При каждом запуске
+[Daily]
+Ежедневно
+[<Root Group>]
+<Корневая группа>
+[Are you sure you want to remove this game?]
+Уверены, что хотите удалить эту игру?
+[Please select a game.]
+Выберите игру.
+[Error: unknown game ID.]
+Ошибка: неизвестный ID игры.
+[Not supported]
+Не поддерживается
+[Configuration saved!]
+Настройки сохранены!
+[Game not found?!]
+Игра не найдена?!
+[Network]
+Сеть
+[Account]
+Учётная запись
+[Features]
+Возможности
+[Blocklist / Games]
+Блокированные / Игры
+[StatusMsg]
+Статусные сообщения
+[Please enter server password...]
+Введите пароль сервера...
+[Games found:%s%s]
+Найдены игры:%s%s
+[<not specified>]
+<не указано>
+[Start game]
+Начать игру
+[Please wait...]
+Пожалуйста, подождите...

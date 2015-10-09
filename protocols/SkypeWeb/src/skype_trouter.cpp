@@ -21,13 +21,13 @@ void CSkypeProto::OnCreateTrouter(const NETLIBHTTPREQUEST *response)
 {
 	if (response == NULL || response->pData == NULL)
 	{
-		ShowNotification(m_tszUserName, TranslateT("Failed establish a TRouter connection."), NULL, 1);
+		ShowNotification(m_tszUserName, TranslateT("Failed to establish a TRouter connection."), NULL, 1);
 		return;
 	}
 
 	JSONNode root = JSONNode::parse(response->pData);
 	if (!root) {
-		ShowNotification(m_tszUserName, TranslateT("Failed establish a TRouter connection."), NULL, 1);
+		ShowNotification(m_tszUserName, TranslateT("Failed to establish a TRouter connection."), NULL, 1);
 		return;
 	}
 
@@ -39,7 +39,7 @@ void CSkypeProto::OnCreateTrouter(const NETLIBHTTPREQUEST *response)
 
 	if (!ccid || !connId || !instance || !socketio || !url)
 	{
-		ShowNotification(m_tszUserName, TranslateT("Failed establish a TRouter connection."), NULL, 1);
+		ShowNotification(m_tszUserName, TranslateT("Failed to establish a TRouter connection."), NULL, 1);
 		return;
 	}
 
@@ -56,14 +56,14 @@ void CSkypeProto::OnTrouterPoliciesCreated(const NETLIBHTTPREQUEST *response)
 {
 	if (response == NULL || response->pData == NULL)
 	{
-		ShowNotification(m_tszUserName, TranslateT("Failed establish a TRouter connection."), NULL, 1);
+		ShowNotification(m_tszUserName, TranslateT("Failed to establish a TRouter connection."), NULL, 1);
 		return;
 	}
 
 	JSONNode root = JSONNode::parse(response->pData);
 	if (!root)
 	{
-		ShowNotification(m_tszUserName, TranslateT("Failed establish a TRouter connection."), NULL, 1);
+		ShowNotification(m_tszUserName, TranslateT("Failed to establish a TRouter connection."), NULL, 1);
 		return;
 	}
 
@@ -73,7 +73,7 @@ void CSkypeProto::OnTrouterPoliciesCreated(const NETLIBHTTPREQUEST *response)
 
 	if (!st || !se || !sig)
 	{
-		ShowNotification(m_tszUserName, TranslateT("Failed establish a TRouter connection."), NULL, 1);
+		ShowNotification(m_tszUserName, TranslateT("Failed to establish a TRouter connection."), NULL, 1);
 		return;
 	}
 
@@ -95,7 +95,7 @@ void CSkypeProto::OnGetTrouter(const NETLIBHTTPREQUEST *response)
 {
 	if (response == NULL || response->pData == NULL)
 	{
-		ShowNotification(m_tszUserName, TranslateT("Failed establish a TRouter connection."), NULL, 1);
+		ShowNotification(m_tszUserName, TranslateT("Failed to establish a TRouter connection."), NULL, 1);
 		return;
 	}
 
@@ -104,8 +104,8 @@ void CSkypeProto::OnGetTrouter(const NETLIBHTTPREQUEST *response)
 	CMStringA szToken = data.Tokenize(":", iStart).Trim();
 	TRouter.sessId = szToken.GetString();
 	
-	SetEvent(m_hTrouterEvent);
-	SetEvent(m_hTrouterHealthEvent);
+	m_hTrouterEvent.Set();
+	m_hTrouterHealthEvent.Set();
 
 	if ((time(NULL) - TRouter.lastRegistrationTime) >= 3600)
 	{
@@ -136,7 +136,8 @@ void CSkypeProto::TRouterThread(void*)
 	while (!m_bThreadsTerminated)
 	{
 
-		WaitForSingleObject(m_hTrouterEvent, INFINITE);
+		m_hTrouterEvent.Wait();
+		errors = 0;
 
 		while (errors < POLLING_ERRORS_LIMIT && m_iStatus > ID_STATUS_OFFLINE)
 		{
@@ -168,7 +169,7 @@ void CSkypeProto::TRouterThread(void*)
 			else
 			{
 				SendRequest(new HealthTrouterRequest(TRouter.ccid.c_str()), &CSkypeProto::OnHealth);
-				WaitForSingleObject(m_hTrouterHealthEvent, INFINITE);
+				m_hTrouterHealthEvent.Wait();
 			}
 			m_TrouterConnection = response->nlc;
 		}
@@ -203,7 +204,7 @@ void CSkypeProto::OnTrouterEvent(const JSONNode &body, const JSONNode &)
 				cle.hContact = hContact;
 				cle.hDbEvent = hEvent;
 				cle.lParam = SKYPE_DB_EVENT_TYPE_INCOMING_CALL;
-				cle.hIcon = IcoLib_GetIconByHandle(GetIconHandle("inc_call"));
+				cle.hIcon = GetIcon(IDI_CALL);
 
 				CMStringA service(FORMAT, "%s/IncomingCallCLE", GetContactProto(hContact));
 				cle.pszService = service.GetBuffer();

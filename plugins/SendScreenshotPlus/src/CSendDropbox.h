@@ -29,6 +29,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #ifndef _CSEND_DROPBOX_FILE_H
 #define _CSEND_DROPBOX_FILE_H
 
+#include "Utils.h"
+
 //---------------------------------------------------------------------------
 class CSendDropbox : public CSend {
 	public:
@@ -38,8 +40,14 @@ class CSendDropbox : public CSend {
 		int Send();
 
 	protected:
+		EventHandle m_hEvent;
+		HANDLE m_hDropHook;
+		HANDLE m_hDropSend;
+
 		void SendThread();
 		static void SendThreadWrapper(void *Obj);
+		static int OnDropSend(void*, WPARAM, LPARAM);
+		static int OnDropAck(void*, WPARAM, LPARAM);
 };
 
 //---------------------------------------------------------------------------

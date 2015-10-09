@@ -187,6 +187,7 @@ int ModulesLoaded(WPARAM, LPARAM)
 
 	// Add menu item
 	CMenuItem mi;
+	SET_UID(mi, 0x3a3f768a, 0xcf47, 0x43d5, 0x92, 0x16, 0xe4, 0xeb, 0x93, 0xf6, 0x72, 0xfa);
 	mi.position = 500100001;
 	mi.flags = CMIF_TCHAR;
 	mi.name.t = LPGENT("Quick Contacts...");
@@ -207,7 +208,7 @@ int EventAdded(WPARAM wparam, LPARAM hDbEvent)
 		|| db_get_w(NULL, MODULE_NAME, "MsgTypeRec", TYPE_GLOBAL) != TYPE_GLOBAL) 
 		return 0;
 
-	db_set_dw(NULL, MODULE_NAME, "LastSentTo", (DWORD)(HANDLE)wparam);
+	db_set_dw(NULL, MODULE_NAME, "LastSentTo", (UINT_PTR)wparam);
 	return 0;
 }
 
@@ -248,7 +249,7 @@ TCHAR *GetListName(c_struct *cs)
 {
 	if (opts.group_append && cs->szgroup[0] != _T('\0'))
 	{
-		mir_sntprintf(tmp_list_name, _countof(tmp_list_name), _T("%s (%s)"), cs->szname, cs->szgroup);
+		mir_sntprintf(tmp_list_name, _T("%s (%s)"), cs->szname, cs->szgroup);
 		return tmp_list_name;
 	}
 	else
@@ -715,7 +716,7 @@ static void FillButton(HWND hwndDlg, int dlgItem, TCHAR *name, TCHAR *key, HICON
 	if (key == NULL)
 		full = TranslateTS(name);
 	else
-		mir_sntprintf(tmp, _countof(tmp), _T("%s (%s)"), TranslateTS(name), key);
+		mir_sntprintf(tmp, _T("%s (%s)"), TranslateTS(name), key);
 
 	SendDlgItemMessage(hwndDlg, dlgItem, BUTTONSETASFLATBTN, 0, 0);
 	SendDlgItemMessage(hwndDlg, dlgItem, BUTTONADDTOOLTIP, (LPARAM)full, BATF_TCHAR);
@@ -731,7 +732,7 @@ static void FillCheckbox(HWND hwndDlg, int dlgItem, TCHAR *name, TCHAR *key)
 	if (key == NULL)
 		full = TranslateTS(name);
 	else
-		mir_sntprintf(tmp, _countof(tmp), _T("%s (%s)"), TranslateTS(name), key);
+		mir_sntprintf(tmp, _T("%s (%s)"), TranslateTS(name), key);
 
 	SetDlgItemText(hwndDlg, dlgItem, full);
 }

@@ -66,7 +66,7 @@ extern "C" __declspec(dllexport) PLUGININFOEX *MirandaPluginInfoEx(DWORD)
 	return &pluginInfo;
 }
 
-extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = {MIID_PROTOCOL, MIID_LAST};
+extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = { MIID_PROTOCOL, MIID_LAST };
 
 static IconItem iconList[] =
 {
@@ -98,7 +98,8 @@ HICON GetIcolibIcon(int iconId)
 	return NULL;
 }
 
-void ReleaseIcolibIcon(HICON hIcon) {
+void ReleaseIcolibIcon(HICON hIcon)
+{
 	IcoLib_ReleaseIcon(hIcon);
 }
 
@@ -165,7 +166,7 @@ INT_PTR TlenProtocol::ContactMenuHandleSendPicture(WPARAM hContact, LPARAM)
 
 INT_PTR TlenProtocol::MenuHandleInbox(WPARAM, LPARAM)
 {
-	char szFileName[ MAX_PATH ];
+	char szFileName[MAX_PATH];
 	DBVARIANT dbv;
 	NETLIBHTTPREQUEST req;
 	NETLIBHTTPHEADER headers[2];
@@ -185,7 +186,7 @@ INT_PTR TlenProtocol::MenuHandleInbox(WPARAM, LPARAM)
 
 	memset(&cookie, 0, sizeof(cookie));
 	if (login != NULL && password != NULL) {
-		mir_snprintf( form, _countof(form), "username=%s&password=%s", login, password);
+		mir_snprintf(form, "username=%s&password=%s", login, password);
 		headers[0].szName = "Content-Type";
 		headers[0].szValue = "application/x-www-form-urlencoded";
 		memset(&req, 0, sizeof(req));
@@ -199,9 +200,9 @@ INT_PTR TlenProtocol::MenuHandleInbox(WPARAM, LPARAM)
 		req.szUrl = "http://poczta.o2.pl/login.html";
 		resp = (NETLIBHTTPREQUEST *)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)m_hNetlibUser, (LPARAM)&req);
 		if (resp != NULL) {
-			if (resp->resultCode/100 == 2 || resp->resultCode == 302) {
+			if (resp->resultCode / 100 == 2 || resp->resultCode == 302) {
 				int i;
-				for (i=0; i<resp->headersCount; i++ ) {
+				for (i = 0; i < resp->headersCount; i++) {
 					if (strcmpi(resp->headers[i].szName, "Set-Cookie") == 0) {
 						char *start = strstr(resp->headers[i].szValue, "ssid=");
 						if (start != NULL) {
@@ -221,8 +222,8 @@ INT_PTR TlenProtocol::MenuHandleInbox(WPARAM, LPARAM)
 	}
 	mir_free(login);
 	mir_free(password);
-	
-	mir_snprintf(szFileName, _countof(szFileName), "http://poczta.o2.pl/login.html?sid=%s", cookie);
+
+	mir_snprintf(szFileName, "http://poczta.o2.pl/login.html?sid=%s", cookie);
 	Utils_OpenUrl(szFileName);
 	return 0;
 }
@@ -267,6 +268,7 @@ void TlenProtocol::initMenuItems()
 	hMenuChats = NULL;
 
 	// "Multi-User Conference"
+	SET_UID(mi,0x4984828, 0x2066, 0x43da, 0x87, 0x9e, 0x71, 0x23, 0xc6, 0xe2, 0x46, 0xd5);
 	mir_strcpy(pSvcName, "/MainMenuMUC");
 	CreateProtoService(pSvcName, &TlenProtocol::MUCMenuHandleMUC);
 	mi.name.a = LPGEN("Multi-User Conference");
@@ -275,6 +277,7 @@ void TlenProtocol::initMenuItems()
 	mi.pszService = text;
 	hMenuMUC = Menu_AddMainMenuItem(&mi);
 
+	SET_UID(mi, 0x594133f1, 0xc5b1, 0x4825, 0xa3, 0x8d, 0x33, 0x0, 0x33, 0x74, 0x3a, 0x29);
 	mir_strcpy(pSvcName, "/MainMenuInbox");
 	CreateProtoService(pSvcName, &TlenProtocol::MenuHandleInbox);
 	mi.name.a = LPGEN("Tlen Mail");
@@ -287,6 +290,7 @@ void TlenProtocol::initMenuItems()
 	mi.root = NULL;
 
 	// "Send picture"
+	SET_UID(mi, 0x12c66fb1, 0x6e57, 0x4acd, 0x90, 0x16, 0xc, 0x83, 0xae, 0x16, 0xe3, 0x12);
 	mi.pszService = "/SendPicture";
 	CreateProtoService(mi.pszService, &TlenProtocol::ContactMenuHandleSendPicture);
 	mi.name.a = LPGEN("Send picture");
@@ -295,6 +299,7 @@ void TlenProtocol::initMenuItems()
 	hMenuPicture = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
 	// "Invite to MUC"
+	SET_UID(mi, 0x4728c863, 0xe95f, 0x4203, 0x9b, 0xe8, 0x1, 0xbf, 0x5e, 0x57, 0x88, 0x43);
 	mi.pszService = "/ContactMenuMUC";
 	CreateProtoService(mi.pszService, &TlenProtocol::MUCContactMenuHandleMUC);
 	mi.name.a = LPGEN("Multi-User Conference");
@@ -303,6 +308,7 @@ void TlenProtocol::initMenuItems()
 	hMenuContactMUC = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
 	// "Invite to voice chat"
+	SET_UID(mi, 0x53f919b6, 0x313c, 0x4ed4, 0x96, 0xbc, 0xf6, 0xa2, 0x67, 0x10, 0x7b, 0xa2);
 	mi.pszService = "/ContactMenuVoice";
 	CreateProtoService(mi.pszService, &TlenProtocol::VoiceContactMenuHandleVoice);
 	mi.name.a = LPGEN("Voice Chat");
@@ -311,6 +317,7 @@ void TlenProtocol::initMenuItems()
 	hMenuContactVoice = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
 	// "Request authorization"
+	SET_UID(mi, 0x36375a1f, 0xc142, 0x4d6e, 0xa6, 0x57, 0xe4, 0x76, 0x5d, 0xbc, 0x59, 0x8e);
 	mi.pszService = "/RequestAuth";
 	CreateProtoService(mi.pszService, &TlenProtocol::ContactMenuHandleRequestAuth);
 	mi.name.a = LPGEN("Request authorization");
@@ -319,6 +326,7 @@ void TlenProtocol::initMenuItems()
 	hMenuContactRequestAuth = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
 	// "Grant authorization"
+	SET_UID(mi, 0x4c90452a, 0x869a, 0x4a81, 0xaf, 0xa8, 0x28, 0x34, 0xaf, 0x2b, 0x6b, 0x30);
 	mi.pszService = "/GrantAuth";
 	CreateProtoService(mi.pszService, &TlenProtocol::ContactMenuHandleGrantAuth);
 	mi.name.a = LPGEN("Grant authorization");
@@ -329,7 +337,7 @@ void TlenProtocol::initMenuItems()
 
 TlenProtocol* tlenProtoInit(const char* pszProtoName, const TCHAR* tszUserName)
 {
-	TlenProtocol* ppro = new TlenProtocol( pszProtoName, tszUserName );
+	TlenProtocol* ppro = new TlenProtocol(pszProtoName, tszUserName);
 	return ppro;
 }
 
@@ -341,12 +349,12 @@ static int tlenProtoUninit(TlenProtocol* ppro)
 
 extern "C" int __declspec(dllexport) Load(void)
 {
-	mir_getLP( &pluginInfo );
+	mir_getLP(&pluginInfo);
 	mir_getCLI();
 
 	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &hMainThread, THREAD_SET_CONTEXT, FALSE, 0);
 
-	srand((unsigned) time(NULL));
+	srand((unsigned)time(NULL));
 
 	TlenRegisterIcons();
 
@@ -354,8 +362,8 @@ extern "C" int __declspec(dllexport) Load(void)
 	PROTOCOLDESCRIPTOR pd = { 0 };
 	pd.cbSize = sizeof(pd);
 	pd.szName = "TLEN";
-	pd.fnInit = ( pfnInitProto )tlenProtoInit;
-	pd.fnUninit = ( pfnUninitProto )tlenProtoUninit;
+	pd.fnInit = (pfnInitProto)tlenProtoInit;
+	pd.fnUninit = (pfnUninitProto)tlenProtoUninit;
 	pd.type = PROTOTYPE_PROTOCOL;
 	Proto_RegisterModule(&pd);
 	return 0;

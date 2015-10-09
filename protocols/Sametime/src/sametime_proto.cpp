@@ -15,7 +15,7 @@ CSametimeProto::CSametimeProto(const char* pszProtoName, const TCHAR* tszUserNam
 {
 	// Register m_hNetlibUser user
 	TCHAR name[128];
-	mir_sntprintf(name, _countof(name), TranslateT("%s connection"), m_tszUserName);
+	mir_sntprintf(name, TranslateT("%s connection"), m_tszUserName);
 	NETLIBUSER nlu = { 0 };
 	nlu.cbSize = sizeof(nlu);
 	nlu.flags = NUF_TCHAR | NUF_OUTGOING | NUF_INCOMING | NUF_HTTPCONNS;
@@ -45,7 +45,7 @@ CSametimeProto::CSametimeProto(const char* pszProtoName, const TCHAR* tszUserNam
 	RegisterPopups();
 	InitAwayMsg();
 
-	mir_snprintf(szProtoGroups, _countof(szProtoGroups), "%s_GROUPS", m_szModuleName);
+	mir_snprintf(szProtoGroups, "%s_GROUPS", m_szModuleName);
 
 	m_iStatus = ID_STATUS_OFFLINE;
 	previous_status = ID_STATUS_OFFLINE;
@@ -226,8 +226,6 @@ int CSametimeProto::SendMsg(MCONTACT hContact, int, const char* msg)
 	debugLog(_T("CSametimeProto::SendMsg()  hContact=[%x]"), hContact);
 
 	char *proto = GetContactProto(hContact);
-	int ret;
-
 	if (!proto || mir_strcmp(proto, m_szModuleName) != 0 || db_get_w(hContact, m_szModuleName, "Status", ID_STATUS_OFFLINE) == ID_STATUS_OFFLINE) {
 		TFakeAckParams* tfap = (TFakeAckParams*)mir_alloc(sizeof(TFakeAckParams));
 		tfap->proto = this;
@@ -240,7 +238,7 @@ int CSametimeProto::SendMsg(MCONTACT hContact, int, const char* msg)
 	if (!msg)
 		return 0;
 
-	ret = (int)SendMessageToUser(hContact, msg);
+	int ret = (INT_PTR)SendMessageToUser(hContact, msg);
 
 	TFakeAckParams *tfap = (TFakeAckParams*)mir_alloc(sizeof(TFakeAckParams));
 	tfap->proto = this;

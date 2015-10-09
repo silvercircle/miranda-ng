@@ -87,7 +87,7 @@ void InitProtocolTree(HWND hwndTreeCtrl)
 					pItemData->m_nType = CTreeItemData::Status;
 					pItemData->m_pszModule = pAccount->szModuleName;
 					pItemData->m_nStatus = m2s.m_nMirandaStatus;
-					bool bStatusExcluded = g_Options.IsProtocolStatusExcluded(pAccount->szModuleName,pItemData->m_nStatus);
+					bStatusExcluded = g_Options.IsProtocolStatusExcluded(pAccount->szModuleName,pItemData->m_nStatus);
 					if (bProtocolExcluded) {
 						if (bStatusExcluded)
 							nState = TCBS_DISABLE_CHECKED;
@@ -145,7 +145,7 @@ inline ETreeCheckBoxState tree_get_state_image(HWND hwndTree,HTREEITEM hti)
 		return static_cast<ETreeCheckBoxState>(nState);
 	}
 
-	_ASSERT(!"we should never get here!");
+	assert(!"we should never get here!");
 	return TCBS_UNCHECKED;
 }
 

@@ -243,7 +243,7 @@ static INT_PTR CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			PROPSHEETHEADER *psh = (PROPSHEETHEADER*)lParam;
 			dat = (DetailsData*)mir_calloc(sizeof(DetailsData));
 			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)dat);
-			dat->hContact = (MCONTACT)psh->pszCaption;
+			dat->hContact = (UINT_PTR)psh->pszCaption;
 			dat->hProtoAckEvent = HookEventMessage(ME_PROTO_ACK, hwndDlg, HM_PROTOACK);
 			WindowList_Add(hWindowList, hwndDlg, dat->hContact);
 
@@ -255,7 +255,7 @@ static INT_PTR CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				name = pcli->pfnGetContactDisplayName(dat->hContact, 0);
 
 			GetWindowText(hwndDlg, oldTitle, _countof(oldTitle));
-			mir_sntprintf(newTitle, _countof(newTitle), oldTitle, name);
+			mir_sntprintf(newTitle, oldTitle, name);
 			SetWindowText(hwndDlg, newTitle);
 
 			//////////////////////////////////////////////////////////////////////
@@ -355,7 +355,7 @@ static INT_PTR CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 	case WM_TIMER:
 		TCHAR str[128];
-		mir_sntprintf(str, _countof(str), _T("%.*s%s%.*s"), dat->updateAnimFrame % 10, _T("........."), dat->szUpdating, dat->updateAnimFrame % 10, _T("........."));
+		mir_sntprintf(str, _T("%.*s%s%.*s"), dat->updateAnimFrame % 10, _T("........."), dat->szUpdating, dat->updateAnimFrame % 10, _T("........."));
 		SetDlgItemText(hwndDlg, IDC_UPDATING, str);
 		if (++dat->updateAnimFrame == UPDATEANIMFRAMES)
 			dat->updateAnimFrame = 0;
@@ -439,10 +439,11 @@ static INT_PTR CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			if (ack->result == ACKRESULT_SUCCESS || ack->result == ACKRESULT_FAILED)
 				dat->infosUpdated[ack->lParam] = 1;
 
-			for (i = 0; i < (int)ack->hProcess; i++)
+			for (i = 0; i < (INT_PTR)ack->hProcess; i++)
 				if (dat->infosUpdated[i] == 0)
 					break;
-			if (i == (int)ack->hProcess) {
+			
+			if (i == (INT_PTR)ack->hProcess) {
 				ShowWindow(GetDlgItem(hwndDlg, IDC_UPDATING), SW_HIDE);
 				KillTimer(hwndDlg, 1);
 				SendMessage(hwndDlg, M_CHECKONLINE, 0, 0);
@@ -629,12 +630,14 @@ int LoadUserInfoModule(void)
 	HookEvent(ME_SYSTEM_PRESHUTDOWN, ShutdownUserInfo);
 
 	CMenuItem mi;
+	SET_UID(mi, 0xe8731d53, 0x95af, 0x42cf, 0xae, 0x27, 0xc7, 0xa7, 0xa, 0xbf, 0x14, 0x1c);
 	mi.position = 1000050000;
 	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_OTHER_USERDETAILS);
 	mi.name.a = LPGEN("User &details");
 	mi.pszService = MS_USERINFO_SHOWDIALOG;
 	Menu_AddContactMenuItem(&mi);
 
+	SET_UID(mi, 0x42852ca4, 0x4941, 0x4219, 0x8b, 0x98, 0x33, 0x46, 0x8c, 0x32, 0xd8, 0xb8);
 	mi.position = 500050000;
 	mi.name.a = LPGEN("View/change my &details...");
 	Menu_AddMainMenuItem(&mi);

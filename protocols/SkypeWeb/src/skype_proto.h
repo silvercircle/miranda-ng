@@ -23,6 +23,7 @@ typedef void(CSkypeProto::*SkypeResponseWithArgCallback)(const NETLIBHTTPREQUEST
 
 struct CSkypeProto : public PROTO < CSkypeProto >
 {
+	friend CSkypeOptionsMain;
 	friend CSkypeGCCreateDlg;
 	//friend CSkypeChatroom;
 	//friend ChatUser;
@@ -51,18 +52,16 @@ public:
 	virtual	int       __cdecl SetStatus(int iNewStatus);
 	virtual	int       __cdecl UserIsTyping(MCONTACT hContact, int type);
 	virtual	int       __cdecl OnEvent(PROTOEVENTTYPE iEventType, WPARAM wParam, LPARAM lParam);
-
+	virtual	int       __cdecl RecvContacts(MCONTACT hContact, PROTORECVEVENT*);
 	// accounts
 	static CSkypeProto* InitAccount(const char *protoName, const TCHAR *userName);
 	static int          UninitAccount(CSkypeProto *proto);
 
 	// icons
 	static void InitIcons();
-	static void UninitIcons();
 
 	// menus
 	static void InitMenus();
-	static void UninitMenus();
 
 	//popups
 	void InitPopups();
@@ -127,10 +126,10 @@ private:
 
 	bool m_bThreadsTerminated;
 
-	HANDLE m_hPollingEvent;
-	HANDLE m_hTrouterEvent;
+	EventHandle m_hPollingEvent;
+	EventHandle m_hTrouterEvent;
 
-	HANDLE m_hTrouterHealthEvent;
+	EventHandle m_hTrouterHealthEvent;
 
 	static CSkypeProto* GetContactAccount(MCONTACT hContact);
 	int __cdecl OnAccountLoaded(WPARAM, LPARAM);
@@ -161,9 +160,9 @@ private:
 	void SendRequest(HttpRequest *request, SkypeResponseWithArgCallback response, void *arg);
 
 	// icons
-	static IconInfo Icons[];
-	static HANDLE GetIconHandle(const char *name);
-	static HANDLE Skin_GetIconHandle(const char *name);
+	static IconItemT Icons[];
+	static HICON GetIcon(int iconId);
+	static HANDLE GetIconHandle(int iconId);
 
 	// menus
 	static HGENMENU ContactMenuItems[CMI_MAX];
@@ -249,6 +248,8 @@ private:
 
 	// messages
 
+	std::map<ULONGLONG, HANDLE> m_mpOutMessagesIds;
+
 	MEVENT GetMessageFromDb(MCONTACT hContact, const char *messageId, LONGLONG timestamp = 0);
 	MEVENT AddDbEvent(WORD type, MCONTACT hContact, DWORD timestamp, DWORD flags, const char *content, const char *uid);
 	MEVENT AppendDBEvent(MCONTACT hContact, MEVENT hEvent, const char *szContent, const char *szUid, time_t edit_time);
@@ -261,6 +262,8 @@ private:
 	void MarkMessagesRead(MCONTACT hContact, MEVENT hDbEvent);
 
 	void OnPrivateMessageEvent(const JSONNode &node);
+
+	void ProcessContactRecv(MCONTACT hContact, time_t timestamp, const char *szContent, const char *szMessageId);
 
 	// sync
 	void OnGetServerHistory(const NETLIBHTTPREQUEST *response);

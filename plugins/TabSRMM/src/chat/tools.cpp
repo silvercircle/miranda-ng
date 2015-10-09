@@ -113,10 +113,7 @@ int ShowPopup(MCONTACT hContact, SESSION_INFO *si, HICON hIcon, char* pszProtoNa
 		pd.lchIcon = LoadIconEx("window");
 
 	PROTOACCOUNT *pa = Proto_GetAccount(pszProtoName);
-	mir_sntprintf(pd.lptzContactName, _countof(pd.lptzContactName), _T("%s - %s"),
-		(pa == NULL) ? _A2T(pszProtoName) : pa->tszAccountName,
-		pcli->pfnGetContactDisplayName(hContact, 0));
-
+	mir_sntprintf(pd.lptzContactName, _T("%s - %s"), (pa == NULL) ? _A2T(pszProtoName) : pa->tszAccountName, pcli->pfnGetContactDisplayName(hContact, 0));
 	_tcsncpy_s(pd.lptzText, TranslateTS(szBuf), _TRUNCATE);
 	pd.iSeconds = g_Settings.iPopupTimeout;
 
@@ -494,7 +491,6 @@ TCHAR* my_strstri(const TCHAR* s1, const TCHAR* s2)
 * log the event to the log file
 * allows selective logging of wanted events
 */
-
 BOOL LogToFile(SESSION_INFO *si, GCEVENT *gce)
 {
 	if (!si || !gce)
@@ -536,7 +532,7 @@ UINT CreateGCMenu(HWND hwndDlg, HMENU *hMenu, int iIndex, POINT pt, SESSION_INFO
 
 		if (pszWordText && pszWordText[0]) {
 			TCHAR szMenuText[4096];
-			mir_sntprintf(szMenuText, _countof(szMenuText), TranslateT("Look up '%s':"), pszWordText);
+			mir_sntprintf(szMenuText, TranslateT("Look up '%s':"), pszWordText);
 			ModifyMenu(*hMenu, 4, MF_STRING | MF_BYPOSITION, 4, szMenuText);
 		}
 		else ModifyMenu(*hMenu, 4, MF_STRING | MF_GRAYED | MF_BYPOSITION, 4, TranslateT("No word to look up"));
@@ -612,7 +608,6 @@ void DestroyGCMenu(HMENU *hMenu, int iIndex)
  * set all filters and notification config for a session
  * uses per channel mask + filterbits, default config as backup
  */
-
 void Chat_SetFilters(SESSION_INFO *si)
 {
 	if (si == NULL)
@@ -665,10 +660,10 @@ char GetIndicator(SESSION_INFO *si, LPCTSTR ptszNick, int *iNickIndex)
 	for (USERINFO *ui = si->pUsers; ui; ui = ui->next) {
 		if (!mir_tstrcmp(ui->pszNick, ptszNick)) {
 			STATUSINFO *ti = pci->TM_FindStatus(si->pStatuses, pci->TM_WordToString(si->pStatuses, ui->Status));
-			if (ti && (int)ti->hIcon < si->iStatusCount) {
+			if (ti && (INT_PTR)ti->hIcon < si->iStatusCount) {
 				if (iNickIndex)
-					*iNickIndex = (int)ti->hIcon; // color table's index is not zero-based
-				return szIndicators[(int)ti->hIcon];
+					*iNickIndex = (INT_PTR)ti->hIcon; // color table's index is not zero-based
+				return szIndicators[(INT_PTR)ti->hIcon];
 			}
 			break;
 		}

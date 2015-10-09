@@ -837,9 +837,9 @@ LONG_PTR CALLBACK StatusBarSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPAR
 				TCHAR szText[1024]; szText[0] = 0;
 				LRESULT result = SendMessage(hWnd, SB_GETTEXT, i, (LPARAM)szText);
 				if (i == 2 && pContainer) {
-					TWindowData *dat = (TWindowData*)GetWindowLongPtr(pContainer->hwndActive, GWLP_USERDATA);
-					if (dat)
-						DrawStatusIcons(dat, hdcMem, itemRect, 2);
+					TWindowData *pDat = (TWindowData*)GetWindowLongPtr(pContainer->hwndActive, GWLP_USERDATA);
+					if (pDat)
+						DrawStatusIcons(pDat, hdcMem, itemRect, 2);
 				}
 				else {
 					if (hIcon) {
@@ -966,12 +966,12 @@ LONG_PTR CALLBACK StatusBarSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPAR
 
 				if (!mir_strcmp(sid->szModule, MSG_ICON_MODULE)) {
 					if (sid->dwId == MSG_ICON_SOUND)
-						mir_sntprintf(wBuf, _countof(wBuf), TranslateT("Sounds are %s. Click to toggle status, hold SHIFT and click to set for all open containers"),
-						pContainer->dwFlags & CNT_NOSOUND ? TranslateT("disabled") : TranslateT("enabled"));
+						mir_sntprintf(wBuf, TranslateT("Sounds are %s. Click to toggle status, hold SHIFT and click to set for all open containers"),
+							pContainer->dwFlags & CNT_NOSOUND ? TranslateT("disabled") : TranslateT("enabled"));
 
-					else if (sid->dwId == MSG_ICON_UTN && dat && (dat->bType == SESSIONTYPE_IM || dat->si->iType == GCW_PRIVMESS)) {
+					else if (sid->dwId == MSG_ICON_UTN && (dat->bType == SESSIONTYPE_IM || dat->si->iType == GCW_PRIVMESS)) {
 						int mtnStatus = db_get_b(dat->hContact, SRMSGMOD, SRMSGSET_TYPING, M.GetByte(SRMSGMOD, SRMSGSET_TYPINGNEW, SRMSGDEFSET_TYPINGNEW));
-						mir_sntprintf(wBuf, _countof(wBuf), TranslateT("Sending typing notifications is %s."),
+						mir_sntprintf(wBuf, TranslateT("Sending typing notifications is %s."),
 							mtnStatus ? TranslateT("enabled") : TranslateT("disabled"));
 					}
 					else if (sid->dwId == MSG_ICON_SESSION)
@@ -997,7 +997,7 @@ LONG_PTR CALLBACK StatusBarSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPAR
 
 				const TCHAR *szFormat = TranslateT("There are %d pending send jobs. Message length: %d bytes, message length limit: %d bytes\n\n%d messages are queued for later delivery");
 
-				mir_sntprintf(wBuf, _countof(wBuf), szFormat, dat->iOpenJobs, iLength, dat->nMax ? dat->nMax : 20000, iQueued);
+				mir_sntprintf(wBuf, szFormat, dat->iOpenJobs, iLength, dat->nMax ? dat->nMax : 20000, iQueued);
 				CallService("mToolTip/ShowTipW", (WPARAM)wBuf, (LPARAM)&ti);
 			}
 

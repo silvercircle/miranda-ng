@@ -308,9 +308,9 @@ void CALLBACK TimerProc(HWND, UINT, UINT_PTR, DWORD)
 	if (frame_id != -1 && ServiceExists(MS_CLIST_FRAMES_ADDFRAME)) {
 		TCHAR TBcapt[255];
 		if (total > 0)
-			mir_sntprintf(TBcapt, _countof(TBcapt), _T("Ping (%d/%d)"), upCount, total);
+			mir_sntprintf(TBcapt, _T("Ping (%d/%d)"), upCount, total);
 		else
-			mir_sntprintf(TBcapt, _countof(TBcapt), _T("Ping"));
+			mir_sntprintf(TBcapt, _T("Ping"));
 
 		CallService(MS_CLIST_FRAMES_SETFRAMEOPTIONS, MAKEWPARAM(FO_TBNAME | FO_TCHAR, frame_id), (LPARAM)TBcapt);
 		CallService(MS_CLIST_FRAMES_SETFRAMEOPTIONS, MAKEWPARAM(FO_TBTIPNAME | FO_TCHAR, frame_id), (LPARAM)TBcapt);
@@ -902,6 +902,7 @@ void InitList()
 		CreateServiceFunction(PLUG "/ShowWindow", PingPlugShowWindow);
 
 		CMenuItem mi;
+		SET_UID(mi, 0x4adbd753, 0x27d6, 0x457a, 0xa6, 0x6, 0xdf, 0x4f, 0x2c, 0xd8, 0xb9, 0x3b);
 		mi.flags = CMIF_TCHAR;
 		mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Ping"), 1000200001);
 		mi.position = 3000320001;

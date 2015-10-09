@@ -347,9 +347,6 @@ char *CSkypeProto::RemoveHtml(const char *text)
 	std::string new_string = "";
 	std::string data = text;
 
-	if (data.find("\x1b\xe3\xac\x8d\x1d") != -1)
-		data = "CONVERSATION MEMBERS:" + data.substr(5, data.length() - 5);
-
 	for (std::string::size_type i = 0; i < data.length(); i++)
 	{
 		if (data.at(i) == '<')
@@ -538,13 +535,13 @@ INT_PTR CSkypeProto::ParseSkypeUriService(WPARAM, LPARAM lParam)
 		MCONTACT hContact = FindContact(_T2A(szJid));
 		if (hContact == NULL)
 		{
-			PROTOSEARCHRESULT psr;
+			PROTOSEARCHRESULT psr = { 0 };
 			psr.cbSize = sizeof(psr);
 			psr.id.t = mir_tstrdup(szJid);
 			psr.nick.t = mir_tstrdup(szJid);
 			psr.flags = PSR_UNICODE;
 
-			ADDCONTACTSTRUCT acs;
+			ADDCONTACTSTRUCT acs = { 0 };
 			acs.handleType = HANDLE_SEARCHRESULT;
 			acs.szProto = m_szModuleName;
 			acs.psr = &psr;

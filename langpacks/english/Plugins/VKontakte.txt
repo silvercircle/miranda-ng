@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: VKontakte.dll
 ;  Plugin: VKontakte protocol
-;  Version: 0.1.1.10
+;  Version: 0.1.1.16
 ;  Authors: Miranda NG Team
 ;============================================================
 [VKontakte protocol support for Miranda NG.]
@@ -52,6 +52,7 @@
 [Open VKontakte site]
 [Advanced]
 [Hide chats on startup]
+[Sync read message status from server]
 [Always notify as unread for all incoming message]
 [Force invisible status upon user activity]
 [Invisible interval timeout (min):]
@@ -142,7 +143,6 @@
 [Document]
 [Wall post]
 [Link]
-[Image]
 [Gift]
 [Unsupported or unknown attachment type: %s]
 [(Unknown contact)]
@@ -183,6 +183,14 @@
 [Post text:]
 [Topic text:]
 ;file \protocols\VKontakte\src\vk_files.cpp
+[Protocol is offline]
+[File does not exist]
+[File type not supported]
+[Error open file]
+[Error read file]
+[File upload error]
+[Upload server returned empty URL]
+[Invalid or unknown recipient user ID]
 [Couldn't save file]
 [Invalid album id]
 [Invalid server]
@@ -192,7 +200,6 @@
 [Invalid filename]
 [Invalid filesize]
 [Unknown error occurred]
-[File upload error]
 ;file \protocols\VKontakte\src\vk_history.cpp
 [Are you sure to reload all messages from vk.com?\nLocal contact history will be deleted and reloaded from the server.\nIt may take a long time.\nDo you want to continue?]
 [Attention!]

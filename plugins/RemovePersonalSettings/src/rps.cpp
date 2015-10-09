@@ -94,6 +94,7 @@ extern "C" int __declspec(dllexport) Load()
 	char *strTmp;
 
 	CMenuItem mi;
+	SET_UID(mi, 0x2f9f21df, 0xf33c, 0x4640, 0xb9, 0x63, 0xd3, 0x26, 0x8a, 0xb8, 0xb1, 0xf0);
 	mi.position = -0x7FFFFFFF;
 	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
 	mi.name.a = LPGEN("Remove Personal Settings...");
@@ -272,7 +273,7 @@ void RemoveProtocolSettings(const char * protocolName)
 
 			// Delete it
 			if (name[0] != '\0') {
-				mir_snprintf(moduleName, _countof(moduleName), "%s%s", protocolName, name);
+				mir_snprintf(moduleName, "%s%s", protocolName, name);
 				DeleteSettingEx(moduleName, NULL);
 			}
 
@@ -410,7 +411,7 @@ void RemoveDirectories()
 			if (accounts[i]->szModuleName == NULL || accounts[i]->szModuleName[0] == '\0')
 				continue;
 
-			mir_snprintf(dir, _countof(dir), "%s%s", gMirandaDir, accounts[i]->szModuleName);
+			mir_snprintf(dir, "%s%s", gMirandaDir, accounts[i]->szModuleName);
 			DeleteFileOrFolder(dir);
 		}
 	}
@@ -434,7 +435,7 @@ void RemoveDirectories()
 
 			// Delete it
 			if (name[0] != '\0') {
-				mir_snprintf(dir, _countof(dir), "%s%s", gMirandaDir, name);
+				mir_snprintf(dir, "%s%s", gMirandaDir, name);
 				DeleteFileOrFolder(dir);
 			}
 

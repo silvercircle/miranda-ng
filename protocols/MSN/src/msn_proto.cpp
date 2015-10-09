@@ -128,7 +128,7 @@ CMsnProto::CMsnProto(const char* aProtoName, const TCHAR* aUserName) :
 	nlu1.szSettingsModule = szDbsettings;
 	nlu1.ptszDescriptiveName = szBuffer;
 
-	mir_snprintf(szDbsettings, _countof(szDbsettings), "%s_HTTPS", m_szModuleName);
+	mir_snprintf(szDbsettings, "%s_HTTPS", m_szModuleName);
 	mir_sntprintf(szBuffer, TranslateT("%s plugin HTTPS connections"), m_tszUserName);
 	hNetlibUserHttps = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu1);
 
@@ -492,7 +492,7 @@ void __cdecl CMsnProto::MsnFileAckThread(void* arg)
 	filetransfer* ft = (filetransfer*)arg;
 
 	TCHAR filefull[MAX_PATH];
-	mir_sntprintf(filefull, _countof(filefull), _T("%s\\%s"), ft->std.tszWorkingDir, ft->std.tszCurrentFile);
+	mir_sntprintf(filefull, _T("%s\\%s"), ft->std.tszWorkingDir, ft->std.tszCurrentFile);
 	replaceStrT(ft->std.tszCurrentFile, filefull);
 
 	ResetEvent(ft->hResumeEvt);
@@ -810,7 +810,7 @@ int __cdecl CMsnProto::RecvMsg(MCONTACT hContact, PROTORECVEVENT* pre)
 	if (db_get_static(hContact, m_szModuleName, "wlid", tEmail, sizeof(tEmail)))
 	    db_get_static(hContact, m_szModuleName, "e-mail", tEmail, sizeof(tEmail));
 
-	if (Lists_IsInList(LIST_FL, tEmail))
+	if (Lists_IsInList(LIST_FL, tEmail) && db_get_b(hContact, "MetaContacts", "IsSubcontact", 0) == 0)
 		db_unset(hContact, "CList", "Hidden");
 
 	return Proto_RecvMessage(hContact, pre);
@@ -1224,7 +1224,7 @@ int __cdecl CMsnProto::OnEvent(PROTOEVENTTYPE eventType, WPARAM wParam, LPARAM l
 
 	case EV_PROTO_ONERASE:
 		char szDbsettings[64];
-		mir_snprintf(szDbsettings, _countof(szDbsettings), "%s_HTTPS", m_szModuleName);
+		mir_snprintf(szDbsettings, "%s_HTTPS", m_szModuleName);
 		CallService(MS_DB_MODULE_DELETE, 0, (LPARAM)szDbsettings);
 		break;
 

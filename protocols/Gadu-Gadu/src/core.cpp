@@ -242,7 +242,7 @@ void __cdecl GGPROTO::mainthread(void *)
 		{ GG_FAILURE_INVALID,     LPGENT("Received invalid server response.") },
 		{ GG_FAILURE_READING,     LPGENT("The connection with the server was abortively closed during the connection attempt. You may have lost your local network connection.") },
 		{ GG_FAILURE_WRITING,     LPGENT("The connection with the server was abortively closed during the connection attempt. You may have lost your local network connection.") },
-		{ GG_FAILURE_PASSWORD,    LPGENT("Your Gadu-Gadu number and password combination was rejected by the Gadu-Gadu server. Please check login details at M->Options->Network->Gadu-Gadu and try again.") },
+		{ GG_FAILURE_PASSWORD,    LPGENT("Your Gadu-Gadu number and password combination was rejected by the Gadu-Gadu server. Please check login details at Options -> Network -> Gadu-Gadu and try again.") },
 		{ GG_FAILURE_404,         LPGENT("Connecting to Gadu-Gadu hub failed.") },
 		{ GG_FAILURE_TLS,         LPGENT("Cannot establish secure connection.") },
 		{ GG_FAILURE_NEED_EMAIL,  LPGENT("Server disconnected asking you for changing your e-mail.") },
@@ -637,7 +637,7 @@ retry:
 
 							_tcsncpy_s(strFmt2, pcli->pfnGetStatusModeDescription( status_gg2m(atoi(__status)), 0), _TRUNCATE);
 							if (__city) {
-								mir_sntprintf(strFmt1, _countof(strFmt1), _T(", %s %s"), TranslateT("City:"), __city);
+								mir_sntprintf(strFmt1, _T(", %s %s"), TranslateT("City:"), __city);
 								mir_tstrncat(strFmt2, strFmt1, _countof(strFmt2) - mir_tstrlen(strFmt2));
 							}
 							if (__birthyear) {
@@ -646,7 +646,7 @@ retry:
 								int br = atoi(__birthyear);
 
 								if (br < (lt->tm_year + 1900) && br > 1900) {
-									mir_sntprintf(strFmt1, _countof(strFmt1), _T(", %s %d"), TranslateT("Age:"), (lt->tm_year + 1900) - br);
+									mir_sntprintf(strFmt1, _T(", %s %d"), TranslateT("Age:"), (lt->tm_year + 1900) - br);
 									mir_tstrncat(strFmt2, strFmt1, _countof(strFmt2) - mir_tstrlen(strFmt2));
 								}
 							}
@@ -975,7 +975,7 @@ retry:
 							if (iIndexes && iIndexes[i])
 								continue;
 
-							mir_sntprintf(szMsg, _countof(szMsg), _T("%s (%s)"), szText,
+							mir_sntprintf(szMsg, _T("%s (%s)"), szText,
 								*e->event.multilogon_info.sessions[i].name != '\0' ?
 								_A2T(e->event.multilogon_info.sessions[i].name) : TranslateT("Unknown client"));
 							showpopup(m_tszUserName, szMsg, GG_POPUP_MULTILOGON);
@@ -1008,7 +1008,7 @@ retry:
 					{
 						CLISTEVENT cle = {0};
 						char service[128];
-						mir_snprintf(service, _countof(service), GGS_RECVIMAGE, m_szModuleName);
+						mir_snprintf(service, GGS_RECVIMAGE, m_szModuleName);
 
 						cle.cbSize = sizeof(cle);
 						cle.hContact = hContact;
@@ -1063,7 +1063,7 @@ retry:
 					pre.descr.t = filenameT;
 					pre.files.t = &filenameT;
 					pre.lParam = (LPARAM)dcc7;
-					ProtoChainRecvFile((MCONTACT)dcc7->contact, &pre);
+					ProtoChainRecvFile((UINT_PTR)dcc7->contact, &pre);
 
 					mir_free(filenameT);
 					e->event.dcc7_new = NULL;
@@ -1077,7 +1077,7 @@ retry:
 					if (dcc7->type == GG_SESSION_DCC7_SEND)
 					{
 						debugLogA("mainthread() (%x): File transfer denied by client %d (reason = %d).", this, dcc7->peer_uin, e->event.dcc7_reject.reason);
-						ProtoBroadcastAck((MCONTACT)dcc7->contact, ACKTYPE_FILE, ACKRESULT_DENIED, dcc7, 0);
+						ProtoBroadcastAck((UINT_PTR)dcc7->contact, ACKTYPE_FILE, ACKRESULT_DENIED, dcc7, 0);
 
 						// Remove from watches and free
 						gg_EnterCriticalSection(&ft_mutex, "mainthread", 21, "ft_mutex", 1);
@@ -1138,7 +1138,7 @@ retry:
 					}
 
 					if (dcc7->contact)
-						ProtoBroadcastAck((MCONTACT)dcc7->contact, ACKTYPE_FILE, ACKRESULT_FAILED, dcc7, 0);
+						ProtoBroadcastAck((UINT_PTR)dcc7->contact, ACKTYPE_FILE, ACKRESULT_FAILED, dcc7, 0);
 
 					// Free dcc
 					gg_dcc7_free(dcc7);
@@ -1716,7 +1716,7 @@ void GGPROTO::changecontactstatus(uin_t uin, int status, const TCHAR *idescr, in
 	{
 		char sversion[48];
 		setDword(hContact, GG_KEY_CLIENTVERSION, (DWORD) version);
-		mir_snprintf(sversion, _countof(sversion), "%sGadu-Gadu %s", (version & 0x00ffffff) > 0x2b ? "Nowe " : "", gg_version2string(version));
+		mir_snprintf(sversion, "%sGadu-Gadu %s", (version & 0x00ffffff) > 0x2b ? "Nowe " : "", gg_version2string(version));
 		setString(hContact, "MirVer", sversion);
 	}
 }

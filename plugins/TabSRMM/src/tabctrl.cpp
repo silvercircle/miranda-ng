@@ -36,7 +36,6 @@ static WNDPROC		OldTabControlClassProc;
 // returns the index of the tab under the mouse pointer. Used for
 // context menu popup and tooltips
 // pt: mouse coordinates, obtained from GetCursorPos()
-
 int TSAPI GetTabItemFromMouse(HWND hwndTab, POINT *pt)
 {
 	TCHITTESTINFO tch;
@@ -598,7 +597,6 @@ static void PaintWorker(HWND hwnd, TabControlData *tabdat)
 	RECT rectTemp, rctPage, rctActive, rcItem, rctClip, rctOrig;
 	RECT rectUpDn = { 0, 0, 0, 0 };
 	int nCount = TabCtrl_GetItemCount(hwnd), i;
-	TCITEM item = { 0 };
 	int iActive, hotItem;
 	POINT pt;
 	DWORD dwStyle = tabdat->dwStyle;
@@ -617,7 +615,8 @@ static void PaintWorker(HWND hwnd, TabControlData *tabdat)
 		InvalidateRect(hwnd, NULL, FALSE);
 	tabdat->iHoveredTabIndex = hotItem;
 
-	item.mask = TCIF_PARAM;
+	TCITEM tci = { 0 };
+	tci.mask = TCIF_PARAM;
 
 	tabdat->fAeroTabs = (CSkin::m_fAeroSkinsValid && (isAero || PluginConfig.m_fillColor)) ? TRUE : FALSE;
 	tabdat->fCloseButton = (tabdat->pContainer->dwFlagsEx & TCF_CLOSEBUTTON ? TRUE : FALSE);
@@ -843,13 +842,13 @@ page_done:
 		goto skip_tabs;
 
 	for (i = 0; i < nCount; i++) {
-		TWindowData *dat = 0;
-
 		if (i == iActive)
 			continue;
-		TabCtrl_GetItem(hwnd, i, &item);
-		if (item.lParam)
-			dat = (TWindowData*)GetWindowLongPtr((HWND)item.lParam, GWLP_USERDATA);
+
+		TabCtrl_GetItem(hwnd, i, &tci);
+		TWindowData *dat = 0;
+		if (tci.lParam)
+			dat = (TWindowData*)GetWindowLongPtr((HWND)tci.lParam, GWLP_USERDATA);
 		TabCtrl_GetItemRect(hwnd, i, &rcItem);
 		if (!bClassicDraw && uiBottom) {
 			rcItem.top -= PluginConfig.tabConfig.m_bottomAdjust;
@@ -881,9 +880,9 @@ page_done:
 		int nHint = 0;
 
 		rcItem = rctActive;
-		TabCtrl_GetItem(hwnd, iActive, &item);
-		if (item.lParam)
-			dat = (TWindowData*)GetWindowLongPtr((HWND)item.lParam, GWLP_USERDATA);
+		TabCtrl_GetItem(hwnd, iActive, &tci);
+		if (tci.lParam)
+			dat = (TWindowData*)GetWindowLongPtr((HWND)tci.lParam, GWLP_USERDATA);
 
 		if (!bClassicDraw && !(dwStyle & TCS_BUTTONS)) {
 			InflateRect(&rcItem, 2, 2);
@@ -1357,10 +1356,10 @@ void TSAPI FreeTabConfig()
 	memset(&PluginConfig.tabConfig, 0, sizeof(PluginConfig.tabConfig));
 }
 
+static bool tconfig_init = false;
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // options dialog for setting up tab options
-
-static bool tconfig_init = false;
 
 INT_PTR CALLBACK DlgProcTabConfig(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {

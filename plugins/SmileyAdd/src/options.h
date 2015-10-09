@@ -40,6 +40,7 @@ public:
 	bool DCursorSmiley;
 	bool DisableCustom;
     bool HQScaling;
+	bool HorizontalSorting;
 	unsigned ButtonStatus;
 	unsigned SelWndBkgClr;
 	unsigned MaxCustomSmileySize;

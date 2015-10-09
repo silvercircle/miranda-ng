@@ -22,30 +22,59 @@ PLUGININFOEX pluginInfo =
 DWORD WINAPI DllMain(HINSTANCE hInstance, DWORD, LPVOID)
 {
 	g_hInstance = hInstance;
-
 	return TRUE;
 }
 
 extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 {
-	if (IsWinVer8Plus())
-		return &pluginInfo;
-
-	MessageBox(NULL, TranslateT("This plugin only supports Windows 8 or higher"), _T(MODULE), MB_OK | MB_ICONERROR);
-	return NULL;
-
+	if (!IsWinVer8Plus())
+	{
+		MessageBox(NULL, TranslateT("This plugin requires Windows 8 or higher"), _T(MODULE), MB_OK | MB_ICONERROR);
+		return NULL;
+	}
+	return &pluginInfo;
 }
 
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
 
+	HookEvent(ME_OPT_INITIALISE, OnOptionsInitialized);
+	HookEvent(ME_SYSTEM_PRESHUTDOWN, &OnPreShutdown);
+	
 	InitServices();
+
+	GetEnvironmentVariableW(L"TEMP", wszTempDir, MAX_PATH);
+	wcscat_s(wszTempDir, L"\\Miranda.Toaster");
+
+	DWORD dwAttributes = GetFileAttributes(wszTempDir);
+	if (dwAttributes == 0xffffffff || (dwAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+		CreateDirectoryTreeT(wszTempDir);
 
 	return 0;
 }
 
 extern "C" int __declspec(dllexport) Unload(void)
 {
+	return 0;
+}
+
+int OnPreShutdown(WPARAM, LPARAM)
+{
+	CallFunctionAsync(&HideAllToasts, NULL);
+	CleanupClasses();
+
+	SHFILEOPSTRUCT file_op = {
+		NULL,
+		FO_DELETE,
+		wszTempDir,
+		_T(""),
+		FOF_NOERRORUI | FOF_SILENT | FOF_NOCONFIRMATION,
+		false,
+		0,
+		_T("")
+	};
+	SHFileOperation(&file_op);
+
 	return 0;
 }

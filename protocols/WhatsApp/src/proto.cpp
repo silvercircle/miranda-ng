@@ -86,13 +86,13 @@ DWORD_PTR WhatsAppProto::GetCaps(int type, MCONTACT hContact)
 {
 	switch (type) {
 	case PFLAGNUM_1:
-		return PF1_IM | PF1_CHAT | PF1_BASICSEARCH | PF1_ADDSEARCHRES | PF1_MODEMSGRECV;
+		return PF1_IM | PF1_FILESEND | PF1_CHAT | PF1_BASICSEARCH | PF1_ADDSEARCHRES | PF1_MODEMSGRECV;
 	case PFLAGNUM_2:
 		return PF2_ONLINE | PF2_INVISIBLE;
 	case PFLAGNUM_3:
 		return 0;
 	case PFLAGNUM_4:
-		return PF4_NOCUSTOMAUTH | PF4_FORCEADDED | PF4_NOAUTHDENYREASON | PF4_IMSENDOFFLINE | PF4_SUPPORTTYPING | PF4_AVATARS;
+		return PF4_NOCUSTOMAUTH | PF4_FORCEADDED | PF4_NOAUTHDENYREASON | PF4_IMSENDOFFLINE | PF4_OFFLINEFILES | PF4_SUPPORTTYPING | PF4_AVATARS;
 	case PFLAGNUM_5:
 		return 0;
 	case PFLAG_UNIQUEIDTEXT:
@@ -177,7 +177,6 @@ MCONTACT WhatsAppProto::AddToList(int flags, PROTOSEARCHRESULT *psr)
 	if (!(flags & PALF_TEMPORARY))
 		db_unset(hContact, "CList", "NotOnList");
 
-	m_pConnection->sendQueryLastOnline(jid.c_str());
 	m_pConnection->sendPresenceSubscriptionRequest(jid.c_str());
 	return hContact;
 }
@@ -279,8 +278,10 @@ bool WhatsAppProto::Register(int state, const string &cc, const string &number, 
 		std::string reason = resp["reason"].as_string();
 		if (reason == "stale")
 			NotifyEvent(ptszTitle, TranslateT("Registration failed due to stale code. Please request a new code"), NULL, WHATSAPP_EVENT_CLIENT);
-		else
-			NotifyEvent(ptszTitle, TranslateT("Registration failed."), NULL, WHATSAPP_EVENT_CLIENT);
+		else {
+			CMString tmp(FORMAT, TranslateT("Registration failed. Reason: %s"), reason.c_str());
+			NotifyEvent(ptszTitle, tmp, NULL, WHATSAPP_EVENT_CLIENT);
+		}
 
 		const JSONNode &tmpVal = resp["retry_after"];
 		if (tmpVal) {
@@ -320,7 +321,6 @@ int WhatsAppProto::OnUserInfo(WPARAM, LPARAM hContact)
 {
 	ptrA jid(getStringA(hContact, WHATSAPP_KEY_ID));
 	if (jid && isOnline()) {
-		m_pConnection->sendQueryLastOnline((char*)jid);
 		m_pConnection->sendGetPicture((char*)jid, "image");
 		m_pConnection->sendPresenceSubscriptionRequest((char*)jid);
 	}
@@ -335,7 +335,6 @@ void WhatsAppProto::RequestFriendship(MCONTACT hContact)
 
 	ptrA jid(getStringA(hContact, WHATSAPP_KEY_ID));
 	if (jid) {
-		m_pConnection->sendQueryLastOnline((char*)jid);
 		m_pConnection->sendPresenceSubscriptionRequest((char*)jid);
 	}
 }
@@ -408,7 +407,7 @@ void WhatsAppProto::NotifyEvent(const TCHAR *title, const TCHAR *info, MCONTACT 
 			pd.lchContact = contact;
 			pd.lchIcon = IcoLib_GetIconByHandle(m_hProtoIcon); // TODO: Icon test
 			pd.PluginData = szUrl;
-			pd.PluginWindowProc = (WNDPROC)PopupDlgProc;
+			pd.PluginWindowProc = PopupDlgProc;
 			mir_tstrcpy(pd.lptzContactName, title);
 			mir_tstrcpy(pd.lptzText, info);
 			ret = PUAddPopupT(&pd);

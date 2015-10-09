@@ -27,7 +27,7 @@ int CDropbox::OnModulesLoaded(WPARAM, LPARAM)
 		BBButton bbd = { sizeof(bbd) };
 		bbd.pszModuleName = MODULE;
 
-		bbd.bbbFlags = BBBF_ISIMBUTTON | BBBF_ISRSIDEBUTTON;
+		bbd.bbbFlags = BBBF_ISIMBUTTON | BBBF_ISCHATBUTTON | BBBF_ISRSIDEBUTTON;
 		bbd.ptszTooltip = TranslateT("Upload files to Dropbox");
 		bbd.hIcon = GetIconHandleByName("upload");
 		bbd.dwButtonID = BBB_ID_FILE_SEND;
@@ -79,7 +79,7 @@ int CDropbox::OnSrmmWindowOpened(WPARAM, LPARAM lParam)
 		bbd.pszModuleName = MODULE;
 		bbd.dwButtonID = BBB_ID_FILE_SEND;
 		bbd.bbbFlags = BBSF_RELEASED;
-		if (!HasAccessToken() || ev->hContact == GetDefaultContact() || !HasAccessToken())
+		if (!HasAccessToken() || ev->hContact == GetDefaultContact())
 			bbd.bbbFlags = BBSF_HIDDEN | BBSF_DISABLED;
 		else if (!isProtoOnline || (status == ID_STATUS_OFFLINE && !canSendOffline))
 			bbd.bbbFlags = BBSF_DISABLED;
@@ -119,8 +119,7 @@ void __stdcall EnableTabSrmmButtonSync(void *arg)
 	bbd.pszModuleName = MODULE;
 	bbd.dwButtonID = BBB_ID_FILE_SEND;
 	bbd.bbbFlags = BBSF_RELEASED;
-	MCONTACT hContact = (MCONTACT)arg;
-	CallService(MS_BB_SETBUTTONSTATE, hContact, (LPARAM)&bbd);
+	CallService(MS_BB_SETBUTTONSTATE, (UINT_PTR)arg, (LPARAM)&bbd);
 }
 
 int CDropbox::OnFileDialogCancelled(WPARAM, LPARAM lParam)
@@ -129,6 +128,7 @@ int CDropbox::OnFileDialogCancelled(WPARAM, LPARAM lParam)
 	if (hTransferWindow == hwnd)
 	{
 		CallFunctionAsync(EnableTabSrmmButtonSync, (void*)hTransferContact);
+		hTransferContact = 0;
 		hTransferWindow = 0;
 	}
 

@@ -3,12 +3,16 @@
 
 class HttpResponse : public NETLIBHTTPREQUEST, public MZeroedObject
 {
+private:
+	bool isEmptyResponse;
+
 public:
 	const NETLIBHTTPREQUEST* request;
 
 	HttpResponse(const NETLIBHTTPREQUEST* response, const NETLIBHTTPREQUEST* request = NULL)
 	{
-		request = request;
+		this->request = request;
+		isEmptyResponse = (response == NULL);
 		if (response)
 		{
 			cbSize = response->cbSize;
@@ -30,6 +34,11 @@ public:
 			nlc = response->nlc;
 			timeout = response->timeout;
 		}
+	}
+
+	bool const operator !() const
+	{
+		return isEmptyResponse;
 	}
 
 	~HttpResponse()
@@ -131,7 +140,7 @@ public:
 		szUrl = m_url.GetBuffer();
 
 		char message[1024];
-		mir_snprintf(message, _countof(message), "Send request to %s", szUrl);
+		mir_snprintf(message, "Send request to %s", szUrl);
 		CallService(MS_NETLIB_LOG, (WPARAM)hConnection, (LPARAM)&message);
 
 		NETLIBHTTPREQUEST* response = (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)hConnection, (LPARAM)this);
@@ -143,5 +152,12 @@ public:
 };
 
 
+bool __forceinline ResponseHttpOk(const NETLIBHTTPREQUEST *response) {
+	return (response && response->pData && (response->resultCode == HTTP_CODE_OK));
+}
+
+bool __forceinline CheckResponse(const NETLIBHTTPREQUEST *response) {
+	return (response && response->pData);
+}
 
 #endif //_HTTP_REQUEST_H_

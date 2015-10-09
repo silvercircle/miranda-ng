@@ -199,8 +199,8 @@ Ne
 Da
 [Hide from list only, in order to keep their history and ignore/visibility settings]
 Brisanje iz liste vidljivih kontakata, čuvanje istorije i ignorisanje kontakta
-[Use Options->Contacts->Ignore to unhide contacts.]
-Putem Podešavanja->Kontakti->Ignorisani podešavaš vidljivost.
+[Use Options -> Contacts -> Ignore to unhide contacts.]
+Putem Podešavanja -> Kontakti -> Ignorisani podešavaš vidljivost.
 [Are you sure you want to delete %s?]
 %s se briše sa spiska. Potvrda?
 [This will erase all history and settings for this contact!]
@@ -1854,8 +1854,8 @@ Poruka od: %s
 %s kuca poruku
 [Typing notification]
 Obaveštenje o kucanju
-[Miranda could not load the built-in message module, Msftedit.dll is missing. Press 'Yes' to continue loading Miranda.]
-Miranda ne može da upotrebi sopstveni modul za poruke, ne postoji Msftedit.dll. Odgovor 'Da' za nastavak učitavanja.
+[Miranda could not load the built-in message module, msftedit.dll is missing. Press 'Yes' to continue loading Miranda.]
+Miranda ne može da upotrebi sopstveni modul za poruke, ne postoji msftedit.dll. Odgovor 'Da' za nastavak učitavanja.
 [Instant messages]
 IM komunikacija
 [Incoming (focused window)]
@@ -1901,21 +1901,9 @@ Potvrda brisanja istorije korisnika: %s?
 Briši istoriju
 [View &history]
 Pregledaj %istoriju
-;file \src\core\stdurl\url.cpp
-[URL from %s]
-Linkovi od: %s
-[Web page address (&URL)]
-Internet stranica (&URL)
-[URL]
-Link
-;file \src\core\stdurl\urldialogs.cpp
-[Send URL to]
-Pošalji link kome:
-[Send timed out]
-Rok za slanje istekao
 ;file \src\core\stduserinfo\src\contactinfo.cpp
-[Edit E-Mail address]
-Izmeni E-Mail adresu
+[Edit e-mail address]
+Izmeni e-mail adresu
 [Edit phone number]
 Izmeni broj telefona
 [The phone number should start with a + and consist of numbers, spaces, brackets and hyphens only.]
@@ -2140,16 +2128,18 @@ Miranda ne uspeva da poboljša organizaciju profila.\nProfil %s ne može da bude
 Profil ne može biti sačuvan u 'root' folderu.\nProfil premestite na drugo mesto.
 [Miranda is unable to open '%s' because you do not have any profile plugins installed.\nYou need to install dbx_mmap.dll]
 Miranda ne uspeva da otvori '%s' jer nije instaliran odgovarajući plug-in.\nPotrebna je biblioteka dbx_mmap.dll
-[No profile support installed!]
-Miranda nema podršku za (taj) profil!
 [Miranda was unable to open '%s', it's in an unknown format.\nThis profile might also be damaged, please run DbChecker which should be installed.]
 Miranda ne uspeva da otvori '%s', u pitanju je nepoznat format.\nZa slučaj da je datoteka profila oštećena, pokrenite DbChecker ako je instaliran.
-[Miranda can't understand that profile]
-Miranda ne razume sadržaj datog profila
 [Miranda was unable to open '%s'\nIt's inaccessible or used by other application or Miranda instance]
 Miranda ne uspeva da otvori '%s'\nNedostupnu datoteku koristi druga aplikacija, ili još jedna instanca Mirande
+[Miranda was unable to open '%s'\nThere is no suitable database driver installed]
+
+[No profile support installed!]
+Miranda nema podršku za (taj) profil!
 [Miranda can't open that profile]
 Miranda ne može da otvori taj profil
+[Miranda can't understand that profile]
+Miranda ne razume sadržaj datog profila
 ;file \src\mir_app\src\dbini.cpp
 [Security systems to prevent malicious changes are in place and you will be warned before every change that is made.]
 Sistem(i) zaštite za prevenciju štetnih promena su pokrenuti i obaveštavaju korisnika o svakoj promeni.
@@ -2476,8 +2466,8 @@ Neuspešan upis nadimka kontakta u metakontakt
 [<Root group>]
 <Glavna grupa (root)>
 ;file \src\mir_app\src\netliblog.cpp
-[Standard netlib log]
-Tipičan netlib log
+[Standard Netlib log]
+Tipičan Netlib log
 [No times]
 Bez vremenskih odrednica
 [Standard hh:mm:ss times]
@@ -2659,6 +2649,8 @@ Pretraga nije pronašla korisnike
 [Icon sets]
 Kompleti ikonica
 ;file \src\mir_app\src\skinicons.cpp
+[URL]
+Link
 [User online]
 Korisnik na vezi
 [Group (open)]

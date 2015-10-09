@@ -193,8 +193,8 @@
 Так
 [Hide from list only, in order to keep their history and ignore/visibility settings]
 Сховати зі списку, зберігши історію і параметри ігнорування та видимості
-[Use Options->Contacts->Ignore to unhide contacts.]
-Приховані контакти: Налаштування -> Контакти -> Ігнорувати
+[Use Options -> Contacts -> Ignore to unhide contacts.]
+Приховані контакти: Налаштування -> Контакти -> Ігнорувати.
 [Are you sure you want to delete %s?]
 Справді видалити %s зі списку?
 [This will erase all history and settings for this contact!]
@@ -1356,7 +1356,7 @@ UIN, E-mail тощо
 [Only prefix with timestamp if it has changed]
 Показувати час, якщо він змінився
 [Timestamp has same color as the event]
-Часова мітка того ж кольору, що й подія
+Час того ж кольору, що й подія
 [Indent the second line of a message]
 Відступ другого рядка повідомлення
 [Limit user names in the message log to 20 characters]
@@ -1809,7 +1809,7 @@ UIN, E-mail тощо
 %s друкує вам повідомлення
 [Typing notification]
 Увага!
-[Miranda could not load the built-in message module, Msftedit.dll is missing. Press 'Yes' to continue loading Miranda.]
+[Miranda could not load the built-in message module, msftedit.dll is missing. Press 'Yes' to continue loading Miranda.]
 Неможливо завантажити вбудований модуль повідомлень, оскільки Msftedit.dll відсутній. Натисніть "Так" щоб продовжити запуск програми.
 [Instant messages]
 Повідомлення
@@ -1853,7 +1853,7 @@ UIN, E-mail тощо
 Видалити історію
 [View &history]
 Історія
-[Edit E-Mail address]
+[Edit e-mail address]
 Змінити адресу E-mail
 [Edit phone number]
 Змінити номер телефону
@@ -2063,16 +2063,18 @@ Miranda намагається оновити вашу структуру збе
 Файл профілю не повинен знаходится в корневій папці Miranda. Перемістіть свій профіль на інше місце.
 [Miranda is unable to open '%s' because you do not have any profile plugins installed.\nYou need to install dbx_mmap.dll]
 Miranda не може відкрити "%s", оскільки не встановлено жодного драйвера бази.\nНеобхідно встановити dbx_mmap.dll або його аналог.
-[No profile support installed!]
-Відсутній драйвер бази
 [Miranda was unable to open '%s', it's in an unknown format.\nThis profile might also be damaged, please run DbChecker which should be installed.]
 Miranda не може відкрити "%s", формат профілю невідомий.\nМожливо, профіль пошкоджений, спробуйте полагодити його за допомогою DbChecker.
-[Miranda can't understand that profile]
-Miranda не може зрозуміти цей профіль
 [Miranda was unable to open '%s'\nIt's inaccessible or used by other application or Miranda instance]
 Miranda не може відкрити "%s".\nДо нього немає доступу або він використовується іншою програмою чи іншою копією Miranda NG.
+[Miranda was unable to open '%s'\nThere is no suitable database driver installed]
+Miranda не може відкрити '%s'.\nНе знайдено відповідного драйвера бази.
+[No profile support installed!]
+Відсутній драйвер бази!
 [Miranda can't open that profile]
 Miranda не може відкрити цей профіль
+[Miranda can't understand that profile]
+Miranda не може зрозуміти цей профіль
 [Security systems to prevent malicious changes are in place and you will be warned before every change that is made.]
 Захист від небезпечних змін увімкнено, вас попередять про будь-які зміни налаштувань.
 [Security systems to prevent malicious changes are in place and you will be warned before changes that are known to be unsafe.]
@@ -2325,8 +2327,8 @@ xСтатус
 Пере&містити до групи
 [<Root group>]
 <Коренева група>
-[Standard netlib log]
-Стандартний журнал netlib
+[Standard Netlib log]
+Стандартний журнал Netlib
 [No times]
 Без часу
 [Standard hh:mm:ss times]

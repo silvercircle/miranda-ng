@@ -136,7 +136,7 @@ static INT_PTR CALLBACK AvatarDlgProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM l
 			TCHAR *displayName = pcli->pfnGetContactDisplayName(data->hContact, 0);
 			if (displayName) {
 				TCHAR title[MAX_PATH];
-				mir_sntprintf(title, _countof(title), TranslateT("Avatar History for %s"), displayName);
+				mir_sntprintf(title, TranslateT("Avatar History for %s"), displayName);
 				SetWindowText(hwnd, title);
 			}
 
@@ -374,7 +374,7 @@ int FillAvatarListFromFiles(HWND list, MCONTACT hContact)
 	WIN32_FIND_DATA finddata;
 
 	GetContactFolder(dir, hContact);
-	mir_sntprintf(path, _countof(path), _T("%s\\*.*"), dir);
+	mir_sntprintf(path, _T("%s\\*.*"), dir);
 
 	HANDLE hFind = FindFirstFile(path, &finddata);
 	if (hFind == INVALID_HANDLE_VALUE)
@@ -384,7 +384,7 @@ int FillAvatarListFromFiles(HWND list, MCONTACT hContact)
 	{
 		if (finddata.cFileName[0] != '.')
 		{
-			mir_sntprintf(path, _countof(path), _T("%s\\%s"), dir, finddata.cFileName);
+			mir_sntprintf(path, _T("%s\\%s"), dir, finddata.cFileName);
 			max_pos = AddFileToList(path,finddata.cFileName,finddata.cFileName,list);
 		}
 	}
@@ -401,7 +401,7 @@ int FillAvatarListFromFolder(HWND list, MCONTACT hContact)
 	WIN32_FIND_DATA finddata;
 
 	GetContactFolder(dir, hContact);
-	mir_sntprintf(path, _countof(path), _T("%s\\*.lnk"), dir);
+	mir_sntprintf(path, _T("%s\\*.lnk"), dir);
 
 	HANDLE hFind = FindFirstFile(path, &finddata);
 	if (hFind == INVALID_HANDLE_VALUE)
@@ -412,7 +412,7 @@ int FillAvatarListFromFolder(HWND list, MCONTACT hContact)
 		if (finddata.cFileName[0] != '.')
 		{
 			TCHAR lnk[MAX_PATH];
-			mir_sntprintf(lnk, _countof(lnk), _T("%s\\%s"), dir, finddata.cFileName);
+			mir_sntprintf(lnk, _T("%s\\%s"), dir, finddata.cFileName);
 			if (ResolveShortcut(lnk, path))
 				max_pos = AddFileToList(path,lnk,finddata.cFileName,list);
 		}
@@ -513,6 +513,7 @@ void InitMenuItem()
 	CreateServiceFunction(MS_AVATARHISTORY_SHOWDIALOG, ShowDialogSvc);
 
 	CMenuItem mi;
+	SET_UID(mi,0x2fb5c7eb, 0xa606, 0x4145, 0x9e, 0x86, 0x73, 0x88, 0x73, 0x1d, 0xe7, 0x5c);
 	mi.name.t = LPGENT("View Avatar History");
 	mi.flags = CMIF_TCHAR;
 	mi.position = 1000090010;
@@ -549,7 +550,7 @@ int ShowSaveDialog(HWND hwnd, TCHAR* fn, MCONTACT hContact)
 	TCHAR title[MAX_PATH];
 	if (displayName)
 	{
-		mir_sntprintf(title, _countof(title), TranslateT("Save Avatar for %s"), displayName);
+		mir_sntprintf(title, TranslateT("Save Avatar for %s"), displayName);
 		ofn.lpstrTitle = title;
 	}
 	else

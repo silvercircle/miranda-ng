@@ -380,11 +380,8 @@ void CVkProto::RetrieveUserInfo(LONG userID)
 	if (userID == VK_FEED_USER || !IsOnline())
 		return;
 	
-	CMString userIDs, code;
-	userIDs.AppendFormat(_T("%i"), userID);
-			
-	code.AppendFormat(_T("var userIDs=\"%s\";return{\"freeoffline\":0,\"users\":API.users.get({\"user_ids\":userIDs,\"fields\":\"%s\",\"name_case\":\"nom\"})};"), 
-		userIDs, CMString(fieldsName));
+	CMString code(FORMAT, _T("var userIDs=\"%i\";return{\"freeoffline\":0,\"users\":API.users.get({\"user_ids\":userIDs,\"fields\":\"%s\",\"name_case\":\"nom\"})};"),
+		userID, CMString(fieldsName));
 	Push(new AsyncHttpRequest(this, REQUEST_POST, "/method/execute.json", true, &CVkProto::OnReceiveUserInfo)
 		<< TCHAR_PARAM("code", code)
 		<< VER_API);
@@ -406,18 +403,19 @@ void CVkProto::RetrieveUsersInfo(bool flag)
 		userIDs.AppendFormat(_T("%i"), userID);
 	}
 
-	CMString codeformat("var userIDs=\"%s\";");
+	CMString codeformat("var userIDs=\"%s\";var _fields=\"%s\";");
 
 	if (m_bNeedSendOnline)
 		codeformat += _T("API.account.setOnline();");
 	
-	if (flag)
-		codeformat += CMString("var US=API.users.get({\"user_ids\":userIDs,\"fields\":\"%s\",\"name_case\":\"nom\"});"
-			"var res=[];var index=US.length;while(index >0){index=index-1;if(US[index].online==1){res.unshift(US[index]);};};"
+	if (flag && !m_bLoadFullCList)
+		codeformat += CMString("var US=API.users.get({\"user_ids\":userIDs,\"fields\":_fields,\"name_case\":\"nom\"});"
+			"var _US=API.users.get({\"user_ids\":userIDs,\"fields\":_fields,\"name_case\":\"nom\"});if(_US.length>US.length)US=_US;"
+			"var res=[];var index=US.length;while(index>0){index=index-1;if(US[index].online!=0){res.unshift(US[index]);};};"
 			"return{\"freeoffline\":1,\"users\":res,\"requests\":API.friends.getRequests({\"extended\":0,\"need_mutual\":0,\"out\":0})};");
 	else
-		codeformat += CMString("var res=API.users.get({\"user_ids\":userIDs,\"fields\":\"%s\",\"name_case\":\"nom\"});"
-			"return{\"freeoffline\":0,\"users\":res};");
+		codeformat += CMString("var res=API.users.get({\"user_ids\":userIDs,\"fields\":_fields,\"name_case\":\"nom\"});"
+			"return{\"freeoffline\":0,\"users\":res,\"requests\":API.friends.getRequests({\"extended\":0,\"need_mutual\":0,\"out\":0})};");
 	code.AppendFormat(codeformat, userIDs, CMString(flag ? "online,status" : fieldsName));
 
 	Push(new AsyncHttpRequest(this, REQUEST_POST, "/method/execute.json", true, &CVkProto::OnReceiveUserInfo)
@@ -456,7 +454,7 @@ void CVkProto::OnReceiveUserInfo(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pRe
 	
 	if (jnResponse["freeoffline"].as_bool())
 		for (int i = 0; i < arContacts.getCount(); i++) {
-			hContact = (MCONTACT)arContacts[i];
+			hContact = (UINT_PTR)arContacts[i];
 			LONG userID = getDword(hContact, "ID", -1);
 			if (userID == m_myUserId || userID == VK_FEED_USER)
 				continue;
@@ -464,7 +462,7 @@ void CVkProto::OnReceiveUserInfo(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pRe
 			int iContactStatus = getWord(hContact, "Status", ID_STATUS_OFFLINE);
 
 			if ((iContactStatus == ID_STATUS_ONLINE)
-				|| (iContactStatus == ID_STATUS_INVISIBLE && time(NULL) - getDword(hContact, "InvisibleTS", 0) >= m_iInvisibleInterval * 60)) {
+				|| (iContactStatus == ID_STATUS_INVISIBLE && time(NULL) - getDword(hContact, "InvisibleTS", 0) >= m_iInvisibleInterval * 60LL)) {
 				setWord(hContact, "Status", ID_STATUS_OFFLINE);
 				SetMirVer(hContact, -1);
 				db_unset(hContact, m_szModuleName, "ListeningTo");
@@ -547,7 +545,7 @@ void CVkProto::OnReceiveFriends(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq
 
 	if (bCleanContacts)
 		for (int i = 0; i < arContacts.getCount(); i++) {
-			MCONTACT hContact = (MCONTACT)arContacts[i];
+			MCONTACT hContact = (UINT_PTR)arContacts[i];
 			LONG userID = getDword(hContact, "ID", -1);
 			if (userID == m_myUserId || userID == VK_FEED_USER)
 				continue;
@@ -595,7 +593,7 @@ void CVkProto::OnReceiveDeleteFriend(NETLIBHTTPREQUEST* reply, AsyncHttpRequest*
 {
 	debugLogA("CVkProto::OnReceiveDeleteFriend %d", reply->resultCode);
 	CVkSendMsgParam *param = (CVkSendMsgParam*)pReq->pUserInfo;
-	if (reply->resultCode == 200) {
+	if (reply->resultCode == 200 && param) {
 		JSONNode jnRoot;
 		const JSONNode &jnResponse = CheckJsonResponse(pReq, reply, jnRoot);
 		if (jnResponse) {
@@ -624,7 +622,11 @@ void CVkProto::OnReceiveDeleteFriend(NETLIBHTTPREQUEST* reply, AsyncHttpRequest*
 			}	
 		}
 	}
-	delete param;
+
+	if (param && (!pReq->bNeedsRestart || m_bTerminated)) {
+		delete param;
+		pReq->pUserInfo = NULL;
+	}
 }
 
 INT_PTR __cdecl CVkProto::SvcBanUser(WPARAM hContact, LPARAM)
@@ -634,8 +636,7 @@ INT_PTR __cdecl CVkProto::SvcBanUser(WPARAM hContact, LPARAM)
 	if (!IsOnline() || userID == -1 || userID == VK_FEED_USER)
 		return 1;
 
-	CMStringA code;
-	code.AppendFormat("var userID=\"%d\";API.account.banUser({\"user_id\":userID});", userID);
+	CMStringA code(FORMAT, "var userID=\"%d\";API.account.banUser({\"user_id\":userID});", userID);
 	CMString tszVarWarning;
 
 	if (m_bReportAbuse) {
@@ -669,9 +670,7 @@ INT_PTR __cdecl CVkProto::SvcBanUser(WPARAM hContact, LPARAM)
 	code += "return 1;";
 
 	ptrT ptszNick(db_get_tsa(hContact, m_szModuleName, "Nick"));
-	CMString ptszMsg;
-
-	ptszMsg.AppendFormat(TranslateT("Are you sure to ban %s? %s%sContinue?"), 
+	CMString ptszMsg(FORMAT, TranslateT("Are you sure to ban %s? %s%sContinue?"),
 		IsEmpty(ptszNick) ? TranslateT("(Unknown contact)") : ptszNick, 
 		tszVarWarning.IsEmpty() ? _T(" ") : TranslateT("\nIt will also"),
 		tszVarWarning.IsEmpty() ? _T("\n") : tszVarWarning);
@@ -696,10 +695,8 @@ INT_PTR __cdecl CVkProto::SvcReportAbuse(WPARAM hContact, LPARAM)
 	if (!IsOnline() || userID == -1 || userID == VK_FEED_USER)
 		return 1;
 
-	CMString formatstr = TranslateT("Are you sure to report abuse on %s?"),
-		tszNick(ptrT(db_get_tsa(hContact, m_szModuleName, "Nick"))),
-		ptszMsg;
-	ptszMsg.AppendFormat(formatstr, tszNick.IsEmpty() ? TranslateT("(Unknown contact)") : tszNick);
+	CMString tszNick(ptrT(db_get_tsa(hContact, m_szModuleName, "Nick"))),
+		ptszMsg(FORMAT, TranslateT("Are you sure to report abuse on %s?"), tszNick.IsEmpty() ? TranslateT("(Unknown contact)") : tszNick);
 	if (IDNO == MessageBox(NULL, ptszMsg, TranslateT("Attention!"), MB_ICONWARNING | MB_YESNO))
 		return 1;
 

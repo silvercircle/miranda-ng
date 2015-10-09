@@ -45,12 +45,12 @@ void TSAPI DM_SaveLogAsRTF(const TWindowData *dat)
 	else if (dat) {
 		TCHAR szFilter[MAX_PATH], szFilename[MAX_PATH];
 		mir_sntprintf(szFilter, _T("%s%c*.rtf%c%c"), TranslateT("Rich Edit file"), 0, 0, 0);
-		mir_sntprintf(szFilename, _countof(szFilename), _T("%s.rtf"), dat->cache->getNick());
+		mir_sntprintf(szFilename, _T("%s.rtf"), dat->cache->getNick());
 
 		Utils::sanitizeFilename(szFilename);
 
 		TCHAR szInitialDir[MAX_PATH + 2];
-		mir_sntprintf(szInitialDir, _countof(szInitialDir), _T("%s%s\\"), M.getDataPath(), _T("\\Saved message logs"));
+		mir_sntprintf(szInitialDir, _T("%s%s\\"), M.getDataPath(), _T("\\Saved message logs"));
 		CreateDirectoryTreeT(szInitialDir);
 
 		OPENFILENAME ofn = { 0 };
@@ -215,31 +215,31 @@ LRESULT TSAPI DM_MsgWindowCmdHandler(HWND hwndDlg, TContainerData *m_pContainer,
 			BOOL isUnderline = (cfOld.dwEffects & CFE_UNDERLINE) && (cfOld.dwMask & CFM_UNDERLINE);
 			BOOL isStrikeout = (cfOld.dwEffects & CFM_STRIKEOUT) && (cfOld.dwMask & CFM_STRIKEOUT);
 
-			int cmd = LOWORD(wParam);
-			if (cmd == IDC_FONTBOLD && !IsWindowEnabled(GetDlgItem(hwndDlg, IDC_FONTBOLD)))
+			int ctrlId = LOWORD(wParam);
+			if (ctrlId == IDC_FONTBOLD && !IsWindowEnabled(GetDlgItem(hwndDlg, IDC_FONTBOLD)))
 				break;
-			if (cmd == IDC_FONTITALIC && !IsWindowEnabled(GetDlgItem(hwndDlg, IDC_FONTITALIC)))
+			if (ctrlId == IDC_FONTITALIC && !IsWindowEnabled(GetDlgItem(hwndDlg, IDC_FONTITALIC)))
 				break;
-			if (cmd == IDC_FONTUNDERLINE && !IsWindowEnabled(GetDlgItem(hwndDlg, IDC_FONTUNDERLINE)))
+			if (ctrlId == IDC_FONTUNDERLINE && !IsWindowEnabled(GetDlgItem(hwndDlg, IDC_FONTUNDERLINE)))
 				break;
-			if (cmd == IDC_FONTSTRIKEOUT && !IsWindowEnabled(GetDlgItem(hwndDlg, IDC_FONTSTRIKEOUT)))
+			if (ctrlId == IDC_FONTSTRIKEOUT && !IsWindowEnabled(GetDlgItem(hwndDlg, IDC_FONTSTRIKEOUT)))
 				break;
-			if (cmd == IDC_FONTBOLD) {
+			if (ctrlId == IDC_FONTBOLD) {
 				cf.dwEffects = isBold ? 0 : CFE_BOLD;
 				cf.dwMask = CFM_BOLD;
 				CheckDlgButton(hwndDlg, IDC_FONTBOLD, !isBold ? BST_CHECKED : BST_UNCHECKED);
 			}
-			else if (cmd == IDC_FONTITALIC) {
+			else if (ctrlId == IDC_FONTITALIC) {
 				cf.dwEffects = isItalic ? 0 : CFE_ITALIC;
 				cf.dwMask = CFM_ITALIC;
 				CheckDlgButton(hwndDlg, IDC_FONTITALIC, !isItalic ? BST_CHECKED : BST_UNCHECKED);
 			}
-			else if (cmd == IDC_FONTUNDERLINE) {
+			else if (ctrlId == IDC_FONTUNDERLINE) {
 				cf.dwEffects = isUnderline ? 0 : CFE_UNDERLINE;
 				cf.dwMask = CFM_UNDERLINE;
 				CheckDlgButton(hwndDlg, IDC_FONTUNDERLINE, !isUnderline ? BST_CHECKED : BST_UNCHECKED);
 			}
-			else if (cmd == IDC_FONTSTRIKEOUT) {
+			else if (ctrlId == IDC_FONTSTRIKEOUT) {
 				cf.dwEffects = isStrikeout ? 0 : CFM_STRIKEOUT;
 				cf.dwMask = CFM_STRIKEOUT;
 				CheckDlgButton(hwndDlg, IDC_FONTSTRIKEOUT, !isStrikeout ? BST_CHECKED : BST_UNCHECKED);
@@ -472,7 +472,7 @@ LRESULT TSAPI DM_MsgWindowCmdHandler(HWND hwndDlg, TContainerData *m_pContainer,
 			if (sendLater->isAvail())
 				dat->sendMode ^= SMODE_SENDLATER;
 			else
-				CWarning::show(CWarning::WARN_NO_SENDLATER, MB_OK | MB_ICONINFORMATION, TranslateT("Configuration issue|The unattended send feature is disabled. The \\b1 send later\\b0  and \\b1 send to multiple contacts\\b0  features depend on it.\n\nYou must enable it under \\b1Options->Message sessions->Advanced tweaks\\b0. Changing this option requires a restart."));
+				CWarning::show(CWarning::WARN_NO_SENDLATER, MB_OK | MB_ICONINFORMATION, TranslateT("Configuration issue|The unattended send feature is disabled. The \\b1 send later\\b0  and \\b1 send to multiple contacts\\b0  features depend on it.\n\nYou must enable it under \\b1Options -> Message sessions -> Advanced tweaks\\b0. Changing this option requires a restart."));
 			break;
 		case ID_SENDMENU_SENDWITHOUTTIMEOUTS:
 			dat->sendMode ^= SMODE_NOACK;
@@ -613,7 +613,7 @@ static INT_PTR CALLBACK DlgProcAbout(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			CallService(MS_SYSTEM_GETFILEVERSION, 0, (LPARAM)&v);
 
 			TCHAR tStr[80];
-			mir_sntprintf(tStr, _countof(tStr), _T("%s %d.%d.%d.%d [build %d]"),
+			mir_sntprintf(tStr, _T("%s %d.%d.%d.%d [build %d]"),
 				TranslateT("Version"), __MAJOR_VERSION, __MINOR_VERSION, __RELEASE_NUM, __BUILD_NUM, v[3]);
 			SetDlgItemText(hwndDlg, IDC_HEADERBAR, tStr);
 		}
@@ -979,7 +979,7 @@ void TSAPI DM_ScrollToBottom(TWindowData *dat, WPARAM wParam, LPARAM lParam)
 static void LoadKLThread(LPVOID _param)
 {
 	DBVARIANT dbv;
-	if (!db_get_ts((MCONTACT)_param, SRMSGMOD_T, "locale", &dbv)) {
+	if (!db_get_ts((UINT_PTR)_param, SRMSGMOD_T, "locale", &dbv)) {
 		HKL hkl = LoadKeyboardLayout(dbv.ptszVal, 0);
 		PostMessage(PluginConfig.g_hwndHotkeyHandler, DM_SETLOCALE, (WPARAM)_param, (LPARAM)hkl);
 		db_free(&dbv);
@@ -1002,7 +1002,7 @@ void TSAPI DM_LoadLocale(TWindowData *dat)
 		if (!PluginConfig.m_bDontUseDefaultKbd) {
 			TCHAR	szBuf[20];
 			GetLocaleInfo(LOCALE_SYSTEM_DEFAULT, LOCALE_ILANGUAGE, szBuf, 20);
-			mir_sntprintf(szKLName, _countof(szKLName), _T("0000%s"), szBuf);
+			mir_sntprintf(szKLName, _T("0000%s"), szBuf);
 			db_set_ts(dat->hContact, SRMSGMOD_T, "locale", szKLName);
 		}
 		else {
@@ -1040,7 +1040,7 @@ void TSAPI DM_UpdateLastMessage(const TWindowData *dat)
 	TCHAR szBuf[100];
 	if (dat->bShowTyping) {
 		SendMessage(dat->pContainer->hwndStatus, SB_SETICON, 0, (LPARAM)PluginConfig.g_buttonBarIcons[ICON_DEFAULT_TYPING]);
-		mir_sntprintf(szBuf, _countof(szBuf), TranslateT("%s is typing a message..."), dat->cache->getNick());
+		mir_sntprintf(szBuf, TranslateT("%s is typing a message..."), dat->cache->getNick());
 	}
 	else if (dat->sbCustom) {
 		SendMessage(dat->pContainer->hwndStatus, SB_SETICON, 0, (LPARAM)dat->sbCustom->hIcon);
@@ -1051,14 +1051,14 @@ void TSAPI DM_UpdateLastMessage(const TWindowData *dat)
 		SendMessage(dat->pContainer->hwndStatus, SB_SETICON, 0, 0);
 
 		if (dat->pContainer->dwFlags & CNT_UINSTATUSBAR)
-			mir_sntprintf(szBuf, _countof(szBuf), _T("UID: %s"), dat->cache->getUIN());
+			mir_sntprintf(szBuf, _T("UID: %s"), dat->cache->getUIN());
 		else if (dat->lastMessage) {
 			TCHAR date[64], time[64];
 			TimeZone_PrintTimeStamp(NULL, dat->lastMessage, _T("d"), date, _countof(date), 0);
 			if (dat->pContainer->dwFlags & CNT_UINSTATUSBAR && mir_tstrlen(date) > 6)
 				date[mir_tstrlen(date) - 5] = 0;
 			TimeZone_PrintTimeStamp(NULL, dat->lastMessage, _T("t"), time, _countof(time), 0);
-			mir_sntprintf(szBuf, _countof(szBuf), TranslateT("Last received: %s at %s"), date, time);
+			mir_sntprintf(szBuf, TranslateT("Last received: %s at %s"), date, time);
 		}
 		else szBuf[0] = 0;
 	}
@@ -1113,7 +1113,7 @@ LRESULT TSAPI DM_WMCopyHandler(HWND hwnd, WNDPROC oldWndProc, UINT msg, WPARAM w
 HWND TSAPI DM_CreateClist(TWindowData *dat)
 {
 	if (!sendLater->isAvail()) {
-		CWarning::show(CWarning::WARN_NO_SENDLATER, MB_OK | MB_ICONINFORMATION, TranslateT("Configuration issue|The unattended send feature is disabled. The \\b1 send later\\b0  and \\b1 send to multiple contacts\\b0  features depend on it.\n\nYou must enable it under \\b1Options->Message sessions->Advanced tweaks\\b0. Changing this option requires a restart."));
+		CWarning::show(CWarning::WARN_NO_SENDLATER, MB_OK | MB_ICONINFORMATION, TranslateT("Configuration issue|The unattended send feature is disabled. The \\b1 send later\\b0  and \\b1 send to multiple contacts\\b0  features depend on it.\n\nYou must enable it under \\b1Options -> Message sessions -> Advanced tweaks\\b0. Changing this option requires a restart."));
 		dat->sendMode &= ~SMODE_MULTIPLE;
 		return 0;
 	}
@@ -1184,19 +1184,19 @@ LRESULT TSAPI DM_MouseWheelHandler(HWND hwnd, HWND hwndParent, TWindowData *mwda
 	else
 		GetWindowRect(GetDlgItem(hwndParent, uID), &rc);
 	if (PtInRect(&rc, pt)) {
-		HWND hwnd = (mwdat->hwndIEView || mwdat->hwndHPP) ? mwdat->hwndIWebBrowserControl : GetDlgItem(hwndParent, uID);
+		HWND hwndLog = (mwdat->hwndIEView || mwdat->hwndHPP) ? mwdat->hwndIWebBrowserControl : GetDlgItem(hwndParent, uID);
 		short wDirection = (short)HIWORD(wParam);
 
-		if (hwnd == 0)
-			hwnd = WindowFromPoint(pt);
+		if (hwndLog == 0)
+			hwndLog = WindowFromPoint(pt);
 
 		if (LOWORD(wParam) & MK_SHIFT || M.GetByte("fastscroll", 0)) {
 			if (wDirection < 0)
-				SendMessage(hwnd, WM_VSCROLL, MAKEWPARAM(SB_PAGEDOWN, 0), 0);
+				SendMessage(hwndLog, WM_VSCROLL, MAKEWPARAM(SB_PAGEDOWN, 0), 0);
 			else if (wDirection > 0)
-				SendMessage(hwnd, WM_VSCROLL, MAKEWPARAM(SB_PAGEUP, 0), 0);
+				SendMessage(hwndLog, WM_VSCROLL, MAKEWPARAM(SB_PAGEUP, 0), 0);
 		}
-		else SendMessage(hwnd, WM_MOUSEWHEEL, wParam, lParam);
+		else SendMessage(hwndLog, WM_MOUSEWHEEL, wParam, lParam);
 		return 0;
 	}
 
@@ -1378,7 +1378,7 @@ void TSAPI DM_Typing(TWindowData *dat, bool fForceOff)
 				dat->bShowTyping = 2;
 				dat->nTypeSecs = 86400;
 
-				mir_sntprintf(dat->szStatusBar, _countof(dat->szStatusBar), TranslateT("%s has entered text."), dat->cache->getNick());
+				mir_sntprintf(dat->szStatusBar, TranslateT("%s has entered text."), dat->cache->getNick());
 				if (hwndStatus && dat->pContainer->hwndActive == hwndDlg)
 					SendMessage(hwndStatus, SB_SETTEXT, 0, (LPARAM)dat->szStatusBar);
 			}
@@ -1403,7 +1403,7 @@ void TSAPI DM_Typing(TWindowData *dat, bool fForceOff)
 		UpdateStatusBar(dat);
 	}
 	else if (dat->nTypeSecs > 0) {
-		mir_sntprintf(dat->szStatusBar, _countof(dat->szStatusBar), TranslateT("%s is typing a message"), dat->cache->getNick());
+		mir_sntprintf(dat->szStatusBar, TranslateT("%s is typing a message"), dat->cache->getNick());
 
 		dat->nTypeSecs--;
 		if (hwndStatus && dat->pContainer->hwndActive == hwndDlg) {
@@ -1596,7 +1596,7 @@ void TSAPI DM_EventAdded(TWindowData *dat, WPARAM hContact, LPARAM lParam)
 			dat->hQueuedEvents[dat->iNextQueuedEvent++] = hDbEvent;
 
 			TCHAR szBuf[100];
-			mir_sntprintf(szBuf, _countof(szBuf), TranslateT("Auto scrolling is disabled, %d message(s) queued (press F12 to enable it)"),
+			mir_sntprintf(szBuf, TranslateT("Auto scrolling is disabled, %d message(s) queued (press F12 to enable it)"),
 				dat->iNextQueuedEvent);
 			SetDlgItemText(hwndDlg, IDC_LOGFROZENTEXT, szBuf);
 			RedrawWindow(GetDlgItem(hwndDlg, IDC_LOGFROZENTEXT), NULL, NULL, RDW_INVALIDATE);
@@ -1744,11 +1744,11 @@ void TSAPI DM_UpdateTitle(TWindowData *dat, WPARAM, LPARAM lParam)
 				else
 					_tcsncpy_s(newcontactname, szNick, _TRUNCATE);
 
-				Utils::DoubleAmpersands(newcontactname);
+				Utils::DoubleAmpersands(newcontactname, _countof(newcontactname));
 
 				if (mir_tstrlen(newcontactname) != 0) {
 					if (PluginConfig.m_bStatusOnTabs)
-						mir_sntprintf(newtitle, _countof(newtitle), _T("%s (%s)"), newcontactname, dat->szStatus);
+						mir_sntprintf(newtitle, _T("%s (%s)"), newcontactname, dat->szStatus);
 					else
 						_tcsncpy_s(newtitle, newcontactname, _TRUNCATE);
 				}
@@ -1760,13 +1760,13 @@ void TSAPI DM_UpdateTitle(TWindowData *dat, WPARAM, LPARAM lParam)
 
 			TCHAR fulluin[256];
 			if (dat->bIsMeta)
-				mir_sntprintf(fulluin, _countof(fulluin),
-				TranslateT("UID: %s (SHIFT click -> copy to clipboard)\nClick for user's details\nRight click for metacontact control\nClick dropdown to add or remove user from your favorites."),
-				bHasName ? dat->cache->getUIN() : TranslateT("No UID"));
+				mir_sntprintf(fulluin,
+					TranslateT("UID: %s (SHIFT click -> copy to clipboard)\nClick for user's details\nRight click for metacontact control\nClick dropdown to add or remove user from your favorites."),
+					bHasName ? dat->cache->getUIN() : TranslateT("No UID"));
 			else
-				mir_sntprintf(fulluin, _countof(fulluin),
-				TranslateT("UID: %s (SHIFT click -> copy to clipboard)\nClick for user's details\nClick dropdown to change this contact's favorite status."),
-				bHasName ? dat->cache->getUIN() : TranslateT("No UID"));
+				mir_sntprintf(fulluin,
+					TranslateT("UID: %s (SHIFT click -> copy to clipboard)\nClick for user's details\nClick dropdown to change this contact's favorite status."),
+					bHasName ? dat->cache->getUIN() : TranslateT("No UID"));
 
 			SendDlgItemMessage(hwndDlg, IDC_NAME, BUTTONADDTOOLTIP, (WPARAM)fulluin, BATF_TCHAR);
 		}

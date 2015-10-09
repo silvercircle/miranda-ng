@@ -34,8 +34,8 @@ CSendDropbox::CSendDropbox(HWND Owner, MCONTACT hContact, bool bAsync)
 	: CSend(Owner, hContact, bAsync)
 {
 	/// @todo : re-enable SS_DLG_DELETEAFTERSSEND with full implemention of Dropbox upload with progress, msg and sounds
-	m_EnableItem = SS_DLG_DESCRIPTION | SS_DLG_AUTOSEND/* | SS_DLG_DELETEAFTERSSEND*/;
-	m_pszSendTyp = LPGENT("Dropbox transfer");
+	m_EnableItem = SS_DLG_DESCRIPTION | SS_DLG_AUTOSEND | SS_DLG_DELETEAFTERSSEND;
+	m_pszSendTyp = TranslateT("Dropbox transfer");
 }
 
 CSendDropbox::~CSendDropbox()
@@ -46,10 +46,6 @@ CSendDropbox::~CSendDropbox()
 
 int CSendDropbox::Send()
 {
-	if (!m_bAsync) {
-		SendThread();
-		return 1;
-	}
 	mir_forkthread(&CSendDropbox::SendThreadWrapper, this);
 	return 0;
 }
@@ -59,17 +55,37 @@ int CSendDropbox::Send()
 void CSendDropbox::SendThread()
 {
 	/// @todo : SS_DLG_DESCRIPTION and SS_DLG_DELETEAFTERSSEND are of no use as of now since we don't track upload progress
-	INT_PTR ret = 0;
-	if (!m_hContact)
-		SetContact(db_find_first("Dropbox"));
-	if (m_hContact)
-		ret = CallService(MS_DROPBOX_SEND_FILE, (WPARAM)m_hContact, (LPARAM)m_pszFile);
-	if (!ret) {
-		Error(LPGENT("%s (%i):\nCould not add a share to the Dropbox plugin."), TranslateTS(m_pszSendTyp), ret);
+
+	m_hDropHook = HookEventObj(ME_DROPBOX_SENT, OnDropSend, this);
+
+	if ((m_hDropSend = (HANDLE)CallService(MS_DROPBOX_SEND_FILE, (WPARAM)m_hContact, (LPARAM)m_pszFile)) == NULL)
+	{
+		Error(LPGENT("%s (%i):\nCould not add a share to the Dropbox plugin."), TranslateTS(m_pszSendTyp), (INT_PTR)m_hDropSend);
 		Exit(ACKRESULT_FAILED); return;
 	}
-	m_bSilent = true;
-	Exit(ACKRESULT_SUCCESS);
+
+	m_hEvent.Wait();
+	UnhookEvent(m_hDropHook);
+
+	if (m_URL)
+		svcSendMsgExit(m_URL);
+	else
+		Exit(ACKRESULT_FAILED);
+}
+
+int CSendDropbox::OnDropSend(void *obj, WPARAM, LPARAM lParam)
+{
+	CSendDropbox *self = (CSendDropbox*)obj;
+	TRANSFERINFO *info = (TRANSFERINFO*)lParam;
+	if (info->hProcess == self->m_hDropSend)
+	{
+		if (!info->status)
+		{
+			self->m_URL = mir_strdup(info->data[0]);
+		}
+		self->m_hEvent.Set();
+	}
+	return 0;
 }
 
 void CSendDropbox::SendThreadWrapper(void * Obj)

@@ -172,7 +172,7 @@ CIcqProto::CIcqProto(const char* aProtoName, const TCHAR* aUserName) :
 	m_hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
 
 	char szP2PModuleName[MAX_PATH];
-	mir_snprintf(szP2PModuleName, _countof(szP2PModuleName), "%sP2P", m_szModuleName);
+	mir_snprintf(szP2PModuleName, "%sP2P", m_szModuleName);
 	mir_sntprintf(szBuffer, TranslateT("%s client-to-client connections"), m_tszUserName);
 	nlu.flags = NUF_OUTGOING | NUF_INCOMING | NUF_TCHAR;
 	nlu.ptszDescriptiveName = szBuffer;
@@ -241,9 +241,9 @@ int CIcqProto::OnModulesLoaded(WPARAM, LPARAM)
 	char pszSrvGroupsName[MAX_PATH];
 	char* modules[5] = { 0, 0, 0, 0, 0 };
 
-	mir_snprintf(pszP2PName, _countof(pszP2PName), "%sP2P", m_szModuleName);
-	mir_snprintf(pszGroupsName, _countof(pszGroupsName), "%sGroups", m_szModuleName);
-	mir_snprintf(pszSrvGroupsName, _countof(pszSrvGroupsName), "%sSrvGroups", m_szModuleName);
+	mir_snprintf(pszP2PName, "%sP2P", m_szModuleName);
+	mir_snprintf(pszGroupsName, "%sGroups", m_szModuleName);
+	mir_snprintf(pszSrvGroupsName, "%sSrvGroups", m_szModuleName);
 	modules[0] = m_szModuleName;
 	modules[1] = pszP2PName;
 	modules[2] = pszGroupsName;
@@ -471,12 +471,12 @@ HANDLE __cdecl CIcqProto::FileAllow(MCONTACT hContact, HANDLE hTransfer, const T
 		return 0; // Invalid contact
 
 	if (icqOnline() && hContact && szPath && hTransfer) { // approve old fashioned file transfer
-		basic_filetransfer *ft = (basic_filetransfer *)hTransfer;
+		basic_filetransfer *bft = (basic_filetransfer *)hTransfer;
 
-		if (!IsValidFileTransfer(ft))
+		if (!IsValidFileTransfer(bft))
 			return 0; // Invalid transfer
 
-		if (dwUin && ft->ft_magic == FT_MAGIC_ICQ) {
+		if (dwUin && bft->ft_magic == FT_MAGIC_ICQ) {
 			filetransfer *ft = (filetransfer *)hTransfer;
 			ft->szSavePath = tchar_to_utf8(szPath);
 			{
@@ -492,7 +492,7 @@ HANDLE __cdecl CIcqProto::FileAllow(MCONTACT hContact, HANDLE hTransfer, const T
 
 			return hTransfer; // Success
 		}
-		else if (ft->ft_magic == FT_MAGIC_OSCAR) { // approve oscar file transfer
+		else if (bft->ft_magic == FT_MAGIC_OSCAR) { // approve oscar file transfer
 			return oftFileAllow(hContact, hTransfer, szPath);
 		}
 	}
@@ -536,7 +536,7 @@ int __cdecl CIcqProto::FileCancel(MCONTACT hContact, HANDLE hTransfer)
 int __cdecl CIcqProto::FileDeny(MCONTACT hContact, HANDLE hTransfer, const TCHAR* szReason)
 {
 	int nReturnValue = 1;
-	basic_filetransfer *ft = (basic_filetransfer*)hTransfer;
+	basic_filetransfer *bft = (basic_filetransfer*)hTransfer;
 
 	DWORD dwUin;
 	uid_str szUid;
@@ -547,7 +547,7 @@ int __cdecl CIcqProto::FileDeny(MCONTACT hContact, HANDLE hTransfer, const TCHAR
 		if (!IsValidFileTransfer(hTransfer))
 			return 1; // Invalid transfer
 
-		if (dwUin && ft->ft_magic == FT_MAGIC_ICQ) { // deny old fashioned file transfer
+		if (dwUin && bft->ft_magic == FT_MAGIC_ICQ) { // deny old fashioned file transfer
 			filetransfer *ft = (filetransfer*)hTransfer;
 			char *szReasonUtf = tchar_to_utf8(szReason);
 			// Was request received thru DC and have we a open DC, send through that
@@ -559,12 +559,12 @@ int __cdecl CIcqProto::FileDeny(MCONTACT hContact, HANDLE hTransfer, const TCHAR
 
 			nReturnValue = 0; // Success
 		}
-		else if (ft->ft_magic == FT_MAGIC_OSCAR) { // deny oscar file transfer
+		else if (bft->ft_magic == FT_MAGIC_OSCAR) { // deny oscar file transfer
 			return oftFileDeny(hContact, hTransfer, szReason);
 		}
 	}
 	// Release possible orphan structure
-	SafeReleaseFileTransfer((void**)&ft);
+	SafeReleaseFileTransfer((void**)&bft);
 
 	return nReturnValue;
 }
@@ -1215,7 +1215,7 @@ HANDLE __cdecl CIcqProto::SendFile(MCONTACT hContact, const TCHAR* szDescription
 					}
 					else {
 						char tmp[64];
-						mir_snprintf(szFiles, _countof(szFiles), ICQTranslateUtfStatic("%d Files", tmp, _countof(tmp)), ft->dwFileCount);
+						mir_snprintf(szFiles, ICQTranslateUtfStatic("%d Files", tmp, _countof(tmp)), ft->dwFileCount);
 						pszFiles = szFiles;
 					}
 
@@ -1559,7 +1559,7 @@ int __cdecl CIcqProto::SetStatus(int iNewStatus)
 			if (m_dwLocalUIN == 0) {
 				SetCurrentStatus(ID_STATUS_OFFLINE);
 				ProtoBroadcastAck(NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_BADUSERID);
-				icq_LogMessage(LOG_FATAL, LPGEN("You have not entered an ICQ number.\nConfigure this in Options->Network->ICQ and try again."));
+				icq_LogMessage(LOG_FATAL, LPGEN("You have not entered an ICQ number.\nConfigure this in Options -> Network -> ICQ and try again."));
 				return 0;
 			}
 
@@ -1857,11 +1857,11 @@ int __cdecl CIcqProto::OnEvent(PROTOEVENTTYPE eventType, WPARAM wParam, LPARAM l
 	case EV_PROTO_ONERASE:
 		{
 			char szDbSetting[MAX_PATH];
-			mir_snprintf(szDbSetting, _countof(szDbSetting), "%sP2P", m_szModuleName);
+			mir_snprintf(szDbSetting, "%sP2P", m_szModuleName);
 			CallService(MS_DB_MODULE_DELETE, 0, (LPARAM)szDbSetting);
-			mir_snprintf(szDbSetting, _countof(szDbSetting), "%sSrvGroups", m_szModuleName);
+			mir_snprintf(szDbSetting, "%sSrvGroups", m_szModuleName);
 			CallService(MS_DB_MODULE_DELETE, 0, (LPARAM)szDbSetting);
-			mir_snprintf(szDbSetting, _countof(szDbSetting), "%sGroups", m_szModuleName);
+			mir_snprintf(szDbSetting, "%sGroups", m_szModuleName);
 			CallService(MS_DB_MODULE_DELETE, 0, (LPARAM)szDbSetting);
 		}
 		break;

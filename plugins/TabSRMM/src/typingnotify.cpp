@@ -174,8 +174,6 @@ void TN_TypingMessage(MCONTACT hContact, int iMode)
 
 static INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	int i;
-
 	switch (msg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
@@ -193,7 +191,7 @@ static INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			CheckDlgButton(hwndDlg, IDC_USEPOPUPCOLORS, BST_CHECKED);
 		}
 
-		for (i = 0; i < _countof(colorPicker); i++) {
+		for (int i = 0; i < _countof(colorPicker); i++) {
 			SendDlgItemMessage(hwndDlg, colorPicker[i].res, CPM_SETCOLOUR, 0, colorPicker[i].color);
 			Utils::enableDlgControl(hwndDlg, colorPicker[i].res, (ColorMode == COLOR_OWN));
 		}
@@ -251,7 +249,7 @@ static INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 					bEnableOthers = true;
 				}
 
-				for (i = 0; i < _countof(colorPicker); i++)
+				for (int i = 0; i < _countof(colorPicker); i++)
 					Utils::enableDlgControl(hwndDlg, colorPicker[i].res, bEnableOthers);
 
 				Utils::enableDlgControl(hwndDlg, IDC_USEPOPUPCOLORS, bEnableOthers);
@@ -273,7 +271,7 @@ static INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 					bEnableOthers = true;
 				}
 
-				for (i = 0; i < sizeof(colorPicker) / sizeof(colorPicker[0]); i++)
+				for (int i = 0; i < sizeof(colorPicker) / sizeof(colorPicker[0]); i++)
 					Utils::enableDlgControl(hwndDlg, colorPicker[i].res, bEnableOthers);
 
 				Utils::enableDlgControl(hwndDlg, IDC_USEWINCOLORS, bEnableOthers);
@@ -296,7 +294,7 @@ static INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 		case IDC_PREVIEW:
 			if (PluginConfig.g_bPopupAvail) {
 				POPUPDATAT ppd = { 0 };
-				for (i = 0; i < 2; i++) {
+				for (int i = 0; i < 2; i++) {
 					int notyping;
 					if (i == PROTOTYPE_CONTACTTYPING_OFF) {
 						_tcsncpy_s(ppd.lptzContactName, TranslateT("Contact"), _TRUNCATE);
@@ -458,7 +456,7 @@ static INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 		case 0:
 			switch (((LPNMHDR)lParam)->code) {
 			case PSN_APPLY:
-				for (i = 0; i < sizeof(colorPicker) / sizeof(colorPicker[0]); i++) {
+				for (int i = 0; i < sizeof(colorPicker) / sizeof(colorPicker[0]); i++) {
 					colorPicker[i].color = SendDlgItemMessage(hwndDlg, colorPicker[i].res, CPM_GETCOLOUR, 0, 0);
 					db_set_dw(0, Module, colorPicker[i].desc, colorPicker[i].color);
 				}
@@ -530,13 +528,14 @@ int TN_ModuleInit()
 		for (i = 0; i < _countof(colorPicker); i++)
 			colorPicker[i].color = M.GetDword(Module, colorPicker[i].desc, 0);
 
-	mir_sntprintf(szStart, _countof(szStart), TranslateT("...is typing a message."));
-	mir_sntprintf(szStop, _countof(szStop), TranslateT("...has stopped typing."));
+	mir_sntprintf(szStart, TranslateT("...is typing a message."));
+	mir_sntprintf(szStop, TranslateT("...has stopped typing."));
 
 	if (PluginConfig.g_bPopupAvail && ShowMenu) {
 		hTypingNotify = CreateServiceFunction("TypingNotify/EnableDisableMenuCommand", EnableDisableMenuCommand);
 
 		CMenuItem mi;
+		SET_UID(mi, 0xe18fd2cf, 0xcf90, 0x459e, 0xb6, 0xe6, 0x70, 0xec, 0xad, 0xc6, 0x73, 0xef);
 		if (!Disabled) {
 			mi.name.a = LPGEN("Disable &typing notification");
 			mi.hIcolibItem = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_ENABLED));

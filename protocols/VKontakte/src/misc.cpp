@@ -131,84 +131,6 @@ char* ExpUrlEncode(const char *szUrl, bool strict)
 	return szOutput;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-
-ULONG AsyncHttpRequest::m_reqCount = 0;
-
-AsyncHttpRequest::AsyncHttpRequest()
-{
-	cbSize = sizeof(NETLIBHTTPREQUEST);
-	m_bApiReq = true;
-	AddHeader("Connection", "keep-alive");
-	AddHeader("Accept-Encoding", "booo");
-	pUserInfo = NULL;
-	m_iRetry = MAX_RETRIES;
-	bNeedsRestart = false;
-	bIsMainConn = false;
-	m_pFunc = NULL;
-	bExpUrlEncode = false;
-	m_reqNum = ::InterlockedIncrement(&m_reqCount);
-	m_priority = rpLow;
-}
-
-AsyncHttpRequest::AsyncHttpRequest(CVkProto *ppro, int iRequestType, LPCSTR _url, bool bSecure, VK_REQUEST_HANDLER pFunc, RequestPriority rpPriority)
-{
-	cbSize = sizeof(NETLIBHTTPREQUEST);
-	m_bApiReq = true;
-	bIsMainConn = false;
-	bExpUrlEncode = ppro->m_bUseNonStandardUrlEncode;
-	AddHeader("Connection", "keep-alive");
-	AddHeader("Accept-Encoding", "booo");
-
-	flags = VK_NODUMPHEADERS | NLHRF_DUMPASTEXT | NLHRF_HTTP11 | NLHRF_REDIRECT;
-	if (bSecure)
-		flags |= NLHRF_SSL;
-
-	if (*_url == '/') {	// relative url leads to a site
-		m_szUrl = ((bSecure) ? "https://" : "http://") + CMStringA("api.vk.com");
-		m_szUrl += _url;
-		bIsMainConn = true;
-	}
-	else m_szUrl = _url;
-
-	if (bSecure)
-		this << CHAR_PARAM("access_token", ppro->m_szAccessToken);
-
-	requestType = iRequestType;
-	m_pFunc = pFunc;
-	pUserInfo = NULL;
-	m_iRetry = MAX_RETRIES;
-	bNeedsRestart = false;
-	m_reqNum = ::InterlockedIncrement(&m_reqCount);
-	m_priority = rpPriority;
-}
-
-AsyncHttpRequest::~AsyncHttpRequest()
-{
-	for (int i = 0; i < headersCount; i++) {
-		mir_free(headers[i].szName);
-		mir_free(headers[i].szValue);
-	}
-	mir_free(headers);
-	mir_free(pData);
-}
-
-void AsyncHttpRequest::AddHeader(LPCSTR szName, LPCSTR szValue)
-{
-	headers = (NETLIBHTTPHEADER*)mir_realloc(headers, sizeof(NETLIBHTTPHEADER)*(headersCount + 1));
-	headers[headersCount].szName = mir_strdup(szName);
-	headers[headersCount].szValue = mir_strdup(szValue);
-	headersCount++;
-}
-
-void AsyncHttpRequest::Redirect(NETLIBHTTPREQUEST *nhr)
-{
-	for (int i = 0; i < nhr->headersCount; i++) {
-		LPCSTR szValue = nhr->headers[i].szValue;
-		if (!_stricmp(nhr->headers[i].szName, "Location"))
-			m_szUrl = szValue;
-	}
-}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -283,7 +205,7 @@ MCONTACT CVkProto::FindChat(LONG dwUserid)
 bool CVkProto::CheckMid(LIST<void> &lList, int guid)
 {
 	for (int i = lList.getCount() - 1; i >= 0; i--)
-		if ((int)lList[i] == guid) {
+		if ((INT_PTR)lList[i] == guid) {
 			lList.remove(i);
 			return true;
 		}
@@ -307,8 +229,10 @@ JSONNode& CVkProto::CheckJsonResponse(AsyncHttpRequest *pReq, NETLIBHTTPREQUEST 
 bool CVkProto::CheckJsonResult(AsyncHttpRequest *pReq, const JSONNode &jnNode)
 {
 	debugLogA("CVkProto::CheckJsonResult");
-	if (!jnNode)
+	if (!jnNode) {
+		pReq->m_iErrorCode = VKERR_NO_JSONNODE;
 		return false;
+	}
 
 	const JSONNode &jnError = jnNode["error"];
 	const JSONNode &jnErrorCode = jnError["error_code"];
@@ -316,11 +240,9 @@ bool CVkProto::CheckJsonResult(AsyncHttpRequest *pReq, const JSONNode &jnNode)
 	if (!jnError || !jnErrorCode)
 		return true;
 
-	int iErrorCode = jnErrorCode.as_int();
-	debugLogA("CVkProto::CheckJsonResult %d", iErrorCode);
-	CVkFileUploadParam * fup = (CVkFileUploadParam *)pReq->pUserInfo;
-	CVkSendMsgParam *param = (CVkSendMsgParam*)pReq->pUserInfo;
-	switch (iErrorCode) {
+	pReq->m_iErrorCode = jnErrorCode.as_int();
+	debugLogA("CVkProto::CheckJsonResult %d", pReq->m_iErrorCode);
+	switch (pReq->m_iErrorCode) {
 	case VKERR_AUTHORIZATION_FAILED:
 		ConnectionFailed(LOGINERR_WRONGPASSWORD);
 		break;
@@ -338,19 +260,9 @@ bool CVkProto::CheckJsonResult(AsyncHttpRequest *pReq, const JSONNode &jnNode)
 	case VKERR_CAPTCHA_NEEDED:
 		ApplyCaptcha(pReq, jnError);
 		break;
-	case VKERR_COULD_NOT_SAVE_FILE:
-	case VKERR_INVALID_ALBUM_ID:
-	case VKERR_INVALID_SERVER:
-	case VKERR_INVALID_HASH:
-	case VKERR_INVALID_AUDIO:
-	case VKERR_AUDIO_DEL_COPYRIGHT:
-	case VKERR_INVALID_FILENAME:
-	case VKERR_INVALID_FILESIZE:
-		if (fup)
-			fup->iErrorCode = iErrorCode;
-		break;
 	case VKERR_FLOOD_CONTROL:
 		pReq->m_iRetry = 0;
+		// fall through
 	case VKERR_UNKNOWN:
 	case VKERR_TOO_MANY_REQ_PER_SEC:
 	case VKERR_INTERNAL_SERVER_ERR:
@@ -361,27 +273,34 @@ bool CVkProto::CheckJsonResult(AsyncHttpRequest *pReq, const JSONNode &jnNode)
 			pReq->m_iRetry--;
 		}
 		else {
-			CMString msg;
-			msg.AppendFormat(TranslateT("Error %d. Data will not be sent or received."), iErrorCode);
+			CMString msg(FORMAT, TranslateT("Error %d. Data will not be sent or received."), pReq->m_iErrorCode);
 			MsgPopup(NULL, msg, TranslateT("Error"), true);
 			debugLogA("CVkProto::CheckJsonResult SendError");
 		}
 		break;
-	case VKERR_HIMSELF_AS_FRIEND:
-	case VKERR_YOU_ON_BLACKLIST:
-	case VKERR_USER_ON_BLACKLIST:
-		if (param)
-			param->iCount = iErrorCode;
-		break;
+
 	case VKERR_INVALID_PARAMETERS:
 		MsgPopup(NULL, TranslateT("One of the parameters specified was missing or invalid"), TranslateT("Error"), true);
 		break;
 	case VKERR_ACC_WALL_POST_DENIED:
 		MsgPopup(NULL, TranslateT("Access to adding post denied"), TranslateT("Error"), true);
 		break;
+	case VKERR_COULD_NOT_SAVE_FILE:
+	case VKERR_INVALID_ALBUM_ID:
+	case VKERR_INVALID_SERVER:
+	case VKERR_INVALID_HASH:
+	case VKERR_INVALID_AUDIO:
+	case VKERR_AUDIO_DEL_COPYRIGHT:
+	case VKERR_INVALID_FILENAME:
+	case VKERR_INVALID_FILESIZE:
+	case VKERR_HIMSELF_AS_FRIEND:
+	case VKERR_YOU_ON_BLACKLIST:
+	case VKERR_USER_ON_BLACKLIST:
+		// See CVkProto::SendFileFiled 
+		break;
 	}
 
-	return iErrorCode == 0;
+	return pReq->m_iErrorCode == 0;
 }
 
 void CVkProto::OnReceiveSmth(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
@@ -550,7 +469,7 @@ void CVkProto::ApplyCookies(AsyncHttpRequest *pReq)
 
 void __cdecl CVkProto::DBAddAuthRequestThread(void *p)
 {
-	MCONTACT hContact = (MCONTACT)p;
+	MCONTACT hContact = (UINT_PTR)p;
 	if (hContact == NULL || hContact == INVALID_CONTACT_ID || !IsOnline())
 		return;
 
@@ -638,8 +557,7 @@ void CVkProto::SetMirVer(MCONTACT hContact, int platform)
 		return;
 	}
 
-	CMString MirVer, OldMirVer;
-	OldMirVer = ptrT(db_get_tsa(hContact, m_szModuleName, "MirVer"));
+	CMString MirVer, OldMirVer(ptrT(db_get_tsa(hContact, m_szModuleName, "MirVer")));
 	bool bSetFlag = true;
 
 	switch (platform) {
@@ -697,12 +615,12 @@ void CVkProto::SetMirVer(MCONTACT hContact, int platform)
 void CVkProto::ContactTypingThread(void *p)
 {
 	debugLogA("CVkProto::ContactTypingThread");
-	MCONTACT hContact = (MCONTACT)p;
+	MCONTACT hContact = (UINT_PTR)p;
 	CallService(MS_PROTO_CONTACTISTYPING, hContact, 5);
 	Sleep(5500);
 	CallService(MS_PROTO_CONTACTISTYPING, hContact);
 	
-	if (!ServiceExists("MessageState/DummyService")) {
+	if (!ServiceExists(MS_MESSAGESTATE_UPDATE)) {
 		Sleep(1500);
 		SetSrmmReadStatus(hContact);
 	}
@@ -713,7 +631,7 @@ int CVkProto::OnProcessSrmmEvent(WPARAM, LPARAM lParam)
 	debugLogA("CVkProto::OnProcessSrmmEvent");
 	MessageWindowEventData *event = (MessageWindowEventData *)lParam;
 
-	if (event->uType == MSG_WINDOW_EVT_OPENING && !ServiceExists("MessageState/DummyService"))
+	if (event->uType == MSG_WINDOW_EVT_OPENING && !ServiceExists(MS_MESSAGESTATE_UPDATE))
 		SetSrmmReadStatus(event->hContact);
 
 	return 0;
@@ -733,8 +651,30 @@ void CVkProto::SetSrmmReadStatus(MCONTACT hContact)
 	StatusTextData st = { 0 };
 	st.cbSize = sizeof(st);
 	st.hIcon = IcoLib_GetIconByHandle(GetIconHandle(IDI_READMSG));
-	mir_sntprintf(st.tszText, _countof(st.tszText), TranslateT("Message read: %s"), ttime);
+	mir_sntprintf(st.tszText, TranslateT("Message read: %s"), ttime);
 	CallService(MS_MSG_SETSTATUSTEXT, (WPARAM)hContact, (LPARAM)&st);
+}
+
+void CVkProto::MarkDialogAsRead(MCONTACT hContact) 
+{
+	debugLogA("CVkProto::MarkDialogAsRead");
+	if (!IsOnline())
+		return;
+
+	LONG userID = getDword(hContact, "ID", -1);
+	if (userID == -1 || userID == VK_FEED_USER)
+		return;
+
+	MEVENT hDBEvent;
+	MCONTACT hMContact = db_mc_tryMeta(hContact);
+	while ((hDBEvent = db_event_firstUnread(hContact)) != NULL) {
+		db_event_markRead(hContact, hDBEvent);
+		int res1 = CallService(MS_CLIST_REMOVEEVENT, hMContact, hDBEvent);
+		int res2 = 2;
+		if (hContact != hMContact)
+			res2 = CallService(MS_CLIST_REMOVEEVENT, hContact, hDBEvent);
+		debugLogA("CVkProto::MarkDialogAsRead [1] result = (%d, %d), hDbEvent = %d", res1, res2, (int)hDBEvent);
+	}
 }
 
 char* CVkProto::GetStickerId(const char* Msg, int &stickerid)
@@ -748,12 +688,12 @@ char* CVkProto::GetStickerId(const char* Msg, int &stickerid)
 	if (tmpMsg)
 		iRes = sscanf(tmpMsg, "[sticker:%d]", &stickerid);
 	if (iRes == 1) {
-		mir_snprintf(HeadMsg, _countof(HeadMsg), "[sticker:%d]", stickerid);
+		mir_snprintf(HeadMsg, "[sticker:%d]", stickerid);
 		size_t retLen = mir_strlen(HeadMsg);
 		if (retLen < mir_strlen(Msg)) {
 			CMStringA szMsg(Msg, int(mir_strlen(Msg) - mir_strlen(tmpMsg)));
 			szMsg.Append(&tmpMsg[retLen]);
-			retMsg = mir_strdup(szMsg);
+			retMsg = mir_strdup(szMsg.Trim());
 		}	
 	}
 
@@ -978,8 +918,7 @@ CMString CVkProto::GetAttachmentDescr(const JSONNode &jnAttachments, BBCSupport 
 			CMString tszArtist(jnAudio["artist"].as_mstring());
 			CMString tszTitle(jnAudio["title"].as_mstring());
 			CMString tszUrl(jnAudio["url"].as_mstring());
-			CMString tszAudio;
-			tszAudio.AppendFormat(_T("%s - %s"), tszArtist, tszTitle);
+			CMString tszAudio(FORMAT, _T("%s - %s"), tszArtist, tszTitle);
 
 			int iParamPos = tszUrl.Find(_T("?"));
 			if (m_bShortenLinksForAudio &&  iParamPos != -1)
@@ -997,8 +936,7 @@ CMString CVkProto::GetAttachmentDescr(const JSONNode &jnAttachments, BBCSupport 
 			CMString tszTitle(jnVideo["title"].as_mstring());
 			int vid = jnVideo["id"].as_int();
 			int ownerID = jnVideo["owner_id"].as_int();
-			CMString tszUrl;
-			tszUrl.AppendFormat(_T("http://vk.com/video%d_%d"), ownerID, vid);
+			CMString tszUrl(FORMAT, _T("http://vk.com/video%d_%d"), ownerID, vid);
 			res.AppendFormat(_T("%s: %s"),
 				SetBBCString(TranslateT("Video"), iBBC, vkbbcB),
 				SetBBCString(tszTitle, iBBC, vkbbcUrl, tszUrl));
@@ -1022,8 +960,7 @@ CMString CVkProto::GetAttachmentDescr(const JSONNode &jnAttachments, BBCSupport 
 			CMString tszText(jnWall["text"].as_mstring());
 			int id = jnWall["id"].as_int();
 			int fromID = jnWall["from_id"].as_int();
-			CMString tszUrl;
-			tszUrl.AppendFormat(_T("http://vk.com/wall%d_%d"), fromID, id);
+			CMString tszUrl(FORMAT, _T("http://vk.com/wall%d_%d"), fromID, id);
 			res.AppendFormat(_T("%s: %s"),
 				SetBBCString(TranslateT("Wall post"), iBBC, vkbbcUrl, tszUrl),
 				tszText.IsEmpty() ? _T(" ") : tszText);
@@ -1109,7 +1046,7 @@ CMString CVkProto::GetAttachmentDescr(const JSONNode &jnAttachments, BBCSupport 
 	return res;
 }
 
-CMString CVkProto::GetFwdMessages(const JSONNode &jnMessages, BBCSupport iBBC)
+CMString CVkProto::GetFwdMessages(const JSONNode &jnMessages, const JSONNode &jnFUsers, BBCSupport iBBC)
 {
 	CMString res;
 	debugLogA("CVkProto::GetFwdMessages");
@@ -1118,19 +1055,39 @@ CMString CVkProto::GetFwdMessages(const JSONNode &jnMessages, BBCSupport iBBC)
 		return res;
 	}
 	
+	OBJLIST<CVkUserInfo> vkUsers(2, NumericKeySortT);
+
+	for (auto it = jnFUsers.begin(); it != jnFUsers.end(); ++it) {
+		const JSONNode &jnUser = (*it);
+
+		int iUserId = jnUser["id"].as_int();
+		CMString tszNick(FORMAT, _T("%s %s"), jnUser["first_name"].as_mstring(), jnUser["last_name"].as_mstring());
+		CMString tszLink(FORMAT, _T("https://vk.com/id%d"), iUserId);
+		
+		CVkUserInfo * vkUser = new CVkUserInfo(jnUser["id"].as_int(), false, tszNick, tszLink, FindUser(iUserId));
+		vkUsers.insert(vkUser);
+	}
+
+
 	for (auto it = jnMessages.begin(); it != jnMessages.end(); ++it) {
 		const JSONNode &jnMsg = (*it);
 
-		int uid = jnMsg["user_id"].as_int();
-		MCONTACT hContact = FindUser(uid);
-		CMString tszNick;
-		if (hContact)
-			tszNick = ptrT(db_get_tsa(hContact, m_szModuleName, "Nick"));
-		if (tszNick.IsEmpty())
-			tszNick = TranslateT("(Unknown contact)");
+		UINT uid = jnMsg["user_id"].as_int();
+		CVkUserInfo * vkUser = vkUsers.find((CVkUserInfo *)&uid);
+		CMString tszNick, tszUrl;
 
-		CMString tszUrl = _T("https://vk.com/id");
-		tszUrl.AppendFormat(_T("%d"), uid);
+		if (vkUser) {
+			tszNick = vkUser->m_tszUserNick;
+			tszUrl = vkUser->m_tszLink;
+		} 
+		else {
+			MCONTACT hContact = FindUser(uid);
+			if (hContact || uid == m_msgId)
+				tszNick = ptrT(db_get_tsa(hContact, m_szModuleName, "Nick"));
+			else 
+				tszNick = TranslateT("(Unknown contact)");		
+			tszUrl.AppendFormat(_T("https://vk.com/id%d"), uid);
+		}
 
 		time_t datetime = (time_t)jnMsg["date"].as_int();
 		TCHAR ttime[64];
@@ -1142,7 +1099,7 @@ CMString CVkProto::GetFwdMessages(const JSONNode &jnMessages, BBCSupport iBBC)
 
 		const JSONNode &jnFwdMessages = jnMsg["fwd_messages"];
 		if (jnFwdMessages) {
-			CMString tszFwdMessages = GetFwdMessages(jnFwdMessages, iBBC == bbcNo ? iBBC : m_iBBCForAttachments);
+			CMString tszFwdMessages = GetFwdMessages(jnFwdMessages, jnFUsers, iBBC == bbcNo ? iBBC : m_iBBCForAttachments);
 			if (!tszBody.IsEmpty())
 				tszFwdMessages = _T("\n") + tszFwdMessages;
 			tszBody += tszFwdMessages;
@@ -1157,9 +1114,8 @@ CMString CVkProto::GetFwdMessages(const JSONNode &jnMessages, BBCSupport iBBC)
 		}
 
 		tszBody.Replace(_T("\n"), _T("\n\t"));
-		CMString tszMes;
 		TCHAR tcSplit = m_bSplitFormatFwdMsg ? '\n' : ' ';
-		tszMes.AppendFormat(_T("%s %s%c%s %s:\n\n%s\n"),
+		CMString tszMes(FORMAT, _T("%s %s%c%s %s:\n\n%s\n"),
 			SetBBCString(TranslateT("Message from"), iBBC, vkbbcB),
 			SetBBCString(tszNick, iBBC, vkbbcUrl, tszUrl),
 			tcSplit,
@@ -1172,6 +1128,7 @@ CMString CVkProto::GetFwdMessages(const JSONNode &jnMessages, BBCSupport iBBC)
 		res += tszMes;
 	}
 
+	vkUsers.destroy();
 	return res;
 }
 

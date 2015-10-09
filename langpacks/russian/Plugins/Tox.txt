@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Tox.dll
 ;  Plugin: Tox protocol
-;  Version: 0.11.1.12
+;  Version: 0.11.1.14
 ;  Authors: Miranda NG Team
 ;============================================================
 [Tox protocol support for Miranda NG.]
@@ -21,13 +21,13 @@
 Пароль:
 [Default group:]
 Группа:
-[Create tox profile]
+[Create Tox profile]
 Создать профиль Tox
-[Import tox profile]
+[Import Tox profile]
 Импорт профиля Tox
 [Copy Tox ID]
 Копировать Tox ID
-[Export tox profile]
+[Export Tox profile]
 Экспорт профиля Tox
 [Connection settings]
 Настройки подключения
@@ -35,9 +35,9 @@
 Включить UDP (иначе принудительно использовать TCP)
 [Enable IPv6]
 Включить IPv6
-[If this field contains tox address (76 hex characters), you will be prompted to add it in your friend list. Otherwise, Miranda will search this query via tox dns discovery.]
-При введении в поле поиска адреса tox (76 hex символов), будет выдан запрос на добавление в список друзей. Иначе поиск будет произведён при помощи dns сервиса обнаружения Tox.
-[Dns name:]
+[If this field contains Tox address (76 hex characters), you will be prompted to add it in your friend list. Otherwise, Miranda will search this query via Tox DNS discovery.]
+При введении в поле поиска адреса Tox (76 hex символов), будет выдан запрос на добавление в список друзей. Иначе поиск будет произведён при помощи DNS сервиса обнаружения Tox.
+[DNS name:]
 DNS имя:
 [Enter password]
 Введите пароль
@@ -95,8 +95,10 @@ IPv6 адрес (необязательно)
 Исходящий звонок
 [To:]
 Для:
-[Groupchat]
+[Group chat]
 Чат
+[Unable to initialize Tox core]
+Невозможно инициализировать ядро Tox
 [Profiles folder]
 Папка профилей
 [Tox URI scheme]
@@ -119,6 +121,8 @@ IPv6 адрес (необязательно)
 Запросить авторизацию
 [Grant authorization]
 Авторизовать
+[You cannot send when you are offline.]
+Вы не можете отправлять сообщения без подключения к сети.
 [Incoming call from %s]
 Входящий звонок от %s
 [Outgoing call to %s]
@@ -141,9 +145,9 @@ IPv6 адрес (необязательно)
 Профиль Tox
 [All files]
 Все файлы
-[Select tox profile]
+[Select Tox profile]
 Выберите профиль Tox
-[Save tox profile]
+[Save Tox profile]
 Сохранить профиль Tox
 [Add node]
 Добавление ноды
@@ -169,9 +173,35 @@ IPv6 адрес (необязательно)
 Учётная запись
 [Nodes]
 Ноды
+[Unable to open Tox profile]
+Невозможно открыть профиль
+[Unable to read Tox profile]
+Невозможно прочесть профиль
+[Unable to decrypt Tox profile]
+Невозможно расшифровать профиль
 [You cannot add yourself to your contact list]
 Невозможно добавить себя в список контактов
 [Contact already in your contact list]
 Контакт уже в вашем списке контактов
 [Query]
 Запрос
+[One of the arguments is missing]
+Пропущен один из аргументов
+[Unable to allocate enough memory]
+Невозможно выделить достаточно памяти
+[Unable to bind to a port]
+Невозможно выполнить привязку к порту
+[The proxy type is not valid]
+Некорректный тип прокси
+[The proxy host is not valid]
+Некорректный адрес прокси
+[The proxy port is not valid]
+Некорректный порт прокси
+[The proxy address could not be resolved]
+Невозможно определить адрес прокси
+[The profile is encrypted]
+Профиль зашифрован
+[The data format is not valid]
+Некорректный формат данных
+[Unknown error]
+Неизвестная ошибка

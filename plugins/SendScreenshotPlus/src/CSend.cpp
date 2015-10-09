@@ -263,7 +263,7 @@ void CSend::svcSendMsgExit(const char* szMessage)
 			m_hOnSend = HookEventObj(ME_PROTO_ACK, OnSend, this);
 		}
 		//start PSS_MESSAGE service
-		m_hSend = (HANDLE)CallContactService(m_hContact, PSS_MESSAGE, NULL, (LPARAM)m_szEventMsg);
+		m_hSend = (HANDLE)CallContactService(m_hContact, PSS_MESSAGE, NULL, ptrA(mir_utf8encode(m_szEventMsg)));
 		// check we actually got an ft handle back from the protocol
 		if (!m_hSend) {
 			Unhook();
@@ -399,7 +399,7 @@ void CSend::Error(LPCTSTR pszFormat, ...)
 {
 	TCHAR tszMsg[MAX_SECONDLINE];
 
-	mir_sntprintf(tszMsg, _countof(tszMsg), _T("%s - %s"), _T(SZ_SENDSS), TranslateT("Error"));
+	mir_sntprintf(tszMsg, _T("%s - %s"), _T(SZ_SENDSS), TranslateT("Error"));
 	mir_free(m_ErrorTitle), m_ErrorTitle = mir_tstrdup(tszMsg);
 
 	va_list vl;

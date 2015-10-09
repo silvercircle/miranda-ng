@@ -296,8 +296,8 @@ const char* CIcqProto::detectUserClient(
 		szClient = "Virus";
 
 	// capabilities based detection
-	capstr* capId;
-	char ver[10];
+	capstr *capId;
+	char ver[16];
 
 	if (nIsICQ && caps) {
 		// check capabilities for client identification
@@ -473,7 +473,7 @@ const char* CIcqProto::detectUserClient(
 		else if (MatchCapability(caps, wLen, &capQipInfium)) {
 			mir_strcpy(szClientBuf, "QIP Infium");
 			if (dwFT1) {
-				mir_snprintf(ver, _countof(ver), " (%d)", dwFT1);
+				mir_snprintf(ver, " (%d)", dwFT1);
 				mir_strcat(szClientBuf, ver);
 			}
 			if (dwFT2 == 0x0B)
@@ -484,7 +484,7 @@ const char* CIcqProto::detectUserClient(
 		else if (MatchCapability(caps, wLen, &capQip2010, 12)) {
 			mir_strcpy(szClientBuf, "QIP 2010");
 			if (dwFT1) {
-				mir_snprintf(ver, _countof(ver), " (%d)", dwFT1);
+				mir_snprintf(ver, " (%d)", dwFT1);
 				mir_strcat(szClientBuf, ver);
 			}
 
@@ -493,7 +493,7 @@ const char* CIcqProto::detectUserClient(
 		else if (MatchCapability(caps, wLen, &capQip2012, 12)) {
 			mir_strcpy(szClientBuf, "QIP 2012");
 			if (dwFT1) {
-				mir_snprintf(ver, _countof(ver), " (%d)", dwFT1);
+				mir_snprintf(ver, " (%d)", dwFT1);
 				mir_strcat(szClientBuf, ver);
 			}
 
@@ -507,7 +507,7 @@ const char* CIcqProto::detectUserClient(
 
 			mir_snprintf(szClientBuf, 64, cliQip, ver);
 			if (dwFT1 && dwFT2 == 0x0E) {
-				mir_snprintf(ver, _countof(ver), " (%d%d%d%d)", dwFT1 >> 0x18, (dwFT1 >> 0x10) & 0xFF, (dwFT1 >> 0x08) & 0xFF, dwFT1 & 0xFF);
+				mir_snprintf(ver, " (%d%d%d%d)", dwFT1 >> 0x18, (dwFT1 >> 0x10) & 0xFF, (dwFT1 >> 0x08) & 0xFF, dwFT1 & 0xFF);
 				mir_strcat(szClientBuf, ver);
 			}
 			szClient = szClientBuf;
@@ -526,9 +526,7 @@ const char* CIcqProto::detectUserClient(
 		else if (capId = MatchCapability(caps, wLen, &capCorePager, 0xA)) {
 			mir_strcpy(szClientBuf, "CORE Pager");
 			if (dwFT2 == 0x0FFFF0011 && dwFT3 == 0x1100FFFF && (dwFT1 >> 0x18)) {
-				char ver[16];
-
-				mir_snprintf(ver, _countof(ver), " %d.%d", dwFT1 >> 0x18, (dwFT1 >> 0x10) & 0xFF);
+				mir_snprintf(ver, " %d.%d", dwFT1 >> 0x18, (dwFT1 >> 0x10) & 0xFF);
 				if ((dwFT1 & 0xFF) == 0x0B)
 					mir_strcat(ver, " Beta");
 				mir_strcat(szClientBuf, ver);
@@ -940,10 +938,10 @@ const char* CIcqProto::detectUserClient(
 
 	// custom miranda packs
 	if (caps && bMirandaIM) {
-		capstr *capId = MatchCapability(caps, wLen, &capMimPack, 4);
+		capId = MatchCapability(caps, wLen, &capMimPack, 4);
 		if (capId) {
 			char szPack[16];
-			mir_snprintf(szPack, _countof(szPack), " [%.12s]", (*capId) + 4);
+			mir_snprintf(szPack, " [%.12s]", (*capId) + 4);
 
 			// make sure client string is not constant
 			if (szClient != szClientBuf) {

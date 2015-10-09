@@ -1048,6 +1048,7 @@ INT_PTR MenuCommand_TrafficShowHide(WPARAM, LPARAM)
 void Traffic_AddMainMenuItem(void)
 {
 	CMenuItem mi;
+	SET_UID(mi, 0x7fe75b30, 0x3cf6, 0x4280, 0xb9, 0xd2, 0x88, 0x6b, 0xbb, 0x69, 0xa3, 0x7e);
 	mi.position = -0x7FFFFFFF;
 	mi.hIcolibItem = NULL;
 	mi.name.a = LPGEN("Toggle traffic counter");
@@ -1075,10 +1076,7 @@ void NotifyOnSend(void)
 	ppd.lchContact = NULL;
 	ppd.lchIcon = Skin_LoadIcon(SKINICON_EVENT_MESSAGE);
 	_tcsncpy(ppd.lptzContactName, TranslateT("Traffic counter notification"), MAX_CONTACTNAME);
-	//
-	mir_sntprintf(ppd.lptzText, _countof(ppd.lptzText), TranslateT("%d kilobytes sent"),
-		notify_send_size = OverallInfo.CurrentSentTraffic >> 10);
-	//
+	mir_sntprintf(ppd.lptzText, TranslateT("%d kilobytes sent"), notify_send_size = OverallInfo.CurrentSentTraffic >> 10);
 	ppd.colorBack = Traffic_PopupBkColor;
 	ppd.colorText = Traffic_PopupFontColor;
 	ppd.PluginWindowProc = NULL;
@@ -1094,10 +1092,7 @@ void NotifyOnRecv(void)
 	ppd.lchContact = NULL;
 	ppd.lchIcon = Skin_LoadIcon(SKINICON_EVENT_MESSAGE);
 	_tcsncpy(ppd.lptzContactName, TranslateT("Traffic counter notification"), MAX_CONTACTNAME);
-	//
-	mir_sntprintf(ppd.lptzText, _countof(ppd.lptzText), TranslateT("%d kilobytes received"),
-		notify_recv_size = OverallInfo.CurrentRecvTraffic >> 10);
-	//
+	mir_sntprintf(ppd.lptzText, TranslateT("%d kilobytes received"), notify_recv_size = OverallInfo.CurrentRecvTraffic >> 10);
 	ppd.colorBack = Traffic_PopupBkColor;
 	ppd.colorText = Traffic_PopupFontColor;
 	ppd.PluginWindowProc = NULL;

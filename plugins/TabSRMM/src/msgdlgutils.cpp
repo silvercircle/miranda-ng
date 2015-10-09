@@ -135,12 +135,12 @@ static void SaveAvatarToFile(TWindowData *dat, HBITMAP hbm, int isOwnPic)
 	DWORD setView = 1;
 
 	TCHAR szTimestamp[100];
-	mir_sntprintf(szTimestamp, _countof(szTimestamp), _T("%04u %02u %02u_%02u%02u"), lt->tm_year + 1900, lt->tm_mon, lt->tm_mday, lt->tm_hour, lt->tm_min);
+	mir_sntprintf(szTimestamp, _T("%04u %02u %02u_%02u%02u"), lt->tm_year + 1900, lt->tm_mon, lt->tm_mday, lt->tm_hour, lt->tm_min);
 
 	TCHAR *szProto = mir_a2t(dat->cache->getActiveProto());
 
 	TCHAR szFinalPath[MAX_PATH];
-	mir_sntprintf(szFinalPath, _countof(szFinalPath), _T("%s\\%s"), M.getSavedAvatarPath(), szProto);
+	mir_sntprintf(szFinalPath, _T("%s\\%s"), M.getSavedAvatarPath(), szProto);
 	mir_free(szProto);
 
 	if (CreateDirectory(szFinalPath, 0) == 0) {
@@ -153,17 +153,17 @@ static void SaveAvatarToFile(TWindowData *dat, HBITMAP hbm, int isOwnPic)
 
 	TCHAR szBaseName[MAX_PATH];
 	if (isOwnPic)
-		mir_sntprintf(szBaseName, _countof(szBaseName), _T("My Avatar_%s"), szTimestamp);
+		mir_sntprintf(szBaseName, _T("My Avatar_%s"), szTimestamp);
 	else
-		mir_sntprintf(szBaseName, _countof(szBaseName), _T("%s_%s"), dat->cache->getNick(), szTimestamp);
+		mir_sntprintf(szBaseName, _T("%s_%s"), dat->cache->getNick(), szTimestamp);
 
-	mir_sntprintf(szFinalFilename, _countof(szFinalFilename), _T("%s.png"), szBaseName);
+	mir_sntprintf(szFinalFilename, _T("%s.png"), szBaseName);
 
 	// do not allow / or \ or % in the filename
 	Utils::sanitizeFilename(szFinalFilename);
 
 	TCHAR filter[MAX_PATH];
-	mir_sntprintf(filter, _countof(filter), _T("%s%c*.bmp;*.png;*.jpg;*.gif%c%c"), TranslateT("Image files"), 0, 0, 0);
+	mir_sntprintf(filter, _T("%s%c*.bmp;*.png;*.jpg;*.gif%c%c"), TranslateT("Image files"), 0, 0, 0);
 
 	OPENFILENAME ofn = { 0 };
 	ofn.lpstrDefExt = _T("png");
@@ -832,16 +832,12 @@ char* TSAPI Message_GetFromStream(HWND hwndRtf, DWORD dwPassedFlags)
 	return pszText; // pszText contains the text
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-// convert rich edit code to bbcode (if wanted). Otherwise, strip all RTF formatting
-// tags and return plain text
-
 static TCHAR tszRtfBreaks[] = _T(" \\\n\r");
 
 static void CreateColorMap(CMString &Text, int iCount, COLORREF *pSrc, int *pDst)
 {
 	const TCHAR *pszText = Text;
-	int iIndex = 1, i = 0;
+	int iIndex = 1;
 
 	static const TCHAR *lpszFmt = _T("\\red%[^ \x5b\\]\\green%[^ \x5b\\]\\blue%[^ \x5b;];");
 	TCHAR szRed[10], szGreen[10], szBlue[10];
@@ -854,7 +850,7 @@ static void CreateColorMap(CMString &Text, int iCount, COLORREF *pSrc, int *pDst
 
 	const TCHAR *p2 = _tcsstr(p1, _T("\\red"));
 
-	for (i = 0; i < iCount; i++)
+	for (int i = 0; i < iCount; i++)
 		pDst[i] = -1;
 
 	while (p2 && p2 < pEnd) {
@@ -880,6 +876,10 @@ static int GetRtfIndex(int iCol, int iCount, int *pIndex)
 
 	return -1;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// convert rich edit code to bbcode (if wanted). Otherwise, strip all RTF formatting
+// tags and return plain text
 
 BOOL TSAPI DoRtfToTags(const TWindowData *dat, CMString &pszText, int iNumColors, COLORREF *pColors)
 {
@@ -1048,7 +1048,7 @@ void TSAPI GetMYUIN(TWindowData *dat)
 			mir_free((void*)ci.pszVal);
 			break;
 		case CNFT_DWORD:
-			mir_sntprintf(dat->myUin, _countof(dat->myUin), _T("%u"), ci.dVal);
+			mir_sntprintf(dat->myUin, _T("%u"), ci.dVal);
 			break;
 		default:
 			dat->myUin[0] = 0;
@@ -1172,7 +1172,6 @@ void TSAPI FindFirstEvent(TWindowData *dat)
 
 		DWORD firstTime = dbei.timestamp - 60 * db_get_w(NULL, SRMSGMOD, SRMSGSET_LOADTIME, SRMSGDEFSET_LOADTIME);
 		for (;;) {
-			MEVENT hPrevEvent;
 			if (dat->hDbEventFirst == NULL)
 				hPrevEvent = db_event_last(dat->hContact);
 			else
@@ -1286,7 +1285,7 @@ void TSAPI GetLocaleID(TWindowData *dat, const TCHAR *szKLName)
 		TCHAR	szKey[20];
 		DWORD	dwLID = _tcstoul(szKLName, &stopped, 16);
 
-		mir_sntprintf(szKey, _countof(szKey), _T("%04.04x"), LOWORD(dwLID));
+		mir_sntprintf(szKey, _T("%04.04x"), LOWORD(dwLID));
 		if (ERROR_SUCCESS == RegOpenKeyEx(HKEY_CLASSES_ROOT, _T("MIME\\Database\\Rfc1766"), 0, KEY_READ, &hKey)) {
 			DWORD dwLength = 255;
 			if (ERROR_SUCCESS == RegQueryValueEx(hKey, szKey, 0, 0, (unsigned char *)szLI, &dwLength)) {
@@ -1306,7 +1305,7 @@ void TSAPI GetLocaleID(TWindowData *dat, const TCHAR *szKLName)
 		_tcsupr(szLI);
 	}
 	fLocaleNotSet = (dat->lcID[0] == 0 && dat->lcID[1] == 0);
-	mir_sntprintf(dat->lcID, _countof(dat->lcID), szLI);
+	mir_sntprintf(dat->lcID, szLI);
 	GetStringTypeA(dat->lcid, CT_CTYPE2, (char*)szTest, 3, wCtype2);
 	pf2.cbSize = sizeof(pf2);
 	pf2.dwMask = PFM_RTLPARA;
@@ -1388,7 +1387,6 @@ void TSAPI LoadTimeZone(TWindowData *dat)
 }
 
 // paste contents of the clipboard into the message input area and send it immediately
-
 void TSAPI HandlePasteAndSend(const TWindowData *dat)
 {
 	UINT ctrlID = dat->bType == SESSIONTYPE_IM ? IDC_MESSAGE : IDC_CHAT_MESSAGE;
@@ -1891,7 +1889,6 @@ LONG TSAPI GetDefaultMinimumInputHeight(const TWindowData *dat)
 static LIST<TCHAR> vTempFilenames(5);
 
 // send a pasted bitmap by file transfer.
-
 void TSAPI SendHBitmapAsFile(const TWindowData *dat, HBITMAP hbmp)
 {
 	const wchar_t* 	mirandatempdir = L"Miranda";
@@ -1957,7 +1954,7 @@ void TSAPI SendHBitmapAsFile(const TWindowData *dat, HBITMAP hbmp)
 
 	if (filename[0] == 0) {	// prompting to save
 		TCHAR filter[MAX_PATH];
-		mir_sntprintf(filter, _countof(filter), _T("%s%c*.jpg%c%c"), TranslateT("JPEG-compressed images"), 0, 0, 0);
+		mir_sntprintf(filter, _T("%s%c*.jpg%c%c"), TranslateT("JPEG-compressed images"), 0, 0, 0);
 
 		OPENFILENAME dlg;
 		dlg.lStructSize = sizeof(dlg);
@@ -1993,7 +1990,6 @@ void TSAPI SendHBitmapAsFile(const TWindowData *dat, HBITMAP hbmp)
 }
 
 // remove all temporary files created by the "send clipboard as file" feature.
-
 void TSAPI CleanTempFiles()
 {
 	for (int i = 0; i < vTempFilenames.getCount(); i++) {

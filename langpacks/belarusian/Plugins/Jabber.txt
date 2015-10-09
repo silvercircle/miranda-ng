@@ -508,7 +508,7 @@ xHTML фармат чат-паведамленняў
 Падтрымка OTR (Off-the-Record Messaging)
 [Supports New_GPG plugin for Miranda NG]
 Падтрымка New_GPG плагіна
-[Blocks packets from other users/groupchats using Privacy lists]
+[Blocks packets from other users/group chats using Privacy lists]
 Блакаванне кантактаў з выкарыстаннем лістоў прыватнасці
 [Supports Message Receipts]
 Прыём паведамленняў
@@ -1370,10 +1370,6 @@ Jabber Рэсурс
 Змены будуць ужытыя пры наступным уваходзе ў Jabber.
 [Jabber Protocol Option]
 Налады пратаколу Jabber
-[Confirm password]
-Увядзіце пароль
-[Passwords do not match.]
-Паролі не супадаюць.
 [This operation will kill your account, roster and all other information stored at the server. Are you ready to do that?]
 Гэта аперацыя выдаліць ваш конт, росцер і усю інфармацыю, што захаваная на серверы. Вы ўпэўнены?
 [Account removal warning]
@@ -1426,8 +1422,8 @@ Jabber Рэсурс
 Выпраўляць час ва ўваходных паведамленнях
 [Disable frame]
 Выключыць фрэйм
-[Enable XMPP link processing (requires Association Manager)]
-Апрацоўваць XMPP спасылкі (патрабуецца плагін "Association Manager")
+[Enable XMPP link processing (requires AssocMgr)]
+Апрацоўваць XMPP спасылкі (патрабуецца плагін "AssocMgr")
 [Keep contacts assigned to local groups (ignore roster group)]
 Выкарыстоўваць лакальныя гурты (ігнараваць гурты росцеру)
 [Security]

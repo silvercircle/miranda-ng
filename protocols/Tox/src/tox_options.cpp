@@ -26,7 +26,7 @@ void CToxOptionsMain::OnInitDialog()
 {
 	CToxDlgBase::OnInitDialog();
 
-	std::tstring profilePath = m_proto->GetToxProfilePath();
+	ptrT profilePath(m_proto->GetToxProfilePath());
 	if (CToxProto::IsFileExists(profilePath))
 	{
 		m_toxAddress.Enable();
@@ -62,34 +62,37 @@ void CToxOptionsMain::ToxAddressCopy_OnClick(CCtrlButton*)
 
 void CToxOptionsMain::ProfileCreate_OnClick(CCtrlButton*)
 {
-	std::tstring profilePath = m_proto->GetToxProfilePath();
+	CToxThread toxThread;
+
+	ptrT profilePath(m_proto->GetToxProfilePath());
 	if (!m_proto->IsFileExists(profilePath))
 	{
-		HANDLE hProfile = CreateFile(profilePath.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+		HANDLE hProfile = CreateFile(profilePath, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (hProfile == NULL)
 		{
-			m_proto->debugLogA(__FUNCTION__": failed to create tox profile");
+			m_proto->logger->Log(__FUNCTION__": failed to create tox profile");
 			return;
 		}
 		CloseHandle(hProfile);
 
 		TOX_ERR_NEW initError;
-		m_proto->tox = tox_new(NULL, &initError);
+		toxThread.tox = tox_new(NULL, &initError);
 		if (initError != TOX_ERR_NEW_OK)
 		{
-			m_proto->debugLogA(__FUNCTION__": failed to load tox profile (%d)", initError);
+			m_proto->logger->Log(__FUNCTION__": failed to load tox profile (%d)", initError);
 			return;
 		}
 	}
 
 	if (m_proto->InitToxCore())
 	{
-		TCHAR *group = m_group.GetText();
+		ptrT group(m_group.GetText());
 		if (mir_tstrlen(group) > 0 && Clist_GroupExists(group))
 			Clist_CreateGroup(0, group);
 
 		m_proto->LoadFriendList(NULL);
-		m_proto->UninitToxCore();
+		m_proto->SaveToxProfile();
+		tox_kill(toxThread.tox);
 
 		m_toxAddress.Enable();
 		m_toxAddress.SetTextA(ptrA(m_proto->getStringA(TOX_SETTINGS_ID)));
@@ -109,7 +112,7 @@ void CToxOptionsMain::ProfileCreate_OnClick(CCtrlButton*)
 void CToxOptionsMain::ProfileImport_OnClick(CCtrlButton*)
 {
 	TCHAR filter[MAX_PATH];
-	mir_sntprintf(filter, _countof(filter), _T("%s(*.tox)%c*.tox%c%s(*.*)%c*.*%c%c"),
+	mir_sntprintf(filter, _T("%s(*.tox)%c*.tox%c%s(*.*)%c*.*%c%c"),
 		TranslateT("Tox profile"), 0, 0, TranslateT("All files"), 0, 0, 0);
 
 	TCHAR profilePath[MAX_PATH] = { 0 };
@@ -119,7 +122,7 @@ void CToxOptionsMain::ProfileImport_OnClick(CCtrlButton*)
 	ofn.lpstrFilter = filter;
 	ofn.nFilterIndex = 1;
 	ofn.lpstrFile = profilePath;
-	ofn.lpstrTitle = TranslateT("Select tox profile");
+	ofn.lpstrTitle = TranslateT("Select Tox profile");
 	ofn.nMaxFile = MAX_PATH;
 	ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_EXPLORER;
 	ofn.lpstrInitialDir = _T("%APPDATA%\\Tox");
@@ -129,10 +132,10 @@ void CToxOptionsMain::ProfileImport_OnClick(CCtrlButton*)
 		return;
 	}
 
-	std::tstring defaultProfilePath = m_proto->GetToxProfilePath();
-	if (mir_tstrcmpi(profilePath, defaultProfilePath.c_str()) != 0)
+	ptrT defaultProfilePath(m_proto->GetToxProfilePath());
+	if (mir_tstrcmpi(profilePath, defaultProfilePath) != 0)
 	{
-		CopyFile(profilePath, defaultProfilePath.c_str(), FALSE);
+		CopyFile(profilePath, defaultProfilePath, FALSE);
 	}
 
 	m_profileCreate.OnClick(&m_profileCreate);
@@ -141,7 +144,7 @@ void CToxOptionsMain::ProfileImport_OnClick(CCtrlButton*)
 void CToxOptionsMain::ProfileExport_OnClick(CCtrlButton*)
 {
 	TCHAR filter[MAX_PATH];
-	mir_sntprintf(filter, _countof(filter), _T("%s(*.tox)%c*.tox%c%c"),
+	mir_sntprintf(filter, _T("%s(*.tox)%c*.tox%c%c"),
 		TranslateT("Tox profile"), 0, 0, 0);
 
 	TCHAR profilePath[MAX_PATH];
@@ -152,7 +155,7 @@ void CToxOptionsMain::ProfileExport_OnClick(CCtrlButton*)
 	ofn.lpstrFilter = filter;
 	ofn.nFilterIndex = 0;
 	ofn.lpstrFile = profilePath;
-	ofn.lpstrTitle = TranslateT("Save tox profile");\
+	ofn.lpstrTitle = TranslateT("Save Tox profile");
 	ofn.nMaxFile = MAX_PATH;
 	ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_EXPLORER;
 	ofn.lpstrInitialDir = _T("%HOMEPATH%");
@@ -160,9 +163,9 @@ void CToxOptionsMain::ProfileExport_OnClick(CCtrlButton*)
 	if (!GetSaveFileName(&ofn))
 		return;
 
-	std::tstring defaultProfilePath = m_proto->GetToxProfilePath();
-	if (mir_tstrcmpi(profilePath, defaultProfilePath.c_str()) != 0)
-		CopyFile(defaultProfilePath.c_str(), profilePath, FALSE);
+	ptrT defaultProfilePath(m_proto->GetToxProfilePath());
+	if (mir_tstrcmpi(profilePath, defaultProfilePath) != 0)
+		CopyFile(defaultProfilePath, profilePath, FALSE);
 }
 
 void CToxOptionsMain::OnApply()
@@ -175,9 +178,8 @@ void CToxOptionsMain::OnApply()
 	{
 		CallProtoService(m_proto->m_szModuleName, PS_SETMYNICKNAME, SMNN_TCHAR, (LPARAM)ptrT(m_nickname.GetText()));
 
-		if (m_proto->password != NULL)
-			mir_free(m_proto->password);
-		m_proto->password = mir_utf8encodeW(ptrT(m_password.GetText()));
+		// todo: add checkbox
+		m_proto->setTString("Password", pass_ptrT(m_password.GetText()));
 
 		m_proto->SaveToxProfile();
 	}
@@ -192,69 +194,105 @@ CToxOptionsMultimedia::CToxOptionsMultimedia(CToxProto *proto)
 {
 }
 
-bool CToxOptionsMultimedia::GetDeviceFullName(GUID guid, TCHAR *deviceName, DWORD deviceNameLength)
+void CToxOptionsMultimedia::EnumDevices(CCtrlCombo &combo, IMMDeviceEnumerator *pEnumerator, EDataFlow dataFlow, const char* setting)
 {
-	TCHAR registryKey[MAX_PATH];
-	mir_sntprintf(registryKey, _countof(registryKey), _T("System\\CurrentControlSet\\Control\\MediaCategories\\{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}"),
-		guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
-
-	HKEY hKey;
-	LONG error = RegOpenKeyEx(HKEY_LOCAL_MACHINE, registryKey, 0, KEY_READ, &hKey);
-	if (error != ERROR_SUCCESS)
-		return false;
-
-	error = RegQueryValueEx(hKey, _T("Name"), 0, NULL, (LPBYTE)deviceName, &deviceNameLength);
-	if (error != ERROR_SUCCESS)
+	LPWSTR pwszDefID = NULL;
+	ptrW wszDefID(m_proto->getWStringA(setting));
+	if (wszDefID != NULL)
 	{
-		RegCloseKey(hKey);
-		return false;
+		size_t len = mir_wstrlen(wszDefID) + 1;
+		pwszDefID = (LPWSTR)CoTaskMemAlloc(len*2);
+		mir_wstrncpy(pwszDefID, wszDefID, len);
+	}
+	else
+	{
+		CComPtr<IMMDevice> pDevice = NULL;
+		if (FAILED(pEnumerator->GetDefaultAudioEndpoint(dataFlow, eConsole, &pDevice))) return;
+		if (FAILED(pDevice->GetId(&pwszDefID))) return;
 	}
 
-	RegCloseKey(hKey);
-	return true;
+	CComPtr<IMMDeviceCollection> pDevices = NULL;
+	EXIT_ON_ERROR(pEnumerator->EnumAudioEndpoints(dataFlow, DEVICE_STATE_ACTIVE, &pDevices));
+
+	UINT count;
+	EXIT_ON_ERROR(pDevices->GetCount(&count));
+
+	for (UINT i = 0; i < count; i++)
+	{
+		CComPtr<IMMDevice> pDevice = NULL;
+		EXIT_ON_ERROR(pDevices->Item(i, &pDevice));
+
+		CComPtr<IPropertyStore> pProperties = NULL;
+		EXIT_ON_ERROR(pDevice->OpenPropertyStore(STGM_READ, &pProperties));
+
+		PROPVARIANT varName;
+		PropVariantInit(&varName);
+		EXIT_ON_ERROR(pProperties->GetValue(PKEY_Device_FriendlyName, &varName));
+
+		LPWSTR pwszID = NULL;
+		EXIT_ON_ERROR(pDevice->GetId(&pwszID));
+		combo.InsertString(varName.pwszVal, i, (LPARAM)mir_wstrdup(pwszID));
+		if (mir_wstrcmpi(pwszID, pwszDefID) == 0)
+			combo.SetCurSel(i);
+		CoTaskMemFree(pwszID);
+
+		PropVariantClear(&varName);
+	}
+
+Exit:
+	CoTaskMemFree(pwszDefID);
 }
 
 void CToxOptionsMultimedia::OnInitDialog()
 {
 	CToxDlgBase::OnInitDialog();
 
-	DWORD count = 0;
-	TCHAR deviceName[MAX_PATH];
-	DWORD deviceNameLength = _countof(deviceName);
+	CComPtr<IMMDeviceEnumerator> pEnumerator = NULL;
+	if (FAILED(CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&pEnumerator)))
+		return;
 
-	WAVEINCAPS2 wic2;
-	count = waveInGetNumDevs();
-	for (DWORD i = 0; i < count; i++)
-	{
-		if (!waveInGetDevCaps(i, (LPWAVEINCAPS)&wic2, sizeof(WAVEINCAPS2)))
-		{
-			if (!GetDeviceFullName(wic2.NameGuid, deviceName, deviceNameLength))
-				mir_tstrncpy(deviceName, wic2.szPname, deviceNameLength);
-
-			m_audioInput.InsertString(deviceName, i);
-		}
-	}
-	m_audioInput.SetCurSel(m_proto->getDword("AudioInputDeviceID", 0));
-
-	WAVEOUTCAPS2 woc2;
-	count = waveOutGetNumDevs();
-	for (DWORD i = 0; i < count; i++)
-	{
-		if (!waveOutGetDevCaps(i, (LPWAVEOUTCAPS)&woc2, sizeof(WAVEOUTCAPS2)))
-		{
-			if (!GetDeviceFullName(woc2.NameGuid, deviceName, deviceNameLength))
-				mir_tstrncpy(deviceName, woc2.szPname, deviceNameLength);
-
-			m_audioOutput.InsertString(deviceName, i);
-		}
-	}
-	m_audioOutput.SetCurSel(m_proto->getDword("AudioOutputDeviceID", 0));
+	EnumDevices(m_audioInput, pEnumerator, eCapture, "AudioInputDeviceID");
+	EnumDevices(m_audioOutput, pEnumerator, eRender, "AudioOutputDeviceID");
 }
 
 void CToxOptionsMultimedia::OnApply()
 {
-	m_proto->setDword("AudioInputDeviceID", m_audioInput.GetCurSel());
-	m_proto->setDword("AudioOutputDeviceID", m_audioOutput.GetCurSel());
+	int i = m_audioInput.GetCurSel();
+	if (i == -1)
+		m_proto->delSetting("AudioInputDeviceID");
+	else
+	{
+		wchar_t* data = (wchar_t*)m_audioInput.GetItemData(i);
+		m_proto->setWString("AudioInputDeviceID", data);
+	}
+
+	i = m_audioOutput.GetCurSel();
+	if (i == -1)
+		m_proto->delSetting("AudioOutputDeviceID");
+	else
+	{
+		wchar_t* data = (wchar_t*)m_audioOutput.GetItemData(i);
+		m_proto->setWString("AudioOutputDeviceID", data);
+	}
+}
+
+void CToxOptionsMultimedia::OnDestroy()
+{
+	int count = m_audioInput.GetCount();
+	for (int i = 0; i < count; i++)
+	{
+		wchar_t* data = (wchar_t*)m_audioInput.GetItemData(i);
+		mir_free(data);
+
+	}
+
+	count = m_audioOutput.GetCount();
+	for (int i = 0; i < count; i++)
+	{
+		wchar_t* data = (wchar_t*)m_audioOutput.GetItemData(i);
+		mir_free(data);
+
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -424,7 +462,7 @@ void CToxOptionsNodeList::OnInitDialog()
 	}
 
 	char module[MAX_PATH], setting[MAX_PATH];
-	mir_snprintf(module, _countof(module), "%s_Nodes", m_proto->m_szModuleName);
+	mir_snprintf(module, "%s_Nodes", m_proto->m_szModuleName);
 	int nodeCount = db_get_w(NULL, module, TOX_SETTINGS_NODE_COUNT, 0);
 	for (int i = 0; i < nodeCount; i++)
 	{
@@ -530,7 +568,7 @@ void CToxOptionsNodeList::OnApply()
 	lvi.pszText = (TCHAR*)mir_alloc(MAX_PATH * sizeof(TCHAR));
 
 	char module[MAX_PATH];
-	mir_snprintf(module, _countof(module), "%s_Nodes", m_proto->m_szModuleName);
+	mir_snprintf(module, "%s_Nodes", m_proto->m_szModuleName);
 
 	int iItem = 0;
 	int itemCount = m_nodes.GetItemCount();

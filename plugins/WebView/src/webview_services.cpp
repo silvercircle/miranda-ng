@@ -60,7 +60,7 @@ int DBSettingChanged(WPARAM wParam, LPARAM lParam)
 			for (int i=0; i < _countof(szInvalidChars); i++ ) {
 				TCHAR *p = _tcschr(nick, szInvalidChars[i]);
 				if (p != NULL) {
-					WErrorPopup((MCONTACT)"ERROR", TranslateT("Invalid symbol present in contact name."));
+					WErrorPopup((UINT_PTR)"ERROR", TranslateT("Invalid symbol present in contact name."));
 					*p = '_';
 					invalidpresent =1;
 				}
@@ -85,12 +85,12 @@ int DBSettingChanged(WPARAM wParam, LPARAM lParam)
 			TCHAR *cacheend = _tcsrchr(cachepath, '\\');
 			cacheend++;
 			*cacheend = '\0';
-			mir_sntprintf(cachedirectorypath, _countof(cachedirectorypath), _T("%s")_T(MODULENAME)_T("cache\\"), cachepath);
+			mir_sntprintf(cachedirectorypath, _T("%s")_T(MODULENAME)_T("cache\\"), cachepath);
 			CreateDirectory(cachedirectorypath, NULL);
 
 			TCHAR newcachepath[MAX_PATH + 50], renamedcachepath[MAX_PATH + 50];
-			mir_sntprintf(newcachepath, _countof(newcachepath), _T("%s")_T(MODULENAME)_T("cache\\%s.txt"), cachepath, oldName);
-			mir_sntprintf(renamedcachepath, _countof(newcachepath), _T("%s")_T(MODULENAME)_T("cache\\%s.txt"), cachepath, nick);
+			mir_sntprintf(newcachepath, _T("%s")_T(MODULENAME)_T("cache\\%s.txt"), cachepath, oldName);
+			mir_sntprintf(renamedcachepath, _T("%s")_T(MODULENAME)_T("cache\\%s.txt"), cachepath, nick);
 
 			// file exists?
 			if ( _taccess(newcachepath, 0) != -1) {
@@ -124,9 +124,9 @@ int SiteDeleted(WPARAM wParam, LPARAM)
 	cacheend++;
 	*cacheend = '\0';
 
-	mir_sntprintf(cachedirectorypath, _countof(cachedirectorypath), _T("%s")_T(MODULENAME)_T("cache\\"), cachepath);
+	mir_sntprintf(cachedirectorypath, _T("%s")_T(MODULENAME)_T("cache\\"), cachepath);
 	CreateDirectory(cachedirectorypath, NULL);
-	mir_sntprintf(newcachepath, _countof(newcachepath), _T("%s")_T(MODULENAME)_T("cache\\%s.txt"), cachepath,  contactName);
+	mir_sntprintf(newcachepath, _T("%s")_T(MODULENAME)_T("cache\\%s.txt"), cachepath,  contactName);
 	// file exists?
 	if ( _taccess(newcachepath, 0) != -1) {
 		FILE *pcachefile = _tfopen(newcachepath, _T("r"));
@@ -149,10 +149,10 @@ INT_PTR OpenCacheDir(WPARAM, LPARAM)
 	cacheend++;
 	*cacheend = '\0';
 
-	mir_sntprintf(cachedirectorypath, _countof(cachedirectorypath), _T("%s")_T(MODULENAME)_T("cache\\%s"), cachepath, cacheend);
+	mir_sntprintf(cachedirectorypath, _T("%s")_T(MODULENAME)_T("cache\\%s"), cachepath, cacheend);
 
 	if( _taccess(cachedirectorypath, 0) != 0)
-		WErrorPopup((MCONTACT)"ERROR", TranslateT("Cache folder does not exist."));
+		WErrorPopup((UINT_PTR)"ERROR", TranslateT("Cache folder does not exist."));
 	else
 		ShellExecute(NULL, _T("open"), cachedirectorypath, NULL, NULL, SW_SHOWNORMAL);
 	return 0;
@@ -163,7 +163,7 @@ INT_PTR PingWebsiteMenuCommand(WPARAM wParam, LPARAM)
 {
 	FILE *pfile = fopen("psite.bat", "r");
 	if (pfile == NULL) {
-		WErrorPopup((MCONTACT)"ERROR", TranslateT("Missing \"psite.bat\" file."));
+		WErrorPopup((UINT_PTR)"ERROR", TranslateT("Missing \"psite.bat\" file."));
 		return 0;
 	}
 
@@ -344,7 +344,7 @@ INT_PTR AddToList(WPARAM, LPARAM lParam)
 	if (psr == NULL)
 		return 0;
 	if (psr->nick.t == NULL) {
-		WErrorPopup((MCONTACT)"ERROR", TranslateT("Please select site in Find/Add contacts..."));
+		WErrorPopup((UINT_PTR)"ERROR", TranslateT("Please select site in Find/Add contacts..."));
 		return 0;
 	}   
 	// if contact with the same ID was not found, add it

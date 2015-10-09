@@ -45,7 +45,7 @@ int CSteamProto::JoinToGameCommand(WPARAM hContact, LPARAM)
 {
 	char url[MAX_PATH];
 	DWORD gameId = getDword(hContact, "GameID", 0);
-	mir_snprintf(url, _countof(url), "steam://rungameid/%lu", gameId);
+	mir_snprintf(url, "steam://rungameid/%lu", gameId);
 	Utils_OpenUrl(url);
 	return 0;
 }
@@ -118,6 +118,7 @@ void CSteamProto::InitMenus()
 	mi.flags = CMIF_TCHAR;
 
 	// "Request authorization"
+	SET_UID(mi, 0x36375a1f, 0xc142, 0x4d6e, 0xa6, 0x57, 0xe4, 0x76, 0x5d, 0xbc, 0x59, 0x8e);
 	mi.pszService = MODULE "/AuthRequest";
 	mi.name.t = LPGENT("Request authorization");
 	mi.position = -201001000 + CMI_AUTH_REQUEST;
@@ -126,6 +127,7 @@ void CSteamProto::InitMenus()
 	CreateServiceFunction(mi.pszService, GlobalService<&CSteamProto::AuthRequestCommand>);
 
 	// "Block"
+	SET_UID(mi, 0xc6169b8f, 0x53ab, 0x4242, 0xbe, 0x90, 0xe2, 0x4a, 0xa5, 0x73, 0x88, 0x32);
 	mi.pszService = MODULE "/Block";
 	mi.name.t = LPGENT("Block");
 	mi.position = -201001001 + CMI_BLOCK;
@@ -136,6 +138,7 @@ void CSteamProto::InitMenus()
 	mi.flags |= CMIF_NOTOFFLINE;
 
 	// "Join to game"
+	SET_UID(mi, 0x1a6aaab7, 0xba31, 0x4b47, 0x8e, 0xce, 0xf8, 0x8e, 0xf4, 0x62, 0x4f, 0xd7);
 	mi.pszService = MODULE "/JoinToGame";
 	mi.name.t = LPGENT("Join to game");
 	mi.position = -200001000 + CMI_JOIN_GAME;

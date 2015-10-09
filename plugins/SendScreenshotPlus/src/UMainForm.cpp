@@ -240,7 +240,7 @@ void TfrmMain::wmInitdialog(WPARAM, LPARAM)
 		if (m_MonitorCount > 1) {
 			TCHAR tszTemp[120];
 			for (size_t mon = 0; mon < m_MonitorCount; ++mon) { /// @todo : fix format for non MSVC compilers
-				mir_sntprintf(tszTemp, _countof(tszTemp), _T("%Iu. %s%s"),
+				mir_sntprintf(tszTemp, _T("%Iu. %s%s"),
 					mon + 1, TranslateT("Monitor"),
 					(m_Monitors[mon].dwFlags & MONITORINFOF_PRIMARY) ? TranslateT(" (primary)") : _T("")
 					);
@@ -983,18 +983,24 @@ INT_PTR TfrmMain::SaveScreenshot(FIBITMAP* dib)
 	mir_free(path);
 
 	//Generate a description according to the screenshot
+
 	TCHAR winText[1024];
-	mir_tstradd(pszFileDesc, TranslateT("Screenshot "));
-	if (m_opt_tabCapture == 0 && m_opt_chkClientArea) {
-		mir_tstradd(pszFileDesc, TranslateT("for Client area "));
-	}
-	mir_tstradd(pszFileDesc, TranslateT("of \""));
 	GetDlgItemText(m_hwndTabPage, ID_edtCaption, winText, _countof(winText));
-	mir_tstradd(pszFileDesc, winText);
-	if (m_opt_tabCapture == 1)
-		mir_tstradd(pszFileDesc, _T("\""));
+
+
+	CMString tszFileDesc;
+
+	if (m_opt_tabCapture)
+		tszFileDesc.Format(TranslateT("Screenshot of \"%s\""), winText);
 	else
-		mir_tstradd(pszFileDesc, TranslateT("\" Window"));
+	{
+		if (m_opt_chkClientArea)
+			tszFileDesc.Format(TranslateT("Screenshot for client area of \"%s\" window"), winText);
+		else 
+			tszFileDesc.Format(TranslateT("Screenshot of \"%s\" window"), winText);
+	}
+
+	pszFileDesc = tszFileDesc.Detach();
 
 	// convert to 32Bits (make shure it is 32bit)
 	FIBITMAP *dib_new = FIP->FI_ConvertTo32Bits(dib);

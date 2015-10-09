@@ -18,11 +18,11 @@
 [Account]
 [Others]
 [Automatic messages synchronization]
-[Use local time for received messages]
 [Always notify as unread for all incoming message]
 [Place:]
 [Use hostname]
-[Use BB-codes]
+[Use BBCode]
+[Change password]
 [Enter password]
 [Save password]
 [Enter the password to continue.]
@@ -86,6 +86,7 @@
 [Unblock contact]
 [Create new chat]
 ;file \protocols\SkypeWeb\src\skype_messages.cpp
+[You cannot send when you are offline.]
 [Unknown error!]
 [Network error!]
 ;file \protocols\SkypeWeb\src\skype_mslogin.cpp
@@ -102,7 +103,5 @@
 [Incoming call sound]
 [Incoming call canceled sound]
 ;file \protocols\SkypeWeb\src\skype_trouter.cpp
-[Failed establish a TRouter connection.]
+[Failed to establish a TRouter connection.]
 [Incoming call from %s]
-;file \protocols\SkypeWeb\src\skype_utils.cpp
-[Message read: %s]

@@ -50,6 +50,8 @@ public:
 
 	virtual	int       __cdecl SendMsg(MCONTACT hContact, int flags, const char* msg);
 
+	virtual	HANDLE    __cdecl SendFile(MCONTACT hContact, const TCHAR*, TCHAR **ppszFiles);
+
 	virtual	int       __cdecl SetStatus(int iNewStatus);
 
 	virtual	int       __cdecl UserIsTyping(MCONTACT hContact, int type);
@@ -163,9 +165,8 @@ protected:
 	virtual void onMessageError(const FMessage &message, int paramInt) { ; }
 	virtual void onPing(const std::string &id) throw (WAException);
 	virtual void onPingResponseReceived() {  }
-	virtual void onAvailable(const std::string &paramString, bool paramBoolean);
+	virtual void onAvailable(const std::string &paramString, bool paramBoolean, DWORD lastSeenTime);
 	virtual void onClientConfigReceived(const std::string &paramString) {  }
-	virtual void onLastSeen(const std::string &paramString1, int paramInt, const std::string &paramString2);
 	virtual void onIsTyping(const std::string &paramString, bool paramBoolean);
 	virtual void onAccountChange(int paramInt, time_t expire_date) {  }
 	virtual void onPrivacyBlockListAdd(const std::string &paramString) {  }

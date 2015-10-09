@@ -29,8 +29,6 @@
 Інше
 [Automatic messages synchronization]
 Автоматична синхронізація повідомлень
-[Use local time for received messages]
-Локальний час для прийнятих повідомлень
 [Always notify as unread for all incoming message]
 Позначати всі вхідні повідомлення непрочитаними
 [Place:]
@@ -39,6 +37,8 @@
 Використ. ім'я хоста
 [Use BBCode]
 Підтримка BBCode
+[Change password]
+Змінити пароль
 [Enter password]
 Введіть пароль
 [Save password]
@@ -147,6 +147,8 @@
 Розблокувати контакт
 [Create new chat]
 Створити новий чат
+[You cannot send when you are offline.]
+Для надсилання повідомлень необхідно підключитися до мережі.
 [Unknown error!]
 Невідома помилка!
 [Network error!]
@@ -167,9 +169,7 @@
 Вхідний дзвінок
 [Incoming call canceled sound]
 Вхідний дзвінок скасовано
-[Failed establish a TRouter connection.]
+[Failed to establish a TRouter connection.]
 Неможливо встановити з'єднання для TRouter.
 [Incoming call from %s]
 Вхідний дзвінок від %s
-[Message read: %s]
-Повідомлення прочитане о %s

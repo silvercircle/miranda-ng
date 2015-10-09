@@ -64,7 +64,7 @@ static int ModulesLoaded(WPARAM, LPARAM)
 HICON LoadIconExEx(const char* IcoLibName, int)
 {
 	char szSettingName[64];
-	mir_snprintf(szSettingName, _countof(szSettingName), "%s_%s", OPENFOLDER_MODULE_NAME, IcoLibName);
+	mir_snprintf(szSettingName, "%s_%s", OPENFOLDER_MODULE_NAME, IcoLibName);
 	return IcoLib_GetIcon(szSettingName);
 }
 
@@ -98,6 +98,7 @@ extern "C" int __declspec(dllexport) Load()
 	Hotkey_Register(&hotkey);
 
 	CMenuItem mi;
+	SET_UID(mi, 0xbba6ad01, 0x755a, 0x4d01, 0x94, 0xee, 0x57, 0x84, 0x18, 0x70, 0x77, 0x4f);
 	mi.position = 0x7FFFFFFF;
 	mi.flags = CMIF_TCHAR;
 	mi.hIcolibItem = icon.hIcolib;

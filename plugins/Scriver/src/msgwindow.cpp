@@ -555,7 +555,7 @@ LRESULT CALLBACK TabCtrlProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						while (GetParent(hParent) != NULL)
 							hParent = GetParent(hParent);
 
-						hParent = WindowList_Find(g_dat.hParentWindowList, (MCONTACT)hParent);
+						hParent = WindowList_Find(g_dat.hParentWindowList, (UINT_PTR)hParent);
 						if ((hParent != NULL && hParent != GetParent(hwnd)) || (hParent == NULL && mwtd->parent->childrenCount > 1 && (GetKeyState(VK_CONTROL) & 0x8000))) {
 							if (hParent == NULL) {
 								RECT rc, rcDesktop;
@@ -775,7 +775,7 @@ INT_PTR CALLBACK DlgProcParentWindow(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			if (dat->prev != NULL)
 				dat->prev->next = dat;
 
-			WindowList_Add(g_dat.hParentWindowList, hwndDlg, (MCONTACT)hwndDlg);
+			WindowList_Add(g_dat.hParentWindowList, hwndDlg, (UINT_PTR)hwndDlg);
 			SubclassTabCtrl(dat->hwndTabs);
 
 			SetContainerWindowStyle(dat);
@@ -1133,14 +1133,14 @@ INT_PTR CALLBACK DlgProcParentWindow(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 
 			char *szNamePrefix = (!savePerContact && dat->isChat) ? "chat" : "";
 			if (!dat->windowWasCascaded) {
-				mir_snprintf(szSettingName, _countof(szSettingName), "%sx", szNamePrefix);
+				mir_snprintf(szSettingName, "%sx", szNamePrefix);
 				db_set_dw(hContact, SRMMMOD, szSettingName, wp.rcNormalPosition.left);
-				mir_snprintf(szSettingName, _countof(szSettingName), "%sy", szNamePrefix);
+				mir_snprintf(szSettingName, "%sy", szNamePrefix);
 				db_set_dw(hContact, SRMMMOD, szSettingName, wp.rcNormalPosition.top);
 			}
-			mir_snprintf(szSettingName, _countof(szSettingName), "%swidth", szNamePrefix);
+			mir_snprintf(szSettingName, "%swidth", szNamePrefix);
 			db_set_dw(hContact, SRMMMOD, szSettingName, wp.rcNormalPosition.right - wp.rcNormalPosition.left);
-			mir_snprintf(szSettingName, _countof(szSettingName), "%sheight", szNamePrefix);
+			mir_snprintf(szSettingName, "%sheight", szNamePrefix);
 			db_set_dw(hContact, SRMMMOD, szSettingName, wp.rcNormalPosition.bottom - wp.rcNormalPosition.top);
 			db_set_b(hContact, SRMMMOD, SRMSGSET_TOPMOST, (BYTE)dat->bTopmost);
 			if (g_dat.lastParent == dat)
@@ -1510,9 +1510,9 @@ int ScriverRestoreWindowPosition(HWND hwnd, MCONTACT hContact, const char *szMod
 	GetWindowPlacement(hwnd, &wp);
 
 	char szSettingName[64];
-	mir_snprintf(szSettingName, _countof(szSettingName), "%sx", szNamePrefix);
+	mir_snprintf(szSettingName, "%sx", szNamePrefix);
 	int x = db_get_dw(hContact, szModule, szSettingName, -1);
-	mir_snprintf(szSettingName, _countof(szSettingName), "%sy", szNamePrefix);
+	mir_snprintf(szSettingName, "%sy", szNamePrefix);
 	int y = db_get_dw(hContact, szModule, szSettingName, -1);
 	if (x == -1)
 		return 1;
@@ -1522,9 +1522,9 @@ int ScriverRestoreWindowPosition(HWND hwnd, MCONTACT hContact, const char *szMod
 	else {
 		wp.rcNormalPosition.left = x;
 		wp.rcNormalPosition.top = y;
-		mir_snprintf(szSettingName, _countof(szSettingName), "%swidth", szNamePrefix);
+		mir_snprintf(szSettingName, "%swidth", szNamePrefix);
 		wp.rcNormalPosition.right = wp.rcNormalPosition.left + db_get_dw(hContact, szModule, szSettingName, -1);
-		mir_snprintf(szSettingName, _countof(szSettingName), "%sheight", szNamePrefix);
+		mir_snprintf(szSettingName, "%sheight", szNamePrefix);
 		wp.rcNormalPosition.bottom = wp.rcNormalPosition.top + db_get_dw(hContact, szModule, szSettingName, -1);
 	}
 	wp.flags = 0;

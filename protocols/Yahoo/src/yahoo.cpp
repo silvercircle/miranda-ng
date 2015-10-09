@@ -29,15 +29,17 @@
 #include "search.h"
 #include "ignore.h"
 
-typedef struct {
+struct yahoo_idlabel
+{
 	int id;
 	char *label;
-} yahoo_idlabel;
+};
 
-typedef struct {
+struct yahoo_authorize_data
+{
 	int id;
 	char *who;
-} yahoo_authorize_data;
+};
 
 yahoo_idlabel yahoo_status_codes[] = {
 	{ YAHOO_STATUS_AVAILABLE, "" },
@@ -519,7 +521,7 @@ void CYahooProto::ext_got_audible(const char *me, const char *who, const char *a
 	}
 
 	char z[1028];
-	mir_snprintf(z, _countof(z), "[miranda-audible] %s", msg ? msg : "");
+	mir_snprintf(z, "[miranda-audible] %s", msg ? msg : "");
 	ext_got_im((char*)me, (char*)who, 0, z, 0, 0, 1, -1, NULL, 0);
 }
 
@@ -733,7 +735,7 @@ void CYahooProto::ext_contact_added(const char *myid, const char *who, const cha
 	nick[0] = '\0';
 
 	if (lname && fname)
-		mir_snprintf(nick, _countof(nick), "%s %s", fname, lname);
+		mir_snprintf(nick, "%s %s", fname, lname);
 	else if (lname)
 		strncpy_s(nick, lname, _TRUNCATE);
 	else if (fname)
@@ -924,15 +926,15 @@ void CYahooProto::ext_mail_notify(const char *from, const char *subj, int cnt)
 			TCHAR z[MAX_SECONDLINE], title[MAX_CONTACTNAME];
 
 			if (from == NULL) {
-				mir_sntprintf(title, _countof(title), _T("%s: %s"), m_tszUserName, TranslateT("New Mail"));
-				mir_sntprintf(z, _countof(z), TranslateT("You have %i unread messages"), cnt);
+				mir_sntprintf(title, _T("%s: %s"), m_tszUserName, TranslateT("New Mail"));
+				mir_sntprintf(z, TranslateT("You have %i unread messages"), cnt);
 			}
 			else {
-				mir_sntprintf(title, _countof(title), TranslateT("New Mail (%i messages)"), cnt);
+				mir_sntprintf(title, TranslateT("New Mail (%i messages)"), cnt);
 
 				ptrT tszFrom(mir_utf8decodeT(from));
 				ptrT tszSubj(mir_utf8decodeT(subj));
-				mir_sntprintf(z, _countof(z), TranslateT("From: %s\nSubject: %s"), (TCHAR*)tszFrom, (TCHAR*)tszSubj);
+				mir_sntprintf(z, TranslateT("From: %s\nSubject: %s"), (TCHAR*)tszFrom, (TCHAR*)tszSubj);
 			}
 
 			if (!ShowPopup(title, z, "http://mail.yahoo.com"))
@@ -984,7 +986,7 @@ void ext_yahoo_got_cookies(int id)
 
 		 //wsprintfA(z, "Cookie: %s; C=%s; Y=%s; T=%s", Bcookie, yahoo_get_cookie(id, "c"), yahoo_get_cookie(id, "y"), yahoo_get_cookie(id, "t"));
 		 //wsprintfA(z, "Cookie: %s; Y=%s", Bcookie, yahoo_get_cookie(id, "y"), yahoo_get_cookie(id, "t"));
-		 mir_snprintf(z, _countof(z), "Cookie: Y=%s; T=%s", yahoo_get_cookie(id, "y"), yahoo_get_cookie(id, "t"));
+		 mir_snprintf(z, "Cookie: Y=%s; T=%s", yahoo_get_cookie(id, "y"), yahoo_get_cookie(id, "t"));
 		 LOG(("Our Cookie: '%s'", z));
 		 CallService(MS_NETLIB_SETSTICKYHEADERS, (WPARAM)hnuMain, (LPARAM)z);*/
 
@@ -993,7 +995,7 @@ void ext_yahoo_got_cookies(int id)
 		char z[1024];
 
 		// need to add Cookie header to our requests or we get booted w/ "Bad Cookie" message.
-		mir_snprintf(z, _countof(z), "Cookie: Y=%s; T=%s; C=%s", yahoo_get_cookie(id, "y"), 
+		mir_snprintf(z, "Cookie: Y=%s; T=%s; C=%s", yahoo_get_cookie(id, "y"), 
 			yahoo_get_cookie(id, "t"), yahoo_get_cookie(id, "c"));    
 		LOG(("Our Cookie: '%s'", z));
 		CallService(MS_NETLIB_SETSTICKYHEADERS, (WPARAM)hNetlibUser, (LPARAM)z);
@@ -1235,7 +1237,7 @@ void CYahooProto::ext_send_http_request(enum yahoo_connection_type type, const c
 
 		if (nlhr.requestType == REQUEST_POST) {
 			httpHeaders[nlhr.headersCount].szName = "Content-Length";
-			mir_snprintf(z, _countof(z), "%d", content_length);
+			mir_snprintf(z, "%d", content_length);
 			httpHeaders[nlhr.headersCount].szValue = z;
 
 			nlhr.headersCount++;
@@ -1256,7 +1258,7 @@ void CYahooProto::ext_send_http_request(enum yahoo_connection_type type, const c
  */
 unsigned int CYahooProto::ext_add_handler(int fd, yahoo_input_condition cond, void *data)
 {
-	struct _conn *c = y_new0(struct _conn, 1);
+	_conn *c = y_new0(_conn, 1);
 
 	c->tag = ++m_connection_tags;
 	c->id = m_id;
@@ -1276,7 +1278,7 @@ void CYahooProto::ext_remove_handler(unsigned int tag)
 	LOG(("[ext_remove_handler] id:%d tag:%d ", m_id, tag));
 
 	for (YList *l = m_connections; l; l = y_list_next(l)) {
-		struct _conn *c = (_conn*)l->data;
+		_conn *c = (_conn*)l->data;
 		if (c->tag == tag) {
 			/* don't actually remove it, just mark it for removal */
 			/* we'll remove when we start the next poll cycle */
@@ -1287,7 +1289,8 @@ void CYahooProto::ext_remove_handler(unsigned int tag)
 	}
 }
 
-struct connect_callback_data {
+struct connect_callback_data
+{
 	yahoo_connect_callback callback;
 	void * callback_data;
 	int id;
@@ -1298,7 +1301,7 @@ void ext_yahoo_remove_handler(int id, unsigned int tag);
 
 static void connect_complete(void *data, int source, yahoo_input_condition)
 {
-	struct connect_callback_data *ccd = (connect_callback_data*)data;
+	connect_callback_data *ccd = (connect_callback_data*)data;
 	int error = 0;//, err_size = sizeof(error);
 	NETLIBSELECT tSelect = { 0 };
 
@@ -1321,7 +1324,7 @@ static void connect_complete(void *data, int source, yahoo_input_condition)
 	FREE(ccd);
 }
 
-void yahoo_callback(struct _conn *c, yahoo_input_condition cond)
+void yahoo_callback(_conn *c, yahoo_input_condition cond)
 {
 	int ret = 1;
 
@@ -1372,13 +1375,13 @@ int CYahooProto::ext_connect_async(const char *host, int port, int type, yahoo_c
 /*
  * Callback handling code ends here
  ***********************************/
-char * CYahooProto::ext_send_https_request(struct yahoo_data *yd, const char *host, const char *path)
+char * CYahooProto::ext_send_https_request(yahoo_data *yd, const char *host, const char *path)
 {
 	NETLIBHTTPREQUEST nlhr = { 0 }, *nlhrReply;
 	char z[4096], *result = NULL;
 	int i;
 
-	mir_snprintf(z, _countof(z), "https://%s%s", host, path);
+	mir_snprintf(z, "https://%s%s", host, path);
 	nlhr.cbSize = sizeof(nlhr);
 	nlhr.requestType = REQUEST_GET;
 	nlhr.flags = NLHRF_HTTP11 | NLHRF_NODUMPSEND | NLHRF_DUMPASTEXT; /* Use HTTP/1.1 and don't dump the requests to the log */
@@ -1451,7 +1454,7 @@ void CYahooProto::ext_login(enum yahoo_status login_mode)
 	NETLIBHTTPREQUEST nlhr = { 0 }, *nlhrReply;
 	char z[4096];
 
-	mir_snprintf(z, _countof(z), "http://%s%s", getByte("YahooJapan", 0) != 0 ? "cs1.msg.vip.ogk.yahoo.co.jp" : "vcs.msg.yahoo.com", "/capacity");
+	mir_snprintf(z, "http://%s%s", getByte("YahooJapan", 0) != 0 ? "cs1.msg.vip.ogk.yahoo.co.jp" : "vcs.msg.yahoo.com", "/capacity");
 	nlhr.cbSize = sizeof(nlhr);
 	nlhr.requestType = REQUEST_GET;
 	nlhr.flags = NLHRF_HTTP11;
@@ -1719,7 +1722,7 @@ void ext_yahoo_send_http_request(int id, enum yahoo_connection_type type, const 
 	GETPROTOBYID(id)->ext_send_http_request(type, method, url, cookies, content_length, callback, callback_data);
 }
 
-char *ext_yahoo_send_https_request(struct yahoo_data *yd, const char *host, const char *path)
+char *ext_yahoo_send_https_request(yahoo_data *yd, const char *host, const char *path)
 {
 	CYahooProto* ppro = getProtoById(yd->client_id);
 	if (ppro)
@@ -1734,7 +1737,7 @@ void ext_yahoo_got_ignore(int id, YList * igns)
 
 void register_callbacks()
 {
-	static struct yahoo_callbacks yc;
+	static yahoo_callbacks yc;
 
 	yc.ext_yahoo_login_response = ext_yahoo_login_response;
 	yc.ext_yahoo_got_buddies = ext_yahoo_got_buddies;

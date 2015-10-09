@@ -79,8 +79,16 @@ namespace utils
 	void generateGradient(COLORREF fromColor, COLORREF toColor, COLORREF colorTab[256]);
 
 	// drawing helpers
-	inline POINT point(int x, int y) { POINT p = { x, y }; return p; }
-	inline RECT rect(int left, int top, int right, int bottom) { RECT r = { left, top, right, bottom }; return r; }
+	struct rect
+	{
+		RECT r;
+		inline rect(int left, int top, int right, int bottom)
+		{
+			r.left = left; r.top = top; r.right = right; r.bottom = bottom;
+		}
+
+		inline operator const RECT*() const { return &r; }
+	};
 
 	// misc functionality
 	void ensureRange(int& value, int min, int max, int fallback);

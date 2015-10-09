@@ -3,7 +3,7 @@
 Facebook plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2009-11 Michal Zelinka, 2011-15 Robert Pösel
+Copyright ï¿½ 2009-11 Michal Zelinka, 2011-15 Robert Pï¿½sel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -146,8 +146,14 @@ http::response facebook_client::flap(RequestType request_type, std::string *post
 				pos = resp.data.find("\"errorDescription\":\"", pos);
 				if (pos != std::string::npos) {
 					pos += 20;
-					error = resp.data.substr(pos, resp.data.find("\"", pos) - pos);
-					error = utils::text::trim(utils::text::html_entities_decode(utils::text::slashu_to_utf8(error)));
+
+					std::string::size_type pos2 = resp.data.find("\",\"", pos);
+					if (pos2 == std::string::npos) {
+						pos2 = resp.data.find("\"", pos);
+					}
+
+					error = resp.data.substr(pos, pos2 - pos);
+					error = utils::text::trim(utils::text::html_entities_decode(utils::text::remove_html(utils::text::slashu_to_utf8(error))));
 					error = ptrA(mir_utf8decodeA(error.c_str()));
 				}
 
@@ -156,7 +162,7 @@ http::response facebook_client::flap(RequestType request_type, std::string *post
 				if (pos != std::string::npos) {
 					pos += 16;
 					title = resp.data.substr(pos, resp.data.find("\"", pos) - pos);
-					title = utils::text::trim(utils::text::html_entities_decode(utils::text::slashu_to_utf8(title)));
+					title = utils::text::trim(utils::text::html_entities_decode(utils::text::remove_html(utils::text::slashu_to_utf8(title))));
 					title = ptrA(mir_utf8decodeA(title.c_str()));
 				}
 
@@ -290,21 +296,10 @@ std::string facebook_client::choose_action(RequestType request_type, std::string
 		return "/ajax/chat/buddy_list.php?__a=1";
 
 	case REQUEST_USER_INFO:
-	{
-		std::string action = "/ajax/chat/user_info.php?__a=1&viewer=%s&__user=%s";
-		utils::text::replace_all(&action, "%s", self_.user_id);
-		if (get_data != NULL) {
-			action += "&" + (*get_data);
-		}
-		return action;
-	}
+		return "/ajax/chat/user_info.php?__a=1";
 
 	case REQUEST_USER_INFO_ALL:
-	{
-		std::string action = "/ajax/chat/user_info_all.php?__a=1&viewer=%s&__user=%s";
-		utils::text::replace_all(&action, "%s", self_.user_id);
-		return action;
-	}
+		return "/ajax/chat/user_info_all.php?__a=1&viewer=" + self_.user_id;
 
 	case REQUEST_USER_INFO_MOBILE:
 	{
@@ -317,7 +312,7 @@ std::string facebook_client::choose_action(RequestType request_type, std::string
 
 	case REQUEST_LOAD_FRIENDSHIPS:
 	{
-		return "/friends/?";
+		return "/friends/center/requests/?";
 	}
 
 	case REQUEST_SEARCH:
@@ -426,7 +421,7 @@ std::string facebook_client::choose_action(RequestType request_type, std::string
 		return "/ajax/mercury/thread_info.php?__a=1";
 
 	case REQUEST_THREAD_SYNC:
-		return "/ajax/mercury/thread_sync.php";
+		return "/ajax/mercury/thread_sync.php?__a=1";
 
 	case REQUEST_MESSAGES_RECEIVE:
 	case REQUEST_ACTIVE_PING:
@@ -441,9 +436,16 @@ std::string facebook_client::choose_action(RequestType request_type, std::string
 		action += "&clientid=" + this->chat_clientid_;
 		action += "&cb=" + utils::text::rand_string(4, "0123456789abcdefghijklmnopqrstuvwxyz", &this->random_);
 
+		/*
+		original cb = return (1048576 * Math.random() | 0).toString(36);
+		char buffer[10];
+		itoa(((int)(1048576 * (((double)rand()) / (RAND_MAX + 1))) | 0), buffer, 36);
+		action += "&cb=" + buffer;
+		*/
+
 		int idleSeconds = parent->IdleSeconds();
 		action += "&idle=" + utils::conversion::to_string(&idleSeconds, UTILS_CONV_UNSIGNED_NUMBER);
-		action += "&cap=0"; // TODO: what's this item?
+		action += "&cap=0"; // TODO: what's this item? Sometimes it's 0, sometimes 8
 		// action += "&wtc=0,0,0.000,0,0"; // TODO: what's this item? It's numbers grows with every new request...		
 
 		action += "&msgs_recv=" + utils::conversion::to_string(&this->chat_msgs_recv_, UTILS_CONV_UNSIGNED_NUMBER);
@@ -451,11 +453,10 @@ std::string facebook_client::choose_action(RequestType request_type, std::string
 		action += "&uid=" + self_.user_id;
 		action += "&viewer_uid=" + self_.user_id;
 
-		if (!this->chat_sticky_num_.empty())
+		if (!this->chat_sticky_num_.empty() && !this->chat_sticky_pool_.empty()) {
 			action += "&sticky_token=" + this->chat_sticky_num_;
-
-		if (!this->chat_sticky_pool_.empty())
 			action += "&sticky_pool=" + this->chat_sticky_pool_;
+		}
 
 		if (!isPing && !this->chat_traceid_.empty())
 			action += "&traceid=" + this->chat_traceid_;
@@ -681,6 +682,11 @@ void facebook_client::insert_reader(MCONTACT hContact, time_t timestamp, const s
 	parent->setDword(hContact, FACEBOOK_KEY_MESSAGE_READ, timestamp);
 	readers.insert(std::make_pair(hContact, timestamp));
 	parent->MessageRead(hContact);
+	if (ServiceExists(MS_MESSAGESTATE_UPDATE)) 
+	{
+		MessageReadData data(timestamp, MRD_TYPE_READTIME); 
+		CallService(MS_MESSAGESTATE_UPDATE, hContact, (LPARAM)&data);
+	}
 }
 
 /**
@@ -691,8 +697,8 @@ void facebook_client::erase_reader(MCONTACT hContact)
 	if (parent->isChatRoom(hContact)) {
 		parent->delSetting(hContact, FACEBOOK_KEY_MESSAGE_READERS);
 	}
-	if (!ServiceExists("MessageState/DummyService"))
-		parent->delSetting(hContact, FACEBOOK_KEY_MESSAGE_READ);
+	
+	parent->delSetting(hContact, FACEBOOK_KEY_MESSAGE_READ);
 
 	readers.erase(hContact);
 	CallService(MS_MSG_SETSTATUSTEXT, (WPARAM)hContact);
@@ -740,8 +746,6 @@ bool facebook_client::login(const char *username, const char *password)
 	// Save Device ID
 	if (!cookies["datr"].empty())
 		parent->setString(FACEBOOK_KEY_DEVICE_ID, cookies["datr"].c_str());
-
-	bool scanComputerRequest = false;
 
 	if (resp.code == HTTP_CODE_FOUND && resp.headers.find("Location") != resp.headers.end())
 	{
@@ -825,28 +829,6 @@ bool facebook_client::login(const char *username, const char *password)
 			else if (resp.data.find("name=\"submit[Get%20Started]\"") != std::string::npos) {
 				// Facebook things that computer was infected by malware and needs cleaning
 				parent->debugLogA("!!! Facebook requires computer scan.");
-				scanComputerRequest = true;
-
-				// Step 1: Get started
-				inner_data = "submit[Get%20Started]=Get%20Started";
-				inner_data += "&nh=" + utils::text::source_get_value(&resp.data, 3, "name=\"nh\"", "value=\"", "\"");
-				inner_data += "&fb_dtsg=" + utils::url::encode(utils::text::source_get_value(&resp.data, 3, "name=\"fb_dtsg\"", "value=\"", "\""));
-
-				resp = flap(REQUEST_SETUP_MACHINE, &inner_data);
-
-				// Step 2: Download F-Secure Online Scanner (we're not really downloading anything)
-				inner_data = "submit[Download]=Download";
-				inner_data += "&nh=" + utils::text::source_get_value(&resp.data, 3, "name=\"nh\"", "value=\"", "\"");
-				inner_data += "&fb_dtsg=" + utils::url::encode(utils::text::source_get_value(&resp.data, 3, "name=\"fb_dtsg\"", "value=\"", "\""));
-
-				resp = flap(REQUEST_SETUP_MACHINE, &inner_data);
-
-				// Step 3: Skip scanning and try to do Complete login
-				inner_data = "submit[Complete%20Login]=Complete%20Login";
-				inner_data += "&nh=" + utils::text::source_get_value(&resp.data, 3, "name=\"nh\"", "value=\"", "\"");
-				inner_data += "&fb_dtsg=" + utils::url::encode(utils::text::source_get_value(&resp.data, 3, "name=\"fb_dtsg\"", "value=\"", "\""));
-
-				resp = flap(REQUEST_SETUP_MACHINE, &inner_data);
 			}
 		}
 	}
@@ -871,15 +853,10 @@ bool facebook_client::login(const char *username, const char *password)
 			return handle_error("login", FORCE_QUIT);
 		}
 
-		if (scanComputerRequest) {
-			// FIXME: remove this message when someone confirm that it works...
-			client_notify(TranslateT("Facebook required computer cleaning and plugin correctly skipped it. Please report this to the plugin developer!"));
-		}
-
 		// Get and notify error message
 		std::string error = utils::text::source_get_value(&resp.data, 4, "login_error_box", "<div", ">", "</div>");
 		if (error.empty())
-			error = utils::text::source_get_value(&resp.data, 3, "<form", "title=\"", "\"");
+			error = utils::text::source_get_value(&resp.data, 4, "<form", "<strong", ">", "</strong>");
 
 		loginError(parent, error);
 	}
@@ -954,12 +931,12 @@ bool facebook_client::home()
 
 	this->dtsg_ = utils::url::encode(utils::text::source_get_value(&resp.data, 3, "name=\"fb_dtsg\"", "value=\"", "\""));
 	{
-		// Compute csrf_ from dtsg_
+		// Compute ttstamp from dtsg_
 		std::stringstream csrf;
 		for (unsigned int i = 0; i < this->dtsg_.length(); i++) {
 			csrf << (int)this->dtsg_.at(i);
 		}
-		this->csrf_ = csrf.str();
+		this->ttstamp_ = "2" + csrf.str();
 	}	
 
 	if (this->dtsg_.empty()) {
@@ -1076,9 +1053,6 @@ bool facebook_client::reconnect()
 		this->chat_sequence_num_ = utils::text::source_get_value2(&resp.data, "\"seq\":", ",}");
 		parent->debugLogA("    Got self sequence number: %s", this->chat_sequence_num_.c_str());
 
-		// TODO: I'm not sure this goes to 0 after reconnect, or it is always same as chat_sequence_num_ (when watching website it was always same)
-		this->chat_msgs_recv_ = 0;
-
 		this->chat_conn_num_ = utils::text::source_get_value2(&resp.data, "\"max_conn\":", ",}");
 		parent->debugLogA("    Got self max_conn: %s", this->chat_conn_num_.c_str());
 
@@ -1156,8 +1130,7 @@ bool facebook_client::channel()
 		parent->debugLogA("    Got self sequence number: %s", seq.c_str());
 
 		if (type == "msg") {
-			// Update msgs_recv number
-			// TODO: I'm not sure this is updated regarding "msg" received and reseted after reconnect, or it is always same as chat_sequence_num_ (when watching website it was always same)
+			// Update msgs_recv number for every "msg" type we receive (during fullRefresh/reload responses it stays the same)
 			this->chat_msgs_recv_++;
 		}
 
@@ -1284,7 +1257,7 @@ int facebook_client::send_message(int seqid, MCONTACT hContact, const std::strin
 	data += "&client=mercury&__a=1&__dyn&__req&__rev";
 	data += "&fb_dtsg=" + this->dtsg_;
 	data += "&__user=" + this->self_.user_id;
-	data += "&ttstamp=" + ttstamp();
+	data += "&ttstamp=" + ttstamp_;
 
 	{
 		ScopedLock s(send_message_lock_);
@@ -1364,6 +1337,8 @@ int facebook_client::send_message(int seqid, MCONTACT hContact, const std::strin
 		}
 		return SEND_MESSAGE_CANCEL; // Cancel because we failed to load captcha image so we can't continue only with error
 
+	//case 1404123: // Blocked sending messages (with URLs) because Facebook think our computer is infected with malware
+
 	default: // Other error
 		parent->debugLogA("!!! Send message error #%d: %s", resp.error_number, resp.error_text.c_str());
 		return SEND_MESSAGE_ERROR;
@@ -1403,13 +1378,13 @@ bool facebook_client::post_status(status_data *status)
 		data = "fb_dtsg=" + this->dtsg_;
 		data += "&targetid=" + (status->user_id.empty() ? this->self_.user_id : status->user_id);
 		data += "&xhpc_targetid=" + (status->user_id.empty() ? this->self_.user_id : status->user_id);
-		data += "&istimeline=1&composercontext=composer&onecolumn=1&nctr[_mod]=pagelet_timeline_recent&__a=1&ttstamp=" + ttstamp();
+		data += "&istimeline=1&composercontext=composer&onecolumn=1&nctr[_mod]=pagelet_timeline_recent&__a=1&ttstamp=" + ttstamp_;
 		data += "&__user=" + (status->isPage && !status->user_id.empty() ? status->user_id : this->self_.user_id);
 		data += "&loaded_components[0]=maininput&loaded_components[1]=backdateicon&loaded_components[2]=withtaggericon&loaded_components[3]=cameraicon&loaded_components[4]=placetaggericon&loaded_components[5]=mainprivacywidget&loaded_components[6]=withtaggericon&loaded_components[7]=backdateicon&loaded_components[8]=placetaggericon&loaded_components[9]=cameraicon&loaded_components[10]=mainprivacywidget&loaded_components[11]=maininput&loaded_components[12]=explicitplaceinput&loaded_components[13]=hiddenplaceinput&loaded_components[14]=placenameinput&loaded_components[15]=hiddensessionid&loaded_components[16]=withtagger&loaded_components[17]=backdatepicker&loaded_components[18]=placetagger&loaded_components[19]=citysharericon";
 		http::response resp = flap(REQUEST_LINK_SCRAPER, &data, &status->url);
 		std::string temp = utils::text::html_entities_decode(utils::text::slashu_to_utf8(resp.data));
 
-		data = "&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=1&xhpc_composerid=u_jsonp_2_0&is_explicit_place=&composertags_place=&composer_session_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=&nctr[_mod]=pagelet_composer&__a=1&__dyn=&__req=1f&ttstamp=" + ttstamp();
+		data = "&xhpc_context=profile&xhpc_ismeta=1&xhpc_timeline=1&xhpc_composerid=u_jsonp_2_0&is_explicit_place=&composertags_place=&composer_session_id=&composertags_city=&disable_location_sharing=false&composer_predicted_city=&nctr[_mod]=pagelet_composer&__a=1&__dyn=&__req=1f&ttstamp=" + ttstamp_;
 		std::string form = utils::text::source_get_value(&temp, 2, "<form", "</form>");
 		utils::text::replace_all(&form, "\\\"", "\"");
 		data += "&" + utils::text::source_get_form_data(&form) + "&";

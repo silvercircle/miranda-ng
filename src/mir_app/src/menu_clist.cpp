@@ -219,8 +219,8 @@ INT_PTR FreeOwnerDataMainMenu(WPARAM, LPARAM lParam)
 {
 	MainMenuExecParam *mmep = (MainMenuExecParam*)lParam;
 	if (mmep != NULL) {
-		FreeAndNil((void**)&mmep->szServiceName);
-		FreeAndNil((void**)&mmep);
+		mir_free(mmep->szServiceName);
+		mir_free(mmep);
 	}
 	return 0;
 }
@@ -338,9 +338,9 @@ static INT_PTR FreeOwnerDataContactMenu(WPARAM, LPARAM lParam)
 {
 	ContactMenuExecParam *cmep = (ContactMenuExecParam*)lParam;
 	if (cmep != NULL) {
-		FreeAndNil((void**)&cmep->szServiceName);
-		FreeAndNil((void**)&cmep->pszContactOwner);
-		FreeAndNil((void**)&cmep);
+		mir_free(cmep->szServiceName);
+		mir_free(cmep->pszContactOwner);
+		mir_free(cmep);
 	}
 	return 0;
 }
@@ -822,7 +822,7 @@ void RebuildMenuOrder(void)
 		mi.hIcon = ic = (HICON)CallProtoServiceInt(NULL, pa->szModuleName, PS_LOADICON, PLI_PROTOCOL | PLIF_SMALL, 0);
 
 		if (Proto_IsAccountLocked(pa) && cli.bDisplayLocked) {
-			mir_sntprintf(tbuf, _countof(tbuf), TranslateT("%s (locked)"), pa->tszAccountName);
+			mir_sntprintf(tbuf, TranslateT("%s (locked)"), pa->tszAccountName);
 			mi.name.t = tbuf;
 		}
 		else mi.name.t = pa->tszAccountName;
@@ -846,7 +846,7 @@ void RebuildMenuOrder(void)
 			mi.flags |= CMIF_CHECKED;
 
 		if ((mi.flags & CMIF_CHECKED) && cli.bDisplayLocked) {
-			mir_sntprintf(tbuf, _countof(tbuf), TranslateT("%s (locked)"), pa->tszAccountName);
+			mir_sntprintf(tbuf, TranslateT("%s (locked)"), pa->tszAccountName);
 			mi.name.t = tbuf;
 		}
 		else mi.name.t = pa->tszAccountName;
@@ -1017,7 +1017,7 @@ static int MenuProtoAck(WPARAM, LPARAM lParam)
 
 	for (int i = 0; i < accounts.getCount(); i++) {
 		if (!mir_strcmp(accounts[i]->szModuleName, ack->szModule)) {
-			int iOldStatus = (int)ack->hProcess;
+			int iOldStatus = (INT_PTR)ack->hProcess;
 			if ((iOldStatus >= ID_STATUS_OFFLINE || iOldStatus == 0) && iOldStatus < ID_STATUS_OFFLINE + _countof(statusModeList)) {
 				int pos = statustopos(iOldStatus);
 				if (pos == -1)
@@ -1150,7 +1150,7 @@ void InitCustomMenus(void)
 	hkd.dwFlags = HKD_TCHAR;
 	for (int i = 0; i < _countof(statusHotkeys); i++) {
 		char szName[30];
-		mir_snprintf(szName, _countof(szName), "StatusHotKey_%d", i);
+		mir_snprintf(szName, "StatusHotKey_%d", i);
 		hkd.pszName = szName;
 		hkd.lParam = statusModeList[i];
 		hkd.ptszDescription = fnGetStatusModeDescription(hkd.lParam, 0);
@@ -1163,6 +1163,7 @@ void InitCustomMenus(void)
 
 	// add exit command to menu
 	CMenuItem mi;
+	SET_UID(mi, 0x707c8962, 0xc33f, 0x4893, 0x8e, 0x36, 0x30, 0xb1, 0x7c, 0xd8, 0x61, 0x40);
 	mi.position = 0x7fffffff;
 	mi.pszService = "CloseAction";
 	mi.name.a = LPGEN("E&xit");

@@ -602,17 +602,17 @@ int DelUserDefSession(int ses_count)
 	}
 
 	char szSessionName[256];
-	mir_snprintf(szSessionName, _countof(szSessionName), "%s_%u", "UserSessionDsc", ses_count);
+	mir_snprintf(szSessionName, "%s_%u", "UserSessionDsc", ses_count);
 	db_unset(NULL, MODNAME, szSessionName);
 
-	mir_snprintf(szSessionName, _countof(szSessionName), "%s_%u", "FavUserSession", ses_count);
+	mir_snprintf(szSessionName, "%s_%u", "FavUserSession", ses_count);
 	db_unset(NULL, MODNAME, szSessionName);
 
 	for (int i = ses_count + 1;; i++) {
-		mir_snprintf(szSessionName, _countof(szSessionName), "%s_%u", "UserSessionDsc", i);
+		mir_snprintf(szSessionName, "%s_%u", "UserSessionDsc", i);
 		ptrT szSessionNameBuf(db_get_tsa(NULL, MODNAME, szSessionName));
 
-		mir_snprintf(szSessionName, _countof(szSessionName), "%s_%u", "UserSessionDsc", i - 1);
+		mir_snprintf(szSessionName, "%s_%u", "UserSessionDsc", i - 1);
 		if (szSessionNameBuf) {
 			MarkUserDefSession(i - 1, IsMarkedUserDefSession(i));
 			db_set_ts(NULL, MODNAME, szSessionName, szSessionNameBuf);
@@ -620,7 +620,7 @@ int DelUserDefSession(int ses_count)
 		else {
 			db_unset(NULL, MODNAME, szSessionName);
 
-			mir_snprintf(szSessionName, _countof(szSessionName), "%s_%u", "FavUserSession", i - 1);
+			mir_snprintf(szSessionName, "%s_%u", "FavUserSession", i - 1);
 			db_unset(NULL, MODNAME, szSessionName);
 			break;
 		}
@@ -638,14 +638,14 @@ int DeleteAutoSession(int ses_count)
 	}
 
 	char szSessionName[256];
-	mir_snprintf(szSessionName, _countof(szSessionName), "%s_%u", "SessionDate", ses_count);
+	mir_snprintf(szSessionName, "%s_%u", "SessionDate", ses_count);
 	db_unset(NULL, MODNAME, szSessionName);
 
 	for (int i = ses_count + 1;; i++) {
-		mir_snprintf(szSessionName, _countof(szSessionName), "%s_%u", "SessionDate", i);
+		mir_snprintf(szSessionName, "%s_%u", "SessionDate", i);
 		ptrT szSessionNameBuf(db_get_tsa(NULL, MODNAME, szSessionName));
 
-		mir_snprintf(szSessionName, _countof(szSessionName), "%s_%u", "SessionDate", i - 1);
+		mir_snprintf(szSessionName, "%s_%u", "SessionDate", i - 1);
 		if (szSessionNameBuf)
 			db_set_ts(NULL, MODNAME, szSessionName, szSessionNameBuf);
 		else {
@@ -796,21 +796,25 @@ static int PluginInit(WPARAM, LPARAM)
 	mi.position = 1000000000;
 	mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Sessions Manager"), 1000000000);
 
+	SET_UID(mi, 0xd35302fa, 0x8326, 0x4323, 0xa3, 0xe5, 0xb4, 0x41, 0xff, 0xfb, 0xaa, 0x2d);
 	mi.name.a = LPGEN("Save session...");
 	mi.hIcolibItem = iconList[4].hIcolib;
 	mi.pszService = MS_SESSIONS_SAVEUSERSESSION;
 	hmSaveCurrentSession = Menu_AddMainMenuItem(&mi);
 
+	SET_UID(mi, 0x8de4d8b1, 0x9a62, 0x4f4e, 0xb0, 0x3d, 0x99, 0x7, 0x80, 0xe8, 0x93, 0xc2);
 	mi.name.a = LPGEN("Load session...");
 	mi.pszService = MS_SESSIONS_OPENMANAGER;
 	mi.hIcolibItem = iconList[3].hIcolib;
 	Menu_AddMainMenuItem(&mi);
 
+	SET_UID(mi, 0x73ea91d6, 0xb7e5, 0x4f67, 0x96, 0x96, 0xa, 0x24, 0x21, 0x48, 0x6f, 0x15);
 	mi.name.a = LPGEN("Close session");
 	mi.pszService = MS_SESSIONS_CLOSESESSION;
 	mi.hIcolibItem = 0;
 	Menu_AddMainMenuItem(&mi);
 
+	SET_UID(mi, 0xe2c4e4ba, 0x5d08, 0x441b, 0xb5, 0x93, 0xc4, 0xe7, 0x9a, 0xfb, 0xa4, 0x6c);
 	mi.name.a = LPGEN("Load last session");
 	mi.pszService = MS_SESSIONS_RESTORELASTSESSION;
 	mi.hIcolibItem = iconList[5].hIcolib;

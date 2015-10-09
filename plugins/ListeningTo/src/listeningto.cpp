@@ -60,9 +60,9 @@ INT_PTR MainMenuClicked(WPARAM wParam, LPARAM lParam);
 bool    ListeningToEnabled(char *proto, bool ignoreGlobal = false);
 INT_PTR ListeningToEnabled(WPARAM wParam, LPARAM lParam);
 INT_PTR EnableListeningTo(WPARAM wParam, LPARAM lParam);
-INT_PTR EnableListeningTo(char  *proto = NULL, bool enabled = false);
+INT_PTR EnableListeningTo(char *proto = NULL, bool enabled = false);
 INT_PTR GetTextFormat(WPARAM wParam, LPARAM lParam);
-TCHAR*	GetParsedFormat(LISTENINGTOINFO *lti);
+TCHAR*  GetParsedFormat(LISTENINGTOINFO *lti);
 INT_PTR GetParsedFormat(WPARAM wParam, LPARAM lParam);
 INT_PTR GetOverrideContactOption(WPARAM wParam, LPARAM lParam);
 INT_PTR GetUnknownText(WPARAM wParam, LPARAM lParam);
@@ -88,8 +88,6 @@ TCHAR* VariablesParsePlayer(ARGUMENTSINFO *ai);
 #define XSTATUS_MUSIC 11
 
 #define UNKNOWN(_X_) ( _X_ == NULL || _X_[0] == _T('\0') ? opts.unknown : _X_ )
-
-
 
 // Functions ////////////////////////////////////////////////////////////////////////////
 
@@ -196,11 +194,12 @@ void RebuildMenu()
 		mi.position = 500080000 + i;
 		mi.pszService = MS_LISTENINGTO_MAINMENU;
 		mi.name.t = text;
-		mi.flags = CMIF_TCHAR
+		mi.flags = CMIF_TCHAR | CMIF_UNMOVABLE
 			| (ListeningToEnabled(info->proto, TRUE) ? CMIF_CHECKED : 0)
 			| (opts.enable_sending ? 0 : CMIF_GRAYED);
 
 		info->hMenu = Menu_AddMainMenuItem(&mi);
+		Menu_ConfigureItem(info->hMenu, MCI_OPT_EXECPARAM, i);
 	}
 
 	UpdateGlobalStatusMenus();
@@ -285,6 +284,7 @@ int ModulesLoaded(WPARAM, LPARAM)
 
 	// Add main menu item
 	CMenuItem mi;
+	SET_UID(mi, 0xe8e4e594, 0x255e, 0x434d, 0x83, 0x74, 0x79, 0x44, 0x1b, 0x4e, 0xe7, 0x16);
 	mi.position = 500080000;
 	mi.name.t = LPGENT("Listening to");
 	mi.flags = CMIF_TCHAR;
@@ -297,6 +297,7 @@ int ModulesLoaded(WPARAM, LPARAM)
 	mi.hIcolibItem = NULL;
 
 	// Add all protos
+	SET_UID(mi, 0xc396a9dd, 0x9a00, 0x46af, 0x96, 0x2e, 0x5, 0x5a, 0xbc, 0x52, 0xfc, 0x9b);
 	mi.name.t = LPGENT("Send to all protocols");
 	mi.flags = CMIF_TCHAR
 		| (ListeningToEnabled(NULL, true) ? CMIF_CHECKED : 0)
@@ -407,7 +408,6 @@ int ModulesLoaded(WPARAM, LPARAM)
 	StartTimer();
 
 	loaded = TRUE;
-
 	return 0;
 }
 
@@ -460,11 +460,9 @@ INT_PTR MainMenuClicked(WPARAM wParam, LPARAM)
 	if (!loaded)
 		return -1;
 
-	unsigned pos = wParam == 0 ? 0 : wParam - 500080000;
-	if (pos >= proto_items.size() || pos < 0)
-		return 0;
-
-	EnableListeningTo(proto_items[pos].proto, !ListeningToEnabled(proto_items[pos].proto, TRUE));
+	if (wParam < proto_items.size()) {
+		ProtocolInfo &pi = proto_items[wParam];		EnableListeningTo(pi.proto, !ListeningToEnabled(pi.proto, TRUE));
+	}
 	return 0;
 }
 
@@ -475,18 +473,16 @@ bool ListeningToEnabled(char *proto, bool ignoreGlobal)
 
 	if (proto == NULL || proto[0] == 0) {
 		// Check all protocols
-		for (unsigned int i = 1; i < proto_items.size(); ++i) {
-			if (!ListeningToEnabled(proto_items[i].proto, TRUE)) {
+		for (unsigned int i = 1; i < proto_items.size(); ++i)
+			if (!ListeningToEnabled(proto_items[i].proto, TRUE))
 				return FALSE;
-			}
-		}
+
 		return TRUE;
 	}
-	else {
-		char setting[256];
-		mir_snprintf(setting, "%sEnabled", proto);
-		return db_get_b(NULL, MODULE_NAME, setting, false) != 0;
-	}
+
+	char setting[256];
+	mir_snprintf(setting, "%sEnabled", proto);
+	return db_get_b(NULL, MODULE_NAME, setting, false) != 0;
 }
 
 INT_PTR ListeningToEnabled(WPARAM wParam, LPARAM)
@@ -494,10 +490,10 @@ INT_PTR ListeningToEnabled(WPARAM wParam, LPARAM)
 	if (!loaded)
 		return -1;
 
-	return ListeningToEnabled((char *)wParam);
+	return ListeningToEnabled((char*)wParam);
 }
 
-ProtocolInfo *GetProtoInfo(char *proto)
+ProtocolInfo* GetProtoInfo(char *proto)
 {
 	for (unsigned int i = 1; i < proto_items.size(); i++)
 		if (mir_strcmp(proto, proto_items[i].proto) == 0)

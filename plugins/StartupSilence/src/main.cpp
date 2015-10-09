@@ -152,24 +152,22 @@ int DisablePopup(WPARAM wParam, LPARAM)
 
 void EnablePopupModule()
 {
-	if (ServiceExists(POPUPONOFF) && db_get_b(NULL,"Popup", "ModuleIsEnabled", 0) == 0) {
-		CallService(POPUPONOFF, NULL, NULL);
-	}
+	CallService(MS_POPUP_QUERY, PUQS_ENABLEPOPUPS);
 }
 
 void InitSettings()
 {
 	if(gethostname(hostname, _countof(hostname)) == 0){
-		mir_snprintf(EnabledComp, _countof(EnabledComp), "%s_Enabled", hostname);
-		mir_snprintf(DelayComp, _countof(DelayComp), "%s_Delay", hostname);
-		mir_snprintf(PopUpComp, _countof(PopUpComp), "%s_PopUp", hostname);
-		mir_snprintf(PopUpTimeComp, _countof(PopUpTimeComp), "%s_PopUpTime", hostname);
-		mir_snprintf(MenuitemComp, _countof(MenuitemComp), "%s_MenuItem", hostname);
-		mir_snprintf(TTBButtonsComp, _countof(TTBButtonsComp), "%s_TTBButtons", hostname);
-		mir_snprintf(DefSoundComp, _countof(DefSoundComp), "%s_DefSound", hostname);
-		mir_snprintf(DefPopupComp, _countof(DefPopupComp), "%s_DefPopup", hostname);
-		mir_snprintf(DefEnabledComp, _countof(DefEnabledComp), "%s_DefEnabled", hostname);
-		mir_snprintf(NonStatusAllowComp, _countof(NonStatusAllowComp), "%s_NonStatusAllow", hostname);
+		mir_snprintf(EnabledComp, "%s_Enabled", hostname);
+		mir_snprintf(DelayComp, "%s_Delay", hostname);
+		mir_snprintf(PopUpComp, "%s_PopUp", hostname);
+		mir_snprintf(PopUpTimeComp, "%s_PopUpTime", hostname);
+		mir_snprintf(MenuitemComp, "%s_MenuItem", hostname);
+		mir_snprintf(TTBButtonsComp, "%s_TTBButtons", hostname);
+		mir_snprintf(DefSoundComp, "%s_DefSound", hostname);
+		mir_snprintf(DefPopupComp, "%s_DefPopup", hostname);
+		mir_snprintf(DefEnabledComp, "%s_DefEnabled", hostname);
+		mir_snprintf(NonStatusAllowComp, "%s_NonStatusAllow", hostname);
 	}
 	//first run on the host, initial setting
 	if (!(delay = db_get_dw(NULL, MODULE_NAME, DelayComp, 0)))
@@ -289,6 +287,7 @@ INT_PTR SilenceConnection(WPARAM wParam, LPARAM)
 static INT_PTR InitMenu()
 {
 	CMenuItem mi;
+	SET_UID(mi, 0x9100c881, 0x6f76, 0x4cb5, 0x97, 0x66, 0xeb, 0xf5, 0xc5, 0x22, 0x46, 0x1f);
 	mi.position = 100000000;
 	mi.hIcolibItem = GetIconHandle(MENU_NAME);
 	mi.name.a = MENU_NAME;
@@ -340,7 +339,7 @@ void RemoveTTButtons()
 HANDLE GetIconHandle(char *szIcon)
 {
 	char szSettingName[64];
-	mir_snprintf(szSettingName, _countof(szSettingName), "%s_%s", MENU_NAME, szIcon);
+	mir_snprintf(szSettingName, "%s_%s", MENU_NAME, szIcon);
 	return IcoLib_GetIconHandle(szSettingName);
 }
 

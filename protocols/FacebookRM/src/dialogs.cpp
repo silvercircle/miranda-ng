@@ -219,7 +219,7 @@ INT_PTR CALLBACK FBMindProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
 		ptrA firstname(data->proto->getStringA(FACEBOOK_KEY_FIRST_NAME));
 		if (firstname != NULL) {
 			char title[100];
-			mir_snprintf(title, _countof(title), Translate("What's on your mind, %s?"), firstname);
+			mir_snprintf(title, Translate("What's on your mind, %s?"), firstname);
 			SetWindowTextA(hwnd, title);
 		}
 	}
@@ -370,6 +370,7 @@ INT_PTR CALLBACK FBOptionsProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
 
 		LoadDBCheckState(proto, hwnd, IDC_SET_IGNORE_STATUS, FACEBOOK_KEY_DISABLE_STATUS_NOTIFY, DEFAULT_DISABLE_STATUS_NOTIFY);
 		LoadDBCheckState(proto, hwnd, IDC_BIGGER_AVATARS, FACEBOOK_KEY_BIG_AVATARS, DEFAULT_BIG_AVATARS);
+		LoadDBCheckState(proto, hwnd, IDC_NAME_AS_NICK, FACEBOOK_KEY_NAME_AS_NICK, DEFAULT_NAME_AS_NICK);
 
 	} return TRUE;
 
@@ -415,6 +416,7 @@ INT_PTR CALLBACK FBOptionsProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
 
 			StoreDBCheckState(proto, hwnd, IDC_SET_IGNORE_STATUS, FACEBOOK_KEY_DISABLE_STATUS_NOTIFY);
 			StoreDBCheckState(proto, hwnd, IDC_BIGGER_AVATARS, FACEBOOK_KEY_BIG_AVATARS);
+			StoreDBCheckState(proto, hwnd, IDC_NAME_AS_NICK, FACEBOOK_KEY_NAME_AS_NICK);
 
 			return TRUE;
 		}

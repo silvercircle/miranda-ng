@@ -87,10 +87,16 @@ void CVkProto::PollUpdates(const JSONNode &jnUpdates)
 
 			if (hContact != NULL && (flags & VKFLAG_MSGUNREAD) && !CheckMid(m_incIds, msgid)) {
 				setDword(hContact, "LastMsgReadTime", time(NULL));
-				if (!ServiceExists("MessageState/DummyService"))
+				if (ServiceExists(MS_MESSAGESTATE_UPDATE)) {
+					MessageReadData data(time(NULL), MRD_TYPE_READTIME);
+					CallService(MS_MESSAGESTATE_UPDATE, hContact, (LPARAM)&data);
+				}
+				else 
 					SetSrmmReadStatus(hContact);
 				if (m_bUserForceOnlineOnActivity)
 					SetInvisible(hContact);
+				if (m_bSyncReadMessageStatusFromServer)
+					MarkDialogAsRead(hContact);
 			}
 			break;
 
@@ -112,11 +118,21 @@ void CVkProto::PollUpdates(const JSONNode &jnUpdates)
 			hContact = FindUser(uid);
 			if (hContact != NULL) {
 				setDword(hContact, "LastMsgReadTime", time(NULL));
-				if (!ServiceExists("MessageState/DummyService"))
+				if (ServiceExists(MS_MESSAGESTATE_UPDATE)) {
+					MessageReadData data(time(NULL), MRD_TYPE_READTIME);
+					CallService(MS_MESSAGESTATE_UPDATE, hContact, (LPARAM)&data);
+				}
+				else
 					SetSrmmReadStatus(hContact);
 				if (m_bUserForceOnlineOnActivity)
 					SetInvisible(hContact);
 			}
+			break;
+		case VKPOLL_READ_ALL_IN:
+			uid = jnChild[1].as_int();
+			hContact = FindUser(uid);
+			if (hContact != NULL && m_bSyncReadMessageStatusFromServer)
+				MarkDialogAsRead(hContact);
 			break;
 
 		case VKPOLL_USR_ONLINE:
@@ -172,8 +188,7 @@ int CVkProto::PollServer()
 	debugLogA("CVkProto::PollServer (online)");
 	int iPollConnRetry = MAX_RETRIES;
 	NETLIBHTTPREQUEST *reply;
-	CMStringA szReqUrl;
-	szReqUrl.AppendFormat("https://%s?act=a_check&key=%s&ts=%s&wait=25&access_token=%s&mode=%d", m_pollingServer, m_pollingKey, m_pollingTs, m_szAccessToken, 106);
+	CMStringA szReqUrl(FORMAT, "https://%s?act=a_check&key=%s&ts=%s&wait=25&access_token=%s&mode=%d", m_pollingServer, m_pollingKey, m_pollingTs, m_szAccessToken, 106);
 	// see mode parametr description on https://vk.com/dev/using_longpoll (Russian version)
 	NETLIBHTTPREQUEST req = { sizeof(req) };
 	req.requestType = REQUEST_GET;

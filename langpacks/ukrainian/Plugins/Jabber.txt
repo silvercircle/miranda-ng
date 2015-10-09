@@ -493,7 +493,7 @@ xHTML-формат повідомлень чату
 Підтримка шифрування повідомлень OTR (Off-the-Record)
 [Supports New_GPG plugin for Miranda NG]
 Підтримка плагіна New_GPG для Miranda NG
-[Blocks packets from other users/groupchats using Privacy lists]
+[Blocks packets from other users/group chats using Privacy lists]
 Блокування користувачів за допомогою списків приватності
 [Supports Message Receipts]
 Прийом повідомлень
@@ -1401,8 +1401,8 @@ xHTML-формат повідомлень чату
 Виправляти час у вхідних повідомленнях
 [Disable frame]
 Вимкнути фрейм
-[Enable XMPP link processing (requires Association Manager)]
-Обробляти XMPP-посилання (потрібен плагін Association Manager)
+[Enable XMPP link processing (requires AssocMgr)]
+Обробляти XMPP-посилання (потрібен плагін AssocMgr)
 [Keep contacts assigned to local groups (ignore roster group)]
 Використовувати локальні групи (ігнорувати групи ростеру)
 [Security]

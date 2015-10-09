@@ -529,15 +529,14 @@ void CProxyWindow::updateTitle(const TCHAR *tszTitle) const
  */
 LRESULT CALLBACK CProxyWindow::stubWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	CProxyWindow* pWnd = reinterpret_cast<CProxyWindow *>(::GetWindowLongPtr(hWnd, GWLP_USERDATA));
-
+	CProxyWindow *pWnd = reinterpret_cast<CProxyWindow *>(::GetWindowLongPtr(hWnd, GWLP_USERDATA));
 	if (pWnd)
-		return(pWnd->wndProc(hWnd, msg, wParam, lParam));
+		return pWnd->wndProc(hWnd, msg, wParam, lParam);
 
 	switch (msg) {
 	case WM_NCCREATE:
 		CREATESTRUCT *cs = reinterpret_cast<CREATESTRUCT *>(lParam);
-		CProxyWindow *pWnd = reinterpret_cast<CProxyWindow *>(cs->lpCreateParams);
+		pWnd = reinterpret_cast<CProxyWindow *>(cs->lpCreateParams);
 		::SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pWnd));
 		return pWnd->wndProc(hWnd, msg, wParam, lParam);
 	}
@@ -550,29 +549,23 @@ LRESULT CALLBACK CProxyWindow::stubWndProc(HWND hWnd, UINT msg, WPARAM wParam, L
 LRESULT CALLBACK CProxyWindow::wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg) {
-
-#if defined(__LOGDEBUG_)
-	case WM_NCCREATE:
-		_DebugTraceW(_T("create proxy WINDOW for: %s"), m_dat->cache->getNick());
-		break;
-#endif
 	case WM_CLOSE:
-	{
-		TContainerData* pC = m_dat->pContainer;
+		{
+			TContainerData* pC = m_dat->pContainer;
 
-		if (m_dat->hwnd != pC->hwndActive)
-			SendMessage(m_dat->hwnd, WM_CLOSE, 1, 3);
-		else
-			SendMessage(m_dat->hwnd, WM_CLOSE, 1, 2);
-		if (!IsIconic(pC->hwnd))
-			SetForegroundWindow(pC->hwnd);
-	}
-	return 0;
+			if (m_dat->hwnd != pC->hwndActive)
+				SendMessage(m_dat->hwnd, WM_CLOSE, 1, 3);
+			else
+				SendMessage(m_dat->hwnd, WM_CLOSE, 1, 2);
+			if (!IsIconic(pC->hwnd))
+				SetForegroundWindow(pC->hwnd);
+		}
+		return 0;
 
-	/*
-	* proxy window was activated by clicking on the thumbnail. Send this
-	* to the real message window.
-	*/
+		/*
+		* proxy window was activated by clicking on the thumbnail. Send this
+		* to the real message window.
+		*/
 	case WM_ACTIVATE:
 		if (WA_ACTIVE == wParam) {
 			if (IsWindow(m_dat->hwnd))
@@ -583,9 +576,6 @@ LRESULT CALLBACK CProxyWindow::wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARA
 
 	case WM_NCDESTROY:
 		::SetWindowLongPtr(hWnd, GWLP_USERDATA, 0);
-#if defined(__LOGDEBUG_)
-		_DebugTraceW(_T("destroy proxy WINDOW for: %s"), m_dat->cache->getNick());
-#endif
 		break;
 
 	case WM_DWMSENDICONICTHUMBNAIL:
@@ -696,7 +686,7 @@ void CThumbBase::renderBase()
 		wchar_t	tszTemp[30];
 
 		m_rcIcon.top += m_sz.cy;
-		mir_sntprintf(tszTemp, _countof(tszTemp), TranslateT("%d unread"), m_dat->dwUnread);
+		mir_sntprintf(tszTemp, TranslateT("%d unread"), m_dat->dwUnread);
 		CSkin::RenderText(m_hdc, m_dat->hTheme, tszTemp, &m_rcIcon, m_dtFlags | DT_CENTER | DT_WORD_ELLIPSIS, 10, 0, true);
 	}
 	m_rcIcon = m_rcTop;
@@ -776,25 +766,21 @@ void CThumbIM::update()
  */
 void CThumbIM::renderContent()
 {
-	HBITMAP			hbmAvatar, hbmOldAv;
-	double			dNewWidth = 0.0, dNewHeight = 0.0;
-	bool			fFree = false;
-	HRGN			hRgn = 0;
-	HDC				dc;
-	const wchar_t*	tszStatusMsg = 0;
+	double dNewWidth = 0.0, dNewHeight = 0.0;
+	bool fFree = false;
 
-	hbmAvatar = (m_dat->ace && m_dat->ace->hbmPic) ? m_dat->ace->hbmPic : PluginConfig.g_hbmUnknown;
+	HBITMAP hbmAvatar = (m_dat->ace && m_dat->ace->hbmPic) ? m_dat->ace->hbmPic : PluginConfig.g_hbmUnknown;
 	Utils::scaleAvatarHeightLimited(hbmAvatar, dNewWidth, dNewHeight, m_rcIcon.bottom - m_rcIcon.top);
 
 	HBITMAP hbmResized = CSkin::ResizeBitmap(hbmAvatar, dNewWidth, dNewHeight, fFree);
 
-	dc = CreateCompatibleDC(m_hdc);
-	hbmOldAv = reinterpret_cast<HBITMAP>(::SelectObject(dc, hbmResized));
+	HDC	dc = CreateCompatibleDC(m_hdc);
+	HBITMAP hbmOldAv = reinterpret_cast<HBITMAP>(::SelectObject(dc, hbmResized));
 
 	LONG xOff = m_rcIcon.right - (LONG)dNewWidth - 2;
 	LONG yOff = (m_cy - (LONG)dNewHeight) / 2 + m_rcIcon.top;
 
-	hRgn = ::CreateRectRgn(xOff - 1, yOff - 1, xOff + (LONG)dNewWidth + 2, yOff + (LONG)dNewHeight + 2);
+	HRGN hRgn = ::CreateRectRgn(xOff - 1, yOff - 1, xOff + (LONG)dNewWidth + 2, yOff + (LONG)dNewHeight + 2);
 	CSkin::m_default_bf.SourceConstantAlpha = 150;
 	GdiAlphaBlend(m_hdc, xOff, yOff, (LONG)dNewWidth, (LONG)dNewHeight, dc, 0, 0, (LONG)dNewWidth, (LONG)dNewHeight, CSkin::m_default_bf);
 	CSkin::m_default_bf.SourceConstantAlpha = 255;
@@ -818,7 +804,8 @@ void CThumbIM::renderContent()
 
 	m_rcBottom.bottom -= ((m_rcBottom.bottom - m_rcBottom.top) % m_sz.cy);		// adjust to a multiple of line height
 
-	if (0 == (tszStatusMsg = m_dat->cache->getStatusMsg()))
+	const wchar_t *tszStatusMsg = m_dat->cache->getStatusMsg();
+	if (tszStatusMsg == 0)
 		tszStatusMsg = TranslateT("No status message");
 
 	CSkin::RenderText(m_hdc, m_dat->hTheme, tszStatusMsg, &m_rcBottom, DT_WORD_ELLIPSIS | DT_END_ELLIPSIS | m_dtFlags, 10, 0, true);

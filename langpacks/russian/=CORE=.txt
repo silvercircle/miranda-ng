@@ -195,8 +195,8 @@
 Да
 [Hide from list only, in order to keep their history and ignore/visibility settings]
 Скрыть из списка (останутся история и настройки видимости)
-[Use Options->Contacts->Ignore to unhide contacts.]
-Скрытые контакты: "Настройки->Контакты->Игнорировать"
+[Use Options -> Contacts -> Ignore to unhide contacts.]
+Скрытые контакты: "Настройки -> Контакты -> Игнорировать".
 [Are you sure you want to delete %s?]
 Удалить %s из списка?
 [This will erase all history and settings for this contact!]
@@ -412,7 +412,7 @@
 [&DND\tCtrl+5]
 Не &беспокоить\tCtrl+5
 [&Free for chat\tCtrl+6]
-&Готов болтать\tCtrl+7
+&Готов болтать\tCtrl+6
 [&Invisible\tCtrl+7]
 &Невидимый\tCtrl+7
 [On the &phone\tCtrl+8]
@@ -1360,7 +1360,7 @@ UIN, E-mail и т.д.
 [Only prefix with timestamp if it has changed]
 Подставлять время, если есть изменения
 [Timestamp has same color as the event]
-Показывать время тем же цветом что и событие
+Время того же цвета, что и событие
 [Indent the second line of a message]
 Отступ второй строки сообщения
 [Limit user names in the message log to 20 characters]
@@ -1811,8 +1811,8 @@ UIN, E-mail и т.д.
 %s набирает текст
 [Typing notification]
 Уведомление о наборе текста
-[Miranda could not load the built-in message module, Msftedit.dll is missing. Press 'Yes' to continue loading Miranda.]
-Miranda не смогла загрузить встроенную систему сообщений из-за отсутствия Msftedit.dll. Нажмите "Да" для продолжения загрузки программы.
+[Miranda could not load the built-in message module, msftedit.dll is missing. Press 'Yes' to continue loading Miranda.]
+Miranda не смогла загрузить встроенную систему сообщений из-за отсутствия msftedit.dll. Нажмите "Да" для продолжения загрузки программы.
 [Instant messages]
 Сообщения IM
 [Incoming (focused window)]
@@ -1855,7 +1855,7 @@ Miranda не смогла загрузить встроенную систему
 Удалить историю
 [View &history]
 &История
-[Edit E-Mail address]
+[Edit e-mail address]
 Редактировать адрес e-mail
 [Edit phone number]
 Редактировать телефон
@@ -2065,16 +2065,18 @@ Miranda не смогла загрузить встроенную систему
 Файл профиля не должен находится в корневой папке Miranda.
 [Miranda is unable to open '%s' because you do not have any profile plugins installed.\nYou need to install dbx_mmap.dll]
 Miranda не может открыть '%s', так как плагины для поддержки профилей не установлены.\nНеобходимо установить плагин dbx_mmap.dll
-[No profile support installed!]
-Нет установленных плагинов базы!
 [Miranda was unable to open '%s', it's in an unknown format.\nThis profile might also be damaged, please run DbChecker which should be installed.]
 Miranda NG не может открыть '%s', профиль в неизвестном формате.\nЭто может оказаться повреждённый профиль, попробуйте исправить его с помощью DbChecker.
-[Miranda can't understand that profile]
-Miranda не может распознать этот профиль
 [Miranda was unable to open '%s'\nIt's inaccessible or used by other application or Miranda instance]
 Miranda NG не может открыть '%s'\nОн недоступен, занят другим приложением или другой копией Miranda NG
+[Miranda was unable to open '%s'\nThere is no suitable database driver installed]
+Miranda NG не может открыть '%s'\nНе установлен подходящий драйвер базы
+[No profile support installed!]
+Нет установленных плагинов базы!
 [Miranda can't open that profile]
 Miranda NG не может открыть этот профиль
+[Miranda can't understand that profile]
+Miranda не может распознать этот профиль
 [Security systems to prevent malicious changes are in place and you will be warned before every change that is made.]
 Система безопасности для предотвращения нежелательных изменений активна и вы будете предупреждены перед каждым произведённым изменением.
 [Security systems to prevent malicious changes are in place and you will be warned before changes that are known to be unsafe.]
@@ -2331,8 +2333,8 @@ xСтатус
 &Группа
 [<Root group>]
 <Корневая группа>
-[Standard netlib log]
-Стандартный журнал netlib
+[Standard Netlib log]
+Стандартный журнал Netlib
 [No times]
 Без времени
 [Standard hh:mm:ss times]
