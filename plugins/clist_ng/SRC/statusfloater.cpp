@@ -28,6 +28,7 @@ of the event area.
 
 Also implementes floating contacts (FLT_*() functions)
 
+#hastagtest
 */
 
 #include <commonheaders.h>

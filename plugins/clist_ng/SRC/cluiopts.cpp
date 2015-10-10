@@ -37,7 +37,6 @@ extern HANDLE hExtraImageApplying;
 extern SIZE g_oldSize;
 extern POINT g_oldPos;
 extern COLORREF g_CLUISkinnedBkColorRGB;
-
 static int opt_clui_changed = 0;
 
 INT_PTR CALLBACK cfg::DlgProcCluiOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
