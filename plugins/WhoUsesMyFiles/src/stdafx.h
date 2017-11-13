@@ -14,7 +14,7 @@
 #include <m_toptoolbar.h>
 
 #include "resource.h"
-#include "Version.h"
+#include "version.h"
 
 #define MODULENAME		"WUMF Plugin"
 
@@ -70,13 +70,13 @@ struct WUMF_OPTIONS
 	COLORREF ColorText;
 	COLORREF ColorBack;
 
-	TCHAR    LogFile[255];
+	wchar_t    LogFile[255];
 };
 
 struct Wumf
 {
 	DWORD  dwID;
-	TCHAR  szID[10], szPerm[10];
+	wchar_t  szID[10], szPerm[10];
 	LPTSTR szUser;
 	LPTSTR szPath;
 	LPTSTR szComp;
@@ -127,6 +127,6 @@ void process_session(SESSION_INFO_1 s_info);
 void process_file(SESSION_INFO_1 s_info, FILE_INFO_3 f_info);
 void printError(DWORD res);
 
-#define msg(X) MessageBox(NULL, X, _T("WUMF"), MB_OK|MB_ICONSTOP)
+#define msg(X) MessageBox(NULL, X, L"WUMF", MB_OK|MB_ICONSTOP)
 #define MS_WUMF_SWITCHPOPUP 	"WUMF/SwitchPopup"
 #define MS_WUMF_CONNECTIONSSHOW "WUMF/ShowConnections"

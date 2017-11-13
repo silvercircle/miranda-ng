@@ -6,7 +6,7 @@ Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-08  George Hazan
 Copyright (c) 2007     Maxim Mluhov
 Copyright (c) 2008-09  Dmitriy Chervov
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -96,7 +96,7 @@ public:
 	CJabberSendManager(CJabberProto *proto);
 	~CJabberSendManager();
 
-	CJabberSendPermanentInfo* AddPermanentHandler(JABBER_SEND_HANDLER pHandler, void *pUserData = NULL, SEND_USER_DATA_FREE_FUNC pUserDataFree = NULL, int iPriority = JH_PRIORITY_DEFAULT);
+	CJabberSendPermanentInfo* AddPermanentHandler(JABBER_SEND_HANDLER pHandler, void *pUserData = nullptr, SEND_USER_DATA_FREE_FUNC pUserDataFree = nullptr, int iPriority = JH_PRIORITY_DEFAULT);
 	bool DeletePermanentHandler(CJabberSendPermanentInfo *pInfo);
 
 	bool HandleSendPermanent(HXML node, ThreadData *pThreadData);

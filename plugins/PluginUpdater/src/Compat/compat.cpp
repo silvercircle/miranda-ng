@@ -69,17 +69,53 @@ char *rtrim(char *str)
 	return str;
 }
 
-void CreatePathToFileT(TCHAR *tszFilePath)
+wchar_t* strdelw(wchar_t *str, size_t len)
+{
+	wchar_t* p;
+	for (p = str + len; *p != 0; p++)
+		*(p - len) = *p;
+
+	*(p - len) = '\0';
+	return str;
+}
+
+void CreatePathToFileW(WCHAR *tszFilePath)
 {
 	TCHAR *pszLastBackslash = _tcsrchr(tszFilePath, '\\');
 	if (pszLastBackslash != NULL){
 		*pszLastBackslash = '\0';
-		CreateDirectoryTreeT(tszFilePath);
+		CreateDirectoryTreeW(tszFilePath);
 		*pszLastBackslash = '\\';
 	}
 }
 
-int wildcmpit(const WCHAR *name, const WCHAR *mask)
+int mir_snwprintf(WCHAR *buffer, size_t count, const WCHAR* fmt, ...)
+{
+	va_list va;
+	va_start(va, fmt);
+	int len = _vsntprintf(buffer, count-1, fmt, va);
+	va_end(va);
+	buffer[count-1] = 0;
+	return len;
+}
+
+int mir_vsnwprintf(WCHAR *buffer, size_t count, const WCHAR* fmt, va_list va)
+{
+	int len = _vsntprintf(buffer, count-1, fmt, va);
+	buffer[count-1] = 0;
+	return len;
+}
+
+int mir_wstrcmpi(const wchar_t *p1, const wchar_t *p2)
+{
+	if (p1 == NULL)
+		return (p2 == NULL) ? 0 : -1;
+	if (p2 == NULL)
+		return 1;
+	return _wcsicmp(p1, p2);
+}
+
+int wildcmpiw(const WCHAR *name, const WCHAR *mask)
 {
 	if (name == NULL || mask == NULL)
 		return false;
@@ -106,8 +142,8 @@ void __stdcall RestartMe(void*)
 	TCHAR mirandaPath[MAX_PATH], cmdLine[MAX_PATH];
 	GetModuleFileName(NULL, mirandaPath, SIZEOF(mirandaPath));
 
-	TCHAR *profilename = Utils_ReplaceVarsT(_T("%miranda_profilename%"));
-	mir_sntprintf(cmdLine, SIZEOF(cmdLine), _T("\"%s\" /restart:%d /profile=%s"), mirandaPath, GetCurrentProcessId(), profilename);
+	TCHAR *profilename = Utils_ReplaceVarsT(L"%miranda_profilename%");
+	mir_sntprintf(cmdLine, SIZEOF(cmdLine), L"\"%s\" /restart:%d /profile=%s", mirandaPath, GetCurrentProcessId(), profilename);
 	mir_free(profilename);
 
 	CallService("CloseAction", 0, 0);
@@ -139,5 +175,5 @@ void InitIcoLib()
 }
 
 TCHAR *GetDefaultUrl() {
-	return mir_tstrdup(_T("http://miranda-ng.org/distr/deprecated/0.94.9/x%platform%"));
+	return mir_tstrdup(L"https://miranda-ng.org/distr/deprecated/0.94.9/x%platform%");
 }

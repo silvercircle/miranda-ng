@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: SkypeWeb.dll
 ;  Plugin: Skype protocol (Web)
-;  Version: 0.12.2.2
+;  Version: 0.12.2.4
 ;  Authors: Miranda NG Team
 ;============================================================
 [Skype protocol support for Miranda NG. Based on new Skype for Web.]
@@ -51,6 +51,8 @@
 Адмін
 [User]
 Користувач
+[Enter new nickname]
+Введіть нове ім'я
 [This chat is going to be destroyed forever with all its contents. This action cannot be undone. Are you sure?]
 Цей чат буде видалено разом з усім його вмістом. Цю дію не можна буде скасувати. Ви впевнені?
 [Warning]
@@ -59,8 +61,8 @@
 &Запросити користувача...
 [&Leave chat session]
 &Вийти з чату
-[&Change topic]
-&Змінити тему
+[&Change topic...]
+&Змінити тему...
 [Kick &user]
 &Вигнати
 [Set &role]
@@ -69,10 +71,14 @@
 &Адмін
 [&User]
 &Користувач
+[Change nick...]
+Змінити ім'я...
 [Enter new chatroom topic]
 Введіть нову тему для чат-кімнати
 [Are you sure?]
 Ви впевнені?
+[Incoming call]
+Вхідний дзвінок
 [Edited message]
 Відредаговане повідомлення
 [Action]
@@ -83,12 +89,14 @@
 Інформація про передачу файлу
 [URI object]
 Об'єкт URI
+[Moji]
+Модзі
+[File]
+Файл
 [Unknown event]
 Невідома подія
-[Incoming call]
-Вхідний дзвінок
-[Invalid data!]
-Неправильні дані!
+[SkypeWeb error: Invalid data!]
+Помилка SkypeWeb: Неправильні дані!
 [[b]Original message:[/b]\n%s\n]
 \[b]Початкове повідомлення:[/b]\n%s\n
 [Original message:\n%s\n]
@@ -169,7 +177,7 @@
 Вхідний дзвінок
 [Incoming call canceled sound]
 Вхідний дзвінок скасовано
-[Failed to establish a TRouter connection.]
-Неможливо встановити з'єднання для TRouter.
+[Skypename]
+Логін Skype
 [Incoming call from %s]
 Вхідний дзвінок від %s

@@ -25,7 +25,7 @@ int hLangpack;
 HANDLE hPrebuildMenuHook = NULL;
 HWND hAddFeedDlg;
 MWindowList hChangeFeedDlgList = NULL;
-TCHAR tszRoot[MAX_PATH] = {0};
+wchar_t tszRoot[MAX_PATH] = {0};
 HANDLE hUpdateMutex;
 
 PLUGININFOEX pluginInfoEx = {
@@ -89,11 +89,11 @@ extern "C" __declspec(dllexport) int Load(void)
 	CreateServiceFunction(MS_NEWSAGGREGATOR_CHANGEFEED, ChangeFeed);
 	CreateServiceFunction(MS_NEWSAGGREGATOR_ENABLED, EnableDisable);
 
-	HOTKEYDESC hkd = { sizeof(hkd) };
-	hkd.dwFlags = HKD_TCHAR;
+	HOTKEYDESC hkd = {};
+	hkd.dwFlags = HKD_UNICODE;
 	hkd.pszName = "NewsAggregator/CheckAllFeeds";
-	hkd.ptszDescription = LPGENT("Check All Feeds");
-	hkd.ptszSection = LPGENT("News Aggregator");
+	hkd.szDescription.w = LPGENW("Check All Feeds");
+	hkd.szSection.w = LPGENW("News Aggregator");
 	hkd.pszService = MS_NEWSAGGREGATOR_CHECKALLFEEDS;
 	hkd.DefHotKey = HOTKEYCODE(HOTKEYF_CONTROL+HKCOMB_A, 'O') | HKF_MIRANDA_LOCAL;
 	Hotkey_Register(&hkd);

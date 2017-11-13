@@ -7,8 +7,8 @@ tstring tstringprintf(tstring strFormat,...) {
 	va_start(vlist, strFormat);
 	
 	int mlen = (int)strFormat.length()+128;
-	TCHAR *text = (TCHAR*)malloc(mlen*sizeof(TCHAR));
-	_vsntprintf(text,mlen,strFormat.c_str(),vlist);
+	wchar_t *text = (wchar_t*)malloc(mlen*sizeof(wchar_t));
+	_vsnwprintf(text,mlen,strFormat.c_str(),vlist);
 	va_end(vlist);
 
 	strFormat = text;
@@ -92,10 +92,7 @@ tstring toLower(const tstring &i_str)
   tstring str(i_str);
   for (size_t i = 0; i < str.size(); ++ i)
   {
-    if (_istlead(str[i]))
-      ++ i;
-    else
-      str[i] = tolower(str[i]);
+    str[i] = tolower(str[i]);
   }
   return str;
 }
@@ -111,7 +108,7 @@ tstring toLower(const tstring &i_str)
 
 tstring Utf8_Decode(const char *str)
 {
-	tstring strRes = _T("");
+	tstring strRes = L"";
 
 	int i;
 	char *p;
@@ -122,7 +119,7 @@ tstring Utf8_Decode(const char *str)
 
 	size_t len = mir_strlen(str);
 
-    if ((wszTemp = (WCHAR *) malloc(sizeof(TCHAR) * (len + 2))) == NULL)
+    if ((wszTemp = (WCHAR *) malloc(sizeof(wchar_t) * (len + 2))) == NULL)
 		return strRes;
 	
 	p = (char *) str;
@@ -140,7 +137,7 @@ tstring Utf8_Decode(const char *str)
 			wszTemp[i++] |= (*(p++) & 0x3f);
 		}
 	}
-	wszTemp[i] = (TCHAR)'\0';
+	wszTemp[i] = (wchar_t)'\0';
 
 	strRes = wszTemp;
 	free(wszTemp);

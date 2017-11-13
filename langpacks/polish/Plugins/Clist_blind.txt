@@ -13,13 +13,13 @@ Usuń kontakt
 [Are you sure you want to delete %s?]
 Czy na pewno chcesz usunąć %s?
 [This will erase all history and settings for this contact!]
-To usunie wszystkie ustawienia i historię dla tego kontaktu!
+To usunie wszystkie ustawienia i historię tego kontaktu!
 [Yes]
 Tak
 [No]
 Nie
 [Hide from list only, in order to keep their history and ignore/visibility settings]
-Tylko ukryj na liście by zatrzymać ustawienia ignorowania/widoczności.
+Tylko ukryj na liście by zatrzymać historię i ustawienia ignorowania/widoczności.
 [Use Options -> Contacts -> Ignore to unhide contacts.]
 Użyj Opcje -> Kontakty -> Ignorowanie by pokazać kontakty.
 [Hotkeys]
@@ -125,7 +125,7 @@ Przypnij do pulpitu
 [Items]
 Obiekty
 ['Hide offline' means to hide:]
-"ukryj rozłączonych" oznacza ukrycie:
+"Ukryj rozłączonych" tzn.:
 [Groups]
 Grupy
 [Show counts of number of contacts in a group]
@@ -147,7 +147,7 @@ Separator:
 [Info:]
 Info:
 [Status bar]
-Pasek stanu
+Pasek statusu
 [Show status bar]
 Pokaż pasek statusu
 [Show icons]
@@ -178,48 +178,20 @@ W&yjdź
 &Dostępny\tCtrl+1
 [&Away\tCtrl+2]
 &Zaraz wracam\tCtrl+2
-[&NA\tCtrl+3]
-&Wrócę później
+[&Not available\tCtrl+3]
+&Wrócę później\tCtrl+3
 [Occ&upied\tCtrl+4]
-Za&jęty
-[&DND\tCtrl+5]
-&Nie przeszkadzać
+Za&jęty\tCtrl+4
+[&Do not disturb\tCtrl+5]
+&Nie przeszkadzać\tCtrl+5
 [&Free for chat\tCtrl+6]
 &Chętny do rozmowy\tCtrl+6
 [&Invisible\tCtrl+7]
 N&iewidoczny\tCtrl+7
 [On the &phone\tCtrl+8]
-Przy &telefonie\tCtrl+8
+Pod &telefonem\tCtrl+8
 [Out to &lunch\tCtrl+9]
-Na &Obiedzie\tCtrl+9
-[Tray]
-Zasobnik
-[&Hide/Show]
-&Pokaż/Ukryj
-[Nowhere]
-Nigdzie
-[&New group]
-&Nowa grupa
-[&Hide offline users]
-&Ukryj rozłączonych
-[Hide &offline users out here]
-Ukryj &rozłączonych poza grupą
-[Hide &empty groups]
-Ukryj &puste grupy
-[Disable &groups]
-Wyłącz &grupy
-[Hide Miranda]
-Ukryj Mirandę
-[Group]
-Grupa
-[&New subgroup]
-&Nowa podgrupa
-[&Hide offline users in here]
-&Ukryj rozłączonych tutaj
-[&Rename group]
-&Zmień nazwę grupy
-[&Delete group]
-&Usuń grupę
+Na &obiedzie\tCtrl+9
 ;file \plugins\Clist_blind\src\clcopts.cpp
 [Not focused]
 Nieaktywne
@@ -229,11 +201,11 @@ Rozłączony
 Dostępny
 [Away]
 Zaraz wracam
-[NA]
+[Not available]
 Wrócę później
 [Occupied]
 Zajęty
-[DND]
+[Do not disturb]
 Nie przeszkadzać
 [Free for chat]
 Porozmawiajmy

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-02 Richard Hughes, Roland Rabien & Tristan Van de Vreede
 
 This program is free software; you can redistribute it and/or
@@ -66,11 +66,6 @@ typedef struct tagCLISTFrame {
 #define F_NO_SUBCONTAINER   1024   //Support skining no subcontainer needed
 #define F_SKINNED           2048    // skinned frame (for owned subframe only)
 #define F_UNICODE			32768 //Use unicode text
-#ifdef _UNICODE
-# define F_TCHAR			F_UNICODE
-#else
-# define F_TCHAR			0
-#endif
 
 // frame alignment
 #define alTop		0x00000001
@@ -99,12 +94,6 @@ typedef struct tagCLISTFrame {
 #define FO_FLOATING		0x000a //Change floating mode
 
 #define FO_UNICODETEXT	0x8000 // flag for	FO_NAME,FO_TBNAME, FO_TBTIPNAME set/get lPAram as unicode wchar_t
-#ifdef _UNICODE
-	#define FO_TCHAR FO_UNICODETEXT
-#else
-	#define FO_TCHAR 0x0000
-#endif
-
 
 //////////////////////////////////////////////////////////////////////////
 //want show tooltip for statusbar

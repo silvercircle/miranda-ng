@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -25,26 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <m_db_int.h>
 
-/* tree diagram
-
-DBHeader
-|-->end of file (plain offset)
-|-->first contact (DBContact)
-|   |-->next contact (DBContact)
-|   |   \--> ...
-|   |-->first settings (DBContactSettings)
-|   |	 |-->next settings (DBContactSettings)
-|   |   |   \--> ...
-|   |   \-->module name (DBModuleName)
-|   \-->first/last/firstunread event
-|-->user contact (DBContact)
-|   |-->next contact = NULL
-|   |-->first settings	as above
-|   \-->first/last/firstunread event as above
-\-->first module name (DBModuleName)
-\-->next module name (DBModuleName)
-\--> ...
-*/
+#pragma warning (disable: 4200)
 
 #define DBMODE_SHARED    0x0001
 #define DBMODE_READONLY  0x0002
@@ -54,48 +35,32 @@ DBHeader
 
 #define MARKED_READ (DBEF_READ | DBEF_SENT)
 
-struct ModuleName
-{
-	char *name;
-	DWORD ofs;
-};
-
 #include <pshpack1.h>
+
+#define DBHEADER_VERSION MAKELONG(1, 4)
 
 #define DBHEADER_SIGNATURE  0x40DECADEu
 struct DBHeader
 {
-	DWORD dwSignature;
-	DWORD dwVersion;			// database format version
+	uint32_t dwSignature;
+	uint32_t dwVersion;			// database format version
 };
 
-#define DBCONTACT_SIGNATURE 0x43DECADEu
 struct DBContact
 {
-	DWORD dwSignature;
-	DWORD dwEventCount;       // number of events in the chain for this contact
-	DWORD tsFirstUnread;
-	DWORD dwFirstUnread;
+	uint32_t dwEventCount;       // number of events in the chain for this contact
+	MEVENT   evFirstUnread;
+	uint64_t tsFirstUnread;
 };
 
-#define DBMODULENAME_SIGNATURE 0x4DDECADEu
-struct DBModuleName
-{
-	DWORD dwSignature;
-	BYTE cbName;            // number of characters in this module name
-	char name[1];           // name, no nul terminator
-};
-
-#define DBEVENT_SIGNATURE  0x45DECADEu
 struct DBEvent
 {
-	DWORD dwSignature;
 	MCONTACT contactID;     // a contact this event belongs to
-	DWORD ofsModuleName;	   // offset to a DBModuleName struct of the name of
-	DWORD timestamp;        // seconds since 00:00:00 01/01/1970
-	DWORD flags;            // see m_database.h, db/event/add
-	WORD  wEventType;       // module-defined event type
-	WORD  cbBlob;           // number of bytes in the blob
+	uint32_t iModuleId;	    // offset to a DBModuleName struct of the name of
+	uint64_t timestamp;        // seconds since 00:00:00 01/01/1970
+	uint32_t flags;            // see m_database.h, db/event/add
+	uint16_t wEventType;       // module-defined event type
+	uint16_t cbBlob;           // number of bytes in the blob
 
 	bool __forceinline markedRead() const
 	{
@@ -103,34 +68,69 @@ struct DBEvent
 	}
 };
 
-#include <poppack.h>
-
 struct DBEventSortingKey
 {
-	DWORD dwEventId, ts, dwContactId;
+	MCONTACT hContact;
+	MEVENT hEvent;
+	uint64_t ts;
+
+	static int Compare(const MDBX_val* a, const MDBX_val* b);
 };
+
+struct DBSettingKey
+{
+	MCONTACT hContact;
+	uint32_t dwModuleId;
+	char     szSettingName[];
+
+	static int Compare(const MDBX_val*, const MDBX_val*);
+
+};
+
+struct DBSettingValue
+{
+	BYTE type;
+	union
+	{
+		BYTE bVal;
+		WORD wVal;
+		DWORD dwVal;
+		char szVal[];
+
+		struct
+		{
+			size_t nLength;
+			BYTE bVal[];
+		} blob;
+	};
+};
+
+#include <poppack.h>
 
 struct DBCachedContact : public DBCachedContactBase
 {
-	void Advance(DWORD id, DBEvent &dbe);
-
-	DBContact dbc;
+	void Advance(MEVENT id, DBEvent &dbe);
+	void Snapshot();
+	void Revert();
+	DBContact dbc, tmp_dbc;
 };
 
 struct EventItem
 {
-	__forceinline EventItem(int _ts, DWORD _id) :
+	__forceinline EventItem(int _ts, MEVENT _id) :
 		ts(_ts), eventId(_id)
 	{}
 
-	int ts;
-	DWORD eventId;
+	uint64_t ts;
+	MEVENT eventId;
 };
 
 struct CDbxMdb : public MIDatabase, public MIDatabaseChecker, public MZeroedObject
 {
+	friend class LMDBEventCursor;
+
 	CDbxMdb(const TCHAR *tszFileName, int mode);
-	~CDbxMdb();
+	virtual ~CDbxMdb();
 
 	int Load(bool bSkipInit);
 	int Create(void);
@@ -138,18 +138,17 @@ struct CDbxMdb : public MIDatabase, public MIDatabaseChecker, public MZeroedObje
 
 	void DatabaseCorruption(const TCHAR *ptszText);
 
-	void ToggleEncryption(void);
 	void StoreKey(void);
 	void SetPassword(const TCHAR *ptszPassword);
 	void UpdateMenuItem(void);
 
 	int  PrepareCheck(int*);
 
-	__forceinline LPSTR GetMenuTitle() const { return m_bUsesPassword ? LPGEN("Change/remove password") : LPGEN("Set password"); }
+	__forceinline LPSTR GetMenuTitle() const { return m_bUsesPassword ? (char*)LPGEN("Change/remove password") : (char*)LPGEN("Set password"); }
 
 	__forceinline bool isEncrypted() const { return m_bEncrypted; }
 	__forceinline bool usesPassword() const { return m_bUsesPassword; }
-
+	int      EnableEncryption(bool bEnable);
 public:
 	STDMETHODIMP_(BOOL)     IsRelational(void) { return TRUE; }
 	STDMETHODIMP_(void)     SetCacheSafetyMode(BOOL);
@@ -175,7 +174,7 @@ public:
 	STDMETHODIMP_(MEVENT)   FindNextEvent(MCONTACT contactID, MEVENT hDbEvent);
 	STDMETHODIMP_(MEVENT)   FindPrevEvent(MCONTACT contactID, MEVENT hDbEvent);
 
-	STDMETHODIMP_(BOOL)     EnumModuleNames(DBMODULEENUMPROC pFunc, void *pParam);
+	STDMETHODIMP_(BOOL)     EnumModuleNames(DBMODULEENUMPROC pFunc, const void *pParam);
 
 	STDMETHODIMP_(BOOL)     GetContactSetting(MCONTACT contactID, LPCSTR szModule, LPCSTR szSetting, DBVARIANT *dbv);
 	STDMETHODIMP_(BOOL)     GetContactSettingStr(MCONTACT contactID, LPCSTR szModule, LPCSTR szSetting, DBVARIANT *dbv);
@@ -183,9 +182,9 @@ public:
 	STDMETHODIMP_(BOOL)     FreeVariant(DBVARIANT *dbv);
 	STDMETHODIMP_(BOOL)     WriteContactSetting(MCONTACT contactID, DBCONTACTWRITESETTING *dbcws);
 	STDMETHODIMP_(BOOL)     DeleteContactSetting(MCONTACT contactID, LPCSTR szModule, LPCSTR szSetting);
-	STDMETHODIMP_(BOOL)     EnumContactSettings(MCONTACT contactID, DBCONTACTENUMSETTINGS *dbces);
+	STDMETHODIMP_(BOOL)     EnumContactSettings(MCONTACT hContact, DBSETTINGENUMPROC pfnEnumProc, const char *szModule, const void *param);
 	STDMETHODIMP_(BOOL)     SetSettingResident(BOOL bIsResident, const char *pszSettingName);
-	STDMETHODIMP_(BOOL)     EnumResidentSettings(DBMODULEENUMPROC pFunc, void *pParam);
+	STDMETHODIMP_(BOOL)     EnumResidentSettings(DBMODULEENUMPROC pFunc, const void *pParam);
 	STDMETHODIMP_(BOOL)     IsSettingEncrypted(LPCSTR szModule, LPCSTR szSetting);
 
 	STDMETHODIMP_(BOOL)     MetaDetouchSub(DBCachedContact *cc, int nSub);
@@ -199,20 +198,11 @@ protected:
 	STDMETHODIMP_(VOID)     Destroy();
 
 protected:
-	void  InvalidateSettingsGroupOfsCacheEntry(DWORD) {}
-	int   WorkInitialCheckHeaders(void);
 
 	void  FillContacts(void);
 
+	int   Map();
 	bool  Remap();
-
-public:  // Check functions
-	int WorkInitialChecks(int);
-	int WorkModuleChain(int);
-	int WorkUser(int);
-	int WorkContactChain(int);
-	int WorkAggressive(int);
-	int WorkFinalTasks(int);
 
 protected:
 	TCHAR*   m_tszProfileName;
@@ -224,92 +214,76 @@ public:
 	MICryptoEngine *m_crypto;
 
 protected:
-	MDB_env *m_pMdbEnv;
-	DWORD    m_dwFileSize;
-	MDB_dbi  m_dbGlobal;
+	MDBX_env *m_pMdbEnv;
+	CMDBX_txn_ro m_txn;
+
+	MDBX_dbi  m_dbGlobal;
 	DBHeader m_header;
 
 	HANDLE   hSettingChangeEvent, hContactDeletedEvent, hContactAddedEvent, hEventMarkedRead;
-
-	mir_cs   m_csDbAccess;
 
 	int      CheckProto(DBCachedContact *cc, const char *proto);
 
 	////////////////////////////////////////////////////////////////////////////
 	// settings
 
-	MDB_dbi  m_dbSettings;
+	MDBX_dbi  m_dbSettings;
+	MDBX_cursor *m_curSettings;
+
 	int      m_codePage;
 	HANDLE   hService, hHook;
+
+	LIST<char> m_lResidentSettings;
 
 	////////////////////////////////////////////////////////////////////////////
 	// contacts
 
-	MDB_dbi	m_dbContacts;
-	int      m_contactCount, m_dwMaxContactId;
+	MDBX_dbi	    m_dbContacts;
+	MDBX_cursor *m_curContacts;
 
-	int      WipeContactHistory(DBContact *dbc);
+	uint32_t m_contactCount;
+	MCONTACT m_maxContactId;
+
 	void     GatherContactHistory(MCONTACT hContact, LIST<EventItem> &items);
 
 	////////////////////////////////////////////////////////////////////////////
 	// events
 
-	MDB_dbi	m_dbEvents, m_dbEventsSort;
-	DWORD    m_dwMaxEventId, m_tsLast;
-	MEVENT   m_evLast;
+	MDBX_dbi	    m_dbEvents,   m_dbEventsSort;
+	MDBX_cursor *m_curEvents, *m_curEventsSort;
+	MEVENT       m_dwMaxEventId;
+
+	HANDLE   hEventAddedEvent, hEventDeletedEvent, hEventFilterAddedEvent;
 
 	void     FindNextUnread(const txn_ptr &_txn, DBCachedContact *cc, DBEventSortingKey &key2);
 
 	////////////////////////////////////////////////////////////////////////////
 	// modules
 
-	MDB_dbi	m_dbModules;
-	HANDLE   m_hModHeap;
-	LIST<ModuleName> m_lMods, m_lOfs;
-	LIST<char> m_lResidentSettings;
-	HANDLE   hEventAddedEvent, hEventDeletedEvent, hEventFilterAddedEvent;
-	MCONTACT m_hLastCachedContact;
-	int      m_maxModuleID;
-	ModuleName *m_lastmn;
+	MDBX_dbi	m_dbModules;
+	MDBX_cursor *m_curModules;
+	
+	std::map<uint32_t, std::string> m_Modules;
 
-	void     AddToList(char *name, DWORD ofs);
-	DWORD    FindExistingModuleNameOfs(const char *szName);
-	int      InitModuleNames(void);
-	DWORD    GetModuleNameOfs(const char *szName);
-	char*    GetModuleNameByOfs(DWORD ofs);
+	int      InitModules();
+	
+	uint32_t GetModuleID(const char *szName);
+	char*    GetModuleName(uint32_t dwId);
 
-	////////////////////////////////////////////////////////////////////////////
-	// checker
 
-	int      PeekSegment(DWORD ofs, PVOID buf, int cbBytes);
-	int      ReadSegment(DWORD ofs, PVOID buf, int cbBytes);
-	int      ReadWrittenSegment(DWORD ofs, PVOID buf, int cbBytes);
-	int      SignatureValid(DWORD ofs, DWORD dwSignature);
-	void     FreeModuleChain();
+	int GetContactSettingWorker(MCONTACT contactID, LPCSTR szModule, LPCSTR szSetting, DBVARIANT *dbv, int isStatic);
 
-	DWORD    ConvertModuleNameOfs(DWORD ofsOld);
-	void     ConvertOldEvent(DBEvent*& dbei);
-
-	int      GetContactSettingWorker(MCONTACT contactID, LPCSTR szModule, LPCSTR szSetting, DBVARIANT *dbv, int isStatic);
-	int      WorkSettingsChain(DBContact *dbc, int firstTime);
-	int      WorkEventChain(DWORD ofsContact, DBContact *dbc, int firstTime);
-
-	DWORD    WriteSegment(DWORD ofs, PVOID buf, int cbBytes);
-	DWORD    WriteEvent(DBEvent *dbe);
-	DWORD    PeekEvent(DWORD ofs, DWORD dwContactID, DBEvent &dbe);
-	void     WriteOfsNextToPrevious(DWORD ofsPrev, DBContact *dbc, DWORD ofsNext);
-	void     FinishUp(DWORD ofsLast, DBContact *dbc);
 
 	DBCHeckCallback *cb;
-	DWORD    sourceFileSize, ofsAggrCur;
 
 	////////////////////////////////////////////////////////////////////////////
 	// encryption
 
+	MDBX_dbi  m_dbCrypto;
+
 	int      InitCrypt(void);
-	void     ToggleEventsEncryption(MCONTACT contactID);
-	void     ToggleSettingsEncryption(MCONTACT contactID);
+	CRYPTO_PROVIDER* SelectProvider();
+	void     GenerateNewKey();
 
 	void     InitDialogs();
-	bool     EnterPassword(const BYTE *pKey, const size_t keyLen);
 };

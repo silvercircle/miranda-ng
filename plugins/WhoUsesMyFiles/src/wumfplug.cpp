@@ -24,11 +24,11 @@ static PLUGININFOEX pluginInfo =
 void LoadOptions()
 {
 	DBVARIANT dbv = { 0 };
-	dbv.type = DBVT_TCHAR;
+	dbv.type = DBVT_WCHAR;
 	memset(&WumfOptions, 0, sizeof(WumfOptions));
-	if (db_get_ts(NULL, MODULENAME, OPT_FILE, &dbv) == 0)
+	if (db_get_ws(NULL, MODULENAME, OPT_FILE, &dbv) == 0)
 	{
-		_tcsncpy(WumfOptions.LogFile, dbv.ptszVal, 255);
+		wcsncpy(WumfOptions.LogFile, dbv.ptszVal, 255);
 		db_free(&dbv);
 	}
 	else
@@ -68,11 +68,11 @@ void ExecuteMenu(HWND hWnd)
         msg(TranslateT("Error creating menu"));
         return;
     }
-    AppendMenu(hMenu, MF_STRING, IDM_ABOUT, _T("About\0"));
+    AppendMenu(hMenu, MF_STRING, IDM_ABOUT, L"About\0");
     AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);//------------------
-    AppendMenu(hMenu, MF_STRING, IDM_SHOW, _T("Show connections\0"));
+    AppendMenu(hMenu, MF_STRING, IDM_SHOW, L"Show connections\0");
     AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);//------------------
-    AppendMenu(hMenu, MF_STRING, IDM_EXIT, _T("Dismiss popup\0"));
+    AppendMenu(hMenu, MF_STRING, IDM_EXIT, L"Dismiss popup\0");
 
     POINT point;
     GetCursorPos(&point);
@@ -116,11 +116,11 @@ static LRESULT CALLBACK PopupDlgProc(HWND hWnd, UINT message, WPARAM wParam, LPA
 
 void ShowWumfPopup(PWumf w)
 {
-	TCHAR text[512], title[512];
+	wchar_t text[512], title[512];
 
 	if (!WumfOptions.AlertFolders && (w->dwAttr & FILE_ATTRIBUTE_DIRECTORY)) return;
-	mir_sntprintf(title, _T("%s (%s)"), w->szComp, w->szUser);
-	mir_sntprintf(text, _T("%s (%s)"), w->szPath, w->szPerm);
+	mir_snwprintf(title, L"%s (%s)", w->szComp, w->szUser);
+	mir_snwprintf(text, L"%s (%s)", w->szPath, w->szPerm);
 	ShowThePopup(w, title, text);
 }
 
@@ -137,8 +137,8 @@ void ShowThePopup(PWumf w, LPTSTR title, LPTSTR text)
 	else if (WumfOptions.DelaySet)
 		ppd.iSeconds = WumfOptions.DelaySec;
 
-	mir_tstrncpy(ppd.lptzContactName, title, MAX_CONTACTNAME);
-	mir_tstrncpy(ppd.lptzText, text, MAX_SECONDLINE);
+	mir_wstrncpy(ppd.lptzContactName, title, MAX_CONTACTNAME);
+	mir_wstrncpy(ppd.lptzText, text, MAX_SECONDLINE);
 	if (WumfOptions.UseWinColor) {
 		ppd.colorBack = GetSysColor(COLOR_WINDOW);
 		ppd.colorText = GetSysColor(COLOR_WINDOWTEXT);
@@ -161,28 +161,28 @@ void ShowThePreview()
 	}
 
 	if (WumfOptions.AlertFolders) {
-		ShowThePopup(NULL, _T("Guest"), _T("C:\\My Share"));
+		ShowThePopup(NULL, L"Guest", L"C:\\My Share");
 		Sleep(300);
-		ShowThePopup(NULL, _T("Guest"), _T("C:\\My Share\\Photos"));
+		ShowThePopup(NULL, L"Guest", L"C:\\My Share\\Photos");
 		Sleep(300);
 	}
-	ShowThePopup(NULL, _T("Guest"), _T("C:\\Share\\My Photos\\photo.jpg"));
+	ShowThePopup(NULL, L"Guest", L"C:\\Share\\My Photos\\photo.jpg");
 	Sleep(300);
 	if (WumfOptions.AlertFolders) {
-		ShowThePopup(NULL, _T("User"), _T("C:\\My Share"));
+		ShowThePopup(NULL, L"User", L"C:\\My Share");
 		Sleep(300);
-		ShowThePopup(NULL, _T("User"), _T("C:\\My Share\\Movies"));
+		ShowThePopup(NULL, L"User", L"C:\\My Share\\Movies");
 		Sleep(300);
 	}
-	ShowThePopup(NULL, _T("User"), _T("C:\\My Share\\Movies\\The Two Towers.avi"));
+	ShowThePopup(NULL, L"User", L"C:\\My Share\\Movies\\The Two Towers.avi");
 	Sleep(300);
 	if (WumfOptions.AlertFolders) {
-		ShowThePopup(NULL, _T("Administrator"), _T("C:\\Distributives"));
+		ShowThePopup(NULL, L"Administrator", L"C:\\Distributives");
 		Sleep(300);
-		ShowThePopup(NULL, _T("Administrator"), _T("C:\\Distributives\\Win2k"));
+		ShowThePopup(NULL, L"Administrator", L"C:\\Distributives\\Win2k");
 		Sleep(300);
 	}
-	ShowThePopup(NULL, _T("Administrator"), _T("C:\\Distributives\\Win2k\\setup.exe"));
+	ShowThePopup(NULL, L"Administrator", L"C:\\Distributives\\Win2k\\setup.exe");
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD, LPVOID)
@@ -222,11 +222,11 @@ static INT_PTR WumfMenuCommand(WPARAM,LPARAM)
 {
 	if (WumfOptions.PopupsEnabled == TRUE) { 
 		WumfOptions.PopupsEnabled = FALSE;
-		Menu_ModifyItem(hMenuItem, LPGENT("Enable WUMF popups"), LoadIcon(hInst,MAKEINTRESOURCE(IDI_NOPOPUP)));
+		Menu_ModifyItem(hMenuItem, LPGENW("Enable WUMF popups"), LoadIcon(hInst,MAKEINTRESOURCE(IDI_NOPOPUP)));
 	}
 	else {
 		WumfOptions.PopupsEnabled = TRUE;
-		Menu_ModifyItem(hMenuItem, LPGENT("Disable WUMF popups"), LoadIcon(hInst,MAKEINTRESOURCE(IDI_POPUP)));
+		Menu_ModifyItem(hMenuItem, LPGENW("Disable WUMF popups"), LoadIcon(hInst,MAKEINTRESOURCE(IDI_POPUP)));
 	}
 
 	db_set_b(NULL, MODULENAME, POPUPS_ENABLED, (BYTE)WumfOptions.PopupsEnabled);
@@ -252,7 +252,7 @@ void DisableDelayOptions(HWND hwndDlg)
 
 void ChooseFile(HWND hwndDlg)
 {
-	TCHAR szFile[MAX_PATH]; szFile[0]=0;
+	wchar_t szFile[MAX_PATH]; szFile[0]=0;
 
 	// Initialize OPENFILENAME
 	OPENFILENAME ofn = {0};       // common dialog box structure
@@ -260,7 +260,7 @@ void ChooseFile(HWND hwndDlg)
 	ofn.hwndOwner = hwndDlg;
 	ofn.lpstrFile = szFile;
 	ofn.nMaxFile = _countof(szFile);
-	ofn.lpstrFilter = _T("All files (*.*)\0*.*\0Text files (*.txt)\0*.txt\0Log files (*.log)\0*.log\0\0");
+	ofn.lpstrFilter = L"All files (*.*)\0*.*\0Text files (*.txt)\0*.txt\0Log files (*.log)\0*.log\0\0";
 	ofn.nFilterIndex = 2;
 	ofn.Flags = OFN_CREATEPROMPT;
 	// Display the Open dialog box. 
@@ -268,13 +268,13 @@ void ChooseFile(HWND hwndDlg)
 		HANDLE hf = CreateFile(szFile,GENERIC_WRITE,0,NULL,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL, NULL);
 		if (hf != INVALID_HANDLE_VALUE) {
 			SetDlgItemText(hwndDlg,IDC_FILE,szFile);
-			mir_tstrncpy(WumfOptions.LogFile, szFile, MAX_PATH);
+			mir_wstrncpy(WumfOptions.LogFile, szFile, MAX_PATH);
 			CloseHandle(hf);
 		}
 	}
 	else if (CommDlgExtendedError() != 0) {
-		TCHAR str[256];
-		mir_sntprintf(str, TranslateT("Common Dialog Error 0x%lx"), CommDlgExtendedError());
+		wchar_t str[256];
+		mir_snwprintf(str, TranslateT("Common Dialog Error 0x%lx"), CommDlgExtendedError());
 		MessageBox(hwndDlg, str, TranslateT("Error"), MB_OK | MB_ICONSTOP);
 	}
 }
@@ -323,7 +323,7 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hwndDlg,UINT msg,WPARAM wparam,LPARAM lpara
 			CheckDlgButton(hwndDlg,IDC_LOG_INTO_FILE,BST_UNCHECKED);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_FILE), FALSE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_SEL_FILE), FALSE);
-			SetDlgItemText(hwndDlg, IDC_FILE, _T(""));
+			SetDlgItemText(hwndDlg, IDC_FILE, L"");
 		}
 		break;
 
@@ -358,7 +358,7 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hwndDlg,UINT msg,WPARAM wparam,LPARAM lpara
 			case IDC_ALERT_COMP:
 			case IDC_LOG_UNC:
 			case IDC_ALERT_UNC:
-				MessageBox(NULL, TranslateT("Not implemented yet..."), _T("WUMF"), MB_OK | MB_ICONINFORMATION);
+				MessageBox(NULL, TranslateT("Not implemented yet..."), L"WUMF", MB_OK | MB_ICONINFORMATION);
 				break;
 				/* end */
 			case IDC_LOG_INTO_FILE:
@@ -447,7 +447,7 @@ INT_PTR CALLBACK OptionsDlgProc(HWND hwndDlg,UINT msg,WPARAM wparam,LPARAM lpara
 				db_set_b(NULL, MODULENAME, LOG_COMP, (BYTE)WumfOptions.LogComp);
 				db_set_b(NULL, MODULENAME, ALERT_COMP, (BYTE)WumfOptions.AlertComp);
 				GetDlgItemText(hwndDlg, IDC_FILE, WumfOptions.LogFile, _countof(WumfOptions.LogFile));
-				db_set_ts(NULL, MODULENAME, OPT_FILE, WumfOptions.LogFile);
+				db_set_ws(NULL, MODULENAME, OPT_FILE, WumfOptions.LogFile);
 			}
 		}
 		break;
@@ -472,9 +472,9 @@ int OptionsInit(WPARAM wparam, LPARAM)
 	odp.position = 945000000;
 	odp.hInstance = hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONS);
-	odp.pszTitle = LPGEN("Who uses my files");
+	odp.szTitle.a = LPGEN("Who uses my files");
 	odp.pfnDlgProc = OptionsDlgProc;
-	odp.pszGroup = LPGEN("Services");
+	odp.szGroup.a = LPGEN("Services");
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wparam, &odp);
 	return 0;
@@ -492,7 +492,7 @@ extern "C" __declspec(dllexport) int Load(void)
 	CMenuItem mi;
 
 	SET_UID(mi, 0xcfce6487, 0x907b, 0x4822, 0xb0, 0x49, 0x18, 0x4e, 0x47, 0x17, 0x0, 0x69);
-	mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Popups"), 1999990000);
+	mi.root = Menu_CreateRoot(MO_MAIN, LPGENW("Popups"), 1999990000);
 	if (WumfOptions.PopupsEnabled == FALSE) { 
 		mi.name.a = LPGEN("Enable WUMF popups");
 		mi.hIcolibItem = LoadIcon(hInst,MAKEINTRESOURCE(IDI_NOPOPUP));
@@ -516,7 +516,7 @@ extern "C" __declspec(dllexport) int Load(void)
 	if (IsUserAnAdmin())
 		SetTimer(NULL, 777, TIME, TimerProc);
 	else
-		MessageBox(NULL, TranslateT("Plugin WhoUsesMyFiles requires admin privileges in order to work."), _T("Miranda NG"), MB_OK);
+		MessageBox(NULL, TranslateT("Plugin WhoUsesMyFiles requires admin privileges in order to work."), L"Miranda NG", MB_OK);
 	return 0;
 }
 

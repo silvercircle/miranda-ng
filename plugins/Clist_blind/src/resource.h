@@ -3,7 +3,6 @@
 // Used by resource.rc
 //
 #define IDD_OPT_CLIST                   126
-#define IDR_CONTEXT                     180
 #define IDC_DROP                        183
 #define IDD_OPT_HOTKEY                  184
 #define IDR_CLISTMENU                   199
@@ -136,18 +135,6 @@
 #define IDC_T_DIVIDER                   1664
 #define IDC_T_INFO                      1665
 #define ID_ICQ_EXIT                     40001
-#define POPUP_HIDEEMPTYGROUPS           40003
-#define POPUP_NEWSUBGROUP               40004
-#define POPUP_HIDEOFFLINE               40005
-#define POPUP_GROUPHIDEOFFLINE          40006
-#define POPUP_HIDEOFFLINEROOT           40007
-#define POPUP_DISABLEGROUPS             40008
-#define POPUP_HIDEMIRANDA               40017
-#define ID_TRAY_HIDE                    40038
-#define ID_TRAY_EXIT                    40040
-#define POPUP_NEWGROUP                  40050
-#define POPUP_RENAMEGROUP               40052
-#define POPUP_DELETEGROUP               40053
 
 // Next default values for new objects
 // 

@@ -2,7 +2,7 @@
 
 Standard ugly history viewer for Miranda NG
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@ extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = { MIID_UIHIST
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	LoadHistoryModule();
 	return 0;

@@ -61,7 +61,7 @@ void __cdecl DeleteMailsPOP3(void *param);
 
 //Function makes readable message about error. It sends it back to YAMN, so YAMN then
 //can show it to the message window
-TCHAR* WINAPI GetErrorString(DWORD Code);
+wchar_t* WINAPI GetErrorString(DWORD Code);
 
 //Function deletes string allocated in GetErrorString
 void WINAPI DeleteErrorString(LPVOID String);
@@ -130,7 +130,7 @@ YAMN_PROTOREGISTRATION POP3ProtocolRegistration =
 	__AUTHORWEB,
 };
 
-static TCHAR *FileName = NULL;
+static wchar_t *FileName = NULL;
 
 HANDLE RegisterNLClient(const char *name);
 
@@ -247,7 +247,7 @@ int RegisterPOP3Plugin(WPARAM, LPARAM)
 	//You must first register account, before using this function as YAMN must use CreatePOP3Account function to add new accounts
 	//But if CreatePOP3Account is not implemented (equals to NULL), YAMN creates account as YAMN's standard HACCOUNT
 	if (FileName) CallService(MS_YAMN_DELETEFILENAME, (WPARAM)FileName, 0);	//shoud not happen (only for secure)
-	FileName = (TCHAR *)CallService(MS_YAMN_GETFILENAME, (WPARAM)_T("pop3"), 0);
+	FileName = (wchar_t *)CallService(MS_YAMN_GETFILENAME, (WPARAM)L"pop3", 0);
 
 	switch (CallService(MS_YAMN_READACCOUNTS, (WPARAM)POP3Plugin, (LPARAM)FileName)) {
 	case EACC_FILEVERSION:
@@ -268,8 +268,8 @@ int RegisterPOP3Plugin(WPARAM, LPARAM)
 	case EACC_SYSTEM:
 		if (ERROR_FILE_NOT_FOUND != GetLastError())
 		{
-			TCHAR temp[1024] = { 0 };
-			mir_sntprintf(temp, _T("%s\n%s"), TranslateT("Reading file error. File already in use?"), FileName);
+			wchar_t temp[1024] = { 0 };
+			mir_snwprintf(temp, L"%s\n%s", TranslateT("Reading file error. File already in use?"), FileName);
 			MessageBox(NULL, temp, TranslateT("YAMN (internal POP3) read error"), MB_OK);
 			CallService(MS_YAMN_DELETEFILENAME, (WPARAM)FileName, 0);
 			FileName = NULL;
@@ -302,7 +302,7 @@ int RegisterPOP3Plugin(WPARAM, LPARAM)
 
 		if (!Finder->hContact && (Finder->Flags & YAMN_ACC_ENA) && (Finder->NewMailN.Flags & YAMN_ACC_CONT)) {
 			//No account contact found, have to create one
-			Finder->hContact = CallService(MS_DB_CONTACT_ADD, 0, 0);
+			Finder->hContact = db_add_contact();
 			Proto_AddToContact(Finder->hContact, YAMN_DBMODULE);
 			db_set_s(Finder->hContact, YAMN_DBMODULE, "Id", Finder->Name);
 			db_set_s(Finder->hContact, YAMN_DBMODULE, "Nick", Finder->Name);
@@ -343,8 +343,8 @@ DWORD WINAPI WritePOP3Accounts()
 {
 	DWORD ReturnValue = CallService(MS_YAMN_WRITEACCOUNTS, (WPARAM)POP3Plugin, (LPARAM)FileName);
 	if (ReturnValue == EACC_SYSTEM) {
-		TCHAR temp[1024] = { 0 };
-		mir_sntprintf(temp, _T("%s\n%s"), TranslateT("Error while copying data to disk occurred. Is file in use?"), FileName);
+		wchar_t temp[1024] = { 0 };
+		mir_snwprintf(temp, L"%s\n%s", TranslateT("Error while copying data to disk occurred. Is file in use?"), FileName);
 		MessageBox(NULL, temp, TranslateT("POP3 plugin - write file error"), MB_OK);
 	}
 
@@ -366,7 +366,7 @@ DWORD WINAPI ReadPOP3Options(HACCOUNT Which, char **Parser, char *End)
 {
 	DWORD Ver;
 #ifdef DEBUG_FILEREAD
-	TCHAR Debug[256];
+	wchar_t Debug[256];
 #endif
 	Ver = *(DWORD *)(*Parser);
 	(*Parser) += sizeof(DWORD);
@@ -380,8 +380,8 @@ DWORD WINAPI ReadPOP3Options(HACCOUNT Which, char **Parser, char *End)
 	if (*Parser >= End)
 		return EACC_FILECOMPATIBILITY;
 #ifdef DEBUG_FILEREAD
-	mir_sntprintf(Debug, _T("CodePage: %d, remaining %d chars"), ((HPOP3ACCOUNT)Which)->CP, End-*Parser);
-	MessageBox(NULL,Debug,_T("debug"),MB_OK);
+	mir_snwprintf(Debug, L"CodePage: %d, remaining %d chars", ((HPOP3ACCOUNT)Which)->CP, End-*Parser);
+	MessageBox(NULL,Debug,L"debug",MB_OK);
 #endif
 	return 0;
 }
@@ -712,8 +712,8 @@ DWORD WINAPI SynchroPOP3(struct CheckParam * WhichTemp)
 				HYAMNMAIL NewMsgsPtr = NULL;
 				for (NewMsgsPtr = (HYAMNMAIL)NewMails; NewMsgsPtr != NULL; NewMsgsPtr = NewMsgsPtr->Next) {
 					if (!mir_strcmp(MsgQueuePtr->ID, NewMsgsPtr->ID)) {
-						TCHAR accstatus[512];
-						mir_sntprintf(accstatus, TranslateT("Reading body %s"), NewMsgsPtr->ID);
+						wchar_t accstatus[512];
+						mir_snwprintf(accstatus, TranslateT("Reading body %s"), NewMsgsPtr->ID);
 						SetAccountStatus(ActualAccount, accstatus);
 						DataRX = MyClient->Top(MsgQueuePtr->Number, 100);
 #ifdef DEBUG_DECODE
@@ -780,13 +780,13 @@ DWORD WINAPI SynchroPOP3(struct CheckParam * WhichTemp)
 
 		try
 		{
-			TCHAR accstatus[512];
+			wchar_t accstatus[512];
 
 			for (i = 0, MsgQueuePtr = NewMails; MsgQueuePtr != NULL; i++)
 			{
 				BOOL autoretr = (ActualAccount->Flags & YAMN_ACC_BODY) != 0;
 				DataRX = MyClient->Top(MsgQueuePtr->Number, autoretr ? 100 : 0);
-				mir_sntprintf(accstatus, TranslateT("Reading new mail messages (%d%% done)"), 100 * i / msgs);
+				mir_snwprintf(accstatus, TranslateT("Reading new mail messages (%d%% done)"), 100 * i / msgs);
 				SetAccountStatus(ActualAccount, accstatus);
 
 #ifdef DEBUG_DECODE
@@ -1500,56 +1500,56 @@ void ExtractList(char *stream, int len, HYAMNMAIL queue)
 	}
 }
 
-TCHAR* WINAPI GetErrorString(DWORD Code)
+wchar_t* WINAPI GetErrorString(DWORD Code)
 {
-	static TCHAR *POP3Errors[] =
+	static wchar_t *POP3Errors[] =
 	{
-		LPGENT("Memory allocation error."),		//memory allocation
-		LPGENT("Account is about to be stopped."),	//stop account
-		LPGENT("Cannot connect to POP3 server."),
-		LPGENT("Cannot allocate memory for received data."),
-		LPGENT("Cannot login to POP3 server."),
-		LPGENT("Bad user or password."),
-		LPGENT("Server does not support APOP authorization."),
-		LPGENT("Error while executing POP3 command."),
-		LPGENT("Error while executing POP3 command."),
-		LPGENT("Error while executing POP3 command."),
+		LPGENW("Memory allocation error."),		//memory allocation
+		LPGENW("Account is about to be stopped."),	//stop account
+		LPGENW("Cannot connect to POP3 server."),
+		LPGENW("Cannot allocate memory for received data."),
+		LPGENW("Cannot login to POP3 server."),
+		LPGENW("Bad user or password."),
+		LPGENW("Server does not support APOP authorization."),
+		LPGENW("Error while executing POP3 command."),
+		LPGENW("Error while executing POP3 command."),
+		LPGENW("Error while executing POP3 command."),
 	};
 
-	static TCHAR *NetlibErrors[] =
+	static wchar_t *NetlibErrors[] =
 	{
-		LPGENT("Cannot connect to server with NetLib."),
-		LPGENT("Cannot send data."),
-		LPGENT("Cannot receive data."),
-		LPGENT("Cannot allocate memory for received data."),
+		LPGENW("Cannot connect to server with NetLib."),
+		LPGENW("Cannot send data."),
+		LPGENW("Cannot receive data."),
+		LPGENW("Cannot allocate memory for received data."),
 	};
 
-	static TCHAR *SSLErrors[] =
+	static wchar_t *SSLErrors[] =
 	{
-		LPGENT("OpenSSL not loaded."),
-		LPGENT("Windows socket 2.0 init failed."),
-		LPGENT("DNS lookup error."),
-		LPGENT("Error while creating base socket."),
-		LPGENT("Error connecting to server with socket."),
-		LPGENT("Error while creating SSL structure."),
-		LPGENT("Error connecting socket with SSL."),
-		LPGENT("Server rejected connection with SSL."),
-		LPGENT("Cannot write SSL data."),
-		LPGENT("Cannot read SSL data."),
-		LPGENT("Cannot allocate memory for received data."),
+		LPGENW("OpenSSL not loaded."),
+		LPGENW("Windows socket 2.0 init failed."),
+		LPGENW("DNS lookup error."),
+		LPGENW("Error while creating base socket."),
+		LPGENW("Error connecting to server with socket."),
+		LPGENW("Error while creating SSL structure."),
+		LPGENW("Error connecting socket with SSL."),
+		LPGENW("Server rejected connection with SSL."),
+		LPGENW("Cannot write SSL data."),
+		LPGENW("Cannot read SSL data."),
+		LPGENW("Cannot allocate memory for received data."),
 	};
 
-	TCHAR *ErrorString = new TCHAR[ERRORSTR_MAXLEN];
+	wchar_t *ErrorString = new wchar_t[ERRORSTR_MAXLEN];
 	POP3_ERRORCODE *ErrorCode = (POP3_ERRORCODE *)(UINT_PTR)Code;
 
-	mir_sntprintf(ErrorString, ERRORSTR_MAXLEN, TranslateT("Error %d-%d-%d-%d:"), ErrorCode->AppError, ErrorCode->POP3Error, ErrorCode->NetError, ErrorCode->SystemError);
+	mir_snwprintf(ErrorString, ERRORSTR_MAXLEN, TranslateT("Error %d-%d-%d-%d:"), ErrorCode->AppError, ErrorCode->POP3Error, ErrorCode->NetError, ErrorCode->SystemError);
 	if (ErrorCode->POP3Error)
-		mir_sntprintf(ErrorString, ERRORSTR_MAXLEN, _T("%s\n%s"), ErrorString, TranslateTS(POP3Errors[ErrorCode->POP3Error - 1]));
+		mir_snwprintf(ErrorString, ERRORSTR_MAXLEN, L"%s\n%s", ErrorString, TranslateW(POP3Errors[ErrorCode->POP3Error - 1]));
 	if (ErrorCode->NetError) {
 		if (ErrorCode->SSL)
-			mir_sntprintf(ErrorString, ERRORSTR_MAXLEN, _T("%s\n%s"), ErrorString, TranslateTS(SSLErrors[ErrorCode->NetError - 1]));
+			mir_snwprintf(ErrorString, ERRORSTR_MAXLEN, L"%s\n%s", ErrorString, TranslateW(SSLErrors[ErrorCode->NetError - 1]));
 		else
-			mir_sntprintf(ErrorString, ERRORSTR_MAXLEN, _T("%s\n%s"), ErrorString, TranslateTS(NetlibErrors[ErrorCode->NetError - 4]));
+			mir_snwprintf(ErrorString, ERRORSTR_MAXLEN, L"%s\n%s", ErrorString, TranslateW(NetlibErrors[ErrorCode->NetError - 4]));
 	}
 
 	return ErrorString;

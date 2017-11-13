@@ -3,7 +3,7 @@
 Facebook plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2009-11 Michal Zelinka, 2011-15 Robert Pösel
+Copyright © 2009-11 Michal Zelinka, 2011-17 Robert Pösel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ PLUGININFOEX pluginInfo = {
 // Protocol instances
 static int compare_protos(const FacebookProto *p1, const FacebookProto *p2)
 {
-	return mir_tstrcmp(p1->m_tszUserName, p2->m_tszUserName);
+	return mir_wstrcmp(p1->m_tszUserName, p2->m_tszUserName);
 }
 
 OBJLIST<FacebookProto> g_Instances(1, compare_protos);
@@ -74,7 +74,7 @@ extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = { MIID_PROTOC
 /////////////////////////////////////////////////////////////////////////////////////////
 // Load
 
-static PROTO_INTERFACE* protoInit(const char *proto_name, const TCHAR *username)
+static PROTO_INTERFACE* protoInit(const char *proto_name, const wchar_t *username)
 {
 	FacebookProto *proto = new FacebookProto(proto_name, username);
 	g_Instances.insert(proto);
@@ -90,7 +90,7 @@ static int protoUninit(PROTO_INTERFACE* proto)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	PROTOCOLDESCRIPTOR pd = { 0 };
 	pd.cbSize = sizeof(pd);
@@ -104,8 +104,8 @@ extern "C" int __declspec(dllexport) Load(void)
 	InitContactMenus();
 
 	// Init native User-Agent
-	WORD v[4];
-	CallService(MS_SYSTEM_GETFILEVERSION, 0, (LPARAM)v);
+	MFileVersion v;
+	Miranda_GetFileVersion(&v);
 	std::stringstream agent;
 	agent << "Miranda NG/" << v[0] << "." << v[1] << "." << v[2];
 #ifdef _WIN64

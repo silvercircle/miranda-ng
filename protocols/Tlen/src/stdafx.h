@@ -57,14 +57,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <newpluginapi.h>
 #include <m_system.h>
-#include <m_system_cpp.h>
 #include <m_netlib.h>
 #include <m_protosvc.h>
 #include <m_protoint.h>
 #include <m_contacts.h>
 #include <m_clist.h>
-#include <m_clui.h>
 #include <m_options.h>
+#include <m_icolib.h>
 #include <m_userinfo.h>
 #include <m_database.h>
 #include <m_langpack.h>
@@ -204,7 +203,7 @@ struct TLEN_VOICE_CONTROL_STRUCT;
 
 struct TlenProtocol : public PROTO<TlenProtocol>
 {
-	TlenProtocol( const char*, const TCHAR* );
+	TlenProtocol( const char*, const wchar_t* );
 	~TlenProtocol();
 
 	//====================================================================================
@@ -215,23 +214,23 @@ struct TlenProtocol : public PROTO<TlenProtocol>
 	virtual	MCONTACT  __cdecl AddToListByEvent(int flags, int iContact, MEVENT hDbEvent);
 
 	virtual	int	    __cdecl Authorize(MEVENT hDbEvent);
-	virtual	int       __cdecl AuthDeny(MEVENT hDbEvent, const TCHAR* szReason);
+	virtual	int       __cdecl AuthDeny(MEVENT hDbEvent, const wchar_t* szReason);
 
-	virtual	HANDLE    __cdecl FileAllow(MCONTACT hContact, HANDLE hTransfer, const TCHAR* szPath);
+	virtual	HANDLE    __cdecl FileAllow(MCONTACT hContact, HANDLE hTransfer, const wchar_t* szPath);
 	virtual	int       __cdecl FileCancel(MCONTACT hContact, HANDLE hTransfer);
-	virtual	int       __cdecl FileDeny(MCONTACT hContact, HANDLE hTransfer, const TCHAR* szReason);
-	virtual	int       __cdecl FileResume(HANDLE hTransfer, int* action, const TCHAR** szFilename);
+	virtual	int       __cdecl FileDeny(MCONTACT hContact, HANDLE hTransfer, const wchar_t* szReason);
+	virtual	int       __cdecl FileResume(HANDLE hTransfer, int* action, const wchar_t** szFilename);
 
 	virtual	DWORD_PTR __cdecl GetCaps(int type, MCONTACT hContact = NULL);
 	virtual	int       __cdecl GetInfo(MCONTACT hContact, int infoType);
 
-	virtual	HANDLE    __cdecl SearchBasic(const TCHAR* id);
-	virtual	HANDLE    __cdecl SearchByEmail(const TCHAR* email);
-	virtual	HANDLE    __cdecl SearchByName(const TCHAR* nick, const TCHAR* firstName, const TCHAR* lastName);
+	virtual	HANDLE    __cdecl SearchBasic(const wchar_t* id);
+	virtual	HANDLE    __cdecl SearchByEmail(const wchar_t* email);
+	virtual	HANDLE    __cdecl SearchByName(const wchar_t* nick, const wchar_t* firstName, const wchar_t* lastName);
 	virtual	HWND      __cdecl SearchAdvanced(HWND owner);
 	virtual	HWND      __cdecl CreateExtendedSearchUI(HWND owner);
 
-	virtual	HANDLE    __cdecl SendFile(MCONTACT hContact, const TCHAR* szDescription, TCHAR** ppszFiles);
+	virtual	HANDLE    __cdecl SendFile(MCONTACT hContact, const wchar_t* szDescription, wchar_t** ppszFiles);
 	virtual	int       __cdecl SendMsg(MCONTACT hContact, int flags, const char* msg);
 
 	virtual	int       __cdecl SetApparentMode(MCONTACT hContact, int mode);
@@ -239,7 +238,7 @@ struct TlenProtocol : public PROTO<TlenProtocol>
 
 	virtual	HANDLE    __cdecl GetAwayMsg(MCONTACT hContact);
 	virtual	int       __cdecl RecvAwayMsg(MCONTACT hContact, int mode, PROTORECVEVENT* evt);
-	virtual	int       __cdecl SetAwayMsg(int iStatus, const TCHAR* msg);
+	virtual	int       __cdecl SetAwayMsg(int iStatus, const wchar_t* msg);
 
 	virtual	int       __cdecl UserIsTyping(MCONTACT hContact, int type);
 
@@ -281,7 +280,7 @@ struct TlenProtocol : public PROTO<TlenProtocol>
 	int __cdecl MUCHandleEvent(WPARAM wParam, LPARAM lParam);
 
 	//====================================================================================
-	HANDLE hFileNetlibUser;
+	HNETLIBUSER hFileNetlibUser;
 
 	TLEN_MODEMSGS modeMsgs;
 
@@ -348,7 +347,7 @@ typedef struct ThreadDataStruct{
 	WORD port;
 	BOOL useEncryption;
 
-	HANDLE s;    //HANDLE from CallService(MS_NETLIB_OPENCONNECTION (tlen_ws.c:68)
+	HNETLIBCONN s;
 	aes_context aes_in_context;
 	aes_context aes_out_context;
 	unsigned char aes_in_iv[16];
@@ -364,7 +363,7 @@ typedef enum { FT_CONNECTING, FT_INITIALIZING, FT_RECEIVING, FT_DONE, FT_ERROR, 
 typedef enum { FT_RECV, FT_SEND} TLEN_FILE_MODE;
 typedef struct TLEN_FILE_TRANSFER_STRUCT{
 	MCONTACT hContact;
-	HANDLE s;
+	HNETLIBCONN s;
 	NETLIBNEWCONNECTIONPROC_V2 pfnNewConnectionV2;
 	TLEN_FILE_STATE state;
 	char *jid;
@@ -416,7 +415,7 @@ typedef struct {
 
 typedef struct {
 	int id;
-	TCHAR *name;
+	wchar_t *name;
 } TLEN_FIELD_MAP;
 
 
@@ -430,15 +429,16 @@ extern HANDLE hMainThread;
  * Function declarations
  *******************************************************************/
 HICON GetIcolibIcon(int iconId);
+HANDLE GetIconHandle(int iconId);
 void ReleaseIcolibIcon(HICON hIcon);
 
 void __cdecl TlenServerThread(ThreadData *info);
 // tlen_ws.cpp
 BOOL TlenWsInit(TlenProtocol *proto);
 void TlenWsUninit(TlenProtocol *proto);
-HANDLE TlenWsConnect(TlenProtocol *proto, char *host, WORD port);
-int TlenWsSend(TlenProtocol *proto, HANDLE s, char *data, int datalen);
-int TlenWsRecv(TlenProtocol *proto, HANDLE s, char *data, long datalen);
+HNETLIBCONN TlenWsConnect(TlenProtocol *proto, char *host, WORD port);
+int TlenWsSend(TlenProtocol *proto, HNETLIBCONN s, char *data, int datalen);
+int TlenWsRecv(TlenProtocol *proto, HNETLIBCONN s, char *data, long datalen);
 int TlenWsSendAES(TlenProtocol *proto, char *data, int datalen, aes_context *aes_ctx, unsigned char *aes_iv);
 int TlenWsRecvAES(TlenProtocol *proto, char *data, long datalen, aes_context *aes_ctx, unsigned char *aes_iv);
 

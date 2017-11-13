@@ -123,7 +123,7 @@ begin
   FillChar(li,SizeOf(li),0);
   li.iItem :=100000; //!! need append
   li.mask  :=LVIF_IMAGE or LVIF_PARAM;
-  li.iImage:=CallService(MS_CLIST_GETCONTACTICON,hContact,0);
+  li.iImage:=cli^.pfnGetContactIcon(hContact);
   li.lParam:=num;
   li.iItem :=SendMessageW(grid,LVM_INSERTITEMW,0,lparam(@li));
 
@@ -359,10 +359,10 @@ end;
 
 procedure DeleteOneContact(hContact:TMCONTACT);
 begin
-  if ServiceExists(strCListDel)>0 then
+  if ServiceExists(strCListDel) then
     CallService(strCListDel,hContact,0)
   else
-    CallService(MS_DB_CONTACT_DELETE,hContact,0);
+    db_delete_contact(hContact);
 end;
 
 procedure DeleteByList;
@@ -380,7 +380,7 @@ begin
     for i:=j downto 0 do
     begin
       if ListView_GetItemState(grid,i,LVIS_SELECTED)<>0 then
-        CallService(MS_DB_CONTACT_DELETE,FlagBuf[LV_GetLParam(grid,i)].contact,0);
+        db_delete_contact(FlagBuf[LV_GetLParam(grid,i)].contact);
     end;
     SendMessage(grid,WM_SETREDRAW,1,0);
   end;
@@ -539,7 +539,7 @@ begin
     begin
       contact:=FlagBuf[LV_GetLParam(grid,i)].contact;
       if container^=#0 then
-        DBDeleteSetting(contact,'Tab_SRMsg','containerW')
+        db_unset(contact,'Tab_SRMsg','containerW')
       else
         DBWriteUnicode(contact,'Tab_SRMsg','containerW',container);
       if ((qsopt.flags and QSO_AUTOCLOSE)=0) and (grcol>=0) then
@@ -812,6 +812,7 @@ begin
         FillChar(mi,SizeOf(mi),0);
         if mnuhandle=0 then
         begin
+          SET_UID(@mi, 'D384A798-5D4C-48B4-B3E2-30046ED6F481');
           mi.flags     :=CMIF_UNICODE;
           mi.szName.w  :='Change setting through QS';
           mi.pszService:='QS/dummy';
@@ -898,7 +899,7 @@ begin
   AppendMenuW(mmenu,MF_SEPARATOR,0,nil);
   AppendMenuW(mmenu,MF_STRING,101,TranslateW('&Delete'));
   AppendMenuW(mmenu,MF_STRING,102,TranslateW('&Copy'));
-  if ServiceExists(MS_MC_CONVERTTOMETA)<>0 then
+  if ServiceExists(MS_MC_CONVERTTOMETA) then
     AppendMenuW(mmenu,MF_STRING,103,TranslateW('C&onvert to Meta'));
 
   cntmenu:=MakeContainerMenu(300);
@@ -1484,7 +1485,7 @@ begin
         if j>0 then
         begin
           StrCopy(StrCopyE(buf,GetProtoName(FlagBuf[i].proto)),PS_GETCUSTOMSTATUSICON);
-          if ServiceExists(buf)<>0 then
+          if ServiceExists(buf) then
           begin
             h:=CallService(buf,j,LR_SHARED);
 
@@ -1507,7 +1508,7 @@ begin
         MirVerW:=MainBuf[lplvcd^.nmcd.lItemlParam,sub].text;
 
 //!!
-        if (MirVerW<>nil) and (MirVerW[0]<>#0) and (ServiceExists(MS_FP_GETCLIENTICONW)<>0) then
+        if (MirVerW<>nil) and (MirVerW[0]<>#0) and ServiceExists(MS_FP_GETCLIENTICONW) then
         begin
           h:=CallService(MS_FP_GETCLIENTICONW,tlparam(MirVerW),0);
           ListView_GetSubItemRect(grid,lplvcd^.nmcd.dwItemSpec,lplvcd^.iSubItem,LVIR_ICON,@rc);
@@ -1621,7 +1622,7 @@ begin
 
       else if (datatype=QSTS_STRING) and
          (StrCmp(setting,'MirVer')=0) and
-         (ServiceExists(MS_FP_GETCLIENTICONW)<>0) then
+         ServiceExists(MS_FP_GETCLIENTICONW) then
         flags:=flags or COL_CLIENT;
 
     end
@@ -1969,8 +1970,7 @@ begin
       grid:=GetDlgItem(Dialog,IDC_LIST);
 
       // ListView
-      ListView_SetImageList(grid,
-         CallService(MS_CLIST_GETICONSIMAGELIST,0,0),LVSIL_SMALL);
+      ListView_SetImageList(grid,Clist_GetImageList,LVSIL_SMALL);
 
       tmp:=LVS_EX_FULLROWSELECT or LVS_EX_SUBITEMIMAGES or LVS_EX_HEADERDRAGDROP or
            LVS_EX_LABELTIP or LVS_EX_DOUBLEBUFFER;
@@ -2094,9 +2094,9 @@ begin
     end;
 
     WM_MEASUREITEM:
-      CallService(MS_CLIST_MENUMEASUREITEM,wParam,lParam);
+      Menu_MeasureItem(lParam);
     WM_DRAWITEM:
-      CallService(MS_CLIST_MENUDRAWITEM,wParam,lParam);
+      Menu_DrawItem(lParam);
 
     WM_MOUSEMOVE: begin
       if TTInstalled then
@@ -2127,9 +2127,7 @@ begin
     end;
 
     WM_COMMAND: begin
-      if CallService(MS_CLIST_MENUPROCESSCOMMAND,
-         MAKEWPARAM(LOWORD(wParam),MPCF_CONTACTMENU),
-         GetFocusedhContact)<>0 then
+      if Clist_MenuProcessCommand(LOWORD(wParam),MPCF_CONTACTMENU,GetFocusedhContact)<>0 then
       begin
         if (qsopt.flags and QSO_AUTOCLOSE)<>0 then
           CloseSrWindow;
@@ -2260,7 +2258,7 @@ begin
   if j=0 then
     exit;
 
-  TTInstalled := ServiceExists(MS_TIPPER_SHOWTIP)<>0;
+  TTInstalled := ServiceExists(MS_TIPPER_SHOWTIP);
   // too lazy to move pattern and flags to thread
   if apattern<>nil then
   begin

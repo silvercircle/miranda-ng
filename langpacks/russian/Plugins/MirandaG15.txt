@@ -6,7 +6,7 @@
 ;  Authors: Martin Kleinhans
 ;============================================================
 [Provides an interface to use Miranda from the LCD of various Logitech devices.]
-Плагин добавляет возможность использования Miranda NG на ЖК-экране различных устройств Logitech.
+Добавляет возможность использования Miranda NG на ЖК-экране различных устройств Logitech.
 [General settings]
 Общие настройки
 [Show softkey labels]
@@ -36,13 +36,9 @@
 [Use transition effects when changing screens]
 Использовать эффекты при смене экранов
 [Credits]
-Кредиты
+Благодарности
 [About]
 Информация
-[For updates and news check the thread on http://www.g15forums.com]
-Обновления и новости ищите в теме на http://www.g15forums.com
-[Or visit http://www.mkleinhans.de]
-Или посетите http://www.mkleinhans.de
 [Device:]
 Клавиатура:
 [If the screensaver is active:]
@@ -105,8 +101,8 @@
 Эмоции
 [Status changes]
 Смены статуса
-[Special IRC events:]
-Только для IRC
+[Group chat events:]
+События чата:
 [Notices]
 Уведомления
 [Channel events]

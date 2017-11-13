@@ -30,12 +30,11 @@
 #include <m_options.h>
 #include <m_langpack.h>
 #include <m_icolib.h>
-#include <m_cluiframes.h>
-#include <win2k.h>
 #include <m_extraicons.h>
+#include <m_gui.h>
 
 #include "resource.h"
-#include "Version.h"
+#include "version.h"
 
 #define MODULENAME "AuthState"
 
@@ -43,7 +42,9 @@ int onOptInitialise(WPARAM wParam, LPARAM lParam);
 int onExtraImageApplying(WPARAM wParam, LPARAM lParam);
 
 extern HINSTANCE g_hInst;
-extern byte bUseAuthIcon, bUseGrantIcon, bContactMenuItem, bIconsForRecentContacts;
 extern HANDLE hExtraIcon;
+
+#include "options.h"
+
 
 #endif //COMMHEADERS_H

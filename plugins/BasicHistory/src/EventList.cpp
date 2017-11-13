@@ -38,7 +38,6 @@ HistoryEventList::HistoryEventList() :
 	m_useImportedMessages(true)
 {
 	memset(&m_dbei, 0, sizeof(DBEVENTINFO));
-	m_dbei.cbSize = sizeof(DBEVENTINFO);
 	m_oldBlobSize = 0;
 }
 
@@ -51,7 +50,6 @@ HistoryEventList::HistoryEventList(MCONTACT _hContact, int filter) :
 	m_useImportedMessages(true)
 {
 	memset(&m_dbei, 0, sizeof(DBEVENTINFO));
-	m_dbei.cbSize = sizeof(DBEVENTINFO);
 	m_oldBlobSize = 0;
 	SetDefFilter(filter);
 }
@@ -79,15 +77,15 @@ bool HistoryEventList::CanShowHistory(DBEVENTINFO* dbei)
 		return true;
 
 	if (m_defFilter < 1) {
-		switch(dbei->eventType) {
+		switch (dbei->eventType) {
 		case EVENTTYPE_MESSAGE:
 		case EVENTTYPE_URL:
 		case EVENTTYPE_FILE:
 			return true;
 
 		default:
-			DBEVENTTYPEDESCR *et = (DBEVENTTYPEDESCR*)CallService(MS_DB_EVENT_GETTYPE, ( WPARAM )dbei->szModule, ( LPARAM )dbei->eventType);
-			if (et && ( et->flags & DETF_HISTORY))
+			DBEVENTTYPEDESCR *et = DbEvent_GetType(dbei->szModule, dbei->eventType);
+			if (et && (et->flags & DETF_HISTORY))
 				return true;
 		}
 
@@ -123,7 +121,7 @@ bool HistoryEventList::CanShowHistory(const IImport::ExternalMessage &message)
 		return true;
 
 	if (m_defFilter < 1) {
-		switch(message.eventType ) {
+		switch (message.eventType) {
 		case EVENTTYPE_MESSAGE:
 		case EVENTTYPE_URL:
 		case EVENTTYPE_FILE:
@@ -220,7 +218,7 @@ void HistoryEventList::GetTempList(std::list<EventTempIndex>& tempList, bool noF
 		for (int i = 0; i < (int)m_importedMessages.size(); ++i) {
 			if (noFilter || CanShowHistory(m_importedMessages[i])) {
 				DWORD ts = m_importedMessages[i].timestamp;
-				while(itL != tempList.end() && itL->timestamp < ts)++itL;
+				while (itL != tempList.end() && itL->timestamp < ts)++itL;
 				if (itL == tempList.end() || itL->timestamp > ts) {
 					ti.exIdx = i;
 					ti.timestamp = ts;
@@ -300,7 +298,7 @@ void HistoryEventList::RefreshEventList()
 	}
 }
 
-bool HistoryEventList::SearchInContact(MCONTACT hContact, TCHAR *strFind, ComparatorInterface* compFun)
+bool HistoryEventList::SearchInContact(MCONTACT hContact, wchar_t *strFind, ComparatorInterface* compFun)
 {
 	InitFilters();
 
@@ -327,7 +325,7 @@ bool HistoryEventList::SearchInContact(MCONTACT hContact, TCHAR *strFind, Compar
 
 	EventIndex ei;
 	EventData ed;
-	TCHAR str[MAXSELECTSTR + 8]; // for safety reason
+	wchar_t str[MAXSELECTSTR + 8]; // for safety reason
 	for (std::list<EventTempIndex>::iterator itL = tempList.begin(); itL != tempList.end(); ++itL) {
 		ei.isExternal = itL->isExternal;
 		ei.hEvent = itL->hEvent;
@@ -343,30 +341,30 @@ bool HistoryEventList::SearchInContact(MCONTACT hContact, TCHAR *strFind, Compar
 
 void HistoryEventList::InitNames()
 {
-	TCHAR str[200];
+	wchar_t str[200];
 	if (m_hContact) {
-		_tcscpy_s(m_contactName, pcli->pfnGetContactDisplayName(m_hContact, 0));
-		mir_sntprintf(str, TranslateT("History for %s"), m_contactName);
+		wcscpy_s(m_contactName, pcli->pfnGetContactDisplayName(m_hContact, 0));
+		mir_snwprintf(str, TranslateT("History for %s"), m_contactName);
 	}
 	else {
-		_tcscpy_s(m_contactName, TranslateT("System"));
-		mir_sntprintf(str, TranslateT("History"));
+		wcscpy_s(m_contactName, TranslateT("System"));
+		mir_snwprintf(str, TranslateT("History"));
 	}
 
 	if (m_isWnd)
 		SetWindowText(m_hWnd, str);
 
-	_tcscpy_s(m_myName, GetMyName().c_str());
+	wcscpy_s(m_myName, GetMyName().c_str());
 }
 
 void HistoryEventList::AddGroup(const EventIndex& ev)
 {
 	EventData data;
 	GetEventData(ev, data);
-	TCHAR eventText[256];
+	wchar_t eventText[256];
 	int i;
 	eventText[0] = 0;
-	TimeZone_PrintTimeStamp(NULL, data.timestamp, _T("d t"), eventText, 64, 0);
+	TimeZone_PrintTimeStamp(NULL, data.timestamp, L"d t", eventText, 64, 0);
 	std::wstring time = eventText;
 	std::wstring user;
 	if (data.isMe)
@@ -374,7 +372,7 @@ void HistoryEventList::AddGroup(const EventIndex& ev)
 	else
 		user = m_contactName;
 	GetEventMessage(ev, eventText, 256);
-	for (i = 0; eventText[i] != 0 && eventText[i] != _T('\r') && eventText[i] != _T('\n'); ++i);
+	for (i = 0; eventText[i] != 0 && eventText[i] != '\r' && eventText[i] != '\n'; ++i);
 	eventText[i] = 0;
 	if (i > Options::instance->groupMessageLen) {
 		eventText[Options::instance->groupMessageLen - 3] = '.';
@@ -396,40 +394,10 @@ std::wstring HistoryEventList::GetContactName()
 	return TranslateT("System");
 }
 
-void GetInfo(CONTACTINFO& ci, std::wstring& str)
-{
-	if (!CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ci)) {
-		if (ci.type == CNFT_ASCIIZ) {
-			str = ci.pszVal;
-			mir_free(ci.pszVal);
-		}
-		else if (ci.type == CNFT_DWORD) {
-			TCHAR buf[20];
-			_ltot_s(ci.dVal, buf, 10);
-			str = buf;
-		}
-		else if (ci.type == CNFT_WORD) {
-			TCHAR buf[20];
-			_ltot_s(ci.wVal, buf, 10);
-			str = buf;
-		}
-	}
-}
-
 std::wstring HistoryEventList::GetMyName()
 {
-	std::wstring myName;
-	CONTACTINFO ci;
-	memset(&ci, 0, sizeof(ci));
-	ci.cbSize = sizeof(ci);
-	ci.szProto = GetContactProto(m_hContact);
-	ci.hContact = 0;
-	ci.dwFlag = CNF_DISPLAY | CNF_TCHAR;
-	GetInfo(ci, myName);
-	if (myName.empty())
-		return TranslateT("Me");
-
-	return myName;
+	ptrW name(Contact_GetInfo(CNF_DISPLAY, NULL, GetContactProto(m_hContact)));
+	return (name == NULL) ? TranslateT("Me") : name;
 }
 
 inline std::wstring GetProtocolName(MCONTACT hContact)
@@ -461,28 +429,14 @@ std::string HistoryEventList::GetBaseProtocol()
 
 std::wstring HistoryEventList::GetMyId()
 {
-	std::wstring myId;
-	CONTACTINFO ci;
-	memset(&ci, 0, sizeof(ci));
-	ci.cbSize = sizeof(ci);
-	ci.szProto = GetContactProto(m_hContact);
-	ci.hContact = 0;
-	ci.dwFlag = CNF_DISPLAYUID | CNF_TCHAR;
-	GetInfo(ci, myId);
-	return myId;
+	ptrW id(Contact_GetInfo(CNF_DISPLAYUID, NULL, GetContactProto(m_hContact)));
+	return (id == NULL) ? L"" : id;
 }
 
 inline std::wstring GetContactId(MCONTACT hContact)
 {
-	std::wstring id;
-	CONTACTINFO ci;
-	memset(&ci, 0, sizeof(ci));
-	ci.cbSize = sizeof(ci);
-	ci.szProto = GetContactProto(hContact);
-	ci.hContact = hContact;
-	ci.dwFlag = CNF_DISPLAYUID | CNF_TCHAR;
-	GetInfo(ci, id);
-	return id;
+	ptrW id(Contact_GetInfo(CNF_DISPLAYUID, hContact));
+	return (id == NULL) ? L"" : id;
 }
 
 std::wstring HistoryEventList::GetContactId()
@@ -490,15 +444,15 @@ std::wstring HistoryEventList::GetContactId()
 	return ::GetContactId(m_hContact);
 }
 
-static void GetMessageDescription(DBEVENTINFO *dbei, TCHAR* buf, int cbBuf)
+static void GetMessageDescription(DBEVENTINFO *dbei, wchar_t* buf, int cbBuf)
 {
-	TCHAR *msg = DbGetEventTextT(dbei, CP_ACP);
-	_tcsncpy_s(buf, cbBuf, msg ? msg : TranslateT("Invalid Message"), _TRUNCATE);
+	wchar_t *msg = DbEvent_GetTextW(dbei, CP_ACP);
+	wcsncpy_s(buf, cbBuf, msg ? msg : TranslateT("Invalid Message"), _TRUNCATE);
 	buf[cbBuf - 1] = 0;
 	mir_free(msg);
 }
 
-void HistoryEventList::GetObjectDescription(DBEVENTINFO *dbei, TCHAR* str, int cbStr)
+void HistoryEventList::GetObjectDescription(DBEVENTINFO *dbei, wchar_t* str, int cbStr)
 {
 	GetMessageDescription(dbei, str, cbStr);
 }
@@ -545,10 +499,10 @@ void HistoryEventList::MargeMessages(const std::vector<IImport::ExternalMessage>
 	std::list<EventTempIndex> tempList;
 	GetTempList(tempList, true, false, m_hContact);
 
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	dbei.szModule = GetContactProto(m_hContact);
 
-	CallService(MS_DB_SETSAFETYMODE, FALSE, 0);
+	db_set_safety_mode(FALSE);
 	for (std::list<EventTempIndex>::iterator it = tempList.begin(); it != tempList.end(); ++it) {
 		if (it->isExternal) {
 			IImport::ExternalMessage& msg = m_importedMessages[it->exIdx];
@@ -566,7 +520,7 @@ void HistoryEventList::MargeMessages(const std::vector<IImport::ExternalMessage>
 		}
 	}
 
-	CallService(MS_DB_SETSAFETYMODE, TRUE, 0);
+	db_set_safety_mode(TRUE);
 	std::vector<IImport::ExternalMessage> emessages;
 	ImportMessages(emessages);
 }
@@ -612,7 +566,7 @@ HICON HistoryEventList::GetEventCoreIcon(const EventIndex& ev)
 	if (ev.isExternal)
 		return NULL;
 
-	HICON ico = (HICON)CallService(MS_DB_EVENT_GETICON, LR_SHARED, (LPARAM)&m_dbei);
+	HICON ico = DbEvent_GetIcon(&m_dbei, LR_SHARED);
 	HICON icoMsg = Skin_LoadIcon(SKINICON_EVENT_MESSAGE);
 	if (icoMsg == ico)
 		return NULL;
@@ -643,8 +597,8 @@ void HistoryEventList::AddImporter(MCONTACT hContact, IImport::ImportType type, 
 {
 	mir_cslock lck(csEventList);
 
-	TCHAR buf[32];
-	mir_sntprintf(buf, _T("%016llx"), (unsigned long long int)hContact);
+	wchar_t buf[32];
+	mir_snwprintf(buf, L"%016llx", (unsigned long long int)hContact);
 	ImportDiscData data;
 	data.file = m_contactFileDir + buf;
 	data.type = type;
@@ -654,7 +608,7 @@ void HistoryEventList::AddImporter(MCONTACT hContact, IImport::ImportType type, 
 
 void HistoryEventList::Init()
 {
-	TCHAR temp[MAX_PATH];
+	wchar_t temp[MAX_PATH];
 	temp[0] = 0;
 	GetTempPath(MAX_PATH, temp);
 	m_contactFileDir = temp;

@@ -46,8 +46,8 @@ Zapisuj indywidualne położenia okien
 Komunikaty o błędach
 [Suppress error messages]
 Ignoruj komunikaty o błędach
-[Display using Popup or OSD plugin]
-Użyj wtyczki Popup lub OSD
+[Display using popup or OSD plugin]
+Wyświetlaj używając wtyczek popup lub OSD
 [Expert options]
 Opcje zaawansowane
 [Disable download protection]
@@ -136,8 +136,8 @@ Zapisz jako dane nieprzetworzone
 Wyświetlanie Popup
 [Delay]
 Wyświetlaj
-[From Popup plugin]
-Z wtyczki Popup
+[From popup plugin]
+Z wtyczki popup
 [Permanent]
 Stałe
 [Preview]

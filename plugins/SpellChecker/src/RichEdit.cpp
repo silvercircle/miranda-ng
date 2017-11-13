@@ -1,4 +1,4 @@
-#include "commons.h"
+#include "stdafx.h"
 
 #define DEFINE_GUIDXXX(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
         const GUID CDECL name \
@@ -143,7 +143,7 @@ int RichEdit::GetLineCount() const
 	return SendMessage(EM_GETLINECOUNT, 0, 0);
 }
 
-void RichEdit::GetLine(int line, TCHAR *text, size_t text_len) const
+void RichEdit::GetLine(int line, wchar_t *text, size_t text_len) const
 {
 	*((WORD*)text) = WORD(text_len - 1);
 	unsigned size = (unsigned)SendMessage(EM_GETLINE, (WPARAM)line, (LPARAM)text);
@@ -152,7 +152,7 @@ void RichEdit::GetLine(int line, TCHAR *text, size_t text_len) const
 	// to make both implementations return same size
 	int lineLen = GetLineLength(line);
 	size = (unsigned)max(0, min((int)text_len - 1, min((int)size, lineLen)));
-	text[size] = _T('\0');
+	text[size] = '\0';
 }
 
 int RichEdit::GetLineLength(int line) const
@@ -193,7 +193,7 @@ int RichEdit::GetTextLength() const
 	return GetWindowTextLength(m_hwnd);
 }
 
-TCHAR* RichEdit::GetText(int start, int end) const
+wchar_t* RichEdit::GetText(int start, int end) const
 {
 	if (end <= start)
 		end = GetTextLength();
@@ -201,36 +201,36 @@ TCHAR* RichEdit::GetText(int start, int end) const
 	if (m_textDocument != NULL) {
 		ITextRange *range;
 		if (m_textDocument->Range(start, end, &range) != S_OK)
-			return mir_tstrdup(_T(""));
+			return mir_wstrdup(L"");
 
 		BSTR text = NULL;
 		if (FAILED(range->GetText(&text))) {
 			if (text)
 				::SysFreeString(text);
 			range->Release();
-			return mir_tstrdup(_T(""));
+			return mir_wstrdup(L"");
 		}
 
-		TCHAR *res = mir_u2t(text);
+		wchar_t *res = mir_wstrdup(text);
 		range->Release();
 		::SysFreeString(text);
 		return res;
 	}
 
 	int len = (GetTextLength() + 1);
-	TCHAR *tmp = (TCHAR *)mir_alloc(len * sizeof(TCHAR));
+	wchar_t *tmp = (wchar_t *)mir_alloc(len * sizeof(wchar_t));
 	GetWindowText(m_hwnd, tmp, len);
 	tmp[len] = 0;
 
-	TCHAR *ret = (TCHAR *)mir_alloc((end - start + 1) * sizeof(TCHAR));
-	memmove(ret, &tmp[start], (end - start) * sizeof(TCHAR));
+	wchar_t *ret = (wchar_t *)mir_alloc((end - start + 1) * sizeof(wchar_t));
+	memmove(ret, &tmp[start], (end - start) * sizeof(wchar_t));
 	ret[end - start] = 0;
 
 	mir_free(tmp);
 	return ret;
 }
 
-void RichEdit::ReplaceSel(const TCHAR *new_text)
+void RichEdit::ReplaceSel(const wchar_t *new_text)
 {
 	if (m_stopped) {
 		CHARRANGE sel = GetSel();
@@ -241,7 +241,7 @@ void RichEdit::ReplaceSel(const TCHAR *new_text)
 
 		SuspendUndo();
 
-		FixSel(&m_old_sel, sel, mir_tstrlen(new_text));
+		FixSel(&m_old_sel, sel, mir_wstrlen(new_text));
 
 		SendMessage(WM_SETREDRAW, FALSE, 0);
 		SendMessage(EM_SETEVENTMASK, 0, m_old_mask & ~ENM_CHANGE);
@@ -249,7 +249,7 @@ void RichEdit::ReplaceSel(const TCHAR *new_text)
 	else SendMessage(EM_REPLACESEL, m_undoEnabled, (LPARAM)new_text);
 }
 
-int RichEdit::Replace(int start, int end, const TCHAR *new_text)
+int RichEdit::Replace(int start, int end, const wchar_t *new_text)
 {
 	CHARRANGE sel = GetSel();
 	CHARRANGE replace_sel = { start, end };
@@ -257,12 +257,12 @@ int RichEdit::Replace(int start, int end, const TCHAR *new_text)
 
 	ReplaceSel(new_text);
 
-	int dif = FixSel(&sel, replace_sel, mir_tstrlen(new_text));
+	int dif = FixSel(&sel, replace_sel, mir_wstrlen(new_text));
 	SetSel(sel);
 	return dif;
 }
 
-int RichEdit::Insert(int pos, const TCHAR *text)
+int RichEdit::Insert(int pos, const wchar_t *text)
 {
 	CHARRANGE sel = GetSel();
 	CHARRANGE replace_sel = { pos, pos };
@@ -270,7 +270,7 @@ int RichEdit::Insert(int pos, const TCHAR *text)
 
 	ReplaceSel(text);
 
-	int dif = FixSel(&sel, replace_sel, mir_tstrlen(text));
+	int dif = FixSel(&sel, replace_sel, mir_wstrlen(text));
 	SetSel(sel);
 	return dif;
 }
@@ -281,7 +281,7 @@ int RichEdit::Delete(int start, int end)
 	CHARRANGE replace_sel = { start, end };
 	SetSel(replace_sel);
 
-	ReplaceSel(_T(""));
+	ReplaceSel(L"");
 
 	int dif = FixSel(&sel, replace_sel, 0);
 	SetSel(sel);
@@ -297,15 +297,11 @@ int RichEdit::FixSel(CHARRANGE *to_fix, CHARRANGE sel_changed, int new_len)
 
 	int newMax = sel_changed.cpMax + dif;
 
-	if (to_fix->cpMin >= sel_changed.cpMax)
-		to_fix->cpMin += dif;
-	else if (to_fix->cpMin >= newMax) // For dif < 0, pos beetween sel_changed.cpMax + dif and sel_changed.cpMax
-		to_fix->cpMin = newMax;
+	if      (to_fix->cpMin >= sel_changed.cpMax) to_fix->cpMin += dif;
+	else if (to_fix->cpMin >= newMax)            to_fix->cpMin = newMax;
 
-	if (to_fix->cpMax >= sel_changed.cpMax)
-		to_fix->cpMax += dif;
-	else if (to_fix->cpMax >= newMax) // For dif < 0, pos beetween sel_changed.cpMax + dif and sel_changed.cpMax
-		to_fix->cpMax = newMax;
+	if      (to_fix->cpMax >= sel_changed.cpMax) to_fix->cpMax += dif;
+	else if (to_fix->cpMax >= newMax)            to_fix->cpMax = newMax;
 
 	return dif;
 }

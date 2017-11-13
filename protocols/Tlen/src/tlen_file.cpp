@@ -144,12 +144,12 @@ static void TlenFileReceiveParse(TLEN_FILE_TRANSFER *ft)
 	}
 }
 
-static void TlenFileReceivingConnection(HANDLE hConnection, DWORD, void * pExtra)
+static void TlenFileReceivingConnection(HNETLIBCONN hConnection, DWORD, void * pExtra)
 {
 	TlenProtocol *proto = (TlenProtocol *)pExtra;
 	TLEN_FILE_TRANSFER *ft = TlenP2PEstablishIncomingConnection(proto, hConnection, LIST_FILE, TRUE);
 	if (ft != NULL) {
-		HANDLE slisten = ft->s;
+		HNETLIBCONN slisten = ft->s;
 		ft->s = hConnection;
 		ft->proto->debugLogA("Set ft->s to %d (saving %d)", hConnection, slisten);
 		ft->proto->debugLogA("Entering send loop for this file connection... (ft->s is hConnection)");
@@ -172,8 +172,9 @@ static void TlenFileReceivingConnection(HANDLE hConnection, DWORD, void * pExtra
 	else Netlib_CloseHandle(hConnection);
 }
 
-static void __cdecl TlenFileReceiveThread(TLEN_FILE_TRANSFER *ft)
+static void __cdecl TlenFileReceiveThread(void *arg)
 {
+	TLEN_FILE_TRANSFER *ft = (TLEN_FILE_TRANSFER *)arg;
 	ft->proto->debugLogA("Thread started: type=file_receive server='%s' port='%d'", ft->hostName, ft->wPort);
 	ft->mode = FT_RECV;
 
@@ -181,7 +182,7 @@ static void __cdecl TlenFileReceiveThread(TLEN_FILE_TRANSFER *ft)
 	nloc.szHost = ft->hostName;
 	nloc.wPort = ft->wPort;
 	ProtoBroadcastAck(ft->proto->m_szModuleName, ft->hContact, ACKTYPE_FILE, ACKRESULT_CONNECTING, ft, 0);
-	HANDLE s = (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)ft->proto->m_hNetlibUser, (LPARAM)&nloc);
+	HNETLIBCONN s = Netlib_OpenConnection(ft->proto->m_hNetlibUser, &nloc);
 	if (s != NULL) {
 		ft->s = s;
 		ft->proto->debugLogA("Entering file receive loop");
@@ -377,9 +378,9 @@ static void TlenFileSendParse(TLEN_FILE_TRANSFER *ft)
 	}
 }
 
-static void TlenFileSendingConnection(HANDLE hConnection, DWORD, void * pExtra)
+static void TlenFileSendingConnection(HNETLIBCONN hConnection, DWORD, void * pExtra)
 {
-	HANDLE slisten;
+	HNETLIBCONN slisten;
 	TlenProtocol *proto = (TlenProtocol *)pExtra;
 
 	TLEN_FILE_TRANSFER *ft = TlenP2PEstablishIncomingConnection(proto, hConnection, LIST_FILE, TRUE);
@@ -441,14 +442,15 @@ int TlenFileCancelAll(TlenProtocol *proto)
 	return 0;
 }
 
-static void __cdecl TlenFileSendingThread(TLEN_FILE_TRANSFER *ft)
+static void __cdecl TlenFileSendingThread(void *arg)
 {
+	TLEN_FILE_TRANSFER *ft = (TLEN_FILE_TRANSFER *)arg;
 	char *nick;
 
 	ft->proto->debugLogA("Thread started: type=tlen_file_send");
 	ft->mode = FT_SEND;
 	ft->pfnNewConnectionV2 = TlenFileSendingConnection;
-	HANDLE s = TlenP2PListen(ft);
+	HNETLIBCONN s = TlenP2PListen(ft);
 	if (s != NULL) {
 		ProtoBroadcastAck(ft->proto->m_szModuleName, ft->hContact, ACKTYPE_FILE, ACKRESULT_CONNECTING, ft, 0);
 		ft->s = s;
@@ -479,7 +481,7 @@ static void __cdecl TlenFileSendingThread(TLEN_FILE_TRANSFER *ft)
 			NETLIBOPENCONNECTION nloc = { sizeof(nloc) };
 			nloc.szHost = ft->hostName;
 			nloc.wPort = ft->wPort;
-			HANDLE hConn = (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)ft->proto->m_hNetlibUser, (LPARAM)&nloc);
+			HNETLIBCONN hConn = Netlib_OpenConnection(ft->proto->m_hNetlibUser, &nloc);
 			if (hConn != NULL) {
 				ProtoBroadcastAck(ft->proto->m_szModuleName, ft->hContact, ACKTYPE_FILE, ACKRESULT_CONNECTING, ft, 0);
 				ft->s = hConn;
@@ -581,13 +583,13 @@ void TlenProcessF(XmlNode *node, ThreadData *info)
 				}
 
 				if (szFilename[0] != '\0' && ft->iqId != NULL) {
-					TCHAR* filenameT = mir_utf8decodeT((char*)szFilename);
+					wchar_t* filenameT = mir_utf8decodeW((char*)szFilename);
 					PROTORECVFILET pre = { 0 };
-					pre.dwFlags = PRFF_TCHAR;
+					pre.dwFlags = PRFF_UNICODE;
 					pre.fileCount = 1;
 					pre.timestamp = time(NULL);
-					pre.descr.t = filenameT;
-					pre.files.t = &filenameT;
+					pre.descr.w = filenameT;
+					pre.files.w = &filenameT;
 					pre.lParam = (LPARAM)ft;
 					ft->proto->debugLogA("sending chainrecv");
 					ProtoChainRecvFile(ft->hContact, &pre);
@@ -630,7 +632,7 @@ void TlenProcessF(XmlNode *node, ThreadData *info)
 				if ((p = TlenXmlGetAttrValue(node, "i")) != NULL)
 					if ((item = TlenListGetItemPtr(info->proto, LIST_FILE, p)) != NULL)
 						if (!mir_strcmp(item->ft->jid, jid))
-							forkthread((void(__cdecl *)(void*))TlenFileSendingThread, 0, item->ft);
+							mir_forkthread(TlenFileSendingThread, item->ft);
 			}
 			else if (!mir_strcmp(e, "6")) {
 				// FILE_RECV : e='6' : IP and port information to connect to get file
@@ -640,7 +642,7 @@ void TlenProcessF(XmlNode *node, ThreadData *info)
 							item->ft->hostName = mir_strdup(p);
 							if ((p = TlenXmlGetAttrValue(node, "p")) != NULL) {
 								item->ft->wPort = atoi(p);
-								forkthread((void(__cdecl *)(void*))TlenFileReceiveThread, 0, item->ft);
+								mir_forkthread(TlenFileReceiveThread, item->ft);
 							}
 						}
 					}

@@ -25,17 +25,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 GlobalMessageData g_dat;
 
-int Chat_ModulesLoaded(WPARAM wParam,LPARAM lParam);
+static const char *buttonIcons[] =
+{
+	"scriver_CLOSEX", "scriver_QUOTE", "scriver_ADD", nullptr, 
+	"scriver_USERDETAILS", "scriver_HISTORY", "scriver_SEND"
+};
 
-static const char *buttonIcons[] = {"scriver_CLOSEX", "scriver_QUOTE", "scriver_SMILEY", 
-									"scriver_ADD", NULL, "scriver_USERDETAILS", "scriver_HISTORY", 
-									"scriver_SEND"};
-
-static const char *chatButtonIcons[] = {"scriver_CLOSEX", 
-									"chat_bold", "chat_italics", "chat_underline", 
-									"chat_fgcol", "chat_bkgcol", 
-									"chat_smiley", "chat_history", 
-									"chat_filter", "chat_settings", "chat_nicklist", "scriver_SEND"};
+static const char *chatButtonIcons[] =
+{
+	"scriver_CLOSEX", "chat_bold", "chat_italics", "chat_underline", 
+	"chat_fgcol", "chat_bkgcol", "chat_history", "chat_filter", 
+	"chat_settings", "chat_nicklist", "scriver_SEND"
+};
 
 static IconItem iconList[] =
 {
@@ -112,27 +113,23 @@ static int ackevent(WPARAM, LPARAM lParam)
 		return 0;
 
 	MCONTACT hContact = pAck->hContact;
-	MessageSendQueueItem *item = FindSendQueueItem(hContact, (HANDLE)pAck->hProcess);
-	if (item == NULL)
-		item = FindSendQueueItem(hContact = db_mc_getMeta(pAck->hContact), (HANDLE)pAck->hProcess);
-	if (item == NULL)
+	MessageSendQueueItem *item = FindSendQueueItem(hContact, pAck->hProcess);
+	if (item == nullptr)
+		item = FindSendQueueItem(hContact = db_mc_getMeta(pAck->hContact), pAck->hProcess);
+	if (item == nullptr)
 		return 0;
 
 	HWND hwndSender = item->hwndSender;
 	if (pAck->result == ACKRESULT_FAILED) {
-		if (item->hwndErrorDlg != NULL)
+		if (item->hwndErrorDlg != nullptr)
 			item = FindOldestPendingSendQueueItem(hwndSender, hContact);
 
-		if (item != NULL && item->hwndErrorDlg == NULL) {
-			if (hwndSender != NULL) {
-				ErrorWindowData *ewd = (ErrorWindowData *)mir_alloc(sizeof(ErrorWindowData));
-				ewd->szName = GetNickname(item->hContact, item->proto);
-				ewd->szDescription = mir_a2t((char *)pAck->lParam);
-				ewd->szText = GetSendBufferMsg(item);
-				ewd->hwndParent = hwndSender;
-				ewd->queueItem = item;
+		if (item != nullptr && item->hwndErrorDlg == nullptr) {
+			if (hwndSender != nullptr) {
 				SendMessage(hwndSender, DM_STOPMESSAGESENDING, 0, 0);
-				SendMessage(hwndSender, DM_SHOWERRORMESSAGE, 0, (LPARAM)ewd);
+
+				CErrorDlg *pDlg = new CErrorDlg(_A2T((char *)pAck->lParam), hwndSender, item);
+				SendMessage(hwndSender, DM_SHOWERRORMESSAGE, 0, (LPARAM)pDlg);
 			}
 			else RemoveSendQueueItem(item);
 		}
@@ -141,30 +138,30 @@ static int ackevent(WPARAM, LPARAM lParam)
 
 	hContact = (db_mc_isMeta(hContact)) ? db_mc_getSrmmSub(item->hContact) : item->hContact;
 
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	dbei.eventType = EVENTTYPE_MESSAGE;
 	dbei.flags = DBEF_UTF | DBEF_SENT | ((item->flags & PREF_RTL) ? DBEF_RTL : 0);
 	dbei.szModule = GetContactProto(hContact);
-	dbei.timestamp = time(NULL);
+	dbei.timestamp = time(nullptr);
 	dbei.cbBlob = (int)mir_strlen(item->sendBuffer) + 1;
 	dbei.pBlob = (PBYTE)item->sendBuffer;
 
-	MessageWindowEvent evt = { sizeof(evt), (INT_PTR)item->hSendId, hContact, &dbei };
-	NotifyEventHooks(hHookWinWrite, 0, (LPARAM)&evt);
+	MessageWindowEvent evt = { item->hSendId, hContact, &dbei };
+	NotifyEventHooks(pci->hevPreCreate, 0, (LPARAM)&evt);
 
 	item->sendBuffer = (char *)dbei.pBlob;
 	db_event_add(hContact, &dbei);
 
-	if (item->hwndErrorDlg != NULL)
+	if (item->hwndErrorDlg != nullptr)
 		DestroyWindow(item->hwndErrorDlg);
 
-	if (RemoveSendQueueItem(item) && db_get_b(NULL, SRMMMOD, SRMSGSET_AUTOCLOSE, SRMSGDEFSET_AUTOCLOSE)) {
-		if (hwndSender != NULL)
+	if (RemoveSendQueueItem(item) && db_get_b(0, SRMM_MODULE, SRMSGSET_AUTOCLOSE, SRMSGDEFSET_AUTOCLOSE)) {
+		if (hwndSender != nullptr)
 			DestroyWindow(hwndSender);
 	}
-	else if (hwndSender != NULL) {
+	else if (hwndSender != nullptr) {
 		SendMessage(hwndSender, DM_STOPMESSAGESENDING, 0, 0);
-		SkinPlaySound("SendMsg");
+		Skin_PlaySound("SendMsg");
 	}
 
 	return 0;
@@ -216,7 +213,7 @@ HICON GetCachedIcon(const char *name)
 		if (!mir_strcmp(iconList[i].szName, name))
 			return IcoLib_GetIconByHandle(iconList[i].hIcolib);
 
-	return NULL;
+	return nullptr;
 }
 
 void LoadGlobalIcons()
@@ -232,8 +229,8 @@ void LoadGlobalIcons()
 	ImageList_RemoveAll(g_dat.hHelperIconList);
 	ImageList_RemoveAll(g_dat.hSearchEngineIconList);
 	for (i = 0; i < _countof(buttonIcons); i++) {
-		if (buttonIcons[i] == NULL)
-			ImageList_AddIcon_ProtoEx(g_dat.hButtonIconList, NULL, ID_STATUS_OFFLINE);
+		if (buttonIcons[i] == nullptr)
+			ImageList_AddIcon_ProtoEx(g_dat.hButtonIconList, nullptr, ID_STATUS_OFFLINE);
 		else
 			ImageList_AddIcon(g_dat.hButtonIconList, GetCachedIcon(buttonIcons[i]));
 	}
@@ -250,50 +247,49 @@ void LoadGlobalIcons()
 	}
 }
 
-static struct { UINT cpId; const TCHAR *cpName; } cpTable[] =
+static struct { UINT cpId; const wchar_t *cpName; } cpTable[] =
 {
-	{ 874, LPGENT("Thai") }, //
-	{ 932, LPGENT("Japanese") }, //
-	{ 936, LPGENT("Simplified Chinese") }, //
-	{ 949, LPGENT("Korean") }, //
-	{ 950, LPGENT("Traditional Chinese") }, //
-	{ 1250, LPGENT("Central European") }, //
-	{ 1251, LPGENT("Cyrillic") }, //
-	{ 1252, LPGENT("Latin I") }, //
-	{ 1253, LPGENT("Greek") }, //
-	{ 1254, LPGENT("Turkish") }, //
-	{ 1255, LPGENT("Hebrew") }, //
-	{ 1256, LPGENT("Arabic") }, //
-	{ 1257, LPGENT("Baltic") }, //
-	{ 1258, LPGENT("Vietnamese") }, //
-	{ 1361, LPGENT("Korean (Johab)") }
+	{ 874, LPGENW("Thai") }, //
+	{ 932, LPGENW("Japanese") }, //
+	{ 936, LPGENW("Simplified Chinese") }, //
+	{ 949, LPGENW("Korean") }, //
+	{ 950, LPGENW("Traditional Chinese") }, //
+	{ 1250, LPGENW("Central European") }, //
+	{ 1251, LPGENW("Cyrillic") }, //
+	{ 1252, LPGENW("Latin I") }, //
+	{ 1253, LPGENW("Greek") }, //
+	{ 1254, LPGENW("Turkish") }, //
+	{ 1255, LPGENW("Hebrew") }, //
+	{ 1256, LPGENW("Arabic") }, //
+	{ 1257, LPGENW("Baltic") }, //
+	{ 1258, LPGENW("Vietnamese") }, //
+	{ 1361, LPGENW("Korean (Johab)") }
 };
 
 void LoadInfobarFonts()
 {
 	LOGFONT lf;
-	LoadMsgDlgFont(MSGFONTID_MESSAGEAREA, &lf, NULL);
-	g_dat.minInputAreaHeight = db_get_dw(NULL, SRMMMOD, SRMSGSET_AUTORESIZELINES, SRMSGDEFSET_AUTORESIZELINES) * abs(lf.lfHeight) * g_dat.logPixelSY / 72;
-	if (g_dat.hInfobarBrush != NULL)
+	LoadMsgDlgFont(MSGFONTID_MESSAGEAREA, &lf, nullptr);
+	g_dat.minInputAreaHeight = db_get_dw(0, SRMM_MODULE, SRMSGSET_AUTORESIZELINES, SRMSGDEFSET_AUTORESIZELINES) * abs(lf.lfHeight) * g_dat.logPixelSY / 72;
+	
+	if (g_dat.hInfobarBrush != nullptr)
 		DeleteObject(g_dat.hInfobarBrush);
-
-	g_dat.hInfobarBrush = CreateSolidBrush(db_get_dw(NULL, SRMMMOD, SRMSGSET_INFOBARBKGCOLOUR, SRMSGDEFSET_INFOBARBKGCOLOUR));
+	g_dat.hInfobarBrush = CreateSolidBrush(db_get_dw(0, SRMM_MODULE, SRMSGSET_INFOBARBKGCOLOUR, SRMSGDEFSET_INFOBARBKGCOLOUR));
 }
 
 void InitGlobals()
 {
-	HDC hdc = GetDC(NULL);
+	HDC hdc = GetDC(nullptr);
 
 	memset(&g_dat, 0, sizeof(struct GlobalMessageData));
-	g_dat.hMessageWindowList = WindowList_Create();
 	g_dat.hParentWindowList = WindowList_Create();
 
 	HookEvent(ME_PROTO_ACK, ackevent);
 	ReloadGlobals();
-	g_dat.lastParent = NULL;
-	g_dat.lastChatParent = NULL;
-	g_dat.hTabIconList = NULL;
-	g_dat.tabIconListUsage = NULL;
+	g_dat.lastParent = nullptr;
+	g_dat.lastChatParent = nullptr;
+	g_dat.hTabIconList = nullptr;
+	g_dat.tabIconListUsage = nullptr;
 	g_dat.tabIconListUsageSize = 0;
 	g_dat.hButtonIconList = ImageList_Create(16, 16, ILC_COLOR32 | ILC_MASK, 0, 0);
 	g_dat.hChatButtonIconList = ImageList_Create(16, 16, ILC_COLOR32 | ILC_MASK, 0, 0);
@@ -303,12 +299,12 @@ void InitGlobals()
 	g_dat.logPixelSX = GetDeviceCaps(hdc, LOGPIXELSX);
 	g_dat.logPixelSY = GetDeviceCaps(hdc, LOGPIXELSY);
 	LoadInfobarFonts();
-	ReleaseDC(NULL, hdc);
+	ReleaseDC(nullptr, hdc);
 }
 
 void FreeGlobals()
 {
-	if (g_dat.hInfobarBrush != NULL)
+	if (g_dat.hInfobarBrush != nullptr)
 		DeleteObject(g_dat.hInfobarBrush);
 	if (g_dat.hTabIconList)
 		ImageList_Destroy(g_dat.hTabIconList);
@@ -322,7 +318,6 @@ void FreeGlobals()
 		ImageList_Destroy(g_dat.hSearchEngineIconList);
 	mir_free(g_dat.tabIconListUsage);
 
-	WindowList_Destroy(g_dat.hMessageWindowList);
 	WindowList_Destroy(g_dat.hParentWindowList);
 
 	memset(&g_dat, 0, sizeof(g_dat));
@@ -332,108 +327,108 @@ void ReloadGlobals()
 {
 	g_dat.flags = 0;
 	g_dat.flags2 = 0;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_AVATARENABLE, SRMSGDEFSET_AVATARENABLE))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_AVATARENABLE, SRMSGDEFSET_AVATARENABLE))
 		g_dat.flags |= SMF_AVATAR;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_SHOWPROGRESS, SRMSGDEFSET_SHOWPROGRESS))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_SHOWPROGRESS, SRMSGDEFSET_SHOWPROGRESS))
 		g_dat.flags |= SMF_SHOWPROGRESS;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_SHOWLOGICONS, SRMSGDEFSET_SHOWLOGICONS))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_SHOWLOGICONS, SRMSGDEFSET_SHOWLOGICONS))
 		g_dat.flags |= SMF_SHOWICONS;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_SHOWTIME, SRMSGDEFSET_SHOWTIME))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_SHOWTIME, SRMSGDEFSET_SHOWTIME))
 		g_dat.flags |= SMF_SHOWTIME;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_SHOWSECONDS, SRMSGDEFSET_SHOWSECONDS))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_SHOWSECONDS, SRMSGDEFSET_SHOWSECONDS))
 		g_dat.flags |= SMF_SHOWSECONDS;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_SHOWDATE, SRMSGDEFSET_SHOWDATE))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_SHOWDATE, SRMSGDEFSET_SHOWDATE))
 		g_dat.flags |= SMF_SHOWDATE;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_USELONGDATE, SRMSGDEFSET_USELONGDATE))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_USELONGDATE, SRMSGDEFSET_USELONGDATE))
 		g_dat.flags |= SMF_LONGDATE;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_USERELATIVEDATE, SRMSGDEFSET_USERELATIVEDATE))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_USERELATIVEDATE, SRMSGDEFSET_USERELATIVEDATE))
 		g_dat.flags |= SMF_RELATIVEDATE;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_GROUPMESSAGES, SRMSGDEFSET_GROUPMESSAGES))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_GROUPMESSAGES, SRMSGDEFSET_GROUPMESSAGES))
 		g_dat.flags |= SMF_GROUPMESSAGES;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_MARKFOLLOWUPS, SRMSGDEFSET_MARKFOLLOWUPS))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_MARKFOLLOWUPS, SRMSGDEFSET_MARKFOLLOWUPS))
 		g_dat.flags |= SMF_MARKFOLLOWUPS;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_MESSAGEONNEWLINE, SRMSGDEFSET_MESSAGEONNEWLINE))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_MESSAGEONNEWLINE, SRMSGDEFSET_MESSAGEONNEWLINE))
 		g_dat.flags |= SMF_MSGONNEWLINE;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_DRAWLINES, SRMSGDEFSET_DRAWLINES))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_DRAWLINES, SRMSGDEFSET_DRAWLINES))
 		g_dat.flags |= SMF_DRAWLINES;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_HIDENAMES, SRMSGDEFSET_HIDENAMES))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_HIDENAMES, SRMSGDEFSET_HIDENAMES))
 		g_dat.flags |= SMF_HIDENAMES;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_AUTOPOPUP, SRMSGDEFSET_AUTOPOPUP))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_AUTOPOPUP, SRMSGDEFSET_AUTOPOPUP))
 		g_dat.flags |= SMF_AUTOPOPUP;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_STAYMINIMIZED, SRMSGDEFSET_STAYMINIMIZED))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_STAYMINIMIZED, SRMSGDEFSET_STAYMINIMIZED))
 		g_dat.flags |= SMF_STAYMINIMIZED;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_SAVEDRAFTS, SRMSGDEFSET_SAVEDRAFTS))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_SAVEDRAFTS, SRMSGDEFSET_SAVEDRAFTS))
 		g_dat.flags |= SMF_SAVEDRAFTS;
 
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_DELTEMP, SRMSGDEFSET_DELTEMP))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_DELTEMP, SRMSGDEFSET_DELTEMP))
 		g_dat.flags |= SMF_DELTEMP;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_SENDONENTER, SRMSGDEFSET_SENDONENTER))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_SENDONENTER, SRMSGDEFSET_SENDONENTER))
 		g_dat.flags |= SMF_SENDONENTER;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_SENDONDBLENTER, SRMSGDEFSET_SENDONDBLENTER))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_SENDONDBLENTER, SRMSGDEFSET_SENDONDBLENTER))
 		g_dat.flags |= SMF_SENDONDBLENTER;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_STATUSICON, SRMSGDEFSET_STATUSICON))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_STATUSICON, SRMSGDEFSET_STATUSICON))
 		g_dat.flags |= SMF_STATUSICON;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_INDENTTEXT, SRMSGDEFSET_INDENTTEXT))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_INDENTTEXT, SRMSGDEFSET_INDENTTEXT))
 		g_dat.flags |= SMF_INDENTTEXT;
 
-	g_dat.openFlags = db_get_dw(NULL, SRMMMOD, SRMSGSET_POPFLAGS, SRMSGDEFSET_POPFLAGS);
-	g_dat.indentSize = db_get_w(NULL, SRMMMOD, SRMSGSET_INDENTSIZE, SRMSGDEFSET_INDENTSIZE);
-	g_dat.logLineColour = db_get_dw(NULL, SRMMMOD, SRMSGSET_LINECOLOUR, SRMSGDEFSET_LINECOLOUR);
+	g_dat.openFlags = db_get_dw(0, SRMM_MODULE, SRMSGSET_POPFLAGS, SRMSGDEFSET_POPFLAGS);
+	g_dat.indentSize = db_get_w(0, SRMM_MODULE, SRMSGSET_INDENTSIZE, SRMSGDEFSET_INDENTSIZE);
+	g_dat.logLineColour = db_get_dw(0, SRMM_MODULE, SRMSGSET_LINECOLOUR, SRMSGDEFSET_LINECOLOUR);
 
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_USETABS, SRMSGDEFSET_USETABS))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_USETABS, SRMSGDEFSET_USETABS))
 		g_dat.flags2 |= SMF2_USETABS;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_TABSATBOTTOM, SRMSGDEFSET_TABSATBOTTOM))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_TABSATBOTTOM, SRMSGDEFSET_TABSATBOTTOM))
 		g_dat.flags2 |= SMF2_TABSATBOTTOM;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_SWITCHTOACTIVE, SRMSGDEFSET_SWITCHTOACTIVE))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_SWITCHTOACTIVE, SRMSGDEFSET_SWITCHTOACTIVE))
 		g_dat.flags2 |= SMF2_SWITCHTOACTIVE;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_LIMITNAMES, SRMSGDEFSET_LIMITNAMES))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_LIMITNAMES, SRMSGDEFSET_LIMITNAMES))
 		g_dat.flags2 |= SMF2_LIMITNAMES;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_HIDEONETAB, SRMSGDEFSET_HIDEONETAB))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_HIDEONETAB, SRMSGDEFSET_HIDEONETAB))
 		g_dat.flags2 |= SMF2_HIDEONETAB;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_SEPARATECHATSCONTAINERS, SRMSGDEFSET_SEPARATECHATSCONTAINERS))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_SEPARATECHATSCONTAINERS, SRMSGDEFSET_SEPARATECHATSCONTAINERS))
 		g_dat.flags2 |= SMF2_SEPARATECHATSCONTAINERS;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_TABCLOSEBUTTON, SRMSGDEFSET_TABCLOSEBUTTON))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_TABCLOSEBUTTON, SRMSGDEFSET_TABCLOSEBUTTON))
 		g_dat.flags2 |= SMF2_TABCLOSEBUTTON;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_LIMITTABS, SRMSGDEFSET_LIMITTABS))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_LIMITTABS, SRMSGDEFSET_LIMITTABS))
 		g_dat.flags2 |= SMF2_LIMITTABS;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_LIMITCHATSTABS, SRMSGDEFSET_LIMITCHATSTABS))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_LIMITCHATSTABS, SRMSGDEFSET_LIMITCHATSTABS))
 		g_dat.flags2 |= SMF2_LIMITCHATSTABS;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_HIDECONTAINERS, SRMSGDEFSET_HIDECONTAINERS))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_HIDECONTAINERS, SRMSGDEFSET_HIDECONTAINERS))
 		g_dat.flags2 |= SMF2_HIDECONTAINERS;
 
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_SHOWSTATUSBAR, SRMSGDEFSET_SHOWSTATUSBAR))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_SHOWSTATUSBAR, SRMSGDEFSET_SHOWSTATUSBAR))
 		g_dat.flags2 |= SMF2_SHOWSTATUSBAR;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_SHOWTITLEBAR, SRMSGDEFSET_SHOWTITLEBAR))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_SHOWTITLEBAR, SRMSGDEFSET_SHOWTITLEBAR))
 		g_dat.flags2 |= SMF2_SHOWTITLEBAR;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_SHOWBUTTONLINE, SRMSGDEFSET_SHOWBUTTONLINE))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_SHOWBUTTONLINE, SRMSGDEFSET_SHOWBUTTONLINE))
 		g_dat.flags2 |= SMF2_SHOWTOOLBAR;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_SHOWINFOBAR, SRMSGDEFSET_SHOWINFOBAR))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_SHOWINFOBAR, SRMSGDEFSET_SHOWINFOBAR))
 		g_dat.flags2 |= SMF2_SHOWINFOBAR;
 
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_SHOWTYPING, SRMSGDEFSET_SHOWTYPING))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_SHOWTYPING, SRMSGDEFSET_SHOWTYPING))
 		g_dat.flags2 |= SMF2_SHOWTYPING;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_SHOWTYPINGWIN, SRMSGDEFSET_SHOWTYPINGWIN))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_SHOWTYPINGWIN, SRMSGDEFSET_SHOWTYPINGWIN))
 		g_dat.flags2 |= SMF2_SHOWTYPINGWIN;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_SHOWTYPINGNOWIN, SRMSGDEFSET_SHOWTYPINGNOWIN))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_SHOWTYPINGNOWIN, SRMSGDEFSET_SHOWTYPINGNOWIN))
 		g_dat.flags2 |= SMF2_SHOWTYPINGTRAY;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_SHOWTYPINGCLIST, SRMSGDEFSET_SHOWTYPINGCLIST))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_SHOWTYPINGCLIST, SRMSGDEFSET_SHOWTYPINGCLIST))
 		g_dat.flags2 |= SMF2_SHOWTYPINGCLIST;
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_SHOWTYPINGSWITCH, SRMSGDEFSET_SHOWTYPINGSWITCH))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_SHOWTYPINGSWITCH, SRMSGDEFSET_SHOWTYPINGSWITCH))
 		g_dat.flags2 |= SMF2_SHOWTYPINGSWITCH;
 
 	if (LOBYTE(LOWORD(GetVersion())) >= 5) {
-		if (db_get_b(NULL, SRMMMOD, SRMSGSET_USETRANSPARENCY, SRMSGDEFSET_USETRANSPARENCY))
+		if (db_get_b(0, SRMM_MODULE, SRMSGSET_USETRANSPARENCY, SRMSGDEFSET_USETRANSPARENCY))
 			g_dat.flags2 |= SMF2_USETRANSPARENCY;
-		g_dat.activeAlpha = db_get_dw(NULL, SRMMMOD, SRMSGSET_ACTIVEALPHA, SRMSGDEFSET_ACTIVEALPHA);
-		g_dat.inactiveAlpha = db_get_dw(NULL, SRMMMOD, SRMSGSET_INACTIVEALPHA, SRMSGDEFSET_INACTIVEALPHA);
+		g_dat.activeAlpha = db_get_dw(0, SRMM_MODULE, SRMSGSET_ACTIVEALPHA, SRMSGDEFSET_ACTIVEALPHA);
+		g_dat.inactiveAlpha = db_get_dw(0, SRMM_MODULE, SRMSGSET_INACTIVEALPHA, SRMSGDEFSET_INACTIVEALPHA);
 	}
-	if (db_get_b(NULL, SRMMMOD, SRMSGSET_USEIEVIEW, SRMSGDEFSET_USEIEVIEW))
+	if (db_get_b(0, SRMM_MODULE, SRMSGSET_USEIEVIEW, SRMSGDEFSET_USEIEVIEW))
 		g_dat.flags |= SMF_USEIEVIEW;
 
-	g_dat.buttonVisibility = db_get_dw(NULL, SRMMMOD, SRMSGSET_BUTTONVISIBILITY, SRMSGDEFSET_BUTTONVISIBILITY);
-	g_dat.chatBbuttonVisibility = db_get_dw(NULL, SRMMMOD, SRMSGSET_CHATBUTTONVISIBILITY, SRMSGDEFSET_CHATBUTTONVISIBILITY);
+	g_dat.buttonVisibility = db_get_dw(0, SRMM_MODULE, SRMSGSET_BUTTONVISIBILITY, SRMSGDEFSET_BUTTONVISIBILITY);
+	g_dat.chatBbuttonVisibility = db_get_dw(0, SRMM_MODULE, SRMSGSET_CHATBUTTONVISIBILITY, SRMSGDEFSET_CHATBUTTONVISIBILITY);
 
-	g_dat.limitNamesLength = db_get_dw(NULL, SRMMMOD, SRMSGSET_LIMITNAMESLEN, SRMSGDEFSET_LIMITNAMESLEN);
-	g_dat.limitTabsNum = db_get_dw(NULL, SRMMMOD, SRMSGSET_LIMITTABSNUM, SRMSGDEFSET_LIMITTABSNUM);
-	g_dat.limitChatsTabsNum = db_get_dw(NULL, SRMMMOD, SRMSGSET_LIMITCHATSTABSNUM, SRMSGDEFSET_LIMITCHATSTABSNUM);
+	g_dat.limitNamesLength = db_get_dw(0, SRMM_MODULE, SRMSGSET_LIMITNAMESLEN, SRMSGDEFSET_LIMITNAMESLEN);
+	g_dat.limitTabsNum = db_get_dw(0, SRMM_MODULE, SRMSGSET_LIMITTABSNUM, SRMSGDEFSET_LIMITTABSNUM);
+	g_dat.limitChatsTabsNum = db_get_dw(0, SRMM_MODULE, SRMSGSET_LIMITCHATSTABSNUM, SRMSGDEFSET_LIMITCHATSTABSNUM);
 }

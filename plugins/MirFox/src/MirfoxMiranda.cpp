@@ -21,6 +21,11 @@ MirfoxData& CMirfoxMiranda::getMirfoxData(){
 	return mirfoxData;
 }
 
+SharedMemoryUtils& CMirfoxMiranda::getSharedMemoryUtils(){
+	return *sharedMemoryUtils;
+}
+
+
 int CMirfoxMiranda::onMirandaInterfaceLoad()
 {
 
@@ -51,6 +56,155 @@ int CMirfoxMiranda::onMirandaInterfaceLoad()
 
 	return 0;
 }
+
+
+void CMirfoxMiranda::onAccListChanged(WPARAM wParam, LPARAM lParam)
+{
+	PROTOACCOUNT *acc = (PROTOACCOUNT*)lParam;
+
+	switch (wParam) {
+	case PRAC_ADDED:
+		if (acc != NULL) {
+			//checking account
+			if(acc->bIsEnabled == 0 || acc->bDynDisabled != 0){
+				return;
+			}
+			mirfoxData.refreshAccount_Add(getSharedMemoryUtils(), acc->szModuleName, acc->tszAccountName, acc->szProtoName);
+		}
+		break;
+
+	case PRAC_UPGRADED:
+	case PRAC_CHANGED:
+		if (acc != NULL) {
+			//checking account
+			if(acc->bIsEnabled == 0 || acc->bDynDisabled != 0){
+				return;
+			}
+			mirfoxData.refreshAccount_Edit(getSharedMemoryUtils(), acc->szModuleName, acc->tszAccountName);
+		}
+		break;
+
+	case PRAC_REMOVED:
+		mirfoxData.refreshAccount_Delete(getSharedMemoryUtils(), acc->szModuleName);
+		break;
+
+	case PRAC_CHECKED:
+		if (acc != NULL) {
+			if (acc->bIsEnabled) {
+				//checking account
+				if(acc->bDynDisabled != 0){
+					return;
+				}
+				mirfoxData.refreshAccount_Add(getSharedMemoryUtils(), acc->szModuleName, acc->tszAccountName, acc->szProtoName);
+			} else {
+				mirfoxData.refreshAccount_Delete(getSharedMemoryUtils(), acc->szModuleName);
+			}
+		}
+		break;
+	}
+
+	return;
+}
+
+
+void CMirfoxMiranda::onContactAdded_async(void* threadArg)
+{
+	Thread_Push(0);
+	OnContactAsyncThreadArgStruct* onContactAsyncThreadArgStruct = (OnContactAsyncThreadArgStruct*)threadArg;
+	CMirfoxMiranda* mirfoxMiranda = onContactAsyncThreadArgStruct->mirfoxMiranda;
+	MFLogger* logger = MFLogger::getInstance();
+
+	// ME_DB_CONTACT_ADDED is fired when only hContact is known, wait some time for finish creating contact
+	// wait some time for finish contact creation
+	SleepEx(300, TRUE);
+	logger->log_p(L"CMirfoxMiranda::onContactAdded_async  AFTER wait [" SCNuPTR L"]", onContactAsyncThreadArgStruct->hContact);
+	bool canAdd = true;
+
+	// ceck miranda
+	if (Miranda_IsTerminated() || mirfoxMiranda->getMirfoxData().Plugin_Terminated)
+		canAdd = false;
+
+	// check if hContact still exist
+	if (canAdd && !db_is_contact(onContactAsyncThreadArgStruct->hContact))
+		canAdd = false;
+
+	// execute
+	if (canAdd && db_get_b(onContactAsyncThreadArgStruct->hContact, "CList", "Hidden", 0) == 1)
+		canAdd = false;
+
+	// add
+	if (canAdd)
+		mirfoxMiranda->getMirfoxData().refreshContact_Add(mirfoxMiranda->getSharedMemoryUtils(), onContactAsyncThreadArgStruct->hContact);
+
+	// clean
+	delete onContactAsyncThreadArgStruct;
+	Thread_Pop();
+	return;
+}
+
+
+void CMirfoxMiranda::onContactDeleted(MCONTACT hContact)
+{
+
+	mirfoxData.refreshContact_Delete(getSharedMemoryUtils(), hContact);
+
+	return;
+}
+
+
+void CMirfoxMiranda::onContactSettingChanged(MCONTACT hContact, LPARAM lParam)
+{
+
+	DBCONTACTWRITESETTING* cws = (DBCONTACTWRITESETTING*)lParam;
+	logger->log_p(L"onContactSettingChanged CList Hidden  hContact [" SCNuPTR L"]", hContact);
+
+	if (cws->value.bVal > 0){
+		mirfoxData.refreshContact_Delete(getSharedMemoryUtils(), hContact);
+	} else { //unset
+		mirfoxData.refreshContact_Add(getSharedMemoryUtils(), hContact);
+	}
+
+	return;
+}
+
+void CMirfoxMiranda::onContactSettingChanged_async(void* threadArg){
+
+	Thread_Push(0);
+	OnContactAsyncThreadArgStruct* onContactAsyncThreadArgStruct = (OnContactAsyncThreadArgStruct*)threadArg;
+	CMirfoxMiranda* mirfoxMiranda = onContactAsyncThreadArgStruct->mirfoxMiranda;
+	MFLogger* logger = MFLogger::getInstance();
+
+	// this ME_DB_CONTACT_SETTINGCHANGED hook can be added after ME_DB_CONTACT_ADDED
+	// if we delay ME_DB_CONTACT_ADDED routines, we must also delay this
+	// wait some time for finish contact creation
+	SleepEx(300+100, TRUE);
+	logger->log_p(L"CMirfoxMiranda::onContactSettingChanged_async  AFTER wait [" SCNuPTR L"]", onContactAsyncThreadArgStruct->hContact);
+	bool canAdd = true;
+
+	// ceck miranda
+	if (Miranda_IsTerminated() || mirfoxMiranda->getMirfoxData().Plugin_Terminated)
+		canAdd = false;
+
+	// check if hContact still exist
+	if (canAdd && !db_is_contact(onContactAsyncThreadArgStruct->hContact))
+		canAdd = false;
+
+	// edit
+	if (canAdd &&db_get_b(onContactAsyncThreadArgStruct->hContact, "CList", "Hidden", 0) == 1)
+		canAdd = false;
+
+
+	if (canAdd)
+		mirfoxMiranda->getMirfoxData().refreshContact_Edit(mirfoxMiranda->getSharedMemoryUtils(), onContactAsyncThreadArgStruct->hContact);
+
+	// clean
+	delete onContactAsyncThreadArgStruct;
+	Thread_Pop();
+	return;
+}
+
+
+
 
 
 int CMirfoxMiranda::onMirandaInterfaceUnload()
@@ -116,7 +270,7 @@ void CMirfoxMiranda::initializeSharedMemoryData(MirfoxData& mirfoxData, SharedMe
 	} else {
 		mirfoxData.processCsmId = result.processCsmId;
 		wchar_t prefix[7];
-		mir_sntprintf(prefix, L"MNG%d", result.processCsmId);
+		mir_snwprintf(prefix, L"MNG%d", result.processCsmId);
 		logger->set6CharsPrefix(prefix);
 	}
 	
@@ -239,8 +393,8 @@ void CMirfoxMiranda::csmThread(void* threadArg)
 		SleepEx(CSMTHREAD_TICK_TIME, TRUE);	//check exit every 0,1s
 
 		//if miranda is exiting - exit this thread
-		if (Miranda_Terminated() || mirfoxDataPtr->Plugin_Terminated){
-			logger->log_p(L"MirfoxMiranda::csmThread break by Plugin_Terminated (=%d) or Miranda_Terminated()", mirfoxDataPtr->Plugin_Terminated);
+		if (Miranda_IsTerminated() || mirfoxDataPtr->Plugin_Terminated){
+			logger->log_p(L"MirfoxMiranda::csmThread break by Plugin_Terminated (=%d) or Miranda_IsTerminated()", mirfoxDataPtr->Plugin_Terminated);
 			break;
 		}
 
@@ -386,8 +540,8 @@ void CMirfoxMiranda::msgQueueThread(void* threadArg)
 		SleepEx(MQTHREAD_TICK_TIME, TRUE);	//check exit every 0,1s
 	
 		//if miranda is exiting - exit this thread
-		if (Miranda_Terminated() || mirfoxDataPtr->Plugin_Terminated){
-			logger->log_p(L"mqThread break by Plugin_Terminated (=%d) or Miranda_Terminated()", mirfoxDataPtr->Plugin_Terminated);
+		if (Miranda_IsTerminated() || mirfoxDataPtr->Plugin_Terminated){
+			logger->log_p(L"mqThread break by Plugin_Terminated (=%d) or Miranda_IsTerminated()", mirfoxDataPtr->Plugin_Terminated);
 			delete [] userActionSelection;
 			break;
 		}

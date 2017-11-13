@@ -7,8 +7,8 @@
 ;============================================================
 [Displays contacts, event notifications, protocol status.]
 Показывает контакты, события, статусы протоколов.
-[Clist Nicer exception]
-Исключение в Clist Nicer
+[Clist nicer exception]
+Исключение в Clist nicer
 [Copy to clipboard]
 Копировать в буфер обмена
 [Continue]
@@ -16,15 +16,7 @@
 [Exit Miranda]
 Выход из Miranda
 [Although the exception was caught and you may continue working with Miranda, you should restart the program as soon as possible. The exception may have damaged internal data structures and can have a serious impact on stability.]
-Несмотря на то, что программа продолжает работать, её нужно перезапустить как можно скорее. Исключение может повредить внутренние структуры данных и вызвать серьёзные проблемы.
-[About CList Nicer+]
-О плагине Nicer+
-[Copyright © 2004-2010 by the Miranda IM project, 2012-2015 by the Miranda NG project. More detailed copyright information can be found in the included README file.]
-Авторские права © 2004-2010 проект Miranda IM, 2012-2015 проект Miranda NG. Более подробная информация об авторских правах содержится в файле README.
-[Version]
-Версия
-[Support and latest version information]
-Поддержка и информация о последней версии
+Несмотря на то, что программа продолжает работать, её необходимо перезапустить как можно скорее. Исключение может повредить внутренние структуры данных и вызвать серьёзные проблемы.
 [Delete contact]
 Удалить контакт
 [No]
@@ -34,7 +26,7 @@
 [Hide from list only, in order to keep their history and ignore/visibility settings]
 Скрыть из списка (останутся история и настройки видимости)
 [Use Options -> Contacts -> Ignore to unhide contacts.]
-Скрытые контакты: "Настройки -> Контакты -> Игнорировать".
+Управление отображением контактов осуществляется в разделе "Настройки -> Контакты -> Игнорировать".
 [Are you sure you want to delete %s?]
 Удалить %s из списка?
 [This will erase all history and settings for this contact!]
@@ -416,11 +408,11 @@
 [Other]
 Другое
 [Hide this contact from the list]
-Спрятать контакт из списка
-[To show a previously hidden contact, navigate to Options -> Events -> Ignore, search the contact in the list and tick the checkbox next to its name.]
-Чтобы показать ранее спрятанный контакт, откройте Настройки -> События -> Игнорировать, найдите контакт, и поставьте галочку перед его именем.
+Скрыть контакт из списка
+[To show a previously hidden contact, navigate to Options -> Contacts -> Ignore, search the contact in the list and tick the checkbox next to its name.]
+Чтобы показать ранее скрытый контакт, откройте раздел "Настройки -> Контакты -> Игнорировать", найдите контакт и поставьте галочку перед его именем.
 [Display options]
-Опции отображения
+Настройки отображения
 [Show contact with priority]
 Контакт с приоритетом
 [Show avatar:]
@@ -430,7 +422,7 @@
 [Draw overlay icon on avatar]
 Значок поверх аватара
 [Show local time]
-Локальное время
+Местное время
 [&Main menu]
 &Главное меню
 [E&xit]
@@ -443,11 +435,11 @@
 В &сети\tCtrl+1
 [&Away\tCtrl+2]
 &Отсутствую\tCtrl+2
-[&NA\tCtrl+3]
+[&Not available\tCtrl+3]
 Не&доступен\tCtrl+3
 [Occ&upied\tCtrl+4]
 &Занят\tCtrl+4
-[&DND\tCtrl+5]
+[&Do not disturb\tCtrl+5]
 Не &беспокоить\tCtrl+5
 [&Free for chat\tCtrl+6]
 &Готов болтать\tCtrl+6
@@ -489,11 +481,11 @@
 В сети
 [Away]
 Отсутствую
-[NA]
+[Not available]
 Недоступен
 [Occupied]
 Занят
-[DND]
+[Do not disturb]
 Не беспокоить
 [Free for chat]
 Готов болтать
@@ -568,7 +560,7 @@
 [When space is available]
 Когда позволяет место
 [When needed by status message]
-Когда нужно статус сообщению
+Когда нужно сообщению статуса
 [Contact list display and ignore options for %s]
 Настройки отображения и игнорирования для %s
 [&Contact list settings...]
@@ -612,15 +604,15 @@
 [Set status modes]
 Установить режимы статуса
 [The requested action requires a valid contact selection. Please select a contact from the contact list and repeat.]
-Для запрошенного действия необходим правильный выбор контакта. Выберите контакт из списка и повторите.
+Для запрошенного действия нужен правильный выбор контакта. Выберите контакт из списка и повторите.
 [Parameter mismatch]
 Несоответствие параметра
-[The service %s specified by the %s button definition was not found. You may need to install additional plugins.]
-Не найдена служба %s, вызываемая кнопкой %s. Возможно, требуется установка дополнительных плагинов.
+[The service %S specified by the %S button definition was not found. You may need to install additional plugins.]
+Не найдена служба %S, вызываемая кнопкой %S. Возможно, требуется установка дополнительных плагинов.
 [Service failure]
 Ошибка службы
 [You need the FloatingContacts plugin, cause the embedded floating contacts were removed.]
-Необходим плагин FloatingContacts, поскольку поддержка встроенных плавающих контактов прекращена.
+Нужен плагин FloatingContacts, поскольку поддержка встроенных плавающих контактов прекращена.
 [Warning]
 Предупреждение
 [Standard contacts]
@@ -640,7 +632,7 @@
 [Frame titles]
 Заголовки фреймов
 [Contact list local time]
-Локальное время контакта
+Местное время контакта
 [Selected text]
 Выделенный текст
 [Hottrack text]
@@ -679,14 +671,6 @@
 &Вверх
 [&Down]
 В&низ
-[Frames]
-Фреймы
-[Show all frames]
-Показать все фреймы
-[Show all title bars]
-Показывать названия
-[Hide all title bars]
-Скрыть названия
 [Lock frame]
 Закрепить фрейм
 [Visible]
@@ -697,6 +681,14 @@
 Применять скин к фрейму
 [Floating]
 Плавающее
+[Frames]
+Фреймы
+[Show all frames]
+Показать все фреймы
+[Show all title bars]
+Показывать названия
+[Hide all title bars]
+Скрыть названия
 [Title bar]
 Заголовок
 [Tool Window]
@@ -725,8 +717,6 @@
 Внешний вид
 [&Options...]
 &Настройки...
-[&About the contact list...]
-О &списке контактов...
 [Ungrouped contacts]
 Контакты вне групп
 [And]
@@ -743,8 +733,8 @@
 Часов
 [Days]
 Дней
-[Current view mode: %s]
-Текущий режим вида: %s
+[Current view mode: %S]
+Текущий режим вида: %S
 [Filtering]
 Фильтрация
 [*** All contacts ***]

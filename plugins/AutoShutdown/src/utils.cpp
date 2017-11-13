@@ -47,12 +47,12 @@ char* u2a(const WCHAR *pszUnicode)
 	return psz;
 }
 
-void TrimString(TCHAR *pszStr)
+void TrimString(wchar_t *pszStr)
 {
-	TCHAR *psz, szChars[] = _T(" \r\n\t");
+	wchar_t *psz, szChars[] = L" \r\n\t";
 	for (int i = 0; i < _countof(szChars); ++i) {
 		/* trim end */
-		psz = &pszStr[mir_tstrlen(pszStr) - 1];
+		psz = &pszStr[mir_wstrlen(pszStr) - 1];
 		while (pszStr[0] && *psz == szChars[i]) {
 			*psz = 0;
 			psz = CharPrev(pszStr, psz);
@@ -60,7 +60,7 @@ void TrimString(TCHAR *pszStr)
 		/* trim beginning */
 		for (psz = pszStr; (*psz && *psz == szChars[i]); psz = CharNext(psz))
 			;
-		memmove(pszStr, psz, (mir_tstrlen(psz) + 1)*sizeof(TCHAR));
+		memmove(pszStr, psz, (mir_wstrlen(psz) + 1)*sizeof(wchar_t));
 	}
 }
 
@@ -84,17 +84,8 @@ void ShowInfoMessage(BYTE flags, const char *pszTitle, const char *pszTextFmt, .
 	mir_vsnprintf(szText, _countof(szText), pszTextFmt, va);
 	va_end(va);
 
-	if (ServiceExists(MS_CLIST_SYSTRAY_NOTIFY)) {
-		MIRANDASYSTRAYNOTIFY msn;
-		msn.cbSize = sizeof(msn);
-		msn.szProto = NULL;
-		msn.szInfoTitle = (char*)pszTitle;
-		msn.szInfo = (char*)szText;
-		msn.uTimeout = 30000; /* max timeout */
-		msn.dwInfoFlags = flags;
-		if (!CallServiceSync(MS_CLIST_SYSTRAY_NOTIFY, 0, (LPARAM)&msn))
-			return; /* success */
-	}
+	if (!Clist_TrayNotifyA(NULL, pszTitle, szText, flags, 30000)) // success
+		return;
 
 	MSGBOXPARAMSA *mbp = (MSGBOXPARAMSA*)mir_calloc(sizeof(*mbp));
 	if (mbp == NULL) return;
@@ -158,7 +149,7 @@ BOOL TimeStampToSystemTime(time_t timestamp, SYSTEMTIME *st)
 	return TRUE;
 }
 
-BOOL GetFormatedCountdown(TCHAR *pszOut, int nSize, time_t countdown)
+BOOL GetFormatedCountdown(wchar_t *pszOut, int nSize, time_t countdown)
 {
 	static BOOL fInited = FALSE;
 	static int (WINAPI *pfnGetDurationFormat)(LCID, DWORD, const SYSTEMTIME*, double, WCHAR*, WCHAR*, int);
@@ -183,7 +174,7 @@ BOOL GetFormatedCountdown(TCHAR *pszOut, int nSize, time_t countdown)
 	return StrFromTimeInterval(pszOut, nSize, (countdown > (MAXDWORD / 1000)) ? MAXDWORD : (countdown * 1000), 10) != 0;
 }
 
-BOOL GetFormatedDateTime(TCHAR *pszOut, int nSize, time_t timestamp, BOOL fShowDateEvenToday)
+BOOL GetFormatedDateTime(wchar_t *pszOut, int nSize, time_t timestamp, BOOL fShowDateEvenToday)
 {
 	SYSTEMTIME st, stNow;
 	LCID locale = Langpack_GetDefaultLocale();
@@ -194,12 +185,12 @@ BOOL GetFormatedDateTime(TCHAR *pszOut, int nSize, time_t timestamp, BOOL fShowD
 		return GetTimeFormat(locale, ((st.wSecond == 0) ? TIME_NOSECONDS : 0) | TIME_FORCE24HOURFORMAT, &st, NULL, pszOut, nSize) != 0;
 	/* show both date and time */
 	{
-		TCHAR szDate[128], szTime[128];
+		wchar_t szDate[128], szTime[128];
 		if (!GetTimeFormat(locale, ((st.wSecond == 0) ? TIME_NOSECONDS : 0) | TIME_FORCE24HOURFORMAT, &st, NULL, szTime, _countof(szTime)))
 			return FALSE;
 		if (!GetDateFormat(locale, DATE_SHORTDATE, &st, NULL, szDate, _countof(szDate)))
 			return FALSE;
-		mir_sntprintf(pszOut, nSize, _T("%s %s"), szTime, szDate);
+		mir_snwprintf(pszOut, nSize, L"%s %s", szTime, szDate);
 		return TRUE;
 	}
 }
@@ -208,14 +199,12 @@ BOOL GetFormatedDateTime(TCHAR *pszOut, int nSize, time_t timestamp, BOOL fShowD
 
 void AddHotkey()
 {
-	HOTKEYDESC hkd = { 0 };
-	hkd.cbSize = sizeof(hkd);
-	hkd.dwFlags = HKD_TCHAR;
+	HOTKEYDESC hkd = {};
+	hkd.dwFlags = HKD_UNICODE;
 	hkd.pszName = "AutoShutdown_Toggle";
-	hkd.ptszDescription = LPGENT("Toggle Automatic Shutdown");
-	hkd.ptszSection = LPGENT("Main");
+	hkd.szDescription.w = LPGENW("Toggle automatic shutdown");
+	hkd.szSection.w = LPGENW("Main");
 	hkd.pszService = "AutoShutdown/MenuCommand";
 	hkd.DefHotKey = HOTKEYCODE(HOTKEYF_CONTROL | HOTKEYF_SHIFT, 'T') | HKF_MIRANDA_LOCAL;
-	hkd.lParam = FALSE;
 	Hotkey_Register(&hkd);
 }

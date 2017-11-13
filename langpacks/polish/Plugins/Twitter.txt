@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Twitter.dll
 ;  Plugin: Twitter protocol
-;  Version: 1.3.0.1
+;  Version: 1.3.0.2
 ;  Authors: dentist, omniwolf, Thief
 ;============================================================
 [Twitter protocol support for Miranda NG.]
@@ -36,8 +36,8 @@ Sprawdzaj:
 Co każde
 [sec]
 s
-[Please cycle your connection for these changes to take effect]
-Proszę ponownie połączyć się aby zmiany przyniosły oczekiwany efekt
+[These changes will take effect the next time you connect to the Twitter network.]
+Te zmiany zostaną wprowadzone gdy ponownie połączysz się z siecią Twittera.
 [Treat tweets as messages]
 Traktuj tweety jako wiadomość
 [Enable popup notifications for tweets]
@@ -70,13 +70,16 @@ Ale nie podczas logowania
 Wpisz kod PIN
 [Enter the PIN provided by Twitter to complete your sign in. This is a one time process until you recreate your Miranda Twitter account.]
 Wpisz kod PIN dostarczony przez Twittera aby się zalogować. Proces jest jednorazowy dla każdego konta.
+;file \protocols\Twitter\src\chat.cpp
+[Normal]
+Normalne
 ;file \protocols\Twitter\src\connection.cpp
 [OAuth variables are out of sequence, they have been reset. Please reconnect and reauthorize Miranda to Twitter.com (do the PIN stuff again)]
 Zmienne OAuth są poza sekwencją, ale zostały przywrócone. Proszę ponownie połączyć się i powtórnie autoryzować Mirandę na Twitter.com (kod PIN)
 [Failed to get Twitter Access Tokens, please go offline and try again. If this keeps happening, check your internet connection.]
 Nie udało się uzyskać tokenów dostępu do Twittera, rozłącz się i spróbuj jeszcze raz. Jeśli sytuacja się powtórzy, sprawdź połączenie internetowe.
-[You're missing the Nick key in the database. This isn't really a big deal, but you'll notice some minor quirks (self contact in list, no group chat outgoing message highlighting, etc). To fix it either add it manually or reset your Twitter account in the Miranda account options]
-W bazie danych brakuje klucza Nick. Nie jest to dużym problemem, ale możesz zauważyć pewne problemy (samego siebie na liście, brak wyróżnienia wiadomości wychodzącej w czacie grupowym itp.). Aby to naprawić, dodaj brakujący klucz ręcznie lub zresetuj konto Twittera w opcjach kont Mirandy.
+[You're missing the Nick key in the database. This isn't really a big deal, but you'll notice some minor quirks (self contact in list, no group chat outgoing message highlighting, etc). To fix it either add it manually or recreate your Miranda Twitter account]
+W bazie danych brakuje klucza Nick. Nie jest to dużym problemem, ale możesz zauważyć pewne problemy (samego siebie na liście, brak wyróżnienia wiadomości wychodzącej w czacie grupowym itp.). Aby to naprawić, dodaj brakujący klucz ręcznie lub utwórz ponownie w Mirandzie swoje konto Twittera.
 ;file \protocols\Twitter\src\proto.cpp
 [Send Tweet...]
 Wyślij Tweet...
@@ -107,5 +110,9 @@ Tweet
 Odpowiedź na Tweet
 [Visit Homepage]
 Odwiedź stronę domową
+[First tweet from new contact]
+
+[New tweet]
+
 [Reply...]
 Odpowiedz...

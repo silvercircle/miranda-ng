@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -23,7 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "stdafx.h"
-#include "modern_commonprototypes.h"
 
 INT_PTR CListTray_GetGlobalStatus(WPARAM wparam, LPARAM lparam);
 
@@ -40,14 +39,8 @@ void cliCluiProtocolStatusChanged(int, const char * proto)
 		pcli->pfnTrayIconUpdateBase(proto);
 }
 
-static INT_PTR MetaSupportCheck(WPARAM, LPARAM)
-{
-	return 1;
-}
-
 int CLUIServices_LoadModule(void)
 {
-	CreateServiceFunction(MS_CLUI_METASUPPORT, MetaSupportCheck);
 	CreateServiceFunction(MS_CLIST_GETSTATUSMODE, CListTray_GetGlobalStatus);
 	return 0;
 }

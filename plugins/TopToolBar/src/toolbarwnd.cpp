@@ -2,10 +2,10 @@
 #include "stdafx.h"
 
 COLORREF bkColour;
-HBITMAP hBmpBackground, hBmpSeparator;
+HBITMAP hBmpBackground;
 int backgroundBmpUse;
 
-static TCHAR pluginname[] = _T("TopToolBar");
+static wchar_t pluginname[] = L"TopToolBar";
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Toolbar window procedure
@@ -208,7 +208,7 @@ LRESULT CALLBACK TopToolBarProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 			if (g_ctrl->bAutoSize) {
 				int Height = ArrangeButtons();
 				INT_PTR frameopt = CallService(MS_CLIST_FRAMES_GETFRAMEOPTIONS, MAKEWPARAM(FO_HEIGHT, g_ctrl->hFrame), 0);
-				if (Height != frameopt) {
+				if (Height != 0 && Height != frameopt) {
 					CallService(MS_CLIST_FRAMES_SETFRAMEOPTIONS, MAKEWPARAM(FO_HEIGHT, g_ctrl->hFrame), Height);
 					bResize = TRUE;
 				}
@@ -238,14 +238,11 @@ LRESULT CALLBACK TopToolBarProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-INT_PTR OnEventFire(WPARAM wParam, LPARAM)
+void CALLBACK OnEventFire()
 {
-	CallService(MS_SYSTEM_REMOVEWAIT, wParam, 0);
-	CloseHandle((HANDLE)wParam);
-
 	HWND parent = pcli->hwndContactList;
 	if (parent == NULL) // no clist, no buttons
-		return -1;
+		return;
 
 	WNDCLASS wndclass = {0};
 	wndclass.lpfnWndProc = TopToolBarProc;
@@ -257,7 +254,7 @@ INT_PTR OnEventFire(WPARAM wParam, LPARAM)
 	RegisterClass(&wndclass);
 
 	g_ctrl->pButtonList = (SortedList *)&Buttons;
-	g_ctrl->hWnd = CreateWindow(pluginname, _T("Toolbar"),
+	g_ctrl->hWnd = CreateWindow(pluginname, L"Toolbar",
 		WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
 		0, 0, 0, g_ctrl->nLastHeight, parent, NULL, hInst, NULL);
 	SetWindowLongPtr(g_ctrl->hWnd, 0, (LONG_PTR)g_ctrl);
@@ -273,10 +270,10 @@ INT_PTR OnEventFire(WPARAM wParam, LPARAM)
 	// if there's no customized frames, create our own
 	if (g_ctrl->hFrame == NULL) {
 		CLISTFrame Frame = { sizeof(Frame) };
-		Frame.tname = _T("Toolbar");
+		Frame.tname = L"Toolbar";
 		Frame.hWnd = g_ctrl->hWnd;
 		Frame.align = alTop;
-		Frame.Flags = F_VISIBLE | F_NOBORDER | F_LOCKED | F_TCHAR;
+		Frame.Flags = F_VISIBLE | F_NOBORDER | F_LOCKED | F_UNICODE;
 		Frame.height = g_ctrl->nLastHeight;
 		Frame.hIcon = Skin_LoadIcon(SKINICON_OTHER_FRAME);
 		g_ctrl->hFrame = (HANDLE)CallService(MS_CLIST_FRAMES_ADDFRAME, (WPARAM)&Frame, 0);
@@ -284,8 +281,6 @@ INT_PTR OnEventFire(WPARAM wParam, LPARAM)
 
 	// receive buttons
 	NotifyEventHooks(hTTBModuleLoaded, 0, 0);
-
-	return 0;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -299,7 +294,7 @@ int LoadBackgroundOptions()
 	}
 
 	if (db_get_b(NULL, TTB_OPTDIR, "UseBitmap", TTBDEFAULT_USEBITMAP)) {
-		ptrT tszBitmapName(db_get_tsa(NULL, TTB_OPTDIR, "BkBitmap"));
+		ptrW tszBitmapName(db_get_wsa(NULL, TTB_OPTDIR, "BkBitmap"));
 		if (tszBitmapName != NULL)
 			hBmpBackground = Bitmap_Load(tszBitmapName);
 	}
@@ -309,6 +304,5 @@ int LoadBackgroundOptions()
 	GetClientRect(g_ctrl->hWnd, &rc);
 	InvalidateRect(g_ctrl->hWnd, &rc, TRUE);
 	UpdateWindow(g_ctrl->hWnd);
-
 	return 0;
 }

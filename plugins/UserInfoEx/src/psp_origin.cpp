@@ -48,10 +48,10 @@ INT_PTR CALLBACK PSPProcOrigin(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 				TranslateDialogDefault(hDlg);
 				SetTimer(hDlg, 1, 5000, NULL);
 
-				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_STREET, SET_CONTACT_ORIGIN_STREET, DBVT_TCHAR));
-				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_ZIP, SET_CONTACT_ORIGIN_ZIP, DBVT_TCHAR));
-				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_CITY, SET_CONTACT_ORIGIN_CITY, DBVT_TCHAR));
-				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_STATE, SET_CONTACT_ORIGIN_STATE, DBVT_TCHAR));
+				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_STREET, SET_CONTACT_ORIGIN_STREET, DBVT_WCHAR));
+				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_ZIP, SET_CONTACT_ORIGIN_ZIP, DBVT_WCHAR));
+				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_CITY, SET_CONTACT_ORIGIN_CITY, DBVT_WCHAR));
+				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_STATE, SET_CONTACT_ORIGIN_STATE, DBVT_WCHAR));
 
 				GetCountryList(&nList, &pList);
 				pCtrlList->insert(CCombo::CreateObj(hDlg, EDIT_COUNTRY, SET_CONTACT_ORIGIN_COUNTRY, DBVT_WORD, pList, nList));
@@ -86,14 +86,14 @@ INT_PTR CALLBACK PSPProcOrigin(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 										mt.FromStampAsUTC(dwStamp);
 								}
 								if (mt.IsValid()) {
-									TCHAR szTime[MAX_PATH];
+									wchar_t szTime[MAX_PATH];
 									LPTSTR ptr;
 									
 									mt.UTCToLocal();
 									mt.DateFormatLong(szTime, _countof(szTime));
 									
-									mir_tstrcat(szTime, _T(" - "));
-									ptr = szTime + mir_tstrlen(szTime);
+									mir_wstrcat(szTime, L" - ");
+									ptr = szTime + mir_wstrlen(szTime);
 									mt.TimeFormat(ptr, _countof(szTime) - (ptr - szTime));
 									SetDlgItemText(hDlg, TXT_DATEADDED, szTime);
 								}
@@ -133,7 +133,7 @@ INT_PTR CALLBACK PSPProcOrigin(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 
 	case WM_TIMER:
 		{
-			TCHAR szTime[32];
+			wchar_t szTime[32];
 			CTzCombo::GetObj(hDlg, EDIT_TIMEZONE)->GetTime(szTime, _countof(szTime));
 			SetDlgItemText(hDlg, TXT_TIME, szTime);
 			break;

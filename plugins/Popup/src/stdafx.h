@@ -37,10 +37,10 @@ Written by: Hrk (Luca Santarelli)
 Updated by: Zazoo (Victor Pavlychko)
 
 Miranda NG can be found here:
-http://miranda-ng.org/
+https://miranda-ng.org/
 
 Miranda NG plugins and tools can be found here:
-http://miranda-ng.org/distr/
+https://miranda-ng.org/distr/
 */
 
 #ifndef HEADERS_H
@@ -62,7 +62,6 @@ http://miranda-ng.org/distr/
 
 #include <newpluginapi.h>
 #include <win2k.h>
-#include <m_clui.h>
 #include <m_clist.h>
 #include <m_options.h>
 #include <m_skin.h>
@@ -130,8 +129,9 @@ http://miranda-ng.org/distr/
 
 #define PU_MODULCLASS  "PopupCLASS" // temp DB modul for this plugin
 #define MODULNAME      "Popup"
-#define MODULNAME_LONG "Popup Plus"
+#define MODULNAME_LONG L"Popup Plus"
 #define MODULNAME_PLU  "Popups"
+#define MODULNAME_PLUW L"Popups"
 
 INT_PTR svcEnableDisableMenuCommand(WPARAM, LPARAM);
 

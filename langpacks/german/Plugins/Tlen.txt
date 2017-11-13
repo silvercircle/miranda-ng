@@ -16,8 +16,6 @@ Passwort:
 Passwort speichern
 [Create new account]
 Neues Konto erstellen
-[Tlen]
-Tlen
 [Options]
 Einstellungen
 [Automatically reconnect after unintentional disconnection]
@@ -88,7 +86,7 @@ Hintergrund
 Text
 [Delay]
 Verzögerung
-[&From Popup plugin]
+[&From popup plugin]
 Vom Popup-Plugin
 [&Custom]
 Benutzerdefiniert

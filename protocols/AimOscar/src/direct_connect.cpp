@@ -25,11 +25,10 @@ void __cdecl CAimProto::aim_dc_helper(void* param) //only called when we are ini
 
 	ProtoBroadcastAck(ft->hContact, ACKTYPE_FILE, ACKRESULT_CONNECTED, ft, 0);
 
-	NETLIBPACKETRECVER packetRecv = { 0 };
-	packetRecv.cbSize = sizeof(packetRecv);
+	NETLIBPACKETRECVER packetRecv = {};
 	packetRecv.dwTimeout = 350000;
 
-	HANDLE hServerPacketRecver = (HANDLE)CallService(MS_NETLIB_CREATEPACKETRECVER, (WPARAM)ft->hConn, 2048 * 4);
+	HANDLE hServerPacketRecver = Netlib_CreatePacketReceiver(ft->hConn, 2048 * 4);
 
 	int result;
 	if (ft->sending)//we are sending
@@ -44,9 +43,9 @@ void __cdecl CAimProto::aim_dc_helper(void* param) //only called when we are ini
 	if (result == 0)
 		ProtoBroadcastAck(ft->hContact, ACKTYPE_FILE, ACKRESULT_SUCCESS, ft, 0);
 	else {
-		if (!ft->requester && result == 1 && !Miranda_Terminated()) {
+		if (!ft->requester && result == 1 && !Miranda_IsTerminated()) {
 			ft->accepted = false;
-			HANDLE hConn = aim_peer_connect(AIM_PROXY_SERVER, get_default_port());
+			HNETLIBCONN hConn = aim_peer_connect(AIM_PROXY_SERVER, get_default_port());
 			if (hConn) {
 				debugLogA("Connected to proxy ip because we want to use a proxy for the file transfer.");
 				ft->requester = true;
@@ -62,12 +61,12 @@ void __cdecl CAimProto::aim_dc_helper(void* param) //only called when we are ini
 	m_ft_list.remove_by_ft(ft);
 }
 
-void aim_direct_connection_initiated(HANDLE hNewConnection, DWORD, void* extra)//for receiving stuff via dc
+void aim_direct_connection_initiated(HNETLIBCONN hNewConnection, DWORD, void* extra)//for receiving stuff via dc
 {
 	CAimProto *ppro = (CAimProto*)extra;
 
-	NETLIBCONNINFO connInfo = { sizeof(connInfo) };
-	CallService(MS_NETLIB_GETCONNECTIONINFO, (WPARAM)hNewConnection, (LPARAM)&connInfo);
+	NETLIBCONNINFO connInfo = {};
+	Netlib_GetConnectionInfo(hNewConnection, &connInfo);
 
 	ppro->debugLogA("Buddy connected: %s", connInfo.szIpPort);
 

@@ -3,7 +3,7 @@
 Minecraft Dynmap plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2015 Robert Pösel
+Copyright © 2015-17 Robert Pösel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@ PLUGININFOEX pluginInfo = {
 // Protocol instances
 static int compare_protos(const MinecraftDynmapProto *p1, const MinecraftDynmapProto *p2)
 {
-	return _tcscmp(p1->m_tszUserName, p2->m_tszUserName);
+	return wcscmp(p1->m_tszUserName, p2->m_tszUserName);
 }
 
 OBJLIST<MinecraftDynmapProto> g_Instances(1, compare_protos);
@@ -72,7 +72,7 @@ extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = {MIID_PROTOCO
 /////////////////////////////////////////////////////////////////////////////////////////
 // Load
 
-static PROTO_INTERFACE* protoInit(const char *proto_name,const TCHAR *username)
+static PROTO_INTERFACE* protoInit(const char *proto_name,const wchar_t *username)
 {
 	MinecraftDynmapProto *proto = new MinecraftDynmapProto(proto_name, username);
 	g_Instances.insert(proto);
@@ -90,7 +90,7 @@ static HANDLE g_hEvents[1];
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	PROTOCOLDESCRIPTOR pd = { 0 };
 	pd.cbSize = sizeof(pd);

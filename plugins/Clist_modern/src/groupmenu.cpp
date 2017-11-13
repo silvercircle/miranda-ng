@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -21,10 +21,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
+
 #include "stdafx.h"
-#include "m_clui.h"
-#include "modern_clist.h"
-#include "modern_clc.h"
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////         Group MENU          //////////////////////////////
@@ -36,7 +34,7 @@ void InitSubGroupMenus(void);
 INT_PTR GroupMenuOnAddService(WPARAM wParam, LPARAM lParam)
 {
 	MENUITEMINFO *mii = (MENUITEMINFO*)wParam;
-	if (mii == NULL)
+	if (mii == nullptr)
 		return 0;
 
 	if (hGroupMainMenuItemProxy == (HANDLE)lParam) {
@@ -62,7 +60,7 @@ void InitGroupMenus(void)
 
 	SET_UID(mi, 0xe386678a, 0x5aee, 0x4bfa, 0xa8, 0x23, 0xd, 0xa0, 0x11, 0x99, 0xb1, 0x98);
 	mi.position = 500;
-	mi.pszService = MS_CLIST_SHOWHIDE;
+	mi.pszService = "Clist/ShowHide";
 	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_OTHER_SHOWHIDE);
 	mi.name.a = LPGEN("&Hide/show");
 	Menu_AddGroupMenuItem(&mi);
@@ -132,14 +130,12 @@ void InitSubGroupMenus(void)
 	HookEvent(ME_CLIST_PREBUILDSUBGROUPMENU, OnBuildSubGroupMenu);
 
 	// add exit command to menu
-	GroupMenuParam gmp;
+	GroupMenuParam gmp = { POPUP_GROUPSHOWOFFLINE, 0 };
 
 	CMenuItem mi;
+	SET_UID(mi, 0x7E081A28, 0x19B3, 0x407F, 0x80, 0x6B, 0x70, 0xC3, 0xC3, 0xA9, 0xD2, 0xA4);
 	mi.position = 1002;
-	mi.hIcolibItem = NULL;
 	mi.pszService = "CLISTMENUSSubGroup/GroupMenuExecProxy";
 	mi.name.a = LPGEN("&Show offline users in here");
-	gmp.lParam = 0;
-	gmp.wParam = POPUP_GROUPSHOWOFFLINE;
 	hShowOfflineUsersHereMenuItem = Menu_AddSubGroupMenuItem(&mi, &gmp);
 }

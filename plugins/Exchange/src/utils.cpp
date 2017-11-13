@@ -92,40 +92,40 @@ char *BinToHex(int size, PBYTE data)
 	return szresult;
 }
 
-void HexToBin(TCHAR *inData, ULONG &size, LPBYTE &outData)
+void HexToBin(wchar_t *inData, ULONG &size, LPBYTE &outData)
 {
-	TCHAR buffer[32] = { 0 };
-	_tcsncpy(buffer, _T("0x"), _countof(_T("0x")));
-	_tcsncpy(buffer + 2, inData, HEX_SIZE);
-	_stscanf(buffer, _T("%x"), &size);
+	wchar_t buffer[32] = { 0 };
+	wcsncpy(buffer, L"0x", _countof(L"0x"));
+	wcsncpy(buffer + 2, inData, HEX_SIZE);
+	swscanf(buffer, L"%x", &size);
 	outData = (unsigned char*)new char[size * 2];
 
-	TCHAR *tmp = inData + HEX_SIZE;
+	wchar_t *tmp = inData + HEX_SIZE;
 	buffer[4] = '\0'; //mark the end of the string
 	for (UINT i = 0; i < size; i++) {
-		_tcsncpy(buffer + 2, &tmp[i * 2], 2);
-		_stscanf(buffer, _T("%hhx"), &outData[i]);
+		wcsncpy(buffer + 2, &tmp[i * 2], 2);
+		swscanf(buffer, L"%hhx", &outData[i]);
 	}
 }
 
-int GetStringFromDatabase(char *szSettingName, TCHAR *szError, TCHAR *szResult, int size)
+int GetStringFromDatabase(char *szSettingName, wchar_t *szError, wchar_t *szResult, int size)
 {
 	DBVARIANT dbv = { 0 };
 	int res = 1;
 	dbv.type = DBVT_ASCIIZ;
-	if (db_get_ts(NULL, ModuleName, szSettingName, &dbv) == 0) {
+	if (db_get_ws(NULL, ModuleName, szSettingName, &dbv) == 0) {
 		res = 0;
-		size_t tmp = mir_tstrlen(dbv.ptszVal);
+		size_t tmp = mir_wstrlen(dbv.ptszVal);
 		size_t len = (tmp < size - 1) ? tmp : size - 1;
-		_tcsncpy(szResult, dbv.ptszVal, len);
+		wcsncpy(szResult, dbv.ptszVal, len);
 		szResult[len] = '\0';
 		mir_free(dbv.ptszVal);
 	}
 	else {
 		res = 1;
-		size_t tmp = mir_tstrlen(szError);
+		size_t tmp = mir_wstrlen(szError);
 		size_t len = (tmp < size - 1) ? tmp : size - 1;
-		_tcsncpy(szResult, szError, len);
+		wcsncpy(szResult, szError, len);
 		szResult[len] = '\0';
 	}
 	return res;
@@ -220,11 +220,11 @@ int ThreadCheckEmail(int bForceAttempt)
 	return 0;
 }
 
-void _popupUtil(TCHAR* szMsg)
+void _popupUtil(wchar_t* szMsg)
 {
 	POPUPDATAT ppd = { 0 };
 	ppd.lchIcon = hiMailIcon;
-	_tcsncpy(ppd.lptzContactName, _T("Exchange notifier"), MAX_CONTACTNAME - 1);
-	_tcsncpy(ppd.lptzText, szMsg, MAX_SECONDLINE - 1);
+	wcsncpy(ppd.lptzContactName, L"Exchange notifier", MAX_CONTACTNAME - 1);
+	wcsncpy(ppd.lptzText, szMsg, MAX_SECONDLINE - 1);
 	PUAddPopupT(&ppd); //show a popup to tell the user what we're doing.
 }

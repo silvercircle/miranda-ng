@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: HistoryStats.dll
 ;  Plugin: HistoryStats
-;  Version: 0.2.0.4
+;  Version: 0.2.1.1
 ;  Authors: Martin Afanasjew
 ;============================================================
 [Creates detailed, colorful and highly customizable statistics using your message history.]
@@ -244,15 +244,15 @@ URL (усі)
 [Totals]
 Разом
 [Column holding the contact's nick and first/last message time if selected.]
-Колонка містить нік контакта і час першого/останнього повідомлення (якщо вибрано).
+Колонка містить нік контакту і час першого/останнього повідомлення (якщо вибрано).
 [Protocol]
 Протокол
 [Column holding the contact's protocol.]
-Колонка містить назву протоколу контакта.
+Колонка містить назву протоколу контакту.
 [Rank]
 Ранг
 [Column holding the contact's placing according to your sorting criteria.]
-Колонка містить місце контакта згідно з вашими критеріями впорядкування.
+Колонка містить місце контакту згідно з вашими критеріями впорядкування.
 ["Split" type]
 Тип гістограми
 [Hours of day]
@@ -418,7 +418,7 @@ wday3:Ндл
 [(multiple)]
 (декілька)
 [You can't access the stand-alone configuration dialog of HistoryStats as long as the options dialog of Miranda NG is open. Please close the options dialog and try again.\r\n\r\nNote that the options offered by both dialogs are the same.]
-Неможливо відкрити окреме вікно налаштувань HistoryStats, оскільки відкрито вікно налаштувань Miranda NG. Закрийте його і спробуйте знову.\r\n\r\nПримітка. Опції в обох діалогах однакові.
+Неможливо відкрити окреме вікно налаштувань HistoryStats, оскільки відкрито вікно налаштувань Miranda NG. Закрийте його і спробуйте знову.\r\n\r\nПримітка: опції в обох діалогах однакові.
 [HistoryStats - Warning]
 Попередження HistoryStats
 [Add set]
@@ -470,7 +470,7 @@ wday3:Ндл
 [Create statistics (there are warnings)]
 Створити статистику (є попередження)
 [You can't access the options of HistoryStats as long as the stand-alone configuration dialog of HistoryStats is open. Please close the stand-alone dialog before opening the options dialog of Miranda NG to see the options of HistoryStats here.\r\n\r\nNote that the options offered by both dialogs are the same.]
-Неможливо відкрити налаштування HistoryStats тут, оскільки відкрито окреме вікно налаштувань. Закрийте його і спробуйте знову.\r\n\r\nПримітка. Опції в обох діалогах однакові.
+Неможливо відкрити налаштування HistoryStats тут, оскільки відкрито окреме вікно налаштувань. Закрийте його і спробуйте знову.\r\n\r\nПримітка: опції в обох діалогах однакові.
 [You have unsaved settings. Do you want to save before running HistoryStats?]
 Ви не зберегли налаштування.\nЗберегти їх перед запуском HistoryStats?
 [HistoryStats]

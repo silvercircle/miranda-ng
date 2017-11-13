@@ -1,13 +1,14 @@
 ﻿#include "stdafx.h"
 
-CSteamProto::CSteamProto(const char* protoName, const TCHAR* userName)
+CSteamProto::CSteamProto(const char* protoName, const wchar_t* userName)
 	: PROTO<CSteamProto>(protoName, userName),
 	hAuthProcess(1), hMessageProcess(1)
 {
 	CreateProtoService(PS_CREATEACCMGRUI, &CSteamProto::OnAccountManagerInit);
 
 	m_idleTS = 0;
-	isTerminated = false;
+	m_lastMessageTS = 0;
+	isLoginAgain = false;
 	m_hQueueThread = NULL;
 	m_pollingConnection = NULL;
 	m_hPollingThread = NULL;
@@ -17,22 +18,22 @@ CSteamProto::CSteamProto(const char* protoName, const TCHAR* userName)
 	GetModuleFileName(g_hInstance, filePath, MAX_PATH);
 
 	wchar_t sectionName[100];
-	mir_sntprintf(sectionName, _T("%s/%s"), LPGENT("Protocols"), LPGENT(MODULE));
+	mir_snwprintf(sectionName, L"%s/%s", LPGENW("Protocols"), _A2W(MODULE));
 
 	char settingName[100];
 	mir_snprintf(settingName, "%s_%s", MODULE, "main");
 
 	SKINICONDESC sid = { 0 };
-	sid.flags = SIDF_ALL_TCHAR;
-	sid.defaultFile.t = filePath;
+	sid.flags = SIDF_ALL_UNICODE;
+	sid.defaultFile.w = filePath;
 	sid.pszName = settingName;
-	sid.section.t = sectionName;
-	sid.description.t = LPGENT("Protocol icon");
+	sid.section.w = sectionName;
+	sid.description.w = LPGENW("Protocol icon");
 	sid.iDefaultIndex = -IDI_STEAM;
 	IcoLib_AddIcon(&sid);
 
 	mir_snprintf(settingName, "%s_%s", MODULE, "gaming");
-	sid.description.t = LPGENT("Gaming icon");
+	sid.description.w = LPGENW("Gaming icon");
 	sid.iDefaultIndex = -IDI_GAMING;
 	IcoLib_AddIcon(&sid);
 
@@ -60,15 +61,18 @@ CSteamProto::CSteamProto(const char* protoName, const TCHAR* userName)
 	CreateProtoService(PS_GETCUSTOMSTATUSICON, &CSteamProto::OnGetXStatusIcon);
 	CreateProtoService(PS_GETADVANCEDSTATUSICON, &CSteamProto::OnRequestAdvStatusIconIdx);
 
-	// netlib support
-	TCHAR name[128];
-	mir_sntprintf(name, TranslateT("%s connection"), m_tszUserName);
+	// custom db events API
+	CreateProtoService(STEAM_DB_GETEVENTTEXT_CHATSTATES, &CSteamProto::OnGetEventTextChatStates);
 
-	NETLIBUSER nlu = { sizeof(nlu) };
-	nlu.flags = NUF_INCOMING | NUF_OUTGOING | NUF_HTTPCONNS | NUF_TCHAR;
-	nlu.ptszDescriptiveName = name;
+	// netlib support
+	wchar_t name[128];
+	mir_snwprintf(name, TranslateT("%s connection"), m_tszUserName);
+
+	NETLIBUSER nlu = {};
+	nlu.flags = NUF_INCOMING | NUF_OUTGOING | NUF_HTTPCONNS | NUF_UNICODE;
+	nlu.szDescriptiveName.w = name;
 	nlu.szSettingsModule = m_szModuleName;
-	m_hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
+	m_hNetlibUser = Netlib_RegisterUser(&nlu);
 
 	requestQueue = new RequestQueue(m_hNetlibUser);
 }
@@ -81,7 +85,7 @@ CSteamProto::~CSteamProto()
 MCONTACT CSteamProto::AddToList(int, PROTOSEARCHRESULT* psr)
 {
 	MCONTACT hContact = NULL;
-	ptrA steamId(mir_u2a(psr->id.t));
+	ptrA steamId(mir_u2a(psr->id.w));
 	if (psr->cbSize == sizeof(PROTOSEARCHRESULT))
 	{
 		if (!FindContact(steamId))
@@ -100,7 +104,7 @@ MCONTACT CSteamProto::AddToList(int, PROTOSEARCHRESULT* psr)
 	{
 		STEAM_SEARCH_RESULT *ssr = (STEAM_SEARCH_RESULT*)psr;
 		hContact = AddContact(steamId, true);
-		UpdateContact(hContact, ssr->data);
+		UpdateContactDetails(hContact, ssr->data);
 	}
 
 	return hContact;
@@ -132,7 +136,7 @@ int CSteamProto::Authorize(MEVENT hDbEvent)
 	return 1;
 }
 
-int CSteamProto::AuthDeny(MEVENT hDbEvent, const TCHAR*)
+int CSteamProto::AuthDeny(MEVENT hDbEvent, const wchar_t*)
 {
 	if (IsOnline() && hDbEvent)
 	{
@@ -158,7 +162,7 @@ int CSteamProto::AuthDeny(MEVENT hDbEvent, const TCHAR*)
 	return 1;
 }
 
-int CSteamProto::AuthRequest(MCONTACT hContact, const TCHAR*)
+int CSteamProto::AuthRequest(MCONTACT hContact, const wchar_t*)
 {
 	if (IsOnline() && hContact)
 	{
@@ -218,28 +222,40 @@ DWORD_PTR CSteamProto:: GetCaps(int type, MCONTACT)
 	}
 }
 
-HANDLE CSteamProto::SearchBasic(const TCHAR* id)
+HANDLE CSteamProto::SearchBasic(const wchar_t* id)
 {
 	if (!this->IsOnline())
 		return 0;
 
-	//ForkThread(&CSteamProto::SearchByIdThread, mir_wstrdup(id));
-
 	ptrA token(getStringA("TokenSecret"));
-	ptrA steamId(mir_t2a(id));
+	ptrA steamId(mir_u2a(id));
 
 	PushRequest(
 		new GetUserSummariesRequest(token, steamId),
-		&CSteamProto::OnSearchByIdEnded,
-		mir_tstrdup(id),
-		MirFreeArg);
+		&CSteamProto::OnSearchResults,
+		(HANDLE)STEAM_SEARCH_BYID);
 
 	return (HANDLE)STEAM_SEARCH_BYID;
 }
 
-int CSteamProto::RecvMsg(MCONTACT hContact, PROTORECVEVENT* pre)
+HANDLE CSteamProto::SearchByName(const wchar_t* nick, const wchar_t* firstName, const wchar_t* lastName)
 {
-	return (INT_PTR)AddDBEvent(hContact, EVENTTYPE_MESSAGE, pre->timestamp, DBEF_UTF, (DWORD)mir_strlen(pre->szMessage), (BYTE*)pre->szMessage);
+	if (!this->IsOnline())
+		return 0;
+
+	// Combine all fields to single text
+	wchar_t keywordsT[200];
+	mir_snwprintf(keywordsT, L"%s %s %s", nick, firstName, lastName);
+
+	ptrA token(getStringA("TokenSecret"));
+	ptrA keywords(mir_utf8encodeW(keywordsT));
+
+	PushRequest(
+		new SearchRequest(token, keywords),
+		&CSteamProto::OnSearchByNameStarted,
+		(HANDLE)STEAM_SEARCH_BYNAME);
+
+	return (HANDLE)STEAM_SEARCH_BYNAME;
 }
 
 int CSteamProto::SendMsg(MCONTACT hContact, int, const char *message)
@@ -280,13 +296,16 @@ int CSteamProto::SetStatus(int new_status)
 	if (new_status == m_iDesiredStatus)
 		return 0;
 
-	debugLog(_T("CSteamProto::SetStatus: changing status from %i to %i"), m_iStatus, new_status);
+	debugLogW(L"CSteamProto::SetStatus: changing status from %i to %i", m_iStatus, new_status);
 
 	int old_status = m_iStatus;
 	m_iDesiredStatus = new_status;
 
 	if (new_status == ID_STATUS_OFFLINE)
 	{
+		// Reset relogin flag
+		isLoginAgain = false;
+
 		m_iStatus = m_iDesiredStatus = ID_STATUS_OFFLINE;
 		ProtoBroadcastAck(NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, (HANDLE)old_status, m_iStatus);
 
@@ -296,18 +315,22 @@ int CSteamProto::SetStatus(int new_status)
 
 		requestQueue->Stop();
 
-		if (!Miranda_Terminated())
+		if (!Miranda_IsTerminated())
 			SetAllContactsStatus(ID_STATUS_OFFLINE);
 	}
 	else if (old_status == ID_STATUS_OFFLINE)
 	{
+		// Load last message timestamp for correct loading of messages history
+		m_lastMessageTS = getDword("LastMessageTS", 0);
+
 		m_iStatus = ID_STATUS_CONNECTING;
 		ProtoBroadcastAck(NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, (HANDLE)old_status, m_iStatus);
 
 		requestQueue->Start();
 
 		ptrA token(getStringA("TokenSecret"));
-		if (mir_strlen(token) > 0)
+		ptrA sessionId(getStringA("SessionID"));
+		if (mir_strlen(token) > 0 && mir_strlen(sessionId) > 0)
 		{
 			PushRequest(
 				new LogonRequest(token),
@@ -315,7 +338,7 @@ int CSteamProto::SetStatus(int new_status)
 		}
 		else
 		{
-			ptrA username(mir_urlEncode(ptrA(mir_utf8encodeT(getTStringA("Username")))));
+			ptrA username(mir_urlEncode(ptrA(mir_utf8encodeW(getWStringA("Username")))));
 			if (username == NULL || username[0] == '\0')
 			{
 				m_iStatus = m_iDesiredStatus = ID_STATUS_OFFLINE;
@@ -343,16 +366,16 @@ void __cdecl CSteamProto::GetAwayMsgThread(void *arg)
 	Sleep(50);
 
 	MCONTACT hContact = (UINT_PTR)arg;
-	CMString message(db_get_tsa(hContact, "CList", "StatusMsg"));
+	CMStringW message(db_get_wsa(hContact, "CList", "StatusMsg"));
 	
 	// if contact has no status message, get xstatus message
 	if (message.IsEmpty())
 	{
-		ptrT xStatusName(getTStringA(hContact, "XStatusName"));
-		ptrT xStatusMsg(getTStringA(hContact, "XStatusMsg"));
+		ptrW xStatusName(getWStringA(hContact, "XStatusName"));
+		ptrW xStatusMsg(getWStringA(hContact, "XStatusMsg"));
 
 		if (xStatusName)
-			message.AppendFormat(_T("%s: %s"), xStatusName, xStatusMsg);
+			message.AppendFormat(L"%s: %s", xStatusName, xStatusMsg);
 		else
 			message.Append(xStatusMsg);
 	}
@@ -372,9 +395,6 @@ int __cdecl CSteamProto::OnEvent(PROTOEVENTTYPE eventType, WPARAM wParam, LPARAM
 	{
 	case EV_PROTO_ONLOAD:
 		return this->OnModulesLoaded(wParam, lParam);
-
-	case EV_PROTO_ONEXIT:
-		return this->OnPreShutdown(wParam, lParam);
 
 	/*case EV_PROTO_ONOPTIONS:
 		return this->OnOptionsInit(wParam, lParam);*/

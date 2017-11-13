@@ -7,7 +7,6 @@
 ;============================================================
 [A contact list for blind folks.]
 Спіс канатактаў для людзей з дрэнным зрокам.
-;file \plugins\Clist_blind\res\resource.rc
 [Delete contact]
 Выдаліць кантакт
 [Are you sure you want to delete %s?]
@@ -21,7 +20,7 @@
 [Hide from list only, in order to keep their history and ignore/visibility settings]
 Схаваць са спісу (захаваецца гісторыя і налады бачнасці)
 [Use Options -> Contacts -> Ignore to unhide contacts.]
-Налады -> Кантакты -> Ігнараваць, каб адлюстраваць кантакты.
+"Налады -> Кантакты -> Ігнараваць", каб адлюстраваць кантакты.
 [Hotkeys]
 Гарачыя клавішы
 [Show/Hide:]
@@ -173,54 +172,25 @@
 [&Status]
 Статус
 [&Offline\tCtrl+0]
-Адключаны
+Ад&ключаныtCtrl+0
 [On&line\tCtrl+1]
-Далучаны
+&Далучаны\tCtrl+1
 [&Away\tCtrl+2]
-Адышоў
-[&NA\tCtrl+3]
-Недасяжны
+&Адсутнічаю\tCtrl+2
+[&Not available\tCtrl+3]
+Неда&ступны\tCtrl+3
 [Occ&upied\tCtrl+4]
-Заняты
-[&DND\tCtrl+5]
-Не турбаваць
+Зан&яты\tCtrl+4
+[&Do not disturb\tCtrl+5]
+Не &турбаваць\tCtrl+5
 [&Free for chat\tCtrl+6]
-Вольны
+&Вольны\tCtrl+6
 [&Invisible\tCtrl+7]
-Нябачны
+&Нябачны\tCtrl+7
 [On the &phone\tCtrl+8]
-Тэлефон
+На тэле&фоне\tCtrl+8
 [Out to &lunch\tCtrl+9]
-За ежай
-[Tray]
-Трэй
-[&Hide/Show]
-С&хаваць/паказаць
-[Nowhere]
-Нідзе
-[&New group]
-Стварыць гурт
-[&Hide offline users]
-Схаваць адключаных
-[Hide &offline users out here]
-Схаваць адключаных па-за гуртом
-[Hide &empty groups]
-Схаваць пустыя гурты
-[Disable &groups]
-Адключыць гурты
-[Hide Miranda]
-Схаваць спіс кантактаў
-[Group]
-Гурт
-[&New subgroup]
-Стварыць падгурт
-[&Hide offline users in here]
-Схаваць адключаных у гурце
-[&Rename group]
-Пераназваць гурт
-[&Delete group]
-Выдаліць гурт
-;file \plugins\Clist_blind\src\clcopts.cpp
+А&бедаю\tCtrl+9
 [Not focused]
 Не ў фокусе
 [Offline]
@@ -229,11 +199,11 @@
 Далучаны
 [Away]
 Адсутнічаю
-[NA]
-Недасяжны
+[Not available]
+Недаступны
 [Occupied]
 Заняты
-[DND]
+[Do not disturb]
 Не турбаваць
 [Free for chat]
 Вольны
@@ -251,11 +221,8 @@
 Інфо: %s
 [List]
 Спіс
-;file \plugins\Clist_blind\src\clistopts.cpp
 [Global]
 Глабальныя
-;file \plugins\Clist_blind\src\cluiopts.cpp
-;file \plugins\Clist_blind\src\init.cpp
 [Unknown protocol]
 Невядомы пратакол
 [Expanded]

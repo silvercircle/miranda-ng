@@ -20,8 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 SmileyPackCListType g_SmileyPackCStore;
 
-
-bool SmileyPackCListType::AddSmileyPack(MCONTACT hContact, TCHAR* dir)
+bool SmileyPackCListType::AddSmileyPack(MCONTACT hContact, wchar_t *dir)
 {
 	bool res = true;
 	if (GetSmileyPack(hContact) == NULL) {
@@ -37,11 +36,10 @@ bool SmileyPackCListType::AddSmileyPack(MCONTACT hContact, TCHAR* dir)
 	return res;
 }
 
-
-bool SmileyPackCListType::AddSmiley(MCONTACT hContact, TCHAR* path)
+bool SmileyPackCListType::AddSmiley(MCONTACT hContact, wchar_t *path)
 {
 	SmileyPackCType *smpack = GetSmileyPack(hContact);
-	if (smpack == NULL) {  
+	if (smpack == NULL) {
 		smpack = new SmileyPackCType;
 
 		smpack->SetId(hContact);
@@ -61,13 +59,13 @@ SmileyPackCType* SmileyPackCListType::GetSmileyPack(MCONTACT id)
 }
 
 
-SmileyCType::SmileyCType(const CMString& fullpath, const TCHAR* filepath)
+SmileyCType::SmileyCType(const CMStringW &fullpath, const wchar_t *filepath)
 {
-	LoadFromResource(fullpath, 0); 
-	CreateTriggerText(T2A_SM(filepath));
+	LoadFromResource(fullpath, 0);
+	CreateTriggerText(_T2A(filepath));
 }
 
-bool SmileyCType::CreateTriggerText(char* text)
+bool SmileyCType::CreateTriggerText(char *text)
 {
 	UrlDecode(text);
 
@@ -75,12 +73,12 @@ bool SmileyCType::CreateTriggerText(char* text)
 	if (len == 0) return false;
 
 	unsigned reslen;
-	char* res = (char*)mir_base64_decode(text, &reslen);
+	ptrA res((char*)mir_base64_decode(text, &reslen));
 	if (res == NULL)
 		return false;
 
 	char save = res[reslen]; res[reslen] = 0; // safe because of mir_alloc
-	TCHAR *txt = mir_utf8decodeT(res);
+	wchar_t *txt = mir_utf8decodeW(res);
 	res[reslen] = save;
 
 	if (txt == NULL)
@@ -88,28 +86,26 @@ bool SmileyCType::CreateTriggerText(char* text)
 
 	m_TriggerText = txt;
 	mir_free(txt);
-	mir_free(res);
 	return true;
 }
-
 
 //
 // SmileyPackCType
 //
 
-bool SmileyPackCType::LoadSmileyDir(TCHAR* dir)
+bool SmileyPackCType::LoadSmileyDir(wchar_t *dir)
 {
-	CMString dirs = dir;
-	dirs += _T("\\*.*");
+	CMStringW dirs = dir;
+	dirs += L"\\*.*";
 
-	_tfinddata_t c_file;
-	INT_PTR hFile = _tfindfirst((TCHAR*)dirs.c_str(), &c_file);
+	_wfinddata_t c_file;
+	INT_PTR hFile = _wfindfirst((wchar_t*)dirs.c_str(), &c_file);
 	if (hFile > -1L) {
 		do {
 			if (c_file.name[0] != '.') {
-				CMString fullpath = dir;
-				fullpath = fullpath + _T("\\") + c_file.name;
-				TCHAR* div = _tcsrchr(c_file.name, '.');
+				CMStringW fullpath = dir;
+				fullpath = fullpath + L"\\" + c_file.name;
+				wchar_t *div = wcsrchr(c_file.name, '.');
 				if (div) {
 					*div = 0;
 					SmileyCType *smlc = new SmileyCType(fullpath, c_file.name);
@@ -119,45 +115,42 @@ bool SmileyPackCType::LoadSmileyDir(TCHAR* dir)
 						m_SmileyList.insert(smlc);
 				}
 			}
-		}
-			while( _tfindnext( hFile, &c_file ) == 0 );
-		_findclose( hFile );
+		} while (_wfindnext(hFile, &c_file) == 0);
+		_findclose(hFile);
 		AddTriggersToSmileyLookup();
 		return true;
 	}
 	return false;
 }
 
-
-bool SmileyPackCType::LoadSmiley(TCHAR* path)
+bool SmileyPackCType::LoadSmiley(wchar_t *path)
 {
-	CMString dirs = path;
+	CMStringW dirs = path;
 	int slash = dirs.ReverseFind('\\');
 	int dot = dirs.ReverseFind('.');
 
-	CMString name = dirs.Mid(slash+1, dot - slash - 1); 
+	CMStringW name = dirs.Mid(slash + 1, dot - slash - 1);
 
-	for (int i=0; i < m_SmileyList.getCount(); i++)
+	for (int i = 0; i < m_SmileyList.getCount(); i++)
 		if (m_SmileyList[i].GetTriggerText() == name) {
 			m_SmileyList[i].LoadFromResource(dirs, 0);
-			return true; 
+			return true;
 		}
 
-	m_SmileyList.insert(new SmileyCType(dirs, (TCHAR*)name.c_str()));
+	m_SmileyList.insert(new SmileyCType(dirs, (wchar_t*)name.c_str()));
 
-	CMString empty;
+	CMStringW empty;
 	m_SmileyLookup.insert(new SmileyLookup(
-		m_SmileyList[m_SmileyList.getCount()-1].GetTriggerText(), false, m_SmileyList.getCount()-1, empty));
+		m_SmileyList[m_SmileyList.getCount() - 1].GetTriggerText(), false, m_SmileyList.getCount() - 1, empty));
 
 	return true;
 }
 
-
 void SmileyPackCType::AddTriggersToSmileyLookup(void)
 {
-	CMString empty;
-	for (int dist=0; dist<m_SmileyList.getCount(); dist++) {
-		SmileyLookup *dats = new SmileyLookup(m_SmileyList[dist].GetTriggerText(), false, dist, empty); 
+	CMStringW empty;
+	for (int dist = 0; dist < m_SmileyList.getCount(); dist++) {
+		SmileyLookup *dats = new SmileyLookup(m_SmileyList[dist].GetTriggerText(), false, dist, empty);
 		m_SmileyLookup.insert(dats);
 	}
 }

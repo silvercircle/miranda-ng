@@ -1,5 +1,5 @@
 /*
-Copyright © 2012-15 Miranda NG team
+Copyright © 2012-17 Miranda NG team
 Copyright © 2009 Jim Porter
 
 This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class TwitterProto : public PROTO<TwitterProto>
 {
 public:
-	TwitterProto(const char*,const TCHAR*);
+	TwitterProto(const char*,const wchar_t*);
 	~TwitterProto();
 
 	//PROTO_INTERFACE
@@ -33,8 +33,8 @@ public:
 	virtual	DWORD_PTR __cdecl GetCaps(int, MCONTACT = 0);
 	virtual	int       __cdecl GetInfo(MCONTACT, int);
 
-	virtual	HANDLE    __cdecl SearchBasic(const TCHAR *);
-	virtual	HANDLE    __cdecl SearchByEmail(const TCHAR *);
+	virtual	HANDLE    __cdecl SearchBasic(const wchar_t *);
+	virtual	HANDLE    __cdecl SearchByEmail(const wchar_t *);
 
 	virtual	int       __cdecl RecvMsg(MCONTACT, PROTORECVEVENT *);
 	virtual	int       __cdecl SendMsg(MCONTACT, int, const char *);
@@ -49,7 +49,6 @@ public:
 
 	// Services
 	INT_PTR __cdecl SvcCreateAccMgrUI(WPARAM,LPARAM);
-	INT_PTR __cdecl GetName(WPARAM,LPARAM);
 	INT_PTR __cdecl GetStatus(WPARAM,LPARAM);
 	INT_PTR __cdecl ReplyToTweet(WPARAM,LPARAM);
 	INT_PTR __cdecl VisitHomepage(WPARAM,LPARAM);
@@ -66,7 +65,6 @@ public:
 	int  __cdecl OnBuildStatusMenu(WPARAM,LPARAM);
 	int  __cdecl OnOptionsInit(WPARAM,LPARAM);
 	int  __cdecl OnModulesLoaded(WPARAM,LPARAM);
-	int  __cdecl OnPreShutdown(WPARAM,LPARAM);
 	int  __cdecl OnPrebuildContactMenu(WPARAM,LPARAM);
 	int  __cdecl OnChatOutgoing(WPARAM,LPARAM);
 
@@ -108,13 +106,13 @@ private:
 
 	void TwitterProto::resetOAuthKeys();
 
-	std::tstring GetAvatarFolder();
+	std::wstring GetAvatarFolder();
 
 	mir_cs signon_lock_;
 	mir_cs avatar_lock_;
 	mir_cs twitter_lock_;
 
-	HANDLE hAvatarNetlib_;
+	HNETLIBUSER hAvatarNetlib_;
 	HANDLE hMsgLoop_;
 	mir_twitter twit_;
 

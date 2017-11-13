@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-04 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -32,7 +32,7 @@ bool g_shutDown = false;
 
 int hLangpack;
 
-TCHAR  g_szDataPath[MAX_PATH];		// user datae path (read at startup only)
+wchar_t  g_szDataPath[MAX_PATH];		// user datae path (read at startup only)
 BOOL   g_AvatarHistoryAvail = FALSE;
 HWND   hwndSetMyAvatar = 0;
 
@@ -43,7 +43,7 @@ HANDLE hEventChanged, hEventContactAvatarChanged, hMyAvatarChanged;
 
 void   InitServices();
 
-static int ComparePicture(const protoPicCacheEntry* p1, const protoPicCacheEntry* p2)
+static int ComparePicture(const protoPicCacheEntry *p1, const protoPicCacheEntry *p2)
 {
 	if ((mir_strcmp(p1->szProtoname, "Global avatar") == 0) || strstr(p1->szProtoname, "Global avatar"))
 		return -1;
@@ -114,7 +114,7 @@ static int MetaChanged(WPARAM hMeta, LPARAM hSubContact)
 	AVATARCACHEENTRY *ace;
 
 	// Get the node
-	CacheNode *node = FindAvatarInCache(hSubContact, TRUE);
+	CacheNode *node = FindAvatarInCache(hSubContact, true);
 	if (node == NULL || !node->loaded) {
 		ace = (AVATARCACHEENTRY*)GetProtoDefaultAvatar(hSubContact);
 		QueueAdd(hSubContact);
@@ -132,7 +132,7 @@ static void LoadDefaultInfo()
 		db_unset(0, PPICT_MODULE, AVS_DEFAULT);
 
 	pce->szProtoname = mir_strdup(AVS_DEFAULT);
-	pce->tszAccName = mir_tstrdup(TranslateT("Global avatar"));
+	pce->tszAccName = mir_wstrdup(TranslateT("Global avatar"));
 	g_ProtoPictures.insert(pce);
 }
 
@@ -144,14 +144,14 @@ static void LoadProtoInfo(PROTOCOLDESCRIPTOR *proto)
 	char protoName[MAX_PATH];
 	mir_snprintf(protoName, "Global avatar for %s accounts", proto->szName);
 
-	TCHAR protoNameTmp[MAX_PATH];
-	mir_sntprintf(protoNameTmp, TranslateT("Global avatar for %s accounts"), _A2T(proto->szName));
+	wchar_t protoNameTmp[MAX_PATH];
+	mir_snwprintf(protoNameTmp, TranslateT("Global avatar for %s accounts"), _A2T(proto->szName));
 	protoPicCacheEntry *pce = new protoPicCacheEntry;
 	if (CreateAvatarInCache(0, pce, protoName) != 1)
 		db_unset(0, PPICT_MODULE, protoName);
 
 	pce->szProtoname = mir_strdup(protoName);
-	pce->tszAccName = mir_tstrdup(protoNameTmp);
+	pce->tszAccName = mir_wstrdup(protoNameTmp);
 	g_ProtoPictures.insert(pce);
 }
 
@@ -162,13 +162,13 @@ static void LoadAccountInfo(PROTOACCOUNT *acc)
 		db_unset(0, PPICT_MODULE, acc->szModuleName);
 
 	pce->szProtoname = mir_strdup(acc->szModuleName);
-	pce->tszAccName = mir_tstrdup(acc->tszAccountName);
+	pce->tszAccName = mir_wstrdup(acc->tszAccountName);
 	g_ProtoPictures.insert(pce);
 
 	pce = new protoPicCacheEntry;
 	CreateAvatarInCache(INVALID_CONTACT_ID, pce, acc->szModuleName);
 	pce->szProtoname = mir_strdup(acc->szModuleName);
-	pce->tszAccName = mir_tstrdup(acc->tszAccountName);
+	pce->tszAccName = mir_wstrdup(acc->tszAccountName);
 	g_MyAvatars.insert(pce);
 }
 
@@ -202,7 +202,7 @@ static int ContactSettingChanged(WPARAM hContact, LPARAM lParam)
 		return 0;
 
 	if (hContact == 0)
-		if (!mir_strcmp(cws->szSetting, "AvatarFile") || !mir_strcmp(cws->szSetting, "PictObject") || !mir_strcmp(cws->szSetting, "AvatarHash") || !mir_strcmp(cws->szSetting, "AvatarSaved"))
+		if (!strcmp(cws->szSetting, "AvatarFile") || !strcmp(cws->szSetting, "PictObject") || !strcmp(cws->szSetting, "AvatarHash") || !strcmp(cws->szSetting, "AvatarSaved"))
 			ReportMyAvatarChanged((WPARAM)cws->szModule, 0);
 
 	return 0;
@@ -322,15 +322,15 @@ void InternalDrawAvatar(AVATARDRAWREQUEST *r, HBITMAP hbm, LONG bmWidth, LONG bm
 
 static int ModulesLoaded(WPARAM, LPARAM)
 {
-	TCHAR szEventName[100];
-	mir_sntprintf(szEventName, _T("avs_loaderthread_%d"), GetCurrentThreadId());
+	wchar_t szEventName[100];
+	mir_snwprintf(szEventName, L"avs_loaderthread_%d", GetCurrentThreadId());
 	hLoaderEvent = CreateEvent(NULL, TRUE, FALSE, szEventName);
 
 	SetThreadPriority(mir_forkthread(PicLoader, 0), THREAD_PRIORITY_IDLE);
 
 	// Folders plugin support
-	hMyAvatarsFolder = FoldersRegisterCustomPathT(LPGEN("Avatars"), LPGEN("My Avatars"), MIRANDA_USERDATAT _T("\\Avatars"));
-	hGlobalAvatarFolder = FoldersRegisterCustomPathT(LPGEN("Avatars"), LPGEN("My Global Avatar Cache"), MIRANDA_USERDATAT _T("\\Avatars"));
+	hMyAvatarsFolder = FoldersRegisterCustomPathT(LPGEN("Avatars"), LPGEN("My Avatars"), MIRANDA_USERDATAT L"\\Avatars");
+	hGlobalAvatarFolder = FoldersRegisterCustomPathT(LPGEN("Avatars"), LPGEN("My Global Avatar Cache"), MIRANDA_USERDATAT L"\\Avatars");
 
 	g_AvatarHistoryAvail = ServiceExists(MS_AVATARHISTORY_ENABLED);
 
@@ -381,8 +381,8 @@ static int LoadAvatarModule()
 	InitServices();
 	InitPolls();
 
-	_tcsncpy_s(g_szDataPath, _countof(g_szDataPath), VARST(_T("%miranda_userdata%\\")), _TRUNCATE);
-	_tcslwr(g_szDataPath);
+	wcsncpy_s(g_szDataPath, _countof(g_szDataPath), VARSW(L"%miranda_userdata%\\"), _TRUNCATE);
+	wcslwr(g_szDataPath);
 	return 0;
 }
 
@@ -400,14 +400,14 @@ extern "C" __declspec(dllexport) PLUGININFOEX * MirandaPluginInfoEx(DWORD)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfoEx);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	INT_PTR result = CALLSERVICE_NOTFOUND;
 	if (ServiceExists(MS_IMG_GETINTERFACE))
 		result = CallService(MS_IMG_GETINTERFACE, FI_IF_VERSION, (LPARAM)&fei);
 
 	if (fei == NULL || result != S_OK) {
-		MessageBox(0, TranslateT("Fatal error, image services not found. Avatar services will be disabled."), TranslateT("Avatar Service"), MB_OK);
+		MessageBox(0, TranslateT("Fatal error, image services not found. Avatar services will be disabled."), TranslateT("Avatar service"), MB_OK);
 		return 1;
 	}
 	LoadACC();

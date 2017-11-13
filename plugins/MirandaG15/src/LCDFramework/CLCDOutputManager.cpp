@@ -14,18 +14,14 @@ CLCDOutputManager *CLCDOutputManager::m_pInstance = NULL;
 //************************************************************************
 // Constructor
 //************************************************************************
-CLCDOutputManager::CLCDOutputManager()
+CLCDOutputManager::CLCDOutputManager() : m_dwButtonRepeatDelay(300), m_pGfx(0),
+	m_pdwButtonRepeatTimers(0), m_pdwButtonRepeatStarts(0), m_pbButtonStates(0),
+	m_pLcdConnection(0), m_bInitialized(false), m_dwLastUpdate(0), m_pActiveScreen(NULL)
 {
 	ASSERT(m_pInstance == NULL);
 
 	m_pInstance = this;
-	m_strAppletName = _T("");
-	m_pbButtonStates = NULL;
-	m_pActiveScreen = NULL;
-	m_bInitialized = false;
-
-	m_dwButtonRepeatDelay = 300;
-	m_dwLastUpdate = 0;
+	m_strAppletName = L"";
 }
 
 //************************************************************************
@@ -144,7 +140,7 @@ void CLCDOutputManager::InitializeGfxObject() {
 	if(m_pGfx->IsInitialized())
 		return;
 
-	TRACE(_T("CLCDOutputManager::UpdateGfxObject(): initializing CLCDGfx\n"));
+	TRACE(L"CLCDOutputManager::UpdateGfxObject(): initializing CLCDGfx\n");
 	SIZE size;
 	size = m_pLcdConnection->GetDisplaySize();
 	
@@ -180,7 +176,7 @@ void CLCDOutputManager::DeinitializeGfxObject() {
 	if(!m_pGfx->IsInitialized())
 		return;
 	
-	TRACE(_T("CLCDOutputManager::UpdateGfxObject(): shutting down CLCDGfx\n"));
+	TRACE(L"CLCDOutputManager::UpdateGfxObject(): shutting down CLCDGfx\n");
 
 	m_pGfx->Shutdown();
 	free(m_pbButtonStates);

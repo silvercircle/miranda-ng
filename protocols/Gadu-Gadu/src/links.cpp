@@ -36,7 +36,7 @@ static INT_PTR gg_menuchoose(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-static INT_PTR gg_parselink(WPARAM wParam, LPARAM lParam)
+static INT_PTR gg_parselink(WPARAM, LPARAM lParam)
 {
 	char *arg = (char*)lParam;
 	uin_t uin;
@@ -116,9 +116,9 @@ void GGPROTO::links_instance_init()
 {
 	if (ServiceExists(MS_ASSOCMGR_ADDNEWURLTYPE)) {
 		CMenuItem mi;
-		mi.flags = CMIF_TCHAR;
+		mi.flags = CMIF_UNICODE;
 		mi.position = g_Instances.getCount();
-		mi.name.t = m_tszUserName;
+		mi.name.w = m_tszUserName;
 		hInstanceMenuItem = Menu_AddItem(hInstanceMenu, &mi, this);
 	}
 }

@@ -87,8 +87,8 @@ void popupMessage(LPCTSTR lpText, LPCTSTR lpCaption, UINT uType)
 	ppd.iSeconds = options.Timeout[indx];
 
 	ppd.lchIcon = (HICON)LoadImage(NULL, MAKEINTRESOURCE(iIcon), IMAGE_ICON, SM_CXSMICON, SM_CYSMICON, LR_SHARED);
-	mir_tstrcpy(ppd.lptzContactName, lpCaption);
-	mir_tstrcpy(ppd.lptzText, lpText);
+	mir_wstrcpy(ppd.lptzContactName, lpCaption);
+	mir_wstrcpy(ppd.lptzText, lpText);
 	PUAddPopupT(&ppd);
 	if (options.Sound)
 		MessageBeep(uType);
@@ -132,10 +132,10 @@ void HookOnImport(HMODULE hModule, char *lpszImpModName, PVOID lpOrigFunc, PVOID
 
 			if (!VirtualProtect((LPVOID)ppfn, sizeof(void*), PAGE_EXECUTE_READWRITE, &oldProtect)) {
 				if (!g_HookError) {
-					TCHAR buf[200];
+					wchar_t buf[200];
 
 					g_HookError = TRUE;
-					mir_sntprintf(buf, TranslateT("VirtualProtect failed. Code %d\nTry to call the author"), GetLastError());
+					mir_snwprintf(buf, TranslateT("VirtualProtect failed. Code %d\nTry to call the author"), GetLastError());
 					prevMessageBox(0, buf, TranslateT("Error"), MB_OK);
 				}
 			}
@@ -152,7 +152,7 @@ void HookOnImport(HMODULE hModule, char *lpszImpModName, PVOID lpOrigFunc, PVOID
 
 void HookAPI()
 {
-	PVOID lpMessageBox = (PVOID)GetProcAddress(GetModuleHandle(_T("USER32.DLL")), "MessageBoxW");
+	PVOID lpMessageBox = (PVOID)GetProcAddress(GetModuleHandle(L"USER32.DLL"), "MessageBoxW");
 	PVOID lpPopupMsgBox = (PVOID)newMessageBox;
 
 	prevMessageBox = (MSGBOXPROC)lpMessageBox;
@@ -186,9 +186,9 @@ int HookedOptions(WPARAM wParam, LPARAM)
 		OPTIONSDIALOGPAGE odp = { 0 };
 		odp.hInstance = hInst;
 		odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONS);
-		odp.ptszTitle = LPGENT("MessagePopup");
-		odp.ptszGroup = LPGENT("Popups");
-		odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+		odp.szTitle.w = LPGENW("MessagePopup");
+		odp.szGroup.w = LPGENW("Popups");
+		odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
 		odp.pfnDlgProc = OptionsDlgProc;
 		Options_AddPage(wParam, &odp);
 	}

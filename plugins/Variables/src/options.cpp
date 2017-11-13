@@ -26,7 +26,7 @@ static INT_PTR CALLBACK SetOptsDlgProc(HWND hwndDlg,UINT msg,WPARAM wParam,LPARA
 		TranslateDialogDefault(hwndDlg);
 		{
 			DBVARIANT dbv;
-			if (!db_get_ts( NULL, MODULENAME, SETTING_STARTUPTEXT, &dbv )) {
+			if (!db_get_ws( NULL, MODULENAME, SETTING_STARTUPTEXT, &dbv )) {
 				SetDlgItemText(hwndDlg, IDC_FORMATTEXT, dbv.ptszVal);
 				db_free(&dbv);
 			}
@@ -85,12 +85,12 @@ static INT_PTR CALLBACK SetOptsDlgProc(HWND hwndDlg,UINT msg,WPARAM wParam,LPARA
 		if (((LPNMHDR)lParam)->code == PSN_APPLY) {
 			int len = SendDlgItemMessage(hwndDlg, IDC_FORMATTEXT, WM_GETTEXTLENGTH, 0, 0);
 			if (len >= 0) {
-				TCHAR *szFormatText = (TCHAR*)mir_calloc((len+1)* sizeof(TCHAR));
+				wchar_t *szFormatText = (wchar_t*)mir_calloc((len+1)* sizeof(wchar_t));
 				if (szFormatText == NULL)
 					break;
 
 				if (GetDlgItemText(hwndDlg, IDC_FORMATTEXT, szFormatText, len+1) != 0)
-					db_set_ts(NULL, MODULENAME, SETTING_STARTUPTEXT, szFormatText);
+					db_set_ws(NULL, MODULENAME, SETTING_STARTUPTEXT, szFormatText);
 
 				mir_free(szFormatText);
 			}
@@ -103,9 +103,9 @@ static INT_PTR CALLBACK SetOptsDlgProc(HWND hwndDlg,UINT msg,WPARAM wParam,LPARA
 
 	case VARM_PARSE:
 		{
-			TCHAR *string = Hlp_GetDlgItemText(hwndDlg, IDC_FORMATTEXT);
+			wchar_t *string = Hlp_GetDlgItemText(hwndDlg, IDC_FORMATTEXT);
 			if (string != NULL) {
-				TCHAR *newString = variables_parsedup(string, NULL, NULL);
+				wchar_t *newString = variables_parsedup(string, NULL, NULL);
 				if (newString != NULL) {
 					SetDlgItemText(hwndDlg, IDC_RESULT, newString);
 					mir_free(newString);
@@ -130,14 +130,13 @@ static INT_PTR CALLBACK SetOptsDlgProc(HWND hwndDlg,UINT msg,WPARAM wParam,LPARA
 int OptionsInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
-	odp.position      = 150000000;
-	odp.pszGroup      = LPGEN("Services");
-	odp.groupPosition = 910000000;
-	odp.hInstance     = hInst;
-	odp.pszTemplate   = MAKEINTRESOURCEA(IDD_OPTS_DIALOG);
-	odp.pszTitle      = LPGEN("Variables");
-	odp.pfnDlgProc    = SetOptsDlgProc;
-	odp.flags         = ODPF_BOLDGROUPS;
+	odp.flags = ODPF_BOLDGROUPS;
+	odp.position = 150000000;
+	odp.szGroup.a = LPGEN("Services");
+	odp.szTitle.a = LPGEN("Variables");
+	odp.hInstance = hInst;
+	odp.pfnDlgProc = SetOptsDlgProc;
+	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTS_DIALOG);
 	Options_AddPage(wParam, &odp);
 	return 0;
 }

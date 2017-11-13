@@ -1,6 +1,6 @@
 /*
    Mobile State plugin for Miranda NG (www.miranda-ng.org)
-   (c) 2012-15 by Robert Pösel
+   (c) 2012-17 by Robert Pösel
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,38 +19,40 @@
 
 #pragma once
 
-static const TCHAR *clients[] = {
-	_T("android"),
-	_T("mobile"),
-	_T("pda"),
-	_T("gtalk"),
-	_T("conversions"),
-	_T("jabiru"),
-	_T("jtalk"),
-	_T("jasmine"),
-	_T("ebuddy"),
-	_T("emessenger"),
-	_T("jimm"),
-	_T("mobicq"),
-	_T("bombus"),
-	_T("colibry"),
-	_T("berry"),
-	_T("phone"),
-	_T("ipad"),
-	_T("im+"),
-	_T("bayan"),
-	_T("imo.im"),
-	_T("slick"),
-	_T("talkonaut"),
-	_T("jabbroid"),
-	_T("talkdroid"),
-	_T("blackberry"),
-	_T("prelude"),
-	_T("nimbuzz"),
-	_T("mqutim"),
-	_T("sleekxmpp.com"),
-	_T("facebook (mobile"),
-	_T("facebook app"),
-	_T("facebook messenger"),
-	_T("wp")
+static const wchar_t *clients[] = {
+	L"android",
+	L"mobile",
+	L"pda",
+	L"gtalk",
+	L"conversions",
+	L"conversations",
+	L"jabiru",
+	L"jtalk",
+	L"jasmine",
+	L"igniterealtime",
+	L"ebuddy",
+	L"emessenger",
+	L"jimm",
+	L"mobicq",
+	L"bombus",
+	L"colibry",
+	L"berry",
+	L"phone",
+	L"ipad",
+	L"im+",
+	L"bayan",
+	L"imo.im",
+	L"slick",
+	L"talkonaut",
+	L"jabbroid",
+	L"talkdroid",
+	L"blackberry",
+	L"prelude",
+	L"nimbuzz",
+	L"mqutim",
+	L"sleekxmpp.com",
+	L"facebook (mobile",
+	L"facebook app",
+	L"facebook messenger",
+	L"wp"
 };

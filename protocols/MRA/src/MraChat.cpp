@@ -1,27 +1,20 @@
 #include "stdafx.h"
 #include "proto.h"
 
-static LPWSTR lpwszStatuses[] = { L"Owners", L"Inviter", L"Visitors" };
+static LPWSTR lpwszStatuses[] = { LPGENW("Owners"), LPGENW("Inviter"), LPGENW("Visitors") };
 #define MRA_CHAT_STATUS_OWNER	0
 #define MRA_CHAT_STATUS_INVITER	1
 #define MRA_CHAT_STATUS_VISITOR	2
 
-void CMraProto::MraChatDllError()
-{
-	MessageBox(NULL, TranslateT("CHAT plugin is required for conferences. Install it before chatting"), m_tszUserName, (MB_OK | MB_ICONWARNING));
-}
 
 bool CMraProto::MraChatRegister()
 {
-	if (!ServiceExists(MS_GC_REGISTER))
-		return FALSE;
-
-	GCREGISTER gcr = { sizeof(gcr) };
+	GCREGISTER gcr = {};
 	gcr.iMaxText = MRA_MAXLENOFMESSAGE;
 	gcr.nColors = 0;
 	gcr.ptszDispName = m_tszUserName;
 	gcr.pszModule = m_szModuleName;
-	CallServiceSync(MS_GC_REGISTER, NULL, (LPARAM)&gcr);
+	Chat_Register(&gcr);
 
 	HookProtoEvent(ME_GC_EVENT, &CMraProto::MraChatGcEventHook);
 	return TRUE;
@@ -30,37 +23,26 @@ bool CMraProto::MraChatRegister()
 INT_PTR CMraProto::MraChatSessionNew(MCONTACT hContact)
 {
 	if (bChatExists)
-	if (hContact) {
-		CMStringW wszEMail;
-		mraGetStringW(hContact, "e-mail", wszEMail);
+	if (!hContact)
+		return 1;
+		
+	CMStringW wszEMail;
+	mraGetStringW(hContact, "e-mail", wszEMail);
 
-		GCSESSION gcw = { sizeof(gcw) };
-		gcw.iType = GCW_CHATROOM;
-		gcw.pszModule = m_szModuleName;
-		gcw.ptszName = pcli->pfnGetContactDisplayName(hContact, 0);
-		gcw.ptszID = wszEMail;
-		gcw.ptszStatusbarText = _T("status bar");
-		gcw.dwItemData = (DWORD)hContact;
-		if (!CallServiceSync(MS_GC_NEWSESSION, NULL, (LPARAM)&gcw)) {
-			GCDEST gcd = { m_szModuleName, wszEMail.c_str(), GC_EVENT_ADDGROUP };
-			GCEVENT gce = { sizeof(gce), &gcd };
-			for (int i = 0; i < _countof(lpwszStatuses); i++) {
-				gce.ptszStatus = TranslateTS(lpwszStatuses[i]);
-				CallServiceSync(MS_GC_EVENT, NULL, (LPARAM)&gce);
-			}
+	if (Chat_NewSession(GCW_CHATROOM, m_szModuleName, wszEMail, pcli->pfnGetContactDisplayName(hContact, 0), (void*)hContact))
+		return 1;
 
-			gcd.iType = GC_EVENT_CONTROL;
-			CallServiceSync(MS_GC_EVENT, SESSION_INITDONE, (LPARAM)&gce);
-			CallServiceSync(MS_GC_EVENT, SESSION_ONLINE, (LPARAM)&gce);
+	for (int i = 0; i < _countof(lpwszStatuses); i++)
+		Chat_AddGroup(m_szModuleName, wszEMail, TranslateW(lpwszStatuses[i]));
 
-			DWORD opcode = MULTICHAT_GET_MEMBERS;
-			CMStringA szEmail;
-			mraGetStringA(hContact, "e-mail", szEmail);
-			MraMessage(FALSE, NULL, 0, MESSAGE_FLAG_MULTICHAT, szEmail, _T(""), (LPBYTE)&opcode, sizeof(opcode));
-			return 0;
-		}
-	}
-	return 1;
+	Chat_Control(m_szModuleName, wszEMail, SESSION_INITDONE);
+	Chat_Control(m_szModuleName, wszEMail, SESSION_ONLINE);
+
+	DWORD opcode = MULTICHAT_GET_MEMBERS;
+	CMStringA szEmail;
+	if (mraGetStringA(hContact, "e-mail", szEmail))
+		MraMessage(FALSE, NULL, 0, MESSAGE_FLAG_MULTICHAT, szEmail, L"", (LPBYTE)&opcode, sizeof(opcode));
+	return 0;
 }
 
 void CMraProto::MraChatSessionDestroy(MCONTACT hContact)
@@ -68,15 +50,11 @@ void CMraProto::MraChatSessionDestroy(MCONTACT hContact)
 	if (!bChatExists || hContact == NULL)
 		return;
 
-	GCDEST gcd = { m_szModuleName, NULL, GC_EVENT_CONTROL };
-	GCEVENT gce = { sizeof(gce), &gcd };
-
 	CMStringW wszEMail;
 	mraGetStringW(hContact, "e-mail", wszEMail);
-	gcd.ptszID = (LPWSTR)wszEMail.c_str();
 
-	CallServiceSync(MS_GC_EVENT, SESSION_TERMINATE, (LPARAM)&gce);
-	CallServiceSync(MS_GC_EVENT, WINDOW_CLEARLOG, (LPARAM)&gce);
+	Chat_Terminate(m_szModuleName, wszEMail);
+	Chat_Control(m_szModuleName, wszEMail, WINDOW_CLEARLOG);
 }
 
 INT_PTR CMraProto::MraChatSessionEventSendByHandle(MCONTACT hContactChatSession, int iType, DWORD dwFlags, const CMStringA &lpszUID, LPCWSTR lpwszStatus, LPCWSTR lpwszMessage, DWORD_PTR dwItemData, DWORD dwTime)
@@ -86,13 +64,12 @@ INT_PTR CMraProto::MraChatSessionEventSendByHandle(MCONTACT hContactChatSession,
 
 	CMStringW wszID, wszUID, wszNick;
 
-	GCDEST gcd = { m_szModuleName, 0, iType };
+	GCEVENT gce = { m_szModuleName, 0, iType };
 	if (hContactChatSession) {
 		mraGetStringW(hContactChatSession, "e-mail", wszID);
-		gcd.ptszID = (LPWSTR)wszID.c_str();
+		gce.ptszID = wszID.c_str();
 	}
 
-	GCEVENT gce = { sizeof(gce), &gcd };
 	gce.dwFlags = dwFlags;
 	gce.ptszUID = wszUID;
 	gce.ptszStatus = lpwszStatus;
@@ -119,7 +96,7 @@ INT_PTR CMraProto::MraChatSessionEventSendByHandle(MCONTACT hContactChatSession,
 			gce.ptszNick = wszUID;
 	}
 
-	return CallServiceSync(MS_GC_EVENT, NULL, (LPARAM)&gce);
+	return Chat_Event(&gce);
 }
 
 INT_PTR CMraProto::MraChatSessionInvite(MCONTACT hContactChatSession, const CMStringA &lpszEMailInMultiChat, DWORD dwTime)
@@ -145,7 +122,7 @@ INT_PTR CMraProto::MraChatSessionMembersAdd(MCONTACT hContactChatSession, const 
 INT_PTR CMraProto::MraChatSessionJoinUser(MCONTACT hContactChatSession, const CMStringA &lpszEMailInMultiChat, DWORD dwTime)
 {
 	if (hContactChatSession)
-		return MraChatSessionEventSendByHandle(hContactChatSession, GC_EVENT_JOIN, GCEF_ADDTOLOG, lpszEMailInMultiChat, lpwszStatuses[MRA_CHAT_STATUS_VISITOR], _T(""), 0, dwTime);
+		return MraChatSessionEventSendByHandle(hContactChatSession, GC_EVENT_JOIN, GCEF_ADDTOLOG, lpszEMailInMultiChat, lpwszStatuses[MRA_CHAT_STATUS_VISITOR], L"", 0, dwTime);
 
 	return 1;
 }
@@ -189,11 +166,11 @@ int CMraProto::MraChatGcEventHook(WPARAM, LPARAM lParam)
 	if (bChatExists) {
 		GCHOOK* gch = (GCHOOK*)lParam;
 
-		if (!_stricmp(gch->pDest->pszModule, m_szModuleName)) {
-			switch (gch->pDest->iType) {
+		if (!_stricmp(gch->pszModule, m_szModuleName)) {
+			switch (gch->iType) {
 			case GC_USER_MESSAGE:
-				if (gch->ptszText && mir_tstrlen(gch->ptszText)) {
-					CMStringA szEmail = gch->pDest->ptszID;
+				if (gch->ptszText && mir_wstrlen(gch->ptszText)) {
+					CMStringA szEmail = gch->ptszID;
 					MCONTACT hContact = MraHContactFromEmail(szEmail, FALSE, TRUE, NULL);
 					BOOL bSlowSend = getByte("SlowSend", MRA_DEFAULT_SLOW_SEND);
 
@@ -224,7 +201,7 @@ int CMraProto::MraChatGcEventHook(WPARAM, LPARAM lParam)
 			case GC_USER_CHANMGR:
 				//int iqId = SerialNext();
 				//IqAdd( iqId, IQ_PROC_NONE, &CJabberProto::OnIqResultGetMuc );
-				//m_ThreadInfo->send( XmlNodeIq( _T("get"), iqId, item->jid ) << XQUERY( xmlnsOwner ));
+				//m_ThreadInfo->send( XmlNodeIq( L"get", iqId, item->jid ) << XQUERY( xmlnsOwner ));
 				break;
 			}
 		}

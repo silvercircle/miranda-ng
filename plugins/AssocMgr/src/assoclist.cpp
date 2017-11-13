@@ -24,22 +24,20 @@ Foundation,  Inc.,  59 Temple Place - Suite 330,  Boston,  MA  02111-1307,  USA.
 // Options
 extern HINSTANCE hInst;
 static HANDLE hHookOptInit;
-// Services
-static HANDLE hServiceAddFile, hServiceRemoveFile, hServiceAddUrl, hServiceRemoveUrl;
 
 /************************* Assoc List *****************************/
 
 typedef struct
 {
 	char *pszClassName;    // class name as used in registry and db
-	TCHAR *pszDescription;
+	wchar_t *pszDescription;
 	HINSTANCE hInstance;   // allowed to be NULL for miranda32.exe
 	WORD nIconResID;
 	char *pszService;
 	WORD flags;            // set of FTDF_* and UTDF_* flags
 	char *pszFileExt;      // file type: NULL for url type
 	char *pszMimeType;     // file type: allowed to be NULL
-	TCHAR *pszVerbDesc;    // file type: allowed to be NULL
+	wchar_t *pszVerbDesc;    // file type: allowed to be NULL
 } ASSOCDATA;
 
 static ASSOCDATA *pAssocList; // protected by csAssocList
@@ -58,15 +56,15 @@ static BOOL IsAssocEnabled(const ASSOCDATA *assoc)
 static void SetAssocEnabled(const ASSOCDATA *assoc, BOOL fEnabled)
 {
 	char szSetting[MAXMODULELABELLENGTH];
-	TCHAR szDLL[MAX_PATH], szBuf[MAX_PATH];
+	wchar_t szDLL[MAX_PATH], szBuf[MAX_PATH];
 	mir_snprintf(szSetting, "enabled_%s", assoc->pszClassName);
 	db_set_b(NULL, "AssocMgr", szSetting, (BYTE)fEnabled);
 	// dll name for uninstall
 	if (assoc->hInstance != NULL && assoc->hInstance != hInst && assoc->hInstance != GetModuleHandle(NULL))
 		if (GetModuleFileName(assoc->hInstance, szBuf, _countof(szBuf)))
-			if (PathToRelativeT(szBuf, szDLL)) {
+			if (PathToRelativeW(szBuf, szDLL)) {
 				mir_snprintf(szSetting, "module_%s", assoc->pszClassName);
-				db_set_ts(NULL, "AssocMgr", szSetting, szDLL);
+				db_set_ws(NULL, "AssocMgr", szSetting, szDLL);
 			}
 }
 
@@ -87,7 +85,7 @@ void CleanupAssocEnabledSettings(void)
 	DBVARIANT dbv;
 	int i;
 	HANDLE hFile;
-	TCHAR szDLL[MAX_PATH];
+	wchar_t szDLL[MAX_PATH];
 	char szSetting[MAXMODULELABELLENGTH];
 
 	// delete old enabled_* settings if associated plugin no longer present
@@ -96,8 +94,8 @@ void CleanupAssocEnabledSettings(void)
 		for (i = 0; i < nSettingsCount; ++i) {
 			pszSuffix = &ppszSettings[i][8];
 			mir_snprintf(szSetting, "module_%s", pszSuffix);
-			if (!db_get_ts(NULL, "AssocMgr", szSetting, &dbv)) {
-				if (PathToAbsoluteT(dbv.ptszVal, szDLL)) {
+			if (!db_get_ws(NULL, "AssocMgr", szSetting, &dbv)) {
+				if (PathToAbsoluteW(dbv.ptszVal, szDLL)) {
 					// file still exists?
 					hFile = CreateFile(szDLL, 0, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
 					if (hFile == INVALID_HANDLE_VALUE) {
@@ -218,14 +216,14 @@ static ASSOCDATA* CopyAssocItem(const ASSOCDATA *assoc)
 	assoc2 = (ASSOCDATA*)mir_alloc(sizeof(ASSOCDATA));
 	if (assoc2 == NULL) return NULL;
 	assoc2->pszClassName = mir_strdup(assoc->pszClassName);
-	assoc2->pszDescription = mir_tstrdup(assoc->pszDescription);
+	assoc2->pszDescription = mir_wstrdup(assoc->pszDescription);
 	assoc2->hInstance = assoc->hInstance;
 	assoc2->nIconResID = assoc->nIconResID;
 	assoc2->pszService = mir_strdup(assoc->pszService);
 	assoc2->flags = assoc->flags;
 	assoc2->pszFileExt = mir_strdup(assoc->pszFileExt);
 	assoc2->pszMimeType = mir_strdup(assoc->pszMimeType);
-	assoc2->pszVerbDesc = mir_tstrdup(assoc->pszVerbDesc);
+	assoc2->pszVerbDesc = mir_wstrdup(assoc->pszVerbDesc);
 	if (assoc2->pszClassName == NULL || assoc2->pszDescription == NULL ||
 		(assoc2->pszFileExt == NULL && assoc->pszFileExt != NULL)) {
 		mir_free(assoc2->pszClassName);   // does NULL check
@@ -264,13 +262,13 @@ static int ReplaceImageListAssocIcon(HIMAGELIST himl, const ASSOCDATA *assoc, in
 
 // the return value does not need to be freed
 // this function assumes it has got the csAssocList mutex
-static TCHAR* GetAssocTypeDesc(const ASSOCDATA *assoc)
+static wchar_t* GetAssocTypeDesc(const ASSOCDATA *assoc)
 {
-	static TCHAR szDesc[32];
+	static wchar_t szDesc[32];
 	if (assoc->pszFileExt == NULL)
-		mir_sntprintf(szDesc, _T("%hs:"), assoc->pszClassName);
+		mir_snwprintf(szDesc, L"%hs:", assoc->pszClassName);
 	else
-		mir_sntprintf(szDesc, TranslateT("%hs files"), assoc->pszFileExt);
+		mir_snwprintf(szDesc, TranslateT("%hs files"), assoc->pszFileExt);
 	return szDesc;
 }
 
@@ -283,7 +281,7 @@ static BOOL IsAssocRegistered(const ASSOCDATA *assoc)
 	fUseMainCmdLine = (assoc->pszService == NULL);
 
 	// class
-	TCHAR *pszRunCmd = MakeRunCommand(fUseMainCmdLine, !fUseMainCmdLine);
+	wchar_t *pszRunCmd = MakeRunCommand(fUseMainCmdLine, !fUseMainCmdLine);
 	if (pszRunCmd != NULL)
 		fSuccess = IsRegClass(assoc->pszClassName, pszRunCmd);
 	mir_free(pszRunCmd); // does NULL check
@@ -299,7 +297,7 @@ static BOOL IsAssocRegistered(const ASSOCDATA *assoc)
 static BOOL EnsureAssocRegistered(const ASSOCDATA *assoc)
 {
 	BOOL fSuccess = FALSE, fIsUrl, fUseMainCmdLine;
-	TCHAR *pszIconLoc, *pszRunCmd, *pszDdeCmd, *pszAppFileName;
+	wchar_t *pszIconLoc, *pszRunCmd, *pszDdeCmd, *pszAppFileName;
 
 	fIsUrl = (assoc->pszFileExt == NULL);
 	fUseMainCmdLine = (assoc->pszService == NULL);
@@ -316,7 +314,7 @@ static BOOL EnsureAssocRegistered(const ASSOCDATA *assoc)
 			// register class
 			if (fUseMainCmdLine) pszDdeCmd = NULL;
 			else pszDdeCmd = fIsUrl ? DDEURLCMD : DDEFILECMD;
-			fSuccess = AddRegClass(assoc->pszClassName, assoc->pszDescription, pszIconLoc, _T(MIRANDANAME), pszRunCmd, pszDdeCmd, DDEAPP, DDETOPIC, assoc->pszVerbDesc, assoc->flags&FTDF_BROWSERAUTOOPEN, fIsUrl, assoc->flags&FTDF_ISSHORTCUT);
+			fSuccess = AddRegClass(assoc->pszClassName, assoc->pszDescription, pszIconLoc, _A2W(MIRANDANAME), pszRunCmd, pszDdeCmd, DDEAPP, DDETOPIC, assoc->pszVerbDesc, assoc->flags&FTDF_BROWSERAUTOOPEN, fIsUrl, assoc->flags&FTDF_ISSHORTCUT);
 			mir_free(pszIconLoc); // does NULL check
 			// file type
 			if (fSuccess && !fIsUrl) {
@@ -344,13 +342,13 @@ static BOOL EnsureAssocRegistered(const ASSOCDATA *assoc)
 static BOOL UnregisterAssoc(const ASSOCDATA *assoc)
 {
 	BOOL fIsUrl, fUseMainCmdLine;
-	TCHAR *pszAppFileName;
+	wchar_t *pszAppFileName;
 
 	fIsUrl = (assoc->pszFileExt == NULL);
 	fUseMainCmdLine = (assoc->pszService == NULL);
 
 	// class might have been registered by another instance
-	TCHAR *pszRunCmd = MakeRunCommand(fUseMainCmdLine, !fUseMainCmdLine);
+	wchar_t *pszRunCmd = MakeRunCommand(fUseMainCmdLine, !fUseMainCmdLine);
 	if (pszRunCmd != NULL && !IsRegClass(assoc->pszClassName, pszRunCmd)) {
 		mir_free(pszRunCmd);
 		return TRUE; // succeed anyway
@@ -393,7 +391,7 @@ typedef struct
 
 // ownership of pszClassName,  pszFileExt,  pszVerbDesc and pszMimeType is transfered
 // to the storage list on success
-static BOOL AddNewAssocItem_Worker(char *pszClassName, const TYPEDESCHEAD *tdh, char *pszFileExt, TCHAR *pszVerbDesc, char *pszMimeType)
+static BOOL AddNewAssocItem_Worker(char *pszClassName, const TYPEDESCHEAD *tdh, char *pszFileExt, wchar_t *pszVerbDesc, char *pszMimeType)
 {
 	ASSOCDATA *pAssocListBuf, *assoc;
 
@@ -486,7 +484,7 @@ static INT_PTR ServiceAddNewFileType(WPARAM, LPARAM lParam)
 	char *pszFileExt = mir_strdup(ftd->pszFileExt);
 	char *pszClassName = MakeFileClassName(ftd->pszFileExt);
 	if (pszFileExt != NULL && pszClassName != NULL) {
-		TCHAR *pszVerbDesc = s2t(ftd->ptszVerbDesc, ftd->flags&FTDF_UNICODE, TRUE); // does NULL check
+		wchar_t *pszVerbDesc = s2t(ftd->ptszVerbDesc, ftd->flags&FTDF_UNICODE, TRUE); // does NULL check
 		char *pszMimeType = mir_strdup(ftd->pszMimeType); // does NULL check
 		if (AddNewAssocItem_Worker(pszClassName, (TYPEDESCHEAD*)ftd, pszFileExt, pszVerbDesc, pszMimeType))
 			// no need to free pszClassName,  pszFileExt, pszVerbDesc and pszMimeType, 
@@ -546,7 +544,7 @@ static INT_PTR ServiceRemoveUrlType(WPARAM, LPARAM lParam)
 
 /************************* Open Handler ***************************/
 
-static BOOL InvokeHandler_Worker(const char *pszClassName, const TCHAR *pszParam, INT_PTR *res)
+static BOOL InvokeHandler_Worker(const char *pszClassName, const wchar_t *pszParam, INT_PTR *res)
 {
 	void *pvParam;
 	char *pszService;
@@ -578,13 +576,13 @@ static BOOL InvokeHandler_Worker(const char *pszClassName, const TCHAR *pszParam
 	return TRUE;
 }
 
-INT_PTR InvokeFileHandler(const TCHAR *pszFileName)
+INT_PTR InvokeFileHandler(const wchar_t *pszFileName)
 {
 	char *pszClassName, *pszFileExt;
 	INT_PTR res = CALLSERVICE_NOTFOUND;
 
 	// find extension
-	TCHAR *p = (TCHAR*)_tcsrchr(pszFileName, _T('.'));
+	wchar_t *p = (wchar_t*)wcsrchr(pszFileName, '.');
 	if (p != NULL) {
 		pszFileExt = t2a(p);
 		if (pszFileExt != NULL) {
@@ -603,7 +601,7 @@ INT_PTR InvokeFileHandler(const TCHAR *pszFileName)
 	return res;
 }
 
-INT_PTR InvokeUrlHandler(const TCHAR *pszUrl)
+INT_PTR InvokeUrlHandler(const wchar_t *pszUrl)
 {
 	char *pszClassName, *pszProtoPrefix, *p;
 	INT_PTR res = CALLSERVICE_NOTFOUND;
@@ -611,7 +609,7 @@ INT_PTR InvokeUrlHandler(const TCHAR *pszUrl)
 	// find prefix
 	pszProtoPrefix = t2a(pszUrl);
 	if (pszProtoPrefix != NULL) {
-		p = strchr(pszProtoPrefix, _T(':'));
+		p = strchr(pszProtoPrefix, ':');
 		if (p != NULL) {
 			*(++p) = 0; // remove trailing :
 			// class name
@@ -743,9 +741,9 @@ static INT_PTR CALLBACK AssocListOptDlgProc(HWND hwndDlg, UINT msg, WPARAM wPara
 			CheckDlgButton(hwndDlg, IDC_ONLYWHILERUNNING, (BOOL)db_get_b(NULL, "AssocMgr", "OnlyWhileRunning", SETTING_ONLYWHILERUNNING_DEFAULT) ? BST_CHECKED : BST_UNCHECKED);
 
 			// autostart
-			TCHAR *pszRunCmd = MakeRunCommand(TRUE, TRUE);
+			wchar_t *pszRunCmd = MakeRunCommand(TRUE, TRUE);
 			if (pszRunCmd != NULL) {
-				CheckDlgButton(hwndDlg, IDC_AUTOSTART, IsRegRunEntry(_T("MirandaNG"), pszRunCmd) ? BST_CHECKED : BST_UNCHECKED);
+				CheckDlgButton(hwndDlg, IDC_AUTOSTART, IsRegRunEntry(L"MirandaNG", pszRunCmd) ? BST_CHECKED : BST_UNCHECKED);
 				mir_free(pszRunCmd);
 			}
 		}
@@ -892,11 +890,11 @@ static INT_PTR CALLBACK AssocListOptDlgProc(HWND hwndDlg, UINT msg, WPARAM wPara
 				PostMessage(hwndDlg, M_REFRESH_ICONS, 0, 0);
 
 				// autostart
-				TCHAR *pszRunCmd = MakeRunCommand(TRUE, TRUE);
+				wchar_t *pszRunCmd = MakeRunCommand(TRUE, TRUE);
 				fRegFailed = FALSE;
 				if (pszRunCmd != NULL) {
 					fEnabled = IsDlgButtonChecked(hwndDlg, IDC_AUTOSTART);
-					if (fEnabled ? !AddRegRunEntry(_T("MirandaNG"), pszRunCmd) : !RemoveRegRunEntry(_T("MirandaNG"), pszRunCmd)) {
+					if (fEnabled ? !AddRegRunEntry(L"MirandaNG", pszRunCmd) : !RemoveRegRunEntry(L"MirandaNG", pszRunCmd)) {
 						char *pszErr;
 						pszErr = GetWinErrorDescription(GetLastError());
 						ShowInfoMessage(NIIF_ERROR, Translate("Autostart error"), Translate("There was an error writing to the registry to modify the autostart list.\n\nReason: %s"), (pszErr != NULL) ? pszErr : Translate("Unknown"));
@@ -919,8 +917,8 @@ static int AssocListOptInit(WPARAM wParam, LPARAM)
 	odp.hInstance = hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_ASSOCLIST);
 	odp.position = 900000100; // network opts  =  900000000
-	odp.pszGroup = LPGEN("Services"); // autotranslated
-	odp.pszTitle = LPGEN("Associations"); // autotranslated
+	odp.szGroup.a = LPGEN("Services"); // autotranslated
+	odp.szTitle.a = LPGEN("Associations"); // autotranslated
 	odp.flags = ODPF_BOLDGROUPS;
 	odp.pfnDlgProc = AssocListOptDlgProc;
 	Options_AddPage(wParam, &odp);
@@ -943,31 +941,31 @@ void InitAssocList(void)
 	nAssocListCount = 0;
 
 	// Services
-	hServiceAddFile = CreateServiceFunction(MS_ASSOCMGR_ADDNEWFILETYPE, ServiceAddNewFileType);
-	hServiceRemoveFile = CreateServiceFunction(MS_ASSOCMGR_REMOVEFILETYPE, ServiceRemoveFileType);
-	hServiceAddUrl = CreateServiceFunction(MS_ASSOCMGR_ADDNEWURLTYPE, ServiceAddNewUrlType);
-	hServiceRemoveUrl = CreateServiceFunction(MS_ASSOCMGR_REMOVEURLTYPE, ServiceRemoveUrlType);
+	CreateServiceFunction(MS_ASSOCMGR_ADDNEWFILETYPE, ServiceAddNewFileType);
+	CreateServiceFunction(MS_ASSOCMGR_REMOVEFILETYPE, ServiceRemoveFileType);
+	CreateServiceFunction(MS_ASSOCMGR_ADDNEWURLTYPE, ServiceAddNewUrlType);
+	CreateServiceFunction(MS_ASSOCMGR_REMOVEURLTYPE, ServiceRemoveUrlType);
 
 	// Notify Shell
 	nNotifyTimerID = 0;
 
 	// register open-with app
 	{
-		TCHAR *pszAppFileName, *pszIconLoc, *pszRunCmd;
+		wchar_t *pszAppFileName, *pszIconLoc, *pszRunCmd;
 		pszIconLoc = MakeIconLocation(NULL, 0);
 
 		// miranda32.exe
 		pszAppFileName = MakeAppFileName(TRUE);
 		pszRunCmd = MakeRunCommand(TRUE, FALSE);
 		if (pszAppFileName != NULL && pszRunCmd != NULL)
-			AddRegOpenWith(pszAppFileName, FALSE, _T(MIRANDANAME), pszIconLoc, pszRunCmd, NULL, NULL, NULL);
+			AddRegOpenWith(pszAppFileName, FALSE, _A2W(MIRANDANAME), pszIconLoc, pszRunCmd, NULL, NULL, NULL);
 		mir_free(pszRunCmd); // does NULL check
 		mir_free(pszAppFileName); // does NULL check
 		// assocmgr.dll
 		pszAppFileName = MakeAppFileName(FALSE);
 		pszRunCmd = MakeRunCommand(FALSE, TRUE);
 		if (pszAppFileName != NULL && pszRunCmd != NULL)
-			AddRegOpenWith(pszAppFileName, TRUE, _T(MIRANDANAME), pszIconLoc, pszRunCmd, DDEFILECMD, DDEAPP, DDETOPIC);
+			AddRegOpenWith(pszAppFileName, TRUE, _A2W(MIRANDANAME), pszIconLoc, pszRunCmd, DDEFILECMD, DDEAPP, DDETOPIC);
 		mir_free(pszRunCmd); // does NULL check
 		mir_free(pszAppFileName); // does NULL check
 
@@ -980,7 +978,7 @@ void InitAssocList(void)
 		ftd.cbSize = sizeof(FILETYPEDESC);
 		ftd.pszFileExt = ".dat";
 		ftd.pszMimeType = NULL;
-		ftd.ptszDescription = TranslateT("Miranda NG database");
+		ftd.pwszDescription = TranslateT("Miranda NG database");
 		ftd.hInstance = hInst;
 		ftd.nIconResID = IDI_MIRANDAFILE;
 		ftd.ptszVerbDesc = NULL;
@@ -994,12 +992,6 @@ void UninitAssocList(void)
 {
 	// Options
 	UnhookEvent(hHookOptInit);
-
-	// Services
-	DestroyServiceFunction(hServiceAddFile);
-	DestroyServiceFunction(hServiceRemoveFile);
-	DestroyServiceFunction(hServiceAddUrl);
-	DestroyServiceFunction(hServiceRemoveUrl);
 
 	// Assoc List
 	BYTE fOnlyWhileRunning = db_get_b(NULL, "AssocMgr", "OnlyWhileRunning", SETTING_ONLYWHILERUNNING_DEFAULT);
@@ -1025,15 +1017,14 @@ void UninitAssocList(void)
 
 	// unregister open-with app
 	if (fOnlyWhileRunning) {
-		TCHAR *pszAppFileName;
 		// miranda32.exe
-		pszAppFileName = MakeAppFileName(TRUE);
+		ptrW pszAppFileName(MakeAppFileName(TRUE));
 		if (pszAppFileName != NULL)
 			RemoveRegOpenWith(pszAppFileName);
-		pszAppFileName = MakeAppFileName(FALSE);
+		
 		// assocmgr.dll
+		pszAppFileName = MakeAppFileName(FALSE);
 		if (pszAppFileName != NULL)
 			RemoveRegOpenWith(pszAppFileName);
-		mir_free(pszAppFileName); // does NULL check
 	}
 }

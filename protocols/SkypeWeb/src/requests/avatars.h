@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2015-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -30,12 +30,12 @@ public:
 class SetAvatarRequest : public HttpRequest
 {
 public:
-	SetAvatarRequest(const char *data, size_t dataSize, LoginInfo &li) :
-		HttpRequest(REQUEST_PUT, FORMAT, "api.skype.com/users/%s/profile/avatar", li.szSkypename)
+	SetAvatarRequest(const PBYTE data, size_t dataSize, const char *szMime, LoginInfo &li) :
+		HttpRequest(REQUEST_PUT, FORMAT, "api.skype.com/users/%s/profile/avatar", li.szSkypename.MakeLower().c_str())
 	{
 		Headers
 			<< CHAR_VALUE("X-Skypetoken", li.api.szToken)
-			<< CHAR_VALUE("Content-Type", "image/jpeg");
+			<< CHAR_VALUE("Content-Type", szMime);
 
 		pData = (char*)mir_alloc(dataSize);
 		memcpy(pData, data, dataSize);
@@ -44,7 +44,6 @@ public:
 
 	~SetAvatarRequest()
 	{
-		HttpRequest::~HttpRequest();
 		mir_free(pData);
 	}
 };

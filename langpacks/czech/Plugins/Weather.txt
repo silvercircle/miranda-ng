@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Weather.dll
 ;  Plugin: Weather
-;  Version: 0.4.0.2
+;  Version: 0.4.0.3
 ;  Authors: Miranda NG Team
 ;============================================================
 [Retrieves weather information and displays it in your contact list.]
@@ -100,8 +100,6 @@ Možnosti stanice
 Meteorologická stanice
 [City name]
 Jméno města
-[ID]
-ID
 [Log Information]
 Záznam událostí
 [Use internal history]
@@ -156,7 +154,7 @@ Doba zobrazení
 Prodleva
 [seconds]
 sek.
-[From Popup plugin]
+[From popup plugin]
 Globální nastavení
 [Permanent]
 Trvale
@@ -249,25 +247,14 @@ Zobrazit historii
 [Open log file]
 Zobrazit záznam
 [Show user menu]
-Zobrazit uživatelské menu
+Zobrazit nabídku uživatele
 [Show user detail]
 Zobrazit informaci o osobě
 [To old setting]
 Předchozí nastavení
 [To default]
 Výchozí nastavení
-;file \plugins\Weather\src\weather.cpp
-[Enable/disable auto update]
-Povolit/zakázat automatickou aktualizaci
-[Auto Update Enabled]
-Zakázat automatickou aktualizaci
-[Auto Update Disabled]
-Povolit automatickou aktualizaci
-[Weather Condition Changed]
-Počasí (změna počasí)
-[Weather Alert Issued]
-Počasí (varování)
-;file \plugins\Weather\src\weather.h
+;file \plugins\Weather\src\stdafx.h
 [N/A]
 <neuvedeno>
 [Invalid ID format, missing "/" (10)]
@@ -350,6 +337,17 @@ Seznam ostatních proměnných, které jsou k dispozici:
 Není zadána adresa pro kompletní předpověď počasí. Z menu vyberte položku 'Upravit nastavení' a v sekci Odkazy doplňte příslušný údaj.
 [The URL for weather map has not been set. You can set it from the Edit Settings dialog.]
 Není zadána adresa pro mapu počasí. Z menu vyberte položku 'Upravit nastavení' a v sekci Odkazy doplňte příslušný údaj.
+;file \plugins\Weather\src\weather.cpp
+[Enable/disable auto update]
+Povolit/zakázat automatickou aktualizaci
+[Auto Update Enabled]
+Zakázat automatickou aktualizaci
+[Auto Update Disabled]
+Povolit automatickou aktualizaci
+[Weather Condition Changed]
+Počasí (změna počasí)
+[Weather Alert Issued]
+Počasí (varování)
 ;file \plugins\Weather\src\weather_addstn.cpp
 [Current weather information for %s.]
 Aktuální informace o počasí pro %s.
@@ -462,12 +460,12 @@ bajtů
 [Description:]
 Popis:
 ;file \plugins\Weather\src\weather_ini.cpp
-[No update data file is found. Please check your Plugins\\Weather directory.]
-Nelze najít konfigurační soubor. Podívejte se do složky Plugins\\Weather.
-[Invalid ini format for: %s]
-Neplatný formát souboru ini: %s
 [All update data has been reloaded.]
 Aktualizovaná data byla znovu načtena.
+[Invalid ini format for: %s]
+Neplatný formát souboru ini: %s
+[No update data file is found. Please check your Plugins\\Weather directory.]
+Nelze najít konfigurační soubor. Podívejte se do složky Plugins\\Weather.
 ;file \plugins\Weather\src\weather_mwin.cpp
 [Frame Font]
 Písmo v rámečku
@@ -476,6 +474,8 @@ Písmo v záhlaví rámečku
 [Frame Background]
 Barva pozadí rámečku
 ;file \plugins\Weather\src\weather_opt.cpp
+[Weather Protocol Text Preview]
+Počasí - náhled
 [Network]
 Sítě
 [General]
@@ -484,8 +484,6 @@ Obecné
 Zobrazení
 [Popups]
 Oznámení
-[Weather Protocol Text Preview]
-Počasí - náhled
 ;file \plugins\Weather\src\weather_popup.cpp
 ;file \plugins\Weather\src\weather_svcs.cpp
 [Station ID]
@@ -518,10 +516,6 @@ Zobrazit v rámečku
 [Unable to retrieve weather information for %s]
 Nelze stáhnout předpověď počasí pro %s
 ;file \plugins\Weather\src\weather_userinfo.cpp
-[Current condition for %n]
-Aktuální předpověď pro %n
-[Last update on:   %u]
-Naposledy aktualizováno %u
 [Variable]
 Proměnná
 [Information]
@@ -530,3 +524,7 @@ Informace
 Aktualizace dat, počkejte prosím...
 [More Info]
 Informace
+[Current condition for %n]
+Aktuální předpověď pro %n
+[Last update on:   %u]
+Naposledy aktualizováno %u

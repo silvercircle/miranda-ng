@@ -20,10 +20,10 @@ void showmsgwnd(unsigned int param)
 {
 	logmsg("showmsgwnd");
 	if (db_get_b(NULL,THIS_MODULE, "showMessageWindow", DEFAULT_SHOWMSGWIN))
-		CallService(MS_MSG_SENDMESSAGET, (WPARAM)param, 0);
+		CallService(MS_MSG_SENDMESSAGEW, (WPARAM)param, 0);
 }
 
-LRESULT ShowOSD(TCHAR *str, int timeout, COLORREF color, MCONTACT user)
+LRESULT ShowOSD(wchar_t *str, int timeout, COLORREF color, MCONTACT user)
 {
 	logmsg("ShowOSD");
 
@@ -62,8 +62,8 @@ int ProtoAck(WPARAM,LPARAM lparam)
 		if ( ack->result == ACKRESULT_SUCCESS && (LPARAM)ack->hProcess != ack->lParam ) {
 			DWORD ann = db_get_dw( NULL, THIS_MODULE, "announce", DEFAULT_ANNOUNCE );
 			if ( ann & ( 1 << ( ack->lParam - ID_STATUS_OFFLINE ))) {
-				TCHAR buffer[512];
-				mir_sntprintf(buffer, TranslateT("%s is %s"), pcli->pfnGetContactDisplayName(ack->hContact, 0), pcli->pfnGetStatusModeDescription(ack->lParam, 0));
+				wchar_t buffer[512];
+				mir_snwprintf(buffer, TranslateT("%s is %s"), pcli->pfnGetContactDisplayName(ack->hContact, 0), pcli->pfnGetStatusModeDescription(ack->lParam, 0));
 				ShowOSD(buffer, 0, db_get_dw(NULL,THIS_MODULE, "clr_status", DEFAULT_CLRSTATUS), ack->hContact);
 	}	}	}
 
@@ -75,9 +75,9 @@ int ContactSettingChanged(WPARAM wParam,LPARAM lParam)
 	MCONTACT hContact = (MCONTACT) wParam;
 	DBCONTACTWRITESETTING *cws=(DBCONTACTWRITESETTING*)lParam;
 
-	logmsg("ContactSettingChanged1");
+	if(hContact==NULL || strcmp(cws->szSetting,"Status")) return 0;
 
-	if(hContact==NULL || mir_strcmp(cws->szSetting,"Status")) return 0;
+	logmsg("ContactSettingChanged1");
 
 	WORD newStatus = cws->value.wVal;
 	WORD oldStatus = DBGetContactSettingRangedWord(hContact,"UserOnline","OldStatus2",ID_STATUS_OFFLINE, ID_STATUS_MIN, ID_STATUS_MAX);
@@ -120,8 +120,8 @@ int ContactStatusChanged(WPARAM wParam, LPARAM lParam)
 	)
 		return 0;
 
-	TCHAR bufferW[512];
-	mir_sntprintf(bufferW, TranslateT("%s is %s"), pcli->pfnGetContactDisplayName(wParam, 0), pcli->pfnGetStatusModeDescription(newStatus, 0));
+	wchar_t bufferW[512];
+	mir_snwprintf(bufferW, TranslateT("%s is %s"), pcli->pfnGetContactDisplayName(wParam, 0), pcli->pfnGetStatusModeDescription(newStatus, 0));
 	ShowOSD(bufferW, 0, db_get_dw(NULL,THIS_MODULE, "clr_status", DEFAULT_CLRSTATUS), hContact);
 	return 0;
 }
@@ -130,7 +130,6 @@ int HookedNewEvent(WPARAM wParam, LPARAM hDBEvent)
 {
 	logmsg("HookedNewEvent1");
 	DBEVENTINFO dbe;
-	dbe.cbSize = sizeof(dbe);
 	dbe.cbBlob = db_event_getBlobSize(hDBEvent);
 	if (dbe.cbBlob == -1)
 		return 0;
@@ -150,17 +149,17 @@ int HookedNewEvent(WPARAM wParam, LPARAM hDBEvent)
 	
 	logmsg("HookedNewEvent2");
 
-	TCHAR buf[512];
-	_tcsncpy(buf, DEFAULT_MESSAGEFORMAT,_countof(buf));
+	wchar_t buf[512];
+	wcsncpy(buf, DEFAULT_MESSAGEFORMAT,_countof(buf));
 
 	DBVARIANT dbv;
-	if(!db_get_ts(NULL,THIS_MODULE,"message_format",&dbv)) {
-		mir_tstrcpy(buf, dbv.ptszVal);
+	if(!db_get_ws(NULL,THIS_MODULE,"message_format",&dbv)) {
+		mir_wstrcpy(buf, dbv.ptszVal);
 		db_free(&dbv);
 	}
 
 	int i1=-1, i2=-1;
-	TCHAR* pbuf = buf;
+	wchar_t* pbuf = buf;
 	while (*pbuf) {
 		if (*pbuf=='%') {
 			if (*(pbuf+1)=='n') {
@@ -181,19 +180,19 @@ int HookedNewEvent(WPARAM wParam, LPARAM hDBEvent)
 		pbuf++;
 	}
 
-	TCHAR *c1 = 0, *c2 = 0;
+	wchar_t *c1 = 0, *c2 = 0;
 	if ( i1 == 1 )
-		c1 = mir_tstrdup(pcli->pfnGetContactDisplayName(wParam, 0));
+		c1 = mir_wstrdup(pcli->pfnGetContactDisplayName(wParam, 0));
 	else if ( i1 == 2 )
-		c1 = DbGetEventTextT( &dbe, 0 );
+		c1 = DbEvent_GetTextW( &dbe, 0 );
 
 	if ( i2 == 1 )
-		c2 = mir_tstrdup(pcli->pfnGetContactDisplayName(wParam, 0));
+		c2 = mir_wstrdup(pcli->pfnGetContactDisplayName(wParam, 0));
 	else if ( i2 == 2 )
-		c2 = DbGetEventTextT( &dbe, 0 );
+		c2 = DbEvent_GetTextW( &dbe, 0 );
 
-	TCHAR buffer[512];
-	mir_sntprintf(buffer, buf, c1, c2);
+	wchar_t buffer[512];
+	mir_snwprintf(buffer, buf, c1, c2);
 	ShowOSD(buffer, 0, db_get_dw(NULL,THIS_MODULE, "clr_msg", DEFAULT_CLRMSG), wParam);
 
 	mir_free( c1 );

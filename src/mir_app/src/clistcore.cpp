@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -29,7 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 CLIST_INTERFACE cli = { 0 };
 
-static TCHAR szTip[MAX_TIP_SIZE+1];
+static wchar_t szTip[MAX_TIP_SIZE+1];
 
 int LoadContactListModule2(void);
 int LoadCLCModule(void);
@@ -55,15 +55,20 @@ static void fnOnCreateClc(void)
 {
 }
 
+static int fnIsVisibleContact(ClcCacheEntry*, ClcGroup*)
+{
+	return false;
+}
+
 static void fnReloadProtoMenus(void)
 {
 	RebuildMenuOrder();
-	if (db_get_b(NULL, "CList", "MoveProtoMenus", TRUE))
+	if (db_get_b(0, "CList", "MoveProtoMenus", TRUE))
 		BuildProtoMenus();
 	cli.pfnCluiProtocolStatusChanged(0, 0);
 }
 
-static INT_PTR srvRetrieveInterface(WPARAM, LPARAM)
+MIR_APP_DLL(CLIST_INTERFACE*) Clist_GetInterface(void)
 {
 	int rc;
 
@@ -72,7 +77,6 @@ static INT_PTR srvRetrieveInterface(WPARAM, LPARAM)
 		cli.bDisplayLocked = TRUE;
 
 		cli.pfnClcOptionsChanged               = fnClcOptionsChanged;
-		cli.pfnClcBroadcast                    = fnClcBroadcast;
 		cli.pfnContactListControlWndProc       = fnContactListControlWndProc;
 
 		cli.pfnRegisterFileDropping            = fnRegisterFileDropping;
@@ -81,8 +85,8 @@ static INT_PTR srvRetrieveInterface(WPARAM, LPARAM)
 		cli.pfnGetRowsPriorTo                  = fnGetRowsPriorTo;
 		cli.pfnFindItem                        = fnFindItem;
 		cli.pfnGetRowByIndex                   = fnGetRowByIndex;
-		cli.pfnContactToHItem                  = fnContactToHItem;
-		cli.pfnContactToItemHandle             = fnContactToItemHandle;
+		cli.pfnGetContactHiddenStatus          = fnGetContactHiddenStatus;
+
 
 		cli.pfnAddGroup                        = fnAddGroup;
 		cli.pfnAddItemToGroup                  = fnAddItemToGroup;
@@ -118,6 +122,7 @@ static INT_PTR srvRetrieveInterface(WPARAM, LPARAM)
 		cli.pfnGetDropTargetInformation        = fnGetDropTargetInformation;
 		cli.pfnClcStatusToPf2                  = fnClcStatusToPf2;
 		cli.pfnIsHiddenMode                    = fnIsHiddenMode;
+		cli.pfnIsVisibleContact                = fnIsVisibleContact;
 		cli.pfnHideInfoTip                     = fnHideInfoTip;
 		cli.pfnNotifyNewContact                = fnNotifyNewContact;
 		cli.pfnGetDefaultExStyle               = fnGetDefaultExStyle;
@@ -135,10 +140,8 @@ static INT_PTR srvRetrieveInterface(WPARAM, LPARAM)
 		cli.pfnRowHitTest                      = fnRowHitTest;
 
 		cli.pfnAddEvent                        = fnAddEvent;
-		cli.pfnCreateEvent                     = fnCreateEvent;
 		cli.pfnEventsProcessContactDoubleClick = fnEventsProcessContactDoubleClick;
 		cli.pfnEventsProcessTrayDoubleClick	   = fnEventsProcessTrayDoubleClick;
-		cli.pfnFreeEvent                       = fnFreeEvent;
 		cli.pfnGetEvent                        = fnGetEvent;
 		cli.pfnGetImlIconIndex                 = fnGetImlIconIndex;
 		cli.pfnRemoveEvent                     = fnRemoveEvent;
@@ -170,7 +173,6 @@ static INT_PTR srvRetrieveInterface(WPARAM, LPARAM)
 		cli.pfnTrayIconUpdateBase              = fnTrayIconUpdateBase;
 		cli.pfnTrayCalcChanged                 = fnTrayCalcChanged;
 		cli.pfnTrayIconUpdateWithImageList	   = fnTrayIconUpdateWithImageList;
-		cli.pfnCListTrayNotify                 = fnCListTrayNotify;
 
 		cli.pfnContactListWndProc              = fnContactListWndProc;
 		cli.pfnLoadCluiGlobalOpts              = fnLoadCluiGlobalOpts;
@@ -181,8 +183,6 @@ static INT_PTR srvRetrieveInterface(WPARAM, LPARAM)
 
 		cli.pfnChangeContactIcon               = fnChangeContactIcon;
 		cli.pfnLoadContactTree                 = fnLoadContactTree;
-		cli.pfnCompareContacts                 = fnCompareContacts;
-		cli.pfnSortContacts                    = fnSortContacts;
 		cli.pfnSetHideOffline                  = fnSetHideOffline;
 
 		cli.pfnDocking_ProcessWindowMessage	   = fnDocking_ProcessWindowMessage;
@@ -192,14 +192,6 @@ static INT_PTR srvRetrieveInterface(WPARAM, LPARAM)
 		cli.pfnIconFromStatusMode              = fnIconFromStatusMode;
 		cli.pfnShowHide                        = fnShowHide;
 		cli.pfnGetStatusModeDescription        = fnGetStatusModeDescription;
-
-		cli.pfnGetGroupName                    = fnGetGroupName;
-		cli.pfnRenameGroup                     = fnRenameGroup;
-
-		cli.pfnHotKeysRegister                 = fnHotKeysRegister;
-		cli.pfnHotKeysUnregister               = fnHotKeysUnregister;
-		cli.pfnHotKeysProcess                  = fnHotKeysProcess;
-		cli.pfnHotkeysProcessMessage           = fnHotkeysProcessMessage;
 
 		cli.pfnGetProtocolVisibility           = fnGetProtocolVisibility;
 		cli.pfnGetProtoIndexByPos              = fnGetProtoIndexByPos;
@@ -220,11 +212,5 @@ static INT_PTR srvRetrieveInterface(WPARAM, LPARAM)
 		interfaceInited = 1;
 	}
 
-	return (LPARAM)&cli;
-}
-
-int LoadContactListModule()
-{
-	CreateServiceFunction(MS_CLIST_RETRIEVE_INTERFACE, srvRetrieveInterface);
-	return 0;
+	return &cli;
 }

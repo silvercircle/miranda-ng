@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -38,7 +38,7 @@ DBHeader
 |   |   \-->module name (DBModuleName)
 |   \-->first/last/firstunread event
 |-->user contact (DBContact)
-|   |-->next contact = NULL
+|   |-->next contact = nullptr
 |   |-->first settings	as above
 |   \-->first/last/firstunread event as above
 \-->first module name (DBModuleName)
@@ -183,7 +183,7 @@ struct DBCachedContact : public DBCachedContactBase
 
 struct CDb3Mmap : public MIDatabase, public MIDatabaseChecker, public MZeroedObject
 {
-	CDb3Mmap(const TCHAR *tszFileName, int mode);
+	CDb3Mmap(const wchar_t *tszFileName, int mode);
 	~CDb3Mmap();
 
 	int Load(bool bSkipInit);
@@ -193,14 +193,14 @@ struct CDb3Mmap : public MIDatabase, public MIDatabaseChecker, public MZeroedObj
 
 	void ToggleEncryption(void);
 	void StoreKey(void);
-	void SetPassword(const TCHAR *ptszPassword);
+	void SetPassword(const wchar_t *ptszPassword);
 	void UpdateMenuItem(void);
 
 	int  PrepareCheck(int*);
 
-	__forceinline LPTSTR GetMenuTitle() const { return m_bUsesPassword ? LPGENT("Change/remove password") : LPGENT("Set password"); }
+	__forceinline LPTSTR GetMenuTitle() const { return m_bUsesPassword ? LPGENW("Change/remove password") : LPGENW("Set password"); }
 
-	void DatabaseCorruption(TCHAR *text);
+	void DatabaseCorruption(wchar_t *text);
 	void WriteSignature(DBSignature&);
 
 	__forceinline HANDLE getFile() const { return m_hDbFile; }
@@ -212,8 +212,8 @@ public:
 	STDMETHODIMP_(void)     SetCacheSafetyMode(BOOL);
 
 	STDMETHODIMP_(LONG)     GetContactCount(void);
-	STDMETHODIMP_(MCONTACT) FindFirstContact(const char *szProto = NULL);
-	STDMETHODIMP_(MCONTACT) FindNextContact(MCONTACT contactID, const char *szProto = NULL);
+	STDMETHODIMP_(MCONTACT) FindFirstContact(const char *szProto = nullptr);
+	STDMETHODIMP_(MCONTACT) FindNextContact(MCONTACT contactID, const char *szProto = nullptr);
 	STDMETHODIMP_(LONG)     DeleteContact(MCONTACT contactID);
 	STDMETHODIMP_(MCONTACT) AddContact(void);
 	STDMETHODIMP_(BOOL)     IsDbContact(MCONTACT contactID);
@@ -232,7 +232,7 @@ public:
 	STDMETHODIMP_(MEVENT)   FindNextEvent(MCONTACT contactID, MEVENT hDbEvent);
 	STDMETHODIMP_(MEVENT)   FindPrevEvent(MCONTACT contactID, MEVENT hDbEvent);
 
-	STDMETHODIMP_(BOOL)     EnumModuleNames(DBMODULEENUMPROC pFunc, void *pParam);
+	STDMETHODIMP_(BOOL)     EnumModuleNames(DBMODULEENUMPROC pFunc, const void *pParam);
 
 	STDMETHODIMP_(BOOL)     GetContactSetting(MCONTACT contactID, LPCSTR szModule, LPCSTR szSetting, DBVARIANT *dbv);
 	STDMETHODIMP_(BOOL)     GetContactSettingStr(MCONTACT contactID, LPCSTR szModule, LPCSTR szSetting, DBVARIANT *dbv);
@@ -240,9 +240,9 @@ public:
 	STDMETHODIMP_(BOOL)     FreeVariant(DBVARIANT *dbv);
 	STDMETHODIMP_(BOOL)     WriteContactSetting(MCONTACT contactID, DBCONTACTWRITESETTING *dbcws);
 	STDMETHODIMP_(BOOL)     DeleteContactSetting(MCONTACT contactID, LPCSTR szModule, LPCSTR szSetting);
-	STDMETHODIMP_(BOOL)     EnumContactSettings(MCONTACT contactID, DBCONTACTENUMSETTINGS *dbces);
+	STDMETHODIMP_(BOOL)     EnumContactSettings(MCONTACT hContact, DBSETTINGENUMPROC pfnEnumProc, const char *szModule, const void *param);
 	STDMETHODIMP_(BOOL)     SetSettingResident(BOOL bIsResident, const char *pszSettingName);
-	STDMETHODIMP_(BOOL)     EnumResidentSettings(DBMODULEENUMPROC pFunc, void *pParam);
+	STDMETHODIMP_(BOOL)     EnumResidentSettings(DBMODULEENUMPROC pFunc, const void *pParam);
 	STDMETHODIMP_(BOOL)     IsSettingEncrypted(LPCSTR szModule, LPCSTR szSetting);
 
 	STDMETHODIMP_(BOOL)     MetaDetouchSub(DBCachedContact *cc, int nSub);
@@ -282,7 +282,7 @@ public:  // Check functions
 	int WorkFinalTasks(int);
 
 protected:
-	TCHAR*   m_tszProfileName;
+	wchar_t*   m_tszProfileName;
 	HANDLE   m_hDbFile;
 	DBHeader m_dbHeader;
 	DWORD    m_ChunkSize;
@@ -319,7 +319,7 @@ protected:
 	// contacts
 
 	int      WipeContactHistory(DBContact *dbc);
-	DWORD    GetContactOffset(MCONTACT contactID, DBCachedContact **cc = NULL);
+	DWORD    GetContactOffset(MCONTACT contactID, DBCachedContact **cc = nullptr);
 
 	////////////////////////////////////////////////////////////////////////////
 	// events

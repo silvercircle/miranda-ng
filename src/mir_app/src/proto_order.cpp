@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -33,7 +33,7 @@ struct ProtocolData
 
 int isProtoSuitable(PROTO_INTERFACE* ppi)
 {
-	if (ppi == NULL)
+	if (ppi == nullptr)
 		return TRUE;
 
 	return ppi->GetCaps(PFLAGNUM_2, 0) & ~ppi->GetCaps(PFLAGNUM_5, 0);
@@ -97,7 +97,7 @@ static bool ProtoToInclude(PROTOACCOUNT *pa)
 		return false;
 
 	PROTOCOLDESCRIPTOR *pd = Proto_IsProtocolLoaded(pa->szProtoName);
-	return (pd != NULL && pd->type == PROTOTYPE_PROTOCOL);
+	return (pd != nullptr && pd->type == PROTOTYPE_PROTOCOL);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -109,7 +109,7 @@ class CProtocolOrderOpts : public CDlgBase
 		m_order.DeleteAllItems();
 
 		TVINSERTSTRUCT tvis;
-		tvis.hParent = NULL;
+		tvis.hParent = nullptr;
 		tvis.hInsertAfter = TVI_LAST;
 		tvis.item.mask = TVIF_PARAM | TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
 
@@ -145,7 +145,7 @@ public:
 		m_order(this, IDC_PROTOCOLORDER),
 		m_btnReset(this, IDC_RESETPROTOCOLDATA),
 		m_bDragging(false),
-		m_hDragItem(NULL)
+		m_hDragItem(nullptr)
 	{
 		m_btnReset.OnClick = Callback(this, &CProtocolOrderOpts::onReset_Click);
 
@@ -170,13 +170,13 @@ public:
 		TVITEMEX tvi;
 		tvi.hItem = m_order.GetRoot();
 		tvi.mask = TVIF_PARAM | TVIF_HANDLE | TVIF_IMAGE;
-		while (tvi.hItem != NULL) {
+		while (tvi.hItem != nullptr) {
 			m_order.GetItem(&tvi);
 
 			if (tvi.lParam != 0) {
 				ProtocolData *ppd = (ProtocolData*)tvi.lParam;
 				PROTOACCOUNT *pa = Proto_GetAccount(ppd->RealName);
-				if (pa != NULL) {
+				if (pa != nullptr) {
 					while (idx < accounts.getCount() && !ProtoToInclude(accounts[idx]))
 						idx++;
 					pa->iOrder = idx++;
@@ -191,8 +191,8 @@ public:
 		WriteDbAccounts();
 		cli.pfnReloadProtoMenus();
 		cli.pfnTrayIconIconsChanged();
-		cli.pfnClcBroadcast(INTM_RELOADOPTIONS, 0, 0);
-		cli.pfnClcBroadcast(INTM_INVALIDATE, 0, 0);
+		Clist_Broadcast(INTM_RELOADOPTIONS, 0, 0);
+		Clist_Broadcast(INTM_INVALIDATE, 0, 0);
 	}
 
 	virtual void OnDestroy()
@@ -221,9 +221,8 @@ int ProtocolOrderOptInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.position = -10000000;
-	odp.groupPosition = 1000000;
-	odp.pszTitle = LPGEN("Accounts");
-	odp.pszGroup = LPGEN("Contact list");
+	odp.szTitle.a = LPGEN("Accounts");
+	odp.szGroup.a = LPGEN("Contact list");
 	odp.pDialog = new CProtocolOrderOpts();
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);

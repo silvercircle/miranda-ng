@@ -2,138 +2,125 @@
 
 void MakeMenuItem(lua_State *L, CMenuItem &mi)
 {
-	mi.hLangpack = hScriptsLangpack;
+	mi.hLangpack = CMLuaEnviroment::GetEnviromentId(L);
 
-	lua_pushliteral(L, "Flags");
-	lua_gettable(L, -2);
+	lua_getfield(L, -1, "Flags");
 	mi.flags = lua_tointeger(L, -1);
 	lua_pop(L, 1);
 
-	if (!(mi.flags & CMIF_TCHAR))
-		mi.flags |= CMIF_TCHAR;
+	if (!(mi.flags & CMIF_UNICODE))
+		mi.flags |= CMIF_UNICODE;
 
-	lua_pushliteral(L, "Uid");
-	lua_gettable(L, -2);
-	const char* uuid = (char*)lua_tostring(L, -1);
-	if (uuid)
-	{
-		unsigned long a;
-		unsigned short b, c;
-		unsigned char d[8];
-		if (sscanf_s(uuid, "{%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-			&a, &b, &c, &d[0], &d[1], &d[2], &d[3], &d[4], &d[5], &d[6], &d[7]) == 11)
-			SET_UID(mi, a, b, c, d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7]);
-	}
+	lua_getfield(L, -1, "Uid");
+	const char* uuid = lua_tostring(L, -1);
+	if (UuidFromStringA((RPC_CSTR)uuid, (UUID*)&mi.uid))
+		UNSET_UID(mi);
 	lua_pop(L, 1);
 
-	lua_pushliteral(L, "Name");
-	lua_gettable(L, -2);
-	mi.name.t = mir_utf8decodeT((char*)luaL_checkstring(L, -1));
+	lua_getfield(L, -1, "Name");
+	mi.name.w = mir_utf8decodeW(luaL_checkstring(L, -1));
 	lua_pop(L, 1);
 
-	lua_pushliteral(L, "Position");
-	lua_gettable(L, -2);
+	lua_getfield(L, -1, "Position");
 	mi.position = lua_tointeger(L, -1);
 	lua_pop(L, 1);
 
-	lua_pushliteral(L, "Icon");
-	lua_gettable(L, -2);
+	lua_getfield(L, -1, "Icon");
 	mi.hIcolibItem = (HANDLE)lua_touserdata(L, -1);
 	lua_pop(L, 1);
 
-	lua_pushliteral(L, "Service");
-	lua_gettable(L, -2);
-	mi.pszService = (char*)lua_tostring(L, -1);
+	lua_getfield(L, -1, "Service");
+	mi.pszService = lua_tostring(L, -1);
 	lua_pop(L, 1);
 
-	lua_pushliteral(L, "Parent");
-	lua_gettable(L, -2);
+	lua_getfield(L, -1, "Parent");
 	mi.root = (HGENMENU)lua_touserdata(L, -1);
 	lua_pop(L, 1);
 }
 
-static int lua_AddMenuItem(lua_State *L)
+static int genmenu_ModifyMenuItem(lua_State *L)
 {
-	int hMenuObject = lua_tointeger(L, 1);
-
-	if (lua_type(L, 2) != LUA_TTABLE)
-	{
-		lua_pushlightuserdata(L, 0);
-		return 1;
-	}
-
-	CMenuItem mi;
-	MakeMenuItem(L, mi);
-
-	HGENMENU res = ::Menu_AddItem(hMenuObject, &mi, NULL);
-	lua_pushlightuserdata(L, res);
-
-	return 1;
-}
-
-static int lua_ModifyMenuItem(lua_State *L)
-{
+	luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
 	HGENMENU hMenuItem = (HGENMENU)lua_touserdata(L, 1);
-	ptrT name(mir_utf8decodeT(lua_tostring(L, 2)));
-	HANDLE hIcolibItem = lua_touserdata(L, 3);
-	int flags = lua_tointeger(L, 4);
+	ptrW name(mir_utf8decodeW(lua_tostring(L, 2)));
+	HANDLE hIcolibItem = luaL_opt(L, lua_touserdata, 3, INVALID_HANDLE_VALUE);
+	int flags = luaL_optinteger(L, 4, -1);
 
 	if (!(flags & CMIF_UNICODE))
 		flags |= CMIF_UNICODE;
 
-	INT_PTR res = ::Menu_ModifyItem(hMenuItem, name, hIcolibItem, flags);
-	lua_pushinteger(L, res);
+	INT_PTR res = Menu_ModifyItem(hMenuItem, name, hIcolibItem, flags);
+	lua_pushboolean(L, res == 0);
+
 	return 1;
 }
 
-static int lua_ShowMenuItem(lua_State *L)
+static int genmenu_ConfigureMenuItem(lua_State *L)
 {
+	luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
+	HGENMENU hMenuItem = (HGENMENU)lua_touserdata(L, 1);
+	int option = luaL_checkinteger(L, 2);
+	luaL_checktype(L, 3, LUA_TLIGHTUSERDATA);
+	INT_PTR value = (INT_PTR)lua_touserdata(L, 3);
+	
+	int res = Menu_ConfigureItem(hMenuItem, option, value);
+	lua_pushboolean(L, res >= 0);
+
+	return 1;
+}
+
+static int genmenu_ShowMenuItem(lua_State *L)
+{
+	luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
 	HGENMENU hMenuItem = (HGENMENU)lua_touserdata(L, 1);
 	bool isShow = luaM_toboolean(L, 2);
 
-	::Menu_ShowItem(hMenuItem, isShow);
+	Menu_ShowItem(hMenuItem, isShow);
 
 	return 0;
 }
 
-static int lua_EnableMenuItem(lua_State *L)
+static int genmenu_EnableMenuItem(lua_State *L)
 {
+	luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
 	HGENMENU hMenuItem = (HGENMENU)lua_touserdata(L, 1);
 	bool isEnable = luaM_toboolean(L, 2);
 
-	::Menu_EnableItem(hMenuItem, isEnable);
+	Menu_EnableItem(hMenuItem, isEnable);
 
 	return 0;
 }
 
-static int lua_CheckMenuItem(lua_State *L)
+static int genmenu_CheckMenuItem(lua_State *L)
 {
+	luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
 	HGENMENU hMenuItem = (HGENMENU)lua_touserdata(L, 1);
 	bool isChecked = luaM_toboolean(L, 2);
 
-	::Menu_SetChecked(hMenuItem, isChecked);
+	Menu_SetChecked(hMenuItem, isChecked);
 
 	return 0;
 }
 
-static int lua_RemoveMenuItem(lua_State *L)
+static int genmenu_RemoveMenuItem(lua_State *L)
 {
+	luaL_checktype(L, 1, LUA_TLIGHTUSERDATA);
 	HGENMENU hMenuItem = (HGENMENU)lua_touserdata(L, 1);
 
-	INT_PTR res = ::Menu_RemoveItem(hMenuItem);
-	lua_pushinteger(L, res);
+	INT_PTR res = Menu_RemoveItem(hMenuItem);
+	lua_pushboolean(L, res == 0);
 
 	return 1;
 }
 
 static luaL_Reg genmenuApi[] =
 {
-	{ "AddMenuItem", lua_AddMenuItem },
-	{ "ModifyMenuItem", lua_ModifyMenuItem },
-	{ "ShowMenuItem", lua_ShowMenuItem },
-	{ "EnableMenuItem", lua_EnableMenuItem },
-	{ "CheckMenuItem", lua_CheckMenuItem },
-	{ "RemoveMenuItem", lua_RemoveMenuItem },
+	{ "ModifyMenuItem", genmenu_ModifyMenuItem },
+	{ "ConfigureMenuItem", genmenu_ConfigureMenuItem },
+	{ "ShowMenuItem", genmenu_ShowMenuItem },
+	{ "EnableMenuItem", genmenu_EnableMenuItem },
+	{ "CheckMenuItem", genmenu_CheckMenuItem },
+	{ "RemoveMenuItem", genmenu_RemoveMenuItem },
 
 	{ NULL, NULL }
 };

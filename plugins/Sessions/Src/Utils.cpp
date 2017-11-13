@@ -222,7 +222,7 @@ void SetInSessionOrder(MCONTACT hContact, int mode, int count, unsigned int orde
 	}
 }
 
-BOOL ResaveSettings(char *szName, int iFirst, int iLimit, TCHAR *szBuffer)
+BOOL ResaveSettings(char *szName, int iFirst, int iLimit, wchar_t *szBuffer)
 {
 	for (int i = iFirst; i < iLimit; i++) {
 		if (szBuffer == NULL)
@@ -231,8 +231,8 @@ BOOL ResaveSettings(char *szName, int iFirst, int iLimit, TCHAR *szBuffer)
 		char szNameBuf[256];
 		mir_snprintf(szNameBuf, "%s_%u", szName, i);
 
-		TCHAR *ptszTemp = db_get_tsa(NULL, MODNAME, szNameBuf);
-		db_set_ts(NULL, MODNAME, szNameBuf, szBuffer);
+		wchar_t *ptszTemp = db_get_wsa(NULL, MODNAME, szNameBuf);
+		db_set_ws(NULL, MODNAME, szNameBuf, szBuffer);
 		mir_free(szBuffer);
 
 		BYTE marked = IsMarkedUserDefSession(i);
@@ -298,7 +298,7 @@ int LoadSessionToCombobox(HWND hdlg, BOOL mode, int iLimit, char* pszSetting, in
 
 	for (int i = 0; i < iLimit; i++) {
 		mir_snprintf(szBuffer, "%s_%u", pszSetting, i);
-		TCHAR *pszBuffer = db_get_tsa(NULL, MODNAME, szBuffer);
+		wchar_t *pszBuffer = db_get_wsa(NULL, MODNAME, szBuffer);
 		if (pszBuffer) {
 			if (!IsMarkedUserDefSession(i + iFirstNum) || mode == 1) {
 				index = SendDlgItemMessage(hdlg, IDC_LIST, CB_ADDSTRING, 0, (LPARAM)pszBuffer);
@@ -327,7 +327,7 @@ int FillFavoritesMenu(HMENU hMenu, int iLimit)
 		if (IsMarkedUserDefSession(i)) {
 			char szBuffer[256];
 			mir_snprintf(szBuffer, "%s_%u", "UserSessionDsc", i);
-			TCHAR *pszBuffer = db_get_tsa(NULL, MODNAME, szBuffer);
+			wchar_t *pszBuffer = db_get_wsa(NULL, MODNAME, szBuffer);
 			if (pszBuffer) {
 				AppendMenu(hMenu, MF_STRING, i + 1, pszBuffer);
 				iItems++;
@@ -358,11 +358,11 @@ int CheckContactVisibility(MCONTACT hContact)
 	return !db_get_b(hContact, "CList", "Hidden", 0);
 }
 
-void RenameUserDefSession(int ses_count, TCHAR* ptszNewName)
+void RenameUserDefSession(int ses_count, wchar_t* ptszNewName)
 {
 	char szSession[256];
 	mir_snprintf(szSession, "%s_%u", "UserSessionDsc", ses_count);
-	db_set_ts(NULL, MODNAME, szSession, ptszNewName);
+	db_set_ws(NULL, MODNAME, szSession, ptszNewName);
 }
 
 int MarkUserDefSession(int ses_count, BYTE bCheck)

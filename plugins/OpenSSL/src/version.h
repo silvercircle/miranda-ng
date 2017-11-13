@@ -1,7 +1,7 @@
 #define __MAJOR_VERSION           0
 #define __MINOR_VERSION           1
 #define __RELEASE_NUM             0
-#define __BUILD_NUM               1
+#define __BUILD_NUM               2
 
 #include <stdver.h>
 
@@ -11,4 +11,4 @@
 #define __AUTHOR                 "Miranda NG Team"
 #define __AUTHOREMAIL            ""
 #define __AUTHORWEB              ""
-#define __COPYRIGHT              "© 2014-15 Miranda NG Team"
+#define __COPYRIGHT              "© 2014-17 Miranda NG Team"

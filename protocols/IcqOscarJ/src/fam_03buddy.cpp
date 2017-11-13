@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2010 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -520,7 +520,7 @@ void CIcqProto::handleUserOnline(BYTE *buf, size_t wLen, serverthread_info*)
 			AddToSpammerList(dwUIN);
 			if (getByte("PopupsSpamEnabled", DEFAULT_SPAM_POPUPS_ENABLED))
 				ShowPopupMsg(hContact, LPGEN("Spambot Detected"), LPGEN("Contact deleted & further events blocked."), POPTYPE_SPAM);
-			CallService(MS_DB_CONTACT_DELETE, hContact, 0);
+			db_delete_contact(hContact);
 
 			debugLogA("Contact %u deleted", dwUIN);
 		}
@@ -692,7 +692,7 @@ void CIcqProto::parseStatusNote(DWORD dwUin, char *szUid, MCONTACT hContact, osc
 			if (getContactXStatus(hContact) != 0 || !CheckContactCapabilities(hContact, CAPF_STATUS_MESSAGES)) {
 				setStatusMsgVar(hContact, szStatusNote, false);
 
-				TCHAR *tszNote = mir_utf8decodeT(szStatusNote);
+				wchar_t *tszNote = mir_utf8decodeW(szStatusNote);
 				ProtoBroadcastAck(hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, NULL, (LPARAM)tszNote);
 				mir_free(tszNote);
 			}

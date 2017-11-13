@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2009 Ricardo Pescuma Domenecci
 
 This is free software; you can redistribute it and/or
@@ -32,21 +32,13 @@ Boston, MA 02111-1307, USA.
 
 #define EMPTY_EXTRA_ICON  0xFFFF
 
-// Adding icon to extra image list.
-// Used for EXTRAICON_TYPE_CALLBACK extra icons
-//
-// wparam = (HICON)hIcon
-// lparam = 0 (unused)
-// return HANDLE hImage on success or INVALID_HANDLE_VALUE on failure
-#define MS_CLIST_EXTRA_ADD_ICON     "CListFrames/AddIconToExtraImageList"
-
-//called with wparam=hContact
+// called with wparam=hContact
 #define ME_CLIST_EXTRA_IMAGE_APPLY  "CListFrames/OnExtraImageApply"
 
-//called with wparam=hContact lparam=extra
+// called with wparam=hContact lparam=extra
 #define ME_CLIST_EXTRA_CLICK        "CListFrames/OnExtraClick"
 
-//called with wparam=lparam=0
+// called with wparam=lparam=0
 #define ME_CLIST_EXTRA_LIST_REBUILD "CListFrames/OnExtraListRebuild"
 
 /*
@@ -113,15 +105,27 @@ EXTERN_C MIR_APP_DLL(void) KillModuleExtraIcons(int hLangpack);
 
 #pragma warning(disable:4505)
 
+/////////////////////////////////////////////////////////////////////////////////////////
+
+#define EIF_DISABLED_BY_DEFAULT 0x0001
+
 EXTERN_C MIR_APP_DLL(HANDLE) ExtraIcon_RegisterCallback(const char *name, const char *description, const char *descIcon,
-	MIRANDAHOOK RebuildIcons, MIRANDAHOOK ApplyIcon, MIRANDAHOOKPARAM OnClick = NULL, LPARAM onClickParam = 0, int = hLangpack);
+	MIRANDAHOOK RebuildIcons, MIRANDAHOOK ApplyIcon, MIRANDAHOOKPARAM OnClick = NULL, LPARAM onClickParam = 0, int flags = 0, int = hLangpack);
 
 EXTERN_C MIR_APP_DLL(HANDLE) ExtraIcon_RegisterIcolib(const char *name, const char *description, const char *descIcon = NULL,
-	MIRANDAHOOKPARAM OnClick = NULL, LPARAM onClickParam = 0, int = hLangpack);
+	MIRANDAHOOKPARAM OnClick = NULL, LPARAM onClickParam = 0, int flags = 0, int = hLangpack);
+
+/////////////////////////////////////////////////////////////////////////////////////////
 
 EXTERN_C MIR_APP_DLL(int) ExtraIcon_SetIcon(HANDLE hExtraIcon, MCONTACT hContact, HANDLE hImage);
 EXTERN_C MIR_APP_DLL(int) ExtraIcon_SetIconByName(HANDLE hExtraIcon, MCONTACT hContact, const char *icoName);
 
 EXTERN_C MIR_APP_DLL(int) ExtraIcon_Clear(HANDLE hExtraIcon, MCONTACT hContact);
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// Adding icon to extra image list.
+// Used for EXTRAICON_TYPE_CALLBACK extra icons
+
+EXTERN_C MIR_APP_DLL(HANDLE) ExtraIcon_AddIcon(HICON hIcon);
 
 #endif // __M_EXTRAICONS_H__

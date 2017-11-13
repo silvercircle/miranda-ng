@@ -1,0 +1,397 @@
+<!DOCTYPE Project SYSTEM "http://www.slickedit.com/dtd/vse/10.0/vpj.dtd">
+<Project
+    Version="10.0"
+    VendorName="SlickEdit"
+    TemplateName="Other C/C++"
+    WorkingDir=".">
+    <Config
+        Name="Debug"
+        Type="cpp"
+        DebugCallbackName="gdb"
+        OutputFile="%bdTabSRMM"
+        CompilerConfigName="Default Compiler">
+        <Menu>
+            <Target
+                Name="Compile"
+                MenuCaption="&amp;Compile"
+                CaptureOutputWith="ProcessBuffer"
+                OutputExts="*.o"
+                SaveOption="SaveCurrent"
+                RunFromDir="%rw">
+                <Exec CmdLine='cc -c -g %i %defd -o "%bd%n.o" "%f"'/>
+            </Target>
+            <Target
+                Name="Link"
+                MenuCaption="&amp;Link">
+                <Exec CmdLine='cc -g -o "%o" %f %libs'/>
+            </Target>
+            <Target
+                Name="Build"
+                MenuCaption="&amp;Build"
+                CaptureOutputWith="ProcessBuffer"
+                SaveOption="SaveWorkspaceFiles"
+                RunFromDir="%rw">
+                <Exec CmdLine='"%(VSLICKBIN1)vsbuild" build "%w" "%r"'/>
+            </Target>
+            <Target
+                Name="Rebuild"
+                MenuCaption="&amp;Rebuild"
+                CaptureOutputWith="ProcessBuffer"
+                SaveOption="SaveWorkspaceFiles"
+                RunFromDir="%rw">
+                <Exec CmdLine='"%(VSLICKBIN1)vsbuild" rebuild "%w" "%r"'/>
+            </Target>
+            <Target
+                Name="Debug"
+                MenuCaption="&amp;Debug"
+                SaveOption="SaveNone"
+                BuildFirst="1"
+                CaptureOutputWith="ProcessBuffer"
+                RunFromDir="%rw">
+                <Exec CmdLine='vsdebugio -prog "%o"'/>
+            </Target>
+            <Target
+                Name="Execute"
+                MenuCaption="E&amp;xecute"
+                SaveOption="SaveNone"
+                BuildFirst="1"
+                CaptureOutputWith="ProcessBuffer"
+                RunFromDir="%rw">
+                <Exec CmdLine='"%o"'/>
+            </Target>
+        </Menu>
+    </Config>
+    <Config
+        Name="Release"
+        Type="cpp"
+        DebugCallbackName="gdb"
+        OutputFile="%bdTabSRMM"
+        CompilerConfigName="Default Compiler">
+        <Menu>
+            <Target
+                Name="Compile"
+                MenuCaption="&amp;Compile"
+                CaptureOutputWith="ProcessBuffer"
+                SaveOption="SaveCurrent"
+                OutputExts="*.o"
+                RunFromDir="%rw">
+                <Exec CmdLine='cc -c -O %i %defd -o "%bd%n.o" "%f"'/>
+            </Target>
+            <Target
+                Name="Link"
+                MenuCaption="&amp;Link">
+                <Exec CmdLine='cc -O -o "%o" %f %libs'/>
+            </Target>
+            <Target
+                Name="Build"
+                MenuCaption="&amp;Build"
+                CaptureOutputWith="ProcessBuffer"
+                SaveOption="SaveWorkspaceFiles"
+                RunFromDir="%rw">
+                <Exec CmdLine='"%(VSLICKBIN1)vsbuild" build "%w" "%r"'/>
+            </Target>
+            <Target
+                Name="Rebuild"
+                MenuCaption="&amp;Rebuild"
+                CaptureOutputWith="ProcessBuffer"
+                SaveOption="SaveWorkspaceFiles"
+                RunFromDir="%rw">
+                <Exec CmdLine='"%(VSLICKBIN1)vsbuild" rebuild "%w" "%r"'/>
+            </Target>
+            <Target
+                Name="Debug"
+                MenuCaption="&amp;Debug"
+                SaveOption="SaveNone"
+                BuildFirst="1"
+                CaptureOutputWith="ProcessBuffer"
+                RunFromDir="%rw">
+                <Exec CmdLine='vsdebugio -prog "%o"'/>
+            </Target>
+            <Target
+                Name="Execute"
+                MenuCaption="E&amp;xecute"
+                SaveOption="SaveNone"
+                BuildFirst="1"
+                CaptureOutputWith="ProcessBuffer"
+                RunFromDir="%rw">
+                <Exec CmdLine='"%o"'/>
+            </Target>
+        </Menu>
+    </Config>
+    <Rules Name="Compile">
+        <Rule
+            InputExts="*.s"
+            OutputExts="*.o"
+            LinkObject="1">
+            <Exec CmdLine='as -o "%bd%n.o" "%f"'/>
+        </Rule>
+    </Rules>
+    <Files>
+        <Folder
+            Name="Source Files"
+            Filters="*.c;*.C;*.cc;*.cpp;*.cp;*.cxx;*.c++;*.prg;*.pas;*.dpr;*.asm;*.s;*.bas;*.java;*.cs;*.sc;*.scala;*.e;*.cob;*.html;*.rc;*.tcl;*.py;*.pl;*.d;*.m;*.mm;*.go;*.groovy;*.gsh"
+            GUID="{0B98DD57-0BCA-49DE-5A57-03384C3DD9A4}">
+            <Folder
+                Name="chat"
+                AutoCustom="1"
+                GUID="{AF333A2D-7908-4285-780F-6C058A1F859B}">
+                <F N="src/chat/chat.h"/>
+                <F N="src/chat/chat_resource.h"/>
+                <F N="src/chat/log.cpp"/>
+                <F N="src/chat/main.cpp"/>
+                <F N="src/chat/manager.cpp"/>
+                <F N="src/chat/muchighlight.cpp"/>
+                <F N="src/chat/muchighlight.h"/>
+                <F N="src/chat/options.cpp"/>
+                <F N="src/chat/services.cpp"/>
+                <F N="src/chat/tools.cpp"/>
+                <F N="src/chat/window.cpp"/>
+            </Folder>
+            <F N="src/buttonbar.h"/>
+            <F N="src/buttonsbar.cpp"/>
+            <F N="src/contactcache.cpp"/>
+            <F N="src/contactcache.h"/>
+            <F N="src/container.cpp"/>
+            <F N="src/containeroptions.cpp"/>
+            <F N="src/controls.cpp"/>
+            <F N="src/controls.h"/>
+            <F N="src/eventpopups.cpp"/>
+            <F N="src/functions.h"/>
+            <F N="src/generic_msghandlers.cpp"/>
+            <F N="src/generic_msghandlers.h"/>
+            <F N="src/globals.cpp"/>
+            <F N="src/globals.h"/>
+            <F N="src/hotkeyhandler.cpp"/>
+            <F N="src/ImageDataObject.cpp"/>
+            <F N="src/ImageDataObject.h"/>
+            <F N="src/infopanel.cpp"/>
+            <F N="src/infopanel.h"/>
+            <F N="src/mim.cpp"/>
+            <F N="src/mim.h"/>
+            <F N="src/modplus.cpp"/>
+            <F N="src/msgdialog.cpp"/>
+            <F N="src/msgdlgutils.cpp"/>
+            <F N="src/msgdlgutils.h"/>
+            <F N="src/msglog.cpp"/>
+            <F N="src/msgoptions.cpp"/>
+            <F N="src/msgs.cpp"/>
+            <F N="src/msgs.h"/>
+            <F N="src/nen.h"/>
+            <F N="src/resource.h"/>
+            <F N="src/selectcontainer.cpp"/>
+            <F N="src/sendlater.cpp"/>
+            <F N="src/sendlater.h"/>
+            <F N="src/sendqueue.cpp"/>
+            <F N="src/sendqueue.h"/>
+            <F N="src/sidebar.cpp"/>
+            <F N="src/sidebar.h"/>
+            <F N="src/srmm.cpp"/>
+            <F N="src/stdafx.cxx"/>
+            <F N="src/stdafx.h"/>
+            <F N="src/tabctrl.cpp"/>
+            <F N="src/taskbar.cpp"/>
+            <F N="src/taskbar.h"/>
+            <F N="src/templates.cpp"/>
+            <F N="src/templates.h"/>
+            <F N="src/themeio.cpp"/>
+            <F N="src/themes.cpp"/>
+            <F N="src/themes.h"/>
+            <F N="src/translator.cpp"/>
+            <F N="src/translator.h"/>
+            <F N="src/trayicon.cpp"/>
+            <F N="src/TSButton.cpp"/>
+            <F N="src/typingnotify.cpp"/>
+            <F N="src/typingnotify.h"/>
+            <F N="src/userprefs.cpp"/>
+            <F N="src/utils.cpp"/>
+            <F N="src/utils.h"/>
+            <F N="src/version.h"/>
+        </Folder>
+        <Folder
+            Name="Header Files"
+            Filters="*.h;*.H;*.hh;*.hpp;*.hxx;*.h++;*.inc;*.sh;*.cpy;*.if"
+            GUID="{D014C90B-A87D-496D-6A5A-A290C9DDB892}">
+            <Folder
+                Name="deprecated"
+                AutoCustom="1"
+                GUID="{9280BA69-1EE3-4CDD-3089-B4BCD1B9758A}">
+                <F N="../../include/deprecated/m_errors.h"/>
+            </Folder>
+            <Folder
+                Name="mingw"
+                AutoCustom="1"
+                GUID="{66A269AA-931D-4F72-B8B6-E5F5248EAEB1}">
+                <F N="../../include/mingw/shobjidl.h"/>
+                <F N="../../include/mingw/tom.h"/>
+            </Folder>
+            <Folder
+                Name="msapi"
+                AutoCustom="1"
+                GUID="{9C744F03-D040-4E10-BE6A-ACF939427C80}">
+                <F N="../../include/msapi/afxres.h"/>
+                <F N="../../include/msapi/comptr.h"/>
+                <F N="../../include/msapi/richedit5.h"/>
+                <F N="../../include/msapi/stdver.h"/>
+                <F N="../../include/msapi/vsstyle.h"/>
+                <F N="../../include/msapi/vssym32.h"/>
+                <F N="../../include/msapi/winres.h"/>
+            </Folder>
+            <Folder
+                Name="openssl"
+                AutoCustom="1"
+                GUID="{D1DEFD2D-8448-4911-E32A-7BBFD924658F}">
+                <F N="../../include/openssl/aes.h"/>
+                <F N="../../include/openssl/applink.c"/>
+                <F N="../../include/openssl/asn1.h"/>
+                <F N="../../include/openssl/asn1t.h"/>
+                <F N="../../include/openssl/asn1_mac.h"/>
+                <F N="../../include/openssl/bio.h"/>
+                <F N="../../include/openssl/blowfish.h"/>
+                <F N="../../include/openssl/bn.h"/>
+                <F N="../../include/openssl/buffer.h"/>
+                <F N="../../include/openssl/camellia.h"/>
+                <F N="../../include/openssl/cast.h"/>
+                <F N="../../include/openssl/cmac.h"/>
+                <F N="../../include/openssl/cms.h"/>
+                <F N="../../include/openssl/comp.h"/>
+                <F N="../../include/openssl/conf.h"/>
+                <F N="../../include/openssl/conf_api.h"/>
+                <F N="../../include/openssl/crypto.h"/>
+                <F N="../../include/openssl/des.h"/>
+                <F N="../../include/openssl/des_old.h"/>
+                <F N="../../include/openssl/dh.h"/>
+                <F N="../../include/openssl/dsa.h"/>
+                <F N="../../include/openssl/dso.h"/>
+                <F N="../../include/openssl/dtls1.h"/>
+                <F N="../../include/openssl/ebcdic.h"/>
+                <F N="../../include/openssl/ec.h"/>
+                <F N="../../include/openssl/ecdh.h"/>
+                <F N="../../include/openssl/ecdsa.h"/>
+                <F N="../../include/openssl/engine.h"/>
+                <F N="../../include/openssl/err.h"/>
+                <F N="../../include/openssl/evp.h"/>
+                <F N="../../include/openssl/e_os2.h"/>
+                <F N="../../include/openssl/hmac.h"/>
+                <F N="../../include/openssl/idea.h"/>
+                <F N="../../include/openssl/krb5_asn.h"/>
+                <F N="../../include/openssl/kssl.h"/>
+                <F N="../../include/openssl/lhash.h"/>
+                <F N="../../include/openssl/md4.h"/>
+                <F N="../../include/openssl/md5.h"/>
+                <F N="../../include/openssl/mdc2.h"/>
+                <F N="../../include/openssl/modes.h"/>
+                <F N="../../include/openssl/objects.h"/>
+                <F N="../../include/openssl/obj_mac.h"/>
+                <F N="../../include/openssl/ocsp.h"/>
+                <F N="../../include/openssl/opensslconf.h"/>
+                <F N="../../include/openssl/opensslv.h"/>
+                <F N="../../include/openssl/ossl_typ.h"/>
+                <F N="../../include/openssl/pem.h"/>
+                <F N="../../include/openssl/pem2.h"/>
+                <F N="../../include/openssl/pkcs12.h"/>
+                <F N="../../include/openssl/pkcs7.h"/>
+                <F N="../../include/openssl/pqueue.h"/>
+                <F N="../../include/openssl/rand.h"/>
+                <F N="../../include/openssl/rc2.h"/>
+                <F N="../../include/openssl/rc4.h"/>
+                <F N="../../include/openssl/ripemd.h"/>
+                <F N="../../include/openssl/rsa.h"/>
+                <F N="../../include/openssl/safestack.h"/>
+                <F N="../../include/openssl/seed.h"/>
+                <F N="../../include/openssl/sha.h"/>
+                <F N="../../include/openssl/srp.h"/>
+                <F N="../../include/openssl/srtp.h"/>
+                <F N="../../include/openssl/ssl.h"/>
+                <F N="../../include/openssl/ssl2.h"/>
+                <F N="../../include/openssl/ssl23.h"/>
+                <F N="../../include/openssl/ssl3.h"/>
+                <F N="../../include/openssl/stack.h"/>
+                <F N="../../include/openssl/symhacks.h"/>
+                <F N="../../include/openssl/tls1.h"/>
+                <F N="../../include/openssl/ts.h"/>
+                <F N="../../include/openssl/txt_db.h"/>
+                <F N="../../include/openssl/ui.h"/>
+                <F N="../../include/openssl/ui_compat.h"/>
+                <F N="../../include/openssl/whrlpool.h"/>
+                <F N="../../include/openssl/x509.h"/>
+                <F N="../../include/openssl/x509v3.h"/>
+                <F N="../../include/openssl/x509_vfy.h"/>
+            </Folder>
+            <F N="../../include/m_acc.h"/>
+            <F N="../../include/m_addcontact.h"/>
+            <F N="../../include/m_avatars.h"/>
+            <F N="../../include/m_awaymsg.h"/>
+            <F N="../../include/m_button.h"/>
+            <F N="../../include/m_button_int.h"/>
+            <F N="../../include/m_chat.h"/>
+            <F N="../../include/m_chat_int.h"/>
+            <F N="../../include/m_clc.h"/>
+            <F N="../../include/m_clist.h"/>
+            <F N="../../include/m_clistint.h"/>
+            <F N="../../include/m_clui.h"/>
+            <F N="../../include/m_cluiframes.h"/>
+            <F N="../../include/m_contacts.h"/>
+            <F N="../../include/m_core.h"/>
+            <F N="../../include/m_crypto.h"/>
+            <F N="../../include/m_database.h"/>
+            <F N="../../include/m_db_int.h"/>
+            <F N="../../include/m_descbutton.h"/>
+            <F N="../../include/m_email.h"/>
+            <F N="../../include/m_extraicons.h"/>
+            <F N="../../include/m_file.h"/>
+            <F N="../../include/m_findadd.h"/>
+            <F N="../../include/m_fontservice.h"/>
+            <F N="../../include/m_freeimage.h"/>
+            <F N="../../include/m_genmenu.h"/>
+            <F N="../../include/m_gui.h"/>
+            <F N="../../include/m_history.h"/>
+            <F N="../../include/m_hotkeys.h"/>
+            <F N="../../include/m_http.h"/>
+            <F N="../../include/m_icolib.h"/>
+            <F N="../../include/m_iconheader.h"/>
+            <F N="../../include/m_icq.h"/>
+            <F N="../../include/m_idle.h"/>
+            <F N="../../include/m_ignore.h"/>
+            <F N="../../include/m_imgsrvc.h"/>
+            <F N="../../include/m_jabber.h"/>
+            <F N="../../include/m_json.h"/>
+            <F N="../../include/m_langpack.h"/>
+            <F N="../../include/m_message.h"/>
+            <F N="../../include/m_metacontacts.h"/>
+            <F N="../../include/m_modernopt.h"/>
+            <F N="../../include/m_netlib.h"/>
+            <F N="../../include/m_options.h"/>
+            <F N="../../include/m_pluginupdater.h"/>
+            <F N="../../include/m_popup.h"/>
+            <F N="../../include/m_protocols.h"/>
+            <F N="../../include/m_protoint.h"/>
+            <F N="../../include/m_protosvc.h"/>
+            <F N="../../include/m_skin.h"/>
+            <F N="../../include/m_ssl.h"/>
+            <F N="../../include/m_string.h"/>
+            <F N="../../include/m_string.inl"/>
+            <F N="../../include/m_system.h"/>
+            <F N="../../include/m_system_cpp.h"/>
+            <F N="../../include/m_timezones.h"/>
+            <F N="../../include/m_types.h"/>
+            <F N="../../include/m_url.h"/>
+            <F N="../../include/m_userinfo.h"/>
+            <F N="../../include/m_utils.h"/>
+            <F N="../../include/m_version.h"/>
+            <F N="../../include/m_xml.h"/>
+            <F N="../../include/m_xstatus.h"/>
+            <F N="../../include/newpluginapi.h"/>
+            <F N="../../include/statusmodes.h"/>
+            <F N="../../include/stdver.h"/>
+            <F N="../../include/win2k.h"/>
+        </Folder>
+        <Folder
+            Name="Resource Files"
+            Filters="*.ico;*.cur;*.dlg"
+            GUID="{DB32CA5C-2DFB-4122-644B-F362D5EEB99B}"/>
+        <Folder
+            Name="Other Files"
+            Filters=""
+            GUID="{58336993-7414-47AB-A5E3-E58902F38389}"/>
+    </Files>
+</Project>

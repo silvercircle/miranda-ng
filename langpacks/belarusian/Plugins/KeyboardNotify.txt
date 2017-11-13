@@ -7,7 +7,6 @@
 ;============================================================
 [Flashes your keyboard LEDs when a message has arrived.]
 Дадае мігценне святлодыёдаў клавіятуры пры прыбылых паведамленнях.
-;file \plugins\KeyboardNotify\res\resources.rc
 [Accounts to check]
 Правяраць наступныя:
 [Events to react on]
@@ -60,9 +59,9 @@
 Адсутнічаю
 [Occupied]
 Заняты
-[NA]
-Недасяжны
-[DND]
+[Not available]
+Недаступны
+[Do not disturb]
 Не турбаваць
 [Free for chat]
 Вольны
@@ -178,22 +177,28 @@ Scroll
 Ігнараваць
 [Set xStatus list]
 Спіс xСтатусаў
-;file \plugins\KeyboardNotify\src\ignore.cpp
 [** All contacts **]
 ** Усе кантакты **
 [** Unknown contacts **]
 ** Невядомыя кантакты **
-;file \plugins\KeyboardNotify\src\options.cpp
 [left -> right]
 лева -> права
 [right -> left]
 права -> лева
 [left <-> right]
 лева <-> права
-[Keyboard Flash]
-Мігценне клавіятуры
-[Events]
-Падзеі
+[\n; Automatically generated Keyboard Notify Theme file\n\n\n]
+\n ; Аўтаматычна згенераваны файл тэмы Keyboard Notify\n\n
+[\n; End of automatically generated Keyboard Notify Theme file\n]
+\n; Канец аўтаматычна згенераванага файла тэмы Keyboard Notify\n\n
+[None]
+Няма
+[Protocol]
+Пратакол
+[Keyboard Notify Theme]
+Тэма звесткі
+[All Files]
+Усе файлы
 [Accounts]
 Конты
 [Rules]
@@ -202,15 +207,7 @@ Scroll
 Мігценне
 [Themes]
 Тэмы
-[Protocol]
-Пратакол
-[Keyboard Notify Theme]
-Тэма звесткі
-[All Files]
-Усе файлы
-[\n; Automatically generated Keyboard Notify Theme file\n\n\n]
-\n ; Аўтаматычна згенераваны файл тэмы Keyboard Notify\n\n
-[\n; End of automatically generated Keyboard Notify Theme file\n]
-\n; Канец аўтаматычна згенераванага файла тэмы Keyboard Notify\n\n
-[None]
-Няма
+[Keyboard Flash]
+Мігценне клавіятуры
+[Events]
+Падзеі

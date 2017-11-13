@@ -17,7 +17,17 @@ public:
 			cookie);
 
 		SetData(data, strlen(data));
-		AddHeader("Content-Type", "application/x-www-form-urlencoded");
+		AddHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
+	}
+};
+
+class GetSessionRequest2 : public HttpRequest
+{
+public:
+	GetSessionRequest2() :
+		HttpRequest(REQUEST_GET, STEAM_WEB_URL)
+	{
+		flags = NLHRF_HTTP11 | NLHRF_SSL | NLHRF_NODUMP;
 	}
 };
 

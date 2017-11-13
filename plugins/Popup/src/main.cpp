@@ -63,38 +63,37 @@ static int OptionsInitialize(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.position = 100000000;
-	odp.groupPosition = 910000000;
 	odp.hInstance = hInst;
 	odp.flags = ODPF_BOLDGROUPS;
-	odp.pszTitle = MODULNAME_PLU;
+	odp.szTitle.a = MODULNAME_PLU;
 
-	odp.pszTab = LPGEN("General");
+	odp.szTab.a = LPGEN("General");
 	odp.pfnDlgProc = DlgProcPopupGeneral;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_POPUP_GENERAL);
 	Options_AddPage(wParam, &odp);
 
-	odp.pszTab = LPGEN("Classes");
+	odp.szTab.a = LPGEN("Classes");
 	odp.pfnDlgProc = DlgProcOptsClasses;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_NOTIFICATIONS);
 	Options_AddPage(wParam, &odp);
 
-	odp.pszTab = LPGEN("Actions");
+	odp.szTab.a = LPGEN("Actions");
 	odp.pfnDlgProc = DlgProcPopupActions;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_ACTIONS);
 	Options_AddPage(wParam, &odp);
 
-	odp.pszTab = LPGEN("Contacts");
+	odp.szTab.a = LPGEN("Contacts");
 	odp.pfnDlgProc = DlgProcContactOpts;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_CONTACTS);
 	Options_AddPage(wParam, &odp);
 
-	odp.pszTab = LPGEN("Advanced");
+	odp.szTab.a = LPGEN("Advanced");
 	odp.pfnDlgProc = DlgProcPopupAdvOpts;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_POPUP_ADVANCED);
 	Options_AddPage(wParam, &odp);
 
-	odp.pszGroup = LPGEN("Skins");
-	odp.pszTab = LPGEN(MODULNAME_PLU);
+	odp.szGroup.a = LPGEN("Skins");
+	odp.szTab.a = LPGEN(MODULNAME_PLU);
 	odp.pfnDlgProc = DlgProcPopSkinsOpts;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_SKIN2);
 	Options_AddPage(wParam, &odp);
@@ -148,14 +147,14 @@ INT_PTR svcEnableDisableMenuCommand(WPARAM, LPARAM)
 		// The action to do is "disable popups" (show disabled) and we must write "enable popup" in the new item.
 		PopupOptions.ModuleIsEnabled = FALSE;
 		db_set_b(NULL, "Popup", "ModuleIsEnabled", FALSE);
-		Menu_ModifyItem(hMenuItem, LPGENT("Enable Popups"), hIcon = GetIconHandle(IDI_NOPOPUP));
+		Menu_ModifyItem(hMenuItem, LPGENW("Enable Popups"), hIcon = GetIconHandle(IDI_NOPOPUP));
 	}
 	else {
 		// The module is disabled.
 		// The action to do is enable popups (show enabled), then write "disable popup" in the new item.
 		PopupOptions.ModuleIsEnabled = TRUE;
 		db_set_b(NULL, "Popup", "ModuleIsEnabled", TRUE);
-		Menu_ModifyItem(hMenuItem, LPGENT("Disable Popups"), hIcon = GetIconHandle(IDI_POPUP));
+		Menu_ModifyItem(hMenuItem, LPGENW("Disable Popups"), hIcon = GetIconHandle(IDI_POPUP));
 	}
 
 	Menu_ModifyItem(hMenuRoot, NULL, hIcon);
@@ -175,19 +174,19 @@ INT_PTR svcShowHistory(WPARAM, LPARAM)
 void InitMenuItems(void)
 {
 	CMenuItem mi;
-	mi.flags = CMIF_TCHAR;
+	mi.flags = CMIF_UNICODE;
 
 	HANDLE hIcon = GetIconHandle(PopupOptions.ModuleIsEnabled ? IDI_POPUP : IDI_NOPOPUP);
 
 	// Build main menu
-	hMenuRoot = Menu_CreateRoot(MO_MAIN, LPGENT(MODULNAME_PLU), -1000000000, hIcon);
+	hMenuRoot = mi.root = Menu_CreateRoot(MO_MAIN, MODULNAME_PLUW, -1000000000, hIcon);
+	Menu_ConfigureItem(mi.root, MCI_OPT_UID, "3F5B5AB5-46D8-469E-8951-50B287C59037");
 
 	// Add item to main menu
 	SET_UID(mi, 0x4353d44e, 0x177, 0x4843, 0x88, 0x30, 0x25, 0x5d, 0x91, 0xad, 0xdf, 0x3f);
-	mi.root = (HGENMENU)hMenuRoot;
 	mi.pszService = MENUCOMMAND_SVC;
 	CreateServiceFunction(mi.pszService, svcEnableDisableMenuCommand);
-	mi.name.t = PopupOptions.ModuleIsEnabled ? LPGENT("Disable Popups") : LPGENT("Enable Popups");
+	mi.name.w = PopupOptions.ModuleIsEnabled ? LPGENW("Disable Popups") : LPGENW("Enable Popups");
 	mi.hIcolibItem = hIcon;
 	hMenuItem = Menu_AddMainMenuItem(&mi);
 
@@ -196,7 +195,7 @@ void InitMenuItems(void)
 	mi.pszService = MENUCOMMAND_HISTORY;
 	CreateServiceFunction(mi.pszService, svcShowHistory);
 	mi.position = 1000000000;
-	mi.name.t = LPGENT("Popup History");
+	mi.name.w = LPGENW("Popup History");
 	mi.hIcolibItem = GetIconHandle(IDI_HISTORY);
 	hMenuItemHistory = Menu_AddMainMenuItem(&mi);
 }
@@ -210,17 +209,17 @@ INT_PTR GetStatus(WPARAM, LPARAM)
 // register Hotkey
 void LoadHotkey()
 {
-	HOTKEYDESC hk = { sizeof(hk) };
-	hk.dwFlags = HKD_TCHAR;
+	HOTKEYDESC hk = {};
+	hk.dwFlags = HKD_UNICODE;
 	hk.pszName = "Toggle Popups";
-	hk.ptszDescription = LPGENT("Toggle Popups");
-	hk.ptszSection = LPGENT(MODULNAME_PLU);
+	hk.szDescription.w = LPGENW("Toggle Popups");
+	hk.szSection.w = MODULNAME_PLUW;
 	hk.pszService = MENUCOMMAND_SVC;
 	Hotkey_Register(&hk);
 
 	// 'Popup History' Hotkey
 	hk.pszName = "Popup History";
-	hk.ptszDescription = LPGENT("Popup History");
+	hk.szDescription.w = LPGENW("Popup History");
 	hk.pszService = MENUCOMMAND_HISTORY;
 	Hotkey_Register(&hk);
 }
@@ -259,13 +258,13 @@ static int ModulesLoaded(WPARAM, LPARAM)
 	// hook TopToolBar
 	HookEvent(ME_TTB_MODULELOADED, TTBLoaded);
 	// Folder plugin support
-	folderId = FoldersRegisterCustomPathT(LPGEN("Skins"), LPGEN("Popup Plus"), MIRANDA_PATHT _T("\\Skins\\Popup"));
+	folderId = FoldersRegisterCustomPathT(LPGEN("Skins"), LPGEN("Popup Plus"), MIRANDA_PATHT L"\\Skins\\Popup");
 	// load skin
 	skins.load();
 	const PopupSkin *skin;
 	if (skin = skins.getSkin(PopupOptions.SkinPack)) {
 		mir_free(PopupOptions.SkinPack);
-		PopupOptions.SkinPack = mir_tstrdup(skin->getName());
+		PopupOptions.SkinPack = mir_wstrdup(skin->getName());
 		skin->loadOpts();
 	}
 	// init PopupEfects
@@ -319,7 +318,7 @@ MIRAPI int Load(void)
 	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &hMainThread, THREAD_SET_CONTEXT, FALSE, 0);
 
 	mir_getLP(&pluginInfoEx);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	CreateServiceFunction(MS_POPUP_GETSTATUS, GetStatus);
 
@@ -331,7 +330,7 @@ MIRAPI int Load(void)
 	LoadGDIPlus();
 
 	// Transparent and animation routines
-	hDwmapiDll = LoadLibrary(_T("dwmapi.dll"));
+	hDwmapiDll = LoadLibrary(L"dwmapi.dll");
 	MyDwmEnableBlurBehindWindow = 0;
 	if (hDwmapiDll)
 		MyDwmEnableBlurBehindWindow = (HRESULT(WINAPI *)(HWND, DWM_BLURBEHIND *))GetProcAddress(hDwmapiDll, "DwmEnableBlurBehindWindow");
@@ -339,7 +338,7 @@ MIRAPI int Load(void)
 	PopupHistoryLoad();
 	LoadPopupThread();
 	if (!LoadPopupWnd2()) {
-		MessageBox(0, TranslateT("Error: I could not register the Popup Window class.\r\nThe plugin will not operate."), _T(MODULNAME_LONG), MB_ICONSTOP | MB_OK);
+		MessageBox(0, TranslateT("Error: I could not register the Popup Window class.\r\nThe plugin will not operate."), MODULNAME_LONG, MB_ICONSTOP | MB_OK);
 		return 0; // We couldn't register our Window Class, don't hook any event: the plugin will act as if it was disabled.
 	}
 	RegisterOptPrevBox();
@@ -387,6 +386,10 @@ MIRAPI int Load(void)
 	CreateServiceFunction(MS_POPUP_UNREGISTERCLASS, Popup_UnregisterPopupClass);
 	CreateServiceFunction(MS_POPUP_ADDPOPUPCLASS, Popup_CreateClassPopup);
 
+	CreateServiceFunction(MS_POPUP_DESTROYPOPUP, Popup_DeletePopup);
+
+	CreateServiceFunction("Popup/LoadSkin", Popup_LoadSkin);
+
 	// load icons / create hook
 	InitIcons();
 	HookEvent(ME_SKIN2_ICONSCHANGED, IconsChanged);
@@ -425,7 +428,7 @@ MIRAPI int Unload(void)
 	SrmmMenu_Unload();
 
 	UnregisterClass(MAKEINTATOM(g_wndClass.cPopupWnd2), hInst);
-	UnregisterClass(_T("PopupEditBox"), hInst);
+	UnregisterClass(L"PopupEditBox", hInst);
 	UnregisterClass(MAKEINTATOM(g_wndClass.cPopupMenuHostWnd), hInst);
 	UnregisterClass(MAKEINTATOM(g_wndClass.cPopupThreadManagerWnd), hInst);
 	UnregisterClass(MAKEINTATOM(g_wndClass.cPopupPreviewBoxWndclass), hInst);

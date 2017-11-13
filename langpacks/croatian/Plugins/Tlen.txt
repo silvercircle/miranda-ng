@@ -16,8 +16,6 @@
 
 [Create new account]
 
-[Tlen]
-
 [Options]
 opcije
 [Automatically reconnect after unintentional disconnection]
@@ -88,7 +86,7 @@ Pozadina
 tekst
 [Delay]
 
-[&From Popup plugin]
+[&From popup plugin]
 
 [&Custom]
 

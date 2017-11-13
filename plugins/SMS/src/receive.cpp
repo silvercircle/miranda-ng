@@ -36,7 +36,7 @@ int handleAckSMS(WPARAM wParam, LPARAM lParam)
 		return 0;
 
 	char szPhone[MAX_PHONE_LEN] = { 0 };
-	TCHAR tszPhone[MAX_PHONE_LEN] = { 0 };
+	wchar_t tszPhone[MAX_PHONE_LEN] = { 0 };
 	LPSTR lpszXML = (LPSTR)((ACKDATA*)lParam)->lParam, lpszData, lpszPhone;
 	size_t dwXMLSize = 0, dwDataSize, dwPhoneSize;
 	ACKDATA *ack = ((ACKDATA*)lParam);
@@ -48,7 +48,7 @@ int handleAckSMS(WPARAM wParam, LPARAM lParam)
 		if (GetXMLFieldEx(lpszXML, dwXMLSize, &lpszPhone, &dwPhoneSize, "sms_message", "sender", NULL)) {
 			LPSTR lpszMessageUTF;
 			size_t dwBuffLen, dwMessageXMLEncodedSize, dwMessageXMLDecodedSize;
-			DBEVENTINFO dbei = { sizeof(dbei) };
+			DBEVENTINFO dbei = {};
 
 			dwBuffLen = (dwDataSize + MAX_PATH);
 			dbei.pBlob = (LPBYTE)MEMALLOC((dwBuffLen + dwPhoneSize));
@@ -75,7 +75,7 @@ int handleAckSMS(WPARAM wParam, LPARAM lParam)
 				if (hContact == NULL) {
 					if (RecvSMSWindowAdd(NULL, ICQEVENTTYPE_SMS, tszPhone, dwPhoneSize, (LPSTR)dbei.pBlob, dbei.cbBlob)) {
 						db_event_markRead(hContact, hResult);
-						SkinPlaySound("RecvSMSMsg");
+						Skin_PlaySound("RecvSMSMsg");
 					}
 				}
 			}
@@ -91,8 +91,7 @@ int handleAckSMS(WPARAM wParam, LPARAM lParam)
 				dwPhoneSize = MultiByteToWideChar(CP_UTF8, 0, szPhone, (int)dwPhoneSize, tszPhone, MAX_PHONE_LEN);
 				MCONTACT hContact = HContactFromPhone(tszPhone, dwPhoneSize);
 
-				DBEVENTINFO dbei = { 0 };
-				dbei.cbSize = sizeof(dbei);
+				DBEVENTINFO dbei = {};
 				dbei.szModule = GetModuleName(hContact);
 				dbei.timestamp = time(NULL);
 				dbei.flags = DBEF_UTF;
@@ -138,7 +137,7 @@ int handleAckSMS(WPARAM wParam, LPARAM lParam)
 
 					if (ack->result == ACKRESULT_FAILED || CompareStringA(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), NORM_IGNORECASE, lpszData, (int)dwDataSize, "no", 2) == CSTR_EQUAL) {
 						char szBuff[1024];
-						TCHAR tszErrorMessage[1028];
+						wchar_t tszErrorMessage[1028];
 						LPSTR lpszErrorDescription;
 
 						if (SendSMSWindowMultipleGet(hWndDlg)) {
@@ -158,7 +157,7 @@ int handleAckSMS(WPARAM wParam, LPARAM lParam)
 							GetXMLFieldExBuff(lpszXML, dwXMLSize, szBuff, sizeof(szBuff), NULL, "sms_response", "error", "params", "param", NULL);
 						}
 
-						mir_sntprintf(tszErrorMessage, TranslateT("SMS message didn't send by %S to %s because: %S"), szNetwork, tszPhone, lpszErrorDescription);
+						mir_snwprintf(tszErrorMessage, TranslateT("SMS message didn't send by %S to %s because: %S"), szNetwork, tszPhone, lpszErrorDescription);
 						ShowWindow(hWndDlg, SW_SHOWNORMAL);
 						EnableWindow(hWndDlg, FALSE);
 						HWND hwndTimeOut = CreateDialog(ssSMSSettings.hInstance, MAKEINTRESOURCE(IDD_SENDSMSTIMEDOUT), hWndDlg, SMSTimedOutDlgProc);
@@ -209,8 +208,8 @@ int handleAckSMS(WPARAM wParam, LPARAM lParam)
 int handleNewMessage(WPARAM hContact, LPARAM hDbEvent)
 {
 	char szServiceFunction[MAX_PATH], *pszServiceFunctionName;
-	TCHAR szToolTip[MAX_PATH];
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	wchar_t szToolTip[MAX_PATH];
+	DBEVENTINFO dbei = {};
 
 	if ((dbei.cbBlob = db_event_getBlobSize(hDbEvent)) == -1)
 		return 0;
@@ -225,28 +224,28 @@ int handleNewMessage(WPARAM hContact, LPARAM hDbEvent)
 	if ((dbei.flags & DBEF_SENT) == 0)
 	if (dbei.eventType == ICQEVENTTYPE_SMS) {
 		if (dbei.cbBlob > MIN_SMS_DBEVENT_LEN) {
-			SkinPlaySound("RecvSMSMsg");
+			Skin_PlaySound("RecvSMSMsg");
 			if (DB_SMS_GetByte(NULL, "AutoPopup", 0)) {
 				if (RecvSMSWindowAdd(hContact, ICQEVENTTYPE_SMS, NULL, 0, (LPSTR)dbei.pBlob, dbei.cbBlob))
 					db_event_markRead(hContact, hDbEvent);
 			}
 			else {
 				memcpy(pszServiceFunctionName, SMS_READ, sizeof(SMS_READ));
-				mir_sntprintf(szToolTip, TranslateT("SMS Message from %s"), pcli->pfnGetContactDisplayName(hContact, 0));
+				mir_snwprintf(szToolTip, TranslateT("SMS Message from %s"), pcli->pfnGetContactDisplayName(hContact, 0));
 
-				CLISTEVENT cle = { sizeof(cle) };
-				cle.flags = CLEF_TCHAR;
+				CLISTEVENT cle = {};
+				cle.flags = CLEF_UNICODE;
 				cle.hContact = hContact;
 				cle.hDbEvent = hDbEvent;
 				cle.hIcon = Skin_LoadIcon(SKINICON_OTHER_SMS);
 				cle.pszService = szServiceFunction;
-				cle.ptszTooltip = szToolTip;
-				CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
+				cle.szTooltip.w = szToolTip;
+				pcli->pfnAddEvent(&cle);
 			}
 		}
 	}
 	else if (dbei.eventType == ICQEVENTTYPE_SMSCONFIRMATION) {
-		SkinPlaySound("RecvSMSConfirmation");
+		Skin_PlaySound("RecvSMSConfirmation");
 		if (DB_SMS_GetByte(NULL, "AutoPopup", 0)) {
 			if (RecvSMSWindowAdd(hContact, ICQEVENTTYPE_SMSCONFIRMATION, NULL, 0, (LPSTR)dbei.pBlob, dbei.cbBlob))
 				db_event_delete(hContact, hDbEvent);
@@ -255,16 +254,16 @@ int handleNewMessage(WPARAM hContact, LPARAM hDbEvent)
 			UINT iIcon;
 			if (GetDataFromMessage((LPSTR)dbei.pBlob, dbei.cbBlob, NULL, NULL, 0, NULL, &iIcon)) {
 				memcpy(pszServiceFunctionName, SMS_READ_ACK, sizeof(SMS_READ_ACK));
-				mir_sntprintf(szToolTip, TranslateT("SMS Confirmation from %s"), pcli->pfnGetContactDisplayName(hContact, 0));
+				mir_snwprintf(szToolTip, TranslateT("SMS Confirmation from %s"), pcli->pfnGetContactDisplayName(hContact, 0));
 
-				CLISTEVENT cle = { sizeof(cle) };
-				cle.flags = CLEF_TCHAR;
+				CLISTEVENT cle = {};
+				cle.flags = CLEF_UNICODE;
 				cle.hContact = hContact;
 				cle.hDbEvent = hDbEvent;
 				cle.hIcon = (HICON)LoadImage(ssSMSSettings.hInstance, MAKEINTRESOURCE(iIcon), IMAGE_ICON, 0, 0, LR_SHARED);
 				cle.pszService = szServiceFunction;
-				cle.ptszTooltip = szToolTip;
-				CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
+				cle.szTooltip.w = szToolTip;
+				pcli->pfnAddEvent(&cle);
 			}
 		}
 	}

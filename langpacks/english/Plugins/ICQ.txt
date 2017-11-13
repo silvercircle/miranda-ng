@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: ICQ.dll
 ;  Plugin: IcqOscarJ protocol
-;  Version: 0.11.3.4
+;  Version: 0.11.3.5
 ;  Authors: Joe Kucera, Bio, Martin Öberg, Richard Hughes, Jon Keating, etc.
 ;============================================================
 [ICQ protocol support for Miranda NG.]
@@ -42,7 +42,7 @@
 [Enable avatar support]
 [Check avatar validity before saving *]
 [Load avatars automatically (like ICQ Lite)]
-[You will need to reconnect to the ICQ network for the changes you have made on this page to take effect.]
+[These changes will take effect the next time you connect to the ICQ network.]
 [You cannot enable/disable the server-side contact list while you are connected to the ICQ network.]
 [Note: The options marked with an asterisk have important side-effects or caveats that may not be initially apparent documented in the help.]
 [Messaging]
@@ -58,7 +58,6 @@
 [Reset Custom status on status change]
 [Auto-retrieve Custom status details]
 [Block known Spam Bots]
-[Enable AIM contacts support]
 [Direct connections]
 [Allowing direct connections will expose your IP address but may be necessary for some ICQ features to work properly.]
 [Allow direct connections with any user]
@@ -785,7 +784,7 @@
 ;file \protocols\IcqOscarJ\src\icq_server.cpp
 [Unable to connect to ICQ login server, SSL could not be negotiated]
 [Unable to connect to ICQ login server]
-[Miranda was unable to allocate a port to listen for direct peer-to-peer connections between clients. You will be able to use most of the ICQ network without problems but you may be unable to send or receive files.\n\nIf you have a firewall this may be blocking Miranda, in which case you should configure your firewall to leave some ports open and tell Miranda which ports to use in Options -> ICQ -> Network.]
+[Miranda was unable to allocate a port to listen for direct peer-to-peer connections between clients. You will be able to use most of the ICQ network without problems but you may be unable to send or receive files.\n\nIf you have a firewall this may be blocking Miranda, in which case you should configure your firewall to leave some ports open and tell Miranda which ports to use in Options -> Network -> ICQ client-to-client connections.]
 [Connection failed.\nLogin sequence failed for unknown reason.\nTry again later.]
 [Your connection with the ICQ server was abortively closed]
 ;file \protocols\IcqOscarJ\src\icq_servlist.cpp
@@ -884,7 +883,7 @@
 [Kitty]
 [Sumo]
 [Broken hearted]
-[Free for Chat]
+[Free for chat]
 [@home]
 [@work]
 [Strawberry]
@@ -907,6 +906,7 @@
 ;file \protocols\IcqOscarJ\src\icq_xtraz.cpp
 [Greeting card:]
 ;file \protocols\IcqOscarJ\src\init.cpp
+[Expand string edit]
 [ICQ xStatus]
 ;file \protocols\IcqOscarJ\src\log.cpp
 [ICQ Warning]

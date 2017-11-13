@@ -37,8 +37,8 @@
 Показывать ссылки от неизвестных контактов
 [Enable avatars]
 Включить аватары
-[You will need to reconnect for the changes you have made on this page to take effect.]
-Изменения вступят в силу при следующем входе в сеть.
+[These changes will take effect the next time you connect to the GG network.]
+Эти изменения вступят в силу при следующем подключении к сети GG.
 [Conference policy]
 Политика конференций
 [if total participant count greater than:]
@@ -54,7 +54,7 @@
 [Show connection errors]
 Показывать ошибки соединения
 [Automatically reconnect after unintentional disconnection]
-Переподключиться после неожиданного разрыва
+Повторно подключиться после неожиданного разъединения
 [Send messages slower, but with full acknowledgment]
 Отправлять сообщения медленнее, но с подтверждением
 [Manually specify connection servers' hosts]
@@ -166,7 +166,7 @@ Miranda не может распознать имя сервера Gadu-Gadu п�
 [The connection with the server was abortively closed during the connection attempt. You may have lost your local network connection.]
 Попытка подключения с сервером прервалась с ошибкой. Возможно, пропало подключение к локальной сети.
 [Your Gadu-Gadu number and password combination was rejected by the Gadu-Gadu server. Please check login details at Options -> Network -> Gadu-Gadu and try again.]
-Ваш логин или пароль не принят сервером Gadu-Gadu. Пожалуйста, проверьте их правильность Настройки -> Сеть -> Gadu-Gadu и попробуйте ещё раз.
+Ваш логин или пароль не принят сервером Gadu-Gadu. Пожалуйста, проверьте их правильность в разделе "Настройки -> Сеть -> Gadu-Gadu" и попробуйте ещё раз.
 [Connecting to Gadu-Gadu hub failed.]
 Соединение с Gadu-Gadu разорвано.
 [Cannot establish secure connection.]
@@ -175,6 +175,8 @@ Miranda не может распознать имя сервера Gadu-Gadu п�
 Сервер закрыл соединение с просьбой изменить E-mail.
 [Too many login attempts with invalid password.]
 Слишком много попыток входа с неправильным паролем.
+[Gadu-Gadu servers are now down. Try again later.]
+Серверы Gadu-Gadu не работают. Попробуйте позже.
 [Unknown]
 Неизвестно
 [External direct connections hostname %s is invalid. Disabling external host forwarding.]
@@ -207,14 +209,6 @@ Miranda не может распознать имя сервера Gadu-Gadu п�
 Женский
 [<not specified>]
 <не указано>
-[Network]
-Сеть
-[General]
-Общее
-[Conference]
-Комната чата
-[Advanced]
-Дополнительно
 [<Last Status>]
 <Последний статус>
 [System tray icon]
@@ -224,7 +218,7 @@ Miranda не может распознать имя сервера Gadu-Gadu п�
 [Message with [img] BBCode]
 Сообщение с тегом [img]
 [You need to specify your registration e-mail first.]
-Необходимо указать ваш e-mail.
+Необходимо указать свой e-mail.
 [Your password will be sent to your registration e-mail.\nDo you want to continue?]
 Ваш пароль будет выслан на регистрационный e-mail.\nПродолжить?
 [You should disconnect before making any permanent changes with your account.\nDo you want to disconnect now?]
@@ -235,6 +229,14 @@ Miranda не может распознать имя сервера Gadu-Gadu п�
 Спросить
 [Ignore]
 Игнорировать
+[Network]
+Сеть
+[General]
+Общее
+[Conference]
+Комната чата
+[Advanced]
+Дополнительно
 [HTTP failed connecting]
 HTTP ошибка подключения
 [HTTP failed resolving]
@@ -313,10 +315,10 @@ HTTP неизвестная ошибка
 Изображения (*.bmp,*.gif,*.jpeg,*.jpg,*.png)
 [Image cannot be written to disk.]
 Изображение не может быть записано на диск.
-[Delete image from the list]
-Удалить изображение из списка
 [Save image to disk]
 Сохранить изображение на диск
+[Delete image from the list]
+Удалить изображение из списка
 [Image from %s]
 Изображение от %s
 [Image for %s]

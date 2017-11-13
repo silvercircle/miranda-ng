@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: SimpleStatusMsg.dll
 ;  Plugin: Simple status message
-;  Version: 1.9.0.5
+;  Version: 1.9.0.6
 ;  Authors: Bartosz 'Dezeath' Bialek, Harven
 ;============================================================
 [Provides a simple way to set status and away messages.]
@@ -60,7 +60,7 @@
 [Do not update variables on ICQ status message requests]
 Не обновлять переменные при смене сообщений статуса ICQ
 [Leave last played track's title after exiting the player]
-Оставлять последний трек, после выключения плеера
+Оставлять последний трек после выключения плеера
 [Enable status messages parsing by Variables plugin]
 Разрешить обработку статусного сообщения плагином Variables
 [Exclude %date% token from parsing (restart required)]
@@ -95,8 +95,8 @@
 Очистить
 [Clear Predefined]
 Очистить
-[* This feature is available only when using StartupStatus plugin.]
-* Эта возможность доступна только при использовании плагина StartupStatus
+[* This feature is available only when using StatusManager plugin.]
+* Эта возможность доступна только при использовании плагина StatusManager.
 [Status on startup]
 Начальный статус
 [Set status after]
@@ -136,7 +136,7 @@
 [Re&ad Away message]
 Пр&очесть сообщение "Отсутствую"
 [Copy Away message]
-Скопировать сообщение статуса
+Скопировать сообщение "Отсутствую"
 [&Go to URL in Away message]
 О&ткрыть ссылку в сообщении "Отсутствую"
 [Change status message]
@@ -148,11 +148,15 @@
 [Status message...]
 Сообщение статуса...
 [%s (locked)]
-%s (заблокирован)
+%s (заблокирована)
 [External Applications]
 Внешние приложения
+[retrieves song name of the song currently playing in Winamp (Simple Status Message compatible)]
+запрашивает название песни, проигрываемой в Winamp (совместимо с Simple Status Message)
 [Miranda Related]
 Относящееся к Miranda NG
+[get the date (Simple Status Message compatible)]
+получает дату (совместимо с Simple Status Message)
 [<current>]
 <текущий>
 [Clear history]
@@ -187,6 +191,8 @@
 Подтверждение удаления настроенных сообщений
 [<last status>]
 <Последний>
+[Startup status]
+Начальный статус
 [Status]
 Статус
 [General]
@@ -202,7 +208,7 @@
 [Simple Status Message]
 Сообщение статуса
 [I've been away since %time%.]
-Отошёл в %time%.
+Отсутствую с %time%.
 [Give it up, I'm not in!]
 Ну нет меня сейчас, нет...
 [Not right now.]

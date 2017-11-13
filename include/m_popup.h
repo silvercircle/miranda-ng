@@ -61,14 +61,8 @@ typedef struct
 // this data, however you MUST NOT chahge that.
 
 // unicode or ansi mode
-#define PU2_ANSI    0x00
-#define PU2_UNICODE 0x01
-#if defined(UNICODE) || defined(_UNICODE)
-#define PU2_TCHAR PU2_UNICODE
-#else
-#define PU2_TCHAR PU2_ANSI
-#endif
-
+#define PU2_ANSI         0x00
+#define PU2_UNICODE      0x01
 #define PU2_CUSTOM_POPUP 0x02
 
 typedef struct
@@ -89,14 +83,14 @@ typedef struct
 	union
 	{
 		char *lpzTitle;
-		WCHAR *lpwzTitle;
-		TCHAR *lptzTitle;
+		wchar_t *lpwzTitle;
+		wchar_t *lptzTitle;
 	};
 	union
 	{
 		char *lpzText;
-		WCHAR *lpwzText;
-		TCHAR *lptzText;
+		wchar_t *lpwzText;
+		wchar_t *lptzText;
 	};
 	char *lpzSkin;
 
@@ -135,13 +129,13 @@ typedef struct
 	HICON lchIcon;
 	union
 	{
-		WCHAR lptzContactName[MAX_CONTACTNAME];
-		WCHAR lpwzContactName[MAX_CONTACTNAME];
+		wchar_t lptzContactName[MAX_CONTACTNAME];
+		wchar_t lpwzContactName[MAX_CONTACTNAME];
 	};
 	union
 	{
-		WCHAR lptzText[MAX_SECONDLINE];
-		WCHAR lpwzText[MAX_SECONDLINE];
+		wchar_t lptzText[MAX_SECONDLINE];
+		wchar_t lpwzText[MAX_SECONDLINE];
 	};
 	COLORREF colorBack;
 	COLORREF colorText;
@@ -192,13 +186,13 @@ typedef struct
 	HICON lchIcon;
 	union
 	{
-		TCHAR lptzContactName[MAX_CONTACTNAME];
-		WCHAR lpwzContactName[MAX_CONTACTNAME];
+		wchar_t lptzContactName[MAX_CONTACTNAME];
+		wchar_t lpwzContactName[MAX_CONTACTNAME];
 	};
 	union
 	{
-		TCHAR lptzText[MAX_SECONDLINE];
-		WCHAR lpwzText[MAX_SECONDLINE];
+		wchar_t lptzText[MAX_SECONDLINE];
+		wchar_t lpwzText[MAX_SECONDLINE];
 	};
 	COLORREF colorBack;
 	COLORREF colorText;
@@ -326,9 +320,10 @@ Send this message when you want to destroy the popup, or use the function below.
 wParam = 0
 lParam = 0
 */
+#define MS_POPUP_DESTROYPOPUP "Popup/Delete"
 #define UM_DESTROYPOPUP          (WM_USER + 0x0201)
 static int __inline PUDeletePopup(HWND hWndPopup) {
-	return (int)SendMessage(hWndPopup, UM_DESTROYPOPUP, 0, 0);
+	return (int)CallService(MS_POPUP_DESTROYPOPUP, 0, (LPARAM)hWndPopup);
 }
 
 /* UM_INITPOPUP
@@ -389,8 +384,8 @@ wParam = Modification type
 lParam = value of type defined by wParam
 */
 
-#define CPT_TEXTW	 2 // lParam = (WCHAR *)text
-#define CPT_TITLEW 4 // lParam = (WCHAR *)title
+#define CPT_TEXTW	 2 // lParam = (wchar_t *)text
+#define CPT_TITLEW 4 // lParam = (wchar_t *)title
 #define CPT_DATAW	 7 // lParam = (POPUPDATAW *)data
 #define CPT_DATA2	8 // lParam = (POPUPDATA2 *)data -- see m_popup2.h for details
 
@@ -643,7 +638,7 @@ typedef struct {
 	union {
 		char *pszDescription;
 		wchar_t *pwszDescription;
-		TCHAR *ptszDescription;
+		wchar_t *ptszDescription;
 	};
 
 	HICON hIcon;
@@ -690,12 +685,10 @@ typedef struct {
 	union {
 		const char *pszTitle;
 		const wchar_t *pwszTitle;
-		const TCHAR *ptszTitle;
 	};
 	union {
 		const char *pszText;
 		const wchar_t *pwszText;
-		const TCHAR *ptszText;
 	};
 	void *PluginData;
 	MCONTACT hContact;

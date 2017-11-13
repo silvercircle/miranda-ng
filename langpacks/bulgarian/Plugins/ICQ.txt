@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: ICQ.dll
 ;  Plugin: IcqOscarJ protocol
-;  Version: 0.11.3.4
+;  Version: 0.11.3.5
 ;  Authors: Joe Kucera, Bio, Martin Öberg, Richard Hughes, Jon Keating, etc.
 ;============================================================
 [ICQ protocol support for Miranda NG.]
@@ -73,8 +73,8 @@ ICQ аватари
 Проверяване валидността на аватара преди запаметяване*
 [Load avatars automatically (like ICQ Lite)]
 Автоматично зареждане на аватари (като ICQ Lite)
-[You will need to reconnect to the ICQ network for the changes you have made on this page to take effect.]
-Необходимо е да се свържете наново към мрежата ICQ, за да бъдат осъществени направените тук промените.
+[These changes will take effect the next time you connect to the ICQ network.]
+Промените ще бъдат осъществени при следващо свързване към мрежата ICQ.
 [You cannot enable/disable the server-side contact list while you are connected to the ICQ network.]
 Не можете да включвате/изключвате списъка на сървъра, докато сте свързани към мрежата ICQ.
 [Note: The options marked with an asterisk have important side-effects or caveats that may not be initially apparent documented in the help.]
@@ -103,8 +103,6 @@ ICQ аватари
 Автоматично извличане на подробностите за персоналните състояния
 [Block known Spam Bots]
 Блокиране на познати спам ботове
-[Enable AIM contacts support]
-Поддържане на AIM контакти
 [Direct connections]
 Директни връзки
 [Allowing direct connections will expose your IP address but may be necessary for some ICQ features to work properly.]
@@ -1482,13 +1480,13 @@ Popup заглавие
 [%s client-to-client connections]
 %s връзки client-to-client
 [You have not entered an ICQ number.\nConfigure this in Options -> Network -> ICQ and try again.]
-Не сте въвели ICQ номер.\nВъведете го в Настройки > Мрежа > ICQ и опитайте отново.
+Не сте въвели ICQ номер.\nВъведете го в "Настройки > Мрежа > ICQ" и опитайте отново.
 [Unable to connect to ICQ login server, SSL could not be negotiated]
 Свързването с ICQ сървъра не е възможно - не може да се договори SSL
 [Unable to connect to ICQ login server]
 Вписването в сървъра на ICQ е невъзможно
-[Miranda was unable to allocate a port to listen for direct peer-to-peer connections between clients. You will be able to use most of the ICQ network without problems but you may be unable to send or receive files.\n\nIf you have a firewall this may be blocking Miranda, in which case you should configure your firewall to leave some ports open and tell Miranda which ports to use in Options -> ICQ -> Network.]
-Заделянето на порт за очакване на директни peer-to-peer връзки между клиенти е невъзможно. Повечето услуги предлагани от мрежата ICQ ще бъдат достъпни, но вероятно няма да можете да изпращате/получавате файлове.\n\nАко имате firewall вероятно той блокира Miranda. Тогава трябва да настроите firewall да оставя някои портове отворени и да зададете същите в Настройки > Мрежа > ICQ.
+[Miranda was unable to allocate a port to listen for direct peer-to-peer connections between clients. You will be able to use most of the ICQ network without problems but you may be unable to send or receive files.\n\nIf you have a firewall this may be blocking Miranda, in which case you should configure your firewall to leave some ports open and tell Miranda which ports to use in Options -> Network -> ICQ client-to-client connections.]
+Заделянето на порт за очакване на директни peer-to-peer връзки между клиенти е невъзможно. Повечето услуги предлагани от мрежата ICQ ще бъдат достъпни, но вероятно няма да можете да изпращате/получавате файлове.\n\nАко имате firewall вероятно той блокира Miranda. Тогава трябва да настроите firewall да оставя някои портове отворени и да зададете същите в "Настройки > Мрежа > ICQ връзки client-to-client".
 [The contact's information was too big and was truncated.]
 Информацията за контакта е съкратена поради размера и.
 [Failed to create the correct sub-group, the using closest parent group.]
@@ -1661,7 +1659,7 @@ Popup заглавие
 Сумо
 [Broken hearted]
 С разбито сърце
-[Free for Chat]
+[Free for chat]
 Готов за чат
 [@home]
 У дома
@@ -1714,13 +1712,13 @@ ICQ фаталност
 [The server did not respond to the connection attempt within a reasonable time, it may be temporarily down. Try again later.]
 Сървърът не отговоря на опита за свързване в разумен период от време, може бе не работи временно. Опитайте по-късно.
 [Miranda was unable to resolve the name of a server to its numeric address. This is most likely caused by a catastrophic loss of your network connection (for example, your modem has disconnected), but if you are behind a proxy, you may need to use the 'Resolve hostnames through proxy' option in Options -> Network.]
-Откриването (resolve) на името на сървъра от числовия адрес е невъзможно. Най-вероятно това е предизвикано от тотална загуба на мрежовата връзка (напр. изключен модем), но ако използвате прокси, може би трябва да отметнете "Откриване имената на хостовете чрез прокси сървъра" от Настройки > Мрежа.
+Откриването (resolve) на името на сървъра от числовия адрес е невъзможно. Най-вероятно това е предизвикано от тотална загуба на мрежовата връзка (напр. изключен модем), но ако използвате прокси, може би трябва да отметнете "Откриване имената на хостовете чрез прокси сървъра" от "Настройки > Мрежа".
 [Miranda was unable to make a connection with a server. It is likely that the server is down, in which case you should wait for a while and try again later.]
 Свърването със сървъра е невъзможно, вероятно не работи. В този случай изчакайте и опитайте по-късно да се свържете.
 [Your proxy rejected the user name and password that you provided. Please check them in Options -> Network.]
-Потребителското име и парола, които въведохте бяха отхвърлени от прокси сървъра. Моля, проверете в Настройки > Мрежа.
+Потребителското име и парола, които въведохте бяха отхвърлени от прокси сървъра. Моля, проверете в "Настройки > Мрежа".
 [The server to which you are trying to connect does not exist. Check your spelling in Options -> Network -> ICQ.]
-Сървърът, към който се опитвате да се свържете не съществува. Проверете правописа в Настройки > Мрежа > ICQ.
+Сървърът, към който се опитвате да се свържете не съществува. Проверете правописа в "Настройки > Мрежа > ICQ".
 [error]
 грешка
 [Enter a password for UIN %u:]

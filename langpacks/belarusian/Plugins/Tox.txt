@@ -2,10 +2,15 @@
 ;============================================================
 ;  File: Tox.dll
 ;  Plugin: Tox protocol
-;  Version: 0.11.1.14
+;  Version: 0.11.1.25
 ;  Authors: Miranda NG Team
 ;============================================================
-;file \protocols\Tox\res\resource.rc
+[Tox protocol support for Miranda NG.]
+
+[Tox ID:]
+
+[Create]
+
 [Import]
 Імпартаваць
 [Copy ID]
@@ -18,26 +23,72 @@
 Пароль:
 [Default group:]
 Гурт:
+[Create Tox profile]
+
+[Import Tox profile]
+
+[Copy Tox ID]
+
+[Export Tox profile]
+
 [Connection settings]
 Налады далучэння
+[Enable UDP (otherwise force Tox to use TCP)]
+
+[Enable IPv6]
+
+[Max connect retries:]
+
+[Max reconnect retries:]
+
+[If this field contains Tox address (76 hex characters), you will be prompted to add it in your friend list. Otherwise, Miranda will search this query via Tox DNS discovery.]
+
+[DNS name:]
+
 [Enter password]
 Увядзіце пароль
 [Save password]
 Захаваць пароль
 [Cancel]
 Скасаваць
+[Tox profile is encrypted. Enter the password to continue.]
+
 [Add]
 Дадаць
+[Update]
+Абнавіць
+[IPv4 address/ Host]
+
+[IPv6 address (optional)]
+
 [Port]
 Порт
 [Public key]
 Адкрыты ключ
+[Multimedia]
+
+[Audio input device]
+
+[Audio output device]
+
+[Video input device]
+
+[Invite contacts to chat room]
+
 [&Invite]
 Запрасіць
 [&Cancel]
 Скасаваць
+[Call]
+
 [End]
 канец
+[Incoming call]
+
+[Answer]
+
+[Reject]
+
 [From:]
 Ад:
 [Date:]
@@ -48,44 +99,117 @@
 &Інфармацыя
 [&History]
 &Гісторыя
+[Outgoing call]
+
 [To:]
 Для:
-;file \protocols\Tox\src\tox_chatrooms.cpp
-;file \protocols\Tox\src\tox_core.cpp
-;file \protocols\Tox\src\tox_events.cpp
+[Current version of plugin is support Tox API version %i.%i.%i which is incompatible with %s]
+
+[Unable to initialize Tox core]
+
+[Profiles folder]
+
+[Tox URI scheme]
+
 [Action]
 Дзеянне
-;file \protocols\Tox\src\tox_icons.cpp
 [Protocol icon]
 Абразок пратаколу
+[Audio call]
+
+[Audio ring]
+
+[Audio start]
+
+[Audio end]
+
 [Protocols]
 Пратаколы
-;file \protocols\Tox\src\tox_menus.cpp
 [Request authorization]
 Запытаць аўтарызацыю
 [Grant authorization]
 Аўтарызаваць
-;file \protocols\Tox\src\tox_messages.cpp
-;file \protocols\Tox\src\tox_multimedia.cpp
-;file \protocols\Tox\src\tox_netlib.cpp
+[You cannot send when you are offline.]
+
+[Incoming call from %s]
+
+[Outgoing call to %s]
+
 [%s connection]
 Злучэнне %s
-;file \protocols\Tox\src\tox_options.cpp
+[Tox profile]
+
 [All files]
 Усе файлы
+[Select Tox profile]
+
+[Save Tox profile]
+
+[Add node]
+
+[Change node]
+
+[Enter IPv4]
+
 [Error]
 Памылка
+[Enter port]
+
+[Enter public key]
+
+[Common nodes]
+
+[User nodes]
+
 [Are you sure?]
 Вы ўпэўнены?
+[Node deleting]
+
 [Network]
 Сеціва
 [Account]
 Конт
-;file \protocols\Tox\src\tox_profile.cpp
-;file \protocols\Tox\src\tox_proto.cpp
+[Nodes]
+
+[Unable to open Tox profile]
+
+[Unable to read Tox profile]
+
+[Unable to decrypt Tox profile]
+
+[You cannot add yourself to your contact list]
+
 [Contact already in your contact list]
 Кантакт ужо ў вашым спісе
-;file \protocols\Tox\src\tox_search.cpp
 [Query]
 Запыт
-;file \protocols\Tox\src\tox_utils.cpp
+[One of the arguments is missing]
+
+[Unable to allocate enough memory]
+
+[Unable to bind to a port]
+
+[The proxy type is not valid]
+
+[The proxy host is not valid]
+
+[The proxy port is not valid]
+
+[The proxy address could not be resolved]
+
+[The profile is encrypted]
+
+[The data format is not valid]
+
+[Unknown error]
+Невядомая памылка
+[The friend ID did not designate a valid friend]
+
+[This client is currently not connected to the friend]
+
+[An allocation error occurred while increasing the send queue size]
+
+[Message length exceeded TOX_MAX_MESSAGE_LENGTH]
+
+[Attempted to send a zero-length message]
+

@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Jabber.dll
 ;  Plugin: Jabber protocol
-;  Version: 0.11.0.4
+;  Version: 0.11.0.5
 ;  Authors: George Hazan, Maxim Mluhov, Victor Pavlychko, Artem Shpynov, Michael Stepura
 ;============================================================
 [Jabber (XMPP) protocol support for Miranda NG.]
@@ -165,8 +165,6 @@ Inicio
 Trabajo
 [Internet]
 Internet
-[X400]
-X400
 [Jabber vCard: Add Phone Number]
 vCard Jabber: Agregar número de teléfono
 [Phone number:]
@@ -183,14 +181,8 @@ Texto/Mensajes
 Celular
 [Video]
 Vídeo
-[BBS]
-BBS
 [Modem]
 Módem
-[ISDN]
-ISDN
-[PCS]
-PCS
 [Load]
 Cargar
 [Save]
@@ -237,12 +229,12 @@ Propietario
 En línea
 [Away]
 Fuera
-[NA]
+[Not available]
 No disponible
-[DND]
+[Do not disturb]
 No molestar
 [Free for chat]
-Libre para el chat	
+Libre para el chat
 [&Leave chat session]
 &Abandonar sesión de charla
 [User &details]
@@ -255,6 +247,8 @@ Tipo
 Iconos de estado
 [Notes]
 Notas
+[Add contact]
+Añadir contacto
 [Protocols]
 Protocolos
 [Request authorization]

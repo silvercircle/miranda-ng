@@ -2,7 +2,7 @@
             DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
                     Version 2, December 2004
 
- Copyright (C) 2014 Miranda NG project (http://miranda-ng.org)
+ Copyright (C) 2014 Miranda NG project (https://miranda-ng.org)
 
  Everyone is permitted to copy and distribute verbatim or modified
  copies of this license document, and changing it is allowed as long
@@ -19,14 +19,15 @@ CSendHost_Imgur::CSendHost_Imgur(HWND Owner, MCONTACT hContact, bool bAsync)
 	: CSend(Owner, hContact, bAsync)
 {
 	m_EnableItem = SS_DLG_DESCRIPTION | SS_DLG_AUTOSEND | SS_DLG_DELETEAFTERSSEND;
-	m_pszSendTyp = LPGENT("Image upload");
+	m_pszSendTyp = LPGENW("Image upload");
 }
 
 CSendHost_Imgur::~CSendHost_Imgur()
 {
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 int CSendHost_Imgur::Send()
 {
 	if (!g_hNetlibUser) { /// check Netlib
@@ -35,7 +36,7 @@ int CSendHost_Imgur::Send()
 		return !m_bAsync;
 	}
 	memset(&m_nlhr, 0, sizeof(m_nlhr));
-	char* tmp; tmp = mir_t2a(m_pszFile);
+	char* tmp; tmp = mir_u2a(m_pszFile);
 	HTTPFormData frm[] = {
 		{ "Authorization", HTTPFORM_HEADER("Client-ID 2a7303d78abe041") },
 		{ "image", HTTPFORM_FILE(tmp) },
@@ -60,7 +61,7 @@ void CSendHost_Imgur::SendThread(void* obj)
 {
 	CSendHost_Imgur* self = (CSendHost_Imgur*)obj;
 	/// send DATA and wait for m_nlreply
-	NETLIBHTTPREQUEST* reply = (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)g_hNetlibUser, (LPARAM)&self->m_nlhr);
+	NETLIBHTTPREQUEST* reply = Netlib_HttpTransaction(g_hNetlibUser, &self->m_nlhr);
 	self->HTTPFormDestroy(&self->m_nlhr);
 	if (reply) {
 		if (reply->dataLength) {
@@ -79,14 +80,14 @@ void CSendHost_Imgur::SendThread(void* obj)
 					self->m_URLthumb[thumblen] = 'm'; // 320x320, see http://api.imgur.com/models/image
 					mir_strcpy(self->m_URLthumb + thumblen + 1, self->m_URL + thumblen);
 				}
-				CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)reply);
+				Netlib_FreeHttpRequest(reply);
 				self->svcSendMsgExit(self->m_URL); return;
 			}
 			else self->Error(SS_ERR_RESPONSE, self->m_pszSendTyp, GetJSONInteger(reply->pData, reply->dataLength, "status", 0));
 		}
 		else self->Error(SS_ERR_RESPONSE, self->m_pszSendTyp, reply->resultCode);
 
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)reply);
+		Netlib_FreeHttpRequest(reply);
 	}
 	else self->Error(SS_ERR_NORESPONSE, self->m_pszSendTyp, self->m_nlhr.resultCode);
 

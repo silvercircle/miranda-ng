@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -25,40 +25,31 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "stdafx.h"
 #include "netlib.h"
 
-INT_PTR NetlibPacketRecverCreate(WPARAM wParam, LPARAM lParam)
+MIR_APP_DLL(HANDLE) Netlib_CreatePacketReceiver(HNETLIBCONN nlc, int iMaxSize)
 {
-	NetlibConnection *nlc = (struct NetlibConnection*)wParam;
-	struct NetlibPacketRecver *nlpr;
-
-	if (GetNetlibHandleType(nlc) != NLH_CONNECTION || lParam == 0) {
+	if (GetNetlibHandleType(nlc) != NLH_CONNECTION || iMaxSize == 0) {
 		SetLastError(ERROR_INVALID_PARAMETER);
-		return (INT_PTR)(struct NetlibPacketRecver*)NULL;
+		return nullptr;
 	}
-	nlpr = (struct NetlibPacketRecver*)mir_calloc(sizeof(struct NetlibPacketRecver));
-	if (nlpr == NULL) {
-		SetLastError(ERROR_OUTOFMEMORY);
-		return (INT_PTR)(struct NetlibPacketRecver*)NULL;
-	}
+	
+	NetlibPacketRecver *nlpr = (struct NetlibPacketRecver*)mir_calloc(sizeof(struct NetlibPacketRecver));
 	nlpr->handleType = NLH_PACKETRECVER;
 	nlpr->nlc = nlc;
-	nlpr->packetRecver.cbSize = sizeof(nlpr->packetRecver);
-	nlpr->packetRecver.bufferSize = lParam;
+	nlpr->packetRecver.bufferSize = iMaxSize;
 	nlpr->packetRecver.buffer = (PBYTE)mir_alloc(nlpr->packetRecver.bufferSize);
 	nlpr->packetRecver.bytesUsed = 0;
 	nlpr->packetRecver.bytesAvailable = 0;
-	return (INT_PTR)nlpr;
+	return nlpr;
 }
 
-INT_PTR NetlibPacketRecverGetMore(WPARAM wParam, LPARAM lParam)
+MIR_APP_DLL(int) Netlib_GetMorePackets(HANDLE hReceiver, NETLIBPACKETRECVER *nlprParam)
 {
-	struct NetlibPacketRecver *nlpr = (struct NetlibPacketRecver*)wParam;
-	NETLIBPACKETRECVER *nlprParam = (NETLIBPACKETRECVER*)lParam;
-
-	if (GetNetlibHandleType(nlpr) != NLH_PACKETRECVER || nlprParam == NULL || nlprParam->cbSize != sizeof(NETLIBPACKETRECVER) || nlprParam->bytesUsed > nlpr->packetRecver.bytesAvailable) {
+	NetlibPacketRecver *nlpr = (NetlibPacketRecver*)hReceiver;
+	if (GetNetlibHandleType(nlpr) != NLH_PACKETRECVER || nlprParam == nullptr || nlprParam->bytesUsed > nlpr->packetRecver.bytesAvailable) {
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return SOCKET_ERROR;
 	}
-	if (Miranda_Terminated()) { /* HACK: Lame, break while loops of protocols that can't kill their while loops, (cough, ICQ, cough) */
+	if (Miranda_IsTerminated()) { /* HACK: Lame, break while loops of protocols that can't kill their while loops, (cough, ICQ, cough) */
 		SetLastError(ERROR_TIMEOUT);
 		return SOCKET_ERROR;
 	}
@@ -66,7 +57,7 @@ INT_PTR NetlibPacketRecverGetMore(WPARAM wParam, LPARAM lParam)
 	if (nlprParam->bytesUsed == 0) {
 		if (nlpr->packetRecver.bytesAvailable == nlpr->packetRecver.bufferSize) {
 			nlpr->packetRecver.bytesAvailable = 0;
-			NetlibLogf(nlpr->nlc->nlu, "Packet recver: packet overflowed buffer, ditching");
+			Netlib_Logf(nlpr->nlc->nlu, "Packet recver: packet overflowed buffer, ditching");
 		}
 	}
 	else {
@@ -81,7 +72,7 @@ INT_PTR NetlibPacketRecverGetMore(WPARAM wParam, LPARAM lParam)
 		}
 	}
 	
-	INT_PTR recvResult = NLRecv(nlpr->nlc, (char*)nlpr->packetRecver.buffer + nlpr->packetRecver.bytesAvailable, nlpr->packetRecver.bufferSize - nlpr->packetRecver.bytesAvailable, 0);
+	INT_PTR recvResult = Netlib_Recv(nlpr->nlc, (char*)nlpr->packetRecver.buffer + nlpr->packetRecver.bytesAvailable, nlpr->packetRecver.bufferSize - nlpr->packetRecver.bytesAvailable, 0);
 	if (recvResult > 0)
 		nlpr->packetRecver.bytesAvailable += recvResult;
 	*nlprParam = nlpr->packetRecver;

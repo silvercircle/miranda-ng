@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2011-2015 Mataes
+Copyright (C) 2011-2017 Mataes
 
 This is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
@@ -22,7 +22,7 @@ Boston, MA 02111-1307, USA.
 HINSTANCE hInst = NULL;
 
 HANDLE hPackUpdaterFolder = NULL;
-TCHAR tszRoot[MAX_PATH] = { 0 };
+wchar_t tszRoot[MAX_PATH] = { 0 };
 int hLangpack;
 
 PLUGININFOEX pluginInfoEx = {
@@ -54,12 +54,12 @@ extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfoEx);
 
-	TCHAR* tszFolder = Utils_ReplaceVarsT(_T("%miranda_userdata%\\" DEFAULT_UPDATES_FOLDER));
-	mir_tstrncpy(tszRoot, tszFolder, _countof(tszRoot));
+	wchar_t *tszFolder = Utils_ReplaceVarsW(L"%miranda_userdata%\\" DEFAULT_UPDATES_FOLDER);
+	mir_wstrncpy(tszRoot, tszFolder, _countof(tszRoot));
 
-	hPackUpdaterFolder = FoldersRegisterCustomPathT(MODULEA, LPGEN("Pack Updater"), MIRANDA_USERDATAT _T("\\")DEFAULT_UPDATES_FOLDER);
+	hPackUpdaterFolder = FoldersRegisterCustomPathT(MODULEA, LPGEN("Pack Updater"), MIRANDA_USERDATAT L"\\" DEFAULT_UPDATES_FOLDER);
 	if (hPackUpdaterFolder)
-		FoldersGetCustomPathT(hPackUpdaterFolder, tszRoot, MAX_PATH, _T(""));
+		FoldersGetCustomPathT(hPackUpdaterFolder, tszRoot, MAX_PATH, L"");
 
 	mir_free(tszFolder);
 	LoadOptions();
@@ -73,9 +73,9 @@ extern "C" __declspec(dllexport) int Load(void)
 	CMenuItem mi;
 	SET_UID(mi, 0x326495e8, 0xab0a, 0x47d2, 0xb2, 0x22, 0x2a, 0x8e, 0xa8, 0xae, 0x53, 0x1a);
 	mi.position = -0x7FFFFFFF;
-	mi.flags = CMIF_TCHAR;
+	mi.flags = CMIF_UNICODE;
 	mi.hIcolibItem = IcoLib_GetIcon("check_update");
-	mi.name.t = LPGENT("Check for pack updates");
+	mi.name.w = LPGENW("Check for pack updates");
 	mi.pszService = MODNAME"/CheckUpdates";
 	Menu_AddMainMenuItem(&mi);
 	// Add empty updates folder menu item
@@ -83,9 +83,9 @@ extern "C" __declspec(dllexport) int Load(void)
 	memset(&mi, 0, sizeof(mi));
 	SET_UID(mi, 0xc3eea590, 0xaba3, 0x454f, 0x93, 0x93, 0xbc, 0x97, 0x15, 0x2c, 0x3b, 0x3d);
 	mi.position = -0x7FFFFFFF;
-	mi.flags = CMIF_TCHAR;
+	mi.flags = CMIF_UNICODE;
 	mi.hIcolibItem = IcoLib_GetIcon("empty_folder");
-	mi.name.t = LPGENT("Clear pack updates folder");
+	mi.name.w = LPGENW("Clear pack updates folder");
 	mi.pszService = MODNAME"/EmptyFolder";
 	Menu_AddMainMenuItem(&mi);
 

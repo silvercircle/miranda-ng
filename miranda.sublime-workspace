@@ -1,0 +1,1003 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"sh",
+				"showHide"
+			],
+			[
+				"CC",
+				"CContactCache"
+			],
+			[
+				"hidden",
+				"hidden_boards"
+			],
+			[
+				"ca",
+				"categories"
+			],
+			[
+				"this",
+				"this_category"
+			],
+			[
+				"igno",
+				"ignored_category"
+			],
+			[
+				"ignore",
+				"ignoreThisBoard"
+			],
+			[
+				"ignored",
+				"ignored_category"
+			],
+			[
+				"ig",
+				"ignoreThisBoard"
+			],
+			[
+				"news",
+				"news_item"
+			],
+			[
+				"URL",
+				"URL_FORMAT"
+			],
+			[
+				"t",
+				"true"
+			],
+			[
+				"tr",
+				"true"
+			],
+			[
+				"back",
+				"background	background-color: hex"
+			],
+			[
+				"font-",
+				"font-weight"
+			],
+			[
+				"all",
+				"allcookies"
+			],
+			[
+				"call",
+				"callHook"
+			],
+			[
+				"preg_ma",
+				"preg_match_all"
+			],
+			[
+				"user",
+				"user_info"
+			],
+			[
+				"profile_er",
+				"profile_error_signature_disabled_bbc"
+			],
+			[
+				"contex",
+				"context"
+			],
+			[
+				"key",
+				"keypad_plus"
+			],
+			[
+				"context",
+				"memberContext"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "miranda.sublime-project",
+			"settings":
+			{
+				"buffer_size": 185,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/core/stdemail/src/main.cpp",
+			"settings":
+			{
+				"buffer_size": 1669,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/Users/Alex/Dropbox/sublime/Data/Packages/SaveFoldings/SaveFoldings.py",
+			"settings":
+			{
+				"buffer_size": 15381,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "plugins/Clist_ng/SRC/CLCButton.cpp",
+			"settings":
+			{
+				"buffer_size": 21212,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "src/core/stdemail/src/version.h",
+			"settings":
+			{
+				"buffer_size": 561,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "src/core/stdemail/src/stdafx.h",
+			"settings":
+			{
+				"buffer_size": 1830,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/e/c++code/miranda-ng/include/m_database.h",
+			"settings":
+			{
+				"buffer_size": 30259,
+				"line_ending": "Windows"
+			}
+		}
+	],
+	"build_system": "Packages/C++/C++.sublime-build",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 375.0,
+		"last_filter": "book",
+		"selected_items":
+		[
+			[
+				"book",
+				"SublimeBookmarks: Goto Bookmark"
+			],
+			[
+				"goto",
+				"SublimeBookmarks: Goto Bookmark"
+			],
+			[
+				"pack",
+				"Package Control: Enable Package"
+			],
+			[
+				"Package Control: ",
+				"Package Control: Install Package"
+			],
+			[
+				"swi",
+				"Switch language: en_GB"
+			],
+			[
+				"swit",
+				"Switch language: en_US"
+			],
+			[
+				"switch",
+				"Switch language: en_GB"
+			],
+			[
+				"Swit",
+				"Switch language: de_DE_igerman98"
+			],
+			[
+				"upd",
+				"Update Languages"
+			],
+			[
+				"up",
+				"Update Languages"
+			],
+			[
+				"packa",
+				"Package Control: Install Package"
+			],
+			[
+				"pac",
+				"Package Control: Disable Package"
+			],
+			[
+				"git st",
+				"Git: Status"
+			],
+			[
+				"git stat",
+				"Git: Status"
+			],
+			[
+				"git s",
+				"Git: Status"
+			],
+			[
+				"git commit",
+				"Git: Commit"
+			],
+			[
+				"git",
+				"Git: Commit"
+			],
+			[
+				"git pul",
+				"Git: Pull"
+			],
+			[
+				"git comm",
+				"Git: Commit"
+			],
+			[
+				"git com",
+				"Git: Commit"
+			],
+			[
+				"git sta",
+				"Git: Status"
+			],
+			[
+				"pak",
+				"Package Control: Install Package"
+			],
+			[
+				"",
+				"About"
+			]
+		],
+		"width": 450.0
+	},
+	"console":
+	{
+		"height": 237.0,
+		"history":
+		[
+			"import urllib.request,os; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); open(os.path.join(ipp, pf), 'wb').write(urllib.request.urlopen( 'http://sublime.wbond.net/' + pf.replace(' ','%20')).read())"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/E/C++CODE/miranda-ng",
+		"/E/C++CODE/miranda-ng/plugins",
+		"/E/C++CODE/miranda-ng/plugins/Clist_ng",
+		"/E/C++CODE/miranda-ng/plugins/Clist_ng/SRC",
+		"/E/C++CODE/miranda-ng/plugins/TabSRMM",
+		"/E/C++CODE/miranda-ng/plugins/TabSRMM/src"
+	],
+	"file_history":
+	[
+		"/E/C++CODE/miranda-ng/src/core/stdemail/src/version.h",
+		"/E/C++CODE/miranda-ng/plugins/Clist_ng/SRC/CLCButton.cpp",
+		"/C/Users/Alex/Dropbox/sublime/Data/Packages/SaveFoldings/SaveFoldings.py",
+		"/C/Users/Alex/Dropbox/sublime/Data/Packages/User/Preferences.sublime-settings",
+		"/E/C++CODE/miranda-ng/plugins/Clist_ng/SRC/clcpaint.cpp",
+		"/E/C++CODE/miranda-ng/plugins/TabSRMM/src/msgdialog.cpp",
+		"/E/C++CODE/miranda-ng/src/core/stdemail/src/main.cpp",
+		"/D/NET_DATA/Dropbox/sublime/Data/Packages/Clang-Complete/Default.sublime-keymap",
+		"/E/C++CODE/miranda-ng/src/core/stdemail/src/email.cpp",
+		"/D/tabsrmm/trunk/miranda/plugins/tabsrmm/include/msgs.h",
+		"/D/tabsrmm/trunk/miranda/plugins/tabsrmm/src/infopanel.cpp",
+		"/D/NET_DATA/Dropbox/sublime/Data/Packages/Clang-Complete/cc.sublime-settings",
+		"/D/NET_DATA/Dropbox/sublime/Data/Packages/Clang-Complete/st_cc.py",
+		"/D/NET_DATA/Dropbox/sublime/Data/Packages/Clang-Complete/clang.py",
+		"/D/NET_DATA/Dropbox/sublime/Data/Packages/Clang-Complete/cc.py",
+		"/D/NET_DATA/Dropbox/sublime/Data/Packages/Clang-Complete/README.md",
+		"/D/tabsrmm/trunk/miranda/plugins/tabsrmm/include/mim.h",
+		"/D/tabsrmm/trunk/miranda/plugins/tabsrmm/src/container.cpp",
+		"/D/NET_DATA/Dropbox/sublime/Data/Packages/Clang-Complete/makefile",
+		"/C/Users/Alex/Dropbox/sublime/Data/Packages/User/Default (Windows).sublime-keymap",
+		"/C/Users/Alex/Dropbox/sublime/Data/Packages/Default/Default (Windows).sublime-keymap",
+		"/C/Users/Alex/Dropbox/sublime/Data/Packages/Anaconda/README.md",
+		"/D/tabsrmm/trunk/miranda/plugins/tabsrmm/src/msgdlgutils.cpp",
+		"/D/tabsrmm/trunk/miranda/plugins/tabsrmm/API/m_historyevents.h",
+		"/D/tabsrmm/trunk/miranda/plugins/tabsrmm/src/commonheaders.h",
+		"/C/Users/Alex/Dropbox/sublime/Data/Packages/Anaconda/Anaconda.sublime-settings",
+		"/D/tabsrmm/trunk/miranda/plugins/tabsrmm/tabsrmm-trunk.sublime-project",
+		"/D/tabsrmm/trunk/miranda/plugins/tabsrmm/src/buttonsbar.cpp",
+		"/C/Users/Alex/Dropbox/sublime/Data/Packages/User/Anaconda.sublime-settings",
+		"/C/Users/Alex/Dropbox/IISEXPRESS/_LOCALCONFIG/applicationhost.config",
+		"/C/Users/Alex/AppData/Roaming/Microsoft/VisualStudio/12.0/ActivityLog.xml",
+		"/E/python3/Lib/site.py",
+		"/C/Windows/System32/Drivers/etc/hosts",
+		"/C/Users/Alex/Dropbox/sublime/Data/Packages/Anaconda/LICENSE",
+		"/D/tabsrmm/trunk/miranda/plugins/tabsrmm/pack.cmd",
+		"/D/NET_DATA/OneDrive/ASPNET/Sites/root/PartyInvites/Web.config",
+		"/D/NET_DATA/OneDrive/ASPNET/Sites/root/SampleASPRazor.sln",
+		"/D/NET_DATA/OneDrive/Coding/ASPNET/index.html",
+		"/C/Users/Alex/Documents/IISExpress/config/applicationhost.config",
+		"/C/Users/Alex/Downloads/Disable_Windows-Store.reg",
+		"/C/Users/Alex/Documents/My Games/Path of Exile/production_Config.ini",
+		"/D/NET_DATA/GoogleDrive/miranda/Profile/skin/clng/base/base.cng",
+		"/D/NET_DATA/GoogleDrive/miranda/Profile/skin/clng/Aero/aero.cng",
+		"/E/C++CODE/miranda-ng/plugins/clist_NG/BASESKIN/base.cng",
+		"/D/NET_DATA/GoogleDrive/miranda/Profile/skin/clng/Aero/base.cng",
+		"/D/NET_DATA/GoogleDrive/miranda/Profile/skin/clng/material/xpmc.cng",
+		"/E/C++CODE/miranda-ng/plugins/Clist_modern/src/modern_clc.cpp",
+		"/C/Users/Alex/Dropbox/qttest/qtconsole/worker.cpp",
+		"/D/NET_DATA/GoogleDrive/miranda/Profile/skin/clng/xpmc/xpmc.cng",
+		"/C/Users/Alex/Dropbox/qttest/qtconsole/playground.cpp",
+		"/C/Users/Alex/Documents/My Web Sites/TestSite/iisstart.htm",
+		"/C/Users/Alex/Dropbox/qttest/qtconsole/worker.hpp",
+		"/E/C++CODE/miranda-ng/include/m_clistint.h",
+		"/E/C++CODE/miranda-ng/src/core/stdclist/src/clcopts.cpp",
+		"/E/C++CODE/miranda-ng/plugins/Clist_nicer/src/clcutils.cpp",
+		"/D/tabsrmm/trunk/miranda/plugins/clist_nicer/INCLUDE/resource.h",
+		"/D/tabsrmm/trunk/miranda/include/m_cluiframes.h",
+		"/C/Users/Alex/AppData/Local/Microsoft/VisualStudio/12.0/Extensions/agxh4tl3.krc/Colors/ThemeNames.pkgdef",
+		"/C/Users/Alex/Dropbox/qttest/qttest/qttest.vcxproj",
+		"/C/Users/Alex/Dropbox/qttest/qtconsole/qtconsole.pro",
+		"/E/C++CODE/WPFTest/.git/config",
+		"/D/NET_DATA/GoogleDrive/miranda/mirandaboot.ini",
+		"/E/C++CODE/miranda-ng/include/m_core.h",
+		"/D/Path of Exile/tools/Data/Skilltree.txt",
+		"/E/eclipse/eclipse.ini",
+		"/E/eclipse/eclipse.ini.OPT",
+		"/C/Users/Alex/Dropbox/privoxy-3.0.21/config.txt",
+		"/C/firefox/profile/prefs.js",
+		"/C/Users/Alex/Downloads/comodorsadomainvalidationsecureserverca.crt",
+		"/C/Users/Alex/Downloads/ca-bundle.crt",
+		"/C/Users/Alex/Downloads/comodorsaorganizationvalidationsecureserverca.crt",
+		"/C/Users/Alex/Downloads/comodorsacertificationauthority.crt",
+		"/C/Users/Alex/Downloads/comodorsaaddtrustca.crt",
+		"/C/Users/Alex/Downloads/addtrustexternalcaroot.crt",
+		"/D/tabsrmm/trunk/miranda/plugins/tabsrmm/src/controls.cpp",
+		"/D/chromium/data/Default/Preferences",
+		"/C/treeinfo.wc",
+		"/C/BOOTSECT.BAK",
+		"/C/Users/Alex/Autodesk/Softimage_2015/Application/layouts/Standard.xsily",
+		"/C/Users/Alex/Autodesk/Softimage_2015/Application/toolbars/Main_Shelf.xsitb",
+		"/F/xsi/Softimage 2015/Application/bin/XSI.bat",
+		"/C/Users/Alex/Downloads/black_nymph.avi",
+		"/C/Users/Alex/Autodesk/Softimage_2015/Application/toolbars/PanelSwitcher.xsitb",
+		"/E/scribus/scripts/LoadWorkspace.py",
+		"/D/S/gimp/share/themes/MS-Windows/gtk-2.0/gtkrc",
+		"/D/S/gimp/share/gimp/2.0/themes/Default/gtkrc",
+		"/E/scribus/scripts/SaveWorkspace.py",
+		"/D/tabsrmm/trunk/miranda/plugins/tabsrmm/src/contactcache.cpp",
+		"/D/tabsrmm/trunk/miranda/plugins/tabsrmm/include/contactcache.h",
+		"/C/tabsrmm/trunk/miranda/plugins/tabsrmm/tabsrmm-trunk.sublime-project",
+		"/C/Users/alex/Dropbox/sublime/Data/Packages/Default/Default (Windows).sublime-keymap",
+		"/C/Users/alex/Dropbox/sublime/Data/Packages/Package Control/Package Control.sublime-settings",
+		"/C/tabsrmm/trunk/miranda/plugins/tabsrmm/src/contactcache.cpp",
+		"/C/tabsrmm/trunk/miranda/plugins/tabsrmm/src/buttonsbar.cpp",
+		"/C/Users/alex/Dropbox/smf/.gitignore",
+		"/C/Users/alex/Dropbox/sublime/Data/Packages/Default/Preferences.sublime-settings",
+		"/C/Users/alex/Dropbox/sublime/Data/Packages/User/Preferences.sublime-settings",
+		"/C/Users/alex/Dropbox/sublime/Data/Packages/Color Scheme - Default/MySolarized.tmTheme",
+		"/C/Users/alex/Dropbox/sublime/Data/Packages/Theme - Soda/Soda Dark.sublime-theme",
+		"/C/Users/alex/Dropbox/sublime/Data/Packages/Color Scheme - Default/Solarized (Dark).tmTheme",
+		"/C/Users/alex/Dropbox/smf/sftp-config.json",
+		"/C/Users/alex/Dropbox/smf/Sources/lib/Twig/lib/Twig/Loader/String.php",
+		"/C/Users/alex/Dropbox/sublime/Data/Packages/Color Scheme - Default/Espresso Libre.tmTheme",
+		"/C/Users/alex/Dropbox/sublime/Data/Packages/Color Scheme - Default/Twilight.tmTheme",
+		"/C/Users/alex/Dropbox/smf/index.php",
+		"/C/Users/alex/Dropbox/sublime/Data/Packages/Color Scheme - Default/Solarized (Light).tmTheme",
+		"/C/Users/alex/Dropbox/sublime/Data/Packages/Color Scheme - Default/Solarized (Light).tmTheme.cache",
+		"/C/Users/alex/Documents/1.xspf",
+		"/C/Users/alex/Dropbox/sublime/Data/Packages/PHP/PHP.tmLanguage",
+		"/C/Users/alex/Dropbox/smf/eos_upgrade.php",
+		"/C/Users/alex/Dropbox/sublime/Data/Packages/User/Default (Windows).sublime-keymap",
+		"/C/Users/alex/Dropbox/smf/Settings.php",
+		"/C/Users/alex/Documents/1.html",
+		"/C/Users/alex/Dropbox/smf/mysql-connector-license.txt",
+		"/C/Users/alex/Dropbox/smf/Themes/default/RelatedTopicsAdmin.template.php",
+		"/C/Users/alex/Dropbox/smf/Sources/PackageGet.php",
+		"/C/Users/alex/Dropbox/smf/.idea/projectCodeStyle.xml",
+		"/C/Users/alex/Dropbox/smf/.idea/modules.xml",
+		"/C/Users/alex/Dropbox/Backups/Zimbra/skins_fonts_hack/base/skin.properties",
+		"/C/Users/alex/Dropbox/smf/.idea/dataSources.xml",
+		"/C/Users/alex/Dropbox/smf/Themes/admin/admin.js",
+		"/C/Users/alex/.cream/creamrc",
+		"/C/Users/alex/.cream/_vimrc",
+		"/C/Users/alex/Dropbox/sublime/sublime_plugin.py",
+		"/C/Program Files (x86)/Zimbra/Zimbra Desktop/jetty/webapps/zimbra/skins/carbon/skin.properties",
+		"/C/Program Files (x86)/Zimbra/Zimbra Desktop/jetty/webapps/zimbra/skins/_base/base2/skin.properties",
+		"/C/Program Files (x86)/Zimbra/Zimbra Desktop/jetty/webapps/zimbra/skins/_base/base/skin.properties",
+		"/C/Users/alex/Dropbox/desktop.ini"
+	],
+	"find":
+	{
+		"height": 36.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"i686-w64-mingw32",
+			"C:\\\\MinGW",
+			"alt+up",
+			"pool",
+			"sites",
+			"avatar",
+			"event",
+			"button",
+			"buttonpre",
+			"frame title",
+			"frame",
+			"sites",
+			"trace",
+			"scrollbarchanged",
+			"novscroll",
+			"scroll",
+			"alpha",
+			"extra_icon_res",
+			"port",
+			"optional",
+			"layer",
+			"accel",
+			"ctrl+1",
+			"CContactCache",
+			"555555",
+			"string",
+			"spell",
+			"this",
+			"m_szProto",
+			"reinterpret_cast",
+			"initPhaseTwo",
+			"spell",
+			"highlight",
+			"php:",
+			"bra",
+			"bracke",
+			"cplus",
+			"php",
+			"caret",
+			"num_",
+			"key",
+			"font",
+			"potplayermini",
+			"child",
+			"ignore",
+			"this",
+			"parameters",
+			"quoted",
+			"'url'",
+			"groups",
+			"font-options",
+			"font",
+			"complete",
+			"caret",
+			"box-sizing",
+			"settings",
+			"smalltext",
+			" *",
+			"intralink",
+			";",
+			"cookiename",
+			");",
+			"manageavatar",
+			"caret",
+			"index.template.php",
+			"detect",
+			"slow",
+			"caret",
+			"num"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"PotPlayerMini64"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 1,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "miranda.sublime-project",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 185,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								175,
+								175
+							]
+						],
+						"settings":
+						{
+							"bs_sintax": "json",
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"savefold_scroll_name": "253aa732",
+							"synced": false,
+							"syntax": "Packages/JavaScript/JSON.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "src/core/stdemail/src/main.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1669,
+						"regions":
+						{
+							"bookmarks":
+							{
+								"flags": 144,
+								"icon": "bookmark",
+								"regions":
+								[
+									[
+										356,
+										356
+									]
+								],
+								"scope": "bookmarks"
+							}
+						},
+						"selection":
+						[
+							[
+								1,
+								1
+							]
+						],
+						"settings":
+						{
+							"bs_sintax": "c++",
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"savefold_scroll_name": "b6faaa9f",
+							"synced": false,
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "/C/Users/Alex/Dropbox/sublime/Data/Packages/SaveFoldings/SaveFoldings.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 15381,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								590,
+								590
+							]
+						],
+						"settings":
+						{
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"savefold_scroll_name": "c870811e",
+							"synced": false,
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "plugins/Clist_ng/SRC/CLCButton.cpp",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 21212,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1,
+								1
+							]
+						],
+						"settings":
+						{
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"savefold_scroll_name": "666ccdfc",
+							"synced": false,
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 16.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "src/core/stdemail/src/version.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 561,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								11,
+								11
+							]
+						],
+						"settings":
+						{
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"savefold_scroll_name": "2d72c99a",
+							"synced": false,
+							"syntax": "Packages/C++/C++.sublime-syntax"
+						},
+						"translation.x": 172.0,
+						"translation.y": 1.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 5,
+					"file": "src/core/stdemail/src/stdafx.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1830,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"bs_sintax": "c++",
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"savefold_scroll_name": "4d1c2435",
+							"synced": false,
+							"syntax": "Packages/C++/C++.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 6,
+					"file": "/e/c++code/miranda-ng/include/m_database.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 30259,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								30259,
+								30259
+							]
+						],
+						"settings":
+						{
+							"bs_sintax": "c++",
+							"incomplete_sync": null,
+							"remote_loading": false,
+							"savefold_scroll_name": "3b6bccbe",
+							"synced": false,
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 10431.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 0.0
+	},
+	"input":
+	{
+		"height": 32.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				2
+			],
+			[
+				1,
+				0,
+				2,
+				1
+			],
+			[
+				1,
+				1,
+				2,
+				2
+			]
+		],
+		"cols":
+		[
+			0.0,
+			0.783974358974,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			0.707239819005,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.cc":
+	{
+		"height": 143.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"output.sftp":
+	{
+		"height": 98.0
+	},
+	"pinned_build_system": "",
+	"project": "miranda.sublime-project",
+	"replace":
+	{
+		"height": 60.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"load",
+				"Sources/lib/Twig/lib/Twig/Loader/String.php"
+			],
+			[
+				"loadmem",
+				"Themes/default/RelatedTopicsAdmin.template.php"
+			],
+			[
+				"pack",
+				"Sources/PackageGet.php"
+			],
+			[
+				"secu",
+				"Sources/Security.php"
+			],
+			[
+				"index.css",
+				"Themes/default/css/index.css"
+			],
+			[
+				"footer.js",
+				"Themes/default/scripts/footer.js"
+			],
+			[
+				"index.template",
+				"Themes/default/index.template.php"
+			],
+			[
+				"index.english",
+				"Themes/default/languages/index.english.php"
+			],
+			[
+				"index.eng",
+				"Themes/default/help/index.english.html"
+			],
+			[
+				"postbit",
+				"Themes/default/Postbit.template.php"
+			],
+			[
+				"display.t",
+				"Themes/default/Display.template.php"
+			],
+			[
+				"displa",
+				"Sources/Display.php"
+			],
+			[
+				"load.",
+				"Sources/Load.php"
+			],
+			[
+				"index.t",
+				"Themes/default/index.template.php"
+			],
+			[
+				"index.e",
+				"Themes/default/languages/index.english.php"
+			],
+			[
+				"like",
+				"Sources/LikeSystem.php"
+			],
+			[
+				"script.js",
+				"Themes/default/scripts/script.js"
+			],
+			[
+				"display.te",
+				"Themes/default/Display.template.php"
+			],
+			[
+				"",
+				".htaccess"
+			],
+			[
+				"footer.",
+				"Themes/default/scripts/footer.js"
+			],
+			[
+				"index.tm",
+				"Themes/default/index.template.php"
+			],
+			[
+				"admin",
+				"Sources/Admin.php"
+			],
+			[
+				"displ",
+				"Sources/Display.php"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 33.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"twindow",
+				"TWindowData"
+			],
+			[
+				"sidebar",
+				"CSideBarButton"
+			],
+			[
+				"dwm",
+				"DWMWINDOWATTRIBUTE"
+			],
+			[
+				"history",
+				"HistoryEvents_CanHandle"
+			]
+		],
+		"width": 538.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 360.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

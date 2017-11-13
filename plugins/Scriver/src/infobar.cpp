@@ -23,110 +23,104 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "stdafx.h"
 
-void SetupInfobar(InfobarWindowData* idat)
+void CSrmmWindow::SetupInfobar()
 {
-	HWND hwnd = idat->hWnd;
+	DWORD colour = db_get_dw(0, SRMM_MODULE, SRMSGSET_INFOBARBKGCOLOUR, SRMSGDEFSET_INFOBARBKGCOLOUR);
+
+	SendDlgItemMessage(m_hwndInfo, IDC_INFOBAR_NAME, EM_SETBKGNDCOLOR, 0, colour);
+	SendDlgItemMessage(m_hwndInfo, IDC_INFOBAR_STATUS, EM_SETBKGNDCOLOR, 0, colour);
+
+	LOGFONT lf;
+	LoadMsgDlgFont(MSGFONTID_INFOBAR_NAME, &lf, &colour);
+
 	CHARFORMAT2 cf2;
 	memset(&cf2, 0, sizeof(cf2));
-	LOGFONT lf;
-	DWORD colour = db_get_dw(NULL, SRMMMOD, SRMSGSET_INFOBARBKGCOLOUR, SRMSGDEFSET_INFOBARBKGCOLOUR);
-	SendDlgItemMessage(hwnd, IDC_INFOBAR_NAME, EM_SETBKGNDCOLOR, 0, colour);
-	SendDlgItemMessage(hwnd, IDC_INFOBAR_STATUS, EM_SETBKGNDCOLOR, 0, colour);
-	LoadMsgDlgFont(MSGFONTID_INFOBAR_NAME, &lf, &colour);
 	cf2.dwMask = CFM_COLOR | CFM_FACE | CFM_CHARSET | CFM_SIZE | CFM_WEIGHT | CFM_BOLD | CFM_ITALIC;
 	cf2.cbSize = sizeof(cf2);
 	cf2.crTextColor = colour;
 	cf2.bCharSet = lf.lfCharSet;
-	_tcsncpy(cf2.szFaceName, lf.lfFaceName, LF_FACESIZE);
+	wcsncpy(cf2.szFaceName, lf.lfFaceName, LF_FACESIZE);
 	cf2.dwEffects = ((lf.lfWeight >= FW_BOLD) ? CFE_BOLD : 0) | (lf.lfItalic ? CFE_ITALIC : 0);
 	cf2.wWeight = (WORD)lf.lfWeight;
 	cf2.bPitchAndFamily = lf.lfPitchAndFamily;
 	cf2.yHeight = abs(lf.lfHeight) * 1440 / g_dat.logPixelSY;
-	SendDlgItemMessage(hwnd, IDC_INFOBAR_NAME, EM_SETCHARFORMAT, SCF_DEFAULT, (LPARAM)&cf2);
-	SendDlgItemMessage(hwnd, IDC_INFOBAR_NAME, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2); /* WINE: fix send colour text. */
-	SendDlgItemMessage(hwnd, IDC_INFOBAR_NAME, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&cf2); /* WINE: fix send colour text. */
+	SendDlgItemMessage(m_hwndInfo, IDC_INFOBAR_NAME, EM_SETCHARFORMAT, SCF_DEFAULT, (LPARAM)&cf2);
+	SendDlgItemMessage(m_hwndInfo, IDC_INFOBAR_NAME, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2); /* WINE: fix send colour text. */
+	SendDlgItemMessage(m_hwndInfo, IDC_INFOBAR_NAME, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&cf2); /* WINE: fix send colour text. */
 
 	LoadMsgDlgFont(MSGFONTID_INFOBAR_STATUS, &lf, &colour);
 	cf2.dwMask = CFM_COLOR | CFM_FACE | CFM_CHARSET | CFM_SIZE | CFM_WEIGHT | CFM_BOLD | CFM_ITALIC;
 	cf2.cbSize = sizeof(cf2);
 	cf2.crTextColor = colour;
 	cf2.bCharSet = lf.lfCharSet;
-	_tcsncpy(cf2.szFaceName, lf.lfFaceName, LF_FACESIZE);
+	wcsncpy(cf2.szFaceName, lf.lfFaceName, LF_FACESIZE);
 	cf2.dwEffects = ((lf.lfWeight >= FW_BOLD) ? CFE_BOLD : 0) | (lf.lfItalic ? CFE_ITALIC : 0);
 	cf2.wWeight = (WORD)lf.lfWeight;
 	cf2.bPitchAndFamily = lf.lfPitchAndFamily;
 	cf2.yHeight = abs(lf.lfHeight) * 1440 / g_dat.logPixelSY;
-	SendDlgItemMessage(hwnd, IDC_INFOBAR_STATUS, EM_SETCHARFORMAT, SCF_DEFAULT, (LPARAM)&cf2);
-	SendDlgItemMessage(hwnd, IDC_INFOBAR_STATUS, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2); /* WINE: fix send colour text. */
-	SendDlgItemMessage(hwnd, IDC_INFOBAR_STATUS, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&cf2); /* WINE: fix send colour text. */
+	SendDlgItemMessage(m_hwndInfo, IDC_INFOBAR_STATUS, EM_SETCHARFORMAT, SCF_DEFAULT, (LPARAM)&cf2);
+	SendDlgItemMessage(m_hwndInfo, IDC_INFOBAR_STATUS, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf2); /* WINE: fix send colour text. */
+	SendDlgItemMessage(m_hwndInfo, IDC_INFOBAR_STATUS, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&cf2); /* WINE: fix send colour text. */
 
-	RefreshInfobar(idat);
+	RefreshInfobar();
 }
 
-static HICON GetExtraStatusIcon(InfobarWindowData* idat)
+static HICON GetExtraStatusIcon(CSrmmWindow *pDlg)
 {
-	BYTE bXStatus = db_get_b(idat->mwd->hContact, idat->mwd->szProto, "XStatusId", 0);
+	BYTE bXStatus = db_get_b(pDlg->m_hContact, pDlg->m_szProto, "XStatusId", 0);
 	if (bXStatus > 0)
-		return (HICON) CallProtoService(idat->mwd->szProto, PS_GETCUSTOMSTATUSICON, bXStatus, 0);
+		return (HICON)CallProtoService(pDlg->m_szProto, PS_GETCUSTOMSTATUSICON, bXStatus, 0);
 
-	return NULL;
+	return nullptr;
 }
 
-void RefreshInfobar(InfobarWindowData* idat)
+void CSrmmWindow::RefreshInfobar()
 {
-	HWND hwnd = idat->hWnd;
-	SrmmWindowData *dat = idat->mwd;
-	TCHAR *szContactName = GetNickname(dat->hContact, dat->szProto);
-	TCHAR *szContactStatusMsg = db_get_tsa(dat->hContact, "CList", "StatusMsg");
-	TCHAR *szXStatusName = db_get_tsa(idat->mwd->hContact, idat->mwd->szProto, "XStatusName");
-	TCHAR *szXStatusMsg = db_get_tsa(idat->mwd->hContact, idat->mwd->szProto, "XStatusMsg");
-	HICON hIcon = GetExtraStatusIcon(idat);
-	TCHAR szText[2048];
+	ptrW szContactStatusMsg(db_get_wsa(m_hContact, "CList", "StatusMsg"));
+	ptrW szXStatusName(db_get_wsa(m_hContact, m_szProto, "XStatusName"));
+	ptrW szXStatusMsg(db_get_wsa(m_hContact, m_szProto, "XStatusMsg"));
+	HICON hIcon = GetExtraStatusIcon(this);
+	wchar_t szText[2048];
 	SETTEXTEX st;
-	if ( szXStatusMsg && *szXStatusMsg )
-		mir_sntprintf(szText, _T("%s (%s)"), TranslateTS(szXStatusName), szXStatusMsg);
+	if (szXStatusMsg && *szXStatusMsg)
+		mir_snwprintf(szText, L"%s (%s)", TranslateW(szXStatusName), szXStatusMsg);
 	else
-		_tcsncpy_s(szText, TranslateTS(szXStatusName), _TRUNCATE);
+		wcsncpy_s(szText, TranslateW(szXStatusName), _TRUNCATE);
 	st.flags = ST_DEFAULT;
 	st.codepage = 1200;
-	SendDlgItemMessage(hwnd, IDC_INFOBAR_NAME, EM_SETTEXTEX, (WPARAM)&st, (LPARAM)szContactName);
-	SendDlgItemMessage(hwnd, IDC_INFOBAR_STATUS, EM_SETTEXTEX, (WPARAM)&st, (LPARAM)szContactStatusMsg);
-	hIcon = (HICON)SendDlgItemMessage(hwnd, IDC_XSTATUSICON, STM_SETICON, (WPARAM)hIcon, 0);
-	if (hIcon) {
+	SendDlgItemMessage(m_hwndInfo, IDC_INFOBAR_NAME, EM_SETTEXTEX, (WPARAM)&st, (LPARAM)pcli->pfnGetContactDisplayName(m_hContact, 0));
+	SendDlgItemMessage(m_hwndInfo, IDC_INFOBAR_STATUS, EM_SETTEXTEX, (WPARAM)&st, (LPARAM)szContactStatusMsg);
+	hIcon = (HICON)SendDlgItemMessage(m_hwndInfo, IDC_XSTATUSICON, STM_SETICON, (WPARAM)hIcon, 0);
+	if (hIcon)
 		DestroyIcon(hIcon);
-	}
-	SetToolTipText(hwnd, idat->hXStatusTip, szText, NULL);
-	SendMessage(hwnd, WM_SIZE, 0, 0);
-	InvalidateRect(hwnd, NULL, TRUE);
-	//RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE);
-	RedrawWindow(GetDlgItem(hwnd, IDC_AVATAR), NULL, NULL, RDW_INVALIDATE);
-	mir_free(szContactStatusMsg);
-	mir_free(szContactName);
-	mir_free(szXStatusName);
-	mir_free(szXStatusMsg);
+
+	SetToolTipText(m_hwndInfo, m_hXStatusTip, szText, nullptr);
+	SendMessage(m_hwndInfo, WM_SIZE, 0, 0);
+	InvalidateRect(m_hwndInfo, nullptr, TRUE);
+	RedrawWindow(GetDlgItem(m_hwndInfo, IDC_AVATAR), nullptr, nullptr, RDW_INVALIDATE);
 }
 
 static INT_PTR CALLBACK InfobarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	static BOOL bWasCopy;
-	InfobarWindowData* idat = (InfobarWindowData *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+	CSrmmWindow *idat = (CSrmmWindow*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 	if (!idat && msg != WM_INITDIALOG)
 		return FALSE;
-	
+
 	switch (msg) {
 	case WM_INITDIALOG:
 		bWasCopy = FALSE;
-		idat = (InfobarWindowData*)lParam;
-		idat->hWnd = hwnd;
+		idat = (CSrmmWindow *)lParam;
+		idat->m_hwndInfo = hwnd;
 		{
 			RECT rect = { 0 };
-			idat->hXStatusTip = CreateToolTip(hwnd, NULL, NULL, &rect);
+			idat->m_hXStatusTip = CreateToolTip(hwnd, nullptr, nullptr, &rect);
 			SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)idat);
 			SendDlgItemMessage(hwnd, IDC_INFOBAR_NAME, EM_AUTOURLDETECT, TRUE, 0);
 			SendDlgItemMessage(hwnd, IDC_INFOBAR_NAME, EM_SETEVENTMASK, 0, ENM_MOUSEEVENTS | ENM_LINK | ENM_KEYEVENTS);
 			SendDlgItemMessage(hwnd, IDC_INFOBAR_STATUS, EM_AUTOURLDETECT, TRUE, 0);
 			SendDlgItemMessage(hwnd, IDC_INFOBAR_STATUS, EM_SETEVENTMASK, 0, ENM_MOUSEEVENTS | ENM_LINK | ENM_KEYEVENTS);
-			SetupInfobar(idat);
+			idat->SetupInfobar();
 		}
 		return TRUE;
 
@@ -140,9 +134,9 @@ static INT_PTR CALLBACK InfobarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			GetClientRect(hwnd, &rc);
 			dlgWidth = rc.right - rc.left;
 			dlgHeight = rc.bottom - rc.top;
-			if (idat->mwd->avatarPic && (g_dat.flags&SMF_AVATAR)) {
+			if (idat->m_hbmpAvatarPic && (g_dat.flags & SMF_AVATAR)) {
 				BITMAP bminfo;
-				GetObject(idat->mwd->avatarPic, sizeof(bminfo), &bminfo);
+				GetObject(idat->m_hbmpAvatarPic, sizeof(bminfo), &bminfo);
 				if (bminfo.bmWidth != 0 && bminfo.bmHeight != 0) {
 					avatarHeight = dlgHeight - 2;
 					avatarWidth = bminfo.bmWidth * avatarHeight / bminfo.bmHeight;
@@ -161,7 +155,7 @@ static INT_PTR CALLBACK InfobarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			rc.top = dlgHeight / 4 - 8;
 			rc.bottom = rc.top + 20;
 			rc.right = rc.left + 16;
-			SetToolTipRect(hwnd, idat->hXStatusTip, &rc);
+			SetToolTipRect(hwnd, idat->m_hXStatusTip, &rc);
 			EndDeferWindowPos(hdwp);
 		}
 		return TRUE;
@@ -172,7 +166,7 @@ static INT_PTR CALLBACK InfobarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 
 	case WM_DROPFILES:
 		SendMessage(GetParent(hwnd), WM_DROPFILES, wParam, lParam);
-		return FALSE;	
+		return FALSE;
 
 	case WM_NOTIFY:
 		{
@@ -201,20 +195,6 @@ static INT_PTR CALLBACK InfobarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 						SetFocus(GetParent(hwnd));
 					}
 					break;
-
-				case EN_LINK:
-					switch (((ENLINK*)lParam)->msg) {
-					case WM_RBUTTONDOWN:
-					case WM_LBUTTONUP:
-						if (!bWasCopy) {
-							if (HandleLinkClick(g_hInst, hwnd, GetDlgItem(GetParent(hwnd), IDC_MESSAGE), (ENLINK*)lParam)) {
-								SetWindowLongPtr(hwnd, DWLP_MSGRESULT, TRUE);
-								return TRUE;
-							}
-						}
-						bWasCopy = FALSE;
-						break;
-					}
 				}
 				break;
 			}
@@ -223,7 +203,7 @@ static INT_PTR CALLBACK InfobarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 
 	case WM_DRAWITEM:
 		{
-			LPDRAWITEMSTRUCT dis = (LPDRAWITEMSTRUCT) lParam;
+			LPDRAWITEMSTRUCT dis = (LPDRAWITEMSTRUCT)lParam;
 			if (dis->hwndItem == GetDlgItem(hwnd, IDC_AVATAR)) {
 				RECT rect;
 				HDC hdcMem = CreateCompatibleDC(dis->hDC);
@@ -236,10 +216,10 @@ static INT_PTR CALLBACK InfobarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 				rect.right = itemWidth - 1;
 				rect.bottom = itemHeight - 1;
 				FillRect(hdcMem, &rect, g_dat.hInfobarBrush);
-				if (idat->mwd->avatarPic && (g_dat.flags&SMF_AVATAR)) {
+				if (idat->m_hbmpAvatarPic && (g_dat.flags & SMF_AVATAR)) {
 					BITMAP bminfo;
-					GetObject(idat->mwd->avatarPic, sizeof(bminfo), &bminfo);
-					if ( bminfo.bmWidth != 0 && bminfo.bmHeight != 0 ) {
+					GetObject(idat->m_hbmpAvatarPic, sizeof(bminfo), &bminfo);
+					if (bminfo.bmWidth != 0 && bminfo.bmHeight != 0) {
 						int avatarHeight = itemHeight;
 						int avatarWidth = bminfo.bmWidth * avatarHeight / bminfo.bmHeight;
 						if (avatarWidth > itemWidth) {
@@ -248,7 +228,7 @@ static INT_PTR CALLBACK InfobarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 						}
 
 						AVATARDRAWREQUEST adr = { sizeof(adr) };
-						adr.hContact = idat->mwd->hContact;
+						adr.hContact = idat->m_hContact;
 						adr.hTargetDC = hdcMem;
 						adr.rcDraw.right = avatarWidth - 1;
 						adr.rcDraw.bottom = avatarHeight - 1;
@@ -263,39 +243,28 @@ static INT_PTR CALLBACK InfobarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 				return TRUE;
 			}
 		}
-		return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
-	
+		return Menu_DrawItem(lParam);
+
 	case WM_LBUTTONDOWN:
-		SendMessage(idat->mwd->hwnd, WM_LBUTTONDOWN, wParam, lParam);
+		SendMessage(idat->GetHwnd(), WM_LBUTTONDOWN, wParam, lParam);
 		return TRUE;
 
 	case WM_RBUTTONUP:
 		{
-			HMENU hMenu = Menu_BuildContactMenu(idat->mwd->hContact);
+			HMENU hMenu = Menu_BuildContactMenu(idat->m_hContact);
 
 			POINT pt;
 			GetCursorPos(&pt);
-			TrackPopupMenu(hMenu, 0, pt.x, pt.y, 0, GetParent(hwnd), NULL);
+			TrackPopupMenu(hMenu, 0, pt.x, pt.y, 0, GetParent(hwnd), nullptr);
 			DestroyMenu(hMenu);
 		}
 		break;
-
-	case WM_DESTROY:
-		if (idat->hXStatusTip != NULL) {
-			DestroyWindow(idat->hXStatusTip);
-			idat->hXStatusTip = NULL;
-		}
-		mir_free(idat);
 	}
 	return FALSE;
 }
 
-InfobarWindowData* CreateInfobar(HWND hParent, SrmmWindowData *dat)
+void CSrmmWindow::CreateInfobar()
 {
-	InfobarWindowData *idat = (InfobarWindowData*)mir_alloc(sizeof(InfobarWindowData));
-	idat->mwd = dat;
-	idat->hWnd = CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_INFOBAR), hParent, InfobarWndProc, (LPARAM)idat);
-	RichUtil_SubClass(idat->hWnd);
-	SetWindowPos(idat->hWnd, HWND_TOP, 0, 0, 0, 0, SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOREPOSITION);
-	return idat;
+	m_hwndInfo = CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_INFOBAR), m_hwnd, InfobarWndProc, (LPARAM)this);
+	SetWindowPos(m_hwndInfo, HWND_TOP, 0, 0, 0, 0, SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOREPOSITION);
 }

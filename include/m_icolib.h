@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -25,8 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef M_ICOLIB_H__
 #define M_ICOLIB_H__ 1
 
-extern int hLangpack;
-
 #ifndef M_CORE_H__
 #include <m_core.h>
 #endif
@@ -40,16 +38,6 @@ extern int hLangpack;
 #define SIDF_UNICODE      0x100   // Section and Description are in UCS-2
 #define SIDF_PATH_UNICODE 0x200   // Default File is in UCS-2
 #define SIDF_ALL_UNICODE  SIDF_PATH_UNICODE | SIDF_UNICODE
-
-#if defined(_UNICODE)
-  #define SIDF_TCHAR      SIDF_UNICODE
-  #define SIDF_PATH_TCHAR SIDF_PATH_UNICODE
-  #define SIDF_ALL_TCHAR  SIDF_ALL_UNICODE
-#else
-  #define SIDF_TCHAR      0
-  #define SIDF_PATH_TCHAR 0
-  #define SIDF_ALL_TCHAR  0
-#endif
 
 struct SKINICONDESC
 {
@@ -117,7 +105,8 @@ MIR_APP_DLL(void)   Button_FreeIcon_IcoLib(HWND hDlg, int itemId);
 ///////////////////////////////////////////////////////////////////////////////
 // Helper to apply an icolib's icon to a window
 
-MIR_APP_DLL(void)   Window_SetIcon_IcoLib(HWND hWnd, int iconId);
+MIR_APP_DLL(void)   Window_SetIcon_IcoLib(HWND hWnd, HANDLE hIcolib);
+MIR_APP_DLL(void)   Window_SetSkinIcon_IcoLib(HWND hWnd, int iconId);
 MIR_APP_DLL(void)   Window_SetProtoIcon_IcoLib(HWND hWnd, const char *szProto, int iconId);
 MIR_APP_DLL(void)   Window_FreeIcon_IcoLib(HWND hWnd);
 

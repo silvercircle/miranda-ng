@@ -30,7 +30,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Uxtheme.h>
 
 //Miranda NG includes
-#include <msapi\vssym32.h>
+#include <msapi/vssym32.h>
 #include <newpluginapi.h>
 #include <m_avatars.h>
 #include <m_button.h>
@@ -50,6 +50,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <win2k.h>
 #include <m_extraicons.h>
 #include <m_protoint.h>
+#include <m_xml.h>
 
 #include <m_folders.h>
 #include <m_assocmgr.h>
@@ -128,6 +129,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #define AIM_KEY_MG                  "ManageGroups"
 #define AIM_KEY_DA                  "DisableAvatars"
 #define AIM_KEY_DSSL                "DisableSSL"
+#define AIM_KEY_CLIENTLOGIN                "UseClientLogin"
 #define AIM_KEY_FSC                 "ForceSingleClient"
 
 #define OTH_KEY_SM                  "StatusMsg"
@@ -161,11 +163,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #define AIM_KEY_BLS                 "IsBlast"
 #define AIM_KEY_NIL                 "IsNotInList"
 
-#define AIM_DEFAULT_SERVER          "slogin.oscar.aol.com"
-#define AIM_DEFAULT_SERVER_NS       "login.oscar.aol.com"
+#define AIM_LOGIN_URL "https://api.screenname.aol.com/auth/clientLogin"
+#define AIM_SESSION_URL "https://api.oscar.aol.com/aim/startOSCARSession"
+#define AIM_DEFAULT_CLIENT_KEY "ma15d7JTxbmVG-RP" //this one from libpurple, i am not able to create one, sorry guys
+#define AIM_DEFAULT_DISTID "1553" //this one from libpurple, i am not able to create one, sorry guys
+
+
+
+#define AIM_DEFAULT_SERVER          "login.oscar.aol.com"
 #define AIM_PROXY_SERVER            "ars.oscar.aol.com"
 #define AIM_DEFAULT_PORT            5190
-#define AIM_DEFAULT_SSL_PORT        443
 
 //Some Defaults for various things
 #define DEFAULT_KEEPALIVE_TIMER     39 // secs
@@ -178,12 +185,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #define MD5_HASH_LENGTH             16
 
 //Aim Version Stuff
-#define AIM_CLIENT_MAJOR_VERSION    5
-#define AIM_CLIENT_MINOR_VERSION    9
-#define AIM_CLIENT_LESSER_VERSION   0
-#define AIM_CLIENT_BUILD_NUMBER     0x1772
+#define AIM_CLIENT_MAJOR_VERSION    0x0005
+#define AIM_CLIENT_MINOR_VERSION    0x0001
+#define AIM_CLIENT_LESSER_VERSION   0x0000
+#define AIM_CLIENT_BUILD_NUMBER     0x0bdc
 #define AIM_CLIENT_ID_NUMBER        0x0109
-#define AIM_CLIENT_DISTRIBUTION_NUMBER 0x0150
+#define AIM_CLIENT_DISTRIBUTION_NUMBER 0x0611
 
 #define AIM_LANGUAGE "en"
 #define AIM_COUNTRY "us"

@@ -3,7 +3,7 @@
 Facebook plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2009-11 Michal Zelinka, 2011-15 Robert Pösel
+Copyright ï¿½ 2009-11 Michal Zelinka, 2011-17 Robert Pï¿½sel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -35,18 +35,26 @@ HGENMENU g_hContactMenuAuthDeny;
 HGENMENU g_hContactMenuPoke;
 HGENMENU g_hContactMenuPostStatus;
 HGENMENU g_hContactMenuVisitConversation;
+HGENMENU g_hContactMenuLoadHistory;
 
 static IconItem icons[] =
 {
-	{ LPGEN("Facebook icon"), "facebook", IDI_FACEBOOK },
-	{ LPGEN("Mind"), "mind", IDI_MIND },
-	{ LPGEN("Poke"), "poke", IDI_POKE },
-	{ LPGEN("Notification"), "notification", IDI_NOTIFICATION },
-	{ LPGEN("Newsfeed"), "newsfeed", IDI_NEWSFEED },
-	{ LPGEN("Friendship details"), "friendship", IDI_FRIENDS },
-	{ LPGEN("Conversation"), "conversation", IDI_CONVERSATION },
-	{ LPGEN("Message read"), "read", IDI_READ },
-	{ LPGEN("Captcha form icon"), "key", IDI_KEYS }
+	{ LPGEN("Facebook icon"),      "facebook",     IDI_FACEBOOK     },
+	{ LPGEN("Mind"),               "mind",         IDI_MIND         },
+	{ LPGEN("Poke"),               "poke",         IDI_POKE         },
+	{ LPGEN("Notification"),       "notification", IDI_NOTIFICATION },
+	{ LPGEN("Newsfeed"),           "newsfeed",     IDI_NEWSFEED     },
+	{ LPGEN("Memories"),           "memories",     IDI_MEMORIES     },
+	{ LPGEN("Friendship details"), "friendship",   IDI_FRIENDS      },
+	{ LPGEN("Conversation"),       "conversation", IDI_CONVERSATION },
+	{ LPGEN("Message read"),       "read",         IDI_READ         },
+	{ LPGEN("Captcha form icon"),  "key",          IDI_KEYS         },
+	{ LPGEN("Angry"),              "angry",        IDI_ANGRY        },
+	{ LPGEN("Haha"),               "haha",         IDI_HAHA         },
+	{ LPGEN("Like"),               "like",         IDI_LIKE         },
+	{ LPGEN("Love"),               "love",         IDI_LOVE         },
+	{ LPGEN("Sad"),                "sad",          IDI_SAD          },
+	{ LPGEN("Wow"),                "wow",          IDI_WOW          },
 };
 
 void InitIcons(void)
@@ -97,6 +105,7 @@ static int PrebuildContactMenu(WPARAM wParam, LPARAM lParam)
 	Menu_ShowItem(g_hContactMenuPoke, false);
 	Menu_ShowItem(g_hContactMenuPostStatus, false);
 	Menu_ShowItem(g_hContactMenuVisitConversation, false);
+	Menu_ShowItem(g_hContactMenuLoadHistory, false);
 
 	// Process them in correct account
 	FacebookProto *proto = GetInstanceByHContact(MCONTACT(wParam));
@@ -149,6 +158,14 @@ void InitContactMenus()
 	CreateServiceFunction(mi.pszService, GlobalService<&FacebookProto::Poke>);
 	g_hContactMenuPoke = Menu_AddContactMenuItem(&mi);
 
+	SET_UID(mi, 0x58e75db0, 0xb9e0, 0x4aa8, 0xbb, 0x42, 0x8d, 0x7d, 0xd1, 0xf6, 0x8e, 0x99);
+	mi.position = -2000006005;
+	mi.hIcolibItem = GetIconHandle("conversation"); // TODO: Use better icon
+	mi.name.a = LPGEN("Load history");
+	mi.pszService = "FacebookProto/LoadHistory";
+	CreateServiceFunction(mi.pszService, GlobalService<&FacebookProto::LoadHistory>);
+	g_hContactMenuLoadHistory = Menu_AddContactMenuItem(&mi);
+
 	SET_UID(mi, 0x619efdcb, 0x99c0, 0x44a8, 0xbf, 0x28, 0xc3, 0xe0, 0x2f, 0xb3, 0x7e, 0x77);
 	mi.position = -2000006010;
 	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_AUTH_REVOKE);
@@ -193,17 +210,21 @@ void InitContactMenus()
 int FacebookProto::OnPrebuildContactMenu(WPARAM wParam, LPARAM)
 {
 	MCONTACT hContact = MCONTACT(wParam);
+
+	BYTE type = getByte(hContact, FACEBOOK_KEY_CONTACT_TYPE, 0);
 	bool bIsChatroom = isChatRoom(hContact);
+	bool bIsSpecialChatroom = IsSpecialChatRoom(hContact);
+	bool bIsPage = (type == CONTACT_PAGE);
 
 	Menu_ShowItem(g_hContactMenuVisitProfile, !bIsChatroom);
-	Menu_ShowItem(g_hContactMenuVisitFriendship, !bIsChatroom);
-	Menu_ShowItem(g_hContactMenuVisitConversation, true);
+	Menu_ShowItem(g_hContactMenuVisitFriendship, !bIsChatroom && !bIsPage);
+	Menu_ShowItem(g_hContactMenuVisitConversation, !bIsSpecialChatroom);
 	Menu_ShowItem(g_hContactMenuPostStatus, !bIsChatroom);
+	Menu_ShowItem(g_hContactMenuLoadHistory, !bIsChatroom);
 
-	if (!isOffline() && !bIsChatroom)
+	if (!isOffline() && !bIsChatroom && !bIsPage)
 	{
 		bool ctrlPressed = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
-		BYTE type = getByte(hContact, FACEBOOK_KEY_CONTACT_TYPE, 0);
 
 		Menu_ShowItem(g_hContactMenuAuthAsk, ctrlPressed || type == CONTACT_NONE || !type);
 		Menu_ShowItem(g_hContactMenuAuthGrant, ctrlPressed || type == CONTACT_APPROVE);
@@ -217,7 +238,7 @@ int FacebookProto::OnPrebuildContactMenu(WPARAM wParam, LPARAM)
 	return 0;
 }
 
-int FacebookProto::OnBuildStatusMenu(WPARAM, LPARAM)
+void FacebookProto::InitMenu()
 {
 	CMenuItem mi;
 	mi.position = 201001;
@@ -246,24 +267,33 @@ int FacebookProto::OnBuildStatusMenu(WPARAM, LPARAM)
 	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_OTHER_HELP);
 	mi.root = m_hMenuServicesRoot = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 
-	mi.pszService = "/RefreshBuddyList";
-	CreateProtoService(mi.pszService, &FacebookProto::RefreshBuddyList);
-	mi.name.a = LPGEN("Refresh Buddy List");
-	mi.hIcolibItem = GetIconHandle("friendship");
-	Menu_AddProtoMenuItem(&mi, m_szModuleName);
-
 	mi.pszService = "/CheckFriendRequests";
 	CreateProtoService(mi.pszService, &FacebookProto::CheckFriendRequests);
-	mi.name.a = LPGEN("Check Friends Requests");
+	mi.name.a = LPGEN("Check friendship requests");
 	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_AUTH_REQUEST);
 	Menu_AddProtoMenuItem(&mi, m_szModuleName);
 
 	mi.pszService = "/CheckNewsfeeds";
 	CreateProtoService(mi.pszService, &FacebookProto::CheckNewsfeeds);
-	mi.name.a = LPGEN("Check Newsfeeds");
+	mi.name.a = LPGEN("Check newsfeeds");
 	mi.hIcolibItem = GetIconHandle("newsfeed");
 	Menu_AddProtoMenuItem(&mi, m_szModuleName);
 
+	mi.pszService = "/CheckMemories";
+	CreateProtoService(mi.pszService, &FacebookProto::CheckMemories);
+	mi.name.a = LPGEN("Check memories");
+	mi.hIcolibItem = GetIconHandle("memories");
+	Menu_AddProtoMenuItem(&mi, m_szModuleName);
+
+	mi.pszService = "/CheckNotifications";
+	CreateProtoService(mi.pszService, &FacebookProto::CheckNotifications);
+	mi.name.a = LPGEN("Check notifications");
+	mi.hIcolibItem = GetIconHandle("notification");
+	Menu_AddProtoMenuItem(&mi, m_szModuleName);
+}
+
+int FacebookProto::OnBuildStatusMenu(WPARAM, LPARAM)
+{
 	ToggleStatusMenuItems(this->isOnline());
 	return 0;
 }

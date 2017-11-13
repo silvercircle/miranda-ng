@@ -1,0 +1,61 @@
+﻿#muuid {621f886b-a7f6-457f-9d62-8ee84c275993}
+;============================================================
+;  File: ModernOpt.dll
+;  Plugin: ModernOpt
+;  Version: 0.1.0.0
+;  Authors: Victor Pavlychko, George Hazan
+;============================================================
+[Support for new options design.]
+Wsparcie dla nowego interfejsu opcji.
+;file \plugins\ModernOpt\res\resource.rc
+[Visit official Miranda NG website]
+Odwiedź oficjalną stronę Mirandy NG
+[Sample page]
+Przykładowa strona
+[Miranda NG Options]
+Opcje Mirandy NG
+[Use arrow keys to choose category]
+Użyj strzałek do wyboru kategorii
+[Cancel]
+Anuluj
+[Apply]
+Zastosuj
+[Switch to classic options]
+Przełącz na standardowe menu opcji
+[Advanced]
+Zaawansowane
+;file \plugins\ModernOpt\src\modernopt.cpp
+[Home]
+Dom
+[Miranda NG configuration center]
+Panel konfiguracji Mirandy NG
+[Accounts]
+Konta
+[Setup your account information to start messaging.]
+Ustaw opcje swoich kont by móc rozmawiać.
+[Style]
+Styl
+[Change the look of Miranda NG according to your taste.]
+Zmień wygląd Mirandy NG by dopasować ją do swoich preferencji.
+[Contacts]
+Kontakty
+[Configure behavior of your contact list.]
+Skonfiguruj zachowanie swojej listy kontaktów.
+[Chats]
+Czaty
+[Customize look&&feel of your chat windows here.]
+Tu możesz dopasować pod siebie okna rozmowy.
+[Ignore]
+Ignorowanie
+[Ban those users and events, you are annoyed with.]
+Zablokuj tych użytkowników i zdarzenia, które cię denerwują.
+[Status]
+Status
+[Set your status messages and idle reporting.]
+Ustaw swój opis statusu i zachowanie podczas bezczynności.
+[Plugins]
+Wtyczki
+[Miranda NG is all about plugins. Manage all the plugins you have here.]
+Cała Miranda NG kręci się wokół wtyczek. Tutaj możesz nimi zarządzać.
+[You have some unsaved changes here.\n Do you wish to apply settings before switching?]
+Nie zapisałeś jeszcze wszystkich zmian.\nCzy chciałbyś je zastosować przed przełączeniem?

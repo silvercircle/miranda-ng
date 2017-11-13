@@ -46,21 +46,21 @@ void ColInOut::impl_configToUI(OptionsCtrl& Opt, OptionsCtrl::Item hGroup)
 	              Opt.insertRadio(m_hAbsolute, m_hAbsTime, TranslateT("Units per week"));
 	              Opt.insertRadio(m_hAbsolute, m_hAbsTime, TranslateT("Units per month (30 days)"));
 
-	static const TCHAR* sourceTexts[] = {
-		LPGENT("Characters (incoming)"),
-		LPGENT("Characters (outgoing)"),
-		LPGENT("Characters (all)"),
-		LPGENT("Messages (incoming)"),
-		LPGENT("Messages (outgoing)"),
-		LPGENT("Messages (all)"),
-		LPGENT("Chats (incoming)"),
-		LPGENT("Chats (outgoing)"),
-		LPGENT("Chats (all)"),
+	static const wchar_t* sourceTexts[] = {
+		LPGENW("Characters (incoming)"),
+		LPGENW("Characters (outgoing)"),
+		LPGENW("Characters (all)"),
+		LPGENW("Messages (incoming)"),
+		LPGENW("Messages (outgoing)"),
+		LPGENW("Messages (all)"),
+		LPGENW("Chats (incoming)"),
+		LPGENW("Chats (outgoing)"),
+		LPGENW("Chats (all)"),
 	};
 
 	array_each_(i, sourceTexts)
 	{
-		Opt.addComboItem(m_hSource, TranslateTS(sourceTexts[i]));
+		Opt.addComboItem(m_hSource, TranslateW(sourceTexts[i]));
 	}
 
 	Opt.setComboSelected(m_hSource  , m_nSource          );
@@ -77,28 +77,28 @@ void ColInOut::impl_configFromUI(OptionsCtrl& Opt)
 
 void ColInOut::impl_outputRenderHeader(ext::ostream& tos, int row, int rowSpan) const
 {
-	static const TCHAR* szShortDesc[] = {
-		LPGENT("Characters"),
-		LPGENT("Messages"),
-		LPGENT("Chats")
+	static const wchar_t* szShortDesc[] = {
+		LPGENW("Characters"),
+		LPGENW("Messages"),
+		LPGENW("Chats")
 	};
 
-	static const TCHAR* szSourceDesc[] = {
-		LPGENT("Incoming characters"),
-		LPGENT("Outgoing characters"),
-		LPGENT("Characters"),
-		LPGENT("Incoming messages"),
-		LPGENT("Outgoing messages"),
-		LPGENT("Messages"),
-		LPGENT("Incoming chats"),
-		LPGENT("Outgoing chats"),
-		LPGENT("Chats")
+	static const wchar_t* szSourceDesc[] = {
+		LPGENW("Incoming characters"),
+		LPGENW("Outgoing characters"),
+		LPGENW("Characters"),
+		LPGENW("Incoming messages"),
+		LPGENW("Outgoing messages"),
+		LPGENW("Messages"),
+		LPGENW("Incoming chats"),
+		LPGENW("Outgoing chats"),
+		LPGENW("Chats")
 	};
 
-	static const TCHAR* szUnitDesc[] = {
-		LPGENT("day"),
-		LPGENT("week"),
-		LPGENT("month"),
+	static const wchar_t* szUnitDesc[] = {
+		LPGENW("day"),
+		LPGENW("week"),
+		LPGENW("month"),
 	};
 
 	if (row == 1)
@@ -107,16 +107,16 @@ void ColInOut::impl_outputRenderHeader(ext::ostream& tos, int row, int rowSpan) 
 
 		if (m_bAbsolute)
 		{
-			strTitle = TranslateTS(szSourceDesc[m_nSource]);
+			strTitle = TranslateW(szSourceDesc[m_nSource]);
 		}
 		else
 		{
 			strTitle = str(ext::kformat(TranslateT("#{data} per #{unit}"))
-				% _T("#{data}") * TranslateTS(szSourceDesc[m_nSource])
-				% _T("#{unit}") * TranslateTS(szUnitDesc[m_nAbsTime]));
+				% L"#{data}" * TranslateW(szSourceDesc[m_nSource])
+				% L"#{unit}" * TranslateW(szUnitDesc[m_nAbsTime]));
 		}
 
-		writeRowspanTD(tos, getCustomTitle(TranslateTS(szShortDesc[m_nSource / 3]), strTitle), row, 1, rowSpan);
+		writeRowspanTD(tos, getCustomTitle(TranslateW(szShortDesc[m_nSource / 3]), strTitle), row, 1, rowSpan);
 	}
 }
 
@@ -136,9 +136,9 @@ void ColInOut::impl_outputRenderRow(ext::ostream& tos, const Contact& contact, D
 			&Contact::getTotalChats,
 		};
 
-		tos << _T("<td class=\"num\">")
+		tos << L"<td class=\"num\">"
 			<< utils::intToGrouped((contact.*getData[m_nSource])())
-			<< _T("</td>") << ext::endl;
+			<< L"</td>" << ext::endl;
 	}
 	else
 	{
@@ -160,8 +160,8 @@ void ColInOut::impl_outputRenderRow(ext::ostream& tos, const Contact& contact, D
 			60.0 * 60.0 * 24.0 * 30.0,
 		};
 
-		tos << _T("<td class=\"num\">")
+		tos << L"<td class=\"num\">"
 			<< utils::floatToGrouped((contact.*getData[m_nSource])() * avgFactor[m_nAbsTime], 1)
-			<< _T("</td>") << ext::endl;
+			<< L"</td>" << ext::endl;
 	}
 }

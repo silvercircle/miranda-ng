@@ -29,5 +29,18 @@
     <ClCompile>
       <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
+    <Link>
+      <AdditionalDependencies>libeay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\skylogin\*.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\libs\libjson\libjson.vcxproj">
+      <Project>{f6a9340e-b8d9-4c75-be30-47dc66d0abc7}</Project>
+    </ProjectReference>
+  </ItemGroup>
 </Project>

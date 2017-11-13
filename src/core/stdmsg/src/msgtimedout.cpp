@@ -1,6 +1,6 @@
 /*
 
-Copyright 2000-12 Miranda IM, 2012-15 Miranda NG project,
+Copyright 2000-12 Miranda IM, 2012-17 Miranda NG project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -28,8 +28,6 @@ struct ErrorDlgParam
 	TMsgQueue *item;
 };
 
-INT_PTR SendMessageCmd(MCONTACT hContact, char* msg, int isWchar);
-
 INT_PTR CALLBACK ErrorDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	TMsgQueue *item = (TMsgQueue*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
@@ -38,7 +36,6 @@ INT_PTR CALLBACK ErrorDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
 		{
-			RECT rc, rcParent;
 			ErrorDlgParam *param = (ErrorDlgParam *)lParam;
 			item = param->item;
 
@@ -46,18 +43,20 @@ INT_PTR CALLBACK ErrorDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 
 			if (!param->szMsg || !param->szMsg[0])
 				SetDlgItemText(hwndDlg, IDC_ERRORTEXT, TranslateT("An unknown error has occurred."));
-			else {
-				ptrT ptszError(Langpack_PcharToTchar(param->szMsg));
-				SetDlgItemText(hwndDlg, IDC_ERRORTEXT, ptszError);
+			else
+				SetDlgItemText(hwndDlg, IDC_ERRORTEXT, ptrW(Langpack_PcharToTchar(param->szMsg)));
+
+			SetDlgItemText(hwndDlg, IDC_MSGTEXT, ptrW(mir_utf8decodeW(item->szMsg)));
+
+			HWND hwndParent = GetParent(hwndDlg);
+			if (hwndParent != nullptr) {
+				RECT rc, rcParent;
+				if (GetWindowRect(hwndDlg, &rc))
+					if (GetWindowRect(hwndParent, &rcParent))
+						SetWindowPos(hwndDlg, 0, (rcParent.left + rcParent.right - (rc.right - rc.left)) / 2,
+							(rcParent.top + rcParent.bottom - (rc.bottom - rc.top)) / 2,
+							0, 0, SWP_NOZORDER | SWP_NOSIZE);
 			}
-
-			SetDlgItemText(hwndDlg, IDC_MSGTEXT, ptrT(mir_utf8decodeT(item->szMsg)));
-
-			GetWindowRect(hwndDlg, &rc);
-			GetWindowRect(GetParent(hwndDlg), &rcParent);
-			SetWindowPos(hwndDlg, 0, (rcParent.left + rcParent.right - (rc.right - rc.left)) / 2,
-				(rcParent.top + rcParent.bottom - (rc.bottom - rc.top)) / 2,
-				0, 0, SWP_NOZORDER | SWP_NOSIZE);
 		}
 		return TRUE;
 
@@ -69,7 +68,7 @@ INT_PTR CALLBACK ErrorDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case IDOK:
-			SendMessageDirect(ptrT(mir_utf8decodeT(item->szMsg)), item->hContact, GetContactProto(item->hContact));
+			SendMessageDirect(ptrW(mir_utf8decodeW(item->szMsg)), item->hContact);
 			DestroyWindow(hwndDlg);
 			break;
 
@@ -84,14 +83,17 @@ INT_PTR CALLBACK ErrorDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 
 void MessageFailureProcess(TMsgQueue *item, const char* err)
 {
-	HWND hwnd = WindowList_Find(g_dat.hMessageWindowList, item->hContact);
-	if (hwnd == NULL) {
-		SendMessageCmd(item->hContact, NULL, 0);
-		hwnd = WindowList_Find(g_dat.hMessageWindowList, item->hContact);
+	MCONTACT hContact = db_mc_tryMeta(item->hContact);
+
+	HWND hwnd = Srmm_FindWindow(hContact);
+	if (hwnd == nullptr) {
+		// If message window doesn't already exist, open a new one
+		SendMessageCmd(item->hContact, nullptr);
+		hwnd = Srmm_FindWindow(hContact);
 	}
 	else SendMessage(hwnd, DM_REMAKELOG, 0, 0);
 
-	SkinPlaySound("SendError");
+	Skin_PlaySound("SendError");
 
 	ErrorDlgParam param = { err, item };
 	CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_MSGSENDERROR), hwnd, ErrorDlgProc, (LPARAM)&param);

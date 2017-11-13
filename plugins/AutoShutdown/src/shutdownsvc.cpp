@@ -30,20 +30,20 @@ static HANDLE hEventOkToShutdown,hEventShutdown;
 
 /************************* Utils **************************************/
 
-TCHAR *desc[] =
+wchar_t *desc[] =
 {
-	LPGENT("Miranda NG is going to be automatically closed in %u second(s)."),
-	LPGENT("All Miranda NG protocols are going to be set to offline in %u second(s)."),
-	LPGENT("You will be logged off automatically in %u second(s)."),
-	LPGENT("The computer will automatically be restarted in %u second(s)."),
-	LPGENT("The computer will automatically be set to standby mode in %u second(s)."),
-	LPGENT("The computer will automatically be set to hibernate mode in %u second(s)."),
-	LPGENT("The workstation will automatically get locked in %u second(s)."),
-	LPGENT("All dialup connections will be closed in %u second(s)."),
-	LPGENT("The computer will automatically be shut down in %u second(s).")
+	LPGENW("Miranda NG is going to be automatically closed in %u second(s)."),
+	LPGENW("All Miranda NG protocols are going to be set to offline in %u second(s)."),
+	LPGENW("You will be logged off automatically in %u second(s)."),
+	LPGENW("The computer will automatically be restarted in %u second(s)."),
+	LPGENW("The computer will automatically be set to standby mode in %u second(s)."),
+	LPGENW("The computer will automatically be set to hibernate mode in %u second(s)."),
+	LPGENW("The workstation will automatically get locked in %u second(s)."),
+	LPGENW("All dial-up connections will be closed in %u second(s)."),
+	LPGENW("The computer will automatically be shut down in %u second(s).")
 };
 
-static BOOL WinNT_SetPrivilege(TCHAR *pszPrivName, BOOL bEnable)
+static BOOL WinNT_SetPrivilege(wchar_t *pszPrivName, BOOL bEnable)
 {
 	BOOL bReturn = FALSE;
 	HANDLE hToken;
@@ -87,9 +87,9 @@ static BOOL IsShutdownTypeEnabled(BYTE shutdownType)
 			DWORD dwSetting, dwSize;
 			/* NoLogOff is BINARY on Win9x/ME and DWORD on Win2000+ */
 			bReturn = TRUE;
-			if (RegOpenKeyEx(HKEY_CURRENT_USER, _T("Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer"), 0, KEY_QUERY_VALUE, &hKey) == ERROR_SUCCESS) {
+			if (RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer", 0, KEY_QUERY_VALUE, &hKey) == ERROR_SUCCESS) {
 				dwSize = sizeof(dwSetting);
-				if (RegQueryValueEx(hKey, _T("NoLogOff"), 0, NULL, (LPBYTE)&dwSetting, &dwSize) == ERROR_SUCCESS)
+				if (RegQueryValueEx(hKey, L"NoLogOff", 0, NULL, (LPBYTE)&dwSetting, &dwSize) == ERROR_SUCCESS)
 					if (dwSetting) bReturn = FALSE;
 				RegCloseKey(hKey);
 			}
@@ -101,9 +101,9 @@ static BOOL IsShutdownTypeEnabled(BYTE shutdownType)
 			DWORD dwSize, dwSetting;
 			/* DisableLockWorkstation is DWORD on Win2000+ */
 			bReturn = TRUE;
-			if (RegOpenKeyEx(HKEY_CURRENT_USER, _T("Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System"), 0, KEY_QUERY_VALUE, &hKey) == ERROR_SUCCESS) {
+			if (RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System", 0, KEY_QUERY_VALUE, &hKey) == ERROR_SUCCESS) {
 				dwSize = sizeof(dwSetting);
-				if (!RegQueryValueEx(hKey, _T("DisableLockWorkstation"), 0, NULL, (LPBYTE)&dwSetting, &dwSize))
+				if (!RegQueryValueEx(hKey, L"DisableLockWorkstation", 0, NULL, (LPBYTE)&dwSetting, &dwSize))
 					if (dwSetting)
 						bReturn = FALSE;
 				RegCloseKey(hKey);
@@ -134,17 +134,17 @@ static DWORD ShutdownNow(BYTE shutdownType)
 	DWORD dwErrCode = ERROR_SUCCESS;
 	switch (shutdownType) {
 	case SDSDT_CLOSEMIRANDA:
-		if (!Miranda_Terminated()) {
+		if (!Miranda_IsTerminated()) {
 			/* waiting for short until ready (but not too long...) */
 			DWORD dwLastTickCount = GetTickCount();
-			while (!CallService(MS_SYSTEM_OKTOEXIT, 0, 0)) {
+			while (!Miranda_OkToExit()) {
 				/* infinite loop protection (max 5 sec) */
 				if (GetTickCount() - dwLastTickCount >= 5000) { /* wraparound works */
 					OutputDebugStringA("Timeout (5 sec)\n"); /* tell others, all ascii */
 					break;
 				}
 				SleepEx(1000, TRUE);
-				if (Miranda_Terminated()) break; /* someone else did it */
+				if (Miranda_IsTerminated()) break; /* someone else did it */
 				OutputDebugStringA("Not ready to exit. Waiting...\n"); /* tell others, all ascii */
 			}
 			/* shutdown service must be called from main thread anyway */
@@ -155,7 +155,7 @@ static DWORD ShutdownNow(BYTE shutdownType)
 
 	case SDSDT_SETMIRANDAOFFLINE:
 		/* set global status mode to offline (is remembered by Miranda on exit) */
-		CallService(MS_CLIST_SETSTATUSMODE, (WPARAM)ID_STATUS_OFFLINE, 0);
+		Clist_SetStatusMode(ID_STATUS_OFFLINE);
 		break;
 
 	case SDSDT_STANDBY:
@@ -328,7 +328,7 @@ static INT_PTR CALLBACK ShutdownDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, L
 			SetWindowLongPtr(GetDlgItem(hwndDlg, IDC_TEXT_HEADER), GWLP_USERDATA, countdown);
 			SendMessage(hwndDlg, M_UPDATE_COUNTDOWN, 0, countdown);
 		}
-		SkinPlaySound("AutoShutdown_Countdown");
+		Skin_PlaySound("AutoShutdown_Countdown");
 		if (!SetTimer(hwndDlg, 1, 1000, NULL))
 			PostMessage(hwndDlg, M_START_SHUTDOWN, 0, 0);
 
@@ -361,7 +361,7 @@ static INT_PTR CALLBACK ShutdownDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, L
 			DWORD dwErrCode = ShutdownNow(shutdownType);
 			if (dwErrCode != ERROR_SUCCESS) {
 				char *pszErr = GetWinErrorDescription(dwErrCode);
-				ShowInfoMessage(NIIF_ERROR, Translate("Automatic Shutdown Error"), Translate("The shutdown process failed!\nReason: %s"), (pszErr != NULL) ? pszErr : Translate("Unknown"));
+				ShowInfoMessage(NIIF_ERROR, Translate("Automatic shutdown error"), Translate("The shutdown process failed!\nReason: %s"), (pszErr != NULL) ? pszErr : Translate("Unknown"));
 				if (pszErr != NULL) LocalFree(pszErr);
 			}
 			DestroyWindow(hwndDlg);
@@ -375,7 +375,7 @@ static INT_PTR CALLBACK ShutdownDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, L
 			if (countdown == 27 || countdown == 24 || countdown == 21 || countdown == 19 ||
 				countdown == 17 || countdown == 15 || countdown == 13 || countdown == 11 ||
 				countdown <= 10)
-				SkinPlaySound("AutoShutdown_Countdown");
+				Skin_PlaySound("AutoShutdown_Countdown");
 		}
 		else KillTimer(hwndDlg, wParam);  /* countdown finished */
 		PostMessage(hwndDlg, M_UPDATE_COUNTDOWN, 0, countdown);
@@ -383,8 +383,8 @@ static INT_PTR CALLBACK ShutdownDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, L
 
 	case M_UPDATE_COUNTDOWN:  /* lParam=(WORD)countdown */
 		{
-			TCHAR szText[256];
-			mir_sntprintf(szText, TranslateTS(desc[shutdownType - 1]), lParam);
+			wchar_t szText[256];
+			mir_snwprintf(szText, TranslateW(desc[shutdownType - 1]), lParam);
 			SetDlgItemText(hwndDlg, IDC_TEXT_HEADER, szText);
 			/* countdown finished */
 			if (!lParam)
@@ -437,7 +437,7 @@ INT_PTR ServiceShutdown(WPARAM wParam, LPARAM lParam)
 	DWORD dwErrCode = ShutdownNow((BYTE)wParam);
 	if (dwErrCode != ERROR_SUCCESS) {
 		char *pszErr = GetWinErrorDescription(dwErrCode);
-		ShowInfoMessage(NIIF_ERROR, Translate("Automatic Shutdown Error"), Translate("Inititiating the shutdown process failed!\nReason: %s"), (pszErr != NULL) ? pszErr : Translate("Unknown"));
+		ShowInfoMessage(NIIF_ERROR, Translate("Automatic shutdown error"), Translate("Initiating the shutdown process failed!\nReason: %s"), (pszErr != NULL) ? pszErr : Translate("Unknown"));
 		if (pszErr != NULL)
 			LocalFree(pszErr);
 		return 4;
@@ -451,24 +451,24 @@ INT_PTR ServiceIsTypeEnabled(WPARAM wParam, LPARAM)
 	return IsShutdownTypeEnabled((BYTE)wParam); /* does shutdownType range check */
 }
 
-const TCHAR *apszShort[] = {
-	LPGENT("Close Miranda NG"),LPGENT("Set Miranda NG offline"),LPGENT("Log off user"),
-	LPGENT("Restart computer"),LPGENT("Shutdown computer"),LPGENT("Standby mode"),LPGENT("Hibernate mode"),
-	LPGENT("Lock workstation"),LPGENT("Hang up dialup connections"),LPGENT("Close Miranda NG"),
-	LPGENT("Set Miranda NG offline"),LPGENT("Log off user"),LPGENT("Restart computer"),LPGENT("Shutdown computer"),
-	LPGENT("Standby mode"),LPGENT("Hibernate mode"),LPGENT("Lock workstation"),LPGENT("Hang up dialup connections")
+const wchar_t *apszShort[] = {
+	LPGENW("Close Miranda NG"),LPGENW("Set Miranda NG offline"),LPGENW("Log off user"),
+	LPGENW("Restart computer"),LPGENW("Shutdown computer"),LPGENW("Standby mode"),LPGENW("Hibernate mode"),
+	LPGENW("Lock workstation"),LPGENW("Hang up dial-up connections"),LPGENW("Close Miranda NG"),
+	LPGENW("Set Miranda NG offline"),LPGENW("Log off user"),LPGENW("Restart computer"),LPGENW("Shutdown computer"),
+	LPGENW("Standby mode"),LPGENW("Hibernate mode"),LPGENW("Lock workstation"),LPGENW("Hang up dial-up connections")
 };
 
-const TCHAR *apszLong[] = {
-	LPGENT("Sets all Miranda NG protocols to offline and closes Miranda NG."),
-	LPGENT("Sets all Miranda NG protocols to offline."),
-	LPGENT("Logs the current Windows user off so that another user can log in."),
-	LPGENT("Shuts down Windows and then restarts Windows."),
-	LPGENT("Closes all running programs and shuts down Windows to a point at which it is safe to turn off the power."),
-	LPGENT("Saves the current Windows session in memory and sets the system to suspend mode."),
-	LPGENT("Saves the current Windows session on hard drive, so that the power can be turned off."),
-	LPGENT("Locks the computer. To unlock the computer, you must log in."),
-	LPGENT("Sets all protocols to offline and closes all RAS connections.")
+const wchar_t *apszLong[] = {
+	LPGENW("Sets all Miranda NG protocols to offline and closes Miranda NG."),
+	LPGENW("Sets all Miranda NG protocols to offline."),
+	LPGENW("Logs the current Windows user off so that another user can log in."),
+	LPGENW("Shuts down Windows and then restarts Windows."),
+	LPGENW("Closes all running programs and shuts down Windows to a point at which it is safe to turn off the power."),
+	LPGENW("Saves the current Windows session in memory and sets the system to suspend mode."),
+	LPGENW("Saves the current Windows session on hard drive, so that the power can be turned off."),
+	LPGENW("Locks the computer. To unlock the computer, you must log in."),
+	LPGENW("Sets all protocols to offline and closes all RAS connections.")
 };
 
 INT_PTR ServiceGetTypeDescription(WPARAM wParam, LPARAM lParam)
@@ -476,8 +476,8 @@ INT_PTR ServiceGetTypeDescription(WPARAM wParam, LPARAM lParam)
 	/* shutdownType range check */
 	if (!wParam || (BYTE)wParam > SDSDT_MAX) return 0;
 	/* select description */
-	TCHAR *pszDesc = (TCHAR*)((lParam&GSTDF_LONGDESC) ? apszLong : apszShort)[wParam - 1];
-	if (!(lParam&GSTDF_UNTRANSLATED)) pszDesc = TranslateTS(pszDesc);
+	wchar_t *pszDesc = (wchar_t*)((lParam&GSTDF_LONGDESC) ? apszLong : apszShort)[wParam - 1];
+	if (!(lParam&GSTDF_UNTRANSLATED)) pszDesc = TranslateW(pszDesc);
 	/* convert as needed */
 	if (!(lParam&GSTDF_UNICODE)) {
 		static char szConvBuf[128];
@@ -496,7 +496,7 @@ void InitShutdownSvc(void)
 {
 	/* Shutdown Dialog */
 	hwndShutdownDlg = NULL;
-	SkinAddNewSoundExT("AutoShutdown_Countdown", LPGENT("Alerts"), LPGENT("Automatic Shutdown Countdown"));
+	Skin_AddSound("AutoShutdown_Countdown", LPGENW("Alerts"), LPGENW("Automatic shutdown countdown"));
 
 	/* Events */
 	hEventOkToShutdown = CreateHookableEvent(ME_AUTOSHUTDOWN_OKTOSHUTDOWN);

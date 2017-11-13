@@ -60,7 +60,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD, LPVOID)
 static int HookDBEventAdded(WPARAM hContact, LPARAM hDbEvent)
 {
 	//process the event
-	DBEVENTINFO dbe = { sizeof(dbe) };
+	DBEVENTINFO dbe = {};
 	db_event_get(hDbEvent, &dbe);
 	//check if we should process the event
 	if (dbe.flags & (DBEF_SENT | DBEF_READ) || dbe.eventType != EVENTTYPE_CONTACTS) return 0;
@@ -70,20 +70,20 @@ static int HookDBEventAdded(WPARAM hContact, LPARAM hDbEvent)
 		dbe.pBlob = (PBYTE)_alloca(dbe.cbBlob);
 	db_event_get(hDbEvent, &dbe);
 	//play received sound
-	SkinPlaySound("RecvContacts");
+	Skin_PlaySound("RecvContacts");
 	{
 		//add event to the contact list
-		TCHAR caToolTip[128];
-		mir_sntprintf(caToolTip, _T("%s %s"), TranslateT("Contacts received from"), pcli->pfnGetContactDisplayName(hContact, 0));
+		wchar_t caToolTip[128];
+		mir_snwprintf(caToolTip, L"%s %s", TranslateT("Contacts received from"), pcli->pfnGetContactDisplayName(hContact, 0));
 
-		CLISTEVENT cle = { sizeof(cle) };
+		CLISTEVENT cle = {};
 		cle.hContact = hContact;
 		cle.hDbEvent = hDbEvent;
 		cle.hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_CONTACTS));
 		cle.pszService = MS_CONTACTS_RECEIVE;
-		cle.ptszTooltip = caToolTip;
+		cle.szTooltip.w = caToolTip;
 		cle.flags |= CLEF_UNICODE;
-		CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
+		pcli->pfnAddEvent(&cle);
 	}
 	return 0; //continue processing by other hooks
 }
@@ -92,7 +92,7 @@ static void ProcessUnreadEvents(void)
 {
 	for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact)) {
 		for (MEVENT hDbEvent = db_event_firstUnread(hContact); hDbEvent; hDbEvent = db_event_next(hContact, hDbEvent)) {
-			DBEVENTINFO dbei = { sizeof(dbei) };
+			DBEVENTINFO dbei = {};
 			db_event_get(hDbEvent, &dbei);
 			if (!(dbei.flags & (DBEF_SENT | DBEF_READ)) && dbei.eventType == EVENTTYPE_CONTACTS) {
 				//process the event
@@ -201,7 +201,7 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	InitCommonControls();
 
@@ -219,8 +219,8 @@ extern "C" __declspec(dllexport) int Load(void)
 	CreateServiceFunction(MS_CONTACTS_RECEIVE, ServiceReceiveCommand);
 
 	//define event sounds
-	SkinAddNewSound("RecvContacts", LPGEN("Incoming Contacts"), "contacts.wav");
-	SkinAddNewSound("SentContacts", LPGEN("Outgoing Contacts"), "ocontacts.wav");
+	Skin_AddSound("RecvContacts", LPGENW("Events"), LPGENW("Incoming Contacts"), L"contacts.wav");
+	Skin_AddSound("SentContacts", LPGENW("Events"), LPGENW("Outgoing Contacts"), L"ocontacts.wav");
 	return 0;
 }
 

@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: MRA.dll
 ;  Plugin: MRA protocol
-;  Version: 2.1.0.10
+;  Version: 2.1.1.1
 ;  Authors: Rozhuk Ivan
 ;============================================================
 [Miranda Mail.ru Agent protocol plugin.]
@@ -219,8 +219,12 @@ Avatare: Server gibt HTTP-Code %lu zurück.
 [Avatars: can't open file %s, error]
 Avatare: Kann Datei %s nicht öffnen, Fehler.
 ;file \protocols\MRA\src\MraChat.cpp
-[CHAT plugin is required for conferences. Install it before chatting]
-Chat.dll ist für Mehrbenutzerkonferenzen erforderlich. Bitte installieren Sie diese Datei nach.
+[Owners]
+Besitzer
+[Inviter]
+Einlader
+[Visitors]
+Besucher
 [invite sender]
 Sender einladen
 [invite new members]
@@ -298,6 +302,8 @@ Dateien senden: Kann Datei %s nicht öffnen, Fehler
 [Send files: requested file: %S - not found in send files list.]
 Dateien senden: Angefragte Datei %S - nicht in Liste der gesendeten Dateien gefunden.
 ;file \protocols\MRA\src\MraIcons.cpp
+[Main icon]
+Haupticon
 [Protocols]
 Protokolle
 [MRA]
@@ -391,7 +397,7 @@ MRIM_CS_*_CONTACT_ACK: Nicht in der Warteschlange gefunden
 [MRIM_ANKETA_INFO: not found in queue]
 MRIM_ANKETA_INFO: Nicht in der Warteschlange gefunden
 [MRIM_CS_GAME: unknown internal game message code: %lu]
-MRIM_CS_GAME:  Unbekannter interner Spiele-Nachricht-Code: %lu
+MRIM_CS_GAME: Unbekannter interner Spiele-Nachricht-Code: %lu
 [MRIM_CS_CONTACT_LIST2: unknown server error, code: %lu]
 MRIM_CS_CONTACT_LIST2: Unbekannter Serverfehler. Code: %lu
 [MRIM_CS_SMS_ACK: not found in queue]

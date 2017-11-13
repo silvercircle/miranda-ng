@@ -65,13 +65,13 @@ void CAimProto::ShowPopup(const char* msg, int flags, char* url)
 {
 	POPUPDATAT ppd = {0};
 
-	mir_sntprintf(ppd.lptzContactName, TranslateT("%s Protocol"), m_tszUserName);
+	mir_snwprintf(ppd.lptzContactName, TranslateT("%s protocol"), m_tszUserName);
 
 	if (flags & ERROR_POPUP) 
 	{
 		if (flags & TCHAR_POPUP)
 		{
-			char* errmsg = mir_t2a((TCHAR*)msg);
+			char* errmsg = mir_u2a((wchar_t*)msg);
 			debugLogA(errmsg);
 			mir_free(errmsg);
 		}
@@ -79,16 +79,16 @@ void CAimProto::ShowPopup(const char* msg, int flags, char* url)
 			debugLogA(msg);
 	}
 
-	TCHAR *msgt = (flags & TCHAR_POPUP) ? mir_tstrdup((TCHAR*)msg) : mir_a2t(msg);
-	_tcsncpy_s(ppd.lptzText, TranslateTS(msgt), _TRUNCATE);
+	wchar_t *msgt = (flags & TCHAR_POPUP) ? mir_wstrdup((wchar_t*)msg) : mir_a2u(msg);
+	wcsncpy_s(ppd.lptzText, TranslateW(msgt), _TRUNCATE);
 	mir_free(msgt);
 
 	if (!ServiceExists(MS_POPUP_ADDPOPUPT))
 	{	
 		if (flags & MAIL_POPUP)
 		{
-			size_t len = mir_tstrlen(ppd.lptzText);
-			mir_sntprintf(&ppd.lptzText[len], _countof(ppd.lptzText) - len, _T(" %s"), TranslateT("Open mail account?"));
+			size_t len = mir_wstrlen(ppd.lptzText);
+			mir_snwprintf(&ppd.lptzText[len], _countof(ppd.lptzText) - len, L" %s", TranslateT("Open mail account?"));
 			if (MessageBox(NULL, ppd.lptzText, ppd.lptzContactName, MB_YESNO | MB_ICONINFORMATION) == IDYES)
 				ShellExecuteA(NULL, "open", url, NULL, NULL, SW_SHOW);
 		}

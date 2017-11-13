@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -24,8 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 struct PROFILEMANAGERDATA
 {
-	TCHAR *ptszProfile;     // in/out
-	TCHAR *ptszProfileDir;  // in/out
+	wchar_t *ptszProfile;     // in/out
+	wchar_t *ptszProfileDir;  // in/out
 	BOOL noProfiles;      // in
 	
 	BOOL bRun;            // out
@@ -33,13 +33,13 @@ struct PROFILEMANAGERDATA
 	DATABASELINK *dblink; // out
 };
 
-char* makeFileName(const TCHAR *tszOriginalName);
-int touchDatabase(const TCHAR *tszProfile, DATABASELINK **pDblink);
+char* makeFileName(const wchar_t *tszOriginalName);
+int touchDatabase(const wchar_t *tszProfile, DATABASELINK **pDblink);
 int getProfileManager(PROFILEMANAGERDATA *pd);
-int getProfilePath(TCHAR *buf, size_t cch);
-int isValidProfileName(const TCHAR *name);
-bool fileExist(const TCHAR *fname);
-bool shouldAutoCreate(TCHAR *szProfile);
+int getProfilePath(wchar_t *buf, size_t cch);
+int isValidProfileName(const wchar_t *name);
+bool fileExist(const wchar_t *fname);
+bool shouldAutoCreate(wchar_t *szProfile);
 
-extern TCHAR g_profileDir[MAX_PATH], g_profileName[MAX_PATH], g_shortProfileName[MAX_PATH];
+extern wchar_t g_profileDir[MAX_PATH], g_profileName[MAX_PATH], g_shortProfileName[MAX_PATH];
 extern bool  g_bDbCreated;

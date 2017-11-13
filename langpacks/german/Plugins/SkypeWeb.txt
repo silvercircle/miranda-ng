@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: SkypeWeb.dll
 ;  Plugin: Skype protocol (Web)
-;  Version: 0.12.2.2
+;  Version: 0.12.2.4
 ;  Authors: Miranda NG Team
 ;============================================================
 [Skype protocol support for Miranda NG. Based on new Skype for Web.]
@@ -54,6 +54,8 @@ Skype-Link-Protokoll
 Administrator
 [User]
 Benutzer
+[Enter new nickname]
+Neuen Nicknamen eingeben
 [This chat is going to be destroyed forever with all its contents. This action cannot be undone. Are you sure?]
 Dieser Chat wird für immer mit seinem ganzen Inhalt zerstört. Diese Aktion kann nicht rückgängig gemacht werden. Sind Sie sich sicher?
 [Warning]
@@ -62,8 +64,8 @@ Warnung
 Kontakt e&inladen...
 [&Leave chat session]
 Chatsitzung ver&lassen
-[&Change topic]
-Thema &ändern
+[&Change topic...]
+Thema &ändern...
 [Kick &user]
 Ben&utzer kicken
 [Set &role]
@@ -72,12 +74,16 @@ Ben&utzer kicken
 &Administrator
 [&User]
 Ben&utzer
+[Change nick...]
+Nick ändern...
 [Enter new chatroom topic]
 Neues Thema für diesen Chatraum eingeben
 ;file \protocols\SkypeWeb\src\skype_contacts.cpp
 [Are you sure?]
 Sind Sie sich sicher?
 ;file \protocols\SkypeWeb\src\skype_db.cpp
+[Incoming call]
+Eingehender Anruf
 [Edited message]
 Bearbeitete Nachricht
 [Action]
@@ -88,13 +94,15 @@ Anrufinformation
 Dateiübertragungsinformation
 [URI object]
 URI-Objekt
+[Moji]
+Moji
+[File]
+Datei
 [Unknown event]
 Unbekanntes Ereignis
-[Incoming call]
-Eingehender Anruf
 ;file \protocols\SkypeWeb\src\skype_events.cpp
-[Invalid data!]
-Ungültige Daten!
+[SkypeWeb error: Invalid data!]
+SkypeWeb-Fehler: Ungültige Daten!
 [[b]Original message:[/b]\n%s\n]
 \[b]Originalnachricht:[/b]\n%s\n
 [Original message:\n%s\n]
@@ -184,8 +192,8 @@ Aufrufe
 Eingehender-Anruf-Klang
 [Incoming call canceled sound]
 Eingehender-Anruf-Abgebrochen-Klang
+[Skypename]
+Skypename
 ;file \protocols\SkypeWeb\src\skype_trouter.cpp
-[Failed to establish a TRouter connection.]
-Aufbau einer TRouter-Verbindung fehlgeschlagen.
 [Incoming call from %s]
 Eingehender Anruf von %s

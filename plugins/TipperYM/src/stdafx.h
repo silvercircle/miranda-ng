@@ -32,7 +32,6 @@ Boston, MA 02111-1307, USA.
 #include <m_awaymsg.h>
 #include <m_clist.h>
 #include <m_clc.h>
-#include <m_clui.h>
 #include <m_cluiframes.h>
 #include <m_database.h>
 #include <m_fontservice.h>
@@ -67,9 +66,9 @@ Boston, MA 02111-1307, USA.
 #include "preset_items.h"
 #include "translations.h"
 
-#define MODULE					"Tipper"
-#define MODULE_ITEMS			"Tipper_Items"
-#define DEFAULT_SKIN_FOLDER		"Skins\\Tipper"
+#define MODULE "Tipper"
+#define MODULE_ITEMS "Tipper_Items"
+#define DEFAULT_SKIN_FOLDER L"Skins\\Tipper"
 
 extern HMODULE hInst;
 
@@ -81,6 +80,7 @@ extern int iCodePage;
 extern FI_INTERFACE *fii;
 
 extern TOOLTIPSKIN skin;
-extern TCHAR SKIN_FOLDER[256];
+extern wchar_t SKIN_FOLDER[256];
 
 extern int ReloadFont(WPARAM wParam, LPARAM lParam);
+extern IconItem iconList[];

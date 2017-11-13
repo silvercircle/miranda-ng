@@ -1,5 +1,5 @@
 #include "stdafx.h"
-
+/*
 MCONTACT CToxProto::GetChatRoom(int groupNumber)
 {
 	MCONTACT hContact = NULL;
@@ -23,19 +23,19 @@ MCONTACT CToxProto::AddChatRoom(int groupNumber)
 	MCONTACT hContact = GetChatRoom(groupNumber);
 	if (!hContact)
 	{
-		hContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
+		hContact = db_add_contact();
 		Proto_AddToContact(hContact, m_szModuleName);
 
 		setWord(hContact, TOX_SETTINGS_CHAT_ID, groupNumber);
 
-		TCHAR title[MAX_PATH];
-		mir_sntprintf(title, _T("%s #%d"), TranslateT("Group chat"), groupNumber);
-		setTString(hContact, "Nick", title);
+		wchar_t title[MAX_PATH];
+		mir_snwprintf(title, L"%s #%d", TranslateT("Group chat"), groupNumber);
+		setWString(hContact, "Nick", title);
 
 		DBVARIANT dbv;
-		if (!db_get_s(NULL, "Chat", "AddToGroup", &dbv, DBVT_TCHAR))
+		if (!db_get_s(NULL, "Chat", "AddToGroup", &dbv, DBVT_WCHAR))
 		{
-			db_set_ts(hContact, "CList", "Group", dbv.ptszVal);
+			db_set_ws(hContact, "CList", "Group", dbv.ptszVal);
 			db_free(&dbv);
 		}
 
@@ -46,18 +46,18 @@ MCONTACT CToxProto::AddChatRoom(int groupNumber)
 
 void CToxProto::LoadChatRoomList(void*)
 {
-	uint32_t count = tox_count_chatlist(toxThread->tox);
+	uint32_t count = tox_count_chatlist(toxThread->Tox());
 	if (count == 0)
 	{
-		logger->Log("CToxProto::LoadGroupChatList: your group chat list is empty");
+		debugLogA(__FUNCTION__": your group chat list is empty");
 		return;
 	}
 	int32_t *groupChats = (int32_t*)mir_alloc(count * sizeof(int32_t));
-	tox_get_chatlist(toxThread->tox, groupChats, count);
+	tox_get_chatlist(toxThread->Tox(), groupChats, count);
 	for (uint32_t i = 0; i < count; i++)
 	{
 		int32_t groupNumber = groupChats[i];
-		int type = tox_group_get_type(toxThread->tox, groupNumber);
+		int type = tox_group_get_type(toxThread->Tox(), groupNumber);
 		if (type == TOX_GROUPCHAT_TYPE_AV)
 		{
 			continue;
@@ -66,8 +66,8 @@ void CToxProto::LoadChatRoomList(void*)
 		if (hContact)
 		{
 			uint8_t title[TOX_MAX_NAME_LENGTH] = { 0 };
-			tox_group_get_title(toxThread->tox, groupNumber, title, TOX_MAX_NAME_LENGTH);
-			setWString(hContact, "Nick", ptrT(mir_utf8decodeT((char*)title)));
+			tox_group_get_title(toxThread->Tox(), groupNumber, title, TOX_MAX_NAME_LENGTH);
+			setWString(hContact, "Nick", ptrW(mir_utf8decodeW((char*)title)));
 		}
 	}
 	mir_free(groupChats);
@@ -110,7 +110,7 @@ INT_PTR CToxProto::OnCreateChatRoom(WPARAM, LPARAM)
 		CToxProto::ChatRoomInviteProc,
 		(LPARAM)&param) == IDOK && !param.invitedContacts.empty())
 	{
-		int groupNumber = tox_add_groupchat(toxThread->tox);
+		int groupNumber = tox_add_groupchat(toxThread->Tox());
 		if (groupNumber == TOX_ERROR)
 		{
 			return 1;
@@ -118,7 +118,7 @@ INT_PTR CToxProto::OnCreateChatRoom(WPARAM, LPARAM)
 		for (std::vector<MCONTACT>::iterator it = param.invitedContacts.begin(); it != param.invitedContacts.end(); ++it)
 		{
 			int32_t friendNumber = GetToxFriendNumber(*it);
-			if (friendNumber == TOX_ERROR || tox_invite_friend(toxThread->tox, friendNumber, groupNumber) == TOX_ERROR)
+			if (friendNumber == TOX_ERROR || tox_invite_friend(toxThread->Tox(), friendNumber, groupNumber) == TOX_ERROR)
 			{
 				return 1;
 			}
@@ -136,11 +136,11 @@ INT_PTR CToxProto::OnCreateChatRoom(WPARAM, LPARAM)
 
 void CToxProto::InitGroupChatModule()
 {
-	GCREGISTER gcr = { sizeof(gcr) };
+	GCREGISTER gcr = {};
 	gcr.iMaxText = 0;
 	gcr.ptszDispName = this->m_tszUserName;
 	gcr.pszModule = this->m_szModuleName;
-	CallServiceSync(MS_GC_REGISTER, 0, (LPARAM)&gcr);
+	Chat_Register(&gcr);
 
 	HookProtoEvent(ME_GC_EVENT, &CToxProto::OnGroupChatEventHook);
 	HookProtoEvent(ME_GC_BUILDMENU, &CToxProto::OnGroupChatMenuHook);
@@ -152,19 +152,17 @@ void CToxProto::InitGroupChatModule()
 void CToxProto::CloseAllChatChatSessions()
 {
 	GC_INFO gci = { 0 };
-	gci.Flags = GCF_BYINDEX | GCF_ID | GCF_DATA;
+	gci.Flags = GCF_BYINDEX | GCF_ID;
 	gci.pszModule = m_szModuleName;
 
-	int count = CallServiceSync(MS_GC_GETSESSIONCOUNT, 0, (LPARAM)m_szModuleName);
+	int count = pci->SM_GetCount(m_szModuleName);
 	for (int i = 0; i < count; i++)
 	{
 		gci.iItem = i;
-		if (!CallServiceSync(MS_GC_GETINFO, 0, (LPARAM)&gci))
+		if (!Chat_GetInfo(&gci))
 		{
-			GCDEST gcd = { m_szModuleName, gci.pszID, GC_EVENT_CONTROL };
-			GCEVENT gce = { sizeof(gce), &gcd };
-			CallServiceSync(MS_GC_EVENT, SESSION_OFFLINE, (LPARAM)&gce);
-			CallServiceSync(MS_GC_EVENT, SESSION_TERMINATE, (LPARAM)&gce);
+			Chat_Control(m_szModuleName, gci.pszID, SESSION_OFFLINE);
+			Chat_Terminate(m_szModuleName, gci.pszID);
 		}
 	}
 }
@@ -175,21 +173,21 @@ void CToxProto::OnGroupChatInvite(Tox *tox, int32_t friendNumber, uint8_t type, 
 
 	if (type == TOX_GROUPCHAT_TYPE_AV)
 	{
-		proto->logger->Log("CToxProto::OnGroupChatInvite: audio chat is not supported yet");
+		Netlib_Logf(proto->m_hNetlibUser, __FUNCTION__": audio chat is not supported yet");
 		return;
 	}
 
 	int groupNumber = tox_join_groupchat(tox, friendNumber, data, length);
 	if (groupNumber == TOX_ERROR)
 	{
-		proto->logger->Log("CToxProto::OnFriendRequest: failed to join to group chat");
+		Netlib_Logf(proto->m_hNetlibUser, __FUNCTION__": failed to join to group chat");
 		return;
 	}
 
 	MCONTACT hContact = proto->AddChatRoom(groupNumber);
 	if (!hContact)
 	{
-		proto->logger->Log("CToxProto::OnFriendRequest: failed to create group chat");
+		Netlib_Logf(proto->m_hNetlibUser, __FUNCTION__": failed to create group chat");
 	}
 }
 
@@ -325,3 +323,4 @@ INT_PTR CALLBACK CToxProto::ChatRoomInviteProc(HWND hwndDlg, UINT msg, WPARAM wP
 	}
 	return FALSE;
 }
+*/

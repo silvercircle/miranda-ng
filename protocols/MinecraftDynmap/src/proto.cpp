@@ -3,7 +3,7 @@
 Minecraft Dynmap plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2015 Robert Pösel
+Copyright © 2015-17 Robert Pösel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,8 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-MinecraftDynmapProto::MinecraftDynmapProto(const char* proto_name, const TCHAR* username) :
-	PROTO<MinecraftDynmapProto>(proto_name, username)
+MinecraftDynmapProto::MinecraftDynmapProto(const char* proto_name, const wchar_t* username) :
+	PROTO<MinecraftDynmapProto>(proto_name, username), m_interval(0), hConnection(0), hEventsConnection(0),
+	m_updateRate(5000), m_nick("")
 {
 	this->signon_lock_ = CreateMutex(NULL, FALSE, NULL);
 	this->send_message_lock_ = CreateMutex(NULL, FALSE, NULL);
@@ -41,28 +42,23 @@ MinecraftDynmapProto::MinecraftDynmapProto(const char* proto_name, const TCHAR* 
 	HookProtoEvent(ME_GC_EVENT, &MinecraftDynmapProto::OnChatEvent);
 
 	// Create standard network connection
-	TCHAR descr[512];
-	NETLIBUSER nlu = {sizeof(nlu)};
-	nlu.flags = NUF_INCOMING | NUF_OUTGOING | NUF_HTTPCONNS | NUF_TCHAR;
+	wchar_t descr[512];
+	mir_snwprintf(descr, TranslateT("%s server connection"), m_tszUserName);
+
+	NETLIBUSER nlu = {};
+	nlu.flags = NUF_INCOMING | NUF_OUTGOING | NUF_HTTPCONNS | NUF_UNICODE;
 	nlu.szSettingsModule = m_szModuleName;
-	mir_sntprintf(descr, TranslateT("%s server connection"), m_tszUserName);
-	nlu.ptszDescriptiveName = descr;
-	m_hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
+	nlu.szDescriptiveName.w = descr;
+	m_hNetlibUser = Netlib_RegisterUser(&nlu);
 	if (m_hNetlibUser == NULL) {
-		TCHAR error[200];
-		mir_sntprintf(error, TranslateT("Unable to initialize Netlib for %s."), m_tszUserName);
-		MessageBox(NULL, error, _T("Miranda NG"), MB_OK | MB_ICONERROR);
+		wchar_t error[200];
+		mir_snwprintf(error, TranslateT("Unable to initialize Netlib for %s."), m_tszUserName);
+		MessageBox(NULL, error, L"Miranda NG", MB_OK | MB_ICONERROR);
 	}
 
-	// Http connection handles
-	this->hConnection = NULL;
-	this->hEventsConnection = NULL;
-
 	// Client instantiation
-	this->m_nick = "";
 	this->error_count_ = 0;
 	this->chatHandle_ = NULL;
-	this->m_updateRate = 5000; // Some default update rate
 }
 
 MinecraftDynmapProto::~MinecraftDynmapProto()
@@ -159,22 +155,17 @@ int MinecraftDynmapProto::OnEvent(PROTOEVENTTYPE event,WPARAM wParam,LPARAM lPar
 
 INT_PTR MinecraftDynmapProto::SvcCreateAccMgrUI(WPARAM, LPARAM lParam)
 {
-	return (INT_PTR)CreateDialogParam(g_hInstance,MAKEINTRESOURCE(IDD_MinecraftDynmapACCOUNT),
-		(HWND)lParam, MinecraftDynmapAccountProc, (LPARAM)this);
+	return (INT_PTR)CreateDialogParam(g_hInstance,MAKEINTRESOURCE(IDD_MinecraftDynmapACCOUNT), (HWND)lParam, MinecraftDynmapAccountProc, (LPARAM)this);
 }
 
 int MinecraftDynmapProto::OnModulesLoaded(WPARAM, LPARAM)
 {
 	// Register group chat
-	GCREGISTER gcr = {sizeof(gcr)};
-	gcr.dwFlags = 0;
+	GCREGISTER gcr = {};
 	gcr.pszModule = m_szModuleName;
 	gcr.ptszDispName = m_tszUserName;
 	gcr.iMaxText = MINECRAFTDYNMAP_MESSAGE_LIMIT;
-	gcr.nColors = 0;
-	gcr.pColors = NULL;
-	CallService(MS_GC_REGISTER, 0, reinterpret_cast<LPARAM>(&gcr));
-
+	Chat_Register(&gcr);
 	return 0;
 }
 
@@ -182,13 +173,13 @@ int MinecraftDynmapProto::OnModulesLoaded(WPARAM, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance   = g_hInstance;
-	odp.ptszTitle   = m_tszUserName;
+	odp.szTitle.w   = m_tszUserName;
 	odp.dwInitParam = LPARAM(this);
-	odp.flags       = ODPF_BOLDGROUPS | ODPF_TCHAR | ODPF_DONTTRANSLATE;
+	odp.flags       = ODPF_BOLDGROUPS | ODPF_UNICODE | ODPF_DONTTRANSLATE;
 
 	odp.position    = 271828;
-	odp.ptszGroup   = LPGENT("Network");
-	odp.ptszTab     = LPGENT("Account");
+	odp.szGroup.w   = LPGENW("Network");
+	odp.szTab.w     = LPGENW("Account");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONS);
 	odp.pfnDlgProc  = MinecraftDynmapOptionsProc;
 	Options_AddPage(wParam, &odp);

@@ -1,7 +1,5 @@
 #include "stdafx.h"
 
-HANDLE hhkShow=0, hhkUpdate=0, hhkRemove=0;
-
 //struct 
 
 int Popup2Show(WPARAM, LPARAM lParam)
@@ -99,49 +97,31 @@ int NotifyOptionsInitialize(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_NOTIFY);
-	odp.pszTitle = LPGEN("YAPP Popups");
+	odp.szTitle.a = LPGEN("YAPP Popups");
 	odp.flags = ODPF_BOLDGROUPS;
 	odp.pfnDlgProc = DlgProcPopups;
 	CallService(MS_NOTIFY_OPT_ADDPAGE, wParam, (LPARAM)&odp);
 	return 0;
 }
 
-HANDLE hEventNotifyOptInit, hEventNotifyModulesLoaded;
-HANDLE hAvChangeEvent;
-
 int NotifyModulesLoaded(WPARAM, LPARAM)
 {
-	hEventNotifyOptInit = HookEvent(ME_NOTIFY_OPT_INITIALISE, NotifyOptionsInitialize);
-	hAvChangeEvent = HookEvent(ME_AV_AVATARCHANGED, AvatarChanged);
+	HookEvent(ME_NOTIFY_OPT_INITIALISE, NotifyOptionsInitialize);
+	HookEvent(ME_AV_AVATARCHANGED, AvatarChanged);
 	return 0;
 }
 
-HANDLE hServicesNotify[4];
 void InitNotify()
 {
-	hhkShow = HookEvent(ME_NOTIFY_SHOW, Popup2Show);
-	hhkUpdate = HookEvent(ME_NOTIFY_UPDATE, Popup2Update);
-	hhkRemove = HookEvent(ME_NOTIFY_REMOVE, Popup2Remove);
+	HookEvent(ME_NOTIFY_SHOW, Popup2Show);
+	HookEvent(ME_NOTIFY_UPDATE, Popup2Update);
+	HookEvent(ME_NOTIFY_REMOVE, Popup2Remove);
 
-	hServicesNotify[0] = CreateServiceFunction("Popup2/DefaultActions", svcPopup2DefaultActions);
+	CreateServiceFunction("Popup2/DefaultActions", svcPopup2DefaultActions);
 
-	hServicesNotify[1] = CreateServiceFunction(MS_POPUP2_SHOW, svcPopup2Show);
-	hServicesNotify[2] = CreateServiceFunction(MS_POPUP2_UPDATE, svcPopup2Update);
-	hServicesNotify[3] = CreateServiceFunction(MS_POPUP2_REMOVE, svcPopup2Remove);
+	CreateServiceFunction(MS_POPUP2_SHOW, svcPopup2Show);
+	CreateServiceFunction(MS_POPUP2_UPDATE, svcPopup2Update);
+	CreateServiceFunction(MS_POPUP2_REMOVE, svcPopup2Remove);
 
-	hEventNotifyModulesLoaded = HookEvent(ME_SYSTEM_MODULESLOADED, NotifyModulesLoaded);
-}
-
-void DeinitNotify()
-{
-	UnhookEvent(hhkShow);
-	UnhookEvent(hhkUpdate);
-	UnhookEvent(hhkRemove);
-
-	UnhookEvent(hAvChangeEvent);
-	UnhookEvent(hEventNotifyOptInit);
-	UnhookEvent(hEventNotifyModulesLoaded);
-
-	for (int i = 0; i < 4; i++)
-		DestroyServiceFunction(hServicesNotify[i]);
+	HookEvent(ME_SYSTEM_MODULESLOADED, NotifyModulesLoaded);
 }

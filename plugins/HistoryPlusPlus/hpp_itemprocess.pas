@@ -47,8 +47,6 @@
  Contributors: theMIROn, Art Fedorov
 -----------------------------------------------------------------------------}
 
-{.$DEFINE USE_URL_BBCODE}
-
 unit hpp_itemprocess;
 
 interface
@@ -98,7 +96,6 @@ type
     bbtype: TBBCodeType;
     rtf: PAnsiChar;
     html: PAnsiChar;
-    minRE: Integer;
   end;
 
 const
@@ -114,27 +111,25 @@ const
     (sz:'white';  col:$FFFFFF));
 
 const
-  bbCodesCount = {$IFDEF USE_URL_BBCODE}7{$ELSE}6{$ENDIF};
+  bbCodesCount = 7;
 
 var
   bbCodes: array[0..bbCodesCount,bbStart..bbEnd] of TBBCodeInfo = (
-    ((prefix:(ansi:'[b]');      suffix:(ansi:nil); bbtype:bbSimple; rtf:'{\b ';      html:'<b>';  minRE: 10),
+    ((prefix:(ansi:'[b]');      suffix:(ansi:nil); bbtype:bbSimple; rtf:'{\b ';      html:'<b>'),
      (prefix:(ansi:'[/b]');     suffix:(ansi:nil); bbtype:bbSimple; rtf:'}';         html:'</b>')),
-    ((prefix:(ansi:'[i]');      suffix:(ansi:nil); bbtype:bbSimple; rtf:'{\i ';      html:'<i>';  minRE: 10),
+    ((prefix:(ansi:'[i]');      suffix:(ansi:nil); bbtype:bbSimple; rtf:'{\i ';      html:'<i>'),
      (prefix:(ansi:'[/i]');     suffix:(ansi:nil); bbtype:bbSimple; rtf:'}';         html:'</i>')),
-    ((prefix:(ansi:'[u]');      suffix:(ansi:nil); bbtype:bbSimple; rtf:'{\ul ';     html:'<u>';  minRE: 10),
+    ((prefix:(ansi:'[u]');      suffix:(ansi:nil); bbtype:bbSimple; rtf:'{\ul ';     html:'<u>'),
      (prefix:(ansi:'[/u]');     suffix:(ansi:nil); bbtype:bbSimple; rtf:'}';         html:'</u>')),
-    ((prefix:(ansi:'[s]');      suffix:(ansi:nil); bbtype:bbSimple; rtf:'{\strike '; html:'<s>';  minRE: 10),
+    ((prefix:(ansi:'[s]');      suffix:(ansi:nil); bbtype:bbSimple; rtf:'{\strike '; html:'<s>'),
      (prefix:(ansi:'[/s]');     suffix:(ansi:nil); bbtype:bbSimple; rtf:'}';         html:'</s>')),
-    ((prefix:(ansi:'[color=');  suffix:(ansi:']'); bbtype:bbColor;  rtf:'{\cf%u ';   html:'<font style="color:%s">'; minRE: 10),
+    ((prefix:(ansi:'[color=');  suffix:(ansi:']'); bbtype:bbColor;  rtf:'{\cf%u ';   html:'<font style="color:%s">'),
      (prefix:(ansi:'[/color]'); suffix:(ansi:nil); bbtype:bbSimple; rtf:'}';         html:'</font>')),
-    {$IFDEF USE_URL_BBCODE}
-    ((prefix:(ansi:'[url=');    suffix:(ansi:']'); bbtype:bbUrl;    rtf:'{\field{\*\fldinst{HYPERLINK ":%s"}}{\fldrslt{\ul\cf%u'; html:'<a href="%s">'; minRE: 41),
+    ((prefix:(ansi:'[url=');    suffix:(ansi:']'); bbtype:bbUrl;    rtf:'{\field{\*\fldinst{HYPERLINK ":%s"}}{\fldrslt{\ul\cf%u'; html:'<a href="%s">'),
      (prefix:(ansi:'[/url]');   suffix:(ansi:nil); bbtype:bbSimple; rtf:'}}}';      html:'</a>')),
-    {$ENDIF}
-    ((prefix:(ansi:'[size=');   suffix:(ansi:']'); bbtype:bbSize;   rtf:'{\fs%u ';   html:'<font style="font-size:%spt">'; minRE: 10),
+    ((prefix:(ansi:'[size=');   suffix:(ansi:']'); bbtype:bbSize;   rtf:'{\fs%u ';   html:'<font style="font-size:%spt">'),
      (prefix:(ansi:'[/size]');  suffix:(ansi:nil); bbtype:bbSimple; rtf:'}';         html:'</font>')),
-    ((prefix:(ansi:'[img]');    suffix:(ansi:nil); bbtype:bbImage;  rtf:'[{\revised\ul\cf%u '; html:'['; minRE: 20),
+    ((prefix:(ansi:'[img]');    suffix:(ansi:nil); bbtype:bbImage;  rtf:'[{\revised\ul\cf%u '; html:'['),
      (prefix:(ansi:'[/img]');   suffix:(ansi:nil); bbtype:bbSimple; rtf:'}]';        html:']'))
   );
 
@@ -282,8 +277,6 @@ begin
   bufEnd := StrECopy(TextBuffer.Buffer,PAnsiChar(S));
   for i := 0 to High(bbCodes) do
   begin
-    if hppRichEditVersion < bbCodes[i, bbStart].minRE then
-      continue;
     bufPos := TextBuffer.Buffer;
     repeat
       newCode := nil;
@@ -309,7 +302,6 @@ begin
               if TryStrToInt(String(code), n) then
                 newCode := StrLFmt(fmt_buffer, MAX_FMTBUF, bbCodes[i, bbStart].rtf, [n shl 1]);
             end;
-{$IFDEF USE_URL_BBCODE}
           bbUrl:
             begin
               SetString(code, strCode, lenCode);
@@ -319,7 +311,6 @@ begin
                 n := 0;
               newCode := StrLFmt(fmt_buffer, MAX_FMTBUF, bbCodes[i, bbStart].rtf, [PAnsiChar(code), n]);
             end;
-{$ENDIF}
           bbImage:
             begin
               if doColorBBCodes then
@@ -488,7 +479,7 @@ begin
   begin
     // Get profile dir
     SetLength(hppProfileDir, MAX_PATH);
-    CallService(MS_DB_GETPROFILEPATH, MAX_PATH, lParam(@hppProfileDir[1]));
+    Profile_GetPathA(MAX_PATH, @hppProfileDir[1]);
     SetLength(hppProfileDir, StrLen(pAnsiChar(@hppProfileDir[1])));
     Link := AnsiString(hppProfileDir) + '\' + ird.pExtended; //!!
   end;

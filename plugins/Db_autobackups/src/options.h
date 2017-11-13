@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-03 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -29,11 +29,13 @@ typedef struct Options_tag {
 	int	backup_types;
 	unsigned int period;
 	PeriodType period_type;
-	TCHAR	folder[MAX_PATH];
+	wchar_t	folder[MAX_PATH];
 	int   num_backups;
 	BOOL	disable_progress;
 	BOOL	disable_popups;
 	BOOL	use_zip;
+	BOOL    use_dropbox;
+	BOOL	backup_profile;
 } Options;
 
 extern Options options;

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -23,10 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "stdafx.h"
-
-#pragma comment(lib, "secur32.lib")
-#pragma comment(lib, "crypt32.lib")
-#pragma comment(lib, "wsock32.lib")
 
 typedef BOOL (*SSL_EMPTY_CACHE_FN_M)(VOID);
 
@@ -64,29 +60,29 @@ struct SslHandle
 
 static void ReportSslError(SECURITY_STATUS scRet, int line, bool = false)
 {
-	TCHAR szMsgBuf[256];
+	wchar_t szMsgBuf[256];
 	switch (scRet) {
 	case 0:
 	case ERROR_NOT_READY:
 		return;
 
 	case SEC_E_INVALID_TOKEN:
-		_tcsncpy_s(szMsgBuf, TranslateT("Client cannot decode host message. Possible causes: host does not support SSL or requires not existing security package"), _TRUNCATE);
+		wcsncpy_s(szMsgBuf, TranslateT("Client cannot decode host message. Possible causes: host does not support SSL or requires not existing security package"), _TRUNCATE);
 		break;
 
 	case CERT_E_CN_NO_MATCH:
 	case SEC_E_WRONG_PRINCIPAL:
-		_tcsncpy_s(szMsgBuf, TranslateT("Host we are connecting to is not the one certificate was issued for"), _TRUNCATE);
+		wcsncpy_s(szMsgBuf, TranslateT("Host we are connecting to is not the one certificate was issued for"), _TRUNCATE);
 		break;
 
 	default:
 		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, scRet, LANG_USER_DEFAULT, szMsgBuf, _countof(szMsgBuf), NULL);
 	}
 
-	TCHAR szMsgBuf2[512];
-	mir_sntprintf(szMsgBuf2, _T("SSL connection failure (%x %u): %s"), scRet, line, szMsgBuf);
+	wchar_t szMsgBuf2[512];
+	mir_snwprintf(szMsgBuf2, L"SSL connection failure (%x %u): %s", scRet, line, szMsgBuf);
 
-	char* szMsg = Utf8EncodeT(szMsgBuf2);
+	char* szMsg = Utf8EncodeW(szMsgBuf2);
 	Netlib_Logf(NULL, szMsg);
 	mir_free(szMsg);
 
@@ -103,7 +99,7 @@ static bool AcquireCredentials(void)
 	memset(&SchannelCred, 0, sizeof(SchannelCred));
 
 	SchannelCred.dwVersion = SCHANNEL_CRED_VERSION;
-	SchannelCred.grbitEnabledProtocols = SP_PROT_SSL3TLS1_CLIENTS;
+	SchannelCred.grbitEnabledProtocols = SP_PROT_SSL3TLS1_X_CLIENTS;
 	SchannelCred.dwFlags |= SCH_CRED_NO_DEFAULT_CREDS | SCH_CRED_MANUAL_CRED_VALIDATION;
 
 	// Create an SSPI credential.
@@ -764,12 +760,12 @@ static INT_PTR GetSslApi(WPARAM, LPARAM lParam)
 	if (si->cbSize != sizeof(SSL_API))
 		return FALSE;
 
-	si->connect = (HSSL(__cdecl *)(SOCKET, const char *, int))NetlibSslConnect;
-	si->pending = (BOOL(__cdecl *)(HSSL))NetlibSslPending;
-	si->read = (int(__cdecl *)(HSSL, char *, int, int))NetlibSslRead;
-	si->write = (int(__cdecl *)(HSSL, const char *, int))NetlibSslWrite;
-	si->shutdown = (void(__cdecl *)(HSSL))NetlibSslShutdown;
-	si->sfree = (void(__cdecl *)(HSSL))NetlibSslFree;
+	si->connect = NetlibSslConnect;
+	si->pending = NetlibSslPending;
+	si->read = NetlibSslRead;
+	si->write = NetlibSslWrite;
+	si->shutdown = NetlibSslShutdown;
+	si->sfree = NetlibSslFree;
 	return TRUE;
 }
 

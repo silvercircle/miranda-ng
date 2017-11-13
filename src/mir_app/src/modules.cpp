@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -38,11 +38,9 @@ int  LoadProtocolsModule(void);	// core: protocol manager
 int  LoadAccountsModule(void);    // core: account manager
 int  LoadIgnoreModule(void);		// protocol filter: ignore
 int  LoadDbintfModule(void);
-int  LoadEventsModule(void);
 int  LoadSrmmModule(void);
 
 int  LoadContactsModule(void);
-int  LoadContactListModule(void);// ui: clist
 int  LoadDatabaseModule(void);
 int  LoadMetacontacts(void);
 int  LoadOptionsModule(void);	// ui: options dialog
@@ -53,7 +51,6 @@ int  LoadSkinHotkeys(void);
 int  LoadUserInfoModule(void);	// ui: user info
 int  LoadVisibilityModule(void);	// ui: visibility control
 
-int  LoadPluginOptionsModule(void);	// ui: plugin viewer
 int  LoadAddContactModule(void);	// ui: authcontrol contacts
 int  LoadUtilsModule(void);		// ui: utils (has a few window classes, like HyperLink)
 int  LoadCLCModule(void);		// window class: CLC control
@@ -62,13 +59,11 @@ int  LoadFontserviceModule(void); // ui: font manager
 int  LoadIcoLibModule(void);   // ui: icons manager
 int  LoadServiceModePlugin(void);
 int  LoadDefaultServiceModePlugin(void);
-int  LoadErrorsModule(void);
 
 void UnloadAccountsModule(void);
 void UnloadClcModule(void);
 void UnloadContactListModule(void);
 void UnloadDatabase(void);
-void UnloadErrorsModule(void);
 void UnloadEventsModule(void);
 void UnloadExtraIconsModule(void);
 void UnloadIcoLibModule(void);
@@ -81,9 +76,9 @@ void UnloadSkinHotkeys(void);
 void UnloadSrmmModule(void);
 void UnloadUtilsModule(void);
 
-int  LoadIcoTabsModule();
-int  LoadHeaderbarModule();
-int  LoadDescButtonModule();
+int LoadIcoTabsModule();
+int LoadHeaderbarModule();
+int LoadDescButtonModule();
 
 int LoadDefaultModules(void)
 {
@@ -95,11 +90,19 @@ int LoadDefaultModules(void)
 	if (LoadIcoTabsModule()) return 1;
 	if (LoadHeaderbarModule()) return 1;
 	if (LoadDbintfModule()) return 1;
-	if (LoadEventsModule()) return 1;
 
 	// load database drivers & service plugins without executing their Load()
 	if (LoadNewPluginsModuleInfos()) return 1;
 
+	if (GetPrivateProfileInt(L"Interface", L"DpiAware", 0, mirandabootini) == 1) {
+		typedef BOOL (WINAPI  * SetProcessDPIAware_t)(void);
+
+		SetProcessDPIAware_t pfn = (SetProcessDPIAware_t)GetProcAddress(GetModuleHandleW(L"user32"), "SetProcessDPIAware");
+		if (pfn != nullptr) {
+			pfn();
+		}
+	}
+	
 	switch (LoadDefaultServiceModePlugin()) {
 	case SERVICE_CONTINUE:  // continue loading Miranda normally
 	case SERVICE_ONLYDB:    // load database and go to the message cycle
@@ -144,7 +147,6 @@ int LoadDefaultModules(void)
 	if (LoadProtocolsModule()) return 1;
 	LoadDbAccounts();                    // retrieves the account array from a database
 	if (LoadContactsModule()) return 1;
-	if (LoadContactListModule()) return 1;   // prepare contact list interface
 	if (LoadAddContactModule()) return 1;
 	if (LoadMetacontacts()) return 1;
 
@@ -172,7 +174,6 @@ void UnloadDefaultModules(void)
 	UnloadSkinSounds();
 	UnloadSkinHotkeys();
 	UnloadSrmmModule();
-	//	UnloadErrorsModule();
 	UnloadIcoLibModule();
 	UnloadUtilsModule();
 	UnloadExtraIconsModule();

@@ -1,30 +1,37 @@
 #ifndef _LUA_SCRIPT_H_
 #define _LUA_SCRIPT_H_
 
-class CMLuaScript
+class CMLuaScript : public CMLuaEnviroment
 {
-private:
-	lua_State *L;
+public:
+	enum Status
+	{
+		None,
+		Loaded,
+		Failed
+	};
 
-	char* moduleName;
-	TCHAR* fileName;
-	TCHAR filePath[MAX_PATH];
-	bool isLoaded;
-	int group;
+private:
+	Status status;
 	int unloadRef;
 
+	char *moduleName;
+	wchar_t *fileName;
+	wchar_t filePath[MAX_PATH];
+
 public:
-	CMLuaScript(lua_State *L, const TCHAR* path, int iGroup = 0);
+	CMLuaScript(lua_State *L, const wchar_t *path);
+	CMLuaScript(const CMLuaScript &script);
 	~CMLuaScript();
 
 	const char* GetModuleName() const;
 
-	const TCHAR* GetFilePath() const;
-	const TCHAR* GetFileName() const;
-	const int GetGroup() const;
+	const wchar_t* GetFilePath() const;
+	const wchar_t* GetFileName() const;
+
+	Status GetStatus() const;
 
 	bool Load();
-	void Unload();
 };
 
 #endif //_LUA_SCRIPT_H_

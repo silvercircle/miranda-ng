@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2015-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -27,6 +27,7 @@ enum SKYPE_DB_EVENT_TYPE
 	SKYPE_DB_EVENT_TYPE_URIOBJ,
 	SKYPE_DB_EVENT_TYPE_EDITED_MESSAGE,
 	SKYPE_DB_EVENT_TYPE_MOJI,
+	SKYPE_DB_EVENT_TYPE_FILE,
 	SKYPE_DB_EVENT_TYPE_UNKNOWN
 };
 
@@ -34,5 +35,32 @@ enum SKYPE_DB_EVENT_TYPE
 #define SKYPE_SETTINGS_PASSWORD "Password"
 #define SKYPE_SETTINGS_GROUP "DefaultGroup"
 
+struct CSkypeOptions
+{
+	CMOption<BYTE> bAutoHistorySync;
+	CMOption<BYTE> bMarkAllAsUnread;
+
+	CMOption<BYTE> bUseHostnameAsPlace;
+	CMOption<wchar_t*> wstrPlace;
+
+	CMOption<BYTE> bUseBBCodes;
+
+	CMOption<wchar_t*> wstrCListGroup;
+
+	CSkypeOptions(PROTO_INTERFACE *proto) :
+
+		bAutoHistorySync(proto, "AutoSync", true),
+		bMarkAllAsUnread(proto, "MarkMesUnread", true),
+
+		wstrPlace(proto, "Place", L""),
+		bUseHostnameAsPlace(proto, "UseHostName", true),
+
+		bUseBBCodes(proto, "UseBBCodes", true),
+
+		wstrCListGroup(proto, SKYPE_SETTINGS_GROUP, L"Skype")
+	{
+	}
+
+};
 
 #endif //_SKYPE_DB_H_

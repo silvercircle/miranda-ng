@@ -6,8 +6,8 @@ struct TContactInfo
 private:
 	MCONTACT hContact;
 	DWORD status;
-	TCHAR *name;
-	TCHAR *group;
+	wchar_t *name;
+	wchar_t *group;
 	bool bManual;
 	float fRate;
 
@@ -17,13 +17,13 @@ public:
 		bManual(_bManual),
 		fRate(_fRate)
 	{
-		name = mir_tstrdup(pcli->pfnGetContactDisplayName(hContact, 0));
+		name = mir_wstrdup(pcli->pfnGetContactDisplayName(hContact, 0));
 
 		if (g_Options.bUseGroups) {
-			if ((group = db_get_tsa(hContact, "CList", "Group")) == NULL)
-				group = mir_tstrdup(TranslateT("<no group>"));
+			if ((group = db_get_wsa(hContact, "CList", "Group")) == NULL)
+				group = mir_wstrdup(TranslateT("<no group>"));
 		}
-		else group = mir_tstrdup(TranslateT("Favorite Contacts"));
+		else group = mir_wstrdup(TranslateT("Favorite Contacts"));
 
 		status = db_get_w(hContact, GetContactProto(hContact), "Status", ID_STATUS_OFFLINE);
 	}
@@ -39,7 +39,7 @@ public:
 		return hContact;
 	}
 
-	TCHAR *getGroup() const
+	wchar_t *getGroup() const
 	{
 		return group;
 	}
@@ -56,8 +56,8 @@ public:
 		}
 
 		int res = 0;
-		if (res = mir_tstrcmp(p1->group, p2->group)) return res;
-		if (res = mir_tstrcmp(p1->name, p2->name)) return res;
+		if (res = mir_wstrcmp(p1->group, p2->group)) return res;
+		if (res = mir_wstrcmp(p1->name, p2->name)) return res;
 		return 0;
 	}
 };
@@ -66,7 +66,7 @@ class TFavContacts : public LIST < TContactInfo >
 {
 private:
 	int nGroups;
-	TCHAR *prevGroup;
+	wchar_t *prevGroup;
 	MIDatabase *db;
 
 	int addContact(MCONTACT hContact, bool bManual)
@@ -84,8 +84,8 @@ private:
 
 		TContactInfo *info = new TContactInfo(hContact, bManual);
 		insert(info);
-		TCHAR *group = info->getGroup();
-		if (prevGroup && mir_tstrcmp(prevGroup, group))
+		wchar_t *group = info->getGroup();
+		if (prevGroup && mir_wstrcmp(prevGroup, group))
 			++nGroups;
 		prevGroup = group;
 		return 1;
@@ -94,7 +94,7 @@ private:
 public:
 	TFavContacts() : LIST<TContactInfo>(5, TContactInfo::cmp)
 	{
-		db = GetCurrentDatabase();
+		db = db_get_current();
 	}
 
 	~TFavContacts()

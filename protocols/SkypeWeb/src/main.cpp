@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2015-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -20,8 +20,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 int hLangpack;
 HINSTANCE g_hInstance;
 CLIST_INTERFACE *pcli;
+FI_INTERFACE *fii = NULL;
 char g_szMirVer[100];
 HANDLE g_hCallEvent;
+CHAT_MANAGER *pci;
 
 PLUGININFOEX pluginInfo =
 {
@@ -55,9 +57,10 @@ extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = { MIID_PROTOC
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
-
-	CallService(MS_SYSTEM_GETVERSIONTEXT, sizeof(g_szMirVer), LPARAM(g_szMirVer));
+	pcli = Clist_GetInterface();
+	pci = Chat_GetInterface();
+	CallService(MS_IMG_GETINTERFACE, FI_IF_VERSION, (LPARAM)&fii);
+	Miranda_GetVersionText(g_szMirVer, sizeof(g_szMirVer));
 
 	PROTOCOLDESCRIPTOR pd = { 0 };
 	pd.cbSize = sizeof(pd);

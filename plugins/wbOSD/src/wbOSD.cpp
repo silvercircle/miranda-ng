@@ -9,13 +9,13 @@ Distributed under GNU's GPL 2 or later
 
 #include "stdafx.h"
 
-TCHAR szClassName[] = _T("wbOSD");
-const static osdmsg defstr = { _T(""), 0, RGB(0, 0, 0), 0, 0 };
+wchar_t szClassName[] = L"wbOSD";
+const static osdmsg defstr = { L"", 0, RGB(0, 0, 0), 0, 0 };
 
-int DrawMe(HWND hwnd, TCHAR *string, COLORREF color)
+int DrawMe(HWND hwnd, wchar_t *string, COLORREF color)
 {
 	logmsg("DrawMe");
-	if (!string) string = _T("bullshit");
+	if (!string) string = L"bullshit";
 
 	plgsettings plgs;
 	loadDBSettings(&plgs);
@@ -161,7 +161,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 		logmsg("WindowProcedure::USER+1");
 
 		ms = (osdmsg*)mir_alloc(sizeof(osdmsg));
-		ms->text = mir_tstrdup((TCHAR *)wParam);
+		ms->text = mir_wstrdup((wchar_t *)wParam);
 		if (lParam == 0)
 			lParam = db_get_dw(NULL, THIS_MODULE, "timeout", DEFAULT_TIMEOUT);
 		ms->timeout = lParam;
@@ -206,7 +206,7 @@ LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
 		ms = (osdmsg*)mir_alloc(sizeof(osdmsg));
 		memcpy(ms, (osdmsg*)wParam, sizeof(osdmsg));
-		ms->text = mir_tstrdup(ms->text);
+		ms->text = mir_wstrdup(ms->text);
 
 		SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)ms);
 		SetTimer(hwnd, (UINT_PTR)ms, (UINT)ms->timeout, 0);
@@ -276,7 +276,7 @@ int MainInit(WPARAM, LPARAM)
 	if (!RegisterClassEx(&wincl))
 		return 0;
 
-	g_hWnd = CreateWindowEx(WS_EX_LAYERED | WS_EX_TOOLWINDOW, szClassName, _T("WannaBeOSD"),
+	g_hWnd = CreateWindowEx(WS_EX_LAYERED | WS_EX_TOOLWINDOW, szClassName, L"WannaBeOSD",
 		WS_POPUP,
 		db_get_dw(NULL, THIS_MODULE, "winxpos", DEFAULT_WINXPOS),
 		db_get_dw(NULL, THIS_MODULE, "winypos", DEFAULT_WINYPOS),
@@ -288,7 +288,7 @@ int MainInit(WPARAM, LPARAM)
 
 	SetLayeredWindowAttributes(g_hWnd, db_get_dw(NULL, THIS_MODULE, "bkclr", DEFAULT_BKCLR), db_get_b(NULL, THIS_MODULE, "alpha", DEFAULT_ALPHA), (db_get_b(NULL, THIS_MODULE, "transparent", DEFAULT_TRANPARENT) ? LWA_COLORKEY : 0) | LWA_ALPHA);
 
-	hservosda = CreateServiceFunction("OSD/Announce", OSDAnnounce);
+	CreateServiceFunction("OSD/Announce", OSDAnnounce);
 
 	HookEvent(ME_DB_EVENT_ADDED, HookedNewEvent);
 

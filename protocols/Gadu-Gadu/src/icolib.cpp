@@ -41,8 +41,6 @@ extern IconItem iconList[] =
 	{ LPGEN("Concurrent sessions"),        "sessions",      IDI_SESSIONS         }
 };
 
-HANDLE hIconLibItem[_countof(iconList)];
-
 void gg_icolib_init()
 {
 	Icon_Register(hInstance, "Protocols/" GGDEF_PROTO, iconList, _countof(iconList), GGDEF_PROTO);
@@ -59,7 +57,7 @@ HANDLE GetIconHandle(int iconId)
 {
 	for(int i = 0; i < _countof(iconList); i++)
 		if (iconList[i].defIconID == iconId)
-			return hIconLibItem[i];
+			return iconList[i].hIcolib;
 	return NULL;
 }
 
@@ -68,16 +66,4 @@ void ReleaseIconEx(const char* name, bool big)
 	char szSettingName[100];
 	mir_snprintf(szSettingName, "%s_%s", GGDEF_PROTO, name);
 	IcoLib_Release(szSettingName, big);
-}
-
-void WindowSetIcon(HWND hWnd, const char* name)
-{
-	SendMessage(hWnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIconEx(name, TRUE));
-	SendMessage(hWnd, WM_SETICON, ICON_SMALL, (LPARAM)LoadIconEx(name, FALSE));
-}
-
-void WindowFreeIcon(HWND hWnd)
-{
-	IcoLib_ReleaseIcon((HICON)SendMessage(hWnd, WM_SETICON, ICON_BIG, 0));
-	IcoLib_ReleaseIcon((HICON)SendMessage(hWnd, WM_SETICON, ICON_SMALL, 0));
 }

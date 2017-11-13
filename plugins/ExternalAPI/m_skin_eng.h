@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -25,7 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef M_ske_H_INC
 #define M_ske_H_INC
 
-#include <m_clui.h>
 #include <m_clistint.h>
 
 /*defaults*/
@@ -68,11 +67,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*SERVICES*/
 
 //toggle the 'hide offline contacts' flag and call CLUI
-//wParam=0
-//lParam=0
 #define MS_CLIST_TOGGLEHIDEOFFLINE  "CList/ToggleHideOffline"
-
-#define MS_CLIST_TOGGLEGROUPS  "CList/ToggleGroups"
 
 #define MS_CLIST_TOGGLESOUNDS  "CList/ToggleSounds"
 

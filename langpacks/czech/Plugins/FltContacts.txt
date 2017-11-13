@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: FltContacts.dll
 ;  Plugin: Floating contacts
-;  Version: 0.7.0.2
+;  Version: 0.7.0.4
 ;  Authors: Iavor Vajarov, Kosh&chka, Victor Pavlychko
 ;============================================================
 [Floating Contacts plugin for Miranda.]
@@ -21,7 +21,7 @@ pixelů
 [Hide all contacts]
 Skrýt všechny kontakty
 [Hide when a fullscreen app is active]
-Skrýt v režimu na celou obrazovku
+Skrýt v celoobrazovkovém režimu
 [Show tooltips*]
 Zobrazovat tipy*
 [ms]

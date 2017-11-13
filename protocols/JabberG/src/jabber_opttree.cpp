@@ -6,7 +6,7 @@ Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
 Copyright (c) 2007     Maxim Mluhov
 Copyright (c) 2007     Victor Pavlychko
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -41,7 +41,7 @@ CCtrlTreeOpts::~CCtrlTreeOpts()
 		delete m_options[i];
 }
 
-void CCtrlTreeOpts::AddOption(TCHAR *szOption, CMOption<BYTE> &option)
+void CCtrlTreeOpts::AddOption(wchar_t *szOption, CMOption<BYTE> &option)
 {
 	m_options.insert(new COptionsItem(szOption, option), m_options.getCount());
 }
@@ -90,10 +90,10 @@ void CCtrlTreeOpts::OnInit()
 {
 	CCtrlTreeView::OnInit();
 
-	TCHAR itemName[1024];
+	wchar_t itemName[1024];
 	HIMAGELIST hImgLst;
 
-	SelectItem(NULL);
+	SelectItem(nullptr);
 	DeleteAllItems();
 
 	hImgLst = ImageList_Create(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), ILC_COLOR | ILC_COLOR32 | ILC_MASK, 5, 1);
@@ -108,19 +108,19 @@ void CCtrlTreeOpts::OnInit()
 
 	/* build options tree. based on code from IcoLib */
 	for (int i = 0; i < m_options.getCount(); i++) {
-		TCHAR *sectionName;
+		wchar_t *sectionName;
 		int sectionLevel = 0;
 
-		HTREEITEM hSection = NULL;
-		mir_tstrcpy(itemName, m_options[i]->m_szOptionName);
+		HTREEITEM hSection = nullptr;
+		mir_wstrcpy(itemName, m_options[i]->m_szOptionName);
 		sectionName = itemName;
 
 		while (sectionName) {
 			// allow multi-level tree
-			TCHAR *pItemName = sectionName;
+			wchar_t *pItemName = sectionName;
 			HTREEITEM hItem;
 
-			if (sectionName = _tcschr(sectionName, '/')) {
+			if (sectionName = wcschr(sectionName, '/')) {
 				// one level deeper
 				*sectionName = 0;
 				sectionName++;
@@ -163,7 +163,7 @@ void CCtrlTreeOpts::OnInit()
 
 	TranslateTree();
 	ShowWindow(m_hwnd, SW_SHOW);
-	SelectItem(FindNamedItem(0, NULL));
+	SelectItem(FindNamedItem(0, nullptr));
 }
 
 void CCtrlTreeOpts::OnDestroy()
@@ -225,10 +225,10 @@ void CCtrlTreeOpts::ProcessItemClick(HTREEITEM hti)
 	SetItem(&tvi);
 }
 
-CCtrlTreeOpts::COptionsItem::COptionsItem(TCHAR *szOption, CMOption<BYTE> &option) :
-m_option(&option), m_groupId(OPTTREE_CHECK), m_hItem(NULL)
+CCtrlTreeOpts::COptionsItem::COptionsItem(wchar_t *szOption, CMOption<BYTE> &option) :
+m_option(&option), m_groupId(OPTTREE_CHECK), m_hItem(nullptr)
 {
-	m_szOptionName = mir_tstrdup(szOption);
+	m_szOptionName = mir_wstrdup(szOption);
 }
 
 CCtrlTreeOpts::COptionsItem::~COptionsItem()

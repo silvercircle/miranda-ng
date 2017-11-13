@@ -136,7 +136,7 @@ Windowsfarben verwenden
 Standardfarben verwenden
 [Delay]
 Verzögerung
-[From Popup plugin]
+[From popup plugin]
 Vom Popup-Plugin
 [Custom]
 Benutzerdef.
@@ -605,6 +605,10 @@ Allgemein
 ;file \plugins\UserInfoEx\src\mir_icolib.h
 [Extended user info]
 Erweiterte Benutzerinfos
+[Dialogs]
+Dialoge
+[Buttons]
+Schaltflächen
 ;file \plugins\UserInfoEx\src\mir_menuitems.cpp
 [Export/import contact]
 Kontakt ex-/importieren
@@ -1070,23 +1074,28 @@ Geschieden
 Getrennt
 [Widowed]
 Verwitwet
+[Actively searching]
+Aktiv suchend
+[In love]
+Verliebt
+[It's complicated]
+Es ist kompliziert
+[In a civil union]
+Eingetragene Partnerschaft
 [jun.]
 Jun.
 [sen.]
 Sen.
 ;file \plugins\UserInfoEx\src\svc_constants.h
-;file \plugins\UserInfoEx\src\svc_contactinfo.cpp
-['(Unknown Contact)']
-(Unbekannter Kontakt)
 ;file \plugins\UserInfoEx\src\svc_email.cpp
 [Send e-mail]
 E-Mail senden
 [Memory allocation error!]
 Speicher konnte nicht bereitgestellt werden!
-[E-mail (uinfoex)]
+[E-mail (UInfoEx)]
 E-Mail (UInfoEx)
 ;file \plugins\UserInfoEx\src\svc_gender.cpp
-[Gender (uinfoex)]
+[Gender (UInfoEx)]
 Geschlecht (UInfoEx)
 ;file \plugins\UserInfoEx\src\svc_homepage.cpp
 [User has no valid homepage]
@@ -1095,10 +1104,10 @@ Der Kontakt hat keine gültige Homepage
 Homepage ansehen
 [&Homepage]
 &Homepage
-[Homepage (uinfoex)]
+[Homepage (UInfoEx)]
 Homepage (UInfoEx)
 ;file \plugins\UserInfoEx\src\svc_phone.cpp
-[Phone (uinfoex)]
+[Phone (UInfoEx)]
 Telefon (UInfoEx)
 ;file \plugins\UserInfoEx\src\svc_refreshci.cpp
 [[b]%s (%S)...[/b]\n%d Contacts remaining]
@@ -1150,7 +1159,7 @@ Geburtstags-Erinnerung
 Kommende Geburtstage
 [Anniversary Reminder]
 Jahrestagserinnerung
-[Reminder (uinfoex)]
+[Reminder (UInfoEx)]
 Erinnern (UInfoEx)
 ;file \plugins\UserInfoEx\src\ex_import\classExImContactBase.cpp
 [contact identification]
@@ -1238,6 +1247,6 @@ Importierte Kontakte: %u / %u\nImportierte Einstellungen: %u / %u\nImportierte E
 [FATAL: An exception was thrown while importing contacts from xmlCard!]
 Schwerwiegender Fehler: Eine Ausnahme entstand beim Importieren der XMLCard!
 ;file \plugins\UserInfoEx\src\Flags\svc_flags.cpp
-[Flags (uinfoex)]
+[Flags (UInfoEx)]
 Flaggen (UInfoEx)
 ;file \plugins\UserInfoEx\src\Flags\svc_flagsicons.cpp

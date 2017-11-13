@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern HINSTANCE hInst;
 extern int nCountriesCount;
 extern struct CountryListEntry *countries;
-static HANDLE hServiceIpToCountry;
 
 /************************* Bin Records ****************************/
 
@@ -73,7 +72,7 @@ static BOOL EnsureRecordCacheLoaded(BYTE **pdata,DWORD *pcount)
 	mir_cslock lck(csRecordCache);
 	if (dataRecords == NULL) {
 		/* load record data list from resources */
-		hrsrc=FindResource(hInst,MAKEINTRESOURCE(IDR_IPTOCOUNTRY),_T("BIN"));
+		hrsrc=FindResource(hInst,MAKEINTRESOURCE(IDR_IPTOCOUNTRY),L"BIN");
 		cb=SizeofResource(hInst,hrsrc);
 		dataRecords=(BYTE*)LockResource(LoadResource(hInst,hrsrc));
 		if (cb<=sizeof(DWORD) || dataRecords == NULL)
@@ -207,27 +206,27 @@ static int EnumIpDataLines(const char *pszFileCSV,const char *pszFileOut)
 			buf=strchr(pszCountry,'"');
 			*buf=pszTwo[2]='\0';
 			/* corrections */
-			if (!mir_tstrcmpi(pszCountry,"ANTARCTICA")) continue;
-			if (!mir_tstrcmpi(pszCountry,"TIMOR-LESTE")) continue;
-			if (!mir_tstrcmpi(pszCountry,"PALESTINIAN TERRITORY, OCCUPIED"))
-				mir_tstrcpy(pszCountry,"ISRAEL");
-			else if (!mir_tstrcmpi(pszCountry,"UNITED STATES MINOR OUTLYING ISLANDS"))
-				mir_tstrcpy(pszCountry,"UNITED STATES");
-			else if (!mir_tstrcmpi(pszCountry,"SOUTH GEORGIA AND THE SOUTH SANDWICH ISLANDS"))
-				mir_tstrcpy(pszCountry,"UNITED KINGDOM");
-			else if (!mir_tstrcmpi(pszTwo,"JE")) /* map error */
-				mir_tstrcpy(pszCountry,"UNITED KINGDOM");
-			else if (!mir_tstrcmpi(pszTwo,"AX")) /* Åland Island belongs to Finland */
-				mir_tstrcpy(pszCountry,"FINLAND");
-			else if (!mir_tstrcmpi(pszTwo,"ME"))
-				mir_tstrcpy(pszCountry,"MONTENEGRO");
-			else if (!mir_tstrcmpi(pszTwo,"RS") || !mir_tstrcmpi(pszTwo,"CS"))
-				mir_tstrcpy(pszCountry,"SERBIA");
+			if (!mir_wstrcmpi(pszCountry,"ANTARCTICA")) continue;
+			if (!mir_wstrcmpi(pszCountry,"TIMOR-LESTE")) continue;
+			if (!mir_wstrcmpi(pszCountry,"PALESTINIAN TERRITORY, OCCUPIED"))
+				mir_wstrcpy(pszCountry,"ISRAEL");
+			else if (!mir_wstrcmpi(pszCountry,"UNITED STATES MINOR OUTLYING ISLANDS"))
+				mir_wstrcpy(pszCountry,"UNITED STATES");
+			else if (!mir_wstrcmpi(pszCountry,"SOUTH GEORGIA AND THE SOUTH SANDWICH ISLANDS"))
+				mir_wstrcpy(pszCountry,"UNITED KINGDOM");
+			else if (!mir_wstrcmpi(pszTwo,"JE")) /* map error */
+				mir_wstrcpy(pszCountry,"UNITED KINGDOM");
+			else if (!mir_wstrcmpi(pszTwo,"AX")) /* Åland Island belongs to Finland */
+				mir_wstrcpy(pszCountry,"FINLAND");
+			else if (!mir_wstrcmpi(pszTwo,"ME"))
+				mir_wstrcpy(pszCountry,"MONTENEGRO");
+			else if (!mir_wstrcmpi(pszTwo,"RS") || !mir_wstrcmpi(pszTwo,"CS"))
+				mir_wstrcpy(pszCountry,"SERBIA");
 			/* convert */
 			for(i=0;i<nCountriesCount;i++) {
 				/* map different writings */
 				for(j=0;j<_countof(differentCountryNames);j++)
-					if (!mir_tstrcmpi(countries[i].szName,differentCountryNames[j].szMir)) {
+					if (!mir_wstrcmpi(countries[i].szName,differentCountryNames[j].szMir)) {
 						buf=(char*)differentCountryNames[j].szCSV;
 						break;
 					}
@@ -289,9 +288,9 @@ static void BinConvThread(void *unused)
 	if (MessageBox(NULL,_T("Looking for 'ip-to-country.csv' in current directory.\n"
 		"It will be converted into 'ip-to-country.bin'.\n"
 		"See debug output for more details.\n"
-		"This process may take very long."),_T("Bin Converter"),MB_OKCANCEL|MB_ICONINFORMATION|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL) == IDOK) {
+		"This process may take very long."),L"Bin Converter",MB_OKCANCEL|MB_ICONINFORMATION|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL) == IDOK) {
 		EnumIpDataLines("ip-to-country.csv","ip-to-country.bin");
-		MessageBox(NULL,_T("Done!\n'ip-to-country.bin' has been created in current directory."),_T("Bin Converter"),MB_OK|MB_ICONINFORMATION|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL);
+		MessageBox(NULL,L"Done!\n'ip-to-country.bin' has been created in current directory.",L"Bin Converter",MB_OK|MB_ICONINFORMATION|MB_SETFOREGROUND|MB_TOPMOST|MB_TASKMODAL);
 	}
 }
 
@@ -304,7 +303,7 @@ void InitIpToCountry(void)
 	nDataRecordsCount=0;
 	dataRecords=NULL;
 	/* Services */
-	hServiceIpToCountry=CreateServiceFunction(MS_FLAGS_IPTOCOUNTRY,ServiceIpToCountry);
+	CreateServiceFunction(MS_FLAGS_IPTOCOUNTRY,ServiceIpToCountry);
 #ifdef BINCONV
 	mir_forkthread(BinConvThread,NULL);
 #endif
@@ -312,7 +311,5 @@ void InitIpToCountry(void)
 
 void UninitIpToCountry(void)
 {
-	mir_free(dataRecords); /* does NULL check */
-	/* Servcies */
-	DestroyServiceFunction(hServiceIpToCountry);
+	mir_free(dataRecords);
 }

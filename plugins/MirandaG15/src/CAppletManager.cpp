@@ -199,14 +199,14 @@ bool CAppletManager::Shutdown()
 //************************************************************************
 // Translates the specified string, and inserts the parameters
 //************************************************************************
-tstring CAppletManager::TranslateString(TCHAR *szString, ...)
+tstring CAppletManager::TranslateString(wchar_t *szString, ...)
 {
-	TCHAR out[1024];
-	TCHAR *szTranslatedString = TranslateTS(szString);
+	wchar_t out[1024];
+	wchar_t *szTranslatedString = TranslateW(szString);
 
 	va_list body;
 	va_start(body, szString);
-	_vstprintf_s(out, _countof(out), szTranslatedString, body);
+	vswprintf_s(out, _countof(out), szTranslatedString, body);
 	va_end(body);
 	return out;
 }
@@ -440,7 +440,7 @@ tstring CAppletManager::GetContactDisplayname(MCONTACT hContact, bool bShortened
 
 	tstring strNick = GetContactDisplayname(hContact, false);
 	if (strNick.length() > (tstring::size_type)CConfig::GetIntSetting(NOTIFY_NICKCUTOFF_OFFSET))
-		return strNick.erase(CConfig::GetIntSetting(NOTIFY_NICKCUTOFF_OFFSET)) + _T("...");
+		return strNick.erase(CConfig::GetIntSetting(NOTIFY_NICKCUTOFF_OFFSET)) + L"...";
 
 	return strNick;
 }
@@ -451,9 +451,9 @@ tstring CAppletManager::GetContactDisplayname(MCONTACT hContact, bool bShortened
 tstring CAppletManager::GetContactGroup(MCONTACT hContact)
 {
 	DBVARIANT dbv;
-	int res = db_get_ts(hContact, "CList", "Group", &dbv);
+	int res = db_get_ws(hContact, "CList", "Group", &dbv);
 
-	tstring strGroup = _T("");
+	tstring strGroup = L"";
 	if (!res)
 		strGroup = dbv.ptszVal;
 
@@ -532,19 +532,19 @@ tstring CAppletManager::GetFormattedTimestamp(tm *tm_time)
 	time(&now);
 	localtime_s(&tm_now, &now);
 
-	TCHAR buffer[128];
+	wchar_t buffer[128];
 
 	if (tm_time->tm_mday != tm_now.tm_mday || tm_time->tm_mon != tm_now.tm_mon) {
 		if (CConfig::GetBoolSetting(TIMESTAMP_SECONDS))
-			_tcsftime(buffer, 128, _T("[%x %H:%M:%S]"), tm_time);
+			wcsftime(buffer, 128, L"[%x %H:%M:%S]", tm_time);
 		else
-			_tcsftime(buffer, 128, _T("[%x %H:%M]"), tm_time);
+			wcsftime(buffer, 128, L"[%x %H:%M]", tm_time);
 	}
 	else {
 		if (CConfig::GetBoolSetting(TIMESTAMP_SECONDS))
-			_tcsftime(buffer, 128, _T("[%H:%M:%S]"), tm_time);
+			wcsftime(buffer, 128, L"[%H:%M:%S]", tm_time);
 		else
-			_tcsftime(buffer, 128, _T("[%H:%M]"), tm_time);
+			wcsftime(buffer, 128, L"[%H:%M]", tm_time);
 	}
 
 	return toTstring(buffer);
@@ -555,7 +555,7 @@ tstring CAppletManager::GetFormattedTimestamp(tm *tm_time)
 //************************************************************************
 void CAppletManager::HandleEvent(CEvent *pEvent)
 {
-	TRACE(_T("<< Event: %i\n"), (int)pEvent->eType);
+	TRACE(L"<< Event: %i\n", (int)pEvent->eType);
 
 	// check if the event's timestamp needs to be set
 	if (!pEvent->bTime) {
@@ -625,7 +625,7 @@ void CAppletManager::UpdateMessageJobs()
 			Event.hValue = (*iter)->hEvent;
 			Event.hContact = (*iter)->hContact;
 			Event.iValue = ACKRESULT_FAILED;
-			Event.strValue = TranslateString(_T("Timeout: No response from contact/server"));
+			Event.strValue = TranslateString(L"Timeout: No response from contact/server");
 
 			HandleEvent(&Event);
 
@@ -662,8 +662,7 @@ void CAppletManager::FinishMessageJob(SMessageJob *pJob)
 			// Only add the message to the history if the contact isn't an irc chatroom
 			if (!(pIRCCon && db_get_b(pJob->hContact, szProto, "ChatRoom", 0) != 0)) {
 				// Add the message to the database
-				DBEVENTINFO dbei = { 0 };
-				dbei.cbSize = sizeof(dbei);
+				DBEVENTINFO dbei = {};
 				dbei.eventType = EVENTTYPE_MESSAGE;
 				dbei.flags = DBEF_SENT | DBEF_UTF;
 				dbei.szModule = szProto;
@@ -750,9 +749,6 @@ void CAppletManager::SendTypingNotification(MCONTACT hContact, bool bEnable)
 MEVENT CAppletManager::SendMessageToContact(MCONTACT hContact, tstring strMessage)
 {
 	tstring strAscii = _A2T(toNarrowString(strMessage).c_str());
-	SMessageJob *pJob = new SMessageJob();
-	pJob->dwTimestamp = GetTickCount();
-	pJob->hContact = hContact;
 
 	char *szProto = GetContactProto(hContact);
 	tstring strProto = toTstring(szProto);
@@ -760,40 +756,30 @@ MEVENT CAppletManager::SendMessageToContact(MCONTACT hContact, tstring strMessag
 	CIRCConnection *pIRCCon = CAppletManager::GetInstance()->GetIRCConnection(strProto);
 
 	if (pIRCCon && db_get_b(hContact, szProto, "ChatRoom", 0) != 0) {
-		GCDEST gcd = { szProto, 0, GC_EVENT_SENDMESSAGE };
-
-		DBVARIANT dbv;
-		if (!db_get_ts(hContact, szProto, "Nick", &dbv))
-			gcd.ptszID = dbv.ptszVal;
-		else
+		ptrW wszNick(db_get_wsa(hContact, szProto, "Nick"));
+		if (wszNick == NULL)
 			return NULL;
 
-		tstring strID = tstring(gcd.ptszID) + _T(" - ") + tstring(_A2T(toNarrowString(pIRCCon->strNetwork).c_str()));
-		gcd.ptszID = (LPTSTR)strID.c_str();
-
-		GCEVENT gce = { sizeof(gce), &gcd };
-		gce.ptszStatus = _T("");
-		gce.ptszText = (LPTSTR)strAscii.c_str();
-		gce.time = time(NULL);
-		gce.bIsMe = true;
-		CallService(MS_GC_EVENT, NULL, (LPARAM)&gce);
-
-		pJob->hEvent = NULL;
-	}
-	else {
-		char* szMsgUtf = mir_utf8encodeW(strMessage.c_str());
-
-		pJob->iBufferSize = (int)mir_strlen(szMsgUtf) + 1;
-		pJob->pcBuffer = (char *)malloc(pJob->iBufferSize);
-		pJob->dwFlags = 0;
-
-		memcpy(pJob->pcBuffer, szMsgUtf, pJob->iBufferSize);
-		mir_free(szMsgUtf);
-
-		pJob->hEvent = (MEVENT)CallContactService(pJob->hContact, PSS_MESSAGE, 0, (LPARAM)pJob->pcBuffer);
-		CAppletManager::GetInstance()->AddMessageJob(pJob);
+		tstring strID = tstring(wszNick) + L" - " + tstring(_A2T(toNarrowString(pIRCCon->strNetwork).c_str()));
+		Chat_SendUserMessage(szProto, strID.c_str(), strAscii.c_str());
+		return 0;
 	}
 
+	SMessageJob *pJob = new SMessageJob();
+	pJob->dwTimestamp = GetTickCount();
+	pJob->hContact = hContact;
+
+	char* szMsgUtf = mir_utf8encodeW(strMessage.c_str());
+
+	pJob->iBufferSize = (int)mir_strlen(szMsgUtf) + 1;
+	pJob->pcBuffer = (char *)malloc(pJob->iBufferSize);
+	pJob->dwFlags = 0;
+
+	memcpy(pJob->pcBuffer, szMsgUtf, pJob->iBufferSize);
+	mir_free(szMsgUtf);
+
+	pJob->hEvent = (MEVENT)ProtoChainSend(pJob->hContact, PSS_MESSAGE, 0, (LPARAM)pJob->pcBuffer);
+	CAppletManager::GetInstance()->AddMessageJob(pJob);
 	return pJob->hEvent;
 }
 
@@ -802,14 +788,8 @@ MEVENT CAppletManager::SendMessageToContact(MCONTACT hContact, tstring strMessag
 //************************************************************************
 bool CAppletManager::IsMessageWindowOpen(MCONTACT hContact)
 {
-	MessageWindowInputData mwid;
-	mwid.cbSize = sizeof(MessageWindowInputData);
-	mwid.hContact = hContact;
-	mwid.uFlags = MSG_WINDOW_UFLAG_MSG_BOTH;
-
 	MessageWindowData mwd;
-	mwd.cbSize = sizeof(MessageWindowData);
-	CallService(MS_MSG_GETWINDOWDATA, (WPARAM)&mwid, (LPARAM)&mwd);
+	Srmm_GetWindowData(hContact, mwd);
 	if (mwd.uState & MSG_WINDOW_STATE_EXISTS)
 		return true;
 	return false;
@@ -821,7 +801,7 @@ bool CAppletManager::IsMessageWindowOpen(MCONTACT hContact)
 void CAppletManager::MarkMessageAsRead(MCONTACT hContact, MEVENT hEvent)
 {
 	db_event_markRead(hContact, hEvent);
-	CallService(MS_CLIST_REMOVEEVENT, hContact, (LPARAM)hEvent);
+	pcli->pfnRemoveEvent(hContact, hEvent);
 }
 
 //************************************************************************
@@ -830,15 +810,11 @@ void CAppletManager::MarkMessageAsRead(MCONTACT hContact, MEVENT hEvent)
 bool CAppletManager::TranslateDBEvent(CEvent *pEvent, WPARAM hContact, LPARAM hdbevent)
 {
 	// Create struct for dbevent
-	DBEVENTINFO dbevent;
-	memset(&dbevent, 0, sizeof(dbevent));
-	//dbevent.flags |= PREF_UNICODE;
-	dbevent.cbSize = sizeof(dbevent);
+	DBEVENTINFO dbevent = {};
 	dbevent.cbBlob = db_event_getBlobSize(hdbevent);
 	if (dbevent.cbBlob == -1)		// hdbevent is invalid
-	{
 		return false;
-	}
+
 	dbevent.pBlob = (PBYTE)malloc(dbevent.cbBlob);
 	if (db_event_get(hdbevent, &dbevent) != 0) {
 		free(dbevent.pBlob);
@@ -875,7 +851,7 @@ bool CAppletManager::TranslateDBEvent(CEvent *pEvent, WPARAM hContact, LPARAM hd
 			pEvent->strValue = Utf8_Decode((char*)dbevent.pBlob);
 		}
 		else if ((int)dbevent.cbBlob == msglen * 3) {
-			pEvent->strValue = (TCHAR *)& dbevent.pBlob[msglen];
+			pEvent->strValue = (wchar_t *)& dbevent.pBlob[msglen];
 		}
 		else {
 			pEvent->strValue = toTstring((char*)dbevent.pBlob);
@@ -887,42 +863,42 @@ bool CAppletManager::TranslateDBEvent(CEvent *pEvent, WPARAM hContact, LPARAM hd
 				pEvent->bNotification = true;
 		}
 
-		pEvent->strDescription = strName + _T(": ") + pEvent->strValue;
-		pEvent->strSummary = TranslateString(_T("New message from %s"), strName.c_str());
+		pEvent->strDescription = strName + L": " + pEvent->strValue;
+		pEvent->strSummary = TranslateString(L"New message from %s", strName.c_str());
 		break;
 	case EVENTTYPE_URL:
 		if (CConfig::GetBoolSetting(NOTIFY_URL))
 			pEvent->bNotification = true;
 
 		pEvent->eType = EVENT_URL;
-		pEvent->strDescription = TranslateString(_T("Incoming URL from %s"), strName.c_str());
+		pEvent->strDescription = TranslateString(L"Incoming URL from %s", strName.c_str());
 		break;
 	case EVENTTYPE_CONTACTS:
 		if (CConfig::GetBoolSetting(NOTIFY_CONTACTS))
 			pEvent->bNotification = true;
 
-		pEvent->strDescription = TranslateString(_T("Incoming contacts from %s"), strName.c_str());
+		pEvent->strDescription = TranslateString(L"Incoming contacts from %s", strName.c_str());
 		pEvent->eType = EVENT_CONTACTS;
 		break;
 	case EVENTTYPE_ADDED:
 		if (CConfig::GetBoolSetting(NOTIFY_CONTACTS))
 			pEvent->bNotification = true;
 
-		pEvent->strDescription = TranslateString(_T("You were added by %s"), strName.c_str());
+		pEvent->strDescription = TranslateString(L"You were added by %s", strName.c_str());
 		pEvent->eType = EVENT_ADDED;
 		break;
 	case EVENTTYPE_AUTHREQUEST:
 		if (CConfig::GetBoolSetting(NOTIFY_CONTACTS))
 			pEvent->bNotification = true;
 
-		pEvent->strDescription = TranslateString(_T("Incoming Authrequest!"));
+		pEvent->strDescription = TranslateString(L"Incoming Authrequest!");
 		pEvent->eType = EVENT_AUTHREQUEST;
 		break;
 	case EVENTTYPE_FILE:
 		if (CConfig::GetBoolSetting(NOTIFY_FILE))
 			pEvent->bNotification = true;
 
-		pEvent->strDescription = TranslateString(_T("Incoming file from %s"), strName.c_str());
+		pEvent->strDescription = TranslateString(L"Incoming file from %s", strName.c_str());
 		pEvent->eType = EVENT_FILE;
 		break;
 	default:
@@ -932,7 +908,7 @@ bool CAppletManager::TranslateDBEvent(CEvent *pEvent, WPARAM hContact, LPARAM hd
 
 	if (CConfig::GetBoolSetting(NOTIFY_SHOWPROTO)) {
 		char *szProto = GetContactProto(pEvent->hContact);
-		pEvent->strDescription = _T("(") + toTstring(szProto) + _T(") ") + pEvent->strDescription;
+		pEvent->strDescription = L"(" + toTstring(szProto) + L") " + pEvent->strDescription;
 	}
 
 	// Clean up
@@ -946,28 +922,28 @@ bool CAppletManager::TranslateDBEvent(CEvent *pEvent, WPARAM hContact, LPARAM hd
 tstring CAppletManager::StripIRCFormatting(tstring strText)
 {
 	tstring::size_type start = 0, i = 0;
-	tstring strEntity = _T("");
-	tstring strReplace = _T("");
+	tstring strEntity = L"";
+	tstring strReplace = L"";
 
 	while (i < strText.length()) {
-		start = strText.find(_T("%"), i);
+		start = strText.find(L"%", i);
 		if (start != string::npos && start < strText.length() - 1) {
 			strEntity = strText[start + 1];
-			if (strEntity == _T("%")) {
-				strText.replace(start, 2, _T("%"));
+			if (strEntity == L"%") {
+				strText.replace(start, 2, L"%");
 				i = start + 1;
 			}
 			/*
-			else if(strEntity == _T("b") || strEntity == _T("B") ||
-				strEntity == _T("i") || strEntity == _T("I") ||
-				strEntity ==_T("u") || strEntity == _T("U") ||
-				strEntity == _T("C") ||strEntity == _T("F"))
+			else if(strEntity == L"b" || strEntity == L"B" ||
+				strEntity == L"i" || strEntity == L"I" ||
+				strEntity ==L"u" || strEntity == L"U" ||
+				strEntity == L"C" ||strEntity == L"F")
 			{
 				strText.erase(start,2);
 				i = start;
 			}
 			*/
-			else if (strEntity == _T("c") || strEntity == _T("f")) {
+			else if (strEntity == L"c" || strEntity == L"f") {
 				strText.erase(start, 4);
 				i = start;
 			}
@@ -1004,7 +980,7 @@ CIRCConnection *CAppletManager::CreateIRCConnection(tstring strProtocol)
 {
 	CIRCConnection *pIRCCon = new CIRCConnection();
 	pIRCCon->strProtocol = strProtocol;
-	pIRCCon->strNetwork = _T("");
+	pIRCCon->strNetwork = L"";
 
 	m_vIRCConnections.push_back(pIRCCon);
 
@@ -1109,53 +1085,51 @@ CIRCHistory *CAppletManager::CreateIRCHistoryByName(tstring strProtocol, tstring
 int CAppletManager::HookChatInbound(WPARAM, LPARAM lParam)
 {
 	GCEVENT *gce = (GCEVENT*)lParam;
-	GCDEST *gcd;
-
-	if (gce == NULL || (gcd = gce->pDest) == NULL) {
-		TRACE(_T("<< [%s] skipping invalid event\n"));
+	if (gce == NULL) {
+		TRACE(L"<< [%s] skipping invalid event\n");
 		return 0;
 	}
 
-	TRACE(_T("<< [%s:%s] event %04X\n"), toTstring(gcd->pszModule).c_str(), gcd->ptszID, gcd->iType);
+	TRACE(L"<< [%s:%s] event %04X\n", toTstring(gce->pszModule).c_str(), gce->ptszID, gce->iType);
 
 	// get the matching irc connection entry
-	CIRCConnection *pIRCCon = CAppletManager::GetInstance()->GetIRCConnection(toTstring(gcd->pszModule));
+	CIRCConnection *pIRCCon = CAppletManager::GetInstance()->GetIRCConnection(toTstring(gce->pszModule));
 	if (!pIRCCon) {
-		TRACE(_T("<< [%s] connection not found, skipping event\n"), toTstring(gcd->pszModule).c_str());
+		TRACE(L"<< [%s] connection not found, skipping event\n", toTstring(gce->pszModule).c_str());
 		return 0;
 	}
 
 	// fetch the network name
-	if (gcd->iType == GC_EVENT_CHANGESESSIONAME) {
-		if (gcd->ptszID && !mir_tstrcmpi(gcd->ptszID, _T("Network log"))) {
-			pIRCCon->strNetwork = toTstring(gce->ptszText);
-			TRACE(_T("\t Found network identifier: %s\n"), pIRCCon->strNetwork.c_str());
-			return 0;
-		}
-	}
+	// if (gcd->iType == GC_EVENT_CHANGESESSIONAME) {
+	// 	if (gcd->ptszID && !mir_wstrcmpi(gcd->ptszID, L"Network log")) {
+	// 		pIRCCon->strNetwork = toTstring(gce->ptszText);
+	// 		TRACE(L"\t Found network identifier: %s\n", pIRCCon->strNetwork.c_str());
+	// 		return 0;
+	// 	}
+	// }
 
 	CEvent Event;
 	if (gce->bIsMe)
 		Event.eType = EVENT_IRC_SENT;
 	else
 		Event.eType = EVENT_IRC_RECEIVED;
-	Event.iValue = gcd->iType;
+	Event.iValue = gce->iType;
 	Event.hValue = lParam;
 
 	CIRCHistory *pHistory = NULL;
-	if (gcd->ptszID) {
-		tstring strChannel = toTstring(gcd->ptszID);
+	if (gce->ptszID) {
+		tstring strChannel = toTstring(gce->ptszID);
 		tstring::size_type pos = strChannel.find('-');
 		if (pos != tstring::npos)
 			strChannel = strChannel.substr(0, pos - 1);
 		else {
-			if (mir_tstrcmpi(gcd->ptszID, _T("Network log")))
-				TRACE(_T("\t WARNING: ignoring unknown event!\n"));
+			if (mir_wstrcmpi(gce->ptszID, L"Network log"))
+				TRACE(L"\t WARNING: ignoring unknown event!\n");
 			return 0;
 		}
 		pHistory = CAppletManager::GetInstance()->GetIRCHistoryByName(pIRCCon->strProtocol, strChannel);
 		if (!pHistory) {
-			if (gcd->iType == GC_EVENT_JOIN) {
+			if (gce->iType == GC_EVENT_JOIN) {
 				pHistory = CAppletManager::GetInstance()->CreateIRCHistoryByName(pIRCCon->strProtocol, strChannel);
 				if (pHistory)
 					pHistory->LUsers.push_back(toTstring(gce->ptszNick));
@@ -1164,19 +1138,19 @@ int CAppletManager::HookChatInbound(WPARAM, LPARAM lParam)
 		}
 		Event.hContact = pHistory->hContact;
 	}
-	else if (gcd->iType != GC_EVENT_INFORMATION) {
-		TRACE(_T("\t WARNING: ignoring unknown event!\n"));
+	else if (gce->iType != GC_EVENT_INFORMATION) {
+		TRACE(L"\t WARNING: ignoring unknown event!\n");
 		return 0;
 	}
 	else
 		Event.hContact = NULL;
 
 	// Ignore events from hidden chatrooms, except for join events
-	if (gcd->ptszID != NULL && db_get_b(Event.hContact, "CList", "Hidden", 0)) {
-		if (gcd->iType == GC_EVENT_JOIN && pHistory)
+	if (gce->ptszID != NULL && db_get_b(Event.hContact, "CList", "Hidden", 0)) {
+		if (gce->iType == GC_EVENT_JOIN && pHistory)
 			pHistory->LUsers.push_back(toTstring(gce->ptszNick));
 
-		TRACE(_T("\t Chatroom is hidden, skipping event!\n"));
+		TRACE(L"\t Chatroom is hidden, skipping event!\n");
 		return 0;
 	}
 
@@ -1185,17 +1159,17 @@ int CAppletManager::HookChatInbound(WPARAM, LPARAM lParam)
 	tstring strStatus = toTstring(gce->ptszStatus);
 
 	if (CConfig::GetBoolSetting(NOTIFY_NICKCUTOFF) && strNick.length() > (tstring::size_type)CConfig::GetIntSetting(NOTIFY_NICKCUTOFF_OFFSET))
-		strNick = strNick.erase(CConfig::GetIntSetting(NOTIFY_NICKCUTOFF_OFFSET)) + _T("...");
+		strNick = strNick.erase(CConfig::GetIntSetting(NOTIFY_NICKCUTOFF_OFFSET)) + L"...";
 
-	TRACE(_T("\t Handling event...\t"));
+	TRACE(L"\t Handling event...\t");
 
-	switch (gcd->iType) {
+	switch (gce->iType) {
 	case GC_EVENT_INFORMATION:
 		if (CConfig::GetBoolSetting(NOTIFY_IRC_CHANNEL))
 			Event.bNotification = true;
 
-		if (strText.find(_T("CTCP")) == 0)
-			Event.strValue = _T("--> ") + strText;
+		if (strText.find(L"CTCP") == 0)
+			Event.strValue = L"--> " + strText;
 		else
 			Event.strValue = strText;
 
@@ -1203,12 +1177,12 @@ int CAppletManager::HookChatInbound(WPARAM, LPARAM lParam)
 	case GC_EVENT_ACTION:
 		if (CConfig::GetBoolSetting(NOTIFY_IRC_EMOTES))
 			Event.bNotification = true;
-		Event.strValue = strNick + _T(" ") + strText;
+		Event.strValue = strNick + L" " + strText;
 		break;
 	case GC_EVENT_MESSAGE:
 		if (CConfig::GetBoolSetting(NOTIFY_IRC_MESSAGES))
 			Event.bNotification = true;
-		Event.strValue = strNick + _T(": ") + strText;
+		Event.strValue = strNick + L": " + strText;
 		break;
 	case GC_EVENT_JOIN:
 		// Add the user to the list
@@ -1219,7 +1193,7 @@ int CAppletManager::HookChatInbound(WPARAM, LPARAM lParam)
 		// Skip join event for user
 		if (gce->bIsMe)
 			return 0;
-		Event.strValue = TranslateString(_T("%s has joined the channel"), strNick.c_str());
+		Event.strValue = TranslateString(L"%s has joined the channel", strNick.c_str());
 
 		break;
 	case GC_EVENT_PART:
@@ -1227,7 +1201,7 @@ int CAppletManager::HookChatInbound(WPARAM, LPARAM lParam)
 			if (CConfig::GetBoolSetting(NOTIFY_IRC_USERS))
 				Event.bNotification = true;
 			tstring strFullNick = toTstring(gce->ptszNick);
-			Event.strValue = TranslateString(strText.empty() ? _T("%s has left") : _T("%s has left: %s"), strNick.c_str(), strText.c_str());
+			Event.strValue = TranslateString(strText.empty() ? L"%s has left" : L"%s has left: %s", strNick.c_str(), strText.c_str());
 			if (pHistory) {
 				// Remove the user from the list
 				list<tstring>::iterator iter = pHistory->LUsers.begin();
@@ -1244,12 +1218,12 @@ int CAppletManager::HookChatInbound(WPARAM, LPARAM lParam)
 	case GC_EVENT_QUIT:
 		if (CConfig::GetBoolSetting(NOTIFY_IRC_USERS))
 			Event.bNotification = true;
-		Event.strValue = TranslateString(strText.empty() ? _T("%s has disconnected") : _T("%s has disconnected: %s"), strNick.c_str(), strText.c_str());
+		Event.strValue = TranslateString(strText.empty() ? L"%s has disconnected" : L"%s has disconnected: %s", strNick.c_str(), strText.c_str());
 		break;
 	case GC_EVENT_KICK:
 		if (CConfig::GetBoolSetting(NOTIFY_IRC_USERS))
 			Event.bNotification = true;
-		Event.strValue = TranslateString(_T("%s has kicked %s: %s"), strStatus.c_str(), strNick.c_str(), strText.c_str());
+		Event.strValue = TranslateString(L"%s has kicked %s: %s", strStatus.c_str(), strNick.c_str(), strText.c_str());
 		break;
 	case GC_EVENT_NICK:
 		{
@@ -1258,9 +1232,9 @@ int CAppletManager::HookChatInbound(WPARAM, LPARAM lParam)
 			tstring strFullNick = toTstring(gce->ptszNick);
 
 			if (CConfig::GetBoolSetting(NOTIFY_NICKCUTOFF) && strText.length() > (tstring::size_type)CConfig::GetIntSetting(NOTIFY_NICKCUTOFF_OFFSET))
-				strText = strText.erase(CConfig::GetIntSetting(NOTIFY_NICKCUTOFF_OFFSET)) + _T("...");
+				strText = strText.erase(CConfig::GetIntSetting(NOTIFY_NICKCUTOFF_OFFSET)) + L"...";
 
-			Event.strValue = TranslateString(_T("%s is now known as %s"), strNick.c_str(), strText.c_str());
+			Event.strValue = TranslateString(L"%s is now known as %s", strNick.c_str(), strText.c_str());
 			if (pHistory) {
 				// change the nick in the userlist
 				list<tstring>::iterator iter = pHistory->LUsers.begin();
@@ -1275,12 +1249,12 @@ int CAppletManager::HookChatInbound(WPARAM, LPARAM lParam)
 	case GC_EVENT_NOTICE:
 		if (CConfig::GetBoolSetting(NOTIFY_IRC_NOTICES))
 			Event.bNotification = true;
-		Event.strValue = TranslateString(_T("Notice from %s: %s"), strNick.c_str(), strText.c_str());
+		Event.strValue = TranslateString(L"Notice from %s: %s", strNick.c_str(), strText.c_str());
 		break;
 	case GC_EVENT_TOPIC:
 		if (CConfig::GetBoolSetting(NOTIFY_IRC_CHANNEL))
 			Event.bNotification = true;
-		Event.strValue = TranslateString(_T("Topic is now '%s' (set by %s)"), strText.c_str(), strNick.c_str());
+		Event.strValue = TranslateString(L"Topic is now '%s' (set by %s)", strText.c_str(), strNick.c_str());
 		break;
 	case GC_EVENT_ADDSTATUS:
 		{
@@ -1288,9 +1262,9 @@ int CAppletManager::HookChatInbound(WPARAM, LPARAM lParam)
 				Event.bNotification = true;
 			tstring strNick2 = toTstring(gce->ptszStatus);
 			if (CConfig::GetBoolSetting(NOTIFY_NICKCUTOFF) && strNick2.length() > (tstring::size_type)CConfig::GetIntSetting(NOTIFY_NICKCUTOFF_OFFSET))
-				strNick2 = strNick2.erase(CConfig::GetIntSetting(NOTIFY_NICKCUTOFF_OFFSET)) + _T("...");
+				strNick2 = strNick2.erase(CConfig::GetIntSetting(NOTIFY_NICKCUTOFF_OFFSET)) + L"...";
 
-			Event.strValue = TranslateString(_T("%s enables '%s' for %s"), strText.c_str(), strNick2.c_str(), strNick.c_str());
+			Event.strValue = TranslateString(L"%s enables '%s' for %s", strText.c_str(), strNick2.c_str(), strNick.c_str());
 			break;
 		}
 	case GC_EVENT_REMOVESTATUS:
@@ -1299,16 +1273,16 @@ int CAppletManager::HookChatInbound(WPARAM, LPARAM lParam)
 				Event.bNotification = true;
 			tstring strNick2 = toTstring(gce->ptszStatus);
 			if (CConfig::GetBoolSetting(NOTIFY_NICKCUTOFF) && strNick2.length() > (tstring::size_type)CConfig::GetIntSetting(NOTIFY_NICKCUTOFF_OFFSET))
-				strNick2 = strNick2.erase(CConfig::GetIntSetting(NOTIFY_NICKCUTOFF_OFFSET)) + _T("...");
+				strNick2 = strNick2.erase(CConfig::GetIntSetting(NOTIFY_NICKCUTOFF_OFFSET)) + L"...";
 
-			Event.strValue = TranslateString(_T("%s disables '%s' for %s"), strText.c_str(), strNick2.c_str(), strNick.c_str());
+			Event.strValue = TranslateString(L"%s disables '%s' for %s", strText.c_str(), strNick2.c_str(), strNick.c_str());
 			break;
 		}
 	default:
-		TRACE(_T("OK!\n"));
+		TRACE(L"OK!\n");
 		return 0;
 	}
-	if (gce->bIsMe || gcd->ptszID == NULL)
+	if (gce->bIsMe || gce->ptszID == NULL)
 		Event.bNotification = false;
 
 	// set the event's timestamp
@@ -1329,7 +1303,7 @@ int CAppletManager::HookChatInbound(WPARAM, LPARAM lParam)
 		if (pHistory->LMessages.size() > CConfig::GetIntSetting(SESSION_LOGSIZE))
 			pHistory->LMessages.pop_front();
 	}
-	else if (gce->ptszNick && gcd->iType == GC_EVENT_QUIT) {
+	else if (gce->ptszNick && gce->iType == GC_EVENT_QUIT) {
 		strNick = toTstring(gce->ptszNick);
 
 		if (!CAppletManager::GetInstance()->m_LIRCHistorys.empty()) {
@@ -1348,8 +1322,8 @@ int CAppletManager::HookChatInbound(WPARAM, LPARAM lParam)
 
 						Event.hContact = (*iter)->hContact;
 						tstring strName = CAppletManager::GetContactDisplayname((*iter)->hContact, true);
-						Event.strDescription = strName + _T(" - ") + Event.strValue;
-						Event.strSummary = _T("(") + toTstring(gcd->pszModule) + _T(") ") + strName;
+						Event.strDescription = strName + L" - " + Event.strValue;
+						Event.strSummary = L"(" + toTstring(gce->pszModule) + L") " + strName;
 						CAppletManager::GetInstance()->HandleEvent(&Event);
 						break;
 					}
@@ -1358,26 +1332,25 @@ int CAppletManager::HookChatInbound(WPARAM, LPARAM lParam)
 				iter++;
 			}
 		}
-		TRACE(_T("OK!\n"));
+		TRACE(L"OK!\n");
 		return 0;
 	}
-	if (gcd->ptszID != NULL) {
-		TRACE(_T("OK!\n"));
+	else if (gce->ptszID != NULL) {
+		TRACE(L"OK!\n");
 		return 0;
 	}
 
 	if (pHistory) {
 		tstring strChannel = pHistory->strChannel;
 		if (CConfig::GetBoolSetting(NOTIFY_CHANNELCUTOFF) && strChannel.length() > CConfig::GetIntSetting(NOTIFY_CHANNELCUTOFF_OFFSET)) {
-			strChannel = strChannel.erase(CConfig::GetIntSetting(NOTIFY_CHANNELCUTOFF_OFFSET)) + _T("...");
+			strChannel = strChannel.erase(CConfig::GetIntSetting(NOTIFY_CHANNELCUTOFF_OFFSET)) + L"...";
 		}
-		Event.strDescription = strChannel + _T(" - ") + Event.strValue;
-		Event.strSummary = _T("(") + toTstring(gcd->pszModule) + _T(") ") + pHistory->strChannel;
+		Event.strDescription = strChannel + L" - " + Event.strValue;
+		Event.strSummary = L"(" + toTstring(gce->pszModule) + L") " + pHistory->strChannel;
 	}
-	else
-		Event.strDescription = Event.strValue;
+	else Event.strDescription = Event.strValue;
 
-	TRACE(_T("OK!\n"));
+	TRACE(L"OK!\n");
 
 	CAppletManager::GetInstance()->HandleEvent(&Event);
 
@@ -1440,7 +1413,7 @@ int CAppletManager::HookStatusChanged(WPARAM wParam, LPARAM lParam)
 {
 	DBCONTACTWRITESETTING *cws = (DBCONTACTWRITESETTING*)lParam;
 
-	if ((wParam == 0) || (mir_strcmp(cws->szSetting, "Status") != NULL))
+	if ((wParam == 0) || (strcmp(cws->szSetting, "Status") != NULL))
 		return 0;
 
 
@@ -1475,16 +1448,16 @@ int CAppletManager::HookStatusChanged(WPARAM wParam, LPARAM lParam)
 
 		Event.eType = EVENT_SIGNED_ON;
 		if (pIRCCon && db_get_b(Event.hContact, szProto, "ChatRoom", 0) != 0) {
-			Event.strDescription = TranslateString(_T("Joined %s"), strName.c_str());
+			Event.strDescription = TranslateString(L"Joined %s", strName.c_str());
 
 			DBVARIANT dbv;
-			if (db_get_ts(Event.hContact, szProto, "Nick", &dbv))
+			if (db_get_ws(Event.hContact, szProto, "Nick", &dbv))
 				return 0;
 			CAppletManager::GetInstance()->CreateIRCHistory(Event.hContact, dbv.ptszVal);
 			db_free(&dbv);
 		}
 		else
-			Event.strDescription = TranslateString(_T("%s signed on (%s)"), strName.c_str(), Event.strValue.c_str());
+			Event.strDescription = TranslateString(L"%s signed on (%s)", strName.c_str(), Event.strValue.c_str());
 	}
 	// Contact signed off
 	else if (iStatus == ID_STATUS_OFFLINE && iOldStatus != ID_STATUS_OFFLINE) {
@@ -1493,12 +1466,12 @@ int CAppletManager::HookStatusChanged(WPARAM wParam, LPARAM lParam)
 
 		Event.eType = EVENT_SIGNED_OFF;
 		if (pIRCCon &&  db_get_b(Event.hContact, szProto, "ChatRoom", 0) != 0) {
-			Event.strDescription = TranslateString(_T("Left %s"), strName.c_str());
+			Event.strDescription = TranslateString(L"Left %s", strName.c_str());
 			// delete IRC-Channel history
 			CAppletManager::GetInstance()->DeleteIRCHistory(Event.hContact);
 		}
 		else
-			Event.strDescription = TranslateString(_T("%s signed off"), strName.c_str());
+			Event.strDescription = TranslateString(L"%s signed off", strName.c_str());
 	}
 	// Contact changed status
 	else if (iStatus != iOldStatus) {
@@ -1506,18 +1479,18 @@ int CAppletManager::HookStatusChanged(WPARAM wParam, LPARAM lParam)
 			Event.bNotification = true;
 
 		Event.eType = EVENT_STATUS;
-		Event.strDescription = TranslateString(_T("%s is now %s"), strName.c_str(), Event.strValue.c_str());
+		Event.strDescription = TranslateString(L"%s is now %s", strName.c_str(), Event.strValue.c_str());
 	}
 	// ignore remaining events
 	else
 		return 0;
 
 	if (CConfig::GetBoolSetting(NOTIFY_SHOWPROTO))
-		Event.strDescription = _T("(") + strProto + _T(") ") + Event.strDescription;
+		Event.strDescription = L"(" + strProto + L") " + Event.strDescription;
 
 
 
-	Event.strSummary = TranslateString(_T("Contactlist event"));
+	Event.strSummary = TranslateString(L"Contactlist event");
 
 	// Block notifications after connecting/disconnecting
 	if (pProtocolData->iStatus == ID_STATUS_OFFLINE || (DWORD)pProtocolData->lTimeStamp + PROTOCOL_NOTIFY_DELAY > GetTickCount())
@@ -1554,7 +1527,7 @@ int CAppletManager::HookProtoAck(WPARAM, LPARAM lParam)
 				if (pAck->lParam != 0)
 					Event.strValue = toTstring((char*)pAck->lParam);
 				else
-					Event.strValue = _T("");
+					Event.strValue = L"";
 
 				if (Event.iValue == ACKRESULT_SUCCESS)
 					CAppletManager::GetInstance()->FinishMessageJob((*iter));
@@ -1576,13 +1549,14 @@ int CAppletManager::HookProtoAck(WPARAM, LPARAM lParam)
 		tstring strProto = toTstring(pAck->szModule);
 
 		// ignore metacontacts status changes
-		if (toLower(strProto) == _T("metacontacts"))
+		if (toLower(strProto) == L"metacontacts")
 			return 0;
 
 		CProtocolData *pProtoData = CAppletManager::GetInstance()->GetProtocolData(strProto);
 		if (pProtoData == NULL)
 			return 0;
 
+		// Skip connecting status
 		if (iNewStatus == ID_STATUS_CONNECTING)
 			return 0;
 
@@ -1602,10 +1576,6 @@ int CAppletManager::HookProtoAck(WPARAM, LPARAM lParam)
 			Event.eType = EVENT_PROTO_STATUS;
 		}
 
-		// Skip connecting status
-		if (iNewStatus == ID_STATUS_CONNECTING)
-			return 0;
-
 		pProtoData->iStatus = iNewStatus;
 
 		Event.iValue = iNewStatus;
@@ -1613,8 +1583,8 @@ int CAppletManager::HookProtoAck(WPARAM, LPARAM lParam)
 
 		// set the event description / summary
 		tstring strStatus = toTstring(pcli->pfnGetStatusModeDescription(iNewStatus, 0));
-		Event.strDescription = _T("(") + Event.strValue + _T(") ") + TranslateString(_T("You are now %s"), strStatus.c_str());
-		Event.strSummary = TranslateString(_T("Protocol status change"));
+		Event.strDescription = L"(" + Event.strValue + L") " + TranslateString(L"You are now %s", strStatus.c_str());
+		Event.strSummary = TranslateString(L"Protocol status change");
 
 		if (Event.eType != EVENT_PROTO_STATUS)
 			pProtoData->lTimeStamp = GetTickCount();
@@ -1652,7 +1622,7 @@ int CAppletManager::HookContactDeleted(WPARAM wParam, LPARAM)
 
 	tstring strName = CAppletManager::GetContactDisplayname(Event.hContact, true);
 
-	Event.strDescription = TranslateString(_T("%s was deleted from contactlist!"), strName.c_str());
+	Event.strDescription = TranslateString(L"%s was deleted from contactlist!", strName.c_str());
 
 	CAppletManager::GetInstance()->HandleEvent(&Event);
 	return 0;
@@ -1668,11 +1638,11 @@ int CAppletManager::HookSettingChanged(WPARAM hContact, LPARAM lParam)
 	CEvent Event;
 	Event.hContact = hContact;
 
-	if (!mir_strcmp(dbcws->szSetting, "Nick") || !mir_strcmp(dbcws->szSetting, "MyHandle")) {
+	if (!strcmp(dbcws->szSetting, "Nick") || !strcmp(dbcws->szSetting, "MyHandle")) {
 		DBVARIANT dbv = { 0 };
 		// if the protocol nick has changed, check if a custom handle is set
-		if (!mir_strcmp(dbcws->szSetting, "Nick")) {
-			if (!db_get_ts(Event.hContact, "CList", "MyHandle", &dbv)) {
+		if (!strcmp(dbcws->szSetting, "Nick")) {
+			if (!db_get_ws(Event.hContact, "CList", "MyHandle", &dbv)) {
 				// handle found, ignore this event
 				if (dbv.pszVal && mir_strlen(dbv.pszVal) > 0)
 					return 0;
@@ -1689,21 +1659,21 @@ int CAppletManager::HookSettingChanged(WPARAM hContact, LPARAM lParam)
 		}
 		else {
 			char *szProto = GetContactProto(Event.hContact);
-			if (db_get_ts(Event.hContact, szProto, "Nick", &dbv))
+			if (db_get_ws(Event.hContact, szProto, "Nick", &dbv))
 				return 0;
 			Event.strValue = dbv.ptszVal;
 			db_free(&dbv);
 		}
 	}
-	else if (!mir_strcmp(dbcws->szModule, "CList")) {
-		if (!mir_strcmp(dbcws->szSetting, "Hidden")) {
+	else if (!strcmp(dbcws->szModule, "CList")) {
+		if (!strcmp(dbcws->szSetting, "Hidden")) {
 			Event.eType = EVENT_CONTACT_HIDDEN;
 			Event.iValue = db_get_b(hContact, "CList", "Hidden", 0);
 		}
-		else if (!mir_strcmp(dbcws->szSetting, "Group")) {
+		else if (!strcmp(dbcws->szSetting, "Group")) {
 			Event.eType = EVENT_CONTACT_GROUP;
 			DBVARIANT dbv;
-			int res = db_get_ts(hContact, "CList", "Group", &dbv);
+			int res = db_get_ws(hContact, "CList", "Group", &dbv);
 			if (!res)
 				Event.strValue = dbv.ptszVal;
 			db_free(&dbv);

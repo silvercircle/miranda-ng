@@ -28,11 +28,20 @@ char *courProtoName = 0;
 
 void LoadWatchedProtos()
 {
-	ptrA szProtos(db_get_sa(NULL, S_MOD, "WatchedProtocols"));
+	// Upgrade from old settings (separated by " ")
+	ptrA szProtosOld(db_get_sa(NULL, S_MOD, "WatchedProtocols"));
+	if (szProtosOld != NULL) {
+		CMStringA tmp(szProtosOld);
+		tmp.Replace(" ", "\n");
+		db_set_s(NULL, S_MOD, "WatchedAccounts", tmp.c_str());
+		db_unset(NULL, S_MOD, "WatchedProtocols");
+	}
+
+	ptrA szProtos(db_get_sa(NULL, S_MOD, "WatchedAccounts"));
 	if (szProtos == NULL)
 		return;
 
-	for (char *p = strtok(szProtos, " "); p != NULL; p = strtok(NULL, " "))
+	for (char *p = strtok(szProtos, "\n"); p != NULL; p = strtok(NULL, "\n"))
 		arWatchedProtos.insert(mir_strdup(p));
 }
 
@@ -141,17 +150,17 @@ DWORD isSeen(MCONTACT hcontact, SYSTEMTIME *st)
 	return res;
 }
 
-TCHAR *weekdays[] = { LPGENT("Sunday"), LPGENT("Monday"), LPGENT("Tuesday"), LPGENT("Wednesday"), LPGENT("Thursday"), LPGENT("Friday"), LPGENT("Saturday") };
-TCHAR *wdays_short[] = { LPGENT("Sun."), LPGENT("Mon."), LPGENT("Tue."), LPGENT("Wed."), LPGENT("Thu."), LPGENT("Fri."), LPGENT("Sat.") };
-TCHAR *monthnames[] = { LPGENT("January"), LPGENT("February"), LPGENT("March"), LPGENT("April"), LPGENT("May"), LPGENT("June"), LPGENT("July"), LPGENT("August"), LPGENT("September"), LPGENT("October"), LPGENT("November"), LPGENT("December") };
-TCHAR *mnames_short[] = { LPGENT("Jan."), LPGENT("Feb."), LPGENT("Mar."), LPGENT("Apr."), LPGENT("May"), LPGENT("Jun."), LPGENT("Jul."), LPGENT("Aug."), LPGENT("Sep."), LPGENT("Oct."), LPGENT("Nov."), LPGENT("Dec.") };
+wchar_t *weekdays[] = { LPGENW("Sunday"), LPGENW("Monday"), LPGENW("Tuesday"), LPGENW("Wednesday"), LPGENW("Thursday"), LPGENW("Friday"), LPGENW("Saturday") };
+wchar_t *wdays_short[] = { LPGENW("Sun."), LPGENW("Mon."), LPGENW("Tue."), LPGENW("Wed."), LPGENW("Thu."), LPGENW("Fri."), LPGENW("Sat.") };
+wchar_t *monthnames[] = { LPGENW("January"), LPGENW("February"), LPGENW("March"), LPGENW("April"), LPGENW("May"), LPGENW("June"), LPGENW("July"), LPGENW("August"), LPGENW("September"), LPGENW("October"), LPGENW("November"), LPGENW("December") };
+wchar_t *mnames_short[] = { LPGENW("Jan."), LPGENW("Feb."), LPGENW("Mar."), LPGENW("Apr."), LPGENW("May"), LPGENW("Jun."), LPGENW("Jul."), LPGENW("Aug."), LPGENW("Sep."), LPGENW("Oct."), LPGENW("Nov."), LPGENW("Dec.") };
 
-TCHAR* ParseString(TCHAR *szstring, MCONTACT hcontact)
+wchar_t* ParseString(wchar_t *szstring, MCONTACT hcontact)
 {
 #define MAXSIZE 1024
-	static TCHAR sztemp[MAXSIZE + 1];
-	TCHAR szdbsetting[128];
-	TCHAR *charPtr;
+	static wchar_t sztemp[MAXSIZE + 1];
+	wchar_t szdbsetting[128];
+	wchar_t *charPtr;
 	int isetting = 0;
 	DWORD dwsetting = 0;
 	struct in_addr ia;
@@ -161,16 +170,15 @@ TCHAR* ParseString(TCHAR *szstring, MCONTACT hcontact)
 
 	SYSTEMTIME st;
 	if (!isSeen(hcontact, &st)) {
-		mir_tstrcat(sztemp, TranslateT("<never seen>"));
+		mir_wstrcat(sztemp, TranslateT("<never seen>"));
 		return sztemp;
 	}
 
-	CONTACTINFO ci = { sizeof(CONTACTINFO) };
-	ci.hContact = hcontact;
-	ci.szProto = hcontact ? GetContactProto(hcontact) : courProtoName;
+	char *szProto = hcontact ? GetContactProto(hcontact) : courProtoName;
+	ptrW info;
 
-	TCHAR *d = sztemp;
-	for (TCHAR *p = szstring; *p; p++) {
+	wchar_t *d = sztemp;
+	for (wchar_t *p = szstring; *p; p++) {
 		if (d >= sztemp + MAXSIZE)
 			break;
 
@@ -183,18 +191,18 @@ TCHAR* ParseString(TCHAR *szstring, MCONTACT hcontact)
 		switch (*++p) {
 		case 'Y':
 			if (!st.wYear) goto LBL_noData;
-			d += _stprintf(d, _T("%04i"), st.wYear); //!!!!!!!!!!!!
+			d += swprintf(d, L"%04i", st.wYear); //!!!!!!!!!!!!
 			break;
 
 		case 'y':
 			if (!st.wYear) goto LBL_noData;
-			d += _stprintf(d, _T("%02i"), st.wYear % 100); //!!!!!!!!!!!!
+			d += swprintf(d, L"%02i", st.wYear % 100); //!!!!!!!!!!!!
 			break;
 
 		case 'm':
 			if (!(isetting = st.wMonth)) goto LBL_noData;
 		LBL_2DigNum:
-			d += _stprintf(d, _T("%02i"), isetting); //!!!!!!!!!!!!
+			d += swprintf(d, L"%02i", isetting); //!!!!!!!!!!!!
 			break;
 
 		case 'd':
@@ -205,28 +213,28 @@ TCHAR* ParseString(TCHAR *szstring, MCONTACT hcontact)
 			isetting = st.wDayOfWeek;
 			if (isetting == -1) {
 			LBL_noData:
-				charPtr = wantempty ? _T("") : TranslateT("<unknown>");
+				charPtr = wantempty ? L"" : TranslateT("<unknown>");
 				goto LBL_charPtr;
 			}
-			charPtr = TranslateTS(weekdays[isetting]);
+			charPtr = TranslateW(weekdays[isetting]);
 		LBL_charPtr:
-			d += mir_sntprintf(d, MAXSIZE - (d - sztemp), _T("%s"), charPtr);
+			d += mir_snwprintf(d, MAXSIZE - (d - sztemp), L"%s", charPtr);
 			break;
 
 		case 'w':
 			isetting = st.wDayOfWeek;
 			if (isetting == -1) goto LBL_noData;
-			charPtr = TranslateTS(wdays_short[isetting]);
+			charPtr = TranslateW(wdays_short[isetting]);
 			goto LBL_charPtr;
 
 		case 'E':
 			if (!(isetting = st.wMonth)) goto LBL_noData;
-			charPtr = TranslateTS(monthnames[isetting - 1]);
+			charPtr = TranslateW(monthnames[isetting - 1]);
 			goto LBL_charPtr;
 
 		case 'e':
 			if (!(isetting = st.wMonth)) goto LBL_noData;
-			charPtr = TranslateTS(mnames_short[isetting - 1]);
+			charPtr = TranslateW(mnames_short[isetting - 1]);
 			goto LBL_charPtr;
 
 		case 'H':
@@ -241,7 +249,7 @@ TCHAR* ParseString(TCHAR *szstring, MCONTACT hcontact)
 
 		case 'p':
 			if ((isetting = st.wHour) == -1) goto LBL_noData;
-			charPtr = (isetting >= 12) ? _T("PM") : _T("AM");
+			charPtr = (isetting >= 12) ? L"PM" : L"AM";
 			goto LBL_charPtr;
 
 		case 'M':
@@ -253,20 +261,19 @@ TCHAR* ParseString(TCHAR *szstring, MCONTACT hcontact)
 			goto LBL_2DigNum;
 
 		case 'n':
-			charPtr = hcontact ? (TCHAR*)pcli->pfnGetContactDisplayName(hcontact, 0) : (wantempty ? _T("") : _T("---"));
+			charPtr = hcontact ? (wchar_t*)pcli->pfnGetContactDisplayName(hcontact, 0) : (wantempty ? L"" : L"---");
 			goto LBL_charPtr;
 
 		case 'N':
-			ci.dwFlag = CNF_NICK | CNF_TCHAR;
-			if (!CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ci)) {
-				charPtr = ci.pszVal;
+			if (info = Contact_GetInfo(CNF_NICK, hcontact, szProto)) {
+				charPtr = info;
 				goto LBL_charPtr;
 			}
 			goto LBL_noData;
 
 		case 'G':
-			if (!db_get_ts(hcontact, "CList", "Group", &dbv)) {
-				_tcsncpy(szdbsetting, dbv.ptszVal, _countof(szdbsetting));
+			if (!db_get_ws(hcontact, "CList", "Group", &dbv)) {
+				wcsncpy(szdbsetting, dbv.ptszVal, _countof(szdbsetting));
 				db_free(&dbv);
 				charPtr = szdbsetting;
 				goto LBL_charPtr;
@@ -274,33 +281,18 @@ TCHAR* ParseString(TCHAR *szstring, MCONTACT hcontact)
 			break;
 
 		case 'u':
-			ci.dwFlag = CNF_UNIQUEID | CNF_TCHAR;
-			if (!CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ci)) {
-				switch (ci.type) {
-				case CNFT_BYTE:
-					_ltot(ci.bVal, szdbsetting, 10);
-					break;
-				case CNFT_WORD:
-					_ltot(ci.wVal, szdbsetting, 10);
-					break;
-				case CNFT_DWORD:
-					_ltot(ci.dVal, szdbsetting, 10);
-					break;
-				case CNFT_ASCIIZ:
-					_tcsncpy(szdbsetting, ci.pszVal, _countof(szdbsetting));
-					break;
-				}
+			if (info = Contact_GetInfo(CNF_UNIQUEID, hcontact, szProto)) {
+				charPtr = info;
+				goto LBL_charPtr;
 			}
-			else goto LBL_noData;
-			charPtr = szdbsetting;
-			goto LBL_charPtr;
+			goto LBL_noData;
 
 		case 's':
 			if (isetting = db_get_w(hcontact, S_MOD, hcontact ? "StatusTriger" : courProtoName, 0)) {
-				_tcsncpy(szdbsetting, pcli->pfnGetStatusModeDescription(isetting | 0x8000, 0), _countof(szdbsetting));
+				wcsncpy(szdbsetting, pcli->pfnGetStatusModeDescription(isetting | 0x8000, 0), _countof(szdbsetting));
 				if (!(isetting & 0x8000)) {
-					mir_tstrncat(szdbsetting, _T("/"), _countof(szdbsetting) - mir_tstrlen(szdbsetting));
-					mir_tstrncat(szdbsetting, TranslateT("Idle"), _countof(szdbsetting) - mir_tstrlen(szdbsetting));
+					mir_wstrncat(szdbsetting, L"/", _countof(szdbsetting) - mir_wstrlen(szdbsetting));
+					mir_wstrncat(szdbsetting, TranslateT("Idle"), _countof(szdbsetting) - mir_wstrlen(szdbsetting));
 				}
 				charPtr = szdbsetting;
 				goto LBL_charPtr;
@@ -308,19 +300,19 @@ TCHAR* ParseString(TCHAR *szstring, MCONTACT hcontact)
 			goto LBL_noData;
 
 		case 'T':
-			if (db_get_ts(hcontact, "CList", "StatusMsg", &dbv))
+			if (db_get_ws(hcontact, "CList", "StatusMsg", &dbv))
 				goto LBL_noData;
 
-			d += mir_sntprintf(d, MAXSIZE - (d - sztemp), _T("%s"), dbv.ptszVal);
+			d += mir_snwprintf(d, MAXSIZE - (d - sztemp), L"%s", dbv.ptszVal);
 			db_free(&dbv);
 			break;
 
 		case 'o':
 			if (isetting = db_get_w(hcontact, S_MOD, hcontact ? "OldStatus" : courProtoName, 0)) {
-				_tcsncpy(szdbsetting, pcli->pfnGetStatusModeDescription(isetting, 0), _countof(szdbsetting));
+				wcsncpy(szdbsetting, pcli->pfnGetStatusModeDescription(isetting, 0), _countof(szdbsetting));
 				if (includeIdle && hcontact && db_get_b(hcontact, S_MOD, "OldIdle", 0)) {
-					mir_tstrncat(szdbsetting, _T("/"), _countof(szdbsetting) - mir_tstrlen(szdbsetting));
-					mir_tstrncat(szdbsetting, TranslateT("Idle"), _countof(szdbsetting) - mir_tstrlen(szdbsetting));
+					mir_wstrncat(szdbsetting, L"/", _countof(szdbsetting) - mir_wstrlen(szdbsetting));
+					mir_wstrncat(szdbsetting, TranslateT("Idle"), _countof(szdbsetting) - mir_wstrlen(szdbsetting));
 				}
 				charPtr = szdbsetting;
 				goto LBL_charPtr;
@@ -329,56 +321,54 @@ TCHAR* ParseString(TCHAR *szstring, MCONTACT hcontact)
 
 		case 'i':
 		case 'r':
-			if (isJabber(ci.szProto)) {
-				if (db_get_ts(hcontact, ci.szProto, *p == 'i' ? "Resource" : "System", &dbv))
-					goto LBL_noData;
-
-				_tcsncpy(szdbsetting, dbv.ptszVal, _countof(szdbsetting));
-				db_free(&dbv);
-				charPtr = szdbsetting;
+			if (isJabber(szProto)) {
+				if (info = db_get_wsa(hcontact, szProto, *p == 'i' ? "Resource" : "System")) {
+					charPtr = info;
+					goto LBL_charPtr;
+				}
+				goto LBL_noData;
 			}
 			else {
-				dwsetting = db_get_dw(hcontact, ci.szProto, *p == 'i' ? "IP" : "RealIP", 0);
+				dwsetting = db_get_dw(hcontact, szProto, *p == 'i' ? "IP" : "RealIP", 0);
 				if (!dwsetting)
 					goto LBL_noData;
 
 				ia.S_un.S_addr = htonl(dwsetting);
-				_tcsncpy(szdbsetting, _A2T(inet_ntoa(ia)), _countof(szdbsetting));
+				wcsncpy(szdbsetting, _A2T(inet_ntoa(ia)), _countof(szdbsetting));
 				charPtr = szdbsetting;
 			}
 			goto LBL_charPtr;
 
 		case 'P':
-			_tcsncpy(szdbsetting, ci.szProto ? _A2T(ci.szProto) : (wantempty ? _T("") : _T("ProtoUnknown")), _countof(szdbsetting));
+			wcsncpy(szdbsetting, szProto ? _A2T(szProto) : (wantempty ? L"" : L"ProtoUnknown"), _countof(szdbsetting));
 			charPtr = szdbsetting;
 			goto LBL_charPtr;
 
 		case 'b':
-			charPtr = _T("\x0D\x0A");
+			charPtr = L"\x0D\x0A";
 			goto LBL_charPtr;
 
 		case 'C': // Get Client Info
-			if (!db_get_ts(hcontact, ci.szProto, "MirVer", &dbv)) {
-				_tcsncpy(szdbsetting, dbv.ptszVal, _countof(szdbsetting));
-				db_free(&dbv);
+			if (info = db_get_wsa(hcontact, szProto, "MirVer")) {
+				charPtr = info;
+				goto LBL_charPtr;
 			}
-			else goto LBL_noData;
-			charPtr = szdbsetting;
-			goto LBL_charPtr;
+			goto LBL_noData;
 
 		case 't':
-			charPtr = _T("\t");
+			charPtr = L"\t";
 			goto LBL_charPtr;
 
 		case 'A':
-		{
-			PROTOACCOUNT *pa = Proto_GetAccount(ci.szProto);
-			if (!pa) goto LBL_noData;
-			_tcsncpy(szdbsetting, pa->tszAccountName, _countof(szdbsetting));
-			charPtr = szdbsetting;
+			{
+				PROTOACCOUNT *pa = Proto_GetAccount(szProto);
+				if (!pa)
+					goto LBL_noData;
+				
+				wcsncpy(szdbsetting, pa->tszAccountName, _countof(szdbsetting));
+				charPtr = szdbsetting;
+			}
 			goto LBL_charPtr;
-		}
-
 
 		default:
 			*d++ = p[-1];
@@ -433,9 +423,9 @@ void GetColorsFromDWord(LPCOLORREF First, LPCOLORREF Second, DWORD colDword)
 DWORD StatusColors15bits[] = {
 	0x63180000, // 0x00C0C0C0, 0x00000000, Offline - LightGray
 	0x7B350000, // 0x00F0C8A8, 0x00000000, Online  - LightBlue
-	0x33fe0000, // 0x0070E0E0, 0x00000000, Away -LightOrange
-	0x295C0000, // 0x005050E0, 0x00000000, DND  -DarkRed
-	0x5EFD0000, // 0x00B8B8E8, 0x00000000, NA   -LightRed
+	0x33fe0000, // 0x0070E0E0, 0x00000000, Away - LightOrange
+	0x295C0000, // 0x005050E0, 0x00000000, DND - DarkRed
+	0x5EFD0000, // 0x00B8B8E8, 0x00000000, Not available - LightRed
 	0x295C0000, // 0x005050E0, 0x00000000, Occupied
 	0x43900000, // 0x0080E080, 0x00000000, Free for chat - LightGreen
 	0x76AF0000, // 0x00E8A878, 0x00000000, Invisible
@@ -495,17 +485,17 @@ void ShowPopup(MCONTACT hcontact, const char * lpzProto, int newStatus)
 	ppd.lchContact = hcontact;
 	ppd.lchIcon = Skin_LoadProtoIcon(lpzProto, newStatus);
 
-	if (!db_get_ts(NULL, S_MOD, "PopupStamp", &dbv)) {
-		_tcsncpy(ppd.lptzContactName, ParseString(dbv.ptszVal, hcontact), MAX_CONTACTNAME);
+	if (!db_get_ws(NULL, S_MOD, "PopupStamp", &dbv)) {
+		wcsncpy(ppd.lptzContactName, ParseString(dbv.ptszVal, hcontact), MAX_CONTACTNAME);
 		db_free(&dbv);
 	}
-	else _tcsncpy(ppd.lptzContactName, ParseString(DEFAULT_POPUPSTAMP, hcontact), MAX_CONTACTNAME);
+	else wcsncpy(ppd.lptzContactName, ParseString(DEFAULT_POPUPSTAMP, hcontact), MAX_CONTACTNAME);
 
-	if (!db_get_ts(NULL, S_MOD, "PopupStampText", &dbv)) {
-		_tcsncpy(ppd.lptzText, ParseString(dbv.ptszVal, hcontact), MAX_SECONDLINE);
+	if (!db_get_ws(NULL, S_MOD, "PopupStampText", &dbv)) {
+		wcsncpy(ppd.lptzText, ParseString(dbv.ptszVal, hcontact), MAX_SECONDLINE);
 		db_free(&dbv);
 	}
-	else _tcsncpy(ppd.lptzText, ParseString(DEFAULT_POPUPSTAMPTEXT, hcontact), MAX_SECONDLINE);
+	else wcsncpy(ppd.lptzText, ParseString(DEFAULT_POPUPSTAMPTEXT, hcontact), MAX_SECONDLINE);
 	ppd.PluginWindowProc = PopupDlgProc;
 	PUAddPopupT(&ppd);
 }
@@ -520,12 +510,14 @@ void myPlaySound(MCONTACT hcontact, WORD newStatus, WORD oldStatus)
 	else if (oldStatus == ID_STATUS_OFFLINE) soundname = "LastSeenTrackedStatusFromOffline";
 	else soundname = "LastSeenTrackedStatusChange";
 	if (soundname != NULL)
-		SkinPlaySound(soundname);
+		Skin_PlaySound(soundname);
 }
 
 // will add hContact to queue and will return position;
 static void waitThread(void *param)
 {
+	Thread_SetName("SeenPlugin: waitThread");
+
 	logthread_info* infoParam = (logthread_info*)param;
 
 	WORD prevStatus = db_get_w(infoParam->hContact, S_MOD, "StatusTriger", ID_STATUS_OFFLINE);
@@ -560,7 +552,7 @@ int UpdateValues(WPARAM hContact, LPARAM lparam)
 	DBCONTACTWRITESETTING *cws = (DBCONTACTWRITESETTING *)lparam;
 	char *szProto = GetContactProto(hContact);
 
-	if (cws->value.type == DBVT_DWORD && !mir_strcmp(cws->szSetting, "LastSeen") && !mir_strcmp(cws->szModule, szProto)) {
+	if (cws->value.type == DBVT_DWORD && !strcmp(cws->szSetting, "LastSeen") && !mir_strcmp(cws->szModule, szProto)) {
 		DBWriteTimeTS(cws->value.dVal, hContact);
 		
 		HWND hwnd = WindowList_Find(g_pUserInfo, hContact);
@@ -569,11 +561,11 @@ int UpdateValues(WPARAM hContact, LPARAM lparam)
 		return 0;
 	}
 
-	BOOL isIdleEvent = includeIdle ? (mir_strcmp(cws->szSetting, "IdleTS") == 0) : 0;
-	if (mir_strcmp(cws->szSetting, "Status") && mir_strcmp(cws->szSetting, "StatusTriger") && (isIdleEvent == 0))
+	BOOL isIdleEvent = includeIdle ? (strcmp(cws->szSetting, "IdleTS") == 0) : 0;
+	if (strcmp(cws->szSetting, "Status") && strcmp(cws->szSetting, "StatusTriger") && (isIdleEvent == 0))
 		return 0;
 	
-	if (!mir_strcmp(cws->szModule, S_MOD)) {
+	if (!strcmp(cws->szModule, S_MOD)) {
 		// here we will come when Settings/SeenModule/StatusTriger is changed
 		WORD prevStatus = db_get_w(hContact, S_MOD, "OldStatus", ID_STATUS_OFFLINE);
 		if (includeIdle) {
@@ -655,6 +647,8 @@ int UpdateValues(WPARAM hContact, LPARAM lparam)
 
 static void cleanThread(void *param)
 {
+	Thread_SetName("SeenPlugin: cleanThread");
+
 	logthread_info* infoParam = (logthread_info*)param;
 	char *szProto = infoParam->sProtoName;
 
@@ -695,7 +689,7 @@ int ModeChange(WPARAM, LPARAM lparam)
 	if ((isetting > ID_STATUS_OFFLINE) && ((WORD)ack->hProcess <= ID_STATUS_OFFLINE)) {
 		//we have just loged-in
 		db_set_dw(NULL, "UserOnline", ack->szModule, GetTickCount());
-		if (!Miranda_Terminated() && IsWatchedProtocol(ack->szModule)) {
+		if (!Miranda_IsTerminated() && IsWatchedProtocol(ack->szModule)) {
 			logthread_info *info = (logthread_info *)mir_alloc(sizeof(logthread_info));
 			mir_strncpy(info->sProtoName, courProtoName, _countof(info->sProtoName));
 			info->hContact = 0;
@@ -746,24 +740,24 @@ short int isDbZero(MCONTACT hContact, const char *module_name, const char *setti
 	return -1;
 }
 
-TCHAR* any_to_IdleNotidleUnknown(MCONTACT hContact, const char *module_name, const char *setting_name, TCHAR *buff, int bufflen)
+wchar_t* any_to_IdleNotidleUnknown(MCONTACT hContact, const char *module_name, const char *setting_name, wchar_t *buff, int bufflen)
 {
 	short int r = isDbZero(hContact, module_name, setting_name);
 	if (r == -1) {
-		_tcsncpy(buff, TranslateT("Unknown"), bufflen);
+		wcsncpy(buff, TranslateT("Unknown"), bufflen);
 	}
 	else {
-		_tcsncpy(buff, r ? TranslateT("Not Idle") : TranslateT("Idle"), bufflen);
+		wcsncpy(buff, r ? TranslateT("Not Idle") : TranslateT("Idle"), bufflen);
 	};
 	buff[bufflen - 1] = 0;
 	return buff;
 }
 
-TCHAR* any_to_Idle(MCONTACT hContact, const char *module_name, const char *setting_name, TCHAR *buff, int bufflen)
+wchar_t* any_to_Idle(MCONTACT hContact, const char *module_name, const char *setting_name, wchar_t *buff, int bufflen)
 {
 	if (isDbZero(hContact, module_name, setting_name) == 0) { //DB setting is NOT zero and exists
 		buff[0] = L'/';
-		_tcsncpy(&buff[1], TranslateT("Idle"), bufflen - 1);
+		wcsncpy(&buff[1], TranslateT("Idle"), bufflen - 1);
 	}
 	else buff[0] = 0;
 	buff[bufflen - 1] = 0;

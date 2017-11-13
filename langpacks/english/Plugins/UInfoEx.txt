@@ -71,7 +71,7 @@
 [Use Windows colors]
 [Use default colors]
 [Delay]
-[From Popup plugin]
+[From popup plugin]
 [Custom]
 [Permanent]
 [Show reminder messages as popups (if reminder is enabled)]
@@ -311,6 +311,8 @@
 [Main]
 ;file \plugins\UserInfoEx\src\mir_icolib.h
 [Extended user info]
+[Dialogs]
+[Buttons]
 ;file \plugins\UserInfoEx\src\mir_menuitems.cpp
 [Export/import contact]
 [User &details]
@@ -547,24 +549,26 @@
 [Divorced]
 [Separated]
 [Widowed]
+[Actively searching]
+[In love]
+[It's complicated]
+[In a civil union]
 [jun.]
 [sen.]
 ;file \plugins\UserInfoEx\src\svc_constants.h
-;file \plugins\UserInfoEx\src\svc_contactinfo.cpp
-['(Unknown Contact)']
 ;file \plugins\UserInfoEx\src\svc_email.cpp
 [Send e-mail]
 [Memory allocation error!]
-[E-mail (uinfoex)]
+[E-mail (UInfoEx)]
 ;file \plugins\UserInfoEx\src\svc_gender.cpp
-[Gender (uinfoex)]
+[Gender (UInfoEx)]
 ;file \plugins\UserInfoEx\src\svc_homepage.cpp
 [User has no valid homepage]
 [View Homepage]
 [&Homepage]
-[Homepage (uinfoex)]
+[Homepage (UInfoEx)]
 ;file \plugins\UserInfoEx\src\svc_phone.cpp
-[Phone (uinfoex)]
+[Phone (UInfoEx)]
 ;file \plugins\UserInfoEx\src\svc_refreshci.cpp
 [[b]%s (%S)...[/b]\n%d Contacts remaining]
 [Abort Refreshing Contact Details]
@@ -591,7 +595,7 @@
 [Birthday reminder]
 [Birthday reminder: it's coming]
 [Anniversary Reminder]
-[Reminder (uinfoex)]
+[Reminder (UInfoEx)]
 ;file \plugins\UserInfoEx\src\ex_import\classExImContactBase.cpp
 [contact identification]
 [The contact %s(%s) has no unique ID in the vCard,\nbut there is a contact in your contact list with the same nick and protocol.\nDo you wish to use this contact?]
@@ -639,5 +643,5 @@
 [added contacts: %u / %u\nadded settings: %u / %u\nadded events %u / %u\nduplicated events: %u]
 [FATAL: An exception was thrown while importing contacts from xmlCard!]
 ;file \plugins\UserInfoEx\src\Flags\svc_flags.cpp
-[Flags (uinfoex)]
+[Flags (UInfoEx)]
 ;file \plugins\UserInfoEx\src\Flags\svc_flagsicons.cpp

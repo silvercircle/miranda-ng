@@ -5,7 +5,7 @@ Jabber Protocol Plugin for Miranda NG
 Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
 Copyright (c) 2007     Maxim Mluhov
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -50,58 +50,51 @@ DWORD CJabberProto::GetJabberVersion() const
 	return PLUGIN_MAKE_VERSION(__MAJOR_VERSION, __MINOR_VERSION, __RELEASE_NUM, __BUILD_NUM);
 }
 
-int CJabberProto::CompareJIDs(LPCTSTR jid1, LPCTSTR jid2)
-{
-	if (!jid1 || !jid2) return 0;
-	return JabberCompareJids(jid1, jid2);
-}
-
 MCONTACT CJabberProto::ContactFromJID(LPCTSTR jid)
 {
-	if (jid == NULL) return NULL;
 	return HContactFromJID(jid);
 }
 
 LPTSTR CJabberProto::ContactToJID(MCONTACT hContact)
 {
-	return getTStringA(hContact, isChatRoom(hContact) ? "ChatRoomID" : "jid");
+	return getWStringA(hContact, isChatRoom(hContact) ? "ChatRoomID" : "jid");
 }
 
 LPTSTR CJabberProto::GetBestResourceName(LPCTSTR jid)
 {
-	if (jid == NULL)
-		return NULL;
-	LPCTSTR p = _tcschr(jid, '/');
-	if (p == NULL) {
+	if (jid == nullptr)
+		return nullptr;
+	LPCTSTR p = wcschr(jid, '/');
+	if (p == nullptr) {
 		mir_cslock lck(m_csLists);
-		return mir_tstrdup(ListGetBestClientResourceNamePtr(jid));
+		return mir_wstrdup(ListGetBestClientResourceNamePtr(jid));
 	}
-	return mir_tstrdup(jid);
+	return mir_wstrdup(jid);
 }
 
 LPTSTR CJabberProto::GetResourceList(LPCTSTR jid)
 {
-	if (jid == NULL)
-		return NULL;
+	if (jid == nullptr)
+		return nullptr;
 
 	mir_cslock lck(m_csLists);
-	JABBER_LIST_ITEM *item = NULL;
-	if ((item = ListGetItemPtr(LIST_VCARD_TEMP, jid)) == NULL)
+	JABBER_LIST_ITEM *item = nullptr;
+	if ((item = ListGetItemPtr(LIST_VCARD_TEMP, jid)) == nullptr)
 		item = ListGetItemPtr(LIST_ROSTER, jid);
-	if (item == NULL)
-		return NULL;
+	if (item == nullptr)
+		return nullptr;
 
 	if (!item->arResources.getCount())
-		return NULL;
+		return nullptr;
 
-	CMString res;
+	CMStringW res;
 	for (int i=0; i < item->arResources.getCount(); i++) {
 		res.Append(item->arResources[i]->m_tszResourceName);
 		res.AppendChar(0);
 	}
 	res.AppendChar(0);
 
-	return mir_tstrndup(res, res.GetLength());
+	return mir_wstrndup(res, res.GetLength());
 }
 
 char *CJabberProto::GetModuleName() const
@@ -180,7 +173,7 @@ HJHANDLER CJabberProto::AddTemporaryIqHandler(JABBER_HANDLER_FUNC Func, int iIqT
 	sHandlerData *d = (sHandlerData*)malloc(sizeof(sHandlerData));
 	d->Func = Func;
 	d->pUserData = pUserData;
-	CJabberIqInfo *pInfo = AddIQ(&CJabberProto::ExternalTempIqHandler, iIqTypes, NULL, 0, iIqId, d, iPriority);
+	CJabberIqInfo *pInfo = AddIQ(&CJabberProto::ExternalTempIqHandler, iIqTypes, nullptr, 0, iIqId, d, iPriority);
 	if (pInfo && dwTimeout > 0)
 		pInfo->SetTimeout(dwTimeout);
 	return (HJHANDLER)pInfo;
@@ -206,10 +199,10 @@ int CJabberProto::RemoveHandler(HJHANDLER hHandler)
 JabberFeatCapPairDynamic *CJabberProto::FindFeature(LPCTSTR szFeature)
 {
 	for (int i=0; i < m_lstJabberFeatCapPairsDynamic.getCount(); i++)
-		if (!mir_tstrcmp(m_lstJabberFeatCapPairsDynamic[i]->szFeature, szFeature))
+		if (!mir_wstrcmp(m_lstJabberFeatCapPairsDynamic[i]->szFeature, szFeature))
 			return m_lstJabberFeatCapPairsDynamic[i];
 
-	return NULL;
+	return nullptr;
 }
 
 int CJabberProto::RegisterFeature(LPCTSTR szFeature, LPCTSTR szDescription)
@@ -220,7 +213,7 @@ int CJabberProto::RegisterFeature(LPCTSTR szFeature, LPCTSTR szDescription)
 	// check for this feature in core features, and return false if it's present, to prevent re-registering a core feature
 	int i;
 	for (i=0; g_JabberFeatCapPairs[i].szFeature; i++)
-		if (!mir_tstrcmp(g_JabberFeatCapPairs[i].szFeature, szFeature))
+		if (!mir_wstrcmp(g_JabberFeatCapPairs[i].szFeature, szFeature))
 			return false;
 
 	mir_cslock lck(m_csLists);
@@ -244,25 +237,25 @@ int CJabberProto::RegisterFeature(LPCTSTR szFeature, LPCTSTR szDescription)
 			return false;
 
 		// remove unnecessary symbols from szFeature to make the string shorter, and use it as szExt
-		LPTSTR szExt = mir_tstrdup(szFeature);
+		LPTSTR szExt = mir_wstrdup(szFeature);
 		LPTSTR pSrc, pDst;
 		for (pSrc = szExt, pDst = szExt; *pSrc; pSrc++)
-			if (_tcschr(_T("bcdfghjklmnpqrstvwxz0123456789"), *pSrc))
+			if (wcschr(L"bcdfghjklmnpqrstvwxz0123456789", *pSrc))
 				*pDst++ = *pSrc;
 		*pDst = 0;
-		m_clientCapsManager.SetClientCaps(JABBER_CAPS_MIRANDA_NODE, szExt, jcb);
+		m_clientCapsManager.SetOwnCaps(JABBER_CAPS_MIRANDA_NODE, szExt, jcb);
 
 		fcp = new JabberFeatCapPairDynamic();
 		fcp->szExt = szExt; // will be deallocated along with other values of JabberFeatCapPairDynamic in CJabberProto destructor
-		fcp->szFeature = mir_tstrdup(szFeature);
-		fcp->szDescription = szDescription ? mir_tstrdup(szDescription) : NULL;
+		fcp->szFeature = mir_wstrdup(szFeature);
+		fcp->szDescription = szDescription ? mir_wstrdup(szDescription) : nullptr;
 		fcp->jcbCap = jcb;
 		m_lstJabberFeatCapPairsDynamic.insert(fcp);
 	}
 	else if (szDescription) { // update description
 		if (fcp->szDescription)
 			mir_free(fcp->szDescription);
-		fcp->szDescription = mir_tstrdup(szDescription);
+		fcp->szDescription = mir_wstrdup(szDescription);
 	}
 	return true;
 }
@@ -279,7 +272,7 @@ int CJabberProto::AddFeatures(LPCTSTR szFeatures)
 		JabberFeatCapPairDynamic *fcp = FindFeature(szFeat);
 		// if someone is trying to add one of core features, RegisterFeature() will return false, so we don't have to perform this check here
 		if (!fcp) { // if the feature is not registered yet
-			if (!RegisterFeature(szFeat, NULL))
+			if (!RegisterFeature(szFeat, nullptr))
 				ret = false;
 			else
 				fcp = FindFeature(szFeat); // update fcp after RegisterFeature()
@@ -288,7 +281,7 @@ int CJabberProto::AddFeatures(LPCTSTR szFeatures)
 			m_uEnabledFeatCapsDynamic |= fcp->jcbCap;
 		else
 			ret = false;
-		szFeat += mir_tstrlen(szFeat) + 1;
+		szFeat += mir_wstrlen(szFeat) + 1;
 	}
 	lck.unlock();
 
@@ -313,7 +306,7 @@ int CJabberProto::RemoveFeatures(LPCTSTR szFeatures)
 		else
 			ret = false; // indicate that there was an error removing at least one of the specified features
 
-		szFeat += mir_tstrlen(szFeat) + 1;
+		szFeat += mir_wstrlen(szFeat) + 1;
 	}
 	lck.unlock();
 
@@ -325,9 +318,9 @@ int CJabberProto::RemoveFeatures(LPCTSTR szFeatures)
 
 LPTSTR CJabberProto::GetResourceFeatures(LPCTSTR jid)
 {
-	JabberCapsBits jcb = GetResourceCapabilites(jid, true);
+	JabberCapsBits jcb = GetResourceCapabilities(jid);
 	if (jcb & JABBER_RESOURCE_CAPS_ERROR)
-		return NULL;
+		return nullptr;
 
 	mir_cslockfull lck(m_csLists);
 	int i;
@@ -335,32 +328,32 @@ LPTSTR CJabberProto::GetResourceFeatures(LPCTSTR jid)
 	// calculate total necessary string length
 	for (i=0; g_JabberFeatCapPairs[i].szFeature; i++)
 		if (jcb & g_JabberFeatCapPairs[i].jcbCap)
-			iLen += mir_tstrlen(g_JabberFeatCapPairs[i].szFeature) + 1;
+			iLen += mir_wstrlen(g_JabberFeatCapPairs[i].szFeature) + 1;
 
 	for (i=0; i < m_lstJabberFeatCapPairsDynamic.getCount(); i++)
 		if (jcb & m_lstJabberFeatCapPairsDynamic[i]->jcbCap)
-			iLen += mir_tstrlen(m_lstJabberFeatCapPairsDynamic[i]->szFeature) + 1;
+			iLen += mir_wstrlen(m_lstJabberFeatCapPairsDynamic[i]->szFeature) + 1;
 
 	// allocate memory and fill it
-	LPTSTR str = (LPTSTR)mir_alloc(iLen * sizeof(TCHAR));
+	LPTSTR str = (LPTSTR)mir_alloc(iLen * sizeof(wchar_t));
 	LPTSTR p = str;
 	for (i=0; g_JabberFeatCapPairs[i].szFeature; i++)
 		if (jcb & g_JabberFeatCapPairs[i].jcbCap) {
-			mir_tstrcpy(p, g_JabberFeatCapPairs[i].szFeature);
-			p += mir_tstrlen(g_JabberFeatCapPairs[i].szFeature) + 1;
+			mir_wstrcpy(p, g_JabberFeatCapPairs[i].szFeature);
+			p += mir_wstrlen(g_JabberFeatCapPairs[i].szFeature) + 1;
 		}
 
 	for (i=0; i < m_lstJabberFeatCapPairsDynamic.getCount(); i++)
 		if (jcb & m_lstJabberFeatCapPairsDynamic[i]->jcbCap) {
-			mir_tstrcpy(p, m_lstJabberFeatCapPairsDynamic[i]->szFeature);
-			p += mir_tstrlen(m_lstJabberFeatCapPairsDynamic[i]->szFeature) + 1;
+			mir_wstrcpy(p, m_lstJabberFeatCapPairsDynamic[i]->szFeature);
+			p += mir_wstrlen(m_lstJabberFeatCapPairsDynamic[i]->szFeature) + 1;
 		}
 
 	*p = 0; // extra zero terminator
 	return str;
 }
 
-HANDLE CJabberProto::GetHandle()
+HNETLIBUSER CJabberProto::GetHandle()
 {
 	return m_hNetlibUser;
 }

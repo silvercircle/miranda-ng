@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2010 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -368,7 +368,7 @@ int __stdcall utf8_decode_codepage(const char *from, char **to, WORD wCp)
 		}
 
 		int err = WideCharToMultiByte(wCp, WC_COMPOSITECHECK, unicode, -1, *to, (int)chars, NULL, NULL);
-		if (err != chars) {
+		if (err != (int)chars) {
 #ifdef _DEBUG
 			fprintf(stderr, "Unicode translation error %d\n", GetLastError());
 #endif

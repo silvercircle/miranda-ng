@@ -6,7 +6,7 @@
 ;  Authors: chaos.persei, sje, Kildor, Billy_Bons
 ;============================================================
 [Database autobackuper plugin.]
-Плагін авторезервування профілю.
+Авторезервування бази даних.
 [Backup progress]
 Резервне копіювання
 [Cancel]
@@ -29,7 +29,7 @@
 Папка для резервних копій
 [Browse...]
 Огляд...
-[Go to the "Customize -> Folders" to change settings]
+[Go to the "Options -> Customize -> Folders" to change settings]
 Відкрийте "Тонке налаштування -> Папки" для зміни налаштувань
 [Compress backup to zip-archive]
 Стиснути резервну копію в zip-архів
@@ -37,20 +37,22 @@
 Вимкнути індикацію
 [Disable popups]
 Вимкнути сплив. вікна
-[Miranda NG database]
-База даних Miranda NG
-[Created by:]
-Створена:
+[Use Dropbox]
+Використовувати Dropbox
+[Backup profile folder]
+Резервувати папку профілю
 [Backup in progress]
 Резервування в процесі
 [Copying database file...]
 Копіювання файлу бази даних...
-[Database backed up]
-Профіль зарезервовано
-[Database back up in process...]
-Резервування профілю...
+[Uploading to Dropbox failed]
+Не вдалося завантажити в Dropbox
 [Error]
 Помилка
+[Database backed up]
+Базу даних зарезервовано
+[Database back up in process...]
+Резервування бази...
 [Miranda NG databases]
 Бази даних Miranda NG
 [Compressed Miranda NG databases]
@@ -64,7 +66,7 @@
 [Save profile as...]
 Зберегти профіль як...
 [Database backups]
-Резервування профілю
+Резервування бази даних
 [Backup folder]
 Папка резервування
 [path to Miranda root folder]
@@ -97,3 +99,5 @@
 Виберіть папку для зберігання резервних копій
 [Error creating backup folder]
 Помилка при створенні папки для резервного копіювання
+[Miranda NG [%s] database backup]
+Резервна копія бази даних Miranda NG [%s]

@@ -6,13 +6,13 @@
 ;  Authors: chaos.persei, sje, Kildor, Billy_Bons
 ;============================================================
 [Database autobackuper plugin.]
-Плагин авторезервирования профиля.
+Авторезервирование базы данных.
 [Backup progress]
 Процесс резервного копирования
 [Cancel]
 Отменить
 [Automatic backups]
-Авторезервирование профиля
+Авторезервирование базы данных
 [Backup NOW]
 Сохранить СЕЙЧАС
 [Disabled]
@@ -29,42 +29,44 @@
 Сохранять в папку:
 [Browse...]
 Обзор...
-[Go to the "Customize -> Folders" to change settings]
-Откройте "Тонкая настройка -> Папки" для изменения настроек
+[Go to the "Options -> Customize -> Folders" to change settings]
+Перейти в раздел "Тонкая настройка -> Папки"
 [Compress backup to zip-archive]
 Сжать резервную копию в zip-архив
 [Disable progress bar]
 Отключить индикатор выполнения
 [Disable popups]
 Отключить всплывающие окна
-[Miranda NG database]
-Резервная копия профиля Miranda NG
-[Created by:]
-Создана:
+[Use Dropbox]
+Использовать Dropbox
+[Backup profile folder]
+Резервировать папку профиля
 [Backup in progress]
 Резервирование в процессе
 [Copying database file...]
-Копирование файла профиля...
-[Database backed up]
-Профиль зарезервирован
-[Database back up in process...]
-Производится резервирование профиля...
+Копирование файла базы данных...
+[Uploading to Dropbox failed]
+Не удалось загрузить в Dropbox
 [Error]
 Ошибка
+[Database backed up]
+База данных зарезервирована
+[Database back up in process...]
+Производится резервирование базы данных...
 [Miranda NG databases]
-Профили Miranda NG
+Базы данных Miranda NG
 [Compressed Miranda NG databases]
-Сжатые профили Miranda NG
+Сжатые базы данных Miranda NG
 [All files]
 Все файлы
 [Database]
-Профиль
+База данных
 [Backup profile]
-Резервировать профиль
+Резервировать базу данных
 [Save profile as...]
 Сохранить профиль как...
 [Database backups]
-Резервирование профиля
+Резервирование базы данных
 [Backup folder]
 Папка резервирования
 [path to Miranda root folder]
@@ -97,3 +99,5 @@
 Выберите папку для хранения резервных копий
 [Error creating backup folder]
 Ошибка при создании папки для резервного копирования
+[Miranda NG [%s] database backup]
+Резервная копия базы Miranda NG [%s]

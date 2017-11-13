@@ -25,34 +25,33 @@ public:
 
 	virtual	int      __cdecl Authorize(MEVENT hDbEvent);
 	virtual	int      __cdecl AuthRecv(MCONTACT hContact, PROTORECVEVENT*);
-	virtual	int      __cdecl AuthRequest(MCONTACT hContact, const TCHAR* szMessage);
+	virtual	int      __cdecl AuthRequest(MCONTACT hContact, const wchar_t* szMessage);
 
-	virtual	HANDLE   __cdecl FileAllow(MCONTACT hContact, HANDLE hTransfer, const TCHAR* tszPath);
+	virtual	HANDLE   __cdecl FileAllow(MCONTACT hContact, HANDLE hTransfer, const wchar_t* tszPath);
 	virtual	int      __cdecl FileCancel(MCONTACT hContact, HANDLE hTransfer);
-	virtual	int      __cdecl FileDeny(MCONTACT hContact, HANDLE hTransfer, const TCHAR* tszReason);
-	virtual	int      __cdecl FileResume(HANDLE hTransfer, int* action, const TCHAR** tszFilename);
+	virtual	int      __cdecl FileDeny(MCONTACT hContact, HANDLE hTransfer, const wchar_t* tszReason);
+	virtual	int      __cdecl FileResume(HANDLE hTransfer, int* action, const wchar_t** tszFilename);
 
 	virtual	DWORD_PTR __cdecl GetCaps(int type, MCONTACT hContact = NULL);
 	
 	virtual	HWND      __cdecl SearchAdvanced(HWND owner);
 	virtual	HWND      __cdecl CreateExtendedSearchUI(HWND owner);
 
-	virtual	int       __cdecl RecvMsg(MCONTACT hContact, PROTORECVEVENT*);
 	virtual	int       __cdecl SendMsg(MCONTACT hContact, int flags, const char* msg);
 
-	virtual	HANDLE    __cdecl SendFile(MCONTACT hContact, const TCHAR*, TCHAR **ppszFiles);
+	virtual	HANDLE    __cdecl SendFile(MCONTACT hContact, const wchar_t*, wchar_t **ppszFiles);
 
 	virtual	int       __cdecl SetStatus(int iNewStatus);
 
 	virtual	HANDLE    __cdecl GetAwayMsg(MCONTACT hContact);
-	virtual	int       __cdecl SetAwayMsg(int iStatus, const TCHAR* msg);
+	virtual	int       __cdecl SetAwayMsg(int iStatus, const wchar_t* msg);
 
 	virtual	int       __cdecl UserIsTyping(MCONTACT hContact, int type);
 
 	virtual	int       __cdecl OnEvent(PROTOEVENTTYPE iEventType, WPARAM wParam, LPARAM lParam);
 
 	// accounts
-	static CToxProto* InitAccount(const char *protoName, const TCHAR *userName);
+	static CToxProto* InitAccount(const char *protoName, const wchar_t *userName);
 	static int        UninitAccount(CToxProto *proto);
 
 	// icons
@@ -66,40 +65,56 @@ public:
 
 	static int OnModulesLoaded(WPARAM, LPARAM);
 
+	// utils
+	static void ShowNotification(const wchar_t *message, int flags = 0, MCONTACT hContact = NULL);
+
 private:
 	CToxThread *toxThread;
 	mir_cs profileLock;
-	TCHAR *accountName;
-	HANDLE hNetlib, hPollingThread;
+	ptrW wszAccountName, wszGroup;
+	
 	CTransferList transfers;
-	CLogger *logger;
+	ULONG hMessageProcess;
+
+	bool isTerminated;
+	HANDLE hConnectingThread;
+	HANDLE hCheckingThread;
+	HANDLE hPollingThread;
+	HANDLE hTerminateEvent;
 
 	static HANDLE hProfileFolderPath;
 
 	// tox profile
-	TCHAR* GetToxProfilePath();
-	static TCHAR* GetToxProfilePath(const TCHAR *accountName);
+	wchar_t* GetToxProfilePath();
+	static wchar_t* GetToxProfilePath(const wchar_t *accountName);
 
 	bool LoadToxProfile(Tox_Options *options);
-	void SaveToxProfile();
+	void SaveToxProfile(Tox *tox);
 
 	INT_PTR __cdecl OnCopyToxID(WPARAM, LPARAM);
 
 	// tox core
 	Tox_Options* GetToxOptions();
-	bool InitToxCore();
-	void UninitToxCore();
+	void InitToxCore(Tox *tox);
+	void UninitToxCore(Tox *tox);
 
-	// tox network
+	// tox bootstrap
+	void BootstrapUdpNode(Tox *tox, const char *address, int port, const char *pubKey);
+	void BootstrapTcpRelay(Tox *tox, const char *address, int port, const char *pubKey);
+
+	void BootstrapNodesFromDb(Tox *tox, bool isIPv6);
+	void BootstrapNodesFromJson(Tox *tox, bool isIPv6);
+	void BootstrapNodes(Tox *tox);
+
+	void UpdateNodes();
+
+	// tox connection
 	bool IsOnline();
 
-	void BootstrapNode(const char *address, int port, const char *pubKey);
-	void BootstrapNodesFromDb(bool isIPv6);
-	void BootstrapNodesFromIni(bool isIPv6);
-	void BootstrapNodes();
-	void TryConnect();
-	void CheckConnection(int &retriesCount);
+	void TryConnect(Tox *tox);
+	void CheckConnection(Tox *tox, int &retriesCount);
 
+	void __cdecl CheckingThread(void*);
 	void __cdecl PollingThread(void*);
 
 	// accounts
@@ -145,8 +160,10 @@ private:
 	void SetContactStatus(MCONTACT hContact, WORD status);
 	void SetAllContactsStatus(WORD status);
 
-	MCONTACT GetContact(const int friendNumber);
+	MCONTACT GetContact(const Tox *tox, const int friendNumber);
 	MCONTACT GetContact(const char *pubKey);
+
+	ToxHexAddress GetContactPublicKey(const Tox *tox, const int friendNumber);
 
 	MCONTACT AddContact(const char *address, const char *nick = NULL, const char *dnsId = NULL, bool isTemporary = false);
 
@@ -154,7 +171,7 @@ private:
 
 	uint32_t GetToxFriendNumber(MCONTACT hContact);
 
-	void __cdecl LoadFriendList(void*);
+	void LoadFriendList(Tox *tox);
 
 	INT_PTR __cdecl OnRequestAuth(WPARAM hContact, LPARAM lParam);
 	INT_PTR __cdecl OnGrantAuth(WPARAM hContact, LPARAM);
@@ -192,8 +209,8 @@ private:
 	INT_PTR __cdecl OnLeaveChatRoom(WPARAM hContact, LPARAM);
 	INT_PTR __cdecl OnCreateChatRoom(WPARAM, LPARAM);
 
-	void InitGroupChatModule();
-	void CloseAllChatChatSessions();
+	//void InitGroupChatModule();
+	//void CloseAllChatChatSessions();
 
 	static void OnGroupChatInvite(Tox *tox, int32_t friendNumber, uint8_t type, const uint8_t *data, const uint16_t length, void *arg);
 
@@ -203,11 +220,13 @@ private:
 	static INT_PTR CALLBACK ChatRoomInviteProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	// messages
-	int OnReceiveMessage(MCONTACT hContact, PROTORECVEVENT *pre);
+	std::map<uint64_t, UINT> messages;
+
+	void __cdecl SendMessageAsync(void *arg);
 	int OnSendMessage(MCONTACT hContact, const char *message);
 
 	static void OnFriendMessage(Tox *tox, uint32_t friendNumber, TOX_MESSAGE_TYPE type, const uint8_t *message, size_t length, void *arg);
-	static void OnReadReceipt(Tox *tox, uint32_t friendNumber, uint32_t messageId, void *arg);
+	static void OnReadReceipt(Tox *tox, uint32_t friendNumber, uint32_t messageNumber, void *arg);
 
 	void __cdecl GetStatusMessageAsync(void* arg);
 
@@ -217,10 +236,11 @@ private:
 	int __cdecl OnPreCreateMessage(WPARAM wParam, LPARAM lParam);
 
 	// transfer
-	HANDLE OnFileAllow(MCONTACT hContact, HANDLE hTransfer, const TCHAR *tszPath);
-	int OnFileResume(HANDLE hTransfer, int *action, const TCHAR **szFilename);
-	int OnFileCancel(MCONTACT hContact, HANDLE hTransfer);
-	HANDLE OnSendFile(MCONTACT hContact, const TCHAR*, TCHAR **ppszFiles);
+	HANDLE OnFileAllow(MCONTACT hContact, HANDLE hTransfer, const wchar_t *tszPath);
+	int OnFileResume(HANDLE hTransfer, int *action, const wchar_t **szFilename);
+	HANDLE OnSendFile(MCONTACT hContact, const wchar_t*, wchar_t **ppszFiles);
+
+	int CancelTransfer(MCONTACT hContact, HANDLE hTransfer);
 
 	static void OnFileRequest(Tox *tox, uint32_t friendNumber, uint32_t fileNumber, TOX_FILE_CONTROL control, void *arg);
 	static void OnFriendFile(Tox *tox, uint32_t friendNumber, uint32_t fileNumber, uint32_t kind, uint64_t fileSize, const uint8_t *fileName, size_t filenameLength, void *arg);
@@ -232,11 +252,11 @@ private:
 
 	void PauseOutgoingTransfers(uint32_t friendNumber);
 	void ResumeIncomingTransfers(uint32_t friendNumber);
-	void CancelAllTransfers();
+	void CancelAllTransfers(Tox *tox);
 
 	// avatars
-	TCHAR* GetAvatarFilePath(MCONTACT hContact = NULL);
-	void SetToxAvatar(const TCHAR* path);
+	wchar_t* GetAvatarFilePath(MCONTACT hContact = NULL);
+	void SetToxAvatar(const wchar_t* path);
 
 	INT_PTR __cdecl GetAvatarCaps(WPARAM wParam, LPARAM lParam);
 	INT_PTR __cdecl GetAvatarInfo(WPARAM, LPARAM lParam);
@@ -251,33 +271,37 @@ private:
 	HWAVEOUT hOutDevice;
 	std::map<MCONTACT, int32_t> calls;
 
-	ToxAvCSettings* GetAudioCSettings();
+	//ToxAvCSettings* GetAudioCSettings();
 	
-	static void OnFriendAudio(void *agent, int32_t callId, const int16_t *PCM, uint16_t size, void *arg);
+	
 	INT_PTR __cdecl OnRecvAudioCall(WPARAM wParam, LPARAM lParam);
 	INT_PTR __cdecl OnAudioRing(WPARAM wParam, LPARAM lParam);
 
 	INT_PTR __cdecl OnSendAudioCall(WPARAM wParam, LPARAM);
 
-	static void OnAvInvite(void*, int32_t callId, void *arg);
-	static void OnAvStart(void*, int32_t callId, void *arg);
-	static void OnAvEnd(void*, int32_t callId, void *arg);
-	static void OnAvReject(void*, int32_t callId, void *arg);
-	static void OnAvCancel(void*, int32_t callId, void *arg);
-	static void OnAvCallTimeout(void*, int32_t callId, void *arg);
-	static void OnAvPeerTimeout(void*, int32_t callId, void *arg);
+	static void OnFriendCall(ToxAV *toxAV, uint32_t friend_number, bool audio_enabled, bool video_enabled, void *arg);
+	static void OnFriendCallState(ToxAV *toxAV, uint32_t friend_number, uint32_t state, void *user_data);
+	static void OnBitrateChanged(ToxAV *toxAV, uint32_t friend_number, uint32_t audio_bit_rate, uint32_t video_bit_rate, void *arg);
+	static void OnFriendAudioFrame(ToxAV *toxAV, uint32_t friend_number, const int16_t *pcm, size_t sample_count, uint8_t channels, uint32_t sampling_rate, void *user_data);
+
+	//static void OnAvEnd(void*, int32_t callId, void *arg);
+	//static void OnAvReject(void*, int32_t callId, void *arg);
+	//static void OnAvCancel(void*, int32_t callId, void *arg);
+	//static void OnAvCallTimeout(void*, int32_t callId, void *arg);
+	//static void OnAvPeerTimeout(void*, int32_t callId, void *arg);
 
 	// utils
 	static int MapStatus(int status);
 	static TOX_USER_STATUS MirandaToToxStatus(int status);
 	static int ToxToMirandaStatus(TOX_USER_STATUS userstatus);
 
-	static TCHAR* ToxErrorToString(TOX_ERR_NEW error);
+	static wchar_t* ToxErrorToString(TOX_ERR_NEW error);
+	static wchar_t* ToxErrorToString(TOX_ERR_FRIEND_SEND_MESSAGE error);
 
-	static void ShowNotification(const TCHAR *message, int flags = 0, MCONTACT hContact = NULL);
-	static void ShowNotification(const TCHAR *caption, const TCHAR *message, int flags = 0, MCONTACT hContact = NULL);
+	
+	static void ShowNotification(const wchar_t *caption, const wchar_t *message, int flags = 0, MCONTACT hContact = NULL);
 
-	static bool IsFileExists(const TCHAR* path);
+	static bool IsFileExists(const wchar_t* path);
 
 	MEVENT AddEventToDb(MCONTACT hContact, WORD type, DWORD timestamp, DWORD flags, PBYTE pBlob, size_t cbBlob);
 

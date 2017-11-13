@@ -45,7 +45,6 @@ var
   pc:pWideChar;
 begin
   FillChar(tabb,SizeOf(tabb),0);
-  tabb.cbSize       :=SizeOf(tabb);
   tabb.dwButtonID   :=ActionItem.dwActID;
   tabb.pszModuleName:=MODULE_NAME;
 
@@ -63,8 +62,8 @@ begin
     tabb.bbbFlags:=BBSF_RELEASED;
   end;
   if pc=nil then pc:=ActionItem.szActDescr;
-  tabb.szTooltip.w:=pc;
-  CallService(MS_BB_SETBUTTONSTATE,hContact,TLPARAM(@tabb));
+  tabb.szTooltip:=pc;
+  Srmm_SetButtonState(hContact,@tabb);
 end;
 
 function IsLocalItem(const UAItem:tMyActionItem):boolean;
@@ -214,7 +213,6 @@ begin
   if (ActionItem.flags and UAF_HKREGGED)=0 then
   begin
     FillChar(hkd,SizeOf(hkd),0);
-    hkd.cbSize          := SizeOf(hkd); // HOTKEYDESC_SIZE_V1 for pre-0.9
     hkd.dwFlags         := HKD_UNICODE; // since 0.9 only
     hkd.pszName         := ActionItem.szNameID;
     hkd.pszDescription.w:= ActionItem.szActDescr;
@@ -231,11 +229,9 @@ end;
 
 procedure DeleteCoreHotkey(var ActionItem:tMyActionItem);
 begin
-  if // bCoreHotkeyPresents and
-     // (ServiceExists(MS_HOTKEY_UNREGISTER)<>0) and
-     ((ActionItem.flags and UAF_HKREGGED)<>0) then
+  if ((ActionItem.flags and UAF_HKREGGED)<>0) then
   begin
-    CallService(MS_HOTKEY_UNREGISTER,0,LParam(ActionItem.szNameID));
+    Hotkey_Unregister(ActionItem.szNameID);
     ActionItem.flags:=ActionItem.flags and not UAF_HKREGGED;
   end;
 end;
@@ -733,26 +729,22 @@ begin
   begin
     FillChar(tabb,SizeOf(tabb),0);
     // register Tab ButtonBar button
-    tabb.cbSize       :=SizeOf(tabb);
     tabb.dwButtonID   :=ActionItem.dwActID;
     tabb.pszModuleName:=MODULE_NAME;
     tabb.dwDefPos     :=(TABTOOLBAR_INITPOS+ActionItem.wSortIndex*10) and $7FFF;
-    tabb.iButtonWidth :=0;
     tabb.hIcon        :=ActionItem.hIcolibIcon;
     if (ActionItem.flags and UAF_2STATE)<>0 then
-      tabb.bbbFlags:=BBBF_ISIMBUTTON or BBBF_ISLSIDEBUTTON or
-                     BBBF_ISCHATBUTTON or BBBF_ISPUSHBUTTON
+      tabb.bbbFlags:=BBBF_ISIMBUTTON or BBBF_ISCHATBUTTON or BBBF_ISPUSHBUTTON
     else
-      tabb.bbbFlags:=BBBF_ISIMBUTTON or BBBF_ISLSIDEBUTTON or
-                     BBBF_ISCHATBUTTON;
+      tabb.bbbFlags:=BBBF_ISIMBUTTON or BBBF_ISCHATBUTTON;
 
     if ActionItem.szTabBTooltip<>nil then
-      tabb.szTooltip.w:=ActionItem.szTabBTooltip
+      tabb.szTooltip:=ActionItem.szTabBTooltip
     else
-      tabb.szTooltip.w:=ActionItem.szActDescr;
+      tabb.szTooltip:=ActionItem.szActDescr;
 
-    if CallService(MS_BB_ADDBUTTON,0,LPARAM(@tabb))=0 then
-      ActionItem.flags:=ActionItem.flags or UAF_TBREGGED;
+    Srmm_AddButton(@tabb);
+    ActionItem.flags:=ActionItem.flags or UAF_TBREGGED;
   end;
 end;
 
@@ -763,10 +755,9 @@ begin
   if (ActionItem.flags and UAF_TBREGGED)<>0 then
   begin
     FillChar(tabb,SizeOf(tabb),0);
-    tabb.cbSize       :=SizeOf(tabb);
     tabb.dwButtonID   :=ActionItem.dwActID;
     tabb.pszModuleName:=MODULE_NAME;
-    CallService(MS_BB_REMOVEBUTTON,0,LPARAM(@tabb));
+    Srmm_RemoveButton(@tabb);
     ActionItem.flags:=ActionItem.flags and not UAF_TBREGGED;
   end;
 end;

@@ -60,18 +60,18 @@ Online
 Na chvíli pryč
 [Occupied]
 Nemám čas
-[NA]
+[Not available]
 Nejsem tady
-[DND]
+[Do not disturb]
 Nerušit!
 [Free for chat]
 Mám volno
 [Invisible]
 Neviditelný
 [On the phone]
-Mám telefon
+Na telefonu
 [Out to lunch]
-Jsem na obědě
+Na obědě
 [Pending Events]
 Trvající události
 [Remind me every]
@@ -184,16 +184,24 @@ Nastavit rozšířené stavy
 [** Unknown contacts **]
 ** neznámé kontakty **
 ;file \plugins\KeyboardNotify\src\options.cpp
-[left->right]
+[left -> right]
 zleva doprava
-[right->left]
+[right -> left]
 zprava doleva
-[left<->right]
+[left <-> right]
 Knight Rider
-[Keyboard Flash]
-Blikání klávesnicí
-[Events]
-Události
+[\n; Automatically generated Keyboard Notify Theme file\n\n\n]
+\n; Automaticky generovaný soubor s tématem pro upozornění klávesnicí\n\n\n
+[\n; End of automatically generated Keyboard Notify Theme file\n]
+\n; Konec automaticky generovaného souboru s tématem pro upozornění klávesnicí\n
+[None]
+---
+[Protocol]
+Protokol
+[Keyboard Notify Theme]
+Sekvence blikání klávesnicí
+[All Files]
+Všechny soubory
 [Accounts]
 Účty
 [Rules]
@@ -202,15 +210,7 @@ Pravidla
 Blikání
 [Themes]
 Vlastní sekvence
-[Protocol]
-Protokol
-[Keyboard Notify Theme]
-Sekvence blikání klávesnicí
-[All Files]
-Všechny soubory
-[\n; Automatically generated Keyboard Notify Theme file\n\n\n]
-\n; Automaticky generovaný soubor s tématem pro upozornění klávesnicí\n\n\n
-[\n; End of automatically generated Keyboard Notify Theme file\n]
-\n; Konec automaticky generovaného souboru s tématem pro upozornění klávesnicí\n
-[None]
----
+[Keyboard Flash]
+Blikání klávesnicí
+[Events]
+Události

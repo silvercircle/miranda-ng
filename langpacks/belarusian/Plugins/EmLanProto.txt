@@ -2,12 +2,11 @@
 ;============================================================
 ;  File: EmLanProto.dll
 ;  Plugin: E-mage LAN protocol
-;  Version: 0.0.1.2
+;  Version: 0.1.0.1
 ;  Authors: kva
 ;============================================================
 [E-mage LAN protocol support for Miranda NG.]
 Падтрымка пратакола E-mage LAN у Miranda NG.
-;file \protocols\EmLanProto\res\amdproto.rc
 [Select your IP address]
 Абярыце ваш IP адрас
 [LAN Settings]
@@ -18,9 +17,8 @@
 Ваша імя
 [Select your name]
 Абярыце ваша імя
-;file \protocols\EmLanProto\src\amdproto.cpp
 [User name or '*']
-Імя кантакта ці  '*'
+Імя кантакта ці '*'
 [E-mage LAN protocol]
 Пратакол E-mage LAN
 [Network]

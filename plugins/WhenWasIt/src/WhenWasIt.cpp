@@ -55,7 +55,7 @@ extern "C" int __declspec(dllexport) Load(void)
 	Log("%s", "Entering function " __FUNCTION__);
 
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	INITCOMMONCONTROLSEX icex;
 	icex.dwSize = sizeof(icex);
@@ -74,7 +74,8 @@ extern "C" int __declspec(dllexport) Load(void)
 
 	CMenuItem mi;
 	mi.position = 10000000;
-	mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Birthdays (When Was It)"), mi.position);
+	mi.root = Menu_CreateRoot(MO_MAIN, LPGENW("Birthdays (When Was It)"), mi.position);
+	Menu_ConfigureItem(mi.root, MCI_OPT_UID, "95D842AE-FCCE-43C9-87E3-C28546B7E00E");
 
 	SET_UID(mi, 0x4efbd640, 0xabbd, 0x470e, 0x9a, 0xa, 0x64, 0x76, 0x1a, 0x74, 0xf3, 0x24);
 	mi.pszService = MS_WWI_CHECK_BIRTHDAYS;
@@ -117,21 +118,21 @@ extern "C" int __declspec(dllexport) Load(void)
 	Menu_AddContactMenuItem(&mi);
 
 	// Register hotkeys
-	HOTKEYDESC hotkey = { sizeof(hotkey) };
-	hotkey.pszSection = LPGEN("Birthdays");
+	HOTKEYDESC hotkey = {};
+	hotkey.szSection.a = LPGEN("Birthdays");
 
 	hotkey.pszName = "wwi_birthday_list";
-	hotkey.pszDescription = LPGEN("Birthday list");
+	hotkey.szDescription.a = LPGEN("Birthday list");
 	hotkey.pszService = MS_WWI_LIST_SHOW;
 	Hotkey_Register(&hotkey);
 
 	hotkey.pszName = "wwi_check_birthdays";
-	hotkey.pszDescription = LPGEN("Check for birthdays");
+	hotkey.szDescription.a = LPGEN("Check for birthdays");
 	hotkey.pszService = MS_WWI_CHECK_BIRTHDAYS;
 	Hotkey_Register(&hotkey);
 
-	SkinAddNewSoundExT(BIRTHDAY_NEAR_SOUND, LPGENT("WhenWasIt"), LPGENT("Birthday near"));
-	SkinAddNewSoundExT(BIRTHDAY_TODAY_SOUND, LPGENT("WhenWasIt"), LPGENT("Birthday today"));
+	Skin_AddSound(BIRTHDAY_NEAR_SOUND, LPGENW("WhenWasIt"), LPGENW("Birthday near"));
+	Skin_AddSound(BIRTHDAY_TODAY_SOUND, LPGENW("WhenWasIt"), LPGENW("Birthday today"));
 
 	Log("%s", "Leaving function " __FUNCTION__);
 	return 0;
@@ -152,9 +153,6 @@ extern "C" int __declspec(dllexport) Unload()
 
 	Log("%s", "Unhooking events ...");
 	UnhookEvents();
-
-	Log("%s", "Destroying service functions ...");
-	DestroyServices();
 
 	Log("%s", "Leaving function " __FUNCTION__);
 	return 0;

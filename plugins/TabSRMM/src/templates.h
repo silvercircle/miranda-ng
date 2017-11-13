@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
-// Copyright (ñ) 2012-15 Miranda NG project,
+// Copyright (ñ) 2012-17 Miranda NG project,
 // Copyright (c) 2000-09 Miranda ICQ/IM project,
 // all portions of this codebase are copyrighted to the people
 // listed in contributors.txt.
@@ -26,26 +26,4 @@
 //
 // templates for the message log...
 
-struct TemplateEditorInfo
-{
-	BOOL rtl;
-	BOOL changed;           // template in edit field is changed
-	BOOL selchanging;
-	int  inEdit;            // template currently in editor
-	BOOL updateInfo[TMPL_ERRMSG + 1];        // item states...
-	HWND hwndParent;
-	MCONTACT hContact;
-};
-
-struct TemplateEditorNew
-{
-	MCONTACT hContact;
-	BOOL   rtl;
-	HWND   hwndParent;
-};
-
-BOOL CALLBACK DlgProcTemplateEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
-static void LoadTemplatesFrom(TTemplateSet *tSet, MCONTACT hContact, int rtl);
 void LoadDefaultTemplates();
-
-#define DM_UPDATETEMPLATEPREVIEW (WM_USER + 50)

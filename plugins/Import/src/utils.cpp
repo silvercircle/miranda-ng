@@ -2,7 +2,7 @@
 
 Import plugin for Miranda NG
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -29,38 +29,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // ------------------------------------------------
 // Returns 1 if successful and 0 when it fails.
 
-int CreateGroup(const TCHAR *group, MCONTACT hContact)
+int CreateGroup(const wchar_t *group, MCONTACT hContact)
 {
 	if (group == NULL)
 		return 0;
 
-	size_t cbName = mir_tstrlen(group);
-	TCHAR *tszGrpName = (TCHAR*)_alloca((cbName + 2)*sizeof(TCHAR));
-	tszGrpName[0] = 1 | GROUPF_EXPANDED;
-	mir_tstrcpy(tszGrpName + 1, group);
-
-	// Check for duplicate & find unused id
-	char groupIdStr[11];
-	for (int groupId = 0;; groupId++) {
-		itoa(groupId, groupIdStr, 10);
-		ptrT tszDbGroup(db_get_tsa(NULL, "CListGroups", groupIdStr));
-		if (tszDbGroup == NULL)
-			break;
-
-		if (!mir_tstrcmp((TCHAR*)tszDbGroup+1, tszGrpName+1)) {
-			if (hContact)
-				db_set_ts(hContact, "CList", "Group", tszGrpName + 1);
-			else
-				AddMessage(LPGENT("Skipping duplicate group %s."), tszGrpName + 1);
-			return 0;
-		}
+	if (Clist_GroupExists(group)) {
+		if (hContact)
+			db_set_ws(hContact, "CList", "Group", group);
+		else
+			AddMessage(LPGENW("Skipping duplicate group %s."), group);
+		return 0;
 	}
 
-	db_set_ts(NULL, "CListGroups", groupIdStr, tszGrpName);
-
+	Clist_GroupCreate(NULL, group);
 	if (hContact)
-		db_set_ts(hContact, "CList", "Group", tszGrpName + 1);
-
+		db_set_ws(hContact, "CList", "Group", group);
 	return 1;
 }
 
@@ -84,7 +68,7 @@ bool IsDuplicateEvent(MCONTACT hContact, DBEVENTINFO dbei)
 	if (hExistingDbEvent == NULL)
 		return FALSE;
 
-	DBEVENTINFO dbeiExisting = { sizeof(dbeiExisting) };
+	DBEVENTINFO dbeiExisting = {};
 	db_event_get(hExistingDbEvent, &dbeiExisting);
 	DWORD dwEventTimeStamp = dbeiExisting.timestamp;
 
@@ -107,7 +91,6 @@ bool IsDuplicateEvent(MCONTACT hContact, DBEVENTINFO dbei)
 			return FALSE;
 
 		memset(&dbeiExisting, 0, sizeof(dbeiExisting));
-		dbeiExisting.cbSize = sizeof(dbeiExisting);
 		db_event_get(hExistingDbEvent, &dbeiExisting);
 		dwEventTimeStamp = dbeiExisting.timestamp;
 
@@ -124,7 +107,6 @@ bool IsDuplicateEvent(MCONTACT hContact, DBEVENTINFO dbei)
 	// check for equal timestamps
 	if (dbei.timestamp == dwPreviousTimeStamp) {
 		memset(&dbeiExisting, 0, sizeof(dbeiExisting));
-		dbeiExisting.cbSize = sizeof(dbeiExisting);
 		db_event_get(hPreviousDbEvent, &dbeiExisting);
 
 		if (IsEqualEvent(dbei, dbeiExisting))
@@ -134,7 +116,6 @@ bool IsDuplicateEvent(MCONTACT hContact, DBEVENTINFO dbei)
 		hExistingDbEvent = db_event_next(hContact, hPreviousDbEvent);
 		while (hExistingDbEvent != NULL) {
 			memset(&dbeiExisting, 0, sizeof(dbeiExisting));
-			dbeiExisting.cbSize = sizeof(dbeiExisting);
 			db_event_get(hExistingDbEvent, &dbeiExisting);
 
 			if (dbeiExisting.timestamp != dwPreviousTimeStamp) {
@@ -155,7 +136,6 @@ bool IsDuplicateEvent(MCONTACT hContact, DBEVENTINFO dbei)
 		// look back
 		while (hExistingDbEvent != NULL) {
 			memset(&dbeiExisting, 0, sizeof(dbeiExisting));
-			dbeiExisting.cbSize = sizeof(dbeiExisting);
 			db_event_get(hExistingDbEvent, &dbeiExisting);
 
 			if (dbei.timestamp > dbeiExisting.timestamp) {
@@ -181,7 +161,6 @@ bool IsDuplicateEvent(MCONTACT hContact, DBEVENTINFO dbei)
 		// look forward
 		while (hExistingDbEvent != NULL) {
 			memset(&dbeiExisting, 0, sizeof(dbeiExisting));
-			dbeiExisting.cbSize = sizeof(dbeiExisting);
 			db_event_get(hExistingDbEvent, &dbeiExisting);
 
 			if (dbei.timestamp < dbeiExisting.timestamp) {

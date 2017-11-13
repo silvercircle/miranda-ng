@@ -806,7 +806,7 @@ INT_PTR CALLBACK DlgProcOptionsGPG(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM l
 			GetDlgItemText(hDlg, IDC_GPGEXECUTABLE_EDIT, gpgexe, _countof(gpgexe));
 
 			// filter zusammensetzen
-			mir_snprintf(filter, _T("%s (*.exe)%c*.exe%c%c"), Translate("Executable Files"), 0, 0, 0);
+			mir_snprintf(filter, "%s (*.exe)%c*.exe%c%c", Translate("Executable Files"), 0, 0, 0);
 
 			// OPENFILENAME initialisieren
 			OPENFILENAME ofn = { sizeof(ofn) };
@@ -1020,8 +1020,8 @@ void RefreshProtoDlg(HWND hDlg)
 		ListView_SetCheckState(hLV, itemNum, arProto[i]->inspecting);
 	}
 
-	SetDlgItemText(hDlg, IDC_SPLITON, _T("0"));
-	SetDlgItemText(hDlg, IDC_SPLITOFF, _T("0"));
+	SetDlgItemText(hDlg, IDC_SPLITON, "0");
+	SetDlgItemText(hDlg, IDC_SPLITOFF, "0");
 	EnableWindow(GetDlgItem(hDlg, IDC_SPLITON), false);
 	EnableWindow(GetDlgItem(hDlg, IDC_SPLITOFF), false);
 
@@ -1154,8 +1154,8 @@ void RefreshGPGDlg(HWND hDlg, BOOL iInit)
 
 void ResetGeneralDlg(HWND hDlg)
 {
-	SetDlgItemText(hDlg, IDC_KET, _T("10"));
-	SetDlgItemText(hDlg, IDC_OKT, _T("2"));
+	SetDlgItemText(hDlg, IDC_KET, "10");
+	SetDlgItemText(hDlg, IDC_OKT, "2");
 
 	CheckDlgButton(hDlg, IDC_SFT, BST_UNCHECKED);
 	CheckDlgButton(hDlg, IDC_SOM, BST_UNCHECKED);
@@ -1571,9 +1571,9 @@ BOOL ShowSelectKeyDlg(HWND hParent, LPSTR KeyPath)
 
 	ofn.lpstrFile = KeyPath;
 	char temp[MAX_PATH];
-	mir_snprintf(temp, _T("%s (*.asc)%c*.asc%c%s (*.*)%c*.*%c%c"), Translate("ASC files"), 0, 0, Translate("All files"), 0, 0, 0);
+	mir_snprintf(temp, "%s (*.asc)%c*.asc%c%s (*.*)%c*.*%c%c", Translate("ASC files"), 0, 0, Translate("All files"), 0, 0, 0);
 	ofn.lpstrFilter = temp;
-	ofn.lpstrTitle = TranslateT("Open Key File");
+	ofn.lpstrTitle = Translate("Open Key File");
 	if (!GetOpenFileName(&ofn)) return FALSE;
 
 	return TRUE;
@@ -1622,24 +1622,24 @@ LPSTR LoadKeys(LPCSTR file, BOOL priv)
 
 BOOL SaveExportRSAKeyDlg(HWND hParent, LPSTR key, BOOL priv)
 {
-	TCHAR szFile[MAX_PATH] = _T("rsa_pub.asc");
+	char szFile[MAX_PATH] = "rsa_pub.asc";
 	if (priv)
-		mir_tstrcpy(szFile, _T("rsa_priv.asc"));
+		mir_strcpy(szFile, "rsa_priv.asc");
 
 	OPENFILENAME ofn = { sizeof(ofn) };
 	char temp[MAX_PATH];
-	mir_snprintf(temp, _T("%s (*.asc)%c*.asc%c%s (*.*)%c*.*%c%c"), Translate("ASC files"), 0, 0, Translate("All files"), 0, 0, 0);
+	mir_snprintf(temp, "%s (*.asc)%c*.asc%c%s (*.*)%c*.*%c%c", Translate("ASC files"), 0, 0, Translate("All files"), 0, 0, 0);
 	ofn.lpstrFilter = temp;
 	ofn.hwndOwner = hParent;
 	ofn.nMaxFile = MAX_PATH;
 	ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_NONETWORKBUTTON;
 	ofn.lpstrFile = szFile;
 
-	ofn.lpstrTitle = (priv) ? TranslateT("Save Private Key File") : TranslateT("Save Public Key File");
+	ofn.lpstrTitle = (priv) ? Translate("Save Private Key File") : Translate("Save Public Key File");
 	if (!GetSaveFileName(&ofn))
 		return FALSE;
 
-	FILE *f = _tfopen(szFile, _T("wb"));
+	FILE *f = fopen(szFile, "wb");
 	if (!f)
 		return FALSE;
 	fwrite(key, mir_strlen(key), 1, f);
@@ -1650,9 +1650,9 @@ BOOL SaveExportRSAKeyDlg(HWND hParent, LPSTR key, BOOL priv)
 
 BOOL LoadImportRSAKeyDlg(HWND hParent, LPSTR key, BOOL priv)
 {
-	TCHAR szFile[MAX_PATH] = _T("rsa_pub.asc");
+	char szFile[MAX_PATH] = "rsa_pub.asc";
 	if (priv)
-		mir_tstrcpy(szFile, _T("rsa_priv.asc"));
+		mir_strcpy(szFile, "rsa_priv.asc");
 
 	OPENFILENAME ofn = { 0 };
 	ofn.lStructSize = sizeof(ofn);
@@ -1661,13 +1661,13 @@ BOOL LoadImportRSAKeyDlg(HWND hParent, LPSTR key, BOOL priv)
 	ofn.Flags = OFN_EXPLORER | OFN_CREATEPROMPT | OFN_OVERWRITEPROMPT | OFN_NOREADONLYRETURN;
 	ofn.lpstrFile = szFile;
 	char temp[MAX_PATH];
-	mir_snprintf(temp, _T("%s (*.asc)%c*.asc%c%s (*.*)%c*.*%c%c"), Translate("ASC files"), 0, 0, Translate("All files"), 0, 0, 0);
+	mir_snprintf(temp, "%s (*.asc)%c*.asc%c%s (*.*)%c*.*%c%c", Translate("ASC files"), 0, 0, Translate("All files"), 0, 0, 0);
 	ofn.lpstrFilter = temp;
-	ofn.lpstrTitle = (priv) ? TranslateT("Load Private Key File") : TranslateT("Load Public Key File");
+	ofn.lpstrTitle = (priv) ? Translate("Load Private Key File") : Translate("Load Public Key File");
 	if (!GetOpenFileName(&ofn))
 		return FALSE;
 
-	FILE *f = _tfopen(szFile, _T("rb"));
+	FILE *f = fopen(szFile, "rb");
 	if (!f)
 		return FALSE;
 
@@ -1689,8 +1689,8 @@ int onRegisterOptions(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = g_hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONSTAB);
-	odp.pszTitle = (char*)MODULENAME;
-	odp.pszGroup = LPGEN("Services");
+	odp.szTitle.a = (char*)MODULENAME;
+	odp.szGroup.a = LPGEN("Services");
 	odp.pfnDlgProc = OptionsDlgProc;
 	Options_AddPage(wParam, &odp);
 	return 0;

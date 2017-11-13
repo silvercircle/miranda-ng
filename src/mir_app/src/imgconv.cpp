@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -28,7 +28,7 @@ typedef DWORD ARGB;
 
 HBITMAP ConvertIconToBitmap(HIMAGELIST hIml, int iconId)
 {
-	BITMAPINFO bmi = {};
+	BITMAPINFO bmi = { 0 };
 	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	bmi.bmiHeader.biPlanes = 1;
 	bmi.bmiHeader.biCompression = BI_RGB;
@@ -36,8 +36,8 @@ HBITMAP ConvertIconToBitmap(HIMAGELIST hIml, int iconId)
 	bmi.bmiHeader.biWidth = g_iIconSX;
 	bmi.bmiHeader.biHeight = g_iIconSY;
 
-	HDC hdc = CreateCompatibleDC(NULL);
-	HBITMAP hbmp = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, NULL, NULL, 0);
+	HDC hdc = CreateCompatibleDC(nullptr);
+	HBITMAP hbmp = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, nullptr, nullptr, 0);
 	HBITMAP hbmpOld = (HBITMAP)SelectObject(hdc, hbmp);
 
 	BLENDFUNCTION bfAlpha = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };

@@ -1,7 +1,7 @@
 /*
 
-Standard encryption plugin for Myranda NG
-Copyright (C) 2012-13 George Hazan
+Standard encryption plugin for Miranda NG
+Copyright (C) 2012-17 George Hazan
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

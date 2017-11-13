@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-04 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -34,7 +34,7 @@ INT_PTR GetAvatarBitmap(WPARAM hContact, LPARAM)
 	hContact = GetContactThatHaveTheAvatar(hContact);
 
 	// Get the node
-	CacheNode *node = FindAvatarInCache(hContact, TRUE);
+	CacheNode *node = FindAvatarInCache(hContact, true);
 	if (node == NULL || !node->loaded)
 		return (INT_PTR)GetProtoDefaultAvatar(hContact);
 	return (INT_PTR)node;
@@ -98,7 +98,7 @@ UINT_PTR CALLBACK OpenFileSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 	case WM_NOTIFY:
 		if (data->setView) {
 			HWND hwndParent = GetParent(hwnd);
-			HWND hwndLv = FindWindowEx(hwndParent, NULL, _T("SHELLDLL_DefView"), NULL);
+			HWND hwndLv = FindWindowEx(hwndParent, NULL, L"SHELLDLL_DefView", NULL);
 			if (hwndLv != NULL) {
 				SendMessage(hwndLv, WM_COMMAND, SHVIEW_THUMBNAIL, 0);
 				data->setView = FALSE;
@@ -115,10 +115,10 @@ UINT_PTR CALLBACK OpenFileSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 	return FALSE;
 }
 
-static INT_PTR avSetAvatar(MCONTACT hContact, TCHAR *tszPath)
+INT_PTR SetAvatar(WPARAM hContact, LPARAM lParam)
 {
-	TCHAR FileName[MAX_PATH];
-	TCHAR *szFinalName;
+	wchar_t FileName[MAX_PATH];
+	wchar_t *szFinalName;
 	BYTE locking_request;
 
 	if (hContact == NULL || fei == NULL)
@@ -126,8 +126,9 @@ static INT_PTR avSetAvatar(MCONTACT hContact, TCHAR *tszPath)
 
 	int is_locked = db_get_b(hContact, "ContactPhoto", "Locked", 0);
 
+	wchar_t *tszPath = (wchar_t*)lParam;
 	if (tszPath == NULL) {
-		TCHAR filter[256];
+		wchar_t filter[256];
 		Bitmap_GetFilter(filter, _countof(filter));
 
 		OPENFILENAME ofn = { 0 };
@@ -138,9 +139,9 @@ static INT_PTR avSetAvatar(MCONTACT hContact, TCHAR *tszPath)
 		ofn.nMaxFile = MAX_PATH;
 		ofn.nMaxFileTitle = MAX_PATH;
 		ofn.Flags = OFN_FILEMUSTEXIST | OFN_ENABLETEMPLATE | OFN_EXPLORER | OFN_ENABLESIZING | OFN_ENABLEHOOK;
-		ofn.lpstrInitialDir = _T(".");
+		ofn.lpstrInitialDir = L".";
 		*FileName = '\0';
-		ofn.lpstrDefExt = _T("");
+		ofn.lpstrDefExt = L"";
 		ofn.hInstance = g_hInst;
 		ofn.lpTemplateName = MAKEINTRESOURCE(IDD_OPENSUBCLASS);
 		ofn.lpfnHook = OpenFileSubclass;
@@ -155,31 +156,21 @@ static INT_PTR avSetAvatar(MCONTACT hContact, TCHAR *tszPath)
 	else szFinalName = tszPath;
 
 	// filename is now set, check it and perform all needed action
-	if (_taccess(szFinalName, 4) == -1)
+	if (_waccess(szFinalName, 4) == -1)
 		return 0;
 
 	// file exists...
-	TCHAR szBackupName[MAX_PATH];
-	PathToRelativeT(szFinalName, szBackupName, g_szDataPath);
-	db_set_ts(hContact, "ContactPhoto", "Backup", szBackupName);
+	wchar_t szBackupName[MAX_PATH];
+	PathToRelativeW(szFinalName, szBackupName, g_szDataPath);
+	db_set_ws(hContact, "ContactPhoto", "Backup", szBackupName);
 
 	db_set_b(hContact, "ContactPhoto", "Locked", is_locked);
-	db_set_ts(hContact, "ContactPhoto", "File", szFinalName);
+	db_set_ws(hContact, "ContactPhoto", "File", szFinalName);
 	MakePathRelative(hContact, szFinalName);
 
 	// Fix cache
 	ChangeAvatar(hContact, true);
 	return 0;
-}
-
-INT_PTR SetAvatar(WPARAM wParam, LPARAM lParam)
-{
-	return avSetAvatar(wParam, _A2T((const char*)lParam));
-}
-
-INT_PTR SetAvatarW(WPARAM wParam, LPARAM lParam)
-{
-	return avSetAvatar(wParam, (TCHAR*)lParam);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -214,7 +205,7 @@ static int InternalRemoveMyAvatar(char *protocol)
 		if (ret == 0) {
 			// Has global avatar?
 			DBVARIANT dbv = { 0 };
-			if (!db_get_ts(NULL, AVS_MODULE, "GlobalUserAvatarFile", &dbv)) {
+			if (!db_get_ws(NULL, AVS_MODULE, "GlobalUserAvatarFile", &dbv)) {
 				db_free(&dbv);
 				db_set_b(NULL, AVS_MODULE, "GlobalUserAvatarNotConsistent", 1);
 				DeleteGlobalUserAvatar();
@@ -253,27 +244,27 @@ static int InternalRemoveMyAvatar(char *protocol)
 	return ret;
 }
 
-static void FilterGetStrings(CMString &filter, BOOL xml, BOOL swf)
+static void FilterGetStrings(CMStringW &filter, BOOL xml, BOOL swf)
 {
-	filter.AppendFormat(_T("%s (*.bmp;*.jpg;*.gif;*.png"), TranslateT("All files"));
-	if (swf) filter.Append(_T(";*.swf"));
-	if (xml) filter.Append(_T(";*.xml"));
+	filter.AppendFormat(L"%s (*.bmp;*.jpg;*.gif;*.png", TranslateT("All files"));
+	if (swf) filter.Append(L";*.swf");
+	if (xml) filter.Append(L";*.xml");
 
-	filter.AppendFormat(_T(")%c*.BMP;*.RLE;*.JPG;*.JPEG;*.GIF;*.PNG"), 0);
-	if (swf) filter.Append(_T(";*.SWF"));
-	if (xml) filter.Append(_T(";*.XML"));
+	filter.AppendFormat(L")%c*.BMP;*.RLE;*.JPG;*.JPEG;*.GIF;*.PNG", 0);
+	if (swf) filter.Append(L";*.SWF");
+	if (xml) filter.Append(L";*.XML");
 	filter.AppendChar(0);
 
-	filter.AppendFormat(_T("%s (*.bmp;*.rle)%c*.BMP;*.RLE%c"), TranslateT("Windows bitmaps"), 0, 0);
-	filter.AppendFormat(_T("%s (*.jpg;*.jpeg)%c*.JPG;*.JPEG%c"), TranslateT("JPEG bitmaps"), 0, 0);
-	filter.AppendFormat(_T("%s (*.gif)%c*.GIF%c"), TranslateT("GIF bitmaps"), 0, 0);
-	filter.AppendFormat(_T("%s (*.png)%c*.PNG%c"), TranslateT("PNG bitmaps"), 0, 0);
+	filter.AppendFormat(L"%s (*.bmp;*.rle)%c*.BMP;*.RLE%c", TranslateT("Windows bitmaps"), 0, 0);
+	filter.AppendFormat(L"%s (*.jpg;*.jpeg)%c*.JPG;*.JPEG%c", TranslateT("JPEG bitmaps"), 0, 0);
+	filter.AppendFormat(L"%s (*.gif)%c*.GIF%c", TranslateT("GIF bitmaps"), 0, 0);
+	filter.AppendFormat(L"%s (*.png)%c*.PNG%c", TranslateT("PNG bitmaps"), 0, 0);
 
 	if (swf)
-		filter.AppendFormat(_T("%s (*.swf)%c*.SWF%c"), TranslateT("Flash animations"), 0, 0);
+		filter.AppendFormat(L"%s (*.swf)%c*.SWF%c", TranslateT("Flash animations"), 0, 0);
 
 	if (xml)
-		filter.AppendFormat(_T("%s (*.xml)%c*.XML%c"), TranslateT("XML files"), 0, 0);
+		filter.AppendFormat(L"%s (*.xml)%c*.XML%c", TranslateT("XML files"), 0, 0);
 
 	filter.AppendChar(0);
 }
@@ -310,7 +301,7 @@ static UINT_PTR CALLBACK SetMyAvatarHookProc(HWND hwnd, UINT msg, WPARAM, LPARAM
 		data = (SetMyAvatarHookData *)ofn->lCustData;
 		if (data->thumbnail) {
 			HWND hwndParent = GetParent(hwnd);
-			HWND hwndLv = FindWindowEx(hwndParent, NULL, _T("SHELLDLL_DefView"), NULL);
+			HWND hwndLv = FindWindowEx(hwndParent, NULL, L"SHELLDLL_DefView", NULL);
 			if (hwndLv != NULL) {
 				SendMessage(hwndLv, WM_COMMAND, SHVIEW_THUMBNAIL, 0);
 				data->thumbnail = FALSE;
@@ -333,12 +324,12 @@ static UINT_PTR CALLBACK SetMyAvatarHookProc(HWND hwnd, UINT msg, WPARAM, LPARAM
 struct SaveProtocolData
 {
 	DWORD max_size;
-	TCHAR image_file_name[MAX_PATH];
+	wchar_t image_file_name[MAX_PATH];
 	BOOL saved;
 	BOOL need_smaller_size;
 	int width;
 	int height;
-	TCHAR temp_file[MAX_PATH];
+	wchar_t temp_file[MAX_PATH];
 	HBITMAP hBmpProto;
 };
 
@@ -347,7 +338,7 @@ void SaveImage(SaveProtocolData &d, char *protocol, int format)
 	if (!Proto_IsAvatarFormatSupported(protocol, format))
 		return;
 
-	mir_sntprintf(d.image_file_name, _T("%s%s"), d.temp_file, ProtoGetAvatarExtension(format));
+	mir_snwprintf(d.image_file_name, L"%s%s", d.temp_file, ProtoGetAvatarExtension(format));
 	if (BmpFilterSaveBitmap(d.hBmpProto, d.image_file_name, format == PA_FORMAT_JPEG ? JPEG_QUALITYSUPERB : 0))
 		return;
 
@@ -369,7 +360,7 @@ void SaveImage(SaveProtocolData &d, char *protocol, int format)
 	else d.saved = TRUE;
 }
 
-static int SetProtoMyAvatar(char *protocol, HBITMAP hBmp, TCHAR *originalFilename, int originalFormat, BOOL square, BOOL grow)
+static int SetProtoMyAvatar(char *protocol, HBITMAP hBmp, wchar_t *originalFilename, int originalFormat, BOOL square, BOOL grow)
 {
 	if (!ProtoServiceExists(protocol, PS_SETMYAVATAR))
 		return -1;
@@ -437,7 +428,7 @@ static int SetProtoMyAvatar(char *protocol, HBITMAP hBmp, TCHAR *originalFilenam
 		if (d.temp_file[0] == '\0') {
 			d.temp_file[0] = '\0';
 			if (GetTempPath(MAX_PATH, d.temp_file) == 0
-				|| GetTempFileName(d.temp_file, _T("mir_av_"), 0, d.temp_file) == 0) {
+				|| GetTempFileName(d.temp_file, L"mir_av_", 0, d.temp_file) == 0) {
 				DeleteObject(d.hBmpProto);
 				return -1;
 			}
@@ -491,10 +482,10 @@ static int SetProtoMyAvatar(char *protocol, HBITMAP hBmp, TCHAR *originalFilenam
 	return ret;
 }
 
-static int InternalSetMyAvatar(char *protocol, TCHAR *szFinalName, SetMyAvatarHookData &data, BOOL allAcceptXML, BOOL allAcceptSWF)
+static int InternalSetMyAvatar(char *protocol, wchar_t *szFinalName, SetMyAvatarHookData &data, BOOL allAcceptXML, BOOL allAcceptSWF)
 {
 	int format = ProtoGetAvatarFormat(szFinalName);
-	if (format == PA_FORMAT_UNKNOWN || _taccess(szFinalName, 4) == -1)
+	if (format == PA_FORMAT_UNKNOWN || _waccess(szFinalName, 4) == -1)
 		return -3;
 
 	// file exists...
@@ -510,7 +501,7 @@ static int InternalSetMyAvatar(char *protocol, TCHAR *szFinalName, SetMyAvatarHo
 	}
 	else {
 		// Try to open if is not a flash or XML
-		hBmp = (HBITMAP)CallService(MS_IMG_LOAD, (WPARAM)szFinalName, IMGL_TCHAR);
+		hBmp = (HBITMAP)CallService(MS_IMG_LOAD, (WPARAM)szFinalName, IMGL_WCHAR);
 		if (hBmp == NULL)
 			return -4;
 	}
@@ -547,16 +538,16 @@ static int InternalSetMyAvatar(char *protocol, TCHAR *szFinalName, SetMyAvatarHo
 			db_set_b(NULL, AVS_MODULE, "GlobalUserAvatarNotConsistent", 1);
 		else {
 			// Copy avatar file to store as global one
-			TCHAR globalFile[1024];
+			wchar_t globalFile[1024];
 			BOOL saved = TRUE;
-			if (FoldersGetCustomPathT(hGlobalAvatarFolder, globalFile, _countof(globalFile), _T(""))) {
-				mir_sntprintf(globalFile, _T("%s%s"), g_szDataPath, _T("GlobalAvatar"));
+			if (FoldersGetCustomPathT(hGlobalAvatarFolder, globalFile, _countof(globalFile), L"")) {
+				mir_snwprintf(globalFile, L"%s%s", g_szDataPath, L"GlobalAvatar");
 				CreateDirectory(globalFile, NULL);
 			}
 
-			TCHAR *ext = _tcsrchr(szFinalName, _T('.')); // Can't be NULL here
+			wchar_t *ext = wcsrchr(szFinalName, '.'); // Can't be NULL here
 			if (format == PA_FORMAT_XML || format == PA_FORMAT_SWF) {
-				mir_sntprintf(globalFile, _T("%s\\my_global_avatar%s"), globalFile, ext);
+				mir_snwprintf(globalFile, L"%s\\my_global_avatar%s", globalFile, ext);
 				CopyFile(szFinalName, globalFile, FALSE);
 			}
 			else {
@@ -574,12 +565,12 @@ static int InternalSetMyAvatar(char *protocol, TCHAR *szFinalName, SetMyAvatarHo
 				// Check if need to resize
 				if (hBmpTmp == hBmp || hBmpTmp == NULL) {
 					// Use original image
-					mir_sntprintf(globalFile, _T("%s\\my_global_avatar%s"), globalFile, ext);
+					mir_snwprintf(globalFile, L"%s\\my_global_avatar%s", globalFile, ext);
 					CopyFile(szFinalName, globalFile, FALSE);
 				}
 				else {
 					// Save as PNG
-					mir_sntprintf(globalFile, _T("%s\\my_global_avatar.png"), globalFile);
+					mir_snwprintf(globalFile, L"%s\\my_global_avatar.png", globalFile);
 					if (BmpFilterSaveBitmap(hBmpTmp, globalFile, 0))
 						saved = FALSE;
 
@@ -588,11 +579,11 @@ static int InternalSetMyAvatar(char *protocol, TCHAR *szFinalName, SetMyAvatarHo
 			}
 
 			if (saved) {
-				TCHAR relFile[1024];
-				if (PathToRelativeT(globalFile, relFile, g_szDataPath))
-					db_set_ts(NULL, AVS_MODULE, "GlobalUserAvatarFile", relFile);
+				wchar_t relFile[1024];
+				if (PathToRelativeW(globalFile, relFile, g_szDataPath))
+					db_set_ws(NULL, AVS_MODULE, "GlobalUserAvatarFile", relFile);
 				else
-					db_set_ts(NULL, AVS_MODULE, "GlobalUserAvatarFile", globalFile);
+					db_set_ws(NULL, AVS_MODULE, "GlobalUserAvatarFile", globalFile);
 
 				db_set_b(NULL, AVS_MODULE, "GlobalUserAvatarNotConsistent", 0);
 			}
@@ -608,17 +599,19 @@ static int InternalSetMyAvatar(char *protocol, TCHAR *szFinalName, SetMyAvatarHo
 	return ret;
 }
 
-INT_PTR avSetMyAvatar(char* protocol, TCHAR* tszPath)
+INT_PTR SetMyAvatar(WPARAM wParam, LPARAM lParam)
 {
-	TCHAR FileName[MAX_PATH];
-	TCHAR *szFinalName = NULL;
+	wchar_t FileName[MAX_PATH];
+	wchar_t *szFinalName = NULL;
 	BOOL allAcceptXML;
 	BOOL allAcceptSWF;
 
 	// Protocol allow seting of avatar?
+	char* protocol = (char*)wParam;
 	if (protocol != NULL && !CanSetMyAvatar((WPARAM)protocol, 0))
 		return -1;
 
+	wchar_t* tszPath = (wchar_t*)lParam;
 	if (tszPath == NULL && hwndSetMyAvatar != 0) {
 		SetForegroundWindow(hwndSetMyAvatar);
 		SetFocus(hwndSetMyAvatar);
@@ -661,11 +654,11 @@ INT_PTR avSetMyAvatar(char* protocol, TCHAR* tszPath)
 	if (tszPath == NULL) {
 		data.protocol = protocol;
 
-		CMString filter;
+		CMStringW filter;
 		FilterGetStrings(filter, allAcceptXML, allAcceptSWF);
 
-		TCHAR inipath[1024];
-		FoldersGetCustomPathT(hMyAvatarsFolder, inipath, _countof(inipath), _T("."));
+		wchar_t inipath[1024];
+		FoldersGetCustomPathT(hMyAvatarsFolder, inipath, _countof(inipath), L".");
 
 		OPENFILENAME ofn = { 0 };
 		ofn.lStructSize = sizeof(ofn);
@@ -680,15 +673,15 @@ INT_PTR avSetMyAvatar(char* protocol, TCHAR* tszPath)
 		ofn.lCustData = (LPARAM)&data;
 
 		*FileName = '\0';
-		ofn.lpstrDefExt = _T("");
+		ofn.lpstrDefExt = L"";
 		ofn.hInstance = g_hInst;
 
-		TCHAR title[256];
+		wchar_t title[256];
 		if (protocol == NULL)
-			mir_sntprintf(title, TranslateT("Set My Avatar"));
+			mir_snwprintf(title, TranslateT("Set my avatar"));
 		else {
-			TCHAR* prototmp = mir_a2t(protocol);
-			mir_sntprintf(title, TranslateT("Set My Avatar for %s"), prototmp);
+			wchar_t* prototmp = mir_a2u(protocol);
+			mir_snwprintf(title, TranslateT("Set my avatar for %s"), prototmp);
 			mir_free(prototmp);
 		}
 		ofn.lpstrTitle = title;
@@ -698,23 +691,13 @@ INT_PTR avSetMyAvatar(char* protocol, TCHAR* tszPath)
 
 		szFinalName = FileName;
 	}
-	else szFinalName = (TCHAR*)tszPath;
+	else szFinalName = (wchar_t*)tszPath;
 
 	// filename is now set, check it and perform all needed action
 	if (szFinalName[0] == '\0')
 		return InternalRemoveMyAvatar(protocol);
 
 	return InternalSetMyAvatar(protocol, szFinalName, data, allAcceptXML, allAcceptSWF);
-}
-
-static INT_PTR SetMyAvatar(WPARAM wParam, LPARAM lParam)
-{
-	return avSetMyAvatar((char*)wParam, _A2T((const char*)lParam));
-}
-
-static INT_PTR SetMyAvatarW(WPARAM wParam, LPARAM lParam)
-{
-	return avSetMyAvatar((char*)wParam, (TCHAR*)lParam);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -799,6 +782,8 @@ INT_PTR GetMyAvatar(WPARAM wParam, LPARAM lParam)
 
 static void ReloadMyAvatar(LPVOID lpParam)
 {
+	Thread_SetName("AVS: ReloadMyAvatar");
+
 	char *szProto = (char *)lpParam;
 
 	mir_sleep(500);
@@ -857,10 +842,8 @@ void InitServices()
 {
 	CreateServiceFunction(MS_AV_GETAVATARBITMAP, GetAvatarBitmap);
 	CreateServiceFunction(MS_AV_PROTECTAVATAR, ProtectAvatar);
-	CreateServiceFunction(MS_AV_SETAVATAR, SetAvatar);
-	CreateServiceFunction(MS_AV_SETAVATARW, SetAvatarW);
-	CreateServiceFunction(MS_AV_SETMYAVATAR, SetMyAvatar);
-	CreateServiceFunction(MS_AV_SETMYAVATARW, SetMyAvatarW);
+	CreateServiceFunction(MS_AV_SETAVATARW, SetAvatar);
+	CreateServiceFunction(MS_AV_SETMYAVATARW, SetMyAvatar);
 	CreateServiceFunction(MS_AV_CANSETMYAVATAR, CanSetMyAvatar);
 	CreateServiceFunction(MS_AV_CONTACTOPTIONS, ContactOptions);
 	CreateServiceFunction(MS_AV_DRAWAVATAR, DrawAvatarPicture);

@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Weather.dll
 ;  Plugin: Weather
-;  Version: 0.4.0.2
+;  Version: 0.4.0.3
 ;  Authors: Miranda NG Team
 ;============================================================
 [Retrieves weather information and displays it in your contact list.]
@@ -153,8 +153,8 @@ URL доп. информации
 Задержка
 [seconds]
 секунд
-[From Popup plugin]
-По умолчанию
+[From popup plugin]
+Из плагина вспл. окон
 [Permanent]
 Постоянно
 [Popup Text]
@@ -210,7 +210,7 @@ URL доп. информации
 [More...]
 Ещё...
 [Weather Protocol INI Setup]
-Настройка INI файла плагина "Погода"
+Настройка INI файла плагина Weather
 [Install and load your weather ini file here]
 Установка и загрузка вашего INI погоды здесь
 [Weather Protocol cannot find any weather INI file stored in your computer. To setup weather INI and add weather stations, please follow the steps:]
@@ -264,7 +264,7 @@ URL доп. информации
 [Weather service ini for this station is not found (20)]
 INI файл погоды для этой станции не найден (20)
 [Netlib error - check your internet connection (30)]
-Ошибка netlib - проверьте соединение с Интернетом (30)
+Ошибка Netlib - проверьте соединение с Интернетом (30)
 [Empty data is retrieved (40)]
 Получены пустые данные (40)
 [Document not found (42)]
@@ -447,18 +447,20 @@ HTTP подключение Weather
 байт
 [Description:]
 Описание:
-[No update data file is found. Please check your Plugins\\Weather directory.]
-Не найдено ни одного файла INI. Пожалуйста, проверьте папку Plugins\\Weather.
-[Invalid ini format for: %s]
-Собственный формат ini для: %s
 [All update data has been reloaded.]
 Все обновлённые данные перезагружены.
+[Invalid ini format for: %s]
+Собственный формат ini для: %s
+[No update data file is found. Please check your Plugins\\Weather directory.]
+Не найдено ни одного файла INI. Пожалуйста, проверьте папку Plugins\\Weather.
 [Frame Font]
 Шрифт фрейма
 [Frame Title Font]
 Шрифт заголовка фрейма
 [Frame Background]
 Фон фрейма
+[Weather Protocol Text Preview]
+Просмотр протокола погоды
 [Network]
 Сеть
 [General]
@@ -467,8 +469,6 @@ HTTP подключение Weather
 Показывать
 [Popups]
 Всплывающие окна
-[Weather Protocol Text Preview]
-Просмотр протокола погоды
 [Station ID]
 ID города
 [Disable &weather notification]
@@ -497,10 +497,6 @@ ID города
 Показывать во фрейме
 [Unable to retrieve weather information for %s]
 Невозможно найти информацию о погоде для %s
-[Current condition for %n]
-Текущее состояние для %n
-[Last update on:   %u]
-Последнее обновление: %u
 [Variable]
 Переменная
 [Information]
@@ -509,3 +505,7 @@ ID города
 Получаю новые данные. Подождите, пожалуйста...
 [More Info]
 Подробнее
+[Current condition for %n]
+Текущее состояние для %n
+[Last update on:   %u]
+Последнее обновление: %u

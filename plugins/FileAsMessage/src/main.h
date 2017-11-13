@@ -30,7 +30,7 @@
 
 #define SERVICE_PREFIX "<%fAM-0023%>"
 
-#define NOPLUGIN_MESSAGE "If you see this \"garbage\", probably you have no \"fileAsMessage\" plugin installed, see http://miranda-ng.org/p/FileAsMessage/ for more information and download."
+#define NOPLUGIN_MESSAGE "If you see this \"garbage\", probably you have no \"fileAsMessage\" plugin installed, see https://miranda-ng.org/p/FileAsMessage/ for more information and download."
 
 extern char *szServiceTitle;
 extern char *szServicePrefix;
@@ -45,6 +45,7 @@ extern MWindowList hFileList;
 extern HANDLE hEventNewFile;
 
 extern HICON hIcons[5];
+extern IconItem iconList[];
 
 ulong memcrc32(uchar *ptr, int size, ulong crc);
 INT_PTR CALLBACK OptionsDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);

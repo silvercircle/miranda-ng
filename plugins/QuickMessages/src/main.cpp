@@ -57,8 +57,9 @@ static int InputMenuPopup(WPARAM, LPARAM lParam)
 {
 	HMENU hSubMenu = NULL;
 	int i = 0;
-	MessageWindowPopupData * mwpd = (MessageWindowPopupData *)lParam;
-	if (mwpd->uFlags == MSG_WINDOWPOPUP_LOG || !g_bQuickMenu || !QuickList->realCount) return 0;
+	MessageWindowPopupData *mwpd = (MessageWindowPopupData *)lParam;
+	if (mwpd->uFlags == MSG_WINDOWPOPUP_LOG || !g_bQuickMenu || !QuickList->realCount)
+		return 0;
 
 	if (mwpd->uType == MSG_WINDOWPOPUP_SHOWING) {
 		hSubMenu = CreatePopupMenu();
@@ -67,35 +68,34 @@ static int InputMenuPopup(WPARAM, LPARAM lParam)
 		InsertMenu((HMENU)mwpd->hMenu, 7, MF_SEPARATOR | MF_BYPOSITION, 0, 0);
 		qsort(QuickList->items, QuickList->realCount, sizeof(QuickData *), sstQuickSortButtons);
 		for (i = 0; i < QuickList->realCount; i++) {
-			QuickData* qd = (QuickData *)QuickList->items[i];
-			if (qd->fEntryType&QMF_EX_SEPARATOR)
+			QuickData *qd = (QuickData*)QuickList->items[i];
+			if (qd->fEntryType & QMF_EX_SEPARATOR)
 				AppendMenu(hSubMenu, MF_SEPARATOR, 0, NULL);
 			else
 				AppendMenu(hSubMenu, MF_STRING, qd->dwPos + 254, qd->ptszValueName);
 		}
 	}
-	else if (mwpd->uType == MSG_WINDOWPOPUP_SELECTED&&mwpd->selection >= 254) {
+	else if (mwpd->uType == MSG_WINDOWPOPUP_SELECTED && mwpd->selection >= 254) {
 		for (i = 0; i < QuickList->realCount; i++) {
-			QuickData* qd = (QuickData *)QuickList->items[i];
+			QuickData *qd = (QuickData *)QuickList->items[i];
 			if ((qd->dwPos + 254) == mwpd->selection) {
 				CHARRANGE cr;
 				UINT textlenght = 0;
-				TCHAR* pszText = NULL;
-				TCHAR* ptszQValue = NULL;
-				TCHAR* pszCBText = NULL;
+				ptrW pszText, pszCBText;
 				BOOL bIsService = 0;
+				wchar_t *ptszQValue = nullptr;
 
 				if (IsClipboardFormatAvailable(CF_TEXT)) {
 					if (OpenClipboard(mwpd->hwnd)) {
 						HANDLE hData = NULL;
-						TCHAR* chBuffer = NULL;
+						wchar_t* chBuffer = NULL;
 						int textLength = 0;
 
 						hData = GetClipboardData(CF_UNICODETEXT);
 
-						chBuffer = (TCHAR*)GlobalLock(hData);
-						textLength = (int)mir_tstrlen(chBuffer);
-						pszCBText = mir_tstrdup(chBuffer);
+						chBuffer = (wchar_t*)GlobalLock(hData);
+						textLength = (int)mir_wstrlen(chBuffer);
+						pszCBText = mir_wstrdup(chBuffer);
 						GlobalUnlock(hData);
 						CloseClipboard();
 					}
@@ -105,24 +105,20 @@ static int InputMenuPopup(WPARAM, LPARAM lParam)
 				textlenght = cr.cpMax - cr.cpMin;
 
 				if (textlenght) {
-					pszText = (TCHAR *)mir_alloc((textlenght + 10)*sizeof(TCHAR));
-					memset(pszText, 0, ((textlenght + 10) * sizeof(TCHAR)));
+					pszText = (wchar_t *)mir_alloc((textlenght + 10)*sizeof(wchar_t));
+					memset(pszText, 0, ((textlenght + 10) * sizeof(wchar_t)));
 					SendMessage(mwpd->hwnd, EM_GETSELTEXT, 0, (LPARAM)pszText);
 				}
 				if (qd->ptszValue) {
-					ptszQValue = ParseString(mwpd->hContact, qd->ptszValue, pszText ? pszText : _T(""), pszCBText ? pszCBText : _T(""), (int)mir_tstrlen(qd->ptszValue), textlenght, pszCBText ? (int)mir_tstrlen(pszCBText) : 0);
+					ptszQValue = ParseString(mwpd->hContact, qd->ptszValue, pszText ? pszText : L"", pszCBText ? pszCBText : L"", (int)mir_wstrlen(qd->ptszValue), textlenght, pszCBText ? (int)mir_wstrlen(pszCBText) : 0);
 					if ((bIsService = qd->bIsService) && ptszQValue)
-
 						CallService(mir_u2a(ptszQValue), (WPARAM)mwpd->hContact, 0);
-
 				}
 
-				if (ptszQValue)
+				if (ptszQValue) {
 					SendMessage(mwpd->hwnd, EM_REPLACESEL, TRUE, (LPARAM)ptszQValue);
-
-				if (pszText) mir_free(pszText);
-				if (ptszQValue) free(ptszQValue);
-				if (pszCBText) mir_free(pszCBText);
+					free(ptszQValue);
+				}
 				break;
 			}
 		}
@@ -134,37 +130,25 @@ static int InputMenuPopup(WPARAM, LPARAM lParam)
 static int CustomButtonPressed(WPARAM, LPARAM lParam)
 {
 	CustomButtonClickData *cbcd = (CustomButtonClickData *)lParam;
+	if (mir_strcmp(cbcd->pszModule, PLGNAME))
+		return 0;
 
-	CHARRANGE cr;
-	HWND hEdit = NULL;
+	if (!ButtonsList[cbcd->dwButtonId])
+		return 1;
+
+	SortedList *sl = ButtonsList[cbcd->dwButtonId]->sl;
+	if (!sl)
+		return 1;
+
 	BOOL bCTRL = 0;
 	BOOL bIsService = 0;
-	TCHAR* pszText = NULL;
-	TCHAR* pszCBText = NULL;
-	TCHAR* ptszQValue = NULL;
-	UINT textlenght = 0;
-	SortedList* sl = NULL;
-	int state = 0;
-
-	if (mir_strcmp(cbcd->pszModule, PLGNAME)) return 0;
-
-	if (!ButtonsList[cbcd->dwButtonId]) return 1;
-
-	sl = ButtonsList[cbcd->dwButtonId]->sl;
-
-	if (!sl) return 1;
+	ptrW pszText, pszCBText;
+	wchar_t *ptszQValue = nullptr;
 
 	if (IsClipboardFormatAvailable(CF_TEXT)) {
 		if (OpenClipboard(cbcd->hwndFrom)) {
-			HANDLE hData = NULL;
-			TCHAR* chBuffer = NULL;
-			int textLength = 0;
-
-			hData = GetClipboardData(CF_UNICODETEXT);
-
-			chBuffer = (TCHAR*)GlobalLock(hData);
-			textLength = (int)mir_tstrlen(chBuffer);
-			pszCBText = mir_tstrdup(chBuffer);
+			HANDLE hData = GetClipboardData(CF_UNICODETEXT);
+			pszCBText = mir_wstrdup((wchar_t*)GlobalLock(hData));
 			GlobalUnlock(hData);
 			CloseClipboard();
 		}
@@ -172,20 +156,21 @@ static int CustomButtonPressed(WPARAM, LPARAM lParam)
 
 	qsort(sl->items, sl->realCount, sizeof(ButtonData *), sstSortButtons);
 
-	hEdit = GetDlgItem(cbcd->hwndFrom, IDC_MESSAGE);
-	if (!hEdit) hEdit = GetDlgItem(cbcd->hwndFrom, IDC_CHATMESSAGE);
+	HWND hEdit = GetDlgItem(cbcd->hwndFrom, IDC_SRMM_MESSAGE);
 
+	CHARRANGE cr;
 	cr.cpMin = cr.cpMax = 0;
 	SendMessage(hEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
 
-	textlenght = cr.cpMax - cr.cpMin;
+	UINT textlenght = cr.cpMax - cr.cpMin;
 	if (textlenght) {
-		pszText = (TCHAR *)mir_alloc((textlenght + 10)*sizeof(TCHAR));
-		memset(pszText, 0, ((textlenght + 10) * sizeof(TCHAR)));
+		pszText = (wchar_t *)mir_alloc((textlenght + 10)*sizeof(wchar_t));
+		memset(pszText, 0, ((textlenght + 10) * sizeof(wchar_t)));
 		SendMessage(hEdit, EM_GETSELTEXT, 0, (LPARAM)pszText);
 	}
 
-	if (cbcd->flags&BBCF_RIGHTBUTTON)
+	int state;
+	if (cbcd->flags & BBCF_RIGHTBUTTON)
 		state = 1;
 	else if (sl->realCount == 1)
 		state = 2;
@@ -195,7 +180,7 @@ static int CustomButtonPressed(WPARAM, LPARAM lParam)
 	switch (state) {
 	case 1:
 		if (ButtonsList[cbcd->dwButtonId]->ptszQValue)
-			ptszQValue = ParseString(cbcd->hContact, ButtonsList[cbcd->dwButtonId]->ptszQValue, pszText ? pszText : _T(""), pszCBText ? pszCBText : _T(""), (int)mir_tstrlen(ButtonsList[cbcd->dwButtonId]->ptszQValue), textlenght, pszCBText ? (int)mir_tstrlen(pszCBText) : 0);
+			ptszQValue = ParseString(cbcd->hContact, ButtonsList[cbcd->dwButtonId]->ptszQValue, pszText ? pszText : L"", pszCBText ? pszCBText : L"", (int)mir_wstrlen(ButtonsList[cbcd->dwButtonId]->ptszQValue), textlenght, pszCBText ? (int)mir_wstrlen(pszCBText) : 0);
 		if ((bIsService = ButtonsList[cbcd->dwButtonId]->bIsServName) && ptszQValue)
 			CallService(mir_u2a(ptszQValue), (WPARAM)cbcd->hContact, 0);
 		break;
@@ -204,7 +189,7 @@ static int CustomButtonPressed(WPARAM, LPARAM lParam)
 		{
 			ButtonData *bd = (ButtonData *)sl->items[0];
 			if (bd && bd->pszValue) {
-				ptszQValue = ParseString(cbcd->hContact, bd->pszValue, pszText ? pszText : _T(""), pszCBText ? pszCBText : _T(""), (int)mir_tstrlen(bd->pszValue), textlenght, pszCBText ? (int)mir_tstrlen(pszCBText) : 0);
+				ptszQValue = ParseString(cbcd->hContact, bd->pszValue, pszText ? pszText : L"", pszCBText ? pszCBText : L"", (int)mir_wstrlen(bd->pszValue), textlenght, pszCBText ? (int)mir_wstrlen(pszCBText) : 0);
 				if ((bIsService = bd->bIsServName) && ptszQValue)
 					CallService(mir_u2a(ptszQValue), (WPARAM)cbcd->hContact, 0);
 			}
@@ -219,7 +204,7 @@ static int CustomButtonPressed(WPARAM, LPARAM lParam)
 
 		for (int menunum = 0; menunum < sl->realCount; menunum++) {
 			ButtonData *bd = (ButtonData *)sl->items[menunum];
-			if (bd->dwOPFlags&QMF_NEW)
+			if (bd->dwOPFlags & QMF_NEW)
 				continue;
 
 			BOOL bSetPopupMark = FALSE;
@@ -231,7 +216,7 @@ static int CustomButtonPressed(WPARAM, LPARAM lParam)
 			if (bd->pszValue && bd->fEntryType == 0)
 				hSubMenu = NULL;
 
-			if (bd->fEntryType&QMF_EX_SEPARATOR)
+			if (bd->fEntryType & QMF_EX_SEPARATOR)
 				AppendMenu((HMENU)((hSubMenu && !bSetPopupMark) ? hSubMenu : hMenu), MF_SEPARATOR, 0, NULL);
 			else
 				AppendMenu((HMENU)((hSubMenu && !bSetPopupMark) ? hSubMenu : hMenu),
@@ -246,7 +231,7 @@ static int CustomButtonPressed(WPARAM, LPARAM lParam)
 		ButtonData *bd = (ButtonData *)sl->items[res - 1];
 		bCTRL = (GetKeyState(VK_CONTROL) & 0x8000) ? 1 : 0;
 		if (bd->pszValue) {
-			ptszQValue = ParseString(cbcd->hContact, bd->pszValue, pszText ? pszText : _T(""), pszCBText ? pszCBText : _T(""), (int)mir_tstrlen(bd->pszValue), textlenght, pszCBText ? (int)mir_tstrlen(pszCBText) : 0);
+			ptszQValue = ParseString(cbcd->hContact, bd->pszValue, pszText ? pszText : L"", pszCBText ? pszCBText : L"", (int)mir_wstrlen(bd->pszValue), textlenght, pszCBText ? (int)mir_wstrlen(pszCBText) : 0);
 			if ((bIsService = bd->bIsServName) && ptszQValue)
 				CallService(mir_u2a(ptszQValue), (WPARAM)cbcd->hContact, 0);
 		}
@@ -257,15 +242,12 @@ static int CustomButtonPressed(WPARAM, LPARAM lParam)
 		if (!bIsService) {
 			SendMessage(hEdit, EM_REPLACESEL, TRUE, (LPARAM)ptszQValue);
 
-			if ((g_bLClickAuto&&state != 1) || (g_bRClickAuto&&state == 1) || cbcd->flags&BBCF_CONTROLPRESSED || bCTRL)
+			if ((g_bLClickAuto && state != 1) || (g_bRClickAuto && state == 1) || cbcd->flags & BBCF_CONTROLPRESSED || bCTRL)
 				SendMessage(cbcd->hwndFrom, WM_COMMAND, IDOK, 0);
 		}
 		free(ptszQValue);
 	}
 
-
-	mir_free(pszText);
-	mir_free(pszCBText);
 	return 1;
 }
 
@@ -274,8 +256,9 @@ static int PluginInit(WPARAM, LPARAM)
 	g_bStartup = 1;
 	HookEvent(ME_OPT_INITIALISE, OptionsInit);
 	HookEvent(ME_MSG_BUTTONPRESSED, CustomButtonPressed);
-	HookEvent(ME_MSG_TOOLBARLOADED, RegisterCustomButton);
 	HookEvent(ME_MSG_WINDOWPOPUP, InputMenuPopup);
+
+	HookTemporaryEvent(ME_MSG_TOOLBARLOADED, RegisterCustomButton);
 
 	g_bRClickAuto = db_get_b(NULL, PLGNAME, "RClickAuto", 0);
 	g_bLClickAuto = db_get_b(NULL, PLGNAME, "LClickAuto", 0);
@@ -307,7 +290,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD, LPVOID)
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, PluginInit);
 	HookEvent(ME_SYSTEM_PRESHUTDOWN, PreShutdown);

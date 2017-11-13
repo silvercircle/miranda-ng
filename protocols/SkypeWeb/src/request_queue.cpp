@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2015-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,8 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-RequestQueue::RequestQueue(HANDLE hConnection) :
-hConnection(hConnection), requests(1)
+RequestQueue::RequestQueue(HNETLIBUSER _nlu) :
+	nlu(_nlu), requests(1)
 {
 	isTerminated = true;
 	hRequestQueueThread = NULL;
@@ -26,6 +26,11 @@ hConnection(hConnection), requests(1)
 
 RequestQueue::~RequestQueue()
 {
+	if (hRequestQueueThread) {
+		WaitForSingleObject(hRequestQueueThread, INFINITE);
+		hRequestQueueThread = nullptr;
+	}
+
 	requests.destroy();
 }
 
@@ -70,10 +75,10 @@ void RequestQueue::Send(HttpRequest *request, HttpResponseCallback response, voi
 
 void RequestQueue::Execute(RequestQueueItem *item)
 {
-	NETLIBHTTPREQUEST *response = item->request->Send(hConnection);
+	NETLIBHTTPREQUEST *response = item->request->Send(nlu);
 	if (item->responseCallback != NULL)
 		item->responseCallback(response, item->arg);
-	CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)response);
+	Netlib_FreeHttpRequest(response);
 	requests.remove(item);
 	delete item;
 }
@@ -92,11 +97,12 @@ unsigned int RequestQueue::WorkerThread(void *arg)
 {
 	RequestQueue *queue = (RequestQueue*)arg;
 
-	while (!queue->isTerminated)
-	{
+	while (true) {
 		queue->hRequestQueueEvent.Wait();
-		while (true)
-		{
+		if (queue->isTerminated)
+			break;
+
+		while (true) {
 			RequestQueueItem *item = NULL;
 			{
 				mir_cslock lock(queue->requestQueueLock);

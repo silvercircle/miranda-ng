@@ -255,11 +255,11 @@ static int NotifyWithPopup(MCONTACT hContact, CEvent::EType eventType, int DaysT
 
 	if (hContact) {
 		ppd.lchContact = hContact;
-		mir_sntprintf(ppd.lptzContactName, _T("%s - %s"), TranslateTS(pszDesc), DB::Contact::DisplayName(hContact));
+		mir_snwprintf(ppd.lptzContactName, L"%s - %s", TranslateW(pszDesc), DB::Contact::DisplayName(hContact));
 	}
-	else mir_tstrncpy(ppd.lptzContactName, TranslateT("Reminder"), _countof(ppd.lptzContactName));
+	else mir_wstrncpy(ppd.lptzContactName, TranslateT("Reminder"), _countof(ppd.lptzContactName));
 
-	mir_tstrncpy(ppd.lptzText, pszMsg, MAX_SECONDLINE);
+	mir_wstrncpy(ppd.lptzText, pszMsg, MAX_SECONDLINE);
 
 	ppd.lchIcon = GetAnnivIcon(CEvent(eventType, DaysToAnniv));
 
@@ -308,35 +308,34 @@ static void NotifyFlashCListIcon(MCONTACT hContact, const CEvent &evt)
 	if (!gRemindOpts.bFlashCList || evt._wDaysLeft != 0)
 		return;
 
-	TCHAR szMsg[MAX_PATH];
+	wchar_t szMsg[MAX_PATH];
 
-	CLISTEVENT cle = { sizeof(cle) };
+	CLISTEVENT cle = {};
 	cle.hContact = hContact;
-	cle.flags = CLEF_URGENT|CLEF_TCHAR;
+	cle.flags = CLEF_URGENT|CLEF_UNICODE;
 	cle.hDbEvent = NULL;
 
 	switch (evt._eType) {
 	case CEvent::BIRTHDAY:
-		mir_sntprintf(szMsg, TranslateT("%s has %s today."), DB::Contact::DisplayName(hContact), TranslateT("Birthday"));
+		mir_snwprintf(szMsg, TranslateT("%s has %s today."), DB::Contact::DisplayName(hContact), TranslateT("Birthday"));
 		cle.hIcon = IcoLib_GetIcon(ICO_COMMON_BIRTHDAY);
 		break;
 
 	case CEvent::ANNIVERSARY:
-		mir_sntprintf(szMsg, TranslateT("%s has %s today."), DB::Contact::DisplayName(hContact), TranslateT("an anniversary"));
+		mir_snwprintf(szMsg, TranslateT("%s has %s today."), DB::Contact::DisplayName(hContact), TranslateT("an anniversary"));
 		cle.hIcon = IcoLib_GetIcon(ICO_COMMON_ANNIVERSARY);
 		break;
 
 	default:
 		return;
 	}
-	cle.ptszTooltip = szMsg;
+	cle.szTooltip.w = szMsg;
 
 	// pszService = NULL get error (crash),
 	// pszService = "dummy" get 'service not fount' and continue;
 	cle.pszService = "dummy";
 	cle.lParam = NULL;
-
-	CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
+	pcli->pfnAddEvent(&cle);
 }
 
 /**
@@ -353,11 +352,11 @@ static BYTE NotifyWithSound(const CEvent &evt)
 	if (evt._wDaysLeft <= min(db_get_b(NULL, MODNAME, SET_REMIND_SOUNDOFFSET, DEFVAL_REMIND_SOUNDOFFSET), gRemindOpts.wDaysEarlier)) {
 		switch (evt._eType) {
 		case CEvent::BIRTHDAY:
-			SkinPlaySound(evt._wDaysLeft == 0 ? SOUND_BIRTHDAY_TODAY : SOUND_BIRTHDAY_SOON);
+			Skin_PlaySound(evt._wDaysLeft == 0 ? SOUND_BIRTHDAY_TODAY : SOUND_BIRTHDAY_SOON);
 			return 0;
 
 		case CEvent::ANNIVERSARY:
-			SkinPlaySound(SOUND_ANNIVERSARY);
+			Skin_PlaySound(SOUND_ANNIVERSARY);
 			return 0;
 		}
 	}
@@ -373,7 +372,7 @@ static BYTE CheckAnniversaries(MCONTACT hContact, MTime &Now, CEvent &evt, BYTE 
 	int numAnniversaries = 0;
 	int Diff = 0;
 	MAnnivDate mta;
-	CMString tszMsg;
+	CMStringW tszMsg;
 
 	if (gRemindOpts.RemindState == REMIND_ANNIV || gRemindOpts.RemindState == REMIND_ALL) {
 		for (int i = 0; i < ANID_LAST && !mta.DBGetAnniversaryDate(hContact, i); i++) {
@@ -407,7 +406,7 @@ static BYTE CheckAnniversaries(MCONTACT hContact, MTime &Now, CEvent &evt, BYTE 
 								tszMsg += TranslateT("She has the following anniversaries:");
 								break;
 							}						
-						tszMsg.Append(_T("\n- "));
+						tszMsg.Append(L"\n- ");
 
 						switch (Diff) {
 						case 0:
@@ -429,10 +428,10 @@ static BYTE CheckAnniversaries(MCONTACT hContact, MTime &Now, CEvent &evt, BYTE 
 	if (numAnniversaries != 0 && bNotify) {
 		if (tszMsg.GetLength() >= MAX_SECONDLINE) {
 			tszMsg.Truncate(MAX_SECONDLINE - 5);
-			tszMsg.Append(_T("\n..."));
+			tszMsg.Append(L"\n...");
 		}
 
-		NotifyWithPopup(hContact, CEvent::ANNIVERSARY, Diff, LPGENT("Anniversaries"), tszMsg);
+		NotifyWithPopup(hContact, CEvent::ANNIVERSARY, Diff, LPGENW("Anniversaries"), tszMsg);
 	}
 
 	return numAnniversaries != 0;
@@ -477,34 +476,34 @@ static bool CheckBirthday(MCONTACT hContact, MTime &Now, CEvent &evt, BYTE bNoti
 					}
 
 					if (bNotify) {
-						TCHAR szMsg[MAXDATASIZE];
+						wchar_t szMsg[MAXDATASIZE];
 						WORD cchMsg = 0;
 
 						switch (Diff) {
 						case 0:
-							cchMsg = mir_sntprintf(szMsg, TranslateT("%s has birthday today."), DB::Contact::DisplayName(hContact));
+							cchMsg = mir_snwprintf(szMsg, TranslateT("%s has birthday today."), DB::Contact::DisplayName(hContact));
 							break;
 						case 1:
-							cchMsg = mir_sntprintf(szMsg, TranslateT("%s has birthday tomorrow."), DB::Contact::DisplayName(hContact));
+							cchMsg = mir_snwprintf(szMsg, TranslateT("%s has birthday tomorrow."), DB::Contact::DisplayName(hContact));
 							break;
 						default:
-							cchMsg = mir_sntprintf(szMsg, TranslateT("%s has birthday in %d days."), DB::Contact::DisplayName(hContact), Diff);
+							cchMsg = mir_snwprintf(szMsg, TranslateT("%s has birthday in %d days."), DB::Contact::DisplayName(hContact), Diff);
 						}
 						int age = mtb.Age(&Now);
 						if (age > 0)
 							switch (GenderOf(hContact)){
 							case 0:
-								mir_sntprintf(szMsg + cchMsg, _countof(szMsg) - cchMsg,
+								mir_snwprintf(szMsg + cchMsg, _countof(szMsg) - cchMsg,
 									TranslateT("\nHe/she becomes %d years old."),
 									age + (Diff > 0));
 								break;
 							case 'M':
-								mir_sntprintf(szMsg + cchMsg, _countof(szMsg) - cchMsg,
+								mir_snwprintf(szMsg + cchMsg, _countof(szMsg) - cchMsg,
 									TranslateT("\nHe becomes %d years old."),
 									age + (Diff > 0));
 								break;
 							case 'F':
-								mir_sntprintf(szMsg + cchMsg, _countof(szMsg) - cchMsg,
+								mir_snwprintf(szMsg + cchMsg, _countof(szMsg) - cchMsg,
 									TranslateT("\nShe becomes %d years old."),
 									age + (Diff > 0));
 								break;
@@ -894,41 +893,24 @@ void SvcReminderOnModulesLoaded(void)
 void SvcReminderLoadModule(void)
 {
 	// init sounds
-	SKINSOUNDDESCEX ssd = { 0 };
-	ssd.cbSize = sizeof(ssd);
-	ssd.pszSection = MODNAME;
-
-	ssd.pszName = SOUND_BIRTHDAY_TODAY;
-	ssd.pszDescription = LPGEN("Birthday reminder");
-	ssd.pszDefaultFile = "Sounds\\BirthDay.wav";
-	Skin_AddSound(&ssd);
-
-	ssd.pszName = SOUND_BIRTHDAY_SOON;
-	ssd.pszDescription = LPGEN("Birthday reminder: it's coming");
-	ssd.pszDefaultFile = "Sounds\\BirthDayComing.wav";
-	Skin_AddSound(&ssd);
-
-	ssd.pszName = SOUND_ANNIVERSARY;
-	ssd.pszDescription = LPGEN("Anniversary Reminder");
-	ssd.pszDefaultFile = "Sounds\\Reminder.wav";
-	Skin_AddSound(&ssd);
+	Skin_AddSound(SOUND_BIRTHDAY_TODAY, LPGENW("Birthday reminder"), L"Sounds\\BirthDay.wav");
+	Skin_AddSound(SOUND_BIRTHDAY_SOON, LPGENW("Birthday reminder: it's coming"), L"Sounds\\BirthDayComing.wav");
+	Skin_AddSound(SOUND_ANNIVERSARY, LPGENW("Anniversary Reminder"), L"Sounds\\Reminder.wav");
 
 	// create service functions
 	CreateServiceFunction(MS_USERINFO_REMINDER_CHECK, CheckService);
 	CreateServiceFunction(MS_USERINFO_REMINDER_AGGRASIVEBACKUP, BackupBirthdayService);
 
 	// register hotkey
-	HOTKEYDESC hk = { 0 };
-	hk.cbSize = sizeof(HOTKEYDESC);
-	hk.pszSection = MODNAME;
+	HOTKEYDESC hk = {};
 	hk.pszName = "ReminderCheck";
-	hk.pszDescription = LPGEN("Check anniversaries");
+	hk.szSection.a = MODNAME;
+	hk.szDescription.a = LPGEN("Check anniversaries");
 	hk.pszService = MS_USERINFO_REMINDER_CHECK;
 	Hotkey_Register(&hk);
 
 	if (db_get_b(NULL, MODNAME, SET_REMIND_ENABLED, DEFVAL_REMIND_ENABLED) != REMIND_OFF && ExtraIcon == INVALID_HANDLE_VALUE)
-		ExtraIcon = ExtraIcon_RegisterIcolib("Reminder", LPGEN("Reminder (uinfoex)"), ICO_COMMON_ANNIVERSARY);
-
+		ExtraIcon = ExtraIcon_RegisterIcolib("Reminder", LPGEN("Reminder (UInfoEx)"), ICO_COMMON_ANNIVERSARY);
 }
 
 /**

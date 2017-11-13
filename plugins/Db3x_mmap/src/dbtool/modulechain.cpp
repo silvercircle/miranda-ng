@@ -17,13 +17,13 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "..\stdafx.h"
+#include "../stdafx.h"
 
 struct ModChainEntry {
 	DWORD ofsOld, ofsNew;
 	int size;
 	char name[257];
-} static *modChain = NULL;
+} static *modChain = nullptr;
 static int modChainCount;
 static DWORD ofsCurrent;
 static int phase, iCurrentModName;
@@ -96,9 +96,9 @@ int CDb3Mmap::WorkModuleChain(int firstTime)
 					n++;
 				}
 			if (n) {
-				TCHAR szModuleName[257];
+				wchar_t szModuleName[257];
 				MultiByteToWideChar(CP_ACP, 0, modChain[iCurrentModName].name, -1, szModuleName, _countof(szModuleName));
-				TCHAR *pszModuleName = szModuleName;
+				wchar_t *pszModuleName = szModuleName;
 
 				cb->pfnAddLogMessage(STATUS_WARNING, TranslateT("Module name '%s' is not unique: %d duplicates found"), pszModuleName, n);
 			}
@@ -132,9 +132,9 @@ DWORD CDb3Mmap::ConvertModuleNameOfs(DWORD ofsOld)
 
 void CDb3Mmap::FreeModuleChain()
 {
-	if (modChain != NULL) {
+	if (modChain != nullptr) {
 		free(modChain);
-		modChain = NULL;
+		modChain = nullptr;
 		last_mod = 0;
 	}
 }

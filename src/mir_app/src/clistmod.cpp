@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -23,21 +23,23 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
 #include "stdafx.h"
-#include "clc.h"
 
-INT_PTR ContactChangeGroup(WPARAM wParam, LPARAM lParam);
+#include "clc.h"
+#include "genmenu.h"
+
 int InitCListEvents(void);
 void UninitCListEvents(void);
+void UninitGroupServices(void);
 int ContactSettingChanged(WPARAM wParam, LPARAM lParam);
-int ContactAdded(WPARAM wParam, LPARAM lParam);
-int ContactDeleted(WPARAM wParam, LPARAM lParam);
+int ContactAdded(WPARAM hContact, LPARAM);
+int ContactDeleted(WPARAM hContact, LPARAM);
 INT_PTR GetContactDisplayName(WPARAM wParam, LPARAM lParam);
 INT_PTR InvalidateDisplayName(WPARAM wParam, LPARAM lParam);
 int InitGroupServices(void);
-void LoadCluiServices();
 INT_PTR Docking_IsDocked(WPARAM wParam, LPARAM lParam);
 int LoadCLUIModule(void);
 int InitClistHotKeys(void);
+void ScheduleMenuUpdate(void);
 
 HANDLE hContactDoubleClicked, hContactIconChangedEvent;
 HIMAGELIST hCListImages;
@@ -52,61 +54,61 @@ struct ProtoIconIndex
 
 OBJLIST<ProtoIconIndex> protoIconIndex(5);
 
-TCHAR* fnGetStatusModeDescription(int mode, int flags)
+wchar_t* fnGetStatusModeDescription(int mode, int flags)
 {
-	static TCHAR szMode[64];
-	TCHAR* descr;
+	static wchar_t szMode[64];
+	wchar_t* descr;
 	int    noPrefixReqd = 0;
 	switch (mode) {
 	case ID_STATUS_OFFLINE:
-		descr = LPGENT("Offline");
+		descr = LPGENW("Offline");
 		noPrefixReqd = 1;
 		break;
 	case ID_STATUS_CONNECTING:
-		descr = LPGENT("Connecting");
+		descr = LPGENW("Connecting");
 		noPrefixReqd = 1;
 		break;
 	case ID_STATUS_ONLINE:
-		descr = LPGENT("Online");
+		descr = LPGENW("Online");
 		noPrefixReqd = 1;
 		break;
 	case ID_STATUS_AWAY:
-		descr = LPGENT("Away");
+		descr = LPGENW("Away");
 		break;
 	case ID_STATUS_DND:
-		descr = LPGENT("DND");
+		descr = LPGENW("Do not disturb");
 		break;
 	case ID_STATUS_NA:
-		descr = LPGENT("NA");
+		descr = LPGENW("Not available");
 		break;
 	case ID_STATUS_OCCUPIED:
-		descr = LPGENT("Occupied");
+		descr = LPGENW("Occupied");
 		break;
 	case ID_STATUS_FREECHAT:
-		descr = LPGENT("Free for chat");
+		descr = LPGENW("Free for chat");
 		break;
 	case ID_STATUS_INVISIBLE:
-		descr = LPGENT("Invisible");
+		descr = LPGENW("Invisible");
 		break;
 	case ID_STATUS_OUTTOLUNCH:
-		descr = LPGENT("Out to lunch");
+		descr = LPGENW("Out to lunch");
 		break;
 	case ID_STATUS_ONTHEPHONE:
-		descr = LPGENT("On the phone");
+		descr = LPGENW("On the phone");
 		break;
 	case ID_STATUS_IDLE:
-		descr = LPGENT("Idle");
+		descr = LPGENW("Idle");
 		break;
 	default:
 		if (IsStatusConnecting(mode)) {
-			const TCHAR* connFmt = LPGENT("Connecting (attempt %d)");
-			mir_sntprintf(szMode, (flags & GSMDF_UNTRANSLATED) ? connFmt : TranslateTS(connFmt), mode - ID_STATUS_CONNECTING + 1);
+			const wchar_t* connFmt = LPGENW("Connecting (attempt %d)");
+			mir_snwprintf(szMode, (flags & GSMDF_UNTRANSLATED) ? connFmt : TranslateW(connFmt), mode - ID_STATUS_CONNECTING + 1);
 			return szMode;
 		}
-		return NULL;
+		return nullptr;
 	}
 
-	return (flags & GSMDF_UNTRANSLATED) ? descr : TranslateTS(descr);
+	return (flags & GSMDF_UNTRANSLATED) ? descr : TranslateW(descr);
 }
 
 static int ProtocolAck(WPARAM, LPARAM lParam)
@@ -118,12 +120,12 @@ static int ProtocolAck(WPARAM, LPARAM lParam)
 	cli.pfnCluiProtocolStatusChanged(lParam, ack->szModule);
 
 	if ((INT_PTR)ack->hProcess < ID_STATUS_ONLINE && ack->lParam >= ID_STATUS_ONLINE) {
-		DWORD caps = (DWORD)CallProtoServiceInt(NULL, ack->szModule, PS_GETCAPS, PFLAGNUM_1, 0);
+		DWORD caps = (DWORD)CallProtoServiceInt(0, ack->szModule, PS_GETCAPS, PFLAGNUM_1, 0);
 		if (caps & PF1_SERVERCLIST) {
 			for (MCONTACT hContact = db_find_first(ack->szModule); hContact; ) {
 				MCONTACT hNext = db_find_next(hContact, ack->szModule);
 				if (db_get_b(hContact, "CList", "Delete", 0))
-					CallService(MS_DB_CONTACT_DELETE, hContact, 0);
+					db_delete_contact(hContact);
 				hContact = hNext;
 			}
 		}
@@ -148,7 +150,7 @@ int fnIconFromStatusMode(const char *szProto, int status, MCONTACT)
 
 	if (index == _countof(statusModeList))
 		index = 0;
-	if (szProto == NULL)
+	if (szProto == nullptr)
 		return index + 1;
 	for (i = 0; i < protoIconIndex.getCount(); i++) {
 		if (mir_strcmp(szProto, protoIconIndex[i].szProto) == 0)
@@ -161,12 +163,7 @@ int fnGetContactIcon(MCONTACT hContact)
 {
 	char *szProto = GetContactProto(hContact);
 	return cli.pfnIconFromStatusMode(szProto,
-		szProto == NULL ? ID_STATUS_OFFLINE : db_get_w(hContact, szProto, "Status", ID_STATUS_OFFLINE), hContact);
-}
-
-static INT_PTR GetContactIcon(WPARAM wParam, LPARAM)
-{
-	return cli.pfnGetContactIcon(wParam);
+		szProto == nullptr ? ID_STATUS_OFFLINE : db_get_w(hContact, szProto, "Status", ID_STATUS_OFFLINE), hContact);
 }
 
 static void AddProtoIconIndex(PROTOACCOUNT *pa)
@@ -192,6 +189,8 @@ static void RemoveProtoIconIndex(PROTOACCOUNT *pa)
 
 static int ContactListModulesLoaded(WPARAM, LPARAM)
 {
+	ScheduleMenuUpdate();
+
 	RebuildMenuOrder();
 	for (int i = 0; i < accounts.getCount(); i++)
 		AddProtoIconIndex(accounts[i]);
@@ -218,50 +217,48 @@ static int ContactListAccountsChanged(WPARAM eventCode, LPARAM lParam)
 	}
 	cli.pfnReloadProtoMenus();
 	cli.pfnTrayIconIconsChanged();
-	cli.pfnClcBroadcast(INTM_RELOADOPTIONS, 0, 0);
-	cli.pfnClcBroadcast(INTM_INVALIDATE, 0, 0);
+	Clist_Broadcast(INTM_RELOADOPTIONS, 0, 0);
+	Clist_Broadcast(INTM_INVALIDATE, 0, 0);
 	return 0;
 }
 
-static INT_PTR ContactDoubleClicked(WPARAM wParam, LPARAM)
+MIR_APP_DLL(void) Clist_ContactDoubleClicked(MCONTACT hContact)
 {
 	// Try to process event myself
-	if (cli.pfnEventsProcessContactDoubleClick(wParam) == 0)
-		return 0;
+	if (cli.pfnEventsProcessContactDoubleClick(hContact) == 0)
+		return;
 
 	// Allow third-party plugins to process a dblclick
-	if (NotifyEventHooks(hContactDoubleClicked, wParam, 0))
-		return 0;
+	if (NotifyEventHooks(hContactDoubleClicked, hContact, 0))
+		return;
 
 	// Otherwise try to execute the default action
-	TryProcessDoubleClick(wParam);
-	return 0;
+	TIntMenuObject *pmo = GetMenuObjbyId(hContactMenuObject);
+	if (pmo != nullptr) {
+		NotifyEventHooks(hPreBuildContactMenuEvent, hContact, 0);
+
+		TMO_IntMenuItem *pimi = Menu_GetDefaultItem(pmo->m_items.first);
+		if (pimi != nullptr)
+			Menu_ProcessCommand(pimi, hContact);
+	}
 }
 
-static INT_PTR GetIconsImageList(WPARAM, LPARAM)
+MIR_APP_DLL(HIMAGELIST) Clist_GetImageList(void)
 {
-	return (INT_PTR)hCListImages;
-}
-
-static INT_PTR ContactFilesDropped(WPARAM wParam, LPARAM lParam)
-{
-	CallService(MS_FILE_SENDSPECIFICFILES, wParam, lParam);
-	return 0;
+	return hCListImages;
 }
 
 static int CListIconsChanged(WPARAM, LPARAM)
 {
-	int i, j;
-
-	for (i = 0; i < _countof(statusModeList); i++)
+	for (int i = 0; i < _countof(statusModeList); i++)
 		ImageList_ReplaceIcon_IconLibLoaded(hCListImages, i + 1, Skin_LoadIcon(skinIconStatusList[i]));
 	ImageList_ReplaceIcon_IconLibLoaded(hCListImages, IMAGE_GROUPOPEN, Skin_LoadIcon(SKINICON_OTHER_GROUPOPEN));
 	ImageList_ReplaceIcon_IconLibLoaded(hCListImages, IMAGE_GROUPSHUT, Skin_LoadIcon(SKINICON_OTHER_GROUPSHUT));
-	for (i = 0; i < protoIconIndex.getCount(); i++)
-		for (j = 0; j < _countof(statusModeList); j++)
+	for (int i = 0; i < protoIconIndex.getCount(); i++)
+		for (int j = 0; j < _countof(statusModeList); j++)
 			ImageList_ReplaceIcon_IconLibLoaded(hCListImages, protoIconIndex[i].iIconBase + j, Skin_LoadProtoIcon(protoIconIndex[i].szProto, statusModeList[j]));
 	cli.pfnTrayIconIconsChanged();
-	cli.pfnInvalidateRect(cli.hwndContactList, NULL, TRUE);
+	cli.pfnInvalidateRect(cli.hwndContactList, nullptr, TRUE);
 	return 0;
 }
 
@@ -281,7 +278,7 @@ int fnGetWindowVisibleState(HWND hWnd, int iStepX, int iStepY)
 	BOOL bPartiallyCovered = FALSE;
 	HWND hAux = 0;
 
-	if (hWnd == NULL) {
+	if (hWnd == nullptr) {
 		SetLastError(0x00000006);       //Wrong handle
 		return -1;
 	}
@@ -295,7 +292,7 @@ int fnGetWindowVisibleState(HWND hWnd, int iStepX, int iStepY)
 	if (IsIconic(hWnd) || !IsWindowVisible(hWnd))
 		return GWVS_HIDDEN;
 
-	if (CallService(MS_CLIST_DOCKINGISDOCKED, 0, 0))
+	if (Clist_IsDocked())
 		return GWVS_VISIBLE;
 
 	GetWindowRect(hWnd, &rcWin);
@@ -317,9 +314,9 @@ int fnGetWindowVisibleState(HWND hWnd, int iStepX, int iStepY)
 		for (j = rc.left; j < rc.right; j += (width / iStepX)) {
 			pt.x = j;
 			hAux = WindowFromPoint(pt);
-			while (GetParent(hAux) != NULL)
+			while (GetParent(hAux) != nullptr)
 				hAux = GetParent(hAux);
-			if (hAux != hWnd && hAux != NULL)       //There's another window!
+			if (hAux != hWnd && hAux != nullptr)       //There's another window!
 				bPartiallyCovered = TRUE;
 			else
 				iNotCoveredDots++;  //Let's count the not covered dots.
@@ -333,11 +330,11 @@ int fnGetWindowVisibleState(HWND hWnd, int iStepX, int iStepY)
 	if (iNotCoveredDots == 0)  //They're all covered!
 		return GWVS_COVERED;
 
-	//There are dots which are visible, but they are not as many as the ones we counted: it's partially covered.
+	// There are dots which are visible, but they are not as many as the ones we counted: it's partially covered.
 	return GWVS_PARTIALLY_COVERED;
 }
 
-int fnShowHide(WPARAM, LPARAM)
+int fnShowHide()
 {
 	BOOL bShow = FALSE;
 
@@ -347,7 +344,7 @@ int fnShowHide(WPARAM, LPARAM)
 	switch (iVisibleState) {
 	case GWVS_PARTIALLY_COVERED:
 		//If we don't want to bring it to top, we can use a simple break. This goes against readability ;-) but the comment explains it.
-		if (!db_get_b(NULL, "CList", "BringToFront", SETTING_BRINGTOFRONT_DEFAULT))
+		if (!db_get_b(0, "CList", "BringToFront", SETTING_BRINGTOFRONT_DEFAULT))
 			break;
 	case GWVS_COVERED:     //Fall through (and we're already falling)
 	case GWVS_HIDDEN:
@@ -361,100 +358,60 @@ int fnShowHide(WPARAM, LPARAM)
 	}
 
 	if (bShow == TRUE) {
-		RECT rcWindow;
-
 		ShowWindow(cli.hwndContactList, SW_RESTORE);
-		if (!db_get_b(NULL, "CList", "OnTop", SETTING_ONTOP_DEFAULT))
+		if (!db_get_b(0, "CList", "OnTop", SETTING_ONTOP_DEFAULT))
 			SetWindowPos(cli.hwndContactList, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 		else
 			SetWindowPos(cli.hwndContactList, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
 		SetForegroundWindow(cli.hwndContactList);
-		db_set_b(NULL, "CList", "State", SETTING_STATE_NORMAL);
+		db_set_b(0, "CList", "State", SETTING_STATE_NORMAL);
 
-		//this forces the window onto the visible screen
+		// this forces the window onto the visible screen
+		RECT rcWindow;
 		GetWindowRect(cli.hwndContactList, &rcWindow);
-		if (Utils_AssertInsideScreen(&rcWindow) == 1) {
-			MoveWindow(cli.hwndContactList, rcWindow.left, rcWindow.top,
-				rcWindow.right - rcWindow.left, rcWindow.bottom - rcWindow.top, TRUE);
-		}
+		if (Utils_AssertInsideScreen(&rcWindow) == 1)
+			MoveWindow(cli.hwndContactList, rcWindow.left, rcWindow.top, rcWindow.right - rcWindow.left, rcWindow.bottom - rcWindow.top, TRUE);
 	}
-	else {                      //It needs to be hidden
-		if (db_get_b(NULL, "CList", "ToolWindow", SETTING_TOOLWINDOW_DEFAULT) ||
-			db_get_b(NULL, "CList", "Min2Tray", SETTING_MIN2TRAY_DEFAULT)) {
+	else { // It needs to be hidden
+		if (db_get_b(0, "CList", "ToolWindow", SETTING_TOOLWINDOW_DEFAULT) ||
+			db_get_b(0, "CList", "Min2Tray", SETTING_MIN2TRAY_DEFAULT)) {
 			ShowWindow(cli.hwndContactList, SW_HIDE);
-			db_set_b(NULL, "CList", "State", SETTING_STATE_HIDDEN);
+			db_set_b(0, "CList", "State", SETTING_STATE_HIDDEN);
 		}
 		else {
 			ShowWindow(cli.hwndContactList, SW_MINIMIZE);
-			db_set_b(NULL, "CList", "State", SETTING_STATE_MINIMIZED);
+			db_set_b(0, "CList", "State", SETTING_STATE_MINIMIZED);
 		}
 
-		if (db_get_b(NULL, "CList", "DisableWorkingSet", 1))
+		if (db_get_b(0, "CList", "DisableWorkingSet", 1))
 			SetProcessWorkingSetSize(GetCurrentProcess(), -1, -1);
 	}
 	return 0;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// old evil code. hopefully it will be deleted soon, cause nobody uses it now
-
-#define SAFESTRING(a) a?a:""
-
-int GetStatusModeOrdering(int statusMode);
-extern int sortByStatus, sortByProto;
-
-static INT_PTR CompareContacts(WPARAM wParam, LPARAM lParam)
+void fnChangeContactIcon(MCONTACT hContact, int iIcon)
 {
-	MCONTACT a = wParam, b = lParam;
-	TCHAR namea[128], *nameb;
-	int rc;
+	Clist_BroadcastAsync(INTM_ICONCHANGED, hContact, iIcon);
 
-	char *szProto1 = GetContactProto(a);
-	char *szProto2 = GetContactProto(b);
-	int statusa = db_get_w(a, SAFESTRING(szProto1), "Status", ID_STATUS_OFFLINE);
-	int statusb = db_get_w(b, SAFESTRING(szProto2), "Status", ID_STATUS_OFFLINE);
+	NotifyEventHooks(hContactIconChangedEvent, hContact, iIcon);
+}
 
-	if (sortByProto) {
-		/* deal with statuses, online contacts have to go above offline */
-		if ((statusa == ID_STATUS_OFFLINE) != (statusb == ID_STATUS_OFFLINE)) {
-			return 2 * (statusa == ID_STATUS_OFFLINE) - 1;
-		}
-		/* both are online, now check protocols */
-		rc = mir_strcmp(SAFESTRING(szProto1), SAFESTRING(szProto2));        /* mir_strcmp() doesn't like NULL so feed in "" as needed */
-		if (rc != 0 && (szProto1 != NULL && szProto2 != NULL))
-			return rc;
-		/* protocols are the same, order by display name */
+/////////////////////////////////////////////////////////////////////////////////////////
+
+MIR_APP_DLL(int) Clist_ContactCompare(MCONTACT hContact1, MCONTACT hContact2)
+{
+	ClcData *dat = (ClcData*)GetWindowLongPtr(cli.hwndContactTree, 0);
+	if (dat != nullptr) {
+		ClcContact *p1, *p2;
+		if (Clist_FindItem(cli.hwndContactTree, dat, hContact1, &p1, nullptr, nullptr) && Clist_FindItem(cli.hwndContactTree, dat, hContact2, &p2, nullptr, nullptr))
+			return cli.pfnCompareContacts(p1, p2);
 	}
 
-	if (sortByStatus) {
-		int ordera, orderb;
-		ordera = GetStatusModeOrdering(statusa);
-		orderb = GetStatusModeOrdering(statusb);
-		if (ordera != orderb)
-			return ordera - orderb;
-	}
-	else {
-		//one is offline: offline goes below online
-		if ((statusa == ID_STATUS_OFFLINE) != (statusb == ID_STATUS_OFFLINE)) {
-			return 2 * (statusa == ID_STATUS_OFFLINE) - 1;
-		}
-	}
-
-	nameb = cli.pfnGetContactDisplayName(a, 0);
-	_tcsncpy_s(namea, nameb, _TRUNCATE);
-	nameb = cli.pfnGetContactDisplayName(b, 0);
-
-	//otherwise just compare names
-	return mir_tstrcmpi(namea, nameb);
+	return 0;
 }
 
 /***************************************************************************************/
-
-static INT_PTR ShowHideStub(WPARAM wParam, LPARAM lParam) { return cli.pfnShowHide(wParam, lParam); }
-static INT_PTR SetHideOfflineStub(WPARAM wParam, LPARAM lParam) { return cli.pfnSetHideOffline(wParam, lParam); }
-static INT_PTR Docking_ProcessWindowMessageStub(WPARAM wParam, LPARAM lParam) { return cli.pfnDocking_ProcessWindowMessage(wParam, lParam); }
-static INT_PTR HotkeysProcessMessageStub(WPARAM wParam, LPARAM lParam) { return cli.pfnHotkeysProcessMessage(wParam, lParam); }
 
 int LoadContactListModule2(void)
 {
@@ -468,27 +425,12 @@ int LoadContactListModule2(void)
 	hContactDoubleClicked = CreateHookableEvent(ME_CLIST_DOUBLECLICKED);
 	hContactIconChangedEvent = CreateHookableEvent(ME_CLIST_CONTACTICONCHANGED);
 
-	LoadCluiServices();
-
-	CreateServiceFunction(MS_CLIST_CONTACTDOUBLECLICKED, ContactDoubleClicked);
-	CreateServiceFunction(MS_CLIST_CONTACTFILESDROPPED, ContactFilesDropped);
-	CreateServiceFunction(MS_CLIST_INVALIDATEDISPLAYNAME, InvalidateDisplayName);
-	CreateServiceFunction(MS_CLIST_CONTACTSCOMPARE, CompareContacts);
-	CreateServiceFunction(MS_CLIST_CONTACTCHANGEGROUP, ContactChangeGroup);
-	CreateServiceFunction(MS_CLIST_SHOWHIDE, ShowHideStub);
-	CreateServiceFunction(MS_CLIST_SETHIDEOFFLINE, SetHideOfflineStub);
-	CreateServiceFunction(MS_CLIST_DOCKINGPROCESSMESSAGE, Docking_ProcessWindowMessageStub);
-	CreateServiceFunction(MS_CLIST_DOCKINGISDOCKED, Docking_IsDocked);
-	CreateServiceFunction(MS_CLIST_HOTKEYSPROCESSMESSAGE, HotkeysProcessMessageStub);
-	CreateServiceFunction(MS_CLIST_GETCONTACTICON, GetContactIcon);
-
 	InitCListEvents();
 	InitGroupServices();
 	cli.pfnInitTray();
 
 	hCListImages = ImageList_Create(16, 16, ILC_MASK | ILC_COLOR32, 13, 0);
 	HookEvent(ME_SKIN_ICONSCHANGED, CListIconsChanged);
-	CreateServiceFunction(MS_CLIST_GETICONSIMAGELIST, GetIconsImageList);
 
 	ImageList_AddIcon_NotShared(hCListImages, MAKEINTRESOURCE(IDI_BLANK));
 
@@ -508,13 +450,14 @@ void UnloadContactListModule()
 		return;
 
 	// remove transitory contacts
-	for (MCONTACT hContact = db_find_first(); hContact != NULL; ) {
+	for (MCONTACT hContact = db_find_first(); hContact != 0; ) {
 		MCONTACT hNext = db_find_next(hContact);
 		if (db_get_b(hContact, "CList", "NotOnList", 0))
-			CallService(MS_DB_CONTACT_DELETE, hContact, 0);
+			db_delete_contact(hContact);
 		hContact = hNext;
 	}
 	ImageList_Destroy(hCListImages);
 	UninitCListEvents();
+	UninitGroupServices();
 	DestroyHookableEvent(hContactDoubleClicked);
 }

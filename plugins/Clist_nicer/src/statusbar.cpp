@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-03 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -88,7 +88,7 @@ LRESULT CALLBACK NewStatusBarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 			HDC hdcMem = CreateCompatibleDC(hdc);
 			RECT rcClient, rcWindow;
 			DRAWITEMSTRUCT dis = { 0 };
-			BYTE windowStyle = cfg::getByte("CLUI", "WindowStyle", SETTING_WINDOWSTYLE_DEFAULT);
+			BYTE windowStyle = db_get_b(NULL, "CLUI", "WindowStyle", SETTING_WINDOWSTYLE_DEFAULT);
 			LONG b_offset = cfg::dat.bClipBorder + (windowStyle == SETTING_WINDOWSTYLE_NOBORDER ? 2 : (windowStyle == SETTING_WINDOWSTYLE_THINBORDER ? 1 : 0));
 
 			GetClientRect(hwnd, &rcClient);
@@ -155,13 +155,13 @@ LRESULT CALLBACK NewStatusBarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 
 						if (NotifyEventHooks(hStatusBarShowToolTipEvent, (WPARAM)PD->RealName, 0) > 0) // a plugin handled this event
 							tooltip_active = TRUE;
-						else if (cfg::getDword("mToolTip", "ShowStatusTip", 0)) {
+						else if (db_get_dw(NULL, "mToolTip", "ShowStatusTip", 0)) {
 							WORD wStatus = (WORD)CallProtoService(PD->RealName, PS_GETSTATUS, 0, 0);
-							BYTE isLocked = cfg::getByte(PD->RealName, "LockMainStatus", 0);
+							BYTE isLocked = db_get_b(NULL, PD->RealName, "LockMainStatus", 0);
 
-							TCHAR szTipText[256];
-							mir_sntprintf(szTipText, _T("<b>%s</b>: %s%s"),
-								PD->RealName, pcli->pfnGetStatusModeDescription(wStatus, 0), isLocked ? _T("  (LOCKED)") : _T(""));
+							wchar_t szTipText[256];
+							mir_snwprintf(szTipText, L"<b>%s</b>: %s%s",
+								PD->RealName, pcli->pfnGetStatusModeDescription(wStatus, 0), isLocked ? L"  (LOCKED)" : L"");
 
 							CLCINFOTIP ti = { sizeof(ti) };
 							ti.isTreeFocused = (GetFocus() == pcli->hwndContactList);

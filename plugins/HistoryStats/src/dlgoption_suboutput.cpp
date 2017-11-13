@@ -108,17 +108,17 @@ void DlgOption::SubOutput::onWMInitDialog()
 			hTemp2                       = m_Options.insertGroup(m_hOmitContacts, TranslateT("Criteria"));
 				m_hOmitByValue            = m_Options.insertCheck(hTemp2, TranslateT("Omit contacts that didn't produce a certain amount of data"), OptionsCtrl::OCF_DISABLECHILDSONUNCHECK);
 					m_hOmitByValueData     = m_Options.insertCombo(m_hOmitByValue, TranslateT("Omit if"));
-					m_hOmitByValueLimit    = m_Options.insertEdit(m_hOmitByValue, TranslateT("...is less than"), _T(""), OptionsCtrl::OCF_NUMBER);
+					m_hOmitByValueLimit    = m_Options.insertEdit(m_hOmitByValue, TranslateT("...is less than"), L"", OptionsCtrl::OCF_NUMBER);
 				m_hOmitByTime             = m_Options.insertCheck(hTemp2, TranslateT("Omit contacts that were inactive for some time"), OptionsCtrl::OCF_DISABLECHILDSONUNCHECK);
-					m_hOmitByTimeDays      = m_Options.insertEdit(m_hOmitByTime, TranslateT("Maximum inactivity time (days)"), _T(""), OptionsCtrl::OCF_NUMBER);
+					m_hOmitByTimeDays      = m_Options.insertEdit(m_hOmitByTime, TranslateT("Maximum inactivity time (days)"), L"", OptionsCtrl::OCF_NUMBER);
 				m_hOmitByRank             = m_Options.insertCheck(hTemp2, TranslateT("Omit all contacts not in \"Top n\""), OptionsCtrl::OCF_DISABLECHILDSONUNCHECK);
-					m_hOmitNumOnTop        = m_Options.insertEdit(m_hOmitByRank, TranslateT("Number of contacts in \"Top n\""), _T("10"), OptionsCtrl::OCF_NUMBER);
+					m_hOmitNumOnTop        = m_Options.insertEdit(m_hOmitByRank, TranslateT("Number of contacts in \"Top n\""), L"10", OptionsCtrl::OCF_NUMBER);
 			m_hOmittedInTotals           = m_Options.insertCheck(m_hOmitContacts, TranslateT("Include omitted contacts in totals"));
 			m_hOmittedInExtraRow         = m_Options.insertCheck(m_hOmitContacts, TranslateT("Include totals of omitted contacts in additional row"));
 		m_hCalcTotals                   = m_Options.insertCheck(hTemp, TranslateT("Include totals in statistics"));
 	hTemp                              = m_Options.insertGroup(NULL, TranslateT("Table header"), OptionsCtrl::OCF_ROOTGROUP | OptionsCtrl::OCF_NODISABLECHILDS);
 		m_hTableHeader                  = m_Options.insertCheck(hTemp, TranslateT("Output header"), OptionsCtrl::OCF_DISABLECHILDSONUNCHECK | OptionsCtrl::OCF_DISABLED | OptionsCtrl::OCF_NODISABLECHILDS);
-			m_hTableHeaderRepeat         = m_Options.insertEdit(m_hTableHeader, TranslateT("Repeat header every n contacts (0=don't repeat)"), _T("0"), OptionsCtrl::OCF_NUMBER);
+			m_hTableHeaderRepeat         = m_Options.insertEdit(m_hTableHeader, TranslateT("Repeat header every n contacts (0=don't repeat)"), L"0", OptionsCtrl::OCF_NUMBER);
 			m_hTableHeaderVerbose        = m_Options.insertCheck(m_hTableHeader, TranslateT("Make column titles more verbose"));
 			m_hHeaderTooltips            = m_Options.insertCheck(m_hTableHeader, TranslateT("Show tooltips with detailed information in column titles"), OptionsCtrl::OCF_DISABLECHILDSONUNCHECK);
 				m_hHeaderTooltipsIfCustom = m_Options.insertCheck(m_hHeaderTooltips, TranslateT("Only show if a custom title was entered or if titles are not verbose"));
@@ -137,44 +137,44 @@ void DlgOption::SubOutput::onWMInitDialog()
 			m_hAutoOpenMenu              = m_Options.insertCheck(hTemp2, TranslateT("...via Miranda NG main menu"));
 
 	// our sort levels
-	static const TCHAR* sortLevels[Settings::cNumSortLevels] = {
-		LPGENT("First sort by"),
-		LPGENT("Then sort by"),
-		LPGENT("Finally sort by")
+	static const wchar_t* sortLevels[Settings::cNumSortLevels] = {
+		LPGENW("First sort by"),
+		LPGENW("Then sort by"),
+		LPGENW("Finally sort by")
 	};
 
 	// our sort keys
 	static const struct {
 		int key;
-		TCHAR* desc;
+		wchar_t* desc;
 	} sortKeys[] = {
-		{ Settings::skNick              , LPGENT("Nick")                                  },
-		{ Settings::skProtocol          , LPGENT("Protocol")                              },
-		{ Settings::skGroup             , LPGENT("Group")                                 },
-		{ Settings::skBytesIn           , LPGENT("Characters (incoming, absolute)")       },
-		{ Settings::skBytesOut          , LPGENT("Characters (outgoing, absolute)")       },
-		{ Settings::skBytesTotal        , LPGENT("Characters (all, absolute)")            },
-		{ Settings::skBytesInAvg        , LPGENT("Characters (incoming, average)")        },
-		{ Settings::skBytesOutAvg       , LPGENT("Characters (outgoing, average)")        },
-		{ Settings::skBytesTotalAvg     , LPGENT("Characters (all, average)")             },
-		{ Settings::skMessagesIn        , LPGENT("Messages (incoming, absolute)")         },
-		{ Settings::skMessagesOut       , LPGENT("Messages (outgoing, absolute)")         },
-		{ Settings::skMessagesTotal     , LPGENT("Messages (all, absolute)")              },
-		{ Settings::skMessagesInAvg     , LPGENT("Messages (incoming, average)")          },
-		{ Settings::skMessagesOutAvg    , LPGENT("Messages (outgoing, average)")          },
-		{ Settings::skMessagesTotalAvg  , LPGENT("Messages (all, average)")               },
-		{ Settings::skChatsIn           , LPGENT("Chats (incoming, absolute)")            },
-		{ Settings::skChatsOut          , LPGENT("Chats (outgoing, absolute)")            },
-		{ Settings::skChatsTotal        , LPGENT("Chats (all, absolute)")                 },
-		{ Settings::skChatsInAvg        , LPGENT("Chats (incoming, average)")             },
-		{ Settings::skChatsOutAvg       , LPGENT("Chats (outgoing, average)")             },
-		{ Settings::skChatsTotalAvg     , LPGENT("Chats (all, average)")                  },
-		{ Settings::skChatDurationTotal , LPGENT("Chat duration (total)")                 },
-		{ Settings::skChatDurationMin   , LPGENT("Chat duration (minimum)")               },
-		{ Settings::skChatDurationAvg   , LPGENT("Chat duration (average)")               },
-		{ Settings::skChatDurationMax   , LPGENT("Chat duration (maximum)")               },
-		{ Settings::skTimeOfFirstMessage, LPGENT("Time of first message to/from contact") },
-		{ Settings::skTimeOfLastMessage , LPGENT("Time of last message to/from contact")  },
+		{ Settings::skNick              , LPGENW("Nick")                                  },
+		{ Settings::skProtocol          , LPGENW("Protocol")                              },
+		{ Settings::skGroup             , LPGENW("Group")                                 },
+		{ Settings::skBytesIn           , LPGENW("Characters (incoming, absolute)")       },
+		{ Settings::skBytesOut          , LPGENW("Characters (outgoing, absolute)")       },
+		{ Settings::skBytesTotal        , LPGENW("Characters (all, absolute)")            },
+		{ Settings::skBytesInAvg        , LPGENW("Characters (incoming, average)")        },
+		{ Settings::skBytesOutAvg       , LPGENW("Characters (outgoing, average)")        },
+		{ Settings::skBytesTotalAvg     , LPGENW("Characters (all, average)")             },
+		{ Settings::skMessagesIn        , LPGENW("Messages (incoming, absolute)")         },
+		{ Settings::skMessagesOut       , LPGENW("Messages (outgoing, absolute)")         },
+		{ Settings::skMessagesTotal     , LPGENW("Messages (all, absolute)")              },
+		{ Settings::skMessagesInAvg     , LPGENW("Messages (incoming, average)")          },
+		{ Settings::skMessagesOutAvg    , LPGENW("Messages (outgoing, average)")          },
+		{ Settings::skMessagesTotalAvg  , LPGENW("Messages (all, average)")               },
+		{ Settings::skChatsIn           , LPGENW("Chats (incoming, absolute)")            },
+		{ Settings::skChatsOut          , LPGENW("Chats (outgoing, absolute)")            },
+		{ Settings::skChatsTotal        , LPGENW("Chats (all, absolute)")                 },
+		{ Settings::skChatsInAvg        , LPGENW("Chats (incoming, average)")             },
+		{ Settings::skChatsOutAvg       , LPGENW("Chats (outgoing, average)")             },
+		{ Settings::skChatsTotalAvg     , LPGENW("Chats (all, average)")                  },
+		{ Settings::skChatDurationTotal , LPGENW("Chat duration (total)")                 },
+		{ Settings::skChatDurationMin   , LPGENW("Chat duration (minimum)")               },
+		{ Settings::skChatDurationAvg   , LPGENW("Chat duration (average)")               },
+		{ Settings::skChatDurationMax   , LPGENW("Chat duration (maximum)")               },
+		{ Settings::skTimeOfFirstMessage, LPGENW("Time of first message to/from contact") },
+		{ Settings::skTimeOfLastMessage , LPGENW("Time of last message to/from contact")  },
 	};
 
 	m_SortKeyToIndex.resize(Settings::skLAST - Settings::skFIRST + 1);
@@ -188,7 +188,7 @@ void DlgOption::SubOutput::onWMInitDialog()
 
 	array_each_(i, sortLevels)
 	{
-		m_hSortBy[i] = m_Options.insertCombo(m_hSort, TranslateTS(sortLevels[i]), (i == 0) ? 0 : OptionsCtrl::OCF_DISABLECHILDSONINDEX0);
+		m_hSortBy[i] = m_Options.insertCombo(m_hSort, TranslateW(sortLevels[i]), (i == 0) ? 0 : OptionsCtrl::OCF_DISABLECHILDSONINDEX0);
 
 		if (i != 0)
 		{
@@ -197,7 +197,7 @@ void DlgOption::SubOutput::onWMInitDialog()
 
 		array_each_(j, sortKeys)
 		{
-			m_Options.addComboItem(m_hSortBy[i], TranslateTS(sortKeys[j].desc));
+			m_Options.addComboItem(m_hSortBy[i], TranslateW(sortKeys[j].desc));
 		}
 
 		m_hSortDir[i] = m_Options.insertRadio(m_hSortBy[i], NULL, TranslateT("Ascending"));
@@ -205,31 +205,31 @@ void DlgOption::SubOutput::onWMInitDialog()
 	}
 
 	// our "omit by value" data
-	static const TCHAR* omitData[] = {
-		LPGENT("Characters (incoming, absolute)"),
-		LPGENT("Characters (outgoing, absolute)"),
-		LPGENT("Characters (all, absolute)"),
-		LPGENT("Characters (incoming, average per week)"),
-		LPGENT("Characters (outgoing, average per week)"),
-		LPGENT("Characters (all, average per week)"),
-		LPGENT("Messages (incoming, absolute)"),
-		LPGENT("Messages (outgoing, absolute)"),
-		LPGENT("Messages (all, absolute)"),
-		LPGENT("Messages (incoming, average per week)"),
-		LPGENT("Messages (outgoing, average per week)"),
-		LPGENT("Messages (all, average per week)"),
-		LPGENT("Chats (incoming, absolute)"),
-		LPGENT("Chats (outgoing, absolute)"),
-		LPGENT("Chats (all, absolute)"),
-		LPGENT("Chats (incoming, average per week)"),
-		LPGENT("Chats (outgoing, average per week)"),
-		LPGENT("Chats (all, average per week)"),
-		LPGENT("Chat duration (total, hours)"),
+	static const wchar_t* omitData[] = {
+		LPGENW("Characters (incoming, absolute)"),
+		LPGENW("Characters (outgoing, absolute)"),
+		LPGENW("Characters (all, absolute)"),
+		LPGENW("Characters (incoming, average per week)"),
+		LPGENW("Characters (outgoing, average per week)"),
+		LPGENW("Characters (all, average per week)"),
+		LPGENW("Messages (incoming, absolute)"),
+		LPGENW("Messages (outgoing, absolute)"),
+		LPGENW("Messages (all, absolute)"),
+		LPGENW("Messages (incoming, average per week)"),
+		LPGENW("Messages (outgoing, average per week)"),
+		LPGENW("Messages (all, average per week)"),
+		LPGENW("Chats (incoming, absolute)"),
+		LPGENW("Chats (outgoing, absolute)"),
+		LPGENW("Chats (all, absolute)"),
+		LPGENW("Chats (incoming, average per week)"),
+		LPGENW("Chats (outgoing, average per week)"),
+		LPGENW("Chats (all, average per week)"),
+		LPGENW("Chat duration (total, hours)"),
 	};
 
 	array_each_(i, omitData)
 	{
-		m_Options.addComboItem(m_hOmitByValueData, TranslateTS(omitData[i]));
+		m_Options.addComboItem(m_hOmitByValueData, TranslateW(omitData[i]));
 	}
 
 	m_Options.ensureVisible(NULL);

@@ -6,7 +6,7 @@
 ;  Authors: yaho
 ;============================================================
 [FTP a file to a server and send the URL to your friend. Supported automatic zipping before upload and encryption via SFTP and FTPS.]
-Плагин позволяет загрузить файл на FTP сервер с помощью Miranda NG и отправить ссылку своим контактам.
+Позволяет загрузить файл на FTP сервер и отправить ссылку своим контактам. Поддерживает сжатие перед отправкой и шифрование с помощью SFTP и FTPS.
 [FTP accounts]
 Учётные записи FTP
 [Host name]
@@ -166,7 +166,7 @@ FTP файл менеджер
 [Zip and upload file]
 Запаковать и отправить файл
 [You have to fill FTP server setting before upload a file.]
-Для отправки файла необходимо указать FTP-сервер в настройках.
+Для отправки файла нужно указать FTP-сервер в настройках.
 [Error has occurred while trying to create a dialog!]
 Ошибка при создании диалога!
 [File upload complete]
@@ -223,6 +223,10 @@ FTP файл менеджер
 Вы должны добавить хотя бы один FTP сервер в настройках.
 [Clear All]
 Снять всё
+[FTP+SSL (Explicit)]
+FTP+SSL (явный)
+[FTP+SSL (Implicit)]
+FTP+SSL (неявный)
 [minutes]
 минут(ы)
 [hours]

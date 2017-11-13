@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
-// Copyright (ñ) 2012-15 Miranda NG project,
+// Copyright (ñ) 2012-17 Miranda NG project,
 // Copyright (c) 2000-09 Miranda ICQ/IM project,
 // all portions of this codebase are copyrighted to the people
 // listed in contributors.txt.
@@ -179,22 +179,14 @@ public:
 	__forceinline bool isVSThemed() { return m_isVsThemed; }
 
 	// window lists
-	void     BroadcastMessage(UINT msg, WPARAM wParam, LPARAM lParam);
-	void     BroadcastMessageAsync(UINT msg, WPARAM wParam, LPARAM lParam);
-	INT_PTR  AddWindow(HWND hWnd, MCONTACT h);
-	INT_PTR  RemoveWindow(HWND hWnd);
-	HWND     FindWindow(MCONTACT h) const;
-
-	static	int FoldersPathChanged(WPARAM wParam, LPARAM lParam);		// hook subscriber for folders plugin
-	static	int TypingMessage(WPARAM wParam, LPARAM lParam);
-	static	int ProtoAck(WPARAM wParam, LPARAM lParam);
-	static	int PrebuildContactMenu(WPARAM wParam, LPARAM lParam);
-	static 	int DispatchNewEvent(WPARAM wParam, LPARAM lParam);
-	static	int MessageEventAdded(WPARAM wParam, LPARAM lParam);
+	static int FoldersPathChanged(WPARAM wParam, LPARAM lParam);  // hook subscriber for folders plugin
+	static int TypingMessage(WPARAM wParam, LPARAM lParam);
+	static int ProtoAck(WPARAM wParam, LPARAM lParam);
+	static int PrebuildContactMenu(WPARAM wParam, LPARAM lParam);
+	static int DispatchNewEvent(WPARAM wParam, LPARAM lParam);
+	static int MessageEventAdded(WPARAM wParam, LPARAM lParam);
 
 public:
-	MWindowList m_hMessageWindowList;
-
 	// various function pointers
 	static PDTTE  m_pfnDrawThemeTextEx;
 	static DEFICA m_pfnDwmExtendFrameIntoClientArea;
@@ -216,7 +208,7 @@ public:
 	static bool   m_shutDown, m_haveBufferedPaint;
 
 private:
-	TCHAR   m_szProfilePath[MAX_PATH + 2], m_szSkinsPath[MAX_PATH + 2], m_szSavedAvatarsPath[MAX_PATH + 2], m_szChatLogsPath[MAX_PATH + 2];
+	wchar_t   m_szProfilePath[MAX_PATH + 2], m_szSkinsPath[MAX_PATH + 2], m_szSavedAvatarsPath[MAX_PATH + 2], m_szChatLogsPath[MAX_PATH + 2];
 	HMODULE m_hUxTheme, m_hDwmApi;
 	bool    m_isAero, m_DwmActive, m_isVsThemed;
 	HANDLE  m_hDataPath, m_hSkinsPath, m_hAvatarsPath, m_hChatLogsPath;
@@ -231,7 +223,7 @@ private:
 	void 	InitPaths();
 
 private:
-	static TCHAR m_userDir[MAX_PATH + 2];
+	static wchar_t m_userDir[MAX_PATH + 2];
 };
 
 extern  CMimAPI M;

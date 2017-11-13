@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2015-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -19,14 +19,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 void CSkypeProto::CloseDialogs()
 {
-	{
-		mir_cslock lck(m_GCCreateDialogsLock);
+	{	mir_cslock lck(m_GCCreateDialogsLock);
 		for (int i = 0; i < m_GCCreateDialogs.getCount(); i++)
 			m_GCCreateDialogs[i]->Close();
 	}
 
-	{
-		mir_cslock lck(m_InviteDialogsLock);
+	{	mir_cslock lck(m_InviteDialogsLock);
 		for (int i = 0; i < m_InviteDialogs.getCount(); i++)
 			m_InviteDialogs[i]->Close();
 	}
@@ -34,18 +32,16 @@ void CSkypeProto::CloseDialogs()
 
 //CSkypeInvideDlg
 CSkypeInviteDlg::CSkypeInviteDlg(CSkypeProto *proto) :
-	CSkypeDlgBase(proto, IDD_GC_INVITE, false), m_ok(this, IDOK), m_cancel(this, IDCANCEL), m_combo(this, IDC_CONTACT)
+	CSkypeDlgBase(proto, IDD_GC_INVITE, false), m_ok(this, IDOK), m_cancel(this, IDCANCEL), m_combo(this, IDC_CONTACT), m_hContact(NULL)
 {
 	m_ok.OnClick = Callback(this, &CSkypeInviteDlg::btnOk_OnOk);
 }
 
 void CSkypeInviteDlg::OnInitDialog()
 {
-	for (MCONTACT hContact = db_find_first(m_proto->m_szModuleName); hContact; hContact = db_find_next(hContact, m_proto->m_szModuleName)) 
-	{
-		if (!m_proto->isChatRoom(hContact))
-		{
-			TCHAR *ptszNick = pcli->pfnGetContactDisplayName(hContact, 0);
+	for (MCONTACT hContact = db_find_first(m_proto->m_szModuleName); hContact; hContact = db_find_next(hContact, m_proto->m_szModuleName)) {
+		if (!m_proto->isChatRoom(hContact)) {
+			wchar_t *ptszNick = pcli->pfnGetContactDisplayName(hContact, 0);
 			m_combo.AddString(ptszNick, hContact);
 		}
 	}
@@ -61,7 +57,9 @@ CSkypeGCCreateDlg::CSkypeGCCreateDlg(CSkypeProto *proto) :
 	CSkypeDlgBase(proto, IDD_GC_CREATE, false), m_ok(this, IDOK), m_cancel(this, IDCANCEL), m_clc(this, IDC_CLIST), m_ContactsList(1)
 {
 	m_ok.OnClick = Callback(this, &CSkypeGCCreateDlg::btnOk_OnOk);
+	m_clc.OnListRebuilt = Callback(this, &CSkypeGCCreateDlg::FilterList);
 }
+
 CSkypeGCCreateDlg::~CSkypeGCCreateDlg()
 {
 	CSkypeProto::FreeList(m_ContactsList);
@@ -75,27 +73,22 @@ void CSkypeGCCreateDlg::OnInitDialog()
 	m_clc.SendMsg(CLM_SETEXSTYLE, CLS_EX_DISABLEDRAGDROP | CLS_EX_TRACKSELECT, 0);
 
 	ResetListOptions(&m_clc);
-	FilterList(&m_clc);
 }
 
 void CSkypeGCCreateDlg::btnOk_OnOk(CCtrlButton*)
 {
-	for (MCONTACT hContact = db_find_first(m_proto->m_szModuleName); hContact; hContact = db_find_next(hContact, m_proto->m_szModuleName)) 
-	{
-		if (!m_proto->isChatRoom(hContact))
-		{
-			if (HANDLE hItem = m_clc.FindContact(hContact)) 
-			{
-				if (m_clc.GetCheck(hItem)) 
-				{
-					char *szName = db_get_sa(hContact, m_proto->m_szModuleName, SKYPE_SETTINGS_ID);
+	for (MCONTACT hContact = db_find_first(m_proto->m_szModuleName); hContact; hContact = db_find_next(hContact, m_proto->m_szModuleName)) {
+		if (!m_proto->isChatRoom(hContact)) {
+			if (HANDLE hItem = m_clc.FindContact(hContact)) {
+				if (m_clc.GetCheck(hItem)) {
+					char *szName = mir_strdup(m_proto->Contacts[hContact]);
 					if (szName != NULL)
 						m_ContactsList.insert(szName);
 				}
 			}
 		}
 	}
-	m_ContactsList.insert(m_proto->li.szSkypename);
+	m_ContactsList.insert(m_proto->li.szSkypename.GetBuffer());
 	EndDialog(m_hwnd, m_ContactsList.getCount());
 }
 

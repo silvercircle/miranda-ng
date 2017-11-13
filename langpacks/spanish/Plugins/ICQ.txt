@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: ICQ.dll
 ;  Plugin: IcqOscarJ protocol
-;  Version: 0.11.3.4
+;  Version: 0.11.3.5
 ;  Authors: Joe Kucera, Bio, Martin Öberg, Richard Hughes, Jon Keating, etc.
 ;============================================================
 [Password:]
@@ -547,8 +547,8 @@ Cerrar
 En el teléfono
 [Typing]
 Escribiendo
-[Free for Chat]
-Libre para el chat	
+[Free for chat]
+Libre para el chat
 [None]
 Ninguno
 [Custom Status]

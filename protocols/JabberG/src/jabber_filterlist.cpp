@@ -5,7 +5,7 @@ Jabber Protocol Plugin for Miranda NG
 Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
 Copyright (c) 2007     Victor Pavlychko
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -35,7 +35,7 @@ struct CFilterData : public MZeroedObject
 	HFONT m_hfntNormal;
 	HFONT m_hfntEmpty;
 	COLORREF m_clGray;
-	TCHAR *m_filterText;
+	wchar_t *m_filterText;
 
 	RECT m_rcButtonClear;
 	RECT m_rcEditBox;
@@ -46,7 +46,7 @@ struct CFilterData : public MZeroedObject
 
 	void ReleaseFilterData()
 	{
-		DeleteObject(m_hfntEmpty);	m_hfntEmpty = NULL;
+		DeleteObject(m_hfntEmpty);	m_hfntEmpty = nullptr;
 	}
 
 	~CFilterData()
@@ -69,7 +69,7 @@ CCtrlFilterListView::~CCtrlFilterListView()
 	delete fdat;
 }
 
-TCHAR *CCtrlFilterListView::GetFilterText()
+wchar_t *CCtrlFilterListView::GetFilterText()
 {
 	return fdat->m_filterText;
 }
@@ -83,7 +83,7 @@ void CCtrlFilterListView::OnInit()
 static LRESULT CALLBACK sttEditBoxSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	CFilterData *fdat = (CFilterData *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-	if (fdat == NULL)
+	if (fdat == nullptr)
 		return DefWindowProc(hwnd, msg, wParam, lParam);
 
 	switch (msg) {
@@ -100,12 +100,12 @@ static LRESULT CALLBACK sttEditBoxSubclassProc(HWND hwnd, UINT msg, WPARAM wPara
 			if (length == 1)
 				fdat->m_filterText = 0;
 			else {
-				fdat->m_filterText = (TCHAR *)mir_alloc(sizeof(TCHAR) * length);
+				fdat->m_filterText = (wchar_t *)mir_alloc(sizeof(wchar_t) * length);
 				GetWindowText(hwnd, fdat->m_filterText, length);
 			}
 
 			DestroyWindow(hwnd);
-			RedrawWindow(fdat->m_hwndOwner, NULL, NULL, RDW_INVALIDATE|RDW_FRAME);
+			RedrawWindow(fdat->m_hwndOwner, nullptr, nullptr, RDW_INVALIDATE|RDW_FRAME);
 			PostMessage(fdat->m_hwndOwner, WM_APP, 0, 0);
 		}
 		else if (wParam == VK_ESCAPE) {
@@ -121,15 +121,15 @@ static LRESULT CALLBACK sttEditBoxSubclassProc(HWND hwnd, UINT msg, WPARAM wPara
 		return 0;
 
 	case WM_DESTROY:
-		fdat->m_hwndEditBox = NULL;
+		fdat->m_hwndEditBox = nullptr;
 	}
 
 	return CallWindowProc(fdat->m_oldWndProc, hwnd, msg, wParam, lParam);
 }
 
-void CCtrlFilterListView::FilterHighlight(TCHAR *str)
+void CCtrlFilterListView::FilterHighlight(wchar_t *str)
 {
-	TCHAR buf[256];
+	wchar_t buf[256];
 	int count = GetItemCount();
 	for (int i=0; i < count; i++) {
 		bool found = false;
@@ -139,7 +139,7 @@ void CCtrlFilterListView::FilterHighlight(TCHAR *str)
 				if (!*buf)
 					break;
 
-				if (_tcsstr(buf, str)) {
+				if (wcsstr(buf, str)) {
 					found = true;
 					break;
 				}
@@ -160,17 +160,17 @@ LRESULT CCtrlFilterListView::CustomWndProc(UINT msg, WPARAM wParam, LPARAM lPara
 		case 0:
 			OnFilterChanged(this);
 			if (!m_keepHiglight)
-				FilterHighlight(NULL);
+				FilterHighlight(nullptr);
 			break;
 
 		case 1:
 			if (m_trackFilter && fdat->m_hwndEditBox) {
-				TCHAR *str = 0;
+				wchar_t *str = 0;
 				int length = GetWindowTextLength(fdat->m_hwndEditBox) + 1;
 				if (length == 1)
 					str = 0;
 				else {
-					str = (TCHAR *)mir_alloc(sizeof(TCHAR) * length);
+					str = (wchar_t *)mir_alloc(sizeof(wchar_t) * length);
 					GetWindowText(fdat->m_hwndEditBox, str, length);
 				}
 				FilterHighlight(str);
@@ -180,10 +180,10 @@ LRESULT CCtrlFilterListView::CustomWndProc(UINT msg, WPARAM wParam, LPARAM lPara
 
 		case 2:
 			fdat->m_hwndOwner = m_hwnd;
-			fdat->m_hwndEditBox = CreateWindow(_T("edit"), fdat->m_filterText,
+			fdat->m_hwndEditBox = CreateWindow(L"edit", fdat->m_filterText,
 				WS_CHILD|WS_VISIBLE|WS_TABSTOP|ES_LEFT|ES_AUTOHSCROLL,
 				0, 0, 0, 0,
-				::GetParent(m_hwnd), (HMENU)-1, hInst, NULL);
+				::GetParent(m_hwnd), (HMENU)-1, hInst, nullptr);
 
 			SendMessage(fdat->m_hwndEditBox, WM_SETFONT, (WPARAM)fdat->m_hfntNormal, 0);
 
@@ -261,8 +261,8 @@ LRESULT CCtrlFilterListView::CustomWndProc(UINT msg, WPARAM wParam, LPARAM lPara
 					rc.right - FILTER_BOX_HEIGHT + (FILTER_BOX_HEIGHT-16)/2, rc.top + (FILTER_BOX_HEIGHT-16)/2,
 					rc.right - FILTER_BOX_HEIGHT + (FILTER_BOX_HEIGHT-16)/2 + 16, rc.top + (FILTER_BOX_HEIGHT-16)/2 + 16);
 
-				DrawIconEx(hdc, rc.left + (FILTER_BOX_HEIGHT-16)/2, rc.top + (FILTER_BOX_HEIGHT-16)/2, g_LoadIconEx("sd_filter_apply"), 16, 16, 0, NULL, DI_NORMAL);
-				DrawIconEx(hdc, rc.right - FILTER_BOX_HEIGHT + (FILTER_BOX_HEIGHT-16)/2, rc.top + (FILTER_BOX_HEIGHT-16)/2, Skin_LoadIcon(SKINICON_OTHER_DELETE), 16, 16, 0, NULL, DI_NORMAL);
+				DrawIconEx(hdc, rc.left + (FILTER_BOX_HEIGHT-16)/2, rc.top + (FILTER_BOX_HEIGHT-16)/2, g_LoadIconEx("sd_filter_apply"), 16, 16, 0, nullptr, DI_NORMAL);
+				DrawIconEx(hdc, rc.right - FILTER_BOX_HEIGHT + (FILTER_BOX_HEIGHT-16)/2, rc.top + (FILTER_BOX_HEIGHT-16)/2, Skin_LoadIcon(SKINICON_OTHER_DELETE), 16, 16, 0, nullptr, DI_NORMAL);
 
 				rc.left += 5*FILTER_BOX_HEIGHT/3;
 				rc.right -= 5*FILTER_BOX_HEIGHT/3;
@@ -276,7 +276,7 @@ LRESULT CCtrlFilterListView::CustomWndProc(UINT msg, WPARAM wParam, LPARAM lPara
 			else {
 				SetRect(&fdat->m_rcButtonClear, 0, 0, 0, 0);
 
-				DrawIconEx(hdc, rc.left + (FILTER_BOX_HEIGHT-16)/2, rc.top + (FILTER_BOX_HEIGHT-16)/2, g_LoadIconEx("sd_filter_reset"), 16, 16, 0, NULL, DI_NORMAL);
+				DrawIconEx(hdc, rc.left + (FILTER_BOX_HEIGHT-16)/2, rc.top + (FILTER_BOX_HEIGHT-16)/2, g_LoadIconEx("sd_filter_reset"), 16, 16, 0, nullptr, DI_NORMAL);
 
 				rc.left += 5*FILTER_BOX_HEIGHT/3;
 				rc.right -= 5;
@@ -297,7 +297,7 @@ LRESULT CCtrlFilterListView::CustomWndProc(UINT msg, WPARAM wParam, LPARAM lPara
 	case WM_NCHITTEST:
 		pt.x = LOWORD(lParam);
 		pt.y = HIWORD(lParam);
-		MapWindowPoints(NULL, m_hwnd, &pt, 1);
+		MapWindowPoints(nullptr, m_hwnd, &pt, 1);
 
 		if (PtInRect(&fdat->m_rcButtonClear, pt))
 			return HTBORDER;
@@ -308,15 +308,15 @@ LRESULT CCtrlFilterListView::CustomWndProc(UINT msg, WPARAM wParam, LPARAM lPara
 	case WM_NCLBUTTONUP:
 		pt.x = LOWORD(lParam);
 		pt.y = HIWORD(lParam);
-		MapWindowPoints(NULL, m_hwnd, &pt, 1);
+		MapWindowPoints(nullptr, m_hwnd, &pt, 1);
 
 		if (PtInRect(&fdat->m_rcButtonClear, pt)) {
 			SetFocus(m_hwnd);
 			if (fdat->m_filterText) mir_free(fdat->m_filterText);
-			fdat->m_filterText = NULL;
-			RedrawWindow(m_hwnd, NULL, NULL, RDW_INVALIDATE|RDW_FRAME);
+			fdat->m_filterText = nullptr;
+			RedrawWindow(m_hwnd, nullptr, nullptr, RDW_INVALIDATE|RDW_FRAME);
 			OnFilterChanged(this);
-			FilterHighlight(NULL);
+			FilterHighlight(nullptr);
 		}
 		else if (PtInRect(&fdat->m_rcEditBox, pt))
 			PostMessage(m_hwnd, WM_APP, 2, 0);

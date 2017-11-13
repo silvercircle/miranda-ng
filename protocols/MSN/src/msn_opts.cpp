@@ -1,7 +1,7 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
 
-Copyright (c) 2012-2014 Miranda NG Team
+Copyright (c) 2012-2017 Miranda NG Team
 Copyright (c) 2006-2012 Boris Krasnovskiy.
 Copyright (c) 2003-2005 George Hazan.
 Copyright (c) 2002-2003 Richard Hughes (original version).
@@ -89,16 +89,16 @@ static INT_PTR CALLBACK DlgProcMsnOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 			SetDlgItemTextA(hwndDlg, IDC_HANDLE, proto->MyOptions.szEmail);
 
-			char tBuffer[MAX_PATH];
-			if (!db_get_static(NULL, proto->m_szModuleName, "Password", tBuffer, sizeof(tBuffer))) {
-				tBuffer[16] = 0;
-				SetDlgItemTextA(hwndDlg, IDC_PASSWORD, tBuffer);
+			char szPassword[100];
+			if (!db_get_static(NULL, proto->m_szModuleName, "Password", szPassword, sizeof(szPassword))) {
+				szPassword[99] = 0;
+				SetDlgItemTextA(hwndDlg, IDC_PASSWORD, szPassword);
 			}
-			SendDlgItemMessage(hwndDlg, IDC_PASSWORD, EM_SETLIMITTEXT, 16, 0);
+			SendDlgItemMessage(hwndDlg, IDC_PASSWORD, EM_SETLIMITTEXT, 99, 0);
 
 			HWND wnd = GetDlgItem(hwndDlg, IDC_HANDLE2);
 			DBVARIANT dbv;
-			if (!proto->getTString("Nick", &dbv)) {
+			if (!proto->getWString("Nick", &dbv)) {
 				SetWindowText(wnd, dbv.ptszVal);
 				db_free(&dbv);
 			}
@@ -115,6 +115,7 @@ static INT_PTR CALLBACK DlgProcMsnOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			EnableWindow(GetDlgItem(hwndDlg, IDC_MAILER_APP), tValue);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_ENTER_MAILER_APP), tValue);
 
+			char tBuffer[MAX_PATH];
 			if (!db_get_static(NULL, proto->m_szModuleName, "MailerPath", tBuffer, sizeof(tBuffer)))
 				SetDlgItemTextA(hwndDlg, IDC_MAILER_APP, tBuffer);
 
@@ -219,7 +220,7 @@ LBL_Continue:
 	case WM_NOTIFY:
 		if (((LPNMHDR)lParam)->code == (UINT)PSN_APPLY) {
 			bool reconnectRequired = false;
-			TCHAR screenStr[MAX_PATH];
+			wchar_t screenStr[MAX_PATH];
 			char  password[100], szEmail[MSN_MAX_EMAIL_LEN];
 			DBVARIANT dbv;
 
@@ -247,41 +248,17 @@ LBL_Continue:
 				proto->setString("Password", password);
 			}
 
-#ifdef OBSOLETE
-			GetDlgItemText(hwndDlg, IDC_HANDLE2, screenStr, _countof(screenStr));
-			if (!proto->getTString("Nick", &dbv)) {
-				if (mir_tstrcmp(dbv.ptszVal, screenStr))
-					proto->MSN_SendNickname(screenStr);
-				db_free(&dbv);
-			}
-			else proto->MSN_SendNickname(screenStr);
-
-			BYTE mblsnd = IsDlgButtonChecked(hwndDlg, IDC_MOBILESEND) == BST_CHECKED;
-			if (mblsnd != proto->getByte("MobileAllowed", 0)) {
-				proto->msnNsThread->sendPacket("PRP", "MOB %c", mblsnd ? 'Y' : 'N');
-				proto->MSN_SetServerStatus(proto->m_iStatus);
-			}
-
-			unsigned tValue = IsDlgButtonChecked(hwndDlg, IDC_DISABLE_ANOTHER_CONTACTS);
-			if (tValue != proto->msnOtherContactsBlocked && proto->msnLoggedIn) {
-				proto->msnOtherContactsBlocked = tValue;
-				proto->msnNsThread->sendPacket("BLP", tValue ? "BL" : "AL");
-				proto->MSN_ABUpdateAttr(NULL, "MSN.IM.BLP", tValue ? "0" : "1");
-				break;
-			}
-#endif
-
 			proto->setByte("SendFontInfo", (BYTE)IsDlgButtonChecked(hwndDlg, IDC_SENDFONTINFO));
 			proto->setByte("RunMailerOnHotmail", (BYTE)IsDlgButtonChecked(hwndDlg, IDC_RUN_APP_ON_HOTMAIL));
 			proto->setByte("ManageServer", (BYTE)IsDlgButtonChecked(hwndDlg, IDC_MANAGEGROUPS));
 
 			GetDlgItemText(hwndDlg, IDC_MAILER_APP, screenStr, _countof(screenStr));
-			proto->setTString("MailerPath", screenStr);
+			proto->setWString("MailerPath", screenStr);
 
 			if (reconnectRequired && proto->msnLoggedIn)
 				MessageBox(hwndDlg,
-				TranslateT("The changes you have made require you to reconnect to the MSN Messenger network before they take effect"),
-				TranslateT("MSN Options"), MB_OK);
+				TranslateT("These changes will take effect the next time you connect to the MSN Messenger network."),
+				TranslateT("MSN options"), MB_OK);
 
 			proto->LoadOptions();
 			return TRUE;
@@ -403,10 +380,6 @@ static INT_PTR CALLBACK DlgProcMsnConnOpts(HWND hwndDlg, UINT msg, WPARAM wParam
 				}
 			}
 			
-#ifdef OBSOLETE
-			unsigned gethst2 = proto->getByte("AutoGetHost", 1);
-
-#endif
 			unsigned gethst = SendDlgItemMessage(hwndDlg, IDC_HOSTOPT, CB_GETCURSEL, 0, 0);
 			if (gethst < 2) gethst = !gethst;
 			proto->setByte("AutoGetHost", (BYTE)gethst);
@@ -416,11 +389,6 @@ static INT_PTR CALLBACK DlgProcMsnConnOpts(HWND hwndDlg, UINT msg, WPARAM wParam
 				proto->setString("YourHost", str);
 			}
 			else proto->delSetting("YourHost");
-
-#ifdef OBSOLETE
-			if (gethst != gethst2)
-				proto->ForkThread(&CMsnProto::MSNConnDetectThread, NULL);
-#endif
 
 			proto->LoadOptions();
 			return TRUE;
@@ -514,15 +482,15 @@ static INT_PTR CALLBACK DlgProcAccMgrUI(HWND hwndDlg, UINT msg, WPARAM wParam, L
 			CMsnProto* proto = (CMsnProto*)lParam;
 			SetDlgItemTextA(hwndDlg, IDC_HANDLE, proto->MyOptions.szEmail);
 
-			char tBuffer[MAX_PATH];
-			if (!db_get_static(NULL, proto->m_szModuleName, "Password", tBuffer, sizeof(tBuffer))) {
-				tBuffer[16] = 0;
-				SetDlgItemTextA(hwndDlg, IDC_PASSWORD, tBuffer);
+			char szPassword[100];
+			if (!db_get_static(NULL, proto->m_szModuleName, "Password", szPassword, sizeof(szPassword))) {
+				szPassword[99] = 0;
+				SetDlgItemTextA(hwndDlg, IDC_PASSWORD, szPassword);
 			}
-			SendDlgItemMessage(hwndDlg, IDC_PASSWORD, EM_SETLIMITTEXT, 16, 0);
+			SendDlgItemMessage(hwndDlg, IDC_PASSWORD, EM_SETLIMITTEXT, 99, 0);
 
 			DBVARIANT dbv;
-			if (!proto->getTString("Place", &dbv)) {
+			if (!proto->getWString("Place", &dbv)) {
 				SetDlgItemText(hwndDlg, IDC_PLACE, dbv.ptszVal);
 				db_free(&dbv);
 			}
@@ -567,10 +535,10 @@ static INT_PTR CALLBACK DlgProcAccMgrUI(HWND hwndDlg, UINT msg, WPARAM wParam, L
 			}
 			else proto->setString("Password", password);
 
-			TCHAR szPlace[64];
+			wchar_t szPlace[64];
 			GetDlgItemText(hwndDlg, IDC_PLACE, szPlace, _countof(szPlace));
 			if (szPlace[0])
-				proto->setTString("Place", szPlace);
+				proto->setWString("Place", szPlace);
 			else
 				proto->delSetting("Place");
 
@@ -627,25 +595,25 @@ int CMsnProto::OnOptionsInit(WPARAM wParam, LPARAM)
 	odp.position = -790000000;
 	odp.hInstance = g_hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_MSN);
-	odp.ptszTitle = m_tszUserName;
-	odp.ptszGroup = LPGENT("Network");
-	odp.ptszTab = LPGENT("Account");
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR | ODPF_DONTTRANSLATE;
+	odp.szTitle.w = m_tszUserName;
+	odp.szGroup.w = LPGENW("Network");
+	odp.szTab.w = LPGENW("Account");
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE | ODPF_DONTTRANSLATE;
 	odp.pfnDlgProc = DlgProcMsnOpts;
 	odp.dwInitParam = (LPARAM)this;
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LPGENT("Connection");
+	odp.szTab.w = LPGENW("Connection");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_MSN_CONN);
 	odp.pfnDlgProc = DlgProcMsnConnOpts;
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LPGENT("Server list");
+	odp.szTab.w = LPGENW("Server list");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_LISTSMGR);
 	odp.pfnDlgProc = DlgProcMsnServLists;
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LPGENT("Notifications");
+	odp.szTab.w = LPGENW("Notifications");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_NOTIFY);
 	odp.pfnDlgProc = DlgProcHotmailPopupOpts;
 	Options_AddPage(wParam, &odp);

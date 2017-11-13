@@ -13,7 +13,7 @@ HGENMENU g_hMenuOpenLogFile = NULL;
 #ifdef CHART_IMPLEMENT
 HGENMENU g_hMenuChart = NULL;
 #endif
-HGENMENU g_hMenuRefresh = NULL;
+HGENMENU g_hMenuRefresh = NULL, g_hMenuRoot = NULL;
 
 #define DB_STR_AUTO_UPDATE "AutoUpdate"
 
@@ -43,9 +43,9 @@ PLUGININFOEX Global_pluginInfo =
 void UpdateMenu(bool bAutoUpdate)
 {
 	if (bAutoUpdate) // to enable auto-update
-		Menu_ModifyItem(g_hEnableDisableMenu, LPGENT("Auto Update Enabled"), Quotes_GetIconHandle(IDI_ICON_MAIN));
+		Menu_ModifyItem(g_hEnableDisableMenu, LPGENW("Auto Update Enabled"), Quotes_GetIconHandle(IDI_ICON_MAIN));
 	else // to disable auto-update
-		Menu_ModifyItem(g_hEnableDisableMenu, LPGENT("Auto Update Disabled"), Quotes_GetIconHandle(IDI_ICON_DISABLED));
+		Menu_ModifyItem(g_hEnableDisableMenu, LPGENW("Auto Update Disabled"), Quotes_GetIconHandle(IDI_ICON_DISABLED));
 
 	CallService(MS_TTB_SETBUTTONSTATE, reinterpret_cast<WPARAM>(g_hTBButton), !bAutoUpdate ? TTBST_PUSHED : 0);
 }
@@ -66,9 +66,8 @@ INT_PTR QuotesMenu_EnableDisable(WPARAM, LPARAM)
 	const CQuotesProviders::TQuotesProviders& rapProviders = pProviders->GetProviders();
 	std::for_each(std::begin(rapProviders), std::end(rapProviders), [](const CQuotesProviders::TQuotesProviderPtr& pProvider) {
 		pProvider->RefreshSettings();
-		if (g_bAutoUpdate) {
+		if (g_bAutoUpdate)
 			pProvider->RefreshAllContacts();
-		}
 	});
 	UpdateMenu(g_bAutoUpdate);
 
@@ -78,11 +77,12 @@ INT_PTR QuotesMenu_EnableDisable(WPARAM, LPARAM)
 void InitMenu()
 {
 	CMenuItem mi;
-	mi.flags = CMIF_TCHAR;
-	mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Quotes"), 0, Quotes_GetIconHandle(IDI_ICON_MAIN));
+	mi.flags = CMIF_UNICODE;
+	mi.root = Menu_CreateRoot(MO_MAIN, LPGENW("Quotes"), 0, Quotes_GetIconHandle(IDI_ICON_MAIN));
+	Menu_ConfigureItem(mi.root, MCI_OPT_UID, "B474F556-22B6-42A1-A91E-22FE4F671388");
 
 	SET_UID(mi, 0x9de6716, 0x3591, 0x48c4, 0x9f, 0x64, 0x1b, 0xfd, 0xc6, 0xd1, 0x34, 0x97);
-	mi.name.t = LPGENT("Enable/Disable Auto Update");
+	mi.name.w = LPGENW("Enable/Disable Auto Update");
 	mi.position = 10100001;
 	mi.hIcolibItem = Quotes_GetIconHandle(IDI_ICON_MAIN);
 	mi.pszService = g_pszAutoUpdateCmd;
@@ -91,7 +91,7 @@ void InitMenu()
 	UpdateMenu(g_bAutoUpdate);
 
 	SET_UID(mi, 0x91cbabf6, 0x5073, 0x4a78, 0x84, 0x8, 0x34, 0x61, 0xc1, 0x8a, 0x34, 0xd9);
-	mi.name.t = LPGENT("Refresh All Quotes\\Rates");
+	mi.name.w = LPGENW("Refresh All Quotes\\Rates");
 	mi.position = 20100001;
 	mi.hIcolibItem = Quotes_GetIconHandle(IDI_ICON_MAIN);
 	mi.pszService = "Quotes/RefreshAll";
@@ -99,7 +99,7 @@ void InitMenu()
 	CreateServiceFunction(mi.pszService, QuotesMenu_RefreshAll);
 
 	SET_UID(mi, 0x3663409c, 0xbd36, 0x473b, 0x9b, 0x4f, 0xff, 0x80, 0xf6, 0x2c, 0xdf, 0x9b);
-	mi.name.t = LPGENT("Currency Converter...");
+	mi.name.w = LPGENW("Currency Converter...");
 	mi.position = 20100002;
 	mi.hIcolibItem = Quotes_GetIconHandle(IDI_ICON_CURRENCY_CONVERTER);
 	mi.pszService = g_pszCurrencyConverter;
@@ -107,7 +107,7 @@ void InitMenu()
 	CreateServiceFunction(mi.pszService, QuotesMenu_CurrencyConverter);
 
 	SET_UID(mi, 0x7cca4fd9, 0x903f, 0x4b7d, 0x93, 0x7a, 0x18, 0x63, 0x23, 0xd4, 0xa9, 0xa9);
-	mi.name.t = LPGENT("Export All Quotes");
+	mi.name.w = LPGENW("Export All Quotes");
 	mi.hIcolibItem = Quotes_GetIconHandle(IDI_ICON_EXPORT);
 	mi.pszService = "Quotes/ExportAll";
 	mi.position = 20100003;
@@ -115,7 +115,7 @@ void InitMenu()
 	CreateServiceFunction(mi.pszService, QuotesMenu_ExportAll);
 
 	SET_UID(mi, 0xa994d3b, 0x77c2, 0x4612, 0x8d, 0x5, 0x6a, 0xae, 0x8c, 0x21, 0xbd, 0xc9);
-	mi.name.t = LPGENT("Import All Quotes");
+	mi.name.w = LPGENW("Import All Quotes");
 	mi.hIcolibItem = Quotes_GetIconHandle(IDI_ICON_IMPORT);
 	mi.pszService = "Quotes/ImportAll";
 	mi.position = 20100004;
@@ -124,9 +124,11 @@ void InitMenu()
 
 	HookEvent(ME_CLIST_PREBUILDCONTACTMENU, Quotes_PrebuildContactMenu);
 
+	g_hMenuRoot = mi.root = Menu_CreateRoot(MO_CONTACT, _T(QUOTES_PROTOCOL_NAME), 0, Quotes_GetIconHandle(IDI_ICON_MAIN));
+	Menu_ConfigureItem(mi.root, MCI_OPT_UID, "C259BE01-642C-461E-997D-0E756B2A3AD6");
+
 	SET_UID(mi, 0xb9812194, 0x3235, 0x4e76, 0xa3, 0xa4, 0x73, 0x32, 0x96, 0x1c, 0x1c, 0xf4);
-	mi.root = Menu_CreateRoot(MO_CONTACT, _T(QUOTES_PROTOCOL_NAME), 0, Quotes_GetIconHandle(IDI_ICON_MAIN));
-	mi.name.t = LPGENT("Refresh");
+	mi.name.w = LPGENW("Refresh");
 	mi.hIcolibItem = Quotes_GetIconHandle(IDI_ICON_REFRESH);
 	mi.pszService = "Quotes/RefreshContact";
 	g_hMenuRefresh = Menu_AddContactMenuItem(&mi, QUOTES_PROTOCOL_NAME);
@@ -134,7 +136,7 @@ void InitMenu()
 	CreateServiceFunction(mi.pszService, QuotesMenu_RefreshContact);
 
 	SET_UID(mi, 0x19a16fa2, 0xf370, 0x4201, 0x92, 0x9, 0x25, 0xde, 0x4e, 0x55, 0xf9, 0x1a);
-	mi.name.t = LPGENT("Open Log File...");
+	mi.name.w = LPGENW("Open Log File...");
 	mi.hIcolibItem = NULL;
 	mi.pszService = "Quotes/OpenLogFile";
 	g_hMenuOpenLogFile = Menu_AddContactMenuItem(&mi, QUOTES_PROTOCOL_NAME);
@@ -143,8 +145,7 @@ void InitMenu()
 
 #ifdef CHART_IMPLEMENT
 	SET_UID(mi, 0x65da7256, 0x43a2, 0x4857, 0xac, 0x52, 0x1c, 0xb7, 0xff, 0xd7, 0x96, 0xfa);
-	mi.name.t = LPGENT("Chart...");
-	mi.popupPosition = 2;
+	mi.name.w = LPGENW("Chart...");
 	mi.hIcolibItem = NULL;
 	mi.pszService = "Quotes/Chart";
 	g_hMenuChart = Menu_AddContactMenuItem(&mi, QUOTES_PROTOCOL_NAME);
@@ -152,7 +153,7 @@ void InitMenu()
 #endif
 
 	SET_UID(mi, 0xac5fc17, 0x5640, 0x4f81, 0xa3, 0x44, 0x8c, 0xb6, 0x9a, 0x5c, 0x98, 0xf);
-	mi.name.t = LPGENT("Edit Settings...");
+	mi.name.w = LPGENW("Edit Settings...");
 	mi.hIcolibItem = NULL;
 	mi.pszService = "Quotes/EditSettings";
 	g_hMenuEditSettings = Menu_AddContactMenuItem(&mi, QUOTES_PROTOCOL_NAME);
@@ -188,11 +189,18 @@ int Quotes_OnToolbarLoaded(WPARAM, LPARAM)
 	return 0;
 }
 
+static void WorkingThread(void *pParam)
+{
+	IQuotesProvider *pProvider = reinterpret_cast<IQuotesProvider*>(pParam);
+	assert(pProvider);
+
+	if (pProvider)
+		pProvider->Run();
+}
+
 int QuotesEventFunc_OnModulesLoaded(WPARAM, LPARAM)
 {
 	CHTTPSession::Init();
-
-	// 		HookEvent(ME_CLIST_EXTRA_IMAGE_APPLY,QuotesEventFunc_onExtraImageApply);
 
 	g_hEventWorkThreadStop = ::CreateEvent(NULL, TRUE, FALSE, NULL);
 	HookEvent(ME_USERINFO_INITIALISE, QuotesEventFunc_OnUserInfoInit);
@@ -224,10 +232,8 @@ int QuotesEventFunc_OnContactDeleted(WPARAM wParam, LPARAM)
 
 	const CModuleInfo::TQuotesProvidersPtr& pProviders = CModuleInfo::GetQuoteProvidersPtr();
 	CQuotesProviders::TQuotesProviderPtr pProvider = pProviders->GetContactProviderPtr(hContact);
-	if (pProvider) {
+	if (pProvider)
 		pProvider->DeleteContact(hContact);
-	}
-
 	return 0;
 }
 
@@ -262,18 +268,12 @@ int QuotesEventFunc_OptInitialise(WPARAM wp, LPARAM/* lp*/)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.position = 910000000;
 	odp.hInstance = g_hInstance;
-	odp.ptszTitle = _T(QUOTES_PROTOCOL_NAME);
-	odp.ptszGroup = LPGENT("Network");
-	odp.hIcon = Quotes_LoadIconEx(ICON_STR_MAIN);
-	odp.flags = ODPF_USERINFOTAB | ODPF_TCHAR;
+	odp.szTitle.w = _T(QUOTES_PROTOCOL_NAME);
+	odp.szGroup.w = LPGENW("Network");
+	odp.flags = ODPF_USERINFOTAB | ODPF_UNICODE;
 
 	std::for_each(rapProviders.begin(), rapProviders.end(), boost::bind(&IQuotesProvider::ShowPropertyPage, _1, wp, boost::ref(odp)));
 	return 0;
-}
-
-inline int Quotes_DestroyServiceFunction(HANDLE h)
-{
-	return DestroyServiceFunction(h);
 }
 
 inline int Quotes_UnhookEvent(HANDLE h)

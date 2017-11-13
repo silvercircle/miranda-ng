@@ -1,5 +1,5 @@
 /*
-Copyright © 2012-15 Miranda NG team
+Copyright © 2012-17 Miranda NG team
 Copyright © 2009 Jim Porter
 
 This program is free software: you can redistribute it and/or modify
@@ -57,7 +57,7 @@ http::response mir_twitter::slurp(const std::string &url, http::method meth, OAu
 	std::wstring auth;
 
 	if (meth == http::get) {
-		if (url_WSTR.size() > 0) { ppro_->debugLogW(L"**SLURP::GET - we have a URL: %s", url_WSTR); }
+		if (url_WSTR.size() > 0) { ppro_->debugLogW(L"**SLURP::GET - we have a URL: %s", url_WSTR.c_str()); }
 		if (consumerKey_.size() > 0) { ppro_->debugLogA("**SLURP::GET - we have a consumerKey"); }
 		if (consumerSecret_.size() > 0) { ppro_->debugLogA("**SLURP::GET - we have a consumerSecret"); }
 		if (oauthAccessToken_.size() > 0) { ppro_->debugLogA("**SLURP::GET - we have a oauthAccessToken"); }
@@ -69,7 +69,7 @@ http::response mir_twitter::slurp(const std::string &url, http::method meth, OAu
 	}
 	else if (meth == http::post) {
 		// OAuthParameters postParams;
-		if (url_WSTR.size() > 0) { ppro_->debugLogW(L"**SLURP::POST - we have a URL: %s", url_WSTR); }
+		if (url_WSTR.size() > 0) { ppro_->debugLogW(L"**SLURP::POST - we have a URL: %s", url_WSTR.c_str()); }
 		if (consumerKey_.size() > 0) { ppro_->debugLogA("**SLURP::POST - we have a consumerKey"); }
 		if (consumerSecret_.size() > 0) { ppro_->debugLogA("**SLURP::POST - we have a consumerSecret"); }
 		if (oauthAccessToken_.size() > 0) { ppro_->debugLogA("**SLURP::POST - we have a oauthAccessToken"); }
@@ -78,7 +78,7 @@ http::response mir_twitter::slurp(const std::string &url, http::method meth, OAu
 
 		pdata_WSTR = BuildQueryString(postParams);
 
-		ppro_->debugLogW(L"**SLURP::POST - post data is: %s", pdata_WSTR);
+		ppro_->debugLogW(L"**SLURP::POST - post data is: %s", pdata_WSTR.c_str());
 
 		auth = OAuthWebRequestSubmit(url_WSTR, L"POST", &postParams, consumerKey_, consumerSecret_, oauthAccessToken_, oauthAccessTokenSecret_);
 	}
@@ -111,8 +111,7 @@ http::response mir_twitter::slurp(const std::string &url, http::method meth, OAu
 	req.nlc = httpPOST_;
 	http::response resp_data;
 	ppro_->debugLogA("**SLURP - just before calling HTTPTRANSACTION");
-	NETLIBHTTPREQUEST *resp = reinterpret_cast<NETLIBHTTPREQUEST*>(CallService(MS_NETLIB_HTTPTRANSACTION,
-		reinterpret_cast<WPARAM>(handle_), reinterpret_cast<LPARAM>(&req)));
+	NETLIBHTTPREQUEST *resp = Netlib_HttpTransaction(handle_, &req);
 	ppro_->debugLogA("**SLURP - HTTPTRANSACTION complete.");
 	if (resp) {
 		ppro_->debugLogA("**SLURP - the server has responded!");
@@ -120,7 +119,7 @@ http::response mir_twitter::slurp(const std::string &url, http::method meth, OAu
 		resp_data.code = resp->resultCode;
 		resp_data.data = resp->pData ? resp->pData : "";
 
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)resp);
+		Netlib_FreeHttpRequest(resp);
 	}
 	else {
 		httpPOST_ = NULL;
@@ -130,31 +129,29 @@ http::response mir_twitter::slurp(const std::string &url, http::method meth, OAu
 	return resp_data;
 }
 
-bool save_url(HANDLE hNetlib, const std::string &url, const std::tstring &filename)
+bool save_url(HNETLIBUSER hNetlib, const std::string &url, const std::wstring &filename)
 {
 	NETLIBHTTPREQUEST req = { sizeof(req) };
 	req.requestType = REQUEST_GET;
 	req.flags = NLHRF_HTTP11 | NLHRF_REDIRECT;
 	req.szUrl = const_cast<char*>(url.c_str());
 
-	NETLIBHTTPREQUEST *resp = reinterpret_cast<NETLIBHTTPREQUEST*>(CallService(MS_NETLIB_HTTPTRANSACTION,
-		reinterpret_cast<WPARAM>(hNetlib), reinterpret_cast<LPARAM>(&req)));
-
+	NETLIBHTTPREQUEST *resp = Netlib_HttpTransaction(hNetlib, &req);
 	if (resp) {
 		bool success = (resp->resultCode == 200);
 		if (success) {
 			// Create folder if necessary
-			std::tstring dir = filename.substr(0, filename.rfind('\\'));
-			if (_taccess(dir.c_str(), 0))
-				CreateDirectoryTreeT(dir.c_str());
+			std::wstring dir = filename.substr(0, filename.rfind('\\'));
+			if (_waccess(dir.c_str(), 0))
+				CreateDirectoryTreeW(dir.c_str());
 
 			// Write to file
-			FILE *f = _tfopen(filename.c_str(), _T("wb"));
+			FILE *f = _wfopen(filename.c_str(), L"wb");
 			fwrite(resp->pData, 1, resp->dataLength, f);
 			fclose(f);
 		}
 
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)resp);
+		Netlib_FreeHttpRequest(resp);
 		return success;
 	}
 

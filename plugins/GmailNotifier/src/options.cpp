@@ -126,12 +126,12 @@ static INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 		case IDC_PRGBROWSE:
 			{
 				OPENFILENAME OpenFileName;
-				TCHAR szName[_MAX_PATH];
+				wchar_t szName[_MAX_PATH];
 				memset(&OpenFileName, 0, sizeof(OPENFILENAME));
 				GetDlgItemText(hwndDlg, IDC_PRG, szName, _countof(szName));
 				OpenFileName.lStructSize = sizeof(OPENFILENAME);
 				OpenFileName.hwndOwner = hwndDlg;
-				OpenFileName.lpstrFilter = _T("Executables (*.exe;*.com;*.bat)\0*.exe;*.com;*.bat\0\0");
+				OpenFileName.lpstrFilter = L"Executables (*.exe;*.com;*.bat)\0*.exe;*.com;*.bat\0\0";
 				OpenFileName.lpstrFile = szName;
 				OpenFileName.nMaxFile = _countof(szName);
 				OpenFileName.Flags = OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_FILEMUSTEXIST;
@@ -149,7 +149,7 @@ static INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			SendMessage(hwndCombo, CB_SETCURSEL, curIndex, 0);
 			SetDlgItemTextA(hwndDlg, IDC_PASS, "");
 			SetFocus(hwndCombo);
-			acc[curIndex].hContact = CallService(MS_DB_CONTACT_ADD, 0, 0);
+			acc[curIndex].hContact = db_add_contact();
 			Proto_AddToContact(acc[curIndex].hContact, MODULE_NAME);
 			SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 			break;
@@ -164,7 +164,7 @@ static INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			SendMessage(hwndCombo, CB_DELETESTRING, curIndex, 0);
 			DeleteResults(acc[curIndex].results.next);
 			acc[curIndex].results.next = NULL;
-			CallService(MS_DB_CONTACT_DELETE, (WPARAM)acc[curIndex].hContact, 0);
+			db_delete_contact(acc[curIndex].hContact);
 			for (int i = curIndex; i < acc_num; i++)
 				acc[i] = acc[i + 1];
 			curIndex = 0;
@@ -262,8 +262,8 @@ int OptInit(WPARAM wParam, LPARAM)
 	odp.position = -790000000;
 	odp.hInstance = hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT);
-	odp.pszTitle = LPGEN("GmailNotifier");
-	odp.pszGroup = LPGEN("Network");
+	odp.szTitle.a = LPGEN("GmailNotifier");
+	odp.szGroup.a = LPGEN("Network");
 	odp.flags = ODPF_BOLDGROUPS;
 	odp.pfnDlgProc = DlgProcOpts;
 	Options_AddPage(wParam, &odp);

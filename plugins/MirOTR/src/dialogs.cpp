@@ -6,13 +6,13 @@ struct SmpData
 	TrustLevel oldlevel;
 	ConnContext *context;
 	bool responder;
-	TCHAR *question;
+	wchar_t *question;
 };
 typedef std::map<HANDLE, SmpData> SmpForContactMap;
 SmpForContactMap smp_for_contact;
 
 
-INT_PTR CALLBACK DlgSMPUpdateProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK DlgSMPUpdateProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg) {
 	case WM_DESTROY: {
@@ -40,11 +40,11 @@ INT_PTR CALLBACK DlgSMPUpdateProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 			smp_for_contact[context->app_data].responder = data->responder;
 			mir_free(data);
 
-			TCHAR title[512], *proto = mir_a2t(GetContactProto(hContact));
-			const TCHAR *name = contact_get_nameT(hContact);
-			mir_sntprintf(title, TranslateT(LANG_SMP_PROGRESS_TITLE), name, proto);
+			wchar_t title[512], *proto = mir_a2u(GetContactProto(hContact));
+			const wchar_t *name = contact_get_nameT(hContact);
+			mir_snwprintf(title, TranslateW(LANG_SMP_PROGRESS_TITLE), name, proto);
 			SetWindowText(hwndDlg, title);
-			mir_sntprintf(title, TranslateT(LANG_SMP_PROGRESS_DESC), name, proto);
+			mir_snwprintf(title, TranslateW(LANG_SMP_PROGRESS_DESC), name, proto);
 			mir_free(proto);
 			SetDlgItemText(hwndDlg, IDC_STC_SMP_HEADPRO, title);
 			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)context);
@@ -97,7 +97,7 @@ INT_PTR CALLBACK DlgSMPUpdateProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 			case 0:
 				EnableWindow(GetDlgItem(hwndDlg, IDCANCEL), false);
 				EnableWindow(GetDlgItem(hwndDlg, IDOK), true);
-				SetDlgItemText(hwndDlg, IDC_STC_SMP_PROGRESS, TranslateT(LANG_SMP_ERROR));
+				SetDlgItemText(hwndDlg, IDC_STC_SMP_PROGRESS, TranslateW(LANG_SMP_ERROR));
 				smp_for_contact.erase(context->app_data);
 				break;
 			case 100:
@@ -107,19 +107,19 @@ INT_PTR CALLBACK DlgSMPUpdateProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 					smp_for_contact.erase(context->app_data);
 					if (context->smstate->sm_prog_state == OTRL_SMP_PROG_SUCCEEDED) {
 						if (context->active_fingerprint->trust && context->active_fingerprint->trust[0]) {
-							SetDlgItemText(hwndDlg, IDC_STC_SMP_PROGRESS, TranslateT(LANG_SMP_SUCCESS));
+							SetDlgItemText(hwndDlg, IDC_STC_SMP_PROGRESS, TranslateW(LANG_SMP_SUCCESS));
 						}
 						else {
-							SetDlgItemText(hwndDlg, IDC_STC_SMP_PROGRESS, TranslateT(LANG_SMP_SUCCESS_VERIFY));
+							SetDlgItemText(hwndDlg, IDC_STC_SMP_PROGRESS, TranslateW(LANG_SMP_SUCCESS_VERIFY));
 						}
 					}
 					else {
-						SetDlgItemText(hwndDlg, IDC_STC_SMP_PROGRESS, TranslateT(LANG_SMP_FAILED));
+						SetDlgItemText(hwndDlg, IDC_STC_SMP_PROGRESS, TranslateW(LANG_SMP_FAILED));
 					}
 				}
 				break;
 			default:
-				SetDlgItemText(hwndDlg, IDC_STC_SMP_PROGRESS, _T(""));
+				SetDlgItemText(hwndDlg, IDC_STC_SMP_PROGRESS, L"");
 			}
 		}
 		break;
@@ -133,6 +133,7 @@ INT_PTR CALLBACK DlgSMPUpdateProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 				case IDOK:
 					smp_for_contact.erase(context->app_data);
 					SetWindowLongPtr(hwndDlg, GWLP_USERDATA, NULL);
+					// fall through
 				case IDCANCEL:
 					DestroyWindow(hwndDlg);
 					break;
@@ -145,7 +146,7 @@ INT_PTR CALLBACK DlgSMPUpdateProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 	return FALSE;
 }
 
-void SMPInitUpdateDialog(ConnContext *context, bool responder)
+static void SMPInitUpdateDialog(ConnContext *context, bool responder)
 {
 	if (!context) return;
 	SmpData *data = (SmpData*)mir_calloc(sizeof(SmpData));
@@ -155,7 +156,7 @@ void SMPInitUpdateDialog(ConnContext *context, bool responder)
 	CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_SMP_PROGRESS), 0, DlgSMPUpdateProc, (LPARAM)data);
 }
 
-INT_PTR CALLBACK DlgSMPResponseProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK DlgSMPResponseProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg) {
 	case WM_DESTROY: {
@@ -182,25 +183,25 @@ INT_PTR CALLBACK DlgSMPResponseProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			smp_for_contact[context->app_data].oldlevel = data->oldlevel;
 			smp_for_contact[context->app_data].responder = data->responder;
 
-			TCHAR buff[512], *proto = mir_a2t(GetContactProto(hContact));
-			mir_sntprintf(buff, TranslateT(LANG_SMP_VERIFY_TITLE), contact_get_nameT(hContact), proto);
+			wchar_t buff[512], *proto = mir_a2u(GetContactProto(hContact));
+			mir_snwprintf(buff, TranslateW(LANG_SMP_VERIFY_TITLE), contact_get_nameT(hContact), proto);
 			mir_free(proto);
 			SetWindowText(hwndDlg, buff);
 			SetDlgItemText(hwndDlg, IDC_STC_SMP_HEAD, buff);
 			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)context);
 
 			if (data->question) {
-				mir_sntprintf(buff, TranslateT(LANG_OTR_SMPQUESTION_RESPOND_DESC), contact_get_nameT(hContact));
+				mir_snwprintf(buff, TranslateW(LANG_OTR_SMPQUESTION_RESPOND_DESC), contact_get_nameT(hContact));
 
 				SetDlgItemText(hwndDlg, IDC_STC_SMP_INFO, buff);
 
 				SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD1, data->question);
 				SendDlgItemMessage(hwndDlg, IDC_EDT_SMP_FIELD1, EM_SETREADONLY, TRUE, 0);
-				SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD1, TranslateT(LANG_SMP_QUESTION));
+				SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD1, TranslateW(LANG_SMP_QUESTION));
 
-				SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD2, _T(""));
+				SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD2, L"");
 				SendDlgItemMessage(hwndDlg, IDC_EDT_SMP_FIELD2, EM_SETREADONLY, FALSE, 0);
-				SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD2, TranslateT(LANG_SMP_ANSWER));
+				SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD2, TranslateW(LANG_SMP_ANSWER));
 
 
 				ShowWindow(GetDlgItem(hwndDlg, IDOK), SW_SHOWNA);
@@ -210,17 +211,17 @@ INT_PTR CALLBACK DlgSMPResponseProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				mir_free(data->question);
 			}
 			else {
-				mir_sntprintf(buff, TranslateT(LANG_OTR_SMPPASSWORD_RESPOND_DESC), contact_get_nameT(hContact));
+				mir_snwprintf(buff, TranslateW(LANG_OTR_SMPPASSWORD_RESPOND_DESC), contact_get_nameT(hContact));
 
 				SetDlgItemText(hwndDlg, IDC_STC_SMP_INFO, buff);
 
-				SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD1, _T(""));
+				SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD1, L"");
 				SendDlgItemMessage(hwndDlg, IDC_EDT_SMP_FIELD1, EM_SETREADONLY, TRUE, 0);
-				SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD1, _T(""));
+				SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD1, L"");
 
-				SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD2, _T(""));
+				SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD2, L"");
 				SendDlgItemMessage(hwndDlg, IDC_EDT_SMP_FIELD2, EM_SETREADONLY, FALSE, 0);
-				SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD2, TranslateT(LANG_SMP_PASSWORD));
+				SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD2, TranslateW(LANG_SMP_PASSWORD));
 
 
 				ShowWindow(GetDlgItem(hwndDlg, IDOK), SW_SHOWNA);
@@ -231,11 +232,11 @@ INT_PTR CALLBACK DlgSMPResponseProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 
 			// Move window to screen center
 			// Get the owner window and dialog box rectangles. 
-			HWND hwndOwner; RECT rcOwner, rcDlg, rc;
-			if ((hwndOwner = GetParent(hwndDlg)) == NULL) {
+			HWND hwndOwner = GetParent(hwndDlg); 
+			if (hwndOwner == NULL)
 				hwndOwner = GetDesktopWindow();
-			}
 
+			RECT rcOwner, rcDlg, rc;
 			GetWindowRect(hwndOwner, &rcOwner);
 			GetWindowRect(hwndDlg, &rcDlg);
 			CopyRect(&rc, &rcOwner);
@@ -259,9 +260,6 @@ INT_PTR CALLBACK DlgSMPResponseProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				SWP_NOSIZE);
 
 			// end center dialog
-
-
-
 			return TRUE;
 		}
 
@@ -274,7 +272,7 @@ INT_PTR CALLBACK DlgSMPResponseProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				SMPInitUpdateDialog(context, true);
 				{
 					int len = SendDlgItemMessage(hwndDlg, IDC_EDT_SMP_FIELD2, WM_GETTEXTLENGTH, 0, 0);
-					TCHAR *answer = new TCHAR[len + 1];
+					wchar_t *answer = new wchar_t[len + 1];
 					GetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD2, answer, len + 1);
 
 					T2Utf ans(answer);
@@ -299,18 +297,18 @@ INT_PTR CALLBACK DlgSMPResponseProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 }
 
 /*
-void SMPInitResponseDialog(ConnContext *context, const TCHAR *question) {
+void SMPInitResponseDialog(ConnContext *context, const wchar_t *question) {
 	if (!context) return;
 	SmpData *data = (SmpData*)mir_calloc(sizeof(SmpData));
 	data->context = context;
 	data->oldlevel = TRUST_NOT_PRIVATE;
 	data->responder = true;
-	data->question = (question) ? mir_tstrdup(question) : NULL;
+	data->question = (question) ? mir_wstrdup(question) : NULL;
 	CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_SMP_INPUT), 0, DlgSMPResponseProc, (LPARAM) data);
 }
 */
 
-INT_PTR CALLBACK DlgProcSMPInitProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK DlgProcSMPInitProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg) {
 	case WM_INITDIALOG:
@@ -328,8 +326,8 @@ INT_PTR CALLBACK DlgProcSMPInitProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			}
 
 			MCONTACT hContact = (UINT_PTR)context->app_data;
-			TCHAR title[512], *proto = mir_a2t(GetContactProto(hContact));
-			mir_sntprintf(title, TranslateT(LANG_SMP_VERIFY_TITLE), contact_get_nameT(hContact), proto);
+			wchar_t title[512], *proto = mir_a2u(GetContactProto(hContact));
+			mir_snwprintf(title, TranslateW(LANG_SMP_VERIFY_TITLE), contact_get_nameT(hContact), proto);
 			mir_free(proto);
 			SetWindowText(hwndDlg, title);
 			SetDlgItemText(hwndDlg, IDC_STC_SMP_HEAD, title);
@@ -337,11 +335,11 @@ INT_PTR CALLBACK DlgProcSMPInitProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 
 			// Move window to screen center
 			// Get the owner window and dialog box rectangles. 
-			HWND hwndOwner; RECT rcOwner, rcDlg, rc;
-			if ((hwndOwner = GetParent(hwndDlg)) == NULL) {
+			HWND hwndOwner = GetParent(hwndDlg); 
+			if (hwndOwner == NULL)
 				hwndOwner = GetDesktopWindow();
-			}
 
+			RECT rcOwner, rcDlg, rc;
 			GetWindowRect(hwndOwner, &rcOwner);
 			GetWindowRect(hwndDlg, &rcDlg);
 			CopyRect(&rc, &rcOwner);
@@ -368,10 +366,10 @@ INT_PTR CALLBACK DlgProcSMPInitProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 
 
 			HWND cmb = GetDlgItem(hwndDlg, IDC_CBO_SMP_CHOOSE);
-			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateT(LANG_SMPTYPE_QUESTION));
-			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateT(LANG_SMPTYPE_PASSWORD));
-			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateT(LANG_SMPTYPE_FINGERPRINT));
-			SendMessage(cmb, CB_SELECTSTRING, -1, (WPARAM)TranslateT(LANG_SMPTYPE_QUESTION));
+			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateW(LANG_SMPTYPE_QUESTION));
+			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateW(LANG_SMPTYPE_PASSWORD));
+			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateW(LANG_SMPTYPE_FINGERPRINT));
+			SendMessage(cmb, CB_SELECTSTRING, -1, (WPARAM)TranslateW(LANG_SMPTYPE_QUESTION));
 			EnableWindow(GetDlgItem(hwndDlg, IDC_CBO_SMP_CHOOSE), TRUE);
 
 
@@ -380,21 +378,21 @@ INT_PTR CALLBACK DlgProcSMPInitProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				DestroyWindow(hwndDlg);
 				return FALSE;
 			}
-			TCHAR buff[1024];
+			wchar_t buff[1024];
 			if (!fp->trust || fp->trust[0] == '\0')
-				mir_sntprintf(buff, TranslateT(LANG_OTR_SMPQUESTION_VERIFY_DESC), contact_get_nameT(hContact));
+				mir_snwprintf(buff, TranslateW(LANG_OTR_SMPQUESTION_VERIFY_DESC), contact_get_nameT(hContact));
 			else
-				mir_sntprintf(buff, TranslateT(LANG_OTR_SMPQUESTION_VERIFIED_DESC), contact_get_nameT(hContact));
+				mir_snwprintf(buff, TranslateW(LANG_OTR_SMPQUESTION_VERIFIED_DESC), contact_get_nameT(hContact));
 
 			SetDlgItemText(hwndDlg, IDC_STC_SMP_INFO, buff);
 
-			SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD1, _T(""));
+			SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD1, L"");
 			SendDlgItemMessage(hwndDlg, IDC_EDT_SMP_FIELD1, EM_SETREADONLY, FALSE, 0);
-			SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD1, TranslateT(LANG_SMP_QUESTION));
+			SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD1, TranslateW(LANG_SMP_QUESTION));
 
-			SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD2, _T(""));
+			SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD2, L"");
 			SendDlgItemMessage(hwndDlg, IDC_EDT_SMP_FIELD2, EM_SETREADONLY, FALSE, 0);
-			SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD2, TranslateT(LANG_SMP_ANSWER));
+			SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD2, TranslateW(LANG_SMP_ANSWER));
 
 
 			ShowWindow(GetDlgItem(hwndDlg, IDOK), SW_SHOWNA);
@@ -411,46 +409,44 @@ INT_PTR CALLBACK DlgProcSMPInitProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			{
 				ConnContext *context = (ConnContext*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
 				MCONTACT hContact = (UINT_PTR)context->app_data;
-				TCHAR msg[1024];
+				wchar_t szMsg[1024];
 				switch (LOWORD(wParam)) {
 				case IDCANCEL:
 					DestroyWindow(hwndDlg);
 					break;
 				case IDOK:
-					GetDlgItemText(hwndDlg, IDC_CBO_SMP_CHOOSE, msg, 255);
-					if (_tcsncmp(msg, TranslateT(LANG_SMPTYPE_QUESTION), 255) == 0) {
+					GetDlgItemText(hwndDlg, IDC_CBO_SMP_CHOOSE, szMsg, _countof(szMsg));
+					if (wcsncmp(szMsg, TranslateW(LANG_SMPTYPE_QUESTION), _countof(szMsg)) == 0) {
 						if (smp_for_contact.find(context->app_data) != smp_for_contact.end()) {
-							TCHAR msg[512];
-							mir_sntprintf(msg, TranslateT(LANG_SMP_IN_PROGRESS), contact_get_nameT(hContact));
-							ShowError(msg);
+							mir_snwprintf(szMsg, TranslateW(LANG_SMP_IN_PROGRESS), contact_get_nameT(hContact));
+							ShowError(szMsg);
 						}
 						else {
 							int len = SendDlgItemMessage(hwndDlg, IDC_EDT_SMP_FIELD1, WM_GETTEXTLENGTH, 0, 0);
-							TCHAR *question = new TCHAR[len + 1];
+							wchar_t *question = new wchar_t[len + 1];
 							GetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD1, question, len + 1);
 							T2Utf quest(question);
-							delete question;
+							delete[] question;
 
 							len = SendDlgItemMessage(hwndDlg, IDC_EDT_SMP_FIELD2, WM_GETTEXTLENGTH, 0, 0);
-							TCHAR *answer = new TCHAR[len + 1];
+							wchar_t *answer = new wchar_t[len + 1];
 							GetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD2, answer, len + 1);
 							T2Utf ans(answer);
-							delete answer;
+							delete[] answer;
 
 							SMPInitUpdateDialog(context, false);
 							otr_start_smp(context, quest, (const unsigned char*)ans, mir_strlen(ans));
 						}
 
 					}
-					else if (_tcsncmp(msg, TranslateT(LANG_SMPTYPE_PASSWORD), 255) == 0) {
+					else if (wcsncmp(szMsg, TranslateW(LANG_SMPTYPE_PASSWORD), _countof(szMsg)) == 0) {
 						if (smp_for_contact.find(context->app_data) != smp_for_contact.end()) {
-							TCHAR msg[512];
-							mir_sntprintf(msg, TranslateT(LANG_SMP_IN_PROGRESS), contact_get_nameT(hContact));
-							ShowError(msg);
+							mir_snwprintf(szMsg, TranslateW(LANG_SMP_IN_PROGRESS), contact_get_nameT(hContact));
+							ShowError(szMsg);
 						}
 						else {
 							int len = SendDlgItemMessage(hwndDlg, IDC_EDT_SMP_FIELD2, WM_GETTEXTLENGTH, 0, 0);
-							TCHAR *answer = new TCHAR[len + 1];
+							wchar_t *answer = new wchar_t[len + 1];
 							GetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD2, answer, len + 1);
 							T2Utf ans(answer);
 							delete[] answer;
@@ -489,55 +485,55 @@ INT_PTR CALLBACK DlgProcSMPInitProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 					BOOL trusted = false;
 					if (fp->trust && fp->trust[0] != '\0') trusted = true;
 
-					TCHAR buff[512];
+					wchar_t buff[512];
 					GetDlgItemText(hwndDlg, IDC_CBO_SMP_CHOOSE, buff, 255);
-					if (_tcsncmp(buff, TranslateT(LANG_SMPTYPE_QUESTION), 255) == 0) {
+					if (wcsncmp(buff, TranslateW(LANG_SMPTYPE_QUESTION), 255) == 0) {
 						if (trusted)
-							mir_sntprintf(buff, TranslateT(LANG_OTR_SMPQUESTION_VERIFIED_DESC), contact_get_nameT(hContact));
+							mir_snwprintf(buff, TranslateW(LANG_OTR_SMPQUESTION_VERIFIED_DESC), contact_get_nameT(hContact));
 						else
-							mir_sntprintf(buff, TranslateT(LANG_OTR_SMPQUESTION_VERIFY_DESC), contact_get_nameT(hContact));
+							mir_snwprintf(buff, TranslateW(LANG_OTR_SMPQUESTION_VERIFY_DESC), contact_get_nameT(hContact));
 
 						SetDlgItemText(hwndDlg, IDC_STC_SMP_INFO, buff);
 
-						SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD1, _T(""));
+						SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD1, L"");
 						SendDlgItemMessage(hwndDlg, IDC_EDT_SMP_FIELD1, EM_SETREADONLY, FALSE, 0);
-						SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD1, TranslateT(LANG_SMP_QUESTION));
+						SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD1, TranslateW(LANG_SMP_QUESTION));
 
-						SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD2, _T(""));
+						SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD2, L"");
 						SendDlgItemMessage(hwndDlg, IDC_EDT_SMP_FIELD2, EM_SETREADONLY, FALSE, 0);
-						SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD2, TranslateT(LANG_SMP_ANSWER));
+						SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD2, TranslateW(LANG_SMP_ANSWER));
 
 
 						ShowWindow(GetDlgItem(hwndDlg, IDOK), SW_SHOWNA);
 						ShowWindow(GetDlgItem(hwndDlg, IDYES), SW_HIDE);
 						ShowWindow(GetDlgItem(hwndDlg, IDNO), SW_HIDE);
 					}
-					else if (_tcsncmp(buff, TranslateT(LANG_SMPTYPE_PASSWORD), 255) == 0) {
+					else if (wcsncmp(buff, TranslateW(LANG_SMPTYPE_PASSWORD), 255) == 0) {
 						if (trusted)
-							mir_sntprintf(buff, TranslateT(LANG_OTR_SMPPASSWORD_VERIFIED_DESC), contact_get_nameT(hContact));
+							mir_snwprintf(buff, TranslateW(LANG_OTR_SMPPASSWORD_VERIFIED_DESC), contact_get_nameT(hContact));
 						else
-							mir_sntprintf(buff, TranslateT(LANG_OTR_SMPPASSWORD_VERIFY_DESC), contact_get_nameT(hContact));
+							mir_snwprintf(buff, TranslateW(LANG_OTR_SMPPASSWORD_VERIFY_DESC), contact_get_nameT(hContact));
 
 						SetDlgItemText(hwndDlg, IDC_STC_SMP_INFO, buff);
 
-						SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD1, _T(""));
+						SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD1, L"");
 						SendDlgItemMessage(hwndDlg, IDC_EDT_SMP_FIELD1, EM_SETREADONLY, TRUE, 0);
-						SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD1, _T(""));
+						SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD1, L"");
 
-						SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD2, _T(""));
+						SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD2, L"");
 						SendDlgItemMessage(hwndDlg, IDC_EDT_SMP_FIELD2, EM_SETREADONLY, FALSE, 0);
-						SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD2, TranslateT(LANG_SMP_PASSWORD));
+						SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD2, TranslateW(LANG_SMP_PASSWORD));
 
 
 						ShowWindow(GetDlgItem(hwndDlg, IDOK), SW_SHOWNA);
 						ShowWindow(GetDlgItem(hwndDlg, IDYES), SW_HIDE);
 						ShowWindow(GetDlgItem(hwndDlg, IDNO), SW_HIDE);
 					}
-					else if (_tcsncmp(buff, TranslateT(LANG_SMPTYPE_FINGERPRINT), 255) == 0) {
+					else if (wcsncmp(buff, TranslateW(LANG_SMPTYPE_FINGERPRINT), 255) == 0) {
 						if (trusted)
-							mir_sntprintf(buff, TranslateT(LANG_OTR_FPVERIFIED_DESC), contact_get_nameT(hContact));
+							mir_snwprintf(buff, TranslateW(LANG_OTR_FPVERIFIED_DESC), contact_get_nameT(hContact));
 						else
-							mir_sntprintf(buff, TranslateT(LANG_OTR_FPVERIFY_DESC), contact_get_nameT(hContact));
+							mir_snwprintf(buff, TranslateW(LANG_OTR_FPVERIFY_DESC), contact_get_nameT(hContact));
 
 						SetDlgItemText(hwndDlg, IDC_STC_SMP_INFO, buff);
 
@@ -550,12 +546,12 @@ INT_PTR CALLBACK DlgProcSMPInitProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 						otrl_privkey_hash_to_humanT(buff, hash);
 						SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD1, buff);
 						SendDlgItemMessage(hwndDlg, IDC_EDT_SMP_FIELD1, EM_SETREADONLY, TRUE, 0);
-						SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD1, TranslateT(LANG_YOUR_PRIVKEY));
+						SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD1, TranslateW(LANG_YOUR_PRIVKEY));
 
 						otrl_privkey_hash_to_humanT(buff, fp->fingerprint);
 						SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD2, buff);
 						SendDlgItemMessage(hwndDlg, IDC_EDT_SMP_FIELD2, EM_SETREADONLY, TRUE, 0);
-						SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD2, TranslateT(LANG_CONTACT_FINGERPRINT));
+						SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD2, TranslateW(LANG_CONTACT_FINGERPRINT));
 
 						ShowWindow(GetDlgItem(hwndDlg, IDOK), SW_HIDE);
 						ShowWindow(GetDlgItem(hwndDlg, IDYES), SW_SHOWNA);
@@ -595,14 +591,14 @@ void SMPDialogUpdate(ConnContext *context, int percent)
 	switch (percent){
 		case 0:
 			VerifyFingerprint(context, false);
-			ShowWarning(_T("SMP failed"));
+			ShowWarning(L"SMP failed");
 			break;
 		case 100:
 			VerifyFingerprint(context, true);
-			ShowWarning(_T("SMP successful"));
+			ShowWarning(L"SMP successful");
 			break;
 		default:
-			ShowWarning(_T("Received an SMP update"));
+			ShowWarning(L"Received an SMP update");
 	}
 	*/
 }
@@ -612,106 +608,99 @@ void SMPDialogReply(ConnContext *context, const char* question)
 	data->context = context;
 	data->oldlevel = TRUST_NOT_PRIVATE;
 	data->responder = true;
-	data->question = (question) ? mir_utf8decodeT(question) : NULL;
+	data->question = (question) ? mir_utf8decodeW(question) : NULL;
 	CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_SMP_INPUT), 0, DlgSMPResponseProc, (LPARAM)data);
 	/*
-	ShowError(_T("SMP requires user password (NOT IMPL YET)"));
+	ShowError(L"SMP requires user password (NOT IMPL YET)");
 	otr_abort_smp(context);
 	*/
 	//otr_continue_smp(context, pass, mir_strlen(pass));
 }
 
-unsigned int CALLBACK verify_context_thread(void *param);
-void VerifyContextDialog(ConnContext* context)
-{
-	if (!context) return;
-	CloseHandle((HANDLE)_beginthreadex(0, 0, verify_context_thread, context, 0, 0));
-}
-
-INT_PTR CALLBACK DlgBoxProcVerifyContext(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK DlgBoxProcVerifyContext(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg) {
 	case WM_INITDIALOG:
-		{
-			if (!lParam) {
-				EndDialog(hwndDlg, IDCANCEL);
-				return FALSE;
-			}
-			SetWindowText(hwndDlg, _T(LANG_OTR_FPVERIFY_TITLE));
-			SetDlgItemText(hwndDlg, IDC_STC_SMP_HEAD, _T(LANG_OTR_FPVERIFY_TITLE));
-			TranslateDialogDefault(hwndDlg);
-			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
-
-			// Move window to screen center
-			// Get the owner window and dialog box rectangles. 
-			HWND hwndOwner; RECT rcOwner, rcDlg, rc;
-			if ((hwndOwner = GetParent(hwndDlg)) == NULL) {
-				hwndOwner = GetDesktopWindow();
-			}
-
-			GetWindowRect(hwndOwner, &rcOwner);
-			GetWindowRect(hwndDlg, &rcDlg);
-			CopyRect(&rc, &rcOwner);
-
-			// Offset the owner and dialog box rectangles so that right and bottom 
-			// values represent the width and height, and then offset the owner again 
-			// to discard space taken up by the dialog box. 
-
-			OffsetRect(&rcDlg, -rcDlg.left, -rcDlg.top);
-			OffsetRect(&rc, -rc.left, -rc.top);
-			OffsetRect(&rc, -rcDlg.right, -rcDlg.bottom);
-
-			// The new position is the sum of half the remaining space and the owner's 
-			// original position. 
-
-			SetWindowPos(hwndDlg,
-				HWND_TOP,
-				rcOwner.left + (rc.right / 2),
-				rcOwner.top + (rc.bottom / 2),
-				0, 0,          // Ignores size arguments. 
-				SWP_NOSIZE);
-
-			// end center dialog
-
-			ConnContext *context = (ConnContext*)lParam;
-			MCONTACT hContact = (UINT_PTR)context->app_data;
-			Fingerprint *fp = context->active_fingerprint;
-			if (!fp) {
-				EndDialog(hwndDlg, IDCANCEL);
-				return FALSE;
-			}
-			TCHAR buff[512];
-			if (!fp->trust || fp->trust[0] == '\0')
-				mir_sntprintf(buff, TranslateT(LANG_OTR_FPVERIFY_DESC), contact_get_nameT(hContact));
-			else
-				mir_sntprintf(buff, TranslateT(LANG_OTR_FPVERIFIED_DESC), contact_get_nameT(hContact));
-
-			SetDlgItemText(hwndDlg, IDC_STC_SMP_INFO, buff);
-
-			unsigned char hash[20];
-			lib_cs_lock();
-			if (!otrl_privkey_fingerprint_raw(otr_user_state, hash, context->accountname, context->protocol)) {
-				EndDialog(hwndDlg, IDCANCEL);
-				return FALSE;
-			}
-			otrl_privkey_hash_to_humanT(buff, hash);
-			SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD1, buff);
-			SendDlgItemMessage(hwndDlg, IDC_EDT_SMP_FIELD1, EM_SETREADONLY, TRUE, 0);
-			SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD1, TranslateT(LANG_YOUR_PRIVKEY));
-
-			otrl_privkey_hash_to_humanT(buff, fp->fingerprint);
-			SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD2, buff);
-			SendDlgItemMessage(hwndDlg, IDC_EDT_SMP_FIELD2, EM_SETREADONLY, TRUE, 0);
-			SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD2, TranslateT(LANG_CONTACT_FINGERPRINT));
-
-			EnableWindow(GetDlgItem(hwndDlg, IDC_CBO_SMP_CHOOSE), FALSE);
-
-			ShowWindow(GetDlgItem(hwndDlg, IDOK), SW_HIDE);
-			ShowWindow(GetDlgItem(hwndDlg, IDYES), SW_SHOWNA);
-			ShowWindow(GetDlgItem(hwndDlg, IDNO), SW_SHOWNA);
-			SetFocus(GetDlgItem(hwndDlg, IDCANCEL));
+	{
+		if (!lParam) {
+			EndDialog(hwndDlg, IDCANCEL);
+			return FALSE;
 		}
-		return FALSE;
+		SetWindowText(hwndDlg, LANG_OTR_FPVERIFY_TITLE);
+		SetDlgItemText(hwndDlg, IDC_STC_SMP_HEAD, LANG_OTR_FPVERIFY_TITLE);
+		TranslateDialogDefault(hwndDlg);
+		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
+
+		// Move window to screen center
+		// Get the owner window and dialog box rectangles. 
+		HWND hwndOwner = GetParent(hwndDlg);
+		if (hwndOwner == NULL)
+			hwndOwner = GetDesktopWindow();
+
+		RECT rcOwner, rcDlg, rc;
+		GetWindowRect(hwndOwner, &rcOwner);
+		GetWindowRect(hwndDlg, &rcDlg);
+		CopyRect(&rc, &rcOwner);
+
+		// Offset the owner and dialog box rectangles so that right and bottom 
+		// values represent the width and height, and then offset the owner again 
+		// to discard space taken up by the dialog box. 
+
+		OffsetRect(&rcDlg, -rcDlg.left, -rcDlg.top);
+		OffsetRect(&rc, -rc.left, -rc.top);
+		OffsetRect(&rc, -rcDlg.right, -rcDlg.bottom);
+
+		// The new position is the sum of half the remaining space and the owner's 
+		// original position. 
+
+		SetWindowPos(hwndDlg,
+			HWND_TOP,
+			rcOwner.left + (rc.right / 2),
+			rcOwner.top + (rc.bottom / 2),
+			0, 0,          // Ignores size arguments. 
+			SWP_NOSIZE);
+
+		// end center dialog
+
+		ConnContext *context = (ConnContext*)lParam;
+		MCONTACT hContact = (UINT_PTR)context->app_data;
+		Fingerprint *fp = context->active_fingerprint;
+		if (!fp) {
+			EndDialog(hwndDlg, IDCANCEL);
+			return FALSE;
+		}
+		wchar_t buff[512];
+		if (!fp->trust || fp->trust[0] == '\0')
+			mir_snwprintf(buff, TranslateW(LANG_OTR_FPVERIFY_DESC), contact_get_nameT(hContact));
+		else
+			mir_snwprintf(buff, TranslateW(LANG_OTR_FPVERIFIED_DESC), contact_get_nameT(hContact));
+
+		SetDlgItemText(hwndDlg, IDC_STC_SMP_INFO, buff);
+
+		unsigned char hash[20];
+		lib_cs_lock();
+		if (!otrl_privkey_fingerprint_raw(otr_user_state, hash, context->accountname, context->protocol)) {
+			EndDialog(hwndDlg, IDCANCEL);
+			return FALSE;
+		}
+		otrl_privkey_hash_to_humanT(buff, hash);
+		SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD1, buff);
+		SendDlgItemMessage(hwndDlg, IDC_EDT_SMP_FIELD1, EM_SETREADONLY, TRUE, 0);
+		SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD1, TranslateW(LANG_YOUR_PRIVKEY));
+
+		otrl_privkey_hash_to_humanT(buff, fp->fingerprint);
+		SetDlgItemText(hwndDlg, IDC_EDT_SMP_FIELD2, buff);
+		SendDlgItemMessage(hwndDlg, IDC_EDT_SMP_FIELD2, EM_SETREADONLY, TRUE, 0);
+		SetDlgItemText(hwndDlg, IDC_STC_SMP_FIELD2, TranslateW(LANG_CONTACT_FINGERPRINT));
+
+		EnableWindow(GetDlgItem(hwndDlg, IDC_CBO_SMP_CHOOSE), FALSE);
+
+		ShowWindow(GetDlgItem(hwndDlg, IDOK), SW_HIDE);
+		ShowWindow(GetDlgItem(hwndDlg, IDYES), SW_SHOWNA);
+		ShowWindow(GetDlgItem(hwndDlg, IDNO), SW_SHOWNA);
+		SetFocus(GetDlgItem(hwndDlg, IDCANCEL));
+	}
+	return FALSE;
 
 	case WM_COMMAND:
 		switch (HIWORD(wParam)) {
@@ -732,21 +721,21 @@ INT_PTR CALLBACK DlgBoxProcVerifyContext(HWND hwndDlg, UINT msg, WPARAM wParam, 
 	return FALSE;
 }
 
-unsigned int CALLBACK verify_context_thread(void *param)
+static unsigned int CALLBACK verify_context_thread(void *param)
 {
 	Thread_Push(0);
 
 	if (param) {
 		ConnContext *context = (ConnContext *)param;
 		MCONTACT hContact = (UINT_PTR)context->app_data;
-		TCHAR msg[1024];
+		wchar_t msg[1024];
 		switch (DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_SMP_INPUT), 0, DlgBoxProcVerifyContext, (LPARAM)param)) {
 		case IDOK:
 		case IDYES:
 			lib_cs_lock();
 			otrl_context_set_trust(context->active_fingerprint, "verified");
 			otrl_privkey_write_fingerprints(otr_user_state, _T2A(g_fingerprint_store_filename));
-			mir_sntprintf(msg, TranslateT(LANG_FINGERPRINT_VERIFIED), contact_get_nameT(hContact));
+			mir_snwprintf(msg, TranslateW(LANG_FINGERPRINT_VERIFIED), contact_get_nameT(hContact));
 			ShowMessage(hContact, msg);
 			SetEncryptionStatus(hContact, otr_context_get_trust(context));
 			break;
@@ -755,7 +744,7 @@ unsigned int CALLBACK verify_context_thread(void *param)
 			lib_cs_lock();
 			otrl_context_set_trust(context->active_fingerprint, NULL);
 			otrl_privkey_write_fingerprints(otr_user_state, _T2A(g_fingerprint_store_filename));
-			mir_sntprintf(msg, TranslateT(LANG_FINGERPRINT_NOT_VERIFIED), contact_get_nameT(hContact));
+			mir_snwprintf(msg, TranslateW(LANG_FINGERPRINT_NOT_VERIFIED), contact_get_nameT(hContact));
 			ShowMessage(hContact, msg);
 			SetEncryptionStatus(hContact, otr_context_get_trust(context));
 			break;
@@ -764,4 +753,10 @@ unsigned int CALLBACK verify_context_thread(void *param)
 
 	Thread_Pop();
 	return 0;
+}
+
+void VerifyContextDialog(ConnContext* context)
+{
+	if (!context) return;
+	CloseHandle((HANDLE)_beginthreadex(0, 0, verify_context_thread, context, 0, 0));
 }

@@ -112,7 +112,7 @@ LRESULT CALLBACK ModuleTreeSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 	case WM_KEYUP:
 		if (wParam == VK_DELETE || wParam == VK_F2 || wParam == VK_F5 || wParam == VK_F3) {
 			TVITEM tvi;
-			TCHAR text[FLD_SIZE];
+			wchar_t text[FLD_SIZE];
 			tvi.mask = TVIF_HANDLE | TVIF_PARAM | TVIF_TEXT;
 			tvi.hItem = TreeView_GetSelection(hwnd);
 			tvi.pszText = text;
@@ -129,12 +129,12 @@ LRESULT CALLBACK ModuleTreeSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 					}
 					else if ((mtis->type == CONTACT) && hContact) {
 						if (db_get_b(NULL, "CList", "ConfirmDelete", 1)) {
-							TCHAR str[MSG_SIZE];
-							mir_sntprintf(str, TranslateT("Are you sure you want to delete contact \"%s\"?"), text);
+							wchar_t str[MSG_SIZE];
+							mir_snwprintf(str, TranslateT("Are you sure you want to delete contact \"%s\"?"), text);
 							if (dlg(str, MB_YESNO | MB_ICONEXCLAMATION) == IDNO)
 								break;
 						}
-						CallService(MS_DB_CONTACT_DELETE, hContact, 0);
+						db_delete_contact(hContact);
 						freeTree(mtis->hContact);
 						TreeView_DeleteItem(hwnd, tvi.hItem);
 					}
@@ -193,7 +193,7 @@ static LRESULT CALLBACK SettingListSubclassProc(HWND hwnd, UINT msg, WPARAM wPar
 
 INT_PTR CALLBACK MainDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	TCHAR text[256];
+	wchar_t text[256];
 
 	switch (msg) {
 	case WM_INITDIALOG:
@@ -274,7 +274,7 @@ INT_PTR CALLBACK MainDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if ((HWND)lParam == GetDlgItem(hwnd, IDC_SPLITTER)) {
 				RECT rc;
 				GetClientRect(hwnd, &rc);
-				POINT pt = { wParam, 0 };
+				POINT pt = { (LONG)wParam, 0 };
 				ScreenToClient(hwnd, &pt);
 
 				splitterPos = rc.left + pt.x + 1;
@@ -443,7 +443,7 @@ INT_PTR CALLBACK MainDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		case MENU_FIX_RESIDENT:
 			if (dlg(TranslateT("Delete resident settings from database?"), MB_YESNO | MB_ICONEXCLAMATION) == IDYES) {
 				int cnt = fixResidentSettings();
-				mir_sntprintf(text, TranslateT("%d orphaned items deleted."), cnt);
+				mir_snwprintf(text, TranslateT("%d items deleted."), cnt);
 				msg(text);
 			}
 			break;
@@ -506,12 +506,7 @@ INT_PTR CALLBACK MainDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			refreshTree(1);
 			break;
 		case MENU_OPEN_OPTIONS:
-			OPENOPTIONSDIALOG odp = { 0 };
-			odp.cbSize = sizeof(odp);
-			odp.pszGroup = "Database";
-			odp.pszPage = modFullname;
-			odp.pszTab = 0;
-			Options_Open(&odp);
+			Options_Open(L"Database", _A2W(modFullname));
 			break;
 		}
 		return TRUE; // case WM_COMMAND

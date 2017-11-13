@@ -24,10 +24,10 @@ static INT_PTR CALLBACK DlgProcWaMpdOpts(HWND hwndDlg, UINT msg, WPARAM, LPARAM 
     {
 		TranslateDialogDefault(hwndDlg);
 		SetDlgItemInt(hwndDlg, IDC_PORT, db_get_w(NULL, szModuleName, "Port", 6600), FALSE);
-		TCHAR *tmp = UniGetContactSettingUtf(NULL, szModuleName, "Server", _T("127.0.0.1"));
+		wchar_t *tmp = UniGetContactSettingUtf(NULL, szModuleName, "Server", L"127.0.0.1");
 		SetDlgItemText(hwndDlg, IDC_SERVER, tmp);
 		mir_free(tmp);
-		tmp = UniGetContactSettingUtf(NULL, szModuleName, "Password", _T(""));
+		tmp = UniGetContactSettingUtf(NULL, szModuleName, "Password", L"");
 		SetDlgItemText(hwndDlg, IDC_PASSWORD, tmp);
 		mir_free(tmp);
       return TRUE;
@@ -47,15 +47,15 @@ static INT_PTR CALLBACK DlgProcWaMpdOpts(HWND hwndDlg, UINT msg, WPARAM, LPARAM 
         
       case PSN_APPLY:
         {
-			TCHAR szText[256];
+			wchar_t szText[256];
 			db_set_w(NULL, szModuleName, "Port", (WORD)GetDlgItemInt(hwndDlg, IDC_PORT, NULL, FALSE));
 			gbPort = (WORD)GetDlgItemInt(hwndDlg, IDC_PORT, NULL, FALSE);
 			GetDlgItemText(hwndDlg, IDC_SERVER, szText, _countof(szText));
-			db_set_ts(NULL, szModuleName, "Server", szText);
-			mir_tstrcpy(gbHost, szText);
+			db_set_ws(NULL, szModuleName, "Server", szText);
+			mir_wstrcpy(gbHost, szText);
 			GetDlgItemText(hwndDlg, IDC_PASSWORD, szText, _countof(szText));
-			db_set_ts(NULL, szModuleName, "Password", szText);
-			mir_tstrcpy(gbPassword, szText);
+			db_set_ws(NULL, szModuleName, "Password", szText);
+			mir_wstrcpy(gbPassword, szText);
           return TRUE;
         }
       }
@@ -71,10 +71,10 @@ int WaMpdOptInit(WPARAM wParam,LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_WA_MPD);
-	odp.ptszTitle = LPGENT("Winamp Track");
-	odp.ptszGroup = LPGENT("Plugins");
-	odp.ptszTab = LPGENT("Watrack MPD");
-	odp.flags=ODPF_BOLDGROUPS|ODPF_TCHAR;
+	odp.szTitle.w = LPGENW("Winamp Track");
+	odp.szGroup.w = LPGENW("Plugins");
+	odp.szTab.w = LPGENW("Watrack MPD");
+	odp.flags=ODPF_BOLDGROUPS|ODPF_UNICODE;
 	odp.pfnDlgProc = DlgProcWaMpdOpts;
 	Options_AddPage(wParam, &odp);
 	return 0;

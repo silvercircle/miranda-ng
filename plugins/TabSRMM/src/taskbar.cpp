@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
-// Copyright (ñ) 2012-15 Miranda NG project,
+// Copyright (ñ) 2012-17 Miranda NG project,
 // Copyright (c) 2000-09 Miranda ICQ/IM project,
 // all portions of this codebase are copyrighted to the people
 // listed in contributors.txt.
@@ -72,7 +72,7 @@ CTaskbarInteract* Win7Taskbar = 0;
 bool CTaskbarInteract::setOverlayIcon(HWND hwndDlg, LPARAM lParam) const
 {
 	if (m_pTaskbarInterface && m_isEnabled && m_fHaveLargeicons) {
-		m_pTaskbarInterface->SetOverlayIcon(hwndDlg, (HICON)lParam, NULL);
+		m_pTaskbarInterface->SetOverlayIcon(hwndDlg, (HICON)lParam, nullptr);
 		return true;
 	}
 	return false;
@@ -97,14 +97,14 @@ bool CTaskbarInteract::haveLargeIcons()
 		 * always returns S_OK, but the icon is simply ignored when using small taskbar icons.
 		 * also, figure out the button grouping mode.
 		 */
-		if (::RegOpenKey(HKEY_CURRENT_USER, _T("Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced"), &hKey) == ERROR_SUCCESS) {
-			::RegQueryValueEx(hKey, _T("TaskbarSmallIcons"), 0, &dwType, (LPBYTE)&val, &size);
+		if (::RegOpenKey(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", &hKey) == ERROR_SUCCESS) {
+			::RegQueryValueEx(hKey, L"TaskbarSmallIcons", 0, &dwType, (LPBYTE)&val, &size);
 			size = 4;
 			dwType = REG_DWORD;
 			/*
 			 * this is the "grouping mode" setting for the task bar. 0 = always combine, no labels
 			 */
-			::RegQueryValueEx(hKey, _T("TaskbarGlomLevel"), 0, &dwType, (LPBYTE)&valGrouping, &size);
+			::RegQueryValueEx(hKey, L"TaskbarGlomLevel", 0, &dwType, (LPBYTE)&valGrouping, &size);
 			::RegCloseKey(hKey);
 		}
 		m_fHaveLargeicons = (val ? false : true);			// small icons in use, revert to default icon feedback
@@ -120,7 +120,7 @@ bool CTaskbarInteract::haveLargeIcons()
 void CTaskbarInteract::clearOverlayIcon(HWND hwndDlg) const
 {
 	if (m_pTaskbarInterface && m_isEnabled)
-		m_pTaskbarInterface->SetOverlayIcon(hwndDlg, NULL, NULL);
+		m_pTaskbarInterface->SetOverlayIcon(hwndDlg, nullptr, nullptr);
 }
 
 LONG CTaskbarInteract::updateMetrics()
@@ -172,22 +172,6 @@ void CTaskbarInteract::SetTabActive(const HWND hwndTab, const HWND hwndGroup) co
 }
 
 /**
- * create a proxy window object for the given session. Do NOT call this more than once
- * per session and not outside of WM_INITDIALOG after most things are initialized.
- * @param dat		session window data
- *
- * static member function. Ignored when OS is not Windows 7 or global option for
- * Windows 7 task bar support is diabled.
- */
-void CProxyWindow::add(TWindowData *dat)
-{
-	if (PluginConfig.m_bIsWin7 && PluginConfig.m_useAeroPeek) // && (!CSkin::m_skinEnabled || M.GetByte("forceAeroPeek", 0)))
-		dat->pWnd = new CProxyWindow(dat);
-	else
-		dat->pWnd = 0;
-}
-
-/**
  * This is called from the broadcasted WM_DWMCOMPOSITIONCHANGED event by all messages
  * sessions. It checks and, if needed, destroys or creates a proxy object, based on
  * the status of the DWM
@@ -195,26 +179,25 @@ void CProxyWindow::add(TWindowData *dat)
  *
  * static member function
  */
-void CProxyWindow::verify(TWindowData *dat)
+void CTabBaseDlg::VerifyProxy()
 {
 	if (PluginConfig.m_bIsWin7 && PluginConfig.m_useAeroPeek) {
-		if (0 == dat->pWnd) {
-			dat->pWnd = new CProxyWindow(dat);
-			if (dat->pWnd) {
-				dat->pWnd->updateIcon(dat->hTabStatusIcon);
-				dat->pWnd->updateTitle(dat->cache->getNick());
+		if (nullptr == m_pWnd) {
+			m_pWnd = new CProxyWindow(this);
+			if (m_pWnd) {
+				m_pWnd->updateIcon(m_hTabStatusIcon);
+				m_pWnd->updateTitle(m_cache->getNick());
 			}
 		}
-		else
-			dat->pWnd->verifyDwmState();
+		else m_pWnd->verifyDwmState();
 	}
 	/*
 	 * this should not happens, but who knows...
 	 */
 	else {
-		if (dat->pWnd) {
-			delete dat->pWnd;
-			dat->pWnd = 0;
+		if (m_pWnd) {
+			delete m_pWnd;
+			m_pWnd = nullptr;
 		}
 	}
 }
@@ -224,19 +207,19 @@ void CProxyWindow::verify(TWindowData *dat)
  * and previews for a message session.
  * each tab has one invisible proxy window
  */
-CProxyWindow::CProxyWindow(TWindowData *dat)
+CProxyWindow::CProxyWindow(CTabBaseDlg *dat)
 {
 	m_dat = dat;
 	m_hBigIcon = 0;
 	m_thumb = 0;
 
-	m_hwndProxy = ::CreateWindowEx(/*WS_EX_TOOLWINDOW | */WS_EX_NOACTIVATE, PROXYCLASSNAME, _T(""),
-		WS_POPUP | WS_BORDER | WS_SYSMENU | WS_CAPTION, -32000, -32000, 10, 10, NULL, NULL, g_hInst, (LPVOID)this);
+	m_hwndProxy = ::CreateWindowEx(/*WS_EX_TOOLWINDOW | */WS_EX_NOACTIVATE, PROXYCLASSNAME, L"",
+		WS_POPUP | WS_BORDER | WS_SYSMENU | WS_CAPTION, -32000, -32000, 10, 10, nullptr, nullptr, g_hInst, (LPVOID)this);
 
 #if defined(__LOGDEBUG_)
-	_DebugTraceW(_T("create proxy object for: %s"), m_dat->cache->getNick());
+	_DebugTraceW(L"create proxy object for: %s", m_dat->cache->getNick());
 #endif
-	Win7Taskbar->registerTab(m_hwndProxy, m_dat->pContainer->hwnd);
+	Win7Taskbar->registerTab(m_hwndProxy, m_dat->m_pContainer->m_hwnd);
 	if (CMimAPI::m_pfnDwmSetWindowAttribute) {
 		BOOL	fIconic = TRUE;
 		BOOL	fHasIconicBitmap = TRUE;
@@ -252,7 +235,7 @@ CProxyWindow::~CProxyWindow()
 	::DestroyWindow(m_hwndProxy);
 
 #if defined(__LOGDEBUG_)
-	_DebugTraceW(_T("destroy proxy object for: %s"), m_dat->cache->getNick());
+	_DebugTraceW(L"destroy proxy object for: %s", m_dat->cache->getNick());
 #endif
 	if (m_thumb) {
 		delete m_thumb;
@@ -293,10 +276,7 @@ void CProxyWindow::sendThumb(LONG width, LONG height)
 	if (0 == m_thumb) {
 		m_width = width;
 		m_height = height;
-		if (m_dat->bType == SESSIONTYPE_IM)
-			m_thumb = new CThumbIM(this);
-		else
-			m_thumb = new CThumbMUC(this);
+		m_thumb = m_dat->tabCreateThumb(this);
 	}
 	else if (width != m_width || height != m_height || !m_thumb->isValid()) {
 		m_width = width;
@@ -317,10 +297,10 @@ void CProxyWindow::sendThumb(LONG width, LONG height)
  */
 void CProxyWindow::sendPreview()
 {
-	if (m_dat->pContainer == NULL)
+	if (m_dat->m_pContainer == nullptr)
 		return;
 
-	TWindowData *dat_active = reinterpret_cast<TWindowData *>(::GetWindowLongPtr(m_dat->pContainer->hwndActive, GWLP_USERDATA));
+	CSrmmWindow *dat_active = reinterpret_cast<CSrmmWindow *>(::GetWindowLongPtr(m_dat->m_pContainer->m_hwndActive, GWLP_USERDATA));
 	if (!m_thumb || !dat_active)
 		return;
 
@@ -329,41 +309,41 @@ void CProxyWindow::sendPreview()
 	RECT rcContainer, rcTemp, rcRich, rcLog;
 	HDC hdc, dc;
 	int twips = (int)(15.0f / PluginConfig.m_DPIscaleY);
-	bool fIsChat = m_dat->bType != SESSIONTYPE_IM;
-	HWND 	hwndRich = ::GetDlgItem(m_dat->hwnd, fIsChat ? IDC_CHAT_LOG : IDC_LOG);
+	bool fIsChat = m_dat->isChat();
+	HWND 	hwndRich = ::GetDlgItem(m_dat->GetHwnd(), IDC_SRMM_LOG);
 	LONG 	cx, cy;
 	POINT	ptOrigin = { 0 }, ptBottom;
 
-	if (m_dat->dwFlags & MWF_NEEDCHECKSIZE) {
+	if (m_dat->m_dwFlags & MWF_NEEDCHECKSIZE) {
 		RECT	rcClient;
 
-		::SendMessage(m_dat->pContainer->hwnd, DM_QUERYCLIENTAREA, 0, (LPARAM)&rcClient);
-		::MoveWindow(m_dat->hwnd, rcClient.left, rcClient.top, (rcClient.right - rcClient.left), (rcClient.bottom - rcClient.top), FALSE);
-		::SendMessage(m_dat->hwnd, WM_SIZE, 0, 0);
-		DM_ScrollToBottom(m_dat, 0, 1);
+		::SendMessage(m_dat->m_pContainer->m_hwnd, DM_QUERYCLIENTAREA, 0, (LPARAM)&rcClient);
+		::MoveWindow(m_dat->GetHwnd(), rcClient.left, rcClient.top, (rcClient.right - rcClient.left), (rcClient.bottom - rcClient.top), FALSE);
+		::SendMessage(m_dat->GetHwnd(), WM_SIZE, 0, 0);
+		m_dat->DM_ScrollToBottom(0, 1);
 	}
 	/*
 		* a minimized container has a null rect as client area, so do not use it
 		* use the last known client area size instead.
 		*/
 
-	if (!::IsIconic(m_dat->pContainer->hwnd)) {
-		::GetWindowRect(m_dat->pContainer->hwndActive, &rcLog);
-		::GetClientRect(m_dat->pContainer->hwnd, &rcContainer);
+	if (!::IsIconic(m_dat->m_pContainer->m_hwnd)) {
+		::GetWindowRect(m_dat->m_pContainer->m_hwndActive, &rcLog);
+		::GetClientRect(m_dat->m_pContainer->m_hwnd, &rcContainer);
 		pt.x = rcLog.left;
 		pt.y = rcLog.top;
-		::ScreenToClient(m_dat->pContainer->hwnd, &pt);
+		::ScreenToClient(m_dat->m_pContainer->m_hwnd, &pt);
 	}
 	else {
-		rcLog = m_dat->pContainer->rcLogSaved;
-		rcContainer = m_dat->pContainer->rcSaved;
-		pt = m_dat->pContainer->ptLogSaved;
+		rcLog = m_dat->m_pContainer->rcLogSaved;
+		rcContainer = m_dat->m_pContainer->rcSaved;
+		pt = m_dat->m_pContainer->ptLogSaved;
 	}
 
-	::GetWindowRect(::GetDlgItem(m_dat->pContainer->hwndActive, dat_active->bType == SESSIONTYPE_IM ? IDC_LOG : IDC_CHAT_LOG), &rcTemp);
+	::GetWindowRect(::GetDlgItem(m_dat->m_pContainer->m_hwndActive, IDC_SRMM_LOG), &rcTemp);
 	ptBottom.x = rcTemp.left;
 	ptBottom.y = rcTemp.bottom;
-	::ScreenToClient(m_dat->pContainer->hwnd, &ptBottom);
+	::ScreenToClient(m_dat->m_pContainer->m_hwnd, &ptBottom);
 
 	cx = rcLog.right - rcLog.left;
 	cy = rcLog.bottom - rcLog.top;
@@ -372,7 +352,7 @@ void CProxyWindow::sendPreview()
 	rcRich.right = cx;
 	rcRich.bottom = ptBottom.y - pt.y;
 
-	dc = ::GetDC(m_dat->hwnd);
+	dc = ::GetDC(m_dat->GetHwnd());
 	hdc = ::CreateCompatibleDC(dc);
 	HBITMAP hbm = CSkin::CreateAeroCompatibleBitmap(rcContainer, hdc);
 	HBITMAP hbmOld = reinterpret_cast<HBITMAP>(::SelectObject(hdc, hbm));
@@ -392,16 +372,16 @@ void CProxyWindow::sendPreview()
 	HBITMAP hbmRich = CSkin::CreateAeroCompatibleBitmap(rcRich, hdcRich);
 	HBITMAP hbmRichOld = reinterpret_cast<HBITMAP>(::SelectObject(hdcRich, hbmRich));
 
-	COLORREF clr = fIsChat ? M.GetDword(FONTMODULE, SRMSGSET_BKGCOLOUR, SRMSGDEFSET_BKGCOLOUR) : m_dat->pContainer->theme.inbg;
+	COLORREF clr = fIsChat ? M.GetDword(FONTMODULE, SRMSGSET_BKGCOLOUR, SRMSGDEFSET_BKGCOLOUR) : m_dat->m_pContainer->theme.inbg;
 	HBRUSH br = ::CreateSolidBrush(clr);
 	::FillRect(hdcRich, &rcRich, br);
 	::DeleteObject(br);
 
-	if (m_dat->hwndIEView)
-		::SendMessage(m_dat->hwndIEView, WM_PRINT, reinterpret_cast<WPARAM>(hdcRich), PRF_CLIENT | PRF_NONCLIENT);
-	else if (m_dat->hwndHPP) {
-		CSkin::RenderText(hdcRich, m_dat->hTheme, TranslateT("Previews not available when using History++ plugin for message log display."),
-			&rcRich, DT_VCENTER | DT_CENTER | DT_WORDBREAK, 10, m_dat->pContainer->theme.fontColors[MSGFONTID_MYMSG], false);
+	if (m_dat->m_hwndIEView)
+		::SendMessage(m_dat->m_hwndIEView, WM_PRINT, reinterpret_cast<WPARAM>(hdcRich), PRF_CLIENT | PRF_NONCLIENT);
+	else if (m_dat->m_hwndHPP) {
+		CSkin::RenderText(hdcRich, m_dat->m_hTheme, TranslateT("Previews not available when using History++ plugin for message log display."),
+			&rcRich, DT_VCENTER | DT_CENTER | DT_WORDBREAK, 10, m_dat->m_pContainer->theme.fontColors[MSGFONTID_MYMSG], false);
 	}
 	else {
 		rcRich.right *= twips;
@@ -433,8 +413,8 @@ void CProxyWindow::sendPreview()
 	}
 	else pt.x = pt.y = 0;
 
-	CMimAPI::m_pfnDwmSetIconicLivePreviewBitmap(m_hwndProxy, hbm, &pt, m_dat->pContainer->dwFlags & CNT_CREATE_MINIMIZED ? 0 : DWM_SIT_DISPLAYFRAME);
-	::ReleaseDC(m_dat->hwnd, dc);
+	CMimAPI::m_pfnDwmSetIconicLivePreviewBitmap(m_hwndProxy, hbm, &pt, m_dat->m_pContainer->dwFlags & CNT_CREATE_MINIMIZED ? 0 : DWM_SIT_DISPLAYFRAME);
+	::ReleaseDC(m_dat->GetHwnd(), dc);
 	::DeleteObject(hbm);
 }
 
@@ -488,7 +468,7 @@ void CProxyWindow::updateIcon(const HICON hIcon) const
  */
 void CProxyWindow::activateTab() const
 {
-	Win7Taskbar->SetTabActive(m_hwndProxy, m_dat->pContainer->hwnd);
+	Win7Taskbar->SetTabActive(m_hwndProxy, m_dat->m_pContainer->m_hwnd);
 }
 /**
  * invalidate the thumbnail, it will be recreated at the next request
@@ -515,7 +495,7 @@ void CProxyWindow::Invalidate() const
  * update the thumb title string (usually, the nickname)
  * @param tszTitle: 	new title string
  */
-void CProxyWindow::updateTitle(const TCHAR *tszTitle) const
+void CProxyWindow::updateTitle(const wchar_t *tszTitle) const
 {
 	if (m_hwndProxy && tszTitle)
 		::SetWindowText(m_hwndProxy, tszTitle);
@@ -551,14 +531,14 @@ LRESULT CALLBACK CProxyWindow::wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARA
 	switch (msg) {
 	case WM_CLOSE:
 		{
-			TContainerData* pC = m_dat->pContainer;
+			TContainerData* pC = m_dat->m_pContainer;
 
-			if (m_dat->hwnd != pC->hwndActive)
-				SendMessage(m_dat->hwnd, WM_CLOSE, 1, 3);
+			if (m_dat->GetHwnd() != pC->m_hwndActive)
+				SendMessage(m_dat->GetHwnd(), WM_CLOSE, 1, 3);
 			else
-				SendMessage(m_dat->hwnd, WM_CLOSE, 1, 2);
-			if (!IsIconic(pC->hwnd))
-				SetForegroundWindow(pC->hwnd);
+				SendMessage(m_dat->GetHwnd(), WM_CLOSE, 1, 2);
+			if (!IsIconic(pC->m_hwnd))
+				SetForegroundWindow(pC->m_hwnd);
 		}
 		return 0;
 
@@ -568,8 +548,8 @@ LRESULT CALLBACK CProxyWindow::wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARA
 		*/
 	case WM_ACTIVATE:
 		if (WA_ACTIVE == wParam) {
-			if (IsWindow(m_dat->hwnd))
-				::PostMessage(m_dat->hwnd, DM_ACTIVATEME, 0, 0);
+			if (IsWindow(m_dat->GetHwnd()))
+				::PostMessage(m_dat->GetHwnd(), DM_ACTIVATEME, 0, 0);
 			return 0;			// no default processing, avoid flickering.
 		}
 		break;
@@ -596,7 +576,8 @@ LRESULT CALLBACK CProxyWindow::wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARA
  * @param _p			 owner proxy window object
  * @return
  */
-CThumbBase::CThumbBase(const CProxyWindow* _p)
+CThumbBase::CThumbBase(const CProxyWindow* _p) :
+	m_isValid(false)
 {
 	m_pWnd = _p;
 	m_hbmThumb = 0;
@@ -621,7 +602,7 @@ void CThumbBase::renderBase()
 	m_hOldFont = 0;
 
 #if defined(__LOGDEBUG_)
-	_DebugTraceW(_T("refresh base (background) with %d, %d"), m_width, m_height);
+	_DebugTraceW(L"refresh base (background) with %d, %d", m_width, m_height);
 #endif
 
 	m_rc.right = m_width;
@@ -640,12 +621,12 @@ void CThumbBase::renderBase()
 	m_hbmOld = reinterpret_cast<HBITMAP>(::SelectObject(m_hdc, m_hbmThumb));
 	ReleaseDC(m_pWnd->getHwnd(), dc);
 
-	brBack = ::CreateSolidBrush(m_dat->dwUnread ? RGB(80, 60, 60) : RGB(60, 60, 60));
+	brBack = ::CreateSolidBrush(m_dat->m_dwUnread ? RGB(80, 60, 60) : RGB(60, 60, 60));
 	::FillRect(m_hdc, &m_rc, brBack);
 	::DeleteObject(brBack);
 
 	::SelectObject(m_hdc, m_hbmOld);
-	CImageItem::SetBitmap32Alpha(m_hbmThumb, m_dat->dwUnread ? 110 : 60);
+	CImageItem::SetBitmap32Alpha(m_hbmThumb, m_dat->m_dwUnread ? 110 : 60);
 	m_hbmOld = reinterpret_cast<HBITMAP>(::SelectObject(m_hdc, m_hbmThumb));
 
 	SetBkMode(m_hdc, TRANSPARENT);
@@ -659,7 +640,7 @@ void CThumbBase::renderBase()
 	hIcon = m_pWnd->getBigIcon();
 
 	if (0 == hIcon) {
-		if (m_dat->dwUnread) {
+		if (m_dat->m_dwUnread) {
 			if (PluginConfig.g_IconMsgEventBig)
 				hIcon = PluginConfig.g_IconMsgEventBig;
 			else {
@@ -668,9 +649,9 @@ void CThumbBase::renderBase()
 			}
 		}
 		else {
-			hIcon = reinterpret_cast<HICON>(Skin_LoadProtoIcon(m_dat->cache->getActiveProto(), m_dat->cache->getActiveStatus(), true));
+			hIcon = reinterpret_cast<HICON>(Skin_LoadProtoIcon(m_dat->m_cache->getActiveProto(), m_dat->m_cache->getActiveStatus(), true));
 			if (0 == hIcon || reinterpret_cast<HICON>(CALLSERVICE_NOTFOUND) == hIcon) {
-				hIcon = reinterpret_cast<HICON>(Skin_LoadProtoIcon(m_dat->cache->getActiveProto(), m_dat->cache->getActiveStatus()));
+				hIcon = reinterpret_cast<HICON>(Skin_LoadProtoIcon(m_dat->m_cache->getActiveProto(), m_dat->m_cache->getActiveStatus()));
 				lIconSize = 16;
 			}
 		}
@@ -681,13 +662,13 @@ void CThumbBase::renderBase()
 		::DrawIconEx(m_hdc, m_rcIcon.right - 16, m_rcIcon.top + 16, hIcon, 16, 16, 0, 0, DI_NORMAL);
 
 	m_rcIcon.top += (lIconSize + 3);
-	CSkin::RenderText(m_hdc, m_dat->hTheme, m_dat->szStatus, &m_rcIcon, m_dtFlags | DT_CENTER | DT_WORD_ELLIPSIS, 10, 0, true);
-	if (m_dat->dwUnread && SESSIONTYPE_IM == m_dat->bType) {
+	CSkin::RenderText(m_hdc, m_dat->m_hTheme, m_dat->m_wszStatus, &m_rcIcon, m_dtFlags | DT_CENTER | DT_WORD_ELLIPSIS, 10, 0, true);
+	if (m_dat->m_dwUnread && !m_dat->isChat()) {
 		wchar_t	tszTemp[30];
 
 		m_rcIcon.top += m_sz.cy;
-		mir_sntprintf(tszTemp, TranslateT("%d unread"), m_dat->dwUnread);
-		CSkin::RenderText(m_hdc, m_dat->hTheme, tszTemp, &m_rcIcon, m_dtFlags | DT_CENTER | DT_WORD_ELLIPSIS, 10, 0, true);
+		mir_snwprintf(tszTemp, TranslateT("%d unread"), m_dat->m_dwUnread);
+		CSkin::RenderText(m_hdc, m_dat->m_hTheme, tszTemp, &m_rcIcon, m_dtFlags | DT_CENTER | DT_WORD_ELLIPSIS, 10, 0, true);
 	}
 	m_rcIcon = m_rcTop;
 	m_rcIcon.top += 2;
@@ -701,7 +682,7 @@ void CThumbBase::renderBase()
  */
 void CThumbBase::setupRect()
 {
-	if (SESSIONTYPE_IM == m_pWnd->getDat()->bType) {
+	if (!m_pWnd->getDat()->isChat()) {
 		m_rcTop = m_rc;
 		m_rcBottom = m_rc;
 		m_rcBottom.top = m_rc.bottom - (2 * (m_rcBottom.bottom / 5)) - 2;
@@ -733,7 +714,7 @@ CThumbBase::~CThumbBase()
 		m_isValid = false;
 	}
 #if defined(__LOGDEBUG_)
-	_DebugTraceW(_T("destroy CThumbBase"));
+	_DebugTraceW(L"destroy CThumbBase");
 #endif
 }
 
@@ -769,7 +750,7 @@ void CThumbIM::renderContent()
 	double dNewWidth = 0.0, dNewHeight = 0.0;
 	bool fFree = false;
 
-	HBITMAP hbmAvatar = (m_dat->ace && m_dat->ace->hbmPic) ? m_dat->ace->hbmPic : PluginConfig.g_hbmUnknown;
+	HBITMAP hbmAvatar = (m_dat->m_ace && m_dat->m_ace->hbmPic) ? m_dat->m_ace->hbmPic : PluginConfig.g_hbmUnknown;
 	Utils::scaleAvatarHeightLimited(hbmAvatar, dNewWidth, dNewHeight, m_rcIcon.bottom - m_rcIcon.top);
 
 	HBITMAP hbmResized = CSkin::ResizeBitmap(hbmAvatar, dNewWidth, dNewHeight, fFree);
@@ -804,14 +785,14 @@ void CThumbIM::renderContent()
 
 	m_rcBottom.bottom -= ((m_rcBottom.bottom - m_rcBottom.top) % m_sz.cy);		// adjust to a multiple of line height
 
-	const wchar_t *tszStatusMsg = m_dat->cache->getStatusMsg();
+	const wchar_t *tszStatusMsg = m_dat->m_cache->getStatusMsg();
 	if (tszStatusMsg == 0)
 		tszStatusMsg = TranslateT("No status message");
 
-	CSkin::RenderText(m_hdc, m_dat->hTheme, tszStatusMsg, &m_rcBottom, DT_WORD_ELLIPSIS | DT_END_ELLIPSIS | m_dtFlags, 10, 0, true);
+	CSkin::RenderText(m_hdc, m_dat->m_hTheme, tszStatusMsg, &m_rcBottom, DT_WORD_ELLIPSIS | DT_END_ELLIPSIS | m_dtFlags, 10, 0, true);
 	m_rcBottom.bottom = m_rc.bottom;
 	m_rcBottom.top = m_rcBottom.bottom - m_sz.cy - 2;
-	CSkin::RenderText(m_hdc, m_dat->hTheme, Win7Taskbar->haveAlwaysGroupingMode() ? m_dat->cache->getUIN() : m_dat->cache->getNick(),
+	CSkin::RenderText(m_hdc, m_dat->m_hTheme, Win7Taskbar->haveAlwaysGroupingMode() ? m_dat->m_cache->getUIN() : m_dat->m_cache->getNick(),
 		&m_rcBottom, m_dtFlags | DT_SINGLELINE | DT_WORD_ELLIPSIS | DT_END_ELLIPSIS, 10, 0, true);
 
 	/*
@@ -834,7 +815,9 @@ void CThumbIM::renderContent()
  * @param _p	our owner (CProxyWindow object)
  * @return
  */
-CThumbMUC::CThumbMUC(const CProxyWindow* _p) : CThumbBase(_p)
+CThumbMUC::CThumbMUC(const CProxyWindow* _p, SESSION_INFO *_si)
+	: CThumbBase(_p),
+	si(_si)
 {
 	renderContent();
 	setValid(true);
@@ -855,61 +838,63 @@ void CThumbMUC::update()
  */
 void CThumbMUC::renderContent()
 {
-	if (m_dat->si) {
-		const MODULEINFO*	mi = pci->MM_FindModule(m_dat->si->pszModule);
-		wchar_t				szTemp[250];
-		const wchar_t*		szStatusMsg = 0;
+	if (si == nullptr)
+		return;
 
-		if (mi) {
-			if (m_dat->dwUnread) {
-				mir_sntprintf(szTemp, TranslateT("%d unread"), m_dat->dwUnread);
-				CSkin::RenderText(m_hdc, m_dat->hTheme, szTemp, &m_rcIcon, m_dtFlags | DT_SINGLELINE | DT_RIGHT, 10, 0, true);
+	const MODULEINFO *mi = pci->MM_FindModule(si->pszModule);
+	if (mi) {
+		wchar_t szTemp[250];
+		if (m_dat->m_dwUnread) {
+			mir_snwprintf(szTemp, TranslateT("%d unread"), m_dat->m_dwUnread);
+			CSkin::RenderText(m_hdc, m_dat->m_hTheme, szTemp, &m_rcIcon, m_dtFlags | DT_SINGLELINE | DT_RIGHT, 10, 0, true);
+			m_rcIcon.top += m_sz.cy;
+		}
+		if (si->iType != GCW_SERVER) {
+			wchar_t* _p = nullptr;
+			if (si->ptszStatusbarText)
+				_p = wcschr(si->ptszStatusbarText, ']');
+			if (_p) {
+				_p++;
+				wchar_t	_t = *_p;
+				*_p = 0;
+				mir_snwprintf(szTemp, TranslateT("Chat room %s"), si->ptszStatusbarText);
+				*_p = _t;
+			}
+			else
+				mir_snwprintf(szTemp, TranslateT("Chat room %s"), L"");
+			CSkin::RenderText(m_hdc, m_dat->m_hTheme, szTemp, &m_rcIcon, m_dtFlags | DT_SINGLELINE | DT_RIGHT, 10, 0, true);
+			m_rcIcon.top += m_sz.cy;
+			mir_snwprintf(szTemp, TranslateT("%d user(s)"), si->nUsersInNicklist);
+			CSkin::RenderText(m_hdc, m_dat->m_hTheme, szTemp, &m_rcIcon, m_dtFlags | DT_SINGLELINE | DT_RIGHT, 10, 0, true);
+		}
+		else {
+			mir_snwprintf(szTemp, TranslateT("Server window"));
+			CSkin::RenderText(m_hdc, m_dat->m_hTheme, szTemp, &m_rcIcon, m_dtFlags | DT_SINGLELINE | DT_RIGHT, 10, 0, true);
+			if (mi->tszIdleMsg[0] && mir_wstrlen(mi->tszIdleMsg) > 2) {
 				m_rcIcon.top += m_sz.cy;
-			}
-			if (m_dat->si->iType != GCW_SERVER) {
-				wchar_t* _p = NULL;
-				if (m_dat->si->ptszStatusbarText)
-					_p = wcschr(m_dat->si->ptszStatusbarText, ']');
-				if (_p) {
-					_p++;
-					wchar_t	_t = *_p;
-					*_p = 0;
-					mir_sntprintf(szTemp, TranslateT("Chat room %s"), m_dat->si->ptszStatusbarText);
-					*_p = _t;
-				}
-				else
-					mir_sntprintf(szTemp, TranslateT("Chat room %s"), L"");
-				CSkin::RenderText(m_hdc, m_dat->hTheme, szTemp, &m_rcIcon, m_dtFlags | DT_SINGLELINE | DT_RIGHT, 10, 0, true);
-				m_rcIcon.top += m_sz.cy;
-				mir_sntprintf(szTemp, TranslateT("%d user(s)"), m_dat->si->nUsersInNicklist);
-				CSkin::RenderText(m_hdc, m_dat->hTheme, szTemp, &m_rcIcon, m_dtFlags | DT_SINGLELINE | DT_RIGHT, 10, 0, true);
-			}
-			else {
-				mir_sntprintf(szTemp, TranslateT("Server window"));
-				CSkin::RenderText(m_hdc, m_dat->hTheme, szTemp, &m_rcIcon, m_dtFlags | DT_SINGLELINE | DT_RIGHT, 10, 0, true);
-				if (mi->tszIdleMsg[0] && mir_tstrlen(mi->tszIdleMsg) > 2) {
-					m_rcIcon.top += m_sz.cy;
-					CSkin::RenderText(m_hdc, m_dat->hTheme, &mi->tszIdleMsg[2], &m_rcIcon, m_dtFlags | DT_SINGLELINE | DT_RIGHT, 10, 0, true);
-				}
+				CSkin::RenderText(m_hdc, m_dat->m_hTheme, &mi->tszIdleMsg[2], &m_rcIcon, m_dtFlags | DT_SINGLELINE | DT_RIGHT, 10, 0, true);
 			}
 		}
-
-		if ((m_rcBottom.bottom - m_rcBottom.top) < 2 * m_sz.cy)
-			m_dtFlags |= DT_SINGLELINE;
-
-		m_rcBottom.bottom -= ((m_rcBottom.bottom - m_rcBottom.top) % m_sz.cy);		// adjust to a multiple of line height
-
-		if (m_dat->si->iType != GCW_SERVER) {
-			if (0 == (szStatusMsg = m_dat->si->ptszTopic))
-				szStatusMsg = TranslateT("no topic set.");
-		}
-		else if (mi) {
-			mir_sntprintf(szTemp, TranslateT("%s on %s%s"), m_dat->szMyNickname, mi->ptszModDispName, L"");
-			szStatusMsg = szTemp;
-		}
-
-		CSkin::RenderText(m_hdc, m_dat->hTheme, szStatusMsg, &m_rcBottom, DT_WORD_ELLIPSIS | DT_END_ELLIPSIS | m_dtFlags, 10, 0, true);
 	}
+
+	if ((m_rcBottom.bottom - m_rcBottom.top) < 2 * m_sz.cy)
+		m_dtFlags |= DT_SINGLELINE;
+
+	m_rcBottom.bottom -= ((m_rcBottom.bottom - m_rcBottom.top) % m_sz.cy);		// adjust to a multiple of line height
+
+	const wchar_t *szStatusMsg = 0;
+	if (si->iType != GCW_SERVER) {
+		if (0 == (szStatusMsg = si->ptszTopic))
+			szStatusMsg = TranslateT("no topic set.");
+	}
+	else if (mi) {
+		wchar_t szTemp[250];
+		mir_snwprintf(szTemp, TranslateT("%s on %s%s"), m_dat->m_wszMyNickname, mi->ptszModDispName, L"");
+		szStatusMsg = szTemp;
+	}
+
+	CSkin::RenderText(m_hdc, m_dat->m_hTheme, szStatusMsg, &m_rcBottom, DT_WORD_ELLIPSIS | DT_END_ELLIPSIS | m_dtFlags, 10, 0, true);
+
 	/*
 	 * finalize it
 	 * do NOT delete the bitmap, the dwm will need the handle

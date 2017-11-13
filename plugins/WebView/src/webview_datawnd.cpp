@@ -78,7 +78,7 @@ INT_PTR CALLBACK DlgProcFind(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 
 				mir_strcpy(Searchstr, NewSearchstr);
 
-				if (!(startposition > mir_strlen(buff)))
+				if (!(startposition > (int)mir_strlen(buff)))
 					location = (strstr(buff + startposition, NewSearchstr)) - buff;
 
 				oldloc = loc;
@@ -117,25 +117,25 @@ INT_PTR CALLBACK DlgProcFind(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 
 /*****************************************************************************/
 
-static TCHAR tszSizeString[] = _T("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+static wchar_t tszSizeString[] = L"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
 
 static MCONTACT FindContactByUrl(HWND hwndDlg)
 {
 	MCONTACT res = NULL;
-	TCHAR urltext[300], titlebartxt[300];
+	wchar_t urltext[300], titlebartxt[300];
 	int contactcount = 0;
 
 	GetDlgItemText(hwndDlg, IDC_OPEN_URL, urltext, _countof(urltext));
 	GetWindowText(hwndDlg, titlebartxt, _countof(titlebartxt));
 
 	for (MCONTACT hContact = db_find_first(MODULENAME); hContact != NULL; hContact = db_find_next(hContact, MODULENAME)) {
-		ptrT db1( db_get_tsa(hContact, MODULENAME, URL_KEY));
-		ptrT db2( db_get_tsa(hContact, MODULENAME, PRESERVE_NAME_KEY));
+		ptrW db1( db_get_wsa(hContact, MODULENAME, URL_KEY));
+		ptrW db2( db_get_wsa(hContact, MODULENAME, PRESERVE_NAME_KEY));
 
-		if (!mir_tstrcmp(urltext, db1) && !mir_tstrcmp(titlebartxt, db2)) {
+		if (!mir_wstrcmp(urltext, db1) && !mir_wstrcmp(titlebartxt, db2)) {
 			contactcount++;
 			if (contactcount > 1) {
-				MessageBox(NULL, TranslateT("ERROR: You have two or more Webview contacts with the same URL and contact name."), _T(MODULENAME), MB_OK);
+				MessageBox(NULL, TranslateT("ERROR: You have two or more Webview contacts with the same URL and contact name."), _A2W(MODULENAME), MB_OK);
 				return NULL;
 			}
 			res = hContact;
@@ -148,7 +148,7 @@ INT_PTR CALLBACK DlgProcDisplayData(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 {
 	DBVARIANT dbv;
 	RECT rc;
-	TCHAR url[300];
+	wchar_t url[300];
 	MCONTACT hContact;
 
 	switch (msg) {
@@ -161,8 +161,8 @@ INT_PTR CALLBACK DlgProcDisplayData(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			WindowList_Add(hWindowList, hwndDlg, hContact2);
 
 			url[0] = '\0';
-			if (!db_get_ts(hContact2, MODULENAME, URL_KEY, &dbv)) {
-				_tcsncpy_s(url, dbv.ptszVal, _TRUNCATE);
+			if (!db_get_ws(hContact2, MODULENAME, URL_KEY, &dbv)) {
+				wcsncpy_s(url, dbv.ptszVal, _TRUNCATE);
 				db_free(&dbv);
 			}
 			SetDlgItemText(hwndDlg, IDC_OPEN_URL, FixButtonText(url, _countof(url)));
@@ -183,36 +183,36 @@ INT_PTR CALLBACK DlgProcDisplayData(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			SendDlgItemMessage(hwndDlg, IDC_DATA, EM_SETBKGNDCOLOR, 0, colour);
 
 			SendDlgItemMessage(hwndDlg, IDC_UPDATE_BUTTON, BM_SETIMAGE, IMAGE_ICON, (LPARAM) LoadImage(hInst, MAKEINTRESOURCE(IDI_UPDATE), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), 0));
-			SendDlgItemMessage(hwndDlg, IDC_UPDATE_BUTTON, BUTTONADDTOOLTIP, (WPARAM) TranslateT("Update data"), BATF_TCHAR);
+			SendDlgItemMessage(hwndDlg, IDC_UPDATE_BUTTON, BUTTONADDTOOLTIP, (WPARAM) TranslateT("Update data"), BATF_UNICODE);
 
 			SendDlgItemMessage(hwndDlg, IDC_FIND_BUTTON, BM_SETIMAGE, IMAGE_ICON, (LPARAM) LoadImage(hInst, MAKEINTRESOURCE(IDI_FIND), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), 0));
-			SendDlgItemMessage(hwndDlg, IDC_FIND_BUTTON, BUTTONADDTOOLTIP, (WPARAM) TranslateT("Find"), BATF_TCHAR);
+			SendDlgItemMessage(hwndDlg, IDC_FIND_BUTTON, BUTTONADDTOOLTIP, (WPARAM) TranslateT("Find"), BATF_UNICODE);
 
 			SendDlgItemMessage(hwndDlg, IDC_OPTIONS_BUTTON, BM_SETIMAGE, IMAGE_ICON, (LPARAM) LoadImage(hInst, MAKEINTRESOURCE(IDI_OPTIONS), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), 0));
-			SendDlgItemMessage(hwndDlg, IDC_OPTIONS_BUTTON, BUTTONADDTOOLTIP, (WPARAM) TranslateT("Contact options"), BATF_TCHAR);
+			SendDlgItemMessage(hwndDlg, IDC_OPTIONS_BUTTON, BUTTONADDTOOLTIP, (WPARAM) TranslateT("Contact options"), BATF_UNICODE);
 
 			SendDlgItemMessage(hwndDlg, IDC_ALERT_BUTTON, BM_SETIMAGE, IMAGE_ICON, (LPARAM) LoadImage(hInst, MAKEINTRESOURCE(IDI_ALERT), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), 0));
-			SendDlgItemMessage(hwndDlg, IDC_ALERT_BUTTON, BUTTONADDTOOLTIP, (WPARAM) TranslateT("Alert options"), BATF_TCHAR);
+			SendDlgItemMessage(hwndDlg, IDC_ALERT_BUTTON, BUTTONADDTOOLTIP, (WPARAM) TranslateT("Alert options"), BATF_UNICODE);
 
 			SendDlgItemMessage(hwndDlg, IDC_STOP, BM_SETIMAGE, IMAGE_ICON, (LPARAM) LoadImage(hInst, MAKEINTRESOURCE(IDI_STOP), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), 0));
-			SendDlgItemMessage(hwndDlg, IDC_STOP, BUTTONADDTOOLTIP, (WPARAM) TranslateT("Stop processing"), BATF_TCHAR);
+			SendDlgItemMessage(hwndDlg, IDC_STOP, BUTTONADDTOOLTIP, (WPARAM) TranslateT("Stop processing"), BATF_UNICODE);
 
-			SendDlgItemMessage(hwndDlg, IDC_OPEN_URL, BUTTONADDTOOLTIP, (WPARAM) TranslateT("Click here to open this URL in a browser window."), BATF_TCHAR);
+			SendDlgItemMessage(hwndDlg, IDC_OPEN_URL, BUTTONADDTOOLTIP, (WPARAM) TranslateT("Click here to open this URL in a browser window."), BATF_UNICODE);
 
 			if (!db_get_b(hContact2, MODULENAME, ON_TOP_KEY, 0)) {
 				SendDlgItemMessage(hwndDlg, IDC_STICK_BUTTON, BM_SETIMAGE, IMAGE_ICON, (LPARAM) LoadImage(hInst, MAKEINTRESOURCE(IDI_UNSTICK), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), 0));
-				SendDlgItemMessage(hwndDlg, IDC_STICK_BUTTON, BUTTONADDTOOLTIP, (WPARAM) TranslateT("Stick to the front"), BATF_TCHAR);
+				SendDlgItemMessage(hwndDlg, IDC_STICK_BUTTON, BUTTONADDTOOLTIP, (WPARAM) TranslateT("Stick to the front"), BATF_UNICODE);
 			}
 			else {
 				SendDlgItemMessage(hwndDlg, IDC_STICK_BUTTON, BM_SETIMAGE, IMAGE_ICON, (LPARAM) LoadImage(hInst, MAKEINTRESOURCE(IDI_STICK), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), 0));
-				SendDlgItemMessage(hwndDlg, IDC_STICK_BUTTON, BUTTONADDTOOLTIP, (WPARAM) TranslateT("Disable stick to the front"), BATF_TCHAR);
+				SendDlgItemMessage(hwndDlg, IDC_STICK_BUTTON, BUTTONADDTOOLTIP, (WPARAM) TranslateT("Disable stick to the front"), BATF_UNICODE);
 			}
 
 			SendDlgItemMessage(hwndDlg, IDC_DATA, WM_SETFONT, (WPARAM) h_font, 1);
 
 			txtcolor = TextClr;
 
-			SetDlgItemText(hwndDlg, IDC_DATA, _T(""));
+			SetDlgItemText(hwndDlg, IDC_DATA, L"");
 
 			InvalidateRect(hwndDlg, NULL, 1);
 
@@ -338,7 +338,7 @@ INT_PTR CALLBACK DlgProcDisplayData(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 		switch (LOWORD(wParam)) {
 		case IDC_OPEN_URL:
 			GetDlgItemText(hwndDlg, IDC_OPEN_URL, url, _countof(url));
-			Utils_OpenUrlT(url);  
+			Utils_OpenUrlW(url);  
 			db_set_w(wParam, MODULENAME, "Status", ID_STATUS_ONLINE); 
 			break;
 
@@ -358,7 +358,7 @@ INT_PTR CALLBACK DlgProcDisplayData(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			if (hContact = FindContactByUrl(hwndDlg))
 				OnTopMenuCommand(wParam, lParam, hContact);
 			{
-				TCHAR *ptszToolTip;
+				wchar_t *ptszToolTip;
 				HWND hTopmost;
 				if (!db_get_b(hContact, MODULENAME, ON_TOP_KEY, 0)) {
 					hTopmost = HWND_NOTOPMOST;
@@ -369,7 +369,7 @@ INT_PTR CALLBACK DlgProcDisplayData(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 					ptszToolTip = TranslateT("Disable stick to the front");
 				}
 				SendDlgItemMessage(hwndDlg, IDC_STICK_BUTTON, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadImage(hInst, MAKEINTRESOURCE(IDI_UNSTICK), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), 0));
-				SendDlgItemMessage(hwndDlg, IDC_STICK_BUTTON, BUTTONADDTOOLTIP, (WPARAM)ptszToolTip, BATF_TCHAR);
+				SendDlgItemMessage(hwndDlg, IDC_STICK_BUTTON, BUTTONADDTOOLTIP, (WPARAM)ptszToolTip, BATF_UNICODE);
 				SetWindowPos(hwndDlg, hTopmost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 			}
 			break;

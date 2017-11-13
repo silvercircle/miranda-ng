@@ -1,0 +1,37 @@
+﻿#muuid {88928401-2ce8-4568-aaa7-226141870cbf}
+;============================================================
+;  File: Discord.dll
+;  Plugin: Discord protocol
+;  Version: 0.5.1.2
+;  Authors: George Hazan
+;============================================================
+[User details]
+Про користувача
+[E-mail:]
+Пошта:
+[Password:]
+Пароль:
+[Contacts]
+Контакти
+[Default group:]
+Група:
+[Nick:]
+Нік:
+[Change &nickname]
+Змінити &нік
+[&Invite a user]
+&Запросити користувача
+[Main icon]
+Головний значок
+[Group chats]
+Групові чати
+[Network]
+Мережа
+[Account]
+Обліковий запис
+[%s server connection]
+З'єднання з сервером %s
+[User ID]
+ID користувача
+[Preview]
+Тест

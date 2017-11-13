@@ -6,22 +6,30 @@
 ;  Authors: MikalaiR
 ;============================================================
 [Displays icons in message window showing whether your last outgoing message was read / is still unread.]
-
-;file \plugins\MessageState\src\global.h
-[Unread message icon]
-
-[Read message icon]
-
-[Failed sending icon]
-
-[Sending message icon]
-
+Zobrazuje ikony informující o stavu vaší poslední odeslané zprávy - zda byla přečtena či nikoliv.
+;file \plugins\MessageState\src\clist_extra.cpp
+[MessageState unread extra icon]
+MessageState ikona nepřečtené zprávy
 ;file \plugins\MessageState\src\messagestate.cpp
-[Last message read at]
-
+[Unread message icon]
+Ikona nepřečtené zprávy
+[Read message icon]
+Ikona přečtené zprávy
+[Failed sending icon]
+Ikona chyby odesílání
+[Sending message icon]
+Ikony odesílání zprávy
+[Unread clist extra icon]
+Ikona nepřečtené zprávy v seznamu
 [Last message is not read]
-
-[Last message was not sent.]
-
+Poslední zpráva nebyla přečtena
+[Last message read]
+Poslední zpráva přečtena
+[Last message was not sent]
+Poslední zpráva nebyla odeslána
 [Sending...]
-Posílání dat...
+Odesílání...
+[Last message read at %X %x]
+Poslední zpráva přečtena v %X %x
+[Last message read (unknown time)]
+Poslední zpráva přečtena (neznámo kdy)

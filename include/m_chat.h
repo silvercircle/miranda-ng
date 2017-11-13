@@ -121,9 +121,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	needed to make sure that the protocol obey rule 1 mentioned above, but also to
 	set protocol specific preferences.
 
-	* Use MS_GC_REGISTER like this: CallService(MS_GC_REGISTER, 0, (LPARAM)(GCREGISTER *) &gcr;
-
-	* returns 0 on success or error code on failure.
+	returns 0 on success or error code on failure.
 */
 
 // Flags
@@ -135,31 +133,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define GC_ACKMSG          0x0020 // the protocol must acknowlege messages sent
 #define GC_TYPNOTIF        0x0040 // enable typing notifications.
 #define GC_CHANMGR         0x0080 // enable the 'channel settings' button
-#define GC_SINGLEFORMAT    0x0100 // the protocol supports only 1 formatting per message
-#define GC_FONTSIZE        0x0200 // enable font size selection
 
 // Error messages
-#define GC_REGISTER_WRONGVER	1   // You appear to be using the wrong version of this API. Registration failed.
-#define GC_REGISTER_ERROR		2   // An internal error occurred. Registration failed.
-#define GC_REGISTER_NOUNICODE	3   // MS_GC_REGISTER returns this error if the Unicode version of chat
-                                  // is not installed and GC_UNICODE is set. Registration failed
+#define GC_ERROR                1 // An internal error occurred.
 
 // GCREGISTER struct
 struct GCREGISTER
 {
-	int        cbSize;            // Set to sizeof(GCREGISTER);
-	DWORD      dwFlags;           // Use GC_* flags above to indicate features supported
-	LPCSTR     pszModule;         // This MUST be the protocol name as registered with Miranda IM
-	LPCTSTR    ptszDispName;      // This is the protocol's real name as it will be displayed to the user
-	int        iMaxText;          // Max message length the protocol supports. Will limit the typing area input. 0 = no limit
-	int        nColors;           // Number of colors in the colorchooser menu for the color buttons. Max = 100
-	COLORREF*  pColors;           // pointer to the first item in a static COLORREF array containing the colors
-	                              // that should be showed in the colorchooser menu.
-	                              // ie:	COLORREF crCols[nColors];
-	                              //	pColors = &crCols[0];
+	const char    *pszModule;      // This MUST be the protocol name as registered with Miranda IM
+	const wchar_t *ptszDispName;   // This is the protocol's real name as it will be displayed to the user
+	unsigned       dwFlags;        // Use GC_* flags above to indicate features supported
+	int            iMaxText;       // Max message length the protocol supports. Will limit the typing area input. 0 = no limit
+	int            nColors;        // Number of colors in the colorchooser menu for the color buttons. Max = 100
+	COLORREF      *pColors;        // pointer to the first item in a static COLORREF array containing the colors
+	                               // that should be showed in the colorchooser menu.
+	                               // ie:	COLORREF crCols[nColors];
+	                               //	pColors = &crCols[0];
 };
 
-#define MS_GC_REGISTER  "GChat/Register"
+EXTERN_C MIR_APP_DLL(int) Chat_Register(const GCREGISTER*);
 
 /*
 	Step 2. -- CREATE a new SESSION --
@@ -168,11 +160,8 @@ struct GCREGISTER
 	The chat room will not be shown to the user until the 'set up' phase is
 	completed and SESSION_INITDONE is sent. See the MS_GC_EVENT for that.
 
-	* Use MS_GC_NEWSESSION like this: CallService(MS_GC_NEWSESSION, 0, (LPARAM)(GCSESSION *) &gcr;
-
-	* returns 0 on success or error code on failure
+	returns 0 on success or error code on failure
 */
-
 
 // Session type
 #define GCW_CHATROOM 1  // the session is a dedicated multi user chat room. ex "IRC channels".
@@ -182,24 +171,13 @@ struct GCREGISTER
 #define GCW_PRIVMESS 3  // NOT SUPPORTED YET! the session is a 1 to 1 session, but with additional
                         // support for adding more users etc. ex "MSN session".
 
-// Error messages
-#define GC_NEWSESSION_WRONGVER  1  // You appear to be using the wrong version of this API.
-#define GC_NEWSESSION_ERROR     2  // An internal error occurred.
-
-// GCSESSION structure
-struct GCSESSION
-{
-	int     cbSize;             // set to sizeof(GCSESSION);
-	int     iType;              // Use one of the GCW_* flags above to set the type of session
-	LPCSTR pszModule;           // The name of the protocol owning the session (the same as pszModule when you register)
-	LPCTSTR ptszName;			    // The name of the session as it will be displayed to the user
-	LPCTSTR ptszID;             // The unique identifier for the session.
-	LPCTSTR ptszStatusbarText;  // Optional text to set in the statusbar of the chat room window, or NULL.
-	DWORD   dwFlags;
-	INT_PTR dwItemData;         // Set user defined data for this session. Retrieve it by using the GC_EVENT_GETITEMDATA event
-};
-
-#define MS_GC_NEWSESSION  "GChat/NewChat"
+EXTERN_C MIR_APP_DLL(struct GCSessionInfoBase*) Chat_NewSession(
+	int            iType,           // Use one of the GCW_* flags above to set the type of session
+	const char    *pszModule,       // The name of the protocol owning the session (the same as pszModule when you register)
+	const wchar_t *ptszID,          // The unique identifier for the session.
+	const wchar_t *ptszName,        // The name of the session as it will be displayed to the user
+	void          *pItemData = NULL // Set user defined data for this session. Retrieve it by using the Chat_GetUserInfo() call
+);
 
 /*
 	Step 3 -- SEND an EVENT --
@@ -227,17 +205,15 @@ struct GCSESSION
 	Chat users speaking, users joining and so on. See below for full
 	list of what events are possible.
 
-	IMPORTANT: For sending events you'll use the GCEVENT and GCDEST structures.	A GCDEST
-	structure pointer is passed inside GCEVENT and it tells Chat what event type it is
-	and what session it is related to. The GCDEST structure and its members are ALWAYS
-	used (but the members can be NULL in some occasions). Depending on what type of event
-	you are sending, the members of GCEVENT have different usage. Each event and how to
-	use the members are discussed below. The "AddToLog" and "time" members are always valid
-	and always mean the same. bAddToLog = TRUE means that the event is added to the disk log
-	(at least when this makes sense). This can be used by Jabber for instance, when
-	it needs to add channel history to the window, but without logging to disk.
-	The "time" member is the timestamp of the event.(Tip. use the function time(NULL)
-	to set the current time)
+	IMPORTANT: For sending events you'll use the GCEVENT structure. First three members of
+	GCEVENT tell Chat what session it is related to and what event type it is. Depending on 
+	what type of event you are sending, the members of GCEVENT have different usage. 
+	Each event and how to use the members are discussed below. The "AddToLog" and "time" 
+   members are always valid and always mean the same. bAddToLog = TRUE means that the event 
+	is added to the disk log (at least when this makes sense). This can be used by Jabber for 
+	instance, when it needs to add channel history to the window, but without logging to disk.
+	The "time" member is the timestamp of the event. (Tip: use the function time(NULL) to set
+	the current time)
 
 	NOTE. It is possible to send formatted text (bold, italics, underlined, foreground color
 	and background color) to Chat by using the following identifiers in the text (pszText):
@@ -261,10 +237,7 @@ struct GCSESSION
 	NOTE. You will not get %cRRRGGGBBB back, instead you will get the index of the colour as
 	registered with GC_REGISTER. Eg %c3 (the fourth colour of your index)
 
-	* Use MS_GC_EVENT like this: CallService(MS_GC_EVENT, 0, (LPARAM)(GCEVENT *) &gce;
-
-	* returns 0 on success or error code on failure
-
+	returns 0 on success or error code on failure
 */
 
 //	* List of possible events to send to Chat. Unlisted members are not valid	*
@@ -289,7 +262,7 @@ struct GCSESSION
 #define GC_EVENT_PART			0x0002
 
 //	GC_EVENT_QUIT - "<pszNick> disconnected: pszText" (A user disconnected from the network)
-//	pszID(in GCDEST)	- Should be NULL as a disconnect event is global.
+//	pszID				- Should be NULL as a disconnect event is global.
 //	pszNick				- Display name
 //	pszUID				- Unique identifier
 //	pszText				- Optional disconnect message, can be NULL
@@ -304,14 +277,14 @@ struct GCSESSION
 
 //	GC_EVENT_NICK - "<pszNick> is now known as <pszText>" (A user changed his name)
 //	NOTE, see GC_EVENT_CHUID also
-//	pszID(in GCDEST)	- Should be NULL as a nick change event is global.
+//	pszID				- Should be NULL as a nick change event is global.
 //	pszNick				- Old display name
 //	pszUID				- Unique identifier
 //	pszText				- New display name of the user. Color codes are not valid
 #define GC_EVENT_NICK			0x0010
 
 //	GC_EVENT_NOTICE - "Notice from <pszNick>: <pszText>" (An IRC type notice)
-//	pszID(in GCDEST)	- Should be NULL to send to the active window
+//	pszID				- Should be NULL to send to the active window
 //	pszNick				- Display name
 //	pszUID				- Unique identifier
 //	pszText				- Notice text
@@ -331,7 +304,7 @@ struct GCSESSION
 #define GC_EVENT_TOPIC			0x0080
 
 //	GC_EVENT_INFORMATION  (Informational text) Ex a server response to a /WHO command in IRC
-//	pszID(in GCDEST)	- NULL to send to the active window
+//	pszID				- NULL to send to the active window
 //	pszText				- Information text
 #define GC_EVENT_INFORMATION	0x0100
 
@@ -362,93 +335,30 @@ struct GCSESSION
 //					registered with GC_EVENT_ADDGROUP. Ex "Voice" in IRC
 #define GC_EVENT_REMOVESTATUS	0x0800
 
-//	GC_EVENT_CHUID - not shown in the log (Change the unique identifier of a contact)
-//	pszID(in GCDEST)	- Should be NULL as a unique id's are global.
-//	pszUID				- The current unique identifier
-//	pszText				- The new unique identifier. Color codes are not valid
-#define GC_EVENT_CHUID			0x1000
-
-//	GC_EVENT_CHANGESESSIONAME - not shown in the log (Change the display name of a session)
-//	pszText		- The new name. Color codes are not valid
-#define GC_EVENT_CHANGESESSIONAME		0x1001
-
-//	GC_EVENT_ADDGROUP - not shown in the log (Add a possible status mode to the nicklist, ex IRC uses "Op", "Voice", "Normal" etc )
-//	NOTE. When adding several statuses, start with the highest status
-//	pszStatus		- The new group name
-//	dwItemData		- Optional HICON handle to a 10x10 icon. Set to NULL to use the built in icons.
-#define GC_EVENT_ADDGROUP		0x1002
-
-//	GC_EVENT_SETITEMDATA & GC_EVENT_SETITEMDATA - not shown in the log (Get/Set the user defined data of a session)
-//	dwItemData		- The itemdata to set or get
-#define GC_EVENT_SETITEMDATA	0x1003
-#define GC_EVENT_GETITEMDATA	0x1004
-
-//	GC_EVENT_SETSBTEXT - not shown in the log (Set the text of the statusbar for a chat room window)
-//	pszText		- Statusbar text. Color codes are not valid
-#define GC_EVENT_SETSBTEXT		0x1006
-
-//	GC_EVENT_ACK - not shown in the log (Acknowledge a outgoing message, when GC_ACKMSG is set
-#define GC_EVENT_ACK			0x1007
-
-//	GC_EVENT_SENDMESSAGE - not shown in the log ("Fake" a message from a chat room as if the user had typed it). Used by IRC to broadcast /AME and /AMSG messages
-//	pszText		- The text
-#define GC_EVENT_SENDMESSAGE	0x1008
-
-//	GC_EVENT_SETSTATUSEX - not shown in the log (Space or tab delimited list of pszUID's to indicate as away).
-//  Used by IRC to mark users as away in the nicklist. If UIDs can contain spaces, use tabs
-//	pszText		- Space or tab delimited list of pszUID's
-
-#define GC_SSE_ONLYLISTED     0x0001  // processes only listed contacts, resets all contacts otherwise
-#define GC_SSE_ONLINE         0x0002  // displays a contact online, otherwise away
-#define GC_SSE_TABDELIMITED   0x0004  // use tabs as delimiters
-#define GC_SSE_OFFLINE        0x0008  // displays a contact offline, otherwise away
-
-#define GC_EVENT_SETSTATUSEX	0x1009
-
 //	GC_EVENT_SETCONTACTSTATUS - sets status icon for contact
 //	pszUID		- Unique identifier of the one who receives a new status
 //	dwItemData	- (DWORD)ID_STATUS_* or zero to remove status icon
 #define GC_EVENT_SETCONTACTSTATUS	0x100A
 
-//	GC_EVENT_CONTROL  - not shown in the log (Control window associated to a session and the session itself)
-//	NOTE 1: No members of GCEVENT are used, send one of the below flags in wParam instead,
-//		Ex CallService(GC_EVENT_CONTROL, SESSION_INITDONE, (LPARAM)&gce);
-//	NOTE 2: The first four control events are the only ones you should use most likely!
-//		The ones below them are used by IRC to join channels hidden or maximized and show the server window from the system menu.
-//		The SESSION_VISIBLE, SESSION_HIDDEN, SESSION_MAXIMIZE and SESSION_MINIMIZE events CAN replace SESSION_INITDONE but I urge you not to
-//		do that as it will override any settings the user has made in the Chat options
-//	NOTE 3: If pszID (of GCDEST) = NULL then this message will be broadcasted to all sessions, which can be usefule for terminating
-//		all sessions when the protocol was disconnected
-#define SESSION_INITDONE		1   // send this when the session is fully set up (all users have ben added to the nicklist)
-#define SESSION_TERMINATE		7   // send to terminate a session and close the window associated with it
-#define SESSION_OFFLINE			8   // send to set the session as "online" (hContact is set to Online etc)
-#define SESSION_ONLINE			9   // send to set the session as "offline" (hContact is set to Offline etc)
-
-#define WINDOW_VISIBLE			2   // make the room window visible
-#define WINDOW_HIDDEN			3   // close the room window. Session is not terminated.
-#define WINDOW_MAXIMIZE			4   // make the room window maximized
-#define WINDOW_MINIMIZE			5   // make the room window minimized
-#define WINDOW_CLEARLOG			6   // clear the log of the room window
-
-#define GC_EVENT_CONTROL		0x1005
-
 // Error messages
-#define GC_EVENT_WRONGVER		1   // You appear to be using the wrong version of this API.
 #define GC_EVENT_ERROR			2   // An internal error occurred.
 
-// The GCDEST structure. It is passed to Chat inside GCEVENT.
-struct GCDEST
+#define GC_EVENT_ALL (GC_EVENT_ACTION | GC_EVENT_MESSAGE | GC_EVENT_NICK | GC_EVENT_JOIN | \
+	GC_EVENT_PART | GC_EVENT_TOPIC | GC_EVENT_ADDSTATUS | GC_EVENT_INFORMATION | GC_EVENT_QUIT | \
+	GC_EVENT_KICK | GC_EVENT_NOTICE)
+
+// The GCEVENT structure
+
+#define GCEF_ADDTOLOG       0x0001	 // force adding to log
+#define GCEF_SILENT         0x0002   // never add to log
+#define GCEF_NOTNOTIFY      0x0004
+
+struct GCEVENT
 {
 	LPCSTR  pszModule;             // Name of the protocol (same as you registered with)
 	LPCTSTR ptszID;                // Unique identifier of the session, or NULL to broadcast to all sessions as specified above
 	int     iType;                 // Use GC_EVENT_* as defined above. Only one event per service call.
-};
 
-// The GCEVENT structure
-struct GCEVENT
-{
-	int     cbSize;                // set to sizeof(GCEVENT);
-	GCDEST *pDest;                 // pointer to a GCDEST structure which specifies the session to receive the event
 	LPCTSTR ptszText;					 //
 	LPCTSTR ptszNick;					 //
 	LPCTSTR ptszUID;					 //
@@ -456,36 +366,55 @@ struct GCEVENT
 	LPCTSTR ptszUserInfo;			 //
 
 	BOOL    bIsMe;                 // Is this event from the Miranda user?
-	DWORD   dwFlags;               // event flags: GCEF_ADDTOLOG, GCEF_NOTNOTIFY
+	DWORD   dwFlags;               // event flags: GCEF_*
 
 	INT_PTR dwItemData;            // User specified data.
 	DWORD   time;                  // Timestamp of the event
 };
 
-#define MS_GC_EVENT  "GChat/NewEvent"
+EXTERN_C MIR_APP_DLL(int) Chat_Event(GCEVENT*);
 
+EXTERN_C MIR_APP_DLL(void*) Chat_GetUserInfo(const char *szModule, const wchar_t *wszId);
+EXTERN_C MIR_APP_DLL(int) Chat_SetUserInfo(const char *szModule, const wchar_t *wszId, void *pItemData);
+
+EXTERN_C MIR_APP_DLL(int) Chat_AddGroup(const char *szModule, const wchar_t *wszId, const wchar_t *wszText, HICON hIcon = NULL);
+EXTERN_C MIR_APP_DLL(int) Chat_ChangeSessionName(const char *szModule, const wchar_t *wszId, const wchar_t *wszNewName);
+EXTERN_C MIR_APP_DLL(int) Chat_ChangeUserId(const char *szModule, const wchar_t *wszId, const wchar_t *wszOldId, const wchar_t *wszNewId);
+EXTERN_C MIR_APP_DLL(int) Chat_SendUserMessage(const char *szModule, const wchar_t *wszId, const wchar_t *wszText);
+EXTERN_C MIR_APP_DLL(int) Chat_SetStatusbarText(const char *szModule, const wchar_t *wszId, const wchar_t *wszText);
+
+EXTERN_C MIR_APP_DLL(wchar_t*) Chat_UnescapeTags(wchar_t *str_in);
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+#define GC_SSE_ONLYLISTED     0x0001  // processes only listed contacts, resets all contacts otherwise
+#define GC_SSE_ONLINE         0x0002  // displays a contact online, otherwise away
+#define GC_SSE_TABDELIMITED   0x0004  // use tabs as delimiters
+#define GC_SSE_OFFLINE        0x0008  // displays a contact offline, otherwise away
+
+// if wszId == NULL, the status is applied to all windows of specified szModule
+EXTERN_C MIR_APP_DLL(int) Chat_SetStatusEx(const char *szModule, const wchar_t *wszId, int flags, const wchar_t *wszText);
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+#define SESSION_INITDONE		1   // send this when the session is fully set up (all users have ben added to the nicklist)
+#define SESSION_TERMINATE		7   // send to terminate a session and close the window associated with it
+#define SESSION_OFFLINE			8   // send to set the session as "online" (hContact is set to Online etc)
+#define SESSION_ONLINE			9   // send to set the session as "offline" (hContact is set to Offline etc)
+
+#define WINDOW_VISIBLE			2   // make the room window visible
+#define WINDOW_HIDDEN			3   // close the room window. Session is not terminated.
+#define WINDOW_CLEARLOG			6   // clear the log of the room window
+
+// if wszId == NULL, this message is broadcasted to all windows of specified szModule
+EXTERN_C MIR_APP_DLL(int) Chat_Control(const char *szModule, const wchar_t *wszId, int command);
+EXTERN_C MIR_APP_DLL(int) Chat_Terminate(const char *szModule, const wchar_t *wszId, bool bRemoveContact = false);
+
+/////////////////////////////////////////////////////////////////////////////////////////
 // This hook is fired when MS_GC_EVENT is called, with the same wParam and lParam as above.
 // It allows external plugins to intercept chat events and display then in other ways
+
 #define ME_GC_HOOK_EVENT "GChat/HookEvent"
-
-#define GCEF_ADDTOLOG       0x0001
-#define GCEF_REMOVECONTACT  0x0002
-// Added in Miranda NG 0.94.4+
-#define GCEF_NOTNOTIFY      0x0004
-
-// OK! That was about everything that you need to know about for operating Chat in a basic way.
-// There are however some more things you will need to know about. Some you may use and some you may not need,
-
-/*
-	 -- GETTING info about a SESSION or session data --
-
-	Use this service to get information on different aspects of the sessions that are registered with Chat.
-
-	* Use MS_GC_GETINFO like this: CallService(MS_GC_GETSESSIONCOUNT, 0, (LPARAM)(char *) pszModule);
-	* returns -1 on failure and the sessioncount on success
-*/
-
-#define MS_GC_GETSESSIONCOUNT  "GChat/GetCount"
 
 /*
 	 -- GETTING info about a SESSION or session data --
@@ -515,14 +444,14 @@ struct GC_INFO
 	LPCSTR    pszModule;    // the module name as registered in MS_GC_REGISTER
 	LPCTSTR   pszID;        // unique ID of the session
 	LPTSTR    pszName;      // display name of the session
-	INT_PTR   dwItemData;   // user specified data.
+	void*     pItemData;    // user specified data.
 	int       iCount;       // count of users in the nicklist
 	LPSTR     pszUsers;     // space separated string containing the UID's of the users in the user list.
 	                        // NOTE. Use Mirandas mmi_free() on the returned string.
 	MCONTACT  hContact;     // hContact for the session (can be NULL)
 };
 
-#define MS_GC_GETINFO  "GChat/GetInfo"
+EXTERN_C MIR_APP_DLL(int) Chat_GetInfo(GC_INFO*);
 
 //------------------------- HOOKS ------------------------
 /*
@@ -551,9 +480,13 @@ struct GC_INFO
 
 struct GCHOOK
 {
-	GCDEST *pDest;       // pointer to a GCDEST structure which specifies from which session the hook was triggered
+	LPCSTR  pszModule;   // Name of the protocol (same as you registered with)
+	LPCTSTR ptszID;      // Unique identifier of the session, or NULL to broadcast to all sessions as specified above
+	int     iType;       // Use GC_EVENT_* as defined above. Only one event per service call.
+	
 	LPTSTR  ptszText;    // usage depends on type of event
 	LPTSTR  ptszUID;     // unique identifier, usage depends on type of event
+	LPTSTR  ptszNick;    // user nick, as displayed in a nicklist
 	INT_PTR dwData;      // user defined data, usage depends on type of event
 };
 
@@ -587,49 +520,31 @@ struct GCHOOK
 
 // contains info on a menuitem to be added
 struct gc_item {
-	TCHAR *pszDesc;     // Textual description of the menu item to add
-	DWORD  dwID;        // when/if the user selects this menu item this
+	wchar_t *pszDesc;   // Textual description of the menu item to add
+	DWORD    dwID;      // when/if the user selects this menu item this
 							  // value will be returned via the above hook, GC_USER_LOGMENU
 						 	  // or GC_USER_NICKLISTMENU. Must not be 0 and must be unique.
-	int    uType;       // What kind of menu item is it? Use MENU_* flags above
-	BOOL   bDisabled;   // should the menu item be shown as disabled
+	int      uType;     // What kind of menu item is it? Use MENU_* flags above
+	BOOL     bDisabled; // should the menu item be shown as disabled
 };
 
 typedef struct {
 	LPSTR    pszModule; // Contains the protocol name, do NOT change.
-	LPTSTR   pszID;     // The unique identifier of the session that triggered the hook, do NOT change.
-	LPTSTR   pszUID;    // Contains the unique identifier if Type = MENU_ON_NICKLIST. do NOT change.
+	LPWSTR   pszID;     // The unique identifier of the session that triggered the hook, do NOT change.
+	LPWSTR   pszUID;    // Contains the unique identifier if Type = MENU_ON_NICKLIST. do NOT change.
    int      Type;      // Type of menu. MENU_ON_* flags used. do NOT change.
-   int      nItems;    // Set this to the number of menu items you want to add
-   gc_item *Item;      // pointer to the first in the array of gc_item's
+	HMENU    hMenu;     // pass this handle to a call of Srmm_AddMenuItems
 }
 	GCMENUITEMS;
 
 #define ME_GC_BUILDMENU  "GChat/BuildMenu"
 
-/*
-	* Example of how to add 2 items to the popup menu for the userlist *
-
-	GCMENUITEMS *gcmi= (GCMENUITEMS*) lParam;
-  	if (gcmi->Type == MENU_ON_NICKLIST)
-	{
-		static struct gc_item Item[] = {
-				{Translate("User &details"), 1, MENU_ITEM, FALSE},
-				{Translate("&Op"), 2, MENU_POPUPITEM, FALSE},
-		};
-
-		gcmi->nItems = sizeof(Item)/sizeof(Item[0]);
-		gcmi->Item = &Item[0];
-		gcmi->Item[gcmi->nItems-1].bDisabled = bFlag;
-
-		return 0;
-	}
-*/
+EXTERN_C MIR_APP_DLL(void) Chat_AddMenuItems(HMENU hMenu, int nItems, const gc_item *Item, int = hLangpack);
 
 //////////////////////////////////////////////////////////////////////////
 // Get Chat ToolTip Text for buddy
-// wParam = (WPARAM)(TCHAR*) roomID parentdat->ptszID
-// lParam = (WPARAM)(TCHAR*) userID ui1->pszUID
-// result (int)(TCHAR*)mir_tstrdup("tooltip text")
+// wParam = (WPARAM)(wchar_t*) roomID parentdat->ptszID
+// lParam = (WPARAM)(wchar_t*) userID ui1->pszUID
+// result (int)(wchar_t*)mir_tstrdup("tooltip text")
 // returns pointer to text of tooltip and starts owns it
 #define MS_GC_PROTO_GETTOOLTIPTEXT "/GetChatToolTipText"

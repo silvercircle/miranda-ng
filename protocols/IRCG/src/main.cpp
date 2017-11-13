@@ -22,6 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "stdafx.h"
 #include "version.h"
 
+CHAT_MANAGER *pci;
+CLIST_INTERFACE *pcli;
 HINSTANCE hInst = NULL;
 
 int hLangpack;
@@ -72,7 +74,7 @@ extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = { MIID_PROTOC
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-static CIrcProto* ircProtoInit(const char* pszProtoName, const TCHAR* tszUserName)
+static CIrcProto* ircProtoInit(const char* pszProtoName, const wchar_t* tszUserName)
 {
 	CIrcProto *ppro = new CIrcProto(pszProtoName, tszUserName);
 	g_Instances.insert(ppro);
@@ -89,6 +91,8 @@ static int ircProtoUninit(CIrcProto *ppro)
 extern "C" int __declspec(dllexport) Load()
 {
 	mir_getLP(&pluginInfo);
+	pci = Chat_GetInterface();
+	pcli = Clist_GetInterface();
 
 	InitIcons();
 	InitServers();

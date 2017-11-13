@@ -46,7 +46,7 @@ Individuelle Fensterposition speichern
 Fehlermeldungen
 [Suppress error messages]
 Fehlermeldungen unterdrücken
-[Display using Popup or OSD plugin]
+[Display using popup or OSD plugin]
 Via Popup- oder OSD-Plugin
 [Expert options]
 Experten-Einstellungen
@@ -136,7 +136,7 @@ Als Rohdaten speichern
 Popup-Verzögerung
 [Delay]
 Verzögerung
-[From Popup plugin]
+[From popup plugin]
 Vom Popup-Plugin
 [Permanent]
 Dauerhaft

@@ -17,7 +17,7 @@
 #include "stdafx.h"
 
 
-logtofile& logtofile::operator<<(TCHAR *buf)
+logtofile& logtofile::operator<<(wchar_t *buf)
 {
 	if(_bDebugLog != bDebugLog)
 		init();
@@ -73,7 +73,7 @@ void logtofile::init()
 	{
 		if(path)
 			mir_free(path);
-		path = UniGetContactSettingUtf(NULL, szGPGModuleName, "szLogFilePath", _T("C:\\GPGdebug.log"));
+		path = UniGetContactSettingUtf(NULL, szGPGModuleName, "szLogFilePath", L"C:\\GPGdebug.log");
 	}
 	_bDebugLog = bDebugLog;
 }

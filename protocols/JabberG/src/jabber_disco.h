@@ -5,7 +5,7 @@ Jabber Protocol Plugin for Miranda NG
 Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
 Copyright (c) 2005-07  Maxim Mluhov
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -36,17 +36,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 class CJabberSDIdentity
 {
 protected:
-	TCHAR *m_szCategory;
-	TCHAR *m_szType;
-	TCHAR *m_szName;
+	wchar_t *m_szCategory;
+	wchar_t *m_szType;
+	wchar_t *m_szName;
 	CJabberSDIdentity *m_pNext;
 public:
-	CJabberSDIdentity(const TCHAR *szCategory, const TCHAR *szType, const TCHAR *szName)
+	CJabberSDIdentity(const wchar_t *szCategory, const wchar_t *szType, const wchar_t *szName)
 	{
-		m_szCategory = mir_tstrdup(szCategory);
-		m_szType = mir_tstrdup(szType);
-		m_szName = mir_tstrdup(szName);
-		m_pNext = NULL;
+		m_szCategory = mir_wstrdup(szCategory);
+		m_szType = mir_wstrdup(szType);
+		m_szName = mir_wstrdup(szName);
+		m_pNext = nullptr;
 	}
 	~CJabberSDIdentity()
 	{
@@ -56,15 +56,15 @@ public:
 		if (m_pNext)
 			delete m_pNext;
 	}
-	TCHAR *GetCategory()
+	wchar_t *GetCategory()
 	{
 		return m_szCategory;
 	}
-	TCHAR *GetType()
+	wchar_t *GetType()
 	{
 		return m_szType;
 	}
-	TCHAR *GetName()
+	wchar_t *GetName()
 	{
 		return m_szName;
 	}
@@ -84,13 +84,13 @@ class CJabberSDFeature;
 class CJabberSDFeature
 {
 protected:
-	TCHAR *m_szVar;
+	wchar_t *m_szVar;
 	CJabberSDFeature *m_pNext;
 public:
-	CJabberSDFeature(const TCHAR *szVar)
+	CJabberSDFeature(const wchar_t *szVar)
 	{
-		m_szVar = szVar ? mir_tstrdup(szVar) : NULL;
-		m_pNext = NULL;
+		m_szVar = szVar ? mir_wstrdup(szVar) : nullptr;
+		m_pNext = nullptr;
 	}
 	~CJabberSDFeature()
 	{
@@ -98,7 +98,7 @@ public:
 		if (m_pNext)
 			delete m_pNext;
 	}
-	TCHAR *GetVar()
+	wchar_t *GetVar()
 	{
 		return m_szVar;
 	}
@@ -117,9 +117,9 @@ public:
 class CJabberSDNode
 {
 protected:
-	TCHAR *m_szJid;
-	TCHAR *m_szNode;
-	TCHAR *m_szName;
+	wchar_t *m_szJid;
+	wchar_t *m_szNode;
+	wchar_t *m_szName;
 	CJabberSDIdentity *m_pIdentities;
 	CJabberSDFeature *m_pFeatures;
 	CJabberSDNode *m_pNext;
@@ -129,25 +129,25 @@ protected:
 	int m_nInfoRequestId;
 	int m_nItemsRequestId;
 	HTREELISTITEM m_hTreeItem;
-	TCHAR *m_szInfoError;
-	TCHAR *m_szItemsError;
+	wchar_t *m_szInfoError;
+	wchar_t *m_szItemsError;
 public:
-	CJabberSDNode(const TCHAR *szJid = NULL, const TCHAR *szNode = NULL, const TCHAR *szName = NULL)
+	CJabberSDNode(const wchar_t *szJid = nullptr, const wchar_t *szNode = nullptr, const wchar_t *szName = nullptr)
 	{
-		m_szJid = mir_tstrdup(szJid);
-		m_szNode = mir_tstrdup(szNode);
-		m_szName = mir_tstrdup(szName);
-		m_pIdentities = NULL;
-		m_pFeatures = NULL;
-		m_pNext = NULL;
-		m_pChild = NULL;
+		m_szJid = mir_wstrdup(szJid);
+		m_szNode = mir_wstrdup(szNode);
+		m_szName = mir_wstrdup(szName);
+		m_pIdentities = nullptr;
+		m_pFeatures = nullptr;
+		m_pNext = nullptr;
+		m_pChild = nullptr;
 		m_dwInfoRequestTime = 0;
 		m_dwItemsRequestTime = 0;
 		m_nInfoRequestId = 0;
 		m_nItemsRequestId = 0;
-		m_hTreeItem = NULL;
-		m_szInfoError = NULL;
-		m_szItemsError = NULL;
+		m_hTreeItem = nullptr;
+		m_szInfoError = nullptr;
+		m_szItemsError = nullptr;
 	}
 	~CJabberSDNode()
 	{
@@ -155,43 +155,43 @@ public:
 	}
 	BOOL RemoveAll()
 	{
-		replaceStrT(m_szJid, NULL);
-		replaceStrT(m_szNode, NULL);
-		replaceStrT(m_szName, NULL);
-		replaceStrT(m_szInfoError, NULL);
-		replaceStrT(m_szItemsError, NULL);
+		replaceStrW(m_szJid, nullptr);
+		replaceStrW(m_szNode, nullptr);
+		replaceStrW(m_szName, nullptr);
+		replaceStrW(m_szInfoError, nullptr);
+		replaceStrW(m_szItemsError, nullptr);
 		if (m_pIdentities)
 			delete m_pIdentities;
-		m_pIdentities = NULL;
+		m_pIdentities = nullptr;
 		if (m_pFeatures)
 			delete m_pFeatures;
-		m_pFeatures = NULL;
+		m_pFeatures = nullptr;
 		if (m_pNext)
 			delete m_pNext;
-		m_pNext = NULL;
+		m_pNext = nullptr;
 		if (m_pChild)
 			delete m_pChild;
-		m_pChild = NULL;
+		m_pChild = nullptr;
 		m_nInfoRequestId = JABBER_DISCO_RESULT_NOT_REQUESTED;
 		m_nItemsRequestId = JABBER_DISCO_RESULT_NOT_REQUESTED;
 		m_dwInfoRequestTime = 0;
 		m_dwItemsRequestTime = 0;
-		m_hTreeItem = NULL;
+		m_hTreeItem = nullptr;
 		return TRUE;
 	}
 	BOOL ResetInfo()
 	{
-		replaceStrT(m_szInfoError, NULL);
-		replaceStrT(m_szItemsError, NULL);
+		replaceStrW(m_szInfoError, nullptr);
+		replaceStrW(m_szItemsError, nullptr);
 		if (m_pIdentities)
 			delete m_pIdentities;
-		m_pIdentities = NULL;
+		m_pIdentities = nullptr;
 		if (m_pFeatures)
 			delete m_pFeatures;
-		m_pFeatures = NULL;
+		m_pFeatures = nullptr;
 		if (m_pChild)
 			delete m_pChild;
-		m_pChild = NULL;
+		m_pChild = nullptr;
 		m_nInfoRequestId = JABBER_DISCO_RESULT_NOT_REQUESTED;
 		m_nItemsRequestId = JABBER_DISCO_RESULT_NOT_REQUESTED;
 		m_dwInfoRequestTime = 0;
@@ -227,25 +227,25 @@ public:
 	{
 		return m_nItemsRequestId;
 	}
-	BOOL SetJid(TCHAR *szJid)
+	BOOL SetJid(wchar_t *szJid)
 	{
-		replaceStrT(m_szJid, szJid);
+		replaceStrW(m_szJid, szJid);
 		return TRUE;
 	}
-	TCHAR *GetJid()
+	wchar_t *GetJid()
 	{
 		return m_szJid;
 	}
-	BOOL SetNode(TCHAR *szNode)
+	BOOL SetNode(wchar_t *szNode)
 	{
-		replaceStrT(m_szNode, szNode);
+		replaceStrW(m_szNode, szNode);
 		return TRUE;
 	}
-	TCHAR *GetNode()
+	wchar_t *GetNode()
 	{
 		return m_szNode;
 	}
-	TCHAR *GetName()
+	wchar_t *GetName()
 	{
 		return m_szName;
 	}
@@ -276,11 +276,11 @@ public:
 		if ((m_nInfoRequestId == nIqId && bInfoId) || (m_nItemsRequestId == nIqId && !bInfoId))
 			return this;
 
-		CJabberSDNode *pNode = NULL;
+		CJabberSDNode *pNode = nullptr;
 		if (m_pChild && (pNode = m_pChild->FindByIqId(nIqId, bInfoId)))
 			return pNode;
 
-		CJabberSDNode *pTmpNode = NULL;
+		CJabberSDNode *pTmpNode = nullptr;
 		pNode = m_pNext;
 		while (pNode) {
 			if ((pNode->m_nInfoRequestId == nIqId && bInfoId) || (pNode->m_nItemsRequestId == nIqId && !bInfoId))
@@ -289,9 +289,9 @@ public:
 				return pTmpNode;
 			pNode = pNode->GetNext();
 		}
-		return NULL;
+		return nullptr;
 	}
-	BOOL AddFeature(const TCHAR *szFeature)
+	BOOL AddFeature(const wchar_t *szFeature)
 	{
 		if (!szFeature)
 			return FALSE;
@@ -305,7 +305,7 @@ public:
 
 		return TRUE;
 	}
-	BOOL AddIdentity(const TCHAR *szCategory, const TCHAR *szType, const TCHAR *szName)
+	BOOL AddIdentity(const wchar_t *szCategory, const wchar_t *szType, const wchar_t *szName)
 	{
 		if (!szCategory || !szType)
 			return FALSE;
@@ -319,7 +319,7 @@ public:
 
 		return TRUE;
 	}
-	BOOL AddChildNode(const TCHAR *szJid, const TCHAR *szNode, const TCHAR *szName)
+	BOOL AddChildNode(const wchar_t *szJid, const wchar_t *szNode, const wchar_t *szName)
 	{
 		if (!szJid)
 			return FALSE;
@@ -333,39 +333,39 @@ public:
 		return TRUE;
 	}
 
-	BOOL SetItemsRequestErrorText(TCHAR *szError)
+	BOOL SetItemsRequestErrorText(wchar_t *szError)
 	{
-		replaceStrT(m_szItemsError, szError);
+		replaceStrW(m_szItemsError, szError);
 		return TRUE;
 	}
 
-	BOOL SetInfoRequestErrorText(TCHAR *szError)
+	BOOL SetInfoRequestErrorText(wchar_t *szError)
 	{
-		replaceStrT(m_szInfoError, szError);
+		replaceStrW(m_szInfoError, szError);
 		return TRUE;
 	}
 
-	BOOL GetTooltipText(TCHAR *szText, int nMaxLength)
+	BOOL GetTooltipText(wchar_t *szText, int nMaxLength)
 	{
-		CMString tszTmp;
+		CMStringW tszTmp;
 
-		tszTmp.AppendFormat(_T("Jid: %s\r\n"), m_szJid);
+		tszTmp.AppendFormat(L"Jid: %s\r\n", m_szJid);
 
 		if (m_szNode)
-			tszTmp.AppendFormat(_T("%s: %s\r\n"), TranslateT("Node"), m_szNode);
+			tszTmp.AppendFormat(L"%s: %s\r\n", TranslateT("Node"), m_szNode);
 
 		if (m_pIdentities) {
-			tszTmp.AppendFormat(_T("\r\n%s:\r\n"), TranslateT("Identities"));
+			tszTmp.AppendFormat(L"\r\n%s:\r\n", TranslateT("Identities"));
 
 			CJabberSDIdentity *pIdentity = m_pIdentities;
 			while (pIdentity) {
 				if (pIdentity->GetName())
-					tszTmp.AppendFormat(_T(" %c %s (%s: %s, %s: %s)\r\n"),
+					tszTmp.AppendFormat(L" %c %s (%s: %s, %s: %s)\r\n",
 						CHR_BULLET, pIdentity->GetName(),
 							TranslateT("category"), pIdentity->GetCategory(),
 							TranslateT("type"), pIdentity->GetType());
 				else
-					tszTmp.AppendFormat(_T(" %c %s: %s, %s: %s\r\n"),
+					tszTmp.AppendFormat(L" %c %s: %s, %s: %s\r\n",
 						CHR_BULLET,
 						TranslateT("Category"), pIdentity->GetCategory(),
 						TranslateT("Type"), pIdentity->GetType());
@@ -375,20 +375,20 @@ public:
 		}
 
 		if (m_pFeatures) {
-			tszTmp.AppendFormat(_T("\r\n%s:\r\n"), TranslateT("Supported features"));
+			tszTmp.AppendFormat(L"\r\n%s:\r\n", TranslateT("Supported features"));
 
 			for (CJabberSDFeature *pFeature = m_pFeatures; pFeature; pFeature = pFeature->GetNext())
-				tszTmp.AppendFormat(_T(" %c %s\r\n"), CHR_BULLET, pFeature->GetVar());
+				tszTmp.AppendFormat(L" %c %s\r\n", CHR_BULLET, pFeature->GetVar());
 		}
 
 		if (m_szInfoError)
-			tszTmp.AppendFormat(_T("\r\n%s: %s\r\n"), TranslateT("Info request error"), m_szInfoError);
+			tszTmp.AppendFormat(L"\r\n%s: %s\r\n", TranslateT("Info request error"), m_szInfoError);
 
 		if (m_szItemsError)
-			tszTmp.AppendFormat(_T("\r\n%s: %s\r\n"), TranslateT("Items request error"), m_szItemsError);
+			tszTmp.AppendFormat(L"\r\n%s: %s\r\n", TranslateT("Items request error"), m_szItemsError);
 
 		tszTmp.TrimRight();
-		_tcsncpy_s(szText, nMaxLength, tszTmp, _TRUNCATE);
+		wcsncpy_s(szText, nMaxLength, tszTmp, _TRUNCATE);
 		return TRUE;
 	}
 };
@@ -402,7 +402,7 @@ protected:
 public:
 	CJabberSDManager()
 	{
-		m_pPrimaryNodes = NULL;
+		m_pPrimaryNodes = nullptr;
 	}
 
 	~CJabberSDManager()
@@ -415,7 +415,7 @@ public:
 	void RemoveAll()
 	{
 		delete m_pPrimaryNodes;
-		m_pPrimaryNodes = NULL;
+		m_pPrimaryNodes = nullptr;
 	}
 
 	CJabberSDNode* GetPrimaryNode()
@@ -423,14 +423,14 @@ public:
 		return m_pPrimaryNodes;
 	}
 
-	CJabberSDNode* AddPrimaryNode(const TCHAR *szJid, const TCHAR *szNode, const TCHAR *szName)
+	CJabberSDNode* AddPrimaryNode(const wchar_t *szJid, const wchar_t *szNode, const wchar_t *szName)
 	{
 		if (!szJid)
-			return NULL;
+			return nullptr;
 
 		CJabberSDNode *pNode = new CJabberSDNode(szJid, szNode, szName);
 		if (!pNode)
-			return NULL;
+			return nullptr;
 
 		pNode->SetNext(m_pPrimaryNodes);
 		m_pPrimaryNodes = pNode;
@@ -443,7 +443,7 @@ public:
 			if (CJabberSDNode *pTmpNode = pNode->FindByIqId(nIqId, bInfoId))
 				return pTmpNode;
 
-		return NULL;
+		return nullptr;
 	}
 };
 

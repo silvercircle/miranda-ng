@@ -6,10 +6,15 @@ INT_PTR CDropbox::SendFilesToDropboxCommand(void *obj, WPARAM hContact, LPARAM)
 	if (!instance->HasAccessToken())
 		return 1;
 
-	instance->hTransferContact = hContact;
-	instance->hTransferWindow = (HWND)CallService(MS_FILE_SENDFILE, instance->GetDefaultContact(), 0);
+	auto it = instance->interceptedContacts.find(hContact);
+	if (it == instance->interceptedContacts.end())
+	{
+		HWND hwnd = (HWND)CallService(MS_FILE_SENDFILE, hContact, 0);
+		instance->interceptedContacts[hContact] = hwnd;
+	}
+	else
+		SetActiveWindow(it->second);
 
-	DisableSrmmButton(hContact);
 	return 0;
 }
 
@@ -27,17 +32,12 @@ void CDropbox::InitializeMenus()
 
 int CDropbox::OnPrebuildContactMenu(WPARAM hContact, LPARAM)
 {
-	if (!hContact)
-		return 0;
-
 	bool bShow = false;
 
-	if (HasAccessToken() && !hTransferContact && hContact != GetDefaultContact())
-	{
-		char *proto = GetContactProto(hContact);
-		bool isContact = db_get_b(hContact, proto, "ChatRoom", 0) == 0;
-		if (proto && isContact)
-		{
+	char *proto = GetContactProto(hContact);
+	if (proto != NULL) {
+		bool bHasIM = (CallProtoService(proto, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_IMSEND) != 0;
+		if (bHasIM && HasAccessToken() && hContact != GetDefaultContact() && !IsAccountIntercepted(proto)) {
 			bool isProtoOnline = CallProtoService(proto, PS_GETSTATUS, 0, 0) > ID_STATUS_OFFLINE;
 			WORD status = db_get_w(hContact, proto, "Status", ID_STATUS_OFFLINE);
 			bool canSendOffline = (CallProtoService(proto, PS_GETCAPS, PFLAGNUM_4, 0) & PF4_IMSENDOFFLINE) > 0;

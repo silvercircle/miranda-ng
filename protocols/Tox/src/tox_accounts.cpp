@@ -4,7 +4,7 @@ LIST<CToxProto> CToxProto::Accounts(1, CToxProto::CompareAccounts);
 
 int CToxProto::CompareAccounts(const CToxProto *p1, const CToxProto *p2)
 {
-	return mir_tstrcmp(p1->m_tszUserName, p2->m_tszUserName);
+	return mir_wstrcmp(p1->m_tszUserName, p2->m_tszUserName);
 }
 
 CToxProto* CToxProto::InitAccount(const char *protoName, const wchar_t *userName)
@@ -42,13 +42,13 @@ int CToxProto::OnAccountLoaded(WPARAM, LPARAM)
 
 int CToxProto::OnAccountRenamed(WPARAM, LPARAM)
 {
-	ptrT newPath(GetToxProfilePath());
-	TCHAR oldPath[MAX_PATH];
-	mir_sntprintf(oldPath, MAX_PATH, _T("%s\\%s.tox"), VARST(_T("%miranda_userdata%")), accountName);
-	_trename(oldPath, newPath);
-	mir_free(accountName);
-	accountName = mir_tstrdup(m_tszUserName);
+	mir_cslock locker(profileLock);
 
+	ptrW newPath(GetToxProfilePath());
+	wchar_t oldPath[MAX_PATH];
+	mir_snwprintf(oldPath, MAX_PATH, L"%s\\%s.tox", VARSW(L"%miranda_userdata%"), wszAccountName);
+	_wrename(oldPath, newPath);
+	wszAccountName = mir_wstrdup(m_tszUserName);
 	return 0;
 }
 

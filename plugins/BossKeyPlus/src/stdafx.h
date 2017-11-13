@@ -22,7 +22,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define _CRT_SECURE_NO_DEPRECATE
 
-#define BOSSKEY_LISTEN_INFO _T("MY6BossKey_Param")
+#define BOSSKEY_LISTEN_INFO L"MY6BossKey_Param"
 
 #include <windows.h>
 #include <shellapi.h>
@@ -43,7 +43,6 @@
 
 #include <m_variables.h>
 #include <m_toptoolbar.h>
-#include <m_msg_buttonsbar.h>
 
 #include "resource.h"
 #include "version.h"
@@ -88,10 +87,10 @@ int OptsDlgInit(WPARAM wParam, LPARAM lParam);
 INT_PTR BossKeyHideMiranda(WPARAM wParam, LPARAM lParam);
 void BossKeyMenuItemInit(void);
 void BossKeyMenuItemUnInit(void);
-static TCHAR *GetBossKeyText(void);
+static wchar_t *GetBossKeyText(void);
 void InitIdleTimer(void);
 void UninitIdleTimer(void);
-TCHAR* GetDefStatusMsg(unsigned uMode, const char* szProto);
+wchar_t* GetDefStatusMsg(unsigned uMode, const char* szProto);
 
 // I never really liked STL's vector... hmm this is nicer anyway, more flexible
 typedef struct HWND_ITEM_TYPE

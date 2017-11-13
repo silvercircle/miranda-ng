@@ -6,7 +6,7 @@
 ;  Authors: Mataes, ZERO_BiT
 ;============================================================
 [Simple updater for Miranda NG premodified packs.]
-Простий плагін для оновлень збірок Miranda NG.
+Оновлення збірок Miranda NG.
 [Updates found!]
 Знайдені оновлення!
 [Update]
@@ -29,7 +29,7 @@
 Нагадувати про невстановлене оновлення
 [Hotkey]
 Гаряча клавіша
-[Go to Customize -> Hotkeys to change the hotkey]
+[Go to Options -> Customize -> Hotkeys to change the hotkey]
 Налаштувати: Тонке налаштування -> Гарячі клавіші
 [Notifications]
 Сповіщення

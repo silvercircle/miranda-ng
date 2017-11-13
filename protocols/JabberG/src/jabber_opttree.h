@@ -6,7 +6,7 @@ Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
 Copyright (c) 2007     Maxim Mluhov
 Copyright (c) 2007     Victor Pavlychko
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -37,7 +37,7 @@ public:
 	CCtrlTreeOpts(CDlgBase* dlg, int ctrlId);
 	~CCtrlTreeOpts();
 
-	void AddOption(TCHAR *szOption, CMOption<BYTE> &option);
+	void AddOption(wchar_t *szOption, CMOption<BYTE> &option);
 
 	BOOL OnNotify(int idCtrl, NMHDR *pnmh);
 	void OnDestroy();
@@ -47,14 +47,14 @@ public:
 protected:
 	struct COptionsItem
 	{
-		TCHAR *m_szOptionName;
+		wchar_t *m_szOptionName;
 		int m_groupId;
 
 		CMOption<BYTE> *m_option;
 
 		HTREEITEM m_hItem;
 
-		COptionsItem(TCHAR *szOption, CMOption<BYTE> &option);
+		COptionsItem(wchar_t *szOption, CMOption<BYTE> &option);
 		~COptionsItem();
 	};
 

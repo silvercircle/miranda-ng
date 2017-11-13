@@ -6,8 +6,7 @@ extern HGENMENU g_hMenuOpenLogFile;
 #ifdef CHART_IMPLEMENT
 extern HGENMENU g_hMenuChart;
 #endif
-extern HGENMENU g_hMenuRefresh;
-
+extern HGENMENU g_hMenuRefresh, g_hMenuRoot;
 
 #define WINDOW_PREFIX_INFO "Quote Info"
 
@@ -24,7 +23,7 @@ inline MCONTACT get_contact(HWND hWnd)
 	return MCONTACT(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 }
 
-bool get_fetch_time(time_t& rTime, MCONTACT hContact)
+static bool get_fetch_time(time_t& rTime, MCONTACT hContact)
 {
 	rTime = db_get_dw(hContact, QUOTES_PROTOCOL_NAME, DB_STR_QUOTE_FETCH_TIME, -1);
 	return (rTime != -1);
@@ -42,8 +41,7 @@ INT_PTR CALLBACK QuoteInfoDlgProcImpl(MCONTACT hContact, HWND hdlg, UINT msg, WP
 			::SetDlgItemText(hdlg, IDC_STATIC_QUOTE_NAME, sDescription.c_str());
 
 			double dRate = 0.0;
-			if (true == Quotes_DBReadDouble(hContact, QUOTES_PROTOCOL_NAME, DB_STR_QUOTE_PREV_VALUE, dRate))
-			{
+			if (true == Quotes_DBReadDouble(hContact, QUOTES_PROTOCOL_NAME, DB_STR_QUOTE_PREV_VALUE, dRate)) {
 				tostringstream o;
 				o.imbue(GetSystemLocale());
 				o << dRate;
@@ -52,8 +50,7 @@ INT_PTR CALLBACK QuoteInfoDlgProcImpl(MCONTACT hContact, HWND hdlg, UINT msg, WP
 			}
 
 			dRate = 0.0;
-			if (true == Quotes_DBReadDouble(hContact, QUOTES_PROTOCOL_NAME, DB_STR_QUOTE_CURR_VALUE, dRate))
-			{
+			if (true == Quotes_DBReadDouble(hContact, QUOTES_PROTOCOL_NAME, DB_STR_QUOTE_CURR_VALUE, dRate)) {
 				tostringstream o;
 				o.imbue(GetSystemLocale());
 				o << dRate;
@@ -62,12 +59,9 @@ INT_PTR CALLBACK QuoteInfoDlgProcImpl(MCONTACT hContact, HWND hdlg, UINT msg, WP
 			}
 
 			time_t nFetchTime;
-			if (true == get_fetch_time(nFetchTime, hContact))
-			{
-				TCHAR szTime[50];
-				if (0 == _tctime_s(szTime, 50, &nFetchTime))
-				{
-					szTime[::mir_tstrlen(szTime) - 1] = _T('\0');
+			if (true == get_fetch_time(nFetchTime, hContact)) {
+				wchar_t szTime[50] = { 0 };
+				if (0 == _tctime_s(szTime, 50, &nFetchTime)) {
 					::SetDlgItemText(hdlg, IDC_EDIT_RATE_FETCH_TIME, szTime);
 				}
 			}
@@ -76,7 +70,7 @@ INT_PTR CALLBACK QuoteInfoDlgProcImpl(MCONTACT hContact, HWND hdlg, UINT msg, WP
 
 			const IQuotesProvider::CProviderInfo& pi = pProvider->GetInfo();
 			tostringstream o;
-			o << TranslateT("Info provided by") << _T(" <a href=\"") << pi.m_sURL << _T("\">") << pi.m_sName << _T("</a>");
+			o << TranslateT("Info provided by") << L" <a href=\"" << pi.m_sURL << L"\">" << pi.m_sName << L"</a>";
 
 			::SetDlgItemText(hdlg, IDC_SYSLINK_PROVIDER, o.str().c_str());
 		}
@@ -88,7 +82,7 @@ INT_PTR CALLBACK QuoteInfoDlgProcImpl(MCONTACT hContact, HWND hdlg, UINT msg, WP
 		case NM_CLICK:
 			if (IDC_SYSLINK_PROVIDER == wParam) {
 				PNMLINK pNMLink = reinterpret_cast<PNMLINK>(pNMHDR);
-				::ShellExecute(hdlg, _T("open"), pNMLink->item.szUrl, NULL, NULL, SW_SHOWNORMAL);
+				::ShellExecute(hdlg, L"open", pNMLink->item.szUrl, NULL, NULL, SW_SHOWNORMAL);
 			}
 			break;
 		}
@@ -115,11 +109,10 @@ int QuotesEventFunc_OnUserInfoInit(WPARAM wp, LPARAM lp)
 
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = g_hInstance;
-	odp.hIcon = Quotes_LoadIconEx(ICON_STR_MAIN);
 	odp.pfnDlgProc = QuoteInfoDlgProc;
 	odp.position = -2000000000;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_DIALOG_QUOTE_INFO);
-	odp.pszTitle = LPGEN("Quote");
+	odp.szTitle.a = LPGEN("Quote");
 	UserInfo_AddPage(wp, &odp);
 	return 0;
 }
@@ -150,7 +143,7 @@ INT_PTR QuotesMenu_OpenLogFile(WPARAM wp, LPARAM)
 
 	tstring sLogFileName;
 	if ((true == get_log_file(hContact, sLogFileName)) && (false == sLogFileName.empty()))
-		::ShellExecute(NULL, _T("open"), sLogFileName.c_str(), NULL, NULL, SW_SHOWNORMAL);
+		::ShellExecute(NULL, L"open", sLogFileName.c_str(), NULL, NULL, SW_SHOWNORMAL);
 
 	return 0;
 }
@@ -219,8 +212,7 @@ static INT_PTR CALLBACK QuoteInfoDlgProc1(HWND hdlg, UINT msg, WPARAM wParam, LP
 int Quotes_OnContactDoubleClick(WPARAM wp, LPARAM/* lp*/)
 {
 	MCONTACT hContact = MCONTACT(wp);
-	if (CModuleInfo::GetQuoteProvidersPtr()->GetContactProviderPtr(hContact))
-	{
+	if (CModuleInfo::GetQuoteProvidersPtr()->GetContactProviderPtr(hContact)) {
 		MWindowList hWL = CModuleInfo::GetInstance().GetWindowList(WINDOW_PREFIX_INFO, true);
 		assert(hWL);
 		HWND hWnd = WindowList_Find(hWL, hContact);
@@ -241,29 +233,30 @@ int Quotes_PrebuildContactMenu(WPARAM wp, LPARAM)
 {
 	Menu_EnableItem(g_hMenuEditSettings, false);
 	Menu_EnableItem(g_hMenuOpenLogFile, false);
-#ifdef CHART_IMPLEMENT
-	Menu_EnableItem(g_hMenuChart,false);
-#endif
+	#ifdef CHART_IMPLEMENT
+	Menu_EnableItem(g_hMenuChart, false);
+	#endif
 	Menu_EnableItem(g_hMenuRefresh, false);
 
 	MCONTACT hContact = MCONTACT(wp);
-	if (NULL == hContact)
-	{
+	char *szProto = GetContactProto(hContact);
+	if (mir_strcmp(szProto, QUOTES_MODULE_NAME)) {
+		Menu_ShowItem(g_hMenuRoot, false);
 		return 0;
 	}
 
+	Menu_ShowItem(g_hMenuRoot, true);
 	Menu_EnableItem(g_hMenuEditSettings, true);
 
 	Menu_EnableItem(g_hMenuRefresh, true);
 
 	tstring sLogFileName;
 	bool bThereIsLogFile = (true == get_log_file(hContact, sLogFileName))
-		&& (false == sLogFileName.empty()) && (0 == _taccess(sLogFileName.c_str(), 04));
-	if (true == bThereIsLogFile)
-	{
-#ifdef CHART_IMPLEMENT
-		Menu_EnableItem(g_hMenuChart,true);
-#endif
+		&& (false == sLogFileName.empty()) && (0 == _waccess(sLogFileName.c_str(), 04));
+	if (true == bThereIsLogFile) {
+		#ifdef CHART_IMPLEMENT
+		Menu_EnableItem(g_hMenuChart, true);
+		#endif
 		Menu_EnableItem(g_hMenuOpenLogFile, true);
 	}
 

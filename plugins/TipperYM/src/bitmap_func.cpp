@@ -150,11 +150,11 @@ void CreateFromBitmaps(bool bServiceTip)
 		if (i == SKIN_ITEM_SIDEBAR && (!opt.iSidebarWidth || bServiceTip))
 			continue;
 
-		TCHAR* tszFileName = opt.szImgFile[i];
+		wchar_t* tszFileName = opt.szImgFile[i];
 		if (tszFileName && *tszFileName != 0) {
 			FIBITMAP *fib = NULL;
 			if (!skin.bCached) {
-				FIBITMAP *fibLoad = (FIBITMAP *)CallService(MS_IMG_LOAD, (WPARAM)tszFileName, IMGL_TCHAR | IMGL_RETURNDIB);
+				FIBITMAP *fibLoad = (FIBITMAP *)CallService(MS_IMG_LOAD, (WPARAM)tszFileName, IMGL_WCHAR | IMGL_RETURNDIB);
 				if (!fibLoad) continue;
 
 				if (fii->FI_GetBPP(fibLoad) != 32) 
@@ -358,7 +358,7 @@ void CreateSkinBitmap(int iWidth, int iHeight, bool bServiceTip)
 	skin.iHeight = iHeight;
 	skin.bNeedLayerUpdate = false;
 
-	BITMAPINFO bi;
+	BITMAPINFO bi = { 0 };
 	bi.bmiHeader.biSize = sizeof(bi.bmiHeader);
 	bi.bmiHeader.biWidth = skin.iWidth;
 	bi.bmiHeader.biHeight = -skin.iHeight;

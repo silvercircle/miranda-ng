@@ -26,12 +26,7 @@ Avatar History Plugin
 
 bool ProtocolEnabled(const char *proto)
 {
-	if (proto == NULL)
-		return FALSE;
-
-	char setting[256];
-	mir_snprintf(setting, "%sEnabled", proto);
-	return 0 != db_get_b(NULL, MODULE_NAME, setting, true);
+	return Proto_IsAccountEnabled(Proto_GetAccount(proto));
 }
 
 bool ContactEnabled(MCONTACT hContact, char *setting, int def)
@@ -59,225 +54,191 @@ BOOL IsUnicodeAscii(const WCHAR * pBuffer, int nSize)
 	return TRUE;
 }
 
-void ConvertToFilename(TCHAR *str, size_t size)
+void ConvertToFilename(wchar_t *str, size_t size)
 {
-	for(size_t i = 0; i < size && str[i] != '\0'; i++) {
-		switch(str[i]) {
-			case '/':
-			case '\\':
-			case ':':
-			case '*':
-			case '?':
-			case '"':
-			case '<':
-			case '>':
-			case '|':
-				str[i] = '_';
+	for (size_t i = 0; i < size && str[i] != '\0'; i++) {
+		switch (str[i]) {
+		case '/':
+		case '\\':
+		case ':':
+		case '*':
+		case '?':
+		case '"':
+		case '<':
+		case '>':
+		case '|':
+			str[i] = '_';
 		}
 	}
 }
 
-int GetUIDFromHContact(MCONTACT contact, TCHAR* uinout, int uinout_len)
+wchar_t* GetExtension(wchar_t *file)
 {
-	bool found = true;
-
-	CONTACTINFO cinfo = { sizeof(cinfo) };
-	cinfo.hContact = contact;
-	cinfo.dwFlag = CNF_UNIQUEID | CNF_TCHAR;
-	if (CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&cinfo) == 0) {
-		if (cinfo.type == CNFT_ASCIIZ) {
-			mir_tstrncpy(uinout, cinfo.pszVal, uinout_len);
-			// It is up to us to free the string
-			// The catch? We need to use Miranda's free(), not our CRT's :)
-			mir_free(cinfo.pszVal);
-		}
-		else if (cinfo.type == CNFT_DWORD)
-			_itot(cinfo.dVal,uinout,10);
-		else if (cinfo.type == CNFT_WORD)
-			_itot(cinfo.wVal,uinout,10);
-		else
-			found = false;
-	}
-	else found = false;
-
-	if (!found)
-		mir_tstrncpy(uinout, TranslateT("Unknown UIN"), uinout_len);
-
-	return 0;
-}
-
-TCHAR* GetExtension(TCHAR *file)
-{
-	if (file == NULL) return _T("");
-	TCHAR *ext = _tcsrchr(file, _T('.'));
+	if (file == NULL) return L"";
+	wchar_t *ext = wcsrchr(file, '.');
 	if (ext != NULL)
 		ext++;
 	else
-		ext = _T("");
+		ext = L"";
 
 	return ext;
 }
 
-TCHAR* GetHistoryFolder(TCHAR *fn)
+wchar_t* GetHistoryFolder(wchar_t *fn)
 {
 	if (fn == NULL) return NULL;
 	FoldersGetCustomPathT(hFolder, fn, MAX_PATH, basedir);
-	CreateDirectoryTreeT(fn);
+	CreateDirectoryTreeW(fn);
 	return fn;
 }
 
-TCHAR* GetProtocolFolder(TCHAR *fn, char *proto)
+wchar_t* GetProtocolFolder(wchar_t *fn, char *proto)
 {
 	GetHistoryFolder(fn);
 
 	if (proto == NULL)
-		proto = Translate("Unknown Protocol");
+		proto = Translate("Unknown protocol");
 
-	mir_sntprintf(fn, MAX_PATH, _T("%s\\%S"), fn, proto);
-	CreateDirectoryTreeT(fn);
+	mir_snwprintf(fn, MAX_PATH, L"%s\\%S", fn, proto);
+	CreateDirectoryTreeW(fn);
 	return fn;
 }
 
-TCHAR* GetContactFolder(TCHAR *fn, MCONTACT hContact)
+wchar_t* GetContactFolder(wchar_t *fn, MCONTACT hContact)
 {
 	char *proto = GetContactProto(hContact);
 	GetProtocolFolder(fn, proto);
-	
-	TCHAR uin[MAX_PATH];
-	GetUIDFromHContact(hContact, uin, _countof(uin));
+
+	wchar_t uin[MAX_PATH];
+	ptrW id(Contact_GetInfo(CNF_UNIQUEID, hContact, proto));
+	wcsncpy_s(uin, (id == NULL) ? TranslateT("Unknown UIN") : id, _TRUNCATE);
 	ConvertToFilename(uin, MAX_PATH); //added so that weather id's like "yw/CI0000" work
-	mir_sntprintf(fn, MAX_PATH, _T("%s\\%s"), fn, uin);
-	CreateDirectoryTreeT(fn);
-	
+	mir_snwprintf(fn, MAX_PATH, L"%s\\%s", fn, uin);
+	CreateDirectoryTreeW(fn);
+
 #ifdef DBGPOPUPS
-	TCHAR log[1024];
-	mir_sntprintf(log, _T("Path: %s\nProto: %S\nUIN: %s"), fn, proto, uin);
-	ShowPopup(hContact, _T("AVH Debug: GetContactFolder"), log);
+	wchar_t log[1024];
+	mir_snwprintf(log, L"Path: %s\nProto: %S\nUIN: %s", fn, proto, uin);
+	ShowPopup(hContact, L"AVH Debug: GetContactFolder", log);
 #endif
 
 	return fn;
 }
 
-TCHAR* GetOldStyleAvatarName(TCHAR *fn, MCONTACT hContact)
+wchar_t* GetOldStyleAvatarName(wchar_t *fn, MCONTACT hContact)
 {
 	GetContactFolder(fn, hContact);
 
 	SYSTEMTIME curtime;
 	GetLocalTime(&curtime);
-	mir_sntprintf(fn, MAX_PATH, 
-		_T("%s\\%04d-%02d-%02d %02dh%02dm%02ds"), fn, 
-		curtime.wYear, curtime.wMonth, curtime.wDay, 
+	mir_snwprintf(fn, MAX_PATH,
+		L"%s\\%04d-%02d-%02d %02dh%02dm%02ds", fn,
+		curtime.wYear, curtime.wMonth, curtime.wDay,
 		curtime.wHour, curtime.wMinute, curtime.wSecond);
-	ShowDebugPopup(hContact,TranslateT("AVH Debug: GetOldStyleAvatarName"),fn);
+	ShowDebugPopup(hContact, L"AVH Debug: GetOldStyleAvatarName", fn);
 	return fn;
 }
 
-void CreateOldStyleShortcut(MCONTACT hContact, TCHAR *history_filename)
+void CreateOldStyleShortcut(MCONTACT hContact, wchar_t *history_filename)
 {
-	TCHAR shortcut[MAX_PATH] = _T("");
+	wchar_t shortcut[MAX_PATH] = L"";
 
 	GetOldStyleAvatarName(shortcut, hContact);
 
-	mir_sntprintf(shortcut, _T("%s.%s.lnk"), shortcut,
+	mir_snwprintf(shortcut, L"%s.%s.lnk", shortcut,
 		GetExtension(history_filename));
 
 	if (!CreateShortcut(history_filename, shortcut))
-	{
-		ShowPopup(hContact, TranslateT("Avatar History: Unable to create shortcut"), shortcut);
-	}
+		ShowPopup(hContact, TranslateT("Avatar history: Unable to create shortcut"), shortcut);
 	else
-	{
-		ShowDebugPopup(hContact, TranslateT("AVH Debug: Shortcut created successfully"), shortcut);
-	}
+		ShowDebugPopup(hContact, L"AVH Debug: Shortcut created successfully", shortcut);
 }
 
-BOOL CopyImageFile(TCHAR *old_file, TCHAR *new_file)
+BOOL CopyImageFile(wchar_t *old_file, wchar_t *new_file)
 {
-	TCHAR *ext = GetExtension(old_file);
-	mir_sntprintf(new_file, MAX_PATH, _T("%s.%s"), new_file, ext);
+	wchar_t *ext = GetExtension(old_file);
+	mir_snwprintf(new_file, MAX_PATH, L"%s.%s", new_file, ext);
 	return !CopyFile(old_file, new_file, TRUE);
 }
 
-TCHAR * GetCachedAvatar(char *proto, TCHAR *hash)
+wchar_t* GetCachedAvatar(char *proto, wchar_t *hash)
 {
-	TCHAR *ret = NULL;
-	TCHAR file[1024] = _T("");
-	TCHAR search[1024] = _T("");
+	wchar_t *ret = NULL;
+	wchar_t file[1024] = L"";
+	wchar_t search[1024] = L"";
 	if (opts.log_keep_same_folder)
 		GetHistoryFolder(file);
 	else
 		GetProtocolFolder(file, proto);
 
-	mir_sntprintf(search, _T("%s\\%s.*"), file, hash);
+	mir_snwprintf(search, L"%s\\%s.*", file, hash);
 
 	WIN32_FIND_DATA finddata;
 	HANDLE hFind = FindFirstFile(search, &finddata);
 	if (hFind == INVALID_HANDLE_VALUE)
 		return NULL;
 
-	do
-	{
-		size_t len = mir_tstrlen(finddata.cFileName);
-		if (len > 4 
-			&& (!mir_tstrcmpi(&finddata.cFileName[len-4], _T(".png"))
-				|| !mir_tstrcmpi(&finddata.cFileName[len-4], _T(".bmp"))
-				|| !mir_tstrcmpi(&finddata.cFileName[len-4], _T(".gif"))
-				|| !mir_tstrcmpi(&finddata.cFileName[len-4], _T(".jpg"))
-				|| !mir_tstrcmpi(&finddata.cFileName[len-5], _T(".jpeg"))))
-		{
-			mir_sntprintf(file, _T("%s\\%s"), file, finddata.cFileName);
-			ret = mir_tstrdup(file);
+	do {
+		size_t len = mir_wstrlen(finddata.cFileName);
+		if (len > 4
+			&& (!mir_wstrcmpi(&finddata.cFileName[len - 4], L".png")
+				|| !mir_wstrcmpi(&finddata.cFileName[len - 4], L".bmp")
+				|| !mir_wstrcmpi(&finddata.cFileName[len - 4], L".gif")
+				|| !mir_wstrcmpi(&finddata.cFileName[len - 4], L".jpg")
+				|| !mir_wstrcmpi(&finddata.cFileName[len - 5], L".jpeg"))) {
+			mir_snwprintf(file, L"%s\\%s", file, finddata.cFileName);
+			ret = mir_wstrdup(file);
 			break;
 		}
-	} while(FindNextFile(hFind, &finddata));
+	} while (FindNextFile(hFind, &finddata));
 	FindClose(hFind);
 
 	return ret;
 }
 
-BOOL CreateShortcut(TCHAR *file, TCHAR *shortcut)
+BOOL CreateShortcut(wchar_t *file, wchar_t *shortcut)
 {
 	IShellLink *psl = NULL;
-	HRESULT hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (void **) &psl);
+	HRESULT hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (void **)&psl);
 	if (SUCCEEDED(hr)) {
-		psl->SetPath(file); 
+		psl->SetPath(file);
 
-		IPersistFile *ppf = NULL; 
-		hr = psl->QueryInterface(IID_IPersistFile,  (void **) &ppf); 
+		IPersistFile *ppf = NULL;
+		hr = psl->QueryInterface(IID_IPersistFile, (void **)&ppf);
 		if (SUCCEEDED(hr)) {
-			hr = ppf->Save(shortcut, TRUE); 
-			ppf->Release(); 
+			hr = ppf->Save(shortcut, TRUE);
+			ppf->Release();
 		}
 
-		psl->Release(); 
-	} 
+		psl->Release();
+	}
 
 	return SUCCEEDED(hr);
 }
 
-BOOL ResolveShortcut(TCHAR *shortcut, TCHAR *file)
+BOOL ResolveShortcut(wchar_t *shortcut, wchar_t *file)
 {
 	IShellLink* psl = NULL;
 
-	HRESULT hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (void **) &psl);
+	HRESULT hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (void **)&psl);
 
 	if (SUCCEEDED(hr)) {
-		IPersistFile* ppf = NULL; 
-		hr = psl->QueryInterface(IID_IPersistFile,  (void **) &ppf); 
+		IPersistFile* ppf = NULL;
+		hr = psl->QueryInterface(IID_IPersistFile, (void **)&ppf);
 
 		if (SUCCEEDED(hr)) {
-			hr = ppf->Load(shortcut, STGM_READ); 
+			hr = ppf->Load(shortcut, STGM_READ);
 			if (SUCCEEDED(hr)) {
-				hr = psl->Resolve(NULL, SLR_UPDATE); 
+				hr = psl->Resolve(NULL, SLR_UPDATE);
 				if (SUCCEEDED(hr)) {
 					WIN32_FIND_DATA wfd;
-					hr = psl->GetPath(file, MAX_PATH, &wfd, SLGP_RAWPATH); 
+					hr = psl->GetPath(file, MAX_PATH, &wfd, SLGP_RAWPATH);
 				}
 			}
 
-			ppf->Release(); 
+			ppf->Release();
 		}
-		psl->Release(); 
+		psl->Release();
 	}
 
 	return SUCCEEDED(hr);

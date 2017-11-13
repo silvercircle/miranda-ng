@@ -561,12 +561,12 @@ begin
     mFreeMem(lservice);
 
   if StrPos(buf,protostr)<>nil then
-    if CallService(MS_DB_CONTACT_IS,data.Parameter,0)<>0 then
+    if db_is_contact(data.Parameter)<>0 then
       StrReplace(buf,protostr,Proto_GetBaseAccountName(data.Parameter))
     else
       Exit;
 
-  if ServiceExists(buf)<>0 then
+  if ServiceExists(buf) then
   begin
     result:=true;
 

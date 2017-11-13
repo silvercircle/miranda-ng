@@ -22,8 +22,6 @@ CLIST_INTERFACE *pcli;
 HINSTANCE hInstance = NULL;
 int hLangpack = 0;
 
-static HANDLE hOpenHistoryMenuItem = 0;
-
 MWindowList hInternalWindowList = NULL;
 
 /////////////////////////////////////////////////////
@@ -121,10 +119,7 @@ int MainInit(WPARAM /*wparam*/, LPARAM /*lparam*/)
 		mi.position = 1000090100;
 		mi.name.a = LPGEN("Open E&xported History");
 		mi.pszService = MS_SHOW_EXPORT_HISTORY;
-		hOpenHistoryMenuItem = Menu_AddContactMenuItem(&mi);
-
-		if (!hOpenHistoryMenuItem)
-			MessageBox(NULL, TranslateT("Failed to add menu item Open Exported History\nCallService(MS_CLIST_ADDCONTACTMENUITEM,...)"), MSG_BOX_TITEL, MB_OK);
+		Menu_AddContactMenuItem(&mi);
 	}
 
 	HookEvent(ME_SYSTEM_SHUTDOWN, nSystemShutdown);
@@ -189,20 +184,20 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 extern "C" __declspec(dllexport) int Load()
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, MainInit);
 
 	nMaxLineWidth = db_get_w(NULL, MODULE, "MaxLineWidth", nMaxLineWidth);
-	if (nMaxLineWidth < 5)
+	if (nMaxLineWidth > 0 && nMaxLineWidth < 5)
 		nMaxLineWidth = 5;
 
-	sExportDir = _DBGetString(NULL, MODULE, "ExportDir", _T("%dbpath%\\MsgExport\\"));
-	sDefaultFile = _DBGetString(NULL, MODULE, "DefaultFile", _T("%nick%.txt"));
+	sExportDir = _DBGetString(NULL, MODULE, "ExportDir", L"%dbpath%\\MsgExport\\");
+	sDefaultFile = _DBGetString(NULL, MODULE, "DefaultFile", L"%nick%.txt");
 
-	sTimeFormat = _DBGetString(NULL, MODULE, "TimeFormat", _T("d s"));
+	sTimeFormat = _DBGetString(NULL, MODULE, "TimeFormat", L"d s");
 
-	sFileViewerPrg = _DBGetString(NULL, MODULE, "FileViewerPrg", _T(""));
+	sFileViewerPrg = _DBGetString(NULL, MODULE, "FileViewerPrg", L"");
 	bUseInternalViewer(db_get_b(NULL, MODULE, "UseInternalViewer", bUseInternalViewer()) != 0);
 
 	bReplaceHistory = db_get_b(NULL, MODULE, "ReplaceHistory", bReplaceHistory) != 0;

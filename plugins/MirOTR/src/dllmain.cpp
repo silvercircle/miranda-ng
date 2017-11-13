@@ -21,18 +21,18 @@ PLUGININFOEX pluginInfo={
 	{0x12d8faad, 0x78ab, 0x4e3c, {0x98, 0x54, 0x32, 0xe, 0x9e, 0xa5, 0xcc, 0x9f}}
 };
 
-BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD, LPVOID)
 {
 	hInst = hModule;
 	return TRUE;
 }
 
-extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
+extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 {
 	return &pluginInfo;
 }
 
-int ModulesLoaded(WPARAM wParam, LPARAM lParam)
+int ModulesLoaded(WPARAM, LPARAM)
 {
 	lib_cs_lock();
 	otr_user_state = otrl_userstate_create();
@@ -51,17 +51,17 @@ int ModulesLoaded(WPARAM wParam, LPARAM lParam)
 		db_set_b(0, MODULENAME, "sim_warned", 1);
 		options.default_policy = OTRL_POLICY_MANUAL_MOD;
 		SaveOptions();
-		MessageBox(0, TranslateT(LANG_OTR_SECUREIM_TEXT), TranslateT(LANG_OTR_SECUREIM_TITLE), 0x30);
+		MessageBox(0, TranslateW(LANG_OTR_SECUREIM_TEXT), TranslateW(LANG_OTR_SECUREIM_TITLE), 0x30);
 	}
 	return 0;
 }
 
 extern "C" __declspec(dllexport) int Load(void)
 {
-	DEBUGOUT_T("LOAD MIROTR");
+	DEBUGOUTA("LOAD MIROTR");
 
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	InitIcons();
 
@@ -104,7 +104,7 @@ extern "C" __declspec(dllexport) int Unload(void)
 	UnhookEvent(hEventWindow);
 	//UnhookEvent(hEventDbEventAddedFilter);
 	//UnhookEvent(hEventDbEventAdded);
-	DEBUGOUT_T("UNLOAD MIROTR");
+	DEBUGOUTA("UNLOAD MIROTR");
 	DeinitSRMM();
 	DeinitDBFilter();
 

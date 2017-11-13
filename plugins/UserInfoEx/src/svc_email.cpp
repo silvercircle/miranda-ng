@@ -100,7 +100,7 @@ static INT_PTR MenuCommand(WPARAM wParam,LPARAM lParam)
 		}
 		else {
 			result = 1;
-			MsgBox((HWND)lParam, MB_OK, LPGENT("Send e-mail"), NULL, LPGENT("Memory allocation error!"));
+			MsgBox((HWND)lParam, MB_OK, LPGENW("Send e-mail"), NULL, LPGENW("Memory allocation error!"));
 		}
 	}
 	__except(GetExceptionCode()==EXCEPTION_ACCESS_VIOLATION ? 
@@ -108,7 +108,7 @@ static INT_PTR MenuCommand(WPARAM wParam,LPARAM lParam)
 	{
 		mir_free(val);
 		result = 1;
-		MsgErr((HWND)lParam, LPGENT("Memory allocation error!"));
+		MsgErr((HWND)lParam, LPGENW("Memory allocation error!"));
 	}
 	return result;
 }
@@ -143,9 +143,9 @@ static int OnContactSettingChanged(MCONTACT hContact, DBCONTACTWRITESETTING* pdb
 {
 	if (hContact && pdbcws && pdbcws->szSetting && 
 			((pdbcws->value.type & DBVTF_VARIABLELENGTH) || (pdbcws->value.type == DBVT_DELETED)) &&
-			(!mir_strncmp(pdbcws->szSetting, SET_CONTACT_EMAIL, 6) ||
-			 !mir_strncmp(pdbcws->szSetting, SET_CONTACT_COMPANY_EMAIL, 13) ||
-			 !mir_strncmp(pdbcws->szSetting, "mye-mail0", 9)))
+			(!strncmp(pdbcws->szSetting, SET_CONTACT_EMAIL, 6) ||
+			 !strncmp(pdbcws->szSetting, SET_CONTACT_COMPANY_EMAIL, 13) ||
+			 !strncmp(pdbcws->szSetting, "mye-mail0", 9)))
 	{
 		OnCListApplyIcons(hContact, 0);
 	}
@@ -229,7 +229,7 @@ bool SvcEMailEnableExtraIcons(bool bEnable, bool bUpdateDB)
 			hApplyIconHook = HookEvent(ME_CLIST_EXTRA_IMAGE_APPLY, OnCListApplyIcons);
 
 		if (ghExtraIconSvc == INVALID_HANDLE_VALUE)
-			ghExtraIconSvc = ExtraIcon_RegisterIcolib("email", LPGEN("E-mail (uinfoex)"), ICO_BTN_EMAIL);
+			ghExtraIconSvc = ExtraIcon_RegisterIcolib("email", LPGEN("E-mail (UInfoEx)"), ICO_BTN_EMAIL);
 	}
 	else { // E-mail uncheckt
 		if (hChangedHook) {
@@ -254,8 +254,8 @@ void SvcEMailLoadModule()
 	SvcEMailEnableExtraIcons();
 	if (db_get_b(NULL, MODNAME, SET_EXTENDED_EMAILSERVICE, TRUE)) {
 		// create own email send command
-		if (!myDestroyServiceFunction(MS_EMAIL_SENDEMAIL))
-			CreateServiceFunction(MS_EMAIL_SENDEMAIL, MenuCommand);
+		DestroyServiceFunction(MS_EMAIL_SENDEMAIL);
+		CreateServiceFunction(MS_EMAIL_SENDEMAIL, MenuCommand);
 	}
 }
 

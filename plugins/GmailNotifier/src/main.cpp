@@ -10,6 +10,7 @@ There is no warranty.
 #include "stdafx.h"
 #include "version.h"
 
+CLIST_INTERFACE *pcli;
 HINSTANCE hInst;
 int hLangpack;
 UINT hTimer;
@@ -88,8 +89,9 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 extern "C" int __declspec(dllexport) Load()
 {
 	mir_getLP(&pluginInfoEx);
+	pcli = Clist_GetInterface();
 
-	SkinAddNewSoundEx("Gmail", LPGEN("Other"), LPGEN("Gmail: New thread(s)"));
+	Skin_AddSound("Gmail", LPGENW("Other"), LPGENW("Gmail: New thread(s)"));
 	HookEvent(ME_CLIST_DOUBLECLICKED, OpenBrowser);
 
 	PROTOCOLDESCRIPTOR pd = { PROTOCOLDESCRIPTOR_V3_SIZE };
@@ -115,11 +117,11 @@ extern "C" int __declspec(dllexport) Load()
 	opt.LogThreads = db_get_dw(NULL, MODULE_NAME, "LogThreads", FALSE);
 
 	DBVARIANT dbv;
-	if (db_get_s(NULL, "Icons", "GmailMNotifier40076", &dbv)) {
-		db_set_s(NULL, "Icons", "GmailMNotifier40071", "plugins\\gmailm.dll,2");
-		db_set_s(NULL, "Icons", "GmailMNotifier40072", "plugins\\gmailm.dll,2");
-		db_set_s(NULL, "Icons", "GmailMNotifier40076", "plugins\\gmailm.dll,0");
-		db_set_s(NULL, "Icons", "GmailMNotifier40073", "plugins\\gmailm.dll,1");
+	if (db_get_s(NULL, "SkinIcons", "core_status_" MODULE_NAME "4", &dbv)) {
+		db_set_s(NULL, "SkinIcons", "core_status_" MODULE_NAME "0", "plugins\\GmailNotifier.dll,2");
+		db_set_s(NULL, "SkinIcons", "core_status_" MODULE_NAME "1", "plugins\\GmailNotifier.dll,2");
+		db_set_s(NULL, "SkinIcons", "core_status_" MODULE_NAME "2", "plugins\\GmailNotifier.dll,0");
+		db_set_s(NULL, "SkinIcons", "core_status_" MODULE_NAME "4", "plugins\\GmailNotifier.dll,1");
 	}
 	else db_free(&dbv);
 

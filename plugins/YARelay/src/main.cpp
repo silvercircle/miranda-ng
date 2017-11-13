@@ -19,14 +19,14 @@ Features:
 
 #include "stdafx.h"
 
-#include "..\Utils\mir_buffer.h"
+#include "../../utils/mir_buffer.h"
 
 CLIST_INTERFACE *pcli;
 HINSTANCE hInst;
 int hLangpack;
 
 MCONTACT hForwardFrom, hForwardTo;
-TCHAR tszForwardTemplate[MAXTEMPLATESIZE]; 
+wchar_t tszForwardTemplate[MAXTEMPLATESIZE]; 
 int iSplit, iSplitMaxSize, iSendParts, iMarkRead, iSendAndHistory, iForwardOnStatus;
 
 LIST<MESSAGE_PROC> arMessageProcs(10, HandleKeySortT);
@@ -68,7 +68,7 @@ int ProtoAck(WPARAM,LPARAM lparam)
 		time_t ltime;
 		time(&ltime);
 
-		DBEVENTINFO dbei = { sizeof(dbei) };
+		DBEVENTINFO dbei = {};
 		dbei.szModule = "yaRelay";
 		dbei.timestamp = ltime;
 		dbei.flags = DBEF_SENT | DBEF_UTF;
@@ -118,7 +118,7 @@ static int MessageEventAdded(WPARAM hContact, LPARAM hDBEvent)
 		return 0;
 
 	// receive message from DB
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	dbei.cbBlob = db_event_getBlobSize(hDBEvent);
 	if (dbei.cbBlob == -1)
 		return 0;
@@ -141,7 +141,7 @@ static int MessageEventAdded(WPARAM hContact, LPARAM hDBEvent)
 			continue;
 		}
 
-		TCHAR buf[100];
+		wchar_t buf[100];
 		switch(*++p) {
 		case 'u':
 		case 'U':
@@ -151,33 +151,24 @@ static int MessageEventAdded(WPARAM hContact, LPARAM hDBEvent)
 		case 'i':
 		case 'I':
 			{
-				// get sender's uin
-				CONTACTINFO ci = { sizeof(ci) };
-				ci.dwFlag = CNF_UNIQUEID;
-				if (CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ci) == 0){
-					if (ci.type == CNFT_ASCIIZ)
-						_tcsncpy_s(buf, ci.pszVal, _TRUNCATE);
-					else if (ci.type == CNFT_BYTE)
-						mir_sntprintf(buf, _T("%u"), ci.bVal);
-					else if (ci.type == CNFT_WORD)
-						mir_sntprintf(buf, _T("%u"), ci.wVal);
-					else if (ci.type == CNFT_DWORD)
-						mir_sntprintf(buf, _T("%u"), ci.dVal);
-				}
-				else mir_sntprintf(buf, _T("%p"), hContact);
+				ptrW id(Contact_GetInfo(CNF_UNIQUEID, NULL));
+				if (id != NULL)
+					wcsncpy_s(buf, id, _TRUNCATE);
+				else
+					mir_snwprintf(buf, L"%p", hContact);
 			}
 			szUtfMsg.append(T2Utf(buf));
 			break;
 
 		case 't':
 		case 'T':
-			_tcsftime(buf, 10, _T("%H:%M"), tm_time);
+			wcsftime(buf, 10, L"%H:%M", tm_time);
 			szUtfMsg.append(T2Utf(buf));
 			break;
 
 		case 'd':
 		case 'D':
-			_tcsftime(buf, 12, _T("%d/%m/%Y"), tm_time);
+			wcsftime(buf, 12, L"%d/%m/%Y", tm_time);
 			szUtfMsg.append(T2Utf(buf));
 			break;
 
@@ -208,7 +199,7 @@ static int MessageEventAdded(WPARAM hContact, LPARAM hDBEvent)
 		strncpy(szMsgPart, szBuf, cbPortion);
 		szMsgPart[cbPortion] = 0;
 
-		HANDLE hMsgProc = (HANDLE)CallContactService(hForwardTo, PSS_MESSAGE, 0, (LPARAM)szMsgPart);
+		HANDLE hMsgProc = (HANDLE)ProtoChainSend(hForwardTo, PSS_MESSAGE, 0, (LPARAM)szMsgPart);
 
 		MESSAGE_PROC* msgProc = (MESSAGE_PROC*)mir_alloc(sizeof(MESSAGE_PROC));
 		msgProc->hProcess = hMsgProc;
@@ -231,7 +222,7 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 extern "C" int __declspec(dllexport) Load()
 {
 	mir_getLP(&pluginInfoEx);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	// Load plugin options from DB
 	hForwardFrom = (MCONTACT)db_get_dw(NULL, "yaRelay", "ForwardFrom", 0);
@@ -239,12 +230,12 @@ extern "C" int __declspec(dllexport) Load()
 
 	iForwardOnStatus = db_get_dw(NULL, "yaRelay", "ForwardOnStatus", STATUS_OFFLINE | STATUS_AWAY | STATUS_NA);
 
-	TCHAR *szForwardTemplate = db_get_tsa(NULL, "yaRelay", "ForwardTemplate");
+	wchar_t *szForwardTemplate = db_get_wsa(NULL, "yaRelay", "ForwardTemplate");
 	if (szForwardTemplate){
-		_tcsncpy(tszForwardTemplate, szForwardTemplate, _countof(tszForwardTemplate));
+		wcsncpy(tszForwardTemplate, szForwardTemplate, _countof(tszForwardTemplate));
 		mir_free(szForwardTemplate);
 	}
-	else _tcsncpy(tszForwardTemplate, _T("%u: %m"), MAXTEMPLATESIZE-1);
+	else wcsncpy(tszForwardTemplate, L"%u: %m", MAXTEMPLATESIZE-1);
 
 	iSplit          = db_get_dw(NULL, "yaRelay", "Split", 0);
 	iSplitMaxSize   = db_get_dw(NULL, "yaRelay", "SplitMaxSize", 100);

@@ -1,6 +1,6 @@
 /*
 
-Copyright 2000-12 Miranda IM, 2012-15 Miranda NG project,
+Copyright 2000-12 Miranda IM, 2012-17 Miranda NG project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "stdafx.h"
 
 int LoadSendRecvMessageModule(void);
-int SplitmsgShutdown(void);
+void SplitmsgShutdown(void);
 
 CLIST_INTERFACE *pcli;
 HINSTANCE g_hInst;
@@ -38,7 +38,7 @@ PLUGININFOEX pluginInfo = {
 	__COPYRIGHT,
 	__AUTHORWEB,
 	UNICODE_AWARE,
-	{0x657fe89b, 0xd121, 0x40c2, { 0x8a, 0xc9, 0xb9, 0xfa, 0x57, 0x55, 0xb3, 0x0D }} //{657FE89B-D121-40c2-8AC9-B9FA5755B30D}
+	{ 0x657fe89b, 0xd121, 0x40c2, { 0x8a, 0xc9, 0xb9, 0xfa, 0x57, 0x55, 0xb3, 0x0D } } //{657FE89B-D121-40c2-8AC9-B9FA5755B30D}
 };
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD, LPVOID)
@@ -47,22 +47,25 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD, LPVOID)
 	return TRUE;
 }
 
-extern "C" __declspec(dllexport) PLUGININFOEX *MirandaPluginInfoEx(DWORD)
+extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 {
 	return &pluginInfo;
 }
 
-extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = {MIID_SRMM, MIID_LAST};
+extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = { MIID_SRMM, MIID_LAST };
 
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
+	Load_ChatModule();
 	return LoadSendRecvMessageModule();
 }
 
 extern "C" int __declspec(dllexport) Unload(void)
 {
-	return SplitmsgShutdown();
+	SplitmsgShutdown();
+	Unload_ChatModule();
+	return 0;
 }

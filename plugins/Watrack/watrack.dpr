@@ -417,14 +417,10 @@ begin
   NotifyEventHooks(hHookWATStatus,WAT_EVENT_PLUGINSTATUS,DisablePlugin);
 end;
 
-function WaitAllModules(wParam:WPARAM;lParam:LPARAM):int;cdecl;
+procedure WaitAllModules; stdcall;
 var
   ptr:pwModule;
 begin
-  result:=0;
-
-  CallService(MS_SYSTEM_REMOVEWAIT,wParam,0);
-
   ptr:=ModuleLink;
   while ptr<>nil do
   begin
@@ -439,7 +435,6 @@ begin
   StartTimer;
 
   NotifyEventHooks(hHookWATLoaded,0,0);
-  CloseHandle(hEvent);
 end;
 
 procedure DoTheDew(load:boolean);
@@ -456,7 +451,7 @@ begin
   end;
 
   // TTB
-  newstate:=ServiceExists(MS_TTB_ADDBUTTON)<>0;
+  newstate:=ServiceExists(MS_TTB_ADDBUTTON);
   if newstate=(ttbState<>0) then
     exit;
 
@@ -471,7 +466,7 @@ begin
   end
   else
   begin
-    if ServiceExists(MS_TTB_REMOVEBUTTON)>0 then
+    if ServiceExists(MS_TTB_REMOVEBUTTON) then
       CallService(MS_TTB_REMOVEBUTTON,WPARAM(ttbState),0);
     ttbState:=0;
   end;
@@ -520,7 +515,7 @@ begin
 
   CreateMenus;
 
-  if ServiceExists(MS_TTB_ADDBUTTON)<>0 then
+  if ServiceExists(MS_TTB_ADDBUTTON) then
     HookEvent(ME_TTB_MODULELOADED,@OnTTBLoaded)
   else
     ttbState:=0;
@@ -557,17 +552,11 @@ begin
     dbetd.flags      :=cdbetd[i].flags;
     dbetd.eventType  :=cdbetd[i].event;
     dbetd.descr      :=cdbetd[i].descr;
-    CallService(MS_DB_EVENT_REGISTERTYPE,0,TLPARAM(@dbetd));
+    DbEvent_RegisterType(@dbetd);
   end;
 
   // Load WATrack modules
-  hEvent:=CreateEvent(nil,true,true,nil);
-  if hEvent<>0 then
-  begin
-    p:='WAT_INIT';
-    CreateServiceFunction(p,@WaitAllModules);
-    CallService(MS_SYSTEM_WAITONHANDLE,hEvent,tlparam(p));
-  end;
+  Miranda_WaitOnHandle(@WaitAllModules, 0);
 
   LoadOpt;
   if DisablePlugin=dsPermanent then
@@ -608,7 +597,7 @@ begin
 
   if ttbState<>0 then
   begin
-    if ServiceExists(MS_TTB_REMOVEBUTTON)>0 then
+    if ServiceExists(MS_TTB_REMOVEBUTTON) then
       CallService(MS_TTB_REMOVEBUTTON,TWPARAM(ttbState),0);
     ttbState:=0;
   end;
@@ -654,6 +643,8 @@ begin
   Langpack_register;
 
   DisablePlugin:=dsPermanent;
+
+  hMenuRoot:=Menu_CreateRoot(MO_MAIN, 'WATrack', 500050000, 0, 0);
 
   hHookWATLoaded:=CreateHookableEvent(ME_WAT_MODULELOADED);
   hHookWATStatus:=CreateHookableEvent(ME_WAT_NEWSTATUS);

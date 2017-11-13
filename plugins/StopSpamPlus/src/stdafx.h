@@ -25,18 +25,16 @@
 typedef std::wstring tstring;
 #define PREF_TCHAR2 PREF_UTF
 
-#include "eventhooker.h"
 #include "version.h"
 #include "resource.h"
 #include "settings.h"
 
 #define pluginName LPGEN("StopSpam")
 
-extern TCHAR * pluginDescription;
-extern TCHAR const * infTalkProtPrefix;
+extern wchar_t * pluginDescription;
+extern wchar_t const * infTalkProtPrefix;
 extern char const * answeredSetting;
 extern char const * questCountSetting;
-extern HANDLE hLoadHook;
 extern HINSTANCE hInst;
 
 //options
@@ -50,9 +48,13 @@ void SetDlgItemString(HWND hwndDlg, UINT idItem, std::wstring const &str);
 tstring &GetDlgItemString(HWND hwnd, int id);
 bool IsExistMyMessage(MCONTACT hContact);
 tstring variables_parse(tstring const &tstrFormat, MCONTACT hContact);
-tstring trim(tstring const &tstr, tstring const &trimChars = _T(" \f\n\r\t\v"));
+tstring trim(tstring const &tstr, tstring const &trimChars = L" \f\n\r\t\v");
 
 INT_PTR IsContactPassed(WPARAM wParam, LPARAM /*lParam*/);
 INT_PTR RemoveTempContacts(WPARAM wParam,LPARAM lParam);
 int OnSystemModulesLoaded(WPARAM wParam, LPARAM lParam);
+int OnDbEventAdded(WPARAM wParam, LPARAM lParam);
+int OnDbEventFilterAdd(WPARAM w, LPARAM l);
+int OnOptInit(WPARAM w, LPARAM l);
+int OnDbContactSettingchanged(WPARAM hContact, LPARAM l);
 #endif

@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
-// Copyright (ñ) 2012-15 Miranda NG project,
+// Copyright (ñ) 2012-17 Miranda NG project,
 // Copyright (c) 2000-09 Miranda ICQ/IM project,
 // all portions of this codebase are copyrighted to the people
 // listed in contributors.txt.
@@ -47,37 +47,9 @@ DURT   CMimAPI::m_pfnDwmUnregisterThumbnail = 0;
 DSIT   CMimAPI::m_pfnDwmSetIconicThumbnail = 0;
 DSILP  CMimAPI::m_pfnDwmSetIconicLivePreviewBitmap = 0;
 bool   CMimAPI::m_shutDown = 0;
-TCHAR  CMimAPI::m_userDir[] = _T("\0");
+wchar_t  CMimAPI::m_userDir[] = L"\0";
 
 bool   CMimAPI::m_haveBufferedPaint = false;
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// window list functions
-
-void CMimAPI::BroadcastMessage(UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	WindowList_Broadcast(m_hMessageWindowList, msg, wParam, lParam);
-}
-
-void CMimAPI::BroadcastMessageAsync(UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	WindowList_BroadcastAsync(m_hMessageWindowList, msg, wParam, lParam);
-}
-
-HWND CMimAPI::FindWindow(MCONTACT h) const
-{
-	return WindowList_Find(m_hMessageWindowList, h);
-}
-
-INT_PTR CMimAPI::AddWindow(HWND hWnd, MCONTACT h)
-{
-	return WindowList_Add(m_hMessageWindowList, hWnd, h);
-}
-
-INT_PTR CMimAPI::RemoveWindow(HWND hWnd)
-{
-	return WindowList_Remove(m_hMessageWindowList, hWnd);
-}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -88,10 +60,10 @@ int CMimAPI::FoldersPathChanged(WPARAM, LPARAM)
 
 void CMimAPI::configureCustomFolders()
 {
-	m_hDataPath = FoldersRegisterCustomPathT(LPGEN("TabSRMM"), LPGEN("Data path"), const_cast<TCHAR *>(getDataPath()));
-	m_hSkinsPath = FoldersRegisterCustomPathT(LPGEN("Skins"), LPGEN("TabSRMM"), const_cast<TCHAR *>(getSkinPath()));
-	m_hAvatarsPath = FoldersRegisterCustomPathT(LPGEN("Avatars"), LPGEN("Saved TabSRMM avatars"), const_cast<TCHAR *>(getSavedAvatarPath()));
-	m_hChatLogsPath = FoldersRegisterCustomPathT(LPGEN("TabSRMM"), LPGEN("Group chat logs root"), const_cast<TCHAR *>(getChatLogPath()));
+	m_hDataPath = FoldersRegisterCustomPathT(LPGEN("TabSRMM"), LPGEN("Data path"), const_cast<wchar_t *>(getDataPath()));
+	m_hSkinsPath = FoldersRegisterCustomPathT(LPGEN("Skins"), LPGEN("TabSRMM"), const_cast<wchar_t *>(getSkinPath()));
+	m_hAvatarsPath = FoldersRegisterCustomPathT(LPGEN("Avatars"), LPGEN("Saved TabSRMM avatars"), const_cast<wchar_t *>(getSavedAvatarPath()));
+	m_hChatLogsPath = FoldersRegisterCustomPathT(LPGEN("TabSRMM"), LPGEN("Group chat logs root"), const_cast<wchar_t *>(getChatLogPath()));
 
 	if (m_hDataPath)
 		HookEvent(ME_FOLDERS_PATH_CHANGED, CMimAPI::FoldersPathChanged);
@@ -101,44 +73,44 @@ void CMimAPI::configureCustomFolders()
 
 INT_PTR CMimAPI::foldersPathChanged()
 {
-	TCHAR szTemp[MAX_PATH + 2];
+	wchar_t szTemp[MAX_PATH + 2];
 
 	if (m_hDataPath) {
 		szTemp[0] = 0;
-		FoldersGetCustomPathT(m_hDataPath, szTemp, MAX_PATH, const_cast<TCHAR *>(getDataPath()));
-		_tcsncpy_s(m_szProfilePath, szTemp, _TRUNCATE);
+		FoldersGetCustomPathT(m_hDataPath, szTemp, MAX_PATH, const_cast<wchar_t *>(getDataPath()));
+		wcsncpy_s(m_szProfilePath, szTemp, _TRUNCATE);
 
 		szTemp[0] = 0;
-		FoldersGetCustomPathT(m_hSkinsPath, szTemp, MAX_PATH, const_cast<TCHAR *>(getSkinPath()));
-		_tcsncpy_s(m_szSkinsPath, (MAX_PATH - 1), szTemp, _TRUNCATE);
+		FoldersGetCustomPathT(m_hSkinsPath, szTemp, MAX_PATH, const_cast<wchar_t *>(getSkinPath()));
+		wcsncpy_s(m_szSkinsPath, (MAX_PATH - 1), szTemp, _TRUNCATE);
 		Utils::ensureTralingBackslash(m_szSkinsPath);
 
 		szTemp[0] = 0;
-		FoldersGetCustomPathT(m_hAvatarsPath, szTemp, MAX_PATH, const_cast<TCHAR *>(getSavedAvatarPath()));
-		_tcsncpy_s(m_szSavedAvatarsPath, szTemp, _TRUNCATE);
+		FoldersGetCustomPathT(m_hAvatarsPath, szTemp, MAX_PATH, const_cast<wchar_t *>(getSavedAvatarPath()));
+		wcsncpy_s(m_szSavedAvatarsPath, szTemp, _TRUNCATE);
 
 		szTemp[0] = 0;
-		FoldersGetCustomPathT(m_hChatLogsPath, szTemp, MAX_PATH, const_cast<TCHAR *>(getChatLogPath()));
-		_tcsncpy_s(m_szChatLogsPath, (MAX_PATH - 1), szTemp, _TRUNCATE);
+		FoldersGetCustomPathT(m_hChatLogsPath, szTemp, MAX_PATH, const_cast<wchar_t *>(getChatLogPath()));
+		wcsncpy_s(m_szChatLogsPath, (MAX_PATH - 1), szTemp, _TRUNCATE);
 		Utils::ensureTralingBackslash(m_szChatLogsPath);
 	}
 
-	CreateDirectoryTreeT(m_szProfilePath);
-	CreateDirectoryTreeT(m_szSkinsPath);
-	CreateDirectoryTreeT(m_szSavedAvatarsPath);
+	CreateDirectoryTreeW(m_szProfilePath);
+	CreateDirectoryTreeW(m_szSkinsPath);
+	CreateDirectoryTreeW(m_szSavedAvatarsPath);
 
 	Skin->extractSkinsAndLogo(true);
 	Skin->setupAeroSkins();
 	return 0;
 }
 
-const TCHAR* CMimAPI::getUserDir()
+const wchar_t* CMimAPI::getUserDir()
 {
 	if (m_userDir[0] == 0) {
 		if (ServiceExists(MS_FOLDERS_REGISTER_PATH))
-			_tcsncpy_s(m_userDir, L"%miranda_userdata%", _TRUNCATE);
+			wcsncpy_s(m_userDir, L"%miranda_userdata%", _TRUNCATE);
 		else
-			_tcsncpy_s(m_userDir, VARST(_T("%miranda_userdata%")), _TRUNCATE);
+			wcsncpy_s(m_userDir, VARSW(L"%miranda_userdata%"), _TRUNCATE);
 
 		Utils::ensureTralingBackslash(m_userDir);
 	}
@@ -147,24 +119,24 @@ const TCHAR* CMimAPI::getUserDir()
 
 void CMimAPI::InitPaths()
 {
-	const TCHAR *szUserdataDir = getUserDir();
+	const wchar_t *szUserdataDir = getUserDir();
 
-	mir_sntprintf(m_szProfilePath, _T("%stabSRMM"), szUserdataDir);
+	mir_snwprintf(m_szProfilePath, L"%stabSRMM", szUserdataDir);
 	if (ServiceExists(MS_FOLDERS_REGISTER_PATH)) {
-		_tcsncpy_s(m_szChatLogsPath, _T("%miranda_logpath%"), _TRUNCATE);
-		_tcsncpy_s(m_szSkinsPath, _T("%miranda_path%\\Skins\\TabSRMM"), _TRUNCATE);
+		wcsncpy_s(m_szChatLogsPath, L"%miranda_logpath%", _TRUNCATE);
+		wcsncpy_s(m_szSkinsPath, L"%miranda_path%\\Skins\\TabSRMM", _TRUNCATE);
 	}
 	else {
-		_tcsncpy_s(m_szChatLogsPath, VARST(_T("%miranda_logpath%")), _TRUNCATE);
-		_tcsncpy_s(m_szSkinsPath, VARST(_T("%miranda_path%\\Skins\\TabSRMM")), _TRUNCATE);
+		wcsncpy_s(m_szChatLogsPath, VARSW(L"%miranda_logpath%"), _TRUNCATE);
+		wcsncpy_s(m_szSkinsPath, VARSW(L"%miranda_path%\\Skins\\TabSRMM"), _TRUNCATE);
 	}
 
 	Utils::ensureTralingBackslash(m_szChatLogsPath);
-	replaceStrT(g_Settings.pszLogDir, m_szChatLogsPath);
+	replaceStrW(g_Settings.pszLogDir, m_szChatLogsPath);
 
 	Utils::ensureTralingBackslash(m_szSkinsPath);
 
-	mir_sntprintf(m_szSavedAvatarsPath, _T("%s\\Saved Contact Pictures"), m_szProfilePath);
+	mir_snwprintf(m_szSavedAvatarsPath, L"%s\\Saved Contact Pictures", m_szProfilePath);
 }
 
 bool CMimAPI::getAeroState()
@@ -234,11 +206,11 @@ int CMimAPI::TypingMessage(WPARAM hContact, LPARAM mode)
 	int foundWin = 0, preTyping = 0;
 	BOOL fShowOnClist = TRUE;
 
-	HWND hwnd = M.FindWindow(hContact);
+	HWND hwnd = Srmm_FindWindow(hContact);
 	MCONTACT hMeta = db_mc_getMeta(hContact);
 	if (hMeta) {
 		if (!hwnd)
-			hwnd = M.FindWindow(hMeta);
+			hwnd = Srmm_FindWindow(hMeta);
 		hContact = hMeta;
 	}
 
@@ -246,14 +218,14 @@ int CMimAPI::TypingMessage(WPARAM hContact, LPARAM mode)
 		preTyping = SendMessage(hwnd, DM_TYPING, 0, mode);
 
 	if (hwnd && IsWindowVisible(hwnd))
-		foundWin = MessageWindowOpened(0, (LPARAM)hwnd);
+		foundWin = MessageWindowOpened(0, hwnd);
 	else
 		foundWin = 0;
 
-	TContainerData *pContainer = NULL;
+	TContainerData *pContainer = nullptr;
 	if (hwnd) {
 		SendMessage(hwnd, DM_QUERYCONTAINER, 0, (LPARAM)&pContainer);
-		if (pContainer == NULL) // should never happen
+		if (pContainer == nullptr) // should never happen
 			return 0;
 	}
 
@@ -266,7 +238,7 @@ int CMimAPI::TypingMessage(WPARAM hContact, LPARAM mode)
 	else fShowOnClist = false;
 
 	if ((!foundWin || !(pContainer->dwFlags & CNT_NOSOUND)) && preTyping != (mode != 0))
-		SkinPlaySound(mode ? "TNStart" : "TNStop");
+		Skin_PlaySound(mode ? "TNStart" : "TNStop");
 
 	if (M.GetByte(SRMSGMOD, "ShowTypingPopup", 0)) {
 		BOOL fShow = false;
@@ -277,7 +249,7 @@ int CMimAPI::TypingMessage(WPARAM hContact, LPARAM mode)
 			fShow = true;
 			break;
 		case 1:
-			if (!foundWin || !(pContainer && pContainer->hwndActive == hwnd && GetForegroundWindow() == pContainer->hwnd))
+			if (!foundWin || !(pContainer && pContainer->m_hwndActive == hwnd && GetForegroundWindow() == pContainer->m_hwnd))
 				fShow = true;
 			break;
 		case 2:
@@ -298,28 +270,22 @@ int CMimAPI::TypingMessage(WPARAM hContact, LPARAM mode)
 	}
 
 	if (mode) {
-		TCHAR szTip[256];
-		mir_sntprintf(szTip, TranslateT("%s is typing a message"), pcli->pfnGetContactDisplayName(hContact, 0));
-		if (fShowOnClist && ServiceExists(MS_CLIST_SYSTRAY_NOTIFY) && M.GetByte(SRMSGMOD, "ShowTypingBalloon", 0)) {
-			MIRANDASYSTRAYNOTIFY tn;
-			tn.szProto = NULL;
-			tn.cbSize = sizeof(tn);
-			tn.tszInfoTitle = TranslateT("Typing notification");
-			tn.tszInfo = szTip;
-			tn.dwInfoFlags = NIIF_INFO | NIIF_INTERN_UNICODE;
-			tn.uTimeout = 1000 * 4;
-			CallService(MS_CLIST_SYSTRAY_NOTIFY, 0, (LPARAM)&tn);
-		}
+		wchar_t szTip[256];
+		mir_snwprintf(szTip, TranslateT("%s is typing a message"), pcli->pfnGetContactDisplayName(hContact, 0));
+		if (fShowOnClist && M.GetByte(SRMSGMOD, "ShowTypingBalloon", 0))
+			Clist_TrayNotifyW(nullptr, TranslateT("Typing notification"), szTip, NIIF_INFO, 1000 * 4);
+
 		if (fShowOnClist) {
-			CLISTEVENT cle = { sizeof(cle) };
+			pcli->pfnRemoveEvent(hContact, 1);
+
+			CLISTEVENT cle = {};
 			cle.hContact = hContact;
 			cle.hDbEvent = 1;
-			cle.flags = CLEF_ONLYAFEW | CLEF_TCHAR;
+			cle.flags = CLEF_ONLYAFEW | CLEF_UNICODE;
 			cle.hIcon = PluginConfig.g_buttonBarIcons[ICON_DEFAULT_TYPING];
-			cle.pszService = "SRMsg/TypingMessage";
-			cle.ptszTooltip = szTip;
-			CallServiceSync(MS_CLIST_REMOVEEVENT, hContact, 1);
-			CallServiceSync(MS_CLIST_ADDEVENT, hContact, (LPARAM)&cle);
+			cle.pszService = MS_MSG_TYPINGMESSAGE;
+			cle.szTooltip.w = szTip;
+			pcli->pfnAddEvent(&cle);
 		}
 	}
 	return 0;
@@ -342,13 +308,13 @@ int CMimAPI::ProtoAck(WPARAM, LPARAM lParam)
 		MCONTACT hMeta = db_mc_getMeta(pAck->hContact);
 		for (int j = 0; j < SendQueue::NR_SENDJOBS; j++) {
 			SendJob &p = jobs[j];
-			if (pAck->hProcess == p.hSendId && pAck->hContact == p.hContact) {
-				TWindowData *dat = p.hOwnerWnd ? (TWindowData*)GetWindowLongPtr(p.hOwnerWnd, GWLP_USERDATA) : NULL;
-				if (dat == NULL) {
-					sendQueue->ackMessage(NULL, (WPARAM)MAKELONG(j, i), lParam);
+			if (pAck->hProcess == (HANDLE)p.iSendId && pAck->hContact == p.hContact) {
+				CSrmmWindow *dat = p.hOwnerWnd ? (CSrmmWindow*)GetWindowLongPtr(p.hOwnerWnd, GWLP_USERDATA) : nullptr;
+				if (dat == nullptr) {
+					sendQueue->ackMessage(nullptr, (WPARAM)MAKELONG(j, i), lParam);
 					return 0;
 				}
-				if (dat->hContact == p.hContact || dat->hContact == hMeta) {
+				if (dat->m_hContact == p.hContact || dat->m_hContact == hMeta) {
 					iFound = j;
 					break;
 				}
@@ -364,8 +330,8 @@ int CMimAPI::ProtoAck(WPARAM, LPARAM lParam)
 
 int CMimAPI::PrebuildContactMenu(WPARAM hContact, LPARAM)
 {
-	if (hContact == NULL)
-		return NULL;
+	if (hContact == 0)
+		return 0;
 
 	bool bEnabled = false;
 	char *szProto = GetContactProto(hContact);
@@ -410,21 +376,21 @@ int CMimAPI::DispatchNewEvent(WPARAM hContact, LPARAM hDbEvent)
 
 int CMimAPI::MessageEventAdded(WPARAM hContact, LPARAM hDbEvent)
 {
-	TCHAR szName[CONTAINER_NAMELEN + 1];
+	wchar_t szName[CONTAINER_NAMELEN + 1];
 
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	db_event_get(hDbEvent, &dbei);
 
-	HWND hwnd = M.FindWindow(hContact);
-	if (hwnd == NULL)
-		hwnd = M.FindWindow(db_event_getContact(hDbEvent));
+	HWND hwnd = Srmm_FindWindow(hContact);
+	if (hwnd == nullptr)
+		hwnd = Srmm_FindWindow(db_event_getContact(hDbEvent));
 
 	BOOL isCustomEvent = IsCustomEvent(dbei.eventType);
 	BOOL isShownCustomEvent = DbEventIsForMsgWindow(&dbei);
 	if (dbei.markedRead() || (isCustomEvent && !isShownCustomEvent))
 		return 0;
 
-	CallServiceSync(MS_CLIST_REMOVEEVENT, hContact, 1);
+	pcli->pfnRemoveEvent(hContact, 1);
 
 	bool bAllowAutoCreate = false;
 	bool bAutoPopup = M.GetBool(SRMSGSET_AUTOPOPUP, SRMSGDEFSET_AUTOPOPUP);
@@ -435,33 +401,33 @@ int CMimAPI::MessageEventAdded(WPARAM hContact, LPARAM hDbEvent)
 	if (hwnd) {
 		TContainerData *pTargetContainer = 0;
 		SendMessage(hwnd, DM_QUERYCONTAINER, 0, (LPARAM)&pTargetContainer);
-		if (pTargetContainer == NULL || !PluginConfig.m_bHideOnClose || IsWindowVisible(pTargetContainer->hwnd))
+		if (pTargetContainer == nullptr || !PluginConfig.m_bHideOnClose || IsWindowVisible(pTargetContainer->m_hwnd))
 			return 0;
 
 		WINDOWPLACEMENT wp = { 0 };
 		wp.length = sizeof(wp);
-		GetWindowPlacement(pTargetContainer->hwnd, &wp);
+		GetWindowPlacement(pTargetContainer->m_hwnd, &wp);
 		GetContainerNameForContact(hContact, szName, CONTAINER_NAMELEN);
 
 		if (bAutoPopup || bAutoCreate) {
 			if (bAutoPopup) {
 				if (wp.showCmd == SW_SHOWMAXIMIZED)
-					ShowWindow(pTargetContainer->hwnd, SW_SHOWMAXIMIZED);
+					ShowWindow(pTargetContainer->m_hwnd, SW_SHOWMAXIMIZED);
 				else
-					ShowWindow(pTargetContainer->hwnd, SW_SHOWNOACTIVATE);
+					ShowWindow(pTargetContainer->m_hwnd, SW_SHOWNOACTIVATE);
 				return 0;
 			}
 
 			TContainerData *pContainer = FindContainerByName(szName);
-			if (pContainer != NULL) {
+			if (pContainer != nullptr) {
 				if (bAutoContainer) {
-					ShowWindow(pTargetContainer->hwnd, SW_SHOWMINNOACTIVE);
+					ShowWindow(pTargetContainer->m_hwnd, SW_SHOWMINNOACTIVE);
 					return 0;
 				}
 				goto nowindowcreate;
 			}
 			else if (bAutoContainer) {
-				ShowWindow(pTargetContainer->hwnd, SW_SHOWMINNOACTIVE);
+				ShowWindow(pTargetContainer->m_hwnd, SW_SHOWMINNOACTIVE);
 				return 0;
 			}
 		}
@@ -481,7 +447,7 @@ int CMimAPI::MessageEventAdded(WPARAM hContact, LPARAM hDbEvent)
 	// if no window is open, we are not interested in anything else but unread message events
 	// new message
 	if (!nen_options.iNoSounds)
-		SkinPlaySound("AlertMsg");
+		Skin_PlaySound("AlertMsg");
 
 	if (nen_options.iNoAutoPopup)
 		goto nowindowcreate;
@@ -505,31 +471,31 @@ int CMimAPI::MessageEventAdded(WPARAM hContact, LPARAM hDbEvent)
 	if (bAllowAutoCreate && (bAutoPopup || bAutoCreate)) {
 		if (bAutoPopup) {
 			TContainerData *pContainer = FindContainerByName(szName);
-			if (pContainer == NULL)
+			if (pContainer == nullptr)
 				pContainer = CreateContainer(szName, FALSE, hContact);
 			if (pContainer)
-				CreateNewTabForContact(pContainer, hContact, 0, NULL, TRUE, TRUE, FALSE, 0);
+				CreateNewTabForContact(pContainer, hContact, true, true, false);
 			return 0;
 		}
 
 		bool bActivate = false, bPopup = M.GetByte("cpopup", 0) != 0;
 		TContainerData *pContainer = FindContainerByName(szName);
-		if (pContainer != NULL) {
-			if (M.GetByte("limittabs", 0) && !wcsncmp(pContainer->szName, L"default", 6)) {
-				if ((pContainer = FindMatchingContainer(L"default")) != NULL) {
-					CreateNewTabForContact(pContainer, hContact, 0, NULL, bActivate, bPopup, TRUE, hDbEvent);
+		if (pContainer != nullptr) {
+			if (M.GetByte("limittabs", 0) && !wcsncmp(pContainer->m_wszName, L"default", 6)) {
+				if ((pContainer = FindMatchingContainer(L"default")) != nullptr) {
+					CreateNewTabForContact(pContainer, hContact, bActivate, bPopup, true, hDbEvent);
 					return 0;
 				}
 			}
 			else {
-				CreateNewTabForContact(pContainer, hContact, 0, NULL, bActivate, bPopup, TRUE, hDbEvent);
+				CreateNewTabForContact(pContainer, hContact, bActivate, bPopup, true, hDbEvent);
 				return 0;
 			}
 		}
 		if (bAutoContainer) {
-			if ((pContainer = CreateContainer(szName, CNT_CREATEFLAG_MINIMIZED, hContact)) != NULL) { // 2 means create minimized, don't popup...
-				CreateNewTabForContact(pContainer, hContact, 0, NULL, bActivate, bPopup, TRUE, hDbEvent);
-				SendMessageW(pContainer->hwnd, WM_SIZE, 0, 0);
+			if ((pContainer = CreateContainer(szName, CNT_CREATEFLAG_MINIMIZED, hContact)) != nullptr) { // 2 means create minimized, don't popup...
+				CreateNewTabForContact(pContainer, hContact, bActivate, bPopup, true, hDbEvent);
+				SendMessageW(pContainer->m_hwnd, WM_SIZE, 0, 0);
 			}
 			return 0;
 		}
@@ -539,20 +505,20 @@ int CMimAPI::MessageEventAdded(WPARAM hContact, LPARAM hDbEvent)
 	// the contact list for flashing
 nowindowcreate:
 	if (!(dbei.flags & DBEF_READ)) {
-		UpdateTrayMenu(0, 0, dbei.szModule, NULL, hContact, 1);
+		UpdateTrayMenu(0, 0, dbei.szModule, nullptr, hContact, 1);
 		if (!nen_options.bTraySupport) {
-			TCHAR toolTip[256], *contactName;
+			wchar_t toolTip[256], *contactName;
 
-			CLISTEVENT cle = { sizeof(cle) };
+			CLISTEVENT cle = {};
 			cle.hContact = hContact;
 			cle.hDbEvent = hDbEvent;
-			cle.flags = CLEF_TCHAR;
+			cle.flags = CLEF_UNICODE;
 			cle.hIcon = Skin_LoadIcon(SKINICON_EVENT_MESSAGE);
-			cle.pszService = "SRMsg/ReadMessage";
+			cle.pszService = MS_MSG_READMESSAGE;
 			contactName = pcli->pfnGetContactDisplayName(hContact, 0);
-			mir_sntprintf(toolTip, TranslateT("Message from %s"), contactName);
-			cle.ptszTooltip = toolTip;
-			CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
+			mir_snwprintf(toolTip, TranslateT("Message from %s"), contactName);
+			cle.szTooltip.w = toolTip;
+			pcli->pfnAddEvent(&cle);
 		}
 		tabSRMM_ShowPopup(hContact, hDbEvent, dbei.eventType, 0, 0, 0, dbei.szModule);
 	}

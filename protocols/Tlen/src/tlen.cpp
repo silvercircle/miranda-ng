@@ -80,7 +80,7 @@ static IconItem iconList[] =
 	{ LPGEN("Send image"),             "IMAGE",        IDI_IMAGE      }
 };
 
-static HANDLE GetIconHandle(int iconId)
+HANDLE GetIconHandle(int iconId)
 {
 	for (int i = 0; i < _countof(iconList); i++)
 		if (iconList[i].defIconID == iconId)
@@ -198,7 +198,7 @@ INT_PTR TlenProtocol::MenuHandleInbox(WPARAM, LPARAM)
 		req.pData = form;
 		req.dataLength = (int)mir_strlen(form);
 		req.szUrl = "http://poczta.o2.pl/login.html";
-		resp = (NETLIBHTTPREQUEST *)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)m_hNetlibUser, (LPARAM)&req);
+		resp = Netlib_HttpTransaction(m_hNetlibUser, &req);
 		if (resp != NULL) {
 			if (resp->resultCode / 100 == 2 || resp->resultCode == 302) {
 				int i;
@@ -217,7 +217,7 @@ INT_PTR TlenProtocol::MenuHandleInbox(WPARAM, LPARAM)
 					}
 				}
 			}
-			CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)resp);
+			Netlib_FreeHttpRequest(resp);
 		}
 	}
 	mir_free(login);
@@ -230,19 +230,14 @@ INT_PTR TlenProtocol::MenuHandleInbox(WPARAM, LPARAM)
 
 int TlenProtocol::OnModulesLoaded(WPARAM, LPARAM)
 {
-	char str[128];
 	/* Set all contacts to offline */
-
 	for (MCONTACT hContact = db_find_first(m_szModuleName); hContact; hContact = db_find_next(hContact, m_szModuleName))
 		if (db_get_w(hContact, m_szModuleName, "Status", ID_STATUS_OFFLINE) != ID_STATUS_OFFLINE)
 			db_set_w(hContact, m_szModuleName, "Status", ID_STATUS_OFFLINE);
 
-	strncpy_s(str, LPGEN("Incoming mail"), _TRUNCATE);
-	SkinAddNewSoundEx("TlenMailNotify", m_szModuleName, str);
-	strncpy_s(str, LPGEN("Alert"), _TRUNCATE);
-	SkinAddNewSoundEx("TlenAlertNotify", m_szModuleName, str);
-	strncpy_s(str, LPGEN("Voice chat"), _TRUNCATE);
-	SkinAddNewSoundEx("TlenVoiceNotify", m_szModuleName, str);
+	Skin_AddSound("TlenMailNotify", m_tszUserName, LPGENW("Incoming mail"));
+	Skin_AddSound("TlenAlertNotify", m_tszUserName, LPGENW("Alert"));
+	Skin_AddSound("TlenVoiceNotify", m_tszUserName, LPGENW("Voice chat"));
 
 	HookProtoEvent(ME_USERINFO_INITIALISE, &TlenProtocol::UserInfoInit);
 	return 0;
@@ -335,7 +330,7 @@ void TlenProtocol::initMenuItems()
 	hMenuContactGrantAuth = Menu_AddContactMenuItem(&mi, m_szModuleName);
 }
 
-TlenProtocol* tlenProtoInit(const char* pszProtoName, const TCHAR* tszUserName)
+TlenProtocol* tlenProtoInit(const char* pszProtoName, const wchar_t* tszUserName)
 {
 	TlenProtocol* ppro = new TlenProtocol(pszProtoName, tszUserName);
 	return ppro;
@@ -350,7 +345,7 @@ static int tlenProtoUninit(TlenProtocol* ppro)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &hMainThread, THREAD_SET_CONTEXT, FALSE, 0);
 

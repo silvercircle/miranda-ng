@@ -23,13 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "stdafx.h"
 
-static MessageSendQueueItem *global_sendQueue = NULL;
+static MessageSendQueueItem *global_sendQueue = nullptr;
 static mir_cs queueMutex;
-
-TCHAR* GetSendBufferMsg(MessageSendQueueItem *item)
-{
-	return mir_utf8decodeW(item->sendBuffer);
-}
 
 MessageSendQueueItem* CreateSendQueueItem(HWND hwndSender)
 {
@@ -38,7 +33,7 @@ MessageSendQueueItem* CreateSendQueueItem(HWND hwndSender)
 	mir_cslock lck(queueMutex);
 	item->hwndSender = hwndSender;
 	item->next = global_sendQueue;
-	if (global_sendQueue != NULL)
+	if (global_sendQueue != nullptr)
 		global_sendQueue->prev = item;
 
 	global_sendQueue = item;
@@ -48,21 +43,21 @@ MessageSendQueueItem* CreateSendQueueItem(HWND hwndSender)
 MessageSendQueueItem* FindOldestPendingSendQueueItem(HWND hwndSender, MCONTACT hContact)
 {
 	mir_cslock lck(queueMutex);
-	for (MessageSendQueueItem *item = global_sendQueue; item != NULL; item = item->next)
-		if (item->hwndSender == hwndSender && item->hContact == hContact && item->hwndErrorDlg == NULL)
+	for (MessageSendQueueItem *item = global_sendQueue; item != nullptr; item = item->next)
+		if (item->hwndSender == hwndSender && item->hContact == hContact && item->hwndErrorDlg == nullptr)
 			return item;
 
-	return NULL;
+	return nullptr;
 }
 
 MessageSendQueueItem* FindSendQueueItem(MCONTACT hContact, HANDLE hSendId)
 {
 	mir_cslock lock(queueMutex);
-	for (MessageSendQueueItem *item = global_sendQueue; item != NULL; item = item->next)
-		if (item->hContact == hContact && item->hSendId == hSendId)
+	for (MessageSendQueueItem *item = global_sendQueue; item != nullptr; item = item->next)
+		if (item->hContact == hContact && HANDLE(item->hSendId) == hSendId)
 			return item;
 
-	return NULL;
+	return nullptr;
 }
 
 BOOL RemoveSendQueueItem(MessageSendQueueItem* item)
@@ -70,19 +65,19 @@ BOOL RemoveSendQueueItem(MessageSendQueueItem* item)
 	HWND hwndSender = item->hwndSender;
 
 	mir_cslock lock(queueMutex);
-	if (item->prev != NULL)
+	if (item->prev != nullptr)
 		item->prev->next = item->next;
 	else
 		global_sendQueue = item->next;
 
-	if (item->next != NULL)
+	if (item->next != nullptr)
 		item->next->prev = item->prev;
 
 	mir_free(item->sendBuffer);
 	mir_free(item->proto);
 	mir_free(item);
 
-	for (item = global_sendQueue; item != NULL; item = item->next)
+	for (item = global_sendQueue; item != nullptr; item = item->next)
 		if (item->hwndSender == hwndSender)
 			return FALSE;
 
@@ -92,24 +87,19 @@ BOOL RemoveSendQueueItem(MessageSendQueueItem* item)
 void ReportSendQueueTimeouts(HWND hwndSender)
 {
 	MessageSendQueueItem *item, *item2;
-	int timeout = db_get_dw(NULL, SRMMMOD, SRMSGSET_MSGTIMEOUT, SRMSGDEFSET_MSGTIMEOUT);
+	int timeout = db_get_dw(0, SRMM_MODULE, SRMSGSET_MSGTIMEOUT, SRMSGDEFSET_MSGTIMEOUT);
 
 	mir_cslock lock(queueMutex);
 
-	for (item = global_sendQueue; item != NULL; item = item2) {
+	for (item = global_sendQueue; item != nullptr; item = item2) {
 		item2 = item->next;
 		if (item->timeout < timeout) {
 			item->timeout += 1000;
 			if (item->timeout >= timeout) {
-				if (item->hwndSender == hwndSender && item->hwndErrorDlg == NULL) {
-					if (hwndSender != NULL) {
-						ErrorWindowData *ewd = (ErrorWindowData *)mir_alloc(sizeof(ErrorWindowData));
-						ewd->szName = GetNickname(item->hContact, item->proto);
-						ewd->szDescription = mir_tstrdup(TranslateT("The message send timed out."));
-						ewd->szText = GetSendBufferMsg(item);
-						ewd->hwndParent = hwndSender;
-						ewd->queueItem = item;
-						PostMessage(hwndSender, DM_SHOWERRORMESSAGE, 0, (LPARAM)ewd);
+				if (item->hwndSender == hwndSender && item->hwndErrorDlg == nullptr) {
+					if (hwndSender != nullptr) {
+						CErrorDlg *pDlg = new CErrorDlg(TranslateT("The message send timed out."), hwndSender, item);
+						PostMessage(hwndSender, DM_SHOWERRORMESSAGE, 0, (LPARAM)pDlg);
 					}
 					else {
 						/* TODO: Handle errors outside messaging window in a better way */
@@ -125,13 +115,13 @@ void ReleaseSendQueueItems(HWND hwndSender)
 {
 	mir_cslock lock(queueMutex);
 
-	for (MessageSendQueueItem *item = global_sendQueue; item != NULL; item = item->next) {
+	for (MessageSendQueueItem *item = global_sendQueue; item != nullptr; item = item->next) {
 		if (item->hwndSender == hwndSender) {
-			item->hwndSender = NULL;
-			if (item->hwndErrorDlg != NULL)
+			item->hwndSender = nullptr;
+			if (item->hwndErrorDlg != nullptr)
 				DestroyWindow(item->hwndErrorDlg);
 
-			item->hwndErrorDlg = NULL;
+			item->hwndErrorDlg = nullptr;
 		}
 	}
 }
@@ -142,8 +132,8 @@ int ReattachSendQueueItems(HWND hwndSender, MCONTACT hContact)
 
 	mir_cslock lock(queueMutex);
 
-	for (MessageSendQueueItem *item = global_sendQueue; item != NULL; item = item->next) {
-		if (item->hContact == hContact && item->hwndSender == NULL) {
+	for (MessageSendQueueItem *item = global_sendQueue; item != nullptr; item = item->next) {
+		if (item->hContact == hContact && item->hwndSender == nullptr) {
 			item->hwndSender = hwndSender;
 			item->timeout = 0;
 			count++;
@@ -156,7 +146,7 @@ void RemoveAllSendQueueItems()
 {
 	MessageSendQueueItem *item, *item2;
 	mir_cslock lock(queueMutex);
-	for (item = global_sendQueue; item != NULL; item = item2) {
+	for (item = global_sendQueue; item != nullptr; item = item2) {
 		item2 = item->next;
 		RemoveSendQueueItem(item);
 	}
@@ -167,19 +157,19 @@ void SendSendQueueItem(MessageSendQueueItem* item)
 	mir_cslockfull lock(queueMutex);
 	item->timeout = 0;
 
-	if (item->prev != NULL) {
+	if (item->prev != nullptr) {
 		item->prev->next = item->next;
-		if (item->next != NULL)
+		if (item->next != nullptr)
 			item->next->prev = item->prev;
 
 		item->next = global_sendQueue;
-		item->prev = NULL;
-		if (global_sendQueue != NULL)
+		item->prev = nullptr;
+		if (global_sendQueue != nullptr)
 			global_sendQueue->prev = item;
 
 		global_sendQueue = item;
 	}
 	lock.unlock();
 
-	item->hSendId = (HANDLE)CallContactService(item->hContact, PSS_MESSAGE, item->flags, (LPARAM)item->sendBuffer);
+	item->hSendId = ProtoChainSend(item->hContact, PSS_MESSAGE, item->flags, (LPARAM)item->sendBuffer);
 }

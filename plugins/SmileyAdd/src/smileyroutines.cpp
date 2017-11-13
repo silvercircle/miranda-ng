@@ -19,8 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-ISmileyBase* CreateSmileyObject(SmileyType* sml);
-ISmileyBase* CreateAniSmileyObject(SmileyType* sml, COLORREF clr, bool ishpp);
+#include <tchar.h>
+
+ISmileyBase* CreateAniSmileyObject(SmileyType *sml, COLORREF clr, bool ishpp);
 
 bool g_HiddenTextSupported = true;
 
@@ -29,13 +30,12 @@ bool g_HiddenTextSupported = true;
 const GUID IID_ITextDocument = 
 { 0x8CC497C0, 0xA1DF, 0x11CE, { 0x80,0x98,0x00,0xAA,0x00,0x47,0xBE,0x5D } };
 
-void LookupAllSmileys(SmileyPackType* smileyPack, SmileyPackCType* smileyCPack, const TCHAR* lpstrText,
-	SmileysQueueType& smllist, const bool firstOnly)
+void LookupAllSmileys(SmileyPackType *smileyPack, SmileyPackCType *smileyCPack, const wchar_t *lpstrText, SmileysQueueType &smllist, const bool firstOnly)
 {
 	if (lpstrText == NULL || *lpstrText == 0) return;
 
-	SmileyPackType::SmileyLookupType*  sml  = smileyPack ? smileyPack->GetSmileyLookup() : NULL;
-	SmileyPackCType::SmileyLookupType* smlc = smileyCPack ? &smileyCPack->GetSmileyLookup() : NULL;
+	SmileyPackType::SmileyLookupType *sml  = smileyPack ? smileyPack->GetSmileyLookup() : NULL;
+	SmileyPackCType::SmileyLookupType *smlc = smileyCPack ? &smileyCPack->GetSmileyLookup() : NULL;
 
 	// Precompute number of smileys
 	int smlszo = sml  ? sml->getCount()  : 0;
@@ -45,10 +45,10 @@ void LookupAllSmileys(SmileyPackType* smileyPack, SmileyPackCType* smileyCPack, 
 	if (smlsz == 0) return;
 
 	// All possible smileys
-	SmileyLookup::SmileyLocVecType* smileys = new SmileyLookup::SmileyLocVecType [smlsz];
+	SmileyLookup::SmileyLocVecType *smileys = new SmileyLookup::SmileyLocVecType [smlsz];
 
 	// Find all possible smileys
-	CMString tmpstr(lpstrText);
+	CMStringW tmpstr(lpstrText);
 	int i = 0;
 
 	if (sml)
@@ -72,10 +72,10 @@ void LookupAllSmileys(SmileyPackType* smileyPack, SmileyPackCType* smileyCPack, 
 	while (true) {
 		int firstSml = -1;
 		int firstSmlRef = -1;
-		SmileyLookup::SmileyLocVecType* smlf = NULL;
+		SmileyLookup::SmileyLocVecType *smlf = NULL;
 
 		for (int csml=0; csml < smlsz; csml++) {
-			SmileyLookup::SmileyLocVecType& smlv = smileys[csml];
+			SmileyLookup::SmileyLocVecType &smlv = smileys[csml];
 
 			int tsml;
 			for (tsml = csmlit[csml]; tsml < smlv.getCount(); tsml++) {
@@ -97,22 +97,23 @@ void LookupAllSmileys(SmileyPackType* smileyPack, SmileyPackCType* smileyCPack, 
 		if (firstSml == -1)
 			break;
 
+		SmileyLookup::SmileyLocType &psmlf = (*smlf)[firstSmlRef];
+		const wchar_t *textToSearch = lpstrText + smloff;
+		const wchar_t *textSmlStart = lpstrText + psmlf.pos;
+		const wchar_t *textSmlEnd   = textSmlStart + psmlf.len;
+
 		ReplaceSmileyType *dat = new ReplaceSmileyType;
 
-		const TCHAR* textToSearch = lpstrText + smloff;
-		const TCHAR* textSmlStart = lpstrText + (*smlf)[firstSmlRef].pos;
-		const TCHAR* textSmlEnd   = textSmlStart + (*smlf)[firstSmlRef].len;
-
 		// check if leading space exist
-		const TCHAR* prech = _tcsdec(textToSearch, textSmlStart);
-		dat->ldspace = prech != NULL ? _istspace(*prech) != 0 : smloff == 0;
+		const wchar_t *prech = _wcsdec(textToSearch, textSmlStart);
+		dat->ldspace = prech != NULL ? iswspace(*prech) != 0 : smloff == 0;
 
 		// check if trailing space exist
-		dat->trspace = *textSmlEnd == 0 || _istspace(*textSmlEnd);
+		dat->trspace = *textSmlEnd == 0 || iswspace(*textSmlEnd);
 
 		// compute text location in RichEdit 
-		dat->loc.cpMin = (long)_tcsnccnt(textToSearch, (*smlf)[firstSmlRef].pos - smloff) + numCharsSoFar;
-		dat->loc.cpMax = numCharsSoFar = (long)_tcsnccnt(textSmlStart, (*smlf)[firstSmlRef].len) + dat->loc.cpMin;
+		dat->loc.cpMin = (long)_wcsncnt(textToSearch, psmlf.pos - smloff) + numCharsSoFar;
+		dat->loc.cpMax = numCharsSoFar = (long)_wcsncnt(textSmlStart, psmlf.len) + dat->loc.cpMin;
 
 		if (!opt.EnforceSpaces || (dat->ldspace && dat->trspace)) {
 			dat->ldspace |= !opt.SurroundSmileyWithSpaces;
@@ -137,15 +138,14 @@ void LookupAllSmileys(SmileyPackType* smileyPack, SmileyPackCType* smileyCPack, 
 		else delete dat;
 
 		// Advance string pointer to search for the next smiley
-		smloff = int((*smlf)[firstSmlRef].pos + (*smlf)[firstSmlRef].len);
+		smloff = int(psmlf.pos + psmlf.len);
 		csmlit[firstSml]++;
 	}
 	delete[] smileys;
 }
 
 
-void FindSmileyInText(SmileyPackType* smp, const TCHAR* str, 
-	unsigned& first, unsigned& size, SmileyType** sml)
+void FindSmileyInText(SmileyPackType *smp, const wchar_t *str, unsigned &first, unsigned &size, SmileyType **sml)
 {
 	SmileysQueueType smllist;
 	LookupAllSmileys(smp, NULL, str, smllist, true);
@@ -161,15 +161,15 @@ void FindSmileyInText(SmileyPackType* smp, const TCHAR* str,
 }
 
 
-SmileyType* FindButtonSmiley(SmileyPackType* smp)
+SmileyType* FindButtonSmiley(SmileyPackType *smp)
 {
 	unsigned start, size;
-	SmileyType* sml;
+	SmileyType *sml;
 	FindSmileyInText(smp, smp->GetButtonSmiley(), start, size, &sml);
 	return sml;
 }
 
-void UpdateSelection(CHARRANGE& sel, int pos, int dif)
+void UpdateSelection(CHARRANGE &sel, int pos, int dif)
 {
 	if (sel.cpMax == sel.cpMin) {
 		if (sel.cpMax < LONG_MAX && sel.cpMax > pos) {
@@ -178,55 +178,44 @@ void UpdateSelection(CHARRANGE& sel, int pos, int dif)
 		}
 	}
 	else {
-		if (sel.cpMax >= pos && sel.cpMax < LONG_MAX) sel.cpMax += dif; 
-		if (sel.cpMin > pos) sel.cpMin += dif; 
+		if (sel.cpMax >= pos && sel.cpMax < LONG_MAX)
+			sel.cpMax += dif; 
+		if (sel.cpMin > pos)
+			sel.cpMin += dif; 
 	}
 }
 
-void ReplaceSmileys(HWND hwnd, SmileyPackType* smp, SmileyPackCType* smcp, const CHARRANGE& sel, 
-	bool useHidden, bool ignoreLast, bool unFreeze, bool fireView)
+void ReplaceSmileys(HWND hwnd, SmileyPackType *smp, SmileyPackCType *smcp, const CHARRANGE &sel,  bool useHidden, bool ignoreLast, bool unFreeze, bool fireView)
 {
-	IRichEditOle* RichEditOle = NULL;
+	CComPtr<IRichEditOle> RichEditOle;
 	if (SendMessage(hwnd, EM_GETOLEINTERFACE, 0, (LPARAM)&RichEditOle) == 0)
 		return;
 	if (RichEditOle == NULL)
 		return;
 
-	ITextDocument* TextDocument = NULL;
-	if (RichEditOle->QueryInterface(IID_ITextDocument, (void**)&TextDocument) != S_OK) {
-		RichEditOle->Release();
+	CComPtr<ITextDocument> TextDocument;
+	if (RichEditOle->QueryInterface(IID_ITextDocument, (void**)&TextDocument) != S_OK)
 		return;
-	}
 
 	long cnt;
 	if (smp == NULL && smcp == NULL) {
-		if (unFreeze) TextDocument->Unfreeze(&cnt);
-		TextDocument->Release();
-		RichEditOle->Release();
+		if (unFreeze)
+			TextDocument->Unfreeze(&cnt);
 		return;
 	}
 
 	// retrieve text range
-	ITextRange* TextRange;
-	if (TextDocument->Range(sel.cpMin, sel.cpMax, &TextRange) != S_OK) {
-		TextDocument->Release();
-		RichEditOle->Release();
+	CComPtr<ITextRange> TextRange;
+	if (TextDocument->Range(sel.cpMin, sel.cpMax, &TextRange) != S_OK)
 		return;
-	}
 
 	// retrieve text to parse for smileys 
 	BSTR btxt = 0;
-	if (TextRange->GetText(&btxt) != S_OK) {
-		TextRange->Release();
-		TextDocument->Release();
-		RichEditOle->Release();
+	if (TextRange->GetText(&btxt) != S_OK)
 		return;
-	}
-
-	TextRange->Release();
 
 	SmileysQueueType smllist;
-	LookupAllSmileys(smp, smcp, W2T_SM(btxt), smllist, false);
+	LookupAllSmileys(smp, smcp, btxt, smllist, false);
 
 	SysFreeString(btxt);
 
@@ -234,19 +223,19 @@ void ReplaceSmileys(HWND hwnd, SmileyPackType* smp, SmileyPackCType* smcp, const
 		// disable screen updates
 		TextDocument->Freeze(&cnt);
 
-		TCHAR classname[20];
+		wchar_t classname[20];
 		GetClassName(hwnd, classname, _countof(classname));
-		bool ishpp = (_tcsncmp(classname, _T("THppRichEdit"), 12) == 0) || fireView;
+		bool ishpp = (wcsncmp(classname, L"THppRichEdit", 12) == 0) || fireView;
 
 		SetRichCallback(hwnd, NULL, false, true);
 
 		bool rdo = (GetWindowLongPtr(hwnd, GWL_STYLE) & ES_READONLY) != 0;
 		if (rdo) SendMessage(hwnd, EM_SETREADONLY, FALSE, 0);
 
-		ITextSelection* TextSelection;
+		CComPtr<ITextSelection> TextSelection;
 		TextDocument->GetSelection(&TextSelection);
 
-		ITextFont *TextFont;
+		CComPtr<ITextFont> TextFont;
 		TextSelection->GetFont(&TextFont);
 
 		//save selection
@@ -261,7 +250,7 @@ void ReplaceSmileys(HWND hwnd, SmileyPackType* smp, SmileyPackCType* smcp, const
 
 		// Determine background color
 		// This logic trying to minimize number of background color changes
-		static COLORREF bkgColor = GetSysColor(COLOR_WINDOW);
+		COLORREF bkgColor = GetSysColor(COLOR_WINDOW);
 		COLORREF bkgColorPv = (COLORREF)SendMessage(hwnd, EM_SETBKGNDCOLOR, 0, bkgColor);
 		if (bkgColorPv != bkgColor) {
 			bkgColor = bkgColorPv;
@@ -274,11 +263,11 @@ void ReplaceSmileys(HWND hwnd, SmileyPackType* smp, SmileyPackCType* smcp, const
 
 		unsigned numBTBSm = 0;
 
-		BSTR spaceb = SysAllocString(_T(" "));
+		BSTR spaceb = SysAllocString(L" ");
 
 		// Replace smileys specified in the list in RichEdit 
 		for (int j = smllist.getCount()-1; j >= 0; j--) {
-			CHARRANGE& smlpos = smllist[j].loc;
+			CHARRANGE &smlpos = smllist[j].loc;
 			if (ignoreLast && oldSel.cpMax == smlpos.cpMax)
 				continue;
 
@@ -305,9 +294,10 @@ void ReplaceSmileys(HWND hwnd, SmileyPackType* smp, SmileyPackCType* smcp, const
 				continue;
 			}
 
-			SmileyType* sml = smllist[j].sml;
-			SmileyCType* smlc = smllist[j].smlc;
-			if (sml == NULL && smlc == NULL) continue;
+			SmileyType *sml = smllist[j].sml;
+			SmileyCType *smlc = smllist[j].smlc;
+			if (sml == NULL && smlc == NULL)
+				continue;
 
 			// Select text analyze
 			TextSelection->SetRange(smlpos.cpMin, smlpos.cpMax);
@@ -315,7 +305,7 @@ void ReplaceSmileys(HWND hwnd, SmileyPackType* smp, SmileyPackCType* smcp, const
 			BSTR bstrText = NULL;
 
 			if (smlc == NULL && sml->IsText()) {
-				bstrText = SysAllocString(T2W_SM(sml->GetToolText().c_str()));
+				bstrText = SysAllocString(sml->GetToolText().c_str());
 				TextSelection->SetText(bstrText);
 			}
 			else {
@@ -400,11 +390,12 @@ void ReplaceSmileys(HWND hwnd, SmileyPackType* smp, SmileyPackCType* smcp, const
 				}
 				else UpdateSelection(oldSel, smlpos.cpMin, -(int)SysStringLen(bstrText)+1);
 
-				ISmileyBase* smileyBase = CreateAniSmileyObject(smlc ? smlc : sml, chf.crBackColor, ishpp);
-				if (smileyBase == NULL) continue;
+				ISmileyBase *smileyBase = CreateAniSmileyObject(smlc ? smlc : sml, chf.crBackColor, ishpp);
+				if (smileyBase == NULL)
+					continue;
 
 				smileyBase->SetExtent(DVASPECT_CONTENT, &sizehm);
-				smileyBase->SetHint(W2T_SM(bstrText));
+				smileyBase->SetHint(bstrText);
 
 				smileyBase->SetPosition(hwnd, NULL);
 
@@ -438,53 +429,46 @@ void ReplaceSmileys(HWND hwnd, SmileyPackType* smp, SmileyPackCType* smcp, const
 		SysFreeString(spaceb);
 
 		TextSelection->SetRange(oldSel.cpMin, oldSel.cpMax);
-		if (rdo) SendMessage(hwnd, EM_SETREADONLY, TRUE, 0);
-
-		TextFont->Release();
-		TextSelection->Release();
+		if (rdo)
+			SendMessage(hwnd, EM_SETREADONLY, TRUE, 0);
 
 		ReleaseDC(hwnd, hdc); 
 
 		TextDocument->Unfreeze(&cnt);
-		if (cnt == 0) UpdateWindow(hwnd);
+		if (cnt == 0)
+			UpdateWindow(hwnd);
 	}
 
 	if (unFreeze) {
 		TextDocument->Unfreeze(&cnt);
-		if (cnt == 0) UpdateWindow(hwnd);
+		if (cnt == 0)
+			UpdateWindow(hwnd);
 	}
-
-	TextDocument->Release();
-	RichEditOle->Release();
 }
 
-void ReplaceSmileysWithText(HWND hwnd, CHARRANGE& sel, bool keepFrozen)
+void ReplaceSmileysWithText(HWND hwnd, CHARRANGE &sel, bool keepFrozen)
 {
-	IRichEditOle* RichEditOle = NULL;
+	CComPtr<IRichEditOle> RichEditOle = NULL;
 	if (SendMessage(hwnd, EM_GETOLEINTERFACE, 0, (LPARAM)&RichEditOle) == 0)
 		return;
 	if (RichEditOle == NULL)
 		return;
 
-	ITextDocument* TextDocument;
-	if (RichEditOle->QueryInterface(IID_ITextDocument, (void**)&TextDocument) != S_OK) {
-		RichEditOle->Release();
+	CComPtr<ITextDocument> TextDocument;
+	if (RichEditOle->QueryInterface(IID_ITextDocument, (void**)&TextDocument) != S_OK)
 		return;
-	}
 
 	// retrieve text range
-	ITextRange* TextRange;
-	if (TextDocument->Range(0, 0, &TextRange) != S_OK) {
-		TextDocument->Release();
-		RichEditOle->Release();
+	CComPtr<ITextRange> TextRange;
+	if (TextDocument->Range(0, 0, &TextRange) != S_OK)
 		return;
-	}
 
 	long cnt;
 	TextDocument->Freeze(&cnt);
 
 	bool rdo = (GetWindowLongPtr(hwnd, GWL_STYLE) & ES_READONLY) != 0;
-	if (rdo) SendMessage(hwnd, EM_SETREADONLY, FALSE, 0);
+	if (rdo)
+		SendMessage(hwnd, EM_SETREADONLY, FALSE, 0);
 
 	CHARRANGE oldSel;
 	SendMessage(hwnd, EM_EXGETSEL, 0, (LPARAM)&oldSel);
@@ -527,10 +511,8 @@ void ReplaceSmileysWithText(HWND hwnd, CHARRANGE& sel, bool keepFrozen)
 	}
 
 	SendMessage(hwnd, EM_EXSETSEL, 0, (LPARAM)&oldSel);
-	if (rdo) SendMessage(hwnd, EM_SETREADONLY, TRUE, 0);
-	if (!keepFrozen) TextDocument->Unfreeze(&cnt);
-
-	TextRange->Release();
-	TextDocument->Release();
-	RichEditOle->Release();
+	if (rdo)
+		SendMessage(hwnd, EM_SETREADONLY, TRUE, 0);
+	if (!keepFrozen)
+		TextDocument->Unfreeze(&cnt);
 }

@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //---------------------------------------------------------------------------
 // Workaround for MS bug ComboBox_SelectItemData
-int ComboBox_SelectItem(HWND hwndCtl, char* data) {
+int ComboBox_SelectItem(HWND hwndCtl, char *data) {
 	int i = 0;
 	for (i; i < ComboBox_GetCount(hwndCtl); i++) {
 		if (mir_strcmp(data, (char*)ComboBox_GetItemData(hwndCtl, i)) == 0) {
@@ -146,9 +146,9 @@ static statusButtons[] = {
 	{ IDC_SOFFLINE, SKINICON_STATUS_OFFLINE, "Offline", PF2_IDLE, PF2_IDLE },
 	{ IDC_SONLINE, SKINICON_STATUS_ONLINE, "Online", PF2_ONLINE, PF2_ONLINE },
 	{ IDC_SAWAY, SKINICON_STATUS_AWAY, "Away", PF2_SHORTAWAY, PF2_SHORTAWAY },
-	{ IDC_SNA, SKINICON_STATUS_NA, "NA", PF2_LONGAWAY, PF2_LONGAWAY },
+	{ IDC_SNA, SKINICON_STATUS_NA, "Not available", PF2_LONGAWAY, PF2_LONGAWAY },
 	{ IDC_SOCCUPIED, SKINICON_STATUS_OCCUPIED, "Occupied", PF2_LIGHTDND, PF2_LIGHTDND },
-	{ IDC_SDND, SKINICON_STATUS_DND, "DND", PF2_HEAVYDND, PF2_HEAVYDND },
+	{ IDC_SDND, SKINICON_STATUS_DND, "Do not disturb", PF2_HEAVYDND, PF2_HEAVYDND },
 	{ IDC_SFREE4CHAT, SKINICON_STATUS_FREE4CHAT, "Free for chat", PF2_FREECHAT, PF2_FREECHAT },
 	{ IDC_SINVISIBLE, SKINICON_STATUS_INVISIBLE, "Invisible", PF2_INVISIBLE, PF2_INVISIBLE },
 	{ IDC_SPHONE, SKINICON_STATUS_ONTHEPHONE, "On the phone", PF2_ONTHEPHONE, PF2_ONTHEPHONE },
@@ -157,9 +157,9 @@ static statusButtons[] = {
 	{ IDC_SOFFLINE2, SKINICON_STATUS_OFFLINE, "Offline", PF2_IDLE, PF2_IDLE << 16 },
 	{ IDC_SONLINE2, SKINICON_STATUS_ONLINE, "Online", PF2_ONLINE, PF2_ONLINE << 16 },
 	{ IDC_SAWAY2, SKINICON_STATUS_AWAY, "Away", PF2_SHORTAWAY, PF2_SHORTAWAY << 16 },
-	{ IDC_SNA2, SKINICON_STATUS_NA, "NA", PF2_LONGAWAY, PF2_LONGAWAY << 16 },
+	{ IDC_SNA2, SKINICON_STATUS_NA, "Not available", PF2_LONGAWAY, PF2_LONGAWAY << 16 },
 	{ IDC_SOCCUPIED2, SKINICON_STATUS_OCCUPIED, "Occupied", PF2_LIGHTDND, PF2_LIGHTDND << 16 },
-	{ IDC_SDND2, SKINICON_STATUS_DND, "DND", PF2_HEAVYDND, PF2_HEAVYDND << 16 },
+	{ IDC_SDND2, SKINICON_STATUS_DND, "Do not disturb", PF2_HEAVYDND, PF2_HEAVYDND << 16 },
 	{ IDC_SFREE4CHAT2, SKINICON_STATUS_FREE4CHAT, "Free for chat", PF2_FREECHAT, PF2_FREECHAT << 16 },
 	{ IDC_SINVISIBLE2, SKINICON_STATUS_INVISIBLE, "Invisible", PF2_INVISIBLE, PF2_INVISIBLE << 16 },
 	{ IDC_SPHONE2, SKINICON_STATUS_ONTHEPHONE, "On the phone", PF2_ONTHEPHONE, PF2_ONTHEPHONE << 16 },
@@ -186,16 +186,16 @@ INT_PTR CALLBACK DlgProcOptsClasses(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 			for (i = 0; i < gTreeData.getCount(); ++i) {
 				POPUPTREEDATA *p = gTreeData[i];
 
-				TCHAR itemName[MAXMODULELABELLENGTH];
+				wchar_t itemName[MAXMODULELABELLENGTH];
 				int iconIndex;
 
 				if (p->typ == 1) { // Treeview part for typ 1 (notification)
 					iconIndex = ImageList_ReplaceIcon(hImgLst, -1, IcoLib_GetIconByHandle(p->hIcoLib));
-					mir_sntprintf(itemName, _T("%s/%s"), p->pszTreeRoot, p->pszDescription);
+					mir_snwprintf(itemName, L"%s/%s", p->pszTreeRoot, p->pszDescription);
 				}
 				else { // Treeview part typ 2 (popup class api)
 					iconIndex = ImageList_ReplaceIcon(hImgLst, -1, p->pupClass.hIcon);
-					mir_sntprintf(itemName, _T("%s/%s"), LPGENT("CLASS Plugins"), p->pszDescription);
+					mir_snwprintf(itemName, L"%s/%s", LPGENW("CLASS Plugins"), p->pszDescription);
 				}
 				OptTree_AddItem(hwndTree, itemName, (LPARAM)p, iconIndex);
 			}
@@ -266,16 +266,16 @@ INT_PTR CALLBACK DlgProcOptsClasses(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 					// combo left action (EXTRA)
 					hCtrl = GetDlgItem(hwnd, IDC_LACTION);
 					for (i = 0; i < ptd->notification.actionCount; ++i) {
-						psztAction = mir_a2t(ptd->notification.lpActions[i].lpzTitle);
-						ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, TranslateTS(psztAction)), ptd->notification.lpActions[i].lpzTitle);
+						psztAction = mir_a2u(ptd->notification.lpActions[i].lpzTitle);
+						ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, TranslateW(psztAction)), ptd->notification.lpActions[i].lpzTitle);
 						mir_free(psztAction); psztAction = NULL;
 					}
 					// combo right action (EXTRA)
 					hCtrl = GetDlgItem(hwnd, IDC_RACTION);
 					psztAction = NULL;
 					for (i = 0; i < ptd->notification.actionCount; ++i) {
-						psztAction = mir_a2t(ptd->notification.lpActions[i].lpzTitle);
-						ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, TranslateTS(psztAction)), ptd->notification.lpActions[i].lpzTitle);
+						psztAction = mir_a2u(ptd->notification.lpActions[i].lpzTitle);
+						ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, TranslateW(psztAction)), ptd->notification.lpActions[i].lpzTitle);
 						mir_free(psztAction); psztAction = NULL;
 					}
 					// enable all controls
@@ -342,7 +342,7 @@ INT_PTR CALLBACK DlgProcOptsClasses(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 					{
 						POPUPDATA2 ppd = { 0 };
 						ppd.cbSize = sizeof(ppd);
-						ppd.flags = PU2_TCHAR;
+						ppd.flags = PU2_UNICODE;
 						ppd.lptzTitle = ptd->pszDescription;
 						ppd.lptzText = TranslateT("Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn!");
 						ppd.iSeconds = ptd->timeoutValue;
@@ -370,12 +370,7 @@ INT_PTR CALLBACK DlgProcOptsClasses(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 					break;
 
 				case IDC_MORE:
-					{
-						OPENOPTIONSDIALOG ood = { sizeof(ood) };
-						ood.pszGroup = "Customize";
-						ood.pszPage = "Fonts and colors";
-						Options_Open(&ood);
-					}
+					Options_Open(L"Customize", L"Fonts and colors");
 					break;
 
 				case IDC_SOFFLINE:  case IDC_SONLINE:     case IDC_SAWAY:       case IDC_SNA:     case IDC_SOCCUPIED:
@@ -396,14 +391,14 @@ INT_PTR CALLBACK DlgProcOptsClasses(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 				switch (idCtrl) {
 				case IDC_LACTION:
 					mir_strncpy(ptd->leftAction,
-						(char *)ComboBox_GetItemData((HWND)lParam, ComboBox_GetCurSel((HWND)lParam)),
-						sizeof(ptd->leftAction));
+						(char*)ComboBox_GetItemData((HWND)lParam, ComboBox_GetCurSel((HWND)lParam)),
+						_countof(ptd->leftAction));
 					SendMessage(GetParent(hwnd), PSM_CHANGED, 0, 0);
 					break;
 				case IDC_RACTION:
 					mir_strncpy(ptd->rightAction,
-						(char *)ComboBox_GetItemData((HWND)lParam, ComboBox_GetCurSel((HWND)lParam)),
-						sizeof(ptd->rightAction));
+						(char*)ComboBox_GetItemData((HWND)lParam, ComboBox_GetCurSel((HWND)lParam)),
+						_countof(ptd->rightAction));
 					SendMessage(GetParent(hwnd), PSM_CHANGED, 0, 0);
 					break;
 				}
@@ -490,8 +485,6 @@ INT_PTR CALLBACK DlgProcOptsClasses(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 void LoadClassSettings(POPUPTREEDATA *ptd, char* szModul)
 {
 	char setting[2 * MAXMODULELABELLENGTH];
-	char *szTmp = NULL;
-
 	mir_snprintf(setting, "%s/enabled", ptd->pupClass.pszName);
 	ptd->enabled =
 		(signed char)db_get_b(NULL, szModul, setting, TRUE);
@@ -506,14 +499,14 @@ void LoadClassSettings(POPUPTREEDATA *ptd, char* szModul)
 		ptd->pupClass.iSeconds ? ptd->pupClass.iSeconds : PopupOptions.Seconds);
 
 	mir_snprintf(setting, "%s/leftAction", ptd->pupClass.pszName);
-	szTmp = db_get_s(NULL, szModul, setting, POPUP_ACTION_NOTHING);	// standart ??
-	mir_strncpy(ptd->leftAction, szTmp, sizeof(ptd->leftAction));
-	mir_free(szTmp); szTmp = NULL;
+	char *szTmp = db_get_s(NULL, szModul, setting, POPUP_ACTION_NOTHING);	// standart ??
+	mir_strncpy(ptd->leftAction, szTmp, _countof(ptd->leftAction));
+	mir_free(szTmp);
 
 	mir_snprintf(setting, "%s/rightAction", ptd->pupClass.pszName);
 	szTmp = db_get_s(NULL, szModul, setting, POPUP_ACTION_DISMISS);	// standart ??
-	mir_strncpy(ptd->rightAction, szTmp, sizeof(ptd->rightAction));
-	mir_free(szTmp); szTmp = NULL;
+	mir_strncpy(ptd->rightAction, szTmp, _countof(ptd->rightAction));
+	mir_free(szTmp);
 }
 
 void SaveClassSettings(POPUPTREEDATA *ptd, char* szModul)

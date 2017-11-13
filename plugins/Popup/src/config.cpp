@@ -89,19 +89,19 @@ void LoadOptions()
 
 void PopupPreview()
 {
-	TCHAR *lptzTitle1Eng = TranslateT("The Jabberwocky");
-	TCHAR *lptzText1Eng = TranslateT("`Twas brillig, and the slithy toves\r\nDid gyre and gimble in the wabe:\r\nAll mimsy were the borogoves,\r\nAnd the mome raths outgrabe.\r\n\t[b][i]Lewis Carroll, 1855[/i][/b]");
+	wchar_t *lptzTitle1Eng = TranslateT("The Jabberwocky");
+	wchar_t *lptzText1Eng = TranslateT("`Twas brillig, and the slithy toves\r\nDid gyre and gimble in the wabe:\r\nAll mimsy were the borogoves,\r\nAnd the mome raths outgrabe.\r\n\t[b][i]Lewis Carroll, 1855[/i][/b]");
 
-	TCHAR *lptzTitle2 = TranslateT("Test preview for the popup plugin settings. This is supposed to be long enough not to fit in one line...");
-	TCHAR *lptzText2 = TranslateTS(
-		LPGENT("This is a special test preview for the popup plugin settings. The text and title are quite long so you can tweak your skin and plugin settings to best fit your needs :)")
+	wchar_t *lptzTitle2 = TranslateT("Test preview for the popup plugin settings. This is supposed to be long enough not to fit in one line...");
+	wchar_t *lptzText2 = TranslateW(
+		LPGENW("This is a special test preview for the popup plugin settings. The text and title are quite long so you can tweak your skin and plugin settings to best fit your needs :)")
 		);
 
 	POPUPDATA2 ppd = { 0 };
 
 	memset(&ppd, 0, sizeof(ppd));
 	ppd.cbSize = sizeof(ppd);
-	ppd.flags = PU2_TCHAR;
+	ppd.flags = PU2_UNICODE;
 
 	ppd.lptzTitle = lptzTitle1Eng;
 	ppd.lptzText = lptzText1Eng;
@@ -111,7 +111,7 @@ void PopupPreview()
 
 	memset(&ppd, 0, sizeof(ppd));
 	ppd.cbSize = sizeof(ppd);
-	ppd.flags = PU2_TCHAR;
+	ppd.flags = PU2_UNICODE;
 	ppd.lptzTitle = lptzTitle2;
 	ppd.lptzText = lptzText2;
 	ppd.lchIcon = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
@@ -151,14 +151,9 @@ static int EnumProc(const char *szSetting, LPARAM lParam)
 static void CopyModule(const char *szModule, const char *szNewModule)
 {
 	EnumProcParam param = { szModule, szNewModule };
+	db_enum_settings(NULL, EnumProc, szModule, &param);
 
-	DBCONTACTENUMSETTINGS dbces = { 0 };
-	dbces.pfnEnumProc = EnumProc;
-	dbces.szModule = szModule;
-	dbces.lParam = (LPARAM)&param;
-	CallService(MS_DB_CONTACT_ENUMSETTINGS, 0, (LPARAM)&dbces);
-
-	CallService(MS_DB_MODULE_DELETE, 0, (LPARAM)szModule);
+	db_delete_module(0, szModule);
 }
 
 void UpgradeDb()

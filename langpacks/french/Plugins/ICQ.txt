@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: ICQ.dll
 ;  Plugin: IcqOscarJ protocol
-;  Version: 0.11.3.4
+;  Version: 0.11.3.5
 ;  Authors: Joe Kucera, Bio, Martin Öberg, Richard Hughes, Jon Keating, etc.
 ;============================================================
 [ICQ protocol support for Miranda NG.]
@@ -78,8 +78,8 @@ Activer le support des avatars
 Vérifier l'avatar avant de l'enregistrer *
 [Load avatars automatically (like ICQ Lite)]
 Charger les avatars automatiquement (comme ICQ Lite)
-[You will need to reconnect to the ICQ network for the changes you have made on this page to take effect.]
-Vous devez vous reconnecter au réseau ICQ pour que les changements effectués sur cette page soient effectifs.
+[These changes will take effect the next time you connect to the ICQ network.]
+Ces changements ne prendront effet qu'à la prochaine connexion au réseau ICQ.
 [You cannot enable/disable the server-side contact list while you are connected to the ICQ network.]
 Vous ne pouvez (dés)activer le support serveur de la liste de contacts lorsque vous êtes connecté au réseau ICQ.
 [Note: The options marked with an asterisk have important side-effects or caveats that may not be initially apparent documented in the help.]
@@ -110,8 +110,6 @@ Au changement d'état, effacer l'état personnalisé
 Télécharger les états personnalisés
 [Block known Spam Bots]
 Bloquer les spams
-[Enable AIM contacts support]
-
 [Direct connections]
 Connexions directes
 [Allowing direct connections will expose your IP address but may be necessary for some ICQ features to work properly.]
@@ -1534,7 +1532,7 @@ Exemple de Spambot
 [%s server connection]
 %s serveur connexion
 [%s client-to-client connections]
-/s client-to-client connexions
+%s client-to-client connexions
 [User ID]
 
 [You have not entered an ICQ number.\nConfigure this in Options -> Network -> ICQ and try again.]
@@ -1544,8 +1542,8 @@ Vous n'avez pas indiqué votre numéro d'ICQ.\nAllez dans Options -> Réseau -> 
 
 [Unable to connect to ICQ login server]
 Connexion impossible au serveur d'identification ICQ
-[Miranda was unable to allocate a port to listen for direct peer-to-peer connections between clients. You will be able to use most of the ICQ network without problems but you may be unable to send or receive files.\n\nIf you have a firewall this may be blocking Miranda, in which case you should configure your firewall to leave some ports open and tell Miranda which ports to use in Options -> ICQ -> Network.]
-Miranda n'a pas pu allouer un port pour écouter des connexions directes (peer-to-peer) entre clients. Vous pourrez utiliser la plus grande partie du réseau ICQ sans problème, mais il est probable que le transfert de fichier ne fonctionne pas.\n\nSi vous possédez un pare-feu, il se peut que celui-ci bloque Miranda, auquel cas vous devriez configurer votre pare-feu pour qu'il laisse quelques ports ouverts et indiquer à Miranda quels ports utiliser dans Options -> ICQ -> Réseau.
+[Miranda was unable to allocate a port to listen for direct peer-to-peer connections between clients. You will be able to use most of the ICQ network without problems but you may be unable to send or receive files.\n\nIf you have a firewall this may be blocking Miranda, in which case you should configure your firewall to leave some ports open and tell Miranda which ports to use in Options -> Network -> ICQ client-to-client connections.]
+Miranda n'a pas pu allouer un port pour écouter des connexions directes (peer-to-peer) entre clients. Vous pourrez utiliser la plus grande partie du réseau ICQ sans problème, mais il est probable que le transfert de fichier ne fonctionne pas.\n\nSi vous possédez un pare-feu, il se peut que celui-ci bloque Miranda, auquel cas vous devriez configurer votre pare-feu pour qu'il laisse quelques ports ouverts et indiquer à Miranda quels ports utiliser dans Options -> Réseau -> ICQ client-to-client connexions.
 [Connection failed.\nLogin sequence failed for unknown reason.\nTry again later.]
 
 [Your connection with the ICQ server was abortively closed]
@@ -1664,7 +1662,7 @@ Plane
 [Watching pro7 on TV]
 Regarde pro7 à la télé
 [Love]
-
+J'adore
 [Hot Dog]
 
 [Rough]
@@ -1739,7 +1737,7 @@ Chien
 
 [Broken hearted]
 
-[Free for Chat]
+[Free for chat]
 OK pour un chat
 [@home]
 
@@ -1783,6 +1781,8 @@ Aucun
 [Greeting card:]
 
 ;file \protocols\IcqOscarJ\src\init.cpp
+[Expand string edit]
+
 [ICQ xStatus]
 
 ;file \protocols\IcqOscarJ\src\log.cpp
@@ -1797,7 +1797,7 @@ Le serveur n'a pas répondu à la tentative de connexion dans un délai raisonna
 [The connection with the server was abortively closed during the connection attempt. You may have lost your local network connection.]
 
 [Miranda was unable to resolve the name of a server to its numeric address. This is most likely caused by a catastrophic loss of your network connection (for example, your modem has disconnected), but if you are behind a proxy, you may need to use the 'Resolve hostnames through proxy' option in Options -> Network.]
-Miranda n'a pas pu résoudre le nom du serveur en adresse IP numérique. Cela est sûrement dû par une perte brutale de votre connexion réseau (par exemple : votre modem a été déconnecté), mais si vous êtes derrière un proxy, vous pouvez avoir besoin d'utiliser l'option 'Résoudre les noms à travers un proxy' dans Options -> ICQ -> Réseau.
+Miranda n'a pas pu résoudre le nom du serveur en adresse IP numérique. Cela est sûrement dû par une perte brutale de votre connexion réseau (par exemple : votre modem a été déconnecté), mais si vous êtes derrière un proxy, vous pouvez avoir besoin d'utiliser l'option 'Résoudre les noms à travers un proxy' dans Options -> Réseau.
 [Miranda was unable to make a connection with a server. It is likely that the server is down, in which case you should wait for a while and try again later.]
 
 [Your proxy rejected the user name and password that you provided. Please check them in Options -> Network.]

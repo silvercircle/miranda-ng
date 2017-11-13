@@ -29,74 +29,101 @@ void RecvMsgSvc_func(MCONTACT hContact, std::wstring str, char *msg, DWORD, DWOR
 	DWORD dbflags = DBEF_UTF;
 	{
 		// check for gpg related data
-		wstring::size_type s1 = str.find(_T("-----BEGIN PGP MESSAGE-----"));
-		wstring::size_type s2 = str.find(_T("-----END PGP MESSAGE-----"));
-		if (s2 != wstring::npos && s1 != wstring::npos) { //this is generic encrypted data block
-			if (!isContactSecured(hContact)) {
+		wstring::size_type s1 = str.find(L"-----BEGIN PGP MESSAGE-----");
+		wstring::size_type s2 = str.find(L"-----END PGP MESSAGE-----");
+		if (s2 != wstring::npos && s1 != wstring::npos)
+		{ //this is generic encrypted data block
+			if (!isContactSecured(hContact))
+			{
 				if (bDebugLog)
 					debuglog << std::string(time_str() + ": info: received encrypted message from: " + toUTF8(pcli->pfnGetContactDisplayName(hContact, 0)) + " with turned off encryption");
-				if (MessageBox(0, TranslateT("We received encrypted message from contact with encryption turned off.\nDo you want to turn on encryption for this contact?"), TranslateT("Warning"), MB_YESNO) == IDYES) {
-					if (!isContactHaveKey(hContact)) {
+				if (MessageBox(0, TranslateT("We received encrypted message from contact with encryption turned off.\nDo you want to turn on encryption for this contact?"), TranslateT("Warning"), MB_YESNO) == IDYES)
+				{
+					if (!isContactHaveKey(hContact))
+					{
 						void ShowLoadPublicKeyDialog();
 						item_num = 0;		 //black magic here
 						user_data[1] = hContact;
 						ShowLoadPublicKeyDialog();
 					}
-					else {
+					else
+					{
 						db_set_b(db_mc_isMeta(hContact) ? metaGetMostOnline(hContact) : hContact, szGPGModuleName, "GPGEncryption", 1);
 						setSrmmIcon(hContact);
 						setClistIcon(hContact);
 					}
-					if (isContactHaveKey(hContact)) {
+					if (isContactHaveKey(hContact))
+					{
 						db_set_b(db_mc_isMeta(hContact) ? metaGetMostOnline(hContact) : hContact, szGPGModuleName, "GPGEncryption", 1);
 						setSrmmIcon(hContact);
 						setClistIcon(hContact);
 					}
 				}
-				else if (MessageBox(0, TranslateT("Do you want to try to decrypt encrypted message?"), TranslateT("Warning"), MB_YESNO) == IDNO) {
+				else if (MessageBox(0, TranslateT("Do you want to try to decrypt encrypted message?"), TranslateT("Warning"), MB_YESNO) == IDNO)
+				{
 					HistoryLog(hContact, db_event(msg, timestamp, 0, dbflags));
 					return;
 				}
 			}
-			else if (bDebugLog) {
+			else if (bDebugLog)
 				debuglog << std::string(time_str() + ": info: received encrypted message from: " + toUTF8(pcli->pfnGetContactDisplayName(hContact, 0)));
-			}
 			boost::algorithm::erase_all(str, "\r");
-			s2 += mir_tstrlen(_T("-----END PGP MESSAGE-----"));
+			s2 += mir_wstrlen(L"-----END PGP MESSAGE-----");
 
-			ptrT ptszHomePath(UniGetContactSettingUtf(NULL, szGPGModuleName, "szHomePath", _T("")));
+			ptrW ptszHomePath(UniGetContactSettingUtf(NULL, szGPGModuleName, "szHomePath", L""));
 			wstring encfile = toUTF16(get_random(10));
 			wstring decfile = toUTF16(get_random(10));
 			{
-				wstring path = wstring(ptszHomePath) + _T("\\tmp\\") + encfile;
-				boost::filesystem::remove(path);
+				wstring path = wstring(ptszHomePath) + L"\\tmp\\" + encfile;
+				if(!bDebugLog)
 				{
+					boost::system::error_code e;
+					boost::filesystem::remove(path, e);
+				}
+
+				{
+					const int timeout = 5000, step = 100;
+					int count = 0;
+
 					fstream f(path.c_str(), std::ios::out);
 					while (!f.is_open())
+					{
+						boost::this_thread::sleep(boost::posix_time::milliseconds(step));
+						count += step;
+						if(count >= timeout)
+						{
+							db_set_b(hContact, szGPGModuleName, "GPGEncryption", 0);
+							setSrmmIcon(hContact);
+							setClistIcon(hContact);
+							debuglog<<std::string(time_str() + "info: failed to create temporary file for decryption, disabling gpg for contact to avoid deadlock");
+							return;
+						}
 						f.open(path.c_str(), std::ios::out);
-					char *tmp = mir_t2a(str.substr(s1, s2 - s1).c_str());
+					}
+					char *tmp = mir_u2a(str.substr(s1, s2 - s1).c_str());
 					f << tmp;
 					mir_free(tmp);
 					f.close();
 				}
-				extern TCHAR *password;
+				extern wchar_t *password;
 				string out;
 				DWORD code;
 				std::vector<wstring> cmd;
 				cmd.push_back(L"--batch");
 				{
 					char *inkeyid = UniGetContactSettingUtf(db_mc_isMeta(hContact) ? metaGetMostOnline(hContact) : hContact, szGPGModuleName, "InKeyID", "");
-					TCHAR *pass = NULL;
+					wchar_t *pass = NULL;
 					if (inkeyid[0]) {
 						string dbsetting = "szKey_";
 						dbsetting += inkeyid;
 						dbsetting += "_Password";
-						pass = UniGetContactSettingUtf(NULL, szGPGModuleName, dbsetting.c_str(), _T(""));
+						pass = UniGetContactSettingUtf(NULL, szGPGModuleName, dbsetting.c_str(), L"");
 						if (pass[0] && bDebugLog)
 							debuglog << std::string(time_str() + ": info: found password in database for key ID: " + inkeyid + ", trying to decrypt message from " + toUTF8(pcli->pfnGetContactDisplayName(hContact, 0)) + " with password");
 					}
-					else {
-						pass = UniGetContactSettingUtf(NULL, szGPGModuleName, "szKeyPassword", _T(""));
+					else
+					{
+						pass = UniGetContactSettingUtf(NULL, szGPGModuleName, "szKeyPassword", L"");
 						if (pass[0] && bDebugLog)
 							debuglog << std::string(time_str() + ": info: found password for all keys in database, trying to decrypt message from " + toUTF8(pcli->pfnGetContactDisplayName(hContact, 0)) + " with password");
 					}
@@ -104,7 +131,8 @@ void RecvMsgSvc_func(MCONTACT hContact, std::wstring str, char *msg, DWORD, DWOR
 						cmd.push_back(L"--passphrase");
 						cmd.push_back(pass);
 					}
-					else if (password && password[0]) {
+					else if (password && password[0])
+					{
 						if (bDebugLog)
 							debuglog << std::string(time_str() + ": info: found password in memory, trying to decrypt message from " + toUTF8(pcli->pfnGetContactDisplayName(hContact, 0)) + " with password");
 						cmd.push_back(L"--passphrase");
@@ -116,7 +144,11 @@ void RecvMsgSvc_func(MCONTACT hContact, std::wstring str, char *msg, DWORD, DWOR
 					mir_free(inkeyid);
 				}
 
-				boost::filesystem::remove(wstring(ptszHomePath) + _T("\\tmp\\") + decfile);
+				if(!bDebugLog)
+				{
+					boost::system::error_code e;
+					boost::filesystem::remove(wstring(ptszHomePath) + L"\\tmp\\" + decfile, e);
+				}
 
 				cmd.push_back(L"--output");
 				cmd.push_back(std::wstring(ptszHomePath) + L"\\tmp\\" + decfile);
@@ -128,37 +160,55 @@ void RecvMsgSvc_func(MCONTACT hContact, std::wstring str, char *msg, DWORD, DWOR
 				params.out = &out;
 				params.code = &code;
 				params.result = &result;
-				if (!gpg_launcher(params)) {
-					boost::filesystem::remove(path);
+				if (!gpg_launcher(params))
+				{
+					if(!bDebugLog)
+					{
+						boost::system::error_code e;
+						boost::filesystem::remove(path, e);
+					}
 					HistoryLog(hContact, db_event(msg, timestamp, 0, dbflags));
 					BYTE enc = db_get_b(hContact, szGPGModuleName, "GPGEncryption", 0);
 					db_set_b(hContact, szGPGModuleName, "GPGEncryption", 0);
-					CallContactService(hContact, PSS_MESSAGE, 0, (LPARAM)"Unable to decrypt PGP encrypted message");
+					ProtoChainSend(hContact, PSS_MESSAGE, 0, (LPARAM)"Unable to decrypt PGP encrypted message");
 					HistoryLog(hContact, db_event("Error message sent", 0, 0, DBEF_SENT));
 					db_set_b(hContact, szGPGModuleName, "GPGEncryption", enc);
 					return;
 				}
-				if (result == pxNotFound) {
-					boost::filesystem::remove(path);
+				if (result == pxNotFound)
+				{
+					if(!bDebugLog)
+					{
+						boost::system::error_code e;
+						boost::filesystem::remove(path, e);
+					}
+
 					HistoryLog(hContact, db_event(msg, timestamp, 0, dbflags));
 					return;
 				}
-				if (result == pxSuccessExitCodeInvalid) {
-					boost::filesystem::remove(path);
+/*				if (result == pxSuccessExitCodeInvalid) //sometime we have invalid return code after succesful decryption, this should be non-fatal at  least
+				{
+					if(!bDebugLog)
+					{
+						boost::system::error_code e;
+						boost::filesystem::remove(path, e);
+					}
+
 					HistoryLog(hContact, db_event(msg, timestamp, 0, dbflags));
 					HistoryLog(hContact, db_event(Translate("failed to decrypt message, GPG returned error, turn on debug log for more details"), timestamp, 0, 0));
 					return;
-				}
+				} */
 
 				//TODO: check gpg output for errors
 				_terminate = false;
-				while (out.find("public key decryption failed: bad passphrase") != string::npos) {
+				while (out.find("public key decryption failed: bad passphrase") != string::npos)
+				{
 					if (bDebugLog)
 						debuglog << std::string(time_str() + ": info: failed to decrypt messaage from " + toUTF8(pcli->pfnGetContactDisplayName(hContact, 0)) + " password needed, trying to get one");
 					if (_terminate) {
 						BYTE enc = db_get_b(hContact, szGPGModuleName, "GPGEncryption", 0);
 						db_set_b(hContact, szGPGModuleName, "GPGEncryption", 0);
-						CallContactService(hContact, PSS_MESSAGE, 0, (LPARAM)"Unable to decrypt PGP encrypted message");
+						ProtoChainSend(hContact, PSS_MESSAGE, 0, (LPARAM)"Unable to decrypt PGP encrypted message");
 						HistoryLog(hContact, db_event("Error message sent", 0, 0, DBEF_SENT));
 						db_set_b(hContact, szGPGModuleName, "GPGEncryption", enc);
 						break;
@@ -174,7 +224,8 @@ void RecvMsgSvc_func(MCONTACT hContact, std::wstring str, char *msg, DWORD, DWOR
 					new_key_hcnt = hContact;
 					ShowLoadKeyPasswordWindow();
 					std::vector<wstring> cmd2 = cmd;
-					if (password) {
+					if (password)
+					{
 						if (bDebugLog)
 							debuglog << std::string(time_str() + ": info: found password in memory, trying to decrypt message from " + toUTF8(pcli->pfnGetContactDisplayName(hContact, 0)));
 						std::vector<wstring> tmp3;
@@ -189,39 +240,67 @@ void RecvMsgSvc_func(MCONTACT hContact, std::wstring str, char *msg, DWORD, DWOR
 					params2.code = &code;
 					params2.result = &result2;
 					if (!gpg_launcher(params2)) {
-						boost::filesystem::remove(path);
+						if(!bDebugLog)
+						{
+							boost::system::error_code e;
+							boost::filesystem::remove(path, e);
+						}
+
 						HistoryLog(hContact, db_event(msg, timestamp, 0, dbflags));
 						BYTE enc = db_get_b(hContact, szGPGModuleName, "GPGEncryption", 0);
 						db_set_b(hContact, szGPGModuleName, "GPGEncryption", 0);
-						CallContactService(hContact, PSS_MESSAGE, 0, (LPARAM)"Unable to decrypt PGP encrypted message");
+						ProtoChainSend(hContact, PSS_MESSAGE, 0, (LPARAM)"Unable to decrypt PGP encrypted message");
 						HistoryLog(hContact, db_event("Error message sent", 0, 0, DBEF_SENT));
 						db_set_b(hContact, szGPGModuleName, "GPGEncryption", enc);
 						return;
 					}
-					if (result2 == pxNotFound) {
-						boost::filesystem::remove(path);
+					if (result2 == pxNotFound)
+					{
+						if(!bDebugLog)
+						{
+							boost::system::error_code e;
+							boost::filesystem::remove(path, e);
+						}
+
 						HistoryLog(hContact, db_event(msg, timestamp, 0, dbflags));
 						return;
 					}
 				}
 				out.clear();
-				if (!gpg_launcher(params)) {
-					boost::filesystem::remove(path);
+				if (!gpg_launcher(params))
+				{
+					if(!bDebugLog)
+					{
+						boost::system::error_code e;
+						boost::filesystem::remove(path, e);
+					}
+
 					HistoryLog(hContact, db_event(msg, timestamp, 0, dbflags));
 					BYTE enc = db_get_b(hContact, szGPGModuleName, "GPGEncryption", 0);
 					db_set_b(hContact, szGPGModuleName, "GPGEncryption", 0);
-					CallContactService(hContact, PSS_MESSAGE, 0, (LPARAM)"Unable to decrypt PGP encrypted message");
+					ProtoChainSend(hContact, PSS_MESSAGE, 0, (LPARAM)"Unable to decrypt PGP encrypted message");
 					HistoryLog(hContact, db_event("Error message sent", 0, 0, DBEF_SENT));
 					db_set_b(hContact, szGPGModuleName, "GPGEncryption", enc);
 					return;
 				}
-				if (result == pxNotFound) {
-					boost::filesystem::remove(path);
+				if (result == pxNotFound)
+				{
+					if(!bDebugLog)
+					{
+						boost::system::error_code e;
+						boost::filesystem::remove(path, e);
+					}
+
 					HistoryLog(hContact, db_event(msg, timestamp, 0, dbflags));
 				}
-				boost::filesystem::remove(wstring(ptszHomePath) + _T("\\tmp\\") + encfile);
+				if(!bDebugLog)
+				{
+					boost::system::error_code e;
+					boost::filesystem::remove(wstring(ptszHomePath) + L"\\tmp\\" + encfile, e);
+				}
 
-				if (!boost::filesystem::exists(wstring(ptszHomePath) + _T("\\tmp\\") + decfile)) {
+				if (!boost::filesystem::exists(wstring(ptszHomePath) + L"\\tmp\\" + decfile))
+				{
 					string str1 = msg;
 					str1.insert(0, "Received unencrypted message:\n");
 					if (bDebugLog)
@@ -232,7 +311,7 @@ void RecvMsgSvc_func(MCONTACT hContact, std::wstring str, char *msg, DWORD, DWOR
 					HistoryLog(hContact, db_event(msg, timestamp, 0, dbflags));
 					BYTE enc = db_get_b(hContact, szGPGModuleName, "GPGEncryption", 0);
 					db_set_b(hContact, szGPGModuleName, "GPGEncryption", 0);
-					CallContactService(hContact, PSS_MESSAGE, 0, (LPARAM)"Unable to decrypt PGP encrypted message");
+					ProtoChainSend(hContact, PSS_MESSAGE, 0, (LPARAM)"Unable to decrypt PGP encrypted message");
 					HistoryLog(hContact, db_event("Error message sent", 0, 0, DBEF_SENT));
 					db_set_b(hContact, szGPGModuleName, "GPGEncryption", enc);
 					return;
@@ -240,10 +319,11 @@ void RecvMsgSvc_func(MCONTACT hContact, std::wstring str, char *msg, DWORD, DWOR
 
 				str.clear();
 
-				wstring tszDecPath = wstring(ptszHomePath) + _T("\\tmp\\") + decfile;
+				wstring tszDecPath = wstring(ptszHomePath) + L"\\tmp\\" + decfile;
 				{
 					fstream f(tszDecPath.c_str(), std::ios::in | std::ios::ate | std::ios::binary);
-					if (f.is_open()) {
+					if (f.is_open())
+					{
 						size_t size = f.tellg();
 						char *tmp = new char[size + 1];
 						f.seekg(0, std::ios::beg);
@@ -253,10 +333,19 @@ void RecvMsgSvc_func(MCONTACT hContact, std::wstring str, char *msg, DWORD, DWOR
 						str.append(toUTF16(tmp));
 						delete[] tmp;
 						f.close();
-						boost::filesystem::remove(tszDecPath);
+						if(!bDebugLog)
+						{
+							boost::system::error_code ec;
+							boost::filesystem::remove(tszDecPath, ec);
+							if(ec)
+							{
+								//TODO: handle error
+							}
+						}
 					}
 				}
-				if (str.empty()) {
+				if (str.empty())
+				{
 					string szMsg = msg;
 					szMsg.insert(0, "Failed to decrypt GPG encrypted message.\nMessage body for manual decryption:\n");
 					if (bDebugLog)
@@ -265,14 +354,15 @@ void RecvMsgSvc_func(MCONTACT hContact, std::wstring str, char *msg, DWORD, DWOR
 					HistoryLog(hContact, db_event(msg, timestamp, 0, dbflags));
 					BYTE enc = db_get_b(hContact, szGPGModuleName, "GPGEncryption", 0);
 					db_set_b(hContact, szGPGModuleName, "GPGEncryption", 0);
-					CallContactService(hContact, PSS_MESSAGE, 0, (LPARAM)"Unable to decrypt PGP encrypted message");
+					ProtoChainSend(hContact, PSS_MESSAGE, 0, (LPARAM)"Unable to decrypt PGP encrypted message");
 					HistoryLog(hContact, db_event("Error message sent", 0, 0, DBEF_SENT));
 					db_set_b(hContact, szGPGModuleName, "GPGEncryption", enc);
 					return;
 				}
 
 				fix_line_term(str);
-				if (bAppendTags) {
+				if (bAppendTags)
+				{
 					str.insert(0, inopentag);
 					str.append(inclosetag);
 				}
@@ -284,7 +374,8 @@ void RecvMsgSvc_func(MCONTACT hContact, std::wstring str, char *msg, DWORD, DWOR
 			}
 		}
 	}
-	if (db_get_b(db_mc_isMeta(hContact) ? metaGetMostOnline(hContact) : hContact, szGPGModuleName, "GPGEncryption", 0)) {
+	if (db_get_b(db_mc_isMeta(hContact) ? metaGetMostOnline(hContact) : hContact, szGPGModuleName, "GPGEncryption", 0))
+	{
 		HistoryLog(hContact, db_event(msg, timestamp, 0, dbflags | DBEF_READ));
 		return;
 	}
@@ -304,10 +395,12 @@ INT_PTR RecvMsgSvc(WPARAM w, LPARAM l)
 	if (!msg)
 		return Proto_ChainRecv(w, ccs);
 	DWORD dbflags = DBEF_UTF;
-	if (db_mc_isMeta(ccs->hContact)) {
+	if (db_mc_isMeta(ccs->hContact))
+	{
 		if (!strstr(msg, "-----BEGIN PGP MESSAGE-----"))
 			return Proto_ChainRecv(w, ccs);
-		else {
+		else
+		{
 			if (bDebugLog)
 				debuglog << std::string(time_str() + ": info: blocked pgp message to metacontact:" + toUTF8(pcli->pfnGetContactDisplayName(ccs->hContact, 0)));
 			return 0;
@@ -315,37 +408,59 @@ INT_PTR RecvMsgSvc(WPARAM w, LPARAM l)
 	}
 	wstring str = toUTF16(msg);
 	size_t s1, s2;
-	if (bAutoExchange && (str.find(_T("-----PGP KEY RESPONSE-----")) != wstring::npos)) {
+	if (bAutoExchange && (str.find(L"-----PGP KEY RESPONSE-----") != wstring::npos))
+	{
 		if (bDebugLog)
 			debuglog << std::string(time_str() + ": info(autoexchange): parsing key response:" + toUTF8(pcli->pfnGetContactDisplayName(ccs->hContact, 0)));
-		s2 = str.find(_T("-----END PGP PUBLIC KEY BLOCK-----"));
-		s1 = str.find(_T("-----BEGIN PGP PUBLIC KEY BLOCK-----"));
-		if (s1 != wstring::npos && s2 != wstring::npos) {
+		s2 = str.find(L"-----END PGP PUBLIC KEY BLOCK-----");
+		s1 = str.find(L"-----BEGIN PGP PUBLIC KEY BLOCK-----");
+		if (s1 != wstring::npos && s2 != wstring::npos)
+		{
 			if (bDebugLog)
 				debuglog << std::string(time_str() + ": info(autoexchange): found pubkey block:" + toUTF8(pcli->pfnGetContactDisplayName(ccs->hContact, 0)));
-			s2 += mir_tstrlen(_T("-----END PGP PUBLIC KEY BLOCK-----"));
-			db_set_ts(ccs->hContact, szGPGModuleName, "GPGPubKey", str.substr(s1, s2 - s1).c_str());
+			s2 += mir_wstrlen(L"-----END PGP PUBLIC KEY BLOCK-----");
+			db_set_ws(ccs->hContact, szGPGModuleName, "GPGPubKey", str.substr(s1, s2 - s1).c_str());
 			{ //gpg execute block
 				std::vector<wstring> cmd;
-				TCHAR tmp2[MAX_PATH] = { 0 };
+				wchar_t tmp2[MAX_PATH] = { 0 };
 				string output;
 				DWORD exitcode;
 				{
-					ptrT ptmp(UniGetContactSettingUtf(NULL, szGPGModuleName, "szHomePath", _T("")));
-					mir_tstrcpy(tmp2, ptmp);
+					ptrW ptmp(UniGetContactSettingUtf(NULL, szGPGModuleName, "szHomePath", L""));
+					mir_wstrcpy(tmp2, ptmp);
 					mir_free(ptmp);
-					mir_tstrcat(tmp2, _T("\\"));
-					TCHAR *tmp3 = mir_a2t(get_random(5).c_str());
-					mir_tstrcat(tmp2, tmp3);
-					mir_tstrcat(tmp2, _T(".asc"));
+					mir_wstrcat(tmp2, L"\\");
+					wchar_t *tmp3 = mir_a2u(get_random(5).c_str());
+					mir_wstrcat(tmp2, tmp3);
+					mir_wstrcat(tmp2, L".asc");
 					mir_free(tmp3);
-					//mir_tstrcat(tmp2, _T("temporary_exported.asc"));
-					boost::filesystem::remove(tmp2);
+					//mir_wstrcat(tmp2, L"temporary_exported.asc");
+					if(!bDebugLog)
+					{
+						boost::system::error_code e;
+						boost::filesystem::remove(tmp2, e);
+					}
 					wfstream f(tmp2, std::ios::out);
-					while (!f.is_open())
-						f.open(tmp2, std::ios::out);
-					ptmp = UniGetContactSettingUtf(ccs->hContact, szGPGModuleName, "GPGPubKey", _T(""));
-					f << (TCHAR*)ptmp;
+					{
+						const int timeout = 5000, step = 100;
+						int count = 0;
+						while (!f.is_open())
+						{
+							boost::this_thread::sleep(boost::posix_time::milliseconds(step));
+							count += step;
+							if(count >= timeout)
+							{
+								db_set_b(ccs->hContact, szGPGModuleName, "GPGEncryption", 0);
+								setSrmmIcon(ccs->hContact);
+								setClistIcon(ccs->hContact);
+								debuglog<<std::string(time_str() + "info: failed to create temporary file for decryption, disabling gpg for contact to avoid deadlock");
+								return 1;
+							}
+							f.open(tmp2, std::ios::out);
+						}
+					}
+					ptmp = UniGetContactSettingUtf(ccs->hContact, szGPGModuleName, "GPGPubKey", L"");
+					f << (wchar_t*)ptmp;
 					f.close();
 					cmd.push_back(L"--batch");
 					cmd.push_back(L"--import");
@@ -358,13 +473,18 @@ INT_PTR RecvMsgSvc(WPARAM w, LPARAM l)
 				params.result = &result;
 				if (!gpg_launcher(params))
 					return 1;
-				boost::filesystem::remove(tmp2);
+				if(!bDebugLog)
+				{
+					boost::system::error_code e;
+					boost::filesystem::remove(tmp2, e);
+				}
 				if (result == pxNotFound)
 					return 1;
-				if (result == pxSuccessExitCodeInvalid) {
+/*				if (result == pxSuccessExitCodeInvalid) //sometime we have invalid return code after succesful decryption, this should be non-fatal at  least
+				{
 					HistoryLog(ccs->hContact, db_event(Translate("failed to decrypt message, GPG returned error, turn on debug log for more details")));
 					return 1;
-				}
+				} */
 				{
 					char *tmp = NULL;
 					s1 = output.find("gpg: key ") + mir_strlen("gpg: key ");
@@ -372,7 +492,8 @@ INT_PTR RecvMsgSvc(WPARAM w, LPARAM l)
 					db_set_s(ccs->hContact, szGPGModuleName, "KeyID", output.substr(s1, s2 - s1).c_str());
 					s2 += 2;
 					s1 = output.find("“", s2);
-					if (s1 == string::npos) {
+					if (s1 == string::npos)
+					{
 						s1 = output.find("\"", s2);
 						s1 += 1;
 					}
@@ -392,7 +513,8 @@ INT_PTR RecvMsgSvc(WPARAM w, LPARAM l)
 					else if (s1 > output.find(">", s2))
 						s1 = output.find(">", s2);
 					s2++;
-					if (output[s1] == ')') {
+					if (output[s1] == ')')
+					{
 						tmp = (char*)mir_alloc(output.substr(s2, s1 - s2).length() + 1);
 						mir_strcpy(tmp, output.substr(s2, s1 - s2).c_str());
 						mir_utf8decode(tmp, 0);
@@ -406,7 +528,8 @@ INT_PTR RecvMsgSvc(WPARAM w, LPARAM l)
 						db_set_s(ccs->hContact, szGPGModuleName, "KeyMainEmail", tmp);
 						mir_free(tmp);
 					}
-					else {
+					else
+					{
 						tmp = (char*)mir_alloc(output.substr(s2, s1 - s2).length() + 1);
 						mir_strcpy(tmp, output.substr(s2, s1 - s2).c_str());
 						mir_utf8decode(tmp, 0);
@@ -417,7 +540,8 @@ INT_PTR RecvMsgSvc(WPARAM w, LPARAM l)
 					db_set_b(ccs->hContact, szGPGModuleName, "bAlwatsTrust", 1);
 					setSrmmIcon(ccs->hContact);
 					setClistIcon(ccs->hContact);
-					if (db_mc_isSub(ccs->hContact)) {
+					if (db_mc_isSub(ccs->hContact))
+					{
 						setSrmmIcon(db_mc_getMeta(ccs->hContact));
 						setClistIcon(db_mc_getMeta(ccs->hContact));
 					}
@@ -427,23 +551,23 @@ INT_PTR RecvMsgSvc(WPARAM w, LPARAM l)
 			return 1;
 		}
 	}
-	if (((s2 = str.find(_T("-----END PGP PUBLIC KEY BLOCK-----"))) == wstring::npos) || ((s1 = str.find(_T("-----BEGIN PGP PUBLIC KEY BLOCK-----"))) == wstring::npos)) {
-		s2 = str.find(_T("-----END PGP PRIVATE KEY BLOCK-----"));
-		s1 = str.find(_T("-----BEGIN PGP PRIVATE KEY BLOCK-----"));
+	if (((s2 = str.find(L"-----END PGP PUBLIC KEY BLOCK-----")) == wstring::npos) || ((s1 = str.find(L"-----BEGIN PGP PUBLIC KEY BLOCK-----")) == wstring::npos))
+	{
+		s2 = str.find(L"-----END PGP PRIVATE KEY BLOCK-----");
+		s1 = str.find(L"-----BEGIN PGP PRIVATE KEY BLOCK-----");
 	}
-	if ((s2 != wstring::npos) && (s1 != wstring::npos)) {  //this is public key
+	if ((s2 != wstring::npos) && (s1 != wstring::npos))
+	{  //this is public key
 		if (bDebugLog)
 			debuglog << std::string(time_str() + ": info: received key from: " + toUTF8(pcli->pfnGetContactDisplayName(ccs->hContact, 0)));
 		s1 = 0;
-		while ((s1 = str.find(_T("\r"), s1)) != wstring::npos)
+		while ((s1 = str.find(L"\r", s1)) != wstring::npos)
 			str.erase(s1, 1);
 		void ShowNewKeyDialog();
-		if (((s2 = str.find(_T("-----END PGP PUBLIC KEY BLOCK-----"))) != wstring::npos) && ((s1 = str.find(_T("-----BEGIN PGP PUBLIC KEY BLOCK-----"))) != wstring::npos)) {
-			s2 += mir_tstrlen(_T("-----END PGP PUBLIC KEY BLOCK-----"));
-		}
-		else if (((s2 = str.find(_T("-----BEGIN PGP PRIVATE KEY BLOCK-----"))) != wstring::npos) && ((s1 = str.find(_T("-----END PGP PRIVATE KEY BLOCK-----"))) != wstring::npos)) {
-			s2 += mir_tstrlen(_T("-----END PGP PRIVATE KEY BLOCK-----"));
-		}
+		if (((s2 = str.find(L"-----END PGP PUBLIC KEY BLOCK-----")) != wstring::npos) && ((s1 = str.find(L"-----BEGIN PGP PUBLIC KEY BLOCK-----")) != wstring::npos))
+			s2 += mir_wstrlen(L"-----END PGP PUBLIC KEY BLOCK-----");
+		else if (((s2 = str.find(L"-----BEGIN PGP PRIVATE KEY BLOCK-----")) != wstring::npos) && ((s1 = str.find(L"-----END PGP PRIVATE KEY BLOCK-----")) != wstring::npos))
+			s2 += mir_wstrlen(L"-----END PGP PRIVATE KEY BLOCK-----");
 		new_key.append(str.substr(s1, s2 - s1));
 		//new_key_hcnt_mutex.lock();
 		new_key_hcnt = ccs->hContact;
@@ -451,7 +575,8 @@ INT_PTR RecvMsgSvc(WPARAM w, LPARAM l)
 		HistoryLog(ccs->hContact, db_event(msg, 0, 0, dbflags));
 		return 0;
 	}
-	if (bAutoExchange && strstr(msg, "-----PGP KEY REQUEST-----") && gpg_valid && gpg_keyexist) {
+	if (bAutoExchange && strstr(msg, "-----PGP KEY REQUEST-----") && gpg_valid && gpg_keyexist)
+	{
 		if (bDebugLog)
 			debuglog << std::string(time_str() + ": info(autoexchange): received key request from: " + toUTF8(pcli->pfnGetContactDisplayName(ccs->hContact, 0)));
 
@@ -463,43 +588,53 @@ INT_PTR RecvMsgSvc(WPARAM w, LPARAM l)
 
 			string str1 = "-----PGP KEY RESPONSE-----";
 			str1.append(tmp);
-			CallContactService(ccs->hContact, PSS_MESSAGE, 0, (LPARAM)str1.c_str());
+			ProtoChainSend(ccs->hContact, PSS_MESSAGE, 0, (LPARAM)str1.c_str());
 			if (enc_state)
 				db_set_b(ccs->hContact, szGPGModuleName, "GPGEncryption", 1);
 		}
 		return 0;
 	}
-	else if (!isContactHaveKey(ccs->hContact) && bAutoExchange && gpg_valid && gpg_keyexist) {
+	else if (!isContactHaveKey(ccs->hContact) && bAutoExchange && gpg_valid && gpg_keyexist)
+	{
 		char *proto = GetContactProto(ccs->hContact);
 		DWORD uin = db_get_dw(ccs->hContact, proto, "UIN", 0);
-		if (uin) {
-			if (ProtoServiceExists(proto, PS_ICQ_CHECKCAPABILITY)) {
+		if (uin)
+		{
+			if (ProtoServiceExists(proto, PS_ICQ_CHECKCAPABILITY))
+			{
 				ICQ_CUSTOMCAP cap = { 0 };
 				strncpy(cap.caps, "GPGAutoExchange", sizeof(cap.caps));
-				if (CallProtoService(proto, PS_ICQ_CHECKCAPABILITY, (WPARAM)ccs->hContact, (LPARAM)&cap)) {
-					CallContactService(ccs->hContact, PSS_MESSAGE, 0, (LPARAM)"-----PGP KEY REQUEST-----");
+				if (CallProtoService(proto, PS_ICQ_CHECKCAPABILITY, (WPARAM)ccs->hContact, (LPARAM)&cap))
+				{
+					ProtoChainSend(ccs->hContact, PSS_MESSAGE, 0, (LPARAM)"-----PGP KEY REQUEST-----");
 					return 0;
 				}
 			}
 		}
-		else {
-			TCHAR *jid = UniGetContactSettingUtf(ccs->hContact, proto, "jid", _T(""));
-			if (jid[0]) {
+		else
+		{
+			wchar_t *jid = UniGetContactSettingUtf(ccs->hContact, proto, "jid", L"");
+			if (jid[0])
+			{
 				extern list <JabberAccount*> Accounts;
 				list<JabberAccount*>::iterator end = Accounts.end();
-				for (list<JabberAccount*>::iterator p = Accounts.begin(); p != end; p++) {
-					TCHAR *caps = (*p)->getJabberInterface()->GetResourceFeatures(jid);
-					if (caps) {
+				for (list<JabberAccount*>::iterator p = Accounts.begin(); p != end; p++)
+				{
+					wchar_t *caps = (*p)->getJabberInterface()->GetResourceFeatures(jid);
+					if (caps)
+					{
 						wstring str1;
-						for (int i = 0;; i++) {
+						for (int i = 0;; i++)
+						{
 							str1.push_back(caps[i]);
 							if (caps[i] == '\0')
 								if (caps[i + 1] == '\0')
 									break;
 						}
 						mir_free(caps);
-						if (str1.find(_T("GPG_Key_Auto_Exchange:0")) != string::npos) {
-							CallContactService(ccs->hContact, PSS_MESSAGE, 0, (LPARAM)"-----PGP KEY REQUEST-----");
+						if (str1.find(L"GPG_Key_Auto_Exchange:0") != string::npos)
+						{
+							ProtoChainSend(ccs->hContact, PSS_MESSAGE, 0, (LPARAM)"-----PGP KEY REQUEST-----");
 							return 0;
 						}
 					}
@@ -523,24 +658,24 @@ void SendMsgSvc_func(MCONTACT hContact, char *msg, DWORD flags)
 			debuglog << std::string(time_str() + ": info: stripping tags in outgoing message, name: " + toUTF8(pcli->pfnGetContactDisplayName(hContact, 0)));
 		strip_tags(str);
 	}
-	/*	for(std::wstring::size_type i = str.find(_T("\r\n")); i != std::wstring::npos; i = str.find(_T("\r\n"), i+1))
-			str.replace(i, 2, _T("\n")); */
+	/*	for(std::wstring::size_type i = str.find(L"\r\n"); i != std::wstring::npos; i = str.find(L"\r\n", i+1))
+			str.replace(i, 2, L"\n"); */
 	string out;
 	DWORD code;
 	wstring file = toUTF16(get_random(10)), path;
 	std::vector<std::wstring> cmd;
-	extern bool bJabberAPI, bIsMiranda09;
+	extern bool bJabberAPI;
 	{
-		TCHAR *tmp2;
+		wchar_t *tmp2;
 		{
 			char *tmp = UniGetContactSettingUtf(hContact, szGPGModuleName, "KeyID", "");
 			if (!tmp[0]) {
 				mir_free(tmp);
 				HistoryLog(hContact, db_event("Failed to encrypt message with GPG (not found key for encryption in db)", 0, 0, DBEF_SENT));
-				CallContactService(hContact, PSS_MESSAGE, flags, (LPARAM)msg);
+				ProtoChainSend(hContact, PSS_MESSAGE, flags, (LPARAM)msg);
 				return;
 			}
-			if (!bJabberAPI || !bIsMiranda09) //force jabber to handle encrypted message by itself
+			if (!bJabberAPI) //force jabber to handle encrypted message by itself
 			{
 				cmd.push_back(L"--comment");
 				cmd.push_back(L"\"\"");
@@ -553,29 +688,43 @@ void SendMsgSvc_func(MCONTACT hContact, char *msg, DWORD flags)
 			cmd.push_back(L"--batch");
 			cmd.push_back(L"--yes");
 			cmd.push_back(L"-eatr");
-			tmp2 = mir_a2t(tmp);
+			tmp2 = mir_a2u(tmp);
 			mir_free(tmp);
 		}
 		cmd.push_back(tmp2);
 		mir_free(tmp2);
 	}
 	{
-		TCHAR *tmp2 = UniGetContactSettingUtf(NULL, szGPGModuleName, "szHomePath", _T(""));
+		wchar_t *tmp2 = UniGetContactSettingUtf(NULL, szGPGModuleName, "szHomePath", L"");
 		path = tmp2;
 		cmd.push_back(std::wstring(tmp2) + L"\\tmp\\" + file);
 		mir_free(tmp2);
 	}
 	path += L"\\tmp\\";
 	path += file;
+	const int timeout = 5000, step = 100;
+	int count = 0;
 	{
 		fstream f(path.c_str(), std::ios::out);
 		while (!f.is_open()) {
-			boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+			boost::this_thread::sleep(boost::posix_time::milliseconds(step));
+			count += step;
+			if(count >= timeout)
+			{
+				db_set_b(hContact, szGPGModuleName, "GPGEncryption", 0); //disable encryption
+				setSrmmIcon(hContact);
+				setClistIcon(hContact);
+				debuglog << std::string(time_str() + ": info: failed to create temporary file for encryption, disabling encryption to avoid deadlock");
+				break;
+			}
 			f.open(path.c_str(), std::ios::out);
 		}
-		std::string tmp = toUTF8(str);
-		f.write(tmp.c_str(), tmp.size());
-		f.close();
+		if(count < timeout)
+		{
+			std::string tmp = toUTF8(str);
+			f.write(tmp.c_str(), tmp.size());
+			f.close();
+		}
 	}
 	pxResult result;
 	{
@@ -585,12 +734,12 @@ void SendMsgSvc_func(MCONTACT hContact, char *msg, DWORD flags)
 		params.result = &result;
 		if (!gpg_launcher(params)) {
 			//mir_free(msg);
-			CallContactService(hContact, PSS_MESSAGE, flags, (LPARAM)msg);
+			ProtoChainSend(hContact, PSS_MESSAGE, flags, (LPARAM)msg);
 			return;
 		}
 		if (result == pxNotFound) {
 			//mir_free(msg);
-			CallContactService(hContact, PSS_MESSAGE, flags, (LPARAM)msg);
+			ProtoChainSend(hContact, PSS_MESSAGE, flags, (LPARAM)msg);
 			return;
 		}
 	}
@@ -608,54 +757,80 @@ void SendMsgSvc_func(MCONTACT hContact, char *msg, DWORD flags)
 			params.code = &code;
 			params.result = &result;
 			if (!gpg_launcher(params)) {
-				CallContactService(hContact, PSS_MESSAGE, flags, (LPARAM)msg);
+				ProtoChainSend(hContact, PSS_MESSAGE, flags, (LPARAM)msg);
 				return;
 			}
 			if (result == pxNotFound) {
-				CallContactService(hContact, PSS_MESSAGE, flags, (LPARAM)msg);
+				ProtoChainSend(hContact, PSS_MESSAGE, flags, (LPARAM)msg);
 				return;
 			}
 			//TODO: check gpg output for errors
 		}
 		else return;
 	}
-	if (result == pxSuccessExitCodeInvalid) {
+//	if (result == pxSuccessExitCodeInvalid) { //sometims gpg return error after succesful operation, this should be non-fatal at  least
 		//mir_free(msg);
-		HistoryLog(hContact, db_event(Translate("failed to encrypt message, GPG returned error, turn on debug log for more details"), 0, 0, DBEF_SENT));
-		boost::filesystem::remove(path);
-		return;
-	}
+//		HistoryLog(hContact, db_event(Translate("failed to encrypt message, GPG returned error, turn on debug log for more details"), 0, 0, DBEF_SENT));
+//		if(!bDebugLog)
+//		{
+//			boost::system::error_code e;
+//			boost::filesystem::remove(path, e);
+//		}
+//		return;
+//	}
 	if (out.find("usage: ") != string::npos) {
 		MessageBox(0, TranslateT("Something is wrong, GPG does not understand us, aborting encryption."), TranslateT("Warning"), MB_OK);
 		//mir_free(msg);
-		CallContactService(hContact, PSS_MESSAGE, flags, (LPARAM)msg);
-		boost::filesystem::remove(path);
+		ProtoChainSend(hContact, PSS_MESSAGE, flags, (LPARAM)msg);
+		if(!bDebugLog)
+		{
+			boost::system::error_code e;
+			boost::filesystem::remove(path, e);
+		}
 		return;
 	}
-	boost::filesystem::remove(path);
-	path.append(_T(".asc"));
+	if(!bDebugLog)
+	{
+		boost::system::error_code e;
+		boost::filesystem::remove(path, e);
+	}
+	path.append(L".asc");
 	wfstream f(path.c_str(), std::ios::in | std::ios::ate | std::ios::binary);
+	count = 0;
 	while (!f.is_open()) {
-		boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+		boost::this_thread::sleep(boost::posix_time::milliseconds(step));
 		f.open(path.c_str(), std::ios::in | std::ios::ate | std::ios::binary);
+		count += step;
+		if(count >= timeout)
+		{
+			db_set_b(hContact, szGPGModuleName, "GPGEncryption", 0); //disable encryption
+			setSrmmIcon(hContact);
+			setClistIcon(hContact);
+			debuglog << std::string(time_str() + ": info: gpg failed to encrypt message, disabling encryption to avoid deadlock");
+			break;
+		}
 	}
 	str.clear();
 	if (f.is_open()) {
 		std::wifstream::pos_type size = f.tellg();
-		TCHAR *tmp = new TCHAR[(std::ifstream::pos_type)size + (std::ifstream::pos_type)1];
+		wchar_t *tmp = new wchar_t[(std::ifstream::pos_type)size + (std::ifstream::pos_type)1];
 		f.seekg(0, std::ios::beg);
 		f.read(tmp, size);
 		tmp[size] = '\0';
 		str.append(tmp);
 		delete[] tmp;
 		f.close();
-		boost::filesystem::remove(path);
+		if(!bDebugLog)
+		{
+			boost::system::error_code e;
+			boost::filesystem::remove(path, e);
+		}
 	}
 	if (str.empty()) {
 		HistoryLog(hContact, db_event("Failed to encrypt message with GPG", 0, 0, DBEF_SENT));
 		if (bDebugLog)
 			debuglog << std::string(time_str() + ": info: Failed to encrypt message with GPG");
-		CallContactService(hContact, PSS_MESSAGE, flags, (LPARAM)msg);
+		ProtoChainSend(hContact, PSS_MESSAGE, flags, (LPARAM)msg);
 		return;
 	}
 	string str_event = msg;
@@ -668,7 +843,7 @@ void SendMsgSvc_func(MCONTACT hContact, char *msg, DWORD flags)
 		debuglog << std::string(time_str() + ": adding event to contact: " + toUTF8(pcli->pfnGetContactDisplayName(hContact, 0)) + " on send message.");
 
 	fix_line_term(str);
-	sent_msgs.push_back((HANDLE)CallContactService(hContact, PSS_MESSAGE, flags, (LPARAM)toUTF8(str).c_str()));
+	sent_msgs.push_back((HANDLE)ProtoChainSend(hContact, PSS_MESSAGE, flags, (LPARAM)toUTF8(str).c_str()));
 }
 
 INT_PTR SendMsgSvc(WPARAM w, LPARAM l)
@@ -712,7 +887,7 @@ int HookSendMsg(WPARAM w, LPARAM l)
 		return 0;
 	MCONTACT hContact = (MCONTACT)w;
 	if (dbei->flags & DBEF_SENT) {
-		if (isContactSecured(hContact) && strstr((char*)dbei->pBlob, "-----BEGIN PGP MESSAGE-----")) //our service data, can be double added by metacontacts e.t.c.
+		if (isContactSecured(hContact) && strstr((char*)dbei->pBlob, "-----BEGIN PGP MESSAGE-----")) //our service data, can be double added by metacontacts e.w.c.
 		{
 			if (bDebugLog)
 				debuglog << std::string(time_str() + ": info(send handler): block pgp message event, name: " + toUTF8(pcli->pfnGetContactDisplayName(hContact, 0)));
@@ -750,7 +925,7 @@ int HookSendMsg(WPARAM w, LPARAM l)
 					if (CallProtoService(proto2, PS_ICQ_CHECKCAPABILITY, hContact, (LPARAM)&cap)) {
 						if (bDebugLog)
 							debuglog << std::string(time_str() + ": info(autoexchange, icq): sending key requiest, name: " + toUTF8(pcli->pfnGetContactDisplayName(hContact, 0)));
-						CallContactService(hContact, PSS_MESSAGE, 0, (LPARAM)"-----PGP KEY REQUEST-----");
+						ProtoChainSend(hContact, PSS_MESSAGE, 0, (LPARAM)"-----PGP KEY REQUEST-----");
 						hcontact_data[hContact].msgs_to_send.push_back((char*)dbei->pBlob);
 						new boost::thread(boost::bind(send_encrypted_msgs_thread, (void*)hContact));
 						return 0;
@@ -758,14 +933,14 @@ int HookSendMsg(WPARAM w, LPARAM l)
 				}
 			}
 			else {
-				TCHAR *jid = UniGetContactSettingUtf(hContact, proto, "jid", _T(""));
+				wchar_t *jid = UniGetContactSettingUtf(hContact, proto, "jid", L"");
 				if (jid[0]) {
 					if (bDebugLog)
 						debuglog << std::string(time_str() + ": info(autoexchange): protocol looks like jabber, name: " + toUTF8(pcli->pfnGetContactDisplayName(hContact, 0)));
 					extern list <JabberAccount*> Accounts;
 					list<JabberAccount*>::iterator end = Accounts.end();
 					for (list<JabberAccount*>::iterator p = Accounts.begin(); p != end; p++) {
-						TCHAR *caps = (*p)->getJabberInterface()->GetResourceFeatures(jid);
+						wchar_t *caps = (*p)->getJabberInterface()->GetResourceFeatures(jid);
 						if (caps) {
 							wstring str;
 							for (int i = 0;; i++) {
@@ -775,10 +950,10 @@ int HookSendMsg(WPARAM w, LPARAM l)
 										break;
 							}
 							mir_free(caps);
-							if (str.find(_T("GPG_Key_Auto_Exchange:0")) != string::npos) {
+							if (str.find(L"GPG_Key_Auto_Exchange:0") != string::npos) {
 								if (bDebugLog)
 									debuglog << std::string(time_str() + ": info(autoexchange, jabber): autoexchange capability found, sending key request, name: " + toUTF8(pcli->pfnGetContactDisplayName(hContact, 0)));
-								CallContactService(hContact, PSS_MESSAGE, 0, (LPARAM)"-----PGP KEY REQUEST-----");
+								ProtoChainSend(hContact, PSS_MESSAGE, 0, (LPARAM)"-----PGP KEY REQUEST-----");
 								hcontact_data[hContact].msgs_to_send.push_back((char*)dbei->pBlob);
 								new boost::thread(boost::bind(send_encrypted_msgs_thread, (void*)hContact));
 								return 0;
@@ -849,24 +1024,24 @@ static INT_PTR CALLBACK DlgProcKeyPassword(HWND hwndDlg, UINT msg, WPARAM wParam
 		switch (LOWORD(wParam)) {
 		case IDOK:
 			{
-				TCHAR tmp[64];
+				wchar_t tmp[64];
 				GetDlgItemText(hwndDlg, IDC_KEY_PASSWORD, tmp, _countof(tmp));
 				if (tmp[0]) {
-					extern TCHAR *password;
+					extern wchar_t *password;
 					if (IsDlgButtonChecked(hwndDlg, IDC_SAVE_PASSWORD)) {
 						inkeyid = UniGetContactSettingUtf(new_key_hcnt, szGPGModuleName, "InKeyID", "");
 						if (inkeyid && inkeyid[0] && BST_UNCHECKED == IsDlgButtonChecked(hwndDlg, IDC_DEFAULT_PASSWORD)) {
 							string dbsetting = "szKey_";
 							dbsetting += inkeyid;
 							dbsetting += "_Password";
-							db_set_ts(NULL, szGPGModuleName, dbsetting.c_str(), tmp);
+							db_set_ws(NULL, szGPGModuleName, dbsetting.c_str(), tmp);
 						}
-						else db_set_ts(NULL, szGPGModuleName, "szKeyPassword", tmp);
+						else db_set_ws(NULL, szGPGModuleName, "szKeyPassword", tmp);
 					}
 					if (password)
 						mir_free(password);
-					password = (TCHAR*)mir_alloc(sizeof(TCHAR)*(mir_tstrlen(tmp) + 1));
-					mir_tstrcpy(password, tmp);
+					password = (wchar_t*)mir_alloc(sizeof(wchar_t)*(mir_wstrlen(tmp) + 1));
+					mir_wstrcpy(password, tmp);
 				}
 				mir_free(inkeyid);
 				DestroyWindow(hwndDlg);

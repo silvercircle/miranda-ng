@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: MRA.dll
 ;  Plugin: MRA protocol
-;  Version: 2.1.0.10
+;  Version: 2.1.1.1
 ;  Authors: Rozhuk Ivan
 ;============================================================
 [E-mail:]
@@ -137,8 +137,10 @@
 Водолей
 [Pisces]
 Риби
-[CHAT plugin is required for conferences. Install it before chatting]
-За конферентни разговори е необходима приставката CHAT. Инсталирайте я преди да чатите.
+[Owners]
+Собственици
+[Visitors]
+Посетители
 [Request authorization]
 Молба за упълномощаване
 [Grant authorization]

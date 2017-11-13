@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
-// Copyright (с) 2012-15 Miranda NG project,
+// Copyright (с) 2012-17 Miranda NG project,
 // Copyright (c) 2000-09 Miranda ICQ/IM project,
 // all portions of this codebase are copyrighted to the people
 // listed in contributors.txt.
@@ -28,37 +28,19 @@
 
 #include "stdafx.h"
 
-#include <string>
-
-typedef std::basic_string<TCHAR> tstring;
-
 #define MWF_LOG_BBCODE 1
 #define MWF_LOG_TEXTFORMAT 0x2000000
 #define MSGDLGFONTCOUNT 22
 
-static TRTFColorTable _rtf_ctable[] =
-{
-	{ _T("red"), RGB(255, 0, 0), ID_FONT_RED },
-	{ _T("blue"), RGB(0, 0, 255), ID_FONT_BLUE },
-	{ _T("green"), RGB(0, 255, 0), ID_FONT_GREEN },
-	{ _T("magenta"), RGB(255, 0, 255), ID_FONT_MAGENTA },
-	{ _T("yellow"), RGB(255, 255, 0), ID_FONT_YELLOW },
-	{ _T("cyan"), RGB(0, 255, 255), ID_FONT_CYAN },
-	{ _T("black"), 0, ID_FONT_BLACK },
-	{ _T("white"), RGB(255, 255, 255), ID_FONT_WHITE },
-	{ _T(""), 0, 0 }
-};
-
-int				Utils::rtf_ctable_size = 0;
-TRTFColorTable* Utils::rtf_ctable = 0;
+OBJLIST<TRTFColorTable> Utils::rtf_clrs(10);
 
 MWindowList CWarning::hWindowList = 0;
 
-static TCHAR *w_bbcodes_begin[] = { _T("[b]"), _T("[i]"), _T("[u]"), _T("[s]"), _T("[color=") };
-static TCHAR *w_bbcodes_end[] = { _T("[/b]"), _T("[/i]"), _T("[/u]"), _T("[/s]"), _T("[/color]") };
+static wchar_t *w_bbcodes_begin[] = { L"[b]", L"[i]", L"[u]", L"[s]", L"[color=" };
+static wchar_t *w_bbcodes_end[] = { L"[/b]", L"[/i]", L"[/u]", L"[/s]", L"[/color]" };
 
-static TCHAR *formatting_strings_begin[] = { _T("b1 "), _T("i1 "), _T("u1 "), _T("s1 "), _T("c1 ") };
-static TCHAR *formatting_strings_end[] = { _T("b0 "), _T("i0 "), _T("u0 "), _T("s0 "), _T("c0 ") };
+static wchar_t *formatting_strings_begin[] = { L"b1 ", L"i1 ", L"u1 ", L"s1 ", L"c1 " };
+static wchar_t *formatting_strings_end[] = { L"b0 ", L"i0 ", L"u0 ", L"s0 ", L"c0 " };
 
 #define NR_CODES 5
 
@@ -67,72 +49,70 @@ static TCHAR *formatting_strings_end[] = { _T("b0 "), _T("i0 "), _T("u0 "), _
 // flags: loword = words only for simple  * /_ formatting
 //        hiword = bbcode support (strip bbcodes if 0)
 
-const TCHAR* Utils::FormatRaw(TWindowData *dat, const TCHAR *msg, int flags, BOOL isSent)
+void CTabBaseDlg::FormatRaw(CMStringW &msg, int flags, bool isSent)
 {
-	bool 	clr_was_added = false, was_added;
-	static tstring message(msg);
-	size_t beginmark = 0, endmark = 0, tempmark = 0, index;
+	bool clr_was_added = false, was_added;
+	int beginmark = 0, endmark = 0, tempmark = 0, index;
 	int i, endindex;
-	TCHAR endmarker;
-	DWORD	dwFlags = dat->dwFlags;
-	message.assign(msg);
+	wchar_t endmarker;
 
-	if (dwFlags & MWF_LOG_BBCODE) {
+	if (m_dwFlags & MWF_LOG_BBCODE) {
 		beginmark = 0;
 		while (true) {
-			for (i = 0; i < NR_CODES; i++) {
-				if ((tempmark = message.find(w_bbcodes_begin[i], 0)) != message.npos)
+			for (i = 0; i < NR_CODES; i++)
+				if ((tempmark = msg.Find(w_bbcodes_begin[i], 0)) != -1)
 					break;
-			}
+
 			if (i >= NR_CODES)
 				break;
 
 			beginmark = tempmark;
 			endindex = i;
-			endmark = message.find(w_bbcodes_end[i], beginmark);
-			if (endindex == 4) {                                 // color
-				size_t closing = message.find_first_of(_T("]"), beginmark);
+			endmark = msg.Find(w_bbcodes_end[i], beginmark);
+			if (endindex == 4) { // color
+				int closing = msg.Find(L"]", beginmark);
 				was_added = false;
 
-				if (closing == message.npos) {                      // must be an invalid [color=] tag w/o closing bracket
-					message[beginmark] = ' ';
+				if (closing == -1) {                      // must be an invalid [color=] tag w/o closing bracket
+					msg.SetAt(beginmark, ' ');
 					continue;
 				}
 
-				tstring colorname = message.substr(beginmark + 7, 8);
+				CMStringW colorname = msg.Mid(beginmark + 7, 8);
 search_again:
 				bool clr_found = false;
-				for (int ii = 0; ii < rtf_ctable_size; ii++) {
-					if (!_tcsnicmp((TCHAR*)colorname.c_str(), rtf_ctable[ii].szName, mir_tstrlen(rtf_ctable[ii].szName))) {
-						closing = beginmark + 7 + mir_tstrlen(rtf_ctable[ii].szName);
-						if (endmark != message.npos) {
-							message.erase(endmark, 4);
-							message.replace(endmark, 4, _T("c0 "));
+				for (int ii = 0; ii < Utils::rtf_clrs.getCount(); ii++) {
+					auto &rtfc = Utils::rtf_clrs[ii];
+					if (!wcsnicmp(colorname, rtfc.szName, mir_wstrlen(rtfc.szName))) {
+						closing = beginmark + 7 + (int)mir_wstrlen(rtfc.szName);
+						if (endmark != -1) {
+							msg.Delete(endmark, 8);
+							msg.Insert(endmark, L"c0 ");
 						}
-						message.erase(beginmark, (closing - beginmark));
+						msg.Delete(beginmark, (closing - beginmark));
 
-						TCHAR szTemp[5];
-						message.insert(beginmark, _T("cxxx "));
-						mir_sntprintf(szTemp, _T("%02d"), MSGDLGFONTCOUNT + 13 + ii);
-						message[beginmark + 3] = szTemp[0];
-						message[beginmark + 4] = szTemp[1];
+						wchar_t szTemp[5];
+						msg.Insert(beginmark, L"cxxx ");
+						mir_snwprintf(szTemp, L"%02d", MSGDLGFONTCOUNT + 13 + ii);
+						msg.SetAt(beginmark + 3, szTemp[0]);
+						msg.SetAt(beginmark + 4, szTemp[1]);
 						clr_found = true;
 						if (was_added) {
-							TCHAR wszTemp[100];
-							mir_sntprintf(wszTemp, _T("##col##%06u:%04u"), endmark - closing, ii);
+							wchar_t wszTemp[100];
+							mir_snwprintf(wszTemp, L"##col##%06u:%04u", endmark - closing, ii);
 							wszTemp[99] = 0;
-							message.insert(beginmark, wszTemp);
+							msg.Insert(beginmark, wszTemp);
 						}
 						break;
 					}
 				}
 				if (!clr_found) {
-					size_t c_closing = colorname.find_first_of(_T("]"), 0);
-					if (c_closing == colorname.npos)
-						c_closing = colorname.length();
-					const TCHAR *wszColname = colorname.c_str();
-					if (endmark != message.npos && c_closing > 2 && c_closing <= 6 && iswalnum(colorname[0]) && iswalnum(colorname[c_closing - 1])) {
-						RTF_ColorAdd(wszColname, c_closing);
+					int c_closing = colorname.Find(L"]");
+					if (c_closing == -1)
+						c_closing = colorname.GetLength();
+					const wchar_t *wszColname = colorname.c_str();
+					if (endmark != -1 && c_closing > 2 && c_closing <= 6 && iswalnum(colorname[0]) && iswalnum(colorname[c_closing - 1])) {
+						Utils::RTF_ColorAdd(wszColname, c_closing);
 						if (!was_added) {
 							clr_was_added = was_added = true;
 							goto search_again;
@@ -141,112 +121,109 @@ search_again:
 					}
 					else {
 invalid_code:
-						if (endmark != message.npos)
-							message.erase(endmark, 8);
-						if (closing != message.npos && closing < (size_t)endmark)
-							message.erase(beginmark, (closing - beginmark) + 1);
+						if (endmark != -1)
+							msg.Delete(endmark, 8);
+						if (closing != -1 && closing < (size_t)endmark)
+							msg.Delete(beginmark, (closing - beginmark) + 1);
 						else
-							message[beginmark] = ' ';
+							msg.SetAt(beginmark, ' ');
 					}
 				}
 				continue;
 			}
-			if (endmark != message.npos)
-				message.replace(endmark, 4, formatting_strings_end[i]);
-			message.insert(beginmark, _T(" "));
-			message.replace(beginmark, 4, formatting_strings_begin[i]);
+			
+			if (endmark != -1) {
+				msg.Delete(endmark, 4);
+				msg.Insert(endmark, formatting_strings_end[i]);
+			}
+			msg.Delete(beginmark, 3);
+			msg.Insert(beginmark, L" ");
+			msg.Insert(beginmark, formatting_strings_begin[i]);
 		}
 	}
 
-	if (!(dwFlags & MWF_LOG_TEXTFORMAT) || message.find(_T("://")) != message.npos) {
-		dat->clr_added = clr_was_added ? TRUE : FALSE;
-		return(message.c_str());
-	}
+	if ((m_dwFlags & MWF_LOG_TEXTFORMAT) && msg.Find(L"://") == -1) {
+		while ((beginmark = msg.Find(L"*/_", beginmark)) != -1) {
+			endmarker = msg[beginmark];
+			if (LOWORD(flags)) {
+				if (beginmark > 0 && !iswspace(msg[beginmark - 1]) && !iswpunct(msg[beginmark - 1])) {
+					beginmark++;
+					continue;
+				}
 
-	while ((beginmark = message.find_first_of(_T("*/_"), beginmark)) != message.npos) {
-		endmarker = message[beginmark];
-		if (LOWORD(flags)) {
-			if (beginmark > 0 && !_istspace(message[beginmark - 1]) && !_istpunct(message[beginmark - 1])) {
+				// search a corresponding endmarker which fulfills the criteria
+				INT_PTR mark = beginmark + 1;
+				while ((endmark = msg.Find(endmarker, mark)) != -1) {
+					if (iswpunct(msg[endmark + 1]) || iswspace(msg[endmark + 1]) || msg[endmark + 1] == 0 || wcschr(L"*/_", msg[endmark + 1]) != nullptr)
+						goto ok;
+					mark = endmark + 1;
+				}
+				break;
+			}
+			else {
+				if ((endmark = msg.Find(endmarker, beginmark + 1)) == -1)
+					break;
+			}
+ok:
+			if ((endmark - beginmark) < 2) {
 				beginmark++;
 				continue;
 			}
-
-			// search a corresponding endmarker which fulfills the criteria
-			INT_PTR mark = beginmark + 1;
-			while ((endmark = message.find(endmarker, mark)) != message.npos) {
-				if (_istpunct(message[endmark + 1]) || _istspace(message[endmark + 1]) || message[endmark + 1] == 0 || _tcschr(_T("*/_"), message[endmark + 1]) != NULL)
-					goto ok;
-				mark = endmark + 1;
-			}
-			break;
-		}
-		else {
-			if ((endmark = message.find(endmarker, beginmark + 1)) == message.npos)
-				break;
-		}
-ok:
-		if ((endmark - beginmark) < 2) {
-			beginmark++;
-			continue;
-		}
-		index = 0;
-		switch (endmarker) {
-		case '*':
 			index = 0;
-			break;
-		case '/':
-			index = 1;
-			break;
-		case '_':
-			index = 2;
-			break;
-		}
-
-		// check if the code enclosed by simple formatting tags is a valid smiley code and skip formatting if
-		// it really is one.
-		if (PluginConfig.g_SmileyAddAvail && (endmark > (beginmark + 1))) {
-			tstring smcode;
-			smcode.assign(message, beginmark, (endmark - beginmark) + 1);
-
-			SMADD_BATCHPARSE2 smbp = { 0 };
-			smbp.cbSize = sizeof(smbp);
-			smbp.Protocolname = dat->cache->getActiveProto();
-			smbp.flag = SAFL_TCHAR | SAFL_PATH | (isSent ? SAFL_OUTGOING : 0);
-			smbp.str = (TCHAR*)smcode.c_str();
-			smbp.hContact = dat->hContact;
-			SMADD_BATCHPARSERES *smbpr = (SMADD_BATCHPARSERES *)CallService(MS_SMILEYADD_BATCHPARSE, 0, (LPARAM)&smbp);
-			if (smbpr) {
-				CallService(MS_SMILEYADD_BATCHFREE, 0, (LPARAM)smbpr);
-				beginmark = endmark + 1;
-				continue;
+			switch (endmarker) {
+			case '*':
+				index = 0;
+				break;
+			case '/':
+				index = 1;
+				break;
+			case '_':
+				index = 2;
+				break;
 			}
+
+			// check if the code enclosed by simple formatting tags is a valid smiley code and skip formatting if
+			// it really is one.
+			if (PluginConfig.g_SmileyAddAvail && (endmark > (beginmark + 1))) {
+				CMStringW smcode = msg.Mid(beginmark, (endmark - beginmark) + 1);
+
+				SMADD_BATCHPARSE2 smbp = { 0 };
+				smbp.cbSize = sizeof(smbp);
+				smbp.Protocolname = m_cache->getActiveProto();
+				smbp.flag = SAFL_TCHAR | SAFL_PATH | (isSent ? SAFL_OUTGOING : 0);
+				smbp.str = (wchar_t*)smcode.c_str();
+				smbp.hContact = m_hContact;
+				SMADD_BATCHPARSERES *smbpr = (SMADD_BATCHPARSERES *)CallService(MS_SMILEYADD_BATCHPARSE, 0, (LPARAM)&smbp);
+				if (smbpr) {
+					CallService(MS_SMILEYADD_BATCHFREE, 0, (LPARAM)smbpr);
+					beginmark = endmark + 1;
+					continue;
+				}
+			}
+			msg.Delete(endmark, 1);
+			msg.Insert(endmark, formatting_strings_end[index]);
+			msg.Delete(beginmark, 1);
+			msg.Insert(beginmark, formatting_strings_begin[index]);
 		}
-		message.insert(endmark, _T("%%%"));
-		message.replace(endmark, 4, formatting_strings_end[index]);
-		message.insert(beginmark, _T("%%%"));
-		message.replace(beginmark, 4, formatting_strings_begin[index]);
 	}
-	dat->clr_added = clr_was_added ? TRUE : FALSE;
-	return(message.c_str());
+	
+	m_bClrAdded = clr_was_added;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // format the title bar string for IM chat sessions using placeholders.
 // the caller must mir_free() the returned string
 
-static TCHAR* Trunc500(TCHAR *str)
+static wchar_t* Trunc500(wchar_t *str)
 {
-	if (mir_tstrlen(str) > 500)
+	if (mir_wstrlen(str) > 500)
 		str[500] = 0;
 	return str;
 }
 
-bool Utils::FormatTitleBar(const TWindowData *dat, const TCHAR *szFormat, CMString &dest)
+bool CTabBaseDlg::FormatTitleBar(const wchar_t *szFormat, CMStringW &dest)
 {
-	if (dat == 0)
-		return false;
-
-	for (const TCHAR *src = szFormat; *src; src++) {
+	for (const wchar_t *src = szFormat; *src; src++) {
 		if (*src != '%') {
 			dest.AppendChar(*src);
 			continue;
@@ -254,29 +231,29 @@ bool Utils::FormatTitleBar(const TWindowData *dat, const TCHAR *szFormat, CMStri
 
 		switch (*++src) {
 		case 'n':
-			dest.Append(dat->cache->getNick());
+			dest.Append(m_cache->getNick());
 			break;
 
 		case 'p':
 		case 'a':
-			dest.Append(dat->cache->getRealAccount());
+			dest.Append(m_cache->getRealAccount());
 			break;
 
 		case 's':
-			dest.Append(dat->szStatus);
+			dest.Append(m_wszStatus);
 			break;
 
 		case 'u':
-			dest.Append(dat->cache->getUIN());
+			dest.Append(m_cache->getUIN());
 			break;
 
 		case 'c':
-			dest.Append(!mir_tstrcmp(dat->pContainer->szName, _T("default")) ? TranslateT("Default container") : dat->pContainer->szName);
+			dest.Append(!mir_wstrcmp(m_pContainer->m_wszName, L"default") ? TranslateT("Default container") : m_pContainer->m_wszName);
 			break;
 
 		case 'o':
 			{
-				const char *szProto = dat->cache->getActiveProto();
+				const char *szProto = m_cache->getActiveProto();
 				if (szProto)
 					dest.Append(_A2T(szProto));
 			}
@@ -284,22 +261,22 @@ bool Utils::FormatTitleBar(const TWindowData *dat, const TCHAR *szFormat, CMStri
 
 		case 'x':
 			{
-				BYTE xStatus = dat->cache->getXStatusId();
-				if (dat->wStatus != ID_STATUS_OFFLINE && xStatus > 0 && xStatus <= 31) {
-					ptrT szXStatus(db_get_tsa(dat->hContact, dat->szProto, "XStatusName"));
-					dest.Append((szXStatus != NULL) ? Trunc500(szXStatus) : xStatusDescr[xStatus - 1]);
+				BYTE xStatus = m_cache->getXStatusId();
+				if (m_wStatus != ID_STATUS_OFFLINE && xStatus > 0 && xStatus <= 31) {
+					ptrW szXStatus(db_get_wsa(m_hContact, m_szProto, "XStatusName"));
+					dest.Append((szXStatus != nullptr) ? Trunc500(szXStatus) : xStatusDescr[xStatus - 1]);
 				}
 			}
 			break;
 
 		case 'm':
 			{
-				BYTE xStatus = dat->cache->getXStatusId();
-				if (dat->wStatus != ID_STATUS_OFFLINE && xStatus > 0 && xStatus <= 31) {
-					ptrT szXStatus(db_get_tsa(dat->hContact, dat->szProto, "XStatusName"));
-					dest.Append((szXStatus != NULL) ? Trunc500(szXStatus) : xStatusDescr[xStatus - 1]);
+				BYTE xStatus = m_cache->getXStatusId();
+				if (m_wStatus != ID_STATUS_OFFLINE && xStatus > 0 && xStatus <= 31) {
+					ptrW szXStatus(db_get_wsa(m_hContact, m_szProto, "XStatusName"));
+					dest.Append((szXStatus != nullptr) ? Trunc500(szXStatus) : xStatusDescr[xStatus - 1]);
 				}
-				else dest.Append(dat->szStatus && dat->szStatus[0] ? dat->szStatus : _T("(undef)"));
+				else dest.Append(m_wszStatus[0] ? m_wszStatus : L"(undef)");
 			}
 			break;
 
@@ -307,7 +284,7 @@ bool Utils::FormatTitleBar(const TWindowData *dat, const TCHAR *szFormat, CMStri
 		case 't':
 		case 'T':
 			{
-				ptrT tszStatus(dat->cache->getNormalizedStatusMsg(dat->cache->getStatusMsg(), true));
+				ptrW tszStatus(m_cache->getNormalizedStatusMsg(m_cache->getStatusMsg(), true));
 				if (tszStatus)
 					dest.Append(tszStatus);
 				else if (*src == 't')
@@ -317,8 +294,8 @@ bool Utils::FormatTitleBar(const TWindowData *dat, const TCHAR *szFormat, CMStri
 
 		case 'g':
 			{
-				ptrT tszGroup(db_get_tsa(dat->hContact, "CList", "Group"));
-				if (tszGroup != NULL)
+				ptrW tszGroup(db_get_wsa(m_hContact, "CList", "Group"));
+				if (tszGroup != nullptr)
 					dest.Append(tszGroup);
 			}
 			break;
@@ -335,9 +312,9 @@ bool Utils::FormatTitleBar(const TWindowData *dat, const TCHAR *szFormat, CMStri
 
 char* Utils::FilterEventMarkers(char *szText)
 {
-	for (char *p = strstr(szText, "~-+"); p != NULL; p = strstr(p, "~-+")) {
+	for (char *p = strstr(szText, "~-+"); p != nullptr; p = strstr(p, "~-+")) {
 		char *pEnd = strstr(p + 3, "+-~");
-		if (pEnd == NULL)
+		if (pEnd == nullptr)
 			break;
 
 		strdel(p, (pEnd - p) + 3);
@@ -346,11 +323,11 @@ char* Utils::FilterEventMarkers(char *szText)
 	return szText;
 }
 
-WCHAR* Utils::FilterEventMarkers(WCHAR *wszText)
+wchar_t* Utils::FilterEventMarkers(wchar_t *wszText)
 {
-	for (WCHAR *p = wcsstr(wszText, L"~-+"); p != NULL; p = wcsstr(p, L"~-+")) {
-		WCHAR *pEnd = wcsstr(p + 3, L"+-~");
-		if (pEnd == NULL)
+	for (wchar_t *p = wcsstr(wszText, L"~-+"); p != nullptr; p = wcsstr(p, L"~-+")) {
+		wchar_t *pEnd = wcsstr(p + 3, L"+-~");
+		if (pEnd == nullptr)
 			break;
 
 		strdelw(p, (pEnd - p) + 3);
@@ -361,11 +338,11 @@ WCHAR* Utils::FilterEventMarkers(WCHAR *wszText)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-void Utils::DoubleAmpersands(TCHAR *pszText, size_t len)
+void Utils::DoubleAmpersands(wchar_t *pszText, size_t len)
 {
-	CMString text(pszText);
-	text.Replace(_T("&"), _T("&&"));
-	mir_tstrncpy(pszText, text.c_str(), len);
+	CMStringW text(pszText);
+	text.Replace(L"&", L"&&");
+	mir_wstrncpy(pszText, text.c_str(), len);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -373,16 +350,16 @@ void Utils::DoubleAmpersands(TCHAR *pszText, size_t len)
 //
 // @param szText	source text
 // @param iMaxLen	max length of the preview
-// @return TCHAR*   result (caller must mir_free() it)
+// @return wchar_t*   result (caller must mir_free() it)
 
-TCHAR* Utils::GetPreviewWithEllipsis(TCHAR *szText, size_t iMaxLen)
+wchar_t* Utils::GetPreviewWithEllipsis(wchar_t *szText, size_t iMaxLen)
 {
 	size_t uRequired;
-	TCHAR *p = 0, cSaved;
+	wchar_t *p = 0, cSaved;
 	bool	 fEllipsis = false;
 
-	if (mir_tstrlen(szText) <= iMaxLen) {
-		uRequired = mir_tstrlen(szText) + 4;
+	if (mir_wstrlen(szText) <= iMaxLen) {
+		uRequired = mir_wstrlen(szText) + 4;
 		cSaved = 0;
 	}
 	else {
@@ -398,8 +375,8 @@ TCHAR* Utils::GetPreviewWithEllipsis(TCHAR *szText, size_t iMaxLen)
 		*p = 0;
 		uRequired = (p - szText) + 6;
 	}
-	TCHAR *szResult = reinterpret_cast<TCHAR *>(mir_alloc((uRequired + 1) * sizeof(TCHAR)));
-	mir_sntprintf(szResult, (uRequired + 1), fEllipsis ? _T("%s...") : _T("%s"), szText);
+	wchar_t *szResult = reinterpret_cast<wchar_t *>(mir_alloc((uRequired + 1) * sizeof(wchar_t)));
+	mir_snwprintf(szResult, (uRequired + 1), fEllipsis ? L"%s..." : L"%s", szText);
 
 	if (p)
 		*p = cSaved;
@@ -411,14 +388,14 @@ TCHAR* Utils::GetPreviewWithEllipsis(TCHAR *szText, size_t iMaxLen)
 // returns != 0 when one of the installed keyboard layouts belongs to an rtl language
 // used to find out whether we need to configure the message input box for bidirectional mode
 
-int Utils::FindRTLLocale(TWindowData *dat)
+int CTabBaseDlg::FindRTLLocale()
 {
 	HKL layouts[20];
 	int i, result = 0;
 	LCID lcid;
 	WORD wCtype2[5];
 
-	if (dat->iHaveRTLLang == 0) {
+	if (m_iHaveRTLLang == 0) {
 		memset(layouts, 0, sizeof(layouts));
 		GetKeyboardLayoutList(20, layouts);
 		for (i = 0; i < 20 && layouts[i]; i++) {
@@ -427,9 +404,9 @@ int Utils::FindRTLLocale(TWindowData *dat)
 			if (wCtype2[0] == C2_RIGHTTOLEFT || wCtype2[1] == C2_RIGHTTOLEFT || wCtype2[2] == C2_RIGHTTOLEFT)
 				result = 1;
 		}
-		dat->iHaveRTLLang = (result ? 1 : -1);
+		m_iHaveRTLLang = (result ? 1 : -1);
 	}
-	else result = dat->iHaveRTLLang == 1 ? 1 : 0;
+	else result = m_iHaveRTLLang == 1 ? 1 : 0;
 
 	return result;
 }
@@ -437,31 +414,40 @@ int Utils::FindRTLLocale(TWindowData *dat)
 /////////////////////////////////////////////////////////////////////////////////////////
 // init default color table. the table may grow when using custom colors via bbcodes
 
+static TRTFColorTable _rtf_ctable[] =
+{
+	{ L"red", RGB(255, 0, 0), ID_FONT_RED },
+	{ L"blue", RGB(0, 0, 255), ID_FONT_BLUE },
+	{ L"green", RGB(0, 255, 0), ID_FONT_GREEN },
+	{ L"magenta", RGB(255, 0, 255), ID_FONT_MAGENTA },
+	{ L"yellow", RGB(255, 255, 0), ID_FONT_YELLOW },
+	{ L"cyan", RGB(0, 255, 255), ID_FONT_CYAN },
+	{ L"black", 0, ID_FONT_BLACK },
+	{ L"white", RGB(255, 255, 255), ID_FONT_WHITE }
+};
+
 void Utils::RTF_CTableInit()
 {
-	int iSize = sizeof(TRTFColorTable) * RTF_CTABLE_DEFSIZE;
-
-	rtf_ctable = (TRTFColorTable *)mir_alloc(iSize);
-	memset(rtf_ctable, 0, iSize);
-	memcpy(rtf_ctable, _rtf_ctable, iSize);
-	rtf_ctable_size = RTF_CTABLE_DEFSIZE;
+	for (int i = 0; i < _countof(_rtf_ctable); i++)
+		rtf_clrs.insert(new TRTFColorTable(_rtf_ctable[i]));
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // add a color to the global rtf color table
 
-void Utils::RTF_ColorAdd(const TCHAR *tszColname, size_t length)
+void Utils::RTF_ColorAdd(const wchar_t *tszColname, size_t length)
 {
-	TCHAR *stopped;
+	TRTFColorTable *p = new TRTFColorTable;
 
-	rtf_ctable_size++;
-	rtf_ctable = (TRTFColorTable *)mir_realloc(rtf_ctable, sizeof(TRTFColorTable) * rtf_ctable_size);
-	COLORREF clr = _tcstol(tszColname, &stopped, 16);
-	mir_sntprintf(rtf_ctable[rtf_ctable_size - 1].szName, length + 1, _T("%06x"), clr);
-	rtf_ctable[rtf_ctable_size - 1].menuid = 0;
+	wchar_t *stopped;
+	COLORREF clr = wcstol(tszColname, &stopped, 16);
+	mir_snwprintf(p->szName, length + 1, L"%06x", clr);
+	p->menuid = 0;
 
-	clr = _tcstol(tszColname, &stopped, 16);
-	rtf_ctable[rtf_ctable_size - 1].clr = (RGB(GetBValue(clr), GetGValue(clr), GetRValue(clr)));
+	clr = wcstol(tszColname, &stopped, 16);
+	p->clr = (RGB(GetBValue(clr), GetGValue(clr), GetRValue(clr)));
+
+	rtf_clrs.insert(p);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -494,31 +480,83 @@ LRESULT CALLBACK Utils::PopupDlgProcError(HWND hWnd, UINT message, WPARAM wParam
 // @param cs		TContainerSettings* target structure
 // @return			0 on success, 1 failure (blob does not exist OR is not a valid private setting structure
 
+struct TOldContainerSettings
+{
+	BOOL    fPrivate;
+	DWORD   dwFlags;
+	DWORD   dwFlagsEx;
+	DWORD   dwTransparency;
+	DWORD   panelheight;
+	int     iSplitterY;
+	wchar_t szTitleFormat[32];
+	WORD    avatarMode;
+	WORD    ownAvatarMode;
+	WORD    autoCloseSeconds;
+	BYTE    reserved[10];
+};
+
 int Utils::ReadContainerSettingsFromDB(const MCONTACT hContact, TContainerSettings *cs, const char *szKey)
 {
-	memcpy(cs, &PluginConfig.globalContainerSettings, sizeof(TContainerSettings));
-
-	DBVARIANT dbv = { 0 };
-	if (0 == db_get(hContact, SRMSGMOD_T, szKey ? szKey : CNT_KEYNAME, &dbv)) {
-		if (dbv.type == DBVT_BLOB && dbv.cpbVal > 0 && dbv.cpbVal <= sizeof(TContainerSettings)) {
-			::memcpy((void*)cs, (void*)dbv.pbVal, dbv.cpbVal);
-			::db_free(&dbv);
-			if (hContact == 0 && szKey == 0)
-				cs->fPrivate = false;
-			return 0;
+	CMStringA szSetting(szKey ? szKey : CNT_KEYNAME);
+	int iSplitterX = db_get_dw(0, SRMSGMOD_T, szSetting + "_SplitterX", -1);
+	if (iSplitterX == -1) { // nothing? try the old format
+		DBVARIANT dbv = { 0 };
+		if (0 == db_get(hContact, SRMSGMOD_T, szSetting + "_Blob", &dbv)) {
+			TOldContainerSettings oldBin = {};
+			if (dbv.type == DBVT_BLOB && dbv.cpbVal > 0 && dbv.cpbVal <= sizeof(oldBin)) {
+				::memcpy(&oldBin, (void*)dbv.pbVal, dbv.cpbVal);
+				cs->dwFlags = oldBin.dwFlags;
+				cs->dwFlagsEx = oldBin.dwFlagsEx;
+				cs->dwTransparency = oldBin.dwTransparency;
+				cs->panelheight = oldBin.panelheight;
+				if (szKey == nullptr)
+					cs->iSplitterX = db_get_dw(0, CHAT_MODULE, "SplitterX", 150);
+				cs->iSplitterY = oldBin.iSplitterY;
+				cs->iSplitterX = 35;
+				wcsncpy_s(cs->szTitleFormat, oldBin.szTitleFormat, _TRUNCATE);
+				cs->avatarMode = oldBin.avatarMode;
+				cs->ownAvatarMode = oldBin.ownAvatarMode;
+				cs->autoCloseSeconds = oldBin.autoCloseSeconds;
+				cs->fPrivate = oldBin.fPrivate != 0;
+				WriteContainerSettingsToDB(hContact, cs, szKey);
+				db_unset(hContact, SRMSGMOD_T, szSetting);
+				::db_free(&dbv);
+				return 0;
+			}
 		}
 		cs->fPrivate = false;
 		db_free(&dbv);
 		return 1;
 	}
 
-	cs->fPrivate = false;
-	return 1;
+	cs->dwFlags = db_get_dw(hContact, SRMSGMOD_T, szSetting + "_Flags", 0);
+	cs->dwFlagsEx = db_get_dw(hContact, SRMSGMOD_T, szSetting + "_FlagsEx", 0);
+	cs->dwTransparency = db_get_dw(hContact, SRMSGMOD_T, szSetting + "_Transparency", 0);
+	cs->panelheight = db_get_dw(hContact, SRMSGMOD_T, szSetting + "_PanelY", 0);
+	cs->iSplitterX = iSplitterX;
+	cs->iSplitterY = db_get_dw(hContact, SRMSGMOD_T, szSetting + "_SplitterY", 0);
+	cs->avatarMode = db_get_w(hContact, SRMSGMOD_T, szSetting + "_AvatarMode", 0);
+	cs->ownAvatarMode = db_get_w(hContact, SRMSGMOD_T, szSetting + "_OwnAvatarMode", 0);
+	cs->autoCloseSeconds = db_get_w(hContact, SRMSGMOD_T, szSetting + "_AutoCloseSecs", 0);
+	cs->fPrivate = db_get_b(hContact, SRMSGMOD_T, szSetting + "_Private", 0) != 0;
+	db_get_wstatic(hContact, SRMSGMOD_T, szSetting + "_Format", cs->szTitleFormat, _countof(cs->szTitleFormat));
+	return 0;
 }
 
 int Utils::WriteContainerSettingsToDB(const MCONTACT hContact, TContainerSettings *cs, const char *szKey)
 {
-	::db_set_blob(hContact, SRMSGMOD_T, szKey ? szKey : CNT_KEYNAME, cs, sizeof(TContainerSettings));
+	CMStringA szSetting(szKey ? szKey : CNT_KEYNAME);
+	db_set_dw(hContact, SRMSGMOD_T, szSetting + "_Flags", cs->dwFlags);
+	db_set_dw(hContact, SRMSGMOD_T, szSetting + "_FlagsEx", cs->dwFlagsEx);
+	db_set_dw(hContact, SRMSGMOD_T, szSetting + "_Transparency", cs->dwTransparency);
+	db_set_dw(hContact, SRMSGMOD_T, szSetting + "_PanelY", cs->panelheight);
+	db_set_dw(hContact, SRMSGMOD_T, szSetting + "_SplitterX", cs->iSplitterX);
+	db_set_dw(hContact, SRMSGMOD_T, szSetting + "_SplitterY", cs->iSplitterY);
+	db_set_ws(hContact, SRMSGMOD_T, szSetting + "_Format", cs->szTitleFormat);
+	db_set_w(hContact, SRMSGMOD_T, szSetting + "_AvatarMode", cs->avatarMode);
+	db_set_w(hContact, SRMSGMOD_T, szSetting + "_OwnAvatarMode", cs->ownAvatarMode);
+	db_set_w(hContact, SRMSGMOD_T, szSetting + "_AutoCloseSecs", cs->autoCloseSeconds);
+	db_set_b(hContact, SRMSGMOD_T, szSetting + "_Private", cs->fPrivate);
 	return 0;
 }
 
@@ -547,14 +585,15 @@ void Utils::ContainerToSettings(TContainerData *pContainer)
 void Utils::ReadPrivateContainerSettings(TContainerData *pContainer, bool fForce)
 {
 	char szCname[50];
-	TContainerSettings csTemp = { 0 };
+	TContainerSettings csTemp;
+	memcpy(&csTemp, &PluginConfig.globalContainerSettings, sizeof(csTemp));
 
-	mir_snprintf(szCname, "%s%d_Blob", CNT_BASEKEYNAME, pContainer->iContainerIndex);
+	mir_snprintf(szCname, "%s%d", CNT_BASEKEYNAME, pContainer->iContainerIndex);
 	Utils::ReadContainerSettingsFromDB(0, &csTemp, szCname);
 	if (csTemp.fPrivate || fForce) {
-		if (pContainer->settings == 0 || pContainer->settings == &PluginConfig.globalContainerSettings)
-			pContainer->settings = (TContainerSettings *)mir_alloc(sizeof(TContainerSettings));
-		memcpy((void*)pContainer->settings, (void*)&csTemp, sizeof(TContainerSettings));
+		if (pContainer->settings == nullptr || pContainer->settings == &PluginConfig.globalContainerSettings)
+			pContainer->settings = (TContainerSettings *)mir_alloc(sizeof(csTemp));
+		memcpy(pContainer->settings, &csTemp, sizeof(csTemp));
 		pContainer->settings->fPrivate = true;
 	}
 	else pContainer->settings = &PluginConfig.globalContainerSettings;
@@ -566,19 +605,19 @@ void Utils::SaveContainerSettings(TContainerData *pContainer, const char *szSett
 
 	pContainer->dwFlags &= ~(CNT_DEFERREDCONFIGURE | CNT_CREATE_MINIMIZED | CNT_DEFERREDSIZEREQUEST | CNT_CREATE_CLONED);
 	if (pContainer->settings->fPrivate) {
-		mir_snprintf(szCName, "%s%d_Blob", szSetting, pContainer->iContainerIndex);
+		mir_snprintf(szCName, "%s%d", szSetting, pContainer->iContainerIndex);
 		WriteContainerSettingsToDB(0, pContainer->settings, szCName);
 	}
 	mir_snprintf(szCName, "%s%d_theme", szSetting, pContainer->iContainerIndex);
-	if (mir_tstrlen(pContainer->szRelThemeFile) > 1) {
+	if (mir_wstrlen(pContainer->szRelThemeFile) > 1) {
 		if (pContainer->fPrivateThemeChanged == TRUE) {
-			PathToRelativeT(pContainer->szRelThemeFile, pContainer->szAbsThemeFile, M.getDataPath());
-			db_set_ts(NULL, SRMSGMOD_T, szCName, pContainer->szAbsThemeFile);
+			PathToRelativeW(pContainer->szRelThemeFile, pContainer->szAbsThemeFile, M.getDataPath());
+			db_set_ws(0, SRMSGMOD_T, szCName, pContainer->szAbsThemeFile);
 			pContainer->fPrivateThemeChanged = FALSE;
 		}
 	}
 	else {
-		::db_unset(NULL, SRMSGMOD_T, szCName);
+		::db_unset(0, SRMSGMOD_T, szCName);
 		pContainer->fPrivateThemeChanged = FALSE;
 	}
 }
@@ -621,32 +660,32 @@ void Utils::scaleAvatarHeightLimited(const HBITMAP hBm, double& dNewWidth, doubl
 // @param dat: _MessageWindowData* pointer to the window data
 // @return HICON: the icon handle
 
-HICON Utils::iconFromAvatar(const TWindowData *dat)
+HICON CTabBaseDlg::IconFromAvatar() const
 {
-	if (!ServiceExists(MS_AV_GETAVATARBITMAP) || dat == NULL)
+	if (!ServiceExists(MS_AV_GETAVATARBITMAP))
 		return 0;
 
-	AVATARCACHEENTRY *ace = (AVATARCACHEENTRY *)CallService(MS_AV_GETAVATARBITMAP, dat->hContact, 0);
-	if (ace == NULL || ace->hbmPic == NULL)
-		return NULL;
+	AVATARCACHEENTRY *ace = (AVATARCACHEENTRY *)CallService(MS_AV_GETAVATARBITMAP, m_hContact, 0);
+	if (ace == nullptr || ace->hbmPic == nullptr)
+		return nullptr;
 
 	LONG lIconSize = Win7Taskbar->getIconSize();
 	double dNewWidth, dNewHeight;
-	scaleAvatarHeightLimited(ace->hbmPic, dNewWidth, dNewHeight, lIconSize);
+	Utils::scaleAvatarHeightLimited(ace->hbmPic, dNewWidth, dNewHeight, lIconSize);
 
 	// resize picture to fit it on the task bar, use an image list for converting it to
-	// 32bpp icon format. dat->hTaskbarIcon will cache it until avatar is changed
+	// 32bpp icon format. hTaskbarIcon will cache it until avatar is changed
 	bool fFree = false;
 	HBITMAP hbmResized = CSkin::ResizeBitmap(ace->hbmPic, (LONG)dNewWidth, (LONG)dNewHeight, fFree);
 	HIMAGELIST hIml_c = ::ImageList_Create(lIconSize, lIconSize, ILC_COLOR32 | ILC_MASK, 1, 0);
 
 	RECT rc = { 0, 0, lIconSize, lIconSize };
 
-	HDC hdc = ::GetDC(dat->pContainer->hwnd);
+	HDC hdc = ::GetDC(m_pContainer->m_hwnd);
 	HDC dc = ::CreateCompatibleDC(hdc);
 	HDC dcResized = ::CreateCompatibleDC(hdc);
 
-	ReleaseDC(dat->pContainer->hwnd, hdc);
+	ReleaseDC(m_pContainer->m_hwnd, hdc);
 
 	HBITMAP hbmNew = CSkin::CreateAeroCompatibleBitmap(rc, dc);
 	HBITMAP hbmOld = reinterpret_cast<HBITMAP>(::SelectObject(dc, hbmNew));
@@ -683,8 +722,8 @@ AVATARCACHEENTRY* Utils::loadAvatarFromAVS(const MCONTACT hContact)
 
 void Utils::sendContactMessage(MCONTACT hContact, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	HWND h = M.FindWindow(hContact);
-	if (h != NULL)
+	HWND h = Srmm_FindWindow(hContact);
+	if (h != nullptr)
 		PostMessage(h, uMsg, wParam, lParam);
 }
 
@@ -710,12 +749,12 @@ void Utils::getIconSize(HICON hIcon, int& sizeX, int& sizeY)
 // @param uID		the item command id
 // @param pos		zero-based position index
 
-void Utils::addMenuItem(const HMENU& m, MENUITEMINFO &mii, HICON hIcon, const TCHAR *szText, UINT uID, UINT pos)
+void Utils::addMenuItem(const HMENU& m, MENUITEMINFO &mii, HICON hIcon, const wchar_t *szText, UINT uID, UINT pos)
 {
 	mii.wID = uID;
 	mii.dwItemData = (ULONG_PTR)hIcon;
-	mii.dwTypeData = const_cast<TCHAR *>(szText);
-	mii.cch = (int)mir_tstrlen(mii.dwTypeData) + 1;
+	mii.dwTypeData = const_cast<wchar_t *>(szText);
+	mii.cch = (int)mir_wstrlen(mii.dwTypeData) + 1;
 
 	::InsertMenuItem(m, pos, TRUE, &mii);
 }
@@ -724,32 +763,29 @@ void Utils::addMenuItem(const HMENU& m, MENUITEMINFO &mii, HICON hIcon, const TC
 // return != 0 when the sound effect must be played for the given
 // session. Uses container sound settings
 
-int Utils::mustPlaySound(const TWindowData *dat)
+int CTabBaseDlg::MustPlaySound() const
 {
-	if (!dat)
-		return 0;
-
-	if (dat->pContainer->fHidden)		// hidden container is treated as closed, so play the sound
+	if (m_pContainer->fHidden)		// hidden container is treated as closed, so play the sound
 		return 1;
 
-	if (dat->pContainer->dwFlags & CNT_NOSOUND || nen_options.iNoSounds)
+	if (m_pContainer->dwFlags & CNT_NOSOUND || nen_options.iNoSounds)
 		return 0;
 
-	bool fActiveWindow = (dat->pContainer->hwnd == ::GetForegroundWindow() ? true : false);
-	bool fActiveTab = (dat->pContainer->hwndActive == dat->hwnd ? true : false);
-	bool fIconic = (::IsIconic(dat->pContainer->hwnd) ? true : false);
+	bool fActiveWindow = (m_pContainer->m_hwnd == ::GetForegroundWindow() ? true : false);
+	bool fActiveTab = (m_pContainer->m_hwndActive == GetHwnd() ? true : false);
+	bool fIconic = (::IsIconic(m_pContainer->m_hwnd) ? true : false);
 
 	// window minimized, check if sound has to be played
 	if (fIconic)
-		return(dat->pContainer->dwFlagsEx & CNT_EX_SOUNDS_MINIMIZED ? 1 : 0);
+		return(m_pContainer->dwFlagsEx & CNT_EX_SOUNDS_MINIMIZED ? 1 : 0);
 
 	// window in foreground
 	if (!fActiveWindow)
-		return(dat->pContainer->dwFlagsEx & CNT_EX_SOUNDS_UNFOCUSED ? 1 : 0);
+		return(m_pContainer->dwFlagsEx & CNT_EX_SOUNDS_UNFOCUSED ? 1 : 0);
 
 	if (fActiveTab)
-		return(dat->pContainer->dwFlagsEx & CNT_EX_SOUNDS_FOCUSED ? 1 : 0);
-	return(dat->pContainer->dwFlagsEx & CNT_EX_SOUNDS_INACTIVETABS ? 1 : 0);
+		return(m_pContainer->dwFlagsEx & CNT_EX_SOUNDS_FOCUSED ? 1 : 0);
+	return(m_pContainer->dwFlagsEx & CNT_EX_SOUNDS_INACTIVETABS ? 1 : 0);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -772,12 +808,12 @@ void Utils::showDlgControl(const HWND hwnd, UINT id, int showCmd)
 // stream function to write the contents of the message log to an rtf file
 DWORD CALLBACK Utils::StreamOut(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG cb, LONG * pcb)
 {
-	TCHAR *szFilename = (TCHAR*)dwCookie;
-	HANDLE hFile = CreateFile(szFilename, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	wchar_t *szFilename = (wchar_t*)dwCookie;
+	HANDLE hFile = CreateFile(szFilename, GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (hFile != INVALID_HANDLE_VALUE) {
-		SetFilePointer(hFile, 0, NULL, FILE_END);
+		SetFilePointer(hFile, 0, nullptr, FILE_END);
 		FilterEventMarkers((char*)pbBuff);
-		WriteFile(hFile, pbBuff, cb, (DWORD *)pcb, NULL);
+		WriteFile(hFile, pbBuff, cb, (DWORD *)pcb, nullptr);
 		*pcb = cb;
 		CloseHandle(hFile);
 		return 0;
@@ -789,8 +825,8 @@ DWORD CALLBACK Utils::StreamOut(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG cb, LONG
 // extract a resource from the given module
 // tszPath must end with \ 
 
-bool Utils::extractResource(const HMODULE h, const UINT uID, const TCHAR *tszName, const TCHAR *tszPath,
-	const TCHAR *tszFilename, bool fForceOverwrite)
+bool Utils::extractResource(const HMODULE h, const UINT uID, const wchar_t *tszName, const wchar_t *tszPath,
+	const wchar_t *tszFilename, bool fForceOverwrite)
 {
 	HRSRC hRes = FindResource(h, MAKEINTRESOURCE(uID), tszName);
 	if (hRes) {
@@ -799,17 +835,17 @@ bool Utils::extractResource(const HMODULE h, const UINT uID, const TCHAR *tszNam
 			char 	*pData = (char *)LockResource(hResource);
 			DWORD	dwSize = SizeofResource(g_hInst, hRes), written = 0;
 
-			TCHAR	szFilename[MAX_PATH];
-			mir_sntprintf(szFilename, _T("%s%s"), tszPath, tszFilename);
+			wchar_t	szFilename[MAX_PATH];
+			mir_snwprintf(szFilename, L"%s%s", tszPath, tszFilename);
 			if (!fForceOverwrite)
 				if (PathFileExists(szFilename))
 					return true;
 
-			HANDLE hFile = CreateFile(szFilename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+			HANDLE hFile = CreateFile(szFilename, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
 			if (hFile == INVALID_HANDLE_VALUE)
 				return false;
 
-			WriteFile(hFile, (void*)pData, dwSize, &written, NULL);
+			WriteFile(hFile, (void*)pData, dwSize, &written, nullptr);
 			CloseHandle(hFile);
 		}
 	}
@@ -817,12 +853,12 @@ bool Utils::extractResource(const HMODULE h, const UINT uID, const TCHAR *tszNam
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
-// extract the clicked URL from a rich edit control. Return the URL as TCHAR*
+// extract the clicked URL from a rich edit control. Return the URL as wchar_t*
 // caller MUST mir_free() the returned string
 // @param 	hwndRich -  rich edit window handle
 // @return	wchar_t*	extracted URL
 
-TCHAR* Utils::extractURLFromRichEdit(const ENLINK* _e, const HWND hwndRich)
+wchar_t* Utils::extractURLFromRichEdit(const ENLINK* _e, const HWND hwndRich)
 {
 	CHARRANGE sel = { 0 };
 	::SendMessage(hwndRich, EM_EXGETSEL, 0, (LPARAM)&sel);
@@ -831,38 +867,13 @@ TCHAR* Utils::extractURLFromRichEdit(const ENLINK* _e, const HWND hwndRich)
 
 	TEXTRANGE tr;
 	tr.chrg = _e->chrg;
-	tr.lpstrText = (TCHAR*)mir_alloc(sizeof(TCHAR) * (tr.chrg.cpMax - tr.chrg.cpMin + 8));
+	tr.lpstrText = (wchar_t*)mir_alloc(sizeof(wchar_t) * (tr.chrg.cpMax - tr.chrg.cpMin + 8));
 	::SendMessage(hwndRich, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
-	if (_tcschr(tr.lpstrText, '@') != NULL && _tcschr(tr.lpstrText, ':') == NULL && _tcschr(tr.lpstrText, '/') == NULL) {
-		mir_tstrncpy(tr.lpstrText, _T("mailto:"), 7);
-		mir_tstrncpy(tr.lpstrText + 7, tr.lpstrText, tr.chrg.cpMax - tr.chrg.cpMin + 1);
+	if (wcschr(tr.lpstrText, '@') != nullptr && wcschr(tr.lpstrText, ':') == nullptr && wcschr(tr.lpstrText, '/') == nullptr) {
+		mir_wstrncpy(tr.lpstrText, L"mailto:", 7);
+		mir_wstrncpy(tr.lpstrText + 7, tr.lpstrText, tr.chrg.cpMax - tr.chrg.cpMin + 1);
 	}
 	return tr.lpstrText;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// generic command dispatcher
-// used in various places (context menus, info panel menus etc.)
-
-LRESULT Utils::CmdDispatcher(UINT uType, HWND hwndDlg, UINT cmd, WPARAM wParam, LPARAM lParam, TWindowData *dat, TContainerData *pContainer)
-{
-	switch (uType) {
-	case CMD_CONTAINER:
-		if (pContainer && hwndDlg)
-			return(DM_ContainerCmdHandler(pContainer, cmd, wParam, lParam));
-		break;
-
-	case CMD_MSGDIALOG:
-		if (pContainer && hwndDlg && dat)
-			return(DM_MsgWindowCmdHandler(hwndDlg, pContainer, dat, cmd, wParam, lParam));
-		break;
-
-	case CMD_INFOPANEL:
-		if (MsgWindowMenuHandler(dat, cmd, MENU_LOGMENU) == 0)
-			return(DM_MsgWindowCmdHandler(hwndDlg, pContainer, dat, cmd, wParam, lParam));
-		break;
-	}
-	return 0;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -879,7 +890,7 @@ void Utils::sanitizeFilename(wchar_t* tszFilename)
 	for (size_t i = 0; i < forbiddenCharactersLen; i++) {
 		wchar_t*	szFound = 0;
 
-		while ((szFound = wcschr(tszFilename, (int)forbiddenCharacters[i])) != NULL)
+		while ((szFound = wcschr(tszFilename, (int)forbiddenCharacters[i])) != nullptr)
 			*szFound = ' ';
 	}
 }
@@ -935,7 +946,7 @@ size_t Utils::CopyToClipBoard(const wchar_t *str, const HWND hwndOwner)
 	if (!OpenClipboard(hwndOwner) || str == 0)
 		return 0;
 
-	size_t i = sizeof(TCHAR) * (mir_tstrlen(str) + 1);
+	size_t i = sizeof(wchar_t) * (mir_wstrlen(str) + 1);
 
 	EmptyClipboard();
 	HGLOBAL hData = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_SHARE, i);
@@ -950,25 +961,25 @@ size_t Utils::CopyToClipBoard(const wchar_t *str, const HWND hwndOwner)
 /////////////////////////////////////////////////////////////////////////////////////////
 // file list handler
 
-void Utils::AddToFileList(TCHAR ***pppFiles, int *totalCount, LPCTSTR szFilename)
+void Utils::AddToFileList(wchar_t ***pppFiles, int *totalCount, LPCTSTR szFilename)
 {
-	*pppFiles = (TCHAR**)mir_realloc(*pppFiles, (++*totalCount + 1) * sizeof(TCHAR*));
-	(*pppFiles)[*totalCount] = NULL;
-	(*pppFiles)[*totalCount - 1] = mir_tstrdup(szFilename);
+	*pppFiles = (wchar_t**)mir_realloc(*pppFiles, (++*totalCount + 1) * sizeof(wchar_t*));
+	(*pppFiles)[*totalCount] = nullptr;
+	(*pppFiles)[*totalCount - 1] = mir_wstrdup(szFilename);
 
 	if (GetFileAttributes(szFilename) & FILE_ATTRIBUTE_DIRECTORY) {
 		WIN32_FIND_DATA fd;
-		TCHAR szPath[MAX_PATH];
-		mir_tstrcpy(szPath, szFilename);
-		mir_tstrcat(szPath, _T("\\*"));
+		wchar_t szPath[MAX_PATH];
+		mir_wstrcpy(szPath, szFilename);
+		mir_wstrcat(szPath, L"\\*");
 		HANDLE hFind = FindFirstFile(szPath, &fd);
 		if (hFind != INVALID_HANDLE_VALUE) {
 			do {
-				if (!mir_tstrcmp(fd.cFileName, _T(".")) || !mir_tstrcmp(fd.cFileName, _T("..")))
+				if (!mir_wstrcmp(fd.cFileName, L".") || !mir_wstrcmp(fd.cFileName, L".."))
 					continue;
-				mir_tstrcpy(szPath, szFilename);
-				mir_tstrcat(szPath, _T("\\"));
-				mir_tstrcat(szPath, fd.cFileName);
+				mir_wstrcpy(szPath, szFilename);
+				mir_wstrcat(szPath, L"\\");
+				mir_wstrcat(szPath, fd.cFileName);
 				AddToFileList(pppFiles, totalCount, szPath);
 			} while (FindNextFile(hFind, &fd));
 			FindClose(hFind);
@@ -993,20 +1004,20 @@ void Utils::AddToFileList(TCHAR ***pppFiles, int *totalCount, LPCTSTR szFilename
 //  some strings are empty, this is intentional and used for error messages that share
 //  the message with other possible error notifications (popups, tool tips etc.)
 // 
-//  Entries that do not use the LPGENT() macro are NOT TRANSLATABLE, so don't bother translating them.
+//  Entries that do not use the LPGENW() macro are NOT TRANSLATABLE, so don't bother translating them.
 
 static wchar_t* warnings[] = {
-	LPGENT("Important release notes|A test warning message"),							/* WARN_TEST */ /* reserved for important notes after upgrade - NOT translatable */
-	LPGENT("Icon pack version check|The installed icon pack is outdated and might be incompatible with TabSRMM version 3.\n\n\\b1Missing or misplaced icons are possible issues with the currently installed icon pack.\\b0"),			/* WARN_ICONPACKVERSION */
-	LPGENT("Edit user notes|You are editing the user notes. Click the button again or use the hotkey (default: Alt-N) to save the notes and return to normal messaging mode"),  /* WARN_EDITUSERNOTES */
-	LPGENT("Missing component|The icon pack is missing. Please install it to the default icons folder.\n\nNo icons will be available"),		/* WARN_ICONPACKMISSING */
-	LPGENT("Aero peek warning|You have enabled Aero Peek features and loaded a custom container window skin\n\nThis can result in minor visual anomalies in the live preview feature."),	/* WARN_AEROPEEKSKIN */
-	LPGENT("File transfer problem|Sending the image by file transfer failed.\n\nPossible reasons: File transfers not supported, either you or the target contact is offline, or you are invisible and the target contact is not on your visibility list."), /* WARN_IMGSVC_MISSING */
-	LPGENT("Settings problem|The option \\b1 History -> Imitate IEView API\\b0  is enabled and the History++ plugin is active. This can cause problems when using IEView as message log viewer.\n\nShould I correct the option (a restart is required)?"), /* WARN_HPP_APICHECK */
+	LPGENW("Important release notes|A test warning message"),							/* WARN_TEST */ /* reserved for important notes after upgrade - NOT translatable */
+	LPGENW("Icon pack version check|The installed icon pack is outdated and might be incompatible with TabSRMM version 3.\n\n\\b1Missing or misplaced icons are possible issues with the currently installed icon pack.\\b0"),			/* WARN_ICONPACKVERSION */
+	LPGENW("Edit user notes|You are editing the user notes. Click the button again or use the hotkey (default: Alt-N) to save the notes and return to normal messaging mode"),  /* WARN_EDITUSERNOTES */
+	LPGENW("Missing component|The icon pack is missing. Please install it to the default icons folder.\n\nNo icons will be available"),		/* WARN_ICONPACKMISSING */
+	LPGENW("Aero peek warning|You have enabled Aero Peek features and loaded a custom container window skin\n\nThis can result in minor visual anomalies in the live preview feature."),	/* WARN_AEROPEEKSKIN */
+	LPGENW("File transfer problem|Sending the image by file transfer failed.\n\nPossible reasons: File transfers not supported, either you or the target contact is offline, or you are invisible and the target contact is not on your visibility list."), /* WARN_IMGSVC_MISSING */
+	LPGENW("Settings problem|The option \\b1 History -> Imitate IEView API\\b0  is enabled and the History++ plugin is active. This can cause problems when using IEView as message log viewer.\n\nShould I correct the option (a restart is required)?"), /* WARN_HPP_APICHECK */
 	L" ", /* WARN_NO_SENDLATER */ /*uses "Configuration issue|The unattended send feature is disabled. The \\b1 send later\\b0  and \\b1 send to multiple contacts\\b0  features depend on it.\n\nYou must enable it under \\b1Options -> Message sessions -> Advanced tweaks\\b0. Changing this option requires a restart." */
-	LPGENT("Closing Window|You are about to close a window with multiple tabs open.\n\nProceed?"),		/* WARN_CLOSEWINDOW */
-	LPGENT("Closing options dialog|To reflect the changes done by importing a theme in the options dialog, the dialog must be closed after loading a theme \\b1 and unsaved changes might be lost\\b0 .\n\nDo you want to continue?"), /* WARN_OPTION_CLOSE */
-	LPGENT("Loading a theme|Loading a color and font theme can overwrite the settings defined by your skin.\n\nDo you want to continue?"), /* WARN_THEME_OVERWRITE */
+	LPGENW("Closing Window|You are about to close a window with multiple tabs open.\n\nProceed?"),		/* WARN_CLOSEWINDOW */
+	LPGENW("Closing options dialog|To reflect the changes done by importing a theme in the options dialog, the dialog must be closed after loading a theme \\b1 and unsaved changes might be lost\\b0 .\n\nDo you want to continue?"), /* WARN_OPTION_CLOSE */
+	LPGENW("Loading a theme|Loading a color and font theme can overwrite the settings defined by your skin.\n\nDo you want to continue?"), /* WARN_THEME_OVERWRITE */
 };
 
 CWarning::CWarning(const wchar_t *tszTitle, const wchar_t *tszText, const UINT uId, const DWORD dwFlags) :
@@ -1068,8 +1079,6 @@ LRESULT CWarning::show(const int uId, DWORD dwFlags, const wchar_t* tszTxt)
 {
 	wchar_t*	separator_pos = 0;
 	__int64 	mask = 0, val = 0;
-	LRESULT 	result = 0;
-	wchar_t*	_s = 0;
 
 	if (0 == hWindowList)
 		hWindowList = WindowList_Create();
@@ -1079,23 +1088,23 @@ LRESULT CWarning::show(const int uId, DWORD dwFlags, const wchar_t* tszTxt)
 	if (CMimAPI::m_shutDown)
 		return -1;
 
+	wchar_t *_s = nullptr;
 	if (tszTxt)
 		_s = const_cast<wchar_t *>(tszTxt);
 	else {
-		if (uId != -1) {
-			if (dwFlags & CWF_UNTRANSLATED)
-				_s = TranslateTS(warnings[uId]);
-			else {
-				// revert to untranslated warning when the translated message
-				// is not well-formatted.
-				_s = TranslateTS(warnings[uId]);
-
-				if (mir_wstrlen(_s) < 3 || 0 == wcschr(_s, '|'))
-					_s = TranslateTS(warnings[uId]);
-			}
-		}
-		else
+		if (uId == -1)
 			return -1;
+		
+		if (dwFlags & CWF_UNTRANSLATED)
+			_s = TranslateW(warnings[uId]);
+		else {
+			// revert to untranslated warning when the translated message
+			// is not well-formatted.
+			_s = TranslateW(warnings[uId]);
+
+			if (mir_wstrlen(_s) < 3 || 0 == wcschr(_s, '|'))
+				_s = TranslateW(warnings[uId]);
+		}
 	}
 
 	if ((mir_wstrlen(_s) > 3) && ((separator_pos = wcschr(_s, '|')) != 0)) {
@@ -1106,26 +1115,18 @@ LRESULT CWarning::show(const int uId, DWORD dwFlags, const wchar_t* tszTxt)
 		else mask = val = 0;
 
 		if (0 == (mask & val) || dwFlags & CWF_NOALLOWHIDE) {
-			wchar_t *s = reinterpret_cast<wchar_t *>(mir_alloc((mir_wstrlen(_s) + 1) * 2));
-			mir_wstrcpy(s, _s);
+			ptrW s(mir_wstrdup(_s));
 			separator_pos = wcschr(s, '|');
 
 			if (separator_pos) {
-				separator_pos[0] = 0;
+				*separator_pos = 0;
 
-				CWarning *w = new CWarning(s, &separator_pos[1], uId, dwFlags);
-				if (!(dwFlags & MB_YESNO || dwFlags & MB_YESNOCANCEL)) {
-					w->ShowDialog();
-					mir_free(s);
-				}
-				else {
-					result = w->ShowDialog();
-					mir_free(s);
-					return(result);
-				}
+				CWarning *w = new CWarning(s, separator_pos+1, uId, dwFlags);
+				if (dwFlags & MB_YESNO || dwFlags & MB_YESNOCANCEL)
+					return w->ShowDialog();
+
+				w->ShowDialog();
 			}
-			else
-				mir_free(s);
 		}
 	}
 	return -1;
@@ -1148,12 +1149,6 @@ INT_PTR CALLBACK CWarning::stubDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			return(w->dlgProc(hwnd, msg, wParam, lParam));
 		}
 		break;
-
-	#if defined(__LOGDEBUG_)
-	case WM_NCDESTROY:
-		_DebugTraceW(L"window destroyed");
-		break;
-	#endif
 	}
 	return FALSE;
 }
@@ -1166,38 +1161,24 @@ INT_PTR CALLBACK CWarning::dlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 	switch (msg) {
 	case WM_INITDIALOG:
 		{
-			HICON		hIcon = 0;
-			UINT		uResId = 0;
-			TCHAR		temp[1024];
-			SETTEXTEX	stx = { ST_SELECTION, CP_UTF8 };
-			size_t		pos = 0;
+			UINT uResId = 0;
+			HICON hIcon = 0;
 
 			m_hwnd = hwnd;
 
 			::SetWindowTextW(hwnd, TranslateT("TabSRMM warning message"));
-			::SendMessage(hwnd, WM_SETICON, ICON_BIG, LPARAM(::Skin_LoadIcon(SKINICON_OTHER_MIRANDA, true)));
-			::SendMessage(hwnd, WM_SETICON, ICON_SMALL, LPARAM(::Skin_LoadIcon(SKINICON_OTHER_MIRANDA)));
+			::Window_SetSkinIcon_IcoLib(hwnd, SKINICON_OTHER_MIRANDA);
 			::SendDlgItemMessage(hwnd, IDC_WARNTEXT, EM_AUTOURLDETECT, TRUE, 0);
 			::SendDlgItemMessage(hwnd, IDC_WARNTEXT, EM_SETEVENTMASK, 0, ENM_LINK);
 
-			mir_sntprintf(temp, RTF_DEFAULT_HEADER, 0, 0, 0, 30 * 15);
-			tstring *str = new tstring(temp);
-
-			str->append(m_szText);
-			str->append(L"}");
-
 			TranslateDialogDefault(hwnd);
 
-			/*
-			* convert normal line breaks to rtf
-			*/
-			while ((pos = str->find(L"\n")) != str->npos) {
-				str->erase(pos, 1);
-				str->insert(pos, L"\\line ");
-			}
-
-			::SendDlgItemMessage(hwnd, IDC_WARNTEXT, EM_SETTEXTEX, (WPARAM)&stx, T2Utf(str->c_str()));
-			delete str;
+			CMStringW str(FORMAT, RTF_DEFAULT_HEADER, 0, 0, 0, 30 * 15);
+			str.Append(m_szText);
+			str.Append(L"}");
+			str.Replace(L"\n", L"\\line ");
+			SETTEXTEX stx = { ST_SELECTION, CP_UTF8 };
+			::SendDlgItemMessage(hwnd, IDC_WARNTEXT, EM_SETTEXTEX, (WPARAM)&stx, T2Utf(str));
 
 			::SetDlgItemTextW(hwnd, IDC_CAPTION, m_szTitle);
 
@@ -1267,18 +1248,13 @@ INT_PTR CALLBACK CWarning::dlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 		case IDCANCEL:
 		case IDYES:
 		case IDNO:
-			if (!m_fIsModal && (IDOK == LOWORD(wParam) || IDCANCEL == LOWORD(wParam))) {		// modeless dialogs can receive a IDCANCEL from destroyAll()
-				::SetWindowLongPtr(hwnd, GWLP_USERDATA, 0);
-				delete this;
-				WindowList_Remove(hWindowList, hwnd);
+			::SetWindowLongPtr(hwnd, GWLP_USERDATA, 0);
+			delete this;
+			WindowList_Remove(hWindowList, hwnd);
+			if (!m_fIsModal && (IDOK == LOWORD(wParam) || IDCANCEL == LOWORD(wParam))) // modeless dialogs can receive a IDCANCEL from destroyAll()
 				::DestroyWindow(hwnd);
-			}
-			else {
-				::SetWindowLongPtr(hwnd, GWLP_USERDATA, 0);
-				delete this;
-				WindowList_Remove(hWindowList, hwnd);
+			else
 				::EndDialog(hwnd, LOWORD(wParam));
-			}
 			break;
 
 		case IDC_DONTSHOWAGAIN:
@@ -1304,7 +1280,7 @@ INT_PTR CALLBACK CWarning::dlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 				const wchar_t *wszUrl = Utils::extractURLFromRichEdit(e, ::GetDlgItem(hwnd, IDC_WARNTEXT));
 				if (wszUrl) {
 					Utils_OpenUrlW(wszUrl);
-					mir_free(const_cast<TCHAR *>(wszUrl));
+					mir_free(const_cast<wchar_t *>(wszUrl));
 				}
 			}
 		}

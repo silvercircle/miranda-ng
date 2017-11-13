@@ -16,7 +16,7 @@
 
 #include "stdafx.h"
 
-HANDLE ghConnection;
+HNETLIBCONN ghConnection;
 HANDLE ghPacketReciever;
 BOOL Connected;
 int gbState;
@@ -31,9 +31,9 @@ void Start(void*)
 	nloc.flags = NLOCF_V2;
 	nloc.wPort = gbPort;
 	Connected = FALSE;
-	ghConnection =  (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)ghNetlibUser, (LPARAM)&nloc);
-	if(ghConnection)
-		ghPacketReciever = (HANDLE)CallService(MS_NETLIB_CREATEPACKETRECVER,(WPARAM)ghConnection,2048);
+	ghConnection = Netlib_OpenConnection(ghNetlibUser, &nloc);
+	if (ghConnection)
+		ghPacketReciever = Netlib_CreatePacketReceiver(ghConnection, 2048);
 }
 
 void ReStart(void*)
@@ -48,12 +48,11 @@ void ReStart(void*)
 
 int Parser()
 {
-	static NETLIBPACKETRECVER nlpr = {0};
+	static NETLIBPACKETRECVER nlpr = {};
 	char *ptr;
 	int i;
 	char *buf;
 	static char ver[16];
-	nlpr.cbSize = sizeof(nlpr);
 	nlpr.dwTimeout = 5;
 	if(!ghConnection)
 	{
@@ -62,21 +61,11 @@ int Parser()
 	if(ghConnection)
 	{	
 		int recvResult;
-/*		do
-		{
-			recvResult = CallService(MS_NETLIB_GETMOREPACKETS,(WPARAM)ghPacketReciever, (LPARAM)&nlpr);
-			if(recvResult == SOCKET_ERROR)
-			{
-				ReStart();
-				return 1;
-			}
-		}
-		while(recvResult > 0);*/
 		if(!Connected)
 		{
 			char tmp[128];
-			char *tmp2 = mir_t2a(gbPassword);
-			recvResult = CallService(MS_NETLIB_GETMOREPACKETS,(WPARAM)ghPacketReciever, (LPARAM)&nlpr);
+			char *tmp2 = mir_u2a(gbPassword);
+			recvResult = Netlib_GetMorePackets(ghPacketReciever, &nlpr);
 			if(recvResult == SOCKET_ERROR)
 			{
 				mir_forkthread(&ReStart, 0);
@@ -89,7 +78,7 @@ int Parser()
 				mir_strcat(tmp, tmp2);
 				mir_strcat(tmp, "\n");
 				Netlib_Send(ghConnection, tmp, (int)mir_strlen(tmp), 0);
-				recvResult = CallService(MS_NETLIB_GETMOREPACKETS,(WPARAM)ghPacketReciever, (LPARAM)&nlpr);
+				recvResult = Netlib_GetMorePackets(ghPacketReciever, &nlpr);
 				if(recvResult == SOCKET_ERROR)
 				{
 					mir_forkthread(&ReStart, 0);
@@ -99,14 +88,14 @@ int Parser()
 			mir_free(tmp2);
 		}
 		Netlib_Send(ghConnection, "status\n", (int)mir_strlen("status\n"), 0);
-		recvResult = CallService(MS_NETLIB_GETMOREPACKETS,(WPARAM)ghPacketReciever, (LPARAM)&nlpr);
+		recvResult = Netlib_GetMorePackets(ghPacketReciever, &nlpr);
 		if(recvResult == SOCKET_ERROR)
 		{
 			mir_forkthread(&ReStart, 0);
 			return 1;
 		}
 		Netlib_Send(ghConnection, "currentsong\n", (int)mir_strlen("currentsong\n"), 0);
-		recvResult = CallService(MS_NETLIB_GETMOREPACKETS,(WPARAM)ghPacketReciever, (LPARAM)&nlpr);
+		recvResult = Netlib_GetMorePackets(ghPacketReciever, &nlpr);
 		if(recvResult == SOCKET_ERROR)
 		{
 			mir_forkthread(&ReStart, 0);
@@ -124,20 +113,20 @@ int Parser()
 			tmp[i] = ptr[i];
 		tmp[i] = '\0';
 		strncpy_s(ver, tmp, _TRUNCATE);
-		SongInfo.txtver = mir_utf8decodeT(tmp);
+		SongInfo.txtver = mir_utf8decodeW(tmp);
 	}
 	else
-		SongInfo.txtver = mir_utf8decodeT(ver);
+		SongInfo.txtver = mir_utf8decodeW(ver);
 	if(ptr = strstr(buf, "file:"))
 	{
 		ptr = &ptr[6];
 		for(i = 0; ((ptr[i] != '\n') && (ptr[i] != '\0')); i++)
 			tmp[i] = ptr[i];
 		tmp[i] = '\0';
-		SongInfo.mfile = mir_utf8decodeT(tmp);
+		SongInfo.mfile = mir_utf8decodeW(tmp);
 	}
 	else
-		SongInfo.mfile = mir_tstrdup(_T(""));
+		SongInfo.mfile = mir_wstrdup(L"");
 	if(ptr = strstr(buf, "Time:"))
 	{
 		ptr = &ptr[6];
@@ -164,50 +153,50 @@ int Parser()
 		for(i = 0; ((ptr[i] != '\n') && (ptr[i] != '\0')); i++)
 			tmp[i] = ptr[i];
 		tmp[i] = '\0';
-		SongInfo.title = mir_utf8decodeT(tmp);
+		SongInfo.title = mir_utf8decodeW(tmp);
 	}
 	else
-		SongInfo.title = mir_tstrdup(_T("Unknown track"));
+		SongInfo.title = mir_wstrdup(L"Unknown track");
 	if(ptr = strstr(buf, "Artist:"))
 	{
 		ptr = &ptr[8];
 		for(i = 0; ((ptr[i] != '\n') && (ptr[i] != '\0')); i++)
 			tmp[i] = ptr[i];
 		tmp[i] = '\0';
-		SongInfo.artist = mir_utf8decodeT(tmp);
+		SongInfo.artist = mir_utf8decodeW(tmp);
 	}
 	else
-		SongInfo.artist = mir_tstrdup(_T("Unknown artist"));
+		SongInfo.artist = mir_wstrdup(L"Unknown artist");
 	if(ptr = strstr(buf, "Genre:"))
 	{
 		ptr = &ptr[7];
 		for(i = 0; ((ptr[i] != '\n') && (ptr[i] != '\0')); i++)
 			tmp[i] = ptr[i];
 		tmp[i] = '\0';
-		SongInfo.genre = mir_utf8decodeT(tmp);
+		SongInfo.genre = mir_utf8decodeW(tmp);
 	}
 	else
-		SongInfo.genre =  mir_tstrdup(_T("Unknown genre"));
+		SongInfo.genre =  mir_wstrdup(L"Unknown genre");
 	if(ptr = strstr(buf, "Album:"))
 	{
 		ptr = &ptr[7];
 		for(i = 0; ((ptr[i] != '\n') && (ptr[i] != '\0')); i++)
 			tmp[i] = ptr[i];
 		tmp[i] = '\0';
-		SongInfo.album = mir_utf8decodeT(tmp);
+		SongInfo.album = mir_utf8decodeW(tmp);
 	}
 	else
-		SongInfo.album =  mir_tstrdup(_T("Unknown album"));
+		SongInfo.album =  mir_wstrdup(L"Unknown album");
 	if(ptr = strstr(buf, "Date:"))
 	{
 		ptr = &ptr[6];
 		for(i = 0; ((ptr[i] != '\n') && (ptr[i] != '\0')); i++)
 			tmp[i] = ptr[i];
 		tmp[i] = '\0';
-		SongInfo.year = mir_utf8decodeT(tmp);
+		SongInfo.year = mir_utf8decodeW(tmp);
 	}
 	else
-		SongInfo.year =  mir_tstrdup(_T("Unknown year"));
+		SongInfo.year =  mir_wstrdup(L"Unknown year");
 	if(ptr = strstr(buf, "volume:"))
 	{
 		ptr = &ptr[8];
@@ -273,8 +262,6 @@ void Stop()
 		Netlib_CloseHandle(ghPacketReciever);
 	if(ghConnection)
 		Netlib_CloseHandle(ghConnection);
-	if(ghNetlibUser && (ghNetlibUser != INVALID_HANDLE_VALUE))
-		CallService(MS_NETLIB_SHUTDOWN,(WPARAM)ghNetlibUser,0);
 }
 
 int Init()
@@ -413,7 +400,7 @@ void RegisterPlayer()
 	{
 		PLAYERCELL player = {0};
 		player.Desc = "Music Player Daemon";
-		player.Notes = _T("mpd is a nice music player for *nix which have not any gui, just daemon.\nuses very small amount of ram, cpu.");
+		player.Notes = L"mpd is a nice music player for *nix which have not any gui, just daemon.\nuses very small amount of ram, cpu.";
 		player.URL = "http://www.musicpd.org";
 		player.Check = CheckPlayer;
 		player.Init = Init;

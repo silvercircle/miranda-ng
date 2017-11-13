@@ -11,8 +11,10 @@
 Описание:
 [Copyright:]
 Copyright:
-[Contact:]
-Контакт:
+[E-mail:]
+Имейл:
+[Homepage:]
+Страница:
 [Account]
 Акаунт
 [Name:]
@@ -21,10 +23,6 @@ Copyright:
 Сървър:
 [Port:]
 Порт:
-[SSL]
-SSL
-[APOP]
-APOP
 [User Name:]
 Потребител:
 [Password:]
@@ -57,11 +55,11 @@ APOP
 На линия
 [Away]
 Отсъстващ
-[N/A]
-НД
+[Not available]
+Недостъпен
 [Occupied]
 Зает
-[DND]
+[Do not disturb]
 Не безпокойте
 [Free for chat]
 Готов за чат

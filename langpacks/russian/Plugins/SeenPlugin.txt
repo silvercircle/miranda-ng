@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: SeenPlugin.dll
 ;  Plugin: Last seen
-;  Version: 5.0.5.2
+;  Version: 5.0.5.3
 ;  Authors: Heiko Schillinger, YB
 ;============================================================
 [Logs when a user was last seen online and which users were online while you were away.]
@@ -45,11 +45,11 @@
 В сети
 [Away]
 Отсутствую
-[NA]
+[Not available]
 Недоступен
 [Occupied]
 Занят
-[DND]
+[Do not disturb]
 Не беспокоить
 [On the phone]
 На телефоне

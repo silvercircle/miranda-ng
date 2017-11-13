@@ -50,14 +50,14 @@ void HistoryWrite(MCONTACT hContact)
 	if (historyLast >= historyMax)
 		historyLast = historyMax - 1;
 
-	TCHAR *ptszString;
+	wchar_t *ptszString;
 	DBVARIANT dbv;
-	if (!db_get_ts(NULL, S_MOD, "HistoryStamp", &dbv)) {
+	if (!db_get_ws(NULL, S_MOD, "HistoryStamp", &dbv)) {
 		ptszString = ParseString(dbv.ptszVal, hContact);
 		db_free(&dbv);
 	}
 	else ptszString = ParseString(DEFAULT_HISTORYSTAMP, hContact);
-	db_set_ts(hContact, S_MOD, BuildSetting(historyLast), ptszString);
+	db_set_ws(hContact, S_MOD, BuildSetting(historyLast), ptszString);
 
 	historyLast = (historyLast + 1) % historyMax;
 	db_set_w(hContact, S_MOD, "HistoryLast", historyLast);
@@ -88,11 +88,11 @@ void LoadHistoryList(MCONTACT hContact, HWND hwnd, int nList)
 		i = (i - 1 + historyMax) % historyMax;
 
 		DBVARIANT dbv;
-		if (!db_get_ts(hContact, S_MOD, BuildSetting(i), &dbv)) {
+		if (!db_get_ws(hContact, S_MOD, BuildSetting(i), &dbv)) {
 			SendDlgItemMessage(hwnd, nList, LB_ADDSTRING, 0, (LPARAM)dbv.ptszVal);
 			db_free(&dbv);
 		}
-		else SendDlgItemMessage(hwnd, nList, LB_ADDSTRING, 0, (LPARAM)_T(""));
+		else SendDlgItemMessage(hwnd, nList, LB_ADDSTRING, 0, (LPARAM)L"");
 	}
 }
 
@@ -167,19 +167,18 @@ void MyResizeGetOffset(HWND hwndControl, int nWidth, int nHeight, int* nDx, int*
 INT_PTR CALLBACK HistoryDlgProc(HWND hwndDlg, UINT Message, WPARAM wparam, LPARAM lparam)
 {
 	MCONTACT hContact;
-	TCHAR sztemp[1024];
+	wchar_t sztemp[1024];
 
 	switch (Message) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
 		hContact = (MCONTACT)lparam;
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lparam);
-		mir_sntprintf(sztemp, _T("%s: %s"),
+		mir_snwprintf(sztemp, L"%s: %s",
 			pcli->pfnGetContactDisplayName(hContact, 0),
 			TranslateT("last seen history"));
 		SetWindowText(hwndDlg, sztemp);
-		SendMessage(hwndDlg, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_MIRANDA));
-		SendMessage(hwndDlg, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_MIRANDA));
+		Window_SetSkinIcon_IcoLib(hwndDlg, SKINICON_OTHER_MIRANDA);
 
 		if (db_get_b(hContact, S_MOD, "OnlineAlert", 0))
 			CheckDlgButton(hwndDlg, IDC_STATUSCHANGE, BST_CHECKED);
@@ -189,23 +188,23 @@ INT_PTR CALLBACK HistoryDlgProc(HWND hwndDlg, UINT Message, WPARAM wparam, LPARA
 		SendDlgItemMessage(hwndDlg, IDC_SENDMSG, BM_SETIMAGE, IMAGE_ICON, (WPARAM)Skin_LoadIcon(SKINICON_EVENT_MESSAGE));
 
 		//set-up tooltips
-		SendDlgItemMessage(hwndDlg, IDC_DETAILS, BUTTONADDTOOLTIP, (WPARAM)TranslateT("View User's Details"), BATF_TCHAR);
-		SendDlgItemMessage(hwndDlg, IDC_USERMENU, BUTTONADDTOOLTIP, (WPARAM)TranslateT("User Menu"), BATF_TCHAR);
-		SendDlgItemMessage(hwndDlg, IDC_SENDMSG, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Send Instant Message"), BATF_TCHAR);
+		SendDlgItemMessage(hwndDlg, IDC_DETAILS, BUTTONADDTOOLTIP, (WPARAM)TranslateT("View User's Details"), BATF_UNICODE);
+		SendDlgItemMessage(hwndDlg, IDC_USERMENU, BUTTONADDTOOLTIP, (WPARAM)TranslateT("User Menu"), BATF_UNICODE);
+		SendDlgItemMessage(hwndDlg, IDC_SENDMSG, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Send Instant Message"), BATF_UNICODE);
 
 		Utils_RestoreWindowPositionNoMove(hwndDlg, NULL, S_MOD, "History_");
 		ShowWindow(hwndDlg, SW_SHOW);
 		return TRUE;
 
 	case WM_MEASUREITEM:
-		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lparam);
+		return Menu_MeasureItem(lparam);
 
 	case WM_DRAWITEM:
-		return Menu_DrawItem((LPDRAWITEMSTRUCT)lparam);
+		return Menu_DrawItem(lparam);
 
 	case WM_COMMAND:
 		hContact = (MCONTACT)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
-		if (CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(LOWORD(wparam), MPCF_CONTACTMENU), hContact))
+		if (Clist_MenuProcessCommand(LOWORD(wparam), MPCF_CONTACTMENU, hContact))
 			break;
 
 		switch (LOWORD(wparam)) {
@@ -235,7 +234,7 @@ INT_PTR CALLBACK HistoryDlgProc(HWND hwndDlg, UINT Message, WPARAM wparam, LPARA
 			CallService(MS_MSG_SENDMESSAGE, hContact, 0);
 			break;
 		case IDC_TEST:
-			debug(ParseString(LPGENT("Date: %d.%m.%y(%Y) \n Date desc: %W - %w - %E - %e \n Time: %H:%M:%S (%h-%p) \n user: %n - %u \n Status: %s \n IP: %i - %r"), hContact));
+			debug(ParseString(LPGENW("Date: %d.%m.%y(%Y) \n Date desc: %W - %w - %E - %e \n Time: %H:%M:%S (%h-%p) \n user: %n - %u \n Status: %s \n IP: %i - %r"), hContact));
 			break;
 		}
 		break;
@@ -298,7 +297,7 @@ void ShowHistory(MCONTACT hContact, BYTE isAlert)
 	}
 
 	if (isAlert)
-		SkinPlaySound("LastSeenTrackedStatusChange");
+		Skin_PlaySound("LastSeenTrackedStatusChange");
 }
 
 void InitHistoryDialog(void)

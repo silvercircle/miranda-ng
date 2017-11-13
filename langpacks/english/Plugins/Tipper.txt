@@ -5,7 +5,7 @@
 ;  Version: 2.1.0.7
 ;  Authors: Scott Ellis, yaho
 ;============================================================
-[Tool Tip notification windows.]
+[Tooltip notification windows.]
 ;file \plugins\TipperYM\res\resource.rc
 [Layout]
 [Text indent:]
@@ -104,9 +104,6 @@
 [Invalid Substitution]
 [<No Label>]
 [Add item]
-[Add separator]
-[Move up]
-[Move down]
 [No icon]
 [Icon on left]
 [Icon on right]
@@ -246,6 +243,11 @@
 [Values]
 [Tray title]
 [Tipper]
+[Copy item]
+[Arrow up]
+[Arrow down]
+[Reload]
+[Apply]
 ;file \plugins\TipperYM\src\translations.cpp
 [Female]
 [Male]

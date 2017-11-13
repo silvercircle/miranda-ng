@@ -11,7 +11,6 @@
 #include <m_database.h>
 #include <m_skin.h>
 #include <m_clist.h>
-#include <m_clui.h>
 #include <m_cluiframes.h>
 #include <m_clc.h>
 #include <m_findadd.h>
@@ -26,7 +25,7 @@
 #include "version.h"
 #include "BkgrCfg.h"
 
-#define TTB_BUTTON_CLASS  _T("TopToolbarButtonClass")
+#define TTB_BUTTON_CLASS  L"TopToolbarButtonClass"
 
 #define TTB_REPOSBUTTONS          (WM_USER+10)
 #define TTB_UPDATEFRAMEVISIBILITY (WM_USER+11)
@@ -69,9 +68,9 @@ struct TopButtonInt : public MZeroedObject
 	HANDLE hIconHandleUp, hIconHandleDn;
 
 	char  *pszService;
-	TCHAR *ptszProgram;
+	wchar_t *ptszProgram;
 	char  *pszName;
-	TCHAR *ptszTooltip;
+	wchar_t *ptszTooltip;
 
 	LPARAM lParamUp;
 	WPARAM wParamUp;
@@ -79,7 +78,7 @@ struct TopButtonInt : public MZeroedObject
 	WPARAM wParamDown;
 
 	int    hLangpack;
-	TCHAR *ptszTooltipUp, *ptszTooltipDn;
+	wchar_t *ptszTooltipUp, *ptszTooltipDn;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -104,11 +103,12 @@ extern TTBCtrl* g_ctrl;
 
 extern LIST<TopButtonInt> Buttons;
 extern HINSTANCE hInst;
-extern HBITMAP hBmpBackground, hBmpSeparator;
+extern HBITMAP hBmpBackground;
 extern mir_cs csButtonsHook;
 extern pfnCustomProc g_CustomProc;
 extern LPARAM g_CustomProcParam;
 extern HANDLE hTTBModuleLoaded;
+extern IconItem iconList[];
 
 void AddToOptions(TopButtonInt* b);
 void RemoveFromOptions(int id);

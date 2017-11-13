@@ -23,7 +23,7 @@ public:
 		mir_snprintf(login, "%s||oauth:%s", steamId, token);
 
 		char cookie[MAX_PATH];
-		mir_snprintf(cookie, "steamLogin=%s;sessionid=%s;forceMobile=1", login, sessionId);
+		mir_snprintf(cookie, "steamLogin=%s;sessionid=%s;mobileClientVersion=1291812;forceMobile=1;mobileClient=ios", login, sessionId);
 
 		char data[128];
 		mir_snprintf(data, _countof(data),
@@ -33,7 +33,7 @@ public:
 
 		SetData(data, strlen(data));
 		AddHeader("Cookie", cookie);
-		AddHeader("Content-Type", "application/x-www-form-urlencoded");
+		AddHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
 	}
 };
 
@@ -47,7 +47,7 @@ public:
 		mir_snprintf(login, "%s||oauth:%s", steamId, token);
 
 		char cookie[MAX_PATH];
-		mir_snprintf(cookie, "steamLogin=%s;sessionid=%s;forceMobile=1", login, sessionId);
+		mir_snprintf(cookie, "steamLogin=%s;sessionid=%s;mobileClientVersion=1291812;forceMobile=1;mobileClient=ios", login, sessionId);
 
 		char data[128];
 		mir_snprintf(data, _countof(data),
@@ -57,7 +57,7 @@ public:
 
 		SetData(data, strlen(data));
 		AddHeader("Cookie", cookie);
-		AddHeader("Content-Type", "application/x-www-form-urlencoded");
+		AddHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
 	}
 };
 
@@ -71,7 +71,7 @@ public:
 		mir_snprintf(login, "%s||oauth:%s", steamId, token);
 
 		char cookie[MAX_PATH];
-		mir_snprintf(cookie, "steamLogin=%s;sessionid=%s;forceMobile=1", login, sessionId);
+		mir_snprintf(cookie, "steamLogin=%s;sessionid=%s;mobileClientVersion=1291812;forceMobile=1;mobileClient=ios", login, sessionId);
 
 		char data[128];
 		mir_snprintf(data, _countof(data),
@@ -81,7 +81,7 @@ public:
 
 		SetData(data, strlen(data));
 		AddHeader("Cookie", cookie);
-		AddHeader("Content-Type", "application/x-www-form-urlencoded");
+		AddHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
 	}
 };
 

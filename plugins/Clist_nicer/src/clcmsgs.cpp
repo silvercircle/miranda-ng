@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-03 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -33,7 +33,7 @@ LRESULT ProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPARAM
 		{
 			ClcContact *contact;
 			ClcGroup *group;
-			if (wParam == 0 || !FindItem(hwnd, dat, (HANDLE)wParam, &contact, &group, NULL))
+			if (wParam == 0 || !Clist_FindItem(hwnd, dat, wParam, &contact, &group, NULL))
 				return 0;
 
 			if (lParam)
@@ -46,7 +46,7 @@ LRESULT ProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPARAM
 	case CLM_GETSTATUSMSG:
 		if (wParam) {
 			ClcContact *contact = NULL;
-			if (!FindItem(hwnd, dat, (HANDLE)wParam, &contact, NULL, NULL))
+			if (!Clist_FindItem(hwnd, dat, wParam, &contact, NULL, NULL))
 				return 0;
 
 			if (contact->type != CLCIT_CONTACT)
@@ -59,26 +59,26 @@ LRESULT ProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPARAM
 		return 0;
 
 	case CLM_SETHIDESUBCONTACTS:
-		dat->bHideSubcontacts = (BOOL)lParam;
+		dat->bHideSubcontacts = lParam != 0;
 		return 0;
 
 	case CLM_TOGGLEPRIORITYCONTACT:
 		if (wParam) {
 			ClcContact *contact = NULL;
-			if (!FindItem(hwnd, dat, (HANDLE)wParam, &contact, NULL, NULL))
+			if (!Clist_FindItem(hwnd, dat, wParam, &contact, NULL, NULL))
 				return 0;
 			if (contact->type != CLCIT_CONTACT)
 				return 0;
 			contact->flags ^= CONTACTF_PRIORITY;
-			cfg::writeByte(contact->hContact, "CList", "Priority", (BYTE)(contact->flags & CONTACTF_PRIORITY ? 1 : 0));
-			pcli->pfnClcBroadcast(CLM_AUTOREBUILD, 0, 0);
+			db_set_b(contact->hContact, "CList", "Priority", (BYTE)(contact->flags & CONTACTF_PRIORITY ? 1 : 0));
+			Clist_Broadcast(CLM_AUTOREBUILD, 0, 0);
 		}
 		return 0;
 
 	case CLM_QUERYPRIORITYCONTACT:
 		if (wParam) {
 			ClcContact *contact = NULL;
-			if (!FindItem(hwnd, dat, (HANDLE)wParam, &contact, NULL, NULL))
+			if (!Clist_FindItem(hwnd, dat, wParam, &contact, NULL, NULL))
 				return 0;
 			if (contact->type != CLCIT_CONTACT)
 				return 0;

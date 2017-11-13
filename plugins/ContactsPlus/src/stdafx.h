@@ -35,7 +35,6 @@
 #include "m_clist.h"
 #include "m_clistint.h"
 #include "m_clc.h"
-#include "m_clui.h"
 #include "m_addcontact.h"
 #include "m_history.h"
 #include "m_userinfo.h"
@@ -44,7 +43,7 @@
 #include "win2k.h"
 
 #include "resource.h"
-#include "Version.h"
+#include "version.h"
 #include "utils.h"
 #include "send.h"
 #include "receive.h"

@@ -1,7 +1,7 @@
 /*
 
 Copyright (C) 2009 Ricardo Pescuma Domenecci
-Copyright (C) 2012-15 Miranda NG project
+Copyright (C) 2012-17 Miranda NG project
 
 This is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
@@ -26,8 +26,7 @@ Boston, MA 02111-1307, USA.
 
 #include "IcoLib.h"
 
-IcolibExtraIcon::IcolibExtraIcon(int _id, const char *_name, const TCHAR *_description, const char *_descIcon,
-		MIRANDAHOOKPARAM _OnClick, LPARAM _param) :
+IcolibExtraIcon::IcolibExtraIcon(int _id, const char *_name, const wchar_t *_description, const char *_descIcon, MIRANDAHOOKPARAM _OnClick, LPARAM _param) :
 	BaseExtraIcon(_id, _name, _description, _descIcon, _OnClick, _param)
 {
 	db_set_resident(MODULE_NAME, _name);
@@ -48,7 +47,7 @@ void IcolibExtraIcon::rebuildIcons()
 
 void IcolibExtraIcon::applyIcon(MCONTACT hContact)
 {
-	if (!isEnabled() || hContact == NULL)
+	if (!isEnabled() || hContact == 0)
 		return;
 
 	HANDLE hImage = INVALID_HANDLE_VALUE;
@@ -62,11 +61,11 @@ void IcolibExtraIcon::applyIcon(MCONTACT hContact)
 
 int IcolibExtraIcon::setIcon(int id, MCONTACT hContact, HANDLE hIcoLib)
 {
-	if (hContact == NULL || id != m_id)
+	if (hContact == 0 || id != m_id)
 		return -1;
 
 	if (hIcoLib == INVALID_HANDLE_VALUE)
-		hIcoLib = NULL;
+		hIcoLib = nullptr;
 
 	if (isEnabled()) {
 		ptrA szIconName(db_get_sa(hContact, MODULE_NAME, m_szName));
@@ -75,22 +74,22 @@ int IcolibExtraIcon::setIcon(int id, MCONTACT hContact, HANDLE hIcoLib)
 	}
 
 	IcolibItem *p = (IcolibItem*)hIcoLib;
-	char *szName = (p) ? p->name : NULL;
+	char *szName = (p) ? p->name : nullptr;
 	storeIcon(hContact, szName);
 
 	if (isEnabled())
-		return ClistSetExtraIcon(hContact, (hIcoLib == NULL) ? INVALID_HANDLE_VALUE : AddIcon(szName));
+		return ClistSetExtraIcon(hContact, (hIcoLib == nullptr) ? INVALID_HANDLE_VALUE : AddIcon(szName));
 
 	return 0;
 }
 
 int IcolibExtraIcon::setIconByName(int id, MCONTACT hContact, const char *icon)
 {
-	if (hContact == NULL || id != m_id)
+	if (hContact == 0 || id != m_id)
 		return -1;
 
 	if (icon == INVALID_HANDLE_VALUE)
-		icon = NULL;
+		icon = nullptr;
 
 	if (isEnabled()) {
 		ptrA szIconName(db_get_sa(hContact, MODULE_NAME, m_szName));
@@ -108,7 +107,7 @@ int IcolibExtraIcon::setIconByName(int id, MCONTACT hContact, const char *icon)
 
 void IcolibExtraIcon::storeIcon(MCONTACT hContact, void *icon)
 {
-	if (hContact == NULL)
+	if (hContact == 0)
 		return;
 
 	const char *icolibName = (const char *)icon;

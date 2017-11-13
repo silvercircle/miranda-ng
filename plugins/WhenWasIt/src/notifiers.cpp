@@ -35,31 +35,31 @@ void PopupNotifyNoBirthdays()
 	FillPopupData(pd, -1);
 	pd.lchIcon = GetDTBIcon(-1);
 
-	_tcsncpy(pd.lptzContactName, TranslateT("WhenWasIt"), MAX_CONTACTNAME - 1);
-	_tcsncpy(pd.lptzText, TranslateT("No upcoming birthdays."), MAX_SECONDLINE - 1);
+	wcsncpy(pd.lptzContactName, TranslateT("WhenWasIt"), MAX_CONTACTNAME - 1);
+	wcsncpy(pd.lptzText, TranslateT("No upcoming birthdays."), MAX_SECONDLINE - 1);
 	PUAddPopupT(&pd);
 }
 
-TCHAR *BuildDTBText(int dtb, TCHAR *name, TCHAR *text, int size)
+wchar_t *BuildDTBText(int dtb, wchar_t *name, wchar_t *text, int size)
 {
 	if (dtb > 1)
-		mir_sntprintf(text, size, TranslateT("%s has birthday in %d days."), name, dtb);
+		mir_snwprintf(text, size, TranslateT("%s has birthday in %d days."), name, dtb);
 	else if (dtb == 1)
-		mir_sntprintf(text, size, TranslateT("%s has birthday tomorrow."), name);
+		mir_snwprintf(text, size, TranslateT("%s has birthday tomorrow."), name);
 	else
-		mir_sntprintf(text, size, TranslateT("%s has birthday today."), name);
+		mir_snwprintf(text, size, TranslateT("%s has birthday today."), name);
 
 	return text;
 }
 
-TCHAR *BuildDABText(int dab, TCHAR *name, TCHAR *text, int size)
+wchar_t *BuildDABText(int dab, wchar_t *name, wchar_t *text, int size)
 {
 	if (dab > 1)
-		mir_sntprintf(text, size, TranslateT("%s had birthday %d days ago."), name, dab);
+		mir_snwprintf(text, size, TranslateT("%s had birthday %d days ago."), name, dab);
 	else if (dab == 1)
-		mir_sntprintf(text, size, TranslateT("%s had birthday yesterday."), name);
+		mir_snwprintf(text, size, TranslateT("%s had birthday yesterday."), name);
 	else
-		mir_sntprintf(text, size, TranslateT("%s has birthday today (Should not happen, please report)."), name);
+		mir_snwprintf(text, size, TranslateT("%s has birthday today (Should not happen, please report)."), name);
 
 	return text;
 }
@@ -69,9 +69,9 @@ int PopupNotifyBirthday(MCONTACT hContact, int dtb, int age)
 	if (commonData.bIgnoreSubcontacts && db_mc_isSub(hContact))
 		return 0;
 
-	TCHAR *name = pcli->pfnGetContactDisplayName(hContact, 0);
+	wchar_t *name = pcli->pfnGetContactDisplayName(hContact, 0);
 
-	TCHAR text[1024];
+	wchar_t text[1024];
 	BuildDTBText(dtb, name, text, _countof(text));
 	int gender = GetContactGender(hContact);
 
@@ -81,13 +81,13 @@ int PopupNotifyBirthday(MCONTACT hContact, int dtb, int age)
 	pd.PluginWindowProc = DlgProcPopup;
 	pd.lchIcon = GetDTBIcon(dtb);
 
-	mir_sntprintf(pd.lptzContactName, MAX_CONTACTNAME, TranslateT("Birthday - %s"), name);
-	TCHAR *sex;
+	mir_snwprintf(pd.lptzContactName, MAX_CONTACTNAME, TranslateT("Birthday - %s"), name);
+	wchar_t *sex;
 	switch (toupper(gender)) {
-	case _T('M'):
+	case 'M':
 		sex = TranslateT("He");
 		break;
-	case _T('F'):
+	case 'F':
 		sex = TranslateT("She");
 		break;
 	default:
@@ -96,12 +96,12 @@ int PopupNotifyBirthday(MCONTACT hContact, int dtb, int age)
 	}
 	if (age > 0) {
 		if (dtb > 0)
-			mir_sntprintf(pd.lptzText, MAX_SECONDLINE, TranslateT("%s\n%s will be %d years old."), text, sex, age);
+			mir_snwprintf(pd.lptzText, MAX_SECONDLINE, TranslateT("%s\n%s will be %d years old."), text, sex, age);
 		else
-			mir_sntprintf(pd.lptzText, MAX_SECONDLINE, TranslateT("%s\n%s just turned %d."), text, sex, age);
+			mir_snwprintf(pd.lptzText, MAX_SECONDLINE, TranslateT("%s\n%s just turned %d."), text, sex, age);
 	}
 	else
-		mir_tstrncpy(pd.lptzText, text, MAX_SECONDLINE - 1);
+		mir_wstrncpy(pd.lptzText, text, MAX_SECONDLINE - 1);
 
 	PUAddPopupT(&pd);
 
@@ -113,9 +113,9 @@ int PopupNotifyMissedBirthday(MCONTACT hContact, int dab, int age)
 	if (commonData.bIgnoreSubcontacts && db_mc_isSub(hContact))
 		return 0;
 
-	TCHAR *name = pcli->pfnGetContactDisplayName(hContact, 0);
+	wchar_t *name = pcli->pfnGetContactDisplayName(hContact, 0);
 
-	TCHAR text[1024];
+	wchar_t text[1024];
 	BuildDABText(dab, name, text, _countof(text));
 	int gender = GetContactGender(hContact);
 
@@ -125,27 +125,23 @@ int PopupNotifyMissedBirthday(MCONTACT hContact, int dab, int age)
 	pd.PluginWindowProc = DlgProcPopup;
 	pd.lchIcon = GetDTBIcon(dab);
 
-	mir_sntprintf(pd.lptzContactName, MAX_CONTACTNAME, TranslateT("Birthday - %s"), name);
-	TCHAR *sex;
+	mir_snwprintf(pd.lptzContactName, MAX_CONTACTNAME, TranslateT("Birthday - %s"), name);
+	wchar_t *sex;
 	switch (toupper(gender)) {
-	case _T('M'):
+	case 'M':
 		sex = TranslateT("He");
 		break;
-	case _T('F'):
+	case 'F':
 		sex = TranslateT("She");
 		break;
 	default:
 		sex = TranslateT("He/She");
 		break;
 	}
-	if (age > 0){
-		if (dab > 0)
-			mir_sntprintf(pd.lptzText, MAX_SECONDLINE, TranslateT("%s\n%s just turned %d."), text, sex, age);
-		else
-			mir_sntprintf(pd.lptzText, MAX_SECONDLINE, TranslateT("%s\n%s just turned %d."), text, sex, age);
-	}
+	if (age > 0)
+		mir_snwprintf(pd.lptzText, MAX_SECONDLINE, TranslateT("%s\n%s just turned %d."), text, sex, age);
 	else
-		mir_tstrncpy(pd.lptzText, text, MAX_SECONDLINE - 1);
+		mir_wstrncpy(pd.lptzText, text, MAX_SECONDLINE - 1);
 
 	PUAddPopupT(&pd);
 	return 0;
@@ -153,9 +149,9 @@ int PopupNotifyMissedBirthday(MCONTACT hContact, int dab, int age)
 
 int DialogNotifyBirthday(MCONTACT hContact, int dtb, int age)
 {
-	TCHAR *name = pcli->pfnGetContactDisplayName(hContact, 0);
+	wchar_t *name = pcli->pfnGetContactDisplayName(hContact, 0);
 
-	TCHAR text[1024];
+	wchar_t text[1024];
 	BuildDTBText(dtb, name, text, _countof(text));
 	if (!hUpcomingDlg) {
 		hUpcomingDlg = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_UPCOMING), NULL, DlgProcUpcoming);
@@ -175,9 +171,9 @@ int DialogNotifyBirthday(MCONTACT hContact, int dtb, int age)
 
 int DialogNotifyMissedBirthday(MCONTACT hContact, int dab, int age)
 {
-	TCHAR *name = pcli->pfnGetContactDisplayName(hContact, 0);
+	wchar_t *name = pcli->pfnGetContactDisplayName(hContact, 0);
 
-	TCHAR text[1024];
+	wchar_t text[1024];
 	BuildDABText(dab, name, text, _countof(text));
 	if (!hUpcomingDlg) {
 		hUpcomingDlg = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_UPCOMING), NULL, DlgProcUpcoming);
@@ -198,9 +194,9 @@ int DialogNotifyMissedBirthday(MCONTACT hContact, int dab, int age)
 int SoundNotifyBirthday(int dtb)
 {
 	if (dtb == 0)
-		SkinPlaySound(BIRTHDAY_TODAY_SOUND);
+		Skin_PlaySound(BIRTHDAY_TODAY_SOUND);
 	else if (dtb <= commonData.cSoundNearDays)
-		SkinPlaySound(BIRTHDAY_NEAR_SOUND);
+		Skin_PlaySound(BIRTHDAY_NEAR_SOUND);
 
 	return 0;
 }

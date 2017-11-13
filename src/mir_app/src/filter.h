@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -29,23 +29,23 @@ extern HANDLE hOptionsInitialize;
 
 typedef DWORD PageHash;
 
-void	AddFilterString(const PageHash key, const TCHAR *data);
-BOOL	ContainsFilterString(const PageHash key, TCHAR *data);
+void	AddFilterString(const PageHash key, const wchar_t *data);
+BOOL	ContainsFilterString(const PageHash key, wchar_t *data);
 void	ClearFilterStrings();
-void	GetDialogStrings(int enableKeywordFiltering, const PageHash key, TCHAR *pluginName, HWND hWnd,  TCHAR *group, TCHAR *title, TCHAR *tab, TCHAR *name);
+void	GetDialogStrings(int enableKeywordFiltering, const PageHash key, wchar_t *pluginName, HWND hWnd,  wchar_t *group, wchar_t *title, wchar_t *tab, wchar_t *name);
 
-_inline TCHAR *_tcslwr_locale(TCHAR *buf)
+_inline wchar_t *_tcslwr_locale(wchar_t *buf)
 {
-	LCMapString(Langpack_GetDefaultLocale() , LCMAP_LOWERCASE, buf, (int)mir_tstrlen(buf), buf, (int)mir_tstrlen(buf));
+	LCMapString(Langpack_GetDefaultLocale() , LCMAP_LOWERCASE, buf, (int)mir_wstrlen(buf), buf, (int)mir_wstrlen(buf));
 	return buf;
 }
 
-typedef LIST<TCHAR> KeywordList;
+typedef LIST<wchar_t> KeywordList;
 class CPageKeywords
 {
 	PageHash	_pageHashKey;
 	KeywordList _pageKeyWords;
-	static int _KeyWordsSortFunc(const TCHAR* p1, const TCHAR* p2)	{ return mir_tstrcmp(p1, p2); };
+	static int _KeyWordsSortFunc(const wchar_t* p1, const wchar_t* p2)	{ return mir_wstrcmp(p1, p2); };
 
 public:
 	CPageKeywords(PageHash pageHashKey) : _pageHashKey(pageHashKey), _pageKeyWords(1, _KeyWordsSortFunc) {};
@@ -55,19 +55,19 @@ public:
 			mir_free(_pageKeyWords[j]);
 	};
 
-	void AddKeyWord(TCHAR *ptKeyWord)
+	void AddKeyWord(wchar_t *ptKeyWord)
 	{
-		TCHAR *plwrWord = _tcslwr_locale(mir_tstrdup(ptKeyWord));
+		wchar_t *plwrWord = _tcslwr_locale(mir_wstrdup(ptKeyWord));
 		if (_pageKeyWords.getIndex(plwrWord) == -1)
 			_pageKeyWords.insert(plwrWord);
 		else
 			mir_free(plwrWord);
 	};
 
-	BOOL ContainsString(TCHAR *data)
+	BOOL ContainsString(wchar_t *data)
 	{
 		for (int i=0; i < _pageKeyWords.getCount(); i++)
-			if (_tcsstr(_pageKeyWords[i], data))
+			if (wcsstr(_pageKeyWords[i], data))
 				return TRUE;
 		return FALSE;
 	}

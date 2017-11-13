@@ -46,6 +46,60 @@ extern "C" __declspec (dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirand
 }
 
 
+
+
+
+static int __cdecl onAccListChanged(WPARAM wParam, LPARAM lParam)
+{
+	if (mirfoxMiranda.getMirfoxData().Plugin_Terminated) return 0;
+	mirfoxMiranda.onAccListChanged(wParam, lParam);
+	return 0;
+}
+
+static int __cdecl onContactAdded(WPARAM wParam, LPARAM)
+{
+	if (mirfoxMiranda.getMirfoxData().Plugin_Terminated) return 0;
+	OnContactAsyncThreadArgStruct* onContactAsyncThreadArgStruct = new(OnContactAsyncThreadArgStruct);
+	onContactAsyncThreadArgStruct->hContact = wParam;
+	onContactAsyncThreadArgStruct->mirfoxMiranda = &mirfoxMiranda;
+	mir_forkthread(CMirfoxMiranda::onContactAdded_async, onContactAsyncThreadArgStruct);
+	return 0;
+}
+
+static int __cdecl onContactDeleted(WPARAM wParam, LPARAM)
+{
+	if (mirfoxMiranda.getMirfoxData().Plugin_Terminated) return 0;
+	mirfoxMiranda.onContactDeleted(wParam);
+	return 0;
+}
+
+static int __cdecl onContactSettingChanged(WPARAM hContact, LPARAM lParam){
+
+	if (mirfoxMiranda.getMirfoxData().Plugin_Terminated)
+		return 0;
+	if (hContact == NULL || lParam == NULL)
+		return 0;
+
+	DBCONTACTWRITESETTING* cws = (DBCONTACTWRITESETTING*)lParam;
+	if (!strcmp(cws->szModule, "CList")) {
+
+		if (!strcmp(cws->szSetting, "Hidden")) {
+			mirfoxMiranda.onContactSettingChanged(hContact, lParam);
+		}
+
+		if (!strcmp(cws->szSetting, "MyHandle")) {
+			OnContactAsyncThreadArgStruct* onContactAsyncThreadArgStruct = new(OnContactAsyncThreadArgStruct);
+			onContactAsyncThreadArgStruct->hContact = hContact;
+			onContactAsyncThreadArgStruct->mirfoxMiranda = &mirfoxMiranda;
+			mir_forkthread(CMirfoxMiranda::onContactSettingChanged_async, onContactAsyncThreadArgStruct);
+		}
+	}
+
+	return 0;
+}
+
+
+
 /*
  * hook on ME_SYSTEM_MODULESLOADED at Load()
  */
@@ -57,7 +111,7 @@ static int onModulesLoaded(WPARAM, LPARAM)
 	puc.flags = PCF_TCHAR;
 
 	puc.pszName = "MirFox_Notify";
-	puc.ptszDescription = TranslateT("MirFox/Notification");
+	puc.pwszDescription = TranslateT("MirFox/Notification");
 	puc.colorBack = RGB(173, 206, 247); //light blue
 	puc.colorText = GetSysColor(COLOR_WINDOWTEXT);
 	puc.iSeconds = 3;
@@ -65,12 +119,20 @@ static int onModulesLoaded(WPARAM, LPARAM)
 	hPopupNotify = Popup_RegisterClass(&puc);
 
 	puc.pszName = "MirFox_Error";
-	puc.ptszDescription = TranslateT("MirFox/Error");
+	puc.pwszDescription = TranslateT("MirFox/Error");
 	puc.colorBack = RGB(255, 128, 128); //light red
 	puc.colorText = GetSysColor(COLOR_WINDOWTEXT);
 	puc.iSeconds = 20;
 	puc.hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_ICON_PE));
 	hPopupError = Popup_RegisterClass(&puc);
+
+
+	//init refresh hooks
+	HookEvent(ME_PROTO_ACCLISTCHANGED, onAccListChanged);
+	HookEvent(ME_DB_CONTACT_ADDED, onContactAdded);
+	HookEvent(ME_DB_CONTACT_DELETED, onContactDeleted);
+	HookEvent(ME_DB_CONTACT_SETTINGCHANGED, onContactSettingChanged);
+
 
 	return 0;
 }
@@ -87,7 +149,7 @@ static int OnShutdown(WPARAM, LPARAM)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, onModulesLoaded);
 	HookEvent(ME_SYSTEM_SHUTDOWN, OnShutdown);

@@ -51,11 +51,11 @@ int InitOptionsCallback(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
-	odp.ptszGroup = LPGENT("Contacts");
-	odp.ptszTitle = LPGENT("Quick Contacts");
+	odp.szGroup.w = LPGENW("Contacts");
+	odp.szTitle.w = LPGENW("Quick Contacts");
 	odp.pfnDlgProc = OptionsDlgProc;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT);
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
 	Options_AddPage(wParam, &odp);
 	return 0;
 }

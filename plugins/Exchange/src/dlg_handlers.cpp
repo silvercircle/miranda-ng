@@ -40,14 +40,14 @@ INT_PTR CALLBACK DlgProcOptions(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 
 			int bCheck = db_get_b(NULL, ModuleName, "Check", 1);
 
-			TCHAR buffer[4096];
-			GetStringFromDatabase("Username", _T(""), buffer, _countof(buffer));
+			wchar_t buffer[4096];
+			GetStringFromDatabase("Username", L"", buffer, _countof(buffer));
 			SetDlgItemText(hWnd, IDC_USER_EDIT, buffer);
 
-			GetStringFromDatabase("Password", _T(""), buffer, _countof(buffer));
+			GetStringFromDatabase("Password", L"", buffer, _countof(buffer));
 			SetDlgItemText(hWnd, IDC_PASSWORD_EDIT, buffer);
 
-			GetStringFromDatabase("Server", _T(""), buffer, _countof(buffer));
+			GetStringFromDatabase("Server", L"", buffer, _countof(buffer));
 			SetDlgItemText(hWnd, IDC_SERVER_EDIT, buffer);
 
 			SetDlgItemInt(hWnd, IDC_PORT_EDIT, db_get_dw(NULL, ModuleName, "Port", EXCHANGE_PORT), FALSE);
@@ -110,15 +110,15 @@ INT_PTR CALLBACK DlgProcOptions(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 			case PSN_APPLY:
 				db_set_b(NULL, ModuleName, "Check", IsDlgButtonChecked(hWnd, IDC_CHECK_EMAILS));
 
-				TCHAR buffer[4096];
+				wchar_t buffer[4096];
 				GetDlgItemText(hWnd, IDC_USER_EDIT, buffer, _countof(buffer));
-				db_set_ts(NULL, ModuleName, "Username", buffer);
+				db_set_ws(NULL, ModuleName, "Username", buffer);
 
 				GetDlgItemText(hWnd, IDC_PASSWORD_EDIT, buffer, _countof(buffer));
-				db_set_ts(NULL, ModuleName, "Password", buffer);
+				db_set_ws(NULL, ModuleName, "Password", buffer);
 
 				GetDlgItemText(hWnd, IDC_SERVER_EDIT, buffer, _countof(buffer));
-				db_set_ts(NULL, ModuleName, "Server", buffer);
+				db_set_ws(NULL, ModuleName, "Server", buffer);
 
 				GetDlgItemText(hWnd, IDC_PORT_EDIT, buffer, _countof(buffer));
 				db_set_dw(NULL, ModuleName, "Port", GetDlgItemInt(hWnd, IDC_PORT_EDIT, NULL, FALSE));
@@ -173,7 +173,7 @@ int CALLBACK ListSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		int count = ListView_GetItemCount(hWnd);
 		for (int i = 0; i < count; i++) {
 			if (ListView_GetItemState(hWnd, i, LVIS_SELECTED)) {
-				TCHAR emailID[4096]; //uhh
+				wchar_t emailID[4096]; //uhh
 				ListView_GetItemText(hWnd, i, 2, emailID, _countof(emailID));
 				exchangeServer.OpenMessage(emailID);
 			}
@@ -226,8 +226,8 @@ INT_PTR CALLBACK DlgProcEmails(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			LVITEM item = { 0 };
 			TEmailHeader email = { 0 };
 			email.cbSize = sizeof(TEmailHeader);
-			TCHAR sender[1024] = _T("");
-			TCHAR subject[1024] = _T("");
+			wchar_t sender[1024] = L"";
+			wchar_t subject[1024] = L"";
 			//char buffer[4096];
 			email.cSender = sizeof(sender);
 			email.cSubject = sizeof(subject);
@@ -242,7 +242,7 @@ INT_PTR CALLBACK DlgProcEmails(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 				item.pszText = email.szSender;
 				ListView_InsertItem(hList, &item);
 				ListView_SetItemText(hList, i, 1, email.szSubject);
-				ListView_SetItemText(hList, i, 2, mir_a2t(email.emailID));
+				ListView_SetItemText(hList, i, 2, mir_a2u(email.emailID));
 			}
 			SetFocus(hList);
 		}
@@ -297,7 +297,7 @@ INT_PTR CALLBACK DlgProcEmails(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			int count = ListView_GetItemCount(hList);
 			for (int i = 0; i < count; i++) {
 				if (ListView_GetCheckState(hList, i)) {
-					TCHAR emailID[2048]; //uhh ohh
+					wchar_t emailID[2048]; //uhh ohh
 					LVITEM item = { 0 };
 					item.iItem = i;
 					item.mask = LVIF_TEXT;

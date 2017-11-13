@@ -6,13 +6,13 @@
 ;  Authors: Deathdemon
 ;============================================================
 [Shows a notification when someone in your contact list changes his client.]
-Уведомляет, если кто-то из вашего списка контактов сменил свой клиент.
+Уведомления о том, кто из вашего списка контактов сменил свой клиент.
 [ClientChangeNotify error]
 Ошибка ClientChangeNotify
 [Fingerprint plugin not found.]
 Плагин Fingerprint не найден.
 [ClientChangeNotify requires it to work properly.]
-Он необходим для работы ClientChangeNotify.
+Он нужен для работы ClientChangeNotify.
 [Don't remind me anymore]
 Больше не напоминать
 [Enable notification]

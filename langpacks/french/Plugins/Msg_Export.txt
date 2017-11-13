@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Msg_Export.dll
 ;  Plugin: Message export
-;  Version: 3.1.0.3
+;  Version: 3.1.2.1
 ;  Authors: Kennet Nielsen, mod by ring0
 ;============================================================
 [Exports every message, URL or file you receive to a text file.]
@@ -32,6 +32,8 @@ Tout exporter
 Répertoire d'exportation
 [Max column width]
 Largeur colonne maxi
+[Note: 0 = no limit]
+NOTE : 0=sans limite
 [Time format]
 Format heure
 [Export format]
@@ -73,7 +75,7 @@ Remettre le nom de fichier par défaut
 [Copy]
 Copier
 ;file \plugins\Msg_Export\src\FileViewer.cpp
-[Failed to write to the RichEdit the buffer was to small.]
+[Failed to write to the Rich Edit the buffer was to small.]
 
 [Error: Optimal buffer size decreased to a too low size!]
 
@@ -81,9 +83,9 @@ Copier
 
 [Failed to execute external file view]
 
-[Failed to load Rich Edit ( Msftedit.DLL )]
+[Failed to load Rich Edit (Msftedit.dll)]
 
-[Failed to get handle to RichEdit!]
+[Failed to get handle to Rich Edit!]
 
 [Failed to open file\r\n%s\r\n\r\nContact handle is invalid]
 
@@ -112,23 +114,21 @@ Surligner un contact
 ;file \plugins\Msg_Export\src\main.cpp
 [Open E&xported History]
 Ouvrir l'historique &exporté
-[Failed to add menu item Open Exported History\nCallService(MS_CLIST_ADDCONTACTMENUITEM,...)]
-
 ;file \plugins\Msg_Export\src\options.cpp
-[No contacts found to export]
-Pas de contacts à exporter trouvés
 [Reading database information (Phase 1 of 2)]
 
-[Failed to export at least one contact]
-N'a pas exporté un seul contact
 [Sorting and writing database information (Phase 2 of 2)]
 Sortie et écriture des infos de la basse de données ( étape 2/2 )
-[Max line width must be at least %d]
-La largeur maximum de ligne doit être au moins de %d
+[Failed to open or create file :\n]
+Échec d'ouverture ou de création du fichier :\n
+[No contacts found to export]
+Pas de contacts à exporter trouvés
+[Failed to export at least one contact]
+N'a pas exporté un seul contact
+[Max line width must be at least %d. Or use 0 for no limit.]
+
 [You need to restart Miranda to change the history function]
 Vous devez relancer Miranda pour changer la gestion de l'historique
-[Failed to get the path to Msg_Export.dll\nPlease locate Msg_Export.txt yourself]
-N'a pas trouvé Msg_Export.dll Veuillez localisé Msg_Export.txt manuellement.
 [File]
 Fichier
 [Nick]
@@ -163,8 +163,6 @@ Général
 [Miranda NG (Message Export Plugin)]
 
 ;file \plugins\Msg_Export\src\utils.cpp
-[No_Nick]
-
 [No_Group]
 
 [Database: Attempt to get wrong type of value, string]
@@ -183,8 +181,6 @@ Général
 
 [All\0*.*\0Text\0*.TXT\0\0]
 
-[Failed to open or create file :\n]
-Échec d'ouverture ou de création du fichier :\n
 [Failed to move to the end of the file :\n]
 Échec de mise en fin de fichier :\n
 [Failed to UTF8 byte order code to file :\n]
@@ -273,3 +269,5 @@ EmailExpress de :
 
 [Failed to delete the file]
 Échec de la suppression du fichier
+[No_Nick]
+

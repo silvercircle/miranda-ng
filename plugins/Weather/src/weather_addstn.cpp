@@ -26,7 +26,7 @@ to the contact list.  Contain code for both name and ID search.
 
 // variables used for weather_addstn.c
 static int sttSearchId = -1;
-static TCHAR name1[256];
+static wchar_t name1[256];
 
 // ============ ADDING NEW STATION  ============
 
@@ -35,7 +35,7 @@ static TCHAR name1[256];
 INT_PTR WeatherAddToList(WPARAM, LPARAM lParam)
 {
 	PROTOSEARCHRESULT *psr = (PROTOSEARCHRESULT*)lParam;
-	if (!psr || !psr->email.t)
+	if (!psr || !psr->email.w)
 		return 0;
 
 	// search for existing contact
@@ -44,8 +44,8 @@ INT_PTR WeatherAddToList(WPARAM, LPARAM lParam)
 		if (IsMyContact(hContact)) {
 			DBVARIANT dbv;
 			// check ID to see if the contact already exist in the database
-			if (!db_get_ts(hContact, WEATHERPROTONAME, "ID", &dbv)) {
-				if (!mir_tstrcmpi(psr->email.t, dbv.ptszVal)) {
+			if (!db_get_ws(hContact, WEATHERPROTONAME, "ID", &dbv)) {
+				if (!mir_wstrcmpi(psr->email.w, dbv.ptszVal)) {
 					// remove the flag for not on list and hidden, thus make the contact visible
 					// and add them on the list
 					if (db_get_b(hContact, "CList", "NotOnList", 1)) {
@@ -63,19 +63,19 @@ INT_PTR WeatherAddToList(WPARAM, LPARAM lParam)
 
 	// if contact with the same ID was not found, add it
 	if (psr->cbSize < sizeof(PROTOSEARCHRESULT)) return 0;
-	MCONTACT hContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
+	MCONTACT hContact = db_add_contact();
 	Proto_AddToContact(hContact, WEATHERPROTONAME);
 	// suppress online notification for the new contact
 	CallService(MS_IGNORE_IGNORE, hContact, IGNOREEVENT_USERONLINE);
 
 	// set contact info and settings
-	TCHAR svc[256];
-	_tcsncpy(svc, psr->email.t, _countof(svc)); svc[_countof(svc) - 1] = 0;
+	wchar_t svc[256];
+	wcsncpy(svc, psr->email.w, _countof(svc)); svc[_countof(svc) - 1] = 0;
 	GetSvc(svc);
 	// set settings by obtaining the default for the service 
-	if (psr->lastName.t[0] != 0) {
+	if (psr->lastName.w[0] != 0) {
 		WIDATA *sData = GetWIData(svc);
-		db_set_ts(hContact, WEATHERPROTONAME, "MapURL", sData->DefaultMap);
+		db_set_ws(hContact, WEATHERPROTONAME, "MapURL", sData->DefaultMap);
 		db_set_s(hContact, WEATHERPROTONAME, "InfoURL", sData->DefaultURL);
 	}
 	else { // if no valid service is found, create empty strings for MapURL and InfoURL
@@ -83,15 +83,15 @@ INT_PTR WeatherAddToList(WPARAM, LPARAM lParam)
 		db_set_s(hContact, WEATHERPROTONAME, "InfoURL", "");
 	}
 	// write the other info and settings to the database
-	db_set_ts(hContact, WEATHERPROTONAME, "ID", psr->email.t);
-	db_set_ts(hContact, WEATHERPROTONAME, "Nick", psr->nick.t);
+	db_set_ws(hContact, WEATHERPROTONAME, "ID", psr->email.w);
+	db_set_ws(hContact, WEATHERPROTONAME, "Nick", psr->nick.w);
 	db_set_w(hContact, WEATHERPROTONAME, "Status", ID_STATUS_OFFLINE);
 
 	AvatarDownloaded(hContact);
 
-	TCHAR str[256];
-	mir_sntprintf(str, TranslateT("Current weather information for %s."), psr->nick.t);
-	db_set_ts(hContact, WEATHERPROTONAME, "About", str);
+	wchar_t str[256];
+	mir_snwprintf(str, TranslateT("Current weather information for %s."), psr->nick.w);
+	db_set_ws(hContact, WEATHERPROTONAME, "About", str);
 
 	// make the last update tags to something invalid
 	db_set_s(hContact, WEATHERPROTONAME, "LastLog", "never");
@@ -107,13 +107,13 @@ INT_PTR WeatherAddToList(WPARAM, LPARAM lParam)
 		GetStationID(hContact, opt.Default, _countof(opt.Default));
 
 		opt.DefStn = hContact;
-		if (!db_get_ts(hContact, WEATHERPROTONAME, "Nick", &dbv)) {
+		if (!db_get_ws(hContact, WEATHERPROTONAME, "Nick", &dbv)) {
 			// notification message box
-			mir_sntprintf(str, TranslateT("%s is now the default weather station"), dbv.ptszVal);
+			mir_snwprintf(str, TranslateT("%s is now the default weather station"), dbv.ptszVal);
 			db_free(&dbv);
 			MessageBox(NULL, str, TranslateT("Weather Protocol"), MB_OK | MB_ICONINFORMATION);
 		}
-		db_set_ts(NULL, WEATHERPROTONAME, "Default", opt.Default);
+		db_set_ws(NULL, WEATHERPROTONAME, "Default", opt.Default);
 	}
 	// display the Edit Settings dialog box
 	EditSettings(hContact, 0);
@@ -134,7 +134,7 @@ BOOL CheckSearch()
 
 // ============ BASIC ID SEARCH  ============
 
-static TCHAR sttSID[32];
+static wchar_t sttSID[32];
 
 // A timer process for the ID search (threaded)
 static void __cdecl BasicSearchTimerProc(LPVOID)
@@ -156,7 +156,7 @@ static void __cdecl BasicSearchTimerProc(LPVOID)
 INT_PTR WeatherBasicSearch(WPARAM, LPARAM lParam)
 {
 	if (sttSearchId != -1) return 0;   //only one search at a time
-	_tcsncpy(sttSID, (TCHAR*)lParam, _countof(sttSID));
+	wcsncpy(sttSID, (wchar_t*)lParam, _countof(sttSID));
 	sttSID[_countof(sttSID) - 1] = 0;
 	sttSearchId = 1;
 	// create a thread for the ID search
@@ -165,7 +165,7 @@ INT_PTR WeatherBasicSearch(WPARAM, LPARAM lParam)
 }
 
 // ============ NAME SEARCH  ============
-
+//
 // name search timer process (threaded)
 static void __cdecl NameSearchTimerProc(LPVOID)
 {
@@ -225,22 +225,22 @@ INT_PTR WeatherAdvancedSearch(WPARAM, LPARAM lParam)
 // searchId = -1
 // sData = the ID search data for that particular weather service
 // svcname = the name of the weather service that is currently searching (ie. Yahoo Weather)
-int IDSearchProc(TCHAR *sID, const int searchId, WIIDSEARCH *sData, TCHAR *svc, TCHAR *svcname)
+int IDSearchProc(wchar_t *sID, const int searchId, WIIDSEARCH *sData, wchar_t *svc, wchar_t *svcname)
 {
-	TCHAR str[MAX_DATA_LEN], newID[MAX_DATA_LEN];
+	wchar_t str[MAX_DATA_LEN], newID[MAX_DATA_LEN];
 
 	if (sData->Available) {
 		char loc[255];
-		TCHAR *szData = NULL;
+		wchar_t *szData = NULL;
 
 		// load the page
 		mir_snprintf(loc, sData->SearchURL, sID);
 		BOOL bFound = (InternetDownloadFile(loc, NULL, NULL, &szData) == 0);
 		if (bFound) {
-			TCHAR* szInfo = szData;
+			wchar_t* szInfo = szData;
 
 			// not found
-			if (_tcsstr(szInfo, sData->NotFoundStr) == NULL)
+			if (wcsstr(szInfo, sData->NotFoundStr) == NULL)
 				GetDataValue(&sData->Name, str, &szInfo);
 		}
 
@@ -250,16 +250,16 @@ int IDSearchProc(TCHAR *sID, const int searchId, WIIDSEARCH *sData, TCHAR *svc, 
 	}
 
 	// give no station name but only ID if the search is unavailable
-	else _tcsncpy(str, TranslateT("<Enter station name here>"), MAX_DATA_LEN - 1);
-	mir_sntprintf(newID, _T("%s/%s"), svc, sID);
+	else wcsncpy(str, TranslateT("<Enter station name here>"), MAX_DATA_LEN - 1);
+	mir_snwprintf(newID, L"%s/%s", svc, sID);
 
 	// set the search result and broadcast it
 	PROTOSEARCHRESULT psr = { sizeof(psr) };
-	psr.flags = PSR_TCHAR;
-	psr.nick.t = str;
-	psr.firstName.t = _T(" ");
-	psr.lastName.t = svcname;
-	psr.email.t = newID;
+	psr.flags = PSR_UNICODE;
+	psr.nick.w = str;
+	psr.firstName.w = L" ";
+	psr.lastName.w = svcname;
+	psr.email.w = newID;
 	ProtoBroadcastAck(WEATHERPROTONAME, NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)searchId, (LPARAM)&psr);
 
 	return 0;
@@ -269,10 +269,10 @@ int IDSearchProc(TCHAR *sID, const int searchId, WIIDSEARCH *sData, TCHAR *svc, 
 //  sID:		the ID to search for
 //  searchId:	don't change
 // return 0 if no error
-int IDSearch(TCHAR *sID, const int searchId)
+int IDSearch(wchar_t *sID, const int searchId)
 {
 	// for a normal ID search (ID != #)
-	if (mir_tstrcmp(sID, _T("#"))) {
+	if (mir_wstrcmp(sID, L"#")) {
 		WIDATALIST *Item = WIHead;
 
 		// search every weather service using the search station ID
@@ -286,11 +286,11 @@ int IDSearch(TCHAR *sID, const int searchId)
 	else {
 		// return an empty contact on "#"
 		PROTOSEARCHRESULT psr = { sizeof(psr) };
-		psr.flags = PSR_TCHAR;
-		psr.nick.t = TranslateT("<Enter station name here>");	// to be entered
-		psr.firstName.t = _T(" ");
-		psr.lastName.t = _T("");
-		psr.email.t = TranslateT("<Enter station ID here>");		// to be entered
+		psr.flags = PSR_UNICODE;
+		psr.nick.w = TranslateT("<Enter station name here>");	// to be entered
+		psr.firstName.w = L" ";
+		psr.lastName.w = L"";
+		psr.email.w = TranslateT("<Enter station ID here>");		// to be entered
 		ProtoBroadcastAck(WEATHERPROTONAME, NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)searchId, (LPARAM)&psr);
 	}
 
@@ -304,34 +304,34 @@ int IDSearch(TCHAR *sID, const int searchId)
 // searchId = -1
 // sData = the name search data for that particular weather service
 // svcname = the name of the weather service that is currently searching (ie. Yahoo Weather)
-int NameSearchProc(TCHAR *name, const int searchId, WINAMESEARCH *sData, TCHAR *svc, TCHAR *svcname)
+int NameSearchProc(wchar_t *name, const int searchId, WINAMESEARCH *sData, wchar_t *svc, wchar_t *svcname)
 {
-	TCHAR Name[MAX_DATA_LEN], str[MAX_DATA_LEN], sID[MAX_DATA_LEN], *szData = NULL, *search;
+	wchar_t Name[MAX_DATA_LEN], str[MAX_DATA_LEN], sID[MAX_DATA_LEN], *szData = NULL, *search;
 
 	// replace spaces with %20
 	char loc[256];
 	T2Utf szSearchName(name);
 	mir_snprintf(loc, sData->SearchURL, ptrA(mir_urlEncode(szSearchName)));
 	if (InternetDownloadFile(loc, NULL, NULL, &szData) == 0) {
-		TCHAR* szInfo = szData;
-		search = _tcsstr(szInfo, sData->NotFoundStr);	// determine if data is available
+		wchar_t* szInfo = szData;
+		search = wcsstr(szInfo, sData->NotFoundStr);	// determine if data is available
 		if (search == NULL) { // if data is found
 			// test if it is single result
 			if (sData->Single.Available && sData->Multiple.Available)
-				search = _tcsstr(szInfo, sData->SingleStr);
+				search = wcsstr(szInfo, sData->SingleStr);
 			// for single result
 			if (sData->Single.Available && (search != NULL || !sData->Multiple.Available)) { // single result
 				// if station ID appears first in the downloaded data
-				if (!mir_tstrcmpi(sData->Single.First, _T("ID"))) {
+				if (!mir_wstrcmpi(sData->Single.First, L"ID")) {
 					GetDataValue(&sData->Single.ID, str, &szInfo);
-					mir_sntprintf(sID, _T("%s/%s"), svc, str);
+					mir_snwprintf(sID, L"%s/%s", svc, str);
 					GetDataValue(&sData->Single.Name, Name, &szInfo);
 				}
 				// if station name appears first in the downloaded data
-				else if (!mir_tstrcmpi(sData->Single.First, _T("NAME"))) {
+				else if (!mir_wstrcmpi(sData->Single.First, L"NAME")) {
 					GetDataValue(&sData->Single.Name, Name, &szInfo);
 					GetDataValue(&sData->Single.ID, str, &szInfo);
-					mir_sntprintf(sID, _T("%s/%s"), svc, str);
+					mir_snwprintf(sID, L"%s/%s", svc, str);
 				}
 				else
 					str[0] = 0;
@@ -344,16 +344,16 @@ int NameSearchProc(TCHAR *name, const int searchId, WINAMESEARCH *sData, TCHAR *
 
 				// if can't get the name, use the search string as name
 				if (Name[0] == 0)
-					_tcsncpy(Name, name, _countof(Name));
+					wcsncpy(Name, name, _countof(Name));
 
 				// set the data and broadcast it
 				PROTOSEARCHRESULT psr = { sizeof(psr) };
-				psr.flags = PSR_TCHAR;
-				psr.nick.t = Name;
-				psr.firstName.t = _T(" ");
-				psr.lastName.t = svcname;
-				psr.email.t = sID;
-				psr.id.t = sID;
+				psr.flags = PSR_UNICODE;
+				psr.nick.w = Name;
+				psr.firstName.w = L" ";
+				psr.lastName.w = svcname;
+				psr.email.w = sID;
+				psr.id.w = sID;
 				ProtoBroadcastAck(WEATHERPROTONAME, NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)searchId, (LPARAM)&psr);
 				mir_free(szData);
 				return 0;
@@ -363,16 +363,16 @@ int NameSearchProc(TCHAR *name, const int searchId, WINAMESEARCH *sData, TCHAR *
 				// search for the next occurrence of the string
 				while (true) {
 					// if station ID appears first in the downloaded data
-					if (!mir_tstrcmpi(sData->Multiple.First, _T("ID"))) {
+					if (!mir_wstrcmpi(sData->Multiple.First, L"ID")) {
 						GetDataValue(&sData->Multiple.ID, str, &szInfo);
-						mir_sntprintf(sID, _T("%s/%s"), svc, str);
+						mir_snwprintf(sID, L"%s/%s", svc, str);
 						GetDataValue(&sData->Multiple.Name, Name, &szInfo);
 					}
 					// if station name appears first in the downloaded data
-					else if (!mir_tstrcmpi(sData->Multiple.First, _T("NAME"))) {
+					else if (!mir_wstrcmpi(sData->Multiple.First, L"NAME")) {
 						GetDataValue(&sData->Multiple.Name, Name, &szInfo);
 						GetDataValue(&sData->Multiple.ID, str, &szInfo);
-						mir_sntprintf(sID, _T("%s/%s"), svc, str);
+						mir_snwprintf(sID, L"%s/%s", svc, str);
 					}
 					else
 						break;
@@ -383,15 +383,15 @@ int NameSearchProc(TCHAR *name, const int searchId, WINAMESEARCH *sData, TCHAR *
 
 					// if can't get the name, use the search string as name
 					if (Name[0] == 0)
-						_tcsncpy(Name, name, _countof(Name));
+						wcsncpy(Name, name, _countof(Name));
 
 					PROTOSEARCHRESULT psr = { sizeof(psr) };
-					psr.flags = PSR_TCHAR;
-					psr.nick.t = Name;
-					psr.firstName.t = _T("");
-					psr.lastName.t = svcname;
-					psr.email.t = sID;
-					psr.id.t = sID;
+					psr.flags = PSR_UNICODE;
+					psr.nick.w = Name;
+					psr.firstName.w = L"";
+					psr.lastName.w = svcname;
+					psr.email.w = sID;
+					psr.id.w = sID;
 					ProtoBroadcastAck(WEATHERPROTONAME, NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)searchId, (LPARAM)&psr);
 				}
 			}
@@ -409,7 +409,7 @@ int NameSearchProc(TCHAR *name, const int searchId, WINAMESEARCH *sData, TCHAR *
 //  name:		the station name to search for
 //  searchId:	don't change
 // return 0 if no error
-int NameSearch(TCHAR *name, const int searchId)
+int NameSearch(wchar_t *name, const int searchId)
 {
 	WIDATALIST *Item = WIHead;
 

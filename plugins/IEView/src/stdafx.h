@@ -59,7 +59,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "Utils.h"
 #include "ieview_services.h"
 #include "Options.h"
-#include "Version.h"
+#include "version.h"
 #include "ChatHTMLBuilder.h"
 #include "HistoryHTMLBuilder.h"
 #include "HTMLBuilder.h"
@@ -70,6 +70,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "MUCCHTMLBuilder.h"
 #include "Template.h"
 #include "TextToken.h"
+#include "external_funcs.h"
 
 #define ieviewModuleName	"IEVIEW"
 
@@ -77,5 +78,16 @@ extern HINSTANCE hInstance;
 extern IEView *debugView;
 extern char *workingDirUtf8;
 extern HANDLE hHookOptionsChanged;
+extern IconItem iconList[];
+
+class BSTR_PTR
+{
+	BSTR _data;
+public:
+	BSTR_PTR(const wchar_t *src) : _data(SysAllocString(src)) {}
+	~BSTR_PTR() { SysFreeString(_data); }
+	size_t length() { return SysStringLen(_data); }
+	operator BSTR () { return _data; }
+};
 
 #endif

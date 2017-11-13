@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: SkypeWeb.dll
 ;  Plugin: Skype protocol (Web)
-;  Version: 0.12.2.2
+;  Version: 0.12.2.4
 ;  Authors: Miranda NG Team
 ;============================================================
 [Skype protocol support for Miranda NG. Based on new Skype for Web.]
@@ -31,28 +31,32 @@
 ;file \protocols\SkypeWeb\src\skype_chatrooms.cpp
 [Admin]
 [User]
+[Enter new nickname]
 [This chat is going to be destroyed forever with all its contents. This action cannot be undone. Are you sure?]
 [Warning]
 [&Invite user...]
 [&Leave chat session]
-[&Change topic]
+[&Change topic...]
 [Kick &user]
 [Set &role]
 [&Admin]
 [&User]
+[Change nick...]
 [Enter new chatroom topic]
 ;file \protocols\SkypeWeb\src\skype_contacts.cpp
 [Are you sure?]
 ;file \protocols\SkypeWeb\src\skype_db.cpp
+[Incoming call]
 [Edited message]
 [Action]
 [Call information]
 [File transfer information]
 [URI object]
+[Moji]
+[File]
 [Unknown event]
-[Incoming call]
 ;file \protocols\SkypeWeb\src\skype_events.cpp
-[Invalid data!]
+[SkypeWeb error: Invalid data!]
 [[b]Original message:[/b]\n%s\n]
 [Original message:\n%s\n]
 [[b]Edited at %s:[/b]\n%s\n]
@@ -102,6 +106,6 @@
 ;file \protocols\SkypeWeb\src\skype_proto.cpp
 [Incoming call sound]
 [Incoming call canceled sound]
+[Skypename]
 ;file \protocols\SkypeWeb\src\skype_trouter.cpp
-[Failed to establish a TRouter connection.]
 [Incoming call from %s]

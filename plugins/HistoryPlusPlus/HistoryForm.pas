@@ -478,92 +478,6 @@ begin
     Result := X
 end;
 
-{ function ParseUrlItem(Item: THistoryItem; out Url,Mes: WideString): Boolean;
-  var
-  tmp1,tmp2: WideString;
-  n: Integer;
-  begin
-  Url := '';
-  Mes := '';
-  Result := False;
-  if not (mtUrl in Item.MessageType) then exit;
-  tmp1 := Item.Text;
-  if tmp1 = '' then exit;
-  Result := True;
-
-  n := Pos(#10,tmp1);
-  if n <> 0 then begin
-  tmp2 := Copy(tmp1,1,n-2);
-  Delete(tmp1,1,n);
-  end else begin
-  tmp2 := tmp1;
-  tmp1 := '';
-  end;
-
-  Mes := tmp1;
-
-  n := Pos(':',tmp2);
-  if n <> 0 then begin
-  tmp2 := Copy(tmp2,n+2,Length(tmp2));
-  end else begin
-  Result := False;
-  tmp2 := '';
-  end;
-
-  url := tmp2;
-  end; }
-
-{ function ParseFileItem(Item: THistoryItem; out FileName,Mes: WideString): Boolean;
-  var
-  tmp1,tmp2: AnsiString;
-  n: Integer;
-  begin
-  Result := False;
-  FileName := '';
-  Mes := '';
-  if not (mtFile in Item.MessageType) then exit;
-  tmp1 := Item.Text;
-
-  n := Pos(#10,tmp1);
-  if n <> 0 then begin
-  Delete(tmp1,1,n)
-  end else
-  exit;
-
-  Result := True;
-
-  n := Pos(#10,tmp1);
-  if n <> 0 then begin
-  tmp2 := tmp1;
-  tmp1 := Copy(tmp2,1,n-2);
-  Delete(tmp2,1,n);
-  end;
-
-  Mes := tmp2;
-  FileName := tmp1;
-  end; }
-
-{ function GetEventInfo(hDBEvent: DWord): TDBEVENTINFO;
-  var
-  BlobSize:Integer;
-  begin
-  ZeroMemory(@Result,SizeOf(Result));
-  Result.cbSize:=SizeOf(Result);
-  Result.pBlob:=nil;
-  BlobSize:=CallService(MS_DB_EVENT_GETBLOBSIZE,hDBEvent,0);
-
-  GetMem(Result.pBlob,BlobSize);
-  Result.cbBlob:=BlobSize;
-
-  CallService(MS_DB_EVENT_GET,hDBEvent,LPARAM(@Result));
-  end; }
-
-(*
-  This function gets only name of the file
-  and tries to make it FAT-happy, so we trim out and
-  ":"-s, "\"-s and so on...
-*)
-
 procedure THistoryFrm.LoadHistory(Sender: TObject);
 // Load the History from the Database and Display it in the grid
   procedure FastLoadHandles;
@@ -860,7 +774,7 @@ begin
     end
     else
     begin
-      DBDeleteContactSetting(0, hppDBName, 'HistoryToolbar');
+      db_unset(0, hppDBName, 'HistoryToolbar');
       LoadToolbar;
       Exit;
     end;
@@ -2619,6 +2533,7 @@ begin
   end
   else
   begin
+    tPanel := [];
     if GetDBBool(hppDBName, 'ShowSessions', False) then
       include(tPanel, hpSessions);
     if GetDBBool(hppDBName, 'ShowBookmarks', False) then
@@ -3626,23 +3541,20 @@ begin
         inherited;
         if Message.Result <> 0 then
           Exit;
-        Message.Result := CallService(MS_CLIST_MENUPROCESSCOMMAND,
-          MAKEWPARAM(Message.WParamLo, MPCF_CONTACTMENU), hContact);
+        Message.Result := Clist_MenuProcessCommand(Message.WParamLo, MPCF_CONTACTMENU, hContact);
         Exit;
       end;
     WM_MEASUREITEM:
       if Self.UserMenu <> 0 then
       begin
-        Message.Result := CallService(MS_CLIST_MENUMEASUREITEM, Message.wParam,
-          Message.lParam);
+        Message.Result := Menu_MeasureItem(Message.LParam);
         if Message.Result <> 0 then
           Exit;
       end;
     WM_DRAWITEM:
       if Self.UserMenu <> 0 then
       begin
-        Message.Result := CallService(MS_CLIST_MENUDRAWITEM, Message.wParam,
-          Message.lParam);
+        Message.Result := Menu_DrawItem(Message.LParam);
         if Message.Result <> 0 then
           Exit;
       end;
@@ -3908,7 +3820,7 @@ end;
 
 procedure THistoryFrm.hgMCData(Sender: TObject; Index: Integer; var Item: TMCItem; Stage: TSaveStage);
 var
-  DBEventInfo: TDBEventInfo;
+  DBEventInfo: TOldDbEventInfo;
   hDBEvent: THandle;
   DataOffset: PAnsiChar;
 begin
@@ -3918,16 +3830,18 @@ begin
     hDBEvent := History[GridIndexToHistory(Index)];
     if hDBEvent <> 0 then
     begin
-      DBEventInfo := GetEventInfo(hDBEvent);
-      DBEventInfo.szModule := nil;
-      Item.Size := Cardinal(DBEventInfo.cbSize) + Cardinal(DBEventInfo.cbBlob);
+      DBEventInfo.d := GetEventInfo(hDBEvent);
+      DBEventInfo.d.szModule := nil;
+      DBEventInfo.cbSize := sizeof(DBEventInfo);
+
+      Item.Size := sizeof(DBEventInfo) + Cardinal(DBEventInfo.d.cbBlob);
     end;
     if Item.Size > 0 then
     begin
       GetMem(Item.Buffer, Item.Size);
-      DataOffset := PAnsiChar(Item.Buffer) + DBEventInfo.cbSize;
-      Move(DBEventInfo, Item.Buffer^, DBEventInfo.cbSize);
-      Move(DBEventInfo.pBlob^, DataOffset^, DBEventInfo.cbBlob);
+      DataOffset := PAnsiChar(Item.Buffer) + sizeof(DBEventInfo);
+      Move(DBEventInfo, Item.Buffer^, sizeof(DBEventInfo));
+      Move(DBEventInfo.d.pBlob^, DataOffset^, DBEventInfo.d.cbBlob);
     end;
   end
   else if Stage = ssDone then

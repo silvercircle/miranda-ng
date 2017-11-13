@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2015-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -53,7 +53,7 @@ struct FORMAT_VALUE : public VALUE
 	{
 		va_list args;
 		va_start(args, _valueFormat);
-		szValue.AppendFormatV(_valueFormat, args);
+		szValue.FormatV(_valueFormat, args);
 		va_end(args);
 	}
 };
@@ -209,7 +209,7 @@ protected:
 		HttpRequestBody & operator<<(const FORMAT_VALUE &param)
 		{
 			AppendSeparator();
-			content.AppendFormat("%s=%s", param.szName, param.szValue);
+			content.AppendFormat("%s=%s", param.szName, param.szValue.c_str());
 			return *this;
 		}
 
@@ -223,13 +223,9 @@ protected:
 	{
 		va_list args;
 		va_start(args, fmt);
-		if (url.Find('?') == -1)
-			url += '?';
-		else
-			url += '&';
+		url += (url.Find('?') == -1) ? '?' : '&';
 		url.AppendFormatV(fmt, args);
 		va_end(args);
-
 		szUrl = url.GetBuffer();
 	}
 
@@ -244,6 +240,7 @@ public:
 		cbSize = sizeof(NETLIBHTTPREQUEST);
 		flags = NLHRF_HTTP11 | NLHRF_SSL | NLHRF_DUMPASTEXT;
 		requestType = type;
+		pData = NULL;
 	}
 
 	HttpRequest(int type, HttpRequestUrlFormat, LPCSTR urlFormat, ...)
@@ -253,9 +250,10 @@ public:
 		flags = NLHRF_HTTP11 | NLHRF_SSL | NLHRF_DUMPASTEXT;
 		requestType = type;
 		va_end(formatArgs);
+		pData = NULL;
 	}
 
-	~HttpRequest()
+	virtual ~HttpRequest()
 	{
 		for (int i = 0; i < headersCount; i++)
 		{
@@ -265,7 +263,7 @@ public:
 		mir_free(headers);
 	}
 
-	NETLIBHTTPREQUEST * Send(HANDLE hConnection)
+	virtual NETLIBHTTPREQUEST* Send(HNETLIBUSER nlu)
 	{
 		if (url.Find("://") == -1)
 			url.Insert(0, ((flags & NLHRF_SSL) ? "https://" : "http://"));
@@ -276,11 +274,9 @@ public:
 			dataLength = (int)mir_strlen(pData);
 		}
 
-		char message[1024];
-		mir_snprintf(message, "Send request to %s", szUrl);
-		CallService(MS_NETLIB_LOG, (WPARAM)hConnection, (LPARAM)&message);
+		Netlib_Logf(nlu, "Send request to %s", szUrl);
 
-		return (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)hConnection, (LPARAM)this);
+		return Netlib_HttpTransaction(nlu, this);
 	}
 };
 

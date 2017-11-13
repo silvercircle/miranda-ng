@@ -1,20 +1,20 @@
-#include "common.h"
+#include "stdafx.h"
 
-#include "WhatsAPI++\WARegister.h"
+#include "WhatsAPI++/WARegister.h"
 
 struct SearchParam
 {
-	SearchParam(const TCHAR *_jid, LONG _id) :
+	SearchParam(const wchar_t *_jid, LONG _id) :
 		jid(_jid), id(_id) 
 		{}
 
-	std::tstring jid;
+	std::wstring jid;
 	LONG id;
 };
 
-WhatsAppProto::WhatsAppProto(const char *proto_name, const TCHAR *username)
+WhatsAppProto::WhatsAppProto(const char *proto_name, const wchar_t *username)
 	: PROTO<WhatsAppProto>(proto_name, username),
-	m_tszDefaultGroup(getTStringA(WHATSAPP_KEY_DEF_GROUP))
+	m_tszDefaultGroup(getWStringA(WHATSAPP_KEY_DEF_GROUP))
 {
 	update_loop_lock_ = CreateEvent(NULL, false, false, NULL);
 
@@ -32,30 +32,30 @@ WhatsAppProto::WhatsAppProto(const char *proto_name, const TCHAR *username)
 	HookProtoEvent(ME_CLIST_PREBUILDSTATUSMENU, &WhatsAppProto::OnBuildStatusMenu);
 
 	// Create standard network connection
-	TCHAR descr[512];
-	mir_sntprintf(descr, TranslateT("%s server connection"), m_tszUserName);
+	wchar_t descr[512];
+	mir_snwprintf(descr, TranslateT("%s server connection"), m_tszUserName);
 
-	NETLIBUSER nlu = { sizeof(nlu) };
-	nlu.flags = NUF_INCOMING | NUF_OUTGOING | NUF_HTTPCONNS | NUF_TCHAR;
+	NETLIBUSER nlu = {};
+	nlu.flags = NUF_INCOMING | NUF_OUTGOING | NUF_HTTPCONNS | NUF_UNICODE;
 	nlu.szSettingsModule = m_szModuleName;
-	nlu.ptszDescriptiveName = descr;
-	m_hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
+	nlu.szDescriptiveName.w = descr;
+	m_hNetlibUser = Netlib_RegisterUser(&nlu);
 	if (m_hNetlibUser == NULL) {
-		TCHAR error[200];
-		mir_sntprintf(error, TranslateT("Unable to initialize Netlib for %s."), m_tszUserName);
-		MessageBox(NULL, error, _T("Miranda NG"), MB_OK | MB_ICONERROR);
+		wchar_t error[200];
+		mir_snwprintf(error, TranslateT("Unable to initialize Netlib for %s."), m_tszUserName);
+		MessageBox(NULL, error, L"Miranda NG", MB_OK | MB_ICONERROR);
 	}
 
 	WASocketConnection::initNetwork(m_hNetlibUser);
 
-	m_tszAvatarFolder = std::tstring(VARST(_T("%miranda_avatarcache%"))) + _T("\\") + m_tszUserName;
+	m_tszAvatarFolder = std::wstring(VARSW(L"%miranda_avatarcache%")) + L"\\" + m_tszUserName;
 	DWORD dwAttributes = GetFileAttributes(m_tszAvatarFolder.c_str());
 	if (dwAttributes == 0xffffffff || (dwAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
-		CreateDirectoryTreeT(m_tszAvatarFolder.c_str());
+		CreateDirectoryTreeW(m_tszAvatarFolder.c_str());
 
 	if (m_tszDefaultGroup == NULL)
-		m_tszDefaultGroup = mir_tstrdup(_T("WhatsApp"));
-	Clist_CreateGroup(0, m_tszDefaultGroup);
+		m_tszDefaultGroup = mir_wstrdup(L"WhatsApp");
+	Clist_GroupCreate(0, m_tszDefaultGroup);
 
 	SetAllContactStatuses(ID_STATUS_OFFLINE, true);
 }
@@ -65,24 +65,30 @@ WhatsAppProto::~WhatsAppProto()
 	CloseHandle(update_loop_lock_);
 }
 
-int WhatsAppProto::OnEvent(PROTOEVENTTYPE evType, WPARAM wParam, LPARAM lParam)
+int WhatsAppProto::OnEvent(PROTOEVENTTYPE evType, WPARAM, LPARAM)
 {
-	if (evType == EV_PROTO_ONLOAD) {
+	switch (evType) {
+	case EV_PROTO_ONMENU:
+		InitMenu();
+		break;
+
+	case EV_PROTO_ONLOAD:
 		// Register group chat
-		GCREGISTER gcr = { sizeof(gcr) };
+		GCREGISTER gcr = {};
 		gcr.dwFlags = GC_TYPNOTIF | GC_CHANMGR;
 		gcr.ptszDispName = m_tszUserName;
 		gcr.pszModule = m_szModuleName;
-		CallServiceSync(MS_GC_REGISTER, 0, (LPARAM)&gcr);
+		Chat_Register(&gcr);
 
 		HookProtoEvent(ME_GC_EVENT, &WhatsAppProto::onGroupChatEvent);
 		HookProtoEvent(ME_GC_BUILDMENU, &WhatsAppProto::OnChatMenu);
 		HookProtoEvent(ME_USERINFO_INITIALISE, &WhatsAppProto::OnUserInfo);
+		break;
 	}
 	return TRUE;
 }
 
-DWORD_PTR WhatsAppProto::GetCaps(int type, MCONTACT hContact)
+DWORD_PTR WhatsAppProto::GetCaps(int type, MCONTACT)
 {
 	switch (type) {
 	case PFLAGNUM_1:
@@ -167,10 +173,10 @@ int WhatsAppProto::SetStatus(int new_status)
 
 MCONTACT WhatsAppProto::AddToList(int flags, PROTOSEARCHRESULT *psr)
 {
-	if (psr->id.t == NULL)
+	if (psr->id.w == NULL)
 		return NULL;
 
-	std::string phone(T2Utf(psr->id.t));
+	std::string phone(T2Utf(psr->id.w));
 	std::string jid(phone + "@s.whatsapp.net");
 
 	MCONTACT hContact = AddToContactList(jid, phone.c_str());
@@ -190,9 +196,9 @@ void WhatsAppProto::SearchAckThread(void *targ)
 	SearchParam *param = (SearchParam*)targ;
 	PROTOSEARCHRESULT psr = { 0 };
 	psr.cbSize = sizeof(psr);
-	psr.flags = PSR_TCHAR;
-	psr.nick.t = psr.firstName.t = psr.lastName.t = _T("");
-	psr.id.t = (TCHAR*)param->jid.c_str();
+	psr.flags = PSR_UNICODE;
+	psr.nick.w = psr.firstName.w = psr.lastName.w = L"";
+	psr.id.w = (wchar_t*)param->jid.c_str();
 
 	ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)param->id, (LPARAM)&psr);
 	ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE)param->id, 0);
@@ -200,7 +206,7 @@ void WhatsAppProto::SearchAckThread(void *targ)
 	delete param;
 }
 
-HANDLE WhatsAppProto::SearchBasic(const TCHAR* id)
+HANDLE WhatsAppProto::SearchBasic(const wchar_t* id)
 {
 	if (isOffline())
 		return 0;
@@ -225,7 +231,7 @@ bool WhatsAppProto::Register(int state, const string &cc, const string &number, 
 	string idx;
 	DBVARIANT dbv;
 
-	if (WASocketConnection::hNetlibUser == NULL) {
+	if (g_hNetlibUser == NULL) {
 		NotifyEvent(m_tszUserName, TranslateT("Network connection error."), NULL, WHATSAPP_EVENT_CLIENT);
 		return false;
 	}
@@ -253,12 +259,11 @@ bool WhatsAppProto::Register(int state, const string &cc, const string &number, 
 	nlhr.szUrl = url.GetBuffer();
 	nlhr.headers = s_registerHeaders;
 	nlhr.headersCount = _countof(s_registerHeaders);
-	nlhr.flags = NLHRF_HTTP11 | NLHRF_GENERATEHOST | NLHRF_REMOVEHOST | NLHRF_SSL;
+	nlhr.flags = NLHRF_HTTP11 | NLHRF_SSL;
 
-	NETLIBHTTPREQUEST* pnlhr = (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION,
-		(WPARAM)WASocketConnection::hNetlibUser, (LPARAM)&nlhr);
+	NETLIBHTTPREQUEST* pnlhr = Netlib_HttpTransaction(g_hNetlibUser, &nlhr);
 
-	const TCHAR *ptszTitle = TranslateT("Registration");
+	const wchar_t *ptszTitle = TranslateT("Registration");
 	if (pnlhr == NULL) {
 		NotifyEvent(ptszTitle, TranslateT("Registration failed. Invalid server response."), NULL, WHATSAPP_EVENT_CLIENT);
 		return false;
@@ -279,13 +284,13 @@ bool WhatsAppProto::Register(int state, const string &cc, const string &number, 
 		if (reason == "stale")
 			NotifyEvent(ptszTitle, TranslateT("Registration failed due to stale code. Please request a new code"), NULL, WHATSAPP_EVENT_CLIENT);
 		else {
-			CMString tmp(FORMAT, TranslateT("Registration failed. Reason: %s"), reason.c_str());
+			CMStringW tmp(FORMAT, TranslateT("Registration failed. Reason: %s"), _A2T(reason.c_str()));
 			NotifyEvent(ptszTitle, tmp, NULL, WHATSAPP_EVENT_CLIENT);
 		}
 
 		const JSONNode &tmpVal = resp["retry_after"];
 		if (tmpVal) {
-			CMString tmp(FORMAT, TranslateT("Please try again in %i seconds"), tmpVal.as_int());
+			CMStringW tmp(FORMAT, TranslateT("Please try again in %i seconds"), tmpVal.as_int());
 			NotifyEvent(ptszTitle, tmp, NULL, WHATSAPP_EVENT_OTHER);
 		}
 		return false;
@@ -360,18 +365,19 @@ LRESULT CALLBACK PopupDlgProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 	return DefWindowProc(hwnd, message, wParam, lParam);
 };
 
-void WhatsAppProto::NotifyEvent(const string& title, const string& info, MCONTACT contact, DWORD flags, TCHAR* url)
+void WhatsAppProto::NotifyEvent(const string& title, const string& info, MCONTACT contact, DWORD flags, wchar_t* url)
 {
-	TCHAR *rawTitle = mir_a2t_cp(title.c_str(), CP_UTF8);
-	TCHAR *rawInfo = mir_a2t_cp(info.c_str(), CP_UTF8);
+	wchar_t *rawTitle = mir_a2u_cp(title.c_str(), CP_UTF8);
+	wchar_t *rawInfo = mir_a2u_cp(info.c_str(), CP_UTF8);
 	NotifyEvent(rawTitle, rawInfo, contact, flags, url);
 	mir_free(rawTitle);
 	mir_free(rawInfo);
 }
 
-void WhatsAppProto::NotifyEvent(const TCHAR *title, const TCHAR *info, MCONTACT contact, DWORD flags, TCHAR* szUrl)
+void WhatsAppProto::NotifyEvent(const wchar_t *title, const wchar_t *info, MCONTACT contact, DWORD flags, wchar_t* szUrl)
 {
-	int ret; int timeout; COLORREF colorBack = 0; COLORREF colorText = 0;
+	int ret, timeout = 0;
+	COLORREF colorBack = 0, colorText = 0;
 
 	switch (flags) {
 	case WHATSAPP_EVENT_CLIENT:
@@ -393,7 +399,7 @@ void WhatsAppProto::NotifyEvent(const TCHAR *title, const TCHAR *info, MCONTACT 
 			colorText = getDword(WHATSAPP_KEY_EVENT_OTHER_COLTEXT, DEFAULT_EVENT_COLTEXT);
 		}
 		timeout = getDword(WHATSAPP_KEY_EVENT_OTHER_TIMEOUT, -1);
-		SkinPlaySound("OtherEvent");
+		Skin_PlaySound("OtherEvent");
 		flags |= NIIF_INFO;
 		break;
 	}
@@ -408,8 +414,8 @@ void WhatsAppProto::NotifyEvent(const TCHAR *title, const TCHAR *info, MCONTACT 
 			pd.lchIcon = IcoLib_GetIconByHandle(m_hProtoIcon); // TODO: Icon test
 			pd.PluginData = szUrl;
 			pd.PluginWindowProc = PopupDlgProc;
-			mir_tstrcpy(pd.lptzContactName, title);
-			mir_tstrcpy(pd.lptzText, info);
+			mir_wstrcpy(pd.lptzContactName, title);
+			mir_wstrcpy(pd.lptzText, info);
 			ret = PUAddPopupT(&pd);
 
 			if (ret == 0)
@@ -417,21 +423,10 @@ void WhatsAppProto::NotifyEvent(const TCHAR *title, const TCHAR *info, MCONTACT 
 		}
 	}
 	else {
-		if (ServiceExists(MS_CLIST_SYSTRAY_NOTIFY)) {
-			MIRANDASYSTRAYNOTIFY err;
-			int niif_flags = flags;
-			REMOVE_FLAG(niif_flags, WHATSAPP_EVENT_CLIENT | WHATSAPP_EVENT_NOTIFICATION | WHATSAPP_EVENT_OTHER);
-			err.szProto = m_szModuleName;
-			err.cbSize = sizeof(err);
-			err.dwInfoFlags = NIIF_INTERN_TCHAR | niif_flags;
-			err.tszInfoTitle = (TCHAR*)title;
-			err.tszInfo = (TCHAR*)info;
-			err.uTimeout = 1000 * timeout;
-			ret = CallService(MS_CLIST_SYSTRAY_NOTIFY, 0, (LPARAM)& err);
-
-			if (ret == 0)
-				goto exit;
-		}
+		int niif_flags = flags;
+		REMOVE_FLAG(niif_flags, WHATSAPP_EVENT_CLIENT | WHATSAPP_EVENT_NOTIFICATION | WHATSAPP_EVENT_OTHER);
+		if (!Clist_TrayNotifyW(m_szModuleName, title, info, niif_flags, 1000 * timeout))
+			goto exit;
 	}
 
 	if (FLAG_CONTAINS(flags, WHATSAPP_EVENT_CLIENT))

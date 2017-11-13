@@ -20,18 +20,18 @@ typedef  struct _MODERNEFFECT
 }MODERNEFFECT;
 
 #ifdef _EFFECTENUM_FULL_H
-TCHAR * ModernEffectNames[] =
+wchar_t * ModernEffectNames[] =
 #else
-TCHAR * _ModernEffectNames[] =
+wchar_t * _ModernEffectNames[] =
 #endif
 {
-	_T("Shadow at left"),
-	_T("Shadow at right"),
-	_T("Outline"),
-	_T("Outline smooth"),
-	_T("Smooth bump"),
-	_T("Contour thin"),
-	_T("Contour heavy"),
+	L"Shadow at left",
+	L"Shadow at right",
+	L"Outline",
+	L"Outline smooth",
+	L"Smooth bump",
+	L"Contour thin",
+	L"Contour heavy",
 };
 
 #ifdef _EFFECTENUM_FULL_H
@@ -87,7 +87,7 @@ MODERNEFFECTMATRIX ModernEffectsEnum[] = {
 #define MAXPREDEFINEDEFFECTS sizeof(ModernEffectNames)/sizeof(ModernEffectNames[0])
 #else
 #define MAXPREDEFINEDEFFECTS sizeof(_ModernEffectNames)/sizeof(_ModernEffectNames[0])
-extern TCHAR * ModernEffectNames[];
+extern wchar_t * ModernEffectNames[];
 #endif
 extern BOOL SkinEngine_ResetTextEffect(HDC);
 extern BOOL SkinEngine_SelectTextEffect(HDC hdc, BYTE EffectID, DWORD FirstColor, DWORD SecondColor);

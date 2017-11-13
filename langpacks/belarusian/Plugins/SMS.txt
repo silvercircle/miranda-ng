@@ -7,7 +7,6 @@
 ;============================================================
 [Send SMS text messages to mobile phones through the IM networks.]
 Дасылка SMS паведамленняў на мабільныя тэлефоны пасродкам IM сетак.
-;file \plugins\SMS\res\resource.rc
 [Received SMS]
 Атрыманае SMS
 [&Reply]
@@ -70,20 +69,18 @@ ID паведамлення:
 Крыніца:
 [Network:]
 Аператар:
-;file \plugins\SMS\src\options.cpp
 [From %s:\r\n\r\n]
 Ад %s:\r\n\r\n
 [Events]
 Падзеі
-;file \plugins\SMS\src\receive.cpp
+[SMS message didn't send by %S to %s because: %S]
+
 [SMS Message from %s]
 SMS ад %s
 [SMS Confirmation from %s]
 SMS пацверджанне ад %s
-;file \plugins\SMS\src\recvdlg.cpp
 [Received SMS Confirmation]
 Атрыманае SMS пацверджанні
-;file \plugins\SMS\src\senddlg.cpp
 [View User's History]
 Гісторыя паведамленняў
 [Add Number To The Multiple List]
@@ -108,16 +105,16 @@ SMS пацверджанне ад %s
 У спісе павінны быць нумары.
 [No Numbers]
 Няма нумароў
+[Valid phone numbers are of the form '+(country code)(phone number)'. The contents of the phone number portion is dependent on the national layout of phone numbers, but often omits the leading zero.]
+
 [Invalid phone number]
 Няслушны нумар тэлефона
 [<< Single]
 <<Аднаму
-;file \plugins\SMS\src\SMSConstans.h
 [Send &SMS...]
 Адправіць СМС
 [&SMS Message]
 СМС паведамленне
-;file \plugins\SMS\src\SMS_svc.cpp
 [Incoming SMS Message]
 Уваходнае SMS паведамленне
 [Incoming SMS Confirmation]

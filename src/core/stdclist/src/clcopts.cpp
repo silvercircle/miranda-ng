@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -54,36 +54,36 @@ static const checkBoxToStyleEx[] =
 struct CheckBoxValues_t
 {
 	DWORD  style;
-	TCHAR* szDescr;
+	wchar_t* szDescr;
 };
 
 static const struct CheckBoxValues_t greyoutValues[] =
 {
-	{ GREYF_UNFOCUS,  LPGENT("Not focused")   },
-	{ MODEF_OFFLINE,  LPGENT("Offline")       },
-	{ PF2_ONLINE,     LPGENT("Online")        },
-	{ PF2_SHORTAWAY,  LPGENT("Away")          },
-	{ PF2_LONGAWAY,   LPGENT("NA")            },
-	{ PF2_LIGHTDND,   LPGENT("Occupied")      },
-	{ PF2_HEAVYDND,   LPGENT("DND")           },
-	{ PF2_FREECHAT,   LPGENT("Free for chat") },
-	{ PF2_INVISIBLE,  LPGENT("Invisible")     },
-	{ PF2_OUTTOLUNCH, LPGENT("Out to lunch")  },
-	{ PF2_ONTHEPHONE, LPGENT("On the phone")  }
+	{ GREYF_UNFOCUS,  LPGENW("Not focused")   },
+	{ MODEF_OFFLINE,  LPGENW("Offline")       },
+	{ PF2_ONLINE,     LPGENW("Online")        },
+	{ PF2_SHORTAWAY,  LPGENW("Away")          },
+	{ PF2_LONGAWAY,   LPGENW("Not available") },
+	{ PF2_LIGHTDND,   LPGENW("Occupied")      },
+	{ PF2_HEAVYDND,   LPGENW("Do not disturb")},
+	{ PF2_FREECHAT,   LPGENW("Free for chat") },
+	{ PF2_INVISIBLE,  LPGENW("Invisible")     },
+	{ PF2_OUTTOLUNCH, LPGENW("Out to lunch")  },
+	{ PF2_ONTHEPHONE, LPGENW("On the phone")  }
 };
 
 static const struct CheckBoxValues_t offlineValues[] =
 {
-	{ MODEF_OFFLINE,  LPGENT("Offline")       },
-	{ PF2_ONLINE,     LPGENT("Online")        },
-	{ PF2_SHORTAWAY,  LPGENT("Away")          },
-	{ PF2_LONGAWAY,   LPGENT("NA")            },
-	{ PF2_LIGHTDND,   LPGENT("Occupied")      },
-	{ PF2_HEAVYDND,   LPGENT("DND")           },
-	{ PF2_FREECHAT,   LPGENT("Free for chat") },
-	{ PF2_INVISIBLE,  LPGENT("Invisible")     },
-	{ PF2_OUTTOLUNCH, LPGENT("Out to lunch")  },
-	{ PF2_ONTHEPHONE, LPGENT("On the phone")  }
+	{ MODEF_OFFLINE,  LPGENW("Offline")       },
+	{ PF2_ONLINE,     LPGENW("Online")        },
+	{ PF2_SHORTAWAY,  LPGENW("Away")          },
+	{ PF2_LONGAWAY,   LPGENW("Not available") },
+	{ PF2_LIGHTDND,   LPGENW("Occupied")      },
+	{ PF2_HEAVYDND,   LPGENW("Do not disturb")},
+	{ PF2_FREECHAT,   LPGENW("Free for chat") },
+	{ PF2_INVISIBLE,  LPGENW("Invisible")     },
+	{ PF2_OUTTOLUNCH, LPGENW("Out to lunch")  },
+	{ PF2_ONTHEPHONE, LPGENW("On the phone")  }
 };
 
 static void FillCheckBoxTree(HWND hwndTree, const struct CheckBoxValues_t *values, int nValues, DWORD style)
@@ -94,7 +94,7 @@ static void FillCheckBoxTree(HWND hwndTree, const struct CheckBoxValues_t *value
 	tvis.item.mask = TVIF_PARAM | TVIF_TEXT | TVIF_STATE;
 	for (int i = 0; i < nValues; i++) {
 		tvis.item.lParam = values[i].style;
-		tvis.item.pszText = TranslateTS(values[i].szDescr);
+		tvis.item.pszText = TranslateW(values[i].szDescr);
 		tvis.item.stateMask = TVIS_STATEIMAGEMASK;
 		tvis.item.state = INDEXTOSTATEIMAGEMASK((style & tvis.item.lParam) != 0 ? 2 : 1);
 		TreeView_InsertItem(hwndTree, &tvis);
@@ -129,7 +129,7 @@ static LONG CalcMinRowHeight()
 		HFONT hFont = CreateFontIndirect(&lf);
 		hFont = (HFONT)SelectObject(hdc, hFont);
 		SIZE fontSize;
-		GetTextExtentPoint32(hdc, _T("x"), 1, &fontSize);
+		GetTextExtentPoint32(hdc, L"x", 1, &fontSize);
 		if (fontSize.cy > minHeight)
 			minHeight = fontSize.cy;
 		hFont = (HFONT)SelectObject(hdc, hFont);
@@ -340,7 +340,7 @@ static INT_PTR CALLBACK DlgProcClcBkgOpts(HWND hwndDlg, UINT msg, WPARAM wParam,
 
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDC_BROWSE) {
-			TCHAR str[MAX_PATH], filter[512];
+			wchar_t str[MAX_PATH], filter[512];
 			GetDlgItemText(hwndDlg, IDC_FILENAME, str, _countof(str));
 
 			OPENFILENAME ofn = { 0 };
@@ -353,7 +353,7 @@ static INT_PTR CALLBACK DlgProcClcBkgOpts(HWND hwndDlg, UINT msg, WPARAM wParam,
 			ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
 			ofn.nMaxFile = _countof(str);
 			ofn.nMaxFileTitle = MAX_PATH;
-			ofn.lpstrDefExt = _T("bmp");
+			ofn.lpstrDefExt = L"bmp";
 			if (!GetOpenFileName(&ofn))
 				break;
 			SetDlgItemText(hwndDlg, IDC_FILENAME, str);
@@ -429,42 +429,17 @@ int ClcOptInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = g_hInst;
-	odp.pszGroup = LPGEN("Contact list");
+	odp.szGroup.a = LPGEN("Contact list");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_CLC);
-	odp.pszTitle = LPGEN("List");
+	odp.szTitle.a = LPGEN("List");
 	odp.pfnDlgProc = DlgProcClcMainOpts;
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);
 
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_CLCBKG);
-	odp.pszTitle = LPGEN("List background");
+	odp.szTitle.a = LPGEN("List background");
 	odp.pfnDlgProc = DlgProcClcBkgOpts;
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);
-	return 0;
-}
-
-int ClcModernOptInit(WPARAM wParam, LPARAM)
-{
-	static int iBoldControls[] =
-	{
-		IDC_TXT_TITLE1, IDC_TXT_TITLE2,
-		MODERNOPT_CTRL_LAST
-	};
-
-	MODERNOPTOBJECT obj = { 0 };
-	obj.cbSize = sizeof(obj);
-	obj.dwFlags = MODEROPT_FLG_TCHAR;
-	obj.hIcon = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
-	obj.hInstance = g_hInst;
-	obj.iSection = MODERNOPT_PAGE_SKINS;
-	obj.iType = MODERNOPT_TYPE_SUBSECTIONPAGE;
-	obj.lptzSubsection = LPGENT("Contact list");
-	obj.iBoldControls = iBoldControls;
-	obj.lpzHelpUrl = "http://wiki.miranda-ng.org/";
-
-	obj.lpzTemplate = MAKEINTRESOURCEA(IDD_MODERNOPT_CLCBKG);
-	obj.pfnDlgProc = DlgProcClcBkgOpts;
-	CallService(MS_MODERNOPT_ADDOBJECT, wParam, (LPARAM)&obj);
 	return 0;
 }

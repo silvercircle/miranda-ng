@@ -19,10 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-//globals
+// globals
 HINSTANCE g_hInst;
 HANDLE    hEvent1;
 HGENMENU  hContactMenuItem;
+
+FI_INTERFACE *fei;
 
 int hLangpack;
 
@@ -59,12 +61,19 @@ static int ModulesLoaded(WPARAM, LPARAM)
 
 	DownloadInit();
 
-	//install hooks if enabled
+	// install hooks if enabled
 	InstallDialogBoxHook();
 
 	g_SmileyCategories.AddAllProtocolsAsCategory();
 	g_SmileyCategories.ClearAndLoadAll();
 
+	ColourID cid = { sizeof(cid) };
+	strcpy_s(cid.dbSettingsGroup, MODULENAME);
+	strcpy_s(cid.group, MODULENAME);
+	strcpy_s(cid.name, LPGEN("Background color"));
+	strcpy_s(cid.setting, "SelWndBkgClr");
+	cid.defcolour = GetSysColor(COLOR_WINDOW);
+	Colour_Register(&cid);
 	return 0;
 }
 
@@ -80,13 +89,14 @@ extern "C" __declspec(dllexport) int Load(void)
 
 	if (ServiceExists(MS_SMILEYADD_REPLACESMILEYS)) {
 		ReportError(TranslateT("Only one instance of SmileyAdd could be executed.\nRemove duplicate instances from 'Plugins' directory"));
-
 		return 1;
 	}
 
+	CallService(MS_IMG_GETINTERFACE, FI_IF_VERSION, (LPARAM)&fei);
+
 	InitImageCache();
 
-	Icon_Register(g_hInst, "SmileyAdd", &icon, 1);
+	Icon_Register(g_hInst, MODULENAME, &icon, 1);
 
 	g_SmileyCategories.SetSmileyPackStore(&g_SmileyPacks);
 
@@ -102,8 +112,12 @@ extern "C" __declspec(dllexport) int Load(void)
 	HookEvent(ME_SMILEYADD_OPTIONSCHANGED, UpdateSrmmDlg);
 	HookEvent(ME_PROTO_ACCLISTCHANGED, AccountListChanged);
 	HookEvent(ME_DB_CONTACT_SETTINGCHANGED, DbSettingChanged);
+	HookEvent(ME_COLOUR_RELOAD, ReloadColour);
+	HookEvent(ME_MSG_BUTTONPRESSED, SmileyButtonPressed);
+	
+	HookTemporaryEvent(ME_MSG_TOOLBARLOADED, SmileyButtonCreate);
 
-	//create the smiley services
+	// create the smiley services
 	CreateServiceFunction(MS_SMILEYADD_REPLACESMILEYS, ReplaceSmileysCommand);
 	CreateServiceFunction(MS_SMILEYADD_SHOWSELECTION, ShowSmileySelectionCommand);
 	CreateServiceFunction(MS_SMILEYADD_GETINFO2, GetInfoCommand2);
@@ -123,7 +137,6 @@ extern "C" __declspec(dllexport) int Unload(void)
 	DestroyHookableEvent(hEvent1);
 
 	RichEditData_Destroy();
-	DestroyAniSmileys();
 
 	g_SmileyCategories.ClearAll();
 	g_SmileyPackCStore.ClearAndFreeAll();
@@ -137,7 +150,7 @@ extern "C" __declspec(dllexport) int Unload(void)
 
 extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID /*lpvReserved*/)
 {
-	switch(fdwReason) {
+	switch (fdwReason) {
 	case DLL_PROCESS_ATTACH:
 		g_hInst = hinstDLL;
 		DisableThreadLibraryCalls(hinstDLL);

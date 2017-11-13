@@ -31,7 +31,7 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-	<ClInclude Include="res\Icons\*" />
+    <ClInclude Include="res\Icons\*" />
     <ClInclude Include="src\requests\avatars.h" />
     <ClInclude Include="src\requests\capabilities.h" />
     <ClInclude Include="src\requests\chatrooms.h" />
@@ -46,6 +46,13 @@
     <ClInclude Include="src\requests\status.h" />
     <ClInclude Include="src\requests\subscriptions.h" />
     <ClInclude Include="src\requests\trouter.h" />
-	<ClInclude Include="src\requests\mslogin.h" />
+    <ClInclude Include="src\requests\mslogin.h" />
+    <ClInclude Include="src\requests\oauth.h" />
+    <ClInclude Include="src\requests\asm\files.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\libs\libjson\libjson.vcxproj">
+      <Project>{f6a9340e-b8d9-4c75-be30-47dc66d0abc7}</Project>
+    </ProjectReference>
   </ItemGroup>
 </Project>

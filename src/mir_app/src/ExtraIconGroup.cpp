@@ -1,7 +1,7 @@
 /*
 
 Copyright (C) 2009 Ricardo Pescuma Domenecci
-Copyright (C) 2012-15 Miranda NG project
+Copyright (C) 2012-17 Miranda NG project
 
 This is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
@@ -38,14 +38,14 @@ void ExtraIconGroup::addExtraIcon(BaseExtraIcon *extra)
 {
 	m_items.insert(extra);
 
-	CMString description;
+	CMStringW description;
 	for (int i = 0; i < m_items.getCount(); i++) {
 		if (i > 0)
-			description += _T(" / ");
+			description += L" / ";
 		description += m_items[i]->getDescription();
 	}
 
-	m_tszDescription = mir_tstrdup(description);
+	m_tszDescription = mir_wstrdup(description);
 }
 
 void ExtraIconGroup::rebuildIcons()
@@ -56,7 +56,7 @@ void ExtraIconGroup::rebuildIcons()
 
 void ExtraIconGroup::applyIcon(MCONTACT hContact)
 {
-	if (!isEnabled() || hContact == NULL)
+	if (!isEnabled() || hContact == 0)
 		return;
 
 	m_setValidExtraIcon = false;
@@ -78,7 +78,7 @@ int ExtraIconGroup::getPosition() const
 {
 	int pos = INT_MAX;
 	for (int i = 0; i < m_items.getCount(); i++)
-		pos = MIN(pos, m_items[i]->getPosition());
+		pos = min(pos, m_items[i]->getPosition());
 	return pos;
 }
 
@@ -94,19 +94,19 @@ ExtraIcon * ExtraIconGroup::getCurrentItem(MCONTACT hContact) const
 {
 	int id = (int)db_get_dw(hContact, MODULE_NAME, m_szName, 0);
 	if (id < 1)
-		return NULL;
+		return nullptr;
 
 	for (int i = 0; i < m_items.getCount(); i++)
 		if (id == m_items[i]->getID())
 			return m_items[i];
 
-	return NULL;
+	return nullptr;
 }
 
 void ExtraIconGroup::onClick(MCONTACT hContact)
 {
 	ExtraIcon *extra = getCurrentItem(hContact);
-	if (extra != NULL)
+	if (extra != nullptr)
 		extra->onClick(hContact);
 }
 
@@ -123,7 +123,7 @@ int ExtraIconGroup::setIconByName(int id, MCONTACT hContact, const char *value)
 int ExtraIconGroup::internalSetIcon(int id, MCONTACT hContact, void *value, bool bByName)
 {
 	if (m_insideApply) {
-		for (int i=0; i < m_items.getCount(); i++)
+		for (int i = 0; i < m_items.getCount(); i++)
 			if (m_items[i]->getID() == id) {
 				if (bByName)
 					return m_items[i]->setIconByName(id, hContact, (const char*)value);
@@ -136,7 +136,7 @@ int ExtraIconGroup::internalSetIcon(int id, MCONTACT hContact, void *value, bool
 	ExtraIcon *current = getCurrentItem(hContact);
 	int currentPos = m_items.getCount();
 	int storePos = m_items.getCount();
-	for (int i=0; i < m_items.getCount(); i++) {
+	for (int i = 0; i < m_items.getCount(); i++) {
 		if (m_items[i]->getID() == id)
 			storePos = i;
 
@@ -188,7 +188,7 @@ int ExtraIconGroup::internalSetIcon(int id, MCONTACT hContact, void *value, bool
 	return ret;
 }
 
-const TCHAR* ExtraIconGroup::getDescription() const
+const wchar_t* ExtraIconGroup::getDescription() const
 {
 	return m_tszDescription;
 }

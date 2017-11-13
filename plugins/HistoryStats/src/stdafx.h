@@ -19,7 +19,6 @@
 
 #pragma comment(lib, "UxTheme.lib")
 
-#include <tchar.h>
 #include <stdio.h>
 
 #include <cstdio>
@@ -39,7 +38,6 @@
 #include <m_chat.h>        // not used
 #include <m_clc.h>
 #include <m_clist.h>
-#include <m_clui.h>        // not used
 #include <m_contacts.h>
 #include <m_database.h>
 #include <m_email.h>       // not used
@@ -60,7 +58,6 @@
 #include <m_protosvc.h>
 #include <m_skin.h>
 #include <m_system.h>
-#include <m_system_cpp.h>  // not used
 #include <m_url.h>         // not used
 #include <m_userinfo.h>    // not used
 #include <m_utils.h>

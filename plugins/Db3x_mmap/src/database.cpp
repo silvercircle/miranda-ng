@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -23,8 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "stdafx.h"
 
-int InitModuleNames(void);
-int InitMap(void);
 int InitIni(void);
 void UninitIni(void);
 
@@ -76,9 +74,9 @@ DWORD CDb3Mmap::ReallocSpace(DWORD ofs, int oldSize, int newSize)
 /////////////////////////////////////////////////////////////////////////////////////////
 
 static DWORD DatabaseCorrupted = 0;
-static TCHAR *msg = NULL;
+static wchar_t *msg = nullptr;
 static DWORD dwErr = 0;
-static TCHAR tszPanic[] = LPGENT("Miranda has detected corruption in your database. This corruption may be fixed by DbChecker plugin. Please download it from http://miranda-ng.org/p/DbChecker/. Miranda will now shut down.");
+static wchar_t tszPanic[] = LPGENW("Miranda has detected corruption in your database. This corruption may be fixed by DbChecker plugin. Please download it from https://miranda-ng.org/p/DbChecker/. Miranda will now shut down.");
 
 void __cdecl dbpanic(void *)
 {
@@ -86,16 +84,16 @@ void __cdecl dbpanic(void *)
 		if (dwErr == ERROR_DISK_FULL)
 			msg = TranslateT("Disk is full. Miranda will now shut down.");
 
-		TCHAR err[256];
-		mir_sntprintf(err, msg, TranslateT("Database failure. Miranda will now shut down."), dwErr);
+		wchar_t err[256];
+		mir_snwprintf(err, msg, TranslateT("Database failure. Miranda will now shut down."), dwErr);
 
 		MessageBox(0, err, TranslateT("Database Error"), MB_SETFOREGROUND | MB_TOPMOST | MB_APPLMODAL | MB_ICONWARNING | MB_OK);
 	}
-	else MessageBox(0, TranslateTS(tszPanic), TranslateT("Database Panic"), MB_SETFOREGROUND | MB_TOPMOST | MB_APPLMODAL | MB_ICONWARNING | MB_OK);
+	else MessageBox(0, TranslateW(tszPanic), TranslateT("Database Panic"), MB_SETFOREGROUND | MB_TOPMOST | MB_APPLMODAL | MB_ICONWARNING | MB_OK);
 	TerminateProcess(GetCurrentProcess(), 255);
 }
 
-void CDb3Mmap::DatabaseCorruption(TCHAR *text)
+void CDb3Mmap::DatabaseCorruption(wchar_t *text)
 {
 	int kill = 0;
 
@@ -115,7 +113,7 @@ void CDb3Mmap::DatabaseCorruption(TCHAR *text)
 	lck.unlock();
 
 	if (kill) {
-		_beginthread(dbpanic, 0, NULL);
+		_beginthread(dbpanic, 0, nullptr);
 		Sleep(INFINITE);
 	}
 }

@@ -6,7 +6,7 @@
 // Copyright © 2001,2002 Jon Keating, Richard Hughes
 // Copyright © 2002,2003,2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004,2005,2006 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -29,7 +29,7 @@
 
 #include "stdafx.h"
 
-int icq_httpGatewayInit(HANDLE hConn, NETLIBOPENCONNECTION*, NETLIBHTTPREQUEST *nlhr)
+int icq_httpGatewayInit(HNETLIBCONN hConn, NETLIBOPENCONNECTION*, NETLIBHTTPREQUEST *nlhr)
 {
 	// initial response from ICQ http gateway
 	size_t wLen, wVersion, wType;
@@ -37,7 +37,6 @@ int icq_httpGatewayInit(HANDLE hConn, NETLIBOPENCONNECTION*, NETLIBHTTPREQUEST *
 	DWORD dwSid1, dwSid2, dwSid3, dwSid4;
 	BYTE *buf;
 	char szSid[33], szHttpServer[256], szHttpGetUrl[300], szHttpPostUrl[300];
-	NETLIBHTTPPROXYINFO nlhpi = {0};
 
 	if (nlhr->dataLength < 31)
 	{
@@ -68,20 +67,19 @@ int icq_httpGatewayInit(HANDLE hConn, NETLIBOPENCONNECTION*, NETLIBHTTPREQUEST *
 	memcpy(szHttpServer, buf, wIpLen);
 	szHttpServer[wIpLen] = '\0';
 
-	nlhpi.cbSize = sizeof(nlhpi);
+	NETLIBHTTPPROXYINFO nlhpi = {};
 	nlhpi.flags = NLHPIF_USEPOSTSEQUENCE;
 	nlhpi.szHttpGetUrl = szHttpGetUrl;
 	nlhpi.szHttpPostUrl = szHttpPostUrl;
 	nlhpi.firstPostSequence = 1;
 	mir_snprintf(szHttpGetUrl, "http://%s/monitor?sid=%s", szHttpServer, szSid);
 	mir_snprintf(szHttpPostUrl, "http://%s/data?sid=%s&seq=", szHttpServer, szSid);
-
-	return CallService(MS_NETLIB_SETHTTPPROXYINFO, (WPARAM)hConn, (LPARAM)&nlhpi);
+	return Netlib_SetHttpProxyInfo(hConn, &nlhpi);
 }
 
 
 
-int icq_httpGatewayBegin(HANDLE hConn, NETLIBOPENCONNECTION* nloc)
+int icq_httpGatewayBegin(HNETLIBCONN hConn, NETLIBOPENCONNECTION* nloc)
 { // open our "virual data connection"
 	icq_packet packet;
 	size_t serverNameLen;
@@ -101,7 +99,7 @@ int icq_httpGatewayBegin(HANDLE hConn, NETLIBOPENCONNECTION* nloc)
 
 
 
-int icq_httpGatewayWrapSend(HANDLE hConn, PBYTE buf, int len, int flags, MIRANDASERVICE pfnNetlibSend)
+int icq_httpGatewayWrapSend(HNETLIBCONN hConn, PBYTE buf, int len, int flags)
 {
 	PBYTE sendBuf = buf;
 	int sendLen = len;
@@ -119,8 +117,7 @@ int icq_httpGatewayWrapSend(HANDLE hConn, PBYTE buf, int len, int flags, MIRANDA
 		write_httphdr(&packet, HTTP_PACKETTYPE_FLAP, GetGatewayIndex(hConn));
 		packBuffer(&packet, sendBuf, curLen);
 
-		NETLIBBUFFER nlb={ (char*)packet.pData, packet.wLen, flags };
-		curResult = pfnNetlibSend((WPARAM)hConn, (LPARAM)&nlb);
+		curResult = Netlib_Send(hConn, (char*)packet.pData, packet.wLen, flags);
 		
 		SAFE_FREE((void**)&packet.pData);
 
@@ -195,7 +192,7 @@ PBYTE icq_httpGatewayUnwrapRecv(NETLIBHTTPREQUEST*, PBYTE buf, int len, int* out
 
 
 
-int icq_httpGatewayWalkTo(HANDLE hConn, NETLIBOPENCONNECTION* nloc)
+int icq_httpGatewayWalkTo(HNETLIBCONN hConn, NETLIBOPENCONNECTION* nloc)
 { // this is bad simplification - for avatars to work we need to handle
 	// two "virtual connections" at the same time
 	icq_packet packet;

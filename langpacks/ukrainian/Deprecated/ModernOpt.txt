@@ -1,0 +1,59 @@
+﻿#muuid {621f886b-a7f6-457f-9d62-8ee84c275993}
+;============================================================
+;  File: ModernOpt.dll
+;  Plugin: ModernOpt
+;  Version: 0.1.0.0
+;  Authors: Victor Pavlychko, George Hazan
+;============================================================
+[Support for new options design.]
+Новий дизайн вікна налаштувань Miranda NG.
+[Visit official Miranda NG website]
+Офіційний сайт Miranda NG
+[Sample page]
+Приклад сторінки
+[Miranda NG Options]
+Налаштування Miranda NG
+[Use arrow keys to choose category]
+Використовуйте клавіші зі стрілками, щоб вибрати категорію
+[Cancel]
+Скасувати
+[Apply]
+Застосувати
+[Switch to classic options]
+Класичний вид налаштувань
+[Advanced]
+Додатково
+[Home]
+Дім
+[Miranda NG configuration center]
+Центр налаштувань Miranda NG
+[Accounts]
+Облікові записи
+[Setup your account information to start messaging.]
+Налаштуйте облікові записи для початку спілкування.
+[Style]
+Стиль
+[Change the look of Miranda NG according to your taste.]
+Змінюйте зовнішній вигляд програми на свій смак.
+[Contacts]
+Контакти
+[Configure behavior of your contact list.]
+Налаштуйте поведінку списку контактів
+[Chats]
+Чати
+[Customize look&&feel of your chat windows here.]
+Налаштуйте зовнішній вигляд вікна повідомлень.
+[Ignore]
+Ігнорувати
+[Ban those users and events, you are annoyed with.]
+Заблокуйте користувачів та події, які вам не подобаються.
+[Status]
+Статус
+[Set your status messages and idle reporting.]
+Встановіть статусні повідомлення та повідомлення відсутності.
+[Plugins]
+Плагіни
+[Miranda NG is all about plugins. Manage all the plugins you have here.]
+Керування додатковими плагінами.
+[You have some unsaved changes here.\n Do you wish to apply settings before switching?]
+У вас є незбережені зміни.\nЗастосувати їх перед перемиканням?

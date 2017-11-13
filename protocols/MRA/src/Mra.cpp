@@ -54,7 +54,7 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-static CMraProto* mraProtoInit(const char* pszProtoName, const TCHAR* tszUserName)
+static CMraProto* mraProtoInit(const char* pszProtoName, const wchar_t* tszUserName)
 {
 	CMraProto *ppro = new CMraProto(pszProtoName, tszUserName);
 	g_Instances.insert(ppro);
@@ -79,7 +79,7 @@ static int __cdecl OnPreShutdown(WPARAM, LPARAM)
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfoEx);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	IconsLoad();
 	InitXStatusIcons();

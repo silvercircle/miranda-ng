@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -27,94 +27,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <wininet.h>
 
-/*
-/////////////////////////////////////////////////////////////////////
-//  ResolveHostName                               (a helper function)
-/////////////////////////////////////////////////////////////////////
-DWORD __stdcall ResolveHostName(LPSTR lpszHostName,
-	LPSTR lpszIPAddress, LPDWORD lpdwIPAddressSize)
-{
-	if (*lpdwIPAddressSize < 17 || lpszIPAddress == NULL)
-	{
-		*lpdwIPAddressSize = 17;
-		return ERROR_INSUFFICIENT_BUFFER;
-	}
-
-	IN_ADDR ip;
-	ip.s_addr = inet_addr(lpszHostName);
-	if (ip.s_addr == INADDR_NONE)
-	{
-		PHOSTENT myhost = gethostbyname(lpszHostName);
-		if (myhost != NULL)
-			ip = *(PIN_ADDR)myhost->h_addr;
-		else
-			return SOCKET_ERROR;
-	}
-	mir_snprintf(lpszIPAddress, *lpdwIPAddressSize, "%u.%u.%u.%u",
-		ip.s_net, ip.s_host, ip.s_lh, ip.s_impno);
-
-	return 0;
-}
-
-/////////////////////////////////////////////////////////////////////
-//  IsResolvable                                  (a helper function)
-/////////////////////////////////////////////////////////////////////
-BOOL __stdcall IsResolvable(LPSTR lpszHost)
-{
-	char szDummy[255];
-	DWORD dwDummySize = sizeof (szDummy) - 1;
-
-	if (ResolveHostName(lpszHost, szDummy, &dwDummySize))
-		return FALSE;
-	return TRUE;
-}
-
-/////////////////////////////////////////////////////////////////////
-//  GetIPAddress                                  (a helper function)
-/////////////////////////////////////////////////////////////////////
-DWORD __stdcall GetIPAddress(LPSTR lpszIPAddress, LPDWORD lpdwIPAddressSize)
-{
-	char szHostBuffer[255];
-
-	if (gethostname(szHostBuffer, sizeof (szHostBuffer) - 1) != ERROR_SUCCESS)
-		return (ERROR_INTERNET_INTERNAL_ERROR);
-	return (ResolveHostName(szHostBuffer, lpszIPAddress, lpdwIPAddressSize));
-}
-
-/////////////////////////////////////////////////////////////////////
-//  IsInNet                                       (a helper function)
-/////////////////////////////////////////////////////////////////////
-BOOL __stdcall IsInNet(LPSTR lpszIPAddress, LPSTR lpszDest, LPSTR lpszMask)
-{
-	DWORD dwDest;
-	DWORD dwIpAddr;
-	DWORD dwMask;
-
-	dwIpAddr = inet_addr(lpszIPAddress);
-	dwDest = inet_addr(lpszDest);
-	dwMask = inet_addr(lpszMask);
-
-	if ((dwDest == INADDR_NONE)  ||
-		(dwIpAddr == INADDR_NONE) || ((dwIpAddr & dwMask) != dwDest))
-		return (FALSE);
-
-	return (TRUE);
-}
-
-static const AutoProxyHelperVtbl OurVtbl =
-{
-	IsResolvable,
-	GetIPAddress,
-	ResolveHostName,
-	IsInNet,
-	NULL,
-	NULL,
-	NULL,
-	NULL
-};
-
-static AutoProxyHelperFunctions HelperFunctions = { &OurVtbl };
-*/
+/////////////////////////////////////////////////////////////////////////////////////////
+// local module data
 
 static char *szProxyHost[3];
 static LIST<char> proxyBypass(5);
@@ -127,60 +41,57 @@ static pfnInternetGetProxyInfo pInternetGetProxyInfo;
 
 static bool bEnabled, bOneProxy;
 
-static void GetFile(char* szUrl, AUTO_PROXY_SCRIPT_BUFFER &buf)
-{
-	NetlibUser nlu = {0};
-	NETLIBHTTPREQUEST nlhr = {0};
+/////////////////////////////////////////////////////////////////////////////////////////
 
+static void GetFile(char *szUrl, AUTO_PROXY_SCRIPT_BUFFER &buf)
+{
+	NetlibUser nlu = {};
 	nlu.handleType = NLH_USER;
 	nlu.user.flags = NUF_OUTGOING | NUF_HTTPCONNS;
 	nlu.user.szSettingsModule = "(NULL)";
 	nlu.toLog = 1;
 
 	// initialize the netlib request
+	NETLIBHTTPREQUEST nlhr = {};
 	nlhr.cbSize = sizeof(nlhr);
 	nlhr.requestType = REQUEST_GET;
 	nlhr.flags = NLHRF_HTTP11 | NLHRF_DUMPASTEXT | NLHRF_REDIRECT;
 	nlhr.szUrl = szUrl;
 
 	// download the page
-	NETLIBHTTPREQUEST *nlhrReply = (NETLIBHTTPREQUEST*)NetlibHttpTransaction((WPARAM)&nlu, (LPARAM)&nlhr);
-
-	if (nlhrReply)
-	{
-		if (nlhrReply->resultCode == 200)
-		{
+	NETLIBHTTPREQUEST *nlhrReply = Netlib_HttpTransaction(&nlu, &nlhr);
+	if (nlhrReply) {
+		if (nlhrReply->resultCode == 200) {
 			buf.lpszScriptBuffer = nlhrReply->pData;
 			buf.dwScriptBufferSize = nlhrReply->dataLength + 1;
 
 			nlhrReply->dataLength = 0;
-			nlhrReply->pData = NULL;
+			nlhrReply->pData = nullptr;
 		}
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)nlhrReply);
+		Netlib_FreeHttpRequest(nlhrReply);
 	}
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////
 
 bool NetlibGetIeProxyConn(NetlibConnection *nlc, bool forceHttps)
 {
 	bool noHttp = false;
 	bool usingSsl = false;
-	char szUrl[256];
+	char szUrl[1024];
 
-	if ((nlc->nloc.flags & (NLOCF_HTTP | NLOCF_HTTPGATEWAY) && nlc->nloc.flags & NLOCF_SSL) ||
-		nlc->nloc.wPort == 443 || forceHttps)
-	{
+	if ((nlc->nloc.flags & (NLOCF_HTTP | NLOCF_HTTPGATEWAY) && nlc->nloc.flags & NLOCF_SSL) || nlc->nloc.wPort == 443 || forceHttps) {
 		mir_snprintf(szUrl, "https://%s", nlc->nloc.szHost);
 		usingSsl = true;
 	}
 	else if (nlc->nloc.flags & (NLOCF_HTTPGATEWAY | NLOCF_HTTP) || nlc->usingHttpGateway)
 		mir_snprintf(szUrl, "http://%s", nlc->nloc.szHost);
-	else
-	{
+	else {
 		strncpy_s(szUrl, nlc->nloc.szHost, _TRUNCATE);
 		noHttp = true;
 	}
 
-	mir_free(nlc->szProxyServer); nlc->szProxyServer = NULL;
+	mir_free(nlc->szProxyServer); nlc->szProxyServer = nullptr;
 	nlc->wProxyPort = 0;
 	nlc->proxyType = 0;
 
@@ -188,49 +99,51 @@ bool NetlibGetIeProxyConn(NetlibConnection *nlc, bool forceHttps)
 	char *m = NEWSTR_ALLOCA(mt);
 	mir_free(mt);
 
-	if (m == NULL) return false;
+	if (m == nullptr)
+		return false;
 
 	// if multiple servers, use the first one
 	char *c = strchr(m, ';'); if (c) *c = 0;
 
 	// if 'direct' no proxy
-	if (_stricmp(lrtrim(m), "direct") == 0) return false;
+	if (_stricmp(lrtrim(m), "direct") == 0)
+		return false;
 
 	// find proxy address
 	char *h = strchr(m, ' ');
-	if (h) { *h = 0; ++h; } else return false;
-
+	if (h == nullptr)
+		return false;
+	
 	// find proxy port
+	*h = 0; ++h;
 	char *p = strchr(h, ':');
 	if (p) { *p = 0; ++p; }
 
 	lrtrim(h); ltrim(p);
-	if (_stricmp(m, "proxy") == 0 && h[0])
-	{
+	if (_stricmp(m, "proxy") == 0 && h[0]) {
 		nlc->proxyType = (usingSsl || noHttp) ? PROXYTYPE_HTTPS : PROXYTYPE_HTTP;
 		nlc->wProxyPort = p ? atol(p) : 8080;
 		nlc->szProxyServer = mir_strdup(h);
 	}
-	else if (_stricmp(m, "socks") == 0 && h[0])
-	{
+	else if (_stricmp(m, "socks") == 0 && h[0]) {
 		nlc->proxyType = PROXYTYPE_SOCKS4;
 		nlc->wProxyPort = p ? atol(p) : 1080;
 		nlc->szProxyServer = mir_strdup(h);
 	}
-	else if (_stricmp(m, "socks5") == 0 && h[0])
-	{
+	else if (_stricmp(m, "socks5") == 0 && h[0]) {
 		nlc->proxyType = PROXYTYPE_SOCKS5;
 		nlc->wProxyPort = p ? atol(p) : 1080;
 		nlc->szProxyServer = mir_strdup(h);
 	}
-	else
-		return false;
+	else return false;
 
 	return true;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
+
 static char szAutoUrlStr[MAX_PATH] = "";
-static AUTO_PROXY_SCRIPT_BUFFER abuf = {0};
+static AUTO_PROXY_SCRIPT_BUFFER abuf = { 0 };
 static HANDLE hIeProxyMutex;
 static bool bAutoProxyInit;
 
@@ -238,28 +151,23 @@ static void NetlibInitAutoProxy(void)
 {
 	if (bAutoProxyInit) return;
 
-	if (!hModJS)
-	{
+	if (!hModJS) {
 		if (!(hModJS = LoadLibraryA("jsproxy.dll")))
 			return;
 
-		pInternetInitializeAutoProxyDll = (pfnInternetInitializeAutoProxyDll)
-			GetProcAddress(hModJS, "InternetInitializeAutoProxyDll");
-
-		pInternetDeInitializeAutoProxyDll = (pfnInternetDeInitializeAutoProxyDll)
-			GetProcAddress(hModJS, "InternetDeInitializeAutoProxyDll");
-
-		pInternetGetProxyInfo = (pfnInternetGetProxyInfo)
-			GetProcAddress(hModJS, "InternetGetProxyInfo");
+		pInternetInitializeAutoProxyDll = (pfnInternetInitializeAutoProxyDll)GetProcAddress(hModJS, "InternetInitializeAutoProxyDll");
+		pInternetDeInitializeAutoProxyDll = (pfnInternetDeInitializeAutoProxyDll)GetProcAddress(hModJS, "InternetDeInitializeAutoProxyDll");
+		pInternetGetProxyInfo = (pfnInternetGetProxyInfo)GetProcAddress(hModJS, "InternetGetProxyInfo");
 	}
 
-	if (strstr(szAutoUrlStr, "file://") == NULL && strstr(szAutoUrlStr, "://") != NULL)
-	{
+	if (strstr(szAutoUrlStr, "file://") == nullptr && strstr(szAutoUrlStr, "://") != nullptr) {
 		abuf.dwStructSize = sizeof(abuf);
 		GetFile(szAutoUrlStr, abuf);
 	}
 	bAutoProxyInit = true;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////
 
 struct IeProxyParam
 {
@@ -271,7 +179,7 @@ struct IeProxyParam
 static void NetlibIeProxyThread(void *arg)
 {
 	IeProxyParam *param = (IeProxyParam*)arg;
-	param->szProxy = NULL;
+	param->szProxy = nullptr;
 
 	if (!bAutoProxyInit) {
 		WaitForSingleObject(hIeProxyMutex, INFINITE);
@@ -281,15 +189,15 @@ static void NetlibIeProxyThread(void *arg)
 
 	BOOL res;
 	char *loc = strstr(szAutoUrlStr, "file://");
-	if (loc || strstr(szAutoUrlStr, "://") == NULL) {
-		NetlibLogf(NULL, "Autoproxy Init file: %s", loc);
+	if (loc || strstr(szAutoUrlStr, "://") == nullptr) {
+		Netlib_Logf(nullptr, "Autoproxy Init file: %s", loc);
 		loc = loc ? loc + 7 : szAutoUrlStr;
-		res = pInternetInitializeAutoProxyDll(0, loc, NULL, NULL /*&HelperFunctions*/, NULL);
+		res = pInternetInitializeAutoProxyDll(0, loc, nullptr, nullptr /*&HelperFunctions*/, nullptr);
 	}
 	else {
-		NetlibLogf(NULL, "Autoproxy Init %d", abuf.dwScriptBufferSize);
+		Netlib_Logf(nullptr, "Autoproxy Init %d", abuf.dwScriptBufferSize);
 		if (abuf.dwScriptBufferSize)
-			res = pInternetInitializeAutoProxyDll(0, NULL, NULL, NULL /*&HelperFunctions*/, &abuf);
+			res = pInternetInitializeAutoProxyDll(0, nullptr, nullptr, nullptr /*&HelperFunctions*/, &abuf);
 		else
 			res = false;
 	}
@@ -303,15 +211,17 @@ static void NetlibIeProxyThread(void *arg)
 			param->szHost, (DWORD)mir_strlen(param->szHost), &proxy, &dwProxyLen))
 			param->szProxy = mir_strdup(lrtrim(proxy));
 
-		NetlibLogf(NULL, "Autoproxy got response %s, Param: %s %s", param->szProxy, param->szUrl, param->szHost);
-		pInternetDeInitializeAutoProxyDll(NULL, 0);
+		Netlib_Logf(nullptr, "Autoproxy got response %s, Param: %s %s", param->szProxy, param->szUrl, param->szHost);
+		pInternetDeInitializeAutoProxyDll(nullptr, 0);
 	}
-	else NetlibLogf(NULL, "Autoproxy init failed");
+	else Netlib_Logf(nullptr, "Autoproxy init failed");
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////
 
 char* NetlibGetIeProxy(char *szUrl)
 {
-	char *res = NULL;
+	char *res = nullptr;
 	char* p = strstr(szUrl, "://");
 	if (p) p += 3; else p = szUrl;
 
@@ -320,15 +230,14 @@ char* NetlibGetIeProxy(char *szUrl)
 	p = strchr(szHost, ':'); if (p) *p = 0;
 	_strlwr(szHost);
 
-	if (bEnabled)
-	{
-		for (int i=0; i < proxyBypass.getCount(); i++)
-		{
-			if (mir_strcmp(proxyBypass[i], "<local>") == 0)
-			{
-				if (strchr(szHost, '.') == NULL) return NULL;
+	if (bEnabled) {
+		for (int i = 0; i < proxyBypass.getCount(); i++) {
+			if (mir_strcmp(proxyBypass[i], "<local>") == 0) {
+				if (strchr(szHost, '.') == nullptr)
+					return nullptr;
 			}
-			else if (wildcmp(szHost, proxyBypass[i])) return NULL;
+			else if (wildcmp(szHost, proxyBypass[i]))
+				return nullptr;
 		}
 
 		int ind = -1;
@@ -339,7 +248,8 @@ char* NetlibGetIeProxy(char *szUrl)
 		else
 			ind = szProxyHost[2] ? 2 : (bOneProxy ? 0 : (szProxyHost[1] ? 1 : 2));
 
-		if (ind < 0 || !szProxyHost[ind]) return NULL;
+		if (ind < 0 || !szProxyHost[ind])
+			return nullptr;
 
 		size_t len = mir_strlen(szHost) + 20;
 		res = (char*)mir_alloc(len);
@@ -348,7 +258,7 @@ char* NetlibGetIeProxy(char *szUrl)
 	}
 
 	if (szAutoUrlStr[0]) {
-		IeProxyParam param = { szUrl, szHost, NULL };
+		IeProxyParam param = { szUrl, szHost, nullptr };
 		HANDLE hThread = mir_forkthread(NetlibIeProxyThread, &param);
 		WaitForSingleObject(hThread, INFINITE);
 		res = param.szProxy;
@@ -356,95 +266,98 @@ char* NetlibGetIeProxy(char *szUrl)
 	return res;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
+
 void NetlibLoadIeProxy(void)
 {
 	HKEY hSettings;
-	if (RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
-		0, KEY_QUERY_VALUE, &hSettings))
+	if (RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", 0, KEY_QUERY_VALUE, &hSettings))
 		return;
 
 	DWORD tValueLen, enabled = 0;
 	char szHostStr[256] = "", szProxyBypassStr[4096] = "";
 
 	tValueLen = sizeof(enabled);
-	int tResult = RegQueryValueExA(hSettings, "ProxyEnable", NULL, NULL, (BYTE*)&enabled, &tValueLen);
+	int tResult = RegQueryValueExA(hSettings, "ProxyEnable", nullptr, nullptr, (BYTE*)&enabled, &tValueLen);
 	bEnabled = enabled && tResult == ERROR_SUCCESS;
 
 	tValueLen = _countof(szHostStr);
-	tResult = RegQueryValueExA(hSettings, "ProxyServer", NULL, NULL, (BYTE*)szHostStr, &tValueLen);
+	tResult = RegQueryValueExA(hSettings, "ProxyServer", nullptr, nullptr, (BYTE*)szHostStr, &tValueLen);
 	bEnabled = bEnabled && tResult == ERROR_SUCCESS;
 
 	tValueLen = _countof(szAutoUrlStr);
-	RegQueryValueExA(hSettings, "AutoConfigUrl", NULL, NULL, (BYTE*)szAutoUrlStr, &tValueLen);
+	RegQueryValueExA(hSettings, "AutoConfigUrl", nullptr, nullptr, (BYTE*)szAutoUrlStr, &tValueLen);
 
 	tValueLen = _countof(szProxyBypassStr);
-	RegQueryValueExA(hSettings, "ProxyOverride", NULL, NULL, (BYTE*)szProxyBypassStr, &tValueLen);
+	RegQueryValueExA(hSettings, "ProxyOverride", nullptr, nullptr, (BYTE*)szProxyBypassStr, &tValueLen);
 
 	RegCloseKey(hSettings);
 
-	if (bEnabled)
-	{
-		char* szProxy = ltrim(szHostStr);
-		if (szProxy[0] == 0) { enabled = false; return; }
+	if (bEnabled) {
+		char *szProxy = ltrim(szHostStr);
+		if (szProxy[0] == 0) {
+			enabled = false;
+			return;
+		}
 
-		while(true)
-		{
+		while (true) {
 			char *szProxyEnd = strchr(szProxy, ';');
-			if (szProxyEnd) *szProxyEnd = 0;
+			if (szProxyEnd)
+				*szProxyEnd = 0;
 
 			int ind = -1;
-			if (strncmp(szProxy, "http = ", 5) == 0) { ind = 0; szProxy += 5; }
-			else if (strncmp(szProxy, "https = ", 6) == 0) { ind = 1; szProxy += 6; }
-			else if (strncmp(szProxy, "socks = ", 6) == 0) { ind = 2; szProxy += 6; }
+			if (strncmp(szProxy, "http=", 5) == 0) { ind = 0; szProxy += 5; }
+			else if (strncmp(szProxy, "https=", 6) == 0) { ind = 1; szProxy += 6; }
+			else if (strncmp(szProxy, "socks=", 6) == 0) { ind = 2; szProxy += 6; }
 			else if (strchr(szProxy, '=')) ind = -2;
 
-			if (ind != -2)
-			{
+			if (ind != -2) {
 				bOneProxy = ind < 0; if (ind < 0) ind = 0;
 
 				lrtrim(szProxy);
 
 				if (strchr(szProxy, ':'))
 					szProxyHost[ind] = mir_strdup(szProxy);
-				else
-				{
+				else {
 					size_t len = mir_strlen(szProxy) + 10;
 					szProxyHost[ind] = (char*)mir_alloc(len);
 					mir_snprintf(szProxyHost[ind], len, "%s:%u", szProxy, ind == 2 ? 1080 : 8080);
 				}
-				if (bOneProxy) break;
+				if (bOneProxy)
+					break;
 			}
-			if (szProxyEnd == NULL) break;
+			if (szProxyEnd == nullptr)
+				break;
 			szProxy = szProxyEnd + 1;
 		}
 
-		char* szProxyBypass = szProxyBypassStr;
-		while(true)
-		{
+		char *szProxyBypass = szProxyBypassStr;
+		while (true) {
 			char *szProxyBypassEnd = strchr(szProxyBypass, ';');
-			if (szProxyBypassEnd) *szProxyBypassEnd = 0;
+			if (szProxyBypassEnd)
+				*szProxyBypassEnd = 0;
 
 			lrtrim(szProxyBypass);
 
 			proxyBypass.insert(_strlwr(mir_strdup(szProxyBypass)));
-			if (szProxyBypassEnd == NULL) break;
+			if (szProxyBypassEnd == nullptr)
+				break;
 
 			szProxyBypass = szProxyBypassEnd + 1;
 		}
 	}
 
 	if (bEnabled || szAutoUrlStr[0])
-		hIeProxyMutex = CreateMutex(NULL, FALSE, NULL);
+		hIeProxyMutex = CreateMutex(nullptr, FALSE, nullptr);
 }
 
 void NetlibUnloadIeProxy(void)
 {
 	int i;
-
-	for (i=0; i < 3; i++)
+	for (i = 0; i < 3; i++)
 		mir_free(szProxyHost[i]);
 
-	for (i=0; i < proxyBypass.getCount(); i++)
+	for (i = 0; i < proxyBypass.getCount(); i++)
 		mir_free(proxyBypass[i]);
 
 	mir_free(abuf.lpszScriptBuffer);

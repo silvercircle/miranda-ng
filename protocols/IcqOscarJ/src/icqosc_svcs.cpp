@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2010 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -348,15 +348,15 @@ INT_PTR CIcqProto::GetAvatarInfo(WPARAM wParam, LPARAM lParam)
 	int dwPaFormat = getByte(pai->hContact, "AvatarType", PA_FORMAT_UNKNOWN);
 
 	if (dwPaFormat != PA_FORMAT_UNKNOWN) { // we know the format, test file
-		TCHAR tszFile[MAX_PATH * 2 + 4];
+		wchar_t tszFile[MAX_PATH * 2 + 4];
 
 		GetFullAvatarFileName(dwUIN, szUID, dwPaFormat, tszFile, MAX_PATH * 2);
 
-		mir_tstrncpy(pai->filename, tszFile, _countof(pai->filename)); // Avatar API does not support unicode :-(
+		mir_wstrncpy(pai->filename, tszFile, _countof(pai->filename)); // Avatar API does not support unicode :-(
 		pai->format = dwPaFormat;
 
 		if (!IsAvatarChanged(pai->hContact, dbv.pbVal, dbv.cpbVal)) { // hashes are the same
-			if (_taccess(tszFile, 0) == 0) {
+			if (_waccess(tszFile, 0) == 0) {
 				db_free(&dbv);
 
 				return GAIR_SUCCESS; // we have found the avatar file, whoala
@@ -366,11 +366,11 @@ INT_PTR CIcqProto::GetAvatarInfo(WPARAM wParam, LPARAM lParam)
 
 	if (IsAvatarChanged(pai->hContact, dbv.pbVal, dbv.cpbVal)) { // we didn't received the avatar before - this ensures we will not request avatar again and again
 		if ((wParam & GAIF_FORCE) != 0 && pai->hContact != 0) { // request avatar data
-			TCHAR tszFile[MAX_PATH * 2 + 4];
+			wchar_t tszFile[MAX_PATH * 2 + 4];
 
 			GetAvatarFileName(dwUIN, szUID, tszFile, MAX_PATH * 2);
 			GetAvatarData(pai->hContact, dwUIN, szUID, dbv.pbVal, dbv.cpbVal, tszFile);
-			mir_tstrncpy(pai->filename, tszFile, _countof(pai->filename)); // Avatar API does not support unicode :-(
+			mir_wstrncpy(pai->filename, tszFile, _countof(pai->filename)); // Avatar API does not support unicode :-(
 
 			db_free(&dbv);
 
@@ -389,9 +389,9 @@ INT_PTR CIcqProto::GetMyAvatar(WPARAM wParam, LPARAM lParam)
 
 	if (!wParam) return -3;
 
-	TCHAR *tszFile = GetOwnAvatarFileName();
-	if (tszFile && !_taccess(tszFile, 0)) {
-		_tcsncpy((TCHAR*)wParam, tszFile, (int)lParam);
+	wchar_t *tszFile = GetOwnAvatarFileName();
+	if (tszFile && !_waccess(tszFile, 0)) {
+		wcsncpy((wchar_t*)wParam, tszFile, (int)lParam);
 		SAFE_FREE(&tszFile);
 		return 0;
 	}
@@ -485,7 +485,7 @@ INT_PTR CIcqProto::SetMyAvatar(WPARAM, LPARAM lParam)
 	if (!m_bAvatarsEnabled || !m_bSsiEnabled)
 		return -2;
 
-	TCHAR *tszFile = (TCHAR*)lParam;
+	wchar_t *tszFile = (wchar_t*)lParam;
 	if (tszFile) { // set file for avatar
 		int dwPaFormat = ::ProtoGetAvatarFileFormat(tszFile);
 		if (dwPaFormat != PA_FORMAT_XML) {
@@ -497,11 +497,11 @@ INT_PTR CIcqProto::SetMyAvatar(WPARAM, LPARAM lParam)
 			DeleteObject(avt);
 		}
 
-		TCHAR tszMyFile[MAX_PATH + 1];
+		wchar_t tszMyFile[MAX_PATH + 1];
 		GetFullAvatarFileName(0, NULL, dwPaFormat, tszMyFile, MAX_PATH);
 		
 		// if not in our storage, copy
-		if (mir_tstrcmp(tszFile, tszMyFile) && !CopyFile(tszFile, tszMyFile, FALSE)) {
+		if (mir_wstrcmp(tszFile, tszMyFile) && !CopyFile(tszFile, tszMyFile, FALSE)) {
 			debugLogA("Failed to copy our avatar to local storage.");
 			return -1;
 		}
@@ -522,9 +522,9 @@ INT_PTR CIcqProto::SetMyAvatar(WPARAM, LPARAM lParam)
 		if (setSettingBlob(NULL, "AvatarHash", ihash, 0x14))
 			debugLogA("Failed to save avatar hash.");
 
-		TCHAR tmp[MAX_PATH];
-		PathToRelativeT(tszMyFile, tmp);
-		setTString(NULL, "AvatarFile", tmp);
+		wchar_t tmp[MAX_PATH];
+		PathToRelativeW(tszMyFile, tmp);
+		setWString(NULL, "AvatarFile", tmp);
 		SAFE_FREE((void**)&hash);
 	}
    else {
@@ -542,7 +542,7 @@ INT_PTR CIcqProto::SetNickName(WPARAM wParam, LPARAM lParam)
 		return 0; // failure
 
 	if (wParam & SMNN_UNICODE)
-		setTString("Nick", (WCHAR*)lParam);
+		setWString("Nick", (WCHAR*)lParam);
 	else
 		setString("Nick", (char*)lParam);
 
@@ -630,15 +630,15 @@ INT_PTR __cdecl CIcqProto::IcqCheckCapability(WPARAM hContact, LPARAM lParam)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-INT_PTR icq_getEventTextMissedMessage(WPARAM, LPARAM lParam)
+INT_PTR icq_getEventTextMissedMessage(WPARAM pEvent, LPARAM datatype)
 {
-	DBEVENTGETTEXT *pEvent = (DBEVENTGETTEXT *)lParam;
+	DBEVENTINFO *dbei = (DBEVENTINFO *)pEvent;
 
 	INT_PTR nRetVal = 0;
 	char *pszText = NULL;
 
-	if (pEvent->dbei->cbBlob > 1) {
-		switch (((WORD*)pEvent->dbei->pBlob)[0]) {
+	if (dbei->cbBlob > 1) {
+		switch (((WORD*)dbei->pBlob)[0]) {
 		case 0:
 			pszText = LPGEN("** This message was blocked by the ICQ server ** The message was invalid.");
 			break;
@@ -659,18 +659,17 @@ INT_PTR icq_getEventTextMissedMessage(WPARAM, LPARAM lParam)
 			pszText = LPGEN("** Unknown missed message event.");
 			break;
 		}
-		if (pEvent->datatype == DBVT_WCHAR) {
-			WCHAR *pwszText;
+		if (datatype == DBVT_WCHAR) {
 			int wchars = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, pszText, (int)mir_strlen(pszText), NULL, 0);
 
-			pwszText = (WCHAR*)_alloca((wchars + 1) * sizeof(WCHAR));
+			WCHAR *pwszText = (WCHAR*)_alloca((wchars + 1) * sizeof(WCHAR));
 			pwszText[wchars] = 0;
 
 			MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, pszText, (int)mir_strlen(pszText), pwszText, wchars);
 
 			nRetVal = (INT_PTR)mir_wstrdup(TranslateW(pwszText));
 		}
-		else if (pEvent->datatype == DBVT_ASCIIZ)
+		else if (datatype == DBVT_ASCIIZ)
 			nRetVal = (INT_PTR)mir_strdup(Translate(pszText));
 	}
 

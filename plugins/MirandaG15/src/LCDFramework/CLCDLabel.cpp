@@ -8,10 +8,10 @@
 //************************************************************************
 // constructor
 //************************************************************************
-CLCDLabel::CLCDLabel()
+CLCDLabel::CLCDLabel() : m_bCutOff(true), m_bWordWrap(false), m_iCutOffIndex(0),
+	m_iLineCount(0)
 {
-	m_strText = _T("");
-	m_bCutOff = true;
+	m_strText = L"";
 }
 
 //************************************************************************
@@ -124,7 +124,7 @@ void CLCDLabel::UpdateCutOffIndex()
 
 	if(iLen <= 0)
 	{
-		m_strCutOff = _T("");
+		m_strCutOff = L"";
 		m_iCutOffIndex = 0;
 		return;
 	}
@@ -150,7 +150,7 @@ void CLCDLabel::UpdateCutOffIndex()
 	if(m_bWordWrap && GetWidth() > 0)
 	{
 		int *piExtents = new int[m_strText.length()];
-		TCHAR *szString = (TCHAR*)m_strText.c_str();
+		wchar_t *szString = (wchar_t*)m_strText.c_str();
 		int iMaxChars = 0;
 		tstring::size_type pos = 0;
 
@@ -162,7 +162,7 @@ void CLCDLabel::UpdateCutOffIndex()
 			if(m_strText[i] == '\n' || m_strText[i] == ' ')
 				i++;
 
-			pos = m_strText.find(_T("\n"),i);
+			pos = m_strText.find(L"\n",i);
 			// check for linebreaks
 			if(pos != tstring::npos && pos != i && pos >= i && pos != i+iMaxChars)
 				iMaxChars = 1 + (int)pos - i;
@@ -170,7 +170,7 @@ void CLCDLabel::UpdateCutOffIndex()
 			else if(iMaxChars < iLen - i || sizeLine.cx >= GetWidth())
 			{
 				// find the last space in the line ( substract -1 from offset to ignore spaces as last chars )
-				pos = m_strText.rfind(_T(" "),i + iMaxChars -1 );
+				pos = m_strText.rfind(L" ",i + iMaxChars -1 );
 				if(pos != tstring::npos && pos != i && pos >= i && pos != i+iMaxChars)
 					iMaxChars = 1 + (int)pos - i;
 			}
@@ -188,7 +188,7 @@ void CLCDLabel::UpdateCutOffIndex()
 
 	// calculate the cutoff position
 
-	GetTextExtentPoint(hDC,_T("..."),3,&sizeCutOff);
+	GetTextExtentPoint(hDC,L"...",3,&sizeCutOff);
 
 	int *piWidths = new int[(*--m_vLines.end()).length()];
 	int iMaxChars = 0;
@@ -202,7 +202,7 @@ void CLCDLabel::UpdateCutOffIndex()
 			if(piWidths[iMaxChars] + sizeCutOff.cx <= iWidth)
 				break;
 		}
-		(*--m_vLines.end()) = (*--m_vLines.end()).substr(0,iMaxChars) + _T("...");
+		(*--m_vLines.end()) = (*--m_vLines.end()).substr(0,iMaxChars) + L"...";
 	}
 	delete[] piWidths;
 

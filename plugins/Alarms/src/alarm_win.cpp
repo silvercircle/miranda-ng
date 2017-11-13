@@ -6,8 +6,8 @@
 #define SPEACH_REPEAT_PERIOD		15000	// milliseconds
 MWindowList hAlarmWindowList = 0;
 
-FontIDT title_font_id, window_font_id;
-ColourIDT bk_colour_id;
+FontIDW title_font_id, window_font_id;
+ColourIDW bk_colour_id;
 HFONT hTitleFont = 0, hWindowFont = 0;
 COLORREF title_font_colour, window_font_colour;
 HBRUSH hBackgroundBrush = 0;
@@ -17,12 +17,13 @@ HBRUSH hBackgroundBrush = 0;
 #define WMU_ADDSNOOZER		(WM_USER + 63)
 
 int win_num = 0;
-typedef struct WindowData_tag {
+struct WindowData
+{
 	ALARM *alarm;
 	POINT p;
 	bool moving;
 	int win_num;
-} WindowData;
+};
 
 void SetAlarmWinOptions()
 {
@@ -33,36 +34,34 @@ INT_PTR CALLBACK DlgProcAlarm(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 {
 	WindowData *wd = (WindowData*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
 
-	switch ( msg ) {
-	case WM_INITDIALOG: 
-		TranslateDialogDefault( hwndDlg );
-		{
-			Utils_RestoreWindowPositionNoSize(hwndDlg, 0, MODULE, "Notify");
-			SetFocus(GetDlgItem(hwndDlg, IDC_SNOOZE));
+	switch (msg) {
+	case WM_INITDIALOG:
+		TranslateDialogDefault(hwndDlg);
 
-			wd = new WindowData;
-			wd->moving = false;
-			wd->alarm = 0;
-			wd->win_num = win_num++;
+		Utils_RestoreWindowPositionNoSize(hwndDlg, 0, MODULE, "Notify");
+		SetFocus(GetDlgItem(hwndDlg, IDC_SNOOZE));
 
-			if (wd->win_num > 0) {
-				RECT r;
-				GetWindowRect(hwndDlg, &r);
-				r.top += 20;
-				r.left += 20;
+		wd = new WindowData;
+		wd->moving = false;
+		wd->alarm = 0;
+		wd->win_num = win_num++;
 
-				SetWindowPos(hwndDlg, 0, r.left, r.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
-				Utils_SaveWindowPosition(hwndDlg, 0, MODULE, "Notify");
-			}
+		if (wd->win_num > 0) {
+			RECT r;
+			GetWindowRect(hwndDlg, &r);
+			r.top += 20;
+			r.left += 20;
 
-			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)wd);
-
-			// options
-			SendMessage(hwndDlg, WMU_SETOPT, 0, 0);
-		
-			// fonts
-			SendMessage(hwndDlg, WMU_SETFONTS, 0, 0);
+			SetWindowPos(hwndDlg, 0, r.left, r.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+			Utils_SaveWindowPosition(hwndDlg, 0, MODULE, "Notify");
 		}
+		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)wd);
+
+		// options
+		SendMessage(hwndDlg, WMU_SETOPT, 0, 0);
+
+		// fonts
+		SendMessage(hwndDlg, WMU_SETFONTS, 0, 0);
 		return FALSE;
 
 	case WMU_REFRESH:
@@ -119,7 +118,7 @@ INT_PTR CALLBACK DlgProcAlarm(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 			GetWindowRect(hwndDlg, &r);
 			int h = (r.right - r.left) > (w * 2) ? w : (r.right - r.left);
 			int v = (r.bottom - r.top) > (w * 2) ? w : (r.bottom - r.top);
-			h = (h<v) ? h : v;
+			h = (h < v) ? h : v;
 			hRgn1 = CreateRoundRectRgn(0, 0, (r.right - r.left + 1), (r.bottom - r.top + 1), h, h);
 			SetWindowRgn(hwndDlg, hRgn1, 1);
 		}
@@ -128,7 +127,7 @@ INT_PTR CALLBACK DlgProcAlarm(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 			RECT r;
 			int w = 10;
 			GetWindowRect(hwndDlg, &r);
-			int h = (r.right - r.left)>(w * 2) ? w : (r.right - r.left);
+			int h = (r.right - r.left) > (w * 2) ? w : (r.right - r.left);
 			int v = (r.bottom - r.top) > (w * 2) ? w : (r.bottom - r.top);
 			h = (h < v) ? h : v;
 			hRgn1 = CreateRectRgn(0, 0, (r.right - r.left + 1), (r.bottom - r.top + 1));
@@ -179,7 +178,7 @@ INT_PTR CALLBACK DlgProcAlarm(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 				if (data->sound_num <= 3) {
 					char buff[128];
 					mir_snprintf(buff, "Triggered%d", data->sound_num);
-					SkinPlaySound(buff);
+					Skin_PlaySound(buff);
 				}
 				else if (data->sound_num == 4) {
 					if (data->szTitle != NULL && data->szTitle[0] != '\0') {
@@ -204,7 +203,7 @@ INT_PTR CALLBACK DlgProcAlarm(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 				FILETIME ft;
 				GetLocalTime(&data->time);
 				SystemTimeToFileTime(&data->time, &ft);
-				
+
 				ULARGE_INTEGER uli;
 				uli.LowPart = ft.dwLowDateTime;
 				uli.HighPart = ft.dwHighDateTime;
@@ -266,16 +265,16 @@ INT_PTR CALLBACK DlgProcAlarm(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 
 				#define AddItem(x) \
 					mii.wID++; \
-					mii.dwTypeData = TranslateT(x); \
-					mii.cch = ( UINT )mir_tstrlen(mii.dwTypeData); \
+					mii.dwTypeData = TranslateW(x); \
+					mii.cch = ( UINT )mir_wstrlen(mii.dwTypeData); \
 					InsertMenuItem(hMenu, mii.wID, FALSE, &mii);
 
-				AddItem(LPGEN("5 mins"));
-				AddItem(LPGEN("15 mins"));
-				AddItem(LPGEN("30 mins"));
-				AddItem(LPGEN("1 hour"));
-				AddItem(LPGEN("1 day"));
-				AddItem(LPGEN("1 week"));
+				AddItem(LPGENW("5 mins"));
+				AddItem(LPGENW("15 mins"));
+				AddItem(LPGENW("30 mins"));
+				AddItem(LPGENW("1 hour"));
+				AddItem(LPGENW("1 day"));
+				AddItem(LPGENW("1 week"));
 
 				TPMPARAMS tpmp = { 0 };
 				tpmp.cbSize = sizeof(tpmp);
@@ -331,15 +330,15 @@ INT_PTR CALLBACK DlgProcAlarm(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 int ReloadFonts(WPARAM, LPARAM)
 {
 	LOGFONT log_font;
-	title_font_colour = CallService(MS_FONT_GETT, (WPARAM)&title_font_id, (LPARAM)&log_font);
+	title_font_colour = Font_GetW(title_font_id, &log_font);
 	DeleteObject(hTitleFont);
 	hTitleFont = CreateFontIndirect(&log_font);
 
-	window_font_colour = CallService(MS_FONT_GETT, (WPARAM)&window_font_id, (LPARAM)&log_font);
+	window_font_colour = Font_GetW(window_font_id, &log_font);
 	DeleteObject(hWindowFont);
 	hWindowFont = CreateFontIndirect(&log_font);
 
-	COLORREF bkCol = CallService(MS_COLOUR_GETT, (WPARAM)&bk_colour_id, 0);
+	COLORREF bkCol = Colour_GetW(bk_colour_id);
 	DeleteObject(hBackgroundBrush);
 	hBackgroundBrush = CreateSolidBrush(bkCol);
 
@@ -349,38 +348,38 @@ int ReloadFonts(WPARAM, LPARAM)
 
 int AlarmWinModulesLoaded(WPARAM, LPARAM)
 {
-	title_font_id.cbSize = sizeof(FontIDT);
-	mir_tstrcpy(title_font_id.group, LPGENT("Alarms"));
-	mir_tstrcpy(title_font_id.name, LPGENT("Title"));
+	title_font_id.cbSize = sizeof(FontIDW);
+	mir_wstrcpy(title_font_id.group, LPGENW("Alarms"));
+	mir_wstrcpy(title_font_id.name, LPGENW("Title"));
 	mir_strcpy(title_font_id.dbSettingsGroup, MODULE);
 	mir_strcpy(title_font_id.prefix, "FontTitle");
-	mir_tstrcpy(title_font_id.backgroundGroup, LPGENT("Alarms"));
-	mir_tstrcpy(title_font_id.backgroundName, LPGENT("Background"));
+	mir_wstrcpy(title_font_id.backgroundGroup, LPGENW("Alarms"));
+	mir_wstrcpy(title_font_id.backgroundName, LPGENW("Background"));
 	title_font_id.flags = 0;
 	title_font_id.order = 0;
-	FontRegisterT(&title_font_id);
+	Font_RegisterW(&title_font_id);
 
-	window_font_id.cbSize = sizeof(FontIDT);
-	mir_tstrcpy(window_font_id.group, LPGENT("Alarms"));
-	mir_tstrcpy(window_font_id.name, LPGENT("Window"));
+	window_font_id.cbSize = sizeof(FontIDW);
+	mir_wstrcpy(window_font_id.group, LPGENW("Alarms"));
+	mir_wstrcpy(window_font_id.name, LPGENW("Window"));
 	mir_strcpy(window_font_id.dbSettingsGroup, MODULE);
 	mir_strcpy(window_font_id.prefix, "FontWindow");
-	mir_tstrcpy(window_font_id.backgroundGroup, LPGENT("Alarms"));
-	mir_tstrcpy(window_font_id.backgroundName, LPGENT("Background"));
+	mir_wstrcpy(window_font_id.backgroundGroup, LPGENW("Alarms"));
+	mir_wstrcpy(window_font_id.backgroundName, LPGENW("Background"));
 	window_font_id.flags = 0;
 	window_font_id.order = 1;
-	FontRegisterT(&window_font_id);
+	Font_RegisterW(&window_font_id);
 
-	bk_colour_id.cbSize = sizeof(ColourIDT);
+	bk_colour_id.cbSize = sizeof(ColourIDW);
 	mir_strcpy(bk_colour_id.dbSettingsGroup, MODULE);
-	mir_tstrcpy(bk_colour_id.group, LPGENT("Alarms"));
-	mir_tstrcpy(bk_colour_id.name, LPGENT("Background"));
+	mir_wstrcpy(bk_colour_id.group, LPGENW("Alarms"));
+	mir_wstrcpy(bk_colour_id.name, LPGENW("Background"));
 	mir_strcpy(bk_colour_id.setting, "BkColour");
 	bk_colour_id.defcolour = GetSysColor(COLOR_3DFACE);
 	bk_colour_id.flags = 0;
 	bk_colour_id.order = 0;
 
-	ColourRegisterT(&bk_colour_id);
+	Colour_RegisterW(&bk_colour_id);
 
 	ReloadFonts(0, 0);
 	HookEvent(ME_FONT_RELOAD, ReloadFonts);

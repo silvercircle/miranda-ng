@@ -12,49 +12,49 @@ struct FieldNames
 
 static const FieldNames GenderField[] =
 {
-	{ 1, LPGENT("Male")         },
-	{ 2, LPGENT("Female")       },
+	{ 1, LPGENW("Male")         },
+	{ 2, LPGENW("Female")       },
 	{ 0, NULL                   }
 };
 
 static const FieldNames MonthField[] =
 {
-	{ 1,  LPGENT("January")     },
-	{ 2,  LPGENT("February")    },
-	{ 3,  LPGENT("March")       },
-	{ 4,  LPGENT("April")       },
-	{ 5,  LPGENT("May")         },
-	{ 6,  LPGENT("June")        },
-	{ 7,  LPGENT("July")        },
-	{ 8,  LPGENT("August")      },
-	{ 9,  LPGENT("September")   },
-	{ 10, LPGENT("October")     },
-	{ 11, LPGENT("November")    },
-	{ 12, LPGENT("December")    },
+	{ 1,  LPGENW("January")     },
+	{ 2,  LPGENW("February")    },
+	{ 3,  LPGENW("March")       },
+	{ 4,  LPGENW("April")       },
+	{ 5,  LPGENW("May")         },
+	{ 6,  LPGENW("June")        },
+	{ 7,  LPGENW("July")        },
+	{ 8,  LPGENW("August")      },
+	{ 9,  LPGENW("September")   },
+	{ 10, LPGENW("October")     },
+	{ 11, LPGENW("November")    },
+	{ 12, LPGENW("December")    },
 	{ 0,  NULL                  }
 };
 
 static const FieldNames ZodiakField[] =
 {
-	{ 1,  LPGENT("Aries")       },
-	{ 2,  LPGENT("Taurus")      },
-	{ 3,  LPGENT("Gemini")      },
-	{ 4,  LPGENT("Cancer")      },
-	{ 5,  LPGENT("Leo")         },
-	{ 6,  LPGENT("Virgo")       },
-	{ 7,  LPGENT("Libra")       },
-	{ 8,  LPGENT("Scorpio")     },
-	{ 9,  LPGENT("Sagittarius") },
-	{ 10, LPGENT("Capricorn")   },
-	{ 11, LPGENT("Aquarius")    },
-	{ 12, LPGENT("Pisces")      },
+	{ 1,  LPGENW("Aries")       },
+	{ 2,  LPGENW("Taurus")      },
+	{ 3,  LPGENW("Gemini")      },
+	{ 4,  LPGENW("Cancer")      },
+	{ 5,  LPGENW("Leo")         },
+	{ 6,  LPGENW("Virgo")       },
+	{ 7,  LPGENW("Libra")       },
+	{ 8,  LPGENW("Scorpio")     },
+	{ 9,  LPGENW("Sagittarius") },
+	{ 10, LPGENW("Capricorn")   },
+	{ 11, LPGENW("Aquarius")    },
+	{ 12, LPGENW("Pisces")      },
 	{ 0,  NULL                  }
 };
 
 void ResetComboBox(HWND hWndCombo)
 {
 	SendMessage(hWndCombo, CB_RESETCONTENT, 0, 0);
-	DWORD dwItem = SendMessage(hWndCombo, CB_ADDSTRING, 0, (LPARAM)_T(""));
+	DWORD dwItem = SendMessage(hWndCombo, CB_ADDSTRING, 0, (LPARAM)L"");
 	SendMessage(hWndCombo, CB_SETITEMDATA, dwItem, 0);
 	SendMessage(hWndCombo, CB_SETCURSEL, dwItem, 0);
 }
@@ -65,7 +65,7 @@ void InitComboBox(HWND hWndCombo, FieldNames *lpNames)
 	ResetComboBox(hWndCombo);
 
 	for (size_t i = 0; lpNames[i].lpszText; i++) {
-		DWORD dwItem = SendMessage(hWndCombo, CB_ADDSTRING, 0, (LPARAM)TranslateTS(lpNames[i].lpszText));
+		DWORD dwItem = SendMessage(hWndCombo, CB_ADDSTRING, 0, (LPARAM)TranslateW(lpNames[i].lpszText));
 		SendMessage(hWndCombo, CB_SETITEMDATA, dwItem, lpNames[i].dwCode);
 	}
 }
@@ -76,8 +76,8 @@ void InitComboBoxNumders(HWND hWndCombo, DWORD dwStart, DWORD dwEnd)
 	ResetComboBox(hWndCombo);
 
 	for (DWORD i = dwStart; i <= dwEnd; i++) {
-		TCHAR szBuff[MAX_PATH];
-		mir_sntprintf(szBuff, _T("%lu"), i);
+		wchar_t szBuff[MAX_PATH];
+		mir_snwprintf(szBuff, L"%lu", i);
 		DWORD dwItem = SendMessage(hWndCombo, CB_ADDSTRING, 0, (LPARAM)szBuff);
 		SendMessage(hWndCombo, CB_SETITEMDATA, dwItem, i);
 	}
@@ -215,7 +215,7 @@ INT_PTR CALLBACK AdvancedSearchDlgProc(HWND hWndDlg, UINT message, WPARAM wParam
 				HWND hWndCombo = GetDlgItem(hWndDlg, IDC_STATE);
 				SendMessage(hWndCombo, CB_RESETCONTENT, 0, 0);
 				ResetComboBox(GetDlgItem(hWndDlg, IDC_CITY));
-				DWORD dwItem = SendMessage(hWndCombo, CB_ADDSTRING, 0, (LPARAM)_T(""));
+				DWORD dwItem = SendMessage(hWndCombo, CB_ADDSTRING, 0, (LPARAM)L"");
 				SendMessage(hWndCombo, CB_SETITEMDATA, dwItem, 0);
 				SendMessage(hWndCombo, CB_SETCURSEL, dwItem, 0);
 
@@ -234,7 +234,7 @@ INT_PTR CALLBACK AdvancedSearchDlgProc(HWND hWndDlg, UINT message, WPARAM wParam
 				DWORD dwStateID = GET_CURRENT_COMBO_DATA(hWndDlg, IDC_STATE);
 				HWND hWndCombo = GetDlgItem(hWndDlg, IDC_CITY);
 				SendMessage(hWndCombo, CB_RESETCONTENT, 0, 0);
-				DWORD dwItem = SendMessage(hWndCombo, CB_ADDSTRING, 0, (LPARAM)_T(""));
+				DWORD dwItem = SendMessage(hWndCombo, CB_ADDSTRING, 0, (LPARAM)L"");
 				SendMessage(hWndCombo, CB_SETITEMDATA, dwItem, 0);
 				SendMessage(hWndCombo, CB_SETCURSEL, dwItem, 0);
 
@@ -254,7 +254,7 @@ HWND CMraProto::SearchAdvanced(HWND hWndDlg)
 {
 	DWORD dwRequestFlags = 0;
 	char szUser[MAX_PATH], szDomain[MAX_PATH];
-	TCHAR wszNickName[MAX_PATH], wszFirstName[MAX_PATH], wszLastName[MAX_PATH];
+	wchar_t wszNickName[MAX_PATH], wszFirstName[MAX_PATH], wszLastName[MAX_PATH];
 
 	size_t dwUserSize = GetDlgItemTextA(hWndDlg, IDC_EMAIL_USER, szUser, _countof(szUser));
 	size_t dwDomainSize = GetDlgItemTextA(hWndDlg, IDC_EMAIL_DOMAIN, szDomain, _countof(szDomain));

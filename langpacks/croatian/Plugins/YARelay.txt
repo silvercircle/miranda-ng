@@ -22,11 +22,11 @@
 
 [Away]
 
-[NA]
+[Not available]
 
 [Occupied]
 
-[DND]
+[Do not disturb]
 
 [Free for chat]
 

@@ -7,7 +7,6 @@
 ;============================================================
 [Advanced Database Editor.]
 Пашыраны рэдактар базы.
-;file \plugins\DbEditorPP\res\resource.rc
 [Search and replace]
 Знайсці і замяніць
 [Search for]
@@ -60,6 +59,10 @@
 Значэнне
 [Base]
 Падстава
+[Hexadecimal]
+
+[Decimal]
+
 [Save value as:]
 Захаваць як:
 [Byte]
@@ -96,6 +99,8 @@
 Дзеянні
 [&Search and replace]
 Знайсці і замяніць...
+[Delete &resident settings]
+
 [&Delete module]
 Выдаліць плагін...
 [&Watches]
@@ -134,6 +139,8 @@
 Словы ў шаснаццатковым выглядзе
 [Edit &Dwords in Hex]
 Падвойныя словы ў шаснаццатковым выглядзе
+[&Inline edit]
+
 [&Restore position]
 Аднаўляць становішча
 [&Open options]
@@ -158,6 +165,8 @@
 Юнікод
 [New]
 Стварыць
+[BL&OB]
+
 [&Watch]
 Назіраць
 [&Refresh]
@@ -192,8 +201,8 @@
 Акно назіранняў
 [Reload watch list]
 Абнавіць спіс назіранняў
-;file \plugins\DbEditorPP\src\copymodule.cpp
-;file \plugins\DbEditorPP\src\deletemodule.cpp
+[Copy module "%s"]
+
 [Are you sure you want to delete module "%s"?]
 Выдаліць плагін "%s"?
 [Delete module from database]
@@ -202,7 +211,6 @@
 Выдаленне плагіна з базы... Загрузка
 [Delete from all contacts (including Settings)]
 Выдаліць з усіх кантактаў (з наладамі)
-;file \plugins\DbEditorPP\src\exportimport.cpp
 [INI Files]
 INI файлы
 [All Files]
@@ -211,15 +219,16 @@ INI файлы
 Экспарт
 [Couldn't open file for writing]
 Не атрымоўваецца адкрыць файл на запіс
+[Import to "%s"]
+
 [Import from files]
 Імпарт з файлаў
-;file \plugins\DbEditorPP\src\findwindow.cpp
 [Result]
 Вынік
 [Contact]
 Кантакт
 [Module]
-Плагiн
+Плагін
 [Setting]
 Налада
 [Enter a string to search the database for]
@@ -236,9 +245,12 @@ INI файлы
 Пошук...
 [Finished. Items found: %d / replaced: %d / deleted: %d]
 Пошук завершаны, знойдзена %d / заменена %d / выдалена %d элемент(аў)
-;file \plugins\DbEditorPP\src\icons.cpp
 [Main icon]
 Галоўны абразок
+[Closed module]
+
+[Open module]
+
 [Settings]
 Налады
 [Contacts group]
@@ -247,9 +259,24 @@ INI файлы
 Невядомы кантакт
 [Known contact]
 Вядомы кантакт
+[Open user tree]
+
+[Empty setting]
+
+[BLOB setting]
+
+[Byte setting]
+
+[Word setting]
+
+[Dword setting]
+
+[String setting]
+
+[Unicode setting]
+
 [Handle]
 Назва
-;file \plugins\DbEditorPP\src\main.cpp
 [Open Database Editor]
 Рэдактар базы
 [Database]
@@ -258,33 +285,45 @@ INI файлы
 Рэдактары базы
 [<UNKNOWN>]
 <НЕВЯДОМА>
-;file \plugins\DbEditorPP\src\main_window.cpp
+[[UNLOADED]]
+
 [Are you sure you want to delete contact "%s"?]
 Вы ўпэўнены, што жадаеце выдаліць кантакт "%s"?
-;file \plugins\DbEditorPP\src\modsettingenum.cpp
+[Delete resident settings from database?]
+
+[%d items deleted.]
+
 [Error loading module list]
 Памылка загрузкі спісу плагінаў
 [Error loading setting list]
 Памылка загрузкі спісу налад
-;file \plugins\DbEditorPP\src\moduletree.cpp
 [Loading contacts...]
 Загрузка кантактаў...
 [Loading modules...]
 Загрузка плагінаў...
 [Contacts]
 Кантакты
-;file \plugins\DbEditorPP\src\options.cpp
-;file \plugins\DbEditorPP\src\renamemodule.cpp
-;file \plugins\DbEditorPP\src\settinglist.cpp
+[Add module to "%s"]
+
 [Type]
 Тып
 [Size]
 Памер
+[Unable to store value in this data type!]
+
+[Are you sure you want to delete setting(s): %d?]
+
 [*** encrypted ***]
 *** зашыфравана ***
-;file \plugins\DbEditorPP\src\settingsdlg.cpp
+[*** buggy resident ***]
+
+[Unknown DBVariant type!]
+
 [Edit setting (%s)]
 Рэдагаваць наладу (%s)
-;file \plugins\DbEditorPP\src\watchedvars.cpp
+[New setting (%s)]
+
+[*** resident ***]
+
 [Database Setting Changed: \nModule: "%s", Setting: "%s"\nNew Value (%s): "%s"]
 Зменена налада базы: \nПлагін: "%s", налада: "%s"\nНовае значэнне (%s): "%s"

@@ -3,7 +3,7 @@
 Omegle plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2011-15 Robert Pösel
+Copyright © 2011-17 Robert Pösel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sstream>
 #include <fstream>
 #include <map>
+#include <vector>
 #include <stdarg.h>
 #include <time.h>
 #include <assert.h>
@@ -40,7 +41,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <newpluginapi.h>
 #include <m_system.h>
-#include <m_system_cpp.h>
 #include <m_chat.h>
 #include <m_clist.h>
 #include <m_langpack.h>
@@ -56,15 +56,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <m_utils.h>
 #include <m_hotkeys.h>
 #include <m_message.h>
-//#include <m_msg_buttonsbar.h>
 #include <m_http.h>
+#include <m_json.h>
 
 #include "version.h"
 
 class OmegleProto;
 
+#include "../../utils/std_string_utils.h"
+
 #include "http.h"
-#include "utils.h"
 #include "client.h"
 #include "proto.h"
 #include "db.h"
@@ -76,3 +77,24 @@ class OmegleProto;
 extern HINSTANCE g_hInstance;
 extern std::string g_strUserAgent;
 extern DWORD g_mirandaVersion;
+
+class ScopedLock
+{
+public:
+	ScopedLock(HANDLE h) : handle_(h)
+	{
+		WaitForSingleObject(handle_, INFINITE);
+	}
+	~ScopedLock()
+	{
+		if (handle_)
+			ReleaseMutex(handle_);
+	}
+	void Unlock()
+	{
+		ReleaseMutex(handle_);
+		handle_ = 0;
+	}
+private:
+	HANDLE handle_;
+};

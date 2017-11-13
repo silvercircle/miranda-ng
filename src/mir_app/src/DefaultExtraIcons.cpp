@@ -1,7 +1,7 @@
 /*
 
 Copyright (C) 2009 Ricardo Pescuma Domenecci
-Copyright (C) 2012-15 Miranda NG project
+Copyright (C) 2012-17 Miranda NG project
 
 This is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
@@ -35,7 +35,7 @@ HANDLE hExtraVisibility, hExtraChat, hExtraGender, hExtraProto;
 
 static void SetVisibility(MCONTACT hContact, int apparentMode, bool clear)
 {
-	if (hContact == NULL)
+	if (hContact == 0)
 		return;
 
 	char *proto = GetContactProto(hContact);
@@ -45,7 +45,7 @@ static void SetVisibility(MCONTACT hContact, int apparentMode, bool clear)
 	if (apparentMode <= 0)
 		apparentMode = db_get_w(hContact, proto, "ApparentMode", 0);
 
-	HANDLE hExtraIcon, hIcolib = NULL;
+	HANDLE hExtraIcon, hIcolib = nullptr;
 
 	if (db_get_b(hContact, proto, "ChatRoom", 0)) {
 		// Is chat
@@ -62,7 +62,7 @@ static void SetVisibility(MCONTACT hContact, int apparentMode, bool clear)
 			hIcolib = Skin_GetIconHandle(SKINICON_OTHER_VISIBLE_ALL);
 	}
 
-	if (hIcolib != NULL || clear) {
+	if (hIcolib != nullptr || clear) {
 		ExtraIcon *extra = GetExtraIcon(hExtraIcon);
 		if (extra)
 			extra->setIcon((INT_PTR)hExtraIcon, hContact, hIcolib);
@@ -71,7 +71,7 @@ static void SetVisibility(MCONTACT hContact, int apparentMode, bool clear)
 
 static void SetGender(MCONTACT hContact, int gender, bool clear)
 {
-	if (hContact == NULL)
+	if (hContact == 0)
 		return;
 
 	char *proto = GetContactProto(hContact);
@@ -89,9 +89,9 @@ static void SetGender(MCONTACT hContact, int gender, bool clear)
 	else if (gender == 'F')
 		ico = "gender_female";
 	else
-		ico = NULL;
+		ico = nullptr;
 
-	if (ico != NULL || clear) {
+	if (ico != nullptr || clear) {
 		ExtraIcon *extra = GetExtraIcon(hExtraGender);
 		if (extra)
 			extra->setIconByName((INT_PTR)hExtraGender, hContact, ico);
@@ -105,6 +105,7 @@ struct Info
 	int         iSkinIcon;
 	const char *db[8];
 	void(*OnClick)(Info *info, const char *text);
+	int        flags;
 
 	HANDLE hIcolib, hExtraIcon;
 };
@@ -113,30 +114,30 @@ static void EmailOnClick(Info*, const char *text)
 {
 	char cmd[1024];
 	mir_snprintf(cmd, "mailto:%s", text);
-	ShellExecuteA(NULL, "open", cmd, NULL, NULL, SW_SHOW);
+	ShellExecuteA(nullptr, "open", cmd, nullptr, nullptr, SW_SHOW);
 }
 
 static void HomepageOnClick(Info*, const char *text)
 {
-	ShellExecuteA(NULL, "open", text, NULL, NULL, SW_SHOW);
+	ShellExecuteA(nullptr, "open", text, nullptr, nullptr, SW_SHOW);
 }
 
 static Info infos[] =
 {
-	{ "homepage", "Homepage", SKINICON_OTHER_MIRANDAWEB,
-		{ NULL, "Homepage", "UserInfo", "Homepage" },
-		&HomepageOnClick },
-	{ "sms", "Phone/SMS", SKINICON_OTHER_SMS,
-		{ NULL, "Cellular", "UserInfo", "Cellular", "UserInfo", "Phone", "UserInfo", "MyPhone0" },
-		NULL },
-	{ "email", "E-mail", SKINICON_OTHER_SENDEMAIL,
-		{ NULL, "e-mail", "UserInfo", "e-mail", "UserInfo", "Mye-mail0" },
-		&EmailOnClick },
+	{ "homepage", LPGEN("Homepage"), SKINICON_OTHER_MIRANDAWEB,
+		{ nullptr, "Homepage", "UserInfo", "Homepage" },
+		&HomepageOnClick, EIF_DISABLED_BY_DEFAULT },
+	{ "sms", LPGEN("Phone/SMS"), SKINICON_OTHER_SMS,
+		{ nullptr, "Cellular", "UserInfo", "Cellular", "UserInfo", "Phone", "UserInfo", "MyPhone0" },
+		nullptr, EIF_DISABLED_BY_DEFAULT },
+	{ "email", LPGEN("E-mail"), SKINICON_OTHER_SENDEMAIL,
+		{ nullptr, "e-mail", "UserInfo", "e-mail", "UserInfo", "Mye-mail0" },
+		&EmailOnClick, EIF_DISABLED_BY_DEFAULT },
 };
 
 static void SetExtraIcons(MCONTACT hContact)
 {
-	if (hContact == NULL)
+	if (hContact == 0)
 		return;
 
 	char *proto = GetContactProto(hContact);
@@ -147,10 +148,10 @@ static void SetExtraIcons(MCONTACT hContact)
 		Info &p = infos[i];
 
 		for (unsigned int j = 0; j < _countof(p.db); j += 2) {
-			if (p.db[j + 1] == NULL)
+			if (p.db[j + 1] == nullptr)
 				break;
 
-			ptrA szValue(db_get_sa(hContact, p.db[j] == NULL ? proto : p.db[j], p.db[j + 1]));
+			ptrA szValue(db_get_sa(hContact, p.db[j] == nullptr ? proto : p.db[j], p.db[j + 1]));
 			if (!IsEmpty(szValue)) {
 				ExtraIcon_SetIcon(p.hExtraIcon, hContact, p.hIcolib);
 				break;
@@ -161,7 +162,7 @@ static void SetExtraIcons(MCONTACT hContact)
 
 static int SettingChanged(WPARAM hContact, LPARAM lParam)
 {
-	if (hContact == NULL)
+	if (hContact == 0)
 		return 0;
 
 	char *proto = GetContactProto(hContact);
@@ -169,13 +170,13 @@ static int SettingChanged(WPARAM hContact, LPARAM lParam)
 		return 0;
 
 	DBCONTACTWRITESETTING *cws = (DBCONTACTWRITESETTING*)lParam;
-	bool isProto = (mir_strcmp(cws->szModule, proto) == 0);
-	if (isProto && mir_strcmp(cws->szSetting, "ApparentMode") == 0) {
+	bool isProto = (strcmp(cws->szModule, proto) == 0);
+	if (isProto && strcmp(cws->szSetting, "ApparentMode") == 0) {
 		SetVisibility(hContact, cws->value.type == DBVT_DELETED ? 0 : cws->value.wVal, true);
 		return 0;
 	}
 
-	if (mir_strcmp(cws->szSetting, "Gender") == 0 && (isProto || mir_strcmp(cws->szModule, "UserInfo") == 0)) {
+	if (strcmp(cws->szSetting, "Gender") == 0 && (isProto || strcmp(cws->szModule, "UserInfo") == 0)) {
 		SetGender(hContact, cws->value.type == DBVT_DELETED ? 0 : cws->value.bVal, true);
 		return 0;
 	}
@@ -184,17 +185,17 @@ static int SettingChanged(WPARAM hContact, LPARAM lParam)
 		Info &p = infos[i];
 
 		for (int j = 0; j < _countof(p.db); j += 2) {
-			if (p.db[j + 1] == NULL)
+			if (p.db[j + 1] == nullptr)
 				break;
-			if (p.db[j] == NULL && !isProto)
+			if (p.db[j] == nullptr && !isProto)
 				continue;
-			if (p.db[j] != NULL && mir_strcmp(cws->szModule, p.db[j]))
+			if (p.db[j] != nullptr && strcmp(cws->szModule, p.db[j]))
 				continue;
-			if (mir_strcmp(cws->szSetting, p.db[j + 1]))
+			if (strcmp(cws->szSetting, p.db[j + 1]))
 				continue;
 
 			bool show = (cws->value.type != DBVT_DELETED && !IsEmpty(cws->value.pszVal));
-			ExtraIcon_SetIcon(p.hExtraIcon, hContact, show ? p.hIcolib : NULL);
+			ExtraIcon_SetIcon(p.hExtraIcon, hContact, show ? p.hIcolib : nullptr);
 			break;
 		}
 	}
@@ -205,10 +206,10 @@ static int SettingChanged(WPARAM hContact, LPARAM lParam)
 static int DefaultOnClick(WPARAM hContact, LPARAM, LPARAM param)
 {
 	Info *p = (Info*)param;
-	if (p == NULL)
+	if (p == nullptr)
 		return 0;
 
-	if (hContact == NULL)
+	if (hContact == 0)
 		return 0;
 
 	char *proto = GetContactProto(hContact);
@@ -217,10 +218,10 @@ static int DefaultOnClick(WPARAM hContact, LPARAM, LPARAM param)
 
 	bool found = false;
 	for (int j = 0; !found && j < _countof(p->db); j += 2) {
-		if (p->db[j + 1] == NULL)
+		if (p->db[j + 1] == nullptr)
 			break;
 
-		ptrA szValue(db_get_sa(hContact, p->db[j] == NULL ? proto : p->db[j], p->db[j + 1]));
+		ptrA szValue(db_get_sa(hContact, p->db[j] == nullptr ? proto : p->db[j], p->db[j + 1]));
 		if (!IsEmpty(szValue)) {
 			p->OnClick(p, szValue);
 			found = true;
@@ -263,12 +264,12 @@ static ProtoInfo* FindProto(const char *proto)
 		return p;
 
 	HICON hIcon = Skin_LoadProtoIcon(proto, ID_STATUS_ONLINE);
-	if (hIcon == NULL)
-		return NULL;
+	if (hIcon == nullptr)
+		return nullptr;
 
-	HANDLE hImage = ExtraIcon_Add(hIcon);
+	HANDLE hImage = ExtraIcon_AddIcon(hIcon);
 	if (hImage == INVALID_HANDLE_VALUE)
-		return NULL;
+		return nullptr;
 
 	p = new ProtoInfo(proto, hImage);
 	arProtos.insert(p);
@@ -283,7 +284,7 @@ static int ProtocolApplyIcon(WPARAM hContact, LPARAM)
 
 	HANDLE hImage = INVALID_HANDLE_VALUE;
 	ProtoInfo *pi = FindProto(proto);
-	if (pi != NULL)
+	if (pi != nullptr)
 		hImage = pi->hImage;
 
 	ExtraIcon_SetIcon(hExtraProto, hContact, hImage);
@@ -303,17 +304,17 @@ void DefaultExtraIcons_Load()
 {
 	hExtraChat = ExtraIcon_RegisterIcolib("chat_activity", LPGEN("Chat activity"), "ChatActivity");
 	hExtraVisibility = ExtraIcon_RegisterIcolib("visibility", "Visibility", Skin_GetIconName(SKINICON_OTHER_VISIBLE_ALL));
-	hExtraGender = ExtraIcon_RegisterIcolib("gender", "Gender", "gender_male");
+	hExtraGender = ExtraIcon_RegisterIcolib("gender", "Gender", "gender_male", 0, 0, EIF_DISABLED_BY_DEFAULT);
 	hExtraProto = ExtraIcon_RegisterCallback("protocol", "Account", Skin_GetIconName(SKINICON_OTHER_ACCMGR),
-		&ProtocolRebuildIcons, &ProtocolApplyIcon, &ProtocolOnClick);
+		&ProtocolRebuildIcons, &ProtocolApplyIcon, &ProtocolOnClick, 0, EIF_DISABLED_BY_DEFAULT);
 
 	for (int i = 0; i < _countof(infos); i++) {
 		Info &p = infos[i];
 		p.hIcolib = Skin_GetIconHandle(p.iSkinIcon);
 		if (p.OnClick)
-			p.hExtraIcon = ExtraIcon_RegisterIcolib(p.name, p.desc, Skin_GetIconName(p.iSkinIcon), DefaultOnClick, (LPARAM)&p);
+			p.hExtraIcon = ExtraIcon_RegisterIcolib(p.name, p.desc, Skin_GetIconName(p.iSkinIcon), DefaultOnClick, (LPARAM)&p, p.flags);
 		else
-			p.hExtraIcon = ExtraIcon_RegisterIcolib(p.name, p.desc, Skin_GetIconName(p.iSkinIcon));
+			p.hExtraIcon = ExtraIcon_RegisterIcolib(p.name, p.desc, Skin_GetIconName(p.iSkinIcon), 0, 0, p.flags);
 	}
 
 	for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact)) {

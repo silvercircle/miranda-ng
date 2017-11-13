@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -24,8 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "stdafx.h"
 #include "genmenu.h"
+#include "plugins.h"
 
-#define STR_SEPARATOR _T("-----------------------------------")
+#define STR_SEPARATOR L"-----------------------------------"
 
 extern bool bIconsDisabled;
 extern int DefaultImageListColorDepth;
@@ -39,9 +40,8 @@ struct MenuItemOptData : public MZeroedObject
 
 	int    pos;
 
-	ptrT   name;
-	ptrT   defname;
-	ptrA   uniqname;
+	ptrW   name;
+	ptrW   defname;
 	
 	bool   bShow;
 	int    id;
@@ -61,11 +61,10 @@ static int SortMenuItems(const MenuItemOptData *p1, const MenuItemOptData *p2)
 class CGenMenuOptionsPage : public CDlgBase
 {
 	int iInitMenuValue;
-	bool bRebuild;
 
-	TCHAR idstr[100];
+	wchar_t idstr[100];
 
-	void SaveTreeInternal(HTREEITEM hRootItem, const char *szModule)
+	void SaveTreeInternal(MenuItemOptData *pParent, HTREEITEM hRootItem, const char *szModule)
 	{
 		TVITEMEX tvi;
 		tvi.hItem = hRootItem;
@@ -73,35 +72,45 @@ class CGenMenuOptionsPage : public CDlgBase
 		tvi.mask = TVIF_TEXT | TVIF_PARAM | TVIF_HANDLE | TVIF_IMAGE;
 		tvi.pszText = idstr;
 
-		int count = 0;
+		int count = 0, customOrder = 0;
 		int runtimepos = 100;
 
-		while (tvi.hItem != NULL) {
+		char pszParent[33];
+		if (pParent == nullptr)
+			pszParent[0] = 0;
+		else
+			bin2hex(&pParent->pimi->mi.uid, sizeof(MUUID), pszParent);
+
+		while (tvi.hItem != nullptr) {
 			m_menuItems.GetItem(&tvi);
 			MenuItemOptData *iod = (MenuItemOptData*)tvi.lParam;
-			if (iod->pimi) {
-				char menuItemName[256], DBString[300];
-				GetMenuItemName(iod->pimi, menuItemName, sizeof(menuItemName));
+			if (TMO_IntMenuItem *pimi = iod->pimi) {
+				if (pimi->mi.uid != miid_last) {
+					char menuItemName[256];
+					bin2hex(&pimi->mi.uid, sizeof(pimi->mi.uid), menuItemName);
 
-				mir_snprintf(DBString, "%s_visible", menuItemName);
-				db_set_b(NULL, szModule, DBString, tvi.iImage != 0);
+					int visible = tvi.iImage != 0;
+					wchar_t *ptszCustomName;
+					if (iod->name != nullptr && iod->defname != nullptr && mir_wstrcmp(iod->name, iod->defname) != 0)
+						ptszCustomName = iod->name;
+					else
+						ptszCustomName = L"";
 
-				mir_snprintf(DBString, "%s_pos", menuItemName);
-				db_set_dw(NULL, szModule, DBString, runtimepos);
+					CMStringW tszValue(FORMAT, L"%d;%d;%S;%s", visible, runtimepos, pszParent, ptszCustomName);
+					db_set_ws(0, szModule, menuItemName, tszValue);
 
-				mir_snprintf(DBString, "%s_name", menuItemName);
-				if (iod->name != NULL && iod->defname != NULL && mir_tstrcmp(iod->name, iod->defname) != 0)
-					db_set_ts(NULL, szModule, DBString, iod->name);
-				else
-					db_unset(NULL, szModule, DBString);
+					if (pimi->mi.flags & CMIF_CUSTOM)
+						db_set_s(0, szModule, CMStringA(FORMAT, "Custom%d", customOrder++), menuItemName);						
+				}
 
-				if (iod->pimi->submenu.first != NULL)
-					SaveTreeInternal(m_menuItems.GetChild(tvi.hItem), szModule);
+				HTREEITEM hChild = m_menuItems.GetChild(tvi.hItem);
+				if (hChild != nullptr)
+					SaveTreeInternal(iod, hChild, szModule);
 
 				runtimepos += 100;
 			}
 
-			if (iod->name && !mir_tstrcmp(iod->name, STR_SEPARATOR) && tvi.iImage)
+			if (iod->name && !mir_wstrcmp(iod->name, STR_SEPARATOR) && tvi.iImage)
 				runtimepos += SEPARATORPOSITIONINTERVAL;
 
 			tvi.hItem = m_menuItems.GetNextSibling(tvi.hItem);
@@ -116,19 +125,20 @@ class CGenMenuOptionsPage : public CDlgBase
 			return;
 
 		TIntMenuObject *pmo = GetMenuObjbyId(MenuObjectId);
-		if (pmo == NULL)
+		if (pmo == nullptr)
 			return;
 
 		char szModule[256];
 		mir_snprintf(szModule, "%s_Items", pmo->pszName);
-		CallService(MS_DB_MODULE_DELETE, NULL, (LPARAM)szModule);
-		SaveTreeInternal(m_menuItems.GetRoot(), szModule);
+		db_delete_module(0, szModule);
+		SaveTreeInternal(nullptr, m_menuItems.GetRoot(), szModule);
+		db_set_b(0, szModule, "MenuFormat", 1);
 	}
 
 	void FreeTreeData()
 	{
 		HTREEITEM hItem = m_menuItems.GetRoot();
-		while (hItem != NULL) {
+		while (hItem != nullptr) {
 			TVITEMEX tvi;
 			tvi.mask = TVIF_HANDLE | TVIF_PARAM;
 			tvi.hItem = hItem;
@@ -149,45 +159,22 @@ class CGenMenuOptionsPage : public CDlgBase
 			BuildTree(MenuObjectID, true);
 	}
 
-	void BuildTreeInternal(const char *pszModule, bool bReread, HGENMENU pFirst, HTREEITEM hRoot)
+	void BuildTreeInternal(const char *pszModule, bool bReread, TMO_IntMenuItem *pFirst, HTREEITEM hRoot)
 	{
 		LIST<MenuItemOptData> arItems(10, SortMenuItems);
 
-		for (TMO_IntMenuItem *p = pFirst; p != NULL; p = p->next) {
+		for (TMO_IntMenuItem *p = pFirst; p != nullptr; p = p->next) {
 			// filter out items whose presence & position might not be changed
 			if (p->mi.flags & CMIF_SYSTEM)
 				continue;
 
-			char menuItemName[256];
-			GetMenuItemName(p, menuItemName, _countof(menuItemName));
-
 			MenuItemOptData *PD = new MenuItemOptData();
-
-			char buf[256];
-			mir_snprintf(buf, "%s_name", menuItemName);
-			ptrT tszName(db_get_tsa(NULL, pszModule, buf));
-			if (tszName != 0)
-				PD->name = tszName.detach();
-			else
-				PD->name = mir_tstrdup(GetMenuItemText(p));
-
 			PD->pimi = p;
-			PD->defname = mir_tstrdup(GetMenuItemText(p));
-
-			mir_snprintf(buf, "%s_visible", menuItemName);
-			PD->bShow = db_get_b(NULL, pszModule, buf, 1) != 0;
-
-			if (bReread) {
-				mir_snprintf(buf, "%s_pos", menuItemName);
-				PD->pos = db_get_dw(NULL, pszModule, buf, 1);
-			}
-			else PD->pos = (PD->pimi) ? PD->pimi->originalPosition : 0;
-
+			PD->defname = mir_wstrdup(GetMenuItemText(p));
+			PD->name = mir_wstrdup((bReread && p->ptszCustomName != nullptr) ? p->ptszCustomName : PD->defname);
+			PD->bShow = (p->mi.flags & CMIF_HIDDEN) == 0;
+			PD->pos = (bReread) ? p->mi.position : p->originalPosition;
 			PD->id = p->iCommand;
-
-			if (p->UniqName)
-				PD->uniqname = mir_strdup(p->UniqName);
-
 			arItems.insert(PD);
 		}
 
@@ -201,10 +188,10 @@ class CGenMenuOptionsPage : public CDlgBase
 
 		for (int i = 0; i < arItems.getCount(); i++) {
 			MenuItemOptData *PD = arItems[i];
-			if (PD->pos - lastpos >= SEPARATORPOSITIONINTERVAL) {
+			if (i > 0 && PD->pos - lastpos >= SEPARATORPOSITIONINTERVAL) {
 				MenuItemOptData *sep = new MenuItemOptData();
 				sep->id = -1;
-				sep->name = mir_tstrdup(STR_SEPARATOR);
+				sep->name = mir_wstrdup(STR_SEPARATOR);
 				sep->pos = PD->pos - 1;
 
 				tvis.item.lParam = (LPARAM)sep;
@@ -217,16 +204,16 @@ class CGenMenuOptionsPage : public CDlgBase
 			tvis.item.lParam = (LPARAM)PD;
 			tvis.item.pszText = PD->name;
 			tvis.item.iImage = tvis.item.iSelectedImage = PD->bShow;
-			tvis.item.cChildren = PD->pimi->submenu.first != NULL;
+			tvis.item.cChildren = PD->pimi->submenu.first != nullptr;
 
 			HTREEITEM hti = m_menuItems.InsertItem(&tvis);
 			if (bIsFirst) {
-				if (hRoot == NULL)
+				if (hRoot == nullptr)
 					m_menuItems.SelectItem(hti);
 				bIsFirst = false;
 			}
 
-			if (PD->pimi->submenu.first != NULL) {
+			if (PD->pimi->submenu.first != nullptr) {
 				BuildTreeInternal(pszModule, bReread, PD->pimi->submenu.first, hti);
 				m_menuItems.Expand(hti, TVE_EXPAND);
 			}
@@ -240,22 +227,23 @@ class CGenMenuOptionsPage : public CDlgBase
 		FreeTreeData();
 
 		TIntMenuObject *pmo = GetMenuObjbyId(MenuObjectId);
-		if (pmo == NULL || pmo->m_items.first == NULL)
+		if (pmo == nullptr || pmo->m_items.first == nullptr)
 			return false;
 
 		char szModule[256];
 		mir_snprintf(szModule, "%s_Items", pmo->pszName);
 
-		bRebuild = true;
+		if (bReread) // no need to reread database on reset
+			MO_RecursiveWalkMenu(pmo->m_items.first, Menu_LoadFromDatabase, szModule);
+
 		m_menuItems.SendMsg(WM_SETREDRAW, FALSE, 0);
 		m_menuItems.DeleteAllItems();
 
-		BuildTreeInternal(szModule, bReread, pmo->m_items.first, NULL);
+		BuildTreeInternal(szModule, bReread, pmo->m_items.first, nullptr);
 
 		m_menuItems.SendMsg(WM_SETREDRAW, TRUE, 0);
-		bRebuild = false;
 
-		ShowWindow(m_warning.GetHwnd(), (pmo->m_bUseUserDefinedItems) ? SW_HIDE : SW_SHOW);
+		m_warning.Show(!pmo->m_bUseUserDefinedItems);
 		m_menuItems.Enable(pmo->m_bUseUserDefinedItems);
 		m_btnInsSeparator.Enable(pmo->m_bUseUserDefinedItems);
 		m_btnInsMenu.Enable(pmo->m_bUseUserDefinedItems);
@@ -294,8 +282,7 @@ public:
 		m_btnDefault(this, IDC_GENMENU_DEFAULT),
 		m_customName(this, IDC_GENMENU_CUSTOMNAME),
 		m_service(this, IDC_GENMENU_SERVICE),
-		m_warning(this, IDC_NOTSUPPORTWARNING),
-		bRebuild(false)
+		m_warning(this, IDC_NOTSUPPORTWARNING)
 	{
 		m_btnSet.OnClick = Callback(this, &CGenMenuOptionsPage::btnSet_Clicked);
 		m_btnReset.OnClick = Callback(this, &CGenMenuOptionsPage::btnReset_Clicked);
@@ -305,7 +292,7 @@ public:
 
 		m_menuObjects.OnSelChange = Callback(this, &CGenMenuOptionsPage::onMenuObjectChanged);
 
-		m_menuItems.SetFlags(MTREE_CHECKBOX | MTREE_DND | MTREE_MULTISELECT);
+		m_menuItems.SetFlags(MTREE_CHECKBOX | MTREE_DND /*| MTREE_MULTISELECT*/);
 		m_menuItems.OnSelChanged = Callback(this, &CGenMenuOptionsPage::onMenuItemChanged);
 		m_menuItems.OnBeginDrag = Callback(this, &CGenMenuOptionsPage::onMenuItemBeginDrag);
 
@@ -316,7 +303,7 @@ public:
 	//---- init dialog -------------------------------------------
 	virtual void OnInitDialog()
 	{
-		iInitMenuValue = db_get_b(NULL, "CList", "MoveProtoMenus", TRUE);
+		iInitMenuValue = db_get_b(0, "CList", "MoveProtoMenus", TRUE);
 		
 		HIMAGELIST himlCheckBoxes = ImageList_Create(g_iIconSX, g_iIconSY, ILC_COLOR32 | ILC_MASK, 2, 2);
 		ImageList_AddIcon_IconLibLoaded(himlCheckBoxes, SKINICON_OTHER_NOTICK);
@@ -334,7 +321,7 @@ public:
 		for (int i = 0; i < g_menus.getCount(); i++) {
 			TIntMenuObject *p = g_menus[i];
 			if (p->id != (int)hStatusMenuObject && p->m_bUseUserDefinedItems)
-				m_menuObjects.AddString(TranslateTS(p->ptszDisplayName), p->id);
+				m_menuObjects.AddString(TranslateW(p->ptszDisplayName), p->id);
 		}
 		
 		m_menuObjects.SetCurSel(0);
@@ -344,12 +331,12 @@ public:
 	virtual void OnApply()
 	{
 		bIconsDisabled = m_enableIcons.GetState() == 0;
-		db_set_b(NULL, "CList", "DisableMenuIcons", bIconsDisabled);
+		db_set_b(0, "CList", "DisableMenuIcons", bIconsDisabled);
 		SaveTree();
 
 		int iNewMenuValue = !m_radio1.GetState();
 		if (iNewMenuValue != iInitMenuValue) {
-			db_set_b(NULL, "CList", "MoveProtoMenus", iNewMenuValue);
+			db_set_b(0, "CList", "MoveProtoMenus", iNewMenuValue);
 
 			RebuildProtoMenus();
 			iInitMenuValue = iNewMenuValue;
@@ -366,7 +353,7 @@ public:
 	void btnInsSep_Clicked(CCtrlButton*)
 	{
 		HTREEITEM hti = m_menuItems.GetSelection();
-		if (hti == NULL)
+		if (hti == nullptr)
 			return;
 
 		TVITEMEX tvi = { 0 };
@@ -377,7 +364,7 @@ public:
 
 		MenuItemOptData *PD = new MenuItemOptData();
 		PD->id = -1;
-		PD->name = mir_tstrdup(STR_SEPARATOR);
+		PD->name = mir_wstrdup(STR_SEPARATOR);
 		PD->pos = ((MenuItemOptData *)tvi.lParam)->pos - 1;
 
 		TVINSERTSTRUCT tvis = { 0 };
@@ -394,7 +381,7 @@ public:
 	void btnInsMenu_Clicked(CCtrlButton*)
 	{
 		HTREEITEM hti = m_menuItems.GetSelection();
-		if (hti == NULL)
+		if (hti == nullptr)
 			return;
 
 		TVITEMEX tvi = { 0 };
@@ -403,10 +390,20 @@ public:
 		if (!m_menuItems.GetItem(&tvi))
 			return;
 
+		MenuItemOptData *curData = (MenuItemOptData*)tvi.lParam;
+
+		TMO_MenuItem mi = {};
+		UuidCreate((UUID*)&mi.uid);
+		mi.flags = CMIF_CUSTOM;
+		mi.name.a = LPGEN("New submenu");
+		mi.position = curData->pos - 1;
+		TMO_IntMenuItem *pimi = Menu_AddItem(curData->pimi->parent->id, &mi, nullptr);
+
 		MenuItemOptData *PD = new MenuItemOptData();
 		PD->id = -1;
-		PD->name = TranslateT("New submenu");
-		PD->pos = ((MenuItemOptData *)tvi.lParam)->pos - 1;
+		PD->name = mir_wstrdup(pimi->mi.name.w);
+		PD->pos = pimi->mi.position;
+		PD->pimi = pimi;
 
 		TVINSERTSTRUCT tvis = { 0 };
 		tvis.item.lParam = (LPARAM)PD;
@@ -431,7 +428,7 @@ public:
 	void btnDefault_Clicked(CCtrlButton*)
 	{
 		HTREEITEM hti = m_menuItems.GetSelection();
-		if (hti == NULL)
+		if (hti == nullptr)
 			return;
 
 		TVITEMEX tvi;
@@ -440,20 +437,22 @@ public:
 		m_menuItems.GetItem(&tvi);
 
 		MenuItemOptData *iod = (MenuItemOptData *)tvi.lParam;
-		if (iod->name && _tcsstr(iod->name, STR_SEPARATOR))
+		if (iod->name && wcsstr(iod->name, STR_SEPARATOR))
 			return;
 
-		iod->name = mir_tstrdup(iod->defname);
+		iod->name = mir_wstrdup(iod->defname);
+		m_customName.SetText(iod->defname);
 
-		SaveTree();
-		RebuildCurrent();
+		tvi.mask = TVIF_TEXT;
+		tvi.pszText = iod->name;
+		m_menuItems.SetItem(&tvi);
 		NotifyChange();
 	}
 
 	void btnSet_Clicked(CCtrlButton*)
 	{
 		HTREEITEM hti = m_menuItems.GetSelection();
-		if (hti == NULL)
+		if (hti == nullptr)
 			return;
 
 		TVITEMEX tvi;
@@ -462,13 +461,14 @@ public:
 		m_menuItems.GetItem(&tvi);
 
 		MenuItemOptData *iod = (MenuItemOptData *)tvi.lParam;
-		if (iod->name && _tcsstr(iod->name, STR_SEPARATOR))
+		if (iod->name && wcsstr(iod->name, STR_SEPARATOR))
 			return;
 
 		iod->name = m_customName.GetText();
 
-		SaveTree();
-		RebuildCurrent();
+		tvi.mask = TVIF_TEXT;
+		tvi.pszText = iod->name;
+		m_menuItems.SetItem(&tvi);
 		NotifyChange();
 	}
 
@@ -481,18 +481,16 @@ public:
 
 	void onMenuItemChanged(void*)
 	{
-		if (bRebuild)
-			return;
-
 		m_customName.SetTextA("");
 		m_service.SetTextA("");
 
+		m_btnInsMenu.Enable(false);
 		m_btnDefault.Enable(false);
 		m_btnSet.Enable(false);
 		m_customName.Enable(false);
 
 		HTREEITEM hti = m_menuItems.GetSelection();
-		if (hti == NULL)
+		if (hti == nullptr)
 			return;
 
 		TVITEMEX tvi;
@@ -503,15 +501,19 @@ public:
 			return;
 
 		MenuItemOptData *iod = (MenuItemOptData *)tvi.lParam;
-		if (iod->name && _tcsstr(iod->name, STR_SEPARATOR))
+		if (iod->name && wcsstr(iod->name, STR_SEPARATOR))
 			return;
 
 		m_customName.SetText(iod->name);
 
-		if (iod->pimi->submenu.first == NULL && iod->uniqname)
-			m_service.SetTextA(iod->uniqname);
+		if (iod->pimi->mi.uid != miid_last) {
+			char szText[100];
+			bin2hex(&iod->pimi->mi.uid, sizeof(iod->pimi->mi.uid), szText);
+			m_service.SetTextA(szText);
+		}
 
-		m_btnDefault.Enable(mir_tstrcmp(iod->name, iod->defname) != 0);
+		m_btnInsMenu.Enable(iod->pimi->mi.root == nullptr);
+		m_btnDefault.Enable(mir_wstrcmp(iod->name, iod->defname) != 0);
 		m_btnSet.Enable(true);
 		m_customName.Enable(true);
 	}
@@ -519,10 +521,9 @@ public:
 	void onMenuItemBeginDrag(CCtrlTreeView::TEventInfo *evt)
 	{
 		MenuItemOptData *p = (MenuItemOptData*)evt->nmtv->itemNew.lParam;
-		if (p->pimi == NULL)
-			evt->nmhdr->code = 0; // reject an attempt to move a separator
-		else if (p->pimi->mi.flags & CMIF_UNMOVABLE)
-			evt->nmhdr->code = 0; // reject an attempt to change item's position
+		if (p->pimi != nullptr)
+			if (p->pimi->mi.flags & CMIF_UNMOVABLE)
+				evt->nmhdr->code = 0; // reject an attempt to change item's position
 	}
 };
 
@@ -530,8 +531,8 @@ int GenMenuOptInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.position = -1000000000;
-	odp.pszTitle = LPGEN("Menus");
-	odp.pszGroup = LPGEN("Customize");
+	odp.szTitle.a = LPGEN("Menus");
+	odp.szGroup.a = LPGEN("Customize");
 	odp.flags = ODPF_BOLDGROUPS;
 	odp.pDialog = new CGenMenuOptionsPage();
 	Options_AddPage(wParam, &odp);

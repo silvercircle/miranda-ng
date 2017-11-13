@@ -11,8 +11,10 @@ Versión
 Detalles:
 [Copyright:]
 Copyright:
-[Contact:]
-Contacto
+[E-mail:]
+E-mail:
+[Homepage:]
+Sitio web:
 [Account]
 Cuenta
 [Name:]
@@ -21,8 +23,6 @@ Nombre:
 Servidor:
 [Port:]
 Puerto:
-[SSL]
-SSL
 [Password:]
 Contraseña:
 [Default]
@@ -43,12 +43,14 @@ Fuera de línea
 En línea
 [Away]
 Fuera
+[Not available]
+No disponible
 [Occupied]
 Ocupado
-[DND]
+[Do not disturb]
 No molestar
 [Free for chat]
-Libre para el chat	
+Libre para el chat
 [Invisible]
 Invisible
 [On the phone]

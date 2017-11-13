@@ -28,30 +28,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <m_options.h>
 #include <m_utils.h>
 #include <m_protosvc.h>
+#include <m_chat_int.h>
 #include <m_langpack.h>
 #include <m_icolib.h>
 #include <m_message.h>
 #include <m_contacts.h>
 #include <win2k.h>
 
-#include <m_msg_buttonsbar.h>
-
 #include "resource.h"
-#include "Version.h"
+#include "version.h"
 #include "Utils.h"
 
 #define PLGNAME "QuickMessages"
 
 extern HINSTANCE hinstance;
 extern HANDLE hIcolib;
-extern ListData* ButtonsList[100];
-extern SortedList* QuickList;
+extern ListData *ButtonsList[100];
+extern SortedList *QuickList;
 extern BOOL g_bRClickAuto;
 extern BOOL g_bLClickAuto;
 extern BOOL g_bQuickMenu;
 extern int g_iButtonsCount;
 
 int OptionsInit(WPARAM,LPARAM);
-
-#define IDC_MESSAGE      1002
-#define IDC_CHATMESSAGE  1009

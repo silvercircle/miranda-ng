@@ -147,13 +147,13 @@ void SweepHistoryFromContact(MCONTACT hContact, CriteriaStruct Criteria, BOOL ke
 
 	// switch off SAFETYMODE if necessary
 	if (unsafe)
-		CallService(MS_DB_SETSAFETYMODE, 0, 0);
+		db_set_safety_mode(FALSE);
 
 	GetBookmarks(hContact, &books, &bookcnt);
 
 	// Get first event
 	for (MEVENT hDBEvent = db_event_first(hContact); hDBEvent != NULL; ) {
-		DBEVENTINFO dbei = { sizeof(dbei) };
+		DBEVENTINFO dbei = {};
 		db_event_get(hDBEvent, &dbei);
 
 		// should we stop processing?
@@ -187,7 +187,7 @@ void SweepHistoryFromContact(MCONTACT hContact, CriteriaStruct Criteria, BOOL ke
 
 	// switch ON safety mode as fast as we can to avoid  DB corruption
 	if (unsafe)
-		CallService(MS_DB_SETSAFETYMODE, 1, 0);
+		db_set_safety_mode(TRUE);
 
 	SetCursor(LoadCursor(0, IDC_ARROW));
 }
@@ -238,7 +238,6 @@ void SetSrmmIcon(MCONTACT hContact)
 	int sweep = db_get_b(hContact, ModuleName, "SweepHistory", 0);
 
 	StatusIconData sid = { 0 };
-	sid.cbSize = sizeof(sid);
 	sid.szModule = ModuleName;
 
 	for (int i = 0; i < 4; i++) {

@@ -17,7 +17,6 @@ DEFINE_PROPERTYKEY(PKEY_Device_FriendlyName, 0xa45c254e, 0xdf1c, 0x4efd, 0x80, 0
 #include <vector>
 #include <regex>
 #include <map>
-#include <algorithm>
 
 #include <newpluginapi.h>
 
@@ -35,16 +34,18 @@ DEFINE_PROPERTYKEY(PKEY_Device_FriendlyName, 0xa45c254e, 0xdf1c, 0x4efd, 0x80, 0
 #include <m_message.h>
 #include <m_avatars.h>
 #include <m_skin.h>
-#include <m_chat.h>
+#include <m_chat_int.h>
 #include <m_genmenu.h>
 #include <m_clc.h>
 #include <m_clist.h>
 #include <m_gui.h>
 #include <m_folders.h>
 #include <m_assocmgr.h>
+#include <m_json.h>
+#include <m_http.h>
 
 #include <tox.h>
-#include <toxav.h>
+#include <ToxAV.h>
 #include <toxdns.h>
 #include <toxencryptsave.h>
 
@@ -53,7 +54,6 @@ struct CToxProto;
 #include "version.h"
 #include "resource.h"
 #include "tox_menus.h"
-#include "tox_logger.h"
 #include "tox_thread.h"
 #include "tox_address.h"
 #include "tox_dialogs.h"
@@ -64,18 +64,25 @@ struct CToxProto;
 #include "tox_chatrooms.h"
 #include "tox_proto.h"
 
+#include "http_request.h"
+
 extern HINSTANCE g_hInstance;
 
 #define MODULE "Tox"
 
+#define TOX_API_VER_MAJOR 0
+#define TOX_API_VER_MINOR 1
+#define TOX_API_VER_PATCH 5
+
 #define TOX_ERROR -1
 
-#define TOX_MAX_CONNECT_RETRIES 300
-#define TOX_MAX_DISCONNECT_RETRIES 300
+#define TOX_MAX_CONNECT_RETRIES 10
+#define TOX_MAX_RECONNECT_RETRIES 10
 
 #define TOX_MAX_CALLS 1
 
 #define TOX_INI_PATH "%miranda_path%\\Plugins\\tox.ini"
+#define TOX_JSON_PATH "%miranda_userdata%\\tox.json"
 
 #define TOX_SETTINGS_ID "ToxID"
 #define TOX_SETTINGS_DNS "DnsID"
@@ -100,6 +107,7 @@ enum TOX_DB_EVENT
 
 #define TOX_MAX_AVATAR_SIZE 1 << 16 // 2 ^ 16 bytes
 
+#define TOX_LIBRARY L"libtox.dll"
 extern HMODULE g_hToxLibrary;
 
 template<typename T>

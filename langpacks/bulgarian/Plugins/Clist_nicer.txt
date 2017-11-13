@@ -7,8 +7,8 @@
 ;============================================================
 [Displays contacts, event notifications, protocol status.]
 Изобразява контакти, уведомявания за събития, състояние на протоколите.
-[Clist Nicer exception]
-CList Nicer изключение
+[Clist nicer exception]
+CList nicer изключение
 [Copy to clipboard]
 Запис в клипборда
 [Continue]
@@ -17,16 +17,6 @@ CList Nicer изключение
 Изход от Miranda
 [Although the exception was caught and you may continue working with Miranda, you should restart the program as soon as possible. The exception may have damaged internal data structures and can have a serious impact on stability.]
 Въпреки проблемът ви можете да продължите работата си с Miranda, но е наложително да рестарти-\nрате програмата възможно най-скоро. Има вероятност грешката да е повредила вътрешната струк-\nтура на данните, което може да се отрази сериозно на стабилността.
-[About CList Nicer+]
-Относно CList Nicer+
-[Clist Nicer+]
-Clist Nicer+
-[Copyright © 2004-2010 by the Miranda IM project, 2012-2015 by the Miranda NG project. More detailed copyright information can be found in the included README file.]
-Авторско право © 2004-2010 на проекта Miranda IM, 2012-2015 на проекта Miranda NG.\nПодробности относно правата можете да откриете във включения README файл.
-[Version]
-Версия
-[Support and latest version information]
-Поддръжка и информация за последната версия
 [Delete contact]
 Изтриване на контакта
 [No]
@@ -36,7 +26,7 @@ Clist Nicer+
 [Hide from list only, in order to keep their history and ignore/visibility settings]
 Скриване (запазва историята и настройките за игнориране/видимост)
 [Use Options -> Contacts -> Ignore to unhide contacts.]
-Може да отмените скриването от Настройки > Контакти > Игнориране.
+Може да отмените скриването от "Настройки > Контакти > Игнориране".
 [Are you sure you want to delete %s?]
 Сигурни ли сте, че желаете контактът "%s" да бъде изтрит?
 [This will erase all history and settings for this contact!]
@@ -387,8 +377,8 @@ URL събития
 Друго
 [Hide this contact from the list]
 Скриване на контакта от списъка
-[To show a previously hidden contact, navigate to Options -> Events -> Ignore, search the contact in the list and tick the checkbox next to its name.]
-За да покажете скрит контакт отидете в Настройки > Събития > Игнориране. Потърсете контакта в списъка и отметнете полето за отметка до него.
+[To show a previously hidden contact, navigate to Options -> Contacts -> Ignore, search the contact in the list and tick the checkbox next to its name.]
+За да покажете скрит контакт отидете в "Настройки > Контакти > Игнориране". Потърсете контакта в списъка и отметнете полето за отметка до него.
 [Display options]
 Настройки за изобразяване
 [Show contact with priority]
@@ -408,25 +398,25 @@ URL събития
 [&Status]
 Състояние
 [&Offline\tCtrl+0]
-Извън линия\tCtrl+0
+&Извън линия\tCtrl+0
 [On&line\tCtrl+1]
-На линия\tCtrl+1
+На &линия\tCtrl+1
 [&Away\tCtrl+2]
-Отсъстващ\tCtrl+2
-[&NA\tCtrl+3]
-Недостъпен\tCtrl+3
+&Отсъстващ\tCtrl+2
+[&Not available\tCtrl+3]
+&Недостъпен\tCtrl+3
 [Occ&upied\tCtrl+4]
-Зает\tCtrl+4
-[&DND\tCtrl+5]
-Не безпокойте\tCtrl+5
+&Зает\tCtrl+4
+[&Do not disturb\tCtrl+5]
+Не &безпокойте\tCtrl+5
 [&Free for chat\tCtrl+6]
-Готов за чат\tCtrl+6
+Готов за &чат\tCtrl+6
 [&Invisible\tCtrl+7]
-Невидим\tCtrl+7
+Не&видим\tCtrl+7
 [On the &phone\tCtrl+8]
-На телефона\tCtrl+8
+На &телефона\tCtrl+8
 [Out to &lunch\tCtrl+9]
-На обяд\tCtrl+9
+На обя&д\tCtrl+9
 [Show menu]
 Главно меню
 [Show/Hide offline contacts]
@@ -459,11 +449,11 @@ URL събития
 На линия
 [Away]
 Отсъстващ
-[NA]
+[Not available]
 Недостъпен
 [Occupied]
 Зает
-[DND]
+[Do not disturb]
 Не безпокойте
 [Free for chat]
 Готов за чат
@@ -581,8 +571,8 @@ URL събития
 Заявеното действие изисква да изберете валиден контакт. Моля, повторете като изберете контакт от списъка с контакти.
 [Parameter mismatch]
 Несъвпадащи параметри
-[The service %s specified by the %s button definition was not found. You may need to install additional plugins.]
-Услугата "%s", определена от дефиницията на бутона "%s" не е открита. Вероятно трябва да инсталирате някой допълнителна приставка.
+[The service %S specified by the %S button definition was not found. You may need to install additional plugins.]
+Услугата "%S", определена от дефиницията на бутона "%S" не е открита. Вероятно трябва да инсталирате някой допълнителна приставка.
 [You need the FloatingContacts plugin, cause the embedded floating contacts were removed.]
 Нуждаете се от приставката FloatingContacts. Функционалността бе\nотстранена от приставката за списъка с контакти.
 [Warning]
@@ -643,14 +633,6 @@ URL събития
 Нагоре
 [&Down]
 Надолу
-[Frames]
-Рамки
-[Show all frames]
-Показване на всички рамки
-[Show all title bars]
-Показване на всички заглавни ленти
-[Hide all title bars]
-Скриване на всички заглавни ленти
 [Lock frame]
 Заключване на рамката
 [Visible]
@@ -661,6 +643,14 @@ URL събития
 Облицована рамка
 [Floating]
 Плаващо
+[Frames]
+Рамки
+[Show all frames]
+Показване на всички рамки
+[Show all title bars]
+Показване на всички заглавни ленти
+[Hide all title bars]
+Скриване на всички заглавни ленти
 [Title bar]
 Заглавна лента
 [Thin border]
@@ -685,8 +675,6 @@ URL събития
 Външен вид
 [&Options...]
 Настройки...
-[&About the contact list...]
-Относно списъка с контакти...
 [Ungrouped contacts]
 Негрупирани контакти
 [And]
@@ -703,8 +691,8 @@ URL събития
 Часове
 [Days]
 Дни
-[Current view mode: %s]
-Текущ режим за преглед: %s
+[Current view mode: %S]
+Текущ режим за преглед: %S
 [Filtering]
 Филтриране
 [*** All contacts ***]

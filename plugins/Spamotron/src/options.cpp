@@ -1,31 +1,31 @@
 #include "stdafx.h"
 
-TCHAR currentResponse[256] = {0};
+wchar_t currentResponse[256] = {0};
 
-TCHAR* _getCOptS(TCHAR *buf, unsigned int buflen, MCONTACT hContact, const char* option, const TCHAR *def)
+wchar_t* _getCOptS(wchar_t *buf, unsigned int buflen, MCONTACT hContact, const char* option, const wchar_t *def)
 {
 	DBVARIANT dbv = {0};
-	_tcsnset(buf, 0, buflen);
-	if (db_get_ts(hContact, PLUGIN_NAME, option, &dbv) != 0)
-		_tcsncpy(buf, def, min(buflen, mir_tstrlen(def)+1));
-	else if (dbv.type == DBVT_TCHAR) {
-		_tcsncpy(buf, dbv.ptszVal, min(buflen, mir_tstrlen(dbv.ptszVal)+1));
+	wcsnset(buf, 0, buflen);
+	if (db_get_ws(hContact, PLUGIN_NAME, option, &dbv) != 0)
+		wcsncpy(buf, def, min(buflen, mir_wstrlen(def)+1));
+	else if (dbv.type == DBVT_WCHAR) {
+		wcsncpy(buf, dbv.ptszVal, min(buflen, mir_wstrlen(dbv.ptszVal)+1));
 	}
 	db_free(&dbv);
 	return buf;
 }
-TCHAR* _getMOptS(TCHAR *buf, unsigned int buflen, const char* module, const char* option, const TCHAR *def)
+wchar_t* _getMOptS(wchar_t *buf, unsigned int buflen, const char* module, const char* option, const wchar_t *def)
 {
-	TCHAR* tmp;
+	wchar_t* tmp;
 	DBVARIANT dbv = {0};
-	_tcsnset(buf, 0, buflen);
+	wcsnset(buf, 0, buflen);
 	if (db_get_s(NULL, module, option, &dbv) != 0)
-		_tcsncpy(buf, def, min(buflen, mir_tstrlen(def)+1));
-	else if (dbv.type == DBVT_TCHAR) {
-		_tcsncpy(buf, dbv.ptszVal, min(buflen, mir_tstrlen(dbv.ptszVal)+1));
+		wcsncpy(buf, def, min(buflen, mir_wstrlen(def)+1));
+	else if (dbv.type == DBVT_WCHAR) {
+		wcsncpy(buf, dbv.ptszVal, min(buflen, mir_wstrlen(dbv.ptszVal)+1));
 	} else {
 		tmp = mir_a2u(dbv.pszVal);
-		_tcsncpy(buf, tmp, min(buflen, mir_tstrlen(tmp)+1));
+		wcsncpy(buf, tmp, min(buflen, mir_wstrlen(tmp)+1));
 		mir_free(tmp);
 	}
 	db_free(&dbv);
@@ -36,9 +36,9 @@ TCHAR* _getMOptS(TCHAR *buf, unsigned int buflen, const char* module, const char
 BOOL _saveDlgItemText(HWND hDialog, int controlID, char* option)
 {
 	int len;
-	TCHAR *tmp;
+	wchar_t *tmp;
 	len = GetWindowTextLength(GetDlgItem(hDialog, controlID));
-	tmp = (TCHAR *)malloc((len + 1)*sizeof(TCHAR));
+	tmp = (wchar_t *)malloc((len + 1)*sizeof(wchar_t));
 	GetDlgItemText(hDialog, controlID, tmp, len + 1);
 	_setOptTS(option, tmp);
 	free(tmp);
@@ -49,9 +49,9 @@ int _saveDlgItemResponse(HWND hDialog, int controlID, char* option)
 	int ret = 0;
 	int isRegex = 0;
 	int len;
-	TCHAR *tmp;
+	wchar_t *tmp;
 	len = GetWindowTextLength(GetDlgItem(hDialog, controlID));
-	tmp = (TCHAR*)malloc((len+1)*sizeof(TCHAR));
+	tmp = (wchar_t*)malloc((len+1)*sizeof(wchar_t));
 	GetDlgItemText(hDialog, controlID, tmp, len+1);
 	isRegex = _isregex(tmp);
 	if (!isRegex)
@@ -68,22 +68,22 @@ int _saveDlgItemResponse(HWND hDialog, int controlID, char* option)
 BOOL _saveDlgItemInt(HWND hDialog, int controlID, char* option)
 {
 	int len;
-	TCHAR *tmp;
+	wchar_t *tmp;
 	len = GetWindowTextLength(GetDlgItem(hDialog, controlID));
-	tmp = (TCHAR *)malloc((len + 1)*sizeof(TCHAR));
+	tmp = (wchar_t *)malloc((len + 1)*sizeof(wchar_t));
 	GetDlgItemText(hDialog, controlID, tmp, len + 1);
-	_setOptD(option, _ttoi(tmp));
+	_setOptD(option, _wtoi(tmp));
 	free(tmp);
 	return TRUE;
 }
 BOOL _saveDlgItemScore(HWND hDialog, int controlID, char* option)
 {
 	int len;
-	TCHAR *tmp;
+	wchar_t *tmp;
 	len = GetWindowTextLength(GetDlgItem(hDialog, controlID));
-	tmp = (TCHAR *)malloc((len + 1)*sizeof(TCHAR));
+	tmp = (wchar_t *)malloc((len + 1)*sizeof(wchar_t));
 	GetDlgItemText(hDialog, controlID, tmp, len + 1);
-	_setOptD(option, _tcstod(tmp, NULL)/SCORE_C);
+	_setOptD(option, wcstod(tmp, NULL)/SCORE_C);
 	return TRUE;
 }
 
@@ -93,12 +93,12 @@ INT_PTR CALLBACK DlgProcOptionsMain(HWND optDlg, UINT msg, WPARAM wParam, LPARAM
 {
 	static int bInitializing = 0, i, j, numProtocols;
 	PROTOACCOUNT **pd;
-	TCHAR pName[256] = {0};
+	wchar_t pName[256] = {0};
 	char protoOption[256] = {0};
 	HWND hProtocolsList = GetDlgItem(optDlg, IDC_OPT_PROTOCOLS);
 	LVITEM lvi = {0};
 	LVCOLUMN lvc = {0};
-	TCHAR buf[512];
+	wchar_t buf[512];
 
 	switch (msg) {
 	case WM_INITDIALOG:
@@ -115,8 +115,8 @@ INT_PTR CALLBACK DlgProcOptionsMain(HWND optDlg, UINT msg, WPARAM wParam, LPARAM
 		CheckDlgButton(optDlg, IDC_OPT_LOG_ACTIONS, _getOptB("LogActions", defaultLogActions) ? BST_CHECKED : BST_UNCHECKED);
 
 		SetDlgItemText(optDlg, IDC_OPT_IN_MSG_APPROVE_WORDLIST, _getOptS(buf, _countof(buf), "ApproveOnMsgInWordlist", defaultApproveOnMsgInWordlist));
-		SetDlgItemText(optDlg, IDC_OPT_MAX_MSG_CONTACT, _itot((unsigned int)_getOptD("MaxMsgContactCountPerDay", defaultMaxMsgContactCountPerDay), buf, 10));
-		SetDlgItemText(optDlg, IDC_OPT_MAX_SAME_MSG, _itot((unsigned int)_getOptD("MaxSameMsgCountPerDay", defaultMaxSameMsgCountPerDay), buf, 10));
+		SetDlgItemText(optDlg, IDC_OPT_MAX_MSG_CONTACT, _itow((unsigned int)_getOptD("MaxMsgContactCountPerDay", defaultMaxMsgContactCountPerDay), buf, 10));
+		SetDlgItemText(optDlg, IDC_OPT_MAX_SAME_MSG, _itow((unsigned int)_getOptD("MaxSameMsgCountPerDay", defaultMaxSameMsgCountPerDay), buf, 10));
 		SetDlgItemText(optDlg, IDC_OPT_DONT_REPLY_MSG_WORDLIST, _getOptS(buf, _countof(buf), "DontReplyMsgWordlist", defaultDontReplyMsgWordlist));
 
 		///Individual protocols list
@@ -129,8 +129,8 @@ INT_PTR CALLBACK DlgProcOptionsMain(HWND optDlg, UINT msg, WPARAM wParam, LPARAM
 		for (i = 0, j = 0; i < numProtocols; i++)
 		{
 			lvi.iItem = i;
-			_getMOptS(pName, 200*sizeof(TCHAR), pd[i]->szModuleName, "AM_BaseProto", _T(""));
-			if (mir_tstrcmp(pName, _T("ICQ")) != 0)
+			_getMOptS(pName, 200*sizeof(wchar_t), pd[i]->szModuleName, "AM_BaseProto", L"");
+			if (mir_wstrcmp(pName, L"ICQ") != 0)
 				continue;
 			lvi.pszText = mir_a2u(pd[i]->szModuleName);
 			ListView_InsertItem(hProtocolsList, &lvi);
@@ -217,7 +217,7 @@ INT_PTR CALLBACK DlgProcOptionsQuestion(HWND optDlg, UINT msg, WPARAM wParam, LP
 	static int bInitializing = 0;
 	int i, selectedMode;
 	HWND ht;
-	TCHAR *buf; 
+	wchar_t *buf; 
 	unsigned int buflen = 500;
 
 	switch (msg) {
@@ -243,7 +243,7 @@ INT_PTR CALLBACK DlgProcOptionsQuestion(HWND optDlg, UINT msg, WPARAM wParam, LP
 				}
 			}
 			SetDlgItemText(optDlg, IDC_OPT_MATH_RESPONSE, TranslateT("Will be automatically evaluated from %mathexpr%"));
-			buf = (TCHAR *)malloc(buflen*sizeof(TCHAR));
+			buf = (wchar_t *)malloc(buflen*sizeof(wchar_t));
 			switch (selectedMode) {
 				case SPAMOTRON_MODE_PLAIN:	
 				case SPAMOTRON_MODE_ROTATE:
@@ -289,7 +289,7 @@ INT_PTR CALLBACK DlgProcOptionsQuestion(HWND optDlg, UINT msg, WPARAM wParam, LP
 						return FALSE;
 					i = SendDlgItemMessage(optDlg, IDC_OPT_MODE, CB_GETCURSEL, 0, 0);
 					selectedMode = SendDlgItemMessage(optDlg, IDC_OPT_MODE, CB_GETITEMDATA, i, 0);
-					buf = (TCHAR*)malloc(buflen*sizeof(TCHAR));
+					buf = (wchar_t*)malloc(buflen*sizeof(wchar_t));
 					switch (selectedMode) {
 						case SPAMOTRON_MODE_PLAIN:	
 						case SPAMOTRON_MODE_ROTATE:
@@ -332,7 +332,7 @@ INT_PTR CALLBACK DlgProcOptionsQuestion(HWND optDlg, UINT msg, WPARAM wParam, LP
 						return FALSE;
 					break;
 				case IDC_DEFAULTS:
-					SetDlgItemText(optDlg, IDC_STATIC_MODEMSG, _T(""));
+					SetDlgItemText(optDlg, IDC_STATIC_MODEMSG, L"");
 					ShowWindow(GetDlgItem(optDlg, IDC_OPT_MATH_RESPONSE), 0);
 					ShowWindow(GetDlgItem(optDlg, IDC_OPT_RESPONSE), 1);
 					EnableWindow(GetDlgItem(optDlg, IDC_OPT_RESPONSE), TRUE);
@@ -418,8 +418,8 @@ INT_PTR CALLBACK DlgProcOptionsBayes(HWND optDlg, UINT msg, WPARAM wParam, LPARA
 {
 	static int bInitializing = 0, len;
 	BOOL bEnabled;
-	TCHAR *dbuf;
-	TCHAR buf[MAX_BUFFER_LENGTH];
+	wchar_t *dbuf;
+	wchar_t buf[MAX_BUFFER_LENGTH];
 	char cbuf[MAX_BUFFER_LENGTH];
 	switch (msg) {
 		case WM_INITDIALOG:
@@ -436,17 +436,17 @@ INT_PTR CALLBACK DlgProcOptionsBayes(HWND optDlg, UINT msg, WPARAM wParam, LPARA
 			
 			EnableControlsBayes(optDlg, bEnabled);
 
-			mir_sntprintf(buf, _T("%0.02f"), (double)_getOptD("BayesSpamScore", defaultBayesSpamScore)*SCORE_C);
+			mir_snwprintf(buf, L"%0.02f", (double)_getOptD("BayesSpamScore", defaultBayesSpamScore)*SCORE_C);
 			SetDlgItemText(optDlg, IDC_OPT_BAYES_SPAM_SCORE, buf);
-			mir_sntprintf(buf, _T("%.02f"), (double)_getOptD("BayesHamScore", defaultBayesHamScore)*SCORE_C);
+			mir_snwprintf(buf, L"%.02f", (double)_getOptD("BayesHamScore", defaultBayesHamScore)*SCORE_C);
 			SetDlgItemText(optDlg, IDC_OPT_BAYES_HAM_SCORE, buf);
-			mir_sntprintf(buf, _T("%d"), _getOptD("BayesWaitApprove", defaultBayesWaitApprove));
+			mir_snwprintf(buf, L"%d", _getOptD("BayesWaitApprove", defaultBayesWaitApprove));
 			SetDlgItemText(optDlg, IDC_OPT_BAYES_WAIT_APPROVE, buf);
 
 			if (bEnabled) {
-				mir_sntprintf(buf, _T("%d"), get_msg_count(SPAM));
+				mir_snwprintf(buf, L"%d", get_msg_count(SPAM));
 				SetDlgItemText(optDlg, IDC_STATIC_SPAM_COUNT, buf);
-				mir_sntprintf(buf, _T("%d"), get_msg_count(HAM));
+				mir_snwprintf(buf, L"%d", get_msg_count(HAM));
 				SetDlgItemText(optDlg, IDC_STATIC_HAM_COUNT, buf);
 			}
 
@@ -482,45 +482,45 @@ INT_PTR CALLBACK DlgProcOptionsBayes(HWND optDlg, UINT msg, WPARAM wParam, LPARA
 				case IDC_OPT_BAYES_HAM:
 					// Learn ham from learnbox
 					len = GetWindowTextLength(GetDlgItem(optDlg, IDC_OPT_BAYES_LEARNBOX))+1;
-					dbuf = (TCHAR *)malloc(len*sizeof(TCHAR));
+					dbuf = (wchar_t *)malloc(len*sizeof(wchar_t));
 					if (!dbuf)
 						return FALSE;
 					GetDlgItemText(optDlg, IDC_OPT_BAYES_LEARNBOX, dbuf, len);
 					learn_ham(dbuf);
-					SetDlgItemText(optDlg, IDC_OPT_BAYES_LEARNBOX, _T(""));
+					SetDlgItemText(optDlg, IDC_OPT_BAYES_LEARNBOX, L"");
 					free(dbuf);
 
-					mir_sntprintf(buf, _T("%d"), get_msg_count(SPAM));
+					mir_snwprintf(buf, L"%d", get_msg_count(SPAM));
 					SetDlgItemText(optDlg, IDC_STATIC_SPAM_COUNT, buf);
-					mir_sntprintf(buf, _T("%d"), get_msg_count(HAM));
+					mir_snwprintf(buf, L"%d", get_msg_count(HAM));
 					SetDlgItemText(optDlg, IDC_STATIC_HAM_COUNT, buf);
 					return FALSE;
 
 				case IDC_OPT_BAYES_SPAM:
 					// Learn spam from learnbox
 					len = GetWindowTextLength(GetDlgItem(optDlg, IDC_OPT_BAYES_LEARNBOX))+1;
-					dbuf = (TCHAR *)malloc(len*sizeof(TCHAR));
+					dbuf = (wchar_t *)malloc(len*sizeof(wchar_t));
 					if (!dbuf)
 						return FALSE;
 					GetDlgItemText(optDlg, IDC_OPT_BAYES_LEARNBOX, dbuf, len);
 					learn_spam(dbuf);
-					SetDlgItemText(optDlg, IDC_OPT_BAYES_LEARNBOX, _T(""));
+					SetDlgItemText(optDlg, IDC_OPT_BAYES_LEARNBOX, L"");
 					free(dbuf);
 
-					mir_sntprintf(buf, _T("%d"), get_msg_count(SPAM));
+					mir_snwprintf(buf, L"%d", get_msg_count(SPAM));
 					SetDlgItemText(optDlg, IDC_STATIC_SPAM_COUNT, buf);
-					mir_sntprintf(buf, _T("%d"), get_msg_count(HAM));
+					mir_snwprintf(buf, L"%d", get_msg_count(HAM));
 					SetDlgItemText(optDlg, IDC_STATIC_HAM_COUNT, buf);
 					return FALSE;
 
 				case IDC_CHECK_MSG:
 					len = GetWindowTextLength(GetDlgItem(optDlg, IDC_OPT_BAYES_LEARNBOX))+1;
-					dbuf = (TCHAR *)malloc((len)*sizeof(TCHAR));
+					dbuf = (wchar_t *)malloc((len)*sizeof(wchar_t));
 					if (!dbuf)
 						return FALSE;
 					GetDlgItemText(optDlg, IDC_OPT_BAYES_LEARNBOX, dbuf, len);
 					mir_snprintf(cbuf, "%0.04f", get_msg_score(dbuf));
-					SetDlgItemText(optDlg, IDC_OPT_BAYES_LEARNBOX, _T(""));
+					SetDlgItemText(optDlg, IDC_OPT_BAYES_LEARNBOX, L"");
 					MessageBoxA(NULL, cbuf, Translate("Message score"), MB_OK);
 					free(dbuf);
 					return FALSE;
@@ -556,21 +556,21 @@ int OnOptInitialize(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
-	odp.ptszGroup = LPGENT("Message sessions");
-	odp.ptszTitle = _T(PLUGIN_NAME);
-	odp.flags = ODPF_TCHAR | ODPF_BOLDGROUPS;
+	odp.szGroup.a = LPGEN("Message sessions");
+	odp.szTitle.a = PLUGIN_NAME;
+	odp.flags = ODPF_BOLDGROUPS;
 
-	odp.ptszTab = LPGENT("Settings");
+	odp.szTab.a = LPGEN("Settings");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_SPAMOTRON_MAIN);
 	odp.pfnDlgProc = DlgProcOptionsMain;
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LPGENT("Messages");
+	odp.szTab.a = LPGEN("Messages");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_SPAMOTRON_Q);
 	odp.pfnDlgProc = DlgProcOptionsQuestion;
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LPGENT("Bayes");
+	odp.szTab.a = LPGEN("Bayes");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_SPAMOTRON_BAYES);
 	odp.pfnDlgProc = DlgProcOptionsBayes;
 	Options_AddPage(wParam, &odp);
@@ -578,8 +578,8 @@ int OnOptInitialize(WPARAM wParam, LPARAM)
 	if (ServiceExists(MS_POPUP_ADDPOPUPT)) {
 		odp.pszTemplate = MAKEINTRESOURCEA(IDD_SPAMOTRON_POPUPS);
 		odp.pfnDlgProc = DlgProcOptionsPopups;
-		odp.ptszGroup = LPGENT("Popups");
-		odp.ptszTab = NULL;
+		odp.szGroup.a = LPGEN("Popups");
+		odp.szTab.a = NULL;
 		Options_AddPage(wParam, &odp);
 	}
 	return 0;

@@ -31,11 +31,11 @@ BOOL bmodulesloaded = false; // modules are loaded
 BOOL png2dibavail = true; // can we use png2dib service?
 
 // path to miranda's dir, config file path, splash path, sound path
-TCHAR szDllName[MAX_PATH], szSplashFile[MAX_PATH], szSoundFile[MAX_PATH], szhAdvaimgPath[MAX_PATH], szPrefix[128], inBuf[80];
-TCHAR *szMirDir;
+wchar_t szDllName[MAX_PATH], szSplashFile[MAX_PATH], szSoundFile[MAX_PATH], szhAdvaimgPath[MAX_PATH], szPrefix[128], inBuf[80];
+wchar_t *szMirDir;
 char szVersion[MAX_PATH];
 #ifdef _DEBUG
-TCHAR szLogFile[MAX_PATH];
+wchar_t szLogFile[MAX_PATH];
 #endif
 SPLASHOPTS options;
 HWND hwndSplash;
@@ -64,18 +64,18 @@ void SplashMain()
 {
 	if (bstartup) {
 		// Retrive path to exe of current running Miranda is located
-		szMirDir = Utils_ReplaceVarsT(_T("%miranda_path%"));
-		mir_sntprintf(szhAdvaimgPath, _T("%s\\plugins\\advaimg.dll"), szMirDir);
-		CallService(MS_SYSTEM_GETVERSIONTEXT, MAX_PATH, (LPARAM)szVersion);
+		szMirDir = Utils_ReplaceVarsW(L"%miranda_path%");
+		mir_snwprintf(szhAdvaimgPath, L"%s\\plugins\\advaimg.dll", szMirDir);
+		Miranda_GetVersionText(szVersion, MAX_PATH);
 
 		#ifdef _DEBUG
-		mir_sntprintf(szLogFile, _T("%s\\%s.log"), szMirDir, _T(__PLUGIN_NAME));
+		mir_snwprintf(szLogFile, L"%s\\%s.log", szMirDir, _A2W(__PLUGIN_NAME));
 		initLog();
-		TCHAR *mirandaVerString = mir_a2t(szVersion);
-		logMessage(_T("Miranda version"), mirandaVerString);
+		wchar_t *mirandaVerString = mir_a2u(szVersion);
+		logMessage(L"Miranda version", mirandaVerString);
 		mir_free(mirandaVerString);
-		logMessage(_T("Dll Name"), _T(__FILENAME));
-		logMessage(_T("Advaimg path"), szhAdvaimgPath);
+		logMessage(L"Dll Name", _A2W(__FILENAME));
+		logMessage(L"Advaimg path", szhAdvaimgPath);
 		#endif
 
 		ReadDbConfig();
@@ -83,69 +83,67 @@ void SplashMain()
 
 	if (bstartup & (options.active == 1)) {
 		DBVARIANT dbv = { 0 };
-		if (!db_get_ts(NULL, MODNAME, "VersionPrefix", &dbv)) {
-			mir_tstrcpy(szPrefix, dbv.ptszVal);
+		if (!db_get_ws(NULL, MODNAME, "VersionPrefix", &dbv)) {
+			mir_wstrcpy(szPrefix, dbv.ptszVal);
 			db_free(&dbv);
 		}
 		else
-			mir_tstrcpy(szPrefix, _T(""));
+			mir_wstrcpy(szPrefix, L"");
 
-		if (!db_get_ts(NULL, MODNAME, "Path", &dbv)) {
-			mir_tstrcpy(inBuf, dbv.ptszVal);
+		if (!db_get_ws(NULL, MODNAME, "Path", &dbv)) {
+			mir_wstrcpy(inBuf, dbv.ptszVal);
 			db_free(&dbv);
 		}
-		else
-			mir_tstrcpy(inBuf, _T("splash\\splash.png"));
+		else mir_wstrcpy(inBuf, L"splash\\splash.png");
 
-		TCHAR szExpandedSplashFile[MAX_PATH];
+		wchar_t szExpandedSplashFile[MAX_PATH];
 		ExpandEnvironmentStrings(inBuf, szExpandedSplashFile, _countof(szExpandedSplashFile));
-		mir_tstrcpy(inBuf, szExpandedSplashFile);
+		mir_wstrcpy(inBuf, szExpandedSplashFile);
 
-		TCHAR *pos3 = 0;
-		pos3 = _tcsrchr(inBuf, _T(':'));
+		wchar_t *pos3 = 0;
+		pos3 = wcsrchr(inBuf, ':');
 		if (pos3 == NULL)
-			mir_sntprintf(szSplashFile, _T("%s\\%s"), szMirDir, inBuf);
+			mir_snwprintf(szSplashFile, L"%s\\%s", szMirDir, inBuf);
 		else
-			mir_tstrcpy(szSplashFile, inBuf);
+			mir_wstrcpy(szSplashFile, inBuf);
 
-		if (!db_get_ts(NULL, MODNAME, "Sound", &dbv)) {
-			mir_tstrcpy(inBuf, dbv.ptszVal);
+		if (!db_get_ws(NULL, MODNAME, "Sound", &dbv)) {
+			mir_wstrcpy(inBuf, dbv.ptszVal);
 			db_free(&dbv);
 		}
-		else
-			mir_tstrcpy(inBuf, _T("sounds\\startup.wav"));
+		else mir_wstrcpy(inBuf, L"sounds\\startup.wav");
 
-		TCHAR szExpandedSoundFile[MAX_PATH];
+		wchar_t szExpandedSoundFile[MAX_PATH];
 		ExpandEnvironmentStrings(inBuf, szExpandedSoundFile, _countof(szExpandedSoundFile));
-		mir_tstrcpy(inBuf, szExpandedSoundFile);
+		mir_wstrcpy(inBuf, szExpandedSoundFile);
 
-		TCHAR *pos2;
-		pos2 = _tcschr(inBuf, _T(':'));
+		wchar_t *pos2;
+		pos2 = wcschr(inBuf, ':');
 		if (pos2 == NULL)
-			mir_sntprintf(szSoundFile, _T("%s\\%s"), szMirDir, inBuf);
+			mir_snwprintf(szSoundFile, L"%s\\%s", szMirDir, inBuf);
 		else
-			mir_tstrcpy(szSoundFile, inBuf);
+			mir_wstrcpy(szSoundFile, inBuf);
 
 		#ifdef _DEBUG
-		logMessage(_T("SoundFilePath"), szSoundFile);
+		logMessage(L"SoundFilePath", szSoundFile);
 		#endif
 
-		TCHAR szOldPath[MAX_PATH] = { 0 };
+		wchar_t szOldPath[MAX_PATH] = { 0 };
 
 		if (options.random) // randomly select a splash file
 		{
 			int filescount = 0;
-			TCHAR szSplashDir[MAX_PATH] = { 0 }, szSearch[MAX_PATH] = { 0 };
-			TCHAR *p = 0;
-			TCHAR files[255][50]; //TODO: make memory allocation dynamic
+			wchar_t szSplashDir[MAX_PATH] = { 0 }, szSearch[MAX_PATH] = { 0 };
+			wchar_t *p = 0;
+			wchar_t files[255][50]; //TODO: make memory allocation dynamic
 
-			mir_tstrcpy(szSplashDir, szSplashFile);
-			mir_tstrcpy(szOldPath, szSplashFile);
+			mir_wstrcpy(szSplashDir, szSplashFile);
+			mir_wstrcpy(szOldPath, szSplashFile);
 			// find the last \ and null it out, this leaves no trailing slash
-			p = _tcsrchr(szSplashDir, _T('\\'));
+			p = wcsrchr(szSplashDir, '\\');
 			if (p) *p = 0;
 			// create the search filter
-			mir_sntprintf(szSearch, _T("%s\\*.*"), szSplashDir);
+			mir_snwprintf(szSearch, L"%s\\*.*", szSplashDir);
 			// FFFN will return filenames
 			HANDLE hFind = INVALID_HANDLE_VALUE;
 			WIN32_FIND_DATA ffd;
@@ -154,24 +152,24 @@ void SplashMain()
 				do {
 					if (!(ffd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)) {
 						#ifdef _DEBUG
-						logMessage(_T("Found file"), ffd.cFileName);
+						logMessage(L"Found file", ffd.cFileName);
 						#endif
 						//files = new char[mir_strlen(ffd.cFileName)];
 						//files[filescount] = new char[mir_strlen(ffd.cFileName)];
-						TCHAR ext[5];
-						wmemcpy(ext, ffd.cFileName + (mir_tstrlen(ffd.cFileName) - 4), 5);
+						wchar_t ext[5];
+						wmemcpy(ext, ffd.cFileName + (mir_wstrlen(ffd.cFileName) - 4), 5);
 
 						#ifdef _DEBUG
-						logMessage(_T("Extention"), ext);
+						logMessage(L"Extention", ext);
 						#endif
 
-						if (mir_tstrcmpi(ext, _T(".png")) & mir_tstrcmpi(ext, _T(".bmp")))
+						if (mir_wstrcmpi(ext, L".png") & mir_wstrcmpi(ext, L".bmp"))
 							continue;
 
 						#ifdef _DEBUG
-						logMessage(_T("File has valid ext"), ext);
+						logMessage(L"File has valid ext", ext);
 						#endif
-						mir_tstrcpy(files[filescount++], ffd.cFileName);
+						mir_wstrcpy(files[filescount++], ffd.cFileName);
 					} //if
 				} while (FindNextFile(hFind, &ffd));
 
@@ -179,10 +177,10 @@ void SplashMain()
 				int r = 0;
 				if (filescount) r = (rand() % filescount) + 1;
 
-				mir_sntprintf(szSplashFile, _T("%s\\%s"), szSplashDir, files[r - 1]);
+				mir_snwprintf(szSplashFile, L"%s\\%s", szSplashDir, files[r - 1]);
 
 				#ifdef _DEBUG
-				logMessage(_T("final file"), szSplashFile);
+				logMessage(L"final file", szSplashFile);
 				#endif
 				FindClose(hFind);
 			} //if
@@ -197,33 +195,30 @@ void SplashMain()
 int PlugDisableHook(WPARAM wParam, LPARAM lParam)
 {
 	#ifdef _DEBUG
-	TCHAR buf[128];
+	wchar_t buf[128];
 	#endif
 	DBCONTACTWRITESETTING *cws = (DBCONTACTWRITESETTING*)lParam;
-	TCHAR *tszModule = mir_a2t(cws->szModule), *tszSetting = mir_a2t(cws->szSetting);
 	if (options.inheritGS) {
-		if (!mir_tstrcmp(tszModule, _T("Skin")) & !mir_tstrcmp(tszSetting, _T("UseSound"))) {
+		if (!strcmp(cws->szModule, "Skin") && !strcmp(cws->szSetting, "UseSound")) {
 			db_set_b(NULL, MODNAME, "PlaySound", cws->value.bVal);
 			#ifdef _DEBUG
-			cws->value.bVal ? _DebugPopup(NULL, _T("Sounds enabled."), _T("")) : _DebugPopup(NULL, _T("Sounds disabled."), _T(""));
-			logMessage(_T("Module"), tszModule);
-			logMessage(_T("Setting"), tszSetting);
-			logMessage(_T("Value"), _itot(cws->value.bVal, buf, 10));
+			cws->value.bVal ? _DebugPopup(NULL, L"Sounds enabled.", L"") : _DebugPopup(NULL, L"Sounds disabled.", L"");
+			logMessage(L"Module", _A2T(cws->szModule));
+			logMessage(L"Setting", _A2T(cws->szSetting));
+			logMessage(L"Value", _itow(cws->value.bVal, buf, 10));
 			#endif
 		}
-		if (!mir_tstrcmp(tszModule, _T("PluginDisable")) & (!mir_tstrcmp(tszSetting, szDllName))) {
+		if (!strcmp(cws->szModule, "PluginDisable") && !strcmp(cws->szSetting, _T2A(szDllName))) {
 			db_set_b(NULL, MODNAME, "Active", cws->value.bVal);
 			#ifdef _DEBUG
-			cws->value.bVal ? _DebugPopup(NULL, _T("Disabled."), "") : _DebugPopup(NULL, _T("Enabled."), _T(""));
-			logMessage(_T("PlugDisableHook"), _T("Triggered"));
-			logMessage(_T("Module"), tszModule);
-			logMessage(_T("Setting"), tszSetting);
-			logMessage(_T("Value"), _itot(cws->value.bVal, buf, 10));
+			cws->value.bVal ? _DebugPopup(NULL, L"Disabled.", "") : _DebugPopup(NULL, L"Enabled.", L"");
+			logMessage(L"PlugDisableHook", L"Triggered");
+			logMessage(L"Module", _A2T(cws->szModule));
+			logMessage(L"Setting", _A2T(cws->szSetting));
+			logMessage(L"Value", _itow(cws->value.bVal, buf, 10));
 			#endif
 		}
 	}
-	mir_free(tszModule);
-	mir_free(tszSetting);
 
 	return 0;
 }
@@ -235,7 +230,7 @@ int ModulesLoaded(WPARAM wParam, LPARAM lParam)
 	if (hwndSplash) {
 		if (PostMessage(hwndSplash, WM_LOADED, 0, 0)) {
 			#ifdef _DEBUG
-			logMessage(_T("Posted WM_LOADED message"), _T("done"));
+			logMessage(L"Posted WM_LOADED message", L"done");
 			#endif
 		}
 	}
@@ -248,7 +243,7 @@ int ModulesLoaded(WPARAM wParam, LPARAM lParam)
 	CreateServiceFunction(MS_SHOWSPLASH, ShowSplashService);
 
 	#ifdef _DEBUG
-	logMessage(_T("Loading modules"), _T("done"));
+	logMessage(L"Loading modules", L"done");
 	#endif
 
 	return 0;
@@ -262,7 +257,7 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD miranda
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, ModulesLoaded);
 
@@ -274,14 +269,14 @@ extern "C" int __declspec(dllexport) Load(void)
 
 extern "C" int __declspec(dllexport) Unload(void)
 {
-	UnregisterClass(_T(SPLASH_CLASS), hInst);
+	UnregisterClass(SPLASH_CLASS, hInst);
 
 	// Freeing loaded libraries
 	if (hAdvaimg)
 		FreeLibrary(hAdvaimg);
 
 	#ifdef _DEBUG
-	logMessage(_T("Unload"), _T("Job done"));
+	logMessage(L"Unload", L"Job done");
 	#endif
 
 	return 0;

@@ -19,9 +19,9 @@
 HINSTANCE hInst;
 BOOL bWatrackService = FALSE;
 int hLangpack = 0;
-TCHAR *gbHost, *gbPassword;
+wchar_t *gbHost, *gbPassword;
 WORD gbPort;
-HANDLE ghNetlibUser;
+HNETLIBUSER ghNetlibUser;
 
 PLUGININFOEX pluginInfo={
 	sizeof(PLUGININFOEX),
@@ -51,18 +51,17 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 void InitVars()
 {
 	gbPort = db_get_w(NULL, szModuleName, "Port", 6600);
-	gbHost = UniGetContactSettingUtf(NULL, szModuleName, "Server", _T("127.0.0.1"));
-	gbPassword = UniGetContactSettingUtf(NULL, szModuleName, "Password", _T(""));
+	gbHost = UniGetContactSettingUtf(NULL, szModuleName, "Server", L"127.0.0.1");
+	gbPassword = UniGetContactSettingUtf(NULL, szModuleName, "Password", L"");
 }
 
 static int OnModulesLoaded(WPARAM, LPARAM)
 {
-	NETLIBUSER nlu = {0};
-	nlu.cbSize = sizeof(nlu);
-	nlu.flags = NUF_OUTGOING | NUF_HTTPCONNS | NUF_TCHAR;
-	nlu.ptszDescriptiveName = TranslateT("Watrack MPD connection");
+	NETLIBUSER nlu = {};
+	nlu.flags = NUF_OUTGOING | NUF_HTTPCONNS | NUF_UNICODE;
+	nlu.szDescriptiveName.w = TranslateT("Watrack MPD connection");
 	nlu.szSettingsModule = __PLUGIN_NAME;
-	ghNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
+	ghNetlibUser = Netlib_RegisterUser(&nlu);
 	InitVars();
 	if (ServiceExists(MS_WAT_PLAYER))
 		bWatrackService = TRUE;

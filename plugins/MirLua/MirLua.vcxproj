@@ -17,6 +17,9 @@
       <Configuration>Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
+    <ProjectReference Include="..\..\libs\liblua\liblua.vcxproj">
+      <Project>{bd291bf0-d804-4818-8311-de871e6bceaa}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>MirLua</ProjectName>
@@ -27,14 +30,15 @@
   </ImportGroup>
   <ItemDefinitionGroup>
     <Link>
-      <AdditionalDependencies>comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>comctl32.lib;rpcrt4.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <ClCompile>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\libs\liblua\include;$(ProjectDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\lua\*.h" />
-    <ClCompile Include="src\lua\*.c">
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-    </ClCompile>
+    <ClInclude Include="include\*.h" />
     <None Include="res\*.ico" />
   </ItemGroup>
 </Project>

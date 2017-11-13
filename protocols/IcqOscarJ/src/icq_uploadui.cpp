@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2008 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -43,8 +43,7 @@ static int cbGroupIds = 0;
 static void ResetCListOptions(HWND hwndList)
 {
 	SetWindowLongPtr(hwndList, GWL_STYLE, GetWindowLongPtr(hwndList, GWL_STYLE) | CLS_SHOWHIDDEN);
-	if (CallService(MS_CLUI_GETCAPS, 0, 0) & CLUIF_HIDEEMPTYGROUPS) // hide empty groups
-		SendMessage(hwndList, CLM_SETHIDEEMPTYGROUPS, (WPARAM)TRUE, 0);
+	SendMessage(hwndList, CLM_SETHIDEEMPTYGROUPS, (WPARAM)TRUE, 0);
 }
 
 // Selects the "All contacts" checkbox if all other list entries
@@ -151,12 +150,7 @@ static void enumServerGroups(CIcqProto* ppro)
 {
 	char szModule[MAX_PATH + 9];
 	mir_snprintf(szModule, "%s%s", ppro->m_szModuleName, "SrvGroups");
-
-	DBCONTACTENUMSETTINGS dbces = { 0 };
-	dbces.pfnEnumProc = &GroupEnumIdsEnumProc;
-	dbces.szModule = szModule;
-	dbces.lParam = (LPARAM)szModule;
-	CallService(MS_DB_CONTACT_ENUMSETTINGS, 0, (LPARAM)&dbces);
+	db_enum_settings(NULL, &GroupEnumIdsEnumProc, szModule, szModule);
 }
 
 static DWORD sendUploadGroup(CIcqProto* ppro, WORD wAction, WORD wGroupId, char* szItemName)
@@ -827,7 +821,7 @@ static INT_PTR CALLBACK DlgProcUploadList(HWND hwndDlg, UINT message, WPARAM wPa
 						CLCINFOITEM cii = { 0 };
 						cii.cbSize = sizeof(cii);
 						cii.flags = CLCIIF_GROUPFONT | CLCIIF_CHECKBOX;
-						cii.pszText = TranslateT(LPGEN("** All contacts **"));
+						cii.pszText = TranslateT("** All contacts **");
 						hItemAll = (HANDLE)SendMessage(hClist, CLM_ADDINFOITEM, 0, (LPARAM)&cii);
 					}
 

@@ -237,7 +237,7 @@ void ThumbInfo::ResizeThumb()
 {
 	int index = FLT_FONTID_NOTONLIST;
 
-	himlMiranda = (HIMAGELIST)CallService(MS_CLIST_GETICONSIMAGELIST, 0, 0);
+	himlMiranda = Clist_GetImageList();
 	if (himlMiranda == NULL)
 		return;
 
@@ -271,7 +271,7 @@ void ThumbInfo::ResizeThumb()
 
 	// Get text and icon sizes
 	SIZEL sizeText;
-	GetTextExtentPoint32(hdc, ptszName, (int)mir_tstrlen(ptszName), &sizeText);
+	GetTextExtentPoint32(hdc, ptszName, (int)mir_wstrlen(ptszName), &sizeText);
 
 	SelectObject(hdc, hOldFont);
 
@@ -302,7 +302,7 @@ void ThumbInfo::ResizeThumb()
 void ThumbInfo::RefreshContactIcon(int _iIcon)
 {
 	if (_iIcon == 0xFFFFFFFF || ImageList_GetImageCount(himlMiranda) <= _iIcon)
-		iIcon = CallService(MS_CLIST_GETCONTACTICON, hContact, 0);
+		iIcon = pcli->pfnGetContactIcon(hContact);
 	else
 		iIcon = _iIcon;
 
@@ -624,7 +624,7 @@ void ThumbInfo::UpdateContent()
 	hOldFont = (HFONT)SelectObject(hdcDraw, hFont[index]);
 
 	SIZE szText;
-	GetTextExtentPoint32(hdcDraw, ptszName, (int)mir_tstrlen(ptszName), &szText);
+	GetTextExtentPoint32(hdcDraw, ptszName, (int)mir_wstrlen(ptszName), &szText);
 	SetTextColor(hdcDraw, bkColor);
 
 	// simple border
@@ -661,7 +661,7 @@ void ThumbInfo::UpdateContent()
 
 void ThumbInfo::PopupMessageDialog()
 {
-	CallService(MS_CLIST_CONTACTDOUBLECLICKED, hContact, 0);
+	Clist_ContactDoubleClicked(hContact);
 }
 
 void ThumbInfo::OnTimer(BYTE idTimer)
@@ -738,13 +738,13 @@ ThumbList::ThumbList() : OBJLIST<ThumbInfo>(1, NumericKeySortT)
 ThumbList::~ThumbList()
 {}
 
-ThumbInfo *ThumbList::AddThumb(HWND hwnd, TCHAR *ptszName, MCONTACT hContact)
+ThumbInfo *ThumbList::AddThumb(HWND hwnd, wchar_t *ptszName, MCONTACT hContact)
 {
 	if (ptszName == NULL || hContact == NULL || hwnd == NULL)
 		return NULL;
 
 	ThumbInfo *pThumb = new ThumbInfo;
-	_tcsncpy_s(pThumb->ptszName, ptszName, _TRUNCATE);
+	wcsncpy_s(pThumb->ptszName, ptszName, _TRUNCATE);
 	pThumb->hContact = hContact;
 	pThumb->hwnd = hwnd;
 

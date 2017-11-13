@@ -21,7 +21,7 @@ Boston, MA 02111-1307, USA.
 #ifndef _POPWIN_INC
 #define _POPWIN_INC
 
-#define POP_WIN_CLASS					_T(MODULE) _T("MimTTClass")
+#define POP_WIN_CLASS					_T(MODULE) L"MimTTClass"
 
 #define PUM_GETHEIGHT					(WM_USER + 0x020)
 #define PUM_CALCPOS						(WM_USER + 0x021)
@@ -89,12 +89,12 @@ typedef struct {
 	HANDLE hItem;		//handle to group or contact
 	POINT ptCursor;
 	RECT rcItem;
-	TCHAR *swzText;		// for tips with specific text
+	wchar_t *swzText;		// for tips with specific text
 	char *szProto;		// for proto tips
 } CLCINFOTIPEX;
 
 typedef struct {
-	TCHAR *swzLabel, *swzValue;
+	wchar_t *swzLabel, *swzValue;
 	HICON hIcon;
 	bool bValueNewline;
 	bool bLineAbove;
@@ -110,7 +110,7 @@ typedef struct {
 	MCONTACT hContact;
 	int iIconIndex;
 	CLCINFOTIPEX clcit;
-	TCHAR swzTitle[TITLE_TEXT_LEN];
+	wchar_t swzTitle[TITLE_TEXT_LEN];
 	SMILEYPARSEINFO spiTitle;
 	RowData *rows;
 	int iRowCount;
@@ -132,7 +132,7 @@ typedef struct {
 
 
 LRESULT CALLBACK PopupWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-extern int IsTrayProto(const TCHAR *swzProto, BOOL bExtendedTip);
+extern int IsTrayProto(const wchar_t *swzProto, BOOL bExtendedTip);
 
 
 #endif

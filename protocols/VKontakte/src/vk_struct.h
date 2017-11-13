@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013-15 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2013-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -54,8 +54,8 @@ struct PARAM
 
 struct INT_PARAM : public PARAM
 {
-	int iValue;
-	__forceinline INT_PARAM(LPCSTR _name, int _value) :
+	long iValue;
+	__forceinline INT_PARAM(LPCSTR _name, long _value) :
 		PARAM(_name), iValue(_value)
 	{}
 };
@@ -70,28 +70,28 @@ struct CHAR_PARAM : public PARAM
 };
 AsyncHttpRequest* operator<<(AsyncHttpRequest*, const CHAR_PARAM&);
 
-struct TCHAR_PARAM : public PARAM
+struct WCHAR_PARAM : public PARAM
 {
-	LPCTSTR tszValue;
-	__forceinline TCHAR_PARAM(LPCSTR _name, LPCTSTR _value) :
-		PARAM(_name), tszValue(_value)
+	LPCWSTR wszValue;
+	__forceinline WCHAR_PARAM(LPCSTR _name, LPCWSTR _value) :
+		PARAM(_name), wszValue(_value)
 	{}
 };
-AsyncHttpRequest* operator<<(AsyncHttpRequest*, const TCHAR_PARAM&);
+AsyncHttpRequest* operator<<(AsyncHttpRequest*, const WCHAR_PARAM&);
 
 struct CVkFileUploadParam : public MZeroedObject {
 	enum VKFileType { typeInvalid, typeImg, typeAudio, typeDoc, typeNotSupported };
-	TCHAR* FileName;
-	TCHAR* Desc;
-	char* atr;
-	char* fname;
+	wchar_t *FileName;
+	wchar_t *Desc;
+	char *atr;
+	char *fname;
 	MCONTACT hContact;
 	VKFileType filetype;
 
-	CVkFileUploadParam(MCONTACT _hContact, const TCHAR* _desc, TCHAR** _files);
+	CVkFileUploadParam(MCONTACT _hContact, const wchar_t *_desc, wchar_t **_files);
 	~CVkFileUploadParam();
 	VKFileType GetType();
-	__forceinline bool IsAccess() { return ::_taccess(FileName, 0) == 0; }
+	__forceinline bool IsAccess() { return ::_waccess(FileName, 0) == 0; }
 	__forceinline char* atrName() { GetType();  return atr; }
 	__forceinline char* fileName() { GetType();  return fname; }
 };
@@ -102,7 +102,7 @@ struct CVkSendMsgParam : public MZeroedObject
 		hContact(_hContact),
 		iMsgID(_iMsgID),
 		iCount(_iCount),
-		pFUP(NULL)
+		pFUP(nullptr)
 	{}
 
 	CVkSendMsgParam(MCONTACT _hContact, CVkFileUploadParam *_pFUP) :
@@ -118,6 +118,17 @@ struct CVkSendMsgParam : public MZeroedObject
 	CVkFileUploadParam *pFUP;
 };
 
+struct CVkDBAddAuthRequestThreadParam : public MZeroedObject
+{
+	CVkDBAddAuthRequestThreadParam(MCONTACT _hContact, bool _bAdded) :
+		hContact(_hContact),
+		bAdded(_bAdded)
+	{}
+
+	MCONTACT hContact;
+	bool bAdded;
+};
+
 struct CVkChatMessage : public MZeroedObject
 {
 	CVkChatMessage(int _id) :
@@ -130,7 +141,7 @@ struct CVkChatMessage : public MZeroedObject
 
 	int m_mid, m_uid, m_date;
 	bool m_bHistory, m_bIsAction;
-	ptrT m_tszBody;
+	ptrW m_wszBody;
 };
 
 struct CVkChatUser : public MZeroedObject
@@ -143,7 +154,7 @@ struct CVkChatUser : public MZeroedObject
 
 	int m_uid;
 	bool m_bDel, m_bUnknown;
-	ptrT m_tszNick;
+	ptrW m_wszNick;
 };
 
 struct CVkChatInfo : public MZeroedObject
@@ -159,12 +170,13 @@ struct CVkChatInfo : public MZeroedObject
 
 	int m_chatid, m_admin_id;
 	bool m_bHistoryRead;
-	ptrT m_tszTopic, m_tszId;
+	ptrW m_wszTopic, m_wszId;
 	MCONTACT m_hContact;
 	OBJLIST<CVkChatUser> m_users;
 	OBJLIST<CVkChatMessage> m_msgs;
 
-	CVkChatUser* GetUserById(LPCTSTR);
+	CVkChatUser* GetUserById(LPCWSTR);
+	CVkChatUser* GetUserById(int user_id);
 };
 
 struct CVkUserInfo : public MZeroedObject {
@@ -173,55 +185,188 @@ struct CVkUserInfo : public MZeroedObject {
 		m_bIsGroup(false)
 	{}
 
-	CVkUserInfo(LONG _UserId, bool _bIsGroup, CMString& _tszUserNick, CMString& _tszLink, MCONTACT _hContact = NULL) :
+	CVkUserInfo(LONG _UserId, bool _bIsGroup, CMStringW& _wszUserNick, CMStringW& _wszLink, MCONTACT _hContact = 0) :
 		m_UserId(_UserId),
 		m_bIsGroup(_bIsGroup),
-		m_tszUserNick(_tszUserNick),
-		m_tszLink(_tszLink),
+		m_wszUserNick(_wszUserNick),
+		m_wszLink(_wszLink),
 		m_hContact(_hContact)
 	{}
 
 	LONG m_UserId;
 	MCONTACT m_hContact;
-	CMString m_tszUserNick;
-	CMString m_tszLink;
+	CMStringW m_wszUserNick;
+	CMStringW m_wszLink;
 	bool m_bIsGroup;
 };
 
 enum VKObjType { vkNull, vkPost, vkPhoto, vkVideo, vkComment, vkTopic, vkUsers, vkCopy, vkInvite };
 
 struct CVKNotification {
-	TCHAR *ptszType;
+	wchar_t *pwszType;
 	VKObjType vkParent, vkFeedback;
-	TCHAR *ptszTranslate;
+	wchar_t *pwszTranslate;
 };
 
 struct CVKNewsItem : public MZeroedObject {
 	CVKNewsItem() :
-		tDate(NULL),
-		vkUser(NULL),
+		tDate(0),
+		vkUser(nullptr),
 		bIsGroup(false),
 		bIsRepost(false),
 		vkFeedbackType(vkNull),
 		vkParentType(vkNull)
 	{}
 
-	CMString tszId;
+	CMStringW wszId;
 	time_t tDate;
 	CVkUserInfo *vkUser;
-	CMString tszText;
-	CMString tszLink;
-	CMString tszType;
+	CMStringW wszText;
+	CMStringW wszLink;
+	CMStringW wszType;
+	CMStringW wszPopupTitle;
+	CMStringW wszPopupText;
 	VKObjType vkFeedbackType, vkParentType;
 	bool bIsGroup;
 	bool bIsRepost;
 };
 
-enum VKBBCType { vkbbcB, vkbbcI, vkbbcS, vkbbcU, vkbbcImg, vkbbcUrl, vkbbcSize, vkbbcColor };
-enum BBCSupport { bbcNo, bbcBasic, bbcAdvanced };
+enum VKBBCType : BYTE { vkbbcB, vkbbcI, vkbbcS, vkbbcU, vkbbcCode, vkbbcImg, vkbbcUrl, vkbbcSize, vkbbcColor };
+enum BBCSupport : BYTE { bbcNo, bbcBasic, bbcAdvanced };
 
 struct CVKBBCItem {
 	VKBBCType vkBBCType;
 	BBCSupport vkBBCSettings;
-	TCHAR *ptszTempate;
+	wchar_t *pwszTempate;
+};
+
+struct CVKChatContactTypingParam {
+	CVKChatContactTypingParam(int pChatId, int pUserId) :
+		m_ChatId(pChatId),
+		m_UserId(pUserId)
+	{}
+
+	int m_ChatId;
+	int m_UserId;
+};
+
+struct CVKInteres {
+	const char *szField;
+	wchar_t *pwszTranslate;
+};
+
+struct CVKLang {
+	wchar_t *szCode;
+	wchar_t *szDescription;
+};
+
+enum MarkMsgReadOn : BYTE { markOnRead, markOnReceive, markOnReply, markOnTyping };
+enum SyncHistoryMetod : BYTE { syncOff, syncAuto, sync1Days, sync3Days };
+enum MusicSendMetod : BYTE { sendNone, sendStatusOnly, sendBroadcastOnly, sendBroadcastAndStatus };
+enum IMGBBCSypport : BYTE { imgNo, imgFullSize, imgPreview130, imgPreview604 };
+
+struct CVKSync {
+	const wchar_t *type;
+	SyncHistoryMetod data;
+};
+
+struct CVKMarkMsgRead {
+	const wchar_t *type;
+	MarkMsgReadOn data;
+};
+
+struct CVkCookie
+{
+	CVkCookie(const CMStringA& name, const CMStringA& value, const CMStringA& domain) :
+		m_name(name),
+		m_value(value),
+		m_domain(domain)
+	{}
+
+	CMStringA m_name, m_value, m_domain;
+};
+
+struct CVKOptions {
+	CMOption<BYTE> bLoadLastMessageOnMsgWindowsOpen;
+	CMOption<BYTE> bLoadOnlyFriends;
+	CMOption<BYTE> bServerDelivery;
+	CMOption<BYTE> bHideChats;
+	CMOption<BYTE> bMesAsUnread;
+	CMOption<BYTE> bUseLocalTime;
+	CMOption<BYTE> bReportAbuse;
+	CMOption<BYTE> bClearServerHistory;
+	CMOption<BYTE> bRemoveFromFrendlist;
+	CMOption<BYTE> bRemoveFromCList;
+	CMOption<BYTE> bPopUpSyncHistory;
+	CMOption<BYTE> iMarkMessageReadOn;
+	CMOption<BYTE> bStikersAsSmyles;
+	CMOption<BYTE> bUserForceInvisibleOnActivity;
+	CMOption<BYTE> iMusicSendMetod;
+	CMOption<BYTE> bPopupContactsMusic;
+	CMOption<BYTE> iSyncHistoryMetod;
+	CMOption<BYTE> bNewsEnabled;
+	CMOption<BYTE> iMaxLoadNewsPhoto;
+	CMOption<BYTE> bNotificationsEnabled;
+	CMOption<BYTE> bNotificationsMarkAsViewed;
+	CMOption<BYTE> bSpecialContactAlwaysEnabled;
+	CMOption<BYTE> iIMGBBCSupport;
+	CMOption<BYTE> iBBCForNews;
+	CMOption<BYTE> iBBCForAttachments;
+	CMOption<BYTE> bUseBBCOnAttacmentsAsNews;
+	CMOption<BYTE> bNewsAutoClearHistory;
+	CMOption<BYTE> bNewsFilterPosts;
+	CMOption<BYTE> bNewsFilterPhotos;
+	CMOption<BYTE> bNewsFilterTags;
+	CMOption<BYTE> bNewsFilterWallPhotos;
+	CMOption<BYTE> bNewsSourceFriends;
+	CMOption<BYTE> bNewsSourceGroups;
+	CMOption<BYTE> bNewsSourcePages;
+	CMOption<BYTE> bNewsSourceFollowing;
+	CMOption<BYTE> bNewsSourceIncludeBanned;
+	CMOption<BYTE> bNewsSourceNoReposts;
+	CMOption<BYTE> bNotificationFilterComments;
+	CMOption<BYTE> bNotificationFilterLikes;
+	CMOption<BYTE> bNotificationFilterReposts;
+	CMOption<BYTE> bNotificationFilterMentions;
+	CMOption<BYTE> bNotificationFilterInvites;
+	CMOption<BYTE> bNotificationFilterAcceptedFriends;
+	CMOption<BYTE> bUseNonStandardNotifications;
+	CMOption<BYTE> bUseStandardUrlEncode;
+	CMOption<BYTE> bShortenLinksForAudio;
+	CMOption<BYTE> bAddMessageLinkToMesWAtt;
+	CMOption<BYTE> bSplitFormatFwdMsg;
+	CMOption<BYTE> bSyncReadMessageStatusFromServer;
+	CMOption<BYTE> bLoadFullCList;
+	CMOption<BYTE> bSendVKLinksAsAttachments;
+	CMOption<BYTE> bLoadSentAttachments;
+	CMOption<BYTE> bShowVkDeactivateEvents;
+
+	CMOption<BYTE> bShowProtoMenuItem0;
+	CMOption<BYTE> bShowProtoMenuItem1;
+	CMOption<BYTE> bShowProtoMenuItem2;
+	CMOption<BYTE> bShowProtoMenuItem3;
+	CMOption<BYTE> bShowProtoMenuItem4;
+	CMOption<BYTE> bShowProtoMenuItem5;
+	CMOption<BYTE> bShowProtoMenuItem6;
+
+	CMOption<DWORD> iNewsInterval;
+	CMOption<DWORD> iNotificationsInterval;
+	CMOption<DWORD> iNewsAutoClearHistoryInterval;
+	CMOption<DWORD> iInvisibleInterval;
+	CMOption<DWORD> iMaxFriendsCount;
+
+	CMOption<wchar_t*> pwszDefaultGroup;
+	CMOption<wchar_t*> pwszReturnChatMessage;
+	CMOption<wchar_t*> pwszVKLang;
+
+	CVKOptions(PROTO_INTERFACE *proto);
+
+	__forceinline BBCSupport BBCForNews() { return (BBCSupport)(BYTE)iBBCForNews; };
+	__forceinline BBCSupport BBCForAttachments() { return (BBCSupport)(BYTE)iBBCForAttachments; };
+
+};
+
+struct CVKDeactivateEvent {
+	wchar_t *wszType;
+	char *szDescription;
 };

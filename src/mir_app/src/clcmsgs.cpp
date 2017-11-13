@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // processing of all the CLM_ messages incoming
 
-LRESULT fnProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT fnProcessExternalMessages(HWND hwnd, ClcData *dat, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	ClcContact *contact;
 	ClcGroup *group;
@@ -43,8 +43,8 @@ LRESULT fnProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPAR
 	case CLM_ADDGROUP:
 		{
 			DWORD groupFlags;
-			TCHAR *szName = cli.pfnGetGroupName(wParam, &groupFlags);
-			if (szName == NULL)
+			wchar_t *szName = Clist_GroupGetName(wParam, &groupFlags);
+			if (szName == nullptr)
 				break;
 			cli.pfnAddGroup(hwnd, dat, szName, groupFlags, wParam, 0);
 			cli.pfnRecalcScrollBar(hwnd, dat);
@@ -55,29 +55,29 @@ LRESULT fnProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPAR
 	case CLM_ADDINFOITEMW:
 		{
 			CLCINFOITEM *cii = (CLCINFOITEM *)lParam;
-			if (cii == NULL || cii->cbSize != sizeof(CLCINFOITEM))
-				return NULL;
-			if (cii->hParentGroup == NULL)
+			if (cii == nullptr || cii->cbSize != sizeof(CLCINFOITEM))
+				return 0;
+			if (cii->hParentGroup == nullptr)
 				group = &dat->list;
 			else {
-				if (!cli.pfnFindItem(hwnd, dat, int(cii->hParentGroup) | HCONTACT_ISGROUP, &contact, NULL, NULL))
-					return NULL;
+				if (!Clist_FindItem(hwnd, dat, INT_PTR(cii->hParentGroup) | HCONTACT_ISGROUP, &contact, nullptr, nullptr))
+					return 0;
 				group = contact->group;
 			}
+			
+			ClcContact *cc;
 			if (msg == CLM_ADDINFOITEMA) {
 				WCHAR* wszText = mir_a2u((char*)cii->pszText);
-				i = cli.pfnAddInfoItemToGroup(group, cii->flags, wszText);
+				cc = cli.pfnAddInfoItemToGroup(group, cii->flags, wszText);
 				mir_free(wszText);
 			}
-			else i = cli.pfnAddInfoItemToGroup(group, cii->flags, cii->pszText);
+			else cc = cli.pfnAddInfoItemToGroup(group, cii->flags, cii->pszText);
 			cli.pfnRecalcScrollBar(hwnd, dat);
-			return (LRESULT)group->cl.items[i]->hContact | HCONTACT_ISINFO;
+			return (LRESULT)cc->hContact | HCONTACT_ISINFO;
 		}
 
 	case CLM_AUTOREBUILD:
-		KillTimer(hwnd, TIMERID_REBUILDAFTER);
-		cli.pfnSaveStateAndRebuildList(hwnd, dat);
-		cli.bAutoRebuild = false;
+		SetTimer(hwnd, TIMERID_REBUILDAFTER, 50, 0);
 		break;
 
 	case CLM_DELETEITEM:
@@ -96,37 +96,35 @@ LRESULT fnProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPAR
 		break;
 
 	case CLM_ENSUREVISIBLE:
-		if (!cli.pfnFindItem(hwnd, dat, wParam, &contact, &group, NULL))
+		if (!Clist_FindItem(hwnd, dat, wParam, &contact, &group, nullptr))
 			break;
 
 		for (ClcGroup *tgroup = group; tgroup; tgroup = tgroup->parent)
 			cli.pfnSetGroupExpand(hwnd, dat, tgroup, 1);
-		cli.pfnEnsureVisible(hwnd, dat, cli.pfnGetRowsPriorTo(&dat->list, group, List_IndexOf((SortedList*)&group->cl, contact)), 0);
+		cli.pfnEnsureVisible(hwnd, dat, cli.pfnGetRowsPriorTo(&dat->list, group, group->cl.indexOf(contact)), 0);
 		break;
 
 	case CLM_EXPAND:
-		if (!cli.pfnFindItem(hwnd, dat, wParam, &contact, NULL, NULL))
-			break;
-		if (contact->type != CLCIT_GROUP)
-			break;
-		cli.pfnSetGroupExpand(hwnd, dat, contact->group, lParam);
+		if (Clist_FindItem(hwnd, dat, wParam, &contact, nullptr, nullptr))
+			if (contact->type == CLCIT_GROUP)
+				cli.pfnSetGroupExpand(hwnd, dat, contact->group, lParam);
 		break;
 
 	case CLM_FINDCONTACT:
-		if (!cli.pfnFindItem(hwnd, dat, wParam, NULL, NULL, NULL))
-			return NULL;
+		if (!Clist_FindItem(hwnd, dat, wParam, nullptr, nullptr, nullptr))
+			return 0;
 		return wParam;
 
 	case CLM_FINDGROUP:
-		if (!cli.pfnFindItem(hwnd, dat, wParam | HCONTACT_ISGROUP, NULL, NULL, NULL))
-			return NULL;
+		if (!Clist_FindItem(hwnd, dat, wParam | HCONTACT_ISGROUP, nullptr, nullptr, nullptr))
+			return 0;
 		return wParam | HCONTACT_ISGROUP;
 
 	case CLM_GETBKCOLOR:
 		return dat->bkColour;
 
 	case CLM_GETCHECKMARK:
-		if (!cli.pfnFindItem(hwnd, dat, wParam, &contact, NULL, NULL))
+		if (!Clist_FindItem(hwnd, dat, wParam, &contact, nullptr, nullptr))
 			return 0;
 		return (contact->flags & CONTACTF_CHECKED) != 0;
 
@@ -137,7 +135,7 @@ LRESULT fnProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPAR
 		return (LRESULT)dat->hwndRenameEdit;
 
 	case CLM_GETEXPAND:
-		if (!cli.pfnFindItem(hwnd, dat, wParam, &contact, NULL, NULL))
+		if (!Clist_FindItem(hwnd, dat, wParam, &contact, nullptr, nullptr))
 			return CLE_INVALID;
 		if (contact->type != CLCIT_GROUP)
 			return CLE_INVALID;
@@ -145,7 +143,7 @@ LRESULT fnProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPAR
 
 	case CLM_SETEXTRASPACE:
 		dat->extraColumnSpacing = (int)wParam;
-		cli.pfnInvalidateRect(hwnd, NULL, FALSE);
+		cli.pfnInvalidateRect(hwnd, nullptr, FALSE);
 		return 0;
 
 	case CLM_GETEXTRACOLUMNS:
@@ -153,7 +151,7 @@ LRESULT fnProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPAR
 
 	case CLM_GETEXTRAIMAGE:
 		if (LOWORD(lParam) < dat->extraColumnsCount) {
-			if (cli.pfnFindItem(hwnd, dat, wParam, &contact, NULL, NULL))
+			if (Clist_FindItem(hwnd, dat, wParam, &contact, nullptr, nullptr))
 				return contact->iExtraImage[LOWORD(lParam)];
 		}
 		return EMPTY_EXTRA_ICON;
@@ -167,23 +165,23 @@ LRESULT fnProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPAR
 		return (LRESULT)dat->fontInfo[wParam].hFont;
 
 	case CLM_GETHIDEOFFLINEROOT:
-		return db_get_b(NULL, "CLC", "HideOfflineRoot", 0);
+		return db_get_b(0, "CLC", "HideOfflineRoot", 0);
 
 	case CLM_GETINDENT:
 		return dat->groupIndent;
 
 	case CLM_GETISEARCHSTRING:
-		mir_tstrcpy((TCHAR*)lParam, dat->szQuickSearch);
-		return mir_tstrlen(dat->szQuickSearch);
+		mir_wstrcpy((wchar_t*)lParam, dat->szQuickSearch);
+		return mir_wstrlen(dat->szQuickSearch);
 
 	case CLM_GETITEMTEXT:
-		if (!cli.pfnFindItem(hwnd, dat, wParam, &contact, NULL, NULL))
+		if (!Clist_FindItem(hwnd, dat, wParam, &contact, nullptr, nullptr))
 			return 0;
-		mir_tstrcpy((TCHAR*)lParam, contact->szText);
-		return mir_tstrlen(contact->szText);
+		mir_wstrcpy((wchar_t*)lParam, contact->szText);
+		return mir_wstrlen(contact->szText);
 
 	case CLM_GETITEMTYPE:
-		if (!cli.pfnFindItem(hwnd, dat, wParam, &contact, NULL, NULL))
+		if (!Clist_FindItem(hwnd, dat, wParam, &contact, nullptr, nullptr))
 			return CLCIT_INVALID;
 		return contact->type;
 
@@ -192,86 +190,86 @@ LRESULT fnProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPAR
 
 	case CLM_GETNEXTITEM:
 		if (wParam == CLGN_ROOT) {
-			if (dat->list.cl.count)
-				return (LRESULT)cli.pfnContactToHItem(dat->list.cl.items[0]);
-			return NULL;
+			if (dat->list.cl.getCount())
+				return Clist_ContactToHItem(dat->list.cl[0]);
+			return 0;
 		}
 
-		if (!cli.pfnFindItem(hwnd, dat, lParam, &contact, &group, NULL))
-			return NULL;
+		if (!Clist_FindItem(hwnd, dat, lParam, &contact, &group, nullptr))
+			return 0;
 
-		i = List_IndexOf((SortedList*)&group->cl, contact);
+		i = group->cl.indexOf(contact);
 		switch (wParam) {
 		case CLGN_CHILD:
 			if (contact->type != CLCIT_GROUP)
-				return NULL;
+				return 0;
 			group = contact->group;
-			if (group->cl.count == 0)
-				return NULL;
-			return (LRESULT)cli.pfnContactToHItem(group->cl.items[0]);
+			if (group->cl.getCount() == 0)
+				return 0;
+			return Clist_ContactToHItem(group->cl[0]);
 
 		case CLGN_PARENT:
 			return group->groupId | HCONTACT_ISGROUP;
 
 		case CLGN_NEXT:
 			do {
-				if (++i >= group->cl.count)
-					return NULL;
-			} while (group->cl.items[i]->type == CLCIT_DIVIDER);
-			return (LRESULT)cli.pfnContactToHItem(group->cl.items[i]);
+				if (++i >= group->cl.getCount())
+					return 0;
+			} while (group->cl[i]->type == CLCIT_DIVIDER);
+			return Clist_ContactToHItem(group->cl[i]);
 
 		case CLGN_PREVIOUS:
 			do {
 				if (--i < 0)
-					return NULL;
-			} while (group->cl.items[i]->type == CLCIT_DIVIDER);
-			return (LRESULT)cli.pfnContactToHItem(group->cl.items[i]);
+					return 0;
+			} while (group->cl[i]->type == CLCIT_DIVIDER);
+			return Clist_ContactToHItem(group->cl[i]);
 
 		case CLGN_NEXTCONTACT:
-			for (i++; i < group->cl.count; i++)
-				if (group->cl.items[i]->type == CLCIT_CONTACT)
+			for (i++; i < group->cl.getCount(); i++)
+				if (group->cl[i]->type == CLCIT_CONTACT)
 					break;
-			if (i >= group->cl.count)
-				return NULL;
-			return (LRESULT)cli.pfnContactToHItem(group->cl.items[i]);
+			if (i >= group->cl.getCount())
+				return 0;
+			return Clist_ContactToHItem(group->cl[i]);
 
 		case CLGN_PREVIOUSCONTACT:
-			if (i >= group->cl.count)
-				return NULL;
+			if (i >= group->cl.getCount())
+				return 0;
 			for (i--; i >= 0; i--)
-				if (group->cl.items[i]->type == CLCIT_CONTACT)
+				if (group->cl[i]->type == CLCIT_CONTACT)
 					break;
 			if (i < 0)
-				return NULL;
-			return (LRESULT)cli.pfnContactToHItem(group->cl.items[i]);
+				return 0;
+			return Clist_ContactToHItem(group->cl[i]);
 
 		case CLGN_NEXTGROUP:
-			for (i++; i < group->cl.count; i++)
-				if (group->cl.items[i]->type == CLCIT_GROUP)
+			for (i++; i < group->cl.getCount(); i++)
+				if (group->cl[i]->type == CLCIT_GROUP)
 					break;
-			if (i >= group->cl.count)
-				return NULL;
-			return (LRESULT)cli.pfnContactToHItem(group->cl.items[i]);
+			if (i >= group->cl.getCount())
+				return 0;
+			return Clist_ContactToHItem(group->cl[i]);
 
 		case CLGN_PREVIOUSGROUP:
-			if (i >= group->cl.count)
-				return NULL;
+			if (i >= group->cl.getCount())
+				return 0;
 			for (i--; i >= 0; i--)
-				if (group->cl.items[i]->type == CLCIT_GROUP)
+				if (group->cl[i]->type == CLCIT_GROUP)
 					break;
 			if (i < 0)
-				return NULL;
-			return (LRESULT)cli.pfnContactToHItem(group->cl.items[i]);
+				return 0;
+			return Clist_ContactToHItem(group->cl[i]);
 		}
-		return NULL;
+		return 0;
 
 	case CLM_GETSCROLLTIME:
 		return dat->scrollTime;
 
 	case CLM_GETSELECTION:
-		if (cli.pfnGetRowByIndex(dat, dat->selection, &contact, NULL) == -1)
-			return NULL;
-		return (LRESULT)cli.pfnContactToHItem(contact);
+		if (cli.pfnGetRowByIndex(dat, dat->selection, &contact, nullptr) == -1)
+			return 0;
+		return Clist_ContactToHItem(contact);
 
 	case CLM_GETTEXTCOLOR:
 		if (wParam > FONTID_MAX)
@@ -281,54 +279,54 @@ LRESULT fnProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPAR
 	case CLM_HITTEST:
 		DWORD hitFlags;
 		{
-			int hit = cli.pfnHitTest(hwnd, dat, (short)LOWORD(lParam), (short)HIWORD(lParam), &contact, NULL, &hitFlags);
+			int hit = cli.pfnHitTest(hwnd, dat, (short)LOWORD(lParam), (short)HIWORD(lParam), &contact, nullptr, &hitFlags);
 			if (wParam)
 				*(PDWORD)wParam = hitFlags;
 			if (hit == -1)
-				return NULL;
+				return 0;
 		}
-		return (LRESULT)cli.pfnContactToHItem(contact);
+		return Clist_ContactToHItem(contact);
 
 	case CLM_SELECTITEM:
-		if (!cli.pfnFindItem(hwnd, dat, wParam, &contact, &group, NULL))
+		if (!Clist_FindItem(hwnd, dat, wParam, &contact, &group, nullptr))
 			break;
 
 		for (ClcGroup *tgroup = group; tgroup; tgroup = tgroup->parent)
 			cli.pfnSetGroupExpand(hwnd, dat, tgroup, 1);
-		dat->selection = cli.pfnGetRowsPriorTo(&dat->list, group, List_IndexOf((SortedList*)&group->cl, contact));
+		dat->selection = cli.pfnGetRowsPriorTo(&dat->list, group, group->cl.indexOf(contact));
 		cli.pfnEnsureVisible(hwnd, dat, dat->selection, 0);
 		break;
 
 	case CLM_SETBKBITMAP:
 		if (dat->hBmpBackground) {
 			DeleteObject(dat->hBmpBackground);
-			dat->hBmpBackground = NULL;
+			dat->hBmpBackground = nullptr;
 		}
 		dat->hBmpBackground = (HBITMAP)lParam;
 		dat->backgroundBmpUse = wParam;
 		dat->bkChanged = 1;
-		cli.pfnInvalidateRect(hwnd, NULL, FALSE);
+		cli.pfnInvalidateRect(hwnd, nullptr, FALSE);
 		break;
 
 	case CLM_SETBKCOLOR:
 		if (dat->hBmpBackground) {
 			DeleteObject(dat->hBmpBackground);
-			dat->hBmpBackground = NULL;
+			dat->hBmpBackground = nullptr;
 		}
 		dat->bkColour = wParam;
 		dat->bkChanged = 1;
-		cli.pfnInvalidateRect(hwnd, NULL, FALSE);
+		cli.pfnInvalidateRect(hwnd, nullptr, FALSE);
 		break;
 
 	case CLM_SETCHECKMARK:
-		if (!cli.pfnFindItem(hwnd, dat, wParam, &contact, NULL, NULL))
+		if (!Clist_FindItem(hwnd, dat, wParam, &contact, nullptr, nullptr))
 			return 0;
 		if (lParam)
 			contact->flags |= CONTACTF_CHECKED;
 		else
 			contact->flags &= ~CONTACTF_CHECKED;
 		cli.pfnRecalculateGroupCheckboxes(hwnd, dat);
-		cli.pfnInvalidateRect(hwnd, NULL, FALSE);
+		cli.pfnInvalidateRect(hwnd, nullptr, FALSE);
 		break;
 
 	case CLM_SETEXTRACOLUMNS:
@@ -336,22 +334,23 @@ LRESULT fnProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPAR
 			return 0;
 
 		dat->extraColumnsCount = wParam;
-		cli.pfnInvalidateRect(hwnd, NULL, FALSE);
+		cli.pfnInvalidateRect(hwnd, nullptr, FALSE);
 		break;
 
 	case CLM_SETEXTRAIMAGE:
 		if (LOWORD(lParam) < dat->extraColumnsCount) {
-			if (!cli.pfnFindItem(hwnd, dat, wParam, &contact, NULL, NULL))
-				return 0;
-
-			contact->iExtraImage[LOWORD(lParam)] = HIWORD(lParam);
-			cli.pfnInvalidateRect(hwnd, NULL, FALSE);
+			int bVisible;
+			if (Clist_FindItem(hwnd, dat, wParam, &contact, nullptr, &bVisible)) {
+				contact->iExtraImage[LOWORD(lParam)] = HIWORD(lParam);
+				if (bVisible)
+					cli.pfnInvalidateRect(hwnd, nullptr, FALSE);
+			}
 		}
 		break;
 
 	case CLM_SETEXTRAIMAGELIST:
 		dat->himlExtraColumns = (HIMAGELIST)lParam;
-		cli.pfnInvalidateRect(hwnd, NULL, FALSE);
+		cli.pfnInvalidateRect(hwnd, nullptr, FALSE);
 		break;
 
 	case CLM_SETFONT:
@@ -371,7 +370,7 @@ LRESULT fnProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPAR
 			ReleaseDC(hwnd, hdc);
 		}
 		if (LOWORD(lParam))
-			cli.pfnInvalidateRect(hwnd, NULL, FALSE);
+			cli.pfnInvalidateRect(hwnd, nullptr, FALSE);
 		break;
 
 	case CLM_SETGREYOUTFLAGS:
@@ -387,7 +386,7 @@ LRESULT fnProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPAR
 		break;
 
 	case CLM_SETHIDEOFFLINEROOT:
-		db_set_b(NULL, "CLC", "HideOfflineRoot", (BYTE)wParam);
+		db_set_b(0, "CLC", "HideOfflineRoot", (BYTE)wParam);
 		cli.pfnInitAutoRebuild(hwnd);
 		break;
 
@@ -397,16 +396,16 @@ LRESULT fnProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPAR
 		break;
 
 	case CLM_SETITEMTEXT:
-		if (!cli.pfnFindItem(hwnd, dat, wParam, &contact, NULL, NULL))
+		if (!Clist_FindItem(hwnd, dat, wParam, &contact, nullptr, nullptr))
 			break;
-		mir_tstrncpy(contact->szText, (TCHAR*)lParam, _countof(contact->szText));
+		mir_wstrncpy(contact->szText, (wchar_t*)lParam, _countof(contact->szText));
 		cli.pfnSortCLC(hwnd, dat, 1);
-		cli.pfnInvalidateRect(hwnd, NULL, FALSE);
+		cli.pfnInvalidateRect(hwnd, nullptr, FALSE);
 		break;
 
 	case CLM_SETLEFTMARGIN:
 		dat->leftMargin = wParam;
-		cli.pfnInvalidateRect(hwnd, NULL, FALSE);
+		cli.pfnInvalidateRect(hwnd, nullptr, FALSE);
 		break;
 
 	case CLM_SETOFFLINEMODES:

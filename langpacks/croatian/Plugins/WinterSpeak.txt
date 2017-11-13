@@ -34,9 +34,9 @@ promjene statusa
 
 [Away]
 
-[DND]
+[Do not disturb]
 
-[NA]
+[Not available]
 
 [Occupied]
 

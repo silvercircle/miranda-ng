@@ -2,7 +2,6 @@
 
 HINSTANCE hInst;
 
-HANDLE hShowGuide;
 int hLangpack;
 
 PLUGININFOEX pluginInfo = {
@@ -21,46 +20,46 @@ PLUGININFOEX pluginInfo = {
 
 static INT_PTR ShowGuideFile(WPARAM, LPARAM)
 {
-	LPTSTR pszDirName = (LPTSTR)mir_alloc(250*sizeof(TCHAR));
-	LPTSTR pszFileName = (LPTSTR)mir_alloc(250*sizeof(TCHAR));
+	LPTSTR pszDirName = (LPTSTR)mir_alloc(250*sizeof(wchar_t));
+	LPTSTR pszFileName = (LPTSTR)mir_alloc(250*sizeof(wchar_t));
 
-	TCHAR *ptszHelpFile = db_get_tsa(NULL, "UserGuide", "PathToHelpFile");
+	wchar_t *ptszHelpFile = db_get_wsa(NULL, "UserGuide", "PathToHelpFile");
 	
 	if (ptszHelpFile==0)
 	{
-			mir_tstrcpy(pszDirName, _T("%miranda_path%\\Plugins"));
-			mir_tstrcpy(pszFileName, _T("UserGuide.chm"));			
+			mir_wstrcpy(pszDirName, L"%miranda_path%\\Plugins");
+			mir_wstrcpy(pszFileName, L"UserGuide.chm");			
 	}
 	else
 	{
-		if(!mir_tstrcmp(ptszHelpFile, _T("")))
+		if(!mir_wstrcmp(ptszHelpFile, L""))
 		{
-			mir_tstrcpy(pszDirName, _T("%miranda_path%\\Plugins"));
-			mir_tstrcpy(pszFileName, _T("UserGuide.chm"));
+			mir_wstrcpy(pszDirName, L"%miranda_path%\\Plugins");
+			mir_wstrcpy(pszFileName, L"UserGuide.chm");
 		}
 		else 
 		{
-			LPTSTR pszDivider = _tcsrchr(ptszHelpFile, '\\');
+			LPTSTR pszDivider = wcsrchr(ptszHelpFile, '\\');
 			if (pszDivider == NULL)
 			{	
-				mir_tstrcpy(pszDirName, _T(""));
-				_tcsncpy(pszFileName, ptszHelpFile, mir_tstrlen(ptszHelpFile));
+				mir_wstrcpy(pszDirName, L"");
+				wcsncpy(pszFileName, ptszHelpFile, mir_wstrlen(ptszHelpFile));
 			}
 			else
 			{
-				_tcsncpy(pszFileName, pszDivider + 1, mir_tstrlen(ptszHelpFile) - mir_tstrlen(pszDivider) - 1);
-				pszFileName[mir_tstrlen(ptszHelpFile) - mir_tstrlen(pszDivider) - 1] = 0;
-				_tcsncpy(pszDirName, ptszHelpFile, pszDivider - ptszHelpFile);
+				wcsncpy(pszFileName, pszDivider + 1, mir_wstrlen(ptszHelpFile) - mir_wstrlen(pszDivider) - 1);
+				pszFileName[mir_wstrlen(ptszHelpFile) - mir_wstrlen(pszDivider) - 1] = 0;
+				wcsncpy(pszDirName, ptszHelpFile, pszDivider - ptszHelpFile);
 				pszDirName[pszDivider - ptszHelpFile] = 0;
 			}
 		}
 		mir_free(ptszHelpFile);
 	}
 	LPTSTR pszDirNameEx;
-	pszDirNameEx = Utils_ReplaceVarsT(pszDirName);
+	pszDirNameEx = Utils_ReplaceVarsW(pszDirName);
 	mir_free(pszDirName);
 
-	ShellExecute(NULL, _T("open"), pszFileName, NULL, pszDirNameEx, SW_SHOW);
+	ShellExecute(NULL, L"open", pszFileName, NULL, pszDirNameEx, SW_SHOW);
 	mir_free(pszFileName);
 	mir_free(pszDirNameEx);
 	return 0;
@@ -80,14 +79,14 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfo);
-	hShowGuide = CreateServiceFunction("UserGuide/ShowGuide", ShowGuideFile);
+	CreateServiceFunction("UserGuide/ShowGuide", ShowGuideFile);
 
 	CMenuItem mi;
 	SET_UID(mi, 0x6787c12d, 0xdc85, 0x409d, 0xaa, 0x6c, 0x1f, 0xfe, 0x5f, 0xe8, 0xc1, 0x18);
 	mi.position = 500000;
-	mi.flags = CMIF_TCHAR;
+	mi.flags = CMIF_UNICODE;
 	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_HELP);
-	mi.name.t = LPGENT("User Guide");
+	mi.name.w = LPGENW("User Guide");
 	mi.pszService = "UserGuide/ShowGuide";
 	Menu_AddMainMenuItem(&mi);
 	
@@ -96,6 +95,5 @@ extern "C" __declspec(dllexport) int Load(void)
 
 extern "C" __declspec(dllexport) int Unload(void)
 {
-	DestroyServiceFunction(hShowGuide);
 	return 0;
 }

@@ -1,34 +1,29 @@
 /*
 A small Miranda plugin, by bidyut, updated by Maat.
-
-Original plugin idea Anders Nilsson.
-His plugin NoSound can be found at:
-http://anders.nilsson.net/programs/miranda
+Original plugin idea (NoSound) by Anders Nilsson.
 
 Miranda can be found here:
-http://miranda-ng.org/
+https://miranda-ng.org/
 */
 
 #include "stdafx.h"
 
 HINSTANCE hInst;
-
-static HANDLE hEventSoundSettingChange, hEventStatusModeChange, hEventOptionsInitialize, hAckEvent, hSoundMenu;
 HGENMENU noSoundMenu;
 int hLangpack;
 
 struct CheckBoxValues_t
 {
 	DWORD style;
-	TCHAR *szDescr;
+	wchar_t *szDescr;
 };
 
 static const struct CheckBoxValues_t statusValues[] = {
 	{ PF2_ONLINE, TEXT("Online") },
 	{ PF2_SHORTAWAY, TEXT("Away") },
-	{ PF2_LONGAWAY, TEXT("NA") },
+	{ PF2_LONGAWAY, TEXT("Not available") },
 	{ PF2_LIGHTDND, TEXT("Occupied") },
-	{ PF2_HEAVYDND, TEXT("DND") },
+	{ PF2_HEAVYDND, TEXT("Do not disturb") },
 	{ PF2_FREECHAT, TEXT("Free for chat") },
 	{ PF2_INVISIBLE, TEXT("Invisible") },
 	{ PF2_OUTTOLUNCH, TEXT("Out to lunch") },
@@ -70,7 +65,7 @@ static void FillCheckBoxTree(HWND hwndTree, const struct CheckBoxValues_t *value
 	tvis.item.mask = TVIF_PARAM | TVIF_TEXT | TVIF_STATE;
 	for (i = 0; i < nValues; i++) {
 		tvis.item.lParam = values[i].style;
-		tvis.item.pszText = TranslateTS(values[i].szDescr);
+		tvis.item.pszText = TranslateW(values[i].szDescr);
 		tvis.item.stateMask = TVIS_STATEIMAGEMASK;
 		tvis.item.state = INDEXTOSTATEIMAGEMASK((style&tvis.item.lParam) != 0 ? 2 : 1);
 		TreeView_InsertItem(hwndTree, &tvis);
@@ -103,7 +98,7 @@ static void UpdateMenuItem()
 static int SoundSettingChanged(WPARAM, LPARAM lParam)
 {
 	DBCONTACTWRITESETTING *cws = (DBCONTACTWRITESETTING*)lParam;
-	if (mir_strcmp(cws->szModule, "Skin") || mir_strcmp(cws->szSetting, "UseSound"))
+	if (strcmp(cws->szModule, "Skin") || strcmp(cws->szSetting, "UseSound"))
 		return 0;
 
 	UpdateMenuItem();
@@ -200,17 +195,16 @@ static INT_PTR CALLBACK DlgProcNoSoundOpts(HWND hwndDlg, UINT msg, WPARAM, LPARA
 	}
 	return FALSE;
 }
-//Called when the user opened the options dialog
+
 static int OptionsInitialize(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.position = 100000000;
 	odp.hInstance = hInst;
-	odp.flags = ODPF_TCHAR;
+	odp.flags = ODPF_UNICODE;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_NOSOUND);
-	odp.ptszTitle = LPGENT("Zero Notifications");
-	odp.ptszGroup = LPGENT("Plugins");
-	odp.groupPosition = 100000000;
+	odp.szTitle.w = LPGENW("Zero Notifications");
+	odp.szGroup.w = LPGENW("Plugins");
 	odp.pfnDlgProc = DlgProcNoSoundOpts;
 	Options_AddPage(wParam, &odp);
 	return 0;
@@ -218,10 +212,8 @@ static int OptionsInitialize(WPARAM wParam, LPARAM)
 
 static INT_PTR NoSoundMenuCommand(WPARAM, LPARAM)
 {
-	if (db_get_b(NULL, "Skin", "UseSound", 1))
-		db_set_b(NULL, "Skin", "UseSound", 0);
-	//	else
-	//		db_set_b(NULL,"Skin","UseSound",1);
+	bool useSound = db_get_b(0, "Skin", "UseSound", true);
+	db_set_b(0, "Skin", "UseSound", !useSound);
 
 	return 0;
 }
@@ -230,34 +222,27 @@ extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfoEx);
 
-	//The menu item - begin
 	if (!db_get_b(NULL, MODNAME, "HideMenu", 1)) {
-		hSoundMenu = CreateServiceFunction(MODNAME "/MenuCommand", NoSoundMenuCommand);
+		CreateServiceFunction(MODNAME "/MenuCommand", NoSoundMenuCommand);
 
 		CMenuItem mi;
-		mi.position = -0x7FFFFFFF;
-		mi.flags = CMIF_TCHAR;
-		UpdateMenuItem();
-
 		SET_UID(mi, 0x6bd635eb, 0xc4bb, 0x413b, 0xb9, 0x3, 0x81, 0x6d, 0x8f, 0xf1, 0x9b, 0xb0);
+		mi.position = -0x7FFFFFFF;
+		mi.flags = CMIF_UNICODE;
 		mi.pszService = MODNAME "/MenuCommand";
 		noSoundMenu = Menu_AddMainMenuItem(&mi);
-	}
-	//The menu item - end
 
-	//The hooks
-	hAckEvent = HookEvent(ME_PROTO_ACK, ProtoAck);
-	hEventSoundSettingChange = HookEvent(ME_DB_CONTACT_SETTINGCHANGED, SoundSettingChanged);
-	hEventOptionsInitialize = HookEvent(ME_OPT_INITIALISE, OptionsInitialize);
+		UpdateMenuItem();
+	}
+
+	HookEvent(ME_PROTO_ACK, ProtoAck);
+	HookEvent(ME_DB_CONTACT_SETTINGCHANGED, SoundSettingChanged);
+	HookEvent(ME_OPT_INITIALISE, OptionsInitialize);
 
 	return 0;
 }
 
 extern "C" __declspec(dllexport) int Unload(void)
 {
-	UnhookEvent(hEventSoundSettingChange);
-	UnhookEvent(hEventOptionsInitialize);
-	UnhookEvent(hAckEvent);
-	DestroyServiceFunction(hSoundMenu);
 	return 0;
 }

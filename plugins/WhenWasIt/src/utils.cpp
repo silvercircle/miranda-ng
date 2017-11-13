@@ -138,54 +138,24 @@ int GetStringFromDatabase(char *szSettingName, char *szError, char *szResult, si
 	return GetStringFromDatabase(NULL, ModuleName, szSettingName, szError, szResult, size);
 }
 
-TCHAR* GetContactID(MCONTACT hContact)
+wchar_t* GetContactID(MCONTACT hContact)
 {
-	return GetContactID(hContact, GetContactProto(hContact));
+	return GetContactID(hContact, NULL);
 }
 
-TCHAR* GetContactID(MCONTACT hContact, char *szProto)
+wchar_t* GetContactID(MCONTACT hContact, char *szProto)
 {
-	CONTACTINFO ctInfo = { sizeof(ctInfo) };
-	ctInfo.szProto = szProto;
-	ctInfo.dwFlag = CNF_UNIQUEID | CNF_TCHAR;
-	ctInfo.hContact = hContact;
-	INT_PTR ret = CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ctInfo);
-	TCHAR *buffer;
-	if (!ret) {
-		TCHAR tmp[16];
-		switch (ctInfo.type) {
-		case CNFT_BYTE:
-			mir_sntprintf(tmp, _T("%d"), ctInfo.bVal);
-			buffer = _tcsdup(tmp);
-			break;
-
-		case CNFT_WORD:
-			mir_sntprintf(tmp, _T("%d"), ctInfo.wVal);
-			buffer = _tcsdup(tmp);
-			break;
-
-		case CNFT_DWORD:
-			mir_sntprintf(tmp, _T("%ld"), ctInfo.dVal);
-			buffer = _tcsdup(tmp);
-			break;
-
-		default:
-			buffer = _tcsdup(ctInfo.pszVal);
-			break;
-		}
-	}
-
-	mir_free(ctInfo.pszVal);
-	return (!ret) ? buffer : NULL;
+	ptrW res(Contact_GetInfo(CNF_UNIQUEID, hContact, szProto));
+	return (res) ? wcsdup(res) : NULL;
 }
 
-MCONTACT GetContactFromID(TCHAR *szID, char *szProto)
+MCONTACT GetContactFromID(wchar_t *szID, char *szProto)
 {
 	for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact)) {
 		char *m_szProto = GetContactProto(hContact);
-		TCHAR *szHandle = GetContactID(hContact, szProto);
+		wchar_t *szHandle = GetContactID(hContact, szProto);
 		if (szHandle) {
-			bool found = (!mir_tstrcmpi(szHandle, szID) && !_stricmp(szProto, m_szProto));
+			bool found = (!mir_wstrcmpi(szHandle, szID) && !_stricmp(szProto, m_szProto));
 			free(szHandle);
 			if (found)
 				return hContact;
@@ -194,7 +164,7 @@ MCONTACT GetContactFromID(TCHAR *szID, char *szProto)
 	return NULL;
 }
 
-MCONTACT GetContactFromID(TCHAR *szID, wchar_t *szProto)
+MCONTACT GetContactFromID(wchar_t *szID, wchar_t *szProto)
 {
 	char protocol[1024];
 	WideCharToMultiByte(CP_ACP, 0, szProto, -1, protocol, sizeof(protocol), NULL, NULL);

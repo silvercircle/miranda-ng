@@ -219,13 +219,13 @@ static INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 int OptInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
-   odp.flags       = ODPF_BOLDGROUPS|ODPF_TCHAR;
+   odp.flags       = ODPF_BOLDGROUPS|ODPF_UNICODE;
    odp.position    = -790000000;
    odp.hInstance   = hInst;
    odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT);
-   odp.ptszTitle   = LPGENT("No History");
-   odp.ptszGroup   = LPGENT("History");
-   odp.ptszTab     = LPGENT("Logging");
+   odp.szTitle.w   = LPGENW("No History");
+   odp.szGroup.w   = LPGENW("History");
+   odp.szTab.w     = LPGENW("Logging");
    odp.pfnDlgProc  = DlgProcOpts;
 	Options_AddPage(wParam, &odp);
 	return 0;

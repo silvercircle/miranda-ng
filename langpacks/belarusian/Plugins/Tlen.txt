@@ -7,7 +7,6 @@
 ;============================================================
 [Tlen protocol support for Miranda NG.]
 Падтрымка пратакола Tlen для Miranda NG.
-;file \protocols\Tlen\res\tlen.rc
 [Username:]
 Карыстач:
 [Password:]
@@ -40,6 +39,8 @@
 Захоўв. падзеі як паведамленні
 [Group chat policy]
 Правілы гутарак
+[Image transfer policy]
+
 [Voice Chats]
 Галасавыя гутаркі
 [Voice chat policy]
@@ -84,7 +85,7 @@ P2P далучэнні
 Тэкст
 [Delay]
 Затрымка
-[&From Popup plugin]
+[&From popup plugin]
 Устаноўкі Popup
 [&Custom]
 Наладзіць
@@ -118,12 +119,16 @@ Tlen Пароль
 Шукаю:
 [Voice chats]
 Галасавыя чаты
+[Publicly visible status]
+
 [Save changes]
 Захаваць змены
 [Avatar]
 Аватар
 [Avatar Options]
 Налады аватара
+[Public avatar]
+
 [Tlen login:]
 Уваход Tlen:
 [Subscription:]
@@ -164,7 +169,6 @@ Tlen запрашэнне галасавога чата
 Ад:
 [The following invitation to join a voice chat is received.]
 Атрымана запрашэнне ўвайсці ў галасавы чат.
-;file \protocols\Tlen\src\tlen.cpp
 [Protocol icon]
 Абразок пратаколу
 [Tlen inbox]
@@ -197,20 +201,24 @@ Tlen пошта
 Запытаць аўтарызацыю
 [Grant authorization]
 Аўтарызаваць
-;file \protocols\Tlen\src\tlen_avatar.cpp
 [Cannot create avatars cache directory. ERROR: %d: %s\n%s]
 Не атрымалася стварыць кэш для аватараў. ПАМЫЛКА: %d: %s\n%s
-;file \protocols\Tlen\src\tlen_file.cpp
+[Cannot save new avatar file "%s" Error:\n\t%s (Error: %d)]
+
+[Error while setting avatar on Tlen account (no response)]
+
+[Error while setting avatar on Tlen account (invalid response)]
+
+[Error while setting avatar on Tlen account]
+
 [1 File]
 1 файл
 [%d Files]
 %d файлаў
-;file \protocols\Tlen\src\tlen_iqid.cpp
 [Authentication failed for %s@%s.]
 Аутэнтыфікацыя не пройдзена для %s@%s.
 [Tlen Authentication]
 Аўтэнтыфікацыя Tlen
-;file \protocols\Tlen\src\tlen_opt.cpp
 [General]
 Агульнае
 [Advanced]
@@ -220,7 +228,7 @@ Tlen пошта
 [Network]
 Сеціва
 [These changes will take effect the next time you connect to the Tlen network.]
-Змены адбудуцца, пасля таго як Вы перападключыцеся Tlen.
+Змены будуць ужытыя пры наступным уваходзе ў Tlen.
 [Tlen Protocol Option]
 Налады пратаколу Tlen
 [Accept all alerts]
@@ -251,11 +259,14 @@ Tlen пошта
 Перанакіраванне
 [%S mail]
 %S пошта
-;file \protocols\Tlen\src\tlen_picture.cpp
-;file \protocols\Tlen\src\tlen_svc.cpp
+[Image sent file://%s]
+
+[Image received file://%s]
+
 [Tlen login]
 Tlen уваход
-;file \protocols\Tlen\src\tlen_thread.cpp
+[You need to be connected to Tlen account to set avatar.]
+
 [Enter password for %s]
 Увядзіце пароль для %s.
 [Tlen Connection Error]
@@ -276,7 +287,6 @@ Tlen памылка далучэння
 %s пошта
 [Subject]
 Тэма
-;file \protocols\Tlen\src\tlen_userinfo.cpp
 [Account]
 Конт
 [both]
@@ -287,7 +297,6 @@ Tlen памылка далучэння
 няма
 [not on roster]
 не у росцеры
-;file \protocols\Tlen\src\tlen_voice.cpp
 [...Connecting...]
 ...далучэнне...
 [...Waiting for connection...]
@@ -300,6 +309,7 @@ Tlen памылка далучэння
 ...Забаронена...
 [Default]
 Змаўчанні
-;file \protocols\Tlen\src\tlen_ws.cpp
 [%s connection]
 Злучэнне %s
+[%s SOCKS connection]
+

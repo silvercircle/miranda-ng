@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Sametime.dll
 ;  Plugin: Sametime protocol
-;  Version: 0.7.0.0
+;  Version: 0.7.0.5
 ;  Authors: Scott Ellis, Szymon Tokarz
 ;============================================================
 [Implementation of instant messaging for the Lotus Sametime protocol.]
@@ -102,8 +102,6 @@ Fehler
 ;file \protocols\Sametime\src\sametime_proto.cpp
 [%s connection]
 %s-Verbindung
-[ID]
-ID
 ;file \protocols\Sametime\src\sametime_session.cpp
 [Sametime administrator message]
 Sametime-Administratornachricht

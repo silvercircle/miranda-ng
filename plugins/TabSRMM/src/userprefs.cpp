@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
-// Copyright (c) 2012-15 Miranda NG project,
+// Copyright (c) 2012-17 Miranda NG project,
 // Copyright (c) 2000-09 Miranda ICQ/IM project,
 // all portions of this codebase are copyrighted to the people
 // listed in contributors.txt.
@@ -132,16 +132,16 @@ static INT_PTR CALLBACK DlgProcUserPrefs(HWND hwndDlg, UINT msg, WPARAM wParam, 
 			break;
 
 		case WM_USER + 100:
-			TWindowData *dat = 0;
+			CSrmmWindow *dat = 0;
 			DWORD	*pdwActionToTake = (DWORD *)lParam;
 			unsigned int iOldIEView = 0;
-			HWND	hWnd = M.FindWindow(hContact);
+			HWND	hWnd = Srmm_FindWindow(hContact);
 			BYTE	bOldInfoPanel = M.GetByte(hContact, "infopanel", 0);
 
 			if (hWnd) {
-				dat = (TWindowData*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+				dat = (CSrmmWindow*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 				if (dat)
-					iOldIEView = GetIEViewMode(dat->hContact);
+					iOldIEView = GetIEViewMode(dat->m_hContact);
 			}
 			int iIndex = SendDlgItemMessage(hwndDlg, IDC_IEVIEWMODE, CB_GETCURSEL, 0, 0);
 			int iMode = SendDlgItemMessage(hwndDlg, IDC_IEVIEWMODE, CB_GETITEMDATA, iIndex, 0);
@@ -166,7 +166,7 @@ static INT_PTR CALLBACK DlgProcUserPrefs(HWND hwndDlg, UINT msg, WPARAM wParam, 
 					break;
 				}
 				if (hWnd && dat) {
-					unsigned int iNewIEView = GetIEViewMode(dat->hContact);
+					unsigned int iNewIEView = GetIEViewMode(dat->m_hContact);
 					if (iNewIEView != iOldIEView) {
 						if (pdwActionToTake)
 							*pdwActionToTake |= UPREF_ACTION_SWITCHLOGVIEWER;
@@ -182,7 +182,7 @@ static INT_PTR CALLBACK DlgProcUserPrefs(HWND hwndDlg, UINT msg, WPARAM wParam, 
 
 			if (IsDlgButtonChecked(hwndDlg, IDC_ISFAVORITE)) {
 				if (!M.GetByte(hContact, "isFavorite", 0))
-					AddContactToFavorites(hContact, NULL, NULL, NULL, 0, 0, 1, PluginConfig.g_hMenuFavorites);
+					AddContactToFavorites(hContact, nullptr, nullptr, nullptr, 0, 0, 1, PluginConfig.g_hMenuFavorites);
 			}
 			else DeleteMenu(PluginConfig.g_hMenuFavorites, hContact, MF_BYCOMMAND);
 
@@ -211,28 +211,30 @@ static INT_PTR CALLBACK DlgProcUserPrefs(HWND hwndDlg, UINT msg, WPARAM wParam, 
 
 			if (IsDlgButtonChecked(hwndDlg, IDC_LOADONLYACTUAL)) {
 				db_set_b(hContact, SRMSGMOD_T, "ActualHistory", 1);
-				if (hWnd && dat) dat->bActualHistory = TRUE;
+				if (hWnd && dat)
+					dat->m_bActualHistory = true;
 			}
 			else {
 				db_set_b(hContact, SRMSGMOD_T, "ActualHistory", 0);
-				if (hWnd && dat) dat->bActualHistory = FALSE;
+				if (hWnd && dat)
+					dat->m_bActualHistory = false;
 			}
 
 			if (IsDlgButtonChecked(hwndDlg, IDC_IGNORETIMEOUTS)) {
 				db_set_b(hContact, SRMSGMOD_T, "no_ack", 1);
 				if (hWnd && dat)
-					dat->sendMode |= SMODE_NOACK;
+					dat->m_sendMode |= SMODE_NOACK;
 			}
 			else {
 				db_unset(hContact, SRMSGMOD_T, "no_ack");
 				if (hWnd && dat)
-					dat->sendMode &= ~SMODE_NOACK;
+					dat->m_sendMode &= ~SMODE_NOACK;
 			}
 			if (hWnd && dat) {
 				SendMessage(hWnd, DM_CONFIGURETOOLBAR, 0, 1);
-				ShowPicture(dat, FALSE);
+				dat->ShowPicture(false);
 				SendMessage(hWnd, WM_SIZE, 0, 0);
-				DM_ScrollToBottom(dat, 0, 1);
+				dat->DM_ScrollToBottom(0, 1);
 			}
 			DestroyWindow(hwndDlg);
 			break;
@@ -241,6 +243,14 @@ static INT_PTR CALLBACK DlgProcUserPrefs(HWND hwndDlg, UINT msg, WPARAM wParam, 
 	}
 	return FALSE;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// loads message log and other "per contact" flags
+// it uses the global flag value (0, mwflags) and then merges per contact settings
+// based on the mask value.
+//
+// ALWAYS mask dat->dwFlags with MWF_LOG_ALL to only affect real flag bits and
+// ignore temporary bits.
 
 static struct _checkboxes
 {
@@ -264,36 +274,25 @@ checkboxes[] = {
 	0, 0
 };
 
-/////////////////////////////////////////////////////////////////////////////////////////
-// loads message log and other "per contact" flags
-// it uses the global flag value (0, mwflags) and then merges per contact settings
-// based on the mask value.
-//
-// ALWAYS mask dat->dwFlags with MWF_LOG_ALL to only affect real flag bits and
-// ignore temporary bits.
-
-int TSAPI LoadLocalFlags(TWindowData *dat)
+int CTabBaseDlg::LoadLocalFlags()
 {
-	if (dat == NULL)
-		return NULL;
+	DWORD	dwMask = M.GetDword(m_hContact, "mwmask", 0);
+	DWORD	dwLocal = M.GetDword(m_hContact, "mwflags", 0);
+	DWORD	dwGlobal = M.GetDword("mwflags", MWF_LOG_DEFAULT);
 
-	int i = 0;
-	DWORD	dwMask = M.GetDword(dat->hContact, "mwmask", 0);
-	DWORD	dwLocal = M.GetDword(dat->hContact, "mwflags", 0);
-	DWORD	dwGlobal = M.GetDword("mwflags", 0);
-
-	dat->dwFlags &= ~MWF_LOG_ALL;
-	if (dat->pContainer->theme.isPrivate)
-		dat->dwFlags |= (dat->pContainer->theme.dwFlags & MWF_LOG_ALL);
+	m_dwFlags &= ~MWF_LOG_ALL;
+	if (m_pContainer->theme.isPrivate)
+		m_dwFlags |= (m_pContainer->theme.dwFlags & MWF_LOG_ALL);
 	else
-		dat->dwFlags |= (dwGlobal & MWF_LOG_ALL);
-	while (checkboxes[i].uId) {
+		m_dwFlags |= (dwGlobal & MWF_LOG_ALL);
+
+	for (int i = 0; checkboxes[i].uId; i++) {
 		DWORD	maskval = checkboxes[i].uFlag;
 		if (dwMask & maskval)
-			dat->dwFlags = (dwLocal & maskval) ? dat->dwFlags | maskval : dat->dwFlags & ~maskval;
-		i++;
+			m_dwFlags = (dwLocal & maskval) ? m_dwFlags | maskval : m_dwFlags & ~maskval;
 	}
-	return(dat->dwFlags & MWF_LOG_ALL);
+
+	return m_dwFlags & MWF_LOG_ALL;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -341,12 +340,12 @@ static INT_PTR CALLBACK DlgProcUserPrefsLogOptions(HWND hwndDlg, UINT msg, WPARA
 		case WM_USER + 100: {
 			int i = 0;
 			LRESULT state;
-			HWND	hwnd = M.FindWindow(hContact);
+			HWND	hwnd = Srmm_FindWindow(hContact);
 			DWORD	*dwActionToTake = (DWORD *)lParam, dwMask = 0, dwFlags = 0, maskval;
 
-			TWindowData *dat = NULL;
+			CSrmmWindow *dat = nullptr;
 			if (hwnd)
-				dat = (TWindowData*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+				dat = (CSrmmWindow*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 
 			while (checkboxes[i].uId) {
 				maskval = checkboxes[i].uFlag;
@@ -374,7 +373,7 @@ static INT_PTR CALLBACK DlgProcUserPrefsLogOptions(HWND hwndDlg, UINT msg, WPARA
 			if (hwnd && dat) {
 				if (dwMask)
 					*dwActionToTake |= (DWORD)UPREF_ACTION_REMAKELOG;
-				if ((dat->dwFlags & MWF_LOG_RTL) != (dwFlags & MWF_LOG_RTL))
+				if ((dat->m_dwFlags & MWF_LOG_RTL) != (dwFlags & MWF_LOG_RTL))
 					*dwActionToTake |= (DWORD)UPREF_ACTION_APPLYOPTIONS;
 			}
 			break;
@@ -415,8 +414,8 @@ INT_PTR CALLBACK DlgProcUserPrefsFrame(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			RECT rcClient;
 			GetClientRect(hwndDlg, &rcClient);
 
-			TCHAR szBuffer[180];
-			mir_sntprintf(szBuffer, TranslateT("Set messaging options for %s"), pcli->pfnGetContactDisplayName(hContact, 0));
+			wchar_t szBuffer[180];
+			mir_snwprintf(szBuffer, TranslateT("Set messaging options for %s"), pcli->pfnGetContactDisplayName(hContact, 0));
 			SetWindowText(hwndDlg, szBuffer);
 
 			memset(&tci, 0, sizeof(tci));
@@ -467,7 +466,7 @@ INT_PTR CALLBACK DlgProcUserPrefsFrame(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 		case IDOK:
 			DWORD	dwActionToTake = 0;			// child pages request which action to take
-			HWND	hwnd = M.FindWindow(hContact);
+			HWND	hwnd = Srmm_FindWindow(hContact);
 
 			tci.mask = TCIF_PARAM;
 
@@ -477,21 +476,21 @@ INT_PTR CALLBACK DlgProcUserPrefsFrame(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				SendMessage((HWND)tci.lParam, WM_COMMAND, WM_USER + 100, (LPARAM)&dwActionToTake);
 			}
 			if (hwnd) {
-				TWindowData *dat = (TWindowData*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+				CSrmmWindow *dat = (CSrmmWindow*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 				if (dat) {
-					DWORD dwOldFlags = (dat->dwFlags & MWF_LOG_ALL);
-					SetDialogToType(hwnd);
-					LoadLocalFlags(dat);
-					if ((dat->dwFlags & MWF_LOG_ALL) != dwOldFlags) {
-						bool	fShouldHide = true;
-						if (IsIconic(dat->pContainer->hwnd))
+					DWORD dwOldFlags = (dat->m_dwFlags & MWF_LOG_ALL);
+					dat->SetDialogToType();
+					dat->LoadLocalFlags();
+					if ((dat->m_dwFlags & MWF_LOG_ALL) != dwOldFlags) {
+						bool fShouldHide = true;
+						if (IsIconic(dat->m_pContainer->m_hwnd))
 							fShouldHide = false;
 						else
-							ShowWindow(dat->pContainer->hwnd, SW_HIDE);
-						SendMessage(hwnd, DM_OPTIONSAPPLIED, 0, 0);
+							ShowWindow(dat->m_pContainer->m_hwnd, SW_HIDE);
+						dat->DM_OptionsApplied(0, 0);
 						SendMessage(hwnd, DM_DEFERREDREMAKELOG, (WPARAM)hwnd, 0);
 						if (fShouldHide)
-							ShowWindow(dat->pContainer->hwnd, SW_SHOWNORMAL);
+							ShowWindow(dat->m_pContainer->m_hwnd, SW_SHOWNORMAL);
 					}
 				}
 			}

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-05 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -92,7 +92,7 @@ extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = { MIID_CLIST,
 
 static int OnAccountsChanged(WPARAM, LPARAM)
 {
-	himlCListClc = (HIMAGELIST)CallService(MS_CLIST_GETICONSIMAGELIST, 0, 0);
+	himlCListClc = Clist_GetImageList();
 	return 0;
 }
 
@@ -101,7 +101,7 @@ static int OnAccountsChanged(WPARAM, LPARAM)
 
 static int OnModulesLoaded(WPARAM, LPARAM)
 {
-	himlCListClc = (HIMAGELIST)CallService(MS_CLIST_GETICONSIMAGELIST, 0, 0);
+	himlCListClc = Clist_GetImageList();
 	return 0;
 }
 
@@ -129,7 +129,9 @@ static INT_PTR GetStatusMode(WPARAM, LPARAM)
 
 extern "C" int __declspec(dllexport) CListInitialise()
 {
-	mir_getCLI();
+	pcli = Clist_GetInterface();
+	g_bSortByStatus = db_get_b(NULL, "CList", "SortByStatus", SETTING_SORTBYSTATUS_DEFAULT);
+	g_bSortByProto = db_get_b(NULL, "CList", "SortByProto", SETTING_SORTBYPROTO_DEFAULT);
 
 	coreCli = *pcli;
 
@@ -144,6 +146,7 @@ extern "C" int __declspec(dllexport) CListInitialise()
 	pcli->pfnLoadClcOptions = LoadClcOptions;
 	pcli->pfnGetRowHeight = GetRowHeight;
 	pcli->pfnSortCLC = SortCLC;
+	pcli->pfnCompareContacts = CompareContacts;
 
 	CreateServiceFunction(MS_CLIST_GETSTATUSMODE, GetStatusMode);
 
@@ -173,27 +176,27 @@ extern "C" int __declspec(dllexport) Unload(void)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-TCHAR* MyDBGetContactSettingTString(MCONTACT hContact, char* module, char* setting, TCHAR* out, size_t len, TCHAR *def)
+wchar_t* MyDBGetContactSettingTString(MCONTACT hContact, char* module, char* setting, wchar_t* out, size_t len, wchar_t *def)
 {
 	DBVARIANT dbv;
 
-	out[0] = _T('\0');
+	out[0] = '\0';
 
-	if (!db_get_ts(hContact, module, setting, &dbv)) {
+	if (!db_get_ws(hContact, module, setting, &dbv)) {
 		if (dbv.type == DBVT_ASCIIZ)
 			MultiByteToWideChar(CP_ACP, 0, dbv.pszVal, -1, out, (int)len);
 		else if (dbv.type == DBVT_UTF8)
 			MultiByteToWideChar(CP_UTF8, 0, dbv.pszVal, -1, out, (int)len);
 		else if (dbv.type == DBVT_WCHAR)
-			mir_tstrncpy(out, dbv.pwszVal, (int)len);
+			mir_wstrncpy(out, dbv.pwszVal, (int)len);
 		else if (def != NULL)
-			mir_tstrncpy(out, def, (int)len);
+			mir_wstrncpy(out, def, (int)len);
 
 		db_free(&dbv);
 	}
 	else {
 		if (def != NULL)
-			mir_tstrncpy(out, def, (int)len);
+			mir_wstrncpy(out, def, (int)len);
 	}
 
 	return out;
@@ -203,13 +206,13 @@ TCHAR* MyDBGetContactSettingTString(MCONTACT hContact, char* module, char* setti
 
 typedef struct
 {
-	TCHAR *text;
+	wchar_t *text;
 	size_t allocated;
 	size_t used;
 
 } StringHelper;
 
-int CopyData(StringHelper *str, const TCHAR *text, size_t len)
+int CopyData(StringHelper *str, const wchar_t *text, size_t len)
 {
 	size_t totalSize;
 
@@ -225,7 +228,7 @@ int CopyData(StringHelper *str, const TCHAR *text, size_t len)
 		totalSize += DATA_BLOCK - (totalSize % DATA_BLOCK);
 
 		if (str->text != NULL) {
-			TCHAR *tmp = (TCHAR *)mir_realloc(str->text, sizeof(TCHAR) * totalSize);
+			wchar_t *tmp = (wchar_t *)mir_realloc(str->text, sizeof(wchar_t) * totalSize);
 
 			if (tmp == NULL) {
 				mir_free(str->text);
@@ -235,7 +238,7 @@ int CopyData(StringHelper *str, const TCHAR *text, size_t len)
 			str->text = tmp;
 		}
 		else {
-			str->text = (TCHAR *)mir_alloc(sizeof(TCHAR) * totalSize);
+			str->text = (wchar_t *)mir_alloc(sizeof(wchar_t) * totalSize);
 
 			if (str->text == NULL) {
 				return -2;
@@ -245,7 +248,7 @@ int CopyData(StringHelper *str, const TCHAR *text, size_t len)
 		str->allocated = totalSize;
 	}
 
-	memmove(&str->text[str->used], text, sizeof(TCHAR) * len);
+	memmove(&str->text[str->used], text, sizeof(wchar_t) * len);
 	str->used += len;
 	str->text[str->used] = '\0';
 
@@ -253,25 +256,25 @@ int CopyData(StringHelper *str, const TCHAR *text, size_t len)
 }
 
 
-TCHAR * ParseText(const TCHAR *text,
-	const TCHAR **variables, size_t variablesSize,
-	const TCHAR **data, size_t dataSize)
+wchar_t * ParseText(const wchar_t *text,
+	const wchar_t **variables, size_t variablesSize,
+	const wchar_t **data, size_t dataSize)
 {
-	size_t length = mir_tstrlen(text);
+	size_t length = mir_wstrlen(text);
 	size_t nextPos = 0;
 	StringHelper ret = { 0 };
 	size_t i;
 
 	// length - 1 because a % in last char will be a % and point
 	for (i = 0; i < length - 1; i++) {
-		if (text[i] == _T('%')) {
+		if (text[i] == '%') {
 			BOOL found = FALSE;
 
 			if (CopyData(&ret, &text[nextPos], i - nextPos))
 				return NULL;
 
-			if (text[i + 1] == _T('%')) {
-				if (CopyData(&ret, _T("%"), 1))
+			if (text[i + 1] == '%') {
+				if (CopyData(&ret, L"%", 1))
 					return NULL;
 
 				i++;
@@ -284,10 +287,10 @@ TCHAR * ParseText(const TCHAR *text,
 
 				// See if can find it
 				for (j = 0; j < size; j++) {
-					size_t vlen = mir_tstrlen(variables[j]);
+					size_t vlen = mir_wstrlen(variables[j]);
 
-					if (_tcsnicmp(&text[i], variables[j], vlen) == 0) {
-						if (CopyData(&ret, data[j], mir_tstrlen(data[j])))
+					if (wcsnicmp(&text[i], variables[j], vlen) == 0) {
+						if (CopyData(&ret, data[j], mir_wstrlen(data[j])))
 							return NULL;
 
 						i += vlen - 1;
@@ -317,10 +320,13 @@ LRESULT CALLBACK ContactListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 {
 	switch (msg) {
 	case WM_NCCREATE:
-		break;
+		return DefWindowProc(hwnd, msg, wParam, lParam);
 
 	case WM_CREATE:
 		break;
+
+	case WM_DRAWITEM:
+		return Menu_DrawItem(lParam);
 	}
 	return coreCli.pfnContactListWndProc(hwnd, msg, wParam, lParam);
 }
@@ -332,10 +338,10 @@ LRESULT CALLBACK ContactListControlWndProc(HWND hwnd, UINT msg, WPARAM wParam, L
 
 	switch (msg) {
 	case WM_CREATE:
-		dat = (ClcData*)mir_calloc(sizeof(ClcData));
+		dat = new ClcData();
 		SetWindowLongPtr(hwnd, 0, (LONG_PTR)dat);
 
-		dat->hwnd_list = CreateWindow(_T("LISTBOX"), _T(""),
+		dat->hwnd_list = CreateWindow(L"LISTBOX", L"",
 			(WS_VISIBLE | WS_CHILD | LBS_NOINTEGRALHEIGHT | LBS_NOTIFY | LBS_WANTKEYBOARDINPUT | WS_VSCROLL),
 			0, 0, 0, 0, hwnd, NULL, g_hInst, 0);
 		dat->need_rebuild = FALSE;
@@ -404,38 +410,38 @@ LRESULT CALLBACK ContactListControlWndProc(HWND hwnd, UINT msg, WPARAM wParam, L
 	return coreCli.pfnContactListControlWndProc(hwnd, msg, wParam, lParam);
 }
 
-TCHAR status_name[128];
-TCHAR* GetStatusName(struct ClcContact *item)
+wchar_t status_name[128];
+wchar_t* GetStatusName(struct ClcContact *item)
 {
 	int status;
 
-	status_name[0] = _T('\0');
+	status_name[0] = '\0';
 	if (item->hContact == NULL || item->proto == NULL)
 		return status_name;
 
 	// Get XStatusName
 	MyDBGetContactSettingTString(item->hContact, item->proto, "XStatusName", status_name, _countof(status_name), NULL);
-	if (status_name[0] != _T('\0'))
+	if (status_name[0] != '\0')
 		return status_name;
 
 	// Get status name
 	status = db_get_w(item->hContact, item->proto, "Status", ID_STATUS_OFFLINE);
-	mir_tstrncpy(status_name, pcli->pfnGetStatusModeDescription(status, 0), _countof(status_name));
+	mir_wstrncpy(status_name, pcli->pfnGetStatusModeDescription(status, 0), _countof(status_name));
 
 	return status_name;
 }
 
 
-TCHAR status_message[256];
-TCHAR* GetStatusMessage(struct ClcContact *item)
+wchar_t status_message[256];
+wchar_t* GetStatusMessage(struct ClcContact *item)
 {
-	status_message[0] = _T('\0');
+	status_message[0] = '\0';
 	if (item->hContact == NULL || item->proto == NULL)
 		return status_message;
 
 	// Get XStatusMsg
 	MyDBGetContactSettingTString(item->hContact, item->proto, "XStatusMsg", status_message, _countof(status_message), NULL);
-	if (status_message[0] != _T('\0'))
+	if (status_message[0] != '\0')
 		return status_message;
 
 	// Get status message
@@ -445,8 +451,8 @@ TCHAR* GetStatusMessage(struct ClcContact *item)
 }
 
 
-TCHAR proto_name[128];
-TCHAR* GetProtoName(struct ClcContact *item)
+wchar_t proto_name[128];
+wchar_t* GetProtoName(struct ClcContact *item)
 {
 	#ifdef UNICODE
 	char description[128];
@@ -454,7 +460,7 @@ TCHAR* GetProtoName(struct ClcContact *item)
 
 	proto_name[0] = '\0';
 	if (item->hContact == NULL || item->proto == NULL) {
-		mir_tstrncpy(proto_name, TranslateT("Unknown protocol"), _countof(proto_name));
+		mir_wstrncpy(proto_name, TranslateT("Unknown protocol"), _countof(proto_name));
 		return proto_name;
 	}
 
@@ -462,14 +468,14 @@ TCHAR* GetProtoName(struct ClcContact *item)
 	if (acc == NULL) {
 		#ifdef UNICODE
 		CallProtoService(item->proto, PS_GETNAME, sizeof(description), (LPARAM)description);
-		mir_sntprintf(proto_name, L"%S", description);
+		mir_snwprintf(proto_name, L"%S", description);
 		#else
 		CallProtoService(item->proto, PS_GETNAME, sizeof(proto_name), (LPARAM)proto_name);
 		#endif
 		return proto_name;
 	}
 
-	mir_tstrncpy(proto_name, acc->tszAccountName, _countof(proto_name));
+	mir_wstrncpy(proto_name, acc->tszAccountName, _countof(proto_name));
 
 	return proto_name;
 }
@@ -477,12 +483,12 @@ TCHAR* GetProtoName(struct ClcContact *item)
 void RebuildEntireListInternal(HWND hwnd, ClcData *tmp_dat, BOOL call_orig)
 {
 	ClcData *dat = (ClcData*)tmp_dat;
-	TCHAR tmp[1024];
-	TCHAR count[128];
-	TCHAR template_contact[1024];
-	TCHAR template_group[1024];
-	TCHAR template_divider[1024];
-	TCHAR template_info[1024];
+	wchar_t tmp[1024];
+	wchar_t count[128];
+	wchar_t template_contact[1024];
+	wchar_t template_group[1024];
+	wchar_t template_divider[1024];
+	wchar_t template_info[1024];
 	int selection = dat->selection;
 	BOOL has_focus = (GetFocus() == dat->hwnd_list || GetFocus() == hwnd);
 
@@ -506,12 +512,11 @@ void RebuildEntireListInternal(HWND hwnd, ClcData *tmp_dat, BOOL call_orig)
 	ClcGroup *group = &dat->list;
 	group->scanIndex = 0;
 	
-	TCHAR *text = tmp;
+	wchar_t *text = tmp;
 	size_t size = _countof(tmp);
 	while (true) {
-		if (group->scanIndex == group->cl.count) {
-			group = group->parent;
-			if (group == NULL)
+		if (group->scanIndex == group->cl.getCount()) {
+			if ((group = group->parent) == NULL)
 				break;
 			text -= 2;
 			size += 2;
@@ -519,63 +524,63 @@ void RebuildEntireListInternal(HWND hwnd, ClcData *tmp_dat, BOOL call_orig)
 			continue;
 		}
 
-		ClcContact *item = group->cl.items[group->scanIndex];
-		text[0] = _T('\0');
+		ClcContact *item = group->cl[group->scanIndex];
+		text[0] = '\0';
 		switch (item->type) {
 		case CLCIT_GROUP:
 			{
-				TCHAR *szCounts = pcli->pfnGetGroupCountsText(dat, item);
-				const TCHAR *t[] = {
-					_T("%name%"),
-					_T("%count%"),
-					_T("%mode%")
+				wchar_t *szCounts = pcli->pfnGetGroupCountsText(dat, item);
+				const wchar_t *t[] = {
+					L"%name%",
+					L"%count%",
+					L"%mode%"
 				};
-				const TCHAR *v[] = {
+				const wchar_t *v[] = {
 					item->szText,
 					count,
 					item->group->expanded ? TranslateT("Expanded") : TranslateT("Collapsed")
 				};
 
 				if (szCounts[0] != '\0')
-					mir_sntprintf(count, _T("%s "), szCounts);
+					mir_snwprintf(count, L"%s ", szCounts);
 				else
-					count[0] = _T('\0');
+					count[0] = '\0';
 
-				TCHAR *txt = ParseText(template_group, t, _countof(t), v, _countof(v));
+				wchar_t *txt = ParseText(template_group, t, _countof(t), v, _countof(v));
 				if (txt != NULL)
-					mir_tstrncpy(text, txt, size);
+					mir_wstrncpy(text, txt, size);
 				mir_free(txt);
 			}
 			break;
 
 		case CLCIT_CONTACT:
 			{
-				const TCHAR *t[] = {
-					_T("%name%"),
-					_T("%status%"),
-					_T("%protocol%"),
-					_T("%status_message%")
+				const wchar_t *t[] = {
+					L"%name%",
+					L"%status%",
+					L"%protocol%",
+					L"%status_message%"
 				};
-				const TCHAR *v[] = {
+				const wchar_t *v[] = {
 					item->szText,
 					GetStatusName(item),
 					GetProtoName(item),
 					GetStatusMessage(item)
 				};
 
-				TCHAR *txt = ParseText(template_contact, t, _countof(t), v, _countof(v));
+				wchar_t *txt = ParseText(template_contact, t, _countof(t), v, _countof(v));
 				if (txt != NULL)
-					mir_tstrncpy(text, txt, size);
+					mir_wstrncpy(text, txt, size);
 				mir_free(txt);
 			}
 			break;
 
 		case CLCIT_DIVIDER:
-			mir_sntprintf(text, size, template_divider, item->szText);
+			mir_snwprintf(text, size, template_divider, item->szText);
 			break;
 
 		case CLCIT_INFO:
-			mir_sntprintf(text, size, template_info, item->szText);
+			mir_snwprintf(text, size, template_info, item->szText);
 			break;
 		}
 
@@ -583,8 +588,8 @@ void RebuildEntireListInternal(HWND hwnd, ClcData *tmp_dat, BOOL call_orig)
 
 		if (item->type == CLCIT_GROUP && item->group->expanded) {
 			group = item->group;
-			text[0] = _T(' ');
-			text[1] = _T(' ');
+			text[0] = ' ';
+			text[1] = ' ';
 			text += 2;
 			size -= 2;
 			group->scanIndex = 0;
@@ -627,7 +632,7 @@ void LoadClcOptions(HWND hwnd, ClcData *dat, BOOL bFirst)
 {
 	coreCli.pfnLoadClcOptions(hwnd, dat, bFirst);
 
-	dat->filterSearch = 0;
+	dat->bFilterSearch = false;
 	dat->rowHeight = SendMessage(dat->hwnd_list, LB_GETITEMHEIGHT, 0, 0);
 }
 
@@ -639,7 +644,7 @@ int GetRowHeight(ClcData *dat, int)
 
 void SortCLC(HWND hwnd, ClcData *dat, int useInsertionSort)
 {
-	if (dat->needsResort) {
+	if (dat->bNeedsResort) {
 		coreCli.pfnSortCLC(hwnd, dat, useInsertionSort);
 		dat->need_rebuild = TRUE;
 	}

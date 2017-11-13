@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
-// Copyright (ñ) 2012-15 Miranda NG project,
+// Copyright (ñ) 2012-17 Miranda NG project,
 // Copyright (c) 2000-09 Miranda ICQ/IM project,
 // all portions of this codebase are copyrighted to the people
 // listed in contributors.txt.
@@ -46,7 +46,9 @@
 #include <malloc.h>
 #include <locale.h>
 
-#include <msapi\vsstyle.h>
+#include <msapi/vsstyle.h>
+#include <msapi/comptr.h>
+
 #include <m_avatars.h>
 #include <m_message.h>
 #include <win2k.h>
@@ -60,7 +62,6 @@
 #include <m_contacts.h>
 #include <m_icolib.h>
 #include <m_clc.h>
-#include <m_clui.h>
 #include <m_clist.h>
 #include <m_userinfo.h>
 #include <m_history.h>
@@ -73,19 +74,18 @@
 #include <m_genmenu.h>
 #include <m_popup.h>
 #include <m_timezones.h>
-#include <m_modernopt.h>
 #include <m_xstatus.h>
 #include <m_toptoolbar.h>
 #include <m_string.h>
 #include <m_db_int.h>
 #include <m_netlib.h>
+#include <m_srmm_int.h>
 
 #include <m_ieview.h>
 #include <m_metacontacts.h>
 #include <m_fingerprint.h>
 #include <m_nudge.h>
 #include <m_folders.h>
-#include <m_msg_buttonsbar.h>
 #include <m_smileyadd.h>
 
 #define TSAPI __stdcall
@@ -114,14 +114,13 @@ typedef struct _DWM_THUMBNAIL_PROPERTIES
 
 #include "resource.h"
 #include "version.h"
-#include "buttonbar.h"
+#include "infopanel.h"
 #include "msgs.h"
 #include "msgdlgutils.h"
 #include "typingnotify.h"
-#include "generic_msghandlers.h"
 #include "nen.h"
 #include "functions.h"
-#include "chat/chat.h"
+#include "chat.h"
 #include "contactcache.h"
 #include "translator.h"
 #include "themes.h"
@@ -130,12 +129,11 @@ typedef struct _DWM_THUMBNAIL_PROPERTIES
 #include "sendqueue.h"
 #include "taskbar.h"
 #include "controls.h"
-#include "infopanel.h"
 #include "sidebar.h"
 #include "utils.h"
 #include "sendlater.h"
 #include "ImageDataObject.h"
-#include "chat/muchighlight.h"
+#include "muchighlight.h"
 
 
 /*
@@ -222,7 +220,6 @@ extern NEN_OPTIONS nen_options;
 extern HINSTANCE g_hInst;
 extern CSkinItem SkinItems[];
 extern TContainerData *pFirstContainer, *pLastActiveContainer;
-extern HANDLE hTypingNotify;
 extern ButtonSet g_ButtonSet;
 extern HANDLE g_hEvent;
 extern RECT rcLastStatusBarClick;
@@ -232,27 +229,19 @@ extern LOGFONTA logfonts[MSGDLGFONTCOUNT + 2];
 extern COLORREF fontcolors[MSGDLGFONTCOUNT + 2];
 extern HINSTANCE hinstance;
 extern BOOL g_bIMGtagButton;
-extern HANDLE hHookToolBarLoadedEvt;
-extern TLogIcon msgLogIcons[NR_LOGICONS * 3];
-extern const TCHAR *pszIDCSAVE_save, *pszIDCSAVE_close;
 extern char *TemplateNames[];
 extern HANDLE hUserPrefsWindowList;
 extern TCpTable cpTable[];
 extern HMODULE g_hIconDLL;
-extern HMENU g_hMenu;
 extern bool g_bShutdown;
 
-extern CREOleCallback reOleCallback;
-extern CREOleCallback2 reOleCallback2;
+extern pfnDoPopup oldDoPopup, oldLogToFile;
+extern pfnDoTrayIcon oldDoTrayIcon;
 
 int  LoadSendRecvMessageModule(void);
 int  SplitmsgShutdown(void);
-void LogErrorMessage(HWND hwndDlg, TWindowData *dat, int i, TCHAR *szMsg);
 int  Chat_Load(), Chat_Unload();
 void FreeLogFonts();
-void ImageDataInsertBitmap(IRichEditOle *ole, HBITMAP hBm);
-int  CacheIconToBMP(TLogIcon *theIcon, HICON hIcon, COLORREF backgroundColor, int sizeX, int sizeY);
-void DeleteCachedIcon(TLogIcon *theIcon);
 
 INT_PTR SendMessageCommand(WPARAM wParam, LPARAM lParam);
 INT_PTR SendMessageCommand_W(WPARAM wParam, LPARAM lParam);
@@ -269,12 +258,10 @@ void TreeViewSetFromDB(HWND hwndTree, UINT id, DWORD dwFlags);
 void TreeViewToDB(HWND hwndTree, UINT id, char *DBPath, DWORD *dwFlags);
 BOOL TreeViewHandleClick(HWND hwndDlg, HWND hwndTree, WPARAM wParam, LPARAM lParam);
 
-
 INT_PTR CALLBACK DlgProcSetupStatusModes(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK DlgProcPopupOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK DlgProcTabConfig(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK DlgProcTemplateEditor(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK DlgProcToolBar(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK PlusOptionsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK DlgProcOptions1(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK DlgProcOptions2(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -283,7 +270,7 @@ INT_PTR CALLBACK DlgProcUserPrefsFrame(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 int TSAPI TBStateConvert2Flat(int state);
 int TSAPI RBStateConvert2Flat(int state);
-void TSAPI FillTabBackground(const HDC hdc, int iStateId, const TWindowData *dat, RECT* rc);
+void TSAPI FillTabBackground(const HDC hdc, int iStateId, const CTabBaseDlg *dat, RECT* rc);
 
 #define IS_EXTKEY(a) (a & (1 << 24))
 

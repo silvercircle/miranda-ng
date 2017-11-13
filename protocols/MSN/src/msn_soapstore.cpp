@@ -1,7 +1,7 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
 
-Copyright (c) 2012-2014 Miranda NG Team
+Copyright (c) 2012-2017 Miranda NG Team
 Copyright (c) 2007-2012 Boris Krasnovskiy.
 
 This program is free software; you can redistribute it and/or
@@ -282,7 +282,7 @@ bool CMsnProto::MSN_StoreGetProfile(bool allowRecurse)
 				while (docstr) {
 					const char *docname = ezxml_txt(ezxml_child(docstr, "DocumentStreamName"));
 					if (!mir_strcmp(docname, "UserTileStatic")) {
-						getMyAvatarFile(ezxml_txt(ezxml_child(docstr, "PreAuthURL")), _T("miranda_avatar.tmp"));
+						getMyAvatarFile(ezxml_txt(ezxml_child(docstr, "PreAuthURL")), L"miranda_avatar.tmp");
 						break;
 					}
 					docstr = ezxml_next(docstr);
@@ -504,7 +504,7 @@ bool CMsnProto::MSN_StoreDeleteRelationships(bool tile, bool allowRecurse)
 }
 
 
-bool CMsnProto::MSN_StoreCreateDocument(const TCHAR *sztName, const char *szMimeType, const char *szPicData, bool allowRecurse)
+bool CMsnProto::MSN_StoreCreateDocument(const wchar_t *sztName, const char *szMimeType, const char *szPicData, bool allowRecurse)
 {
 	char* reqHdr;
 	ezxml_t tbdy;
@@ -586,7 +586,7 @@ bool CMsnProto::MSN_StoreCreateDocument(const TCHAR *sztName, const char *szMime
 }
 
 
-bool CMsnProto::MSN_StoreUpdateDocument(const TCHAR *sztName, const char *szMimeType, const char *szPicData, bool allowRecurse)
+bool CMsnProto::MSN_StoreUpdateDocument(const wchar_t *sztName, const char *szMimeType, const char *szPicData, bool allowRecurse)
 {
 	char* reqHdr;
 	T2Utf szName(sztName);

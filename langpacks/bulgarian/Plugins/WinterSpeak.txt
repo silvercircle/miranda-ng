@@ -21,9 +21,9 @@
 На линия
 [Away]
 Отсъстващ
-[DND]
+[Do not disturb]
 Не безпокойте
-[NA]
+[Not available]
 Недостъпен
 [Occupied]
 Зает

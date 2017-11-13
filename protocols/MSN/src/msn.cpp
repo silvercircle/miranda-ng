@@ -1,7 +1,7 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
 
-Copyright (c) 2012-2014 Miranda NG Team
+Copyright (c) 2012-2017 Miranda NG Team
 Copyright (c) 2006-2012 Boris Krasnovskiy.
 Copyright (c) 2003-2005 George Hazan.
 Copyright (c) 2002-2003 Richard Hughes (original version).
@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "version.h"
 
 CLIST_INTERFACE *pcli;
-HINSTANCE g_hInst;
+HINSTANCE g_hInst, g_hOpenssl = NULL;
 int hLangpack;
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -58,18 +58,15 @@ static const PLUGININFOEX pluginInfo =
 int MSN_GCEventHook(WPARAM wParam, LPARAM lParam);
 int MSN_GCMenuHook(WPARAM wParam, LPARAM lParam);
 
-/////////////////////////////////////////////////////////////////////////////
 // Protocol instances
 static int sttCompareProtocols(const CMsnProto *p1, const CMsnProto *p2)
 {
-	return mir_tstrcmp(p1->m_tszUserName, p2->m_tszUserName);
+	return mir_wstrcmp(p1->m_tszUserName, p2->m_tszUserName);
 }
 
 OBJLIST<CMsnProto> g_Instances(1, sttCompareProtocols);
 
-/////////////////////////////////////////////////////////////////////////////////////////
 //	Main DLL function
-
 extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID)
 {
 	if (fdwReason == DLL_PROCESS_ATTACH) {
@@ -79,19 +76,17 @@ extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID)
 	return TRUE;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
 //	OnModulesLoaded - finalizes plugin's configuration on load
-
 static int OnModulesLoaded(WPARAM, LPARAM)
 {
-	avsPresent = ServiceExists(MS_AV_SETMYAVATART) != 0;
+	avsPresent = ServiceExists(MS_AV_SETMYAVATARW) != 0;
 
 	MsnLinks_Init();
 
 	return 0;
 }
 
-static CMsnProto* msnProtoInit(const char* pszProtoName, const TCHAR* tszUserName)
+static CMsnProto* msnProtoInit(const char* pszProtoName, const wchar_t* tszUserName)
 {
 	CMsnProto *ppro = new CMsnProto(pszProtoName, tszUserName);
 	g_Instances.insert(ppro);
@@ -104,14 +99,11 @@ static int msnProtoUninit(CMsnProto* ppro)
 	return 0;
 }
 
-
-/////////////////////////////////////////////////////////////////////////////////////////
 // Performs a primary set of actions upon plugin loading
-
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
 
@@ -128,25 +120,22 @@ extern "C" int __declspec(dllexport) Load(void)
 	return 0;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
 // Unload a plugin
-
 extern "C" int __declspec(dllexport) Unload(void)
 {
+	if (g_hOpenssl)
+		FreeLibrary(g_hOpenssl);
+
 	MSN_RemoveContactMenus();
 	MsnLinks_Destroy();
 	return 0;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
 // MirandaPluginInfoEx - returns an information about a plugin
-
 extern "C" __declspec(dllexport) const PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 {
 	return &pluginInfo;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
 // MirandaInterfaces - returns the protocol interface to the core
-
 extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = { MIID_PROTOCOL, MIID_LAST };

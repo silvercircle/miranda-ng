@@ -2,7 +2,7 @@
 
 Import plugin for Miranda NG
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -99,8 +99,7 @@ INT_PTR CALLBACK WizardDlgProc(HWND hdlg, UINT message, WPARAM wParam, LPARAM lP
 		SetWindowPos(hwndPage, 0, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
 		ShowWindow(hwndPage, SW_SHOW);
 		ShowWindow(hdlg, SW_SHOW);
-		SendMessage(hdlg, WM_SETICON, ICON_SMALL, (LPARAM)GetIcon(IDI_IMPORT));
-		SendMessage(hdlg, WM_SETICON, ICON_BIG, (LPARAM)GetIcon(IDI_IMPORT, true));
+		Window_SetIcon_IcoLib(hdlg, GetIconHandle(IDI_IMPORT));
 		return TRUE;
 
 	case WIZM_GOTOPAGE:
@@ -147,7 +146,7 @@ INT_PTR CALLBACK WizardDlgProc(HWND hdlg, UINT message, WPARAM wParam, LPARAM lP
 		break;
 
 	case WIZM_SETCANCELTEXT:
-		SetDlgItemText(hdlg, IDCANCEL, (TCHAR*)lParam);
+		SetDlgItemText(hdlg, IDCANCEL, (wchar_t*)lParam);
 		break;
 
 	case WM_COMMAND:
@@ -158,6 +157,9 @@ INT_PTR CALLBACK WizardDlgProc(HWND hdlg, UINT message, WPARAM wParam, LPARAM lP
 		DestroyWindow(hwndPage);
 		DestroyWindow(hdlg);
 		break;
+	case WM_DESTROY:
+		if (g_bServiceMode)
+			PostQuitMessage(0);
 	}
 
 	return FALSE;

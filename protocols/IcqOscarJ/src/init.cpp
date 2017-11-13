@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2010 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -65,7 +65,7 @@ extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD, LPVOID)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-static PROTO_INTERFACE* icqProtoInit(const char* pszProtoName, const TCHAR* tszUserName)
+static PROTO_INTERFACE* icqProtoInit(const char* pszProtoName, const wchar_t* tszUserName)
 {
 	CIcqProto *ppro = new CIcqProto(pszProtoName, tszUserName);
 	g_Instances.insert(ppro);
@@ -91,10 +91,15 @@ static int OnPreShutdown(WPARAM, LPARAM)
 	return 0;
 }
 
+IconItem iconList[] =
+{
+	{ LPGEN("Expand string edit"), "ICO_EXPANDSTRINGEDIT", IDI_EXPANDSTRINGEDIT }
+};
+
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	srand(time(NULL));
 	_tzset();
@@ -124,6 +129,8 @@ extern "C" int __declspec(dllexport) Load(void)
 	HookEvent(ME_SYSTEM_PRESHUTDOWN, OnPreShutdown);
 
 	hExtraXStatus = ExtraIcon_RegisterIcolib("xstatus", LPGEN("ICQ xStatus"), "icq_xstatus13");
+
+	Icon_Register(hInst, "ICQ", iconList, _countof(iconList));
 
 	g_MenuInit();
 	return 0;
@@ -157,7 +164,7 @@ void CIcqProto::UpdateGlobalSettings()
 
 	if (m_hNetlibUser) {
 		NETLIBUSERSETTINGS nlus = { sizeof(NETLIBUSERSETTINGS) };
-		if ( !m_bSecureConnection && CallService(MS_NETLIB_GETUSERSETTINGS, (WPARAM)m_hNetlibUser, (LPARAM)&nlus)) {
+		if (!m_bSecureConnection && Netlib_GetUserSettings(m_hNetlibUser, &nlus)) {
 			if (nlus.useProxy && nlus.proxyType == PROXYTYPE_HTTP)
 				m_bGatewayMode = 1;
 			else
@@ -168,7 +175,6 @@ void CIcqProto::UpdateGlobalSettings()
 
 	m_bSecureLogin = getByte("SecureLogin", DEFAULT_SECURE_LOGIN);
 	m_bLegacyFix = getByte("LegacyFix", DEFAULT_LEGACY_FIX);
-	m_bAimEnabled = getByte("AimEnabled", DEFAULT_AIM_ENABLED);
 	m_wAnsiCodepage = getWord("AnsiCodePage", DEFAULT_ANSI_CODEPAGE);
 	m_bDCMsgEnabled = getByte("DirectMessaging", DEFAULT_DCMSG_ENABLED);
 	m_bTempVisListEnabled = getByte("TempVisListEnabled", DEFAULT_TEMPVIS_ENABLED);

@@ -24,7 +24,6 @@ begin
   FillChar(hkrec,SizeOf(hkrec),0);
   with hkrec do
   begin
-    cbSize          :=SizeOf(hkrec);
     pszName         :=HKN_INSERT;
     pszDescription.a:='Global WATrack hotkey';
     pszSection.a    :=PluginName;
@@ -32,7 +31,7 @@ begin
     DefHotKey       :=((HOTKEYF_ALT or HOTKEYF_CONTROL) shl 8) or VK_F5;
 //    lParam          :=0;
   end;
-  CallService(MS_HOTKEY_REGISTER,0,lparam(@hkrec));
+  Hotkey_Register(@hkrec);
 end;
 
 {$include i_st_vars.inc}
@@ -69,11 +68,6 @@ begin
   hINS:=CreateServiceFunction(MS_WAT_INSERT,@InsertProc);
   reghotkey;
   plStatusHook:=HookEvent(ME_WAT_NEWSTATUS,@NewPlStatus);
-
-//  mStatus.ModuleStat:=1;
-
-//  if ServiceExists(MS_LISTENINGTO_GETPARSEDTEXT)<>0 then
-//    hLTo:=CreateServiceFunction(MS_LISTENINGTO_GETPARSEDTEXT,@ListenProc);
 end;
 
 procedure DeInitProc(aSetDisable:boolean);

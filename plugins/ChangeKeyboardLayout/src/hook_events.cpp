@@ -8,13 +8,13 @@ INT_PTR APIChangeLayout(WPARAM wParam, LPARAM)
 
 INT_PTR APIGetLayoutOfText(WPARAM, LPARAM lParam)
 {
-	LPTSTR ptszInText = (TCHAR*)lParam;
+	LPTSTR ptszInText = (wchar_t*)lParam;
 	return (INT_PTR)GetLayoutOfText(ptszInText);
 }
 
 INT_PTR APIChangeTextLayout(WPARAM wParam, LPARAM lParam)
 {
-	LPTSTR ptszInText = (TCHAR*)wParam;
+	LPTSTR ptszInText = (wchar_t*)wParam;
 	CKLLayouts *ckllFromToLay = (CKLLayouts*)lParam;
 
 	return (INT_PTR)ChangeTextLayout(ptszInText, ckllFromToLay->hklFrom, ckllFromToLay->hklTo, ckllFromToLay->bTwoWay);
@@ -95,20 +95,20 @@ int OnIconsChanged(WPARAM, LPARAM)
 
 int ModulesLoaded(WPARAM, LPARAM)
 {
-	LPCTSTR ptszEmptySting = _T("");
+	LPCTSTR ptszEmptySting = L"";
 
 	// Заполняем конфигурационные строки из базы. Если их там нет - генерируем.
 	for (int i = 0; i < bLayNum; i++) {
 		LPTSTR ptszCurrLayout = GenerateLayoutString(hklLayouts[i]);
 		LPSTR ptszTemp = GetNameOfLayout(hklLayouts[i]);
-		ptrT tszValue(db_get_tsa(NULL, ModuleName, ptszTemp));
+		ptrW tszValue(db_get_wsa(NULL, ModuleName, ptszTemp));
 		if (tszValue == 0)
 			ptszLayStrings[i] = ptszCurrLayout;
-		else if (!mir_tstrcmp(tszValue, ptszEmptySting))
+		else if (!mir_wstrcmp(tszValue, ptszEmptySting))
 			ptszLayStrings[i] = ptszCurrLayout;
 		else {
 			ptszLayStrings[i] = tszValue.detach();
-			if (!mir_tstrcmp(ptszCurrLayout, ptszLayStrings[i]))
+			if (!mir_wstrcmp(ptszCurrLayout, ptszLayStrings[i]))
 				db_unset(NULL, ModuleName, ptszTemp);
 			mir_free(ptszCurrLayout);
 		}
@@ -122,15 +122,15 @@ int ModulesLoaded(WPARAM, LPARAM)
 	ReadPopupOptions();
 
 	// Зарегим звук
-	SkinAddNewSoundEx(SND_ChangeLayout, ModuleName, LPGEN("Changing Layout"));
-	SkinAddNewSoundEx(SND_ChangeCase, ModuleName, LPGEN("Changing Case"));
+	Skin_AddSound(SND_ChangeLayout, ModuleNameW, LPGENW("Changing Layout"));
+	Skin_AddSound(SND_ChangeCase,   ModuleNameW, LPGENW("Changing Case"));
 
 	// Хук на нажатие клавиши
 	kbHook_All = SetWindowsHookEx(WH_KEYBOARD, (HOOKPROC)Keyboard_Hook, NULL, GetCurrentThreadId());
 
-	hChangeLayout = CreateServiceFunction(MS_CKL_CHANGELAYOUT, APIChangeLayout);
-	hGetLayoutOfText = CreateServiceFunction(MS_CKL_GETLAYOUTOFTEXT, APIGetLayoutOfText);
-	hChangeTextLayout = CreateServiceFunction(MS_CKL_CHANGETEXTLAYOUT, APIChangeTextLayout);
+	CreateServiceFunction(MS_CKL_CHANGELAYOUT, APIChangeLayout);
+	CreateServiceFunction(MS_CKL_GETLAYOUTOFTEXT, APIGetLayoutOfText);
+	CreateServiceFunction(MS_CKL_CHANGETEXTLAYOUT, APIChangeTextLayout);
 
 	RegPopupActions();
 
@@ -143,15 +143,15 @@ int OnOptionsInitialise(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_MAIN_OPTION_FORM);
-	odp.pszTitle = ModuleName;
-	odp.pszGroup = LPGEN("Message sessions");
+	odp.szTitle.a = ModuleName;
+	odp.szGroup.a = LPGEN("Message sessions");
 	odp.flags = ODPF_BOLDGROUPS;
 	odp.pfnDlgProc = DlgMainProcOptions;
 	Options_AddPage(wParam, &odp);
 
 	if (ServiceExists(MS_POPUP_ADDPOPUPT)) {
 		odp.pszTemplate = MAKEINTRESOURCEA(IDD_POPUP_OPTION_FORM);
-		odp.pszGroup = LPGEN("Popups");
+		odp.szGroup.a = LPGEN("Popups");
 		odp.pfnDlgProc = DlgPopupsProcOptions;
 		Options_AddPage(wParam, &odp);
 	}

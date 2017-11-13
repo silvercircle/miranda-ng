@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -24,7 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef M_CRYPTO_H__
 #define M_CRYPTO_H__ 1
 
+#ifndef M_CORE_H__
 #include <m_core.h>
+#endif
 
 struct MICryptoEngine
 {
@@ -63,12 +65,6 @@ typedef MICryptoEngine* (__cdecl *pfnCryptoProviderFactory)(void);
 
 #define CPF_UNICODE 1
 
-#if defined(_UNICODE)
-	#define CPF_TCHAR CPF_UNICODE
-#else
-	#define CPF_TCHAR 0
-#endif
-
 typedef struct tagCRYPTOPROVIDER
 {
 	DWORD	dwSize;
@@ -77,8 +73,8 @@ typedef struct tagCRYPTOPROVIDER
 	char *pszName; // unique id
 	union {
 		char *pszDescr;   // description
-		TCHAR *ptszDescr;	// auto translated by core
-		WCHAR *pwszDescr;
+		wchar_t *ptszDescr;	// auto translated by core
+		wchar_t *pwszDescr;
 	};
 
 	pfnCryptoProviderFactory pFactory;
@@ -89,7 +85,6 @@ typedef struct tagCRYPTOPROVIDER
 
 __forceinline HANDLE Crypto_RegisterEngine(CRYPTO_PROVIDER *pProvider)
 {
-	extern int hLangpack;
 	return (HANDLE)CallService(MS_CRYPTO_REGISTER_ENGINE, hLangpack, (LPARAM)pProvider);
 }
 

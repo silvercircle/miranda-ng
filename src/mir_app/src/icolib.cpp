@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -30,7 +30,7 @@ static BOOL bModuleInitialized = FALSE;
 static volatile LONG iStaticCount = 1;
 HANDLE hIcons2ChangedEvent, hIconsChangedEvent;
 
-HICON hIconBlank = NULL;
+HICON hIconBlank = nullptr;
 
 int iconEventActive = 0;
 
@@ -40,45 +40,19 @@ mir_cs csIconList;
 
 static int sttCompareSections(const SectionItem *p1, const SectionItem *p2)
 {
-	return mir_tstrcmp(p1->name, p2->name);
+	return mir_wstrcmp(p1->name, p2->name);
 }
 
 LIST<SectionItem> sectionList(20, sttCompareSections);
 
 static int sttCompareIconSourceFiles(const IconSourceFile *p1, const IconSourceFile *p2)
 {
-	return mir_tstrcmpi(p1->file, p2->file);
+	return mir_wstrcmpi(p1->file, p2->file);
 }
 
 static LIST<IconSourceFile> iconSourceFileList(10, sttCompareIconSourceFiles);
 
-static int sttCompareIconSourceItems(const IconSourceItem *p1, const IconSourceItem *p2)
-{
-	if (p1->indx < p2->indx)
-		return -1;
-
-	if (p1->indx > p2->indx)
-		return 1;
-
-	if (p1->cx < p2->cx)
-		return -1;
-
-	if (p1->cx > p2->cx)
-		return 1;
-
-	if (p1->cy < p2->cy)
-		return -1;
-
-	if (p1->cy > p2->cy)
-		return 1;
-
-	if (p1->file == p2->file)
-		return 0;
-
-	return (p1->file > p2->file) ? 1 : -1;
-}
-
-static LIST<IconSourceItem> iconSourceList(20, sttCompareIconSourceItems);
+static LIST<IconSourceItem> iconSourceList(20, &IconSourceItem::compare);
 
 static int sttCompareIcons(const IcolibItem *p1, const IcolibItem *p2)
 {
@@ -92,43 +66,43 @@ LIST<IcolibItem> iconList(20, sttCompareIcons);
 
 void __fastcall SafeDestroyIcon(HICON &hIcon)
 {
-	if (hIcon != NULL) {
+	if (hIcon != nullptr) {
 		DestroyIcon(hIcon);
-		hIcon = NULL;
+		hIcon = nullptr;
 	}
 }
 
 // Helper functions to manage Icon resources
 
-static IconSourceFile* IconSourceFile_Get(const TCHAR* file, bool isPath)
+static IconSourceFile* IconSourceFile_Get(const wchar_t *file, bool isPath)
 {
 	if (!file)
-		return NULL;
+		return nullptr;
 
 	IconSourceFile key;
 	if (isPath)
-		PathToAbsoluteT(file, key.file); /// TODO: convert path to long - eliminate duplicate items
+		PathToAbsoluteW(file, key.file); /// TODO: convert path to long - eliminate duplicate items
 	else
-		_tcsncpy_s(key.file, file, _TRUNCATE);
+		wcsncpy_s(key.file, file, _TRUNCATE);
 
 	IconSourceFile *p = iconSourceFileList.find(&key);
-	if (p != NULL) {
+	if (p != nullptr) {
 		p->ref_count++;
 		return p;
 	}
 
 	// store only needed number of chars
-	size_t cbLen = _tcslen(key.file) + 1;
-	p = (IconSourceFile*)mir_alloc(sizeof(int) + sizeof(TCHAR)*cbLen);
+	size_t cbLen = wcslen(key.file) + 1;
+	p = (IconSourceFile*)mir_alloc(sizeof(int) + sizeof(wchar_t)*cbLen);
 	p->ref_count = 1;
-	_tcsncpy_s(p->file, cbLen, key.file, _TRUNCATE);
+	wcsncpy_s(p->file, cbLen, key.file, _TRUNCATE);
 	iconSourceFileList.insert(p);
 	return p;
 }
 
 static int IconSourceFile_Release(IconSourceFile *pItem)
 {
-	if (pItem == NULL || !pItem->ref_count)
+	if (pItem == nullptr || !pItem->ref_count)
 		return 1;
 
 	if (--pItem->ref_count <= 0) {
@@ -148,7 +122,7 @@ static int BytesPerScanLine(int PixelsPerScanline, int BitsPerPixel, int Alignme
 	return bytes / 8;
 }
 
-static int InitializeBitmapInfoHeader(HBITMAP bitmap, BITMAPINFOHEADER* bi)
+static int InitializeBitmapInfoHeader(HBITMAP bitmap, BITMAPINFOHEADER *bi)
 {
 	DIBSECTION DS;
 	DS.dsBmih.biSize = 0;
@@ -204,7 +178,7 @@ static int InternalGetDIB(HBITMAP bitmap, HPALETTE palette, void *bitmapInfo, vo
 		oldPal = SelectPalette(DC, palette, FALSE);
 		RealizePalette(DC);
 	}
-	else oldPal = NULL;
+	else oldPal = nullptr;
 
 	int result = GetDIBits(DC, bitmap, 0, ((BITMAPINFOHEADER*)bitmapInfo)->biHeight, Bits, (BITMAPINFO*)bitmapInfo, DIB_RGB_COLORS) == 0;
 
@@ -213,138 +187,163 @@ static int InternalGetDIB(HBITMAP bitmap, HPALETTE palette, void *bitmapInfo, vo
 	return result;
 }
 
-static int GetIconData(HICON icon, BYTE** data, int* size)
+#define VER30 0x00030000
+
+IconSourceItem::IconSourceItem(const IconSourceItemKey &_key)
+	: key(_key),
+	ref_count(1)
 {
+}
+
+IconSourceItem::~IconSourceItem()
+{
+	IconSourceFile_Release(key.file);
+	SafeDestroyIcon(icon);
+	mir_free(icon_data);
+}
+
+HICON IconSourceItem::getIcon()
+{
+	if (icon) {
+		icon_ref_count++;
+		return icon;
+	}
+
+	if (icon_size) {
+		icon = CreateIconFromResourceEx(icon_data, icon_size, TRUE, VER30, key.cx, key.cy, LR_COLOR);
+		if (icon) {
+			icon_ref_count++;
+			return icon;
+		}
+	}
+
+	_ExtractIconEx(key.file->file, key.indx, key.cx, key.cy, &icon, LR_COLOR);
+	if (icon)
+		icon_ref_count++;
+
+	return icon;
+}
+
+int IconSourceItem::getIconData(HICON hIcon)
+{
+	icon_size = 0;
+
 	ICONINFO iconInfo;
-	int MonoInfoSize, ColorInfoSize;
-	int MonoBitsSize, ColorBitsSize;
-
-	if (!data || !size) return 1; // Failure
-
-	if (!GetIconInfo(icon, &iconInfo)) return 1; // Failure
-
-	if (InternalGetDIBSizes(iconInfo.hbmMask, &MonoInfoSize, &MonoBitsSize) ||
-		InternalGetDIBSizes(iconInfo.hbmColor, &ColorInfoSize, &ColorBitsSize)) {
-		DeleteObject(iconInfo.hbmColor);
-		DeleteObject(iconInfo.hbmMask);
+	if (!GetIconInfo(hIcon, &iconInfo))
 		return 1; // Failure
-	}
-	void* MonoInfo = mir_alloc(MonoInfoSize);
-	void* MonoBits = mir_alloc(MonoBitsSize);
-	void* ColorInfo = mir_alloc(ColorInfoSize);
-	void* ColorBits = mir_alloc(ColorBitsSize);
 
-	if (InternalGetDIB(iconInfo.hbmMask, 0, MonoInfo, MonoBits) ||
-		InternalGetDIB(iconInfo.hbmColor, 0, ColorInfo, ColorBits)) {
-		mir_free(MonoInfo);
-		mir_free(MonoBits);
-		mir_free(ColorInfo);
-		mir_free(ColorBits);
+	int MonoInfoSize, ColorInfoSize, MonoBitsSize, ColorBitsSize;
+	if (InternalGetDIBSizes(iconInfo.hbmMask, &MonoInfoSize, &MonoBitsSize)
+		|| InternalGetDIBSizes(iconInfo.hbmColor, &ColorInfoSize, &ColorBitsSize)) {
 		DeleteObject(iconInfo.hbmColor);
 		DeleteObject(iconInfo.hbmMask);
 		return 1; // Failure
 	}
 
-	*size = ColorInfoSize + ColorBitsSize + MonoBitsSize;
-	*data = (BYTE*)mir_alloc(*size);
+	mir_ptr<BYTE>
+		MonoInfo((BYTE*)mir_calloc(MonoInfoSize)),
+		MonoBits((BYTE*)mir_calloc(MonoBitsSize)),
+		ColorInfo((BYTE*)mir_calloc(ColorInfoSize)),
+		ColorBits((BYTE*)mir_calloc(ColorBitsSize));
 
-	BYTE* buf = *data;
-	((BITMAPINFOHEADER*)ColorInfo)->biHeight *= 2; // color height includes mono bits
+	if (InternalGetDIB(iconInfo.hbmMask, 0, MonoInfo, MonoBits)
+		|| InternalGetDIB(iconInfo.hbmColor, 0, ColorInfo, ColorBits)) {
+		DeleteObject(iconInfo.hbmColor);
+		DeleteObject(iconInfo.hbmMask);
+		return 1; // Failure
+	}
+
+	icon_size = ColorInfoSize + ColorBitsSize + MonoBitsSize;
+	icon_data = (BYTE*)mir_alloc(icon_size);
+
+	BYTE *buf = icon_data;
+	((BITMAPINFOHEADER*)(BYTE*)ColorInfo)->biHeight *= 2; // color height includes mono bits
 	memcpy(buf, ColorInfo, ColorInfoSize);
 	buf += ColorInfoSize;
 	memcpy(buf, ColorBits, ColorBitsSize);
 	buf += ColorBitsSize;
 	memcpy(buf, MonoBits, MonoBitsSize);
 
-	mir_free(MonoInfo);
-	mir_free(MonoBits);
-	mir_free(ColorInfo);
-	mir_free(ColorBits);
 	DeleteObject(iconInfo.hbmColor);
 	DeleteObject(iconInfo.hbmMask);
 	return 0; // Success
 }
 
-#define VER30           0x00030000
-
-HICON IconSourceItem_GetIcon(IconSourceItem *item)
+int IconSourceItem::releaseIcon()
 {
-	if (item->icon) {
-		item->icon_ref_count++;
-		return item->icon;
-	}
-
-	if (item->icon_size) {
-		item->icon = CreateIconFromResourceEx(item->icon_data, item->icon_size, TRUE, VER30, item->cx, item->cy, LR_COLOR);
-		if (item->icon) {
-			item->icon_ref_count++;
-			return item->icon;
-		}
-	}
-	//SHOULD BE REPLACED WITH GOOD ENOUGH FUNCTION
-	_ExtractIconEx(item->file->file, item->indx, item->cx, item->cy, &item->icon, LR_COLOR);
-
-	if (item->icon)
-		item->icon_ref_count++;
-
-	return item->icon;
-}
-
-int IconSourceItem_ReleaseIcon(IconSourceItem *item)
-{
-	if (item == 0 || item->icon_ref_count == 0)
+	if (this == nullptr || icon_ref_count == 0)
 		return 1; // Failure
 
-	item->icon_ref_count--;
-	if (!item->icon_ref_count) {
-		if (!item->icon_size)
-			if (GetIconData(item->icon, &item->icon_data, &item->icon_size))
-				item->icon_size = 0; // Failure
-		SafeDestroyIcon(item->icon);
+	icon_ref_count--;
+	if (!icon_ref_count) {
+		if (!icon_size)
+			if (getIconData(icon))
+				icon_size = 0; // Failure
+		SafeDestroyIcon(icon);
 	}
 
 	return 0; // Success
 }
 
-IconSourceItem* GetIconSourceItem(const TCHAR *file, int indx, int cxIcon, int cyIcon)
+int IconSourceItem::compare(const IconSourceItem *p1, const IconSourceItem *p2)
+{
+	if (p1->key.indx < p2->key.indx)
+		return -1;
+
+	if (p1->key.indx > p2->key.indx)
+		return 1;
+
+	if (p1->key.cx < p2->key.cx)
+		return -1;
+
+	if (p1->key.cx > p2->key.cx)
+		return 1;
+
+	if (p1->key.cy < p2->key.cy)
+		return -1;
+
+	if (p1->key.cy > p2->key.cy)
+		return 1;
+
+	if (p1->key.file == p2->key.file)
+		return 0;
+
+	return (p1->key.file > p2->key.file) ? 1 : -1;
+}
+
+IconSourceItem* GetIconSourceItem(const wchar_t *file, int indx, int cxIcon, int cyIcon)
 {
 	if (!file)
-		return NULL;
+		return nullptr;
 
-	IconSourceFile* r_file = IconSourceFile_Get(file, true);
-	IconSourceItem key = { r_file, indx, cxIcon, cyIcon };
+	IconSourceFile *r_file = IconSourceFile_Get(file, true);
+	IconSourceItemKey key = { r_file, indx, cxIcon, cyIcon };
 	int ix;
-	if ((ix = iconSourceList.getIndex(&key)) != -1) {
+	if ((ix = iconSourceList.getIndex((IconSourceItem*)&key)) != -1) {
 		IconSourceFile_Release(r_file);
-		iconSourceList[ix]->ref_count++;
+		iconSourceList[ix]->addRef();
 		return iconSourceList[ix];
 	}
 
-	IconSourceItem* newItem = (IconSourceItem*)mir_calloc(sizeof(IconSourceItem));
-	newItem->file = r_file;
-	newItem->indx = indx;
-	newItem->ref_count = 1;
-	newItem->cx = cxIcon;
-	newItem->cy = cyIcon;
+	IconSourceItem *newItem = new IconSourceItem(key);
 	iconSourceList.insert(newItem);
-
 	return newItem;
 }
 
-IconSourceItem* GetIconSourceItemFromPath(const TCHAR* path, int cxIcon, int cyIcon)
+IconSourceItem* GetIconSourceItemFromPath(const wchar_t *path, int cxIcon, int cyIcon)
 {
 	if (!path)
-		return NULL;
+		return nullptr;
 
-	TCHAR file[MAX_PATH];
-	mir_tstrncpy(file, path, _countof(file));
-	TCHAR *comma = _tcsrchr(file, ',');
+	wchar_t file[MAX_PATH];
+	mir_wstrncpy(file, path, _countof(file));
+	wchar_t *comma = wcsrchr(file, ',');
 
 	int n;
 	if (!comma)
 		n = 0;
 	else {
-		n = _ttoi(comma + 1);
+		n = _wtoi(comma + 1);
 		*comma = 0;
 	}
 	return GetIconSourceItem(file, n, cxIcon, cyIcon);
@@ -352,63 +351,52 @@ IconSourceItem* GetIconSourceItemFromPath(const TCHAR* path, int cxIcon, int cyI
 
 IconSourceItem* CreateStaticIconSourceItem(int cxIcon, int cyIcon)
 {
-	TCHAR tszName[100];
-	mir_sntprintf(tszName, _T("*StaticIcon_%d"), iStaticCount++);
+	wchar_t tszName[100];
+	mir_snwprintf(tszName, L"*StaticIcon_%d", iStaticCount++);
 
-	IconSourceItem* newItem = (IconSourceItem*)mir_calloc(sizeof(IconSourceItem));
-	newItem->file = IconSourceFile_Get(tszName, false);
-	newItem->indx = 0;
-	newItem->ref_count = 1;
-	newItem->cx = cxIcon;
-	newItem->cy = cyIcon;
+	IconSourceItemKey key = { IconSourceFile_Get(tszName, false), 0, cxIcon, cyIcon };
+	IconSourceItem *newItem = new IconSourceItem(key);
 	iconSourceList.insert(newItem);
-
 	return newItem;
 }
 
-int IconSourceItem_Release(IconSourceItem* &pItem)
+int IconSourceItem::release()
 {
-	if (pItem == NULL || pItem->ref_count == 0)
+	if (this == nullptr || ref_count <= 0)
 		return 1;
 
-	pItem->ref_count--;
-	if (!pItem->ref_count) {
+	ref_count--;
+	if (!ref_count) {
 		int indx;
-		if ((indx = iconSourceList.getIndex(pItem)) != -1) {
-			IconSourceFile_Release(pItem->file);
-			SafeDestroyIcon(pItem->icon);
-			mir_free(pItem->icon_data);
+		if ((indx = iconSourceList.getIndex(this)) != -1) {
 			iconSourceList.remove(indx);
-			mir_free(pItem);
+			delete this;
 		}
 	}
-	pItem = NULL;
 	return 0;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Service functions
 
-static SectionItem* IcoLib_AddSection(TCHAR *sectionName, BOOL create_new)
+static SectionItem* IcoLib_AddSection(wchar_t *sectionName, BOOL create_new)
 {
 	if (!sectionName)
-		return NULL;
+		return nullptr;
 
 	int indx;
-	SectionItem key = { sectionName, 0 };
-	if ((indx = sectionList.getIndex(&key)) != -1)
+	if ((indx = sectionList.getIndex((SectionItem*)&sectionName)) != -1)
 		return sectionList[indx];
 
 	if (create_new) {
-		SectionItem* newItem = (SectionItem*)mir_calloc(sizeof(SectionItem));
-		newItem->name = mir_tstrdup(sectionName);
-		newItem->flags = 0;
+		SectionItem *newItem = new SectionItem();
+		newItem->name = mir_wstrdup(sectionName);
 		sectionList.insert(newItem);
 		bNeedRebuild = TRUE;
 		return newItem;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 static void IcoLib_RemoveSection(SectionItem *section)
@@ -419,8 +407,7 @@ static void IcoLib_RemoveSection(SectionItem *section)
 	int indx;
 	if ((indx = sectionList.getIndex(section)) != -1) {
 		sectionList.remove(indx);
-		mir_free(section->name);
-		mir_free(section);
+		delete section;
 		bNeedRebuild = TRUE;
 	}
 }
@@ -433,13 +420,13 @@ IcolibItem* IcoLib_FindIcon(const char *pszIconName)
 
 IcolibItem* IcoLib_FindHIcon(HICON hIcon, bool &big)
 {
-	if (hIcon == NULL)
-		return NULL;
+	if (hIcon == nullptr)
+		return nullptr;
 
 	for (int i = 0; i < iconList.getCount(); i++) {
 		IcolibItem *p = iconList[i];
 		if ((void*)p == hIcon) {
-			big = (p->source_small == NULL);
+			big = (p->source_small == nullptr);
 			return p;
 		}
 		if (p->source_small && p->source_small->icon == hIcon) {
@@ -452,26 +439,24 @@ IcolibItem* IcoLib_FindHIcon(HICON hIcon, bool &big)
 		}
 	}
 
-	return NULL;
+	return nullptr;
 }
 
-static void IcoLib_FreeIcon(IcolibItem *pItem)
+void IcolibItem::clear()
 {
-	if (!pItem) return;
-
-	mir_free(pItem->name);
-	mir_free(pItem->description);
-	mir_free(pItem->temp_file);
-	if (pItem->section) {
-		if (!--pItem->section->ref_count)
-			IcoLib_RemoveSection(pItem->section);
-		pItem->section = NULL;
+	mir_free(name);
+	mir_free(description);
+	mir_free(temp_file);
+	if (section) {
+		if (!--section->ref_count)
+			IcoLib_RemoveSection(section);
+		section = nullptr;
 	}
-	IconSourceFile_Release(pItem->default_file);
-	IconSourceItem_Release(pItem->source_small);
-	IconSourceItem_Release(pItem->source_big);
-	IconSourceItem_Release(pItem->default_icon);
-	SafeDestroyIcon(pItem->temp_icon);
+	IconSourceFile_Release(default_file);
+	source_small->release(); source_small = nullptr;
+	source_big->release(); source_big = nullptr;
+	default_icon->release(); default_icon = nullptr;
+	SafeDestroyIcon(temp_icon);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -483,19 +468,19 @@ MIR_APP_DLL(HANDLE) IcoLib_AddIcon(SKINICONDESC *sid, int _hLang)
 
 	IcolibItem *item = IcoLib_FindIcon(sid->pszName);
 	if (!item) {
-		item = (IcolibItem*)mir_calloc(sizeof(IcolibItem));
+		item = new IcolibItem();
 		item->name = sid->pszName;
 		iconList.insert(item);
 	}
-	else IcoLib_FreeIcon(item);
+	else item->clear();
 
 	item->name = mir_strdup(sid->pszName);
 	if (sid->flags & SIDF_UNICODE) {
-		item->description = mir_u2t(sid->description.w);
+		item->description = mir_wstrdup(sid->description.w);
 		item->section = IcoLib_AddSection(sid->section.w, TRUE);
 	}
 	else {
-		item->description = mir_a2t(sid->description.a);
+		item->description = mir_a2u(sid->description.a);
 		item->section = IcoLib_AddSection(_A2T(sid->section.a), TRUE);
 	}
 
@@ -522,14 +507,16 @@ MIR_APP_DLL(HANDLE) IcoLib_AddIcon(SKINICONDESC *sid, int _hLang)
 		IcolibItem *def_item = IcoLib_FindHIcon(sid->hDefaultIcon, big);
 		if (def_item) {
 			item->default_icon = big ? def_item->source_big : def_item->source_small;
-			item->default_icon->ref_count++;
+			item->default_icon->addRef();
 		}
 		else {
 			int cx = item->cx ? item->cx : g_iIconSX;
 			int cy = item->cy ? item->cy : g_iIconSY;
 			item->default_icon = CreateStaticIconSourceItem(cx, cy);
-			if (GetIconData(sid->hDefaultIcon, &item->default_icon->icon_data, &item->default_icon->icon_size))
-				IconSourceItem_Release(item->default_icon);
+			if (item->default_icon->getIconData(sid->hDefaultIcon)) {
+				item->default_icon->release();
+				item->default_icon = nullptr;
+			}
 		}
 	}
 
@@ -544,7 +531,7 @@ MIR_APP_DLL(HANDLE) IcoLib_AddIcon(SKINICONDESC *sid, int _hLang)
 
 static int ReleaseIconInternal(IcolibItem *item, bool big)
 {
-	if (item == NULL)
+	if (item == nullptr)
 		return 1;
 
 	IconSourceItem *source = big && !item->cx ? item->source_big : item->source_small;
@@ -552,7 +539,7 @@ static int ReleaseIconInternal(IcolibItem *item, bool big)
 		if (iconEventActive)
 			source->icon_ref_count--;
 		else
-			IconSourceItem_ReleaseIcon(source);
+			source->releaseIcon();
 		return 0;
 	}
 
@@ -561,16 +548,20 @@ static int ReleaseIconInternal(IcolibItem *item, bool big)
 
 MIR_APP_DLL(int) IcoLib_ReleaseIcon(HICON hIcon, bool big)
 {
-	if (hIcon == NULL)
+	if (hIcon == nullptr)
 		return 1;
 
 	mir_cslock lck(csIconList);
-	return ReleaseIconInternal(IcoLib_FindHIcon(hIcon, big), big);
+
+	// this call might change the 'big' parameter
+	// if inserted into the call of ReleaseIconInternal(), the unchanged 'big' will be passed first
+	IcolibItem *pItem = IcoLib_FindHIcon(hIcon, big);
+	return ReleaseIconInternal(pItem, big);
 }
 
 MIR_APP_DLL(int) IcoLib_Release(const char *szIconName, bool big)
 {
-	if (szIconName == NULL)
+	if (szIconName == nullptr)
 		return 1;
 
 	mir_cslock lck(csIconList);
@@ -580,13 +571,11 @@ MIR_APP_DLL(int) IcoLib_Release(const char *szIconName, bool big)
 /////////////////////////////////////////////////////////////////////////////////////////
 // IcoLib_RemoveIcon
 
-static int IcoLib_RemoveIcon_Internal(int i)
+__inline void IcoLib_RemoveIcon_Internal(int i)
 {
 	IcolibItem *item = iconList[i];
-	IcoLib_FreeIcon(item);
 	iconList.remove(i);
-	mir_free(item);
-	return 0;
+	delete item;
 }
 
 MIR_APP_DLL(void) IcoLib_RemoveIcon(const char *pszIconName)
@@ -615,11 +604,8 @@ MIR_APP_DLL(void) KillModuleIcons(int _hLang)
 	mir_cslock lck(csIconList);
 	for (int i = iconList.getCount() - 1; i >= 0; i--) {
 		IcolibItem *item = iconList[i];
-		if (item->hLangpack == _hLang) {
-			IcoLib_FreeIcon(item);
-			iconList.remove(i);
-			mir_free(item);
-		}
+		if (item->hLangpack == _hLang)
+			IcoLib_RemoveIcon_Internal(i);
 	}
 }
 
@@ -628,13 +614,13 @@ MIR_APP_DLL(void) KillModuleIcons(int _hLang)
 
 HICON IconItem_GetDefaultIcon(IcolibItem *item, bool big)
 {
-	HICON hIcon = NULL;
+	HICON hIcon = nullptr;
 
 	if (item->default_icon && !big) {
-		IconSourceItem_Release(item->source_small);
+		item->source_small->release();
 		item->source_small = item->default_icon;
-		item->source_small->ref_count++;
-		hIcon = IconSourceItem_GetIcon(item->source_small);
+		item->source_small->addRef();
+		hIcon = item->source_small->getIcon();
 	}
 
 	if (!hIcon && item->default_file) {
@@ -643,27 +629,27 @@ HICON IconItem_GetDefaultIcon(IcolibItem *item, bool big)
 		IconSourceItem *def_icon = GetIconSourceItem(item->default_file->file, item->default_indx, cx, cy);
 		if (big) {
 			if (def_icon != item->source_big) {
-				IconSourceItem_Release(item->source_big);
+				item->source_big->release();
 				item->source_big = def_icon;
 				if (def_icon) {
-					def_icon->ref_count++;
-					hIcon = IconSourceItem_GetIcon(def_icon);
+					def_icon->addRef();
+					hIcon = def_icon->getIcon();
 				}
 			}
-			else IconSourceItem_Release(def_icon);
+			else def_icon->release();
 		}
 		else {
 			if (def_icon != item->default_icon) {
-				IconSourceItem_Release(item->default_icon);
+				item->default_icon->release();
 				item->default_icon = def_icon;
 				if (def_icon) {
-					IconSourceItem_Release(item->source_small);
+					item->source_small->release();
 					item->source_small = def_icon;
-					def_icon->ref_count++;
-					hIcon = IconSourceItem_GetIcon(def_icon);
+					def_icon->addRef();
+					hIcon = def_icon->getIcon();
 				}
 			}
-			else IconSourceItem_Release(def_icon);
+			else def_icon->release();
 		}
 	}
 	return hIcon;
@@ -675,25 +661,25 @@ HICON IconItem_GetDefaultIcon(IcolibItem *item, bool big)
 HICON IconItem_GetIcon(HANDLE hIcoLib, bool big)
 {
 	IcolibItem *item = (IcolibItem*)hIcoLib;
-	if (item == NULL)
-		return NULL;
+	if (item == nullptr)
+		return nullptr;
 
 	big = big && !item->cx;
 	IconSourceItem* &source = big ? item->source_big : item->source_small;
-
-	DBVARIANT dbv = { 0 };
-	if (!source && !db_get_ts(NULL, "SkinIcons", item->name, &dbv)) {
-		TCHAR tszFullPath[MAX_PATH];
-		PathToAbsoluteT(dbv.ptszVal, tszFullPath);
-		int cx = item->cx ? item->cx : (big ? g_iIconX : g_iIconSX);
-		int cy = item->cy ? item->cy : (big ? g_iIconY : g_iIconSY);
-		source = GetIconSourceItemFromPath(tszFullPath, cx, cy);
-		db_free(&dbv);
+	if (source == nullptr) {
+		ptrW tszCustomPath(db_get_wsa(0, "SkinIcons", item->name));
+		if (tszCustomPath != nullptr) {
+			wchar_t tszFullPath[MAX_PATH];
+			PathToAbsoluteW(tszCustomPath, tszFullPath);
+			int cx = item->cx ? item->cx : (big ? g_iIconX : g_iIconSX);
+			int cy = item->cy ? item->cy : (big ? g_iIconY : g_iIconSY);
+			source = GetIconSourceItemFromPath(tszFullPath, cx, cy);
+		}
 	}
 
-	HICON hIcon = NULL;
+	HICON hIcon = nullptr;
 	if (source)
-		hIcon = IconSourceItem_GetIcon(source);
+		hIcon = source->getIcon();
 
 	if (!hIcon)
 		hIcon = IconItem_GetDefaultIcon(item, big);
@@ -707,8 +693,8 @@ HICON IconItem_GetIcon(HANDLE hIcoLib, bool big)
 /////////////////////////////////////////////////////////////////////////////////////////
 // IcoLib_GetIcon
 // lParam: pszIconName
-// wParam: PLOADIMAGEPARAM or NULL.
-// if wParam == NULL, default is used:
+// wParam: PLOADIMAGEPARAM or nullptr.
+// if wParam == nullptr, default is used:
 //     uType = IMAGE_ICON
 //     cx/cyDesired = GetSystemMetrics(SM_CX/CYSMICON)
 //     fuLoad = 0
@@ -720,7 +706,7 @@ MIR_APP_DLL(HICON) IcoLib_GetIcon(const char* pszIconName, bool big)
 
 	mir_cslock lck(csIconList);
 	IcolibItem *item = IcoLib_FindIcon(pszIconName);
-	return (item) ? IconItem_GetIcon(item, big) : NULL;
+	return (item) ? IconItem_GetIcon(item, big) : nullptr;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -730,7 +716,7 @@ MIR_APP_DLL(HICON) IcoLib_GetIcon(const char* pszIconName, bool big)
 MIR_APP_DLL(HANDLE) IcoLib_GetIconHandle(const char *pszIconName)
 {
 	if (!pszIconName)
-		return NULL;
+		return nullptr;
 
 	mir_cslock lck(csIconList);
 	return IcoLib_FindIcon(pszIconName);
@@ -743,8 +729,8 @@ MIR_APP_DLL(HANDLE) IcoLib_GetIconHandle(const char *pszIconName)
 
 MIR_APP_DLL(HICON) IcoLib_GetIconByHandle(HANDLE hItem, bool big)
 {
-	if (hItem == NULL)
-		return NULL;
+	if (hItem == nullptr)
+		return nullptr;
 
 	mir_cslock lck(csIconList);
 	IcolibItem *pi = (IcolibItem*)hItem;
@@ -756,7 +742,7 @@ MIR_APP_DLL(HICON) IcoLib_GetIconByHandle(HANDLE hItem, bool big)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // IcoLib_IsManaged
-// lParam: NULL
+// lParam: nullptr
 // wParam: HICON
 
 MIR_APP_DLL(HANDLE) IcoLib_IsManaged(HICON hIcon)
@@ -769,7 +755,7 @@ MIR_APP_DLL(HANDLE) IcoLib_IsManaged(HICON hIcon)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // IcoLib_AddRef
-// lParam: NULL
+// lParam: nullptr
 // wParam: HICON
 
 MIR_APP_DLL(int) IcoLib_AddRef(HICON hIcon)
@@ -779,7 +765,7 @@ MIR_APP_DLL(int) IcoLib_AddRef(HICON hIcon)
 	bool big;
 	IcolibItem *item = IcoLib_FindHIcon(hIcon, big);
 	if (item) {
-		IconSourceItem* source = big && !item->cx ? item->source_big : item->source_small;
+		IconSourceItem *source = big && !item->cx ? item->source_big : item->source_small;
 		if (source->icon_ref_count) {
 			source->icon_ref_count++;
 			return 0;
@@ -808,7 +794,6 @@ int LoadIcoLibModule(void)
 	hIconsChangedEvent = CreateHookableEvent(ME_SKIN_ICONSCHANGED);
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, SkinSystemModulesLoaded);
-
 	return 0;
 }
 
@@ -820,33 +805,21 @@ void UnloadIcoLibModule(void)
 	DestroyHookableEvent(hIconsChangedEvent);
 	DestroyHookableEvent(hIcons2ChangedEvent);
 
-	for (int i = iconList.getCount() - 1; i >= 0; i--) {
-		IcolibItem *p = iconList[i];
-		iconList.remove(i);
-		IcoLib_FreeIcon(p);
+	while (iconList.getCount() > 0)
+		IcoLib_RemoveIcon_Internal(0);
+
+	for (int i = 0; i < iconSourceList.getCount(); i++)
+		delete iconSourceList[i];
+	iconSourceList.destroy();
+
+	while (iconSourceFileList.getCount() > 0) {
+		IconSourceFile *p = iconSourceFileList[0];
+		iconSourceFileList.remove(0);
 		mir_free(p);
 	}
 
-	for (int i = iconSourceList.getCount() - 1; i >= 0; i--) {
-		IconSourceItem *p = iconSourceList[i];
-		iconSourceList.remove(i);
-		IconSourceFile_Release(p->file);
-		SafeDestroyIcon(p->icon);
-		mir_free(p->icon_data);
-		mir_free(p);
-	}
-
-	for (int i = iconSourceFileList.getCount() - 1; i >= 0; i--) {
-		IconSourceFile *p = iconSourceFileList[i];
-		iconSourceFileList.remove(i);
-		mir_free(p->file);
-		mir_free(p);
-	}
-
-	for (int i = 0; i < sectionList.getCount(); i++) {
-		mir_free(sectionList[i]->name);
-		mir_free(sectionList[i]);
-	}
+	for (int i = 0; i < sectionList.getCount(); i++)
+		delete sectionList[i];
 
 	SafeDestroyIcon(hIconBlank);
 	bModuleInitialized = false;

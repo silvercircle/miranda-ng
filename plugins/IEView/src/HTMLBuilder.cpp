@@ -88,7 +88,7 @@ char* HTMLBuilder::encodeUTF8(MCONTACT hContact, const char *proto, const wchar_
 
 	CMStringW str;
 	encode(hContact, proto, wtext, str, 0, flags, isSent);
-	return mir_utf8encodeT(str);
+	return mir_utf8encodeW(str);
 }
 
 char* HTMLBuilder::encodeUTF8(MCONTACT hContact, const char *proto, const char *text, int flags, bool isSent)
@@ -104,7 +104,7 @@ char* HTMLBuilder::encodeUTF8(MCONTACT hContact, const char *proto, const char *
 	if (text == NULL)
 		return NULL;
 
-	ptrW wtext(mir_a2t_cp(text, cp));
+	ptrW wtext(mir_a2u_cp(text, cp));
 	return encodeUTF8(hContact, proto, wtext, flags, isSent);
 }
 
@@ -175,79 +175,37 @@ void HTMLBuilder::setLastEventTime(DWORD t)
 
 bool HTMLBuilder::isSameDate(time_t time1, time_t time2)
 {
-	struct tm tm_t1, tm_t2;
-	tm_t1 = *localtime((time_t *)(&time1));
-	tm_t2 = *localtime((time_t *)(&time2));
-	if (tm_t1.tm_year == tm_t2.tm_year && tm_t1.tm_mon == tm_t2.tm_mon
-		&& tm_t1.tm_mday == tm_t2.tm_mday) {
-		return true;
-	}
-	return false;
+	tm tm_t1 = *localtime(&time1), tm_t2 = *localtime(&time2);
+	return tm_t1.tm_year == tm_t2.tm_year && tm_t1.tm_mon == tm_t2.tm_mon && tm_t1.tm_mday == tm_t2.tm_mday;
+
 }
 
 void HTMLBuilder::getUINs(MCONTACT hContact, char *&uinIn, char *&uinOut)
 {
-	CONTACTINFO ci;
-	char buf[128];
-	char *szProto;
 	hContact = getRealContact(hContact);
-	szProto = getProto(hContact);
-	memset(&ci, 0, sizeof(ci));
-	ci.cbSize = sizeof(ci);
-	ci.hContact = hContact;
-	ci.szProto = szProto;
-	ci.dwFlag = CNF_UNIQUEID;
-	buf[0] = 0;
-	if (!CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)& ci)) {
-		switch (ci.type) {
-		case CNFT_ASCIIZ:
-			strncpy_s(buf, (char*)ci.pszVal, _TRUNCATE);
-			mir_free(ci.pszVal);
-			break;
-		case CNFT_DWORD:
-			mir_snprintf(buf, "%u", ci.dVal);
-			break;
-		}
-	}
-	uinIn = mir_utf8encode(buf);
-	ci.hContact = NULL;
-	buf[0] = 0;
-	if (!CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)& ci)) {
-		switch (ci.type) {
-		case CNFT_ASCIIZ:
-			strncpy_s(buf, (char*)ci.pszVal, _TRUNCATE);
-			mir_free(ci.pszVal);
-			break;
-		case CNFT_DWORD:
-			mir_snprintf(buf, "%u", ci.dVal);
-			break;
-		}
-	}
-	uinOut = mir_utf8encode(buf);
-	mir_free(szProto);
+
+	ptrW id(Contact_GetInfo(CNF_UNIQUEID, hContact));
+	uinIn = mir_utf8encodeW(id ? id.get() : L"");
+
+	id = Contact_GetInfo(CNF_UNIQUEID, NULL);
+	uinOut = mir_utf8encodeW(id ? id.get() : L"");
 }
 
-wchar_t *HTMLBuilder::getContactName(MCONTACT hContact, const char *szProto)
+wchar_t* HTMLBuilder::getContactName(MCONTACT hContact, const char *szProto)
 {
-	CONTACTINFO ci = { 0 };
-	ci.cbSize = sizeof(ci);
-	ci.hContact = hContact;
-	ci.szProto = (char *)szProto;
-	ci.dwFlag = CNF_DISPLAY | CNF_UNICODE;
-	if (!CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ci))
-		if (ci.type == CNFT_ASCIIZ && ci.pszVal) // already mir_tstrdup'ed
-			return ci.pszVal;
+	wchar_t *str = Contact_GetInfo(CNF_DISPLAY, hContact, szProto);
+	if (str != NULL)
+		return str;
 
-	ci.dwFlag = CNF_UNIQUEID;
-	if (!CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ci))
-		if (ci.type == CNFT_ASCIIZ && ci.pszVal) // already mir_tstrdup'ed
-			return ci.pszVal;
+	str = Contact_GetInfo(CNF_UNIQUEID, hContact, szProto);
+	if (str != NULL)
+		return str;
 
-	TCHAR *szNameStr = pcli->pfnGetContactDisplayName(hContact, 0);
-	if (szNameStr != NULL)
-		return mir_tstrdup(szNameStr);
+	str = pcli->pfnGetContactDisplayName(hContact, 0);
+	if (str != NULL)
+		return mir_wstrdup(str);
 
-	return mir_tstrdup(TranslateT("(Unknown Contact)"));
+	return mir_wstrdup(TranslateT("(Unknown Contact)"));
 }
 
 char* HTMLBuilder::getEncodedContactName(MCONTACT hContact, const char* szProto, const char* szSmileyProto)
@@ -287,7 +245,7 @@ void HTMLBuilder::appendEventOld(IEView *view, IEVIEWEVENT *event)
 	newEvent.hwnd = event->hwnd;
 	newEvent.eventData = NULL;
 	for (int eventIdx = 0; hDbEvent != NULL && (eventIdx < event->count || event->count == -1); eventIdx++) {
-		DBEVENTINFO dbei = { sizeof(dbei) };
+		DBEVENTINFO dbei = {};
 		dbei.cbBlob = db_event_getBlobSize(hDbEvent);
 		if (dbei.cbBlob == 0xFFFFFFFF) {
 			hDbEvent = db_event_next(event->hContact, hDbEvent);
@@ -297,7 +255,7 @@ void HTMLBuilder::appendEventOld(IEView *view, IEVIEWEVENT *event)
 		db_event_get(hDbEvent, &dbei);
 		if (!(dbei.flags & DBEF_SENT) && (dbei.eventType == EVENTTYPE_MESSAGE || dbei.eventType == EVENTTYPE_URL)) {
 			db_event_markRead(event->hContact, hDbEvent);
-			CallService(MS_CLIST_REMOVEEVENT, event->hContact, (LPARAM)hDbEvent);
+			pcli->pfnRemoveEvent(event->hContact, hDbEvent);
 		}
 
 		if (!isDbEventShown(&dbei)) {
@@ -325,7 +283,7 @@ void HTMLBuilder::appendEventOld(IEView *view, IEVIEWEVENT *event)
 			eventData->bIsMe = FALSE;
 		}
 		if (dbei.eventType == EVENTTYPE_MESSAGE || dbei.eventType == EVENTTYPE_URL || Utils::DbEventIsForMsgWindow(&dbei)) {
-			eventData->pszTextW = DbGetEventTextW(&dbei, newEvent.codepage);
+			eventData->pszTextW = DbEvent_GetTextW(&dbei, newEvent.codepage);
 			if (dbei.eventType == EVENTTYPE_MESSAGE)
 				eventData->iType = IEED_EVENT_MESSAGE;
 			else if (dbei.eventType == EVENTTYPE_URL)
@@ -337,25 +295,25 @@ void HTMLBuilder::appendEventOld(IEView *view, IEVIEWEVENT *event)
 			//blob is: sequenceid(DWORD),filename(ASCIIZ),description(ASCIIZ)
 			char* filename = ((char *)dbei.pBlob) + sizeof(DWORD);
 			char* descr = filename + mir_strlen(filename) + 1;
-			eventData->ptszText = DbGetEventStringT(&dbei, filename);
+			eventData->ptszText = DbEvent_GetString(&dbei, filename);
 			if (*descr != '\0')
-				eventData->ptszText2 = DbGetEventStringT(&dbei, descr);
+				eventData->ptszText2 = DbEvent_GetString(&dbei, descr);
 			eventData->iType = IEED_EVENT_FILE;
 		}
 		else if (dbei.eventType == EVENTTYPE_AUTHREQUEST) {
 			//blob is: uin(DWORD), hContact(DWORD), nick(ASCIIZ), first(ASCIIZ), last(ASCIIZ), email(ASCIIZ)
-			eventData->ptszText = mir_tstrdup(TranslateT(" requested authorization"));
-			eventData->ptszNick = DbGetEventStringT(&dbei, (char *)dbei.pBlob + 8);
+			eventData->ptszText = mir_wstrdup(TranslateT(" requested authorization"));
+			eventData->ptszNick = DbEvent_GetString(&dbei, (char *)dbei.pBlob + 8);
 			eventData->iType = IEED_EVENT_SYSTEM;
 		}
 		else if (dbei.eventType == EVENTTYPE_ADDED) {
 			//blob is: uin(DWORD), hContact(DWORD), nick(ASCIIZ), first(ASCIIZ), last(ASCIIZ), email(ASCIIZ)
-			eventData->ptszText = mir_tstrdup(TranslateT(" was added."));
-			eventData->ptszNick = DbGetEventStringT(&dbei, (char *)dbei.pBlob + 8);
+			eventData->ptszText = mir_wstrdup(TranslateT(" was added."));
+			eventData->ptszNick = DbEvent_GetString(&dbei, (char *)dbei.pBlob + 8);
 			eventData->iType = IEED_EVENT_SYSTEM;
 		}
 		else { // custom event
-			eventData->pszTextW = DbGetEventTextW(&dbei, newEvent.codepage);
+			eventData->pszTextW = DbEvent_GetTextW(&dbei, newEvent.codepage);
 			eventData->iType = IEED_EVENT_MESSAGE;
 		}
 		free(dbei.pBlob);

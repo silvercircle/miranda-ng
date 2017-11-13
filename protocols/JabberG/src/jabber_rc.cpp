@@ -5,7 +5,7 @@ Jabber Protocol Plugin for Miranda NG
 Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
 Copyright (c) 2007     Maxim Mluhov
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 XEP-0146 support for Miranda IM
 
@@ -31,12 +31,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 CJabberAdhocSession::CJabberAdhocSession(CJabberProto* global)
 {
-	m_pNext = NULL;
-	m_pUserData = NULL;
+	m_pNext = nullptr;
+	m_pUserData = nullptr;
 	m_bAutofreeUserData = FALSE;
 	m_dwStage = 0;
 	ppro = global;
-	m_szSessionId.Format(_T("%u%u"), ppro->SerialNext(), GetTickCount());
+	m_szSessionId.Format(L"%u%u", ppro->SerialNext(), GetTickCount());
 	m_dwStartTime = GetTickCount();
 }
 
@@ -58,33 +58,33 @@ BOOL CJabberProto::HandleAdhocCommandRequest(HXML iqNode, CJabberIqInfo *pInfo)
 		return TRUE;
 	}
 
-	const TCHAR *szNode = XmlGetAttrValue(pInfo->GetChildNode(), _T("node"));
+	const wchar_t *szNode = XmlGetAttrValue(pInfo->GetChildNode(), L"node");
 	if (!szNode)
 		return TRUE;
 
-	m_adhocManager.HandleCommandRequest(iqNode, pInfo, (TCHAR*)szNode);
+	m_adhocManager.HandleCommandRequest(iqNode, pInfo, (wchar_t*)szNode);
 	return TRUE;
 }
 
-BOOL CJabberAdhocManager::HandleItemsRequest(HXML, CJabberIqInfo *pInfo, const TCHAR *szNode)
+BOOL CJabberAdhocManager::HandleItemsRequest(HXML, CJabberIqInfo *pInfo, const wchar_t *szNode)
 {
 	if (!szNode || !m_pProto->m_options.EnableRemoteControl || !m_pProto->IsRcRequestAllowedByACL(pInfo))
 		return FALSE;
 
-	if (!mir_tstrcmp(szNode, JABBER_FEAT_COMMANDS)) {
-		XmlNodeIq iq(_T("result"), pInfo);
-		HXML resultQuery = iq << XQUERY(JABBER_FEAT_DISCO_ITEMS) << XATTR(_T("node"), JABBER_FEAT_COMMANDS);
+	if (!mir_wstrcmp(szNode, JABBER_FEAT_COMMANDS)) {
+		XmlNodeIq iq(L"result", pInfo);
+		HXML resultQuery = iq << XQUERY(JABBER_FEAT_DISCO_ITEMS) << XATTR(L"node", JABBER_FEAT_COMMANDS);
 		{
 			mir_cslock lck(m_cs);
 
 			CJabberAdhocNode* pNode = GetFirstNode();
 			while (pNode) {
-				TCHAR *szJid = pNode->GetJid();
+				wchar_t *szJid = pNode->GetJid();
 				if (!szJid)
 					szJid = m_pProto->m_ThreadInfo->fullJID;
 
-				resultQuery << XCHILD(_T("item")) << XATTR(_T("jid"), szJid)
-					<< XATTR(_T("node"), pNode->GetNode()) << XATTR(_T("name"), pNode->GetName());
+				resultQuery << XCHILD(L"item") << XATTR(L"jid", szJid)
+					<< XATTR(L"node", pNode->GetNode()) << XATTR(L"name", pNode->GetName());
 
 				pNode = pNode->GetNext();
 			}
@@ -96,22 +96,22 @@ BOOL CJabberAdhocManager::HandleItemsRequest(HXML, CJabberIqInfo *pInfo, const T
 	return FALSE;
 }
 
-BOOL CJabberAdhocManager::HandleInfoRequest(HXML, CJabberIqInfo *pInfo, const TCHAR *szNode)
+BOOL CJabberAdhocManager::HandleInfoRequest(HXML, CJabberIqInfo *pInfo, const wchar_t *szNode)
 {
 	if (!szNode || !m_pProto->m_options.EnableRemoteControl || !m_pProto->IsRcRequestAllowedByACL(pInfo))
 		return FALSE;
 
 	// FIXME: same code twice
-	if (!mir_tstrcmp(szNode, JABBER_FEAT_COMMANDS)) {
-		XmlNodeIq iq(_T("result"), pInfo);
-		HXML resultQuery = iq << XQUERY(JABBER_FEAT_DISCO_INFO) << XATTR(_T("node"), JABBER_FEAT_COMMANDS);
-		resultQuery << XCHILD(_T("identity")) << XATTR(_T("name"), _T("Ad-hoc commands"))
-			<< XATTR(_T("category"), _T("automation")) << XATTR(_T("type"), _T("command-node"));
+	if (!mir_wstrcmp(szNode, JABBER_FEAT_COMMANDS)) {
+		XmlNodeIq iq(L"result", pInfo);
+		HXML resultQuery = iq << XQUERY(JABBER_FEAT_DISCO_INFO) << XATTR(L"node", JABBER_FEAT_COMMANDS);
+		resultQuery << XCHILD(L"identity") << XATTR(L"name", L"Ad-hoc commands")
+			<< XATTR(L"category", L"automation") << XATTR(L"type", L"command-node");
 
-		resultQuery << XCHILD(_T("feature")) << XATTR(_T("var"), JABBER_FEAT_COMMANDS);
-		resultQuery << XCHILD(_T("feature")) << XATTR(_T("var"), JABBER_FEAT_DATA_FORMS);
-		resultQuery << XCHILD(_T("feature")) << XATTR(_T("var"), JABBER_FEAT_DISCO_INFO);
-		resultQuery << XCHILD(_T("feature")) << XATTR(_T("var"), JABBER_FEAT_DISCO_ITEMS);
+		resultQuery << XCHILD(L"feature") << XATTR(L"var", JABBER_FEAT_COMMANDS);
+		resultQuery << XCHILD(L"feature") << XATTR(L"var", JABBER_FEAT_DATA_FORMS);
+		resultQuery << XCHILD(L"feature") << XATTR(L"var", JABBER_FEAT_DISCO_INFO);
+		resultQuery << XCHILD(L"feature") << XATTR(L"var", JABBER_FEAT_DISCO_ITEMS);
 
 		m_pProto->m_ThreadInfo->send(iq);
 		return TRUE;
@@ -119,23 +119,23 @@ BOOL CJabberAdhocManager::HandleInfoRequest(HXML, CJabberIqInfo *pInfo, const TC
 
 	mir_cslockfull lck(m_cs);
 	CJabberAdhocNode *pNode = FindNode(szNode);
-	if (pNode == NULL)
+	if (pNode == nullptr)
 		return FALSE;
 
-	XmlNodeIq iq(_T("result"), pInfo);
-	HXML resultQuery = iq << XQUERY(JABBER_FEAT_DISCO_INFO) << XATTR(_T("node"), JABBER_FEAT_DISCO_INFO);
-	resultQuery << XCHILD(_T("identity")) << XATTR(_T("name"), pNode->GetName())
-		<< XATTR(_T("category"), _T("automation")) << XATTR(_T("type"), _T("command-node"));
+	XmlNodeIq iq(L"result", pInfo);
+	HXML resultQuery = iq << XQUERY(JABBER_FEAT_DISCO_INFO) << XATTR(L"node", JABBER_FEAT_DISCO_INFO);
+	resultQuery << XCHILD(L"identity") << XATTR(L"name", pNode->GetName())
+		<< XATTR(L"category", L"automation") << XATTR(L"type", L"command-node");
 
-	resultQuery << XCHILD(_T("feature")) << XATTR(_T("var"), JABBER_FEAT_COMMANDS);
-	resultQuery << XCHILD(_T("feature")) << XATTR(_T("var"), JABBER_FEAT_DATA_FORMS);
-	resultQuery << XCHILD(_T("feature")) << XATTR(_T("var"), JABBER_FEAT_DISCO_INFO);
+	resultQuery << XCHILD(L"feature") << XATTR(L"var", JABBER_FEAT_COMMANDS);
+	resultQuery << XCHILD(L"feature") << XATTR(L"var", JABBER_FEAT_DATA_FORMS);
+	resultQuery << XCHILD(L"feature") << XATTR(L"var", JABBER_FEAT_DISCO_INFO);
 	lck.unlock();
 	m_pProto->m_ThreadInfo->send(iq);
 	return TRUE;
 }
 
-BOOL CJabberAdhocManager::HandleCommandRequest(HXML iqNode, CJabberIqInfo *pInfo, const TCHAR *szNode)
+BOOL CJabberAdhocManager::HandleCommandRequest(HXML iqNode, CJabberIqInfo *pInfo, const wchar_t *szNode)
 {
 	// ATTN: ACL and db settings checked in calling function
 
@@ -147,25 +147,25 @@ BOOL CJabberAdhocManager::HandleCommandRequest(HXML iqNode, CJabberIqInfo *pInfo
 		lck.unlock();
 
 		m_pProto->m_ThreadInfo->send(
-			XmlNodeIq(_T("error"), pInfo)
-				<< XCHILD(_T("error")) << XATTR(_T("type"), _T("cancel"))
-					<< XCHILDNS(_T("item-not-found"), _T("urn:ietf:params:xml:ns:xmpp-stanzas")));
+			XmlNodeIq(L"error", pInfo)
+				<< XCHILD(L"error") << XATTR(L"type", L"cancel")
+					<< XCHILDNS(L"item-not-found", L"urn:ietf:params:xml:ns:xmpp-stanzas"));
 
 		return FALSE;
 	}
 
-	const TCHAR *szSessionId = XmlGetAttrValue(commandNode, _T("sessionid"));
+	const wchar_t *szSessionId = XmlGetAttrValue(commandNode, L"sessionid");
 
-	CJabberAdhocSession* pSession = NULL;
+	CJabberAdhocSession* pSession = nullptr;
 	if (szSessionId) {
 		pSession = FindSession(szSessionId);
 		if (!pSession) {
 			lck.unlock();
 
-			XmlNodeIq iq(_T("error"), pInfo);
-			HXML errorNode = iq << XCHILD(_T("error")) << XATTR(_T("type"), _T("modify"));
-			errorNode << XCHILDNS(_T("bad-request"), _T("urn:ietf:params:xml:ns:xmpp-stanzas"));
-			errorNode << XCHILDNS(_T("bad-sessionid"), JABBER_FEAT_COMMANDS);
+			XmlNodeIq iq(L"error", pInfo);
+			HXML errorNode = iq << XCHILD(L"error") << XATTR(L"type", L"modify");
+			errorNode << XCHILDNS(L"bad-request", L"urn:ietf:params:xml:ns:xmpp-stanzas");
+			errorNode << XCHILDNS(L"bad-sessionid", JABBER_FEAT_COMMANDS);
 			m_pProto->m_ThreadInfo->send(iq);
 			return FALSE;
 		}
@@ -177,9 +177,9 @@ BOOL CJabberAdhocManager::HandleCommandRequest(HXML iqNode, CJabberIqInfo *pInfo
 		lck.unlock();
 
 		m_pProto->m_ThreadInfo->send(
-			XmlNodeIq(_T("error"), pInfo)
-				<< XCHILD(_T("error")) << XATTR(_T("type"), _T("cancel"))
-					<< XCHILDNS(_T("forbidden"), _T("urn:ietf:params:xml:ns:xmpp-stanzas")));
+			XmlNodeIq(L"error", pInfo)
+				<< XCHILD(L"error") << XATTR(L"type", L"cancel")
+					<< XCHILDNS(L"forbidden", L"urn:ietf:params:xml:ns:xmpp-stanzas"));
 
 		return FALSE;
 	}
@@ -190,27 +190,27 @@ BOOL CJabberAdhocManager::HandleCommandRequest(HXML iqNode, CJabberIqInfo *pInfo
 
 	if (nResultCode == JABBER_ADHOC_HANDLER_STATUS_COMPLETED) {
 		m_pProto->m_ThreadInfo->send(
-			XmlNodeIq(_T("result"), pInfo)
-				<< XCHILDNS(_T("command"), JABBER_FEAT_COMMANDS) << XATTR(_T("node"), szNode)
-					<< XATTR(_T("sessionid"), pSession->GetSessionId()) << XATTR(_T("status"), _T("completed"))
-				<< XCHILD(_T("note"), TranslateT("Command completed successfully")) << XATTR(_T("type"), _T("info")));
+			XmlNodeIq(L"result", pInfo)
+				<< XCHILDNS(L"command", JABBER_FEAT_COMMANDS) << XATTR(L"node", szNode)
+					<< XATTR(L"sessionid", pSession->GetSessionId()) << XATTR(L"status", L"completed")
+				<< XCHILD(L"note", TranslateT("Command completed successfully")) << XATTR(L"type", L"info"));
 
 		RemoveSession(pSession);
-		pSession = NULL;
+		pSession = nullptr;
 	}
 	else if (nResultCode == JABBER_ADHOC_HANDLER_STATUS_CANCEL) {
 		m_pProto->m_ThreadInfo->send(
-			XmlNodeIq(_T("result"), pInfo)
-				<< XCHILDNS(_T("command"), JABBER_FEAT_COMMANDS) << XATTR(_T("node"), szNode)
-					<< XATTR(_T("sessionid"), pSession->GetSessionId()) << XATTR(_T("status"), _T("canceled"))
-				<< XCHILD(_T("note"), TranslateT("Error occurred during processing command")) << XATTR(_T("type"), _T("error")));
+			XmlNodeIq(L"result", pInfo)
+				<< XCHILDNS(L"command", JABBER_FEAT_COMMANDS) << XATTR(L"node", szNode)
+					<< XATTR(L"sessionid", pSession->GetSessionId()) << XATTR(L"status", L"canceled")
+				<< XCHILD(L"note", TranslateT("Error occurred during processing command")) << XATTR(L"type", L"error"));
 
 		RemoveSession(pSession);
-		pSession = NULL;
+		pSession = nullptr;
 	}
 	else if (nResultCode == JABBER_ADHOC_HANDLER_STATUS_REMOVE_SESSION) {
 		RemoveSession(pSession);
-		pSession = NULL;
+		pSession = nullptr;
 	}
 
 	return TRUE;
@@ -218,12 +218,12 @@ BOOL CJabberAdhocManager::HandleCommandRequest(HXML iqNode, CJabberIqInfo *pInfo
 
 BOOL CJabberAdhocManager::FillDefaultNodes()
 {
-	AddNode(NULL, JABBER_FEAT_RC_SET_STATUS,       TranslateT("Set status"),              &CJabberProto::AdhocSetStatusHandler);
-	AddNode(NULL, JABBER_FEAT_RC_SET_OPTIONS,      TranslateT("Set options"),             &CJabberProto::AdhocOptionsHandler);
-	AddNode(NULL, JABBER_FEAT_RC_FORWARD,          TranslateT("Forward unread messages"), &CJabberProto::AdhocForwardHandler);
-	AddNode(NULL, JABBER_FEAT_RC_LEAVE_GROUPCHATS, TranslateT("Leave group chats"),        &CJabberProto::AdhocLeaveGroupchatsHandler);
-	AddNode(NULL, JABBER_FEAT_RC_WS_LOCK,          TranslateT("Lock workstation"),        &CJabberProto::AdhocLockWSHandler);
-	AddNode(NULL, JABBER_FEAT_RC_QUIT_MIRANDA,     TranslateT("Quit Miranda NG"),         &CJabberProto::AdhocQuitMirandaHandler);
+	AddNode(nullptr, JABBER_FEAT_RC_SET_STATUS,       TranslateT("Set status"),              &CJabberProto::AdhocSetStatusHandler);
+	AddNode(nullptr, JABBER_FEAT_RC_SET_OPTIONS,      TranslateT("Set options"),             &CJabberProto::AdhocOptionsHandler);
+	AddNode(nullptr, JABBER_FEAT_RC_FORWARD,          TranslateT("Forward unread messages"), &CJabberProto::AdhocForwardHandler);
+	AddNode(nullptr, JABBER_FEAT_RC_LEAVE_GROUPCHATS, TranslateT("Leave group chats"),        &CJabberProto::AdhocLeaveGroupchatsHandler);
+	AddNode(nullptr, JABBER_FEAT_RC_WS_LOCK,          TranslateT("Lock workstation"),        &CJabberProto::AdhocLockWSHandler);
+	AddNode(nullptr, JABBER_FEAT_RC_QUIT_MIRANDA,     TranslateT("Quit Miranda NG"),         &CJabberProto::AdhocQuitMirandaHandler);
 	return TRUE;
 }
 
@@ -245,7 +245,7 @@ static char *StatusModeToDbSetting(int status,const char *suffix)
 		case ID_STATUS_ONTHEPHONE: prefix="Otp";      break;
 		case ID_STATUS_OUTTOLUNCH: prefix="Otl";      break;
 		case ID_STATUS_IDLE:       prefix="Idl";      break;
-		default: return NULL;
+		default: return nullptr;
 	}
 	mir_strcpy(str,prefix); mir_strcat(str,suffix);
 	return str;
@@ -257,74 +257,74 @@ int CJabberProto::AdhocSetStatusHandler(HXML, CJabberIqInfo *pInfo, CJabberAdhoc
 		// first form
 		pSession->SetStage(1);
 
-		XmlNodeIq iq(_T("result"), pInfo);
+		XmlNodeIq iq(L"result", pInfo);
 		HXML xNode = iq
-			<< XCHILDNS(_T("command"), JABBER_FEAT_COMMANDS) << XATTR(_T("node"), JABBER_FEAT_RC_SET_STATUS)
-				<< XATTR(_T("sessionid"), pSession->GetSessionId()) << XATTR(_T("status"), _T("executing"))
-			<< XCHILDNS(_T("x"), JABBER_FEAT_DATA_FORMS) << XATTR(_T("type"), _T("form"));
+			<< XCHILDNS(L"command", JABBER_FEAT_COMMANDS) << XATTR(L"node", JABBER_FEAT_RC_SET_STATUS)
+				<< XATTR(L"sessionid", pSession->GetSessionId()) << XATTR(L"status", L"executing")
+			<< XCHILDNS(L"x", JABBER_FEAT_DATA_FORMS) << XATTR(L"type", L"form");
 
-		xNode << XCHILD(_T("title"), TranslateT("Change Status"));
-		xNode << XCHILD(_T("instructions"), TranslateT("Choose the status and status message"));
+		xNode << XCHILD(L"title", TranslateT("Change Status"));
+		xNode << XCHILD(L"instructions", TranslateT("Choose the status and status message"));
 
-		xNode << XCHILD(_T("field")) << XATTR(_T("type"), _T("hidden")) << XATTR(_T("var"), _T("FORM_TYPE"))
-			<< XATTR(_T("value"), JABBER_FEAT_RC);
+		xNode << XCHILD(L"field") << XATTR(L"type", L"hidden") << XATTR(L"var", L"FORM_TYPE")
+			<< XATTR(L"value", JABBER_FEAT_RC);
 
-		HXML fieldNode = xNode << XCHILD(_T("field")) << XATTR(_T("label"), TranslateT("Status"))
-			<< XATTR(_T("type"), _T("list-single")) << XATTR(_T("var"), _T("status"));
+		HXML fieldNode = xNode << XCHILD(L"field") << XATTR(L"label", TranslateT("Status"))
+			<< XATTR(L"type", L"list-single") << XATTR(L"var", L"status");
 
-		fieldNode << XCHILD(_T("required"));
+		fieldNode << XCHILD(L"required");
 
 		int status = CallService(MS_CLIST_GETSTATUSMODE, 0, 0);
 		switch (status) {
 		case ID_STATUS_INVISIBLE:
-			fieldNode << XCHILD(_T("value"), _T("invisible"));
+			fieldNode << XCHILD(L"value", L"invisible");
 			break;
 		case ID_STATUS_AWAY:
 		case ID_STATUS_ONTHEPHONE:
 		case ID_STATUS_OUTTOLUNCH:
-			fieldNode << XCHILD(_T("value"), _T("away"));
+			fieldNode << XCHILD(L"value", L"away");
 			break;
 		case ID_STATUS_NA:
-			fieldNode << XCHILD(_T("value"), _T("xa"));
+			fieldNode << XCHILD(L"value", L"xa");
 			break;
 		case ID_STATUS_DND:
 		case ID_STATUS_OCCUPIED:
-			fieldNode << XCHILD(_T("value"), _T("dnd"));
+			fieldNode << XCHILD(L"value", L"dnd");
 			break;
 		case ID_STATUS_FREECHAT:
-			fieldNode << XCHILD(_T("value"), _T("chat"));
+			fieldNode << XCHILD(L"value", L"chat");
 			break;
 		case ID_STATUS_ONLINE:
 		default:
-			fieldNode << XCHILD(_T("value"), _T("online"));
+			fieldNode << XCHILD(L"value", L"online");
 			break;
 		}
 
-		fieldNode << XCHILD(_T("option")) << XATTR(_T("label"), TranslateT("Free for chat")) << XCHILD(_T("value"), _T("chat"));
-		fieldNode << XCHILD(_T("option")) << XATTR(_T("label"), TranslateT("Online")) << XCHILD(_T("value"), _T("online"));
-		fieldNode << XCHILD(_T("option")) << XATTR(_T("label"), TranslateT("Away")) << XCHILD(_T("value"), _T("away"));
-		fieldNode << XCHILD(_T("option")) << XATTR(_T("label"), TranslateT("Extended Away (N/A)")) << XCHILD(_T("value"), _T("xa"));
-		fieldNode << XCHILD(_T("option")) << XATTR(_T("label"), TranslateT("Do Not Disturb")) << XCHILD(_T("value"), _T("dnd"));
-		fieldNode << XCHILD(_T("option")) << XATTR(_T("label"), TranslateT("Invisible")) << XCHILD(_T("value"), _T("invisible"));
-		fieldNode << XCHILD(_T("option")) << XATTR(_T("label"), TranslateT("Offline")) << XCHILD(_T("value"), _T("offline"));
+		fieldNode << XCHILD(L"option") << XATTR(L"label", TranslateT("Free for chat")) << XCHILD(L"value", L"chat");
+		fieldNode << XCHILD(L"option") << XATTR(L"label", TranslateT("Online")) << XCHILD(L"value", L"online");
+		fieldNode << XCHILD(L"option") << XATTR(L"label", TranslateT("Away")) << XCHILD(L"value", L"away");
+		fieldNode << XCHILD(L"option") << XATTR(L"label", TranslateT("Extended away (Not available)")) << XCHILD(L"value", L"xa");
+		fieldNode << XCHILD(L"option") << XATTR(L"label", TranslateT("Do not disturb")) << XCHILD(L"value", L"dnd");
+		fieldNode << XCHILD(L"option") << XATTR(L"label", TranslateT("Invisible")) << XCHILD(L"value", L"invisible");
+		fieldNode << XCHILD(L"option") << XATTR(L"label", TranslateT("Offline")) << XCHILD(L"value", L"offline");
 
 		// priority
-		TCHAR szPriority[ 256 ];
-		mir_sntprintf(szPriority, _T("%d"), (short)getWord("Priority", 5));
-		xNode << XCHILD(_T("field")) << XATTR(_T("label"), TranslateT("Priority")) << XATTR(_T("type"), _T("text-single"))
-			<< XATTR(_T("var"), _T("status-priority")) << XCHILD(_T("value"), szPriority);
+		wchar_t szPriority[ 256 ];
+		mir_snwprintf(szPriority, L"%d", (int)getDword("Priority", 5));
+		xNode << XCHILD(L"field") << XATTR(L"label", TranslateT("Priority")) << XATTR(L"type", L"text-single")
+			<< XATTR(L"var", L"status-priority") << XCHILD(L"value", szPriority);
 
 		// status message text
-		xNode << XCHILD(_T("field")) << XATTR(_T("label"), TranslateT("Status message"))
-			<< XATTR(_T("type"), _T("text-multi")) << XATTR(_T("var"), _T("status-message"));
+		xNode << XCHILD(L"field") << XATTR(L"label", TranslateT("Status message"))
+			<< XATTR(L"type", L"text-multi") << XATTR(L"var", L"status-message");
 
 		// global status
-		fieldNode = xNode << XCHILD(_T("field")) << XATTR(_T("label"), TranslateT("Change global status"))
-			<< XATTR(_T("type"), _T("boolean")) << XATTR(_T("var"), _T("status-global"));
+		fieldNode = xNode << XCHILD(L"field") << XATTR(L"label", TranslateT("Change global status"))
+			<< XATTR(L"type", L"boolean") << XATTR(L"var", L"status-global");
 
-		ptrT tszStatusMsg((TCHAR*)CallService(MS_AWAYMSG_GETSTATUSMSGT, status, 0));
+		ptrW tszStatusMsg((wchar_t*)CallService(MS_AWAYMSG_GETSTATUSMSGW, status, 0));
 		if (tszStatusMsg)
-			fieldNode << XCHILD(_T("value"), tszStatusMsg);
+			fieldNode << XCHILD(L"value", tszStatusMsg);
 
 		m_ThreadInfo->send(iq);
 		return JABBER_ADHOC_HANDLER_STATUS_EXECUTING;
@@ -337,57 +337,57 @@ int CJabberProto::AdhocSetStatusHandler(HXML, CJabberIqInfo *pInfo, CJabberAdhoc
 		if (!xNode)
 			return JABBER_ADHOC_HANDLER_STATUS_CANCEL;
 
-		HXML fieldNode = XmlGetChildByTag(xNode, "field", "var", _T("status")), valueNode;
+		HXML fieldNode = XmlGetChildByTag(xNode, "field", "var", L"status"), valueNode;
 		if (!fieldNode)
 			return JABBER_ADHOC_HANDLER_STATUS_CANCEL;
 
 		LPCTSTR ptszValue = XmlGetText( XmlGetChild(fieldNode , "value"));
-		if (ptszValue == NULL)
+		if (ptszValue == nullptr)
 			return JABBER_ADHOC_HANDLER_STATUS_CANCEL;
 
 		int status;
-		if (!mir_tstrcmp(ptszValue, _T("away"))) status = ID_STATUS_AWAY;
-		else if (!mir_tstrcmp(ptszValue, _T("xa"))) status = ID_STATUS_NA;
-		else if (!mir_tstrcmp(ptszValue, _T("dnd"))) status = ID_STATUS_DND;
-		else if (!mir_tstrcmp(ptszValue, _T("chat"))) status = ID_STATUS_FREECHAT;
-		else if (!mir_tstrcmp(ptszValue, _T("online"))) status = ID_STATUS_ONLINE;
-		else if (!mir_tstrcmp(ptszValue, _T("invisible"))) status = ID_STATUS_INVISIBLE;
-		else if (!mir_tstrcmp(ptszValue, _T("offline"))) status = ID_STATUS_OFFLINE;
+		if (!mir_wstrcmp(ptszValue, L"away")) status = ID_STATUS_AWAY;
+		else if (!mir_wstrcmp(ptszValue, L"xa")) status = ID_STATUS_NA;
+		else if (!mir_wstrcmp(ptszValue, L"dnd")) status = ID_STATUS_DND;
+		else if (!mir_wstrcmp(ptszValue, L"chat")) status = ID_STATUS_FREECHAT;
+		else if (!mir_wstrcmp(ptszValue, L"online")) status = ID_STATUS_ONLINE;
+		else if (!mir_wstrcmp(ptszValue, L"invisible")) status = ID_STATUS_INVISIBLE;
+		else if (!mir_wstrcmp(ptszValue, L"offline")) status = ID_STATUS_OFFLINE;
 		else
 			return JABBER_ADHOC_HANDLER_STATUS_CANCEL;
 
 		int priority = -9999;
 
-		fieldNode = XmlGetChildByTag(xNode, "field", "var", _T("status-priority"));
+		fieldNode = XmlGetChildByTag(xNode, "field", "var", L"status-priority");
 		if (fieldNode && (valueNode = XmlGetChild(fieldNode , "value")))
 			if (ptszValue = XmlGetText(valueNode))
-				priority = _ttoi(ptszValue);
+				priority = _wtoi(ptszValue);
 
 		if (priority >= -128 && priority <= 127)
-			setWord("Priority", (WORD)priority);
+			setDword("Priority", priority);
 
-		const TCHAR *szStatusMessage = NULL;
-		fieldNode = XmlGetChildByTag(xNode, "field", "var", _T("status-message"));
+		const wchar_t *szStatusMessage = nullptr;
+		fieldNode = XmlGetChildByTag(xNode, "field", "var", L"status-message");
 		if (fieldNode && (valueNode = XmlGetChild(fieldNode , "value")))
 			szStatusMessage = XmlGetText(valueNode);
 
 		// skip f...ng away dialog
-		int nNoDlg = db_get_b(NULL, "SRAway", StatusModeToDbSetting(status, "NoDlg"), 0);
-		db_set_b(NULL, "SRAway", StatusModeToDbSetting(status, "NoDlg"), 1);
+		int nNoDlg = db_get_b(0, "SRAway", StatusModeToDbSetting(status, "NoDlg"), 0);
+		db_set_b(0, "SRAway", StatusModeToDbSetting(status, "NoDlg"), 1);
 
-		db_set_ts(NULL, "SRAway", StatusModeToDbSetting(status, "Msg"), szStatusMessage ? szStatusMessage : _T(""));
+		db_set_ws(0, "SRAway", StatusModeToDbSetting(status, "Msg"), szStatusMessage ? szStatusMessage : L"");
 
-		fieldNode = XmlGetChildByTag(xNode, "field", "var", _T("status-global"));
+		fieldNode = XmlGetChildByTag(xNode, "field", "var", L"status-global");
 		if (fieldNode && (valueNode = XmlGetChild(fieldNode , "value"))) {
-			if ((ptszValue = XmlGetText(valueNode)) != NULL && _ttoi(ptszValue))
-				CallService(MS_CLIST_SETSTATUSMODE, status, NULL);
+			if ((ptszValue = XmlGetText(valueNode)) != nullptr && _wtoi(ptszValue))
+				Clist_SetStatusMode(status);
 			else
-				CallProtoService(m_szModuleName, PS_SETSTATUS, status, NULL);
+				CallProtoService(m_szModuleName, PS_SETSTATUS, status, 0);
 		}
 		SetAwayMsg(status, szStatusMessage);
 
 		// return NoDlg setting
-		db_set_b(NULL, "SRAway", StatusModeToDbSetting(status, "NoDlg"), (BYTE)nNoDlg);
+		db_set_b(0, "SRAway", StatusModeToDbSetting(status, "NoDlg"), (BYTE)nNoDlg);
 
 		return JABBER_ADHOC_HANDLER_STATUS_COMPLETED;
 	}
@@ -400,32 +400,32 @@ int CJabberProto::AdhocOptionsHandler(HXML, CJabberIqInfo *pInfo, CJabberAdhocSe
 		// first form
 		pSession->SetStage(1);
 
-		XmlNodeIq iq(_T("result"), pInfo);
+		XmlNodeIq iq(L"result", pInfo);
 		HXML xNode = iq
-			<< XCHILDNS(_T("command"), JABBER_FEAT_COMMANDS) << XATTR(_T("node"), JABBER_FEAT_RC_SET_OPTIONS)
-				<< XATTR(_T("sessionid"), pSession->GetSessionId()) << XATTR(_T("status"), _T("executing"))
-			<< XCHILDNS(_T("x"), JABBER_FEAT_DATA_FORMS) << XATTR(_T("type"), _T("form"));
+			<< XCHILDNS(L"command", JABBER_FEAT_COMMANDS) << XATTR(L"node", JABBER_FEAT_RC_SET_OPTIONS)
+				<< XATTR(L"sessionid", pSession->GetSessionId()) << XATTR(L"status", L"executing")
+			<< XCHILDNS(L"x", JABBER_FEAT_DATA_FORMS) << XATTR(L"type", L"form");
 
-		xNode << XCHILD(_T("title"), TranslateT("Set Options"));
-		xNode << XCHILD(_T("instructions"), TranslateT("Set the desired options"));
+		xNode << XCHILD(L"title", TranslateT("Set Options"));
+		xNode << XCHILD(L"instructions", TranslateT("Set the desired options"));
 
-		xNode << XCHILD(_T("field")) << XATTR(_T("type"), _T("hidden")) << XATTR(_T("var"), _T("FORM_TYPE"))
-			<< XATTR(_T("value"), JABBER_FEAT_RC);
+		xNode << XCHILD(L"field") << XATTR(L"type", L"hidden") << XATTR(L"var", L"FORM_TYPE")
+			<< XATTR(L"value", JABBER_FEAT_RC);
 
 		// Automatically Accept File Transfers
-		TCHAR szTmpBuff[ 1024 ];
-		mir_sntprintf(szTmpBuff, _T("%d"), db_get_b(NULL, "SRFile", "AutoAccept", 0));
-		xNode << XCHILD(_T("field")) << XATTR(_T("label"), TranslateT("Automatically Accept File Transfers"))
-			<< XATTR(_T("type"), _T("boolean")) << XATTR(_T("var"), _T("auto-files")) << XCHILD(_T("value"), szTmpBuff);
+		wchar_t szTmpBuff[ 1024 ];
+		mir_snwprintf(szTmpBuff, L"%d", db_get_b(0, "SRFile", "AutoAccept", 0));
+		xNode << XCHILD(L"field") << XATTR(L"label", TranslateT("Automatically Accept File Transfers"))
+			<< XATTR(L"type", L"boolean") << XATTR(L"var", L"auto-files") << XCHILD(L"value", szTmpBuff);
 
 		// Use sounds
-		mir_sntprintf(szTmpBuff, _T("%d"), db_get_b(NULL, "Skin", "UseSound", 0));
-		xNode << XCHILD(_T("field")) << XATTR(_T("label"), TranslateT("Play sounds"))
-			<< XATTR(_T("type"), _T("boolean")) << XATTR(_T("var"), _T("sounds")) << XCHILD(_T("value"), szTmpBuff);
+		mir_snwprintf(szTmpBuff, L"%d", db_get_b(0, "Skin", "UseSound", 0));
+		xNode << XCHILD(L"field") << XATTR(L"label", TranslateT("Play sounds"))
+			<< XATTR(L"type", L"boolean") << XATTR(L"var", L"sounds") << XCHILD(L"value", szTmpBuff);
 
 		// Disable remote controlling
-		xNode << XCHILD(_T("field")) << XATTR(_T("label"), TranslateT("Disable remote controlling (check twice what you are doing)"))
-			<< XATTR(_T("type"), _T("boolean")) << XATTR(_T("var"), _T("enable-rc")) << XCHILD(_T("value"), _T("0"));
+		xNode << XCHILD(L"field") << XATTR(L"label", TranslateT("Disable remote controlling (check twice what you are doing)"))
+			<< XATTR(L"type", L"boolean") << XATTR(L"var", L"enable-rc") << XCHILD(L"value", L"0");
 
 		m_ThreadInfo->send(iq);
 		return JABBER_ADHOC_HANDLER_STATUS_EXECUTING;
@@ -439,21 +439,21 @@ int CJabberProto::AdhocOptionsHandler(HXML, CJabberIqInfo *pInfo, CJabberAdhocSe
 			return JABBER_ADHOC_HANDLER_STATUS_CANCEL;
 
 		// Automatically Accept File Transfers
-		HXML fieldNode = XmlGetChildByTag(xNode, "field", "var", _T("auto-files")), valueNode;
+		HXML fieldNode = XmlGetChildByTag(xNode, "field", "var", L"auto-files"), valueNode;
 		if (fieldNode && (valueNode = XmlGetChild(fieldNode , "value")))
 			if (XmlGetText(valueNode))
-				db_set_b(NULL, "SRFile", "AutoAccept", (BYTE)_ttoi(XmlGetText(valueNode)));
+				db_set_b(0, "SRFile", "AutoAccept", (BYTE)_wtoi(XmlGetText(valueNode)));
 
 		// Use sounds
-		fieldNode = XmlGetChildByTag(xNode, "field", "var", _T("sounds"));
+		fieldNode = XmlGetChildByTag(xNode, "field", "var", L"sounds");
 		if (fieldNode && (valueNode = XmlGetChild(fieldNode , "value")))
 			if (XmlGetText(valueNode))
-				db_set_b(NULL, "Skin", "UseSound", (BYTE)_ttoi(XmlGetText(valueNode)));
+				db_set_b(0, "Skin", "UseSound", (BYTE)_wtoi(XmlGetText(valueNode)));
 
 		// Disable remote controlling
-		fieldNode = XmlGetChildByTag(xNode, "field", "var", _T("enable-rc"));
+		fieldNode = XmlGetChildByTag(xNode, "field", "var", L"enable-rc");
 		if (fieldNode && (valueNode = XmlGetChild(fieldNode , "value")))
-			if (XmlGetText(valueNode) && _ttoi(XmlGetText(valueNode)))
+			if (XmlGetText(valueNode) && _wtoi(XmlGetText(valueNode)))
 				m_options.EnableRemoteControl = 0;
 
 		return JABBER_ADHOC_HANDLER_STATUS_COMPLETED;
@@ -465,11 +465,11 @@ int CJabberProto::RcGetUnreadEventsCount()
 {
 	int nEventsSent = 0;
 	for (MCONTACT hContact = db_find_first(m_szModuleName); hContact; hContact = db_find_next(hContact, m_szModuleName)) {
-		ptrT jid( getTStringA(hContact, "jid"));
-		if (jid == NULL) continue;
+		ptrW jid( getWStringA(hContact, "jid"));
+		if (jid == nullptr) continue;
 
 		for (MEVENT hDbEvent = db_event_firstUnread(hContact); hDbEvent; hDbEvent = db_event_next(hContact, hDbEvent)) {
-			DBEVENTINFO dbei = { sizeof(dbei) };
+			DBEVENTINFO dbei = {};
 			dbei.cbBlob = db_event_getBlobSize(hDbEvent);
 			if (dbei.cbBlob == -1)
 				continue;
@@ -477,7 +477,7 @@ int CJabberProto::RcGetUnreadEventsCount()
 			dbei.pBlob = (PBYTE)mir_alloc(dbei.cbBlob + 1);
 			int nGetTextResult = db_event_get(hDbEvent, &dbei);
 			if (!nGetTextResult && dbei.eventType == EVENTTYPE_MESSAGE && !(dbei.flags & DBEF_READ) && !(dbei.flags & DBEF_SENT)) {
-				TCHAR *szEventText = DbGetEventTextT(&dbei, CP_ACP);
+				wchar_t *szEventText = DbEvent_GetTextW(&dbei, CP_ACP);
 				if (szEventText) {
 					nEventsSent++;
 					mir_free(szEventText);
@@ -491,17 +491,17 @@ int CJabberProto::RcGetUnreadEventsCount()
 
 int CJabberProto::AdhocForwardHandler(HXML, CJabberIqInfo *pInfo, CJabberAdhocSession* pSession)
 {
-	TCHAR szMsg[ 1024 ];
+	wchar_t szMsg[ 1024 ];
 	if (pSession->GetStage() == 0) {
 		int nUnreadEvents = RcGetUnreadEventsCount();
 		if (!nUnreadEvents) {
-			mir_sntprintf(szMsg, TranslateT("There is no messages to forward"));
+			mir_snwprintf(szMsg, TranslateT("There is no messages to forward"));
 
 			m_ThreadInfo->send(
-				XmlNodeIq(_T("result"), pInfo)
-					<< XCHILDNS(_T("command"), JABBER_FEAT_COMMANDS) << XATTR(_T("node"), JABBER_FEAT_RC_FORWARD)
-						<< XATTR(_T("sessionid"), pSession->GetSessionId()) << XATTR(_T("status"), _T("completed"))
-					<< XCHILD(_T("note"), szMsg) << XATTR(_T("type"), _T("info")));
+				XmlNodeIq(L"result", pInfo)
+					<< XCHILDNS(L"command", JABBER_FEAT_COMMANDS) << XATTR(L"node", JABBER_FEAT_RC_FORWARD)
+						<< XATTR(L"sessionid", pSession->GetSessionId()) << XATTR(L"status", L"completed")
+					<< XCHILD(L"note", szMsg) << XATTR(L"type", L"info"));
 
 			return JABBER_ADHOC_HANDLER_STATUS_REMOVE_SESSION;
 		}
@@ -509,24 +509,24 @@ int CJabberProto::AdhocForwardHandler(HXML, CJabberIqInfo *pInfo, CJabberAdhocSe
 		// first form
 		pSession->SetStage(1);
 
-		XmlNodeIq iq(_T("result"), pInfo);
+		XmlNodeIq iq(L"result", pInfo);
 		HXML xNode = iq
-			<< XCHILDNS(_T("command"), JABBER_FEAT_COMMANDS) << XATTR(_T("node"), JABBER_FEAT_RC_FORWARD)
-				<< XATTR(_T("sessionid"), pSession->GetSessionId()) << XATTR(_T("status"), _T("executing"))
-			<< XCHILDNS(_T("x"), JABBER_FEAT_DATA_FORMS) << XATTR(_T("type"), _T("form"));
+			<< XCHILDNS(L"command", JABBER_FEAT_COMMANDS) << XATTR(L"node", JABBER_FEAT_RC_FORWARD)
+				<< XATTR(L"sessionid", pSession->GetSessionId()) << XATTR(L"status", L"executing")
+			<< XCHILDNS(L"x", JABBER_FEAT_DATA_FORMS) << XATTR(L"type", L"form");
 
-		xNode << XCHILD(_T("title"), TranslateT("Forward options"));
+		xNode << XCHILD(L"title", TranslateT("Forward options"));
 
-		mir_sntprintf(szMsg, TranslateT("%d message(s) to be forwarded"), nUnreadEvents);
-		xNode << XCHILD(_T("instructions"), szMsg);
+		mir_snwprintf(szMsg, TranslateT("%d message(s) to be forwarded"), nUnreadEvents);
+		xNode << XCHILD(L"instructions", szMsg);
 
-		xNode << XCHILD(_T("field")) << XATTR(_T("type"), _T("hidden")) << XATTR(_T("var"), _T("FORM_TYPE"))
-			<< XCHILD(_T("value"), JABBER_FEAT_RC);
+		xNode << XCHILD(L"field") << XATTR(L"type", L"hidden") << XATTR(L"var", L"FORM_TYPE")
+			<< XCHILD(L"value", JABBER_FEAT_RC);
 
 		// remove clist events
-		xNode << XCHILD(_T("field")) << XATTR(_T("label"), TranslateT("Mark messages as read")) << XATTR(_T("type"), _T("boolean"))
-			<< XATTR(_T("var"), _T("remove-clist-events")) << XCHILD(_T("value"),
-			m_options.RcMarkMessagesAsRead == 1 ? _T("1") : _T("0"));
+		xNode << XCHILD(L"field") << XATTR(L"label", TranslateT("Mark messages as read")) << XATTR(L"type", L"boolean")
+			<< XATTR(L"var", L"remove-clist-events") << XCHILD(L"value",
+			m_options.RcMarkMessagesAsRead == 1 ? L"1" : L"0");
 
 		m_ThreadInfo->send(iq);
 		return JABBER_ADHOC_HANDLER_STATUS_EXECUTING;
@@ -542,21 +542,21 @@ int CJabberProto::AdhocForwardHandler(HXML, CJabberIqInfo *pInfo, CJabberAdhocSe
 		BOOL bRemoveCListEvents = TRUE;
 
 		// remove clist events
-		HXML fieldNode = XmlGetChildByTag(xNode,"field", "var", _T("remove-clist-events")), valueNode;
+		HXML fieldNode = XmlGetChildByTag(xNode,"field", "var", L"remove-clist-events"), valueNode;
 		if (fieldNode && (valueNode = XmlGetChild(fieldNode , "value")))
-			if (XmlGetText(valueNode) && !_ttoi(XmlGetText(valueNode)))
+			if (XmlGetText(valueNode) && !_wtoi(XmlGetText(valueNode)))
 				bRemoveCListEvents = FALSE;
 
 		m_options.RcMarkMessagesAsRead = bRemoveCListEvents ? 1 : 0;
 
 		int nEventsSent = 0;
 		for (MCONTACT hContact = db_find_first(m_szModuleName); hContact; hContact = db_find_next(hContact, m_szModuleName)) {
-			ptrT tszJid( getTStringA(hContact, "jid"));
-			if (tszJid == NULL)
+			ptrW tszJid( getWStringA(hContact, "jid"));
+			if (tszJid == nullptr)
 				continue;
 				
 			for (MEVENT hDbEvent = db_event_firstUnread(hContact); hDbEvent; hDbEvent = db_event_next(hContact, hDbEvent)) {
-				DBEVENTINFO dbei = { sizeof(dbei) };
+				DBEVENTINFO dbei = {};
 				dbei.cbBlob = db_event_getBlobSize(hDbEvent);
 				if (dbei.cbBlob == -1)
 					continue;
@@ -569,33 +569,33 @@ int CJabberProto::AdhocForwardHandler(HXML, CJabberIqInfo *pInfo, CJabberAdhocSe
 				if (dbei.eventType != EVENTTYPE_MESSAGE || (dbei.flags & (DBEF_READ | DBEF_SENT)))
 					continue;
 
-				ptrT szEventText( DbGetEventTextT(&dbei, CP_ACP));
-				if (szEventText == NULL)
+				ptrW szEventText( DbEvent_GetTextW(&dbei, CP_ACP));
+				if (szEventText == nullptr)
 					continue;
 
-				XmlNode msg(_T("message"));
-				msg << XATTR(_T("to"), pInfo->GetFrom()) << XATTRID(SerialNext())
-					<< XCHILD(_T("body"), szEventText);
+				XmlNode msg(L"message");
+				msg << XATTR(L"to", pInfo->GetFrom()) << XATTRID(SerialNext())
+					<< XCHILD(L"body", szEventText);
 
-				HXML addressesNode = msg << XCHILDNS(_T("addresses"), JABBER_FEAT_EXT_ADDRESSING);
-				TCHAR szOFrom[JABBER_MAX_JID_LEN];
+				HXML addressesNode = msg << XCHILDNS(L"addresses", JABBER_FEAT_EXT_ADDRESSING);
+				wchar_t szOFrom[JABBER_MAX_JID_LEN];
 
 				size_t cbBlob = mir_strlen((LPSTR)dbei.pBlob)+1;
 				if (cbBlob < dbei.cbBlob) { // rest of message contains a sender's resource
-					ptrT szOResource( mir_utf8decodeT((LPSTR)dbei.pBlob + cbBlob+1));
-					mir_sntprintf(szOFrom, _T("%s/%s"), tszJid, szOResource);
+					ptrW szOResource( mir_utf8decodeW((LPSTR)dbei.pBlob + cbBlob+1));
+					mir_snwprintf(szOFrom, L"%s/%s", tszJid, szOResource);
 				} else
-					_tcsncpy_s(szOFrom, tszJid, _TRUNCATE);
+					wcsncpy_s(szOFrom, tszJid, _TRUNCATE);
 
-				addressesNode << XCHILD(_T("address")) << XATTR(_T("type"), _T("ofrom")) << XATTR(_T("jid"), szOFrom);
-				addressesNode << XCHILD(_T("address")) << XATTR(_T("type"), _T("oto")) << XATTR(_T("jid"), m_ThreadInfo->fullJID);
+				addressesNode << XCHILD(L"address") << XATTR(L"type", L"ofrom") << XATTR(L"jid", szOFrom);
+				addressesNode << XCHILD(L"address") << XATTR(L"type", L"oto") << XATTR(L"jid", m_ThreadInfo->fullJID);
 
 				time_t ltime = (time_t)dbei.timestamp;
 				struct tm *gmt = gmtime(&ltime);
-				TCHAR stime[512];
-				mir_sntprintf(stime, _T("%.4i-%.2i-%.2iT%.2i:%.2i:%.2iZ"), gmt->tm_year + 1900, gmt->tm_mon + 1, gmt->tm_mday,
+				wchar_t stime[512];
+				mir_snwprintf(stime, L"%.4i-%.2i-%.2iT%.2i:%.2i:%.2iZ", gmt->tm_year + 1900, gmt->tm_mon + 1, gmt->tm_mday,
 					gmt->tm_hour, gmt->tm_min, gmt->tm_sec);
-				msg << XCHILDNS(_T("delay"), _T("urn:xmpp:delay")) << XATTR(_T("stamp"), stime);
+				msg << XCHILDNS(L"delay", L"urn:xmpp:delay") << XATTR(L"stamp", stime);
 
 				m_ThreadInfo->send(msg);
 
@@ -603,17 +603,17 @@ int CJabberProto::AdhocForwardHandler(HXML, CJabberIqInfo *pInfo, CJabberAdhocSe
 
 				db_event_markRead(hContact, hDbEvent);
 				if (bRemoveCListEvents)
-					CallService(MS_CLIST_REMOVEEVENT, hContact, (LPARAM)hDbEvent);
+					pcli->pfnRemoveEvent(hContact, hDbEvent);
 			}
 		}
 
-		mir_sntprintf(szMsg, TranslateT("%d message(s) forwarded"), nEventsSent);
+		mir_snwprintf(szMsg, TranslateT("%d message(s) forwarded"), nEventsSent);
 
 		m_ThreadInfo->send(
-			XmlNodeIq(_T("result"), pInfo)
-				<< XCHILDNS(_T("command"), JABBER_FEAT_COMMANDS) << XATTR(_T("node"), JABBER_FEAT_RC_FORWARD)
-					<< XATTR(_T("sessionid"), pSession->GetSessionId()) << XATTR(_T("status"), _T("completed"))
-				<< XCHILD(_T("note"), szMsg) << XATTR(_T("type"), _T("info")));
+			XmlNodeIq(L"result", pInfo)
+				<< XCHILDNS(L"command", JABBER_FEAT_COMMANDS) << XATTR(L"node", JABBER_FEAT_RC_FORWARD)
+					<< XATTR(L"sessionid", pSession->GetSessionId()) << XATTR(L"status", L"completed")
+				<< XCHILD(L"note", szMsg) << XATTR(L"type", L"info"));
 
 		return JABBER_ADHOC_HANDLER_STATUS_REMOVE_SESSION;
 	}
@@ -625,17 +625,17 @@ int CJabberProto::AdhocLockWSHandler(HXML, CJabberIqInfo *pInfo, CJabberAdhocSes
 {
 	BOOL bOk = LockWorkStation();
 
-	TCHAR szMsg[ 1024 ];
+	wchar_t szMsg[ 1024 ];
 	if (bOk)
-		mir_sntprintf(szMsg, TranslateT("Workstation successfully locked"));
+		mir_snwprintf(szMsg, TranslateT("Workstation successfully locked"));
 	else
-		mir_sntprintf(szMsg, TranslateT("Error %d occurred during workstation lock"), GetLastError());
+		mir_snwprintf(szMsg, TranslateT("Error %d occurred during workstation lock"), GetLastError());
 
 	m_ThreadInfo->send(
-		XmlNodeIq(_T("result"), pInfo)
-			<< XCHILDNS(_T("command"), JABBER_FEAT_COMMANDS) << XATTR(_T("node"), JABBER_FEAT_RC_WS_LOCK)
-				<< XATTR(_T("sessionid"), pSession->GetSessionId()) << XATTR(_T("status"), _T("completed"))
-			<< XCHILD(_T("note"), szMsg) << XATTR(_T("type"), bOk ? _T("info") : _T("error")));
+		XmlNodeIq(L"result", pInfo)
+			<< XCHILDNS(L"command", JABBER_FEAT_COMMANDS) << XATTR(L"node", JABBER_FEAT_RC_WS_LOCK)
+				<< XATTR(L"sessionid", pSession->GetSessionId()) << XATTR(L"status", L"completed")
+			<< XCHILD(L"note", szMsg) << XATTR(L"type", bOk ? L"info" : L"error"));
 
 	return JABBER_ADHOC_HANDLER_STATUS_REMOVE_SESSION;
 }
@@ -651,21 +651,21 @@ int CJabberProto::AdhocQuitMirandaHandler(HXML, CJabberIqInfo *pInfo, CJabberAdh
 		// first form
 		pSession->SetStage(1);
 
-		XmlNodeIq iq(_T("result"), pInfo);
+		XmlNodeIq iq(L"result", pInfo);
 		HXML xNode = iq
-			<< XCHILDNS(_T("command"), JABBER_FEAT_COMMANDS) << XATTR(_T("node"), JABBER_FEAT_RC_QUIT_MIRANDA)
-				<< XATTR(_T("sessionid"), pSession->GetSessionId()) << XATTR(_T("status"), _T("executing"))
-			<< XCHILDNS(_T("x"), JABBER_FEAT_DATA_FORMS) << XATTR(_T("type"), _T("form"));
+			<< XCHILDNS(L"command", JABBER_FEAT_COMMANDS) << XATTR(L"node", JABBER_FEAT_RC_QUIT_MIRANDA)
+				<< XATTR(L"sessionid", pSession->GetSessionId()) << XATTR(L"status", L"executing")
+			<< XCHILDNS(L"x", JABBER_FEAT_DATA_FORMS) << XATTR(L"type", L"form");
 
-		xNode << XCHILD(_T("title"), TranslateT("Confirmation needed"));
-		xNode << XCHILD(_T("instructions"), TranslateT("Please confirm Miranda NG shutdown"));
+		xNode << XCHILD(L"title", TranslateT("Confirmation needed"));
+		xNode << XCHILD(L"instructions", TranslateT("Please confirm Miranda NG shutdown"));
 
-		xNode << XCHILD(_T("field")) << XATTR(_T("type"), _T("hidden")) << XATTR(_T("var"), _T("FORM_TYPE"))
-			<< XCHILD(_T("value"), JABBER_FEAT_RC);
+		xNode << XCHILD(L"field") << XATTR(L"type", L"hidden") << XATTR(L"var", L"FORM_TYPE")
+			<< XCHILD(L"value", JABBER_FEAT_RC);
 
 		// I Agree checkbox
-		xNode << XCHILD(_T("field")) << XATTR(_T("label"), _T("I agree")) << XATTR(_T("type"), _T("boolean"))
-			<< XATTR(_T("var"), _T("allow-shutdown")) << XCHILD(_T("value"), _T("0"));
+		xNode << XCHILD(L"field") << XATTR(L"label", L"I agree") << XATTR(L"type", L"boolean")
+			<< XATTR(L"var", L"allow-shutdown") << XCHILD(L"value", L"0");
 
 		m_ThreadInfo->send(iq);
 		return JABBER_ADHOC_HANDLER_STATUS_EXECUTING;
@@ -681,9 +681,9 @@ int CJabberProto::AdhocQuitMirandaHandler(HXML, CJabberIqInfo *pInfo, CJabberAdh
 		HXML fieldNode, valueNode;
 
 		// I Agree checkbox
-		fieldNode = XmlGetChildByTag(xNode,"field", "var", _T("allow-shutdown"));
+		fieldNode = XmlGetChildByTag(xNode,"field", "var", L"allow-shutdown");
 		if (fieldNode && (valueNode = XmlGetChild(fieldNode , "value")))
-			if (XmlGetText(valueNode) && _ttoi(XmlGetText(valueNode)))
+			if (XmlGetText(valueNode) && _wtoi(XmlGetText(valueNode)))
 				CallFunctionAsync(JabberQuitMirandaIMThread, 0);
 
 		return JABBER_ADHOC_HANDLER_STATUS_COMPLETED;
@@ -702,48 +702,48 @@ int CJabberProto::AdhocLeaveGroupchatsHandler(HXML, CJabberIqInfo *pInfo, CJabbe
 			LISTFOREACH_NODEF(i, this, LIST_CHATROOM)
 			{
 				JABBER_LIST_ITEM *item = ListGetItemPtrFromIndex(i);
-				if (item != NULL)
+				if (item != nullptr)
 					nChatsCount++;
 			}
 		}
 
 		if (!nChatsCount) {
-			TCHAR szMsg[ 1024 ];
-			mir_sntprintf(szMsg, TranslateT("There is no group chats to leave"));
+			wchar_t szMsg[ 1024 ];
+			mir_snwprintf(szMsg, TranslateT("There is no group chats to leave"));
 
 			m_ThreadInfo->send(
-				XmlNodeIq(_T("result"), pInfo)
-					<< XCHILDNS(_T("command"), JABBER_FEAT_COMMANDS) << XATTR(_T("node"), JABBER_FEAT_RC_LEAVE_GROUPCHATS)
-						<< XATTR(_T("sessionid"), pSession->GetSessionId()) << XATTR(_T("status"), _T("completed"))
-					<< XCHILD(_T("note"), szMsg) << XATTR(_T("type"), _T("info")));
+				XmlNodeIq(L"result", pInfo)
+					<< XCHILDNS(L"command", JABBER_FEAT_COMMANDS) << XATTR(L"node", JABBER_FEAT_RC_LEAVE_GROUPCHATS)
+						<< XATTR(L"sessionid", pSession->GetSessionId()) << XATTR(L"status", L"completed")
+					<< XCHILD(L"note", szMsg) << XATTR(L"type", L"info"));
 
 			return JABBER_ADHOC_HANDLER_STATUS_REMOVE_SESSION;
 		}
 
 		pSession->SetStage(1);
 
-		XmlNodeIq iq(_T("result"), pInfo);
+		XmlNodeIq iq(L"result", pInfo);
 		HXML xNode = iq
-			<<	XCHILDNS(_T("command"), JABBER_FEAT_COMMANDS) << XATTR(_T("node"), JABBER_FEAT_RC_LEAVE_GROUPCHATS)
-				<< XATTR(_T("sessionid"), pSession->GetSessionId()) << XATTR(_T("status"), _T("executing"))
-			<< XCHILDNS(_T("x"), JABBER_FEAT_DATA_FORMS) << XATTR(_T("type"), _T("form"));
+			<<	XCHILDNS(L"command", JABBER_FEAT_COMMANDS) << XATTR(L"node", JABBER_FEAT_RC_LEAVE_GROUPCHATS)
+				<< XATTR(L"sessionid", pSession->GetSessionId()) << XATTR(L"status", L"executing")
+			<< XCHILDNS(L"x", JABBER_FEAT_DATA_FORMS) << XATTR(L"type", L"form");
 
-		xNode << XCHILD(_T("title"), TranslateT("Leave group chats"));
-		xNode << XCHILD(_T("instructions"), TranslateT("Choose the group chats you want to leave"));
+		xNode << XCHILD(L"title", TranslateT("Leave group chats"));
+		xNode << XCHILD(L"instructions", TranslateT("Choose the group chats you want to leave"));
 
-		xNode << XCHILD(_T("field")) << XATTR(_T("type"), _T("hidden")) << XATTR(_T("var"), _T("FORM_TYPE"))
-			<< XATTR(_T("value"), JABBER_FEAT_RC);
+		xNode << XCHILD(L"field") << XATTR(L"type", L"hidden") << XATTR(L"var", L"FORM_TYPE")
+			<< XATTR(L"value", JABBER_FEAT_RC);
 
 		// Groupchats
-		HXML fieldNode = xNode << XCHILD(_T("field")) << XATTR(_T("label"), NULL) << XATTR(_T("type"), _T("list-multi")) << XATTR(_T("var"), _T("groupchats"));
-		fieldNode << XCHILD(_T("required"));
+		HXML fieldNode = xNode << XCHILD(L"field") << XATTR(L"label", nullptr) << XATTR(L"type", L"list-multi") << XATTR(L"var", L"groupchats");
+		fieldNode << XCHILD(L"required");
 		{
 			mir_cslock lck(m_csLists);
 			LISTFOREACH_NODEF(i, this, LIST_CHATROOM)
 			{
 				JABBER_LIST_ITEM *item = ListGetItemPtrFromIndex(i);
-				if (item != NULL)
-					fieldNode << XCHILD(_T("option")) << XATTR(_T("label"), item->jid) << XCHILD(_T("value"), item->jid);
+				if (item != nullptr)
+					fieldNode << XCHILD(L"option") << XATTR(L"label", item->jid) << XCHILD(L"value", item->jid);
 			}
 		}
 
@@ -759,14 +759,14 @@ int CJabberProto::AdhocLeaveGroupchatsHandler(HXML, CJabberIqInfo *pInfo, CJabbe
 			return JABBER_ADHOC_HANDLER_STATUS_CANCEL;
 
 		// Groupchat list here:
-		HXML fieldNode = XmlGetChildByTag(xNode,"field", "var", _T("groupchats"));
+		HXML fieldNode = XmlGetChildByTag(xNode,"field", "var", L"groupchats");
 		if (fieldNode) {
 			for (i=0; i < XmlGetChildCount(fieldNode); i++) {
 				HXML valueNode = XmlGetChild(fieldNode, i);
-				if (valueNode && XmlGetName(valueNode) && XmlGetText(valueNode) && !mir_tstrcmp(XmlGetName(valueNode), _T("value"))) {
+				if (valueNode && XmlGetName(valueNode) && XmlGetText(valueNode) && !mir_wstrcmp(XmlGetName(valueNode), L"value")) {
 					JABBER_LIST_ITEM *item = ListGetItemPtr(LIST_CHATROOM, XmlGetText(valueNode));
 					if (item)
-						GcQuit(item, 0, NULL);
+						GcQuit(item, 0, nullptr);
 				}
 			}
 		}

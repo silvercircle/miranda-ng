@@ -20,6 +20,8 @@ Boston, MA 02111-1307, USA.
 
 #include "stdafx.h"
 
+#include <tchar.h>
+
 HMODULE hDwmapiDll = 0;
 HRESULT (WINAPI *MyDwmEnableBlurBehindWindow)(HWND hWnd, DWM_BLURBEHIND *pBlurBehind) = 0;
 
@@ -55,7 +57,7 @@ bool NeedWaitForContent(CLCINFOTIPEX *clcitex)
 		if (opt.bWaitForStatusMsg && !bStatusMsgReady)
 		{
 			db_unset(hContact, MODULE, "TempStatusMsg");
-			if (CanRetrieveStatusMsg(hContact, szProto) && CallContactService(hContact, PSS_GETAWAYMSG, 0, 0))
+			if (CanRetrieveStatusMsg(hContact, szProto) && ProtoChainSend(hContact, PSS_GETAWAYMSG, 0, 0))
 			{
 				if (WaitForContentTimerID)
 					KillTimer(0, WaitForContentTimerID);
@@ -101,11 +103,13 @@ bool NeedWaitForContent(CLCINFOTIPEX *clcitex)
 
 unsigned int CALLBACK MessagePumpThread(void*)
 {
+	Thread_SetName("TipperYM: MessagePumpThread");
+
 	HWND hwndTip = NULL;
 	CLCINFOTIPEX *clcitex = NULL;
 	MSG hwndMsg = {0};
 
-	while (GetMessage(&hwndMsg, NULL, 0, 0) > 0 && !Miranda_Terminated()) {
+	while (GetMessage(&hwndMsg, NULL, 0, 0) > 0 && !Miranda_IsTerminated()) {
 		if (hwndMsg.hwnd != NULL && IsDialogMessage(hwndMsg.hwnd, &hwndMsg)) /* Wine fix. */
 			continue;
 		switch (hwndMsg.message) {
@@ -148,7 +152,7 @@ unsigned int CALLBACK MessagePumpThread(void*)
 		case MUM_GOTSTATUS:
 			{
 				MCONTACT hContact = (MCONTACT)hwndMsg.wParam;
-				TCHAR *swzMsg = (TCHAR *)hwndMsg.lParam;
+				wchar_t *swzMsg = (wchar_t *)hwndMsg.lParam;
 
 				if (opt.bWaitForContent && !bStatusMsgReady && clcitex && clcitex->hItem == (HANDLE)hContact) {
 					if (WaitForContentTimerID) {
@@ -157,7 +161,7 @@ unsigned int CALLBACK MessagePumpThread(void*)
 					}
 
 					if (swzMsg) {
-						db_set_ts((DWORD_PTR)clcitex->hItem, MODULE, "TempStatusMsg", swzMsg);
+						db_set_ws((DWORD_PTR)clcitex->hItem, MODULE, "TempStatusMsg", swzMsg);
 						mir_free(swzMsg);
 					}
 
@@ -216,7 +220,7 @@ void InitMessagePump()
 	wcl.lpszClassName = POP_WIN_CLASS;
 	RegisterClassEx(&wcl);
 
-	hDwmapiDll = LoadLibrary(_T("dwmapi.dll"));
+	hDwmapiDll = LoadLibrary(L"dwmapi.dll");
 	if (hDwmapiDll)
 		MyDwmEnableBlurBehindWindow = (HRESULT (WINAPI *)(HWND, DWM_BLURBEHIND *))GetProcAddress(hDwmapiDll, "DwmEnableBlurBehindWindow");
 
@@ -280,7 +284,7 @@ INT_PTR ShowTipW(WPARAM wParam, LPARAM lParam)
 
 	if (wParam) // wParam is char pointer containing text - e.g. status bar tooltip
 	{
-		clcit2->swzText = mir_tstrdup((TCHAR *)wParam);
+		clcit2->swzText = mir_wstrdup((wchar_t *)wParam);
 		GetCursorPos(&clcit2->ptCursor);
 	}
 
@@ -311,9 +315,9 @@ int ProtoAck(WPARAM, LPARAM lParam)
 		return 0;
 
 	if (ack->type == ACKTYPE_AWAYMSG) {
-		TCHAR *tszMsg = (TCHAR*)ack->lParam;
-		if (mir_tstrlen(tszMsg))
-			PostMPMessage(MUM_GOTSTATUS, (WPARAM)ack->hContact, (LPARAM)mir_tstrdup(tszMsg));
+		wchar_t *tszMsg = (wchar_t*)ack->lParam;
+		if (mir_wstrlen(tszMsg))
+			PostMPMessage(MUM_GOTSTATUS, (WPARAM)ack->hContact, (LPARAM)mir_wstrdup(tszMsg));
 	}
 	else if (ack->type == ICQACKTYPE_XSTATUS_RESPONSE)
 		PostMPMessage(MUM_GOTXSTATUS, (WPARAM)ack->hContact, 0);

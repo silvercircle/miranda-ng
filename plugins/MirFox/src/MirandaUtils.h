@@ -82,6 +82,8 @@ private:
 
 	void addMessageToDB(MCONTACT hContact, char* msgBuffer, std::size_t bufSize, char* targetHandleSzProto);
 
+	void notifyHookToOpenMsgWindow(ActionThreadArgStruct* args, bool showMessageToSend);
+
 	void setStatusOnAccount(ActionThreadArgStruct* args);
 
 	void onProtoAckOnInstance(ACKDATA* ack);
@@ -89,7 +91,7 @@ private:
 	static void ForceForegroundWindow(HWND hWnd);
 
 
-	HANDLE netlibHandle;
+	HNETLIBUSER netlibHandle;
 
 	std::wstring profileName;
 	std::wstring displayName;

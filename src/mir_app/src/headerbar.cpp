@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 Copyright (c) 2007 Artem Shpynov
 all portions of this codebase are copyrighted to the people
@@ -72,9 +72,9 @@ int LoadHeaderbarModule()
 {
 	WNDCLASSEX wc = { 0 };
 	wc.cbSize = sizeof(wc);
-	wc.lpszClassName = _T("MHeaderbarCtrl");
+	wc.lpszClassName = L"MHeaderbarCtrl";
 	wc.lpfnWndProc = MHeaderbarWndProc;
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wc.cbWndExtra = sizeof(MHeaderbarCtrl*);
 	wc.style = CS_GLOBALCLASS|CS_SAVEBITS;
 	RegisterClassEx(&wc);
@@ -130,29 +130,28 @@ static LRESULT MHeaderbar_OnPaint(HWND hwndDlg, MHeaderbarCtrl *mit)
 {
 	int iTopSpace = IsAeroMode() ? 0 : 3;
 	PAINTSTRUCT ps;
-	HBITMAP hBmp, hOldBmp;
 
 	int titleLength = GetWindowTextLength(hwndDlg) + 1;
-	TCHAR *szTitle = (TCHAR *)mir_alloc(sizeof(TCHAR) * titleLength);
+	wchar_t *szTitle = (wchar_t *)mir_alloc(sizeof(wchar_t) * titleLength);
 	GetWindowText(hwndDlg, szTitle, titleLength);
 
-	TCHAR *szSubTitle = _tcschr(szTitle, _T('\n'));
+	wchar_t *szSubTitle = wcschr(szTitle, '\n');
 	if (szSubTitle)
 		*szSubTitle++ = 0;
 
 	HDC hdc = BeginPaint(hwndDlg, &ps);
 	HDC tempDC = CreateCompatibleDC(hdc);
 
-	BITMAPINFO bmi;
+	BITMAPINFO bmi = { 0 };
 	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	bmi.bmiHeader.biWidth = mit->width;
 	bmi.bmiHeader.biHeight = -mit->height; // we need this for DrawThemeTextEx
 	bmi.bmiHeader.biPlanes = 1;
 	bmi.bmiHeader.biBitCount = 32;
 	bmi.bmiHeader.biCompression = BI_RGB;
-	hBmp = CreateDIBSection(tempDC, &bmi, DIB_RGB_COLORS, NULL, NULL, 0);
+	HBITMAP hBmp = CreateDIBSection(tempDC, &bmi, DIB_RGB_COLORS, nullptr, nullptr, 0);
 
-	hOldBmp = (HBITMAP)SelectObject(tempDC, hBmp);
+	HBITMAP hOldBmp = (HBITMAP)SelectObject(tempDC, hBmp);
 
 	if (IsAeroMode()) {
 		RECT temprc = { 0, 0, mit->width, mit->width };
@@ -188,7 +187,7 @@ static LRESULT MHeaderbar_OnPaint(HWND hwndDlg, MHeaderbarCtrl *mit)
 		DrawIcon(tempDC, 10, iTopSpace, mit->hIcon);
 	else {
 		HICON hIcon = (HICON)SendMessage(GetParent(hwndDlg), WM_GETICON, ICON_BIG, 0);
-		if (hIcon == NULL)
+		if (hIcon == nullptr)
 			hIcon = (HICON)SendMessage(GetParent(hwndDlg), WM_GETICON, ICON_SMALL, 0);
 		DrawIcon(tempDC, 10, iTopSpace, hIcon);
 	}
@@ -209,17 +208,13 @@ static LRESULT MHeaderbar_OnPaint(HWND hwndDlg, MHeaderbarCtrl *mit)
 		textRect.left = 50;
 		hOldFont = (HFONT)SelectObject(tempDC, hFntBold);
 
-		wchar_t *szTitleW = mir_t2u(szTitle);
-		drawThemeTextEx(hTheme, tempDC, WP_CAPTION, CS_ACTIVE, szTitleW, -1, DT_TOP | DT_LEFT | DT_SINGLELINE | DT_NOPREFIX | DT_NOCLIP | DT_END_ELLIPSIS, &textRect, &dto);
-		mir_free(szTitleW);
+		drawThemeTextEx(hTheme, tempDC, WP_CAPTION, CS_ACTIVE, szTitle, -1, DT_TOP | DT_LEFT | DT_SINGLELINE | DT_NOPREFIX | DT_NOCLIP | DT_END_ELLIPSIS, &textRect, &dto);
 
 		if (szSubTitle) {
 			textRect.left = 66;
 			SelectObject(tempDC, hFont);
 
-			wchar_t *szSubTitleW = mir_t2u(szSubTitle);
-			drawThemeTextEx(hTheme, tempDC, WP_CAPTION, CS_ACTIVE, szSubTitleW, -1, DT_BOTTOM | DT_LEFT | DT_SINGLELINE | DT_NOPREFIX | DT_NOCLIP | DT_END_ELLIPSIS, &textRect, &dto);
-			mir_free(szSubTitleW);
+			drawThemeTextEx(hTheme, tempDC, WP_CAPTION, CS_ACTIVE, szSubTitle, -1, DT_BOTTOM | DT_LEFT | DT_SINGLELINE | DT_NOPREFIX | DT_NOCLIP | DT_END_ELLIPSIS, &textRect, &dto);
 		}
 		CloseThemeData(hTheme);
 	}
@@ -250,7 +245,7 @@ static LRESULT MHeaderbar_OnPaint(HWND hwndDlg, MHeaderbarCtrl *mit)
 
 		for (int i = 0; i < mit->nControlsToRedraw; i++) {
 			GetWindowRect(mit->controlsToRedraw[i], &temprc);
-			MapWindowPoints(NULL, hwndDlg, (LPPOINT)&temprc, 2);
+			MapWindowPoints(nullptr, hwndDlg, (LPPOINT)&temprc, 2);
 			HRGN hRgnTmp = CreateRectRgnIndirect(&temprc);
 			CombineRgn(hRgn, hRgn, hRgnTmp, RGN_DIFF);
 			DeleteObject(hRgnTmp);
@@ -261,7 +256,7 @@ static LRESULT MHeaderbar_OnPaint(HWND hwndDlg, MHeaderbarCtrl *mit)
 
 	BitBlt(hdc, mit->rc.left, mit->rc.top, mit->width, mit->height, tempDC, 0, 0, SRCCOPY);
 
-	SelectClipRgn(hdc, NULL);
+	SelectClipRgn(hdc, nullptr);
 
 	SelectObject(tempDC, hOldBmp);
 	DeleteObject(hBmp);
@@ -288,7 +283,7 @@ static LRESULT CALLBACK MHeaderbarWndProc(HWND hwndDlg, UINT  msg, WPARAM wParam
 			RECT rcWnd; GetWindowRect(hwndDlg, &rcWnd);
 			itc->controlsToRedraw = 0;
 			itc->nControlsToRedraw = 0;
-			for (HWND hChild = FindWindowEx(hParent, NULL, NULL, NULL); hChild; hChild = FindWindowEx(hParent, hChild, NULL, NULL)) {
+			for (HWND hChild = FindWindowEx(hParent, nullptr, nullptr, nullptr); hChild; hChild = FindWindowEx(hParent, hChild, nullptr, nullptr)) {
 				if (hChild != hwndDlg) {
 					RECT rcChild; GetWindowRect(hChild, &rcChild);
 					RECT rc;
@@ -326,7 +321,7 @@ static LRESULT CALLBACK MHeaderbarWndProc(HWND hwndDlg, UINT  msg, WPARAM wParam
 	case WM_SETICON:
 		if (wParam < 3) {
 			itc->hIcon = (HICON)lParam;
-			InvalidateRect(hwndDlg, NULL, FALSE);
+			InvalidateRect(hwndDlg, nullptr, FALSE);
 		}
 		break;
 
@@ -334,7 +329,7 @@ static LRESULT CALLBACK MHeaderbarWndProc(HWND hwndDlg, UINT  msg, WPARAM wParam
 		return 1;
 
 	case WM_NCPAINT:
-		InvalidateRect(hwndDlg, NULL, FALSE);
+		InvalidateRect(hwndDlg, nullptr, FALSE);
 		break;
 
 	case WM_PAINT:

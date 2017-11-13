@@ -55,7 +55,7 @@ MyBitmap::MyBitmap(int w, int h)
 	allocate(w, h);
 }
 
-MyBitmap::MyBitmap(const TCHAR *fn)
+MyBitmap::MyBitmap(const wchar_t *fn)
 {
 	dcBmp = 0;
 	hBmp = 0;
@@ -594,9 +594,9 @@ void MyBitmap::DrawIcon(HICON hic, int x, int y, int w, int h)
 	DeleteObject(info.hbmMask);
 }
 
-void MyBitmap::Draw_Text(TCHAR *str, int x, int y)
+void MyBitmap::Draw_Text(wchar_t *str, int x, int y)
 {
-	SIZE sz; GetTextExtentPoint32(this->getDC(), str, (int)mir_tstrlen(str), &sz);
+	SIZE sz; GetTextExtentPoint32(this->getDC(), str, (int)mir_wstrlen(str), &sz);
 	RECT rc; SetRect(&rc, x, y, x + 10000, y + 10000);
 	this->saveAlpha(x, y, sz.cx, sz.cy);
 	DrawText(this->getDC(), str, -1, &rc, DT_LEFT | DT_TOP | DT_SINGLELINE | DT_NOPREFIX);
@@ -676,11 +676,11 @@ static int hex2dec(char hex)
 	return 0;
 }
 
-bool MyBitmap::loadFromFile_pixel(const TCHAR *fn)
+bool MyBitmap::loadFromFile_pixel(const wchar_t *fn)
 {
 	allocate(1, 1);
 	int r, g, b, a = 255;
-	const TCHAR *p = fn + mir_tstrlen(_T("pixel:"));
+	const wchar_t *p = fn + mir_wstrlen(L"pixel:");
 	r = (hex2dec(p[0]) << 4) + hex2dec(p[1]);
 	g = (hex2dec(p[2]) << 4) + hex2dec(p[3]);
 	b = (hex2dec(p[4]) << 4) + hex2dec(p[5]);
@@ -688,9 +688,9 @@ bool MyBitmap::loadFromFile_pixel(const TCHAR *fn)
 	return true;
 }
 
-bool MyBitmap::loadFromFile_gradient(const TCHAR *fn)
+bool MyBitmap::loadFromFile_gradient(const wchar_t *fn)
 {
-	const TCHAR *p = fn + mir_tstrlen(_T("gradient:"));
+	const wchar_t *p = fn + mir_wstrlen(L"gradient:");
 
 	if (*p == 'h') allocate(256, 1);
 	else allocate(1, 256);
@@ -720,18 +720,18 @@ bool MyBitmap::loadFromFile_gradient(const TCHAR *fn)
 	return true;
 }
 
-bool MyBitmap::loadFromFile(const TCHAR *fn)
+bool MyBitmap::loadFromFile(const wchar_t *fn)
 {
 	if (bits) freemem();
 
-	if (!_tcsncmp(fn, _T("pixel:"), mir_tstrlen(_T("pixel:"))))
+	if (!wcsncmp(fn, L"pixel:", mir_wstrlen(L"pixel:")))
 		return loadFromFile_pixel(fn);
 
-	if (!_tcsncmp(fn, _T("gradient:"), mir_tstrlen(_T("gradient:"))))
+	if (!wcsncmp(fn, L"gradient:", mir_wstrlen(L"gradient:")))
 		return loadFromFile_gradient(fn);
 
 	SIZE sz;
-	HBITMAP hBmpLoaded = (HBITMAP)CallService(MS_IMG_LOAD, (WPARAM)fn, IMGL_TCHAR);
+	HBITMAP hBmpLoaded = (HBITMAP)CallService(MS_IMG_LOAD, (WPARAM)fn, IMGL_WCHAR);
 	if (!hBmpLoaded)
 		return false;
 
@@ -762,18 +762,18 @@ void MyBitmap::allocate(int w, int h)
 	width = w;
 	height = h;
 
-	BITMAPINFO bi;
+	if (dcBmp) {
+		DeleteObject(SelectObject(dcBmp, hBmpSave));
+		DeleteDC(dcBmp);
+	}
+
+	BITMAPINFO bi = { 0 };
 	bi.bmiHeader.biSize = sizeof(bi.bmiHeader);
 	bi.bmiHeader.biWidth = w;
 	bi.bmiHeader.biHeight = -h;
 	bi.bmiHeader.biPlanes = 1;
 	bi.bmiHeader.biBitCount = 32;
 	bi.bmiHeader.biCompression = BI_RGB;
-
-	if (dcBmp) {
-		DeleteObject(SelectObject(dcBmp, hBmpSave));
-		DeleteDC(dcBmp);
-	}
 
 	hBmp = (HBITMAP)CreateDIBSection(0, &bi, DIB_RGB_COLORS, (void **)&bits, 0, 0);
 	dcBmp = CreateCompatibleDC(0);

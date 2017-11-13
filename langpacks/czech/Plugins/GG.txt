@@ -38,8 +38,8 @@ Po dokončení přenosu obrázku použít:
 Zobrazit odkazy i od neznámých kontaktů
 [Enable avatars]
 Aktivovat avatary
-[You will need to reconnect for the changes you have made on this page to take effect.]
-Poznámka: Provedené změny se projeví až při dalším připojení do sítě.
+[These changes will take effect the next time you connect to the GG network.]
+Provedené změny se projeví až při dalším připojení k síti GG.
 [Conference policy]
 Pravidla pro konference
 [if total participant count greater than:]
@@ -168,7 +168,7 @@ Chyba při připojování k serveru ICQ. Zkuste prosím danou akci zopakovat poz
 Neplatná odezva serveru Gadu-Gadu.
 [The connection with the server was abortively closed during the connection attempt. You may have lost your local network connection.]
 Připojování k serveru ICQ bylo přerušeno. Nejste náhodou odpojeni od sítě?
-[Your Gadu-Gadu number and password combination was rejected by the Gadu-Gadu server. Please check login details at M->Options->Network->Gadu-Gadu and try again.]
+[Your Gadu-Gadu number and password combination was rejected by the Gadu-Gadu server. Please check login details at Options -> Network -> Gadu-Gadu and try again.]
 Server neakceptoval zadanou kombinaci uživatelského jména a hesla. Zkontrolujte správnost příslušných údajů v M->Možnosti->Sítě->Gadu-Gadu.
 [Connecting to Gadu-Gadu hub failed.]
 Nelze připojit k požadovanému serveru Gadu-Gadu.
@@ -213,14 +213,6 @@ muž
 žena
 [<not specified>]
 <neurčeno>
-[Network]
-Sítě
-[General]
-Obecné
-[Conference]
-Konference
-[Advanced]
-Extra
 [<Last Status>]
 <poslední stav>
 [System tray icon]
@@ -245,6 +237,14 @@ Filtrování
 Vaše údaje byly nahrány na veřejného adresáře.
 [You have to be logged in before you can change your details.]
 Musíte být přihlášeni pro změnu vašich údajů.
+[Network]
+Sítě
+[General]
+Obecné
+[Conference]
+Konference
+[Advanced]
+Extra
 ;file \protocols\Gadu-Gadu\src\filetransfer.cpp
 [Cannot create transfer file. ERROR: %d: %s (dcc)\n%s]
 Nelze vytvořit soubor pro přenos. CHYBA: %d: %s (dcc)\n%s
@@ -335,10 +335,10 @@ Přehled relací
 Soubory obrázků (*.bmp,*.gif,*.jpeg,*.jpg,*.png)
 [Image cannot be written to disk.]
 Obrázek nelze uložit na disk.
-[Delete image from the list]
-Smazat obrázek ze seznamu
 [Save image to disk]
 Uložit obrázek na disk
+[Delete image from the list]
+Smazat obrázek ze seznamu
 [Image from %s]
 Obrázek od %s
 [Image for %s]
@@ -435,8 +435,8 @@ Nelze načíst obrázkový token.
 Nový účet nelze založit. Chyba:\n\t%s
 [Registration rejected]
 Registrace odmítnuta
-[You have registered new account.\nPlease fill up your personal details in "M->View/Change My Details..."]
-Založili jste nový účet.\nZadejte vaše osobní informace v "Menu->Informace o sobě"
+[You have registered new account.\nPlease fill up your personal details in "Main menu -> View/change my details..."]
+Založili jste nový účet.\nZadejte vaše osobní informace v "Hlavní nabídka -> Informace o sobě..."
 [Your account cannot be removed because of error:\n\t%s]
 Požadovaný účet nelze zrušit. Chyba:\n\t%s
 [Bad number or password]

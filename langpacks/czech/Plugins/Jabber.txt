@@ -166,8 +166,6 @@ Domov
 Práce
 [Internet]
 Internet
-[X400]
-X400
 [Jabber vCard: Add Phone Number]
 Jabber vCard: Přidání telefonu
 [Phone number:]
@@ -184,14 +182,8 @@ Textovka
 Mobil
 [Video]
 Video
-[BBS]
-BBS
 [Modem]
 Modem
-[ISDN]
-ISDN
-[PCS]
-PCS
 [Load]
 Načíst
 [Save]
@@ -512,7 +504,7 @@ Podporuje doplněk SecureIM pro Mirandu
 Podporuje OTR (komunikace mimo záznam)
 [Supports New_GPG plugin for Miranda NG]
 Podporuje doplněk New_GPG pro Mirandu
-[Blocks packets from other users/groupchats using Privacy lists]
+[Blocks packets from other users/group chats using Privacy lists]
 Umožňuje blokovat komunikaci na základě definovaných filtrů
 [Supports Message Receipts]
 Podporuje potvrzenky o doručení
@@ -626,9 +618,9 @@ Zkopírovat téma místnosti
 Online
 [Away]
 Na chvíli pryč
-[NA]
+[Not available]
 Nejsem tady
-[DND]
+[Do not disturb]
 Nerušit!
 [Free for chat]
 Mám volno
@@ -984,7 +976,7 @@ Nejvyšší priorita (dle serveru)
 Zpráva stavu
 ;file \protocols\JabberG\src\jabber_message_handlers.cpp
 ;file \protocols\JabberG\src\jabber_misc.cpp
-[CHAT plugin is required for conferences. Install it before chatting]
+[Chat plugin is required for conferences. Install it before chatting]
 Tato funkce vyžaduje doplněk 'Chat'. Před použitím je třeba nainstalovat.
 [To]
 Do
@@ -1384,10 +1376,6 @@ jorubština
 Změny se projeví až při příštím připojení do sítě Jabber.
 [Jabber Protocol Option]
 Možnost protokolu Jabber
-[Confirm password]
-Potvrzení hesla
-[Passwords do not match.]
-Hesla se neshodují.
 [This operation will kill your account, roster and all other information stored at the server. Are you ready to do that?]
 Opravdu chcete odstranit vybraný účet, tj. seznam kontaktů umístěný na serveru a všechny ostatní související informace?
 [Account removal warning]
@@ -1403,7 +1391,7 @@ Odeslat zprávy pomaleji, ale s úplným potvrzením
 [Enable avatars]
 Aktivovat avatary
 [Log chat state changes]
-Zaznamenat změny stavu během diskuse
+Zaznamenat změny stavu diskuse
 [Log presence subscription state changes]
 Zaznamenat změny stavu autorizace
 [Log presence errors]
@@ -1440,8 +1428,8 @@ Automaticky přijímat žádosti o autorizaci
 Opravovat neplatné datum příchozích zpráv
 [Disable frame]
 Vypnout zobrazení rámečku
-[Enable XMPP link processing (requires Association Manager)]
-Povolit práci s odkazy (vyžaduje doplněk Association Manager)
+[Enable XMPP link processing (requires AssocMgr)]
+Povolit práci s odkazy (vyžaduje doplněk AssocMgr)
 [Keep contacts assigned to local groups (ignore roster group)]
 Neměnit rozmístění kontaktů ve skupinách (ignorovat stav na serveru)
 [Security]
@@ -1480,8 +1468,6 @@ Změny funkce
 Změny stavu
 [Don't notify history messages]
 Neoznamovat staré zprávy
-[JID]
-Identifikátor
 [Group]
 Skupina
 [Subscription]
@@ -1510,10 +1496,20 @@ XMPP (zabezpečená síť, starší typ)
 Google Talk!
 [LiveJournal Talk]
 LiveJournal Talk
+[League Of Legends (EU Nordic)]
+
+[League Of Legends (EU West)]
+
+[League Of Legends (Oceania)]
+
+[League Of Legends (US)]
+
 [Odnoklassniki]
 Odnoklassniki
+[Yandex]
+Yandex
 [Some changes will take effect the next time you connect to the Jabber network.]
-Některé změny se projeví až při příštím přihlášení do vybrané sítě Jabber.
+Některé změny se projeví až při dalším připojení k síti Jabber.
 ;file \protocols\JabberG\src\jabber_password.cpp
 [Set New Password for %s@%S]
 Nové heslo pro %s@%S
@@ -1672,10 +1668,8 @@ Změnit stav
 Vyberte požadovaný stav a zadejte zprávu
 [Status]
 Stavy
-[Extended Away (N/A)]
-
-[Do Not Disturb]
-Nerušit
+[Extended away (Not available)]
+Nejsem tady
 [Invisible]
 Neviditelný
 [Offline]
@@ -1902,6 +1896,8 @@ Poznámka
 [%s connection]
 %s - spojení se serverem
 ;file \protocols\JabberG\src\jabber_xstatus.cpp
+[<advanced status slot>]
+<slot rozšířeného stavu>
 [Afraid]
 obavy
 [Amazed]
@@ -2239,284 +2235,7 @@ Nálada
 [Activities]
 Činnosti
 ;file \protocols\JabberG\src\stdafx.h
-[I'm happy Miranda NG user. Get it at http://miranda-ng.org/.]
-Jsem šťastný uživatel Mirandy NG. Stáhněte si ji z http://miranda-ng.org/.
+[I'm happy Miranda NG user. Get it at https://miranda-ng.org/.]
+Jsem šťastný uživatel Mirandy NG. Stáhněte si ji z https://miranda-ng.org/.
 [/me slaps %s around a bit with a large trout]
-
-;file \protocols\JabberG\src\obsoleted\jabber_form2.cpp
-[One or more addresses for communication related to abusive traffic]
-
-[One or more addresses for customer feedback]
-
-[One or more addresses for communication related to sales and marketing]
-
-[One or more addresses for communication related to security concerns]
-
-[One or more addresses for customer support]
-
-[The Jabber ID of a single entity to which an operation applies]
-
-[The Jabber ID of one or more entities to which an operation applies]
-
-[The Jabber IDs associated with active sessions]
-
-[The number of online entities that are active]
-
-[A list of entities with administrative privileges]
-
-[The text of an announcement to be sent to active users or all users]
-
-[A list of entities with whom communication is blocked]
-
-[The number of seconds to delay before applying a change]
-
-[The Jabber IDs that have been disabled]
-
-[The number of disabled entities]
-
-[The email address for a user]
-
-[The given (first) name of a user]
-
-[The number of online entities that are idle]
-
-[The IP addresses of an account's online sessions]
-
-[The last login time (per XEP-0082) of a user]
-
-[The number of logins per minute for an account]
-
-[The maximum number of items associated with a search or list]
-
-[The text of a message of the day]
-
-[The names of an account's online sessions]
-
-[The Jabber IDs associated with online users]
-
-[The number of online entities]
-
-[The password for an account]
-
-[Password verification]
-
-[A list of registered entities]
-
-[The number of registered entities]
-
-[Number of roster items for an account]
-
-[The number of stanzas being sent per second by an account]
-
-[The family (last) name of a user]
-
-[The text of a welcome message]
-
-[A list of entities with whom communication is allowed]
-
-[First Name]
-Jméno
-[Last Name]
-Příjmení
-[Desired Nickname]
-Požadovaná přezdívka
-[Your URL]
-Vaše URL
-[Email Address]
-E-mailová adresa
-[FAQ Entry]
-
-[Whether to allow occupants to invite others]
-
-[Whether to allow occupants to change subject]
-
-[Whether to enable logging of room conversations]
-
-[Natural language for room discussions]
-
-[Maximum number of room occupants]
-
-[Whether to make room members-only]
-
-[Whether to make room moderated]
-
-[Whether a password is required to enter]
-
-[Whether to make room persistent]
-
-[Roles for which presence is broadcast]
-
-[Whether to allow public searching for room]
-
-[Full list of room admins]
-
-[Short description of room]
-
-[Natural-language room name]
-
-[Full list of room owners]
-
-[The room password]
-
-[Affiliations that may discover real JIDs of occupants]
-
-[Precondition: node configuration with the specified access model]
-
-[Whether to allow the subscription]
-
-[The SubID of the subscription]
-
-[The NodeID of the relevant node]
-
-[The address (JID) of the subscriber]
-
-[Whether an entity wants to receive or disable notifications]
-
-[Whether an entity wants to receive digests (aggregations) of notifications or all notifications individually]
-
-[The minimum number of milliseconds between sending any two notification digests]
-
-[The date and time at which a leased subscription will end or has ended]
-
-[Whether an entity wants to receive an XMPP message body in addition to the payload format]
-
-[The presence states for which an entity wants to receive notifications]
-
-[Who may subscribe and retrieve items]
-
-[The URL of an XSL transformation which can be applied to payloads in order to generate an appropriate message body element.]
-
-[The collection with which a node is affiliated]
-
-[The URL of an XSL transformation which can be applied to the payload format in order to generate a valid Data Forms result that the client could display using a generic Data Forms rendering engine]
-
-[Whether to deliver payloads with event notifications]
-
-[Whether owners or publisher should receive replies to items]
-
-[Who may associate leaf nodes with a collection]
-
-[The list of JIDs that may associated leaf nodes with a collection]
-
-[The child nodes (leaf or collection) associated with a collection]
-
-[The maximum number of child nodes that can be associated with a collection]
-
-[The maximum number of items to persist]
-
-[The maximum payload size in bytes]
-
-[Whether the node is a leaf (default) or a collection]
-
-[Whether to notify subscribers when the node configuration changes]
-
-[Whether to notify subscribers when the node is deleted]
-
-[Whether to notify subscribers when items are removed from the node]
-
-[Whether to persist items to storage]
-
-[Whether to deliver notifications to available users only]
-
-[The publisher model]
-
-[The specific multi-user chat rooms to specify for replyroom]
-
-[The specific JID(s) to specify for replyto]
-
-[The roster group(s) allowed to subscribe and retrieve items]
-
-[Whether to send items to new subscribers]
-
-[Whether to allow subscriptions]
-
-[A friendly name for the node]
-
-[The type of node data, usually specified by the namespace of the payload (if any); MAY be list-single rather than text-single]
-
-[The JIDs of those to contact with questions]
-
-[The date and time when the node was created]
-
-[The JID of the node creator]
-
-[A description of the node]
-
-[The default language of the node]
-
-[The number of subscribers to the node]
-
-[The JIDs of those with an affiliation of owner]
-
-[The JIDs of those with an affiliation of publisher]
-
-[The name of the node]
-
-[Payload type]
-
-[Whether to automatically authorize subscription requests]
-
-[Whether to automatically accept file transfers]
-
-[Whether to automatically open new messages]
-
-[Whether to automatically go offline when idle]
-
-[Whether to play sounds]
-
-[A list of pending file transfers]
-
-[A list of joined group chat rooms]
-
-[A presence or availability status]
-
-[The status message text]
-
-[The new priority for the client]
-
-[Account name associated with the user]
-
-[Familiar name of the user]
-
-[Password or secret for the user]
-
-[Full name of the user]
-
-[First name or given name of the user]
-
-[Last name, surname, or family name of the user]
-
-[Email address of the user]
-
-[Street portion of a physical or mailing address]
-
-[Locality portion of a physical or mailing address]
-
-[Region portion of a physical or mailing address]
-
-[Postal code portion of a physical or mailing address]
-
-[Family Name]
-
-[Whether to accept the invitation]
-
-[Another resource with which to continue the session]
-
-[Disclosure of content, decryption keys or identities]
-
-[Whether may send Chat State Notifications per XEP-0085]
-
-[Whether allowed to use XHTML-IM formatting per XEP-0071]
-
-[Primary written language of the chat (each value appears in order of preference and conforms to RFC 4646 and the IANA registry)]
-
-[Whether allowed to log messages (i.e., whether Off-The-Record mode is required)]
-
-[Whether to renegotiate the session]
-
-[Minimum security level]
-
-[Whether to terminate the session]
-
-[Whether to enable Message Receipts per XEP-0184]
 

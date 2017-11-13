@@ -3,6 +3,11 @@
 
 HANDLE hXStatusAdvancedStatusIcons[MRA_XSTATUS_COUNT+4];
 
+IconItem gdiMainIcon[1] =
+{
+	{ LPGEN("Main icon"),         "main",                 IDI_MRA }
+};
+
 IconItem gdiMenuItems[MAIN_MENU_ITEMS_COUNT] =
 {
 	{ MRA_GOTO_INBOX_STR,         MRA_GOTO_INBOX,         IDI_INBOX             },
@@ -64,17 +69,18 @@ HICON IconLibGetIconEx(HANDLE hIcon, DWORD dwFlags)
 
 void IconsLoad()
 {
-	g_hMainIcon = (HICON)LoadImage(g_hInstance, MAKEINTRESOURCE(IDI_MRA), IMAGE_ICON, 0, 0, LR_SHARED);
-
+	Icon_Register(g_hInstance, LPGEN("Protocols") "/" LPGEN("MRA"), gdiMainIcon, 1, "MRA_");
 	Icon_Register(g_hInstance, LPGEN("Protocols") "/" LPGEN("MRA") "/" LPGEN("Main Menu"), gdiMenuItems, MAIN_MENU_ITEMS_COUNT, "MRA_");
 	Icon_Register(g_hInstance, LPGEN("Protocols") "/" LPGEN("MRA") "/" LPGEN("Contact Menu"), gdiContactMenuItems, CONTACT_MENU_ITEMS_COUNT, "MRA_");
 	Icon_Register(g_hInstance, LPGEN("Protocols") "/" LPGEN("MRA") "/" LPGEN("Extra status"), gdiExtraStatusIconsItems, ADV_ICON_MAX, "MRA_");
+
+	g_hMainIcon = IconLibGetIcon(gdiMainIcon[0].hIcolib);
 }
 
 void InitXStatusIcons()
 {
 	// load libs
-	TCHAR szBuff[MAX_FILEPATH];
+	wchar_t szBuff[MAX_FILEPATH];
 	if (GetModuleFileName(NULL, szBuff, _countof(szBuff))) {
 		LPWSTR lpwszFileName;
 		g_dwMirWorkDirPathLen = GetFullPathName(szBuff, MAX_FILEPATH, g_szMirWorkDirPath, &lpwszFileName);
@@ -84,12 +90,12 @@ void InitXStatusIcons()
 
 			// load xstatus icons lib
 			DWORD dwBuffLen;
-			DWORD dwErrorCode = FindFile(g_szMirWorkDirPath, (DWORD)g_dwMirWorkDirPathLen, _T("xstatus_MRA.dll"), -1, szBuff, _countof(szBuff), &dwBuffLen);
+			DWORD dwErrorCode = FindFile(g_szMirWorkDirPath, (DWORD)g_dwMirWorkDirPathLen, L"xstatus_MRA.dll", -1, szBuff, _countof(szBuff), &dwBuffLen);
 			if (dwErrorCode == NO_ERROR) {
 				g_hDLLXStatusIcons = LoadLibraryEx(szBuff, NULL, 0);
 				if (g_hDLLXStatusIcons) {
 					dwBuffLen = LoadString(g_hDLLXStatusIcons, IDS_IDENTIFY, szBuff, MAX_FILEPATH);
-					if (dwBuffLen == 0 || _tcsnicmp(_T("# Custom Status Icons #"), szBuff, 23)) {
+					if (dwBuffLen == 0 || wcsnicmp(L"# Custom Status Icons #", szBuff, 23)) {
 						FreeLibrary(g_hDLLXStatusIcons);
 						g_hDLLXStatusIcons = NULL;
 					}
@@ -101,9 +107,9 @@ void InitXStatusIcons()
 	GetModuleFileName((g_hDLLXStatusIcons != NULL) ? g_hDLLXStatusIcons : g_hInstance, szBuff, _countof(szBuff));
 
 	SKINICONDESC sid = { 0 };
-	sid.section.t = LPGENT("Protocols")_T("/") LPGENT("MRA") _T("/") LPGENT("Custom Status");
-	sid.defaultFile.t = szBuff;
-	sid.flags = SIDF_ALL_TCHAR;
+	sid.section.w = LPGENW("Protocols")L"/" LPGENW("MRA") L"/" LPGENW("Custom Status");
+	sid.defaultFile.w = szBuff;
+	sid.flags = SIDF_ALL_UNICODE;
 
 	hXStatusAdvancedStatusIcons[0] = NULL;
 	for (DWORD i = 1; i < MRA_XSTATUS_COUNT+1; i++) {
@@ -112,7 +118,7 @@ void InitXStatusIcons()
 		sid.pszName = szIconName;
 
 		int iCurIndex = i+IDI_XSTATUS1-1;
-		sid.description.t = (TCHAR*)lpcszXStatusNameDef[i];
+		sid.description.w = (wchar_t*)lpcszXStatusNameDef[i];
 		sid.iDefaultIndex = -iCurIndex;
 
 		hXStatusAdvancedStatusIcons[i] = IcoLib_AddIcon(&sid);

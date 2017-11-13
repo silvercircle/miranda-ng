@@ -2,8 +2,10 @@
 ;============================================================
 ;  File: Steam.dll
 ;  Plugin: Steam protocol
-;  Version: 0.11.4.2
+;  Version: 0.11.6.1
 ;  Authors: Miranda NG Team, Robert Pösel
 ;============================================================
+[Show chat state events (i.e., user closed chat session)]
+Show chat state events (i.e. user closed chat session)
 [Request authorization]
 Request authorisation

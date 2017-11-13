@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "..\stdafx.h"
+#include "../stdafx.h"
 
 /***********************************************************************************************************
  * common stuff
@@ -402,7 +402,7 @@ BYTE CExImContactXML::ExportEvents()
 
 	// read out all events for the current contact
 	for (MEVENT hDbEvent = db_event_first(_hContact); hDbEvent != NULL; hDbEvent = db_event_next(_hContact, hDbEvent)) {
-		DBEVENTINFO	dbei = { sizeof(DBEVENTINFO) };
+		DBEVENTINFO dbei = {};
 		if (DB::Event::GetInfoWithData(hDbEvent, &dbei))
 			continue;
 
@@ -603,11 +603,11 @@ int CExImContactXML::ImportContact()
 				// ask to delete new incomplete contact
 				if (_isNewContact && _hContact != NULL) {
 					int result = MsgBox(NULL, MB_YESNO|MB_ICONWARNING, 
-						LPGENT("Question"), 
-						LPGENT("Importing a new contact was aborted!"), 
-						LPGENT("You aborted import of a new contact.\nSome information may be missing for this contact.\n\nDo you want to delete the incomplete contact?"));
+						LPGENW("Question"), 
+						LPGENW("Importing a new contact was aborted!"), 
+						LPGENW("You aborted import of a new contact.\nSome information may be missing for this contact.\n\nDo you want to delete the incomplete contact?"));
 					if (result == IDYES) {
-						DB::Contact::Delete(_hContact);
+						db_delete_contact(_hContact);
 						_hContact = INVALID_CONTACT_ID;
 					}
 				}
@@ -687,8 +687,8 @@ int CExImContactXML::Import(BYTE keepMetaSubContact)
 				// load all subcontacts
 				do {
 					// update progressbar and abort if user clicked cancel
-					int result = _pXmlFile->_progress.UpdateContact(_T("Sub Contact: %s (%S)"), 
-						ptrT(mir_utf8decodeT(xContact->Attribute("nick"))), xContact->Attribute("proto"));
+					int result = _pXmlFile->_progress.UpdateContact(L"Sub Contact: %s (%S)", 
+						ptrW(mir_utf8decodeW(xContact->Attribute("nick"))), xContact->Attribute("proto"));
 					
 					// user clicked abort button
 					if (!result) break;
@@ -739,17 +739,17 @@ int CExImContactXML::ImportMetaSubContact(CExImContactXML * pMetaContact)
 		if (err == FALSE) {
 			// ask to delete new contact
 			if (_isNewContact && _hContact != NULL) {
-				LPTSTR ptszNick = mir_utf8decodeT(_pszNick);
-				LPTSTR ptszMetaNick = mir_utf8decodeT(pMetaContact->_pszNick);
+				LPTSTR ptszNick = mir_utf8decodeW(_pszNick);
+				LPTSTR ptszMetaNick = mir_utf8decodeW(pMetaContact->_pszNick);
 				int result = MsgBox(NULL, MB_YESNO|MB_ICONWARNING, 
-					LPGENT("Question"), 
-					LPGENT("Importing a new meta subcontact failed!"), 
-					LPGENT("The newly created meta subcontact '%s'\ncould not be added to metacontact '%s'!\n\nDo you want to delete this contact?"),
+					LPGENW("Question"), 
+					LPGENW("Importing a new meta subcontact failed!"), 
+					LPGENW("The newly created meta subcontact '%s'\ncould not be added to metacontact '%s'!\n\nDo you want to delete this contact?"),
 					ptszNick, ptszMetaNick);
 				MIR_FREE(ptszNick);
 				MIR_FREE(ptszMetaNick);
 				if (result == IDYES) {
-					DB::Contact::Delete(_hContact);
+					db_delete_contact(_hContact);
 					_hContact = INVALID_CONTACT_ID;
 				}
 			}
@@ -821,7 +821,7 @@ int CExImContactXML::ImportModule(TiXmlNode* xmlModule)
 			else if (ImportSetting(pszModule, xKey->ToElement()) == ERROR_OK) {
 				_pXmlFile->_numSettingsDone++;
 			}
-			if (!_pXmlFile->_progress.UpdateSetting(LPGENT("Settings: %S"), pszModule))
+			if (!_pXmlFile->_progress.UpdateSetting(LPGENW("Settings: %S"), pszModule))
 				return ERROR_ABORTED;
 		}
 		// import event
@@ -835,7 +835,7 @@ int CExImContactXML::ImportModule(TiXmlNode* xmlModule)
 				_pXmlFile->_numEventsDuplicated++;
 				break;
 			}
-			if (!_pXmlFile->_progress.UpdateSetting(LPGENT("Events: %S"), pszModule))
+			if (!_pXmlFile->_progress.UpdateSetting(LPGENW("Events: %S"), pszModule))
 				return ERROR_ABORTED;
 		}
 	} //*end for
@@ -939,7 +939,7 @@ int CExImContactXML::ImportEvent(LPCSTR pszModule, TiXmlElement *xmlEvent)
 		return ERROR_NOT_ADDED;
 
 	// timestamp must be valid
-	DBEVENTINFO	dbei = { sizeof(dbei) };
+	DBEVENTINFO	dbei = {};
 	xmlEvent->Attribute("time", (LPINT)&dbei.timestamp);
 	if (dbei.timestamp == 0)
 		return ERROR_INVALID_TIMESTAMP;

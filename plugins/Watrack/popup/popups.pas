@@ -247,7 +247,6 @@ begin
         colorBack       :=cb;
         colorText       :=ct;
 
-    //    if ServiceExists(MS_POPUP_REGISTERACTIONS)=0 then
         if ActionList=nil then
           flag:=0
         else
@@ -298,14 +297,13 @@ begin
   FillChar(hkrec,SizeOf(hkrec),0);
   with hkrec do
   begin
-    cbSize          :=SizeOf(hkrec);
     pszName         :=HKN_POPUP;
     pszDescription.a:='WATrack popup hotkey';
     pszSection.a    :=PluginName;
     pszService      :=MS_WAT_SHOWMUSICINFO;
     DefHotKey:=((HOTKEYF_ALT or HOTKEYF_CONTROL) shl 8) or VK_F7 or HKF_MIRANDA_LOCAL;
   end;
-  CallService(MS_HOTKEY_REGISTER,0,lparam(@hkrec));
+  Hotkey_Register(@hkrec);
 end;
 
 {$include pop_dlg.inc}
@@ -361,7 +359,7 @@ begin
   odp.szGroup.a  :='Popups';
   odp.pszTemplate:=PAnsiChar(IDD_OPT_POPUP);
   odp.pfnDlgProc :=@DlgPopupOpt;
-  CallService(MS_OPT_ADDPAGE,wParam,tlparam(@odp));
+  Options_AddPage(wParam,@odp);
   result:=0;
 end;
 
@@ -392,18 +390,18 @@ var
 begin
   result:=true;
   // Popups
-  newstate:=ServiceExists(MS_POPUP_ADDPOPUPW)<>0;
+  newstate:=ServiceExists(MS_POPUP_ADDPOPUPW);
   if newstate=PopupPresent then
     exit;
 
   PopupPresent:=newstate;
   if PopupPresent then
   begin
-    IsFreeImagePresent:=ServiceExists(MS_IMG_LOAD       )<>0;
-    IsPopup2Present   :=ServiceExists(MS_POPUP_ADDPOPUP2)<>0;
+    IsFreeImagePresent:=ServiceExists(MS_IMG_LOAD);
+    IsPopup2Present   :=ServiceExists(MS_POPUP_ADDPOPUP2);
     opthook:=HookEvent(ME_OPT_INITIALISE,@OnOptInitialise);
 
-    if ServiceExists(MS_POPUP_REGISTERACTIONS)<>0 then
+    if ServiceExists(MS_POPUP_REGISTERACTIONS) then
     begin
       if RegisterButtonIcons then
       begin
@@ -420,7 +418,7 @@ begin
   end;
 
   // TTB
-  newstate:=ServiceExists(MS_TTB_ADDBUTTON)<>0;
+  newstate:=ServiceExists(MS_TTB_ADDBUTTON);
   if newstate=(ttbInfo<>0) then
     exit;
 
@@ -433,7 +431,7 @@ begin
   end
   else
   begin
-    if ServiceExists(MS_TTB_REMOVEBUTTON)>0 then
+    if ServiceExists(MS_TTB_REMOVEBUTTON) then
       CallService(MS_TTB_REMOVEBUTTON,WPARAM(ttbInfo),0);
     ttbInfo:=0;
   end;
@@ -472,7 +470,8 @@ begin
   HookEvent(ME_SKIN2_ICONSCHANGED,@IconChanged);
 
   FillChar(mi,SizeOf(mi),0);
-  mi.root      :=Menu_CreateRoot(MO_MAIN, 'Watrack', MenuInfoPos, 0, 0);
+  SET_UID(@mi, '225458FC-C423-4B20-A798-2DB423506F80');
+  mi.root      :=hMenuRoot;
   mi.hIcon     :=IcoLib_GetIcon(IcoBtnInfo,0);
   mi.szName.a  :='Music Info';
   mi.pszService:=MS_WAT_SHOWMUSICINFO;
@@ -480,15 +479,15 @@ begin
   hMenuInfo:=Menu_AddMainMenuItem(@mi);
 
   ActionList:=nil;
-  if ServiceExists(MS_POPUP_ADDPOPUPW)<>0 then
+  if ServiceExists(MS_POPUP_ADDPOPUPW) then
   begin
-    IsFreeImagePresent:=ServiceExists(MS_IMG_LOAD       )<>0;
-    IsPopup2Present   :=ServiceExists(MS_POPUP_ADDPOPUP2)<>0;
+    IsFreeImagePresent:=ServiceExists(MS_IMG_LOAD);
+    IsPopup2Present   :=ServiceExists(MS_POPUP_ADDPOPUP2);
     PopupPresent:=true;
     opthook:=HookEvent(ME_OPT_INITIALISE,@OnOptInitialise);
     loadpopup;
 
-    if ServiceExists(MS_POPUP_REGISTERACTIONS)<>0 then
+    if ServiceExists(MS_POPUP_REGISTERACTIONS) then
     begin
       if RegisterButtonIcons then
       begin
@@ -507,7 +506,7 @@ begin
 
   plStatusHook:=HookEvent(ME_WAT_NEWSTATUS,@NewPlStatus);
 
-  if ServiceExists(MS_TTB_ADDBUTTON)>0 then
+  if ServiceExists(MS_TTB_ADDBUTTON) then
   begin
     onttbhook:=0;
     OnTTBLoaded(0,0);
@@ -531,7 +530,7 @@ begin
 
   if ttbInfo<>0 then
   begin
-    if ServiceExists(MS_TTB_REMOVEBUTTON)>0 then
+    if ServiceExists(MS_TTB_REMOVEBUTTON) then
       CallService(MS_TTB_REMOVEBUTTON,WPARAM(ttbInfo),0);
     ttbInfo:=0;
   end;

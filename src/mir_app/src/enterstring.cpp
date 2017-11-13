@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -57,18 +57,18 @@ static void ComboLoadRecentStrings(HWND hwndDlg, EnterStringFormParam *pForm)
 	for (int i = 0; i < pForm->recentCount; i++) {
 		char setting[MAXMODULELABELLENGTH];
 		mir_snprintf(setting, "%s%d", pForm->szDataPrefix, i);
-		ptrT tszRecent(db_get_tsa(NULL, pForm->szModuleName, setting));
-		if (tszRecent != NULL)
+		ptrW tszRecent(db_get_wsa(0, pForm->szModuleName, setting));
+		if (tszRecent != nullptr)
 			SendDlgItemMessage(hwndDlg, pForm->idcControl, CB_ADDSTRING, 0, tszRecent);
 	}
 
 	if (!SendDlgItemMessage(hwndDlg, pForm->idcControl, CB_GETCOUNT, 0, 0))
-		SendDlgItemMessage(hwndDlg, pForm->idcControl, CB_ADDSTRING, 0, (LPARAM)_T(""));
+		SendDlgItemMessage(hwndDlg, pForm->idcControl, CB_ADDSTRING, 0, (LPARAM)L"");
 }
 
 static void ComboAddRecentString(HWND hwndDlg, EnterStringFormParam *pForm)
 {
-	TCHAR *string = pForm->ptszResult;
+	wchar_t *string = pForm->ptszResult;
 	if (!string || !*string)
 		return;
 	
@@ -77,14 +77,14 @@ static void ComboAddRecentString(HWND hwndDlg, EnterStringFormParam *pForm)
 
 	int id;
 	SendDlgItemMessage(hwndDlg, pForm->idcControl, CB_ADDSTRING, 0, (LPARAM)string);
-	if ((id = SendDlgItemMessage(hwndDlg, pForm->idcControl, CB_FINDSTRING, (WPARAM)-1, (LPARAM)_T(""))) != CB_ERR)
+	if ((id = SendDlgItemMessage(hwndDlg, pForm->idcControl, CB_FINDSTRING, (WPARAM)-1, (LPARAM)L"")) != CB_ERR)
 		SendDlgItemMessage(hwndDlg, pForm->idcControl, CB_DELETESTRING, id, 0);
 
-	id = db_get_b(NULL, pForm->szModuleName, pForm->szDataPrefix, 0);
+	id = db_get_b(0, pForm->szModuleName, pForm->szDataPrefix, 0);
 	char setting[MAXMODULELABELLENGTH];
 	mir_snprintf(setting, "%s%d", pForm->szDataPrefix, id);
-	db_set_ts(NULL, pForm->szModuleName, setting, string);
-	db_set_b(NULL, pForm->szModuleName, pForm->szDataPrefix, (id + 1) % pForm->idcControl);
+	db_set_ws(0, pForm->szModuleName, setting, string);
+	db_set_b(0, pForm->szModuleName, pForm->szDataPrefix, (id + 1) % pForm->idcControl);
 }
 
 static INT_PTR CALLBACK sttEnterStringDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -94,8 +94,7 @@ static INT_PTR CALLBACK sttEnterStringDlgProc(HWND hwndDlg, UINT msg, WPARAM wPa
 	switch (msg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_RENAME, true));
-		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_RENAME, false));
+		Window_SetSkinIcon_IcoLib(hwndDlg, SKINICON_OTHER_RENAME);
 		params = (EnterStringFormParam *)lParam;
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)params);
 		SetWindowText(hwndDlg, params->caption);
@@ -111,7 +110,7 @@ static INT_PTR CALLBACK sttEnterStringDlgProc(HWND hwndDlg, UINT msg, WPARAM wPa
 				params->idcControl = IDC_TXT_MULTILINE;
 				params->height = 0;
 				rc.bottom += (rc.bottom - rc.top) * 2;
-				SetWindowPos(hwndDlg, NULL, 0, 0, rc.right - rc.left, rc.bottom - rc.top, SWP_NOMOVE | SWP_NOREPOSITION);
+				SetWindowPos(hwndDlg, nullptr, 0, 0, rc.right - rc.left, rc.bottom - rc.top, SWP_NOMOVE | SWP_NOREPOSITION);
 				break;
 
 			case ESF_COMBO:
@@ -127,7 +126,7 @@ static INT_PTR CALLBACK sttEnterStringDlgProc(HWND hwndDlg, UINT msg, WPARAM wPa
 				SendDlgItemMessage(hwndDlg, IDC_TXT_RICHEDIT, EM_SETEVENTMASK, 0, ENM_LINK);
 				params->height = 0;
 				rc.bottom += (rc.bottom - rc.top) * 2;
-				SetWindowPos(hwndDlg, NULL, 0, 0, rc.right - rc.left, rc.bottom - rc.top, SWP_NOMOVE | SWP_NOREPOSITION);
+				SetWindowPos(hwndDlg, nullptr, 0, 0, rc.right - rc.left, rc.bottom - rc.top, SWP_NOMOVE | SWP_NOREPOSITION);
 				break;
 			}
 		}
@@ -136,14 +135,14 @@ static INT_PTR CALLBACK sttEnterStringDlgProc(HWND hwndDlg, UINT msg, WPARAM wPa
 			SetDlgItemText(hwndDlg, params->idcControl, params->ptszInitVal);
 
 		if (params->szDataPrefix)
-			Utils_RestoreWindowPosition(hwndDlg, NULL, params->szModuleName, params->szDataPrefix);
+			Utils_RestoreWindowPosition(hwndDlg, 0, params->szModuleName, params->szDataPrefix);
 
-		SetTimer(hwndDlg, 1000, 50, NULL);
+		SetTimer(hwndDlg, 1000, 50, nullptr);
 
 		if (params->timeout > 0) {
-			SetTimer(hwndDlg, 1001, 1000, NULL);
-			TCHAR buf[128];
-			mir_sntprintf(buf, TranslateT("OK (%d)"), params->timeout);
+			SetTimer(hwndDlg, 1001, 1000, nullptr);
+			wchar_t buf[128];
+			mir_snwprintf(buf, TranslateT("OK (%d)"), params->timeout);
 			SetDlgItemText(hwndDlg, IDOK, buf);
 		}
 
@@ -161,8 +160,8 @@ static INT_PTR CALLBACK sttEnterStringDlgProc(HWND hwndDlg, UINT msg, WPARAM wPa
 			break;
 
 		case 1001:
-			TCHAR buf[128];
-			mir_sntprintf(buf, TranslateT("OK (%d)"), --params->timeout);
+			wchar_t buf[128];
+			mir_snwprintf(buf, TranslateT("OK (%d)"), --params->timeout);
 			SetDlgItemText(hwndDlg, IDOK, buf);
 
 			if (params->timeout < 0) {
@@ -197,10 +196,10 @@ static INT_PTR CALLBACK sttEnterStringDlgProc(HWND hwndDlg, UINT msg, WPARAM wPa
 
 			TEXTRANGE tr;
 			tr.chrg = param->chrg;
-			tr.lpstrText = (TCHAR *)mir_alloc(sizeof(TCHAR)*(tr.chrg.cpMax - tr.chrg.cpMin + 2));
+			tr.lpstrText = (wchar_t *)mir_alloc(sizeof(wchar_t)*(tr.chrg.cpMax - tr.chrg.cpMin + 2));
 			SendMessage(param->nmhdr.hwndFrom, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
 
-			Utils_OpenUrlT(tr.lpstrText);
+			Utils_OpenUrlW(tr.lpstrText);
 			mir_free(tr.lpstrText);
 		}
 		return TRUE;
@@ -224,7 +223,7 @@ static INT_PTR CALLBACK sttEnterStringDlgProc(HWND hwndDlg, UINT msg, WPARAM wPa
 
 		case IDCANCEL:
 			if (params->szDataPrefix)
-				Utils_SaveWindowPosition(hwndDlg, NULL, params->szModuleName, params->szDataPrefix);
+				Utils_SaveWindowPosition(hwndDlg, 0, params->szModuleName, params->szDataPrefix);
 
 			EndDialog(hwndDlg, 0);
 			break;
@@ -232,13 +231,13 @@ static INT_PTR CALLBACK sttEnterStringDlgProc(HWND hwndDlg, UINT msg, WPARAM wPa
 		case IDOK:
 			HWND hWnd = GetDlgItem(hwndDlg, params->idcControl);
 			int len = GetWindowTextLength(hWnd)+1;
-			params->ptszResult = (LPTSTR)mir_alloc(sizeof(TCHAR)*len);
+			params->ptszResult = (LPTSTR)mir_alloc(sizeof(wchar_t)*len);
 			GetWindowText(hWnd, params->ptszResult, len);
 
 			if ((params->type == ESF_COMBO) && params->szDataPrefix && params->recentCount)
 				ComboAddRecentString(hwndDlg, params);
 			if (params->szDataPrefix)
-				Utils_SaveWindowPosition(hwndDlg, NULL, params->szModuleName, params->szDataPrefix);
+				Utils_SaveWindowPosition(hwndDlg, 0, params->szModuleName, params->szDataPrefix);
 
 			EndDialog(hwndDlg, 1);
 			break;
@@ -251,7 +250,7 @@ static INT_PTR CALLBACK sttEnterStringDlgProc(HWND hwndDlg, UINT msg, WPARAM wPa
 INT_PTR __cdecl svcEnterString(WPARAM, LPARAM lParam)
 {
 	ENTER_STRING *pForm = (ENTER_STRING*)lParam;
-	if (pForm == NULL || pForm->cbSize != sizeof(ENTER_STRING))
+	if (pForm == nullptr || pForm->cbSize != sizeof(ENTER_STRING))
 		return FALSE;
 
 	EnterStringFormParam param;

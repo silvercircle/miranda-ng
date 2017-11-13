@@ -177,7 +177,7 @@ typedef struct _SAMPLELISTVIEWCOLUMN
 	int		 nSortType;		//	sorting type (STRING = 0, NUMERIC, DATE, DATETIME)
 	int		 nSortOrder;	//	sorting order (ASCENDING = -1, NONE, DESCENDING)
 	int		 nPriority;		//	sort priority (-1 for none, 0, 1, ..., nColumns - 1 maximum)
-	TCHAR lpszName[128];	//	column name
+	wchar_t lpszName[128];	//	column name
 } SAMPLELISTVIEWCOLUMN;
 
 //	Compare priority
@@ -543,7 +543,7 @@ int AddNewMailsToListView(HWND hListView, HACCOUNT ActualAccount, DWORD nflags)
 			if ((UnicodeHeader.From != NULL) && (UnicodeHeader.FromNick != NULL)) {
 				size_t size = mir_wstrlen(UnicodeHeader.From) + mir_wstrlen(UnicodeHeader.FromNick) + 4;
 				FromStr = new WCHAR[size];
-				mir_sntprintf(FromStr, size, L"%s <%s>", UnicodeHeader.FromNick, UnicodeHeader.From);
+				mir_snwprintf(FromStr, size, L"%s <%s>", UnicodeHeader.FromNick, UnicodeHeader.From);
 				FromStrNew = TRUE;
 			}
 			else if (UnicodeHeader.From != NULL)
@@ -569,7 +569,7 @@ int AddNewMailsToListView(HWND hListView, HACCOUNT ActualAccount, DWORD nflags)
 			SendMessage(hListView, LVM_SETITEMTEXT, (WPARAM)item.iItem, (LPARAM)&item);
 
 			item.iSubItem = 2;
-			mir_sntprintf(SizeStr, L"%d kB", msgq->MailData->Size / 1024);
+			mir_snwprintf(SizeStr, L"%d kB", msgq->MailData->Size / 1024);
 			item.pszText = SizeStr;
 			SendMessage(hListView, LVM_SETITEMTEXT, (WPARAM)item.iItem, (LPARAM)&item);
 
@@ -587,8 +587,8 @@ int AddNewMailsToListView(HWND hListView, HACCOUNT ActualAccount, DWORD nflags)
 		}
 
 		if ((nflags & YAMN_ACC_POP) && (ActualAccount->Flags & YAMN_ACC_POPN) && (msgq->Flags & YAMN_MSG_POPUP) && (msgq->Flags & YAMN_MSG_NEW)) {
-			mir_tstrncpy(NewMailPopup.lptzContactName, FromStr, _countof(NewMailPopup.lptzContactName));
-			mir_tstrncpy(NewMailPopup.lptzText, UnicodeHeader.Subject, _countof(NewMailPopup.lptzText));
+			mir_wstrncpy(NewMailPopup.lptzContactName, FromStr, _countof(NewMailPopup.lptzContactName));
+			mir_wstrncpy(NewMailPopup.lptzText, UnicodeHeader.Subject, _countof(NewMailPopup.lptzText));
 
 			PYAMN_MAILSHOWPARAM MailParam = (PYAMN_MAILSHOWPARAM)malloc(sizeof(YAMN_MAILSHOWPARAM));
 			if (MailParam) {
@@ -622,38 +622,35 @@ int AddNewMailsToListView(HWND hListView, HACCOUNT ActualAccount, DWORD nflags)
 
 void DoMailActions(HWND hDlg, HACCOUNT ActualAccount, struct CMailNumbers *MN, DWORD nflags, DWORD nnflags)
 {
-	char *NotIconText = Translate("- new mail message(s)");
-	NOTIFYICONDATA nid;
-
-	memset(&nid, 0, sizeof(nid));
+	NOTIFYICONDATA nid = {};
+	nid.cbSize = sizeof(nid);
+	nid.hWnd = hDlg;
 
 	if (MN->Real.EventNC + MN->Virtual.EventNC)
 		NotifyEventHooks(hNewMailHook, 0, 0);
 
-	if ((nflags & YAMN_ACC_KBN) && (MN->Real.PopupRun + MN->Virtual.PopupRun)) {
+	if ((nflags & YAMN_ACC_KBN) && (MN->Real.PopupRun + MN->Virtual.PopupRun))
 		CallService(MS_KBDNOTIFY_STARTBLINK, (WPARAM)MN->Real.PopupNC + MN->Virtual.PopupNC, NULL);
-	}
 
 	if ((nflags & YAMN_ACC_CONT) && (MN->Real.PopupRun + MN->Virtual.PopupRun)) {
-		char sMsg[250];
-		mir_snprintf(sMsg, Translate("%s : %d new mail message(s), %d total"), ActualAccount->Name, MN->Real.PopupNC + MN->Virtual.PopupNC, MN->Real.PopupTC + MN->Virtual.PopupTC);
-		if (!(nflags & YAMN_ACC_CONTNOEVENT)) {
-			CLISTEVENT cEvent;
-			cEvent.cbSize = sizeof(CLISTEVENT);
-			cEvent.hContact = ActualAccount->hContact;
-			cEvent.hIcon = g_LoadIconEx(2);
-			cEvent.hDbEvent = ActualAccount->hContact;
-			cEvent.lParam = ActualAccount->hContact;
-			cEvent.pszService = MS_YAMN_CLISTDBLCLICK;
-			cEvent.pszTooltip = sMsg;
-			cEvent.flags = 0;
-			CallServiceSync(MS_CLIST_ADDEVENT, 0, (LPARAM)&cEvent);
-		}
-		db_set_s(ActualAccount->hContact, "CList", "StatusMsg", sMsg);
+		wchar_t tszMsg[250];
+		mir_snwprintf(tszMsg, TranslateT("%s : %d new mail message(s), %d total"), _A2T(ActualAccount->Name), MN->Real.PopupNC + MN->Virtual.PopupNC, MN->Real.PopupTC + MN->Virtual.PopupTC);
 
-		if (nflags & YAMN_ACC_CONTNICK) {
-			db_set_s(ActualAccount->hContact, YAMN_DBMODULE, "Nick", sMsg);
+		if (!(nflags & YAMN_ACC_CONTNOEVENT)) {
+			CLISTEVENT evt = {};
+			evt.flags = CLEF_UNICODE;
+			evt.hContact = ActualAccount->hContact;
+			evt.hIcon = g_LoadIconEx(2);
+			evt.hDbEvent = ActualAccount->hContact;
+			evt.lParam = ActualAccount->hContact;
+			evt.pszService = MS_YAMN_CLISTDBLCLICK;
+			evt.szTooltip.w = tszMsg;
+			pcli->pfnAddEvent(&evt);
 		}
+		db_set_ws(ActualAccount->hContact, "CList", "StatusMsg", tszMsg);
+
+		if (nflags & YAMN_ACC_CONTNICK)
+			db_set_ws(ActualAccount->hContact, YAMN_DBMODULE, "Nick", tszMsg);
 	}
 
 	if ((nflags & YAMN_ACC_POP) &&
@@ -676,22 +673,18 @@ void DoMailActions(HWND hDlg, HACCOUNT ActualAccount, struct CMailNumbers *MN, D
 		NewMailPopup.PluginWindowProc = NewMailPopupProc;
 		NewMailPopup.PluginData = (void *)0;	//multiple popups
 
-		mir_tstrncpy(NewMailPopup.lptzContactName, _A2T(ActualAccount->Name), _countof(NewMailPopup.lptzContactName));
-		mir_sntprintf(NewMailPopup.lptzText, TranslateT("%d new mail message(s), %d total"), MN->Real.PopupNC + MN->Virtual.PopupNC, MN->Real.PopupTC + MN->Virtual.PopupTC);
+		mir_wstrncpy(NewMailPopup.lptzContactName, _A2T(ActualAccount->Name), _countof(NewMailPopup.lptzContactName));
+		mir_snwprintf(NewMailPopup.lptzText, TranslateT("%d new mail message(s), %d total"), MN->Real.PopupNC + MN->Virtual.PopupNC, MN->Real.PopupTC + MN->Virtual.PopupTC);
 		PUAddPopupT(&NewMailPopup);
 	}
 
-	//destroy tray icon if no new mail
-	if ((MN->Real.SysTrayUC + MN->Virtual.SysTrayUC == 0) && (hDlg != NULL)) {
-		nid.hWnd = hDlg;
-		nid.uID = 0;
+	// destroy tray icon if no new mail
+	if ((MN->Real.SysTrayUC + MN->Virtual.SysTrayUC == 0) && (hDlg != NULL))
 		Shell_NotifyIcon(NIM_DELETE, &nid);
-	}
 
-	//and remove the event
-	if ((nflags & YAMN_ACC_CONT) && (!(nflags & YAMN_ACC_CONTNOEVENT)) && (MN->Real.UnSeen + MN->Virtual.UnSeen == 0)) {
-		CallService(MS_CLIST_REMOVEEVENT, (WPARAM)ActualAccount->hContact, (LPARAM)ActualAccount->hContact);
-	}
+	// and remove the event
+	if ((nflags & YAMN_ACC_CONT) && (!(nflags & YAMN_ACC_CONTNOEVENT)) && (MN->Real.UnSeen + MN->Virtual.UnSeen == 0))
+		pcli->pfnRemoveEvent(ActualAccount->hContact, ActualAccount->hContact);
 
 	if ((MN->Real.BrowserUC + MN->Virtual.BrowserUC == 0) && (hDlg != NULL)) {
 		if (!IsWindowVisible(hDlg) && !(nflags & YAMN_ACC_MSG))
@@ -708,19 +701,10 @@ void DoMailActions(HWND hDlg, HACCOUNT ActualAccount, struct CMailNumbers *MN, D
 			SendDlgItemMessageW(hDlg, IDC_LISTMAILS, LVM_SCROLL, 0, (LPARAM)0x7ffffff);
 
 			if ((nflags & YAMN_ACC_ICO) && (MN->Real.SysTrayUC + MN->Virtual.SysTrayUC)) {
-				char* src;
-				TCHAR *dest;
-				int i;
-
-				for (src = ActualAccount->Name, dest = nid.szTip, i = 0; (*src != (TCHAR)0) && (i + 1 < sizeof(nid.szTip)); *dest++ = *src++);
-				for (src = NotIconText; (*src != (TCHAR)0) && (i + 1 < sizeof(nid.szTip)); *dest++ = *src++);
-				*dest = (TCHAR)0;
-				nid.cbSize = sizeof(NOTIFYICONDATA);
-				nid.hWnd = hDlg;
 				nid.hIcon = g_LoadIconEx(2);
-				nid.uID = 0;
 				nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
 				nid.uCallbackMessage = WM_YAMN_NOTIFYICON;
+				mir_snwprintf(nid.szTip, L"%S %s", ActualAccount->Name, TranslateT("- new mail message(s)"));
 				Shell_NotifyIcon(NIM_ADD, &nid);
 				SetTimer(hDlg, TIMER_FLASHING, 500, NULL);
 			}
@@ -757,7 +741,7 @@ void DoMailActions(HWND hDlg, HACCOUNT ActualAccount, struct CMailNumbers *MN, D
 
 	if (MN->Real.SoundNC + MN->Virtual.SoundNC != 0)
 		if (nflags & YAMN_ACC_SND)
-			SkinPlaySound(YAMN_NEWMAILSOUND);
+			Skin_PlaySound(YAMN_NEWMAILSOUND);
 
 	if ((nnflags & YAMN_ACC_POP) && (MN->Real.PopupRun + MN->Virtual.PopupRun == 0)) {
 		POPUPDATAT NoNewMailPopup;
@@ -777,11 +761,11 @@ void DoMailActions(HWND hDlg, HACCOUNT ActualAccount, struct CMailNumbers *MN, D
 		NoNewMailPopup.PluginWindowProc = NoNewMailPopupProc;
 		NoNewMailPopup.PluginData = 0;					//it's not new mail popup
 
-		mir_tstrncpy(NoNewMailPopup.lptzContactName, _A2T(ActualAccount->Name), _countof(NoNewMailPopup.lptzContactName));
+		mir_wstrncpy(NoNewMailPopup.lptzContactName, _A2T(ActualAccount->Name), _countof(NoNewMailPopup.lptzContactName));
 		if (MN->Real.PopupSL2NC + MN->Virtual.PopupSL2NC)
-			mir_sntprintf(NoNewMailPopup.lptzText, TranslateT("No new mail message, %d spam(s)"), MN->Real.PopupSL2NC + MN->Virtual.PopupSL2NC);
+			mir_snwprintf(NoNewMailPopup.lptzText, TranslateT("No new mail message, %d spam(s)"), MN->Real.PopupSL2NC + MN->Virtual.PopupSL2NC);
 		else
-			mir_tstrncpy(NoNewMailPopup.lptzText, TranslateT("No new mail message"), _countof(NoNewMailPopup.lptzText));
+			mir_wstrncpy(NoNewMailPopup.lptzText, TranslateT("No new mail message"), _countof(NoNewMailPopup.lptzText));
 		PUAddPopupT(&NoNewMailPopup);
 	}
 
@@ -866,9 +850,8 @@ LRESULT CALLBACK NewMailPopupProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 					DebugLog(SynchroFile, "PopupProc:LEFTCLICK:ActualAccountSO-read enter failed\n");
 			#endif
 			}
-			if ((Account->NewMailN.Flags & YAMN_ACC_CONT) && !(Account->NewMailN.Flags & YAMN_ACC_CONTNOEVENT)) {
-				CallService(MS_CLIST_REMOVEEVENT, hContact, hContact);
-			}
+			if ((Account->NewMailN.Flags & YAMN_ACC_CONT) && !(Account->NewMailN.Flags & YAMN_ACC_CONTNOEVENT))
+				pcli->pfnRemoveEvent(hContact, hContact);
 		}
 		// fall through
 	case WM_CONTEXTMENU:
@@ -1285,8 +1268,7 @@ INT_PTR CALLBACK DlgProcYAMNShowMessage(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 			HWND hListView = GetDlgItem(hDlg, IDC_LISTHEADERS);
 			mir_subclassWindow(GetDlgItem(hDlg, IDC_SPLITTER), SplitterSubclassProc);
 			SetWindowLongPtr(hDlg, DWLP_USER, (LONG_PTR)MailParam);
-			SendMessage(hDlg, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)g_LoadIconEx(2, true));
-			SendMessage(hDlg, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)g_LoadIconEx(2));
+			Window_SetIcon_IcoLib(hDlg, g_GetIconHandle(2));
 
 			ListView_SetUnicodeFormat(hListView, TRUE);
 			ListView_SetExtendedListViewStyle(hListView, LVS_EX_FULLROWSELECT);
@@ -1453,13 +1435,13 @@ INT_PTR CALLBACK DlgProcYAMNShowMessage(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 			size_t size = (From ? mir_wstrlen(From) : 0) + (Subj ? mir_wstrlen(Subj) : 0) + 4;
 			title = new WCHAR[size];
 			if (From && Subj)
-				mir_sntprintf(title, size, L"%s (%s)", Subj, From);
+				mir_snwprintf(title, size, L"%s (%s)", Subj, From);
 			else if (From)
-				_tcsncpy_s(title, size, From, _TRUNCATE);
+				wcsncpy_s(title, size, From, _TRUNCATE);
 			else if (Subj)
-				_tcsncpy_s(title, size, Subj, _TRUNCATE);
+				wcsncpy_s(title, size, Subj, _TRUNCATE);
 			else
-				_tcsncpy_s(title, size, L"none", _TRUNCATE);
+				wcsncpy_s(title, size, L"none", _TRUNCATE);
 			if (Subj) delete[] Subj;
 			if (From) delete[] From;
 			SetWindowTextW(hDlg, title);
@@ -1493,6 +1475,7 @@ INT_PTR CALLBACK DlgProcYAMNShowMessage(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 		return (INT_PTR)GetSysColorBrush(COLOR_WINDOW);
 
 	case WM_DESTROY:
+		Window_FreeIcon_IcoLib(hDlg);
 		{
 			RECT coord;
 			if (GetWindowRect(hDlg, &coord)) {
@@ -1574,26 +1557,26 @@ INT_PTR CALLBACK DlgProcYAMNShowMessage(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 				if (nReturnCmd > 0) {
 					int courRow = 0;
 					size_t sizeNeeded = 0;
-					TCHAR headname[64] = { 0 }, headvalue[256] = { 0 };
+					wchar_t headname[64] = { 0 }, headvalue[256] = { 0 };
 					for (courRow = 0; courRow < numRows; courRow++) {
 						if ((nReturnCmd == 1) && (ListView_GetItemState(hList, courRow, LVIS_SELECTED) == 0)) continue;
 						ListView_GetItemText(hList, courRow, 0, headname, _countof(headname));
 						ListView_GetItemText(hList, courRow, 1, headvalue, _countof(headvalue));
-						size_t headnamelen = mir_tstrlen(headname);
+						size_t headnamelen = mir_wstrlen(headname);
 						if (headnamelen) sizeNeeded += 1 + headnamelen;
-						sizeNeeded += 3 + mir_tstrlen(headvalue);
+						sizeNeeded += 3 + mir_wstrlen(headvalue);
 					}
 					if (sizeNeeded && OpenClipboard(hDlg)) {
 						EmptyClipboard();
-						HGLOBAL hData = GlobalAlloc(GMEM_MOVEABLE, (sizeNeeded + 1)*sizeof(TCHAR));
-						TCHAR *buff = (TCHAR*)GlobalLock(hData);
+						HGLOBAL hData = GlobalAlloc(GMEM_MOVEABLE, (sizeNeeded + 1)*sizeof(wchar_t));
+						wchar_t *buff = (wchar_t*)GlobalLock(hData);
 						int courPos = 0;
 						for (courRow = 0; courRow < numRows; courRow++) {
 							if ((nReturnCmd == 1) && (ListView_GetItemState(hList, courRow, LVIS_SELECTED) == 0)) continue;
 							ListView_GetItemText(hList, courRow, 0, headname, _countof(headname));
 							ListView_GetItemText(hList, courRow, 1, headvalue, _countof(headvalue));
-							if (mir_tstrlen(headname)) courPos += mir_sntprintf(&buff[courPos], sizeNeeded + 1, _T("%s:\t%s\r\n"), headname, headvalue);
-							else courPos += mir_sntprintf(&buff[courPos], sizeNeeded + 1, _T("\t%s\r\n"), headvalue);
+							if (mir_wstrlen(headname)) courPos += mir_snwprintf(&buff[courPos], sizeNeeded + 1, L"%s:\t%s\r\n", headname, headvalue);
+							else courPos += mir_snwprintf(&buff[courPos], sizeNeeded + 1, L"\t%s\r\n", headvalue);
 						}
 						GlobalUnlock(hData);
 
@@ -1704,14 +1687,14 @@ INT_PTR CALLBACK DlgProcYAMNMailBrowser(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 			WindowList_Add(YAMNVar.NewMailAccountWnd, hDlg, (UINT_PTR)ActualAccount);
 
 			{
-				TCHAR accstatus[512];
+				wchar_t accstatus[512];
 				GetStatusFcn(ActualAccount, accstatus);
 				SetDlgItemText(hDlg, IDC_STSTATUS, accstatus);
 			}
 			SetTimer(hDlg, TIMER_FLASHING, 500, NULL);
 
 			if (ActualAccount->hContact != NULL)
-				CallService(MS_CLIST_REMOVEEVENT, (WPARAM)ActualAccount->hContact, (LPARAM)"yamn new mail message");
+				pcli->pfnRemoveEvent(ActualAccount->hContact, (LPARAM)"yamn new mail message");
 
 			mir_subclassWindow(GetDlgItem(hDlg, IDC_LISTMAILS), ListViewSubclassProc);
 		}
@@ -1722,6 +1705,8 @@ INT_PTR CALLBACK DlgProcYAMNMailBrowser(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 			RECT coord;
 			LVCOLUMN ColInfo;
 			HYAMNMAIL Parser;
+
+			Window_FreeIcon_IcoLib(hDlg);
 
 			struct CMailWinUserInfo *mwui = (struct CMailWinUserInfo *)GetWindowLongPtr(hDlg, DWLP_USER);
 			if (NULL == (ActualAccount = GetWindowAccount(hDlg)))
@@ -1800,6 +1785,7 @@ INT_PTR CALLBACK DlgProcYAMNMailBrowser(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 			PostQuitMessage(0);
 		}
 		break;
+
 	case WM_SHOWWINDOW:
 		{
 			struct CMailWinUserInfo *mwui = (struct CMailWinUserInfo *)GetWindowLongPtr(hDlg, DWLP_USER);
@@ -1808,6 +1794,7 @@ INT_PTR CALLBACK DlgProcYAMNMailBrowser(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 				return 0;
 			mwui->Seen = TRUE;
 		}
+
 	case WM_YAMN_CHANGESTATUS:
 		if (NULL == (ActualAccount = GetWindowAccount(hDlg)))
 			break;
@@ -1815,7 +1802,7 @@ INT_PTR CALLBACK DlgProcYAMNMailBrowser(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 		if ((HACCOUNT)wParam != ActualAccount)
 			break;
 
-		TCHAR accstatus[512];
+		wchar_t accstatus[512];
 		GetStatusFcn(ActualAccount, accstatus);
 		SetDlgItemText(hDlg, IDC_STSTATUS, accstatus);
 		return 1;
@@ -2050,9 +2037,9 @@ INT_PTR CALLBACK DlgProcYAMNMailBrowser(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 					WriteDoneFcn(ActualAccount->MessagesAccessSO);
 
 					if (Total) {
-						TCHAR DeleteMsg[1024];
+						wchar_t DeleteMsg[1024];
 
-						mir_sntprintf(DeleteMsg, TranslateT("Do you really want to delete %d selected mails?"), Total);
+						mir_snwprintf(DeleteMsg, TranslateT("Do you really want to delete %d selected mails?"), Total);
 						if (IDOK == MessageBox(hDlg, DeleteMsg, TranslateT("Delete confirmation"), MB_OKCANCEL | MB_ICONWARNING)) {
 							struct DeleteParam ParamToDeleteMails = { YAMN_DELETEVERSION, ThreadRunningEV, ActualAccount, NULL };
 
@@ -2249,19 +2236,19 @@ INT_PTR CALLBACK DlgProcYAMNMailBrowser(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 				if (nReturnCmd > 0) {
 					int courRow = 0;
 					size_t sizeNeeded = 0;
-					TCHAR from[128] = { 0 }, subject[256] = { 0 }, size[16] = { 0 }, date[64] = { 0 };
+					wchar_t from[128] = { 0 }, subject[256] = { 0 }, size[16] = { 0 }, date[64] = { 0 };
 					for (courRow = 0; courRow < numRows; courRow++) {
 						if ((nReturnCmd == 1) && (ListView_GetItemState(hList, courRow, LVIS_SELECTED) == 0)) continue;
 						ListView_GetItemText(hList, courRow, 0, from, _countof(from));
 						ListView_GetItemText(hList, courRow, 1, subject, _countof(subject));
 						ListView_GetItemText(hList, courRow, 2, size, _countof(size));
 						ListView_GetItemText(hList, courRow, 3, date, _countof(date));
-						sizeNeeded += 5 + mir_tstrlen(from) + mir_tstrlen(subject) + mir_tstrlen(size) + mir_tstrlen(date);
+						sizeNeeded += 5 + mir_wstrlen(from) + mir_wstrlen(subject) + mir_wstrlen(size) + mir_wstrlen(date);
 					}
 					if (sizeNeeded && OpenClipboard(hDlg)) {
 						EmptyClipboard();
-						HGLOBAL hData = GlobalAlloc(GMEM_MOVEABLE, (sizeNeeded + 1)*sizeof(TCHAR));
-						TCHAR *buff = (TCHAR *)GlobalLock(hData);
+						HGLOBAL hData = GlobalAlloc(GMEM_MOVEABLE, (sizeNeeded + 1)*sizeof(wchar_t));
+						wchar_t *buff = (wchar_t *)GlobalLock(hData);
 						int courPos = 0;
 						for (courRow = 0; courRow < numRows; courRow++) {
 							if ((nReturnCmd == 1) && (ListView_GetItemState(hList, courRow, LVIS_SELECTED) == 0)) continue;
@@ -2269,7 +2256,7 @@ INT_PTR CALLBACK DlgProcYAMNMailBrowser(HWND hDlg, UINT msg, WPARAM wParam, LPAR
 							ListView_GetItemText(hList, courRow, 1, subject, _countof(subject));
 							ListView_GetItemText(hList, courRow, 2, size, _countof(size));
 							ListView_GetItemText(hList, courRow, 3, date, _countof(date));
-							courPos += mir_sntprintf(&buff[courPos], sizeNeeded + 1, _T("%s\t%s\t%s\t%s\r\n"), from, subject, size, date);
+							courPos += mir_snwprintf(&buff[courPos], sizeNeeded + 1, L"%s\t%s\t%s\t%s\r\n", from, subject, size, date);
 						}
 						GlobalUnlock(hData);
 
@@ -2357,8 +2344,7 @@ void __cdecl MailBrowser(void *Param)
 			WndFound = TRUE;
 		if ((hMailBrowser == NULL) && ((MyParam.nflags & YAMN_ACC_MSG) || (MyParam.nflags & YAMN_ACC_ICO) || (MyParam.nnflags & YAMN_ACC_MSG))) {
 			hMailBrowser = CreateDialogParamW(YAMNVar.hInst, MAKEINTRESOURCEW(IDD_DLGVIEWMESSAGES), NULL, DlgProcYAMNMailBrowser, (LPARAM)&MyParam);
-			SendMessage(hMailBrowser, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)g_LoadIconEx(2, true));
-			SendMessage(hMailBrowser, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)g_LoadIconEx(2));
+			Window_SetIcon_IcoLib(hMailBrowser, g_GetIconHandle(2));
 			MoveWindow(hMailBrowser, PosX, PosY, SizeX, SizeY, TRUE);
 		}
 

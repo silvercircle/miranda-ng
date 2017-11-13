@@ -3,7 +3,7 @@
 Minecraft Dynmap plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2015 Robert Pösel
+Copyright © 2015-17 Robert Pösel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class MinecraftDynmapProto : public PROTO<MinecraftDynmapProto>
 {
 public:
-	MinecraftDynmapProto(const char *proto_name, const TCHAR *username);
+	MinecraftDynmapProto(const char *proto_name, const wchar_t *username);
 	~MinecraftDynmapProto();
 
 	inline const char* ModuleName() const {
@@ -87,8 +87,8 @@ public:
 	HANDLE events_loop_event_;
 	
 	// Handles
-	HANDLE hConnection;
-	HANDLE hEventsConnection;
+	HNETLIBCONN hConnection;
+	HNETLIBCONN hEventsConnection;
 	HANDLE chatHandle_;
 
 	// Data storage

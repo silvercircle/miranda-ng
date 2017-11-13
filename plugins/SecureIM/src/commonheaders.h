@@ -40,7 +40,7 @@
 #include "secureim.h"
 #include "version.h"
 #include "resource.h"
-#include "..\SecureIM_icons\src\resource.h"
+#include "../SecureIM_icons/src/resource.h"
 #include "language.h"
 #include "mmi.h"
 #include "crypt.h"
@@ -89,7 +89,7 @@ __forceinline int SendBroadcast(MCONTACT hContact, int type, int result, HANDLE 
 	return ProtoBroadcastAck( GetContactProto(hContact), hContact, type, result, hProcess, lParam);
 }
 
-extern HANDLE hNetlibUser;
+extern HNETLIBUSER hNetlibUser;
 void InitNetlib();
 void DeinitNetlib();
 int Sent_NetLog(const char *,...);

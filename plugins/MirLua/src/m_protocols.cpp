@@ -2,42 +2,47 @@
 
 HANDLE hRecvMessage = NULL;
 
-static void MapToTable(lua_State *L, const PROTOCOLDESCRIPTOR* pd)
+static int lua_GetProtocol(lua_State *L)
 {
-	lua_newtable(L);
-	lua_pushliteral(L, "Name");
-	lua_pushstring(L, ptrA(mir_utf8encode(pd->szName)));
-	lua_settable(L, -3);
-	lua_pushliteral(L, "Type");
-	lua_pushinteger(L, pd->type);
-	lua_settable(L, -3);
-}
+	const char *szProto = NULL;
 
-static int lua_GetProto(lua_State *L)
-{
-	ptrA name(mir_utf8decodeA(luaL_checkstring(L, 1)));
+	switch (lua_type(L, 1))
+	{
+	case LUA_TNUMBER:
+	{
+		const char *szModule = GetContactProto(lua_tonumber(L, 1));
+		PROTOACCOUNT *pa = Proto_GetAccount(szModule);
+		if (pa)
+			szProto = pa->szProtoName;
+		break;
+	}
+	case LUA_TSTRING:
+		szProto = lua_tostring(L, 1);
+		break;
+	default:
+		luaL_argerror(L, 1, luaL_typename(L, 1));
+	}
 
-	PROTOCOLDESCRIPTOR* pd = ::Proto_IsProtocolLoaded(name);
-
+	PROTOCOLDESCRIPTOR *pd = Proto_IsProtocolLoaded(szProto);
 	if (pd)
-		MapToTable(L, pd);
+		MT<PROTOCOLDESCRIPTOR>::Apply(L, pd);
 	else
 		lua_pushnil(L);
 
 	return 1;
 }
 
-static int lua_ProtoIterator(lua_State *L)
+static int lua_ProtocolIterator(lua_State *L)
 {
 	int i = lua_tointeger(L, lua_upvalueindex(1));
 	int count = lua_tointeger(L, lua_upvalueindex(2));
-	PROTOCOLDESCRIPTOR** protos = (PROTOCOLDESCRIPTOR**)lua_touserdata(L, lua_upvalueindex(3));
+	PROTOCOLDESCRIPTOR **protos = (PROTOCOLDESCRIPTOR**)lua_touserdata(L, lua_upvalueindex(3));
 
 	if (i < count)
 	{
 		lua_pushinteger(L, (i + 1));
 		lua_replace(L, lua_upvalueindex(1));
-		MapToTable(L, protos[i]);
+		MT<PROTOCOLDESCRIPTOR>::Apply(L, protos[i]);
 	}
 	else
 		lua_pushnil(L);
@@ -45,83 +50,82 @@ static int lua_ProtoIterator(lua_State *L)
 	return 1;
 }
 
-static int lua_AllProtos(lua_State *L)
+static int lua_Protocols(lua_State *L)
 {
 	int count;
-	PROTOCOLDESCRIPTOR** protos;
+	PROTOCOLDESCRIPTOR **protos;
 	Proto_EnumProtocols(&count, &protos);
 
 	lua_pushinteger(L, 0);
 	lua_pushinteger(L, count);
 	lua_pushlightuserdata(L, protos);
-	lua_pushcclosure(L, lua_ProtoIterator, 3);
+	lua_pushcclosure(L, lua_ProtocolIterator, 3);
 
 	return 1;
 }
 
-static int lua_EnumProtos(lua_State *L)
+static int lua_RegisterProtocol(lua_State *L)
 {
-	if (!lua_isfunction(L, 1))
-	{
-		lua_pushlightuserdata(L, NULL);
-		return 1;
-	}
+	ptrA name(mir_utf8decodeA(luaL_checkstring(L, 1)));
 
-	lua_pushvalue(L, 1);
-	int ref = luaL_ref(L, LUA_REGISTRYINDEX);
+	PROTOCOLDESCRIPTOR pd = { 0 };
+	pd.cbSize = sizeof(pd);
+	pd.szName = name;
+	pd.type = PROTOTYPE_PROTOCOL;
+	int res = Proto_RegisterModule(&pd);
 
-	int count;
-	PROTOCOLDESCRIPTOR** protos;
-	Proto_EnumProtocols(&count, &protos);
-
-	for (int i = 0; i < count; i++)
-	{
-		lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
-		MapToTable(L, protos[i]);
-		if (lua_pcall(L, 1, 0, 0))
-			CallService(MS_NETLIB_LOG, (WPARAM)hNetlib, (LPARAM)lua_tostring(L, -1));
-	}
-
-	luaL_unref(L, LUA_REGISTRYINDEX, ref);
-	lua_pushinteger(L, count);
+	lua_pushboolean(L, res == 0);
 
 	return 1;
 }
 
-static void MapToTable(lua_State *L, const PROTOACCOUNT* pa)
+static int lua_ChainSend(lua_State *L)
 {
-	lua_newtable(L);
-	lua_pushliteral(L, "InternalName");
-	lua_pushstring(L, ptrA(mir_utf8encode(pa->szModuleName)));
-	lua_settable(L, -3);
-	lua_pushliteral(L, "AccountName");
-	lua_pushstring(L, ptrA(mir_utf8encodeT(pa->tszAccountName)));
-	lua_settable(L, -3);
-	lua_pushliteral(L, "ProtoName");
-	lua_pushstring(L, ptrA(mir_utf8encode(pa->szProtoName)));
-	lua_settable(L, -3);
-	lua_pushliteral(L, "IsEnabled");
-	lua_pushboolean(L, pa->bIsEnabled);
-	lua_settable(L, -3);
-	lua_pushliteral(L, "IsVisible");
-	lua_pushboolean(L, pa->bIsVisible);
-	lua_settable(L, -3);
-	lua_pushliteral(L, "IsVirtual");
-	lua_pushboolean(L, pa->bIsVirtual);
-	lua_settable(L, -3);
-	lua_pushliteral(L, "OldProto");
-	lua_pushboolean(L, pa->bOldProto);
-	lua_settable(L, -3);
+	MCONTACT hContact = luaL_checknumber(L, 1);
+	const char *service = luaL_checkstring(L, 2);
+	WPARAM wParam = (WPARAM)luaM_tomparam(L, 3);
+	LPARAM lParam = (LPARAM)luaM_tomparam(L, 4);
+
+	INT_PTR res = ProtoChainSend(hContact, service, wParam, lParam);
+	lua_pushinteger(L, res);
+
+	return 1;
 }
+
+static int lua_ChainRecv(lua_State *L)
+{
+	MCONTACT hContact = luaL_checknumber(L, 1);
+	const char *service = luaL_checkstring(L, 2);
+	WPARAM wParam = (WPARAM)luaM_tomparam(L, 3);
+	LPARAM lParam = (LPARAM)luaM_tomparam(L, 4);
+
+	INT_PTR res = ProtoChainRecv(hContact, service, wParam, lParam);
+	lua_pushinteger(L, res);
+
+	return 1;
+}
+
+/***********************************************/
 
 static int lua_GetAccount(lua_State *L)
 {
-	ptrA moduleName(mir_utf8decodeA(luaL_checkstring(L, 1)));
+	const char *name = NULL;
 
-	PROTOACCOUNT* pa = ::Proto_GetAccount(moduleName);
+	switch (lua_type(L, 1))
+	{
+	case LUA_TNUMBER:
+		name = GetContactProto(lua_tonumber(L, 1));
+		break;
+	case LUA_TSTRING:
+		name = lua_tostring(L, 1);
+		break;
+	default:
+		luaL_argerror(L, 1, luaL_typename(L, 1));
+	}
 
+	PROTOACCOUNT *pa = Proto_GetAccount(name);
 	if (pa)
-		MapToTable(L, pa);
+		MT<PROTOACCOUNT>::Apply(L, pa);
 	else
 		lua_pushnil(L);
 
@@ -132,13 +136,18 @@ static int lua_AccountIterator(lua_State *L)
 {
 	int i = lua_tointeger(L, lua_upvalueindex(1));
 	int count = lua_tointeger(L, lua_upvalueindex(2));
-	PROTOACCOUNT** accounts = (PROTOACCOUNT**)lua_touserdata(L, lua_upvalueindex(3));
+	PROTOACCOUNT **accounts = (PROTOACCOUNT**)lua_touserdata(L, lua_upvalueindex(3));
+	const char *szProto = lua_tostring(L, lua_upvalueindex(4));
+
+	if (szProto)
+		while (i < count && mir_strcmp(szProto, accounts[i]->szProtoName))
+			i++;
 
 	if (i < count)
 	{
 		lua_pushinteger(L, (i + 1));
 		lua_replace(L, lua_upvalueindex(1));
-		MapToTable(L, accounts[i]);
+		MT<PROTOACCOUNT>::Apply(L, accounts[i]);
 	}
 	else
 		lua_pushnil(L);
@@ -146,182 +155,140 @@ static int lua_AccountIterator(lua_State *L)
 	return 1;
 }
 
-static int lua_AllAccounts(lua_State *L)
+static int lua_Accounts(lua_State *L)
 {
+	const char *szProto = NULL;
+
+	switch (lua_type(L, 1))
+	{
+	case LUA_TNONE:
+		break;
+	case LUA_TSTRING:
+		szProto = lua_tostring(L, 1);
+		break;
+	case LUA_TUSERDATA:
+	{
+		PROTOCOLDESCRIPTOR *pd = *(PROTOCOLDESCRIPTOR**)luaL_checkudata(L, 1, MT_PROTOCOLDESCRIPTOR);
+		szProto = pd->szName;
+		break;
+	}
+	default:
+		luaL_argerror(L, 1, luaL_typename(L, 1));
+	}
+
 	int count;
-	PROTOACCOUNT** accounts;
+	PROTOACCOUNT **accounts;
 	Proto_EnumAccounts(&count, &accounts);
 
 	lua_pushinteger(L, 0);
 	lua_pushinteger(L, count);
 	lua_pushlightuserdata(L, accounts);
-	lua_pushcclosure(L, lua_AccountIterator, 3);
+	lua_pushstring(L, szProto);
+	lua_pushcclosure(L, lua_AccountIterator, 4);
 
 	return 1;
 }
 
-static int lua_EnumAccounts(lua_State *L)
+static int lua_CallService(lua_State *L)
 {
-	if (!lua_isfunction(L, 1))
+	const char *szModule = NULL;
+
+	switch (lua_type(L, 1))
 	{
-		lua_pushlightuserdata(L, NULL);
-		return 1;
+	case LUA_TNUMBER:
+		szModule = GetContactProto(lua_tonumber(L, 1));
+		break;
+	case LUA_TSTRING:
+		szModule = lua_tostring(L, 1);
+		break;
+	case LUA_TUSERDATA:
+	{
+		PROTOACCOUNT *pa = *(PROTOACCOUNT**)luaL_checkudata(L, 1, MT_PROTOACCOUNT);
+		szModule = pa->szModuleName;
+		break;
+	}
+	default:
+		luaL_argerror(L, 1, luaL_typename(L, 1));
 	}
 
-	lua_pushvalue(L, 1);
-	int ref = luaL_ref(L, LUA_REGISTRYINDEX);
+	const char *service = luaL_checkstring(L, 2);
+	WPARAM wParam = (WPARAM)luaM_tomparam(L, 3);
+	LPARAM lParam = (LPARAM)luaM_tomparam(L, 4);
 
-	int count;
-	PROTOACCOUNT** accounts;
-	Proto_EnumAccounts(&count, &accounts);
-
-	for (int i = 0; i < count; i++)
-	{
-		lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
-		MapToTable(L, accounts[i]);
-		if (lua_pcall(L, 1, 0, 0))
-			CallService(MS_NETLIB_LOG, (WPARAM)hNetlib, (LPARAM)lua_tostring(L, -1));
-	}
-
-	luaL_unref(L, LUA_REGISTRYINDEX, ref);
-	lua_pushinteger(L, count);
+	INT_PTR res = CallProtoService(szModule, service, wParam, lParam);
+	lua_pushinteger(L, res);
 
 	return 1;
 }
 
-int ProtoAckHookEventObjParam(void *obj, WPARAM wParam, LPARAM lParam, LPARAM param)
-{
-	lua_State *L = (lua_State*)obj;
-
-	int ref = param;
-	lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
-
-	lua_pushnumber(L, wParam);
-
-	ACKDATA *ack = (ACKDATA*)lParam;
-
-	lua_newtable(L);
-	lua_pushliteral(L, "Module");
-	lua_pushstring(L, ptrA(mir_utf8encode(ack->szModule)));
-	lua_settable(L, -3);
-	lua_pushliteral(L, "hContact");
-	lua_pushinteger(L, ack->hContact);
-	lua_settable(L, -3);
-	lua_pushliteral(L, "Type");
-	lua_pushinteger(L, ack->type);
-	lua_settable(L, -3);
-	lua_pushliteral(L, "Result");
-	lua_pushinteger(L, ack->result);
-	lua_settable(L, -3);
-	lua_pushliteral(L, "hProcess");
-	lua_pushlightuserdata(L, ack->hProcess);
-	lua_settable(L, -3);
-	lua_pushliteral(L, "lParam");
-	lua_pushnumber(L, ack->lParam);
-	lua_settable(L, -3);
-
-	if (lua_pcall(L, 2, 1, 0))
-		printf("%s\n", lua_tostring(L, -1));
-
-	int res = (int)lua_tointeger(L, 1);
-
-	return res;
-}
-
-static int lua_OnProtoAck(lua_State *L)
-{
-	if (!lua_isfunction(L, 1))
-	{
-		lua_pushlightuserdata(L, NULL);
-		return 1;
-	}
-
-	lua_pushvalue(L, 1);
-	int ref = luaL_ref(L, LUA_REGISTRYINDEX);
-
-	HANDLE res = ::HookEventObjParam(ME_PROTO_ACK, ProtoAckHookEventObjParam, L, ref);
-	lua_pushlightuserdata(L, res);
-
-	CMLua::Hooks.insert(res);
-	CMLua::HookRefs.insert(new HandleRefParam(L, res, ref));
-
-	return 1;
-}
-
-int RecvMessageHookEventObjParam(void *obj, WPARAM wParam, LPARAM lParam, LPARAM param)
-{
-	lua_State *L = (lua_State*)obj;
-
-	int ref = param;
-	lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
-
-	lua_pushnumber(L, wParam);
-
-	CCSDATA *ccs = (CCSDATA*)lParam;
-	PROTORECVEVENT *pre = (PROTORECVEVENT*)ccs->lParam;
-
-	lua_newtable(L);
-	lua_pushliteral(L, "hContact");
-	lua_pushinteger(L, ccs->hContact);
-	lua_settable(L, -3);
-	lua_pushliteral(L, "Message");
-	lua_pushstring(L, pre->szMessage);
-	lua_settable(L, -3);
-
-	if (lua_pcall(L, 2, 1, 0))
-		printf("%s\n", lua_tostring(L, -1));
-
-	int res = (int)lua_tointeger(L, 1);
-
-	return res;
-}
-
-static int lua_OnReceiveMessage(lua_State *L)
-{
-	if (!lua_isfunction(L, 1))
-	{
-		lua_pushlightuserdata(L, NULL);
-		return 1;
-	}
-
-	lua_pushvalue(L, 1);
-	int ref = luaL_ref(L, LUA_REGISTRYINDEX);
-
-	HANDLE res = ::HookEventObjParam(MODULE PSR_MESSAGE, RecvMessageHookEventObjParam, L, ref);
-	lua_pushlightuserdata(L, res);
-
-	CMLua::Hooks.insert(res);
-	CMLua::HookRefs.insert(new HandleRefParam(L, res, ref));
-
-	return 1;
-}
+/***********************************************/
 
 INT_PTR FilterRecvMessage(WPARAM wParam, LPARAM lParam)
 {
-	NotifyEventHooks(hRecvMessage, wParam, lParam);
-
-	return Proto_ChainRecv(wParam, (CCSDATA*)lParam);
+	int res = NotifyEventHooks(hRecvMessage, wParam, lParam);
+	if (res) return res;
+	Proto_ChainRecv(wParam, (CCSDATA*)lParam);
+	return 0;
 }
+
+/***********************************************/
 
 static luaL_Reg protocolsApi[] =
 {
-	{ "GetProto", lua_GetProto },
-	{ "AllProtos", lua_AllProtos },
-	{ "EnumProtos", lua_EnumProtos },
+	{ "GetProtocol", lua_GetProtocol },
+	{ "Protocols", lua_Protocols },
+	{ "RegisterProtocol", lua_Protocols },
+
+	{ "CallSendChain", lua_ChainSend },
+	{ "CallReceiveChain", lua_ChainRecv },
 
 	{ "GetAccount", lua_GetAccount },
-	{ "AllAccounts", lua_AllAccounts },
-	{ "EnumAccounts", lua_EnumAccounts },
+	{ "Accounts", lua_Accounts },
 
-	{ "OnProtoAck", lua_OnProtoAck },
-	{ "OnReceiveMessage", lua_OnReceiveMessage },
+	{ "CallService", lua_CallService },
 
 	{ NULL, NULL }
 };
 
+/***********************************************/
+
 LUAMOD_API int luaopen_m_protocols(lua_State *L)
 {
 	luaL_newlib(L, protocolsApi);
+
+	MT<PROTOCOLDESCRIPTOR>(L, MT_PROTOCOLDESCRIPTOR)
+		.Field(&PROTOCOLDESCRIPTOR::szName, "Name", LUA_TSTRINGA)
+		.Field(&PROTOCOLDESCRIPTOR::type, "Type", LUA_TINTEGER)
+		.Field(lua_Accounts, "Accounts");
+
+	MT<PROTOACCOUNT>(L, MT_PROTOACCOUNT)
+		.Field(&PROTOACCOUNT::szModuleName, "ModuleName", LUA_TSTRINGA)
+		.Field(&PROTOACCOUNT::tszAccountName, "AccountName", LUA_TSTRINGW)
+		.Field(&PROTOACCOUNT::szProtoName, "ProtoName", LUA_TSTRINGA)
+		.Field(&PROTOACCOUNT::bIsEnabled, "IsEnabled", LUA_TBOOLEAN)
+		.Field(&PROTOACCOUNT::bIsVisible, "IsVisible", LUA_TBOOLEAN)
+		.Field(&PROTOACCOUNT::bIsVirtual, "IsVirtual", LUA_TBOOLEAN)
+		.Field(&PROTOACCOUNT::bOldProto, "IsOldProto", LUA_TBOOLEAN)
+		.Field(lua_CallService, "CallService");
+
+	MT<ACKDATA>(L, "ACKDATA")
+		.Field(&ACKDATA::szModule, "Module", LUA_TSTRINGA)
+		.Field(&ACKDATA::hContact, "hContact", LUA_TINTEGER)
+		.Field(&ACKDATA::type, "Type", LUA_TINTEGER)
+		.Field(&ACKDATA::result, "Result", LUA_TINTEGER)
+		.Field(&ACKDATA::hProcess, "hProcess", LUA_TLIGHTUSERDATA)
+		.Field(&ACKDATA::lParam, "lParam", LUA_TLIGHTUSERDATA);
+
+	MT<CCSDATA>(L, "CCSDATA")
+		.Field(&CCSDATA::hContact, "hContact", LUA_TINTEGER)
+		.Field(&CCSDATA::szProtoService, "Service", LUA_TSTRINGA)
+		.Field(&CCSDATA::wParam, "wParam", LUA_TLIGHTUSERDATA)
+		.Field(&CCSDATA::lParam, "lParam", LUA_TLIGHTUSERDATA);
+	
+	MT<PROTORECVEVENT>(L, "PROTORECVEVENT")
+		.Field(&PROTORECVEVENT::timestamp, "Timestamp", LUA_TINTEGER)
+		.Field(&PROTORECVEVENT::flags, "Flags", LUA_TINTEGER)
+		.Field(&PROTORECVEVENT::szMessage, "Message", LUA_TSTRING);
 
 	return 1;
 }

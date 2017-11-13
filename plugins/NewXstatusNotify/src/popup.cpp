@@ -21,22 +21,22 @@
 
 #include "stdafx.h"
 
-void ShowChangePopup(MCONTACT hContact, HICON hIcon, WORD newStatus, const TCHAR *stzText, PLUGINDATA *pdp)
+void ShowChangePopup(MCONTACT hContact, HICON hIcon, WORD newStatus, const wchar_t *stzText, PLUGINDATA *pdp)
 {
 	POPUPDATAT ppd = { 0 };
 	ppd.lchContact = hContact;
 	ppd.lchIcon = hIcon;
-	CMString buf(pcli->pfnGetContactDisplayName(hContact, 0));
+	CMStringW buf(pcli->pfnGetContactDisplayName(hContact, 0));
 
 	// add group name to popup title
 	if (opt.ShowGroup) {
-		ptrT tszGroup(db_get_tsa(hContact, "CList", "Group"));
+		ptrW tszGroup(db_get_wsa(hContact, "CList", "Group"));
 		if (tszGroup)
-			buf.AppendFormat(_T(" (%s)"), tszGroup);
+			buf.AppendFormat(L" (%s)", tszGroup);
 	}
-	_tcsncpy_s(ppd.lptzContactName, buf, _TRUNCATE);
+	wcsncpy_s(ppd.lptzContactName, buf, _TRUNCATE);
 
-	_tcsncpy(ppd.lptzText, stzText, _countof(ppd.lptzText));
+	wcsncpy(ppd.lptzText, stzText, _countof(ppd.lptzText));
 
 	switch (opt.Colors) {
 	case POPUP_COLOR_OWN:
@@ -77,17 +77,17 @@ static int AwayMsgHook(WPARAM, LPARAM lParam, LPARAM pObj)
 		return 0;
 
 	MCONTACT hContact = PUGetContact(pdp->hWnd);
-	ptrT pstzLast(db_get_tsa(hContact, MODULE, "LastPopupText"));
+	ptrW pstzLast(db_get_wsa(hContact, MODULE, "LastPopupText"));
 
-	TCHAR *tszStatus = (TCHAR *)ack->lParam;
+	wchar_t *tszStatus = (wchar_t *)ack->lParam;
 	if (tszStatus == NULL || *tszStatus == 0)
 		return 0;
 
-	TCHAR stzText[1024];
+	wchar_t stzText[1024];
 	if (pstzLast)
-		mir_sntprintf(stzText, _T("%s\n%s"), pstzLast, tszStatus);
+		mir_snwprintf(stzText, L"%s\n%s", pstzLast, tszStatus);
 	else
-		_tcsncpy(stzText, tszStatus, _countof(stzText));
+		wcsncpy(stzText, tszStatus, _countof(stzText));
 	SendMessage(pdp->hWnd, WM_SETREDRAW, FALSE, 0);
 	PUChangeTextT(pdp->hWnd, stzText);
 	SendMessage(pdp->hWnd, WM_SETREDRAW, TRUE, 0);
@@ -103,10 +103,10 @@ void QueryAwayMessage(HWND hWnd, PLUGINDATA *pdp)
 			(CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_3, 0) & Proto_Status2Flag(pdp->newStatus)))
 		{
 			pdp->hWnd = hWnd;
-			//The following HookEventMessage will hook the ME_PROTO_ACK event and send a WM_AWAYMSG to hWnd when the hooks get notified.
+			// The following HookEventMessage will hook the ME_PROTO_ACK event and send a WM_AWAYMSG to hWnd when the hooks get notified.
 			pdp->hAwayMsgHook = HookEventParam(ME_PROTO_ACK, AwayMsgHook, (LPARAM)pdp);
-			//The following instruction asks Miranda to retrieve the away message and associates a hProcess (handle) to this request. This handle will appear in the ME_PROTO_ACK event.
-			pdp->hAwayMsgProcess = (HANDLE)CallContactService(hContact, PSS_GETAWAYMSG, 0, 0);
+			// The following instruction asks Miranda to retrieve the away message and associates a hProcess (handle) to this request. This handle will appear in the ME_PROTO_ACK event.
+			pdp->hAwayMsgProcess = (HANDLE)ProtoChainSend(hContact, PSS_GETAWAYMSG, 0, 0);
 		}
 	}
 }
@@ -117,7 +117,7 @@ void PopupAction(HWND hWnd, BYTE action)
 	if (hContact && hContact != INVALID_CONTACT_ID) {
 		switch (action) {
 		case PCA_OPENMESSAGEWND:
-			CallServiceSync(MS_MSG_SENDMESSAGET, hContact, 0);
+			CallServiceSync(MS_MSG_SENDMESSAGEW, hContact, 0);
 			break;
 
 		case PCA_OPENMENU:
@@ -154,15 +154,15 @@ LRESULT CALLBACK PopupDlgProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 	PLUGINDATA *pdp = NULL;
 
 	switch (message) {
-	case WM_MEASUREITEM: //Needed by the contact's context menu
-		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
+	case WM_MEASUREITEM: // Needed by the contact's context menu
+		return Menu_MeasureItem(lParam);
 
-	case WM_DRAWITEM: //Needed by the contact's context menu
-		return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
+	case WM_DRAWITEM: // Needed by the contact's context menu
+		return Menu_DrawItem(lParam);
 
 	case WM_COMMAND:
-		//This one returns TRUE if it processed the menu command, and FALSE if it did not process it.
-		if (CallServiceSync(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(LOWORD(wParam), MPCF_CONTACTMENU), (LPARAM)PUGetContact(hwnd)))
+		// This one returns TRUE if it processed the menu command, and FALSE if it did not process it.
+		if (Clist_MenuProcessCommand(LOWORD(wParam), MPCF_CONTACTMENU, PUGetContact(hwnd)))
 			break;
 
 		PopupAction(hwnd, opt.LeftClickAction);

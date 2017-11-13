@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-03 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -36,30 +36,28 @@ int hLangpack;
 
 extern HICON overlayicons[10];
 
-extern int Docking_ProcessWindowMessage(WPARAM wParam, LPARAM lParam);
-extern int SetHideOffline(WPARAM wParam, LPARAM lParam);
+int Docking_ProcessWindowMessage(WPARAM wParam, LPARAM lParam);
+int SetHideOffline(int iValue);
 
 ClcContact *CreateClcContact(void);
-CListEvent *fnCreateEvent(void);
 void ReloadThemedOptions();
 int TrayCalcChanged(const char *szChangedProto, int averageMode, int iProtoCount);
-void RegisterCLUIFrameClasses();
 void LoadButtonModule();
 
 void GetDefaultFontSetting(int i, LOGFONT *lf, COLORREF *colour);
 int GetWindowVisibleState(HWND hWnd, int iStepX, int iStepY);
-int ShowHide(WPARAM wParam, LPARAM lParam);
+int ShowHide(void);
 int ClcShutdown(WPARAM wParam, LPARAM lParam);
 
-CListEvent *AddEvent(CLISTEVENT *cle);
-ClcGroup *AddGroup(HWND hwnd, struct ClcData *dat, const TCHAR *szName, DWORD flags, int groupId, int calcTotalMembers);
+CListEvent* AddEvent(CLISTEVENT *cle);
+ClcGroup*   AddGroup(HWND hwnd, struct ClcData *dat, const wchar_t *szName, DWORD flags, int groupId, int calcTotalMembers);
 
-int     AddContactToGroup(struct ClcData *dat, ClcGroup *group, MCONTACT hContact);
-int     AddInfoItemToGroup(ClcGroup *group, int flags, const TCHAR *pszText);
-LRESULT ProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPARAM wParam, LPARAM lParam);
-int     RemoveEvent(MCONTACT hContact, MEVENT hDbEvent);
-INT_PTR TrayIconProcessMessage(WPARAM wParam, LPARAM lParam);
-void    RecalcScrollBar(HWND hwnd, struct ClcData *dat);
+ClcContact* AddContactToGroup(struct ClcData *dat, ClcGroup *group, MCONTACT hContact);
+ClcContact* AddInfoItemToGroup(ClcGroup *group, int flags, const wchar_t *pszText);
+LRESULT     ProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPARAM wParam, LPARAM lParam);
+int         RemoveEvent(MCONTACT hContact, MEVENT hDbEvent);
+INT_PTR     TrayIconProcessMessage(WPARAM wParam, LPARAM lParam);
+void        RecalcScrollBar(HWND hwnd, struct ClcData *dat);
 
 LRESULT CALLBACK ContactListWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK ContactListControlWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -93,7 +91,6 @@ extern "C" __declspec(dllexport) PLUGININFOEX *MirandaPluginInfoEx(DWORD)
 
 extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = { MIID_CLIST, MIID_LAST };
 
-int PreloadContactListModule(void);
 int LoadContactListModule(void);
 int LoadCLCModule(void);
 void LoadCLUIModule(void);
@@ -109,7 +106,6 @@ static int systemModulesLoaded(WPARAM, LPARAM)
 	cfg::dat.bAvatarServiceAvail = ServiceExists(MS_AV_GETAVATARBITMAP) ? TRUE : FALSE;
 	if (cfg::dat.bAvatarServiceAvail)
 		HookEvent(ME_AV_AVATARCHANGED, AvatarChanged);
-	cfg::dat.tabSRMM_Avail = ServiceExists("SRMsg_MOD/GetWindowFlags") ? TRUE : FALSE;
 
 	memset(&overlayicons, 0, sizeof(overlayicons));
 
@@ -126,15 +122,14 @@ extern "C" int __declspec(dllexport) CListInitialise()
 {
 	mir_getLP(&pluginInfo);
 
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 	coreCli = *pcli;
 
 	API::onInit();
-	RegisterCLUIFrameClasses();
 
 	memset(&cfg::dat, 0, sizeof(cfg::dat));
 
-	int iCount = CallService(MS_DB_CONTACT_GETCOUNT, 0, 0);
+	int iCount = db_get_contact_count();
 
 	iCount += 20;
 	if (iCount < 300)
@@ -142,62 +137,60 @@ extern "C" int __declspec(dllexport) CListInitialise()
 
 	cfg::dat.hMenuNotify = CreatePopupMenu();
 	cfg::dat.wNextMenuID = 1;
-	cfg::dat.sortTimer = cfg::getDword("CLC", "SortTimer", 150);
-	cfg::dat.avatarBorder = (COLORREF)cfg::getDword("CLC", "avatarborder", 0);
-	cfg::dat.avatarRadius = (COLORREF)cfg::getDword("CLC", "avatarradius", 4);
+	cfg::dat.sortTimer = db_get_dw(NULL, "CLC", "SortTimer", 150);
+	cfg::dat.avatarBorder = (COLORREF)db_get_dw(NULL, "CLC", "avatarborder", 0);
+	cfg::dat.avatarRadius = (COLORREF)db_get_dw(NULL, "CLC", "avatarradius", 4);
 	cfg::dat.hBrushAvatarBorder = CreateSolidBrush(cfg::dat.avatarBorder);
-	cfg::dat.avatarSize = cfg::getWord("CList", "AvatarSize", 24);
-	cfg::dat.dualRowMode = cfg::getByte("CLC", "DualRowMode", 0);
-	cfg::dat.avatarPadding = cfg::getByte("CList", "AvatarPadding", 0);
-	cfg::dat.isTransparent = cfg::getByte("CList", "Transparent", 0);
-	cfg::dat.alpha = cfg::getByte("CList", "Alpha", SETTING_ALPHA_DEFAULT);
-	cfg::dat.autoalpha = cfg::getByte("CList", "AutoAlpha", SETTING_ALPHA_DEFAULT);
-	cfg::dat.fadeinout = cfg::getByte("CLUI", "FadeInOut", 0);
-	cfg::dat.autosize = cfg::getByte("CLUI", "AutoSize", 0);
-	cfg::dat.bNoOfflineAvatars = cfg::getByte("CList", "NoOfflineAV", 1);
-	cfg::dat.bFullTransparent = cfg::getByte("CLUI", "fulltransparent", 0);
-	cfg::dat.bDblClkAvatars = cfg::getByte("CLC", "dblclkav", 0);
-	cfg::dat.bEqualSections = cfg::getByte("CLUI", "EqualSections", 0);
-	cfg::dat.bCenterStatusIcons = cfg::getByte("CLC", "si_centered", 1);
+	cfg::dat.avatarSize = db_get_w(NULL, "CList", "AvatarSize", 24);
+	cfg::dat.dualRowMode = db_get_b(NULL, "CLC", "DualRowMode", 0);
+	cfg::dat.avatarPadding = db_get_b(NULL, "CList", "AvatarPadding", 0);
+	cfg::dat.isTransparent = db_get_b(NULL, "CList", "Transparent", 0);
+	cfg::dat.alpha = db_get_b(NULL, "CList", "Alpha", SETTING_ALPHA_DEFAULT);
+	cfg::dat.autoalpha = db_get_b(NULL, "CList", "AutoAlpha", SETTING_ALPHA_DEFAULT);
+	cfg::dat.fadeinout = db_get_b(NULL, "CLUI", "FadeInOut", 0);
+	cfg::dat.autosize = db_get_b(NULL, "CLUI", "AutoSize", 0);
+	cfg::dat.bNoOfflineAvatars = db_get_b(NULL, "CList", "NoOfflineAV", 1);
+	cfg::dat.bFullTransparent = db_get_b(NULL, "CLUI", "fulltransparent", 0);
+	cfg::dat.bDblClkAvatars = db_get_b(NULL, "CLC", "dblclkav", 0);
+	cfg::dat.bEqualSections = db_get_b(NULL, "CLUI", "EqualSections", 0);
+	cfg::dat.bCenterStatusIcons = db_get_b(NULL, "CLC", "si_centered", 1);
 	cfg::dat.boldHideOffline = -1;
 	cfg::dat.bSecIMAvail = ServiceExists("SecureIM/IsContactSecured") ? 1 : 0;
-	cfg::dat.bNoTrayTips = cfg::getByte("CList", "NoTrayTips", 0);
-	cfg::dat.bShowLocalTime = cfg::getByte("CLC", "ShowLocalTime", 1);
-	cfg::dat.bShowLocalTimeSelective = cfg::getByte("CLC", "SelectiveLocalTime", 1);
-	cfg::dat.bDontSeparateOffline = cfg::getByte("CList", "DontSeparateOffline", 0);
-	cfg::dat.bShowXStatusOnSbar = cfg::getByte("CLUI", "xstatus_sbar", 0);
-	cfg::dat.bLayeredHack = cfg::getByte("CLUI", "layeredhack", 1);
-	cfg::dat.bFirstRun = cfg::getByte("CLUI", "firstrun", 1);
+	cfg::dat.bNoTrayTips = db_get_b(NULL, "CList", "NoTrayTips", 0);
+	cfg::dat.bShowLocalTime = db_get_b(NULL, "CLC", "ShowLocalTime", 1);
+	cfg::dat.bShowLocalTimeSelective = db_get_b(NULL, "CLC", "SelectiveLocalTime", 1);
+	cfg::dat.bDontSeparateOffline = db_get_b(NULL, "CList", "DontSeparateOffline", 0);
+	cfg::dat.bShowXStatusOnSbar = db_get_b(NULL, "CLUI", "xstatus_sbar", 0);
+	cfg::dat.bLayeredHack = db_get_b(NULL, "CLUI", "layeredhack", 1);
+	cfg::dat.bFirstRun = db_get_b(NULL, "CLUI", "firstrun", 1);
 	cfg::dat.langPackCP = Langpack_GetDefaultCodePage();
-	cfg::dat.realTimeSaving = cfg::getByte("CLUI", "save_pos_always", 0);
+	cfg::dat.realTimeSaving = db_get_b(NULL, "CLUI", "save_pos_always", 0);
 
-	DWORD sortOrder = cfg::getDword("CList", "SortOrder", SORTBY_NAME);
+	DWORD sortOrder = db_get_dw(NULL, "CList", "SortOrder", SORTBY_NAME);
 	cfg::dat.sortOrder[0] = LOBYTE(LOWORD(sortOrder));
 	cfg::dat.sortOrder[1] = HIBYTE(LOWORD(sortOrder));
 	cfg::dat.sortOrder[2] = LOBYTE(HIWORD(sortOrder));
 
 	if (cfg::dat.bFirstRun)
-		cfg::writeByte("CLUI", "firstrun", 0);
+		db_set_b(NULL, "CLUI", "firstrun", 0);
 
 	ReloadThemedOptions();
 	Reload3dBevelColors();
 
-	cfg::dat.dwFlags = cfg::getDword("CLUI", "Frameflags", CLUI_FRAME_STATUSICONS | CLUI_FRAME_SHOWBOTTOMBUTTONS | CLUI_FRAME_BUTTONSFLAT | CLUI_FRAME_CLISTSUNKEN);
-	cfg::dat.dwFlags |= (cfg::getByte("CLUI", "ShowSBar", 1) ? CLUI_FRAME_SBARSHOW : 0);
-	cfg::dat.soundsOff = cfg::getByte("Skin", "UseSound", 1) ? 0 : 1;
+	cfg::dat.dwFlags = db_get_dw(NULL, "CLUI", "Frameflags", CLUI_FRAME_STATUSICONS | CLUI_FRAME_SHOWBOTTOMBUTTONS | CLUI_FRAME_BUTTONSFLAT | CLUI_FRAME_CLISTSUNKEN);
+	cfg::dat.dwFlags |= (db_get_b(NULL, "CLUI", "ShowSBar", 1) ? CLUI_FRAME_SBARSHOW : 0);
+	cfg::dat.soundsOff = db_get_b(NULL, "Skin", "UseSound", 1) ? 0 : 1;
 
-	CallService(MS_DB_GETPROFILEPATHT, MAX_PATH, (LPARAM)cfg::dat.tszProfilePath);
-	_tcslwr(cfg::dat.tszProfilePath);
-
-	PreloadContactListModule();
+	Profile_GetPathW(MAX_PATH, cfg::dat.tszProfilePath);
+	wcslwr(cfg::dat.tszProfilePath);
 
 	// get the clist interface
 	pcli->hInst = g_hInst;
 	pcli->pfnCluiProtocolStatusChanged = CluiProtocolStatusChanged;
 	pcli->pfnCompareContacts = CompareContacts;
 	pcli->pfnCreateClcContact = CreateClcContact;
-	pcli->pfnCreateEvent = fnCreateEvent;
 	pcli->pfnDocking_ProcessWindowMessage = Docking_ProcessWindowMessage;
+	pcli->pfnGetContactHiddenStatus = CLVM_GetContactHiddenStatus;
 	pcli->pfnGetDefaultFontSetting = GetDefaultFontSetting;
 	pcli->pfnGetRowBottomY = RowHeight::getItemBottomY;
 	pcli->pfnGetRowHeight = RowHeight::getHeight;
@@ -205,7 +198,6 @@ extern "C" int __declspec(dllexport) CListInitialise()
 	pcli->pfnGetRowTotalHeight = RowHeight::getTotalHeight;
 	pcli->pfnGetWindowVisibleState = GetWindowVisibleState;
 	pcli->pfnHitTest = HitTest;
-	pcli->pfnLoadContactTree = LoadContactTree;
 	pcli->pfnOnCreateClc = OnCreateClc;
 	pcli->pfnPaintClc = PaintClc;
 	pcli->pfnRebuildEntireList = RebuildEntireList;

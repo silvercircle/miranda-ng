@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: OpenSSL.dll
 ;  Plugin: OpenSSL SSL API module
-;  Version: 0.1.0.1
+;  Version: 0.1.0.2
 ;  Authors: Miranda NG Team
 ;============================================================
 [Core driver to provide OpenSSL-based SSL services.]
@@ -11,4 +11,8 @@
 [Client cannot decode host message. Possible causes: host does not support SSL or requires not existing security package]
 
 [Host we are connecting to is not the one certificate was issued for]
+
+[OpenSSL library loading failed]
+
+[OpenSSL error]
 

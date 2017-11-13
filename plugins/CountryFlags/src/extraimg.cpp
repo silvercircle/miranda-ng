@@ -89,7 +89,7 @@ void UpdateExtraImages()
 // always call in context of main thread
 static void __fastcall SetStatusIcon(MCONTACT hContact,int countryNumber)
 {
-	StatusIconData sid = { sizeof(sid) };
+	StatusIconData sid = {};
 	sid.szModule = MODULENAME;
 
 	if (countryNumber != 0xFFFF || bUseUnknown) {
@@ -108,7 +108,7 @@ static void __fastcall SetStatusIcon(MCONTACT hContact,int countryNumber)
 // always call in context of main thread
 static void __fastcall UnsetStatusIcon(MCONTACT hContact)
 {
-	StatusIconData sid = { sizeof(sid) };
+	StatusIconData sid = {};
 	sid.szModule = MODULENAME;
 	sid.flags = MBF_HIDDEN;
 	Srmm_ModifyIcon(hContact, &sid);
@@ -135,21 +135,18 @@ static int MsgWndEvent(WPARAM, LPARAM lParam)
 
 void CALLBACK UpdateStatusIcons(LPARAM)
 {
-	MessageWindowInputData msgwi = { sizeof(msgwi) };
-	msgwi.uFlags = MSG_WINDOW_UFLAG_MSG_BOTH;
-	msgwi.hContact = db_find_first();
-	while (msgwi.hContact != NULL) {
+	MCONTACT hContact = db_find_first();
+	while (hContact != NULL) {
 		/* is a message window opened for this contact? */
 		MessageWindowData msgw; /* output */
-		msgw.cbSize = sizeof(msgw);
-		if (!CallService(MS_MSG_GETWINDOWDATA,(WPARAM)&msgwi,(LPARAM)&msgw) && msgw.uState & MSG_WINDOW_STATE_EXISTS) {
+		if (!Srmm_GetWindowData(hContact, msgw) && msgw.uState & MSG_WINDOW_STATE_EXISTS) {
 			if (bShowStatusIcon) {
-				int countryNumber = ServiceDetectContactOriginCountry((WPARAM)msgwi.hContact, 0);
-				SetStatusIcon(msgwi.hContact, countryNumber);
+				int countryNumber = ServiceDetectContactOriginCountry(hContact, 0);
+				SetStatusIcon(hContact, countryNumber);
 			}
-			else UnsetStatusIcon(msgwi.hContact);
+			else UnsetStatusIcon(hContact);
 		}
-		msgwi.hContact = db_find_next(msgw.hContact);
+		hContact = db_find_next(hContact);
 	}
 }
 
@@ -165,12 +162,11 @@ static int ExtraImgSettingChanged(WPARAM hContact, LPARAM lParam)
 	DBCONTACTWRITESETTING *dbcws = (DBCONTACTWRITESETTING*)lParam;
 	if (hContact) {
 		/* user details update */
-		if (!mir_strcmp(dbcws->szSetting,"RealIP") || !mir_strcmp(dbcws->szSetting,"Country") || !mir_strcmp(dbcws->szSetting,"CompanyCountry")) {
+		if (!strcmp(dbcws->szSetting,"RealIP") || !strcmp(dbcws->szSetting,"Country") || !strcmp(dbcws->szSetting,"CompanyCountry")) {
 			/* Extra Image */
 			SetExtraImage(hContact);
 			/* Status Icon */
-			if (ServiceExists(MS_MSG_REMOVEICON))
-				CallFunctionBuffered(UpdateStatusIcons,0,FALSE,STATUSICON_REFRESHDELAY);
+			CallFunctionBuffered(UpdateStatusIcons,0,FALSE,STATUSICON_REFRESHDELAY);
 		}
 	}
 	return 0;
@@ -181,7 +177,7 @@ static int ExtraImgSettingChanged(WPARAM hContact, LPARAM lParam)
 static int ExtraImgModulesLoaded(WPARAM, LPARAM)
 {
 	/* Status Icon */
-	StatusIconData sid = { sizeof(sid) };
+	StatusIconData sid = {};
 	sid.szModule = MODULENAME; // dwID = 0
 	sid.flags = MBF_HIDDEN;
 	Srmm_AddIcon(&sid);

@@ -44,8 +44,8 @@ PLUGININFOEX pluginInfo = {
 
 #define TRANSNUMBER 2
 DBVTranslation idleTr[TRANSNUMBER] = {
-	{ any_to_IdleNotidleUnknown, _T("Any to Idle/Not Idle/Unknown"), 0 },
-	{ any_to_Idle, _T("Any to /Idle or empty"), 0 }
+	{ any_to_IdleNotidleUnknown, L"Any to Idle/Not Idle/Unknown", 0 },
+	{ any_to_Idle, L"Any to /Idle or empty", 0 }
 };
 
 static int CompareProtos(const char *p1, const char *p2)
@@ -86,7 +86,7 @@ static int OnShutdown(WPARAM, LPARAM)
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	g_pUserInfo = WindowList_Create();
 	g_hShutdownEvent = CreateEvent(0, TRUE, FALSE, 0);
@@ -104,10 +104,10 @@ extern "C" __declspec(dllexport) int Load(void)
 
 	LoadWatchedProtos();
 
-	SkinAddNewSoundExT("LastSeenTrackedStatusChange", LPGENT("LastSeen"), LPGENT("User status change"));
-	SkinAddNewSoundExT("LastSeenTrackedStatusOnline", LPGENT("LastSeen"), LPGENT("Changed to Online"));
-	SkinAddNewSoundExT("LastSeenTrackedStatusOffline", LPGENT("LastSeen"), LPGENT("User Logged Off"));
-	SkinAddNewSoundExT("LastSeenTrackedStatusFromOffline", LPGENT("LastSeen"), LPGENT("User Logged In"));
+	Skin_AddSound("LastSeenTrackedStatusChange", LPGENW("LastSeen"), LPGENW("User status change"));
+	Skin_AddSound("LastSeenTrackedStatusOnline", LPGENW("LastSeen"), LPGENW("Changed to Online"));
+	Skin_AddSound("LastSeenTrackedStatusOffline", LPGENW("LastSeen"), LPGENW("User Logged Off"));
+	Skin_AddSound("LastSeenTrackedStatusFromOffline", LPGENW("LastSeen"), LPGENW("User Logged In"));
 	return 0;
 }
 

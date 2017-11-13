@@ -1,7 +1,7 @@
 /*
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-09 Miranda ICQ/IM project,
 
 This file is part of Send Screenshot Plus, a Miranda IM plugin.
@@ -31,6 +31,5 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define mir_freeAndNil(ptr) mir_free(ptr),ptr=NULL
 void mir_stradd(char* &pszDest, const char* pszSrc);
 void mir_wstradd(wchar_t* &pszDest, const wchar_t* pszSrc);
-#define mir_tstradd mir_wstradd
 
 #endif /* _MIR_STRING_H_INCLUDED_ */

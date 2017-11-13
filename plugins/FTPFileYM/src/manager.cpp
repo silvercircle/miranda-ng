@@ -121,7 +121,7 @@ void Manager::fillTree()
 	DBEntry *entry = DBEntry::getFirst();
 	while (entry != NULL) {
 		if ((UINT)entry->m_iFtpNum < m_rootItems.size()) {
-			tvi.item.pszText = mir_a2t(entry->m_szFileName);
+			tvi.item.pszText = mir_a2u(entry->m_szFileName);
 			tvi.hParent = m_rootItems[entry->m_iFtpNum]->m_handle;
 			HTREEITEM hItem = TreeView_InsertItem(m_hwndFileTree, &tvi);
 			AddLeaf(hItem, tvi.hParent, entry->m_fileID);
@@ -223,23 +223,23 @@ INT_PTR CALLBACK Manager::ManagerDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, 
 	switch (msg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
+		Window_SetIcon_IcoLib(hwndDlg, Utils::getIconHandle("main"));
 
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)Utils::loadIconEx("main"));
 		SendDlgItemMessage(hwndDlg, IDC_BTN_SELECTALL, BUTTONSETASFLATBTN, 0, 0);
 		SendDlgItemMessage(hwndDlg, IDC_BTN_SELECTALL, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_TICK));
-		SendDlgItemMessage(hwndDlg, IDC_BTN_SELECTALL, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Select All"), BATF_TCHAR);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_SELECTALL, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Select All"), BATF_UNICODE);
 		SendDlgItemMessage(hwndDlg, IDC_BTN_DESELECTALL, BUTTONSETASFLATBTN, 0, 0);
 		SendDlgItemMessage(hwndDlg, IDC_BTN_DESELECTALL, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_NOTICK));
-		SendDlgItemMessage(hwndDlg, IDC_BTN_DESELECTALL, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Clear All"), BATF_TCHAR);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_DESELECTALL, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Clear All"), BATF_UNICODE);
 		SendDlgItemMessage(hwndDlg, IDC_BTN_DELETEFROMLIST, BUTTONSETASFLATBTN, 0, 0);
 		SendDlgItemMessage(hwndDlg, IDC_BTN_DELETEFROMLIST, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Utils::loadIconEx("clear"));
-		SendDlgItemMessage(hwndDlg, IDC_BTN_DELETEFROMLIST, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Delete from List"), BATF_TCHAR);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_DELETEFROMLIST, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Delete from List"), BATF_UNICODE);
 		SendDlgItemMessage(hwndDlg, IDC_BTN_DELETE, BUTTONSETASFLATBTN, 0, 0);
 		SendDlgItemMessage(hwndDlg, IDC_BTN_DELETE, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Utils::loadIconEx("delete"));
-		SendDlgItemMessage(hwndDlg, IDC_BTN_DELETE, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Delete from FTP"), BATF_TCHAR);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_DELETE, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Delete from FTP"), BATF_UNICODE);
 		SendDlgItemMessage(hwndDlg, IDC_BTN_CLOSE, BUTTONSETASFLATBTN, 0, 0);
 		SendDlgItemMessage(hwndDlg, IDC_BTN_CLOSE, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_EXIT));
-		SendDlgItemMessage(hwndDlg, IDC_BTN_CLOSE, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Close"), BATF_TCHAR);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_CLOSE, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Close"), BATF_UNICODE);
 		return TRUE;
 
 	case WM_COMMAND:
@@ -377,7 +377,7 @@ INT_PTR CALLBACK Manager::ManagerDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, 
 
 				if (item) {
 					if (item->m_tszToolTip[0]) {
-						_tcsncpy(tvInfoTip->pszText, item->m_tszToolTip, tvInfoTip->cchTextMax - 1);
+						wcsncpy(tvInfoTip->pszText, item->m_tszToolTip, tvInfoTip->cchTextMax - 1);
 						tvInfoTip->pszText[tvInfoTip->cchTextMax - 1] = 0;
 					}
 				}

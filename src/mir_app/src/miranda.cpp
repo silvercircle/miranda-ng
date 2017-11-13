@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -42,19 +42,52 @@ pfnGetBufferedPaintBits getBufferedPaintBits;
 pfnDwmExtendFrameIntoClientArea dwmExtendFrameIntoClientArea;
 pfnDwmIsCompositionEnabled dwmIsCompositionEnabled;
 
-ITaskbarList3 * pTaskbarInterface;
+ITaskbarList3 *pTaskbarInterface;
 
 HANDLE hOkToExitEvent, hModulesLoadedEvent;
 HANDLE hShutdownEvent, hPreShutdownEvent;
-static HANDLE hWaitObjects[MAXIMUM_WAIT_OBJECTS-1];
-static char *pszWaitServices[MAXIMUM_WAIT_OBJECTS-1];
-static int waitObjectCount = 0;
 HANDLE hMirandaShutdown;
 HINSTANCE g_hInst;
 DWORD hMainThreadId;
 int hLangpack = 0;
 bool bModulesLoadedFired = false;
 int g_iIconX, g_iIconY, g_iIconSX, g_iIconSY;
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+struct MWaitableObject
+{
+	MWaitableObject(MWaitableStub pFunc, HANDLE hEvent) :
+		m_bOwnsEvent(false),
+		m_hEvent(hEvent),
+		m_pFunc(pFunc)
+	{
+		if (hEvent == nullptr) {
+			m_hEvent = CreateEvent(nullptr, TRUE, TRUE, nullptr);
+			m_bOwnsEvent = true;
+		}
+	}
+
+	~MWaitableObject()
+	{	
+		if (m_bOwnsEvent)
+			::CloseHandle(m_hEvent);
+	}
+
+	bool m_bOwnsEvent;
+	HANDLE m_hEvent;
+	MWaitableStub m_pFunc;
+};
+
+static OBJLIST<MWaitableObject> arWaitableObjects(1, HandleKeySortT);
+
+MIR_APP_DLL(void) Miranda_WaitOnHandle(MWaitableStub pFunc, HANDLE hEvent)
+{
+	arWaitableObjects.insert(new MWaitableObject(pFunc, hEvent));
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// dll entry point
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID)
 {
@@ -69,33 +102,15 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD dwReason, LPVOID)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
-// exception handling
-
-static INT_PTR srvGetExceptionFilter(WPARAM, LPARAM)
-{
-	return (INT_PTR)GetExceptionFilter();
-}
-
-static INT_PTR srvSetExceptionFilter(WPARAM, LPARAM lParam)
-{
-	return (INT_PTR)SetExceptionFilter((pfnExceptionFilter)lParam);
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
 
 typedef LONG(WINAPI *pNtQIT)(HANDLE, LONG, PVOID, ULONG, PULONG);
 #define ThreadQuerySetWin32StartAddress 9
-
-INT_PTR MirandaIsTerminated(WPARAM, LPARAM)
-{
-	return WaitForSingleObject(hMirandaShutdown, 0) == WAIT_OBJECT_0;
-}
 
 static void __cdecl compactHeapsThread(void*)
 {
 	Thread_SetName("compactHeapsThread");
 
-	while (!Miranda_Terminated()) {
+	while (!Miranda_IsTerminated()) {
 		HANDLE hHeaps[256];
 		DWORD hc;
 		SleepEx((1000 * 60) * 5, TRUE); // every 5 minutes
@@ -108,11 +123,11 @@ static void __cdecl compactHeapsThread(void*)
 	} //while
 }
 
-void(*SetIdleCallback) (void) = NULL;
+void(*SetIdleCallback) (void) = nullptr;
 
 static INT_PTR SystemSetIdleCallback(WPARAM, LPARAM lParam)
 {
-	if (lParam && SetIdleCallback == NULL) {
+	if (lParam && SetIdleCallback == nullptr) {
 		SetIdleCallback = (void(*)(void))lParam;
 		return 1;
 	}
@@ -145,43 +160,65 @@ static int SystemShutdownProc(WPARAM, LPARAM)
 #define MIRANDA_PROCESS_WAIT_TIMEOUT        60000
 #define MIRANDA_PROCESS_WAIT_RESOLUTION     1000
 #define MIRANDA_PROCESS_WAIT_STEPS          (MIRANDA_PROCESS_WAIT_TIMEOUT/MIRANDA_PROCESS_WAIT_RESOLUTION)
-static INT_PTR CALLBACK WaitForProcessDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+
+class CWaitRestartDlg : public CDlgBase
 {
-	switch (msg) {
-	case WM_INITDIALOG:
-		TranslateDialogDefault(hwnd);
-		SetWindowLongPtr(hwnd, GWLP_USERDATA, lParam);
-		SendDlgItemMessage(hwnd, IDC_PROGRESSBAR, PBM_SETRANGE, 0, MAKELPARAM(0, MIRANDA_PROCESS_WAIT_STEPS));
-		SendDlgItemMessage(hwnd, IDC_PROGRESSBAR, PBM_SETSTEP, 1, 0);
-		SetTimer(hwnd, 1, MIRANDA_PROCESS_WAIT_RESOLUTION, NULL);
-		break;
+	HANDLE m_hProcess;
+	CTimer m_timer;
+	CProgress m_progress;
+	CCtrlButton m_cancel;
 
-	case WM_TIMER:
-		if (SendDlgItemMessage(hwnd, IDC_PROGRESSBAR, PBM_STEPIT, 0, 0) == MIRANDA_PROCESS_WAIT_STEPS)
-			EndDialog(hwnd, 0);
-		if (WaitForSingleObject((HANDLE)GetWindowLongPtr(hwnd, GWLP_USERDATA), 1) != WAIT_TIMEOUT) {
-			SendDlgItemMessage(hwnd, IDC_PROGRESSBAR, PBM_SETPOS, MIRANDA_PROCESS_WAIT_STEPS, 0);
-			EndDialog(hwnd, 0);
-		}
-		break;
+protected:
+	void OnInitDialog();
+	
+	void Timer_OnEvent(CTimer*);
 
-	case WM_COMMAND:
-		if (LOWORD(wParam) == IDCANCEL) {
-			SendDlgItemMessage(hwnd, IDC_PROGRESSBAR, PBM_SETPOS, MIRANDA_PROCESS_WAIT_STEPS, 0);
-			EndDialog(hwnd, 1);
-		}
-		break;
+	void Cancel_OnClick(CCtrlBase*);
+
+public:
+	CWaitRestartDlg(HANDLE hProcess);
+};
+
+CWaitRestartDlg::CWaitRestartDlg(HANDLE hProcess)
+	: CDlgBase(g_hInst, IDD_WAITRESTART), m_timer(this, 1),
+	m_progress(this, IDC_PROGRESSBAR), m_cancel(this, IDCANCEL)
+{
+	m_autoClose = 0;
+	m_hProcess = hProcess;
+	m_timer.OnEvent = Callback(this, &CWaitRestartDlg::Timer_OnEvent);
+	m_cancel.OnClick = Callback(this, &CWaitRestartDlg::Cancel_OnClick);
+}
+
+void CWaitRestartDlg::OnInitDialog()
+{
+	m_progress.SetRange(MIRANDA_PROCESS_WAIT_STEPS);
+	m_progress.SetStep(1);
+	m_timer.Start(MIRANDA_PROCESS_WAIT_RESOLUTION);
+}
+
+void CWaitRestartDlg::Timer_OnEvent(CTimer*)
+{
+	if (m_progress.Move() == MIRANDA_PROCESS_WAIT_STEPS)
+		EndModal(0);
+	if (WaitForSingleObject(m_hProcess, 1) != WAIT_TIMEOUT) {
+		m_progress.SetPosition(MIRANDA_PROCESS_WAIT_STEPS);
+		EndModal(0);
 	}
-	return FALSE;
+}
+
+void CWaitRestartDlg::Cancel_OnClick(CCtrlBase*)
+{
+	m_progress.SetPosition(MIRANDA_PROCESS_WAIT_STEPS);
+	EndModal(1);
 }
 
 INT_PTR CheckRestart()
 {
-	LPCTSTR tszPID = CmdLine_GetOption(_T("restart"));
+	LPCTSTR tszPID = CmdLine_GetOption(L"restart");
 	if (tszPID) {
-		HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, _ttol(tszPID));
+		HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, _wtol(tszPID));
 		if (hProcess) {
-			INT_PTR result = DialogBoxParam(g_hInst, MAKEINTRESOURCE(IDD_WAITRESTART), NULL, WaitForProcessDlgProc, (LPARAM)hProcess);
+			INT_PTR result = CWaitRestartDlg(hProcess).DoModal();
 			CloseHandle(hProcess);
 			return result;
 		}
@@ -191,6 +228,15 @@ INT_PTR CheckRestart()
 
 static void crtErrorHandler(const wchar_t*, const wchar_t*, const wchar_t*, unsigned, uintptr_t)
 {}
+
+static DWORD myWait()
+{
+	HANDLE *hWaitObjects = (HANDLE*)_alloca(arWaitableObjects.getCount() * sizeof(HANDLE));
+	for (int i = 0; i < arWaitableObjects.getCount(); i++)
+		hWaitObjects[i] = arWaitableObjects[i].m_hEvent;
+
+	return MsgWaitForMultipleObjectsEx(arWaitableObjects.getCount(), hWaitObjects, INFINITE, QS_ALLINPUT, MWMO_ALERTABLE);
+}
 
 int WINAPI mir_main(LPTSTR cmdLine)
 {
@@ -205,18 +251,18 @@ int WINAPI mir_main(LPTSTR cmdLine)
 	setlocale(LC_ALL, "");
 
 #ifdef _DEBUG
-	if (CmdLine_GetOption(_T("memdebug")))
+	if (CmdLine_GetOption(L"memdebug"))
 		_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 
 	HMODULE hDwmApi, hThemeAPI;
 	if (IsWinVerVistaPlus()) {
-		hDwmApi = LoadLibrary(_T("dwmapi.dll"));
+		hDwmApi = LoadLibrary(L"dwmapi.dll");
 		if (hDwmApi) {
 			dwmExtendFrameIntoClientArea = (pfnDwmExtendFrameIntoClientArea)GetProcAddress(hDwmApi, "DwmExtendFrameIntoClientArea");
 			dwmIsCompositionEnabled = (pfnDwmIsCompositionEnabled)GetProcAddress(hDwmApi, "DwmIsCompositionEnabled");
 		}
-		hThemeAPI = LoadLibrary(_T("uxtheme.dll"));
+		hThemeAPI = LoadLibrary(L"uxtheme.dll");
 		if (hThemeAPI) {
 			drawThemeTextEx = (pfnDrawThemeTextEx)GetProcAddress(hThemeAPI, "DrawThemeTextEx");
 			setWindowThemeAttribute = (pfnSetWindowThemeAttribute)GetProcAddress(hThemeAPI, "SetWindowThemeAttribute");
@@ -232,10 +278,10 @@ int WINAPI mir_main(LPTSTR cmdLine)
 	if (bufferedPaintInit)
 		bufferedPaintInit();
 
-	OleInitialize(NULL);
+	OleInitialize(nullptr);
 
 	if (IsWinVer7Plus())
-		CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_ALL, IID_ITaskbarList3, (void**)&pTaskbarInterface);
+		CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_ALL, IID_ITaskbarList3, (void**)&pTaskbarInterface);
 
 	int result = 0;
 	if (LoadDefaultModules()) {
@@ -254,7 +300,7 @@ int WINAPI mir_main(LPTSTR cmdLine)
 		// ensure that the kernel hooks the SystemShutdownProc() after all plugins
 		HookEvent(ME_SYSTEM_SHUTDOWN, SystemShutdownProc);
 
-		forkthread(compactHeapsThread, 0, NULL);
+		mir_forkthread(compactHeapsThread);
 		CreateServiceFunction(MS_SYSTEM_SETIDLECALLBACK, SystemSetIdleCallback);
 		CreateServiceFunction(MS_SYSTEM_GETIDLE, SystemGetIdle);
 		dwEventTime = GetTickCount();
@@ -264,24 +310,25 @@ int WINAPI mir_main(LPTSTR cmdLine)
 		while (messageloop) {
 			MSG msg;
 			BOOL dying = FALSE;
-			DWORD rc = MsgWaitForMultipleObjectsEx(waitObjectCount, hWaitObjects, INFINITE, QS_ALLINPUT, MWMO_ALERTABLE);
-			if (rc < WAIT_OBJECT_0 + waitObjectCount) {
+			DWORD rc = myWait();
+			if (rc < WAIT_OBJECT_0 + arWaitableObjects.getCount()) {
 				rc -= WAIT_OBJECT_0;
-				CallService(pszWaitServices[rc], (WPARAM)hWaitObjects[rc], 0);
+				(*arWaitableObjects[rc].m_pFunc)();
+				arWaitableObjects.remove(rc);
 			}
-			//
-			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+
+			while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
 				if (msg.message != WM_QUIT) {
 					HWND h = GetForegroundWindow();
 					DWORD pid = 0;
 					checkIdle(&msg);
-					if (h != NULL && GetWindowThreadProcessId(h, &pid) && pid == myPid && GetClassLongPtr(h, GCW_ATOM) == 32770)
-						if (h != NULL && IsDialogMessage(h, &msg)) /* Wine fix. */
+					if (h != nullptr && GetWindowThreadProcessId(h, &pid) && pid == myPid && GetClassLongPtr(h, GCW_ATOM) == 32770)
+						if (h != nullptr && IsDialogMessage(h, &msg)) /* Wine fix. */
 							continue;
 
 					TranslateMessage(&msg);
 					DispatchMessage(&msg);
-					if (SetIdleCallback != NULL)
+					if (SetIdleCallback != nullptr)
 						SetIdleCallback();
 				}
 				else if (!dying) {
@@ -317,14 +364,24 @@ int WINAPI mir_main(LPTSTR cmdLine)
 	return result;
 }
 
-static INT_PTR OkToExit(WPARAM, LPARAM)
+/////////////////////////////////////////////////////////////////////////////////////////
+
+MIR_APP_DLL(bool) Miranda_IsTerminated()
+{
+	return WaitForSingleObject(hMirandaShutdown, 0) == WAIT_OBJECT_0;
+}
+
+MIR_APP_DLL(bool) Miranda_OkToExit()
 {
 	return NotifyEventHooks(hOkToExitEvent, 0, 0) == 0;
 }
 
-static INT_PTR GetMirandaVersion(WPARAM, LPARAM)
+/////////////////////////////////////////////////////////////////////////////////////////
+// version functions
+
+MIR_APP_DLL(DWORD) Miranda_GetVersion()
 {
-	TCHAR filename[MAX_PATH];
+	wchar_t filename[MAX_PATH];
 	GetModuleFileName(g_hInst, filename, _countof(filename));
 
 	DWORD unused, verInfoSize = GetFileVersionInfoSize(filename, &unused);
@@ -333,17 +390,16 @@ static INT_PTR GetMirandaVersion(WPARAM, LPARAM)
 
 	UINT blockSize;
 	VS_FIXEDFILEINFO *vsffi;
-	VerQueryValue(pVerInfo, _T("\\"), (PVOID*)&vsffi, &blockSize);
-	DWORD ver = (((vsffi->dwProductVersionMS >> 16) & 0xFF) << 24) |
+	VerQueryValue(pVerInfo, L"\\", (PVOID*)&vsffi, &blockSize);
+	return (((vsffi->dwProductVersionMS >> 16) & 0xFF) << 24) |
 		((vsffi->dwProductVersionMS & 0xFF) << 16) |
 		(((vsffi->dwProductVersionLS >> 16) & 0xFF) << 8) |
 		(vsffi->dwProductVersionLS & 0xFF);
-	return (INT_PTR)ver;
 }
 
-static INT_PTR GetMirandaFileVersion(WPARAM, LPARAM lParam)
+MIR_APP_DLL(void) Miranda_GetFileVersion(MFileVersion *pVer)
 {
-	TCHAR filename[MAX_PATH];
+	wchar_t filename[MAX_PATH];
 	GetModuleFileName(g_hInst, filename, _countof(filename));
 
 	DWORD unused, verInfoSize = GetFileVersionInfoSize(filename, &unused);
@@ -352,19 +408,17 @@ static INT_PTR GetMirandaFileVersion(WPARAM, LPARAM lParam)
 
 	UINT blockSize;
 	VS_FIXEDFILEINFO *vsffi;
-	VerQueryValue(pVerInfo, _T("\\"), (PVOID*)&vsffi, &blockSize);
+	VerQueryValue(pVerInfo, L"\\", (PVOID*)&vsffi, &blockSize);
 
-	WORD* p = (WORD*)lParam;
-	p[0] = HIWORD(vsffi->dwProductVersionMS);
-	p[1] = LOWORD(vsffi->dwProductVersionMS);
-	p[2] = HIWORD(vsffi->dwProductVersionLS);
-	p[3] = LOWORD(vsffi->dwProductVersionLS);
-	return 0;
+	(*pVer)[0] = HIWORD(vsffi->dwProductVersionMS);
+	(*pVer)[1] = LOWORD(vsffi->dwProductVersionMS);
+	(*pVer)[2] = HIWORD(vsffi->dwProductVersionLS);
+	(*pVer)[3] = LOWORD(vsffi->dwProductVersionLS);
 }
 
-static INT_PTR GetMirandaVersionText(WPARAM wParam, LPARAM lParam)
+MIR_APP_DLL(void) Miranda_GetVersionText(char *pDest, size_t cbSize)
 {
-	TCHAR filename[MAX_PATH], *productVersion;
+	wchar_t filename[MAX_PATH], *productVersion;
 	GetModuleFileName(g_hInst, filename, _countof(filename));
 
 	DWORD unused, verInfoSize = GetFileVersionInfoSize(filename, &unused);
@@ -372,61 +426,22 @@ static INT_PTR GetMirandaVersionText(WPARAM wParam, LPARAM lParam)
 	GetFileVersionInfo(filename, 0, verInfoSize, pVerInfo);
 
 	UINT blockSize;
-	VerQueryValue(pVerInfo, _T("\\StringFileInfo\\000004b0\\ProductVersion"), (LPVOID*)&productVersion, &blockSize);
-	strncpy((char*)lParam, _T2A(productVersion), wParam);
+	VerQueryValue(pVerInfo, L"\\StringFileInfo\\000004b0\\ProductVersion", (LPVOID*)&productVersion, &blockSize);
+	strncpy_s(pDest, cbSize, _T2A(productVersion), _TRUNCATE);
 #if defined(_WIN64)
-	strcat_s((char*)lParam, wParam, " x64");
+	strcat_s(pDest, cbSize, " x64");
 #endif
-	return 0;
-}
-
-INT_PTR WaitOnHandle(WPARAM wParam, LPARAM lParam)
-{
-	if (waitObjectCount >= MAXIMUM_WAIT_OBJECTS - 1)
-		return 1;
-
-	hWaitObjects[waitObjectCount] = (HANDLE)wParam;
-	pszWaitServices[waitObjectCount] = (char*)lParam;
-	waitObjectCount++;
-	return 0;
-}
-
-static INT_PTR RemoveWait(WPARAM wParam, LPARAM)
-{
-	int i;
-
-	for (i = 0; i < waitObjectCount; i++)
-		if (hWaitObjects[i] == (HANDLE)wParam)
-			break;
-
-	if (i == waitObjectCount)
-		return 1;
-
-	waitObjectCount--;
-	memmove(&hWaitObjects[i], &hWaitObjects[i + 1], sizeof(HANDLE)*(waitObjectCount - i));
-	memmove(&pszWaitServices[i], &pszWaitServices[i + 1], sizeof(char*)*(waitObjectCount - i));
-	return 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 
 int LoadSystemModule(void)
 {
-	hMirandaShutdown = CreateEvent(NULL, TRUE, FALSE, NULL);
+	hMirandaShutdown = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 
 	hShutdownEvent = CreateHookableEvent(ME_SYSTEM_SHUTDOWN);
 	hPreShutdownEvent = CreateHookableEvent(ME_SYSTEM_PRESHUTDOWN);
 	hModulesLoadedEvent = CreateHookableEvent(ME_SYSTEM_MODULESLOADED);
 	hOkToExitEvent = CreateHookableEvent(ME_SYSTEM_OKTOEXIT);
-
-	CreateServiceFunction(MS_SYSTEM_TERMINATED, MirandaIsTerminated);
-	CreateServiceFunction(MS_SYSTEM_OKTOEXIT, OkToExit);
-	CreateServiceFunction(MS_SYSTEM_GETVERSION, GetMirandaVersion);
-	CreateServiceFunction(MS_SYSTEM_GETFILEVERSION, GetMirandaFileVersion);
-	CreateServiceFunction(MS_SYSTEM_GETVERSIONTEXT, GetMirandaVersionText);
-	CreateServiceFunction(MS_SYSTEM_WAITONHANDLE, WaitOnHandle);
-	CreateServiceFunction(MS_SYSTEM_REMOVEWAIT, RemoveWait);
-	CreateServiceFunction(MS_SYSTEM_GETEXCEPTFILTER, srvGetExceptionFilter);
-	CreateServiceFunction(MS_SYSTEM_SETEXCEPTFILTER, srvSetExceptionFilter);
 	return 0;
 }

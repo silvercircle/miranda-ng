@@ -30,7 +30,7 @@ int CALLBACK PopupDlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_COMMAND:
 	case WM_CONTEXTMENU:
 		MCONTACT hContact = PUGetContact(hWnd);
-		ptrT url( db_get_tsa(hContact, MODULENAME, URL_KEY));
+		ptrW url( db_get_wsa(hContact, MODULENAME, URL_KEY));
 
 		if (message == WM_COMMAND) { // left click
 			if(hContact != NULL) { 
@@ -42,7 +42,7 @@ int CALLBACK PopupDlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				}
 				// open url
 				if (db_get_b(NULL, MODULENAME, LCLK_WEB_PGE_KEY, 0)) {
-					Utils_OpenUrlT(url);
+					Utils_OpenUrlW(url);
 					PUDeletePopup(hWnd);
 					db_set_w(wParam, MODULENAME, "Status", ID_STATUS_ONLINE); 
 				}
@@ -63,7 +63,7 @@ int CALLBACK PopupDlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				}
 				// open url
 				if (db_get_b(NULL, MODULENAME, RCLK_WEB_PGE_KEY, 1)) {
-					Utils_OpenUrlT(url);
+					Utils_OpenUrlW(url);
 					PUDeletePopup(hWnd);
 					db_set_w(wParam, MODULENAME, "Status", ID_STATUS_ONLINE); 
 				}
@@ -88,21 +88,21 @@ int WDisplayDataAlert(MCONTACT hContact)
 }
 
 /*****************************************************************************/
-int WAlertPopup(MCONTACT hContact, TCHAR *displaytext)
+int WAlertPopup(MCONTACT hContact, wchar_t *displaytext)
 {
 	NotifyEventHooks(hHookAlertPopup, hContact, (LPARAM)displaytext);
 	return 0;
 }
 
 /*****************************************************************************/
-int WErrorPopup(MCONTACT hContact, TCHAR *textdisplay)
+int WErrorPopup(MCONTACT hContact, wchar_t *textdisplay)
 {
 	NotifyEventHooks(hHookErrorPopup, hContact, (LPARAM) textdisplay);
 	return 0;
 }
 
 /*****************************************************************************/
-int WAlertOSD(MCONTACT hContact, TCHAR *displaytext)
+int WAlertOSD(MCONTACT hContact, wchar_t *displaytext)
 {
 	NotifyEventHooks(hHookAlertOSD, hContact, (LPARAM) displaytext);
 	return 0;
@@ -115,20 +115,20 @@ int PopupAlert(WPARAM wParam, LPARAM lParam)
 
 	if( ((HANDLE)wParam) != NULL) {
 		DBVARIANT dbv;
-		db_get_ts(wParam, MODULENAME, PRESERVE_NAME_KEY, &dbv);
-		mir_tstrncpy(ppd.lptzContactName, dbv.ptszVal, _countof(ppd.lptzContactName));
+		db_get_ws(wParam, MODULENAME, PRESERVE_NAME_KEY, &dbv);
+		mir_wstrncpy(ppd.lptzContactName, dbv.ptszVal, _countof(ppd.lptzContactName));
 		db_free(&dbv);
 	}
-	else mir_tstrcpy(ppd.lptzContactName, _T(MODULENAME));
+	else mir_wstrcpy(ppd.lptzContactName, _A2W(MODULENAME));
 
 	ppd.lchContact = wParam;
 	ppd.lchIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_SITE));
 
-	TCHAR *displaytext = (TCHAR*)lParam;
-	if ((mir_tstrlen(displaytext) == MAX_SECONDLINE) ||  (mir_tstrlen(displaytext) > MAX_SECONDLINE))
-		mir_sntprintf(ppd.lptzText, displaytext);
-	else if (mir_tstrlen(displaytext) < MAX_SECONDLINE)
-		mir_sntprintf(ppd.lptzText, displaytext);
+	wchar_t *displaytext = (wchar_t*)lParam;
+	if ((mir_wstrlen(displaytext) == MAX_SECONDLINE) ||  (mir_wstrlen(displaytext) > MAX_SECONDLINE))
+		mir_snwprintf(ppd.lptzText, displaytext);
+	else if (mir_wstrlen(displaytext) < MAX_SECONDLINE)
+		mir_snwprintf(ppd.lptzText, displaytext);
 
 	if ( db_get_b(NULL, MODULENAME, POP_USECUSTCLRS_KEY, 0)) {
 		ppd.colorBack = db_get_dw(NULL, MODULENAME, POP_BG_CLR_KEY, Def_color_bg);
@@ -181,30 +181,22 @@ int OSDAlert(WPARAM hContact, LPARAM lParam)
 int ErrorMsgs(WPARAM wParam, LPARAM lParam)
 {
 	MCONTACT hContact = wParam;
-	TCHAR newdisplaytext[2000], *displaytext = (TCHAR*)lParam;
+	wchar_t newdisplaytext[2000], *displaytext = (wchar_t*)lParam;
 
 	if (db_get_b(NULL, MODULENAME, SUPPRESS_ERR_KEY, 0))
 		return 0;
 
-	TCHAR *ptszContactName = pcli->pfnGetContactDisplayName(hContact, 0);
+	wchar_t *ptszContactName = pcli->pfnGetContactDisplayName(hContact, 0);
 	if (ServiceExists(MS_POPUP_ADDPOPUPT) && db_get_b(NULL, MODULENAME, ERROR_POPUP_KEY, 0)) {
-		mir_sntprintf(newdisplaytext, _T("%s\n%s"), ptszContactName, displaytext);
+		mir_snwprintf(newdisplaytext, L"%s\n%s", ptszContactName, displaytext);
 		PUShowMessageT(newdisplaytext, SM_WARNING);
 	}
 	else if ( ServiceExists("OSD/Announce") && db_get_b(NULL, MODULENAME, ERROR_POPUP_KEY, 0)) {
-		mir_sntprintf(newdisplaytext, _T("%s: %s"), ptszContactName, TranslateTS(displaytext));
+		mir_snwprintf(newdisplaytext, L"%s: %s", ptszContactName, TranslateW(displaytext));
 		CallService("OSD/Announce", (WPARAM)newdisplaytext, 0);
 	}
-	else if (ServiceExists(MS_CLIST_SYSTRAY_NOTIFY)) {
-		MIRANDASYSTRAYNOTIFY webview_tip = {0};
-		webview_tip.cbSize = sizeof(MIRANDASYSTRAYNOTIFY);
-		webview_tip.szProto = NULL;
-		webview_tip.tszInfoTitle = ptszContactName;
-		webview_tip.tszInfo = TranslateTS(displaytext);
-		webview_tip.dwInfoFlags = NIIF_ERROR | NIIF_INTERN_UNICODE;
-		webview_tip.uTimeout = 15000;
-		CallService(MS_CLIST_SYSTRAY_NOTIFY, 0, (LPARAM) &webview_tip);
-	}
+
+	Clist_TrayNotifyW(NULL, ptszContactName, TranslateW(displaytext), NIIF_ERROR, 15000);
 	return 0;
 }
 
@@ -255,7 +247,7 @@ void SaveToFile(MCONTACT hContact, char *truncated)
 int ProcessAlerts(MCONTACT hContact, char *truncated, char *tstr, char *contactname, int notpresent)
 {
 	char alertstring[255];
-	TCHAR displaystring[300];
+	wchar_t displaystring[300];
 	FILE  *pcachefile;
 	DBVARIANT tdbv;
 	int wasAlert = 0;
@@ -340,7 +332,7 @@ int ProcessAlerts(MCONTACT hContact, char *truncated, char *tstr, char *contactn
 
 				SetDlgItemText(hwndDlg, IDC_STATUSBAR, TranslateT("Start/end strings not found or strings not set."));
 			}
-			else MessageBox(NULL, TranslateT("Start/end strings not found or strings not set."), _T(MODULENAME), MB_OK);
+			else MessageBox(NULL, TranslateT("Start/end strings not found or strings not set."), _A2W(MODULENAME), MB_OK);
 		}
 
 		if (eventIndex == 0) { // string present
@@ -353,11 +345,11 @@ int ProcessAlerts(MCONTACT hContact, char *truncated, char *tstr, char *contactn
 					wasAlert = 1;
 
 					// play sound?
-					SkinPlaySound("webviewalert");
+					Skin_PlaySound("webviewalert");
 					//
 					if ((!notpresent)) {
 						if (alertIndex == 0) { // popup
-							mir_sntprintf(displaystring, _T("%s \"%S\" %s."), Translate("The string"), alertstring, Translate("has been found on the web page"));
+							mir_snwprintf(displaystring, L"%s \"%S\" %s.", Translate("The string"), alertstring, Translate("has been found on the web page"));
 							WAlertPopup(hContact, displaystring);
 
 							// contactlist name//
@@ -397,7 +389,7 @@ int ProcessAlerts(MCONTACT hContact, char *truncated, char *tstr, char *contactn
 							}
 						}
 						else if (alertIndex == 3) {
-							mir_sntprintf(displaystring, _T("%s \"%s\" %s."), TranslateT("The string"), alertstring, TranslateT("has been found on the web page"));
+							mir_snwprintf(displaystring, L"%s \"%s\" %s.", TranslateT("The string"), alertstring, TranslateT("has been found on the web page"));
 							WAlertOSD(hContact, displaystring);
 
 							// contactlist name//
@@ -413,25 +405,25 @@ int ProcessAlerts(MCONTACT hContact, char *truncated, char *tstr, char *contactn
 							HWND hwndDlg = WindowList_Find(hWindowList, hContact);
 							SetDlgItemText(hwndDlg, IDC_STATUSBAR, TranslateT("Download successful; about to process data..."));
 						}
-						else MessageBox(NULL, TranslateT("Unknown alert type."), _T(MODULENAME), MB_OK);
+						else MessageBox(NULL, TranslateT("Unknown alert type."), _A2W(MODULENAME), MB_OK);
 					}
 				}
 			}
 		}
 		else if (eventIndex == 1) { // webpage changed
 			// TEST GET NAME FOR CACHE
-			TCHAR cachepath[MAX_PATH], cachedirectorypath[MAX_PATH], newcachepath[MAX_PATH + 50];
+			wchar_t cachepath[MAX_PATH], cachedirectorypath[MAX_PATH], newcachepath[MAX_PATH + 50];
 			GetModuleFileName(hInst, cachepath, _countof(cachepath));
-			TCHAR *cacheend = _tcsrchr(cachepath, '\\');
+			wchar_t *cacheend = wcsrchr(cachepath, '\\');
 			cacheend++;
 			*cacheend = '\0';
 
-			mir_sntprintf(cachedirectorypath, _T("%s%S%S"), cachepath, MODULENAME, "cache\\");
+			mir_snwprintf(cachedirectorypath, L"%s%S%S", cachepath, MODULENAME, "cache\\");
 			CreateDirectory(cachedirectorypath, NULL);
-			mir_sntprintf(newcachepath, _T("%s%S%S%S%S"), cachepath, MODULENAME, "cache\\", contactname, ".txt");
+			mir_snwprintf(newcachepath, L"%s%S%S%S%S", cachepath, MODULENAME, "cache\\", contactname, ".txt");
 			// file exists?
-			if ( _taccess(newcachepath, 0) != -1) {
-				if ((pcachefile = _tfopen(newcachepath, _T("r"))) == NULL)
+			if ( _waccess(newcachepath, 0) != -1) {
+				if ((pcachefile = _wfopen(newcachepath, L"r")) == NULL)
 					WErrorPopup((UINT_PTR)contactname, TranslateT("Cannot read from file"));
 				else {
 					memset(&cachecompare, 0, sizeof(cachecompare));
@@ -440,18 +432,18 @@ int ProcessAlerts(MCONTACT hContact, char *truncated, char *tstr, char *contactn
 				}
 			}
 			// write to cache
-			if ((pcachefile = _tfopen(newcachepath, _T("w"))) == NULL)
+			if ((pcachefile = _wfopen(newcachepath, L"w")) == NULL)
 				WErrorPopup((UINT_PTR)contactname, TranslateT("Cannot write to file 1"));
 			else {
 				fwrite(tempraw, mir_strlen(tempraw), 1, pcachefile); //smaller cache
 				fclose(pcachefile);
-				db_set_ts(hContact, MODULENAME, CACHE_FILE_KEY, newcachepath);
+				db_set_ws(hContact, MODULENAME, CACHE_FILE_KEY, newcachepath);
 			}
 			// end write to cache
 
 			if (strncmp(tempraw, cachecompare, mir_strlen(tempraw)) != 0) { //lets try this instead
 				// play sound?
-				SkinPlaySound("webviewalert");
+				Skin_PlaySound("webviewalert");
 				// there was an alert
 				wasAlert = 1;
 
@@ -508,7 +500,7 @@ int ProcessAlerts(MCONTACT hContact, char *truncated, char *tstr, char *contactn
 						if ( db_get_b(hContact, MODULENAME, APND_DATE_NAME_KEY, 0))
 							db_set_s(hContact, "CList", "MyHandle", tstr);
 					}
-					else MessageBox(NULL, TranslateT("Unknown alert type."), _T(MODULENAME), MB_OK);
+					else MessageBox(NULL, TranslateT("Unknown alert type."), _A2W(MODULENAME), MB_OK);
 				}
 			}
 		}
@@ -624,7 +616,7 @@ int ProcessAlerts(MCONTACT hContact, char *truncated, char *tstr, char *contactn
 					HWND hwndDlg = (WindowList_Find(hWindowList, hContact));
 					SetDlgItemText(hwndDlg, IDC_STATUSBAR, TranslateT("Alert start/end strings not found or strings not set."));
 				}
-				else MessageBox(NULL, TranslateT("Alert start/end strings not found or strings not set."), _T(MODULENAME), MB_OK);
+				else MessageBox(NULL, TranslateT("Alert start/end strings not found or strings not set."), _A2W(MODULENAME), MB_OK);
 
 				db_set_w(hContact, MODULENAME, "Status", ID_STATUS_AWAY);
 			}
@@ -632,18 +624,18 @@ int ProcessAlerts(MCONTACT hContact, char *truncated, char *tstr, char *contactn
 			///////////////
 			if (((strstr(tempraw, Alerttempstring)) != 0) && ((strstr(tempraw, Alerttempstring2)) != 0)) {
 				// TEST GET NAME FOR CACHE
-				TCHAR cachepath[MAX_PATH], cachedirectorypath[MAX_PATH], newcachepath[MAX_PATH + 50];
+				wchar_t cachepath[MAX_PATH], cachedirectorypath[MAX_PATH], newcachepath[MAX_PATH + 50];
 				GetModuleFileName(hInst, cachepath, _countof(cachepath));
-				TCHAR *cacheend = _tcsrchr(cachepath, '\\');
+				wchar_t *cacheend = wcsrchr(cachepath, '\\');
 				cacheend++;
 				*cacheend = '\0';
 
-				mir_sntprintf(cachedirectorypath, _T("%s%S%S"), cachepath, MODULENAME, "cache\\");
+				mir_snwprintf(cachedirectorypath, L"%s%S%S", cachepath, MODULENAME, "cache\\");
 				CreateDirectory(cachedirectorypath, NULL);
-				mir_sntprintf(newcachepath, _T("%s%S%S%S%S"), cachepath, MODULENAME, "cache\\", contactname, ".txt");
+				mir_snwprintf(newcachepath, L"%s%S%S%S%S", cachepath, MODULENAME, "cache\\", contactname, ".txt");
 				// file exists?
-				if ( _taccess(newcachepath, 0) != -1) {
-					if ((pcachefile = _tfopen(newcachepath, _T("r"))) == NULL)
+				if ( _waccess(newcachepath, 0) != -1) {
+					if ((pcachefile = _wfopen(newcachepath, L"r")) == NULL)
 						WErrorPopup((UINT_PTR)contactname, TranslateT("Cannot read from file"));
 					else {
 						memset(&cachecompare, 0, sizeof(cachecompare));
@@ -652,17 +644,17 @@ int ProcessAlerts(MCONTACT hContact, char *truncated, char *tstr, char *contactn
 					}
 				}
 				// write to cache
-				if ((pcachefile = _tfopen(newcachepath, _T("w"))) == NULL)
+				if ((pcachefile = _wfopen(newcachepath, L"w")) == NULL)
 					WErrorPopup((UINT_PTR)contactname, TranslateT("Cannot write to file 2"));
 				else {
 					fwrite(raw, mir_strlen(raw), 1, pcachefile); //smaller cache
-					db_set_ts(hContact, MODULENAME, CACHE_FILE_KEY, newcachepath);
+					db_set_ws(hContact, MODULENAME, CACHE_FILE_KEY, newcachepath);
 					fclose(pcachefile);
 				}
 				// end write to cache
 				if (strncmp(raw, cachecompare, (mir_strlen(raw))) != 0) { //lets try this instead
 					// play sound?
-					SkinPlaySound("webviewalert");
+					Skin_PlaySound("webviewalert");
 					// there was an alert
 					wasAlert = 1;
 
@@ -718,7 +710,7 @@ int ProcessAlerts(MCONTACT hContact, char *truncated, char *tstr, char *contactn
 							if ( db_get_b(hContact, MODULENAME, APND_DATE_NAME_KEY, 0))
 								db_set_s(hContact, "CList", "MyHandle", tstr);
 						}
-						else MessageBox(NULL, TranslateT("Unknown alert type."), _T(MODULENAME), MB_OK);
+						else MessageBox(NULL, TranslateT("Unknown alert type."), _A2W(MODULENAME), MB_OK);
 					}
 				}
 			}

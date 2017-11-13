@@ -114,7 +114,7 @@ void TSendContactsData::AddContact(MCONTACT hContact1)
 
 int TSendContactsData::SendContactsPacket(HWND hwndDlg, MCONTACT *phContacts, int nContacts1)
 {
-	HANDLE hProcc = (HANDLE)CallContactService(hContact, PSS_CONTACTS, MAKEWPARAM(0, nContacts1), (LPARAM)phContacts);
+	HANDLE hProcc = (HANDLE)ProtoChainSend(hContact, PSS_CONTACTS, MAKEWPARAM(0, nContacts1), (LPARAM)phContacts);
 	if (!hProcc) {
 		// on trivial error - do not close dialog
 		ShowErrorDlg(hwndDlg, "Contacts transfer failed!", FALSE);
@@ -200,7 +200,7 @@ static void SetAllContactChecks(HWND hwndList, MCONTACT hReceiver) // doubtful n
 	if (szProto == NULL)
 		return;
 
-	if (CallService(MS_CLUI_GETCAPS, 0, 0) & CLUIF_HIDEEMPTYGROUPS && db_get_b(NULL, "CList", "HideEmptyGroups", SETTING_USEGROUPS_DEFAULT))
+	if (db_get_b(NULL, "CList", "HideEmptyGroups", SETTING_USEGROUPS_DEFAULT))
 		SendMessage(hwndList, CLM_SETHIDEEMPTYGROUPS, TRUE, 0);
 	else
 		SendMessage(hwndList, CLM_SETHIDEEMPTYGROUPS, FALSE, 0);
@@ -234,10 +234,10 @@ INT_PTR CALLBACK SendDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 		wndData = new TSendContactsData(lParam);
 		SetWindowLongPtr(hwndDlg, DWLP_USER, (LONG_PTR)wndData);
 		// new dlg init 
-		wndData->hIcons[0] = InitMButton(hwndDlg, IDC_ADD, SKINICON_OTHER_ADDCONTACT, LPGENT("Add Contact Permanently to List"));
-		wndData->hIcons[1] = InitMButton(hwndDlg, IDC_DETAILS, SKINICON_OTHER_USERDETAILS, LPGENT("View User's Details"));
-		wndData->hIcons[2] = InitMButton(hwndDlg, IDC_HISTORY, SKINICON_OTHER_HISTORY, LPGENT("View User's History"));
-		wndData->hIcons[3] = InitMButton(hwndDlg, IDC_USERMENU, SKINICON_OTHER_DOWNARROW, LPGENT("User Menu"));
+		wndData->hIcons[0] = InitMButton(hwndDlg, IDC_ADD, SKINICON_OTHER_ADDCONTACT, LPGENW("Add Contact Permanently to List"));
+		wndData->hIcons[1] = InitMButton(hwndDlg, IDC_DETAILS, SKINICON_OTHER_USERDETAILS, LPGENW("View User's Details"));
+		wndData->hIcons[2] = InitMButton(hwndDlg, IDC_HISTORY, SKINICON_OTHER_HISTORY, LPGENW("View User's History"));
+		wndData->hIcons[3] = InitMButton(hwndDlg, IDC_USERMENU, SKINICON_OTHER_DOWNARROW, LPGENW("User Menu"));
 
 		SendMessage(hwndDlg, DM_UPDATETITLE, 0, 0);
 		// new dialog init done
@@ -293,7 +293,7 @@ INT_PTR CALLBACK SendDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 		case MSGERROR_RETRY:// resend timeouted packets
 			for (int i = 0; i < wndData->uacklist.Count; i++) {
 				TAckData *lla = g_aAckData.Remove(wndData->uacklist.Items[i]);
-				HANDLE hProcc = (HANDLE)CallContactService(wndData->hContact, PSS_CONTACTS, MAKEWPARAM(0, lla->nContacts), (LPARAM)lla->aContacts);
+				HANDLE hProcc = (HANDLE)ProtoChainSend(wndData->hContact, PSS_CONTACTS, MAKEWPARAM(0, lla->nContacts), (LPARAM)lla->aContacts);
 
 				if (!hProcc) { // if fatal do not include
 					wndData->uacklist.Remove(wndData->uacklist.Items[i]);
@@ -311,7 +311,7 @@ INT_PTR CALLBACK SendDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 		break;
 
 	case WM_COMMAND:
-		if (!lParam && CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(LOWORD(wParam), MPCF_CONTACTMENU), (LPARAM)wndData->hContact))
+		if (!lParam && Clist_MenuProcessCommand(LOWORD(wParam), MPCF_CONTACTMENU, wndData->hContact))
 			break;
 
 		switch (LOWORD(wParam)) {
@@ -398,7 +398,7 @@ INT_PTR CALLBACK SendDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 				break;
 			}
 
-			DBEVENTINFO dbei = { sizeof(dbei) };
+			DBEVENTINFO dbei = {};
 			dbei.szModule = GetContactProto(ackData->hContact);
 			dbei.eventType = EVENTTYPE_CONTACTS;
 			dbei.flags = DBEF_SENT | DBEF_UTF;
@@ -411,8 +411,8 @@ INT_PTR CALLBACK SendDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 			int i;
 			for (i = 0; i < ackData->nContacts; i++) {
 				// prepare data & count size
-				maSend[i].mcaNick = mir_utf8encodeT(pcli->pfnGetContactDisplayName(ackData->aContacts[i], 0));
-				maSend[i].mcaUIN = mir_utf8encodeT(ptrT(GetContactUID(ackData->aContacts[i])));
+				maSend[i].mcaNick = mir_utf8encodeW(pcli->pfnGetContactDisplayName(ackData->aContacts[i], 0));
+				maSend[i].mcaUIN = mir_utf8encodeW(ptrW(GetContactUID(ackData->aContacts[i])));
 				dbei.cbBlob += (DWORD)strlennull(maSend[i].mcaUIN) + (DWORD)strlennull((char*)maSend[i].mcaNick) + 2;
 			}
 			dbei.pBlob = (PBYTE)_alloca(dbei.cbBlob);
@@ -431,7 +431,7 @@ INT_PTR CALLBACK SendDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 			}
 			delete ackData; // all done, release structure
 			if (!wndData->uacklist.Count) {
-				SkinPlaySound("SentContacts");
+				Skin_PlaySound("SentContacts");
 				KillTimer(hwndDlg, TIMERID_MSGSEND);
 
 				if (wndData->hError)
@@ -443,11 +443,11 @@ INT_PTR CALLBACK SendDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 		break;
 	
 	case WM_MEASUREITEM:
-		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
+		return Menu_MeasureItem(lParam);
 
 	case WM_DRAWITEM:
 		DrawProtocolIcon(hwndDlg, lParam, wndData->hContact);
-		return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
+		return Menu_DrawItem(lParam);
 
 	case DM_UPDATETITLE:
 		UpdateDialogTitle(hwndDlg, wndData ? wndData->hContact : NULL, TranslateT("Send Contacts to"));
@@ -479,7 +479,7 @@ INT_PTR CALLBACK ErrorDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 		TranslateDialogDefault(hwndDlg);
 		{
 			if (lParam)
-				SetDlgItemText(hwndDlg, IDC_ERRORTEXT, TranslateTS((TCHAR*)lParam));
+				SetDlgItemText(hwndDlg, IDC_ERRORTEXT, TranslateW((wchar_t*)lParam));
 
 			RECT rc, rcParent;
 			GetWindowRect(hwndDlg, &rc);

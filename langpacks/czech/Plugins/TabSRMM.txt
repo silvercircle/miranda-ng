@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: TabSRMM.dll
 ;  Plugin: TabSRMM
-;  Version: 3.4.0.11
+;  Version: 3.4.1.2
 ;  Authors: The Miranda developers team and contributors
 ;============================================================
 [IM and group chat module for Miranda NG.]
@@ -44,8 +44,6 @@ Oznamovací oblast
 Možnosti
 [Add new rooms to group:]
 Nové místnosti do skupiny:
-[Chat integration is disabled. You can enable it here, and then you to NEED RESTART Miranda after making this change.\n\nYou MUST disable the standard chat plugin when you enable the group chat support here. Otherwise no group chat at all may work.]
-Integrace chatu je nyní vypnutá, zde jí můžete zapnout (poté je NUTNÉ RESTARTOVAT Mirandu, aby nastavení vešlo v platnost).\n\nTaké prosím vypněte standardní modul pro chat, pokud se rozhodnete používat integrovaný. Pokud tak neučiníte, chat nejspíš nebude fungovat vůbec.
 [Log files]
 Soubory záznamů
 [Enable logging to disk]
@@ -395,7 +393,7 @@ Předchozí události starší méně než
 [minutes old]
 min.
 [Global message log display]
-Zobrazení globálního záznamu komunikace
+Zobrazení záznamu komunikace
 [Typing notification options]
 Upozornění na psaní zprávy
 [Send typing notifications to the following users when you are typing a message to them:]
@@ -498,7 +496,7 @@ Pouze jedn&o oznámení na kontakt
 Zobrazit položku v hlavním m&enu
 [...is typing]
 ... píše zprávu
-[From Popup plugin]
+[From popup plugin]
 Globální nastavení
 [From protocol]
 Dle protokolu
@@ -552,8 +550,8 @@ Pozn.: Některá nastavení hned neovlivní otevřené kontejnery.
 Rozvržení záložek
 [About TabSRMM]
 O TabSRMM
-[Copyright 2004-2011 by the Miranda IM project, 2012-2015 by the Miranda NG project. More detailed copyright information can be found in the included README file.]
-Copyright © 2004-2011 Miranda IM projekt, 2012-2015 Miranda NG projekt. Detailnější informace týkající se copyrightu naleznete v přiloženém README souboru.
+[Copyright 2004-2011 by the Miranda IM project, 2012-2016 by the Miranda NG project. More detailed copyright information can be found in the included README file.]
+Copyright © 2004-2011 Miranda IM projekt, 2012-2016 Miranda NG projekt. Detailnější informace týkající se copyrightu naleznete v přiloženém README souboru.
 [Support and latest version information]
 Podpora, hlášení chyb a informace o nových verzích
 [Selected skin]
@@ -620,7 +618,7 @@ Zprava doleva je výchozí směr psaní
 Zaznamenávat změny stavu (pouze při otevřeném okně)
 [Revert to global options]
 Resetovat nastavení
-[You can set private message log options for this contact here. Filled boxes are inherited from the global settings which can be found on Message sessions->Message log]
+[You can set private message log options for this contact here. Filled boxes are inherited from the global settings which can be found on Options -> Message sessions -> Message log]
 Zde si můžete nastavit záznam rozhovoru pro konkrétní kontakt. Předvyplněné hodnoty jsou převzaty z globálního nastavení, které se nachází v Komunikace -> Záznam komunikace
 [Use normal templates (uncheck to use simple templates)]
 Použít normální šablony (odznačením se použijí jednoduché)
@@ -884,6 +882,8 @@ Vždy navrchu
 Záz&nam hovoru
 [&Container]
 &Kontejner
+[Event popups]
+Oznámení událostí
 [Disable all event popups]
 Zakázat oznámení všech událostí
 [Show popups if window is minimized]
@@ -926,7 +926,7 @@ Zavřít rozhovor
 [Quote last message OR selected text]
 Citovat poslední zprávu NEBO vybraný text
 [Message log options]
-Možnosti záznamu rozhovoru
+Možnosti záznamu komunikace
 [View user's history]
 Zobrazit historii
 [Edit user notes]
@@ -967,8 +967,8 @@ Velikost okna a vzhled
 Můžete vybrat vlastní téma (soubor .tabsrmm) pro tento kontejner, které přepíše výchozí téma záznamu komunikace. Po této změně bude nutné zavřít a znovu otevřít všechna komunikační okna.
 [Transparency]
 Průhlednost
-[This feature requires Windows 2000 or later and may be unavailable when using a container skin.]
-Tato funkce vyžaduje Windows 2000 nebo novější a může být nedostupná při použití skinu kontejneru.
+[This feature may be unavailable when using a container skin.]
+Tato funkce může být nedostupná při použití skinu kontejneru.
 [Contact avatars]
 Avatary kontaktu
 [Sound notifications]
@@ -1030,8 +1030,8 @@ Neznámý modul nebo uživatel
 Rich Edit soubor
 [No status message]
 Žádná zpráva stavu
-[Configuration issue|The unattended send feature is disabled. The \\b1 send later\\b0  and \\b1 send to multiple contacts\\b0  features depend on it.\n\nYou must enable it under \\b1Options->Message sessions->Advanced tweaks\\b0. Changing this option requires a restart.]
-Problém v nastavení|Funkce bezobslužného odesílání je zakázána. Funkce \\b1 zpožděné odesílání\\b0  a \\b1 poslat více kontaktům\\b0  ji však vyžadují.\n\nNutno povolit v \\b1Možnosti->Komunikace->Pokročilé úpravy\\b0. Změna tohoto nastavení vyžaduje restart.
+[Configuration issue|The unattended send feature is disabled. The \\b1 send later\\b0  and \\b1 send to multiple contacts\\b0  features depend on it.\n\nYou must enable it under \\b1Options -> Message sessions -> Advanced tweaks\\b0. Changing this option requires a restart.]
+Problém v nastavení|Funkce bezobslužného odesílání je zakázána. Funkce \\b1 zpožděné odesílání\\b0  a \\b1 poslat více kontaktům\\b0  ji však vyžadují.\n\nNutno povolit v \\b1Možnosti -> Komunikace -> Pokročilé úpravy\\b0. Změna tohoto nastavení vyžaduje restart.
 [You cannot edit user notes when there are unsent messages]
 Nemůžete upravovat poznámky k uživateli pokud existují neodeslané zprávy.
 [Version]
@@ -1097,29 +1097,33 @@ Odeslat soubor
 [Quote message]
 Citovat zprávu
 [Toggle send later]
-
+Přepnout zpožděné odesílání
 [Send message]
 Poslat zprávu
 [Smiley selector]
 Použití smajlíku
 [Show message history]
-
+Zobrazit historii zpráv
+[Show send menu]
+Zobrazit nabídku odesílání
+[Show protocol menu]
+Zobrazit nabídku protokolu
 [Show user menu]
-Zobrazit uživatelské menu
+Zobrazit nabídku uživatele
 [Show user details]
-
+Zobrazit detaily uživatele
 [Toggle toolbar]
-
+Přepnout tlačítkovou lištu
 [Toggle info panel]
-
+Přepnout info panel
 [Toggle text direction]
-
+Přepnout směr textu
 [Toggle multi send]
-
+Přepnout odesílání více uživatelům
 [Clear message log]
-
+Vymazat záznam komunikace
 [Collapse side bar]
-
+Skrýt boční lištu
 [Toggle filter]
 Přepnout filtr
 [Show server window]
@@ -1336,7 +1340,7 @@ Chcete se vzhledem nahrát také šablony záznamu?\nUPOZORNĚNÍ: Tato volba p�
 [Load theme]
 Nahrát vzhled
 [Internal message log]
-
+Vestavěný záznam komunikace
 [IEView plugin]
 Styly (IEView)
 [History++ plugin]
@@ -1347,8 +1351,6 @@ Vybrali jste externí plugin pro zobrazení záznamu zpráv v komunikačním okn
 ** nové kontakty **
 [** Unknown contacts **]
 ** neznámé kontakty **
-[Show balloon popup (unsupported system)]
-Zobrazit oznámení bublinami (nepodporováno)
 [Always]
 Vždy
 [Always, but no popup when window is focused]
@@ -1464,8 +1466,8 @@ Symbol hodin (pro hodiny informačního panelu)
 Funkce zakázána (použito jako překrytí)
 [Feature enabled (used as overlay)]
 Funkce povolena (použito jako překrytí)
-[The image service plugin (advaimg.dll) is not properly installed.\n\nTabSRMM is disabled.]
-Doplněk pro práci s obrázky (advaimg.dll) není nainstalován.\n\nTabSRMM je zakázáno.
+[The image service plugin (AdvaImg) is not properly installed.\n\nTabSRMM is disabled.]
+Doplněk pro práci s obrázky (AdvaImg) není nainstalován.\n\nTabSRMM je zakázáno.
 [TabSRMM fatal error]
 TabSRMM kritická chyba
 ;file \plugins\TabSRMM\src\msgs.h
@@ -1545,7 +1547,7 @@ Rozšířené rozvržení s avatary, horizontální orientace
 Rozšířené rozvržení s avatary, vertikální orientace
 ;file \plugins\TabSRMM\src\srmm.cpp
 [This version of TabSRMM requires Windows 2000 or later.]
-
+Tato verze TabSRMM vyžaduje Windows 2000 nebo novější.
 [TabSRMM message (%s)]
 TabSRMM zpráva (%s)
 ;file \plugins\TabSRMM\src\taskbar.cpp
@@ -1562,6 +1564,20 @@ Okno serveru
 [%s on %s%s]
 %s v síti %s%s
 ;file \plugins\TabSRMM\src\templates.cpp
+[Message In]
+Příchozí zpráva
+[Message Out]
+Odchozí zpráva
+[Group In (Start)]
+Seskupené příchozí (začátek)
+[Group Out (Start)]
+Seskupené odchozí (začátek)
+[Group In (Inner)]
+Seskupené příchozí (uvnitř)
+[Group Out (Inner)]
+Seskupené odchozí (uvnitř)
+[Error message]
+Chybová zpráva
 [Template set editor]
 Editor sady šablon
 [This will reset the template set to the default built-in templates. Are you sure you want to do this?]
@@ -1775,8 +1791,8 @@ Editovat poznámky k uživateli|Editujete poznámky k uživateli. Klikněte na t
 Aero náhled - varování|Máte povolen Aero náhled a nahrán vlastní styl kontejneru\n\nTo může vést k vedlejším vizuálním anomáliím.
 [File transfer problem|Sending the image by file transfer failed.\n\nPossible reasons: File transfers not supported, either you or the target contact is offline, or you are invisible and the target contact is not on your visibility list.]
 
-[Settings problem|The option \\b1 History->Imitate IEView API\\b0  is enabled and the History++ plugin is active. This can cause problems when using IEView as message log viewer.\n\nShould I correct the option (a restart is required)?]
-Problém v nastavení|Možnost \\b1 History->Imitate IEView API\\b0 je povolena a plugin History++ je aktivní. To může vést k problémům při použití IEView jako prohlížeče záznamu komunikace.\n\nMohu napravit nastavení (vyžaduje restart)?
+[Settings problem|The option \\b1 History -> Imitate IEView API\\b0  is enabled and the History++ plugin is active. This can cause problems when using IEView as message log viewer.\n\nShould I correct the option (a restart is required)?]
+Problém v nastavení|Možnost \\b1 Historie -> Imitovat IEView API\\b0 je povolena a plugin History++ je aktivní. To může vést k problémům při použití IEView jako prohlížeče záznamu komunikace.\n\nMohu napravit nastavení (vyžaduje restart)?
 [Closing Window|You are about to close a window with multiple tabs open.\n\nProceed?]
 Zavírání okna|Pokoušíte se zavřít okno s několika otevřenými panely.\n\nPokračovat?
 [Closing options dialog|To reflect the changes done by importing a theme in the options dialog, the dialog must be closed after loading a theme \\b1 and unsaved changes might be lost\\b0 .\n\nDo you want to continue?]
@@ -1969,6 +1985,8 @@ Odsadit druhý řádek dlouhé zprávy
 Omezit délku jmen v záznamu na 20 znaků
 [Add a colon (:) to auto-completed user names]
 Přidat dvojtečku za automaticky doplněné jméno
+[Add a comma instead of a colon to auto-completed user names]
+Přidat čárku místo dvojtečky za automaticky doplněné jméno
 [Start private conversation on double click in nick list (insert nick if unchecked)]
 Zahájit soukromý rozhovor dvojklikem v seznamu uživatelů (jinak vložit přezdívku)
 [Strip colors from messages in the log]
@@ -1979,6 +1997,8 @@ Aktivovat filtr událostí pro nové místnosti
 Použít IRC indikátory stavu v záznamu
 [Allow clickable user names in the message log]
 Povolit klikatelné uživatelské jména v záznamu komunikace
+[Add new line after names]
+Přidat nový řádek za jména
 [Colorize user names in message log]
 Obarvit uživatelské jména v záznamu komunikace
 [Scale down icons to 10x10 pixels in the chat log]

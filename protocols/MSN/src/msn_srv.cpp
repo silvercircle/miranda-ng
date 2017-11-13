@@ -1,7 +1,7 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
 
-Copyright (c) 2012-2014 Miranda NG Team
+Copyright (c) 2012-2017 Miranda NG Team
 Copyright (c) 2006-2012 Boris Krasnovskiy.
 Copyright (c) 2003-2005 George Hazan.
 Copyright (c) 2002-2003 Richard Hughes (original version).
@@ -38,7 +38,7 @@ void CMsnProto::MSN_AddGroup(const char* grpName, const char *grpId, bool init)
 	m_arGroups.insert(p);
 
 	if (init)
-		Clist_CreateGroup(0, ptrT(mir_utf8decodeT(grpName)));
+		Clist_GroupCreate(0, ptrW(mir_utf8decodeW(grpName)));
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -284,19 +284,8 @@ void CMsnProto::MSN_SendNicknameUtf(const char* nickname)
 	else
 		delSetting("Nick");
 
-#ifdef OBSOLETE
-	MSN_SetNicknameUtf(nickname[0] ? nickname : MyOptions.szEmail);
-#endif
-
 	ForkThread(&CMsnProto::msn_storeProfileThread, (void*)1);
 }
-
-#ifdef OBSOLETE
-void CMsnProto::MSN_SetNicknameUtf(const char* nickname)
-{
-	msnNsThread->sendPacket("PRP", "MFN %s", ptrA(mir_urlEncode(nickname)));
-}
-#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // msn_storeAvatarThread - update our own avatar on the server

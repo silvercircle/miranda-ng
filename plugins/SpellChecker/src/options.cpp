@@ -18,7 +18,7 @@ Boston, MA 02111-1307, USA.
 */
 
 
-#include "commons.h"
+#include "stdafx.h"
 
 // Prototypes /////////////////////////////////////////////////////////////////////////////////////
 
@@ -57,8 +57,8 @@ int InitOptionsCallback(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
-	odp.pszGroup = LPGEN("Message sessions");
-	odp.pszTitle = LPGEN("Spell Checker");
+	odp.szGroup.a = LPGEN("Message sessions");
+	odp.szTitle.a = LPGEN("Spell Checker");
 	odp.pfnDlgProc = OptionsDlgProc;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONS);
 	odp.flags = ODPF_BOLDGROUPS;
@@ -66,8 +66,8 @@ int InitOptionsCallback(WPARAM wParam, LPARAM)
 
 	memset(&odp, 0, sizeof(odp));
 	odp.hInstance = hInst;
-	odp.pszGroup = LPGEN("Message sessions");
-	odp.pszTitle = LPGEN("Auto-replacements");
+	odp.szGroup.a = LPGEN("Message sessions");
+	odp.szTitle.a = LPGEN("Auto-replacements");
 	odp.pfnDlgProc = AutoreplaceDlgProc;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_REPLACEMENTS);
 	odp.flags = ODPF_BOLDGROUPS;
@@ -88,23 +88,23 @@ void LoadOptions()
 	LoadOpts(autoReplaceControls, _countof(autoReplaceControls), MODULE_NAME);
 
 	if (languages.getCount() <= 0) {
-		opts.default_language[0] = _T('\0');
+		opts.default_language[0] = '\0';
 		return;
 	}
 
 	DBVARIANT dbv;
-	if (!db_get_ts(NULL, MODULE_NAME, "DefaultLanguage", &dbv)) {
-		mir_tstrncpy(opts.default_language, dbv.ptszVal, _countof(opts.default_language));
+	if (!db_get_ws(NULL, MODULE_NAME, "DefaultLanguage", &dbv)) {
+		mir_wstrncpy(opts.default_language, dbv.ptszVal, _countof(opts.default_language));
 		db_free(&dbv);
 	}
 
 	int i;
 	for (i = 0; i < languages.getCount(); i++)
-		if (mir_tstrcmp(languages[i]->language, opts.default_language) == 0)
+		if (mir_wstrcmp(languages[i]->language, opts.default_language) == 0)
 			break;
 
 	if (i >= languages.getCount())
-		mir_tstrcpy(opts.default_language, languages[0]->language);
+		mir_wstrcpy(opts.default_language, languages[0]->language);
 }
 
 static void DrawItem(LPDRAWITEMSTRUCT lpdis, Dictionary *dict)
@@ -179,7 +179,7 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			SendDlgItemMessage(hwndDlg, IDC_DEF_LANG, CB_ADDSTRING, 0, (LPARAM)languages[i]->full_name);
 			SendDlgItemMessage(hwndDlg, IDC_DEF_LANG, CB_SETITEMDATA, i, (LPARAM)languages[i]);
 
-			if (!mir_tstrcmp(opts.default_language, languages[i]->language))
+			if (!mir_wstrcmp(opts.default_language, languages[i]->language))
 				sel = i;
 		}
 		SendDlgItemMessage(hwndDlg, IDC_DEF_LANG, CB_SETCURSEL, sel, 0);
@@ -196,7 +196,7 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDC_GETMORE)
-			Utils_OpenUrl("http://wiki.miranda-ng.org/index.php?title=Plugin:SpellChecker");
+			Utils_OpenUrl("https://miranda-ng.org/p/SpellChecker/");
 
 		if (LOWORD(wParam) == IDC_DEF_LANG && (HIWORD(wParam) == CBN_SELCHANGE && (HWND)lParam == GetFocus())) {
 			SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
@@ -212,9 +212,9 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			int sel = SendDlgItemMessage(hwndDlg, IDC_DEF_LANG, CB_GETCURSEL, 0, 0);
 			if (sel >= languages.getCount())
 				sel = 0;
-			db_set_ts(NULL, MODULE_NAME, "DefaultLanguage",
-				(TCHAR *)languages[sel]->language);
-			mir_tstrcpy(opts.default_language, languages[sel]->language);
+			db_set_ws(NULL, MODULE_NAME, "DefaultLanguage",
+				(wchar_t *)languages[sel]->language);
+			mir_wstrcpy(opts.default_language, languages[sel]->language);
 		}
 	}
 	break;
@@ -247,21 +247,21 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 struct AutoreplaceData
 {
 	Dictionary *dict;
-	map<tstring, AutoReplacement> autoReplaceMap;
+	map<std::wstring, AutoReplacement> autoReplaceMap;
 	BOOL initialized;
 	BOOL changed;
 
 	AutoreplaceData(Dictionary *dict) : dict(dict), initialized(FALSE), changed(FALSE) {}
 
-	void RemoveWord(const TCHAR *aWord)
+	void RemoveWord(const wchar_t *aWord)
 	{
-		map<tstring, AutoReplacement>::iterator it = autoReplaceMap.find(aWord);
+		map<std::wstring, AutoReplacement>::iterator it = autoReplaceMap.find(aWord);
 		if (it != autoReplaceMap.end())
 			autoReplaceMap.erase(it);
 		changed = TRUE;
 	}
 
-	void AddWord(const TCHAR *find, const TCHAR *replace, BOOL useVars)
+	void AddWord(const wchar_t *find, const wchar_t *replace, BOOL useVars)
 	{
 		autoReplaceMap[find] = AutoReplacement(replace, useVars);
 		changed = TRUE;
@@ -302,33 +302,33 @@ static void LoadReplacements(HWND hwndDlg)
 		data->initialized = TRUE;
 	}
 
-	map<tstring, AutoReplacement>::iterator it = data->autoReplaceMap.begin();
+	map<std::wstring, AutoReplacement>::iterator it = data->autoReplaceMap.begin();
 	for (int i = 0; it != data->autoReplaceMap.end(); it++, i++) {
 		LVITEM item = { 0 };
 		item.mask = LVIF_TEXT | LVIF_PARAM;
 		item.iItem = i;
 		item.iSubItem = 0;
-		item.pszText = (TCHAR *)it->first.c_str();
+		item.pszText = (wchar_t *)it->first.c_str();
 		item.lParam = i;
 
 		ListView_InsertItem(hList, &item);
 
-		ListView_SetItemText(hList, i, 1, (TCHAR *)it->second.replace.c_str());
+		ListView_SetItemText(hList, i, 1, (wchar_t *)it->second.replace.c_str());
 	}
 
 	EnableDisableCtrls(hwndDlg);
 }
 
 static void SaveNewReplacements(BOOL canceled, Dictionary*,
-	const TCHAR *find, const TCHAR *replace, BOOL useVariables,
-	const TCHAR *original_find, void *param)
+	const wchar_t *find, const wchar_t *replace, BOOL useVariables,
+	const wchar_t *original_find, void *param)
 {
 	if (canceled)
 		return;
 
 	AutoreplaceData *data = (AutoreplaceData *)param;
 
-	if (mir_tstrlen(original_find) > 0)
+	if (mir_wstrlen(original_find) > 0)
 		data->RemoveWord(original_find);
 
 	data->AddWord(find, replace, useVariables);
@@ -342,8 +342,8 @@ static void ShowAddReplacement(HWND hwndDlg, int item = -1)
 
 	AutoreplaceData *data = (AutoreplaceData *)SendDlgItemMessage(hwndDlg, IDC_LANGUAGE, CB_GETITEMDATA, sel, 0);
 
-	TCHAR find[256];
-	const TCHAR *replace = NULL;
+	wchar_t find[256];
+	const wchar_t *replace = NULL;
 	BOOL useVariables = FALSE;
 
 	if (item < 0)
@@ -351,7 +351,7 @@ static void ShowAddReplacement(HWND hwndDlg, int item = -1)
 	else
 		ListView_GetItemText(GetDlgItem(hwndDlg, IDC_REPLACEMENTS), item, 0, find, _countof(find));
 
-	if (mir_tstrlen(find) > 0) {
+	if (mir_wstrlen(find) > 0) {
 		AutoReplacement &ar = data->autoReplaceMap[find];
 		replace = ar.replace.c_str();
 		useVariables = ar.useVariables;
@@ -378,7 +378,7 @@ static INT_PTR CALLBACK AutoreplaceDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam
 			SendDlgItemMessage(hwndDlg, IDC_LANGUAGE, CB_ADDSTRING, 0, (LPARAM)p->full_name);
 			SendDlgItemMessage(hwndDlg, IDC_LANGUAGE, CB_SETITEMDATA, i, (LPARAM)new AutoreplaceData(p));
 
-			if (!mir_tstrcmp(opts.default_language, p->language))
+			if (!mir_wstrcmp(opts.default_language, p->language))
 				sel = i;
 		}
 		SendDlgItemMessage(hwndDlg, IDC_LANGUAGE, CB_SETCURSEL, sel, 0);
@@ -430,7 +430,7 @@ static INT_PTR CALLBACK AutoreplaceDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam
 
 			sel = SendMessage(hList, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
 			while (sel >= 0) {
-				TCHAR tmp[256];
+				wchar_t tmp[256];
 				ListView_GetItemText(hList, sel, 0, tmp, _countof(tmp));
 
 				data->RemoveWord(tmp);

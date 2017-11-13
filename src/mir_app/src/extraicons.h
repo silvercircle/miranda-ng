@@ -1,7 +1,7 @@
 /*
 
 Copyright (C) 2009 Ricardo Pescuma Domenecci
-Copyright (C) 2012-15 Miranda NG project
+Copyright (C) 2012-17 Miranda NG project
 
 This is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
@@ -26,8 +26,6 @@ Boston, MA 02111-1307, USA.
 
 // Global Variables
 
-#define FREE(_m_)		if (_m_ != NULL) { free(_m_); _m_ = NULL; }
-
 #define ICON_SIZE 16
 
 #include "Extraicon.h"
@@ -44,28 +42,12 @@ int Clist_SetExtraIcon(MCONTACT hContact, int slot, HANDLE hImage);
 
 void DefaultExtraIcons_Load();
 
-HANDLE ExtraIcon_Add(HICON hIcon);
-
 void fnReloadExtraIcons();
 void fnSetAllExtraIcons(MCONTACT hContact);
 
 static inline BOOL IsEmpty(const char *str)
 {
-	return str == NULL || str[0] == 0;
-}
-
-static inline int MIN(int a, int b)
-{
-	if (a <= b)
-		return a;
-	return b;
-}
-
-static inline int MAX(int a, int b)
-{
-	if (a >= b)
-		return a;
-	return b;
+	return str == nullptr || str[0] == 0;
 }
 
 #endif // __COMMONS_H__

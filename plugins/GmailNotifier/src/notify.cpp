@@ -6,7 +6,7 @@ int OpenBrowser(WPARAM hContact, LPARAM)
 	if (proto && !mir_strcmp(proto, MODULE_NAME)) {
 		Account *curAcc = GetAccountByContact(hContact);
 		PUDeletePopup(curAcc->popUpHwnd);
-		CallServiceSync(MS_CLIST_REMOVEEVENT, (WPARAM)curAcc->hContact, (LPARAM)1);
+		pcli->pfnRemoveEvent(curAcc->hContact, 1);
 		if (GetKeyState(VK_SHIFT) >> 8 || optionWindowIsOpen)
 			return FALSE;
 
@@ -45,7 +45,7 @@ static LRESULT CALLBACK PopupDlgProc(HWND hWnd, UINT message, WPARAM wParam, LPA
 	case WM_CONTEXTMENU:
 		PUDeletePopup(hWnd);
 		curAcc->popUpHwnd = NULL;
-		CallServiceSync(MS_CLIST_REMOVEEVENT, (WPARAM)hContact, (LPARAM)1);
+		pcli->pfnRemoveEvent(hContact, 1);
 	}
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
@@ -59,7 +59,7 @@ void NotifyUser(Account *curAcc)
 	switch (curAcc->results_num) {
 	case 0:
 		PUDeletePopup(curAcc->popUpHwnd);
-		CallServiceSync(MS_CLIST_REMOVEEVENT, (WPARAM)curAcc->hContact, (LPARAM)1);
+		pcli->pfnRemoveEvent(curAcc->hContact, 1);
 		if (curAcc->oldResults_num != 0)
 			db_set_w(curAcc->hContact, MODULE_NAME, "Status", ID_STATUS_NONEW);
 		break;
@@ -72,7 +72,7 @@ void NotifyUser(Account *curAcc)
 		db_set_w(curAcc->hContact, MODULE_NAME, "Status", ID_STATUS_OCCUPIED);
 		int newMails = (curAcc->oldResults_num == -1) ? (curAcc->results_num) : (curAcc->results_num - curAcc->oldResults_num);
 		if (opt.LogThreads&&newMails > 0) {
-			DBEVENTINFO dbei = { sizeof(dbei) };
+			DBEVENTINFO dbei = {};
 			dbei.eventType = EVENTTYPE_MESSAGE;
 			dbei.flags = DBEF_READ;
 			dbei.szModule = MODULE_NAME;
@@ -87,15 +87,16 @@ void NotifyUser(Account *curAcc)
 			}
 		}
 		if (opt.notifierOnTray&&newMails > 0) {
-			CLISTEVENT cle = { sizeof(cle) };
+			pcli->pfnRemoveEvent(curAcc->hContact, 1);
+
+			CLISTEVENT cle = {};
 			cle.hContact = curAcc->hContact;
 			cle.hDbEvent = 1;
 			cle.flags = CLEF_URGENT;
 			cle.hIcon = Skin_LoadProtoIcon(MODULE_NAME, ID_STATUS_OCCUPIED);
 			cle.pszService = "GmailMNotifier/Notifying";
-			cle.pszTooltip = curAcc->results.next->content;
-			CallServiceSync(MS_CLIST_REMOVEEVENT, (WPARAM)curAcc->hContact, (LPARAM)1);
-			CallServiceSync(MS_CLIST_ADDEVENT, (WPARAM)curAcc->hContact, (LPARAM)& cle);
+			cle.szTooltip.a = curAcc->results.next->content;
+			pcli->pfnAddEvent(&cle);
 		}
 
 		if (opt.notifierOnPop&&newMails > 0) {
@@ -119,7 +120,7 @@ void NotifyUser(Account *curAcc)
 			PUAddPopup(&ppd);
 		}
 		if (newMails > 0)
-			SkinPlaySound("Gmail");
+			Skin_PlaySound("Gmail");
 	}
 	curAcc->oldResults_num = curAcc->results_num;
 	DeleteResults(curAcc->results.next);

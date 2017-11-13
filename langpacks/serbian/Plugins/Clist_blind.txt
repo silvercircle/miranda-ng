@@ -178,48 +178,20 @@ Glavni &meni
 &Prisutan\tCtrl+1
 [&Away\tCtrl+2]
 &Neaktivan\tCtrl+2
-[&NA\tCtrl+3]
+[&Not available\tCtrl+3]
 N&edostupan\tCtrl+3
 [Occ&upied\tCtrl+4]
 &Zauzet\tCtrl+4
-[&DND\tCtrl+5]
-Ne &Uznemiravati\tCtrl+5
+[&Do not disturb\tCtrl+5]
+Ne &uznemiravaj\tCtrl+5
 [&Free for chat\tCtrl+6]
-Spreman za &razgovor\tCtrl+7
+Spreman za &razgovor\tCtrl+6
 [&Invisible\tCtrl+7]
 Ne&vidljiv\tCtrl+7
 [On the &phone\tCtrl+8]
-Na &telefonu\tCtrl+8
+&Telefoniram\tCtrl+8
 [Out to &lunch\tCtrl+9]
 N&a ručku\tCtrl+9
-[Tray]
-Tray
-[&Hide/Show]
-&Sakriti/Prikazati
-[Nowhere]
-Nigde
-[&New group]
-&Nova grupa
-[&Hide offline users]
-S&kloniti odsutne
-[Hide &offline users out here]
-Skloniti &odsutne kontakte pri grupi
-[Hide &empty groups]
-Skloniti &prazne grupe
-[Disable &groups]
-Ne koristiti &grupe
-[Hide Miranda]
-Sakriti Miranda prozor
-[Group]
-Grupa
-[&New subgroup]
-&Napravi grupu
-[&Hide offline users in here]
-Skloniti &odsutne kontakte ove grupe
-[&Rename group]
-&Preimenovati grupu
-[&Delete group]
-&Izbrisati grupu
 ;file \plugins\Clist_blind\src\clcopts.cpp
 [Not focused]
 Van fokusa
@@ -229,11 +201,11 @@ Odsutan
 Prisutan
 [Away]
 Neaktivan
-[NA]
+[Not available]
 Nedostupan
 [Occupied]
 Zauzet
-[DND]
+[Do not disturb]
 Ne uznemiravaj
 [Free for chat]
 Spreman za razgovor

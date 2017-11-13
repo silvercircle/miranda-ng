@@ -32,8 +32,8 @@ INT_PTR doubleClick(WPARAM wParam, LPARAM)
 	if (proto && !mir_strcmp(proto, MODNAME)) {
 		if (GetKeyState(VK_CONTROL) & 0x8000) // ctrl is pressed
 			editContact(wParam, 0);		// for later when i add a second double click setting
-		else if (db_get_static(wParam, MODNAME, "Program", program, _countof(program)) && mir_strcmp(program, "")) {
-			if (!db_get_static(wParam, MODNAME, "ProgramParams", params, _countof(params)))
+		else if (!db_get_static(wParam, MODNAME, "Program", program, _countof(program)) && mir_strcmp(program, "")) {
+			if (db_get_static(wParam, MODNAME, "ProgramParams", params, _countof(params)))
 				mir_strcpy(params, "");
 			if (strstr(program, "http://") || strstr(program, "https://"))
 				Utils_OpenUrl(program);
@@ -60,13 +60,14 @@ int LCStatus = ID_STATUS_OFFLINE;
 // Returns : int
 // Description : Called at very beginning of plugin
 //=====================================================
+//
 int NimcOptInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = g_hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONS);
-	odp.pszGroup = LPGEN("Plugins");
-	odp.pszTitle = LPGEN("Non-IM Contacts");
+	odp.szGroup.a = LPGEN("Plugins");
+	odp.szTitle.a = LPGEN("Non-IM Contacts");
 	odp.pfnDlgProc = DlgProcNimcOpts;
 	Options_AddPage(wParam, &odp);
 	return 0;
@@ -77,7 +78,7 @@ int NimcOptInit(WPARAM wParam, LPARAM)
 // Returns :
 // Description : Sets plugin info
 //=====================================================
-
+//
 extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 {
 	return &pluginInfoEx;
@@ -89,7 +90,7 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 // Returns : BOOL
 // Description :
 //=====================================================
-
+//
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD, LPVOID)
 {
 	g_hInst = hinst;
@@ -102,22 +103,22 @@ int ModulesLoaded(WPARAM, LPARAM)
 	return 0;
 }
 
+IconItem icoList[] =
+{
+	{ LPGEN("Main Icon"), MODNAME, IDI_MAIN },
+};
+
 //=====================================================
 // Name : Load
 // Parameters: PLUGINLINK *link
 // Returns : int
 // Description : Called when plugin is loaded into Miranda
 //=====================================================
-
-IconItem icoList[] =
-{
-	{ LPGEN("Main Icon"), MODNAME, IDI_MAIN },
-};
-
+//
 extern "C" __declspec(dllexport) int Load()
 {
 	mir_getLP(&pluginInfoEx);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	Icon_Register(g_hInst, LPGEN("Non-IM Contact"), icoList, _countof(icoList));
 
@@ -143,10 +144,11 @@ extern "C" __declspec(dllexport) int Load()
 	CreateServiceFunction("NIM_Contact/DoubleClick", doubleClick);
 
 	CMenuItem mi;
+	mi.root = Menu_CreateRoot(MO_MAIN, LPGENW("&Non-IM Contact"), 600090000);
+	Menu_ConfigureItem(mi.root, MCI_OPT_UID, "D7CE61C5-1178-41BA-B2ED-5A711BB21AE9");
 
 	SET_UID(mi, 0x73c11266, 0x153c, 0x4da4, 0x9b, 0x82, 0x5c, 0xce, 0xca, 0x86, 0xd, 0x41);
 	mi.position = 600090000;
-	mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("&Non-IM Contact"), 600090000);
 	mi.name.a = LPGEN("&Add Non-IM Contact");
 	mi.pszService = "AddLCcontact";
 	mi.hIcolibItem = icoList[0].hIcolib;
@@ -195,7 +197,7 @@ extern "C" __declspec(dllexport) int Load()
 // Returns :
 // Description : Unloads plugin
 //=====================================================
-
+//
 extern "C" __declspec(dllexport) int Unload(void)
 {
 	killTimer();

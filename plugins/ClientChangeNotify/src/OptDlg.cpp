@@ -58,17 +58,17 @@ void EnablePopupOptDlgControls()
 
 static struct
 {
-	TCHAR *Text;
+	wchar_t *Text;
 	int Action;
 }
 PopupActions[] =
 {
-	LPGENT("Open message window"), PCA_OPENMESSAGEWND,
-	LPGENT("Close popup"), PCA_CLOSEPOPUP,
-	LPGENT("Open contact details window"), PCA_OPENDETAILS,
-	LPGENT("Open contact menu"), PCA_OPENMENU,
-	LPGENT("Open contact history"), PCA_OPENHISTORY,
-	LPGENT("Do nothing"), PCA_DONOTHING
+	LPGENW("Open message window"), PCA_OPENMESSAGEWND,
+	LPGENW("Close popup"), PCA_CLOSEPOPUP,
+	LPGENW("Open contact details window"), PCA_OPENDETAILS,
+	LPGENW("Open contact menu"), PCA_OPENMENU,
+	LPGENW("Open contact history"), PCA_OPENHISTORY,
+	LPGENW("Do nothing"), PCA_DONOTHING
 };
 
 INT_PTR CALLBACK PopupOptDlg(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -87,8 +87,8 @@ INT_PTR CALLBACK PopupOptDlg(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 			HWND hLCombo = GetDlgItem(hwndDlg, IDC_POPUPOPTDLG_LCLICK_ACTION);
 			HWND hRCombo = GetDlgItem(hwndDlg, IDC_POPUPOPTDLG_RCLICK_ACTION);
 			for (int i = 0; i < _countof(PopupActions); i++) {
-				SendMessage(hLCombo, CB_SETITEMDATA, SendMessage(hLCombo, CB_ADDSTRING, 0, (LPARAM)TranslateTS(PopupActions[i].Text)), PopupActions[i].Action);
-				SendMessage(hRCombo, CB_SETITEMDATA, SendMessage(hRCombo, CB_ADDSTRING, 0, (LPARAM)TranslateTS(PopupActions[i].Text)), PopupActions[i].Action);
+				SendMessage(hLCombo, CB_SETITEMDATA, SendMessage(hLCombo, CB_ADDSTRING, 0, (LPARAM)TranslateW(PopupActions[i].Text)), PopupActions[i].Action);
+				SendMessage(hRCombo, CB_SETITEMDATA, SendMessage(hRCombo, CB_ADDSTRING, 0, (LPARAM)TranslateW(PopupActions[i].Text)), PopupActions[i].Action);
 			}
 			g_PopupOptPage.DBToMemToPage();
 			EnablePopupOptDlgControls();
@@ -163,12 +163,12 @@ int OptionsDlgInit(WPARAM wParam, LPARAM)
 	if (bPopupExists) {
 		OPTIONSDIALOGPAGE optDi = { sizeof(optDi) };
 		optDi.position = 920000000;
-		optDi.ptszTitle = LPGENT("ClientChangeNotify");
+		optDi.szGroup.a = LPGEN("Popups");
+		optDi.szTitle.a = LPGEN("ClientChangeNotify");
 		optDi.pfnDlgProc = PopupOptDlg;
 		optDi.pszTemplate = MAKEINTRESOURCEA(IDD_POPUPOPTDLG);
 		optDi.hInstance = g_hInstance;
-		optDi.ptszGroup = LPGENT("Popups");
-		optDi.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+		optDi.flags = ODPF_BOLDGROUPS;
 		Options_AddPage(wParam, &optDi);
 	}
 	return 0;
@@ -197,6 +197,6 @@ void InitOptions()
 	g_PopupOptPage.Items.AddElem(new COptItem_Generic(IDC_POPUPOPTDLG_STATIC_DEFAULT, IDC_POPUPOPTDLG_POPUPNOTIFY));
 	g_PopupOptPage.Items.AddElem(new COptItem_Generic(IDC_POPUPOPTDLG_STATIC_INFINITE, IDC_POPUPOPTDLG_POPUPNOTIFY));
 	g_PopupOptPage.Items.AddElem(new COptItem_Generic(IDC_POPUPOPTDLG_STATIC_IGNORESTRINGS, IDC_POPUPOPTDLG_POPUPNOTIFY));
-	g_PopupOptPage.Items.AddElem(new COptItem_Edit(IDC_POPUPOPTDLG_IGNORESTRINGS, DB_IGNORESUBSTRINGS, IGNORESTRINGS_MAX_LEN, _T("gmail;skype;/Miranda[0-9A-F]{8}/"), IDC_POPUPOPTDLG_POPUPNOTIFY));
+	g_PopupOptPage.Items.AddElem(new COptItem_Edit(IDC_POPUPOPTDLG_IGNORESTRINGS, DB_IGNORESUBSTRINGS, IGNORESTRINGS_MAX_LEN, L"gmail;skype;/Miranda[0-9A-F]{8}/", IDC_POPUPOPTDLG_POPUPNOTIFY));
 	g_PopupOptPage.Items.AddElem(new COptItem_Generic(IDC_POPUPOPTDLG_STATIC_REGEXP, IDC_POPUPOPTDLG_POPUPNOTIFY));
 }

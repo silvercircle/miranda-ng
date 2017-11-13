@@ -12,14 +12,14 @@
 #include <ObjError.h>
 #include <Ole2Ver.h>
 
-#include "SAPI 4.0\Include\speech.h"
+#include "SAPI 4.0/Include/speech.h"
 //#include <spchwrap.h>
 
 #include <sstream>
 #include <memory>
 
 //------------------------------------------------------------------------------
-SpeechApi40a::SpeechApi40a() : m_tts_central(0), m_tts_attribs(0), m_state(TextToSpeech::State_Unloaded), m_voice(_T("")), m_volume(50), m_pitch(50), m_rate(50)
+SpeechApi40a::SpeechApi40a() : m_tts_central(0), m_tts_attribs(0), m_state(TextToSpeech::State_Unloaded), m_voice(L""), m_volume(50), m_pitch(50), m_rate(50)
 {
 }
 
@@ -88,7 +88,7 @@ bool SpeechApi40a::isLoaded() const
 //------------------------------------------------------------------------------
 bool SpeechApi40a::say(const std::wstring &sentence)
 {
-	//std::string text = mir_t2a_cp(sentence.c_str(), CP_ACP);
+	//std::string text = mir_u2a_cp(sentence.c_str(), CP_ACP);
 	//MessageBoxA(NULL, text.c_str(), "TTS4", MB_OK);
 	bool ret = true;
 
@@ -212,7 +212,7 @@ bool SpeechApi40a::lexiconDialog(HWND window)
 //------------------------------------------------------------------------------
 std::wstring SpeechApi40a::getDescription()
 {
-	return _T("Microsoft SAPI v4.0");
+	return L"Microsoft SAPI v4.0";
 }
 
 //------------------------------------------------------------------------------

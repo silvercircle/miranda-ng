@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: ICQ.dll
 ;  Plugin: IcqOscarJ protocol
-;  Version: 0.11.3.4
+;  Version: 0.11.3.5
 ;  Authors: Joe Kucera, Bio, Martin Öberg, Richard Hughes, Jon Keating, etc.
 ;============================================================
 [ICQ protocol support for Miranda NG.]
@@ -78,7 +78,7 @@
 
 [Load avatars automatically (like ICQ Lite)]
 
-[You will need to reconnect to the ICQ network for the changes you have made on this page to take effect.]
+[These changes will take effect the next time you connect to the ICQ network.]
 
 [You cannot enable/disable the server-side contact list while you are connected to the ICQ network.]
 
@@ -109,8 +109,6 @@
 [Auto-retrieve Custom status details]
 
 [Block known Spam Bots]
-
-[Enable AIM contacts support]
 
 [Direct connections]
 
@@ -1544,7 +1542,7 @@ Odbaci autorizaciju
 
 [Unable to connect to ICQ login server]
 
-[Miranda was unable to allocate a port to listen for direct peer-to-peer connections between clients. You will be able to use most of the ICQ network without problems but you may be unable to send or receive files.\n\nIf you have a firewall this may be blocking Miranda, in which case you should configure your firewall to leave some ports open and tell Miranda which ports to use in Options -> ICQ -> Network.]
+[Miranda was unable to allocate a port to listen for direct peer-to-peer connections between clients. You will be able to use most of the ICQ network without problems but you may be unable to send or receive files.\n\nIf you have a firewall this may be blocking Miranda, in which case you should configure your firewall to leave some ports open and tell Miranda which ports to use in Options -> Network -> ICQ client-to-client connections.]
 
 [Connection failed.\nLogin sequence failed for unknown reason.\nTry again later.]
 
@@ -1739,7 +1737,7 @@ Odbaci autorizaciju
 
 [Broken hearted]
 
-[Free for Chat]
+[Free for chat]
 
 [@home]
 
@@ -1783,6 +1781,8 @@ Odbaci autorizaciju
 [Greeting card:]
 
 ;file \protocols\IcqOscarJ\src\init.cpp
+[Expand string edit]
+
 [ICQ xStatus]
 
 ;file \protocols\IcqOscarJ\src\log.cpp

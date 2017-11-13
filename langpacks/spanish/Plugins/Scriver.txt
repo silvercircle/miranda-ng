@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Scriver.dll
 ;  Plugin: Scriver
-;  Version: 2.12.2.1
+;  Version: 3.0.1.7
 ;  Authors: Miranda NG Development Team
 ;============================================================
 [Behavior]
@@ -61,36 +61,10 @@ Intentar de nuevo
 Cancelar
 [Message session]
 Sesión de mensaje
-[&User menu]
-Menú de usuario
-[User &details]
-&Detalles del usuario
-[&Emoticons]
-&Emoticones
-[&Add]
-&Añadir
-[&History]
-&Historial
 [Yes]
 Sí
 [No]
 No
-[&Bold]
-&Negrita
-[&Italic]
-C&ursiva
-[&Underline]
-S&ubrayar
-[&Color]
-&Color
-[&Background color]
-Color &de fondo
-[&Filter]
-&Filtro
-[&Room settings]
-Configu&ración de espacio
-[&Show/hide nick list]
-&Mostrar/ocultar lista de nicks
 [Show these events only:]
 Mostrar sólo estos eventos:
 [Actions]
@@ -187,198 +161,10 @@ Pegar && enviar
 Eliminar
 [Clear]
 Limpiar
-[List]
-Lista
-[&Message]
-&Mensaje
-[Clear lo&g]
-Limpiar re&gistro
-[Add contact]
-Añadir contacto
-[Send message]
-Enviar mensaje
-[Smiley button]
-Botón de emoticono
-[Icon overlay]
-Icono de superposición
-[Incoming message (10x10)]
-Mensaje entrante (10x10)
-[Outgoing message (10x10)]
-Mensaje saliente (10x10)
-[Notice (10x10)]
-Anuncio (10x10)
-[Window Icon]
-Icono de ventana
-[Text color]
-Color de texto
-[Background color]
-Color de fondo
-[Bold]
-Negrita
-[Italics]
-Cursiva
-[Underlined]
-Subrayado
-[Room history]
-Historial de salas
-[Room settings]
-Configuración de la Sala
-[Event filter disabled]
-Filtro de eventos desactivado
-[Event filter enabled]
-Filtro de eventos activado
-[Hide nick list]
-Ocultar lista de usuarios
-[Show nick list]
-Mostrar lista de usuarios
-[Status 1 (10x10)]
-Estado 1 (10x10)
-[Status 2 (10x10)]
-Estado 2 (10x10)
-[Status 3 (10x10)]
-Estado 3 (10x10)
-[Status 4 (10x10)]
-Estado 4 (10x10)
-[Status 5 (10x10)]
-Estado 5 (10x10)
-[Status 6 (10x10)]
-Estado 6 (10x10)
-[Message in (10x10)]
-Mensaje entrante (10x10)
-[Message out (10x10)]
-Mensaje saliente (10x10)
-[Action (10x10)]
-Acción (10x10)
-[Add Status (10x10)]
-Añadir estado (10x10)
-[Remove status (10x10)]
-Quitar estado (10x10)
-[Join (10x10)]
-Unirse (10x10)
-[Leave (10x10)]
-Dejar (10x10)
-[Quit (10x10)]
-Quitar (10x10)
-[Kick (10x10)]
-Sacar (10x10)
-[Nickchange (10x10)]
-Cambio de apodo (10x10)
-[Topic (10x10)]
-Tema (10x10)
-[Highlight (10x10)]
-Resaltado (10x10)
-[Information (10x10)]
-Información (10x10)
-[Group chats]
-Grupo de chats
 [Messaging]
 Mensajería
-[User menu]
-Menú del usuario
-[User details]
-Información del usuario
-[History]
-Historial
-[Send]
-Enviar
-[Look up '%s':]
-Buscar '%s':
-[No word to look up]
-Ni una palabra para buscar
-[Add contact permanently to list]
-Añadir contacto permanentemente a la lista
-[View user's details]
-Ver detalles del usuario
-[View user's history]
-Ver historial del usuario
-[%s is typing a message...]
-%s está escribiendo un mensaje...
-[Last message received on %s at %s.]
-Último mensaje recibido el %s a %s.
-[File sent]
-Archivo enviado
-[File received]
-Archivo recibido
-[General]
-General
-[Outgoing messages]
-Mensajes salientes
-[Incoming messages]
-Mensajes entrantes
-[Outgoing name]
-Nombre saliente
-[Outgoing time]
-Tiempo saliente
-[Outgoing colon]
-Puntos de salida
-[Incoming name]
-Nombre entrante
-[Incoming time]
-Tiempo entrante
-[Incoming colon]
-Puntos de entrada
-[Message area]
-Área de mensaje
-[Outgoing URL]
-URL saliente
-[Incoming URL]
-URL entrante
-[Offline]
-Fuera de línea
-[Online]
-En línea
-[Away]
-Fuera
-[NA]
-No disponible
-[Occupied]
-Ocupado
-[DND]
-No molestar
-[Free for chat]
-Libre para el chat	
-[Invisible]
-Invisible
-[Out to lunch]
-Salí a comer
-[On the phone]
-En el teléfono
-[** New contacts **]
-** Nuevos contactos **
-[** Unknown contacts **]
-** Contactos desconocidos **
-[Show balloon popup (unsupported system)]
-Mostrar globo emergente (sistema sin soporte)
-[Message sessions]
-Sesiones de mensaje
-[Typing notify]
-Notificación de escritura
-[Message from %s]
-Mensaje de
-[%s is typing a message]
-%s está escribiendo un mensaje
-[Typing notification]
-Escribiendo notificación
-[Instant messages]
-Mensajes instantáneos
-[Incoming (focused window)]
-Entrante (ventana enfocada)
-[Incoming (unfocused window)]
-Entrante (ventana desenfocada)
-[Incoming (new session)]
-Entrante (nueva sesión)
-[Outgoing]
-Saliendo
-[Contact started typing]
-El contacto ha comenzado a escribir
-[Contact stopped typing]
-El contacto dejó de escribir
-[An unknown error has occurred.]
-Se ha producido un error desconocido.
-[Always on top]
-Siempre en primer plano
-[The message send timed out.]
-El mensaje envia el tiempo de espera.
+[Group chats]
+Grupo de chats
 [Prefix all events with a timestamp]
 Prefijo de todos los eventos con una fecha y hora
 [Only prefix with timestamp if it has changed]
@@ -469,36 +255,6 @@ Apariencia
 Eventos predeterminados a mostrar en nuevas salas de chat, si está activado el "filtro de eventos'
 [Select folder]
 Seleccionar carpeta
-[Popups]
-Ventanas emergentes
-[&Message %s]
-&Mensaje %s
-[Insert a smiley]
-Inserte un emoticono
-[Make the text bold (CTRL+B)]
-Hacer el texto negrita (CTRL+B)
-[Make the text italicized (CTRL+I)]
-Hacer el texto cursiva (CTRL+I)
-[Make the text underlined (CTRL+U)]
-Hacer el texto subrayado (CTRL+U)
-[Select a background color for the text (CTRL+L)]
-Seleccione un color de fondo para el texto (CTRL+L)
-[Select a foreground color for the text (CTRL+K)]
-Seleccione un color de primer plano para el texto (CTRL+K)
-[Show the history (CTRL+H)]
-Mostrar el historial (CTRL+H)
-[Show/hide the nick list (CTRL+N)]
-Mostrar/ocultar la lista de apodos (CTRL+N)
-[Control this room (CTRL+O)]
-Controlar esta sala (CTRL+O)
-[Enable/disable the event filter (CTRL+F)]
-Activar/desactivar el filtro de eventos (CTRL+F)
-[Nickname]
-Apodo
-[Unique ID]
-ID único
-[Status]
-Estado
 [%s: chat room (%u user)]
 %s: sala de chat (%u usuario)
 [%s: chat room (%u users)]
@@ -507,3 +263,227 @@ Estado
 %s: sesión de mensaje
 [%s: message session (%u users)]
 %s: sesión de mensaje (%u usuarios)
+[Nickname]
+Apodo
+[Unique ID]
+ID único
+[Status]
+Estado
+[Add contact]
+Añadir contacto
+[Send message]
+Enviar mensaje
+[Smiley button]
+Botón de emoticono
+[Icon overlay]
+Icono de superposición
+[Incoming message (10x10)]
+Mensaje entrante (10x10)
+[Outgoing message (10x10)]
+Mensaje saliente (10x10)
+[Notice (10x10)]
+Anuncio (10x10)
+[Window Icon]
+Icono de ventana
+[Text color]
+Color de texto
+[Background color]
+Color de fondo
+[Bold]
+Negrita
+[Italics]
+Cursiva
+[Underlined]
+Subrayado
+[Room history]
+Historial de salas
+[Room settings]
+Configuración de la Sala
+[Event filter disabled]
+Filtro de eventos desactivado
+[Event filter enabled]
+Filtro de eventos activado
+[Hide nick list]
+Ocultar lista de usuarios
+[Show nick list]
+Mostrar lista de usuarios
+[Status 1 (10x10)]
+Estado 1 (10x10)
+[Status 2 (10x10)]
+Estado 2 (10x10)
+[Status 3 (10x10)]
+Estado 3 (10x10)
+[Status 4 (10x10)]
+Estado 4 (10x10)
+[Status 5 (10x10)]
+Estado 5 (10x10)
+[Status 6 (10x10)]
+Estado 6 (10x10)
+[Message in (10x10)]
+Mensaje entrante (10x10)
+[Message out (10x10)]
+Mensaje saliente (10x10)
+[Action (10x10)]
+Acción (10x10)
+[Add Status (10x10)]
+Añadir estado (10x10)
+[Remove status (10x10)]
+Quitar estado (10x10)
+[Join (10x10)]
+Unirse (10x10)
+[Leave (10x10)]
+Dejar (10x10)
+[Quit (10x10)]
+Quitar (10x10)
+[Kick (10x10)]
+Sacar (10x10)
+[Nickchange (10x10)]
+Cambio de apodo (10x10)
+[Topic (10x10)]
+Tema (10x10)
+[Highlight (10x10)]
+Resaltado (10x10)
+[Information (10x10)]
+Información (10x10)
+[%s is typing a message...]
+%s está escribiendo un mensaje...
+[Last message received on %s at %s.]
+Último mensaje recibido el %s a %s.
+[Look up '%s':]
+Buscar '%s':
+[No word to look up]
+Ni una palabra para buscar
+[File sent]
+Archivo enviado
+[File received]
+Archivo recibido
+[Outgoing messages]
+Mensajes salientes
+[Incoming messages]
+Mensajes entrantes
+[Outgoing name]
+Nombre saliente
+[Outgoing time]
+Tiempo saliente
+[Outgoing colon]
+Puntos de salida
+[Incoming name]
+Nombre entrante
+[Incoming time]
+Tiempo entrante
+[Incoming colon]
+Puntos de entrada
+[Message area]
+Área de mensaje
+[Outgoing URL]
+URL saliente
+[Incoming URL]
+URL entrante
+[Offline]
+Fuera de línea
+[Online]
+En línea
+[Away]
+Fuera
+[Not available]
+No disponible
+[Occupied]
+Ocupado
+[Do not disturb]
+No molestar
+[Free for chat]
+Libre para el chat
+[Invisible]
+Invisible
+[Out to lunch]
+Salí a comer
+[On the phone]
+En el teléfono
+[** New contacts **]
+** Nuevos contactos **
+[** Unknown contacts **]
+** Contactos desconocidos **
+[Message sessions]
+Sesiones de mensaje
+[General]
+General
+[Typing notify]
+Notificación de escritura
+[Popups]
+Ventanas emergentes
+[Message from %s]
+Mensaje de
+[%s is typing a message]
+%s está escribiendo un mensaje
+[Typing notification]
+Escribiendo notificación
+[&Add]
+&Añadir
+[Add contact permanently to list]
+Añadir contacto permanentemente a la lista
+[&User menu]
+Menú de usuario
+[User menu]
+Menú del usuario
+[User &details]
+&Detalles del usuario
+[View user's details]
+Ver detalles del usuario
+[&History]
+&Historial
+[View user's history (CTRL+H)]
+Ver historial del usuario
+[&Bold]
+&Negrita
+[Make the text bold (CTRL+B)]
+Hacer el texto negrita (CTRL+B)
+[&Italic]
+C&ursiva
+[Make the text italicized (CTRL+I)]
+Hacer el texto cursiva (CTRL+I)
+[&Underline]
+S&ubrayar
+[Make the text underlined (CTRL+U)]
+Hacer el texto subrayado (CTRL+U)
+[&Color]
+&Color
+[Select a foreground color for the text (CTRL+K)]
+Seleccione un color de primer plano para el texto (CTRL+K)
+[&Background color]
+Color &de fondo
+[Select a background color for the text (CTRL+L)]
+Seleccione un color de fondo para el texto (CTRL+L)
+[&Room settings]
+Configu&ración de espacio
+[Control this room (CTRL+O)]
+Controlar esta sala (CTRL+O)
+[&Show/hide nick list]
+&Mostrar/ocultar lista de nicks
+[Show/hide the nick list (CTRL+N)]
+Mostrar/ocultar la lista de apodos (CTRL+N)
+[&Filter]
+&Filtro
+[Enable/disable the event filter (CTRL+F)]
+Activar/desactivar el filtro de eventos (CTRL+F)
+[&Message]
+&Mensaje
+[Instant messages]
+Mensajes instantáneos
+[Incoming (focused window)]
+Entrante (ventana enfocada)
+[Incoming (unfocused window)]
+Entrante (ventana desenfocada)
+[Incoming (new session)]
+Entrante (nueva sesión)
+[Outgoing]
+Saliendo
+[Contact started typing]
+El contacto ha comenzado a escribir
+[Contact stopped typing]
+El contacto dejó de escribir
+[An unknown error has occurred.]
+Se ha producido un error desconocido.
+[The message send timed out.]
+El mensaje envia el tiempo de espera.
+[Always on top]
+Siempre en primer plano

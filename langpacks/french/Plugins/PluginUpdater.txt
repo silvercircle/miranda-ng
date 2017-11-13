@@ -24,7 +24,7 @@ Annuler
 &Rien sélectionner
 [Hotkey]
 Raccourci clavier
-[Go to Customize -> Hotkeys to change the hotkey]
+[Go to Options -> Customize -> Hotkeys to change the hotkey]
 Aller à Apparence -> Raccourcis clavier pour changer les raccourcis.
 [Update options]
 
@@ -36,7 +36,7 @@ Au démarrage
 Tous les
 [Silent mode]
 
-[Backup database before update (requires Db_autobackups)]
+[Backup database before update (requires Db_autobackups plugin)]
 
 [Files source]
 Source du fichier
@@ -49,6 +49,8 @@ Version de développement avec les symboles de debug
 [Custom version]
 Version personnalisée
 [Some component(s) was updated.\nYou need to restart your Miranda to apply installed updates.]
+
+[Change platform to 32-bit]
 
 [Notifications]
 Notifications
@@ -172,6 +174,8 @@ Vérification des mises à jour en cours!
 heures
 [days]
 jours
+[Change platform to 64-bit]
+
 [Test]
 Test
 [Services]

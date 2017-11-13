@@ -25,7 +25,6 @@ void MirandaContact::fetchSlot(int i)
 
 	ei.hContact = ci.hContact;
 	ei.dbe.cbBlob = db_event_getBlobSize(ci.hEvent);
-	ei.dbe.cbSize = sizeof(ei.dbe);
 
 	if (ei.dbe.cbBlob > ei.nAllocated) {
 		ei.nAllocated = ei.dbe.cbBlob;
@@ -118,7 +117,7 @@ void MirandaContact::endRead()
 {
 #if defined(_DEBUG)
 	if (m_CIs.size() + m_EIs.size() + m_SpareEIs.size() > 0) {
-		ext::string strLog = ext::str(ext::format(_T("Freeing | CIs and |+| EIs...\n")) % m_CIs.size() % m_EIs.size() % m_SpareEIs.size());
+		ext::string strLog = ext::str(ext::format(L"Freeing | CIs and |+| EIs...\n") % m_CIs.size() % m_EIs.size() % m_SpareEIs.size());
 
 		OutputDebugString(strLog.c_str());
 	}

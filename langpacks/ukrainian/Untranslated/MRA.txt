@@ -1,1 +1,3 @@
-﻿[MRA]
+﻿[Inviter]
+[Main icon]
+[MRA]

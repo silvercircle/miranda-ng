@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -29,13 +29,9 @@ Created by Pescuma
 #ifndef __ROWHEIGHT_FUNCS_H__
 # define __ROWHEIGHT_FUNCS_H__
 
-#include "modern_clc.h"
-
 #define ROW_SPACE_BEETWEEN_LINES 2
 #define ICON_HEIGHT 16
 #define ICON_WIDTH	16
-
-
 
 BOOL RowHeights_Initialize(ClcData *dat);
 void RowHeights_Free(ClcData *dat);

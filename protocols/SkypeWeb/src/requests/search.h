@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2015-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -22,13 +22,18 @@ class GetSearchRequest : public HttpRequest
 {
 public:
 	GetSearchRequest(const char *string, LoginInfo &li) :
-		HttpRequest(REQUEST_GET, "api.skype.com/search/users/any")
+		HttpRequest(REQUEST_GET, "skypegraph.skype.com/search/v1.1/namesearch/swx/")
 	{
+
+		wchar_t locale[LOCALE_NAME_MAX_LENGTH] = L"en-US";
+		//LCIDToLocaleName(Langpack_GetDefaultLocale(), locale, _countof(locale), 0); //FIXME: xp support
+
 		Url
-			<< CHAR_VALUE("keyWord", string);
+			<< CHAR_VALUE("requestid", "skype.com-1.48.78-00000000-0000-0000-0000-000000000000")
+			<< CHAR_VALUE("locale", T2Utf(locale))
+			<< CHAR_VALUE("searchstring", string);
 		Headers
 			<< CHAR_VALUE("Accept", "application/json")
-			<< CHAR_VALUE("Connection", "keep-alive")
 			<< CHAR_VALUE("X-Skypetoken", li.api.szToken);
 	}
 };

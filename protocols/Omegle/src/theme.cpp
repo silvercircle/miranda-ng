@@ -3,7 +3,7 @@
 Omegle plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2011-15 Robert Pösel
+Copyright © 2011-17 Robert Pösel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -26,10 +26,10 @@ extern OBJLIST<OmegleProto> g_Instances;
 
 static IconItem icons[] =
 {
-	{ "omegle", LPGEN("Omegle Icon"), IDI_OMEGLE },
+	{ LPGEN("Omegle Icon"), "omegle", IDI_OMEGLE },
+	{ LPGEN("Stranger is typing"), "typing_on", IDI_TYPING_ON },
+	{ LPGEN("Stranger stopped typing"), "typing_off", IDI_TYPING_OFF },
 };
-
-static HANDLE hIconLibItem[_countof(icons)];
 
 void InitIcons(void)
 {
@@ -38,10 +38,9 @@ void InitIcons(void)
 
 HANDLE GetIconHandle(const char* name)
 {
-	for(size_t i=0; i<_countof(icons); i++)
-	{
-		if(mir_strcmp(icons[i].szName, name) == 0)
-			return hIconLibItem[i];
-	}
+	for (size_t i = 0; i < _countof(icons); i++)
+		if (mir_strcmp(icons[i].szName, name) == 0)
+			return icons[i].hIcolib;
+
 	return 0;
 }

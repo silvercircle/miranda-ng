@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: SmileyAdd.dll
 ;  Plugin: SmileyAdd
-;  Version: 0.2.3.18
+;  Version: 0.2.4.1
 ;  Authors: Peacow, nightwish, bid, borkra
 ;============================================================
 [Smiley support for Miranda NG.]
@@ -40,12 +40,6 @@ Ime:
 
 [Smiley selector]
 
-[Surround inserted smiley with spaces]
-
-[Use first smiley for selection size]
-
-[IEView style window]
-
 [Input area]
 
 [Enable smileys]
@@ -54,10 +48,16 @@ Ime:
 
 [Built-in message dialog support]
 
-[Disable]
+[Enable]
 
 [Smiley button]
 Smeško-dugme
+[Surround inserted smiley with spaces]
+
+[Use first smiley for selection size]
+
+[IEView style window]
+
 [Horizontal sorting]
 
 ;file \plugins\SmileyAdd\src\dlgboxsubclass.cpp
@@ -75,23 +75,23 @@ Smeško-dugme
 
 [Assign smiley category]
 
+[Background color]
+Boja pozadine
 [Only one instance of SmileyAdd could be executed.\nRemove duplicate instances from 'Plugins' directory]
 
 ;file \plugins\SmileyAdd\src\options.cpp
-[Smileys]
+[Hide]
 
-[Customize]
-Podešavanja
-[Off]
-Isklj.
-[Top]
-
-[Bottom]
-
+[Show]
+Prikaz
 [Smiley packs]
 
 [All files]
 Sve datoteke
+[Smileys]
+
+[Customize]
+Podešavanja
 ;file \plugins\SmileyAdd\src\services.cpp
 [Protocol specific]
 

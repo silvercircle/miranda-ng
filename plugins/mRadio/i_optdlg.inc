@@ -172,7 +172,7 @@ begin
                     if dst<>nil then
                       DBWriteUnicode(i,strCList,optGroup,dst)
                     else
-                      DBDeleteSetting(i,strCList,optGroup);
+                      db_unset(i,strCList,optGroup);
                       
                   end
                   else if loword(wParam)=IDC_ADD_INI then
@@ -629,12 +629,12 @@ begin
   odp.pszTemplate:=MAKEINTRESOURCEA(IDD_SETTING);
   odp.pfnDlgProc :=@DlgProcOpt;
   odp.szTab.a    :='Common';
-  CallService(MS_OPT_ADDPAGE,wParam,tlparam(@odp));
+  Options_AddPage(wParam,@odp);
 
   odp.pszTemplate:=MAKEINTRESOURCEA(IDD_SETTING_TECH);
   odp.pfnDlgProc :=@DlgProcOptTech;//!!
   odp.szTab.a    :=Translate('Advanced');
-  CallService(MS_OPT_ADDPAGE,wParam,tlparam(@odp));
+  Options_AddPage(wParam,@odp);
 
   result:=0;
 end;

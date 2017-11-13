@@ -39,11 +39,11 @@ int OnOptionsInitialize(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.position = 100000000;
-	odp.ptszTitle = LPGENT("History");
+	odp.szTitle.w = LPGENW("History");
 	odp.pfnDlgProc = OptionsDlgProc;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_HISTORY);
 	odp.hInstance = hInstance;
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
 	Options_AddPage(wParam, &odp);
 	return 0;
 }

@@ -73,7 +73,7 @@ static LRESULT CALLBACK ProgressBarSubclassProc(HWND hwndProgress, UINT msg, WPA
 
 /************************* Window Class *******************************/
 
-#define COUNTDOWNFRAME_CLASS  _T("AutoShutdownCountdown")
+#define COUNTDOWNFRAME_CLASS  L"AutoShutdownCountdown"
 
 /* Data */
 struct CountdownFrameWndData
@@ -124,17 +124,17 @@ static LRESULT CALLBACK FrameWndProc(HWND hwndFrame, UINT msg, WPARAM wParam, LP
 	case WM_CREATE:  /*  create childs */
 		{
 			CREATESTRUCT *params = (CREATESTRUCT*)lParam;
-			dat->hwndIcon = CreateWindowEx(WS_EX_NOPARENTNOTIFY, _T("Static"), NULL, WS_CHILD | WS_VISIBLE | SS_ICON | SS_CENTERIMAGE | SS_NOTIFY,
+			dat->hwndIcon = CreateWindowEx(WS_EX_NOPARENTNOTIFY, L"Static", NULL, WS_CHILD | WS_VISIBLE | SS_ICON | SS_CENTERIMAGE | SS_NOTIFY,
 				3, 0, GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON), hwndFrame, NULL, params->hInstance, NULL);
 			dat->hwndProgress = CreateWindowEx(WS_EX_NOPARENTNOTIFY, PROGRESS_CLASS, (dat->fTimeFlags&SDWTF_ST_TIME) ? TranslateT("Shutdown at:") : TranslateT("Time left:"),
 				WS_CHILD | WS_VISIBLE | PBS_SMOOTH, GetSystemMetrics(SM_CXICON) + 5, 5, 90, (GetSystemMetrics(SM_CXICON) / 2) - 5, hwndFrame, NULL, params->hInstance, NULL);
 			if (dat->hwndProgress == NULL) return -1; /* creation failed, calls WM_DESTROY */
 			SendMessage(dat->hwndProgress, PBM_SETSTEP, 1, 0);
 			mir_subclassWindow(dat->hwndProgress, ProgressBarSubclassProc);
-			dat->hwndDesc = CreateWindowEx(WS_EX_NOPARENTNOTIFY, _T("Static"), (dat->fTimeFlags&SDWTF_ST_TIME) ? TranslateT("Shutdown at:") : TranslateT("Time left:"),
+			dat->hwndDesc = CreateWindowEx(WS_EX_NOPARENTNOTIFY, L"Static", (dat->fTimeFlags&SDWTF_ST_TIME) ? TranslateT("Shutdown at:") : TranslateT("Time left:"),
 				WS_CHILD | WS_VISIBLE | SS_LEFTNOWORDWRAP | SS_NOTIFY, GetSystemMetrics(SM_CXICON) + 5, (GetSystemMetrics(SM_CXICON) / 2), 75,
 				(GetSystemMetrics(SM_CXICON) / 2), hwndFrame, NULL, params->hInstance, NULL);
-			dat->hwndTime = CreateWindowEx(WS_EX_NOPARENTNOTIFY, _T("Static"), NULL, WS_CHILD | WS_VISIBLE | SS_RIGHT | SS_NOTIFY | SS_ENDELLIPSIS,
+			dat->hwndTime = CreateWindowEx(WS_EX_NOPARENTNOTIFY, L"Static", NULL, WS_CHILD | WS_VISIBLE | SS_RIGHT | SS_NOTIFY | SS_ENDELLIPSIS,
 				(GetSystemMetrics(SM_CXICON) + 80), (GetSystemMetrics(SM_CXICON) / 2), 35, (GetSystemMetrics(SM_CXICON) / 2), hwndFrame, NULL, params->hInstance, NULL);
 			if (dat->hwndTime == NULL)
 				return -1; /* creation failed, calls WM_DESTROY */
@@ -223,12 +223,18 @@ static LRESULT CALLBACK FrameWndProc(HWND hwndFrame, UINT msg, WPARAM wParam, LP
 
 	case M_REFRESH_COLORS:
 		COLORREF clrBar;
-		if (FontService_GetColor(_T("Automatic Shutdown"), _T("Progress Bar"), &clrBar))
+		clrBar = Colour_GetW(L"Automatic shutdown", L"Progress bar");
+		if (clrBar == -1)
 			clrBar = GetDefaultColor(FRAMEELEMENT_BAR);
-		if (FontService_GetColor(_T("Automatic Shutdown"), _T("Background"), &dat->clrBackground))
+		
+		dat->clrBackground = Colour_GetW(L"Automatic shutdown", L"Background");
+		if (dat->clrBackground == -1)
 			dat->clrBackground = GetDefaultColor(FRAMEELEMENT_BKGRND);
-		if (dat->hbrBackground != NULL) DeleteObject(dat->hbrBackground);
+		
+		if (dat->hbrBackground != NULL)
+			DeleteObject(dat->hbrBackground);
 		dat->hbrBackground = CreateSolidBrush(dat->clrBackground);
+
 		SendMessage(dat->hwndProgress, PBM_SETBARCOLOR, 0, (LPARAM)clrBar);
 		SendMessage(dat->hwndProgress, PBM_SETBKCOLOR, 0, (LPARAM)dat->clrBackground);
 		InvalidateRect(hwndFrame, NULL, TRUE);
@@ -240,17 +246,9 @@ static LRESULT CALLBACK FrameWndProc(HWND hwndFrame, UINT msg, WPARAM wParam, LP
 	case M_REFRESH_FONTS:
 		{
 			LOGFONT lf;
-			if (!FontService_GetFont(_T("Automatic Shutdown"), _T("Countdown on Frame"), &dat->clrText, &lf)) {
-				if (dat->hFont != NULL) DeleteObject(dat->hFont);
-				dat->hFont = CreateFontIndirect(&lf);
-			}
-			else {
-				dat->clrText = GetDefaultColor(FRAMEELEMENT_TEXT);
-				if (GetDefaultFont(&lf) != NULL) {
-					if (dat->hFont != NULL) DeleteObject(dat->hFont);
-					dat->hFont = CreateFontIndirect(&lf);
-				}
-			}
+			dat->clrText = Font_GetW(L"Automatic shutdown", L"Countdown on frame", &lf);
+			if (dat->hFont != NULL) DeleteObject(dat->hFont);
+			dat->hFont = CreateFontIndirect(&lf);
 		}
 		if (dat->hwndDesc != NULL)
 			SendMessage(dat->hwndDesc, WM_SETFONT, (WPARAM)dat->hFont, FALSE);
@@ -327,7 +325,7 @@ static LRESULT CALLBACK FrameWndProc(HWND hwndFrame, UINT msg, WPARAM wParam, LP
 			dat->flags |= FWPDF_PAUSEDSHOWN;
 		}
 		else {
-			TCHAR szOutput[256];
+			wchar_t szOutput[256];
 			if (dat->fTimeFlags&SDWTF_ST_TIME)
 				GetFormatedDateTime(szOutput, _countof(szOutput), dat->settingLastTime, TRUE);
 			else GetFormatedCountdown(szOutput, _countof(szOutput), dat->countdown);
@@ -383,9 +381,9 @@ static LRESULT CALLBACK FrameWndProc(HWND hwndFrame, UINT msg, WPARAM wParam, LP
 			}
 			HMENU hContextMenu = CreatePopupMenu();
 			if (hContextMenu != NULL) {
-				AppendMenu(hContextMenu, MF_STRING, MENUITEM_PAUSECOUNTDOWN, (dat->flags&FWPDF_PAUSED) ? TranslateT("&Unpause Countdown") : TranslateT("&Pause Countdown"));
+				AppendMenu(hContextMenu, MF_STRING, MENUITEM_PAUSECOUNTDOWN, (dat->flags&FWPDF_PAUSED) ? TranslateT("&Unpause countdown") : TranslateT("&Pause countdown"));
 				SetMenuDefaultItem(hContextMenu, MENUITEM_PAUSECOUNTDOWN, FALSE);
-				AppendMenu(hContextMenu, MF_STRING, MENUITEM_STOPCOUNTDOWN, TranslateT("&Cancel Countdown"));
+				AppendMenu(hContextMenu, MF_STRING, MENUITEM_STOPCOUNTDOWN, TranslateT("&Cancel countdown"));
 				TrackPopupMenuEx(hContextMenu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_HORPOSANIMATION | TPM_VERPOSANIMATION | TPM_RIGHTBUTTON, pt.x, pt.y, hwndFrame, NULL);
 				DestroyMenu(hContextMenu);
 			}
@@ -414,7 +412,7 @@ static LRESULT CALLBACK FrameWndProc(HWND hwndFrame, UINT msg, WPARAM wParam, LP
 			HDC hdc;
 			SIZE size;
 			HFONT hFontPrev = NULL;
-			TCHAR szOutput[256];
+			wchar_t szOutput[256];
 			dat->flags &= ~FWPDF_TIMEISCLIPPED;
 			if (GetWindowText(dat->hwndTime, szOutput, _countof(szOutput)))
 				if (GetClientRect(dat->hwndTime, &rc)) {
@@ -422,7 +420,7 @@ static LRESULT CALLBACK FrameWndProc(HWND hwndFrame, UINT msg, WPARAM wParam, LP
 					if (hdc != NULL) {
 						if (dat->hFont != NULL)
 							hFontPrev = (HFONT)SelectObject(hdc, dat->hFont);
-						if (GetTextExtentPoint32(hdc, szOutput, (int)mir_tstrlen(szOutput), &size))
+						if (GetTextExtentPoint32(hdc, szOutput, (int)mir_wstrlen(szOutput), &size))
 							if (size.cx >= (rc.right - rc.left))
 								dat->flags &= FWPDF_TIMEISCLIPPED;
 						if (dat->hFont != NULL)
@@ -462,13 +460,13 @@ static LRESULT CALLBACK FrameWndProc(HWND hwndFrame, UINT msg, WPARAM wParam, LP
 							ttdi->lpszText = ttdi->szText;
 					}
 					else if ((HWND)wParam == dat->hwndIcon)
-						ttdi->lpszText = TranslateT("Automatic Shutdown");
+						ttdi->lpszText = TranslateT("Automatic shutdown");
 					else {
-						TCHAR szTime[_countof(ttdi->szText)];
+						wchar_t szTime[_countof(ttdi->szText)];
 						if (dat->fTimeFlags&SDWTF_ST_TIME)
 							GetFormatedDateTime(szTime, _countof(szTime), dat->settingLastTime, FALSE);
 						else GetFormatedCountdown(szTime, _countof(szTime), dat->countdown);
-						mir_sntprintf(ttdi->szText, _T("%s %s"), (dat->fTimeFlags&SDWTF_ST_TIME) ? TranslateT("Shutdown at:") : TranslateT("Time left:"), szTime);
+						mir_snwprintf(ttdi->szText, L"%s %s", (dat->fTimeFlags&SDWTF_ST_TIME) ? TranslateT("Shutdown at:") : TranslateT("Time left:"), szTime);
 						ttdi->lpszText = ttdi->szText;
 					}
 					return 0;
@@ -503,7 +501,7 @@ void ShowCountdownFrame(WORD fTimeFlags)
 		clf.height = GetSystemMetrics(SM_CYICON);
 		clf.Flags = F_VISIBLE | F_SHOWTBTIP | F_NOBORDER | F_SKINNED;
 		clf.name = Translate("AutoShutdown");
-		clf.TBname = Translate("Automatic Shutdown");
+		clf.TBname = Translate("Automatic shutdown");
 		clf.hWnd = hwndCountdownFrame;
 		hFrame = (WORD)CallService(MS_CLIST_FRAMES_ADDFRAME, (WPARAM)&clf, 0);
 		if (hFrame) {
@@ -556,13 +554,13 @@ static int FrameModulesLoaded(WPARAM, LPARAM)
 		LOGFONT lf;
 		/* built-in font module is not available before this hook */
 		COLORREF clr = GetDefaultColor(FRAMEELEMENT_TEXT);
-		FontService_RegisterFont("AutoShutdown", "CountdownFont", LPGENT("Automatic Shutdown"), LPGENT("Countdown on Frame"), LPGENT("Automatic Shutdown"), LPGENT("Background"), 0, FALSE, GetDefaultFont(&lf), clr);
+		FontService_RegisterFont("AutoShutdown", "CountdownFont", LPGENW("Automatic shutdown"), LPGENW("Countdown on frame"), LPGENW("Automatic shutdown"), LPGENW("Background"), 0, FALSE, GetDefaultFont(&lf), clr);
 		clr = GetDefaultColor(FRAMEELEMENT_BKGRND);
-		FontService_RegisterColor("AutoShutdown", "BkgColor", LPGENT("Automatic Shutdown"), LPGENT("Background"), clr);
+		FontService_RegisterColor("AutoShutdown", "BkgColor", LPGENW("Automatic shutdown"), LPGENW("Background"), clr);
 		if (!IsThemeActive()) {
 			/* progressbar color can only be changed with classic theme */
 			clr = GetDefaultColor(FRAMEELEMENT_BAR);
-			FontService_RegisterColor("AutoShutdown", "ProgressColor", TranslateT("Automatic Shutdown"), TranslateT("Progress Bar"), clr);
+			FontService_RegisterColor("AutoShutdown", "ProgressColor", TranslateT("Automatic shutdown"), TranslateT("Progress bar"), clr);
 		}
 	}
 	return 0;

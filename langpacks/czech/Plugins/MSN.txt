@@ -2,14 +2,12 @@
 ;============================================================
 ;  File: MSN.dll
 ;  Plugin: MSN protocol
-;  Version: 0.12.1.1
+;  Version: 0.12.1.2
 ;  Authors: Boris Krasnovskiy, George Hazan, Richard Hughes, leecher
 ;============================================================
 [Microsoft Network (MSN) protocol support for Miranda NG.]
 Microsoft Network (MSN) protokol pro Mirandu NG.
 ;file \protocols\MSN\res\msn.rc
-[MSN]
-MSN
 [Live ID:]
 Identifikátor:
 [Password:]
@@ -58,8 +56,6 @@ Zablokovaný kontakt
 Kontakt vás má umístěn ve svém seznamu na serveru
 [Refresh]
 Aktualizovat
-[Hotmail]
-Hotmail
 [Enable Popup notifications]
 Povolit oznámení
 [Enable Contact List notifications]
@@ -163,6 +159,17 @@ Zpráva nebyla doručena
 ;file \protocols\MSN\src\msn_errors.cpp
 [User not online]
 Uživatel není online
+;file \protocols\MSN\src\msn_ieembed.cpp
+[IID_IOleObject failed.]
+Selhání IID_IOleObject.
+[RESULT]
+VÝSLEDEK
+[IID_IOleInPlaceObject failed.]
+Selhání IID_IOleInPlaceObject.
+[Failed to Advise]
+Selhání sdělení
+[C++ Event Sink]
+Potopení C++ události
 ;file \protocols\MSN\src\msn_links.cpp
 [MSN Link Protocol]
 Odkaz protokolu MSN
@@ -238,9 +245,9 @@ Seznam protistrany
 Lokální seznam
 [Server groups import may change your contact list layout after next login. Do you want to upload your groups to the server?]
 Import skupin ze serveru může při příštím přihlášení ovlivnit seznam\nkontaktů. Opravdu chcete zapnout správu skupin na serveru?
-[The changes you have made require you to reconnect to the MSN Messenger network before they take effect]
-Změny se projeví až při příštím připojení do sítě MSN Messenger.
-[MSN Options]
+[These changes will take effect the next time you connect to the MSN Messenger network.]
+Provedené změny se projeví až při dalším připojení k síti MSN Messenger.
+[MSN options]
 MSN - možnosti
 [Automatically obtain host/port]
 Automaticky zjistit kombinaci hostitel/port

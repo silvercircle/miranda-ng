@@ -1,96 +1,41 @@
 #include "stdafx.h"
 
-CMLuaScript::CMLuaScript(lua_State *L, const TCHAR* path, int iGroup)
-	: L(L), unloadRef(0)
+#define MT_SCRIPT "SCRIPT"
+
+CMLuaScript::CMLuaScript(lua_State *L, const wchar_t *path)
+	: CMLuaEnviroment(L), status(None), unloadRef(LUA_NOREF)
 {
-	mir_tstrcpy(filePath, path);
+	mir_wstrcpy(filePath, path);
 
-	group = iGroup;
+	fileName = wcsrchr(filePath, '\\') + 1;
+	wchar_t *dot = wcsrchr(fileName, '.');
 
-	fileName = _tcsrchr(filePath, '\\') + 1;
-	size_t length = mir_tstrlen(fileName) - 3;
+	size_t length = mir_wstrlen(fileName) - mir_wstrlen(dot) + 1;
 
-	ptrT name((TCHAR*)mir_calloc(sizeof(TCHAR) * length));
-	mir_tstrncpy(name, fileName, mir_tstrlen(fileName) - 3);
+	ptrW name((wchar_t*)mir_calloc(sizeof(wchar_t) * (length + 1)));
+	mir_wstrncpy(name, fileName, length);
 
-	moduleName = mir_utf8encodeT(name);
+	moduleName = mir_utf8encodeW(name);
+}
+
+CMLuaScript::CMLuaScript(const CMLuaScript &script)
+	: CMLuaEnviroment(L), status(None), unloadRef(LUA_NOREF)
+{
+	mir_wstrcpy(filePath, script.filePath);
+	fileName = mir_wstrdup(script.fileName);
+	moduleName = mir_strdup(script.moduleName);
 }
 
 CMLuaScript::~CMLuaScript()
 {
-	mir_free(this->moduleName);
-}
-
-const char* CMLuaScript::GetModuleName() const
-{
-	return moduleName;
-}
-
-const TCHAR* CMLuaScript::GetFilePath() const
-{
-	return filePath;
-}
-
-const TCHAR* CMLuaScript::GetFileName() const
-{
-	return fileName;
-}
-
-const int CMLuaScript::GetGroup() const
-{
-	return group;
-}
-
-bool CMLuaScript::Load()
-{
-	if (luaL_loadfile(L, T2Utf(filePath)))
-	{
-		CallService(MS_NETLIB_LOG, (WPARAM)hNetlib, (LPARAM)lua_tostring(L, -1));
-		return false;
-	}
-
-	if (lua_pcall(L, 0, 1, 0))
-	{
-		CallService(MS_NETLIB_LOG, (WPARAM)hNetlib, (LPARAM)lua_tostring(L, -1));
-		return false;
-	}
-
-	isLoaded = true;
-
-	if (!lua_istable(L, -1))
-		return true;
-
-	lua_pushliteral(L, "Load");
-	lua_gettable(L, -2);
-	if (lua_isfunction(L, -1))
-	{
-		if (lua_pcall(L, 0, 0, 0))
-			CallService(MS_NETLIB_LOG, (WPARAM)hNetlib, (LPARAM)lua_tostring(L, -1));
-	}
-	else
-		lua_pop(L, 1);
-
-	lua_pushliteral(L, "Unload");
-	lua_gettable(L, -2);
-	if (lua_isfunction(L, -1))
-	{
-		lua_pushvalue(L, -1);
-		unloadRef = luaL_ref(L, LUA_REGISTRYINDEX);
-	}
-	lua_pop(L, 1);
-
-	return true;
-}
-
-void CMLuaScript::Unload()
-{
-	if (isLoaded && unloadRef)
+	if (status == Loaded)
 	{
 		lua_rawgeti(L, LUA_REGISTRYINDEX, unloadRef);
-		if (lua_isfunction(L, -1) && lua_pcall(L, 0, 0, 0))
-			CallService(MS_NETLIB_LOG, (WPARAM)hNetlib, (LPARAM)lua_tostring(L, -1));
-		luaL_unref(L, LUA_REGISTRYINDEX, unloadRef);
-		isLoaded = false;
+		if (lua_isfunction(L, -1))
+			luaM_pcall(L);
+		lua_pushnil(L);
+		lua_rawsetp(L, LUA_REGISTRYINDEX, this);
+		status = None;
 	}
 
 	luaL_getsubtable(L, LUA_REGISTRYINDEX, "_LOADED");
@@ -98,6 +43,76 @@ void CMLuaScript::Unload()
 	lua_setfield(L, -2, moduleName);
 	lua_pop(L, 1);
 
-	lua_pushnil(L);
-	lua_setglobal(L, moduleName);
+	mir_free(moduleName);
+}
+
+const char* CMLuaScript::GetModuleName() const
+{
+	return moduleName;
+}
+
+const wchar_t* CMLuaScript::GetFilePath() const
+{
+	return filePath;
+}
+
+const wchar_t* CMLuaScript::GetFileName() const
+{
+	return fileName;
+}
+
+CMLuaScript::Status CMLuaScript::GetStatus() const
+{
+	return status;
+}
+
+bool CMLuaScript::Load()
+{
+	status = Failed;
+
+	if (luaL_loadfile(L, _T2A(filePath))) {
+		ReportError(L);
+		return false;
+	}
+
+	if (!CMLuaEnviroment::Load()) {
+		ReportError(L);
+		return false;
+	}
+
+	status = Loaded;
+
+	if (lua_isnoneornil(L, -1))
+		return true;
+
+	luaL_getsubtable(L, LUA_REGISTRYINDEX, "_LOADED");
+	lua_getfield(L, -1, moduleName);
+	if (!lua_toboolean(L, -1)) {
+		lua_pop(L, 1);
+		lua_pushvalue(L, -2);
+		lua_setfield(L, -2, moduleName);
+		lua_pop(L, 1);
+	}
+	else
+		lua_remove(L, -2);
+
+	if (!lua_istable(L, -1))
+		return true;
+
+	lua_getfield(L, -1, "Load");
+	if (lua_isfunction(L, -1))
+		luaM_pcall(L);
+	else
+		lua_pop(L, 1);
+
+	lua_getfield(L, -1, "Unload");
+	if (lua_isfunction(L, -1)) {
+		lua_pushvalue(L, -1);
+		unloadRef = luaL_ref(L, LUA_REGISTRYINDEX);
+	}
+	lua_pop(L, 1);
+
+	lua_pop(L, 1);
+
+	return true;
 }

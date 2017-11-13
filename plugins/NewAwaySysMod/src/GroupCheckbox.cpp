@@ -94,9 +94,9 @@ static int CALLBACK CheckboxWndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM l
 			}
 			else {
 				SIZE size;
-				TCHAR *szText = (TCHAR*)_alloca(Len * sizeof(TCHAR));
+				wchar_t *szText = (wchar_t*)_alloca(Len * sizeof(wchar_t));
 				GetWindowText(hWnd, szText, Len);
-				GetTextExtentPoint32(hdc, szText, (int)mir_tstrlen(szText), &size);
+				GetTextExtentPoint32(hdc, szText, (int)mir_wstrlen(szText), &size);
 				rcText.right = size.cx;
 				rcText.bottom = size.cy;
 			}
@@ -191,7 +191,7 @@ static int CALLBACK CheckboxWndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM l
 
 	case WM_MOUSEMOVE:
 		{
-			TRACKMOUSEEVENT tme;
+			TRACKMOUSEEVENT tme = { 0 };
 			tme.cbSize = sizeof(tme);
 			tme.dwFlags = TME_LEAVE;
 			tme.dwHoverTime = HOVER_DEFAULT;
@@ -274,7 +274,7 @@ static int CALLBACK CheckboxWndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM l
 			rc.left += CG_CHECKBOX_INDENT + CG_CHECKBOX_WIDTH + CG_TEXT_INDENT;
 
 			int Len = GetWindowTextLength(hWnd) + 1;
-			TCHAR *szTextT = (TCHAR*)_alloca(Len * sizeof(TCHAR));
+			wchar_t *szTextT = (wchar_t*)_alloca(Len * sizeof(wchar_t));
 			GetWindowText(hWnd, szTextT, Len);
 
 			HFONT hOldFont = (HFONT)SelectObject(hdcMem, dat->hFont);
@@ -290,7 +290,7 @@ static int CALLBACK CheckboxWndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM l
 					GetThemeTextExtent(hTheme, hdcMem, BP_GROUPBOX, IsWindowEnabled(hWnd) ? GBS_NORMAL : GBS_DISABLED, szTextT, -1, DT_CALCRECT | DT_LEFT | DT_VCENTER | DT_SINGLELINE, 0, &rcText);
 				else {
 					SIZE size;
-					GetTextExtentPoint32(hdcMem, szTextT, (int)mir_tstrlen(szTextT), &size);
+					GetTextExtentPoint32(hdcMem, szTextT, (int)mir_wstrlen(szTextT), &size);
 					rcText.right = size.cx;
 					rcText.bottom = size.cy;
 				}

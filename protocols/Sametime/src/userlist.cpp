@@ -48,20 +48,13 @@ void CSametimeProto::AddGroup(const char* name, bool expanded)
 	if (name && mir_strcmp(name, Translate("None")) == 0)
 		return;
 
-	ptrT ptszGroup(mir_utf8decodeT(name));
-	HANDLE hGroup = Clist_GroupExists(ptszGroup);
-	if (hGroup == NULL) {
-		hGroup = Clist_CreateGroup(NULL, ptszGroup);
-		if (hGroup) {
-			CallService(MS_CLUI_GROUPADDED, (WPARAM)hGroup, 0);
-			CallService(MS_CLIST_GROUPSETEXPANDED, (WPARAM)hGroup, expanded ? 1 : 0);
-		}
-	}
+	MGROUP hGroup = Clist_GroupCreate(NULL, ptrW(mir_utf8decodeW(name)));
+	Clist_GroupSetExpanded(hGroup, expanded);
 }
 
 MCONTACT CSametimeProto::AddContact(mwSametimeUser* user, bool temporary)
 {
-	debugLog(_T("CSametimeProto::AddContact() start"));
+	debugLogW(L"CSametimeProto::AddContact() start");
 	const char* id = mwSametimeUser_getUser(user);
 	const char* name = mwSametimeUser_getShortName(user);
 	const char* nick = mwSametimeUser_getAlias(user);
@@ -71,14 +64,14 @@ MCONTACT CSametimeProto::AddContact(mwSametimeUser* user, bool temporary)
 	MCONTACT hContact = FindContactByUserId(id);
 	bool new_contact = false;
 	if (!hContact) {
-		hContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
+		hContact = db_add_contact();
 		if (!hContact) {
-			debugLog(_T("AddContact(): Failed to create Sametime contact"));
+			debugLogW(L"AddContact(): Failed to create Sametime contact");
 			return NULL; ///TODO error handling
 		}
 		if (Proto_AddToContact(hContact, m_szModuleName) != 0) {
-			CallService(MS_DB_CONTACT_DELETE, (WPARAM)hContact, 0);
-			debugLog(_T("AddContact(): Failed to register Sametime contact"));
+			db_delete_contact(hContact);
+			debugLogW(L"AddContact(): Failed to register Sametime contact");
 			return NULL; ///TODO error handling
 		}
 		new_contact = true;
@@ -132,7 +125,7 @@ MCONTACT CSametimeProto::AddContact(mwSametimeUser* user, bool temporary)
 
 void CSametimeProto::ImportContactsFromList(mwSametimeList* user_list, bool temporary)
 {
-	debugLog(_T("CSametimeProto::ImportContactsFromList() start"));
+	debugLogW(L"CSametimeProto::ImportContactsFromList() start");
 	// add contacts
 	mwSametimeGroup* stgroup;
 	mwSametimeUser* stuser;
@@ -194,7 +187,7 @@ void CSametimeProto::ImportContactsFromList(mwSametimeList* user_list, bool temp
 
 void CSametimeProto::ExportContactsToList(mwSametimeList* user_list)
 {
-	debugLog(_T("CSametimeProto::ExportContactsToList() start"));
+	debugLogW(L"CSametimeProto::ExportContactsToList() start");
 	mwSametimeGroup* stgroup = 0;
 	char* group_name;
 	char* group_alias;
@@ -244,11 +237,11 @@ void CSametimeProto::ExportContactsToList(mwSametimeList* user_list)
 
 						//group_open = (db_get_b(0, szProtoGroups, buff, 0) == 1);
 
-						ptrT ptszGroup(mir_utf8decodeT(group_alias));
-						HANDLE hGroup = Clist_GroupExists(ptszGroup);
+						ptrW ptszGroup(mir_utf8decodeW(group_alias));
+						MGROUP hGroup = Clist_GroupExists(ptszGroup);
 						if (hGroup) {
-							int expanded;
-							CallService(MS_CLIST_GROUPGETNAME, (WPARAM)hGroup, (LPARAM)&expanded);
+							DWORD expanded;
+							Clist_GroupGetName(hGroup, &expanded);
 							group_open = (expanded != 0);
 						}
 						else {
@@ -305,9 +298,9 @@ void CSametimeProto::ExportContactsToList(mwSametimeList* user_list)
 	}
 }
 
-void CSametimeProto::ImportContactsFromFile(TCHAR* filename)
+void CSametimeProto::ImportContactsFromFile(wchar_t* filename)
 {
-	debugLog(_T("CSametimeProto::ImportContactsFromFile() start"));
+	debugLogW(L"CSametimeProto::ImportContactsFromFile() start");
 	std::ifstream in(filename);
 	std::string text;
 	std::string line;
@@ -333,9 +326,9 @@ void CSametimeProto::ExportContactsToServer()
 	mwPutBuffer* buff;
 	mwOpaque* op;
 
-	debugLog(_T("CSametimeProto::ExportContactsToServer() start"));
+	debugLogW(L"CSametimeProto::ExportContactsToServer() start");
 	if (MW_SERVICE_IS_DEAD(service_storage)) {
-		debugLog(_T("CSametimeProto::ExportContactsToServer() Failed"));
+		debugLogW(L"CSametimeProto::ExportContactsToServer() Failed");
 		showPopup(TranslateT("Failed to upload contacts - storage service unavailable."), SAMETIME_POPUP_ERROR);
 		return;
 	}
@@ -393,7 +386,7 @@ int CSametimeProto::ContactDeleted(MCONTACT hContact)
 	if (db_get_b(hContact, m_szModuleName, "ChatRoom", 0))
 		return 0;
 
-	debugLog(_T("CSametimeProto::ContactDeleted()"));
+	debugLogW(L"CSametimeProto::ContactDeleted()");
 
 	if (GetAwareIdFromContact(hContact, &id_block)) {
 		GList* gl = g_list_prepend(NULL, &id_block);
@@ -511,7 +504,7 @@ void mwAwareList_on_aware(mwAwareList* list, mwAwareSnapshot* aware)
 			db_free(&dbv);
 		}
 
-		GList* query = g_list_prepend(0, (void*)aware->id.user);
+		GList* query = g_list_prepend(0, aware->id.user);
 		mwServiceResolve_resolve(proto->service_resolve, query, mwResolveFlag_USERS, mwResolve_handler_dyngroup_callback, (gpointer)stgroup, 0);
 		g_list_free(query);
 
@@ -587,7 +580,7 @@ mwAwareListHandler mwAwareList_handler =
 
 void CSametimeProto::UserListCreate()
 {
-	debugLog(_T("CSametimeProto::UserListCreate() start"));
+	debugLogW(L"CSametimeProto::UserListCreate() start");
 	mwServiceAware_unsetAttribute(service_aware, mwAttribute_SPEAKERS);
 	mwServiceAware_unsetAttribute(service_aware, mwAttribute_MICROPHONE);
 	mwServiceAware_unsetAttribute(service_aware, mwAttribute_VIDEO_CAMERA);
@@ -641,9 +634,9 @@ void CSametimeProto::UserListDestroy()
 
 void CSametimeProto::UserRecvAwayMessage(MCONTACT hContact)
 {
-	debugLog(_T("CSametimeProto::UserRecvAwayMessage() start hContact=[%x]"), hContact);
+	debugLogW(L"CSametimeProto::UserRecvAwayMessage() start hContact=[%x]", hContact);
 	DBVARIANT dbv;
-	if (!db_get_s((MCONTACT)hContact, "CList", "StatusMsg", &dbv, DBVT_TCHAR)) {
+	if (!db_get_s((MCONTACT)hContact, "CList", "StatusMsg", &dbv, DBVT_WCHAR)) {
 		ProtoBroadcastAck((MCONTACT)hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, (HANDLE)1, (LPARAM)dbv.ptszVal);
 		db_free(&dbv);
 	}
@@ -661,8 +654,8 @@ void mwResolve_handler_callback(mwServiceResolve* srvc, guint32 id, guint32 code
 	mcsr.psr.nick.a = mcsr.name;
 
 	mcsr.nFieldCount = 4;
-	TCHAR fields[4][512];
-	TCHAR *fields_addr[4];
+	wchar_t fields[4][512];
+	wchar_t *fields_addr[4];
 	mcsr.pszFields = fields_addr;
 	mcsr.pszFields[0] = fields[0];
 	mcsr.pszFields[1] = fields[1];
@@ -672,24 +665,22 @@ void mwResolve_handler_callback(mwServiceResolve* srvc, guint32 id, guint32 code
 	if (advanced == TRUE) {
 		// send column names
 		mcsr.psr.cbSize = 0;
-		_tcsncpy(mcsr.pszFields[0], TranslateT("ID"), 512);
-		_tcsncpy(mcsr.pszFields[1], TranslateT("Name"), 512);
-		_tcsncpy(mcsr.pszFields[2], TranslateT("Description"), 512);
-		_tcsncpy(mcsr.pszFields[3], TranslateT("Group?"), 512);
+		wcsncpy(mcsr.pszFields[0], TranslateT("ID"), 512);
+		wcsncpy(mcsr.pszFields[1], TranslateT("Name"), 512);
+		wcsncpy(mcsr.pszFields[2], TranslateT("Description"), 512);
+		wcsncpy(mcsr.pszFields[3], TranslateT("Group?"), 512);
 		proto->ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_SEARCHRESULT, (HANDLE)id, (LPARAM)&mcsr);
 	}
 
 	mcsr.psr.cbSize = sizeof(MYPROTOSEARCHRESULT);
 
 	if (code == mwResolveCode_SUCCESS) {
-		GList *ri = results, *mri;
-		for (; ri; ri = ri->next) {
-			mri = ((mwResolveResult *)ri->data)->matches;
-			for (; mri; mri = mri->next) {
+		for (GList *ri = results; ri; ri = ri->next) {
+			for (GList *mri = ((mwResolveResult *)ri->data)->matches; mri; mri = mri->next) {
 				strncpy_s(mcsr.stid, ((mwResolveMatch *)mri->data)->id, _TRUNCATE);
 				MultiByteToWideChar(CP_UTF8, 0, mcsr.stid, -1, mcsr.pszFields[0], 512);
 
-				strncpy(mcsr.name, ((mwResolveMatch *)mri->data)->name, _TRUNCATE);
+				strncpy_s(mcsr.name, ((mwResolveMatch *)mri->data)->name, _TRUNCATE);
 				MultiByteToWideChar(CP_UTF8, 0, mcsr.name, -1, mcsr.pszFields[1], 512);
 
 				if (((mwResolveMatch *)mri->data)->desc)
@@ -698,7 +689,7 @@ void mwResolve_handler_callback(mwServiceResolve* srvc, guint32 id, guint32 code
 					mcsr.pszFields[2][0] = 0;
 
 				mcsr.group = (((mwResolveMatch *)mri->data)->type == mwResolveMatch_GROUP);
-				_tcsncpy_s(mcsr.pszFields[3], 512, mcsr.group ? TranslateT("True") : TranslateT("False"), _TRUNCATE);
+				wcsncpy_s(mcsr.pszFields[3], 512, mcsr.group ? TranslateT("True") : TranslateT("False"), _TRUNCATE);
 
 				if (advanced == TRUE)
 					proto->ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_SEARCHRESULT, (HANDLE)id, (LPARAM)&mcsr);
@@ -742,7 +733,7 @@ void mwResolve_handler_details_callback(mwServiceResolve* srvc, guint32 id, guin
 int CSametimeProto::SearchForUser(const char* name, BOOLEAN advanced)
 {
 	if (m_iStatus != ID_STATUS_OFFLINE && service_resolve) {
-		GList *query = g_list_prepend(0, (void*)name);
+		GList *query = g_list_prepend(0, (gpointer) name);
 		guint32 id = mwServiceResolve_resolve(service_resolve, query, (mwResolveFlag)(mwResolveFlag_USERS | mwResolveFlag_GROUPS), &mwResolve_handler_callback, (gpointer)advanced, 0);
 		g_list_free(query);
 		return id; // search handle
@@ -774,7 +765,7 @@ INT_PTR CALLBACK CALLBACK SearchDialogFunc(HWND hwndDlg, UINT msg, WPARAM wParam
 MCONTACT CSametimeProto::AddSearchedUser(MYPROTOSEARCHRESULT* mpsr, bool temporary)
 {
 	MCONTACT hContact = 0;
-	debugLog(_T("CSametimeProto::AddSearchedUser() start"));
+	debugLogW(L"CSametimeProto::AddSearchedUser() start");
 	mwSametimeList* user_list = mwSametimeList_new();
 	mwSametimeGroup* stgroup = 0;
 	if (mpsr->group) {
@@ -808,7 +799,7 @@ void mwServiceAware_clear_callback(mwServiceAware* srvc)
 
 void CSametimeProto::InitUserList()
 {
-	debugLog(_T("CSametimeProto::InitUserList()"));
+	debugLogW(L"CSametimeProto::InitUserList()");
 
 	mwSession_addService(session, (mwService*)(service_storage = mwServiceStorage_new(session)));
 	mwSession_addService(session, (mwService*)(service_resolve = mwServiceResolve_new(session)));
@@ -822,7 +813,7 @@ void CSametimeProto::InitUserList()
 
 void CSametimeProto::DeinitUserList()
 {
-	debugLog(_T("CSametimeProto::DeinitUserList()"));
+	debugLogW(L"CSametimeProto::DeinitUserList()");
 
 	mwSession_removeService(session, mwService_AWARE);
 	mwService_free((mwService*)service_aware);

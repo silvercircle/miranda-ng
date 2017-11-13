@@ -10,14 +10,13 @@ There is no warranty.
 #include "stdafx.h"
 #include "alarms.h"
 
-
-#define SERVICENAME _T("mp")
-#define COMMANDPREFIX _T("/") SERVICENAME
+#define SERVICENAME L"mp"
+#define COMMANDPREFIX L"/" SERVICENAME
 
 #define WMP_PAUSE	32808
 #define WMP_NEXT	0x497B
 
-TCHAR szGamePrefix[] = COMMANDPREFIX;
+wchar_t szGamePrefix[] = COMMANDPREFIX;
 
 CLIST_INTERFACE *pcli;
 HINSTANCE hInst;
@@ -52,64 +51,66 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 
 static LRESULT CALLBACK PopupDlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	switch(message) {
+	switch (message) {
 	case WM_COMMAND:
 		if (HIWORD(wParam) == STN_CLICKED) { //It was a click on the Popup.
 			PUDeletePopup(hWnd);
 			return TRUE;
 		}
 		break;
+
 	case UM_FREEPLUGINDATA:
 		return TRUE;
 	}
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-void ShowPopup(MCONTACT hContact, const TCHAR *msg)
+void ShowPopup(MCONTACT hContact, const wchar_t *msg)
 {
 	if (ServiceExists(MS_POPUP_ADDPOPUPT)) {
-		TCHAR *lpzContactName = (TCHAR *)pcli->pfnGetContactDisplayName(hContact, 0);
+		wchar_t *lpzContactName = (wchar_t *)pcli->pfnGetContactDisplayName(hContact, 0);
 
 		POPUPDATAT ppd = { 0 };
 		ppd.lchContact = hContact; //Be sure to use a GOOD handle, since this will not be checked.
 		ppd.lchIcon = hIconList1;
-		mir_tstrncpy(ppd.lptzContactName, lpzContactName,MAX_CONTACTNAME);
-		mir_tstrncpy(ppd.lptzText, msg,  MAX_SECONDLINE);
+		mir_wstrncpy(ppd.lptzContactName, lpzContactName, MAX_CONTACTNAME);
+		mir_wstrncpy(ppd.lptzText, msg, MAX_SECONDLINE);
 		ppd.colorBack = GetSysColor(COLOR_BTNFACE);
-		ppd.colorText = RGB(0,0,0);
+		ppd.colorText = RGB(0, 0, 0);
 		ppd.PluginWindowProc = PopupDlgProc;
 		ppd.PluginData = 0;
 		ppd.iSeconds = 3;
 
-		//Now that every field has been filled, we want to see the popup.
+		// Now that every field has been filled, we want to see the popup.
 		PUAddPopupT(&ppd);
 	}
 }
 
 HBITMAP LoadBmpFromIcon(int IdRes)
 {
-	HICON hIcon = LoadIcon(hInst,MAKEINTRESOURCE(IdRes));
+	HICON hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IdRes));
 
-	RECT rc;
-	BITMAPINFOHEADER bih = {0};
-
-	HBRUSH hBkgBrush = CreateSolidBrush(GetSysColor(COLOR_3DFACE));
+	BITMAPINFOHEADER bih = { 0 };
 	bih.biSize = sizeof(bih);
 	bih.biBitCount = 24;
 	bih.biPlanes = 1;
 	bih.biCompression = BI_RGB;
 	bih.biHeight = 16;
 	bih.biWidth = 20;
+
+	RECT rc;
 	rc.top = rc.left = 0;
 	rc.right = bih.biWidth;
 	rc.bottom = bih.biHeight;
+
 	HDC hdc = GetDC(NULL);
 	HBITMAP hBmp = CreateCompatibleBitmap(hdc, bih.biWidth, bih.biHeight);
 	HDC hdcMem = CreateCompatibleDC(hdc);
 	HBITMAP hoBmp = (HBITMAP)SelectObject(hdcMem, hBmp);
+
+	HBRUSH hBkgBrush = CreateSolidBrush(GetSysColor(COLOR_3DFACE));
 	FillRect(hdcMem, &rc, hBkgBrush);
 	DrawIconEx(hdcMem, 2, 0, hIcon, 16, 16, 0, NULL, DI_NORMAL);
-
 
 	SelectObject(hdcMem, hoBmp);
 	DeleteDC(hdcMem);
@@ -152,7 +153,7 @@ static int MainDeInit(WPARAM, LPARAM)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	// ensure datetime picker is loaded
 	INITCOMMONCONTROLSEX ccx;
@@ -160,7 +161,7 @@ extern "C" int __declspec(dllexport) Load(void)
 	ccx.dwICC = ICC_DATE_CLASSES;
 	InitCommonControlsEx(&ccx);
 
-	HookEvent(ME_SYSTEM_MODULESLOADED,MainInit);
+	HookEvent(ME_SYSTEM_MODULESLOADED, MainInit);
 	HookEvent(ME_SYSTEM_PRESHUTDOWN, MainDeInit);
 
 	LoadOptions();

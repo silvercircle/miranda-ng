@@ -32,12 +32,7 @@ function DBWriteString (hContact:TMCONTACT;szModule:PAnsiChar;szSetting:PAnsiCha
 function DBWriteUTF8   (hContact:TMCONTACT;szModule:PAnsiChar;szSetting:PAnsiChar;val:PAnsiChar):int_ptr;
 function DBWriteUnicode(hContact:TMCONTACT;szModule:PAnsiChar;szSetting:PAnsiChar;val:PWideChar):int_ptr;
 
-//function DBFreeVariant(dbv:PDBVARIANT):int_ptr;
-function DBDeleteSetting(hContact:TMCONTACT;szModule:PAnsiChar;szSetting:PAnsiChar):int_ptr;
-
 function DBDeleteGroup(hContact:TMCONTACT;szModule:PAnsiChar;prefix:PAnsiChar=nil):int_ptr;
-
-function DBDeleteModule(hContact:TMCONTACT;szModule:PAnsiChar):integer;
 
 function DBGetSettingType(hContact:TMCONTACT;szModule:PAnsiChar;szSetting:PAnsiChar):integer;
 
@@ -87,7 +82,7 @@ begin
   else
     result:=StrLen(dbv.szVal.a);
 
-  DBFreeVariant(@dbv);
+  db_free(@dbv);
 end;
 
 function DBReadString(hContact:TMCONTACT;szModule:PAnsiChar;szSetting:PAnsiChar;
@@ -106,7 +101,7 @@ begin
   else
     StrDup(result,default);
 
-  DBFreeVariant(@dbv);
+  db_free(@dbv);
 end;
 
 function DBReadUTF8(hContact:TMCONTACT;szModule:PAnsiChar;szSetting:PAnsiChar;default:PAnsiChar=nil):PAnsiChar;
@@ -130,7 +125,7 @@ begin
   else
     StrDupW(result,default);
 
-  DBFreeVariant(@dbv);
+  db_free(@dbv);
 end;
 
 function DBReadStruct(hContact:TMCONTACT;szModule:PAnsiChar;szSetting:PAnsiChar;
@@ -147,7 +142,7 @@ begin
     if ptr=nil then
       mGetMem(ptr,size);
     move(dbv.pbVal^,ptr^,size);
-    DBFreeVariant(@dbv);
+    db_free(@dbv);
     result:=uint_ptr(ptr)
   end
   else
@@ -204,12 +199,6 @@ begin
   result:=db_set_ws(hContact, szModule, szSetting, val);
 end;
 
-function DBDeleteSetting(hContact:TMCONTACT;szModule:PAnsiChar;szSetting:PAnsiChar):int_ptr;
-  {$IFDEF AllowInline}inline;{$ENDIF}
-begin
-  result:=db_unset(hContact, szModule, szSetting);
-end;
-
 type
   ppchar = ^PAnsiChar;
 
@@ -228,7 +217,6 @@ end;
 
 function DBDeleteGroup(hContact:TMCONTACT;szModule:PAnsiChar;prefix:PAnsiChar=nil):int_ptr;
 var
-  ces:TDBCONTACTENUMSETTINGS;
   p:PAnsiChar;
   code,num:integer;
   ptr:PAnsiChar;
@@ -238,26 +226,19 @@ var
 begin
   if (prefix=nil) or (prefix^=#0) then
   begin
-    DBDeleteModule(hContact,szModule);
+    db_delete_module(hContact,szModule);
     result:=0;
     exit;
   end;
 
-  ces.szModule:=szModule;
-  num:=0;
   //calculate size for setting names buffer
-  ces.pfnEnumProc:=@EnumSettingsProcCalc;
-  ces.lParam     :=lParam(@num);
-  ces.ofsSettings:=0;
-  CallService(MS_DB_CONTACT_ENUMSETTINGS,hContact,lparam(@ces));
+  num:=0;
+  db_enum_settings(hContact,@EnumSettingsProcCalc,szModule,@num);
 
   //get setting names list
   GetMem(p,num+1);
   ptr:=p;
-  ces.pfnEnumProc:=@EnumSettingsProc;
-  ces.lParam     :=lparam(@ptr);
-  ces.ofsSettings:=0;
-  result:=CallService(MS_DB_CONTACT_ENUMSETTINGS,hContact,lparam(@ces));
+  result:=db_enum_settings(hContact,@EnumSettingsProc,szModule,@ptr);
   ptr^:=#0;
 
   ptr:=p;
@@ -307,18 +288,12 @@ begin
 
     if res then
     begin
-      DBDeleteSetting(hContact,szModule,ptr);
+      db_unset(hContact,szModule,ptr);
     end;
     while ptr^<>#0 do inc(ptr);
     inc(ptr);
   end;
   FreeMem(p);
-end;
-
-function DBDeleteModule(hContact:TMCONTACT;szModule:PAnsiChar):integer;
-begin
-  result:=0;
-  CallService(MS_DB_MODULE_DELETE,hContact,lParam(szModule));
 end;
 
 function DBGetSettingType(hContact:TMCONTACT;szModule:PAnsiChar;szSetting:PAnsiChar):integer;
@@ -328,7 +303,7 @@ begin
   if DBReadSetting(hContact,szModule,szSetting,@ldbv)=0 then
   begin
     result:=ldbv._type;
-    DBFreeVariant(@ldbv);
+    db_free(@ldbv);
   end
   else
     result:=DBVT_DELETED;

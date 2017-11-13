@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -21,29 +21,14 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
-
-struct DlgChangePassParam
-{
-	CDbxMdb *db;
-	TCHAR newPass[100];
-	int wrongPass;
-};
-
-#define MS_DB_CHANGEPASSWORD "DB/UI/ChangePassword"
-
-static IconItem iconList[] =
-{
-	{ LPGEN("Logo"), "logo", IDI_LOGO },
-	{ LPGEN("Password"), "password", IDI_ICONPASS }
-};
+#include "stdafx.h"
 
 static HGENMENU hSetPwdMenu;
 
 static UINT oldLangID;
 void LanguageChanged(HWND hwndDlg)
 {
-	UINT LangID = (UINT)GetKeyboardLayout(0);
+	UINT_PTR LangID = (UINT_PTR)GetKeyboardLayout(0);
 	char Lang[3] = { 0 };
 	if (LangID != oldLangID) {
 		oldLangID = LangID;
@@ -54,97 +39,18 @@ void LanguageChanged(HWND hwndDlg)
 	}
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-
-static INT_PTR CALLBACK sttEnterPassword(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	DlgChangePassParam *param = (DlgChangePassParam*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
-
-	switch (uMsg) {
-	case WM_INITDIALOG:
-		TranslateDialogDefault(hwndDlg);
-		SendDlgItemMessage(hwndDlg, IDC_HEADERBAR, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(g_hInst, MAKEINTRESOURCE(iconList[0].defIconID)));
-
-		param = (DlgChangePassParam*)lParam;
-		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
-
-		if (param->wrongPass) {
-			if (param->wrongPass > 2) {
-				HWND hwndCtrl = GetDlgItem(hwndDlg, IDC_USERPASS);
-				EnableWindow(hwndCtrl, FALSE);
-				hwndCtrl = GetDlgItem(hwndDlg, IDOK);
-				EnableWindow(hwndCtrl, FALSE);
-				SetDlgItemText(hwndDlg, IDC_HEADERBAR, TranslateT("Too many errors!"));
-			}
-			else SetDlgItemText(hwndDlg, IDC_HEADERBAR, TranslateT("Password is not correct!"));
-		}
-		else SetDlgItemText(hwndDlg, IDC_HEADERBAR, TranslateT("Please type in your password"));
-
-		oldLangID = 0;
-		SetTimer(hwndDlg, 1, 200, NULL);
-		LanguageChanged(hwndDlg);
-		return TRUE;
-
-	case WM_CTLCOLORSTATIC:
-		if ((HWND)lParam == GetDlgItem(hwndDlg, IDC_LANG)) {
-			SetTextColor((HDC)wParam, GetSysColor(COLOR_HIGHLIGHTTEXT));
-			SetBkMode((HDC)wParam, TRANSPARENT);
-			return (BOOL)GetSysColorBrush(COLOR_HIGHLIGHT);
-		}
-		return FALSE;
-
-	case WM_COMMAND:
-		switch (LOWORD(wParam)) {
-		case IDCANCEL:
-			EndDialog(hwndDlg, IDCANCEL);
-			break;
-
-		case IDOK:
-			GetDlgItemText(hwndDlg, IDC_USERPASS, param->newPass, SIZEOF(param->newPass));
-			EndDialog(hwndDlg, IDOK);
-		}
-		break;
-
-	case WM_TIMER:
-		LanguageChanged(hwndDlg);
-		return FALSE;
-
-	case WM_DESTROY:
-		KillTimer(hwndDlg, 1);
-		DestroyIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
-	}
-
-	return FALSE;
-}
-
-bool CDbxMdb::EnterPassword(const BYTE *pKey, const size_t keyLen)
-{
-	DlgChangePassParam param = { this };
-	while (true) {
-		// Esc pressed
-		if (IDOK != DialogBoxParam(g_hInst, MAKEINTRESOURCE(IDD_LOGIN), 0, sttEnterPassword, (LPARAM)&param))
-			return false;
-
-		m_crypto->setPassword(ptrA(mir_utf8encodeT(param.newPass)));
-		if (m_crypto->setKey(pKey, keyLen)) {
-			m_bUsesPassword = true;
-			SecureZeroMemory(&param, sizeof(param));
-			return true;
-		}
-
-		param.wrongPass++;
-	}
-}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
 static bool CheckOldPassword(HWND hwndDlg, CDbxMdb *db)
 {
-	if (db->usesPassword()) {
+	if (db->usesPassword()) 
+	{
 		TCHAR buf[100];
-		GetDlgItemText(hwndDlg, IDC_OLDPASS, buf, SIZEOF(buf));
-		ptrA oldPass(mir_utf8encodeT(buf));
-		if (!db->m_crypto->checkPassword(oldPass)) {
+		GetDlgItemText(hwndDlg, IDC_OLDPASS, buf, _countof(buf));
+		pass_ptrA oldPass(mir_utf8encodeW(buf));
+		if (!db->m_crypto->checkPassword(oldPass)) 
+		{
 			SetDlgItemText(hwndDlg, IDC_HEADERBAR, TranslateT("Wrong old password entered!"));
 			return false;
 		}
@@ -160,7 +66,7 @@ static INT_PTR CALLBACK sttChangePassword(HWND hwndDlg, UINT uMsg, WPARAM wParam
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
-		SendDlgItemMessage(hwndDlg, IDC_HEADERBAR, WM_SETICON, ICON_SMALL, (LPARAM)Skin_GetIconByHandle(iconList[0].hIcolib, true));
+		SendDlgItemMessage(hwndDlg, IDC_HEADERBAR, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIconByHandle(iconList[0].hIcolib, true));
 
 		param = (DlgChangePassParam*)lParam;
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
@@ -174,7 +80,7 @@ static INT_PTR CALLBACK sttChangePassword(HWND hwndDlg, UINT uMsg, WPARAM wParam
 		if ((HWND)lParam == GetDlgItem(hwndDlg, IDC_LANG)) {
 			SetTextColor((HDC)wParam, GetSysColor(COLOR_HIGHLIGHTTEXT));
 			SetBkMode((HDC)wParam, TRANSPARENT);
-			return (BOOL)GetSysColorBrush(COLOR_HIGHLIGHT);
+			return (INT_PTR)GetSysColorBrush(COLOR_HIGHLIGHT);
 		}
 		return FALSE;
 
@@ -201,14 +107,14 @@ static INT_PTR CALLBACK sttChangePassword(HWND hwndDlg, UINT uMsg, WPARAM wParam
 
 		case IDOK:
 			TCHAR buf2[100];
-			GetDlgItemText(hwndDlg, IDC_USERPASS1, buf2, SIZEOF(buf2));
-			if (_tcslen(buf2) < 3) {
+			GetDlgItemText(hwndDlg, IDC_USERPASS1, buf2, _countof(buf2));
+			if (wcslen(buf2) < 3) {
 				SetDlgItemText(hwndDlg, IDC_HEADERBAR, TranslateT("Password is too short!"));
 				goto LBL_Error;
 			}
 
-			GetDlgItemText(hwndDlg, IDC_USERPASS2, buf, SIZEOF(buf));
-			if (_tcscmp(buf2, buf)) {
+			GetDlgItemText(hwndDlg, IDC_USERPASS2, buf, _countof(buf));
+			if (wcscmp(buf2, buf)) {
 				SetDlgItemText(hwndDlg, IDC_HEADERBAR, TranslateT("Passwords do not match!"));
 				goto LBL_Error;
 			}
@@ -230,7 +136,7 @@ static INT_PTR CALLBACK sttChangePassword(HWND hwndDlg, UINT uMsg, WPARAM wParam
 
 	case WM_DESTROY:
 		KillTimer(hwndDlg, 1);
-		Skin_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
+		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
 	}
 
 	return FALSE;
@@ -246,52 +152,14 @@ static INT_PTR ChangePassword(void* obj, WPARAM, LPARAM)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-INT_PTR CALLBACK DlgProcOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	CDbxMdb *db = (CDbxMdb *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
-
-	switch (msg) {
-	case WM_INITDIALOG:
-		TranslateDialogDefault(hwndDlg);
-		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
-
-		db = (CDbxMdb*)lParam;
-		CheckRadioButton(hwndDlg, IDC_STANDARD, IDC_TOTAL, IDC_STANDARD + db->isEncrypted());
-		return TRUE;
-
-	case WM_COMMAND:
-		if (HIWORD(wParam) == BN_CLICKED && (HWND)lParam == GetFocus()) {
-			if (LOWORD(wParam) == IDC_USERPASS)
-				CallService(MS_DB_CHANGEPASSWORD, 0, 0);
-			else
-				SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
-		}
-		break;
-
-	case WM_NOTIFY:
-		if (((LPNMHDR)lParam)->code == PSN_APPLY) {
-			if (IsDlgButtonChecked(hwndDlg, IDC_TOTAL) != (UINT)db->isEncrypted()) {
-				db->ToggleEncryption();
-				CheckRadioButton(hwndDlg, IDC_STANDARD, IDC_TOTAL, IDC_STANDARD + db->isEncrypted());
-			}
-			break;
-		}
-		break;
-	}
-
-	return FALSE;
-}
 
 static int OnOptionsInit(PVOID obj, WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { sizeof(odp) };
 	odp.position = -790000000;
-	odp.hInstance = g_hInst;
-	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONS);
 	odp.flags = ODPF_BOLDGROUPS;
-	odp.pszTitle = LPGEN("Database");
-	odp.pfnDlgProc = DlgProcOptions;
-	odp.dwInitParam = (LPARAM)obj;
+	odp.szTitle.a = LPGEN("Database");
+	odp.pDialog = new COptionsDialog((CDbxMdb*)obj);
 	Options_AddPage(wParam, &odp);
 	return 0;
 }
@@ -300,32 +168,26 @@ static int OnOptionsInit(PVOID obj, WPARAM wParam, LPARAM)
 
 void CDbxMdb::UpdateMenuItem()
 {
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.flags = CMIM_NAME;
-	mi.icolibItem = iconList[1].hIcolib;
-	mi.pszName = GetMenuTitle();
-	Menu_ModifyItem(hSetPwdMenu, &mi);
+	Menu_ModifyItem(hSetPwdMenu, _A2T(GetMenuTitle()), iconList[1].hIcolib);
 }
 
 static int OnModulesLoaded(PVOID obj, WPARAM, LPARAM)
 {
 	CDbxMdb *db = (CDbxMdb*)obj;
 
-	Icon_Register(g_hInst, LPGEN("Database"), iconList, SIZEOF(iconList), "mmap");
+	Icon_Register(g_hInst, LPGEN("Database"), iconList, _countof(iconList), "lmdb");
 
 	HookEventObj(ME_OPT_INITIALISE, OnOptionsInit, db);
 
-	// main menu item
-	CLISTMENUITEM mi = { sizeof(mi) };
-	mi.pszName = LPGEN("Database");
-	mi.position = 500000000;
-	mi.flags = CMIF_ROOTHANDLE;
-	mi.icolibItem = iconList[0].hIcolib;
-	HGENMENU hMenuRoot = Menu_AddMainMenuItem(&mi);
+	CMenuItem mi;
 
-	mi.icolibItem = iconList[1].hIcolib;
-	mi.pszName = db->GetMenuTitle();
-	mi.hParentMenu = hMenuRoot;
+	// main menu item
+	mi.root = Menu_CreateRoot(MO_MAIN, LPGENW("Database"), 500000000, iconList[0].hIcolib);
+	Menu_ConfigureItem(mi.root, MCI_OPT_UID, "F7C5567C-D1EE-484B-B4F6-24677A5AAAEF");
+
+	SET_UID(mi, 0x50321866, 0xba1, 0x46dd, 0xb3, 0xa6, 0xc3, 0xcc, 0x55, 0xf2, 0x42, 0x9e);
+	mi.hIcolibItem = iconList[1].hIcolib;
+	mi.name.a = db->GetMenuTitle();
 	mi.pszService = MS_DB_CHANGEPASSWORD;
 	hSetPwdMenu = Menu_AddMainMenuItem(&mi);
 	return 0;

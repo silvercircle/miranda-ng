@@ -6,17 +6,17 @@
 ;  Authors: George Hazan
 ;============================================================
 [Miranda NG Database Checker.]
-Плагин проверки БД Miranda NG.
+Проверяет базу данных Miranda NG.
 [Welcome to the Miranda Database Wizard]
 Добро пожаловать в мастер базы данных
 [Using this Wizard you can compact your Miranda profile database to remove dead space created during normal usage, as well as repair a large number of issues that could affect the database.]
-Используя этот мастер, вы можете уменьшить размер профиля удалением "мёртвого" пространства.
+Используя этот мастер, вы можете уменьшить размер базы данных профиля удалением "мёртвого" пространства.
 [To continue, click Next.]
 Нажмите "Далее" для продолжения.
 [This program is licensed under the terms of the GNU General Public License.]
 Программа лицензирована под условиями GNU General Public License.
 [Miranda Database Tool]
-Инструмент базы Miranda NG
+Инструмент базы данных Miranda NG
 [< &Back]
 < &Назад
 [&Next >]
@@ -26,7 +26,7 @@
 [Select Miranda Profile]
 Выбор профиля Miranda NG
 [You can choose the Miranda profile database to compact or repair.]
-Выберите профиль Miranda NG для сжатия или восстановления.
+Выберите базу данных Miranda NG для сжатия или восстановления.
 [Select the &profile database from the list below. If the database you wish to use is not listed here then click Other to browse your computer.]
 Выберите &профиль базы в списке. Если его нет в списке, нажмите "Ещё..." для поиска на компьютере.
 [&File:]
@@ -58,9 +58,9 @@
 [Just checks that the database is valid, without writing anything to the disk.]
 Только проверка базы, без записи чего-либо на диск.
 [Cleaning Options]
-Опции очистки
+Настройки очистки
 [You can choose to remove information from the database while it is being processed.]
-Вы можете удалить информацию из базы во время процесса.
+Вы можете удалить информацию из базы во время обработки.
 [Erase all histories]
 Удалить всю историю
 [Removes all the saved history for all contacts in the database.]
@@ -72,7 +72,7 @@
 [Convert old Unicode messages to UTF8]
 Конвертировать старые Unicode сообщения в UTF8
 [Converts history messages in pre-0.7 format (ANSI+UCS2) to the new UTF8 format supported by 0.7. Saves the database space in most cases (recommended).]
-Конвертирует историю сообщений из <0.7 формата (ANSI+UCS2) в новый UTF8 формат. В большинстве случаев помогает сохранить место на диске (рекомендуется).
+Конвертирует историю сообщений из <0.7 формата (ANSI+UCS2) в новый UTF8 формат. В большинстве случаев экономит место на диске (рекомендуется).
 [Working...]
 Выполнение...
 [Please wait while the requested operations are being performed.]
@@ -84,7 +84,7 @@
 [Launch Miranda with this profile]
 Запустить Miranda NG с этим профилем
 [Launches Miranda with the profile that was just worked on.]
-Запускает Miranda NG с предыдущим профилем
+Запускает Miranda NG с профилем, который только что проверяли.
 [Backup:]
 Резерв:
 [The processing of the database has been completed. Click Next to return to the start of the wizard to select another database to check, or click Finish to exit the wizard.]
@@ -98,17 +98,17 @@
 [Processing has not yet completed, if you go back now then the changes that have currently been made will be rolled back and the original database will be restored. Do you still want to go back?]
 Обработка ещё не завершена; если вы перейдёте назад сейчас, то изменения не будут применены к исходной базе данных. Вы хотите перейти назад?
 [Database Checker cannot find a suitable database plugin to open '%s'.]
-Плагин проверки не может найти подходящего драйвера БД для открытия '%s'.
+Плагин проверки не может найти подходящий драйвер базы для открытия '%s'.
 [Error]
 Ошибка
 [Database driver '%s' doesn't support checking.]
-Драйвер БД '%s' не поддерживает проверку.
+Драйвер базы '%s' не поддерживает проверку.
 [Database]
-Профиль
+База данных
 [Total size]
 Размер
 [Miranda Databases (*.dat)]
-Базы Miranda NG (*.dat)
+Базы данных Miranda NG (*.dat)
 [All Files]
 Все файлы
 [Errors were encountered, however you selected not to backup the original database. It is strongly recommended that you do so in case important data was omitted. Do you wish to keep a backup of the original database?]

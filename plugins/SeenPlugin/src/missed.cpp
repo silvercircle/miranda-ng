@@ -52,7 +52,7 @@ int ResetMissed(void)
 int CheckIfOnline(void)
 {
 	for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact))
-		if (CallService(MS_CLIST_GETCONTACTICON, hContact, 0) != ICON_OFFLINE)
+		if (pcli->pfnGetContactIcon(hContact) != ICON_OFFLINE)
 			db_set_b(hContact, S_MOD, "Missed", 2);
 
 	return 0;
@@ -105,18 +105,16 @@ int ShowMissed(void)
 	if (!mcs.count)
 		return 0;
 
-	TCHAR sztemp[1024], szcount[7];
+	CMStringW buf;
 	for (int loop = 0; loop < mcs.count; loop++) {
-		mir_tstrncat(sztemp, (TCHAR*)pcli->pfnGetContactDisplayName(mcs.wpcontact[loop], 0), _countof(sztemp) - mir_tstrlen(sztemp));
-		if (db_get_b(NULL, S_MOD, "MissedOnes_Count", 0)) {
-			mir_sntprintf(szcount, _T(" [%i]"), mcs.times[loop]);
-			mir_tstrcat(sztemp, szcount);
-		}
+		buf.Append(pcli->pfnGetContactDisplayName(mcs.wpcontact[loop], 0));
+		if (db_get_b(NULL, S_MOD, "MissedOnes_Count", 0))
+			buf.AppendFormat(L" [%i]", mcs.times[loop]);
 
-		mir_tstrcat(sztemp, _T("\n"));
+		buf.AppendChar('\n');
 	}
 
-	CreateDialogParam(hInstance, MAKEINTRESOURCE(IDD_MISSED), NULL, MissedDlgProc, (LPARAM)sztemp);
+	CreateDialogParam(hInstance, MAKEINTRESOURCE(IDD_MISSED), NULL, MissedDlgProc, (LPARAM)buf.c_str());
 	return 0;
 }
 

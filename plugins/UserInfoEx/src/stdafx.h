@@ -50,7 +50,6 @@ using namespace std;
 
 #include <newpluginapi.h>
 #include <m_button.h>
-#include <m_clui.h>
 #include <m_clist.h>
 #include <m_database.h>
 #include <m_hotkeys.h>
@@ -114,7 +113,6 @@ unsigned int hashSettingW_M2(const char * key);		//new Murma2 hash
 #include "../IconPacks/ice/src/icons.h"
 #include "svc_constants.h"
 #include "svc_avatar.h"
-#include "svc_contactinfo.h"
 #include "svc_email.h"
 #include "svc_gender.h"
 #include "svc_homepage.h"
@@ -122,7 +120,6 @@ unsigned int hashSettingW_M2(const char * key);		//new Murma2 hash
 #include "svc_refreshci.h"
 #include "svc_reminder.h"
 #include "svc_timezone.h"
-#include "svc_timezone_old.h"
 #include "mir_contactqueue.h"
 #include "mir_db.h"
 #include "mir_string.h"
@@ -142,20 +139,20 @@ unsigned int hashSettingW_M2(const char * key);		//new Murma2 hash
 #include "dlg_anniversarylist.h"
 #include "psp_base.h"
 #include "psp_options.h"
-#include "ex_import\svc_ExImport.h"
-#include "ex_import\tinystr.h"
-#include "ex_import\tinyxml.h"
-#include "ex_import\mir_rfcCodecs.h"
-#include "ex_import\classExImContactBase.h"
-#include "ex_import\dlg_ExImProgress.h"
-#include "ex_import\svc_ExImXML.h"
-#include "ex_import\classExImContactXML.h"
-#include "ex_import\dlg_ExImModules.h"
-#include "ex_import\dlg_ExImOpenSaveFile.h"
-#include "ex_import\svc_ExImINI.h"
-#include "ex_import\svc_ExImVCF.h"
-#include "flags\svc_flags.h"
-#include "Flags\svc_flagsicons.h"
+#include "ex_import/svc_ExImport.h"
+#include "ex_import/tinystr.h"
+#include "ex_import/tinyxml.h"
+#include "ex_import/mir_rfcCodecs.h"
+#include "ex_import/classExImContactBase.h"
+#include "ex_import/dlg_ExImProgress.h"
+#include "ex_import/svc_ExImXML.h"
+#include "ex_import/classExImContactXML.h"
+#include "ex_import/dlg_ExImModules.h"
+#include "ex_import/dlg_ExImOpenSaveFile.h"
+#include "ex_import/svc_ExImINI.h"
+#include "ex_import/svc_ExImVCF.h"
+#include "flags/svc_flags.h"
+#include "Flags/svc_flagsicons.h"
 
 /***********************************************************************************************************
  * UserInfoEx global variables
@@ -210,8 +207,6 @@ extern struct CountryListEntry *countries;
  ***********************************************************************************************************/
 
 DWORD	hashSetting(LPCSTR szStr);					//old miranda hash
-
-INT_PTR	myDestroyServiceFunction(const char * key);
 
 static FORCEINLINE BOOL IsProtoOnline(LPSTR pszProto)
 {

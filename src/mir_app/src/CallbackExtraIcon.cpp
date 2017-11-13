@@ -1,7 +1,7 @@
 /*
 
 Copyright (C) 2009 Ricardo Pescuma Domenecci
-Copyright (C) 2012-15 Miranda NG project
+Copyright (C) 2012-17 Miranda NG project
 
 This is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
@@ -23,7 +23,7 @@ Boston, MA 02111-1307, USA.
 
 #include "extraicons.h"
 
-CallbackExtraIcon::CallbackExtraIcon(int _id, const char *_name, const TCHAR *_description, const char *_descIcon,
+CallbackExtraIcon::CallbackExtraIcon(int _id, const char *_name, const wchar_t *_description, const char *_descIcon,
 		MIRANDAHOOK _RebuildIcons, MIRANDAHOOK _ApplyIcon, MIRANDAHOOKPARAM _OnClick, LPARAM _param) :
 	BaseExtraIcon(_id, _name, _description, _descIcon, _OnClick, _param),
 	m_pfnRebuildIcons(_RebuildIcons), m_pfnApplyIcon(_ApplyIcon), m_needToRebuild(true)
@@ -52,7 +52,7 @@ void CallbackExtraIcon::rebuildIcons()
 
 void CallbackExtraIcon::applyIcon(MCONTACT hContact)
 {
-	if (!isEnabled() || hContact == NULL)
+	if (!isEnabled() || hContact == 0)
 		return;
 
 	if (m_needToRebuild)
@@ -63,7 +63,7 @@ void CallbackExtraIcon::applyIcon(MCONTACT hContact)
 
 int CallbackExtraIcon::setIcon(int id, MCONTACT hContact, HANDLE icon)
 {
-	if (!isEnabled() || hContact == NULL || id != m_id)
+	if (!isEnabled() || hContact == 0 || id != m_id)
 		return -1;
 
 	return ClistSetExtraIcon(hContact, icon);

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-03 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -32,7 +32,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #include "stdafx.h"
-#include "modern_clist.h"
 
 #define EMPTY_PLACE 255
 #define COLUMNS_PLACE 254
@@ -47,7 +46,7 @@ typedef struct _NodeList
 	struct _NodeList *  itemParent;
 } NodeList;
 
-NodeList * RootNode = NULL;
+NodeList * RootNode = nullptr;
 
 NodeList * AddNode(NodeList * Parent)
 {
@@ -150,7 +149,7 @@ BOOL CALLBACK DlgProcItemNewRowOpts(HWND hwndDlg, UINT msg, WPARAM, LPARAM lPara
 	{
 		NodeList * res1, *res2, *res3;
 		int i = 0;
-		RootNode = AddNode(NULL);
+		RootNode = AddNode(nullptr);
 		RootNode->pData = i++;
 		res1 = AddNode(RootNode);
 		res1->pData = i++;
@@ -171,8 +170,8 @@ BOOL CALLBACK DlgProcItemNewRowOpts(HWND hwndDlg, UINT msg, WPARAM, LPARAM lPara
 		if (RemoveNode(res1)) res1 = 0;
 		TRACE("*********** Nodes DUMP 2 ***********\n");
 		TraceTreeLevel(RootNode);
-		//CheckDlgButton(hwndDlg, IDC_HIDE_ICON_ON_AVATAR, db_get_b(NULL,"CList","IconHideOnAvatar",SETTING_HIDEICONONAVATAR_DEFAULT) == 1 ? BST_CHECKED : BST_UNCHECKED );
-		MessageBox(hwndDlg, _T("Init NewRow Dialog"), _T("Notify"), MB_OK);
+		//CheckDlgButton(hwndDlg, IDC_HIDE_ICON_ON_AVATAR, db_get_b(0,"CList","IconHideOnAvatar",SETTING_HIDEICONONAVATAR_DEFAULT) == 1 ? BST_CHECKED : BST_UNCHECKED );
+		MessageBox(hwndDlg, L"Init NewRow Dialog", L"Notify", MB_OK);
 		break;
 	}
 	case WM_NOTIFY:

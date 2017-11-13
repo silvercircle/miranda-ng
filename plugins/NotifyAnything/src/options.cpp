@@ -25,9 +25,9 @@ INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 		}
 
 		{
-			TCHAR buf[10];
+			wchar_t buf[10];
 			SetDlgItemText(hwndDlg, NA_LOG_FILENAME, g_settings.log_filename.c_str());
-			SetDlgItemText(hwndDlg, NA_PORT, _itot(g_settings.port, buf, 10));
+			SetDlgItemText(hwndDlg, NA_PORT, _itow(g_settings.port, buf, 10));
 			SetDlgItemText(hwndDlg, NA_PASSWORD, g_settings.password.c_str());
 			UINT state;
 			switch (g_settings.sound) {
@@ -56,7 +56,7 @@ INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 			SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 		case NA_LOG_BROWSE:
 			if (HIWORD(wParam) == BN_CLICKED) {
-				TCHAR szTemp[MAX_PATH + 1], szTemp1[MAX_PATH + 1], szProfileDir[MAX_PATH + 1];
+				wchar_t szTemp[MAX_PATH + 1], szTemp1[MAX_PATH + 1], szProfileDir[MAX_PATH + 1];
 				GetDlgItemText(hwndDlg, NA_LOG_FILENAME, szTemp, _countof(szTemp));
 				OPENFILENAME ofn = { 0 };
 				ofn.lStructSize = sizeof(ofn);
@@ -66,12 +66,12 @@ INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 				ofn.lpstrFilter = TranslateT("Log (*.log)\0*.log\0Text (*.txt)\0*.txt\0All Files (*.*)\0*.*\0");
 				ofn.nFilterIndex = 1;
 				// Use profile directory as default, if path is not specified
-				CallService(MS_DB_GETPROFILEPATHT, (WPARAM)MAX_PATH, (LPARAM)szProfileDir);
+				Profile_GetPathW(MAX_PATH, szProfileDir);
 				ofn.lpstrInitialDir = szProfileDir;
 				ofn.Flags = OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
-				ofn.lpstrDefExt = _T("log");
+				ofn.lpstrDefExt = L"log";
 				if (GetOpenFileName(&ofn)) {
-					PathToRelativeT(szTemp, szTemp1);
+					PathToRelativeW(szTemp, szTemp1);
 					SetDlgItemText(hwndDlg, NA_LOG_FILENAME, szTemp1);
 					SendMessage(GetParent(hwndDlg), PSM_CHANGED, (WPARAM)hwndDlg, 0);
 				}
@@ -107,10 +107,10 @@ INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 			s.use_pcspeaker = IsDlgButtonChecked(hwndDlg, NA_PCSPEAKER_CHECK) != BST_UNCHECKED;
 			s.allow_execute = IsDlgButtonChecked(hwndDlg, NA_ALLOW_EXECUTE) != BST_UNCHECKED;
 
-			TCHAR buf[1000];
+			wchar_t buf[1000];
 			if (!GetDlgItemText(hwndDlg, NA_PORT, buf, _countof(buf)))
 				buf[0] = '\0';
-			int port = _ttoi(buf);
+			int port = _wtoi(buf);
 			if (port <= 0 || port > 65535)
 				MessageBox(0, TranslateT("Invalid port number"), TranslateT("NotifyAnything"), MB_ICONWARNING | MB_OK);
 			else
@@ -141,8 +141,8 @@ void save_settings()
 	db_set_b(NULL, PlugName, "use_pcspeaker", g_settings.use_pcspeaker);
 	db_set_b(NULL, PlugName, "allow_execute", g_settings.allow_execute);
 	db_set_dw(NULL, PlugName, "port", g_settings.port);
-	db_set_ts(NULL, PlugName, "password", g_settings.password.c_str());
-	db_set_ts(NULL, PlugName, "log_filename", g_settings.log_filename.c_str());
+	db_set_ws(NULL, PlugName, "password", g_settings.password.c_str());
+	db_set_ws(NULL, PlugName, "log_filename", g_settings.log_filename.c_str());
 }
 
 void load_settings()
@@ -156,17 +156,17 @@ void load_settings()
 	g_settings.port = db_get_dw(NULL, PlugName, "port", 12001);
 
 	DBVARIANT dbv;
-	if (!db_get_ts(NULL, PlugName, "password", &dbv)) {
+	if (!db_get_ws(NULL, PlugName, "password", &dbv)) {
 		g_settings.password = dbv.ptszVal;
 		db_free(&dbv);
 	}
 
-	if (!db_get_ts(NULL, PlugName, "log_filename", &dbv)) {
+	if (!db_get_ws(NULL, PlugName, "log_filename", &dbv)) {
 		g_settings.log_filename = dbv.ptszVal;
 		db_free(&dbv);
 	}
 	else
-		g_settings.log_filename = g_mirandaDir + _T("\\") + _T(LOG_ID) + _T(".log");
+		g_settings.log_filename = g_mirandaDir + L"\\NotifyAnything.log";
 }
 
 int OptionsInitialize(WPARAM wParam, LPARAM)
@@ -174,11 +174,10 @@ int OptionsInitialize(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.pszTemplate = MAKEINTRESOURCEA(NA_OPTIONS);
 	odp.pfnDlgProc = DlgProcOpts;
-	odp.pszTitle = LPGEN("Notify Anything");
-	odp.pszGroup = LPGEN("Plugins");
+	odp.szTitle.a = LPGEN("Notify Anything");
+	odp.szGroup.a = LPGEN("Plugins");
 	odp.position = 100000000;
 	odp.hInstance = hInst;
-	odp.groupPosition = 910000000;
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);
 	return 0;

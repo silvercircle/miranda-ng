@@ -24,15 +24,14 @@ struct RECURSION_DATA_STACK_ITEM
 	WIN32_FIND_DATA w32fdFindFileData;
 };
 
-LRESULT CALLBACK MessageEditSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
 CMStringA MraGetSelfVersionString()
 {
-	WORD v[4];
 	LPSTR lpszSecIM = ServiceExists("SecureIM/IsContactSecured") ? " + SecureIM" : "";
 
+	MFileVersion v;
+	Miranda_GetFileVersion(&v);
+
 	CMStringA szSelfVersion;
-	CallService(MS_SYSTEM_GETFILEVERSION, 0, (LPARAM)v);
 	szSelfVersion.Format("Miranda NG %lu.%lu.%lu.%lu Unicode (MRA v%lu.%lu.%lu.%lu)%s, version: %lu.%lu",
 		v[0], v[1], v[2], v[3], __FILEVERSION_STRING, lpszSecIM, PROTO_VERSION_MAJOR, PROTO_VERSION_MINOR);
 	return szSelfVersion;
@@ -115,7 +114,8 @@ DWORD MraAddrListGetFromBuff(const CMStringA &szAddresses, MRA_ADDR_LIST *pmalAd
 
 	while (TRUE) {
 		LPSTR lpszEndItem = strchr(lpszCurrentItem, ';');
-		if (lpszEndItem == NULL) lpszEndItem = buf + szAddresses.GetLength();
+		if (lpszEndItem == NULL)
+			lpszEndItem = buf + szAddresses.GetLength();
 		if (!lpszEndItem)
 			break;
 
@@ -414,7 +414,8 @@ DWORD CMraProto::GetContactBasicInfoW(MCONTACT hContact, DWORD *pdwID, DWORD *pd
 	if (pdwContactFlag)
 		*pdwContactFlag = GetContactFlags(hContact);
 	if (szEmail)
-		mraGetStringA(hContact, "e-mail", *szEmail);
+		if (!mraGetStringA(hContact, "e-mail", *szEmail))
+			return 0;
 	if (wszNick)
 		DB_GetStringW(hContact, "CList", "MyHandle", *wszNick);
 
@@ -455,8 +456,11 @@ DWORD CMraProto::SetContactBasicInfoW(MCONTACT hContact, DWORD dwSetInfoFlags, D
 		setDword(hContact, "GroupID", dwGroupID);
 
 		MraGroupItem *grp = m_groups.find((MraGroupItem*)&dwGroupID);
-		if (grp)
-			db_set_ts(hContact, "CList", "Group", grp->m_name);
+		if (grp) {
+			ptrW tszGroup(db_get_wsa(hContact, "CList", "Group"));
+			if (mir_wstrcmp(tszGroup, grp->m_name))
+				db_set_ws(hContact, "CList", "Group", grp->m_name);
+		}
 	}
 
 	if ((dwFlags & SCBIF_NICK) && wszNick != NULL && !wszNick->IsEmpty()) {
@@ -520,29 +524,15 @@ MCONTACT CMraProto::MraHContactFromEmail(const CMStringA &szEmail, BOOL bAddIfNe
 		//not already there: add
 		if (IsEMailChatAgent(szEmail)) {
 			CMStringW wszEMail = szEmail;
-
-			GCSESSION gcw = { sizeof(gcw) };
-			gcw.iType = GCW_CHATROOM;
-			gcw.pszModule = m_szModuleName;
-			gcw.ptszName = wszEMail;
-			gcw.ptszID = (LPWSTR)wszEMail.c_str();
-
-			if (CallServiceSync(MS_GC_NEWSESSION, NULL, (LPARAM)&gcw) == 0) {
-				BOOL bChatAdded = FALSE;
-				for (hContact = db_find_first(m_szModuleName); hContact; hContact = db_find_next(hContact, m_szModuleName)) {
-					if (mraGetStringA(hContact, "ChatRoomID", szEMailLocal)) {
-						if (szEMailLocal == szEmail) {
-							bChatAdded = TRUE;
-							break;
-						}
-					}
-				}
+			GCSessionInfoBase *si = Chat_NewSession(GCW_CHATROOM, m_szModuleName, wszEMail, wszEMail);
+			if (si != 0) {
+				bool bChatAdded = (si->hContact != NULL);
 				if (bChatAdded == FALSE)
 					hContact = NULL;
 			}
 		}
 		else {
-			hContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
+			hContact = db_add_contact();
 			Proto_AddToContact(hContact, m_szModuleName);
 		}
 
@@ -643,65 +633,61 @@ void CMraProto::MraUpdateEmailStatus(const CMStringA &pszFrom, const CMStringA &
 		CMStringA szEmail;
 		MCONTACT hContact = NULL;
 
-		TCHAR szMailBoxStatus[MAX_SECONDLINE];
-		mir_sntprintf(szMailBoxStatus, TranslateT("Unread mail is available: %lu/%lu messages"), m_dwEmailMessagesUnread, dwEmailMessagesTotal);
+		wchar_t szMailBoxStatus[MAX_SECONDLINE];
+		mir_snwprintf(szMailBoxStatus, TranslateT("Unread mail is available: %lu/%lu messages"), m_dwEmailMessagesUnread, dwEmailMessagesTotal);
 
 		if (!pszFrom.IsEmpty() || !pszSubject.IsEmpty()) {
 			CMStringA szFrom, szSubject;
 			if (GetEMailFromString(szFrom, szEmail))
 				hContact = MraHContactFromEmail(szEmail, FALSE, TRUE, NULL);
 
-			mir_sntprintf(szStatusText, TranslateT("From: %S\r\nSubject: %S\r\n%s"), pszFrom.c_str(), szSubject.c_str(), szMailBoxStatus);
+			mir_snwprintf(szStatusText, TranslateT("From: %S\r\nSubject: %S\r\n%s"), pszFrom.c_str(), szSubject.c_str(), szMailBoxStatus);
 		}
-		else _tcsncpy_s(szStatusText, szMailBoxStatus, _TRUNCATE);
+		else wcsncpy_s(szStatusText, szMailBoxStatus, _TRUNCATE);
 
 		if (bTrayIconNewMailNotify) {
-			char szServiceFunction[MAX_PATH], *pszServiceFunctionName;
-			CLISTEVENT cle = { 0 };
-
-			cle.cbSize = sizeof(cle);
-			//cle.hContact;
-			//cle.hDbEvent;
+			char szServiceFunction[MAX_PATH] = { 0 }, *pszServiceFunctionName;
+			CLISTEVENT cle = {};
 			cle.lpszProtocol = m_szModuleName;
 			cle.hIcon = IconLibGetIcon(gdiMenuItems[0].hIcolib);
 			cle.flags = (CLEF_UNICODE | CLEF_PROTOCOLGLOBAL);
 			cle.pszService = "";
-			cle.ptszTooltip = szStatusText;
+			cle.szTooltip.w = szStatusText;
 
 			if (getByte("TrayIconNewMailClkToInbox", MRA_DEFAULT_TRAYICON_NEW_MAIL_CLK_TO_INBOX)) {
-				strncpy(szServiceFunction, m_szModuleName, MAX_PATH);
+				strncpy(szServiceFunction, m_szModuleName, MAX_PATH - 1);
 				pszServiceFunctionName = szServiceFunction + mir_strlen(m_szModuleName);
 				memcpy(pszServiceFunctionName, MRA_GOTO_INBOX, sizeof(MRA_GOTO_INBOX));
 				cle.pszService = szServiceFunction;
 			}
-			CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
+			pcli->pfnAddEvent(&cle);
 		}
 
-		SkinPlaySound(szNewMailSound);
+		Skin_PlaySound(szNewMailSound);
 		if (hContact) {// update user info
 			MraUpdateContactInfo(hContact);
-			MraPopupShowFromContactW(hContact, MRA_POPUP_TYPE_EMAIL_STATUS, (MRA_POPUP_ALLOW_ENTER), szStatusText);
+			MraPopupShowFromContactW(hContact, MRA_POPUP_TYPE_EMAIL_STATUS, szStatusText);
 		}
-		else MraPopupShowFromAgentW(MRA_POPUP_TYPE_EMAIL_STATUS, (MRA_POPUP_ALLOW_ENTER), szStatusText);
+		else MraPopupShowFromAgentW(MRA_POPUP_TYPE_EMAIL_STATUS, szStatusText);
 	}
 	else {
 		if ( !force_display && getByte("IncrementalNewMailNotify", MRA_DEFAULT_INC_NEW_MAIL_NOTIFY)) {
 			if (bTrayIconNewMailNotify)
-				CallService(MS_CLIST_REMOVEEVENT, 0, (LPARAM)m_szModuleName);
+				pcli->pfnRemoveEvent(0, (LPARAM)m_szModuleName);
 			PUDeletePopup(hWndEMailPopupStatus);
 			hWndEMailPopupStatus = NULL;
 		}
 		else {
-			mir_sntprintf(szStatusText, TranslateT("No unread mail is available\r\nTotal messages: %lu"), dwEmailMessagesTotal);
-			MraPopupShowFromAgentW(MRA_POPUP_TYPE_EMAIL_STATUS, (MRA_POPUP_ALLOW_ENTER), szStatusText);
+			mir_snwprintf(szStatusText, TranslateT("No unread mail is available\r\nTotal messages: %lu"), dwEmailMessagesTotal);
+			MraPopupShowFromAgentW(MRA_POPUP_TYPE_EMAIL_STATUS, szStatusText);
 		}
 	}
 }
 
-bool IsHTTPSProxyUsed(HANDLE hNetlibUser)
+bool IsHTTPSProxyUsed(HNETLIBUSER hNetlibUser)
 {
 	NETLIBUSERSETTINGS nlus = { sizeof(nlus) };
-	if (CallService(MS_NETLIB_GETUSERSETTINGS, (WPARAM)hNetlibUser, (LPARAM)&nlus))
+	Netlib_GetUserSettings(hNetlibUser, &nlus);
 	if (nlus.useProxy && nlus.proxyType == PROXYTYPE_HTTPS)
 		return true;
 
@@ -869,23 +855,24 @@ bool CMraProto::GetContactFirstEMail(MCONTACT hContact, BOOL bMRAOnly, CMStringA
 
 void CMraProto::ShowFormattedErrorMessage(LPWSTR lpwszErrText, DWORD dwErrorCode)
 {
-	TCHAR szErrorText[2048], szErrDescription[1024];
+	wchar_t szErrorText[2048], szErrDescription[1024];
 	size_t dwErrDescriptionSize;
 
 	if (dwErrorCode == NO_ERROR)
-		_tcsncpy_s(szErrorText, TranslateTS(lpwszErrText), _TRUNCATE);
+		wcsncpy_s(szErrorText, TranslateW(lpwszErrText), _TRUNCATE);
 	else {
 		dwErrDescriptionSize = (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwErrorCode, 0, szErrDescription, (_countof(szErrDescription) - sizeof(WCHAR)), NULL) - 2);
 		szErrDescription[dwErrDescriptionSize] = 0;
-		mir_sntprintf(szErrorText, _T("%s %lu: %s"), TranslateTS(lpwszErrText), dwErrorCode, szErrDescription);
+		mir_snwprintf(szErrorText, L"%s %lu: %s", TranslateW(lpwszErrText), dwErrorCode, szErrDescription);
 	}
-	MraPopupShowFromAgentW(MRA_POPUP_TYPE_ERROR, 0, szErrorText);
+	MraPopupShowFromAgentW(MRA_POPUP_TYPE_ERROR, szErrorText);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
 static void FakeThread(void* param)
 {
+	Thread_SetName("MRA: ProtoBroadcastAckAsync");
 	Sleep(100);
 	
 	ACKDATA *ack = (ACKDATA*)param;
@@ -909,24 +896,24 @@ DWORD CMraProto::ProtoBroadcastAckAsync(MCONTACT hContact, int type, int hResult
 
 CMStringA CMraProto::CreateBlobFromContact(MCONTACT hContact, const CMStringW &wszRequestReason)
 {
-	CMStringA res('\0', 8), tmp;
+	CMStringA res('\0', 8);
+	CMStringW tmp;
 	DWORD *p = (DWORD*)res.c_str();
 	p[0] = 0; p[1] = (DWORD)hContact;
 
-	mraGetStringA(hContact, "Nick", tmp);
-	res += tmp; res.AppendChar(0);
+	mraGetStringW(hContact, "Nick", tmp);
+	res.Append(ptrA(mir_utf8encodeW(tmp))); res.AppendChar(0);
 
-	mraGetStringA(hContact, "FirstName", tmp);
-	res += tmp; res.AppendChar(0);
+	mraGetStringW(hContact, "FirstName", tmp);
+	res.Append(ptrA(mir_utf8encodeW(tmp))); res.AppendChar(0);
 
-	mraGetStringA(hContact, "LastName", tmp);
-	res += tmp; res.AppendChar(0);
+	mraGetStringW(hContact, "LastName", tmp);
+	res.Append(ptrA(mir_utf8encodeW(tmp))); res.AppendChar(0);
 
-	mraGetStringA(hContact, "e-mail", tmp);
-	res += tmp; res.AppendChar(0);
+	mraGetStringW(hContact, "e-mail", tmp);
+	res.Append(ptrA(mir_utf8encodeW(tmp))); res.AppendChar(0);
 
-	tmp = wszRequestReason;
-	res += tmp; res.AppendChar(0);
+	res.Append(ptrA(mir_utf8encodeW(wszRequestReason))); res.AppendChar(0);
 	return res;
 }
 
@@ -935,8 +922,8 @@ CMStringA CopyNumber(const CMStringA &str)
 	CMStringA res;
 
 	for (LPCSTR p = str; *p; p++)
-	if (*p >= '0' && *p <= '9')
-		res.AppendChar(*p);
+		if (*p >= '0' && *p <= '9')
+			res.AppendChar(*p);
 
 	return res;
 }
@@ -947,7 +934,7 @@ void EnableControlsArray(HWND hWndDlg, WORD *pwControlsList, size_t dwControlsLi
 		EnableWindow(GetDlgItem(hWndDlg, pwControlsList[i]), bEnabled);
 }
 
-LRESULT CALLBACK MessageEditSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK MessageEditSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	if (msg == WM_CHAR)
 	if (GetKeyState(VK_CONTROL) & 0x8000) {
@@ -994,19 +981,19 @@ INT_PTR CALLBACK SetXStatusDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LP
 			SendDlgItemMessage(hWndDlg, IDC_XTITLE, EM_LIMITTEXT, STATUS_TITLE_MAX, 0);
 			SendDlgItemMessage(hWndDlg, IDC_XMSG, EM_LIMITTEXT, STATUS_DESC_MAX, 0);
 			SendMessage(hWndDlg, WM_SETICON, ICON_BIG, (LPARAM)dat->hDlgIcon);
-			SetWindowText(hWndDlg, TranslateTS(lpcszXStatusNameDef[dat->dwXStatus]));
+			SetWindowText(hWndDlg, TranslateW(lpcszXStatusNameDef[dat->dwXStatus]));
 
 			mir_snprintf(szValueName, "XStatus%ldName", dat->dwXStatus);
 			if (dat->ppro->mraGetStringW(NULL, szValueName, szBuff))
 				SetDlgItemText(hWndDlg, IDC_XTITLE, szBuff.c_str()); // custom xstatus name
 			else // default xstatus name
-				SetDlgItemText(hWndDlg, IDC_XTITLE, TranslateTS(lpcszXStatusNameDef[dat->dwXStatus]));
+				SetDlgItemText(hWndDlg, IDC_XTITLE, TranslateW(lpcszXStatusNameDef[dat->dwXStatus]));
 
 			mir_snprintf(szValueName, "XStatus%ldMsg", dat->dwXStatus);
 			if (dat->ppro->mraGetStringW(NULL, szValueName, szBuff))
 				SetDlgItemText(hWndDlg, IDC_XMSG, szBuff.c_str()); // custom xstatus description
 			else // default xstatus description
-				SetDlgItemText(hWndDlg, IDC_XMSG, _T(""));
+				SetDlgItemText(hWndDlg, IDC_XMSG, L"");
 
 			SendMessage(hWndDlg, WM_TIMER, 0, 0);
 			SetTimer(hWndDlg, 1, 1000, 0);
@@ -1016,8 +1003,8 @@ INT_PTR CALLBACK SetXStatusDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LP
 
 	case WM_TIMER:
 		if (dat->dwCountdown != -1) {
-			TCHAR szBuff[MAX_PATH];
-			mir_sntprintf(szBuff, TranslateT("Closing in %ld"), dat->dwCountdown--);
+			wchar_t szBuff[MAX_PATH];
+			mir_snwprintf(szBuff, TranslateT("Closing in %ld"), dat->dwCountdown--);
 			SetDlgItemText(hWndDlg, IDOK, szBuff);
 			break;
 		}
@@ -1043,7 +1030,7 @@ INT_PTR CALLBACK SetXStatusDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LP
 		SetWindowLongPtr(hWndDlg, GWLP_USERDATA, 0);
 		if (dat) { // set our xStatus
 
-			TCHAR szBuff[STATUS_TITLE_MAX + STATUS_DESC_MAX];
+			wchar_t szBuff[STATUS_TITLE_MAX + STATUS_DESC_MAX];
 			DWORD dwBuffSize = GetDlgItemText(hWndDlg, IDC_XMSG, szBuff, (STATUS_DESC_MAX + 1));
 
 			char szValueName[MAX_PATH];
@@ -1053,7 +1040,7 @@ INT_PTR CALLBACK SetXStatusDlgProc(HWND hWndDlg, UINT message, WPARAM wParam, LP
 
 			dwBuffSize = GetDlgItemText(hWndDlg, IDC_XTITLE, szBuff, (STATUS_TITLE_MAX + 1));
 			if (dwBuffSize == 0) { // user delete all text
-				mir_tstrncpy(szBuff, TranslateTS(lpcszXStatusNameDef[dat->dwXStatus]), STATUS_TITLE_MAX + 1);
+				mir_wstrncpy(szBuff, TranslateW(lpcszXStatusNameDef[dat->dwXStatus]), STATUS_TITLE_MAX + 1);
 				dwBuffSize = (DWORD)mir_wstrlen(szBuff);
 			}
 			mir_snprintf(szValueName, "XStatus%dName", dat->dwXStatus);
@@ -1105,7 +1092,7 @@ INT_PTR CALLBACK SendReplyBlogStatusDlgProc(HWND hWndDlg, UINT message, WPARAM w
 			mir_subclassWindow(GetDlgItem(hWndDlg, IDC_MSG_TO_SEND), MessageEditSubclassProc);
 			SendMessage(hWndEdit, EM_LIMITTEXT, MICBLOG_STATUS_MAX, 0);
 
-			SendMessage(hWndDlg, WM_SETICON, ICON_BIG, (LPARAM)IconLibGetIcon(gdiMenuItems[4].hIcolib));
+			Window_SetIcon_IcoLib(hWndDlg, gdiMenuItems[4].hIcolib);
 
 			// blog status message
 			CMStringW szBuff;
@@ -1121,7 +1108,7 @@ INT_PTR CALLBACK SendReplyBlogStatusDlgProc(HWND hWndDlg, UINT message, WPARAM w
 
 			DWORD dwTime = dat->ppro->getDword(dat->hContact, DBSETTING_BLOGSTATUSTIME, 0);
 			if (dwTime && MakeLocalSystemTimeFromTime32(dwTime, &stBlogStatusTime))
-				szBuff.Format(_T("%s: %04ld.%02ld.%02ld %02ld:%02ld"), TranslateT("Written"),
+				szBuff.Format(L"%s: %04ld.%02ld.%02ld %02ld:%02ld", TranslateT("Written"),
 				stBlogStatusTime.wYear, stBlogStatusTime.wMonth, stBlogStatusTime.wDay, stBlogStatusTime.wHour, stBlogStatusTime.wMinute);
 			else
 				szBuff.Empty();
@@ -1142,7 +1129,7 @@ INT_PTR CALLBACK SendReplyBlogStatusDlgProc(HWND hWndDlg, UINT message, WPARAM w
 			{
 				DWORD dwFlags;
 				DWORDLONG dwBlogStatusID;
-				TCHAR szBuff[MICBLOG_STATUS_MAX];
+				wchar_t szBuff[MICBLOG_STATUS_MAX];
 
 				GetDlgItemText(hWndDlg, IDC_MSG_TO_SEND, szBuff, _countof(szBuff));
 
@@ -1169,11 +1156,11 @@ INT_PTR CALLBACK SendReplyBlogStatusDlgProc(HWND hWndDlg, UINT message, WPARAM w
 
 		case IDC_MSG_TO_SEND:
 			if (HIWORD(wParam) == EN_CHANGE) {
-				TCHAR tszBuff[MAX_PATH];
+				wchar_t tszBuff[MAX_PATH];
 				size_t dwMessageSize = GetWindowTextLength(GetDlgItem(hWndDlg, IDC_MSG_TO_SEND));
 
 				EnableWindow(GetDlgItem(hWndDlg, IDOK), (int)dwMessageSize);
-				mir_sntprintf(tszBuff, _T("%d/%d"), dwMessageSize, MICBLOG_STATUS_MAX);
+				mir_snwprintf(tszBuff, L"%d/%d", dwMessageSize, MICBLOG_STATUS_MAX);
 				SetDlgItemText(hWndDlg, IDC_STATIC_CHARS_COUNTER, tszBuff);
 			}
 			break;
@@ -1229,7 +1216,7 @@ DWORD FindFile(LPWSTR lpszFolder, DWORD dwFolderLen, LPWSTR lpszFileName, DWORD 
 	DWORD dwRetErrorCode;
 
 	if (lpszFolder && dwFolderLen && lpszFileName && dwFileNameLen) {
-		TCHAR szPath[32768];
+		wchar_t szPath[32768];
 		DWORD dwPathLen, dwRecDeepAllocated, dwRecDeepCurPos, dwFilePathLen;
 		RECURSION_DATA_STACK_ITEM *prdsiItems;
 
@@ -1247,7 +1234,7 @@ DWORD FindFile(LPWSTR lpszFolder, DWORD dwFolderLen, LPWSTR lpszFileName, DWORD 
 				dwPathLen++;
 			}
 			szPath[dwPathLen] = 0;
-			mir_tstrcat(szPath, _T("*.*"));
+			mir_wstrcat(szPath, L"*.*");
 
 			dwRetErrorCode = ERROR_FILE_NOT_FOUND;
 			prdsiItems[dwRecDeepCurPos].dwFileNameLen = 0;
@@ -1258,11 +1245,11 @@ DWORD FindFile(LPWSTR lpszFolder, DWORD dwFolderLen, LPWSTR lpszFileName, DWORD 
 
 					while (dwRetErrorCode == ERROR_FILE_NOT_FOUND && FindNextFile(prdsiItems[dwRecDeepCurPos].hFind, &prdsiItems[dwRecDeepCurPos].w32fdFindFileData)) {
 						if (prdsiItems[dwRecDeepCurPos].w32fdFindFileData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) {// folder
-							if (CompareString(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), NORM_IGNORECASE, prdsiItems[dwRecDeepCurPos].w32fdFindFileData.cFileName, -1, _T("."), 1) != CSTR_EQUAL)
-							if (CompareString(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), NORM_IGNORECASE, prdsiItems[dwRecDeepCurPos].w32fdFindFileData.cFileName, -1, _T(".."), 2) != CSTR_EQUAL) {
+							if (CompareString(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), NORM_IGNORECASE, prdsiItems[dwRecDeepCurPos].w32fdFindFileData.cFileName, -1, L".", 1) != CSTR_EQUAL)
+							if (CompareString(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), NORM_IGNORECASE, prdsiItems[dwRecDeepCurPos].w32fdFindFileData.cFileName, -1, L"..", 2) != CSTR_EQUAL) {
 								prdsiItems[dwRecDeepCurPos].dwFileNameLen = (int)mir_wstrlen(prdsiItems[dwRecDeepCurPos].w32fdFindFileData.cFileName) + 1;
 								memcpy((szPath + dwPathLen), prdsiItems[dwRecDeepCurPos].w32fdFindFileData.cFileName, (prdsiItems[dwRecDeepCurPos].dwFileNameLen*sizeof(WCHAR)));
-								mir_tstrcat(szPath, _T("\\*.*"));
+								mir_wstrcat(szPath, L"\\*.*");
 								dwPathLen += prdsiItems[dwRecDeepCurPos].dwFileNameLen;
 
 								dwRecDeepCurPos++;
@@ -1430,16 +1417,16 @@ static DWORD ReplaceInBuff(LPVOID lpInBuff, size_t dwInBuffSize, size_t dwReplac
 	return dwRetErrorCode;
 }
 
-static const LPTSTR lpszXMLTags[] = { _T("&apos;"), _T("&quot;"), _T("&amp;"), _T("&lt;"), _T("&gt;") };
-static const size_t dwXMLTagsCount[] = { (6 * sizeof(TCHAR)), (6 * sizeof(TCHAR)), (5 * sizeof(TCHAR)), (4 * sizeof(TCHAR)), (4 * sizeof(TCHAR)) };
-static const LPTSTR lpszXMLSymbols[] = { _T("\'"), _T("\""), _T("&"), _T("<"), _T(">") };
-static const size_t dwXMLSymbolsCount[] = { sizeof(TCHAR), sizeof(TCHAR), sizeof(TCHAR), sizeof(TCHAR), sizeof(TCHAR) };
+static const LPTSTR lpszXMLTags[] = { L"&apos;", L"&quot;", L"&amp;", L"&lt;", L"&gt;" };
+static const size_t dwXMLTagsCount[] = { (6 * sizeof(wchar_t)), (6 * sizeof(wchar_t)), (5 * sizeof(wchar_t)), (4 * sizeof(wchar_t)), (4 * sizeof(wchar_t)) };
+static const LPTSTR lpszXMLSymbols[] = { L"\'", L"\"", L"&", L"<", L">" };
+static const size_t dwXMLSymbolsCount[] = { sizeof(wchar_t), sizeof(wchar_t), sizeof(wchar_t), sizeof(wchar_t), sizeof(wchar_t) };
 
 //Decode XML coded string. The function translate special xml code into standard characters.
 CMStringW DecodeXML(const CMStringW &lptszMessage)
 {
 	CMStringW ret('\0', (lptszMessage.GetLength() * 4));
-	ReplaceInBuff((void*)lptszMessage.GetString(), lptszMessage.GetLength()*sizeof(TCHAR), _countof(lpszXMLTags), (LPVOID*)lpszXMLTags, (size_t*)dwXMLTagsCount, (LPVOID*)lpszXMLSymbols, (size_t*)dwXMLSymbolsCount, ret);
+	ReplaceInBuff((void*)lptszMessage.GetString(), lptszMessage.GetLength()*sizeof(wchar_t), _countof(lpszXMLTags), (LPVOID*)lpszXMLTags, (size_t*)dwXMLTagsCount, (LPVOID*)lpszXMLSymbols, (size_t*)dwXMLSymbolsCount, ret);
 	return ret;
 }
 
@@ -1447,6 +1434,6 @@ CMStringW DecodeXML(const CMStringW &lptszMessage)
 CMStringW EncodeXML(const CMStringW &lptszMessage)
 {
 	CMStringW ret('\0', (lptszMessage.GetLength() * 4));
-	ReplaceInBuff((void*)lptszMessage.GetString(), lptszMessage.GetLength()*sizeof(TCHAR), _countof(lpszXMLTags), (LPVOID*)lpszXMLSymbols, (size_t*)dwXMLSymbolsCount, (LPVOID*)lpszXMLTags, (size_t*)dwXMLTagsCount, ret);
+	ReplaceInBuff((void*)lptszMessage.GetString(), lptszMessage.GetLength()*sizeof(wchar_t), _countof(lpszXMLTags), (LPVOID*)lpszXMLSymbols, (size_t*)dwXMLSymbolsCount, (LPVOID*)lpszXMLTags, (size_t*)dwXMLTagsCount, ret);
 	return ret;
 }

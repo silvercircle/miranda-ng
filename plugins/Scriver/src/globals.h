@@ -82,7 +82,6 @@ struct GlobalMessageData
 {
 	unsigned int flags;
 	unsigned int flags2;
-	MWindowList hMessageWindowList;
 	DWORD openFlags;
 	MWindowList hParentWindowList;
 	ParentWindowData *lastParent;
@@ -127,7 +126,6 @@ void ReleaseIcons();
 void LoadGlobalIcons();
 HICON GetCachedIcon(const char *name);
 void RegisterFontServiceFonts();
-int ScriverRestoreWindowPosition(HWND hwnd, MCONTACT hContact, const char *szModule, const char *szNamePrefix, int flags, int showCmd);
 
 int ImageList_AddIcon_Ex(HIMAGELIST hIml, int id);
 int ImageList_AddIcon_Ex2(HIMAGELIST hIml, HICON hIcon);

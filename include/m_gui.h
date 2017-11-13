@@ -6,7 +6,7 @@ Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
 Copyright (c) 2007-09  Maxim Mluhov
 Copyright (c) 2007-09  Victor Pavlychko
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -29,10 +29,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __M_GUI_H
 #define __M_GUI_H
 
+#include <CommCtrl.h>
+
 #include <m_protoint.h>
 #include <m_clc.h>
 
-#pragma warning(disable:4355 4251)
+#pragma warning(disable:4355 4251 4481)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // helpers for the option's visualization
@@ -47,13 +49,13 @@ struct CMDBTraits<1>
 {
 	typedef BYTE DBType;
 	enum { DBTypeId = DBVT_BYTE };
-	static __forceinline DBType Get(PROTO_INTERFACE *pPro, char *szSetting, DBType value)
+	static __forceinline DBType Get(char *szModule, char *szSetting, DBType value)
 	{
-		return pPro->getByte(szSetting, value);
+		return db_get_b(0, szModule, szSetting, value);
 	}
-	static __forceinline void Set(PROTO_INTERFACE *pPro, char *szSetting, DBType value)
+	static __forceinline void Set(char *szModule, char *szSetting, DBType value)
 	{
-		pPro->setByte(szSetting, value);
+		db_set_b(0, szModule, szSetting, value);
 	}
 };
 
@@ -62,13 +64,13 @@ struct CMDBTraits<2>
 {
 	typedef WORD DBType;
 	enum { DBTypeId = DBVT_WORD };
-	static __forceinline DBType Get(PROTO_INTERFACE *pPro, char *szSetting, DBType value)
+	static __forceinline DBType Get(char *szModule, char *szSetting, DBType value)
 	{
-		pPro->getWord(szSetting, value);
+		return db_get_w(0, szModule, szSetting, value);
 	}
-	static __forceinline void Set(PROTO_INTERFACE *pPro, char *szSetting, DBType value)
+	static __forceinline void Set(char *szModule, char *szSetting, DBType value)
 	{
-		pPro->setWord(szSetting, value);
+		db_set_w(0, szModule, szSetting, value);
 	}
 };
 
@@ -77,28 +79,47 @@ struct CMDBTraits<4>
 {
 	typedef DWORD DBType;
 	enum { DBTypeId = DBVT_DWORD };
-	static __forceinline DBType Get(PROTO_INTERFACE *pPro, char *szSetting, DBType value)
+	static __forceinline DBType Get(char *szModule, char *szSetting, DBType value)
 	{
-		return pPro->getDword(szSetting, value);
+		return db_get_dw(0, szModule, szSetting, value);
 	}
-	static __forceinline void Set(PROTO_INTERFACE *pPro, char *szSetting, DBType value)
+	static __forceinline void Set(char *szModule, char *szSetting, DBType value)
 	{
-		pPro->setDword(szSetting, value);
+		db_set_dw(0, szModule, szSetting, value);
+	}
+};
+
+template<>
+struct CMDBTraits<8>
+{
+	typedef DWORD DBType;
+	enum { DBTypeId = DBVT_DWORD };
+	static __forceinline DBType Get(char *szModule, char *szSetting, DBType value)
+	{
+		return db_get_dw(0, szModule, szSetting, value);
+	}
+	static __forceinline void Set(char *szModule, char *szSetting, DBType value)
+	{
+		db_set_dw(0, szModule, szSetting, value);
 	}
 };
 
 class CMOptionBase
 {
 public:
-	__forceinline char* GetDBModuleName() const { return m_proto->m_szModuleName; }
-	__forceinline char* GetDBSettingName() const { return m_szSetting; }
+	__forceinline const char* GetDBModuleName() const { return m_szModuleName; }
+	__forceinline const char* GetDBSettingName() const { return m_szSetting; }
 
 protected:
 	__forceinline CMOptionBase(PROTO_INTERFACE *proto, char *szSetting) :
-		m_proto(proto), m_szSetting(szSetting)
+		m_szModuleName(proto->m_szModuleName), m_szSetting(szSetting)
 	{}
 
-	PROTO_INTERFACE *m_proto;
+	__forceinline CMOptionBase(char *module, char *szSetting) :
+		m_szModuleName(module), m_szSetting(szSetting)
+	{}
+
+	char *m_szModuleName;
 	char *m_szSetting;
 
 private:
@@ -116,13 +137,17 @@ public:
 		CMOptionBase(proto, szSetting), m_default(defValue)
 	{}
 
+	__forceinline CMOption(char *szModule, char *szSetting, Type defValue) :
+		CMOptionBase(szModule, szSetting), m_default(defValue)
+	{}
+
 	__forceinline operator Type()
 	{
-		return (Type)CMDBTraits<sizeof(Type)>::Get(m_proto, m_szSetting, m_default);
+		return (Type)CMDBTraits<sizeof(Type)>::Get(m_szModuleName, m_szSetting, m_default);
 	}
 	__forceinline Type operator= (Type value)
 	{
-		CMDBTraits<sizeof(Type)>::Set(m_proto, m_szSetting, (CMDBTraits<sizeof(Type)>::DBType)value);
+		CMDBTraits<sizeof(Type)>::Set(m_szModuleName, m_szSetting, (CMDBTraits<sizeof(Type)>::DBType)value);
 		return value;
 	}
 
@@ -133,6 +158,80 @@ private:
 	void operator= (const CMOption &) {}
 };
 
+#ifdef M_SYSTEM_CPP_H__
+
+template<>
+class CMOption<char*> : public CMOptionBase
+{
+public:
+	
+	typedef char Type;
+
+	__forceinline CMOption(PROTO_INTERFACE *proto, char *szSetting, const Type *defValue = nullptr) :
+		CMOptionBase(proto, szSetting), m_default(defValue)
+	{}
+
+	__forceinline CMOption(char *szModule, char *szSetting, const Type *defValue = nullptr) :
+		CMOptionBase(szModule, szSetting), m_default(defValue)
+	{}
+
+	__forceinline operator Type*()
+	{
+		m_value = db_get_sa(0, m_szModuleName, m_szSetting);
+		if (!m_value) m_value = mir_strdup(m_default);
+		return m_value;
+	}
+	__forceinline Type* operator= (Type *value)
+	{
+		db_set_s(0, m_szModuleName, m_szSetting, value);
+		return value;
+	}
+
+private:
+	const Type *m_default;
+	mir_ptr<Type> m_value;
+
+	CMOption(const CMOption &) : CMOptionBase((char*)nullptr, nullptr) {}
+	void operator= (const CMOption &) {}
+};
+
+template<>
+class CMOption<wchar_t*> : public CMOptionBase
+{
+public:
+
+	typedef wchar_t Type;
+
+	__forceinline CMOption(PROTO_INTERFACE *proto, char *szSetting, const Type *defValue = nullptr) :
+		CMOptionBase(proto, szSetting), m_default(defValue)
+	{}
+
+	__forceinline CMOption(char *szModule, char *szSetting, const Type *defValue = nullptr) :
+		CMOptionBase(szModule, szSetting), m_default(defValue)
+	{}
+
+	__forceinline operator Type*()
+	{
+		m_value = db_get_wsa(0, m_szModuleName, m_szSetting);
+		if (!m_value) m_value = mir_wstrdup(m_default);
+		return m_value;
+	}
+
+	__forceinline const Type* operator= (const Type *value)
+	{
+		db_set_ws(0, m_szModuleName, m_szSetting, value);
+		return value;
+	}
+
+private:
+	const Type *m_default;
+	mir_ptr<Type> m_value;
+
+	CMOption(const CMOption &) : CMOptionBase((char*)nullptr, nullptr) {}
+	void operator= (const CMOption &) {}
+};
+
+#endif
 /////////////////////////////////////////////////////////////////////////////////////////
 // Callbacks
 
@@ -205,8 +304,8 @@ public:
 	virtual DWORD LoadInt() = 0;
 	virtual void  SaveInt(DWORD value) = 0;
 
-	virtual TCHAR* LoadText() = 0;
-	virtual void   SaveText(TCHAR *value) = 0;
+	virtual wchar_t* LoadText() = 0;
+	virtual void   SaveText(wchar_t *value) = 0;
 };
 
 class MIR_CORE_EXPORT CDbLink : public CDataLink
@@ -216,20 +315,20 @@ class MIR_CORE_EXPORT CDbLink : public CDataLink
 	bool m_bSigned;
 
 	DWORD m_iDefault;
-	TCHAR *m_szDefault;
+	wchar_t *m_szDefault;
 
 	DBVARIANT dbv;
 
 public:
 	CDbLink(const char *szModule, const char *szSetting, BYTE type, DWORD iValue);
-	CDbLink(const char *szModule, const char *szSetting, BYTE type, TCHAR *szValue);
+	CDbLink(const char *szModule, const char *szSetting, BYTE type, wchar_t *szValue);
 	~CDbLink();
 
 	DWORD LoadInt();
 	void  SaveInt(DWORD value);
 
-	TCHAR* LoadText();
-	void   SaveText(TCHAR *value);
+	wchar_t* LoadText();
+	void   SaveText(wchar_t *value);
 };
 
 template<class T>
@@ -246,8 +345,27 @@ public:
 	__forceinline DWORD LoadInt() { return (DWORD)(T)*m_option; }
 	__forceinline void  SaveInt(DWORD value) { *m_option = (T)value; }
 
-	__forceinline TCHAR* LoadText() { return NULL; }
-	__forceinline void   SaveText(TCHAR*) {}
+	__forceinline wchar_t* LoadText() { return NULL; }
+	__forceinline void   SaveText(wchar_t*) {}
+};
+
+template<>
+class CMOptionLink<wchar_t*> : public CDataLink
+{
+private:
+	typedef wchar_t *T;
+	CMOption<T> *m_option;
+
+public:
+	__forceinline CMOptionLink(CMOption<T> &option) :
+		CDataLink(DBVT_WCHAR), m_option(&option)
+	{}
+
+	__forceinline DWORD LoadInt() { return 0; }
+	__forceinline void  SaveInt(DWORD) { }
+
+	__forceinline wchar_t* LoadText() { return *m_option; }
+	__forceinline void   SaveText(wchar_t *value) { *m_option = value; }
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -255,6 +373,7 @@ public:
 
 class MIR_CORE_EXPORT CDlgBase
 {
+	friend class CTimer;
 	friend class CCtrlBase;
 	friend class CCtrlData;
 
@@ -263,19 +382,24 @@ public:
 	virtual ~CDlgBase();
 
 	// general utilities
+	void Close();
+	void Resize();
 	void Create();
 	void Show(int nCmdShow = SW_SHOW);
-	int DoModal();
+	int  DoModal();
+	void EndModal(INT_PTR nResult);
 
-	void SetCaption(const TCHAR *ptszCaption);
+	void SetCaption(const wchar_t *ptszCaption);
 	void NotifyChange(void); // sends a notification to a parent window
 
+	__forceinline void Fail() { m_lresult = false; }
 	__forceinline HINSTANCE GetInst() const { return m_hInst; }
 	__forceinline HWND GetHwnd() const { return m_hwnd; }
+	__forceinline void Hide() { Show(SW_HIDE); }
 	__forceinline bool IsInitialized() const { return m_initialized; }
 	__forceinline void SetParent(HWND hwnd) { m_hwndParent = hwnd; }
-	__forceinline void Close() { SendMessage(m_hwnd, WM_CLOSE, 0, 0); }
-	__forceinline void Fail() { m_lresult = false; }
+
+	__forceinline CCtrlBase* operator[](int iControlId) { return FindControl(iControlId); }
 
 	static CDlgBase* Find(HWND hwnd);
 
@@ -287,6 +411,7 @@ protected:
 	bool      m_isModal;
 	bool      m_initialized;
 	bool      m_forceResizable;
+	bool      m_bExiting; // window received WM_CLOSE and gonna die soon
 	LRESULT   m_lresult;
 
 	enum { CLOSE_ON_OK = 0x1, CLOSE_ON_CANCEL = 0x2 };
@@ -297,6 +422,8 @@ protected:
 	virtual void OnInitDialog() { }
 	virtual void OnClose() { }
 	virtual void OnDestroy() { }
+
+	virtual void OnTimer(CTimer*) {}
 
 	// miranda-related stuff
 	virtual int Resizer(UTILRESIZECONTROL *urc);
@@ -309,18 +436,47 @@ protected:
 
 	// register controls
 	void AddControl(CCtrlBase *ctrl);
+	void AddTimer(CTimer *timer);
 
 	// win32 stuff
 	void ThemeDialogBackground(BOOL tabbed);
 
 private:
+	LIST<CTimer> m_timers;
 	LIST<CCtrlBase> m_controls;
 
 	void NotifyControls(void (CCtrlBase::*fn)());
-	CCtrlBase *FindControl(int idCtrl);
+	CCtrlBase* FindControl(int idCtrl);
+	CCtrlBase* FindControl(HWND hwnd);
+
+	CTimer* FindTimer(int idEvent);
 
 	static INT_PTR CALLBACK GlobalDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	static int GlobalDlgResizer(HWND hwnd, LPARAM lParam, UTILRESIZECONTROL *urc);
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// CTimer
+
+class MIR_CORE_EXPORT CTimer
+{
+	friend class CDlgBase;
+
+public:
+	CTimer(CDlgBase* wnd, int idEvent);
+
+	__forceinline int GetEventId() const { return m_idEvent; }
+
+	virtual BOOL OnTimer();
+
+	void Start(int elapse);
+	void Stop();
+
+	CCallback<CTimer> OnEvent;
+
+protected:
+	int m_idEvent;
+	CDlgBase* m_wnd;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -330,32 +486,41 @@ class MIR_CORE_EXPORT CCtrlBase
 {
 	friend class CDlgBase;
 
+	__forceinline CCtrlBase(const CCtrlBase&) {}
+	__forceinline CCtrlBase& operator=(const CCtrlBase&) { return *this; }
+
+	__forceinline CCtrlBase(HWND hwnd) : m_hwnd(hwnd) {}
+
 public:
 	CCtrlBase(CDlgBase *wnd, int idCtrl);
-	virtual ~CCtrlBase() { }
+	virtual ~CCtrlBase();
 
 	__forceinline HWND GetHwnd() const { return m_hwnd; }
 	__forceinline int GetCtrlId() const { return m_idCtrl; }
-	__forceinline CDlgBase *GetParent() { return m_parentWnd; }
+	__forceinline CDlgBase *GetParent() const { return m_parentWnd; }
 	__forceinline bool IsChanged() const { return m_bChanged; }
 	__forceinline void SetSilent() { m_bSilent = true; }
+	__forceinline void UseSystemColors() { m_bUseSystemColors = true; }
 
-	void Enable(int bIsEnable = true);
+	void Show(bool bShow = true);
+	__forceinline void Hide() { Show(false); }
+
+	void Enable(bool bIsEnable = true);
 	__forceinline void Disable() { Enable(false); }
-	BOOL Enabled(void) const;
+	bool Enabled(void) const;
 
 	void NotifyChange();
 
-	LRESULT SendMsg(UINT Msg, WPARAM wParam, LPARAM lParam);
+	LRESULT SendMsg(UINT Msg, WPARAM wParam, LPARAM lParam) const;
 
-	void SetText(const TCHAR *text);
+	void SetText(const wchar_t *text);
 	void SetTextA(const char *text);
 	void SetInt(int value);
 
-	TCHAR *GetText();
+	wchar_t *GetText();
 	char *GetTextA();
 
-	TCHAR *GetText(TCHAR *buf, int size);
+	wchar_t *GetText(wchar_t *buf, int size);
 	char *GetTextA(char *buf, int size);
 
 	int GetInt();
@@ -377,10 +542,11 @@ protected:
 	HWND m_hwnd;  // must be the first data item
 	int m_idCtrl;
 	CDlgBase* m_parentWnd;
-	bool m_bChanged, m_bSilent;
+	bool m_bChanged, m_bSilent, m_bUseSystemColors;
 
 public:
 	CCallback<CCtrlBase> OnChange;
+	CCallback<CCtrlBase> OnBuildMenu;
 
 protected:
 	virtual LRESULT CustomWndProc(UINT msg, WPARAM wParam, LPARAM lParam);
@@ -401,10 +567,17 @@ class MIR_CORE_EXPORT CCtrlButton : public CCtrlBase
 public:
 	CCtrlButton(CDlgBase *dlg, int ctrlId);
 
-	virtual BOOL OnCommand(HWND hwndCtrl, WORD idCtrl, WORD idCode);
+	virtual BOOL OnCommand(HWND hwndCtrl, WORD idCtrl, WORD idCode) override;
 
 	CCallback<CCtrlButton> OnClick;
+
+	void Click();
+	bool IsPushed() const;
+	void Push(bool bPushed);
 };
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// CCtrlMButton
 
 class MIR_CORE_EXPORT CCtrlMButton : public CCtrlButton
 {
@@ -418,12 +591,34 @@ public:
 	void MakeFlat();
 	void MakePush();
 
-	virtual void OnInit();
+	virtual void OnInit() override;
 
 protected:
 	HICON m_hIcon;
 	const char* m_toolTip;
 };
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// CSplitter
+
+class MIR_CORE_EXPORT CSplitter : public CCtrlBase
+{
+	typedef CCtrlBase CSuper;
+
+public:
+	CSplitter(CDlgBase *dlg, int ctrlId);
+
+	__forceinline int GetPos() const { return m_iPosition; }
+
+protected:
+	virtual LRESULT CustomWndProc(UINT msg, WPARAM wParam, LPARAM lParam) override;
+	virtual void OnInit() override;
+
+	int m_iPosition;
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// CCtrlHyperlink
 
 class MIR_CORE_EXPORT CCtrlHyperlink : public CCtrlBase
 {
@@ -432,14 +627,33 @@ class MIR_CORE_EXPORT CCtrlHyperlink : public CCtrlBase
 public:
 	CCtrlHyperlink(CDlgBase *dlg, int ctrlId, const char* url);
 
-	virtual BOOL OnCommand(HWND hwndCtrl, WORD idCtrl, WORD idCode);
+	virtual BOOL OnCommand(HWND hwndCtrl, WORD idCtrl, WORD idCode) override;
 
 protected:
 	const char* m_url;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////
+// CProgress
+
+class MIR_CORE_EXPORT CProgress : public CCtrlBase
+{
+public:
+	CProgress(CDlgBase *dlg, int ctrlId);
+
+	void SetRange(WORD max, WORD min = 0);
+	void SetPosition(WORD value);
+	void SetStep(WORD value);
+	WORD Move(WORD delta = 0);
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////
 // CCtrlClc
+
+#if !defined(MGROUP)
+	typedef int MGROUP;
+#endif
+
 class MIR_CORE_EXPORT CCtrlClc : public CCtrlBase
 {
 	typedef CCtrlBase CSuper;
@@ -456,7 +670,7 @@ public:
 	void       EnsureVisible(HANDLE hItem, bool partialOk);
 	void       Expand(HANDLE hItem, DWORD flags);
 	HANDLE     FindContact(MCONTACT hContact);
-	HANDLE     FindGroup(HANDLE hGroup);
+	HANDLE     FindGroup(MGROUP hGroup);
 	COLORREF   GetBkColor();
 	bool       GetCheck(HANDLE hItem);
 	int        GetCount();
@@ -514,7 +728,7 @@ public:
 	CCallback<TEventInfo>	OnClick;
 
 protected:
-	virtual BOOL OnNotify(int idCtrl, NMHDR *pnmh);
+	virtual BOOL OnNotify(int idCtrl, NMHDR *pnmh) override;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -529,10 +743,10 @@ public:
 	virtual ~CCtrlData();
 
 	void CreateDbLink(const char* szModuleName, const char* szSetting, BYTE type, DWORD iValue);
-	void CreateDbLink(const char* szModuleName, const char* szSetting, TCHAR* szValue);
+	void CreateDbLink(const char* szModuleName, const char* szSetting, wchar_t* szValue);
 	void CreateDbLink(CDataLink *link) { m_dbLink = link; }
 
-	virtual void OnInit();
+	virtual void OnInit() override;
 
 protected:
 	CDataLink *m_dbLink;
@@ -540,8 +754,8 @@ protected:
 	__inline BYTE GetDataType() { return m_dbLink ? m_dbLink->GetDataType() : DBVT_DELETED; }
 	__inline DWORD LoadInt() { return m_dbLink ? m_dbLink->LoadInt() : 0; }
 	__inline void SaveInt(DWORD value) { if (m_dbLink) m_dbLink->SaveInt(value); }
-	__inline const TCHAR *LoadText() { return m_dbLink ? m_dbLink->LoadText() : _T(""); }
-	__inline void SaveText(TCHAR *value) { if (m_dbLink) m_dbLink->SaveText(value); }
+	__inline const wchar_t *LoadText() { return m_dbLink ? m_dbLink->LoadText() : L""; }
+	__inline void SaveText(wchar_t *value) { if (m_dbLink) m_dbLink->SaveText(value); }
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -553,10 +767,10 @@ class MIR_CORE_EXPORT CCtrlCheck : public CCtrlData
 
 public:
 	CCtrlCheck(CDlgBase *dlg, int ctrlId);
-	virtual BOOL OnCommand(HWND /*hwndCtrl*/, WORD /*idCtrl*/, WORD /*idCode*/);
+	virtual BOOL OnCommand(HWND /*hwndCtrl*/, WORD /*idCtrl*/, WORD /*idCode*/) override;
 
-	virtual void OnApply();
-	virtual void OnReset();
+	virtual void OnApply() override;
+	virtual void OnReset() override;
 
 	int GetState();
 	void SetState(int state);
@@ -571,10 +785,54 @@ class MIR_CORE_EXPORT CCtrlEdit : public CCtrlData
 
 public:
 	CCtrlEdit(CDlgBase *dlg, int ctrlId);
-	virtual BOOL OnCommand(HWND /*hwndCtrl*/, WORD /*idCtrl*/, WORD idCode);
+	virtual BOOL OnCommand(HWND /*hwndCtrl*/, WORD /*idCtrl*/, WORD idCode) override;
 
-	virtual void OnApply();
-	virtual void OnReset();
+	virtual void OnApply() override;
+	virtual void OnReset() override;
+
+	void SetMaxLength(unsigned int len);
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// CCtrlRichEdit
+
+class MIR_CORE_EXPORT CCtrlRichEdit : public CCtrlEdit
+{
+	typedef CCtrlEdit CSuper;
+
+public:
+	CCtrlRichEdit(CDlgBase *dlg, int ctrlId);
+
+	// returns text length in bytes if a parameter is omitted or in symbols, if not
+	int GetRichTextLength(int iCodePage = CP_ACP) const;
+
+	// returns a buffer that should be freed using mir_free() or ptrA/ptrW
+	char* GetRichTextRtf(bool bText = false, bool bSelection = false) const; // returns text with formatting
+	wchar_t* GetRichText() const;	// returns only text in ucs2
+
+	// these methods return text length in Unicode chars
+	int SetRichText(const wchar_t *text);
+	int SetRichTextRtf(const char *text);
+
+	// enables or disables content editing
+	void SetReadOnly(bool bReadOnly);
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// CCtrlSpin
+
+class MIR_CORE_EXPORT CCtrlSpin : public CCtrlBase
+{
+	typedef CCtrlData CSuper;
+
+	virtual BOOL OnNotify(int, NMHDR*) override;
+
+public:
+	CCtrlSpin(CDlgBase *dlg, int ctrlId);
+
+	WORD GetPosition();
+	void SetPosition(WORD pos);
+	void SetRange(WORD max, WORD min = 0);
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -587,24 +845,26 @@ class MIR_CORE_EXPORT CCtrlListBox : public CCtrlBase
 public:
 	CCtrlListBox(CDlgBase *dlg, int ctrlId);
 
-	int    AddString(TCHAR *text, LPARAM data=0);
+	int    AddString(wchar_t *text, LPARAM data=0);
 	void   DeleteString(int index);
-	int    FindString(TCHAR *str, int index = -1, bool exact = false);
+	int    FindString(wchar_t *str, int index = -1, bool exact = false);
 	int    GetCount();
 	int    GetCurSel();
 	LPARAM GetItemData(int index);
-	TCHAR* GetItemText(int index);
-	TCHAR* GetItemText(int index, TCHAR *buf, int size);
+	int    GetItemRect(int index, RECT *pResult);
+	wchar_t* GetItemText(int index);
+	wchar_t* GetItemText(int index, wchar_t *buf, int size);
 	bool   GetSel(int index);
 	int    GetSelCount();
 	int*   GetSelItems(int *items, int count);
 	int*   GetSelItems();
-	int    InsertString(TCHAR *text, int pos, LPARAM data=0);
+	int    InsertString(wchar_t *text, int pos, LPARAM data=0);
 	void   ResetContent();
-	int    SelectString(TCHAR *str);
+	int    SelectString(wchar_t *str);
 	int    SetCurSel(int index);
 	void   SetItemData(int index, LPARAM data);
-	void   SetSel(int index, bool sel=true);
+	void   SetItemHeight(int index, int iHeight);
+	void   SetSel(int index, bool sel = true);
 
 	// Events
 	CCallback<CCtrlListBox>	OnDblClick;
@@ -612,7 +872,7 @@ public:
 	CCallback<CCtrlListBox>	OnSelChange;
 
 protected:
-	BOOL OnCommand(HWND hwndCtrl, WORD idCtrl, WORD idCode);
+	BOOL OnCommand(HWND hwndCtrl, WORD idCtrl, WORD idCode) override;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -625,26 +885,26 @@ class MIR_CORE_EXPORT CCtrlCombo : public CCtrlData
 public:
 	CCtrlCombo(CDlgBase *dlg, int ctrlId);
 
-	virtual BOOL OnCommand(HWND /*hwndCtrl*/, WORD /*idCtrl*/, WORD idCode);
-	virtual void OnInit();
-	virtual void OnApply();
-	virtual void OnReset();
+	virtual BOOL OnCommand(HWND /*hwndCtrl*/, WORD /*idCtrl*/, WORD idCode) override;
+	virtual void OnInit() override;
+	virtual void OnApply() override;
+	virtual void OnReset() override;
 
 	// Control interface
-	int    AddString(const TCHAR *text, LPARAM data = 0);
+	int    AddString(const wchar_t *text, LPARAM data = 0);
 	int    AddStringA(const char *text, LPARAM data = 0);
 	void   DeleteString(int index);
-	int    FindString(const TCHAR *str, int index = -1, bool exact = false);
+	int    FindString(const wchar_t *str, int index = -1, bool exact = false);
 	int    FindStringA(const char *str, int index = -1, bool exact = false);
 	int    GetCount();
 	int    GetCurSel();
 	bool   GetDroppedState();
 	LPARAM GetItemData(int index);
-	TCHAR* GetItemText(int index);
-	TCHAR* GetItemText(int index, TCHAR *buf, int size);
-	int    InsertString(TCHAR *text, int pos, LPARAM data=0);
+	wchar_t* GetItemText(int index);
+	wchar_t* GetItemText(int index, wchar_t *buf, int size);
+	int    InsertString(wchar_t *text, int pos, LPARAM data=0);
 	void   ResetContent();
-	int    SelectString(TCHAR *str);
+	int    SelectString(wchar_t *str);
 	int    SetCurSel(int index);
 	void   SetItemData(int index, LPARAM data);
 	void   ShowDropdown(bool show = true);
@@ -769,7 +1029,7 @@ public:
 	BOOL       SetItemPosition(int i, int x, int y);
 	void       SetItemPosition32(int iItem, int x, int y);
 	void       SetItemState(int i, UINT state, UINT mask);
-	void       SetItemText(int i, int iSubItem, TCHAR *pszText);
+	void       SetItemText(int i, int iSubItem, wchar_t *pszText);
 	COLORREF   SetOutlineColor(COLORREF color);
 	void       SetSelectedColumn(int iCol);
 	INT        SetSelectionMark(INT iIndex);
@@ -790,10 +1050,10 @@ public:
 
 	// Additional APIs
 	HIMAGELIST CreateImageList(int iImageList);
-	void       AddColumn(int iSubItem, TCHAR *name, int cx);
-	void       AddGroup(int iGroupId, TCHAR *name);
-	int        AddItem(TCHAR *text, int iIcon, LPARAM lParam = 0, int iGroupId = -1);
-	void       SetItem(int iItem, int iSubItem, TCHAR *text, int iIcon = -1);
+	void       AddColumn(int iSubItem, wchar_t *name, int cx);
+	void       AddGroup(int iGroupId, wchar_t *name);
+	int        AddItem(wchar_t *text, int iIcon, LPARAM lParam = 0, int iGroupId = -1);
+	void       SetItem(int iItem, int iSubItem, wchar_t *text, int iIcon = -1);
 	LPARAM     GetItemData(int iItem);
 
 	// Events
@@ -834,7 +1094,7 @@ public:
 	CCallback<TEventInfo> OnSetDispInfo;
 
 protected:
-	virtual BOOL OnNotify(int idCtrl, NMHDR *pnmh);
+	virtual BOOL OnNotify(int idCtrl, NMHDR *pnmh) override;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -851,7 +1111,7 @@ class MIR_CORE_EXPORT CCtrlTreeView : public CCtrlBase
 {
 	typedef CCtrlBase CSuper;
 
-	HTREEITEM MoveItemAbove(HTREEITEM hItem, HTREEITEM hInsertAfter);
+	HTREEITEM MoveItemAbove(HTREEITEM hItem, HTREEITEM hInsertAfter, HTREEITEM hParent);
 
 public:
 	CCtrlTreeView(CDlgBase *dlg, int ctrlId);
@@ -921,9 +1181,9 @@ public:
 	// Additional stuff
 	void       TranslateItem(HTREEITEM hItem);
 	void       TranslateTree();
-	HTREEITEM  FindNamedItem(HTREEITEM hItem, const TCHAR *name);
+	HTREEITEM  FindNamedItem(HTREEITEM hItem, const wchar_t *name);
 	void       GetItem(HTREEITEM hItem, TVITEMEX *tvi);
-	void       GetItem(HTREEITEM hItem, TVITEMEX *tvi, TCHAR *szText, int iTextLength);
+	void       GetItem(HTREEITEM hItem, TVITEMEX *tvi, wchar_t *szText, int iTextLength);
 	void       InvertCheck(HTREEITEM hItem);
 
 	bool       IsSelected(HTREEITEM hItem);
@@ -960,6 +1220,7 @@ public:
 	CCallback<TEventInfo> OnEndLabelEdit;
 	CCallback<TEventInfo> OnGetDispInfo;
 	CCallback<TEventInfo> OnGetInfoTip;
+	CCallback<TEventInfo> OnItemChanged;
 	CCallback<TEventInfo> OnItemExpanded;
 	CCallback<TEventInfo> OnItemExpanding;
 	CCallback<TEventInfo> OnKeyDown;
@@ -969,10 +1230,10 @@ public:
 	CCallback<TEventInfo> OnSingleExpand;
 
 protected:
-	virtual void OnInit();
-	virtual BOOL OnNotify(int idCtrl, NMHDR *pnmh);
+	virtual void OnInit() override;
+	virtual BOOL OnNotify(int idCtrl, NMHDR *pnmh) override;
 	
-	virtual LRESULT CustomWndProc(UINT msg, WPARAM wParam, LPARAM lParam);
+	virtual LRESULT CustomWndProc(UINT msg, WPARAM wParam, LPARAM lParam) override;
 
 	union {
 		uint32_t m_dwFlags;
@@ -1002,36 +1263,40 @@ class MIR_CORE_EXPORT CCtrlPages : public CCtrlBase
 public:
 	CCtrlPages(CDlgBase *dlg, int ctrlId);
 
-	void AddPage(TCHAR *ptszName, HICON hIcon, CDlgBase *pDlg);
+	void AddPage(wchar_t *ptszName, HICON hIcon, CDlgBase *pDlg);
 	void ActivatePage(int iPage);
+	int  GetCount(void);
+	int  GetDlgIndex(CDlgBase*);
+	CDlgBase* GetNthPage(int iPage);
+	void RemovePage(int iPage);
+	void SwapPages(int idx1, int idx2);
+
+	__forceinline CDlgBase* GetActivePage() const
+	{	return m_pActivePage;
+	}
 
 protected:
-	virtual BOOL OnNotify(int idCtrl, NMHDR *pnmh);
+	virtual BOOL OnNotify(int idCtrl, NMHDR *pnmh) override;
 	
-	virtual void OnInit();
-	virtual void OnDestroy();
+	virtual void OnInit() override;
+	virtual void OnDestroy() override;
 
-	virtual void OnApply();
-	virtual void OnReset();
+	virtual void OnApply() override;
+	virtual void OnReset() override;
 
-	virtual LRESULT CustomWndProc(UINT msg, WPARAM wParam, LPARAM lParam);
+	virtual LRESULT CustomWndProc(UINT msg, WPARAM wParam, LPARAM lParam) override;
 
 private:
 	HIMAGELIST m_hIml;
 	CDlgBase *m_pActivePage;
 
-	struct TPageInfo : public MZeroedObject
-	{
-		int m_pageId;
-		ptrT m_ptszHeader;
-		HICON m_hIcon;
-		BOOL m_bChanged;
-		CDlgBase *m_pDlg;
-	};
+	struct TPageInfo;
 
+	void InsertPage(TPageInfo *pPage);
 	void ShowPage(CDlgBase *pDlg);
 
 	TPageInfo* GetCurrPage();
+	TPageInfo* GetItemPage(int iPage);
 	LIST<TPageInfo> m_pages;
 };
 
@@ -1065,7 +1330,7 @@ public:
 		m_pfnOnDeleteItem	= pfnOnDeleteItem;
 	}
 
-	virtual BOOL OnCommand(HWND hwndCtrl, WORD idCtrl, WORD idCode)
+	virtual BOOL OnCommand(HWND hwndCtrl, WORD idCtrl, WORD idCode) override
 	{
 		if (m_parentWnd && m_pfnOnCommand) {
 			m_parentWnd->m_lresult = 0;
@@ -1074,7 +1339,7 @@ public:
 		}
 		return FALSE;
 	}
-	virtual BOOL OnNotify(int idCtrl, NMHDR *pnmh)
+	virtual BOOL OnNotify(int idCtrl, NMHDR *pnmh) override
 	{
 		if (m_parentWnd && m_pfnOnNotify) {
 			m_parentWnd->m_lresult = 0;
@@ -1084,7 +1349,7 @@ public:
 		return FALSE;
 	}
 
-	virtual BOOL OnMeasureItem(MEASUREITEMSTRUCT *param)
+	virtual BOOL OnMeasureItem(MEASUREITEMSTRUCT *param) override
 	{
 		if (m_parentWnd && m_pfnOnMeasureItem) {
 			m_parentWnd->m_lresult = 0;
@@ -1093,7 +1358,7 @@ public:
 		}
 		return FALSE;
 	}
-	virtual BOOL OnDrawItem(DRAWITEMSTRUCT *param)
+	virtual BOOL OnDrawItem(DRAWITEMSTRUCT *param) override
 	{
 		if (m_parentWnd && m_pfnOnDrawItem) {
 			m_parentWnd->m_lresult = 0;
@@ -1102,7 +1367,7 @@ public:
 		}
 		return FALSE;
 	}
-	virtual BOOL OnDeleteItem(DELETEITEMSTRUCT *param)
+	virtual BOOL OnDeleteItem(DELETEITEMSTRUCT *param) override
 	{
 		if (m_parentWnd && m_pfnOnDeleteItem) {
 			m_parentWnd->m_lresult = 0;
@@ -1131,7 +1396,7 @@ public:
 	CProtoIntDlgBase(PROTO_INTERFACE *proto, int idDialog, bool show_label = true);
 
 	void CreateLink(CCtrlData& ctrl, char *szSetting, BYTE type, DWORD iValue);
-	void CreateLink(CCtrlData& ctrl, const char *szSetting, TCHAR *szValue);
+	void CreateLink(CCtrlData& ctrl, const char *szSetting, wchar_t *szValue);
 
 	template<class T>
 	__inline void CreateLink(CCtrlData& ctrl, CMOption<T> &option)
@@ -1141,7 +1406,7 @@ public:
 
 	__inline PROTO_INTERFACE *GetProtoInterface() { return m_proto_interface; }
 
-	void SetStatusText(const TCHAR *statusText);
+	void SetStatusText(const wchar_t *statusText);
 
 protected:
 	PROTO_INTERFACE *m_proto_interface;
@@ -1155,7 +1420,7 @@ protected:
 	virtual void OnProtoCheckOnline(WPARAM, LPARAM);
 
 private:
-	void UpdateProtoTitle(const TCHAR *szText = NULL);
+	void UpdateProtoTitle(const wchar_t *szText = NULL);
 	void UpdateStatusBar();
 };
 
@@ -1175,6 +1440,27 @@ public:
 
 protected:
 	TProto* m_proto;
+};
+
+class CPluginDlgBase : public CDlgBase
+{
+	const char *m_szModule;
+public:
+	CPluginDlgBase(HINSTANCE hInst, int idDialog, const char *module) : CDlgBase(hInst, idDialog), m_szModule(module) {};
+
+	void CreateLink(CCtrlData& ctrl, const char *szSetting, BYTE type, DWORD iValue)
+	{
+		ctrl.CreateDbLink(m_szModule, szSetting, type, iValue);
+	}
+	void CreateLink(CCtrlData& ctrl, const char *szSetting, wchar_t *szValue)
+	{
+		ctrl.CreateDbLink(m_szModule, szSetting, szValue);
+	}
+	template<class T>
+	__inline void CreateLink(CCtrlData& ctrl, CMOption<T> &option)
+	{
+		ctrl.CreateDbLink(new CMOptionLink<T>(option));
+	}
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////

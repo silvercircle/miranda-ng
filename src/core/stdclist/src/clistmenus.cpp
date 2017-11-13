@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static INT_PTR CloseAction(WPARAM, LPARAM)
 {
-	if (CallService(MS_SYSTEM_OKTOEXIT, 0, 0))
+	if (Miranda_OkToExit())
 		DestroyWindow(pcli->hwndContactList);
 
 	return(0);

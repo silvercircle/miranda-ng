@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -37,11 +37,8 @@ void InitCustomMenus( void );
 void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint);
 
 int ClcOptInit(WPARAM wParam, LPARAM lParam);
-int ClcModernOptInit(WPARAM wParam, LPARAM lParam);
 int CluiOptInit(WPARAM wParam, LPARAM lParam);
-int CluiModernOptInit(WPARAM wParam, LPARAM lParam);
 int CListOptInit(WPARAM wParam, LPARAM lParam);
-int CListModernOptInit(WPARAM wParam, LPARAM lParam);
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // dll stub
@@ -84,19 +81,17 @@ extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = { MIID_CLIST,
 
 static int OnAccountsChanged(WPARAM, LPARAM)
 {
-	himlCListClc = (HIMAGELIST)CallService(MS_CLIST_GETICONSIMAGELIST, 0, 0);
+	himlCListClc = Clist_GetImageList();
 	return 0;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // called when all modules got loaded
 
-static int OnModernOptsInit(WPARAM wParam, LPARAM lParam);
 static int OnModulesLoaded(WPARAM, LPARAM)
 {
-	HookEvent(ME_MODERNOPT_INITIALIZE, OnModernOptsInit);
 	RegisterCListFonts();
-	himlCListClc = (HIMAGELIST)CallService(MS_CLIST_GETICONSIMAGELIST, 0, 0);
+	himlCListClc = Clist_GetImageList();
 	return 0;
 }
 
@@ -108,14 +103,6 @@ static int OnOptsInit(WPARAM wParam, LPARAM lParam)
 	ClcOptInit(wParam, lParam);
 	CluiOptInit(wParam, lParam);
 	CListOptInit(wParam, lParam);
-	return 0;
-}
-
-static int OnModernOptsInit(WPARAM wParam, LPARAM lParam)
-{
-	ClcModernOptInit(wParam, lParam);
-	CListModernOptInit(wParam, lParam);
-	CluiModernOptInit(wParam, lParam);
 	return 0;
 }
 
@@ -133,12 +120,16 @@ static INT_PTR GetStatusMode(WPARAM, LPARAM)
 extern "C" __declspec(dllexport) int CListInitialise()
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
+
+	g_bSortByStatus = db_get_b(NULL, "CList", "SortByStatus", SETTING_SORTBYSTATUS_DEFAULT);
+	g_bSortByProto = db_get_b(NULL, "CList", "SortByProto", SETTING_SORTBYPROTO_DEFAULT);
 
 	coreCli = *pcli;
 	pcli->hInst = g_hInst;
 	pcli->pfnPaintClc = PaintClc;
 	pcli->pfnLoadClcOptions = LoadClcOptions;
+	pcli->pfnCompareContacts = CompareContacts;
 
 	CreateServiceFunction(MS_CLIST_GETSTATUSMODE, GetStatusMode);
 

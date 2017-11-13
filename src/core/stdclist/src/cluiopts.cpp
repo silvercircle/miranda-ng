@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -74,7 +74,7 @@ static INT_PTR CALLBACK DlgProcCluiOpts(HWND hwndDlg, UINT msg, WPARAM wParam, L
 		}
 
 		{	DBVARIANT dbv;
-		if (!db_get_ts(NULL, "CList", "TitleText", &dbv)) {
+		if (!db_get_ws(NULL, "CList", "TitleText", &dbv)) {
 			SetDlgItemText(hwndDlg, IDC_TITLETEXT, dbv.ptszVal);
 			db_free(&dbv);
 		}
@@ -170,9 +170,9 @@ static INT_PTR CALLBACK DlgProcCluiOpts(HWND hwndDlg, UINT msg, WPARAM wParam, L
 			db_set_b(NULL, "CLUI", "ClientAreaDrag", (BYTE)IsDlgButtonChecked(hwndDlg, IDC_CLIENTDRAG));
 			db_set_b(NULL, "CList", "Min2Tray", (BYTE)IsDlgButtonChecked(hwndDlg, IDC_MIN2TRAY));
 			{
-				TCHAR title[256];
+				wchar_t title[256];
 				GetDlgItemText(hwndDlg, IDC_TITLETEXT, title, _countof(title));
-				db_set_ts(NULL, "CList", "TitleText", title);
+				db_set_ws(NULL, "CList", "TitleText", title);
 				SetWindowText(pcli->hwndContactList, title);
 			}
 
@@ -195,7 +195,7 @@ static INT_PTR CALLBACK DlgProcCluiOpts(HWND hwndDlg, UINT msg, WPARAM wParam, L
 				SetWindowLongPtr(pcli->hwndContactList, GWL_EXSTYLE, GetWindowLongPtr(pcli->hwndContactList, GWL_EXSTYLE) & ~WS_EX_TOOLWINDOW | WS_EX_APPWINDOW);
 
 			if (IsDlgButtonChecked(hwndDlg, IDC_ONDESKTOP)) {
-				HWND hProgMan = FindWindow(_T("Progman"), NULL);
+				HWND hProgMan = FindWindow(L"Progman", NULL);
 				if (hProgMan)
 					SetParent(pcli->hwndContactList, hProgMan);
 			}
@@ -318,47 +318,16 @@ int CluiOptInit(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = g_hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_CLUI);
-	odp.pszTitle = LPGEN("Window");
-	odp.pszGroup = LPGEN("Contact list");
+	odp.szTitle.a = LPGEN("Window");
+	odp.szGroup.a = LPGEN("Contact list");
 	odp.pfnDlgProc = DlgProcCluiOpts;
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);
 
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_SBAR);
-	odp.pszTitle = LPGEN("Status bar");
+	odp.szTitle.a = LPGEN("Status bar");
 	odp.pfnDlgProc = DlgProcSBarOpts;
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);
-	return 0;
-}
-
-int CluiModernOptInit(WPARAM wParam, LPARAM)
-{
-	static int iBoldControls[] =
-	{
-		IDC_TXT_TITLE1, IDC_TXT_TITLE2, IDC_SHOWSBAR,
-		MODERNOPT_CTRL_LAST
-	};
-
-	MODERNOPTOBJECT obj = { 0 };
-
-	obj.cbSize = sizeof(obj);
-	obj.dwFlags = MODEROPT_FLG_TCHAR | MODEROPT_FLG_NORESIZE;
-	obj.hIcon = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
-	obj.hInstance = g_hInst;
-	obj.iSection = MODERNOPT_PAGE_CLIST;
-	obj.iType = MODERNOPT_TYPE_SECTIONPAGE;
-	obj.iBoldControls = iBoldControls;
-	obj.lpzClassicGroup = LPGEN("Contact list");
-	obj.lpzClassicPage = "List";
-	obj.lpzHelpUrl = "http://wiki.miranda-ng.org/";
-
-	obj.lpzTemplate = MAKEINTRESOURCEA(IDD_MODERNOPT_CLUI);
-	obj.pfnDlgProc = DlgProcCluiOpts;
-	CallService(MS_MODERNOPT_ADDOBJECT, wParam, (LPARAM)&obj);
-
-	obj.lpzTemplate = MAKEINTRESOURCEA(IDD_MODERNOPT_SBAR);
-	obj.pfnDlgProc = DlgProcSBarOpts;
-	CallService(MS_MODERNOPT_ADDOBJECT, wParam, (LPARAM)&obj);
 	return 0;
 }

@@ -2,16 +2,36 @@
 ;============================================================
 ;  File: MirLua.dll
 ;  Plugin: MirLua
-;  Version: 0.11.4.6
+;  Version: 0.11.8.5
 ;  Authors: Miranda NG team
 ;============================================================
 [Extends Miranda NG functionality with Lua scripts.]
 Розширює функціональність Miranda NG за допомогою скриптів на мові Lua.
 [Reload all]
 Перезавантажити
-[Common scripts folder]
-Папка із загальними скриптами
 [Scripts]
 Скрипти
+[Popup on script error]
+Спливаючі вікна при помилках скрипта
+[General]
+Загальне
+[Popup on obsolete methods]
+Спливаючі вікна при виклику застарілих методів
+[C libs folder]
+Папка з бібліотеками C
+[Scripts folder]
+Папка зі скриптами
+[Script]
+Скрипт
+[Loaded]
+Завантажений
+[Failed]
+Незавантажений
+[Open]
+Відкрити
+[Reload]
+Перезавантажити
 [Common scripts]
 Загальні скрипти
+[Services]
+Служби

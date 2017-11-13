@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2010 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -29,13 +29,15 @@
 
 #include "stdafx.h"
 
-void icq_newConnectionReceived(HANDLE hNewConnection, DWORD dwRemoteIP, void *pExtra);
+void icq_newConnectionReceived(HNETLIBCONN hNewConnection, DWORD dwRemoteIP, void *pExtra);
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // ICQ Server thread
 
 void __cdecl CIcqProto::ServerThread(serverthread_start_info *infoParam)
 {
+	Thread_SetName("ICQ: ServerThread");
+
 	serverthread_info info = { 0 };
 	info.isLoginServer = info.bReinitRecver = true;
 	info.wAuthKeyLen = infoParam->wPassLen;
@@ -61,7 +63,7 @@ void __cdecl CIcqProto::ServerThread(serverthread_start_info *infoParam)
 		SAFE_FREE((void**)&infoParam);
 
 		if (hServerConn && m_bSecureConnection) {
-			if (!CallService(MS_NETLIB_STARTSSL, (WPARAM)hServerConn, 0)) {
+			if (!Netlib_StartSsl(hServerConn, 0)) {
 				icq_LogMessage(LOG_ERROR, LPGEN("Unable to connect to ICQ login server, SSL could not be negotiated"));
 				SetCurrentStatus(ID_STATUS_OFFLINE);
 				NetLib_CloseConnection(&hServerConn, TRUE);
@@ -86,7 +88,7 @@ void __cdecl CIcqProto::ServerThread(serverthread_start_info *infoParam)
 
 	info.hDirectBoundPort = NetLib_BindPort(icq_newConnectionReceived, this, &wListenPort, &dwInternalIP);
 	if (!info.hDirectBoundPort) {
-		icq_LogUsingErrorCode(LOG_WARNING, GetLastError(), LPGEN("Miranda was unable to allocate a port to listen for direct peer-to-peer connections between clients. You will be able to use most of the ICQ network without problems but you may be unable to send or receive files.\n\nIf you have a firewall this may be blocking Miranda, in which case you should configure your firewall to leave some ports open and tell Miranda which ports to use in Options -> ICQ -> Network."));
+		icq_LogUsingErrorCode(LOG_WARNING, GetLastError(), LPGEN("Miranda was unable to allocate a port to listen for direct peer-to-peer connections between clients. You will be able to use most of the ICQ network without problems but you may be unable to send or receive files.\n\nIf you have a firewall this may be blocking Miranda, in which case you should configure your firewall to leave some ports open and tell Miranda which ports to use in Options -> Network -> ICQ client-to-client connections."));
 		wListenPort = 0;
 		if (!bConstInternalIP)
 			delSetting("RealIP");
@@ -105,17 +107,16 @@ void __cdecl CIcqProto::ServerThread(serverthread_start_info *infoParam)
 
 	// This is the "infinite" loop that receives the packets from the ICQ server
 	NETLIBPACKETRECVER packetRecv;
-	info.hPacketRecver = (HANDLE)CallService(MS_NETLIB_CREATEPACKETRECVER, (WPARAM)hServerConn, 0x2400);
+	info.hPacketRecver = Netlib_CreatePacketReceiver(hServerConn, 0x2400);
 
 	while (serverThreadHandle) {
 		if (info.bReinitRecver) { // we reconnected, reinit struct
 			info.bReinitRecver = false;
 			memset(&packetRecv, 0, sizeof(packetRecv));
-			packetRecv.cbSize = sizeof(packetRecv);
 			packetRecv.dwTimeout = 1000;
 		}
 
-		int recvResult = CallService(MS_NETLIB_GETMOREPACKETS, (WPARAM)info.hPacketRecver, (LPARAM)&packetRecv);
+		int recvResult = Netlib_GetMorePackets(info.hPacketRecver, &packetRecv);
 		if (recvResult == 0) {
 			debugLogA("Clean closure of server socket");
 			break;
@@ -151,7 +152,8 @@ void __cdecl CIcqProto::ServerThread(serverthread_start_info *infoParam)
 	NetLib_SafeCloseHandle(&info.hPacketRecver);
 
 	// Close DC port
-	NetLib_SafeCloseHandle(&info.hDirectBoundPort);
+	Netlib_CloseHandle(info.hDirectBoundPort);
+	info.hDirectBoundPort = NULL;
 
 	// disable auto info-update thread
 	icq_EnableUserLookup(FALSE);
@@ -333,6 +335,7 @@ void CIcqProto::sendServPacket(icq_packet *pPacket)
 
 void __cdecl CIcqProto::SendPacketAsyncThread(icq_packet* pkt)
 {
+	Thread_SetName("ICQ: SendPacketAsyncThread");
 	sendServPacket( pkt );
 	SAFE_FREE((void**)&pkt);
 }

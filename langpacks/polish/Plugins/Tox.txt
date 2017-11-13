@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Tox.dll
 ;  Plugin: Tox protocol
-;  Version: 0.11.1.14
+;  Version: 0.11.1.25
 ;  Authors: Miranda NG Team
 ;============================================================
 [Tox protocol support for Miranda NG.]
@@ -24,8 +24,6 @@ Nazwa:
 Hasło:
 [Default group:]
 Domyślna grupa:
-[Tox]
-Tox
 [Create Tox profile]
 Stwórz profil Tox
 [Import Tox profile]
@@ -40,6 +38,10 @@ Ustawienia połączenia
 Włącz UDP (w przeciwnym razie wymuszaj używanie TCP przez tox)
 [Enable IPv6]
 Włącz IPV6
+[Max connect retries:]
+
+[Max reconnect retries:]
+
 [If this field contains Tox address (76 hex characters), you will be prompted to add it in your friend list. Otherwise, Miranda will search this query via Tox DNS discovery.]
 Jeżeli to pole zawiera adres Tox (76 znaków hex), zostaniesz poproszony o dodanie go do swojej listy kontaktów, w przeciwnym razie Miranda dokona wyszukiwania tego zapytania za pomocą odkrywania DNS Tox.
 [DNS name:]
@@ -54,6 +56,8 @@ Anuluj
 Profil tox jest zaszyfrowany. Wprowadź hasło, by kontynuować.
 [Add]
 Dodaj
+[Update]
+Aktualizacja
 [IPv4 address/ Host]
 Adres/host IPv4
 [IPv6 address (optional)]
@@ -100,10 +104,10 @@ Dane &kontaktu
 Połączenie wychodzące
 [To:]
 Do:
-;file \protocols\Tox\src\tox_chatrooms.cpp
-[Group chat]
-Czat grupowy
-;file \protocols\Tox\src\tox_core.cpp
+;file \protocols\Tox\src\main.cpp
+[Current version of plugin is support Tox API version %i.%i.%i which is incompatible with %s]
+
+;file \protocols\Tox\src\tox_connection.cpp
 [Unable to initialize Tox core]
 Nie można uruchomić rdzenia Tox
 ;file \protocols\Tox\src\tox_events.cpp
@@ -139,18 +143,6 @@ Nie możesz wysyłać będąc rozłączonym.
 Przychodząca rozmowa od %s
 [Outgoing call to %s]
 Rozmowa wychodząca z %s
-[Unable to find input audio device]
-Nie udało się znaleźć urządzenia wejścia audio
-[Video call is unsupported]
-Rozmowa video nie jest wspierana
-[Call canceled]
-Rozmowa anulowana
-[Unable to find output audio device]
-Nie udało się znaleźć urządzenia wyjścia audio
-[Call started]
-Rozmowa rozpoczęta
-[Call ended]
-Rozmowa zakończona
 ;file \protocols\Tox\src\tox_netlib.cpp
 [%s connection]
 Połączenie %s
@@ -171,6 +163,8 @@ Zmień gniazdo
 Wprowadź IPV4
 [Error]
 Błąd
+[Enter port]
+
 [Enter public key]
 Wprowadź klucz publiczny
 [Common nodes]
@@ -223,3 +217,13 @@ Profil jest szyfrowany
 Format danych jest nieprawidłowy
 [Unknown error]
 Nieznany błąd
+[The friend ID did not designate a valid friend]
+
+[This client is currently not connected to the friend]
+Ten klient nie jest aktualnie połączony z przyjacielem
+[An allocation error occurred while increasing the send queue size]
+Wystąpił błąd przyporządkowania podczas zwiększania rozmiaru kolejki wysyłania
+[Message length exceeded TOX_MAX_MESSAGE_LENGTH]
+Długość wiadomości przekroczyła TOX_MAX_MESSAGE_LENGTH
+[Attempted to send a zero-length message]
+Próbowano wysłać pustą wiadomość

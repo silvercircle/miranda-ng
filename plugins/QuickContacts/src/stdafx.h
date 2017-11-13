@@ -45,11 +45,11 @@ Boston, MA 02111-1307, USA.
 #include <m_metacontacts.h>
 #include <m_quickcontacts.h>
 
-#include "../utils/mir_options.h"
+#include "../../utils/mir_options.h"
 
 #include "resource.h"
 #include "options.h"
-#include "Version.h"
+#include "version.h"
 
 #define MODULE_NAME		"QuickContacts"
 

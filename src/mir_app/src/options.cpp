@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 Copyright (c) 2007 Artem Shpynov
 all portions of this codebase are copyrighted to the people
@@ -26,355 +26,72 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "stdafx.h"
 #include "filter.h"
 
+#define OPTSTATE_PREFIX "s_"
+
 #define FILTER_TIMEOUT_TIMER 10012
 
-#define ALL_MODULES_FILTER LPGEN("<all modules>")
-#define CORE_MODULES_FILTER LPGEN("<core modules>")
+#define HM_MODULELOAD (WM_USER+12)
+#define HM_MODULEUNLOAD (WM_USER+13)
+
+#define ALL_MODULES_FILTER LPGENW("<all modules>")
+#define CORE_MODULES_FILTER LPGENW("<core modules>")
 
 int LangpackOptionsInit(WPARAM, LPARAM);
 
 static HANDLE hOptionsInitEvent;
-static HWND hwndOptions = NULL;
-static HWND hFilterSearchWnd = NULL;
+static class COptionsDlg *pOptionsDlg = nullptr;
 
 // Thread for search keywords in dialogs
 static BYTE bSearchState = 0; // 0 - not executed; 1 - in progress; 2 - completed;
-static int FilterPage = 0;
 static int FilterLoadProgress = 100;
-static int FilterTimerId = 0;
 
-struct OptionsPageInit
+struct OptionsPage : public OPTIONSDIALOGPAGE
 {
-	int pageCount;
-	OPTIONSDIALOGPAGE *odp;
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////
-
-class COptionPageDialog : public CDlgBase
-{
-	DLGPROC m_wndProc;
-	LPARAM  m_lParam;
-
-public:
-	COptionPageDialog(HINSTANCE hInst, int idDialog, DLGPROC pProc, LPARAM lParam) :
-		CDlgBase(hInst, idDialog),
-		m_wndProc(pProc),
-		m_lParam(lParam)
+	~OptionsPage()
 	{
-	}
-
-	virtual INT_PTR DlgProc(UINT msg, WPARAM wParam, LPARAM lParam)
-	{
-		if (msg == WM_INITDIALOG)
-			lParam = m_lParam;
-
-		LRESULT res = m_wndProc(m_hwnd, msg, wParam, lParam);
-
-		if (msg == WM_DESTROY)
-			m_hwnd = NULL;
-
-		return res;
+		mir_free(szTitle.a);
+		mir_free(szGroup.a);
+		mir_free(szTab.a);
+		if ((DWORD_PTR)pszTemplate & 0xFFFF0000)
+			mir_free((char*)pszTemplate);
 	}
 };
 
-struct OptionsPageData : public MZeroedObject
-{
-	OptionsPageData(OPTIONSDIALOGPAGE *src)
-	{
-		if (src->hInstance != NULL && src->pszTemplate != NULL)
-			pDialog = new COptionPageDialog(src->hInstance, (INT_PTR)src->pszTemplate, src->pfnDlgProc, src->dwInitParam);
-		else
-			pDialog = src->pDialog;
-		assert(pDialog != NULL);
-
-		flags = src->flags;
-		hLangpack = src->hLangpack;
-
-		if (src->flags & ODPF_UNICODE)
-			ptszTitle = mir_tstrdup(src->ptszTitle);
-		else
-			ptszTitle = mir_a2t(src->pszTitle);
-
-		if (src->flags & ODPF_UNICODE)
-			ptszGroup = mir_tstrdup(src->ptszGroup);
-		else
-			ptszGroup = mir_a2t(src->pszGroup);
-
-		if (src->flags & ODPF_UNICODE)
-			ptszTab = mir_tstrdup(src->ptszTab);
-		else
-			ptszTab = mir_a2t(src->pszTab);
-  	}
-	
-	~OptionsPageData()
-	{
-		if (pDialog && getHwnd() != NULL)
-			DestroyWindow(getHwnd());
-	}
-
-	CDlgBase *pDialog;
-	int hLangpack;
-	ptrT ptszTitle, ptszGroup, ptszTab;
-	HTREEITEM hTreeItem;
-	int changed;
-	int height;
-	int width;
-	DWORD flags;
-	BOOL insideTab;
-
-	__forceinline HWND getHwnd() const { return pDialog->GetHwnd(); }
-	__forceinline HINSTANCE getInst() const { return pDialog->GetInst(); }
-
-	__forceinline TCHAR* getString(TCHAR *ptszStr)
-	{
-		if (flags & ODPF_DONTTRANSLATE)
-			return ptszStr;
-		return TranslateTH(hLangpack, ptszStr);
-	}
-};
-
-struct OptionsDlgData : public MZeroedObject
-{
-	OptionsDlgData() :
-		arOpd(10)
-		{}
-
-	int currentPage;
-	HTREEITEM hCurrentPage;
-	LIST<OptionsPageData> arOpd;
-	RECT rcDisplay;
-	RECT rcTab;
-	HFONT hBoldFont;
-	TCHAR szFilterString[1024];
-	HANDLE hPluginLoad, hPluginUnload;
-
-	OptionsPageData* getCurrent() const
-	{	return (currentPage == -1) ? NULL : arOpd[currentPage];
-	}
-};
-
-HTREEITEM FindNamedTreeItemAtRoot(HWND hwndTree, const TCHAR* name)
-{
-	TCHAR str[128];
-	TVITEM tvi;
-	tvi.mask = TVIF_TEXT;
-	tvi.pszText = str;
-	tvi.cchTextMax = _countof(str);
-	tvi.hItem = TreeView_GetRoot(hwndTree);
-	while (tvi.hItem != NULL) {
-		SendMessage(hwndTree, TVM_GETITEM, 0, (LPARAM)&tvi);
-		if (!mir_tstrcmpi(str, name))
-			return tvi.hItem;
-
-		tvi.hItem = TreeView_GetNextSibling(hwndTree, tvi.hItem);
-	}
-	return NULL;
-}
-
-static HTREEITEM FindNamedTreeItemAtChildren(HWND hwndTree, HTREEITEM hItem, const TCHAR* name)
-{
-	TCHAR str[128];
-	TVITEM tvi;
-	tvi.mask = TVIF_TEXT;
-	tvi.pszText = str;
-	tvi.cchTextMax = _countof(str);
-	tvi.hItem = TreeView_GetChild(hwndTree, hItem);
-	while (tvi.hItem != NULL) {
-		SendMessage(hwndTree, TVM_GETITEM, 0, (LPARAM)&tvi);
-		if (!mir_tstrcmpi(str, name))
-			return tvi.hItem;
-
-		tvi.hItem = TreeView_GetNextSibling(hwndTree, tvi.hItem);
-	}
-	return NULL;
-}
+typedef OBJLIST<OptionsPage> OptionsPageList;
 
 static BOOL CALLBACK BoldGroupTitlesEnumChildren(HWND hwnd, LPARAM lParam)
 {
-	TCHAR szClass[64];
+	wchar_t szClass[64];
 	GetClassName(hwnd, szClass, _countof(szClass));
 
-	if (!mir_tstrcmp(szClass, _T("Button")) && (GetWindowLongPtr(hwnd, GWL_STYLE) & 0x0F) == BS_GROUPBOX)
+	if (!mir_wstrcmp(szClass, L"Button") && (GetWindowLongPtr(hwnd, GWL_STYLE) & 0x0F) == BS_GROUPBOX)
 		SendMessage(hwnd, WM_SETFONT, lParam, 0);
 	return TRUE;
 }
-
-#define OPTSTATE_PREFIX "s_"
-
-static void SaveOptionsTreeState(HWND hdlg)
-{
-	TVITEMA tvi;
-	char buf[130], str[128];
-	tvi.mask = TVIF_TEXT | TVIF_STATE;
-	tvi.pszText = str;
-	tvi.cchTextMax = _countof(str);
-	tvi.hItem = TreeView_GetRoot(GetDlgItem(hdlg, IDC_PAGETREE));
-	while (tvi.hItem != NULL) {
-		if (SendDlgItemMessageA(hdlg, IDC_PAGETREE, TVM_GETITEMA, 0, (LPARAM)&tvi)) {
-			mir_snprintf(buf, "%s%s", OPTSTATE_PREFIX, str);
-			db_set_b(NULL, "Options", buf, (BYTE)((tvi.state & TVIS_EXPANDED) ? 1 : 0));
-		}
-		tvi.hItem = TreeView_GetNextSibling(GetDlgItem(hdlg, IDC_PAGETREE), tvi.hItem);
-	}
-}
-
-#define DM_FOCUSPAGE   (WM_USER+10)
-#define DM_REBUILDPAGETREE (WM_USER+11)
-
-#define HM_MODULELOAD (WM_USER+12)
-#define HM_MODULEUNLOAD (WM_USER+13)
 
 static void ThemeDialogBackground(HWND hwnd, BOOL tabbed)
 {
 	EnableThemeDialogTexture(hwnd, (tabbed ? ETDT_ENABLE : ETDT_DISABLE) | ETDT_USETABTEXTURE);
 }
 
-static TCHAR* GetPluginName(HINSTANCE hInstance, TCHAR *buffer, int size)
+static wchar_t* GetPluginName(HINSTANCE hInstance, wchar_t *buffer, int size)
 {
-	TCHAR tszModuleName[MAX_PATH];
+	wchar_t tszModuleName[MAX_PATH];
 	GetModuleFileName(hInstance, tszModuleName, _countof(tszModuleName));
-	TCHAR *dllName = _tcsrchr(tszModuleName, '\\');
+	wchar_t *dllName = wcsrchr(tszModuleName, '\\');
 	if (!dllName)
 		dllName = tszModuleName;
 	else
 		dllName++;
 
-	_tcsncpy_s(buffer, size, dllName, _TRUNCATE);
+	wcsncpy_s(buffer, size, dllName, _TRUNCATE);
 	return buffer;
-}
-
-PageHash GetPluginPageHash(const OptionsPageData *page)
-{
-	return mir_hashstrT(page->ptszGroup) + mir_hashstrT(page->ptszTitle) + mir_hashstrT(page->ptszTab);
-}
-
-static HWND CreateOptionWindow(const OptionsPageData *opd, HWND hWndParent)
-{
-	opd->pDialog->SetParent(hWndParent);
-	opd->pDialog->Create();
-	return opd->pDialog->GetHwnd();
-}
-
-static void FindFilterStrings(int enableKeywordFiltering, int current, HWND hWndParent, const OptionsPageData *page)
-{
-	HWND hWnd = 0;
-	if (enableKeywordFiltering) {
-		if (current)
-			hWnd = page->getHwnd();
-		else {
-			hWnd = CreateOptionWindow(page, hWndParent);
-			ShowWindow(hWnd, SW_HIDE); // make sure it's hidden
-		}
-	}
-
-	DWORD key = GetPluginPageHash(page); // get the plugin page hash
-
-	TCHAR pluginName[MAX_PATH];
-	char *temp = GetPluginNameByInstance(page->getInst());
-	GetDialogStrings(enableKeywordFiltering, key, GetPluginName(page->getInst(), pluginName, _countof(pluginName)), hWnd, page->ptszGroup, page->ptszTitle, page->ptszTab, _A2T(temp));
-
-	if (enableKeywordFiltering && !current)
-		DestroyWindow(hWnd); // destroy the page, we're done with it
-}
-
-static int MatchesFilter(const OptionsPageData *page, TCHAR *szFilterString)
-{
-	return ContainsFilterString(GetPluginPageHash(page), szFilterString);
-}
-
-static LRESULT CALLBACK OptionsFilterSubclassProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	if (message != WM_PAINT && message != WM_PRINT)
-		return mir_callNextSubclass(hWnd, OptionsFilterSubclassProc, message, wParam, lParam);
-
-	if (GetFocus() == hWnd || GetWindowTextLength(hWnd))
-		return mir_callNextSubclass(hWnd, OptionsFilterSubclassProc, message, wParam, lParam);
-
-	RECT rc;
-	GetClientRect(hWnd, &rc);
-
-	PAINTSTRUCT paint;
-	HDC hdc = (message == WM_PAINT) ? BeginPaint(hWnd, &paint) : (HDC)wParam;
-
-	TCHAR buf[255];
-	if (bSearchState == 1 && FilterLoadProgress < 100 && FilterLoadProgress > 0)
-		mir_sntprintf(buf, TranslateT("Loading... %d%%"), FilterLoadProgress);
-	else
-		mir_sntprintf(buf, TranslateT("Search"));
-
-	bool bDrawnByTheme = false;
-
-	int oldMode = SetBkMode(hdc, TRANSPARENT);
-
-	HTHEME hTheme = OpenThemeData(hWnd, L"EDIT");
-	if (hTheme) {
-		if (IsThemeBackgroundPartiallyTransparent(hTheme, EP_EDITTEXT, ETS_NORMAL))
-			DrawThemeParentBackground(hWnd, hdc, &rc);
-
-		RECT rc2;
-		GetThemeBackgroundContentRect(hTheme, hdc, EP_EDITTEXT, ETS_NORMAL, &rc, &rc2);
-		rc2.top = 2 * rc.top - rc2.top;
-		rc2.left = 2 * rc.left - rc2.left;
-		rc2.bottom = 2 * rc.bottom - rc2.bottom;
-		rc2.right = 2 * rc.right - rc2.right;
-
-		DrawThemeBackground(hTheme, hdc, EP_EDITTEXT, ETS_NORMAL, &rc2, &rc);
-		HFONT hFont = (HFONT)SendMessage(hWnd, WM_GETFONT, 0, 0);
-		HFONT oldFont = (HFONT)SelectObject(hdc, hFont);
-
-		wchar_t *bufW = mir_t2u(buf);
-		DrawThemeText(hTheme, hdc, EP_EDITTEXT, ETS_DISABLED, bufW, -1, 0, 0, &rc);
-		mir_free(bufW);
-
-		SelectObject(hdc, oldFont);
-		CloseThemeData(hTheme);
-		bDrawnByTheme = true;
-	}
-
-	SetBkMode(hdc, oldMode);
-
-	if (!bDrawnByTheme) {
-		HFONT hFont = (HFONT)SendMessage(hWnd, WM_GETFONT, 0, 0);
-		HFONT oldFont = (HFONT)SelectObject(hdc, hFont);
-		SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
-		FillRect(hdc, &rc, GetSysColorBrush(COLOR_WINDOW));
-		oldMode = SetBkMode(hdc, TRANSPARENT);
-		DrawText(hdc, buf, -1, &rc, 0);
-		SetBkMode(hdc, oldMode);
-		SelectObject(hdc, oldFont);
-	}
-
-	if (message == WM_PAINT)
-		EndPaint(hWnd, &paint);
-
-	return 0;
-}
-
-static bool CheckPageShow(HWND, OptionsDlgData *dat, int i)
-{
-	OptionsPageData *opd = dat->arOpd[i];
-	if (dat->szFilterString[0] && !MatchesFilter(opd, dat->szFilterString))
-		return false;
-	return true;
 }
 
 static BOOL IsAeroMode()
 {
 	BOOL result;
 	return dwmIsCompositionEnabled && (dwmIsCompositionEnabled(&result) == S_OK) && result;
-}
-
-static void FreeOptionsData(OptionsPageInit* popi)
-{
-	for (int i = 0; i < popi->pageCount; i++) {
-		mir_free((char*)popi->odp[i].pszTitle);
-		mir_free(popi->odp[i].pszGroup);
-		mir_free(popi->odp[i].pszTab);
-		if ((DWORD_PTR)popi->odp[i].pszTemplate & 0xFFFF0000)
-			mir_free((char*)popi->odp[i].pszTemplate);
-	}
-	mir_free(popi->odp);
 }
 
 static LRESULT CALLBACK AeroPaintSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -386,7 +103,7 @@ static void AeroPaintControl(HWND hwnd, HDC hdc, UINT msg, LPARAM lpFlags)
 
 	HDC tempDC = CreateCompatibleDC(hdc);
 
-	BITMAPINFO bmi;
+	BITMAPINFO bmi = { 0 };
 	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	bmi.bmiHeader.biWidth = rc.right;
 	bmi.bmiHeader.biHeight = -rc.bottom;
@@ -395,7 +112,7 @@ static void AeroPaintControl(HWND hwnd, HDC hdc, UINT msg, LPARAM lpFlags)
 	bmi.bmiHeader.biCompression = BI_RGB;
 
 	BYTE *pBits;
-	HBITMAP hBmp = CreateDIBSection(tempDC, &bmi, DIB_RGB_COLORS, (void **)&pBits, NULL, 0);
+	HBITMAP hBmp = CreateDIBSection(tempDC, &bmi, DIB_RGB_COLORS, (void **)&pBits, nullptr, 0);
 	HBITMAP hOldBmp = (HBITMAP)SelectObject(tempDC, hBmp);
 
 	// paint
@@ -421,7 +138,7 @@ static LRESULT CALLBACK AeroPaintSubclassProc(HWND hwnd, UINT msg, WPARAM wParam
 	switch (msg) {
 	case WM_CTLCOLOREDIT:
 		if (!GetPropA((HWND)lParam, "Miranda.AeroRender.Active"))
-			RedrawWindow((HWND)lParam, NULL, NULL, RDW_INVALIDATE);
+			RedrawWindow((HWND)lParam, nullptr, nullptr, RDW_INVALIDATE);
 		break;
 
 	case WM_ERASEBKGND:
@@ -446,840 +163,1033 @@ static LRESULT CALLBACK AeroPaintSubclassProc(HWND hwnd, UINT msg, WPARAM wParam
 	return mir_callNextSubclass(hwnd, AeroPaintSubclassProc, msg, wParam, lParam);
 }
 
-static void CALLBACK FilterSearchTimerFunc(HWND hwnd, UINT, UINT_PTR, DWORD)
+/////////////////////////////////////////////////////////////////////////////////////////
+// Stub for the old options (hinst + resource + window procedure + lParam)
+
+class COptionPageDialog : public CDlgBase
 {
-	OptionsDlgData *dat = (OptionsDlgData*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-	if (!dat)
-		return;
+	DLGPROC m_wndProc;
+	LPARAM  m_lParam;
 
-	if (hFilterSearchWnd == NULL) // Fake window to keep option page focused
-		hFilterSearchWnd = CreateWindowA("STATIC", "Test", WS_OVERLAPPED | WS_DISABLED, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, g_hInst, 0);
-
-	if (FilterPage < dat->arOpd.getCount())
-		FindFilterStrings(TRUE, dat->currentPage == FilterPage, hFilterSearchWnd, dat->arOpd[FilterPage]);
-
-	FilterPage++;
-	FilterLoadProgress = FilterPage * 100 / ((dat->arOpd.getCount()) ? dat->arOpd.getCount() : FilterPage);
-	if (FilterPage >= dat->arOpd.getCount()) {
-		KillTimer(hwnd, FilterTimerId);
-		FilterTimerId = 0;
-		bSearchState = 2;
-		FilterLoadProgress = 100;
-		DestroyWindow(hFilterSearchWnd);
-		hFilterSearchWnd = NULL;
-	}
-	RedrawWindow(GetDlgItem(hwnd, IDC_KEYWORD_FILTER), NULL, NULL, RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE);
-}
-
-static void ExecuteFindFilterStringsTimer(HWND hdlg)
-{
-	bSearchState = 1;
-	FilterPage = 0;
-	if (FilterTimerId) KillTimer(hdlg, FilterTimerId);
-	FilterTimerId = SetTimer(hdlg, NULL, 1, FilterSearchTimerFunc);
-}
-
-static void FillFilterCombo(HWND hDlg, OptionsDlgData* dat)
-{
-	HINSTANCE *KnownInstances = (HINSTANCE*)alloca(sizeof(HINSTANCE)*dat->arOpd.getCount());
-	int countKnownInst = 0;
-	SendDlgItemMessage(hDlg, IDC_KEYWORD_FILTER, (UINT)CB_RESETCONTENT, 0, 0);
-	int index = SendDlgItemMessage(hDlg, IDC_KEYWORD_FILTER, (UINT)CB_ADDSTRING, 0, (LPARAM)TranslateT(ALL_MODULES_FILTER));
-	SendDlgItemMessage(hDlg, IDC_KEYWORD_FILTER, (UINT)CB_SETITEMDATA, (WPARAM)index, 0);
-	index = SendDlgItemMessage(hDlg, IDC_KEYWORD_FILTER, (UINT)CB_ADDSTRING, 0, (LPARAM)TranslateT(CORE_MODULES_FILTER));
-	SendDlgItemMessage(hDlg, IDC_KEYWORD_FILTER, (UINT)CB_SETITEMDATA, (WPARAM)index, (LPARAM)g_hInst);
-	
-	for (int i = 0; i < dat->arOpd.getCount(); i++) {
-		OptionsPageData *opd = dat->arOpd[i];
-		FindFilterStrings(FALSE, FALSE, hDlg, opd); // only modules name (fast enougth)
-
-		HINSTANCE inst = opd->getInst();
-		if (inst == g_hInst)
-			continue;
-
-		int j;
-		for (j = 0; j < countKnownInst; j++)
-			if (KnownInstances[j] == inst)
-				break;
-		if (j != countKnownInst)
-			continue;
-
-		KnownInstances[countKnownInst] = inst;
-		countKnownInst++;
-		
-		TCHAR tszModuleName[MAX_PATH];
-		GetModuleFileName(inst, tszModuleName, _countof(tszModuleName));
-
-		TCHAR *dllName = mir_a2t(GetPluginNameByInstance(inst));
-		if (!dllName) dllName = mir_tstrdup(_tcsrchr(tszModuleName, _T('\\')));
-		if (!dllName) dllName = mir_tstrdup(tszModuleName);
-		if (dllName) {
-			index = SendDlgItemMessage(hDlg, IDC_KEYWORD_FILTER, (UINT)CB_ADDSTRING, 0, (LPARAM)dllName);
-			SendDlgItemMessage(hDlg, IDC_KEYWORD_FILTER, (UINT)CB_SETITEMDATA, (WPARAM)index, (LPARAM)inst);
-			mir_free(dllName);
-		}
+public:
+	COptionPageDialog(HINSTANCE hInst, int idDialog, DLGPROC pProc, LPARAM lParam) :
+		CDlgBase(hInst, idDialog),
+		m_wndProc(pProc),
+		m_lParam(lParam)
+	{
 	}
 
-	FilterLoadProgress = 100;
-}
+	virtual INT_PTR DlgProc(UINT msg, WPARAM wParam, LPARAM lParam)
+	{
+		if (msg == WM_INITDIALOG)
+			lParam = m_lParam;
 
-static void RebuildPageTree(HWND hdlg, OptionsDlgData *dat)
-{
-	LPARAM oldSel = SendDlgItemMessage(hdlg, IDC_KEYWORD_FILTER, CB_GETEDITSEL, 0, 0);
-	GetDlgItemText(hdlg, IDC_KEYWORD_FILTER, dat->szFilterString, _countof(dat->szFilterString));
+		LRESULT res = m_wndProc(m_hwnd, msg, wParam, lParam);
+		if (!res)
+			res = CDlgBase::DlgProc(msg, wParam, lParam);
 
-	// if filter string is set to all modules then make the filter string empty (this will return all modules)
-	BOOL bRemoveFocusFromFilter = FALSE;
-	if (mir_tstrcmp(dat->szFilterString, TranslateT(ALL_MODULES_FILTER)) == 0) {
-		dat->szFilterString[0] = 0;
-		bRemoveFocusFromFilter = TRUE;
+		return res;
 	}
-	// if filter string is set to core modules replace it with the name of the executable (this will return all core modules)
-	else if (mir_tstrcmp(dat->szFilterString, TranslateT(CORE_MODULES_FILTER)) == 0) {
-		// replace string with process name - that will show core settings
-		TCHAR szFileName[300];
-		GetModuleFileName(g_hInst, szFileName, _countof(szFileName));
-		TCHAR *pos = _tcsrchr(szFileName, _T('\\'));
-		if (pos)
-			pos++;
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// One option page
+
+struct OptionsPageData : public MZeroedObject
+{
+	OptionsPageData(const OPTIONSDIALOGPAGE &src)
+	{
+		if (src.hInstance != nullptr && src.pszTemplate != nullptr)
+			pDialog = new COptionPageDialog(src.hInstance, (INT_PTR)src.pszTemplate, src.pfnDlgProc, src.dwInitParam);
 		else
-			pos = szFileName;
+			pDialog = src.pDialog;
+		assert(pDialog != nullptr);
 
-		_tcsncpy_s(dat->szFilterString, pos, _TRUNCATE);
-	}
-	else {
-		int sel = SendDlgItemMessage(hdlg, IDC_KEYWORD_FILTER, (UINT)CB_GETCURSEL, 0, 0);
-		if (sel != -1) {
-			HINSTANCE hinst = (HINSTANCE)SendDlgItemMessage(hdlg, IDC_KEYWORD_FILTER, (UINT)CB_GETITEMDATA, sel, 0);
-			TCHAR szFileName[300];
-			GetModuleFileName(hinst, szFileName, _countof(szFileName));
-			TCHAR *pos = _tcsrchr(szFileName, _T('\\'));
-			if (pos) pos++;
-			else pos = szFileName;
-			_tcsncpy_s(dat->szFilterString, pos, _TRUNCATE);
-		}
-	}
+		flags = src.flags;
+		hLangpack = src.hLangpack;
 
-	_tcslwr_locale(dat->szFilterString); //all strings are stored as lowercase ... make sure filter string is lowercase too
+		if (src.flags & ODPF_UNICODE)
+			ptszTitle = mir_wstrdup(src.szTitle.w);
+		else
+			ptszTitle = mir_a2u(src.szTitle.a);
 
-	HWND hwndTree = GetDlgItem(hdlg, IDC_PAGETREE);
-	SendMessage(hwndTree, WM_SETREDRAW, FALSE, 0);
+		if (src.flags & ODPF_UNICODE)
+			ptszGroup = mir_wstrdup(src.szGroup.w);
+		else
+			ptszGroup = mir_a2u(src.szGroup.a);
 
-	HWND oldWnd = NULL;
-	HWND oldTab = NULL;
-	CMString fullTitle;
-
-	OptionsPageData *opd = dat->getCurrent();
-	if (opd != NULL) {
-		oldWnd = opd->getHwnd();
-		if (opd->insideTab)
-			oldTab = GetDlgItem(hdlg, IDC_TAB);
+		if (src.flags & ODPF_UNICODE)
+			ptszTab = mir_wstrdup(src.szTab.w);
+		else
+			ptszTab = mir_a2u(src.szTab.a);
+  	}
+	
+	~OptionsPageData()
+	{
+		delete pDialog;
 	}
 
-	dat->hCurrentPage = NULL;
+	CDlgBase *pDialog;
+	int hLangpack;
+	ptrW ptszTitle, ptszGroup, ptszTab;
+	HTREEITEM hTreeItem;
+	int changed;
+	int height;
+	int width;
+	DWORD flags;
+	BOOL insideTab;
 
-	TreeView_SelectItem(hwndTree, NULL);
-	TreeView_DeleteAllItems(hwndTree);
+	__forceinline HWND getHwnd() const { return pDialog->GetHwnd(); }
+	__forceinline HINSTANCE getInst() const { return pDialog->GetInst(); }
 
-	TVINSERTSTRUCT tvis;
-	tvis.hParent = NULL;
-	tvis.hInsertAfter = TVI_SORT;
-	tvis.item.mask = TVIF_TEXT | TVIF_STATE | TVIF_PARAM;
-	tvis.item.state = tvis.item.stateMask = TVIS_EXPANDED;
-	for (int i = 0; i < dat->arOpd.getCount(); i++) {
-		if (!CheckPageShow(hdlg, dat, i))
-			continue;
+	__forceinline wchar_t* getString(wchar_t *ptszStr)
+	{
+		if (flags & ODPF_DONTTRANSLATE)
+			return ptszStr;
+		return TranslateW_LP(ptszStr, hLangpack);
+	}
 
-		opd = dat->arOpd[i];
-		TCHAR *ptszGroup = TranslateTH(opd->hLangpack, opd->ptszGroup);
-		TCHAR *ptszTitle = opd->getString(opd->ptszTitle), *useTitle;
-		TCHAR *ptszTab = TranslateTH(opd->hLangpack, opd->ptszTab);
+	HWND CreateOptionWindow(HWND hWndParent) const
+	{
+		pDialog->SetParent(hWndParent);
+		pDialog->Create();
+		return pDialog->GetHwnd();
+	}
 
-		tvis.hParent = NULL;
-		useTitle = ptszTitle;
+	PageHash GetPluginPageHash() const
+	{
+		return mir_hashstrW(ptszGroup) + mir_hashstrW(ptszTitle) + mir_hashstrW(ptszTab);
+	}
 
-		if (ptszGroup != NULL) {
-			tvis.hParent = FindNamedTreeItemAtRoot(hwndTree, ptszGroup);
-			if (tvis.hParent == NULL) {
-				tvis.item.lParam = -1;
-				tvis.item.pszText = ptszGroup;
-				tvis.hParent = TreeView_InsertItem(hwndTree, &tvis);
+	void FindFilterStrings(int enableKeywordFiltering, int current, HWND hWndParent)
+	{
+		HWND hWnd = 0;
+		if (enableKeywordFiltering) {
+			if (current)
+				hWnd = getHwnd();
+			else {
+				hWnd = CreateOptionWindow(hWndParent);
+				ShowWindow(hWnd, SW_HIDE); // make sure it's hidden
 			}
 		}
+
+		DWORD key = GetPluginPageHash(); // get the plugin page hash
+
+		wchar_t pluginName[MAX_PATH];
+		char *temp = GetPluginNameByInstance(getInst());
+		GetDialogStrings(enableKeywordFiltering, key, GetPluginName(getInst(), pluginName, _countof(pluginName)), hWnd, ptszGroup, ptszTitle, ptszTab, _A2T(temp));
+
+		if (enableKeywordFiltering && !current)
+			DestroyWindow(hWnd); // destroy the page, we're done with it
+	}
+
+	int MatchesFilter(wchar_t *szFilterString)
+	{
+		return ContainsFilterString(GetPluginPageHash(), szFilterString);
+	}
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// Options dialog
+
+static LRESULT CALLBACK OptionsFilterSubclassProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	if (message != WM_PAINT && message != WM_PRINT)
+		return mir_callNextSubclass(hWnd, OptionsFilterSubclassProc, message, wParam, lParam);
+
+	if (GetFocus() == hWnd || GetWindowTextLength(hWnd))
+		return mir_callNextSubclass(hWnd, OptionsFilterSubclassProc, message, wParam, lParam);
+
+	RECT rc;
+	GetClientRect(hWnd, &rc);
+
+	PAINTSTRUCT paint;
+	HDC hdc = (message == WM_PAINT) ? BeginPaint(hWnd, &paint) : (HDC)wParam;
+
+	wchar_t buf[255];
+	if (bSearchState == 1 && FilterLoadProgress < 100 && FilterLoadProgress > 0)
+		mir_snwprintf(buf, TranslateT("Loading... %d%%"), FilterLoadProgress);
+	else
+		mir_snwprintf(buf, TranslateT("Search"));
+
+	bool bDrawnByTheme = false;
+
+	int oldMode = SetBkMode(hdc, TRANSPARENT);
+
+	HTHEME hTheme = OpenThemeData(hWnd, L"EDIT");
+	if (hTheme) {
+		if (IsThemeBackgroundPartiallyTransparent(hTheme, EP_EDITTEXT, ETS_NORMAL))
+			DrawThemeParentBackground(hWnd, hdc, &rc);
+
+		RECT rc2;
+		GetThemeBackgroundContentRect(hTheme, hdc, EP_EDITTEXT, ETS_NORMAL, &rc, &rc2);
+		rc2.top = 2 * rc.top - rc2.top;
+		rc2.left = 2 * rc.left - rc2.left;
+		rc2.bottom = 2 * rc.bottom - rc2.bottom;
+		rc2.right = 2 * rc.right - rc2.right;
+		DrawThemeBackground(hTheme, hdc, EP_EDITTEXT, ETS_NORMAL, &rc2, &rc);
+
+		HFONT hFont = (HFONT)SendMessage(hWnd, WM_GETFONT, 0, 0);
+		HFONT oldFont = (HFONT)SelectObject(hdc, hFont);
+		DrawThemeText(hTheme, hdc, EP_EDITTEXT, ETS_DISABLED, buf, -1, 0, 0, &rc);
+
+		SelectObject(hdc, oldFont);
+		CloseThemeData(hTheme);
+		bDrawnByTheme = true;
+	}
+
+	SetBkMode(hdc, oldMode);
+
+	if (!bDrawnByTheme) {
+		HFONT hFont = (HFONT)SendMessage(hWnd, WM_GETFONT, 0, 0);
+		HFONT oldFont = (HFONT)SelectObject(hdc, hFont);
+		SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
+		FillRect(hdc, &rc, GetSysColorBrush(COLOR_WINDOW));
+		oldMode = SetBkMode(hdc, TRANSPARENT);
+		DrawText(hdc, buf, -1, &rc, 0);
+		SetBkMode(hdc, oldMode);
+		SelectObject(hdc, oldFont);
+	}
+
+	if (message == WM_PAINT)
+		EndPaint(hWnd, &paint);
+
+	return 0;
+}
+
+class COptionsDlg : public CDlgBase
+{
+	int m_currentPage;
+	HTREEITEM m_hCurrentPage;
+	LIST<OptionsPageData> m_arOpd;
+	RECT m_rcDisplay;
+	RECT m_rcTab;
+	HFONT m_hBoldFont;
+	wchar_t m_szFilterString[1024];
+	HANDLE m_hPluginLoad, m_hPluginUnload;
+
+	const wchar_t *m_szCaption, *m_szGroup, *m_szPage, *m_szTab;
+	const OptionsPageList &m_pages;
+
+	CCtrlTreeView m_pageTree;
+	CCtrlCombo m_keywordFilter;
+	CCtrlButton m_btnApply, m_btnCancel;
+
+	COptionsDlg& operator=(const COptionsDlg&);
+
+	HTREEITEM FindNamedTreeItem(HTREEITEM hParent, const wchar_t *name)
+	{
+		wchar_t str[128];
+		TVITEMEX tvi;
+		tvi.mask = TVIF_TEXT;
+		tvi.pszText = str;
+		tvi.cchTextMax = _countof(str);
+		tvi.hItem = (hParent == nullptr) ? m_pageTree.GetRoot() : m_pageTree.GetChild(hParent);
+		while (tvi.hItem != nullptr) {
+			m_pageTree.GetItem(&tvi);
+			if (!mir_wstrcmpi(str, name))
+				return tvi.hItem;
+
+			tvi.hItem = m_pageTree.GetNextSibling(tvi.hItem);
+		}
+		return nullptr;
+	}
+
+	void SaveOptionsTreeState()
+	{
+		wchar_t str[128];
+		TVITEMEX tvi;
+		tvi.mask = TVIF_TEXT | TVIF_STATE;
+		tvi.pszText = str;
+		tvi.cchTextMax = _countof(str);
+		tvi.hItem = m_pageTree.GetRoot();
+		while (tvi.hItem != nullptr) {
+			if (m_pageTree.GetItem(&tvi)) {
+				char buf[130];
+				mir_snprintf(buf, "%s%S", OPTSTATE_PREFIX, str);
+				db_set_b(0, "Options", buf, (BYTE)((tvi.state & TVIS_EXPANDED) ? 1 : 0));
+			}
+			tvi.hItem = m_pageTree.GetNextSibling(tvi.hItem);
+		}
+	}
+
+	bool CheckPageShow(int i)
+	{
+		OptionsPageData *opd = m_arOpd[i];
+		if (m_szFilterString[0] && !opd->MatchesFilter(m_szFilterString))
+			return false;
+		return true;
+	}
+
+	void FillFilterCombo()
+	{
+		HINSTANCE *KnownInstances = (HINSTANCE*)alloca(sizeof(HINSTANCE)*m_arOpd.getCount());
+		int countKnownInst = 0;
+		m_keywordFilter.ResetContent();
+		m_keywordFilter.AddString(ALL_MODULES_FILTER, 0);
+		m_keywordFilter.AddString(CORE_MODULES_FILTER, (LPARAM)g_hInst);
+
+		for (int i = 0; i < m_arOpd.getCount(); i++) {
+			OptionsPageData *opd = m_arOpd[i];
+			opd->FindFilterStrings(false, 0, m_hwnd); // only modules name (fast enougth)
+
+			HINSTANCE inst = opd->getInst();
+			if (inst == g_hInst)
+				continue;
+
+			int j;
+			for (j = 0; j < countKnownInst; j++)
+				if (KnownInstances[j] == inst)
+					break;
+			if (j != countKnownInst)
+				continue;
+
+			KnownInstances[countKnownInst] = inst;
+			countKnownInst++;
+
+			wchar_t tszModuleName[MAX_PATH];
+			GetModuleFileName(inst, tszModuleName, _countof(tszModuleName));
+
+			wchar_t *dllName = mir_a2u(GetPluginNameByInstance(inst));
+			if (!dllName) dllName = mir_wstrdup(wcsrchr(tszModuleName, '\\'));
+			if (!dllName) dllName = mir_wstrdup(tszModuleName);
+			if (dllName) {
+				m_keywordFilter.AddString(dllName, (LPARAM)inst);
+				mir_free(dllName);
+			}
+		}
+
+		FilterLoadProgress = 100;
+	}
+
+	void CreateOptionWindowEx(OptionsPageData *opd)
+	{
+		opd->CreateOptionWindow(m_hwnd);
+		if (opd->flags & ODPF_BOLDGROUPS)
+			EnumChildWindows(opd->getHwnd(), BoldGroupTitlesEnumChildren, (LPARAM)m_hBoldFont);
+
+		RECT rcPage;
+		GetClientRect(opd->getHwnd(), &rcPage);
+		int w = opd->width = rcPage.right;
+		int h = opd->height = rcPage.bottom;
+
+		RECT rc;
+		GetWindowRect(opd->getHwnd(), &rc);
+
+		opd->insideTab = IsInsideTab(m_currentPage);
+		if (opd->insideTab) {
+			SetWindowPos(opd->getHwnd(), HWND_TOP, (m_rcTab.left + m_rcTab.right - w) >> 1, m_rcTab.top, w, h, 0);
+			::ThemeDialogBackground(opd->getHwnd(), TRUE);
+		}
 		else {
-			TVITEM tvi;
-			tvi.hItem = FindNamedTreeItemAtRoot(hwndTree, useTitle);
-			if (tvi.hItem != NULL) {
-				if (i == dat->currentPage) dat->hCurrentPage = tvi.hItem;
-				tvi.mask = TVIF_PARAM;
-				TreeView_GetItem(hwndTree, &tvi);
-				if (tvi.lParam == -1) {
-					tvi.lParam = i;
-					TreeView_SetItem(hwndTree, &tvi);
+			SetWindowPos(opd->getHwnd(), HWND_TOP, (m_rcDisplay.left + m_rcDisplay.right - w) >> 1, (m_rcDisplay.top + m_rcDisplay.bottom - h) >> 1, w, h, 0);
+			::ThemeDialogBackground(opd->getHwnd(), FALSE);
+		}
+	}
+
+	void RebuildPageTree()
+	{
+		LPARAM oldSel = m_keywordFilter.SendMsg(CB_GETEDITSEL, 0, 0);
+		m_keywordFilter.GetText(m_szFilterString, _countof(m_szFilterString));
+
+		// if filter string is set to all modules then make the filter string empty (this will return all modules)
+		BOOL bRemoveFocusFromFilter = FALSE;
+		if (mir_wstrcmp(m_szFilterString, ALL_MODULES_FILTER) == 0) {
+			m_szFilterString[0] = 0;
+			bRemoveFocusFromFilter = TRUE;
+		}
+		// if filter string is set to core modules replace it with the name of the executable (this will return all core modules)
+		else if (mir_wstrcmp(m_szFilterString, CORE_MODULES_FILTER) == 0) {
+			// replace string with process name - that will show core settings
+			wchar_t szFileName[300];
+			GetModuleFileName(g_hInst, szFileName, _countof(szFileName));
+			wchar_t *pos = wcsrchr(szFileName, '\\');
+			if (pos)
+				pos++;
+			else
+				pos = szFileName;
+
+			wcsncpy_s(m_szFilterString, pos, _TRUNCATE);
+		}
+		else {
+			int sel = m_keywordFilter.GetCurSel();
+			if (sel != -1) {
+				HINSTANCE hinst = (HINSTANCE)m_keywordFilter.GetItemData(sel);
+				wchar_t szFileName[300];
+				GetModuleFileName(hinst, szFileName, _countof(szFileName));
+				wchar_t *pos = wcsrchr(szFileName, '\\');
+				if (pos) pos++;
+				else pos = szFileName;
+				wcsncpy_s(m_szFilterString, pos, _TRUNCATE);
+			}
+		}
+
+		_tcslwr_locale(m_szFilterString); //all strings are stored as lowercase ... make sure filter string is lowercase too
+
+		m_pageTree.SendMsg(WM_SETREDRAW, FALSE, 0);
+
+		HWND oldWnd = nullptr;
+		HWND oldTab = nullptr;
+		CMStringW fullTitle;
+		TVITEMEX tvi;
+
+		OptionsPageData *opd = getCurrent();
+		if (opd != nullptr) {
+			oldWnd = opd->getHwnd();
+			if (opd->insideTab)
+				oldTab = GetDlgItem(m_hwnd, IDC_TAB);
+		}
+
+		m_hCurrentPage = nullptr;
+
+		m_pageTree.SelectItem(nullptr);
+		m_pageTree.DeleteAllItems();
+
+		TVINSERTSTRUCT tvis;
+		tvis.hParent = nullptr;
+		tvis.hInsertAfter = TVI_SORT;
+		tvis.item.mask = TVIF_TEXT | TVIF_STATE | TVIF_PARAM;
+		tvis.item.state = tvis.item.stateMask = TVIS_EXPANDED;
+		for (int i = 0; i < m_arOpd.getCount(); i++) {
+			if (!CheckPageShow(i))
+				continue;
+
+			opd = m_arOpd[i];
+			wchar_t *ptszGroup = TranslateW_LP(opd->ptszGroup, opd->hLangpack);
+			wchar_t *ptszTitle = opd->getString(opd->ptszTitle), *useTitle;
+			wchar_t *ptszTab = TranslateW_LP(opd->ptszTab, opd->hLangpack);
+
+			tvis.hParent = nullptr;
+			useTitle = ptszTitle;
+
+			if (ptszGroup != nullptr) {
+				tvis.hParent = FindNamedTreeItem(nullptr, ptszGroup);
+				if (tvis.hParent == nullptr) {
+					tvis.item.lParam = -1;
+					tvis.item.pszText = ptszGroup;
+					tvis.hParent = m_pageTree.InsertItem(&tvis);
+				}
+			}
+			else {
+				tvi.hItem = FindNamedTreeItem(nullptr, useTitle);
+				if (tvi.hItem != nullptr) {
+					if (i == m_currentPage) m_hCurrentPage = tvi.hItem;
+					tvi.mask = TVIF_PARAM;
+					m_pageTree.GetItem(&tvi);
+					if (tvi.lParam == -1) {
+						tvi.lParam = i;
+						m_pageTree.SetItem(&tvi);
+						continue;
+					}
+				}
+			}
+
+			if (ptszTab != nullptr) {
+				HTREEITEM hItem;
+				if (tvis.hParent == nullptr)
+					hItem = FindNamedTreeItem(nullptr, useTitle);
+				else
+					hItem = FindNamedTreeItem(tvis.hParent, useTitle);
+				if (hItem != nullptr) {
+					if (i == m_currentPage) {
+						tvi.hItem = hItem;
+						tvi.mask = TVIF_PARAM;
+						tvi.lParam = m_currentPage;
+						m_pageTree.SetItem(&tvi);
+						m_hCurrentPage = hItem;
+					}
 					continue;
 				}
 			}
+
+			tvis.item.pszText = useTitle;
+			tvis.item.lParam = i;
+			opd->hTreeItem = m_pageTree.InsertItem(&tvis);
+			if (i == m_currentPage)
+				m_hCurrentPage = opd->hTreeItem;
 		}
 
-		if (ptszTab != NULL) {
-			HTREEITEM hItem;
-			if (tvis.hParent == NULL)
-				hItem = FindNamedTreeItemAtRoot(hwndTree, useTitle);
-			else
-				hItem = FindNamedTreeItemAtChildren(hwndTree, tvis.hParent, useTitle);
-			if (hItem != NULL) {
-				if (i == dat->currentPage) {
-					TVITEM tvi;
-					tvi.hItem = hItem;
-					tvi.mask = TVIF_PARAM;
-					tvi.lParam = dat->currentPage;
-					TreeView_SetItem(hwndTree, &tvi);
-					dat->hCurrentPage = hItem;
-				}
-				continue;
+		wchar_t str[128];
+		tvi.mask = TVIF_TEXT | TVIF_STATE;
+		tvi.pszText = str;
+		tvi.cchTextMax = _countof(str);
+		tvi.hItem = m_pageTree.GetRoot();
+		while (tvi.hItem != nullptr) {
+			if (m_pageTree.GetItem(&tvi)) {
+				char buf[130];
+				mir_snprintf(buf, "%s%S", OPTSTATE_PREFIX, str);
+				if (!db_get_b(0, "Options", buf, 1))
+					m_pageTree.Expand(tvi.hItem, TVE_COLLAPSE);
+			}
+			tvi.hItem = m_pageTree.GetNextSibling(tvi.hItem);
+		}
+
+		if (m_hCurrentPage == nullptr) {
+			m_hCurrentPage = m_pageTree.GetRoot();
+			m_currentPage = -1;
+		}
+		m_pageTree.SelectItem(m_hCurrentPage);
+
+		if (oldWnd) {
+			opd = getCurrent();
+			if (opd && oldWnd != opd->getHwnd()) {
+				ShowWindow(oldWnd, SW_HIDE);
+				if (oldTab && (opd == nullptr || !opd->insideTab))
+					ShowWindow(oldTab, SW_HIDE);
 			}
 		}
 
-		tvis.item.pszText = useTitle;
-		tvis.item.lParam = i;
-		opd->hTreeItem = TreeView_InsertItem(hwndTree, &tvis);
-		if (i == dat->currentPage)
-			dat->hCurrentPage = opd->hTreeItem;
+		if (m_szFilterString[0] == 0) // Clear the keyword combo box
+			m_keywordFilter.SetText(L"");
+		if (!bRemoveFocusFromFilter)
+			SetFocus(m_keywordFilter.GetHwnd()); //set the focus back to the combo box
+
+		m_keywordFilter.SendMsg(CB_SETEDITSEL, 0, oldSel); //but don't select any of the text
+
+		m_pageTree.SendMsg(WM_SETREDRAW, TRUE, 0);
+		m_pageTree.EnsureVisible(m_hCurrentPage);
 	}
 
-	char str[128];
-	TVITEMA tvi;
-	tvi.mask = TVIF_TEXT | TVIF_STATE;
-	tvi.pszText = str;
-	tvi.cchTextMax = _countof(str);
-	tvi.hItem = TreeView_GetRoot(hwndTree);
-	while (tvi.hItem != NULL) {
-		if (SendMessageA(hwndTree, TVM_GETITEMA, 0, (LPARAM)&tvi)) {
-			char buf[130];
-			mir_snprintf(buf, "%s%s", OPTSTATE_PREFIX, str);
-			if (!db_get_b(NULL, "Options", buf, 1))
-				TreeView_Expand(hwndTree, tvi.hItem, TVE_COLLAPSE);
+	BOOL IsInsideTab(int i)
+	{
+		OptionsPageData *opd = m_arOpd[i];
+		int pages = 0;
+		if (opd->ptszTab != nullptr) {
+			// Count tabs to calc position
+			for (int j = 0; j < m_arOpd.getCount() && pages < 2; j++) {
+				OptionsPageData* opd2 = m_arOpd[j];
+				if (!CheckPageShow(j)) continue;
+				if (mir_wstrcmp(opd2->ptszTitle, opd->ptszTitle) || mir_wstrcmp(opd2->ptszGroup, opd->ptszGroup))
+					continue;
+				pages++;
+			}
 		}
-		tvi.hItem = TreeView_GetNextSibling(hwndTree, tvi.hItem);
+		return (pages > 1);
 	}
 
-	if (dat->hCurrentPage == NULL) {
-		dat->hCurrentPage = TreeView_GetRoot(hwndTree);
-		dat->currentPage = -1;
-	}
-	TreeView_SelectItem(hwndTree, dat->hCurrentPage);
+	void LoadOptionsModule(HINSTANCE hInst)
+	{
+		OptionsPageList arPages(1);
+		CallPluginEventHook(hInst, hOptionsInitEvent, (WPARAM)&arPages, 0);
+		if (arPages.getCount() == 0)
+			return;
 
-	if (oldWnd) {
-		opd = dat->getCurrent();
-		if (opd && oldWnd != opd->getHwnd()) {
-			ShowWindow(oldWnd, SW_HIDE);
-			if (oldTab && (opd == NULL || !opd->insideTab))
-				ShowWindow(oldTab, SW_HIDE);
+		for (int i = 0; i < arPages.getCount(); i++) {
+			OptionsPageData *opd = new OptionsPageData(arPages[i]);
+			if (opd->pDialog == nullptr) // smth went wrong
+				delete opd;
+			else
+				m_arOpd.insert(opd);
 		}
+
+		RebuildPageTree();
 	}
 
-	if (dat->szFilterString[0] == 0) // Clear the keyword combo box
-		SetDlgItemText(hdlg, IDC_KEYWORD_FILTER, _T(""));
-	if (!bRemoveFocusFromFilter)
-		SetFocus(GetDlgItem(hdlg, IDC_KEYWORD_FILTER)); //set the focus back to the combo box
+	void UnloadOptionsModule(HINSTANCE hInst)
+	{
+		bool bToRebuildTree = false;
 
-	SendDlgItemMessage(hdlg, IDC_KEYWORD_FILTER, CB_SETEDITSEL, 0, oldSel); //but don't select any of the text
-
-	SendMessage(hwndTree, WM_SETREDRAW, TRUE, 0);
-	TreeView_EnsureVisible(hwndTree, dat->hCurrentPage);
-}
-
-static BOOL IsInsideTab(HWND hdlg, OptionsDlgData *dat, int i)
-{
-	OptionsPageData *opd = dat->arOpd[i];
-	int pages = 0;
-	if (opd->ptszTab != NULL) {
-		// Count tabs to calc position
-		for (int j = 0; j < dat->arOpd.getCount() && pages < 2; j++) {
-			OptionsPageData* opd2 = dat->arOpd[j];
-			if (!CheckPageShow(hdlg, dat, j)) continue;
-			if (mir_tstrcmp(opd2->ptszTitle, opd->ptszTitle) || mir_tstrcmp(opd2->ptszGroup, opd->ptszGroup))
+		for (int i = m_arOpd.getCount() - 1; i >= 0; i--) {
+			OptionsPageData *opd = m_arOpd[i];
+			if (opd->getInst() != hInst)
 				continue;
-			pages++;
-		}
-	}
-	return (pages > 1);
-}
 
-static void LoadOptionsModule(HWND hdlg, OptionsDlgData *dat, HINSTANCE hInst)
-{
-	OptionsPageInit opi = { 0 };
-	CallPluginEventHook(hInst, hOptionsInitEvent, (WPARAM)&opi, 0);
-	if (opi.pageCount == 0)
-		return;
+			if (m_currentPage > i)
+				m_currentPage--;
 
-	for (int i = 0; i < opi.pageCount; i++) {
-		OptionsPageData *opd = new OptionsPageData(&opi.odp[i]);
-		if (opd->pDialog == NULL) // smth went wrong
+			m_arOpd.remove(i);
 			delete opd;
-		else
-			dat->arOpd.insert(opd);
+			bToRebuildTree = true;
+		}
+
+		if (bToRebuildTree)
+			RebuildPageTree();
 	}
 
-	FreeOptionsData(&opi);
-	PostMessage(hdlg, DM_REBUILDPAGETREE, 0, 0);
-}
-
-static void UnloadOptionsModule(HWND hdlg, OptionsDlgData *dat, HINSTANCE hInst)
-{
-	bool bToRebuildTree = false;
-
-	for (int i = dat->arOpd.getCount() - 1; i >= 0; i--) {
-		OptionsPageData *opd = dat->arOpd[i];
-		if (opd->getInst() != hInst)
-			continue;
-
-		if (dat->currentPage > i)
-			dat->currentPage--;
-
-		dat->arOpd.remove(i);
-		delete opd;
-		bToRebuildTree = true;
+	OptionsPageData* getCurrent() const
+	{	return (m_currentPage == -1) ? nullptr : m_arOpd[m_currentPage];
 	}
 
-	if (bToRebuildTree)
-		PostMessage(hdlg, DM_REBUILDPAGETREE, 0, 0);
-}
+public:
+	COptionsDlg(const wchar_t *pszCaption, const wchar_t *pszGroup, const wchar_t *pszPage, const wchar_t *pszTab, bool bSinglePage, const OptionsPageList &arPages) :
+		CDlgBase(g_hInst, bSinglePage ? IDD_OPTIONSPAGE : IDD_OPTIONS),
+		m_btnApply(this, IDC_APPLY),
+		m_btnCancel(this, IDCANCEL),
+		m_pageTree(this, IDC_PAGETREE),
+		m_keywordFilter(this, IDC_KEYWORD_FILTER),
+		m_arOpd(10),
+		m_szCaption(pszCaption),
+		m_szGroup(pszGroup),
+		m_szPage(pszPage),
+		m_szTab(pszTab),
+		m_pages(arPages)
+	{
+		m_keywordFilter.UseSystemColors();
+		m_keywordFilter.OnChange = Callback(this, &COptionsDlg::OnFilterChanged);
 
-static INT_PTR CALLBACK OptionsDlgProc(HWND hdlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	OptionsPageData *opd;
-	OptionsDlgData *dat = (OptionsDlgData*)GetWindowLongPtr(hdlg, GWLP_USERDATA);
-	HWND hwndTree = GetDlgItem(hdlg, IDC_PAGETREE);
+		m_pageTree.OnSelChanging = Callback(this, &COptionsDlg::OnChanging);
+		m_pageTree.OnSelChanged = Callback(this, &COptionsDlg::OnTreeChanged);
 
-	switch (message) {
-	case WM_CTLCOLORSTATIC:
-		switch (GetDlgCtrlID((HWND)lParam)) {
-		case IDC_WHITERECT:
-		case IDC_KEYWORD_FILTER:
-			SetBkColor((HDC)wParam, GetSysColor(COLOR_WINDOW));
-			return (INT_PTR)GetSysColorBrush(COLOR_WINDOW);
+		m_btnCancel.OnClick = Callback(this, &COptionsDlg::OnCancel);
+		m_btnApply.OnClick = Callback(this, &COptionsDlg::btnApply_Click);
+	}
+
+	virtual void OnInitDialog() override
+	{
+		Utils_RestoreWindowPositionNoSize(m_hwnd, 0, "Options", "");
+		Window_SetSkinIcon_IcoLib(m_hwnd, SKINICON_OTHER_OPTIONS);
+		m_btnApply.Disable();
+
+		COMBOBOXINFO cbi;
+		cbi.cbSize = sizeof(COMBOBOXINFO);
+		GetComboBoxInfo(GetDlgItem(m_hwnd, IDC_KEYWORD_FILTER), &cbi);
+		mir_subclassWindow(cbi.hwndItem, OptionsFilterSubclassProc);
+
+		if (IsAeroMode()) {
+			mir_subclassWindow(cbi.hwndCombo, AeroPaintSubclassProc);
+			mir_subclassWindow(cbi.hwndItem, AeroPaintSubclassProc);
 		}
-		break;
 
-	case WM_INITDIALOG:
-		TranslateDialogDefault(hdlg);
+		SetCaption(m_szCaption);
 
-		if (!ServiceExists(MS_MODERNOPT_SHOW))
-			ShowWindow(GetDlgItem(hdlg, IDC_MODERN), FALSE);
+		LOGFONT lf;
+		m_hBoldFont = (HFONT)m_btnApply.SendMsg(WM_GETFONT, 0, 0);
+		GetObject(m_hBoldFont, sizeof(lf), &lf);
+		lf.lfWeight = FW_BOLD;
+		m_hBoldFont = CreateFontIndirect(&lf);
 
-		dat = new OptionsDlgData;
-		SetWindowLongPtr(hdlg, GWLP_USERDATA, (LONG_PTR)dat);
+		m_hPluginLoad = HookEventMessage(ME_SYSTEM_MODULELOAD, m_hwnd, HM_MODULELOAD);
+		m_hPluginUnload = HookEventMessage(ME_SYSTEM_MODULEUNLOAD, m_hwnd, HM_MODULEUNLOAD);
+		m_currentPage = -1;
 
-		Utils_RestoreWindowPositionNoSize(hdlg, NULL, "Options", "");
-		Window_SetIcon_IcoLib(hdlg, SKINICON_OTHER_OPTIONS);
-		EnableWindow(GetDlgItem(hdlg, IDC_APPLY), FALSE);
-		{
-			COMBOBOXINFO cbi;
-			cbi.cbSize = sizeof(COMBOBOXINFO);
-			GetComboBoxInfo(GetDlgItem(hdlg, IDC_KEYWORD_FILTER), &cbi);
-			mir_subclassWindow(cbi.hwndItem, OptionsFilterSubclassProc);
+		ptrW lastPage, lastGroup, lastTab;
+		if (m_szPage == nullptr) {
+			lastPage = db_get_wsa(0, "Options", "LastPage");
 
-			if (IsAeroMode()) {
-				mir_subclassWindow(cbi.hwndCombo, AeroPaintSubclassProc);
-				mir_subclassWindow(cbi.hwndItem, AeroPaintSubclassProc);
-			}
-
-			PROPSHEETHEADER *psh = (PROPSHEETHEADER*)lParam;
-			SetWindowText(hdlg, psh->pszCaption);
-
-			LOGFONT lf;
-			dat->hBoldFont = (HFONT)SendDlgItemMessage(hdlg, IDC_APPLY, WM_GETFONT, 0, 0);
-			GetObject(dat->hBoldFont, sizeof(lf), &lf);
-			lf.lfWeight = FW_BOLD;
-			dat->hBoldFont = CreateFontIndirect(&lf);
-
-			dat->hPluginLoad = HookEventMessage(ME_SYSTEM_MODULELOAD, hdlg, HM_MODULELOAD);
-			dat->hPluginUnload = HookEventMessage(ME_SYSTEM_MODULEUNLOAD, hdlg, HM_MODULEUNLOAD);
-			dat->currentPage = -1;
-
-			ptrT lastPage, lastGroup, lastTab;
-			OPENOPTIONSDIALOG *ood = (OPENOPTIONSDIALOG*)psh->pStartPage;
-			if (ood->pszPage == NULL) {
-				lastPage = db_get_tsa(NULL, "Options", "LastPage");
-
-				if (ood->pszGroup == NULL)
-					lastGroup = db_get_tsa(NULL, "Options", "LastGroup");
-				else
-					lastGroup = mir_a2t(ood->pszGroup);
-			}
-			else {
-				lastPage = mir_a2t(ood->pszPage);
-				lastGroup = mir_a2t(ood->pszGroup);
-			}
-
-			if (ood->pszTab == NULL)
-				lastTab = db_get_tsa(NULL, "Options", "LastTab");
+			if (m_szGroup == nullptr)
+				lastGroup = db_get_wsa(0, "Options", "LastGroup");
 			else
-				lastTab = mir_a2t(ood->pszTab);
-
-			OPTIONSDIALOGPAGE *odp = (OPTIONSDIALOGPAGE*)psh->ppsp;
-			for (UINT i = 0; i < psh->nPages; i++, odp++) {
-				opd = new OptionsPageData(odp);
-				if (opd->pDialog == NULL) // smth went wrong
-					delete opd;
-				else
-					dat->arOpd.insert(opd);
-
-				if (!mir_tstrcmp(lastPage, odp->ptszTitle) && !mir_tstrcmp(lastGroup, odp->ptszGroup))
-					if ((ood->pszTab == NULL && dat->currentPage == -1) || !mir_tstrcmp(lastTab, odp->ptszTab))
-						dat->currentPage = (int)i;
-			}
-
-			GetWindowRect(GetDlgItem(hdlg, IDC_STNOPAGE), &dat->rcDisplay);
-			MapWindowPoints(NULL, hdlg, (LPPOINT)&dat->rcDisplay, 2);
-
-			// Add an item to count in height
-			TCITEM tie;
-			tie.mask = TCIF_TEXT | TCIF_IMAGE;
-			tie.iImage = -1;
-			tie.pszText = _T("X");
-			TabCtrl_InsertItem(GetDlgItem(hdlg, IDC_TAB), 0, &tie);
-
-			GetWindowRect(GetDlgItem(hdlg, IDC_TAB), &dat->rcTab);
-			MapWindowPoints(NULL, hdlg, (LPPOINT)&dat->rcTab, 2);
-			TabCtrl_AdjustRect(GetDlgItem(hdlg, IDC_TAB), FALSE, &dat->rcTab);
-
-			FillFilterCombo(hdlg, dat);
-			PostMessage(hdlg, DM_REBUILDPAGETREE, 0, 0);
-		}
-		return TRUE;
-
-	case DM_REBUILDPAGETREE:
-		RebuildPageTree(hdlg, dat);
-		break;
-
-	case HM_MODULELOAD:
-		LoadOptionsModule(hdlg, dat, (HINSTANCE)lParam);
-		break;
-
-	case HM_MODULEUNLOAD:
-		UnloadOptionsModule(hdlg, dat, (HINSTANCE)lParam);
-		break;
-
-	case PSM_CHANGED:
-		EnableWindow(GetDlgItem(hdlg, IDC_APPLY), TRUE);
-
-		opd = dat->getCurrent();
-		if (opd)
-			opd->changed = 1;
-
-		return TRUE;
-
-	case PSM_GETBOLDFONT:
-		SetWindowLongPtr(hdlg, DWLP_MSGRESULT, (LONG_PTR)dat->hBoldFont);
-		return TRUE;
-
-	case WM_NOTIFY:
-		switch (wParam) {
-		case IDC_TAB:
-		case IDC_PAGETREE:
-			switch (((LPNMHDR)lParam)->code) {
-			case TVN_ITEMEXPANDING:
-				SetWindowLongPtr(hdlg, DWLP_MSGRESULT, FALSE);
-				return TRUE;
-
-			case TCN_SELCHANGING:
-			case TVN_SELCHANGING:
-				opd = dat->getCurrent();
-				if (opd && opd->getHwnd() != NULL) {
-					PSHNOTIFY pshn;
-					pshn.hdr.code = PSN_KILLACTIVE;
-					pshn.hdr.hwndFrom = dat->arOpd[dat->currentPage]->getHwnd();
-					pshn.hdr.idFrom = 0;
-					pshn.lParam = 0;
-					if (SendMessage(dat->arOpd[dat->currentPage]->getHwnd(), WM_NOTIFY, 0, (LPARAM)&pshn)) {
-						SetWindowLongPtr(hdlg, DWLP_MSGRESULT, TRUE);
-						return TRUE;
-					}
-				}
-				break;
-
-			case TCN_SELCHANGE:
-			case TVN_SELCHANGED:
-				ShowWindow(GetDlgItem(hdlg, IDC_STNOPAGE), SW_HIDE);
-
-				opd = dat->getCurrent();
-				if (opd && opd->getHwnd() != NULL)
-					ShowWindow(opd->getHwnd(), SW_HIDE);
-
-				if (wParam != IDC_TAB) {
-					TVITEM tvi;
-					tvi.hItem = dat->hCurrentPage = TreeView_GetSelection(hwndTree);
-					if (tvi.hItem == NULL) {
-						ShowWindow(GetDlgItem(hdlg, IDC_TAB), SW_HIDE);
-						break;
-					}
-
-					tvi.mask = TVIF_HANDLE | TVIF_PARAM;
-					TreeView_GetItem(hwndTree, &tvi);
-					dat->currentPage = tvi.lParam;
-					ShowWindow(GetDlgItem(hdlg, IDC_TAB), SW_HIDE);
-				}
-				else {
-					TCITEM tie;
-					tie.mask = TCIF_PARAM;
-					TabCtrl_GetItem(GetDlgItem(hdlg, IDC_TAB), TabCtrl_GetCurSel(GetDlgItem(hdlg, IDC_TAB)), &tie);
-					dat->currentPage = tie.lParam;
-
-					TVITEM tvi;
-					tvi.hItem = dat->hCurrentPage;
-					tvi.mask = TVIF_PARAM;
-					tvi.lParam = dat->currentPage;
-					TreeView_SetItem(hwndTree, &tvi);
-				}
-
-				opd = dat->getCurrent();
-				if (opd == NULL) {
-					ShowWindow(GetDlgItem(hdlg, IDC_STNOPAGE), SW_SHOW);
-					break;
-				}
-				if (opd->getHwnd() == NULL) {
-					CreateOptionWindow(opd, hdlg);
-					if (opd->flags & ODPF_BOLDGROUPS)
-						EnumChildWindows(opd->getHwnd(), BoldGroupTitlesEnumChildren, (LPARAM)dat->hBoldFont);
-
-					RECT rcPage;
-					GetClientRect(opd->getHwnd(), &rcPage);
-					int w = opd->width = rcPage.right;
-					int h = opd->height = rcPage.bottom;
-
-					RECT rc;
-					GetWindowRect(opd->getHwnd(), &rc);
-
-					opd->insideTab = IsInsideTab(hdlg, dat, dat->currentPage);
-					if (opd->insideTab) {
-						SetWindowPos(opd->getHwnd(), HWND_TOP, (dat->rcTab.left + dat->rcTab.right - w) >> 1, dat->rcTab.top, w, h, 0);
-						ThemeDialogBackground(opd->getHwnd(), TRUE);
-					}
-					else {
-						SetWindowPos(opd->getHwnd(), HWND_TOP, (dat->rcDisplay.left + dat->rcDisplay.right - w) >> 1, (dat->rcDisplay.top + dat->rcDisplay.bottom - h) >> 1, w, h, 0);
-						ThemeDialogBackground(opd->getHwnd(), FALSE);
-					}
-				}
-
-				if (wParam != IDC_TAB) {
-					opd->insideTab = IsInsideTab(hdlg, dat, dat->currentPage);
-					if (opd->insideTab) {
-						// Make tabbed pane
-						int pages = 0, sel = 0;
-						HWND hwndTab = GetDlgItem(hdlg, IDC_TAB);
-						TabCtrl_DeleteAllItems(hwndTab);
-
-						TCITEM tie;
-						tie.mask = TCIF_TEXT | TCIF_IMAGE | TCIF_PARAM;
-						tie.iImage = -1;
-						for (int i = 0; i < dat->arOpd.getCount(); i++) {
-							if (!CheckPageShow(hdlg, dat, i))
-								continue;
-
-							OptionsPageData *p = dat->arOpd[i];
-							if (mir_tstrcmp(opd->ptszTitle, p->ptszTitle) || mir_tstrcmp(opd->ptszGroup, p->ptszGroup))
-								continue;
-
-							tie.pszText = TranslateTH(p->hLangpack, p->ptszTab);
-							tie.lParam = i;
-							TabCtrl_InsertItem(hwndTab, pages, &tie);
-							if (!mir_tstrcmp(opd->ptszTab, p->ptszTab))
-								sel = pages;
-							pages++;
-						}
-						TabCtrl_SetCurSel(hwndTab, sel);
-						ShowWindow(hwndTab, opd->insideTab ? SW_SHOW : SW_HIDE);
-					}
-
-					ThemeDialogBackground(opd->getHwnd(), opd->insideTab);
-				}
-
-				ShowWindow(opd->getHwnd(), SW_SHOW);
-				if (((LPNMTREEVIEW)lParam)->action == TVC_BYMOUSE)
-					PostMessage(hdlg, DM_FOCUSPAGE, 0, 0);
-				else
-					SetFocus(hwndTree);
-			}
-		}
-		break;
-
-	case DM_FOCUSPAGE:
-		if (dat->currentPage != -1)
-			SetFocus(dat->arOpd[dat->currentPage]->getHwnd());
-		break;
-
-	case WM_TIMER:
-		if (wParam == FILTER_TIMEOUT_TIMER) {
-			SaveOptionsTreeState(hdlg);
-			SendMessage(hdlg, DM_REBUILDPAGETREE, 0, 0);
-
-			KillTimer(hdlg, FILTER_TIMEOUT_TIMER);
-		}
-		break;
-
-	case WM_COMMAND:
-		switch (LOWORD(wParam)) {
-		case IDC_KEYWORD_FILTER:
-			// add a timer - when the timer elapses filter the option pages
-			if ((HIWORD(wParam) == CBN_SELCHANGE) || (HIWORD(wParam) == CBN_EDITCHANGE))
-			if (!SetTimer(hdlg, FILTER_TIMEOUT_TIMER, 400, NULL))
-				MessageBeep(MB_ICONSTOP);
-			break;
-
-		case IDC_MODERN:
-			db_set_b(NULL, "Options", "Expert", 0);
-			SaveOptionsTreeState(hdlg);
-			PostMessage(hdlg, WM_CLOSE, 0, 0);
-			CallService(MS_MODERNOPT_SHOW, 0, 0);
-			break;
-
-		case IDCANCEL:
-			{
-				PSHNOTIFY pshn;
-				pshn.hdr.idFrom = 0;
-				pshn.lParam = 0;
-				pshn.hdr.code = PSN_RESET;
-				for (int i = 0; i < dat->arOpd.getCount(); i++) {
-					OptionsPageData *p = dat->arOpd[i];
-					if (p->getHwnd() == NULL || !p->changed)
-						continue;
-					pshn.hdr.hwndFrom = p->getHwnd();
-					SendMessage(p->getHwnd(), WM_NOTIFY, 0, (LPARAM)&pshn);
-				}
-				DestroyWindow(hdlg);
-			}
-			break;
-
-		case IDOK:
-		case IDC_APPLY:
-			if (LOWORD(wParam) == IDOK && GetParent(GetFocus()) == GetDlgItem(hdlg, IDC_KEYWORD_FILTER))
-				return TRUE;
-
-			PSHNOTIFY pshn;
-			EnableWindow(GetDlgItem(hdlg, IDC_APPLY), FALSE);
-			SetFocus(hwndTree);
-
-			opd = dat->getCurrent();
-			if (opd != NULL) {
-				pshn.hdr.idFrom = 0;
-				pshn.lParam = LOWORD(wParam);
-				pshn.hdr.code = PSN_KILLACTIVE;
-				pshn.hdr.hwndFrom = opd->getHwnd();
-				if (SendMessage(opd->getHwnd(), WM_NOTIFY, 0, (LPARAM)&pshn))
-					break;
-			}
-
-			pshn.hdr.code = PSN_APPLY;
-			for (int i = 0; i < dat->arOpd.getCount(); i++) {
-				OptionsPageData *p = dat->arOpd[i];
-				if (p->getHwnd() == NULL || !p->changed) continue;
-				p->changed = 0;
-				pshn.hdr.hwndFrom = p->getHwnd();
-				if (SendMessage(p->getHwnd(), WM_NOTIFY, 0, (LPARAM)&pshn) == PSNRET_INVALID_NOCHANGEPAGE) {
-					dat->hCurrentPage = p->hTreeItem;
-					TreeView_SelectItem(hwndTree, dat->hCurrentPage);
-					if (opd)
-						opd->pDialog->Show(SW_HIDE);
-					dat->currentPage = i;
-					if (opd)
-						opd->pDialog->Show();
-					return 0;
-				}
-			}
-
-			if (LOWORD(wParam) == IDOK)
-				DestroyWindow(hdlg);
-		}
-		break;
-
-	case WM_DESTROY:
-		if (FilterTimerId)
-			KillTimer(hdlg, FilterTimerId);
-		DestroyWindow(hFilterSearchWnd);
-		ClearFilterStrings();
-		dat->szFilterString[0] = 0;
-
-		UnhookEvent(dat->hPluginLoad);
-		UnhookEvent(dat->hPluginUnload);
-
-		SaveOptionsTreeState(hdlg);
-		Window_FreeIcon_IcoLib(hdlg);
-
-		opd = dat->getCurrent();
-		if (opd) {
-			if (opd->ptszTab)
-				db_set_ts(NULL, "Options", "LastTab", opd->ptszTab);
-			else
-				db_unset(NULL, "Options", "LastTab");
-			if (opd->ptszGroup)
-				db_set_ts(NULL, "Options", "LastGroup", opd->ptszGroup);
-			else
-				db_unset(NULL, "Options", "LastGroup");
-			db_set_ts(NULL, "Options", "LastPage", opd->ptszTitle);
+				lastGroup = mir_wstrdup(m_szGroup);
 		}
 		else {
-			db_unset(NULL, "Options", "LastTab");
-			db_unset(NULL, "Options", "LastGroup");
-			db_unset(NULL, "Options", "LastPage");
+			lastPage = mir_wstrdup(m_szPage);
+			lastGroup = mir_wstrdup(m_szGroup);
 		}
 
-		Utils_SaveWindowPosition(hdlg, NULL, "Options", "");
+		if (m_szTab == nullptr)
+			lastTab = db_get_wsa(0, "Options", "LastTab");
+		else
+			lastTab = mir_wstrdup(m_szTab);
 
-		for (int i = 0; i < dat->arOpd.getCount(); i++)
-			delete dat->arOpd[i];
+		for (int i = 0; i < m_pages.getCount(); i++) {
+			const OPTIONSDIALOGPAGE &odp = m_pages[i];
+			OptionsPageData *opd = new OptionsPageData(odp);
+			if (opd->pDialog == nullptr) // smth went wrong
+				delete opd;
+			else
+				m_arOpd.insert(opd);
 
-		DeleteObject(dat->hBoldFont);
-		delete dat;
-		hwndOptions = NULL;
+			if (!mir_wstrcmp(lastPage, odp.szTitle.w) && !mir_wstrcmp(lastGroup, odp.szGroup.w))
+				if ((m_szTab == nullptr && m_currentPage == -1) || !mir_wstrcmp(lastTab, odp.szTab.w))
+					m_currentPage = (int)i;
+		}
 
-		CallService(MS_MODERNOPT_RESTORE, 0, 0);
-		break;
+		GetWindowRect(GetDlgItem(m_hwnd, IDC_STNOPAGE), &m_rcDisplay);
+		MapWindowPoints(nullptr, m_hwnd, (LPPOINT)&m_rcDisplay, 2);
+
+		// Add an item to count in height
+		TCITEM tie;
+		tie.mask = TCIF_TEXT | TCIF_IMAGE;
+		tie.iImage = -1;
+		tie.pszText = L"X";
+		TabCtrl_InsertItem(GetDlgItem(m_hwnd, IDC_TAB), 0, &tie);
+
+		GetWindowRect(GetDlgItem(m_hwnd, IDC_TAB), &m_rcTab);
+		MapWindowPoints(nullptr, m_hwnd, (LPPOINT)&m_rcTab, 2);
+		TabCtrl_AdjustRect(GetDlgItem(m_hwnd, IDC_TAB), FALSE, &m_rcTab);
+
+		FillFilterCombo();
+		RebuildPageTree();
 	}
-	return FALSE;
-}
+
+	virtual void OnDestroy() override
+	{
+		ClearFilterStrings();
+		m_szFilterString[0] = 0;
+
+		UnhookEvent(m_hPluginLoad);
+		UnhookEvent(m_hPluginUnload);
+
+		SaveOptionsTreeState();
+		Window_FreeIcon_IcoLib(m_hwnd);
+
+		OptionsPageData *opd = getCurrent();
+		if (opd) {
+			if (opd->ptszTab)
+				db_set_ws(0, "Options", "LastTab", opd->ptszTab);
+			else
+				db_unset(0, "Options", "LastTab");
+			if (opd->ptszGroup)
+				db_set_ws(0, "Options", "LastGroup", opd->ptszGroup);
+			else
+				db_unset(0, "Options", "LastGroup");
+			db_set_ws(0, "Options", "LastPage", opd->ptszTitle);
+		}
+		else {
+			db_unset(0, "Options", "LastTab");
+			db_unset(0, "Options", "LastGroup");
+			db_unset(0, "Options", "LastPage");
+		}
+
+		Utils_SaveWindowPosition(m_hwnd, 0, "Options", "");
+
+		for (int i = 0; i < m_arOpd.getCount(); i++)
+			delete m_arOpd[i];
+
+		DeleteObject(m_hBoldFont);
+		pOptionsDlg = nullptr;
+	}
+
+	virtual void OnApply() override
+	{
+		PSHNOTIFY pshn;
+		m_btnApply.Disable();
+		SetFocus(m_pageTree.GetHwnd());
+
+		OptionsPageData *opd = getCurrent();
+		if (opd != nullptr) {
+			pshn.hdr.idFrom = 0;
+			pshn.lParam = IDC_APPLY;
+			pshn.hdr.code = PSN_KILLACTIVE;
+			pshn.hdr.hwndFrom = opd->getHwnd();
+			if (SendMessage(opd->getHwnd(), WM_NOTIFY, 0, (LPARAM)&pshn))
+				return;
+		}
+
+		pshn.hdr.code = PSN_APPLY;
+		for (int i = 0; i < m_arOpd.getCount(); i++) {
+			OptionsPageData *p = m_arOpd[i];
+			if (p->getHwnd() == nullptr || !p->changed) continue;
+			p->changed = 0;
+			pshn.hdr.hwndFrom = p->getHwnd();
+			if (SendMessage(p->getHwnd(), WM_NOTIFY, 0, (LPARAM)&pshn) == PSNRET_INVALID_NOCHANGEPAGE) {
+				m_hCurrentPage = p->hTreeItem;
+				m_pageTree.SelectItem(m_hCurrentPage);
+				if (opd)
+					opd->pDialog->Hide();
+				m_currentPage = i;
+				if (opd)
+					opd->pDialog->Show();
+				return;
+			}
+		}
+	}
+
+	void btnApply_Click(CCtrlButton*)
+	{
+		OnApply();
+		m_btnApply.Disable();
+	}
+
+	void OnOk(void*)
+	{
+		if (GetParent(GetFocus()) == GetDlgItem(m_hwnd, IDC_KEYWORD_FILTER))
+			return;
+
+		OnApply();
+		Close();
+	}
+
+	void OnCancel(CCtrlButton*)
+	{
+		PSHNOTIFY pshn;
+		pshn.hdr.idFrom = 0;
+		pshn.lParam = 0;
+		pshn.hdr.code = PSN_RESET;
+		for (int i = 0; i < m_arOpd.getCount(); i++) {
+			OptionsPageData *p = m_arOpd[i];
+			if (p->getHwnd() == nullptr || !p->changed)
+				continue;
+			pshn.hdr.hwndFrom = p->getHwnd();
+			SendMessage(p->getHwnd(), WM_NOTIFY, 0, (LPARAM)&pshn);
+		}
+	}
+
+	void OnChanging(CCtrlTreeView::TEventInfo*)
+	{
+		OptionsPageData *opd = getCurrent();
+		if (opd && opd->getHwnd() != nullptr) {
+			PSHNOTIFY pshn;
+			pshn.hdr.code = PSN_KILLACTIVE;
+			pshn.hdr.hwndFrom = m_arOpd[m_currentPage]->getHwnd();
+			pshn.hdr.idFrom = 0;
+			pshn.lParam = 0;
+			if (SendMessage(m_arOpd[m_currentPage]->getHwnd(), WM_NOTIFY, 0, (LPARAM)&pshn)) {
+				SetWindowLongPtr(m_hwnd, DWLP_MSGRESULT, TRUE);
+				return;
+			}
+		}
+	}
+
+	void OnFilterChanged(void*)
+	{
+		// add a timer - when the timer elapses filter the option pages
+		CTimer *pTimer = new CTimer(this, FILTER_TIMEOUT_TIMER);
+		pTimer->OnEvent = Callback(this, &COptionsDlg::OnTimer);
+		pTimer->Start(400);
+	}
+
+	void OnTreeChanged(CCtrlTreeView::TEventInfo *evt)
+	{
+		ShowWindow(GetDlgItem(m_hwnd, IDC_STNOPAGE), SW_HIDE);
+
+		OptionsPageData *opd = getCurrent();
+		if (opd && opd->getHwnd() != nullptr)
+			ShowWindow(opd->getHwnd(), SW_HIDE);
+
+		TVITEMEX tvi;
+		tvi.hItem = m_hCurrentPage = m_pageTree.GetSelection();
+		if (tvi.hItem == nullptr) {
+			ShowWindow(GetDlgItem(m_hwnd, IDC_TAB), SW_HIDE);
+			return;
+		}
+
+		tvi.mask = TVIF_HANDLE | TVIF_PARAM;
+		m_pageTree.GetItem(&tvi);
+		m_currentPage = tvi.lParam;
+		ShowWindow(GetDlgItem(m_hwnd, IDC_TAB), SW_HIDE);
+
+		opd = getCurrent();
+		if (opd == nullptr) {
+			ShowWindow(GetDlgItem(m_hwnd, IDC_STNOPAGE), SW_SHOW);
+			return;
+		}
+
+		if (opd->getHwnd() == nullptr)
+			CreateOptionWindowEx(opd);
+
+		opd->insideTab = IsInsideTab(m_currentPage);
+		if (opd->insideTab) {
+			// Make tabbed pane
+			int pages = 0, sel = 0;
+			HWND hwndTab = GetDlgItem(m_hwnd, IDC_TAB);
+			TabCtrl_DeleteAllItems(hwndTab);
+
+			TCITEM tie;
+			tie.mask = TCIF_TEXT | TCIF_IMAGE | TCIF_PARAM;
+			tie.iImage = -1;
+			for (int i = 0; i < m_arOpd.getCount(); i++) {
+				if (!CheckPageShow(i))
+					continue;
+
+				OptionsPageData *p = m_arOpd[i];
+				if (mir_wstrcmp(opd->ptszTitle, p->ptszTitle) || mir_wstrcmp(opd->ptszGroup, p->ptszGroup))
+					continue;
+
+				tie.pszText = TranslateW_LP(p->ptszTab, p->hLangpack);
+				tie.lParam = i;
+				TabCtrl_InsertItem(hwndTab, pages, &tie);
+				if (!mir_wstrcmp(opd->ptszTab, p->ptszTab))
+					sel = pages;
+				pages++;
+			}
+			TabCtrl_SetCurSel(hwndTab, sel);
+			ShowWindow(hwndTab, opd->insideTab ? SW_SHOW : SW_HIDE);
+		}
+
+		::ThemeDialogBackground(opd->getHwnd(), opd->insideTab);
+
+		ShowWindow(opd->getHwnd(), SW_SHOW);
+		if (evt->nmtv->action == TVC_BYMOUSE) {
+			if (m_currentPage != -1)
+				SetFocus(m_arOpd[m_currentPage]->getHwnd());
+		}
+		else SetFocus(m_pageTree.GetHwnd());
+	}
+
+	void OnTabChanged()
+	{
+		ShowWindow(GetDlgItem(m_hwnd, IDC_STNOPAGE), SW_HIDE);
+
+		OptionsPageData *opd = getCurrent();
+		if (opd && opd->getHwnd() != nullptr)
+			ShowWindow(opd->getHwnd(), SW_HIDE);
+
+		TCITEM tie;
+		tie.mask = TCIF_PARAM;
+		TabCtrl_GetItem(GetDlgItem(m_hwnd, IDC_TAB), TabCtrl_GetCurSel(GetDlgItem(m_hwnd, IDC_TAB)), &tie);
+		m_currentPage = tie.lParam;
+
+		TVITEMEX tvi;
+		tvi.hItem = m_hCurrentPage;
+		tvi.mask = TVIF_PARAM;
+		tvi.lParam = m_currentPage;
+		m_pageTree.SetItem(&tvi);
+
+		opd = getCurrent();
+		if (opd == nullptr) {
+			ShowWindow(GetDlgItem(m_hwnd, IDC_STNOPAGE), SW_SHOW);
+			return;
+		}
+
+		if (opd->getHwnd() == nullptr)
+			CreateOptionWindowEx(opd);
+
+		ShowWindow(opd->getHwnd(), SW_SHOW);
+		SetFocus(m_pageTree.GetHwnd());
+	}
+
+	virtual INT_PTR DlgProc(UINT msg, WPARAM wParam, LPARAM lParam) override
+	{
+		switch (msg) {
+		case HM_MODULELOAD:
+			LoadOptionsModule((HINSTANCE)lParam);
+			break;
+
+		case HM_MODULEUNLOAD:
+			UnloadOptionsModule((HINSTANCE)lParam);
+			break;
+
+		case PSM_CHANGED:
+			m_btnApply.Enable();
+			{
+				OptionsPageData *opd = getCurrent();
+				if (opd)
+					opd->changed = 1;
+			}
+			return TRUE;
+
+		case PSM_GETBOLDFONT:
+			SetWindowLongPtr(m_hwnd, DWLP_MSGRESULT, (LONG_PTR)m_hBoldFont);
+			return TRUE;
+
+		case WM_NOTIFY:
+			switch (wParam) {
+			case IDC_TAB:
+			case IDC_PAGETREE:
+				switch (((LPNMHDR)lParam)->code) {
+				case TVN_ITEMEXPANDING:
+					SetWindowLongPtr(m_hwnd, DWLP_MSGRESULT, FALSE);
+					return TRUE;
+
+				case TCN_SELCHANGING:
+					OnChanging(nullptr);
+					return TRUE;
+
+				case TCN_SELCHANGE:
+					OnTabChanged();
+					return TRUE;
+				}
+			}
+			break;
+		}
+
+		return CDlgBase::DlgProc(msg, wParam, lParam);
+	}
+
+	void OnTimer(CTimer *pTimer)
+	{
+		pTimer->Stop();
+		SaveOptionsTreeState();
+		RebuildPageTree();
+	}
+
+	void Locate(const wchar_t *pszGroup, const wchar_t *pszPage, int _hLang)
+	{
+		ShowWindow(GetHwnd(), SW_RESTORE);
+		SetForegroundWindow(m_hwnd);
+		if (pszPage != nullptr) {
+			HTREEITEM hItem = nullptr;
+			if (pszGroup != nullptr) {
+				hItem = FindNamedTreeItem(nullptr, TranslateW_LP(pszGroup, _hLang));
+				if (hItem != nullptr)
+					hItem = FindNamedTreeItem(hItem, TranslateW_LP(pszPage, _hLang));
+			}
+			else hItem = FindNamedTreeItem(nullptr, TranslateW_LP(pszPage, _hLang));
+
+			if (hItem != nullptr)
+				m_pageTree.SelectItem(hItem);
+		}
+	}
+};
 
 void OpenAccountOptions(PROTOACCOUNT *pa)
 {
-	if (pa->ppro == NULL)
+	if (pa->ppro == nullptr)
 		return;
 
-	OptionsPageInit opi = { 0 };
-	pa->ppro->OnEvent(EV_PROTO_ONOPTIONS, (WPARAM)&opi, 0);
-	if (opi.pageCount == 0)
+	OptionsPageList arPages(1);
+	pa->ppro->OnEvent(EV_PROTO_ONOPTIONS, (WPARAM)&arPages, 0);
+	if (arPages.getCount() == 0)
 		return;
 
-	TCHAR tszTitle[100];
-	mir_sntprintf(tszTitle, TranslateT("%s options"), pa->tszAccountName);
-
-	OPENOPTIONSDIALOG ood = { sizeof(ood) };
-	ood.pszGroup = LPGEN("Network");
-	ood.pszPage = mir_t2a(pa->tszAccountName);
-
-	PROPSHEETHEADER psh = { sizeof(psh) };
-	psh.dwFlags = PSH_PROPSHEETPAGE | PSH_NOAPPLYNOW;
-	psh.hwndParent = NULL;
-	psh.nPages = opi.pageCount;
-	psh.pStartPage = (LPCTSTR)&ood;
-	psh.pszCaption = tszTitle;
-	psh.ppsp = (PROPSHEETPAGE*)opi.odp;
-	hwndOptions = CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_OPTIONSPAGE), NULL, OptionsDlgProc, (LPARAM)&psh);
-	mir_free((void*)ood.pszPage);
-	FreeOptionsData(&opi);
+	wchar_t tszTitle[100];
+	mir_snwprintf(tszTitle, TranslateT("%s options"), pa->tszAccountName);
+	pOptionsDlg = new COptionsDlg(tszTitle, LPGENW("Network"), pa->tszAccountName, nullptr, true, arPages);
+	pOptionsDlg->Show();
 }
 
-static void OpenOptionsNow(int _hLang, const char *pszGroup, const char *pszPage, const char *pszTab, bool bSinglePage = false)
+static void OpenOptionsNow(int _hLang, const wchar_t *pszGroup, const wchar_t *pszPage, const wchar_t *pszTab, bool bSinglePage)
 {
-	if (IsWindow(hwndOptions)) {
-		ShowWindow(hwndOptions, SW_RESTORE);
-		SetForegroundWindow(hwndOptions);
-		if (pszPage != NULL) {
-			ptrT ptszPage(mir_a2t(pszPage));
-			HTREEITEM hItem = NULL;
-			if (pszGroup != NULL) {
-				ptrT ptszGroup(mir_a2t(pszGroup));
-				hItem = FindNamedTreeItemAtRoot(GetDlgItem(hwndOptions, IDC_PAGETREE), TranslateTH(_hLang, ptszGroup));
-				if (hItem != NULL)
-					hItem = FindNamedTreeItemAtChildren(GetDlgItem(hwndOptions, IDC_PAGETREE), hItem, TranslateTH(_hLang, ptszPage));
-			}
-			else hItem = FindNamedTreeItemAtRoot(GetDlgItem(hwndOptions, IDC_PAGETREE), TranslateTH(_hLang, ptszPage));
-
-			if (hItem != NULL)
-				TreeView_SelectItem(GetDlgItem(hwndOptions, IDC_PAGETREE), hItem);
-		}
-	}
-	else {
-		OptionsPageInit opi = { 0 };
-		NotifyEventHooks(hOptionsInitEvent, (WPARAM)&opi, 0);
-		if (opi.pageCount == 0)
+	if (pOptionsDlg == nullptr) {
+		OptionsPageList arPages(1);
+		NotifyEventHooks(hOptionsInitEvent, (WPARAM)&arPages, 0);
+		if (arPages.getCount() == 0)
 			return;
 
-		OPENOPTIONSDIALOG ood = { 0 };
-		ood.cbSize = sizeof(ood);
-		ood.pszGroup = pszGroup;
-		ood.pszPage = pszPage;
-		ood.pszTab = pszTab;
-
-		PROPSHEETHEADER psh = { 0 };
-		psh.dwSize = sizeof(psh);
-		psh.dwFlags = PSH_PROPSHEETPAGE | PSH_NOAPPLYNOW;
-		psh.nPages = opi.pageCount;
-		psh.pStartPage = (LPCTSTR)&ood; // more structure misuse
-		psh.pszCaption = TranslateT("Miranda NG options");
-		psh.ppsp = (PROPSHEETPAGE*)opi.odp; // blatent misuse of the structure, but what the hell
-
-		hwndOptions = CreateDialogParam(g_hInst,
-			MAKEINTRESOURCE(bSinglePage ? IDD_OPTIONSPAGE : IDD_OPTIONS),
-			NULL, OptionsDlgProc, (LPARAM)&psh);
-
-		FreeOptionsData(&opi);
+		pOptionsDlg = new COptionsDlg(TranslateT("Miranda NG options"), pszGroup, pszPage, pszTab, bSinglePage, arPages);
+		pOptionsDlg->Show();
 	}
+	else pOptionsDlg->Locate(pszGroup, pszPage, _hLang);
 }
 
-static INT_PTR OpenOptions(WPARAM wParam, LPARAM lParam)
+MIR_APP_DLL(int) Options_Open(const wchar_t *pszGroup, const wchar_t *pszPage, const wchar_t *pszTab, int _hLangpack)
 {
-	OPENOPTIONSDIALOG *ood = (OPENOPTIONSDIALOG*)lParam;
-	if (ood == NULL || ood->cbSize != sizeof(OPENOPTIONSDIALOG))
-		return 1;
-	
-	OpenOptionsNow((int)wParam, ood->pszGroup, ood->pszPage, ood->pszTab);
+	OpenOptionsNow(_hLangpack, pszGroup, pszPage, pszTab, false);
 	return 0;
 }
 
-static INT_PTR OpenOptionsPage(WPARAM wParam, LPARAM lParam)
+MIR_APP_DLL(HWND) Options_OpenPage(const wchar_t *pszGroup, const wchar_t *pszPage, const wchar_t *pszTab, int _hLangpack)
 {
-	OPENOPTIONSDIALOG *ood = (OPENOPTIONSDIALOG*)lParam;
-	if (ood == NULL || ood->cbSize != sizeof(OPENOPTIONSDIALOG))
-		return 1;
-
-	OpenOptionsNow((int)wParam, ood->pszGroup, ood->pszPage, ood->pszTab, true);
-	return (INT_PTR)hwndOptions;
+	OpenOptionsNow(_hLangpack, pszGroup, pszPage, pszTab, true);
+	return pOptionsDlg->GetHwnd();
 }
 
-static INT_PTR OpenOptionsDialog(WPARAM, LPARAM)
-{
-	if (hwndOptions || !ServiceExists(MS_MODERNOPT_SHOW))
-		OpenOptionsNow(NULL, NULL, NULL, NULL);
-	else
-		CallService(MS_MODERNOPT_SHOW, 0, 0);
-	return 0;
-}
+/////////////////////////////////////////////////////////////////////////////////////////
 
-static INT_PTR AddOptionsPage(WPARAM wParam, LPARAM lParam)
+MIR_APP_DLL(int) Options_AddPage(WPARAM wParam, OPTIONSDIALOGPAGE *odp, int _hLangpack)
 {
-	OPTIONSDIALOGPAGE *odp = (OPTIONSDIALOGPAGE*)lParam, *dst;
-	OptionsPageInit *opi = (OptionsPageInit*)wParam;
-	if (odp == NULL || opi == NULL)
+	OptionsPageList *pList = (OptionsPageList*)wParam;
+	if (odp == nullptr || pList == nullptr)
 		return 1;
 
-	opi->odp = (OPTIONSDIALOGPAGE*)mir_realloc(opi->odp, sizeof(OPTIONSDIALOGPAGE)*(opi->pageCount + 1));
-	dst = opi->odp + opi->pageCount;
+	OptionsPage *dst = new OptionsPage();
 	memcpy(dst, odp, sizeof(OPTIONSDIALOGPAGE));
+	dst->hLangpack = _hLangpack;
 
-	if (odp->ptszTitle != NULL) {
+	if (odp->szTitle.w != nullptr) {
 		if (odp->flags & ODPF_UNICODE)
-			dst->ptszTitle = mir_wstrdup(odp->ptszTitle);
+			dst->szTitle.w = mir_wstrdup(odp->szTitle.w);
 		else {
-			dst->ptszTitle = mir_a2u(odp->pszTitle);
+			dst->szTitle.w = mir_a2u(odp->szTitle.a);
 			dst->flags |= ODPF_UNICODE;
 		}
 	}
 
-	if (odp->ptszGroup != NULL) {
+	if (odp->szGroup.w != nullptr) {
 		if (odp->flags & ODPF_UNICODE)
-			dst->ptszGroup = mir_wstrdup(odp->ptszGroup);
+			dst->szGroup.w = mir_wstrdup(odp->szGroup.w);
 		else {
-			dst->ptszGroup = mir_a2t(odp->pszGroup);
+			dst->szGroup.w = mir_a2u(odp->szGroup.a);
 			dst->flags |= ODPF_UNICODE;
 		}
 	}
 
-	if (odp->ptszTab != NULL) {
+	if (odp->szTab.w != nullptr) {
 		if (odp->flags & ODPF_UNICODE)
-			dst->ptszTab = mir_wstrdup(odp->ptszTab);
+			dst->szTab.w = mir_wstrdup(odp->szTab.w);
 		else {
-			dst->ptszTab = mir_a2t(odp->pszTab);
+			dst->szTab.w = mir_a2u(odp->szTab.a);
 			dst->flags |= ODPF_UNICODE;
 		}
 	}
@@ -1287,7 +1197,15 @@ static INT_PTR AddOptionsPage(WPARAM wParam, LPARAM lParam)
 	if ((DWORD_PTR)odp->pszTemplate & 0xFFFF0000)
 		dst->pszTemplate = mir_strdup(odp->pszTemplate);
 
-	opi->pageCount++;
+	pList->insert(dst);
+	return 0;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+static INT_PTR OpenOptionsDialog(WPARAM, LPARAM)
+{
+	OpenOptionsNow(0, nullptr, nullptr, nullptr, false);
 	return 0;
 }
 
@@ -1300,28 +1218,21 @@ static int OptModulesLoaded(WPARAM, LPARAM)
 	mi.name.a = LPGEN("&Options...");
 	mi.pszService = "Options/OptionsCommand";
 	Menu_AddMainMenuItem(&mi);
+	CreateServiceFunction(mi.pszService, OpenOptionsDialog);
 	return 0;
 }
 
 int ShutdownOptionsModule(WPARAM, LPARAM)
 {
-	if (IsWindow(hwndOptions)) {
-		DestroyWindow(hwndOptions);
-		hwndOptions = NULL;
-	}
+	delete pOptionsDlg; pOptionsDlg = nullptr;
 	return 0;
 }
 
 int LoadOptionsModule(void)
 {
-	hwndOptions = NULL;
 	hOptionsInitEvent = CreateHookableEvent(ME_OPT_INITIALISE);
 	HookEvent(ME_OPT_INITIALISE, LangpackOptionsInit);
 
-	CreateServiceFunction("Opt/AddPage", AddOptionsPage);
-	CreateServiceFunction("Opt/OpenOptions", OpenOptions);
-	CreateServiceFunction("Opt/OpenOptionsPage", OpenOptionsPage);
-	CreateServiceFunction("Options/OptionsCommand", OpenOptionsDialog);
 	HookEvent(ME_SYSTEM_MODULESLOADED, OptModulesLoaded);
 	HookEvent(ME_SYSTEM_PRESHUTDOWN, ShutdownOptionsModule);
 	return 0;

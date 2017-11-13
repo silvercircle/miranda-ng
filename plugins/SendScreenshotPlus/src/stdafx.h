@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (с) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (с) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-09 Miranda ICQ/IM project,
 
 This file is part of Send Screenshot Plus, a Miranda IM plugin.
@@ -53,7 +53,7 @@ using namespace std;
 #include <msapi/vssym32.h>
 #include <newpluginapi.h>
 #include <m_button.h>
-#include <m_chat.h>
+#include <m_chat_int.h>
 #include <m_clist.h>
 #include <m_contacts.h>
 #include <m_database.h>
@@ -97,30 +97,30 @@ using namespace std;
 #define UM_EVENT	WM_USER+2
 
 // Generic Message Box for Errors
-#define MSGERROR(text) MessageBox(NULL, text, _T("SendSS"), MB_OK | MB_ICONERROR)
-#define MSGINFO	(text) MessageBox(NULL, text, _T("SendSS"), MB_OK | MB_ICONINFORMATION)
+#define MSGERROR(text) MessageBox(NULL, text, L"SendSS", MB_OK | MB_ICONERROR)
+#define MSGINFO	(text) MessageBox(NULL, text, L"SendSS", MB_OK | MB_ICONINFORMATION)
 
 typedef struct _MGLOBAL {
 	DWORD		mirandaVersion;					// mirandaVersion
 	BOOLEAN		PopupExist			: 1;		// Popup or MS_POPUP_ADDPOPUP exist
 	BOOLEAN		PopupActionsExist	: 1;		// Popup++ or MS_POPUP_REGISTERACTIONS exist
 	BOOLEAN		PluginHTTPExist		: 1;		// HTTPServer or MS_HTTP_ACCEPT_CONNECTIONS exist
-	BOOLEAN		PluginFTPExist		: 1;		// FTPFile or MS_FTPFILE_SHAREFILE exist
+	BOOLEAN		PluginFTPExist		: 1;		// FTPFile or MS_FTPFILE_UPLOAD exist
 	BOOLEAN		PluginDropboxExist	: 1;		// Dropbox or MS_DROPBOX_SEND_FILE exists
 
 } MGLOBAL, *LPMGLOBAL;
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 #define ERROR_TITLE		TranslateT("SendScreenshot - Error")
 
 // Miranda Database Key
 #define SZ_SENDSS		"SendSS"
 
 extern ATOM g_clsTargetHighlighter;
-extern HINSTANCE		g_hSendSS;
-extern MGLOBAL			g_myGlobals;
-extern HANDLE			g_hNetlibUser;
-
+extern HINSTANCE g_hSendSS;
+extern MGLOBAL g_myGlobals;
+extern HNETLIBUSER g_hNetlibUser;
 
 enum{
 	ICO_MAIN=0,

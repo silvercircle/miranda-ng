@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -346,8 +346,8 @@ static int IdleOptInit(WPARAM wParam, LPARAM)
 	odp.position = 100000000;
 	odp.hInstance = hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_IDLE);
-	odp.pszGroup = LPGEN("Status");
-	odp.pszTitle = LPGEN("Idle");
+	odp.szGroup.a = LPGEN("Status");
+	odp.szTitle.a = LPGEN("Idle");
 	odp.pfnDlgProc = IdleOptsDlgProc;
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);
@@ -369,30 +369,6 @@ static INT_PTR IdleGetInfo(WPARAM, LPARAM lParam)
 	return 0;
 }
 
-static int IdleModernOptInit(WPARAM wParam, LPARAM)
-{
-	static const int iBoldControls[] =
-	{
-		IDC_TXT_TITLE1, IDC_TXT_TITLE2, IDC_TXT_TITLE3,
-		MODERNOPT_CTRL_LAST
-	};
-
-	MODERNOPTOBJECT obj = {0};
-	obj.cbSize = sizeof(obj);
-	obj.hInstance = hInst;
-	obj.dwFlags = MODEROPT_FLG_TCHAR | MODEROPT_FLG_NORESIZE;
-	obj.iSection = MODERNOPT_PAGE_STATUS;
-	obj.iType = MODERNOPT_TYPE_SECTIONPAGE;
-	obj.iBoldControls = (int*)iBoldControls;
-	obj.lpzTemplate = MAKEINTRESOURCEA(IDD_MODERNOPT_IDLE);
-	obj.pfnDlgProc = IdleOptsDlgProc;
-//	obj.lpzClassicGroup = "Status";
-//	obj.lpzClassicPage = "Messages";
-	obj.lpzHelpUrl = "http://wiki.miranda-ng.org/";
-	CallService(MS_MODERNOPT_ADDOBJECT, wParam, (LPARAM)&obj);
-	return 0;
-}
-
 int LoadIdleModule(void)
 {
 	bModuleInitialized = TRUE;
@@ -401,7 +377,6 @@ int LoadIdleModule(void)
 	IdleObject_Create(&gIdleObject);
 	CreateServiceFunction(MS_IDLE_GETIDLEINFO, IdleGetInfo);
 	HookEvent(ME_OPT_INITIALISE, IdleOptInit);
-	HookEvent(ME_MODERNOPT_INITIALIZE, IdleModernOptInit);
 	return 0;
 }
 

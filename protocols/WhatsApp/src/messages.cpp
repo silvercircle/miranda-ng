@@ -1,4 +1,4 @@
-#include "common.h"
+#include "stdafx.h"
 
 int WhatsAppProto::RecvMsg(MCONTACT hContact, PROTORECVEVENT *pre)
 {
@@ -112,7 +112,7 @@ void WhatsAppProto::onMessageStatusUpdate(const FMessage &fmsg)
 		return;
 	}
 
-	const TCHAR *ptszBy;
+	const wchar_t *ptszBy;
 	switch (fmsg.status) {
 	case FMessage::STATUS_RECEIVED_BY_SERVER: ptszBy = TranslateT("server"); break;
 	case FMessage::STATUS_RECEIVED_BY_TARGET: ptszBy = pcli->pfnGetContactDisplayName(hContact, 0);  break;
@@ -131,7 +131,7 @@ void WhatsAppProto::onMessageStatusUpdate(const FMessage &fmsg)
 
 	time_t ts = atol(fmsg.key.id.substr(0, delim).c_str());
 
-	TCHAR ttime[64];
-	_tcsftime(ttime, _countof(ttime), _T("%X"), localtime(&ts));
-	utils::setStatusMessage(hContact, CMString(FORMAT, TranslateT("Message received: %s by %s"), ttime, ptszBy));
+	wchar_t ttime[64];
+	wcsftime(ttime, _countof(ttime), L"%X", localtime(&ts));
+	utils::setStatusMessage(hContact, CMStringW(FORMAT, TranslateT("Message received: %s by %s"), ttime, ptszBy));
 }

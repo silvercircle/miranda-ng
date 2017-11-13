@@ -3,18 +3,19 @@
  *
  */
 
-#include "../common.h" // #TODO Remove Miranda-dependency
+#include "../stdafx.h" // #TODO Remove Miranda-dependency
 
 #include "WARegister.h"
 #include "PhoneNumber.h"
 
 using namespace Utilities;
 
+static char WaToken[] = WHATSAPP_TOKEN;
+
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // Token generation
-
-static char WaToken[] = "PdA2DJyKoUrwLw1Bg6EIhzh502dF9noR9uFCllGk1435688727801";
-
+//
 std::string WAToken::GenerateToken(const string &number)
 {
 	uint8_t digest[16];
@@ -27,6 +28,7 @@ std::string WAToken::GenerateToken(const string &number)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Account registration
+//
 CMStringA WARegister::RequestCodeUrl(const std::string &phoneNumber, const std::string &code)
 {
 	try {

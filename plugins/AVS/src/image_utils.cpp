@@ -159,12 +159,12 @@ void SetHIMETRICtoDP(HDC hdc, SIZE* sz)
 	sz->cy = pt.y;
 }
 
-HBITMAP BmpFilterLoadBitmap(BOOL *bIsTransparent, const TCHAR *ptszFilename)
+HBITMAP BmpFilterLoadBitmap(BOOL *bIsTransparent, const wchar_t *ptszFilename)
 {
 	if (fei == NULL)
 		return 0;
 
-	FIBITMAP *dib = (FIBITMAP*)CallService(MS_IMG_LOAD, (WPARAM)ptszFilename, IMGL_RETURNDIB | IMGL_TCHAR);
+	FIBITMAP *dib = (FIBITMAP*)CallService(MS_IMG_LOAD, (WPARAM)ptszFilename, IMGL_RETURNDIB | IMGL_WCHAR);
 	if (dib == NULL)
 		return 0;
 
@@ -203,16 +203,16 @@ static HWND hwndClui = 0;
 // PNG and BMP will be saved as 32bit images, jpg as 24bit with default quality (75)
 // returns 1 on success, 0 on failure
 
-int BmpFilterSaveBitmap(HBITMAP hBmp, const TCHAR *ptszFile, int flags)
+int BmpFilterSaveBitmap(HBITMAP hBmp, const wchar_t *ptszFile, int flags)
 {
 	if (fei == NULL)
 		return -1;
 
-	TCHAR tszFilename[MAX_PATH];
-	if (!PathToAbsoluteT(ptszFile, tszFilename))
-		_tcsncpy_s(tszFilename, ptszFile, _TRUNCATE);
+	wchar_t tszFilename[MAX_PATH];
+	if (!PathToAbsoluteW(ptszFile, tszFilename))
+		wcsncpy_s(tszFilename, ptszFile, _TRUNCATE);
 
-	if (mir_tstrlen(tszFilename) <= 4)
+	if (mir_wstrlen(tszFilename) <= 4)
 		return -1;
 
 	IMGSRVC_INFO i = { 0 };
@@ -222,7 +222,7 @@ int BmpFilterSaveBitmap(HBITMAP hBmp, const TCHAR *ptszFile, int flags)
 	i.dwMask = IMGI_HBITMAP;
 	i.fif = FIF_UNKNOWN;
 
-	return !CallService(MS_IMG_SAVE, (WPARAM)&i, MAKELONG(IMGL_TCHAR, flags));
+	return !CallService(MS_IMG_SAVE, (WPARAM)&i, MAKELONG(IMGL_WCHAR, flags));
 }
 
 // Other utilities ////////////////////////////////////////////////////////////////////////////////
@@ -551,7 +551,7 @@ BOOL MakeTransparentBkg(MCONTACT hContact, HBITMAP *hBitmap)
 /////////////////////////////////////////////////////////////////////////////////////////
 // Other utils
 
-int SaveAvatar(const char *protocol, const TCHAR *tszFileName)
+int SaveAvatar(const char *protocol, const wchar_t *tszFileName)
 {
 	INT_PTR result = CallProtoService(protocol, PS_SETMYAVATAR, 0, (LPARAM)tszFileName);
 	if (result == CALLSERVICE_NOTFOUND)

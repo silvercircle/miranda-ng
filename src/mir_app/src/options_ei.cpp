@@ -1,7 +1,7 @@
 /*
 
 Copyright (C) 2009 Ricardo Pescuma Domenecci
-Copyright (C) 2012-15 Miranda NG project
+Copyright (C) 2012-17 Miranda NG project
 
 This is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
@@ -111,7 +111,7 @@ class CExtraIconOptsDlg : public CDlgBase
 	HTREEITEM Tree_AddExtraIconGroup(intlist &group, bool selected, HTREEITEM hAfter = TVI_LAST)
 	{
 		intlist *ids = new intlist();
-		CMString desc;
+		CMStringW desc;
 		int img = 0;
 		for (int i = 0; i < group.count; i++) {
 			BaseExtraIcon *extra = registeredExtraIcons[group.data[i] - 1];
@@ -121,7 +121,7 @@ class CExtraIconOptsDlg : public CDlgBase
 				img = extra->getID();
 
 			if (i > 0)
-				desc += _T(" / ");
+				desc += L" / ";
 			desc += extra->getDescription();
 		}
 
@@ -131,7 +131,7 @@ class CExtraIconOptsDlg : public CDlgBase
 		tvis.item.stateMask = TVIS_STATEIMAGEMASK;
 		tvis.item.iSelectedImage = tvis.item.iImage = img;
 		tvis.item.lParam = (LPARAM)ids;
-		tvis.item.pszText = (TCHAR*)desc.c_str();
+		tvis.item.pszText = (wchar_t*)desc.c_str();
 		tvis.item.state = INDEXTOSTATEIMAGEMASK(selected ? 2 : 1);
 		return m_tree.InsertItem(&tvis);
 	}
@@ -141,7 +141,7 @@ class CExtraIconOptsDlg : public CDlgBase
 		LIST<_TREEITEM> toRemove(1);
 		intlist ids;
 		bool selected = false;
-		HTREEITEM hPlace = NULL;
+		HTREEITEM hPlace = nullptr;
 
 		// Find items
 		HTREEITEM hItem = m_tree.GetRoot();
@@ -149,7 +149,7 @@ class CExtraIconOptsDlg : public CDlgBase
 		tvi.mask = TVIF_HANDLE | TVIF_PARAM | TVIF_TEXT | TVIF_STATE;
 		while (hItem) {
 			if (m_tree.IsSelected(hItem)) {
-				if (hPlace == NULL)
+				if (hPlace == nullptr)
 					hPlace = hItem;
 
 				tvi.hItem = hItem;
@@ -168,7 +168,7 @@ class CExtraIconOptsDlg : public CDlgBase
 			hItem = m_tree.GetNextSibling(hItem);
 		}
 
-		if (hPlace != NULL) {
+		if (hPlace != nullptr) {
 			// Add new
 			HTREEITEM hNew = Tree_AddExtraIconGroup(ids, selected, hPlace);
 
@@ -187,7 +187,7 @@ class CExtraIconOptsDlg : public CDlgBase
 	void UngroupSelectedItems()
 	{
 		HTREEITEM hItem = m_tree.GetSelection();
-		if (hItem == NULL)
+		if (hItem == nullptr)
 			return;
 
 		intlist *ids = Tree_GetIDs(hItem);
@@ -224,7 +224,7 @@ class CExtraIconOptsDlg : public CDlgBase
 		TranslateMenu(submenu);
 
 		DWORD pos = GetMessagePos();
-		int ret = TrackPopupMenu(submenu, TPM_TOPALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_LEFTALIGN, LOWORD(pos), HIWORD(pos), 0, m_hwnd, NULL);
+		int ret = TrackPopupMenu(submenu, TPM_TOPALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_LEFTALIGN, LOWORD(pos), HIWORD(pos), 0, m_hwnd, nullptr);
 
 		DestroyMenu(menu);
 
@@ -254,7 +254,7 @@ public:
 		int numSlots = GetNumberOfSlots();
 		if (numSlots < (int)registeredExtraIcons.getCount()) {
 			HWND label = GetDlgItem(m_hwnd, IDC_MAX_ICONS_L);
-			SetWindowText(label, CMString(FORMAT, TranslateT("*only the first %d icons will be shown"), numSlots));
+			SetWindowText(label, CMStringW(FORMAT, TranslateT("*only the first %d icons will be shown"), numSlots));
 			ShowWindow(label, SW_SHOW);
 		}
 
@@ -268,7 +268,7 @@ public:
 			ExtraIcon *extra = registeredExtraIcons[i];
 
 			HICON hIcon = IcoLib_GetIcon(extra->getDescIcon());
-			if (hIcon == NULL)
+			if (hIcon == nullptr)
 				ImageList_AddIcon(hImageList, hBlankIcon);
 			else {
 				ImageList_AddIcon(hImageList, hIcon);
@@ -292,7 +292,7 @@ public:
 		}
 
 		TVSORTCB sort = { 0 };
-		sort.hParent = NULL;
+		sort.hParent = nullptr;
 		sort.lParam = 0;
 		sort.lpfnCompare = CompareFunc;
 		m_tree.SortChildrenCB(&sort, 0);
@@ -309,9 +309,9 @@ public:
 			else
 				// Remove old slot for groups to re-set images
 				oldSlots[i] = -1;
-			lastUsedSlot = MAX(lastUsedSlot, registeredExtraIcons[i]->getSlot());
+			lastUsedSlot = max(lastUsedSlot, registeredExtraIcons[i]->getSlot());
 		}
-		lastUsedSlot = MIN(lastUsedSlot, GetNumberOfSlots());
+		lastUsedSlot = min(lastUsedSlot, GetNumberOfSlots());
 
 		// Get user data and create new groups
 		LIST<ExtraIconGroup> groups(1);
@@ -327,7 +327,7 @@ public:
 			m_tree.GetItem(&tvi);
 
 			intlist*ids = (intlist*)tvi.lParam;
-			if (ids == NULL || ids->count < 1)
+			if (ids == nullptr || ids->count < 1)
 				continue; // ???
 
 			bool enabled = ((tvi.state & INDEXTOSTATEIMAGEMASK(3)) == INDEXTOSTATEIMAGEMASK(2));
@@ -366,26 +366,26 @@ public:
 
 			char setting[512];
 			mir_snprintf(setting, "Position_%s", extra->getName());
-			db_set_w(NULL, MODULE_NAME, setting, extra->getPosition());
+			db_set_w(0, MODULE_NAME, setting, extra->getPosition());
 
 			mir_snprintf(setting, "Slot_%s", extra->getName());
-			db_set_w(NULL, MODULE_NAME, setting, extra->getSlot());
+			db_set_w(0, MODULE_NAME, setting, extra->getSlot());
 		}
 
-		CallService(MS_DB_MODULE_DELETE, 0, (LPARAM)MODULE_NAME "Groups");
-		db_set_w(NULL, MODULE_NAME "Groups", "Count", groups.getCount());
+		db_delete_module(0, MODULE_NAME "Groups");
+		db_set_w(0, MODULE_NAME "Groups", "Count", groups.getCount());
 		for (int k = 0; k < groups.getCount(); k++) {
 			ExtraIconGroup *group = groups[k];
 
 			char setting[512];
 			mir_snprintf(setting, "%d_count", k);
-			db_set_w(NULL, MODULE_NAME "Groups", setting, (WORD)group->m_items.getCount());
+			db_set_w(0, MODULE_NAME "Groups", setting, (WORD)group->m_items.getCount());
 
 			for (int j = 0; j < group->m_items.getCount(); j++) {
 				BaseExtraIcon *extra = group->m_items[j];
 
 				mir_snprintf(setting, "%d_%d", k, j);
-				db_set_s(NULL, MODULE_NAME "Groups", setting, extra->getName());
+				db_set_s(0, MODULE_NAME "Groups", setting, extra->getName());
 			}
 		}
 
@@ -425,7 +425,7 @@ public:
 			LPNMHDR lpnmhdr = (LPNMHDR)lParam;
 			if (lpnmhdr->idFrom == IDC_EXTRAORDER && lpnmhdr->code == NM_RCLICK) {
 				HTREEITEM hSelected = m_tree.GetDropHilight();
-				if (hSelected != NULL && !m_tree.IsSelected(hSelected)) {
+				if (hSelected != nullptr && !m_tree.IsSelected(hSelected)) {
 					m_tree.UnselectAll();
 					m_tree.SelectItem(hSelected);
 				}
@@ -462,9 +462,9 @@ int InitOptionsCallback(WPARAM wParam, LPARAM)
 		return 0;
 
 	OPTIONSDIALOGPAGE odp = { 0 };
-	odp.pszGroup = LPGEN("Contact list");
-	odp.pszTitle = LPGEN("Extra icons");
-	odp.pszTab = LPGEN("General");
+	odp.szGroup.a = LPGEN("Contact list");
+	odp.szTitle.a = LPGEN("Extra icons");
+	odp.szTab.a = LPGEN("General");
 	odp.flags = ODPF_BOLDGROUPS;
 	odp.pDialog = new CExtraIconOptsDlg();
 	Options_AddPage(wParam, &odp);

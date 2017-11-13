@@ -25,9 +25,99 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "stdafx.h"
 
 // variables for weather_popup.c
-static HANDLE hPopupContact;
+static MCONTACT hPopupContact;
 
 //============  SHOW WEATHER POPUPS  ============
+
+//============  WEATHER ERROR POPUPS  ============
+
+// display weather error or notices (not threaded)
+// wParam = error text
+// lParam = display type
+// Type can either be SM_WARNING, SM_NOTIFY, or SM_WEATHERALERT
+int WeatherError(WPARAM wParam, LPARAM lParam)
+{
+	if (!opt.UsePopup)
+		return 0;
+
+	wchar_t* tszMsg = (wchar_t*)wParam;
+
+	if ((DWORD)lParam == SM_WARNING)
+		PUShowMessageT(tszMsg, SM_WARNING);
+	else if ((DWORD)lParam == SM_NOTIFY)
+		PUShowMessageT(tszMsg, SM_NOTIFY);
+	else if ((DWORD)lParam == SM_WEATHERALERT) {
+		POPUPDATAT ppd = { 0 };
+		wchar_t str1[512], str2[512];
+
+		// get the 2 strings
+		wcsncpy(str1, tszMsg, _countof(str1) - 1);
+		wcsncpy(str2, tszMsg, _countof(str2) - 1);
+		wchar_t *chop = wcschr(str1, 255);
+		if (chop != NULL)
+			*chop = '\0';
+		else
+			str1[0] = 0;
+		chop = wcschr(str2, 255);
+		if (chop != NULL)
+			wcsncpy(str2, chop + 1, _countof(str2) - 1);
+		else
+			str2[0] = 0;
+
+		// setup the popup
+		ppd.lchIcon = (HICON)LoadImage(NULL, MAKEINTRESOURCE(OIC_BANG), IMAGE_ICON,
+			GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
+		mir_wstrcpy(ppd.lptzContactName, str1);
+		mir_wstrcpy(ppd.lptzText, str2);
+		ppd.colorBack = (opt.UseWinColors) ? GetSysColor(COLOR_BTNFACE) : opt.BGColour;
+		ppd.colorText = (opt.UseWinColors) ? GetSysColor(COLOR_WINDOWTEXT) : opt.TextColour;
+		ppd.iSeconds = opt.pDelay;
+		PUAddPopupT(&ppd);
+	}
+	return 0;
+}
+
+// wrapper function for displaying weather warning popup by triggering an event
+//  (threaded)
+// lpzText = error text
+// kind = display type (see m_popup.h)
+int WPShowMessage(wchar_t* lpzText, WORD kind)
+{
+	NotifyEventHooks(hHookWeatherError, (WPARAM)lpzText, (LPARAM)kind);
+	return 0;
+}
+
+//============  WEATHER POPUP PROCESSES  ============
+
+// popup dialog pocess
+// for selecting actions when click on the popup window
+// use for displaying contact menu
+static LRESULT CALLBACK PopupDlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	DWORD ID = 0;
+	MCONTACT hContact;
+	hContact = PUGetContact(hWnd);
+
+	switch (message) {
+	case WM_COMMAND:
+		ID = opt.LeftClickAction;
+		if (ID != IDM_M7)  PUDeletePopup(hWnd);
+		SendMessage(hPopupWindow, ID, hContact, 0);
+		return TRUE;
+
+	case WM_CONTEXTMENU:
+		ID = opt.RightClickAction;
+		if (ID != IDM_M7)  PUDeletePopup(hWnd);
+		SendMessage(hPopupWindow, ID, hContact, 0);
+		return TRUE;
+
+	case UM_FREEPLUGINDATA:
+		IcoLib_ReleaseIcon((HICON)PUGetPluginData(hWnd));
+		return FALSE;
+	}
+
+	return DefWindowProc(hWnd, message, wParam, lParam);
+}
 
 // display weather popups
 // wParam = the contact to display popup
@@ -54,97 +144,6 @@ int WeatherPopup(WPARAM hContact, LPARAM lParam)
 	return 0;
 }
 
-//============  WEATHER ERROR POPUPS  ============
-
-// display weather error or notices (not threaded)
-// wParam = error text
-// lParam = display type
-// Type can either be SM_WARNING, SM_NOTIFY, or SM_WEATHERALERT
-
-int WeatherError(WPARAM wParam, LPARAM lParam)
-{
-	if (!opt.UsePopup)
-		return 0;
-
-	TCHAR* tszMsg = (TCHAR*)wParam;
-
-	if ((DWORD)lParam == SM_WARNING)
-		PUShowMessageT(tszMsg, SM_WARNING);
-	else if ((DWORD)lParam == SM_NOTIFY)
-		PUShowMessageT(tszMsg, SM_NOTIFY);
-	else if ((DWORD)lParam == SM_WEATHERALERT) {
-		POPUPDATAT ppd = { 0 };
-		TCHAR str1[512], str2[512];
-
-		// get the 2 strings
-		_tcsncpy(str1, tszMsg, _countof(str1) - 1);
-		_tcsncpy(str2, tszMsg, _countof(str2) - 1);
-		TCHAR *chop = _tcschr(str1, 255);
-		if (chop != NULL)
-			*chop = '\0';
-		else
-			str1[0] = 0;
-		chop = _tcschr(str2, 255);
-		if (chop != NULL)
-			_tcsncpy(str2, chop + 1, _countof(str2) - 1);
-		else
-			str2[0] = 0;
-
-		// setup the popup
-		ppd.lchIcon = (HICON)LoadImage(NULL, MAKEINTRESOURCE(OIC_BANG), IMAGE_ICON,
-			GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
-		mir_tstrcpy(ppd.lptzContactName, str1);
-		mir_tstrcpy(ppd.lptzText, str2);
-		ppd.colorBack = (opt.UseWinColors) ? GetSysColor(COLOR_BTNFACE) : opt.BGColour;
-		ppd.colorText = (opt.UseWinColors) ? GetSysColor(COLOR_WINDOWTEXT) : opt.TextColour;
-		ppd.iSeconds = opt.pDelay;
-		PUAddPopupT(&ppd);
-	}
-	return 0;
-}
-
-// wrapper function for displaying weather warning popup by triggering an event
-//  (threaded)
-// lpzText = error text
-// kind = display type (see m_popup.h)
-
-int WPShowMessage(TCHAR* lpzText, WORD kind)
-{
-	NotifyEventHooks(hHookWeatherError, (WPARAM)lpzText, (LPARAM)kind);
-	return 0;
-}
-
-//============  WEATHER POPUP PROCESSES  ============
-
-// popup dialog pocess
-// for selecting actions when click on the popup window
-// use for displaying contact menu
-LRESULT CALLBACK PopupDlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	DWORD ID = 0;
-	MCONTACT hContact;
-	hContact = PUGetContact(hWnd);
-
-	switch (message) {
-	case WM_COMMAND:
-		ID = opt.LeftClickAction;
-		if (ID != IDM_M7)  PUDeletePopup(hWnd);
-		SendMessage(hPopupWindow, ID, hContact, 0);
-		return TRUE;
-
-	case WM_CONTEXTMENU:
-		ID = opt.RightClickAction;
-		if (ID != IDM_M7)  PUDeletePopup(hWnd);
-		SendMessage(hPopupWindow, ID, hContact, 0);
-		return TRUE;
-
-	case UM_FREEPLUGINDATA:
-		IcoLib_ReleaseIcon((HICON)PUGetPluginData(hWnd));
-		return FALSE;
-	}
-
-	return DefWindowProc(hWnd, message, wParam, lParam);
-}
 
 // process for the popup window
 // containing the code for popup actions
@@ -176,7 +175,7 @@ LRESULT CALLBACK PopupWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 	case IDM_M7:	// display contact menu
 		hMenu = Menu_BuildContactMenu(wParam);
 		GetCursorPos(&pt);
-		hPopupContact = (HANDLE)wParam;
+		hPopupContact = wParam;
 		TrackPopupMenu(hMenu, TPM_LEFTALIGN, pt.x, pt.y, 0, hWnd, NULL);
 		DestroyMenu(hMenu);
 		break;
@@ -185,15 +184,15 @@ LRESULT CALLBACK PopupWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 		CallService(MS_USERINFO_SHOWDIALOG, wParam, 0);
 
 	case WM_COMMAND:	 //Needed by the contact's context menu
-		if (CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(LOWORD(wParam), MPCF_CONTACTMENU), (LPARAM)hPopupContact))
+		if (Clist_MenuProcessCommand(LOWORD(wParam), MPCF_CONTACTMENU, hPopupContact))
 			break;
 		return FALSE;
 
 	case WM_MEASUREITEM: //Needed by the contact's context menu
-		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
+		return Menu_MeasureItem(lParam);
 
 	case WM_DRAWITEM: //Needed by the contact's context menu
-		return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
+		return Menu_DrawItem(lParam);
 	}
 
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);//FALSE;
@@ -212,8 +211,8 @@ static void SelectMenuItem(HMENU hMenu, int Check)
 // but does not write to the database
 void ReadPopupOpt(HWND hdlg)
 {
-	TCHAR text[MAX_TEXT_SIZE];
-	TCHAR str[512];
+	wchar_t text[MAX_TEXT_SIZE];
+	wchar_t str[512];
 
 	// popup colour
 	opt.TextColour = SendDlgItemMessage(hdlg, IDC_TEXTCOLOUR, CPM_GETCOLOUR, 0, 0);
@@ -221,7 +220,7 @@ void ReadPopupOpt(HWND hdlg)
 
 	// get delay time
 	GetDlgItemText(hdlg, IDC_DELAY, str, _countof(str));
-	int num = _ttoi(str);
+	int num = _wtoi(str);
 	opt.pDelay = num;
 
 	// other options
@@ -245,7 +244,7 @@ void ReadPopupOpt(HWND hdlg)
 INT_PTR CALLBACK DlgPopupOpts(HWND hdlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	int ID;
-	TCHAR str[512];
+	wchar_t str[512];
 	HMENU hMenu, hMenu1;
 	RECT pos;
 	HWND button;
@@ -260,9 +259,9 @@ INT_PTR CALLBACK DlgPopupOpts(HWND hdlg, UINT msg, WPARAM wParam, LPARAM lParam)
 		hMenu = LoadMenu(hInst, MAKEINTRESOURCE(IDR_PMENU));
 		hMenu1 = GetSubMenu(hMenu, 0);
 		GetMenuString(hMenu1, opt.LeftClickAction, str, _countof(str), MF_BYCOMMAND);
-		SetDlgItemText(hdlg, IDC_LeftClick, TranslateTS(str));
+		SetDlgItemText(hdlg, IDC_LeftClick, TranslateW(str));
 		GetMenuString(hMenu1, opt.RightClickAction, str, _countof(str), MF_BYCOMMAND);
-		SetDlgItemText(hdlg, IDC_RightClick, TranslateTS(str));
+		SetDlgItemText(hdlg, IDC_RightClick, TranslateW(str));
 		DestroyMenu(hMenu);
 
 		// other options
@@ -274,7 +273,7 @@ INT_PTR CALLBACK DlgPopupOpts(HWND hdlg, UINT msg, WPARAM wParam, LPARAM lParam)
 		SetDlgItemText(hdlg, IDC_PText, opt.pText);
 		SetDlgItemText(hdlg, IDC_PTitle, opt.pTitle);
 		// setting popup delay option
-		_ltot(opt.pDelay, str, 10);
+		_ltow(opt.pDelay, str, 10);
 		SetDlgItemText(hdlg, IDC_DELAY, str);
 		if (opt.pDelay == -1)
 			CheckRadioButton(hdlg, IDC_PD1, IDC_PD3, IDC_PD2);
@@ -342,8 +341,8 @@ INT_PTR CALLBACK DlgPopupOpts(HWND hdlg, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			hMenu = LoadMenu(hInst, MAKEINTRESOURCE(IDR_PMENU));
 			hMenu1 = GetSubMenu(hMenu, 0);
-			GetMenuString(hMenu1, opt.RightClickAction, str, sizeof(str), MF_BYCOMMAND);
-			SetDlgItemText(hdlg, IDC_RightClick, TranslateTS(str));
+			GetMenuString(hMenu1, opt.RightClickAction, str, _countof(str), MF_BYCOMMAND);
+			SetDlgItemText(hdlg, IDC_RightClick, TranslateW(str));
 			DestroyMenu(hMenu);
 			break;
 
@@ -362,20 +361,20 @@ INT_PTR CALLBACK DlgPopupOpts(HWND hdlg, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			hMenu = LoadMenu(hInst, MAKEINTRESOURCE(IDR_PMENU));
 			hMenu1 = GetSubMenu(hMenu, 0);
-			GetMenuString(hMenu1, opt.LeftClickAction, str, sizeof(str), MF_BYCOMMAND);
-			SetDlgItemText(hdlg, IDC_LeftClick, TranslateTS(str));
+			GetMenuString(hMenu1, opt.LeftClickAction, str, _countof(str), MF_BYCOMMAND);
+			SetDlgItemText(hdlg, IDC_LeftClick, TranslateW(str));
 			DestroyMenu(hMenu);
 			break;
 
 		case IDC_PD1:
 			// Popup delay setting from Popup plugin
-			SetDlgItemText(hdlg, IDC_DELAY, _T("0"));
+			SetDlgItemText(hdlg, IDC_DELAY, L"0");
 			CheckRadioButton(hdlg, IDC_PD1, IDC_PD3, IDC_PD1);
 			break;
 
 		case IDC_PD2:
 			// Popup delay = permanent
-			SetDlgItemText(hdlg, IDC_DELAY, _T("-1"));
+			SetDlgItemText(hdlg, IDC_DELAY, L"-1");
 			CheckRadioButton(hdlg, IDC_PD1, IDC_PD3, IDC_PD2);
 			break;
 
@@ -395,10 +394,10 @@ INT_PTR CALLBACK DlgPopupOpts(HWND hdlg, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		case IDC_VAR3:
 			// display variable list
-			_tcsncpy(str, _T("                                                            \n"), _countof(str) - 1);		// to make the message box wider
-			mir_tstrncat(str, VAR_LIST_POPUP, _countof(str) - mir_tstrlen(str));
-			mir_tstrncat(str, _T("\n"), _countof(str) - mir_tstrlen(str));
-			mir_tstrncat(str, CUSTOM_VARS, _countof(str) - mir_tstrlen(str));
+			wcsncpy(str, L"                                                            \n", _countof(str) - 1);		// to make the message box wider
+			mir_wstrncat(str, VAR_LIST_POPUP, _countof(str) - mir_wstrlen(str));
+			mir_wstrncat(str, L"\n", _countof(str) - mir_wstrlen(str));
+			mir_wstrncat(str, CUSTOM_VARS, _countof(str) - mir_wstrlen(str));
 			MessageBox(NULL, str, TranslateT("Variable List"), MB_OK | MB_ICONASTERISK | MB_TOPMOST);
 			break;
 

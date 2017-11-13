@@ -3,7 +3,7 @@
 Minecraft Dynmap plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2015 Robert Pösel
+Copyright © 2015-17 Robert Pösel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -81,7 +81,7 @@ http::response MinecraftDynmapProto::sendRequest(const int request_type, std::st
 	debugLogA("@@@@@ Sending request to '%s'", nlhr.szUrl);
 
 	// Send the request	
-	NETLIBHTTPREQUEST *pnlhr = (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)m_hNetlibUser, (LPARAM)&nlhr);
+	NETLIBHTTPREQUEST *pnlhr = Netlib_HttpTransaction(m_hNetlibUser, &nlhr);
 
 	mir_free(nlhr.headers);
 
@@ -111,7 +111,7 @@ http::response MinecraftDynmapProto::sendRequest(const int request_type, std::st
 
 		// debugLogA("&&&&& Got response: %s", resp.data.c_str());
 
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)pnlhr);
+		Netlib_FreeHttpRequest(pnlhr);
 	} else {
 		debugLogA("!!!!! No response from server (time-out)");
 		resp.code = HTTP_CODE_FAKE_DISCONNECTED;
@@ -281,7 +281,7 @@ bool MinecraftDynmapProto::doEvents()
 			// TODO: there are also "channel" and "account" elements
 
 			if (!time_ || !playerName_ || !message_) {
-				debugLog(_T("Error: No player name, time or text for message"));
+				debugLogW(L"Error: No player name, time or text for message");
 				continue;
 			}
 
@@ -289,7 +289,7 @@ bool MinecraftDynmapProto::doEvents()
 			std::string name = playerName_.as_string();
 			std::string message = message_.as_string();
 
-			debugLog(_T("Received message: [%d] %s -> %s"), timestamp, name.c_str(), message.c_str());
+			debugLogW(L"Received message: [%d] %s -> %s", timestamp, name.c_str(), message.c_str());
 			UpdateChat(name.c_str(), message.c_str(), timestamp);
 		}
 	}

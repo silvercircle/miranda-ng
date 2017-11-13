@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (C) 2012-15 Miranda NG project,
+Copyright (C) 2012-17 Miranda NG project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -24,6 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "stdafx.h"
 #include "database.h"
 
+static DBVARIANT temp;
+
 static int stringCompare(const char *p1, const char *p2)
 {
 	return mir_strcmp(p1, p2);
@@ -39,8 +41,8 @@ MDatabaseCache::MDatabaseCache(size_t _size) :
 	m_lSettings(100, stringCompare),
 	m_lContacts(50, NumericKeySortT),
 	m_lGlobalSettings(50, compareGlobals),
-	m_lastSetting(NULL),
-	m_lastVL(NULL)
+	m_lastSetting(nullptr),
+	m_lastVL(nullptr)
 {
 	m_hCacheHeap = HeapCreate(0, 0, 0);
 }
@@ -75,7 +77,7 @@ DBCachedContact* MDatabaseCache::GetCachedContact(MCONTACT contactID)
 	mir_cslock lck(m_cs);
 
 	int index = m_lContacts.getIndex((DBCachedContact*)&contactID);
-	return (index == -1) ? NULL : m_lContacts[index];
+	return (index == -1) ? nullptr : m_lContacts[index];
 }
 
 DBCachedContact* MDatabaseCache::GetFirstContact()
@@ -89,7 +91,7 @@ DBCachedContact* MDatabaseCache::GetNextContact(MCONTACT contactID)
 	mir_cslock lck(m_cs);
 
 	int index = m_lContacts.getIndex((DBCachedContact*)&contactID);
-	return (index == -1) ? NULL : m_lContacts[index+1];
+	return (index == -1) ? nullptr : m_lContacts[index+1];
 }
 
 void MDatabaseCache::FreeCachedContact(MCONTACT contactID)
@@ -102,7 +104,7 @@ void MDatabaseCache::FreeCachedContact(MCONTACT contactID)
 
 	DBCachedContact *cc = m_lContacts[index];
 	DBCachedContactValue* V = cc->first;
-	while (V != NULL) {
+	while (V != nullptr) {
 		DBCachedContactValue* V1 = V->next;
 		FreeCachedVariant(&V->value);
 		HeapFree(m_hCacheHeap, 0, V);
@@ -130,7 +132,7 @@ char* MDatabaseCache::GetCachedSetting(const char *szModuleName, const char *szS
 {
 	char szFullName[512];
 	const char *szKey;
-	if (szModuleName != NULL) {
+	if (szModuleName != nullptr) {
 		mir_strcpy(szFullName, szModuleName);
 		szFullName[moduleNameLen] = '/';
 		mir_strcpy(szFullName + moduleNameLen + 1, szSettingName);
@@ -152,23 +154,23 @@ char* MDatabaseCache::GetCachedSetting(const char *szModuleName, const char *szS
 
 void MDatabaseCache::SetCachedVariant(DBVARIANT* s /* new */, DBVARIANT* d /* cached */)
 {
-	char* szSave = (d->type == DBVT_UTF8 || d->type == DBVT_ASCIIZ) ? d->pszVal : NULL;
+	char* szSave = (d->type == DBVT_UTF8 || d->type == DBVT_ASCIIZ) ? d->pszVal : nullptr;
 
 	memcpy(d, s, sizeof(DBVARIANT));
-	if ((s->type == DBVT_UTF8 || s->type == DBVT_ASCIIZ) && s->pszVal != NULL) {
-		if (szSave != NULL)
+	if ((s->type == DBVT_UTF8 || s->type == DBVT_ASCIIZ) && s->pszVal != nullptr) {
+		if (szSave != nullptr)
 			d->pszVal = (char*)HeapReAlloc(m_hCacheHeap, 0, szSave, mir_strlen(s->pszVal) + 1);
 		else
 			d->pszVal = (char*)HeapAlloc(m_hCacheHeap, 0, mir_strlen(s->pszVal) + 1);
 		mir_strcpy(d->pszVal, s->pszVal);
 	}
-	else if (szSave != NULL)
+	else if (szSave != nullptr)
 		HeapFree(m_hCacheHeap, 0, szSave);
 }
 
 void MDatabaseCache::FreeCachedVariant(DBVARIANT* V)
 {
-	if ((V->type == DBVT_ASCIIZ || V->type == DBVT_UTF8) && V->pszVal != NULL)
+	if ((V->type == DBVT_ASCIIZ || V->type == DBVT_UTF8) && V->pszVal != nullptr)
 		HeapFree(m_hCacheHeap, 0, V->pszVal);
 }
 
@@ -185,12 +187,12 @@ STDMETHODIMP_(DBVARIANT*) MDatabaseCache::GetCachedValuePtr(MCONTACT contactID, 
 				FreeCachedVariant(&V->value);
 				m_lGlobalSettings.remove(index);
 				HeapFree(m_hCacheHeap, 0, V);
-				return NULL;
+				return &temp; // not null - smth were deleted
 			}
 		}
 		else {
 			if (bAllocate != 1)
-				return NULL;
+				return nullptr;
 
 			V = (DBCachedGlobalValue*)HeapAlloc(m_hCacheHeap, HEAP_ZERO_MEMORY, sizeof(DBCachedGlobalValue));
 			V->name = szSetting;
@@ -208,17 +210,17 @@ STDMETHODIMP_(DBVARIANT*) MDatabaseCache::GetCachedValuePtr(MCONTACT contactID, 
 
 	int index = m_lContacts.getIndex(&ccTemp);
 	if (index == -1)
-		return NULL;
+		return nullptr;
 
 	m_lastVL = cc = m_lContacts[index];
 
-	for (V = cc->first; V != NULL; V = V->next)
+	for (V = cc->first; V != nullptr; V = V->next)
 		if (V->name == szSetting)
 			break;
 
-	if (V == NULL) {
+	if (V == nullptr) {
 		if (bAllocate != 1)
-			return NULL;
+			return nullptr;
 
 		V = (DBCachedContactValue *)HeapAlloc(m_hCacheHeap, HEAP_ZERO_MEMORY, sizeof(DBCachedContactValue));
 		if (cc->last)
@@ -229,15 +231,15 @@ STDMETHODIMP_(DBVARIANT*) MDatabaseCache::GetCachedValuePtr(MCONTACT contactID, 
 		V->name = szSetting;
 	}
 	else if (bAllocate == -1) {
-		m_lastVL = NULL;
+		m_lastVL = nullptr;
 		FreeCachedVariant(&V->value);
 		if (cc->first == V) {
 			cc->first = V->next;
 			if (cc->last == V)
-				cc->last = V->next; // NULL
+				cc->last = V->next; // nullptr
 		}
 		else
-			for (V1 = cc->first; V1 != NULL; V1 = V1->next)
+			for (V1 = cc->first; V1 != nullptr; V1 = V1->next)
 				if (V1->next == V) {
 					V1->next = V->next;
 					if (cc->last == V)
@@ -245,7 +247,7 @@ STDMETHODIMP_(DBVARIANT*) MDatabaseCache::GetCachedValuePtr(MCONTACT contactID, 
 					break;
 				}
 		HeapFree(m_hCacheHeap, 0, V);
-		return NULL;
+		return &temp; // not null - smth were deleted
 	}
 
 	return &V->value;

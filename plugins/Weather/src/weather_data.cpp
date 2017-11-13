@@ -29,11 +29,11 @@ saving individual weather data for a weather contact.
 // get station ID from DB
 // hContact = the current contact handle
 // return value = the string for station ID
-
-void GetStationID(MCONTACT hContact, TCHAR* id, size_t idlen)
+//
+void GetStationID(MCONTACT hContact, wchar_t* id, int idlen)
 {
 	// accessing the database
-	if (DBGetStaticString(hContact, WEATHERPROTONAME, "ID", id, idlen))
+	if (db_get_wstatic(hContact, WEATHERPROTONAME, "ID", id, idlen))
 		id[0] = 0;
 }
 
@@ -49,36 +49,36 @@ WEATHERINFO LoadWeatherInfo(MCONTACT hContact)
 	winfo.hContact = hContact;
 	GetStationID(hContact, winfo.id, _countof(winfo.id));
 
-	if (DBGetStaticString(hContact, WEATHERPROTONAME, "Nick", winfo.city, _countof(winfo.city)))
-		_tcsncpy(winfo.city, NODATA, _countof(winfo.city) - 1);
-	if (DBGetStaticString(hContact, WEATHERCONDITION, "Update", winfo.update, _countof(winfo.update)))
-		_tcsncpy(winfo.update, NODATA, _countof(winfo.update) - 1);
-	if (DBGetStaticString(hContact, WEATHERCONDITION, "Condition", winfo.cond, _countof(winfo.cond)))
-		_tcsncpy(winfo.cond, NODATA, _countof(winfo.cond) - 1);
-	if (DBGetStaticString(hContact, WEATHERCONDITION, "Temperature", winfo.temp, _countof(winfo.temp)))
-		_tcsncpy(winfo.temp, NODATA, _countof(winfo.temp) - 1);
-	if (DBGetStaticString(hContact, WEATHERCONDITION, "High", winfo.high, _countof(winfo.high)))
-		_tcsncpy(winfo.high, NODATA, _countof(winfo.high) - 1);
-	if (DBGetStaticString(hContact, WEATHERCONDITION, "Low", winfo.low, _countof(winfo.low)))
-		_tcsncpy(winfo.low, NODATA, _countof(winfo.low) - 1);
-	if (DBGetStaticString(hContact, WEATHERCONDITION, "Sunset", winfo.sunset, _countof(winfo.sunset)))
-		_tcsncpy(winfo.sunset, NODATA, _countof(winfo.sunset) - 1);
-	if (DBGetStaticString(hContact, WEATHERCONDITION, "Sunrise", winfo.sunrise, _countof(winfo.sunrise)))
-		_tcsncpy(winfo.sunrise, NODATA, _countof(winfo.sunrise) - 1);
-	if (DBGetStaticString(hContact, WEATHERCONDITION, "Wind Speed", winfo.wind, _countof(winfo.wind)))
-		_tcsncpy(winfo.wind, NODATA, _countof(winfo.wind) - 1);
-	if (DBGetStaticString(hContact, WEATHERCONDITION, "Wind Direction", winfo.winddir, _countof(winfo.winddir)))
-		_tcsncpy(winfo.winddir, NODATA, _countof(winfo.winddir) - 1);
-	if (DBGetStaticString(hContact, WEATHERCONDITION, "Dewpoint", winfo.dewpoint, _countof(winfo.dewpoint)))
-		_tcsncpy(winfo.dewpoint, NODATA, _countof(winfo.dewpoint) - 1);
-	if (DBGetStaticString(hContact, WEATHERCONDITION, "Pressure", winfo.pressure, _countof(winfo.pressure)))
-		_tcsncpy(winfo.pressure, NODATA, _countof(winfo.pressure) - 1);
-	if (DBGetStaticString(hContact, WEATHERCONDITION, "Visibility", winfo.vis, _countof(winfo.vis)))
-		_tcsncpy(winfo.vis, NODATA, _countof(winfo.vis) - 1);
-	if (DBGetStaticString(hContact, WEATHERCONDITION, "Humidity", winfo.humid, _countof(winfo.humid)))
-		_tcsncpy(winfo.humid, NODATA, _countof(winfo.humid) - 1);
-	if (DBGetStaticString(hContact, WEATHERCONDITION, "Feel", winfo.feel, _countof(winfo.feel)))
-		_tcsncpy(winfo.feel, NODATA, _countof(winfo.feel) - 1);
+	if (db_get_wstatic(hContact, WEATHERPROTONAME, "Nick", winfo.city, _countof(winfo.city)))
+		wcsncpy(winfo.city, NODATA, _countof(winfo.city) - 1);
+	if (db_get_wstatic(hContact, WEATHERCONDITION, "Update", winfo.update, _countof(winfo.update)))
+		wcsncpy(winfo.update, NODATA, _countof(winfo.update) - 1);
+	if (db_get_wstatic(hContact, WEATHERCONDITION, "Condition", winfo.cond, _countof(winfo.cond)))
+		wcsncpy(winfo.cond, NODATA, _countof(winfo.cond) - 1);
+	if (db_get_wstatic(hContact, WEATHERCONDITION, "Temperature", winfo.temp, _countof(winfo.temp)))
+		wcsncpy(winfo.temp, NODATA, _countof(winfo.temp) - 1);
+	if (db_get_wstatic(hContact, WEATHERCONDITION, "High", winfo.high, _countof(winfo.high)))
+		wcsncpy(winfo.high, NODATA, _countof(winfo.high) - 1);
+	if (db_get_wstatic(hContact, WEATHERCONDITION, "Low", winfo.low, _countof(winfo.low)))
+		wcsncpy(winfo.low, NODATA, _countof(winfo.low) - 1);
+	if (db_get_wstatic(hContact, WEATHERCONDITION, "Sunset", winfo.sunset, _countof(winfo.sunset)))
+		wcsncpy(winfo.sunset, NODATA, _countof(winfo.sunset) - 1);
+	if (db_get_wstatic(hContact, WEATHERCONDITION, "Sunrise", winfo.sunrise, _countof(winfo.sunrise)))
+		wcsncpy(winfo.sunrise, NODATA, _countof(winfo.sunrise) - 1);
+	if (db_get_wstatic(hContact, WEATHERCONDITION, "Wind Speed", winfo.wind, _countof(winfo.wind)))
+		wcsncpy(winfo.wind, NODATA, _countof(winfo.wind) - 1);
+	if (db_get_wstatic(hContact, WEATHERCONDITION, "Wind Direction", winfo.winddir, _countof(winfo.winddir)))
+		wcsncpy(winfo.winddir, NODATA, _countof(winfo.winddir) - 1);
+	if (db_get_wstatic(hContact, WEATHERCONDITION, "Dewpoint", winfo.dewpoint, _countof(winfo.dewpoint)))
+		wcsncpy(winfo.dewpoint, NODATA, _countof(winfo.dewpoint) - 1);
+	if (db_get_wstatic(hContact, WEATHERCONDITION, "Pressure", winfo.pressure, _countof(winfo.pressure)))
+		wcsncpy(winfo.pressure, NODATA, _countof(winfo.pressure) - 1);
+	if (db_get_wstatic(hContact, WEATHERCONDITION, "Visibility", winfo.vis, _countof(winfo.vis)))
+		wcsncpy(winfo.vis, NODATA, _countof(winfo.vis) - 1);
+	if (db_get_wstatic(hContact, WEATHERCONDITION, "Humidity", winfo.humid, _countof(winfo.humid)))
+		wcsncpy(winfo.humid, NODATA, _countof(winfo.humid) - 1);
+	if (db_get_wstatic(hContact, WEATHERCONDITION, "Feel", winfo.feel, _countof(winfo.feel)))
+		wcsncpy(winfo.feel, NODATA, _countof(winfo.feel) - 1);
 
 	winfo.status = (WORD)db_get_w(hContact, WEATHERPROTONAME, "StatusIcon", ID_STATUS_OFFLINE);
 	return winfo;
@@ -88,38 +88,26 @@ WEATHERINFO LoadWeatherInfo(MCONTACT hContact)
 // return 0 on success
 int DBGetData(MCONTACT hContact, char *setting, DBVARIANT *dbv)
 {
-	if (db_get_ts(hContact, WEATHERCONDITION, setting, dbv)) {
+	if (db_get_ws(hContact, WEATHERCONDITION, setting, dbv)) {
 		size_t len = mir_strlen(setting) + 1;
 		char *set = (char*)alloca(len + 1);
 		*set = '#';
 		memcpy(set + 1, setting, len);
 
-		if (db_get_ts(hContact, WEATHERCONDITION, set, dbv))
+		if (db_get_ws(hContact, WEATHERCONDITION, set, dbv))
 			return 1;
 	}
 	return 0;
 }
 
-int DBGetStaticString(MCONTACT hContact, const char *szModule, const char *valueName, TCHAR *dest, size_t dest_len)
-{
-	DBVARIANT dbv;
-	if (db_get_ts(hContact, szModule, valueName, &dbv))
-		return 1;
-
-	_tcsncpy(dest, dbv.ptszVal, dest_len);
-	dest[dest_len - 1] = 0;
-	db_free(&dbv);
-	return 0;
-}
-
 
 //============  ERASE OLD SETTINGS  ============
-
+//
 // erase all current weather information from database
 // lastver = the last used version number in dword (using PLUGIN_MAKE_VERSION)
 void EraseAllInfo()
 {
-	TCHAR str[255];
+	wchar_t str[255];
 	int ContactCount = 0;
 	MCONTACT LastContact = NULL;
 	DBVARIANT dbv;
@@ -129,8 +117,8 @@ void EraseAllInfo()
 		db_set_w(hContact, WEATHERPROTONAME, "StatusIcon", ID_STATUS_OFFLINE);
 		db_unset(hContact, "CList", "MyHandle");
 		// clear all data
-		if (db_get_ts(hContact, WEATHERPROTONAME, "Nick", &dbv)) {
-			db_set_ts(hContact, WEATHERPROTONAME, "Nick", TranslateT("<Enter city name here>"));
+		if (db_get_ws(hContact, WEATHERPROTONAME, "Nick", &dbv)) {
+			db_set_ws(hContact, WEATHERPROTONAME, "Nick", TranslateT("<Enter city name here>"));
 			db_set_s(hContact, WEATHERPROTONAME, "LastLog", "never");
 			db_set_s(hContact, WEATHERPROTONAME, "LastCondition", "None");
 			db_set_s(hContact, WEATHERPROTONAME, "LastTemperature", "None");
@@ -142,7 +130,7 @@ void EraseAllInfo()
 		// reset update tag
 		db_set_b(hContact, WEATHERPROTONAME, "IsUpdated", FALSE);
 		// reset logging settings
-		if (!db_get_ts(hContact, WEATHERPROTONAME, "Log", &dbv)) {
+		if (!db_get_ws(hContact, WEATHERPROTONAME, "Log", &dbv)) {
 			db_set_b(hContact, WEATHERPROTONAME, "File", (BYTE)(dbv.ptszVal[0] != 0));
 			db_free(&dbv);
 		}
@@ -153,16 +141,16 @@ void EraseAllInfo()
 			GetStationID(hContact, opt.Default, _countof(opt.Default));
 
 			opt.DefStn = hContact;
-			if (!db_get_ts(hContact, WEATHERPROTONAME, "Nick", &dbv)) {
-				mir_sntprintf(str, TranslateT("%s is now the default weather station"), dbv.ptszVal);
+			if (!db_get_ws(hContact, WEATHERPROTONAME, "Nick", &dbv)) {
+				mir_snwprintf(str, TranslateT("%s is now the default weather station"), dbv.ptszVal);
 				db_free(&dbv);
 				MessageBox(NULL, str, TranslateT("Weather Protocol"), MB_OK | MB_ICONINFORMATION);
 			}
 		}
 		// get the handle of the default station
 		if (opt.DefStn == NULL) {
-			if (!db_get_ts(hContact, WEATHERPROTONAME, "ID", &dbv)) {
-				if (!mir_tstrcmp(dbv.ptszVal, opt.Default))
+			if (!db_get_ws(hContact, WEATHERPROTONAME, "ID", &dbv)) {
+				if (!mir_wstrcmp(dbv.ptszVal, opt.Default))
 					opt.DefStn = hContact;
 				db_free(&dbv);
 			}
@@ -175,94 +163,94 @@ void EraseAllInfo()
 	// if (ContactCount != 0) status = ONLINE;
 	// in case where the default station is missing
 	if (opt.DefStn == NULL && ContactCount != 0) {
-		if (!db_get_ts(LastContact, WEATHERPROTONAME, "ID", &dbv)) {
-			_tcsncpy(opt.Default, dbv.ptszVal, _countof(opt.Default) - 1);
+		if (!db_get_ws(LastContact, WEATHERPROTONAME, "ID", &dbv)) {
+			wcsncpy(opt.Default, dbv.ptszVal, _countof(opt.Default) - 1);
 			db_free(&dbv);
 		}
 		opt.DefStn = LastContact;
-		if (!db_get_ts(LastContact, WEATHERPROTONAME, "Nick", &dbv)) {
-			mir_sntprintf(str, TranslateT("%s is now the default weather station"), dbv.ptszVal);
+		if (!db_get_ws(LastContact, WEATHERPROTONAME, "Nick", &dbv)) {
+			mir_snwprintf(str, TranslateT("%s is now the default weather station"), dbv.ptszVal);
 			db_free(&dbv);
 			MessageBox(NULL, str, TranslateT("Weather Protocol"), MB_OK | MB_ICONINFORMATION);
 		}
 	}
 	// save option in case of default station changed
-	db_set_ts(NULL, WEATHERPROTONAME, "Default", opt.Default);
+	db_set_ws(NULL, WEATHERPROTONAME, "Default", opt.Default);
 }
 
-void ConvertDataValue(WIDATAITEM *UpdateData, TCHAR *Data)
+void ConvertDataValue(WIDATAITEM *UpdateData, wchar_t *Data)
 {
-	TCHAR str[MAX_DATA_LEN];
+	wchar_t str[MAX_DATA_LEN];
 
 	// convert the unit
-	if (mir_tstrcmp(Data, TranslateT("<Error>")) && mir_tstrcmp(Data, NODATA) && mir_tstrcmp(Data, TranslateTS(NODATA))) {
+	if (mir_wstrcmp(Data, TranslateT("<Error>")) && mir_wstrcmp(Data, NODATA) && mir_wstrcmp(Data, TranslateW(NODATA))) {
 		// temperature
-		if (!mir_tstrcmp(UpdateData->Name, _T("Temperature")) || !mir_tstrcmp(UpdateData->Name, _T("High")) ||
-			!mir_tstrcmp(UpdateData->Name, _T("Low")) || !mir_tstrcmp(UpdateData->Name, _T("Feel")) ||
-			!mir_tstrcmp(UpdateData->Name, _T("Dewpoint")) ||
-			!mir_tstrcmpi(UpdateData->Unit, _T("C")) || !mir_tstrcmpi(UpdateData->Unit, _T("F")) ||
-			!mir_tstrcmpi(UpdateData->Unit, _T("K"))) {
+		if (!mir_wstrcmp(UpdateData->Name, L"Temperature") || !mir_wstrcmp(UpdateData->Name, L"High") ||
+			!mir_wstrcmp(UpdateData->Name, L"Low") || !mir_wstrcmp(UpdateData->Name, L"Feel") ||
+			!mir_wstrcmp(UpdateData->Name, L"Dewpoint") ||
+			!mir_wstrcmpi(UpdateData->Unit, L"C") || !mir_wstrcmpi(UpdateData->Unit, L"F") ||
+			!mir_wstrcmpi(UpdateData->Unit, L"K")) {
 			GetTemp(Data, UpdateData->Unit, str);
-			mir_tstrcpy(Data, str);
+			mir_wstrcpy(Data, str);
 		}
 		// pressure
-		else if (!mir_tstrcmp(UpdateData->Name, _T("Pressure")) || !mir_tstrcmpi(UpdateData->Unit, _T("HPA")) ||
-			!mir_tstrcmpi(UpdateData->Unit, _T("KPA")) || !mir_tstrcmpi(UpdateData->Unit, _T("MB")) ||
-			!mir_tstrcmpi(UpdateData->Unit, _T("TORR")) || !mir_tstrcmpi(UpdateData->Unit, _T("IN")) ||
-			!mir_tstrcmpi(UpdateData->Unit, _T("MM"))) {
+		else if (!mir_wstrcmp(UpdateData->Name, L"Pressure") || !mir_wstrcmpi(UpdateData->Unit, L"HPA") ||
+			!mir_wstrcmpi(UpdateData->Unit, L"KPA") || !mir_wstrcmpi(UpdateData->Unit, L"MB") ||
+			!mir_wstrcmpi(UpdateData->Unit, L"TORR") || !mir_wstrcmpi(UpdateData->Unit, L"IN") ||
+			!mir_wstrcmpi(UpdateData->Unit, L"MM")) {
 			GetPressure(Data, UpdateData->Unit, str);
-			mir_tstrcpy(Data, str);
+			mir_wstrcpy(Data, str);
 		}
 		// speed
-		else if (!mir_tstrcmp(UpdateData->Name, _T("Wind Speed")) || !mir_tstrcmpi(UpdateData->Unit, _T("KM/H")) ||
-			!mir_tstrcmpi(UpdateData->Unit, _T("M/S")) || !mir_tstrcmpi(UpdateData->Unit, _T("MPH")) ||
-			!mir_tstrcmpi(UpdateData->Unit, _T("KNOTS"))) {
+		else if (!mir_wstrcmp(UpdateData->Name, L"Wind Speed") || !mir_wstrcmpi(UpdateData->Unit, L"KM/H") ||
+			!mir_wstrcmpi(UpdateData->Unit, L"M/S") || !mir_wstrcmpi(UpdateData->Unit, L"MPH") ||
+			!mir_wstrcmpi(UpdateData->Unit, L"KNOTS")) {
 			GetSpeed(Data, UpdateData->Unit, str);
-			mir_tstrcpy(Data, str);
+			mir_wstrcpy(Data, str);
 		}
 		// visibility
-		else if (!mir_tstrcmp(UpdateData->Name, _T("Visibility")) || !mir_tstrcmpi(UpdateData->Unit, _T("KM")) ||
-			!mir_tstrcmpi(UpdateData->Unit, _T("MILES"))) {
+		else if (!mir_wstrcmp(UpdateData->Name, L"Visibility") || !mir_wstrcmpi(UpdateData->Unit, L"KM") ||
+			!mir_wstrcmpi(UpdateData->Unit, L"MILES")) {
 			GetDist(Data, UpdateData->Unit, str);
-			mir_tstrcpy(Data, str);
+			mir_wstrcpy(Data, str);
 		}
 		// elevation
-		else if (!mir_tstrcmp(UpdateData->Name, _T("Elevation")) || !mir_tstrcmpi(UpdateData->Unit, _T("FT")) ||
-			!mir_tstrcmpi(UpdateData->Unit, _T("M"))) {
+		else if (!mir_wstrcmp(UpdateData->Name, L"Elevation") || !mir_wstrcmpi(UpdateData->Unit, L"FT") ||
+			!mir_wstrcmpi(UpdateData->Unit, L"M")) {
 			GetElev(Data, UpdateData->Unit, str);
-			mir_tstrcpy(Data, str);
+			mir_wstrcpy(Data, str);
 		}
 		// converting case for condition to the upper+lower format
-		else if (!mir_tstrcmpi(UpdateData->Unit, _T("COND")))
+		else if (!mir_wstrcmpi(UpdateData->Unit, L"COND"))
 			CaseConv(Data);
 		// degree sign
-		else if (!mir_tstrcmpi(UpdateData->Unit, _T("DEG"))) {
-			if (!opt.DoNotAppendUnit) mir_tstrcat(Data, opt.DegreeSign);
+		else if (!mir_wstrcmpi(UpdateData->Unit, L"DEG")) {
+			if (!opt.DoNotAppendUnit) mir_wstrcat(Data, opt.DegreeSign);
 		}
 		// percent sign
-		else if (!mir_tstrcmpi(UpdateData->Unit, _T("%"))) {
-			if (!opt.DoNotAppendUnit) mir_tstrcat(Data, _T("%"));
+		else if (!mir_wstrcmpi(UpdateData->Unit, L"%")) {
+			if (!opt.DoNotAppendUnit) mir_wstrcat(Data, L"%");
 		}
 		// truncating strings for day/month to 2 or 3 characters
-		else if (!mir_tstrcmpi(UpdateData->Unit, _T("DAY")) || !mir_tstrcmpi(UpdateData->Unit, _T("MONTH")))
-			if (opt.dUnit > 1 && mir_tstrlen(Data) > opt.dUnit)
+		else if (!mir_wstrcmpi(UpdateData->Unit, L"DAY") || !mir_wstrcmpi(UpdateData->Unit, L"MONTH"))
+			if (opt.dUnit > 1 && mir_wstrlen(Data) > opt.dUnit)
 				Data[opt.dUnit] = '\0';
 	}
 }
 
 //============  GET THE VALUE OF A DATAITEM  ============
-
+//
 // get the value of the data using the start, end strings
 // UpdateData = the WIDATAITEM struct containing start, end, unit
 // Data = the string containing weather data obtained from UpdateData
 // global var. used: szInfo = the downloaded string
-
-void GetDataValue(WIDATAITEM *UpdateData, TCHAR *Data, TCHAR** szData)
+//
+void GetDataValue(WIDATAITEM *UpdateData, wchar_t *Data, wchar_t** szData)
 {
-	TCHAR last = 0, current, *start, *end;
+	wchar_t last = 0, current, *start, *end;
 	unsigned startloc = 0, endloc = 0, respos = 0;
 	BOOL tag = FALSE, symb = FALSE;
-	TCHAR *szInfo = *szData;
+	wchar_t *szInfo = *szData;
 
 	Data[0] = 0;
 	// parse the data if available
@@ -270,25 +258,25 @@ void GetDataValue(WIDATAITEM *UpdateData, TCHAR *Data, TCHAR** szData)
 	start = szInfo;
 	// the start string must be found
 	if (UpdateData->Start[0] != 0) {
-		start = _tcsstr(szInfo, UpdateData->Start);
+		start = wcsstr(szInfo, UpdateData->Start);
 		if (start != NULL) {
 			// set the starting location for getting data
-			start += mir_tstrlen(UpdateData->Start);
+			start += mir_wstrlen(UpdateData->Start);
 			szInfo = start;
 		}
 	}
 
 	// the end string must be found too
 	if (UpdateData->End[0] != 0)
-		end = _tcsstr(szInfo, UpdateData->End);
+		end = wcsstr(szInfo, UpdateData->End);
 	else
-		end = _tcsstr(szInfo, _T(" "));
+		end = wcsstr(szInfo, L" ");
 
 	if (end != NULL) {
 		// set the ending location
 		startloc = 0;
 		endloc = end - szInfo;
-		end += mir_tstrlen(UpdateData->End);
+		end += mir_wstrlen(UpdateData->End);
 		last = '\n';
 	}
 
@@ -303,7 +291,7 @@ void GetDataValue(WIDATAITEM *UpdateData, TCHAR *Data, TCHAR** szData)
 				(szInfo[startloc + 1] == ';' || szInfo[startloc + 2] == ';' || szInfo[startloc + 3] == ';' ||
 					szInfo[startloc + 4] == ';' || szInfo[startloc + 5] == ';' || szInfo[startloc + 6] == ';')) {
 				// ...but do NOT strip &minus;
-				if ((endloc - startloc) > 7 && _tcsncmp(szInfo + startloc, _T("&minus;"), 7) == 0) {
+				if ((endloc - startloc) > 7 && wcsncmp(szInfo + startloc, L"&minus;", 7) == 0) {
 					Data[respos++] = '-';
 					startloc += 7;
 					continue;
@@ -327,11 +315,11 @@ void GetDataValue(WIDATAITEM *UpdateData, TCHAR *Data, TCHAR** szData)
 			++startloc;
 			// prevent crashes if the string go over maximun length -> generate an error
 			if (respos >= MAX_DATA_LEN) {
-				if (opt.ShowWarnings && UpdateData->Name[0] != 0 && mir_tstrcmp(UpdateData->Name, _T("Ignore"))) {
-					mir_sntprintf(Data, MAX_DATA_LEN, TranslateT("Error when obtaining data: %s"), UpdateData->Name);
+				if (opt.ShowWarnings && UpdateData->Name[0] != 0 && mir_wstrcmp(UpdateData->Name, L"Ignore")) {
+					mir_snwprintf(Data, MAX_DATA_LEN, TranslateT("Error when obtaining data: %s"), UpdateData->Name);
 					WPShowMessage(Data, SM_WARNING);
 				}
-				_tcsncpy(Data, TranslateT("<Error>"), MAX_DATA_LEN);
+				wcsncpy(Data, TranslateT("<Error>"), MAX_DATA_LEN);
 				last = ' ';
 				respos = MAX_DATA_LEN - 1;
 				break;
@@ -355,18 +343,16 @@ void GetDataValue(WIDATAITEM *UpdateData, TCHAR *Data, TCHAR** szData)
 }
 
 //============ ALLOCATE SPACE AND COPY STRING ============
-
+//
 // copy a string into a new memory location
 // Data = the field the data is copied to
 // Value = the original string, the string where data is copied from
 void wSetData(char **Data, const char *Value)
 {
-	if (Value[0] != 0) {
-		char *newData = (char*)mir_alloc(mir_strlen(Value) + 3);
-		mir_strcpy(newData, Value);
-		*Data = newData;
-	}
-	else *Data = "";
+	if (Value[0] != 0)
+		*Data = mir_strdup(Value);
+	else
+		*Data = "";
 }
 
 void wSetData(WCHAR **Data, const char *Value)
@@ -414,24 +400,19 @@ int GetWeatherDataFromDB(const char *szSetting, LPARAM lparam)
 
 // remove or display the weather information for a contact
 // hContact - the contact in which the info is going to be removed
-
+//
 void DBDataManage(MCONTACT hContact, WORD Mode, WPARAM wParam, LPARAM)
 {
+	// get all the settings and store them in a temporary list
 	LIST<char> arSettings(10);
-
-	// get all the settings and stored them in a temporary list
-	DBCONTACTENUMSETTINGS dbces;
-	dbces.lParam = (LPARAM)&arSettings;
-	dbces.pfnEnumProc = GetWeatherDataFromDB;
-	dbces.szModule = WEATHERCONDITION;
-	CallService(MS_DB_CONTACT_ENUMSETTINGS, hContact, (LPARAM)&dbces);
+	db_enum_settings(hContact, GetWeatherDataFromDB, WEATHERCONDITION, &arSettings);
 
 	// begin deleting settings
 	for (int i = arSettings.getCount() - 1; i >= 0; i--) {
 		char *szSetting = arSettings[i];
 
 		DBVARIANT dbv;
-		if (!db_get_ts(hContact, WEATHERCONDITION, szSetting, &dbv)) {
+		if (!db_get_ws(hContact, WEATHERCONDITION, szSetting, &dbv)) {
 			switch (Mode) {
 			case WDBM_REMOVE:
 				db_unset(hContact, WEATHERCONDITION, szSetting);
@@ -446,7 +427,7 @@ void DBDataManage(MCONTACT hContact, WORD Mode, WPARAM wParam, LPARAM)
 				LV_ITEM lvi = { 0 };
 				lvi.mask = LVIF_TEXT | LVIF_PARAM;
 				lvi.lParam = i;
-				lvi.pszText = TranslateTS(_A2T(szSetting));
+				lvi.pszText = TranslateW(_A2T(szSetting));
 				lvi.iItem = ListView_InsertItem(hList, &lvi);
 				lvi.pszText = dbv.ptszVal;
 				ListView_SetItemText(hList, lvi.iItem, 1, dbv.ptszVal);

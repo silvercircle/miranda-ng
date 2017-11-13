@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2015-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-RequestQueue::RequestQueue(HANDLE hConnection) :
+RequestQueue::RequestQueue(HNETLIBUSER hConnection) :
 	hConnection(hConnection), requests(1)
 {
 	isTerminated = true;
@@ -78,6 +78,7 @@ void RequestQueue::Execute(RequestQueueItem *item)
 	if (item->finallyCallback != NULL)
 		item->finallyCallback(item->arg);
 	delete item;
+	delete response;
 }
 
 unsigned int RequestQueue::AsyncSendThread(void *owner, void *arg)

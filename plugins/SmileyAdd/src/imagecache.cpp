@@ -18,32 +18,30 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-static FI_INTERFACE *fei;
-
 static HANDLE g_hMutexIm;
 static OBJLIST<ImageBase> g_imagecache(25, ImageType::CompareImg);
 
-static CMString lastdllname;
+static CMStringW lastdllname;
 static HMODULE lastmodule;
 static time_t laststamp;
 static UINT_PTR timerId;
 
-static void CALLBACK timerProc(HWND, UINT, UINT_PTR, DWORD) 
+static void CALLBACK timerProc(HWND, UINT, UINT_PTR, DWORD)
 {
 	WaitForSingleObject(g_hMutexIm, 3000);
 	const time_t ts = time(NULL) - 10;
-	if ( lastmodule && ts > laststamp) {
+	if (lastmodule && ts > laststamp) {
 		FreeLibrary(lastmodule);
 		lastmodule = NULL;
 		lastdllname.Empty();
 	}
 
-	for (int i=g_imagecache.getCount()-1; i >= 0; i--)
+	for (int i = g_imagecache.getCount() - 1; i >= 0; i--)
 		g_imagecache[i].ProcessTimerTick(ts);
 
 	if (g_imagecache.getCount() == 0) {
 		g_imagecache.destroy();
-		if (timerId && (timerId+1) && lastmodule == NULL) {
+		if (timerId && (timerId + 1) && lastmodule == NULL) {
 			KillTimer(NULL, timerId);
 			timerId = 0;
 		}
@@ -53,14 +51,14 @@ static void CALLBACK timerProc(HWND, UINT, UINT_PTR, DWORD)
 }
 
 
-static void CALLBACK sttMainThreadCallback( PVOID )
+static void CALLBACK sttMainThreadCallback(PVOID)
 {
-	if (timerId == 0xffffffff) 
+	if (timerId == 0xffffffff)
 		timerId = SetTimer(NULL, 0, 10000, (TIMERPROC)timerProc);
 }
 
 
-static HMODULE LoadDll(const CMString& file)
+static HMODULE LoadDll(const CMStringW &file)
 {
 	WaitForSingleObject(g_hMutexIm, 3000);
 
@@ -86,8 +84,8 @@ ImageBase::ImageBase(unsigned id)
 	m_timestamp = 0;
 }
 
-long ImageBase::AddRef(void) 
-{ 
+long ImageBase::AddRef(void)
+{
 	WaitForSingleObject(g_hMutexIm, 3000);
 	long cnt = ++m_lRefCount;
 	ReleaseMutex(g_hMutexIm);
@@ -109,14 +107,14 @@ long ImageBase::Release(void)
 void ImageBase::ProcessTimerTick(time_t ts)
 {
 	WaitForSingleObject(g_hMutexIm, 3000);
-	if (m_lRefCount == 0 && m_timestamp < ts ) 
-		if (!g_imagecache.remove(this)) 
-			delete this; 
+	if (m_lRefCount == 0 && m_timestamp < ts)
+		if (!g_imagecache.remove(this))
+			delete this;
 
 	ReleaseMutex(g_hMutexIm);
 }
 
-int ImageBase::CompareImg(const ImageBase* p1, const ImageBase* p2)
+int ImageBase::CompareImg(const ImageBase *p1, const ImageBase *p2)
 {
 	unsigned id1 = p1->m_id;
 	unsigned id2 = p2->m_id;
@@ -125,7 +123,7 @@ int ImageBase::CompareImg(const ImageBase* p1, const ImageBase* p2)
 	else return id1 < id2 ? -1 : 1;
 }
 
-void ImageBase::Draw(HDC hdc, RECT& rc, bool clip)
+void ImageBase::Draw(HDC hdc, RECT &rc, bool clip)
 {
 	HRGN hrgn = NULL;
 	if (clip) {
@@ -140,7 +138,7 @@ void ImageBase::Draw(HDC hdc, RECT& rc, bool clip)
 	const int sizeY = rc.bottom - rc.top;
 
 	const int x = rc.left + (sizeX > iSize.cx || clip ? (sizeX - iSize.cx) / 2 : 0);
-	const int y = rc.top  + (sizeY > iSize.cy || clip ? (sizeY - iSize.cy) / 2 : 0);
+	const int y = rc.top + (sizeY > iSize.cy || clip ? (sizeY - iSize.cy) / 2 : 0);
 
 	const int scaleX = sizeX > iSize.cx || clip ? iSize.cx : sizeX;
 	const int scaleY = sizeY > iSize.cy || clip ? iSize.cy : sizeY;
@@ -162,7 +160,7 @@ HBITMAP ImageBase::GetBitmap(COLORREF bkgClr, int sizeX, int sizeY)
 		SIZE iSize;
 		GetSize(iSize);
 
-		if (sizeX == 0) rc.right  = iSize.cx;
+		if (sizeX == 0) rc.right = iSize.cx;
 		if (sizeY == 0) rc.bottom = iSize.cy;
 	}
 
@@ -190,9 +188,9 @@ int ImageBase::SelectNextFrame(const int frame)
 	return res;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
 
-
-IconType::IconType(const unsigned id, const CMString& file, const int index, const IcoTypeEnum type)
+IconType::IconType(const unsigned id, const CMStringW &file, const int index, const IcoTypeEnum type)
 	: ImageBase(id)
 {
 	m_SmileyIcon = NULL;
@@ -201,13 +199,13 @@ IconType::IconType(const unsigned id, const CMString& file, const int index, con
 	case icoDll:
 		{
 			const HMODULE hModule = LoadDll(file);
-			if (hModule != NULL) 
-				m_SmileyIcon = (HICON) LoadImage(hModule, MAKEINTRESOURCE(-index), IMAGE_ICON, 0, 0, 0);
+			if (hModule != NULL)
+				m_SmileyIcon = (HICON)LoadImage(hModule, MAKEINTRESOURCE(-index), IMAGE_ICON, 0, 0, 0);
 		}
 		break;
 
 	case icoFile:
-		m_SmileyIcon = (HICON) LoadImage(NULL, file.c_str(), IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
+		m_SmileyIcon = (HICON)LoadImage(NULL, file.c_str(), IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
 		break;
 
 	default:
@@ -227,12 +225,12 @@ void IconType::DrawInternal(HDC hdc, int x, int y, int sizeX, int sizeY)
 		DrawIconEx(hdc, x, y, m_SmileyIcon, sizeX, sizeY, 0, NULL, DI_NORMAL);
 }
 
-HICON IconType::GetIcon(void) 
-{ 
-	return (HICON)CopyImage(m_SmileyIcon, IMAGE_ICON, 0, 0, 0); 
+HICON IconType::GetIcon(void)
+{
+	return (HICON)CopyImage(m_SmileyIcon, IMAGE_ICON, 0, 0, 0);
 }
 
-void IconType::GetSize(SIZE& size)
+void IconType::GetSize(SIZE &size)
 {
 	if (m_SmileyIcon == NULL)
 		return;
@@ -257,7 +255,7 @@ ImageListItemType::ImageListItemType(const unsigned id, HIMAGELIST hImList, int 
 	m_hImList = hImList;
 }
 
-void ImageListItemType::DrawInternal(HDC hdc, int x, int y, int sizeX, int sizeY) 
+void ImageListItemType::DrawInternal(HDC hdc, int x, int y, int sizeX, int sizeY)
 {
 	SIZE iSize;
 	GetSize(iSize);
@@ -271,20 +269,20 @@ void ImageListItemType::DrawInternal(HDC hdc, int x, int y, int sizeX, int sizeY
 	}
 }
 
-HICON ImageListItemType::GetIcon(void) 
-{ 
+HICON ImageListItemType::GetIcon(void)
+{
 	return ImageList_GetIconFixed(m_hImList, m_index, ILD_TRANSPARENT);
 }
 
-void ImageListItemType::GetSize(SIZE& size)
+void ImageListItemType::GetSize(SIZE &size)
 {
 	ImageList_GetIconSize(m_hImList, (int*)&size.cx, (int*)&size.cy);
 }
 
-ImageType::ImageType(const unsigned id, const CMString& file, IStream* pStream)
+ImageType::ImageType(const unsigned id, const CMStringW &file, IStream *pStream)
 	: ImageBase(id)
 {
-	m_bmp           = NULL;
+	m_bmp = NULL;
 	m_pPropertyItem = NULL;
 	m_nCurrentFrame = 0;
 	m_nFrameCount = 0;
@@ -294,7 +292,7 @@ ImageType::ImageType(const unsigned id, const CMString& file, IStream* pStream)
 	if (pStream)
 		m_bmp = new Gdiplus::Bitmap(pStream);
 	else
-		m_bmp = new Gdiplus::Bitmap(T2W_SM(file.c_str()));
+		m_bmp = new Gdiplus::Bitmap(file.c_str());
 
 	if (m_bmp->GetLastStatus() != Gdiplus::Ok) {
 		delete m_bmp;
@@ -312,13 +310,13 @@ ImageType::ImageType(const unsigned id, const CMString& file, IStream* pStream)
 	}
 }
 
-ImageType::ImageType(const unsigned id, const CMString& file, const int index, const IcoTypeEnum type)
+ImageType::ImageType(const unsigned id, const CMStringW &file, const int index, const IcoTypeEnum type)
 	: ImageBase(id)
 {
-	m_bmp           = NULL;
+	m_bmp = NULL;
 	m_pPropertyItem = NULL;
 	m_nCurrentFrame = 0;
-	m_nFrameCount   = 0;
+	m_nFrameCount = 0;
 
 	if (!InitGdiPlus()) return;
 
@@ -327,7 +325,7 @@ ImageType::ImageType(const unsigned id, const CMString& file, const int index, c
 		{
 			const HMODULE hModule = LoadDll(file);
 			if (hModule != NULL) {
-				HICON hIcon = (HICON) LoadImage(hModule, MAKEINTRESOURCE(-index), IMAGE_ICON, 0, 0, 0);
+				HICON hIcon = (HICON)LoadImage(hModule, MAKEINTRESOURCE(-index), IMAGE_ICON, 0, 0, 0);
 				m_bmp = new Gdiplus::Bitmap(hIcon);
 				DestroyIcon(hIcon);
 			}
@@ -335,7 +333,7 @@ ImageType::ImageType(const unsigned id, const CMString& file, const int index, c
 		break;
 
 	case icoFile:
-		m_bmp = new Gdiplus::Bitmap(T2W_SM(file.c_str()));
+		m_bmp = new Gdiplus::Bitmap(file.c_str());
 		break;
 
 	default:
@@ -349,7 +347,6 @@ ImageType::ImageType(const unsigned id, const CMString& file, const int index, c
 	if (m_bmp->GetLastStatus() != Gdiplus::Ok) {
 		delete m_bmp;
 		m_bmp = NULL;
-		return;
 	}
 }
 
@@ -383,12 +380,13 @@ void ImageType::DrawInternal(HDC hdc, int x, int y, int sizeX, int sizeY)
 	ReleaseMutex(g_hMutexIm);
 }
 
-int  ImageType::GetFrameDelay(void) const
-{ 
-	return ((long*) m_pPropertyItem->value)[m_nCurrentFrame]; 
+int ImageType::GetFrameDelay(void) const
+{
+	int Del = ((long*)m_pPropertyItem->value)[m_nCurrentFrame];
+	return (Del ? Del : 5);
 }
 
-HICON ImageType::GetIcon(void) 
+HICON ImageType::GetIcon(void)
 {
 	if (m_bmp == NULL) return NULL;
 
@@ -402,7 +400,7 @@ HICON ImageType::GetIcon(void)
 }
 
 
-void ImageType::GetSize(SIZE& size)
+void ImageType::GetSize(SIZE &size)
 {
 	if (m_bmp) {
 		size.cx = m_bmp->GetWidth();
@@ -418,17 +416,17 @@ ImageFType::ImageFType(const unsigned id)
 	m_bmp = NULL;
 }
 
-ImageFType::ImageFType(const unsigned id, const CMString& file)
+ImageFType::ImageFType(const unsigned id, const CMStringW &file)
 	: ImageBase(id)
 {
 	m_bmp = NULL;
 
-	FREE_IMAGE_FORMAT fif = fei->FI_GetFileTypeT(file.c_str(), 0);
+	FREE_IMAGE_FORMAT fif = fei->FI_GetFileTypeU(file.c_str(), 0);
 	if (fif == FIF_UNKNOWN)
-		fif = fei->FI_GetFIFFromFilenameT(file.c_str());
+		fif = fei->FI_GetFIFFromFilenameU(file.c_str());
 	if (fif == FIF_UNKNOWN) return;
 
-	FIBITMAP *dib = fei->FI_LoadT(fif, file.c_str(), 0);
+	FIBITMAP *dib = fei->FI_LoadU(fif, file.c_str(), 0);
 	if (dib == NULL) return;
 
 	bool transp = fei->FI_IsTransparent(dib) != 0;
@@ -463,13 +461,13 @@ void ImageFType::DrawInternal(HDC hdc, int x, int y, int sizeX, int sizeY)
 	if (m_bmp == NULL) return;
 
 	HDC hdcImg = CreateCompatibleDC(hdc);
-	HBITMAP oldBmp = (HBITMAP) SelectObject(hdcImg, m_bmp);
+	HBITMAP oldBmp = (HBITMAP)SelectObject(hdcImg, m_bmp);
 
 	BITMAP bm;
 	GetObject(m_bmp, sizeof(bm), &bm);
 
 	if (bm.bmBitsPixel == 32) {
-		BLENDFUNCTION bf = {0};
+		BLENDFUNCTION bf = { 0 };
 		bf.SourceConstantAlpha = 255;
 		bf.AlphaFormat = AC_SRC_ALPHA;
 		GdiAlphaBlend(hdc, x, y, sizeX, sizeY, hdcImg, 0, 0, bm.bmWidth, bm.bmHeight, bf);
@@ -492,14 +490,14 @@ HICON ImageFType::GetIcon(void)
 	ii.fIcon = TRUE;
 	ii.xHotspot = 0;
 	ii.yHotspot = 0;
-	ii.hbmMask  = CreateBitmap(bm.bmWidth, bm.bmHeight, 1, 1, NULL);
+	ii.hbmMask = CreateBitmap(bm.bmWidth, bm.bmHeight, 1, 1, NULL);
 	ii.hbmColor = m_bmp;
 	HICON hIcon = CreateIconIndirect(&ii);
 	DeleteObject(ii.hbmMask);
 	return hIcon;
 }
 
-void ImageFType::GetSize(SIZE& size)
+void ImageFType::GetSize(SIZE &size)
 {
 	if (m_bmp) {
 		BITMAP bm;
@@ -513,7 +511,6 @@ void ImageFType::GetSize(SIZE& size)
 void InitImageCache(void)
 {
 	g_hMutexIm = CreateMutex(NULL, FALSE, NULL);
-	CallService(MS_IMG_GETINTERFACE, FI_IF_VERSION, (LPARAM) &fei);
 }
 
 void DestroyImageCache(void)
@@ -529,10 +526,10 @@ void DestroyImageCache(void)
 	CloseHandle(g_hMutexIm);
 }
 
-ImageBase* AddCacheImage(const CMString& file, int index)
+ImageBase* AddCacheImage(const CMStringW &file, int index)
 {
-	CMString tmpfile(file); tmpfile.AppendFormat(_T("#%d"), index);
-	unsigned id = mir_hash(tmpfile.c_str(), tmpfile.GetLength() * sizeof(TCHAR));
+	CMStringW tmpfile(file); tmpfile.AppendFormat(L"#%d", index);
+	unsigned id = mir_hash(tmpfile.c_str(), tmpfile.GetLength() * sizeof(wchar_t));
 
 	WaitForSingleObject(g_hMutexIm, 3000);
 
@@ -543,17 +540,17 @@ ImageBase* AddCacheImage(const CMString& file, int index)
 		if (ind == -1)
 			return NULL;
 
-		CMString ext = file.Mid(ind+1);
+		CMStringW ext = file.Mid(ind + 1);
 		ext.MakeLower();
-		if (ext == _T("dll") || ext == _T("exe"))
+		if (ext == L"dll" || ext == L"exe")
 			img = opt.HQScaling ? (ImageBase*)new ImageType(id, file, index, icoDll) : (ImageBase*)new IconType(id, file, index, icoDll);
-		else if (ext == _T("ico"))
+		else if (ext == L"ico")
 			img = opt.HQScaling ? (ImageBase*)new ImageType(id, file, 0, icoFile) : (ImageBase*)new IconType(id, file, 0, icoFile);
-		else if (ext == _T("icl"))
+		else if (ext == L"icl")
 			img = opt.HQScaling ? (ImageBase*)new ImageType(id, file, index, icoIcl) : (ImageBase*)new IconType(id, file, index, icoIcl);
-		else if (ext == _T("gif"))
+		else if (ext == L"gif")
 			img = new ImageType(id, file, NULL);
-		else if (fei == NULL || ext == _T("tif") || ext == _T("tiff"))
+		else if (fei == NULL || ext == L"tif" || ext == L"tiff")
 			img = new ImageType(id, file, NULL);
 		else
 			img = opt.HQScaling ? (ImageBase*)new ImageType(id, file, NULL) : (ImageBase*)new ImageFType(id, file);

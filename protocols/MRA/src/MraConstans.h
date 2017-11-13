@@ -31,7 +31,6 @@ static const LPSTR lpcszMailRuDomains[] =
 #define BUFF_SIZE_RCV_MIN_FREE               (16 * 1024) //internal
 #define BUFF_SIZE_BLOB                       16384 //internal
 #define BUFF_SIZE_URL                        4096 //internal
-#define NETLIB_SELECT_TIMEOUT                250 //internal // время ожидания событий на сокете
 #define WAIT_FOR_THREAD_TIMEOUT              15 //internal // время ожидания завершения потока
 #define THREAD_SLEEP_TIME                    100 //internal
 #define THREAD_MAX_PING_TIME                 20 // sec, internal
@@ -41,7 +40,7 @@ static const LPSTR lpcszMailRuDomains[] =
 #define EMAILS_MIN_COUNT                     16 //internal   // колличество элементов обязательно проверяемых при извлечении email адреса из инфы юзера
 #define PHONES_MIN_COUNT                     4 //internal   // колличество элементов обязательно проверяемых при извлечении email адреса из инфы юзера
 
-#define MRA_ALARM_MESSAGE                    LPGENT("Your contact wakes you")
+#define MRA_ALARM_MESSAGE                    LPGENW("Your contact wakes you")
 
 #define MRA_GOTO_INBOX                       "/GotoInbox"
 #define MRA_GOTO_INBOX_STR                   LPGEN("Display &Inbox")
@@ -120,7 +119,7 @@ static const LPSTR lpcszMailRuDomains[] =
 #define ADV_ICON_BLOGSTATUS_ID               "ADV_ICON_BLOGSTATUS"
 #define ADV_ICON_BLOGSTATUS_STR              LPGEN("Blog status message")
 
-#define MRA_SOUND_NEW_EMAIL                   LPGEN("New E-mail available in Inbox")
+#define MRA_SOUND_NEW_EMAIL                   LPGENW("New E-mail available in Inbox")
 
 #define MAILRU_SERVER_TIME_ZONE              -180 //internal // +0300
 #define MAILRU_CONTACTISTYPING_TIMEOUT       10 //internal
@@ -158,7 +157,7 @@ static const LPSTR lpcszMailRuDomains[] =
 #define MRA_DEFAULT_SLOW_SEND                TRUE
 #define MRA_DEFAULT_CVT_SMILES_TO_TAGS       TRUE
 #define MRA_DEFAULT_MIRVER_RAW               FALSE // hidden option
-#define MRA_DEFAULT_AUTH_MESSAGE             LPGEN("Please authorize me")
+#define MRA_DEFAULT_AUTH_MESSAGE             LPGENW("Please authorize me")
 
 #define MRA_DEFAULT_RTF_RECEIVE_ENABLE       FALSE
 #define MRA_DEFAULT_RTF_SEND_ENABLE          TRUE
@@ -184,7 +183,7 @@ static const LPSTR lpcszMailRuDomains[] =
 #define MRA_DEFAULT_SHOW_ALL_XSTATUSES		FALSE /* Do not display some x statuses (like dating) in menu. */
 
 #define MRA_AVT_DEFAULT_ENABLE               TRUE
-#define MRA_AVT_DEFAULT_WRK_THREAD_COUNTS    4 // hidden
+#define MRA_AVT_DEFAULT_WRK_THREAD_COUNTS    1 // hidden
 #define MRA_AVT_DEFAULT_SERVER               "obraz.foto.mail.ru"
 #define MRA_AVT_DEFAULT_SERVER_PORT          80
 #define MRA_AVT_DEFAULT_TIMEOUT_CONN         10
@@ -192,10 +191,9 @@ static const LPSTR lpcszMailRuDomains[] =
 #define MRA_AVT_DEFAULT_TIMEOUT_RECV         30
 #define MRA_AVT_DEFAULT_USE_KEEPALIVE_CONN   TRUE
 #define MRA_AVT_DEFAULT_CHK_INTERVAL         60
-#define MRA_AVT_DEFAULT_AVT_FILENAME         _T("_default.jpg")
+#define MRA_AVT_DEFAULT_AVT_FILENAME         L"_default.jpg"
 #define MRA_AVT_DEFAULT_RET_ABC_PATH         TRUE
 #define MRA_DELETE_AVT_ON_CONTACT_DELETE     TRUE
-#define MRA_AVT_DEFAULT_QE_CHK_INTERVAL      1000 //internal
 
 #define MRA_FILES_QUEUE_PROGRESS_INTERVAL    250 //internal
 #define MRA_FILES_NULL_ADDRR                 "192.168.0.1:26666;"

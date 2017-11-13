@@ -21,7 +21,7 @@
 
 #include "gg.h"
 
-GGPROTO::GGPROTO(const char *pszProtoName, const TCHAR *tszUserName) :
+GGPROTO::GGPROTO(const char *pszProtoName, const wchar_t *tszUserName) :
 	PROTO<GGPROTO>(pszProtoName, tszUserName),
 	avatar_requests(1, NumericKeySortT),
 	avatar_transfers(1, NumericKeySortT)
@@ -39,16 +39,15 @@ GGPROTO::GGPROTO(const char *pszProtoName, const TCHAR *tszUserName) :
 	InitializeCriticalSection(&sessions_mutex);
 
 	// Register m_hNetlibUser user
-	TCHAR name[128];
-	mir_sntprintf(name, TranslateT("%s connection"), m_tszUserName);
+	wchar_t name[128];
+	mir_snwprintf(name, TranslateT("%s connection"), m_tszUserName);
 
-	NETLIBUSER nlu = { 0 };
-	nlu.cbSize = sizeof(nlu);
-	nlu.flags = NUF_TCHAR | NUF_OUTGOING | NUF_INCOMING | NUF_HTTPCONNS;
+	NETLIBUSER nlu = {};
+	nlu.flags = NUF_UNICODE | NUF_OUTGOING | NUF_INCOMING | NUF_HTTPCONNS;
 	nlu.szSettingsModule = m_szModuleName;
-	nlu.ptszDescriptiveName = name;
+	nlu.szDescriptiveName.w = name;
 
-	m_hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
+	m_hNetlibUser = Netlib_RegisterUser(&nlu);
 
 	// Register services
 	CreateProtoService(PS_GETAVATARCAPS, &GGPROTO::getavatarcaps);
@@ -67,8 +66,8 @@ GGPROTO::GGPROTO(const char *pszProtoName, const TCHAR *tszUserName) :
 
 	db_set_resident(m_szModuleName, GG_KEY_AVATARREQUESTED);
 
-	TCHAR szPath[MAX_PATH];
-	mir_sntprintf(szPath, _T("%s\\%s\\ImageCache"), (TCHAR*)VARST(_T("%miranda_userdata%")), m_tszUserName);
+	wchar_t szPath[MAX_PATH];
+	mir_snwprintf(szPath, L"%s\\%s\\ImageCache", (wchar_t*)VARSW(L"%miranda_userdata%"), m_tszUserName);
 	hImagesFolder = FoldersRegisterCustomPathT(LPGEN("Images"), m_szModuleName, szPath, m_tszUserName);
 
 	DWORD dwVersion;
@@ -119,7 +118,7 @@ GGPROTO::~GGPROTO()
 
 //////////////////////////////////////////////////////////
 // when contact is added to list
-
+//
 MCONTACT GGPROTO::AddToList(int flags, PROTOSEARCHRESULT *pmsr)
 {
 #ifdef DEBUGMODE
@@ -131,15 +130,15 @@ MCONTACT GGPROTO::AddToList(int flags, PROTOSEARCHRESULT *pmsr)
 	if (psr->cbSize == sizeof(GGSEARCHRESULT))
 		uin = psr->uin;
 	else
-		uin = _ttoi(psr->id.t);
+		uin = _wtoi(psr->id.w);
 
-	return getcontact(uin, 1, flags & PALF_TEMPORARY ? 0 : 1, psr->nick.t);
+	return getcontact(uin, 1, flags & PALF_TEMPORARY ? 0 : 1, psr->nick.w);
 }
 
 //////////////////////////////////////////////////////////
 // checks proto capabilities
-
-DWORD_PTR GGPROTO::GetCaps(int type, MCONTACT hContact)
+//
+DWORD_PTR GGPROTO::GetCaps(int type, MCONTACT)
 {
 	switch (type) {
 	case PFLAGNUM_1:
@@ -164,7 +163,7 @@ DWORD_PTR GGPROTO::GetCaps(int type, MCONTACT hContact)
 
 //////////////////////////////////////////////////////////
 // user info request
-
+//
 void __cdecl GGPROTO::cmdgetinfothread(void *hContact)
 {
 	debugLogA("cmdgetinfothread(): started. Failed info retreival.");
@@ -173,7 +172,7 @@ void __cdecl GGPROTO::cmdgetinfothread(void *hContact)
 	debugLogA("cmdgetinfothread(): end.");
 }
 
-int GGPROTO::GetInfo(MCONTACT hContact, int infoType)
+int GGPROTO::GetInfo(MCONTACT hContact, int)
 {
 	gg_pubdir50_t req;
 
@@ -227,6 +226,7 @@ int GGPROTO::GetInfo(MCONTACT hContact, int infoType)
 				debugLogA("GetInfo(): ForkThread 9 GGPROTO::cmdgetinfothread");
 			#endif
 				ForkThread(&GGPROTO::cmdgetinfothread, (void*)hContact);
+				gg_pubdir50_free(req);
 				return 1;
 			}
 			gg_LeaveCriticalSection(&sess_mutex, "GetInfo", 49, 2, "sess_mutex", 1);
@@ -238,9 +238,6 @@ int GGPROTO::GetInfo(MCONTACT hContact, int infoType)
 	return 1;
 }
 
-//////////////////////////////////////////////////////////
-// when basic search
-
 void __cdecl GGPROTO::searchthread(void *)
 {
 	debugLogA("searchthread(): started. Failed search.");
@@ -251,7 +248,10 @@ void __cdecl GGPROTO::searchthread(void *)
 #endif
 }
 
-HANDLE GGPROTO::SearchBasic(const TCHAR *id)
+//////////////////////////////////////////////////////////
+// when basic search
+//
+HANDLE GGPROTO::SearchBasic(const wchar_t *id)
 {
 	if (!isonline())
 		return 0;
@@ -287,8 +287,8 @@ HANDLE GGPROTO::SearchBasic(const TCHAR *id)
 
 //////////////////////////////////////////////////////////
 // search by details
-
-HANDLE GGPROTO::SearchByName(const TCHAR *nick, const TCHAR *firstName, const TCHAR *lastName)
+//
+HANDLE GGPROTO::SearchByName(const wchar_t *nick, const wchar_t *firstName, const wchar_t *lastName)
 {
 	// Check if connected and if there's a search data
 	if (!isonline())
@@ -344,10 +344,12 @@ HANDLE GGPROTO::SearchByName(const TCHAR *nick, const TCHAR *firstName, const TC
 		debugLogA("SearchByName(): ForkThread 13 GGPROTO::searchthread");
 	#endif
 		ForkThread(&GGPROTO::searchthread, NULL);
-		return (HANDLE)1;
 	}
-	gg_LeaveCriticalSection(&sess_mutex, "SearchByName", 51, 2, "sess_mutex", 1);
-	debugLogA("SearchByName(): Seq %d.", req->seq);
+	else
+	{
+		gg_LeaveCriticalSection(&sess_mutex, "SearchByName", 51, 2, "sess_mutex", 1);
+		debugLogA("SearchByName(): Seq %d.", req->seq);
+	}
 	gg_pubdir50_free(req);
 
 	return (HANDLE)1;
@@ -355,7 +357,7 @@ HANDLE GGPROTO::SearchByName(const TCHAR *nick, const TCHAR *firstName, const TC
 
 //////////////////////////////////////////////////////////
 // search by advanced
-
+//
 HWND GGPROTO::SearchAdvanced(HWND hwndDlg)
 {
 	// Check if connected
@@ -374,9 +376,9 @@ HWND GGPROTO::SearchAdvanced(HWND hwndDlg)
 	CMStringA szQuery;
 
 	// Fetch search data
-	TCHAR text[64];
+	wchar_t text[64];
 	GetDlgItemText(hwndDlg, IDC_FIRSTNAME, text, _countof(text));
-	if (mir_tstrlen(text)) {
+	if (mir_wstrlen(text)) {
 		T2Utf firstName_utf8(text);
 		gg_pubdir50_add(req, GG_PUBDIR50_FIRSTNAME, firstName_utf8);
 		szQuery.Append(firstName_utf8);
@@ -384,7 +386,7 @@ HWND GGPROTO::SearchAdvanced(HWND hwndDlg)
 	/* 1 */ szQuery.AppendChar('.');
 
 	GetDlgItemText(hwndDlg, IDC_LASTNAME, text, _countof(text));
-	if (mir_tstrlen(text)) {
+	if (mir_wstrlen(text)) {
 		T2Utf lastName_utf8(text);
 		gg_pubdir50_add(req, GG_PUBDIR50_LASTNAME, lastName_utf8);
 		szQuery.Append(lastName_utf8);
@@ -392,7 +394,7 @@ HWND GGPROTO::SearchAdvanced(HWND hwndDlg)
 	/* 2 */ szQuery.AppendChar('.');
 
 	GetDlgItemText(hwndDlg, IDC_NICKNAME, text, _countof(text));
-	if (mir_tstrlen(text)) {
+	if (mir_wstrlen(text)) {
 		T2Utf nickName_utf8(text);
 		gg_pubdir50_add(req, GG_PUBDIR50_NICKNAME, nickName_utf8);
 		szQuery.Append(nickName_utf8);
@@ -400,7 +402,7 @@ HWND GGPROTO::SearchAdvanced(HWND hwndDlg)
 	/* 3 */ szQuery.AppendChar('.');
 
 	GetDlgItemText(hwndDlg, IDC_CITY, text, _countof(text));
-	if (mir_tstrlen(text)) {
+	if (mir_wstrlen(text)) {
 		T2Utf city_utf8(text);
 		gg_pubdir50_add(req, GG_PUBDIR50_CITY, city_utf8);
 		szQuery.Append(city_utf8);
@@ -408,7 +410,7 @@ HWND GGPROTO::SearchAdvanced(HWND hwndDlg)
 	/* 4 */ szQuery.AppendChar('.');
 
 	GetDlgItemText(hwndDlg, IDC_AGEFROM, text, _countof(text));
-	if (mir_tstrlen(text)) {
+	if (mir_wstrlen(text)) {
 		int yearTo = _tstoi(text);
 		int yearFrom;
 		time_t t = time(NULL);
@@ -428,7 +430,7 @@ HWND GGPROTO::SearchAdvanced(HWND hwndDlg)
 			yearFrom = 0;
 		else
 			yearFrom = ay - yearFrom;
-		mir_sntprintf(text, _T("%d %d"), yearFrom, yearTo);
+		mir_snwprintf(text, L"%d %d", yearFrom, yearTo);
 
 		T2Utf age_utf8(text);
 		gg_pubdir50_add(req, GG_PUBDIR50_BIRTHYEAR, age_utf8);
@@ -455,8 +457,10 @@ HWND GGPROTO::SearchAdvanced(HWND hwndDlg)
 	/* 7 */ szQuery.AppendChar('.');
 
 	// No data entered
-	if (szQuery.GetLength() <= 7 || (szQuery.GetLength() == 8 && IsDlgButtonChecked(hwndDlg, IDC_ONLYCONNECTED)))
+	if (szQuery.GetLength() <= 7 || (szQuery.GetLength() == 8 && IsDlgButtonChecked(hwndDlg, IDC_ONLYCONNECTED))) {
+		gg_pubdir50_free(req);
 		return 0;
+	}
 
 	// Count crc & check if the data was equal if yes do same search with shift
 	unsigned long crc = crc_get(szQuery.GetBuffer());
@@ -488,13 +492,13 @@ HWND GGPROTO::SearchAdvanced(HWND hwndDlg)
 
 //////////////////////////////////////////////////////////
 // create adv search dialog
-
-static INT_PTR CALLBACK gg_advancedsearchdlgproc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
+//
+static INT_PTR CALLBACK gg_advancedsearchdlgproc(HWND hwndDlg, UINT message, WPARAM, LPARAM)
 {
 	switch (message) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
-		SendDlgItemMessage(hwndDlg, IDC_GENDER, CB_ADDSTRING, 0, (LPARAM)_T(""));				// 0
+		SendDlgItemMessage(hwndDlg, IDC_GENDER, CB_ADDSTRING, 0, (LPARAM)L"");				// 0
 		SendDlgItemMessage(hwndDlg, IDC_GENDER, CB_ADDSTRING, 0, (LPARAM)TranslateT("Female"));	// 1
 		SendDlgItemMessage(hwndDlg, IDC_GENDER, CB_ADDSTRING, 0, (LPARAM)TranslateT("Male"));	// 2
 		return TRUE;
@@ -507,9 +511,6 @@ HWND GGPROTO::CreateExtendedSearchUI(HWND owner)
 	return CreateDialogParam(hInstance,
 		MAKEINTRESOURCE(IDD_GGADVANCEDSEARCH), owner, gg_advancedsearchdlgproc, (LPARAM)this);
 }
-
-//////////////////////////////////////////////////////////
-// when messsage sent
 
 typedef struct
 {
@@ -525,6 +526,9 @@ void __cdecl GGPROTO::sendackthread(void *ack)
 	mir_free(ack);
 }
 
+//////////////////////////////////////////////////////////
+// when messsage sent
+//
 int GGPROTO::SendMsg(MCONTACT hContact, int, const char *msg)
 {
 	uin_t uin = (uin_t)getDword(hContact, GG_KEY_UIN, 0);
@@ -554,7 +558,7 @@ int GGPROTO::SendMsg(MCONTACT hContact, int, const char *msg)
 
 //////////////////////////////////////////////////////////
 // visible lists
-
+//
 int GGPROTO::SetApparentMode(MCONTACT hContact, int mode)
 {
 	setWord(hContact, GG_KEY_APPARENT, (WORD)mode);
@@ -564,7 +568,7 @@ int GGPROTO::SetApparentMode(MCONTACT hContact, int mode)
 
 //////////////////////////////////////////////////////////
 // sets protocol status
-
+//
 int GGPROTO::SetStatus(int iNewStatus)
 {
 	int nNewStatus = gg_normalizestatus(iNewStatus);
@@ -583,9 +587,6 @@ int GGPROTO::SetStatus(int iNewStatus)
 	return 0;
 }
 
-//////////////////////////////////////////////////////////
-// when away message is requested
-
 void __cdecl GGPROTO::getawaymsgthread(void *arg)
 {
 	DBVARIANT dbv;
@@ -593,9 +594,9 @@ void __cdecl GGPROTO::getawaymsgthread(void *arg)
 	MCONTACT hContact = (UINT_PTR)arg;
 	debugLogA("getawaymsgthread(): started");
 	gg_sleep(100, FALSE, "getawaymsgthread", 106, 1);
-	if (!db_get_s(hContact, "CList", GG_KEY_STATUSDESCR, &dbv, DBVT_TCHAR)) {
+	if (!db_get_s(hContact, "CList", GG_KEY_STATUSDESCR, &dbv, DBVT_WCHAR)) {
 		ProtoBroadcastAck(hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, (HANDLE)1, (LPARAM)dbv.ptszVal);
-		debugLog(_T("getawaymsgthread(): Reading away msg <%s>."), dbv.ptszVal);
+		debugLogW(L"getawaymsgthread(): Reading away msg <%s>.", dbv.ptszVal);
 		db_free(&dbv);
 	}
 	else {
@@ -604,6 +605,9 @@ void __cdecl GGPROTO::getawaymsgthread(void *arg)
 	debugLogA("getawaymsgthread(): end");
 }
 
+//////////////////////////////////////////////////////////
+// when away message is requested
+//
 HANDLE GGPROTO::GetAwayMsg(MCONTACT hContact)
 {
 #ifdef DEBUGMODE
@@ -616,13 +620,13 @@ HANDLE GGPROTO::GetAwayMsg(MCONTACT hContact)
 //////////////////////////////////////////////////////////
 // when away message is being set
 // registered as ProtoService PS_SETAWAYMSGT
-
-int GGPROTO::SetAwayMsg(int iStatus, const TCHAR *newMsg)
+//
+int GGPROTO::SetAwayMsg(int iStatus, const wchar_t *newMsg)
 {
 	int status = gg_normalizestatus(iStatus);
-	TCHAR **msgPtr;
+	wchar_t **msgPtr;
 
-	debugLog(_T("SetAwayMsg(): PS_SETAWAYMSG(%d, \"%s\")."), iStatus, newMsg);
+	debugLogW(L"SetAwayMsg(): PS_SETAWAYMSG(%d, \"%s\".)", iStatus, newMsg);
 
 	gg_EnterCriticalSection(&modemsg_mutex, "SetAwayMsg", 55, "modemsg_mutex", 1);
 	// Select proper our msg ptr
@@ -648,7 +652,7 @@ int GGPROTO::SetAwayMsg(int iStatus, const TCHAR *newMsg)
 	}
 
 	// Check if we change status here somehow
-	if (*msgPtr && newMsg && !mir_tstrcmp(*msgPtr, newMsg)
+	if (*msgPtr && newMsg && !mir_wstrcmp(*msgPtr, newMsg)
 		|| !*msgPtr && (!newMsg || !*newMsg)) {
 		if (status == m_iDesiredStatus && m_iDesiredStatus == m_iStatus) {
 			debugLogA("SetAwayMsg(): Message hasn't been changed, return.");
@@ -659,7 +663,7 @@ int GGPROTO::SetAwayMsg(int iStatus, const TCHAR *newMsg)
 	else {
 		if (*msgPtr)
 			mir_free(*msgPtr);
-		*msgPtr = newMsg && *newMsg ? mir_tstrdup(newMsg) : NULL;
+		*msgPtr = newMsg && *newMsg ? mir_wstrdup(newMsg) : NULL;
 	#ifdef DEBUGMODE
 		debugLogA("SetAwayMsg(): Message changed.");
 	#endif
@@ -675,7 +679,7 @@ int GGPROTO::SetAwayMsg(int iStatus, const TCHAR *newMsg)
 
 //////////////////////////////////////////////////////////
 // sends a notification that the user is typing a message
-
+//
 int GGPROTO::UserIsTyping(MCONTACT hContact, int type)
 {
 	uin_t uin = getDword(hContact, GG_KEY_UIN, 0);
@@ -693,7 +697,7 @@ int GGPROTO::UserIsTyping(MCONTACT hContact, int type)
 
 //////////////////////////////////////////////////////////
 // Custom protocol event
-
+//
 int GGPROTO::OnEvent(PROTOEVENTTYPE eventType, WPARAM wParam, LPARAM lParam)
 {
 	switch (eventType) {

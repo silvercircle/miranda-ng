@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-09 Miranda ICQ/IM project,
 
 This file is part of Send Screenshot Plus, a Miranda IM plugin.
@@ -26,16 +26,15 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-//---------------------------------------------------------------------------
 #include "stdafx.h"
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
 
 CSendEmail::CSendEmail(HWND Owner, MCONTACT hContact, bool /*bAsync*/)
 	: CSend(Owner, hContact, true)
 {
 	m_EnableItem = SS_DLG_DESCRIPTION | SS_DLG_DELETEAFTERSSEND; // SS_DLG_AUTOSEND | ;
-	m_pszSendTyp = LPGENT("Email transfer");
+	m_pszSendTyp = LPGENW("Email transfer");
 	m_pszFileA = NULL;
 	m_pszFileName = NULL;
 	m_Email = NULL;
@@ -52,7 +51,7 @@ CSendEmail::~CSendEmail()
 	mir_free(m_Subject);
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
 
 int CSendEmail::Send()
 {
@@ -61,27 +60,11 @@ int CSendEmail::Send()
 	m_pszFileName = GetFileNameA(m_pszFile);
 
 	mir_free(m_pszFileA);
-	m_pszFileA = mir_t2a(m_pszFile);
+	m_pszFileA = mir_u2a(m_pszFile);
 
-
-	//	AnsiString Email, Subject, FriendlyName;
-	CONTACTINFO ci = { 0 };
-	ci.cbSize = sizeof(ci);
-	ci.hContact = m_hContact;
-	ci.szProto = m_pszProto;
-	//ci.dwFlag = CNF_TCHAR;
-
-	ci.dwFlag = CNF_EMAIL | CNF_TCHAR;
-	CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ci);
-	m_Email = mir_t2a(ci.pszVal);
-
-	ci.dwFlag = CNF_DISPLAY | CNF_TCHAR;
-	CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ci);
-	m_FriendlyName = mir_t2a(ci.pszVal);
-
-	mir_free(ci.pszVal);
-
-	m_Subject = mir_t2a(m_pszFileDesc);
+	m_Email = mir_u2a(ptrW(Contact_GetInfo(CNF_EMAIL, m_hContact, m_pszProto)));
+	m_FriendlyName = mir_u2a(ptrW(Contact_GetInfo(CNF_DISPLAY, m_hContact, m_pszProto)));
+	m_Subject = mir_u2a(m_pszFileDesc);
 
 	//SendByEmail(m_pszFileA, "", m_FriendlyName, m_Email, m_Subject);
 
@@ -102,7 +85,7 @@ void CSendEmail::SendThread()
 	MapiMessage Msg;
 	MAPIFUNC lpMAPISendMail;
 
-	HINSTANCE hMAPILib = ::LoadLibrary(_T("MAPI32.DLL"));
+	HINSTANCE hMAPILib = ::LoadLibrary(L"MAPI32.DLL");
 	if (hMAPILib == NULL) {
 		//return -1;
 		Error(SS_ERR_INIT, m_pszSendTyp);
@@ -152,53 +135,53 @@ void CSendEmail::SendThread()
 		int res = lpMAPISendMail(NULL, NULL, &Msg, MAPI_LOGON_UI | MAPI_DIALOG, 0);
 		::FreeLibrary(hMAPILib);
 
-		TCHAR* err;
+		wchar_t* err;
 		switch (res) {
 		case SUCCESS_SUCCESS:
 			//The call succeeded and the message was sent.
 			Exit(ACKRESULT_SUCCESS); return;
 			// No message was sent
 		case MAPI_E_AMBIGUOUS_RECIPIENT:
-			err = LPGENT("A recipient matched more than one of the recipient descriptor structures and MAPI_DIALOG was not set");
+			err = LPGENW("A recipient matched more than one of the recipient descriptor structures and MAPI_DIALOG was not set");
 			break;
 		case MAPI_E_ATTACHMENT_NOT_FOUND:
-			err = LPGENT("The specified attachment was not found");
+			err = LPGENW("The specified attachment was not found");
 			break;
 		case MAPI_E_ATTACHMENT_OPEN_FAILURE:
-			err = LPGENT("The specified attachment could not be opened");
+			err = LPGENW("The specified attachment could not be opened");
 			break;
 		case MAPI_E_BAD_RECIPTYPE:
-			err = LPGENT("The type of a recipient was not MAPI_TO, MAPI_CC, or MAPI_BCC");
+			err = LPGENW("The type of a recipient was not MAPI_TO, MAPI_CC, or MAPI_BCC");
 			break;
 		case MAPI_E_FAILURE:
-			err = LPGENT("One or more unspecified errors occurred");
+			err = LPGENW("One or more unspecified errors occurred");
 			break;
 		case MAPI_E_INSUFFICIENT_MEMORY:
-			err = LPGENT("There was insufficient memory to proceed");
+			err = LPGENW("There was insufficient memory to proceed");
 			break;
 		case MAPI_E_INVALID_RECIPS:
-			err = LPGENT("One or more recipients were invalid or did not resolve to any address");
+			err = LPGENW("One or more recipients were invalid or did not resolve to any address");
 			break;
 		case MAPI_E_LOGIN_FAILURE:
-			err = LPGENT("There was no default logon, and the user failed to log on successfully when the logon dialog box was displayed");
+			err = LPGENW("There was no default logon, and the user failed to log on successfully when the logon dialog box was displayed");
 			break;
 		case MAPI_E_TEXT_TOO_LARGE:
-			err = LPGENT("The text in the message was too large");
+			err = LPGENW("The text in the message was too large");
 			break;
 		case MAPI_E_TOO_MANY_FILES:
-			err = LPGENT("There were too many file attachments");
+			err = LPGENW("There were too many file attachments");
 			break;
 		case MAPI_E_TOO_MANY_RECIPIENTS:
-			err = LPGENT("There were too many recipients");
+			err = LPGENW("There were too many recipients");
 			break;
 		case MAPI_E_UNKNOWN_RECIPIENT:
-			err = LPGENT("A recipient did not appear in the address list");
+			err = LPGENW("A recipient did not appear in the address list");
 			break;
 		case MAPI_E_USER_ABORT:
-			err = LPGENT("The user canceled one of the dialog boxes");
+			err = LPGENW("The user canceled one of the dialog boxes");
 			break;
 		default:
-			err = LPGENT("Unknown Error");
+			err = LPGENW("Unknown Error");
 			break;
 		}
 		Error(SS_ERR_MAPI, res, err);
@@ -216,5 +199,3 @@ void	CSendEmail::SendThreadWrapper(void * Obj)
 {
 	reinterpret_cast<CSendEmail*>(Obj)->SendThread();
 }
-
-//---------------------------------------------------------------------------

@@ -15,7 +15,24 @@ public:
 			ptrA(mir_urlEncode(text)));
 
 		SetData(data, data.GetLength());
-		AddHeader("Content-Type", "application/x-www-form-urlencoded");
+		AddHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
+	}
+};
+
+class SendTypingRequest : public HttpRequest
+{
+public:
+	SendTypingRequest(const char *token, const char *umqId, const char *steamId) :
+		HttpRequest(REQUEST_POST, STEAM_API_URL "/ISteamWebUserPresenceOAuth/Message/v0001")
+	{
+		CMStringA data;
+		data.AppendFormat("access_token=%s&umqid=%s&steamid_dst=%s&type=typing",
+			token,
+			umqId,
+			steamId);
+
+		SetData(data, data.GetLength());
+		AddHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
 	}
 };
 

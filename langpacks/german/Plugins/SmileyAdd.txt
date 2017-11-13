@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: SmileyAdd.dll
 ;  Plugin: SmileyAdd
-;  Version: 0.2.3.18
+;  Version: 0.2.4.1
 ;  Authors: Peacow, nightwish, bid, borkra
 ;============================================================
 [Smiley support for Miranda NG.]
@@ -40,12 +40,6 @@ Maximale 'Custom Smiley'-Höhe
 Minimale Smiley-Höhe
 [Smiley selector]
 Smileyauswahl
-[Surround inserted smiley with spaces]
-Eingefügte Smileys mit Leerzeichen umgeben
-[Use first smiley for selection size]
-Auswahlgröße an ersten Smiley anpassen
-[IEView style window]
-IEView-Auswahlfenster
 [Input area]
 Eingabebereich
 [Enable smileys]
@@ -54,12 +48,18 @@ Smileys aktivieren
 Erst bei nächstem Zeichen anzeigen
 [Built-in message dialog support]
 Nachrichtenfensterunterstützung
-[Disable]
-Deaktivieren
+[Enable]
+Aktivieren
 [Smiley button]
 Smileybutton
+[Surround inserted smiley with spaces]
+Eingefügte Smileys mit Leerzeichen umgeben
+[Use first smiley for selection size]
+Auswahlgröße an ersten Smiley anpassen
+[IEView style window]
+IEView-Auswahlfenster
 [Horizontal sorting]
-
+Horizontal sortieren
 ;file \plugins\SmileyAdd\src\dlgboxsubclass.cpp
 [Show smiley selection window]
 Smiley-Auswahlfenster anzeigen
@@ -75,23 +75,23 @@ SmileyAdd-Plugin HTTP-Verbindungen
 Smiley-Button
 [Assign smiley category]
 Smileykategorie zuweisen
+[Background color]
+Hintergrundfarbe
 [Only one instance of SmileyAdd could be executed.\nRemove duplicate instances from 'Plugins' directory]
 Nur eine Instanz von SmileyAdd kann ausgeführt werden.\nEntfernung des Duplikats im 'Plugins'-Verzeichnis erforderlich.
 ;file \plugins\SmileyAdd\src\options.cpp
-[Smileys]
-Smileys
-[Customize]
-Customize
-[Off]
-Aus
-[Top]
-Oben
-[Bottom]
-Unten
+[Hide]
+Verstecken
+[Show]
+Anzeigen
 [Smiley packs]
 Smileypacks
 [All files]
 Alle Dateien
+[Smileys]
+Smileys
+[Customize]
+Customize
 ;file \plugins\SmileyAdd\src\services.cpp
 [Protocol specific]
 protokollspezifisch

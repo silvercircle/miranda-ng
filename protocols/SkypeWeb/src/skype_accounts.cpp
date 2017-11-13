@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2015-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -21,7 +21,7 @@ LIST<CSkypeProto> CSkypeProto::Accounts(1, CSkypeProto::CompareAccounts);
 
 int CSkypeProto::CompareAccounts(const CSkypeProto *p1, const CSkypeProto *p2)
 {
-	return mir_tstrcmp(p1->m_tszUserName, p2->m_tszUserName);
+	return mir_wstrcmp(p1->m_tszUserName, p2->m_tszUserName);
 }
 
 CSkypeProto* CSkypeProto::InitAccount(const char *protoName, const wchar_t *userName)

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -24,13 +24,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #pragma warning(disable:4509)
 
 #include <windows.h>
+#include <wincred.h>
 #include <time.h>
 #include <process.h>
 #include <memory>
 
 #include <newpluginapi.h>
 #include <win2k.h>
-#include <m_system_cpp.h>
+#include <m_system.h>
 #include <m_database.h>
 #include <m_langpack.h>
 #include <m_clist.h>
@@ -39,15 +40,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_crypto.h>
 #include <m_metacontacts.h>
 #include <m_protocols.h>
+#include <m_gui.h>
 
 #include "database.h"
 #include "dbintf.h"
 #include "resource.h"
 #include "version.h"
 
+
 extern HINSTANCE g_hInst;
 extern LIST<CDb3Mmap> g_Dbs;
 extern DBSignature dbSignatureU, dbSignatureE, dbSignatureIM, dbSignatureSA, dbSignatureSD;
+
+#include "ui.h"
 
 #ifdef __GNUC__
 #define mir_i64(x) (x##LL)

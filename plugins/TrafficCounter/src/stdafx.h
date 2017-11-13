@@ -30,7 +30,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <newpluginapi.h>
 #include <m_netlib.h>
 #include <m_langpack.h>
-#include <m_clui.h>
 #include <m_clc.h>
 #include <m_clist.h>
 #include <m_options.h>
@@ -108,7 +107,7 @@ typedef struct
 					// дата которой соответствует началу статистики данного аккаунта.
 
 	// 0.1.1.6
-	TCHAR *tszAccountName; // Человеческое имя аккаунта для использования в графическом интерфейсе.
+	wchar_t *tszAccountName; // Человеческое имя аккаунта для использования в графическом интерфейсе.
 } PROTOLIST;
 
 //---------------------------------------------------------------------------------------------
@@ -156,8 +155,8 @@ extern char Traffic_PopupTimeoutDefault;
 extern char Traffic_PopupTimeoutValue;
 extern char Traffic_AdditionSpace;
 
-extern TCHAR Traffic_CounterFormat[512];
-extern TCHAR Traffic_TooltipFormat[512];
+extern wchar_t Traffic_CounterFormat[512];
+extern wchar_t Traffic_TooltipFormat[512];
 
 extern BOOL bPopupExists, bVariablesExists, bTooltipExists;
 

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-03 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -26,8 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define TRAYICON_ID_BASE 100
 
-extern HIMAGELIST hCListImages;
-
 // don't move to win2k.h, need new and old versions to work on 9x/2000/XP
 #define NIF_STATE		0x00000008
 #define NIF_INFO		0x00000010
@@ -40,8 +38,8 @@ int TrayCalcChanged(const char *szChangedProto, int averageMode, int netProtoCou
 
 	if (netProtoCount > 1) {
 		if (averageMode > 0) {
-			if (cfg::getByte("CList", "TrayIcon", SETTING_TRAYICON_DEFAULT) == SETTING_TRAYICON_MULTI) {
-				if (cfg::getByte("CList", "AlwaysMulti", SETTING_ALWAYSMULTI_DEFAULT)) {
+			if (db_get_b(NULL, "CList", "TrayIcon", SETTING_TRAYICON_DEFAULT) == SETTING_TRAYICON_MULTI) {
+				if (db_get_b(NULL, "CList", "AlwaysMulti", SETTING_ALWAYSMULTI_DEFAULT)) {
 					iIcon = IconFromStatusMode(szChangedProto, averageMode, 0, &hIcon);
 					hIcon = (hIcon) ? CopyIcon(hIcon) : ImageList_GetIcon(hCListImages, iIcon, ILD_NORMAL);
 					return pcli->pfnTrayIconSetBaseInfo(hIcon, szChangedProto);
@@ -61,17 +59,17 @@ int TrayCalcChanged(const char *szChangedProto, int averageMode, int netProtoCou
 			}
 		}
 		else {
-			switch (cfg::getByte("CList", "TrayIcon", SETTING_TRAYICON_DEFAULT)) {
+			switch (db_get_b(NULL, "CList", "TrayIcon", SETTING_TRAYICON_DEFAULT)) {
 			case SETTING_TRAYICON_CYCLE:
 				iIcon = IconFromStatusMode(szChangedProto, CallProtoService(szChangedProto, PS_GETSTATUS, 0, 0), 0, &hIcon);
-				pcli->cycleTimerId = SetTimer(NULL, 0, cfg::getWord("CList", "CycleTime", SETTING_CYCLETIME_DEFAULT) * 1000, pcli->pfnTrayCycleTimerProc);
+				pcli->cycleTimerId = SetTimer(NULL, 0, db_get_w(NULL, "CList", "CycleTime", SETTING_CYCLETIME_DEFAULT) * 1000, pcli->pfnTrayCycleTimerProc);
 				hIcon = (hIcon) ? CopyIcon(hIcon) : ImageList_GetIcon(hCListImages, iIcon, ILD_NORMAL);
 				return pcli->pfnTrayIconSetBaseInfo(hIcon, NULL);
 
 			case SETTING_TRAYICON_MULTI:
 				if (!pcli->trayIcon)
 					pcli->pfnTrayIconRemove(NULL, NULL);
-				else if (cfg::getByte("CList", "AlwaysMulti", SETTING_ALWAYSMULTI_DEFAULT)) {
+				else if (db_get_b(NULL, "CList", "AlwaysMulti", SETTING_ALWAYSMULTI_DEFAULT)) {
 					iIcon = IconFromStatusMode(szChangedProto, CallProtoService(szChangedProto, PS_GETSTATUS, 0, 0), 0, &hIcon);
 					hIcon = (hIcon) ? CopyIcon(hIcon) : ImageList_GetIcon(hCListImages, iIcon, ILD_NORMAL);
 					return pcli->pfnTrayIconSetBaseInfo(hIcon, szChangedProto);

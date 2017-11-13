@@ -35,8 +35,8 @@
 Интерфейс
 [Do not change icon when testing]
 Не менять значок при тестировании
-[Use the Customize -> Fonts options to change text size and color.]
-Настройка шрифтов в "Тонкая настройка -> Шрифты и цвета"
+[Use Options -> Customize -> Fonts and colors to change text size and color.]
+Размер и цвет текста настраиваются в разделе "Настройки -> Тонкая настройка -> Шрифты и цвета".
 [Indent:]
 Отступ:
 [Row height:]
@@ -114,7 +114,7 @@ TCP соединение
 [Hosts]
 Хосты
 [Ping Plugin]
-Плагин пинг
+Плагин Ping
 [Responding]
 Отвечает
 [Not Responding]

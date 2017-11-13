@@ -1,7 +1,7 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
 
-Copyright (c) 2012-2014 Miranda NG Team
+Copyright (c) 2012-2017 Miranda NG Team
 Copyright (c) 2006-2012 Boris Krasnovskiy.
 Copyright (c) 2003-2005 George Hazan.
 Copyright (c) 2002-2003 Richard Hughes (original version).
@@ -25,9 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "version.h"
 
 
-/////////////////////////////////////////////////////////////////////////////////////////
 // MirandaStatusToMSN - status helper functions
-
 const char* CMsnProto::MirandaStatusToMSN(int status)
 {
 	switch (status) {
@@ -80,38 +78,17 @@ char** CMsnProto::GetStatusMsgLoc(int status)
 	return NULL;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
 // MSN_AddAuthRequest - adds the authorization event to the database
-
 void CMsnProto::MSN_AddAuthRequest(const char *email, const char *nick, const char *reason)
 {
-	//blob is: UIN=0(DWORD), hContact(DWORD), nick(ASCIIZ), ""(ASCIIZ), ""(ASCIIZ), email(ASCIIZ), ""(ASCIIZ)
-
 	MCONTACT hContact = MSN_HContactFromEmail(email, nick, true, true);
 
-	int emaillen = (int)mir_strlen(email);
-
-	if (nick == NULL) nick = "";
-	int nicklen = (int)mir_strlen(nick);
-
-	if (reason == NULL) reason = "";
-	int reasonlen = (int)mir_strlen(reason);
+	DB_AUTH_BLOB blob(hContact, nick, 0, 0, email, reason);
 
 	PROTORECVEVENT pre = { 0 };
 	pre.timestamp = (DWORD)time(NULL);
-	pre.lParam = sizeof(DWORD) + sizeof(HANDLE) + nicklen + emaillen + 5 + reasonlen;
-
-	char* pCurBlob = (char*)alloca(pre.lParam);
-	pre.szMessage = pCurBlob;
-
-	*(PDWORD)pCurBlob = 0; pCurBlob += sizeof(DWORD);                // UID
-	*(PDWORD)pCurBlob = (DWORD)hContact; pCurBlob += sizeof(DWORD);  // Contact Handle
-	mir_strcpy(pCurBlob, nick); pCurBlob += nicklen + 1;                 // Nickname
-	*pCurBlob = '\0'; pCurBlob++;                                    // First Name
-	*pCurBlob = '\0'; pCurBlob++;	                                   // Last Name
-	mir_strcpy(pCurBlob, email); pCurBlob += emaillen + 1;               // E-mail
-	mir_strcpy(pCurBlob, reason);                                        // Reason
-
+	pre.lParam = blob.size();
+	pre.szMessage = blob;
 	ProtoChainRecv(hContact, PSR_AUTH, 0, (LPARAM)&pre);
 }
 
@@ -121,8 +98,8 @@ void CMsnProto::InitCustomFolders(void)
 {
 	if (InitCstFldRan) return;
 
-	TCHAR folder[MAX_PATH];
-	mir_sntprintf(folder, _T("%%miranda_avatarcache%%\\%S"), m_szModuleName);
+	wchar_t folder[MAX_PATH];
+	mir_snwprintf(folder, L"%%miranda_avatarcache%%\\%S", m_szModuleName);
 	hCustomSmileyFolder = FoldersRegisterCustomPathT(LPGEN("Custom Smileys"), m_szModuleName, folder, m_tszUserName);
 
 	InitCstFldRan = true;
@@ -171,15 +148,13 @@ char* MSN_GetAvatarHash(char* szContext, char** pszUrl)
 	return res;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
 // MSN_GetAvatarFileName - gets a file name for an contact's avatar
-
-void CMsnProto::MSN_GetAvatarFileName(MCONTACT hContact, TCHAR* pszDest, size_t cbLen, const TCHAR *ext)
+void CMsnProto::MSN_GetAvatarFileName(MCONTACT hContact, wchar_t* pszDest, size_t cbLen, const wchar_t *ext)
 {
-	size_t tPathLen = mir_sntprintf(pszDest, cbLen, _T("%s\\%S"), VARST(_T("%miranda_avatarcache%")), m_szModuleName);
+	size_t tPathLen = mir_snwprintf(pszDest, cbLen, L"%s\\%S", VARSW(L"%miranda_avatarcache%"), m_szModuleName);
 
-	if (_taccess(pszDest, 0))
-		CreateDirectoryTreeT(pszDest);
+	if (_waccess(pszDest, 0))
+		CreateDirectoryTreeW(pszDest);
 
 	size_t tPathLen2 = tPathLen;
 	if (hContact != NULL) {
@@ -187,8 +162,8 @@ void CMsnProto::MSN_GetAvatarFileName(MCONTACT hContact, TCHAR* pszDest, size_t 
 		if (getString(hContact, "PictContext", &dbv) == 0) {
 			char* szAvatarHash = MSN_GetAvatarHash(dbv.pszVal);
 			if (szAvatarHash != NULL) {
-				TCHAR *sztAvatarHash = mir_a2t(szAvatarHash);
-				tPathLen += mir_sntprintf(pszDest + tPathLen, cbLen - tPathLen, _T("\\%s."), sztAvatarHash);
+				wchar_t *sztAvatarHash = mir_a2u(szAvatarHash);
+				tPathLen += mir_snwprintf(pszDest + tPathLen, cbLen - tPathLen, L"\\%s.", sztAvatarHash);
 				mir_free(sztAvatarHash);
 				mir_free(szAvatarHash);
 			}
@@ -202,24 +177,24 @@ void CMsnProto::MSN_GetAvatarFileName(MCONTACT hContact, TCHAR* pszDest, size_t 
 			pszDest[0] = 0;
 	}
 	else {
-		TCHAR *sztModuleName = mir_a2t(m_szModuleName);
-		tPathLen += mir_sntprintf(pszDest + tPathLen, cbLen - tPathLen, _T("\\%s avatar."), sztModuleName);
+		wchar_t *sztModuleName = mir_a2u(m_szModuleName);
+		tPathLen += mir_snwprintf(pszDest + tPathLen, cbLen - tPathLen, L"\\%s avatar.", sztModuleName);
 		mir_free(sztModuleName);
 	}
 
 	if (ext == NULL) {
-		mir_sntprintf(pszDest + tPathLen, cbLen - tPathLen, _T("*"));
+		mir_snwprintf(pszDest + tPathLen, cbLen - tPathLen, L"*");
 
 		bool found = false;
-		_tfinddata_t c_file;
-		long hFile = _tfindfirst(pszDest, &c_file);
+		_wfinddata_t c_file;
+		long hFile = _wfindfirst(pszDest, &c_file);
 		if (hFile > -1L) {
 			do {
-				if (_tcsrchr(c_file.name, '.')) {
-					mir_sntprintf(pszDest + tPathLen2, cbLen - tPathLen2, _T("\\%s"), c_file.name);
+				if (wcsrchr(c_file.name, '.')) {
+					mir_snwprintf(pszDest + tPathLen2, cbLen - tPathLen2, L"\\%s", c_file.name);
 					found = true;
 				}
-			} while (_tfindnext(hFile, &c_file) == 0);
+			} while (_wfindnext(hFile, &c_file) == 0);
 			_findclose(hFile);
 		}
 
@@ -227,11 +202,11 @@ void CMsnProto::MSN_GetAvatarFileName(MCONTACT hContact, TCHAR* pszDest, size_t 
 	}
 	else {
 		tPathLen--;
-		mir_sntprintf(pszDest + tPathLen, cbLen - tPathLen, ext);
+		mir_snwprintf(pszDest + tPathLen, cbLen - tPathLen, ext);
 	}
 }
 
-int CMsnProto::MSN_SetMyAvatar(const TCHAR* sztFname, void* pData, size_t cbLen)
+int CMsnProto::MSN_SetMyAvatar(const wchar_t* sztFname, void* pData, size_t cbLen)
 {
 	mir_sha1_ctx sha1ctx;
 	BYTE sha1c[MIR_SHA1_HASH_SIZE], sha1d[MIR_SHA1_HASH_SIZE];
@@ -284,76 +259,75 @@ int CMsnProto::MSN_SetMyAvatar(const TCHAR* sztFname, void* pData, size_t cbLen)
 	ptrA szEncodedBuffer(mir_urlEncode(szBuffer));
 	free(szBuffer);
 
-	const TCHAR *szExt;
+	const wchar_t *szExt;
 	int fmt = ProtoGetBufferFormat(pData, &szExt);
 	if (fmt == PA_FORMAT_UNKNOWN)
 		return fmt;
 
-	TCHAR szFileName[MAX_PATH];
+	wchar_t szFileName[MAX_PATH];
 	MSN_GetAvatarFileName(NULL, szFileName, _countof(szFileName), NULL);
-	_tremove(szFileName);
+	_wremove(szFileName);
 
 	MSN_GetAvatarFileName(NULL, szFileName, _countof(szFileName), szExt);
 
-	int fileId = _topen(szFileName, _O_CREAT | _O_TRUNC | _O_WRONLY | O_BINARY, _S_IREAD | _S_IWRITE);
+	int fileId = _wopen(szFileName, _O_CREAT | _O_TRUNC | _O_WRONLY | O_BINARY, _S_IREAD | _S_IWRITE);
 	if (fileId >= 0) {
 		_write(fileId, pData, (unsigned)cbLen);
 		_close(fileId);
 
 		char szAvatarHashdOld[41] = "";
-		db_get_static(NULL, m_szModuleName, "AvatarHash", szAvatarHashdOld, sizeof(szAvatarHashdOld));
-		char *szAvatarHash = arrayToHex(sha1d, sizeof(sha1d));
-		if (mir_strcmp(szAvatarHashdOld, szAvatarHash)) {
-			setString("PictObject", szEncodedBuffer);
-			setString("AvatarHash", szAvatarHash);
+		if (!db_get_static(NULL, m_szModuleName, "AvatarHash", szAvatarHashdOld, sizeof(szAvatarHashdOld))) {
+			char *szAvatarHash = arrayToHex(sha1d, sizeof(sha1d));
+			if (mir_strcmp(szAvatarHashdOld, szAvatarHash)) {
+				setString("PictObject", szEncodedBuffer);
+				setString("AvatarHash", szAvatarHash);
+			}
+			mir_free(szAvatarHash);
 		}
-		mir_free(szAvatarHash);
 	}
 	else MSN_ShowError("Cannot set avatar. File '%s' could not be created/overwritten", szFileName);
 
 	return fmt;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
 // MSN_GetCustomSmileyFileName - gets a file name for an contact's custom smiley
-
-void CMsnProto::MSN_GetCustomSmileyFileName(MCONTACT hContact, TCHAR* pszDest, size_t cbLen, const char* SmileyName, int type)
+void CMsnProto::MSN_GetCustomSmileyFileName(MCONTACT hContact, wchar_t* pszDest, size_t cbLen, const char* SmileyName, int type)
 {
 	size_t tPathLen;
 
 	InitCustomFolders();
 
-	TCHAR* path = (TCHAR*)alloca(cbLen * sizeof(TCHAR));
-	if (hCustomSmileyFolder == NULL || FoldersGetCustomPathT(hCustomSmileyFolder, path, (int)cbLen, _T(""))) {
-		TCHAR *tmpPath = Utils_ReplaceVarsT(_T("%miranda_userdata%"));
-		TCHAR *tszModuleName = mir_a2t(m_szModuleName);
-		tPathLen = mir_sntprintf(pszDest, cbLen, _T("%s\\%s\\CustomSmiley"), tmpPath, tszModuleName);
+	wchar_t* path = (wchar_t*)alloca(cbLen * sizeof(wchar_t));
+	if (hCustomSmileyFolder == NULL || FoldersGetCustomPathT(hCustomSmileyFolder, path, (int)cbLen, L"")) {
+		wchar_t *tmpPath = Utils_ReplaceVarsW(L"%miranda_userdata%");
+		wchar_t *tszModuleName = mir_a2u(m_szModuleName);
+		tPathLen = mir_snwprintf(pszDest, cbLen, L"%s\\%s\\CustomSmiley", tmpPath, tszModuleName);
 		mir_free(tszModuleName);
 		mir_free(tmpPath);
 	}
 	else {
-		mir_tstrcpy(pszDest, path);
-		tPathLen = mir_tstrlen(pszDest);
+		mir_wstrcpy(pszDest, path);
+		tPathLen = mir_wstrlen(pszDest);
 	}
 
 	if (hContact != NULL) {
 		DBVARIANT dbv = { 0 };
-		if (getTString(hContact, "e-mail", &dbv)) {
+		if (getWString(hContact, "e-mail", &dbv)) {
 			dbv.type = DBVT_ASCIIZ;
-			dbv.ptszVal = (TCHAR*)mir_alloc(11);
-			_ui64tot((UINT_PTR)hContact, dbv.ptszVal, 10);
+			dbv.ptszVal = (wchar_t*)mir_alloc(11*sizeof(wchar_t));
+			_ui64tow((UINT_PTR)hContact, dbv.ptszVal, 10);
 		}
 
-		tPathLen += mir_sntprintf(pszDest + tPathLen, cbLen - tPathLen, _T("\\%s"), dbv.ptszVal);
+		tPathLen += mir_snwprintf(pszDest + tPathLen, cbLen - tPathLen, L"\\%s", dbv.ptszVal);
 		db_free(&dbv);
 	}
 	else {
-		TCHAR *tszModuleName = mir_a2t(m_szModuleName);
-		tPathLen += mir_sntprintf(pszDest + tPathLen, cbLen - tPathLen, _T("\\%s"), tszModuleName);
+		wchar_t *tszModuleName = mir_a2u(m_szModuleName);
+		tPathLen += mir_snwprintf(pszDest + tPathLen, cbLen - tPathLen, L"\\%s", tszModuleName);
 		mir_free(tszModuleName);
 	}
 
-	bool exist = _taccess(pszDest, 0) == 0;
+	bool exist = _waccess(pszDest, 0) == 0;
 
 	if (type == 0) {
 		if (!exist) pszDest[0] = 0;
@@ -361,17 +335,15 @@ void CMsnProto::MSN_GetCustomSmileyFileName(MCONTACT hContact, TCHAR* pszDest, s
 	}
 
 	if (!exist)
-		CreateDirectoryTreeT(pszDest);
+		CreateDirectoryTreeW(pszDest);
 
-	TCHAR *sztSmileyName = mir_a2t(SmileyName);
-	mir_sntprintf(pszDest + tPathLen, cbLen - tPathLen, _T("\\%s.%s"), sztSmileyName,
-		type == MSN_APPID_CUSTOMSMILEY ? _T("png") : _T("gif"));
+	wchar_t *sztSmileyName = mir_a2u(SmileyName);
+	mir_snwprintf(pszDest + tPathLen, cbLen - tPathLen, L"\\%s.%s", sztSmileyName,
+		type == MSN_APPID_CUSTOMSMILEY ? L"png" : L"gif");
 	mir_free(sztSmileyName);
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
 // MSN_GoOffline - performs several actions when a server goes offline
-
 void CMsnProto::MSN_GoOffline(void)
 {
 	if (m_iStatus == ID_STATUS_OFFLINE) return;
@@ -389,9 +361,7 @@ void CMsnProto::MSN_GoOffline(void)
 		MSN_EnableMenuItems(false);
 
 	MSN_FreeGroups();
-#ifdef OBSOLETE
-	MsgQueue_Clear();
-#endif
+
 	clearCachedMsg();
 
 	if (!g_bTerminated) {
@@ -405,13 +375,9 @@ void CMsnProto::MSN_GoOffline(void)
 				hContact = db_find_next(hContact, m_szModuleName)) 
 		{
 			if (isChatRoom(hContact) != 0) {
-				DBVARIANT dbv;
-				if (getTString(hContact, "ChatRoomID", &dbv) == 0) {
-					GCDEST gcd = { m_szModuleName, dbv.ptszVal, GC_EVENT_CONTROL };
-					GCEVENT gce = { sizeof(gce), &gcd };
-					CallServiceSync(MS_GC_EVENT, SESSION_OFFLINE, (LPARAM)&gce);
-					db_free(&dbv);
-				}
+				ptrW wszRoom(getWStringA(hContact, "ChatRoomID"));
+				if (wszRoom != NULL)
+					Chat_Control(m_szModuleName, wszRoom, SESSION_OFFLINE);
 			}
 			else {
 				if (ID_STATUS_OFFLINE != getWord(hContact, "Status", ID_STATUS_OFFLINE)) {
@@ -423,14 +389,8 @@ void CMsnProto::MSN_GoOffline(void)
 	}
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
 // MSN_SendMessage - formats and sends a MSG packet through the server
-
-#ifdef OBSOLETE
-int ThreadData::sendMessage(int msgType, const char* email, int netId, const char* parMsg, int parFlags)
-#else
 int ThreadData::sendMessage(int, const char *email, int netId, const char *parMsg, int parFlags)
-#endif
 {
 	CMStringA buf;
 
@@ -476,11 +436,6 @@ int ThreadData::sendMessage(int, const char *email, int netId, const char *parMs
 				tFontColor = db_get_dw(NULL, "SRMsg", "Font0Col", 0);
 			}
 			else tFontStyle[0] = 0;
-
-#ifdef OBSOLETE
-			if (parFlags & MSG_OFFLINE)
-				off += mir_snprintf((buf + off), (_countof(buf) - off), "Dest-Agent: client\r\n"); 
-#endif
 		}
 
 		char *pszNick=proto->MyOptions.szEmail;
@@ -495,6 +450,9 @@ int ThreadData::sendMessage(int, const char *email, int netId, const char *parMs
 		if (!proto->getString("Nick", &dbv))
 			pszNick = dbv.pszVal;
 
+		CMStringA msgClean;
+
+		for (BYTE *p = (BYTE*)parMsg; *p; p++) if (*p >= 0x20 || (*p>=0x09 && *p<=0x0D)) msgClean.AppendChar(*p);
 		buf.AppendFormat(
 			"Messaging: 2.0\r\n"
 			"Client-Message-ID: %llu\r\n"
@@ -502,11 +460,11 @@ int ThreadData::sendMessage(int, const char *email, int netId, const char *parMs
 			"IM-Display-Name: %s\r\n"
 			"Content-Type: %s\r\n"
 			"Content-Length: %d\r\n",
-			msgid, pszMsgType, pszNick, pszContType, mir_strlen(parMsg));
+			msgid, pszMsgType, pszNick, pszContType, msgClean.GetLength());
 
 		if (*tFontName) buf.AppendFormat("X-MMS-IM-Format: FN=%s; EF=%s; CO=%x; CS=0; PF=31%s\r\n",
 			tFontName, tFontStyle, tFontColor, (parFlags & MSG_RTL) ? ";RL=1" : "");
-		buf.AppendFormat("\r\n%s", parMsg);
+		buf.AppendFormat("\r\n%s", msgClean.c_str());
 
 		if (pszNick!=proto->MyOptions.szEmail) db_free(&dbv);
 		parMsg = buf;
@@ -523,32 +481,8 @@ int ThreadData::sendMessage(int, const char *email, int netId, const char *parMs
 		netId == NETID_SKYPE?netId:proto->MyOptions.netId, proto->GetMyUsername(netId), proto->MyOptions.szMachineGuid,
 		parMsg);
 
-#ifdef OBSOLETE
-	if (netId == NETID_YAHOO || netId == NETID_MOB || (parFlags & MSG_OFFLINE))
-		seq = sendPacket("UUM", "%s %d %c %d\r\n%s%s", email, netId, msgType,
-		mir_strlen(parMsg) + off, buf, parMsg);
-	else
-		seq = sendPacket("MSG", "%c %d\r\n%s%s", msgType,
-		mir_strlen(parMsg) + off, buf, parMsg);
-#endif
-
 	return seq;
 }
-
-#ifdef OBSOLETE
-void ThreadData::sendCaps(void)
-{
-	char mversion[100], capMsg[1000];
-	CallService(MS_SYSTEM_GETVERSIONTEXT, sizeof(mversion), (LPARAM)mversion);
-
-	mir_snprintf(capMsg,
-		"Content-Type: text/x-clientcaps\r\n\r\n"
-		"Client-Name: Miranda NG %s (MSN v.%s)\r\n",
-		mversion, __VERSION_STRING_DOTS);
-
-	sendMessage('U', NULL, 1, capMsg, MSG_DISABLE_HDR);
-}
-#endif
 
 void ThreadData::sendTerminate(void)
 {
@@ -558,9 +492,7 @@ void ThreadData::sendTerminate(void)
 	}
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
 // MSN_SendRawPacket - sends a packet accordingly to the MSN protocol
-
 int ThreadData::sendRawMessage(int msgType, const char* data, int datLen)
 {
 	if (data == NULL)
@@ -582,7 +514,6 @@ int ThreadData::sendRawMessage(int msgType, const char* data, int datLen)
 }
 
 // Typing notifications support
-
 void CMsnProto::MSN_SendTyping(ThreadData* info, const char* email, int netId, bool bTyping)
 {
 	char tCommand[1024];
@@ -601,12 +532,8 @@ void CMsnProto::MSN_StartStopTyping(GCThreadData* info, bool start)
 	MSN_SendTyping(msnNsThread, info->szEmail, info->netId, start);
 }
 
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// MSN_SendStatusMessage - notify a server about the status message change
-
 // Helper to process texts
-static char * HtmlEncodeUTF8T(const TCHAR *src)
+static char * HtmlEncodeUTF8T(const wchar_t *src)
 {
 	if (src == NULL)
 		return mir_strdup("");
@@ -614,165 +541,75 @@ static char * HtmlEncodeUTF8T(const TCHAR *src)
 	return HtmlEncode(UTF8(src));
 }
 
-#ifdef OBSOLETE
-void CMsnProto::MSN_SendStatusMessage(const char* msg)
-#else
+// MSN_SendStatusMessage - notify a server about the status message change
 void CMsnProto::MSN_SendStatusMessage(const char*)
-#endif
 {
 	if (!msnLoggedIn)
 		return;
 
 	MSN_SetServerStatus(m_iDesiredStatus);
-	/* FIXME: Currently not implemented, should be set on status change anyway  */
-
-#ifdef OBSOLETE
-	char* msgEnc = HtmlEncode(msg ? msg : "");
-
-	size_t sz;
-	char  szMsg[2048];
-	if (msnCurrentMedia.cbSize == 0) {
-		sz = mir_snprintf(szMsg, "<Data><PSM>%s</PSM><CurrentMedia></CurrentMedia><MachineGuid>%s</MachineGuid>"
-			"<DDP></DDP><SignatureSound></SignatureSound><Scene></Scene><ColorScheme></ColorScheme></Data>",
-			msgEnc, MyOptions.szMachineGuid);
-	}
-	else {
-		char *szFormatEnc;
-		if (ServiceExists(MS_LISTENINGTO_GETPARSEDTEXT)) {
-			LISTENINGTOINFO lti = { 0 };
-			lti.cbSize = sizeof(lti);
-			if (msnCurrentMedia.ptszTitle != NULL) lti.ptszTitle = _T("{0}");
-			if (msnCurrentMedia.ptszArtist != NULL) lti.ptszArtist = _T("{1}");
-			if (msnCurrentMedia.ptszAlbum != NULL) lti.ptszAlbum = _T("{2}");
-			if (msnCurrentMedia.ptszTrack != NULL) lti.ptszTrack = _T("{3}");
-			if (msnCurrentMedia.ptszYear != NULL) lti.ptszYear = _T("{4}");
-			if (msnCurrentMedia.ptszGenre != NULL) lti.ptszGenre = _T("{5}");
-			if (msnCurrentMedia.ptszLength != NULL) lti.ptszLength = _T("{6}");
-			if (msnCurrentMedia.ptszPlayer != NULL) lti.ptszPlayer = _T("{7}");
-			if (msnCurrentMedia.ptszType != NULL) lti.ptszType = _T("{8}");
-
-			TCHAR *tmp = (TCHAR *)CallService(MS_LISTENINGTO_GETPARSEDTEXT, (WPARAM)_T("%title% - %artist%"), (LPARAM)&lti);
-			szFormatEnc = HtmlEncodeUTF8T(tmp);
-			mir_free(tmp);
-		}
-		else szFormatEnc = HtmlEncodeUTF8T(_T("{0} - {1}"));
-
-		char *szArtist = HtmlEncodeUTF8T(msnCurrentMedia.ptszArtist),
-			*szAlbum = HtmlEncodeUTF8T(msnCurrentMedia.ptszAlbum),
-			*szTitle = HtmlEncodeUTF8T(msnCurrentMedia.ptszTitle),
-			*szTrack = HtmlEncodeUTF8T(msnCurrentMedia.ptszTrack),
-			*szYear = HtmlEncodeUTF8T(msnCurrentMedia.ptszYear),
-			*szGenre = HtmlEncodeUTF8T(msnCurrentMedia.ptszGenre),
-			*szLength = HtmlEncodeUTF8T(msnCurrentMedia.ptszLength),
-			*szPlayer = HtmlEncodeUTF8T(msnCurrentMedia.ptszPlayer),
-			*szType = HtmlEncodeUTF8T(msnCurrentMedia.ptszType);
-
-		sz = mir_snprintf(szMsg, _countof(szMsg),
-			"<Data>"
-			"<PSM>%s</PSM>"
-			"<CurrentMedia>%s\\0%s\\01\\0%s\\0%s\\0%s\\0%s\\0%s\\0%s\\0%s\\0%s\\0%s\\0%s\\0\\0</CurrentMedia>"
-			"<MachineGuid>%s</MachineGuid><DDP></DDP><SignatureSound></SignatureSound><Scene></Scene><ColorScheme></ColorScheme>"
-			"<DDP></DDP><SignatureSound></SignatureSound><Scene></Scene><ColorScheme></ColorScheme>"
-			"</Data>",
-			msgEnc, szPlayer, szType, szFormatEnc, szTitle, szArtist, szAlbum, szTrack, szYear, szGenre,
-			szLength, szPlayer, szType, MyOptions.szMachineGuid);
-
-		mir_free(szArtist);
-		mir_free(szAlbum);
-		mir_free(szTitle);
-		mir_free(szTrack);
-		mir_free(szYear);
-		mir_free(szGenre);
-		mir_free(szLength);
-		mir_free(szPlayer);
-		mir_free(szType);
-		mir_free(szFormatEnc);
-	}
-	mir_free(msgEnc);
-
-	if (msnPreviousUUX == NULL || mir_strcmp(msnPreviousUUX, szMsg)) {
-		replaceStr(msnPreviousUUX, szMsg);
-		msnNsThread->sendPacket("UUX", "%d\r\n%s", sz, szMsg);
-		mStatusMsgTS = clock();
-	}
-#endif
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
 // MSN_SendPacket - sends a packet accordingly to the MSN protocol
-
 int ThreadData::sendPacket(const char* cmd, const char* fmt, ...)
 {
 	if (this == NULL) return 0;
 
-	size_t strsize = 512;
-	char* str = (char*)mir_alloc(strsize);
-
+	CMStringA str;
 	int thisTrid = 0;
 
 	if (fmt == NULL)
-		strncpy_s(str, strsize, cmd, _TRUNCATE);
+		str = cmd;
 	else {
 		thisTrid = InterlockedIncrement(&mTrid);
 		if (fmt[0] == '\0')
-			mir_snprintf(str, strsize, "%s %d", cmd, thisTrid);
+			str.AppendFormat("%s %d", cmd, thisTrid);
 		else {
 			va_list vararg;
 			va_start(vararg, fmt);
-
-			int paramStart = mir_snprintf(str, strsize, "%s %d ", cmd, thisTrid);
-			while (mir_vsnprintf(str + paramStart, strsize - paramStart - 3, fmt, vararg) == -1)
-				str = (char*)mir_realloc(str, strsize += 512);
-
-			str[strsize - 3] = 0;
+			str.AppendFormat("%s %d ", cmd, thisTrid);
+			str.AppendFormatV(fmt, vararg);
 			va_end(vararg);
 		}
 	}
 
 	if (strchr(str, '\r') == NULL)
-		mir_strcat(str, "\r\n");
+		str += "\r\n";
 
-	int result = send(str, mir_strlen(str));
-	mir_free(str);
+	int result = send(str, str.GetLength());
 	return (result > 0) ? thisTrid : -1;
 }
 
 int ThreadData::sendPacketPayload(const char* cmd, const char *param, const char* fmt, ...)
 {
-	int thisTrid = 0;
-	bool bTopHdr;
-
 	if (this == NULL) return 0;
-
-	size_t strsize = 512;
-	char* str = (char*)mir_alloc(strsize);
 
 	va_list vararg;
 	va_start(vararg, fmt);
 
-	thisTrid = InterlockedIncrement(&mTrid);
-	int regSz = proto->msnRegistration ? (int)mir_strlen(proto->msnRegistration)+16 : 0;
-	int paramStart = mir_snprintf(str, strsize, "%s %d %s ", cmd, thisTrid, param), strSz;
-	if (bTopHdr=*fmt=='\b') fmt++;
-	while ((strSz = mir_vsnprintf(str + paramStart, strsize - paramStart - regSz - 10, fmt, vararg)) == -1)
-		str = (char*)mir_realloc(str, strsize += 512);
-	if (strSz && !bTopHdr) strSz+=2;
-	paramStart+=mir_snprintf(str+paramStart, strsize - paramStart , "%d\r\n", strSz+regSz);
-	if (proto->msnRegistration) paramStart+=mir_snprintf(str+paramStart, strsize - paramStart, "Registration: %s\r\n", proto->msnRegistration);
-	if (strSz && !bTopHdr) paramStart+=mir_snprintf(str+paramStart, strsize - paramStart, "\r\n");
-	mir_vsnprintf(str + paramStart, strsize - paramStart, fmt, vararg);
-	str[strsize - 3] = 0;
+	bool bTopHdr = fmt[0] == '\b';
+	int thisTrid = InterlockedIncrement(&mTrid);
+
+	CMStringA str, payLoad;
+	if (bTopHdr)
+		fmt++;
+
+	if (proto->msnRegistration)
+		payLoad.AppendFormat("Registration: %s\r\n", proto->msnRegistration);
+	if (!bTopHdr)
+		payLoad.Append("\r\n");
+	payLoad.AppendFormatV(fmt, vararg);
 	va_end(vararg);
 
-	int result = send(str, mir_strlen(str));
-	mir_free(str);
+	str.AppendFormat("%s %d %s ", cmd, thisTrid, param);
+	str.AppendFormat("%d\r\n", payLoad.GetLength());
+	str += payLoad;
+
+	int result = send(str, str.GetLength());
 	return (result > 0) ? thisTrid : -1;
 }
 
-
-/////////////////////////////////////////////////////////////////////////////////////////
 // MSN_SetServerStatus - changes plugins status at the server
-
 void CMsnProto::MSN_SetServerStatus(int newStatus)
 {
 	debugLogA("Setting MSN server status %d, logged in = %d", newStatus, msnLoggedIn);
@@ -787,7 +624,7 @@ void CMsnProto::MSN_SetServerStatus(int newStatus)
 
 	if (newStatus != ID_STATUS_OFFLINE) {
 		DBVARIANT msnObject = { 0 };
-		if (ServiceExists(MS_AV_SETMYAVATAR))
+		if (ServiceExists(MS_AV_SETMYAVATARW))
 			getString("PictObject", &msnObject);
 
 		// Capabilties: WLM 2009, Chunking, UUN Bootstrap
@@ -799,32 +636,16 @@ void CMsnProto::MSN_SetServerStatus(int newStatus)
 		unsigned myFlagsExEx = capexex_SupportsMissedConversations | capexex_SupportsShortCircuit;
 
 		char szMsg[2048];
-#ifdef OBSOLETE
-		if (m_iStatus < ID_STATUS_ONLINE) {
-			int sz = mir_snprintf(szMsg,
-				"<EndpointData><Capabilities>%u:%u</Capabilities></EndpointData>", myFlags, myFlagsEx);
-			msnNsThread->sendPacket("UUX", "%d\r\n%s", sz, szMsg);
-
-			msnNsThread->sendPacket("BLP", msnOtherContactsBlocked ? "BL" : "AL");
-
-			DBVARIANT dbv;
-			if (!getStringUtf("Nick", &dbv)) {
-				if (dbv.pszVal[0])
-					MSN_SetNicknameUtf(dbv.pszVal);
-				db_free(&dbv);
-			}
-		}
-#endif
 
 		char *szPlace;
 		DBVARIANT dbv;
 		if (!getStringUtf("Place", &dbv))
 			szPlace = dbv.pszVal;
 		else {
-			TCHAR buf[128] = _T("Miranda");
+			wchar_t buf[128] = L"Miranda";
 			DWORD buflen = _countof(buf);
 			GetComputerName(buf, &buflen);
-			szPlace = mir_utf8encodeT(buf);
+			szPlace = mir_utf8encodeW(buf);
 		}
 
 		char** msgptr = GetStatusMsgLoc(newStatus);
@@ -858,40 +679,12 @@ void CMsnProto::MSN_SetServerStatus(int newStatus)
 			MyOptions.szMachineGuid,
 			sz, szMsg);
 
-
-		// TODO: Send, MSN_SendStatusMessage anpassen.
-#ifdef OBSOLETE
-		int sz = mir_snprintf(szMsg,
-			"<PrivateEndpointData>"
-			"<EpName>%s</EpName>"
-			"<Idle>%s</Idle>"
-			"<ClientType>1</ClientType>"
-			"<State>%s</State>"
-			"</PrivateEndpointData>",
-			szPlace, newStatus == ID_STATUS_IDLE ? "true" : "false", szStatusName);
-		msnNsThread->sendPacket("UUX", "%d\r\n%s", sz, szMsg);
-#endif
 		mir_free(szPlace);
-
-#ifdef OBSOLETE
-		if (newStatus != ID_STATUS_IDLE) {
-			char** msgptr = GetStatusMsgLoc(newStatus);
-			if (msgptr != NULL)
-				MSN_SendStatusMessage(*msgptr);
-		}
-
-		msnNsThread->sendPacket("CHG", "%s %u:%u %s", szStatusName, myFlags, myFlagsEx, msnObject.pszVal ? msnObject.pszVal : "0");
-#endif
 		db_free(&msnObject);
 	}
-#ifdef OBSOLETE
-	else msnNsThread->sendPacket("CHG", szStatusName);
-#endif
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
 // MSN_FetchRecentMessages - fetches missed offline messages
-
 void CMsnProto::MSN_FetchRecentMessages(time_t since)
 {
 	if (!since) {
@@ -906,7 +699,7 @@ void CMsnProto::MSN_FetchRecentMessages(time_t since)
 			if (!(hDbEvent = db_event_last(hContact)))
 				continue;
 
-			DBEVENTINFO dbei = { sizeof(dbei) };
+			DBEVENTINFO dbei = {};
 			db_event_get(hDbEvent, &dbei);
 			if (dbei.timestamp>since) since=dbei.timestamp;
 		}
@@ -917,13 +710,10 @@ void CMsnProto::MSN_FetchRecentMessages(time_t since)
 		((unsigned __int64)since)*1000);
 }
 
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// Display Hotmail Inbox thread
-
 static const char postdataM[] = "ct=%u&bver=7&wa=wsignin1.0&ru=%s&pl=MBI";
 static const char postdataS[] = "ct=%u&bver=7&id=73625&ru=%s&js=yes&pl=%%3Fid%%3D73625";
 
+// Display Hotmail Inbox thread
 void CMsnProto::MsnInvokeMyURL(bool ismail, const char* url)
 {
 	if (!url)
@@ -945,23 +735,21 @@ void CMsnProto::MsnInvokeMyURL(bool ismail, const char* url)
 		CMStringA hippy(passport);
 		hippy.AppendFormat("/ppsecure/sha1auth.srf?lc=%d&token=%s", itoa(langpref, passport, 10), ptrA(mir_urlEncode(post)));
 
-		debugLogA("Starting URL: '%s'", hippy);
+		debugLogA("Starting URL: '%s'", hippy.c_str());
 		Utils_OpenUrl(hippy.GetString());
 	}
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
 // MSN_ShowError - shows an error
-
 void CMsnProto::MSN_ShowError(const char* msgtext, ...)
 {
-	TCHAR   tBuffer[4096];
+	wchar_t   tBuffer[4096];
 	va_list tArgs;
 
-	TCHAR *buf = Langpack_PcharToTchar(msgtext);
+	wchar_t *buf = Langpack_PcharToTchar(msgtext);
 
 	va_start(tArgs, msgtext);
-	mir_vsntprintf(tBuffer, _countof(tBuffer), buf, tArgs);
+	mir_vsnwprintf(tBuffer, _countof(tBuffer), buf, tArgs);
 	va_end(tArgs);
 
 	mir_free(buf);
@@ -973,7 +761,8 @@ void HandlePopupData(PopupData *tData)  {
 	if (tData != NULL) {
 		if (tData->flags & MSN_HOTMAIL_POPUP) {
 			MCONTACT hContact = tData->proto->MSN_HContactFromEmail(tData->proto->MyOptions.szEmail, NULL);
-			if (hContact) CallService(MS_CLIST_REMOVEEVENT, hContact, (LPARAM)1);
+			if (hContact)
+				pcli->pfnRemoveEvent(hContact, 1);
 			if (tData->flags & MSN_ALLOW_ENTER)
 				tData->proto->MsnInvokeMyURL(true, tData->url);
 		}
@@ -986,12 +775,11 @@ void RemovePopupData(PopupData *tData) {
 	if (tData != NULL && (tData->flags & MSN_HOTMAIL_POPUP)) {
 		MCONTACT hContact = tData->proto->MSN_HContactFromEmail(tData->proto->MyOptions.szEmail, NULL);
 		if (hContact)
-			CallService(MS_CLIST_REMOVEEVENT, hContact, 1);
+			pcli->pfnRemoveEvent(hContact, 1);
 	}
 }
-/////////////////////////////////////////////////////////////////////////////////////////
-// Popup plugin window proc
 
+// Popup plugin window proc
 LRESULT CALLBACK NullWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	PopupData *tData = (PopupData*)PUGetPluginData(hWnd);
@@ -1020,32 +808,30 @@ LRESULT CALLBACK NullWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
 // InitPopups - popup plugin support
-
 void CMsnProto::InitPopups(void)
 {
-	TCHAR desc[256];
+	wchar_t desc[256];
 	char name[256];
 
 	POPUPCLASS ppc = { sizeof(ppc) };
 	ppc.flags = PCF_TCHAR;
 	ppc.PluginWindowProc = NullWindowProc;
 	ppc.hIcon = LoadIconEx("main");
-	ppc.ptszDescription = desc;
+	ppc.pwszDescription = desc;
 	ppc.pszName = name;
 
 	ppc.colorBack = RGB(173, 206, 247);
 	ppc.colorText = GetSysColor(COLOR_WINDOWTEXT);
 	ppc.iSeconds = 3;
-	mir_sntprintf(desc, _T("%s/%s"), m_tszUserName, TranslateT("Hotmail"));
+	mir_snwprintf(desc, L"%s/%s", m_tszUserName, TranslateT("Hotmail"));
 	mir_snprintf(name, "%s_%s", m_szModuleName, "Hotmail");
 	hPopupHotmail = Popup_RegisterClass(&ppc);
 
 	ppc.colorBack = RGB(173, 206, 247);
 	ppc.colorText = GetSysColor(COLOR_WINDOWTEXT);
 	ppc.iSeconds = 3;
-	mir_sntprintf(desc, _T("%s/%s"), m_tszUserName, TranslateT("Notify"));
+	mir_snwprintf(desc, L"%s/%s", m_tszUserName, TranslateT("Notify"));
 	mir_snprintf(name, "%s_%s", m_szModuleName, "Notify");
 	hPopupNotify = Popup_RegisterClass(&ppc);
 
@@ -1054,23 +840,21 @@ void CMsnProto::InitPopups(void)
 	ppc.colorText = RGB(255, 245, 225); //Yellow
 	ppc.iSeconds = 60;
 
-	mir_sntprintf(desc, _T("%s/%s"), m_tszUserName, TranslateT("Error"));
+	mir_snwprintf(desc, L"%s/%s", m_tszUserName, TranslateT("Error"));
 	mir_snprintf(name, "%s_%s", m_szModuleName, "Error");
 	hPopupError = Popup_RegisterClass(&ppc);
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
 // MSN_ShowPopup - popup plugin support
-
-void CALLBACK sttMainThreadCallback(PVOID dwParam)
+void CALLBACK sttMainThreadCallback(void *param)
 {
-	PopupData* pud = (PopupData*)dwParam;
+	PopupData* pud = (PopupData*)param;
 
 	bool iserr = (pud->flags & MSN_SHOW_ERROR) != 0;
 	if ((iserr && !pud->proto->MyOptions.ShowErrorsAsPopups) || !ServiceExists(MS_POPUP_ADDPOPUPCLASS)) {
 		if (pud->flags & MSN_ALLOW_MSGBOX) {
-			TCHAR szMsg[MAX_SECONDLINE + MAX_CONTACTNAME];
-			mir_sntprintf(szMsg, _T("%s:\n%s"), pud->title, pud->text);
+			wchar_t szMsg[MAX_SECONDLINE + MAX_CONTACTNAME];
+			mir_snwprintf(szMsg, L"%s:\n%s", pud->title, pud->text);
 			int ret = MessageBox(NULL, szMsg, TranslateT("MSN Protocol"),
 				MB_YESNO | (iserr ? MB_ICONERROR : MB_ICONINFORMATION));
 			if (ret == IDYES)
@@ -1088,8 +872,8 @@ void CALLBACK sttMainThreadCallback(PVOID dwParam)
 	char name[256];
 
 	POPUPDATACLASS ppd = { sizeof(ppd) };
-	ppd.ptszTitle = pud->title;
-	ppd.ptszText = pud->text;
+	ppd.pwszTitle = pud->title;
+	ppd.pwszText = pud->text;
 	ppd.PluginData = pud;
 	ppd.pszClassName = name;
 
@@ -1103,22 +887,22 @@ void CALLBACK sttMainThreadCallback(PVOID dwParam)
 	CallService(MS_POPUP_ADDPOPUPCLASS, 0, (LPARAM)&ppd);
 }
 
-void CMsnProto::MSN_ShowPopup(const TCHAR* nickname, const TCHAR* msg, int flags, const char* url)
+void CMsnProto::MSN_ShowPopup(const wchar_t* nickname, const wchar_t* msg, int flags, const char* url)
 {
 	if (g_bTerminated) return;
 
 	PopupData *pud = (PopupData*)mir_calloc(sizeof(PopupData));
 	pud->flags = flags;
 	pud->url = mir_strdup(url);
-	pud->title = mir_tstrdup(nickname);
-	pud->text = mir_tstrdup(msg);
+	pud->title = mir_wstrdup(nickname);
+	pud->text = mir_wstrdup(msg);
 	pud->proto = this;
 
 	CallFunctionAsync(sttMainThreadCallback, pud);
 }
 
 
-void CMsnProto::MSN_ShowPopup(const MCONTACT hContact, const TCHAR* msg, int flags)
+void CMsnProto::MSN_ShowPopup(const MCONTACT hContact, const wchar_t* msg, int flags)
 {
 	MSN_ShowPopup(GetContactNameT(hContact), msg, flags, NULL);
 }
@@ -1131,7 +915,7 @@ filetransfer::filetransfer(CMsnProto* prt)
 	memset(this, 0, sizeof(filetransfer));
 	fileId = -1;
 	std.cbSize = sizeof(std);
-	std.flags = PFTS_TCHAR;
+	std.flags = PFTS_UNICODE;
 	proto = prt;
 
 	hLockHandle = CreateMutex(NULL, FALSE, NULL);
@@ -1147,13 +931,8 @@ filetransfer::~filetransfer(void)
 	CloseHandle(hLockHandle);
 	CloseHandle(hResumeEvt);
 
-	if (fileId != -1) {
+	if (fileId != -1)
 		_close(fileId);
-#ifdef OBSOLETE
-		if (tType != SERVER_HTTP && p2p_appID != MSN_APPID_FILE && !(std.flags & PFTS_SENDING))
-			proto->p2p_pictureTransferFailed(this);
-#endif
-	}
 
 	if (!bCompleted && p2p_appID == MSN_APPID_FILE) {
 		std.ptszFiles = NULL;
@@ -1196,7 +975,7 @@ int filetransfer::create(void)
 	int flags = _O_BINARY | _O_CREAT | _O_WRONLY | _O_APPEND;
 
 	if (std.currentFileProgress == 0) flags |= _O_TRUNC;
-	fileId = _topen(std.tszCurrentFile, flags, _S_IREAD | _S_IWRITE);
+	fileId = _wopen(std.tszCurrentFile, flags, _S_IREAD | _S_IWRITE);
 
 	if (fileId == -1)
 		proto->MSN_ShowError("Cannot create file '%s' during a file transfer", std.tszCurrentFile);
@@ -1216,7 +995,7 @@ int filetransfer::openNext(void)
 
 	while (std.ptszFiles && std.ptszFiles[cf]) {
 		struct _stati64 statbuf;
-		if (_tstati64(std.ptszFiles[cf], &statbuf) == 0 && (statbuf.st_mode & _S_IFDIR) == 0)
+		if (_wstat64(std.ptszFiles[cf], &statbuf) == 0 && (statbuf.st_mode & _S_IFDIR) == 0)
 			break;
 
 		++cf;
@@ -1224,8 +1003,8 @@ int filetransfer::openNext(void)
 
 	if (std.ptszFiles && std.ptszFiles[cf]) {
 		bCompleted = false;
-		replaceStrT(std.tszCurrentFile, std.ptszFiles[cf]);
-		fileId = _topen(std.tszCurrentFile, _O_BINARY | _O_RDONLY, _S_IREAD);
+		replaceStrW(std.tszCurrentFile, std.ptszFiles[cf]);
+		fileId = _wopen(std.tszCurrentFile, _O_BINARY | _O_RDONLY, _S_IREAD);
 		if (fileId != -1) {
 			std.currentFileSize = _filelengthi64(fileId);
 			std.currentFileProgress = 0;
@@ -1244,71 +1023,6 @@ int filetransfer::openNext(void)
 
 	return fileId;
 }
-
-#ifdef OBSOLETE
-directconnection::directconnection(const char* CallID, const char* Wlid)
-{
-	memset(this, 0, sizeof(directconnection));
-
-	wlid = mir_strdup(Wlid);
-	callId = mir_strdup(CallID);
-	mNonce = (UUID*)mir_alloc(sizeof(UUID));
-	UuidCreate(mNonce);
-	ts = time(NULL);
-}
-
-directconnection::~directconnection()
-{
-	mir_free(wlid);
-	mir_free(callId);
-	mir_free(mNonce);
-	mir_free(xNonce);
-}
-
-
-char* directconnection::calcHashedNonce(UUID* nonce)
-{
-	mir_sha1_ctx sha1ctx;
-	BYTE sha[MIR_SHA1_HASH_SIZE];
-
-	mir_sha1_init(&sha1ctx);
-	mir_sha1_append(&sha1ctx, (BYTE*)nonce, sizeof(UUID));
-	mir_sha1_finish(&sha1ctx, sha);
-
-	char* p;
-	UuidToStringA((UUID*)&sha, (BYTE**)&p);
-	size_t len = mir_strlen(p) + 3;
-	char* result = (char*)mir_alloc(len);
-	mir_snprintf(result, len, "{%s}", p);
-	_strupr(result);
-	RpcStringFreeA((BYTE**)&p);
-
-	return result;
-}
-
-char* directconnection::mNonceToText(void)
-{
-	char* p;
-	UuidToStringA(mNonce, (BYTE**)&p);
-	size_t len = mir_strlen(p) + 3;
-	char* result = (char*)mir_alloc(len);
-	mir_snprintf(result, len, "{%s}", p);
-	_strupr(result);
-	RpcStringFreeA((BYTE**)&p);
-
-	return result;
-}
-
-
-void directconnection::xNonceToBin(UUID* nonce)
-{
-	size_t len = mir_strlen(xNonce);
-	char *p = (char*)alloca(len);
-	mir_strcpy(p, xNonce + 1);
-	p[len - 2] = 0;
-	UuidFromStringA((BYTE*)p, nonce);
-}
-#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // TWinErrorCode class
@@ -1372,17 +1086,13 @@ bool CMsnProto::MSN_IsMeByContact(MCONTACT hContact, char* szEmail)
 
 bool MSN_MsgWndExist(MCONTACT hContact)
 {
-	MessageWindowInputData msgWinInData =
-	{ sizeof(MessageWindowInputData), hContact, MSG_WINDOW_UFLAG_MSG_BOTH };
-	MessageWindowData msgWinData = { 0 };
-	msgWinData.cbSize = sizeof(MessageWindowData);
-
-	bool res = CallService(MS_MSG_GETWINDOWDATA, (WPARAM)&msgWinInData, (LPARAM)&msgWinData) != 0;
+	MessageWindowData msgWinData;
+	bool res = Srmm_GetWindowData(hContact, msgWinData) != 0;
 	res = res || msgWinData.hwndWindow;
 	if (res) {
-		msgWinInData.hContact = db_mc_getMeta(hContact);
-		if (msgWinInData.hContact != NULL) {
-			res = CallService(MS_MSG_GETWINDOWDATA, (WPARAM)&msgWinInData, (LPARAM)&msgWinData) != 0;
+		hContact = db_mc_getMeta(hContact);
+		if (hContact != 0) {
+			res = Srmm_GetWindowData(hContact, msgWinData) != 0;
 			res |= (msgWinData.hwndWindow == NULL);
 		}
 	}
@@ -1441,7 +1151,7 @@ void MSN_MakeDigest(const char* chl, char* dgst)
 
 char* GetGlobalIp(void)
 {
-	NETLIBIPLIST* ihaddr = (NETLIBIPLIST*)CallService(MS_NETLIB_GETMYIP, 1, 0);
+	NETLIBIPLIST *ihaddr = Netlib_GetMyIp(true);
 	for (unsigned i = 0; i < ihaddr->cbNum; ++i)
 		if (strchr(ihaddr->szIp[i], ':'))
 			return mir_strdup(ihaddr->szIp[i]);

@@ -3,7 +3,7 @@
 Facebook plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2009-11 Michal Zelinka, 2011-15 Robert Pösel
+Copyright © 2009-11 Michal Zelinka, 2011-17 Robert Pösel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -33,19 +33,19 @@ bool FacebookProto::GetDbAvatarInfo(PROTO_AVATAR_INFORMATION &pai, std::string *
 		utils::text::replace_first(url, "%s", std::string(id));
 	}
 
-	std::tstring filename = GetAvatarFolder() + _T('\\') + std::tstring(_A2T(id)) + _T(".jpg");
+	std::wstring filename = GetAvatarFolder() + L'\\' + std::wstring(_A2T(id)) + L".jpg";
 
-	_tcsncpy_s(pai.filename, filename.c_str(), _TRUNCATE);
+	wcsncpy_s(pai.filename, filename.c_str(), _TRUNCATE);
 	pai.format = ProtoGetAvatarFormat(pai.filename);
 	return true;
 }
 
 void FacebookProto::CheckAvatarChange(MCONTACT hContact, const std::string &image_url)
 {
-	std::tstring::size_type pos = image_url.rfind("/");
+	std::wstring::size_type pos = image_url.rfind("/");
 
 	// Facebook contacts always have some avatar - keep avatar in database even if we have loaded empty one (e.g. for 'On Mobile' contacts)
-	if (image_url.empty() || pos == std::tstring::npos)
+	if (image_url.empty() || pos == std::wstring::npos)
 		return;
 
 	// Get name of image
@@ -53,7 +53,7 @@ void FacebookProto::CheckAvatarChange(MCONTACT hContact, const std::string &imag
 
 	// Remove eventual parameters from name
 	pos = image_name.rfind("?");
-	if (pos != std::tstring::npos)
+	if (pos != std::wstring::npos)
 		image_name = image_name.substr(0, pos);
 
 	// Append our parameters to allow comparing for avatar/settings change
@@ -86,7 +86,7 @@ void FacebookProto::CheckAvatarChange(MCONTACT hContact, const std::string &imag
 
 void FacebookProto::UpdateAvatarWorker(void *)
 {
-	HANDLE nlc = NULL;
+	HNETLIBCONN nlc = NULL;
 
 	debugLogA("*** UpdateAvatarWorker");
 
@@ -98,7 +98,7 @@ void FacebookProto::UpdateAvatarWorker(void *)
 		PROTO_AVATAR_INFORMATION ai = { 0 };
 		ai.hContact = avatar_queue[0];
 
-		if (Miranda_Terminated())
+		if (Miranda_IsTerminated())
 		{
 			debugLogA("*** Terminating avatar update early: %s", url.c_str());
 			break;
@@ -123,10 +123,10 @@ void FacebookProto::UpdateAvatarWorker(void *)
 	Netlib_CloseHandle(nlc);
 }
 
-std::tstring FacebookProto::GetAvatarFolder()
+std::wstring FacebookProto::GetAvatarFolder()
 {
-	TCHAR path[MAX_PATH];
-	mir_sntprintf(path, _T("%s\\%s"), VARST(_T("%miranda_avatarcache%")), m_tszUserName);
+	wchar_t path[MAX_PATH];
+	mir_snwprintf(path, L"%s\\%s", VARSW(L"%miranda_avatarcache%"), m_tszUserName);
 	return path;
 }
 
@@ -180,7 +180,7 @@ INT_PTR FacebookProto::GetAvatarInfo(WPARAM wParam, LPARAM lParam)
 	PROTO_AVATAR_INFORMATION* pai = (PROTO_AVATAR_INFORMATION*)lParam;
 	if (GetDbAvatarInfo(*pai, NULL))
 	{
-		bool fileExist = _taccess(pai->filename, 0) == 0;
+		bool fileExist = _waccess(pai->filename, 0) == 0;
 
 		bool needLoad;
 		if (pai->hContact)
@@ -216,13 +216,13 @@ INT_PTR FacebookProto::GetMyAvatar(WPARAM wParam, LPARAM lParam)
 	if (!wParam || !lParam)
 		return -3;
 
-	TCHAR* buf = (TCHAR*)wParam;
+	wchar_t* buf = (wchar_t*)wParam;
 	int  size = (int)lParam;
 
 	PROTO_AVATAR_INFORMATION ai = { 0 };
 	switch (GetAvatarInfo(0, (LPARAM)&ai)) {
 	case GAIR_SUCCESS:
-		_tcsncpy(buf, ai.filename, size);
+		wcsncpy(buf, ai.filename, size);
 		buf[size - 1] = 0;
 		return 0;
 

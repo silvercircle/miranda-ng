@@ -17,8 +17,8 @@
 #include "stdafx.h"
 
 //global variables
-bool bAppendTags = false, bDebugLog = false, bJabberAPI = false, bPresenceSigning = false, bIsMiranda09 = false, bFileTransfers = false, bSameAction = false, bAutoExchange = false, bStripTags = false, tabsrmm_used = false;
-TCHAR *inopentag = NULL, *inclosetag = NULL, *outopentag = NULL, *outclosetag = NULL, *password = NULL;
+bool bAppendTags = false, bDebugLog = false, bJabberAPI = false, bPresenceSigning = false, bFileTransfers = false, bSameAction = false, bAutoExchange = false, bStripTags = false, tabsrmm_used = false;
+wchar_t *inopentag = NULL, *inclosetag = NULL, *outopentag = NULL, *outclosetag = NULL, *password = NULL;
 
 list <JabberAccount*> Accounts;
 
@@ -74,17 +74,16 @@ void init_vars()
 {
 	bAppendTags = db_get_b(NULL, szGPGModuleName, "bAppendTags", 0) != 0;
 	bStripTags = db_get_b(NULL, szGPGModuleName, "bStripTags", 0) != 0;
-	inopentag = UniGetContactSettingUtf(NULL, szGPGModuleName, "szInOpenTag", _T("<GPGdec>"));
-	inclosetag = UniGetContactSettingUtf(NULL, szGPGModuleName, "szInCloseTag", _T("</GPGdec>"));
-	outopentag = UniGetContactSettingUtf(NULL, szGPGModuleName, "szOutOpenTag", _T("<GPGenc>"));
-	outclosetag = UniGetContactSettingUtf(NULL, szGPGModuleName, "szOutCloseTag", _T("</GPGenc>"));
+	inopentag = UniGetContactSettingUtf(NULL, szGPGModuleName, "szInOpenTag", L"<GPGdec>");
+	inclosetag = UniGetContactSettingUtf(NULL, szGPGModuleName, "szInCloseTag", L"</GPGdec>");
+	outopentag = UniGetContactSettingUtf(NULL, szGPGModuleName, "szOutOpenTag", L"<GPGenc>");
+	outclosetag = UniGetContactSettingUtf(NULL, szGPGModuleName, "szOutCloseTag", L"</GPGenc>");
 	bDebugLog = db_get_b(NULL, szGPGModuleName, "bDebugLog", 0) != 0;
 	bAutoExchange = db_get_b(NULL, szGPGModuleName, "bAutoExchange", 0) != 0;
 	bSameAction = db_get_b(NULL, szGPGModuleName, "bSameAction", 0) != 0;
-	password = UniGetContactSettingUtf(NULL, szGPGModuleName, "szKeyPassword", _T(""));
+	password = UniGetContactSettingUtf(NULL, szGPGModuleName, "szKeyPassword", L"");
 	debuglog.init();
-	bIsMiranda09 = (DWORD)CallService(MS_SYSTEM_GETVERSION, 0, 0) >= 0x00090001;
-	bJabberAPI = db_get_b(NULL, szGPGModuleName, "bJabberAPI", bIsMiranda09) != 0;
+	bJabberAPI = db_get_b(NULL, szGPGModuleName, "bJabberAPI", true) != 0;
 	bPresenceSigning = db_get_b(NULL, szGPGModuleName, "bPresenceSigning", 0) != 0;
 	bFileTransfers = db_get_b(NULL, szGPGModuleName, "bFileTransfers", 0) != 0;
 	firstrun_rect.left = db_get_dw(NULL, szGPGModuleName, "FirstrunWindowX", 0);
@@ -102,7 +101,7 @@ void init_vars()
 	load_existing_key_rect.left = db_get_dw(NULL, szGPGModuleName, "LoadExistingKeyWindowX", 0);
 	load_existing_key_rect.top = db_get_dw(NULL, szGPGModuleName, "LoadExistingKeyWindowY", 0);
 	tabsrmm_used = isTabsrmmUsed();
-	bold_font = CreateFont(14, 0, 0, 0, 600, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, _T("Arial"));
+	bold_font = CreateFont(14, 0, 0, 0, 600, 0, 0, 0, DEFAULT_CHARSET, 0, 0, 0, 0, L"Arial");
 }
 
 static int OnModulesLoaded(WPARAM, LPARAM)
@@ -125,7 +124,7 @@ static int OnModulesLoaded(WPARAM, LPARAM)
 	if(!db_get_b(NULL, szGPGModuleName, "FirstRun", 1))
 		InitCheck();
 
-	StatusIconData sid = { sizeof(sid) };
+	StatusIconData sid = {};
 	sid.szModule = szGPGModuleName;
 	sid.flags = MBF_HIDDEN;
 	sid.dwId = 0x00000001;
@@ -138,12 +137,12 @@ static int OnModulesLoaded(WPARAM, LPARAM)
 	sid.szTooltip = LPGEN("GPG Turn on encryption");
 	Srmm_AddIcon(&sid);
 
-	if(bJabberAPI && bIsMiranda09)
+	if(bJabberAPI)
 		GetJabberInterface(0,0);
 
 	HookEvent(ME_OPT_INITIALISE, GpgOptInit);
 	HookEvent(ME_DB_EVENT_FILTER_ADD, HookSendMsg);
-	if(bJabberAPI && bIsMiranda09)
+	if(bJabberAPI)
 		HookEvent(ME_PROTO_ACCLISTCHANGED, GetJabberInterface);
 
 	HookEvent(ME_PROTO_ACK, onProtoAck);
@@ -169,7 +168,7 @@ static int OnModulesLoaded(WPARAM, LPARAM)
 extern "C" int __declspec(dllexport) Load()
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
 
@@ -184,37 +183,37 @@ extern "C" int __declspec(dllexport) Load()
 
 	SET_UID(mi, 0xbd22e3f8, 0xc19c, 0x45a8, 0xb7, 0x37, 0x6b, 0x3b, 0x27, 0xf0, 0x8c, 0xbb);
 	mi.position = -0x7FFFFFFF;
-	mi.flags = CMIF_TCHAR;
+	mi.flags = CMIF_UNICODE;
 	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
-	mi.name.t = LPGENT("Load GPG public key");
+	mi.name.w = LPGENW("Load public GPG key");
 	mi.pszService = "/LoadPubKey";
 	hLoadPubKey = Menu_AddContactMenuItem(&mi);
 
 	SET_UID(mi, 0xc8008193, 0x56a9, 0x414a, 0x82, 0x98, 0x78, 0xe8, 0xa8, 0x84, 0x20, 0x67);
 	mi.position = -0x7FFFFFFe;
 	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
-	mi.name.t = LPGENT("Toggle GPG encryption");
+	mi.name.w = LPGENW("Toggle GPG encryption");
 	mi.pszService = "/ToggleEncryption";
 	hToggleEncryption = Menu_AddContactMenuItem(&mi);
 
 	SET_UID(mi, 0x42bb535f, 0xd58e, 0x4edb, 0xbf, 0x2c, 0xfa, 0x9a, 0xbf, 0x1e, 0xb8, 0x69);
 	mi.position = -0x7FFFFFFd;
 	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
-	mi.name.t = LPGENT("Send public key");
+	mi.name.w = LPGENW("Send public key");
 	mi.pszService = "/SendKey";
 	hSendKey = Menu_AddContactMenuItem(&mi);
 
 	SET_UID(mi, 0x33a204b2, 0xe3c0, 0x413b, 0xbf, 0xd8, 0x8b, 0x2e, 0x3d, 0xa0, 0xef, 0xa4);
 	mi.position = -0x7FFFFFFe;
 	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
-	mi.name.t = LPGENT("Export GPG Public keys");
+	mi.name.w = LPGENW("Export GPG Public keys");
 	mi.pszService = "/ExportGPGKeys";
 	hExportGpgKeys = Menu_AddMainMenuItem(&mi);
 
 	SET_UID(mi, 0x627fcfc1, 0x4e60, 0x4428, 0xaf, 0x96, 0x11, 0x42, 0x24, 0xeb, 0x7, 0xea);
 	mi.position = -0x7FFFFFFF;
 	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
-	mi.name.t = LPGENT("Import GPG Public keys");
+	mi.name.w = LPGENW("Import GPG Public keys");
 	mi.pszService = "/ImportGPGKeys";
 	hImportGpgKeys = Menu_AddMainMenuItem(&mi);
 

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-03 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -49,7 +49,7 @@ static int GetContactStatus(MCONTACT hContact)
 	szProto = GetContactProto(hContact);
 	if (szProto == NULL)
 		return ID_STATUS_OFFLINE;
-	return cfg::getWord(hContact, szProto, "Status", ID_STATUS_OFFLINE);
+	return db_get_w(hContact, szProto, "Status", ID_STATUS_OFFLINE);
 }
 
 int __forceinline GetStatusModeOrdering(int statusMode)
@@ -72,7 +72,7 @@ static void MF_CalcFrequency(MCONTACT hContact, DWORD dwCutoffDays, int doSleep)
 
 	eventCount = 0;
 
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	while (hEvent) {
 		db_event_get(hEvent, &dbei);
 
@@ -90,21 +90,23 @@ static void MF_CalcFrequency(MCONTACT hContact, DWORD dwCutoffDays, int doSleep)
 
 	if (eventCount == 0) {
 		frequency = 0x7fffffff;
-		cfg::writeDword(hContact, "CList", "mf_firstEvent", curTime - (dwCutoffDays * 86400));
+		db_set_dw(hContact, "CList", "mf_firstEvent", curTime - (dwCutoffDays * 86400));
 	}
 	else {
 		frequency = (curTime - dbei.timestamp) / eventCount;
-		cfg::writeDword(hContact, "CList", "mf_firstEvent", dbei.timestamp);
+		db_set_dw(hContact, "CList", "mf_firstEvent", dbei.timestamp);
 	}
 
-	cfg::writeDword(hContact, "CList", "mf_freq", frequency);
-	cfg::writeDword(hContact, "CList", "mf_count", eventCount);
+	db_set_dw(hContact, "CList", "mf_freq", frequency);
+	db_set_dw(hContact, "CList", "mf_count", eventCount);
 }
 
-extern TCHAR g_ptszEventName[];
+extern wchar_t g_ptszEventName[];
 
 void MF_UpdateThread(LPVOID)
 {
+	Thread_SetName("CList_nicer: MF_UpdateThread");
+
 	HANDLE hEvent = OpenEvent(EVENT_ALL_ACCESS, FALSE, g_ptszEventName);
 
 	WaitForSingleObject(hEvent, 20000);
@@ -124,37 +126,20 @@ void MF_UpdateThread(LPVOID)
 	CloseHandle(hEvent);
 }
 
-void LoadContactTree(void)
+void MF_InitCheck(void)
 {
-	int i, status, hideOffline;
-	BYTE bMsgFrequency = cfg::getByte("CList", "fhistdata", 0);
-
-	CallService(MS_CLUI_LISTBEGINREBUILD, 0, 0);
-	for (i = 1;; i++) {
-		if (pcli->pfnGetGroupName(i, NULL) == NULL)
-			break;
-		CallService(MS_CLUI_GROUPADDED, i, 0);
-	}
-
-	hideOffline = cfg::getByte("CList", "HideOffline", SETTING_HIDEOFFLINE_DEFAULT);
-
-	for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact)) {
-		status = GetContactStatus(hContact);
-		if ((!hideOffline || status != ID_STATUS_OFFLINE) && !CLVM_GetContactHiddenStatus(hContact, NULL, NULL))
-			pcli->pfnChangeContactIcon(hContact, IconFromStatusMode(GetContactProto(hContact), status, hContact, NULL), 1);
-
-		// build initial data for message frequency
-		if (!bMsgFrequency)
+	BYTE bMsgFrequency = db_get_b(NULL, "CList", "fhistdata", 0);
+	if (!bMsgFrequency) {
+		for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact))
 			MF_CalcFrequency(hContact, 100, 0);
+		db_set_b(NULL, "CList", "fhistdata", 1);
 	}
-	cfg::writeByte("CList", "fhistdata", 1);
-	CallService(MS_CLUI_LISTENDREBUILD, 0, 0);
 }
 
 DWORD INTSORT_GetLastMsgTime(MCONTACT hContact)
 {
 	for (MEVENT hDbEvent = db_event_last(hContact); hDbEvent; hDbEvent = db_event_prev(hContact, hDbEvent)) {
-		DBEVENTINFO dbei = { sizeof(dbei) };
+		DBEVENTINFO dbei = {};
 		db_event_get(hDbEvent, &dbei);
 		if (dbei.eventType == EVENTTYPE_MESSAGE && !(dbei.flags & DBEF_SENT))
 			return dbei.timestamp;
@@ -173,7 +158,7 @@ int __forceinline GetProtoIndex(char * szName)
 
 int __forceinline INTSORT_CompareContacts(const ClcContact* c1, const ClcContact* c2, UINT bywhat)
 {
-	TCHAR *namea, *nameb;
+	wchar_t *namea, *nameb;
 	int statusa, statusb;
 	char *szProto1, *szProto2;
 	int rc;
@@ -216,8 +201,8 @@ int __forceinline INTSORT_CompareContacts(const ClcContact* c1, const ClcContact
 
 	switch (bywhat) {
 	case SORTBY_NAME:
-		namea = (TCHAR *)c1->szText;
-		nameb = (TCHAR *)c2->szText;
+		namea = (wchar_t *)c1->szText;
+		nameb = (wchar_t *)c2->szText;
 		return CompareString(LOCALE_USER_DEFAULT, NORM_IGNORECASE, namea, -1, nameb, -1) - 2;
 
 	case SORTBY_LASTMSG:
@@ -266,21 +251,11 @@ int CompareContacts(const ClcContact* c1, const ClcContact* c2)
 
 #undef SAFESTRING
 
-int SetHideOffline(WPARAM wParam, LPARAM)
+int SetHideOffline(int iValue)
 {
-	int newVal = (int)wParam;
-	switch ((int)wParam) {
-	case 0:
-		cfg::writeByte("CList", "HideOffline", 0); break;
-	case 1:
-		cfg::writeByte("CList", "HideOffline", 1); break;
-	case -1:
-		newVal = !cfg::getByte("CList", "HideOffline", SETTING_HIDEOFFLINE_DEFAULT);
-		cfg::writeByte("CList", "HideOffline", (BYTE)newVal);
-		break;
-	}
+	int newVal = coreCli.pfnSetHideOffline(iValue);
+
 	SetButtonStates();
 	ClcSetButtonState(IDC_TBHIDEOFFLINE, newVal);
-	LoadContactTree();
-	return 0;
+	return newVal;
 }

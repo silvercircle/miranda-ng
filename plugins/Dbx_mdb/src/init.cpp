@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -21,7 +21,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 int hLangpack;
 
@@ -49,14 +49,14 @@ LIST<CDbxMdb> g_Dbs(1, HandleKeySortT);
 // returns 0 if the profile is created, EMKPRF*
 static int makeDatabase(const TCHAR *profile)
 {
-	std::auto_ptr<CDbxMdb> db(new CDbxMdb(profile, 0));
+	std::unique_ptr<CDbxMdb> db(new CDbxMdb(profile, 0));
 	return db->Create();
 }
 
 // returns 0 if the given profile has a valid header
 static int grokHeader(const TCHAR *profile)
 {
-	std::auto_ptr<CDbxMdb> db(new CDbxMdb(profile, DBMODE_SHARED | DBMODE_READONLY));
+	std::unique_ptr<CDbxMdb> db(new CDbxMdb(profile, DBMODE_SHARED | DBMODE_READONLY));
 	return db->Check();
 }
 
@@ -66,7 +66,7 @@ static MIDatabase* LoadDatabase(const TCHAR *profile, BOOL bReadOnly)
 	// set the memory, lists & UTF8 manager
 	mir_getLP(&pluginInfo);
 
-	std::auto_ptr<CDbxMdb> db(new CDbxMdb(profile, (bReadOnly) ? DBMODE_READONLY : 0));
+	std::unique_ptr<CDbxMdb> db(new CDbxMdb(profile, (bReadOnly) ? DBMODE_READONLY : 0));
 	if (db->Load(false) != ERROR_SUCCESS)
 		return NULL;
 
@@ -83,7 +83,7 @@ static int UnloadDatabase(MIDatabase *db)
 
 MIDatabaseChecker* CheckDb(const TCHAR *profile, int *error)
 {
-	std::auto_ptr<CDbxMdb> db(new CDbxMdb(profile, DBMODE_READONLY));
+	std::unique_ptr<CDbxMdb> db(new CDbxMdb(profile, DBMODE_READONLY));
 	if (db->Load(true) != ERROR_SUCCESS) {
 		*error = ERROR_ACCESS_DENIED;
 		return NULL;
@@ -98,8 +98,8 @@ MIDatabaseChecker* CheckDb(const TCHAR *profile, int *error)
 static DATABASELINK dblink =
 {
 	sizeof(DATABASELINK),
-	"dbx_mdb",
-	_T("LMDB database driver"),
+	"dbx_mdbx",
+	L"LMDBx database driver",
 	makeDatabase,
 	grokHeader,
 	LoadDatabase,

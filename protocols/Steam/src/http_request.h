@@ -34,6 +34,11 @@ public:
 			nlc = response->nlc;
 			timeout = response->timeout;
 		}
+		else if (request != NULL)
+		{
+			// when response is null, we must get resultCode from the request object
+			resultCode = request->resultCode;
+		}
 	}
 
 	bool const operator !() const
@@ -135,28 +140,26 @@ public:
 			mir_free(pData);
 	}
 
-	HttpResponse* Send(HANDLE hConnection)
+	HttpResponse* Send(HNETLIBUSER nlu)
 	{
 		szUrl = m_url.GetBuffer();
 
-		char message[1024];
-		mir_snprintf(message, "Send request to %s", szUrl);
-		CallService(MS_NETLIB_LOG, (WPARAM)hConnection, (LPARAM)&message);
+		Netlib_Logf(nlu, "Send request to %s", szUrl);
 
-		NETLIBHTTPREQUEST* response = (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)hConnection, (LPARAM)this);
+		NETLIBHTTPREQUEST* response = Netlib_HttpTransaction(nlu, this);
 		HttpResponse* result = new HttpResponse(response, this);
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)response);
+		Netlib_FreeHttpRequest(response);
 
 		return result;
 	}
 };
 
 
-bool __forceinline ResponseHttpOk(const NETLIBHTTPREQUEST *response) {
+bool __forceinline ResponseHttpOk(const HttpResponse *response) {
 	return (response && response->pData && (response->resultCode == HTTP_CODE_OK));
 }
 
-bool __forceinline CheckResponse(const NETLIBHTTPREQUEST *response) {
+bool __forceinline CheckResponse(const HttpResponse *response) {
 	return (response && response->pData);
 }
 

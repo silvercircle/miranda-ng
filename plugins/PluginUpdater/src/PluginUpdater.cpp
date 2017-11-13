@@ -20,7 +20,7 @@ Boston, MA 02111-1307, USA.
 #include "stdafx.h"
 
 HINSTANCE hInst = NULL;
-TCHAR g_tszRoot[MAX_PATH] = {0}, g_tszTempPath[MAX_PATH];
+wchar_t g_tszRoot[MAX_PATH] = {0}, g_tszTempPath[MAX_PATH];
 int hLangpack;
 DWORD g_mirandaVersion;
 
@@ -70,7 +70,6 @@ extern "C" __declspec(dllexport) int Load(void)
 
 	InitServices();
 #endif
-
 	db_set_b(NULL, MODNAME, DB_SETTING_NEED_RESTART, 0);
 
 	DWORD dwLen = GetTempPath(_countof(g_tszTempPath), g_tszTempPath);
@@ -112,38 +111,38 @@ extern "C" __declspec(dllexport) int Load(void)
 	Menu_AddMainMenuItem(&mi);
 
 	InitOptions();
-#endif
 
 	// Add hotkey
-	HOTKEYDESC hkd = { sizeof(hkd) };
+	HOTKEYDESC hkd = {};
 	hkd.pszName = "Check for updates";
-	hkd.pszDescription = "Check for updates";
-	hkd.pszSection = "Plugin Updater";
+	hkd.szDescription.a = "Check for updates";
+	hkd.szSection.a = "Plugin Updater";
 	hkd.pszService = MS_PU_CHECKUPDATES;
 	hkd.DefHotKey = HOTKEYCODE(HOTKEYF_CONTROL, VK_F10) | HKF_MIRANDA_LOCAL;
 	hkd.lParam = FALSE;
 	Hotkey_Register(&hkd);
+#endif
 
 	InitEvents();
 
-	// add sounds
-	SkinAddNewSoundEx("updatecompleted", LPGEN("Plugin Updater"), LPGEN("Update completed"));
-	SkinAddNewSoundEx("updatefailed", LPGEN("Plugin Updater"), LPGEN("Update failed"));
-
 #if MIRANDA_VER >= 0x0A00
+	// add sounds
+	Skin_AddSound("updatecompleted", LPGENW("Plugin Updater"), LPGENW("Update completed"));
+	Skin_AddSound("updatefailed",    LPGENW("Plugin Updater"), LPGENW("Update failed"));
+
 	// Upgrade old settings
 	if (-1 == db_get_b(0, MODNAME, DB_SETTING_UPDATE_MODE, -1)) {
-		ptrT dbvUpdateURL(db_get_tsa(0, MODNAME, DB_SETTING_UPDATE_URL));
+		ptrW dbvUpdateURL(db_get_wsa(0, MODNAME, DB_SETTING_UPDATE_URL));
 		if (dbvUpdateURL) {
-			if (!_tcscmp(dbvUpdateURL, _T(DEFAULT_UPDATE_URL_OLD))) {
+			if (!wcscmp(dbvUpdateURL, _A2W(DEFAULT_UPDATE_URL_OLD))) {
 				db_set_b(0, MODNAME, DB_SETTING_UPDATE_MODE, UPDATE_MODE_STABLE);
 				db_unset(0, MODNAME, DB_SETTING_UPDATE_URL);
 			}
-			else if (!_tcscmp(dbvUpdateURL, _T(DEFAULT_UPDATE_URL_TRUNK_OLD))) {
+			else if (!wcscmp(dbvUpdateURL, _A2W(DEFAULT_UPDATE_URL_TRUNK_OLD))) {
 				db_set_b(0, MODNAME, DB_SETTING_UPDATE_MODE, UPDATE_MODE_TRUNK);
 				db_unset(0, MODNAME, DB_SETTING_UPDATE_URL);
 			}
-			else if (!_tcscmp(dbvUpdateURL, _T(DEFAULT_UPDATE_URL_TRUNK_SYMBOLS_OLD)_T("/"))) {
+			else if (!wcscmp(dbvUpdateURL, _A2W(DEFAULT_UPDATE_URL_TRUNK_SYMBOLS_OLD) L"/")) {
 				db_set_b(0, MODNAME, DB_SETTING_UPDATE_MODE, UPDATE_MODE_TRUNK_SYMBOLS);
 				db_unset(0, MODNAME, DB_SETTING_UPDATE_URL);
 			}

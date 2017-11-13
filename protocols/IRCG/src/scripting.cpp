@@ -26,7 +26,7 @@ INT_PTR __cdecl CIrcProto::Scripting_InsertRawIn(WPARAM, LPARAM lParam)
 	char* pszRaw = (char*)lParam;
 
 	if (m_scriptingEnabled && pszRaw && IsConnected()) {
-		TCHAR* p = mir_a2t(pszRaw);
+		wchar_t* p = mir_a2u(pszRaw);
 		InsertIncomingEvent(p);
 		mir_free(p);
 		return 0;
@@ -59,14 +59,14 @@ static void __stdcall OnHook(void * pi)
 	GCHOOK* gch = (GCHOOK*)pi;
 	free(gch->ptszUID);
 	free(gch->ptszText);
-	free((void*)gch->pDest->ptszID);
-	free((void*)gch->pDest->pszModule);
-	delete gch->pDest;
+	free((void*)gch->ptszID);
+	free((void*)gch->pszModule);
 	delete gch;
 }
 
 static void __cdecl GuiOutThread(LPVOID di)
 {
+	Thread_SetName("IRC: GuiOutThread");
 	GCHOOK* gch = (GCHOOK*)di;
 	CallFunctionAsync(OnHook, (void*)gch);
 }
@@ -77,28 +77,28 @@ INT_PTR __cdecl CIrcProto::Scripting_InsertGuiOut(WPARAM, LPARAM lParam)
 
 	if (m_scriptingEnabled && gch) {
 		GCHOOK* gchook = new GCHOOK;
-		gchook->pDest = new GCDEST;
-
 		gchook->dwData = gch->dwData;
-		gchook->pDest->iType = gch->pDest->iType;
+		gchook->iType = gch->iType;
 		if (gch->ptszText)
-			gchook->ptszText = _tcsdup(gch->ptszText);
-		else gchook->ptszText = NULL;
+			gchook->ptszText = wcsdup(gch->ptszText);
+		else
+			gchook->ptszText = NULL;
 
 		if (gch->ptszUID)
-			gchook->ptszUID = _tcsdup(gch->ptszUID);
+			gchook->ptszUID = wcsdup(gch->ptszUID);
 		else
 			gchook->ptszUID = NULL;
 
-		if (gch->pDest->ptszID) {
-			CMString S = MakeWndID(gch->pDest->ptszID);
-			gchook->pDest->ptszID = _tcsdup(S.c_str());
+		if (gch->ptszID) {
+			CMStringW S = MakeWndID(gch->ptszID);
+			gchook->ptszID = wcsdup(S.c_str());
 		}
-		else gchook->pDest->ptszID = NULL;
+		else gchook->ptszID = NULL;
 
-		if (gch->pDest->pszModule)
-			gchook->pDest->pszModule = _strdup(gch->pDest->pszModule);
-		else gchook->pDest->pszModule = NULL;
+		if (gch->pszModule)
+			gchook->pszModule = _strdup(gch->pszModule);
+		else
+			gchook->pszModule = NULL;
 
 		mir_forkthread(GuiOutThread, gchook);
 		return 0;
@@ -111,12 +111,12 @@ INT_PTR __cdecl CIrcProto::Scripting_GetIrcData(WPARAM, LPARAM lparam)
 {
 	if (m_scriptingEnabled && lparam) {
 		CMStringA sString = (char*)lparam, sRequest;
-		CMString sOutput, sChannel;
+		CMStringW sOutput, sChannel;
 
 		int i = sString.Find("|");
 		if (i != -1) {
 			sRequest = sString.Mid(0, i);
-			TCHAR* p = mir_a2t(sString.Mid(i + 1));
+			wchar_t* p = mir_a2u(sString.Mid(i + 1));
 			sChannel = p;
 			mir_free(p);
 		}
@@ -141,29 +141,29 @@ INT_PTR __cdecl CIrcProto::Scripting_GetIrcData(WPARAM, LPARAM lparam)
 			(m_IPFromServer) ? m_myHost : m_myLocalHost);
 
 		else if (sRequest == "usercount" && !sChannel.IsEmpty()) {
-			CMString S = MakeWndID(sChannel.c_str());
+			CMStringW S = MakeWndID(sChannel.c_str());
 			GC_INFO gci = { 0 };
 			gci.Flags = GCF_BYID | GCF_COUNT;
 			gci.pszModule = m_szModuleName;
 			gci.pszID = S.c_str();
-			if (!CallServiceSync(MS_GC_GETINFO, 0, (LPARAM)&gci)) {
-				TCHAR szTemp[40];
-				mir_sntprintf(szTemp, _T("%u"), gci.iCount);
+			if (!Chat_GetInfo(&gci)) {
+				wchar_t szTemp[40];
+				mir_snwprintf(szTemp, L"%u", gci.iCount);
 				sOutput = szTemp;
 			}
 		}
 		else if (sRequest == "userlist" && !sChannel.IsEmpty()) {
-			CMString S = MakeWndID(sChannel.c_str());
+			CMStringW S = MakeWndID(sChannel.c_str());
 			GC_INFO gci = { 0 };
 			gci.Flags = GCF_BYID | GCF_USERS;
 			gci.pszModule = m_szModuleName;
 			gci.pszID = S.c_str();
-			if (!CallServiceSync(MS_GC_GETINFO, 0, (LPARAM)&gci))
+			if (!Chat_GetInfo(&gci))
 				return (INT_PTR)mir_strdup(gci.pszUsers);
 		}
 		else if (sRequest == "channellist") {
-			CMString S = _T("");
-			int n = CallServiceSync(MS_GC_GETSESSIONCOUNT, 0, (LPARAM)m_szModuleName);
+			CMStringW S = L"";
+			int n = pci->SM_GetCount(m_szModuleName);
 			if (n >= 0) {
 				int j = 0;
 				while (j < n) {
@@ -171,13 +171,13 @@ INT_PTR __cdecl CIrcProto::Scripting_GetIrcData(WPARAM, LPARAM lparam)
 					gci.Flags = GCF_BYINDEX | GCF_ID;
 					gci.pszModule = m_szModuleName;
 					gci.iItem = j;
-					if (!CallServiceSync(MS_GC_GETINFO, 0, (LPARAM)&gci)) {
-						if (mir_tstrcmpi(gci.pszID, SERVERWINDOW)) {
-							CMString S1 = gci.pszID;
-							int k = S1.Find(_T(" "));
+					if (!Chat_GetInfo(&gci)) {
+						if (mir_wstrcmpi(gci.pszID, SERVERWINDOW)) {
+							CMStringW S1 = gci.pszID;
+							int k = S1.Find(L" ");
 							if (k != -1)
 								S1 = S1.Mid(0, k);
-							S += S1 + _T(" ");
+							S += S1 + L" ";
 						}
 					}
 					j++;
@@ -185,11 +185,11 @@ INT_PTR __cdecl CIrcProto::Scripting_GetIrcData(WPARAM, LPARAM lparam)
 			}
 
 			if (!S.IsEmpty())
-				sOutput = (TCHAR*)S.c_str();
+				sOutput = (wchar_t*)S.c_str();
 		}
 		// send it to mbot
 		if (!sOutput.IsEmpty())
-			return (INT_PTR)mir_t2a(sOutput.c_str());
+			return (INT_PTR)mir_u2a(sOutput.c_str());
 	}
 	return 0;
 }

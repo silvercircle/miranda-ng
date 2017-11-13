@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2015-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -21,24 +21,20 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 class LoginOAuthRequest : public HttpRequest
 {
 public:
-	LoginOAuthRequest(const char *username, const char *password) :
+	LoginOAuthRequest(CMStringA username, const char *password) :
 		HttpRequest(REQUEST_POST, "api.skype.com/login/skypetoken")
 	{
-		CMStringA user(username); user.MakeLower();
-
-		pass_ptrA str(CMStringA(::FORMAT, "%s\nskyper\n%s", user, password).Detach());
+		username.MakeLower();
+		CMStringA hashStr(::FORMAT, "%s\nskyper\n%s", username.c_str(), password);
 
 		BYTE digest[16];
-
-		mir_md5_hash((BYTE*)((char*)str), mir_strlen(str), digest);
-
-		pass_ptrA hash(mir_base64_encode(digest, sizeof(digest)));
+		mir_md5_hash((const BYTE*)hashStr.GetString(), hashStr.GetLength(), digest);
 
 		Body
 			<< CHAR_VALUE("scopes", "client")
 			<< CHAR_VALUE("clientVersion", ptrA(mir_urlEncode("0/7.4.85.102/259/")))
-			<< CHAR_VALUE("username", ptrA(mir_urlEncode(user)))
-			<< CHAR_VALUE("passwordHash", pass_ptrA(mir_urlEncode(hash)));
+			<< CHAR_VALUE("username", ptrA(mir_urlEncode(username)))
+			<< CHAR_VALUE("passwordHash", pass_ptrA(mir_urlEncode(ptrA(mir_base64_encode(digest, sizeof(digest))))));
 	}
 };
 

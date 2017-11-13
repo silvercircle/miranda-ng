@@ -40,7 +40,7 @@ Distributed under GNU's GPL 2 or later
 #define DEFAULT_FNT_CLIPRECISION 2
 #define DEFAULT_FNT_QUALITY 1
 #define DEFAULT_FNT_PITCHANDFAM 49
-#define DEFAULT_FNT_FACENAME _T("Arial")
+#define DEFAULT_FNT_FACENAME L"Arial"
 
 #define DEFAULT_CLRMSG RGB(255, 100, 0) //fore
 #define DEFAULT_CLRSTATUS RGB(40, 160, 255) //fore
@@ -62,7 +62,7 @@ Distributed under GNU's GPL 2 or later
 #define DEFAULT_ANNOUNCESTATUS 1
 #define DEFAULT_ANNOUNCE 0x00000002 //status mask
 #define DEFAULT_SHOWMYSTATUS 1
-#define DEFAULT_MESSAGEFORMAT _T("Message from %n: %m")
+#define DEFAULT_MESSAGEFORMAT L"Message from %n: %m"
 #define DEFAULT_SHOWMSGWIN 1
 #define DEFAULT_SHOWWHEN 0x00000002
 
@@ -86,7 +86,7 @@ typedef struct _plgsettings {
 	int align, salign, altShadow, showShadow, a_user, distance, onlyfromlist, showmystatus;
 	int showMsgWindow;
 	int messages; //also other events...
-	TCHAR msgformat[256];
+	wchar_t msgformat[256];
 	int winx, winy, winxpos, winypos, alpha, transparent, timeout;
 	COLORREF clr_msg, clr_status, clr_shadow, bkclr;
 	DWORD announce, showWhen;
@@ -94,7 +94,7 @@ typedef struct _plgsettings {
 } plgsettings;
 
 typedef struct _osdmsg {
-	TCHAR *text;
+	wchar_t *text;
 	int timeout; //ms
 	COLORREF color;
 	void (*callback)(unsigned int param);
@@ -113,5 +113,4 @@ void loadDBSettings(plgsettings *ps);
 
 extern HINSTANCE hI;
 extern HWND   g_hWnd;
-extern HANDLE hservosda;
 extern HANDLE hHookedInit, hProtoAck, hContactSettingChanged, hHookContactStatusChanged, hContactStatusChanged;

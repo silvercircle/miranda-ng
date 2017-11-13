@@ -23,7 +23,7 @@
 
 void PreviewSound(HWND hList)
 {
-	TCHAR buff[MAX_PATH], stzSoundPath[MAX_PATH];
+	wchar_t buff[MAX_PATH], stzSoundPath[MAX_PATH];
 
 	LVITEM lvi = { 0 };
 	lvi.mask = LVIF_PARAM;
@@ -33,15 +33,15 @@ void PreviewSound(HWND hList)
 	int hlpStatus = lvi.lParam;
 
 	ListView_GetItemText(hList, lvi.iItem, 1, buff, _countof(buff));
-	if (!mir_tstrcmp(buff, TranslateT(DEFAULT_SOUND))) {
+	if (!mir_wstrcmp(buff, TranslateW(DEFAULT_SOUND))) {
 		if (hlpStatus < ID_STATUS_MIN)
-			SkinPlaySound(StatusListEx[hlpStatus].lpzSkinSoundName);
+			Skin_PlaySound(StatusListEx[hlpStatus].lpzSkinSoundName);
 		else
-			SkinPlaySound(StatusList[Index(hlpStatus)].lpzSkinSoundName);
+			Skin_PlaySound(StatusList[Index(hlpStatus)].lpzSkinSoundName);
 	}
 	else {
-		PathToAbsoluteT(buff, stzSoundPath);
-		SkinPlaySoundFile(stzSoundPath);
+		PathToAbsoluteW(buff, stzSoundPath);
+		Skin_PlaySoundFile(stzSoundPath);
 	}
 }
 
@@ -51,36 +51,36 @@ BOOL RemoveSoundFromList(HWND hList)
 	if (iSel != -1) {
 		iSel = -1;
 		while ((iSel = ListView_GetNextItem(hList, iSel, LVNI_SELECTED)) != -1)
-			ListView_SetItemText(hList, iSel, 1, TranslateT(DEFAULT_SOUND));
+			ListView_SetItemText(hList, iSel, 1, TranslateW(DEFAULT_SOUND));
 		return TRUE;
 	}
 
 	return FALSE;
 }
 
-TCHAR *SelectSound(HWND hwndDlg, TCHAR *buff, size_t bufflen)
+wchar_t *SelectSound(HWND hwndDlg, wchar_t *buff, size_t bufflen)
 {
 	OPENFILENAME ofn = { 0 };
 
 	HWND hList = GetDlgItem(hwndDlg, IDC_INDSNDLIST);
 	ListView_GetItemText(hList, ListView_GetNextItem(hList, -1, LVNI_SELECTED), 1, buff, (DWORD)bufflen);
-	if (!mir_tstrcmp(buff, TranslateT(DEFAULT_SOUND)))
+	if (!mir_wstrcmp(buff, TranslateW(DEFAULT_SOUND)))
 		buff = NULL;
 
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = GetParent(hwndDlg);
 	ofn.hInstance = hInst;
-	TCHAR filter[MAX_PATH];
-	if (GetModuleHandle(_T("bass_interface.dll")))
-		mir_sntprintf(filter, _T("%s (*.wav, *.mp3, *.ogg)%c*.wav;*.mp3;*.ogg%c%s (*.*)%c*%c"), TranslateT("Sound files"), 0, 0, TranslateT("All files"), 0, 0);
+	wchar_t filter[MAX_PATH];
+	if (GetModuleHandle(L"bass_interface.dll"))
+		mir_snwprintf(filter, L"%s (*.wav, *.mp3, *.ogg)%c*.wav;*.mp3;*.ogg%c%s (*.*)%c*%c", TranslateT("Sound files"), 0, 0, TranslateT("All files"), 0, 0);
 	else
-		mir_sntprintf(filter, _T("%s (*.wav)%c*.wav%c%s (*.*)%c*%c"), TranslateT("Wave files"), 0, 0, TranslateT("All files"), 0, 0);
+		mir_snwprintf(filter, L"%s (*.wav)%c*.wav%c%s (*.*)%c*%c", TranslateT("Wave files"), 0, 0, TranslateT("All files"), 0, 0);
 	ofn.lpstrFilter = filter;
 	ofn.lpstrFile = buff;
 	ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_EXPLORER | OFN_NOCHANGEDIR;
 	ofn.nMaxFile = MAX_PATH;
 	ofn.nMaxFileTitle = MAX_PATH;
-	ofn.lpstrDefExt = _T("");
+	ofn.lpstrDefExt = L"";
 	if (GetOpenFileName(&ofn))
 		return buff;
 
@@ -132,7 +132,7 @@ INT_PTR CALLBACK DlgProcSoundUIPage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 
 			if (szProto) {
 				DBVARIANT dbv;
-				TCHAR buff[MAX_PATH];
+				wchar_t buff[MAX_PATH];
 
 				for (int i = ID_STATUS_MAX; i >= ID_STATUS_MIN; i--) {
 					int flags = CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_2, 0);
@@ -146,15 +146,14 @@ INT_PTR CALLBACK DlgProcSoundUIPage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 						lvi.iSubItem = 0;
 						lvi.iImage = Index(i);
 						lvi.lParam = (LPARAM)i;
-						lvi.pszText = TranslateTS(StatusList[Index(i)].lpzSkinSoundDesc);
+						lvi.pszText = TranslateW(StatusList[Index(i)].lpzSkinSoundDesc);
 						lvi.iItem = ListView_InsertItem(hList, &lvi);
 
-						if (!db_get_ts(hContact, MODULE, StatusList[Index(i)].lpzSkinSoundName, &dbv)) {
-							mir_tstrcpy(buff, dbv.ptszVal);
+						if (!db_get_ws(hContact, MODULE, StatusList[Index(i)].lpzSkinSoundName, &dbv)) {
+							mir_wstrcpy(buff, dbv.ptszVal);
 							db_free(&dbv);
 						}
-						else
-							mir_tstrcpy(buff, TranslateT(DEFAULT_SOUND));
+						else mir_wstrcpy(buff, TranslateW(DEFAULT_SOUND));
 
 						ListView_SetItemText(hList, lvi.iItem, 1, buff);
 					}
@@ -167,15 +166,14 @@ INT_PTR CALLBACK DlgProcSoundUIPage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 					lvi.iSubItem = 0;
 					lvi.iImage = Index(ID_STATUS_MAX) + 1; // additional icon
 					lvi.lParam = (LPARAM)i;
-					lvi.pszText = TranslateTS(StatusListEx[i].lpzSkinSoundDesc);
+					lvi.pszText = TranslateW(StatusListEx[i].lpzSkinSoundDesc);
 					lvi.iItem = ListView_InsertItem(hList, &lvi);
 
-					if (!db_get_ts(hContact, MODULE, StatusList[i].lpzSkinSoundName, &dbv)) {
-						_tcsncpy(buff, dbv.ptszVal, _countof(buff)-1);
+					if (!db_get_ws(hContact, MODULE, StatusList[i].lpzSkinSoundName, &dbv)) {
+						wcsncpy(buff, dbv.ptszVal, _countof(buff)-1);
 						db_free(&dbv);
 					}
-					else
-						_tcsncpy(buff, TranslateT(DEFAULT_SOUND), _countof(buff)-1);
+					else wcsncpy(buff, TranslateW(DEFAULT_SOUND), _countof(buff)-1);
 
 					ListView_SetItemText(hList, lvi.iItem, 1, buff);
 				}
@@ -202,7 +200,7 @@ INT_PTR CALLBACK DlgProcSoundUIPage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			{
 				int iSel = ListView_GetNextItem(GetDlgItem(hwndDlg, IDC_INDSNDLIST), -1, LVNI_SELECTED);
 				if (iSel != -1) {
-					TCHAR stzFilePath[MAX_PATH];
+					wchar_t stzFilePath[MAX_PATH];
 					if (SelectSound(hwndDlg, stzFilePath, MAX_PATH - 1) != NULL) {
 						iSel = -1;
 						while ((iSel = ListView_GetNextItem(hList, iSel, LVNI_SELECTED)) != -1)
@@ -229,7 +227,7 @@ INT_PTR CALLBACK DlgProcSoundUIPage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 
 	case WM_NOTIFY:
 		if (((LPNMHDR)lParam)->code == PSN_APPLY) {
-			TCHAR buff[MAX_PATH];
+			wchar_t buff[MAX_PATH];
 
 			LVITEM lvi = { 0 };
 			lvi.mask = LVIF_PARAM;
@@ -238,15 +236,15 @@ INT_PTR CALLBACK DlgProcSoundUIPage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				ListView_GetItem(hList, &lvi);
 				ListView_GetItemText(hList, lvi.iItem, 1, buff, _countof(buff));
 
-				if (!mir_tstrcmp(buff, TranslateT(DEFAULT_SOUND))) {
+				if (!mir_wstrcmp(buff, TranslateW(DEFAULT_SOUND))) {
 					if (lvi.lParam < ID_STATUS_MIN)
 						db_unset(hContact, MODULE, StatusListEx[lvi.lParam].lpzSkinSoundName);
 					else
 						db_unset(hContact, MODULE, StatusList[Index(lvi.lParam)].lpzSkinSoundName);
 				}
 				else {
-					TCHAR stzSoundPath[MAX_PATH] = { 0 };
-					PathToRelativeT(buff, stzSoundPath);
+					wchar_t stzSoundPath[MAX_PATH] = { 0 };
+					PathToRelativeW(buff, stzSoundPath);
 					if (lvi.lParam < ID_STATUS_MIN)
 						db_set_ws(hContact, MODULE, StatusListEx[lvi.lParam].lpzSkinSoundName, stzSoundPath);
 					else
@@ -261,7 +259,7 @@ INT_PTR CALLBACK DlgProcSoundUIPage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 		switch (hlpControlID) {
 		case IDC_INDSNDLIST:
 			if (((LPNMHDR)lParam)->code == NM_DBLCLK) {
-				TCHAR stzFilePath[MAX_PATH];
+				wchar_t stzFilePath[MAX_PATH];
 				if (SelectSound(hwndDlg, stzFilePath, MAX_PATH - 1) != NULL) {
 					int iSel = -1;
 					while ((iSel = ListView_GetNextItem(hList, iSel, LVNI_SELECTED)) != -1)
@@ -424,21 +422,21 @@ INT_PTR CALLBACK DlgProcFiltering(HWND hwndDlg, UINT msg, WPARAM, LPARAM lParam)
 
 		HIMAGELIST hImageList = ImageList_Create(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), ILC_COLOR32 | ILC_MASK, 3, 3);
 
-		ImageList_AddIcon(hImageList, LoadIcon(hInst, MAKEINTRESOURCE(IDI_SOUND)));
+		ImageList_AddIcon(hImageList, IcoLib_GetIconByHandle(iconList[2].hIcolib));
 		SendDlgItemMessage(hwndDlg, IDC_SOUNDICON, STM_SETICON, (WPARAM)ImageList_GetIcon(hImageList, EXTRA_IMAGE_SOUND, ILD_NORMAL), 0);
-		ImageList_AddIcon(hImageList, LoadIcon(hInst, MAKEINTRESOURCE(IDI_POPUP)));
+		ImageList_AddIcon(hImageList, IcoLib_GetIconByHandle(iconList[1].hIcolib));
 		SendDlgItemMessage(hwndDlg, IDC_POPUPICON, STM_SETICON, (WPARAM)ImageList_GetIcon(hImageList, EXTRA_IMAGE_POPUP, ILD_NORMAL), 0);
-		ImageList_AddIcon(hImageList, LoadIcon(hInst, MAKEINTRESOURCE(IDI_XSTATUS)));
+		ImageList_AddIcon(hImageList, IcoLib_GetIconByHandle(iconList[5].hIcolib));
 		SendDlgItemMessage(hwndDlg, IDC_XSTATUSICON, STM_SETICON, (WPARAM)ImageList_GetIcon(hImageList, EXTRA_IMAGE_XSTATUS, ILD_NORMAL), 0);
-		ImageList_AddIcon(hImageList, LoadIcon(hInst, MAKEINTRESOURCE(IDI_LOGGING_XSTATUS)));
+		ImageList_AddIcon(hImageList, IcoLib_GetIconByHandle(iconList[10].hIcolib));
 		SendDlgItemMessage(hwndDlg, IDC_XLOGGINGICON, STM_SETICON, (WPARAM)ImageList_GetIcon(hImageList, EXTRA_IMAGE_XLOGGING, ILD_NORMAL), 0);
-		ImageList_AddIcon(hImageList, LoadIcon(hInst, MAKEINTRESOURCE(IDI_STATUS_MESSAGE)));
+		ImageList_AddIcon(hImageList, IcoLib_GetIconByHandle(iconList[9].hIcolib));
 		SendDlgItemMessage(hwndDlg, IDC_SMSGICON, STM_SETICON, (WPARAM)ImageList_GetIcon(hImageList, EXTRA_IMAGE_STATUSMSG, ILD_NORMAL), 0);
-		ImageList_AddIcon(hImageList, LoadIcon(hInst, MAKEINTRESOURCE(IDI_LOGGING_SMSG)));
+		ImageList_AddIcon(hImageList, IcoLib_GetIconByHandle(iconList[11].hIcolib));
 		SendDlgItemMessage(hwndDlg, IDC_SMSGLOGGINGICON, STM_SETICON, (WPARAM)ImageList_GetIcon(hImageList, EXTRA_IMAGE_SMSGLOGGING, ILD_NORMAL), 0);
-		ImageList_AddIcon(hImageList, LoadIcon(hInst, MAKEINTRESOURCE(IDI_DISABLEALL)));
+		ImageList_AddIcon(hImageList, IcoLib_GetIconByHandle(iconList[6].hIcolib));
 		SendDlgItemMessage(hwndDlg, IDC_DISABLEALLICON, STM_SETICON, (WPARAM)ImageList_GetIcon(hImageList, EXTRA_IMAGE_DISABLEALL, ILD_NORMAL), 0);
-		ImageList_AddIcon(hImageList, LoadIcon(hInst, MAKEINTRESOURCE(IDI_ENABLEALL)));
+		ImageList_AddIcon(hImageList, IcoLib_GetIconByHandle(iconList[7].hIcolib));
 		SendDlgItemMessage(hwndDlg, IDC_ENABLEALLICON, STM_SETICON, (WPARAM)ImageList_GetIcon(hImageList, EXTRA_IMAGE_ENABLEALL, ILD_NORMAL), 0);
 
 		ImageList_AddIcon(hImageList, Skin_LoadIcon(SKINICON_OTHER_SMALLDOT));
@@ -601,7 +599,7 @@ int UserInfoInitialise(WPARAM wParam, LPARAM lParam)
 		odp.position = 100000000;
 		odp.hInstance = hInst;
 		odp.pszTemplate = MAKEINTRESOURCEA(IDD_INFO_SOUNDS);
-		odp.pszTitle = LPGEN("Status Notify");
+		odp.szTitle.a = LPGEN("Status Notify");
 		odp.pfnDlgProc = DlgProcSoundUIPage;
 		UserInfo_AddPage(wParam, &odp);
 	}

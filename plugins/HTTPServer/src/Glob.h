@@ -32,7 +32,6 @@ using namespace std;
 #include <m_database.h>
 #include <m_clist.h>
 #include <m_langpack.h>
-#include <m_clui.h>
 #include <m_userinfo.h>
 #include <m_netlib.h>
 #include <m_message.h>
@@ -47,7 +46,7 @@ using namespace std;
 #include "MimeHandling.h"
 #include "resource.h"
 #include "IndexCreation.h"
-#include "Version.h"
+#include "version.h"
 
 
 #define SD_RECEIVE      0x00
@@ -55,13 +54,13 @@ using namespace std;
 #define SD_BOTH         0x02
 
 #define MODULE "HTTPServer"
-#define MSG_BOX_TITEL TranslateT("Miranda NG HTTP-Server")
+#define MSG_BOX_TITEL Translate("Miranda NG HTTP-Server")
 
 #define SplitIpAddress( p ) (BYTE)(p>>24),(BYTE)(p>>16),(BYTE)(p>>8),(BYTE)(p)
 
 extern HINSTANCE hInstance;
 
-extern HANDLE hNetlibUser;
+extern HNETLIBUSER hNetlibUser;
 
 extern bool bShutdownInProgress;
 bool bWriteConfigurationFile();

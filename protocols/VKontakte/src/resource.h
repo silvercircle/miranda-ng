@@ -1,7 +1,8 @@
 //{{NO_DEPENDENCIES}}
 // Включаемый файл, созданный в Microsoft Visual C++.
-// Используется d:\svn\protocols\VKontakte\res\resource.rc
+// Используется d:\github\miranda-ng\protocols\VKontakte\res\resource.rc
 //
+#define IDOPENBROWSER                   3
 #define IDD_ACCMGRUI                    101
 #define IDD_CAPTCHAFORM                 102
 #define IDD_OPT_MAIN                    103
@@ -22,6 +23,9 @@
 #define IDI_STATUS                      119
 #define IDD_WALLPOST                    120
 #define IDI_WALL                        121
+#define IDI_MARKMESSAGESASREAD          122
+#define IDD_OPT_MENU                    122
+#define IDD_CONTACTDELETE               123
 #define IDI_KEYS                        203
 #define IDC_LOGIN                       1001
 #define IDC_PASSWORD                    1002
@@ -38,7 +42,8 @@
 #define IDC_CLIST                       1013
 #define IDC_HIDECHATS                   1014
 #define IDC_CONTACT                     1015
-#define IDC_AUTOCLEAN                   1020
+#define IDC_LASTHISTORYLOAD             1019
+#define IDC_LOADONLYFRIENDS             1020
 #define IDC_MESASUREAD                  1025
 #define IDC_SYNC_MSG_STATUS             1026
 #define IDC_USE_LOCAL_TIME              1029
@@ -60,6 +65,7 @@
 #define IDC_SEND_MUSIC_BROADCAST        1047
 #define IDC_SEND_MUSIC_BROADCAST_AND_STATUS 1048
 #define IDC_STATIC_SYNC_HISTORY         1049
+#define IDC_STATIC_CHATS                1049
 #define IDC_SYNC_OFF                    1050
 #define IDC_SYNC_AUTO                   1051
 #define IDC_SYNC_LAST1DAY               1052
@@ -98,7 +104,7 @@
 #define IDC_ATTBBC_BASIC                1085
 #define IDC_ATTBBC_ADV                  1086
 #define IDC_BBC_ATT_NEWS                1087
-#define IDC_USENOSTDURLENCODE           1088
+#define IDC_POPUP_CONTACT_MUSIC         1088
 #define IDC_ED_INT_INVIS                1089
 #define IDC_SPIN_INT_INVIS              1090
 #define IDC_ED_MSG                      1091
@@ -107,15 +113,34 @@
 #define IDC_ST_WARNING                  1095
 #define IDC_NOTIF_MARK_VIEWED           1096
 #define IDC_N_INVITES                   1097
+#define IDC_USENOSTDPOPUPS              1098
+#define IDC_RET_CHAT_MES                1099
+#define IDC_COMBO_LANGUAGE              1100
+#define IDC_SHOW_MENU0                  1101
+#define IDC_SHOW_MENU1                  1102
+#define IDC_SHOW_MENU2                  1103
+#define IDC_SHOW_MENU3                  1104
+#define IDC_SHOW_MENU4                  1105
+#define IDC_SHOW_MENU5                  1106
+#define IDC_SHOW_MENU6                  1107
+#define IDC_COMBO_MARKASREAD            1108
+#define IDC_COMBO_SYNCHISTORY           1109
+#define IDC_N_FRIENDACCEPTED            1110
+#define IDC_SENDVKURLSASATTACH          1111
+#define IDC_LOADSENTATTACH              1112
+#define IDC_ADD_MES_LINK_MES_ATT        1113
+#define IDC_STATIC_TXT                  1114
+#define IDC_CH_REMOVE_FROM_FRIEND       1115
+#define IDC_CH_CLEARHISTORY             1116
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        122
+#define _APS_NEXT_RESOURCE_VALUE        124
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1098
+#define _APS_NEXT_CONTROL_VALUE         1116
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

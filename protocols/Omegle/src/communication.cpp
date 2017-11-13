@@ -3,7 +3,7 @@
 Omegle plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2011-15 Robert Pösel
+Copyright © 2011-17 Robert Pösel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -79,12 +79,12 @@ http::response Omegle_client::flap(const int request_type, std::string *post_dat
 	parent->debugLogA("@@@@@ Sending request to '%s'", nlhr.szUrl);
 
 	// Send the request	
-	NETLIBHTTPREQUEST *pnlhr = (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)handle_, (LPARAM)&nlhr);
+	NETLIBHTTPREQUEST *pnlhr = Netlib_HttpTransaction(handle_, &nlhr);
 
 	mir_free(nlhr.headers);
 
 	// Remember the persistent connection handle (or not)
-	switch ( request_type )
+	switch (request_type)
 	{
 	case OMEGLE_REQUEST_HOME:
 		break;
@@ -107,10 +107,16 @@ http::response Omegle_client::flap(const int request_type, std::string *post_dat
 		resp.code = pnlhr->resultCode;
 		resp.data = pnlhr->pData ? pnlhr->pData : "";
 
+		// This error code gives us some error page, but we don't need that, so clear the response
+		if (pnlhr->resultCode == HTTP_CODE_WEB_SERVER_IS_DOWN) {
+			resp.data = "";
+		}
+
 		parent->debugLogA("&&&&& Got response: %s", resp.data.c_str());
 
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)pnlhr);
-	} else {
+		Netlib_FreeHttpRequest(pnlhr);
+	}
+	else {
 		parent->debugLogA("!!!!! No response from server (time-out)");
 		resp.code = HTTP_CODE_FAKE_DISCONNECTED;
 		// Better to have something set explicitely as this value is compaired in all communication requests
@@ -119,33 +125,33 @@ http::response Omegle_client::flap(const int request_type, std::string *post_dat
 	return resp;
 }
 
-bool Omegle_client::handle_entry(const std::string &method )
+bool Omegle_client::handle_entry(const std::string &method)
 {
 	parent->debugLogA("   >> Entering %s()", method.c_str());
 	return true;
 }
 
-bool Omegle_client::handle_success(const std::string &method )
+bool Omegle_client::handle_success(const std::string &method)
 {
 	parent->debugLogA("   << Quitting %s()", method.c_str());
 	reset_error();
 	return true;
 }
 
-bool Omegle_client::handle_error(const std::string &method, bool force_disconnect )
+bool Omegle_client::handle_error(const std::string &method, bool force_disconnect)
 {
 	bool result;
 	increment_error();
 	parent->debugLogA("!!!!! %s(): Something with Omegle went wrong", method.c_str());
 
-	if ( force_disconnect )
+	if (force_disconnect)
 		result = false;
-	else if ( error_count_ <= (UINT)db_get_b(NULL,parent->m_szModuleName,OMEGLE_KEY_TIMEOUTS_LIMIT,OMEGLE_TIMEOUTS_LIMIT))
+	else if (error_count_ <= (UINT)db_get_b(NULL, parent->m_szModuleName, OMEGLE_KEY_TIMEOUTS_LIMIT, OMEGLE_TIMEOUTS_LIMIT))
 		result = true;
 	else
 		result = false;
 
-	if ( result == false )
+	if (result == false)
 	{
 		reset_error();
 		parent->UpdateChat(NULL, TranslateT("Connection error."));
@@ -157,17 +163,17 @@ bool Omegle_client::handle_error(const std::string &method, bool force_disconnec
 
 //////////////////////////////////////////////////////////////////////////////
 
-std::string Omegle_client::get_server( bool not_last )
+std::string Omegle_client::get_server(bool not_last)
 {
-	int q = not_last ? 1 : 0;	
+	int q = not_last ? 1 : 0;
 
 	int server = db_get_b(NULL, parent->m_szModuleName, OMEGLE_KEY_SERVER, 0);
-	if (server < 0 || server >= (int)(_countof(servers)-q))
+	if (server < 0 || server >= (int)(_countof(servers) - q))
 		server = 0;
 
 	if (server == 0) {
 		srand(::time(NULL));
-		server = (rand() % (_countof(servers)-1-q))+1;
+		server = (rand() % (_countof(servers) - 1 - q)) + 1;
 	}
 
 	return servers[server];
@@ -184,39 +190,39 @@ std::string Omegle_client::get_language()
 
 std::string Omegle_client::choose_server(int request_type)
 {
-	switch ( request_type )
+	switch (request_type)
 	{
 	case OMEGLE_REQUEST_HOME:
 		return OMEGLE_SERVER_REGULAR;
-	
-/*	case OMEGLE_REQUEST_START:
-	case OMEGLE_REQUEST_STOP:
-	case OMEGLE_REQUEST_SEND:
-	case OMEGLE_REQUEST_EVENTS:
-	case OMEGLE_REQUEST_TYPING_START:
-	case OMEGLE_REQUEST_TYPING_STOP:
-	case OMEGLE_REQUEST_RECAPTCHA:
-	case OMEGLE_REQUEST_COUNT:
-*/	default:
-		std::string server = OMEGLE_SERVER_CHAT;
-		utils::text::replace_first( &server, "%s", this->server_ );
-		return server;
+
+		/*	case OMEGLE_REQUEST_START:
+			case OMEGLE_REQUEST_STOP:
+			case OMEGLE_REQUEST_SEND:
+			case OMEGLE_REQUEST_EVENTS:
+			case OMEGLE_REQUEST_TYPING_START:
+			case OMEGLE_REQUEST_TYPING_STOP:
+			case OMEGLE_REQUEST_RECAPTCHA:
+			case OMEGLE_REQUEST_COUNT:
+			*/	default:
+				std::string server = OMEGLE_SERVER_CHAT;
+				utils::text::replace_first(&server, "%s", this->server_);
+				return server;
 	}
 }
 
 std::string Omegle_client::choose_action(int request_type, std::string* get_data)
 {
-	switch ( request_type )
+	switch (request_type)
 	{
 	case OMEGLE_REQUEST_START:
-		{
-			std::string action = "/start?rcs=1&spid=&lang=";
-			action += get_language();
-			if (get_data != NULL)
-				action += (*get_data);
+	{
+		std::string action = "/start?rcs=1&spid=&lang=";
+		action += get_language();
+		if (get_data != NULL)
+			action += (*get_data);
 
-			return action;
-		}
+		return action;
+	}
 
 	case OMEGLE_REQUEST_STOP:
 		return "/disconnect";
@@ -239,16 +245,16 @@ std::string Omegle_client::choose_action(int request_type, std::string* get_data
 	case OMEGLE_REQUEST_COUNT:
 		return "/count";
 
-	// "/stoplookingforcommonlikes"
+		// "/stoplookingforcommonlikes"
 
-/*	case OMEGLE_REQUEST_HOME:
-*/	default:
-		return "/";
+		/*	case OMEGLE_REQUEST_HOME:
+		*/	default:
+			return "/";
 	}
 }
 
 
-NETLIBHTTPHEADER* Omegle_client::get_request_headers( int request_type, int* headers_count )
+NETLIBHTTPHEADER* Omegle_client::get_request_headers(int request_type, int* headers_count)
 {
 	if (request_type == REQUEST_POST)
 		*headers_count = 4;
@@ -272,9 +278,9 @@ NETLIBHTTPHEADER* Omegle_client::get_request_headers( int request_type, int* hea
 	return headers;
 }
 
-void Omegle_client::store_headers( http::response* resp, NETLIBHTTPHEADER* headers, int headersCount )
+void Omegle_client::store_headers(http::response* resp, NETLIBHTTPHEADER* headers, int headersCount)
 {
-	for ( size_t i = 0; i < (size_t)headersCount; i++ )
+	for (size_t i = 0; i < (size_t)headersCount; i++)
 	{
 		std::string header_name = headers[i].szName;
 		std::string header_value = headers[i].szValue;
@@ -289,7 +295,7 @@ void Omegle_client::store_headers( http::response* resp, NETLIBHTTPHEADER* heade
 
 bool Omegle_client::start()
 {
-	handle_entry( "start" );
+	HANDLE_ENTRY;
 
 	this->server_ = get_server();
 	//parent->debugLogA("Chosing server %s", this->server_.c_str());
@@ -304,20 +310,21 @@ bool Omegle_client::start()
 
 		if (this->question_.empty()) {
 			data = "&wantsspy=1";
-		} else {
+		}
+		else {
 			data = "&ask=" + utils::url::encode(this->question_);
 			data += "&cansavequestion=";
 			data += db_get_b(NULL, parent->m_szModuleName, OMEGLE_KEY_REUSE_QUESTION, 0) ? "1" : "0";
 		}
 	}
-	else if ( db_get_b(NULL, parent->m_szModuleName, OMEGLE_KEY_MEET_COMMON, 0))
+	else if (db_get_b(NULL, parent->m_szModuleName, OMEGLE_KEY_MEET_COMMON, 0))
 	{
 		DBVARIANT dbv;
 		if (!db_get_utf(NULL, parent->m_szModuleName, OMEGLE_KEY_INTERESTS, &dbv))
 		{
 			std::string topics = dbv.pszVal;
 			std::string topic;
-		
+
 			db_free(&dbv);
 
 			std::string::size_type pos = 0;
@@ -335,13 +342,13 @@ bool Omegle_client::start()
 
 				pos = pos2 + 1;
 			}
-		
+
 			topic = topics.substr(pos);
 			topic = utils::text::trim(topic);
-			if (!topic.empty()) {			
+			if (!topic.empty()) {
 				if (pos > 0)
 					data += ",";
-				data += "\"" + topic + "\"";			
+				data += "\"" + topic + "\"";
 			}
 
 			parent->debugLogA("TOPICS: %s", data.c_str());
@@ -358,65 +365,67 @@ bool Omegle_client::start()
 
 	if (db_get_b(NULL, parent->m_szModuleName, OMEGLE_KEY_SERVER_INFO, 0))
 	{
-		std::string count = get_page( OMEGLE_REQUEST_COUNT );
+		std::string count = get_page(OMEGLE_REQUEST_COUNT);
 		if (!count.empty()) {
 			char str[255];
 			mir_snprintf(str, Translate("Connected to server %s. There are %s users online now."), server_.c_str(), count.c_str());
 
-			TCHAR *msg = mir_a2t(str);
+			wchar_t *msg = mir_a2u(str);
 			parent->UpdateChat(NULL, msg);
 			mir_free(msg);
 		}
-	} else {
+	}
+	else {
 		char str[255];
 		mir_snprintf(str, Translate("Connected to server %s."), server_.c_str());
 
-		TCHAR *msg = mir_a2t(str);
+		wchar_t *msg = mir_a2u(str);
 		parent->UpdateChat(NULL, msg);
 		mir_free(msg);
 	}
 
 	// Send validation
-	http::response resp = flap( OMEGLE_REQUEST_START, NULL, &data );
+	http::response resp = flap(OMEGLE_REQUEST_START, NULL, &data);
 
-	switch ( resp.code )
+	switch (resp.code)
 	{
 	case HTTP_CODE_FAKE_DISCONNECTED:
 	{
 		// If is is only timeout error, try login once more
-		if ( handle_error( "start" ))
+		if (HANDLE_ERROR(false))
 			return start();
 		else
 			return false;
 	}
 
 	case HTTP_CODE_OK:
-	{ 
+	{
 		if (!resp.data.empty()) {
-			this->chat_id_ = resp.data.substr(1,resp.data.length()-2);
+			this->chat_id_ = resp.data.substr(1, resp.data.length() - 2);
 			this->state_ = STATE_WAITING;
 
-			return handle_success( "start" );
-		} else {
-			return handle_error( "start", FORCE_DISCONNECT );
+			return HANDLE_SUCCESS;
+		}
+		else {
+			return HANDLE_ERROR(FORCE_DISCONNECT);
 		}
 	}
 
 	default:
-		return handle_error( "start", FORCE_DISCONNECT );
+		return HANDLE_ERROR(FORCE_DISCONNECT);
 	}
 }
 
 bool Omegle_client::stop()
 {
-	if ( parent->isOffline())
+	if (parent->isOffline())
 		return true;
 
-	handle_entry( "stop" );
+	HANDLE_ENTRY;
 
 	std::string data = "id=" + this->chat_id_;
 
-	http::response resp = flap( OMEGLE_REQUEST_STOP, &data );
+	http::response resp = flap(OMEGLE_REQUEST_STOP, &data);
 
 	if (hConnection)
 		Netlib_CloseHandle(hConnection);
@@ -427,264 +436,224 @@ bool Omegle_client::stop()
 	hEventsConnection = NULL;
 
 	if (resp.data == "win") {
-		return handle_success( "stop" );
-	} else {
-		return handle_error( "stop" );
+		return HANDLE_SUCCESS;
+	}
+	else {
+		return HANDLE_ERROR(false);
 	}
 
-/*	switch ( resp.code )
-	{
-	case HTTP_CODE_OK:
-	case HTTP_CODE_FOUND:
+	/*	switch ( resp.code )
+		{
+		case HTTP_CODE_OK:
+		case HTTP_CODE_FOUND:
 
-	default:
-		
-	}*/
+		default:
+
+		}*/
 }
 
 bool Omegle_client::events()
 {
-	handle_entry( "events" );
+	HANDLE_ENTRY;
 
-	std::string data = "id=" + this->chat_id_;
+	std::string post_data = "id=" + this->chat_id_;
 
 	// Get update
-	http::response resp = flap( OMEGLE_REQUEST_EVENTS, &data );
+	http::response resp = flap(OMEGLE_REQUEST_EVENTS, &post_data);
 
 	// Return
-	switch ( resp.code )
+	switch (resp.code)
 	{
 	case HTTP_CODE_OK:
 	{
-		if ( resp.data == "null" ) {
+		if (resp.data == "null") {
 			// Everything is OK, no new message received -- OR it is a problem
 			// TODO: if we are waiting for Stranger with common likes, then we should try standard Stranger if this takes too long
-			return handle_error( "events" );
-		} else if ( resp.data == "fail" ) {
-			// Something went wrong
-			return handle_error( "events" );
+			return HANDLE_ERROR(false);
 		}
-		
-		std::string::size_type pos = 0;
+		else if (resp.data == "fail") {
+			// Something went wrong
+			return HANDLE_ERROR(false);
+		}
+
+		JSONROOT root(resp.data.c_str());
+		if (root == NULL)
+			return HANDLE_ERROR(false);
+
 		bool newStranger = false;
 		bool waiting = false;
+
+		for (size_t i = 0; i < json_size(root); i++) {
+			JSONNode *item = json_at(root, i);
+			if (item == NULL)
+				continue;
+
+			std::string name = _T2A(json_as_string(json_at(item, 0)));
 		
-		if ( resp.data.find( "[\"waiting\"]" ) != std::string::npos ) {
-			// We are just waiting for new Stranger
-			waiting = true;
-		}
-
-		/*if ( (pos = resp.data.find( "[\"count\"," )) != std::string::npos ) {
-			// We got info about count of connected people there
-			pos += 9;
-
-			std::string count = utils::text::trim( resp.data.substr(pos, resp.data.find("]", pos) - pos));
-
-			char str[255];
-			mir_snprintf(str, Translate("On whole Omegle are %s strangers online now."), count.c_str());
-			
-			TCHAR *msg = mir_a2t_cp(str,CP_UTF8);
-			parent->UpdateChat(NULL, msg);
-			mir_free(msg);
-		}*/
-
-		if ( (pos = resp.data.find( "[\"serverMessage\"," )) != std::string::npos ) {
-			// We got server message
-			pos += 18;
-
-			std::string message = utils::text::trim( resp.data.substr(pos, resp.data.find("\"]", pos) - pos));
-			TCHAR *tstr = Langpack_PcharToTchar(message.c_str());
-			parent->UpdateChat(NULL, tstr);
-			mir_free(tstr);
-		}
-
-		if ( resp.data.find( "[\"connected\"]" ) != std::string::npos ) {
-			// Stranger connected
-			if (this->spy_mode_ && !this->question_.empty()) {
-				parent->AddChatContact(TranslateT("Stranger 1"));
-				parent->AddChatContact(TranslateT("Stranger 2"));
-				this->state_ = STATE_SPY;
-			} else {			
-				parent->AddChatContact(TranslateT("Stranger"));
-				this->state_ = STATE_ACTIVE;
+			if (name == "waiting") {
+				// We are just waiting for new Stranger
+				waiting = true;
 			}
-
-			newStranger = true;
-			waiting = false;
-		}
-
-		if ( (pos = resp.data.find( "[\"commonLikes\"," )) != std::string::npos ) {
-			pos += 17;
-			std::string like = resp.data.substr(pos, resp.data.find("\"]", pos) - pos);
-			utils::text::replace_all(&like, "\", \"", ", ");
-
-			parent->debugLogA("Got common likes: '%s'", like.c_str());
-
-			like = Translate("You and the Stranger both like: ") + like;
-
-			TCHAR *msg = mir_a2t(like.c_str());
-			parent->SetTopic(msg);
-			mir_free(msg);
-		}
-
-		if ( (pos = resp.data.find( "[\"question\"," )) != std::string::npos ) {
-			pos += 13;
-
-			std::string question = utils::text::trim(
-				utils::text::special_expressions_decode(
-					utils::text::slashu_to_utf8(
-						resp.data.substr(pos, resp.data.find("\"]", pos) - pos)	)) );
-
-			TCHAR *msg = mir_a2t_cp(question.c_str(),CP_UTF8);
-			parent->SetTopic(msg);
-			mir_free(msg);
-		}
-
-		if ( resp.data.find( "[\"typing\"]" ) != std::string::npos
-			|| resp.data.find( "[\"spyTyping\"," ) != std::string::npos )
-		{
-			// Stranger is typing, not supported by chat module yet
-			SkinPlaySound( "StrangerTyp" );
-			
-			
-			StatusTextData st = { 0 };
-			st.cbSize = sizeof(st);
-			// st.hIcon = IcoLib_GetIconByHandle(GetIconHandle("typing_on")); // TODO: typing icon
-
-			mir_sntprintf(st.tszText, TranslateT("%s is typing."), TranslateT("Stranger"));
-
-			CallService(MS_MSG_SETSTATUSTEXT, (WPARAM)parent->GetChatHandle(), (LPARAM)&st);
-		}
-
-		if ( resp.data.find( "[\"stoppedTyping\"]" ) != std::string::npos
-			|| resp.data.find( "[\"spyStoppedTyping\"," ) != std::string::npos )
-		{
-			// Stranger stopped typing, not supported by chat module yet
-			SkinPlaySound( "StrangerTypStop" );
-			
-			StatusTextData st = { 0 };
-			st.cbSize = sizeof(st);
-			// st.hIcon = IcoLib_GetIconByHandle(GetIconHandle("typing_off")); // TODO: typing icon
-
-			mir_sntprintf(st.tszText, TranslateT("%s stopped typing."), TranslateT("Stranger"));
-
-			CallService(MS_MSG_SETSTATUSTEXT, (WPARAM)parent->GetChatHandle(), (LPARAM)&st);
-		}
-
-		pos = 0;
-		while ( (pos = resp.data.find( "[\"gotMessage\",", pos )) != std::string::npos ) {
-			pos += 15;
-
-			std::string message = utils::text::trim(
-				utils::text::special_expressions_decode(
-					utils::text::slashu_to_utf8(
-						resp.data.substr(pos, resp.data.find("\"]", pos) - pos)	)) );
-			
-			if (state_ == STATE_ACTIVE) {
-				TCHAR *msg = mir_a2t_cp(message.c_str(),CP_UTF8);
-				parent->UpdateChat(TranslateT("Stranger"), msg);
-				mir_free(msg);
-
-				CallService(MS_MSG_SETSTATUSTEXT, (WPARAM)parent->GetChatHandle(), 0);
+			else if (name == "identDigests") {
+				// We get some comma separated hashes, I'm not sure what for
 			}
-		}
+			else if (name == "statusInfo") {
+				JSONNode *data = json_at(item, 1);
 
-		pos = 0;
-		while ( (pos = resp.data.find( "[\"spyMessage\",", pos )) != std::string::npos ) {
-			pos += 15;
+				// We got some object as second parameter
+				//data["antinudepercent"]; // probably 1 by default
+				//data["antinudeservers"]; // array of server names, like "waw3.omegle.com"
+				//data["rtmfp"]; // some rtmfp protocol address
+				//data["servers"]; // array of server names, like "front5.omegle.com"
+				//data["spyeeQueueTime"]; // some float number, e.g. 0.0701999903
+				//data["spyQueueTime"]; // some float number, e.g. 4.7505000114
+				//data["timestamp"]; // e.g. 1445336566.0196209
 
-			std::string message = resp.data.substr(pos, resp.data.find("\"]", pos) - pos);
-			
-			if (state_ == STATE_SPY) {
-				std::string stranger = message.substr(0, message.find("\""));
-				message = message.substr(stranger.length() + 4);
+				// We got info about count of connected people there
+				ptrW count(json_as_string(json_get(data, "count")));
+				wchar_t strT[255];
+				mir_snwprintf(strT, TranslateT("On whole Omegle are %s strangers online now."), count);
 
-				message = utils::text::trim(
-							utils::text::special_expressions_decode(
-								utils::text::slashu_to_utf8( message )) );
+				parent->UpdateChat(NULL, strT);
+			}
+			else if (name == "serverMessage") {
+				ptrW message(json_as_string(json_at(item, 1)));
+				parent->UpdateChat(NULL, TranslateW(message));
+			}
+			else if (name == "connected") {
+				// Stranger connected
+				if (this->spy_mode_ && !this->question_.empty()) {
+					parent->AddChatContact(TranslateT("Stranger 1"));
+					parent->AddChatContact(TranslateT("Stranger 2"));
+					this->state_ = STATE_SPY;
+				}
+				else {
+					parent->AddChatContact(TranslateT("Stranger"));
+					this->state_ = STATE_ACTIVE;
+				}
+
+				newStranger = true;
+				waiting = false;
+			}
+			else if (name == "commonLikes") {
+				std::wstring likes = TranslateT("You and the Stranger both like: ");
+
+				JSONNode *items = json_at(item, 1);
+				size_t size = json_size(items);
+				for (size_t j = 0; j < size; j++) {
+					likes += ptrW(json_as_string(json_at(items, j)));
+					if (j < size - 1)
+						likes += L", ";
+				}
 				
-				stranger = Translate(stranger.c_str());
-				
-				TCHAR *str = mir_a2t_cp(stranger.c_str(), CP_UTF8);				
-				TCHAR *msg = mir_a2t_cp(message.c_str(), CP_UTF8);
-
-				parent->UpdateChat(str, msg);
-
-				mir_free(msg);
-				mir_free(str);
+				parent->debugLogW(L"Got common likes: '%s'", likes.c_str());
+				parent->SetTopic(likes.c_str());
 			}
-		}
-
-		if ( resp.data.find( "[\"strangerDisconnected\"]" ) != std::string::npos ) {
-			// Stranger disconnected
-			if (db_get_b(NULL, parent->m_szModuleName, OMEGLE_KEY_DONT_STOP, 0))
-			{
-				SkinPlaySound( "StrangerChange" );
-				parent->NewChat();
+			else if (name == "question") {
+				ptrW question(json_as_string(json_at(item, 1)));
+				parent->SetTopic(question);
 			}
-			else			
+			else if (name == "typing" || name == "spyTyping") {
+				// Stranger is typing, not supported by chat module yet
+				Skin_PlaySound("StrangerTyp");
+
+				ptrW who(name == "spyTyping" ? json_as_string(json_at(item, 1)) : mir_wstrdup(L"Stranger"));
+				Srmm_SetStatusText(parent->GetChatHandle(), 
+					CMStringW(FORMAT, TranslateT("%s is typing."), TranslateW(who)), 
+					IcoLib_GetIconByHandle(GetIconHandle("typing_on")));
+			}
+			else if (name == "stoppedTyping" || name == "spyStoppedTyping") {
+				// Stranger stopped typing, not supported by chat module yet
+				Skin_PlaySound("StrangerTypStop");
+
+				ptrW who(name == "spyTyping" ? json_as_string(json_at(item, 1)) : mir_wstrdup(L"Stranger"));
+				Srmm_SetStatusText(parent->GetChatHandle(), 
+					CMStringW(FORMAT, TranslateT("%s stopped typing."), TranslateW(who)), 
+					IcoLib_GetIconByHandle(GetIconHandle("typing_off")));
+			}
+			else if (name == "gotMessage") {
+				Srmm_SetStatusText(parent->GetChatHandle(), nullptr);
+
+				// Play sound as we received message
+				Skin_PlaySound("StrangerMessage");
+
+				if (state_ == STATE_ACTIVE) {
+					ptrW msg(json_as_string(json_at(item, 1)));
+					parent->UpdateChat(TranslateT("Stranger"), msg);
+				}
+			}
+			else if (name == "spyMessage") {
+				Srmm_SetStatusText(parent->GetChatHandle(), nullptr);
+
+				// Play sound as we received message
+				Skin_PlaySound("StrangerMessage");
+
+				if (state_ == STATE_SPY) {
+					ptrW stranger(json_as_string(json_at(item, 1)));
+					ptrW msg(json_as_string(json_at(item, 2)));
+					parent->UpdateChat(stranger, msg);
+				}
+			}
+			else if (name == "strangerDisconnected") {
+				Srmm_SetStatusText(parent->GetChatHandle(), nullptr);
+
+				// Stranger disconnected
+				if (db_get_b(NULL, parent->m_szModuleName, OMEGLE_KEY_DONT_STOP, 0))
+				{
+					Skin_PlaySound("StrangerChange");
+					parent->NewChat();
+				}
+				else
+					parent->StopChat(false);
+			}
+			else if (name == "spyDisconnected") {
+				Srmm_SetStatusText(parent->GetChatHandle(), nullptr);
+
+				ptrW stranger(json_as_string(json_at(item, 1)));
+
+				wchar_t strT[255];
+				mir_snwprintf(strT, TranslateT("%s disconnected."), TranslateW(stranger));
+				parent->UpdateChat(NULL, strT);
+
+				// Stranger disconnected
+				if (db_get_b(NULL, parent->m_szModuleName, OMEGLE_KEY_DONT_STOP, 0))
+				{
+					Skin_PlaySound("StrangerChange");
+					parent->NewChat();
+				}
+				else
+					parent->StopChat(false);
+			}
+			else if (name == "recaptchaRequired") {
+				// Nothing to do with recaptcha
+				parent->UpdateChat(NULL, TranslateT("Recaptcha is required.\nOpen http://omegle.com , solve Recaptcha and try again."));
 				parent->StopChat(false);
-		}
-
-		if ( (pos = resp.data.find( "[\"spyDisconnected\"," )) != std::string::npos ) {
-			pos += 20;
-
-			std::string stranger = utils::text::trim(
-				utils::text::special_expressions_decode(
-					utils::text::slashu_to_utf8(
-						resp.data.substr(pos, resp.data.find("\"]", pos) - pos)	)) );
-
-			char str[255];
-			mir_snprintf(str, Translate("%s disconnected."), Translate(stranger.c_str()));
-			
-			TCHAR *msg = mir_a2t(str);
-			parent->UpdateChat(NULL, msg);
-			mir_free(msg);
-
-			// Stranger disconnected
-			if (db_get_b(NULL, parent->m_szModuleName, OMEGLE_KEY_DONT_STOP, 0))
-			{
-				SkinPlaySound( "StrangerChange" );
-				parent->NewChat();
 			}
-			else
+			else if (name == "recaptchaRejected") {
+				// Nothing to do with recaptcha
 				parent->StopChat(false);
+			}
+			else if (name == "error") {
+				ptrW error(json_as_string(json_at(item, 1)));
+
+				wchar_t strT[255];
+				mir_snwprintf(strT, TranslateT("Error: %s"), TranslateW(error));
+				parent->UpdateChat(NULL, strT);
+			}
 		}
-
-		if ( resp.data.find( "[\"recaptchaRequired\"" ) != std::string::npos ) {
-			// Nothing to do with recaptcha
-			parent->UpdateChat(NULL, TranslateT("Recaptcha is required.\nOpen http://omegle.com , solve Recaptcha and try again."));
-			parent->StopChat(false);
-		}
-
-		if ( resp.data.find( "[\"recaptchaRejected\"]" ) != std::string::npos ) {
-			// Nothing to do with recaptcha
-			parent->StopChat(false);
-		}
-
-		if ( (pos = resp.data.find( "[\"error\"," )) != std::string::npos ) {
-			pos += 10;
-
-			std::string error = utils::text::trim(
-				utils::text::special_expressions_decode(
-					utils::text::slashu_to_utf8(
-						resp.data.substr(pos, resp.data.find("\"]", pos) - pos)	)) );
-
-			error = Translate("Error: ") + error;
-
-			TCHAR *msg = mir_a2t(error.c_str());
-			parent->UpdateChat(NULL, msg);
-			mir_free(msg);
-		}
-				
-		if (newStranger && state_ != STATE_SPY) {
+		
+		if (newStranger && !spy_mode_) {
 			// We got new stranger in this event, lets say him "Hi message" if enabled			
-			if ( db_get_b( NULL, parent->m_szModuleName, OMEGLE_KEY_HI_ENABLED, 0 )) {
+			if (db_get_b(NULL, parent->m_szModuleName, OMEGLE_KEY_HI_ENABLED, 0)) {
 				DBVARIANT dbv;
-				if ( !db_get_utf( NULL, parent->m_szModuleName, OMEGLE_KEY_HI, &dbv )) {
-					std::string *message = new std::string(dbv.pszVal);
+				if (!db_get_utf(NULL, parent->m_szModuleName, OMEGLE_KEY_HI, &dbv)) {
+					std::vector<std::string> messages;
+					utils::text::explode(std::string(dbv.pszVal), "\r\n", &messages);
 					db_free(&dbv);
-	
+
+					int pos = rand() % messages.size();
+					std::string *message = new std::string(messages.at(pos));
+
 					parent->debugLogA("**Chat - saying Hi! message");
 					parent->ForkThread(&OmegleProto::SendMsgWorker, message);
 				}
@@ -697,83 +666,79 @@ bool Omegle_client::events()
 			parent->UpdateChat(NULL, TranslateT("We are still waiting..."));
 		}
 
-		return handle_success( "events" );
+		return HANDLE_SUCCESS;
 	}
 
 	case HTTP_CODE_FAKE_DISCONNECTED:
 		// timeout
-		return handle_success( "events" );
+		return HANDLE_SUCCESS;
 
-	case HTTP_CODE_FAKE_ERROR:
 	default:
-		return handle_error( "events" );
+		return HANDLE_ERROR(false);
 	}
 }
 
-bool Omegle_client::send_message(const std::string &message_text )
+bool Omegle_client::send_message(const std::string &message_text)
 {
-	handle_entry( "send_message" );
+	HANDLE_ENTRY;
 
-	std::string data = "msg=" + utils::url::encode( message_text );
+	std::string data = "msg=" + utils::url::encode(message_text);
 	data += "&id=" + this->chat_id_;
 
-	http::response resp = flap( OMEGLE_REQUEST_SEND, &data );
+	http::response resp = flap(OMEGLE_REQUEST_SEND, &data);
 
-	switch ( resp.code )
+	switch (resp.code)
 	{
 	case HTTP_CODE_OK:
 		if (resp.data == "win") {
-			return handle_success( "send_message" );
+			return HANDLE_SUCCESS;
 		}
 
-	case HTTP_CODE_FAKE_ERROR:
 	case HTTP_CODE_FAKE_DISCONNECTED:
 	default:
-		return handle_error( "send_message" );
+		return HANDLE_ERROR(false);
 	}
 }
 
 bool Omegle_client::typing_start()
 {
-	handle_entry( "typing_start" );
+	HANDLE_ENTRY;
 
 	std::string data = "id=" + this->chat_id_;
 
-	http::response resp = flap( OMEGLE_REQUEST_TYPING_START, &data );
+	http::response resp = flap(OMEGLE_REQUEST_TYPING_START, &data);
 
-	switch ( resp.code )
+	switch (resp.code)
 	{
 	case HTTP_CODE_OK:
 		if (resp.data == "win") {
-			return handle_success( "typing_start" );
+			return HANDLE_SUCCESS;
 		}
 
-	case HTTP_CODE_FAKE_ERROR:
 	case HTTP_CODE_FAKE_DISCONNECTED:
 	default:
-		return handle_error( "typing_start" );
+		return HANDLE_ERROR(false);
 	}
 }
 
 bool Omegle_client::typing_stop()
 {
-	handle_entry( "typing_stop" );
+	HANDLE_ENTRY;
 
 	std::string data = "id=" + this->chat_id_;
 
-	http::response resp = flap( OMEGLE_REQUEST_TYPING_STOP, &data );
+	http::response resp = flap(OMEGLE_REQUEST_TYPING_STOP, &data);
 
-	switch ( resp.code )
+	switch (resp.code)
 	{
 	case HTTP_CODE_OK:
 		if (resp.data == "win") {
-			return handle_success( "typing_stop" );
+			return HANDLE_SUCCESS;
 		}
 
-	case HTTP_CODE_FAKE_ERROR:
 	case HTTP_CODE_FAKE_DISCONNECTED:
 	default:
-		return handle_error( "typing_stop" );
+		return HANDLE_ERROR(false);
 	}
 }
 
@@ -781,43 +746,41 @@ bool Omegle_client::recaptcha()
 {
 	// TODO: Implement!
 
-	handle_entry( "recaptcha" );
+	HANDLE_ENTRY;
 
 	// data:{id:this.clientID,challenge:b,response:a}}
 	//std::string data = "?id=...&challenge= ..., &response= ...";
 
-	http::response resp = flap( OMEGLE_REQUEST_RECAPTCHA );
+	http::response resp = flap(OMEGLE_REQUEST_RECAPTCHA);
 
-	switch ( resp.code )
+	switch (resp.code)
 	{
 	case HTTP_CODE_OK:
-/*		if (resp.data == "win") {
-			return handle_success( "typing_start" );
-		}*/
+		/*		if (resp.data == "win") {
+					return handle_success( "typing_start" );
+					}*/
 
-	case HTTP_CODE_FAKE_ERROR:
 	case HTTP_CODE_FAKE_DISCONNECTED:
 	default:
-		return handle_error( "typing_start" );
+		return HANDLE_ERROR(false);
 	}
 }
 
 std::string Omegle_client::get_page(const int request_type)
 {
-	handle_entry("get_page");
+	HANDLE_ENTRY;
 
 	http::response resp = flap(request_type);
 
-	switch ( resp.code )
+	switch (resp.code)
 	{
 	case HTTP_CODE_OK:
-		handle_success("get_page");
+		HANDLE_SUCCESS;
 		break;
 
-	case HTTP_CODE_FAKE_ERROR:
 	case HTTP_CODE_FAKE_DISCONNECTED:
 	default:
-		handle_error("get_page");
+		HANDLE_ERROR(false);
 	}
 
 	return resp.data;

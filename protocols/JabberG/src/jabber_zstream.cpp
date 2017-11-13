@@ -6,7 +6,7 @@ XEP-0138 (Stream Compression) implementation
 
 Copyright (c) 2005-12  George Hazan
 Copyright (c) 2007     Kostya Chukavin, Taras Zackrepa
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -82,7 +82,7 @@ int ThreadData::zlibSend(char* data, int datalen)
 	}
 		while (zStreamOut.avail_out == 0);
 
-	if (db_get_b(NULL, "Netlib", "DumpSent", TRUE) == TRUE)
+	if (db_get_b(0, "Netlib", "DumpSent", TRUE) == TRUE)
 		proto->debugLogA("(ZLIB) Data sent\n%s\n===OUT: %d(%d) bytes", data, datalen, bytesOut);
 
 	return TRUE;
@@ -115,7 +115,7 @@ retry:
 	}
 
 	int len = datalen - zStreamIn.avail_out;
-	if (db_get_b(NULL, "Netlib", "DumpRecv", TRUE) == TRUE) {
+	if (db_get_b(0, "Netlib", "DumpRecv", TRUE) == TRUE) {
 		char* szLogBuffer = (char*)alloca(len+32);
 		memcpy(szLogBuffer, data, len);
 		szLogBuffer[ len ]='\0';

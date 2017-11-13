@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013-15 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2013-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,21 +17,21 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-void CVkProto::OnReceiveAvatar(NETLIBHTTPREQUEST *reply, AsyncHttpRequest* pReq)
+void CVkProto::OnReceiveAvatar(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
 {
 	if (reply->resultCode != 200 || !pReq->pUserInfo)
 		return;
 
 	PROTO_AVATAR_INFORMATION ai = { 0 };
-	CVkSendMsgParam * param = (CVkSendMsgParam *)pReq->pUserInfo;
+	CVkSendMsgParam *param = (CVkSendMsgParam *)pReq->pUserInfo;
 	GetAvatarFileName(param->hContact, ai.filename, _countof(ai.filename));
 	ai.format = ProtoGetBufferFormat(reply->pData);
 
-	FILE *out = _tfopen(ai.filename, _T("wb"));
-	if (out == NULL) {
+	FILE *out = _wfopen(ai.filename, L"wb");
+	if (out == nullptr) {
 		ProtoBroadcastAck(param->hContact, ACKTYPE_AVATAR, ACKRESULT_FAILED, &ai);
 		delete param;
-		pReq->pUserInfo = NULL;
+		pReq->pUserInfo = nullptr;
 		return;
 	}
 
@@ -40,7 +40,7 @@ void CVkProto::OnReceiveAvatar(NETLIBHTTPREQUEST *reply, AsyncHttpRequest* pReq)
 	setByte(param->hContact, "NeedNewAvatar", 0);
 	ProtoBroadcastAck(param->hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, &ai);
 	delete param;
-	pReq->pUserInfo = NULL;
+	pReq->pUserInfo = nullptr;
 }
 
 INT_PTR CVkProto::SvcGetAvatarCaps(WPARAM wParam, LPARAM lParam)
@@ -79,19 +79,19 @@ void CVkProto::ReloadAvatarInfo(MCONTACT hContact)
 
 INT_PTR CVkProto::SvcGetAvatarInfo(WPARAM, LPARAM lParam)
 {
-	PROTO_AVATAR_INFORMATION* pai = (PROTO_AVATAR_INFORMATION*)lParam;
+	PROTO_AVATAR_INFORMATION *pai = (PROTO_AVATAR_INFORMATION *)lParam;
 
 	ptrA szUrl(getStringA(pai->hContact, "AvatarUrl"));
-	if (szUrl == NULL)
+	if (szUrl == nullptr)
 		return GAIR_NOAVATAR;
 
-	TCHAR tszFileName[MAX_PATH];
-	GetAvatarFileName(pai->hContact, tszFileName, _countof(tszFileName));
-	_tcsncpy(pai->filename, tszFileName, _countof(pai->filename));
+	wchar_t wszFileName[MAX_PATH];
+	GetAvatarFileName(pai->hContact, wszFileName, _countof(wszFileName));
+	wcsncpy(pai->filename, wszFileName, _countof(pai->filename));
 
 	pai->format = ProtoGetAvatarFormat(pai->filename);
 
-	if (::_taccess(pai->filename, 0) == 0 && !getBool(pai->hContact, "NeedNewAvatar"))
+	if (::_waccess(pai->filename, 0) == 0 && !getBool(pai->hContact, "NeedNewAvatar"))
 		return GAIR_SUCCESS;
 
 	if (IsOnline()) {
@@ -118,52 +118,52 @@ INT_PTR CVkProto::SvcGetMyAvatar(WPARAM wParam, LPARAM lParam)
 	PROTO_AVATAR_INFORMATION ai = { 0 };
 	if (SvcGetAvatarInfo(0, (LPARAM)&ai) != GAIR_SUCCESS)
 		return 1;
-	
-	TCHAR* buf = (TCHAR*)wParam;
+
+	wchar_t *buf = (wchar_t*)wParam;
 	int size = (int)lParam;
-	
-	_tcsncpy(buf, ai.filename, size);
+
+	wcsncpy(buf, ai.filename, size);
 	buf[size - 1] = 0;
 
 	return 0;
 }
 
-void CVkProto::GetAvatarFileName(MCONTACT hContact, TCHAR* pszDest, size_t cbLen)
+void CVkProto::GetAvatarFileName(MCONTACT hContact, wchar_t *pwszDest, size_t cbLen)
 {
-	int tPathLen = mir_sntprintf(pszDest, cbLen, _T("%s\\%S"), VARST(_T("%miranda_avatarcache%")), m_szModuleName);
+	int tPathLen = mir_snwprintf(pwszDest, cbLen, L"%s\\%S", VARSW(L"%miranda_avatarcache%"), m_szModuleName);
 
-	DWORD dwAttributes = GetFileAttributes(pszDest);
+	DWORD dwAttributes = GetFileAttributes(pwszDest);
 	if (dwAttributes == 0xffffffff || (dwAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
-		CreateDirectoryTreeT(pszDest);
+		CreateDirectoryTreeW(pwszDest);
 
-	pszDest[tPathLen++] = '\\';
+	pwszDest[tPathLen++] = '\\';
 
-	const TCHAR* szFileType = _T(".jpg");
-	ptrT szUrl(getTStringA(hContact, "AvatarUrl"));
-	if (szUrl) {
-		TCHAR *p = _tcsrchr(szUrl, '.');
-		if (p != NULL)
+	const wchar_t *szFileType = L".jpg";
+	ptrW wszUrl(getWStringA(hContact, "AvatarUrl"));
+	if (wszUrl) {
+		wchar_t *p = wcsrchr(wszUrl, '.');
+		if (p != nullptr)
 			szFileType = p;
 	}
 
-	LONG id = getDword(hContact, "ID", -1);
-	mir_sntprintf(pszDest + tPathLen, MAX_PATH - tPathLen, _T("%d%s"), id, szFileType);
+	LONG id = getDword(hContact, "ID", VK_INVALID_USER);
+	mir_snwprintf(pwszDest + tPathLen, MAX_PATH - tPathLen, L"%d%s", id, szFileType);
 }
 
-void CVkProto::SetAvatarUrl(MCONTACT hContact, CMString &tszUrl)
+void CVkProto::SetAvatarUrl(MCONTACT hContact, CMStringW &wszUrl)
 {
-	CMString oldUrl(getTStringA(hContact, "AvatarUrl"));
+	CMStringW oldUrl(getWStringA(hContact, "AvatarUrl"));
 
-	if (tszUrl == oldUrl)
+	if (wszUrl == oldUrl)
 		return;
 
-	if (tszUrl.IsEmpty()) {
+	if (wszUrl.IsEmpty()) {
 		delSetting(hContact, "AvatarUrl");
-		ProtoBroadcastAck(hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, NULL);
+		ProtoBroadcastAck(hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, nullptr);
 	}
 	else {
-		setTString(hContact, "AvatarUrl", tszUrl);
-		setByte(hContact,"NeedNewAvatar", 1);
+		setWString(hContact, "AvatarUrl", wszUrl);
+		setByte(hContact, "NeedNewAvatar", 1);
 		PROTO_AVATAR_INFORMATION ai = { 0 };
 		ai.hContact = hContact;
 		GetAvatarFileName(ai.hContact, ai.filename, _countof(ai.filename));

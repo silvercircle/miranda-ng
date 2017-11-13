@@ -2,7 +2,7 @@
 
 Import plugin for Miranda NG
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <win2k.h>
 #include <newpluginapi.h>
 #include <m_langpack.h>
-#include <m_system_cpp.h>
+#include <m_system.h>
 #include <m_database.h>
 #include <m_protosvc.h>
 #include <m_icolib.h>
@@ -85,7 +85,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define IOPT_HISTORY 		0x000007FE
 
-void AddMessage(const TCHAR* fmt, ...);
+void AddMessage(const wchar_t* fmt, ...);
 
 INT_PTR CALLBACK WizardIntroPageProc(HWND hdlg, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK ProgressPageProc(HWND hdlg, UINT message, WPARAM wParam, LPARAM lParam);
@@ -96,13 +96,14 @@ INT_PTR CALLBACK FinishedPageProc(HWND hdlg, UINT message, WPARAM wParam, LPARAM
 
 bool IsDuplicateEvent(MCONTACT hContact, DBEVENTINFO dbei);
 
-int CreateGroup(const TCHAR* name, MCONTACT hContact);
+int CreateGroup(const wchar_t* name, MCONTACT hContact);
 
 extern HINSTANCE hInst;
 extern HWND hwndAccMerge;
 extern int nImportOptions;
-extern TCHAR importFile[];
+extern wchar_t importFile[];
 extern time_t dwSinceDate;
+extern bool g_bServiceMode;
 
 HICON  GetIcon(int iIconId, bool size = false);
 HANDLE GetIconHandle(int iIconId);

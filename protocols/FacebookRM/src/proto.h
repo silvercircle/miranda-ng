@@ -3,7 +3,7 @@
 Facebook plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2009-11 Michal Zelinka, 2011-15 Robert Pösel
+Copyright ï¿½ 2009-11 Michal Zelinka, 2011-17 Robert Pï¿½sel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class FacebookProto : public PROTO<FacebookProto>
 {
 public:
-	FacebookProto(const char *proto_name, const TCHAR *username);
+	FacebookProto(const char *proto_name, const wchar_t *username);
 	~FacebookProto();
 
 	inline const char* ModuleName() const
@@ -53,6 +53,9 @@ public:
 
 	inline int IdleSeconds()
 	{
+		if ((m_iStatus == ID_STATUS_AWAY || m_iStatus == ID_STATUS_INVISIBLE) && m_awayTS)
+			return time(0) - m_awayTS;
+
 		return m_idleTS ? time(0) - m_idleTS : 0;
 	}
 
@@ -60,8 +63,10 @@ public:
 	bool m_enableChat;
 	bool m_signingOut;
 	time_t m_idleTS;
+	time_t m_awayTS;
 	time_t m_pingTS;
 	std::string m_locale;
+	std::string m_pagePrefix;
 
 	// DB utils missing in proto_interface
 
@@ -78,15 +83,15 @@ public:
 	virtual	MCONTACT __cdecl AddToList(int flags, PROTOSEARCHRESULT* psr);
 
 	virtual	int      __cdecl Authorize(MEVENT hDbEvent);
-	virtual	int      __cdecl AuthDeny(MEVENT hDbEvent, const TCHAR* szReason);
-	virtual	int      __cdecl AuthRequest(MCONTACT hContact, const TCHAR* szMessage);
+	virtual	int      __cdecl AuthDeny(MEVENT hDbEvent, const wchar_t* szReason);
+	virtual	int      __cdecl AuthRequest(MCONTACT hContact, const wchar_t* szMessage);
 
 	virtual	DWORD_PTR __cdecl GetCaps(int type, MCONTACT hContact = NULL);
 	virtual	int       __cdecl GetInfo(MCONTACT hContact, int infoType);
 
-	virtual	HANDLE    __cdecl SearchBasic(const TCHAR* id);
-	virtual	HANDLE    __cdecl SearchByEmail(const TCHAR* email);
-	virtual	HANDLE    __cdecl SearchByName(const TCHAR* nick, const TCHAR* firstName, const TCHAR* lastName);
+	virtual	HANDLE    __cdecl SearchBasic(const wchar_t* id);
+	virtual	HANDLE    __cdecl SearchByEmail(const wchar_t* email);
+	virtual	HANDLE    __cdecl SearchByName(const wchar_t* nick, const wchar_t* firstName, const wchar_t* lastName);
 
 	virtual	int       __cdecl RecvMsg(MCONTACT hContact, PROTORECVEVENT*);
 	virtual	int       __cdecl SendMsg(MCONTACT hContact, int flags, const char* msg);
@@ -94,7 +99,7 @@ public:
 	virtual	int       __cdecl SetStatus(int iNewStatus);
 
 	virtual	HANDLE    __cdecl GetAwayMsg(MCONTACT hContact);
-	virtual	int       __cdecl SetAwayMsg(int iStatus, const TCHAR* msg);
+	virtual	int       __cdecl SetAwayMsg(int iStatus, const wchar_t* msg);
 
 	virtual	int       __cdecl UserIsTyping(MCONTACT hContact, int type);
 
@@ -114,6 +119,7 @@ public:
 	INT_PTR __cdecl VisitConversation(WPARAM, LPARAM);
 	INT_PTR __cdecl VisitNotifications(WPARAM, LPARAM);
 	INT_PTR __cdecl Poke(WPARAM, LPARAM);
+	INT_PTR __cdecl LoadHistory(WPARAM, LPARAM);
 	INT_PTR __cdecl CancelFriendship(WPARAM, LPARAM);
 	INT_PTR __cdecl RequestFriendship(WPARAM, LPARAM);
 	INT_PTR __cdecl ApproveFriendship(WPARAM, LPARAM);
@@ -121,7 +127,8 @@ public:
 	INT_PTR __cdecl OnCancelFriendshipRequest(WPARAM, LPARAM);
 	INT_PTR __cdecl CheckNewsfeeds(WPARAM, LPARAM);
 	INT_PTR __cdecl CheckFriendRequests(WPARAM, LPARAM);
-	INT_PTR __cdecl RefreshBuddyList(WPARAM, LPARAM);
+	INT_PTR __cdecl CheckNotifications(WPARAM, LPARAM);
+	INT_PTR __cdecl CheckMemories(WPARAM, LPARAM);
 	INT_PTR __cdecl GetNotificationsCount(WPARAM, LPARAM);
 
 	INT_PTR __cdecl OnJoinChat(WPARAM,LPARAM);
@@ -129,10 +136,11 @@ public:
 
 	INT_PTR __cdecl OnMind(WPARAM,LPARAM);
 
-	// Initialiation
+	// Initialization
 	void InitPopups();
 	void InitHotkeys();
 	void InitSounds();
+	void InitMenu();
 
 	// Events
 	int  __cdecl OnModulesLoaded(WPARAM, LPARAM);
@@ -156,7 +164,6 @@ public:
 	void __cdecl UpdateLoop(void*);
 
 	// Processing threads
-	void __cdecl ProcessBuddyList(void*);
 	void __cdecl ProcessFriendList(void*);
 	void __cdecl ProcessMessages(void*);
 	void __cdecl ProcessUnreadMessages(void*);
@@ -168,8 +175,8 @@ public:
 	void __cdecl SearchIdAckThread(void*);
 	void __cdecl ProcessPages(void*);
 	void __cdecl LoadLastMessages(void*);
-	void __cdecl SyncThreads(void*);
-	void __cdecl ProcessOnThisDay(void*);
+	void __cdecl LoadHistory(void*);
+	void __cdecl ProcessMemories(void*);
 
 	// Worker threads
 	void __cdecl SignOn(void*);
@@ -188,6 +195,7 @@ public:
 	void __cdecl CancelFriendsRequest(void*);
 	void __cdecl SendPokeWorker(void*);
 	void __cdecl IgnoreFriendshipRequest(void*);
+	void __cdecl RefreshUserInfo(void*);
 
 	// Contacts handling
 	bool		IsMyContact(MCONTACT, bool include_chat = false);
@@ -195,33 +203,35 @@ public:
 	MCONTACT	ChatIDToHContact(const std::string&);
 	std::string	ThreadIDToContactID(const std::string&);
 	void		LoadContactInfo(facebook_user* fbu);
-	MCONTACT	AddToContactList(facebook_user*, ContactType type, bool force_add = false, bool add_temporarily = false);
+	MCONTACT	AddToContactList(facebook_user*, bool force_add = false, bool add_temporarily = false);
 	void		SetAllContactStatuses(int status);
 	MCONTACT	HContactFromAuthEvent(MEVENT hEvent);
 	void		StartTyping(MCONTACT hContact);
 	void		StopTyping(MCONTACT hContact);
 
 	// Chats handling
-	void AddChat(const char *chat_id, const TCHAR *name);
+	void AddChat(const char *chat_id, const wchar_t *name);
 	void UpdateChat(const char *chat_id, const char *id, const char *name, const char *message, DWORD timestamp = 0, bool is_old = false);
 	void RenameChat(const char *chat_id, const char *name);
 	bool IsChatContact(const char *chat_id, const char *id);
-	void AddChatContact(const char *chat_id, const char *id, const char *name);
+	void AddChatContact(const char *chat_id, const chatroom_participant &user, bool addToLog);
 	void RemoveChatContact(const char *chat_id, const char *id, const char *name);
 	char *GetChatUsers(const char *chat_id);
-	void ReceiveMessages(std::vector<facebook_message*> messages, bool check_duplicates = false);
+	void ReceiveMessages(std::vector<facebook_message> &messages, bool check_duplicates = false);
 	void LoadChatInfo(facebook_chatroom* fbc);
 	void LoadParticipantsNames(facebook_chatroom *fbc);
-	
+	void JoinChatrooms();
+
 	bool IsSpecialChatRoom(MCONTACT hContact);
 	void PrepareNotificationsChatRoom();
 	void UpdateNotificationsChatRoom(facebook_notification *notification);
+	std::string FacebookProto::GenerateChatName(facebook_chatroom *fbc);
 
 	// Connection client
 	facebook_client facy; // TODO: Refactor to "client" and make dynamic
 
 	// Helpers
-	std::tstring GetAvatarFolder();
+	std::wstring GetAvatarFolder();
 	bool GetDbAvatarInfo(PROTO_AVATAR_INFORMATION &ai, std::string *url);
 	void CheckAvatarChange(MCONTACT hContact, const std::string &image_url);
 	void ToggleStatusMenuItems(bool bEnable);
@@ -243,7 +253,7 @@ public:
 	HANDLE log_lock_;
 	HANDLE update_loop_lock_;
 
-	ptrT m_tszDefaultGroup;
+	ptrW m_tszDefaultGroup;
 
 	std::vector<HANDLE> popupClasses;
 
@@ -253,6 +263,6 @@ public:
 	static void CALLBACK APC_callback(ULONG_PTR p);
 
 	// Information providing
-	HWND NotifyEvent(TCHAR* title, TCHAR* info, MCONTACT contact, DWORD flags, std::string *url = NULL, std::string *notification_id = NULL);
+	HWND NotifyEvent(wchar_t* title, wchar_t* text, MCONTACT contact, EventType type, std::string *url = NULL, std::string *notification_id = NULL, const char *icon = NULL);
 	void ShowNotifications();
 };

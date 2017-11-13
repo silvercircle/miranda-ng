@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013-15 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2013-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -21,6 +21,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 HINSTANCE hInst;
 int hLangpack;
 CLIST_INTERFACE *pcli;
+FI_INTERFACE *fii;
 
 PLUGININFOEX pluginInfo =
 {
@@ -55,9 +56,9 @@ extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = {MIID_PROTOCO
 /////////////////////////////////////////////////////////////////////////////////////////
 // OnLoad - initialize the plugin instance
 
-static CVkProto* vkProtoInit(const char* pszProtoName, const TCHAR *tszUserName)
+static CVkProto* vkProtoInit(const char *pszProtoName, const wchar_t *wszUserName)
 {
-	CVkProto *ppro = new CVkProto(pszProtoName, tszUserName);
+	CVkProto *ppro = new CVkProto(pszProtoName, wszUserName);
 	return ppro;
 }
 
@@ -70,8 +71,8 @@ static int vkProtoUninit(CVkProto *ppro)
 extern "C" int __declspec(dllexport) Load()
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
-
+	pcli = Clist_GetInterface();
+	CallService(MS_IMG_GETINTERFACE, FI_IF_VERSION, (LPARAM)&fii);
 	InitIcons();
 
 	// Register protocol module

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -43,25 +43,31 @@ void InitWinver();
 int hLangpack = 0;
 HINSTANCE g_hInst = 0;
 
+HCURSOR g_hCursorNS, g_hCursorWE;
 HANDLE hStackMutex, hThreadQueueEmpty;
 DWORD mir_tls = 0;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-static INT_PTR RestartMiranda(WPARAM wParam, LPARAM)
+static INT_PTR RestartMiranda(WPARAM wParam, LPARAM lParam)
 {
-	TCHAR mirandaPath[MAX_PATH], cmdLine[MAX_PATH];
+	wchar_t mirandaPath[MAX_PATH], cmdLine[MAX_PATH];
+	if (lParam)
+		wcsncpy_s(mirandaPath, (const wchar_t*)lParam, _TRUNCATE);
+	else
+		GetModuleFileName(NULL, mirandaPath, _countof(mirandaPath));
+
+	if (wParam) {
+		VARSW profilename(L"%miranda_profilename%");
+		mir_snwprintf(cmdLine, L"\"%s\" /restart:%d /profile=%s", mirandaPath, GetCurrentProcessId(), (wchar_t*)profilename);
+	}
+	else mir_snwprintf(cmdLine, L"\"%s\" /restart:%d", mirandaPath, GetCurrentProcessId());
+
+	CallService("CloseAction", 0, 0);
+
 	PROCESS_INFORMATION pi;
 	STARTUPINFO startupInfo = { 0 };
 	startupInfo.cb = sizeof(startupInfo);
-	GetModuleFileName(NULL, mirandaPath, _countof(mirandaPath));
-	if (wParam) {
-		VARST profilename(_T("%miranda_profilename%"));
-		mir_sntprintf(cmdLine, _T("\"%s\" /restart:%d /profile=%s"), mirandaPath, GetCurrentProcessId(), (TCHAR*)profilename);
-	}
-	else mir_sntprintf(cmdLine, _T("\"%s\" /restart:%d"), mirandaPath, GetCurrentProcessId());
-
-	CallService("CloseAction", 0, 0);
 	CreateProcess(mirandaPath, cmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &startupInfo, &pi);
 	return 0;
 }
@@ -93,11 +99,11 @@ static void LoadCoreModule(void)
 	icce.dwICC = ICC_WIN95_CLASSES | ICC_USEREX_CLASSES;
 	InitCommonControlsEx(&icce);
 
-	hAPCWindow = CreateWindowEx(0, _T("ComboLBox"), NULL, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
+	hAPCWindow = CreateWindowEx(0, L"ComboLBox", NULL, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
 	SetClassLongPtr(hAPCWindow, GCL_STYLE, GetClassLongPtr(hAPCWindow, GCL_STYLE) | CS_DROPSHADOW);
 	DestroyWindow(hAPCWindow);
 
-	hAPCWindow = CreateWindowEx(0, _T("STATIC"), NULL, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
+	hAPCWindow = CreateWindowEx(0, L"STATIC", NULL, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
 	SetWindowLongPtr(hAPCWindow, GWLP_WNDPROC, (LONG_PTR)APCWndProc);
 	SetTimer(hAPCWindow, 1, 1000, NULL);
 	hStackMutex = CreateMutex(NULL, FALSE, NULL);

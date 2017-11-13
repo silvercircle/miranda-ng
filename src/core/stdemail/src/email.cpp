@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -47,7 +47,7 @@ static INT_PTR SendEMailCommand(WPARAM hContact, LPARAM lParam)
 	mir_strcpy(szUrl, "mailto:");
 	mir_strcat(szUrl, dbv.pszVal);
 	mir_free(dbv.pszVal);
-	forkthread(SendEmailThread, 0, szUrl);
+	mir_forkthread(SendEmailThread, szUrl);
 	return 0;
 }
 

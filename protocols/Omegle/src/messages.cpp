@@ -3,7 +3,7 @@
 Omegle plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2011-15 Robert Pösel
+Copyright © 2011-17 Robert Pösel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -24,19 +24,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 void OmegleProto::SendMsgWorker(void *p)
 {
-	if(p == NULL)
+	if (p == NULL)
 		return;
-  
-	ScopedLock s( facy.send_message_lock_ );
 
 	std::string data = *(std::string*)p;
 	delete (std::string*)p;
 
 	data = utils::text::trim(data);
 
-	if (facy.state_ == STATE_ACTIVE && data.length() && facy.send_message( data ))
+	if (facy.state_ == STATE_ACTIVE && data.length() && facy.send_message(data))
 	{
-		TCHAR *msg = mir_a2t_cp(data.c_str(), CP_UTF8);
+		wchar_t *msg = mir_a2u_cp(data.c_str(), CP_UTF8);
 		UpdateChat(facy.nick_, msg);
 		mir_free(msg);
 	}
@@ -55,13 +53,11 @@ void OmegleProto::SendTypingWorker(void *p)
 	if (facy.typing_ == typ)
 		return;
 
-	facy.typing_ = typ;
-	// Wait for eventually changes to typing info by other thread and ignore if changed
-	SleepEx(2000, true);
-	if (facy.typing_ != typ || facy.old_typing_ == typ || facy.state_ != STATE_ACTIVE)
-		return;	
+	if (facy.state_ != STATE_ACTIVE)
+		return;
 
-	facy.old_typing_ = typ;
+	facy.typing_ = typ;
+
 	if (typ)
 		facy.typing_start();
 	else

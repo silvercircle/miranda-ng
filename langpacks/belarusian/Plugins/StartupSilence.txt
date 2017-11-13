@@ -7,7 +7,6 @@
 ;============================================================
 [Suppresses popups and mutes sounds for 10-300 sec at Miranda NG startup, then sets them back to predefined state (Automatically per computer settings).]
 Падаўляе усплывальныя вокны і гукаі на 10-300 сек пасля запуску Міранды, затым ўстанаўлівае іх назад у адпаведнасці з іх наладамі (Асабіста для кожнага кампутара).
-;file \plugins\StartupSilence\res\StartupSilence.rc
 [Silence at Startup]
 Ціхі старт
 [Settings for the next Computer Name:]
@@ -28,26 +27,40 @@
 Кнопка ў TopToolBar (з'явіцца пасля перазапуску)
 [Reset to default\r\n(for this computer)]
 Скінуць налады\r\n(для гэтага камп'ютэра)
+[You need to configure it once for each computer, where you run your Miranda NG.]
+
 [No Apply button required.]
 Налады захоўваюцца аўтаматычна.
+[After startup set:]
+
+[Filtered popups only (leave uncheck for no popups)]
+
 [Enable sounds]
 Уключыць гукі
-;file \plugins\StartupSilence\src\main.cpp
+[Allow to set sounds and filtered popups only after startup (uncheck for all popups and sounds)]
+
+[Allow mRadio or Weather popups, etc.]
+
 [Events]
 Падзеі
-;file \plugins\StartupSilence\src\stdafx.h
 [Silence at startup]
 Ціхі запуск
 [Toggle Silence OFF]
 Выключыць ціхі запуск
 [Toggle Silence ON]
 Уключыць ціхі запуск
+[Toggle Silence OFF TTB]
+
 [Toggle Silence ON TTB]
 Уключаны ціхі запуск TTB
 [Sounds and popups are enabled]
 Гукі і усплывальныя вокны выключаны
+[Filtered mode ON]
+
 [Sounds and popups are disabled temporarily]
 Гукі і усплывальныя вокны часова выключаны
+[Sounds and popups are disabled temporarily.\nmRadio or Weather popups, etc. are allowed.]
+
 [Silent Startup mode changed to ON]
 Ціхі запуск уключаны
 [Silent Startup mode changed to OFF]
@@ -58,7 +71,7 @@
 Ціхі запуск выключаны
 [Toggle Silence At Startup]
 Ціхі запуск Укл/Выкл
-[You have to install "TopToolBar" to use this option.]
+[You have to install TopToolBar plugin to use this option.]
 Для выкарыстання гэтай функцыі неабходны усталяваны TopToolBar плагін.
-[You have to install "YAPP" or "Popup+" to use this option.]
-Для выкарыстання гэтай функцыі неабходны усталяваны \"YAPP\" ці \"Popup+\" плагін усплывальных вокнаў.
+[You have to install popup plugin to use this option.]
+Для выкарыстання гэтай функцыі неабходны усталяваны плагін усплывальных вокнаў.

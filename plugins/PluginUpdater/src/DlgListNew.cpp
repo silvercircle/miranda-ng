@@ -34,6 +34,8 @@ static void SelectAll(HWND hDlg, bool bEnable)
 
 static void ApplyDownloads(void *param)
 {
+	Thread_SetName("PluginUpdater: ApplyDownloads");
+
 	HWND hDlg = (HWND)param;
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -51,17 +53,17 @@ static void ApplyDownloads(void *param)
 	HWND hwndList = GetDlgItem(hDlg, IDC_LIST_UPDATES);
 	OBJLIST<FILEINFO> &todo = *(OBJLIST<FILEINFO> *)GetWindowLongPtr(hDlg, GWLP_USERDATA);
 	//create needed folders after escalating priviledges. Folders creates when we actually install updates
-	TCHAR tszFileTemp[MAX_PATH], tszFileBack[MAX_PATH];
+	wchar_t tszFileTemp[MAX_PATH], tszFileBack[MAX_PATH];
 
-	mir_sntprintf(tszFileBack, _T("%s\\Backups"), g_tszRoot);
+	mir_snwprintf(tszFileBack, L"%s\\Backups", g_tszRoot);
 	SafeCreateDirectory(tszFileBack);
 
-	mir_sntprintf(tszFileTemp, _T("%s\\Temp"), g_tszRoot);
+	mir_snwprintf(tszFileTemp, L"%s\\Temp", g_tszRoot);
 	SafeCreateDirectory(tszFileTemp);
 
-	VARST tszMirandaPath(_T("%miranda_path%"));
+	VARSW tszMirandaPath(L"%miranda_path%");
 
-	HANDLE nlc = NULL;
+	HNETLIBCONN nlc = NULL;
 	for (int i=0; i < todo.getCount(); ++i) {
 		ListView_EnsureVisible(hwndList, i, FALSE);
 		if (todo[i].bEnabled) {
@@ -72,6 +74,7 @@ static void ApplyDownloads(void *param)
 				ListView_SetItemText(hwndList, i, 1, TranslateT("Succeeded."));
 				if (unzip(todo[i].File.tszDiskPath, tszMirandaPath, tszFileBack,false))
 					SafeDeleteFile(todo[i].File.tszDiskPath);  // remove .zip after successful update
+				db_unset(NULL, DB_MODULE_NEW_FILES, _T2A(todo[i].tszOldName));
 			}
 			else
 				ListView_SetItemText(hwndList, i, 1, TranslateT("Failed!"));
@@ -108,13 +111,13 @@ static LRESULT CALLBACK PluginListWndProc(HWND hwnd, UINT msg, WPARAM wParam, LP
 			if (ListView_GetItem(hwnd, &lvi) && lvi.iGroupId == 1) {
 				FILEINFO *info = (FILEINFO *)lvi.lParam;
 
-				TCHAR tszFileName[MAX_PATH];
-				_tcscpy(tszFileName, _tcsrchr(info->tszNewName, L'\\') + 1);
-				TCHAR *p = _tcschr(tszFileName, L'.'); *p = 0;
+				wchar_t tszFileName[MAX_PATH];
+				wcscpy(tszFileName, wcsrchr(info->tszNewName, L'\\') + 1);
+				wchar_t *p = wcschr(tszFileName, L'.'); *p = 0;
 
-				TCHAR link[MAX_PATH];
-				mir_sntprintf(link, PLUGIN_INFO_URL, tszFileName);
-				Utils_OpenUrlT(link);
+				wchar_t link[MAX_PATH];
+				mir_snwprintf(link, PLUGIN_INFO_URL, tszFileName);
+				Utils_OpenUrlW(link);
 			}
 		}
 	}
@@ -152,8 +155,7 @@ INT_PTR CALLBACK DlgList(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		TranslateDialogDefault( hDlg );
 		oldWndProc = (WNDPROC)SetWindowLongPtr(hwndList, GWLP_WNDPROC, (LONG_PTR)PluginListWndProc);
 		
-		SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIconByHandle(iconList[2].hIcolib, 1));
-		SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIconByHandle(iconList[2].hIcolib));
+		Window_SetIcon_IcoLib(hDlg, iconList[2].hIcolib);
 		{
 			HIMAGELIST hIml = ImageList_Create(16, 16, ILC_MASK | ILC_COLOR32, 4, 0);
 			ImageList_AddIconFromIconLib(hIml, 1);
@@ -163,10 +165,10 @@ INT_PTR CALLBACK DlgList(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			if (GetVersionEx(&osver) && osver.dwMajorVersion >= 6) {
 				wchar_t szPath[MAX_PATH];
 				GetModuleFileName(NULL, szPath, _countof(szPath));
-				TCHAR *ext = _tcsrchr(szPath, '.');
+				wchar_t *ext = wcsrchr(szPath, '.');
 				if (ext != NULL)
 					*ext = '\0';
-				_tcscat(szPath, _T(".test"));
+				wcscat(szPath, L".test");
 				HANDLE hFile = CreateFile(szPath, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 				if (hFile == INVALID_HANDLE_VALUE)
 					// Running Windows Vista or later (major version >= 6).
@@ -220,14 +222,15 @@ INT_PTR CALLBACK DlgList(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			ListView_DeleteAllItems(hwndList);
 
 			///
+			bool enableOk = false;
 			OBJLIST<FILEINFO> &todo = *(OBJLIST<FILEINFO> *)lParam;
 			for (int i = 0; i < todo.getCount(); ++i) {
 				LVITEM lvi = {0};
 				lvi.mask = LVIF_PARAM | LVIF_GROUPID | LVIF_TEXT | LVIF_IMAGE;
 				
 				int groupId = 4;
-				if (_tcschr(todo[i].tszOldName, L'\\') != NULL)
-					groupId = (_tcsstr(todo[i].tszOldName, _T("Plugins")) != NULL) ? 1 : ((_tcsstr(todo[i].tszOldName, _T("Languages")) != NULL) ? 3 : 2);
+				if (wcschr(todo[i].tszOldName, L'\\') != NULL)
+					groupId = (wcsstr(todo[i].tszOldName, L"Plugins") != NULL) ? 1 : ((wcsstr(todo[i].tszOldName, L"Languages") != NULL) ? 3 : 2);
 
 				lvi.iItem = i;
 				lvi.lParam = (LPARAM)&todo[i];
@@ -235,7 +238,15 @@ INT_PTR CALLBACK DlgList(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				lvi.iImage = ((groupId ==1) ? 0 : -1);
 				lvi.pszText = todo[i].tszOldName;
 				ListView_InsertItem(hwndList, &lvi);
+
+				if (todo[i].bEnabled)
+				{
+					enableOk = true;
+					ListView_SetCheckState(hwndList, lvi.iItem, 1);
+				}
 			}
+			if (enableOk)
+				EnableWindow(GetDlgItem(hDlg, IDOK), TRUE);
 		}
 
 		// do this after filling list - enables 'ITEMCHANGED' below
@@ -318,8 +329,7 @@ INT_PTR CALLBACK DlgList(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 	case WM_DESTROY:
 		Utils_SaveWindowPosition(hDlg, NULL, MODNAME, "ListWindow");
-		IcoLib_ReleaseIcon((HICON)SendMessage(hDlg, WM_SETICON, ICON_BIG, 0));
-		IcoLib_ReleaseIcon((HICON)SendMessage(hDlg, WM_SETICON, ICON_SMALL, 0));
+		Window_FreeIcon_IcoLib(hDlg);
 		hwndDialog = NULL;
 		delete (OBJLIST<FILEINFO> *)GetWindowLongPtr(hDlg, GWLP_USERDATA);
 		SetWindowLongPtr(hDlg, GWLP_USERDATA, 0);
@@ -334,45 +344,48 @@ static void __stdcall LaunchListDialog(void *param)
 	hwndDialog = CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_LIST), GetDesktopWindow(), DlgList, (LPARAM)param);
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-// building file list in the separate thread
-
-static FILEINFO* ServerEntryToFileInfo(const ServListEntry &hash, const TCHAR* tszBaseUrl, const TCHAR* tszPath)
+static FILEINFO* ServerEntryToFileInfo(const ServListEntry &hash, const wchar_t* tszBaseUrl, const wchar_t* tszPath)
 {
 	FILEINFO *FileInfo = new FILEINFO;
 	FileInfo->bDeleteOnly = FALSE;
 	// copy the relative old name
-	_tcsncpy(FileInfo->tszOldName, hash.m_name, _countof(FileInfo->tszOldName));
-	_tcsncpy(FileInfo->tszNewName, hash.m_name, _countof(FileInfo->tszNewName));
+	wcsncpy(FileInfo->tszOldName, hash.m_name, _countof(FileInfo->tszOldName));
+	wcsncpy(FileInfo->tszNewName, hash.m_name, _countof(FileInfo->tszNewName));
 
-	TCHAR tszFileName[MAX_PATH];
-	_tcsncpy(tszFileName, _tcsrchr(tszPath, L'\\') + 1, _countof(tszFileName));
-	TCHAR *tp = _tcschr(tszFileName, L'.'); *tp = 0;
+	wchar_t tszFileName[MAX_PATH];
+	wcsncpy(tszFileName, wcsrchr(tszPath, L'\\') + 1, _countof(tszFileName));
+	wchar_t *tp = wcschr(tszFileName, L'.'); if (tp) *tp = 0;
 
-	TCHAR tszRelFileName[MAX_PATH];
-	_tcsncpy(tszRelFileName, hash.m_name, MAX_PATH);
-	tp = _tcsrchr(tszRelFileName, L'.'); if (tp) *tp = 0;
-	tp = _tcschr(tszRelFileName, L'\\'); if (tp) tp++; else tp = tszRelFileName;
-	_tcslwr(tp);
+	wchar_t tszRelFileName[MAX_PATH];
+	wcsncpy(tszRelFileName, hash.m_name, MAX_PATH);
+	tp = wcsrchr(tszRelFileName, L'.'); if (tp) *tp = 0;
+	tp = wcschr(tszRelFileName, L'\\'); if (tp) tp++; else tp = tszRelFileName;
+	wcslwr(tp);
 
-	mir_sntprintf(FileInfo->File.tszDiskPath, _T("%s\\Temp\\%s.zip"), g_tszRoot, tszFileName);
-	mir_sntprintf(FileInfo->File.tszDownloadURL, _T("%s/%s.zip"), tszBaseUrl, tszRelFileName);
-	for (tp = _tcschr(FileInfo->File.tszDownloadURL, '\\'); tp != 0; tp = _tcschr(tp, '\\'))
+	mir_snwprintf(FileInfo->File.tszDiskPath, L"%s\\Temp\\%s.zip", g_tszRoot, tszFileName);
+	mir_snwprintf(FileInfo->File.tszDownloadURL, L"%s/%s.zip", tszBaseUrl, tszRelFileName);
+	for (tp = wcschr(FileInfo->File.tszDownloadURL, '\\'); tp != 0; tp = wcschr(tp, '\\'))
 		*tp++ = '/';
 	FileInfo->File.CRCsum = hash.m_crc;
-	// Deselect all plugins by default
-	FileInfo->bEnabled = false;
+	// Load list of checked Plugins from database
+	Netlib_LogfW(hNetlibUser, L"File %s found", FileInfo->tszOldName);
+	FileInfo->bEnabled = db_get_b(NULL, DB_MODULE_NEW_FILES, _T2A(FileInfo->tszOldName)) != 0;
 	return FileInfo;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
+// building file list in the separate thread
+//
 static void GetList(void *)
 {
-	TCHAR tszTempPath[MAX_PATH];
+	Thread_SetName("PluginUpdater: GetList");
+
+	wchar_t tszTempPath[MAX_PATH];
 	DWORD dwLen = GetTempPath(_countof(tszTempPath), tszTempPath);
 	if (tszTempPath[dwLen-1] == '\\')
 		tszTempPath[dwLen-1] = 0;
 
-	ptrT updateUrl( GetDefaultUrl()), baseUrl;
+	ptrW updateUrl( GetDefaultUrl()), baseUrl;
 	SERVLIST hashes(50, CompareHashes);
 	if (!ParseHashes(updateUrl, baseUrl, hashes)) {
 		hListThread = NULL;
@@ -380,13 +393,13 @@ static void GetList(void *)
 	}
 
 	FILELIST *UpdateFiles = new FILELIST(20);
-	VARST dirname(_T("%miranda_path%"));
+	VARSW dirname(L"%miranda_path%");
 
 	for (int i=0; i < hashes.getCount(); i++) {
 		ServListEntry &hash = hashes[i];
 
-		TCHAR tszPath[MAX_PATH];
-		mir_sntprintf(tszPath, _T("%s\\%s"), dirname, hash.m_name);
+		wchar_t tszPath[MAX_PATH];
+		mir_snwprintf(tszPath, L"%s\\%s", dirname, hash.m_name);
 
 		if (GetFileAttributes(tszPath) == INVALID_FILE_ATTRIBUTES) {
 			FILEINFO *FileInfo = ServerEntryToFileInfo(hash, baseUrl, tszPath);
@@ -437,26 +450,26 @@ void UnloadListNew()
 
 static INT_PTR ParseUriService(WPARAM, LPARAM lParam)
 {
-	TCHAR *arg = (TCHAR *)lParam;
+	wchar_t *arg = (wchar_t *)lParam;
 	if (arg == NULL)
 		return 1;
 
-	TCHAR uri[1024];
-	_tcsncpy_s(uri, arg, _TRUNCATE);
+	wchar_t uri[1024];
+	wcsncpy_s(uri, arg, _TRUNCATE);
 
-	TCHAR *p = _tcschr(uri, _T(':'));
+	wchar_t *p = wcschr(uri, ':');
 	if (p == NULL)
 		return 1;
 
-	TCHAR pluginPath[MAX_PATH];
-	mir_tstrcpy(pluginPath, p + 1);
-	p = _tcschr(pluginPath, _T('/'));
-	if (p) *p = _T('\\');
+	wchar_t pluginPath[MAX_PATH];
+	mir_wstrcpy(pluginPath, p + 1);
+	p = wcschr(pluginPath, '/');
+	if (p) *p = '\\';
 
 	if (GetFileAttributes(pluginPath) != INVALID_FILE_ATTRIBUTES)
 		return 0;
 
-	ptrT updateUrl(GetDefaultUrl()), baseUrl;
+	ptrW updateUrl(GetDefaultUrl()), baseUrl;
 	SERVLIST hashes(50, CompareHashes);
 	if (!ParseHashes(updateUrl, baseUrl, hashes)) {
 		hListThread = NULL;
@@ -467,9 +480,9 @@ static INT_PTR ParseUriService(WPARAM, LPARAM lParam)
 	if (hash == NULL)
 		return 0;
 
-	VARST dirName(_T("%miranda_path%"));
-	TCHAR tszPath[MAX_PATH];
-	mir_sntprintf(tszPath, _T("%s\\%s"), dirName, hash->m_name);
+	VARSW dirName(L"%miranda_path%");
+	wchar_t tszPath[MAX_PATH];
+	mir_snwprintf(tszPath, L"%s\\%s", dirName, hash->m_name);
 	FILEINFO *fileInfo = ServerEntryToFileInfo(*hash, baseUrl, tszPath);
 
 	FILELIST *fileList = new FILELIST(1);

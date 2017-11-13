@@ -65,7 +65,7 @@ char* u2a(const WCHAR *pszUnicode,BOOL fMirCp)
 }
 
 // mir_free() the return value
-TCHAR* s2t(const void *pszStr,DWORD fUnicode,BOOL fMirCp)
+wchar_t* s2t(const void *pszStr,DWORD fUnicode,BOOL fMirCp)
 {
 
 	if(fUnicode) return mir_wstrdup((WCHAR*)pszStr);
@@ -74,7 +74,7 @@ TCHAR* s2t(const void *pszStr,DWORD fUnicode,BOOL fMirCp)
 }
 
 // mir_free() the return value
-void* t2s(const TCHAR *pszStr,DWORD fUnicode,BOOL fMirCp)
+void* t2s(const wchar_t *pszStr,DWORD fUnicode,BOOL fMirCp)
 {
 
 	if (!fUnicode) return (void*)u2a(pszStr,fMirCp);
@@ -110,16 +110,12 @@ static int EnumPrefixSettingsProc(const char *pszSetting,LPARAM lParam)
 // mir_free() the returned pSettings after use
 BOOL EnumDbPrefixSettings(const char *pszModule,const char *pszSettingPrefix,char ***pSettings,int *pnSettingsCount)
 {
-	DBCONTACTENUMSETTINGS dbces;
 	struct EnumPrefixSettingsParams param;
-	dbces.szModule = pszModule;
-	dbces.pfnEnumProc = EnumPrefixSettingsProc;
-	dbces.lParam = (LPARAM)&param;
 	param.settings = NULL;
 	param.nSettingsCount = 0;
 	param.pszPrefix = pszSettingPrefix;
 	param.nPrefixLen = (int)mir_strlen(pszSettingPrefix);
-	CallService(MS_DB_CONTACT_ENUMSETTINGS, 0, (LPARAM)&dbces);
+	db_enum_settings(NULL, EnumPrefixSettingsProc, pszModule, &param);
 	*pnSettingsCount = param.nSettingsCount;
 	*pSettings = param.settings;
 	return param.nSettingsCount != 0;
@@ -139,26 +135,16 @@ static void MessageBoxIndirectFree(void *param)
 void ShowInfoMessage(BYTE flags,const char *pszTitle,const char *pszTextFmt,...)
 {
 	char szText[256]; /* max for systray */
-	MSGBOXPARAMSA *mbp;
 
 	va_list va;
 	va_start(va,pszTextFmt);
 	mir_vsnprintf(szText,_countof(szText),pszTextFmt,va);
 	va_end(va);
 
-	if(ServiceExists(MS_CLIST_SYSTRAY_NOTIFY)) {
-		MIRANDASYSTRAYNOTIFY msn;
-		msn.cbSize=sizeof(msn);
-		msn.szProto=NULL;
-		msn.szInfoTitle=(char*)pszTitle;
-		msn.szInfo=(char*)szText;
-		msn.uTimeout=30000; /* max timeout */
-		msn.dwInfoFlags=flags;
-		if (!CallServiceSync(MS_CLIST_SYSTRAY_NOTIFY,0,(LPARAM)&msn))
-			return; /* success */
-	}
+	if (!Clist_TrayNotifyA(NULL, pszTitle, szText, flags, 30000)) // success 
+		return;
 
-	mbp = (MSGBOXPARAMSA*)mir_calloc(sizeof(*mbp));
+	MSGBOXPARAMSA *mbp = (MSGBOXPARAMSA*)mir_calloc(sizeof(*mbp));
 	if(mbp == NULL)
 		return;
 	

@@ -139,7 +139,7 @@ end;
 function isVarsInstalled:bool;
 {$IFDEF AllowInline}inline;{$ENDIF}
 begin
-  result:=ServiceExists(MS_VARS_FORMATSTRING)<>0;
+  result:=ServiceExists(MS_VARS_FORMATSTRING);
 end;
 
 function ParseVarString(astr:PAnsiChar;aContact:TMCONTACT=0;extra:PAnsiChar=nil):PAnsiChar;
@@ -228,7 +228,7 @@ procedure ShowPopupW(text:PWideChar;title:PWideChar=nil);
 var
   ppdu:TPOPUPDATAW;
 begin
-  if ServiceExists(MS_POPUP_ADDPOPUPW)=0 then
+  if not ServiceExists(MS_POPUP_ADDPOPUPW) then
     exit;
 
   FillChar(ppdu,SizeOf(TPOPUPDATAW),0);
@@ -299,7 +299,7 @@ var
   altfilename,filename:array [0..127] of AnsiChar;
   p:PAnsiChar;
 begin
-  CallService(MS_DB_GETPROFILEPATH,300,lparam(@profilepath));
+  Profile_GetPathA(300,@profilepath);
   p:=StrEnd(profilepath);
   p^:='\'; inc(p);
   p^:=#0;
@@ -309,7 +309,7 @@ begin
   begin
     StrCopy(filename,prefix);
     p:=StrEnd(filename);
-    CallService(MS_DB_GETPROFILENAME,SizeOf(filename)-integer(p-PAnsiChar(@filename)),lparam(p));
+    Profile_GetNameA(Sizeof(filename)-integer(p-PAnsiChar(@filename)),p);
     ChangeExt(filename,ext);
     result:=CheckPath(filename,profilepath,path);
   end
@@ -334,11 +334,6 @@ end;
 
 // Import plugin function adaptation
 function CreateGroupW(name:PWideChar;hContact:TMCONTACT):integer;
-var
-  groupId:integer;
-  groupIdStr:array [0..10] of AnsiChar;
-  grbuf:array [0..127] of WideChar;
-  p:PWideChar;
 begin
   if (name=nil) or (name^=#0) then
   begin
@@ -346,41 +341,10 @@ begin
     exit;
   end;
 
-  StrCopyW(@grbuf[1],name);
-  grbuf[0]:=WideChar(1 or GROUPF_EXPANDED);
-
-  // Check for duplicate & find unused id
-  groupId:=0;
-  repeat
-    p:=DBReadUnicode(0,'CListGroups',IntToStr(groupIdStr,groupId));
-    if p=nil then
-      break;
-
-    if StrCmpW(p+1,@grbuf[1])=0 then
-    begin
-      if hContact<>0 then
-        DBWriteUnicode(hContact,strCList,clGroup,@grbuf[1]);
-
-      mFreeMem(p);
-      result:=0;
-      exit;
-    end;
-
-    mFreeMem(p);
-    inc(groupId);
-  until false;
-
-  DBWriteUnicode(0,'CListGroups',groupIdStr,grbuf);
+  Clist_GroupCreate(0,name);
 
   if hContact<>0 then
-    DBWriteUnicode(hContact,strCList,clGroup,@grbuf[1]);
-
-  p:=StrRScanW(grbuf,'\');
-  if p<>nil then
-  begin
-    p^:=#0;
-    CreateGroupW(grbuf+1,0);
-  end;
+    DBWriteUnicode(hContact,strCList,clGroup,name);
 
   result:=1;
 end;
@@ -470,16 +434,14 @@ begin
   if hNetLib=0 then
   begin
     FillChar(nlu,SizeOf(nlu),0);
-    nlu.cbSize          :=SizeOf(nlu);
-    nlu.flags           :=NUF_HTTPCONNS or NUF_NOHTTPSOPTION or NUF_OUTGOING or NUF_NOOPTIONS;
+    nlu.flags :=NUF_HTTPCONNS or NUF_NOHTTPSOPTION or NUF_OUTGOING or NUF_NOOPTIONS;
     nlu.szSettingsModule:='dummy';
-    hTmpNetLib:=CallService(MS_NETLIB_REGISTERUSER,0,lparam(@nlu));
+    hTmpNetLib:=Netlib_RegisterUser(@nlu);
   end
   else
     hTmpNetLib:=hNetLib;
 
-  resp:=pointer(CallService(MS_NETLIB_HTTPTRANSACTION,hTmpNetLib,lparam(@req)));
-
+  resp:=Netlib_HttpTransaction(hTmpNetLib,@req);
   if resp<>nil then
   begin
     if resp^.resultCode=200 then
@@ -490,11 +452,11 @@ begin
     begin
       result:=PAnsiChar(int_ptr(resp^.resultCode and $0FFF));
     end;
-    CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT,0,lparam(resp));
+    Netlib_FreeHttpRequest(resp);
   end;
 
-  if (hNetLib=0) and (nlu.cbSize<>0) then
-    CallService(MS_NETLIB_CLOSEHANDLE,hTmpNetLib,0);
+  if (hNetLib=0) and (nlu.flags<>0) then
+    Netlib_CloseHandle(hTmpNetLib);
 end;
 
 (*
@@ -502,8 +464,7 @@ static int __inline NLog(AnsiChar *msg) {
   return CallService(MS_NETLIB_LOG, (WPARAM)hNetlibUser, (LPARAM)msg);
 }
 *)
-function GetFile(url:PAnsiChar;save_file:PAnsiChar;
-                 hNetLib:THANDLE=0;recurse_count:integer=0):bool;
+function GetFile(url:PAnsiChar; save_file:PAnsiChar; hNetLib:THANDLE=0; recurse_count:integer=0):bool;
 var
   nlu:TNETLIBUSER;
   req :TNETLIBHTTPREQUEST;
@@ -527,14 +488,12 @@ begin
   FillChar(nlu,SizeOf(nlu),0);
   if hNetLib=0 then
   begin
-    nlu.cbSize          :=SizeOf(nlu);
-    nlu.flags           :=NUF_HTTPCONNS or NUF_NOHTTPSOPTION or NUF_OUTGOING or NUF_NOOPTIONS;
+    nlu.flags := NUF_HTTPCONNS or NUF_NOHTTPSOPTION or NUF_OUTGOING or NUF_NOOPTIONS;
     nlu.szSettingsModule:='dummy';
-    hNetLib:=CallService(MS_NETLIB_REGISTERUSER,0,lparam(@nlu));
+    hNetLib:=Netlib_RegisterUser(@nlu);
   end;
 
-  resp:=pointer(CallService(MS_NETLIB_HTTPTRANSACTION,hNetLib,lparam(@req)));
-
+  resp:=Netlib_HttpTransaction(hNetLib,@req);
   if resp<>nil then
   begin
     if resp^.resultCode=200 then
@@ -552,28 +511,17 @@ begin
       // get new location
       for i:=0 to resp^.headersCount-1 do
       begin
-        //MessageBox(0,resp^.headers[i].szValue, resp^.headers[i].szName,MB_OK);
         if StrCmp(resp^.headers^[i].szName,'Location')=0 then
         begin
           result:=GetFile(resp^.headers^[i].szValue,save_file,hNetLib,recurse_count+1);
           break;
         end
       end;
-    end
-    else
-    begin
-{
-      _stprintf(buff, TranslateT("Failed to download \"%s\" - Invalid response, code %d"), plugin_name, resp->resultCode);
-
-      ShowError(buff);
-      AnsiChar *ts = GetAString(buff);
-      NLog(ts);
-}
     end;
-    CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT,0,lparam(resp));
+    Netlib_FreeHttpRequest(resp);
 
-    if nlu.cbSize<>0 then
-      CallService(MS_NETLIB_CLOSEHANDLE,hNetLib,0);
+    if nlu.flags<>0 then
+      Netlib_CloseHandle(hNetLib);
   end;
 end;
 
@@ -595,7 +543,7 @@ var
 begin
   result:=nil;
   nlus.cbSize:=SizeOf(nlus);
-  if CallService(MS_NETLIB_GETUSERSETTINGS,hNetLib,lparam(@nlus))<>0 then
+  if Netlib_GetUserSettings(hNetLib,@nlus)<>0 then
   begin
     if nlus.useProxy<>0 then
     begin
@@ -655,13 +603,11 @@ begin
   req.flags      :=NLHRF_NODUMP;
 
   FillChar(nlu,SizeOf(nlu),0);
-  nlu.cbSize          :=SizeOf(nlu);
-  nlu.flags           :=NUF_HTTPCONNS or NUF_NOHTTPSOPTION or NUF_OUTGOING or NUF_NOOPTIONS;
+  nlu.flags := NUF_HTTPCONNS or NUF_NOHTTPSOPTION or NUF_OUTGOING or NUF_NOOPTIONS;
   nlu.szSettingsModule:='dummy';
-  hNetLib:=CallService(MS_NETLIB_REGISTERUSER,0,lparam(@nlu));
+  hNetLib:=Netlib_RegisterUser(@nlu);
 
-  resp:=pointer(CallService(MS_NETLIB_HTTPTRANSACTION,hNetLib,lparam(@req)));
-
+  resp:=Netlib_HttpTransaction(hNetLib,@req);
   if resp<>nil then
   begin
     if resp^.resultCode=200 then
@@ -674,9 +620,9 @@ begin
 //      if result<>0 then
 //        DeleteObject(SendMessage(wnd,STM_SETIMAGE,IMAGE_BITMAP,result)); //!!
     end;
-    CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT,0,lparam(resp));
+    Netlib_FreeHttpRequest(resp);
   end;
-  CallService(MS_NETLIB_CLOSEHANDLE,hNetLib,0);
+  Netlib_CloseHandle(hNetLib);
 end;
 
 function RegisterSingleIcon(resname,ilname,descr,group:PAnsiChar):int;

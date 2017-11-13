@@ -21,11 +21,11 @@
 В мережі
 [Away]
 Відсутній
-[NA]
+[Not available]
 Недоступний
 [Occupied]
 Зайнятий
-[DND]
+[Do not disturb]
 Не турбувати
 [Free for chat]
 Готовий до чату

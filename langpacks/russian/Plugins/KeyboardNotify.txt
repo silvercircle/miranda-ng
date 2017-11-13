@@ -59,9 +59,9 @@
 Отсутствую
 [Occupied]
 Занят
-[NA]
+[Not available]
 Недоступен
-[DND]
+[Do not disturb]
 Не беспокоить
 [Free for chat]
 Готов болтать
@@ -82,7 +82,7 @@
 [xStatuses]
 xСтатусы
 [Keys to flash]
-Чем моргать
+Чем мигать
 [Flashing effects]
 Мигать
 [All at the same time]
@@ -106,7 +106,7 @@ xСтатусы
 [&Preview]
 &Тест
 [Emulate key presses (Use this option if you are using a USB keyboard)]
-Эмулировать нажатия клавиш (Только для USB-клавиатур)
+Эмулировать нажатия клавиш (только для USB-клавиатур)
 [Create/Edit Themes]
 Создать/Редактировать тему
 [Theme]
@@ -175,10 +175,18 @@ xСтатусы
 право -> лево
 [left <-> right]
 лево <-> право
-[Keyboard Flash]
-Мигание клавиатуры
-[Events]
-События
+[\n; Automatically generated Keyboard Notify Theme file\n\n\n]
+\n; Автоматически созданный файл темы Keyboard Notify\n\n\n
+[\n; End of automatically generated Keyboard Notify Theme file\n]
+\n; Окончание автоматически созданного файла темы Keyboard Notify\n
+[None]
+Нет
+[Protocol]
+Протокол
+[Keyboard Notify Theme]
+Тема уведомления
+[All Files]
+Все файлы
 [Accounts]
 Учётные записи
 [Rules]
@@ -187,11 +195,7 @@ xСтатусы
 Мигание
 [Themes]
 Темы
-[Protocol]
-Протокол
-[Keyboard Notify Theme]
-Тема уведомления
-[All Files]
-Все файлы
-[None]
-Нет
+[Keyboard Flash]
+Мигание клавиатуры
+[Events]
+События

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -30,7 +30,7 @@ static BOOL bModuleInitialized = FALSE;
 HANDLE hConnectionHeaderMutex, hConnectionOpenMutex;
 DWORD g_LastConnectionTick;
 int connectionTimeout;
-HANDLE hSendEvent = NULL, hRecvEvent = NULL;
+HANDLE hSendEvent = nullptr, hRecvEvent = nullptr;
 
 typedef BOOL (WINAPI *tGetProductInfo)(DWORD, DWORD, DWORD, DWORD, PDWORD);
 
@@ -68,7 +68,7 @@ void NetlibInitializeNestedCS(NetlibNestedCriticalSection *nlncs)
 {
 	nlncs->dwOwningThreadId = 0;
 	nlncs->lockCount = 0;
-	nlncs->hMutex = CreateMutex(NULL, FALSE, NULL);
+	nlncs->hMutex = CreateMutex(nullptr, FALSE, nullptr);
 }
 
 void NetlibDeleteNestedCS(NetlibNestedCriticalSection *nlncs)
@@ -82,7 +82,7 @@ int NetlibEnterNestedCS(NetlibConnection *nlc, int which)
 	DWORD dwCurrentThreadId = GetCurrentThreadId();
 
 	WaitForSingleObject(hConnectionHeaderMutex, INFINITE);
-	if (nlc == NULL || nlc->handleType != NLH_CONNECTION) {
+	if (nlc == nullptr || nlc->handleType != NLH_CONNECTION) {
 		ReleaseMutex(hConnectionHeaderMutex);
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return 0;
@@ -115,7 +115,7 @@ void NetlibLeaveNestedCS(NetlibNestedCriticalSection *nlncs)
 static INT_PTR GetNetlibUserSettingInt(const char *szUserModule, const char *szSetting, int defValue)
 {
 	DBVARIANT dbv;
-	if (db_get(NULL, szUserModule, szSetting, &dbv) && db_get(NULL, "Netlib", szSetting, &dbv))
+	if (db_get(0, szUserModule, szSetting, &dbv) && db_get(0, "Netlib", szSetting, &dbv))
 		return defValue;
 
 	if (dbv.type == DBVT_BYTE) return dbv.bVal;
@@ -123,28 +123,26 @@ static INT_PTR GetNetlibUserSettingInt(const char *szUserModule, const char *szS
 	return dbv.dVal;
 }
 
-static char *GetNetlibUserSettingString(const char *szUserModule, const char *szSetting)
+static char* GetNetlibUserSettingString(const char *szUserModule, const char *szSetting)
 {
-	char *szRet = db_get_sa(NULL, szUserModule, szSetting);
-	if (szRet == NULL)
-		if ((szRet = db_get_sa(NULL, "Netlib", szSetting)) == NULL)
-			return NULL;
+	char *szRet = db_get_sa(0, szUserModule, szSetting);
+	if (szRet == nullptr)
+		if ((szRet = db_get_sa(0, "Netlib", szSetting)) == nullptr)
+			return nullptr;
 
 	return szRet;
 }
 
-static INT_PTR NetlibRegisterUser(WPARAM, LPARAM lParam)
+/////////////////////////////////////////////////////////////////////////////////////////
+
+MIR_APP_DLL(HNETLIBUSER) Netlib_RegisterUser(const NETLIBUSER *nlu)
 {
-	NETLIBUSER *nlu = (NETLIBUSER*)lParam;
-	if (nlu == NULL || nlu->cbSize != sizeof(NETLIBUSER) || nlu->szSettingsModule == NULL ||
-		 (!(nlu->flags & NUF_NOOPTIONS) && nlu->szDescriptiveName == NULL) ||
-		 (nlu->flags & NUF_HTTPGATEWAY && (nlu->pfnHttpGatewayInit == NULL)))
-	{
+	if (nlu == nullptr || nlu->szSettingsModule == nullptr || (!(nlu->flags & NUF_NOOPTIONS) && nlu->szDescriptiveName.w == nullptr)) {
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return 0;
 	}
 
-	NetlibUser *thisUser = (NetlibUser*)mir_calloc(sizeof(NetlibUser));
+	HNETLIBUSER thisUser = (HNETLIBUSER)mir_calloc(sizeof(NetlibUser));
 	thisUser->handleType = NLH_USER;
 	thisUser->user = *nlu;
 
@@ -159,12 +157,12 @@ static INT_PTR NetlibRegisterUser(WPARAM, LPARAM lParam)
 		return 0;
 	}
 
-	if (nlu->szDescriptiveName)
-		thisUser->user.ptszDescriptiveName = (thisUser->user.flags&NUF_UNICODE ? mir_u2t((WCHAR*)nlu->ptszDescriptiveName) : mir_a2t(nlu->szDescriptiveName));
+	if (nlu->szDescriptiveName.w)
+		thisUser->user.szDescriptiveName.w = (thisUser->user.flags & NUF_UNICODE) ? mir_wstrdup(nlu->szDescriptiveName.w) : mir_a2u(nlu->szDescriptiveName.a);
 
-	if ((thisUser->user.szSettingsModule = mir_strdup(nlu->szSettingsModule)) == NULL
-	   || (nlu->szDescriptiveName && thisUser->user.ptszDescriptiveName == NULL)
-	   || (nlu->szHttpGatewayUserAgent && (thisUser->user.szHttpGatewayUserAgent = mir_strdup(nlu->szHttpGatewayUserAgent)) == NULL))
+	if ((thisUser->user.szSettingsModule = mir_strdup(nlu->szSettingsModule)) == nullptr
+		|| (nlu->szDescriptiveName.w && thisUser->user.szDescriptiveName.w == nullptr)
+	   || (nlu->szHttpGatewayUserAgent && (thisUser->user.szHttpGatewayUserAgent = mir_strdup(nlu->szHttpGatewayUserAgent)) == nullptr))
 	{
 		mir_free(thisUser);
 		SetLastError(ERROR_OUTOFMEMORY);
@@ -173,14 +171,14 @@ static INT_PTR NetlibRegisterUser(WPARAM, LPARAM lParam)
 	if (nlu->szHttpGatewayHello)
 		thisUser->user.szHttpGatewayHello = mir_strdup(nlu->szHttpGatewayHello);
 	else
-		thisUser->user.szHttpGatewayHello = NULL;
+		thisUser->user.szHttpGatewayHello = nullptr;
 
 	thisUser->settings.cbSize = sizeof(NETLIBUSERSETTINGS);
 	thisUser->settings.useProxy = GetNetlibUserSettingInt(thisUser->user.szSettingsModule, "NLUseProxy", 0);
 	thisUser->settings.proxyType = GetNetlibUserSettingInt(thisUser->user.szSettingsModule, "NLProxyType", PROXYTYPE_SOCKS5);
 	if (thisUser->user.flags&NUF_NOHTTPSOPTION && thisUser->settings.proxyType == PROXYTYPE_HTTPS)
 		thisUser->settings.proxyType = PROXYTYPE_HTTP;
-	if (!(thisUser->user.flags&(NUF_HTTPCONNS|NUF_HTTPGATEWAY)) && thisUser->settings.proxyType == PROXYTYPE_HTTP) {
+	if (!(thisUser->user.flags & NUF_HTTPCONNS) && thisUser->settings.proxyType == PROXYTYPE_HTTP) {
 		thisUser->settings.useProxy = 0;
 		thisUser->settings.proxyType = PROXYTYPE_SOCKS5;
 	}
@@ -201,15 +199,14 @@ static INT_PTR NetlibRegisterUser(WPARAM, LPARAM lParam)
 
 	mir_cslock lck(csNetlibUser);
 	netlibUser.insert(thisUser);
-	return (INT_PTR)thisUser;
+	return thisUser;
 }
 
-static INT_PTR NetlibGetUserSettings(WPARAM wParam, LPARAM lParam)
-{
-	NETLIBUSERSETTINGS *nlus = (NETLIBUSERSETTINGS*)lParam;
-	NetlibUser *nlu = (NetlibUser*)wParam;
+/////////////////////////////////////////////////////////////////////////////////////////
 
-	if (GetNetlibHandleType(nlu) != NLH_USER || nlus == NULL || nlus->cbSize != sizeof(NETLIBUSERSETTINGS)) {
+MIR_APP_DLL(int) Netlib_GetUserSettings(HNETLIBUSER nlu, NETLIBUSERSETTINGS *nlus)
+{
+	if (GetNetlibHandleType(nlu) != NLH_USER || nlus == nullptr || nlus->cbSize != sizeof(NETLIBUSERSETTINGS)) {
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return 0;
 	}
@@ -217,12 +214,9 @@ static INT_PTR NetlibGetUserSettings(WPARAM wParam, LPARAM lParam)
 	return 1;
 }
 
-static INT_PTR NetlibSetUserSettings(WPARAM wParam, LPARAM lParam)
+MIR_APP_DLL(int) Netlib_SetUserSettings(HNETLIBUSER nlu, const NETLIBUSERSETTINGS *nlus)
 {
-	NETLIBUSERSETTINGS *nlus = (NETLIBUSERSETTINGS*)lParam;
-	NetlibUser *nlu = (NetlibUser*)wParam;
-
-	if (GetNetlibHandleType(nlu) != NLH_USER || nlus == NULL || nlus->cbSize != sizeof(NETLIBUSERSETTINGS)) {
+	if (GetNetlibHandleType(nlu) != NLH_USER || nlus == nullptr || nlus->cbSize != sizeof(NETLIBUSERSETTINGS)) {
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return 0;
 	}
@@ -230,29 +224,32 @@ static INT_PTR NetlibSetUserSettings(WPARAM wParam, LPARAM lParam)
 	return 1;
 }
 
-void NetlibDoClose(NetlibConnection *nlc, bool noShutdown)
+/////////////////////////////////////////////////////////////////////////////////////////
+
+void NetlibDoCloseSocket(NetlibConnection *nlc, bool noShutdown)
 {
 	if (nlc->s == INVALID_SOCKET) return;
 
-	NetlibLogf(nlc->nlu, "(%p:%u) Connection closed internal", nlc, nlc->s);
+	Netlib_Logf(nlc->nlu, "(%p:%u) Connection closed internal", nlc, nlc->s);
 	if (nlc->hSsl) {
-		if (!noShutdown) sslApi.shutdown(nlc->hSsl);
+		if (!noShutdown)
+			sslApi.shutdown(nlc->hSsl);
 		sslApi.sfree(nlc->hSsl);
-		nlc->hSsl = NULL;
+		nlc->hSsl = nullptr;
 	}
 	closesocket(nlc->s);
 	nlc->s = INVALID_SOCKET;
 }
 
-INT_PTR NetlibCloseHandle(WPARAM wParam, LPARAM)
+MIR_APP_DLL(int) Netlib_CloseHandle(HANDLE hNetlib)
 {
-	if (wParam == NULL)
+	if (hNetlib == nullptr)
 		return 0;
 
-	switch(GetNetlibHandleType((void*)wParam)) {
+	switch (GetNetlibHandleType(hNetlib)) {
 	case NLH_USER:
 		{
-			NetlibUser *nlu = (NetlibUser*)wParam;
+			NetlibUser *nlu = (NetlibUser*)hNetlib;
 			{
 				mir_cslock lck(csNetlibUser);
 				int i = netlibUser.getIndex(nlu);
@@ -262,61 +259,50 @@ INT_PTR NetlibCloseHandle(WPARAM wParam, LPARAM)
 
 			NetlibFreeUserSettingsStruct(&nlu->settings);
 			mir_free(nlu->user.szSettingsModule);
-			mir_free(nlu->user.szDescriptiveName);
+			mir_free(nlu->user.szDescriptiveName.a);
 			mir_free(nlu->user.szHttpGatewayHello);
 			mir_free(nlu->user.szHttpGatewayUserAgent);
 			mir_free(nlu->szStickyHeaders);
-			break;
-		}
-	case NLH_CONNECTION:
-		{
-			NetlibConnection *nlc = (struct NetlibConnection*)wParam;
-			HANDLE waitHandles[4];
-			DWORD waitResult;
-
-			WaitForSingleObject(hConnectionHeaderMutex, INFINITE);
-			if (nlc->usingHttpGateway)
-				HttpGatewayRemovePacket(nlc, -1);
-			else {
-				if (nlc->s != INVALID_SOCKET)
-					NetlibDoClose(nlc, nlc->termRequested);
-				if (nlc->s2 != INVALID_SOCKET) closesocket(nlc->s2);
-				nlc->s2 = INVALID_SOCKET;
-			}
-			ReleaseMutex(hConnectionHeaderMutex);
-
-			waitHandles[0] = hConnectionHeaderMutex;
-			waitHandles[1] = nlc->hOkToCloseEvent;
-			waitHandles[2] = nlc->ncsRecv.hMutex;
-			waitHandles[3] = nlc->ncsSend.hMutex;
-			waitResult = WaitForMultipleObjects(_countof(waitHandles), waitHandles, TRUE, INFINITE);
-			if (waitResult >= WAIT_OBJECT_0 + _countof(waitHandles)) {
-				ReleaseMutex(hConnectionHeaderMutex);
-				SetLastError(ERROR_INVALID_PARAMETER);  //already been closed
-				return 0;
-			}
-			nlc->handleType = 0;
-			mir_free(nlc->nlhpi.szHttpPostUrl);
-			mir_free(nlc->nlhpi.szHttpGetUrl);
-			mir_free(nlc->dataBuffer);
-			mir_free((char*)nlc->nloc.szHost);
-			mir_free(nlc->szNewUrl);
-			mir_free(nlc->szProxyServer);
-			NetlibDeleteNestedCS(&nlc->ncsRecv);
-			NetlibDeleteNestedCS(&nlc->ncsSend);
-			CloseHandle(nlc->hOkToCloseEvent);
-			DeleteCriticalSection(&nlc->csHttpSequenceNums);
-			ReleaseMutex(hConnectionHeaderMutex);
-			NetlibLogf(nlc->nlu, "(%p:%u) Connection closed", nlc, nlc->s);
 		}
 		break;
 
+	case NLH_CONNECTION:
+		WaitForSingleObject(hConnectionHeaderMutex, INFINITE);
+		{
+			NetlibConnection *nlc = (NetlibConnection*)hNetlib;
+			if (GetNetlibHandleType(nlc) == NLH_CONNECTION) {
+				if (nlc->usingHttpGateway)
+					HttpGatewayRemovePacket(nlc, -1);
+				else {
+					if (nlc->s != INVALID_SOCKET)
+						NetlibDoCloseSocket(nlc, nlc->termRequested);
+					if (nlc->s2 != INVALID_SOCKET)
+						closesocket(nlc->s2);
+					nlc->s2 = INVALID_SOCKET;
+				}
+				ReleaseMutex(hConnectionHeaderMutex);
+
+				HANDLE waitHandles[4] = { hConnectionHeaderMutex, nlc->hOkToCloseEvent, nlc->ncsRecv.hMutex, nlc->ncsSend.hMutex };
+				DWORD waitResult = WaitForMultipleObjects(_countof(waitHandles), waitHandles, TRUE, INFINITE);
+				if (waitResult >= WAIT_OBJECT_0 + _countof(waitHandles)) {
+					ReleaseMutex(hConnectionHeaderMutex);
+					SetLastError(ERROR_INVALID_PARAMETER);  //already been closed
+					return 0;
+				}
+
+				Netlib_Logf(nlc->nlu, "(%p:%u) Connection closed", nlc, nlc->s);
+				delete nlc;
+			}
+		}
+		ReleaseMutex(hConnectionHeaderMutex);
+		return 1;
+
 	case NLH_BOUNDPORT:
-		return NetlibFreeBoundPort((struct NetlibBoundPort*)wParam);
+		return NetlibFreeBoundPort((NetlibBoundPort*)hNetlib);
 
 	case NLH_PACKETRECVER:
 		{
-			struct NetlibPacketRecver *nlpr = (struct NetlibPacketRecver*)wParam;
+			struct NetlibPacketRecver *nlpr = (NetlibPacketRecver*)hNetlib;
 			mir_free(nlpr->packetRecver.buffer);
 		}
 		break;
@@ -325,25 +311,27 @@ INT_PTR NetlibCloseHandle(WPARAM wParam, LPARAM)
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return 0;
 	}
-	mir_free((void*)wParam);
+	mir_free(hNetlib);
 	return 1;
 }
 
-static INT_PTR NetlibGetSocket(WPARAM wParam, LPARAM)
+/////////////////////////////////////////////////////////////////////////////////////////
+
+MIR_APP_DLL(UINT_PTR) Netlib_GetSocket(HNETLIBCONN hConnection)
 {
 	SOCKET s;
-	if (wParam == 0) {
+	if (hConnection == 0) {
 		s = INVALID_SOCKET;
 		SetLastError(ERROR_INVALID_PARAMETER);
 	}
 	else {
 		WaitForSingleObject(hConnectionHeaderMutex, INFINITE);
-		switch (GetNetlibHandleType((void*)wParam)) {
+		switch (GetNetlibHandleType(hConnection)) {
 		case NLH_CONNECTION:
-			s = ((struct NetlibConnection*)wParam)->s;
+			s = ((NetlibConnection*)hConnection)->s;
 			break;
 		case NLH_BOUNDPORT:
-			s = ((struct NetlibBoundPort*)wParam)->s;
+			s = ((NetlibBoundPort*)hConnection)->s;
 			break;
 		default:
 			s = INVALID_SOCKET;
@@ -355,74 +343,58 @@ static INT_PTR NetlibGetSocket(WPARAM wParam, LPARAM)
 	return s;
 }
 
-INT_PTR NetlibStringToAddressSrv(WPARAM wParam, LPARAM lParam)
+/////////////////////////////////////////////////////////////////////////////////////////
+
+MIR_APP_DLL(HNETLIBUSER) Netlib_GetConnNlu(HANDLE hConn)
 {
-	return (INT_PTR)!NetlibStringToAddress((char*)wParam, (SOCKADDR_INET_M*)lParam);
+	if (GetNetlibHandleType(hConn) != NLH_CONNECTION)
+		return nullptr;
+
+	return ((NetlibConnection*)hConn)->nlu;
 }
 
-INT_PTR NetlibAddressToStringSrv(WPARAM wParam, LPARAM lParam)
-{
-	if (wParam) {
-		SOCKADDR_INET_M iaddr = {0};
-		iaddr.Ipv4.sin_family = AF_INET;
-		iaddr.Ipv4.sin_addr.s_addr = htonl((unsigned)lParam);
-		return (INT_PTR)NetlibAddressToString(&iaddr);
-	}
-	return (INT_PTR)NetlibAddressToString((SOCKADDR_INET_M*)lParam);
-}
+/////////////////////////////////////////////////////////////////////////////////////////
 
-INT_PTR NetlibGetConnectionInfoSrv(WPARAM wParam, LPARAM lParam)
+MIR_APP_DLL(void) Netlib_Shutdown(HNETLIBCONN h)
 {
-	NetlibGetConnectionInfo((NetlibConnection*)wParam, (NETLIBCONNINFO*)lParam);
-	return 0;
-}
-
-INT_PTR NetlibGetMyIp(WPARAM wParam, LPARAM)
-{
-	return (INT_PTR)GetMyIp((unsigned)wParam);
-}
-
-INT_PTR NetlibShutdown(WPARAM wParam, LPARAM)
-{
-	if (wParam) {
+	if (h) {
 		WaitForSingleObject(hConnectionHeaderMutex, INFINITE);
-		switch(GetNetlibHandleType((void*)wParam)) {
+		switch (GetNetlibHandleType(h)) {
 		case NLH_CONNECTION:
 			{
-				NetlibConnection *nlc = (NetlibConnection*)wParam;
+				NetlibConnection *nlc = h;
 				if (!nlc->termRequested) {
 					if (nlc->hSsl) sslApi.shutdown(nlc->hSsl);
-					if (nlc->s != INVALID_SOCKET) shutdown(nlc->s, 2);
-					if (nlc->s2 != INVALID_SOCKET) shutdown(nlc->s2, 2);
+					if (nlc->s != INVALID_SOCKET) shutdown(nlc->s, SD_BOTH);
+					if (nlc->s2 != INVALID_SOCKET) shutdown(nlc->s2, SD_BOTH);
 					nlc->termRequested = true;
 				}
 			}
 			break;
 
 		case NLH_BOUNDPORT:
-			struct NetlibBoundPort* nlb = (struct NetlibBoundPort*)wParam;
+			NetlibBoundPort *nlb = (NetlibBoundPort*)h;
 			if (nlb->s != INVALID_SOCKET)
-				shutdown(nlb->s, 2);
+				shutdown(nlb->s, SD_BOTH);
 			break;
 		}
 		ReleaseMutex(hConnectionHeaderMutex);
 	}
-	return 0;
 }
 
 void UnloadNetlibModule(void)
 {
-	if (!bModuleInitialized || hConnectionHeaderMutex == NULL) return;
+	if (!bModuleInitialized || hConnectionHeaderMutex == nullptr) return;
 
 	NetlibUnloadIeProxy();
 	NetlibUPnPDestroy();
 	NetlibLogShutdown();
 
-	DestroyHookableEvent(hRecvEvent); hRecvEvent = NULL;
-	DestroyHookableEvent(hSendEvent); hSendEvent = NULL;
+	DestroyHookableEvent(hRecvEvent); hRecvEvent = nullptr;
+	DestroyHookableEvent(hSendEvent); hSendEvent = nullptr;
 
 	for (int i = netlibUser.getCount(); i > 0; i--)
-		NetlibCloseHandle((WPARAM)netlibUser[i-1], 0);
+		Netlib_CloseHandle(netlibUser[i-1]);
 
 	CloseHandle(hConnectionHeaderMutex);
 	if (hConnectionOpenMutex)
@@ -432,15 +404,14 @@ void UnloadNetlibModule(void)
 
 int LoadNetlibModule(void)
 {
-	WSADATA wsadata;
-
 	bModuleInitialized = TRUE;
 
+	WSADATA wsadata;
 	WSAStartup(MAKEWORD(2, 2), &wsadata);
 
 	HookEvent(ME_OPT_INITIALISE, NetlibOptInitialise);
 
-	hConnectionHeaderMutex = CreateMutex(NULL, FALSE, NULL);
+	hConnectionHeaderMutex = CreateMutex(nullptr, FALSE, nullptr);
 	NetlibLogInit();
 
 	connectionTimeout = 0;
@@ -455,7 +426,7 @@ int LoadNetlibModule(void)
 		else if (osvi.dwMajorVersion == 6 && osvi.wServicePackMajor < 2) {
 			DWORD dwType = 0;
 			tGetProductInfo pGetProductInfo = (tGetProductInfo) GetProcAddress(GetModuleHandleA("kernel32"), "GetProductInfo");
-			if (pGetProductInfo != NULL) pGetProductInfo(6, 0, 0, 0, &dwType);
+			if (pGetProductInfo != nullptr) pGetProductInfo(6, 0, 0, 0, &dwType);
 			switch(dwType) {
 			case 0x01:  // Vista Ultimate edition have connection limit of 25 / sec - plenty for Miranda
 			case 0x1c:
@@ -480,48 +451,20 @@ int LoadNetlibModule(void)
 			if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, keyn, 0, KEY_QUERY_VALUE, &hSettings) == ERROR_SUCCESS) {
 				DWORD tValueLen, enabled;
 				tValueLen = sizeof(enabled);
-				if (RegQueryValueExA(hSettings, valn, NULL, NULL, (BYTE*)&enabled, &tValueLen) == ERROR_SUCCESS && enabled)
+				if (RegQueryValueExA(hSettings, valn, nullptr, nullptr, (BYTE*)&enabled, &tValueLen) == ERROR_SUCCESS && enabled)
 					connectionTimeout = 150;  // if enabled limit is set to 10 / sec
 				RegCloseKey(hSettings);
 			}
 		}
 	}
 
-	hConnectionOpenMutex = connectionTimeout ? CreateMutex(NULL, FALSE, NULL) : NULL;
+	hConnectionOpenMutex = connectionTimeout ? CreateMutex(nullptr, FALSE, nullptr) : nullptr;
 	g_LastConnectionTick = GetTickCount();
-
-	CreateServiceFunction(MS_NETLIB_REGISTERUSER, NetlibRegisterUser);
-	CreateServiceFunction(MS_NETLIB_GETUSERSETTINGS, NetlibGetUserSettings);
-	CreateServiceFunction(MS_NETLIB_SETUSERSETTINGS, NetlibSetUserSettings);
-	CreateServiceFunction(MS_NETLIB_CLOSEHANDLE, NetlibCloseHandle);
-	CreateServiceFunction(MS_NETLIB_BINDPORT, NetlibBindPort);
-	CreateServiceFunction(MS_NETLIB_OPENCONNECTION, NetlibOpenConnection);
-	CreateServiceFunction(MS_NETLIB_SETHTTPPROXYINFO, NetlibHttpGatewaySetInfo);
-	CreateServiceFunction(MS_NETLIB_SETSTICKYHEADERS, NetlibHttpSetSticky);
-	CreateServiceFunction(MS_NETLIB_GETSOCKET, NetlibGetSocket);
-	CreateServiceFunction(MS_NETLIB_SENDHTTPREQUEST, NetlibHttpSendRequest);
-	CreateServiceFunction(MS_NETLIB_RECVHTTPHEADERS, NetlibHttpRecvHeaders);
-	CreateServiceFunction(MS_NETLIB_FREEHTTPREQUESTSTRUCT, NetlibHttpFreeRequestStruct);
-	CreateServiceFunction(MS_NETLIB_HTTPTRANSACTION, NetlibHttpTransaction);
-	CreateServiceFunction(MS_NETLIB_SEND, NetlibSend);
-	CreateServiceFunction(MS_NETLIB_RECV, NetlibRecv);
-	CreateServiceFunction(MS_NETLIB_SELECT, NetlibSelect);
-	CreateServiceFunction(MS_NETLIB_SELECTEX, NetlibSelectEx);
-	CreateServiceFunction(MS_NETLIB_SHUTDOWN, NetlibShutdown);
-	CreateServiceFunction(MS_NETLIB_CREATEPACKETRECVER, NetlibPacketRecverCreate);
-	CreateServiceFunction(MS_NETLIB_GETMOREPACKETS, NetlibPacketRecverGetMore);
-	CreateServiceFunction(MS_NETLIB_SETPOLLINGTIMEOUT, NetlibHttpSetPollingTimeout);
-	CreateServiceFunction(MS_NETLIB_STARTSSL, NetlibStartSsl);
-	CreateServiceFunction(MS_NETLIB_STRINGTOADDRESS, NetlibStringToAddressSrv);
-	CreateServiceFunction(MS_NETLIB_ADDRESSTOSTRING, NetlibAddressToStringSrv);
-	CreateServiceFunction(MS_NETLIB_GETCONNECTIONINFO, NetlibGetConnectionInfoSrv);
-	CreateServiceFunction(MS_NETLIB_GETMYIP, NetlibGetMyIp);
 
 	hRecvEvent = CreateHookableEvent(ME_NETLIB_FASTRECV);
 	hSendEvent = CreateHookableEvent(ME_NETLIB_FASTSEND);
 
 	NetlibUPnPInit();
-	NetlibSecurityInit();
 	NetlibLoadIeProxy();
 	return 0;
 }

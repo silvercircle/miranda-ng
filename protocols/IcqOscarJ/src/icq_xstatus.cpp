@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2010 Angeli-Ka, Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -29,7 +29,7 @@
 
 #include "stdafx.h"
 #include "m_extraicons.h"
-#include "..\icq_xstatus\src\resource.h"
+#include "../icq_xstatus/src/resource.h"
 
 static HANDLE hXStatusIcons[XSTATUS_COUNT];
 static int    hXStatusCListIcons[XSTATUS_COUNT];
@@ -120,34 +120,34 @@ DWORD CIcqProto::requestXStatusDetails(MCONTACT hContact, BOOL bAllowDelay)
 	return -1; // delayed
 }
 
-static HANDLE LoadXStatusIconLibrary(TCHAR *path, const TCHAR *sub)
+static HANDLE LoadXStatusIconLibrary(wchar_t *path, const wchar_t *sub)
 {
-	TCHAR* p = _tcsrchr(path, '\\');
+	wchar_t* p = wcsrchr(path, '\\');
 	HANDLE hLib;
 
-	mir_tstrcpy(p, sub);
-	mir_tstrcat(p, _T("\\xstatus_ICQ.dll"));
+	mir_wstrcpy(p, sub);
+	mir_wstrcat(p, L"\\xstatus_ICQ.dll");
 	if (hLib = LoadLibrary(path))
 		return hLib;
-	mir_tstrcpy(p, sub);
-	mir_tstrcat(p, _T("\\xstatus_icons.dll"));
+	mir_wstrcpy(p, sub);
+	mir_wstrcat(p, L"\\xstatus_icons.dll");
 	if (hLib = LoadLibrary(path))
 		return hLib;
-	mir_tstrcpy(p, _T("\\"));
+	mir_wstrcpy(p, L"\\");
 	return hLib;
 }
 
-static TCHAR* InitXStatusIconLibrary(TCHAR *buf, size_t buf_size)
+static wchar_t* InitXStatusIconLibrary(wchar_t *buf, size_t buf_size)
 {
-	TCHAR path[2 * MAX_PATH];
+	wchar_t path[2 * MAX_PATH];
 	HMODULE hXStatusIconsDLL;
 
 	// get miranda's exe path
 	GetModuleFileName(NULL, path, MAX_PATH);
 
-	hXStatusIconsDLL = (HMODULE)LoadXStatusIconLibrary(path, _T("\\Icons"));
+	hXStatusIconsDLL = (HMODULE)LoadXStatusIconLibrary(path, L"\\Icons");
 	if (!hXStatusIconsDLL) // TODO: add "Custom Folders" support
-		hXStatusIconsDLL = (HMODULE)LoadXStatusIconLibrary(path, _T("\\Plugins"));
+		hXStatusIconsDLL = (HMODULE)LoadXStatusIconLibrary(path, L"\\Plugins");
 
 	if (hXStatusIconsDLL) {
 		null_strcpy(buf, path, buf_size - 1);
@@ -290,7 +290,7 @@ const char *nameXStatus[XSTATUS_COUNT] = {
 	LPGEN("Kitty"),         //58
 	LPGEN("Sumo"),          //59
 	LPGEN("Broken hearted"),//60
-	LPGEN("Free for Chat"), //62
+	LPGEN("Free for chat"), //62
 	LPGEN("@home"),         //63
 	LPGEN("@work"),         //64
 	LPGEN("Strawberry"),    //65
@@ -758,10 +758,8 @@ static INT_PTR CALLBACK SetXStatusDlgProc(HWND hwndDlg, UINT message, WPARAM wPa
 				db_set_utf(NULL, dat->ppro->m_szModuleName, DBSETTING_XSTATUS_NAME, szValue);
 				SAFE_FREE(&szValue);
 
-				if (dat->bXStatus) {
-					IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_BIG, 0));
-					IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
-				}
+				if (dat->bXStatus)
+					Window_FreeIcon_IcoLib(hwndDlg);
 			}
 			dat->ppro->updateServerCustomStatus(TRUE);
 		}
@@ -853,12 +851,12 @@ void CIcqProto::InitXStatusItems(BOOL bAllowStatus)
 
 	HGENMENU hRoot;
 	{
-		TCHAR szItem[MAX_PATH + 64];
-		mir_sntprintf(szItem, TranslateT("%s Custom Status"), m_tszUserName);
+		wchar_t szItem[MAX_PATH + 64];
+		mir_snwprintf(szItem, TranslateT("%s Custom Status"), m_tszUserName);
 
 		CMenuItem mi;
 		mi.root = pcli->pfnGetProtocolMenu(m_szModuleName);
-		mi.name.t = szItem;
+		mi.name.w = szItem;
 		mi.position = 10001;
 		hRoot = Menu_AddStatusMenuItem(&mi, m_szModuleName);
 	}
@@ -891,12 +889,12 @@ void CIcqProto::InitXStatusItems(BOOL bAllowStatus)
 
 void InitXStatusIcons()
 {
-	TCHAR lib[2 * MAX_PATH] = { 0 };
+	wchar_t lib[2 * MAX_PATH] = { 0 };
 
 	SKINICONDESC sid = { 0 };
 	sid.section.a = "Protocols/" ICQ_PROTOCOL_NAME "/" LPGEN("Custom Status");
-	sid.flags = SIDF_PATH_TCHAR;
-	sid.defaultFile.t = InitXStatusIconLibrary(lib, _countof(lib));
+	sid.flags = SIDF_PATH_UNICODE;
+	sid.defaultFile.w = InitXStatusIconLibrary(lib, _countof(lib));
 
 	for (int i = 0; i < XSTATUS_COUNT; i++) {
 		char szTemp[100];
@@ -947,13 +945,13 @@ INT_PTR CIcqProto::SetXStatusEx(WPARAM, LPARAM lParam)
 
 		if (m_bXStatusEnabled && (pData->flags & CSSF_MASK_NAME)) { // set custom status name
 			if (pData->flags & CSSF_UNICODE)
-				setTString(DBSETTING_XSTATUS_NAME, pData->pwszName);
+				setWString(DBSETTING_XSTATUS_NAME, pData->pwszName);
 			else
 				setString(DBSETTING_XSTATUS_NAME, pData->pszName);
 		}
 		if (pData->flags & CSSF_MASK_MESSAGE) { // set custom status message
 			if (pData->flags & CSSF_UNICODE)
-				setTString(DBSETTING_XSTATUS_MSG, pData->pwszMessage);
+				setWString(DBSETTING_XSTATUS_MSG, pData->pwszMessage);
 			else
 				setString(DBSETTING_XSTATUS_MSG, pData->pszMessage);
 
@@ -1112,7 +1110,7 @@ INT_PTR CIcqProto::RequestAdvStatusIconIdx(WPARAM wParam, LPARAM)
 	if (bXStatus) {
 		if (!bXStatusCListIconsValid[bXStatus - 1]) { // adding icon
 			int idx = hXStatusCListIcons[bXStatus - 1];
-			HIMAGELIST hCListImageList = (HIMAGELIST)CallService(MS_CLIST_GETICONSIMAGELIST, 0, 0);
+			HIMAGELIST hCListImageList = Clist_GetImageList();
 			if (hCListImageList) {
 				HICON hXStatusIcon = getXStatusIcon(bXStatus, LR_SHARED);
 

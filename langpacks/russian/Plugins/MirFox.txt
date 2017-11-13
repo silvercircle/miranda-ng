@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: MirFox.dll
 ;  Plugin: MirFox
-;  Version: 0.5.0.0
+;  Version: 0.5.1.0
 ;  Authors: Szymon Tokarz
 ;============================================================
 [MirFox (Miranda NG) - part of Miranda-Firefox integration - http://wsx22.3.xpdev-hosted.com]
@@ -15,6 +15,10 @@ MirFox (Miranda NG) - часть интеграции Miranda-Firefox - http://w
 при нажатии правой кнопки мыши
 [on middle mouse button click\n(note: use middle mouse button to send multiple messages from Firefox)]
 при нажатии средней кнопки мыши\n(примечание: используйте среднюю кнопку мыши, чтобы отправить несколько сообщений из Firefox)
+[Firefox menu]
+Меню Firefox
+[Add account to contact name]
+Добавить учётную запись к имени контакта
 [Firefox profiles]
 Профили Firefox
 [Show Miranda menu only in these Firefox profiles (comma delimited)]
@@ -22,7 +26,7 @@ MirFox (Miranda NG) - часть интеграции Miranda-Firefox - http://w
 [Show these contacts in 'Send ... to' option in Firefox]
 Эти контакты будут отображаться в меню Firefox "Отправить..."
 [Show these accounts in 'Set status message' option in Firefox]
-Отображать эти учётные записи в опции Firefox 'Установить сообщение статуса'
+Отображать эти учётные записи в меню Firefox 'Установить сообщение статуса'
 [MirFox/Notification]
 MirFox/Уведомление
 [MirFox/Error]
@@ -47,6 +51,8 @@ MirFox/Ошибка
 Учётные записи
 [MirFox log]
 Лог MirFox
+[Message sent to %s]
+Сообщение для %s отправлено
 [Message sent to %s (%s)]
 Сообщение для %s (%s) отправлено
 [Message sent]
@@ -74,4 +80,4 @@ MirFox/Ошибка
 [MirFox (Miranda) - Error]
 MirFox (Miranda) - Ошибка
 [This MirFox (Miranda) plugin cannot start because some other MirFox component is too old. Please, check and update your MirFox components.]
-Плагин MirFox (Miranda) не работает - устарели другие компоненты MirFox. Пожалуйста, проверьте и обновите ваше дополнение MirFox.
+Плагин MirFox (Miranda) не работает - устарели другие компоненты MirFox. Пожалуйста, проверьте и обновите своё дополнение MirFox.

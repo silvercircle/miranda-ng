@@ -20,17 +20,17 @@ static const int ID_TTNTF_STATUS_TYPING = ID_STATUS_INVISIBLE + 10;
 static const int ID_TTNTF_STATUS_IDLE = ID_STATUS_INVISIBLE + 11;
 static const int ID_TTNTF_STATUS_NOT_IDLE = ID_STATUS_INVISIBLE + 12;
 
-#define FONTSERV_GROUP   LPGENT("Tooltip Notify")
-#define FONTSERV_ONLINE  LPGENT("Online")
-#define FONTSERV_OFFLINE LPGENT("Offline")
-#define FONTSERV_OTHER   LPGENT("Other status")
-#define FONTSERV_TYPING  LPGENT("Typing")
-#define FONTSERV_IDLE    LPGENT("Idle")
+#define FONTSERV_GROUP   LPGENW("Tooltip Notify")
+#define FONTSERV_ONLINE  LPGENW("Online")
+#define FONTSERV_OFFLINE LPGENW("Offline")
+#define FONTSERV_OTHER   LPGENW("Other status")
+#define FONTSERV_TYPING  LPGENW("Typing")
+#define FONTSERV_IDLE    LPGENW("Idle")
 
 struct FontEntry
 {
 	int status;
-	TCHAR* name;
+	wchar_t* name;
 	char* fontPrefix;
 	char* clrPrefix;
 };
@@ -72,56 +72,51 @@ CTooltipNotify::~CTooltipNotify()
 
 void CTooltipNotify::RegisterFonts()
 {
-	FontIDT fontId = { sizeof(fontId) };
-	_tcsncpy(fontId.group, FONTSERV_GROUP, _countof(fontId.group) - 1);
+	FontIDW fontId = { sizeof(fontId) };
+	wcsncpy(fontId.group, FONTSERV_GROUP, _countof(fontId.group) - 1);
 	strncpy(fontId.dbSettingsGroup, MODULENAME, _countof(fontId.dbSettingsGroup) - 1);
 	fontId.flags = FIDF_DEFAULTVALID;
 	fontId.deffontsettings.colour = DEF_SETTING_TXTCOLOR;
 	fontId.deffontsettings.size = -MulDiv(DEF_SETTING_FONT_SIZE, DEF_LOGPIXELSY, 72);
 	fontId.deffontsettings.style = DEF_SETTING_FONT_STYLE;
 	fontId.deffontsettings.charset = DEF_SETTING_FONT_CHARSET;
-	_tcsncpy(fontId.deffontsettings.szFace, DEF_SETTING_FONT_FACE, _countof(fontId.deffontsettings.szFace) - 1);
+	wcsncpy(fontId.deffontsettings.szFace, DEF_SETTING_FONT_FACE, _countof(fontId.deffontsettings.szFace) - 1);
 	fontId.order = 0;
-	_tcsncpy(fontId.backgroundGroup, FONTSERV_GROUP, _countof(fontId.backgroundGroup) - 1);
+	wcsncpy(fontId.backgroundGroup, FONTSERV_GROUP, _countof(fontId.backgroundGroup) - 1);
 
-	ColourIDT colorId = { sizeof(colorId) };
-	_tcsncpy(colorId.group, FONTSERV_GROUP, _countof(colorId.group) - 1);
+	ColourIDW colorId = { sizeof(colorId) };
+	wcsncpy(colorId.group, FONTSERV_GROUP, _countof(colorId.group) - 1);
 	strncpy(colorId.dbSettingsGroup, MODULENAME, _countof(colorId.dbSettingsGroup) - 1);
 	colorId.flags = 0;
 	colorId.defcolour = DEF_SETTING_BGCOLOR;
 	colorId.order = 0;
 
 	for (int i = 0; i < _countof(s_fontTable); i++) {
-		_tcsncpy(fontId.name, s_fontTable[i].name, _countof(fontId.name) - 1);
+		wcsncpy(fontId.name, s_fontTable[i].name, _countof(fontId.name) - 1);
 		strncpy(fontId.prefix, s_fontTable[i].fontPrefix, _countof(fontId.prefix) - 1);
-		_tcsncpy(fontId.backgroundName, s_fontTable[i].name, _countof(fontId.backgroundName) - 1);
-		::FontRegisterT(&fontId);
+		wcsncpy(fontId.backgroundName, s_fontTable[i].name, _countof(fontId.backgroundName) - 1);
+		::Font_RegisterW(&fontId);
 
-		_tcsncpy(colorId.name, s_fontTable[i].name, _countof(colorId.name) - 1);
+		wcsncpy(colorId.name, s_fontTable[i].name, _countof(colorId.name) - 1);
 		strncpy(colorId.setting, s_fontTable[i].clrPrefix, _countof(colorId.setting) - 1);
-		::ColourRegisterT(&colorId);
+		::Colour_RegisterW(&colorId);
 	}
 }
 
 void CTooltipNotify::GetFont(int iStatus, LOGFONT* lf, COLORREF* text, COLORREF* bg)
 {
-	TCHAR* fontName = 0;
+	wchar_t* fontName = 0;
 	for (int i = 0; i < _countof(s_fontTable); i++) {
 		if (s_fontTable[i].status == iStatus) {
 			fontName = s_fontTable[i].name;
 		}
 	}
-	if (fontName == 0) {
+	if (fontName == 0)
 		fontName = s_fontTable[_countof(s_fontTable) - 1].name;
-	}
 
 	// name and group only
-	FontIDT fontId = { sizeof(fontId), FONTSERV_GROUP, 0 };
-	_tcsncpy(fontId.name, fontName, _countof(fontId.name) - 1);
-	*text = (COLORREF)::CallService(MS_FONT_GETT, (WPARAM)&fontId, (LPARAM)lf);
-	ColourIDT colorId = { sizeof(colorId), FONTSERV_GROUP, 0 };
-	_tcsncpy(colorId.name, fontName, _countof(colorId.name) - 1);
-	*bg = (COLORREF)::CallService(MS_COLOUR_GETT, (WPARAM)&colorId, 0);
+	*text = ::Font_GetW(FONTSERV_GROUP, fontName, lf);
+	*bg = ::Colour_GetW(FONTSERV_GROUP, fontName);
 }
 
 int CTooltipNotify::ModulesLoaded(WPARAM, LPARAM)
@@ -138,14 +133,13 @@ int CTooltipNotify::ModulesLoaded(WPARAM, LPARAM)
 		db_set_b(NULL, MODULENAME, "firstrun", 0);
 	}
 
+	Skin_AddSound(SND_ONLINE,  LPGENW("Tooltip Notify"), LPGENW("Online"),  L"online.wav");
+	Skin_AddSound(SND_OFFLINE, LPGENW("Tooltip Notify"), LPGENW("Offline"), L"offline.wav");
+	Skin_AddSound(SND_OTHER,   LPGENW("Tooltip Notify"), LPGENW("Other"),   L"other.wav");
+	Skin_AddSound(SND_TYPING,  LPGENW("Tooltip Notify"), LPGENW("Typing"),  L"typing.wav");
+
 	// register fonts
-	SkinAddNewSound(SND_ONLINE, LPGEN("Tooltip Notify: Online"), "online.wav");
-	SkinAddNewSound(SND_OFFLINE, LPGEN("Tooltip Notify: Offline"), "offline.wav");
-	SkinAddNewSound(SND_OTHER, LPGEN("Tooltip Notify: Other"), "other.wav");
-	SkinAddNewSound(SND_TYPING, LPGEN("Tooltip Notify: Typing"), "typing.wav");
-
 	RegisterFonts();
-
 	return 0;
 }
 
@@ -161,7 +155,7 @@ int CTooltipNotify::ProtoContactIsTyping(WPARAM hContact, LPARAM lParam)
 		pTooltipData->iStatus = ID_TTNTF_STATUS_TYPING;
 
 		EndNotifyAll();
-		SkinPlaySound(SND_TYPING);
+		Skin_PlaySound(SND_TYPING);
 		BeginNotify(pTooltipData);
 	}
 	else EndNotifyAll();
@@ -176,7 +170,7 @@ int CTooltipNotify::ProtoAck(WPARAM, LPARAM lParam)
 	if ((ack == NULL) || (ack->type != ACKTYPE_STATUS)) return 0;
 
 	WORD wNewStatus = (WORD)ack->lParam;
-	WORD wOldStatus = (WORD)ack->hProcess;
+	WORD wOldStatus = (UINT_PTR)ack->hProcess;
 	if (wOldStatus == wNewStatus) return 0; //Useless message.
 
 	char *szProtocol = (char *)ack->szModule;
@@ -204,9 +198,9 @@ int CTooltipNotify::ContactSettingChanged(WPARAM hContact, LPARAM lParam)
 		return 0;
 
 	bool idle = false;
-	if (mir_strcmp(cws->szSetting, "Status") == 0)
+	if (strcmp(cws->szSetting, "Status") == 0)
 		idle = false;
-	else if (mir_strcmp(cws->szSetting, "IdleTS") == 0)
+	else if (strcmp(cws->szSetting, "IdleTS") == 0)
 		idle = true;
 	else return 0;
 
@@ -230,18 +224,18 @@ int CTooltipNotify::ContactSettingChanged(WPARAM hContact, LPARAM lParam)
 	switch (wNewStatus) {
 	case ID_STATUS_OFFLINE:
 		if (!m_sOptions.bOffline) return 0;
-		SkinPlaySound(SND_OFFLINE);
+		Skin_PlaySound(SND_OFFLINE);
 		break;
 
 	case ID_STATUS_ONLINE:
 		if (CallService(MS_IGNORE_ISIGNORED, hContact, IGNOREEVENT_USERONLINE) && m_sOptions.bConjSOLN) return 0;
 		if (!m_sOptions.bOnline) return 0;
-		SkinPlaySound(SND_ONLINE);
+		Skin_PlaySound(SND_ONLINE);
 		break;
 
 	default:
 		if (!m_sOptions.bOther) return 0;
-		SkinPlaySound(SND_OTHER);
+		Skin_PlaySound(SND_OTHER);
 		break;
 	}
 
@@ -265,9 +259,8 @@ int CTooltipNotify::InitializeOptions(WPARAM wParam, LPARAM)
 	odp.position = 100000000;
 	odp.hInstance = g_hInstDLL;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONS);
-	odp.pszTitle = LPGEN("Tooltip Notify");
-	odp.pszGroup = LPGEN("Popups");
-	odp.groupPosition = 910000000;
+	odp.szTitle.a = LPGEN("Tooltip Notify");
+	odp.szGroup.a = LPGEN("Popups");
 	odp.flags = ODPF_BOLDGROUPS;
 	odp.pfnDlgProc = CTooltipNotify::OptionsDlgProcWrapper;
 	::Options_AddPage(wParam, &odp);
@@ -276,7 +269,7 @@ int CTooltipNotify::InitializeOptions(WPARAM wParam, LPARAM)
 
 CTooltip *CTooltipNotify::BeginNotify(STooltipData *pTooltipData)
 {
-	TCHAR szTooltipText[64] = { 0 };
+	wchar_t szTooltipText[64] = { 0 };
 	MakeTooltipString(pTooltipData->hContact, pTooltipData->iStatus, szTooltipText, 64);
 
 	LOGFONT lf = { 0 };
@@ -536,8 +529,8 @@ BOOL CTooltipNotify::OptionsDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM l
 
 	case WM_VSCROLL:
 	case WM_HSCROLL:
-		TCHAR str[10];
-		mir_sntprintf(str, _T("%d%%"), 100 * SendDlgItemMessage(hDlg, IDC_TRANSPARENCY_SLIDER, TBM_GETPOS, 0, 0) / 255);
+		wchar_t str[10];
+		mir_snwprintf(str, L"%d%%", 100 * SendDlgItemMessage(hDlg, IDC_TRANSPARENCY_SLIDER, TBM_GETPOS, 0, 0) / 255);
 		SetDlgItemText(hDlg, IDC_TRANSPERC, str);
 		if (wParam != 0x12345678)
 			SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
@@ -674,12 +667,12 @@ BOOL CTooltipNotify::ProtosDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM)
 			int proto_count = ListView_GetItemCount(GetDlgItem(hDlg, IDC_PROTOS));
 
 			for (int i = 0; i < proto_count; i++) {
-				TCHAR szProto[64];
+				wchar_t szProto[64];
 
 				ListView_GetItemText(GetDlgItem(hDlg, IDC_PROTOS), i, 0, szProto, _countof(szProto));
 
 				char szMultiByteProto[128];
-				long lLen = WideCharToMultiByte(CP_ACP, 0, szProto, (int)mir_tstrlen(szProto),
+				long lLen = WideCharToMultiByte(CP_ACP, 0, szProto, (int)mir_wstrlen(szProto),
 					szMultiByteProto, sizeof(szMultiByteProto), NULL, NULL);
 				szMultiByteProto[lLen] = '\0';
 
@@ -714,10 +707,7 @@ BOOL CTooltipNotify::ProtosDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM)
 
 void CTooltipNotify::ResetCList(HWND hwndDlg)
 {
-	BOOL b = (CallService(MS_CLUI_GETCAPS, 0, 0) & CLUIF_DISABLEGROUPS &&
-		db_get_b(NULL, "CList", "UseGroups", SETTING_USEGROUPS_DEFAULT));
-	SendDlgItemMessage(hwndDlg, IDC_CLIST, CLM_SETUSEGROUPS, (WPARAM)b, 0);
-
+	SendDlgItemMessage(hwndDlg, IDC_CLIST, CLM_SETUSEGROUPS, db_get_b(NULL, "CList", "UseGroups", SETTING_USEGROUPS_DEFAULT), 0);
 	SendDlgItemMessage(hwndDlg, IDC_CLIST, CLM_SETHIDEEMPTYGROUPS, 1, 0);
 }
 
@@ -799,58 +789,56 @@ BOOL CTooltipNotify::ContactsDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM)
 
 }
 
-TCHAR* CTooltipNotify::StatusToString(int iStatus, TCHAR *szStatus, int iBufSize)
+wchar_t* CTooltipNotify::StatusToString(int iStatus, wchar_t *szStatus, int iBufSize)
 {
 	if (iStatus >= ID_STATUS_OFFLINE && iStatus <= ID_STATUS_OUTTOLUNCH)
-		mir_tstrncpy(szStatus, pcli->pfnGetStatusModeDescription(iStatus, 0), iBufSize);
+		mir_wstrncpy(szStatus, pcli->pfnGetStatusModeDescription(iStatus, 0), iBufSize);
 	else {
 		switch (iStatus) {
 		case ID_TTNTF_STATUS_TYPING:
-			mir_tstrncpy(szStatus, TranslateT("Typing"), iBufSize);
+			mir_wstrncpy(szStatus, TranslateT("Typing"), iBufSize);
 			break;
 
 		case ID_TTNTF_STATUS_IDLE:
-			mir_tstrncpy(szStatus, TranslateT("Idle"), iBufSize);
+			mir_wstrncpy(szStatus, TranslateT("Idle"), iBufSize);
 			break;
 
 		case ID_TTNTF_STATUS_NOT_IDLE:
-			mir_tstrncpy(szStatus, TranslateT("Not Idle"), iBufSize);
+			mir_wstrncpy(szStatus, TranslateT("Not Idle"), iBufSize);
 			break;
 
 		default:
-			mir_tstrncpy(szStatus, TranslateT("Unknown"), iBufSize);
+			mir_wstrncpy(szStatus, TranslateT("Unknown"), iBufSize);
 			break;
 		}
 	}
 	return szStatus;
 }
 
-TCHAR* CTooltipNotify::MakeTooltipString(MCONTACT hContact, int iStatus, TCHAR *szString, int iBufSize)
+wchar_t* CTooltipNotify::MakeTooltipString(MCONTACT hContact, int iStatus, wchar_t *szString, int iBufSize)
 {
-	TCHAR szStatus[32];
+	wchar_t szStatus[32];
 	StatusToString(iStatus, szStatus, _countof(szStatus));
 
 	// "proro: user is online"
-	const TCHAR *szFormatString = m_sOptions.bPrefixProto ? _T("%s%s%s") : _T("%.0s%.0s%s");
-	const TCHAR* szIs = TranslateT("is");
+	const wchar_t *szFormatString = m_sOptions.bPrefixProto ? L"%s%s%s" : L"%.0s%.0s%s";
+	const wchar_t* szIs = TranslateT("is");
 
-	const char* szProto =
-		hContact == 0 ? "Proto" : (char*)::GetContactProto(hContact);
-	const TCHAR* szContactName =
-		(TCHAR *)::pcli->pfnGetContactDisplayName(hContact, 0);
+	const char* szProto = hContact == 0 ? "Proto" : ::GetContactProto(hContact);
+	const wchar_t* szContactName = ::pcli->pfnGetContactDisplayName(hContact, 0);
 
-	memset(szString, 0, iBufSize*sizeof(TCHAR));
+	memset(szString, 0, iBufSize*sizeof(wchar_t));
 
 
 	WCHAR wszProto[32];
 	long lLen = MultiByteToWideChar(CP_ACP, 0, szProto, (int)mir_strlen(szProto), wszProto, _countof(wszProto));
-	wszProto[lLen] = _T('\0');
+	wszProto[lLen] = '\0';
 
-	mir_sntprintf(szString, iBufSize - 1, szFormatString, wszProto, _T(": "), szContactName);
+	mir_snwprintf(szString, iBufSize - 1, szFormatString, wszProto, L": ", szContactName);
 
 
-	TruncateWithDots(szString, iBufSize - 1 - mir_tstrlen(szStatus) - mir_tstrlen(szIs) - 2); // 2 spaces around szIs
-	mir_sntprintf(szString + mir_tstrlen(szString), iBufSize - 1 - mir_tstrlen(szString), _T(" %s %s"), szIs, szStatus);
+	TruncateWithDots(szString, iBufSize - 1 - mir_wstrlen(szStatus) - mir_wstrlen(szIs) - 2); // 2 spaces around szIs
+	mir_snwprintf(szString + mir_wstrlen(szString), iBufSize - 1 - mir_wstrlen(szString), L" %s %s", szIs, szStatus);
 
 	return szString;
 }
@@ -860,7 +848,7 @@ void CTooltipNotify::OnTooltipDblClicked(CTooltip *pTooltip)
 {
 	switch (m_sOptions.bLDblClick) {
 	case SHOW_HIDE_CLIST:
-		::CallService(MS_CLIST_SHOWHIDE, 0, 0);
+		pcli->pfnShowHide();
 		break;
 
 	case OPEN_MSGDLG:
@@ -868,12 +856,13 @@ void CTooltipNotify::OnTooltipDblClicked(CTooltip *pTooltip)
 			TooltipsList::iterator iter = FindBy(&STooltipData::pTooltip, pTooltip);
 			STooltipData* pTooltipData = *iter;
 			WPARAM wParam = (WPARAM)pTooltipData->hContact;
-			if (wParam)	::CallService(MS_CLIST_CONTACTDOUBLECLICKED, wParam, 0);
+			if (wParam)
+				Clist_ContactDoubleClicked(wParam);
 			break;
 		}
 
 	default:
-		::CallService(MS_CLIST_SHOWHIDE, 0, 0);
+		pcli->pfnShowHide();
 		break;
 	}
 }

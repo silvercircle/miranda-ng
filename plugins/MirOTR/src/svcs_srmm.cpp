@@ -6,16 +6,14 @@ BBButton OTRButton;
 int SVC_IconPressed(WPARAM hContact, LPARAM lParam)
 {
 	StatusIconClickData *sicd = (StatusIconClickData *)lParam;
-	if(sicd->cbSize < sizeof(StatusIconClickData))
-		return 0;
 
-	if(mir_strcmp(sicd->szModule, MODULENAME) == 0) {
+	if (mir_strcmp(sicd->szModule, MODULENAME) == 0) {
 		char *proto = GetContactProto(hContact);
-		if(proto && db_get_b(hContact, proto, "ChatRoom", 0))
+		if (proto && db_get_b(hContact, proto, "ChatRoom", 0))
 			return 0;
 		ShowOTRMenu(hContact, sicd->clickLocation);
 	}
-	
+
 	return 0;
 }
 
@@ -27,7 +25,7 @@ void SetEncryptionStatus(MCONTACT hContact, TrustLevel level)
 
 	BBButton button = OTRButton;
 
-	StatusIconData sid = { sizeof(sid) }, sid2 = { sizeof(sid) };
+	StatusIconData sid = {}, sid2 = {};
 	sid.szModule = MODULENAME;
 	sid.dwId = 0;
 	sid.flags = MBF_HIDDEN;
@@ -40,22 +38,22 @@ void SetEncryptionStatus(MCONTACT hContact, TrustLevel level)
 		switch (level) {
 		case TRUST_FINISHED:
 			sid.flags = 0;
-			button.ptszTooltip = TranslateT(LANG_STATUS_FINISHED);
+			button.pwszTooltip = TranslateW(LANG_STATUS_FINISHED);
 			button.hIcon = IcoLib_GetIconHandle(ICON_FINISHED);
 			break;
 		case TRUST_UNVERIFIED:
 			sid2.flags = MBF_DISABLED;
-			button.ptszTooltip = TranslateT(LANG_STATUS_UNVERIFIED);
+			button.pwszTooltip = TranslateW(LANG_STATUS_UNVERIFIED);
 			button.hIcon = IcoLib_GetIconHandle(ICON_UNVERIFIED);
 			break;
 		case TRUST_PRIVATE:
 			sid2.flags = 0;
-			button.ptszTooltip = TranslateT(LANG_STATUS_PRIVATE);
+			button.pwszTooltip = TranslateW(LANG_STATUS_PRIVATE);
 			button.hIcon = IcoLib_GetIconHandle(ICON_PRIVATE);
 			break;
 		default:
 			sid.flags = MBF_DISABLED;
-			button.ptszTooltip = TranslateT(LANG_STATUS_DISABLED);
+			button.pwszTooltip = TranslateW(LANG_STATUS_DISABLED);
 			button.hIcon = IcoLib_GetIconHandle(ICON_NOT_PRIVATE);
 			break;
 		}
@@ -65,8 +63,8 @@ void SetEncryptionStatus(MCONTACT hContact, TrustLevel level)
 
 	Srmm_ModifyIcon(hContact, &sid);
 	Srmm_ModifyIcon(hContact, &sid2);
+	Srmm_SetButtonState(hContact, &button);
 
-	if (options.bHaveButtonsBar) CallService(MS_BB_SETBUTTONSTATE, hContact, (LPARAM)&button);
 	db_set_dw(hContact, MODULENAME, "TrustLevel", level);
 
 	if (!chat_room) {
@@ -88,14 +86,14 @@ void SetEncryptionStatus(MCONTACT hContact, TrustLevel level)
 
 int SVC_ButtonsBarLoaded(WPARAM, LPARAM)
 {
-	CallService(MS_BB_ADDBUTTON, 0, (LPARAM)&OTRButton);
+	Srmm_AddButton(&OTRButton);
 	return 0;
 }
 
 int SVC_ButtonsBarPressed(WPARAM w, LPARAM l)
 {
-	CustomButtonClickData* cbcd = (CustomButtonClickData *)l;
-	if (cbcd->cbSize == sizeof(CustomButtonClickData) && cbcd->dwButtonId == 0 && mir_strcmp(cbcd->pszModule, MODULENAME)==0) {
+	CustomButtonClickData *cbcd = (CustomButtonClickData *)l;
+	if (cbcd->dwButtonId == 0 && !mir_strcmp(cbcd->pszModule, MODULENAME)) {
 		MCONTACT hContact = (MCONTACT)w;
 	
 		char *proto = GetContactProto(hContact);
@@ -117,7 +115,7 @@ void InitSRMM()
 	hIconPrivate = IcoLib_GetIcon(ICON_PRIVATE, 0);
 	hIconUnverified = IcoLib_GetIcon(ICON_UNVERIFIED, 0);
 
-	StatusIconData sid = { sizeof(sid) };
+	StatusIconData sid = {};
 	sid.szModule = MODULENAME;
 	sid.hIcon = hIconFinished;
 	sid.hIconDisabled = hIconNotSecure;
@@ -133,19 +131,18 @@ void InitSRMM()
 	// hook the window events so that we can can change the status of the icon
 	HookEvent(ME_MSG_ICONPRESSED, SVC_IconPressed);
 
-	if (options.bHaveButtonsBar) {
-		memset(&OTRButton, 0, sizeof(OTRButton));
-		OTRButton.cbSize = sizeof(OTRButton);
-		OTRButton.dwButtonID = 0;
-		OTRButton.pszModuleName = MODULENAME;
-		OTRButton.dwDefPos = 200;
-		OTRButton.bbbFlags = BBBF_ISRSIDEBUTTON|BBBF_CANBEHIDDEN|BBBF_ISIMBUTTON;
-		OTRButton.ptszTooltip = TranslateT(LANG_OTR_TOOLTIP);
-		OTRButton.hIcon = IcoLib_GetIconHandle(ICON_NOT_PRIVATE);
-		HookEvent(ME_MSG_TOOLBARLOADED, SVC_ButtonsBarLoaded);
-		HookEvent(ME_MSG_BUTTONPRESSED, SVC_ButtonsBarPressed);
-	}
+	memset(&OTRButton, 0, sizeof(OTRButton));
+	OTRButton.pszModuleName = MODULENAME;
+	OTRButton.dwDefPos = 200;
+	OTRButton.bbbFlags = BBBF_ISRSIDEBUTTON | BBBF_CANBEHIDDEN | BBBF_ISIMBUTTON;
+	OTRButton.pwszTooltip = TranslateT(LANG_OTR_TOOLTIP);
+	OTRButton.hIcon = IcoLib_GetIconHandle(ICON_NOT_PRIVATE);
+
+	HookEvent(ME_MSG_BUTTONPRESSED, SVC_ButtonsBarPressed);
+
+	HookTemporaryEvent(ME_MSG_TOOLBARLOADED, SVC_ButtonsBarLoaded);
 }
+
 void DeinitSRMM()
 {
 	IcoLib_Release(ICON_NOT_PRIVATE, 0);

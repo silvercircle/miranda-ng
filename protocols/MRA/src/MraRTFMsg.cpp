@@ -100,9 +100,9 @@ DWORD MraTextToRTFData(LPSTR lpszMessage, size_t dwMessageSize, LPSTR lpszMessag
 
 bool MraIsMessageFlashAnimation(const CMStringW &lpwszMessage)
 {
-	int iStart = lpwszMessage.Find(_T("<SMILE>id=flas"));
+	int iStart = lpwszMessage.Find(L"<SMILE>id=flas");
 	if (iStart != -1)
-		if (lpwszMessage.Find(_T("'</SMILE>"), iStart) != -1)
+		if (lpwszMessage.Find(L"'</SMILE>", iStart) != -1)
 			return true;
 
 	return false;
@@ -210,7 +210,7 @@ DWORD CMraProto::MraConvertToRTFW(const CMStringW &wszMessage, CMStringA &szMess
 		HDC hDC = GetDC(NULL);// kegl
 		lf.lfCharSet = MRA_DEFAULT_RTF_FONT_CHARSET;
 		lf.lfHeight = -MulDiv(MRA_DEFAULT_RTF_FONT_SIZE, GetDeviceCaps(hDC, LOGPIXELSY), 72);
-		mir_tstrncpy(lf.lfFaceName, MRA_DEFAULT_RTF_FONT_NAME, LF_FACESIZE);
+		mir_wstrncpy(lf.lfFaceName, MRA_DEFAULT_RTF_FONT_NAME, LF_FACESIZE);
 		ReleaseDC(NULL, hDC);
 	}
 	dwFontSize = ((-lf.lfHeight)+(((-lf.lfHeight)+4)/8));
@@ -235,7 +235,7 @@ DWORD CMraProto::MraConvertToRTFW(const CMStringW &wszMessage, CMStringA &szMess
 			memcpy(lpszMessageRTFCur, PAR, sizeof(PAR)); lpszMessageRTFCur += (sizeof(PAR) - 1);
 			memcpy(lpszMessageRTFCur, CRLF, sizeof(CRLF)); lpszMessageRTFCur += (sizeof(CRLF) - 1);
 			memcpy(lpszMessageRTFCur, "}", 2); lpszMessageRTFCur += 2;
-			debugLogA("%s\n", szMessageRTF);
+			debugLogA("%s\n", szMessageRTF.c_str());
 			return NO_ERROR;
 		}
 

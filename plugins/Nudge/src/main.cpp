@@ -50,8 +50,8 @@ INT_PTR NudgeSend(WPARAM hContact, LPARAM lParam)
 	char *protoName = GetContactProto(hContact);
 	int diff = time(NULL) - db_get_dw(hContact, "Nudge", "LastSent", time(NULL) - 30);
 	if (diff < GlobalNudge.sendTimeSec) {
-		TCHAR msg[500];
-		mir_sntprintf(msg, TranslateT("You are not allowed to send too much nudge (only 1 each %d sec, %d sec left)"), GlobalNudge.sendTimeSec, 30 - diff);
+		wchar_t msg[500];
+		mir_snwprintf(msg, TranslateT("You are not allowed to send too much nudge (only 1 each %d sec, %d sec left)"), GlobalNudge.sendTimeSec, 30 - diff);
 		if (GlobalNudge.useByProtocol) {
 			for (int i = 0; i < arNudges.getCount(); i++) {
 				CNudgeElement &p = arNudges[i];
@@ -133,13 +133,13 @@ int NudgeReceived(WPARAM hContact, LPARAM lParam)
 							if (p.shakeClist)
 								ShakeClist(hContact, lParam);
 							if (p.openMessageWindow)
-								CallService(MS_MSG_SENDMESSAGET, hContact, 0);
+								CallService(MS_MSG_SENDMESSAGEW, hContact, 0);
 							if (p.shakeChat)
 								ShakeChat(hContact, lParam);
 							if (p.autoResend)
 								mir_forkthread(AutoResendNudge, (void*)hContact);
 
-							SkinPlaySound(p.NudgeSoundname);
+							Skin_PlaySound(p.NudgeSoundname);
 						}
 					}
 
@@ -176,13 +176,13 @@ int NudgeReceived(WPARAM hContact, LPARAM lParam)
 					if (DefaultNudge.shakeClist)
 						ShakeClist(hContact, lParam);
 					if (DefaultNudge.openMessageWindow)
-						CallService(MS_MSG_SENDMESSAGET, hContact, 0);
+						CallService(MS_MSG_SENDMESSAGEW, hContact, 0);
 					if (DefaultNudge.shakeChat)
 						ShakeChat(hContact, lParam);
 					if (DefaultNudge.autoResend)
 						mir_forkthread(AutoResendNudge, (void*)hContact);
 
-					SkinPlaySound(DefaultNudge.NudgeSoundname);
+					Skin_PlaySound(DefaultNudge.NudgeSoundname);
 				}
 			}
 
@@ -210,7 +210,7 @@ void LoadProtocols(void)
 	//Load the default nudge
 	mir_snprintf(DefaultNudge.ProtocolName, "Default");
 	mir_snprintf(DefaultNudge.NudgeSoundname, "Nudge : Default");
-	SkinAddNewSoundEx(DefaultNudge.NudgeSoundname, LPGEN("Nudge"), LPGEN("Default Nudge"));
+	Skin_AddSound(DefaultNudge.NudgeSoundname, LPGENW("Nudge"), LPGENW("Default Nudge"));
 	DefaultNudge.Load();
 
 	GlobalNudge.Load();
@@ -248,16 +248,18 @@ static int TabsrmmButtonPressed(WPARAM wParam, LPARAM lParam)
 
 static int TabsrmmButtonInit(WPARAM, LPARAM)
 {
-	BBButton bbd = { sizeof(bbd) };
+	HOTKEYDESC hkd = { "srmm_nudge", LPGEN("Send nudge"), BB_HK_SECTION, 0, HOTKEYCODE(HOTKEYF_CONTROL, 'N'), LPARAM(hInst) };
+	Hotkey_Register(&hkd);
+
+	BBButton bbd = {};
 	bbd.pszModuleName = "Nudge";
-	bbd.ptszTooltip = LPGENT("Send Nudge");
+	bbd.pwszTooltip = LPGENW("Send nudge");
 	bbd.dwDefPos = 300;
-	bbd.bbbFlags = BBBF_ISIMBUTTON | BBBF_ISLSIDEBUTTON | BBBF_CANBEHIDDEN;
+	bbd.bbbFlags = BBBF_ISIMBUTTON | BBBF_CANBEHIDDEN;
 	bbd.hIcon = iconList[0].hIcolib;
 	bbd.dwButtonID = 6000;
-	bbd.iButtonWidth = 0;
-	CallService(MS_BB_ADDBUTTON, 0, (LPARAM)&bbd);
-
+	bbd.pszHotkey = hkd.pszName;
+	Srmm_AddButton(&bbd);
 	return 0;
 }
 
@@ -265,11 +267,11 @@ void HideNudgeButton(MCONTACT hContact)
 {
 	char *szProto = GetContactProto(hContact);
 	if (!ProtoServiceExists(szProto, PS_SEND_NUDGE)) {
-		BBButton bbd = { sizeof(bbd) };
-		bbd.bbbFlags = BBSF_HIDDEN | BBSF_DISABLED;
+		BBButton bbd = {};
 		bbd.pszModuleName = "Nudge";
 		bbd.dwButtonID = 6000;
-		CallService(MS_BB_SETBUTTONSTATE, hContact, (LPARAM)&bbd);
+		bbd.bbbFlags = BBSF_HIDDEN | BBSF_DISABLED;
+		Srmm_SetButtonState(hContact, &bbd);
 	}
 }
 
@@ -300,10 +302,9 @@ int ModulesLoaded(WPARAM, LPARAM)
 
 	HookEvent(ME_CLIST_PREBUILDCONTACTMENU, PrebuildContactMenu);
 
-	if (HookEvent(ME_MSG_TOOLBARLOADED, TabsrmmButtonInit)) {
-		HookEvent(ME_MSG_BUTTONPRESSED, TabsrmmButtonPressed);
-		HookEvent(ME_MSG_WINDOWEVENT, ContactWindowOpen);
-	}
+	HookTemporaryEvent(ME_MSG_TOOLBARLOADED, TabsrmmButtonInit);
+	HookEvent(ME_MSG_BUTTONPRESSED, TabsrmmButtonPressed);
+	HookEvent(ME_MSG_WINDOWEVENT, ContactWindowOpen);
 	return 0;
 }
 
@@ -321,7 +322,7 @@ int AccListChanged(WPARAM wParam, LPARAM lParam)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	LoadIcons();
 
@@ -338,10 +339,10 @@ extern "C" int __declspec(dllexport) Load(void)
 	// Add contact menu entry
 	CMenuItem mi;
 	SET_UID(mi, 0xd617db26, 0x22ba, 0x4205, 0x9c, 0x3e, 0x53, 0x10, 0xbc, 0xcf, 0xce, 0x19);
-	mi.flags = CMIF_NOTOFFLINE | CMIF_TCHAR;
+	mi.flags = CMIF_NOTOFFLINE | CMIF_UNICODE;
 	mi.position = -500050004;
 	mi.hIcolibItem = iconList[0].hIcolib;
-	mi.name.t = LPGENT("Send &Nudge");
+	mi.name.w = LPGENW("Send &nudge");
 	mi.pszService = MS_NUDGE_SEND;
 	g_hContactMenu = Menu_AddContactMenuItem(&mi);
 
@@ -354,7 +355,7 @@ extern "C" int __declspec(dllexport) Load(void)
 	evtype.descr = LPGEN("Nudge");
 	evtype.eventIcon = iconList[0].hIcolib;
 	evtype.flags = DETF_HISTORY | DETF_MSGWINDOW;
-	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&evtype);
+	DbEvent_RegisterType(&evtype);
 	return 0;
 }
 
@@ -368,7 +369,7 @@ LRESULT CALLBACK NudgePopupProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 {
 	switch (msg) {
 	case WM_COMMAND:
-		CallService(MS_MSG_SENDMESSAGET, (WPARAM)PUGetContact(hWnd), 0);
+		CallService(MS_MSG_SENDMESSAGEW, (WPARAM)PUGetContact(hWnd), 0);
 		PUDeletePopup(hWnd);
 		break;
 
@@ -393,7 +394,7 @@ void LoadPopupClass()
 	POPUPCLASS ppc = { sizeof(ppc) };
 	ppc.flags = PCF_TCHAR;
 	ppc.pszName = "Nudge";
-	ppc.ptszDescription = LPGENT("Show Nudge");
+	ppc.pwszDescription = LPGENW("Show Nudge");
 	ppc.hIcon = IcoLib_GetIconByHandle(iconList[0].hIcolib);
 	ppc.colorBack = NULL;
 	ppc.colorText = NULL;
@@ -410,7 +411,7 @@ int Preview()
 		for (int i = 0; i < arNudges.getCount(); i++) {
 			CNudgeElement &p = arNudges[i];
 			if (p.enabled) {
-				SkinPlaySound(p.NudgeSoundname);
+				Skin_PlaySound(p.NudgeSoundname);
 				if (p.showPopup)
 					Nudge_ShowPopup(&p, hContact, p.recText);
 				if (p.openContactList)
@@ -418,7 +419,7 @@ int Preview()
 				if (p.shakeClist)
 					ShakeClist(0, 0);
 				if (p.openMessageWindow)
-					CallService(MS_MSG_SENDMESSAGET, hContact, NULL);
+					CallService(MS_MSG_SENDMESSAGEW, hContact, NULL);
 				if (p.shakeChat)
 					ShakeChat(hContact, (LPARAM)time(NULL));
 			}
@@ -426,7 +427,7 @@ int Preview()
 	}
 	else {
 		if (DefaultNudge.enabled) {
-			SkinPlaySound(DefaultNudge.NudgeSoundname);
+			Skin_PlaySound(DefaultNudge.NudgeSoundname);
 			if (DefaultNudge.showPopup)
 				Nudge_ShowPopup(&DefaultNudge, hContact, DefaultNudge.recText);
 			if (DefaultNudge.openContactList)
@@ -434,7 +435,7 @@ int Preview()
 			if (DefaultNudge.shakeClist)
 				ShakeClist(0, 0);
 			if (DefaultNudge.openMessageWindow)
-				CallService(MS_MSG_SENDMESSAGET, hContact, NULL);
+				CallService(MS_MSG_SENDMESSAGEW, hContact, NULL);
 			if (DefaultNudge.shakeChat)
 				ShakeChat(hContact, (LPARAM)time(NULL));
 		}
@@ -442,17 +443,17 @@ int Preview()
 	return 0;
 }
 
-void Nudge_ShowPopup(CNudgeElement*, MCONTACT hContact, TCHAR * Message)
+void Nudge_ShowPopup(CNudgeElement*, MCONTACT hContact, wchar_t * Message)
 {
 	hContact = db_mc_tryMeta(hContact);
-	TCHAR *lpzContactName = (TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0);
+	wchar_t *lpzContactName = (wchar_t*)pcli->pfnGetContactDisplayName(hContact, 0);
 
 	if (ServiceExists(MS_POPUP_ADDPOPUPCLASS)) {
 		POPUPDATACLASS NudgePopup = { 0 };
 		NudgePopup.cbSize = sizeof(NudgePopup);
 		NudgePopup.hContact = hContact;
-		NudgePopup.ptszText = Message;
-		NudgePopup.ptszTitle = lpzContactName;
+		NudgePopup.pwszText = Message;
+		NudgePopup.pwszTitle = lpzContactName;
 		NudgePopup.pszClassName = "nudge";
 		CallService(MS_POPUP_ADDPOPUPCLASS, 0, (LPARAM)&NudgePopup);
 	}
@@ -466,8 +467,8 @@ void Nudge_ShowPopup(CNudgeElement*, MCONTACT hContact, TCHAR * Message)
 		NudgePopup.PluginWindowProc = NudgePopupProc;
 		NudgePopup.PluginData = (void *)1;
 
-		_tcscpy_s(NudgePopup.lptzText, Message);
-		_tcscpy_s(NudgePopup.lptzContactName, lpzContactName);
+		wcscpy_s(NudgePopup.lptzText, Message);
+		wcscpy_s(NudgePopup.lptzContactName, lpzContactName);
 
 		CallService(MS_POPUP_ADDPOPUPT, (WPARAM)&NudgePopup, 0);
 	}
@@ -478,7 +479,7 @@ void Nudge_SentStatus(CNudgeElement *n, MCONTACT hContact)
 {
 	T2Utf buff(n->senText);
 
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	dbei.szModule = MODULENAME;
 	dbei.flags = DBEF_SENT | DBEF_UTF;
 	dbei.timestamp = (DWORD)time(NULL);
@@ -492,7 +493,7 @@ void Nudge_ShowStatus(CNudgeElement *n, MCONTACT hContact, DWORD timestamp)
 {
 	T2Utf buff(n->recText);
 
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	dbei.szModule = MODULENAME;
 	dbei.eventType = 1;
 	dbei.flags = DBEF_UTF;
@@ -517,14 +518,14 @@ void Nudge_AddAccount(PROTOACCOUNT *proto)
 	mir_snprintf(p->NudgeSoundname, "%s: Nudge", proto->szModuleName);
 
 	strcpy_s(p->ProtocolName, proto->szModuleName);
-	_tcscpy_s(p->AccountName, proto->tszAccountName);
+	wcscpy_s(p->AccountName, proto->tszAccountName);
 
 	p->Load();
 	p->hEvent = hevent;
 
-	TCHAR soundDesc[MAXMODULELABELLENGTH + 10];
-	mir_sntprintf(soundDesc, LPGENT("Nudge for %s"), proto->tszAccountName);
-	SkinAddNewSoundExT(p->NudgeSoundname, LPGENT("Nudge"), soundDesc);
+	wchar_t soundDesc[MAXMODULELABELLENGTH + 10];
+	mir_snwprintf(soundDesc, LPGENW("Nudge for %s"), proto->tszAccountName);
+	Skin_AddSound(p->NudgeSoundname, LPGENW("Nudge"), soundDesc);
 
 	arNudges.insert(p);
 }

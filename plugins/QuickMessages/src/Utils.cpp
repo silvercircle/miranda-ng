@@ -153,11 +153,11 @@ void SaveModuleSettings(int buttonnum, ButtonData* bd)
 	char szMEntry[256] = { '\0' };
 
 	mir_snprintf(szMEntry, "EntryName_%u_%u", buttonnum, bd->dwPos);
-	db_set_ts(NULL, PLGNAME, szMEntry, bd->pszName);
+	db_set_ws(NULL, PLGNAME, szMEntry, bd->pszName);
 
 	mir_snprintf(szMEntry, "EntryValue_%u_%u", buttonnum, bd->dwPos);
 	if (bd->pszValue)
-		db_set_ts(NULL, PLGNAME, szMEntry, bd->pszValue);
+		db_set_ws(NULL, PLGNAME, szMEntry, bd->pszValue);
 	else
 		db_unset(NULL, PLGNAME, szMEntry);
 
@@ -185,7 +185,7 @@ void CleanSettings(int buttonnum, int from)
 	}
 
 	mir_snprintf(szMEntry, "EntryName_%u_%u", buttonnum, from);
-	while (!db_get_ts(NULL, PLGNAME, szMEntry, &dbv)) {
+	while (!db_get_ws(NULL, PLGNAME, szMEntry, &dbv)) {
 		db_unset(NULL, PLGNAME, szMEntry);
 		mir_snprintf(szMEntry, "EntryValue_%u_%u", buttonnum, from);
 		db_unset(NULL, PLGNAME, szMEntry);
@@ -224,42 +224,39 @@ BYTE getEntryByte(int buttonnum, int entrynum, BOOL mode)
 
 static HANDLE AddIcon(char* szIcoName)
 {
-	TCHAR tszPath[MAX_PATH];
+	wchar_t tszPath[MAX_PATH];
 	GetModuleFileName(hinstance, tszPath, _countof(tszPath));
 
 	SKINICONDESC sid = { 0 };
-	sid.flags = SIDF_PATH_TCHAR;
+	sid.flags = SIDF_PATH_UNICODE;
 	sid.section.a = "Quick Messages";
 	sid.description.a = szIcoName;
 	sid.pszName = szIcoName;
-	sid.defaultFile.t = tszPath;
+	sid.defaultFile.w = tszPath;
 	sid.iDefaultIndex = -IDI_QICON;
 	return IcoLib_AddIcon(&sid);
 }
 
 DWORD BalanceButtons(int buttonsWas, int buttonsNow)
 {
-	if (!ServiceExists(MS_BB_ADDBUTTON)) {
-		BBButton bb = { sizeof(bb) };
-		bb.pszModuleName = PLGNAME;
+	BBButton bb = {};
+	bb.pszModuleName = PLGNAME;
 
-		while (buttonsWas > buttonsNow) {
-			bb.dwButtonID = --buttonsWas;
-			CallService(MS_BB_REMOVEBUTTON, 0, (LPARAM)&bb);
-		}
-
-		while (buttonsWas < buttonsNow) {
-			if (ServiceExists(MS_BB_ADDBUTTON)) {
-				char iconname[40];
-				mir_snprintf(iconname, LPGEN("Quick Messages Button %u"), buttonsWas);
-				bb.bbbFlags = BBBF_ISIMBUTTON | BBBF_ISCHATBUTTON | BBBF_ISLSIDEBUTTON;
-				bb.dwButtonID = buttonsWas++;
-				bb.dwDefPos = 300 + buttonsWas;
-				bb.hIcon = AddIcon(iconname);
-				CallService(MS_BB_ADDBUTTON, 0, (LPARAM)&bb);
-			}
-		}
+	while (buttonsWas > buttonsNow) {
+		bb.dwButtonID = --buttonsWas;
+		Srmm_RemoveButton(&bb);
 	}
+
+	while (buttonsWas < buttonsNow) {
+		char iconname[40];
+		mir_snprintf(iconname, LPGEN("Quick Messages Button %u"), buttonsWas);
+		bb.bbbFlags = BBBF_ISIMBUTTON | BBBF_ISCHATBUTTON;
+		bb.dwButtonID = buttonsWas++;
+		bb.dwDefPos = 300 + buttonsWas;
+		bb.hIcon = AddIcon(iconname);
+		Srmm_AddButton(&bb);
+	}
+
 	return buttonsNow;
 }
 
@@ -269,7 +266,7 @@ void InitButtonsList()
 	int i, j, k = 0;
 	QuickList = List_Create(0, 1);
 	for (i = 0; i < g_iButtonsCount; i++) {
-		TCHAR* pszBName = NULL;
+		wchar_t* pszBName = NULL;
 		ListData* ld = NULL;
 		if (!(pszBName = getMenuEntry(i, 0, 3))) {
 			g_iButtonsCount = i;
@@ -286,7 +283,7 @@ void InitButtonsList()
 		ld->dwOPFlags = 0;
 		ld->bIsServName = ld->bIsOpServName = getEntryByte(i, 0, 3);
 		for (j = 0;; j++) {
-			TCHAR* pszEntry = NULL;
+			wchar_t* pszEntry = NULL;
 			ButtonData *bd = NULL;
 
 			if (!(pszEntry = getMenuEntry(i, j, 0)))
@@ -331,9 +328,9 @@ void DestructButtonsList()
 	}
 }
 
-TCHAR* getMenuEntry(int buttonnum, int entrynum, BYTE mode)
+wchar_t* getMenuEntry(int buttonnum, int entrynum, BYTE mode)
 {
-	TCHAR* buffer = NULL;
+	wchar_t* buffer = NULL;
 	char szMEntry[256];
 	DBVARIANT dbv;
 
@@ -355,9 +352,9 @@ TCHAR* getMenuEntry(int buttonnum, int entrynum, BYTE mode)
 		break;
 	}
 
-	if (!db_get_ts(NULL, PLGNAME, szMEntry, &dbv)) {
-		if (mir_tstrlen(dbv.ptszVal))
-			buffer = mir_tstrdup(dbv.ptszVal);
+	if (!db_get_ws(NULL, PLGNAME, szMEntry, &dbv)) {
+		if (mir_wstrlen(dbv.ptszVal))
+			buffer = mir_wstrdup(dbv.ptszVal);
 		db_free(&dbv);
 	}
 
@@ -366,40 +363,36 @@ TCHAR* getMenuEntry(int buttonnum, int entrynum, BYTE mode)
 
 int RegisterCustomButton(WPARAM, LPARAM)
 {
-	if (!ServiceExists(MS_BB_ADDBUTTON))
-		return 1;
-
 	for (int i = 0; i < g_iButtonsCount; i++) {
 		ListData* ld = ButtonsList[i];
 
 		char iconname[40];
 		mir_snprintf(iconname, LPGEN("Quick Messages Button %u"), i);
 
-		BBButton bbd = { sizeof(bbd) };
-		bbd.bbbFlags = BBBF_ISIMBUTTON | BBBF_ISCHATBUTTON | BBBF_ISLSIDEBUTTON;
+		BBButton bbd = {};
+		bbd.bbbFlags = BBBF_ISIMBUTTON | BBBF_ISCHATBUTTON;
 		bbd.dwButtonID = i;
 		bbd.dwDefPos = 320 + i;
 		bbd.hIcon = AddIcon(iconname);
 		bbd.pszModuleName = PLGNAME;
-		bbd.ptszTooltip = ld->ptszButtonName;
-		CallService(MS_BB_ADDBUTTON, 0, (LPARAM)&bbd);
+		bbd.pwszTooltip = ld->ptszButtonName;
+		Srmm_AddButton(&bbd);
 	}
 	return 0;
 }
 
-TCHAR* ParseString(MCONTACT hContact, TCHAR* ptszQValIn, TCHAR* ptszText, TCHAR* ptszClip, int QVSize, int TextSize, int ClipSize)
+wchar_t* ParseString(MCONTACT hContact, wchar_t* ptszQValIn, wchar_t* ptszText, wchar_t* ptszClip, int QVSize, int TextSize, int ClipSize)
 {
 	int i = 0, iOffset = 0;
-	TCHAR* tempPointer = NULL;
-	TCHAR* ptszQValue = _tcsdup(ptszQValIn);
-	TCHAR* tempQValue = ptszQValue;
-	TCHAR varstr = _T('%');
-	TCHAR* p = NULL;
+	wchar_t* tempPointer = NULL;
+	wchar_t* ptszQValue = wcsdup(ptszQValIn);
+	wchar_t* tempQValue = ptszQValue;
+	wchar_t varstr = '%';
+	wchar_t* p = NULL;
 	int NameLenght = 0;
-	TCHAR* ptszName = NULL;
-	CONTACTINFO ci;
+	wchar_t* ptszName = NULL;
 
-	if (!_tcschr(ptszQValue, varstr))
+	if (!wcschr(ptszQValue, varstr))
 		return ptszQValue;
 
 	if (TextSize && ptszText[TextSize - 1] == '\0')
@@ -415,18 +408,18 @@ TCHAR* ParseString(MCONTACT hContact, TCHAR* ptszQValIn, TCHAR* ptszText, TCHAR*
 
 		switch (ptszQValue[i + 1]) {
 		case 't':
-			p = (TCHAR *)realloc(tempQValue, (QVSize + TextSize + 1) * sizeof(TCHAR));
+			p = (wchar_t *)realloc(tempQValue, (QVSize + TextSize + 1) * sizeof(wchar_t));
 			if (!p)
 				break;
 			i = iOffset;
 			tempQValue = ptszQValue = p;
 
-			tempPointer = (TCHAR *)memmove(ptszQValue + i + TextSize, ptszQValue + i + 2, (QVSize - i - 1) * sizeof(TCHAR));
-			memcpy(ptszQValue + i, ptszText, TextSize * sizeof(TCHAR));
+			tempPointer = (wchar_t *)memmove(ptszQValue + i + TextSize, ptszQValue + i + 2, (QVSize - i - 1) * sizeof(wchar_t));
+			memcpy(ptszQValue + i, ptszText, TextSize * sizeof(wchar_t));
 			QVSize += (TextSize - 2);
 			ptszQValue[QVSize] = '\0';
 
-			if (!_tcschr(ptszQValue, varstr))
+			if (!wcschr(ptszQValue, varstr))
 				return ptszQValue;
 
 			ptszQValue = tempPointer;
@@ -434,18 +427,18 @@ TCHAR* ParseString(MCONTACT hContact, TCHAR* ptszQValIn, TCHAR* ptszText, TCHAR*
 			i = -1;
 			break;
 		case 'c':
-			p = (TCHAR *)realloc(tempQValue, (QVSize + ClipSize + 1) * sizeof(TCHAR));
+			p = (wchar_t *)realloc(tempQValue, (QVSize + ClipSize + 1) * sizeof(wchar_t));
 			if (!p)
 				break;
 			i = iOffset;
 			tempQValue = ptszQValue = p;
 
-			tempPointer = (TCHAR *)memmove(ptszQValue + i + ClipSize, ptszQValue + i + 2, (QVSize - i - 1) * sizeof(TCHAR));
-			memcpy(ptszQValue + i, ptszClip, ClipSize * sizeof(TCHAR));
+			tempPointer = (wchar_t *)memmove(ptszQValue + i + ClipSize, ptszQValue + i + 2, (QVSize - i - 1) * sizeof(wchar_t));
+			memcpy(ptszQValue + i, ptszClip, ClipSize * sizeof(wchar_t));
 			QVSize += (ClipSize - 2);
 			ptszQValue[QVSize] = '\0';
 
-			if (!_tcschr(ptszQValue, varstr))
+			if (!wcschr(ptszQValue, varstr))
 				return ptszQValue;
 
 			ptszQValue = tempPointer;
@@ -454,8 +447,8 @@ TCHAR* ParseString(MCONTACT hContact, TCHAR* ptszQValIn, TCHAR* ptszText, TCHAR*
 			break;
 		case 'P':
 			ptszName = mir_a2u(GetContactProto(hContact));
-			NameLenght = (int)mir_tstrlen(ptszName);
-			p = (TCHAR *)realloc(tempQValue, (QVSize + NameLenght + 1) * sizeof(TCHAR));
+			NameLenght = (int)mir_wstrlen(ptszName);
+			p = (wchar_t *)realloc(tempQValue, (QVSize + NameLenght + 1) * sizeof(wchar_t));
 			if (!p) {
 				mir_free(ptszName);
 				break;
@@ -463,13 +456,13 @@ TCHAR* ParseString(MCONTACT hContact, TCHAR* ptszQValIn, TCHAR* ptszText, TCHAR*
 			i = iOffset;
 			tempQValue = ptszQValue = p;
 
-			tempPointer = (TCHAR *)memmove(ptszQValue + i + NameLenght, ptszQValue + i + 2, (QVSize - i - 1) * sizeof(TCHAR));
-			memcpy(ptszQValue + i, ptszName, NameLenght * sizeof(TCHAR));
+			tempPointer = (wchar_t *)memmove(ptszQValue + i + NameLenght, ptszQValue + i + 2, (QVSize - i - 1) * sizeof(wchar_t));
+			memcpy(ptszQValue + i, ptszName, NameLenght * sizeof(wchar_t));
 			QVSize += (NameLenght - 2);
 			mir_free(ptszName);
 			ptszQValue[QVSize] = '\0';
 
-			if (!_tcschr(ptszQValue, varstr))
+			if (!wcschr(ptszQValue, varstr))
 				return ptszQValue;
 
 			ptszQValue = tempPointer;
@@ -478,20 +471,20 @@ TCHAR* ParseString(MCONTACT hContact, TCHAR* ptszQValIn, TCHAR* ptszText, TCHAR*
 			break;
 
 		case 'n':
-			ptszName = (TCHAR *)pcli->pfnGetContactDisplayName(hContact, 0);
-			NameLenght = (int)mir_tstrlen(ptszName);
-			p = (TCHAR *)realloc(tempQValue, (QVSize + NameLenght + 1) * sizeof(TCHAR));
+			ptszName = (wchar_t *)pcli->pfnGetContactDisplayName(hContact, 0);
+			NameLenght = (int)mir_wstrlen(ptszName);
+			p = (wchar_t *)realloc(tempQValue, (QVSize + NameLenght + 1) * sizeof(wchar_t));
 			if (!p)
 				break;
 			i = iOffset;
 			tempQValue = ptszQValue = p;
 
-			tempPointer = (TCHAR *)memmove(ptszQValue + i + NameLenght, ptszQValue + i + 2, (QVSize - i - 1) * sizeof(TCHAR));
-			memcpy(ptszQValue + i, ptszName, NameLenght * sizeof(TCHAR));
+			tempPointer = (wchar_t *)memmove(ptszQValue + i + NameLenght, ptszQValue + i + 2, (QVSize - i - 1) * sizeof(wchar_t));
+			memcpy(ptszQValue + i, ptszName, NameLenght * sizeof(wchar_t));
 			QVSize += (NameLenght - 2);
 			ptszQValue[QVSize] = '\0';
 
-			if (!_tcschr(ptszQValue, varstr))
+			if (!wcschr(ptszQValue, varstr))
 				return ptszQValue;
 
 			ptszQValue = tempPointer;
@@ -499,17 +492,11 @@ TCHAR* ParseString(MCONTACT hContact, TCHAR* ptszQValIn, TCHAR* ptszText, TCHAR*
 			i = -1;
 			break;
 		case 'F':
-			memset(&ci, 0, sizeof(CONTACTINFO));
-			ci.cbSize = sizeof(CONTACTINFO);
-			ci.hContact = hContact;
-			ci.dwFlag = CNF_FIRSTNAME | CNF_UNICODE;
-			ci.szProto = GetContactProto(hContact);
-
-			if (CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ci))
+			ptszName = Contact_GetInfo(CNF_FIRSTNAME, hContact);
+			if (ptszName == NULL)
 				break;
-			NameLenght = (int)mir_tstrlen(ci.pszVal);
-			ptszName = ci.pszVal;
-			p = (TCHAR *)realloc(tempQValue, (QVSize + NameLenght + 1) * sizeof(TCHAR));
+			NameLenght = (int)mir_wstrlen(ptszName);
+			p = (wchar_t *)realloc(tempQValue, (QVSize + NameLenght + 1) * sizeof(wchar_t));
 			if (!p) {
 				mir_free(ptszName);
 				break;
@@ -517,13 +504,13 @@ TCHAR* ParseString(MCONTACT hContact, TCHAR* ptszQValIn, TCHAR* ptszText, TCHAR*
 			i = iOffset;
 			tempQValue = ptszQValue = p;
 
-			tempPointer = (TCHAR *)memmove(ptszQValue + i + NameLenght, ptszQValue + i + 2, (QVSize - i - 1) * sizeof(TCHAR));
-			memcpy(ptszQValue + i, ptszName, NameLenght * sizeof(TCHAR));
+			tempPointer = (wchar_t *)memmove(ptszQValue + i + NameLenght, ptszQValue + i + 2, (QVSize - i - 1) * sizeof(wchar_t));
+			memcpy(ptszQValue + i, ptszName, NameLenght * sizeof(wchar_t));
 			QVSize += (NameLenght - 2);
 			mir_free(ptszName);
 			ptszQValue[QVSize] = '\0';
 
-			if (!_tcschr(ptszQValue, varstr))
+			if (!wcschr(ptszQValue, varstr))
 				return ptszQValue;
 
 			ptszQValue = tempPointer;
@@ -531,17 +518,12 @@ TCHAR* ParseString(MCONTACT hContact, TCHAR* ptszQValIn, TCHAR* ptszText, TCHAR*
 			i = -1;
 			break;
 		case 'L':
-			memset(&ci, 0, sizeof(CONTACTINFO));
-			ci.cbSize = sizeof(CONTACTINFO);
-			ci.hContact = hContact;
-			ci.dwFlag = CNF_LASTNAME | CNF_UNICODE;
-			ci.szProto = GetContactProto(hContact);
-
-			if (CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ci))
+			ptszName = Contact_GetInfo(CNF_LASTNAME, hContact);
+			if (ptszName == NULL)
 				break;
-			NameLenght = (int)mir_tstrlen(ci.pszVal);
-			ptszName = ci.pszVal;
-			p = (TCHAR *)realloc(tempQValue, (QVSize + NameLenght + 1) * sizeof(TCHAR));
+
+			NameLenght = (int)mir_wstrlen(ptszName);
+			p = (wchar_t *)realloc(tempQValue, (QVSize + NameLenght + 1) * sizeof(wchar_t));
 			if (!p) {
 				mir_free(ptszName);
 				break;
@@ -549,13 +531,13 @@ TCHAR* ParseString(MCONTACT hContact, TCHAR* ptszQValIn, TCHAR* ptszText, TCHAR*
 			i = iOffset;
 			tempQValue = ptszQValue = p;
 
-			tempPointer = (TCHAR *)memmove(ptszQValue + i + NameLenght, ptszQValue + i + 2, (QVSize - i - 1) * sizeof(TCHAR));
-			memcpy(ptszQValue + i, ptszName, NameLenght * sizeof(TCHAR));
+			tempPointer = (wchar_t *)memmove(ptszQValue + i + NameLenght, ptszQValue + i + 2, (QVSize - i - 1) * sizeof(wchar_t));
+			memcpy(ptszQValue + i, ptszName, NameLenght * sizeof(wchar_t));
 			QVSize += (NameLenght - 2);
 			mir_free(ptszName);
 			ptszQValue[QVSize] = '\0';
 
-			if (!_tcschr(ptszQValue, varstr))
+			if (!wcschr(ptszQValue, varstr))
 				return ptszQValue;
 
 			ptszQValue = tempPointer;

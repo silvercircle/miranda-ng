@@ -1,0 +1,83 @@
+﻿#muuid {88928401-2ce8-4568-aaa7-226141870cbf}
+;============================================================
+;  File: Discord.dll
+;  Plugin: Discord protocol
+;  Version: 0.5.1.2
+;  Authors: George Hazan
+;============================================================
+[Discord support for Miranda NG.]
+
+[User details]
+Пра кантакт
+[E-mail:]
+Пошта:
+[Password:]
+Пароль:
+[Contacts]
+Кантакты
+[Default group:]
+Гурт:
+[Hide guild chats on startup]
+
+[Nick:]
+Мянушка:
+[edited at]
+
+[Change &nickname]
+Змяніць мянушку
+[Channel control]
+
+[Change &topic]
+
+[&Rename channel]
+
+[&Destroy channel]
+
+[&Invite a user]
+Запрасіць кантакт
+[Do you really want to destroy this channel? This action is non-revertable.]
+
+[Enter new channel name:]
+
+[Enter new topic:]
+
+[Enter your new nick name:]
+
+[Main icon]
+Галоўны абразок
+[Group chats]
+Чаты
+[Enter channel name]
+
+[Enter invitation code you received]
+
+[Do you really want to leave the guild?]
+
+[Join guild]
+
+[Copy my Discord ID]
+
+[Leave guild]
+
+[Create new channel]
+
+[Copy Discord ID]
+
+[Network]
+Сеціва
+[Account]
+Уліковы запіс
+[%s server connection]
+Далучэнне да сервера %s
+[%s gateway connection]
+
+[User ID]
+ID кантакта
+[Protocol is offline or user isn't authorized yet]
+
+[Attachment]
+
+[Embed]
+
+[Preview]
+Прагляд

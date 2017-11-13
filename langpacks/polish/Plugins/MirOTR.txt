@@ -139,8 +139,6 @@ OTR zakończono
 OTR prywatny
 [OTR not secure]
 OTR bez szyfrowania
-[OTR]
-OTR
 [Refresh]
 Odśwież
 [Generating new private key for protocol '%s'.\nPlease Wait...]
@@ -253,7 +251,7 @@ Wystąpił błąd podczas szyfrowania twojej wiadomości.\nWiadomość nie zosta
 ['%s' has already closed his/her private connection to you; you should do the same]
 "%s" zamknął już prywatne połączenie z Tobą; powinieneś zrobić to samo
 [Error setting up private conversation: %s]
-Błąd ustanawiania rozmowy prywatnej:  %s
+Błąd ustanawiania rozmowy prywatnej: %s
 [Malformed message received]
 Otrzymano zniekształconą wiadomość
 [We are receiving our own OTR messages.\nYou are either trying to talk to yourself, or someone is reflecting your messages back at you]
@@ -270,8 +268,8 @@ Otrzymaliśmy wiadomość ze zniekształconymi danymi od "%s"
 Następująca wiadomość, otrzymana od "%s", nie została zaszyfrowana:\n\n%s
 ['%s' has sent a message intended for a different session. If you are logged in multiple times, another session may have received the message.]
 "%s" wysłał wiadomość przeznaczoną dla innej sesji. Jeżeli jesteś zalogowany wielokrotnie, inna sesja mogła otrzymać wiadomość.
-[unknown OTR message received, please report that to Miranda NG]
-Otrzymano nieznaną wiadomość OTR, proszę zgłosić to Miranda NG
+[unknown OTR message received, please report that to Miranda NG developers]
+Otrzymano nieznaną wiadomość OTR, proszę zgłosić to do zespołu Mirandy NG
 ;file \plugins\MirOTR\src\otr.h
 [ has requested an Off-the-Record private conversation. However, you do not have a plugin to support that.\nSee http://wikipedia.org/wiki/Off-the-Record_Messaging for more information.]
- zażądał prywatnej rozmowy Off-the-Record, jedakże nieposiadasz wtyczki, która by to wspierała.\nZobacz http://pl.wikipedia.org/wiki/Off-the-record_messaging, aby uzyskać więcej informacji
+ zażądał prywatnej rozmowy Off-the-Record, jedakże nie posiadasz wtyczki, która by to wspierała.\nZobacz http://pl.wikipedia.org/wiki/Off-the-record_messaging, aby uzyskać więcej informacji

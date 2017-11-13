@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Quotes.dll
 ;  Plugin: Quotes
-;  Version: 0.1.0.1
+;  Version: 0.1.0.101
 ;  Authors: Dioksin
 ;============================================================
 [Log]
@@ -21,8 +21,8 @@ Color de fondo
 Color de texto
 [Delay]
 Retardo
-[From Popup plugin]
-Desde Popup plugin
+[From popup plugin]
+Desde popup plugin
 [Custom]
 Personalizado
 [Permanent]
@@ -41,5 +41,3 @@ Horas
 Refrescar
 [Network]
 Red
-[All]
-Todo

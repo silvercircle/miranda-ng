@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: MRA.dll
 ;  Plugin: MRA protocol
-;  Version: 2.1.0.10
+;  Version: 2.1.1.1
 ;  Authors: Rozhuk Ivan
 ;============================================================
 [E-mail:]
@@ -68,7 +68,7 @@ Conceder autorización
 [Protocols]
 Protocolos
 [Main Menu]
-Menú Principal
+Menú principal
 [Contact Menu]
 Menú de contacto
 [Custom Status]

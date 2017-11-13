@@ -7,11 +7,11 @@ static WatchListArrayStruct WatchListArray = {0};
 static int lastColumn = -1;
 
 ColumnsSettings csWatchList[] = {
-	{ LPGENT("Contact"), 0, "Watch0width", 100 },
-	{ LPGENT("Module"),  1, "Watch1width", 100 },
-	{ LPGENT("Setting"), 2, "Watch2width", 100 },
-	{ LPGENT("Value"),   3, "Watch3width", 200 },
-	{ LPGENT("Type"),    4, "Watch4width", 75 },
+	{ LPGENW("Contact"), 0, "Watch0width", 100 },
+	{ LPGENW("Module"),  1, "Watch1width", 100 },
+	{ LPGENW("Setting"), 2, "Watch2width", 100 },
+	{ LPGENW("Value"),   3, "Watch3width", 200 },
+	{ LPGENW("Type"),    4, "Watch4width", 75 },
 	{0}
 };
 
@@ -109,7 +109,7 @@ void addwatchtolist(HWND hwnd, struct DBsetting *lParam)
 	if (db_get_s(lParam->hContact, lParam->module, lParam->setting, &(lParam->dbv), 0))
 		return;
 
-	TCHAR data[32], tmp[16], name[NAME_SIZE];
+	wchar_t data[32], tmp[16], name[NAME_SIZE];
 
 	GetContactName(lParam->hContact, NULL, name, _countof(name));
 	lvItem.pszText = name;
@@ -131,16 +131,16 @@ void addwatchtolist(HWND hwnd, struct DBsetting *lParam)
 		break;
 	}
 	case DBVT_BYTE:
-		mir_sntprintf(data, _T("0x%02X (%s)"), dbv->bVal, _ultot(dbv->bVal, tmp, 10));
+		mir_snwprintf(data, L"0x%02X (%s)", dbv->bVal, _ultow(dbv->bVal, tmp, 10));
 		ListView_SetItemText(hwnd, index, 3, data);
 		break;
 	case DBVT_WORD:
-		mir_sntprintf(data, _T("0x%04X (%s)"), dbv->wVal, _ultot(dbv->wVal, tmp, 10));
+		mir_snwprintf(data, L"0x%04X (%s)", dbv->wVal, _ultow(dbv->wVal, tmp, 10));
 		ListView_SetItemText(hwnd, index, 3, data);
 		break;
 
 	case DBVT_DWORD:
-		mir_sntprintf(data, _T("0x%08X (%s)"), dbv->dVal, _ultot(dbv->dVal, tmp, 10));
+		mir_snwprintf(data, L"0x%08X (%s)", dbv->dVal, _ultow(dbv->dVal, tmp, 10));
 		ListView_SetItemText(hwnd, index, 3, data);
 		break;
 
@@ -150,14 +150,14 @@ void addwatchtolist(HWND hwnd, struct DBsetting *lParam)
 
 	case DBVT_WCHAR:
 	{
-		ptrT str(mir_u2t(dbv->pwszVal));
+		ptrW str(mir_wstrdup(dbv->pwszVal));
 		ListView_SetItemText(hwnd, index, 3, str);
 		break;
 	}
 
 	case DBVT_UTF8:
 	{
-		ptrT str(mir_utf8decodeT(dbv->pszVal));
+		ptrW str(mir_utf8decodeW(dbv->pszVal));
 		ListView_SetItemText(hwnd, index, 3, str);
 		break;
 	}
@@ -352,18 +352,18 @@ void popupWatchedVar(MCONTACT hContact, const char *module, const char *setting)
 	COLORREF colorText = db_get_dw(NULL, modname, "PopupTextColour", RGB(0, 0, 0));
 	int timeout = db_get_b(NULL, modname, "PopupDelay", 3);
 
-	TCHAR name[NAME_SIZE], text[MAX_SECONDLINE], value[MAX_SECONDLINE];
+	wchar_t name[NAME_SIZE], text[MAX_SECONDLINE], value[MAX_SECONDLINE];
 	GetContactName(hContact, NULL, name, _countof(name));
 
 	// 2nd line
 	int type = GetValue(hContact, module, setting, value, _countof(value));
-	mir_sntprintf(text, TranslateT("Database Setting Changed: \nModule: \"%s\", Setting: \"%s\"\nNew Value (%s): \"%s\""), _A2T(module), _A2T(setting), DBVType(type), value);
+	mir_snwprintf(text, TranslateT("Database Setting Changed: \nModule: \"%s\", Setting: \"%s\"\nNew Value (%s): \"%s\""), _A2T(module), _A2T(setting), DBVType(type), value);
 
 	POPUPDATAT ppd = { 0 };
 	ppd.lchContact = (MCONTACT)hContact;
 	ppd.lchIcon = LoadIcon(hInst, MAKEINTRESOURCE(ICO_REGEDIT));
-	mir_tstrncpy(ppd.lptzContactName, name, _countof(ppd.lptzContactName));
-	mir_tstrncpy(ppd.lptzText, text, _countof(ppd.lptzText));
+	mir_wstrncpy(ppd.lptzContactName, name, _countof(ppd.lptzContactName));
+	mir_wstrncpy(ppd.lptzText, text, _countof(ppd.lptzText));
 	ppd.colorBack = colorBack;
 	ppd.colorText = colorText;
 	ppd.iSeconds = timeout ? timeout : -1;

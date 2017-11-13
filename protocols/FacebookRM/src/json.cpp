@@ -3,7 +3,7 @@
 Facebook plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright � 2009-11 Michal Zelinka, 2011-15 Robert P�sel
+Copyright � 2009-11 Michal Zelinka, 2011-17 Robert P�sel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,139 +22,33 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-int facebook_json_parser::parse_buddy_list(std::string *data, List::List< facebook_user >* buddy_list)
-{
-	facebook_user* current = NULL;
-	std::string jsonData = data->substr(9);
-
-	JSONNode root = JSONNode::parse(jsonData.c_str());
-	if (!root)
-		return EXIT_FAILURE;
-
-	const JSONNode &list = root["payload"].at("buddy_list");
-	if (!list)
-		return EXIT_FAILURE;
-
-	// Set all contacts in map to offline
-	for (List::Item< facebook_user >* i = buddy_list->begin(); i != NULL; i = i->next)
-		i->data->status_id = ID_STATUS_OFFLINE;
-
-	// Load last active times
-	const JSONNode &lastActive = list["last_active_times"];
-	for (auto it = lastActive.begin(); it != lastActive.end(); ++it) {
-		const char *id = (*it).name();
-
-		current = buddy_list->find(id);
-		if (current == NULL) {
-			buddy_list->insert(std::make_pair(id, new facebook_user()));
-			current = buddy_list->find(id);
-			current->user_id = id;
-		}
-
-		current->last_active = (*it).as_int();
-	}
-
-	// Find mobile friends
-	const JSONNode &mobileFriends = list["mobile_friends"];
-	for (auto it = mobileFriends.begin(); it != mobileFriends.end(); ++it) {
-		std::string id = (*it).as_string();
-
-		current = buddy_list->find(id);
-		if (current == NULL) {
-			buddy_list->insert(std::make_pair(id, new facebook_user()));
-			current = buddy_list->find(id);
-			current->user_id = id;
-		}
-
-		current->status_id = ID_STATUS_OFFLINE;
-		current->client = CLIENT_MOBILE;
-	}
-
-	// Find now available contacts
-	const JSONNode &nowAvailable = list["nowAvailableList"];
-	for (auto it = nowAvailable.begin(); it != nowAvailable.end(); ++it) {
-		const char *id = (*it).name();
-
-		current = buddy_list->find(id);
-		if (current == NULL) {
-			buddy_list->insert(std::make_pair(id, new facebook_user()));
-			current = buddy_list->find(id);
-			current->user_id = id;
-		}
-
-		current->status_id = ID_STATUS_ONLINE;
-
-		const JSONNode &p = (*it)["p"];
-		if (p) {
-			std::string status = p["status"].as_string(); // this seems to be "active" everytime
-			std::string webStatus = p["webStatus"].as_string(); // "active", "idle" or "offline"
-			std::string fbAppStatus = p["fbAppStatus"].as_string(); // "offline" or "active"
-			std::string messengerStatus = p["messengerStatus"].as_string(); // "offline" or "active"
-			std::string otherStatus = p["otherStatus"].as_string(); // "offline" or "active" - this seems to be "active" when webStatus is "idle" or "active" only
-
-			// this may never happen
-			if (status != "active")
-				current->status_id = ID_STATUS_OFFLINE;
-
-			bool b;
-
-			// "webStatus" and "otherStatus" are marked as "WEB" on FB website
-			if ((b = (webStatus == "active")) || otherStatus == "active") {
-				current->status_id = ID_STATUS_ONLINE;
-				current->client = b ? CLIENT_WEB : CLIENT_OTHER;
-			}
-
-			// "fbAppStatus" and "messengerStatus" are marked as "MOBILE" on FB website
-			if ((b = (fbAppStatus == "active")) || messengerStatus == "active") {
-				current->status_id = ID_STATUS_ONTHEPHONE;
-				current->client = b ? CLIENT_APP : CLIENT_MESSENGER;
-			}
-
-			// this is not marked anyhow on website (yet?)
-			current->idle = webStatus == "idle" || otherStatus == "idle" || fbAppStatus == "idle" || messengerStatus == "idle";
-		}
-	}
-
-	// Get aditional informations about contacts (if available)
-	const JSONNode &userInfos = list["userInfos"];
-	for (auto it = userInfos.begin(); it != userInfos.end(); ++it) {
-		const char *id = (*it).name();
-
-		current = buddy_list->find(id);
-		if (current == NULL)
-			continue;
-
-		std::string name = (*it)["name"].as_string();
-		if (!name.empty())
-			current->real_name = utils::text::slashu_to_utf8(name);
-
-		std::string thumbSrc = (*it)["thumbSrc"].as_string();
-		if (!thumbSrc.empty())
-			current->image_url = utils::text::slashu_to_utf8(thumbSrc);
-	}
-
-	return EXIT_SUCCESS;
-}
-
 void parseUser(const JSONNode &it, facebook_user *fbu)
 {
 	fbu->user_id = it.name();
 
-	std::string id = it["id"].as_string();
-	if (id.empty() || id == "0") {
-		// this user has deleted account or is just unavailable for us (e.g., ignore list) -> don't read dummy name and avatar and rather ignore that completely
-		return;
-	}
-
+	std::string id = it["id"].as_string(); // same as element's name, but doesn't exists for "page" type
 	std::string alternateName = it["alternateName"].as_string(); // nickname
 	std::string name = it["name"].as_string();
 	std::string thumbSrc = it["thumbSrc"].as_string();
 	std::string vanity = it["vanity"].as_string(); // username
+	std::string type = it["type"].as_string(); // "friend", "page", "user" (friend with disabled account or not friend)
+	bool isFriend = it["is_friend"].as_bool(); // e.g. "True" or "False" for type="friend" (I don't know why), "False" for type="user", doesn't exist for type="page"
 	int gender = it["gender"].as_int();
+	// bool isMessengerContact = it["is_nonfriend_messenger_contact"].as_bool(); // "True" or "False", but we don't care as "is_friend" and "type" are enough for us
 
-	//const JSONNode &uri = it["uri"); // profile url
-	//const JSONNode &is_friend = it["is_friend"); // e.g. "True"
-	//const JSONNode &type = it["type"); // e.g. "friend" (classic contact) or "user" (disabled/deleted account)
+	//const JSONNode &uri = it["uri"); // profile url	
+
+	if (type == "user" && (id.empty() || id == "0")) {
+		// this user has deleted account or is just unavailable for us (e.g., ignore list) -> don't read dummy name and avatar and rather ignore that completely
+		return;
+	}
+
+	if (type == "friend" && isFriend)
+		fbu->type = CONTACT_FRIEND;
+	else if (type == "user" || (type == "friend" && !isFriend))
+		fbu->type = CONTACT_NONE;
+	else if (type == "page")
+		fbu->type = CONTACT_PAGE;
 
 	if (!name.empty())
 		fbu->real_name = utils::text::slashu_to_utf8(name);
@@ -173,12 +67,104 @@ void parseUser(const JSONNode &it, facebook_user *fbu)
 		case 2: // male
 			fbu->gender = 77;
 			break;
-			// case 7: not available female?
+		// case 7: // not available female?
+		// case 11: // page
 		}
 	}
 }
 
-int facebook_json_parser::parse_friends(std::string *data, std::map< std::string, facebook_user* >* friends)
+void parseMessageType(FacebookProto *proto, facebook_message &message, const JSONNode &log_type_, const JSONNode &log_body_, const JSONNode &log_data_) {
+	if (!log_type_ || !log_body_ || !log_data_)
+		return;
+
+	std::string logType = log_type_.as_string();
+
+	if (logType == "log:phone-call") {
+		message.type = PHONE_CALL;
+	}
+	else if (logType == "log:video-call") {
+		message.type = VIDEO_CALL;
+	}
+	else if (logType == "log:generic-admin-text") {
+		message.type = ADMIN_TEXT;
+	}
+	else if (logType == "log:subscribe") {
+		message.type = SUBSCRIBE;
+
+		const JSONNode &fbids_ = log_data_["added_participants"];
+		for (auto it2 = fbids_.begin(); it2 != fbids_.end(); ++it2) {
+			std::string id = (*it2).as_string().substr(5); // strip "fbid:" prefix
+			if (!message.data.empty())
+				message.data += ";";
+			message.data += id;
+		}
+	}
+	else if (logType == "log:unsubscribe") {
+		message.type = UNSUBSCRIBE;
+
+		const JSONNode &fbids_ = log_data_["removed_participants"];
+		for (auto it2 = fbids_.begin(); it2 != fbids_.end(); ++it2) {
+			std::string id = (*it2).as_string().substr(5); // strip "fbid:" prefix
+			if (!message.data.empty())
+				message.data += ";";
+			message.data += id;
+		}
+	}
+	else if (logType == "log:thread-name") {
+		message.type = THREAD_NAME;
+		message.data = log_data_["name"].as_string();
+	}
+	else if (logType == "log:thread-image") {
+		message.type = THREAD_IMAGE;
+	}
+	else {
+		proto->debugLogA("!!! Unknown log type - %s", logType.c_str());
+	}
+}
+
+int facebook_json_parser::parse_chat_participant_names(std::string *data, std::map<std::string, chatroom_participant>* participants)
+{
+	std::string jsonData = data->substr(9);
+
+	JSONNode root = JSONNode::parse(jsonData.c_str());
+	if (!root)
+		return EXIT_FAILURE;
+
+	const JSONNode &profiles = root["payload"].at("profiles");
+	if (!profiles)
+		return EXIT_FAILURE;
+
+	for (auto it = profiles.begin(); it != profiles.end(); ++it) {
+		std::string userId = (*it).name();
+		std::string userName = (*it)["name"].as_string();
+		std::string type = (*it)["type"].as_string();
+
+		if (userId.empty() || userName.empty())
+			continue;
+
+		auto participant = participants->find(userId);
+		if (participant != participants->end()) {
+			chatroom_participant &user = participant->second;
+			user.nick = userName;
+
+			if (type == "friend")
+				user.role = ROLE_FRIEND;
+			else if (type == "user")
+				user.role = ROLE_NONE;
+			else if (type == "page") {
+				user.role = ROLE_NONE;
+				// Use prefix for "page" users
+				user.nick = proto->m_pagePrefix + " " + userName;
+			}
+
+			user.loaded = true;
+		}
+	}
+
+	return EXIT_SUCCESS;
+}
+
+int facebook_json_parser::parse_friends(std::string *data, std::map< std::string, facebook_user* >* friends, bool loadAllContacts)
 {
 	std::string jsonData = data->substr(9);
 
@@ -193,6 +179,12 @@ int facebook_json_parser::parse_friends(std::string *data, std::map< std::string
 	for (auto it = payload.begin(); it != payload.end(); ++it) {
 		facebook_user *fbu = new facebook_user();
 		parseUser(*it, fbu);
+
+		// Facebook now sends also other types of contacts, which we do not want here
+		if (!loadAllContacts && fbu->type != CONTACT_FRIEND) {
+			delete fbu;
+			continue;
+		}
 
 		friends->insert(std::make_pair(fbu->user_id, fbu));
 	}
@@ -222,6 +214,7 @@ int facebook_json_parser::parse_notifications(std::string *data, std::map< std::
 		const JSONNode &time_ = (*it)["timestamp"]["time"];
 		const JSONNode &text_ = (*it)["title"]["text"];
 		const JSONNode &url_ = (*it)["url"];
+		const JSONNode &icon_ = (*it)["icon"]["uri"];
 
 		// Ignore empty and old notifications
 		if (!text_ || !state_ || state_.as_string() == "SEEN_AND_READ" || !time_)
@@ -239,6 +232,7 @@ int facebook_json_parser::parse_notifications(std::string *data, std::map< std::
 		notification->link = url_.as_string();
 		notification->text = utils::text::html_entities_decode(utils::text::slashu_to_utf8(text_.as_string()));
 		notification->time = utils::time::from_string(time_.as_string());
+		notification->setIcon(icon_.as_string());
 
 		// Write notification to chatroom
 		proto->UpdateNotificationsChatRoom(notification);
@@ -253,7 +247,7 @@ int facebook_json_parser::parse_notifications(std::string *data, std::map< std::
 	return EXIT_SUCCESS;
 }
 
-bool ignore_duplicits(FacebookProto *proto, const std::string &mid, const std::string &)
+bool ignore_duplicits(FacebookProto *proto, const std::string &mid)
 {
 	ScopedLock s(proto->facy.send_message_lock_);
 
@@ -276,57 +270,53 @@ std::string absolutizeUrl(std::string &url) {
 	return url;
 }
 
-void parseAttachments(FacebookProto *proto, std::string *message_text, const JSONNode &it, const std::string &thread_id, std::string other_user_fbid)
+void parseAttachments(FacebookProto *proto, std::string *message_text, const JSONNode &delta_, std::string other_user_fbid, bool legacy)
 {
-	// Process attachements and stickers
-	const JSONNode &has_attachment = it["has_attachment"];
-	if (!has_attachment || !has_attachment.as_bool())
-		return;
-
-	// Append attachements
-	std::string type;
 	std::string attachments_text;
-	const JSONNode &attachments = it["attachments"];
-	for (auto itAttachment = attachments.begin(); itAttachment != attachments.end(); ++itAttachment) {
-		const JSONNode &attach_type = (*itAttachment)["attach_type"]; // "sticker", "photo", "file", "share"
-		if (attach_type) {
-			// Get attachment type - "file" has priority over other types
-			if (type.empty() || type != "file")
-				type = attach_type.as_string();
-		}
+	std::string type;
 
-		if (type == "photo") {			
-			std::string filename = (*itAttachment)["name"].as_string();
-			std::string link = (*itAttachment)["hires_url"].as_string();
+	const JSONNode &attachments_ = delta_["attachments"];
+	if (!attachments_ || attachments_.empty())
+		return;
+		
+	for (auto itAttachment = attachments_.begin(); itAttachment != attachments_.end(); ++itAttachment) {
+		const JSONNode &attach_ = legacy ? (*itAttachment) : (*itAttachment)["mercury"];
 
-			const JSONNode &metadata = (*itAttachment)["metadata"];
-			if (metadata) {
-				std::string id = metadata["fbid"].as_string();
-				const JSONNode &data = it["attachment_map"][id.c_str()];
-				filename = data["filename"].as_string();
-				link = data["image_data"]["url"].as_string();
+		type = attach_["attach_type"].as_string();  // "sticker", "photo", "file", "share", "animated_image", "video"
+
+		if (type == "photo") {
+			std::string filename = attach_["name"].as_string();
+			std::string link = attach_["hires_url"].as_string();
+			if (link.empty()) {
+				link = attach_["large_preview_url"].as_string();
+			}
+			if (link.empty()) {
+				link = attach_["preview_url"].as_string();
 			}
 
 			if (!link.empty()) {
 				attachments_text += "\n" + (!filename.empty() ? "<" + filename + "> " : "") + absolutizeUrl(link) + "\n";
 			}
 		}
-		else if (type == "file") {
-			std::string filename = (*itAttachment)["name"].as_string();
-			std::string link = (*itAttachment)["url"].as_string();
+		else if (type == "file" || type == "video") {
+			std::string filename = attach_["name"].as_string();
+			std::string link = attach_["url"].as_string();
 
 			if (!link.empty()) {
 				attachments_text += "\n" + (!filename.empty() ? "<" + filename + "> " : "") + absolutizeUrl(link) + "\n";
 			}
 		}
 		else if (type == "share") {
-			const JSONNode &share = (*itAttachment)["share"];
+			const JSONNode &share = attach_["share"];
 			if (share) {
-				std::string title = share["title"].as_string();
-				std::string description = share["description"].as_string();
+				std::string title = share["title"] ? share["title"].as_string() : "";
+				std::string description = share["description"] ? share["description"].as_string() : "";
 				std::string link = share["uri"].as_string();
 
-				if (link.find("l." FACEBOOK_SERVER_DOMAIN) != std::string::npos) {
+				// shorten long descriptions
+				description = utils::text::truncate_utf8(description, MAX_LINK_DESCRIPTION_LEN);
+
+				if (link.find("//www." FACEBOOK_SERVER_DOMAIN "/l.php") != std::string::npos || link.find("//l." FACEBOOK_SERVER_DOMAIN) != std::string::npos) {
 					// de-facebook this link
 					link = utils::url::decode(utils::text::source_get_value2(&link, "l.php?u=", "&", true));
 				}
@@ -342,23 +332,20 @@ void parseAttachments(FacebookProto *proto, std::string *message_text, const JSO
 			}
 		}
 		else if (type == "sticker") {
-			std::string link = (*itAttachment)["url"].as_string();
+			std::string link = attach_["url"].as_string();
 			if (!link.empty()) {
 				attachments_text += "\n" + absolutizeUrl(link) + "\n";
 			}
 
-			// Stickers as smileys
-			if (proto->getByte(FACEBOOK_KEY_CUSTOM_SMILEYS, DEFAULT_CUSTOM_SMILEYS)) {
-				const JSONNode &metadata = (*itAttachment)["metadata"];
-				if (metadata) {
-					const JSONNode &stickerId_ = metadata["stickerID"];
-					if (stickerId_) {
-						std::string sticker = "[[sticker:" + stickerId_.as_string() + "]]\n";
-						attachments_text += sticker;
+			const JSONNode &metadata = attach_["metadata"];
+			if (metadata) {
+				const JSONNode &stickerId_ = metadata["stickerID"];
+				if (stickerId_) {
+					std::string sticker = "[[sticker:" + stickerId_.as_string() + "]]\n";
+					attachments_text += sticker;
 
-						if (other_user_fbid.empty() && !thread_id.empty())
-							other_user_fbid = proto->ThreadIDToContactID(thread_id);
-
+					// Stickers as smileys
+					if (proto->getByte(FACEBOOK_KEY_CUSTOM_SMILEYS, DEFAULT_CUSTOM_SMILEYS) && !proto->facy.loading_history) {
 						// FIXME: rewrite smileyadd to use custom smileys per protocol and not per contact and then remove this ugliness
 						if (!other_user_fbid.empty()) {
 							MCONTACT hContact = proto->ContactIDToHContact(other_user_fbid);
@@ -368,6 +355,22 @@ void parseAttachments(FacebookProto *proto, std::string *message_text, const JSO
 				}
 			}
 		}
+		else if (type == "animated_image") {
+			std::string link = attach_["hires_url"].as_string();
+			if (link.empty()) {
+				link = attach_["large_preview_url"].as_string();
+			}
+			if (link.empty()) {
+				link = attach_["preview_url"].as_string();
+			}
+
+			if (!link.empty()) {
+				attachments_text += "\n" + absolutizeUrl(link) + "\n";
+			}
+		}
+		else {
+			proto->debugLogA("json::parseAttachments (%s) - Unknown attachment type '%s'", legacy ? "legacy" : "not legacy", type.c_str());
+		}
 	}
 
 	// TODO: have this as extra event, not replace or append message content
@@ -375,36 +378,87 @@ void parseAttachments(FacebookProto *proto, std::string *message_text, const JSO
 		*message_text += "\n\n";
 
 	if (!attachments_text.empty()) {
-		// we can't use this as offline messages doesn't have it
-		/* const JSONNode &admin_snippet = it["admin_snippet");
-		if (admin_snippet != NULL) {
-		*message_text += admin_snippet);
-		} */
-
-		std::tstring newText;
+		std::wstring newText;
 		if (type == "sticker")
 			newText = TranslateT("a sticker");
 		else if (type == "share")
 			newText = TranslateT("a link");
 		else if (type == "file")
-			newText = (attachments.size() > 1) ? TranslateT("files") : TranslateT("a file");
+			newText = (attachments_.size() > 1) ? TranslateT("files") : TranslateT("a file");
 		else if (type == "photo")
-			newText = (attachments.size() > 1) ? TranslateT("photos") : TranslateT("a photo");
+			newText = (attachments_.size() > 1) ? TranslateT("photos") : TranslateT("a photo");
+		else if (type == "video")
+			newText = TranslateT("a video");
+		else if (type == "animated_image")
+			newText = TranslateT("a GIF");
 		else
 			newText = _A2T(type.c_str());
 
-		TCHAR title[200];
-		mir_sntprintf(title, TranslateT("User sent %s:"), newText.c_str());
+		wchar_t title[200];
+		mir_snwprintf(title, TranslateT("User sent %s:"), newText.c_str());
 
 		*message_text += T2Utf(title);
 		*message_text += attachments_text;
 	}
 	else {
 		*message_text += T2Utf(TranslateT("User sent an unsupported attachment. Open your browser to see it."));
+		proto->debugLogA("json::parseAttachments (%s) - Unsupported attachment:\n%s", legacy ? "legacy" : "not legacy", attachments_.as_string().c_str());
 	}
 }
 
-int facebook_json_parser::parse_messages(std::string *pData, std::vector< facebook_message* >* messages, std::map< std::string, facebook_notification* >* notifications, bool inboxOnly)
+bool parseMessageMetadata(FacebookProto *proto, facebook_message &message, const JSONNode &meta_)
+{
+	if (!meta_)
+		return false;
+
+	const JSONNode &actorFbId_ = meta_["actorFbId"]; // who did the action
+	const JSONNode &adminText_ = meta_["adminText"]; // description of the event (only for special events, not for user messages)
+	const JSONNode &messageId_ = meta_["messageId"];
+	const JSONNode &otherUserFbId_ = meta_["threadKey"]["otherUserFbId"]; // for whom the event is (only for single conversations)
+	const JSONNode &threadFbId_ = meta_["threadKey"]["threadFbId"]; // thread of the event (only for multi chat conversations)
+	const JSONNode &timestamp_ = meta_["timestamp"];
+
+	if (!actorFbId_ || !messageId_ || !timestamp_)
+		return false;
+
+	std::string actorFbId = (actorFbId_ ? actorFbId_.as_string() : "");
+	std::string otherUserFbId = (otherUserFbId_ ? otherUserFbId_.as_string() : "");
+	std::string threadFbId = (!otherUserFbId_ && threadFbId_ ? "id." + threadFbId_.as_string() : ""); // NOTE: we must add "id." prefix as this is threadFbId and we want threadId (but only for multi chats)
+
+	message.isChat = otherUserFbId.empty();
+	message.isIncoming = (actorFbId_.as_string() != proto->facy.self_.user_id);
+	message.isUnread = message.isIncoming;
+	message.message_text = (adminText_ ? adminText_.as_string() : "");
+	message.time = utils::time::from_string(timestamp_.as_string());
+	message.user_id = message.isChat ? actorFbId : otherUserFbId;
+	message.message_id = messageId_.as_string();
+	message.thread_id = threadFbId;
+	return true;
+}
+
+bool processSpecialMessage(FacebookProto *proto, std::vector<facebook_message>* messages, const JSONNode &meta_, MessageType messageType, const std::string &messageData = "")
+{
+	facebook_message message;
+	message.type = messageType;
+	message.data = messageData;
+
+	// Parse message metadata
+	if (!parseMessageMetadata(proto, message, meta_)) {
+		proto->debugLogA("json::processSpecialMessage - given empty messageMetadata");
+		return false;
+	}
+
+	// Ignore duplicits or messages sent from miranda
+	if (ignore_duplicits(proto, message.message_id)) {
+		return false;
+	}
+
+	messages->push_back(message);
+	return true;
+}
+
+
+int facebook_json_parser::parse_messages(std::string *pData, std::vector<facebook_message>* messages, std::map< std::string, facebook_notification* >* notifications)
 {
 	// remove old received messages from map		
 	for (std::map<std::string, int>::iterator it = proto->facy.messages_ignore.begin(); it != proto->facy.messages_ignore.end();) {
@@ -431,127 +485,202 @@ int facebook_json_parser::parse_messages(std::string *pData, std::vector< facebo
 			continue;
 
 		std::string t = type.as_string();
-		if (t == "messaging") {
-			// various messaging stuff (received and sent messages, getting seen info)
+		if (t == "delta") {
+			// new messaging stuff
 
-			const JSONNode &ev_ = (*it)["event"];
-			if (!ev_)
+			const JSONNode &delta_ = (*it)["delta"];
+			if (!delta_)
 				continue;
 
-			std::string ev = ev_.as_string();
-			if (ev == "read_receipt") {
-				// user read message
-				const JSONNode &reader_ = (*it)["reader"];
-				const JSONNode &time_ = (*it)["time"];
-				if (!reader_ || !time_)
+			const JSONNode &cls_ = delta_["class"];
+			std::string cls = cls_.as_string();
+			if (cls == "NewMessage") { // revised 5.3.2017		
+				facebook_message message;
+
+				// Parse message metadata				
+				const JSONNode &meta_ = delta_["messageMetadata"];
+				if (!parseMessageMetadata(proto, message, meta_)) {
+					proto->debugLogA("json::parse_messages - No messageMetadata element");
+					continue;
+				}
+
+				// Ignore duplicits or messages sent from miranda
+				if (ignore_duplicits(proto, message.message_id))
 					continue;
 
-				time_t timestamp = utils::time::from_string(time_.as_string());
-				MCONTACT hContact = NULL;
-				std::tstring reader;
+				const JSONNode &body_ = delta_["body"];
+				std::string messageText = body_.as_string();
 
-				std::string readerId = reader_.as_string();
-				const JSONNode &threadid = (*it)["tid"];
-				if (!threadid) {
-					// classic contact
-					hContact = proto->ContactIDToHContact(readerId);
-				} else {
-					// multi user chat
+				// Process attachements and stickers
+				parseAttachments(proto, &messageText, delta_, (message.isChat ? "" : message.user_id), false);
+
+				message.message_text = utils::text::trim(messageText, true);
+				messages->push_back(message);
+			}
+			else if (cls == "ReplaceMessage") { // revised 5.3.2017
+				//const JSONNode &newMessage_ = delta_["newMessage"];
+				// In newMessage object: "attachments", "body", "data"["meta_ranges"], "messageMetadata"["actorFbId", "messageId", "threadKey"["otherUserFbId", "threadFbId"], "timestamp"], "ttl"
+				// ttl is usually "TTL_OFF"
+				// meta_ranges is e.g. meta_ranges=[{"offset":11,"length":3,"type":1,"data":{"name":"timestamp","value":1488715200}}]
+			}
+			else if (cls == "ReadReceipt") {
+				// user read message
+
+				// when read
+				const JSONNode &time_ = delta_["actionTimestampMs"];
+				if (!time_)
+					continue;
+				
+				time_t timestamp = utils::time::from_string(time_.as_string());
+
+				// for multi chats (not available for single)
+				const JSONNode &actor_ = delta_["actorFbId"]; // who read the message
+				const JSONNode &thread_ = delta_["threadKey"]["threadFbId"]; // chat thread
+
+				// for single chats (not available for multi)
+				const JSONNode &reader_ = delta_["threadKey"]["otherUserFbId"]; // who read the message
+
+				if (actor_ && thread_) {
+					// multi chat
+					
+					// ignore if disabled
 					if (!proto->m_enableChat)
 						continue;
 
-					std::string tid = threadid.as_string();
+					std::string readerId = actor_.as_string();
+					std::string tid = "id." + thread_.as_string(); // NOTE: threadFbId means just numeric id of thread, without "id." prefix. We add it here to have it consistent with other methods (where threadId is used)
 
-					auto itRoom = proto->facy.chat_rooms.find(tid);
-					if (itRoom != proto->facy.chat_rooms.end()) {
-						facebook_chatroom *chatroom = itRoom->second;
-						std::map<std::string, std::string> participants = chatroom->participants;
+					MCONTACT hContact = proto->ChatIDToHContact(tid);
+					proto->facy.insert_reader(hContact, timestamp, readerId);
+				}
+				else if (reader_) {
+					// single chat
+					std::string userId = reader_.as_string();
 
-						auto participant = participants.find(readerId);
-						if (participant == participants.end()) {
-							// TODO: load name of this participant
-							std::string name = readerId;
-							participants.insert(std::make_pair(readerId, name));
-							proto->AddChatContact(tid.c_str(), readerId.c_str(), name.c_str());
-						}
+					MCONTACT hContact = proto->ContactIDToHContact(userId);
+					proto->facy.insert_reader(hContact, timestamp);
+				}
+			}
+			else if (cls == "MarkRead") { // revised 5.3.2017
+				// Messages (thread) was marked as read on server
+				//const JSONNode &other_user_id_ = delta_["threadKeys"]["otherUserFbId"]; // for whom the message is (only for single conversations)
+				//const JSONNode &thread_fbid_ = delta_["threadKeys"]["threadFbId"]; // thread of the message (only for multi chat conversations)
+				//const JSONNode &actionTimestamp_ = delta_["actionTimestamp"]; // timestamp; more recent than watermarkTimestamp
+				//const JSONNode &watermarkTimestamp_ = delta_["watermarkTimestamp"]; // timestamp
+			}
+			else if (cls == "NoOp") { // revised 5.3.2017
+				//const JSONNode &numNoOps_ = delta_["numNoOps"]; // number, usually 1 but I don't know what is it for
+				continue;
+			}
+			else if (cls == "ForcedFetch") { // revised 5.3.2017
+				// when something related to thread changes (e.g. change of nickname of other user, thread image, etc.)
+			}
+			else if (cls == "AdminTextMessage") { // revised 5.3.2017
+				// various system messages - approving friendship, changing thread nickname, etc.
+				const JSONNode &meta_ = delta_["messageMetadata"];
+				MessageType messageType = ADMIN_TEXT;
 
-						participant = participants.find(readerId);
-						if (participant != participants.end()) {
-							// TODO: remember just reader ids to avoid eventual duplication of names
-							reader = _A2T(participant->second.c_str(), CP_UTF8);
-							hContact = proto->ChatIDToHContact(tid);
-						}
+				// TODO: Do something special with some delta types
+				const JSONNode &type_ = delta_["type"];
+				//const JSONNode &untyped_ = delta_["untypedData"];
+
+				std::string deltaType = type_.as_string();
+				if (deltaType == "confirm_friend_request") {
+					//const JSONNode &connection_type_ = untyped_["connection_type"]; // e.g. "friend_request"
+					//const JSONNode &friend_request_recipient_ = untyped_["friend_request_recipient"]; // userid
+					//const JSONNode &friend_request_sender_ = untyped_["friend_request_sender"]; // userid
+				}
+				else if (deltaType == "change_thread_nickname") {
+					//const JSONNode &nickname_ = untyped_["nickname"]; // new nickname
+					//const JSONNode &participant_id_ = untyped_["participant_id"]; // user fbid of that participant
+				}
+				else if (deltaType == "change_thread_theme") {
+					//const JSONNode &theme_color_ = untyped_["theme_color"]; // hexa format aarrggbb
+				}
+				else if (deltaType == "type=change_thread_icon") {
+					//const JSONNode &thread_icon_ = untyped_["thread_icon"]; // emoji symbol
+				}
+				else {
+					proto->debugLogA("json::parse_messages - Unknown AdminTextMessage type '%s'", deltaType.c_str());
+				}
+
+				if (!processSpecialMessage(proto, messages, meta_, messageType)) {
+					// Message wasn't added - either it is duplicate or there was some error
+					continue;
+				}
+			}
+			else if (cls == "RTCEventLog") { // revised 5.3.2017
+				// various voice/video calls events
+				const JSONNode &meta_ = delta_["messageMetadata"];
+				MessageType messageType = ADMIN_TEXT;
+
+				// TODO: Do something special with some types
+				//const JSONNode &duration_ = delta_["duration"]; // numeric, probably length of call, e.g. 0
+				const JSONNode &eventType_ = delta_["eventType"]; // e.g. "VOICE_EVENT", "VIDEO_EVENT"
+
+				std::string eventType = eventType_.as_string();
+				if (eventType == "VOICE_EVENT") {
+					messageType = PHONE_CALL;
+				}
+				else if (eventType == "VIDEO_EVENT") {
+					messageType = VIDEO_CALL;
+				}
+				else {
+					proto->debugLogA("json::parse_messages - Unknown RTCEventLog type '%s'", eventType.c_str());
+				}
+
+				if (!processSpecialMessage(proto, messages, meta_, messageType)) {
+					// Message wasn't added - either it is duplicate or there was some error
+					continue;
+				}
+			}
+			else if (cls == "ThreadName") {
+				// changed thread name (multi user chat)
+				const JSONNode &meta_ = delta_["messageMetadata"];
+				
+				const JSONNode &name_ = delta_["name"]; // new name of the chat (could be empty)
+				std::string data = (name_ ? name_.as_string() : "");
+
+				processSpecialMessage(proto, messages, meta_, THREAD_NAME, data);
+			}
+			else if (cls == "ThreadMuteSettings") {
+				//const JSONNode &expireTime_ = delta_["expireTime"]; // timestamp until which this thread will be muted; could be 0 = unmuted
+				// _delta["threadKey"] contains "threadFbId" or "otherUserId" identifier
+			}
+			else if (cls == "ParticipantLeftGroupThread") {
+				// user was removed from multi user chat
+				const JSONNode &meta_ = delta_["messageMetadata"];
+				
+				const JSONNode &leftParticipantFbId_ = delta_["leftParticipantFbId"];
+				std::string data = (leftParticipantFbId_ ? leftParticipantFbId_.as_string() : "");
+
+				processSpecialMessage(proto, messages, meta_, UNSUBSCRIBE, data);
+			}
+			else if (cls == "ParticipantsAddedToGroupThread") {
+				// user was added to multi user chat
+				const JSONNode &meta_ = delta_["messageMetadata"];
+				std::string data = "";
+
+				const JSONNode &addedParticipants_ = delta_["addedParticipants"]; // array of added participants
+				for (auto it2 = addedParticipants_.begin(); it2 != addedParticipants_.end(); ++it2) {
+					//const JSONNode &firstName_ = (*it2)["firstName"];
+					//const JSONNode &fullName_ = (*it2)["fullName"];
+					//const JSONNode &isMessengerUser_ = (*it2)["isMessengerUser"]; // boolean
+					const JSONNode &userFbId_ = (*it2)["userFbId"]; // userid
+
+					// TODO: Take advantage of given fullName so we don't need to load it manually afterwards
+					if (userFbId_) {
+						if (!data.empty())
+							data += ";";
+						data += userFbId_.as_string();
 					}
 				}
 
-				if (hContact)
-					proto->facy.insert_reader(hContact, timestamp, reader);
+				processSpecialMessage(proto, messages, meta_, SUBSCRIBE, data);
 			}
-			else if (ev == "deliver") {
-				// inbox message (multiuser or direct)
-
-				const JSONNode &msg = (*it)["message"];
-				const JSONNode &folder = (*it)["folder"];				
-
-				if (inboxOnly && folder.as_string() != "inbox")
-					continue;
-
-				const JSONNode &sender_fbid = msg["sender_fbid"];
-				const JSONNode &sender_name = msg["sender_name"];
-				const JSONNode &body = msg["body"];
-
-				// looks like there is either "tid" or "other_user_fbid" (or both)
-				const JSONNode &tid = msg["tid"];
-				const JSONNode &mid = msg["mid"];
-				const JSONNode &timestamp = msg["timestamp"];				
-				if (!sender_fbid || !sender_name || !body || !mid || !timestamp)
-					continue;
-
-				const JSONNode &is_filtered = (*it)["is_filtered_content"]; // TODO: is it still here? perhaps it is replaced with msg["is_spoof_warning"] or something else?
-				//const JSONNode &is_spoof_warning = msg["is_spoof_warning"];				
-				//const JSONNode &is_silent = msg["is_silent"];
-				//const JSONNode &is_unread = msg["is_unread"];
-
-				std::string id = sender_fbid.as_string();
-				std::string message_id = mid.as_string();
-				std::string message_text = body.as_string();
-
-				std::string thread_id = tid.as_string();
-				std::string other_user_id = msg["other_user_fbid"].as_string();
-
-				// Process attachements and stickers
-				parseAttachments(proto, &message_text, msg, thread_id, other_user_id);
-
-				// Ignore duplicits or messages sent from miranda
-				if (!body || ignore_duplicits(proto, message_id, message_text))
-					continue;
-
-				if (is_filtered.as_bool() && message_text.empty())
-					message_text = Translate("This message is no longer available, because it was marked as abusive or spam.");
-
-				message_text = utils::text::trim(utils::text::slashu_to_utf8(message_text), true);
-				if (message_text.empty())
-					continue;
-
-				facebook_message* message = new facebook_message();
-				message->isUnread = true;
-				message->isIncoming = (id != proto->facy.self_.user_id);
-				message->message_text = message_text;
-				message->time = utils::time::from_string(timestamp.as_string());
-				message->user_id = id;
-				message->message_id = message_id;
-				message->sender_name = utils::text::slashu_to_utf8(sender_name.as_string()); // TODO: or if not incomming use my own name from facy.self_ ?
-				message->thread_id = tid.as_string(); // TODO: or if not incomming use my own id from facy.self_ ?
-
-				const JSONNode &gthreadinfo = msg["group_thread_info"];
-				message->isChat = (gthreadinfo && gthreadinfo.as_string() != "null");
-
-				if (!message->isChat && !message->isIncoming) {
-					message->sender_name.clear();
-					message->user_id = !other_user_id.empty() ? other_user_id : proto->ThreadIDToContactID(message->thread_id); // TODO: Check if we have contact with this user_id in friendlist and otherwise do something different?
-				}
-
-				messages->push_back(message);
+			else {
+				// DeliveryReceipt, MarkRead, ThreadDelete
+				proto->debugLogA("json::parse_messages - Unknown delta class '%s'", cls.c_str());
 			}
 		}
 		else if (t == "notification_json") {
@@ -569,6 +698,7 @@ int facebook_json_parser::parse_messages(std::string *pData, std::vector< facebo
 				const JSONNode &text = text_["text"];
 				const JSONNode &url = (*itNodes)["url"];
 				const JSONNode &alert_id = (*itNodes)["alert_id"];
+				const JSONNode &icon_ = (*itNodes)["icon"]["uri"];
 
 				const JSONNode &time_ = (*itNodes)["timestamp"];
 				if (!time_)
@@ -587,6 +717,7 @@ int facebook_json_parser::parse_messages(std::string *pData, std::vector< facebo
 					notification->link = url.as_string();
 					notification->id = alert_id.as_string();
 					notification->time = timestamp;
+					notification->setIcon(icon_.as_string());
 
 					// Fix notification ID
 					std::string::size_type pos = notification->id.find(":");
@@ -629,27 +760,44 @@ int facebook_json_parser::parse_messages(std::string *pData, std::vector< facebo
 				std::string url = href_.as_string();
 				std::string alert_id = alertId_.as_string();
 
-				proto->NotifyEvent(proto->m_tszUserName, ptrT(mir_utf8decodeT(text.c_str())), NULL, FACEBOOK_EVENT_FRIENDSHIP, &url, alert_id.empty() ? NULL : &alert_id);
+				// Notify it, if user wants to be notified
+				if (proto->getByte(FACEBOOK_KEY_EVENT_FRIENDSHIP_ENABLE, DEFAULT_EVENT_FRIENDSHIP_ENABLE)) {
+					proto->NotifyEvent(proto->m_tszUserName, ptrW(mir_utf8decodeW(text.c_str())), NULL, EVENT_FRIENDSHIP, &url, alert_id.empty() ? NULL : &alert_id);
+				}
 			}
 		}
 		else if (t == "jewel_requests_add") {
 			// New friendship request, load them all with real names (because there is only user_id in "from" field)
 			proto->ForkThread(&FacebookProto::ProcessFriendRequests, NULL);
 		}
-		else if (t == "typ") {
+		/*else if (t == "jewel_requests_handled") { // revised 5.3.2017
+			// When some request is approved (or perhaps even ignored/removed)
+			const JSONNode &item_id_ = (*it)["item_id"]; // "<other_userid>_1_req"
+			const JSONNode &realtime_viewer_fbid_ = (*it)["realtime_viewer_fbid"]; // our user fbid
+		}
+		else if (t == "type=jewel_requests_remove_old") { // revised 5.3.2017
+			// Probably same as above? Happened in same situation. Could happen few times in a row.
+			const JSONNode &from_ = (*it)["from"]; // other_userid
+			const JSONNode &realtime_viewer_fbid_ = (*it)["realtime_viewer_fbid"]; // our user fbid
+		}*/
+		else if (t == "typ") { // revised 5.3.2017
 			// chat typing notification
+			const JSONNode &from_ = (*it)["from"]; // user fbid
+			const JSONNode &to_ = (*it)["to"]; // user fbid (should be our own, but could be from our page too)
+			//const JSONNode &realtime_viewer_fbid_ = (*it)["realtime_viewer_fbid"]; // our user fbid
+			//const JSONNode &from_mobile_ = (*it)["from_mobile"]; // boolean // TODO: perhaps we should update user client based on this?
+			const JSONNode &st_ = (*it)["st"]; // typing status - 1 = started typing, 0 = stopped typing
 
-			const JSONNode &from = (*it)["from"];
-			if (!from)
+			// Ignore wrong (without "from") typing notifications or that are not meant for us (but e.g. for our page)
+			if (!from_ || to_.as_string() != proto->facy.self_.user_id)
 				continue;
 
 			facebook_user fbu;
-			fbu.user_id = from.as_string();
+			fbu.user_id = from_.as_string();
+			fbu.type = CONTACT_FRIEND; // only friends are able to send typing notifications
+			MCONTACT hContact = proto->AddToContactList(&fbu);
 
-			MCONTACT hContact = proto->AddToContactList(&fbu, CONTACT_FRIEND); // only friends are able to send typing notifications
-
-			const JSONNode &st = (*it)["st"];
-			if (st.as_int() == 1)
+			if (st_.as_int() == 1)
 				proto->StartTyping(hContact);
 			else
 				proto->StopTyping(hContact);
@@ -671,29 +819,26 @@ int facebook_json_parser::parse_messages(std::string *pData, std::vector< facebo
 			auto itRoom = proto->facy.chat_rooms.find(thread_.as_string());
 			if (itRoom != proto->facy.chat_rooms.end()) {
 				facebook_chatroom *chatroom = itRoom->second;
-				std::map<std::string, std::string> participants = chatroom->participants;
+				std::map<std::string, chatroom_participant> participants = chatroom->participants;
 
 				auto participant = participants.find(from_id);
 				if (participant == participants.end()) {
 					// TODO: load name of this participant
-					std::string name = from_id;
-					proto->AddChatContact(tid.c_str(), from_id.c_str(), name.c_str());
+					chatroom_participant new_participant;
+					new_participant.user_id = from_id;
+					new_participant.nick = from_id;
+					proto->AddChatContact(tid.c_str(), new_participant, true);
 				}
 
 				participant = participants.find(from_id);
 				if (participant != participants.end()) {
 					MCONTACT hChatContact = proto->ChatIDToHContact(tid);
-					ptrT name(mir_utf8decodeT(participant->second.c_str()));
+					ptrW name(mir_utf8decodeW(participant->second.nick.c_str()));
 
-					if (st_.as_int() == 1) {
-						StatusTextData st = { 0 };
-						st.cbSize = sizeof(st);
-
-						mir_sntprintf(st.tszText, TranslateT("%s is typing a message..."), name);
-
-						CallService(MS_MSG_SETSTATUSTEXT, (WPARAM)hChatContact, (LPARAM)&st);
-					}
-					else CallService(MS_MSG_SETSTATUSTEXT, (WPARAM)hChatContact);
+					if (st_.as_int() == 1)
+						Srmm_SetStatusText(hChatContact, CMStringW(FORMAT, TranslateT("%s is typing a message..."), name));
+					else
+						Srmm_SetStatusText(hChatContact, nullptr);
 
 					// TODO: support proper MS_PROTO_CONTACTISTYPING service for chatrooms (when it will be implemented)
 				}
@@ -714,13 +859,186 @@ int facebook_json_parser::parse_messages(std::string *pData, std::vector< facebo
 
 				bool isVisible = visibility && visibility.as_bool();
 				proto->debugLogA("    Requested chat switch to %s", isVisible ? "Online" : "Offline");
-				proto->SetStatus(isVisible ? ID_STATUS_ONLINE : ID_STATUS_INVISIBLE);
+
+				// If actual status is not what server says, change it (handle also local away status, which means online)
+				if (isVisible != (proto->m_iStatus != ID_STATUS_INVISIBLE))
+					proto->SetStatus(isVisible ? ID_STATUS_ONLINE : ID_STATUS_INVISIBLE);
+			}
+		}
+		else if (t == "chatproxy-presence") {
+			const JSONNode &buddyList = (*it)["buddyList"];
+			if (!buddyList)
+				continue;
+
+			time_t offlineThreshold = time(NULL) - 15 * 60; // contacts last active more than 15 minutes will be marked offline
+
+			for (auto itNodes = buddyList.begin(); itNodes != buddyList.end(); ++itNodes) {
+				std::string id = (*itNodes).name();
+
+				MCONTACT hContact = proto->ContactIDToHContact(id);
+				if (!hContact) {
+					// Facebook now sends info also about some nonfriends, so we just ignore status change of contacts we don't have in list
+					continue;
+				}
+
+				// TODO: Check for friends existence/inexistence? Here we should get all friends (but we're already doing friendslist request, so we should have fresh data already)
+
+				const JSONNode &p_ = (*itNodes)["p"]; // possible values: 0, 2 (something more?) (might not be present)
+				const JSONNode &lat_ = (*itNodes)["lat"]; // timestamp of last activity (could be 0) (is always present)
+				const JSONNode &vc_ = (*itNodes)["vc"]; // possible values: 0, 8, 10 (something more?) (might not be present)
+
+				int status = ID_STATUS_DND; // DND to easily spot some problem, as we expect it will always be p==0 or p==2 below
+
+				// Probably means presence: 0 = away, 2 = online, when not present then that probably means don't change that status
+				if (p_) {
+					int p = p_.as_int();
+
+					if (p == 0)
+						status = ID_STATUS_AWAY;
+					else if (p == 2)
+						status = ID_STATUS_ONLINE;
+
+					proto->setWord(hContact, "Status", status);
+				}
+
+				// Last active time
+				if (lat_) {
+					time_t last_active = utils::time::from_string(lat_.as_string());
+
+					if (last_active > 0)
+						proto->setDword(hContact, "LastActiveTS", last_active);
+					else
+						proto->delSetting(hContact, "LastActiveTS");
+
+					// Set users inactive for too long as offline
+					if (last_active > 0 && last_active < offlineThreshold) {
+						proto->setWord(hContact, "Status", ID_STATUS_OFFLINE);
+					}
+				}
+
+				// Probably means client: guess 0 = web, 8 = messenger, 10 = something else?
+				if (vc_) {
+					int vc = vc_.as_int();
+					wchar_t *client;
+
+					if (vc == 0) {
+						client = FACEBOOK_CLIENT_WEB;
+					}
+					else if (vc == 8) {
+						client = FACEBOOK_CLIENT_MESSENGER; // I was online on Miranda, but when looked at myself at messenger.com I had icon of Messenger.
+					}
+					else if (vc == 10) {
+						client = FACEBOOK_CLIENT_MOBILE;
+					}
+					else {
+						client = FACEBOOK_CLIENT_OTHER;
+					}
+					proto->setWString(hContact, "MirVer", client);
+				}
 			}
 		}
 		else if (t == "buddylist_overlay") {
-			// we opened/closed chat window - pretty useless info for us
-			continue;
+			// TODO: This is now supported also via /ajax/mercury/tabs_presence.php request (probably)
+			// additional info about user status (status, used client)
+			const JSONNode &overlay_ = (*it)["overlay"];
+			if (!overlay_)
+				continue;
+
+			time_t offlineThreshold = time(NULL) - 15 * 60; // contacts last active more than 15 minutes will be marked offline
+
+			for (auto itNodes = overlay_.begin(); itNodes != overlay_.end(); ++itNodes) {
+				std::string id = (*itNodes).name();
+
+				MCONTACT hContact = proto->ContactIDToHContact(id);
+				if (!hContact) {
+					// Facebook now sends info also about some nonfriends, so we just ignore status change of contacts we don't have in list
+					continue;
+				}
+
+				/* ptrW client(getWStringA(fbu->handle, "MirVer"));
+				if (!client || mir_wstrcmp(client, fbu->getMirVer()))
+					setWString(fbu->handle, "MirVer", fbu->getMirVer());
+				*/
+
+				const JSONNode &a_ = (*itNodes)["a"]; // possible values: 0, 2 (something more?)
+				const JSONNode &la_ = (*itNodes)["la"]; // timestamp of last activity (could be 0)
+				const JSONNode &s_ = (*itNodes)["s"]; // possible values: push (something more?)
+				const JSONNode &vc_ = (*itNodes)["vc"]; // possible values: 0, 8, 10 (something more?)
+
+				// Friller account has also these:
+				// const JSONNode &ol_ = (*itNodes)["ol"]; // possible values: -1 (when goes to offline), 0 (when goes back online) (something more?)
+				// const JSONNode &p_ = (*itNodes)["p"]; // class with fbAppStatus, messengerStatus, otherStatus, status, webStatus
+
+				int status = ID_STATUS_FREECHAT; // FREECHAT to easily spot some problem, as we expect it will always be p==0 or p==2 below
+
+				if (a_) {
+					int a = a_.as_int();
+
+					if (a == 0)
+						status = ID_STATUS_OFFLINE;
+					else if (a == 2)
+						status = ID_STATUS_ONLINE;
+				}
+				else {
+					status = ID_STATUS_OFFLINE;
+				}
+
+				if (la_ /*&& status != ID_STATUS_ONLINE*/) {
+					time_t last_active = utils::time::from_string(la_.as_string());
+					
+					// we should set IdleTS only when contact is IDLE, or OFFLINE
+					//if (proto->getDword(hContact, "IdleTS", 0) != last_active) {
+					//	if (/*(fbu->idle || status == ID_STATUS_OFFLINE) &&*/ last_active > 0)
+					//		proto->setDword(hContact, "IdleTS", last_active);
+					//	else
+					//		proto->delSetting(hContact, "IdleTS");
+					//}
+
+					/*if (last_active > 0)
+						proto->setDword(hContact, "LastActiveTS", last_active);
+					else
+						proto->delSetting(hContact, "LastActiveTS");
+					*/
+
+					// Set users inactive for too long as offline
+					if (last_active > 0 && last_active < offlineThreshold)
+						status = ID_STATUS_OFFLINE;
+				}
+				else {
+					proto->delSetting(hContact, "IdleTS");
+				}
+
+				proto->setWord(hContact, "Status", status);
+
+				if (s_) {
+					// what to do with this?
+				}
+				// Probably means client: guess 0 = web, 8 = messenger, 10 = something else?
+				if (vc_) {
+					wchar_t *client = FACEBOOK_CLIENT_WEB;
+
+					/*if (vc == 0) {
+						// means active some time ago? (on messenger or also on web)
+						client = FACEBOOK_CLIENT_WEB;
+					}
+					else if (vc == 8) {
+						client = FACEBOOK_CLIENT_MESSENGER; // I was online on Miranda, but when looked at myself at messenger.com I had icon of Messenger.
+					}
+					else if (vc == 10) {
+						// means actually active on messenger
+						client = FACEBOOK_CLIENT_MOBILE;
+					}
+					else {
+						client = FACEBOOK_CLIENT_OTHER;
+					}*/
+
+					proto->setWString(hContact, "MirVer", client);
+				}
+			}
 		} else if (t == "ticker_update:home") {
+			if (!proto->getByte(FACEBOOK_KEY_EVENT_TICKER_ENABLE, DEFAULT_EVENT_TICKER_ENABLE))
+				continue;
+
 			const JSONNode &actor_ = (*it)["actor"];
 			const JSONNode &story_ = (*it)["story_xhp"];
 
@@ -740,62 +1058,9 @@ int facebook_json_parser::parse_messages(std::string *pData, std::vector< facebo
 			proto->debugLogA("+++ Got ticker type='%s' class='%s'", story_type.c_str(), story_class.c_str());
 
 			if (!text.empty())
-				proto->NotifyEvent(proto->m_tszUserName, ptrT(mir_utf8decodeT(text.c_str())), hContact, FACEBOOK_EVENT_TICKER, &url);
+				proto->NotifyEvent(proto->m_tszUserName, ptrW(mir_utf8decodeW(text.c_str())), hContact, EVENT_TICKER, &url);
 		}
-		else if (t == "mercury") {
-			// rename multi user chat, video call, ...
-
-			const JSONNode &actions_ = (*it)["actions"];
-			if (!actions_)
-				continue;
-
-			for (unsigned int i = 0; i < actions_.size(); i++) {
-				const JSONNode &action_ = actions_[i];
-
-				const JSONNode &thread_id_ = action_["thread_id"];
-				const JSONNode &log_body_ = action_["log_message_body"];
-				const JSONNode &log_data_ = action_["log_message_data"];
-				const JSONNode &log_type_ = action_["log_message_type"];
-				if (!log_data_ || !log_body_ || !thread_id_ || !log_type_)
-					continue;
-
-				std::string thread_id = thread_id_.as_string();
-				std::string logType = log_type_.as_string();
-				std::string message_text = log_body_.as_string();
-
-				if (logType == "log:video-call") {
-					std::string id = action_["other_user_fbid"].as_string();
-					std::string message_id = action_["message_id"].as_string();
-
-					facebook_message* message = new facebook_message();
-					message->isChat = false;
-					message->isUnread = true;
-					message->isIncoming = (id != proto->facy.self_.user_id);
-					message->message_text = message_text;
-					message->time = utils::time::from_string(action_["timestamp"].as_string());
-					message->user_id = id;
-					message->message_id = message_id;
-					message->sender_name.clear();
-					message->thread_id = thread_id;
-					message->type = CALL;
-
-					messages->push_back(message);
-				}
-				else {
-					// TODO: check for other types, now we expect this is rename chat
-					if (!proto->m_enableChat)
-						continue;
-
-					std::string name = log_data_["name"].as_string();
-
-					// proto->RenameChat(thread_id.c_str(), name.c_str()); // this don't work, why?
-					proto->setStringUtf(proto->ChatIDToHContact(thread_id), FACEBOOK_KEY_NICK, name.c_str());
-
-					proto->UpdateChat(thread_id.c_str(), NULL, NULL, message_text.c_str());
-				}
-			}
-		}
-		else if (t == "notifications_read" || t == "notifications_seen") {
+		else if (t == "notifications_read" || t == "notifications_seen") { // revised 5.3.2017
 			ScopedLock s(proto->facy.notifications_lock_);
 
 			const JSONNode &alerts = (*it)["alert_ids"];
@@ -813,6 +1078,38 @@ int facebook_json_parser::parse_messages(std::string *pData, std::vector< facebo
 				}
 			}
 		}
+		/*else if (t == "mobile_requests_count") { // revised 5.3.2017
+			// Notifies about remaining friendship requests (happens e.g. after approving friendship)
+			const JSONNode &num_friend_confirmed_unseen_ = (*it)["num_friend_confirmed_unseen"]; // number, e.g. "0"
+			const JSONNode &num_unread_ = (*it)["num_unread"]; // number, e.g. "0"
+			const JSONNode &num_unseen_ = (*it)["num_unseen"]; // number, e.g. "0"
+			const JSONNode &realtime_viewer_fbid_ = (*it)["realtime_viewer_fbid"]; // our user fbid
+		}
+		else if (t == "friending_state_change") { // revised 5.3.2017
+			const JSONNode &userid_ = (*it)["userid"]; // fbid of user this event is about
+			const JSONNode &realtime_viewer_fbid_ = (*it)["realtime_viewer_fbid"]; // our user fbid
+			const JSONNode &action_ = (*it)["action"]; // "confirm" = when we approved friendship
+
+			if (action_.as_string() == "confirm") {
+				// ...
+			}
+		}
+		else if (t == "inbox") { // revised 5.3.2017
+			const JSONNode &realtime_viewer_fbid_ = (*it)["realtime_viewer_fbid"]; // our user fbid
+			const JSONNode &recent_unread_ = (*it)["recent_unread"]; // number
+			const JSONNode &seen_timestamp_ = (*it)["seen_timestamp"]; // number
+			const JSONNode &unread_ = (*it)["unread"]; // number
+			const JSONNode &unseen_ = (*it)["unseen"]; // number
+		}
+		else if (t == "webrtc") { // revised 5.3.2017
+			const JSONNode &realtime_viewer_fbid_ = (*it)["realtime_viewer_fbid"]; // our user fbid
+			const JSONNode &source_ = (*it)["source"]; // e.g. "www"
+			const JSONNode &msg_type_ = (*it)["msg_type"]; // e.g. "hang_up", "other_dismiss", "ice_candidate", "offer", "offer_ack", ...?
+			const JSONNode &id_ = (*it)["id"]; // some numeric id
+			const JSONNode &call_id_ = (*it)["call_id"]; // some numeric id
+			const JSONNode &from_ = (*it)["from"]; // user fbid that started this event
+			const JSONNode &payload_ = (*it)["payload"]; // string with some metadata (usually same as above)
+		}*/
 		else
 			continue;
 	}
@@ -820,7 +1117,7 @@ int facebook_json_parser::parse_messages(std::string *pData, std::vector< facebo
 	return EXIT_SUCCESS;
 }
 
-int facebook_json_parser::parse_unread_threads(std::string *data, std::vector< std::string >* threads, bool inboxOnly)
+int facebook_json_parser::parse_unread_threads(std::string *data, std::vector< std::string >* threads)
 {
 	std::string jsonData = data->substr(9);
 
@@ -828,25 +1125,26 @@ int facebook_json_parser::parse_unread_threads(std::string *data, std::vector< s
 	if (!root)
 		return EXIT_FAILURE;
 
-	const JSONNode &unread_threads = root["payload"].at("unread_thread_ids");
+	const JSONNode &unread_threads = root["payload"].at("unread_thread_fbids");
 	if (!unread_threads)
 		return EXIT_FAILURE;
 
 	for (auto it = unread_threads.begin(); it != unread_threads.end(); ++it) {
-		const JSONNode &folder = (*it)["folder"];
-		const JSONNode &thread_ids = (*it)["thread_ids"];
+		// For multi user chats
+		const JSONNode &thread_fbids = (*it)["thread_fbids"];
+		for (auto jt = thread_fbids.begin(); jt != thread_fbids.end(); ++jt)
+			threads->push_back((*jt).as_string());
 
-		if (inboxOnly && folder.as_string() != "inbox")
-			continue;
-
-		for (auto jt = thread_ids.begin(); jt != thread_ids.end(); ++jt)
+		// For classic conversations
+		const JSONNode &other_user_fbids = (*it)["other_user_fbids"];
+		for (auto jt = other_user_fbids.begin(); jt != other_user_fbids.end(); ++jt)
 			threads->push_back((*jt).as_string());
 	}
 
 	return EXIT_SUCCESS;
 }
 
-int facebook_json_parser::parse_thread_messages(std::string *data, std::vector< facebook_message* >* messages, std::map< std::string, facebook_chatroom* >* chatrooms, bool unreadOnly, bool inboxOnly)
+int facebook_json_parser::parse_thread_messages(std::string *data, std::vector< facebook_message >* messages, bool unreadOnly)
 {
 	std::string jsonData = data->substr(9);
 
@@ -863,135 +1161,155 @@ int facebook_json_parser::parse_thread_messages(std::string *data, std::vector< 
 	if (!actions || !threads)
 		return EXIT_FAILURE;
 
-	const JSONNode &roger = payload["roger"];
-	for (auto it = roger.begin(); it != roger.end(); ++it) {
-		std::string id = (*it).name();
+	for (auto it = actions.begin(); it != actions.end(); ++it) {
+		const JSONNode &author_ = (*it)["author"];
+		const JSONNode &other_user_fbid_ = (*it)["other_user_fbid"];
+		const JSONNode &body_ = (*it)["body"];
+		const JSONNode &thread_id_ = (*it)["thread_id"];
+		const JSONNode &thread_fbid_ = (*it)["thread_fbid"];
+		const JSONNode &mid_ = (*it)["message_id"];
+		const JSONNode &timestamp_ = (*it)["timestamp"];
+		const JSONNode &filtered_ = (*it)["is_filtered_content"];
+		const JSONNode &is_unread_ = (*it)["is_unread"];
 
-		// Ignore "wrong" (duplicit) identifiers - these that doesn't begin with "id."
-		if (id.substr(0, 3) == "id.") {
-			facebook_chatroom *room = new facebook_chatroom(id);
-			chatrooms->insert(std::make_pair(id, room));
+		// Either there is "body" (for classic messages), or "log_message_type" and "log_message_body" (for log messages)
+		const JSONNode &log_type_ = (*it)["log_message_type"];
+		const JSONNode &log_body_ = (*it)["log_message_body"];
+		const JSONNode &log_data_ = (*it)["log_message_data"]; // additional data for this log message
+
+		if (!author_ || (!body_ && !log_body_) || !mid_ || (!thread_fbid_ && !thread_id_) || !timestamp_) {
+			proto->debugLogA("parse_thread_messages: ignoring message (%s) - missing attribute", mid_.as_string().c_str());
+			continue;
 		}
+
+		std::string thread_id = thread_id_.as_string();
+		std::string thread_fbid = thread_fbid_.as_string();
+		std::string message_id = mid_.as_string();
+		std::string message_text = body_ ? body_.as_string() : log_body_.as_string();
+		std::string author_id = author_.as_string();
+		std::string other_user_fbid = other_user_fbid_ ? other_user_fbid_.as_string() : "";
+		std::string::size_type pos = author_id.find(":"); // strip "fbid:" prefix
+		if (pos != std::string::npos)
+			author_id = author_id.substr(pos + 1);
+
+		// Process attachements and stickers
+		parseAttachments(proto, &message_text, *it, other_user_fbid, true);
+
+		if (filtered_.as_bool() && message_text.empty())
+			message_text = Translate("This message is no longer available, because it was marked as abusive or spam.");
+
+		message_text = utils::text::trim(utils::text::slashu_to_utf8(message_text), true);
+		if (message_text.empty()) {
+			proto->debugLogA("parse_thread_messages: ignoring message (%s) - empty message text", mid_.as_string().c_str());
+			continue;
+		}
+
+		bool isUnread = is_unread_.as_bool();
+
+		// Ignore read messages if we want only unread messages
+		if (unreadOnly && !isUnread)
+			continue;
+
+		facebook_message message;
+		message.message_text = message_text;
+		message.time = utils::time::from_string(timestamp_.as_string());
+		message.message_id = message_id;
+		message.isIncoming = (author_id != proto->facy.self_.user_id);
+		message.isUnread = isUnread;
+
+		message.isChat = other_user_fbid.empty();
+		if (message.isChat) {
+			message.user_id = author_id;
+			message.thread_id = "id." + thread_fbid;
+		}
+		else {
+			message.user_id = other_user_fbid;
+			message.thread_id = thread_id;
+		}
+
+		parseMessageType(proto, message, log_type_, log_body_, log_data_);
+
+		messages->push_back(message);
 	}
 
-	std::map<std::string, std::string> thread_ids;
-	for (auto it = threads.begin(); it != threads.end(); ++it) {
-		const JSONNode &is_canonical_user = (*it)["is_canonical_user"];
-		const JSONNode &other_user_fbid = (*it)["other_user_fbid"]; // other_user_fbid is better than thread_fbid, because even multi chat has thread_fbid, but they have other_user_fbid=null
-		const JSONNode &thread_id = (*it)["thread_id"];
-		const JSONNode &name = (*it)["name"];
-		//const JSONNode &message_count = (*it)["message_count");
-		//const JSONNode &unread_count = (*it)["unread_count"); // TODO: use it to check against number of loaded messages... but how?
-		const JSONNode &folder = (*it)["folder"];
+	return EXIT_SUCCESS;
+}
 
-		if (!other_user_fbid || !thread_id) {
-			proto->debugLogA("!!! Missing other_user_fbid/thread_id");
-			continue;
-		}
+int facebook_json_parser::parse_history(std::string *data, std::vector< facebook_message >* messages, std::string *firstTimestamp)
+{
+	std::string jsonData = data->substr(9);
 
-		std::string id = other_user_fbid.as_string();
-		std::string tid = thread_id.as_string();
+	JSONNode root = JSONNode::parse(jsonData.c_str());
+	if (!root)
+		return EXIT_FAILURE;
 
-		std::map<std::string, facebook_chatroom*>::iterator iter = chatrooms->find(tid);
-		if (iter != chatrooms->end()) {
-			if (is_canonical_user.as_bool()) {
-				chatrooms->erase(iter); // this is not chatroom
-			}
-			else {
-				iter->second->chat_name = std::tstring(ptrT(mir_utf8decodeT(name.as_string().c_str()))); // TODO: create name from users if there is no name...
+	const JSONNode &payload = root["payload"];
+	if (!payload)
+		return EXIT_FAILURE;
 
-				const JSONNode &participants = (*it)["participants"];
-				for (auto jt = participants.begin(); jt != participants.end(); ++jt) {
-					std::string user_id = (*jt).name();
-					iter->second->participants.insert(std::make_pair(user_id, user_id)); // TODO: get name somehow
-				}
-			}
-		}
+	const JSONNode &actions = payload["actions"];
+	if (!actions)
+		return EXIT_FAILURE;
 
-		iter = chatrooms->find(id);
-		if (iter != chatrooms->end())
-			chatrooms->erase(iter); // this is not chatroom
-
-		if (inboxOnly && folder.as_string() != "inbox")
-			continue;
-
-		if (id == "null")
-			continue;
-
-		thread_ids.insert(std::make_pair(tid, id));
-	}
+	bool first = true;
 
 	for (auto it = actions.begin(); it != actions.end(); ++it) {
 		const JSONNode &author = (*it)["author"];
-		const JSONNode &author_email = (*it)["author_email"];
 		const JSONNode &other_user_fbid = (*it)["other_user_fbid"];
 		const JSONNode &body = (*it)["body"];
 		const JSONNode &tid = (*it)["thread_id"];
 		const JSONNode &mid = (*it)["message_id"];
 		const JSONNode &timestamp = (*it)["timestamp"];
 		const JSONNode &filtered = (*it)["is_filtered_content"];
-		const JSONNode &folder = (*it)["folder"];
 		const JSONNode &is_unread = (*it)["is_unread"];
 
-		if (!author || !body || !mid || !tid || !timestamp)
-			continue;
+		// Either there is "body" (for classic messages), or "log_message_type" and "log_message_body" (for log messages)
+		const JSONNode &log_type_ = (*it)["log_message_type"];
+		const JSONNode &log_body_ = (*it)["log_message_body"];
+		const JSONNode &log_data_ = (*it)["log_message_data"];
 
-		if (inboxOnly && folder.as_string() != "inbox")
+		if (!author || (!body && !log_body_) || !mid || !tid || !timestamp) {
+			proto->debugLogA("parse_history: ignoring message (%s) - missing attribute", mid.as_string().c_str());
 			continue;
+		}
+
+		if (first) {
+			*firstTimestamp = timestamp.as_string();
+			first = false;
+		}
 
 		std::string thread_id = tid.as_string();
 		std::string message_id = mid.as_string();
-		std::string message_text = body.as_string();
+		std::string message_text = body ? body.as_string() : log_body_.as_string();
 		std::string author_id = author.as_string();
 		std::string other_user_id = other_user_fbid ? other_user_fbid.as_string() : "";
-		std::string::size_type pos = author_id.find(":");
+		std::string::size_type pos = author_id.find(":"); // strip "fbid:" prefix
 		if (pos != std::string::npos)
 			author_id = author_id.substr(pos + 1);
 
 		// Process attachements and stickers
-		parseAttachments(proto, &message_text, *it, thread_id, other_user_id);
+		parseAttachments(proto, &message_text, *it, other_user_id, true);
 
 		if (filtered.as_bool() && message_text.empty())
 			message_text = Translate("This message is no longer available, because it was marked as abusive or spam.");
 
 		message_text = utils::text::trim(utils::text::slashu_to_utf8(message_text), true);
-		if (message_text.empty())
+		if (message_text.empty()) {
+			proto->debugLogA("parse_history: ignoring message (%s) - empty message text", mid.as_string().c_str());
 			continue;
-
-		bool isUnread = is_unread.as_bool();
-
-		// Ignore read messages if we want only unread messages
-		if (unreadOnly && !isUnread)
-			continue;
-
-		facebook_message* message = new facebook_message();
-		message->message_text = message_text;
-		if (author_email)
-			message->sender_name = author_email.as_string();
-		message->time = utils::time::from_string(timestamp.as_string());
-		message->thread_id = thread_id;
-		message->message_id = message_id;
-		message->isIncoming = (author_id != proto->facy.self_.user_id);
-		message->isUnread = isUnread;
-
-		if (chatrooms->find(thread_id) != chatrooms->end()) {
-			// this is chatroom message
-			message->isChat = true;
-			message->user_id = author_id;
 		}
-		else {
-			// this is standard message
-			message->isChat = false;
-			auto iter = thread_ids.find(thread_id);
-			if (iter != thread_ids.end())
-				message->user_id = iter->second; // TODO: Check if we have contact with this ID in friendlist and otherwise do something different?
-			else if (!other_user_id.empty())
-				message->user_id = other_user_id;
-			else {
-				delete message;
-				continue;
-			}
-		}
+
+		facebook_message message;
+		message.message_text = message_text;
+		message.time = utils::time::from_string(timestamp.as_string());
+		message.thread_id = thread_id;
+		message.message_id = message_id;
+		message.isIncoming = (author_id != proto->facy.self_.user_id);
+		message.isUnread = is_unread.as_bool();
+		message.isChat = false;
+		message.user_id = other_user_id;
+
+		parseMessageType(proto, message, log_type_, log_body_, log_data_);
 
 		messages->push_back(message);
 	}
@@ -1068,45 +1386,73 @@ int facebook_json_parser::parse_chat_info(std::string *data, facebook_chatroom* 
 	if (!threads)
 		return EXIT_FAILURE;
 
-	/*const JSONNode &roger = payload, "roger");
-	if (roger) {
-	for (unsigned int i = 0; i < json_size(roger); i++) {
-	const JSONNode &it = json_at(roger, i);
-	std::tstring id = _A2T(json_name(it));
-
-	// Ignore "wrong" (duplicit) identifiers - these that doesn't begin with "id."
-	if (id.substr(0, 3) == _T("id.")) {
-	facebook_chatroom *room = new facebook_chatroom();
-	room->thread_id = id;
-
-	chatrooms->insert(std::make_pair((char*)_T2A(room->thread_id.c_str()), room));
-	}
-	}
-	}*/
-
 	for (auto it = threads.begin(); it != threads.end(); ++it) {
 		const JSONNode &is_canonical_user_ = (*it)["is_canonical_user"];
-		const JSONNode &thread_id_ = (*it)["thread_id"];
+		const JSONNode &thread_fbid_ = (*it)["thread_fbid"];
 		const JSONNode &name_ = (*it)["name"];
 		//const JSONNode &message_count_ = (*it)["message_count");
 		//const JSONNode &unread_count_ = (*it)["unread_count"); // TODO: use it to check against number of loaded messages... but how?
 
-		if (!thread_id_ || !is_canonical_user_ || is_canonical_user_.as_bool())
+		if (!thread_fbid_ || !is_canonical_user_ || is_canonical_user_.as_bool())
 			continue;
 
-		std::string tid = thread_id_.as_string();
+		std::string tid = "id." + thread_fbid_.as_string();
 
-		// TODO: allow more users to parse at once
+		// TODO: allow more chats to parse at once
 		if (fbc->thread_id != tid)
 			continue;
 
-		const JSONNode &participants = (*it)["participants"];
-		for (auto jt = participants.begin(); jt != participants.end(); ++jt) {
-			std::string user_id = (*jt).as_string();
-			fbc->participants.insert(std::make_pair(user_id.substr(5), ""));
+		chatroom_participant user;
+
+		user.is_former = true;
+		const JSONNode &former_participants = (*it)["former_participants"];
+		for (auto jt = former_participants.begin(); jt != former_participants.end(); ++jt) {
+			user.role = (*jt)["is_friend"].as_bool() ? ROLE_FRIEND : ROLE_NONE;
+			user.user_id = (*jt)["id"].as_string().substr(5); // strip "fbid:" prefix
+			fbc->participants.insert(std::make_pair(user.user_id, user));
 		}
 
-		fbc->chat_name = std::tstring(ptrT(mir_utf8decodeT(name_.as_string().c_str())));
+		user.is_former = false;
+		user.role = ROLE_NONE;
+		const JSONNode &participants = (*it)["participants"];
+		for (auto jt = participants.begin(); jt != participants.end(); ++jt) {
+			user.user_id = (*jt).as_string().substr(5); // strip "fbid:" prefix
+			fbc->participants.insert(std::make_pair(user.user_id, user));
+		}
+
+		// TODO: don't automatically join unsubscribed or archived chatrooms
+
+		fbc->can_reply = (*it)["can_reply"].as_bool();
+		fbc->is_archived = (*it)["is_archived"].as_bool();
+		fbc->is_subscribed = (*it)["is_subscribed"].as_bool();
+		fbc->read_only = (*it)["read_only"].as_bool();
+		fbc->chat_name = std::wstring(ptrW(mir_utf8decodeW(name_.as_string().c_str())));
+	}
+
+	return EXIT_SUCCESS;
+}
+
+int facebook_json_parser::parse_messages_count(std::string *data, int *messagesCount, int *unreadCount)
+{
+	std::string jsonData = data->substr(9);
+
+	JSONNode root = JSONNode::parse(jsonData.c_str());
+	if (!root)
+		return EXIT_FAILURE;
+
+	const JSONNode &threads = root["payload"].at("threads");
+	if (!threads)
+		return EXIT_FAILURE;
+
+	for (auto it = threads.begin(); it != threads.end(); ++it) {
+		const JSONNode &message_count_ = (*it)["message_count"];
+		const JSONNode &unread_count_ = (*it)["unread_count"];
+
+		if (!message_count_|| !unread_count_)
+			return EXIT_FAILURE;
+
+		*messagesCount = message_count_.as_int();
+		*unreadCount = unread_count_.as_int();
 	}
 
 	return EXIT_SUCCESS;

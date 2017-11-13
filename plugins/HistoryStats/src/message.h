@@ -27,7 +27,7 @@ private:
 private:
 	bool m_bOutgoing;
 	DWORD m_Timestamp;
-	ext::string::size_type m_nLength;
+	size_t m_nLength;
 	const void* m_RawSource;
 	int m_Available;
 	ext::string m_Raw;
@@ -43,10 +43,9 @@ private:
 
 public:
 	explicit Message(bool bStripRawRTF, bool bStripBBCodes)
-		: m_RawSource(NULL)
-		, m_Available(0)
-		, m_bStripRawRTF(bStripRawRTF)
-		, m_bStripBBCodes(bStripBBCodes)
+		: m_RawSource(NULL), m_Available(0),
+		m_bStripRawRTF(bStripRawRTF), m_bStripBBCodes(bStripBBCodes),
+		m_bOutgoing(false), m_Timestamp(0), m_nLength(0)
 	{
 	}
 
@@ -57,7 +56,7 @@ public:
 		m_Timestamp = localTimestamp;
 	}
 
-	void assignText(const TCHAR* msg, ext::string::size_type len)
+	void assignText(const wchar_t* msg, size_t len)
 	{
 		m_RawSource = msg;
 		m_nLength = len;
@@ -65,7 +64,7 @@ public:
 	}
 
 #if defined(_UNICODE)
-	void assignText(const char* msg, ext::string::size_type len)
+	void assignText(const char* msg, size_t len)
 	{
 		m_RawSource = msg;
 		m_nLength = len;
@@ -73,7 +72,7 @@ public:
 	}
 #endif // _UNICODE
 
-	void assignTextFromUTF8(const char* msg, ext::string::size_type len)
+	void assignTextFromUTF8(const char* msg, size_t len)
 	{
 		m_RawSource = msg;
 		m_nLength = len;
@@ -92,7 +91,7 @@ public:
 	}
 	
 	// retrieving on-demand data
-	ext::string::size_type getLength()
+	size_t getLength()
 	{
 		return (!m_bStripBBCodes && !m_bStripRawRTF) ? m_nLength : getRaw().length();
 	}

@@ -7,7 +7,7 @@ static int MraExtraIconsApplyAll(WPARAM, LPARAM)
 	return 0;
 }
 
-CMraProto::CMraProto(const char* _module, const TCHAR* _displayName) :
+CMraProto::CMraProto(const char* _module, const wchar_t* _displayName) :
 	PROTO<CMraProto>(_module, _displayName),
 	m_bLoggedIn(false),
 	m_groups(5, NumericKeySortT)
@@ -35,19 +35,19 @@ CMraProto::CMraProto(const char* _module, const TCHAR* _displayName) :
 	if (ServiceExists(MS_NUDGE_SEND))
 		m_heNudgeReceived = CreateProtoEvent(PE_NUDGE);
 
-	TCHAR name[MAX_PATH];
-	mir_sntprintf(name, TranslateT("%s connection"), m_tszUserName);
+	wchar_t name[MAX_PATH];
+	mir_snwprintf(name, TranslateT("%s connection"), m_tszUserName);
 
-	NETLIBUSER nlu = { sizeof(nlu) };
-	nlu.flags = NUF_INCOMING | NUF_OUTGOING | NUF_HTTPCONNS | NUF_TCHAR;
+	NETLIBUSER nlu = {};
+	nlu.flags = NUF_INCOMING | NUF_OUTGOING | NUF_HTTPCONNS | NUF_UNICODE;
 	nlu.szSettingsModule = m_szModuleName;
-	nlu.ptszDescriptiveName = name;
-	m_hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
+	nlu.szDescriptiveName.w = name;
+	m_hNetlibUser = Netlib_RegisterUser(&nlu);
 
 	InitMenus();
 
 	mir_snprintf(szNewMailSound, "%s_new_email", m_szModuleName);
-	SkinAddNewSoundEx(szNewMailSound, m_szModuleName, MRA_SOUND_NEW_EMAIL);
+	Skin_AddSound(szNewMailSound, m_tszUserName, MRA_SOUND_NEW_EMAIL);
 
 	HookProtoEvent(ME_CLIST_PREBUILDSTATUSMENU, &CMraProto::MraRebuildStatusMenu);
 
@@ -155,24 +155,20 @@ MCONTACT CMraProto::AddToList(int flags, PROTOSEARCHRESULT *psr)
 	if (psr->cbSize != sizeof(PROTOSEARCHRESULT))
 		return 0;
 
-	return AddToListByEmail(psr->email.t, psr->nick.t, psr->firstName.t, psr->lastName.t, flags);
+	return AddToListByEmail(psr->email.w, psr->nick.w, psr->firstName.w, psr->lastName.w, flags);
 }
 
 MCONTACT CMraProto::AddToListByEvent(int, int, MEVENT hDbEvent)
 {
-	DBEVENTINFO dbei = { 0 };
-	dbei.cbSize = sizeof(dbei);
+	DBEVENTINFO dbei = {};
 	if ((dbei.cbBlob = db_event_getBlobSize(hDbEvent)) != -1) {
 		dbei.pBlob = (PBYTE)alloca(dbei.cbBlob);
 		if (db_event_get(hDbEvent, &dbei) == 0 &&
 			 !mir_strcmp(dbei.szModule, m_szModuleName) &&
 			 (dbei.eventType == EVENTTYPE_AUTHREQUEST || dbei.eventType == EVENTTYPE_CONTACTS))
 		{
-			char *nick = (char*)(dbei.pBlob + sizeof(DWORD) * 2);
-			char *firstName = nick + mir_strlen(nick) + 1;
-			char *lastName = firstName + mir_strlen(firstName) + 1;
-			char *email = lastName + mir_strlen(lastName) + 1;
-			return AddToListByEmail(_A2T(email), _A2T(nick), _A2T(firstName), _A2T(lastName), 0);
+			DB_AUTH_BLOB blob(dbei.pBlob);
+			return AddToListByEmail(dbei.getString(blob.get_email()), dbei.getString(blob.get_nick()), dbei.getString(blob.get_firstName()), dbei.getString(blob.get_lastName()), 0);
 		}
 	}
 	return 0;
@@ -184,56 +180,49 @@ int CMraProto::Authorize(MEVENT hDBEvent)
 {
 	if (!m_bLoggedIn)	return 1;
 
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	if ((dbei.cbBlob = db_event_getBlobSize(hDBEvent)) == -1)
 		return 1;
 
 	dbei.pBlob = (PBYTE)alloca(dbei.cbBlob);
-	if (db_event_get(hDBEvent, &dbei))           return 1;
-	if (dbei.eventType != EVENTTYPE_AUTHREQUEST) return 1;
-	if (mir_strcmp(dbei.szModule, m_szModuleName))   return 1;
+	if (db_event_get(hDBEvent, &dbei))             return 1;
+	if (dbei.eventType != EVENTTYPE_AUTHREQUEST)   return 1;
+	if (mir_strcmp(dbei.szModule, m_szModuleName)) return 1;
 
-	LPSTR lpszNick = (LPSTR)(dbei.pBlob + sizeof(DWORD) * 2);
-	LPSTR lpszFirstName = lpszNick + mir_strlen(lpszNick) + 1;
-	LPSTR lpszLastName = lpszFirstName + mir_strlen(lpszFirstName) + 1;
-	MraAuthorize(CMStringA(lpszLastName + mir_strlen(lpszLastName) + 1));
+	DB_AUTH_BLOB blob(dbei.pBlob);
+	MraAuthorize(blob.get_email());
 	return 0;
 }
 
-int CMraProto::AuthDeny(MEVENT hDBEvent, const TCHAR* szReason)
+int CMraProto::AuthDeny(MEVENT hDBEvent, const wchar_t* szReason)
 {
 	if (!m_bLoggedIn) return 1;
 
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	if ((dbei.cbBlob = db_event_getBlobSize(hDBEvent)) == -1)
 		return 1;
 
 	dbei.pBlob = (PBYTE)alloca(dbei.cbBlob);
-	if (db_event_get(hDBEvent, &dbei))           return 1;
-	if (dbei.eventType != EVENTTYPE_AUTHREQUEST) return 1;
-	if (mir_strcmp(dbei.szModule, m_szModuleName))   return 1;
+	if (db_event_get(hDBEvent, &dbei))             return 1;
+	if (dbei.eventType != EVENTTYPE_AUTHREQUEST)   return 1;
+	if (mir_strcmp(dbei.szModule, m_szModuleName)) return 1;
 
-	LPSTR lpszNick = (LPSTR)(dbei.pBlob + sizeof(DWORD) * 2);
-	LPSTR lpszFirstName = lpszNick + mir_strlen(lpszNick) + 1;
-	LPSTR lpszLastName = lpszFirstName + mir_strlen(lpszFirstName) + 1;
-	LPSTR szEmail = lpszLastName + mir_strlen(lpszLastName) + 1;
-
-	MraMessage(FALSE, NULL, 0, 0, szEmail, szReason, NULL, 0);
+	DB_AUTH_BLOB blob(dbei.pBlob);
+	MraMessage(FALSE, NULL, 0, 0, blob.get_email(), szReason, NULL, 0);
 	return 0;
 }
 
 int CMraProto::AuthRecv(MCONTACT, PROTORECVEVENT* pre)
 {
-	Proto_AuthRecv(m_szModuleName, pre);
-	return 0;
+	return Proto_AuthRecv(m_szModuleName, pre);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-HANDLE CMraProto::FileAllow(MCONTACT, HANDLE hTransfer, const TCHAR *szPath)
+HANDLE CMraProto::FileAllow(MCONTACT, HANDLE hTransfer, const wchar_t *szPath)
 {
 	if (szPath != NULL)
-		if (MraFilesQueueAccept(hFilesQueueHandle, (DWORD_PTR)hTransfer, szPath, mir_tstrlen(szPath)) == NO_ERROR)
+		if (MraFilesQueueAccept(hFilesQueueHandle, (DWORD_PTR)hTransfer, szPath, mir_wstrlen(szPath)) == NO_ERROR)
 			return hTransfer; // Success
 
 	return NULL;
@@ -249,7 +238,7 @@ int CMraProto::FileCancel(MCONTACT hContact, HANDLE hTransfer)
 	return 1;
 }
 
-int CMraProto::FileDeny(MCONTACT hContact, HANDLE hTransfer, const TCHAR*)
+int CMraProto::FileDeny(MCONTACT hContact, HANDLE hTransfer, const wchar_t*)
 {
 	return FileCancel(hContact, hTransfer);
 }
@@ -300,12 +289,12 @@ int CMraProto::GetInfo(MCONTACT hContact, int)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-HANDLE CMraProto::SearchBasic(const TCHAR *id)
+HANDLE CMraProto::SearchBasic(const wchar_t *id)
 {
 	return SearchByEmail(id);
 }
 
-HANDLE CMraProto::SearchByEmail(const TCHAR *email)
+HANDLE CMraProto::SearchByEmail(const wchar_t *email)
 {
 	if (m_bLoggedIn && email) {
 		CMStringA szEmail(email);
@@ -315,7 +304,7 @@ HANDLE CMraProto::SearchByEmail(const TCHAR *email)
 	return NULL;
 }
 
-HANDLE CMraProto::SearchByName(const TCHAR *pszNick, const TCHAR *pszFirstName, const TCHAR *pszLastName)
+HANDLE CMraProto::SearchByName(const wchar_t *pszNick, const wchar_t *pszFirstName, const wchar_t *pszLastName)
 {
 	if (m_bLoggedIn && (*pszNick || *pszFirstName || *pszLastName)) {
 		DWORD dwRequestFlags = 0;
@@ -332,7 +321,7 @@ HANDLE CMraProto::SearchByName(const TCHAR *pszNick, const TCHAR *pszFirstName, 
 
 int CMraProto::RecvContacts(MCONTACT hContact, PROTORECVEVENT* pre)
 {
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	dbei.szModule = m_szModuleName;
 	dbei.timestamp = pre->timestamp;
 	dbei.flags = (pre->flags & PREF_CREATEREAD) ? DBEF_READ : 0;
@@ -371,7 +360,7 @@ int CMraProto::SendContacts(MCONTACT hContact, int, int nContacts, MCONTACT *hCo
 	return iRet;
 }
 
-HANDLE CMraProto::SendFile(MCONTACT hContact, const TCHAR*, TCHAR **ppszFiles)
+HANDLE CMraProto::SendFile(MCONTACT hContact, const wchar_t*, wchar_t **ppszFiles)
 {
 	if (!m_bLoggedIn || !hContact || !ppszFiles)
 		return NULL;
@@ -392,7 +381,7 @@ int CMraProto::SendMsg(MCONTACT hContact, int, const char *lpszMessage)
 	}
 
 	DWORD dwFlags = 0;
-	CMStringW wszMessage(ptrW(mir_utf8decodeT(lpszMessage)));
+	CMStringW wszMessage(ptrW(mir_utf8decodeW(lpszMessage)));
 	if (wszMessage.IsEmpty()) {
 		ProtoBroadcastAck(hContact, ACKTYPE_MESSAGE, ACKRESULT_FAILED, NULL, (LPARAM)"Cant allocate buffer for convert to unicode.");
 		return 0;
@@ -476,7 +465,8 @@ int CMraProto::SetStatus(int iNewStatus)
 			for (MCONTACT hContact = db_find_first(m_szModuleName); hContact; hContact = db_find_next(hContact, m_szModuleName))
 				SetContactBasicInfoW(hContact, SCBIFSI_LOCK_CHANGES_EVENTS, (SCBIF_ID | SCBIF_GROUP_ID | SCBIF_SERVER_FLAG | SCBIF_STATUS), -1, -1, 0, 0, ID_STATUS_OFFLINE, 0, 0, 0);
 
-		NETLIB_CLOSEHANDLE(m_hConnection);
+		if (m_hConnection != NULL)
+			Netlib_Shutdown(m_hConnection);
 	}
 	else {
 		// если offline то сразу ставим connecting, но обработка как offline
@@ -495,7 +485,7 @@ int CMraProto::SetStatus(int iNewStatus)
 		case ID_STATUS_DND:
 		case ID_STATUS_FREECHAT:
 		case ID_STATUS_INVISIBLE:
-			MraSendNewStatus(m_iDesiredStatus, m_iXStatus, _T(""), _T(""));
+			MraSendNewStatus(m_iDesiredStatus, m_iXStatus, L"", L"");
 		case ID_STATUS_CONNECTING:
 			// предотвращаем переход в любой статус (кроме offline) из статуса connecting, если он не вызван самим плагином
 			if (dwOldStatusMode == ID_STATUS_CONNECTING && iNewStatus != m_iDesiredStatus)
@@ -516,7 +506,7 @@ HANDLE CMraProto::GetAwayMsg(MCONTACT hContact)
 	if (!m_bLoggedIn || !hContact)
 		return 0;
 
-	TCHAR szStatusDesc[MICBLOG_STATUS_MAX + MICBLOG_STATUS_MAX + MAX_PATH], szTime[64];
+	wchar_t szStatusDesc[MICBLOG_STATUS_MAX + MICBLOG_STATUS_MAX + MAX_PATH], szTime[64];
 	DWORD dwTime;
 	int iRet = 0;
 
@@ -525,30 +515,30 @@ HANDLE CMraProto::GetAwayMsg(MCONTACT hContact)
 		SYSTEMTIME tt = { 0 };
 		dwTime = getDword(hContact, DBSETTING_BLOGSTATUSTIME, 0);
 		if (dwTime && MakeLocalSystemTimeFromTime32(dwTime, &tt))
-			mir_sntprintf(szTime, _T("%04ld.%02ld.%02ld %02ld:%02ld: "), tt.wYear, tt.wMonth, tt.wDay, tt.wHour, tt.wMinute);
+			mir_snwprintf(szTime, L"%04ld.%02ld.%02ld %02ld:%02ld: ", tt.wYear, tt.wMonth, tt.wDay, tt.wHour, tt.wMinute);
 		else
 			szTime[0] = 0;
 
-		mir_sntprintf(szStatusDesc, _T("%s%s"), szTime, szBlogStatus.c_str());
+		mir_snwprintf(szStatusDesc, L"%s%s", szTime, szBlogStatus.c_str());
 		iRet = GetTickCount();
 		ProtoBroadcastAck(hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, (HANDLE)iRet, (LPARAM)szStatusDesc);
 	}
 	return (HANDLE)iRet;
 }
 
-int CMraProto::SetAwayMsg(int iStatus, const TCHAR *msg)
+int CMraProto::SetAwayMsg(int iStatus, const wchar_t *msg)
 {
 	if (!m_bLoggedIn)
 		return 1;
 
-	size_t dwStatusDescSize = mir_tstrlen(msg);
+	size_t dwStatusDescSize = mir_wstrlen(msg);
 	DWORD dwStatus = iStatus;
 	DWORD dwXStatus = m_iXStatus;
 
 	// не отправляем новый статусный текст для хстатусов, для хстатусов только эвей сообщения
 	if (dwStatus != ID_STATUS_ONLINE || IsXStatusValid(dwXStatus) == FALSE) {
 		dwStatusDescSize = min(dwStatusDescSize, STATUS_DESC_MAX);
-		MraSendNewStatus(dwStatus, dwXStatus, _T(""), msg);
+		MraSendNewStatus(dwStatus, dwXStatus, L"", msg);
 	}
 	return 0;
 }

@@ -23,12 +23,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "stdafx.h"
 
-HTREEITEM OptTree_FindNamedTreeItemAt(HWND hwndTree, HTREEITEM hItem, const TCHAR *name);
-HTREEITEM OptTree_AddItem(HWND hwndTree, TCHAR *name, LPARAM lParam, int iconIndex);
+HTREEITEM OptTree_FindNamedTreeItemAt(HWND hwndTree, HTREEITEM hItem, const wchar_t *name);
+HTREEITEM OptTree_AddItem(HWND hwndTree, wchar_t *name, LPARAM lParam, int iconIndex);
 
 static void OptTree_TranslateItem(HWND hwndTree, HTREEITEM hItem)
 {
-	TCHAR buf[128];
+	wchar_t buf[128];
 
 	TVITEM tvi = {0};
 	tvi.mask = TVIF_HANDLE|TVIF_TEXT;
@@ -38,7 +38,7 @@ static void OptTree_TranslateItem(HWND hwndTree, HTREEITEM hItem)
 	SendMessage(hwndTree, TVM_GETITEM, 0, (LPARAM)&tvi);
 	// Проверим, надо ли переводить.
 	if ((tvi.lParam != -1) && (pOptions[tvi.lParam].dwFlag & OPTTREE_NOTRANSLATE)) return;
-	tvi.pszText = TranslateTS(tvi.pszText);
+	tvi.pszText = TranslateW(tvi.pszText);
 	SendMessage(hwndTree, TVM_SETITEM, 0, (LPARAM)&tvi);
 }
 
@@ -72,10 +72,10 @@ void OptTree_Translate(HWND hwndTree)
 	}
 }
 
-HTREEITEM OptTree_FindNamedTreeItemAt(HWND hwndTree, HTREEITEM hItem, const TCHAR *name)
+HTREEITEM OptTree_FindNamedTreeItemAt(HWND hwndTree, HTREEITEM hItem, const wchar_t *name)
 {
 	TVITEM tvi = {0};
-	TCHAR str[MAX_PATH];
+	wchar_t str[MAX_PATH];
 
 	if (hItem)
 		tvi.hItem = TreeView_GetChild(hwndTree, hItem);
@@ -93,7 +93,7 @@ HTREEITEM OptTree_FindNamedTreeItemAt(HWND hwndTree, HTREEITEM hItem, const TCHA
 	{
 		TreeView_GetItem(hwndTree, &tvi);
 
-		if (!mir_tstrcmp(tvi.pszText, name))
+		if (!mir_wstrcmp(tvi.pszText, name))
 			return tvi.hItem;
 
 		tvi.hItem = TreeView_GetNextSibling(hwndTree, tvi.hItem);
@@ -101,24 +101,24 @@ HTREEITEM OptTree_FindNamedTreeItemAt(HWND hwndTree, HTREEITEM hItem, const TCHA
 	return NULL;
 }
 
-HTREEITEM OptTree_AddItem(HWND hwndTree, TCHAR *name, LPARAM lParam, int iconIndex)
+HTREEITEM OptTree_AddItem(HWND hwndTree, wchar_t *name, LPARAM lParam, int iconIndex)
 {
-	TCHAR itemName[1024];
+	wchar_t itemName[1024];
 
-	TCHAR* sectionName;
+	wchar_t* sectionName;
 	int sectionLevel = 0;
 
 	HTREEITEM hSection = NULL, result = NULL;
-	mir_tstrcpy(itemName, name);
+	mir_wstrcpy(itemName, name);
 	sectionName = itemName;
 
 	while (sectionName)
 	{
 		// allow multi-level tree
-		TCHAR* pItemName = sectionName;
+		wchar_t* pItemName = sectionName;
 		HTREEITEM hItem;
 
-		if (sectionName = _tcschr(sectionName, '/'))
+		if (sectionName = wcschr(sectionName, '/'))
 		{
 			// one level deeper
 			*sectionName = 0;
@@ -169,7 +169,7 @@ BOOL  OptTree_ProcessMessage(HWND hwnd, UINT msg, WPARAM, LPARAM lparam, BOOL*, 
 		case WM_INITDIALOG:
 		{
 			int indx;
-			TCHAR itemName[1024];
+			wchar_t itemName[1024];
 			HIMAGELIST hImgLst;
 
 			TreeView_SelectItem(hwndTree, NULL);
@@ -188,12 +188,12 @@ BOOL  OptTree_ProcessMessage(HWND hwnd, UINT msg, WPARAM, LPARAM lparam, BOOL*, 
 			/* build options tree. based on code from IcoLib */
 			for (indx = 0; indx < optionCount; indx++)
 			{
-				TCHAR* sectionName;
+				wchar_t* sectionName;
 				int sectionLevel = 0;
 
 				HTREEITEM hSection = NULL;
 				if (options[indx].szOptionName)
-					mir_tstrcpy(itemName, options[indx].szOptionName);
+					mir_wstrcpy(itemName, options[indx].szOptionName);
 				else
 					itemName[0] = 0;
 
@@ -202,10 +202,10 @@ BOOL  OptTree_ProcessMessage(HWND hwnd, UINT msg, WPARAM, LPARAM lparam, BOOL*, 
 				while (sectionName)
 				{
 					// allow multi-level tree
-					TCHAR* pItemName = sectionName;
+					wchar_t* pItemName = sectionName;
 					HTREEITEM hItem;
 
-					if (sectionName = _tcschr(sectionName, '/'))
+					if (sectionName = wcschr(sectionName, '/'))
 					{
 						// one level deeper
 						*sectionName = 0;

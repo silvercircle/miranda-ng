@@ -54,11 +54,11 @@ Offline
 Online
 [Away]
 Abwesend
-[NA]
+[Not available]
 Außer Haus
 [Occupied]
 Beschäftigt
-[DND]
+[Do not disturb]
 Bitte nicht stören
 [Free for chat]
 Für Chat bereit
@@ -87,9 +87,9 @@ Nudge
 Standardnudge
 [Nudge as Default]
 Standard Nudge
-[Send Nudge]
+[Send nudge]
 Nudge senden
-[Send &Nudge]
+[Send &nudge]
 &Nudge senden
 [Show Nudge]
 Zeige Nudge

@@ -7,7 +7,6 @@
 ;============================================================
 [Shows and allows you to edit your details for all accounts.]
 Дазваляе паказваць і рэдагаваць вашы дэталі для ўсіх контаў.
-;file \plugins\MyDetails\res\resource.rc
 [Set my nickname]
 Мая мянушка
 [Nickname:]
@@ -16,6 +15,8 @@
 Скасаваць
 [General]
 Агульнае
+[RTL]
+
 [Align text to right]
 Выраўнаваць справа
 [Auto-resize frame]
@@ -77,25 +78,25 @@
 [Status message:]
 Паведамленне статусу:
 [&Offline]
-Адключаны
+Ад&ключаны
 [On&line]
-У с&еціве
+&Далучаны
 [&Away]
 &Адсутнічаю
-[&NA]
-Недасяжны
+[&Not available]
+Неда&ступны
 [Occ&upied]
-Зан&ят
-[&DND]
-&Не турбаваць
+Зан&яты
+[&Do not disturb]
+Не &турбаваць
 [&Free for chat]
-&Свабодны
+&Вольны
 [&Invisible]
 &Нябачны
 [On the &phone]
-Тэлефаную
+На тэле&фоне
 [Out to &lunch]
-Абедаю
+А&бедаю
 [Set my avatar...]
 Змяніць мой аватар...
 [Set my nickname...]
@@ -112,10 +113,8 @@
 Змяняць конты
 [Don't cycle through accounts]
 Не змяняць конты
-;file \plugins\MyDetails\src\data.cpp
 [<no status name>]
 <няма імя статусу>
-;file \plugins\MyDetails\src\frame.cpp
 [Nickname]
 Мянушка
 [Status]
@@ -142,15 +141,12 @@
 Змяніць статуснае паведамленне для %s...
 [Hide my details]
 Схаваць мае дэталі
-;file \plugins\MyDetails\src\mydetails.cpp
 [Previous account]
 Папярэдні конт
 [Next account]
 Наступны конт
 [Contact list]
 Спіс кантактаў
-;file \plugins\MyDetails\src\options.cpp
-;file \plugins\MyDetails\src\services.cpp
 [Set my nickname for %s]
 Змяніць мянушку для %s
 [Set my status message for %s]

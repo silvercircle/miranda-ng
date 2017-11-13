@@ -4,7 +4,7 @@
  * (c) majvan 2002,2004
  */
 
-#include "..\stdafx.h"
+#include "../stdafx.h"
 
 #define BADCONNECTTITLE LPGEN("%s - connection error")
 #define BADCONNECTMSG LPGEN("An error occurred. Error code: %d")//is in use?
@@ -85,7 +85,7 @@ INT_PTR CALLBACK DlgProcYAMNBadConnection(HWND hDlg, UINT msg, WPARAM wParam, LP
 		DWORD  ErrorCode;
 		char* TitleStrA;
 		char *Message1A = NULL;
-		TCHAR *Message1W = NULL;
+		wchar_t *Message1W = NULL;
 		POPUPDATAT BadConnectPopup;
 
 		ActualAccount = ((struct BadConnectionParam *)lParam)->account;
@@ -119,13 +119,13 @@ INT_PTR CALLBACK DlgProcYAMNBadConnection(HWND hDlg, UINT msg, WPARAM wParam, LP
 
 			BadConnectPopup.PluginWindowProc = BadConnectPopupProc;
 			BadConnectPopup.PluginData = ActualAccount;
-			mir_tstrncpy(BadConnectPopup.lptzContactName, _A2T(ActualAccount->Name), _countof(BadConnectPopup.lptzContactName));
+			mir_wstrncpy(BadConnectPopup.lptzContactName, _A2T(ActualAccount->Name), _countof(BadConnectPopup.lptzContactName));
 		}
 
 		if (ActualAccount->Plugin->Fcn != NULL && ActualAccount->Plugin->Fcn->GetErrorStringWFcnPtr != NULL) {
 			Message1W = ActualAccount->Plugin->Fcn->GetErrorStringWFcnPtr(ErrorCode);
 			SetDlgItemText(hDlg, IDC_STATICMSG, Message1W);
-			_tcsncpy_s(BadConnectPopup.lptzText, Message1W, _TRUNCATE);
+			wcsncpy_s(BadConnectPopup.lptzText, Message1W, _TRUNCATE);
 			if (ShowPopup)
 				PUAddPopupT(&BadConnectPopup);
 		}
@@ -133,7 +133,7 @@ INT_PTR CALLBACK DlgProcYAMNBadConnection(HWND hDlg, UINT msg, WPARAM wParam, LP
 		{
 			Message1W = ActualAccount->Plugin->Fcn->GetErrorStringWFcnPtr(ErrorCode);
 			SetDlgItemText(hDlg, IDC_STATICMSG, Message1W);
-			_tcsncpy_s(BadConnectPopup.lptzText, Message1W, _TRUNCATE);
+			wcsncpy_s(BadConnectPopup.lptzText, Message1W, _TRUNCATE);
 			if (ShowPopup)
 				PUAddPopupT(&BadConnectPopup);
 		}
@@ -141,7 +141,7 @@ INT_PTR CALLBACK DlgProcYAMNBadConnection(HWND hDlg, UINT msg, WPARAM wParam, LP
 		{
 			Message1W = TranslateT("Unknown error");
 			SetDlgItemText(hDlg, IDC_STATICMSG, Message1W);
-			_tcsncpy_s(BadConnectPopup.lptzText, Message1W, _TRUNCATE);
+			wcsncpy_s(BadConnectPopup.lptzText, Message1W, _TRUNCATE);
 			if (ShowPopup)
 				PUAddPopupT(&BadConnectPopup);
 		}
@@ -185,7 +185,7 @@ INT_PTR CALLBACK DlgProcYAMNBadConnection(HWND hDlg, UINT msg, WPARAM wParam, LP
 		}
 		return 0;
 	case WM_CHAR:
-		switch ((TCHAR)wParam)
+		switch ((wchar_t)wParam)
 		{
 		case 27:
 		case 13:
@@ -216,10 +216,6 @@ void __cdecl BadConnection(void *Param)
 	MSG msg;
 	HWND hBadConnect;
 	HACCOUNT ActualAccount;
-	NOTIFYICONDATA nid;
-	char *NotIconText = Translate(" - connection error"), *src;
-	TCHAR *dest;
-	int i;
 
 	struct BadConnectionParam MyParam = *(struct BadConnectionParam *)Param;
 	ActualAccount = MyParam.account;
@@ -234,22 +230,12 @@ void __cdecl BadConnection(void *Param)
 	__try
 	{
 		hBadConnect = CreateDialogParam(YAMNVar.hInst, MAKEINTRESOURCE(IDD_DLGBADCONNECT), NULL, DlgProcYAMNBadConnection, (LPARAM)&MyParam);
-		SendMessage(hBadConnect, WM_SETICON, ICON_BIG, (LPARAM)g_LoadIconEx(3));
-		SendMessage(hBadConnect, WM_SETICON, ICON_SMALL, (LPARAM)g_LoadIconEx(3));
-
-		memset(&nid, 0, sizeof(nid));
-		nid.cbSize = sizeof(NOTIFYICONDATA);
-		nid.hWnd = hBadConnect;
-		nid.hIcon = g_LoadIconEx(3);
-		nid.uID = 0;
-		nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
-		nid.uCallbackMessage = WM_YAMN_NOTIFYICON;
+		Window_SetIcon_IcoLib(hBadConnect, g_GetIconHandle(3));
 
 #ifdef DEBUG_SYNCHRO
 		DebugLog(SynchroFile,"BadConnect:ActualAccountSO-read wait\n");
 #endif
-		if (WAIT_OBJECT_0 != WaitToReadFcn(ActualAccount->AccountAccessSO))
-		{
+		if (WAIT_OBJECT_0 != WaitToReadFcn(ActualAccount->AccountAccessSO)) {
 #ifdef DEBUG_SYNCHRO
 			DebugLog(SynchroFile,"BadConnect:ActualAccountSO-read wait failed\n");
 #endif
@@ -258,16 +244,23 @@ void __cdecl BadConnection(void *Param)
 #ifdef DEBUG_SYNCHRO
 		DebugLog(SynchroFile,"BadConnect:ActualAccountSO-read enter\n");
 #endif
-		for (src = ActualAccount->Name, dest = nid.szTip, i = 0; (*src != (TCHAR)0) && (i + 1 < sizeof(nid.szTip)); *dest++ = *src++);
-		for (src = NotIconText; (*src != (TCHAR)0) && (i + 1 < sizeof(nid.szTip)); *dest++ = *src++);
-		*dest = (TCHAR)0;
-
 		if (ActualAccount->BadConnectN.Flags & YAMN_ACC_SND)
-			CallService(MS_SKIN_PLAYSOUND, 0, (LPARAM)YAMN_CONNECTFAILSOUND);
+			Skin_PlaySound(YAMN_CONNECTFAILSOUND);
+
 		if (ActualAccount->BadConnectN.Flags & YAMN_ACC_MSG)
 			ShowWindow(hBadConnect, SW_SHOWNORMAL);
-		if (ActualAccount->BadConnectN.Flags & YAMN_ACC_ICO)
+
+		if (ActualAccount->BadConnectN.Flags & YAMN_ACC_ICO) {
+			NOTIFYICONDATA nid = {};
+			nid.cbSize = sizeof(nid);
+			nid.hWnd = hBadConnect;
+			nid.hIcon = g_LoadIconEx(3);
+			nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+			nid.uCallbackMessage = WM_YAMN_NOTIFYICON;
+			mir_snwprintf(nid.szTip, L"%S%s", ActualAccount->Name, TranslateT(" - connection error"));
 			Shell_NotifyIcon(NIM_ADD, &nid);
+		}
+
 #ifdef DEBUG_SYNCHRO
 		DebugLog(SynchroFile,"BadConnect:ActualAccountSO-read done\n");
 #endif

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-03 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -42,112 +42,10 @@ EXCEPTION_RECORD API::exRecord = { 0 };
 CONTEXT API::exCtx = { 0 };
 LRESULT API::exLastResult = 0;
 char    API::exSzFile[MAX_PATH] = "";
-TCHAR   API::exReason[256] = _T("");
+wchar_t   API::exReason[256] = L"";
 int     API::exLine = 0;
 bool    API::exAllowContinue = false;
 HMODULE API::hDwm = 0;
-
-DWORD cfg::getDword(const MCONTACT hContact = 0, const char *szModule = 0, const char *szSetting = 0, DWORD uDefault = 0)
-{
-	return ((DWORD)db_get_dw(hContact, szModule, szSetting, uDefault));
-}
-
-// read a setting from our default module (Tab_SRMSG)
-DWORD cfg::getDword(const char *szSetting = 0, DWORD uDefault = 0)
-{
-	return ((DWORD)db_get_dw(0, DEFAULT_MODULE, szSetting, uDefault));
-}
-
-// read a setting from module only
-DWORD cfg::getDword(const char *szModule, const char *szSetting, DWORD uDefault)
-{
-	return ((DWORD)db_get_dw(0, szModule, szSetting, uDefault));
-}
-
-
-WORD cfg::getWord(const MCONTACT hContact = 0, const char *szModule = 0, const char *szSetting = 0, WORD uDefault = 0)
-{
-	return ((WORD)db_get_w(hContact, szModule, szSetting, uDefault));
-}
-
-// read a setting from our default module (Tab_SRMSG)
-WORD cfg::getWord(const char *szSetting = 0, WORD uDefault = 0)
-{
-	return ((WORD)db_get_w(0, DEFAULT_MODULE, szSetting, uDefault));
-}
-
-// read a setting from module only
-WORD cfg::getWord(const char *szModule, const char *szSetting, WORD uDefault)
-{
-	return ((WORD)db_get_w(0, szModule, szSetting, uDefault));
-}
-
-// same for bytes now
-int cfg::getByte(const MCONTACT hContact = 0, const char *szModule = 0, const char *szSetting = 0, int uDefault = 0)
-{
-	return (db_get_b(hContact, szModule, szSetting, uDefault));
-}
-
-int cfg::getByte(const char *szSetting = 0, int uDefault = 0)
-{
-	return (db_get_b(0, DEFAULT_MODULE, szSetting, uDefault));
-}
-
-int cfg::getByte(const char *szModule, const char *szSetting, int uDefault)
-{
-	return (db_get_b(0, szModule, szSetting, uDefault));
-}
-
-INT_PTR cfg::getTString(const MCONTACT hContact, const char *szModule, const char *szSetting, DBVARIANT *dbv)
-{
-	return (db_get_ts(hContact, szModule, szSetting, dbv));
-}
-
-INT_PTR cfg::getString(const MCONTACT hContact, const char *szModule, const char *szSetting, DBVARIANT *dbv)
-{
-	return (db_get_s(hContact, szModule, szSetting, dbv));
-}
-
-// writer functions
-INT_PTR cfg::writeDword(const MCONTACT hContact = 0, const char *szModule = 0, const char *szSetting = 0, DWORD value = 0)
-{
-	return (db_set_dw(hContact, szModule, szSetting, value));
-}
-
-INT_PTR cfg::writeDword(const char *szModule = 0, const char *szSetting = 0, DWORD value = 0)
-{
-	return (db_set_dw(0, szModule, szSetting, value));
-}
-
-INT_PTR cfg::writeWord(const MCONTACT hContact = 0, const char *szModule = 0, const char *szSetting = 0, WORD value = 0)
-{
-	return (db_set_w(hContact, szModule, szSetting, value));
-}
-
-INT_PTR cfg::writeWord(const char *szModule = 0, const char *szSetting = 0, WORD value = 0)
-{
-	return (db_set_w(0, szModule, szSetting, value));
-}
-
-INT_PTR cfg::writeByte(const MCONTACT hContact = 0, const char *szModule = 0, const char *szSetting = 0, BYTE value = 0)
-{
-	return (db_set_b(hContact, szModule, szSetting, value));
-}
-
-INT_PTR cfg::writeByte(const char *szModule = 0, const char *szSetting = 0, BYTE value = 0)
-{
-	return (db_set_b(0, szModule, szSetting, value));
-}
-
-INT_PTR cfg::writeTString(const MCONTACT hContact, const char *szModule = 0, const char *szSetting = 0, const TCHAR *str = 0)
-{
-	return (db_set_ts(hContact, szModule, szSetting, str));
-}
-
-INT_PTR cfg::writeString(const MCONTACT hContact, const char *szModule = 0, const char *szSetting = 0, const char *str = 0)
-{
-	return (db_set_s(hContact, szModule, szSetting, str));
-}
 
 TExtraCache* cfg::getCache(const MCONTACT hContact, const char *szProto)
 {
@@ -201,7 +99,7 @@ void API::onInit()
 	sysConfig.isSevenPlus = (IsWinVer7Plus() ? true : false);
 
 	if (sysConfig.isVistaPlus) {
-		if ((hDwm = Utils::loadSystemLibrary(_T("\\dwmapi.dll")), true) != 0) {
+		if ((hDwm = Utils::loadSystemLibrary(L"\\dwmapi.dll"), true) != 0) {
 			pfnDwmIsCompositionEnabled = (pfnDwmIsCompositionEnabled_t)GetProcAddress(hDwm, "DwmIsCompositionEnabled");
 			pfnDwmExtendFrameIntoClientArea = (pfnDwmExtendFrameIntoClientArea_t)GetProcAddress(hDwm, "DwmExtendFrameIntoClientArea");
 		}
@@ -226,7 +124,7 @@ void API::updateState()
 
 	if (sysConfig.isVistaPlus) {
 		sysState.isDwmActive = (pfnDwmIsCompositionEnabled && (pfnDwmIsCompositionEnabled(&result) == S_OK) && result) ? true : false;
-		sysState.isAero = /* (CSkin::m_skinEnabled == false) && */ cfg::getByte("CLUI", "useAero", 1) /* && CSkin::m_fAeroSkinsValid */ && sysState.isDwmActive;
+		sysState.isAero = /* (CSkin::m_skinEnabled == false) && */ db_get_b(NULL, "CLUI", "useAero", 1) /* && CSkin::m_fAeroSkinsValid */ && sysState.isDwmActive;
 	}
 }
 
@@ -295,7 +193,7 @@ void API::Ex_Handler()
 		ExitProcess(1);
 }
 
-int API::Ex_ShowDialog(EXCEPTION_POINTERS *ep, const char *szFile, int line, TCHAR* szReason, bool fAllowContinue)
+int API::Ex_ShowDialog(EXCEPTION_POINTERS *ep, const char *szFile, int line, wchar_t* szReason, bool fAllowContinue)
 {
 	char szDrive[MAX_PATH], szDir[MAX_PATH], szName[MAX_PATH], szExt[MAX_PATH];
 
@@ -304,7 +202,7 @@ int API::Ex_ShowDialog(EXCEPTION_POINTERS *ep, const char *szFile, int line, TCH
 	memcpy(&exCtx, ep->ContextRecord, sizeof(CONTEXT));
 
 	mir_snprintf(exSzFile, "%s%s", szName, szExt);
-	mir_sntprintf(exReason, _T("An application error has occured: %s"), szReason);
+	mir_snwprintf(exReason, L"An application error has occured: %s", szReason);
 	exLine = line;
 	exLastResult = DialogBoxParam(g_hInst, MAKEINTRESOURCE(IDD_EXCEPTION), 0, Ex_DlgProc, 0);
 	exAllowContinue = fAllowContinue;
@@ -332,9 +230,9 @@ void TSAPI Utils::showDlgControl(const HWND hwnd, UINT id, int showCmd)
  *
  * return 0 and throw an exception if something goes wrong.
  */
-HMODULE Utils::loadSystemLibrary(const TCHAR* szFilename, bool useGetHandle)
+HMODULE Utils::loadSystemLibrary(const wchar_t* szFilename, bool useGetHandle)
 {
-	TCHAR sysPathName[MAX_PATH + 2];
+	wchar_t sysPathName[MAX_PATH + 2];
 	HMODULE _h = 0;
 
 	try {
@@ -342,10 +240,10 @@ HMODULE Utils::loadSystemLibrary(const TCHAR* szFilename, bool useGetHandle)
 			throw(CRTException("Error while loading system library", szFilename));
 
 		sysPathName[MAX_PATH - 1] = 0;
-		if (mir_tstrlen(sysPathName) + mir_tstrlen(szFilename) >= MAX_PATH)
+		if (mir_wstrlen(sysPathName) + mir_wstrlen(szFilename) >= MAX_PATH)
 			throw(CRTException("Error while loading system library", szFilename));
 
-		mir_tstrcat(sysPathName, szFilename);
+		mir_wstrcat(sysPathName, szFilename);
 		if (useGetHandle)
 			_h = ::GetModuleHandle(sysPathName);
 		else
@@ -360,17 +258,17 @@ HMODULE Utils::loadSystemLibrary(const TCHAR* szFilename, bool useGetHandle)
 	return (_h);
 }
 
-CRTException::CRTException(const char *szMsg, const TCHAR *szParam) : std::runtime_error(std::string(szMsg))
+CRTException::CRTException(const char *szMsg, const wchar_t *szParam) : std::runtime_error(std::string(szMsg))
 {
-	mir_sntprintf(m_szParam, MAX_PATH, szParam);
+	mir_snwprintf(m_szParam, MAX_PATH, szParam);
 }
 
 void CRTException::display() const
 {
-	TCHAR *tszMsg = mir_a2t(what());
+	wchar_t *tszMsg = mir_a2u(what());
 
-	TCHAR tszBoxMsg[500];
-	mir_sntprintf(tszBoxMsg, _T("%s\n\n(%s)"), tszMsg, m_szParam);
-	::MessageBox(0, tszBoxMsg, _T("Clist_nicer runtime error"), MB_OK | MB_ICONERROR);
+	wchar_t tszBoxMsg[500];
+	mir_snwprintf(tszBoxMsg, L"%s\n\n(%s)", tszMsg, m_szParam);
+	::MessageBox(0, tszBoxMsg, L"Clist_nicer runtime error", MB_OK | MB_ICONERROR);
 	mir_free(tszMsg);
 }

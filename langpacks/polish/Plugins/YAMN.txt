@@ -16,10 +16,10 @@ Wersja:
 Opis:
 [Copyright:]
 Własność:
-[Contact:]
-Kontakt:
-[WWW:]
-Strona domowa:
+[E-mail:]
+E-mail:
+[Homepage:]
+WWW:
 [Account]
 Konto
 [Name:]
@@ -28,10 +28,6 @@ Nazwa:
 Serwer:
 [Port:]
 Port:
-[SSL]
-SSL
-[APOP]
-APOP
 [User Name:]
 Użytkownik:
 [Password:]
@@ -100,11 +96,11 @@ Rozłączony
 Dostępny
 [Away]
 Zaraz wracam
-[N/A]
+[Not available]
 Wrócę później
 [Occupied]
 Zajęty
-[DND]
+[Do not disturb]
 Nie przeszkadzać
 [Free for chat]
 Porozmawiajmy
@@ -159,9 +155,9 @@ Popup gdy niepowodzenie
 [Preview]
 Podgląd
 [Background color]
-Tło
+Kolor tła
 [Text color]
-Tekst
+Kolor tekstu
 ;file \plugins\YAMN\src\main.cpp
 [Check &mail (All Account)]
 Sprawdź wiadomości e-&mail
@@ -199,12 +195,12 @@ Nieznany błąd
 ;file \plugins\YAMN\src\browser\mailbrowser.cpp
 [%s - %d new mail messages, %d total]
 Konto: %s, Nowych wiadomości: %d, Łącznie: %d
-[- new mail message(s)]
-- nowych wiadomości e-mail
 [%s : %d new mail message(s), %d total]
 %s: Nowych wiadomości: %d, Łącznie: %d
 [%d new mail message(s), %d total]
 Nowych wiadomości: %d, Łącznie: %d
+[- new mail message(s)]
+- nowa wiadomość(ści) e-mail
 [No new mail message, %d spam(s)]
 Brak nowych wiadomości, spamów: %d
 [Invalid]

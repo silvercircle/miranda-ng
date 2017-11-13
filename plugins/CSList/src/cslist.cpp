@@ -84,10 +84,10 @@ static int OnInitOptions(WPARAM wparam, LPARAM)
 	odp.position = 955000000;
 	odp.hInstance = g_hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONS);
-	odp.pszTitle = MODULENAME;
 	odp.pfnDlgProc = CSOptionsProc;
-	odp.pszGroup = LPGEN("Status");
-	odp.flags = ODPF_BOLDGROUPS;
+	odp.szGroup.w = L"Status";
+	odp.szTitle.w = MODULENAME;
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
 	Options_AddPage(wparam, &odp);
 	return 0;
 }
@@ -115,7 +115,7 @@ static int OnPreshutdown(WPARAM, LPARAM)
 extern "C" __declspec(dllexport) int Load()
 {
 	mir_getLP(&pluginInfoEx);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	// support for ComboBoxEx
 	INITCOMMONCONTROLSEX icc;
@@ -124,20 +124,20 @@ extern "C" __declspec(dllexport) int Load()
 	InitCommonControlsEx(&icc);
 
 	// init icons
-	TCHAR tszFile[MAX_PATH];
+	wchar_t tszFile[MAX_PATH];
 	GetModuleFileName(g_hInst, tszFile, MAX_PATH);
 
 	SKINICONDESC sid = { 0 };
-	sid.defaultFile.t = tszFile;
-	sid.flags = SIDF_ALL_TCHAR;
-	sid.section.t = _T(MODULENAME);
+	sid.defaultFile.w = tszFile;
+	sid.flags = SIDF_ALL_UNICODE;
+	sid.section.w = MODULENAME;
 
 	for (int i = 0; i < _countof(forms); i++) {
 		char szSettingName[64];
 		mir_snprintf(szSettingName, "%s_%s", MODNAME, forms[i].pszIconIcoLib);
 
 		sid.pszName = szSettingName;
-		sid.description.t = forms[i].ptszDescr;
+		sid.description.w = forms[i].ptszDescr;
 		sid.iDefaultIndex = -forms[i].iconNoIcoLib;
 		forms[i].hIcoLibItem = IcoLib_AddIcon(&sid);
 	}
@@ -161,13 +161,13 @@ extern "C" __declspec(dllexport) int Unload()
 
 // ====[ FUN ]================================================================
 
-void RegisterHotkeys(char buf[200], TCHAR* accName, int Number)
+void RegisterHotkeys(char buf[200], wchar_t* accName, int Number)
 {
-	HOTKEYDESC hotkey = { sizeof(hotkey) };
-	hotkey.dwFlags = HKD_TCHAR;
+	HOTKEYDESC hotkey = {};
+	hotkey.dwFlags = HKD_UNICODE;
 	hotkey.pszName = buf;
-	hotkey.ptszDescription = accName;
-	hotkey.ptszSection = LPGENT("Custom Status List");
+	hotkey.szDescription.w = accName;
+	hotkey.szSection.w = LPGENW("Custom Status List");
 	hotkey.pszService = buf;
 	hotkey.DefHotKey = HOTKEYCODE(HOTKEYF_CONTROL | HOTKEYF_SHIFT, '0' + Number);
 	Hotkey_Register(&hotkey);
@@ -188,12 +188,12 @@ void SetStatus(WORD code, StatusItem* item, char *szAccName)
 	int statusToSet;
 
 	CUSTOM_STATUS ics = { sizeof(CUSTOM_STATUS) };
-	ics.flags = CSSF_MASK_STATUS | CSSF_MASK_NAME | CSSF_MASK_MESSAGE | CSSF_TCHAR;
+	ics.flags = CSSF_MASK_STATUS | CSSF_MASK_NAME | CSSF_MASK_MESSAGE | CSSF_UNICODE;
 
 	if (code == IDC_CANCEL) {
 		statusToSet = 0;
-		ics.ptszName = _T("");
-		ics.ptszMessage = _T("");
+		ics.ptszName = L"";
+		ics.ptszMessage = L"";
 	}
 	else if (code == IDOK && item != NULL) {
 		statusToSet = item->m_iIcon + 1;
@@ -238,9 +238,9 @@ void addProtoStatusMenuItem(char *protoName)
 		CreateServiceFunctionParam(buf, showList, (LPARAM)protoName);
 
 	CMenuItem mi;
-	mi.flags =  CMIF_TCHAR;
+	mi.flags =  CMIF_UNICODE;
 	mi.hIcolibItem = forms[0].hIcoLibItem;
-	mi.name.t = _T(MODULENAME);
+	mi.name.w = MODULENAME;
 	mi.position = 2000040000;
 	mi.pszService = buf;
 	mi.root = hRoot;
@@ -261,15 +261,15 @@ void importCustomStatuses(CSWindow* csw, int result)
 		si->m_iIcon = i - 1;
 
 		mir_snprintf(bufTitle, "XStatus%dName", i);
-		if (!db_get_ts(NULL, protoName, bufTitle, &dbv)) {
-			mir_tstrcpy(si->m_tszTitle, dbv.ptszVal);
+		if (!db_get_ws(NULL, protoName, bufTitle, &dbv)) {
+			mir_wstrcpy(si->m_tszTitle, dbv.ptszVal);
 			db_free(&dbv);
 		}
 		else si->m_tszTitle[0] = 0;
 
 		mir_snprintf(bufMessage, "XStatus%dMsg", i);
-		if (!db_get_ts(NULL, protoName, bufMessage, &dbv)) {
-			mir_tstrcpy(si->m_tszMessage, dbv.ptszVal);
+		if (!db_get_ws(NULL, protoName, bufMessage, &dbv)) {
+			mir_wstrcpy(si->m_tszMessage, dbv.ptszVal);
 			db_free(&dbv);
 		}
 		else si->m_tszMessage[0] = 0;
@@ -366,7 +366,7 @@ void CSWindow::initButtons()
 
 		SendDlgItemMessage(m_handle, forms[i].idc, BM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIconByHandle(forms[i].hIcoLibItem));
 		SendDlgItemMessage(m_handle, forms[i].idc, BUTTONSETASFLATBTN, TRUE, 0); //maybe set as BUTTONSETDEFAULT?
-		SendDlgItemMessage(m_handle, forms[i].idc, BUTTONADDTOOLTIP, (WPARAM)TranslateTS(forms[i].ptszTitle), BATF_TCHAR);
+		SendDlgItemMessage(m_handle, forms[i].idc, BUTTONADDTOOLTIP, (WPARAM)TranslateW(forms[i].ptszTitle), BATF_UNICODE);
 	}
 }
 
@@ -388,15 +388,15 @@ void CSWindow::toggleEmptyListMessage()
 
 BOOL CSWindow::itemPassedFilter(ListItem< StatusItem >* li)
 {
-	TCHAR filter[MAX_PATH];
+	wchar_t filter[MAX_PATH];
 	GetDlgItemText(m_handle, IDC_FILTER_FIELD, filter, _countof(filter));
 
-	if (mir_tstrlen(filter))
+	if (mir_wstrlen(filter))
 	{
-		TCHAR title[EXTRASTATUS_TITLE_LIMIT], message[EXTRASTATUS_MESSAGE_LIMIT];
-		mir_tstrcpy(title, li->m_item->m_tszTitle); mir_tstrcpy(message, li->m_item->m_tszMessage);
-		if (strpos(_tcslwr(title), _tcslwr(filter)) == -1)
-			if (strpos(_tcslwr(message), _tcslwr(filter)) == -1)
+		wchar_t title[EXTRASTATUS_TITLE_LIMIT], message[EXTRASTATUS_MESSAGE_LIMIT];
+		mir_wstrcpy(title, li->m_item->m_tszTitle); mir_wstrcpy(message, li->m_item->m_tszMessage);
+		if (strpos(wcslwr(title), wcslwr(filter)) == -1)
+			if (strpos(wcslwr(message), wcslwr(filter)) == -1)
 				return FALSE;
 	}
 
@@ -415,7 +415,7 @@ void CSWindow::toggleFilter()
 		SetFocus(hFilter);
 	else
 	{
-		TCHAR filterText[255];
+		wchar_t filterText[255];
 		GetDlgItemText(m_handle, IDC_FILTER_FIELD, filterText, _countof(filterText));
 		if (filterText[0] != 0)
 			SetDlgItemText(m_handle, IDC_FILTER_FIELD, TEXT(""));
@@ -484,9 +484,9 @@ void CSAMWindow::setCombo()
 	db_free(&dbv);
 
 	WPARAM iStatus;
-	TCHAR tszName[100];
+	wchar_t tszName[100];
 	CUSTOM_STATUS cs = { sizeof(cs) };
-	cs.flags = CSSF_MASK_NAME | CSSF_DEFAULT_NAME | CSSF_TCHAR;
+	cs.flags = CSSF_MASK_NAME | CSSF_DEFAULT_NAME | CSSF_UNICODE;
 	cs.ptszName = tszName;
 	cs.wParam = &iStatus;
 
@@ -500,7 +500,7 @@ void CSAMWindow::setCombo()
 		cbi.mask = CBEIF_TEXT | CBEIF_IMAGE | CBEIF_SELECTEDIMAGE;
 		cbi.iItem = -1;
 		cbi.iImage = cbi.iSelectedImage = i - 1;
-		cbi.pszText = TranslateTS(tszName);
+		cbi.pszText = TranslateW(tszName);
 		SendMessage(m_hCombo, CBEM_INSERTITEM, 0, (LPARAM)&cbi);
 	}
 	SendMessage(m_hCombo, CB_SETCURSEL, 0, 0); // first 0 sets selection to top
@@ -528,22 +528,22 @@ void CSAMWindow::checkFieldLimit(WORD action, WORD item)
 
 	if (action == EN_CHANGE)
 	{
-		TCHAR* ptszInputText = (TCHAR*)mir_alloc((limit + 8) * sizeof(TCHAR));
+		wchar_t* ptszInputText = (wchar_t*)mir_alloc((limit + 8) * sizeof(wchar_t));
 
 		GetDlgItemText(m_handle, item, ptszInputText, limit + 8);
 
-		if (mir_tstrlen(ptszInputText) > limit)
+		if (mir_wstrlen(ptszInputText) > limit)
 		{
-			TCHAR tszPopupTip[MAX_PATH];
+			wchar_t tszPopupTip[MAX_PATH];
 			EDITBALLOONTIP ebt = { 0 };
 			ebt.cbStruct = sizeof(ebt);
 			ebt.pszTitle = TranslateT("Warning");
-			mir_sntprintf(tszPopupTip, TranslateT("This field doesn't accept string longer than %d characters. The string will be truncated."), limit);
+			mir_snwprintf(tszPopupTip, TranslateT("This field doesn't accept string longer than %d characters. The string will be truncated."), limit);
 			ebt.pszText = tszPopupTip;
 			ebt.ttiIcon = TTI_WARNING;
 			SendDlgItemMessage(m_handle, item, EM_SHOWBALLOONTIP, 0, (LPARAM)&ebt);
 
-			TCHAR* ptszOutputText = (TCHAR*)mir_alloc((limit + 1) * sizeof(TCHAR));
+			wchar_t* ptszOutputText = (wchar_t*)mir_alloc((limit + 1) * sizeof(wchar_t));
 			GetDlgItemText(m_handle, item, ptszOutputText, limit + 1);
 			SetDlgItemText(m_handle, item, ptszOutputText);
 			mir_free(ptszOutputText);
@@ -562,7 +562,7 @@ void CSAMWindow::checkItemValidity()
 	if (m_item->m_iIcon != cbi.iImage)
 		m_item->m_iIcon = cbi.iImage, m_bChanged = TRUE;
 
-	TCHAR tszInputMessage[EXTRASTATUS_MESSAGE_LIMIT];
+	wchar_t tszInputMessage[EXTRASTATUS_MESSAGE_LIMIT];
 
 	GetDlgItemText(m_handle, IDC_MESSAGE, tszInputMessage, _countof(tszInputMessage));
 
@@ -571,17 +571,17 @@ void CSAMWindow::checkItemValidity()
 		return;
 
 	WPARAM i = SendMessage(m_hCombo, CB_GETCURSEL, 0, 0) + 1;
-	TCHAR tszTitle[100];
+	wchar_t tszTitle[100];
 
 	CUSTOM_STATUS cs = { sizeof(cs) };
-	cs.flags = CSSF_MASK_NAME | CSSF_DEFAULT_NAME | CSSF_TCHAR;
+	cs.flags = CSSF_MASK_NAME | CSSF_DEFAULT_NAME | CSSF_UNICODE;
 	cs.ptszName = tszTitle;
 	cs.wParam = &i;
 	if (CallProtoService(pdescr->szModuleName, PS_GETCUSTOMSTATUSEX, 0, (LPARAM)&cs) == 0)
-		mir_tstrncpy(m_item->m_tszTitle, TranslateTS(tszTitle), _countof(m_item->m_tszTitle));
+		mir_wstrncpy(m_item->m_tszTitle, TranslateW(tszTitle), _countof(m_item->m_tszTitle));
 
-	if (mir_tstrcmp(m_item->m_tszMessage, tszInputMessage))
-		mir_tstrcpy(m_item->m_tszMessage, tszInputMessage), m_bChanged = true;
+	if (mir_wstrcmp(m_item->m_tszMessage, tszInputMessage))
+		mir_wstrcpy(m_item->m_tszMessage, tszInputMessage), m_bChanged = true;
 }
 
 CSListView::CSListView(HWND hwnd, CSWindow* parent)
@@ -713,10 +713,10 @@ int CSItemsList::compareItems(const StatusItem* p1, const StatusItem* p2)
 	else if (p1->m_iIcon < p2->m_iIcon)
 		icoRes = -1;
 
-	result = mir_tstrcmp(p1->m_tszTitle, p2->m_tszTitle);
+	result = mir_wstrcmp(p1->m_tszTitle, p2->m_tszTitle);
 	ttlRes = result;
 
-	result = mir_tstrcmp(p1->m_tszMessage, p2->m_tszMessage);
+	result = mir_wstrcmp(p1->m_tszMessage, p2->m_tszMessage);
 	msgRes = result;
 
 	if (!icoRes && !ttlRes && !msgRes)
@@ -747,15 +747,15 @@ void CSItemsList::loadItems(char *protoName)
 		item->m_iIcon = getByte(dbSetting, DEFAULT_ITEM_ICON);
 
 		mir_snprintf(dbSetting, "%s_Item%dTitle", protoName, i);
-		if (!getTString(dbSetting, &dbv)) {
-			mir_tstrcpy(item->m_tszTitle, dbv.ptszVal);
+		if (!getWString(dbSetting, &dbv)) {
+			mir_wstrcpy(item->m_tszTitle, dbv.ptszVal);
 			db_free(&dbv);
 		}
 		else item->m_tszTitle[0] = 0;
 
 		mir_snprintf(dbSetting, "%s_Item%dMessage", protoName, i);
-		if (!getTString(dbSetting, &dbv)) {
-			mir_tstrcpy(item->m_tszMessage, dbv.ptszVal);
+		if (!getWString(dbSetting, &dbv)) {
+			mir_wstrcpy(item->m_tszMessage, dbv.ptszVal);
 			db_free(&dbv);
 		}
 		else item->m_tszMessage[0] = 0;
@@ -781,9 +781,9 @@ void CSItemsList::saveItems(char *protoName)
 		mir_snprintf(dbSetting, "%s_Item%dIcon", protoName, i);
 		setByte(dbSetting, item->m_iIcon);
 		mir_snprintf(dbSetting, "%s_Item%dTitle", protoName, i);
-		setTString(dbSetting, item->m_tszTitle);
+		setWString(dbSetting, item->m_tszTitle);
 		mir_snprintf(dbSetting, "%s_Item%dMessage", protoName, i);
-		setTString(dbSetting, item->m_tszMessage);
+		setWString(dbSetting, item->m_tszMessage);
 		mir_snprintf(dbSetting, "%s_Item%dFavourite", protoName, i);
 		setByte(dbSetting, item->m_bFavourite);
 	}
@@ -827,7 +827,7 @@ INT_PTR CALLBACK CSWindowProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpa
 		csw->toggleButtons();
 		csw->toggleEmptyListMessage();
 		csw->loadWindowPosition();
-		SetWindowText(hwnd, TranslateT(MODULENAME));
+		SetWindowText(hwnd, MODULENAME);
 		return TRUE;
 
 	case WM_COMMAND:
@@ -852,7 +852,7 @@ INT_PTR CALLBACK CSWindowProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpa
 
 		case IDC_REMOVE:
 			if (getByte("ConfirmDeletion", DEFAULT_PLUGIN_CONFIRM_ITEMS_DELETION))
-				if (MessageBox(hwnd, TranslateT("Do you really want to delete selected item?"), TranslateT(MODULENAME), MB_YESNO | MB_DEFBUTTON2 | MB_ICONQUESTION) == IDNO)
+				if (MessageBox(hwnd, TranslateT("Do you really want to delete selected item?"), TranslateW(MODULENAME), MB_YESNO | MB_DEFBUTTON2 | MB_ICONQUESTION) == IDNO)
 					break;
 
 			csw->m_itemslist->m_list->remove(csw->m_listview->getPositionInList());
@@ -893,7 +893,7 @@ INT_PTR CALLBACK CSWindowProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpa
 			else {
 				result = MessageBox(hwnd,
 					TranslateT("Do you want old database entries to be deleted after Import?"),
-					TranslateT(MODULENAME), MB_YESNOCANCEL | MB_DEFBUTTON2 | MB_ICONQUESTION);
+					TranslateW(MODULENAME), MB_YESNOCANCEL | MB_DEFBUTTON2 | MB_ICONQUESTION);
 				if (result == IDCANCEL)
 					break;
 			}

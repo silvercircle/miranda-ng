@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "..\stdafx.h"
+#include "../stdafx.h"
 
 /**
  * name:	CExImContactBase
@@ -236,18 +236,18 @@ MCONTACT CExImContactBase::toDB()
 		}
 
 		// create new contact
-		_hContact = DB::Contact::Add();
+		_hContact = db_add_contact();
 		if (!_hContact) {
 			return _hContact = INVALID_CONTACT_ID;
 		}
 		// Add the protocol to the new contact
 		if (Proto_AddToContact(_hContact, _pszProto)) {
-			DB::Contact::Delete(_hContact);
+			db_delete_contact(_hContact);
 			return _hContact = INVALID_CONTACT_ID;
 		}
 		// write uid to protocol module
 		if (db_set(_hContact, _pszProto, _pszUIDKey, &_dbvUID)) {
-			DB::Contact::Delete(_hContact);
+			db_delete_contact(_hContact);
 			return _hContact = INVALID_CONTACT_ID;
 		}
 		// write nick and display name
@@ -256,16 +256,9 @@ MCONTACT CExImContactBase::toDB()
 
 		// add group
 		if (_pszGroup) {
-			ptrT ptszGroup( mir_utf8decodeT(_pszGroup));
-			db_set_ts(_hContact, MOD_CLIST, "Group", ptszGroup);
-			if ( Clist_GroupExists(ptszGroup) == NULL) {
-				HANDLE hGroup = Clist_CreateGroup(NULL, NULL);
-				if (hGroup) {
-					// renaming twice is stupid but the only way to avoid error dialog telling shit like
-					// a group with that name does exist
-					CallService(MS_CLIST_GROUPRENAME, (WPARAM)hGroup, (LPARAM)ptszGroup);
-				}
-			}
+			ptrW ptszGroup(mir_utf8decodeW(_pszGroup));
+			db_set_ws(_hContact, MOD_CLIST, "Group", ptszGroup);
+			Clist_GroupCreate(NULL, ptszGroup);
 		}
 	}
 	return _hContact;
@@ -297,29 +290,14 @@ void CExImContactBase::toIni(FILE* file, int modCount)
 				strncpy_s(name, "(UNKNOWN)", _TRUNCATE);
 		}
 		else {
-			// Proto loadet - GetContactName(hContact,pszProto,0)
-			LPSTR pszCI	= NULL;
-			CONTACTINFO ci;
-			memset(&ci, 0, sizeof(ci));
-
-			ci.cbSize		= sizeof(ci);
-			ci.hContact		= _hContact;
-			ci.szProto		= _pszProto;
-			ci.dwFlag		= CNF_DISPLAY;
-
-			if (!GetContactInfo(NULL, (LPARAM) &ci)) {
-				// CNF_DISPLAY always returns a string type
-				pszCI = (LPSTR)ci.pszVal;
-			}
-			LPSTR pszUID = uid2String(FALSE);
+			// Proto loaded - GetContactName(hContact,pszProto,0)
+			ptrW pszCI(Contact_GetInfo(CNF_DISPLAY, _hContact, _pszProto));
+			ptrA pszUID(uid2String(FALSE));
 			if (_pszUIDKey && pszUID)
-				mir_snprintf(name, "%s *(%s)*<%s>*{%s}*", pszCI, _pszProto, _pszUIDKey, pszUID);
+				mir_snprintf(name, "%S *(%s)*<%s>*{%s}*", pszCI, _pszProto, _pszUIDKey, pszUID);
 			else 
-				mir_snprintf(name, "%s (%s)", pszCI, _pszProto);
-
-			mir_free(pszCI);
-			mir_free(pszUID);
-		} // end else (Proto loadet)
+				mir_snprintf(name, "%S (%s)", pszCI, _pszProto);
+		}
 
 		// it is not the best solution (but still works if only basic modules export) - need rework
 		if (modCount > 3)
@@ -497,10 +475,10 @@ BYTE CExImContactBase::isHandle(MCONTACT hContact)
 	// compare nicknames if no UID
 	else if (!DB::Setting::GetUString(hContact, _pszProto, SET_CONTACT_NICK, &dbv)) {
 		if (dbv.type == DBVT_UTF8 && dbv.pszVal && !mir_strcmpi(dbv.pszVal,_pszNick)) {
-			LPTSTR ptszNick = mir_utf8decodeT(_pszNick);
-			LPTSTR ptszProto = mir_a2t(_pszProto);
-			int ans = MsgBox(NULL, MB_ICONQUESTION|MB_YESNO, LPGENT("Question"), LPGENT("contact identification"),
-				LPGENT("The contact %s(%s) has no unique ID in the vCard,\nbut there is a contact in your contact list with the same nick and protocol.\nDo you wish to use this contact?"),
+			LPTSTR ptszNick = mir_utf8decodeW(_pszNick);
+			LPTSTR ptszProto = mir_a2u(_pszProto);
+			int ans = MsgBox(NULL, MB_ICONQUESTION|MB_YESNO, LPGENW("Question"), LPGENW("contact identification"),
+				LPGENW("The contact %s(%s) has no unique ID in the vCard,\nbut there is a contact in your contact list with the same nick and protocol.\nDo you wish to use this contact?"),
 				ptszNick, ptszProto);
 			MIR_FREE(ptszNick);
 			MIR_FREE(ptszProto);

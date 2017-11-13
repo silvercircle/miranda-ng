@@ -1,7 +1,7 @@
 ﻿;============================================================
 ;  File: miranda32/64.exe
 ;  Module: Miranda Core
-;  Version: 0.95.5
+;  Version: 0.95.7
 ;============================================================
 [Authorization request]
 Молба за упълномощаване
@@ -43,148 +43,10 @@
 Ползване на следното съобщение като стандартно:
 [Use %time% for the current time, %date% for the current date]
 Използвайте %time% и %date% за текущ час и дата.
-[Status messages:]
-Текст за състояние:
 [Change %s message]
 Промяна на текста "%s"
 [Closing in %d]
 Затваряне след %d
-[&Send]
-Изпращане
-[&Emoticons]
-Емотикони
-[&Bold]
-Получер
-[&Italic]
-Курсив
-[&Underline]
-Подчертан
-[&Color]
-Цвят
-[&Background color]
-Фонов цвят
-[&History]
-История
-[&Filter]
-Филтър
-[&Room settings]
-Настройки на стаята
-[&Show/Hide nick list]
-Скриване/Показване на списъка с прякори
-[Show these events only:]
-Показване само на следните събития:
-[Actions]
-Действия
-[Messages]
-Съобщения
-[Nick changes]
-Промяна на прякор
-[Users joining]
-Влизане на потребител
-[Users leaving]
-Излизане на потребител
-[Topic changes]
-Промяна на темата
-[Status changes]
-Промяна на състояние
-[Information]
-Информация
-[Disconnects]
-Излизания от мрежата
-[User kicks]
-Изгонване на потребител
-[Notices]
-Известия
-[Options]
-Настройки
-[Log options]
-Настройки на дневника
-[Log timestamp]
-В дневника
-[Timestamp]
-Времева марка
-[Other name]
-Друго име
-[Your name]
-Вашето име
-[Enable highlighting]
-Отличаване на думи
-[Limit log text to (events):]
-Макс. брой събития в прозорец:
-[Trim to (KB)]
-Макс. (KB)
-[Words to highlight (wildcards allowed)]
-Думи за отличаване (wildcards allowed)
-[Enable logging to disk]
-Запис на разговорите в дневник на диска
-[Log directory]
-Директория на дневника
-[Other]
-Друго
-[Add new rooms to group:]
-Добавяне на новите стаи към група:
-[Nick list row distance (pixels):]
-Височина на ред в списъка с прякори (пиксела):
-[Use same style as in the message log]
-Ползване на същия стил както в дневника за съобщения
-[Use default colors]
-Стандартни цветове
-[Use custom colors]
-Зададени цветове
-[Popups for the Chat plugin]
-Popup за приставката Chat
-[Timeout (s)]
-Времетраене (сек)
-[Text]
-Текст
-[Background]
-Фон
-[List]
-Списък
-[&Message]
-Съобщение
-[Log]
-Дневник
-[Clear lo&g]
-Изчистване на дневника
-[Co&py all]
-Копиране на всичко
-[Word lookup]
-Търсене на дума
-[Wikipedia]
-Wikipedia
-[Link]
-Връзка
-[Open a &new browser window]
-Отваряне в нов прозорец на браузера
-[&Open in current browser window]
-Отваряне в текущия прозорец
-[&Copy link]
-Копиране на връзката
-[Message]
-Съобщение
-[Undo]
-Отмяна
-[Redo]
-Възстановяване
-[Copy]
-Копиране
-[Cut]
-Изрязване
-[Paste]
-Поставяне
-[Select all]
-Избор - всичко
-[Clear]
-Изчистване
-[Tabs]
-Табове
-[&Close tab]
-Затваряне на таба
-[C&lose other tabs]
-Затваряне на другите табове
-[&Open at this position]
-Отваряне на тази позиция
 [Delete contact]
 Изтриване на контакта
 [No]
@@ -194,7 +56,7 @@ Wikipedia
 [Hide from list only, in order to keep their history and ignore/visibility settings]
 Скриване (запазва историята и настройките за игнориране/видимост)
 [Use Options -> Contacts -> Ignore to unhide contacts.]
-Може да отмените скриването от Настройки > Контакти > Игнориране.
+Може да отмените скриването от "Настройки > Контакти > Игнориране".
 [Are you sure you want to delete %s?]
 Сигурни ли сте, че желаете контактът "%s" да бъде изтрит?
 [This will erase all history and settings for this contact!]
@@ -379,16 +241,6 @@ Wikipedia
 Разделител между панелите
 [Show resize grip indicator]
 Индикатор за ръчна промяна на размера
-[Ordering:]
-Подреждане:
-[Contact list:]
-Списък с контакти:
-[If window is partially covered, bring it to front]
-Извеждане на прозореца отпред, ако е частично покрит
-[Window:]
-Прозорец:
-[Contact list background:]
-Фон на списъка с контакти:
 [&Main menu]
 Главно меню
 [E&xit]
@@ -401,22 +253,24 @@ Wikipedia
 На линия\tCtrl+1
 [&Away\tCtrl+2]
 Отсъстващ\tCtrl+2
-[&NA\tCtrl+3]
-Недостъпен\tCtrl+3
+[&Not available\tCtrl+3]
+&Недостъпен\tCtrl+3
 [Occ&upied\tCtrl+4]
 Зает\tCtrl+4
-[&DND\tCtrl+5]
-Не безпокойте\tCtrl+5
+[&Do not disturb\tCtrl+5]
+Не &безпокойте\tCtrl+5
 [&Free for chat\tCtrl+6]
 Готов за чат\tCtrl+6
 [&Invisible\tCtrl+7]
 Невидим\tCtrl+7
 [On the &phone\tCtrl+8]
-На телефона\tCtrl+8
+На &телефона\tCtrl+8
 [Out to &lunch\tCtrl+9]
-На обяд\tCtrl+9
+На обя&д\tCtrl+9
 [Send file(s)]
 Изпрати файл(ове)
+[&Send]
+Изпращане
 [Cancel]
 Отказ
 [To:]
@@ -431,6 +285,8 @@ Wikipedia
 Описание:
 [&User menu]
 Потребителско меню
+[&History]
+История
 [Incoming file transfer]
 Входящ файл
 [A&ccept]
@@ -559,10 +415,6 @@ Wikipedia
 Бездействащ при програма работеща на целия екран
 [Disable sounds on idle]
 Изключване на звука при бездействие
-[Become idle if computer is left unattended for:]
-Бездействащ при липса на активност на компютъра за:
-[Idle (auto-away):]
-Бездействащ (автоотсъстващ):
 [Automatically popup window when:]
 Изскачане на прозореца при състояние:
 [In background]
@@ -579,8 +431,6 @@ Wikipedia
 Каскадно подреждане на новите прозорци
 [Show 'Send' button]
 Показване на бутон "Изпращане"
-[Show username on top row]
-Потребителско име на горния ред
 [Show toolbar buttons on top row]
 Лента с инструменти на горния ред
 [Send message on double 'Enter']
@@ -609,10 +459,6 @@ Wikipedia
 при опит за изпращане на следното съобщение:
 [Try again]
 Опитай отново
-[Message session]
-Разговор
-[&Details]
-Подробности
 [Message window event log]
 Дневник на събитията в прозореца за съобщения
 [Show names]
@@ -633,6 +479,14 @@ Wikipedia
 Събития от преди
 [minutes old]
 минути
+[Use a tabbed interface]
+Ползване на табове
+[Close tab on double click]
+Затваряне на таб при двукратно натискане
+[Restore previously open tabs when showing the window]
+Възстановяване на последно отворените табове при показване на прозореца
+[Show tabs at the bottom]
+Табове на дъното
 [Send typing notifications to the following users when you are typing a message to them:]
 Изпращане на уведомяване при писане до следните потребители, когато им пишете съобщение:
 [Show typing notifications when a user is typing a message]
@@ -645,18 +499,108 @@ Wikipedia
 Мигане на иконата в трея и списъка с контакти
 [Show balloon popup]
 Показване на балонни popup
-[Save the window position for each contact]
-Запис на позицията на прозореца поотделно за всеки контакт
-[Message window behavior:]
-Поведение на прозореца за съобщения:
+[Show these events only:]
+Показване само на следните събития:
+[Actions]
+Действия
+[Messages]
+Съобщения
+[Nick changes]
+Промяна на прякор
+[Users joining]
+Влизане на потребител
+[Users leaving]
+Излизане на потребител
+[Topic changes]
+Промяна на темата
+[Status changes]
+Промяна на състояние
+[Information]
+Информация
+[Disconnects]
+Излизания от мрежата
+[User kicks]
+Изгонване на потребител
+[Notices]
+Известия
+[Options]
+Настройки
+[Log options]
+Настройки на дневника
+[Log timestamp]
+В дневника
+[Timestamp]
+Времева марка
+[Other name]
+Друго име
+[Your name]
+Вашето име
+[Enable highlighting]
+Отличаване на думи
+[Limit log text to (events):]
+Макс. брой събития в прозорец:
+[Trim to (KB)]
+Макс. (KB)
+[Words to highlight (wildcards allowed)]
+Думи за отличаване (wildcards allowed)
+[Enable logging to disk]
+Запис на разговорите в дневник на диска
+[Log directory]
+Директория на дневника
+[Other]
+Друго
+[Add new rooms to group:]
+Добавяне на новите стаи към група:
+[Nick list row distance (pixels):]
+Височина на ред в списъка с прякори (пиксела):
+[Use same style as in the message log]
+Ползване на същия стил както в дневника за съобщения
+[Use default colors]
+Стандартни цветове
+[Use custom colors]
+Зададени цветове
+[Popups for the Chat plugin]
+Popup за приставката Chat
+[Timeout (s)]
+Времетраене (сек)
+[Text]
+Текст
+[Background]
+Фон
+[Message]
+Съобщение
+[Undo]
+Отмяна
+[Redo]
+Възстановяване
+[Copy]
+Копиране
+[Cut]
+Изрязване
+[Paste]
+Поставяне
+[Select all]
+Избор - всичко
+[Clear]
+Изчистване
+[Tabs]
+Табове
+[&Close tab]
+Затваряне на таба
+[C&lose other tabs]
+Затваряне на другите табове
+[&Open at this position]
+Отваряне на тази позиция
+[Log]
+Дневник
 [C&lear log]
 Изчистване на дневника
 [&Copy]
 Копиране
+[Co&py all]
+Копиране на всичко
 [Select &all]
 Маркиране на всичко
-[&Open link]
-Отваряне на връзката
 [Paste and send]
 Поставяне и изпращане
 [Delete]
@@ -809,8 +753,6 @@ Miranda NG - диспечер на профили
 Конфигурирайте настройките на Miranda NG
 [Apply]
 Прилагане
-[Switch to simple options]
-Опростен вид на настройките
 [Please select a subentry from the list]
 Моля, изберете подраздел от списъка вляво
 [Install database settings]
@@ -887,16 +829,6 @@ OutputDebugString()
 Име:
 [Enable sound events]
 Включване на звука
-[Icons]
-Икони
-[Show category:]
-Показване на категория:
-[&Load icon set...]
-Зареди комплект икони...
-[&Import icons >>]
-Внос на икони >>
-[Download more icons]
-Сваляне на още икони
 [The following events are being ignored:]
 Следните събития ще бъдат игнорирани:
 [URLs]
@@ -939,6 +871,8 @@ URL адреси
 За
 [<< &Import]
 << Внос
+[Download more icons]
+Сваляне на още икони
 [To default status icons]
 Стандартни икони за състоянието
 [Logging...]
@@ -967,16 +901,16 @@ URL адреси
 Потвърждаване на SSL сертификатите
 [Incoming connections]
 Входящи връзки
-[You will need to reconnect for the changes you have made on this page to take effect.]
-Необходимо е да се свържете на ново, за да бъдат осъществени промените направени тук.
+[These changes will take effect the next time you connect to the network.]
+Промените ще бъдат осъществени при следващо свързване към мрежата.
 [Please complete the following form to create a new user profile]
 Попълнете следния формуляр, за да създадете нов потребителски профил.
 [Profile]
 Профил
 [e.g., Workplace]
 напр. raboten
-[You can select a different profile driver from the default, it may offer more features or abilities, if in doubt use the default.]
-Можете да изберете драйвер за профила, който предлага повече функции. Ако имате съмнения използвайте стандартния.
+[You can select a different database driver from the default, it may offer more features or abilities, if in doubt use the default.]
+Можете да изберете драйвер за базата данни, който предлага повече функции. Ако имате съмнения използвайте стандартния.
 [e.g., dbx mmap]
 напр. dbx mmap driver
 [Driver]
@@ -1007,6 +941,12 @@ Copyright:
 Цвят на текста
 [Choose font]
 Избор на шрифт
+[Icons]
+Икони
+[&Load icon set...]
+Зареди комплект икони...
+[&Import icons >>]
+Внос на икони >>
 [Menu objects]
 Менюта
 [Menu items]
@@ -1073,24 +1013,6 @@ Copyright:
 Miranda NG се рестартира.\nМоля, изчакайте...
 [Error notifications]
 Уведомяване за грешки
-[Headers:]
-Горни колонтитули:
-[This font is used to display main section titles or text elements.]
-Шрифт за изобразяване етикети на секции или текстови елементи.
-[Normal text:]
-Нормален текст:
-[This font is used to display most text elements or section bodies.]
-Шрифт за повечето текстови елементи или съдържанието на секциите.
-[Minor notes:]
-Малки бележки:
-[This font is used to display various additional notes.]
-Шрифта за изобразяване на различни допълнителни бележки.
-[Welcome to Miranda NG's account manager!\nHere you can set up your IM accounts.\n\nSelect an account from the list on the left to see the available options. Alternatively, just click on the Plus sign underneath the list to set up a new IM account.]
-Добре дошли в диспечера на акаунти в Miranda NG!\nОт тук можете да настроите вашите акаунти.\n\nЗа да видите наличните опции, изберете акаунт от списъка вляво. Ако желаете да създадете нов акаунт, натиснете знака "плюс" под списъка.
-[Event icon legend:]
-Легенда на иконите за събития:
-[Choose events you wish to ignore:]
-Кои събития да бъдат игнорирани:
 [Font effect]
 Ефекти на шрифта
 [Effect:]
@@ -1155,6 +1077,14 @@ Miranda NG се рестартира.\nМоля, изчакайте...
 Презареждане на пакета
 [Download more language packs]
 Сваляне на още езикови пакети
+[Show in IM chats]
+Показване в обикновени прозорци
+[Show in chat rooms]
+Показване в чат стаи
+[Gap between buttons:]
+Пролука м/у бутоните:
+[Hide if there isn't enough space]
+Скриване, ако няма достатъчно място
 [Tray]
 Трей
 [&Hide/Show]
@@ -1189,14 +1119,30 @@ Miranda NG се рестартира.\nМоля, изчакайте...
 Добавяне в списъка
 [Send &message]
 Изпращане на съобщение
-[Open in &new window]
-Отваряне в нов прозорец
-[&Open in existing window]
-Отваряне в съществуващ прозорец
+[&Open link]
+Отваряне на връзката
+[&Copy link]
+Копиране на връзката
 [Cancel change]
 Отказ на промяната
 [Ungroup]
 Дегрупиране
+[List]
+Списък
+[&Message]
+Съобщение
+[Clear lo&g]
+Изчистване на дневника
+[Word lookup]
+Търсене на дума
+[Yandex]
+Yandex
+[Wikipedia (en)]
+Wikipedia (en)
+[Google Maps]
+Google Maps
+[Google Translate]
+Google Translate
 [%s requests authorization]
 %s желае да бъде упълномощен
 [%u requests authorization]
@@ -1259,6 +1205,166 @@ Miranda NG се рестартира.\nМоля, изчакайте...
 бездействаммм
 [Status]
 Състояние
+[Standard contacts]
+Стандартни контакти
+[Online contacts to whom you have a different visibility]
+Контакти, към които имате различна видимост
+[Offline contacts]
+Контакти "Извън линия"
+[Contacts which are 'not on list']
+Контакти, които не са в списъка
+[Group member counts]
+Брой контакти в групата
+[Dividers]
+Разделители
+[Offline contacts to whom you have a different visibility]
+Контакти "Извън линия", към които имате различна видимост
+[Selected text]
+Маркиран текст
+[Hottrack text]
+Посочен текст
+[Quicksearch text]
+Бързо търсен текст
+[Not focused]
+Дефокусирано
+[Offline]
+Извън линия
+[Online]
+На линия
+[Away]
+Отсъстващ
+[Not available]
+Недостъпен
+[Occupied]
+Зает
+[Do not disturb]
+Не безпокойте
+[Free for chat]
+Готов за чат
+[Invisible]
+Невидим
+[Out to lunch]
+На обяд
+[On the phone]
+На телефона
+[List background]
+Фон на списъка
+[Global]
+Общо
+[Standard crypto provider]
+Стандартен доставчик на криптиране
+[User has not registered an e-mail address]
+Потребителят не е задал имейл
+[Send e-mail]
+Изпращане на е-писмо
+[&E-mail]
+Имейл
+[File from %s]
+Файл от %s
+[bytes]
+байта
+[&File]
+Файл
+[File &transfers...]
+Обмен на файлове...
+[Incoming]
+Входящи
+[Complete]
+Завършен
+[Error]
+Грешка
+[Denied]
+Отхвърлен
+[%s file]
+%s файл
+[All files]
+Всички файлове
+[Executable files]
+Изпълними файлове
+[Events]
+Събития
+[Select folder]
+Избор на папка
+[My received files]
+Получени файлове
+[View user's history]
+История на съобщенията
+[User menu]
+Потребителско меню
+[Canceled]
+Отказано
+[This file transfer has been canceled by the other side]
+Прехвърлянето на файла е отказано от отсрещната страна.
+[%d files]
+%d файла
+[%d directories]
+%d директории
+[This file has not yet been scanned for viruses. Are you certain you want to open it?]
+Файлът не е сканиран за вируси. Сигурни ли сте, че желаете да бъде отворен?
+[File received]
+Файлът е получен
+[of]
+от
+[Request sent, waiting for acceptance...]
+Молбата е изпратена. Изчакване на одобрение...
+[Waiting for connection...]
+Изчакване за връзка...
+[Unable to initiate transfer.]
+Стартирането на прехвърляне е невъзможно.
+[Contact menu]
+Меню на контактите
+[Open...]
+Отваряне...
+[sec]
+сек
+[remaining]
+оставащи
+[Decision sent]
+Решението бе изпратено
+[Connecting...]
+Свързване...
+[Connecting to proxy...]
+Свързване с прокси...
+[Connected]
+Свързано
+[Initializing...]
+Инициализиране...
+[Moving to next file...]
+Преминаване към следващия файл...
+[Sending...]
+Изпращане...
+[Receiving...]
+Получаване...
+[File transfer denied]
+Прехвърлянето на файла е отхвърлено
+[File transfer failed]
+Прехвърлянето на файла не е успешно
+[Transfer completed.]
+Прехвърлянето завърши.
+[Transfer completed, open file.]
+Прехвърлянето завърши - отваряне на файла.
+[Transfer completed, open folder.]
+Прехвърлянето завърши - отваряне на папката
+[Scanning for viruses...]
+Сканиране за вируси...
+[Transfer and virus scan complete]
+Прехвърлянето и сканирането за вируси завърши.
+[Outgoing]
+Изходящи
+[< Copyright]
+< Copyright
+[&Help]
+Помощ
+[&About...]
+Относно...
+[&Support]
+Поддръжка
+[&Miranda NG homepage]
+Страницата на Miranda NG
+[&Report bug]
+Съобщи за програмна грешка
+[Idle]
+Бездействие
 [Chat module]
 Чат модул
 [Group chat log background]
@@ -1271,14 +1377,6 @@ Miranda NG се рестартира.\nМоля, изчакайте...
 Редове на списък с прякори
 [Nick list background (selected)]
 Фон на списъка с прякори (маркирано)
-[Use a tabbed interface]
-Ползване на табове
-[Close tab on double click]
-Затваряне на таб при двукратно натискане
-[Restore previously open tabs when showing the window]
-Възстановяване на последно отворените табове при показване на прозореца
-[Show tabs at the bottom]
-Табове на дъното
 [Send message by pressing the 'Enter' key]
 Изпращане на съобщение с натискане на бутона "Enter"
 [Send message by pressing the 'Enter' key twice]
@@ -1297,10 +1395,6 @@ Miranda NG се рестартира.\nМоля, изчакайте...
 Показване на бутони за форматиране на текста, който въвеждате
 [Show button menus when right clicking the buttons]
 Показване менютата на бутоните при натискане с десен бутон
-[Show new windows cascaded]
-Каскадно подреждане на новите прозорци
-[Save the size and position of chat rooms]
-Запис на размера и позицията на чат стаите
 [Show the topic of the room on your contact list (if supported)]
 Показване на темата на стаята в списъка с контакти (ако се поддържа)
 [Do not play sounds when the chat room is focused]
@@ -1495,8 +1589,6 @@ Miranda NG се рестартира.\nМоля, изчакайте...
 Групови чатове
 [Group chats log]
 Дневник за груповите чатове
-[Options for using a tabbed interface]
-Настройки на интерфейса с табове
 [Appearance and functionality of chat room windows]
 Външен вид и функционалност на чат стаите
 [Appearance of the message log]
@@ -1509,8 +1601,6 @@ Miranda NG се рестартира.\nМоля, изчакайте...
 Икони за изобразяване в трея
 [Popups to display]
 Popups за изобразяване
-[Select folder]
-Избор на папка
 [Message sessions]
 Разговори
 [General]
@@ -1519,38 +1609,6 @@ Popups за изобразяване
 Чат дневник
 [Popups]
 Рopups
-[Look up '%s':]
-Търсене за "%s":
-[No word to look up]
-Няма дума за търсене
-[&Message %s]
-Съобщение %s
-[Insert a smiley]
-Вмъкване на усмивка
-[Make the text bold (CTRL+B)]
-Удебеляване (CTRL+B)
-[Make the text italicized (CTRL+I)]
-Наклоняване (CTRL+I)
-[Make the text underlined (CTRL+U)]
-Подчертаване (CTRL+U)
-[Select a background color for the text (CTRL+L)]
-Фон за текста (CTRL+L)
-[Select a foreground color for the text (CTRL+K)]
-Цвят на текста (CTRL+K)
-[Show the history (CTRL+H)]
-Показване на историята (CTRL+H)
-[Show/hide the nick list (CTRL+N)]
-Показване/Скриване на списъка с прякори (CTRL+N)
-[Control this room (CTRL+O)]
-Управление на стаята (CTRL+O)
-[Enable/disable the event filter (CTRL+F)]
-Включване/Изключване на филтъра за събития (CTRL+F)
-[Close current tab (CTRL+F4)]
-Затваряне на текущия таб (CTRL+F4)
-[Nickname]
-Прякор
-[Unique ID]
-Уникален ID
 [%s: chat room (%u user)]
 %s: Чат стая (%u потребител)
 [%s: chat room (%u users)]
@@ -1559,170 +1617,18 @@ Popups за изобразяване
 %s: Разговор
 [%s: message session (%u users)]
 %s: Разговор (%u потребителя)
-[Standard contacts]
-Стандартни контакти
-[Online contacts to whom you have a different visibility]
-Контакти, към които имате различна видимост
-[Offline contacts]
-Контакти "Извън линия"
-[Contacts which are 'not on list']
-Контакти, които не са в списъка
-[Group member counts]
-Брой контакти в групата
-[Dividers]
-Разделители
-[Offline contacts to whom you have a different visibility]
-Контакти "Извън линия", към които имате различна видимост
-[Selected text]
-Маркиран текст
-[Hottrack text]
-Посочен текст
-[Quicksearch text]
-Бързо търсен текст
-[Not focused]
-Дефокусирано
-[Offline]
-Извън линия
-[Online]
-На линия
-[Away]
-Отсъстващ
-[NA]
-Недостъпен
-[Occupied]
-Зает
-[DND]
-Не безпокойте
-[Free for chat]
-Готов за чат
-[Invisible]
-Невидим
-[Out to lunch]
-На обяд
-[On the phone]
-На телефона
-[List background]
-Фон на списъка
-[Global]
-Общо
-[Standard crypto provider]
-Стандартен доставчик на криптиране
-[User has not registered an e-mail address]
-Потребителят не е задал имейл
-[Send e-mail]
-Изпращане на е-писмо
-[&E-mail]
-Имейл
-[File from %s]
-Файл от %s
-[bytes]
-байта
-[&File]
-Файл
-[File &transfers...]
-Обмен на файлове...
-[Incoming]
-Входящи
-[Complete]
-Завършен
-[Error]
-Грешка
-[Denied]
-Отхвърлен
-[%s file]
-%s файл
-[All files]
-Всички файлове
-[Executable files]
-Изпълними файлове
-[Events]
-Събития
-[My received files]
-Получени файлове
-[View user's history]
-История на съобщенията
-[User menu]
-Потребителско меню
-[Canceled]
-Отказано
-[This file transfer has been canceled by the other side]
-Прехвърлянето на файла е отказано от отсрещната страна.
-[%d files]
-%d файла
-[%d directories]
-%d директории
-[This file has not yet been scanned for viruses. Are you certain you want to open it?]
-Файлът не е сканиран за вируси. Сигурни ли сте, че желаете да бъде отворен?
-[File received]
-Файлът е получен
-[of]
-от
-[Request sent, waiting for acceptance...]
-Молбата е изпратена. Изчакване на одобрение...
-[Waiting for connection...]
-Изчакване за връзка...
-[Unable to initiate transfer.]
-Стартирането на прехвърляне е невъзможно.
-[Contact menu]
-Меню на контактите
-[Open...]
-Отваряне...
-[sec]
-сек
-[remaining]
-оставащи
-[Decision sent]
-Решението бе изпратено
-[Connecting...]
-Свързване...
-[Connecting to proxy...]
-Свързване с прокси...
-[Connected]
-Свързано
-[Initializing...]
-Инициализиране...
-[Moving to next file...]
-Преминаване към следващия файл...
-[Sending...]
-Изпращане...
-[Receiving...]
-Получаване...
-[File transfer denied]
-Прехвърлянето на файла е отхвърлено
-[File transfer failed]
-Прехвърлянето на файла не е успешно
-[Transfer completed.]
-Прехвърлянето завърши.
-[Transfer completed, open file.]
-Прехвърлянето завърши - отваряне на файла.
-[Transfer completed, open folder.]
-Прехвърлянето завърши - отваряне на папката
-[Scanning for viruses...]
-Сканиране за вируси...
-[Transfer and virus scan complete]
-Прехвърлянето и сканирането за вируси завърши.
-[Outgoing]
-Изходящи
-[< Copyright]
-< Copyright
-[&Help]
-Помощ
-[&About...]
-Относно...
-[&Support]
-Поддръжка
-[&Miranda NG homepage]
-Страницата на Miranda NG
-[&Report bug]
-Съобщи за програмна грешка
-[Idle]
-Бездействие
+[Nickname]
+Прякор
+[Unique ID]
+Уникален ID
 [Incoming message (10x10)]
 Входящо съобщение (10х10)
 [Outgoing message (10x10)]
 Изходящо съобщение (10х10)
 [Last message received on %s at %s.]
 Последното съобщение е получено на %s в %s.
+[Message session]
+Разговор
 [%s is typing a message...]
 %s пише съобщение...
 [Me]
@@ -1755,8 +1661,6 @@ Popups за изобразяване
 ** Нови контакти **
 [** Unknown contacts **]
 ** Непознати контакти **
-[Show balloon popup (unsupported system)]
-Показване на балонни popup (неподдържана система)
 [Messaging log]
 Дневник за съобщения
 [Typing notify]
@@ -1767,6 +1671,40 @@ Popups за изобразяване
 %s пише съобщение
 [Typing notification]
 Уведомявания при писане
+[View user's history (CTRL+H)]
+История на съобщенията (CTRL+H)
+[&Bold]
+Получер
+[Make the text bold (CTRL+B)]
+Удебеляване (CTRL+B)
+[&Italic]
+Курсив
+[Make the text italicized (CTRL+I)]
+Наклоняване (CTRL+I)
+[&Underline]
+Подчертан
+[Make the text underlined (CTRL+U)]
+Подчертаване (CTRL+U)
+[&Color]
+Цвят
+[Select a foreground color for the text (CTRL+K)]
+Цвят на текста (CTRL+K)
+[&Background color]
+Фонов цвят
+[Select a background color for the text (CTRL+L)]
+Фон за текста (CTRL+L)
+[&Room settings]
+Настройки на стаята
+[Control this room (CTRL+O)]
+Управление на стаята (CTRL+O)
+[&Show/hide nick list]
+Скриване/Показване на списъка с прякори
+[Show/hide the nick list (CTRL+N)]
+Показване/Скриване на списъка с прякори (CTRL+N)
+[&Filter]
+Филтър
+[Enable/disable the event filter (CTRL+F)]
+Включване/Изключване на филтъра за събития (CTRL+F)
 [Instant messages]
 Незабавни съобщения
 [Incoming (focused window)]
@@ -1831,6 +1769,26 @@ Popups за изобразяване
 Жена
 [<not specified>]
 <неуточнено>
+[Single]
+Необвързан(а)
+[Close relationships]
+Обвързан(а)
+[Engaged]
+Сгоден(а)
+[Married]
+Женен/Омъжена
+[Divorced]
+Разведен(а)
+[Separated]
+Разделен(а)
+[Widowed]
+Вдовец/Вдовица
+[Actively searching]
+В активно търсене
+[In love]
+Влюбен
+[It's complicated]
+Всичко е сложно
 [Summary]
 Обобщение
 [Contact]
@@ -1969,6 +1927,24 @@ Popups за изобразяване
 Темата е "%s"
 [The topic is '%s' (set by %s)]
 Темата е "%s" (зададена от %s)
+[Look up '%s':]
+Търсене за "%s":
+[No word to look up]
+Няма дума за търсене
+[&Message %s]
+Съобщение %s
+[New group]
+Нова група
+[Are you sure you want to delete group '%s'? This operation cannot be undone.]
+Сигурни ли сте, че желаете групата '%s' да бъде изтрита? Това действие не може да бъде отменено.
+[Delete group]
+Изтриване на групата
+[You already have a group with that name. Please enter a unique name for the group.]
+Вече съществува група с въведеното име. Моля, въведете уникално име.
+[Rename group]
+Преименуване на групата
+[This group]
+Тази група
 [Connecting]
 Свързване
 [Connecting (attempt %d)]
@@ -2023,6 +1999,12 @@ Popups за изобразяване
 Отварянето на профила е невъзможно.
 [Miranda can't understand that profile]
 Анализирането на профила е невъзможно
+[Authorization request from %s%s: %s]
+Молба за упълномощаване от %s%s: %s
+[You were added by %s%s]
+Бяхте добавени от %s%s
+[Contacts: ]
+Контакти:\s
 [Security systems to prevent malicious changes are in place and you will be warned before every change that is made.]
 Налични са системи за предотвратяване на злонамерени промени. Ще бъдете уведомени преди всяка промяна.
 [Security systems to prevent malicious changes are in place and you will be warned before changes that are known to be unsafe.]
@@ -2037,12 +2019,6 @@ Popups за изобразяване
 Тази команда не е известна като сигурна.
 [Invalid setting type for '%s'. The first character of every value must be b, w, d, l, s, e, u, g, h or n.]
 Невалиден тип настройка за "%s". Първият знак на всяка стойност трябва да бъде b, w, d, l, s, e, u, g, h или n.
-[Authorization request from %s%s: %s]
-Молба за упълномощаване от %s%s: %s
-[You were added by %s%s]
-Бяхте добавени от %s%s
-[Contacts: ]
-Контакти:\s
 [Chat activity]
 Чат активност
 [You haven't filled in the search field. Please enter a search term and try again.]
@@ -2075,28 +2051,12 @@ Popups за изобразяване
 Грешка при записването на файла
 [Customize]
 Персонализиране
-[Sample text]
-Примерен текст
-[Fonts]
-Шрифтове
 [Headers]
 Горни колонтитули
 [Generic text]
 Основен текст
 [Small text]
 Малък текст
-[New group]
-Нова група
-[Are you sure you want to delete group '%s'? This operation cannot be undone.]
-Сигурни ли сте, че желаете групата '%s' да бъде изтрита? Това действие не може да бъде отменено.
-[Delete group]
-Изтриване на групата
-[You already have a group with that name. Please enter a unique name for the group.]
-Вече съществува група с въведеното име. Моля, въведете уникално име.
-[Rename group]
-Преименуване на групата
-[This group]
-Тази група
 [Browser: Back]
 Браузър: Назад
 [Browser: Forward]
@@ -2167,12 +2127,12 @@ Win +\s
 Отваря "Настройки на дневника на мрежовите връзки"
 [Open 'Find user' dialog]
 Отваря "Търсене/Добавяне на контакти"
+[built-in]
+Вграден
 [(incompatible)]
 (несъвместимо)
 [Unknown]
 Неизвестно
-[built-in]
-Вграден
 [Languages]
 Езици
 [Custom status]
@@ -2225,8 +2185,6 @@ Win +\s
 Неуспешно добавяне към метаконтакт.
 [Assignment failure]
 Провалено добавяне
-[ID]
-Идентификатор
 [Protocol]
 Протокол
 [Delete metacontact?]
@@ -2271,12 +2229,10 @@ Win +\s
 Не са открити контакти "На линия"
 [Select metacontact]
 Изберете метакнтакт
-[Sender]
-Изпращач
-[&Move to group]
-Преместване в друга група
 [<Root group>]
 <Главна група>
+[&Move to group]
+Преместване в друга група
 [No times]
 Без час
 [Standard hh:mm:ss times]
@@ -2377,16 +2333,18 @@ Win +\s
 Вашият акаунт е надграден успешно. Необходимо е да рестартирате Miranda NG, за да се активира.\n\nАко желаете Miranda NG да бъде рестартирана сега натиснете "Да", в противен случай - "Не".
 [This account uses legacy protocol plugin. Use Miranda NG options dialogs to change its preferences.]
 Акаунтът изисква много стара приставка за протокола. Променете настройките на акаунта през прозореца с настройки на Miranda NG.
-[Account error]
-Грешка в акаунт
-[Account name has to be unique. Please enter unique name.]
-Името на акаунта трябва да бъде уникално.
+[Welcome to Miranda NG's account manager!\nHere you can set up your IM accounts.\n\nSelect an account from the list on the left to see the available options. Alternatively, just click on the Plus sign underneath the list to set up a new IM account.]
+Добре дошли в диспечера на акаунти в Miranda NG!\nОт тук можете да настроите вашите акаунти.\n\nЗа да видите наличните опции, изберете акаунт от списъка вляво. Ако желаете да създадете нов акаунт, натиснете знака "плюс" под списъка.
 [Create new account]
 Създаване на акаунт
 [Editing account]
 Редактиране на акаунта
 [Upgrading account]
 Надграждане на акаунт
+[Account error]
+Грешка в акаунт
+[Account name has to be unique. Please enter unique name.]
+Името на акаунта трябва да бъде уникално.
 [Account is disabled. Please activate it to access options.]
 Акаунтът е изключен. За достъп до настройките е необходимо да бъде включен.
 [New account]
@@ -2397,12 +2355,6 @@ Win +\s
 Настройване...
 [Upgrade account]
 Надграждане на акаунт
-[Account ID]
-ID на акаунта
-[<unknown>]
-<неизвестно>
-[Protocol is not loaded.]
-Протоколът не е зареден.
 [Rename]
 Преименуване
 [Configure]
@@ -2417,6 +2369,12 @@ ID на акаунта
 Акаунтът %s ще бъде изтрит
 [You need to disable plugin to delete this account]
 Необходимо е да изключите приставка, за да бъде изтрит акаунта.
+[Account ID]
+ID на акаунта
+[<unknown>]
+<неизвестно>
+[Protocol is not loaded.]
+Протоколът не е зареден.
 [&Accounts...]
 Акаунти...
 [Account]
@@ -2519,6 +2477,10 @@ ANSI приставка
 Файлове със звуци
 [WAV files]
 WAV файлове
+[<Separator>]
+<Разделител>
+[Toolbar]
+Лента с инструменти
 [Unspecified]
 Неуточнено
 [Afghanistan]
@@ -3030,4 +2992,4 @@ GIF изображения
 [PNG bitmaps]
 PNG изображения
 [<unspecified>]
-<Неуточнено>
+<неуточнено>

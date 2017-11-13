@@ -363,12 +363,12 @@ WORD	MTime::DateFormatAlt(LPTSTR ptszTimeFormat, WORD cchTimeFormat)
 		return 0;
 	}
 	
-	TCHAR tszText[10];
-	_itot(mtNow.Year(), tszText, 10);
-	TCHAR * tszYear = _tcsstr(ptszTimeFormat, tszText);
+	wchar_t tszText[10];
+	_itow(mtNow.Year(), tszText, 10);
+	wchar_t * tszYear = wcsstr(ptszTimeFormat, tszText);
 
-	if (tszYear && mir_tstrlen(tszYear) == 4)
-		mir_tstrcpy(tszYear, _T("????"));
+	if (tszYear && mir_wstrlen(tszYear) == 4)
+		mir_wstrcpy(tszYear, L"????");
 	else {
 		*ptszTimeFormat = 0;
 		return 0;

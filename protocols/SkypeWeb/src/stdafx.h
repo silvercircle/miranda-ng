@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2015-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -24,6 +24,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <regex>
 #include <map>
+#include <memory>
+#include <functional>
 
 #include <newpluginapi.h>
 
@@ -42,7 +44,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <m_message.h>
 #include <m_avatars.h>
 #include <m_skin.h>
-#include <m_chat.h>
+#include <m_chat_int.h>
 #include <m_genmenu.h>
 #include <m_clc.h>
 #include <m_string.h>
@@ -58,6 +60,9 @@ struct CSkypeProto;
 extern HINSTANCE g_hInstance;
 extern char g_szMirVer[];
 extern HANDLE g_hCallEvent;
+extern FI_INTERFACE *fii;
+
+struct SESSION_INFO : public GCSessionInfoBase {};
 
 #define SKYPE_ENDPOINTS_HOST "client-s.gateway.messenger.live.com"
 
@@ -75,7 +80,7 @@ struct LoginInfo
 		ptrA szServer;
 	} endpoint;
 
-	ptrA szSkypename;
+	CMStringA szSkypename, szMyname;
 };
 
 
@@ -99,32 +104,91 @@ struct MessageId
 	HANDLE handle;
 };
 
+
+//#include "websocket.h"
 #include "version.h"
 #include "resource.h"
 #include "skype_menus.h"
 #include "skype_dialogs.h"
 #include "skype_options.h"
 #include "skype_trouter.h"
-#include "skype_db.h"
 #include "skype_utils.h"
+#include "skype_db.h"
 #include "http_request.h"
-#include "requests\login.h"
-#include "requests\profile.h"
-#include "requests\contacts.h"
-#include "requests\status.h"
-#include "requests\endpoint.h"
-#include "requests\capabilities.h"
-#include "requests\subscriptions.h"
-#include "requests\messages.h"
-#include "requests\history.h"
-#include "requests\poll.h"
-#include "requests\avatars.h"
-#include "requests\search.h"
-#include "requests\chatrooms.h"
-#include "requests\trouter.h"
-#include "requests\mslogin.h"
+#include "requests/login.h"
+#include "requests/profile.h"
+#include "requests/contacts.h"
+#include "requests/status.h"
+#include "requests/endpoint.h"
+#include "requests/capabilities.h"
+#include "requests/subscriptions.h"
+#include "requests/messages.h"
+#include "requests/history.h"
+#include "requests/poll.h"
+#include "requests/avatars.h"
+#include "requests/search.h"
+#include "requests/chatrooms.h"
+#include "requests/trouter.h"
+#include "requests/mslogin.h"
+#include "requests/oauth.h"
+#include "requests/asm/files.h"
 #include "request_queue.h"
 #include "skype_proto.h"
+
+void SkypeHttpResponse(const NETLIBHTTPREQUEST *response, void *arg);
+
+class SkypeResponseDelegateBase
+{
+protected:
+	CSkypeProto *proto;
+public:
+	SkypeResponseDelegateBase(CSkypeProto *ppro) : proto(ppro) {}
+	virtual void Invoke(const NETLIBHTTPREQUEST *) = 0;
+	virtual ~SkypeResponseDelegateBase(){};
+};
+
+class SkypeResponseDelegate : public SkypeResponseDelegateBase
+{
+	SkypeResponseCallback pfnResponseCallback;
+public:
+	SkypeResponseDelegate(CSkypeProto *ppro, SkypeResponseCallback callback) : SkypeResponseDelegateBase(ppro), pfnResponseCallback(callback) {}
+
+	virtual void Invoke(const NETLIBHTTPREQUEST *response) override
+	{
+		(proto->*(pfnResponseCallback))(response);
+	}
+};
+
+class SkypeResponseDelegateWithArg : public SkypeResponseDelegateBase
+{
+	SkypeResponseWithArgCallback pfnResponseCallback;
+	void *arg;
+public:
+	SkypeResponseDelegateWithArg(CSkypeProto *ppro, SkypeResponseWithArgCallback callback, void *p) :
+		SkypeResponseDelegateBase(ppro),
+		pfnResponseCallback(callback),
+		arg(p)
+	{}
+
+	virtual void Invoke(const NETLIBHTTPREQUEST *response) override
+	{
+		(proto->*(pfnResponseCallback))(response, arg);
+	}
+};
+
+template <typename F>
+class SkypeResponseDelegateLambda : public SkypeResponseDelegateBase
+{
+	F lCallback;
+public:
+	SkypeResponseDelegateLambda(CSkypeProto *ppro, F &callback) : SkypeResponseDelegateBase(ppro), lCallback(callback) {}
+
+	virtual void Invoke(const NETLIBHTTPREQUEST *response) override
+	{
+		lCallback(response);
+	}
+};
+
 
 #define MODULE "Skype"
 

@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Weather.dll
 ;  Plugin: Weather
-;  Version: 0.4.0.2
+;  Version: 0.4.0.3
 ;  Authors: Miranda NG Team
 ;============================================================
 [Retrieves weather information and displays it in your contact list.]
@@ -100,8 +100,6 @@ Modifier la Station Météo
 Station Météo
 [City name]
 Ville
-[ID]
-ID
 [Log Information]
 Enregistrement des Informations
 [Use internal history]
@@ -156,8 +154,8 @@ Délai des popups
 
 [seconds]
 secondes
-[From Popup plugin]
-Comme le plugin Popup
+[From popup plugin]
+Comme le plugin popup
 [Permanent]
 
 [Popup Text]
@@ -462,12 +460,12 @@ octets
 [Description:]
 Description :
 ;file \plugins\Weather\src\weather_ini.cpp
-[No update data file is found. Please check your Plugins\\Weather directory.]
-Aucun fichier de mise à jour trouvé. Vérifiez le dossier Plugins\\Weather.
-[Invalid ini format for: %s]
-Format ini invalide de : %s
 [All update data has been reloaded.]
 Toutes les données ont bien été mise à jour.
+[Invalid ini format for: %s]
+Format ini invalide de : %s
+[No update data file is found. Please check your Plugins\\Weather directory.]
+Aucun fichier de mise à jour trouvé. Vérifiez le dossier Plugins\\Weather.
 ;file \plugins\Weather\src\weather_mwin.cpp
 [Frame Font]
 
@@ -476,6 +474,8 @@ Toutes les données ont bien été mise à jour.
 [Frame Background]
 
 ;file \plugins\Weather\src\weather_opt.cpp
+[Weather Protocol Text Preview]
+Prévisualisation de Weather Protocole
 [Network]
 Réseau
 [General]
@@ -484,8 +484,6 @@ Général
 
 [Popups]
 Popups
-[Weather Protocol Text Preview]
-Prévisualisation de Weather Protocole
 ;file \plugins\Weather\src\weather_popup.cpp
 ;file \plugins\Weather\src\weather_svcs.cpp
 [Station ID]
@@ -518,10 +516,6 @@ Notification de Weather
 [Unable to retrieve weather information for %s]
 Impossible de retrouver la météo de %s
 ;file \plugins\Weather\src\weather_userinfo.cpp
-[Current condition for %n]
-Condition actuelles de %n
-[Last update on:   %u]
-Dernière mise à jour : %u
 [Variable]
 
 [Information]
@@ -530,3 +524,7 @@ Informations
 Réception des données, veuillez patienter...
 [More Info]
 Plus d'info
+[Current condition for %n]
+Condition actuelles de %n
+[Last update on:   %u]
+Dernière mise à jour : %u

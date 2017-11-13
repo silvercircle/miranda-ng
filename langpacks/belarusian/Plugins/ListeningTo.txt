@@ -2,12 +2,11 @@
 ;============================================================
 ;  File: ListeningTo.dll
 ;  Plugin: ListeningTo
-;  Version: 0.3.0.0
+;  Version: 0.4.0.0
 ;  Authors: Ricardo Pescuma Domenecci
 ;============================================================
 [Handles listening information to/for contacts.]
 Адсылае інфармацыю пра праслухоўваемую Вамі музыку.
-;file \plugins\ListeningTo\res\resource.rc
 [Listening to information]
 Зараз грае
 [Enable sending listening information to contacts:]
@@ -42,12 +41,8 @@ xСтатус
 Атрымаць інфармацыю з WATrack
 [Get info from these players:]
 Атрымліваць інфармацыю з плэераў:
-[Winamp (*)]
-Winamp (*)
 [Windows Media Player]
 Прайгравальнік Windows Media
-[iTunes]
-iTunes
 [foobar2000 (need to install the plugin manually)]
 foobar2000 (усталюйце плагін уручную)
 [Other players]
@@ -58,8 +53,6 @@ foobar2000 (усталюйце плагін уручную)
 секунд(ы)
 [Allow auto-loading plugins into players (affect players with *)]
 Аўтаматычна загружаць плагіны ў плэеры (толькі для пазначаных *)
-[mRadio]
-mRadio
 [Listening to]
 Слухаю
 [Template:]
@@ -93,20 +86,17 @@ mRadio
 [Other Variables:]
 Астатнія зменныя:
 [%listening% - Listening to info (as set above)]
-%listening% -  наладжаная вышэй інфармацыя
+%listening% - наладжаная вышэй інфармацыя
 [When nothing is playing, replace %listening% with:]
 Калі нічога не грае, пісаць:
-;file \plugins\ListeningTo\src\listeningto.cpp
 [Listening to (enabled)]
 Слухаю (укл.)
 [Listening to (disabled)]
 Слухаю (адкл.)
-[ListeningTo]
-Слухаю
-[Listening to music]
-Слухаю музыку
 [Send to %s]
 Адпраўляць у %s
+[Listening to music]
+Слухаю музыку
 [Send to all protocols]
 Адпраўляць усім пратаколам
 [Listening info]
@@ -141,7 +131,8 @@ mRadio
 Выключыць ListeningTo (для ўсіх пратаколаў)
 [Enable ListeningTo (to all protocols)]
 Уключыць ListeningTo (для ўсіх пратаколаў)
-;file \plugins\ListeningTo\src\options.cpp
+[ListeningTo]
+Слухаю
 [<Unknown>]
 Невядома
 [<Nothing is playing now>]
@@ -154,9 +145,7 @@ mRadio
 Фармат
 [Players]
 Плэеры
-;file \plugins\ListeningTo\src\players\generic.cpp
 [Miranda ListeningTo receiver]
 Прымаць у 'Слухаю'
-;file \plugins\ListeningTo\src\players\wmp.cpp
 [Miranda ListeningTo WMP receiver]
 Прымаць у 'Слухаю' з WMP

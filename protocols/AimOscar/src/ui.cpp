@@ -105,7 +105,7 @@ static INT_PTR CALLBACK userinfo_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, L
 				cf.cbSize = sizeof(cf);
 				cf.yHeight = 12 * 20;
 				cf.dwMask = CFM_SIZE | CFM_FACE;
-				mir_tstrcpy(cf.szFaceName, TEXT("Arial"));
+				mir_wstrcpy(cf.szFaceName, TEXT("Arial"));
 				SendDlgItemMessage(hwndDlg, IDC_PROFILE, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
 			}
 			else {
@@ -190,7 +190,7 @@ static INT_PTR CALLBACK userinfo_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, L
 				DBVARIANT dbv;
 				if (!db_get_utf(NULL, ppro->m_szModuleName, AIM_KEY_PR, &dbv)) {
 					html_decode(dbv.pszVal);
-					TCHAR *txt = mir_utf8decodeT(dbv.pszVal);
+					wchar_t *txt = mir_utf8decodeW(dbv.pszVal);
 					SetDlgItemText(hwndDlg, IDC_PROFILE, txt);
 					mir_free(txt);
 					db_free(&dbv);
@@ -683,17 +683,17 @@ int CAimProto::OnUserInfoInit(WPARAM wParam, LPARAM lParam)
 	{
 		OPTIONSDIALOGPAGE odp = { 0 };
 		odp.position = -1900000000;
-		odp.flags = ODPF_USERINFOTAB | ODPF_TCHAR;
+		odp.flags = ODPF_USERINFOTAB | ODPF_UNICODE;
 		odp.hInstance = hInstance;
-		odp.ptszTitle = m_tszUserName;
+		odp.szTitle.w = m_tszUserName;
 		odp.dwInitParam = LPARAM(this);
 
-		odp.ptszTab = LPGENT("Profile");
+		odp.szTab.w = LPGENW("Profile");
 		odp.pszTemplate = MAKEINTRESOURCEA(IDD_INFO);
 		odp.pfnDlgProc = userinfo_dialog;
 		UserInfo_AddPage(wParam, &odp);
 
-		odp.ptszTab = LPGENT("Admin");
+		odp.szTab.w = LPGENW("Admin");
 		odp.pszTemplate = MAKEINTRESOURCEA(IDD_ADMIN);
 		odp.pfnDlgProc = admin_dialog;
 		UserInfo_AddPage(wParam, &odp);
@@ -742,7 +742,7 @@ static INT_PTR CALLBACK options_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				SetDlgItemTextA(hwndDlg, IDC_HN, dbv.pszVal);
 				db_free(&dbv);
 			}
-			else SetDlgItemTextA(hwndDlg, IDC_HN, ppro->getByte(AIM_KEY_DSSL, 0) ? AIM_DEFAULT_SERVER_NS : AIM_DEFAULT_SERVER);
+			else SetDlgItemTextA(hwndDlg, IDC_HN, AIM_DEFAULT_SERVER);
 
 			SetDlgItemInt(hwndDlg, IDC_PN, ppro->get_default_port(), FALSE);
 
@@ -759,23 +759,24 @@ static INT_PTR CALLBACK options_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			CheckDlgButton(hwndDlg, IDC_MG, ppro->getByte(AIM_KEY_MG, 1) ? BST_CHECKED : BST_UNCHECKED);//Manage Groups
 			CheckDlgButton(hwndDlg, IDC_DA, ppro->getByte(AIM_KEY_DA, 0) ? BST_CHECKED : BST_UNCHECKED);//Disable Avatars
 			CheckDlgButton(hwndDlg, IDC_DSSL, ppro->getByte(AIM_KEY_DSSL, 0) ? BST_CHECKED : BST_UNCHECKED);//Disable SSL
+			CheckDlgButton(hwndDlg, IDC_CLIENTLOGIN, ppro->getByte(AIM_KEY_CLIENTLOGIN, 1) ? BST_CHECKED : BST_UNCHECKED);//use clientlogin
+			{
+				HWND dssl = GetDlgItem(hwndDlg, IDC_DSSL);
+				bool clientlogin = ppro->getByte(AIM_KEY_CLIENTLOGIN, 1) != 0;
+				EnableWindow(dssl,  clientlogin);
+				if(!clientlogin)
+					CheckDlgButton(hwndDlg, IDC_DSSL, BST_CHECKED);
+			}
 			CheckDlgButton(hwndDlg, IDC_FSC, ppro->getByte(AIM_KEY_FSC, 0) ? BST_CHECKED : BST_UNCHECKED);//Force Single Client
 		}
 		break;
 
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
-		case IDC_DSSL:
-			{
-				bool dssl = IsDlgButtonChecked(hwndDlg, IDC_DSSL) != 0;
-				SetDlgItemTextA(hwndDlg, IDC_HN, dssl ? AIM_DEFAULT_SERVER_NS : AIM_DEFAULT_SERVER);
-				SetDlgItemInt(hwndDlg, IDC_PN, dssl ? AIM_DEFAULT_PORT : AIM_DEFAULT_SSL_PORT, FALSE);
-			}
-			break;
+
 
 		case IDC_SVRRESET:
-			SetDlgItemTextA(hwndDlg, IDC_HN,
-				IsDlgButtonChecked(hwndDlg, IDC_DSSL) ? AIM_DEFAULT_SERVER_NS : AIM_DEFAULT_SERVER);
+			SetDlgItemTextA(hwndDlg, IDC_HN, AIM_DEFAULT_SERVER);
 			SetDlgItemInt(hwndDlg, IDC_PN, ppro->get_default_port(), FALSE);
 			break;
 
@@ -787,6 +788,17 @@ static INT_PTR CALLBACK options_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			if (HIWORD(wParam) != EN_CHANGE || (HWND)lParam != GetFocus())
 				return 0;
 			break;
+		}
+		if (IsDlgButtonChecked(hwndDlg, IDC_CLIENTLOGIN))
+		{
+			HWND dssl = GetDlgItem(hwndDlg, IDC_DSSL);
+			EnableWindow(dssl, true);
+		}
+		else
+		{
+			HWND dssl = GetDlgItem(hwndDlg, IDC_DSSL);
+			EnableWindow(dssl, false);
+			CheckDlgButton(hwndDlg, IDC_DSSL, BST_CHECKED);
 		}
 		SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 		break;
@@ -841,6 +853,10 @@ static INT_PTR CALLBACK options_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				ppro->setByte(AIM_KEY_DSSL, IsDlgButtonChecked(hwndDlg, IDC_DSSL) != 0);
 				//Disable SSL
 
+				//use "clientlogin"
+				ppro->setByte(AIM_KEY_CLIENTLOGIN, IsDlgButtonChecked(hwndDlg, IDC_CLIENTLOGIN) != 0);
+				//use "clientlogin"
+
 				//Force Single Login
 				ppro->setByte(AIM_KEY_FSC, IsDlgButtonChecked(hwndDlg, IDC_FSC) != 0);
 				//Force Single Login
@@ -851,7 +867,7 @@ static INT_PTR CALLBACK options_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 				//PN
 				int port = GetDlgItemInt(hwndDlg, IDC_PN, NULL, FALSE);
-				if (port > 0 && port != (ppro->getByte(AIM_KEY_DSSL, 0) ? AIM_DEFAULT_PORT : AIM_DEFAULT_SSL_PORT))
+				if (port > 0 && port != AIM_DEFAULT_PORT)
 					ppro->setWord(AIM_KEY_PN, (WORD)port);
 				else
 					ppro->delSetting(AIM_KEY_PN);
@@ -1042,17 +1058,17 @@ int CAimProto::OnOptionsInit(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.position = 1003000;
 	odp.hInstance = hInstance;
-	odp.ptszGroup = LPGENT("Network");
-	odp.ptszTitle = m_tszUserName;
+	odp.szGroup.w = LPGENW("Network");
+	odp.szTitle.w = m_tszUserName;
 	odp.dwInitParam = LPARAM(this);
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR | ODPF_DONTTRANSLATE;
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE | ODPF_DONTTRANSLATE;
 
-	odp.ptszTab = LPGENT("Basic");
+	odp.szTab.w = LPGENW("Basic");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_AIM);
 	odp.pfnDlgProc = options_dialog;
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LPGENT("Privacy");
+	odp.szTab.w = LPGENW("Privacy");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_PRIVACY);
 	odp.pfnDlgProc = privacy_dialog;
 	Options_AddPage(wParam, &odp);
@@ -1139,7 +1155,8 @@ INT_PTR CALLBACK instant_idle_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
 		ppro = (CAimProto*)lParam;
 		{
-			Window_SetIcon(hwndDlg, "idle");
+			Window_SetIcon_IcoLib(hwndDlg, GetIconHandle("idle"));
+
 			unsigned long it = ppro->getDword(AIM_KEY_IIT, 0);
 			unsigned long hours = it / 60;
 			unsigned long minutes = it % 60;
@@ -1200,7 +1217,7 @@ INT_PTR CALLBACK join_chat_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
 		ppro = (CAimProto*)lParam;
-		Window_SetIcon(hwndDlg, "aol");
+		Window_SetIcon_IcoLib(hwndDlg, GetIconHandle("aol"));
 		break;
 
 	case WM_CLOSE:
@@ -1250,10 +1267,10 @@ static void clist_chat_invite_send(MCONTACT hItem, HWND hwndList, chat_list_item
 			int chk = SendMessage(hwndList, CLM_GETCHECKMARK, (WPARAM)hItem, 0);
 			if (chk) {
 				if (IsHContactInfo(hItem)) {
-					TCHAR buf[128] = _T("");
+					wchar_t buf[128] = L"";
 					SendMessage(hwndList, CLM_GETITEMTEXT, (WPARAM)hItem, (LPARAM)buf);
 
-					char *sn = mir_t2a(buf);
+					char *sn = mir_u2a(buf);
 					ppro->aim_chat_invite(ppro->m_hServerConn, ppro->m_seqno,
 						item->cookie, item->exchange, item->instance, sn, msg);
 					mir_free(sn);
@@ -1309,7 +1326,7 @@ INT_PTR CALLBACK invite_to_chat_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
 		param = (invite_chat_param*)lParam;
 
-		Window_SetIcon(hwndDlg, "aol");
+		Window_SetIcon_IcoLib(hwndDlg, GetIconHandle("aol"));
 		SetDlgItemTextA(hwndDlg, IDC_ROOMNAME, param->id);
 		SetDlgItemTextA(hwndDlg, IDC_MSG, Translate("Join me in this buddy chat!"));
 		break;
@@ -1347,7 +1364,7 @@ INT_PTR CALLBACK invite_to_chat_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			switch (LOWORD(wParam)) {
 			case IDC_ADDSCR:
 				if (param->ppro->m_state == 1) {
-					TCHAR sn[64];
+					wchar_t sn[64];
 					GetDlgItemText(hwndDlg, IDC_EDITSCR, sn, _countof(sn));
 
 					CLCINFOITEM cii = { 0 };
@@ -1398,7 +1415,7 @@ INT_PTR CALLBACK chat_request_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
 		param = (invite_chat_req_param*)lParam;
 
-		Window_SetIcon(hwndDlg, "aol");
+		Window_SetIcon_IcoLib(hwndDlg, GetIconHandle("aol"));
 
 		SetDlgItemTextA(hwndDlg, IDC_ROOMNAME, strrchr(param->cnp->id, '-') + 1);
 		SetDlgItemTextA(hwndDlg, IDC_SCREENNAME, param->name);

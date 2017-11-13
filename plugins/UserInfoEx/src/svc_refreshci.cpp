@@ -115,11 +115,11 @@ public:
 	{
 		if (szText)
 		{
-			TCHAR buf[MAXDATASIZE];
+			wchar_t buf[MAXDATASIZE];
 			va_list vl;
 			
 			va_start(vl, szText);
-			if (mir_vsntprintf(buf, _countof(buf), szText, vl) != -1)
+			if (mir_vsnwprintf(buf, _countof(buf), szText, vl) != -1)
 			{
 				SetTitle(buf);	 
 			}
@@ -143,15 +143,15 @@ public:
 	{
 		if (szText)
 		{
-			INT_PTR cch = mir_tstrlen(szText);
-			LPTSTR	fmt = (LPTSTR) mir_alloc((cch + 1) * sizeof(TCHAR));
+			INT_PTR cch = mir_wstrlen(szText);
+			LPTSTR	fmt = (LPTSTR) mir_alloc((cch + 1) * sizeof(wchar_t));
 			
 			if (fmt)
 			{
-				TCHAR buf[MAXDATASIZE];
+				wchar_t buf[MAXDATASIZE];
 				va_list vl;
 
-				mir_tstrcpy(fmt, szText);
+				mir_wstrcpy(fmt, szText);
 
 				// delete bbcodes
 				if (!_bBBCode)
@@ -165,13 +165,13 @@ public:
 							// leading bbcode tag (e.g.: [b], [u], [i])
 							if ((s[1] == 'b' || s[1] == 'u' || s[1] == 'i') && s[2] == ']')
 							{
-								memmove(s, s + 3, (e - s - 2) * sizeof(TCHAR));
+								memmove(s, s + 3, (e - s - 2) * sizeof(wchar_t));
 								e -= 3;
 							}
 							// ending bbcode tag (e.g.: [/b], [/u], [/i])
 							else if (s[1] == '/' && (s[2] == 'b' || s[2] == 'u' || s[2] == 'i') && s[3] == ']')
 							{
-								memmove(s, s + 4, (e - s - 3) * sizeof(TCHAR));
+								memmove(s, s + 4, (e - s - 3) * sizeof(wchar_t));
 								e -= 4;
 							}
 						}
@@ -179,7 +179,7 @@ public:
 				}
 			
 				va_start(vl, szText);
-				if (mir_vsntprintf(buf, _countof(buf), fmt, vl) != -1)
+				if (mir_vsnwprintf(buf, _countof(buf), fmt, vl) != -1)
 				{
 					SetText(buf);	 
 				}
@@ -345,12 +345,12 @@ class CPopupUpdProgress : public CUpdProgress
 	{
 		if (_szText)
 		{
-			INT_PTR cb = mir_tstrlen(_szText) + 8;
-			LPTSTR	pb = (LPTSTR) mir_alloc(cb * sizeof(TCHAR));
+			INT_PTR cb = mir_wstrlen(_szText) + 8;
+			LPTSTR	pb = (LPTSTR) mir_alloc(cb * sizeof(wchar_t));
 
 			if (pb)
 			{
-				mir_tstrcpy(pb, _szText);
+				mir_wstrcpy(pb, _szText);
 
 				SendMessage(_hWnd, UM_CHANGEPOPUP, CPT_TITLET, (LPARAM) pb);
 			}
@@ -424,10 +424,10 @@ public:
 		pd.lpActions = _popupButtons;
 
 		// dummy text
-		_szText = mir_tstrdup(szTitle);
-		mir_tstrcpy(pd.lptzContactName, _szText);
+		_szText = mir_wstrdup(szTitle);
+		mir_wstrcpy(pd.lptzContactName, _szText);
 		
-		mir_tstrcpy(pd.lptzText, _T(" "));
+		mir_wstrcpy(pd.lptzText, L" ");
 		
 		_pFnCallBack = pFnCallBack;
 		_hWnd = (HWND) CallService(MS_POPUP_ADDPOPUPT, (WPARAM) &pd, APF_RETURN_HWND|APF_NEWDATA);
@@ -455,7 +455,7 @@ public:
 	virtual void SetTitle(LPCTSTR szText)
 	{
 		MIR_FREE(_szText);
-		_szText = mir_tstrdup(szText);
+		_szText = mir_wstrdup(szText);
 		UpdateText();
 	}
 
@@ -465,7 +465,7 @@ public:
 	 **/
 	virtual void SetText(LPCTSTR szText)
 	{
-		SendMessage(_hWnd, UM_CHANGEPOPUP, CPT_TEXTT, (LPARAM) mir_tstrdup(szText));
+		SendMessage(_hWnd, UM_CHANGEPOPUP, CPT_TEXTT, (LPARAM) mir_wstrdup(szText));
 	}
 };
 
@@ -602,7 +602,7 @@ class CContactUpdater : public CContactQueue
 
 		// reset menu
 		if (hMenuItemRefresh)
-			Menu_ModifyItem(hMenuItemRefresh, LPGENT("Refresh contact details"), IcoLib_GetIcon(ICO_BTN_UPDATE));
+			Menu_ModifyItem(hMenuItemRefresh, LPGENW("Refresh contact details"), IcoLib_GetIcon(ICO_BTN_UPDATE));
 	}
 
 	/**
@@ -637,7 +637,7 @@ class CContactUpdater : public CContactQueue
 			if (IsProtoOnline(pszProto))
 			{
 				int i;
-				for (i = 0; i < 3 && CallContactService(hContact, PSS_GETINFO, 0, 0); i++)
+				for (i = 0; i < 3 && ProtoChainSend(hContact, PSS_GETINFO, 0, 0); i++)
 				{
 					Sleep(3000);
 				}
@@ -713,7 +713,7 @@ public:
 
 		// if there are contacts in the queue, change the main menu item to indicate it is meant for canceling.
 		if (hMenuItemRefresh && Size() > 0)
-			Menu_ModifyItem(hMenuItemRefresh, LPGENT("Abort Refreshing Contact Details"), IcoLib_GetIcon(ICO_BTN_CANCEL));
+			Menu_ModifyItem(hMenuItemRefresh, LPGENW("Abort Refreshing Contact Details"), IcoLib_GetIcon(ICO_BTN_CANCEL));
 	}
 
 	/**
@@ -785,20 +785,20 @@ static INT_PTR RefreshService(WPARAM, LPARAM)
 			{
 				ContactUpdater->RefreshAll();
 			}
-			else if (IDYES == MsgBox(NULL, MB_YESNO|MB_ICON_QUESTION, LPGENT("Refresh contact details"), NULL, 
-				LPGENT("Do you want to cancel the current refresh procedure?")))
+			else if (IDYES == MsgBox(NULL, MB_YESNO|MB_ICON_QUESTION, LPGENW("Refresh contact details"), NULL, 
+				LPGENW("Do you want to cancel the current refresh procedure?")))
 			{
 				ContactUpdater->Cancel();
 			}
 		}
 		else
 		{
-			MsgErr(NULL, LPGENT("Miranda must be online for refreshing contact information!"));
+			MsgErr(NULL, LPGENW("Miranda must be online for refreshing contact information!"));
 		}
 	}
 	catch(...)
 	{
-		MsgErr(NULL, LPGENT("The function caused an exception!"));
+		MsgErr(NULL, LPGENW("The function caused an exception!"));
 	}
 	return 0;
 }
@@ -838,7 +838,7 @@ static int OnContactAdded(WPARAM hContact, LPARAM)
 	}
 	catch(...)
 	{
-		MsgErr(NULL, LPGENT("The function caused an exception!"));
+		MsgErr(NULL, LPGENW("The function caused an exception!"));
 	}
 	return 0;
 }
@@ -875,11 +875,10 @@ void SvcRefreshContactInfoLoadModule(void)
 	HookEvent(ME_SYSTEM_PRESHUTDOWN, OnPreShutdown);
 	HookEvent(ME_DB_CONTACT_ADDED, OnContactAdded);
 
-	HOTKEYDESC hk = { 0 };
-	hk.cbSize = sizeof(HOTKEYDESC);
-	hk.pszSection = MODNAME;
+	HOTKEYDESC hk = {};
 	hk.pszName = "RefreshContactDetails";
-	hk.pszDescription = LPGEN("Refresh contact details");
+	hk.szSection.a = MODNAME;
+	hk.szDescription.a = LPGEN("Refresh contact details");
 	hk.pszService = MS_USERINFO_REFRESH;
 	Hotkey_Register(&hk);
 }

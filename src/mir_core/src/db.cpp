@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -25,6 +25,87 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "stdafx.h"
 
 MIDatabase *currDb = NULL;
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// database functions
+
+MIR_CORE_DLL(void) db_set_safety_mode(BOOL bNewMode)
+{
+	if (currDb)
+		currDb->SetCacheSafetyMode(bNewMode != 0);
+}
+
+MIR_CORE_DLL(int) db_get_contact_count(void)
+{
+	return (currDb) ? currDb->GetContactCount() : 0;
+}
+
+MIR_CORE_DLL(MIDatabase*) db_get_current()
+{
+	return currDb;
+}
+
+static int sttEnumVars(const char *szVarName, LPARAM lParam)
+{
+	LIST<char>* vars = (LIST<char>*)lParam;
+	vars->insert(mir_strdup(szVarName));
+	return 0;
+}
+
+MIR_CORE_DLL(int) db_delete_module(MCONTACT hContact, const char *szModuleName)
+{
+	LIST<char> vars(20);
+	db_enum_settings(hContact, sttEnumVars, szModuleName, &vars);
+
+	for (int i = vars.getCount() - 1; i >= 0; i--) {
+		db_unset(hContact, szModuleName, vars[i]);
+		mir_free(vars[i]);
+	}
+	return 0;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// contact functions
+
+MIR_CORE_DLL(MCONTACT) db_add_contact(void)
+{
+	MCONTACT hNew = (currDb) ? currDb->AddContact() : 0;
+	Netlib_Logf(NULL, "New contact created: %d", hNew);
+	return hNew;
+}
+
+MIR_CORE_DLL(int) db_delete_contact(MCONTACT hContact)
+{
+	ptrW wszPhoto(db_get_wsa(hContact, "ContactPhoto", "File"));
+	if (wszPhoto != NULL)
+		DeleteFile(wszPhoto);
+
+	Netlib_Logf(NULL, "Contact deleted: %d", hContact);
+	return (currDb) ? currDb->DeleteContact(hContact) : 0;
+}
+
+MIR_CORE_DLL(int) db_is_contact(MCONTACT hContact)
+{
+	return (currDb) ? currDb->IsDbContact(hContact) : 0;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// enumerators
+
+MIR_CORE_DLL(int) db_enum_modules(DBMODULEENUMPROC pFunc, const void *param)
+{
+	return (currDb) ? currDb->EnumModuleNames(pFunc, param) : 0;
+}
+
+MIR_CORE_DLL(int) db_enum_residents(DBMODULEENUMPROC pFunc, const void *param)
+{
+	return (currDb) ? currDb->EnumResidentSettings(pFunc, param) : 0;
+}
+
+EXTERN_C MIR_CORE_DLL(int) db_enum_settings(MCONTACT hContact, DBSETTINGENUMPROC pFunc, const char *szModule, const void *param)
+{
+	return (currDb) ? currDb->EnumContactSettings(hContact, pFunc, szModule, param) : 0;
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // getting data
@@ -351,7 +432,7 @@ extern "C" MIR_CORE_DLL(void) db_setCurrent(MIDatabase *_db)
 	currDb = _db;
 
 	// try to get the langpack's name from a profile
-	ptrT langpack(db_get_tsa(NULL, "Langpack", "Current"));
+	ptrW langpack(db_get_wsa(NULL, "Langpack", "Current"));
 	if (langpack && langpack[0] != '\0')
 		LoadLangPack(langpack);
 	else

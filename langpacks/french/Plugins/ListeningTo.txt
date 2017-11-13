@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: ListeningTo.dll
 ;  Plugin: ListeningTo
-;  Version: 0.3.0.0
+;  Version: 0.4.0.0
 ;  Authors: Ricardo Pescuma Domenecci
 ;============================================================
 [Handles listening information to/for contacts.]
@@ -42,11 +42,7 @@ Appliquer le modèle sur les contacts (écrase le modèle des contacts)
 Recevoir les informations du plugin WATrack
 [Get info from these players:]
 Recevoir les informations de ces lecteurs :
-[Winamp (*)]
-
 [Windows Media Player]
-
-[iTunes]
 
 [foobar2000 (need to install the plugin manually)]
 
@@ -58,8 +54,6 @@ Actualiser toutes les :
 secondes
 [Allow auto-loading plugins into players (affect players with *)]
 (*) Autoriser le chargement automatique des plugins dans les lecteurs
-[mRadio]
-
 [Listening to]
 Écoute
 [Template:]
@@ -101,12 +95,10 @@ Si rien n'est en lecture, remplacer %listening% par :
 
 [Listening to (disabled)]
 
-[ListeningTo]
-
-[Listening to music]
-
 [Send to %s]
 Envoyer à %s
+[Listening to music]
+
 [Send to all protocols]
 Envoyer à tous les protocoles
 [Listening info]
@@ -140,6 +132,8 @@ nom du lecteur
 [Disable ListeningTo (to all protocols)]
 
 [Enable ListeningTo (to all protocols)]
+
+[ListeningTo]
 
 ;file \plugins\ListeningTo\src\options.cpp
 [<Unknown>]

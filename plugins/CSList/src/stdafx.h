@@ -37,7 +37,7 @@
 
 #include <newpluginapi.h>
 #include <m_database.h>
-#include <m_system_cpp.h>
+#include <m_system.h>
 #include <m_langpack.h>
 #include <m_clist.h>
 #include <m_icolib.h>
@@ -54,8 +54,8 @@
 
 // ====[ BASIC DEFINITIONS ]==================================================
 
-#define MODULENAME	       LPGEN("Custom Status List")
-#define MODNAME		"CSList"
+#define MODULENAME  LPGENW("Custom Status List")
+#define MODNAME     "CSList"
 
 // ====[ LIMITS ]=============================================================
 
@@ -90,8 +90,8 @@
 #define setWord(setting, value)           db_set_w(NULL, MODNAME, setting, value)
 #define getDword(setting, error)          db_get_dw(NULL, MODNAME, setting, error)
 #define setDword(setting, value)          db_set_dw(NULL, MODNAME, setting, value)
-#define getTString(setting, dest)         db_get_ts(NULL, MODNAME, setting, dest)
-#define setTString(setting, value)        db_set_ts(NULL, MODNAME, setting, value)
+#define getWString(setting, dest)         db_get_ws(NULL, MODNAME, setting, dest)
+#define setWString(setting, value)        db_set_ws(NULL, MODNAME, setting, value)
 #define deleteSetting(setting)            db_unset(NULL, MODNAME, setting)
 
 // --
@@ -103,23 +103,23 @@ typedef void(__cdecl *pForAllProtosFunc)(char*, void *);
 struct StatusItem // list item structure
 {
 	int     m_iIcon;
-	TCHAR   m_tszTitle[EXTRASTATUS_TITLE_LIMIT];
-	TCHAR   m_tszMessage[EXTRASTATUS_MESSAGE_LIMIT];
+	wchar_t   m_tszTitle[EXTRASTATUS_TITLE_LIMIT];
+	wchar_t   m_tszMessage[EXTRASTATUS_MESSAGE_LIMIT];
 	BOOL    m_bFavourite;
 
 	StatusItem()
 	{
 		m_iIcon = 0;
-		mir_tstrcpy(m_tszTitle, _T(""));
-		mir_tstrcpy(m_tszMessage, _T(""));
+		mir_wstrcpy(m_tszTitle, L"");
+		mir_wstrcpy(m_tszMessage, L"");
 		m_bFavourite = FALSE;
 	}
 
 	StatusItem(const StatusItem& p)
 	{
 		m_iIcon = p.m_iIcon;
-		mir_tstrcpy(m_tszTitle, p.m_tszTitle);
-		mir_tstrcpy(m_tszMessage, p.m_tszMessage);
+		mir_wstrcpy(m_tszTitle, p.m_tszTitle);
+		mir_wstrcpy(m_tszMessage, p.m_tszMessage);
 		m_bFavourite = p.m_bFavourite;
 	}
 
@@ -130,25 +130,25 @@ struct StatusItem // list item structure
 
 static struct CSForm { // icons + buttons
 	int     idc;
-	TCHAR*  ptszTitle;
-	TCHAR*  ptszDescr;
+	wchar_t*  ptszTitle;
+	wchar_t*  ptszDescr;
 	char *  pszIconIcoLib;
 	int     iconNoIcoLib;
 	HANDLE  hIcoLibItem;
 
 } forms[] = {
 
-	{ -1, LPGENT("Main Menu"), LPGENT("Main Icon"), "icon", IDI_CSLIST },
-	{ IDC_ADD, LPGENT("Add new item"), LPGENT("Add"), "add", IDI_ADD },
-	{ IDC_MODIFY, LPGENT("Modify selected item"), LPGENT("Modify"), "modify", IDI_MODIFY },
-	{ IDC_REMOVE, LPGENT("Delete selected item"), LPGENT("Remove"), "remove", IDI_REMOVE },
-	{ IDC_FAVOURITE, LPGENT("Set/unset current item as favorite"), LPGENT("Favorite"), "favourite", IDI_FAVOURITE },
-	{ IDC_UNDO, LPGENT("Undo changes"), LPGENT("Undo changes"), "undo", IDI_UNDO },
-	{ IDC_IMPORT, LPGENT("Import statuses from database"), LPGENT("Import"), "import", IDI_IMPORT },
-	{ IDC_FILTER, LPGENT("Filter list"), LPGENT("Filter"), "filter", IDI_FILTER },
-	{ IDCLOSE, LPGENT("Close without changing custom status"), LPGENT("No change"), "nochng", IDI_CLOSE },
-	{ IDC_CANCEL, LPGENT("Clear custom status (reset to None) and close"), LPGENT("Clear"), "clear", IDI_UNSET },
-	{ IDOK, LPGENT("Set custom status to selected one and close"), LPGENT("Set"), "apply", IDI_APPLY }
+	{ -1, LPGENW("Main Menu"), LPGENW("Main Icon"), "icon", IDI_CSLIST },
+	{ IDC_ADD, LPGENW("Add new item"), LPGENW("Add"), "add", IDI_ADD },
+	{ IDC_MODIFY, LPGENW("Modify selected item"), LPGENW("Modify"), "modify", IDI_MODIFY },
+	{ IDC_REMOVE, LPGENW("Delete selected item"), LPGENW("Remove"), "remove", IDI_REMOVE },
+	{ IDC_FAVOURITE, LPGENW("Set/unset current item as favorite"), LPGENW("Favorite"), "favourite", IDI_FAVOURITE },
+	{ IDC_UNDO, LPGENW("Undo changes"), LPGENW("Undo changes"), "undo", IDI_UNDO },
+	{ IDC_IMPORT, LPGENW("Import statuses from database"), LPGENW("Import"), "import", IDI_IMPORT },
+	{ IDC_FILTER, LPGENW("Filter list"), LPGENW("Filter"), "filter", IDI_FILTER },
+	{ IDCLOSE, LPGENW("Close without changing custom status"), LPGENW("No change"), "nochng", IDI_CLOSE },
+	{ IDC_CANCEL, LPGENW("Clear custom status (reset to None) and close"), LPGENW("Clear"), "clear", IDI_UNSET },
+	{ IDOK, LPGENW("Set custom status to selected one and close"), LPGENW("Set"), "apply", IDI_APPLY }
 };
 
 // ====[ MY BITCHY LIST IMPLEMENTATION x)) ]==================================
@@ -343,7 +343,7 @@ struct CSWindow
 	HIMAGELIST      m_icons;
 	int             m_statusCount;
 	BOOL            m_bSomethingChanged;
-	TCHAR*          m_filterString;
+	wchar_t*          m_filterString;
 	char *          m_protoName;
 
 	CSWindow(char *protoName);
@@ -395,7 +395,7 @@ void addProtoStatusMenuItem(char *protoName);
 
 // other functions
 void IitIcoLib();
-void RegisterHotkeys(char buf[200], TCHAR* accName, int Number);
+void RegisterHotkeys(char buf[200], wchar_t* accName, int Number);
 void SetStatus(WORD code, StatusItem* item, char *protoName);
 
 // ====[ PROCEDURES ]=========================================================

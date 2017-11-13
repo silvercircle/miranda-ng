@@ -35,6 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <m_popup.h>
 #include <m_netlib.h>
 #include <m_string.h>
+#include <m_db_int.h>
 
 #include "m_folders.h"
 #include "m_toptoolbar.h"
@@ -91,43 +92,42 @@ extern DWORD mirandaVersion;
 extern LCID packlcid;
 extern bool servicemode, clsdates, dtsubfldr, catchcrashes, needrestart;
 
-extern TCHAR CrashLogFolder[MAX_PATH];
-extern TCHAR VersionInfoFolder[MAX_PATH];
+extern wchar_t CrashLogFolder[MAX_PATH];
+extern wchar_t VersionInfoFolder[MAX_PATH];
 
-void WriteBBFile(CMString& buffer, bool hdr);
+void WriteBBFile(CMStringW& buffer, bool hdr);
 void WriteUtfFile(HANDLE hDumpFile, char* bufu);
 
 LONG WINAPI myfilter(PEXCEPTION_POINTERS exc_ptr);
 LONG WINAPI myfilterv(PEXCEPTION_POINTERS exc_ptr);
 DWORD MirandaThreadFilter(DWORD code, EXCEPTION_POINTERS* info);
 
-void GetInternetExplorerVersion(CMString& buffer);
-void GetProcessorString(CMString& buffer);
-void GetFreeMemoryString(CMString& buffer);
-void GetFreeDiskString(LPCTSTR dirname, CMString& buffer);
-void GetAdminString(CMString& buffer);
-void GetLanguageString(CMString& buffer);
-void GetLanguagePackString(CMString& buffer);
-void GetWow64String(CMString& buffer);
-void GetVersionInfo(HMODULE hLib, CMString& buffer);
+void GetInternetExplorerVersion(CMStringW& buffer);
+void GetProcessorString(CMStringW& buffer);
+void GetFreeMemoryString(CMStringW& buffer);
+void GetFreeDiskString(LPCTSTR dirname, CMStringW& buffer);
+void GetAdminString(CMStringW& buffer);
+void GetLanguageString(CMStringW& buffer);
+void GetLanguagePackString(CMStringW& buffer);
+void GetWow64String(CMStringW& buffer);
+void GetVersionInfo(HMODULE hLib, CMStringW& buffer);
 
 void GetISO8061Time(SYSTEMTIME* stLocal, LPTSTR lpszString, DWORD dwSize);
 
-void ReadableExceptionInfo(PEXCEPTION_RECORD excrec, CMString& buffer);
+void ReadableExceptionInfo(PEXCEPTION_RECORD excrec, CMStringW& buffer);
 
 void GetLastWriteTime(LPCTSTR fileName, LPTSTR lpszString, DWORD dwSize);
 void GetLastWriteTime(FILETIME* ftime, LPTSTR lpszString, DWORD dwSize);
-bool CreateDirectoryTree(LPTSTR szDir);
-void StoreStringToClip(CMString& buffer);
-void ShowMessage(int type, const TCHAR* format, ...);
-bool IsPluginEnabled(TCHAR* filename);
+void StoreStringToClip(CMStringW& buffer);
+void ShowMessage(int type, const wchar_t* format, ...);
+bool IsPluginEnabled(wchar_t* filename);
 
 PLUGININFOEX* GetMirInfo(HMODULE hModule);
 const PLUGININFOEX* GetPluginInfoEx(void);
 
 void CreateMiniDump(HANDLE hDumpFile, PEXCEPTION_POINTERS exc_ptr);
-void CreateCrashReport(HANDLE hDumpFile, PEXCEPTION_POINTERS exc_ptr, const TCHAR* msg);
-void PrintVersionInfo(CMString& buffer, unsigned flags = VI_FLAG_PRNVAR);
+void CreateCrashReport(HANDLE hDumpFile, PEXCEPTION_POINTERS exc_ptr, const wchar_t* msg);
+void PrintVersionInfo(CMStringW& buffer, unsigned flags = VI_FLAG_PRNVAR);
 bool ProcessVIHash(bool store);
 
 void InitExceptionHandler(void);

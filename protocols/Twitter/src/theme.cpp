@@ -1,5 +1,5 @@
 /*
-Copyright © 2012-15 Miranda NG team
+Copyright © 2012-17 Miranda NG team
 Copyright © 2009 Jim Porter
 
 This program is free software: you can redistribute it and/or modify
@@ -24,14 +24,18 @@ extern OBJLIST<TwitterProto> g_Instances;
 
 static IconItem icons[] =
 {
-	{ LPGEN("Twitter Icon"),   "twitter",  IDI_TWITTER },
-	{ LPGEN("Tweet"),          "tweet",    IDI_TWITTER },
-	{ LPGEN("Reply to Tweet"), "reply",    IDI_TWITTER },
+	{ LPGEN("Twitter Icon"), "twitter", IDI_TWITTER },
+	{ LPGEN("Tweet"), "tweet", IDI_TWITTER },
+	{ LPGEN("Reply to Tweet"), "reply", IDI_TWITTER },
 
-	{ LPGEN("Visit Homepage"), "homepage", 0 }, 
+	{ LPGEN("Visit Homepage"), "homepage", 0 },
 };
 
-static HANDLE hIconLibItem[_countof(icons)];
+void TwitterInitSounds(void)
+{
+	Skin_AddSound("TwitterNewContact", LPGENW("Twitter"), LPGENW("First tweet from new contact"));
+	Skin_AddSound("TwitterNew",        LPGENW("Twitter"), LPGENW("New tweet"));
+}
 
 // TODO: uninit
 void InitIcons(void)
@@ -40,21 +44,20 @@ void InitIcons(void)
 	icons[_countof(icons) - 1].hIcolib = Skin_GetIconHandle(SKINICON_EVENT_URL);
 }
 
-HANDLE GetIconHandle(const char* name)
+HANDLE GetIconHandle(const char *name)
 {
 	for (size_t i = 0; i < _countof(icons); i++)
 		if (mir_strcmp(icons[i].szName, name) == 0)
-			return hIconLibItem[i];
+			return icons[i].hIcolib;
 
 	return 0;
 }
 
 // Contact List menu stuff
 static HGENMENU g_hMenuItems[2];
-static HANDLE g_hMenuEvts[3];
 
 // Helper functions
-static TwitterProto * GetInstanceByHContact(MCONTACT hContact)
+static TwitterProto* GetInstanceByHContact(MCONTACT hContact)
 {
 	char *proto = GetContactProto(hContact);
 	if (!proto)
@@ -84,36 +87,26 @@ static int PrebuildContactMenu(WPARAM wParam, LPARAM lParam)
 
 void InitContactMenus()
 {
-	g_hMenuEvts[0] = HookEvent(ME_CLIST_PREBUILDCONTACTMENU, PrebuildContactMenu);
+	HookEvent(ME_CLIST_PREBUILDCONTACTMENU, PrebuildContactMenu);
 
 	CMenuItem mi;
-	mi.flags = CMIF_NOTOFFLINE | CMIF_TCHAR;
+	mi.flags = CMIF_NOTOFFLINE | CMIF_UNICODE;
 
-	SET_UID(mi,0xfc4e1245, 0xc8e0, 0x4de2, 0x92, 0x15, 0xfc, 0xcf, 0x48, 0xf9, 0x41, 0x56);
+	SET_UID(mi, 0xfc4e1245, 0xc8e0, 0x4de2, 0x92, 0x15, 0xfc, 0xcf, 0x48, 0xf9, 0x41, 0x56);
 	mi.position = -2000006000;
 	mi.hIcolibItem = GetIconHandle("reply");
-	mi.name.t = LPGENT("Reply...");
+	mi.name.w = LPGENW("Reply...");
 	mi.pszService = "Twitter/ReplyToTweet";
-	g_hMenuEvts[1] = CreateServiceFunction(mi.pszService, GlobalService<&TwitterProto::ReplyToTweet>);
 	g_hMenuItems[0] = Menu_AddContactMenuItem(&mi);
+	CreateServiceFunction(mi.pszService, GlobalService<&TwitterProto::ReplyToTweet>);
 
 	SET_UID(mi, 0x7f7e4c24, 0x821c, 0x450f, 0x93, 0x76, 0xbe, 0x65, 0xe9, 0x2f, 0xb6, 0xc2);
 	mi.position = -2000006000;
 	mi.hIcolibItem = GetIconHandle("homepage");
-	mi.name.t = LPGENT("Visit Homepage");
+	mi.name.w = LPGENW("Visit Homepage");
 	mi.pszService = "Twitter/VisitHomepage";
-	g_hMenuEvts[2] = CreateServiceFunction(mi.pszService, GlobalService<&TwitterProto::VisitHomepage>);
 	g_hMenuItems[1] = Menu_AddContactMenuItem(&mi);
-}
-
-void UninitContactMenus()
-{
-	for (size_t i = 0; i < _countof(g_hMenuItems); i++)
-		Menu_RemoveItem(g_hMenuItems[i]);
-
-	UnhookEvent(g_hMenuEvts[0]);
-	for (size_t i = 1; i < _countof(g_hMenuEvts); i++)
-		DestroyServiceFunction(g_hMenuEvts[i]);
+	CreateServiceFunction(mi.pszService, GlobalService<&TwitterProto::VisitHomepage>);
 }
 
 void ShowContactMenus(bool show)

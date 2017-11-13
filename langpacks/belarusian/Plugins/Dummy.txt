@@ -1,0 +1,61 @@
+﻿#muuid {2a1081d1-aee3-4091-b70d-ae46d09f9a7f}
+;============================================================
+;  File: Dummy.dll
+;  Plugin: Dummy protocol
+;  Version: 0.2.0.0
+;  Authors: Robert Pösel
+;============================================================
+[Dummy protocol for Miranda NG. Could be used for holding contacts and history from deprecated protocols or for creating virtual contacts.]
+
+[Protocol template:]
+
+[Unique ID setting:]
+
+[Name of setting that holds unique identifier of contacts]
+
+[Unique ID text:]
+
+[Visible name of unique identifier of contacts]
+
+[Restart is required to apply these changes.]
+
+[Allow sending messages to contacts]
+
+[Custom]
+Наладзіць
+[Screen name]
+Мянушка
+[User name]
+Імя карыстача
+[Facebook ID]
+
+[Gadu-Gadu number]
+Нумар Gadu-Gadu
+[User ID]
+ID кантакта
+[ICQ number]
+
+[Nickname]
+Мянушка
+[Visible name]
+Бачнае імя
+[E-mail address]
+Адрас e-mail
+[Live ID]
+
+[Skype name]
+
+[Steam ID]
+
+[Tlen login]
+Tlen уваход
+[Tox ID]
+
+[Username]
+Імя карыстача
+[VKontakte ID]
+
+[WhatsApp ID]
+
+[This Dummy account has disabled sending messages. Enable it in account options.]
+

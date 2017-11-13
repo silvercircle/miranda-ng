@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-09 Miranda ICQ/IM project,
 
 This file is part of Send Screenshot Plus, a Miranda IM plugin.
@@ -29,37 +29,35 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #ifndef UAboutFormH
 #define UAboutFormH
 
-//---------------------------------------------------------------------------
-class TfrmAbout{
+class TfrmAbout
+{
 
-	public:
-		// Deklaration Standardkonstruktor/Standarddestructor
-		TfrmAbout(HWND Owner);
-		~TfrmAbout();
+public:
+	// Deklaration Standardkonstruktor/Standarddestructor
+	TfrmAbout(HWND Owner);
+	~TfrmAbout();
 
-		HWND	m_hWndOwner;
+	HWND	m_hWndOwner;
 
-		static void Unload();
-		void	Show(){ShowWindow(m_hWnd,SW_SHOW);}
-		void	Hide(){ShowWindow(m_hWnd,SW_HIDE);}
-		void	Close(){SendMessage(m_hWnd,WM_CLOSE,0,0);}
+	static void Unload();
+	void	Show(){ ShowWindow(m_hWnd, SW_SHOW); }
+	void	Hide(){ ShowWindow(m_hWnd, SW_HIDE); }
+	void	Close(){ SendMessage(m_hWnd, WM_CLOSE, 0, 0); }
 
-	private:
-		HWND	m_hWnd;
+private:
+	HWND	m_hWnd;
 
-	protected:
-		UINT m_Page;
-		typedef std::map<HWND, TfrmAbout *> CHandleMapping;
-		static CHandleMapping _HandleMapping;
-		static INT_PTR CALLBACK DlgTfrmAbout(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+protected:
+	UINT m_Page;
+	typedef std::map<HWND, TfrmAbout *> CHandleMapping;
+	static CHandleMapping _HandleMapping;
+	static INT_PTR CALLBACK DlgTfrmAbout(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-		LRESULT wmInitdialog(WPARAM wParam, LPARAM lParam);
-		LRESULT wmCommand(WPARAM wParam, LPARAM lParam);
-		LRESULT wmClose(WPARAM wParam, LPARAM lParam);
+	LRESULT wmInitdialog(WPARAM wParam, LPARAM lParam);
+	LRESULT wmCommand(WPARAM wParam, LPARAM lParam);
+	LRESULT wmClose(WPARAM wParam, LPARAM lParam);
 
-		void btnPageClick();
-
+	void btnPageClick();
 };
 
-//---------------------------------------------------------------------------
 #endif

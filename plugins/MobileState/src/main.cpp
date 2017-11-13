@@ -1,6 +1,6 @@
 /*
    Mobile State plugin for Miranda NG (www.miranda-ng.org)
-   (c) 2012-15 by Robert Pösel
+   (c) 2012-17 by Robert Pösel
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -54,14 +54,14 @@ bool hasMobileClient(MCONTACT hContact, LPARAM)
 {
 	char *proto = GetContactProto(hContact);
 
-	ptrT client(db_get_tsa(hContact, proto, "MirVer"));
+	ptrW client(db_get_wsa(hContact, proto, "MirVer"));
 	if (client) {
 		// Make client lower-case
-		_tcslwr(client);
+		wcslwr(client);
 		
 		// Find whether this client contain something from clients list
 		for (size_t i = 0; i < _countof(clients); i++)
-			if (_tcsstr(client, clients[i]))
+			if (wcsstr(client, clients[i]))
 				return true;
 	}
 
@@ -88,7 +88,7 @@ int onContactSettingChanged(WPARAM wParam, LPARAM lParam)
 		return 0;
 
 	DBCONTACTWRITESETTING *cws = (DBCONTACTWRITESETTING*)lParam;
-	if (!mir_strcmp(cws->szModule, proto) && !mir_strcmp(cws->szSetting, "MirVer"))
+	if (!strcmp(cws->szModule, proto) && !strcmp(cws->szSetting, "MirVer"))
 		ExtraIconsApply(wParam, 1);
 
 	return 0;

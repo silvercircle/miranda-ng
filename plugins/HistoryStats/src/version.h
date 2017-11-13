@@ -1,7 +1,7 @@
 #define __MAJOR_VERSION      0
 #define __MINOR_VERSION      2
-#define __RELEASE_NUM        0
-#define __BUILD_NUM          4
+#define __RELEASE_NUM        1
+#define __BUILD_NUM          1
 
 #include <stdver.h>
 
@@ -10,5 +10,5 @@
 #define __DESCRIPTION        "Creates detailed, colorful and highly customizable statistics using your message history."
 #define __AUTHOR             "Martin Afanasjew"
 #define __AUTHOREMAIL        "miranda@dark-passage.de"
-#define __AUTHORWEB          "http://miranda-ng.org/p/HistoryStats/"
+#define __AUTHORWEB          "https://miranda-ng.org/p/HistoryStats/"
 #define __COPYRIGHT          "© 2005-2007 Martin Afanasjew (see README for further credits)"

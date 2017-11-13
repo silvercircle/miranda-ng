@@ -6,7 +6,7 @@
 ;  Authors: Awkward
 ;============================================================
 [Plugin for manage hotkeys to open contact window, insert text, run program and call services]
-Плагин для управления "горячими" клавишами и действиями, такими как открытие окна контакта, вставка текста, запуск сторонних программ и вызов сервисов.
+Управление "горячими" клавишами и действиями, такими как открытие окна контакта, вставка текста, запуск сторонних программ и вызов сервисов.
 [Apply]
 Применить
 [New]
@@ -42,7 +42,7 @@
 [Registered actions]
 Зарегистрированные действия
 [Your Actman settings are for old version. If you are ready to upgrade settings, press OK. Else press Cancel and change manually Actman plugin back to old version or make settings backup. To keep previously exported macros please import them back before conversion.]
-Ваши настройки Actman предназначены для устаревшей версии плагина. Нажмите "ОК", чтобы преобразовать настройки в новый формат, либо нажмите "Отмена", если собираетесь самостоятельно вернуть прежнюю версию плагина или сделать резервную копию настроек. Если вы ранее экспортировали макросы, не забудьте импортировать их обратно перед преобразованием в новый формат, поскольку новая версия плагина не может импортировать макросы, экспортированные прежней версией
+Текущие настройки Actman предназначены для устаревшей версии плагина. Нажмите "ОК", чтобы преобразовать настройки в новый формат, либо нажмите "Отмена", если собираетесь самостоятельно вернуть прежнюю версию плагина или сделать резервную копию настроек. Если вы ранее экспортировали макросы, не забудьте импортировать их обратно перед преобразованием в новый формат, поскольку новая версия плагина не может импортировать макросы, экспортированные прежней версией
 [Please, don't use macro test for non-saved macros. If you had 'Advanced' or file writing actions previously, check them - their logic was changed.]
 Не используйте проверку макросов при наличии несохранённых макросов. Если макросы содержат действия из категории "Расширенное" или операции записи в файл, не забудьте проверить их работоспособность, поскольку изменилась логика этих действий.
 [Actman settings converted to new version]
@@ -356,7 +356,7 @@ UTF16+сигнатура
 [Retry, Cancel]
 Повтор, Отмена
 [Database]
-Профиль
+База данных
 [Contact type]
 Тип контакта
 [Own settings]
@@ -521,6 +521,8 @@ UTF16+сигнатура
 Показывает все фреймы
 [Show All Titlebars]
 Показывает названия
+[will return Unicode instead of AnsiChar]
+вернёт Unicode вместо AnsiChar
 [int hMenu handle]
 целочисленный хендл hMenu
 [Show All Users]
@@ -537,19 +539,19 @@ UTF16+сигнатура
 В сети
 [Away]
 Отсутствую
-[DND]
+[Do not disturb]
 Не беспокоить
-[NA]
+[Not available]
 Недоступен
 [Occupied]
 Занят
-[Free for Chat]
+[Free for chat]
 Готов болтать
 [Invisible]
 Невидимый
-[On the Phone]
+[On the phone]
 На телефоне
-[Out to Lunch]
+[Out to lunch]
 Обедаю
 [Set global status]
 Устанавливает глобальный статус
@@ -567,14 +569,22 @@ UTF16+сигнатура
 Удаляет все настройки, относящиеся к указанному модулю
 [int 0]
 целочисленный 0
+[Import settings/contacts from file]
+Импортирует настройки/контакты из файла
+[Opens or activate database editor]
+Открывает или активирует редактор базы
 [displays File Transfer window]
 Показывает окно передачи файлов
 [on Desktop]
 на рабочем столе
+[parent window handle]
+дескриптор родительского окна
 [Show "About..." window]
 Показывает окно "О программе"
 [Open support (originally - Miranda wiki) page]
 Открывает страницу поддержки (вики)
+[Go to Miranda Homepage]
+Переход на домашнюю страницу программы
 [Open bug report page]
 Открывает страницу для создания сообщения об ошибке
 [System]
@@ -583,6 +593,8 @@ UTF16+сигнатура
 Показывает историю контакта или системную историю (если wParam=0)
 [Erases contact's history. hContact can be NULL(0) to empty system history]
 Удаляет историю контакта. Если hContact NULL(0), то будет удалена системная история
+[Show Global history search window. If already opened, bring it to front.]
+Открывает окно поиска по всей истории. Если окно уже открыто, выводит его на передний план.
 [Ignore all]
 Игнорировать всё
 [Ignore messages]
@@ -609,16 +621,36 @@ UTF16+сигнатура
 Перезапускает Miranda
 [Station name]
 Название станции
+[wParam is Ansi station name]
+wParam содержит имя станции в кодировке Ansi
+[wParam is Unicode station name]
+wParam содержит имя станции в кодировке Unicode
+[Stop cycle]
+Останавливает цикл
+[Start cycle]
+Запускает цикл
 [All protocols]
 Все протоколы
 [Protocol]
 Протокол
+[Shows a dialog to set the avatar for all possible protocols]
+Вызывает окно установки аватара для всех доступных протоколов
+[Open Options dialog]
+Открывает окно настроек программы
+[Opens the options dialog, optionally at the specified page]
+Открывает окно настроек, допускается указание конкретного раздела
 [Check for updates]
 Проверяет наличие обновлений
 [with confirmation]
 с подтверждением
 [without confirmation]
 без подтверждения
+[Empty updater download folder]
+Очищает папку загрузки обновлений
+[Popup Plus (popup.dll) latest YAPP (yapp.dll)]
+Popup Plus (Popup.dll) или YAPP (YAPP.dll)
+[Enables or disables Popup windows]
+Включает или отключает всплывающие окна
 [Notify]
 Уведомление
 [YAPP or Popup]
@@ -627,20 +659,32 @@ YAPP или Popup
 Всплывающее окно
 [Unicode Text]
 Текст Unicode
+[Enables or disables Popup windows (maybe deprecated)]
+Включает или отключает всплывающие окна (возможно, не поддерживается)
 [displays the Account Manager]
 Открывает менеджер учётных записей
+[Show the dialog to select the contact]
+Показывает окно выбора контакта
 [wParam is unicode]
 wParam в Unicode
 [wParam is Ansi]
 wParam в ANSI
 [Plays sound added through Skin/Sounds/AddNew. If sound not found, standard Windows sound plays]
 Воспроизводит звук, добавленный с помощью Skin/Sounds/AddNew. Если звук не найден, будет воспроизведён стандартный звук Windows
+[Send Email to contact]
+Отправляет контакту письмо по электронной почте
 [struct]
 структура
+[Open contact received file directory]
+Открывает папку с принятым от контакта файлом
 [Send file to contact.]
 Отправляет контакту файл
+[Opens message window for contact with handle in wparam]
+Открывает окно беседы с контактом, хендл которого находится в wparam
 [remove all temporary contacts from db]
 Удаляет из базы все временные контакты
+[Call avatar option dialog for contact]
+Вызывает окно настроек аватара контакта
 [Filename]
 Имя файла
 [Shows contact property window.]
@@ -655,6 +699,8 @@ wParam в ANSI
 С форматированием
 [Don't use formating]
 Без форматирования
+[Returns a string containing the versioninfo post]
+Возвращает строку, содержащую сообщение с информацией о версии
 [int 0, if unsuccessful]
 целочисленный 0 в случае неудачи
 [Manage Jabber Bookmarks]
@@ -695,8 +741,6 @@ wParam в ANSI
 Фотографирую
 [Having fun]
 Веселюсь
-[On the phone]
-На телефоне
 [Gaming]
 Играю
 [Studying]
@@ -746,8 +790,10 @@ wParam в ANSI
 [Double click on the contact list]
 Двойной щелчок по списку контактов
 [database driver]
-драйвер базы
+драйвер базы данных
 [New contact added to database]
-Добавление нового контакта в базу
+Добавление нового контакта в базу данных
 [Contact deleting]
 Удаление контакта
+[Displays a modal dialog box that contains a system icon, a set of buttons, and a brief application-specific message, such as status or error information.]
+Показывает модальное окно, содержащее системный значок, набор кнопок и краткое сообщение, связанное с программой (например, статус или информацию об ошибке).

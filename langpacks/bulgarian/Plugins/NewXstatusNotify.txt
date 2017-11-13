@@ -17,11 +17,11 @@
 Готов за чат
 [Away]
 Отсъстващ
-[NA]
+[Not available]
 Недостъпен
 [Occupied]
 Зает
-[DND]
+[Do not disturb]
 Не безпокойте
 [Out to lunch]
 На обяд
@@ -60,7 +60,7 @@
 [Status Notify]
 Уведомяване за състояния
 [Individual sounds are disabled.\n\nTo enable them, go to Options -> Status -> Status Notify, enable\n"Use individual sounds" checkbox, and then reopen this dialog.]
-Индивидуалните звукове са изключени.\n\nЗа да да ги включите отидете в Настройки>Състояние>Уведомяване и включете\n"Ползване на индивидуален звук", след което отворете наново прозореца.
+Индивидуалните звукове са изключени.\n\nЗа да да ги включите отидете в "Настройки > Състояние > Уведомяване" и включете\n"Ползване на индивидуален звук", след което отворете наново прозореца.
 [Sounds]
 Звук
 [Popups]
@@ -230,9 +230,9 @@
 [(M) is eating something]
 (M) в момента яде нещо
 [(F) is eating something]
-(F)  в момента яде нещо
+(F) в момента яде нещо
 [(U) is eating something]
-(U)  в момента яде нещо
+(U) в момента яде нещо
 [User: Out to lunch]
 Потребител: "На обяд"
 [(M) had to answer the phone]

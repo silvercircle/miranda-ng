@@ -26,6 +26,7 @@
 
 #define MAX_SETTING_STR 512
 #define PLUGINNAME "ConnectionNotify"
+#define PLUGINNAMEW L"ConnectionNotify"
 #define MAX_LENGTH 512
 #define STATUS_COUNT 9
 
@@ -40,7 +41,7 @@
 #define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
 #define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
 
-void showMsg(TCHAR *pName,DWORD pid,TCHAR *intIp,TCHAR *extIp,int intPort,int extPort,int state);
+void showMsg(wchar_t *pName,DWORD pid,wchar_t *intIp,wchar_t *extIp,int intPort,int extPort,int state);
 //int __declspec(dllexport) Load(PLUGINLINK *link);
 extern "C" BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 static unsigned __stdcall checkthread(void *dummy);

@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Import.dll
 ;  Plugin: Import contacts and messages
-;  Version: 0.95.4.2
+;  Version: 0.95.4.3
 ;  Authors: Miranda team
 ;============================================================
 [Imports contacts and messages from another Miranda profile or from an external program.]
@@ -53,7 +53,7 @@ Importuj tylko kontakty
 [Custom import]
 Importuj niestandardowe
 [Makes precise copy of the original profile, including all settings, contacts and history.]
-Tworzy dokładną kopię oryginau profilu uwzględniającą wszystkie ustawieni,a kontakty i historię rozmów.
+Tworzy dokładną kopię oryginału profilu uwzględniającą wszystkie ustawieni,a kontakty i historię rozmów.
 [Imports only contacts and history, and a few settings. Ideal for synchronizing.]
 Importuje jedynie kontakty, historię i niektóre ustawienia. Idealny do synchronizacji.
 [Imports contacts only, doesn't import any message history.]
@@ -67,7 +67,7 @@ Historia systemowa
 [Select items to import:]
 Wybierz rzeczy do importu:
 [Incoming]
-Przychodzący
+Przychodzące
 [Outgoing]
 Wychodzące
 [Only since:]
@@ -166,7 +166,7 @@ Dany plik nie istnieje. Sprawdź czy wpisałeś poprawnie jego nazwę.
 [Miranda Import]
 Import Mirandy
 [Miranda NG database]
-Baza danych Miranda NG
+Profil Mirandy NG
 [All Files]
 Wszystkie pliki
 ;file \plugins\Import\src\utils.cpp

@@ -34,14 +34,13 @@ void __cdecl CAimProto::aim_proxy_helper(void* param)
 	}
 
 	//start listen for packets stuff
-	NETLIBPACKETRECVER packetRecv = {0};
-	packetRecv.cbSize = sizeof(packetRecv);
+	NETLIBPACKETRECVER packetRecv = {};
 	packetRecv.dwTimeout = INFINITE;
 
-	HANDLE hServerPacketRecver = (HANDLE) CallService(MS_NETLIB_CREATEPACKETRECVER, (WPARAM)ft->hConn, 2048 * 4);
+	HANDLE hServerPacketRecver = Netlib_CreatePacketReceiver(ft->hConn, 2048 * 4);
 	for (;;)
 	{
-		int recvResult = CallService(MS_NETLIB_GETMOREPACKETS, (WPARAM)hServerPacketRecver, (LPARAM)&packetRecv);
+		int recvResult = Netlib_GetMorePackets(hServerPacketRecver, &packetRecv);
 		if (recvResult == 0) 
 		{
 			ProtoBroadcastAck(ft->hContact, ACKTYPE_FILE, ACKRESULT_FAILED, ft, 0);
@@ -105,7 +104,7 @@ void __cdecl CAimProto::aim_proxy_helper(void* param)
 				int i;
 				for (i = 21; --i; )
 				{
-					if (Miranda_Terminated()) return;
+					if (Miranda_IsTerminated()) return;
 					Sleep(100);
 					if (ft->accepted) break;
 				}
@@ -135,7 +134,7 @@ void __cdecl CAimProto::aim_proxy_helper(void* param)
 }
 
 
-int proxy_initialize_send(HANDLE connection, char* sn, char* cookie)
+int proxy_initialize_send(HNETLIBCONN connection, char* sn, char* cookie)
 {
 	const char sn_length = (char)mir_strlen(sn);
 	const int len = sn_length + 21 + TLV_HEADER_SIZE + AIM_CAPS_LENGTH;
@@ -153,7 +152,7 @@ int proxy_initialize_send(HANDLE connection, char* sn, char* cookie)
 	return Netlib_Send(connection, buf, offset, 0) >= 0 ? 0 : -1; 
 }
 
-int proxy_initialize_recv(HANDLE connection,char* sn, char* cookie,unsigned short port_check)
+int proxy_initialize_recv(HNETLIBCONN connection, char* sn, char* cookie, unsigned short port_check)
 {
 	const char sn_length = (char)mir_strlen(sn);
 	const int len = sn_length + 23 + TLV_HEADER_SIZE + AIM_CAPS_LENGTH;

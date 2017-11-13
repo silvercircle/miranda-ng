@@ -2,57 +2,11 @@
 ;============================================================
 ;  File: Clist_modern.dll
 ;  Plugin: Modern contact list
-;  Version: 0.9.1.3
+;  Version: 0.9.1.7
 ;  Authors: Artem Shpynov, Ricardo Pescuma Domenecci and Anton Senko based on clist_mw by Bethoven
 ;============================================================
 [Displays contacts, event notifications, protocol status with advanced visual modifications. Supported multi-window modifications, enhanced metacontact cooperation.]
 Изобразява контакти, уведомявания за събития, състояние на протоколите с предимство на визуалните модификации. Поддържа множество прозорци (в списъка) и работа с метаконтакти.
-[Transparency:]
-Прозрачност:
-[Window behavior:]
-Поведение на прозореца:
-[List sorting:]
-Сортиране на списъка:
-[Status bar:]
-Лента за състояние:
-[List content:]
-Съдържание на списъка:
-[Show counts of number of contacts in a group]
-Показване на броя контакти в група
-[Hide group counts when there are none online]
-Скриване на броя, когато всички са "Извън линия"
-[1st:]
-1ви:
-[2nd:]
-2ри:
-[3rd:]
-3ти:
-[Always on top]
-Винаги отгоре
-[Hide contact list after]
-Скриване на списъка след
-[seconds]
-секунди
-[Fade contact list in/out]
-Избледняване/Изсветляване на списъка
-[Transparent contact list]
-Прозрачност на списъка с контакти
-[Inactive opacity:]
-Неактивен прозорец:
-[Active opacity:]
-Активен прозорец:
-[Show avatars]
-Показване на аватари
-[Animate avatars]
-Анимирани аватари
-[Show contact time in list]
-Час на контакта в списъка
-[Compact mode]
-Компактен режим
-[Show protocol names]
-Показване името на протокола
-[Show status text]
-Показване на текст за състоянието
 [Settings]
 Настройки
 [Background color:]
@@ -119,6 +73,8 @@
 Състояние
 [Automatically clear this view mode after]
 Автоизчистване на режима за преглед след
+[seconds]
+секунди
 [View mode options]
 Настройки на режима за преглед
 [Editing view mode]
@@ -143,8 +99,8 @@
 Лента за състояние на няколко реда:
 [Accounts per line]
 Акаунти на ред
-[* To increase status bar height:\nset in Main menu: Frames -> Status Bar -> Show title then pull appeared title of status bar up or down.]
-* За увеличаване височината на лентата: Главно меню > Рамки > Лента за състояние > Показване на името, след което влачете появилото се име нагоре/надолу.
+[* To increase status bar height:\nset in Main menu -> Frames -> Status Bar -> Show title then pull appeared title of status bar up or down.]
+* За увеличаване височината на лентата: "Главно меню > Рамки > Лента за състояние > Показване на името", след което влачете появилото се име нагоре/надолу.
 [Hold [Shift] to inverse [Right Click] behavior.]
 "Shift"+"Десен бутон" = Главно меню
 [[Ctrl]+[Left Click] to filter only protocol. Click on empty space to show all.]
@@ -155,6 +111,8 @@
 Частни настройки на акаунта
 [Hide account completely]
 Цялостно скриване на акаунта
+[Show protocol names]
+Показване името на протокола
 [Show status name]
 Името на състоянието
 [Show xStatus name]
@@ -190,7 +148,7 @@
 [Hide from list only, in order to keep their history and ignore/visibility settings]
 Скриване (запазва историята и настройките за игнориране/видимост)
 [Use Options -> Contacts -> Ignore to unhide contacts.]
-Може да отмените скриването от Настройки > Контакти > Игнориране.
+Може да отмените скриването от "Настройки > Контакти > Игнориране".
 [Are you sure you want to delete %s?]
 Сигурни ли сте, че желаете контактът "%s" да бъде изтрит?
 [This will erase all history and settings for this contact!]
@@ -207,6 +165,12 @@
 Списък с контакти
 [Contact list sorting]
 Сортиране на списъка с контакти по:
+[1st:]
+1ви:
+[2nd:]
+2ри:
+[3rd:]
+3ти:
 [Gamma correction]
 Корекция на гамата
 [Default]
@@ -221,6 +185,8 @@
 Режим на маркиране
 [Bring to front if covered]
 Извеждане отпред, ако е покрит
+[Hide contact list after]
+Скриване на списъка след
 [Automatically resize window to height of list]
 Автооразмеряване към височината на списъка
 [maximum]
@@ -287,6 +253,10 @@ x100 ms
 Групи
 [Draw a line alongside group names]
 Добавяне на линия до имената на групите
+[Show counts of number of contacts in a group]
+Показване на броя контакти в група
+[Hide group counts when there are none online]
+Скриване на броя, когато всички са "Извън линия"
 [Sort groups alphabetically]
 Сортиране на групите по азбучен ред
 [Quicksearch in open groups only]
@@ -355,6 +325,8 @@ ms между две мигания
 Показване на местното време като елемент на реда
 [Appearance]
 Външен вид
+[Always on top]
+Винаги отгоре
 [Pin to desktop]
 Прилепване към работния плот
 [Thin border main window]
@@ -371,6 +343,14 @@ ms между две мигания
 Минимизиране в трея
 [Translucency options]
 Настройки за прозрачност
+[Fade contact list in/out]
+Избледняване/Изсветляване на списъка
+[Transparent contact list]
+Прозрачност на списъка с контакти
+[Inactive opacity:]
+Неактивен прозорец:
+[Active opacity:]
+Активен прозорец:
 [Frames]
 Рамки
 [Use non-layered mode]
@@ -405,6 +385,8 @@ ms между две мигания
 Компактен режим (аватарът и допълнителната информация\nсе показват само за маркираните контакти)
 [Draw border on avatar]
 Рамка на аватара
+[Show avatars]
+Показване на аватари
 [Draw overlay icons]
 Наслагване на икони
 [Round corners of avatars]
@@ -422,7 +404,9 @@ ms между две мигания
 [height]
 височина
 [width]
-Ширина
+ширина
+[Animate avatars]
+Анимирани аватари
 [Hide icon when showing avatar]
 Скриване на иконата, когато има аватар
 [Draw icon in avatar space]
@@ -532,25 +516,25 @@ ms между две мигания
 [&Status]
 Състояние
 [&Offline\tCtrl+0]
-Извън линия\tCtrl+0
+&Извън линия\tCtrl+0
 [On&line\tCtrl+1]
-На линия\tCtrl+1
+На &линия\tCtrl+1
 [&Away\tCtrl+2]
-Отсъстващ\tCtrl+2
-[&NA\tCtrl+3]
-Недостъпен\tCtrl+3
+&Отсъстващ\tCtrl+2
+[&Not available\tCtrl+3]
+&Недостъпен\tCtrl+3
 [Occ&upied\tCtrl+4]
-Зает\tCtrl+4
-[&DND\tCtrl+5]
-Не безпокойте\tCtrl+5
+&Зает\tCtrl+4
+[&Do not disturb\tCtrl+5]
+Не &безпокойте\tCtrl+5
 [&Free for chat\tCtrl+6]
-Готов за чат\tCtrl+6
+Готов за &чат\tCtrl+6
 [&Invisible\tCtrl+7]
-Невидим\tCtrl+7
+Не&видим\tCtrl+7
 [On the &phone\tCtrl+8]
-На телефона\tCtrl+8
+На &телефона\tCtrl+8
 [Out to &lunch\tCtrl+9]
-На обяд\tCtrl+9
+На обя&д\tCtrl+9
 [&Visible]
 Видима
 [&Show title]
@@ -577,14 +561,14 @@ ms между две мигания
 Нагоре
 [&Down]
 Надолу
+[Lock frame]
+Заключване на рамката
 [Show all frames]
 Показване на всички рамки
 [Show all title bars]
 Показване на всички заглавни ленти
 [Hide all title bars]
 Скриване на всички заглавни ленти
-[Lock frame]
-Заключване на рамката
 [&Hide/show]
 Показване/Скриване
 [&Find/add contacts...]
@@ -639,9 +623,9 @@ Modern contact list
 Стандартни контакти
 [Away contacts]
 Контакти (Отсъстващ)
-[DND contacts]
+[Do not disturb contacts]
 Контакти (Не безпокойте)
-[NA contacts]
+[Not available contacts]
 Контакти (Недостъпен)
 [Occupied contacts]
 Контакти (Зает)
@@ -654,7 +638,7 @@ Modern contact list
 [Out to lunch contacts]
 Контакти (На обяд)
 [Offline contacts]
-Контакти "Извън линия"
+Контакти (Извън линия)
 [Online contacts to whom you have a different visibility]
 Контакти, към които имате различна видимост
 [Offline contacts to whom you have a different visibility]
@@ -703,11 +687,11 @@ Modern contact list
 На линия
 [Away]
 Отсъстващ
-[NA]
+[Not available]
 Недостъпен
 [Occupied]
 Зает
-[DND]
+[Do not disturb]
 Не безпокойте
 [Free for chat]
 Готов за чат
@@ -797,10 +781,10 @@ Modern contact list
 Моите контакти
 [My Contacts]
 Моите контакти
-[Close Miranda]
-Затваряне на Miranda
 [Main]
 Основна
+[Close Miranda]
+Затваряне на Miranda
 [Restore last status]
 Възстановя предишното състояние
 [Show/Hide offline users]

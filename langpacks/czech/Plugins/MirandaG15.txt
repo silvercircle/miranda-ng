@@ -8,12 +8,12 @@
 [Provides an interface to use Miranda from the LCD of various Logitech devices.]
 
 ;file \plugins\MirandaG15\res\MirandaG15.rc
-[Fonts]
-Písma
 [General settings]
 Obecná nastavení
 [Show softkey labels]
 
+[Fonts]
+Písma
 [Event log:]
 
 [Sample]
@@ -40,16 +40,6 @@ Zobrazit sekundy v časovém údaji
 Poděkování
 [About]
 Informace
-[Mirandag15 + TrillianG15]
-
-[For updates and news check the thread on http://www.g15forums.com]
-
-[Or visit http://www.mkleinhans.de]
-
-[mail@mkleinhans.de]
-
-[© 2006 by Martin Kleinhans]
-
 [Device:]
 
 [If the screensaver is active:]
@@ -58,8 +48,6 @@ Informace
 
 [Skip driver missing notification]
 
-[Notifications]
-Upozornění
 [Notification screen title]
 
 [Hide it]
@@ -114,7 +102,7 @@ Zprávy
 
 [Status changes]
 Změny stavu
-[Special IRC events:]
+[Group chat events:]
 
 [Notices]
 Poznámky
@@ -132,8 +120,6 @@ znaků
 
 [Cut off channel names after]
 
-[Contact list]
-Seznam kontaktů
 [Show the contacts protocols]
 
 [Hide offline users]
@@ -166,8 +152,6 @@ Skrýt uživatele offline
 
 [Fade out selection rectangle]
 
-[Chat]
-Diskuse
 [Typing notifications]
 
 [Show typing notifications]
@@ -211,11 +195,13 @@ Nedělat nic
 [When in background]
 
 ;file \plugins\MirandaG15\src\CConfig.cpp
-[MirandaG15]
-
 [Appearance]
 Vzhled
+[Notifications]
+Upozornění
 [Chat sessions]
 
+[Contact list]
+Seznam kontaktů
 [No device attached]
 

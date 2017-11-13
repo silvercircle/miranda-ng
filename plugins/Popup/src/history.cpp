@@ -74,8 +74,8 @@ void PopupHistoryAdd(POPUPDATA2 *ppdNew)
 	POPUPDATA2 *ppd = (POPUPDATA2*)mir_alloc(sizeof(POPUPDATA2));
 	*ppd = *ppdNew;
 	if (ppd->flags & PU2_UNICODE) {
-		ppd->lptzTitle = mir_tstrdup(ppd->lpwzTitle);
-		ppd->lptzText = mir_tstrdup(ppd->lptzText);
+		ppd->lptzTitle = mir_wstrdup(ppd->lpwzTitle);
+		ppd->lptzText = mir_wstrdup(ppd->lptzText);
 	}
 	else {
 		ppd->lpzTitle = mir_strdup(ppd->lpzTitle);
@@ -128,10 +128,9 @@ static INT_PTR CALLBACK HistoryDlgProc(HWND hwnd, UINT msg, WPARAM, LPARAM lPara
 			oldWidth = 0;
 			HWND hwndList = GetDlgItem(hwnd, IDC_POPUP_LIST);
 			for (int i = 0; i < arPopupHistory.getCount(); ++i)
-				ListBox_SetItemData(hwndList, ListBox_AddString(hwndList, _T("")), 0);
+				ListBox_SetItemData(hwndList, ListBox_AddString(hwndList, L""), 0);
 
-			SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)LoadIconEx(IDI_HISTORY, false));
-			SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIconEx(IDI_HISTORY, true));
+			Window_SetIcon_IcoLib(hwnd, GetIconHandle(IDI_HISTORY));
 
 			if (gbHppInstalled && PopupOptions.UseHppHistoryLog) {
 				logType = LOG_HPP;
@@ -393,7 +392,7 @@ static INT_PTR CALLBACK HistoryDlgProc(HWND hwnd, UINT msg, WPARAM, LPARAM lPara
 				PostMessage(hwnd, UM_RESIZELIST, 0, 0);
 				return TRUE;
 			}
-			ListBox_SetItemData(hwndLog, ListBox_AddString(hwndLog, _T("")), 0);
+			ListBox_SetItemData(hwndLog, ListBox_AddString(hwndLog, L""), 0);
 		}
 		return TRUE;
 

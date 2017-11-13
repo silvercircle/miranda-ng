@@ -25,7 +25,7 @@ wchar_t Utils::base_dir[MAX_PATH];
 
 const wchar_t *Utils::getBaseDir()
 {
-	PathToAbsoluteT(_T("miranda32.exe"), base_dir);
+	PathToAbsoluteW(L"miranda32.exe", base_dir);
 	return base_dir;
 }
 
@@ -118,12 +118,12 @@ void Utils::appendIcon(CMStringA &str, const char *iconFile)
 
 bool Utils::DbEventIsForMsgWindow(DBEVENTINFO *dbei)
 {
-	DBEVENTTYPEDESCR *et = (DBEVENTTYPEDESCR*)CallService(MS_DB_EVENT_GETTYPE, (WPARAM)dbei->szModule, (LPARAM)dbei->eventType);
+	DBEVENTTYPEDESCR *et = DbEvent_GetType(dbei->szModule, dbei->eventType);
 	return et && (et->flags & DETF_MSGWINDOW);
 }
 
 bool Utils::DbEventIsForHistory(DBEVENTINFO *dbei)
 {
-	DBEVENTTYPEDESCR *et = (DBEVENTTYPEDESCR*)CallService(MS_DB_EVENT_GETTYPE, (WPARAM)dbei->szModule, (LPARAM)dbei->eventType);
+	DBEVENTTYPEDESCR *et = DbEvent_GetType(dbei->szModule, dbei->eventType);
 	return et && (et->flags & DETF_HISTORY);
 }

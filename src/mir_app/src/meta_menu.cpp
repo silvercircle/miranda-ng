@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "stdafx.h"
+#include "clc.h"
 
 #include <m_nudge.h>
 #include "metacontacts.h"
@@ -48,15 +49,15 @@ static HGENMENU
 
 INT_PTR Meta_Convert(WPARAM wParam, LPARAM)
 {
-	ptrT tszGroup(db_get_tsa(wParam, "CList", "Group"));
+	ptrW tszGroup(db_get_wsa(wParam, "CList", "Group"));
 
 	// Create a new metacontact
-	MCONTACT hMetaContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
-	if (hMetaContact == NULL)
-		return NULL;
+	MCONTACT hMetaContact = db_add_contact();
+	if (hMetaContact == 0)
+		return 0;
 
 	DBCachedContact *cc = currDb->m_cache->GetCachedContact(hMetaContact);
-	if (cc == NULL)
+	if (cc == nullptr)
 		return 0;
 
 	db_set_dw(hMetaContact, META_PROTO, "NumContacts", 0);
@@ -67,12 +68,12 @@ INT_PTR Meta_Convert(WPARAM wParam, LPARAM)
 	Proto_AddToContact(hMetaContact, META_PROTO);
 
 	if (tszGroup)
-		db_set_ts(hMetaContact, "CList", "Group", tszGroup);
+		db_set_ws(hMetaContact, "CList", "Group", tszGroup);
 
 	// Assign the contact to the MetaContact just created (and make default).
 	if (!Meta_Assign(wParam, hMetaContact, TRUE)) {
 		MessageBox(0, TranslateT("There was a problem in assigning the contact to the metacontact"), TranslateT("Error"), MB_ICONEXCLAMATION);
-		CallService(MS_DB_CONTACT_DELETE, hMetaContact, 0);
+		db_delete_contact(hMetaContact);
 		return 0;
 	}
 
@@ -88,17 +89,17 @@ INT_PTR Meta_Convert(WPARAM wParam, LPARAM)
 
 void Meta_RemoveContactNumber(DBCachedContact *ccMeta, int number, bool bUpdateInfo)
 {
-	if (ccMeta == NULL)
+	if (ccMeta == nullptr)
 		return;
 
 	// make sure this contact thinks it's part of this metacontact
 	DBCachedContact *ccSub = currDb->m_cache->GetCachedContact(Meta_GetContactHandle(ccMeta, number));
-	if (ccSub != NULL) {
+	if (ccSub != nullptr) {
 		if (ccSub->parentID == ccMeta->contactID) {
 			db_unset(ccSub->contactID, "CList", "Hidden");
 
 			// stop ignoring, if we were
-			if (options.bSuppressStatus)
+			if (g_metaOptions.bSuppressStatus)
 				CallService(MS_IGNORE_UNIGNORE, ccSub->contactID, IGNOREEVENT_USERONLINE);
 		}
 	}
@@ -132,7 +133,7 @@ void Meta_RemoveContactNumber(DBCachedContact *ccMeta, int number, bool bUpdateI
 	mir_snprintf(buffer, "CListName%d", id);
 	db_unset(ccMeta->contactID, META_PROTO, buffer);
 
-	if (ccSub != NULL) {
+	if (ccSub != nullptr) {
 		ccSub->parentID = 0;
 		currDb->MetaDetouchSub(ccMeta, ccMeta->nSubs - 1);
 
@@ -163,10 +164,10 @@ void Meta_RemoveContactNumber(DBCachedContact *ccMeta, int number, bool bUpdateI
 			PROTO_AVATAR_INFORMATION ai = { 0 };
 			ai.hContact = ccMeta->contactID;
 			ai.format = PA_FORMAT_UNKNOWN;
-			_tcsncpy_s(ai.filename, _T("X"), _TRUNCATE);
+			wcsncpy_s(ai.filename, L"X", _TRUNCATE);
 
 			if (CallProtoService(META_PROTO, PS_GETAVATARINFO, 0, (LPARAM)&ai) == GAIR_SUCCESS)
-				db_set_ts(ccMeta->contactID, "ContactPhoto", "File", ai.filename);
+				db_set_ws(ccMeta->contactID, "ContactPhoto", "File", ai.filename);
 		}
 	}
 }
@@ -183,7 +184,7 @@ void Meta_RemoveContactNumber(DBCachedContact *ccMeta, int number, bool bUpdateI
 INT_PTR Meta_Delete(WPARAM hContact, LPARAM bSkipQuestion)
 {
 	DBCachedContact *cc = currDb->m_cache->GetCachedContact(hContact);
-	if (cc == NULL)
+	if (cc == nullptr)
 		return 1;
 
 	// The wParam is a metacontact
@@ -199,14 +200,14 @@ INT_PTR Meta_Delete(WPARAM hContact, LPARAM bSkipQuestion)
 			Meta_RemoveContactNumber(cc, i, false);
 
 		NotifyEventHooks(hSubcontactsChanged, hContact, 0);
-		CallService(MS_DB_CONTACT_DELETE, hContact, 0);
+		db_delete_contact(hContact);
 	}
 	else if (cc->IsSub()) {
-		if ((cc = currDb->m_cache->GetCachedContact(cc->parentID)) == NULL)
+		if ((cc = currDb->m_cache->GetCachedContact(cc->parentID)) == nullptr)
 			return 2;
 
 		if (cc->nSubs == 1) {
-			if (IDYES == MessageBox(0, TranslateT(szDelMsg), TranslateT("Delete metacontact?"), MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON1))
+			if (IDYES == MessageBox(0, TranslateW(szDelMsg), TranslateT("Delete metacontact?"), MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON1))
 				Meta_Delete(cc->contactID, 1);
 
 			return 0;
@@ -246,7 +247,7 @@ INT_PTR Meta_Default(WPARAM hSub, LPARAM)
 int Meta_ModifyMenu(WPARAM hMeta, LPARAM)
 {
 	DBCachedContact *cc = currDb->m_cache->GetCachedContact(hMeta);
-	if (cc == NULL)
+	if (cc == nullptr)
 		return 0;
 		
 	Menu_ShowItem(hMenuRoot, false);
@@ -262,10 +263,10 @@ int Meta_ModifyMenu(WPARAM hMeta, LPARAM)
 		Menu_ShowItem(hMenuDefault, false);
 
 		Menu_ShowItem(hMenuDelete, false);
-		Menu_ModifyItem(hMenuDelete, LPGENT("Remove from metacontact"));
+		Menu_ModifyItem(hMenuDelete, LPGENW("Remove from metacontact"));
 
 		// show subcontact menu items
-		CMString tszNick;
+		CMStringW tszNick;
 		for (int i = 0; i < MAX_CONTACTS; i++) {
 			if (i >= cc->nSubs) {
 				Menu_ShowItem(hMenuContact[i], false);
@@ -275,14 +276,13 @@ int Meta_ModifyMenu(WPARAM hMeta, LPARAM)
 			MCONTACT hContact = Meta_GetContactHandle(cc, i);
 			LPCTSTR ptszName;
 
-			if (options.menu_contact_label == DNT_UID) {
+			if (g_metaOptions.menu_contact_label == DNT_UID) {
 				Meta_GetSubNick(hMeta, i, tszNick);
 				ptszName = tszNick.GetBuffer();
 			}
 			else ptszName = cli.pfnGetContactDisplayName(hContact, 0);
 
-			int iconIndex = CallService(MS_CLIST_GETCONTACTICON, hContact, 0);
-			HICON hIcon = ImageList_GetIcon((HIMAGELIST)CallService(MS_CLIST_GETICONSIMAGELIST, 0, 0), iconIndex, 0);
+			HICON hIcon = ImageList_GetIcon(hCListImages, cli.pfnGetContactIcon(hContact), 0);
 			Menu_ModifyItem(hMenuContact[i], ptszName, hIcon, 0);
 			DestroyIcon(hIcon);
 			
@@ -311,7 +311,7 @@ int Meta_ModifyMenu(WPARAM hMeta, LPARAM)
 	if (cc->IsSub()) {
 		Menu_ShowItem(hMenuDefault, true);
 
-		Menu_ModifyItem(hMenuDelete, LPGENT("Remove from metacontact"));
+		Menu_ModifyItem(hMenuDelete, LPGENW("Remove from metacontact"));
 		Menu_ShowItem(hMenuDelete, true);
 
 		Menu_ShowItem(hMenuAdd, false);
@@ -342,9 +342,9 @@ INT_PTR Meta_OnOff(WPARAM, LPARAM)
 	bool bToggled = !db_mc_isEnabled();
 	db_set_b(0, META_PROTO, "Enabled", bToggled);
 	if (bToggled)
-		Menu_ModifyItem(hMenuOnOff, LPGENT("Toggle metacontacts off"), GetIconHandle(I_MENUOFF));
+		Menu_ModifyItem(hMenuOnOff, LPGENW("Toggle metacontacts off"), Meta_GetIconHandle(I_MENU));
 	else
-		Menu_ModifyItem(hMenuOnOff, LPGENT("Toggle metacontacts on"), GetIconHandle(I_MENU));
+		Menu_ModifyItem(hMenuOnOff, LPGENW("Toggle metacontacts on"), Meta_GetIconHandle(I_MENUOFF));
 
 	db_mc_enable(bToggled);
 	Meta_HideMetaContacts(!bToggled);
@@ -360,7 +360,7 @@ void InitMenus()
 
 	// main menu item
 	SET_UID(mi, 0x8999a6ca, 0x9c66, 0x49c1, 0xad, 0xe1, 0x48, 0x17, 0x28, 0xb, 0x94, 0x86);
-	mi.hIcolibItem = GetIconHandle(I_MENUOFF);
+	mi.hIcolibItem = Meta_GetIconHandle(I_MENU);
 	mi.name.a = LPGEN("Toggle metacontacts off");
 	mi.pszService = "MetaContacts/OnOff";
 	mi.position = 500010000;
@@ -368,35 +368,35 @@ void InitMenus()
 
 	// contact menu items
 	SET_UID(mi, 0x48cdb295, 0x858f, 0x4f4f, 0x80, 0xc7, 0x50, 0x49, 0x91, 0x75, 0xa6, 0x63);
-	mi.hIcolibItem = GetIconHandle(I_CONVERT);
+	mi.hIcolibItem = Meta_GetIconHandle(I_CONVERT);
 	mi.position = -200010;
 	mi.name.a = LPGEN("Convert to metacontact");
 	mi.pszService = "MetaContacts/Convert";
 	hMenuConvert = Menu_AddContactMenuItem(&mi);
 
 	SET_UID(mi, 0xf1437693, 0x69f5, 0x48b0, 0x89, 0xed, 0x29, 0x2c, 0x20, 0x1f, 0xed, 0x3e);
-	mi.hIcolibItem = GetIconHandle(I_ADD);
+	mi.hIcolibItem = Meta_GetIconHandle(I_ADD);
 	mi.position = -200009;
 	mi.name.a = LPGEN("Add to existing metacontact...");
 	mi.pszService = "MetaContacts/AddTo";
 	hMenuAdd = Menu_AddContactMenuItem(&mi);
 
 	SET_UID(mi, 0x1673fd9e, 0x8d30, 0x4e07, 0x9f, 0x1b, 0xec, 0x92, 0xc0, 0x10, 0x90, 0x64);
-	mi.hIcolibItem = GetIconHandle(I_EDIT);
+	mi.hIcolibItem = Meta_GetIconHandle(I_EDIT);
 	mi.position = -200010;
 	mi.name.a = LPGEN("Edit metacontact...");
 	mi.pszService = "MetaContacts/Edit";
 	hMenuEdit = Menu_AddContactMenuItem(&mi);
 
 	SET_UID(mi, 0x38b7400, 0x685a, 0x497d, 0xbc, 0x15, 0x99, 0x45, 0xcc, 0x1d, 0x9d, 0xaf);
-	mi.hIcolibItem = GetIconHandle(I_SETDEFAULT);
+	mi.hIcolibItem = Meta_GetIconHandle(I_SETDEFAULT);
 	mi.position = -200009;
 	mi.name.a = LPGEN("Set as metacontact default");
 	mi.pszService = "MetaContacts/Default";
 	hMenuDefault = Menu_AddContactMenuItem(&mi);
 
 	SET_UID(mi, 0x102849ca, 0x9d2f, 0x4265, 0x81, 0xdc, 0x5d, 0xc8, 0x82, 0xb7, 0x70, 0xe5);
-	mi.hIcolibItem = GetIconHandle(I_REMOVE);
+	mi.hIcolibItem = Meta_GetIconHandle(I_REMOVE);
 	mi.position = -200008;
 	mi.name.a = LPGEN("Delete metacontact");
 	mi.pszService = "MetaContacts/Delete";
@@ -427,11 +427,11 @@ void InitMenus()
 
 	if (!db_mc_isEnabled()) {
 		// modify main menu item
-		Menu_ModifyItem(hMenuOnOff, LPGENT("Toggle metacontacts on"), GetIconHandle(I_MENU));
+		Menu_ModifyItem(hMenuOnOff, LPGENW("Toggle metacontacts on"), Meta_GetIconHandle(I_MENUOFF));
 		Meta_HideMetaContacts(true);
 	}
 	else {
-		Meta_SuppressStatus(options.bSuppressStatus);
+		Meta_SuppressStatus(g_metaOptions.bSuppressStatus);
 		Meta_HideMetaContacts(false);
 	}
 }

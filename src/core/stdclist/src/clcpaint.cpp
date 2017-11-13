@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -142,7 +142,7 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint)
 	DWORD style = GetWindowLongPtr(hwnd, GWL_STYLE);
 	int status = GetGeneralisedStatus();
 	// yes I know about GetSysColorBrush()
-	COLORREF tmpbkcolour = style & CLS_CONTACTLIST ? (dat->useWindowsColours ? GetSysColor(COLOR_3DFACE) : dat->bkColour) : dat->bkColour;
+	COLORREF tmpbkcolour = style & CLS_CONTACTLIST ? (dat->bUseWindowsColours ? GetSysColor(COLOR_3DFACE) : dat->bkColour) : dat->bkColour;
 	
 	int minHeight = 16;
 	for (int i = 0; i < FONTID_LAST; i++)
@@ -265,19 +265,18 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint)
 	group->scanIndex = 0;
 	int indent = 0;
 	for (int index = 0; y < rcPaint->bottom;) {
-		if (group->scanIndex == group->cl.count) {
-			group = group->parent;
-			indent--;
-			if (group == NULL)
+		if (group->scanIndex == group->cl.getCount()) {
+			if ((group = group->parent) == NULL)
 				break;
 			group->scanIndex++;
+			indent--;
 			continue;
 		}
 		
-		ClcContact *cc = group->cl.items[group->scanIndex];
+		ClcContact *cc = group->cl[group->scanIndex];
 		if (y > rcPaint->top - dat->rowHeight) {
 			int iImage = -1;
-			int selected = index == dat->selection && (dat->showSelAlways || dat->exStyle & CLS_EX_SHOWSELALWAYS || GetFocus() == hwnd) && cc->type != CLCIT_DIVIDER;
+			int selected = index == dat->selection && (dat->bShowSelAlways || dat->exStyle & CLS_EX_SHOWSELALWAYS || GetFocus() == hwnd) && cc->type != CLCIT_DIVIDER;
 			int hottrack = dat->exStyle & CLS_EX_TRACKSELECT && cc->type != CLCIT_DIVIDER && dat->iHotTrack == index;
 			SIZE textSize, countsSize, spaceSize;
 			int width, checkboxWidth;
@@ -314,16 +313,16 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint)
 				ChangeToFont(hdcMem, dat, FONTID_OFFLINE, &fontHeight);
 			else
 				ChangeToFont(hdcMem, dat, FONTID_CONTACTS, &fontHeight);
-			GetTextExtentPoint32(hdcMem, cc->szText, (int)mir_tstrlen(cc->szText), &textSize);
+			GetTextExtentPoint32(hdcMem, cc->szText, (int)mir_wstrlen(cc->szText), &textSize);
 			width = textSize.cx;
 
-			TCHAR *ptszGroupCount = NULL;
+			wchar_t *ptszGroupCount = NULL;
 			if (cc->type == CLCIT_GROUP) {
 				ptszGroupCount = pcli->pfnGetGroupCountsText(dat, cc);
 				if (*ptszGroupCount) {
-					GetTextExtentPoint32(hdcMem, _T(" "), 1, &spaceSize);
+					GetTextExtentPoint32(hdcMem, L" ", 1, &spaceSize);
 					ChangeToFont(hdcMem, dat, FONTID_GROUPCOUNTS, &fontHeight);
-					GetTextExtentPoint32(hdcMem, ptszGroupCount, (int)mir_tstrlen(ptszGroupCount), &countsSize);
+					GetTextExtentPoint32(hdcMem, ptszGroupCount, (int)mir_wstrlen(ptszGroupCount), &countsSize);
 					width += spaceSize.cx + countsSize.cx;
 				}
 			}
@@ -375,7 +374,7 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint)
 					colourFg = dat->fontInfo[FONTID_NOTONLIST].colour;
 					mode = ILD_BLEND50;
 				}
-				if (cc->type == CLCIT_CONTACT && dat->showIdle && (cc->flags & CONTACTF_IDLE) && GetRealStatus(cc, ID_STATUS_OFFLINE) != ID_STATUS_OFFLINE)
+				if (cc->type == CLCIT_CONTACT && dat->bShowIdle && (cc->flags & CONTACTF_IDLE) && GetRealStatus(cc, ID_STATUS_OFFLINE) != ID_STATUS_OFFLINE)
 					mode = ILD_SELECTED;
 				ImageList_DrawEx(himlCListClc, iImage, hdcMem, dat->leftMargin + indent * dat->groupIndent + checkboxWidth,
 					y + ((dat->rowHeight - 16) >> 1), 0, 0, CLR_NONE, colourFg, mode);
@@ -410,7 +409,7 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint)
 				rc.left = dat->leftMargin + indent * dat->groupIndent;
 				rc.right = rc.left + ((clRect.right - rc.left - textSize.cx) >> 1) - 3;
 				DrawEdge(hdcMem, &rc, BDR_SUNKENOUTER, BF_RECT);
-				TextOut(hdcMem, rc.right + 3, y + ((dat->rowHeight - fontHeight) >> 1), cc->szText, (int)mir_tstrlen(cc->szText));
+				TextOut(hdcMem, rc.right + 3, y + ((dat->rowHeight - fontHeight) >> 1), cc->szText, (int)mir_wstrlen(cc->szText));
 				rc.left = rc.right + 6 + textSize.cx;
 				rc.right = clRect.right;
 				DrawEdge(hdcMem, &rc, BDR_SUNKENOUTER, BF_RECT);
@@ -426,16 +425,16 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint)
 					if (rc.right < rc.left + 4)
 						rc.right = clRect.right + 1;
 					else
-						TextOut(hdcMem, rc.right, rc.top + groupCountsFontTopShift, ptszGroupCount, (int)mir_tstrlen(ptszGroupCount));
+						TextOut(hdcMem, rc.right, rc.top + groupCountsFontTopShift, ptszGroupCount, (int)mir_wstrlen(ptszGroupCount));
 					ChangeToFont(hdcMem, dat, FONTID_GROUPS, &fontHeight);
 					if (selected)
 						SetTextColor(hdcMem, dat->selTextColour);
 					else if (hottrack)
 						SetHotTrackColour(hdcMem, dat);
 					rc.right--;
-					ExtTextOut(hdcMem, rc.left, rc.top, ETO_CLIPPED, &rc, cc->szText, (int)mir_tstrlen(cc->szText), NULL);
+					ExtTextOut(hdcMem, rc.left, rc.top, ETO_CLIPPED, &rc, cc->szText, (int)mir_wstrlen(cc->szText), NULL);
 				}
-				else TextOut(hdcMem, dat->leftMargin + indent * dat->groupIndent + checkboxWidth + dat->iconXSpace, y + ((dat->rowHeight - fontHeight) >> 1), cc->szText, (int)mir_tstrlen(cc->szText));
+				else TextOut(hdcMem, dat->leftMargin + indent * dat->groupIndent + checkboxWidth + dat->iconXSpace, y + ((dat->rowHeight - fontHeight) >> 1), cc->szText, (int)mir_wstrlen(cc->szText));
 
 				if (dat->exStyle & CLS_EX_LINEWITHGROUPS) {
 					rc.top = y + (dat->rowHeight >> 1);
@@ -457,7 +456,7 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint)
 
 			if (selected) {
 				if (cc->type != CLCIT_DIVIDER) {
-					size_t qlen = mir_tstrlen(dat->szQuickSearch);
+					size_t qlen = mir_wstrlen(dat->szQuickSearch);
 					SetTextColor(hdcMem, dat->quickSearchColour);
 
 					RECT rc;

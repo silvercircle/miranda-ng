@@ -1,7 +1,7 @@
 ﻿;============================================================
 ;  File: miranda32/64.exe
 ;  Module: Miranda Core
-;  Version: 0.95.5
+;  Version: 0.95.7
 ;============================================================
 [Authorization request]
 Solicitud de autorización
@@ -43,150 +43,10 @@ Por defecto, usar el mismo mensaje como la última vez
 Por defecto, usar este mensaje:
 [Use %time% for the current time, %date% for the current date]
 Usar %time% para la hora actual, %date% para la fecha actual
-[Status messages:]
-Mensajes de estado:
 [Change %s message]
 Cambiar %s mensaje
 [Closing in %d]
 Cerrando en %d
-[&Send]
-&Enviar
-[&Emoticons]
-&Emoticones
-[&Bold]
-&Negrita
-[&Italic]
-C&ursiva
-[&Underline]
-S&ubrayar
-[&Color]
-&Color
-[&Background color]
-Color &de fondo
-[&History]
-&Historial
-[&Filter]
-&Filtro
-[&Room settings]
-Configu&ración de espacio
-[&Show/Hide nick list]
-&Mostrar/ocultar lista de nicks
-[Show these events only:]
-Mostrar sólo estos eventos:
-[Actions]
-Acciones
-[Messages]
-Mensajes
-[Nick changes]
-Cambios de Nick
-[Users joining]
-Usuarios entrando
-[Users leaving]
-Usuarios saliendo
-[Topic changes]
-Cambios de tema
-[Status changes]
-Cambios de estado
-[Information]
-Información
-[Disconnects]
-Desconectados
-[User kicks]
-Usuarios sacados
-[Notices]
-Avisos
-[Options]
-Opciones
-[Log options]
-Opciones de registro
-[Log timestamp]
-Registro de marca de tiempo
-[Timestamp]
-Marca de tiempo
-[Other name]
-Otro nombre
-[Your name]
-Su nombre
-[Enable highlighting]
-Habilitar resaltando
-[Limit log text to (events):]
-Limitar el texto del registro a (eventos):
-[Trim to (KB)]
-Recortar a (KB)
-[Words to highlight (wildcards allowed)]
-Palabras a resaltar (comodines permitidos)
-[Enable logging to disk]
-Habilitar registro en el disco
-[Log directory]
-Directorio de registro
-[Other]
-Otro
-[Add new rooms to group:]
-Añadir nuevas salas de grupo:
-[Nick list row distance (pixels):]
-Lista de usuarios distancia entre hileras (píxeles):
-[Use same style as in the message log]
-Usar mismo estilo que en el registro de mensajes
-[Use default colors]
-Usar colores predeterminados
-[Use custom colors]
-Usar colores personalizados
-[Popups for the Chat plugin]
-Ventanas emergentes para el plugin de chat
-[Timeout (s)]
-Tiempo de espera (s)
-[Text]
-Texto
-[Background]
-Fondo
-[(Setting timeout to 0 means default setting and -1 means indefinite time)]
-(Ajuste de tiempo de espera a 0 significa Ajuste predeterminado y -1 significa tiempo indefinido)
-[List]
-Lista
-[&Message]
-&Mensaje
-[Log]
-Registro
-[Clear lo&g]
-Limpiar re&gistro
-[Co&py all]
-Co&piar todo
-[Word lookup]
-Palabra de búsqueda
-[Wikipedia]
-Wikipedia
-[Link]
-Enlace
-[Open a &new browser window]
-Abrir una nueva ventana del navegador
-[&Open in current browser window]
-Abrir en ventana actual del navegad&or
-[&Copy link]
-Copiar enlace
-[Message]
-Mensaje
-[Undo]
-Deshacer
-[Redo]
-Rehacer
-[Copy]
-Copiar
-[Cut]
-Cortar
-[Paste]
-Pegar
-[Select all]
-Seleccionar todo
-[Clear]
-Limpiar
-[Tabs]
-Pestañas
-[&Close tab]
-&Cerrar pestaña
-[C&lose other tabs]
-C&errar otras pestañas
-[&Open at this position]
-Abrir en esta p&osición
 [Delete contact]
 Eliminar contacto
 [No]
@@ -383,16 +243,6 @@ Igualar anchura de secciones
 Mostrar biseles en los paneles
 [Show resize grip indicator]
 Mostrar indicador de cambio de tamaño
-[Ordering:]
-Ordenando:
-[Contact list:]
-Lista de contactos:
-[If window is partially covered, bring it to front]
-Si la ventana está cubierta en parte, llevar a delante
-[Window:]
-Ventana:
-[Contact list background:]
-Fondo de lista de de contactos:
 [&Main menu]
 &Menú principal
 [E&xit]
@@ -400,27 +250,29 @@ Fondo de lista de de contactos:
 [&Status]
 E&stado
 [&Offline\tCtrl+0]
-&Fuera de línea
+&Fuera de línea\tCtrl+0
 [On&line\tCtrl+1]
-&En línea
+&En línea\tCtrl+1
 [&Away\tCtrl+2]
-Fuer&a
-[&NA\tCtrl+3]
-&No disponible
+Fuer&a\tCtrl+2
+[&Not available\tCtrl+3]
+&No disponible\tCtrl+3
 [Occ&upied\tCtrl+4]
-Oc&upado
-[&DND\tCtrl+5]
-No molestar
+Oc&upado\tCtrl+4
+[&Do not disturb\tCtrl+5]
+No &molestar\tCtrl+5
 [&Free for chat\tCtrl+6]
-&Libre para el chat
+&Libre para el chat\tCtrl+6
 [&Invisible\tCtrl+7]
-&Invisible
+&Invisible\tCtrl+7
 [On the &phone\tCtrl+8]
 En el &teléfono\tCtrl+8
 [Out to &lunch\tCtrl+9]
-Salí a comer\tCtrl+9
+Salí a &comer\tCtrl+9
 [Send file(s)]
 Enviar archivo(s)
+[&Send]
+&Enviar
 [Cancel]
 Cancelar
 [To:]
@@ -435,6 +287,8 @@ Tamaño total:
 Detalles:
 [&User menu]
 Menú de usuario
+[&History]
+&Historial
 [Incoming file transfer]
 Transferencia de archivos entrantes
 [A&ccept]
@@ -565,10 +419,6 @@ Opciones de inactividad
 Pasar a inactivo si aplicación pasa a pantalla completa
 [Disable sounds on idle]
 Desactivar los sonidos en inactividad
-[Become idle if computer is left unattended for:]
-Pasar a inactivo si el equipo se deja de usar durante:
-[Idle (auto-away):]
-Inactivo (automático):
 [Automatically popup window when:]
 Ventana emergente automáticamente cuando:
 [In background]
@@ -585,8 +435,6 @@ Guardar el tamaño de la ventana y la ubicación de forma individual para cada c
 Ventanas en cascada nueva
 [Show 'Send' button]
 Mostrar botón 'Enviar'
-[Show username on top row]
-Mostrar nombre de usuario en la fila superior
 [Show toolbar buttons on top row]
 Mostrar botones de barra de herramientas en la parte superior de la fila
 [Send message on double 'Enter']
@@ -615,10 +463,6 @@ Se ha producido un error. El protocolo reportó el siguiente error:
 al enviar el siguiente mensaje:
 [Try again]
 Intentar de nuevo
-[Message session]
-Sesión de mensaje
-[&Details]
-&Detalles
 [Message window event log]
 Ventana de mensajes de registro de eventos
 [Show names]
@@ -641,6 +485,14 @@ Número de eventos anteriores a cargar
 Cargar eventos previos de menos de
 [minutes old]
 minutos de pasado
+[Use a tabbed interface]
+Usar interfaz con pestañas
+[Close tab on double click]
+Cerrar pestaña con doble clic
+[Restore previously open tabs when showing the window]
+Restaurar pestañas previamente abiertas al mostrar la ventana
+[Show tabs at the bottom]
+Mostrar pestañas en la parte inferior
 [Send typing notifications to the following users when you are typing a message to them:]
 Enviar notificaciones de escritura a los siguientes usuarios cuando se está escribiendo un mensaje para ellos
 [Show typing notifications when a user is typing a message]
@@ -653,20 +505,110 @@ Mostrar notificación de escritura cuando no hay diálogo de mensaje abierto
 Destellos en la bandeja del sistema y en la lista de contactos
 [Show balloon popup]
 Mostrar globo emergente
-[Save the window position for each contact]
-Guardar la posición de la ventana para cada contacto
-[Message window behavior:]
-Comportamiento de la ventana de mensaje:
-[Messaging:]
-Mensajería:
+[Show these events only:]
+Mostrar sólo estos eventos:
+[Actions]
+Acciones
+[Messages]
+Mensajes
+[Nick changes]
+Cambios de Nick
+[Users joining]
+Usuarios entrando
+[Users leaving]
+Usuarios saliendo
+[Topic changes]
+Cambios de tema
+[Status changes]
+Cambios de estado
+[Information]
+Información
+[Disconnects]
+Desconectados
+[User kicks]
+Usuarios sacados
+[Notices]
+Avisos
+[Options]
+Opciones
+[Log options]
+Opciones de registro
+[Log timestamp]
+Registro de marca de tiempo
+[Timestamp]
+Marca de tiempo
+[Other name]
+Otro nombre
+[Your name]
+Su nombre
+[Enable highlighting]
+Habilitar resaltando
+[Limit log text to (events):]
+Limitar el texto del registro a (eventos):
+[Trim to (KB)]
+Recortar a (KB)
+[Words to highlight (wildcards allowed)]
+Palabras a resaltar (comodines permitidos)
+[Enable logging to disk]
+Habilitar registro en el disco
+[Log directory]
+Directorio de registro
+[Other]
+Otro
+[Add new rooms to group:]
+Añadir nuevas salas de grupo:
+[Nick list row distance (pixels):]
+Lista de usuarios distancia entre hileras (píxeles):
+[Use same style as in the message log]
+Usar mismo estilo que en el registro de mensajes
+[Use default colors]
+Usar colores predeterminados
+[Use custom colors]
+Usar colores personalizados
+[Popups for the Chat plugin]
+Ventanas emergentes para el plugin de chat
+[Timeout (s)]
+Tiempo de espera (s)
+[Text]
+Texto
+[Background]
+Fondo
+[(Setting timeout to 0 means default setting and -1 means indefinite time)]
+(Ajuste de tiempo de espera a 0 significa Ajuste predeterminado y -1 significa tiempo indefinido)
+[Message]
+Mensaje
+[Undo]
+Deshacer
+[Redo]
+Rehacer
+[Copy]
+Copiar
+[Cut]
+Cortar
+[Paste]
+Pegar
+[Select all]
+Seleccionar todo
+[Clear]
+Limpiar
+[Tabs]
+Pestañas
+[&Close tab]
+&Cerrar pestaña
+[C&lose other tabs]
+C&errar otras pestañas
+[&Open at this position]
+Abrir en esta p&osición
+[Log]
+Registro
 [C&lear log]
 &Limpiar registro
 [&Copy]
 &Copiar
+[Co&py all]
+Co&piar todo
 [Select &all]
 Elegir &todo
-[&Open link]
-&Abrir enlace
 [Paste and send]
 Pegar y Enviar
 [Delete]
@@ -821,8 +763,6 @@ Aquí usted puede agregar contactos a su lista de contactos
 Configure las opciones de Miranda NG
 [Apply]
 Aplicar
-[Switch to simple options]
-Cambiar a opciones sencillas
 [Please select a subentry from the list]
 Por favor seleccione una subentrada de la lista
 [Install database settings]
@@ -909,16 +849,6 @@ Ubicación:
 Nombre:
 [Enable sound events]
 Activar eventos de sonido
-[Icons]
-Iconos
-[Show category:]
-Mostrar categoría:
-[&Load icon set...]
-&Cargar grupo de iconos...
-[&Import icons >>]
-&Importar iconos >>
-[Download more icons]
-Descargar más iconos
 [The following events are being ignored:]
 Los siguientes eventos seran ignorados:
 [URLs]
@@ -961,6 +891,8 @@ A iconos principales
 A
 [<< &Import]
 << &Importar
+[Download more icons]
+Descargar más iconos
 [To default status icons]
 Para reajustar los iconos de estado
 [Logging...]
@@ -993,15 +925,13 @@ Validar certificados SSL
 Conexiones entrantes
 [Enable UPnP port mapping]
 Habilitar la asignación de puertos UPnP
-[You will need to reconnect for the changes you have made on this page to take effect.]
-Tendrá que volver a conectarse para que los cambios en esta página surtan efecto.
 [Please complete the following form to create a new user profile]
 Por favor, complete el siguiente formulario para crear un nuevo perfil de usuario.
 [Profile]
 Perfil
 [e.g., Workplace]
 Ejemplo: Trabajo
-[You can select a different profile driver from the default, it may offer more features or abilities, if in doubt use the default.]
+[You can select a different database driver from the default, it may offer more features or abilities, if in doubt use the default.]
 Puede seleccionar un controlador de perfil diferente del predeterminado, puede ofrecer más características o habilidades, en caso de duda usar el predeterminado.
 [e.g., dbx mmap]
 Ejemplo: dbx mmap
@@ -1035,6 +965,12 @@ Efecto de texto
 Color de texto
 [Choose font]
 Elegir fuente
+[Icons]
+Iconos
+[&Load icon set...]
+&Cargar grupo de iconos...
+[&Import icons >>]
+&Importar iconos >>
 [Menu objects]
 Objetos del menú
 [Menu items]
@@ -1103,24 +1039,6 @@ Miranda NG se reinicia.\nPor favor espere...
 Consola de errores
 [Error notifications]
 Notificaciones de error
-[Headers:]
-Cabeceras
-[This font is used to display main section titles or text elements.]
-Esta fuente se utiliza para mostrar secciones de títulos principales o elementos de texto.
-[Normal text:]
-Texto normal:
-[This font is used to display most text elements or section bodies.]
-Esta fuente se utiliza para mostrar más elementos de texto o sección de cuerpos.
-[Minor notes:]
-Notas menores:
-[This font is used to display various additional notes.]
-Esta fuente se utiliza para mostrar diferentes notas complementarias.
-[Welcome to Miranda NG's account manager!\nHere you can set up your IM accounts.\n\nSelect an account from the list on the left to see the available options. Alternatively, just click on the Plus sign underneath the list to set up a new IM account.]
-¡Bienvenido al gestor de cuentas de Miranda NG!\nAquí usted puede configurar sus cuentas de mensajería instantánea.\n\nSeleccione una cuenta de la lista de la izquierda para ver las opciones disponibles. Alternativamente, haga clic en el signo más debajo de la lista para configurar una nueva cuenta de MI.
-[Event icon legend:]
-Leyenda de icono de evento:
-[Choose events you wish to ignore:]
-Seleccione los eventos que desea ignorar:
 [Font effect]
 Efecto de fuente
 [Effect:]
@@ -1185,14 +1103,22 @@ buscar/añadir
 &Añadir a la lista
 [Send &message]
 Enviar mensaje
-[Open in &new window]
-Abrir en nueva ventana
-[&Open in existing window]
-Abrir en ventana existente
+[&Open link]
+&Abrir enlace
+[&Copy link]
+Copiar enlace
 [Cancel change]
 Cancelar cambio
 [Ungroup]
 Desagrupar
+[List]
+Lista
+[&Message]
+&Mensaje
+[Clear lo&g]
+Limpiar re&gistro
+[Word lookup]
+Palabra de búsqueda
 [%s requests authorization]
 %s solicita autorización
 [%u requests authorization]
@@ -1255,6 +1181,164 @@ Mmm... comida.
 libreeeeeeee
 [Status]
 Estado
+[Standard contacts]
+Contactos estándar
+[Online contacts to whom you have a different visibility]
+Contactos en línea a los que usted tiene una visibilidad diferente
+[Offline contacts]
+Contactos fuera de línea
+[Contacts which are 'not on list']
+Contactos que son 'no está en la lista'
+[Group member counts]
+Recuentos miembros del grupo
+[Dividers]
+Divisores
+[Offline contacts to whom you have a different visibility]
+Contactos desconectados a los que usted tiene una visibilidad diferente
+[Selected text]
+Texto seleccionado
+[Hottrack text]
+Texto rondado
+[Quicksearch text]
+Búsqueda rápida de texto
+[Not focused]
+No enfocado
+[Offline]
+Fuera de línea
+[Online]
+En línea
+[Away]
+Fuera
+[Not available]
+No disponible
+[Occupied]
+Ocupado
+[Do not disturb]
+No molestar
+[Free for chat]
+Libre para el chat
+[Invisible]
+Invisible
+[Out to lunch]
+Salí a comer
+[On the phone]
+En el teléfono
+[List background]
+Lista de fondos
+[Global]
+Global
+[Standard crypto provider]
+Proveedor estándar de cifrado
+[User has not registered an e-mail address]
+El usuario no ha registrado una dirección de correo electrónico
+[Send e-mail]
+Enviar e-mail
+[&E-mail]
+E-mail
+[File from %s]
+Archivo de %s
+[bytes]
+bytes
+[&File]
+&Archivo
+[File &transfers...]
+&Transferencias de archivos...
+[Incoming]
+Entrante
+[Complete]
+Completo
+[Error]
+Error
+[Denied]
+Denegado
+[%s file]
+%s archivo
+[All files]
+Todos los archivos
+[Executable files]
+Archivos ejecutables
+[Events]
+Eventos
+[Select folder]
+Seleccionar carpeta
+[My received files]
+Mis archivos recibidos
+[View user's history]
+Ver historial del usuario
+[User menu]
+Menú del usuario
+[Canceled]
+Cancelado
+[%d files]
+%d Archivos
+[%d directories]
+%d directorios
+[This file has not yet been scanned for viruses. Are you certain you want to open it?]
+Este archivo aún no ha sido escaneado en busca de virus. ¿Estás seguro de que quieres abrirlo?
+[File received]
+Archivo recibido
+[of]
+de
+[Request sent, waiting for acceptance...]
+Solicitud enviada, en espera de la aceptación
+[Waiting for connection...]
+Esperando por conexión...
+[Unable to initiate transfer.]
+No se puede iniciar la transferencia.
+[Contact menu]
+Menú de contacto
+[Open...]
+Abrir...
+[sec]
+seg
+[remaining]
+restante
+[Decision sent]
+Decisión enviada
+[Connecting...]
+Conectando...
+[Connecting to proxy...]
+Conectando al proxy...
+[Connected]
+Conectado
+[Initializing...]
+Inicializando...
+[Moving to next file...]
+Pasando al siguiente archivo...
+[Sending...]
+Enviando...
+[Receiving...]
+Recibiendo...
+[File transfer denied]
+Transferencia de archivo denegada
+[File transfer failed]
+Transferencia de archivos fallida
+[Transfer completed.]
+Transferencia finalizada.
+[Transfer completed, open file.]
+Transferencia finalizada, abrir archivo.
+[Transfer completed, open folder.]
+Transferencia finalizada, abrir carpeta.
+[Scanning for viruses...]
+Análisis en busca de virus...
+[Transfer and virus scan complete]
+Transferencia y Análisis en busca de virus finalizado
+[Outgoing]
+Saliendo
+[< Copyright]
+< Copyright
+[&Help]
+A&yuda
+[&About...]
+&Acerca de...
+[&Support]
+&Soporte
+[&Miranda NG homepage]
+&Miranda NG página principal
+[&Report bug]
+&Reportar error
+[Idle]
+Inactivo
 [Chat module]
 Módulo de chat
 [Message background]
@@ -1265,14 +1349,6 @@ Fondo de lista de usuarios
 Líneas de lista de usuarios
 [Nick list background (selected)]
 Fondo de lista de usuarios (seleccionado)
-[Use a tabbed interface]
-Usar interfaz con pestañas
-[Close tab on double click]
-Cerrar pestaña con doble clic
-[Restore previously open tabs when showing the window]
-Restaurar pestañas previamente abiertas al mostrar la ventana
-[Show tabs at the bottom]
-Mostrar pestañas en la parte inferior
 [Send message by pressing the 'Enter' key]
 Enviar mensaje pulsando la tecla 'Intro'
 [Send message by pressing the 'Enter' key twice]
@@ -1291,10 +1367,6 @@ Mostrar botones para el control de la sala de chat
 Mostrar botones para formatear el texto que está escribiendo
 [Show button menus when right clicking the buttons]
 Mostrar menús del botón derecho cuando se hace clic en los botones
-[Show new windows cascaded]
-Mostrar nuevas ventanas en cascada
-[Save the size and position of chat rooms]
-Guarde el tamaño y la posición de las salas de chat
 [Show the topic of the room on your contact list (if supported)]
 Mostrar el tema de la sala en su lista de contactos (si es compatible)
 [Do not play sounds when the chat room is focused]
@@ -1491,8 +1563,6 @@ Mensajería
 Grupo de chats
 [Group chats log]
 Registro de Grupo de Chats
-[Options for using a tabbed interface]
-Opciones para usar una interfaz con pestañas
 [Appearance and functionality of chat room windows]
 Apariencia y funcionalidad de ventanas de chat
 [Appearance of the message log]
@@ -1505,48 +1575,16 @@ Iconos a mostrar en el registro de mensajes
 Iconos a mostrar en la bandeja
 [Popups to display]
 Ventanas emergentes mostrar
-[Select folder]
-Seleccionar carpeta
 [Message sessions]
 Sesiones de mensaje
 [General]
 General
 [Chat log]
 Registro de chat
+[Chat]
+Chat
 [Popups]
 Ventanas emergentes
-[Look up '%s':]
-Buscar '%s':
-[No word to look up]
-Ni una palabra para buscar
-[&Message %s]
-&Mensaje %s
-[Insert a smiley]
-Inserte un emoticono
-[Make the text bold (CTRL+B)]
-Hacer el texto negrita (CTRL+B)
-[Make the text italicized (CTRL+I)]
-Hacer el texto cursiva (CTRL+I)
-[Make the text underlined (CTRL+U)]
-Hacer el texto subrayado (CTRL+U)
-[Select a background color for the text (CTRL+L)]
-Seleccione un color de fondo para el texto (CTRL+L)
-[Select a foreground color for the text (CTRL+K)]
-Seleccione un color de primer plano para el texto (CTRL+K)
-[Show the history (CTRL+H)]
-Mostrar el historial (CTRL+H)
-[Show/hide the nick list (CTRL+N)]
-Mostrar/ocultar la lista de apodos (CTRL+N)
-[Control this room (CTRL+O)]
-Controlar esta sala (CTRL+O)
-[Enable/disable the event filter (CTRL+F)]
-Activar/desactivar el filtro de eventos (CTRL+F)
-[Close current tab (CTRL+F4)]
-Cerrar pestaña actual (CTRL+F4)
-[Nickname]
-Apodo
-[Unique ID]
-ID único
 [%s: chat room (%u user)]
 %s: sala de chat (%u usuario)
 [%s: chat room (%u users)]
@@ -1555,162 +1593,10 @@ ID único
 %s: sesión de mensaje
 [%s: message session (%u users)]
 %s: sesión de mensaje (%u usuarios)
-[Standard contacts]
-Contactos estándar
-[Online contacts to whom you have a different visibility]
-Contactos en línea a los que usted tiene una visibilidad diferente
-[Offline contacts]
-Contactos fuera de línea
-[Contacts which are 'not on list']
-Contactos que son 'no está en la lista'
-[Group member counts]
-Recuentos miembros del grupo
-[Dividers]
-Divisores
-[Offline contacts to whom you have a different visibility]
-Contactos desconectados a los que usted tiene una visibilidad diferente
-[Selected text]
-Texto seleccionado
-[Hottrack text]
-Texto rondado
-[Quicksearch text]
-Búsqueda rápida de texto
-[Not focused]
-No enfocado
-[Offline]
-Fuera de línea
-[Online]
-En línea
-[Away]
-Fuera
-[NA]
-No disponible
-[Occupied]
-Ocupado
-[DND]
-No molestar
-[Free for chat]
-Libre para el chat	
-[Invisible]
-Invisible
-[Out to lunch]
-Salí a comer
-[On the phone]
-En el teléfono
-[List background]
-Lista de fondos
-[Global]
-Global
-[Standard crypto provider]
-Proveedor estándar de cifrado
-[User has not registered an e-mail address]
-El usuario no ha registrado una dirección de correo electrónico
-[Send e-mail]
-Enviar e-mail
-[&E-mail]
-E-mail
-[File from %s]
-Archivo de %s
-[bytes]
-bytes
-[&File]
-&Archivo
-[File &transfers...]
-&Transferencias de archivos...
-[Incoming]
-Entrante
-[Complete]
-Completo
-[Error]
-Error
-[Denied]
-Denegado
-[%s file]
-%s archivo
-[All files]
-Todos los archivos
-[Executable files]
-Archivos ejecutables
-[Events]
-Eventos
-[My received files]
-Mis archivos recibidos
-[View user's history]
-Ver historial del usuario
-[User menu]
-Menú del usuario
-[Canceled]
-Cancelado
-[%d files]
-%d Archivos
-[%d directories]
-%d directorios
-[This file has not yet been scanned for viruses. Are you certain you want to open it?]
-Este archivo aún no ha sido escaneado en busca de virus. ¿Estás seguro de que quieres abrirlo?
-[File received]
-Archivo recibido
-[of]
-de
-[Request sent, waiting for acceptance...]
-Solicitud enviada, en espera de la aceptación
-[Waiting for connection...]
-Esperando por conexión...
-[Unable to initiate transfer.]
-No se puede iniciar la transferencia.
-[Contact menu]
-Menú de contacto
-[Open...]
-Abrir...
-[sec]
-seg
-[remaining]
-restante
-[Decision sent]
-Decisión enviada
-[Connecting...]
-Conectando...
-[Connecting to proxy...]
-Conectando al proxy...
-[Connected]
-Conectado
-[Initializing...]
-Inicializando...
-[Moving to next file...]
-Pasando al siguiente archivo...
-[Sending...]
-Enviando...
-[Receiving...]
-Recibiendo...
-[File transfer denied]
-Transferencia de archivo denegada
-[File transfer failed]
-Transferencia de archivos fallida
-[Transfer completed.]
-Transferencia finalizada.
-[Transfer completed, open file.]
-Transferencia finalizada, abrir archivo.
-[Transfer completed, open folder.]
-Transferencia finalizada, abrir carpeta.
-[Scanning for viruses...]
-Análisis en busca de virus...
-[Transfer and virus scan complete]
-Transferencia y Análisis en busca de virus finalizado
-[Outgoing]
-Saliendo
-[< Copyright]
-< Copyright
-[&Help]
-A&yuda
-[&About...]
-&Acerca de...
-[&Support]
-&Soporte
-[&Miranda NG homepage]
-&Miranda NG página principal
-[&Report bug]
-&Reportar error
-[Idle]
-Inactivo
+[Nickname]
+Apodo
+[Unique ID]
+ID único
 [The message send timed out.]
 El mensaje envia el tiempo de espera.
 [Incoming message (10x10)]
@@ -1719,6 +1605,8 @@ Mensaje entrante (10x10)
 Mensaje saliente (10x10)
 [Last message received on %s at %s.]
 Último mensaje recibido el %s a %s.
+[Message session]
+Sesión de mensaje
 [%s is typing a message...]
 %s está escribiendo un mensaje...
 [File sent]
@@ -1749,8 +1637,6 @@ Registro de mensaje
 ** Nuevos contactos **
 [** Unknown contacts **]
 ** Contactos desconocidos **
-[Show balloon popup (unsupported system)]
-Mostrar globo emergente (sistema sin soporte)
 [Messaging log]
 Registro de mensajería
 [Typing notify]
@@ -1761,6 +1647,40 @@ Mensaje de
 %s está escribiendo un mensaje
 [Typing notification]
 Escribiendo notificación
+[View user's history (CTRL+H)]
+Ver historial del usuario
+[&Bold]
+&Negrita
+[Make the text bold (CTRL+B)]
+Hacer el texto negrita (CTRL+B)
+[&Italic]
+C&ursiva
+[Make the text italicized (CTRL+I)]
+Hacer el texto cursiva (CTRL+I)
+[&Underline]
+S&ubrayar
+[Make the text underlined (CTRL+U)]
+Hacer el texto subrayado (CTRL+U)
+[&Color]
+&Color
+[Select a foreground color for the text (CTRL+K)]
+Seleccione un color de primer plano para el texto (CTRL+K)
+[&Background color]
+Color &de fondo
+[Select a background color for the text (CTRL+L)]
+Seleccione un color de fondo para el texto (CTRL+L)
+[&Room settings]
+Configu&ración de espacio
+[Control this room (CTRL+O)]
+Controlar esta sala (CTRL+O)
+[&Show/hide nick list]
+&Mostrar/ocultar lista de nicks
+[Show/hide the nick list (CTRL+N)]
+Mostrar/ocultar la lista de apodos (CTRL+N)
+[&Filter]
+&Filtro
+[Enable/disable the event filter (CTRL+F)]
+Activar/desactivar el filtro de eventos (CTRL+F)
 [Miranda could not load the built-in message module, msftedit.dll is missing. Press 'Yes' to continue loading Miranda.]
 Miranda no pudo cargar el módulo de mensajes incorporado, falta msftedit.dll. Pulse 'Sí ' para continuar cargando Miranda.
 [Instant messages]
@@ -1831,6 +1751,8 @@ Masculino
 Femenino
 [<not specified>]
 <no especificado>
+[Separated]
+Separado
 [Summary]
 Resumen
 [Contact]
@@ -1965,6 +1887,24 @@ Aviso de %s: %s
 El tema es '%s'
 [The topic is '%s' (set by %s)]
 El tema es '%s' (establecido por %s)
+[Look up '%s':]
+Buscar '%s':
+[No word to look up]
+Ni una palabra para buscar
+[&Message %s]
+&Mensaje %s
+[New group]
+Nuevo grupo
+[Are you sure you want to delete group '%s'? This operation cannot be undone.]
+¿Eliminar el grupo '%s'? Esta operación no se puede deshacer.
+[Delete group]
+Eliminar grupo
+[You already have a group with that name. Please enter a unique name for the group.]
+Usted ya tiene un grupo con ese nombre. Por favor, introduzca un nombre exclusivo para el grupo.
+[Rename group]
+Renombrar grupo
+[This group]
+Este grupo
 [Connecting]
 Conectando
 [(Unknown contact)]
@@ -2075,28 +2015,12 @@ Archivos de texto
 Error escribiendo archivo
 [Customize]
 Personalizar
-[Sample text]
-Texto de ejemplo
-[Fonts]
-Fuentes
 [Headers]
 Cabeceras
 [Generic text]
 Texto genérico
 [Small text]
 Texto pequeño
-[New group]
-Nuevo grupo
-[Are you sure you want to delete group '%s'? This operation cannot be undone.]
-¿Eliminar el grupo '%s'? Esta operación no se puede deshacer.
-[Delete group]
-Eliminar grupo
-[You already have a group with that name. Please enter a unique name for the group.]
-Usted ya tiene un grupo con ese nombre. Por favor, introduzca un nombre exclusivo para el grupo.
-[Rename group]
-Renombrar grupo
-[This group]
-Este grupo
 [Ctrl + ]
 Ctrl +\s
 [Alt + ]
@@ -2135,12 +2059,12 @@ Abrir opciones de página
 Abrir opciones de registro
 [Open 'Find user' dialog]
 Abrir diálogo 'Buscar usuario'
+[built-in]
+construido
 [(incompatible)]
 (incompatible)
 [Unknown]
 Desconocido
-[built-in]
-construido
 [Languages]
 Idiomas
 [Custom status]
@@ -2165,12 +2089,10 @@ Iconos de menú
 Protocolo
 [Edit]
 Editar
-[Sender]
-Remitente
-[&Move to group]
-&Mover a grupo
 [<Root group>]
 <Grupo raíz>
+[&Move to group]
+&Mover a grupo
 [Standard Netlib log]
 Registro Netlib estándar
 [No times]
@@ -2271,16 +2193,18 @@ Nuevo perfil
 Tu cuenta ha sido actualizada correctamente. Para activarla, es necesario reiniciar Miranda.\n\nSi desea reiniciar Miranda ahora, pulse Sí, si usted desea actualizar otra cuenta, presione No
 [This account uses legacy protocol plugin. Use Miranda NG options dialogs to change its preferences.]
 Esta cuenta utiliza protocolo heredado de plugin. Use diálogos de opciones de Miranda NG para cambiar sus preferencias.
-[Account error]
-Error de cuenta
-[Account name has to be unique. Please enter unique name.]
-El nombre de la cuenta tiene que ser único. Por favor ingrese el nombre único.
+[Welcome to Miranda NG's account manager!\nHere you can set up your IM accounts.\n\nSelect an account from the list on the left to see the available options. Alternatively, just click on the Plus sign underneath the list to set up a new IM account.]
+¡Bienvenido al gestor de cuentas de Miranda NG!\nAquí usted puede configurar sus cuentas de mensajería instantánea.\n\nSeleccione una cuenta de la lista de la izquierda para ver las opciones disponibles. Alternativamente, haga clic en el signo más debajo de la lista para configurar una nueva cuenta de MI.
 [Create new account]
 Crear nueva cuenta
 [Editing account]
 Editar cuenta
 [Upgrading account]
 Actualizar cuenta
+[Account error]
+Error de cuenta
+[Account name has to be unique. Please enter unique name.]
+El nombre de la cuenta tiene que ser único. Por favor ingrese el nombre único.
 [Account is disabled. Please activate it to access options.]
 Cuenta deshabilitada. Active para acceder a las opciones.
 [New account]
@@ -2291,12 +2215,6 @@ Eliminar cuenta
 Configurar...]
 [Upgrade account]
 Actualiza cuenta
-[Account ID]
-ID de la cuenta
-[<unknown>]
-<desconocido>
-[Protocol is not loaded.]
-Protocolo no está cargado.
 [Rename]
 Renombrar
 [Configure]
@@ -2311,6 +2229,12 @@ La cuenta está en línea. ¿Desactivar la cuenta?
 La cuenta %s se está borrando
 [You need to disable plugin to delete this account]
 Es necesario desactivar plugin para eliminar esta cuenta
+[Account ID]
+ID de la cuenta
+[<unknown>]
+<desconocido>
+[Protocol is not loaded.]
+Protocolo no está cargado.
 [&Accounts...]
 &Cuentas...
 [Account]
@@ -2415,6 +2339,10 @@ Iconos principales
 Archivos de sonido
 [WAV files]
 Archivos WAV
+[<Separator>]
+<Separador>
+[Toolbar]
+Barra de herramientas
 [Unspecified]
 <Sin especificar>
 [Afghanistan]

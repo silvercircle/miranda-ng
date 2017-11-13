@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-09 Miranda ICQ/IM project,
 
 This file is part of Send Screenshot Plus, a Miranda IM plugin.
@@ -26,10 +26,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-//---------------------------------------------------------------------------
 #include "stdafx.h"
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 CSendDropbox::CSendDropbox(HWND Owner, MCONTACT hContact, bool bAsync)
 	: CSend(Owner, hContact, bAsync)
 {
@@ -42,7 +42,7 @@ CSendDropbox::~CSendDropbox()
 {
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
 
 int CSendDropbox::Send()
 {
@@ -50,42 +50,24 @@ int CSendDropbox::Send()
 	return 0;
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
 
 void CSendDropbox::SendThread()
 {
 	/// @todo : SS_DLG_DESCRIPTION and SS_DLG_DELETEAFTERSSEND are of no use as of now since we don't track upload progress
 
-	m_hDropHook = HookEventObj(ME_DROPBOX_SENT, OnDropSend, this);
+	DropboxUploadInfo ui = { m_pszFile, L"SendSS" };
 
-	if ((m_hDropSend = (HANDLE)CallService(MS_DROPBOX_SEND_FILE, (WPARAM)m_hContact, (LPARAM)m_pszFile)) == NULL)
+	if (CallService(MS_DROPBOX_UPLOAD, (WPARAM)&m_URL, (LPARAM)&ui))
 	{
-		Error(LPGENT("%s (%i):\nCould not add a share to the Dropbox plugin."), TranslateTS(m_pszSendTyp), (INT_PTR)m_hDropSend);
+		Error(LPGENW("%s (%i):\nCould not add a share to the Dropbox plugin."), TranslateW(m_pszSendTyp), 0);
 		Exit(ACKRESULT_FAILED); return;
 	}
-
-	m_hEvent.Wait();
-	UnhookEvent(m_hDropHook);
 
 	if (m_URL)
 		svcSendMsgExit(m_URL);
 	else
 		Exit(ACKRESULT_FAILED);
-}
-
-int CSendDropbox::OnDropSend(void *obj, WPARAM, LPARAM lParam)
-{
-	CSendDropbox *self = (CSendDropbox*)obj;
-	TRANSFERINFO *info = (TRANSFERINFO*)lParam;
-	if (info->hProcess == self->m_hDropSend)
-	{
-		if (!info->status)
-		{
-			self->m_URL = mir_strdup(info->data[0]);
-		}
-		self->m_hEvent.Set();
-	}
-	return 0;
 }
 
 void CSendDropbox::SendThreadWrapper(void * Obj)

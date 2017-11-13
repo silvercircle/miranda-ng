@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
-// Copyright (ñ) 2012-15 Miranda NG project,
+// Copyright (ñ) 2012-17 Miranda NG project,
 // Copyright (c) 2000-09 Miranda ICQ/IM project,
 // all portions of this codebase are copyrighted to the people
 // listed in contributors.txt.
@@ -63,16 +63,16 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 	return &pluginInfo;
 }
 
-extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = { MIID_SRMM, MIID_CHAT, MIID_LAST };
+extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = { MIID_SRMM, MIID_LAST };
 
 extern "C" int __declspec(dllexport) Load(void)
 {
 	if (WinVerMajor() < 5) {
-		MessageBox(0, TranslateT("This version of TabSRMM requires Windows 2000 or later."), _T("tabSRMM"), MB_OK | MB_ICONERROR);
+		MessageBox(0, TranslateT("This version of TabSRMM requires Windows 2000 or later."), L"tabSRMM", MB_OK | MB_ICONERROR);
 		return 1;
 	}
 
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 	mir_getLP(&pluginInfo);
 
 	SystemParametersInfo(SPI_GETICONTITLELOGFONT, sizeof(lfDefault), &lfDefault, FALSE);
@@ -91,7 +91,6 @@ extern "C" int __declspec(dllexport) Unload(void)
 	Skin->UnloadAeroTabs();
 	CleanTempFiles();
 	delete Skin;
-	DestroyServiceFunction(hTypingNotify);
 	delete sendLater;
 	delete sendQueue;
 	return iRet;
@@ -111,7 +110,7 @@ int _DebugTraceW(const wchar_t *fmt, ...)
 	mir_snprintf(tszTime, "%02d.%02d.%04d - %02d:%02d:%02d.%04d: ", st.wDay, st.wMonth, st.wYear, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 
 
-	mir_vsntprintf(debug, ibsize - 10, fmt, va);
+	mir_vsnwprintf(debug, ibsize - 10, fmt, va);
 	//#ifdef _DEBUG
 	OutputDebugStringW(debug);
 	//#else
@@ -119,7 +118,7 @@ int _DebugTraceW(const wchar_t *fmt, ...)
 		char szLogFileName[MAX_PATH], szDataPath[MAX_PATH];
 		FILE *f;
 
-		CallService(MS_DB_GETPROFILEPATH, MAX_PATH, (LPARAM)szDataPath);
+		Profile_GetPathA(MAX_PATH, szDataPath);
 		mir_snprintf(szLogFileName, "%s\\%s", szDataPath, "tabsrmm_debug.log");
 		f = fopen(szLogFileName, "a+");
 		if (f) {
@@ -141,29 +140,19 @@ int _DebugTraceW(const wchar_t *fmt, ...)
  * can display the message either as systray notification (baloon popup) or using the
  * popup plugin.
  */
-int _DebugPopup(MCONTACT hContact, const TCHAR *fmt, ...)
+int _DebugPopup(MCONTACT hContact, const wchar_t *fmt, ...)
 {
 	va_list	va;
-	TCHAR		debug[1024];
+	wchar_t		debug[1024];
 	int			ibsize = 1023;
 
 	va_start(va, fmt);
-	mir_vsntprintf(debug, ibsize, fmt, va);
+	mir_vsnwprintf(debug, ibsize, fmt, va);
 
-	if (ServiceExists(MS_CLIST_SYSTRAY_NOTIFY)) {
-		MIRANDASYSTRAYNOTIFY tn;
-		TCHAR	szTitle[128];
-		mir_sntprintf(szTitle, TranslateT("TabSRMM message (%s)"),
-			(hContact != 0) ? pcli->pfnGetContactDisplayName(hContact, 0) : TranslateT("Global"));
+	wchar_t	szTitle[128];
+	mir_snwprintf(szTitle, TranslateT("TabSRMM message (%s)"),
+		(hContact != 0) ? pcli->pfnGetContactDisplayName(hContact, 0) : TranslateT("Global"));
 
-		tn.szProto = NULL;
-		tn.cbSize = sizeof(tn);
-		tn.tszInfoTitle = szTitle;
-		tn.tszInfo = debug;
-		tn.dwInfoFlags = NIIF_INFO;
-		tn.dwInfoFlags |= NIIF_INTERN_UNICODE;
-		tn.uTimeout = 1000 * 4;
-		CallService(MS_CLIST_SYSTRAY_NOTIFY, 0, (LPARAM)&tn);
-	}
+	Clist_TrayNotifyW(nullptr, szTitle, debug, NIIF_INFO, 1000 * 4);
 	return 0;
 }

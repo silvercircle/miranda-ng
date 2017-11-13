@@ -7,7 +7,6 @@
 ;============================================================
 [Favorite contacts menu.]
 Меню абраных кантактаў.
-;file \plugins\FavContacts\res\resource.rc
 [Customize]
 Тонкая налада
 [Show second line]
@@ -39,26 +38,21 @@
 [Align to the right]
 Выраўноўванне па правым краі
 [Dim idle contact icons]
-Зацямніць idle кантакты
+Прыцьміць неактыўных
 [Show]
 Паказаць
 [recent contacts]
 нядаўніх кантактаў
-;file \plugins\FavContacts\src\favlist.h
 [<no group>]
 <няма гурта>
-;file \plugins\FavContacts\src\main.cpp
 [Favorite Contact]
 Абраны кантакт
 [Regular Contact]
 Звычайны кантакт
 [Favorites]
 Абраныя
-;file \plugins\FavContacts\src\menu.cpp
-;file \plugins\FavContacts\src\options.cpp
 [Contacts]
 Кантакты
-;file \plugins\FavContacts\src\services.cpp
 [Contact name]
 Імя кантакту
 [Second line]

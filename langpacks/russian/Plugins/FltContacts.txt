@@ -2,11 +2,11 @@
 ;============================================================
 ;  File: FltContacts.dll
 ;  Plugin: Floating contacts
-;  Version: 0.7.0.3
+;  Version: 0.7.0.4
 ;  Authors: Iavor Vajarov, Kosh&chka, Victor Pavlychko
 ;============================================================
 [Floating Contacts plugin for Miranda.]
-Плагин плавающих контактов для Miranda NG.
+Плавающие контакты для Miranda NG.
 [Hiding contacts]
 Скрытие контактов
 [Hide offline contacts]

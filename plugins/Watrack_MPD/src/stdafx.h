@@ -29,14 +29,14 @@
 
 #include "resource.h"
 #include "utilities.h"
-#include "Version.h"
+#include "version.h"
 
 #define szModuleName "Watrack_MPD"
 
 extern HINSTANCE hInst;
-extern HANDLE ghNetlibUser;
+extern HNETLIBUSER ghNetlibUser;
 extern BOOL bWatrackService;
-extern TCHAR *gbHost, *gbPassword;
+extern wchar_t *gbHost, *gbPassword;
 extern WORD gbPort;
 extern char *date();
 

@@ -1,12 +1,18 @@
 #include "stdafx.h"
 
-CToxProto::CToxProto(const char* protoName, const TCHAR* userName)
+CToxProto::CToxProto(const char* protoName, const wchar_t* userName)
 	: PROTO<CToxProto>(protoName, userName),
-	hPollingThread(NULL), hOutDevice(NULL), toxThread(NULL)
+	toxThread(NULL), isTerminated(false),
+	hCheckingThread(NULL), hPollingThread(NULL),
+	hMessageProcess(1)
 {
 	InitNetlib();
 
-	accountName = mir_tstrdup(userName);
+	wszAccountName = mir_wstrdup(userName);
+	wszGroup = getWStringA(TOX_SETTINGS_GROUP);
+	if (wszGroup == nullptr)
+		wszGroup = mir_wstrdup(L"Tox");
+	Clist_GroupCreate(0, wszGroup);
 
 	CreateProtoService(PS_CREATEACCMGRUI, &CToxProto::OnAccountManagerInit);
 
@@ -25,21 +31,21 @@ CToxProto::CToxProto(const char* protoName, const TCHAR* userName)
 	// nick
 	CreateProtoService(PS_SETMYNICKNAME, &CToxProto::SetMyNickname);
 
-	hAudioDialogs = WindowList_Create();
+	// hAudioDialogs = WindowList_Create();
+
+	hTerminateEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 }
 
 CToxProto::~CToxProto()
 {
 	WindowList_Destroy(hAudioDialogs);
 
-	mir_free(accountName);
 	UninitNetlib();
 }
 
 DWORD_PTR CToxProto::GetCaps(int type, MCONTACT)
 {
-	switch (type)
-	{
+	switch (type) {
 	case PFLAGNUM_1:
 		return PF1_IM | PF1_FILE | PF1_AUTHREQ | PF1_MODEMSG | PF1_EXTSEARCH | PF1_SERVERCLIST;
 	case PFLAGNUM_2:
@@ -62,13 +68,11 @@ DWORD_PTR CToxProto::GetCaps(int type, MCONTACT)
 MCONTACT CToxProto::AddToList(int flags, PROTOSEARCHRESULT *psr)
 {
 	ptrA myAddress(getStringA(NULL, TOX_SETTINGS_ID));
-	if (strnicmp(psr->id.a, myAddress, TOX_PUBLIC_KEY_SIZE) == 0)
-	{
+	if (strnicmp(psr->id.a, myAddress, TOX_PUBLIC_KEY_SIZE) == 0) {
 		ShowNotification(TranslateT("You cannot add yourself to your contact list"), 0);
 		return NULL;
 	}
-	if (MCONTACT hContact = GetContact(psr->id.a))
-	{
+	if (MCONTACT hContact = GetContact(psr->id.a)) {
 		ShowNotification(TranslateT("Contact already in your contact list"), 0, hContact);
 		return NULL;
 	}
@@ -89,28 +93,28 @@ int CToxProto::AuthRecv(MCONTACT, PROTORECVEVENT* pre)
 	return Proto_AuthRecv(m_szModuleName, pre);
 }
 
-int CToxProto::AuthRequest(MCONTACT hContact, const TCHAR *szMessage)
+int CToxProto::AuthRequest(MCONTACT hContact, const wchar_t *szMessage)
 {
 	ptrA reason(mir_utf8encodeW(szMessage));
 	return OnRequestAuth(hContact, (LPARAM)reason);
 }
 
-HANDLE CToxProto::FileAllow(MCONTACT hContact, HANDLE hTransfer, const TCHAR *tszPath)
+HANDLE CToxProto::FileAllow(MCONTACT hContact, HANDLE hTransfer, const wchar_t *tszPath)
 {
 	return OnFileAllow(hContact, hTransfer, tszPath);
 }
 
 int CToxProto::FileCancel(MCONTACT hContact, HANDLE hTransfer)
 {
-	return OnFileCancel(hContact, hTransfer);
+	return CancelTransfer(hContact, hTransfer);
 }
 
-int CToxProto::FileDeny(MCONTACT hContact, HANDLE hTransfer, const TCHAR*)
+int CToxProto::FileDeny(MCONTACT hContact, HANDLE hTransfer, const wchar_t*)
 {
 	return FileCancel(hContact, hTransfer);
 }
 
-int CToxProto::FileResume(HANDLE hTransfer, int *action, const TCHAR **szFilename)
+int CToxProto::FileResume(HANDLE hTransfer, int *action, const wchar_t **szFilename)
 {
 	return OnFileResume(hTransfer, action, szFilename);
 }
@@ -125,17 +129,12 @@ HWND CToxProto::CreateExtendedSearchUI(HWND owner)
 	return OnCreateExtendedSearchUI(owner);
 }
 
-int CToxProto::RecvMsg(MCONTACT hContact, PROTORECVEVENT *pre)
-{
-	return OnReceiveMessage(hContact, pre);
-}
-
 int CToxProto::SendMsg(MCONTACT hContact, int, const char *msg)
 {
 	return OnSendMessage(hContact, msg);
 }
 
-HANDLE CToxProto::SendFile(MCONTACT hContact, const TCHAR *msg, TCHAR **ppszFiles)
+HANDLE CToxProto::SendFile(MCONTACT hContact, const wchar_t *msg, wchar_t **ppszFiles)
 {
 	return OnSendFile(hContact, msg, ppszFiles);
 }
@@ -147,23 +146,19 @@ int CToxProto::SetStatus(int iNewStatus)
 
 	iNewStatus = MapStatus(iNewStatus);
 
-	logger->Log("CToxProto::SetStatus: changing status from %i to %i", m_iStatus, iNewStatus);
+	debugLogA(__FUNCTION__": changing status from %i to %i", m_iStatus, iNewStatus);
 
 	int old_status = m_iStatus;
 	m_iDesiredStatus = iNewStatus;
 
-	if (iNewStatus == ID_STATUS_OFFLINE)
-	{
+	if (iNewStatus == ID_STATUS_OFFLINE) {
 		// logout
-		if (toxThread)
-		{
-			toxThread->Stop();
-		}
+		isTerminated = true;
+		SetEvent(hTerminateEvent);
 
-		if (!Miranda_Terminated())
-		{
+		if (!Miranda_IsTerminated()) {
 			SetAllContactsStatus(ID_STATUS_OFFLINE);
-			CloseAllChatChatSessions();
+			//CloseAllChatChatSessions();
 		}
 
 		m_iStatus = m_iDesiredStatus = ID_STATUS_OFFLINE;
@@ -171,21 +166,19 @@ int CToxProto::SetStatus(int iNewStatus)
 		return 0;
 	}
 
-	if (old_status == ID_STATUS_CONNECTING)
+	if (old_status >= ID_STATUS_CONNECTING && old_status < ID_STATUS_OFFLINE)
 		return 0;
 
-	if (old_status == ID_STATUS_OFFLINE && !IsOnline())
-	{
+	if (old_status == ID_STATUS_OFFLINE && !IsOnline()) {
 		// login
+		isTerminated = false;
 		m_iStatus = ID_STATUS_CONNECTING;
-
 		hPollingThread = ForkThreadEx(&CToxProto::PollingThread, NULL, NULL);
 	}
-	else
-	{
+	else {
 		// set tox status
 		m_iStatus = iNewStatus;
-		tox_self_set_status(toxThread->tox, MirandaToToxStatus(iNewStatus));
+		tox_self_set_status(toxThread->Tox(), MirandaToToxStatus(iNewStatus));
 	}
 
 	ProtoBroadcastAck(NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, (HANDLE)old_status, m_iStatus);
@@ -194,8 +187,7 @@ int CToxProto::SetStatus(int iNewStatus)
 
 HANDLE CToxProto::GetAwayMsg(MCONTACT hContact)
 {
-	if (IsOnline())
-	{
+	if (IsOnline()) {
 		ForkThread(&CToxProto::GetStatusMessageAsync, (void*)hContact);
 		return (HANDLE)hContact;
 	}
@@ -203,14 +195,13 @@ HANDLE CToxProto::GetAwayMsg(MCONTACT hContact)
 	return 0;
 }
 
-int CToxProto::SetAwayMsg(int, const TCHAR *msg)
+int CToxProto::SetAwayMsg(int, const wchar_t *msg)
 {
-	if (IsOnline())
-	{
+	if (IsOnline()) {
 		T2Utf statusMessage(msg);
 		TOX_ERR_SET_INFO error;
-		if (tox_self_set_status_message(toxThread->tox, (uint8_t*)(char*)statusMessage, min(TOX_MAX_STATUS_MESSAGE_LENGTH, mir_strlen(statusMessage)), &error))
-			logger->Log("CToxProto::SetAwayMsg: failed to set status status message %s (%d)", msg, error);
+		if (!tox_self_set_status_message(toxThread->Tox(), (uint8_t*)(char*)statusMessage, min(TOX_MAX_STATUS_MESSAGE_LENGTH, mir_strlen(statusMessage)), &error))
+			debugLogA(__FUNCTION__": failed to set status status message %s (%d)", msg, error);
 	}
 
 	return 0;
@@ -223,8 +214,7 @@ int CToxProto::UserIsTyping(MCONTACT hContact, int type)
 
 int CToxProto::OnEvent(PROTOEVENTTYPE iEventType, WPARAM wParam, LPARAM lParam)
 {
-	switch (iEventType)
-	{
+	switch (iEventType) {
 	case EV_PROTO_ONLOAD:
 		return OnAccountLoaded(wParam, lParam);
 
@@ -236,6 +226,11 @@ int CToxProto::OnEvent(PROTOEVENTTYPE iEventType, WPARAM wParam, LPARAM lParam)
 
 	case EV_PROTO_ONMENU:
 		return OnInitStatusMenu();
+
+	case EV_PROTO_ONERASE:
+		ptrW profilePath(GetToxProfilePath());
+		_wunlink(profilePath);
+		break;
 	}
 
 	return 1;

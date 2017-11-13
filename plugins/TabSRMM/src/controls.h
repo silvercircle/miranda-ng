@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
-// Copyright (ñ) 2012-15 Miranda NG project,
+// Copyright (ñ) 2012-17 Miranda NG project,
 // Copyright (c) 2000-09 Miranda ICQ/IM project,
 // all portions of this codebase are copyrighted to the people
 // listed in contributors.txt.
@@ -29,9 +29,7 @@
 #ifndef __CONTROLS_H
 #define __CONTROLS_H
 
-extern LONG_PTR CALLBACK StatusBarSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-class CMenuBar
+class CMenuBar : public MZeroedObject
 {
 public:
 	enum {
@@ -66,7 +64,7 @@ public:
 	void			setAero(bool fState) { m_isAero = fState; }
 	const bool		getAero(void) const { return(m_isAero); }
 
-	const LRESULT	processAccelerator(TCHAR a, UINT& ctlId) const
+	const LRESULT	processAccelerator(wchar_t a, UINT& ctlId) const
 	{
 		UINT		_ctlId;
 

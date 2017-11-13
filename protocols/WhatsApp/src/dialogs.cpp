@@ -1,9 +1,9 @@
-#include "common.h"
+#include "stdafx.h"
 
-#define szAskSendSms  LPGEN("An SMS with registration code will be sent to your mobile phone.\nNotice that you are not able to use the real WhatsApp and this plugin simultaneously!\nContinue?")
-#define szAskCall  LPGEN("A call with registration code will be made to your mobile phone.\nNotice that you are not able to use the real WhatsApp and this plugin simultaneously!\nContinue?")
-#define szPasswordSet LPGEN("Your password has been set automatically. You can proceed with login now.")
-#define szSpecifyCode LPGEN("Please correctly specify your registration code received by SMS/Voice.")
+#define szAskSendSms  LPGENW("An SMS with registration code will be sent to your mobile phone.\nNotice that you are not able to use the real WhatsApp and this plugin simultaneously!\nContinue?")
+#define szAskCall  LPGENW("A call with registration code will be made to your mobile phone.\nNotice that you are not able to use the real WhatsApp and this plugin simultaneously!\nContinue?")
+#define szPasswordSet LPGENW("Your password has been set automatically. You can proceed with login now.")
+#define szSpecifyCode LPGENW("Please correctly specify your registration code received by SMS/Voice.")
 
 class COptionsDlg : public CProtoDlgBase<WhatsAppProto>
 {
@@ -31,10 +31,10 @@ public:
 		CreateLink(m_remoteTime, WHATSAPP_KEY_USE_REMOTE_TIME, DBVT_BYTE, false);
 		CreateLink(m_autorun, WHATSAPP_KEY_AUTORUNCHATS, DBVT_BYTE, true);
 
-		CreateLink(m_cc, WHATSAPP_KEY_CC, _T(""));
-		CreateLink(m_nick, WHATSAPP_KEY_NICK, _T(""));
-		CreateLink(m_login, WHATSAPP_KEY_LOGIN, _T(""));
-		CreateLink(m_group, WHATSAPP_KEY_DEF_GROUP, _T(""));
+		CreateLink(m_cc, WHATSAPP_KEY_CC, L"");
+		CreateLink(m_nick, WHATSAPP_KEY_NICK, L"");
+		CreateLink(m_login, WHATSAPP_KEY_LOGIN, L"");
+		CreateLink(m_group, WHATSAPP_KEY_DEF_GROUP, L"");
 
 		m_requestSMS.OnClick = Callback(this, &COptionsDlg::OnRequestSMSClick);
 		m_requestVoice.OnClick = Callback(this, &COptionsDlg::OnRequestVoiceClick);
@@ -52,14 +52,14 @@ public:
 
 	void OnRequestVoiceClick(CCtrlButton*)
 	{
-		if (IDYES != MessageBox(GetHwnd(), TranslateT(szAskCall), PRODUCT_NAME, MB_YESNO))
+		if (IDYES != MessageBox(GetHwnd(), TranslateW(szAskCall), PRODUCT_NAME, MB_YESNO))
 			return;
 
 		ptrA cc(m_cc.GetTextA()), number(m_login.GetTextA());
 		string password;
 		if (m_proto->Register(REG_STATE_REQ_CODE, string(cc), string(number), "voice", password)) {
 			if (!password.empty()) {
-				MessageBox(GetHwnd(), TranslateT(szPasswordSet), PRODUCT_NAME, MB_ICONWARNING);
+				MessageBox(GetHwnd(), TranslateW(szPasswordSet), PRODUCT_NAME, MB_ICONWARNING);
 				m_proto->setString(WHATSAPP_KEY_PASS, password.c_str());
 			}
 			else {
@@ -73,14 +73,14 @@ public:
 
 	void OnRequestSMSClick(CCtrlButton*)
 	{
-		if (IDYES != MessageBox(GetHwnd(), TranslateT(szAskSendSms), PRODUCT_NAME, MB_YESNO))
+		if (IDYES != MessageBox(GetHwnd(), TranslateW(szAskSendSms), PRODUCT_NAME, MB_YESNO))
 			return;
 
 		ptrA cc(m_cc.GetTextA()), number(m_login.GetTextA());
 		string password;
 		if (m_proto->Register(REG_STATE_REQ_CODE, string(cc), string(number), "sms", password)) {
 			if (!password.empty()) {
-				MessageBox(GetHwnd(), TranslateT(szPasswordSet), PRODUCT_NAME, MB_ICONWARNING);
+				MessageBox(GetHwnd(), TranslateW(szPasswordSet), PRODUCT_NAME, MB_ICONWARNING);
 				m_proto->setString(WHATSAPP_KEY_PASS, password.c_str());
 			}
 			else {
@@ -95,7 +95,7 @@ public:
 	void OnRegisterClick(CCtrlButton*)
 	{
 		if (GetWindowTextLength(m_pw1.GetHwnd()) != 3 || GetWindowTextLength(m_pw2.GetHwnd()) != 3)
-			MessageBox(GetHwnd(), TranslateT(szSpecifyCode), PRODUCT_NAME, MB_ICONEXCLAMATION);
+			MessageBox(GetHwnd(), TranslateW(szSpecifyCode), PRODUCT_NAME, MB_ICONEXCLAMATION);
 		else {
 			char code[10];
 			GetWindowTextA(m_pw1.GetHwnd(), code, 4);
@@ -105,7 +105,7 @@ public:
 			ptrA cc(m_cc.GetTextA()), number(m_login.GetTextA());
 			if (m_proto->Register(REG_STATE_REG_CODE, string(cc), string(number), string(code), password)) {
 				m_proto->setString(WHATSAPP_KEY_PASS, password.c_str());
-				MessageBox(GetHwnd(), TranslateT(szPasswordSet), PRODUCT_NAME, MB_ICONWARNING);
+				MessageBox(GetHwnd(), TranslateW(szPasswordSet), PRODUCT_NAME, MB_ICONWARNING);
 			}
 		}
 		m_proto->setByte("CodeRequestDone", 0);
@@ -113,8 +113,8 @@ public:
 
 	virtual void OnApply()
 	{
-		ptrT tszGroup(m_group.GetText());
-		if (mir_tstrcmp(m_proto->m_tszDefaultGroup, tszGroup))
+		ptrW tszGroup(m_group.GetText());
+		if (mir_wstrcmp(m_proto->m_tszDefaultGroup, tszGroup))
 			m_proto->m_tszDefaultGroup = tszGroup.detach();
 
 		if (m_proto->isOnline())
@@ -122,7 +122,7 @@ public:
 	}
 };
 
-INT_PTR WhatsAppProto::SvcCreateAccMgrUI(WPARAM wParam, LPARAM lParam)
+INT_PTR WhatsAppProto::SvcCreateAccMgrUI(WPARAM, LPARAM lParam)
 {
 	COptionsDlg *pDlg = new COptionsDlg(this, IDD_ACCMGRUI);
 	pDlg->SetParent((HWND)lParam);
@@ -133,11 +133,11 @@ INT_PTR WhatsAppProto::SvcCreateAccMgrUI(WPARAM wParam, LPARAM lParam)
 int WhatsAppProto::OnOptionsInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
-	odp.ptszTitle = m_tszUserName;
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR | ODPF_DONTTRANSLATE;
-	odp.ptszGroup = LPGENT("Network");
+	odp.szTitle.w = m_tszUserName;
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE | ODPF_DONTTRANSLATE;
+	odp.szGroup.w = LPGENW("Network");
 
-	odp.ptszTab = LPGENT("Account");
+	odp.szTab.w = LPGENW("Account");
 	odp.pDialog = new COptionsDlg(this, IDD_OPTIONS);
 	Options_AddPage(wParam, &odp);
 	return 0;

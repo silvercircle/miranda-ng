@@ -7,7 +7,7 @@
 /////////////////////////////////////////////////////////////////////////////
 //
 
-#define WND_CLASS					_T("MirandaThumbsWnd")
+#define WND_CLASS					L"MirandaThumbsWnd"
 #define	WM_REFRESH_CONTACT			WM_USER + 0x100
 
 #ifndef WS_EX_LAYERED
@@ -135,7 +135,7 @@ static __forceinline BOOL ImageList_GetIconSize_my(HIMAGELIST himl, SIZE &sz)
 void RegHotkey				( MCONTACT hContact, HWND hwnd );
 BOOL IsStatusVisible		( int status );
 BOOL HideOnFullScreen		();
-void SendMsgDialog			( HWND hwnd, TCHAR *pText );
+void SendMsgDialog			( HWND hwnd, wchar_t *pText );
 void SaveContactsPos		( void );
 
 /////////////////////////////////////////////////////////////////////////////

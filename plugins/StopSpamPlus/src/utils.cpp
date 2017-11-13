@@ -4,7 +4,7 @@ tstring &GetDlgItemString(HWND hwnd, int id)
 {
 	HWND h = GetDlgItem(hwnd, id);
 	int len = GetWindowTextLength(h);
-	TCHAR * buf = new TCHAR[len + 1];
+	wchar_t * buf = new wchar_t[len + 1];
 	GetWindowText(h, buf, len + 1);
 	static tstring s;
 	s = buf;
@@ -16,7 +16,7 @@ bool IsExistMyMessage(MCONTACT hContact)
 {
 	MEVENT hDbEvent = db_event_first(hContact);
 	while (hDbEvent) {
-		DBEVENTINFO dbei = { sizeof(dbei) };
+		DBEVENTINFO dbei = {};
 		if (db_event_get(hDbEvent, &dbei))
 			break;
 
@@ -48,10 +48,10 @@ tstring variables_parse(tstring const &tstrFormat, MCONTACT hContact){
 
 		memset(&fi, 0, sizeof(fi));
 		fi.cbSize = sizeof(fi);
-		fi.tszFormat = _tcsdup(tstrFormat.c_str());
+		fi.tszFormat = wcsdup(tstrFormat.c_str());
 		fi.hContact = hContact;
 		fi.flags |= FIF_TCHAR;
-		TCHAR *tszParsed = (TCHAR *)CallService(MS_VARS_FORMATSTRING, (WPARAM)&fi, 0);
+		wchar_t *tszParsed = (wchar_t *)CallService(MS_VARS_FORMATSTRING, (WPARAM)&fi, 0);
 		free(fi.tszFormat);
 		if (tszParsed) {
 			tstrResult = tszParsed;
@@ -68,7 +68,7 @@ tstring trim(const tstring &tstr, const tstring& trimChars)
 	size_t e = tstr.find_last_not_of(trimChars);
 
 	if ((tstring::npos == s) || (tstring::npos == e))
-		return _T("");
+		return L"";
 	else
 		return tstr.substr(s, e - s + 1);
 }

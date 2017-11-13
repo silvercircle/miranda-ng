@@ -34,9 +34,9 @@ Rozłączony
 Dostępny
 [Away]
 Zaraz wracam
-[DND]
+[Do not disturb]
 Nie przeszkadzać
-[NA]
+[Not available]
 Wrócę później
 [Occupied]
 Zajęty

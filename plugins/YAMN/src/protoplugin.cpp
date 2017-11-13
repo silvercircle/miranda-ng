@@ -93,8 +93,8 @@ int WINAPI SetProtocolPluginFcnImportFcn(HYAMNPROTOPLUGIN Plugin,PYAMN_PROTOIMPO
 	Plugin->Fcn=YAMNFcn;
 	Plugin->MailFcn=YAMNMailFcn;
 
-	EnterCriticalSection(&PluginRegCS);
-//We add protocol to the protocol list
+	mir_cslock lck(PluginRegCS);
+	// We add protocol to the protocol list
 	for (Parser=FirstProtoPlugin;Parser != NULL && Parser->Next != NULL;Parser=Parser->Next);
 	if (Parser==NULL)
 	{
@@ -109,8 +109,6 @@ int WINAPI SetProtocolPluginFcnImportFcn(HYAMNPROTOPLUGIN Plugin,PYAMN_PROTOIMPO
 
 	Parser->Plugin=Plugin;
 	Parser->Next=NULL;
-
-	LeaveCriticalSection(&PluginRegCS);
 	return 1;
 }
 
@@ -161,37 +159,34 @@ INT_PTR UnregisterProtocolPluginSvc(WPARAM wParam,LPARAM)
 {
 	HYAMNPROTOPLUGIN Plugin=(HYAMNPROTOPLUGIN)wParam;
 
-	EnterCriticalSection(&PluginRegCS);
+	mir_cslock lck(PluginRegCS);
 	UnregisterProtocolPlugin(Plugin);
-	LeaveCriticalSection(&PluginRegCS);
 	return 1;
-
 }
 
 INT_PTR UnregisterProtoPlugins()
 {
-	EnterCriticalSection(&PluginRegCS);
-//We remove protocols from the protocol list
+	mir_cslock lck(PluginRegCS);
+	// We remove protocols from the protocol list
 	while(FirstProtoPlugin != NULL)
 		UnregisterProtocolPlugin(FirstProtoPlugin->Plugin);
-	LeaveCriticalSection(&PluginRegCS);
 	return 1;
 }
 
 INT_PTR GetFileNameSvc(WPARAM wParam,LPARAM)
 {
-	TCHAR *FileName = new TCHAR[MAX_PATH];
+	wchar_t *FileName = new wchar_t[MAX_PATH];
 	if (FileName == NULL)
 		return NULL;
 
-	mir_sntprintf(FileName, MAX_PATH, _T("%s\\yamn-accounts.%s.%s.book"), UserDirectory, wParam, ProfileName);
+	mir_snwprintf(FileName, MAX_PATH, L"%s\\yamn-accounts.%s.%s.book", UserDirectory, wParam, ProfileName);
 	return (INT_PTR)FileName;
 }
 
 INT_PTR DeleteFileNameSvc(WPARAM wParam,LPARAM)
 {
-	if (( TCHAR* )wParam != NULL)
-		delete[] ( TCHAR* ) wParam;
+	if (( wchar_t* )wParam != NULL)
+		delete[] ( wchar_t* ) wParam;
 
 	return 0;
 }

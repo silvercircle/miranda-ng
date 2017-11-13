@@ -29,14 +29,18 @@
 Показывать уведомление, если не фильтры не определены
 [Attempt interval (ms)]
 Интервал попыток (мс)
+[Delete]
+Удалить
 ['Online' means:]
 "В сети" значит:
 [Filters]
 Фильтры
-[DN]
+[Move down]
 Вниз
-[UP]
+[Move up]
 Вверх
+[Add]
+Добавить
 [Rule editor]
 Редактор правил
 [Application name]

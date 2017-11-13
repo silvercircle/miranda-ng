@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-03 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -40,8 +40,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <win2k.h>
 #include <m_clist.h>
 #include <m_database.h>
-#include <m_system_cpp.h>
+#include <m_system.h>
 #include <m_langpack.h>
+#include <m_message.h>
 #include <m_avatars.h>
 #include <m_button.h>
 #include <m_options.h>
@@ -50,7 +51,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_addcontact.h>
 #include <m_timezones.h>
 #include <m_cluiframes.h>
-#include <m_clui.h>
 #include <m_icolib.h>
 #include <m_fontservice.h>
 #include <m_xstatus.h>
@@ -62,7 +62,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_cln_skinedit.h>
 
 #include "resource.h"
-#include "Version.h"
+#include "version.h"
 #include "extbackg.h"
 #include "clc.h"
 #include "config.h"
@@ -73,8 +73,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // shared vars
 extern HINSTANCE g_hInst;
 extern LONG g_cxsmIcon, g_cysmIcon;
+extern PLUGININFOEX pluginInfo;
 extern LIST<StatusItems_t> arStatusItems;
 extern ImageItem *g_glyphItem;
+extern HIMAGELIST hCListImages;
 
 extern CLIST_INTERFACE coreCli;
 

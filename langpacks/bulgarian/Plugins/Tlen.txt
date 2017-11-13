@@ -35,8 +35,6 @@
 Текст
 [Delay]
 Закъснение
-[&From Popup plugin]
-От приставката Popup
 [&Custom]
 Избор
 [P&ermanent]
@@ -103,6 +101,8 @@
 Уведомявания
 [Network]
 Мрежа
+[These changes will take effect the next time you connect to the Tlen network.]
+Промените ще бъдат осъществени при следващо свързване към мрежата Tlen.
 [%S mail]
 %s имейл
 [Enter password for %s]

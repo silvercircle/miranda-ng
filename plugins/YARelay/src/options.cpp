@@ -69,7 +69,7 @@ static INT_PTR CALLBACK OptionsFrameProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
 		SendDlgItemMessage(hwndDlg, IDC_COMBO_TO, CB_SETCURSEL, (WPARAM)idx, 0);
 
 		for (hContact = db_find_first(); hContact; hContact = db_find_next(hContact)) {
-			TCHAR *ptszNick = pcli->pfnGetContactDisplayName(hContact, 0);
+			wchar_t *ptszNick = pcli->pfnGetContactDisplayName(hContact, 0);
 			if (ptszNick){
 				idx = SendDlgItemMessage(hwndDlg, IDC_COMBO_TO, CB_ADDSTRING, 0, (LPARAM)ptszNick);
 				SendDlgItemMessage(hwndDlg, IDC_COMBO_TO, CB_SETITEMDATA, (WPARAM)idx, hContact);
@@ -172,7 +172,7 @@ static INT_PTR CALLBACK OptionsFrameProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
 				db_set_dw(NULL, "yaRelay", "ForwardFrom", (DWORD)hForwardFrom);
 				db_set_dw(NULL, "yaRelay", "ForwardTo", (DWORD)hForwardTo);
 				db_set_dw(NULL, "yaRelay", "ForwardOnStatus", iForwardOnStatus);
-				db_set_ts(NULL, "yaRelay", "ForwardTemplate", tszForwardTemplate);
+				db_set_ws(NULL, "yaRelay", "ForwardTemplate", tszForwardTemplate);
 				db_set_dw(NULL, "yaRelay", "Split", iSplit);
 				db_set_dw(NULL, "yaRelay", "SplitMaxSize", iSplitMaxSize);
 				db_set_dw(NULL, "yaRelay", "SendParts", iSendParts);
@@ -194,9 +194,9 @@ int OptionsInit(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
 	odp.position = -1;
-	odp.pszGroup = LPGEN("Message sessions");
+	odp.szGroup.a = LPGEN("Message sessions");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_SETTINGS);
-	odp.pszTitle = LPGEN("Messages forwarding");
+	odp.szTitle.a = LPGEN("Messages forwarding");
 	odp.pfnDlgProc = OptionsFrameProc;
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);

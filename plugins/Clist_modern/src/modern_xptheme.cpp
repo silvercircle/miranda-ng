@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include "modern_commonprototypes.h"
 #include "m_xpTheme.h"
 
 
@@ -18,7 +17,7 @@ static mir_cs xptCS;
 static void _sttXptCloseThemeData(XPTObject * xptObject)
 {
 	CloseThemeData(xptObject->hThemeHandle);
-	xptObject->hThemeHandle = NULL;
+	xptObject->hThemeHandle = nullptr;
 }
 
 static void _sttXptReloadThemeData(XPTObject * xptObject)

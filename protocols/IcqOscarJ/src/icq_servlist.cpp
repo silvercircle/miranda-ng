@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2010 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -65,6 +65,7 @@ void CIcqProto::servlistEndOperation(int operationCount)
 void __cdecl CIcqProto::servlistQueueThread(void *param)
 {
 	debugLogA("Server-List: Starting Update board.");
+	Thread_SetName("ICQ: servlistQueueThread");
 
 	int *queueState = (int*)param;
 	SleepEx(50, FALSE);
@@ -853,11 +854,7 @@ void CIcqProto::LoadServerIDs()
 	mir_snprintf(szModule, "%sSrvGroups", m_szModuleName);
 	GroupReserveIdsEnumParam param = { this, szModule };
 
-	DBCONTACTENUMSETTINGS dbces = { 0 };
-	dbces.pfnEnumProc = &GroupReserveIdsEnumProc;
-	dbces.szModule = szModule;
-	dbces.lParam = (LPARAM)&param;
-	CallService(MS_DB_CONTACT_ENUMSETTINGS, 0, (LPARAM)&dbces);
+	db_enum_settings(NULL, &GroupReserveIdsEnumProc, szModule, &param);
 
 	nGroups = nServerIDListCount - nStart;
 
@@ -1179,7 +1176,7 @@ int CIcqProto::IsServerGroupsDefined()
 
 		// flush obsolete linking data
 		mir_snprintf(szModule, "%sGroups", m_szModuleName);
-		CallService(MS_DB_MODULE_DELETE, 0, (LPARAM)szModule);
+		db_delete_module(0, szModule);
 
 		iRes = 0; // no groups defined, or older version
 	}
@@ -1192,9 +1189,8 @@ int CIcqProto::IsServerGroupsDefined()
 void CIcqProto::FlushSrvGroupsCache()
 {
 	char szModule[MAX_PATH];
-
 	mir_snprintf(szModule, "%sSrvGroups", m_szModuleName);
-	CallService(MS_DB_MODULE_DELETE, 0, (LPARAM)szModule);
+	db_delete_module(0, szModule);
 }
 
 // Look thru DB and collect all ContactIDs from a group
@@ -1279,12 +1275,7 @@ void CIcqProto::removeGroupPathLinks(WORD wGroupID)
 	pars[1] = (char*)wGroupID;
 	pars[2] = szModule;
 
-	DBCONTACTENUMSETTINGS dbces = { 0 };
-	dbces.pfnEnumProc = &GroupLinksEnumProc;
-	dbces.szModule = szModule;
-	dbces.lParam = (LPARAM)pars;
-
-	if (!CallService(MS_DB_CONTACT_ENUMSETTINGS, 0, (LPARAM)&dbces)) { // we found some links, remove them
+	if (!db_enum_settings(NULL, &GroupLinksEnumProc, szModule, pars)) { // we found some links, remove them
 		char** list = (char**)pars[0];
 		while (list) {
 			void* bet;
@@ -1376,16 +1367,16 @@ int CIcqProto::getCListGroupExists(const char *szGroup)
 		return 0;
 
 	size_t size = mir_strlen(szGroup) + 2;
-	TCHAR *tszGroup = (TCHAR*)_alloca(size * sizeof(TCHAR));
+	wchar_t *tszGroup = (wchar_t*)_alloca(size * sizeof(wchar_t));
 
-	if (utf8_to_tchar_static(szGroup, tszGroup, size))
+	if (make_unicode_string_static(szGroup, tszGroup, size))
 		for (int i = 1; TRUE; i++) {
-			TCHAR *tszGroupName = (TCHAR*)pcli->pfnGetGroupName(i, NULL);
+			wchar_t *tszGroupName = (wchar_t*)Clist_GroupGetName(i, NULL);
 			if (!tszGroupName)
 				break;
 
 			// we have found the group
-			if (!mir_tstrcmp(tszGroup, tszGroupName))
+			if (!mir_wstrcmp(tszGroup, tszGroupName))
 				return i;
 		}
 
@@ -1395,12 +1386,8 @@ int CIcqProto::getCListGroupExists(const char *szGroup)
 
 int CIcqProto::moveContactToCListGroup(MCONTACT hContact, const char *szGroup)
 {
-	HANDLE hGroup = Clist_CreateGroup(0, ptrT(mir_utf8decodeT(szGroup)));
-
-	if (ServiceExists(MS_CLIST_CONTACTCHANGEGROUP))
-		return CallService(MS_CLIST_CONTACTCHANGEGROUP, hContact, (LPARAM)hGroup);
-	else /// TODO: is this neccessary ?
-		return db_set_utf(hContact, "CList", "Group", szGroup);
+	MGROUP hGroup = Clist_GroupCreate(0, ptrW(mir_utf8decodeW(szGroup)));
+	return Clist_ContactChangeGroup(hContact, hGroup);
 }
 
 
@@ -1519,7 +1506,6 @@ static int SrvGroupNamesEnumProc(const char *szSetting, LPARAM lParam)
 char* CIcqProto::getServListUniqueGroupName(const char *szGroupName, int bAlloced)
 {
 	// enum ICQSrvGroups and create unique name if neccessary
-	DBCONTACTENUMSETTINGS dbces;
 	char szModule[MAX_PATH];
 	char *pars[4];
 	int uniqueID = 1;
@@ -1537,11 +1523,7 @@ char* CIcqProto::getServListUniqueGroupName(const char *szGroupName, int bAlloce
 		pars[1] = NULL;
 		pars[2] = szNewGroupName ? szNewGroupName : szGroupNameBase;
 		pars[3] = szModule;
-
-		dbces.pfnEnumProc = &SrvGroupNamesEnumProc;
-		dbces.szModule = szModule;
-		dbces.lParam = (LPARAM)pars;
-		CallService(MS_DB_CONTACT_ENUMSETTINGS, 0, (LPARAM)&dbces);
+		db_enum_settings(NULL, &SrvGroupNamesEnumProc, szModule, pars);
 
 		if (pars[1]) { // the groupname already exists, create another
 			SAFE_FREE((void**)&szNewGroupName);
@@ -2268,20 +2250,20 @@ int CIcqProto::ServListDbSettingChanged(WPARAM hContact, LPARAM lParam)
 	if (!icqOnline() || !m_bSsiEnabled || bIsSyncingCL)
 		return 0;
 
-	if (!mir_strcmp(cws->szModule, "CList")) {
+	if (!strcmp(cws->szModule, "CList")) {
 		// Has contact been renamed?
-		if (!mir_strcmp(cws->szSetting, "MyHandle") && getByte("StoreServerDetails", DEFAULT_SS_STORE))
+		if (!strcmp(cws->szSetting, "MyHandle") && getByte("StoreServerDetails", DEFAULT_SS_STORE))
 			servlistUpdateContact(hContact); // Update contact's details in server-list
 
 		// Has contact been moved to another group?
-		if (!mir_strcmp(cws->szSetting, "Group") && getByte("StoreServerDetails", DEFAULT_SS_STORE)) {
+		if (!strcmp(cws->szSetting, "Group") && getByte("StoreServerDetails", DEFAULT_SS_STORE)) {
 			char* szNewGroup = getContactCListGroup(hContact); // Read group from DB
 			SAFE_FREE(&szNewGroup);
 		}
 	}
-	else if (!mir_strcmp(cws->szModule, "UserInfo")) {
+	else if (!strcmp(cws->szModule, "UserInfo")) {
 		// Update contact's details in server-list
-		if (!mir_strcmp(cws->szSetting, "MyNotes") && getByte("StoreServerDetails", DEFAULT_SS_STORE))
+		if (!strcmp(cws->szSetting, "MyNotes") && getByte("StoreServerDetails", DEFAULT_SS_STORE))
 			servlistUpdateContact(hContact);
 	}
 
@@ -2349,7 +2331,7 @@ int CIcqProto::ServListCListGroupChange(WPARAM hContact, LPARAM lParam)
 
 	if (hContact == NULL) { // change made to group
 		if (grpchg->pszNewName == NULL && grpchg->pszOldName != NULL) { // group removed
-			char *szOldName = tchar_to_utf8(grpchg->pszOldName);
+			char *szOldName = make_utf8_string(grpchg->pszOldName);
 			WORD wGroupId = getServListGroupLinkID(szOldName);
 
 			if (wGroupId) { // the group is known, remove from server
@@ -2359,8 +2341,8 @@ int CIcqProto::ServListCListGroupChange(WPARAM hContact, LPARAM lParam)
 			SAFE_FREE(&szOldName);
 		}
 		else if (grpchg->pszNewName != NULL && grpchg->pszOldName != NULL) { // group renamed
-			char *szNewName = tchar_to_utf8(grpchg->pszNewName);
-			char *szOldName = tchar_to_utf8(grpchg->pszOldName);
+			char *szNewName = make_utf8_string(grpchg->pszNewName);
+			char *szOldName = make_utf8_string(grpchg->pszOldName);
 			WORD wGroupId = getServListGroupLinkID(szOldName);
 
 			if (wGroupId) { // group is known, rename on server
@@ -2372,7 +2354,7 @@ int CIcqProto::ServListCListGroupChange(WPARAM hContact, LPARAM lParam)
 	}
 	else { // change to contact
 		if (IsICQContact(hContact)) { // our contact, fine move on the server as well
-			char *szNewName = grpchg->pszNewName ? tchar_to_utf8(grpchg->pszNewName) : NULL;
+			char *szNewName = grpchg->pszNewName ? make_utf8_string(grpchg->pszNewName) : NULL;
 			servlistMoveContact(hContact, szNewName);
 			SAFE_FREE(&szNewName);
 		}

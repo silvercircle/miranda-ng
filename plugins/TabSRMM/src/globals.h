@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
-// Copyright (ñ) 2012-15 Miranda NG project,
+// Copyright (ñ) 2012-17 Miranda NG project,
 // Copyright (c) 2000-09 Miranda ICQ/IM project,
 // all portions of this codebase are copyrighted to the people
 // listed in contributors.txt.
@@ -32,11 +32,10 @@
 
 struct TSplitterBroadCast {
 	TContainerData *pSrcContainer;
-	TWindowData  *pSrcDat;
+	CTabBaseDlg *pSrcDat;
 	LONG pos, pos_chat;
 	LONG off_chat, off_im;
 	LPARAM lParam;
-	BYTE bSync;
 };
 
 typedef BOOL(WINAPI *pfnSetMenuInfo)(HMENU hmenu, LPCMENUINFO lpcmi);
@@ -68,7 +67,7 @@ public:
 	HWND        g_hwndHotkeyHandler;
 	HICON       g_iconIn, g_iconOut, g_iconErr, g_iconContainer, g_iconStatus;
 	HICON       g_iconOverlayDisabled, g_iconOverlayEnabled, g_iconClock;
-	HCURSOR     hCurSplitNS, hCurSplitWE, hCurHyperlinkHand;
+	HCURSOR     hCurSplitNS, hCurSplitWE;
 	HBITMAP     g_hbmUnknown;
 	bool        g_SmileyAddAvail, g_WantIEView, g_bPopupAvail, g_WantHPP;
 	HIMAGELIST  g_hImageList;
@@ -94,9 +93,9 @@ public:
 	bool        m_bStatusOnTabs;
 	bool        m_bLogStatusChanges;
 	bool        m_bUseDividers;
+	bool        m_bDividersUsePopupConfig;
 	bool        m_bSoundOnTyping;
 	bool        m_bAllowOfflineMultisend;
-	bool        m_bDividersUsePopupConfig;
 	bool        m_bFlashOnClist;
 	bool        m_bAlwaysFullToolbarWidth;
 	bool        m_bIdleDetect;
@@ -113,7 +112,6 @@ public:
 	double      m_DPIscaleX;
 	double      m_DPIscaleY;
 	HBITMAP     m_hbmMsgArea;
-	BYTE        m_iButtonsBarGap;
 	BYTE        m_WinVerMajor;
 	BYTE        m_WinVerMinor;
 	bool        m_bIsVista, m_bIsWin7;
@@ -138,7 +136,6 @@ public:
 	COLORREF    m_ipBackgroundGradient;
 	COLORREF    m_ipBackgroundGradientHigh;
 	COLORREF    m_tbBackgroundHigh, m_tbBackgroundLow, m_fillColor, m_cRichBorders, m_genericTxtColor;
-	HANDLE      m_event_MsgWin, m_event_MsgPopup, m_event_WriteEvent;
 	HGENMENU    m_hMenuItem;
 	BYTE        m_useAeroPeek;
 
@@ -148,7 +145,7 @@ public:
 	TSplitterBroadCast lastSPlitterPos;
 	TContainerSettings globalContainerSettings;
 
-	static TCHAR* m_default_container_name;
+	static wchar_t* m_default_container_name;
 
 	static void logStatusChange(WPARAM wParam, const CContactCache *c);
 

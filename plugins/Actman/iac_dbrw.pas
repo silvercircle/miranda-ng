@@ -213,9 +213,9 @@ begin
     if (asbuf[0]='*') or (asbuf[StrLen(asbuf)-1]='*') then
       DBDeleteGroup(hContact,ambuf,asbuf)
     else if asbuf[0]=#0 then
-      DBDeleteModule(hContact,ambuf)
+      db_delete_module(hContact,ambuf)
     else
-      DBDeleteSetting(hContact,ambuf,asbuf);
+      db_unset(hContact,ambuf,asbuf);
   end
   else
   begin

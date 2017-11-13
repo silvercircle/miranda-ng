@@ -2,16 +2,15 @@
 ;============================================================
 ;  File: Popup.dll
 ;  Plugin: Popup plus
-;  Version: 2.1.1.11
+;  Version: 2.1.1.12
 ;  Authors: MPK, Merlin_de (Luca Santarelli, Victor Pavlychko)
 ;============================================================
 [Provides popup notification services for different plugins.]
 Падае сэрвіс усплывальных вокнаў для розных плагінаў.
-;file \plugins\Popup\res\resource.rc
-[Content && Style]
+[Content and Style]
 Стыль вокнаў
-[Go to Customize > Fonts && Colors for fonts and colors options]
-Налады шрыфтоў і колеры: Тонкая налада>Шрыфты і колеры
+[Go to Customize -> Fonts and Colors for fonts and colors options]
+Налады шрыфтоў і колеры: "Тонкая налада -> Шрыфты і колеры"
 [Miscellaneous]
 Іншае
 [Effects]
@@ -112,6 +111,8 @@ History++ для гісторыі вокнаў
 Звычайныя дзеянні толькі ў кантактаў
 [Don't close popups on default actions]
 Не зачыняць вокны агульных дзеянняў
+[Size and position]
+
 [Use large icons]
 Вялікія значкі
 [Popup actions will be displayed as:]
@@ -148,8 +149,8 @@ History++ для гісторыі вокнаў
 Адключыць, калі глабальны статус...
 [Disable when relevant protocol's status is...]
 Адключыць, калі статус адпавядае пратаколу...
-[Colors can be configured in\r\nCustomize > Fonts and colors]
-Настроіць колеры ў\r\nТонкая налада > Шрыфты і колеры
+[Colors can be configured in\r\nCustomize -> Fonts and colors]
+Настроіць колеры ў\r\n"Тонкая налада -> Шрыфты і колеры"
 [More...]
 Яшчэ...
 [Disable if message window is open]
@@ -200,7 +201,6 @@ History++ для гісторыі вокнаў
 Поўны экран
 [Debug]
 Адладка
-;file \plugins\Popup\src\actions.cpp
 [Quick reply]
 Хуткі адказ
 [Send message]
@@ -221,9 +221,10 @@ History++ для гісторыі вокнаў
 няма дзеяння
 [Action]
 Дзеянне
-;file \plugins\Popup\src\config.cpp
 [The Jabberwocky]
 Пустаслоўе
+[`Twas brillig, and the slithy toves\r\nDid gyre and gimble in the wabe:\r\nAll mimsy were the borogoves,\r\nAnd the mome raths outgrabe.\r\n\t[b][i]Lewis Carroll, 1855[/i][/b]]
+
 [Test preview for the popup plugin settings. This is supposed to be long enough not to fit in one line...]
 Тэставы прадпрагляд для налад плагіна ўсплывальных вокнаў. Загаловак досыць доўгі...
 [This is a special test preview for the popup plugin settings. The text and title are quite long so you can tweak your skin and plugin settings to best fit your needs :)]
@@ -234,8 +235,8 @@ History++ для гісторыі вокнаў
 Гэта заўвага
 [This is an error message]
 Гэта паведамленне пра памылку
-;file \plugins\Popup\src\effects.cpp
-;file \plugins\Popup\src\font.h
+[Square fading]
+
 [Popups]
 Усплывальныя вокны
 [Title]
@@ -256,12 +257,10 @@ History++ для гісторыі вокнаў
 Падкрэсленне загалоўка
 [Avatar border]
 Мяжа аватара
-;file \plugins\Popup\src\history.cpp
 [Popup History is disabled]
 Гісторыя ўсплывальных вокнаў адключана
 [Popup History message]
 Гісторыя ўсплывальных вокнаў
-;file \plugins\Popup\src\icons.cpp
 [Popups are enabled]
 Вокны ўключаны
 [Popups are disabled]
@@ -294,7 +293,6 @@ History++ для гісторыі вокнаў
 Замацаванае
 [Add contact permanently]
 Дадаць кантакт заўсёды
-;file \plugins\Popup\src\main.cpp
 [Classes]
 Класы
 [Actions]
@@ -311,15 +309,16 @@ History++ для гісторыі вокнаў
 Адключыць Вокны
 [Popup Plus]
 Вокны
-;file \plugins\Popup\src\opt_adv.cpp
+[Error: I could not register the Popup Window class.\r\nThe plugin will not operate.]
+
 [No effect]
 Без эфекту
 [Fade in/out]
 Плыўны паказ
-;file \plugins\Popup\src\opt_class.cpp
 [CLASS Plugins]
 Гурты плагінаў
-;file \plugins\Popup\src\opt_gen.cpp
+[Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn!]
+
 [Offline]
 Адключаны
 [Online]
@@ -328,11 +327,11 @@ History++ для гісторыі вокнаў
 Нябачны
 [Away]
 Адсутнічаю
-[NA]
-Недасяжны
+[Not available]
+Недаступны
 [Occupied]
 Заняты
-[DND]
+[Do not disturb]
 Не турбаваць
 [Free for chat]
 Вольны
@@ -360,9 +359,12 @@ History++ для гісторыі вокнаў
 Статус пратаколу
 [You cannot specify a value lower than %d and higher than %d.]
 Значэнне меншае %d ці большае %d не дапушчаецца.
-[Popup Plus Warning]
-Заўвага Popup Plus
-;file \plugins\Popup\src\opt_skins.cpp
+['Reorder popups' option is currently disabled.\r\nThis may cause misaligned popups when used with\r\navatars and text replacement (mainly NewXstatusNotify).\r\n\r\nDo you want to enable popup reordering now?\r\n]
+
+[Popup plus warning]
+Заўвага Popup plus
+[Failed to register %s class.]
+
 [Skin preview]
 Прагляд скіна
 [Just take a look at this skin... ;)]
@@ -383,13 +385,14 @@ History++ для гісторыі вокнаў
 Глабальныя налады
 [Refresh List]
 Абнавіць спіс
-;file \plugins\Popup\src\popup_thread.cpp
-;file \plugins\Popup\src\popup_wnd2.cpp
-;file \plugins\Popup\src\services.cpp
+[Failed to GetClassInfoExW from EDIT class.]
+
+[Failed to register custom edit box window class.\r\n\r\ncbSize: %i\r\nstyle: %p\r\nlpfnWndProc: %i\r\ncbClsExtra: %i\r\ncbWndExtra: %i\r\nhInstance: %i\r\nhIcon: %i\r\nhCursor: %i\r\nhbrBackground: %i\r\nlpszMenuName: %s\r\nlpszClassName: %s\r\nhIconSm: %i\r\n]
+
 [Notify]
 Абвестка
-;file \plugins\Popup\src\skin.cpp
-;file \plugins\Popup\src\srmm_menu.cpp
+[The skin you are trying to load is designed\r\nfor newer version of Popup plus. And will not\r\ndisplay properly.\r\n\r\nPlease choose another skin.]
+
 [Auto]
 Аўта
 [Favorite]
@@ -398,6 +401,8 @@ History++ для гісторыі вокнаў
 Заблакаваць
 [Popup Mode: Auto]
 Рэжым усплывальных вокнаў: па змаўчанні
+[Popup Mode: Favorite]
+
 [Popup Mode: Ignore fullscreen]
 Рэжым усплывальных вокнаў: ігнараваць поўнаэкранныя прыкладанні
 [Popup Mode: Block contact]

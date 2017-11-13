@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -30,13 +30,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define PLUGIN_MAKE_VERSION(a, b, c, d)   (((((DWORD)(a))&0xFF)<<24)|((((DWORD)(b))&0xFF)<<16)|((((DWORD)(c))&0xFF)<<8)|(((DWORD)(d))&0xFF))
 #define MAXMODULELABELLENGTH 64
 
-#if defined(_UNICODE)
-	#define UNICODE_AWARE 0x0001
-#else
-	#define UNICODE_AWARE 0x0000
-#endif
-
-#define STATIC_PLUGIN    0x0002
+#define UNICODE_AWARE 0x0001
+#define STATIC_PLUGIN 0x0002
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // The UUID structure below is used to for plugin UUID's and module type definitions
@@ -49,7 +44,15 @@ struct MUUID
 	unsigned char d[8];
 };
 
+__forceinline bool operator==(const MUUID &p1, const MUUID &p2)
+{	return memcmp(&p1, &p2, sizeof(MUUID)) == 0;
+}
+__forceinline bool operator!=(const MUUID &p1, const MUUID &p2)
+{	return memcmp(&p1, &p2, sizeof(MUUID)) != 0;
+}
+
 MIR_APP_DLL(int) GetPluginLangId(const MUUID &uuid, int hLangpack);
+MIR_APP_DLL(int) IsPluginLoaded(const MUUID &uuid);
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Used to define the end of the MirandaPluginInterface list
@@ -78,7 +81,6 @@ MIR_APP_DLL(int) GetPluginLangId(const MUUID &uuid, int hLangpack);
 
 #define MIID_DATABASE       {0xae77fd33, 0xe484, 0x4dc7, {0x8c, 0xbc, 0x09, 0x9f, 0xed, 0xcc, 0xcf, 0xdd}}
 #define MIID_CLIST          {0x9d8da8bf, 0x665b, 0x4908, {0x9e, 0x61, 0x9f, 0x75, 0x98, 0xae, 0x33, 0x0e}}
-#define MIID_CHAT           {0x23576a43, 0x3a26, 0x4357, {0x9b, 0x1b, 0x4a, 0x71, 0x9e, 0x42, 0x5d, 0x48}}
 #define MIID_SRMM           {0x58c7eea6, 0xf9db, 0x4dd9, {0x80, 0x36, 0xae, 0x80, 0x2b, 0xc0, 0x41, 0x4c}}
 #define MIID_IMPORT         {0x5f3bcad4, 0x75f8, 0x476e, {0xb3, 0x6b, 0x2b, 0x30, 0x70, 0x32, 0x49, 0x0c}}
 #define MIID_TESTPLUGIN     {0x53b974f4, 0x3c74, 0x4dba, {0x8f, 0xc2, 0x6f, 0x92, 0xfe, 0x01, 0x3b, 0x8c}}
@@ -135,5 +137,11 @@ struct PLUGININFOEX
 // lParam = HINSTANCE of the plugin to be unloaded
 
 #define ME_SYSTEM_MODULEUNLOAD "Miranda/System/UnloadModule"
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// initializes the plugin-specific translation context  v0.10.0+
+// always returns 0
+
+EXTERN_C MIR_CORE_DLL(void) mir_getLP(const PLUGININFOEX *pInfo, int *_hLang = &hLangpack);
 
 #endif // M_NEWPLUGINAPI_H__

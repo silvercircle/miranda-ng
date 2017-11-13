@@ -2,10 +2,11 @@
 ;============================================================
 ;  File: Steam.dll
 ;  Plugin: Steam protocol
-;  Version: 0.11.4.2
+;  Version: 0.11.6.1
 ;  Authors: Miranda NG Team, Robert Pösel
 ;============================================================
-;file \protocols\Steam\res\Resource.rc
+[Steam protocol support for Miranda NG.]
+
 [Username:]
 Карыстач:
 [Password:]
@@ -18,43 +19,77 @@
 Кантакты
 [Use bigger avatars]
 Вялікія аватары
+[Message sessions]
+Гутаркі
+[Show chat state events (i.e., user closed chat session)]
+
+[Captcha]
+
 [Cancel]
 Скасаваць
+[As an added account security measure, you'll need to grant access by entering the special code we've just sent to your email address.]
+
+[Go to email domain]
+
 [Block]
 Заблакаваць
 [Enter password]
 Увядзіце пароль
 [Save password]
 Захаваць пароль
-;file \protocols\Steam\src\main.cpp
-;file \protocols\Steam\src\steam_contacts.cpp
+[Enter the password to continue.]
+
+[As an added account security measure, you'll need to grant access by entering the SMS code we've just sent to your mobile phone.]
+
+[Steam game]
+
+[Looking to play]
+
+[Looking to trade]
+
+[ (Non-Steam)]
+
+[ on server %s]
+
 [Playing]
 Грае
-;file \protocols\Steam\src\steam_dialogs.cpp
+[%s has been removed from your contact list]
+
+[%s is back in your contact list]
+
+[%s has added you to his or her Friend List]
+
 [Fatal error, image services not found. Avatar services will be disabled.]
 Фатальная памылка, служба малюнкаў не знойдзена. Служба аватараў будзе адключана.
 [Avatar Service]
 Служба аватар
-;file \protocols\Steam\src\steam_events.cpp
 [Network]
 Сеціва
-;file \protocols\Steam\src\steam_login.cpp
-;file \protocols\Steam\src\steam_menus.cpp
+[Blocked contacts]
+
+[Cannot obtain connection token.]
+
+[Unknown login error.]
+
+[Steam menu chooser]
+
 [Request authorization]
 Запытаць аўтарызацыю
-;file \protocols\Steam\src\steam_messages.cpp
+[Join to game]
+
 [Unknown error]
 Невядомая памылка
-;file \protocols\Steam\src\steam_options.cpp
 [Name]
 Імя
-;file \protocols\Steam\src\steam_proto.cpp
 [Protocols]
 Пратаколы
 [Protocol icon]
 Абразок пратаколу
+[Gaming icon]
+
 [%s connection]
 Злучэнне %s
 [You cannot send messages when you are offline.]
 Вы не можаце адпраўляць паведамленні без далучэння.
-;file \protocols\Steam\src\steam_xstatus.cpp
+[closed chat session]
+зачыніў вакно чата

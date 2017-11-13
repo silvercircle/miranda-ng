@@ -1,7 +1,7 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
 
-Copyright (c) 2012-2014 Miranda NG Team
+Copyright (c) 2012-2017 Miranda NG Team
 Copyright (c) 2006-2012 Boris Krasnovskiy.
 Copyright (c) 2003-2005 George Hazan.
 Copyright (c) 2002-2003 Richard Hughes (original version).
@@ -27,16 +27,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 int ThreadData::send(const char data[], size_t datalen)
 {
-	NETLIBBUFFER nlb = { (char*)data, (int)datalen, 0 };
-
 	resetTimeout();
 
-	if (proto->usingGateway && !(mType == SERVER_FILETRANS || mType == SERVER_P2P_DIRECT)) {
+	if (proto->usingGateway) {
 		mGatewayTimeout = 2;
-		CallService(MS_NETLIB_SETPOLLINGTIMEOUT, WPARAM(s), mGatewayTimeout);
+		Netlib_SetPollingTimeout(s, mGatewayTimeout);
 	}
 
-	int rlen = CallService(MS_NETLIB_SEND, (WPARAM)s, (LPARAM)&nlb);
+	int rlen = Netlib_Send(s, data, (int)datalen);
 	if (rlen == SOCKET_ERROR) {
 		// should really also check if sendlen is the same as datalen
 		proto->debugLogA("Send failed: %d", WSAGetLastError());
@@ -54,76 +52,36 @@ void ThreadData::resetTimeout(bool term)
 
 bool ThreadData::isTimeout(void)
 {
+	if (mWaitPeriod >= clock())
+		return false;
+
 	bool res = false;
-
-	if (mWaitPeriod >= clock()) return false;
-
-	if (mIsMainThread) {
+	if (mIsMainThread)
 		res = !proto->usingGateway;
-	}
-	else if (mJoinedContactsWLID.getCount() <= 1 || mChatID[0] == 0) {
-#ifdef OBSOLETE
-		MCONTACT hContact = getContactHandle();
-#endif
-		if (mJoinedContactsWLID.getCount() == 0 || termPending)
-			res = true;
-#ifdef OBSOLETE
-		else if (proto->p2p_getThreadSession(hContact, mType) != NULL)
-			res = false;
-		else if (mType == SERVER_SWITCHBOARD) {
-			res = MSN_MsgWndExist(hContact);
-			if (res) {
-				WORD status = proto->getWord(hContact, "Status", ID_STATUS_OFFLINE);
-				if ((status == ID_STATUS_OFFLINE || status == ID_STATUS_INVISIBLE || proto->m_iStatus == ID_STATUS_INVISIBLE))
-					res = false;
-			}
-		}
-#endif
-		else
-			res = true;
-	}
+	else if (mJoinedContactsWLID.getCount() <= 1 || mChatID[0] == 0)
+		res = true;
 
 	if (res) {
-		bool sbsess = mType == SERVER_SWITCHBOARD;
-
-		proto->debugLogA("Dropping the idle %s due to inactivity", sbsess ? "switchboard" : "p2p");
-		if (!sbsess || termPending) return true;
-
-#ifdef OBSOLETE
-		if (proto->getByte("EnableSessionPopup", 0)) {
-			MCONTACT hContact = NULL;
-			if (mJoinedContactsWLID.getCount())
-				hContact = proto->MSN_HContactFromEmail(mJoinedContactsWLID[0]);
-			else if (mInitialContactWLID)
-				hContact = proto->MSN_HContactFromEmail(mInitialContactWLID);
-
-			if (hContact)
-				proto->MSN_ShowPopup(hContact, TranslateT("Chat session dropped due to inactivity"), 0);
-		}
-
-		sendTerminate();
-		resetTimeout(true);
-#endif
+		proto->debugLogA("Dropping the idle p2p due to inactivity");
+		if (termPending)
+			return true;
 	}
-	else
-		resetTimeout();
+	else resetTimeout();
 
 	return false;
 }
 
 int ThreadData::recv(char* data, size_t datalen)
 {
-	NETLIBBUFFER nlb = { data, (int)datalen, 0 };
-
 	if (!proto->usingGateway) {
 		resetTimeout();
-		NETLIBSELECT nls = { 0 };
-		nls.cbSize = sizeof(nls);
+
+		NETLIBSELECT nls = {};
 		nls.dwTimeout = 1000;
 		nls.hReadConns[0] = s;
 
 		for (;;) {
-			int ret = CallService(MS_NETLIB_SELECT, 0, (LPARAM)&nls);
+			int ret = Netlib_Select(&nls);
 			if (ret < 0) {
 				proto->debugLogA("Connection abortively closed, error %d", WSAGetLastError());
 				return ret;
@@ -137,7 +95,7 @@ int ThreadData::recv(char* data, size_t datalen)
 	}
 
 LBL_RecvAgain:
-	int ret = CallService(MS_NETLIB_RECV, (WPARAM)s, (LPARAM)&nlb);
+	int ret = Netlib_Recv(s, data, (int)datalen);
 	if (ret == 0) {
 		proto->debugLogA("Connection closed gracefully");
 		return 0;
@@ -153,13 +111,13 @@ LBL_RecvAgain:
 			if (sessionClosed || isTimeout()) return 0;
 			if ((mGatewayTimeout += 2) > 20) mGatewayTimeout = 20;
 
-			CallService(MS_NETLIB_SETPOLLINGTIMEOUT, WPARAM(s), mGatewayTimeout);
+			Netlib_SetPollingTimeout(s, mGatewayTimeout);
 			goto LBL_RecvAgain;
 		}
 		else {
 			resetTimeout();
 			mGatewayTimeout = 1;
-			CallService(MS_NETLIB_SETPOLLINGTIMEOUT, WPARAM(s), mGatewayTimeout);
+			Netlib_SetPollingTimeout(s, mGatewayTimeout);
 		}
 	}
 

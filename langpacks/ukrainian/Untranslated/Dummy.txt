@@ -1,0 +1,6 @@
+﻿[Facebook ID]
+[Live ID]
+[Steam ID]
+[Tox ID]
+[VKontakte ID]
+[WhatsApp ID]

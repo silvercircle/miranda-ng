@@ -2,8 +2,9 @@
 
 int	hLangpack;
 HINSTANCE g_hInstance;
-TCHAR	*profilePath;
+wchar_t	*profilePath;
 HANDLE	hFolder;
+char g_szMirVer[100];
 
 PLUGININFOEX pluginInfo = {
 	sizeof(PLUGININFOEX),
@@ -33,22 +34,22 @@ static INT_PTR ABService(WPARAM, LPARAM)
 
 static INT_PTR DBSaveAs(WPARAM, LPARAM)
 {
-	TCHAR fname_buff[MAX_PATH], tszFilter[200];
-	OPENFILENAME ofn = { 0 };
-	CallService(MS_DB_GETPROFILENAMET, _countof(fname_buff), (LPARAM)fname_buff);
+	wchar_t fname_buff[MAX_PATH], tszFilter[200];
+	Profile_GetNameW(_countof(fname_buff), fname_buff);
 
-	mir_sntprintf(tszFilter, _T("%s (*.dat)%c*.dat%c%s (*.zip)%c*.zip%c%s (*.*)%c*%c"),
+	mir_snwprintf(tszFilter, L"%s (*.dat)%c*.dat%c%s (*.zip)%c*.zip%c%s (*.*)%c*%c",
 		TranslateT("Miranda NG databases"), 0, 0,
 		TranslateT("Compressed Miranda NG databases"), 0, 0,
 		TranslateT("All files"), 0, 0);
 
+	OPENFILENAME ofn = { 0 };
 	ofn.lStructSize = sizeof(ofn);
 	ofn.lpstrFile = fname_buff;
 	ofn.nMaxFile = _countof(fname_buff);
 	ofn.Flags = OFN_NOREADONLYRETURN | OFN_OVERWRITEPROMPT;
 	ofn.lpstrFilter = tszFilter;
 	ofn.nFilterIndex = 1;
-	ofn.lpstrDefExt = _T("dat");
+	ofn.lpstrDefExt = L"dat";
 
 	if (GetSaveFileName(&ofn))
 		BackupStart(fname_buff);
@@ -64,7 +65,7 @@ static int FoldersGetBackupPath(WPARAM, LPARAM)
 static int ModulesLoad(WPARAM, LPARAM)
 {
 	CMenuItem mi;
-	mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Database"), 500100000);
+	mi.root = Menu_CreateRoot(MO_MAIN, LPGENW("Database"), 500100000);
 
 	SET_UID(mi, 0x1439b1db, 0x7d95, 0x495b, 0xbf, 0x5, 0x3d, 0x21, 0xc1, 0xeb, 0xf7, 0x58);
 	mi.name.a = LPGEN("Backup profile");
@@ -80,12 +81,13 @@ static int ModulesLoad(WPARAM, LPARAM)
 	mi.position = 500100001;
 	Menu_AddMainMenuItem(&mi);
 
-	profilePath = Utils_ReplaceVarsT(_T("%miranda_userdata%"));
+	profilePath = Utils_ReplaceVarsW(L"%miranda_userdata%");
 
 	if (hFolder = FoldersRegisterCustomPathT(LPGEN("Database backups"), LPGEN("Backup folder"), DIR SUB_DIR)) {
 		HookEvent(ME_FOLDERS_PATH_CHANGED, FoldersGetBackupPath);
 		FoldersGetBackupPath(0, 0);
 	}
+	options.use_dropbox = (BOOL)(db_get_b(0, "AutoBackups", "UseDropbox", 0) && ServiceExists(MS_DROPBOX_UPLOAD));
 
 	if (options.backup_types & BT_START)
 		BackupStart(NULL);
@@ -111,6 +113,8 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfo);
+
+	Miranda_GetVersionText(g_szMirVer, sizeof(g_szMirVer));
 
 	HookEvent(ME_SYSTEM_PRESHUTDOWN, PreShutdown);
 	HookEvent(ME_SYSTEM_MODULESLOADED, ModulesLoad);

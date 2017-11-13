@@ -6,7 +6,7 @@ namespace
 
 	tstring get_log_file_name()
 	{
-		return CreateFilePath(_T("Quotes.log"));
+		return CreateFilePath(L"Quotes.log");
 	}
 
 	bool is_log_enabled()
@@ -24,20 +24,9 @@ namespace
 		tofstream file(rsFileName.c_str(), std::ios::ate | std::ios::app);
 		if (file.good())
 		{
-			TCHAR szTime[20];
-			// 			TCHAR sz[10000+1];
+			wchar_t szTime[20];
 			_tstrtime_s(szTime);
-			file << szTime << _T(" ================================>\n") << rsMsg << _T("\n\n");
-
-			// 			size_t cBytes = rsMsg.size();
-			// 			const TCHAR* p = rsMsg.c_str();
-			// 			for(size_t c = 0;c < cBytes;c += 10000,p+=10000)
-			// 			{
-			// 				_tcsncpy_s(sz,p,10000);
-			// 				file << sz;
-			// 			}
-			// 			
-			// 			file << "\n\n";
+			file << szTime << L" ================================>\n" << rsMsg << L"\n\n";
 		}
 	}
 }

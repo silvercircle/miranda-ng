@@ -59,7 +59,6 @@ using std::fstream;
 #include <m_database.h>
 #include <m_options.h>
 #include <m_langpack.h>
-#include <m_clui.h>
 #include <m_skin.h>
 #include <m_jabber.h>
 #include <m_icq.h>
@@ -68,13 +67,14 @@ using std::fstream;
 #include <m_cluiframes.h>
 #include <m_icolib.h>
 #include <m_extraicons.h>
+#include <m_string.h>
 #include <win2k.h>
 
 #include <m_metacontacts.h>
 
 //internal
 #include "resource.h"
-#include "Version.h"
+#include "version.h"
 #include "constants.h"
 #include "log.h"
 #include "globals.h"

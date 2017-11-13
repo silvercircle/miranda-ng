@@ -38,14 +38,14 @@ struct
 {
 	DLGPROC dlgProc;
 	DWORD dlgId;
-	TCHAR *tabName;
+	wchar_t *tabName;
 }
 static tabPages[] =
 {
-	{ IEViewGeneralOptDlgProc, IDD_GENERAL_OPTIONS, LPGENT("General") },
-	{ IEViewSRMMOptDlgProc, IDD_SRMM_OPTIONS, LPGENT("Message Log") },
-	{ IEViewGroupChatsOptDlgProc, IDD_SRMM_OPTIONS, LPGENT("Group chats") },
-	{ IEViewHistoryOptDlgProc, IDD_SRMM_OPTIONS, LPGENT("History") }
+	{ IEViewGeneralOptDlgProc, IDD_GENERAL_OPTIONS, LPGENW("General") },
+	{ IEViewSRMMOptDlgProc, IDD_SRMM_OPTIONS, LPGENW("Message Log") },
+	{ IEViewGroupChatsOptDlgProc, IDD_SRMM_OPTIONS, LPGENW("Group chats") },
+	{ IEViewHistoryOptDlgProc, IDD_SRMM_OPTIONS, LPGENW("History") }
 };
 
 static LPARAM GetItemParam(HWND hwndTreeView, HTREEITEM hItem)
@@ -360,10 +360,10 @@ static void RefreshIcons()
 	else {
 		hImageList = ImageList_Create(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), ILC_MASK | ILC_COLOR32, 0, 0);
 	}
-	ImageList_AddIcon(hImageList, (HICON)LoadImage(hInstance, MAKEINTRESOURCE(IDI_GROUP_OFF), IMAGE_ICON, 0, 0, 0));
-	ImageList_AddIcon(hImageList, (HICON)LoadImage(hInstance, MAKEINTRESOURCE(IDI_GROUP_ON), IMAGE_ICON, 0, 0, 0));
-	ImageList_AddIcon(hImageList, (HICON)LoadImage(hInstance, MAKEINTRESOURCE(IDI_RTL_OFF), IMAGE_ICON, 0, 0, 0));
-	ImageList_AddIcon(hImageList, (HICON)LoadImage(hInstance, MAKEINTRESOURCE(IDI_RTL_ON), IMAGE_ICON, 0, 0, 0));
+	ImageList_AddIcon(hImageList, IcoLib_GetIconByHandle(iconList[3].hIcolib));
+	ImageList_AddIcon(hImageList, IcoLib_GetIconByHandle(iconList[2].hIcolib));
+	ImageList_AddIcon(hImageList, IcoLib_GetIconByHandle(iconList[1].hIcolib));
+	ImageList_AddIcon(hImageList, IcoLib_GetIconByHandle(iconList[0].hIcolib));
 }
 
 static void RefreshProtoList(HWND hwndDlg, int mode, bool protoTemplates)
@@ -386,7 +386,7 @@ static void RefreshProtoList(HWND hwndDlg, int mode, bool protoTemplates)
 		else
 			CallProtoService(proto->getProtocolName(), PS_GETNAME, sizeof(protoName), (LPARAM)protoName);
 
-		tvi.item.pszText = mir_a2t(protoName);
+		tvi.item.pszText = mir_a2u(protoName);
 		tvi.item.lParam = (LPARAM)proto;
 		tvi.item.iImage = i;
 		tvi.item.iSelectedImage = i;
@@ -437,20 +437,20 @@ int IEViewOptInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInstance;
-	odp.ptszGroup = LPGENT("Message sessions");
-	odp.ptszTitle = LPGENT("IEView");
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+	odp.szGroup.w = LPGENW("Message sessions");
+	odp.szTitle.w = LPGENW("IEView");
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
 	odp.pszTemplate = MAKEINTRESOURCEA(tabPages[0].dlgId);
 	odp.pfnDlgProc = tabPages[0].dlgProc;
-	odp.ptszTab = tabPages[0].tabName;
+	odp.szTab.w = tabPages[0].tabName;
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszGroup = LPGENT("Skins");
-	odp.ptszTitle = LPGENT("IEView");
+	odp.szGroup.w = LPGENW("Skins");
+	odp.szTitle.w = LPGENW("IEView");
 	for (size_t i = 1; i < _countof(tabPages); i++) {
 		odp.pszTemplate = MAKEINTRESOURCEA(tabPages[i].dlgId);
 		odp.pfnDlgProc = tabPages[i].dlgProc;
-		odp.ptszTab = tabPages[i].tabName;
+		odp.szTab.w = tabPages[i].tabName;
 		Options_AddPage(wParam, &odp);
 	}
 	return 0;
@@ -509,9 +509,9 @@ static INT_PTR CALLBACK IEViewGeneralOptDlgProc(HWND hwndDlg, UINT msg, WPARAM w
 		EnableWindow(GetDlgItem(hwndDlg, IDC_SMILEYS_IN_NAMES), Options::isSmileyAdd());
 		EnableWindow(GetDlgItem(hwndDlg, IDC_EMBED_SIZE), IsDlgButtonChecked(hwndDlg, IDC_ENABLE_EMBED));
 		{
-			TCHAR* size[] = { _T("320 x 205"), _T("480 x 385"), _T("560 x 349"), _T("640 x 390") };
+			wchar_t* size[] = { L"320 x 205", L"480 x 385", L"560 x 349", L"640 x 390" };
 			for (int i = 0; i < _countof(size); ++i) {
-				int item = SendDlgItemMessage(hwndDlg, IDC_EMBED_SIZE, CB_ADDSTRING, 0, (LPARAM)TranslateTS(size[i]));
+				int item = SendDlgItemMessage(hwndDlg, IDC_EMBED_SIZE, CB_ADDSTRING, 0, (LPARAM)TranslateW(size[i]));
 				SendDlgItemMessage(hwndDlg, IDC_EMBED_SIZE, CB_SETITEMDATA, item, 0);
 			}
 			SendDlgItemMessage(hwndDlg, IDC_EMBED_SIZE, CB_SETCURSEL, Options::getEmbedsize(), 0);
@@ -1746,4 +1746,15 @@ void Options::saveProtocolSettings()
 		PathToRelative(proto->getHistoryTemplateFilename(), tmpPath);
 		db_set_s(NULL, ieviewModuleName, dbsName, tmpPath);
 	}
+}
+
+void Options::Reload()
+{
+	ProtocolSettings *p, *p1;
+	for (p = Options::protocolList; p != NULL; p = p1) {
+		p1 = p->getNext();
+		delete p;
+	}
+	isInited = false;
+	init();
 }

@@ -25,12 +25,12 @@ static bool gdiPlusFail = false;
 //
 // General functions
 //
-int CalculateTextHeight(HDC hdc, CHARFORMAT2* chf)
+int CalculateTextHeight(HDC hdc, CHARFORMAT2 *chf)
 {
 	HDC hcdc = CreateCompatibleDC(hdc);
 
 	int logPixelsY = GetDeviceCaps(hdc, LOGPIXELSY);
-	HFONT hFont = CreateFont(-(chf->yHeight * logPixelsY / 1440), 0, 0, 0, 
+	HFONT hFont = CreateFont(-(chf->yHeight * logPixelsY / 1440), 0, 0, 0,
 		chf->wWeight, chf->dwEffects & CFE_ITALIC ? 1 : 0, 0, 0,
 		chf->bCharSet, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
 		DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE,
@@ -38,7 +38,7 @@ int CalculateTextHeight(HDC hdc, CHARFORMAT2* chf)
 	SelectObject(hcdc, hFont);
 
 	SIZE fontSize;
-	GetTextExtentPoint32(hcdc, _T(")"), 1, &fontSize);
+	GetTextExtentPoint32(hcdc, L")", 1, &fontSize);
 
 	DeleteObject(hFont);
 	DeleteDC(hcdc);
@@ -49,7 +49,7 @@ int CalculateTextHeight(HDC hdc, CHARFORMAT2* chf)
 HICON GetDefaultIcon(bool copy)
 {
 	HICON resIco = IcoLib_GetIcon("SmileyAdd_ButtonSmiley");
-	if (resIco == NULL) 
+	if (resIco == NULL)
 		resIco = (HICON)LoadImage(g_hInst, MAKEINTRESOURCE(IDI_SMILINGICON), IMAGE_ICON, 0, 0, copy ? 0 : LR_SHARED);
 	else if (copy) {
 		resIco = (HICON)CopyImage(resIco, IMAGE_ICON, 0, 0, 0);
@@ -59,31 +59,31 @@ HICON GetDefaultIcon(bool copy)
 	return resIco;
 }
 
-const TCHAR* GetImageExt(CMString &fname)
+const wchar_t* GetImageExt(CMStringW &fname)
 {
-	const TCHAR* ext = _T("");
+	const wchar_t *ext = L"";
 
-	int fileId = _topen(fname.c_str(), O_RDONLY | _O_BINARY);
+	int fileId = _wopen(fname.c_str(), O_RDONLY | _O_BINARY);
 	if (fileId != -1) {
 		BYTE buf[6];
 
 		int bytes = _read(fileId, buf, sizeof(buf));
 		if (bytes > 4) {
-			if ( *(unsigned short*)buf == 0xd8ff )
-				ext = _T("jpg");
-			else if ( *(unsigned short*)buf == 0x4d42 )
-				ext = _T("bmp");
-			else if ( *(unsigned*)buf == 0x474e5089 )
-				ext = _T("png");
-			else if ( *(unsigned*)buf == 0x38464947 )
-				ext = _T("gif");
+			if (*(unsigned short*)buf == 0xd8ff)
+				ext = L"jpg";
+			else if (*(unsigned short*)buf == 0x4d42)
+				ext = L"bmp";
+			else if (*(unsigned*)buf == 0x474e5089)
+				ext = L"png";
+			else if (*(unsigned*)buf == 0x38464947)
+				ext = L"gif";
 		}
 		_close(fileId);
 	}
 	return ext;
 }
 
-HICON ImageList_GetIconFixed (HIMAGELIST himl, INT i, UINT fStyle)
+HICON ImageList_GetIconFixed(HIMAGELIST himl, INT i, UINT fStyle)
 {
 	ICONINFO ii;
 	HICON hIcon;
@@ -99,52 +99,50 @@ HICON ImageList_GetIconFixed (HIMAGELIST himl, INT i, UINT fStyle)
 	ii.xHotspot = 0;
 	ii.yHotspot = 0;
 
-	/* draw mask*/
-	ii.hbmMask = CreateBitmap (cx, cy, 1, 1, NULL);
-	hOldDstBitmap = (HBITMAP)SelectObject (hdcDst, ii.hbmMask);
+	// draw mask
+	ii.hbmMask = CreateBitmap(cx, cy, 1, 1, NULL);
+	hOldDstBitmap = (HBITMAP)SelectObject(hdcDst, ii.hbmMask);
 	PatBlt(hdcDst, 0, 0, cx, cy, WHITENESS);
 	ImageList_Draw(himl, i, hdcDst, 0, 0, fStyle | ILD_MASK);
 
-	/* draw image*/
-	ii.hbmColor = CreateBitmap (cx, cy, 1, 32, NULL);
-	SelectObject (hdcDst, ii.hbmColor);
-	PatBlt (hdcDst, 0, 0, cx, cy, BLACKNESS);
+	// draw image
+	ii.hbmColor = CreateBitmap(cx, cy, 1, 32, NULL);
+	SelectObject(hdcDst, ii.hbmColor);
+	PatBlt(hdcDst, 0, 0, cx, cy, BLACKNESS);
 	ImageList_Draw(himl, i, hdcDst, 0, 0, fStyle | ILD_TRANSPARENT);
 
-	/*
-	* CreateIconIndirect requires us to deselect the bitmaps from
-	* the DCs before calling
-	*/
+	// CreateIconIndirect requires us to deselect the bitmaps from
+	// the DCs before calling
 	SelectObject(hdcDst, hOldDstBitmap);
 
-	hIcon = CreateIconIndirect (&ii);
+	hIcon = CreateIconIndirect(&ii);
 
-	DeleteObject (ii.hbmMask);
-	DeleteObject (ii.hbmColor);
-	DeleteDC (hdcDst);
+	DeleteObject(ii.hbmMask);
+	DeleteObject(ii.hbmColor);
+	DeleteDC(hdcDst);
 
 	return hIcon;
 }
 
-void pathToRelative(const CMString& pSrc, CMString& pOut)
+void pathToRelative(const CMStringW &pSrc, CMStringW &pOut)
 {
-	TCHAR szOutPath[MAX_PATH];
-	PathToRelativeT(pSrc.c_str(), szOutPath);
+	wchar_t szOutPath[MAX_PATH];
+	PathToRelativeW(pSrc.c_str(), szOutPath);
 	pOut = szOutPath;
 }
 
-void pathToAbsolute(const CMString& pSrc, CMString& pOut) 
+void pathToAbsolute(const CMStringW &pSrc, CMStringW &pOut)
 {
-	TCHAR szOutPath[MAX_PATH];
+	wchar_t szOutPath[MAX_PATH];
 
-	TCHAR *szVarPath = Utils_ReplaceVarsT(pSrc.c_str());
-	if (szVarPath == (TCHAR*)CALLSERVICE_NOTFOUND || szVarPath == NULL) {
-		TCHAR szExpPath[MAX_PATH];
+	wchar_t *szVarPath = Utils_ReplaceVarsW(pSrc.c_str());
+	if (szVarPath == (wchar_t*)CALLSERVICE_NOTFOUND || szVarPath == NULL) {
+		wchar_t szExpPath[MAX_PATH];
 		ExpandEnvironmentStrings(pSrc.c_str(), szExpPath, _countof(szExpPath));
-		PathToAbsoluteT(szExpPath, szOutPath);
+		PathToAbsoluteW(szExpPath, szOutPath);
 	}
 	else {
-		PathToAbsoluteT(szVarPath, szOutPath);
+		PathToAbsoluteW(szVarPath, szOutPath);
 		mir_free(szVarPath);
 	}
 	pOut = szOutPath;
@@ -155,17 +153,17 @@ void pathToAbsolute(const CMString& pSrc, CMString& pOut)
 
 static int __fastcall SingleHexToDecimal(char c)
 {
-	if (c >= '0' && c <= '9') return c-'0';
-	if (c >= 'a' && c <= 'f') return c-'a'+10;
-	if (c >= 'A' && c <= 'F') return c-'A'+10;
+	if (c >= '0' && c <= '9') return c - '0';
+	if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+	if (c >= 'A' && c <= 'F') return c - 'A' + 10;
 	return -1;
 }
 
-void  UrlDecode(char* str)
+void  UrlDecode(char *str)
 {
-	char* s = str, *d = str;
+	char *s = str, *d = str;
 
-	while(*s) {
+	while (*s) {
 		if (*s == '%') {
 			int digit1 = SingleHexToDecimal(s[1]);
 			if (digit1 != -1) {
@@ -174,8 +172,8 @@ void  UrlDecode(char* str)
 					s += 3;
 					*d++ = (char)((digit1 << 4) | digit2);
 					continue;
-				}	
-			}	
+				}
+			}
 		}
 		*d++ = *s++;
 	}
@@ -188,14 +186,15 @@ bool InitGdiPlus(void)
 {
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 
-	static const TCHAR errmsg[] = _T("GDI+ not installed.\n")
-		_T("GDI+ can be downloaded here: http://www.microsoft.com/downloads");
+	static const wchar_t errmsg[] = L"GDI+ not installed.\n"
+		L"GDI+ can be downloaded here: http://www.microsoft.com/downloads";
 
 	__try {
 		if (g_gdiplusToken == 0 && !gdiPlusFail)
 			Gdiplus::GdiplusStartup(&g_gdiplusToken, &gdiplusStartupInput, NULL);
 	}
-	__except(EXCEPTION_EXECUTE_HANDLER) {
+	__except (EXCEPTION_EXECUTE_HANDLER)
+	{
 		gdiPlusFail = true;
 		ReportError(errmsg);
 	}
@@ -215,7 +214,7 @@ MCONTACT DecodeMetaContact(MCONTACT hContact)
 {
 	if (hContact == NULL)
 		return NULL;
-	
+
 	MCONTACT hReal = db_mc_getMostOnline(hContact);
 	if (hReal == NULL || (INT_PTR)hReal == CALLSERVICE_NOTFOUND)
 		hReal = hContact;
@@ -228,13 +227,13 @@ bool IsSmileyProto(char *proto)
 	return proto && mir_strcmp(proto, META_PROTO) && (CallProtoService(proto, PS_GETCAPS, PFLAGNUM_1, 0) & (PF1_IM | PF1_CHAT));
 }
 
-void ReportError(const TCHAR *errmsg)
+void ReportError(const wchar_t *errmsg)
 {
-	static const TCHAR title[] = _T("Miranda SmileyAdd");
+	static const wchar_t title[] = L"Miranda SmileyAdd";
 
-	POPUPDATAT pd = {0};
-	mir_tstrcpy(pd.lpwzContactName, title);
-	mir_tstrcpy(pd.lpwzText, errmsg);
+	POPUPDATAT pd = { 0 };
+	mir_wstrcpy(pd.lpwzContactName, title);
+	mir_wstrcpy(pd.lpwzText, errmsg);
 	pd.iSeconds = -1;
 	if (PUAddPopupT(&pd) == CALLSERVICE_NOTFOUND)
 		MessageBox(NULL, errmsg, title, MB_OK | MB_ICONWARNING | MB_TOPMOST);

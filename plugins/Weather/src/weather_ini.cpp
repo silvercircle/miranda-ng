@@ -30,10 +30,10 @@ code for unloading and getting weather data from the ini settings.
 HWND hWndSetup;
 
 //============  DATA LIST (LINKED LIST)  ============
-
+//
 // add an item into weather service data list
 // Data = the service data to be added to the list
-void WIListAdd(WIDATA Data)
+static void WIListAdd(WIDATA Data)
 {
 	// create a new datalist item and point to the data
 	WIDATALIST *newItem = (WIDATALIST*)mir_alloc(sizeof(WIDATALIST));
@@ -48,35 +48,20 @@ void WIListAdd(WIDATA Data)
 // get the service data (from loaded ini file) by internal name
 // pszServ = internal name for the service
 // return value = the matching WIDATA struct for pszServ, NULL if no match found
-WIDATA* GetWIData(TCHAR *pszServ)
+WIDATA* GetWIData(wchar_t *pszServ)
 {
 	// loop through the list to find matching internal name
 	for (WIDATALIST *Item = WIHead; Item != NULL; Item = Item->next)
 		// if internal name found, return the data
-		if (mir_tstrcmp(Item->Data.InternalName, pszServ) == 0)
+		if (mir_wstrcmp(Item->Data.InternalName, pszServ) == 0)
 			return &Item->Data;
 
 	// return NULL when no match found
 	return NULL;
 }
 
-// remove all service data from memory
-void DestroyWIList(void)
-{
-	// free the list one by one
-	while (WIHead != NULL) {
-		WIDATALIST *wi = WIHead;
-		WIHead = wi->next;
-		FreeWIData(&wi->Data);	// free the data struct
-		mir_free(wi);
-	}
-
-	// make sure the entire list is clear
-	WITail = NULL;
-}
-
 //============  DATA ITEM LIST (LINKED LIST)  ============
-
+//
 // add a new update item into the current list
 void WIItemListAdd(WIDATAITEM *DataItem, WIDATA *Data)
 {
@@ -91,14 +76,14 @@ void WIItemListAdd(WIDATAITEM *DataItem, WIDATA *Data)
 // reset the data item by using empty string
 // Item = the item to set
 // name = the string to store in the "name" field
-void ResetDataItem(WIDATAITEM *Item, const TCHAR *name)
+void ResetDataItem(WIDATAITEM *Item, const wchar_t *name)
 {
-	Item->Name = mir_tstrdup(name);
-	Item->Start = _T("");
-	Item->End = _T("");
-	Item->Unit = _T("");
+	Item->Name = mir_wstrdup(name);
+	Item->Start = L"";
+	Item->End = L"";
+	Item->Unit = L"";
 	Item->Url = "";
-	Item->Break = _T("");
+	Item->Break = L"";
 	Item->Type = 0;
 }
 
@@ -115,7 +100,7 @@ void FreeDataItem(WIDATAITEM *Item)
 }
 
 //============  Condition Icon List  ============
-
+//
 // initiate icon assignmet list
 void WICondListInit(WICONDLIST *List)
 {
@@ -128,7 +113,7 @@ void WICondListAdd(char *str, WICONDLIST *List)
 {
 	WICONDITEM *newItem = (WICONDITEM*)mir_alloc(sizeof(WICONDITEM));
 	wSetData(&newItem->Item, str);
-	CharLowerBuff(newItem->Item, (DWORD)mir_tstrlen(newItem->Item));
+	CharLowerBuff(newItem->Item, (DWORD)mir_wstrlen(newItem->Item));
 	newItem->Next = NULL;
 	if (List->Tail == NULL)	List->Head = newItem;
 	else List->Tail->Next = newItem;
@@ -136,12 +121,12 @@ void WICondListAdd(char *str, WICONDLIST *List)
 }
 
 // check if the condition string matched for the assignment
-bool IsContainedInCondList(const TCHAR *pszStr, WICONDLIST *List)
+bool IsContainedInCondList(const wchar_t *pszStr, WICONDLIST *List)
 {
 	// loop through the list to find matching internal name
 	for (WICONDITEM *Item = List->Head; Item != NULL; Item = Item->Next) {
 		// if internal name found, return true indicating that the data is found
-		if (_tcsstr(pszStr, Item->Item))
+		if (wcsstr(pszStr, Item->Item))
 			return true;
 
 	}
@@ -163,64 +148,81 @@ void DestroyCondList(WICONDLIST *List)
 }
 
 
-//============  LOADING INI FILES  ============
-
-// load the weather update data form INI files
-bool LoadWIData(bool dial)
+//============  WEATHER INI SETUP DIALOG  ============
+//
+static INT_PTR CALLBACK DlgProcSetup(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	// make sure that the current service data list is empty
-	WITail = NULL;
-	WIHead = WITail;
+	switch (msg) {
+	case WM_INITDIALOG:
+		TranslateDialogDefault(hwndDlg);
 
-	// find all *.ini file in the plugin\weather directory
-	TCHAR szSearchPath[MAX_PATH], FileName[MAX_PATH];
-	GetModuleFileName(GetModuleHandle(NULL), szSearchPath, _countof(szSearchPath));
-	TCHAR *chop = _tcsrchr(szSearchPath, '\\');
-	if (chop == NULL)
-		return false;
-	*chop = '\0';
-	mir_tstrncat(szSearchPath, _T("\\Plugins\\Weather\\*.ini"), _countof(szSearchPath) - mir_tstrlen(szSearchPath));
-	_tcsncpy(FileName, szSearchPath, MAX_PATH - 1);
+		// make the buttons flat
+		SendDlgItemMessage(hwndDlg, IDC_STEP1, BUTTONSETASFLATBTN, TRUE, 0);
+		SendDlgItemMessage(hwndDlg, IDC_STEP2, BUTTONSETASFLATBTN, TRUE, 0);
+		SendDlgItemMessage(hwndDlg, IDC_STEP3, BUTTONSETASFLATBTN, TRUE, 0);
+		SendDlgItemMessage(hwndDlg, IDC_STEP4, BUTTONSETASFLATBTN, TRUE, 0);
 
-	WIN32_FIND_DATA fd;
-	HANDLE hFind = FindFirstFile(szSearchPath, &fd);
+		// set icons
+		Window_SetIcon_IcoLib(hwndDlg, GetIconHandle("main"));
 
+		WindowList_Add(hWindowList, hwndDlg, NULL);
+		ShowWindow(hwndDlg, SW_SHOW);
+		break;
 
-	// load the content of the ini file into memory
-	if (hFind != INVALID_HANDLE_VALUE) {
-		do {
-			chop = _tcsrchr(FileName, '\\');
-			chop[1] = '\0';
-			mir_tstrncat(FileName, fd.cFileName, _countof(FileName) - mir_tstrlen(FileName));
-			if (mir_tstrcmpi(fd.cFileName, _T("SAMPLE_INI.INI"))) {
-				WIDATA Data;
-				LoadStationData(FileName, fd.cFileName, &Data);
-				if (Data.Enabled)
-					WIListAdd(Data);
+	case WM_COMMAND:
+		switch (LOWORD(wParam)) {
+		case IDC_STEP1:
+			// update current data
+			Utils_OpenUrl("https://miranda-ng.org/");
+			break;
+
+		case IDC_STEP2:
+		{
+			wchar_t szPath[1024];
+			GetModuleFileName(GetModuleHandle(NULL), szPath, _countof(szPath));
+			wchar_t *chop = wcsrchr(szPath, '\\');
+			if (chop) {
+				*chop = '\0';
+				mir_wstrncat(szPath, L"\\Plugins\\weather\\", _countof(szPath) - mir_wstrlen(szPath));
+				if (_wmkdir(szPath) == 0)
+					ShellExecute((HWND)lParam, L"open", szPath, L"", L"", SW_SHOW);
 			}
-			// look through the entire "plugins\weather" directory
-		} while (FindNextFile(hFind, &fd));
-		FindClose(hFind);
-	}
+			break;
+		}
 
-	if (WIHead == NULL) {
-		// no ini found, display an error message box.
-		if (dial)
-			hWndSetup = CreateDialog(hInst, MAKEINTRESOURCE(IDD_SETUP), NULL, DlgProcSetup);
-		else
-			MessageBox(NULL,
-				TranslateT("No update data file is found. Please check your Plugins\\Weather directory."),
-				TranslateT("Weather Protocol"), MB_OK | MB_ICONERROR);
-		return false;
+		case IDC_STEP3:
+			if (LoadWIData(false))
+				MessageBox(NULL,
+					TranslateT("All update data has been reloaded."),
+					TranslateT("Weather Protocol"), MB_OK | MB_ICONINFORMATION);
+			break;
+
+		case IDC_STEP4:
+			WeatherAdd(0, 0);
+			// fall through
+		case IDCANCEL:
+			// close the info window
+			DestroyWindow(hwndDlg);
+			break;
+		}
+		break;
+
+	case WM_CLOSE:
+		DestroyWindow(hwndDlg);
+		break;
+
+	case WM_DESTROY:
+		Window_FreeIcon_IcoLib(hwndDlg);
+		break;
 	}
-	return true;
+	return FALSE;
 }
 
 // load the station data from a file
 // pszFile = the file name + path for the ini file to be loaded
 // pszShortFile = the file name of the ini file, but not including the path
 // Data = the struct to load the ini content to, and return to previous function
-void LoadStationData(TCHAR *pszFile, TCHAR *pszShortFile, WIDATA *Data)
+static void LoadStationData(wchar_t *pszFile, wchar_t *pszShortFile, WIDATA *Data)
 {
 	WIDATAITEM DataItem;
 	char *Group, *Temp;
@@ -245,7 +247,7 @@ void LoadStationData(TCHAR *pszFile, TCHAR *pszShortFile, WIDATA *Data)
 	Data->Enabled = FALSE;
 
 	// open the ini file
-	FILE *pfile = _tfsopen(pszFile, _T("rt"), _SH_DENYWR);
+	FILE *pfile = _wfsopen(pszFile, L"rt", _SH_DENYWR);
 	if (pfile != NULL) {
 		char Line[4096];
 		fgets(Line, _countof(Line), pfile);
@@ -267,8 +269,8 @@ void LoadStationData(TCHAR *pszFile, TCHAR *pszShortFile, WIDATA *Data)
 		else if (!mir_strcmp(Line, "[Weather 0.3.x Update Data 1.5]"))
 			Data->InternalVer = 7;
 		else {
-			TCHAR str[4096];
-			mir_sntprintf(str, TranslateT("Invalid ini format for: %s"), pszFile);
+			wchar_t str[4096];
+			mir_snwprintf(str, TranslateT("Invalid ini format for: %s"), pszFile);
 			MessageBox(NULL, str, TranslateT("Weather Protocol"), MB_OK | MB_ICONERROR);
 			fclose(pfile);
 			return;
@@ -277,13 +279,13 @@ void LoadStationData(TCHAR *pszFile, TCHAR *pszShortFile, WIDATA *Data)
 		// initialize all data fields
 		Group = "";
 
-		Data->DisplayName = _T("");
-		Data->InternalName = _T("");
-		Data->Description = _T("");
-		Data->Author = _T("");
-		Data->Version = _T("");
+		Data->DisplayName = L"";
+		Data->InternalName = L"";
+		Data->Description = L"";
+		Data->Author = L"";
+		Data->Version = L"";
 		Data->DefaultURL = "";
-		Data->DefaultMap = _T("");
+		Data->DefaultMap = L"";
 		Data->UpdateURL = "";
 		Data->UpdateURL2 = "";
 		Data->UpdateURL3 = "";
@@ -291,37 +293,37 @@ void LoadStationData(TCHAR *pszFile, TCHAR *pszShortFile, WIDATA *Data)
 		Data->Cookie = "";
 		Data->UserAgent = "";
 		Data->IDSearch.SearchURL = "";
-		Data->IDSearch.NotFoundStr = _T("");
+		Data->IDSearch.NotFoundStr = L"";
 		Data->NameSearch.SearchURL = "";
-		Data->NameSearch.NotFoundStr = _T("");
-		Data->NameSearch.SingleStr = _T("");
-		Data->NameSearch.Single.First = _T("");
-		Data->NameSearch.Multiple.First = _T("");
+		Data->NameSearch.NotFoundStr = L"";
+		Data->NameSearch.SingleStr = L"";
+		Data->NameSearch.Single.First = L"";
+		Data->NameSearch.Multiple.First = L"";
 		Data->IDSearch.Available = FALSE;
 		Data->NameSearch.Single.Available = FALSE;
 		Data->NameSearch.Multiple.Available = FALSE;
 		wSetData(&Data->FileName, pszFile);
 		wSetData(&Data->ShortFileName, pszShortFile);
 
-		ResetDataItem(&Data->IDSearch.Name, _T("ID Search - Station Name"));
-		ResetDataItem(&Data->NameSearch.Single.Name, _T("Name Search Single Result - Station Name"));
-		ResetDataItem(&Data->NameSearch.Single.ID, _T("Name Search Single Result - Station ID"));
-		ResetDataItem(&Data->NameSearch.Multiple.Name, _T("Name Search Multiple Result - Station Name"));
-		ResetDataItem(&Data->NameSearch.Multiple.ID, _T("Name Search Multiple Result - Station ID"));
+		ResetDataItem(&Data->IDSearch.Name, L"ID Search - Station Name");
+		ResetDataItem(&Data->NameSearch.Single.Name, L"Name Search Single Result - Station Name");
+		ResetDataItem(&Data->NameSearch.Single.ID, L"Name Search Single Result - Station ID");
+		ResetDataItem(&Data->NameSearch.Multiple.Name, L"Name Search Multiple Result - Station Name");
+		ResetDataItem(&Data->NameSearch.Multiple.ID, L"Name Search Multiple Result - Station ID");
 
-		DataItem.Name = _T("");
-		DataItem.Start = _T("");
-		DataItem.End = _T("");
-		DataItem.Unit = _T("");
+		DataItem.Name = L"";
+		DataItem.Start = L"";
+		DataItem.End = L"";
+		DataItem.Unit = L"";
 		DataItem.Url = "";
-		DataItem.Break = _T("");
+		DataItem.Break = L"";
 		DataItem.Type = 0;
 
 		Temp = "";
 
 		// initialize the linked list for update items
 		Data->UpdateDataCount = 0;
-		Data->MemUsed = sizeof(WIDATA) + sizeof(WIDATALIST) + (mir_tstrlen(pszShortFile) + mir_tstrlen(pszFile) + 20)*sizeof(TCHAR);
+		Data->MemUsed = sizeof(WIDATA) + sizeof(WIDATALIST) + (mir_wstrlen(pszShortFile) + mir_wstrlen(pszFile) + 20)*sizeof(wchar_t);
 		Data->UpdateData = NULL;
 		Data->UpdateDataTail = NULL;
 
@@ -444,11 +446,11 @@ void LoadStationData(TCHAR *pszFile, TCHAR *pszShortFile, WIDATA *Data)
 				else if (!_stricmp(ValName, "URL")) 		wSetData(&Data->UpdateDataTail->Item.Url, Value);
 				else if (!_stricmp(ValName, "HIDDEN")) {
 					if (!_stricmp(Value, "TRUE")) {
-						TCHAR *nm = Data->UpdateDataTail->Item.Name;
-						size_t len = mir_tstrlen(nm) + 1;
+						wchar_t *nm = Data->UpdateDataTail->Item.Name;
+						size_t len = mir_wstrlen(nm) + 1;
 
-						Data->UpdateDataTail->Item.Name = nm = (TCHAR*)mir_realloc(nm, sizeof(TCHAR)*(len + 3));
-						memmove(nm + 1, nm, len*sizeof(TCHAR));
+						Data->UpdateDataTail->Item.Name = nm = (wchar_t*)mir_realloc(nm, sizeof(wchar_t)*(len + 3));
+						memmove(nm + 1, nm, len*sizeof(wchar_t));
 						*nm = '#';
 					}
 				}
@@ -473,11 +475,64 @@ void LoadStationData(TCHAR *pszFile, TCHAR *pszShortFile, WIDATA *Data)
 	}
 }
 
-//============  FREE WIDATA ITEM FROM MEMORY  ============
+//============  LOADING INI FILES  ============
+//
+// load the weather update data form INI files
+bool LoadWIData(bool dial)
+{
+	// make sure that the current service data list is empty
+	WITail = NULL;
+	WIHead = WITail;
 
+	// find all *.ini file in the plugin\weather directory
+	wchar_t szSearchPath[MAX_PATH], FileName[MAX_PATH];
+	GetModuleFileName(GetModuleHandle(NULL), szSearchPath, _countof(szSearchPath));
+	wchar_t *chop = wcsrchr(szSearchPath, '\\');
+	if (chop == NULL)
+		return false;
+	*chop = '\0';
+	mir_wstrncat(szSearchPath, L"\\Plugins\\Weather\\*.ini", _countof(szSearchPath) - mir_wstrlen(szSearchPath));
+	wcsncpy(FileName, szSearchPath, MAX_PATH - 1);
+
+	WIN32_FIND_DATA fd;
+	HANDLE hFind = FindFirstFile(szSearchPath, &fd);
+
+
+	// load the content of the ini file into memory
+	if (hFind != INVALID_HANDLE_VALUE) {
+		do {
+			chop = wcsrchr(FileName, '\\');
+			chop[1] = '\0';
+			mir_wstrncat(FileName, fd.cFileName, _countof(FileName) - mir_wstrlen(FileName));
+			if (mir_wstrcmpi(fd.cFileName, L"SAMPLE_INI.INI")) {
+				WIDATA Data;
+				LoadStationData(FileName, fd.cFileName, &Data);
+				if (Data.Enabled)
+					WIListAdd(Data);
+			}
+			// look through the entire "plugins\weather" directory
+		} while (FindNextFile(hFind, &fd));
+		FindClose(hFind);
+	}
+
+	if (WIHead == NULL) {
+		// no ini found, display an error message box.
+		if (dial)
+			hWndSetup = CreateDialog(hInst, MAKEINTRESOURCE(IDD_SETUP), NULL, DlgProcSetup);
+		else
+			MessageBox(NULL,
+				TranslateT("No update data file is found. Please check your Plugins\\Weather directory."),
+				TranslateT("Weather Protocol"), MB_OK | MB_ICONERROR);
+		return false;
+	}
+	return true;
+}
+
+//============  FREE WIDATA ITEM FROM MEMORY  ============
+//
 // free the WIDATA struct from memory
 // Data = the struct to be freed
-void FreeWIData(WIDATA *Data)
+static void FreeWIData(WIDATA *Data)
 {
 	// free update items linked list first
 	WIDATAITEMLIST *WItem = Data->UpdateData;
@@ -520,75 +575,17 @@ void FreeWIData(WIDATA *Data)
 		DestroyCondList(&Data->CondList[i]);
 }
 
-//============  WEATHER INI SETUP DIALOG  ============
-
-INT_PTR CALLBACK DlgProcSetup(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+// remove all service data from memory
+void DestroyWIList(void)
 {
-	switch (msg) {
-	case WM_INITDIALOG:
-		TranslateDialogDefault(hwndDlg);
-
-		// make the buttons flat
-		SendDlgItemMessage(hwndDlg, IDC_STEP1, BUTTONSETASFLATBTN, TRUE, 0);
-		SendDlgItemMessage(hwndDlg, IDC_STEP2, BUTTONSETASFLATBTN, TRUE, 0);
-		SendDlgItemMessage(hwndDlg, IDC_STEP3, BUTTONSETASFLATBTN, TRUE, 0);
-		SendDlgItemMessage(hwndDlg, IDC_STEP4, BUTTONSETASFLATBTN, TRUE, 0);
-
-		// set icons
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadIconEx("main", TRUE));
-		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)LoadIconEx("main", FALSE));
-
-		WindowList_Add(hWindowList, hwndDlg, NULL);
-		ShowWindow(hwndDlg, SW_SHOW);
-		break;
-
-	case WM_COMMAND:
-		switch (LOWORD(wParam)) {
-		case IDC_STEP1:
-			// update current data
-			Utils_OpenUrl("http://miranda-ng.org/");
-			break;
-
-		case IDC_STEP2:
-			{
-				TCHAR szPath[1024];
-				GetModuleFileName(GetModuleHandle(NULL), szPath, _countof(szPath));
-				TCHAR *chop = _tcsrchr(szPath, '\\');
-				if (chop) {
-					*chop = '\0';
-					mir_tstrncat(szPath, _T("\\Plugins\\weather\\"), _countof(szPath) - mir_tstrlen(szPath));
-					_tmkdir(szPath);
-					ShellExecute((HWND)lParam, _T("open"), szPath, _T(""), _T(""), SW_SHOW);
-				}
-				break;
-			}
-
-		case IDC_STEP3:
-			if (LoadWIData(false))
-				MessageBox(NULL,
-					TranslateT("All update data has been reloaded."),
-					TranslateT("Weather Protocol"), MB_OK | MB_ICONINFORMATION);
-			break;
-
-		case IDC_STEP4:
-			WeatherAdd(0, 0);
-
-		case IDCANCEL:
-			// close the info window
-			DestroyWindow(hwndDlg);
-			break;
-		}
-		break;
-
-	case WM_CLOSE:
-		DestroyWindow(hwndDlg);
-		break;
-
-	case WM_DESTROY:
-		ReleaseIconEx((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_BIG, 0));
-		ReleaseIconEx((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, 0));
-		break;
+	// free the list one by one
+	while (WIHead != NULL) {
+		WIDATALIST *wi = WIHead;
+		WIHead = wi->next;
+		FreeWIData(&wi->Data);	// free the data struct
+		mir_free(wi);
 	}
-	return FALSE;
-}
 
+	// make sure the entire list is clear
+	WITail = NULL;
+}

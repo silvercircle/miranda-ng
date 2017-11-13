@@ -17,7 +17,22 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#define ADDALIAS		_T("alias")
+#define ADDALIAS		L"alias"
 
-int isValidTokenChar(TCHAR tc);
-TCHAR *getArguments(TCHAR *string, TCHAR ***aargv, int *aargc);
+int isValidTokenChar(wchar_t tc);
+
+struct TArgList : public LIST<wchar_t>
+{
+	TArgList() :
+		LIST<wchar_t>(1)
+	{}
+
+	void destroy() 
+	{
+		for (int i = 0; i < count; i++)
+			mir_free(items[i]);
+		count = 0;
+	}
+};
+
+wchar_t* getArguments(wchar_t *string, TArgList &aargv);

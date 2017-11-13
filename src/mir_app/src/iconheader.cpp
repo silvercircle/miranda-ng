@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 Copyright (c) 2007 Artem Shpynov
 all portions of this codebase are copyrighted to the people
@@ -44,46 +44,44 @@ static BOOL IsVSMode()
 
 #define ITC_BORDER_SIZE		3
 
-static LRESULT CALLBACK MIcoTabWndProc(HWND hwnd, UINT  msg, WPARAM wParam, LPARAM lParam);
-
 // structure is used for storing list of tab info
 struct MIcoTabCtrl : public MZeroedObject
 {
-	MIcoTabCtrl(): pList(1) {}
+	MIcoTabCtrl() : pList(1) {}
 
-	HWND		hwnd;
-	int			nSelectedIdx, nHotIdx;
+	HWND hwnd;
+	int  nSelectedIdx, nHotIdx;
 	LIST<MIcoTab> pList;
 
 	// UI info
-	BOOL		bMouseInside;
-	RECT		rc;
-	int			width, height;
-	int			itemWidth, itemHeight;
+	BOOL bMouseInside;
+	RECT rc;
+	int  width, height;
+	int  itemWidth, itemHeight;
 
 	//background bitmap
-	HBITMAP		hBkgBmp;
-	HBITMAP		hBkgOldBmp;
-	HDC			hBkgDC;
-	SIZE		BkgSize;
+	HBITMAP hBkgBmp;
+	HBITMAP hBkgOldBmp;
+	HDC     hBkgDC;
+	SIZE    BkgSize;
 
 	// control colors
-	RGBQUAD		rgbBkgTop, rgbBkgBottom;
-	RGBQUAD		rgbSelTop, rgbSelBottom;
-	RGBQUAD		rgbHotTop, rgbHotBottom;
-	COLORREF	clText;
-	COLORREF	clSelText, clSelBorder;
-	COLORREF	clHotText, clHotBorder;
+	RGBQUAD rgbBkgTop, rgbBkgBottom;
+	RGBQUAD rgbSelTop, rgbSelBottom;
+	RGBQUAD rgbHotTop, rgbHotBottom;
+	COLORREF clText;
+	COLORREF clSelText, clSelBorder;
+	COLORREF clHotText, clHotBorder;
 
 	// fonts
-	HFONT		hFont;
+	HFONT hFont;
 };
 
 typedef void (*ItemDestuctor)(void*);
 
 static void MITListDestructor(void * adr)
 {
-	MIcoTab * mit = (MIcoTab *)adr;
+	MIcoTab *mit = (MIcoTab *)adr;
 	mir_free(mit->tcsName);
 	if (mit->hIcon && !(mit->flag&MITCF_SHAREDICON))
 		DestroyIcon(mit->hIcon);
@@ -92,63 +90,45 @@ static void MITListDestructor(void * adr)
 
 void li_ListDestruct(LIST<MIcoTab> &pList, ItemDestuctor pItemDestructor)
 {
-	for (int i=0; i<pList.getCount(); i++)	pItemDestructor(pList[i]);
+	for (int i = 0; i < pList.getCount(); i++)	pItemDestructor(pList[i]);
 	pList.destroy();
-}
-
-int LoadIcoTabsModule()
-{
-	WNDCLASSEX wc;
-
-	memset(&wc, 0, sizeof(wc));
-	wc.cbSize = sizeof(wc);
-	wc.lpszClassName = MIRANDAICOTABCLASS;
-	wc.lpfnWndProc = MIcoTabWndProc;
-//	wc.hCursor = LoadCursor(NULL, IDC_HAND);
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wc.cbWndExtra = sizeof(MIcoTabCtrl*);
-	wc.hbrBackground = 0; //GetStockObject(WHITE_BRUSH);
-	wc.style = CS_GLOBALCLASS/*|CS_SAVEBITS*/;
-	RegisterClassEx(&wc);
-	return 0;
 }
 
 static void MIcoTab_SetupColors(MIcoTabCtrl *dat)
 {
-	COLORREF cl;
-
-	cl = GetSysColor(COLOR_WINDOW);
-	dat->rgbBkgBottom.rgbRed	 = (dat->rgbBkgTop.rgbRed	 = GetRValue(cl)) * .95;
-	dat->rgbBkgBottom.rgbGreen	 = (dat->rgbBkgTop.rgbGreen	 = GetGValue(cl)) * .95;
-	dat->rgbBkgBottom.rgbBlue	 = (dat->rgbBkgTop.rgbBlue	 = GetBValue(cl)) * .95;
+	COLORREF cl = GetSysColor(COLOR_WINDOW);
+	dat->rgbBkgBottom.rgbRed = (dat->rgbBkgTop.rgbRed = GetRValue(cl)) * .95;
+	dat->rgbBkgBottom.rgbGreen = (dat->rgbBkgTop.rgbGreen = GetGValue(cl)) * .95;
+	dat->rgbBkgBottom.rgbBlue = (dat->rgbBkgTop.rgbBlue = GetBValue(cl)) * .95;
 
 	cl = GetSysColor(COLOR_HIGHLIGHT);
-	dat->rgbSelTop.rgbRed	 = (dat->rgbSelBottom.rgbRed		 = GetRValue(cl)) * .75;
-	dat->rgbSelTop.rgbGreen	 = (dat->rgbSelBottom.rgbGreen	 = GetGValue(cl)) * .75;
-	dat->rgbSelTop.rgbBlue	 = (dat->rgbSelBottom.rgbBlue	 = GetBValue(cl)) * .75;
+	dat->rgbSelTop.rgbRed = (dat->rgbSelBottom.rgbRed = GetRValue(cl)) * .75;
+	dat->rgbSelTop.rgbGreen = (dat->rgbSelBottom.rgbGreen = GetGValue(cl)) * .75;
+	dat->rgbSelTop.rgbBlue = (dat->rgbSelBottom.rgbBlue = GetBValue(cl)) * .75;
 
-	dat->rgbHotTop.rgbRed	 = (dat->rgbSelTop.rgbRed	+ 255) / 2;
-	dat->rgbHotTop.rgbGreen	 = (dat->rgbSelTop.rgbGreen	+ 255) / 2;
-	dat->rgbHotTop.rgbBlue	 = (dat->rgbSelTop.rgbBlue	+ 255) / 2;
+	dat->rgbHotTop.rgbRed = (dat->rgbSelTop.rgbRed + 255) / 2;
+	dat->rgbHotTop.rgbGreen = (dat->rgbSelTop.rgbGreen + 255) / 2;
+	dat->rgbHotTop.rgbBlue = (dat->rgbSelTop.rgbBlue + 255) / 2;
 
-	dat->rgbHotBottom.rgbRed	 = (dat->rgbSelBottom.rgbRed		+ 255) / 2;
-	dat->rgbHotBottom.rgbGreen	 = (dat->rgbSelBottom.rgbGreen	+ 255) / 2;
-	dat->rgbHotBottom.rgbBlue	 = (dat->rgbSelBottom.rgbBlue	+ 255) / 2;
+	dat->rgbHotBottom.rgbRed = (dat->rgbSelBottom.rgbRed + 255) / 2;
+	dat->rgbHotBottom.rgbGreen = (dat->rgbSelBottom.rgbGreen + 255) / 2;
+	dat->rgbHotBottom.rgbBlue = (dat->rgbSelBottom.rgbBlue + 255) / 2;
 
-	dat->clText			 = GetSysColor(COLOR_WINDOWTEXT);
-	dat->clSelText		 = GetSysColor(COLOR_HIGHLIGHTTEXT);
-	dat->clSelBorder	 = RGB(dat->rgbSelTop.rgbRed, dat->rgbSelTop.rgbGreen, dat->rgbSelTop.rgbBlue);
-	dat->clHotBorder	 = RGB(dat->rgbHotTop.rgbRed, dat->rgbHotTop.rgbGreen, dat->rgbHotTop.rgbBlue);
+	dat->clText = GetSysColor(COLOR_WINDOWTEXT);
+	dat->clSelText = GetSysColor(COLOR_HIGHLIGHTTEXT);
+	dat->clSelBorder = RGB(dat->rgbSelTop.rgbRed, dat->rgbSelTop.rgbGreen, dat->rgbSelTop.rgbBlue);
+	dat->clHotBorder = RGB(dat->rgbHotTop.rgbRed, dat->rgbHotTop.rgbGreen, dat->rgbHotTop.rgbBlue);
 
-	if (!dat->hFont) dat->hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+	if (!dat->hFont)
+		dat->hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 }
 
 static void MIcoTab_FillRect(HDC hdc, int x, int y, int width, int height, COLORREF cl)
 {
-	int oldMode			 = SetBkMode(hdc, OPAQUE);
-	COLORREF oldColor	 = SetBkColor(hdc, cl);
+	int oldMode = SetBkMode(hdc, OPAQUE);
+	COLORREF oldColor = SetBkColor(hdc, cl);
 
-	RECT rc; SetRect(&rc, x, y, x+width, y+height);
+	RECT rc; SetRect(&rc, x, y, x + width, y + height);
 	ExtTextOutA(hdc, 0, 0, ETO_OPAQUE, &rc, "", 0, 0);
 
 	SetBkMode(hdc, oldMode);
@@ -157,15 +137,17 @@ static void MIcoTab_FillRect(HDC hdc, int x, int y, int width, int height, COLOR
 
 static void MIcoTab_DrawGradient(HDC hdc, int x, int y, int width, int height, RGBQUAD *rgb0, RGBQUAD *rgb1)
 {
-	int oldMode			 = SetBkMode(hdc, OPAQUE);
-	COLORREF oldColor	 = SetBkColor(hdc, 0);
+	int oldMode = SetBkMode(hdc, OPAQUE);
+	COLORREF oldColor = SetBkColor(hdc, 0);
 
-	RECT rc; SetRect(&rc, x, 0, x+width, 0);
-	for (int i = y+height; --i >= y;) {
+	RECT rc;
+	SetRect(&rc, x, 0, x + width, 0);
+	
+	for (int i = y + height; --i >= y;) {
 		COLORREF color = RGB(
-			((height-i-1)*rgb0->rgbRed   + i*rgb1->rgbRed)   / height,
-			((height-i-1)*rgb0->rgbGreen + i*rgb1->rgbGreen) / height,
-			((height-i-1)*rgb0->rgbBlue  + i*rgb1->rgbBlue)  / height);
+			((height - i - 1)*rgb0->rgbRed + i*rgb1->rgbRed) / height,
+			((height - i - 1)*rgb0->rgbGreen + i*rgb1->rgbGreen) / height,
+			((height - i - 1)*rgb0->rgbBlue + i*rgb1->rgbBlue) / height);
 		rc.top = rc.bottom = i;
 		++rc.bottom;
 		SetBkColor(hdc, color);
@@ -179,11 +161,11 @@ static void MIcoTab_DrawGradient(HDC hdc, int x, int y, int width, int height, R
 static void MIcoTab_DrawItem(HWND hwnd, HDC hdc, MIcoTabCtrl *dat, MIcoTab *tab, int i)
 {
 	int iTopSpace = IsAeroMode() ? 0 : ITC_BORDER_SIZE;
-	int itemX	 = ITC_BORDER_SIZE + dat->itemWidth * i;
-	int iconTop	 = iTopSpace + 5;
-	int textTop	 = iconTop + 32 + 3;
+	int itemX = ITC_BORDER_SIZE + dat->itemWidth * i;
+	int iconTop = iTopSpace + 5;
+	int textTop = iconTop + 32 + 3;
 
-	HFONT hFntSave = NULL;
+	HFONT hFntSave = nullptr;
 
 	if (dat->nSelectedIdx == i) {
 		LOGFONT lf;
@@ -199,15 +181,15 @@ static void MIcoTab_DrawItem(HWND hwnd, HDC hdc, MIcoTabCtrl *dat, MIcoTab *tab,
 			rc.bottom = iTopSpace + dat->itemHeight;
 			HANDLE hTheme = OpenThemeData(hwnd, L"ListView");
 			if (dat->nHotIdx == i || GetFocus() == hwnd)
-				DrawThemeBackground(hTheme, hdc, LVP_LISTITEM, LISS_HOTSELECTED, &rc, NULL);
+				DrawThemeBackground(hTheme, hdc, LVP_LISTITEM, LISS_HOTSELECTED, &rc, nullptr);
 			else
-				DrawThemeBackground(hTheme, hdc, LVP_LISTITEM, LISS_SELECTED, &rc, NULL);
+				DrawThemeBackground(hTheme, hdc, LVP_LISTITEM, LISS_SELECTED, &rc, nullptr);
 
 			CloseThemeData(hTheme);
 		}
 		else {
 			MIcoTab_FillRect(hdc, itemX, ITC_BORDER_SIZE, dat->itemWidth, dat->itemHeight, dat->clSelBorder);
-			MIcoTab_DrawGradient(hdc, itemX+1, ITC_BORDER_SIZE+1, dat->itemWidth-2, dat->itemHeight-2, &dat->rgbSelTop, &dat->rgbSelBottom);
+			MIcoTab_DrawGradient(hdc, itemX + 1, ITC_BORDER_SIZE + 1, dat->itemWidth - 2, dat->itemHeight - 2, &dat->rgbSelTop, &dat->rgbSelBottom);
 		}
 		SetTextColor(hdc, dat->clSelText);
 	}
@@ -218,14 +200,14 @@ static void MIcoTab_DrawItem(HWND hwnd, HDC hdc, MIcoTabCtrl *dat, MIcoTab *tab,
 			rc.top = iTopSpace;
 			rc.right = itemX + dat->itemWidth;
 			rc.bottom = iTopSpace + dat->itemHeight;
-			SetWindowTheme(hwnd, L"explorer", NULL);
+			SetWindowTheme(hwnd, L"explorer", nullptr);
 			HANDLE hTheme = OpenThemeData(hwnd, L"ListView");
-			DrawThemeBackground(hTheme, hdc, LVP_LISTITEM, LISS_HOT, &rc, NULL);
+			DrawThemeBackground(hTheme, hdc, LVP_LISTITEM, LISS_HOT, &rc, nullptr);
 			CloseThemeData(hTheme);
 		}
 		else {
 			MIcoTab_FillRect(hdc, itemX, ITC_BORDER_SIZE, dat->itemWidth, dat->itemHeight, dat->clHotBorder);
-			MIcoTab_DrawGradient(hdc, itemX+1, ITC_BORDER_SIZE+1, dat->itemWidth-2, dat->itemHeight-2, &dat->rgbHotTop, &dat->rgbHotBottom);
+			MIcoTab_DrawGradient(hdc, itemX + 1, ITC_BORDER_SIZE + 1, dat->itemWidth - 2, dat->itemHeight - 2, &dat->rgbHotTop, &dat->rgbHotBottom);
 		}
 		SetTextColor(hdc, dat->clHotText);
 	}
@@ -233,23 +215,21 @@ static void MIcoTab_DrawItem(HWND hwnd, HDC hdc, MIcoTabCtrl *dat, MIcoTab *tab,
 
 	RECT textRect;
 	textRect.left = itemX;
-	textRect.right = itemX+dat->itemWidth;
+	textRect.right = itemX + dat->itemWidth;
 	textRect.top = textTop;
-	textRect.bottom = iconTop+dat->itemHeight;
-	DrawIcon(hdc, itemX+dat->itemWidth/2-16, iconTop, tab->hIcon);
+	textRect.bottom = iconTop + dat->itemHeight;
+	DrawIcon(hdc, itemX + dat->itemWidth / 2 - 16, iconTop, tab->hIcon);
 
 	if (IsVSMode()) {
-		DTTOPTS dto = {0};
+		DTTOPTS dto = { 0 };
 		dto.dwSize = sizeof(dto);
-		dto.dwFlags = DTT_COMPOSITED|DTT_GLOWSIZE;
+		dto.dwFlags = DTT_COMPOSITED | DTT_GLOWSIZE;
 		dto.iGlowSize = 10;
 		HANDLE hTheme = OpenThemeData(hwnd, L"Window");
-		wchar_t *tcsNameW = mir_t2u(tab->tcsName);
-		drawThemeTextEx(hTheme, hdc, WP_CAPTION, CS_ACTIVE, tcsNameW, -1, DT_VCENTER|DT_CENTER|DT_END_ELLIPSIS, &textRect, &dto);
-		mir_free(tcsNameW);
+		drawThemeTextEx(hTheme, hdc, WP_CAPTION, CS_ACTIVE, tab->tcsName, -1, DT_VCENTER | DT_CENTER | DT_END_ELLIPSIS, &textRect, &dto);
 		CloseThemeData(hTheme);
 	}
-	else DrawText(hdc, tab->tcsName, -1, &textRect, DT_VCENTER|DT_CENTER|DT_END_ELLIPSIS);
+	else DrawText(hdc, tab->tcsName, -1, &textRect, DT_VCENTER | DT_CENTER | DT_END_ELLIPSIS);
 
 	if (hFntSave)
 		DeleteObject(SelectObject(hdc, hFntSave));
@@ -262,14 +242,14 @@ static LRESULT MIcoTab_OnPaint(HWND hwndDlg, MIcoTabCtrl *mit)
 	HDC hdc = BeginPaint(hwndDlg, &ps);
 	HDC tempDC = CreateCompatibleDC(hdc);
 
-	BITMAPINFO bmi;
+	BITMAPINFO bmi = { 0 };
 	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	bmi.bmiHeader.biWidth = mit->width;
 	bmi.bmiHeader.biHeight = -mit->height; // we need this for DrawThemeTextEx
 	bmi.bmiHeader.biPlanes = 1;
 	bmi.bmiHeader.biBitCount = 32;
 	bmi.bmiHeader.biCompression = BI_RGB;
-	HBITMAP hBmp = CreateDIBSection(tempDC, &bmi, DIB_RGB_COLORS, NULL, NULL, 0);
+	HBITMAP hBmp = CreateDIBSection(tempDC, &bmi, DIB_RGB_COLORS, nullptr, nullptr, 0);
 
 	HBITMAP hOldBmp = (HBITMAP)SelectObject(tempDC, hBmp);
 
@@ -290,8 +270,8 @@ static LRESULT MIcoTab_OnPaint(HWND hwndDlg, MIcoTabCtrl *mit)
 			else
 				MIcoTab_DrawGradient(tempDC, 0, 0, mit->width, mit->height, &mit->rgbBkgTop, &mit->rgbBkgBottom);
 
-			MIcoTab_FillRect(tempDC, 0, mit->height-2, mit->width, 1, GetSysColor(COLOR_BTNSHADOW));
-			MIcoTab_FillRect(tempDC, 0, mit->height-1, mit->width, 1, GetSysColor(COLOR_BTNHIGHLIGHT));
+			MIcoTab_FillRect(tempDC, 0, mit->height - 2, mit->width, 1, GetSysColor(COLOR_BTNSHADOW));
+			MIcoTab_FillRect(tempDC, 0, mit->height - 1, mit->width, 1, GetSysColor(COLOR_BTNHIGHLIGHT));
 		}
 	}
 
@@ -300,7 +280,7 @@ static LRESULT MIcoTab_OnPaint(HWND hwndDlg, MIcoTabCtrl *mit)
 	HFONT hOldFont = (HFONT)SelectObject(tempDC, hFont);
 	SetBkMode(tempDC, TRANSPARENT);
 
-	for (int i=0; i<mit->pList.getCount(); i++) {
+	for (int i = 0; i < mit->pList.getCount(); i++) {
 		MIcoTab *tab = (MIcoTab *)mit->pList[i];
 		MIcoTab_DrawItem(hwndDlg, tempDC, mit, tab, i);
 	}
@@ -309,7 +289,7 @@ static LRESULT MIcoTab_OnPaint(HWND hwndDlg, MIcoTabCtrl *mit)
 	BitBlt(hdc, mit->rc.left, mit->rc.top, mit->width, mit->height, tempDC, 0, 0, SRCCOPY);
 	SelectObject(tempDC, hOldBmp);
 	DeleteObject(hBmp);
-	SelectObject(tempDC,hOldFont);
+	SelectObject(tempDC, hOldFont);
 	DeleteDC(tempDC);
 
 	EndPaint(hwndDlg, &ps);
@@ -330,7 +310,9 @@ static LRESULT CALLBACK MIcoTabWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 		MIcoTab_SetupColors(itc);
 
 		if (IsAeroMode()) {
-			RECT rc; GetWindowRect(hwndDlg, &rc);
+			RECT rc;
+			GetWindowRect(hwndDlg, &rc);
+			
 			MARGINS margins = { 0, 0, rc.bottom - rc.top, 0 };
 			dwmExtendFrameIntoClientArea(GetParent(hwndDlg), &margins);
 		}
@@ -368,23 +350,26 @@ static LRESULT CALLBACK MIcoTabWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 			itc->bMouseInside = TRUE;
 		}
 
-		itc->nHotIdx = (LOWORD(lParam) - ITC_BORDER_SIZE) / itc->itemWidth;
-		if (itc->nHotIdx >= itc->pList.getCount())
-			itc->nHotIdx = -1;
-		RedrawWindow(hwndDlg, NULL, NULL, RDW_INVALIDATE);
+		itc->nHotIdx = -1;
+		if (itc->itemWidth != 0) {
+			int idx = (LOWORD(lParam) - ITC_BORDER_SIZE) / itc->itemWidth;
+			if (idx >= itc->pList.getCount())
+				itc->nHotIdx = idx;
+		}
+		RedrawWindow(hwndDlg, nullptr, nullptr, RDW_INVALIDATE);
 		return 0;
 
 	case WM_MOUSELEAVE:
 		itc->bMouseInside = FALSE;
 		itc->nHotIdx = -1;
-		RedrawWindow(hwndDlg, NULL, NULL, RDW_INVALIDATE);
+		RedrawWindow(hwndDlg, nullptr, nullptr, RDW_INVALIDATE);
 		return 0;
 
 	case WM_LBUTTONUP:
 		if ((itc->nHotIdx >= 0) && (itc->nHotIdx != itc->nSelectedIdx)) {
 			itc->nSelectedIdx = itc->nHotIdx;
 			SetWindowText(hwndDlg, itc->pList[itc->nSelectedIdx]->tcsName);
-			RedrawWindow(hwndDlg, NULL, NULL, RDW_INVALIDATE);
+			RedrawWindow(hwndDlg, nullptr, nullptr, RDW_INVALIDATE);
 			SendMessage(GetParent(hwndDlg), WM_COMMAND,
 				MAKEWPARAM(GetWindowLongPtr(hwndDlg, GWL_ID), ITCN_SELCHANGED),
 				itc->nSelectedIdx);
@@ -393,7 +378,7 @@ static LRESULT CALLBACK MIcoTabWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 
 	case WM_SETFOCUS:
 	case WM_KILLFOCUS:
-		RedrawWindow(hwndDlg, NULL, NULL, RDW_INVALIDATE);
+		RedrawWindow(hwndDlg, nullptr, nullptr, RDW_INVALIDATE);
 		break;
 
 	case WM_MOUSEACTIVATE:
@@ -434,7 +419,7 @@ static LRESULT CALLBACK MIcoTabWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 			if ((newIdx >= 0) && (newIdx < itc->pList.getCount()) && (newIdx != itc->nSelectedIdx)) {
 				itc->nSelectedIdx = newIdx;
 				SetWindowText(hwndDlg, itc->pList[itc->nSelectedIdx]->tcsName);
-				RedrawWindow(hwndDlg, NULL, NULL, RDW_INVALIDATE);
+				RedrawWindow(hwndDlg, nullptr, nullptr, RDW_INVALIDATE);
 				SendMessage(GetParent(hwndDlg), WM_COMMAND,
 					MAKEWPARAM(GetWindowLongPtr(hwndDlg, GWL_ID), ITCN_SELCHANGEDKBD),
 					itc->nSelectedIdx);
@@ -446,7 +431,7 @@ static LRESULT CALLBACK MIcoTabWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 		return 1;
 
 	case WM_NCPAINT:
-		InvalidateRect(hwndDlg, NULL, FALSE);
+		InvalidateRect(hwndDlg, nullptr, FALSE);
 		break;
 
 	case WM_PAINT:
@@ -456,7 +441,7 @@ static LRESULT CALLBACK MIcoTabWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 	case ITCM_SETBACKGROUND:
 		itc->hBkgBmp = (HBITMAP)lParam;
 		if (!itc->hBkgDC)
-			itc->hBkgDC = CreateCompatibleDC(NULL);
+			itc->hBkgDC = CreateCompatibleDC(nullptr);
 		itc->hBkgOldBmp = (HBITMAP)SelectObject(itc->hBkgDC, itc->hBkgBmp);
 		{
 			BITMAPINFO bmp;
@@ -476,9 +461,9 @@ static LRESULT CALLBACK MIcoTabWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 			pListMit->flag = pMit->flag;
 			pListMit->data = pMit->data;
 			if (pMit->flag & MITCF_UNICODE)
-				pListMit->tcsName = mir_u2t(pMit->lpwzName);
+				pListMit->tcsName = mir_wstrdup(pMit->lpwzName);
 			else
-				pListMit->tcsName = mir_a2t(pMit->lpzName);
+				pListMit->tcsName = mir_a2u(pMit->lpzName);
 			if (pMit->hIcon) {
 				if (pListMit->flag&MITCF_SHAREDICON)
 					pListMit->hIcon = pMit->hIcon;
@@ -490,7 +475,7 @@ static LRESULT CALLBACK MIcoTabWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 			itc->itemWidth = (itc->width - 2 * ITC_BORDER_SIZE) / itc->pList.getCount();
 			itc->itemHeight = itc->height - 2 * ITC_BORDER_SIZE - 2;
 
-			RedrawWindow(hwndDlg, NULL, NULL, RDW_INVALIDATE);
+			RedrawWindow(hwndDlg, nullptr, nullptr, RDW_INVALIDATE);
 		}
 		return TRUE;
 
@@ -498,7 +483,7 @@ static LRESULT CALLBACK MIcoTabWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 		if ((int)wParam >= 0 && (int)wParam < itc->pList.getCount()) {
 			itc->nSelectedIdx = wParam;
 			SetWindowText(hwndDlg, itc->pList[itc->nSelectedIdx]->tcsName);
-			RedrawWindow(hwndDlg, NULL, NULL, RDW_INVALIDATE);
+			RedrawWindow(hwndDlg, nullptr, nullptr, RDW_INVALIDATE);
 			SendMessage(GetParent(hwndDlg), WM_COMMAND,
 				MAKEWPARAM(GetWindowLongPtr(hwndDlg, GWL_ID), ITCN_SELCHANGED),
 				itc->nSelectedIdx);
@@ -523,4 +508,19 @@ static LRESULT CALLBACK MIcoTabWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 		return TRUE;
 	}
 	return DefWindowProc(hwndDlg, uMsg, wParam, lParam);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+int LoadIcoTabsModule()
+{
+	WNDCLASSEX wc = {};
+	wc.cbSize = sizeof(wc);
+	wc.lpszClassName = MIRANDAICOTABCLASS;
+	wc.lpfnWndProc = MIcoTabWndProc;
+	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+	wc.cbWndExtra = sizeof(MIcoTabCtrl*);
+	wc.style = CS_GLOBALCLASS;
+	RegisterClassEx(&wc);
+	return 0;
 }

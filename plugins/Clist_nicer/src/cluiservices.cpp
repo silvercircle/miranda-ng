@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-03 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -25,21 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "stdafx.h"
 #include "cluiframes.h"
 
-extern HIMAGELIST hCListImages;
 extern ButtonItem *g_ButtonItems;
-extern PLUGININFOEX pluginInfo;
-
-static INT_PTR GetClistVersion(WPARAM, LPARAM lParam)
-{
-	static char g_szVersionString[256];
-
-	mir_snprintf(g_szVersionString, "%s, %d.%d.%d.%d", pluginInfo.shortName, HIBYTE(HIWORD(pluginInfo.version)), LOBYTE(HIWORD(pluginInfo.version)), HIBYTE(LOWORD(pluginInfo.version)), LOBYTE(LOBYTE(pluginInfo.version)));
-	if (!IsBadWritePtr((LPVOID)lParam, 4))
-		*((DWORD *)lParam) = pluginInfo.version;
-
-	return (INT_PTR)g_szVersionString;
-}
-
 
 void FreeProtocolData(void)
 {
@@ -112,8 +98,8 @@ void CluiProtocolStatusChanged(int, const char*)
 	}
 	else {
 		SIZE textSize;
-		BYTE showOpts = cfg::getByte("CLUI", "SBarShow", 1);
-		TCHAR szName[32];
+		BYTE showOpts = db_get_b(NULL, "CLUI", "SBarShow", 1);
+		wchar_t szName[32];
 
 		HDC hdc = GetDC(NULL);
 		HFONT hofont = reinterpret_cast<HFONT>(SelectObject(hdc, (HFONT)SendMessage(pcli->hwndStatus, WM_GETFONT, 0, 0)));
@@ -133,16 +119,16 @@ void CluiProtocolStatusChanged(int, const char*)
 			if (showOpts & 1)
 				x += 16;
 			if (showOpts & 2) {
-				mir_tstrncpy(szName, pa->tszAccountName, _countof(szName));
+				mir_wstrncpy(szName, pa->tszAccountName, _countof(szName));
 				szName[_countof(szName) - 1] = 0;
-				if ((showOpts & 4) && mir_tstrlen(szName) < sizeof(szName) - 1)
-					mir_tstrcat(szName, _T(" "));
-				GetTextExtentPoint32(hdc, szName, (int)mir_tstrlen(szName), &textSize);
+				if ((showOpts & 4) && mir_wstrlen(szName) < sizeof(szName) - 1)
+					mir_wstrcat(szName, L" ");
+				GetTextExtentPoint32(hdc, szName, (int)mir_wstrlen(szName), &textSize);
 				x += textSize.cx + GetSystemMetrics(SM_CXBORDER) * 4; // The SB panel doesnt allocate enough room
 			}
 			if (showOpts & 4) {
-				TCHAR* modeDescr = pcli->pfnGetStatusModeDescription(CallProtoService(accs[i]->szModuleName, PS_GETSTATUS, 0, 0), 0);
-				GetTextExtentPoint32(hdc, modeDescr, (int)mir_tstrlen(modeDescr), &textSize);
+				wchar_t* modeDescr = pcli->pfnGetStatusModeDescription(CallProtoService(accs[i]->szModuleName, PS_GETSTATUS, 0, 0), 0);
+				GetTextExtentPoint32(hdc, modeDescr, (int)mir_wstrlen(modeDescr), &textSize);
 				x += textSize.cx + GetSystemMetrics(SM_CXBORDER) * 4; // The SB panel doesnt allocate enough room
 			}
 			partWidths[partCount] = (partCount ? partWidths[partCount - 1] : cfg::dat.bCLeft) + x + 2;
@@ -158,7 +144,7 @@ void CluiProtocolStatusChanged(int, const char*)
 	SendMessage(pcli->hwndStatus, SB_SIMPLE, FALSE, 0);
 
 	partWidths[partCount - 1] = -1;
-	windowStyle = cfg::getByte("CLUI", "WindowStyle", 0);
+	windowStyle = db_get_b(NULL, "CLUI", "WindowStyle", 0);
 	SendMessage(pcli->hwndStatus, SB_SETMINHEIGHT, 18 + cfg::dat.bClipBorder + ((windowStyle == SETTING_WINDOWSTYLE_THINBORDER || windowStyle == SETTING_WINDOWSTYLE_NOBORDER) ? 3 : 0), 0);
 	SendMessage(pcli->hwndStatus, SB_SETPARTS, partCount, (LPARAM)partWidths);
 
@@ -181,7 +167,7 @@ void CluiProtocolStatusChanged(int, const char*)
 		{
 			int flags;
 			flags = SBT_OWNERDRAW;
-			if (cfg::getByte("CLUI", "SBarBevel", 1) == 0)
+			if (db_get_b(NULL, "CLUI", "SBarBevel", 1) == 0)
 				flags |= SBT_NOBORDERS;
 			SendMessageA(pcli->hwndStatus, SB_SETTEXTA, partCount | flags, (LPARAM)PD);
 		}
@@ -221,7 +207,7 @@ void CluiProtocolStatusChanged(int, const char*)
 	* and uses timer based sort and redraw handling. This can improve performance
 	* when connecting multiple protocols significantly.
 	*/
-	TCHAR *szStatus = pcli->pfnGetStatusModeDescription(wStatus, 0);
+	wchar_t *szStatus = pcli->pfnGetStatusModeDescription(wStatus, 0);
 
 	/*
 	* set the global status icon and display the global (most online) status mode on the

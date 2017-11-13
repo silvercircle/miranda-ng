@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -62,7 +62,7 @@ MIR_CORE_DLL(WCHAR*) rtrimw(WCHAR *str)
 	if (str == NULL)
 		return NULL;
 
-	WCHAR *p = _tcschr(str, 0);
+	WCHAR *p = wcschr(str, 0);
 	while (--p >= str) {
 		switch (*p) {
 		case ' ': case '\t': case '\n': case '\r':
@@ -146,9 +146,9 @@ MIR_CORE_DLL(char*) strdel(char *str, size_t len)
 {
 	char* p;
 	for (p = str + len; *p != 0; p++)
-		p[-len] = *p;
+		*(p - len) = *p;
 
-	p[-len] = '\0';
+	*(p - len) = '\0';
 	return str;
 }
 
@@ -156,9 +156,9 @@ MIR_CORE_DLL(wchar_t*) strdelw(wchar_t *str, size_t len)
 {
 	wchar_t* p;
 	for (p = str + len; *p != 0; p++)
-		p[-len] = *p;
+		*(p - len) = *p;
 
-	p[-len] = '\0';
+	*(p - len) = '\0';
 	return str;
 }
 
@@ -282,6 +282,56 @@ MIR_CORE_DLL(WCHAR*) bin2hexW(const void *pData, size_t len, WCHAR *dest)
 	return dest;
 }
 
+static int hex2dec(int iHex)
+{
+	if (iHex >= '0' && iHex <= '9')
+		return iHex - '0';
+	if (iHex >= 'a' && iHex <= 'f')
+		return iHex - 'a' + 10;
+	if (iHex >= 'A' && iHex <= 'F')
+		return iHex - 'A' + 10;
+	return 0;
+}
+
+MIR_CORE_DLL(bool) hex2bin(const char *pSrc, void *pData, size_t len)
+{
+	if (pSrc == NULL || pData == NULL || len == 0)
+		return false;
+
+	size_t bufLen = strlen(pSrc)/2;
+	if (pSrc[bufLen*2] != 0 || bufLen > len)
+		return false;
+
+	BYTE *pDest = (BYTE*)pData;
+	const char *p = (const char *)pSrc;
+	for (size_t i = 0; i < bufLen; i++, p += 2)
+		pDest[i] = hex2dec(p[0]) * 16 + hex2dec(p[1]);
+
+	if (bufLen < len)
+		memset(pDest + bufLen, 0, len - bufLen);
+	return true;
+}
+
+MIR_CORE_DLL(bool) hex2binW(const wchar_t *pSrc, void *pData, size_t len)
+{
+	if (pSrc == NULL || pData == NULL || len == 0)
+		return false;
+
+	size_t bufLen = wcslen(pSrc)/2;
+	if (pSrc[bufLen * 2] != 0 || bufLen > len)
+		return false;
+
+	BYTE *pDest = (BYTE*)pData;
+	const wchar_t *p = (const wchar_t *)pSrc;
+	for (size_t i = 0; i < bufLen; i++, p += 2)
+		pDest[i] = hex2dec(p[0]) * 16 + hex2dec(p[1]);
+
+	if (bufLen < len)
+		memset(pDest+bufLen, 0, len - bufLen);
+	return true;
+}
+
+
 /////////////////////////////////////////////////////////////////////////////////////////
 
 #pragma intrinsic(strlen, strcpy, strcat, strcmp, wcslen, wcscpy, wcscat, wcscmp)
@@ -402,7 +452,7 @@ MIR_CORE_DLL(int) mir_strcmp(const char *p1, const char *p2)
 		return (p2 == NULL) ? 0 : -1;
 	if (p2 == NULL)
 		return 1;
-	return CompareStringA(LOCALE_USER_DEFAULT, 0, p1, -1, p2, -1) - 2;
+	return strcmp(p1, p2);
 }
 
 MIR_CORE_DLL(int) mir_wstrcmp(const wchar_t *p1, const wchar_t *p2)
@@ -411,7 +461,7 @@ MIR_CORE_DLL(int) mir_wstrcmp(const wchar_t *p1, const wchar_t *p2)
 		return (p2 == NULL) ? 0 : -1;
 	if (p2 == NULL)
 		return 1;
-	return CompareStringW(LOCALE_USER_DEFAULT, 0, p1, -1, p2, -1) - 2;
+	return wcscmp(p1, p2);
 }
 
 MIR_CORE_DLL(int) mir_strcmpi(const char *p1, const char *p2)
@@ -420,7 +470,7 @@ MIR_CORE_DLL(int) mir_strcmpi(const char *p1, const char *p2)
 		return (p2 == NULL) ? 0 : -1;
 	if (p2 == NULL)
 		return 1;
-	return CompareStringA(LOCALE_USER_DEFAULT, NORM_IGNORECASE, p1, -1, p2, -1) - 2;
+	return stricmp(p1, p2);
 }
 
 MIR_CORE_DLL(int) mir_wstrcmpi(const wchar_t *p1, const wchar_t *p2)
@@ -429,7 +479,7 @@ MIR_CORE_DLL(int) mir_wstrcmpi(const wchar_t *p1, const wchar_t *p2)
 		return (p2 == NULL) ? 0 : -1;
 	if (p2 == NULL)
 		return 1;
-	return CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE, p1, -1, p2, -1) - 2;
+	return wcsicmp(p1, p2);
 }
 
 MIR_CORE_DLL(int) mir_strncmp(const char *p1, const char *p2, size_t n)
@@ -438,7 +488,7 @@ MIR_CORE_DLL(int) mir_strncmp(const char *p1, const char *p2, size_t n)
 		return (p2 == NULL) ? 0 : -1;
 	if (p2 == NULL)
 		return 1;
-	return CompareStringA(LOCALE_USER_DEFAULT, 0, p1, (int)n, p2, (int)n) - 2;
+	return strncmp(p1, p2, n);
 }
 
 MIR_CORE_DLL(int) mir_wstrncmp(const wchar_t *p1, const wchar_t *p2, size_t n)
@@ -447,7 +497,7 @@ MIR_CORE_DLL(int) mir_wstrncmp(const wchar_t *p1, const wchar_t *p2, size_t n)
 		return (p2 == NULL) ? 0 : -1;
 	if (p2 == NULL)
 		return 1;
-	return CompareStringW(LOCALE_USER_DEFAULT, 0, p1, (int)n, p2, (int)n) - 2;
+	return wcsncmp(p1, p2, n);
 }
 
 MIR_CORE_DLL(int) mir_strncmpi(const char *p1, const char *p2, size_t n)
@@ -456,7 +506,7 @@ MIR_CORE_DLL(int) mir_strncmpi(const char *p1, const char *p2, size_t n)
 		return (p2 == NULL) ? 0 : -1;
 	if (p2 == NULL)
 		return 1;
-	return CompareStringA(LOCALE_USER_DEFAULT, NORM_IGNORECASE, p1, (int)n, p2, (int)n) - 2;
+	return strnicmp(p1, p2, n);
 }
 
 MIR_CORE_DLL(int) mir_wstrncmpi(const wchar_t *p1, const wchar_t *p2, size_t n)
@@ -465,7 +515,7 @@ MIR_CORE_DLL(int) mir_wstrncmpi(const wchar_t *p1, const wchar_t *p2, size_t n)
 		return (p2 == NULL) ? 0 : -1;
 	if (p2 == NULL)
 		return 1;
-	return CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE, p1, (int)n, p2, (int)n) - 2;
+	return wcsnicmp(p1, p2, n);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -474,8 +524,28 @@ PGENRANDOM pfnRtlGenRandom;
 
 MIR_CORE_DLL(void) Utils_GetRandom(void *pszDest, size_t cbLen)
 {
-	if (pszDest != 0 || cbLen != 0 && pfnRtlGenRandom != NULL)
+	if (pszDest == nullptr || cbLen == 0)
+		return;
+
+	if (pfnRtlGenRandom != NULL)
 		pfnRtlGenRandom(pszDest, (ULONG)cbLen);
-	else
-		memset(pszDest, 0, cbLen);
+	else {
+		srand(time(NULL));
+		BYTE *p = (BYTE*)pszDest;
+		for (size_t i = 0; i < cbLen; i++)
+			p[i] = rand() & 0xFF;
+	}
+}
+
+MIR_CORE_DLL(bool) Utils_IsRtl(const wchar_t *pszwText)
+{
+	size_t iLen = mir_wstrlen(pszwText);
+	mir_ptr<WORD> infoTypeC2((WORD*)mir_calloc(sizeof(WORD) * (iLen + 2)));
+	GetStringTypeW(CT_CTYPE2, pszwText, (int)iLen, infoTypeC2);
+
+	for (size_t i = 0; i < iLen; i++)
+		if (infoTypeC2[i] == C2_RIGHTTOLEFT)
+			return true;
+
+	return false;
 }

@@ -26,7 +26,7 @@
 [&Del]
 &Удалить
 [User info - Required]
-Инфо пользователя - Необходимо
+Инфо пользователя - Требуется
 [Nick]
 Ник
 [Alternative nick]
@@ -50,7 +50,7 @@ ID пользователя
 [Rejoin channel if kicked]
 Перезайти на канал после кика
 [Rejoin channels on reconnect]
-Перезайти при переподключении
+Перезайти при повторном подключении
 [Disable tray balloon on error]
 Отключить сообщения в трее
 [Show addresses]
@@ -158,7 +158,7 @@ ID пользователя
 [Online detection mode]
 Режим определения в сети
 [Basic]
-Основные
+Основной
 [Wildcard enabled network search]
 Wildcard поиск по сети
 [Channel manager]
@@ -180,7 +180,7 @@ Wildcard поиск по сети
 [Key:]
 Ключ:
 [User limit:]
-Лимит:
+Кол-во пользователей:
 [Private]
 Приватный
 [Secret]
@@ -194,11 +194,11 @@ Wildcard поиск по сети
 [Hidden]
 Скрытый
 [Use the options to set modes for this channel. You are usually required to be op. or higher to modify.]
-Опции настройки комнаты чата. Для настройки комнаты чата нужны права администратора.
+Настройки комнаты чата. Для этого, чаще всего, требуются права администратора.
 [Strip colors]
 Цвета полос
 [Normal]
-Нормальный
+Обычный
 [Send-ahead]
 Упреждающий
 [Attempt reverse DCC (good if firewalled)]
@@ -299,10 +299,24 @@ DCC: Запрос на реверсную передачу файла от %s о
 DCC: Запрос на продолжение закачки файла от %s отклонён
 [CTCP %s requested by %s]
 СТСР %s запрос от %s
+[%u second]
+%u секунда
+[%u seconds]
+%u секунд(ы)
 [CTCP PING reply from %s: %u sec(s)]
-СТСP PING ответ от %s: %u сек (с)
+СТСP PING ответ от %s: %u сек.
 [CTCP %s reply from %s: %s]
 СТСР %s ответ от %s: %s
+[Owner]
+Владелец
+[Admin]
+Админ
+[Op]
+Оп
+[Halfop]
+Полуоп
+[Voice]
+Войс
 [Downloading list (%u%%) - %u channels]
 Загружается список (%u%%) - %u% комнат чата
 [Downloading list - %u channels]
@@ -323,12 +337,12 @@ DCC: Запрос на продолжение закачки файла от %s 
 в сети с %s, простаивает %s
 [Change nickname]
 Сменить ник
-[IRC error]
-Ошибка IRC
 [Unknown]
 Неизвестно
+[IRC error]
+Ошибка IRC
 [Please enter the hostmask (nick!user@host)\nNOTE! Contacts on your contact list are never ignored]
-Введите маску узла (псевдоним!пользователь@узел)\nВНИМАНИЕ! Контакты в вашем списке никогда не игнорируются
+Введите маску (nick!user@host)\nВнимание: пользователи из списка контактов не будут игнорироваться
 [Ignore]
 Игнорировать
 [Please enter the reason]
@@ -378,7 +392,7 @@ DCC: Запрос на продолжение закачки файла от %s 
 [DCC CHAT request sent to %s]
 Запрос на DCC-чат отправлен для %s
 [DCC ERROR: Unable to bind port]
-Ошибка DCC: Невозможно определить порт
+Ошибка DCC: Невозможно выполнить привязку к порту
 [Input command]
 Ввод команды
 [Please enter the reply]
@@ -386,11 +400,11 @@ DCC: Запрос на продолжение закачки файла от %s 
 [Failed to connect to]
 Не удалось подключиться к
 [DCC ERROR: Unable to bind local port for passive file transfer]
-Ошибка DCC: Невозможно открыть локальный порт для пассивной передачи файлов
+Ошибка DCC: Невозможно выполнить привязку к локальному порту для пассивной передачи файлов
 [%s server connection]
 %s подключение к серверу
 [%s client-to-client connections]
-%s подключения между клиентами
+%s подключения между пользователями
 [Nickname]
 Ник
 [DCC ERROR: No valid files specified]
@@ -400,7 +414,7 @@ DCC-запрос на реверсную передачу послан %s [%s]
 [DCC file transfer request sent to %s [%s]]
 DCC-запрос на передачу файла послан %s [%s]
 [DCC ERROR: Unable to bind local port]
-Ошибка DCC: Невозможно получить порт
+Ошибка DCC: Невозможно выполнить привязку к локальному порту
 [The protocol is not online]
 Протокол не в сети
 [The dcc chat connection is not active]
@@ -491,11 +505,11 @@ DCC-запрос на передачу файла послан %s [%s]
 Событие: Доступен
 [Event: Away]
 Событие: Отсутствую
-[Event: N/A]
+[Event: Not available]
 Событие: Недоступен
 [Event: Occupied]
 Событие: Занят
-[Event: DND]
+[Event: Do not disturb]
 Событие: Не беспокоить
 [Event: Free for chat]
 Событие: Готов болтать
@@ -526,7 +540,7 @@ DCC-запрос на передачу файла послан %s [%s]
 [Add ignore]
 Добавление правила
 [Edit ignore]
-Изменить игнор
+Изменение правила
 [Account]
 Учётная запись
 [DCC and CTCP]
@@ -567,8 +581,6 @@ WallOps от %s:\s
 &Добавить в чёрный список
 [%s (%s) is requesting a client-to-client chat connection.]
 %s [%s] запрашивает соединение на СТСР-чат
-[Please enter the hostmask (nick!user@host) \nNOTE! Contacts on your contact list are never ignored]
-Введите маску (nick!user@host) \nВнимание! Пользователи из списка контакта не будут игнорироваться!
 [Join channel]
 Зайти в комнату чата
 [Please enter a channel to join]
@@ -582,7 +594,7 @@ WallOps от %s:\s
 [Authenticate nick]
 Аутентифицировать
 [Are you sure you want to unregister your current nick?]
-Вы уверены, что хотите удалить ваш ник?
+Вы уверены, что хотите удалить свой ник?
 [Delete nick]
 Удалить ник
 [Identify nick]
@@ -598,23 +610,23 @@ WallOps от %s:\s
 [Change language of NickServ messages]
 Сменить язык сообщений Nickserv
 [Please enter URL that will be linked to your nick]
-Введите ссылку на ваш ник
+Введите ссылку на свой ник
 [Set URL, linked to nick]
 Ссылка на ник
 [Please enter your e-mail, that will be linked to your nick]
-Введите e-mail вашего ника
+Введите e-mail своего ника
 [Set e-mail, linked to nick]
 Установить e-mail, ссылающийся на ник
 [Please enter some information about your nick]
-Введите информацию о вашем нике
+Введите информацию о своём нике
 [Set information for nick]
 Установить инфо о нике
 [Please enter nick you want to link to your current nick]
-Введите ник, который нужно закрепить за текущим ником
+Введите ник, который хотите закрепить за текущим ником
 [Link another nick to current nick]
 Закрепить другой ник к этому нику
 [Please enter nick you want to unlink from your current nick]
-Введите ник, который нужно отцепить от текущего
+Введите ник, который хотите отцепить от текущего
 [Unlink another nick from current nick]
 Отцепить другой ник от текущего
 [Please enter nick you want to set as your main nick]
@@ -722,21 +734,27 @@ Nickserv убить фантома
 [Send &File]
 Передача &файла
 [Add to &ignore list]
-Добавить в &игнор
+&Игнорировать
 [&Add User]
 &Добавить в контакты
 [Connecting to]
 Соединение с
 [Offline]
 Не в сети
+[Faster! Searches the network for an exact match of the nickname only. The hostmask is optional and provides further security if used. Wildcards (? and *) are allowed.]
+Быстрее: в сети ищется лишь ник, в точности совпадающий c указанным. Маска узла необязательна, но добавляет безопасности. Поддерживаются метасимволы ? и *.
+[Slower! Searches the network for nicknames matching a wildcard string. The hostmask is mandatory and a minimum of 4 characters is necessary in the "Nick" field. Wildcards (? and *) are allowed.]
+Медленнее: ищутся ники, удовлетворяющие указанным метасимволам. Необходимо указать маску узла и минимум 4 символа в поле "Ник". Поддерживаются метасимволы ? и *.
 [Settings could not be saved!\n\nThe "Nick" field must contain at least four characters including wildcards,\n and it must also match the default nickname for this contact.]
-Настройки не сохранены.\n\nПоле "Псевдоним" должно содержать как минимум четыре знака (включая маски), и совпадать с псевдонимом по умолчанию для этого контакта.
+Настройки не сохранены.\n\nПоле "Псевдоним" должно содержать как минимум четыре знака (включая маски) и совпадать с псевдонимом по умолчанию для этого контакта.
 [Please wait...]
 Подождите, пожалуйста...
 [Channel]
 Комната чата
 [Mode]
 Режим
+[%s - Filtered - %d items]
+%s - отфильтровано - %d объектов 
 [---- Not listed server ----]
 ----Сервер вне списка---
 [Type new server address here]

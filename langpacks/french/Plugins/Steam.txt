@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Steam.dll
 ;  Plugin: Steam protocol
-;  Version: 0.11.4.2
+;  Version: 0.11.6.1
 ;  Authors: Miranda NG Team, Robert Pösel
 ;============================================================
 [Steam protocol support for Miranda NG.]
@@ -20,12 +20,14 @@ Compte
 Contacts
 [Use bigger avatars]
 Utiliser des grands avatars
+[Message sessions]
+Sessions de message
+[Show chat state events (i.e., user closed chat session)]
+
 [Captcha]
 
 [Cancel]
 Annuler
-[Steam Guard]
-
 [As an added account security measure, you'll need to grant access by entering the special code we've just sent to your email address.]
 
 [Go to email domain]
@@ -37,6 +39,8 @@ Entrez le passe
 [Save password]
 Enregistrer le passe
 [Enter the password to continue.]
+
+[As an added account security measure, you'll need to grant access by entering the SMS code we've just sent to your mobile phone.]
 
 ;file \protocols\Steam\src\main.cpp
 [Steam game]
@@ -69,7 +73,9 @@ Réseau
 [Blocked contacts]
 
 ;file \protocols\Steam\src\steam_login.cpp
-[Connection token expired. Please login again.]
+[Cannot obtain connection token.]
+
+[Unknown login error.]
 
 ;file \protocols\Steam\src\steam_menus.cpp
 [Steam menu chooser]
@@ -93,8 +99,9 @@ Protocoles
 
 [%s connection]
 
-[SteamID]
-
 [You cannot send messages when you are offline.]
 Vous ne pouvez pas envoyer de message si vous êtes Hors ligne.
+;file \protocols\Steam\src\steam_utils.cpp
+[closed chat session]
+session chat fermée
 ;file \protocols\Steam\src\steam_xstatus.cpp

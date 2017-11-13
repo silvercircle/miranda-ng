@@ -22,9 +22,9 @@ class PlainHtmlExport :
 	public IExport
 {
 public:
-	virtual const TCHAR* GetExt()
+	virtual const wchar_t* GetExt()
 	{
-		return _T("html");
+		return L"html";
 	}
 
 	virtual void WriteHeader(const std::wstring &fileName, const std::wstring &filterName, const std::wstring &myName, const std::wstring &myId, const std::wstring &name1, const std::wstring &proto1, const std::wstring &id1, const std::string& baseProto1, const std::wstring& encoding);

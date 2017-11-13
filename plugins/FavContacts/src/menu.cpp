@@ -23,11 +23,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 UINT g_maxItemWidth = 0;
 float g_widthMultiplier = 0;
 
-TCHAR g_filter[1024] = { 0 };
+wchar_t g_filter[1024] = { 0 };
 
 HWND g_hwndMenuHost = NULL;
 
-static TCHAR* sttGetGroupName(int id)
+static wchar_t* sttGetGroupName(int id)
 {
 	if (id == 1) {
 		if (g_Options.bUseGroups)
@@ -35,19 +35,19 @@ static TCHAR* sttGetGroupName(int id)
 		return TranslateT("Favorite Contacts");
 	}
 
-	return pcli->pfnGetGroupName(id - 1, NULL);
+	return Clist_GroupGetName(id - 1, NULL);
 }
 
 static BOOL sttMeasureItem_Group(LPMEASUREITEMSTRUCT lpmis, Options *options)
 {
 	HDC hdc = GetDC(g_hwndMenuHost);
 	HFONT hfntSave = (HFONT)SelectObject(hdc, GetStockObject(DEFAULT_GUI_FONT));
-	TCHAR *name = sttGetGroupName(-INT_PTR(lpmis->itemData));
+	wchar_t *name = sttGetGroupName(-INT_PTR(lpmis->itemData));
 	if (!options->bSysColors)
 		SelectObject(hdc, g_Options.hfntName);
 
 	SIZE sz;
-	GetTextExtentPoint32(hdc, name, (int)mir_tstrlen(name), &sz);
+	GetTextExtentPoint32(hdc, name, (int)mir_wstrlen(name), &sz);
 	lpmis->itemHeight = sz.cy + 8;
 	lpmis->itemWidth = sz.cx + 10;
 	SelectObject(hdc, hfntSave);
@@ -71,7 +71,7 @@ static BOOL sttMeasureItem_Contact(LPMEASUREITEMSTRUCT lpmis, Options *options)
 
 	if (options->bSecondLine) {
 		bool bFree = false;
-		TCHAR *title = db_get_tsa(hContact, "CList", "StatusMsg");
+		wchar_t *title = db_get_wsa(hContact, "CList", "StatusMsg");
 		if (title == NULL) {
 			char *proto = GetContactProto(hContact);
 			int status = db_get_w(hContact, proto, "Status", ID_STATUS_OFFLINE);
@@ -81,7 +81,7 @@ static BOOL sttMeasureItem_Contact(LPMEASUREITEMSTRUCT lpmis, Options *options)
 
 		if (!options->bSysColors)
 			SelectObject(hdc, g_Options.hfntSecond);
-		GetTextExtentPoint32(hdc, title, (int)mir_tstrlen(title), &sz);
+		GetTextExtentPoint32(hdc, title, (int)mir_wstrlen(title), &sz);
 		textWidth = sz.cx;
 		lpmis->itemHeight += sz.cy + 3;
 
@@ -89,10 +89,10 @@ static BOOL sttMeasureItem_Contact(LPMEASUREITEMSTRUCT lpmis, Options *options)
 			mir_free(title);
 	}
 
-	TCHAR *name = (TCHAR *)pcli->pfnGetContactDisplayName(hContact, 0);
+	wchar_t *name = (wchar_t *)pcli->pfnGetContactDisplayName(hContact, 0);
 
 	if (!options->bSysColors) SelectObject(hdc, g_Options.hfntName);
-	GetTextExtentPoint32(hdc, name, (int)mir_tstrlen(name), &sz);
+	GetTextExtentPoint32(hdc, name, (int)mir_wstrlen(name), &sz);
 	textWidth = max(textWidth, sz.cx);
 
 	SelectObject(hdc, hfntSave);
@@ -128,7 +128,7 @@ BOOL MenuMeasureItem(LPMEASUREITEMSTRUCT lpmis, Options *options)
 	BOOL res = FALSE;
 	if (INT_PTR(lpmis->itemData) < 0)
 		res = sttMeasureItem_Group(lpmis, options);
-	else if (CallService(MS_DB_CONTACT_IS, lpmis->itemData, 0))
+	else if (db_is_contact(lpmis->itemData))
 		res = sttMeasureItem_Contact(lpmis, options);
 
 	if (res && (lpmis->itemWidth > g_maxItemWidth)) lpmis->itemWidth = g_maxItemWidth;
@@ -155,7 +155,7 @@ static BOOL sttDrawItem_Group(LPDRAWITEMSTRUCT lpdis, Options *options = NULL)
 		SetTextColor(lpdis->hDC, g_Options.clLine1Sel);
 	}
 
-	TCHAR *name = sttGetGroupName(-INT_PTR(lpdis->itemData));
+	wchar_t *name = sttGetGroupName(-INT_PTR(lpdis->itemData));
 	if (!options->bSysColors)
 		SelectObject(lpdis->hDC, g_Options.hfntName);
 	DrawText(lpdis->hDC, name, -1, &lpdis->rcItem, DT_NOPREFIX | DT_SINGLELINE | DT_VCENTER | DT_CENTER);
@@ -241,8 +241,8 @@ static BOOL sttDrawItem_Contact(LPDRAWITEMSTRUCT lpdis, Options *options = NULL)
 
 	char *proto = GetContactProto(hContact);
 
-	HIMAGELIST hIml = (HIMAGELIST)CallService(MS_CLIST_GETICONSIMAGELIST, 0, 0);
-	int iIcon = CallService(MS_CLIST_GETCONTACTICON, hContact, 0);
+	HIMAGELIST hIml = Clist_GetImageList();
+	int iIcon = pcli->pfnGetContactIcon(hContact);
 
 	if (db_get_dw(hContact, proto, "IdleTS", 0)) {
 		ImageList_DrawDimmed(hIml, iIcon, hdcTemp,
@@ -301,7 +301,7 @@ static BOOL sttDrawItem_Contact(LPDRAWITEMSTRUCT lpdis, Options *options = NULL)
 	}
 
 	if (true) {
-		TCHAR *name = (TCHAR *)pcli->pfnGetContactDisplayName(hContact, 0);
+		wchar_t *name = (wchar_t *)pcli->pfnGetContactDisplayName(hContact, 0);
 
 		if (!options->bSysColors)
 			SelectObject(hdcTemp, g_Options.hfntName);
@@ -309,13 +309,13 @@ static BOOL sttDrawItem_Contact(LPDRAWITEMSTRUCT lpdis, Options *options = NULL)
 		DrawText(hdcTemp, name, -1, &lpdis->rcItem, DT_NOPREFIX | DT_SINGLELINE | DT_TOP | DT_LEFT);
 
 		SIZE sz;
-		GetTextExtentPoint32(hdcTemp, name, (int)mir_tstrlen(name), &sz);
+		GetTextExtentPoint32(hdcTemp, name, (int)mir_wstrlen(name), &sz);
 		lpdis->rcItem.top += sz.cy + 3;
 	}
 
 	if (options->bSecondLine) {
 		bool bFree = false;
-		TCHAR *title = db_get_tsa(hContact, "CList", "StatusMsg");
+		wchar_t *title = db_get_wsa(hContact, "CList", "StatusMsg");
 		if (title == NULL) {
 			int status = db_get_w(hContact, proto, "Status", ID_STATUS_OFFLINE);
 			title = pcli->pfnGetStatusModeDescription(status, 0);
@@ -350,7 +350,7 @@ BOOL MenuDrawItem(LPDRAWITEMSTRUCT lpdis, Options *options)
 	if (INT_PTR(lpdis->itemData) < 0)
 		return sttDrawItem_Group(lpdis, options);
 
-	if (CallService(MS_DB_CONTACT_IS, lpdis->itemData, 0))
+	if (db_is_contact(lpdis->itemData))
 		return sttDrawItem_Contact(lpdis, options);
 
 	return FALSE;
@@ -368,7 +368,7 @@ static LRESULT CALLBACK MenuHostWndProc(HWND hwnd, UINT message, WPARAM wParam, 
 				return FALSE;
 
 			if ((lpmis->itemID >= CLISTMENUIDMIN) && (lpmis->itemID <= CLISTMENUIDMAX))
-				return Menu_MeasureItem(lpmis);
+				return Menu_MeasureItem(lParam);
 
 			return MenuMeasureItem(lpmis);
 		}
@@ -380,7 +380,7 @@ static LRESULT CALLBACK MenuHostWndProc(HWND hwnd, UINT message, WPARAM wParam, 
 				return FALSE;
 
 			if ((lpdis->itemID >= CLISTMENUIDMIN) && (lpdis->itemID <= CLISTMENUIDMAX))
-				return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
+				return Menu_DrawItem(lParam);
 
 			return MenuDrawItem(lpdis);
 		}
@@ -390,13 +390,13 @@ static LRESULT CALLBACK MenuHostWndProc(HWND hwnd, UINT message, WPARAM wParam, 
 			RemoveMenu((HMENU)lParam, 1, MF_BYPOSITION);
 
 		if (LOWORD(wParam) == VK_BACK) {
-			if (size_t l = mir_tstrlen(g_filter))
+			if (size_t l = mir_wstrlen(g_filter))
 				g_filter[l - 1] = 0;
 		}
-		else if (_istalnum(LOWORD(wParam))) {
-			if (mir_tstrlen(g_filter) < _countof(g_filter) - 1) {
-				TCHAR s[] = { LOWORD(wParam), 0 };
-				mir_tstrcat(g_filter, s);
+		else if (iswalnum(LOWORD(wParam))) {
+			if (mir_wstrlen(g_filter) < _countof(g_filter) - 1) {
+				wchar_t s[] = { LOWORD(wParam), 0 };
+				mir_wstrcat(g_filter, s);
 			}
 		}
 		{
@@ -419,7 +419,7 @@ static LRESULT CALLBACK MenuHostWndProc(HWND hwnd, UINT message, WPARAM wParam, 
 		GetMenuItemInfo((HMENU)lParam, wParam, TRUE, &mii);
 
 		MCONTACT cc = (MCONTACT)mii.dwItemData;
-		if (!CallService(MS_DB_CONTACT_IS, cc, 0))
+		if (!db_is_contact(cc))
 			return FALSE;
 
 		HMENU hMenu = Menu_BuildContactMenu(cc);
@@ -432,7 +432,7 @@ static LRESULT CALLBACK MenuHostWndProc(HWND hwnd, UINT message, WPARAM wParam, 
 		SetForegroundWindow(hwndSave);
 		DestroyMenu(hMenu);
 
-		CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(res, MPCF_CONTACTMENU), hContact);
+		Clist_MenuProcessCommand(res, MPCF_CONTACTMENU, hContact);
 		return TRUE;
 	}
 
@@ -444,7 +444,7 @@ int ShowMenu(bool centered)
 	HMENU hMenu = CreatePopupMenu();
 	SIZE szMenu = { 0 };
 	SIZE szColumn = { 0 };
-	TCHAR *prevGroup = NULL;
+	wchar_t *prevGroup = NULL;
 	int idItem = 100;
 	MCONTACT hContact;
 
@@ -465,7 +465,7 @@ int ShowMenu(bool centered)
 		mis.CtlID = 0;
 		mis.CtlType = ODT_MENU;
 
-		if (!prevGroup || mir_tstrcmp(prevGroup, favList[i]->getGroup())) {
+		if (!prevGroup || mir_wstrcmp(prevGroup, favList[i]->getGroup())) {
 			if (prevGroup && g_Options.bUseColumns) {
 				szMenu.cx += szColumn.cx;
 				szMenu.cy = max(szMenu.cy, szColumn.cy);
@@ -528,7 +528,7 @@ int ShowMenu(bool centered)
 	DestroyMenu(hMenu);
 
 	if (hContact)
-		CallService(MS_CLIST_CONTACTDOUBLECLICKED, hContact, 0);
+		Clist_ContactDoubleClicked(hContact);
 
 	return 0;
 }
@@ -540,10 +540,10 @@ void InitMenu()
 	wcl.hInstance = g_hInst;
 	wcl.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wcl.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
-	wcl.lpszClassName = _T("FavContactsMenuHostWnd");
+	wcl.lpszClassName = L"FavContactsMenuHostWnd";
 	RegisterClassEx(&wcl);
 
-	g_hwndMenuHost = CreateWindow(_T("FavContactsMenuHostWnd"), NULL, 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP, NULL, g_hInst, NULL);
+	g_hwndMenuHost = CreateWindow(L"FavContactsMenuHostWnd", NULL, 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP, NULL, g_hInst, NULL);
 	SetWindowPos(g_hwndMenuHost, 0, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_DEFERERASE | SWP_NOSENDCHANGING | SWP_HIDEWINDOW);
 }
 

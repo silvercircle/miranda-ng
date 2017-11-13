@@ -30,29 +30,31 @@ Liczba trzymanych kopii zapasowych:
 Zapisuj kopię do folderu:
 [Browse...]
 Przeglądaj...
-[Go to the "Customize -> Folders" to change settings]
-Idź do Personalizacja -> Foldery aby zmienić ustawienia
+[Go to the "Options -> Customize -> Folders" to change settings]
+Idź do Opcje -> Personalizacja -> Foldery aby zmienić ustawienia
 [Compress backup to zip-archive]
 Kompresuj kopię do archiwum zip
 [Disable progress bar]
 Wyłącz okienko ze wskaźnikiem postępu kopiowania
 [Disable popups]
 Wyłącz popupy
+[Use Dropbox]
+Używaj Dropbox
+[Backup profile folder]
+Kopia zapasowa folderu z profilem
 ;file \plugins\Db_autobackups\src\backup.cpp
-[Miranda NG database]
-Baza danych Mirandy NG
-[Created by:]
-Utworzona przez:
 [Backup in progress]
 Tworzenie kopii zapasowej...
 [Copying database file...]
 Kopiowanie pliku profilu...
+[Uploading to Dropbox failed]
+Nieudane załadowanie do Dropbox'a
+[Error]
+Błąd
 [Database backed up]
 Kopia zapasowa utworzona
 [Database back up in process...]
 Tworzenie kopii zapasowej bazy danych w toku...
-[Error]
-Błąd
 ;file \plugins\Db_autobackups\src\main.cpp
 [Miranda NG databases]
 Bazy danych Mirandy NG
@@ -96,9 +98,12 @@ dni
 [hours]
 godzin
 [minutes]
-minuty
+minut
 [Select backup folder]
 Wybierz folder kopii zapasowej
 [Error creating backup folder]
 Błąd tworzenia folderu kopii bezpieczeństwa
 ;file \plugins\Db_autobackups\src\stdafx.h
+;file \plugins\Db_autobackups\src\zip.cpp
+[Miranda NG [%s] database backup]
+Miranda NG [%s] kopia zapasowa profilu

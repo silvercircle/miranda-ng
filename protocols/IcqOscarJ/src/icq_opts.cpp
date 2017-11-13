@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2010 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -29,12 +29,12 @@
 
 extern BOOL bPopupService;
 
-static const TCHAR* szLogLevelDescr[] = {
-	LPGENT("Display all problems"),
-	LPGENT("Display problems causing possible loss of data"),
-	LPGENT("Display explanations for disconnection"),
-	LPGENT("Display problems requiring user intervention"),
-	LPGENT("Do not display any problems (not recommended)")
+static const wchar_t* szLogLevelDescr[] = {
+	LPGENW("Display all problems"),
+	LPGENW("Display problems causing possible loss of data"),
+	LPGENW("Display explanations for disconnection"),
+	LPGENW("Display problems requiring user intervention"),
+	LPGENW("Do not display any problems (not recommended)")
 };
 
 static void LoadDBCheckState(CIcqProto* ppro, HWND hwndDlg, int idCtrl, const char* szSetting, BYTE bDef)
@@ -93,14 +93,14 @@ static INT_PTR CALLBACK DlgProcIcqOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			LoadDBCheckState(ppro, hwndDlg, IDC_KEEPALIVE, "KeepAlive", DEFAULT_KEEPALIVE_ENABLED);
 			SendDlgItemMessage(hwndDlg, IDC_LOGLEVEL, TBM_SETRANGE, FALSE, MAKELONG(0, 4));
 			SendDlgItemMessage(hwndDlg, IDC_LOGLEVEL, TBM_SETPOS, TRUE, 4 - ppro->getByte("ShowLogLevel", LOG_WARNING));
-			SetDlgItemText(hwndDlg, IDC_LEVELDESCR, TranslateTS(szLogLevelDescr[4 - SendDlgItemMessage(hwndDlg, IDC_LOGLEVEL, TBM_GETPOS, 0, 0)]));
+			SetDlgItemText(hwndDlg, IDC_LEVELDESCR, TranslateW(szLogLevelDescr[4 - SendDlgItemMessage(hwndDlg, IDC_LOGLEVEL, TBM_GETPOS, 0, 0)]));
 			ShowDlgItem(hwndDlg, IDC_RECONNECTREQD, SW_HIDE);
 			LoadDBCheckState(ppro, hwndDlg, IDC_NOERRMULTI, "IgnoreMultiErrorBox", 0);
 		}
 		return TRUE;
 
 	case WM_HSCROLL:
-		SetDlgItemText(hwndDlg, IDC_LEVELDESCR, TranslateTS(szLogLevelDescr[4 - SendDlgItemMessage(hwndDlg, IDC_LOGLEVEL, TBM_GETPOS, 0, 0)]));
+		SetDlgItemText(hwndDlg, IDC_LEVELDESCR, TranslateW(szLogLevelDescr[4 - SendDlgItemMessage(hwndDlg, IDC_LOGLEVEL, TBM_GETPOS, 0, 0)]));
 		OptDlgChanged(hwndDlg);
 		break;
 
@@ -334,7 +334,6 @@ static BOOL CALLBACK FillCpCombo(LPSTR str)
 static const UINT icqDCMsgControls[] = { IDC_DCPASSIVE };
 static const UINT icqXStatusControls[] = { IDC_XSTATUSAUTO };
 static const UINT icqCustomStatusControls[] = { IDC_XSTATUSRESET };
-static const UINT icqAimControls[] = { IDC_AIMENABLE };
 
 static INT_PTR CALLBACK DlgProcIcqFeaturesOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -362,8 +361,6 @@ static INT_PTR CALLBACK DlgProcIcqFeaturesOpts(HWND hwndDlg, UINT msg, WPARAM wP
 			LoadDBCheckState(ppro, hwndDlg, IDC_XSTATUSAUTO, "XStatusAuto", DEFAULT_XSTATUS_AUTO);
 			LoadDBCheckState(ppro, hwndDlg, IDC_XSTATUSRESET, "XStatusReset", DEFAULT_XSTATUS_RESET);
 			LoadDBCheckState(ppro, hwndDlg, IDC_KILLSPAMBOTS, "KillSpambots", DEFAULT_KILLSPAM_ENABLED);
-			LoadDBCheckState(ppro, hwndDlg, IDC_AIMENABLE, "AimEnabled", DEFAULT_AIM_ENABLED);
-			icq_EnableMultipleControls(hwndDlg, icqAimControls, _countof(icqAimControls), ppro->icqOnline() ? FALSE : TRUE);
 
 			hCpCombo = GetDlgItem(hwndDlg, IDC_UTFCODEPAGE);
 			int sCodePage = ppro->getWord("AnsiCodePage", CP_ACP);
@@ -424,7 +421,6 @@ static INT_PTR CALLBACK DlgProcIcqFeaturesOpts(HWND hwndDlg, UINT msg, WPARAM wP
 			StoreDBCheckState(ppro, hwndDlg, IDC_XSTATUSAUTO, "XStatusAuto");
 			StoreDBCheckState(ppro, hwndDlg, IDC_XSTATUSRESET, "XStatusReset");
 			StoreDBCheckState(ppro, hwndDlg, IDC_KILLSPAMBOTS, "KillSpambots");
-			StoreDBCheckState(ppro, hwndDlg, IDC_AIMENABLE, "AimEnabled");
 			return TRUE;
 		}
 		break;
@@ -511,27 +507,27 @@ int CIcqProto::OnOptionsInit(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.position = -800000000;
 	odp.hInstance = hInst;
-	odp.ptszGroup = LPGENT("Network");
+	odp.szGroup.w = LPGENW("Network");
 	odp.dwInitParam = LPARAM(this);
-	odp.ptszTitle = m_tszUserName;
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR | ODPF_DONTTRANSLATE;
+	odp.szTitle.w = m_tszUserName;
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE | ODPF_DONTTRANSLATE;
 
-	odp.ptszTab = LPGENT("Account");
+	odp.szTab.w = LPGENW("Account");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_ICQ);
 	odp.pfnDlgProc = DlgProcIcqOpts;
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LPGENT("Contacts");
+	odp.szTab.w = LPGENW("Contacts");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_ICQCONTACTS);
 	odp.pfnDlgProc = DlgProcIcqContactsOpts;
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LPGENT("Features");
+	odp.szTab.w = LPGENW("Features");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_ICQFEATURES);
 	odp.pfnDlgProc = DlgProcIcqFeaturesOpts;
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LPGENT("Privacy");
+	odp.szTab.w = LPGENW("Privacy");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_ICQPRIVACY);
 	odp.pfnDlgProc = DlgProcIcqPrivacyOpts;
 	Options_AddPage(wParam, &odp);
@@ -539,10 +535,9 @@ int CIcqProto::OnOptionsInit(WPARAM wParam, LPARAM)
 	if (bPopupService) {
 		odp.position = 100000000;
 		odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_POPUPS);
-		odp.groupPosition = 900000000;
 		odp.pfnDlgProc = DlgProcIcqPopupOpts;
-		odp.ptszGroup = LPGENT("Popups");
-		odp.ptszTab = NULL;
+		odp.szGroup.w = LPGENW("Popups");
+		odp.szTab.w = NULL;
 		Options_AddPage(wParam, &odp);
 	}
 	return 0;

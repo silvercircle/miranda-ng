@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (с) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (с) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-09 Miranda ICQ/IM project,
 
 This file is part of Send Screenshot Plus, a Miranda IM plugin.
@@ -26,19 +26,17 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-//---------------------------------------------------------------------------
 #include "stdafx.h"
 
 INT_PTR(*g_MirCallService)(const char *, WPARAM, LPARAM) = NULL;
-//INT_PTR (*CallService)(const char *,WPARAM,LPARAM);
 
+/////////////////////////////////////////////////////////////////////////////////////////
 
-//---------------------------------------------------------------------------
 CSendHTTPServer::CSendHTTPServer(HWND Owner, MCONTACT hContact, bool /*bAsync*/)
 	: CSend(Owner, hContact, true)
 {
 	m_EnableItem = SS_DLG_DESCRIPTION; //| SS_DLG_AUTOSEND | SS_DLG_DELETEAFTERSSEND;
-	m_pszSendTyp = LPGENT("HTTPServer transfer");
+	m_pszSendTyp = LPGENW("HTTPServer transfer");
 	m_pszFileName = NULL;
 	m_fsi_pszSrvPath = NULL;
 	m_fsi_pszRealPath = NULL;
@@ -51,12 +49,13 @@ CSendHTTPServer::~CSendHTTPServer()
 	mir_free(m_fsi_pszRealPath);
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 int CSendHTTPServer::Send()
 {
 	if (!m_hContact) return 1;
 	if (CallService(MS_HTTP_ACCEPT_CONNECTIONS, TRUE, 0) != 0) {
-		Error(LPGENT("Could not start the HTTP Server plugin."));
+		Error(LPGENW("Could not start the HTTP Server plugin."));
 		Exit(ACKRESULT_FAILED);
 		return !m_bAsync;
 	}
@@ -102,7 +101,7 @@ void CSendHTTPServer::SendThread()
 	}
 
 	if (ret != 0) {
-		Error(LPGENT("%s (%i):\nCould not add a share to the HTTP Server plugin."), TranslateTS(m_pszSendTyp), ret);
+		Error(LPGENW("%s (%i):\nCould not add a share to the HTTP Server plugin."), TranslateW(m_pszSendTyp), ret);
 		Exit(ret); return;
 	}
 

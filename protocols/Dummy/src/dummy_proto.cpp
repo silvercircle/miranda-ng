@@ -17,24 +17,49 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-void CDummyProto::SendMsgAck(void *param)
+void CDummyProto::SendMsgAck(void *p)
 {
-	MCONTACT hContact = (UINT_PTR)param;
+	if (p == NULL)
+		return;
+
+	message_data *data = static_cast<message_data*>(p);
+
 	Sleep(100);
-	ProtoBroadcastAck(hContact, ACKTYPE_MESSAGE, ACKRESULT_FAILED, (HANDLE)0, (LPARAM)Translate("Dummy protocol is too dumb to send messages."));
+
+	if (getByte(DUMMY_KEY_ALLOW_SENDING, 0))
+		ProtoBroadcastAck(data->hContact, ACKTYPE_MESSAGE, ACKRESULT_SUCCESS, (HANDLE)data->msgid, 0);
+	else
+		ProtoBroadcastAck(data->hContact, ACKTYPE_MESSAGE, ACKRESULT_FAILED, (HANDLE)data->msgid, (LPARAM)Translate("This Dummy account has disabled sending messages. Enable it in account options."));
+
+	delete data;
+}
+
+void CDummyProto::SearchIdAckThread(void *targ)
+{
+	PROTOSEARCHRESULT psr = { 0 };
+	psr.cbSize = sizeof(psr);
+	psr.flags = PSR_UNICODE;
+	psr.id.w = (wchar_t*)targ;
+	ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, targ, (LPARAM)&psr);
+	
+	ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, targ, 0);
+
+	mir_free(targ);
 }
 
 static int sttCompareProtocols(const CDummyProto *p1, const CDummyProto *p2)
 {
-	return mir_tstrcmp(p1->m_tszUserName, p2->m_tszUserName);
+	return mir_wstrcmp(p1->m_tszUserName, p2->m_tszUserName);
 }
 
 LIST<CDummyProto> dummy_Instances(1, sttCompareProtocols);
 
-CDummyProto::CDummyProto(const char *szModuleName, const TCHAR *ptszUserName) :
+CDummyProto::CDummyProto(const char *szModuleName, const wchar_t *ptszUserName) :
 	PROTO<CDummyProto>(szModuleName, ptszUserName)
 {
 	CreateProtoService(PS_CREATEACCMGRUI, &CDummyProto::SvcCreateAccMgrUI);
+
+	msgid = 0;
 
 	uniqueIdText[0] = '\0';
 	uniqueIdSetting[0] = '\0';
@@ -50,11 +75,20 @@ CDummyProto::~CDummyProto()
 
 //////////////////////////////////////////////////////////////////////////////
 
+int CDummyProto::getTemplateId()
+{
+	int id = this->getByte(DUMMY_ID_TEMPLATE, 0);
+	if (id < 0 || id >= _countof(templates)) {
+		return 0;
+	}
+	return id;
+}
+
 DWORD_PTR CDummyProto::GetCaps(int type, MCONTACT)
 {
 	switch(type) {
 	case PFLAGNUM_1:
-		return PF1_IM;
+		return PF1_IM | PF1_BASICSEARCH | PF1_ADDSEARCHRES;
 
 	case PFLAGNUM_2:
 		return PF2_ONLINE | PF2_INVISIBLE | PF2_SHORTAWAY | PF2_LONGAWAY | PF2_LIGHTDND | PF2_HEAVYDND | PF2_FREECHAT | PF2_OUTTOLUNCH | PF2_ONTHEPHONE;
@@ -63,7 +97,7 @@ DWORD_PTR CDummyProto::GetCaps(int type, MCONTACT)
 		return 0;
 
 	case PFLAGNUM_4:
-		return 0;
+		return PF4_AVATARS | PF4_NOAUTHDENYREASON | PF4_NOCUSTOMAUTH;
 
 	case PFLAGNUM_5:
 		return PF2_ONLINE | PF2_INVISIBLE | PF2_SHORTAWAY | PF2_LONGAWAY | PF2_LIGHTDND | PF2_HEAVYDND | PF2_FREECHAT | PF2_OUTTOLUNCH | PF2_ONTHEPHONE;
@@ -73,7 +107,8 @@ DWORD_PTR CDummyProto::GetCaps(int type, MCONTACT)
 
 	case PFLAG_UNIQUEIDTEXT:
 		if (uniqueIdSetting[0] == '\0') {
-			ptrA setting(getStringA(DUMMY_ID_TEXT));
+			int id = getTemplateId();
+			ptrA setting(id > 0 ? mir_strdup(Translate(templates[id].text)) : getStringA(DUMMY_ID_TEXT));
 			if (setting != NULL)
 				strncpy_s(uniqueIdSetting, setting, _TRUNCATE);
 		}
@@ -81,7 +116,8 @@ DWORD_PTR CDummyProto::GetCaps(int type, MCONTACT)
 
 	case PFLAG_UNIQUEIDSETTING:
 		if (uniqueIdText[0] == '\0') {
-			ptrA setting(getStringA(DUMMY_ID_SETTING));
+			int id = getTemplateId();
+			ptrA setting(id > 0 ? mir_strdup(templates[id].setting) : getStringA(DUMMY_ID_SETTING));
 			if (setting != NULL)
 				strncpy_s(uniqueIdText, setting, _TRUNCATE);
 		}
@@ -92,13 +128,53 @@ DWORD_PTR CDummyProto::GetCaps(int type, MCONTACT)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int CDummyProto::SendMsg(MCONTACT hContact, int, const char*)
+int CDummyProto::SendMsg(MCONTACT hContact, int, const char *msg)
 {
-	ForkThread(&CDummyProto::SendMsgAck, (void*)hContact);
-	return 0;
+	std::string message = msg;
+	unsigned int id = InterlockedIncrement(&this->msgid);
+
+	ForkThread(&CDummyProto::SendMsgAck, new message_data(hContact, message, id));
+	return id;
 }
 
 int CDummyProto::SetStatus(int)
 {
 	return 0;
+}
+
+HANDLE CDummyProto::SearchBasic(const wchar_t* id)
+{
+	if (uniqueIdSetting[0] == '\0')
+		return 0;
+
+	wchar_t *tid = mir_wstrdup(id);
+	ForkThread(&CDummyProto::SearchIdAckThread, tid);
+	return tid;
+}
+
+MCONTACT CDummyProto::AddToList(int flags, PROTOSEARCHRESULT* psr)
+{
+	if (psr->id.w == NULL)
+		return NULL;
+
+	MCONTACT hContact = db_add_contact();
+	if (hContact && Proto_AddToContact(hContact, m_szModuleName) != 0) {
+		db_delete_contact(hContact);
+		hContact = NULL;
+	}
+
+	if (hContact) {
+		if (flags & PALF_TEMPORARY) {
+			db_set_b(hContact, "CList", "Hidden", 1);
+			db_set_b(hContact, "CList", "NotOnList", 1);
+		}
+		else if (db_get_b(hContact, "CList", "NotOnList", 0)) {
+			db_unset(hContact, "CList", "Hidden");
+			db_unset(hContact, "CList", "NotOnList");
+		}
+		setWString(hContact, uniqueIdSetting, psr->id.w);
+		setWString(hContact, "Nick", psr->id.w);
+	}
+
+	return hContact;
 }

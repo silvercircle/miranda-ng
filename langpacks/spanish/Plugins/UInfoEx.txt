@@ -69,8 +69,8 @@ Usar colores de Windows
 Usar colores predeterminados
 [Delay]
 Retardo
-[From Popup plugin]
-Desde Popup plugin
+[From popup plugin]
+Desde popup plugin
 [Custom]
 Personalizado
 [Permanent]
@@ -187,8 +187,6 @@ Inicio
 Internet
 [Separated]
 Separado
-['(Unknown Contact)']
-'(Contacto desconocido)'
 [Send e-mail]
 Enviar e-mail
 [All Contacts]

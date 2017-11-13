@@ -7,14 +7,14 @@
 ;============================================================
 [Anti-Boss plugin. Makes your Miranda NG hidden or password-protected.]
 Позволяет по нажатию "горячей клавиши" прятать Miranda NG от посторонних глаз.
-[Go to Customize -> Hotkeys to change the hotkey]
-Настройка в Тонкая настройка -> Горячие клавиши
+[Go to Options -> Customize -> Hotkeys to change the hotkey]
+Перейти в раздел "Тонкая настройка -> Горячие клавиши"
 [When I press the hotkey:]
 Когда я нажму горячую кнопку:
 [Change status to]
 Изменить статус на
 [Change only if current status is Online]
-Изменять только при статусе 'В сети'
+Изменять только при статусе "В сети"
 [Use default status message]
 Статусное сообщение по умолчанию
 [Disable Sounds]
@@ -30,7 +30,7 @@
 [Hotkey]
 Горячая клавиша
 [Miranda NG is locked.\nEnter password to unlock it.]
-Miranda NG заблокирована.\nВведите ваш пароль для разблокировки.
+Miranda NG заблокирована.\nВведите свой пароль для разблокировки.
 [Password:]
 Пароль:
 [Cancel]

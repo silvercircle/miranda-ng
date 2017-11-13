@@ -16,8 +16,6 @@
 
 [Internet address]
 
-[SSL]
-
 [Port range]
 
 [Password]
@@ -258,10 +256,6 @@ Nema
 Poruke
 [Notices]
 naznake
-[CTCP]
-
-[DCC]
-
 [Ignore mask (nick!user@host)]
 
 [Network (*)]
@@ -308,9 +302,23 @@ naznake
 
 [CTCP %s requested by %s]
 
+[%u second]
+
+[%u seconds]
+
 [CTCP PING reply from %s: %u sec(s)]
 
 [CTCP %s reply from %s: %s]
+
+[Owner]
+Vlasnik
+[Admin]
+
+[Op]
+
+[Halfop]
+
+[Voice]
 
 [Downloading list (%u%%) - %u channels]
 
@@ -332,10 +340,10 @@ naznake
 
 [Change nickname]
 
-[IRC error]
-
 [Unknown]
 Nepoznati
+[IRC error]
+
 [Please enter the hostmask (nick!user@host)\nNOTE! Contacts on your contact list are never ignored]
 
 [Ignore]
@@ -506,11 +514,11 @@ Otkazivanje
 
 [Event: Away]
 
-[Event: N/A]
+[Event: Not available]
 
 [Event: Occupied]
 
-[Event: DND]
+[Event: Do not disturb]
 
 [Event: Free for chat]
 
@@ -584,8 +592,6 @@ Napredno
 
 [%s (%s) is requesting a client-to-client chat connection.]
 
-[Please enter the hostmask (nick!user@host) \nNOTE! Contacts on your contact list are never ignored]
-
 [Join channel]
 
 [Please enter a channel to join]
@@ -645,8 +651,6 @@ Napredno
 [Please enter the channel name to invite to]
 
 [Invite to channel]
-
-[NickServ]
 
 [Register nick]
 

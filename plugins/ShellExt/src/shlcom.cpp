@@ -27,14 +27,14 @@ int IsCOMRegistered()
 	int  res = 0;
 
 	// these arent the BEST checks in the world
-	if (!RegOpenKeyEx(HKEY_CLASSES_ROOT, _T("miranda.shlext"), 0, KEY_READ, &hRegKey)) {
+	if (!RegOpenKeyEx(HKEY_CLASSES_ROOT, L"miranda.shlext", 0, KEY_READ, &hRegKey)) {
 		res += COMREG_OK;
 		RegCloseKey(hRegKey);
 	}
 
-	if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Shell Extensions\\Approved"), 0, KEY_READ, &hRegKey)) {
+	if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Shell Extensions\\Approved", 0, KEY_READ, &hRegKey)) {
 		DWORD lpType = REG_SZ;
-		if (!RegQueryValueEx(hRegKey, _T("{72013A26-A94C-11d6-8540-A5E62932711D}"), NULL, &lpType, 0, 0))
+		if (!RegQueryValueEx(hRegKey, L"{72013A26-A94C-11d6-8540-A5E62932711D}", NULL, &lpType, 0, 0))
 			res += COMREG_APPROVED;
 		RegCloseKey(hRegKey);
 	}
@@ -74,7 +74,7 @@ BOOL AddToList(TAddArgList& args)
 	DWORD attr = GetFileAttributesA(args.szFile);
 	if (attr != 0xFFFFFFFF && (attr & FILE_ATTRIBUTE_HIDDEN) == 0) {
 		if ((args.count % 10) == 5)
-			if (CallService(MS_SYSTEM_TERMINATED, 0, 0) != 0)
+			if (Miranda_IsTerminated() != 0)
 				return true;
 
 		if (attr & FILE_ATTRIBUTE_DIRECTORY) {
@@ -183,7 +183,7 @@ struct TSlotInfo
 
 int __cdecl SortContact(const void *Item1, const void *Item2)
 {
-	return CallService(MS_CLIST_CONTACTSCOMPARE, ((TSlotInfo*)Item1)->hContact, ((TSlotInfo*)Item2)->hContact);
+	return Clist_ContactCompare(((TSlotInfo*)Item1)->hContact, ((TSlotInfo*)Item2)->hContact);
 }
 
 void ipcGetSkinIcons(THeaderIPC *ipch)
@@ -243,7 +243,7 @@ bool ipcGetSortedContacts(THeaderIPC *ipch, int *pSlot, bool bGroupMode)
 		bHideOffline = true;
 
 	// get the number of contacts
-	int dwContacts = (int)CallService(MS_DB_CONTACT_GETCOUNT, 0, 0);
+	int dwContacts = db_get_contact_count();
 	if (dwContacts == 0)
 		return false;
 
@@ -301,7 +301,7 @@ bool ipcGetSortedContacts(THeaderIPC *ipch, int *pSlot, bool bGroupMode)
 
 	// create an IPC slot for each contact and store display name, etc
 	for (i = 0; i < dwContacts; i++) {
-		ptrA szContact(mir_t2a(pcli->pfnGetContactDisplayName(pContacts[i].hContact, 0)));
+		ptrA szContact(mir_u2a(pcli->pfnGetContactDisplayName(pContacts[i].hContact, 0)));
 		if (szContact != NULL) {
 			ptrA szGroup;
 			if (bGroupMode)
@@ -425,7 +425,7 @@ void __stdcall ipcService(ULONG_PTR)
 			if (pct != NULL) {
 				// will actually return with .dat if there's space for it, not what the docs say
 				pct->Status = STATUS_PROFILENAME;
-				CallService(MS_DB_GETPROFILENAME, 49, UINT_PTR(pct) + sizeof(TSlotIPC));
+				Profile_GetNameA(49, (char*)pct + sizeof(TSlotIPC));
 			}
 		}
 		if (*bits & REQUEST_NEWICONS)
@@ -490,7 +490,7 @@ void __cdecl ThreadServer(HANDLE hMainThread)
 		if (retVal == WAIT_OBJECT_0)
 			QueueUserAPC(ipcService, hMainThread, 0);
 
-		if (CallService(MS_SYSTEM_TERMINATED, 0, 0) == 1)
+		if (Miranda_IsTerminated() == 1)
 			break;
 	}
 	CloseHandle(hEvent);
@@ -509,33 +509,33 @@ void InvokeThreadServer()
 HRESULT RemoveCOMRegistryEntries()
 {
 	HKEY hRootKey;
-	if (!RegOpenKeyEx(HKEY_CLASSES_ROOT, _T("miranda.shlext"), 0, KEY_READ, &hRootKey)) {
+	if (!RegOpenKeyEx(HKEY_CLASSES_ROOT, L"miranda.shlext", 0, KEY_READ, &hRootKey)) {
 		// need to delete the subkey before the parent key is deleted under NT/2000/XP
-		RegDeleteKey(hRootKey, _T("CLSID"));
+		RegDeleteKey(hRootKey, L"CLSID");
 		// close the key
 		RegCloseKey(hRootKey);
 		// delete it
-		if (RegDeleteKey(HKEY_CLASSES_ROOT, _T("miranda.shlext")) != ERROR_SUCCESS)
+		if (RegDeleteKey(HKEY_CLASSES_ROOT, L"miranda.shlext") != ERROR_SUCCESS)
 			MessageBox(0,
 				TranslateT("Unable to delete registry key for 'shlext COM', this key may already be deleted or you may need admin rights."),
 				TranslateT("Problem"), MB_ICONERROR);
 	}
-	if (!RegOpenKeyEx(HKEY_CLASSES_ROOT, _T("\\*\\shellex\\ContextMenuHandlers"), 0, KEY_ALL_ACCESS, &hRootKey)) {
-		if (RegDeleteKey(hRootKey, _T("miranda.shlext")) != ERROR_SUCCESS)
+	if (!RegOpenKeyEx(HKEY_CLASSES_ROOT, L"\\*\\shellex\\ContextMenuHandlers", 0, KEY_ALL_ACCESS, &hRootKey)) {
+		if (RegDeleteKey(hRootKey, L"miranda.shlext") != ERROR_SUCCESS)
 			MessageBox(0,
 				TranslateT("Unable to delete registry key for 'File context menu handlers', this key may already be deleted or you may need admin rights."),
 				TranslateT("Problem"), MB_ICONERROR);
 		RegCloseKey(hRootKey);
 	}
-	if (!RegOpenKeyEx(HKEY_CLASSES_ROOT, _T("Directory\\shellex\\ContextMenuHandlers"), 0, KEY_ALL_ACCESS, &hRootKey)) {
-		if (RegDeleteKey(hRootKey, _T("miranda.shlext")) != ERROR_SUCCESS)
+	if (!RegOpenKeyEx(HKEY_CLASSES_ROOT, L"Directory\\shellex\\ContextMenuHandlers", 0, KEY_ALL_ACCESS, &hRootKey)) {
+		if (RegDeleteKey(hRootKey, L"miranda.shlext") != ERROR_SUCCESS)
 			MessageBox(0,
 				TranslateT("Unable to delete registry key for 'Directory context menu handlers', this key may already be deleted or you may need admin rights."),
 				TranslateT("Problem"), MB_ICONERROR);
 		RegCloseKey(hRootKey);
 	}
-	if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("Software\\Microsoft\\Windows\\CurrentVersion\\Shell Extensions\\Approved"), 0, KEY_ALL_ACCESS, &hRootKey)) {
-		if (RegDeleteValue(hRootKey, _T("{72013A26-A94C-11d6-8540-A5E62932711D}")) != ERROR_SUCCESS) {
+	if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows\\CurrentVersion\\Shell Extensions\\Approved", 0, KEY_ALL_ACCESS, &hRootKey)) {
+		if (RegDeleteValue(hRootKey, L"{72013A26-A94C-11d6-8540-A5E62932711D}") != ERROR_SUCCESS) {
 			MessageBox(0,
 				TranslateT("Unable to delete registry entry for 'Approved context menu handlers', this key may already be deleted or you may need admin rights."),
 				TranslateT("Problem"), MB_ICONERROR);
@@ -550,13 +550,13 @@ void CheckUnregisterServer()
 {
 	if (bIsVistaPlus) {
 		// launches regsvr to remove the dll under admin.
-		TCHAR szFileName[MAX_PATH], szBuf[MAX_PATH * 2];
+		wchar_t szFileName[MAX_PATH], szBuf[MAX_PATH * 2];
 		GetModuleFileName(hInst, szFileName, _countof(szFileName));
-		mir_sntprintf(szBuf, _T("/s /u \"%s\""), szFileName);
+		mir_snwprintf(szBuf, L"/s /u \"%s\"", szFileName);
 
 		SHELLEXECUTEINFO sei = { sizeof(sei) };
-		sei.lpVerb = _T("runas");
-		sei.lpFile = _T("regsvr32");
+		sei.lpVerb = L"runas";
+		sei.lpFile = L"regsvr32";
 		sei.lpParameters = szBuf;
 		if (ShellExecuteEx(&sei) == TRUE)
 			return;
@@ -570,10 +570,10 @@ void CheckUnregisterServer()
 // for permission before installing the shell extension.  note the filepath arg has to be quoted }
 void CheckRegisterServer()
 {
-	TCHAR szFileName[MAX_PATH], szBuf[MAX_PATH * 2];
+	wchar_t szFileName[MAX_PATH], szBuf[MAX_PATH * 2];
 
 	HKEY hRegKey;
-	if (!RegOpenKeyEx(HKEY_CLASSES_ROOT, _T("miranda.shlext"), 0, KEY_READ, &hRegKey))
+	if (!RegOpenKeyEx(HKEY_CLASSES_ROOT, L"miranda.shlext", 0, KEY_READ, &hRegKey))
 		RegCloseKey(hRegKey);
 	else if (bIsVistaPlus) {
 		MessageBox(0,
@@ -581,11 +581,11 @@ void CheckRegisterServer()
 			TranslateT("Miranda NG - Shell context menus (shellext.dll)"), MB_OK | MB_ICONINFORMATION);
 		// /s = silent
 		GetModuleFileName(hInst, szFileName, _countof(szFileName));
-		mir_sntprintf(szBuf, _T("/s \"%s\""), szFileName);
+		mir_snwprintf(szBuf, L"/s \"%s\"", szFileName);
 
 		SHELLEXECUTEINFO sei = { sizeof(sei) };
-		sei.lpVerb = _T("runas");
-		sei.lpFile = _T("regsvr32");
+		sei.lpVerb = L"runas";
+		sei.lpFile = L"regsvr32";
 		sei.lpParameters = szBuf;
 		ShellExecuteEx(&sei);
 	}

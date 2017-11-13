@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -44,11 +44,10 @@ INT_PTR ShowAddedWindow(WPARAM, LPARAM lParam)
 
 static int AuthEventAdded(WPARAM, LPARAM lParam)
 {
-	TCHAR szUid[128] = _T("");
-	TCHAR szTooltip[256];
+	wchar_t szTooltip[256];
 	MEVENT hDbEvent = (MEVENT)lParam;
 
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	db_event_get(lParam, &dbei);
 	if (dbei.flags & (DBEF_SENT | DBEF_READ) || (dbei.eventType != EVENTTYPE_AUTHREQUEST && dbei.eventType != EVENTTYPE_ADDED))
 		return 0;
@@ -59,53 +58,36 @@ static int AuthEventAdded(WPARAM, LPARAM lParam)
 
 	MCONTACT hContact = DbGetAuthEventContact(&dbei);
 
-	CLISTEVENT cli = { 0 };
-	cli.cbSize = sizeof(cli);
+	CLISTEVENT cli = {};
 	cli.hContact = hContact;
-	cli.ptszTooltip = szTooltip;
-	cli.flags = CLEF_TCHAR;
+	cli.szTooltip.w = szTooltip;
+	cli.flags = CLEF_UNICODE;
 	cli.lParam = lParam;
 	cli.hDbEvent = hDbEvent;
 
-	CONTACTINFO ci = { 0 };
-	ci.cbSize = sizeof(ci);
-	ci.hContact = hContact;
-	ci.szProto = GetContactProto(hContact);
-	ci.dwFlag = CNF_UNIQUEID | CNF_TCHAR;
-	if (!CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ci)) {
-		switch (ci.type) {
-		case CNFT_ASCIIZ:
-			_tcsncpy_s(szUid, ci.pszVal, _TRUNCATE);
-			mir_free(ci.pszVal);
-			break;
-
-		case CNFT_DWORD:
-			mir_sntprintf(szUid, _T("%u"), ci.dVal);
-			break;
-		}
-	}
+	ptrW szUid(Contact_GetInfo(CNF_UNIQUEID, hContact));
 
 	if (dbei.eventType == EVENTTYPE_AUTHREQUEST) {
-		SkinPlaySound("AuthRequest");
-		if (szUid[0])
-			mir_sntprintf(szTooltip, TranslateT("%s requests authorization"), szUid);
+		Skin_PlaySound("AuthRequest");
+		if (szUid)
+			mir_snwprintf(szTooltip, TranslateT("%s requests authorization"), szUid);
 		else
-			mir_sntprintf(szTooltip, TranslateT("%u requests authorization"), *(PDWORD)dbei.pBlob);
+			mir_snwprintf(szTooltip, TranslateT("%u requests authorization"), *(PDWORD)dbei.pBlob);
 
 		cli.hIcon = Skin_LoadIcon(SKINICON_AUTH_REQUEST);
 		cli.pszService = MS_AUTH_SHOWREQUEST;
-		CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cli);
+		pcli->pfnAddEvent(&cli);
 	}
 	else if (dbei.eventType == EVENTTYPE_ADDED) {
-		SkinPlaySound("AddedEvent");
-		if (szUid[0])
-			mir_sntprintf(szTooltip, TranslateT("%s added you to their contact list"), szUid);
+		Skin_PlaySound("AddedEvent");
+		if (szUid)
+			mir_snwprintf(szTooltip, TranslateT("%s added you to their contact list"), szUid);
 		else
-			mir_sntprintf(szTooltip, TranslateT("%u added you to their contact list"), *(PDWORD)dbei.pBlob);
+			mir_snwprintf(szTooltip, TranslateT("%u added you to their contact list"), *(PDWORD)dbei.pBlob);
 
 		cli.hIcon = Skin_LoadIcon(SKINICON_AUTH_ADD);
 		cli.pszService = MS_AUTH_SHOWADDED;
-		CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cli);
+		pcli->pfnAddEvent(&cli);
 	}
 	return 0;
 }
@@ -116,7 +98,7 @@ int LoadSendRecvAuthModule(void)
 	CreateServiceFunction(MS_AUTH_SHOWADDED, ShowAddedWindow);
 	HookEvent(ME_DB_EVENT_ADDED, AuthEventAdded);
 
-	SkinAddNewSoundEx("AuthRequest", LPGEN("Alerts"), LPGEN("Authorization request"));
-	SkinAddNewSoundEx("AddedEvent", LPGEN("Alerts"), LPGEN("Added event"));
+	Skin_AddSound("AuthRequest", LPGENW("Alerts"), LPGENW("Authorization request"));
+	Skin_AddSound("AddedEvent", LPGENW("Alerts"), LPGENW("Added event"));
 	return 0;
 }

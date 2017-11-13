@@ -1,6 +1,6 @@
 /*
 
-Copyright 2000-12 Miranda IM, 2012-15 Miranda NG project,
+Copyright 2000-12 Miranda IM, 2012-17 Miranda NG project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -26,11 +26,11 @@ HANDLE hHookIconPressedEvt;
 
 static int OnSrmmIconChanged(WPARAM hContact, LPARAM)
 {
-	if (hContact == NULL)
-		WindowList_Broadcast(g_dat.hMessageWindowList, DM_STATUSICONCHANGE, 0, 0);
+	if (hContact == 0)
+		Srmm_Broadcast(DM_STATUSICONCHANGE, 0, 0);
 	else {
-		HWND hwnd = WindowList_Find(g_dat.hMessageWindowList, hContact);
-		if (hwnd != NULL)
+		HWND hwnd = Srmm_FindWindow(hContact);
+		if (hwnd != nullptr)
 			PostMessage(hwnd, DM_STATUSICONCHANGE, 0, 0);
 	}
 	return 0;
@@ -48,7 +48,7 @@ void DrawStatusIcons(MCONTACT hContact, HDC hDC, const RECT &rc, int gap)
 		HICON hIcon = ((sid->flags & MBF_DISABLED) && sid->hIconDisabled) ? sid->hIconDisabled : sid->hIcon;
 
 		SetBkMode(hDC, TRANSPARENT);
-		DrawIconEx(hDC, x, (rc.top + rc.bottom - cy_icon) >> 1, hIcon, cx_icon, cy_icon, 0, NULL, DI_NORMAL);
+		DrawIconEx(hDC, x, (rc.top + rc.bottom - cy_icon) >> 1, hIcon, cx_icon, cy_icon, 0, nullptr, DI_NORMAL);
 
 		x += cx_icon + gap;
 	}
@@ -58,7 +58,7 @@ void CheckStatusIconClick(MCONTACT hContact, HWND hwndFrom, POINT pt, const RECT
 {
 	int iconNum = (pt.x - rc.left) / (GetSystemMetrics(SM_CXSMICON) + gap);
 	StatusIconData *sid = Srmm_GetNthIcon(hContact, iconNum);
-	if (sid == NULL)
+	if (sid == nullptr)
 		return;
 
 	StatusIconClickData sicd = { sizeof(sicd) };
@@ -67,11 +67,8 @@ void CheckStatusIconClick(MCONTACT hContact, HWND hwndFrom, POINT pt, const RECT
 	sicd.dwId = sid->dwId;
 	sicd.szModule = sid->szModule;
 	sicd.flags = click_flags;
-
 	NotifyEventHooks(hHookIconPressedEvt, hContact, (LPARAM)&sicd);
 }
-
-HANDLE hServiceIcon[3];
 
 int InitStatusIcons()
 {
@@ -90,7 +87,7 @@ int DeinitStatusIcons()
 int GetStatusIconsCount(MCONTACT hContact)
 {
 	int nIcon = 0;
-	while (Srmm_GetNthIcon(hContact, nIcon) != NULL)
+	while (Srmm_GetNthIcon(hContact, nIcon) != nullptr)
 		nIcon++;
 	return nIcon;
 }

@@ -47,23 +47,28 @@ extern bool bReplaceHistory;
 
 tstring sGetErrorString(DWORD dwError);
 tstring sGetErrorString();
-void DisplayLastError(const TCHAR *pszError);
+void DisplayLastError(const wchar_t *pszError);
+void DisplayErrorDialog(const wchar_t *pszError, tstring& sFilePath, DBEVENTINFO *dbei);
 
-TCHAR *CheckedTranslate(const TCHAR *szEng, int nFormatCount = -1);
+wchar_t *CheckedTranslate(const wchar_t *szEng, int nFormatCount = -1);
 
 void SaveSettings();
 void ShowDebugInfo();
 
+bool bIsExportEnabled(MCONTACT hContact);
+HANDLE openCreateFile(tstring sFilePath);
+bool bExportEvent(MCONTACT hContact, MEVENT hDbEvent, HANDLE hFile, tstring sFilePath, bool bAppendOnly);
+
 int nExportEvent(WPARAM wparam, LPARAM lparam);
 int nContactDeleted(WPARAM wparam, LPARAM lparam);
 
-const TCHAR *NickFromHandle(MCONTACT hContact);
+wchar_t* GetMyOwnNick(MCONTACT hContact);
 
-tstring __inline _DBGetStringW(MCONTACT hContact, const char *szModule, const char *szSetting, const TCHAR *pszError);
+tstring __inline _DBGetStringW(MCONTACT hContact, const char *szModule, const char *szSetting, const wchar_t *pszError);
 string __inline _DBGetStringA(MCONTACT hContact, const char *szModule, const char *szSetting, const char *pszError);
 
-void ReplaceAll(tstring &sSrc, const TCHAR *pszReplace, const tstring &sNew);
-void ReplaceAll(tstring &sSrc, const TCHAR *pszReplace, const TCHAR *pszNew);
+void ReplaceAll(tstring &sSrc, const wchar_t *pszReplace, const tstring &sNew);
+void ReplaceAll(tstring &sSrc, const wchar_t *pszReplace, const wchar_t *pszNew);
 
 void UpdateFileToColWidth();
 
@@ -76,7 +81,7 @@ void ReplaceTimeVariables(tstring &sRet);
 bool bCreatePathToFile(tstring sFilePath);
 
 bool bWriteIndentedToFile(HANDLE hFile, int nIndent, const char *pszSrc, bool bUtf8File);
-bool bWriteIndentedToFile(HANDLE hFile, int nIndent, const TCHAR *pszSrc, bool bUtf8File);
+bool bWriteIndentedToFile(HANDLE hFile, int nIndent, const wchar_t *pszSrc, bool bUtf8File);
 bool bWriteNewLine(HANDLE hFile, DWORD dwIndent);
 bool bIsUtf8Header(BYTE * pucByteOrder);
 

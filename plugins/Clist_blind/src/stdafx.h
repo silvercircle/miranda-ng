@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-05 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -28,7 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <newpluginapi.h>
 #include <m_clist.h>
-#include <m_clui.h>
 #include <m_database.h>
 #include <m_langpack.h>
 #include <m_options.h>
@@ -36,7 +35,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <win2k.h>
 
 #include "resource.h"
-#include "Version.h"
+#include "version.h"
 
 struct ClcContact : public ClcContactBase {};
 
@@ -49,6 +48,10 @@ struct ClcData : public ClcDataBase
 // shared vars
 extern HINSTANCE g_hInst;
 extern CLIST_INTERFACE coreCli;
+extern int g_bSortByStatus, g_bSortByProto;
+
+
+int CompareContacts(const ClcContact *contact1, const ClcContact *contact2);
 
 /* most free()'s are invalid when the code is executed from a dll, so this changes
  all the bad free()'s to good ones, however it's still incorrect code. The reasons for not

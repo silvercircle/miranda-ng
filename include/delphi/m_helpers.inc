@@ -16,17 +16,6 @@ function CreateVersionStringPlugin(pluginInfo:PPluginInfoEx;buf:PAnsiChar):PAnsi
 function PLUGIN_MAKE_VERSION(a,b,c,d: Cardinal): int;
 function PLUGIN_CMP_VERSION(verA: LongInt; verB: LongInt): int;
 
-function mir_forkthread(aFunc:pThreadFunc; arg:pointer):THANDLE; {inline}
-function mir_forkthreadex(aFunc:pThreadFuncEx; arg:pointer; pThreadID:puint_ptr):THANDLE; {inline}
-function mir_forkthreadowner(aFunc:pThreadFuncOwner; owner:pointer; arg:pointer; pThreadID:puint_ptr):THANDLE; {inline}
-
-function Netlib_CloseHandle(Handle: THANDLE): int;
-function Netlib_GetBase64DecodedBufferSize(const cchEncoded: int): int;
-function Netlib_GetBase64EncodedBufferSize(const cbDecoded: int): int;
-function Netlib_Send(hConn: THANDLE; const buf: PAnsiChar; len: int; flags: int): int_ptr;
-function Netlib_Recv(hConn: THANDLE; const buf: PAnsiChar; len: int; flags: int): int_ptr;
-procedure Netlib_Log(hNetLib: THANDLE; const sz: PAnsiChar);
-
 function mir_hashstr (const key:PAnsiChar):uint; {inline;}
 function mir_hashstrW(const key:PWideChar):uint; {inline;}
 function lrtrim (str:PAnsiChar):PAnsiChar; {inline}
@@ -44,14 +33,6 @@ function Langpack_Register:int_ptr;
 
 function CreateProtoServiceFunction(const szModule, szService: PAnsiChar; serviceProc: TMIRANDASERVICE): int_ptr;
 
-function  Srmm_AddIcon   (sid: PStatusIconData):int_ptr;
-procedure Srmm_RemoveIcon(sid: PStatusIconData);
-procedure Srmm_ModifyIcon(hContact:TMCONTACT; sid:PStatusIconData);
-function  Srmm_GetNthIcon(hContact:TMCONTACT; index:int):pStatusIconData;
-
-function SkinAddNewSound(const name, description, defaultFile: PAnsiChar): int_ptr;
-function SkinPlaySound  (const name: PAnsiChar): int_ptr;
-
 function Menu_AddContextFrameMenuItem(mi:PMO_MenuItem):HGENMENU;
 function Menu_AddMainMenuItem        (mi:PMO_MenuItem):HGENMENU;
 function Menu_AddContactMenuItem     (mi:PMO_MenuItem):HGENMENU;
@@ -59,7 +40,10 @@ function Menu_AddStatusMenuItem      (mi:PMO_MenuItem):HGENMENU;
 function Menu_AddProtoMenuItem       (mi:PMO_MenuItem):HGENMENU;
 function Menu_AddTrayMenuItem        (mi:PMO_MenuItem):HGENMENU;
 
-function UserInfo_AddPage(wParam:WPARAM; odp:POPTIONSDIALOGPAGE):int_ptr;
+procedure Srmm_AddButton(bbdi:pBBButton);
+
+procedure SET_UID(pmi:PMO_MenuItem; strguid:PAnsiChar);
+
 function Options_AddPage (wParam:WPARAM; odp:POPTIONSDIALOGPAGE):int_ptr;
 function Hotkey_Register(hk:PHOTKEYDESC):int_ptr;
 
@@ -67,19 +51,12 @@ function Skin_AddIcon(si:PSKINICONDESC):THANDLE;
 procedure Icon_Register (hInst:HINST; const szSection:PAnsiChar; pIcons:pIconItem ; iCount:size_t; prefix:PAnsiChar);
 procedure Icon_RegisterW(hInst:HINST; const szSection:PWideChar; pIcons:pIconItemW; iCount:size_t; prefix:PAnsiChar);
 
-procedure FontRegister (pFontID:pFontID);
-procedure FontRegisterW(pFontID:pFontIDW);
-
-procedure ColourRegister (pColorID:pColourID);
-procedure ColourRegisterW(pColorID:pColourIDW);
-
-procedure EffectRegister (pEffectID:pEffectID);
-procedure EffectRegisterW(pEffectID:pEffectIDW);
+procedure FontRegister(pFontID:pFontID);
+procedure ColourRegister(pColorID:pColourID);
 
 function TopToolbar_AddButton(pButton:PTTBButton):THANDLE;
 
-function Options_Open    (ood:POPENOPTIONSDIALOG):int_ptr;
-function Options_OpenPage(ood:POPENOPTIONSDIALOG):HWND;
+function Options_Open(group,page,tab:PWideChar):int_ptr;
 
 procedure MIcoTab_AddItem (hwnd:HWND; lptzName:PAnsiChar; hIcon:HICON; data:LPARAM; bSharedIcon:bool);
 procedure MIcoTab_AddItemW(hwnd:HWND; lptzName:PWideChar; hIcon:HICON; data:LPARAM; bSharedIcon:bool);
@@ -92,6 +69,9 @@ function  Crypto_GetProvider(pszName:PAnsiChar):PCRYPTO_PROVIDER;
 
 var
   hLangpack:int = 0;
+
+function _Srmm_AddButton(bbdi:pBBButton;_hLang:int) : integer; stdcall; 
+             external AppDll name 'Srmm_AddButton';
 
 function _AddMainMenuItem(mi:PMO_MenuItem) : HGENMENU; stdcall;
              external AppDll name 'Menu_AddMainMenuItem';
@@ -188,69 +168,6 @@ begin
   Inc(Result, (verA and $FF000000) - (verB and $FF000000));
 end;
 
-
-function mir_forkthread(aFunc:pThreadFunc; arg:pointer):THANDLE;
-  {$IFDEF AllowInline}inline;{$ENDIF}
-begin
-	result:=forkthread(aFunc, 0, arg);
-end;
-function mir_forkthreadex(aFunc:pThreadFuncEx; arg:pointer; pThreadID:puint_ptr):THANDLE;
-  {$IFDEF AllowInline}inline;{$ENDIF}
-begin
-	result:=forkthreadex(nil, 0, aFunc, nil, arg, pThreadID);
-end;
-function mir_forkthreadowner(aFunc:pThreadFuncOwner; owner:pointer; arg:pointer; pThreadID:puint_ptr):THANDLE;
-  {$IFDEF AllowInline}inline;{$ENDIF}
-begin
-	result:=forkthreadex(nil, 0, pThreadFuncEx(aFunc), owner, arg, pThreadID);
-end;
-
-
-function Netlib_CloseHandle(Handle: THANDLE): int;
-  {$IFDEF AllowInline}inline;{$ENDIF}
-begin
-  Result := CallService(MS_NETLIB_CLOSEHANDLE, Handle, 0);
-end;
-
-function Netlib_GetBase64DecodedBufferSize(const cchEncoded: int): int;
-  {$IFDEF AllowInline}inline;{$ENDIF}
-begin
-  Result := (cchEncoded shr 2) * 3;
-end;
-
-function Netlib_GetBase64EncodedBufferSize(const cbDecoded: int): int;
-  {$IFDEF AllowInline}inline;{$ENDIF}
-begin
-  Result := (cbDecoded * 4+11) div 12*4+1;
-end;
-
-function Netlib_Send(hConn: THANDLE; const buf: PAnsiChar; len: int; flags: int): int_ptr;
-var
-  nlb: TNETLIBBUFFER;
-begin
-  nlb.buf   := buf;
-  nlb.len   := len;
-  nlb.flags := flags;
-  Result := CallService(MS_NETLIB_SEND, wParam(hConn), lParam(@nlb));
-end;
-
-function Netlib_Recv(hConn: THANDLE; const buf: PAnsiChar; len: int; flags: int): int_ptr;
-var
-  nlb: TNETLIBBUFFER;
-begin
-  nlb.buf   := buf;
-  nlb.len   := len;
-  nlb.flags := flags;
-  Result := CallService(MS_NETLIB_RECV, wParam(hConn), lParam(@nlb));
-end;
-
-procedure Netlib_Log(hNetLib: THANDLE; const sz: PAnsiChar);
-  {$IFDEF AllowInline}inline;{$ENDIF}
-begin
-  CallService(MS_NETLIB_LOG, hNetLib, lParam(sz));
-end;
-
-
 function mir_hashstr(const key:PAnsiChar):uint; {inline;}
 var
   len:int;
@@ -338,6 +255,7 @@ end;
 function Langpack_Register:int_ptr;
 begin
   mir_getLP(PluginInfo, hLangpack);
+  cli := Clist_GetInterface();
   result:=hLangpack;
 end;
 
@@ -354,48 +272,6 @@ begin
   lstrcpya(@szStr, szModule);
   lstrcata(@szStr, szService);
   Result := CreateServiceFunction(szStr, @serviceProc);
-end;
-
-// Hidden variable hLangpack - do not use Inline style
-function Srmm_AddIcon(sid: PStatusIconData):int_ptr;
-begin
-  result:=CallService(MS_MSG_ADDICON, hLangpack, LPARAM(sid));
-end;
-
-procedure Srmm_RemoveIcon(sid: PStatusIconData);
-  {$IFDEF AllowInline}inline;{$ENDIF}
-begin
-  CallService(MS_MSG_REMOVEICON, 0, LPARAM(sid));
-end;
-
-procedure Srmm_ModifyIcon(hContact:TMCONTACT; sid:PStatusIconData);
-  {$IFDEF AllowInline}inline;{$ENDIF}
-begin
-  CallService(MS_MSG_GETNTHICON, hContact, LPARAM(sid));
-end;
-
-function Srmm_GetNthIcon(hContact:TMCONTACT; index:int):PStatusIconData;
-  {$IFDEF AllowInline}inline;{$ENDIF}
-begin
-  result:=PStatusIconData(CallService(MS_MSG_GETNTHICON, hContact, index));
-end;
-
-function SkinAddNewSound(const name, description, defaultFile: PAnsiChar): int_ptr;
-var
-  ssd: TSKINSOUNDDESCEX;
-begin
-  FillChar(ssd,SizeOf(ssd),0);
-  ssd.cbSize         := sizeof(ssd);
-  ssd.pszName        := name;
-  ssd.pszDescription.a := description;
-  ssd.pszDefaultFile.a := defaultFile;
-  Result := CallService(MS_SKIN_ADDNEWSOUND, hLangpack, lParam(@ssd));
-end;
-
-function SkinPlaySound (const name: PAnsiChar): int_ptr;
-  {$IFDEF AllowInline}inline;{$ENDIF}
-begin
-  Result := CallService(MS_SKIN_PLAYSOUND, 0, lParam(name));
 end;
 
 
@@ -435,22 +311,9 @@ begin
   result:=_AddTrayMenuItem(mi);
 end;
 
-
-function UserInfo_AddPage(wParam:WPARAM; odp:POPTIONSDIALOGPAGE):int_ptr;
-begin
-  odp^.hLangpack:=hLangpack;
-	result:=CallService(MS_USERINFO_ADDPAGE, wParam, LPARAM(odp));
-end;
-
-function Options_AddPage(wParam:WPARAM; odp:POPTIONSDIALOGPAGE):int_ptr;
-begin
-  odp^.hLangpack:=hLangpack;
-	result:=CallService(MS_OPT_ADDPAGE, wParam, LPARAM(odp));
-end;
-
 function Hotkey_Register(hk:PHOTKEYDESC):int_ptr;
 begin
-	result:=CallService(MS_HOTKEY_REGISTER, hLangpack, LPARAM(hk));
+	result:=_Hotkey_Register(hk, hLangpack);
 end;
 
 function Skin_AddIcon(si:PSKINICONDESC):THANDLE;
@@ -470,29 +333,12 @@ end;
 
 procedure FontRegister(pFontID:pFontID);
 begin
-	CallService(MS_FONT_REGISTERA, WPARAM(pFontID), hLangpack);
-end;
-procedure FontRegisterW(pFontID:pFontIDW);
-begin
-	CallService(MS_FONT_REGISTERW, WPARAM(pFontID), hLangpack);
+   Font_Register(pFontID, hLangpack);
 end;
 
 procedure ColourRegister(pColorID:pColourID);
 begin
-	CallService(MS_COLOUR_REGISTERA, WPARAM(pColorID), hLangpack);
-end;
-procedure ColourRegisterW(pColorID:pColourIDW);
-begin
-	CallService(MS_COLOUR_REGISTERW, WPARAM(pColorID), hLangpack);
-end;
-
-procedure EffectRegister(pEffectID:pEffectID);
-begin
-	CallService(MS_EFFECT_REGISTERA, WPARAM(pEffectID), hLangpack);
-end;
-procedure EffectRegisterW(pEffectID:pEffectIDW);
-begin
-	CallService(MS_EFFECT_REGISTERW, WPARAM(pEffectID), hLangpack);
+	Colour_Register(pColorID, hLangpack);
 end;
 
 function TopToolbar_AddButton(pButton:PTTBButton):THANDLE;
@@ -500,14 +346,14 @@ begin
   result:=CallService(MS_TTB_ADDBUTTON, WPARAM(pButton), hLangpack);
 end;
 
-function Options_Open(ood:POPENOPTIONSDIALOG):int_ptr;
+function Options_AddPage(wParam:WPARAM; odp:POPTIONSDIALOGPAGE):int_ptr;
 begin
-	result:=CallService(MS_OPT_OPENOPTIONS, hLangpack, LPARAM(ood));
+  result:=_Options_AddPage(wParam, odp, hLangpack);
 end;
 
-function Options_OpenPage(ood:POPENOPTIONSDIALOG):HWND;
+function Options_Open(group,page,tab:PWideChar):int_ptr;
 begin
-	result:=CallService(MS_OPT_OPENOPTIONSPAGE, hLangpack, LPARAM(ood));
+	result:=_Options_Open(group,page,tab,hLangpack);
 end;
 
 procedure MIcoTab_AddItem(hwnd:HWND; lptzName:PAnsiChar; hIcon:HICON; data:LPARAM; bSharedIcon:bool);
@@ -538,6 +384,10 @@ begin
   SendMessage(hwnd, ITCM_ADDITEM, WPARAM(@mit), 0);
 end;
 
+procedure Srmm_AddButton(bbdi:pBBButton);
+begin
+   _Srmm_AddButton(bbdi,hLangpack);
+end;
 
 function Crypto_RegisterEngine(pProvider:PCRYPTO_PROVIDER):THANDLE;
 begin
@@ -554,7 +404,11 @@ begin
 	result:=PCRYPTO_PROVIDER(CallService(MS_CRYPTO_GET_PROVIDER, 0, LPARAM(pszName)));
 end;
 
-initialization
-   cli:=PCLIST_INTERFACE(CallService(MS_CLIST_RETRIEVE_INTERFACE,0,0));
+function UuidFromStringA(StringUuid:PAnsiChar; var Uuid:TGUID) : integer; stdcall; external 'Rpcrt4.dll';
+
+procedure SET_UID(pmi:PMO_MenuItem; strguid:PAnsiChar);
+begin
+   UuidFromStringA(strguid, pmi.uid);
+end;
 
 {$ENDIF}

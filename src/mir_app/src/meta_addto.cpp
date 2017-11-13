@@ -46,21 +46,21 @@ static int FillList(HWND list, BOOL sort)
 	for (MCONTACT hMetaUser = db_find_first(); hMetaUser; hMetaUser = db_find_next(hMetaUser)) {
 		// if it's not a MetaContact, go to the next
 		DBCachedContact *cc = CheckMeta(hMetaUser);
-		if (cc == NULL)
+		if (cc == nullptr)
 			continue;
 
 		// get contact display name from clist
-		TCHAR *swzContactDisplayName = cli.pfnGetContactDisplayName(hMetaUser, 0);
+		wchar_t *swzContactDisplayName = cli.pfnGetContactDisplayName(hMetaUser, 0);
 		// don't insert huge strings that we have to compare with later
-		if (mir_tstrlen(swzContactDisplayName) > 1023)
+		if (mir_wstrlen(swzContactDisplayName) > 1023)
 			swzContactDisplayName[1024] = 0;
 
 		int pos = -1;
 		if (sort) {
 			for (pos = 0; pos < i; pos++) {
-				TCHAR buff[1024];
+				wchar_t buff[1024];
 				SendMessage(list, LB_GETTEXT, pos, (LPARAM)buff);
-				if (mir_tstrcmp(buff, swzContactDisplayName) > 0)
+				if (mir_wstrcmp(buff, swzContactDisplayName) > 0)
 					break;
 			}
 		}
@@ -100,111 +100,128 @@ static int BuildList(HWND list, BOOL sort)
 * @return TRUE if the dialog processed the message, FALSE if it did not.
 */
 
-#define szConvMsg LPGEN("Either there is no metacontact in the database (in this case you should first convert a contact into one)\n\
+#define szConvMsg LPGENW("Either there is no metacontact in the database (in this case you should first convert a contact into one)\n\
 or there is none that can host this contact.\n\
 Another solution could be to convert this contact into a new metacontact.\n\nConvert this contact into a new metacontact?")
 
-static INT_PTR CALLBACK Meta_SelectDialogProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+class CMetaSelectDlg : public CDlgBase
 {
-	switch (msg) {
-	case WM_INITDIALOG:
-		TranslateDialogDefault(hwndDlg);
-		{
-			DBCachedContact *cc = currDb->m_cache->GetCachedContact(lParam);
-			if (cc == NULL) {
-				DestroyWindow(hwndDlg);
-				return TRUE;
-			}
+	MCONTACT m_hContact;
 
-			if (cc->IsMeta()) {
-				MessageBox(hwndDlg,
-							  TranslateT("This contact is a metacontact.\nYou can't add a metacontact to another metacontact.\n\nPlease choose another."),
-							  TranslateT("Metacontact conflict"), MB_ICONERROR);
-				DestroyWindow(hwndDlg);
-				return TRUE;
-			}
+	CCtrlListBox m_metaList;
+	CCtrlCheck m_sortCheck;
 
-			if (cc->IsSub()) {
-				MessageBox(hwndDlg,
-							  TranslateT("This contact is already associated to a metacontact.\nYou cannot add a contact to multiple metacontacts."),
-							  TranslateT("Multiple metacontacts"), MB_ICONERROR);
-				DestroyWindow(hwndDlg);
-				return TRUE;
-			}
-		}
+protected:
+	void OnInitDialog();
+	void OnApply();
+	void OnDestroy();
 
-		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam); // user data is contact handle
+	void MetaList_OnDblClick(CCtrlListBox*);
+	void SortCheck_OnChange(CCtrlCheck*);
 
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadIconEx(I_ADD));
+public:
+	CMetaSelectDlg(MCONTACT hContact);
+};
 
-		// Initialize the graphical part
-		CheckDlgButton(hwndDlg, IDC_ONLYAVAIL, BST_CHECKED); // Initially checked; display all metacontacts is only an option
-		// Besides, we can check if there is at least one metacontact to add the contact to.
-		if (BuildList(GetDlgItem(hwndDlg, IDC_METALIST), FALSE) <= 0) {
-			if (MessageBox(hwndDlg, TranslateT(szConvMsg), TranslateT("No suitable metacontact found"), MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON1) == IDYES)
-				Meta_Convert(lParam, 0);
-			DestroyWindow(hwndDlg);
-			return TRUE;
-		}
-		else {
-			// get contact display name from clist
-			TCHAR *ptszCDN = cli.pfnGetContactDisplayName(lParam, 0);
-			if (!ptszCDN)
-				ptszCDN = TranslateT("a contact");
+CMetaSelectDlg::CMetaSelectDlg(MCONTACT hContact)
+	: CDlgBase(g_hInst, IDD_METASELECT), m_hContact(hContact),
+	m_metaList(this, IDC_METALIST), m_sortCheck(this, IDC_CHK_SRT)
+{
+	m_metaList.OnDblClick = Callback(this, &CMetaSelectDlg::MetaList_OnDblClick);
+	m_sortCheck.OnChange = Callback(this, &CMetaSelectDlg::SortCheck_OnChange);
+}
 
-			// ... and set it to the Window title.
-			TCHAR buf[256];
-			mir_sntprintf(buf, TranslateT("Adding %s..."), ptszCDN);
-			SetWindowText(hwndDlg, buf);
-		}
-		ShowWindow(hwndDlg, SW_SHOWNORMAL);
-		return TRUE;
-
-	case WM_COMMAND:
-		if (HIWORD(wParam) == LBN_DBLCLK) // emulate click ok Ok
-			wParam = MAKEWPARAM(IDOK, BN_CLICKED);
-
-		if (HIWORD(wParam) != BN_CLICKED)
-			break;	// Only clicks of buttons are relevant, let other COMMANDs through
-
-		switch (LOWORD(wParam)) {
-			case IDOK:
-			{
-				int item = SendDlgItemMessage(hwndDlg, IDC_METALIST, LB_GETCURSEL, 0, 0);	// Get the index of the selected metacontact
-				if (item == -1)
-					return IDOK == MessageBox(hwndDlg, TranslateT("Please select a metacontact"), TranslateT("No metacontact selected"), MB_ICONHAND);
-
-				MCONTACT hContact = (MCONTACT)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
-				MCONTACT hMeta = (MCONTACT)SendDlgItemMessage(hwndDlg, IDC_METALIST, LB_GETITEMDATA, item, 0);
-				if (!Meta_Assign(hContact, hMeta, FALSE))
-					MessageBox(hwndDlg, TranslateT("Assignment to the metacontact failed."), TranslateT("Assignment failure"), MB_ICONERROR);
-			}
-			// fall through
-		case IDCANCEL:
-			DestroyWindow(hwndDlg);
-			break;
-
-		case IDC_CHK_SRT:
-			SetWindowLongPtr(GetDlgItem(hwndDlg, IDC_METALIST), GWL_STYLE, GetWindowLongPtr(GetDlgItem(hwndDlg, IDC_METALIST), GWL_STYLE) ^ LBS_SORT);
-			if (BuildList(GetDlgItem(hwndDlg, IDC_METALIST), IsDlgButtonChecked(hwndDlg, IDC_CHK_SRT) ? TRUE : FALSE) <= 0) {
-				if (MessageBox(hwndDlg, TranslateT(szConvMsg), TranslateT("No suitable metacontact found"), MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON1) == IDYES)
-					Meta_Convert(lParam, 0);
-				DestroyWindow(hwndDlg);
-				return TRUE;
-			}
-			break;
-		}
-		break;
-
-	case WM_DESTROY:
-		// Free all allocated memory and return the focus to the CList
-		HWND clist = GetParent(hwndDlg);
-		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_BIG, 0));
-		EndDialog(hwndDlg, TRUE);
-		SetFocus(clist);
-		return TRUE;
+void CMetaSelectDlg::OnInitDialog()
+{
+	DBCachedContact *cc = currDb->m_cache->GetCachedContact(m_hContact);
+	if (cc == nullptr)
+	{
+		Close();
+		return;
 	}
-	return FALSE;	// All other Message are not handled
+
+	if (cc->IsMeta())
+	{
+		MessageBox(GetHwnd(),
+			TranslateT("This contact is a metacontact.\nYou can't add a metacontact to another metacontact.\n\nPlease choose another."),
+			TranslateT("Metacontact conflict"), MB_ICONERROR);
+		Close();
+		return;
+	}
+
+	if (cc->IsSub())
+	{
+		MessageBox(GetHwnd(),
+			TranslateT("This contact is already associated to a metacontact.\nYou cannot add a contact to multiple metacontacts."),
+			TranslateT("Multiple metacontacts"), MB_ICONERROR);
+		Close();
+		return;
+	}
+
+	Window_SetIcon_IcoLib(GetHwnd(), Meta_GetIconHandle(I_ADD));
+
+	// Initialize the graphical part
+	CheckDlgButton(GetHwnd(), IDC_ONLYAVAIL, BST_CHECKED); // Initially checked; display all metacontacts is only an option
+														 // Besides, we can check if there is at least one metacontact to add the contact to.
+	if (BuildList(GetDlgItem(GetHwnd(), IDC_METALIST), FALSE) <= 0)
+	{
+		if (MessageBox(GetHwnd(), TranslateW(szConvMsg), TranslateT("No suitable metacontact found"), MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON1) == IDYES)
+			Meta_Convert(m_hContact, 0);
+		Close();
+		return;
+	}
+	else
+	{
+		// get contact display name from clist
+		wchar_t *ptszCDN = cli.pfnGetContactDisplayName(m_hContact, 0);
+		if (!ptszCDN)
+			ptszCDN = TranslateT("a contact");
+
+		// ... and set it to the Window title.
+		wchar_t buf[256];
+		mir_snwprintf(buf, TranslateT("Adding %s..."), ptszCDN);
+		SetWindowText(GetHwnd(), buf);
+	}
+	ShowWindow(GetHwnd(), SW_SHOWNORMAL);
+}
+
+void CMetaSelectDlg::OnApply()
+{
+	int item = m_metaList.GetCurSel();
+	if (item == -1)
+	{
+		BOOL result = IDOK == MessageBox(GetHwnd(), TranslateT("Please select a metacontact"), TranslateT("No metacontact selected"), MB_ICONHAND);
+		EndModal(result);
+	}
+
+	MCONTACT hMeta = (MCONTACT)m_metaList.GetItemData(item);
+	if (!Meta_Assign(m_hContact, hMeta, FALSE))
+		MessageBox(GetHwnd(), TranslateT("Assignment to the metacontact failed."), TranslateT("Assignment failure"), MB_ICONERROR);
+}
+
+void CMetaSelectDlg::OnDestroy()
+{
+	HWND clist = GetParent(GetHwnd());
+	Window_FreeIcon_IcoLib(GetHwnd());
+	EndModal(TRUE);
+	SetFocus(clist);
+}
+
+void CMetaSelectDlg::MetaList_OnDblClick(CCtrlListBox*)
+{
+	OnApply();
+	Close();
+}
+
+void CMetaSelectDlg::SortCheck_OnChange(CCtrlCheck*)
+{
+	SetWindowLongPtr(m_metaList.GetHwnd(), GWL_STYLE, GetWindowLongPtr(m_metaList.GetHwnd(), GWL_STYLE) ^ LBS_SORT);
+	if (BuildList(m_metaList.GetHwnd(), m_sortCheck.GetState() ? TRUE : FALSE) <= 0)
+	{
+		if (MessageBox(GetHwnd(), TranslateW(szConvMsg), TranslateT("No suitable metacontact found"), MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON1) == IDYES)
+			Meta_Convert(m_hContact, 0);
+		Close();
+	}
 }
 
 /** Display the <b>'Add to'</b> Dialog
@@ -218,6 +235,8 @@ static INT_PTR CALLBACK Meta_SelectDialogProc(HWND hwndDlg, UINT msg, WPARAM wPa
 
 INT_PTR Meta_AddTo(WPARAM hContact, LPARAM)
 {
-	DialogBoxParam(g_hInst, MAKEINTRESOURCE(IDD_METASELECT), cli.hwndContactList, &Meta_SelectDialogProc, hContact);
+	CMetaSelectDlg dlg(hContact);
+	dlg.SetParent(cli.hwndContactList);
+	dlg.DoModal();
 	return 0;
 }

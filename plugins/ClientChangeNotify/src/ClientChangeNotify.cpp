@@ -57,10 +57,10 @@ static int CALLBACK MenuWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 {
 	switch (uMsg) {
 	case WM_MEASUREITEM:
-		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
+		return Menu_MeasureItem(lParam);
 
 	case WM_DRAWITEM:
-		return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
+		return Menu_DrawItem(lParam);
 	}
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
@@ -70,12 +70,12 @@ static VOID NTAPI ShowContactMenu(ULONG_PTR wParam)
 // wParam = hContact
 {
 	POINT pt;
-	HWND hMenuWnd = CreateWindowEx(WS_EX_TOOLWINDOW, _T("static"), _T(MOD_NAME)_T("_MenuWindow"), 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP, NULL, g_hInstance, NULL);
+	HWND hMenuWnd = CreateWindowEx(WS_EX_TOOLWINDOW, L"static", _A2W(MOD_NAME) L"_MenuWindow", 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP, NULL, g_hInstance, NULL);
 	SetWindowLongPtr(hMenuWnd, GWLP_WNDPROC, (LONG_PTR)MenuWndProc);
 	HMENU hMenu = Menu_BuildContactMenu(wParam);
 	GetCursorPos(&pt);
 	SetForegroundWindow(hMenuWnd);
-	CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y, 0, hMenuWnd, NULL), MPCF_CONTACTMENU), (LPARAM)wParam);
+	Clist_MenuProcessCommand(TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y, 0, hMenuWnd, NULL), MPCF_CONTACTMENU, wParam);
 	PostMessage(hMenuWnd, WM_NULL, 0, 0);
 	DestroyMenu(hMenu);
 	DestroyWindow(hMenuWnd);
@@ -149,11 +149,11 @@ void ShowPopup(SHOWPOPUP_DATA *sd)
 {
 	TCString PopupText;
 	if (sd->PopupOptPage->GetValue(IDC_POPUPOPTDLG_SHOWPREVCLIENT)) {
-		mir_sntprintf(PopupText.GetBuffer(MAX_MSG_LEN), MAX_MSG_LEN, TranslateT("changed client to %s (was %s)"), (const TCHAR*)sd->MirVer, (const TCHAR*)sd->OldMirVer);
+		mir_snwprintf(PopupText.GetBuffer(MAX_MSG_LEN), MAX_MSG_LEN, TranslateT("changed client to %s (was %s)"), (const wchar_t*)sd->MirVer, (const wchar_t*)sd->OldMirVer);
 		PopupText.ReleaseBuffer();
 	}
 	else {
-		mir_sntprintf(PopupText.GetBuffer(MAX_MSG_LEN), MAX_MSG_LEN, TranslateT("changed client to %s"), (const TCHAR*)sd->MirVer);
+		mir_snwprintf(PopupText.GetBuffer(MAX_MSG_LEN), MAX_MSG_LEN, TranslateT("changed client to %s"), (const wchar_t*)sd->MirVer);
 		PopupText.ReleaseBuffer();
 	}
 
@@ -168,8 +168,8 @@ void ShowPopup(SHOWPOPUP_DATA *sd)
 		ppd.lchIcon = Skin_LoadProtoIcon(szProto, db_get_w(sd->hContact, szProto, "Status", ID_STATUS_OFFLINE));
 		pdata->hIcon = NULL;
 	}
-	_tcsncpy(ppd.lptzContactName, (TCHAR*)pcli->pfnGetContactDisplayName(sd->hContact, 0), _countof(ppd.lptzContactName) - 1);
-	_tcsncpy(ppd.lptzText, PopupText, _countof(ppd.lptzText) - 1);
+	wcsncpy(ppd.lptzContactName, (wchar_t*)pcli->pfnGetContactDisplayName(sd->hContact, 0), _countof(ppd.lptzContactName) - 1);
+	wcsncpy(ppd.lptzText, PopupText, _countof(ppd.lptzText) - 1);
 	ppd.colorBack = (sd->PopupOptPage->GetValue(IDC_POPUPOPTDLG_DEFBGCOLOUR) ? 0 : sd->PopupOptPage->GetValue(IDC_POPUPOPTDLG_BGCOLOUR));
 	ppd.colorText = (sd->PopupOptPage->GetValue(IDC_POPUPOPTDLG_DEFTEXTCOLOUR) ? 0 : sd->PopupOptPage->GetValue(IDC_POPUPOPTDLG_TEXTCOLOUR));
 	ppd.PluginWindowProc = PopupWndProc;
@@ -183,27 +183,27 @@ void ShowPopup(SHOWPOPUP_DATA *sd)
 int ContactSettingChanged(WPARAM hContact, LPARAM lParam)
 {
 	DBCONTACTWRITESETTING *cws = (DBCONTACTWRITESETTING*)lParam;
-	if (mir_strcmp(cws->szSetting, DB_MIRVER))
+	if (strcmp(cws->szSetting, DB_MIRVER))
 		return 0;
 
 	SHOWPOPUP_DATA sd = {0};
 	char *szProto = GetContactProto(hContact);
 	if (g_PreviewOptPage)
-		sd.MirVer = _T("Miranda NG ICQ 0.93.5.3007");
+		sd.MirVer = L"Miranda NG ICQ 0.93.5.3007";
 	else {
 		if (!hContact) // exit if hContact == NULL and it's not a popup preview
 			return 0;
 
 		_ASSERT(szProto);
-		if (!mir_strcmp(szProto, META_PROTO)) // workaround for metacontacts
+		if (!strcmp(szProto, META_PROTO)) // workaround for metacontacts
 			return 0;
 
-		sd.MirVer = db_get_s(hContact, szProto, DB_MIRVER, _T(""));
+		sd.MirVer = db_get_s(hContact, szProto, DB_MIRVER, L"");
 		if (sd.MirVer.IsEmpty())
 			return 0;
 	}
-	sd.OldMirVer = db_get_s(hContact, MOD_NAME, DB_OLDMIRVER, _T(""));
-	db_set_ts(hContact, MOD_NAME, DB_OLDMIRVER, sd.MirVer); // we have to write it here, because we modify sd.OldMirVer and sd.MirVer to conform our settings later
+	sd.OldMirVer = db_get_s(hContact, MOD_NAME, DB_OLDMIRVER, L"");
+	db_set_ws(hContact, MOD_NAME, DB_OLDMIRVER, sd.MirVer); // we have to write it here, because we modify sd.OldMirVer and sd.MirVer to conform our settings later
 	if (sd.OldMirVer.IsEmpty())  // looks like it's the right way to do
 		return 0;
 
@@ -234,7 +234,7 @@ int ContactSettingChanged(WPARAM hContact, LPARAM lParam)
 				LPCTSTR ptszOldClient = Finger_GetClientDescr(sd.OldMirVer); 
 				LPCTSTR ptszClient = Finger_GetClientDescr(sd.MirVer);
 				if (ptszOldClient && ptszClient) {
-					if (PerContactSetting != NOTIFY_ALMOST_ALWAYS && PerContactSetting != NOTIFY_ALWAYS && !PopupOptPage.GetValue(IDC_POPUPOPTDLG_VERCHGNOTIFY) && !mir_tstrcmp(ptszClient, ptszOldClient))
+					if (PerContactSetting != NOTIFY_ALMOST_ALWAYS && PerContactSetting != NOTIFY_ALWAYS && !PopupOptPage.GetValue(IDC_POPUPOPTDLG_VERCHGNOTIFY) && !wcscmp(ptszClient, ptszOldClient))
 						return 0;
 
 					if (!PopupOptPage.GetValue(IDC_POPUPOPTDLG_SHOWVER)) {
@@ -244,20 +244,20 @@ int ContactSettingChanged(WPARAM hContact, LPARAM lParam)
 				}
 			}
 		}
-		if (sd.MirVer == (const TCHAR*)sd.OldMirVer) {
+		if (sd.MirVer == (const wchar_t*)sd.OldMirVer) {
 			_ASSERT(hContact);
 			return 0;
 		}
 		if (PerContactSetting == NOTIFY_ALWAYS || (PopupOptPage.GetValue(IDC_POPUPOPTDLG_POPUPNOTIFY) && (g_PreviewOptPage || PerContactSetting == NOTIFY_ALMOST_ALWAYS || -1 == PcreCheck(sd.MirVer)))) {
 			ShowPopup(&sd);
-			SkinPlaySound(CLIENTCHANGED_SOUND);
+			Skin_PlaySound(CLIENTCHANGED_SOUND);
 		}
 	}
 
 	if (hContact) {
 		TCString ClientName;
 		if (PopupOptPage.GetValue(IDC_POPUPOPTDLG_SHOWPREVCLIENT) && sd.OldMirVer.GetLen()) {
-			mir_sntprintf(ClientName.GetBuffer(MAX_MSG_LEN), MAX_MSG_LEN, TranslateT("%s (was %s)"), (const TCHAR*)sd.MirVer, (const TCHAR*)sd.OldMirVer);
+			mir_snwprintf(ClientName.GetBuffer(MAX_MSG_LEN), MAX_MSG_LEN, TranslateT("%s (was %s)"), (const wchar_t*)sd.MirVer, (const wchar_t*)sd.OldMirVer);
 			ClientName.ReleaseBuffer();
 		}
 		else ClientName = sd.MirVer;
@@ -277,9 +277,9 @@ static int PrebuildMainMenu(WPARAM, LPARAM)
 	// we have to use ME_CLIST_PREBUILDMAINMENU instead of updating menu items only on settings change, because "popup_enabled" and "popup_disabled" icons are not always available yet in ModulesLoaded
 	if (bPopupExists) {
 		if (g_PopupOptPage.GetDBValueCopy(IDC_POPUPOPTDLG_POPUPNOTIFY))
-			Menu_ModifyItem(g_hTogglePopupsMenuItem, LPGENT("Disable c&lient change notification"), IcoLib_GetIcon("popup_enabled"));
+			Menu_ModifyItem(g_hTogglePopupsMenuItem, LPGENW("Disable c&lient change notification"), IcoLib_GetIcon("popup_enabled"));
 		else
-			Menu_ModifyItem(g_hTogglePopupsMenuItem, LPGENT("Enable c&lient change notification"), IcoLib_GetIcon("popup_disabled"));
+			Menu_ModifyItem(g_hTogglePopupsMenuItem, LPGENW("Enable c&lient change notification"), IcoLib_GetIcon("popup_disabled"));
 	}
 	return 0;
 }
@@ -322,7 +322,8 @@ int MirandaLoaded(WPARAM, LPARAM)
 	HookEvent(ME_SYSTEM_MODULELOAD, ModuleLoad);
 	HookEvent(ME_SYSTEM_MODULEUNLOAD, ModuleLoad);
 	HookEvent(ME_DB_CONTACT_SETTINGCHANGED, ContactSettingChanged);
-	SkinAddNewSoundEx(CLIENTCHANGED_SOUND, NULL, LPGEN("ClientChangeNotify: Client changed"));
+
+	Skin_AddSound(CLIENTCHANGED_SOUND, nullptr, LPGENW("ClientChangeNotify: Client changed"));
 
 	if (bPopupExists) {
 		CreateServiceFunction(MS_CCN_TOGGLEPOPUPS, srvTogglePopups);
@@ -330,12 +331,12 @@ int MirandaLoaded(WPARAM, LPARAM)
 	
 		CMenuItem mi;
 		SET_UID(mi, 0xfabb9181, 0xdb92, 0x43f4, 0x86, 0x40, 0xca, 0xb6, 0x4c, 0x93, 0x34, 0x27);
-		mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Popups"), 0);
-		mi.flags = CMIF_TCHAR;
+		mi.root = Menu_CreateRoot(MO_MAIN, LPGENW("Popups"), 0);
+		mi.flags = CMIF_UNICODE;
 		if (g_PopupOptPage.GetDBValueCopy(IDC_POPUPOPTDLG_POPUPNOTIFY))
-			mi.name.t = LPGENT("Disable c&lient change notification");
+			mi.name.w = LPGENW("Disable c&lient change notification");
 		else
-			mi.name.t = LPGENT("Enable c&lient change notification");
+			mi.name.w = LPGENW("Enable c&lient change notification");
 
 		mi.pszService = MS_CCN_TOGGLEPOPUPS;
 		g_hTogglePopupsMenuItem = Menu_AddMainMenuItem(&mi);
@@ -351,7 +352,7 @@ int MirandaLoaded(WPARAM, LPARAM)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, MirandaLoaded);
 	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &g_hMainThread, THREAD_SET_CONTEXT, false, 0);
@@ -359,9 +360,9 @@ extern "C" int __declspec(dllexport) Load(void)
 
 	if (db_get_b(NULL, MOD_NAME, DB_SETTINGSVER, 0) < 1) {
 		TCString Str;
-		Str = db_get_s(NULL, MOD_NAME, DB_IGNORESUBSTRINGS, _T(""));
+		Str = db_get_s(NULL, MOD_NAME, DB_IGNORESUBSTRINGS, L"");
 		if (Str.GetLen()) // fix incorrect regexp from v0.1.1.0
-			db_set_ts(NULL, MOD_NAME, DB_IGNORESUBSTRINGS, Str.Replace(_T("/Miranda[0-9A-F]{8}/"), _T("/[0-9A-F]{8}(\\W|$)/")));
+			db_set_ws(NULL, MOD_NAME, DB_IGNORESUBSTRINGS, Str.Replace(L"/Miranda[0-9A-F]{8}/", L"/[0-9A-F]{8}(\\W|$)/"));
 
 		db_set_b(NULL, MOD_NAME, DB_SETTINGSVER, 1);
 	}

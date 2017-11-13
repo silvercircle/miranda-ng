@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: MRA.dll
 ;  Plugin: MRA protocol
-;  Version: 2.1.0.10
+;  Version: 2.1.1.1
 ;  Authors: Rozhuk Ivan
 ;============================================================
 [Miranda Mail.ru Agent protocol plugin.]
@@ -219,7 +219,7 @@ Ryby
 [Avatars: can't open file %s, error]
 
 ;file \protocols\MRA\src\MraChat.cpp
-[CHAT plugin is required for conferences. Install it before chatting]
+[Chat plugin is required for conferences. Install it before chatting]
 Tato funkce vyžaduje doplněk 'Chat'. Před použitím je třeba nainstalovat.
 [invite sender]
 
@@ -440,7 +440,7 @@ Pracuju
 [Relaxing]
 Odpočinek
 [On the phone]
-Mám telefon
+Na telefonu
 [In institute]
 
 [At school]

@@ -136,8 +136,8 @@ Użyj kolorów Windows
 Użyj domyślnych kolorów
 [Delay]
 Wyświetlaj
-[From Popup plugin]
-Z wtyczki Popup
+[From popup plugin]
+Z wtyczki popup
 [Custom]
 Niestandardowe
 [Permanent]
@@ -373,7 +373,7 @@ Ukryj element
 [Show Items:]
 Pokaż element:
 [Reset to defaults]
-Ustaw domyślnie
+Przywróć domyślne
 ;file \plugins\UserInfoEx\src\classPsTreeItem.cpp
 [Creating unique name for a page failed with %d and error code %d]
 Tworzenie unikalnej nazwy strony nie powiodło się z %d oraz kodem błędu %d
@@ -605,6 +605,10 @@ Ogólne
 ;file \plugins\UserInfoEx\src\mir_icolib.h
 [Extended user info]
 Rozszerzone dane kontaktu
+[Dialogs]
+Okna
+[Buttons]
+Przyciski
 ;file \plugins\UserInfoEx\src\mir_menuitems.cpp
 [Export/import contact]
 Eksportuj/importuj kontakt
@@ -617,7 +621,7 @@ Eksportuj/importuj kontakt
 [&Import user details]
 &Importuj dane kontaktu
 [View/change my &details...]
-Zobacz/zmień moje &dane
+Pokaż/Zmień moje &dane...
 [Export all contacts]
 Eksportuj wszystkie kontakty
 [Import all contacts]
@@ -1070,24 +1074,29 @@ Rozwiedziony(-a)
 W separacji
 [Widowed]
 Wdowa/Wdowiec
+[Actively searching]
+Poszukuję
+[In love]
+Zakochany
+[It's complicated]
+Too.. skomplikowane
+[In a civil union]
+Małżeństwo cywilne
 [jun.]
 Junior
 [sen.]
 Senior
 ;file \plugins\UserInfoEx\src\svc_constants.h
-;file \plugins\UserInfoEx\src\svc_contactinfo.cpp
-['(Unknown Contact)']
-"(Nieznany kontakt)"
 ;file \plugins\UserInfoEx\src\svc_email.cpp
 [Send e-mail]
 Wyślij e-mail
 [Memory allocation error!]
 Błąd alokacji pamięci!
-[E-mail (uinfoex)]
-E-mail (uinfoex)
+[E-mail (UInfoEx)]
+E-mail (UInfoEx)
 ;file \plugins\UserInfoEx\src\svc_gender.cpp
-[Gender (uinfoex)]
-Płeć (uinfoex)
+[Gender (UInfoEx)]
+Płeć (UInfoEx)
 ;file \plugins\UserInfoEx\src\svc_homepage.cpp
 [User has no valid homepage]
 Użytkownik nie podał strony domowej
@@ -1095,11 +1104,11 @@ Użytkownik nie podał strony domowej
 Pokaż stronę domową
 [&Homepage]
 &Strona domowa
-[Homepage (uinfoex)]
-Strona domowa (uinfoex)
+[Homepage (UInfoEx)]
+Strona domowa (UInfoEx)
 ;file \plugins\UserInfoEx\src\svc_phone.cpp
-[Phone (uinfoex)]
-Telefon (uinfoex)
+[Phone (UInfoEx)]
+Telefon (UInfoEx)
 ;file \plugins\UserInfoEx\src\svc_refreshci.cpp
 [[b]%s (%S)...[/b]\n%d Contacts remaining]
 \[b]%s (%S)...[/b]\nPozostało %d kontaktów
@@ -1150,8 +1159,8 @@ Przypominanie o urodzinach
 Przypominanie o rocznicach: nadchodzących
 [Anniversary Reminder]
 Przypominanie o rocznicach
-[Reminder (uinfoex)]
-Rocznice (uinfoex)
+[Reminder (UInfoEx)]
+Rocznice (UInfoEx)
 ;file \plugins\UserInfoEx\src\ex_import\classExImContactBase.cpp
 [contact identification]
 identyfikacja kontaktu
@@ -1238,6 +1247,6 @@ Dodano kontaktów: %u / %u\nDodano ustawień: %u / %u\nDodano zdarzeń: %u / %u\
 [FATAL: An exception was thrown while importing contacts from xmlCard!]
 Krytyczny: wyjątek został zwrócony podczas importowania kontaktów z wizytówki XML!
 ;file \plugins\UserInfoEx\src\Flags\svc_flags.cpp
-[Flags (uinfoex)]
-Flagi (uinfoex)
+[Flags (UInfoEx)]
+Flagi (UInfoEx)
 ;file \plugins\UserInfoEx\src\Flags\svc_flagsicons.cpp

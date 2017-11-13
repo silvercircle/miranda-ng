@@ -1,4 +1,4 @@
-/* 
+/*
 Copyright (C) 2005-2009 Ricardo Pescuma Domenecci
 
 This is free software; you can redistribute it and/or
@@ -14,29 +14,29 @@ Library General Public License for more details.
 You should have received a copy of the GNU Library General Public
 License along with this file; see the file license.txt.  If
 not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-Boston, MA 02111-1307, USA.  
+Boston, MA 02111-1307, USA.
 */
 
-#include "..\stdafx.h"
+#include "../stdafx.h"
 
 static UINT hTimer = NULL;
 static HANDLE hLog = NULL;
 
 GenericPlayer *singleton = NULL;
 
-void m_log(const TCHAR *function, const TCHAR *fmt, ...)
+void m_log(const wchar_t *function, const wchar_t *fmt, ...)
 {
 	if (hLog == NULL) {
-		hLog = mir_createLog(MODULE_NAME, _T("ListeningTo log"), _T("c:\\temp\\listeningto.txt"), 0);
+		hLog = mir_createLog(MODULE_NAME, L"ListeningTo log", L"c:\\temp\\listeningto.txt", 0);
 		if (hLog == NULL)
 			return;
 	}
 
-	mir_writeLogT(hLog, _T("%s: "), function);
+	mir_writeLogW(hLog, L"%s: ", function);
 
 	va_list args;
 	va_start(args, fmt);
-	mir_writeLogVT(hLog, fmt, args);
+	mir_writeLogVW(hLog, fmt, args);
 }
 
 static LRESULT CALLBACK ReceiverWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -55,10 +55,6 @@ static LRESULT CALLBACK ReceiverWndProc(HWND hWnd, UINT message, WPARAM wParam, 
 		}
 		break;
 
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		break;
-
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
@@ -67,24 +63,20 @@ static LRESULT CALLBACK ReceiverWndProc(HWND hWnd, UINT message, WPARAM wParam, 
 
 GenericPlayer::GenericPlayer()
 {
-	name = _T("GenericPlayer");
+	name = L"GenericPlayer";
 
 	enabled = TRUE;
 	received[0] = L'\0';
 	singleton = this;
 
-	WNDCLASS wc = { 0 };
+	WNDCLASS wc = {};
 	wc.lpfnWndProc = ReceiverWndProc;
 	wc.hInstance = hInst;
 	wc.lpszClassName = MIRANDA_WINDOWCLASS;
-
 	RegisterClass(&wc);
 
-	hWnd = CreateWindow(MIRANDA_WINDOWCLASS, LPGENT("Miranda ListeningTo receiver"),
-		0, 0, 0, 0, 0, NULL, NULL, hInst, NULL);
+	hWnd = CreateWindow(MIRANDA_WINDOWCLASS, LPGENW("Miranda ListeningTo receiver"), 0, 0, 0, 0, 0, NULL, NULL, hInst, NULL);
 }
-
-
 
 GenericPlayer::~GenericPlayer()
 {
@@ -99,8 +91,6 @@ GenericPlayer::~GenericPlayer()
 	UnregisterClass(MIRANDA_WINDOWCLASS, hInst);
 	singleton = NULL;
 }
-
-
 
 void GenericPlayer::ProcessReceived()
 {
@@ -118,14 +108,14 @@ void GenericPlayer::ProcessReceived()
 	int pCount = 0;
 	WCHAR *p = received;
 	do {
-		*p1 = _T('\0');
+		*p1 = '\0';
 		parts[pCount] = p;
 		pCount++;
 		p = p1 + 2;
-		p1 = wcsstr(p, _T("\\0"));
+		p1 = wcsstr(p, L"\\0");
 	} while (p1 != NULL && pCount < 10);
 	if (p1 != NULL)
-		*p1 = _T('\0');
+		*p1 = '\0';
 	parts[pCount] = p;
 
 	if (pCount < 5)
@@ -154,7 +144,7 @@ void GenericPlayer::ProcessReceived()
 
 		li->cbSize = sizeof(listening_info);
 		li->dwFlags = LTI_TCHAR;
-		li->ptszType = U2TD(parts[2], _T("Music"));
+		li->ptszType = U2TD(parts[2], L"Music");
 		li->ptszTitle = U2T(parts[3]);
 		li->ptszArtist = U2T(parts[4]);
 		li->ptszAlbum = U2T(parts[5]);
@@ -163,23 +153,23 @@ void GenericPlayer::ProcessReceived()
 		li->ptszGenre = U2T(parts[8]);
 
 		if (player == this)
-			li->ptszPlayer = mir_u2t(parts[1]);
+			li->ptszPlayer = mir_wstrdup(parts[1]);
 		else
-			li->ptszPlayer = mir_tstrdup(player->name);
+			li->ptszPlayer = mir_wstrdup(player->name);
 
 		if (parts[9] != NULL) {
 			long length = _wtoi(parts[9]);
 			if (length > 0) {
-				li->ptszLength = (TCHAR*)mir_alloc(10 * sizeof(TCHAR));
+				li->ptszLength = (wchar_t*)mir_alloc(10 * sizeof(wchar_t));
 
 				int s = length % 60;
 				int m = (length / 60) % 60;
 				int h = (length / 60) / 60;
 
 				if (h > 0)
-					mir_sntprintf(li->ptszLength, 9, _T("%d:%02d:%02d"), h, m, s);
+					mir_snwprintf(li->ptszLength, 9, L"%d:%02d:%02d", h, m, s);
 				else
-					mir_sntprintf(li->ptszLength, 9, _T("%d:%02d"), m, s);
+					mir_snwprintf(li->ptszLength, 9, L"%d:%02d", m, s);
 			}
 		}
 	}
@@ -212,7 +202,7 @@ static VOID CALLBACK SendTimerProc(HWND, UINT, UINT_PTR, DWORD)
 
 void GenericPlayer::NewData(const WCHAR *data, size_t len)
 {
-	if (data[0] == _T('\0'))
+	if (data[0] == '\0')
 		return;
 
 	mir_cslock lck(cs);

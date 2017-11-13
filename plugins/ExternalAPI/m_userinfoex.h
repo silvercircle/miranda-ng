@@ -1,7 +1,7 @@
 /*
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-09 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -275,7 +275,7 @@ lParam = not used
 /* UserInfo/MsgBox v0.1.0.4+
 Slightly modified version of MButtonClass, to draw both text and icon in a button control
 */
-#define UINFOBUTTONCLASS	_T("UInfoButtonClass")
+#define UINFOBUTTONCLASS	L"UInfoButtonClass"
 
 /*************************************************************
  *	contact info module
@@ -307,64 +307,6 @@ wParam=hContact	- handle to contact whose homepage is to show
 lParam=not used
 */
 #define MS_USERINFO_HOMEPAGE_OPENURL		"UserInfo/Homepage/OpenURL"
-
-/*************************************************************
- * extended database module
- */
-
-/* DB/Contact/GetSettingStrEx	v0.7.0.1+
-This service function reads a database setting from USERINFO module.
-If the setting does not exist, it is looked up in 'pszProto'.
-If 'hContact' points to a MetaContact, the setting is recursivly
-searched in all sub contacts, too, starting with the default contact,
-if the MetaContact does not directly provide the setting.
-This service can directly replace the default MS_DB_CONTACT_GETSETTING_STR
-for reading contact information from the database.
-There will be no difference for the user but the possible source of information.
-
-This service can be used to retrieve all kinds of settings!
-Some versions of the default MS_DB_CONTACT_GETSETTING_STR service return
-an error for BYTE, WORD and DWORD values if cgs.pValue->type is not 0.
-
-wParam = (WPARAM)(HANDLE)hContact
-lParam = (LPARAM)(DBCONTACTGETSETTING*)&cgs
-
-This service returns one of the results of MS_DB_CONTACT_GETSETTING_STR!
-*/
-#define MS_DB_CONTACT_GETSETTING_STR_EX		"DB/Contact/GetSettingStrEx"
-
-static FORCEINLINE INT_PTR
-	DBGetContactSettingEx_Helper(
-		MCONTACT hContact,
-		const char* pszProto,
-		const char* pszSetting,
-		DBVARIANT *dbv,
-		BYTE nType)
-{
-	INT_PTR rc;
-	DBCONTACTGETSETTING cgs;
-
-	cgs.szModule = pszProto;
-	cgs.szSetting = pszSetting;
-	cgs.pValue = dbv;
-	dbv->type = nType;
-
-	rc = CallService(MS_DB_CONTACT_GETSETTING_STR_EX, (WPARAM)hContact, (LPARAM)&cgs);
-	if (rc == CALLSERVICE_NOTFOUND)
-		rc = db_get_s(hContact, pszProto, pszSetting, dbv, nType);
-
-	return rc;
-}
-
-#define DBGetContactSettingStringEx(c,p,s,v)		DBGetContactSettingEx_Helper(c,p,s,v,DBVT_ASCIIZ)
-#define DBGetContactSettingWStringEx(c,p,s,v)		DBGetContactSettingEx_Helper(c,p,s,v,DBVT_WCHAR)
-#define DBGetContactSettingUTF8StringEx(c,p,s,v)	DBGetContactSettingEx_Helper(c,p,s,v,DBVT_UTF8)
-
-#ifdef _UNICODE
-#define DBGetContactSettingTStringEx	DBGetContactSettingWStringEx
-#else
-#define DBGetContactSettingTStringEx	DBGetContactSettingStringEx
-#endif
 
 /*************************************************************/
 #endif /*	_M_USERINFOEX_H_ */

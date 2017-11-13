@@ -7,8 +7,6 @@
 ;============================================================
 [Copy to clipboard]
 Copiar al portapapeles
-[Version]
-Versión
 [Delete contact]
 Eliminar contacto
 [No]
@@ -232,25 +230,25 @@ Otro
 [&Status]
 E&stado
 [&Offline\tCtrl+0]
-&Fuera de línea
+&Fuera de línea\tCtrl+0
 [On&line\tCtrl+1]
-&En línea
+&En línea\tCtrl+1
 [&Away\tCtrl+2]
-Fuer&a
-[&NA\tCtrl+3]
-&No disponible
+Fuer&a\tCtrl+2
+[&Not available\tCtrl+3]
+&No disponible\tCtrl+3
 [Occ&upied\tCtrl+4]
-Oc&upado
-[&DND\tCtrl+5]
-No molestar
+Oc&upado\tCtrl+4
+[&Do not disturb\tCtrl+5]
+No &molestar\tCtrl+5
 [&Free for chat\tCtrl+6]
-&Libre para el chat
+&Libre para el chat\tCtrl+6
 [&Invisible\tCtrl+7]
-&Invisible
+&Invisible\tCtrl+7
 [On the &phone\tCtrl+8]
-En el &teléfono
+En el &teléfono\tCtrl+8
 [Out to &lunch\tCtrl+9]
-Salí a comer
+Salí a &comer\tCtrl+9
 [Show/Hide offline contacts]
 Mostrar/Ocultar contactos desconectados
 [Use/Disable groups]
@@ -271,14 +269,14 @@ Fuera de línea
 En línea
 [Away]
 Fuera
-[NA]
+[Not available]
 No disponible
 [Occupied]
 Ocupado
-[DND]
+[Do not disturb]
 No molestar
 [Free for chat]
-Libre para el chat	
+Libre para el chat
 [Invisible]
 Invisible
 [Out to lunch]
@@ -329,10 +327,10 @@ Texto seleccionado
 Texto rondado
 [Quicksearch text]
 Búsqueda rápida de texto
-[Frames]
-Marcos
 [Show title bar]
 Mostrar barra de título
+[Frames]
+Marcos
 [&Hide/show]
 &Mostrar/Ocultar
 [&Find/add contacts...]

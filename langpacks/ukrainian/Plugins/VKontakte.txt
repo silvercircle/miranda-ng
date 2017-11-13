@@ -2,11 +2,27 @@
 ;============================================================
 ;  File: VKontakte.dll
 ;  Plugin: VKontakte protocol
-;  Version: 0.1.1.16
+;  Version: 0.1.3.0
 ;  Authors: Miranda NG Team
 ;============================================================
 [VKontakte protocol support for Miranda NG.]
 Підтримка протоколу ВКонтакті в Miranda NG.
+[Show in protocol menu ]
+Показувати в меню протоколу\s
+[Create new chat]
+Створити новий чат
+[Status message]
+Статусне повідомлення
+[Send message to my wall]
+Публікувати на своїй стіні
+[Load news from VK]
+Завантажити новини з сайту
+[Load history for all contacts from VK]
+Завантажити історію всіх контактів із сайту
+[Wipe contacts missing in friend list]
+Видалити контакти поза списком друзів
+[Visit profile]
+Профіль на сайті
 [[img] BBCode support for image]
 Підтримка тега [img] для зображень
 [off]
@@ -21,18 +37,20 @@
 Підтримка BBCode у новинах і сповіщеннях
 [basic ([b], [i], [u], [s])]
 базова ([b], [i], [u], [s])
-[advanced (+[url], [size], [color])]
-розширена (+[url], [size], [color])
+[advanced (+[url], [size], [color], [code])]
+розширена (+[url], [size], [color], [code])
 [Use this setting also for attachments on news and notifications]
 Увімкнути це налаштування також для вкладень у новинах і сповіщеннях
-[Other]
-Інше
 [BBCode support on attachments]
 Підтримка BBCode у вкладеннях
+[Other]
+Інше
 [Process stickers as smileys]
 Обробляти стікери як смайли
 [Shorten links for audio attachments]
 Скорочувати посилання для аудіовкладень
+[Use non-standard popups for news and event notifications]
+Нестандартні спливаючі вікна для новин і подій
 [News and event notifications]
 Новини і сповіщення
 [WARNING: Causes excessive network traffic!!!]
@@ -87,24 +105,30 @@
 Репости
 [Mentions in comments]
 Згадування в коментарях
+[Accepted friend requests]
+Підтверджені запити дружби
 [E-mail or phone number:]
 Пошта або номер телефону:
 [Password:]
 Пароль:
 [Open VKontakte site]
-Відкрити сторінку ВКонтактi
+Відкрити сторінку ВКонтакті
 [Advanced]
 Додатково
 [Hide chats on startup]
 Не відкривати вікна чатів при старті
+[Sync read message status from server]
+Синхронізувати стан прочитання з сервером
 [Always notify as unread for all incoming message]
 Позначати всі вхідні повідомлення непрочитаними
 [Force invisible status upon user activity]
-Змінювати статус контакта на "Невидимий" при його активності
+Змінювати статус контакту на "Невидимий" при його активності
 [Invisible interval timeout (min):]
 Інтервал переходу в "Невидимий" (хв):
-[Use non-standard urlEncode for sent messages (less traffic)]
-Нестандартний urlEncode для повідомлень (економія трафіку)
+[Send VK-objects links as attachments]
+Заміняти вкладеннями посилання на пости, зображення, музику, відео
+[and load sent attachments]
+і завантажувати надіслані вкладення
 [When I ban user...]
 При блокуванні користувача...
 [Report abuse]
@@ -123,36 +147,26 @@
 тільки як аудіостатус
 [as regular status only]
 тільки як звичайний статус
+[Group chats]
+Групові чати
+[Message for return to group chat:]
+Повідомлення при поверненні в чат
 [Login settings]
 Налаштування входу
 [Local settings]
 Локальні налаштування
 [Contact list group:]
 Група в списку контактів:
+[Language for names and titles:]
+Мова для імен і назв:
+[Mark message as read:]
+Позначати повідомлення прочитаними:
+[Sync history on protocol online:]
+Синхронізувати історію при підключенні:
+[Use local time for received messages]
+Місцевий час для прийнятих повідомлень
 [Server-side delivery confirmation]
 Підтвердження доставки зі сторони серверу
-[Use local time for received messages]
-Локальний час для прийнятих повідомлень
-[Automatically wipe local contacts missing in your friend list]
-Автоматично видаляти локальні контакти, яких немає в списку друзів
-[Mark message as read...]
-Позначати повідомлення прочитаними...
-[on read]
-при читанні
-[on receive]
-при отриманні
-[on reply]
-при відповіді
-[on typing]
-при наборі тексту
-[Sync history on protocol online...]
-Синхронізувати історію при підключенні...
-[automatically]
-автоматично
-[for last 1 day]
-за останній день
-[for last 3 days]
-за останні 3 дні
 [Bots challenge test]
 Захист від ботів
 [Instruction:]
@@ -161,6 +175,8 @@
 Прийняти
 [Cancel]
 Скасувати
+[Open in browser]
+Відкрити в браузері
 [Invite user to chat]
 Запросити користувача до чату
 [Choose one of your contacts to be invited:]
@@ -177,8 +193,6 @@
 Посилання:
 [Only for friends]
 Тільки друзям
-[Attention]
-Увага
 [Captcha form icon]
 Значок форми з капчею
 [Notification icon]
@@ -203,6 +217,8 @@
 Значок статусу
 [Wall message icon]
 Повідомлення на стіні
+[Mark messages as read icon]
+Позначити як прочитані
 [Protocols]
 Протоколи
 [VKontakte]
@@ -211,14 +227,22 @@
 Відмовлено в доступі! Дані не передаватимуться і не прийматимуться.
 [Error]
 Помилка
+[You have to validate your account before you can use VK in Miranda NG]
+Перед користуванням протоколом ВКонтакті в Miranda NG необхідно підтвердити свій обліковий запис
 [Error %d. Data will not be sent or received.]
 Помилка %d. Дані не передаватимуться і не прийматимуться.
 [One of the parameters specified was missing or invalid]
 Один із заданих параметрів відсутній або неправильний
 [Access to adding post denied]
 Денний ліміт публікацій вичерпано
+[Enter the missing digits between %s and %s of the phone number linked to your account]
+Введіть цифри, пропущені між %s і %s у телефонному номері, прив'язаному до вашого облікового запису
+[Attention!]
+Увага!
 [Enter confirmation code]
 Введіть код підтвердження
+[Enter new nickname]
+Введіть нове ім'я
 [Message read: %s]
 Повідомлення прочитане о %s
 [has invited you to a group]
@@ -269,12 +293,16 @@
 Аудіо
 [Video]
 Відео
+[Link]
+Посилання
 [Document]
 Документ
 [Wall post]
 Запис на стіні
-[Link]
-Посилання
+[Product]
+Товар
+[Price]
+Ціна
 [Gift]
 Подарунок
 [Unsupported or unknown attachment type: %s]
@@ -285,8 +313,6 @@
 Повідомлення від
 [at]
 о
-[Enter the text you see]
-Введіть текст, який бачите
 [Participants]
 Учасники
 [Owners]
@@ -317,8 +343,6 @@
 Цей чат буде видалено разом з усім його вмістом. Цю дію не можна буде скасувати. Ви впевнені?
 [Warning]
 Попередження
-[I'm back]
-Я повернувся
 [You've been kicked by ]
 Вас вигнав користувач\s
 [Chat]
@@ -331,16 +355,34 @@
 &Видалити кімнату
 [&User details]
 &Інформація про користувача
-[Visit profile]
-Профіль на сайті
+[Change nick]
+Змінити ім'я
 [&Kick]
 &Вигнати
+[%s is typing a message...]
+%s друкує вам повідомлення...
+[Enter the text you see]
+Введіть текст, який бачите
+[Wall message for %s]
+Повідомлення на стіну %s
+[New news]
+Новини
+[New notifications]
+Нові сповіщення
 [User was tagged in these photos:]
 Користувач позначений на цих фотографіях:
+[(photos)]
+(фото)
+[(attachments)]
+(вкладення)
 [News from %s\n%s]
 Новина від %s\n%s
+[News from %s]
+Новини від %s
 [\tRepost from %s\n%s]
 \tРепост від %s\n%s
+[Repost from %s]
+Репост від %s
 [Video description:]
 Опис відео:
 [Post text:]
@@ -383,8 +425,18 @@ ID отримувача помилковий або невідомий
 Невідома помилка
 [Are you sure to reload all messages from vk.com?\nLocal contact history will be deleted and reloaded from the server.\nIt may take a long time.\nDo you want to continue?]
 Ви впевнені, що хочете завантажити всі повідомлення з сайту vk.com?\nЛокальну історію контакту буде видалено і завантажено з сервера. Це може забрати багато часу.\nПродовжити?
-[Attention!]
-Увага!
+[Are you sure you want to reload all messages for all contacts from vk.com?\nLocal contact history will be deleted and reloaded from the server.\nIt may take a very long time and/or corrupt Miranda database.\nWe recommend check your database before reloading messages and after it (Miranda32.exe /svc:dbchecker or Miranda64.exe /svc:dbchecker).\nDo you want to continue?]
+Ви впевнені, що хочете перезавантажити повідомлення для всіх контактів із сайту vk.com?\nЛокальну історію контактів буде видалено і заново завантажено з сервера.\nЦе може забрати багато часу і/або пошкодити базу даних.\nРекомендуємо перевірити вашу базу даних (Miranda32.exe /svc:dbchecker або Miranda64.exe /svc:dbchecker) перед повторним завантаженням повідомлень та після нього.\nПродовжити?
+[Error loading message history from server.]
+Помилка при завантаженні повідомлень з сервера.
+[Loading messages for all contacts is completed.]
+Завершено завантаження повідомлень для всіх контактів.
+[Loading history]
+Завантаження історії
+[Error loading message history for %s from server.]
+Помилка при завантаженні повідомлень для %s з сервера.
+[Loading messages for %s is completed.]
+Завершено завантаження повідомлень для %s.
 [Network]
 Мережа
 [Account]
@@ -393,17 +445,51 @@ ID отримувача помилковий або невідомий
 Новини і сповіщення
 [View]
 Вигляд
+[Menu]
+Меню
+[Account language]
+Мова облікового запису
+[English]
+Англійська
+[Russian]
+Російська
+[Belarusian]
+Білоруська
+[Ukrainian]
+Українська
+[Spanish]
+Іспанська
+[Finnish]
+Фінська
+[German]
+Німецька
+[Italian]
+Італійська
+[automatically]
+автоматично
+[for last 1 day]
+за останній день
+[for last 3 days]
+за останні 3 дні
+[on read]
+при читанні
+[on receive]
+при отриманні
+[on reply]
+при відповіді
+[on typing]
+при наборі тексту
+[These changes will take effect after Miranda NG restart.\nWould you like to restart it now?]
+Зміни наберуть чинності після перезапуску.\nПерезапустити зараз?
+[VKontakte protocol]
+Протокол ВКонтакті
 [%s server connection]
 З'єднання з сервером %s
-[Create new chat]
-Створити новий чат
-[Status message]
-Статусне повідомлення
-[Send message to my wall]
-Публікувати на своїй стіні
-[Load news from VK]
-Завантажити новини з сайту
-[Send message to user\'s wall]
+[VKontakte newsfeed & notification event]
+Новини і сповіщення ВКонтакті
+[Mark messages as read]
+Позначити повідомлення як прочитані
+[Send message to user's wall]
 Повідомлення на стіні користувача
 [Add as friend]
 Додати до списку друзів
@@ -443,8 +529,30 @@ ID отримувача помилковий або невідомий
 Очікування...
 [Enter new status message]
 Введіть нове статусне повідомлення
+[I'm back]
+Я повернувся
+[Service message]
+Сервісне повідомлення
+[Interests]
+Інтереси
+[Activities]
+Діяльність
+[Music]
+Музика
+[Movies]
+Фільми
+[TV]
+Телепередачі
+[Books]
+Книги
+[Games]
+Ігри
+[Quotes]
+Цитати
 [Please authorize me to add you to my friend list.]
 Будь ласка, дозвольте додати вас до списку друзів.
+[Are you sure to wipe local contacts missing in your friend list?]
+Ви впевнені, що хочете видалити локальні контакти, яких немає в списку друзів?
 [Are you sure to delete %s from your friend list?]
 Ви впевнені, що хочете видалити %s з друзів?
 [User %s was deleted from your friend list]
@@ -471,7 +579,3 @@ ID отримувача помилковий або невідомий
 \nЦе також
 [Are you sure to report abuse on %s?]
 Ви впевнені, що хочете поскаржитися на %s?
-[Wall message for]
-Повідомлення на стіні для
-[Attention! Message body or url should not be empty!]
-Увага! Текст повідомлення або посилання не можуть бути порожніми!

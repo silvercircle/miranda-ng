@@ -1,6 +1,7 @@
 // Microsoft Visual C++ generated resource script.
 //
 #include "..\src\resource.h"
+#include "..\..\include\chat_resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -9,7 +10,7 @@
 //
 #include <winres.h>
 #include <richedit.h>
-#include "statusmodes.h"
+#include "..\..\include\statusmodes.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -42,7 +43,6 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,86,289,10
     CONTROL         "Cascade new windows",IDC_CASCADE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,98,289,10
     CONTROL         "Show 'Send' button",IDC_SHOWSENDBTN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,166,135,10
-    CONTROL         "Show username on top row",IDC_SHOWINFOLINE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,179,138,10
     CONTROL         "Show toolbar buttons on top row",IDC_SHOWBUTTONLINE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,192,137,10
     CONTROL         "Send message on double 'Enter'",IDC_SENDONDBLENTER,
@@ -74,29 +74,22 @@ BEGIN
     LTEXT           "An error has occurred. The protocol reported the following error:",IDC_STATIC,5,4,177,20
     EDITTEXT        IDC_ERRORTEXT,5,24,177,21,ES_MULTILINE | ES_READONLY
     LTEXT           "while sending the following message:",IDC_STATIC,6,48,175,8
-    CONTROL         "",IDC_MSGTEXT,"RichEdit50W",ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_CLIPSIBLINGS | WS_VSCROLL | WS_TABSTOP,5,60,177,26,WS_EX_STATICEDGE
+    CONTROL         "",IDC_MSGTEXT,"RichEdit50W",WS_CLIPSIBLINGS | WS_VSCROLL | WS_TABSTOP | 0x844,5,60,177,26,WS_EX_STATICEDGE
     DEFPUSHBUTTON   "Try again",IDOK,22,91,63,14
     PUSHBUTTON      "Cancel",IDCANCEL,104,91,61,14
 END
 
 IDD_MSG DIALOGEX 0, 0, 185, 79
-STYLE DS_SETFONT | DS_3DLOOK | DS_FIXEDSYS | DS_CENTER | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
-EXSTYLE WS_EX_NOPARENTNOTIFY | WS_EX_ACCEPTFILES | WS_EX_CONTROLPARENT
-CAPTION "Message session"
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    CONTROL         "",IDC_PROTOCOL,"Button",BS_OWNERDRAW,2,5,12,12
-    CONTROL         "User &details",IDC_NAME,"MButtonClass",WS_TABSTOP,15,2,95,14,WS_EX_NOACTIVATE | 0x10000000L
-    CONTROL         "&Add",IDC_ADD,"MButtonClass",WS_TABSTOP,110,2,16,14,WS_EX_NOACTIVATE | 0x10000000L
-    CONTROL         "&User menu",IDC_USERMENU,"MButtonClass",WS_TABSTOP,128,2,16,14,WS_EX_NOACTIVATE | 0x10000000L
-    CONTROL         "&Details",IDC_DETAILS,"MButtonClass",WS_TABSTOP,146,2,16,14,WS_EX_NOACTIVATE | 0x10000000L
-    CONTROL         "&History",IDC_HISTORY,"MButtonClass",WS_TABSTOP,164,2,16,14,WS_EX_NOACTIVATE | 0x10000000L
-    CONTROL         "",IDC_MESSAGE,"RichEdit50W",ES_MULTILINE | ES_AUTOVSCROLL | ES_NOHIDESEL | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP,1,49,141,13,WS_EX_ACCEPTFILES | WS_EX_STATICEDGE
-    DEFPUSHBUTTON   "&Send",IDOK,143,48,39,15
+    CONTROL         "",IDC_SRMM_MESSAGE,"RichEdit50W",WS_VSCROLL | WS_TABSTOP | 0x1144,1,49,141,29,WS_EX_ACCEPTFILES | WS_EX_STATICEDGE
+    DEFPUSHBUTTON   "&Send",IDOK,143,49,39,29
     PUSHBUTTON      "Close",IDCANCEL,129,0,54,15,NOT WS_VISIBLE
-    CONTROL         "",IDC_LOG,"RichEdit50W",ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL | WS_TABSTOP,1,18,183,26,WS_EX_STATICEDGE
-    CONTROL         "",IDC_SPLITTER,"Static",SS_ENHMETAFILE,0,45,183,2
-    CONTROL         "",IDC_AVATAR,"Button",BS_OWNERDRAW | NOT WS_VISIBLE,1,50,1,13
+    CONTROL         "",IDC_SRMM_LOG,"RichEdit50W",WS_VSCROLL | WS_TABSTOP | 0x844,1,18,183,26,WS_EX_STATICEDGE
+    CONTROL         "",IDC_SPLITTERY,"Static",SS_ENHMETAFILE,0,45,183,2
+    CONTROL         "",IDC_AVATAR,"Button",BS_OWNERDRAW | NOT WS_VISIBLE,1,66,1,13
 END
 
 IDD_OPT_MSGLOG DIALOGEX 0, 0, 311, 164
@@ -122,6 +115,18 @@ BEGIN
     LTEXT           "minutes old",IDC_STMINSOLD,189,138,82,8,WS_DISABLED
 END
 
+IDD_OPT_TABS DIALOGEX 0, 0, 283, 80
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    CONTROL         "Use a tabbed interface",IDC_USETABS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,11,263,13
+    CONTROL         "Close tab on double click",IDC_CLOSETABS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,26,246,10
+    CONTROL         "Restore previously open tabs when showing the window",IDC_RESTORETABS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,39,250,10
+    CONTROL         "Show tabs at the bottom",IDC_TABSBOTTOM,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,52,233,10
+END
+
 IDD_OPT_MSGTYPE DIALOGEX 0, 0, 283, 234
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
@@ -140,64 +145,108 @@ BEGIN
     CONTROL         "Show balloon popup",IDC_NOTIFYBALLOON,"Button",BS_AUTORADIOBUTTON,44,219,206,10
 END
 
-IDD_MODERNOPT_MSGDLG DIALOGEX 0, 0, 369, 106
+IDD_CHANNEL DIALOGEX 0, 0, 252, 140
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    CONTROL         "Close the message window on send",IDC_AUTOCLOSE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,13,174,10
-    CONTROL         "Minimize the message window on send",IDC_AUTOMIN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,25,174,10
-    CONTROL         "Use the contact's status icon as the window icon",IDC_STATUSWIN,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,37,174,10
-    CONTROL         "Save the window position for each contact",IDC_SAVEPERCONTACT,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,49,174,10
-    CONTROL         "Cascade new windows",IDC_CASCADE,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,216,119,22,10
-    CONTROL         "",IDC_POPLIST,"SysTreeView32",TVS_DISABLEDRAGDROP | TVS_NOTOOLTIPS | TVS_NONEVENHEIGHT | WS_BORDER | WS_HSCROLL | WS_TABSTOP,194,13,175,46
-    LTEXT           "Automatically popup window when:",IDC_TXT_TITLE2,184,0,185,8
-    CONTROL         "Show 'Send' button",IDC_SHOWSENDBTN,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,10,137,25,10
-    CONTROL         "Show username on top row",IDC_SHOWINFOLINE,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,11,161,26,10
-    CONTROL         "Show toolbar buttons on top row",IDC_SHOWBUTTONLINE,
-                    "Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,11,174,28,10
-    CONTROL         "Send message on double 'Enter'",IDC_SENDONDBLENTER,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,79,174,10
-    CONTROL         "Send message on 'Enter'",IDC_SENDONENTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,194,79,175,10
-    CONTROL         "Show character count",IDC_CHARCOUNT,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,59,142,22,10
-    LTEXT           "Show warning when message has not been received after",IDC_STATIC,10,93,211,8
-    EDITTEXT        IDC_SECONDS,226,91,25,12,ES_AUTOHSCROLL
-    LTEXT           "seconds",IDC_STATIC,256,93,44,8
-    CONTROL         "Support CTRL+Up/Down in message area to show previously sent messages",IDC_CTRLSUPPORT,
-                    "Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,240,131,20,10
-    CONTROL         "Delete temporary contacts when closing message window",IDC_DELTEMP,
-                    "Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,240,143,22,10
-    CONTROL         "Enable avatar support in the message window",IDC_AVATARSUPPORT,
-                    "Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,239,155,23,10
-    CONTROL         "Limit avatar height to",IDC_LIMITAVATARH,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,236,166,26,10
-    EDITTEXT        IDC_AVATARHEIGHT,242,178,12,13,ES_AUTOHSCROLL | NOT WS_VISIBLE
-    LTEXT           "pixels",IDC_STATIC,271,177,8,8,NOT WS_VISIBLE
-    LTEXT           "Message window behavior:",IDC_TXT_TITLE1,1,0,183,8
-    LTEXT           "Messaging:",IDC_TXT_TITLE3,1,64,368,8
+    CONTROL         "",IDC_SRMM_MESSAGE,"RichEdit50W",WS_VSCROLL | WS_TABSTOP | 0x3144,0,128,127,28,WS_EX_STATICEDGE
+    PUSHBUTTON      "&Send",IDOK,136,126,115,28,WS_DISABLED
+    CONTROL         "",IDC_SRMM_LOG,"RichEdit50W",WS_VSCROLL | WS_TABSTOP | 0x2844,8,2,164,94,WS_EX_STATICEDGE
+    CONTROL         "",IDC_SPLITTERX,"Static",SS_ENHMETAFILE,172,23,10,73
+    CONTROL         "",IDC_SPLITTERY,"Static",SS_ENHMETAFILE,0,102,251,6
+    LISTBOX         IDC_SRMM_NICKLIST,182,2,69,94,LBS_OWNERDRAWFIXED | LBS_NOINTEGRALHEIGHT | LBS_NODATA | NOT WS_BORDER | WS_VSCROLL | WS_TABSTOP,WS_EX_STATICEDGE
 END
 
-IDD_MODERNOPT_MSGLOG DIALOGEX 0, 0, 369, 103
+IDD_CONTAINER DIALOGEX 0, 0, 252, 140
+STYLE DS_SETFONT | DS_3DLOOK | DS_FIXEDSYS | DS_CENTER | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    CONTROL         "Tab1",IDC_TAB,"SysTabControl32",TCS_MULTILINE,0,0,251,140
+END
+
+IDD_FILTER DIALOGEX 0, 0, 83, 125
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_BORDER
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    CTEXT           "Show these events only:",IDC_TEXTO,0,0,83,13,SS_CENTERIMAGE
+    LTEXT           "",IDC_STATIC,0,13,83,112
+    CONTROL         "Actions",IDC_1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,13,73,10
+    CONTROL         "Messages",IDC_2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,23,73,10
+    CONTROL         "Nick changes",IDC_3,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,33,73,10
+    CONTROL         "Users joining",IDC_4,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,43,73,10
+    CONTROL         "Users leaving",IDC_5,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,53,73,10
+    CONTROL         "Topic changes",IDC_6,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,63,73,10
+    CONTROL         "Status changes",IDC_7,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,73,73,10
+    CONTROL         "Information",IDC_8,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,83,73,10
+    CONTROL         "Disconnects",IDC_9,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,93,73,10
+    CONTROL         "User kicks",IDC_10,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,103,73,10
+    CONTROL         "Notices",IDC_11,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,113,73,10
+END
+
+IDD_OPTIONS1 DIALOGEX 0, 0, 300, 230
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    CONTROL         "Show icons",IDC_SHOWLOGICONS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,13,146,10
-    CONTROL         "Show names",IDC_SHOWNAMES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,25,146,10
-    CONTROL         "Show timestamp",IDC_SHOWTIMES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,194,13,146,10
-    CONTROL         "Show dates",IDC_SHOWDATES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,206,37,135,10
-    CONTROL         "Load unread events only",IDC_LOADUNREAD,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,10,65,138,10
-    CONTROL         "Load number of previous events",IDC_LOADCOUNT,"Button",BS_AUTORADIOBUTTON,10,78,138,10
-    EDITTEXT        IDC_LOADCOUNTN,153,76,33,12,ES_RIGHT | ES_NUMBER | WS_DISABLED
-    CONTROL         "",IDC_LOADCOUNTSPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS | UDS_HOTTRACK | WS_DISABLED,176,76,11,14
-    CONTROL         "Load previous events less than",IDC_LOADTIME,"Button",BS_AUTORADIOBUTTON,10,91,138,10
-    EDITTEXT        IDC_LOADTIMEN,153,89,33,12,ES_RIGHT | ES_NUMBER | WS_DISABLED
-    CONTROL         "",IDC_LOADTIMESPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS | UDS_HOTTRACK | WS_DISABLED,176,89,11,14
-    LTEXT           "minutes old",IDC_STMINSOLD,191,91,82,8,WS_DISABLED
-    CONTROL         "Show seconds",IDC_SHOWSECS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,206,25,127,10
-    LTEXT           "Message window event log",IDC_TXT_TITLE1,0,0,369,8
-    LTEXT           "Load history events",IDC_TXT_TITLE2,0,52,369,8
+    CONTROL         "Tree1",IDC_CHECKBOXES,"SysTreeView32",TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_DISABLEDRAGDROP | TVS_FULLROWSELECT | WS_BORDER | WS_TABSTOP,10,12,280,205
+    GROUPBOX        "Options",IDC_STATIC,0,0,300,227
+END
+
+IDD_OPTIONS2 DIALOGEX 0, 0, 300, 200
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Log options",IDC_STATIC,1,1,294,134
+    EDITTEXT        IDC_OUTSTAMP,10,19,35,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_INSTAMP,60,19,35,14,ES_AUTOHSCROLL
+    LTEXT           "Log timestamp",IDC_STATIC,205,11,81,8
+    EDITTEXT        IDC_LOGTIMESTAMP,205,19,81,14,ES_AUTOHSCROLL
+    LTEXT           "Timestamp",IDC_STATIC,119,11,78,8
+    EDITTEXT        IDC_TIMESTAMP,118,19,81,14,ES_AUTOHSCROLL
+    LTEXT           "Other name",IDC_STATIC,60,11,57,8
+    LTEXT           "Your name",IDC_STATIC,10,11,50,8
+    CONTROL         "Enable highlighting",IDC_HIGHLIGHT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,46,118,10
+    LTEXT           "Limit log text to (events):",IDC_STATIC,133,46,112,8
+    LTEXT           "Trim to (KB)",IDC_STATIC,248,104,38,8
+    EDITTEXT        IDC_LOGLIMIT,248,44,38,14,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Spin1",IDC_SPIN2,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS | UDS_HOTTRACK,275,43,11,14
+    LTEXT           "Words to highlight (wildcards allowed)",IDC_STATIC,10,58,240,8
+    EDITTEXT        IDC_HIGHLIGHTWORDS,10,67,276,14,ES_AUTOHSCROLL
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,10,86,275,1
+    CONTROL         "Enable logging to disk",IDC_LOGGING,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,94,211,10
+    LTEXT           "Log directory",IDC_STATIC,10,106,211,8
+    EDITTEXT        IDC_LOGDIRECTORY,10,114,211,14,ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "...",IDC_FONTCHOOSE,221,114,19,14
+    EDITTEXT        IDC_LIMIT,248,114,38,14,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Spin1",IDC_SPIN3,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS | UDS_HOTTRACK,275,112,11,14
+    GROUPBOX        "Other",IDC_STATIC,1,145,294,53
+    LTEXT           "Add new rooms to group:",IDC_STATIC,11,159,132,8
+    EDITTEXT        IDC_GROUP,158,158,49,14,ES_AUTOHSCROLL
+    LTEXT           "Nick list row distance (pixels):",IDC_STATIC,11,180,132,8
+    EDITTEXT        IDC_NICKROW2,158,178,29,14,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_SPIN4,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS | UDS_HOTTRACK,183,178,11,14
+END
+
+IDD_OPTIONSPOPUP DIALOGEX 0, 0, 277, 177
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    CONTROL         "Use same style as in the message log",IDC_RADIO1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,33,29,225,10
+    CONTROL         "Use default colors",IDC_RADIO2,"Button",BS_AUTORADIOBUTTON,33,62,217,10
+    CONTROL         "Use custom colors",IDC_RADIO3,"Button",BS_AUTORADIOBUTTON,33,95,105,10
+    CONTROL         "Custom1",IDC_TEXT,"ColourPicker",WS_TABSTOP,141,93,50,14,WS_EX_NOACTIVATE | 0x10000000L
+    CONTROL         "Custom2",IDC_BKG,"ColourPicker",WS_TABSTOP,201,93,50,14,WS_EX_NOACTIVATE | 0x10000000L
+    EDITTEXT        IDC_TIMEOUT,132,134,38,14,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Spin1",IDC_SPIN1,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS | UDS_HOTTRACK,169,135,11,14
+    GROUPBOX        "Popups for the Chat plugin",IDC_STATIC,0,0,277,174
+    LTEXT           "Timeout (s)",IDC_STATIC,33,138,92,8
+    LTEXT           "Text",IDC_STATIC,141,83,49,8
+    LTEXT           "Background",IDC_STATIC,201,83,67,8
+    LTEXT           "(Setting timeout to 0 means default setting and -1 means indefinite time)",IDC_STATIC,33,151,207,17
 END
 
 
@@ -242,7 +291,6 @@ BEGIN
         VERTGUIDE, 156
         VERTGUIDE, 169
         VERTGUIDE, 300
-        BOTTOMMARGIN, 178
     END
 
     IDD_OPT_MSGTYPE, DIALOG
@@ -250,7 +298,77 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 276
         TOPMARGIN, 7
-        BOTTOMMARGIN, 245
+    END
+
+    IDD_CHANNEL, DIALOG
+    BEGIN
+        RIGHTMARGIN, 251
+        VERTGUIDE, 8
+        VERTGUIDE, 172
+        VERTGUIDE, 182
+        VERTGUIDE, 237
+        HORZGUIDE, 8
+        HORZGUIDE, 23
+        HORZGUIDE, 70
+        HORZGUIDE, 96
+        HORZGUIDE, 102
+        HORZGUIDE, 108
+        HORZGUIDE, 121
+    END
+
+    IDD_CONTAINER, DIALOG
+    BEGIN
+    END
+
+    IDD_FILTER, DIALOG
+    BEGIN
+        VERTGUIDE, 5
+        VERTGUIDE, 78
+        HORZGUIDE, 13
+        HORZGUIDE, 117
+    END
+
+    IDD_OPTIONS1, DIALOG
+    BEGIN
+        VERTGUIDE, 10
+        VERTGUIDE, 153
+        VERTGUIDE, 181
+        VERTGUIDE, 202
+        VERTGUIDE, 290
+        HORZGUIDE, 12
+        HORZGUIDE, 174
+        HORZGUIDE, 192
+        HORZGUIDE, 213
+    END
+
+    IDD_OPTIONS2, DIALOG
+    BEGIN
+        LEFTMARGIN, 1
+        RIGHTMARGIN, 295
+        VERTGUIDE, 10
+        VERTGUIDE, 60
+        VERTGUIDE, 144
+        VERTGUIDE, 158
+        VERTGUIDE, 183
+        VERTGUIDE, 221
+        VERTGUIDE, 286
+        TOPMARGIN, 1
+        BOTTOMMARGIN, 198
+        HORZGUIDE, 108
+        HORZGUIDE, 126
+        HORZGUIDE, 146
+        HORZGUIDE, 158
+        HORZGUIDE, 174
+    END
+
+    IDD_OPTIONSPOPUP, DIALOG
+    BEGIN
+        VERTGUIDE, 33
+        VERTGUIDE, 157
+        VERTGUIDE, 201
+        HORZGUIDE, 49
+        HORZGUIDE, 81
+        HORZGUIDE, 174
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -262,12 +380,12 @@ END
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE
+1 TEXTINCLUDE 
 BEGIN
     "..\\sxr\\resource.h\0"
 END
 
-2 TEXTINCLUDE
+2 TEXTINCLUDE 
 BEGIN
     "#include <winres.h>\r\n"
     "#include <richedit.h>\r\n"
@@ -275,7 +393,7 @@ BEGIN
     "\0"
 END
 
-3 TEXTINCLUDE
+3 TEXTINCLUDE 
 BEGIN
     "\r\n"
     "\0"
@@ -291,9 +409,47 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
+IDI_BUNDERLINE          ICON                    "underline.ico"
 IDI_INCOMING            ICON                    "incoming.ico"
 IDI_OUTGOING            ICON                    "outgoing.ico"
 IDI_NOTICE              ICON                    "notice.ico"
+IDI_TAG1                ICON                    "tag1.ico"
+IDI_TAG2                ICON                    "tag2.ico"
+IDI_BBOLD               ICON                    "bold.ico"
+IDI_BITALICS            ICON                    "italics.ico"
+IDI_BSMILEY             ICON                    "smiley.ico"
+IDI_JOIN                ICON                    "join.ico"
+IDI_TOPIC               ICON                    "topic.ico"
+IDI_ADDSTATUS           ICON                    "addmode.ico"
+IDI_INFO                ICON                    "info.ico"
+IDI_KICK                ICON                    "kick.ico"
+IDI_MESSAGE             ICON                    "message.ico"
+IDI_NICK                ICON                    "nick.ico"
+IDI_EXCL                ICON                    "excl.ico"
+IDI_PART                ICON                    "part.ico"
+IDI_QUIT                ICON                    "quit.ico"
+IDI_REMSTATUS           ICON                    "removestatus.ico"
+IDI_HIGHLIGHT           ICON                    "highlight.ico"
+IDI_MESSAGEOUT          ICON                    "messageout.ico"
+IDI_ACTION              ICON                    "action.ico"
+IDI_TOPICBUT            ICON                    "topicbut.ico"
+IDI_BKGCOLOR            ICON                    "bkgcolor.ico"
+IDI_CHANMGR             ICON                    "window.ico"
+IDI_COLOR               ICON                    "color.ico"
+IDI_FILTER              ICON                    "filter.ico"
+IDI_HISTORY             ICON                    "history.ico"
+IDI_NICKLIST            ICON                    "nicklist.ico"
+IDI_BLANK               ICON                    "blank.ico"
+IDI_STATUS3             ICON                    "4.ico"
+IDI_STATUS2             ICON                    "3.ico"
+IDI_STATUS4             ICON                    "5.ico"
+IDI_STATUS1             ICON                    "2.ico"
+IDI_STATUS0             ICON                    "1.ico"
+IDI_STATUS5             ICON                    "6.ico"
+IDI_CLOSE               ICON                    "close.ico"
+IDI_OVERLAY             ICON                    "overlay.ico"
+IDI_NICKLIST2           ICON                    "nicklist2.ico"
+IDI_FILTER2             ICON                    "filter2.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -309,6 +465,29 @@ IDC_DROPUSER            CURSOR                  "dropuser.cur"
 // Menu
 //
 
+IDR_MENU MENU
+BEGIN
+    POPUP "Message"
+    BEGIN
+        MENUITEM "Undo",                        ID_MESSAGE_UNDO, GRAYED
+        MENUITEM "Redo",                        ID_MESSAGE_REDO, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Copy",                        ID_MESSAGE_COPY, GRAYED
+        MENUITEM "Cut",                         ID_MESSAGE_CUT, GRAYED
+        MENUITEM "Paste",                       ID_MESSAGE_PASTE
+        MENUITEM "Select all",                  ID_MESSAGE_SELECTALL
+        MENUITEM SEPARATOR
+        MENUITEM "Clear",                       ID_MESSAGE_CLEAR
+    END
+    POPUP "Tabs"
+    BEGIN
+        MENUITEM "&Close tab",                  ID_CLOSE
+        MENUITEM "C&lose other tabs",           ID_CLOSEOTHER
+        MENUITEM SEPARATOR
+        MENUITEM "&Open at this position",      ID_LOCKPOSITION
+    END
+END
+
 IDR_CONTEXT MENU
 BEGIN
     POPUP "Log"
@@ -320,11 +499,6 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Select &all",                 IDM_SELECTALL
     END
-    POPUP "LogLink"
-    BEGIN
-        MENUITEM "&Open link",                  IDM_OPENLINK
-        MENUITEM "&Copy link",                  IDM_COPYLINK
-    END
     POPUP "Message"
     BEGIN
         MENUITEM "Undo",                        IDM_UNDO
@@ -333,7 +507,7 @@ BEGIN
         MENUITEM "Cut",                         IDM_CUT
         MENUITEM "Copy",                        IDM_COPY
         MENUITEM "Paste",                       IDM_PASTE
-        MENUITEM "Paste and send",               IDM_PASTESEND
+        MENUITEM "Paste and send",              IDM_PASTESEND
         MENUITEM "Delete",                      IDM_DELETE
         MENUITEM SEPARATOR
         MENUITEM "Select &all",                 IDM_SELECTALL
@@ -356,3 +530,4 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
+

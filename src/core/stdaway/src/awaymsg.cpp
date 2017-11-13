@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -51,21 +51,21 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 		if (dat->hContact == NULL)
 			dat->hContact = lParam;
 		dat->hAwayMsgEvent = HookEventMessage(ME_PROTO_ACK, hwndDlg, HM_AWAYMSG);
-		dat->hSeq = (HANDLE)CallContactService(dat->hContact, PSS_GETAWAYMSG, 0, 0);
+		dat->hSeq = (HANDLE)ProtoChainSend(dat->hContact, PSS_GETAWAYMSG, 0, 0);
 		WindowList_Add(hWindowList, hwndDlg, dat->hContact);
 		{
-			TCHAR str[256], format[128];
-			TCHAR *contactName = pcli->pfnGetContactDisplayName(dat->hContact, 0);
+			wchar_t str[256], format[128];
+			wchar_t *contactName = pcli->pfnGetContactDisplayName(dat->hContact, 0);
 			char *szProto = GetContactProto(dat->hContact);
 			WORD dwStatus = db_get_w(dat->hContact, szProto, "Status", ID_STATUS_OFFLINE);
-			TCHAR *status = pcli->pfnGetStatusModeDescription(dwStatus, 0);
+			wchar_t *status = pcli->pfnGetStatusModeDescription(dwStatus, 0);
 
 			GetWindowText(hwndDlg, format, _countof(format));
-			mir_sntprintf(str, format, status, contactName);
+			mir_snwprintf(str, format, status, contactName);
 			SetWindowText(hwndDlg, str);
 
 			GetDlgItemText(hwndDlg, IDC_RETRIEVING, format, _countof(format));
-			mir_sntprintf(str, format, status);
+			mir_snwprintf(str, format, status);
 			SetDlgItemText(hwndDlg, IDC_RETRIEVING, str);
 
 			Window_SetProtoIcon_IcoLib(hwndDlg, szProto, dwStatus);
@@ -89,7 +89,7 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 			if (ack->result != ACKRESULT_SUCCESS) break;
 			if (dat->hAwayMsgEvent && ack->hProcess == dat->hSeq) { UnhookEvent(dat->hAwayMsgEvent); dat->hAwayMsgEvent = NULL; }
 
-			SetDlgItemText(hwndDlg, IDC_MSG, (const TCHAR*)ack->lParam);
+			SetDlgItemText(hwndDlg, IDC_MSG, (const wchar_t*)ack->lParam);
 
 			ShowWindow(GetDlgItem(hwndDlg, IDC_RETRIEVING), SW_HIDE);
 			ShowWindow(GetDlgItem(hwndDlg, IDC_MSG), SW_SHOW);
@@ -140,8 +140,8 @@ static int AwayMsgPreBuildMenu(WPARAM hContact, LPARAM)
 			int status = db_get_w(hContact, szProto, "Status", ID_STATUS_OFFLINE);
 			if (CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGRECV) {
 				if (CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_3, 0) & Proto_Status2Flag(status)) {
-					TCHAR str[128];
-					mir_sntprintf(str, TranslateT("Re&ad %s message"), pcli->pfnGetStatusModeDescription(status, 0));
+					wchar_t str[128];
+					mir_snwprintf(str, TranslateT("Re&ad %s message"), pcli->pfnGetStatusModeDescription(status, 0));
 					Menu_ModifyItem(hAwayMsgMenuItem, str, Skin_LoadProtoIcon(szProto, status), CMIF_NOTOFFLINE);
 					return 0;
 				}

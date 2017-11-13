@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: SendSS.dll
 ;  Plugin: Send ScreenShot+
-;  Version: 0.8.9.1
+;  Version: 0.8.10.1
 ;  Authors: Merlin
 ;============================================================
 [Take a screenshot and send it to a contact.]
@@ -42,7 +42,7 @@
 [About]
 Информация
 [Copyright]
-Права
+Авторские права
 [&Close]
 &Закрыть
 [Edit]
@@ -103,8 +103,12 @@
 Неизвестная ошибка
 [File transfer]
 Передача файла
+[Image upload]
+Загрузка изображения
+[HTTPServer transfer]
+Передача HTTPServer
 [Could not start the HTTP Server plugin.]
-Не могу запустить плагин HTTP Сервер.
+Не могу запустить плагин HTTP Server.
 [Retry]
 Ещё раз
 [Yes]
@@ -151,8 +155,8 @@ HTTP подключение SendSS
 Отправить скриншот
 [Screenshots]
 Снимки экрана
-[Image services (AdvaImg) not found.\nSendSS disabled.]
-Не найдена служба изображений (AdvaImg).\nПлагин SendSS будет отключён.
+[Image services (AdvaImg plugin) not found.\nSendSS disabled.]
+Не найдена служба изображений (плагин AdvaImg).\nПлагин SendSS будет отключён.
 [Buttons]
 Кнопки
 [Take a screenshot]
@@ -166,7 +170,7 @@ HTTP подключение SendSS
 [SendScreenshot - Error]
 SendScreenshot - Ошибка
 [Credits]
-Кредиты
+Благодарности
 [Drag&Drop the target on the desired window.]
 Перетащите прицел на нужное окно.
 [Send screenshot to %s]

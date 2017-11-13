@@ -2,24 +2,113 @@
 ;============================================================
 ;  File: VKontakte.dll
 ;  Plugin: VKontakte protocol
-;  Version: 0.1.1.16
+;  Version: 0.1.3.0
 ;  Authors: Miranda NG Team
 ;============================================================
 [VKontakte protocol support for Miranda NG.]
 Падтрымка пратаколу ВКонтакте ў Miranda NG.
-;file \protocols\VKontakte\res\resource.rc
+[Show in protocol menu ]
+
+[Create new chat]
+Стварыць чат
+[Status message]
+Статуснае паведамленне
+[Send message to my wall]
+
+[Load news from VK]
+
+[Load history for all contacts from VK]
+
+[Wipe contacts missing in friend list]
+
+[Visit profile]
+Профіль
+[[img] BBCode support for image]
+Падтрымка BB-кода [img] для выяў
 [off]
 адкл.
+[for original size images]
+для арыгінальнага памеру
+[for preview max 130px*130px]
+для прэв'ю 130px*130px 
+[for preview max 604px*604px]
+для прэв'ю 604px*604px 
+[BBCode support on news and event notifications]
+Падтрымка BBCode для навін і паведамленняў
+[basic ([b], [i], [u], [s])]
+базавая ([b], [i], [u], [s])
+[advanced (+[url], [size], [color], [code])]
+пашыраная (+[url], [size], [color], [code])
+[Use this setting also for attachments on news and notifications]
+
+[BBCode support on attachments]
+Падтрымка BBCode для ўкладанняў
 [Other]
 Іншае
+[Process stickers as smileys]
+Апрацоўваць стыкеры як смайлы
+[Shorten links for audio attachments]
+Пакарочаныя спасылкі для аўдыё
+[Use non-standard popups for news and event notifications]
+
+[Add message link to messages with attachments]
+
+[News and event notifications]
+Паведамленні аб навінах і падзеях
+[WARNING: Causes excessive network traffic!!!]
+ЎВАГА: Вялікае ўжыванне трафіку !!!
+[Enable news feeds]
+Ўключыць ленту навін
+[Interval for news updates (min):]
+Перыяд абнаўлення навін (хвіліны):
+[Enable event notifications]
+Ўключыць паведамленні аб падзеях
+[Interval for notification updates (min):]
+Перыяд абнаўлення падзей (хвіліны):
+[Mark notification as viewed on receive]
+
+[Special contact always enabled]
+
+[Autoclear news and notification history]
+
+[News types]
+
+[Wall posts]
+
 [Photos]
 Фатаграфіі
+[Photos tags]
+
+[Wall photos]
+
+[News sources]
+
 [Friends]
 Сябры
 [Groups]
 Гурты
+[Include banned sources]
+
+[Pages]
+Старонкі
+[Subscriptions to users]
+
+[No reposts]
+
+[Notifications types]
+
+[Comments]
+Каментарыі
+[Likes]
+"Мне падабаецца"
 [Invites]
 Запрашэнні
+[Reposts]
+
+[Mentions in comments]
+
+[Accepted friend requests]
+
 [E-mail or phone number:]
 Пошта ці нумар тэлефона:
 [Password:]
@@ -30,24 +119,72 @@
 Дадаткова
 [Hide chats on startup]
 Не адчыняць вокны пакояў пры далучэнні
+[Sync read message status from server]
+
+[Always notify as unread for all incoming message]
+Заўжды паведамляць аб уваходзячых паведамленнях
+[Force invisible status upon user activity]
+
+[Invisible interval timeout (min):]
+
+[Send VK-objects links as attachments]
+
+[and load sent attachments]
+
+[Notify about changes of contacts audio broadcast]
+
+[When I ban user...]
+
+[Report abuse]
+
+[Clear server history]
+
+[Remove from friend list]
+
+[Remove from contact list]
+
+[Broadcast music...]
+
+[as regular status for unknown music and audio status otherwise]
+
+[as audio status only]
+
+[as regular status only]
+
+[Group chats]
+Чаты
+[Message for return to group chat:]
+
 [Login settings]
 Налады уваходу
 [Local settings]
 Лакальныя налады
 [Contact list group:]
 Гурт у спісе кантактаў
+[Language for names and titles:]
+
+[Mark message as read:]
+
+[Sync history on protocol online:]
+
+[Load last messages when message window open and local history is empty]
+
+[Use local time for received messages]
+
+[Load only friends to local contact list]
+
 [Server-side delivery confirmation]
 Падцверджанне дастаўкі з боку сервера
-[Automatically wipe local contacts missing in your friend list]
-Аўтаматычна выдаляць кантакты, якіх няма на серверы
 [Bots challenge test]
 Абарона ад ботаў
 [Instruction:]
-Інструкцыя
+Інструкцыя:
 [Submit]
 Прыняць
 [Cancel]
 Скасаваць
+[Open in browser]
+Адкрыць у браўзары
 [Invite user to chat]
 Запрасіць у чат
 [Choose one of your contacts to be invited:]
@@ -62,17 +199,106 @@
 Падзяліцца
 [URL:]
 Спасылка:
-;file \protocols\VKontakte\src\misc.cpp
+[Only for friends]
+
+[Captcha form icon]
+
+[Notification icon]
+
+[Read message icon]
+
+[Visit profile icon]
+
+[Load server history icon]
+
+[Add to friend list icon]
+
+[Delete from friend list icon]
+
+[Report abuse icon]
+
+[Ban user icon]
+
+[Broadcast icon]
+
 [Status icon]
 Абразок статусу
+[Wall message icon]
+
+[Mark messages as read icon]
+
 [Protocols]
 Пратаколы
 [VKontakte]
 Вконтакте
+[Access denied! Data will not be sent or received.]
+
 [Error]
 Памылка
+[You have to validate your account before you can use VK in Miranda NG]
+
+[Error %d. Data will not be sent or received.]
+
+[One of the parameters specified was missing or invalid]
+
+[Access to adding post denied]
+
+[Can't send messages for users from blacklist]
+
+[Can't send messages for users without dialogs]
+
+[Can't send messages to this user due to their privacy settings]
+
+[Enter the missing digits between %s and %s of the phone number linked to your account]
+
+[Attention!]
+
+[Enter confirmation code]
+
+[Enter new nickname]
+
 [Message read: %s]
 Паведамленне прачытана ў: %s
+[has invited you to a group]
+
+[has invited you to subscribe to a page]
+
+[invites you to event]
+
+[commented on your post]
+
+[commented on your photo]
+
+[commented on your video]
+
+[replied to your comment]
+
+[replied to your comment to photo]
+
+[replied to your comment to video]
+
+[replied to your topic]
+
+[liked your post]
+
+[liked your comment]
+
+[liked your photo]
+
+[liked your video]
+
+[liked your comment to photo]
+
+[liked your comment to video]
+
+[liked your comment to topic]
+
+[shared your post]
+
+[shared your photo]
+
+[shared your video]
+
 [Photo]
 Фота
 [Attachments:]
@@ -81,22 +307,56 @@
 Аўдыё
 [Video]
 Відэё
-[Document]
-Дакумент
 [Link]
 Спасылка
+[Document]
+Дакумент
+[Wall post]
+
+[Product]
+
+[Price]
+
+[Gift]
+
 [Unsupported or unknown attachment type: %s]
 Непадтрымліваемы ці невядомы тып укладання: %s
 [(Unknown contact)]
 (Невядомы кантакт)
-;file \protocols\VKontakte\src\vk_captcha.cpp
-[Enter the text you see]
-Увядзіце тэкст, які бачыце
-;file \protocols\VKontakte\src\vk_chats.cpp
+[Message from]
+
+[at]
+
+[User restored control over own page]
+
+[User was deactivated (deleted)]
+
+[User was deactivated (banned)]
+
 [Participants]
 Удзельнікі
 [Owners]
 Уладары
+[Message link]
+
+[create chat]
+
+[kick user]
+
+[left chat]
+
+[invite user]
+
+[returned to chat]
+
+[change chat title to]
+
+[changed chat cover:]
+
+[deleted chat cover]
+
+[chat action not supported]
+
 [Unknown]
 Невядомы
 [Enter new chat title]
@@ -105,6 +365,8 @@
 Гэты чат будзе знішчаны з усімі кантактамі. Гэта дзеянне нельга адкаціць. Вы ўпэўнены?
 [Warning]
 Папярэджанне
+[You've been kicked by ]
+
 [Chat]
 Чат
 [&Invite a user]
@@ -115,33 +377,239 @@
 Выдаліць чат
 [&User details]
 Пра кантакт
-[Visit profile]
-Профіль
+[Change nick]
+
 [&Kick]
 Выкінуць
-;file \protocols\VKontakte\src\vk_feed.cpp
-;file \protocols\VKontakte\src\vk_files.cpp
-;file \protocols\VKontakte\src\vk_history.cpp
-;file \protocols\VKontakte\src\vk_options.cpp
+[%s is typing a message...]
+%s набірае тэкст...
+[Enter the text you see]
+Увядзіце тэкст, які бачыце
+[Wall message for %s]
+
+[You delete %s from the contact list.\nWhat needs to be done additionally?]
+
+[Remove %s from your friend list]
+
+[Clear server history with %s]
+
+[Deleting %s from contact list]
+
+[New news]
+
+[New notifications]
+
+[User was tagged in these photos:]
+
+[(photos)]
+
+[(attachments)]
+
+[News from %s\n%s]
+
+[News from %s]
+
+[\tRepost from %s\n%s]
+
+[Repost from %s]
+
+[Video description:]
+
+[Post text:]
+
+[Topic text:]
+
+[Protocol is offline]
+Конт адключаны
+[File does not exist]
+
+[File type not supported]
+
+[Error open file]
+
+[Error read file]
+
+[File upload error]
+
+[Upload server returned empty URL]
+
+[Invalid or unknown recipient user ID]
+
+[Couldn't save file]
+
+[Invalid album id]
+
+[Invalid server]
+
+[Invalid hash]
+
+[Invalid audio]
+
+[The audio file was removed by the copyright holder and cannot be reuploaded]
+
+[Invalid filename]
+
+[Invalid filesize]
+
+[Unknown error occurred]
+
+[Are you sure to reload all messages from vk.com?\nLocal contact history will be deleted and reloaded from the server.\nIt may take a long time.\nDo you want to continue?]
+
+[Are you sure you want to reload all messages for all contacts from vk.com?\nLocal contact history will be deleted and reloaded from the server.\nIt may take a very long time and/or corrupt Miranda database.\nWe recommend check your database before reloading messages and after it (Miranda32.exe /svc:dbchecker or Miranda64.exe /svc:dbchecker).\nDo you want to continue?]
+
+[Error loading message history from server.]
+
+[Loading messages for all contacts is completed.]
+
+[Loading history]
+
+[Error loading message history for %s from server.]
+
+[Loading messages for %s is completed.]
+
 [Network]
 Сеціва
 [Account]
 Конт
+[News and notifications]
+
 [View]
 Выгляд
-;file \protocols\VKontakte\src\vk_proto.cpp
+[Menu]
+Меню
+[Account language]
+
+[English]
+Ангельскі
+[Russian]
+Рускі
+[Belarusian]
+Беларускі
+[Ukrainian]
+Украінскі
+[Spanish]
+Гішпанскі
+[Finnish]
+Фінскі
+[German]
+Нямецкі
+[Italian]
+Італьянскі
+[automatically]
+
+[for last 1 day]
+
+[for last 3 days]
+
+[on read]
+
+[on receive]
+
+[on reply]
+
+[on typing]
+
+[These changes will take effect after Miranda NG restart.\nWould you like to restart it now?]
+
+[VKontakte protocol]
+
 [%s server connection]
 Далучэнне да сервера %s
-[Create new chat]
-Стварыць чат
-[Status message]
-Статуснае паведамленне
+[VKontakte newsfeed & notification event]
+
+[Mark messages as read]
+Пазначыць павеламленні прачытанымі
+[Send message to user's wall]
+
+[Add as friend]
+
+[Delete from friend list]
+
+[Ban user]
+
+[Destroy room]
+
+[Open broadcast]
+
+[Reload messages from vk.com...]
+
+[for last week]
+
+[for last 30 days]
+
+[for last 90 days]
+
+[for all time]
+
 [Errors]
 Памылкі
 [Notification]
 Абвестка
-;file \protocols\VKontakte\src\vk_status.cpp
+[VK user activate/deactivate action]
+
+[User %s added as friend]
+
+[You cannot add yourself as friend]
+
+[Cannot add this user to friends as they have put you on their blacklist]
+
+[Cannot add this user to friends as you put him on blacklist]
+
+[Loading status message from vk.com.\nThis may take some time.]
+
 [Waiting...]
 Чаканне...
-;file \protocols\VKontakte\src\vk_thread.cpp
-;file \protocols\VKontakte\src\vk_wallpost.cpp
+[Enter new status message]
+
+[I'm back]
+
+[Service message]
+
+[%s is listening to]
+
+[Interests]
+Інтарэсы
+[Activities]
+Заняткі
+[Music]
+Музыка
+[Movies]
+
+[TV]
+
+[Books]
+
+[Games]
+Гульні
+[Quotes]
+Каціроўкі
+[Please authorize me to add you to my friend list.]
+
+[Are you sure to wipe local contacts missing in your friend list?]
+
+[Are you sure to delete %s from your friend list?]
+
+[User %s was deleted from your friend list]
+
+[Your request to the user %s was deleted]
+
+[Friend request from the user %s declined]
+
+[Friend request suggestion for the user %s deleted]
+
+[User or request was not deleted]
+
+[ report abuse on him/her]
+
+[ clear server history with him/her]
+
+[ remove him/her from your friend list]
+
+[ remove him/her from your contact list]
+
+[Are you sure to ban %s? %s%sContinue?]
+
+[\nIt will also]
+
+[Are you sure to report abuse on %s?]
+

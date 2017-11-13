@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -43,13 +43,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef MIR_APP_EXPORTS
 	#define MIR_APP_EXPORT __declspec(dllexport)
+	typedef struct NetlibUser* HNETLIBUSER;
+	typedef struct NetlibConnection* HNETLIBCONN;
+	typedef struct NetlibBoundPort* HNETLIBBIND;
 #else
 	#define MIR_APP_EXPORT __declspec(dllimport)
+	DECLARE_HANDLE(HNETLIBUSER);
+	DECLARE_HANDLE(HNETLIBCONN);
+	DECLARE_HANDLE(HNETLIBBIND);
 #endif
 
 #define MIR_APP_DLL(T) MIR_APP_EXPORT T __stdcall
 
-#pragma warning(disable:4201 4127 4706)
+#pragma warning(disable:4201 4127 4312 4706)
 
 #if defined(__cplusplus)
 extern "C"
@@ -98,11 +104,15 @@ MIR_CORE_DLL(int)     CallPluginEventHook(HINSTANCE hInst, HANDLE hEvent, WPARAM
 MIR_CORE_DLL(int)     NotifyEventHooks(HANDLE hEvent, WPARAM wParam = 0, LPARAM lParam = 0);
 MIR_CORE_DLL(int)     NotifyFastHook(HANDLE hEvent, WPARAM wParam = 0, LPARAM lParam = 0);
 
-MIR_CORE_DLL(HANDLE)  HookEvent(const char* name, MIRANDAHOOK hookProc);
-MIR_CORE_DLL(HANDLE)  HookEventParam(const char* name, MIRANDAHOOKPARAM hookProc, LPARAM lParam = 0);
-MIR_CORE_DLL(HANDLE)  HookEventObj(const char* name, MIRANDAHOOKOBJ hookProc, void* object);
-MIR_CORE_DLL(HANDLE)  HookEventObjParam(const char* name, MIRANDAHOOKOBJPARAM hookProc, void* object, LPARAM lParam);
-MIR_CORE_DLL(HANDLE)  HookEventMessage(const char* name, HWND hwnd, UINT message);
+MIR_CORE_DLL(HANDLE)  HookEvent(const char *name, MIRANDAHOOK hookProc);
+MIR_CORE_DLL(HANDLE)  HookEventParam(const char *name, MIRANDAHOOKPARAM hookProc, LPARAM lParam = 0);
+MIR_CORE_DLL(HANDLE)  HookEventObj(const char *name, MIRANDAHOOKOBJ hookProc, void* object);
+MIR_CORE_DLL(HANDLE)  HookEventObjParam(const char *name, MIRANDAHOOKOBJPARAM hookProc, void* object, LPARAM lParam);
+MIR_CORE_DLL(HANDLE)  HookEventMessage(const char *name, HWND hwnd, UINT message);
+
+// executes the event handler if event is missing
+MIR_CORE_DLL(HANDLE)  HookTemporaryEvent(const char *name, MIRANDAHOOK hookProc);
+
 MIR_CORE_DLL(int)     UnhookEvent(HANDLE hHook);
 MIR_CORE_DLL(void)    KillObjectEventHooks(void* pObject);
 MIR_CORE_DLL(void)    KillModuleEventHooks(HINSTANCE pModule);
@@ -113,17 +123,17 @@ MIR_CORE_DLL(HANDLE)  CreateServiceFunctionObj(const char *name, MIRANDASERVICEO
 MIR_CORE_DLL(HANDLE)  CreateServiceFunctionObjParam(const char *name, MIRANDASERVICEOBJPARAM serviceProc, void* object, LPARAM lParam);
 MIR_CORE_DLL(HANDLE)  CreateProtoServiceFunction(const char *szModule, const char *szService, MIRANDASERVICE serviceProc);
 MIR_CORE_DLL(int)     DestroyServiceFunction(HANDLE hService);
-MIR_CORE_DLL(int)     ServiceExists(const char *name);
+MIR_CORE_DLL(bool)    ServiceExists(const char *name);
 
 MIR_CORE_DLL(INT_PTR) CallService(const char *name, WPARAM wParam = 0, LPARAM lParam = 0);
 MIR_CORE_DLL(INT_PTR) CallServiceSync(const char *name, WPARAM wParam = 0, LPARAM lParam = 0);
 
+MIR_CORE_DLL(INT_PTR) CallFunctionSync(INT_PTR(__stdcall *func)(void *), void *arg);
 MIR_CORE_DLL(int)     CallFunctionAsync(void (__stdcall *func)(void *), void *arg);
 MIR_CORE_DLL(void)    KillModuleServices(HINSTANCE hInst);
 MIR_CORE_DLL(void)    KillObjectServices(void* pObject);
 
 MIR_APP_DLL(int)      ProtoServiceExists(LPCSTR szModule, const char *szService);
-MIR_APP_DLL(INT_PTR)  CallContactService(MCONTACT, const char*, WPARAM wParam = 0, LPARAM lParam = 0);
 MIR_APP_DLL(INT_PTR)  CallProtoService(LPCSTR szModule, const char *szService, WPARAM wParam = 0, LPARAM lParam = 0);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -154,7 +164,7 @@ typedef struct tagIconItem
 
 typedef struct tagIconItemT
 {
-	TCHAR *tszDescr;
+	wchar_t *tszDescr;
 	char  *szName;
 	int    defIconID, size;
 	HANDLE hIcolib;
@@ -163,10 +173,10 @@ typedef struct tagIconItemT
 
 #if defined( __cplusplus )
 MIR_CORE_DLL(void) Icon_Register(HINSTANCE hInst, const char* szSection, IconItem* pIcons, size_t iCount, char *prefix = NULL, int = hLangpack);
-MIR_CORE_DLL(void) Icon_RegisterT(HINSTANCE hInst, const TCHAR* szSection, IconItemT* pIcons, size_t iCount, char *prefix = NULL, int = hLangpack);
+MIR_CORE_DLL(void) Icon_RegisterT(HINSTANCE hInst, const wchar_t* szSection, IconItemT* pIcons, size_t iCount, char *prefix = NULL, int = hLangpack);
 #else
 MIR_CORE_DLL(void) Icon_Register(HINSTANCE hInst, const char* szSection, IconItem* pIcons, size_t iCount, char *prefix, int hLangpack);
-MIR_CORE_DLL(void) Icon_RegisterT(HINSTANCE hInst, const TCHAR* szSection, IconItemT* pIcons, size_t iCount, char *prefix, int hLangpack);
+MIR_CORE_DLL(void) Icon_RegisterT(HINSTANCE hInst, const wchar_t* szSection, IconItemT* pIcons, size_t iCount, char *prefix, int hLangpack);
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -233,7 +243,7 @@ MIR_CORE_DLL(void)        List_ObjCopy(SortedList* s, SortedList* d, size_t item
 ///////////////////////////////////////////////////////////////////////////////
 // logging functions
 
-MIR_CORE_DLL(HANDLE) mir_createLog(const char *pszName, const TCHAR *ptszDescr, const TCHAR *ptszFile, unsigned options);
+MIR_CORE_DLL(HANDLE) mir_createLog(const char *pszName, const wchar_t *ptszDescr, const wchar_t *ptszFile, unsigned options);
 MIR_CORE_DLL(void)   mir_closeLog(HANDLE hLogger);
 
 MIR_C_CORE_DLL(int)  mir_writeLogA(HANDLE hLogger, const char *format, ...);
@@ -321,26 +331,33 @@ MIR_APP_DLL(INT_PTR) ProtoBroadcastAck(LPCSTR szModule, MCONTACT hContact, int t
 // avatar support functions
 
 // returns image extension by a PA_* constant or empty string for PA_FORMAT_UNKNOWN
-MIR_APP_DLL(const TCHAR*) ProtoGetAvatarExtension(int format);
+MIR_APP_DLL(const wchar_t*) ProtoGetAvatarExtension(int format);
 
 // detects image format by extension
-MIR_APP_DLL(int) ProtoGetAvatarFormat(const TCHAR *ptszFileName);
+MIR_APP_DLL(int) ProtoGetAvatarFormat(const wchar_t *ptszFileName);
 
 // detects image format by its contents
-MIR_APP_DLL(int) ProtoGetAvatarFileFormat(const TCHAR *ptszFileName);
+MIR_APP_DLL(int) ProtoGetAvatarFileFormat(const wchar_t *ptszFileName);
+
+// returns the mime type according to a picture type (PA_*)	passed
+MIR_APP_DLL(const wchar_t*) ProtoGetAvatarMimeType(int iFileType);
+
+// returns the picture type (PA_*) according to a mime type passed
+MIR_APP_DLL(int) ProtoGetAvatarFormatByMimeType(const wchar_t *pwszMimeType);
 
 // returns the image format and extension by the first bytes of picture
 // ptszExtension might be NULL
 #if defined( __cplusplus )
-	MIR_APP_DLL(int) ProtoGetBufferFormat(const void *buf, const TCHAR **ptszExtension = NULL);
+	MIR_APP_DLL(int) ProtoGetBufferFormat(const void *buf, const wchar_t **ptszExtension = NULL);
 #else
-	MIR_APP_DLL(int) ProtoGetBufferFormat(const void *buf, const TCHAR **ptszExtension);
+	MIR_APP_DLL(int) ProtoGetBufferFormat(const void *buf, const wchar_t **ptszExtension);
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // sha1 functions
 
 #define MIR_SHA1_HASH_SIZE 20
+#define MIR_SHA_BLOCKSIZE 64
 
 struct mir_sha1_ctx
 {
@@ -351,9 +368,9 @@ struct mir_sha1_ctx
 };
 
 MIR_CORE_DLL(void) mir_sha1_init(mir_sha1_ctx *ctx);
-MIR_CORE_DLL(void) mir_sha1_append(mir_sha1_ctx *ctx, const BYTE *dataIn, int len);
+MIR_CORE_DLL(void) mir_sha1_append(mir_sha1_ctx *ctx, const BYTE *dataIn, size_t len);
 MIR_CORE_DLL(void) mir_sha1_finish(mir_sha1_ctx *ctx, BYTE hashout[MIR_SHA1_HASH_SIZE]);
-MIR_CORE_DLL(void) mir_sha1_hash(BYTE *dataIn, int len, BYTE hashout[MIR_SHA1_HASH_SIZE]);
+MIR_CORE_DLL(void) mir_sha1_hash(BYTE *dataIn, size_t len, BYTE hashout[MIR_SHA1_HASH_SIZE]);
 
 MIR_CORE_DLL(void) mir_hmac_sha1(BYTE hashout[MIR_SHA1_HASH_SIZE], const BYTE *key, size_t keylen, const BYTE *text, size_t textlen);
 
@@ -366,7 +383,7 @@ struct SHA256_CONTEXT
 {
 	UINT32  h0, h1, h2, h3, h4, h5, h6, h7;
 	UINT32  nblocks;
-	BYTE buf[64];
+	BYTE buf[MIR_SHA_BLOCKSIZE];
 	int  count;
 };
 
@@ -374,6 +391,8 @@ MIR_CORE_DLL(void) mir_sha256_init(SHA256_CONTEXT *ctx);
 MIR_CORE_DLL(void) mir_sha256_write(SHA256_CONTEXT *ctx, const void *dataIn, size_t len);
 MIR_CORE_DLL(void) mir_sha256_final(SHA256_CONTEXT *ctx, BYTE hashout[MIR_SHA256_HASH_SIZE]);
 MIR_CORE_DLL(void) mir_sha256_hash(const void *dataIn, size_t len, BYTE hashout[MIR_SHA256_HASH_SIZE]);
+
+MIR_CORE_DLL(void) mir_hmac_sha256(BYTE hashout[MIR_SHA256_HASH_SIZE], const BYTE *key, size_t keylen, const BYTE *text, size_t textlen);
 
 ///////////////////////////////////////////////////////////////////////////////
 // strings
@@ -408,6 +427,9 @@ MIR_CORE_DLL(int) wildcmpiw(const wchar_t *name, const wchar_t *mask);
 MIR_CORE_DLL(char*)  bin2hex(const void *pData, size_t len, char *dest);
 MIR_CORE_DLL(wchar_t*) bin2hexW(const void *pData, size_t len, wchar_t *dest);
 
+MIR_CORE_DLL(bool) hex2bin(const char *pSrc, void *pData, size_t len);
+MIR_CORE_DLL(bool) hex2binW(const wchar_t *pSrc, void *pData, size_t len);
+
 __forceinline char* lrtrim(char *str) { return ltrim(rtrim(str)); };
 __forceinline char* lrtrimp(char *str) { return ltrimp(rtrim(str)); };
 
@@ -424,162 +446,43 @@ __forceinline char* lrtrimp(char *str) { return ltrimp(rtrim(str)); };
 
 typedef union {
 	char *a; // utf8 or ansi strings
-	TCHAR *t; // strings of TCHARs
 	wchar_t *w; // strings of WCHARs
 } MAllStrings;
 
 typedef union {
 	char **a; // array of utf8 or ansi strings
-	TCHAR **t; // array of strings of TCHARs
 	wchar_t **w; // array of strings of WCHARs
 } MAllStringArray;
-
-#ifdef _UNICODE
-	#define mir_t2a(s) mir_u2a(s)
-	#define mir_a2t(s) mir_a2u(s)
-	#define mir_t2u(s) mir_wstrdup(s)
-	#define mir_u2t(s) mir_wstrdup(s)
-
-	#define mir_t2a_cp(s,c) mir_u2a_cp(s,c)
-	#define mir_a2t_cp(s,c) mir_a2u_cp(s,c)
-	#define mir_t2u_cp(s,c) mir_wstrdup(s)
-	#define mir_u2t_cp(s,c) mir_wstrdup(s)
-
-	#define mir_tstrlen   mir_wstrlen
-	#define mir_tstrcpy   mir_wstrcpy
-	#define mir_tstrncpy  mir_wstrncpy
-	#define mir_tstrcat   mir_wstrcat
-	#define mir_tstrncat  mir_wstrncat
-	#define mir_tstrcmp   mir_wstrcmp
-	#define mir_tstrcmpi  mir_wstrcmpi
-	#define mir_tstrncmp  mir_wstrncmp
-	#define mir_tstrncmpi mir_wstrncmpi
-	#define mir_tstrdup   mir_wstrdup
-	#define mir_tstrndup  mir_wstrndup
-
-	#define replaceStrT replaceStrW
-	#define bin2hexT    bin2hexW
-
-	#define rtrimt  rtrimw
-	#define ltrimt  ltrimw
-	#define ltrimpt ltrimpw
-
-	#define strdelt strdelw
-
-	#define wildcmpt  wildcmpw
-	#define wildcmpit wildcmpiw
-
-	#define mir_sntprintf  mir_snwprintf
-	#define mir_vsntprintf mir_vsnwprintf
-
-	#define mir_writeLogT  mir_writeLogW
-	#define mir_writeLogVT mir_writeLogVW
-#else
-	#define mir_t2a(s) mir_strdup(s)
-	#define mir_a2t(s) mir_strdup(s)
-	#define mir_t2u(s) mir_a2u(s)
-	#define mir_u2t(s) mir_u2a(s)
-
-	#define mir_t2a_cp(s,c) mir_strdup(s)
-	#define mir_a2t_cp(s,c) mir_strdup(s)
-	#define mir_t2u_cp(s,c) mir_a2u_cp(s,c)
-	#define mir_u2t_cp(s,c) mir_u2a_cp(s,c)
-
-	#define mir_tstrlen   mir_strlen
-	#define mir_tstrcpy   mir_strcpy
-	#define mir_tstrncpy  mir_strncpy
-	#define mir_tstrcat   mir_strcat
-	#define mir_tstrncat  mir_strncat
-	#define mir_tstrcmp   mir_strcmp
-	#define mir_tstrcmpi  mir_strcmpi
-	#define mir_tstrncmp  mir_strncmp
-	#define mir_tstrncmpi mir_strncmpi
-	#define mir_tstrdup   mir_strdup
-	#define mir_tstrndup  mir_strndup
-
-	#define replaceStrT replaceStr
-	#define bin2hexT    bin2hex
-
-	#define rtrimt rtrim
-	#define ltrimt ltrim
-	#define ltrimpt ltrimp
-
-	#define strdelt strdel
-
-	#define wildcmpt wildcmp
-	#define wildcmpit wildcmpi
-
-	#define mir_sntprintf  mir_snprintf
-	#define mir_vsntprintf mir_vsnprintf
-
-	#define mir_writeLogT  mir_writeLogA
-	#define mir_writeLogVT mir_writeLogVA
-#endif
 
 MIR_CORE_DLL(wchar_t*) mir_a2u_cp(const char* src, int codepage);
 MIR_CORE_DLL(wchar_t*) mir_a2u(const char* src);
 MIR_CORE_DLL(char*)  mir_u2a_cp(const wchar_t* src, int codepage);
 MIR_CORE_DLL(char*)  mir_u2a(const wchar_t* src);
 
-#if defined(__cplusplus)
-
-class _A2T
-{
-	TCHAR* buf;
-
-public:
-	__forceinline _A2T(const char* s) : buf(mir_a2t(s)) {}
-	__forceinline _A2T(const char* s, int cp) : buf(mir_a2t_cp(s, cp)) {}
-	~_A2T() { mir_free(buf); }
-
-	__forceinline operator LPARAM() const { return (LPARAM)buf; }
-	__forceinline operator TCHAR*() const { return buf; }
-};
-
-class _T2A
-{
-	char* buf;
-
-public:
-	__forceinline _T2A(const TCHAR* s) : buf(mir_t2a(s)) {}
-	__forceinline _T2A(const TCHAR* s, int cp) : buf(mir_t2a_cp(s, cp)) {}
-	__forceinline ~_T2A() { mir_free(buf); }
-
-	__forceinline operator LPARAM() const { return (LPARAM)buf; }
-	__forceinline operator char*() const {	return buf; }
-};
-
-#endif
-
 ///////////////////////////////////////////////////////////////////////////////
 // threads
 
-typedef void (__cdecl *pThreadFunc)(void*);
-typedef unsigned (__stdcall *pThreadFuncEx)(void*);
-typedef unsigned (__cdecl *pThreadFuncOwner)(void *owner, void* param);
+typedef void (__cdecl *pThreadFunc)(void *param);
+typedef unsigned (__stdcall *pThreadFuncEx)(void *param);
+typedef unsigned (__cdecl *pThreadFuncOwner)(void *owner, void *param);
 
 #if defined( __cplusplus )
-	MIR_CORE_DLL(INT_PTR) Thread_Push(HINSTANCE hInst, void* pOwner=NULL);
+	MIR_CORE_DLL(INT_PTR) Thread_Push(HINSTANCE hInst, void* pOwner = NULL);
 #else
 	MIR_CORE_DLL(INT_PTR) Thread_Push(HINSTANCE hInst, void* pOwner);
 #endif
 MIR_CORE_DLL(INT_PTR) Thread_Pop(void);
 MIR_CORE_DLL(void)    Thread_Wait(void);
 
-MIR_CORE_DLL(UINT_PTR) forkthread(pThreadFunc, unsigned long stacksize, void *arg);
-MIR_CORE_DLL(UINT_PTR) forkthreadex(void *sec, unsigned stacksize, pThreadFuncEx, void* owner, void *arg, unsigned *thraddr);
-
-__forceinline HANDLE mir_forkthread(pThreadFunc aFunc, void* arg)
-{	return (HANDLE)forkthread(aFunc, 0, arg);
-}
-
-__forceinline HANDLE mir_forkthreadex(pThreadFuncEx aFunc, void* arg, unsigned* pThreadID)
-{	return (HANDLE)forkthreadex(NULL, 0, aFunc, NULL, arg, pThreadID);
-}
-
-__forceinline HANDLE mir_forkthreadowner(pThreadFuncOwner aFunc, void* owner, void* arg, unsigned* pThreadID)
-{	return (HANDLE)forkthreadex(NULL, 0, (pThreadFuncEx)aFunc, owner, arg, pThreadID);
-}
+#if defined( __cplusplus )
+MIR_CORE_DLL(HANDLE) mir_forkthread(pThreadFunc aFunc, void *arg = NULL);
+MIR_CORE_DLL(HANDLE) mir_forkthreadex(pThreadFuncEx aFunc, void *arg = NULL, unsigned *pThreadID = NULL);
+MIR_CORE_DLL(HANDLE) mir_forkthreadowner(pThreadFuncOwner aFunc, void *owner, void *arg = NULL, unsigned *pThreadID = NULL);
+#else
+MIR_CORE_DLL(HANDLE) mir_forkthread(pThreadFunc aFunc, void *arg);
+MIR_CORE_DLL(HANDLE) mir_forkthreadex(pThreadFuncEx aFunc, void *arg, unsigned *pThreadID);
+MIR_CORE_DLL(HANDLE) mir_forkthreadowner(pThreadFuncOwner aFunc, void *owner, void *arg, unsigned *pThreadID);
+#endif
 
 MIR_CORE_DLL(void) Thread_SetName(const char *szThreadName);
 
@@ -590,6 +493,7 @@ MIR_CORE_DLL(void) KillObjectThreads(void* pObject);
 
 MIR_CORE_DLL(char*) Utf8Decode(char* str, wchar_t** ucs2);
 MIR_CORE_DLL(char*) Utf8DecodeCP(char* str, int codepage, wchar_t** ucs2);
+MIR_CORE_DLL(int)   Utf8toUcs2(const char *src, size_t srclen, wchar_t *dst, size_t dstlen); // returns 0 on error
 
 MIR_CORE_DLL(wchar_t*) Utf8DecodeW(const char* str);
 
@@ -601,9 +505,6 @@ MIR_CORE_DLL(int)   Ucs2toUtf8Len(const wchar_t *src);
 
 MIR_CORE_DLL(BOOL)  Utf8CheckString(const char* str);
 
-#define Utf8DecodeT Utf8DecodeW
-#define Utf8EncodeT Utf8EncodeW
-
 #define mir_utf8decode(A, B)      Utf8Decode(A, B)
 #define mir_utf8decodecp(A, B, C) Utf8DecodeCP(A, B, C)
 #define mir_utf8decodeW(A)   	    Utf8DecodeW(A)
@@ -614,45 +515,10 @@ MIR_CORE_DLL(BOOL)  Utf8CheckString(const char* str);
 
 __forceinline char* mir_utf8decodeA(const char* src)
 {
-    char* tmp = mir_strdup(src);
+    char *tmp = mir_strdup(src);
     mir_utf8decode(tmp, NULL);
     return tmp;
 }
-
-#if defined(_UNICODE)
-	#define mir_utf8decodeT mir_utf8decodeW
-	#define mir_utf8encodeT mir_utf8encodeW
-#else
-	#define mir_utf8decodeT mir_utf8decodeA
-	#define mir_utf8encodeT mir_utf8encode
-#endif
-
-class T2Utf
-{
-	char* m_str;
-
-public:
-	__forceinline T2Utf(const TCHAR *str) :
-		m_str(mir_utf8encodeT(str))
-	{}
-
-	__forceinline ~T2Utf()
-	{	mir_free(m_str);
-	}
-
-	__forceinline char* detach()
-	{	char *res = m_str; m_str = NULL;
-		return res;
-	}
-
-	__forceinline char& operator[](size_t idx) const { return m_str[idx]; }
-	__forceinline operator char*() const {	return m_str; }
-	__forceinline operator unsigned char*() const {	return (unsigned char*)m_str; }
-	__forceinline operator LPARAM() const { return (LPARAM)m_str; }
-	#ifdef _XSTRING_
-		std::string str() const { return std::string(m_str); }
-	#endif
-};
 
 ///////////////////////////////////////////////////////////////////////////////
 // Window subclassing
@@ -677,7 +543,7 @@ MIR_CORE_DLL(BOOL)    IsFullScreen();
 MIR_CORE_DLL(BOOL)    IsWorkstationLocked();
 MIR_CORE_DLL(BOOL)    IsScreenSaverRunning();
 
-MIR_CORE_DLL(BOOL)    GetOSDisplayString(TCHAR *buf, size_t bufSize);
+MIR_CORE_DLL(BOOL)    GetOSDisplayString(wchar_t *buf, size_t bufSize);
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // retrieves the hLangpack of a plugin by its HINSTANCE
@@ -727,19 +593,11 @@ inline int mir_vsnwprintf(wchar_t(&buffer)[_Size], const wchar_t* fmt, va_list v
 #endif
 
 #ifndef MIR_CORE_EXPORTS
-	#if !defined(_WIN64)
-		#pragma comment(lib, "mir_core.lib")
-	#else
-		#pragma comment(lib, "mir_core64.lib")
-	#endif
+	#pragma comment(lib, "mir_core.lib")
 #endif
 
 #ifndef MIR_APP_EXPORTS
-	#if !defined(_WIN64)
-		#pragma comment(lib, "mir_app.lib")
-	#else
-		#pragma comment(lib, "mir_app64.lib")
-	#endif
+	#pragma comment(lib, "mir_app.lib")
 #endif
 
 #endif // M_CORE_H

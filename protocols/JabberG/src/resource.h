@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by C:\Users\xx\Documents\Visual Studio 2010\Projects\miranda-ng\protocols\JabberG\res\jabber.rc
+// Used by w:\miranda-ng\protocols\JabberG\res\jabber.rc
 //
 #define IDD_OPT_JABBER                  101
 #define IDI_JABBER                      102
@@ -21,7 +21,6 @@
 #define IDD_PRIVACY_ADD_LIST            118
 #define IDD_SERVICE_DISCOVERY           119
 #define IDD_NOTE_EDIT                   120
-#define IDD_MODERNOPT                   121
 #define IDI_ADDCONTACT                  122
 #define IDI_DELETE                      123
 #define IDI_EDIT                        124
@@ -166,7 +165,6 @@
 #define IDC_PRIORITY                    1105
 #define IDC_PRIORITY_LABEL              1106
 #define IDC_NEWPASSWD                   1107
-#define IDC_COMBO_ACCTYPE               1108
 #define IDC_PROXY_ADDR                  1112
 #define IDC_DIRECT_ADDR                 1114
 #define IDC_DIRECT_MANUAL               1121
@@ -240,7 +238,6 @@
 #define IDC_OPTTREE                     1263
 #define IDC_LB_LISTS                    1264
 #define IDC_LST_NOTES                   1264
-#define IDC_TITLE1                      1265
 #define IDC_CONSOLE                     1266
 #define IDC_CONSOLEIN                   1267
 #define IDC_RESET                       1268
@@ -321,7 +318,7 @@
 #define IDC_VALUE                       3019
 
 // Next default values for new objects
-//
+// 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1

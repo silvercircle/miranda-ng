@@ -40,35 +40,11 @@ POINT menuMousePoint;
 
 int Meta_SetNick(char *szProto)
 {
-	CONTACTINFO ci = { sizeof(ci) };
-	ci.dwFlag = CNF_DISPLAY | CNF_TCHAR;
-	ci.szProto = szProto;
-	if (CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ci))
+	ptrW tszNick(Contact_GetInfo(CNF_DISPLAY, 0, szProto));
+	if (tszNick == nullptr)
 		return 1;
 
-	switch (ci.type) {
-	case CNFT_BYTE:
-		if (db_set_b(NULL, META_PROTO, "Nick", ci.bVal))
-			return 1;
-		break;
-	case CNFT_WORD:
-		if (db_set_w(NULL, META_PROTO, "Nick", ci.wVal))
-			return 1;
-		break;
-	case CNFT_DWORD:
-		if (db_set_dw(NULL, META_PROTO, "Nick", ci.dVal))
-			return 1;
-		break;
-	case CNFT_ASCIIZ:
-		if (db_set_ts(NULL, META_PROTO, "Nick", ci.pszVal))
-			return 1;
-		mir_free(ci.pszVal);
-		break;
-	default:
-		if (db_set_s(NULL, META_PROTO, "Nick", (char *)TranslateT("Sender")))
-			return 1;
-		break;
-	}
+	db_set_ws(0, META_PROTO, "Nick", tszNick);
 	return 0;
 }
 
@@ -84,11 +60,11 @@ int Meta_SetNick(char *szProto)
 BOOL Meta_Assign(MCONTACT hSub, MCONTACT hMeta, BOOL set_as_default)
 {
 	DBCachedContact *ccDest = CheckMeta(hMeta), *ccSub = currDb->m_cache->GetCachedContact(hSub);
-	if (ccDest == NULL || ccSub == NULL)
+	if (ccDest == nullptr || ccSub == nullptr)
 		return FALSE;
 
 	char *szProto = GetContactProto(hSub);
-	if (szProto == NULL) {
+	if (szProto == nullptr) {
 		MessageBox(0, TranslateT("Could not retrieve contact protocol"), TranslateT("Assignment error"), MB_OK | MB_ICONWARNING);
 		return FALSE;
 	}
@@ -148,7 +124,7 @@ BOOL Meta_Assign(MCONTACT hSub, MCONTACT hMeta, BOOL set_as_default)
 
 	// write the display name
 	mir_snprintf(buffer, "CListName%d", ccDest->nSubs);
-	db_set_ts(hMeta, META_PROTO, buffer, cli.pfnGetContactDisplayName(hSub, 0));
+	db_set_ws(hMeta, META_PROTO, buffer, cli.pfnGetContactDisplayName(hSub, 0));
 
 	// Get the status
 	WORD status = db_get_w(hSub, szProto, "Status", ID_STATUS_OFFLINE);
@@ -164,8 +140,8 @@ BOOL Meta_Assign(MCONTACT hSub, MCONTACT hMeta, BOOL set_as_default)
 	// write status string
 	mir_snprintf(buffer, "StatusString%d", ccDest->nSubs);
 
-	TCHAR *szStatus = cli.pfnGetStatusModeDescription(status, 0);
-	db_set_ts(hMeta, META_PROTO, buffer, szStatus);
+	wchar_t *szStatus = cli.pfnGetStatusModeDescription(status, 0);
+	db_set_ws(hMeta, META_PROTO, buffer, szStatus);
 
 	// Write the link in the contact
 	db_set_dw(hSub, META_PROTO, "ParentMeta", hMeta);
@@ -194,17 +170,17 @@ BOOL Meta_Assign(MCONTACT hSub, MCONTACT hMeta, BOOL set_as_default)
 		PROTO_AVATAR_INFORMATION ai;
 		ai.hContact = hMeta;
 		ai.format = PA_FORMAT_UNKNOWN;
-		_tcsncpy_s(ai.filename, _T("X"), _TRUNCATE);
+		wcsncpy_s(ai.filename, L"X", _TRUNCATE);
 
 		if (CallProtoService(META_PROTO, PS_GETAVATARINFO, 0, (LPARAM)&ai) == GAIR_SUCCESS)
-			db_set_ts(hMeta, "ContactPhoto", "File", ai.filename);
+			db_set_ws(hMeta, "ContactPhoto", "File", ai.filename);
 	}
 
 	// merge sub's events to the meta-history
 	currDb->MetaMergeHistory(ccDest, ccSub);
 
 	// Ignore status if the option is on
-	if (options.bSuppressStatus)
+	if (g_metaOptions.bSuppressStatus)
 		CallService(MS_IGNORE_IGNORE, hSub, IGNOREEVENT_USERONLINE);
 
 	NotifyEventHooks(hSubcontactsChanged, hMeta, 0);
@@ -247,12 +223,12 @@ static int GetStatusPriority(int status)
 
 MCONTACT Meta_GetMostOnlineSupporting(DBCachedContact *cc, int pflagnum, unsigned long capability)
 {
-	if (cc == NULL || cc->nDefault == -1)
-		return NULL;
+	if (cc == nullptr || cc->nDefault == -1)
+		return 0;
 
 	// if the default is beyond the end of the list (eek!) return null
 	if (cc->nDefault >= cc->nSubs)
-		return NULL;
+		return 0;
 
 	int most_online_status = ID_STATUS_OFFLINE;
 	MCONTACT most_online_contact = Meta_GetContactHandle(cc, cc->nDefault);
@@ -279,7 +255,7 @@ MCONTACT Meta_GetMostOnlineSupporting(DBCachedContact *cc, int pflagnum, unsigne
 
 		MCONTACT hContact = Meta_GetContactHandle(cc, i);
 		szProto = GetContactProto(hContact);
-		if (szProto == NULL || CallProtoService(szProto, PS_GETSTATUS, 0, 0) < ID_STATUS_ONLINE) // szProto offline or connecting
+		if (szProto == nullptr || CallProtoService(szProto, PS_GETSTATUS, 0, 0) < ID_STATUS_ONLINE) // szProto offline or connecting
 			continue;
 
 		DWORD caps = CallProtoService(szProto, PS_GETCAPS, pflagnum, 0);
@@ -314,7 +290,7 @@ MCONTACT Meta_GetMostOnlineSupporting(DBCachedContact *cc, int pflagnum, unsigne
 DBCachedContact* CheckMeta(MCONTACT hMeta)
 {
 	DBCachedContact *cc = currDb->m_cache->GetCachedContact(hMeta);
-	return (cc == NULL || cc->nSubs == -1) ? NULL : cc;
+	return (cc == nullptr || cc->nSubs == -1) ? nullptr : cc;
 }
 
 int Meta_GetContactNumber(DBCachedContact *cc, MCONTACT hContact)
@@ -347,11 +323,11 @@ int Meta_HideLinkedContacts(void)
 
 	for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact)) {
 		DBCachedContact *cc = currDb->m_cache->GetCachedContact(hContact);
-		if (cc == NULL || cc->parentID == 0)
+		if (cc == nullptr || cc->parentID == 0)
 			continue;
 
 		DBCachedContact *ccMeta = CheckMeta(cc->parentID);
-		if (ccMeta == NULL)
+		if (ccMeta == nullptr)
 			continue;
 
 		// get contact number
@@ -393,7 +369,7 @@ int Meta_HideLinkedContacts(void)
 			}
 		}
 
-		if (options.bSuppressStatus)
+		if (g_metaOptions.bSuppressStatus)
 			CallService(MS_IGNORE_IGNORE, hContact, IGNOREEVENT_USERONLINE);
 
 		MCONTACT hMostOnline = Meta_GetMostOnline(ccMeta); // set nick
@@ -407,7 +383,7 @@ int Meta_HideLinkedContacts(void)
 int Meta_HideMetaContacts(bool bHide)
 {
 	// set status suppression
-	bool bSuppress = bHide ? FALSE : options.bSuppressStatus;
+	bool bSuppress = bHide ? FALSE : g_metaOptions.bSuppressStatus;
 
 	for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact)) {
 		bool bSet;
@@ -444,27 +420,27 @@ int Meta_SuppressStatus(BOOL suppress)
 
 int Meta_CopyContactNick(DBCachedContact *ccMeta, MCONTACT hContact)
 {
-	if (options.bLockHandle)
+	if (g_metaOptions.bLockHandle)
 		hContact = Meta_GetContactHandle(ccMeta, 0);
 
 	if (!hContact)
 		return 1;
 
 	char *szProto = GetContactProto(hContact);
-	if (szProto == NULL)
+	if (szProto == nullptr)
 		return 1;
 
-	if (options.clist_contact_name == CNNT_NICK) {
-		ptrT tszNick(db_get_tsa(hContact, szProto, "Nick"));
+	if (g_metaOptions.clist_contact_name == CNNT_NICK) {
+		ptrW tszNick(db_get_wsa(hContact, szProto, "Nick"));
 		if (tszNick) {
-			db_set_ts(ccMeta->contactID, META_PROTO, "Nick", tszNick);
+			db_set_ws(ccMeta->contactID, META_PROTO, "Nick", tszNick);
 			return 0;
 		}
 	}
-	else if (options.clist_contact_name == CNNT_DISPLAYNAME) {
-		TCHAR *name = cli.pfnGetContactDisplayName(hContact, 0);
-		if (name && mir_tstrcmp(name, TranslateT("(Unknown contact)")) != 0) {
-			db_set_ts(ccMeta->contactID, META_PROTO, "Nick", name);
+	else if (g_metaOptions.clist_contact_name == CNNT_DISPLAYNAME) {
+		wchar_t *name = cli.pfnGetContactDisplayName(hContact, 0);
+		if (name && mir_wstrcmp(name, TranslateT("(Unknown contact)")) != 0) {
+			db_set_ws(ccMeta->contactID, META_PROTO, "Nick", name);
 			return 0;
 		}
 	}
@@ -475,7 +451,7 @@ int Meta_SetAllNicks()
 {
 	for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact)) {
 		DBCachedContact *cc = CheckMeta(hContact);
-		if (cc == NULL)
+		if (cc == nullptr)
 			continue;
 		MCONTACT most_online = Meta_GetMostOnline(cc);
 		Meta_CopyContactNick(cc, most_online);
@@ -523,7 +499,7 @@ int Meta_SwapContacts(DBCachedContact *cc, int n1, int n2)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-void Meta_GetSubNick(MCONTACT hMeta, int i, CMString &tszDest)
+void Meta_GetSubNick(MCONTACT hMeta, int i, CMStringW &tszDest)
 {
 	char idStr[50];
 	mir_snprintf(idStr, "Login%d", i);
@@ -536,13 +512,13 @@ void Meta_GetSubNick(MCONTACT hMeta, int i, CMString &tszDest)
 		tszDest = dbv.pszVal;
 		break;
 	case DBVT_BYTE:
-		tszDest.Format(_T("%d"), dbv.bVal);
+		tszDest.Format(L"%d", dbv.bVal);
 		break;
 	case DBVT_WORD:
-		tszDest.Format(_T("%d"), dbv.wVal);
+		tszDest.Format(L"%d", dbv.wVal);
 		break;
 	case DBVT_DWORD:
-		tszDest.Format(_T("%d"), dbv.dVal);
+		tszDest.Format(L"%d", dbv.dVal);
 		break;
 	default:
 		tszDest.Empty();
@@ -569,7 +545,7 @@ void Meta_FixStatus(DBCachedContact *ccMeta)
 
 void Meta_UpdateSrmmIcon(DBCachedContact *ccMeta, int)
 {
-	StatusIconData sid = { sizeof(sid) };
+	StatusIconData sid = {};
 	sid.szModule = META_PROTO;
 	sid.flags = (ccMeta->IsMeta()) ? 0 : MBF_HIDDEN;
 	Srmm_ModifyIcon(ccMeta->contactID, &sid);

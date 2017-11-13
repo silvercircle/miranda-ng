@@ -2,12 +2,11 @@
 ;============================================================
 ;  File: Alarms.dll
 ;  Plugin: Alarms
-;  Version: 0.4.0.5
+;  Version: 0.4.0.6
 ;  Authors: Scott Ellis
 ;============================================================
 [Sets once-off, daily, weekly and weekday alarms.]
 Устаноўка штодзённых, штотыднёвых і разавых напамінкаў.
-;file \plugins\Alarms\res\resource.rc
 [New]
 Стварыць
 [Delete]
@@ -23,7 +22,7 @@
 [minutes]
 хвілін(ы)
 [Row height:]
-Вышыня радка
+Вышыня радка:
 [Indent:]
 Водступ:
 [Reminder frame]
@@ -84,8 +83,6 @@
 Дзён
 [Weekdays]
 Па буднях
-[Monthly]
-Месяцаў
 [Yearly]
 Штогод
 [i'm hiding]
@@ -98,6 +95,24 @@
 Не спрацоўваць пры загрузцы
 [No reminder]
 Не паказваць у спісе
+[Selected days]
+
+[Mon]
+Пн
+[Tue]
+Аўт
+[Wed]
+Сер
+[Thu]
+Чц
+[Fri]
+Пт
+[Sat]
+Сб
+[Sun]
+Нд
+[Monthly]
+Месяцаў
 [Dismiss]
 Прыбраць
 [Snooze]
@@ -114,11 +129,8 @@
 &Налады
 [&New alarm...]
 &Новы напамінак...
-;file \plugins\Alarms\src\alarmlist.cpp
-;file \plugins\Alarms\src\alarms.cpp
 [Set alarm]
 Даць напамінак
-;file \plugins\Alarms\src\alarm_win.cpp
 [Example alarm]
 Прыклад напамінку
 [Some example text. Example, example, example.]
@@ -141,7 +153,6 @@
 Фон
 [Window]
 Акно
-;file \plugins\Alarms\src\frame.cpp
 [%dh %dm]
 %d гадз. %d хв.
 [%dm]
@@ -154,7 +165,6 @@
 Фрэймы
 [Alarm reminders]
 Напамінкі
-;file \plugins\Alarms\src\icons.cpp
 [Menu: Set alarm]
 Меню: Даць напамінак
 [Reminder: Soon]
@@ -165,7 +175,6 @@
 Трэй
 [Menu: Show/Hide reminders]
 Меню: Паказаць/Схаваць напамінкі
-;file \plugins\Alarms\src\options.cpp
 [Sunday]
 Нядзеля
 [Monday]

@@ -45,7 +45,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_langpack.h>
 #include <m_button.h>
 #include <m_clist.h>
-#include <m_clui.h>
 #include <m_protosvc.h>
 #include <m_skin.h>
 #include <m_contacts.h>
@@ -62,6 +61,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_timezones.h>
 #include <m_string.h>
 #include <m_xstatus.h>
+#include <m_chat_int.h>
+#include <m_srmm_int.h>
 #include <win2k.h>
 
 #include <m_ieview.h>
@@ -69,18 +70,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_metacontacts.h>
 
 #include "resource.h"
-#include "Version.h"
-#include "infobar.h"
-#include "cmdlist.h"
-#include "sendqueue.h"
-#include "msgs.h"
-#include "globals.h"
-#include "msgwindow.h"
-#include "utils.h"
-#include "input.h"
-#include "richutil.h"
-#include "statusicon.h"
-#include "chat/chat.h"
+#include "version.h"
 
 #ifndef IMF_AUTOFONTSIZEADJUST
 #define IMF_AUTOFONTSIZEADJUST	0x0010
@@ -98,19 +88,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	CFM_WEIGHT			0x00400000
 #endif
 
-extern HWND SM_FindWindowByContact(MCONTACT hContact);
 extern HINSTANCE g_hInst;
-extern void ChangeStatusIcons();
-extern void LoadInfobarFonts();
 extern HCURSOR hDragCursor;
 extern ITaskbarList3 *pTaskbarInterface;
-extern GlobalMessageData g_dat;
-extern HMENU  g_hMenu;
-extern HANDLE hHookWinPopup, hHookWinWrite;
-extern HCURSOR hCurSplitNS, hCurSplitWE;
 
-extern CREOleCallback reOleCallback;
-extern CREOleCallback2 reOleCallback2;
+void ChangeStatusIcons();
+void LoadInfobarFonts();
 
 #define SPLITTER_HEIGHT   4
 #define TOOLBAR_HEIGHT   24
@@ -121,10 +104,20 @@ extern CREOleCallback2 reOleCallback2;
 #define INFO_BAR_COLOR COLOR_INACTIVEBORDER
 
 int Chat_Load();
-int Chat_Unload();
-int Chat_ModulesLoaded(WPARAM wParam,LPARAM lParam);
 int OptInitialise(WPARAM wParam, LPARAM lParam);
 int FontServiceFontsChanged(WPARAM wParam, LPARAM lParam);
 int StatusIconPressed(WPARAM wParam, LPARAM lParam);
+
+#include "cmdlist.h"
+#include "sendqueue.h"
+#include "msgs.h"
+#include "globals.h"
+#include "tabs.h"
+#include "utils.h"
+#include "input.h"
+#include "statusicon.h"
+#include "chat.h"
+
+extern GlobalMessageData g_dat;
 
 #endif

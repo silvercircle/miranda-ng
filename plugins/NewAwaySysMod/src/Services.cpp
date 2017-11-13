@@ -29,7 +29,7 @@ struct NAS_PROTOINFOv1
 	union {
 		char *szMsg;
 		WCHAR *wszMsg;
-		TCHAR *tszMsg;
+		wchar_t *tszMsg;
 	};
 	WORD status;
 };
@@ -41,7 +41,7 @@ __inline void PSSetStatus(char *szProto, WORD Status, int bNoClistSetStatusMode 
 		CallProtoService(szProto, PS_SETSTATUS, Status, 0);
 	else if (!bNoClistSetStatusMode) { // global status
 		g_fNoProcessing = true;
-		CallService(MS_CLIST_SETSTATUSMODE, Status, 0);
+		Clist_SetStatusMode(Status);
 		_ASSERT(!g_fNoProcessing && g_ProtoStates[(char*)NULL].m_status == Status);
 		g_fNoProcessing = false;
 	}
@@ -53,7 +53,7 @@ __inline void PSSetStatus(char *szProto, WORD Status, int bNoClistSetStatusMode 
 INT_PTR GetStatusMsgW(WPARAM wParam, LPARAM)
 {
 	LogMessage("MS_AWAYMSG_GETSTATUSMSGW called. status=%d", wParam);
-	WCHAR *szMsg = mir_t2u(GetDynamicStatMsg(INVALID_CONTACT_ID, NULL, 0, wParam));
+	WCHAR *szMsg = mir_wstrdup(GetDynamicStatMsg(INVALID_CONTACT_ID, NULL, 0, wParam));
 	LogMessage("returned szMsgW:\n%S", szMsg ? szMsg : L"NULL");
 	return (INT_PTR)szMsg;
 }
@@ -64,11 +64,11 @@ INT_PTR SetStatusMode(WPARAM wParam, LPARAM lParam) // called by GamerStatus and
 {
 	LogMessage("MS_AWAYSYS_SETSTATUSMODE called. status=%d, szMsg:\n%s", wParam, lParam ? (char*)lParam : "NULL");
 	g_fNoProcessing = true;
-	CallService(MS_CLIST_SETSTATUSMODE, wParam, 0);
+	Clist_SetStatusMode(wParam);
 
 	_ASSERT(!g_fNoProcessing && g_ProtoStates[(char*)NULL].m_status == wParam);
 	g_fNoProcessing = false;
-	CProtoSettings(NULL, wParam).SetMsgFormat(SMF_TEMPORARY, lParam ? (TCHAR*)_A2T((char*)lParam) : CProtoSettings(NULL, wParam).GetMsgFormat(GMF_LASTORDEFAULT));
+	CProtoSettings(NULL, wParam).SetMsgFormat(SMF_TEMPORARY, lParam ? (wchar_t*)_A2T((char*)lParam) : CProtoSettings(NULL, wParam).GetMsgFormat(GMF_LASTORDEFAULT));
 	ChangeProtoMessages(NULL, wParam, TCString());
 	return 0;
 }
@@ -90,7 +90,7 @@ int GetState(WPARAM wParam, LPARAM lParam, int Widechar)
 			TCString Msg(pi->status ? CProtoSettings(pi->szProto, pi->status).GetMsgFormat(GMF_LASTORDEFAULT) : CProtoSettings(pi->szProto).GetMsgFormat(((Flags & PIF_NOTTEMPORARY) ? 0 : GMF_TEMPORARY) | GMF_PERSONAL));
 			if (Msg != NULL) {
 				if (Widechar)
-					pi->tszMsg = mir_tstrdup(Msg);
+					pi->tszMsg = mir_wstrdup(Msg);
 				else
 					pi->szMsg = mir_strdup(_T2A(Msg));
 			}

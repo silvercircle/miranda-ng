@@ -71,18 +71,18 @@ int dialogOptionsInitialise(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = g_hInst;
-	odp.ptszGroup = LPGENT("Speak");
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+	odp.szGroup.w = LPGENW("Speak");
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
 
 	if (g_speak_config)
 	{
 		odp.pszTemplate = MAKEINTRESOURCEA(IDD_CONFIG);
-		odp.ptszTitle = LPGENT("Engine/Voice");
+		odp.szTitle.w = LPGENW("Engine/Voice");
 		odp.pfnDlgProc = DialogConfigEngine::process;
 		Options_AddPage(wParam, &odp);
 
 		odp.pszTemplate = MAKEINTRESOURCEA(IDD_ACTIVEMODES);
-		odp.ptszTitle = LPGENT("Active Modes");
+		odp.szTitle.w = LPGENW("Active Modes");
 		odp.pfnDlgProc = DialogConfigActive::process;
 		Options_AddPage(wParam, &odp);
 	}
@@ -90,7 +90,7 @@ int dialogOptionsInitialise(WPARAM wParam, LPARAM)
 	if (g_speak_announce)
 	{
 		odp.pszTemplate = MAKEINTRESOURCEA(IDD_ANNOUNCE);
-		odp.ptszTitle = LPGENT("Announce");
+		odp.szTitle.w = LPGENW("Announce");
 		odp.pfnDlgProc = AnnounceDialog::process;
 		Options_AddPage(wParam, &odp);
 	}
@@ -106,7 +106,7 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD miranda
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	if (!g_speak_config)
 	{

@@ -6,7 +6,7 @@ Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-08  George Hazan
 Copyright (c) 2007     Maxim Mluhov
 Copyright (c) 2008-09  Dmitriy Chervov
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -43,10 +43,10 @@ CJabberMessageManager::~CJabberMessageManager()
 
 void CJabberMessageManager::FillPermanentHandlers()
 {
-	AddPermanentHandler(&CJabberProto::OnMessageError, JABBER_MESSAGE_TYPE_ERROR, JABBER_MESSAGE_PARSE_FROM | JABBER_MESSAGE_PARSE_HCONTACT, NULL, FALSE, _T("error"));
-	AddPermanentHandler(&CJabberProto::OnMessageIbb, 0, 0, JABBER_FEAT_IBB, FALSE, _T("data"));
-	AddPermanentHandler(&CJabberProto::OnMessagePubsubEvent, 0, 0, JABBER_FEAT_PUBSUB_EVENT, FALSE, _T("event"));
-	AddPermanentHandler(&CJabberProto::OnMessageGroupchat, JABBER_MESSAGE_TYPE_GROUPCHAT, JABBER_MESSAGE_PARSE_FROM, NULL, FALSE, NULL);
+	AddPermanentHandler(&CJabberProto::OnMessageError, JABBER_MESSAGE_TYPE_ERROR, JABBER_MESSAGE_PARSE_FROM | JABBER_MESSAGE_PARSE_HCONTACT, nullptr, FALSE, L"error");
+	AddPermanentHandler(&CJabberProto::OnMessageIbb, 0, 0, JABBER_FEAT_IBB, FALSE, L"data");
+	AddPermanentHandler(&CJabberProto::OnMessagePubsubEvent, 0, 0, JABBER_FEAT_PUBSUB_EVENT, FALSE, L"event");
+	AddPermanentHandler(&CJabberProto::OnMessageGroupchat, JABBER_MESSAGE_TYPE_GROUPCHAT, JABBER_MESSAGE_PARSE_FROM, nullptr, FALSE, nullptr);
 }
 
 bool CJabberMessageManager::HandleMessagePermanent(HXML node, ThreadData *pThreadData)
@@ -57,17 +57,17 @@ bool CJabberMessageManager::HandleMessagePermanent(HXML node, ThreadData *pThrea
 		// have to get all data here, in the loop, because there's always possibility that previous handler modified it
 		CJabberMessageInfo messageInfo;
 
-		LPCTSTR szType = XmlGetAttrValue(node, _T("type"));
+		LPCTSTR szType = XmlGetAttrValue(node, L"type");
 		if (szType) {
-			if (!mir_tstrcmpi(szType, _T("normal")))
+			if (!mir_wstrcmpi(szType, L"normal"))
 				messageInfo.m_nMessageType = JABBER_MESSAGE_TYPE_NORMAL;
-			else if (!mir_tstrcmpi(szType, _T("error")))
+			else if (!mir_wstrcmpi(szType, L"error"))
 				messageInfo.m_nMessageType = JABBER_MESSAGE_TYPE_ERROR;
-			else if (!mir_tstrcmpi(szType, _T("chat")))
+			else if (!mir_wstrcmpi(szType, L"chat"))
 				messageInfo.m_nMessageType = JABBER_MESSAGE_TYPE_CHAT;
-			else if (!mir_tstrcmpi(szType, _T("groupchat")))
+			else if (!mir_wstrcmpi(szType, L"groupchat"))
 				messageInfo.m_nMessageType = JABBER_MESSAGE_TYPE_GROUPCHAT;
-			else if (!mir_tstrcmpi(szType, _T("headline")))
+			else if (!mir_wstrcmpi(szType, L"headline"))
 				messageInfo.m_nMessageType = JABBER_MESSAGE_TYPE_HEADLINE;
 			else
 				return false;
@@ -80,27 +80,27 @@ bool CJabberMessageManager::HandleMessagePermanent(HXML node, ThreadData *pThrea
 				HXML child = XmlGetChild(node, i);
 
 				LPCTSTR szTagName = XmlGetName(child);
-				LPCTSTR szXmlns = XmlGetAttrValue(child, _T("xmlns"));
+				LPCTSTR szXmlns = XmlGetAttrValue(child, L"xmlns");
 
-				if ((!pInfo.m_szXmlns || (szXmlns && !mir_tstrcmp(pInfo.m_szXmlns, szXmlns))) && (!pInfo.m_szTag || !mir_tstrcmp(pInfo.m_szTag, szTagName))) {
+				if ((!pInfo.m_szXmlns || (szXmlns && !mir_wstrcmp(pInfo.m_szXmlns, szXmlns))) && (!pInfo.m_szTag || !mir_wstrcmp(pInfo.m_szTag, szTagName))) {
 					// node suits handler criteria, call the handler
 					messageInfo.m_hChildNode = child;
 					messageInfo.m_szChildTagName = szTagName;
 					messageInfo.m_szChildTagXmlns = szXmlns;
 					messageInfo.m_pUserData = pInfo.m_pUserData;
-					messageInfo.m_szFrom = XmlGetAttrValue(node, _T("from")); // is necessary for ppro->debugLogA() below, that's why we must parse it even if JABBER_MESSAGE_PARSE_FROM flag is not set
+					messageInfo.m_szFrom = XmlGetAttrValue(node, L"from"); // is necessary for ppro->debugLogA() below, that's why we must parse it even if JABBER_MESSAGE_PARSE_FROM flag is not set
 
 					if (pInfo.m_dwParamsToParse & JABBER_MESSAGE_PARSE_ID_STR)
-						messageInfo.m_szId = XmlGetAttrValue(node, _T("id"));
+						messageInfo.m_szId = XmlGetAttrValue(node, L"id");
 
 					if (pInfo.m_dwParamsToParse & JABBER_IQ_PARSE_TO)
-						messageInfo.m_szTo = XmlGetAttrValue(node, _T("to"));
+						messageInfo.m_szTo = XmlGetAttrValue(node, L"to");
 
 					if (pInfo.m_dwParamsToParse & JABBER_MESSAGE_PARSE_HCONTACT)
-						messageInfo.m_hContact = ppro->HContactFromJID(messageInfo.m_szFrom, 3);
+						messageInfo.m_hContact = ppro->HContactFromJID(messageInfo.m_szFrom);
 
 					if (messageInfo.m_szFrom)
-						ppro->debugLog(_T("Handling message from %s"), messageInfo.m_szFrom);
+						ppro->debugLogW(L"Handling message from %s", messageInfo.m_szFrom);
 					if ((ppro->*(pInfo.m_pHandler))(node, pThreadData, &messageInfo))
 						return true;
 				}
@@ -115,9 +115,9 @@ CJabberMessagePermanentInfo* CJabberMessageManager::AddPermanentHandler(
 	JABBER_PERMANENT_MESSAGE_HANDLER pHandler,
 	int nMessageTypes,
 	DWORD dwParamsToParse,
-	const TCHAR *szXmlns,
+	const wchar_t *szXmlns,
 	BOOL bAllowPartialNs,
-	const TCHAR *szTag,
+	const wchar_t *szTag,
 	void *pUserData,
 	MESSAGE_USER_DATA_FREE_FUNC pUserDataFree,
 	int iPriority)
@@ -125,9 +125,9 @@ CJabberMessagePermanentInfo* CJabberMessageManager::AddPermanentHandler(
 	CJabberMessagePermanentInfo* pInfo = new CJabberMessagePermanentInfo();
 	pInfo->m_pHandler = pHandler;
 	pInfo->m_nMessageTypes = nMessageTypes ? nMessageTypes : JABBER_MESSAGE_TYPE_ANY;
-	pInfo->m_szXmlns = mir_tstrdup(szXmlns);
+	pInfo->m_szXmlns = mir_wstrdup(szXmlns);
 	pInfo->m_bAllowPartialNs = bAllowPartialNs;
-	pInfo->m_szTag = mir_tstrdup(szTag);
+	pInfo->m_szTag = mir_wstrdup(szTag);
 	pInfo->m_dwParamsToParse = dwParamsToParse;
 	pInfo->m_pUserData = pUserData;
 	pInfo->m_pUserDataFree = pUserDataFree;
@@ -139,7 +139,7 @@ CJabberMessagePermanentInfo* CJabberMessageManager::AddPermanentHandler(
 }
 
 bool CJabberMessageManager::DeletePermanentHandler(CJabberMessagePermanentInfo *pInfo)
-{ 
+{
 	mir_cslock lck(m_cs);
 	return m_arHandlers.remove(pInfo) == 1;
 }

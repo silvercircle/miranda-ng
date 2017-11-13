@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -24,14 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-static INT_PTR srvTranslateString(WPARAM wParam, LPARAM lParam);
-static INT_PTR srvTranslateMenu(WPARAM wParam, LPARAM lParam);
-static INT_PTR srvRegisterLP(WPARAM wParam, LPARAM lParam);
 static INT_PTR srvGetDefaultCodePage(WPARAM, LPARAM);
 static INT_PTR srvGetDefaultLocale(WPARAM, LPARAM);
-static INT_PTR srvPcharToTchar(WPARAM wParam, LPARAM lParam);
-static INT_PTR srvReloadLangpack(WPARAM wParam, LPARAM lParam);
-static INT_PTR srvGetPluginLangpack(WPARAM wParam, LPARAM lParam);
+static INT_PTR srvReloadLangpack(WPARAM, LPARAM);
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -42,17 +37,14 @@ static INT_PTR srvGetPluginLangpack(WPARAM wParam, LPARAM lParam);
 /* Langpack Info */
 struct LANGPACK_INFO
 {
-	TCHAR tszLanguage[64];
+	wchar_t tszLanguage[64];
 	LCID Locale;
 	WORD codepage;
 	CMStringA szAuthors, szAuthorEmail, szLastModifiedUsing;
 	FILETIME ftFileDate;
-	TCHAR tszFileName[MAX_PATH]; /* just the file name itself */
-	TCHAR tszFullPath[MAX_PATH]; /* full path to the langpack */
+	wchar_t tszFileName[MAX_PATH]; /* just the file name itself */
+	wchar_t tszFullPath[MAX_PATH]; /* full path to the langpack */
 	BYTE flags; /* see LPIF_* flags */
 };
-
-typedef BOOL(*ENUM_PACKS_CALLBACK) (LANGPACK_INFO *pack, WPARAM wParam, LPARAM lParam);
-BOOL EnumLangpacks(ENUM_PACKS_CALLBACK callback, WPARAM wParam, LPARAM lParam);
 
 int LangpackOptionsInit(WPARAM wParam, LPARAM);

@@ -24,15 +24,8 @@
 // From NewEventNotify :-)
 bool CheckMsgWnd(MCONTACT hContact)
 {
-	MessageWindowInputData mwid;
-	mwid.cbSize = sizeof(MessageWindowInputData);
-	mwid.hContact = hContact;
-	mwid.uFlags = MSG_WINDOW_UFLAG_MSG_BOTH;
-
 	MessageWindowData mwd;
-	mwd.cbSize = sizeof(MessageWindowData);
-	mwd.hContact = hContact;
-	if (CallService(MS_MSG_GETWINDOWDATA, (WPARAM)&mwid, (LPARAM)&mwd) != NULL)
+	if (Srmm_GetWindowData(hContact, mwd) != NULL)
 		return false;
 
 	if (mwd.hwndWindow != NULL && (mwd.uState & MSG_WINDOW_STATE_EXISTS))
@@ -41,22 +34,22 @@ bool CheckMsgWnd(MCONTACT hContact)
 	return false;
 }
 
-int DBGetStringDefault(MCONTACT hContact, const char *szModule, const char *szSetting, TCHAR *setting, int size, const TCHAR *defaultValue)
+int DBGetStringDefault(MCONTACT hContact, const char *szModule, const char *szSetting, wchar_t *setting, int size, const wchar_t *defaultValue)
 {
 	DBVARIANT dbv;
-	if (!db_get_ts(hContact, szModule, szSetting, &dbv)) {
-		_tcsncpy(setting, dbv.ptszVal, size);
+	if (!db_get_ws(hContact, szModule, szSetting, &dbv)) {
+		wcsncpy(setting, dbv.ptszVal, size);
 		db_free(&dbv);
 		return 0;
 	}
 
-	_tcsncpy(setting, defaultValue, size);
+	wcsncpy(setting, defaultValue, size);
 	return 1;
 }
 
-void ShowLog(TCHAR *file)
+void ShowLog(wchar_t *file)
 {
-	INT_PTR res = (INT_PTR)ShellExecute(NULL, _T("open"), file, NULL, NULL, SW_SHOW);
+	INT_PTR res = (INT_PTR)ShellExecute(NULL, L"open", file, NULL, NULL, SW_SHOW);
 	if (res <= 32) // error
 		MessageBox(0, TranslateT("Can't open the log file!"), TranslateT("NewXstatusNotify"), MB_OK | MB_ICONERROR);
 }
@@ -83,22 +76,22 @@ BOOL StatusHasAwayMessage(char *szProto, int status)
 	}
 }
 
-void LogToFile(TCHAR *stzText)
+void LogToFile(wchar_t *stzText)
 {
-	FILE *fp = _tfopen(opt.LogFilePath, _T("a+b, ccs=UTF-8"));
+	FILE *fp = _wfopen(opt.LogFilePath, L"a+b, ccs=UTF-8");
 	if (fp) {
 		fprintf(fp, T2Utf(stzText));
 		fclose(fp);
 	}
 }
 
-void AddCR(CMString &str, const TCHAR *stzText)
+void AddCR(CMStringW &str, const wchar_t *stzText)
 {
 	if (stzText == NULL)
 		return;
 	
-	CMString res(stzText);
-	res.Replace(_T("\n"), _T("\r\n"));
-	res.Replace(_T("\r\r\n"), _T("\r\n"));
+	CMStringW res(stzText);
+	res.Replace(L"\n", L"\r\n");
+	res.Replace(L"\r\r\n", L"\r\n");
 	str.Append(res);
 }

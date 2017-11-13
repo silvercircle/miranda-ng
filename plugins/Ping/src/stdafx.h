@@ -18,7 +18,6 @@
 #include <m_netlib.h>
 #include <m_database.h>
 #include <m_protosvc.h>
-#include <m_clui.h>
 #include <m_clist.h>
 #include <m_cluiframes.h>
 #include <m_fontservice.h>
@@ -27,7 +26,7 @@
 
 #include "resource.h"
 #include "collection.h"
-#include "Version.h"
+#include "version.h"
 #include "icmp.h"
 #include "log.h"
 #include "menu.h"
@@ -47,7 +46,7 @@
 #define DEFAULT_SHOW_POPUP2		false
 #define DEFAULT_BLOCK_REPS		true
 #define DEFAULT_LOGGING_ENABLED	false
-#define DEFAULT_LOG_FILENAME	_T("ping_log.txt")
+#define DEFAULT_LOG_FILENAME	L"ping_log.txt"
 #define DEFAULT_NO_TEST_ICON	true
 #define DEFAULT_ATTACH_TO_CLIST	false
 
@@ -57,7 +56,7 @@
 typedef struct {
 	int ping_period, ping_timeout;
 	bool show_popup, show_popup2, block_reps, logging;
-	TCHAR log_filename[MAX_PATH];
+	wchar_t log_filename[MAX_PATH];
 	bool no_test_icon;
 	int row_height;
 	int indent;
@@ -84,16 +83,16 @@ typedef LinkedList< HistPair > HistoryList;
 struct PINGADDRESS {
 	int cbSize;	//size in bytes of this structure
 	DWORD item_id;
-	TCHAR pszName[MAX_PINGADDRESS_STRING_LENGTH];		//IP address or domain name
-	TCHAR pszLabel[MAX_PINGADDRESS_STRING_LENGTH];
+	wchar_t pszName[MAX_PINGADDRESS_STRING_LENGTH];		//IP address or domain name
+	wchar_t pszLabel[MAX_PINGADDRESS_STRING_LENGTH];
 	bool responding;
 	int status;
 	short round_trip_time;
 	int miss_count;
 	int port; // -1 for ICMP, non-zero for TCP
 	char pszProto[MAX_PINGADDRESS_STRING_LENGTH];
-	TCHAR pszCommand[MAX_PATH];
-	TCHAR pszParams[MAX_PATH];
+	wchar_t pszCommand[MAX_PATH];
+	wchar_t pszParams[MAX_PATH];
 	unsigned int get_status;		// on success, if status equals this
 	unsigned int set_status;	// set it to this
 	int index;
@@ -108,7 +107,7 @@ typedef std::list<PINGADDRESS> PINGLIST;
 typedef std::list<PINGADDRESS>::iterator pinglist_it;
 
 
-extern HANDLE hNetlibUser;
+extern HNETLIBUSER hNetlibUser;
 extern HINSTANCE hInst;
 
 extern bool use_raw_ping;

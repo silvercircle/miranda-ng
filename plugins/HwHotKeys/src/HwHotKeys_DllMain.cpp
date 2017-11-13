@@ -107,7 +107,7 @@ extern "C" __declspec(dllexport) int Load(void)
 	mir_getLP(&PluginInfoEx);
 
 	// Интерфейс контактлиста - макрос заполняет CLIST_INTERFACE *pcli;
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	// регистрация диалога опций
 	HookEvent(ME_OPT_INITIALISE, initializeOptions);
@@ -128,10 +128,10 @@ int initializeOptions(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE OptDlgPg = { sizeof(OptDlgPg) };
 	OptDlgPg.position = 100000000;
 	OptDlgPg.hInstance = hInstance;
-	OptDlgPg.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+	OptDlgPg.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
 	OptDlgPg.pszTemplate = MAKEINTRESOURCEA(dlg_options);
-	OptDlgPg.ptszGroup = LPGENT("Customize");
-	OptDlgPg.ptszTitle = LPGENT("Hardware HotKeys");
+	OptDlgPg.szGroup.w = LPGENW("Customize");
+	OptDlgPg.szTitle.w = LPGENW("Hardware HotKeys");
 	OptDlgPg.pfnDlgProc = OptDlgProc;
 	OptDlgPg.hLangpack = hLangpack;
 	Options_AddPage(wParam, &OptDlgPg);

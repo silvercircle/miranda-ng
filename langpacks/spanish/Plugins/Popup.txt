@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Popup.dll
 ;  Plugin: Popup plus
-;  Version: 2.1.1.11
+;  Version: 2.1.1.12
 ;  Authors: MPK, Merlin_de (Luca Santarelli, Victor Pavlychko)
 ;============================================================
 [Miscellaneous]
@@ -81,14 +81,14 @@ En línea
 Invisible
 [Away]
 Fuera
-[NA]
+[Not available]
 No disponible
 [Occupied]
 Ocupado
-[DND]
+[Do not disturb]
 No molestar
 [Free for chat]
-Libre para el chat	
+Libre para el chat
 [Out to lunch]
 Salí a comer
 [On the phone]

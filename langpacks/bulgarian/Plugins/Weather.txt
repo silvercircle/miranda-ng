@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Weather.dll
 ;  Plugin: Weather
-;  Version: 0.4.0.2
+;  Version: 0.4.0.3
 ;  Authors: Miranda NG Team
 ;============================================================
 [Retrieves weather information and displays it in your contact list.]
@@ -99,8 +99,6 @@ m
 Метеостанция
 [City name]
 Име на града
-[ID]
-Идентификатор
 [Log Information]
 Информация за дневника
 [Use internal history]
@@ -155,8 +153,6 @@ Popup времетраене
 Закъснение
 [seconds]
 секунди
-[From Popup plugin]
-От приставката Popup
 [Permanent]
 Постоянно
 [Popup Text]
@@ -437,18 +433,20 @@ INI версия
 байта
 [Description:]
 Описание:
-[No update data file is found. Please check your Plugins\\Weather directory.]
-Не е открит файл с данни. Моля, проверете директорията Plugins\\Weather
-[Invalid ini format for: %s]
-Невалиден .INI формат за: %s
 [All update data has been reloaded.]
 Всички обновени данни са заредени.
+[Invalid ini format for: %s]
+Невалиден .INI формат за: %s
+[No update data file is found. Please check your Plugins\\Weather directory.]
+Не е открит файл с данни. Моля, проверете директорията Plugins\\Weather
 [Frame Font]
 Шрифт за рамката
 [Frame Title Font]
 Шрифт за заглавие на рамките
 [Frame Background]
 Фон на рамката
+[Weather Protocol Text Preview]
+Преглед на текст от протокола Weather
 [Network]
 Мрежа
 [General]
@@ -457,8 +455,6 @@ INI версия
 Изобразяване
 [Popups]
 Рopups
-[Weather Protocol Text Preview]
-Преглед на текст от протокола Weather
 [Station ID]
 ID на станцията
 [Disable &weather notification]
@@ -487,10 +483,6 @@ Weather
 Изобразяване в рамка
 [Unable to retrieve weather information for %s]
 Извличането на атмосферни данни за %s е невъзможно
-[Current condition for %n]
-Текущи условия за %n
-[Last update on:   %u]
-Обновено в:   %u
 [Variable]
 Променливо
 [Information]
@@ -499,3 +491,7 @@ Weather
 Извличане на нови данни, моля изчакайте...
 [More Info]
 Още
+[Current condition for %n]
+Текущи условия за %n
+[Last update on:   %u]
+Обновено в:   %u

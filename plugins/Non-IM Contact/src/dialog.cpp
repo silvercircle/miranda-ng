@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#define NIM_HELP_TEXT TranslateT("String replacing variables....\r\nThe following are all the valid variables that can be used. Refer to the readme for a proper explanation.\r\n\r\n\
+#define NIM_HELP_TEXT TranslateT("String replacing variables...\r\nThe following are all the valid variables that can be used. Refer to the readme for a proper explanation.\r\n\r\n\
 file(X)\t\t<- specifies the file to read from. MUST be followed by either start() or end() or wholeline()\r\n\
 filename(X)\t<- copies the filename of file X.\r\n\
 start(...)\t\t<- specifies where to start copying from.\r\n\
@@ -17,7 +17,7 @@ filename(0)    <- will display the filename of the 0th file\r\nfile(0)wholeline(
 
 INT_PTR CALLBACK DlgProcNimcOpts(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	TCHAR tmp[5];
+	wchar_t tmp[5];
 
 	switch (msg) {
 	case WM_INITDIALOG:
@@ -25,7 +25,7 @@ INT_PTR CALLBACK DlgProcNimcOpts(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 		CheckDlgButton(hwnd, IDC_AWAYISNOTONLINE, db_get_b(NULL, MODNAME, "AwayAsStatus", 0) ? BST_CHECKED : BST_UNCHECKED);
 		if (db_get_w(NULL, MODNAME, "Timer", 1)) {
 			EnableWindow(GetDlgItem(hwnd, IDC_TIMER_INT), 1);
-			SetDlgItemText(hwnd, IDC_TIMER_INT, _itot(db_get_w(NULL, MODNAME, "Timer", 1), tmp, 10));
+			SetDlgItemText(hwnd, IDC_TIMER_INT, _itow(db_get_w(NULL, MODNAME, "Timer", 1), tmp, 10));
 			EnableWindow(GetDlgItem(hwnd, IDC_TIMER_TEXT), 1);
 		}
 		else {
@@ -47,7 +47,7 @@ INT_PTR CALLBACK DlgProcNimcOpts(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				EnableWindow(GetDlgItem(hwnd, IDC_TIMER_TEXT), 1);
 				EnableWindow(GetDlgItem(hwnd, IDC_TIMER_INT), 1);
 				if (!GetWindowTextLength(GetDlgItem(hwnd, IDC_TIMER_INT)))
-					SetDlgItemText(hwnd, IDC_TIMER_INT, _T("1"));
+					SetDlgItemText(hwnd, IDC_TIMER_INT, L"1");
 			}
 			break;
 		}
@@ -61,7 +61,7 @@ INT_PTR CALLBACK DlgProcNimcOpts(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				db_set_b(NULL, MODNAME, "AwayAsStatus", (BYTE)IsDlgButtonChecked(hwnd, IDC_AWAYISNOTONLINE));
 				if (BST_UNCHECKED == IsDlgButtonChecked(hwnd, IDC_DISABLETIMER) && GetWindowTextLength(GetDlgItem(hwnd, IDC_TIMER_INT))) {
 					GetDlgItemText(hwnd, IDC_TIMER_INT, tmp, _countof(tmp));
-					db_set_w(NULL, MODNAME, "Timer", (WORD)_ttoi(tmp));
+					db_set_w(NULL, MODNAME, "Timer", (WORD)_wtoi(tmp));
 				}
 				else db_set_w(NULL, MODNAME, "Timer", 0);
 				return TRUE;
@@ -235,7 +235,7 @@ static int CALLBACK PropSheetProc(HWND, UINT uMsg, LPARAM lParam)
 
 void DoPropertySheet(MCONTACT hContact)
 {
-	char title[256], nick[256];
+	char nick[256];
 	PROPSHEETPAGEA psp[4] = { 0 };
 
 	/* contact info */
@@ -287,9 +287,11 @@ void DoPropertySheet(MCONTACT hContact)
 	psh.dwFlags = PSH_USEICONID | PSH_PROPSHEETPAGE | PSH_USECALLBACK;
 	psh.hInstance = g_hInst;
 	psh.pszIcon = MAKEINTRESOURCEA(IDI_MAIN);
-	db_get_static(hContact, MODNAME, "Nick", nick, _countof(nick));
-	mir_snprintf(title, Translate("Edit Non-IM Contact \"%s\""), nick);
-	psh.pszCaption = title;
+	if (!db_get_static(hContact, MODNAME, "Nick", nick, _countof(nick))) {
+		char title[256];
+		mir_snprintf(title, Translate("Edit Non-IM Contact \"%s\""), nick);
+		psh.pszCaption = title;
+	}
 	psh.nPages = _countof(psp);
 	psh.ppsp = (LPCPROPSHEETPAGEA)&psp;
 	psh.pfnCallback = PropSheetProc;
@@ -301,13 +303,13 @@ void DoPropertySheet(MCONTACT hContact)
 INT_PTR addContact(WPARAM, LPARAM)
 {
 	char tmp[256];
-	MCONTACT hContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
+	MCONTACT hContact = db_add_contact();
 	Proto_AddToContact(hContact, MODNAME);
 	CallService(MS_IGNORE_IGNORE, hContact, IGNOREEVENT_USERONLINE);
-	db_set_ts(hContact, MODNAME, "Nick", TranslateT("New Non-IM Contact"));
+	db_set_ws(hContact, MODNAME, "Nick", TranslateT("New Non-IM Contact"));
 	DoPropertySheet(hContact);
-	if (!db_get_static(hContact, MODNAME, "Name", tmp, _countof(tmp)))
-		CallService(MS_DB_CONTACT_DELETE, hContact, 0);
+	if (db_get_static(hContact, MODNAME, "Name", tmp, _countof(tmp)))
+		db_delete_contact(hContact);
 	replaceAllStrings(hContact);
 	return 0;
 }
@@ -317,14 +319,14 @@ INT_PTR editContact(WPARAM wParam, LPARAM)
 	MCONTACT hContact = wParam;
 	char tmp[256];
 	if (!hContact) {
-		hContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
+		hContact = db_add_contact();
 		Proto_AddToContact(hContact, MODNAME);
 		CallService(MS_IGNORE_IGNORE, hContact, IGNOREEVENT_USERONLINE);
 		db_set_s(hContact, MODNAME, "Nick", Translate("New Non-IM Contact"));
 	}
 	DoPropertySheet(hContact);
-	if (!db_get_static(hContact, MODNAME, "Name", tmp, _countof(tmp)))
-		CallService(MS_DB_CONTACT_DELETE, hContact, 0);
+	if (db_get_static(hContact, MODNAME, "Name", tmp, _countof(tmp)))
+		db_delete_contact(hContact);
 	replaceAllStrings(hContact);
 	return 0;
 }

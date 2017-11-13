@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include "stdafx.h"
 #include "dlg_propsheet.h"
 #include "psp_base.h"
-#include "ex_import\svc_ExImport.h"
+#include "ex_import/svc_ExImport.h"
 #include "svc_reminder.h"
 
 #define OPTIONPAGE_OLD_SIZE		(offsetof(OPTIONSDIALOGPAGE, hLangpack))
@@ -65,7 +65,7 @@ static HANDLE g_hDetailsInitEvent = NULL;
 static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 CPsHdr::CPsHdr()
-	: _ignore(10, _tcscmp)
+	: _ignore(10, wcscmp)
 {
 	_dwSize = sizeof(*this);
 	_hContact = NULL;
@@ -124,7 +124,7 @@ private:
 		// check if icq is online
 		if (!IsProtoOnline((*_pPd)->szModuleName))
 			MsgBox(_pPs->hDlg, MB_ICON_WARNING, TranslateT("Upload details"),
-				CMString(FORMAT, TranslateT("Protocol '%s' is offline"), _A2T((*_pPd)->szModuleName)),
+				CMStringW(FORMAT, TranslateT("Protocol '%s' is offline"), _A2T((*_pPd)->szModuleName)),
 				TranslateT("You are not currently connected to the ICQ network.\nYou must be online in order to update your information on the server.\n\nYour changes will be saved to database only."));
 
 		// start uploading process
@@ -268,7 +268,7 @@ static INT_PTR ShowDialog(WPARAM wParam, LPARAM)
 	metrics.x = GetSystemMetrics(SM_CXSMICON);
 	metrics.y = GetSystemMetrics(SM_CYSMICON);
 	if ((psh._hImages = ImageList_Create(metrics.x, metrics.y, ILC_COLOR32 | ILC_MASK, 0, 1)) == NULL) {
-		MsgErr(NULL, LPGENT("Creating the image list failed!"));
+		MsgErr(NULL, LPGENW("Creating the image list failed!"));
 		return 1;
 	}
 
@@ -291,7 +291,7 @@ static INT_PTR ShowDialog(WPARAM wParam, LPARAM)
 		// get contact's protocol
 		psh._pszPrefix = psh._pszProto = Proto_GetBaseAccountName(wParam);
 		if (psh._pszProto == NULL) {
-			MsgErr(NULL, LPGENT("Could not find contact's protocol. Maybe it is not active!"));
+			MsgErr(NULL, LPGENW("Could not find contact's protocol. Maybe it is not active!"));
 			return 1;
 		}
 		// prepare scanning for metacontact's subcontact's pages
@@ -302,7 +302,7 @@ static INT_PTR ShowDialog(WPARAM wParam, LPARAM)
 	// add the pages
 	NotifyEventHooks(g_hDetailsInitEvent, (WPARAM)&psh, wParam);
 	if (!psh._pPages || !psh._numPages) {
-		MsgErr(NULL, LPGENT("No pages have been added. Canceling dialog creation!"));
+		MsgErr(NULL, LPGENW("No pages have been added. Canceling dialog creation!"));
 		return 1;
 	}
 
@@ -330,7 +330,7 @@ static INT_PTR ShowDialog(WPARAM wParam, LPARAM)
 
 	// create the dialog itself
 	if (!CreateDialogParam(ghInst, MAKEINTRESOURCE(IDD_DETAILS), NULL, DlgProc, (LPARAM)&psh))
-		MsgErr(NULL, LPGENT("Details dialog failed to be created. Returning error is %d."), GetLastError());
+		MsgErr(NULL, LPGENW("Details dialog failed to be created. Returning error is %d."), GetLastError());
 	return 0;
 }
 
@@ -356,7 +356,7 @@ static INT_PTR AddPage(WPARAM wParam, LPARAM lParam)
 
 	if (pPsh->_dwFlags & (PSF_PROTOPAGESONLY | PSF_PROTOPAGESONLY_INIT)) {
 		BYTE bIsUnicode = (odp->flags & ODPF_UNICODE) == ODPF_UNICODE;
-		TCHAR *ptszTitle = bIsUnicode ? mir_tstrdup(odp->ptszTitle) : mir_a2t(odp->pszTitle);
+		wchar_t *ptszTitle = bIsUnicode ? mir_wstrdup(odp->szTitle.w) : mir_a2u(odp->szTitle.a);
 
 		// avoid adding pages for a meta subcontact, which have been added for a metacontact.
 		if (pPsh->_dwFlags & PSF_PROTOPAGESONLY) {
@@ -367,7 +367,7 @@ static INT_PTR AddPage(WPARAM wParam, LPARAM lParam)
 		}
 		// init ignore list with pages added by metacontact
 		else if (pPsh->_dwFlags & PSF_PROTOPAGESONLY_INIT)
-			pPsh->_ignore.insert(mir_tstrdup(ptszTitle));
+			pPsh->_ignore.insert(mir_wstrdup(ptszTitle));
 
 		mir_free(ptszTitle);
 	}
@@ -428,65 +428,65 @@ static int OnShutdown(WPARAM, LPARAM)
 **/
 static int AddProtocolPages(OPTIONSDIALOGPAGE& odp, WPARAM wParam, LPSTR pszProto = NULL)
 {
-	TCHAR szTitle[MAX_PATH];
-	const BYTE ofs = (pszProto) ? mir_sntprintf(szTitle, _T("%S\\"), pszProto) : 0;
+	wchar_t szTitle[MAX_PATH];
+	const BYTE ofs = (pszProto) ? mir_snwprintf(szTitle, L"%S\\", pszProto) : 0;
 
-	odp.ptszTitle = szTitle;
+	odp.szTitle.w = szTitle;
 	
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_CONTACT_GENERAL);
 	odp.position = 0x8000000;
 	odp.pfnDlgProc = PSPProcGeneral;
-	odp.hIcon = (HICON)ICONINDEX(IDI_TREE_GENERAL);
-	mir_tstrncpy(szTitle + ofs, LPGENT("General"), _countof(szTitle) - ofs);
+	odp.dwInitParam = ICONINDEX(IDI_TREE_GENERAL);
+	mir_wstrncpy(szTitle + ofs, LPGENW("General"), _countof(szTitle) - ofs);
 	AddPage(wParam, (LPARAM)&odp);
 
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_CONTACT_ADDRESS);
 	odp.position = 0x8000001;
 	odp.pfnDlgProc = PSPProcContactHome;
-	odp.hIcon = (HICON)ICONINDEX(IDI_TREE_ADDRESS);
-	mir_tstrncpy(szTitle + ofs, LPGENT("General") _T("\\") LPGENT("Contact (private)"), _countof(szTitle) - ofs);
+	odp.dwInitParam = ICONINDEX(IDI_TREE_ADDRESS);
+	mir_wstrncpy(szTitle + ofs, LPGENW("General") L"\\" LPGENW("Contact (private)"), _countof(szTitle) - ofs);
 	AddPage(wParam, (LPARAM)&odp);
 
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_CONTACT_ORIGIN);
 	odp.position = 0x8000002;
 	odp.pfnDlgProc = PSPProcOrigin;
-	odp.hIcon = (HICON)ICONINDEX(IDI_TREE_ADVANCED);
-	mir_tstrncpy(szTitle + ofs, LPGENT("General") _T("\\") LPGENT("Origin"), _countof(szTitle) - ofs);
+	odp.dwInitParam = ICONINDEX(IDI_TREE_ADVANCED);
+	mir_wstrncpy(szTitle + ofs, LPGENW("General") L"\\" LPGENW("Origin"), _countof(szTitle) - ofs);
 	AddPage(wParam, (LPARAM)&odp);
 		
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_CONTACT_ANNIVERSARY);
 	odp.position = 0x8000003;
 	odp.pfnDlgProc = PSPProcAnniversary;
-	odp.hIcon = (HICON)ICONINDEX(IDI_BIRTHDAY);
-	mir_tstrncpy(szTitle + ofs,  LPGENT("General") _T("\\") LPGENT("Anniversaries"), _countof(szTitle) - ofs);
+	odp.dwInitParam = ICONINDEX(IDI_BIRTHDAY);
+	mir_wstrncpy(szTitle + ofs,  LPGENW("General") L"\\" LPGENW("Anniversaries"), _countof(szTitle) - ofs);
 	AddPage(wParam, (LPARAM)&odp);
 
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_CONTACT_COMPANY);
 	odp.position = 0x8000004;
 	odp.pfnDlgProc = PSPProcCompany;
-	odp.hIcon = (HICON)ICONINDEX(IDI_TREE_COMPANY);
-	mir_tstrncpy(szTitle + ofs, LPGENT("Work"), _countof(szTitle) - ofs);
+	odp.dwInitParam = ICONINDEX(IDI_TREE_COMPANY);
+	mir_wstrncpy(szTitle + ofs, LPGENW("Work"), _countof(szTitle) - ofs);
 	AddPage(wParam, (LPARAM)&odp);
 
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_CONTACT_ADDRESS);
 	odp.position = 0x8000005;
 	odp.pfnDlgProc = PSPProcContactWork;
-	odp.hIcon = (HICON)ICONINDEX(IDI_TREE_ADDRESS);
-	mir_tstrncpy(szTitle + ofs, LPGENT("Work") _T("\\") LPGENT("Contact (work)"), _countof(szTitle) - ofs);
+	odp.dwInitParam = ICONINDEX(IDI_TREE_ADDRESS);
+	mir_wstrncpy(szTitle + ofs, LPGENW("Work") L"\\" LPGENW("Contact (work)"), _countof(szTitle) - ofs);
 	AddPage(wParam, (LPARAM)&odp);
 		
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_CONTACT_ABOUT);
 	odp.position = 0x8000006;
 	odp.pfnDlgProc = PSPProcAbout;
-	odp.hIcon = (HICON)ICONINDEX(IDI_TREE_ABOUT);
-	mir_tstrncpy(szTitle + ofs, LPGENT("About"), _countof(szTitle) - ofs);
+	odp.dwInitParam = ICONINDEX(IDI_TREE_ABOUT);
+	mir_wstrncpy(szTitle + ofs, LPGENW("About"), _countof(szTitle) - ofs);
 	AddPage(wParam, (LPARAM)&odp);
 
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_CONTACT_PROFILE);
 	odp.position = 0x8000007;
 	odp.pfnDlgProc = PSPProcContactProfile;
-	odp.hIcon = (HICON)ICONINDEX(IDI_TREE_PROFILE);
-	mir_tstrncpy(szTitle + ofs, LPGENT("About") _T("\\") LPGENT("Profile"), _countof(szTitle) - ofs);
+	odp.dwInitParam = ICONINDEX(IDI_TREE_PROFILE);
+	mir_wstrncpy(szTitle + ofs, LPGENW("About") L"\\" LPGENW("Profile"), _countof(szTitle) - ofs);
 	AddPage(wParam, (LPARAM)&odp);
 	return 0;
 }
@@ -507,22 +507,22 @@ static int InitDetails(WPARAM wParam, LPARAM lParam)
 		if (lParam || bChangeDetailsEnabled) {
 			OPTIONSDIALOGPAGE odp = { 0 };
 			odp.hInstance = ghInst;
-			odp.flags = ODPF_ICON | ODPF_TCHAR;
-			odp.ptszGroup = IcoLib_GetDefaultIconFileName();
+			odp.flags = ODPF_ICON | ODPF_UNICODE;
+			odp.szGroup.w = IcoLib_GetDefaultIconFileName();
 
 			if (lParam) {
 				// ignore common pages for weather contacts
 				if (!pPsh->_pszProto || _stricmp(pPsh->_pszProto, "weather")) {
 					AddProtocolPages(odp, wParam);
-					odp.ptszTitle = LPGENT("About") _T("\\") LPGENT("Notes");
+					odp.szTitle.w = LPGENW("About") L"\\" LPGENW("Notes");
 				}
 				else
-					odp.ptszTitle = LPGENT("Notes");
+					odp.szTitle.w = LPGENW("Notes");
 
 				odp.pszTemplate = MAKEINTRESOURCEA(IDD_CONTACT_ABOUT);
 				odp.position = 0x8000008;
 				odp.pfnDlgProc = PSPProcMyNotes;
-				odp.hIcon = (HICON)ICONINDEX(IDI_TREE_NOTES);
+				odp.dwInitParam = ICONINDEX(IDI_TREE_NOTES);
 				AddPage(wParam, (LPARAM)&odp);
 			}
 		}
@@ -711,8 +711,7 @@ static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 			ShowWindow(GetDlgItem(hDlg, IDC_PAGETITLEBG2), !IsAeroMode());
 
 			// set icons
-			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIcon(ICO_COMMON_MAIN, false));
-			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIcon(ICO_COMMON_MAIN, true));
+			Window_SetIcon_IcoLib(hDlg, IcoLib_GetIconHandle(ICO_COMMON_MAIN));
 			DlgProc(hDlg, HM_RELOADICONS, NULL, NULL);
 
 			// load basic protocol for current contact (for faster load later on and better handling for owner protocol)
@@ -736,7 +735,7 @@ static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 
 			GetObject(hNormalFont, sizeof(lf), &lf);
 			lf.lfHeight = 22;
-			mir_tstrcpy(lf.lfFaceName, _T("Segoe UI"));
+			mir_wstrcpy(lf.lfFaceName, L"Segoe UI");
 			pPs->hCaptionFont = CreateFontIndirect(&lf);
 			SendDlgItemMessage(hDlg, IDC_PAGETITLE, WM_SETFONT, (WPARAM)pPs->hCaptionFont, 0);
 
@@ -1095,14 +1094,14 @@ static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 		LPCTSTR pszName;
 		if (!pPs->hContact)
 			pszName = TranslateT("Owner");
-		else if (pdbcws && pdbcws->value.type == DBVT_TCHAR)
+		else if (pdbcws && pdbcws->value.type == DBVT_WCHAR)
 			pszName = pdbcws->value.ptszVal;
 		else
 			pszName = DB::Contact::DisplayName(pPs->hContact);
 
 		HWND hName = GetDlgItem(hDlg, TXT_NAME);
 		SetWindowText(hName, pszName);
-		SetWindowText(hDlg, CMString(FORMAT, _T("%s - %s"), pszName, TranslateT("edit contact information")));
+		SetWindowText(hDlg, CMStringW(FORMAT, L"%s - %s", pszName, TranslateT("edit contact information")));
 		SetDlgItemText(hDlg, IDC_HEADERBAR, TranslateT("View personal user details and more"));
 
 		// redraw the name control
@@ -1142,12 +1141,12 @@ static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 		if (hCtrl = GetDlgItem(hDlg, BTN_IMPORT)) {
 			hIcon = IcoLib_GetIcon(ICO_BTN_IMPORT);
 			SendMessage(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
-			SetWindowText(hCtrl, hIcon ? _T("") : _T("I"));
+			SetWindowText(hCtrl, hIcon ? L"" : L"I");
 		}
 		if (hCtrl = GetDlgItem(hDlg, BTN_EXPORT)) {
 			hIcon = IcoLib_GetIcon(ICO_BTN_EXPORT);
 			SendMessage(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
-			SetWindowText(hCtrl, hIcon ? _T("") : _T("E"));
+			SetWindowText(hCtrl, hIcon ? L"" : L"E");
 		}
 		// update page icons
 		if (PtrIsValid(pPs) && (pPs->dwFlags & PSF_INITIALIZED))
@@ -1219,9 +1218,9 @@ static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 			}
 			else if (ack->result == ACKRESULT_FAILED) {
 				MsgBox(hDlg, MB_ICON_WARNING,
-					LPGENT("Upload ICQ details"),
-					LPGENT("Upload failed"),
-					LPGENT("Your details were not uploaded successfully.\nThey were written to database only."));
+					LPGENW("Upload ICQ details"),
+					LPGENW("Upload failed"),
+					LPGENW("Your details were not uploaded successfully.\nThey were written to database only."));
 				KillTimer(hDlg, TIMERID_UPDATING);
 				ShowWindow(GetDlgItem(hDlg, TXT_UPDATING), SW_HIDE);
 				DlgProc(hDlg, M_CHECKONLINE, NULL, NULL);
@@ -1327,13 +1326,13 @@ static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 					break;
 			}
 
-			if ( !mir_strcmp(pdbcws->szSetting, SET_CONTACT_MYHANDLE) || !mir_strcmp(pdbcws->szSetting, SET_CONTACT_NICK)) {
+			if ( !strcmp(pdbcws->szSetting, SET_CONTACT_MYHANDLE) || !strcmp(pdbcws->szSetting, SET_CONTACT_NICK)) {
 				// force the update of all propertysheetpages
 				DlgProc(hDlg, PSM_FORCECHANGED, NULL, NULL);
 				// update the windowtitle
 				DlgProc(hDlg, HM_SETWINDOWTITLE, NULL, lParam);
 			}
-			else if ( !mir_strcmp(pdbcws->szModule, USERINFO) || !mir_strcmp(pdbcws->szModule, pPs->pszProto) || !mir_strcmp(pdbcws->szModule, MOD_MBIRTHDAY)) {
+			else if ( !strcmp(pdbcws->szModule, USERINFO) || !strcmp(pdbcws->szModule, pPs->pszProto) || !strcmp(pdbcws->szModule, MOD_MBIRTHDAY)) {
 				// force the update of all propertysheetpages
 				DlgProc(hDlg, PSM_FORCECHANGED, NULL, NULL);
 			}
@@ -1521,7 +1520,7 @@ static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 
 				pPs->dwFlags &= ~PSF_CHANGED;
 				EnableWindow(GetDlgItem(hDlg, IDAPPLY), FALSE);
-				CallService(MS_CLIST_INVALIDATEDISPLAYNAME, (WPARAM)pPs->hContact, NULL);
+				pcli->pfnInvalidateDisplayNameCacheEntry(pPs->hContact);
 
 				// need to upload owners settings
 				if (!pPs->hContact && myGlobals.CanChangeDetails && db_get_b(NULL, MODNAME, SET_PROPSHEET_CHANGEMYDETAILS, FALSE)) {
@@ -1565,7 +1564,7 @@ static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 
 						// call the services
 						for (int i = 0; i < pPs->nSubContacts; i++)
-						if (!CallContactService(pPs->infosUpdated[pPs->nSubContacts].hContact, PSS_GETINFO, NULL, NULL))
+						if (!ProtoChainSend(pPs->infosUpdated[pPs->nSubContacts].hContact, PSS_GETINFO, NULL, NULL))
 							bDo = TRUE;
 
 						if (bDo) {
@@ -1575,7 +1574,7 @@ static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 						}
 					}
 				}
-				else if (!CallContactService(pPs->hContact, PSS_GETINFO, NULL, NULL)) {
+				else if (!ProtoChainSend(pPs->hContact, PSS_GETINFO, NULL, NULL)) {
 					pPs->infosUpdated = (TAckInfo *)mir_calloc(sizeof(TAckInfo));
 					pPs->infosUpdated[0].hContact = pPs->hContact;
 					pPs->nSubContacts = 1;
@@ -1611,6 +1610,7 @@ static INT_PTR CALLBACK DlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 		ResetUpdateInfo(pPs);
 
 		// avoid any further message processing for this dialog page
+		Window_FreeIcon_IcoLib(hDlg);
 		WindowList_Remove(g_hWindowList, hDlg);
 		SetUserData(hDlg, NULL);
 

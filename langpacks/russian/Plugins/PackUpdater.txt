@@ -6,7 +6,7 @@
 ;  Authors: Mataes, ZERO_BiT
 ;============================================================
 [Simple updater for Miranda NG premodified packs.]
-Простой плагин для обновлений сборок Miranda NG.
+Обновление сборок Miranda NG.
 [Updates found!]
 Найдены обновления!
 [Update]
@@ -29,8 +29,8 @@
 Напоминать о неустановленном обновлении
 [Hotkey]
 Горячая клавиша
-[Go to Customize -> Hotkeys to change the hotkey]
-Настройка в Тонкая настройка -> Горячие клавиши
+[Go to Options -> Customize -> Hotkeys to change the hotkey]
+Перейти в раздел "Тонкая настройка -> Горячие клавиши"
 [Notifications]
 Уведомления
 [Message boxes]
@@ -76,7 +76,7 @@
 [Sec]
 сек.
 [* Needs popup actions to be enabled]
-* Необходимы включённые действия вспл. окон
+* Нужны включённые действия вспл. окон
 [Not sets for "Message boxes"]
 Не устанавливает для "Диалоги"
 [Boxes]

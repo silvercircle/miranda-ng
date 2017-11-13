@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2015-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -21,7 +21,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 class SendMessageRequest : public HttpRequest
 {
 public:
-	SendMessageRequest(const char *username, time_t timestamp, const char *message, LoginInfo &li) :
+	SendMessageRequest(const char *username, time_t timestamp, const char *message, LoginInfo &li, const char *MessageType = nullptr) :
 	  HttpRequest(REQUEST_POST, FORMAT, "%s/v1/users/ME/conversations/8:%s/messages", li.endpoint.szServer, username)
 	{
 		Headers
@@ -32,7 +32,7 @@ public:
 		JSONNode node;
 		node 
 			<< JSONNode("clientmessageid", CMStringA(::FORMAT, "%llu", (ULONGLONG)timestamp))
-			<< JSONNode("messagetype", "Text")
+			<< JSONNode("messagetype", MessageType ? MessageType : "Text")
 			<< JSONNode("contenttype", "text")
 			<< JSONNode("content", message);
 
@@ -52,7 +52,7 @@ public:
 			<< CHAR_VALUE("Content-Type", "application/json; charset=UTF-8");
 
 		CMStringA content;
-		content.AppendFormat("%s %s", li.szSkypename, message);
+		content.AppendFormat("%s %s", li.szSkypename.c_str(), message);
 
 		JSONNode node;
 		node 
@@ -60,7 +60,7 @@ public:
 			<< JSONNode("messagetype", "RichText")
 			<< JSONNode("contenttype", "text")
 			<< JSONNode("content", content)
-			<< JSONNode("skypeemoteoffset", (int)(mir_strlen(li.szSkypename) + 1));
+			<< JSONNode("skypeemoteoffset", li.szSkypename.GetLength() + 1);
 
 		Body << VALUE(node.write().c_str());
 	}

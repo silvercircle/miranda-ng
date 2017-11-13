@@ -25,19 +25,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define Li2Double(x) ((double)((x).HighPart)*4.294967296E9+(double)((x).LowPart)) 
 
-static BOOL WinNT_PerfStatsSwitch(TCHAR *pszServiceName, BOOL fDisable)
+static BOOL WinNT_PerfStatsSwitch(wchar_t *pszServiceName, BOOL fDisable)
 {
 	HKEY hKeyServices, hKeyService, hKeyPerf;
 	DWORD dwData, dwDataSize;
 	BOOL fSwitched = FALSE;
 	/* Win2000+ */
-	if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, _T("System\\CurrentControlSet\\Services"), 0, KEY_QUERY_VALUE | KEY_SET_VALUE, &hKeyServices)) {
+	if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Services", 0, KEY_QUERY_VALUE | KEY_SET_VALUE, &hKeyServices)) {
 		if (!RegOpenKeyEx(hKeyServices, pszServiceName, 0, KEY_QUERY_VALUE | KEY_SET_VALUE, &hKeyService)) {
-			if (!RegOpenKeyEx(hKeyService, _T("Performance"), 0, KEY_QUERY_VALUE | KEY_SET_VALUE, &hKeyPerf)) {
+			if (!RegOpenKeyEx(hKeyService, L"Performance", 0, KEY_QUERY_VALUE | KEY_SET_VALUE, &hKeyPerf)) {
 				dwDataSize = sizeof(DWORD);
-				if (!RegQueryValueEx(hKeyPerf, _T("Disable Performance Counters"), NULL, NULL, (BYTE*)&dwData, &dwDataSize))
+				if (!RegQueryValueEx(hKeyPerf, L"Disable Performance Counters", NULL, NULL, (BYTE*)&dwData, &dwDataSize))
 					if ((dwData != 0) != fDisable)
-						fSwitched = !RegSetValueEx(hKeyPerf, _T("Disable Performance Counters"), 0, REG_DWORD, (BYTE*)&fDisable, dwDataSize);
+						fSwitched = !RegSetValueEx(hKeyPerf, L"Disable Performance Counters", 0, REG_DWORD, (BYTE*)&fDisable, dwDataSize);
 				RegCloseKey(hKeyPerf);
 			}
 			RegCloseKey(hKeyService);
@@ -69,7 +69,7 @@ static BOOL CallBackAndWait(struct CpuUsageThreadParams *param, BYTE nCpuUsage)
 	}
 	if (!param->pfnDataAvailProc(nCpuUsage, param->lParam)) return FALSE;
 	SleepEx(param->dwDelayMillis, TRUE);
-	return !Miranda_Terminated();
+	return !Miranda_IsTerminated();
 }
 
 static void WinNT_PollThread(void *vparam)
@@ -94,8 +94,8 @@ static void WinNT_PollThread(void *vparam)
 	dwObjectId = 238;             /*'Processor' object */
 	dwCounterId = 6;              /* '% processor time' counter */
 	pwszInstanceName = L"_Total"; /* '_Total' instance */
-	_itot_s(dwObjectId, wszValueName, 10);
-	fSwitched = WinNT_PerfStatsSwitch(_T("PerfOS"), FALSE);
+	_itow_s(dwObjectId, wszValueName, 10);
+	fSwitched = WinNT_PerfStatsSwitch(L"PerfOS", FALSE);
 
 	/* poll */
 	for (;;) {
@@ -171,7 +171,7 @@ static void WinNT_PollThread(void *vparam)
 	if (pPerfData)
 		mir_free(pPerfData);
 	if (fSwitched)
-		WinNT_PerfStatsSwitch(_T("PerfOS"), TRUE);
+		WinNT_PerfStatsSwitch(L"PerfOS", TRUE);
 
 	/* return error for PollCpuUsage() if never succeeded */
 	if (param->hFirstEvent != NULL)

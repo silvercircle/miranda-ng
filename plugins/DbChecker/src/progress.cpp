@@ -28,13 +28,13 @@ HANDLE hEventRun = NULL, hEventAbort = NULL;
 int errorCount;
 LRESULT wizardResult;
 
-void AddToStatus(int flags, const TCHAR* fmt, ...)
+void AddToStatus(int flags, const wchar_t* fmt, ...)
 {
 	va_list vararg;
 	va_start(vararg, fmt);
 
-	TCHAR str[256];
-	mir_vsntprintf(str, _countof(str), fmt, vararg);
+	wchar_t str[256];
+	mir_vsnwprintf(str, _countof(str), fmt, vararg);
 	va_end(vararg);
 
 	int i = SendMessage(hwndStatus, LB_ADDSTRING, 0, (LPARAM)str);
@@ -90,7 +90,7 @@ INT_PTR CALLBACK ProgressDlgProc(HWND hdlg, UINT message, WPARAM wParam, LPARAM 
 			hdc = GetDC(NULL);
 			hFont = (HFONT)SendMessage(hdlg, WM_GETFONT, 0, 0);
 			hoFont = (HFONT)SelectObject(hdc, hFont);
-			GetTextExtentPoint32(hdc, _T("x"), 1, &s);
+			GetTextExtentPoint32(hdc, L"x", 1, &s);
 			SelectObject(hdc, hoFont);
 			ReleaseDC(NULL, hdc);
 			fontHeight = s.cy;
@@ -120,7 +120,7 @@ INT_PTR CALLBACK ProgressDlgProc(HWND hdlg, UINT message, WPARAM wParam, LPARAM 
 		return TRUE;
 
 	case WM_DRAWITEM:
-		TCHAR str[256];
+		wchar_t str[256];
 		{
 			LPDRAWITEMSTRUCT dis = (LPDRAWITEMSTRUCT)lParam;
 			int bold = 0;
@@ -147,7 +147,7 @@ INT_PTR CALLBACK ProgressDlgProc(HWND hdlg, UINT message, WPARAM wParam, LPARAM 
 				break;
 			}
 			if (bold) hoFont = (HFONT)SelectObject(dis->hDC, hBoldFont);
-			ExtTextOut(dis->hDC, dis->rcItem.left, dis->rcItem.top, ETO_CLIPPED | ETO_OPAQUE, &dis->rcItem, str, (UINT)mir_tstrlen(str), NULL);
+			ExtTextOut(dis->hDC, dis->rcItem.left, dis->rcItem.top, ETO_CLIPPED | ETO_OPAQUE, &dis->rcItem, str, (UINT)mir_wstrlen(str), NULL);
 			if (bold) SelectObject(dis->hDC, hoFont);
 		}
 		return TRUE;
@@ -185,7 +185,7 @@ INT_PTR CALLBACK ProgressDlgProc(HWND hdlg, UINT message, WPARAM wParam, LPARAM 
 		if (bShortModeDone) {
 			if (!errorCount) {
 				if (bLaunchMiranda)
-					CallService(MS_DB_SETDEFAULTPROFILE, (WPARAM)opts.filename, 0);
+					Profile_SetDefault(opts.filename);
 				wizardResult = 1;
 			}
 			return TRUE;

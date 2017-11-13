@@ -42,7 +42,7 @@ var trunk=FSO.GetFolder(FSO.GetParentFolderName(FSO.GetParentFolderName(scriptpa
 //text string for make path output into templates.
 var trunkPath=new String(trunk);
 //path to sln file
-var slnfile=trunk+"\\bin10\\mir_full.sln"
+var slnfile=trunk+"\\bin15\\mir_full.sln"
 //core path
 var core=FSO.BuildPath(trunk,"src");
 //langpack folder "\langpacks\english\" in trunk folder
@@ -110,7 +110,7 @@ sln_stream=FSO.GetFile(slnfile).OpenAsTextStream(ForReading, TristateUseDefault)
      // if exist sln_project_regexp, add to array, adding leading path to "trunk"
      if (sln_project_regexp) {
         //RegExp for unneeded modules, such as crypting library, zlib.dll etc.
-        var unneeded_modules=/(Zlib|EkHtml|Libgcrypt|Libotr|Cryptlib|pu_stub|libcurl|glib)/i;
+        var unneeded_modules=/(libjson|Zlib|EkHtml|Libgcrypt|libotr|Cryptlib|pu_stub|libcurl|glib|Pcre16|liblua|winapi|json|libaxolotl|hunspell|ffi|m_popup|m_variables)/i;
         // Now check for unneeded modules NOT passed (module name are in sln_project_regexp[1]
         if (!unneeded_modules.test(sln_project_regexp[1]))
         //no, this is not unneeded module, put path to array. Trunk path + path to file in sln_project_regexp[2]
@@ -224,8 +224,6 @@ function GeneratePluginTranslate (pluginpath,langpackfilepath,vcxprojfile) {
     FindFiles(pluginpath,"\\.rc$",resourcefiles);
     //find all source files and list files in array
     FindFiles(pluginpath,"\\.h$|\\.cpp$|\\.c$|\\.pas$|\\.dpr$|\\.inc$",sourcefiles);
-    //Check for "Status plugins". They have few common resource files to translate, which located one layer upper, than plugin folder.
-    CheckStatusPlugins(plugin);
     //Parse files "resourcefiles", put result into "foundstrings" using "ParseRCFile" function
     ParseFiles(resourcefiles,foundstrings,ParseRCFile);
     //Parse files "sourcefiles", put result into "foundstrings" using "ParseSourceFile" function
@@ -372,15 +370,6 @@ function GetMUUID (folder,array) {
  if (log) WScript.Echo(muuid);
 };
 
-//For status plugins, namely KeepStatus, StartupStatus and AdvancedAutoAway we need add for all of them common source files to parsing array, because they exist one layer upper of pluginfolder
-function CheckStatusPlugins (plug) {
-if (plug.match(/(KeepStatus|StartupStatus|AdvancedAutoAway)/)) {
-    resourcefiles.push(trunk+"\\Plugins\\StatusPlugins\\resource.rc");
-    sourcefiles.push(trunk+"\\Plugins\\StatusPlugins\\commonstatus.cpp");
-    sourcefiles.push(trunk+"\\Plugins\\StatusPlugins\\confirmdialog.cpp");
-    }
-}
-
 //read text file, removing all commented text for further processing
 function ReadFile (file) {
  //If file zero size, return;
@@ -389,7 +378,7 @@ function ReadFile (file) {
  file_stream=FSO.GetFile(file).OpenAsTextStream(ForReading, TristateUseDefault);
  //read file fully into var
  allstrings=file_stream.ReadAll();
- //remove all comments. The text starting with \\ (but not with ":\\" it's a links like http://miranda-ng.org/ and ")//" -there is one comment right after needed string)
+ //remove all comments. The text starting with \\ (but not with ":\\" it's a links like https://miranda-ng.org/ and ")//" -there is one comment right after needed string)
  //and remove multi-line comments, started with /* and ended with */
  text=allstrings.replace(/(?:[^\):])(\/{2}.+?(?=$))|(\s\/\*[\S\s]+?\*\/)/mg,".")
  //close file
@@ -430,9 +419,9 @@ function ParseRCFile(FileTextVar,array) {
  //now make a job, till end of matching regexp
  while ((string = find.exec(FileTextVar)) != null) {
       // check for some garbage like "List1","Tab1" etc. in *.rc files, we do not need this.
-      onestring=string[2].replace(/^(((List|Tab|Tree|Spin|Custom|Slider|DateTimePicker|Radio|Check|HotKey|Progress)\d)|(whiterect|IndSndList|&?[Oo][Kk]|ICQ|Jabber|WhatsApp|OSD|Google|Miranda NG|SMS|Miranda|Windows|&\w)|(%.(.*%)?))$/g,"");
+      onestring=string[2].replace(/^(((List|Tab|Tree|Spin|Custom|Slider|DateTimePicker|Radio|Check|HotKey|Progress)\d)|(whiterect|IndSndList|&?[Oo][Kk]|AOL|APOP|BBS|Bing|CTCP|DCC|Foodnetwork|Google|Google Talk|GPG|Hotmail|ICQ|ICQ Corp|ID|IP|ISDN|iTunes|Jabber|JID|Miranda|Miranda NG|mRadio|MSN|NickServ|OSD|OTR|PCS|PGP|S.ms|SMS|SSL|Steam|Steam Guard|Tlen|Tox|Twitter|Yahoo|WhatsApp|Winamp \(\*\)|Windows|X400|&\w)|(%.(.*%)?))$/g,"");
       // ignore some popup menu craps
-      if (string[1]=="POPUP" && onestring.match(/^([a-zA-Z ]*(menu|context|popup))|([A-Z][a-z]+([A-Z][a-z]*)+)|(new item)$/g))
+      if (string[1]=="POPUP" && onestring.match(/^([a-zA-Z ]*(menu|context|popup(?!s)))|([A-Z][a-z]+([A-Z][a-z]*)+)|(new item)$/g))
         continue;
       //if there is double "", replace with single one
       onestring=onestring.replace(/\"{2}/g,"\"");
@@ -476,7 +465,7 @@ function ParseSourceFile (FileTextVar,array) {
 //filter _T() function results
 function filter_T(string) {
 //filter for exact matched strings
-var filter1=/^(&?[Oo][Kk]|ICQ|Jabber|WhatsApp|OSD|Google|Miranda NG|SMS|Miranda|Windows)$/g;
+var filter1=/^(&?[Oo][Kk]|AOL|APOP|BBS|Bing|CTCP|DCC|Foodnetwork|Google|GPG|Hotmail|ICQ|ICQ Corp|ID|IP|ISDN|iTunes|Jabber|JID|Miranda|MirandaG15|Miranda NG|mRadio|MSN|NickServ|OSD|OTR|PCS|PGP|SMS|SSL|SteamID|Steam Guard|Tlen|Tox|Twitter|Yahoo|WhatsApp|Winamp \(\*\)|Windows|X400)$/g;
 //filter string starting from following words
 var filter2=/^(SOFTWARE\\|SYSTEM\\|http|ftp|UTF-|utf-|TEXT|EXE|exe|txt|css|html|dat[^a]|txt|MS\x20|CLVM|TM_|CLCB|CLSID|CLUI|HKEY_|MButton|BUTTON|WindowClass|MHeader|RichEdit|RICHEDIT|STATIC|EDIT|CList|listbox|LISTBOX|combobox|COMBOBOX|TitleB|std\w|iso-|windows-|<div|<html|<img|<span|<hr|<a\x20|<table|<td|miranda_|kernel32|user32|muc|pubsub|shlwapi|Tahoma|NBRichEdit|CreatePopup|&?[Oo][Kk]|<\/|<\w>|\w\\\w|urn\:|<\?xml|<\!|h\d|\.!\.).*$/g;
 //filter string ending with following words
@@ -484,18 +473,19 @@ var filter3=/^.+(001|\/value|\*!\*|=)$/g;
 //filter from Kildor
 var filter4=/^((d\s\w)|\[\/?(\w|url|img|size|quote|color)(=\w*)?\]?|(\\\w)|(%\w+%)|(([\w-]+\.)*\.(\w{2,4}|travel|museum|xn--\w+))|\W|\s|\d)+$/gi;
 //filter from Kildor for remove filenames and paths.
-var filter5=/^[\w_:%.\\\/*-]+\.\w+$/g;
+//var filter5=/^[\w_:%.\\\/*-]+\.\w+$/g;
 
 //apply filters to our string
 test1=filter1.test(string);
 test2=filter2.test(string);
 test3=filter3.test(string);
 test4=filter4.test(string);
-test5=filter5.test(string);
+//test5=filter5.test(string);
 
 //if match (test1) first filter and NOT match other tests, thus string are good, return this string back.
 //if (test1 && !test2 && !test3 && !test4 && !test5) {
-if (!test1 && !test2 && !test3 && !test4 && !test5) {
+//if (!test1 && !test2 && !test3 && !test4 && !test5) {
+if (!test1 && !test2 && !test3 && !test4) {
     return string;
     } else {
         //in other case, string is a garbage, put into crap array.

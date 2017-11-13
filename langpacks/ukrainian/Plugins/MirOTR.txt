@@ -6,7 +6,7 @@
 ;  Authors: ProgAndy & CHEF-KOCH
 ;============================================================
 [OTR (Off-the-Record) plugin for Miranda NG (using some code and ideas from SecureIM, Pidgin-OTR and old Miranda OTR (by SJE)).]
-Плагін шифрування OTR (Off-the-Record) для Miranda NG.
+Підтримка шифрування OTR (Off-the-Record) у Miranda NG.
 [OTR Generating Private Key]
 OTR: Створення приватного ключа
 [Generating new private key - please wait.]
@@ -24,7 +24,7 @@ OTR: Створення приватного ключа
 [End sessions on window close]
 Зупиняти сесію при закритті вікна
 [End sessions when contacts go offline]
-Зупиняти сесію, коли контакт переходить в офлайн
+Зупиняти сесію, коли контакт виходить з мережі
 [Prefix encrypted IMs:]
 Префікс шифрованих IM:
 [don't rely on the prefix, always check the OTR status icon]
@@ -88,7 +88,7 @@ OTR: Створення приватного ключа
 [No]
 Ні
 [OTR status (Click for more options)]
-Статус OTR (натисніть для опцій)
+Статус OTR (натисніть для налаштування)
 [OTR Encryption: Disabled]
 Шифрування OTR: вимкнено
 [OTR Encryption: UNVERIFIED]
@@ -247,3 +247,11 @@ OTR: встановлений SecureIM
 '%s' вже закрив приватне з'єднання з вами; ви повинні вчинити так само
 [Error setting up private conversation: %s]
 Помилка створення приватної бесіди: %s
+[We are receiving our own OTR messages.\nYou are either trying to talk to yourself, or someone is reflecting your messages back at you]
+Ви отримуєте власні повідомлення OTR.\nВи намагаєтеся спілкуватися сам із собою, або ж хтось пересилає назад ваші повідомлення.
+[The encrypted message received from '%s' is unreadable, as you are not currently communicating privately]
+Зашифроване повідомлення від '%s' неможливо прочитати, оскільки зараз ви не ведете приватну бесіду.
+[We received an unreadable encrypted message from '%s']
+Отримано незрозуміле зашифроване повідомлення від '%s
+[unknown OTR message received, please report that to Miranda NG developers]
+отримано невідоме повідомлення OTR, повідомте про це розробників Miranda NG

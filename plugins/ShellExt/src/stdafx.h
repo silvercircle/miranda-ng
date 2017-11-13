@@ -9,7 +9,7 @@
 
 #include <newpluginapi.h>
 
-#include <m_system_cpp.h>
+#include <m_system.h>
 #include <m_protocols.h>
 #include <m_protosvc.h>
 #include <m_file.h>
@@ -21,7 +21,7 @@
 #include <m_database.h>
 #include <win2k.h>
 
-#include "Version.h"
+#include "version.h"
 
 #define SHLExt_Name            "shlext15"
 #define SHLExt_MRU             "MRU"

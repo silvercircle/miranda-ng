@@ -2,17 +2,17 @@
 ;============================================================
 ;  File: QuickReplies.dll
 ;  Plugin: Quick replies
-;  Version: 0.8.1.0
+;  Version: 0.9.1.2
 ;  Authors: Unsane
 ;============================================================
 [Plugin for quick insert (or sending) pre-defined messages in message input area.]
-Плагін для швидкої вставки (або відправлення) певних повідомлень у вікно відправлення.
+Швидка вставка (або відправлення) певних повідомлень у вікно відправлення.
 [Quick Replies]
 Швидкі відповіді
 [Send replies immediately]
 Надсилати відповіді негайно
 [- Add your replies, one per line.]
-- Додайте ваші відповіді, по одній у рядку.
+- Додайте свої відповіді, по одній у рядку.
 [Variables]
 Змінні
 [Hints:]
@@ -23,7 +23,5 @@
 - Натисніть [v] для допомоги по змінним.
 [Button]
 Кнопка
-[Quick Replies\r\nLeft button - open menu\r\nRight button - options page]
-Швидкі відповіді\r\nЛіва кнопка - меню\r\nПрава кнопка - налаштування
 [Message sessions]
 Бесіди

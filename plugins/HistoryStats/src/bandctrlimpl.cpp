@@ -8,7 +8,7 @@
  * BandCtrlImpl
  */
 
-const TCHAR* BandCtrlImpl::m_ClassName = _T("HistoryStatsBand");
+const wchar_t* BandCtrlImpl::m_ClassName = L"HistoryStatsBand";
 const int BandCtrlImpl::m_PollId = 100;
 const int BandCtrlImpl::m_PollDelay = 50;
 
@@ -265,7 +265,7 @@ void BandCtrlImpl::onWMPaint()
 	HGDIOBJ hOldFont = SelectObject(hDC, m_hFont);
 	SIZE textSize;
 
-	GetTextExtentPoint32(hDC, _T("X"), 1, &textSize);
+	GetTextExtentPoint32(hDC, L"X", 1, &textSize);
 	SetBkMode(hDC, TRANSPARENT);
 	SetTextColor(hDC, GetSysColor(bBandEnabled ? COLOR_BTNTEXT : COLOR_GRAYTEXT));
 
@@ -461,8 +461,8 @@ int BandCtrlImpl::onBCMAddButton(BCBUTTON *pButton)
 	id.bChecked = bool_(pButton->dwFlags & BCF_CHECKED);
 	id.bVisible = !(pButton->dwFlags & BCF_HIDDEN);
 	id.bDropDown = bool_(pButton->dwFlags & BCF_DROPDOWN);
-	id.text = (pButton->dwFlags & BCF_TEXT) ? TranslateTS(pButton->m_szText) : _T("");
-	id.tooltip = (pButton->dwFlags & BCF_TOOLTIP) ? TranslateTS(pButton->m_szTooltip) : _T("");
+	id.text = (pButton->dwFlags & BCF_TEXT) ? TranslateW(pButton->m_szText) : L"";
+	id.tooltip = (pButton->dwFlags & BCF_TOOLTIP) ? TranslateW(pButton->m_szTooltip) : L"";
 	id.uTTId = -1;
 	id.dwData = (pButton->dwFlags & BCF_DATA) ? pButton->dwData : 0;
 	id.bEnabled = !(pButton->dwFlags & BCF_DISABLED);
@@ -604,7 +604,7 @@ void BandCtrlImpl::recalcButtonRects()
 				m_Items[i].uTTId,									// uId
 				m_Items[i].rItem,									// rect
 				NULL,												// hInstance
-				const_cast<TCHAR*>(m_Items[i].tooltip.c_str()),	// lpszText
+				const_cast<wchar_t*>(m_Items[i].tooltip.c_str()),	// lpszText
 			};
 
 			SendMessage(m_hTooltip, TTM_SETTOOLINFO, 0, reinterpret_cast<LPARAM>(&ti));
@@ -622,10 +622,10 @@ void BandCtrlImpl::recalcButtonRects()
 		else if (m_Items[i].uTTId == -1 && m_Items[i].bVisible && !m_Items[i].tooltip.empty()) {
 			// add a tooltip, if we don't have a tooltip but are now visible
 			if (!m_hTooltip)
-				m_hTooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, _T(""), WS_POPUP, 0, 0, 0, 0, NULL, NULL, g_hInst, NULL);
+				m_hTooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, L"", WS_POPUP, 0, 0, 0, 0, NULL, NULL, g_hInst, NULL);
 
 			TOOLINFO ti = { sizeof(TOOLINFO), TTF_SUBCLASS, m_hWnd, UINT_PTR(i+1), m_Items[i].rItem, NULL,
-				const_cast<TCHAR*>(m_Items[i].tooltip.c_str()),	// lpszText
+				const_cast<wchar_t*>(m_Items[i].tooltip.c_str()),	// lpszText
 			};
 
 			if (SendMessage(m_hTooltip, TTM_ADDTOOL, 0, reinterpret_cast<LPARAM>(&ti)))

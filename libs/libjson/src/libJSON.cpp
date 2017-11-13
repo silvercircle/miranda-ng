@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -53,9 +53,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern JSONNode nullNode;
 
-inline TCHAR* toCString(const json_string & str)
+inline wchar_t* toCString(const json_string & str)
 {
-	return mir_utf8decodeT( str.c_str());
+	return mir_utf8decodeW( str.c_str());
 }
 
 /*
@@ -90,6 +90,9 @@ LIBJSON_DLL(void) json_delete(JSONNode *node) {
 
 JSONNode JSONNode::parse(const json_char *str)
 {
+	if (str == nullptr)
+		return JSONNode();
+
 	return JSONWorker::parse(str);
 }
 
@@ -102,7 +105,7 @@ LIBJSON_DLL(JSONNode*) json_parse(const json_char *json) {
 	return 0;
 }
 
-LIBJSON_DLL(TCHAR*) json_strip_white_space(const json_char *json) {
+LIBJSON_DLL(wchar_t*) json_strip_white_space(const json_char *json) {
 	JSON_ASSERT_SAFE(json, JSON_TEXT("null ptr to json_strip_white_space"), return 0;);
 	return toCString(JSONWorker::RemoveWhiteSpaceAndComments(json));
 }
@@ -277,7 +280,7 @@ LIBJSON_DLL(const json_char*) json_name(const JSONNode *node) {
 	}
 #endif
 
-LIBJSON_DLL(TCHAR*) json_as_string(const JSONNode *node) {
+LIBJSON_DLL(wchar_t*) json_as_string(const JSONNode *node) {
 	JSON_ASSERT_SAFE(node, JSON_TEXT("null node to json_as_string"), return toCString(EMPTY_CSTRING););
 	return toCString(node->as_string());
 }
@@ -325,12 +328,12 @@ LIBJSON_DLL(JSONNode*) json_as_array(const JSONNode *node) {
 #endif
 
 #ifdef JSON_WRITER
-	LIBJSON_DLL(TCHAR*) json_write(const JSONNode *node) {
+	LIBJSON_DLL(wchar_t*) json_write(const JSONNode *node) {
 		JSON_ASSERT_SAFE(node, JSON_TEXT("null node to json_write"), return toCString(EMPTY_CSTRING););
 		return toCString(node->write());
 	}
 
-	LIBJSON_DLL(TCHAR*) json_write_formatted(const JSONNode *node) {
+	LIBJSON_DLL(wchar_t*) json_write_formatted(const JSONNode *node) {
 		JSON_ASSERT_SAFE(node, JSON_TEXT("null node to json_write_formatted"), return toCString(EMPTY_CSTRING););
 		return toCString(node->write_formatted());
 	}
@@ -440,13 +443,13 @@ LIBJSON_DLL(void) json_push_back(JSONNode *node, JSONNode *node2) {
 
 LIBJSON_DLL(JSONNode*) json_pop_back_at(JSONNode *node, json_index_t pos) {
 	JSON_ASSERT_SAFE(node, JSON_TEXT("null node to json_pop_back_i"), return 0;);
-	return MANAGER_INSERT(&node->pop_back(pos));
+	return MANAGER_INSERT(node->pop_back(pos));
 }
 
 LIBJSON_DLL(JSONNode*) json_pop_back(JSONNode *node, const json_char *name) {
 	JSON_ASSERT_SAFE(node, JSON_TEXT("null node to json_pop_back"), return 0;);
 	JSON_ASSERT_SAFE(name, JSON_TEXT("null name to json_pop_back.  Did you mean to use json_pop_back_at?"), return 0;);
-	return MANAGER_INSERT(&node->pop_back(name));
+	return MANAGER_INSERT(node->pop_back(name));
 }
 
 //comparison

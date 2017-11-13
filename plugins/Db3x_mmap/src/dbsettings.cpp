@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -23,10 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "stdafx.h"
 
-DWORD GetModuleNameOfs(const char *szName);
-DBCachedContact* AddToCachedContactList(MCONTACT contactID, int index);
+#pragma warning(disable: 4701)
 
-#define VLT(n) ((n == DBVT_UTF8 || n == DBVT_ENCRYPTED)?DBVT_ASCIIZ:n)
+#define VLT(n) ((n == DBVT_UTF8 || n == DBVT_ENCRYPTED) ? DBVT_ASCIIZ : n)
 
 BOOL CDb3Mmap::IsSettingEncrypted(LPCSTR szModule, LPCSTR szSetting)
 {
@@ -58,7 +57,7 @@ static bool ValidLookupName(LPCSTR szModule, LPCSTR szSetting)
 
 int CDb3Mmap::GetContactSettingWorker(MCONTACT contactID, LPCSTR szModule, LPCSTR szSetting, DBVARIANT *dbv, int isStatic)
 {
-	if (szSetting == NULL || szModule == NULL)
+	if (szSetting == nullptr || szModule == nullptr)
 		return 1;
 
 	// the db format can't tolerate more than 255 bytes of space (incl. null) for settings+module name
@@ -84,14 +83,14 @@ LBL_Seek:
 	log3("get [%08p] %s (%p)", hContact, szCachedSettingName, szCachedSettingName);
 
 	DBVARIANT *pCachedValue = m_cache->GetCachedValuePtr(contactID, szCachedSettingName, 0);
-	if (pCachedValue != NULL) {
+	if (pCachedValue != nullptr) {
 		if (pCachedValue->type == DBVT_ASCIIZ || pCachedValue->type == DBVT_UTF8) {
 			int cbOrigLen = dbv->cchVal;
 			char *cbOrigPtr = dbv->pszVal;
 			memcpy(dbv, pCachedValue, sizeof(DBVARIANT));
 			if (isStatic) {
 				int cbLen = 0;
-				if (pCachedValue->pszVal != NULL)
+				if (pCachedValue->pszVal != nullptr)
 					cbLen = (int)mir_strlen(pCachedValue->pszVal);
 
 				cbOrigLen--;
@@ -122,7 +121,7 @@ LBL_Seek:
 
 	DWORD ofsModuleName = GetModuleNameOfs(szModule);
 
-	DBContact dbc = *(DBContact*)DBRead(ofsContact, NULL);
+	DBContact dbc = *(DBContact*)DBRead(ofsContact, nullptr);
 	if (dbc.signature != DBCONTACT_SIGNATURE)
 		return 1;
 
@@ -185,14 +184,14 @@ LBL_Seek:
 					break;
 
 				case DBVT_ENCRYPTED:
-					if (m_crypto == NULL)
+					if (m_crypto == nullptr)
 						return 1;
 					else {
 						varLen = *(PWORD)(pBlob + 1);
 						NeedBytes(int(3 + varLen));
 						size_t realLen;
 						ptrA decoded(m_crypto->decodeString(pBlob + 3, varLen, &realLen));
-						if (decoded == NULL)
+						if (decoded == nullptr)
 							return 1;
 
 						varLen = (WORD)realLen;
@@ -217,7 +216,7 @@ LBL_Seek:
 				/**** add to cache **********************/
 				if (iType != DBVT_BLOB && iType != DBVT_ENCRYPTED) {
 					pCachedValue = m_cache->GetCachedValuePtr(contactID, szCachedSettingName, 1);
-					if (pCachedValue != NULL) {
+					if (pCachedValue != nullptr) {
 						m_cache->SetCachedVariant(dbv, pCachedValue);
 						log3("set cached [%08p] %s (%p)", hContact, szCachedSettingName, pCachedValue);
 					}
@@ -254,11 +253,11 @@ STDMETHODIMP_(BOOL) CDb3Mmap::GetContactSetting(MCONTACT contactID, LPCSTR szMod
 		return 1;
 
 	if (dbv->type == DBVT_UTF8) {
-		WCHAR *tmp = NULL;
+		WCHAR *tmp = nullptr;
 		char *p = NEWSTR_ALLOCA(dbv->pszVal);
-		if (mir_utf8decode(p, &tmp) != NULL) {
+		if (mir_utf8decode(p, &tmp) != nullptr) {
 			BOOL bUsed = FALSE;
-			int  result = WideCharToMultiByte(m_codePage, WC_NO_BEST_FIT_CHARS, tmp, -1, NULL, 0, NULL, &bUsed);
+			int  result = WideCharToMultiByte(m_codePage, WC_NO_BEST_FIT_CHARS, tmp, -1, nullptr, 0, nullptr, &bUsed);
 
 			mir_free(dbv->pszVal);
 
@@ -269,7 +268,7 @@ STDMETHODIMP_(BOOL) CDb3Mmap::GetContactSetting(MCONTACT contactID, LPCSTR szMod
 			else {
 				dbv->type = DBVT_ASCIIZ;
 				dbv->pszVal = (char *)mir_alloc(result);
-				WideCharToMultiByte(m_codePage, WC_NO_BEST_FIT_CHARS, tmp, -1, dbv->pszVal, result, NULL, NULL);
+				WideCharToMultiByte(m_codePage, WC_NO_BEST_FIT_CHARS, tmp, -1, dbv->pszVal, result, nullptr, nullptr);
 				mir_free(tmp);
 			}
 		}
@@ -297,9 +296,9 @@ STDMETHODIMP_(BOOL) CDb3Mmap::GetContactSettingStr(MCONTACT contactID, LPCSTR sz
 
 	if (iSaveType == DBVT_WCHAR) {
 		if (dbv->type != DBVT_UTF8) {
-			int len = MultiByteToWideChar(CP_ACP, 0, dbv->pszVal, -1, NULL, 0);
+			int len = MultiByteToWideChar(CP_ACP, 0, dbv->pszVal, -1, nullptr, 0);
 			wchar_t* wszResult = (wchar_t*)mir_alloc((len + 1)*sizeof(wchar_t));
-			if (wszResult == NULL)
+			if (wszResult == nullptr)
 				return 1;
 
 			MultiByteToWideChar(CP_ACP, 0, dbv->pszVal, -1, wszResult, len);
@@ -316,14 +315,14 @@ STDMETHODIMP_(BOOL) CDb3Mmap::GetContactSettingStr(MCONTACT contactID, LPCSTR sz
 	}
 	else if (iSaveType == DBVT_UTF8) {
 		char* tmpBuf = mir_utf8encode(dbv->pszVal);
-		if (tmpBuf == NULL)
+		if (tmpBuf == nullptr)
 			return 1;
 
 		mir_free(dbv->pszVal);
 		dbv->pszVal = tmpBuf;
 	}
 	else if (iSaveType == DBVT_ASCIIZ)
-		mir_utf8decode(dbv->pszVal, NULL);
+		mir_utf8decode(dbv->pszVal, nullptr);
 
 	dbv->type = iSaveType;
 	return 0;
@@ -331,11 +330,30 @@ STDMETHODIMP_(BOOL) CDb3Mmap::GetContactSettingStr(MCONTACT contactID, LPCSTR sz
 
 STDMETHODIMP_(BOOL) CDb3Mmap::GetContactSettingStatic(MCONTACT contactID, LPCSTR szModule, LPCSTR szSetting, DBVARIANT *dbv)
 {
+	bool bNeedsWchars;
+	size_t cbSaved;
+
+	if (dbv->type == DBVT_WCHAR) { // there's no wchar_t strings in a database, we need conversion
+		cbSaved = dbv->cchVal-1;
+		dbv->cchVal *= sizeof(wchar_t); // extend a room for the utf8 string
+		dbv->type = DBVT_UTF8;
+		bNeedsWchars = true;
+	}
+	else bNeedsWchars = false;
+
 	if (GetContactSettingWorker(contactID, szModule, szSetting, dbv, 1))
 		return 1;
 
-	if (dbv->type == DBVT_UTF8) {
-		mir_utf8decode(dbv->pszVal, NULL);
+	if (bNeedsWchars) {
+		char *pBuf = NEWSTR_ALLOCA(dbv->pszVal);
+		int cbLen = Utf8toUcs2(pBuf, dbv->cchVal, dbv->pwszVal, cbSaved);
+		if (cbLen < 0)
+			return 1;
+		
+		dbv->pwszVal[cbLen] = 0;
+	}
+	else if (dbv->type == DBVT_UTF8) {
+		mir_utf8decode(dbv->pszVal, nullptr);
 		dbv->type = DBVT_ASCIIZ;
 	}
 
@@ -364,7 +382,7 @@ STDMETHODIMP_(BOOL) CDb3Mmap::FreeVariant(DBVARIANT *dbv)
 
 STDMETHODIMP_(BOOL) CDb3Mmap::SetSettingResident(BOOL bIsResident, const char *pszSettingName)
 {
-	char *szSetting = m_cache->GetCachedSetting(NULL, pszSettingName, 0, (int)mir_strlen(pszSettingName));
+	char *szSetting = m_cache->GetCachedSetting(nullptr, pszSettingName, 0, (int)mir_strlen(pszSettingName));
 	szSetting[-1] = (char)bIsResident;
 
 	mir_cslock lck(m_csDbAccess);
@@ -381,7 +399,7 @@ STDMETHODIMP_(BOOL) CDb3Mmap::SetSettingResident(BOOL bIsResident, const char *p
 
 STDMETHODIMP_(BOOL) CDb3Mmap::WriteContactSetting(MCONTACT contactID, DBCONTACTWRITESETTING *dbcws)
 {
-	if (dbcws == NULL || dbcws->szSetting == NULL || dbcws->szModule == NULL || m_bReadOnly)
+	if (dbcws == nullptr || dbcws->szSetting == nullptr || dbcws->szModule == nullptr || m_bReadOnly)
 		return 1;
 
 	// the db format can't tolerate more than 255 bytes of space (incl. null) for settings+module name
@@ -403,9 +421,9 @@ STDMETHODIMP_(BOOL) CDb3Mmap::WriteContactSetting(MCONTACT contactID, DBCONTACTW
 	// used for notifications
 	DBCONTACTWRITESETTING dbcwNotif = *dbcws;
 	if (dbcwNotif.value.type == DBVT_WCHAR) {
-		if (dbcwNotif.value.pszVal != NULL) {
+		if (dbcwNotif.value.pszVal != nullptr) {
 			char* val = mir_utf8encodeW(dbcwNotif.value.pwszVal);
-			if (val == NULL)
+			if (val == nullptr)
 				return 1;
 
 			dbcwNotif.value.pszVal = (char*)alloca(mir_strlen(val) + 1);
@@ -416,27 +434,29 @@ STDMETHODIMP_(BOOL) CDb3Mmap::WriteContactSetting(MCONTACT contactID, DBCONTACTW
 		else return 1;
 	}
 
-	if (dbcwNotif.szModule == NULL || dbcwNotif.szSetting == NULL)
+	if (dbcwNotif.szModule == nullptr || dbcwNotif.szSetting == nullptr)
 		return 1;
 
 	DBCONTACTWRITESETTING dbcwWork = dbcwNotif;
+	char *szCachedSettingName = m_cache->GetCachedSetting(dbcwWork.szModule, dbcwWork.szSetting, moduleNameLen, settingNameLen);
+	bool bIsResident = szCachedSettingName[-1] != 0;
 
-	mir_ptr<BYTE> pEncoded(NULL);
+	mir_ptr<BYTE> pEncoded(nullptr);
 	bool bIsEncrypted = false;
 	switch (dbcwWork.value.type) {
 	case DBVT_BYTE: case DBVT_WORD: case DBVT_DWORD:
 		break;
 
 	case DBVT_ASCIIZ: case DBVT_UTF8:
-		bIsEncrypted = m_bEncrypted || IsSettingEncrypted(dbcws->szModule, dbcws->szSetting);
+		bIsEncrypted = !bIsResident && (m_bEncrypted || IsSettingEncrypted(dbcws->szModule, dbcws->szSetting));
 	LBL_WriteString:
-		if (dbcwWork.value.pszVal == NULL)
+		if (dbcwWork.value.pszVal == nullptr)
 			return 1;
 		dbcwWork.value.cchVal = (WORD)mir_strlen(dbcwWork.value.pszVal);
 		if (bIsEncrypted) {
 			size_t len;
 			BYTE *pResult = m_crypto->encodeString(dbcwWork.value.pszVal, &len);
-			if (pResult != NULL) {
+			if (pResult != nullptr) {
 				pEncoded = dbcwWork.value.pbVal = pResult;
 				dbcwWork.value.cpbVal = (WORD)len;
 				dbcwWork.value.type = DBVT_ENCRYPTED;
@@ -449,7 +469,7 @@ STDMETHODIMP_(BOOL) CDb3Mmap::WriteContactSetting(MCONTACT contactID, DBCONTACTW
 		goto LBL_WriteString;
 
 	case DBVT_BLOB: case DBVT_ENCRYPTED:
-		if (dbcwWork.value.pbVal == NULL)
+		if (dbcwWork.value.pbVal == nullptr)
 			return 1;
 		break;
 	default:
@@ -464,13 +484,12 @@ STDMETHODIMP_(BOOL) CDb3Mmap::WriteContactSetting(MCONTACT contactID, DBCONTACTW
 		return 2;
 	}
 
-	char *szCachedSettingName = m_cache->GetCachedSetting(dbcwWork.szModule, dbcwWork.szSetting, moduleNameLen, settingNameLen);
 	log3("set [%08p] %s (%p)", hContact, szCachedSettingName, szCachedSettingName);
 
 	// we don't cache blobs and passwords
 	if (dbcwWork.value.type != DBVT_BLOB && dbcwWork.value.type != DBVT_ENCRYPTED && !bIsEncrypted) {
 		DBVARIANT *pCachedValue = m_cache->GetCachedValuePtr(contactID, szCachedSettingName, 1);
-		if (pCachedValue != NULL) {
+		if (pCachedValue != nullptr) {
 			bool bIsIdentical = false;
 			if (pCachedValue->type == dbcwWork.value.type) {
 				switch (dbcwWork.value.type) {
@@ -485,7 +504,7 @@ STDMETHODIMP_(BOOL) CDb3Mmap::WriteContactSetting(MCONTACT contactID, DBCONTACTW
 			}
 			m_cache->SetCachedVariant(&dbcwWork.value, pCachedValue);
 		}
-		if (szCachedSettingName[-1] != 0) {
+		if (bIsResident) {
 			lck.unlock();
 			log2(" set resident as %s (%p)", printVariant(&dbcwWork.value), pCachedValue);
 			NotifyEventHooks(hSettingChangeEvent, contactID, (LPARAM)&dbcwWork);
@@ -497,7 +516,7 @@ STDMETHODIMP_(BOOL) CDb3Mmap::WriteContactSetting(MCONTACT contactID, DBCONTACTW
 	log1(" write database as %s", printVariant(&dbcwWork.value));
 
 	DWORD ofsModuleName = GetModuleNameOfs(dbcwWork.szModule);
-	DBContact dbc = *(DBContact*)DBRead(ofsContact, NULL);
+	DBContact dbc = *(DBContact*)DBRead(ofsContact, nullptr);
 	if (dbc.signature != DBCONTACT_SIGNATURE)
 		return 1;
 
@@ -630,11 +649,11 @@ STDMETHODIMP_(BOOL) CDb3Mmap::WriteContactSetting(MCONTACT contactID, DBCONTACTW
 		ofsDbcsPrev = dbc.ofsFirstSettings;
 		if (ofsDbcsPrev == ofsSettingsGroup) ofsDbcsPrev = 0;
 		else {
-			dbcsPrev = (DBContactSettings*)DBRead(ofsDbcsPrev, NULL);
+			dbcsPrev = (DBContactSettings*)DBRead(ofsDbcsPrev, nullptr);
 			while (dbcsPrev->ofsNext != ofsSettingsGroup) {
-				if (dbcsPrev->ofsNext == 0) DatabaseCorruption(NULL);
+				if (dbcsPrev->ofsNext == 0) DatabaseCorruption(nullptr);
 				ofsDbcsPrev = dbcsPrev->ofsNext;
-				dbcsPrev = (DBContactSettings*)DBRead(ofsDbcsPrev, NULL);
+				dbcsPrev = (DBContactSettings*)DBRead(ofsDbcsPrev, nullptr);
 			}
 		}
 
@@ -649,7 +668,7 @@ STDMETHODIMP_(BOOL) CDb3Mmap::WriteContactSetting(MCONTACT contactID, DBCONTACTW
 			DBWrite(ofsContact, &dbc, sizeof(DBContact));
 		}
 		else {
-			dbcsPrev = (DBContactSettings*)DBRead(ofsDbcsPrev, NULL);
+			dbcsPrev = (DBContactSettings*)DBRead(ofsDbcsPrev, nullptr);
 			dbcsPrev->ofsNext = ofsNew;
 			DBWrite(ofsDbcsPrev, dbcsPrev, offsetof(DBContactSettings, blob));
 		}
@@ -728,7 +747,7 @@ STDMETHODIMP_(BOOL) CDb3Mmap::DeleteContactSetting(MCONTACT contactID, LPCSTR sz
 		if (szCachedSettingName[-1] == 0) { // it's not a resident variable
 			DWORD ofsModuleName = GetModuleNameOfs(szModule);
 			DWORD ofsContact = GetContactOffset(contactID);
-			DBContact *dbc = (DBContact*)DBRead(ofsContact, NULL);
+			DBContact *dbc = (DBContact*)DBRead(ofsContact, nullptr);
 			if (dbc->signature != DBCONTACT_SIGNATURE)
 				return 1;
 
@@ -770,9 +789,15 @@ STDMETHODIMP_(BOOL) CDb3Mmap::DeleteContactSetting(MCONTACT contactID, LPCSTR sz
 			}
 			DBMoveChunk(ofsSettingToCut, ofsSettingToCut + nameLen + valLen, ofsBlobPtr + 1 - ofsSettingToCut);
 			DBFlush(1);
-		}
 
-		m_cache->GetCachedValuePtr(saveContact, szCachedSettingName, -1);
+			// remove a value from cache anyway
+			m_cache->GetCachedValuePtr(saveContact, szCachedSettingName, -1);
+		}
+		else { // resident variable
+			// if a value doesn't exist, simply return error
+			if (m_cache->GetCachedValuePtr(saveContact, szCachedSettingName, -1) == nullptr)
+				return 1;
+		}
 	}
 
 	// notify
@@ -784,9 +809,9 @@ STDMETHODIMP_(BOOL) CDb3Mmap::DeleteContactSetting(MCONTACT contactID, LPCSTR sz
 	return 0;
 }
 
-STDMETHODIMP_(BOOL) CDb3Mmap::EnumContactSettings(MCONTACT contactID, DBCONTACTENUMSETTINGS* dbces)
+STDMETHODIMP_(BOOL) CDb3Mmap::EnumContactSettings(MCONTACT contactID, DBSETTINGENUMPROC pfnEnumProc, const char *szModule, const void *param)
 {
-	if (!dbces->szModule)
+	if (!szModule)
 		return -1;
 
 	mir_cslock lck(m_csDbAccess);
@@ -795,16 +820,16 @@ STDMETHODIMP_(BOOL) CDb3Mmap::EnumContactSettings(MCONTACT contactID, DBCONTACTE
 	if (ofsContact == 0)
 		return -1;
 
-	DBContact *dbc = (DBContact*)DBRead(ofsContact, NULL);
+	DBContact *dbc = (DBContact*)DBRead(ofsContact, nullptr);
 	if (dbc->signature != DBCONTACT_SIGNATURE)
 		return -1;
 
-	DWORD ofsModuleName = GetModuleNameOfs(dbces->szModule);
-	dbces->ofsSettings = GetSettingsGroupOfsByModuleNameOfs(dbc, ofsModuleName);
-	if (!dbces->ofsSettings)
+	DWORD ofsModuleName = GetModuleNameOfs(szModule);
+	DWORD ofsSettings = GetSettingsGroupOfsByModuleNameOfs(dbc, ofsModuleName);
+	if (!ofsSettings)
 		return -1;
 
-	DWORD ofsBlobPtr = dbces->ofsSettings + offsetof(DBContactSettings, blob);
+	DWORD ofsBlobPtr = ofsSettings + offsetof(DBContactSettings, blob);
 	int bytesRemaining;
 	PBYTE pBlob = (PBYTE)DBRead(ofsBlobPtr, &bytesRemaining);
 	if (pBlob[0] == 0)
@@ -816,7 +841,7 @@ STDMETHODIMP_(BOOL) CDb3Mmap::EnumContactSettings(MCONTACT contactID, DBCONTACTE
 		NeedBytes(1 + pBlob[0]);
 		char szSetting[256];
 		memcpy(szSetting, pBlob + 1, pBlob[0]); szSetting[pBlob[0]] = 0;
-		result = (dbces->pfnEnumProc)(szSetting, dbces->lParam);
+		result = pfnEnumProc(szSetting, LPARAM(param));
 		MoveAlong(1 + pBlob[0]);
 		NeedBytes(3);
 		MoveAlong(1 + GetSettingValueLength(pBlob));
@@ -825,11 +850,12 @@ STDMETHODIMP_(BOOL) CDb3Mmap::EnumContactSettings(MCONTACT contactID, DBCONTACTE
 	return result;
 }
 
-STDMETHODIMP_(BOOL) CDb3Mmap::EnumResidentSettings(DBMODULEENUMPROC pFunc, void *pParam)
+STDMETHODIMP_(BOOL) CDb3Mmap::EnumResidentSettings(DBMODULEENUMPROC pFunc, const void *pParam)
 {
 	for (int i = 0; i < m_lResidentSettings.getCount(); i++) {
 		int ret = pFunc(m_lResidentSettings[i], 0, (LPARAM)pParam);
-		if (ret) return ret;
+		if (ret)
+			return ret;
 	}
 	return 0;
 }

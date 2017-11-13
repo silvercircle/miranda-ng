@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: SendSS.dll
 ;  Plugin: Send ScreenShot+
-;  Version: 0.8.9.1
+;  Version: 0.8.10.1
 ;  Authors: Merlin
 ;============================================================
 [Take a screenshot and send it to a contact.]
@@ -206,7 +206,7 @@ Strelica dolje
 
 [Screenshots]
 
-[Image services (AdvaImg) not found.\nSendSS disabled.]
+[Image services (AdvaImg plugin) not found.\nSendSS disabled.]
 
 [Buttons]
 

@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2010 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -42,7 +42,7 @@ struct CIcqProto;
 class avatars_server_connection : public MZeroedObject
 {
 	CIcqProto *ppro;
-	HANDLE hConnection;  // handle to the connection
+	HNETLIBCONN hConnection;  // handle to the connection
 	HANDLE hPacketRecver;
 	WORD   wLocalSequence;
 	mir_cs localSeqMutex, connMutex;
@@ -73,7 +73,7 @@ class avatars_server_connection : public MZeroedObject
 	void     checkRequestQueue();
 
 public:
-	avatars_server_connection(CIcqProto *ppro, HANDLE hConnection, char *pCookie, size_t wCookieLen);
+	avatars_server_connection(CIcqProto *ppro, HNETLIBCONN hConnection, char *pCookie, size_t wCookieLen);
 	virtual ~avatars_server_connection();
 
 	void connectionThread();
@@ -84,7 +84,7 @@ public:
 	__inline BOOL isPending() { return !isLoggedIn; };
 	__inline BOOL isReady() { return isLoggedIn && isActive && !stopThread; };
 
-	DWORD  sendGetAvatarRequest(MCONTACT hContact, DWORD dwUin, char *szUid, const BYTE *hash, size_t hashlen, const TCHAR *file);
+	DWORD  sendGetAvatarRequest(MCONTACT hContact, DWORD dwUin, char *szUid, const BYTE *hash, size_t hashlen, const wchar_t *file);
 	DWORD  sendUploadAvatarRequest(MCONTACT hContact, WORD wRef, const BYTE *data, size_t datalen);
 };
 
@@ -96,7 +96,7 @@ struct avatars_request : public MZeroedObject
 	uid_str  szUid;
 	BYTE    *hash;
 	size_t   hashlen;
-	TCHAR   *szFile;
+	wchar_t   *szFile;
 	BYTE    *pData;
 	size_t   cbData;
 	WORD     wRef;
@@ -107,14 +107,12 @@ public:
 	virtual ~avatars_request();
 };
 
-__inline static void SAFE_DELETE(avatars_request **p) { SAFE_DELETE((MZeroedObject**)p); };
-
 #define ART_GET     1
 #define ART_UPLOAD  2
 #define ART_BLOCK   4
 
-void AddAvatarExt(int dwFormat, TCHAR *pszDest);
+void AddAvatarExt(int dwFormat, wchar_t *pszDest);
 
-BYTE* calcMD5HashOfFile(const TCHAR *szFile);
+BYTE* calcMD5HashOfFile(const wchar_t *szFile);
 
 #endif /* __ICQ_AVATAR_H */

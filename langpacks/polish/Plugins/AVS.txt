@@ -14,8 +14,8 @@ Ustawione tutaj obrazki są wyświetlane jako domyślne awatary\ndla kontaktów 
 Wybierz domyślny obrazek
 [Delete default picture]
 Usuń domyślny obrazek
-[CAUTION: These pictures are NOT your own avatars.\nTo set your own Avatar go to Main menu | View/change my details | Avatars.]
-Uwaga: te obrazy nie są twoimi awatarami.\nAby ustawić swojego awatara, przejdź do menu głównego | Pokaż zmień moje dane | Awatary\n
+[CAUTION: These pictures are NOT your own avatars.\nTo set your own avatar go to Main menu -> View/change my details -> Avatar.]
+UWAGA: Te zdjęcia NIE są Twoimi awatarami.\nAby ustawić swojego awatara, przejdź do Menu głównego -> Pokaż/Zmień moje dane -> Awatar.
 [Try to draw avatar background transparent (for images without transparency)]
 Próbuj rysować przezroczyste tło awataru (dla obrazku bez przezroczystości)
 [Number of points to define background:]
@@ -92,7 +92,7 @@ Moje awatary
 Cache mojego głównego awataru
 [Fatal error, image services not found. Avatar services will be disabled.]
 Błąd, nie znaleziono wtyczki "advaimg.dll". Usługa awatarów zostanie wyłączona.
-[Avatar Service]
+[Avatar service]
 Usługa awatarów
 ;file \plugins\AVS\src\options.cpp
 [Set avatar options for %s]
@@ -115,8 +115,6 @@ Twoje awatary
 Brak awatara
 [Are you sure you want to remove your avatar?]
 Czy na pewno chcesz usunąć swój awatar?
-[Global Avatar]
-Globalny Awatar
 [Avatar]
 Awatar
 ;file \plugins\AVS\src\services.cpp
@@ -136,7 +134,7 @@ Animacja Flash
 Pliki XML
 [Grow avatar to fit max allowed protocol size]
 Dopasuj awatar do maksymalnego dozwolonego rozmiaru protokołu
-[Set My Avatar]
+[Set my avatar]
 Ustaw mój awatar
-[Set My Avatar for %s]
+[Set my avatar for %s]
 Ustaw mój awatar dla %s

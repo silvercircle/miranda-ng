@@ -1,7 +1,7 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
 
-Copyright (c) 2012-2014 Miranda NG Team
+Copyright (c) 2012-2017 Miranda NG Team
 Copyright (c) 2006-2012 Boris Krasnovskiy.
 Copyright (c) 2003-2005 George Hazan.
 Copyright (c) 2002-2003 Richard Hughes (original version).
@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "stdafx.h"
 #include "msn_proto.h"
 
-static ThreadData* FindThreadConn(HANDLE hConn)
+static ThreadData* FindThreadConn(HNETLIBCONN hConn)
 {
 	ThreadData *res = NULL;
 	for (int i = 0; i < g_Instances.getCount() && res == NULL; ++i)
@@ -36,15 +36,14 @@ static ThreadData* FindThreadConn(HANDLE hConn)
 // Fake function - it does nothing but confirms successful session initialization
 //=======================================================================================
 
-int msn_httpGatewayInit(HANDLE hConn, NETLIBOPENCONNECTION*, NETLIBHTTPREQUEST*)
+int msn_httpGatewayInit(HNETLIBCONN hConn, NETLIBOPENCONNECTION*, NETLIBHTTPREQUEST*)
 {
-	NETLIBHTTPPROXYINFO nlhpi = { 0 };
-	nlhpi.cbSize = sizeof(nlhpi);
+	NETLIBHTTPPROXYINFO nlhpi = {};
 	nlhpi.szHttpGetUrl = NULL;
 	nlhpi.szHttpPostUrl = "messenger.hotmail.com";
 	nlhpi.flags = NLHPIF_HTTP11;
 	nlhpi.combinePackets = MSN_PACKETS_COMBINE;
-	return CallService(MS_NETLIB_SETHTTPPROXYINFO, (WPARAM)hConn, (LPARAM)&nlhpi);
+	return Netlib_SetHttpProxyInfo(hConn, &nlhpi);
 }
 
 //=======================================================================================
@@ -52,7 +51,7 @@ int msn_httpGatewayInit(HANDLE hConn, NETLIBOPENCONNECTION*, NETLIBHTTPREQUEST*)
 // function generates the initial URL depending on a thread type
 //=======================================================================================
 
-int msn_httpGatewayWrapSend(HANDLE hConn, PBYTE buf, int len, int flags, MIRANDASERVICE pfnNetlibSend)
+int msn_httpGatewayWrapSend(HNETLIBCONN hConn, PBYTE buf, int len, int flags)
 {
 	ThreadData *T = FindThreadConn(hConn);
 	if (T != NULL) {
@@ -62,8 +61,7 @@ int msn_httpGatewayWrapSend(HANDLE hConn, PBYTE buf, int len, int flags, MIRANDA
 		T->applyGatewayData(hConn, len == 0);
 	}
 
-	NETLIBBUFFER tBuf = { (char*)buf, len, flags };
-	return pfnNetlibSend((LPARAM)hConn, WPARAM(&tBuf));
+	return Netlib_Send(hConn, (char*)buf, len, flags);
 }
 
 //=======================================================================================

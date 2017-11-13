@@ -3,7 +3,7 @@
 Omegle plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2011-15 Robert Pösel
+Copyright © 2011-17 Robert Pösel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -30,6 +30,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define STATE_DISCONNECTING		3	// disconnecting from stranger
 #define STATE_SPY				4	// spy mode (read-only)
 
+#define HANDLE_ENTRY handle_entry(__FUNCTION__)
+#define HANDLE_SUCCESS handle_success(__FUNCTION__)
+#define HANDLE_ERROR(force_disconnect) handle_error(__FUNCTION__, force_disconnect)
+
 class Omegle_client
 {
 public:
@@ -39,10 +43,9 @@ public:
 	{
 		nick_ = NULL;
 		//msgid_ = 0;
-		send_message_lock_ = NULL;
 		state_ = STATE_INACTIVE;
 
-		old_typing_ = typing_ = spy_mode_ = false;
+		typing_ = spy_mode_ = false;
 
 		error_count_ = 0;
 
@@ -54,8 +57,8 @@ public:
 		chatHandle_ = NULL;
 	}
 
-	HANDLE hConnection;
-	HANDLE hEventsConnection;
+	HNETLIBCONN hConnection;
+	HNETLIBCONN hEventsConnection;
 	HANDLE connection_lock_;
 	HANDLE chatHandle_;
 
@@ -66,20 +69,18 @@ public:
 	std::string chat_id_;
 	std::string server_;
 	std::string question_;
-	ptrT nick_;
+	ptrW nick_;
 
-	HANDLE send_message_lock_;
 	//int	msgid_;
-	
+
 	// State of client
 	int state_;
 	bool typing_;
-	bool old_typing_;
 	bool spy_mode_;
 
 	// Data storage
 	void    store_headers(http::response *resp, NETLIBHTTPHEADER *headers, int headers_count);
-	
+
 	std::string get_server(bool not_last = false);
 	std::string get_language();
 
@@ -91,8 +92,8 @@ public:
 	bool    handle_error(const std::string &method, bool force_disconnect = false);
 
 	void __inline increment_error() { error_count_++; }
-	void __inline decrement_error() { if ( error_count_ > 0 ) error_count_--; }
-	void __inline reset_error() { error_count_ = 0; }	
+	void __inline decrement_error() { if (error_count_ > 0) error_count_--; }
+	void __inline reset_error() { error_count_ = 0; }
 
 	bool    start();
 	bool    stop();
@@ -103,7 +104,7 @@ public:
 	bool    recaptcha();
 
 	std::string get_page(int);
-	
+
 	bool    send_message(const std::string &message_text);
 
 	// HTTP communication
@@ -116,9 +117,9 @@ public:
 
 	// Netlib handle
 
-	HANDLE handle_;
+	HNETLIBUSER handle_;
 
-	void set_handle(HANDLE h)
+	void set_handle(HNETLIBUSER h)
 	{
 		handle_ = h;
 	}

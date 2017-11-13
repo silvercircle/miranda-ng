@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <m_langpack.h>
 #include <m_icolib.h>
 #include <m_message.h>
-#include <m_clist.h>
+#include <m_clistint.h>
 #include <m_hotkeys.h>
 #include <win2k.h>
 
@@ -39,12 +39,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <m_sessions.h>
 
 #include "Utils.h"
-#include "Version.h"
+#include "version.h"
 #include "Resource.h"
 
 #define MODNAME "Sessions"
-
-#define MS_SESSIONS_LAUNCHME "Sessions/Service/LaunchMe"
 
 extern IconItem iconList[];
 
@@ -55,7 +53,7 @@ int DeleteAutoSession(int ses_count);
 int LoadSession(WPARAM, LPARAM);
 int SaveSessionHandles(WPARAM, LPARAM);
 INT_PTR SaveUserSessionHandles(WPARAM, LPARAM);
-int SaveUserSessionName(TCHAR*);
+int SaveUserSessionName(wchar_t*);
 INT_PTR CloseCurrentSession(WPARAM, LPARAM);
 int SaveSessionDate();
 
@@ -70,6 +68,6 @@ extern bool g_bOtherWarnings;
 extern bool g_bCrashRecovery;
 extern bool g_bIncompletedSave;
 
-#define TIMERID_LOAD		  12
-#define TIMERID_SHOW          11
-#define TIMERID_REBUILDAFTER   14
+#define TIMERID_SHOW 11
+#define TIMERID_LOAD 12
+

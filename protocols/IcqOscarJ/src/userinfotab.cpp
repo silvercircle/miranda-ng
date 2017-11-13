@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2010 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -52,14 +52,14 @@ static void SetValue(CIcqProto* ppro, HWND hwndDlg, int idCtrl, MCONTACT hContac
 	dbv.type = DBVT_DELETED;
 
 	if ((hContact == NULL) && ((INT_PTR)szModule < 0x100)) {
-		dbv.type = (BYTE)szModule;
+		dbv.type = (INT_PTR)szModule;
 
 		switch ((INT_PTR)szModule) {
 		case DBVT_BYTE:
-			dbv.cVal = (BYTE)szSetting;
+			dbv.cVal = (INT_PTR)szSetting;
 			break;
 		case DBVT_WORD:
-			dbv.wVal = (WORD)szSetting;
+			dbv.wVal = (INT_PTR)szSetting;
 			break;
 		case DBVT_DWORD:
 			dbv.dVal = (UINT_PTR)szSetting;
@@ -232,9 +232,10 @@ static INT_PTR CALLBACK IcqDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
 					SetValue(ppro, hwndDlg, IDC_STATUS, hContact, szProto, "Status", SVS_STATUSID);
 				}
 				else {
+					MFileVersion v;
+					Miranda_GetFileVersion(&v);
+
 					char str[MAX_PATH];
-					WORD v[4];
-					CallService(MS_SYSTEM_GETFILEVERSION, 0, (LPARAM)&v);
 					mir_snprintf(str, "Miranda NG %d.%d.%d.%d (ICQ %s)", v[0], v[1], v[2], v[3], __VERSION_STRING_DOTS);
 
 					SetValue(ppro, hwndDlg, IDC_PORT, hContact, (char*)DBVT_WORD, (char*)ppro->wListenPort, SVS_ZEROISUNSPEC);
@@ -268,19 +269,19 @@ int CIcqProto::OnUserInfoInit(WPARAM wParam, LPARAM lParam)
 		return 0;
 
 	OPTIONSDIALOGPAGE odp = { 0 };
-	odp.flags = ODPF_TCHAR | ODPF_DONTTRANSLATE;
+	odp.flags = ODPF_UNICODE | ODPF_DONTTRANSLATE;
 	odp.hInstance = hInst;
 	odp.dwInitParam = LPARAM(this);
 	odp.pfnDlgProc = IcqDlgProc;
 	odp.position = -1900000000;
-	odp.ptszTitle = m_tszUserName;
+	odp.szTitle.w = m_tszUserName;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_INFO_ICQ);
 	UserInfo_AddPage(wParam, &odp);
 
 	if (!lParam) {
-		TCHAR buf[200];
-		mir_sntprintf(buf, TranslateT("%s Details"), m_tszUserName);
-		odp.ptszTitle = buf;
+		wchar_t buf[200];
+		mir_snwprintf(buf, TranslateT("%s Details"), m_tszUserName);
+		odp.szTitle.w = buf;
 
 		odp.position = -1899999999;
 		odp.pszTemplate = MAKEINTRESOURCEA(IDD_INFO_CHANGEINFO);

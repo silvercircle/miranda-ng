@@ -3,7 +3,7 @@
 
 struct send_direct
 {
-	send_direct(MCONTACT hContact, const std::string &msg, HANDLE msgid, bool isChat = false) :
+	send_direct(MCONTACT hContact, const std::string &msg, HANDLE msgid) :
 		hContact(hContact), msg(msg), msgid(msgid)
 		{}
 
@@ -14,9 +14,9 @@ struct send_direct
 
 struct input_box
 {
-	tstring text;
-	tstring title;
-	tstring defaultValue;
+	wstring text;
+	wstring title;
+	wstring defaultValue;
 	int limit;
 
 	void(__cdecl WhatsAppProto::*thread)(void*);

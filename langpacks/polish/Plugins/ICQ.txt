@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: ICQ.dll
 ;  Plugin: IcqOscarJ protocol
-;  Version: 0.11.3.4
+;  Version: 0.11.3.5
 ;  Authors: Joe Kucera, Bio, Martin Öberg, Richard Hughes, Jon Keating, etc.
 ;============================================================
 [ICQ protocol support for Miranda NG.]
@@ -78,8 +78,8 @@ Włącz wsparcie dla awatarów
 Sprawdź ważność awataru przed zapisaniem *
 [Load avatars automatically (like ICQ Lite)]
 Wczytuj awatary automatycznie (jak ICQ Lite)
-[You will need to reconnect to the ICQ network for the changes you have made on this page to take effect.]
-Musisz ponownie połączyć się z siecią ICQ żeby zmiany na tej stronie przyniosły rezultat.
+[These changes will take effect the next time you connect to the ICQ network.]
+Te zmiany zostaną wprowadzone gdy ponownie połączysz się z siecią ICQ.
 [You cannot enable/disable the server-side contact list while you are connected to the ICQ network.]
 Nie możesz włączyć/wyłączyć listy kontaktów po stronie serwera kiedy jesteś połączony z ICQ.
 [Note: The options marked with an asterisk have important side-effects or caveats that may not be initially apparent documented in the help.]
@@ -110,8 +110,6 @@ Resetuj domyślny status i wybieraj ponownie
 Automatycznie pobieraj informacje o statusie niestandardowym
 [Block known Spam Bots]
 Blokuj znane Spam Boty
-[Enable AIM contacts support]
-Włącz wsparcie dla kontaktów protokołu AIM
 [Direct connections]
 Bezpośrednie połączenia
 [Allowing direct connections will expose your IP address but may be necessary for some ICQ features to work properly.]
@@ -229,7 +227,7 @@ Język:
 [Country:]
 Kraj:
 [State:]
-Status:
+Stan:
 [City:]
 Miasto:
 [Background info]
@@ -656,7 +654,7 @@ Kolumbia
 [Comoros]
 Komory
 [Congo, Democratic Republic of the]
-Kongo, Demokratyczna Republika
+Demokratyczna Republika Konga
 [Congo, Republic of the]
 Kongo
 [Cook Islands]
@@ -1544,8 +1542,8 @@ Nie możesz wpisać numeru ICQ.\nSkonfiguruj to w Opcje -> Sieć -> ICQ, i spró
 Nie udało się połączyć z serwerem logowania ICQ. Nie udało się wynegocjować połączenia szyfrowanego SSL.
 [Unable to connect to ICQ login server]
 Nie można połączyć się z serwerem logowania ICQ
-[Miranda was unable to allocate a port to listen for direct peer-to-peer connections between clients. You will be able to use most of the ICQ network without problems but you may be unable to send or receive files.\n\nIf you have a firewall this may be blocking Miranda, in which case you should configure your firewall to leave some ports open and tell Miranda which ports to use in Options -> ICQ -> Network.]
-Miranda nie była w stanie przydzielić portu nasłuchu połączeń bezpośrednich P2P pomiędzy klientami. Będziesz w stanie używać większości funkcji sieci ICQ normalnie, ale możesz napotkać na problemy przy próbie wysyłania i odbierania plików.\n\nJeśli używasz firewalla, może być to czynnik blokujący Mirandę. W tym przypadku skonfiguruj firewall tak, by pozostawić otwarte porty, a następnie wskaż Mirandzie porty, które powinny być używane w Opcje -> ICQ -> Sieć.
+[Miranda was unable to allocate a port to listen for direct peer-to-peer connections between clients. You will be able to use most of the ICQ network without problems but you may be unable to send or receive files.\n\nIf you have a firewall this may be blocking Miranda, in which case you should configure your firewall to leave some ports open and tell Miranda which ports to use in Options -> Network -> ICQ client-to-client connections.]
+Miranda nie była w stanie przydzielić portu nasłuchu połączeń bezpośrednich P2P pomiędzy klientami. Będziesz w stanie używać większości funkcji sieci ICQ normalnie, ale możesz napotkać na problemy przy próbie wysyłania i odbierania plików.\n\nJeśli używasz firewalla, może być to czynnik blokujący Mirandę. W tym przypadku skonfiguruj firewall tak, by pozostawić otwarte porty, a następnie wskaż Mirandzie porty, które powinny być używane w Opcje -> Sieć -> Połączenie Klient-do-Klienta ICQ.
 [Connection failed.\nLogin sequence failed for unknown reason.\nTry again later.]
 Połączenie nieudane.\nSekwencja logowania nie powiodła się z nieznanej przyczyny.\nSpróbuj ponownie później.
 [Your connection with the ICQ server was abortively closed]
@@ -1739,8 +1737,8 @@ Kot
 Sumo
 [Broken hearted]
 Złamane serce
-[Free for Chat]
-Chętny do rozmowy
+[Free for chat]
+Porozmawiajmy
 [@home]
 @dom
 [@work]
@@ -1783,6 +1781,8 @@ Niestandardowy status
 [Greeting card:]
 Kartka powitalna:
 ;file \protocols\IcqOscarJ\src\init.cpp
+[Expand string edit]
+
 [ICQ xStatus]
 ICQ xStatus
 ;file \protocols\IcqOscarJ\src\log.cpp

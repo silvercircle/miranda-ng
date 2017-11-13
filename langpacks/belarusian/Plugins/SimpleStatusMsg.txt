@@ -2,12 +2,11 @@
 ;============================================================
 ;  File: SimpleStatusMsg.dll
 ;  Plugin: Simple status message
-;  Version: 1.9.0.5
+;  Version: 1.9.0.6
 ;  Authors: Bartosz 'Dezeath' Bialek, Harven
 ;============================================================
 [Provides a simple way to set status and away messages.]
 Хуткая зьмена статусаў і статусных паведамленьняў.
-;file \plugins\SimpleStatusMsg\res\resource.rc
 [%s message for %s]
 %s (%s)
 [&Cancel]
@@ -65,7 +64,7 @@
 [Enable status messages parsing by Variables plugin]
 Дазволіць апрацоўку статуснага паведамлення плагінам Variables
 [Exclude %date% token from parsing (restart required)]
-Выключыць маркер  %date% з апрацоўкі (патрабуецца перазапуск)
+Выключыць маркер %date% з апрацоўкі (патрабуецца перазапуск)
 [Layout]
 Размяшчэнне
 [Show status list]
@@ -96,8 +95,8 @@
 Сцерці гісторыю
 [Clear Predefined]
 Сцерці
-[* This feature is available only when using StartupStatus plugin.]
-* Гэта магчымасць даступная толькі пры выкарыстанні дадатку StartupStatus
+[* This feature is available only when using StatusManager plugin.]
+* Гэта магчымасць даступная толькі пры выкарыстанні дадатку StatusManager.
 [Status on startup]
 Пачатковы стан
 [Set status after]
@@ -112,6 +111,44 @@
 Незалежна для кожнага пратакола
 [Pop up dialog asking for status message]
 Паказваць вакно запытання смены статуса
+[Fortune]
+
+[?cinfo(contact,property)]
+
+[?contact(string,property)]
+
+[?mstatus(protocol)]
+
+[?lsdate(contact,format)]
+
+[?lsstatus(contact)]
+
+[?lstime(contact,format)]
+
+[?dbsetting(contact,module,setting)]
+
+[?txtfile(file,line)]
+
+[?if(condition,true,false)]
+
+[?strcmp(string1,string2)]
+
+[?stricmp(string1,string2)]
+
+[?cdate(format)]
+
+[?ctime(format)]
+
+[?replace(sub,string1,string2)]
+
+[?lower(string)]
+
+[?upper(string)]
+
+[?scroll(string,numchars,numchars)]
+
+[More variables...]
+
 [Cut]
 Выразаць
 [Copy]
@@ -122,20 +159,22 @@
 Выдаліць
 [Select all]
 Вылучыць усё
-;file \plugins\SimpleStatusMsg\src\awaymsg.cpp
+[Failed to retrieve %s message.]
+
 [&Close]
 &Зачыніць
 [Re&ad %s message]
 &Прачытаць паведамленне "%s"
 [Copy %s message]
 Капіяваць паведамленне %s
+[&Go to URL in %s message]
+
 [Re&ad Away message]
 Пра&чытаць паведамленне "Адсутнічаю"
 [Copy Away message]
 Скапіяваць паведамленне статусу
 [&Go to URL in Away message]
 &Адкрыць спасылку
-;file \plugins\SimpleStatusMsg\src\main.cpp
 [Change status message]
 Змяніць паведамленне статуса
 [Open status message dialog]
@@ -148,9 +187,14 @@
 %s (заблакаваны)
 [External Applications]
 Знешнія прыкладанні
+[retrieves song name of the song currently playing in Winamp (Simple Status Message compatible)]
+
 [Miranda Related]
 Адносіцца да Miranda
-;file \plugins\SimpleStatusMsg\src\msgbox.cpp
+[get the date (Simple Status Message compatible)]
+
+[<startup>]
+
 [<current>]
 <бягучы>
 [Clear history]
@@ -167,7 +211,6 @@
 Вы ўпэўнены, што хочаце удаліць гісторыю статусных паведамленняў?
 [Confirm clearing history]
 Пацьвярджэнне выданення гісторыі
-;file \plugins\SimpleStatusMsg\src\options.cpp
 [Global status change]
 Глабальны статус
 [Open string formatting help]
@@ -186,13 +229,14 @@
 Пацвярджэнне выдалення наладжаных паведамленняў
 [<last status>]
 <Апошні>
+[Startup status]
+Пачатковы статус
 [Status]
 Статус
 [General]
 Агульнае
 [Advanced]
 Дадаткова
-;file \plugins\SimpleStatusMsg\src\utils.cpp
 [Recent message]
 Апошняе паведамленне
 [Predefined message]

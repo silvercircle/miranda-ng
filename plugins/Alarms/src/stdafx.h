@@ -16,7 +16,6 @@
 #include <m_popup.h>
 #include <m_clist.h>
 #include <m_idle.h>
-#include <m_clui.h>
 #include <m_cluiframes.h>
 #include <m_fontservice.h>
 #include <m_icolib.h>
@@ -36,16 +35,16 @@ extern HANDLE hTopToolbarButton;
 
 typedef struct ALARM_tag {
 	unsigned short id;
-	TCHAR *szTitle;
-	TCHAR *szDesc;
+	wchar_t *szTitle;
+	wchar_t *szDesc;
 	Occurrence occurrence;
 	BOOL snoozer;
 	SYSTEMTIME time;
 	unsigned short action;
-	TCHAR *szCommand;
-	TCHAR *szCommandParams;
+	wchar_t *szCommand;
+	wchar_t *szCommandParams;
 	BYTE sound_num;
-	int flags;
+	int flags, day_mask;
 } ALARM;
 
 #endif

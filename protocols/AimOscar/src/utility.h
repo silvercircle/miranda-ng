@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 char *normalize_name(const char *s);
 char* trim_str(char* s);
 void create_group(const char *group);
-unsigned int aim_oft_checksum_file(TCHAR *filename, unsigned __int64 size = -1);
+unsigned int aim_oft_checksum_file(wchar_t *filename, unsigned __int64 size = -1);
 char* long_ip_to_char_ip(unsigned long host, char* ip);
 unsigned long char_ip_to_long_ip(char* ip);
 unsigned short get_random(void);
@@ -30,7 +30,6 @@ unsigned short get_random(void);
 inline int cap_cmp(const char* cap, const char* cap2) { return memcmp(cap, cap2, 16); }
 inline const char* alpha_cap_str(char ver) { return (ver & 0x80) ? " Alpha" : ""; }
 inline const char* secure_cap_str(char* ver) { return (*(int*)ver == 0xDEC0FE5A) ? " + SecureIM" : ""; }
-
 
 struct BdListItem
 {

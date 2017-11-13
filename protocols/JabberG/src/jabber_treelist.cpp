@@ -5,7 +5,7 @@ Jabber Protocol Plugin for Miranda NG
 Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
 Copyright (c) 2007     Victor Pavlychko
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -41,12 +41,12 @@ struct TTreeList_ItemInfo
 
 	struct TTreeList_ItemInfo *parent;
 	int iIcon, iOverlay;
-	LIST<TCHAR> text;
+	LIST<wchar_t> text;
 	LPARAM data;
 	LIST<TTreeList_ItemInfo> subItems;
 
 	TTreeList_ItemInfo(int columns = 3, int children = 5):
-		text(columns), subItems(children), parent(NULL),
+		text(columns), subItems(children), parent(nullptr),
 		flags(0), indent(0), sortIndex(0), iIcon(0), iOverlay(0), data(0) {}
 	~TTreeList_ItemInfo()
 	{
@@ -61,17 +61,17 @@ struct TTreeList_ItemInfo
 struct TTreeList_Data
 {
 	int mode, sortMode;
-	TCHAR *filter;
+	wchar_t *filter;
 	HTREELISTITEM hItemSelected;
 	TTreeList_ItemInfo *root;
 
 	TTreeList_Data()
 	{
 		sortMode = 0;
-		filter = NULL;
+		filter = nullptr;
 		mode = TLM_TREE;
-		root = NULL;
-		hItemSelected = NULL;
+		root = nullptr;
+		hItemSelected = nullptr;
 	}
 	~TTreeList_Data()
 	{
@@ -178,12 +178,12 @@ void TreeList_SetSortMode(HWND hwnd, int col, BOOL descending)
 	TreeList_Update(hwnd);
 }
 
-void TreeList_SetFilter(HWND hwnd, TCHAR *filter)
+void TreeList_SetFilter(HWND hwnd, wchar_t *filter)
 {
 	TTreeList_Data *data = (TTreeList_Data *)sttTreeList_GeWindowData(hwnd);
 	if (data->filter) mir_free(data->filter);
-	data->filter = NULL;
-	if (filter) data->filter = mir_tstrdup(filter);
+	data->filter = nullptr;
+	if (filter) data->filter = mir_wstrdup(filter);
 	TreeList_Update(hwnd);
 }
 
@@ -194,12 +194,12 @@ HTREELISTITEM TreeList_GetActiveItem(HWND hwnd)
 	lvi.mask = LVIF_PARAM;
 	lvi.iItem = ListView_GetNextItem(hwnd, -1, LVNI_SELECTED);
 	if (lvi.iItem < 0)
-		return (data->hItemSelected->flags & TLIF_ROOT) ? NULL : data->hItemSelected;
+		return (data->hItemSelected->flags & TLIF_ROOT) ? nullptr : data->hItemSelected;
 	ListView_GetItem(hwnd, &lvi);
 	return (HTREELISTITEM)lvi.lParam;
 }
 
-HTREELISTITEM TreeList_AddItem(HWND hwnd, HTREELISTITEM hParent, TCHAR *text, LPARAM nodeDdata)
+HTREELISTITEM TreeList_AddItem(HWND hwnd, HTREELISTITEM hParent, wchar_t *text, LPARAM nodeDdata)
 {
 	TTreeList_Data *data = (TTreeList_Data *)sttTreeList_GeWindowData(hwnd);
 	if (!hParent) hParent = data->root;
@@ -207,7 +207,7 @@ HTREELISTITEM TreeList_AddItem(HWND hwnd, HTREELISTITEM hParent, TCHAR *text, LP
 	TTreeList_ItemInfo *item = new TTreeList_ItemInfo;
 	item->data = nodeDdata;
 	item->parent = hParent;
-	item->text.insert(mir_tstrdup(text));
+	item->text.insert(mir_wstrdup(text));
 	item->flags |= TLIF_MODIFIED;
 	if (hParent->flags & TLIF_ROOT) {
 		item->flags |= TLIF_EXPANDED;
@@ -239,9 +239,9 @@ void TreeList_MakeFakeParent(HTREELISTITEM hItem, BOOL flag)
 	hItem->flags |= TLIF_MODIFIED;
 }
 
-void TreeList_AppendColumn(HTREELISTITEM hItem, TCHAR *text)
+void TreeList_AppendColumn(HTREELISTITEM hItem, wchar_t *text)
 {
-	hItem->text.insert(mir_tstrdup(text));
+	hItem->text.insert(mir_wstrdup(text));
 	hItem->flags |= TLIF_MODIFIED;
 }
 
@@ -249,7 +249,7 @@ int TreeList_AddIcon(HWND hwnd, HICON hIcon, int iOverlay)
 {
 	HIMAGELIST hIml = ListView_GetImageList(hwnd, LVSIL_SMALL);
 	int idx = ImageList_AddIcon(hIml, hIcon);
-	g_ReleaseIcon(hIcon);
+	IcoLib_ReleaseIcon(hIcon);
 	if (iOverlay) ImageList_SetOverlayImage(hIml, idx, iOverlay);
 	return idx;
 }
@@ -469,12 +469,12 @@ BOOL TreeList_ProcessMessage(HWND hwnd, UINT msg, WPARAM, LPARAM lparam, UINT id
 }
 
 ///////////////////////////////////////////////////////////////////////////
-static int sttTreeList_SortItems_Cmp0(const void *p1, const void *p2) { return  mir_tstrcmp((*(HTREELISTITEM *)p1)->text[0], (*(HTREELISTITEM *)p2)->text[0]); }
-static int sttTreeList_SortItems_Cmp1(const void *p1, const void *p2) { return -mir_tstrcmp((*(HTREELISTITEM *)p1)->text[0], (*(HTREELISTITEM *)p2)->text[0]); }
-static int sttTreeList_SortItems_Cmp2(const void *p1, const void *p2) { return  mir_tstrcmp((*(HTREELISTITEM *)p1)->text[1], (*(HTREELISTITEM *)p2)->text[1]); }
-static int sttTreeList_SortItems_Cmp3(const void *p1, const void *p2) { return -mir_tstrcmp((*(HTREELISTITEM *)p1)->text[1], (*(HTREELISTITEM *)p2)->text[1]); }
-static int sttTreeList_SortItems_Cmp4(const void *p1, const void *p2) { return  mir_tstrcmp((*(HTREELISTITEM *)p1)->text[2], (*(HTREELISTITEM *)p2)->text[2]); }
-static int sttTreeList_SortItems_Cmp5(const void *p1, const void *p2) { return -mir_tstrcmp((*(HTREELISTITEM *)p1)->text[2], (*(HTREELISTITEM *)p2)->text[2]); }
+static int sttTreeList_SortItems_Cmp0(const void *p1, const void *p2) { return  mir_wstrcmp((*(HTREELISTITEM *)p1)->text[0], (*(HTREELISTITEM *)p2)->text[0]); }
+static int sttTreeList_SortItems_Cmp1(const void *p1, const void *p2) { return -mir_wstrcmp((*(HTREELISTITEM *)p1)->text[0], (*(HTREELISTITEM *)p2)->text[0]); }
+static int sttTreeList_SortItems_Cmp2(const void *p1, const void *p2) { return  mir_wstrcmp((*(HTREELISTITEM *)p1)->text[1], (*(HTREELISTITEM *)p2)->text[1]); }
+static int sttTreeList_SortItems_Cmp3(const void *p1, const void *p2) { return -mir_wstrcmp((*(HTREELISTITEM *)p1)->text[1], (*(HTREELISTITEM *)p2)->text[1]); }
+static int sttTreeList_SortItems_Cmp4(const void *p1, const void *p2) { return  mir_wstrcmp((*(HTREELISTITEM *)p1)->text[2], (*(HTREELISTITEM *)p2)->text[2]); }
+static int sttTreeList_SortItems_Cmp5(const void *p1, const void *p2) { return -mir_wstrcmp((*(HTREELISTITEM *)p1)->text[2], (*(HTREELISTITEM *)p2)->text[2]); }
 
 static void sttTreeList_SortItems(HTREELISTITEM hItem, LPARAM data)
 {
@@ -509,7 +509,7 @@ static void sttTreeList_FilterItems(HTREELISTITEM hItem, LPARAM data)
 {
 	int i = 0;
 	for (i=0; i < hItem->text.getCount(); i++)
-		if (JabberStrIStr(hItem->text[i], (TCHAR *)data))
+		if (JabberStrIStr(hItem->text[i], (wchar_t *)data))
 			break;
 
 	if (i < hItem->text.getCount()) {

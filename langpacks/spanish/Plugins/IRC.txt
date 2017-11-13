@@ -7,8 +7,6 @@
 ;============================================================
 [Enable]
 Habilitar
-[SSL]
-SSL
 [Password]
 Contraseña
 [&Add]
@@ -61,6 +59,8 @@ Avisos
 Servidor:
 [Password:]
 Contraseña:
+[Owner]
+Propietario
 [Unknown]
 Desconocido
 [Ignore]

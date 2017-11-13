@@ -16,11 +16,11 @@ struct DeleteEventHead {
 };
 static DeleteEventHead DeleteEvents = {0,0};
 
-VOID CALLBACK DeleteTimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {
+void CALLBACK DeleteTimerProc(HWND, UINT, UINT_PTR, DWORD) {
 	if (!DeleteEvents.first) return;
 	mir_cslock lck(RemoveChainCS);
 	DeleteEventNode *prev =0, *current, *next;
-	DBEVENTINFO info = { sizeof(info) };
+	DBEVENTINFO info = {};
 	next = DeleteEvents.first;
 	while (current = next) {
 		if (difftime(time(0), current->timestamp) < 1) break;
@@ -113,7 +113,7 @@ int OnDatabaseEventAdded(WPARAM hContact, LPARAM lParam)
 
 	unsigned len = (unsigned)strlen(LANG_INLINE_PREFIX);
 
-	DBEVENTINFO info = { sizeof(info) };
+	DBEVENTINFO info = {};
 	info.cbBlob = len * 2;
 	info.pBlob = (PBYTE)_alloca(info.cbBlob);
 	if (db_event_get(lParam, &info))
@@ -163,7 +163,7 @@ void FinishSession(MCONTACT hContact)
 	return;
 }
 
-int WindowEvent(WPARAM wParam, LPARAM lParam)
+int WindowEvent(WPARAM, LPARAM lParam)
 {
 	MessageWindowEventData *mwd = (MessageWindowEventData *)lParam;
 	if (mwd->uType == MSG_WINDOW_EVT_CLOSE && options.end_window_close) {
@@ -222,7 +222,7 @@ int OnContactSettingChanged(WPARAM hContact, LPARAM lParam)
 		return 0;
 
 	DBCONTACTWRITESETTING *cws = (DBCONTACTWRITESETTING *)lParam;
-	if (!lParam || mir_strcmp(cws->szSetting, "Status") != 0) return 0;
+	if (!lParam || strcmp(cws->szSetting, "Status") != 0) return 0;
 	int status = 0;
 	switch (cws->value.type) {
 	case DBVT_WORD:

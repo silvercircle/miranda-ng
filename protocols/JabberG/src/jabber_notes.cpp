@@ -6,7 +6,7 @@ Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
 Copyright (c) 2007-09  Maxim Mluhov
 Copyright (c) 2007-09  Victor Pavlychko
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -31,15 +31,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "jabber_privacy.h"
 #include "jabber_notes.h"
 
-static TCHAR* StrTrimCopy(TCHAR *str)
+static wchar_t* StrTrimCopy(wchar_t *str)
 {
 	if (!str) return 0;
-	while (*str && _istspace(*str)) ++str;
-	if (!*str) return mir_tstrdup(str);
+	while (*str && iswspace(*str)) ++str;
+	if (!*str) return mir_wstrdup(str);
 
-	TCHAR *res = mir_tstrdup(str);
-	for (TCHAR *p = res + mir_tstrlen(res) - 1; p >= res; --p) {
-		if (_istspace(*p))
+	wchar_t *res = mir_wstrdup(str);
+	for (wchar_t *p = res + mir_wstrlen(res) - 1; p >= res; --p) {
+		if (iswspace(*p))
 			*p = 0;
 		else
 			break;
@@ -50,12 +50,12 @@ static TCHAR* StrTrimCopy(TCHAR *str)
 
 CNoteItem::CNoteItem()
 {
-	m_szTitle = m_szFrom = m_szText = m_szTags = m_szTagsStr = NULL;
+	m_szTitle = m_szFrom = m_szText = m_szTags = m_szTagsStr = nullptr;
 }
 
-CNoteItem::CNoteItem(HXML hXml, TCHAR *szFrom)
+CNoteItem::CNoteItem(HXML hXml, wchar_t *szFrom)
 {
-	m_szTitle = m_szFrom = m_szText = m_szTags = m_szTagsStr = NULL;
+	m_szTitle = m_szFrom = m_szText = m_szTags = m_szTagsStr = nullptr;
 	SetData(
 		XPathT(hXml, "title"),
 		szFrom ? szFrom : XPathT(hXml, "@from"),
@@ -72,7 +72,7 @@ CNoteItem::~CNoteItem()
 	mir_free(m_szTagsStr);
 }
 
-void CNoteItem::SetData(TCHAR *title, TCHAR *from, TCHAR *text, TCHAR *tags)
+void CNoteItem::SetData(wchar_t *title, wchar_t *from, wchar_t *text, wchar_t *tags)
 {
 	mir_free(m_szTitle);
 	mir_free(m_szFrom);
@@ -84,15 +84,15 @@ void CNoteItem::SetData(TCHAR *title, TCHAR *from, TCHAR *text, TCHAR *tags)
 	m_szText = JabberStrFixLines(text);
 	m_szFrom = StrTrimCopy(from);
 
-	const TCHAR *szTags = tags;
-	TCHAR *p = m_szTags = (TCHAR *)mir_alloc((mir_tstrlen(szTags) + 2 /*for double zero*/) * sizeof(TCHAR));
-	TCHAR *q = m_szTagsStr = (TCHAR *)mir_alloc((mir_tstrlen(szTags) + 1) * sizeof(TCHAR));
+	const wchar_t *szTags = tags;
+	wchar_t *p = m_szTags = (wchar_t *)mir_alloc((mir_wstrlen(szTags) + 2 /*for double zero*/) * sizeof(wchar_t));
+	wchar_t *q = m_szTagsStr = (wchar_t *)mir_alloc((mir_wstrlen(szTags) + 1) * sizeof(wchar_t));
 	for (; szTags && *szTags; ++szTags) {
-		if (_istspace(*szTags))
+		if (iswspace(*szTags))
 			continue;
 
-		if (*szTags == _T(',')) {
-			*q++ = _T(',');
+		if (*szTags == ',') {
+			*q++ = ',';
 			*p++ = 0;
 			continue;
 		}
@@ -103,13 +103,13 @@ void CNoteItem::SetData(TCHAR *title, TCHAR *from, TCHAR *text, TCHAR *tags)
 	q[0] = p[0] = p[1] = 0;
 }
 
-bool CNoteItem::HasTag(const TCHAR *szTag)
+bool CNoteItem::HasTag(const wchar_t *szTag)
 {
 	if (!szTag || !*szTag)
 		return true;
 
-	for (TCHAR *p = m_szTags; p && *p; p = p + mir_tstrlen(p) + 1)
-		if (!mir_tstrcmp(p, szTag))
+	for (wchar_t *p = m_szTags; p && *p; p = p + mir_wstrlen(p) + 1)
+		if (!mir_wstrcmp(p, szTag))
 			return true;
 
 	return false;
@@ -118,15 +118,15 @@ bool CNoteItem::HasTag(const TCHAR *szTag)
 int CNoteItem::cmp(const CNoteItem *p1, const CNoteItem *p2)
 {
 	int ret = 0;
-	if (ret = mir_tstrcmp(p1->m_szTitle, p2->m_szTitle)) return ret;
-	if (ret = mir_tstrcmp(p1->m_szText, p2->m_szText)) return ret;
-	if (ret = mir_tstrcmp(p1->m_szTagsStr, p2->m_szTagsStr)) return ret;
+	if (ret = mir_wstrcmp(p1->m_szTitle, p2->m_szTitle)) return ret;
+	if (ret = mir_wstrcmp(p1->m_szText, p2->m_szText)) return ret;
+	if (ret = mir_wstrcmp(p1->m_szTagsStr, p2->m_szTagsStr)) return ret;
 	if (p1 < p2) return -1;
 	if (p1 > p2) return 1;
 	return 0;
 }
 
-void CNoteList::AddNote(HXML hXml, TCHAR *szFrom)
+void CNoteList::AddNote(HXML hXml, wchar_t *szFrom)
 {
 	m_bIsModified = true;
 	insert(new CNoteItem(hXml, szFrom));
@@ -153,10 +153,10 @@ void CNoteList::SaveXml(HXML hXmlParent)
 	CNoteList &me = *this;
 
 	for (int i = 0; i < getCount(); i++) {
-		HXML hXmlItem = hXmlParent << XCHILD(_T("note"));
-		hXmlItem << XATTR(_T("from"), me[i].GetFrom()) << XATTR(_T("tags"), me[i].GetTagsStr());
-		hXmlItem << XCHILD(_T("title"), me[i].GetTitle());
-		hXmlItem << XCHILD(_T("text"), me[i].GetText());
+		HXML hXmlItem = hXmlParent << XCHILD(L"note");
+		hXmlItem << XATTR(L"from", me[i].GetFrom()) << XATTR(L"tags", me[i].GetTagsStr());
+		hXmlItem << XCHILD(L"title", me[i].GetTitle());
+		hXmlItem << XCHILD(L"text", me[i].GetText());
 	}
 }
 
@@ -187,10 +187,10 @@ private:
 
 	void btnOk_OnClick(CCtrlButton *)
 	{
-		TCHAR *szTitle = m_txtTitle.GetText();
-		TCHAR *szText = m_txtText.GetText();
-		TCHAR *szTags = m_txtTags.GetText();
-		TCHAR *szFrom = mir_tstrdup(m_pNote->GetFrom());
+		wchar_t *szTitle = m_txtTitle.GetText();
+		wchar_t *szText = m_txtText.GetText();
+		wchar_t *szTags = m_txtTags.GetText();
+		wchar_t *szFrom = mir_wstrdup(m_pNote->GetFrom());
 		m_pNote->SetData(szTitle, szFrom, szText, szTags);
 		mir_free(szTitle);
 		mir_free(szText);
@@ -212,7 +212,7 @@ private:
 CJabberDlgNoteItem::CJabberDlgNoteItem(CJabberDlgBase *parent, CNoteItem *pNote) :
 	CSuper(parent->GetProto(), IDD_NOTE_EDIT),
 	m_pNote(pNote),
-	m_fnProcess(NULL),
+	m_fnProcess(nullptr),
 	m_txtTitle(this, IDC_TXT_TITLE),
 	m_txtText(this, IDC_TXT_TEXT),
 	m_txtTags(this, IDC_TXT_TAGS),
@@ -237,10 +237,10 @@ CJabberDlgNoteItem::CJabberDlgNoteItem(CJabberProto *proto, CNoteItem *pNote, TF
 void CJabberDlgNoteItem::OnInitDialog()
 {
 	CSuper::OnInitDialog();
-	WindowSetIcon(m_hwnd, m_proto, "notes");
+	Window_SetIcon_IcoLib(m_hwnd, g_GetIconHandle(IDI_NOTES));
 
 	if (m_fnProcess) {
-		CMString buf;
+		CMStringW buf;
 		if (m_fnProcess == &CJabberProto::ProcessIncomingNote)
 			buf.Format(TranslateT("Incoming note from %s"), m_pNote->GetFrom());
 		else
@@ -287,7 +287,7 @@ public:
 		: CCtrlListBox(dlg, ctrlId),
 		m_adding(false)
 	{
-		m_hfntNormal = m_hfntSmall = m_hfntBold = NULL;
+		m_hfntNormal = m_hfntSmall = m_hfntBold = nullptr;
 	}
 
 	void SetFonts(HFONT hfntNormal, HFONT hfntSmall, HFONT hfntBold)
@@ -297,7 +297,7 @@ public:
 		m_hfntBold = hfntBold;
 	}
 
-	int AddString(TCHAR *text, LPARAM data = 0)
+	int AddString(wchar_t *text, LPARAM data = 0)
 	{
 		m_adding = true;
 		int idx = CCtrlListBox::AddString(text, data);
@@ -335,7 +335,7 @@ public:
 				if (mis.itemHeight) SendMessage(m_hwnd, LB_SETITEMHEIGHT, idx, mis.itemHeight);
 			}
 			SendMessage(m_hwnd, WM_SETREDRAW, TRUE, 0);
-			RedrawWindow(m_hwnd, NULL, NULL, RDW_INVALIDATE);
+			RedrawWindow(m_hwnd, nullptr, nullptr, RDW_INVALIDATE);
 		}
 
 		return CSuper::CustomWndProc(msg, wParam, lParam);
@@ -374,8 +374,8 @@ public:
 		rc.top += DrawText(hdc, pNote->GetTitle(), -1, &rc, DT_NOPREFIX | DT_SINGLELINE | DT_END_ELLIPSIS);
 		SelectObject(hdc, m_hfntNormal);
 		if (pNote->GetFrom()) {
-			TCHAR buf[256];
-			mir_sntprintf(buf, TranslateT("From: %s"), pNote->GetFrom());
+			wchar_t buf[256];
+			mir_snwprintf(buf, TranslateT("From: %s"), pNote->GetFrom());
 			rc.top += DrawText(hdc, buf, -1, &rc, DT_NOPREFIX | DT_SINGLELINE | DT_END_ELLIPSIS);
 		}
 		rc.top += DrawText(hdc, pNote->GetText(), -1, &rc, DT_NOPREFIX | DT_WORDBREAK | DT_EXPANDTABS | DT_END_ELLIPSIS);
@@ -409,8 +409,8 @@ public:
 		lps->itemHeight += rcTmp.bottom;
 		SelectObject(hdc, m_hfntNormal);
 		if (pNote->GetFrom()) {
-			TCHAR buf[256];
-			mir_sntprintf(buf, TranslateT("From: %s"), pNote->GetFrom());
+			wchar_t buf[256];
+			mir_snwprintf(buf, TranslateT("From: %s"), pNote->GetFrom());
 			rcTmp = rc;
 			DrawText(hdc, buf, -1, &rcTmp, DT_NOPREFIX | DT_SINGLELINE | DT_END_ELLIPSIS | DT_CALCRECT);
 			lps->itemHeight += rcTmp.bottom;
@@ -466,31 +466,31 @@ private:
 		m_btnRemove.Enable(m_lstNotes.GetCurSel() != LB_ERR);
 	}
 
-	void InsertTag(HTREEITEM htiRoot, const TCHAR *tag, bool bSelect)
+	void InsertTag(HTREEITEM htiRoot, const wchar_t *tag, bool bSelect)
 	{
 		TVINSERTSTRUCT tvi = { 0 };
 		tvi.hParent = htiRoot;
 		tvi.hInsertAfter = TVI_LAST;
 		tvi.itemex.mask = TVIF_TEXT | TVIF_PARAM;
-		tvi.itemex.pszText = (TCHAR *)tag;
-		tvi.itemex.lParam = (LPARAM)mir_tstrdup(tag);
+		tvi.itemex.pszText = (wchar_t *)tag;
+		tvi.itemex.lParam = (LPARAM)mir_wstrdup(tag);
 		HTREEITEM hti = m_tvFilter.InsertItem(&tvi);
 		if (bSelect) m_tvFilter.SelectItem(hti);
 	}
 
-	void PopulateTags(HTREEITEM htiRoot, TCHAR *szActiveTag)
+	void PopulateTags(HTREEITEM htiRoot, wchar_t *szActiveTag)
 	{
-		LIST<TCHAR> tagSet(5, _tcscmp);
+		LIST<wchar_t> tagSet(5, wcscmp);
 		for (int i = 0; i < m_proto->m_notes.getCount(); i++) {
-			TCHAR *tags = m_proto->m_notes[i].GetTags();
-			for (TCHAR *tag = tags; tag && *tag; tag = tag + mir_tstrlen(tag) + 1)
+			wchar_t *tags = m_proto->m_notes[i].GetTags();
+			for (wchar_t *tag = tags; tag && *tag; tag = tag + mir_wstrlen(tag) + 1)
 				if (!tagSet.find(tag))
 					tagSet.insert(tag);
 		}
 
 		bool selected = false;
 		for (int j = 0; j < tagSet.getCount(); ++j) {
-			bool select = !mir_tstrcmp(szActiveTag, tagSet[j]);
+			bool select = !mir_wstrcmp(szActiveTag, tagSet[j]);
 			selected |= select;
 			InsertTag(htiRoot, tagSet[j], select);
 		}
@@ -505,7 +505,7 @@ private:
 		tvi.mask = TVIF_HANDLE | TVIF_PARAM;
 		tvi.hItem = m_tvFilter.GetSelection();
 		m_tvFilter.GetItem(&tvi);
-		TCHAR *szActiveTag = mir_tstrdup((TCHAR *)tvi.lParam);
+		wchar_t *szActiveTag = mir_wstrdup((wchar_t *)tvi.lParam);
 
 		m_tvFilter.DeleteAllItems();
 
@@ -521,11 +521,11 @@ private:
 
 	void InsertItem(CNoteItem &item)
 	{
-		m_lstNotes.AddString((TCHAR *)item.GetTitle(), (LPARAM)&item);
+		m_lstNotes.AddString((wchar_t *)item.GetTitle(), (LPARAM)&item);
 		EnableControls();
 	}
 
-	void ListItems(const TCHAR *tag)
+	void ListItems(const wchar_t *tag)
 	{
 		m_lstNotes.ResetContent();
 		for (int i = 0; i < m_proto->m_notes.getCount(); i++)
@@ -587,23 +587,23 @@ private:
 
 	void tvFilter_OnDeleteItem(CCtrlTreeView::TEventInfo *e)
 	{
-		TCHAR *szText = (TCHAR *)e->nmtv->itemOld.lParam;
+		wchar_t *szText = (wchar_t *)e->nmtv->itemOld.lParam;
 		mir_free(szText);
 		EnableControls();
 	}
 
 	void tvFilter_OnSelChanged(CCtrlTreeView::TEventInfo *e)
 	{
-		TCHAR *szText = (TCHAR *)e->nmtv->itemNew.lParam;
+		wchar_t *szText = (wchar_t *)e->nmtv->itemNew.lParam;
 		ListItems(szText);
 		EnableControls();
 	}
 
 	void btnSave_OnClick(CCtrlButton *)
 	{
-		XmlNodeIq iq(_T("set"));
+		XmlNodeIq iq(L"set");
 		HXML query = iq << XQUERY(JABBER_FEAT_PRIVATE_STORAGE);
-		HXML storage = query << XCHILDNS(_T("storage"), JABBER_FEAT_MIRANDA_NOTES);
+		HXML storage = query << XCHILDNS(L"storage", JABBER_FEAT_MIRANDA_NOTES);
 		m_proto->m_notes.SaveXml(storage);
 		m_proto->m_ThreadInfo->send(iq);
 		EnableControls();
@@ -611,7 +611,7 @@ private:
 };
 
 CJabberDlgNotes::CJabberDlgNotes(CJabberProto *proto) :
-	CSuper(proto, IDD_NOTEBOOK, NULL),
+	CSuper(proto, IDD_NOTEBOOK, nullptr),
 	m_btnAdd(this, IDC_ADD, SKINICON_OTHER_ADDCONTACT, LPGEN("Add")),
 	m_btnEdit(this, IDC_EDIT, SKINICON_OTHER_RENAME, LPGEN("Edit")),
 	m_btnRemove(this, IDC_REMOVE, SKINICON_OTHER_DELETE, LPGEN("Remove")),
@@ -639,7 +639,7 @@ void CJabberDlgNotes::UpdateData()
 void CJabberDlgNotes::OnInitDialog()
 {
 	CSuper::OnInitDialog();
-	WindowSetIcon(m_hwnd, m_proto, "notes");
+	Window_SetIcon_IcoLib(m_hwnd, g_GetIconHandle(IDI_NOTES));
 
 	LOGFONT lf, lfTmp;
 	m_hfntNormal = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
@@ -650,7 +650,7 @@ void CJabberDlgNotes::OnInitDialog()
 	m_hfntSmall = CreateFontIndirect(&lfTmp);
 	m_lstNotes.SetFonts(m_hfntNormal, m_hfntSmall, m_hfntBold);
 
-	Utils_RestoreWindowPosition(m_hwnd, NULL, m_proto->m_szModuleName, "notesWnd_");
+	Utils_RestoreWindowPosition(m_hwnd, 0, m_proto->m_szModuleName, "notesWnd_");
 }
 
 void CJabberDlgNotes::OnClose()
@@ -662,7 +662,7 @@ void CJabberDlgNotes::OnClose()
 		}
 	}
 
-	Utils_SaveWindowPosition(m_hwnd, NULL, m_proto->m_szModuleName, "notesWnd_");
+	Utils_SaveWindowPosition(m_hwnd, 0, m_proto->m_szModuleName, "notesWnd_");
 	DeleteObject(m_hfntSmall);
 	DeleteObject(m_hfntBold);
 	CSuper::OnClose();
@@ -671,7 +671,7 @@ void CJabberDlgNotes::OnClose()
 void CJabberDlgNotes::OnDestroy()
 {
 	m_tvFilter.DeleteAllItems();
-	m_proto->m_pDlgNotes = NULL;
+	m_proto->m_pDlgNotes = nullptr;
 	CSuper::OnDestroy();
 }
 
@@ -710,9 +710,9 @@ void CJabberProto::ProcessIncomingNote(CNoteItem *pNote, bool ok)
 	if (ok && pNote->IsNotEmpty()) {
 		m_notes.insert(pNote);
 
-		XmlNodeIq iq(_T("set"));
+		XmlNodeIq iq(L"set");
 		HXML query = iq << XQUERY(JABBER_FEAT_PRIVATE_STORAGE);
-		HXML storage = query << XCHILDNS(_T("storage"), JABBER_FEAT_MIRANDA_NOTES);
+		HXML storage = query << XCHILDNS(L"storage", JABBER_FEAT_MIRANDA_NOTES);
 		m_notes.SaveXml(storage);
 		m_ThreadInfo->send(iq);
 	}
@@ -726,31 +726,31 @@ void CJabberProto::ProcessOutgoingNote(CNoteItem *pNote, bool ok)
 		return;
 	}
 
-	TCHAR buf[1024];
-	mir_sntprintf(buf, _T("Incoming note: %s\n\n%s\nTags: %s"),
+	wchar_t buf[1024];
+	mir_snwprintf(buf, L"Incoming note: %s\n\n%s\nTags: %s",
 		pNote->GetTitle(), pNote->GetText(), pNote->GetTagsStr());
 
-	JabberCapsBits jcb = GetResourceCapabilites(pNote->GetFrom(), TRUE);
+	JabberCapsBits jcb = GetResourceCapabilities(pNote->GetFrom());
 
 	if (jcb & JABBER_RESOURCE_CAPS_ERROR)
 		jcb = JABBER_RESOURCE_CAPS_NONE;
 
 	int nMsgId = SerialNext();
 
-	XmlNode m(_T("message"));
-	m << XATTR(_T("type"), _T("chat")) << XATTR(_T("to"), pNote->GetFrom()) << XATTRID(nMsgId);
-	m << XCHILD(_T("body"), buf);
-	HXML hXmlItem = m << XCHILDNS(_T("x"), JABBER_FEAT_MIRANDA_NOTES) << XCHILD(_T("note"));
-	hXmlItem << XATTR(_T("tags"), pNote->GetTagsStr());
-	hXmlItem << XCHILD(_T("title"), pNote->GetTitle());
-	hXmlItem << XCHILD(_T("text"), pNote->GetText());
+	XmlNode m(L"message");
+	m << XATTR(L"type", L"chat") << XATTR(L"to", pNote->GetFrom()) << XATTRID(nMsgId);
+	m << XCHILD(L"body", buf);
+	HXML hXmlItem = m << XCHILDNS(L"x", JABBER_FEAT_MIRANDA_NOTES) << XCHILD(L"note");
+	hXmlItem << XATTR(L"tags", pNote->GetTagsStr());
+	hXmlItem << XCHILD(L"title", pNote->GetTitle());
+	hXmlItem << XCHILD(L"text", pNote->GetText());
 
 	// message receipts XEP priority
 	if (jcb & JABBER_CAPS_MESSAGE_RECEIPTS)
-		m << XCHILDNS(_T("request"), JABBER_FEAT_MESSAGE_RECEIPTS);
+		m << XCHILDNS(L"request", JABBER_FEAT_MESSAGE_RECEIPTS);
 	else if (jcb & JABBER_CAPS_MESSAGE_EVENTS) {
-		HXML x = m << XCHILDNS(_T("x"), JABBER_FEAT_MESSAGE_EVENTS);
-		x << XCHILD(_T("delivered")); x << XCHILD(_T("offline"));
+		HXML x = m << XCHILDNS(L"x", JABBER_FEAT_MESSAGE_EVENTS);
+		x << XCHILD(L"delivered"); x << XCHILD(L"offline");
 	}
 	else
 		nMsgId = -1;
@@ -759,13 +759,13 @@ void CJabberProto::ProcessOutgoingNote(CNoteItem *pNote, bool ok)
 	delete pNote;
 }
 
-bool CJabberProto::OnIncomingNote(const TCHAR *szFrom, HXML hXml)
+bool CJabberProto::OnIncomingNote(const wchar_t *szFrom, HXML hXml)
 {
 	if (!m_options.AcceptNotes)
 		return false;
 
 	if (!szFrom || !hXml) return true;
-	CNoteItem *pItem = new CNoteItem(hXml, (TCHAR *)szFrom);
+	CNoteItem *pItem = new CNoteItem(hXml, (wchar_t *)szFrom);
 	if (!pItem->IsNotEmpty()) {
 		delete pItem;
 		return true;
@@ -776,18 +776,17 @@ bool CJabberProto::OnIncomingNote(const TCHAR *szFrom, HXML hXml)
 		return false;
 	}
 
-	CLISTEVENT cle = { 0 };
 	char szService[256];
 	mir_snprintf(szService, "%s%s", m_szModuleName, JS_INCOMING_NOTE_EVENT);
-	cle.cbSize = sizeof(CLISTEVENT);
+
+	CLISTEVENT cle = {};
 	cle.hIcon = (HICON)LoadIconEx("notes");
-	cle.flags = CLEF_PROTOCOLGLOBAL | CLEF_TCHAR;
+	cle.flags = CLEF_PROTOCOLGLOBAL | CLEF_UNICODE;
 	cle.hDbEvent = -99;
 	cle.lParam = (LPARAM)pItem;
 	cle.pszService = szService;
-	cle.ptszTooltip = TranslateT("Incoming note");
-	CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
-
+	cle.szTooltip.w = TranslateT("Incoming note");
+	pcli->pfnAddEvent(&cle);
 	return true;
 }
 
@@ -816,7 +815,7 @@ INT_PTR __cdecl CJabberProto::OnMenuHandleNotes(WPARAM, LPARAM)
 INT_PTR __cdecl CJabberProto::OnMenuSendNote(WPARAM wParam, LPARAM)
 {
 	if (wParam) {
-		CNoteItem *pItem = new CNoteItem(NULL, ptrT(getTStringA(wParam, "jid")));
+		CNoteItem *pItem = new CNoteItem(nullptr, ptrW(getWStringA(wParam, "jid")));
 		CJabberDlgBase *pDlg = new CJabberDlgNoteItem(this, pItem, &CJabberProto::ProcessOutgoingNote);
 		pDlg->Show();
 	}

@@ -46,11 +46,11 @@ int DB::setAStringF(MCONTACT hContact, char *szModule, char *szSetting, int id, 
 	return db_set_s(hContact, szModule, formSet, szValue);
 }
 
-int DB::setStringF(MCONTACT hContact, char *szModule, char *szSetting, int id, TCHAR *stzValue)
+int DB::setStringF(MCONTACT hContact, char *szModule, char *szSetting, int id, wchar_t *stzValue)
 {
 	char formSet[256];
 	mir_snprintf(formSet, szSetting, id);
-	return db_set_ts(hContact, szModule, formSet, stzValue);
+	return db_set_ws(hContact, szModule, formSet, stzValue);
 }
 
 int DB::getByteF(MCONTACT hContact, char *szModule, char *szSetting, int id, int iErrorValue)
@@ -94,11 +94,11 @@ int DB::getAStringF(MCONTACT hContact, char *szModule, char *szSetting, int id, 
 	return getAString(hContact, szModule, formSet, buff);
 }
 
-int DB::getString(MCONTACT hContact, char *szModule, char *szSetting, TCHAR *buff)
+int DB::getString(MCONTACT hContact, char *szModule, char *szSetting, wchar_t *buff)
 {
 	DBVARIANT dbv;
-	if (!db_get_ts(hContact, szModule, szSetting, &dbv)) {
-		mir_tstrcpy(buff, dbv.ptszVal);
+	if (!db_get_ws(hContact, szModule, szSetting, &dbv)) {
+		mir_wstrcpy(buff, dbv.ptszVal);
 		db_free(&dbv);
 		return 0;
 	}
@@ -107,7 +107,7 @@ int DB::getString(MCONTACT hContact, char *szModule, char *szSetting, TCHAR *buf
 	return 1;
 }
 
-int DB::getStringF(MCONTACT hContact, char *szModule, char *szSetting, int id, TCHAR *buff)
+int DB::getStringF(MCONTACT hContact, char *szModule, char *szSetting, int id, wchar_t *buff)
 {
 	char formSet[256];
 	mir_snprintf(formSet, szSetting, id);

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-TCHAR* ptszMessage[6]={0};
+wchar_t* ptszMessage[6]={0};
 INT lastIndex=-1;
 
 INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -15,24 +15,24 @@ INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 			SetDlgItemInt(hwndDlg, IDC_INTERVAL, db_get_w(NULL, protocolname, KEY_REPEATINTERVAL, 300) / 60, FALSE);
 
 			DBVARIANT dbv;
-			if (!db_get_ts(NULL, protocolname, KEY_HEADING, &dbv)) {
+			if (!db_get_ws(NULL, protocolname, KEY_HEADING, &dbv)) {
 				SetDlgItemText(hwndDlg, IDC_HEADING, dbv.ptszVal);
 				db_free(&dbv);
 			}
 
 			for (INT c = ID_STATUS_ONLINE; c < ID_STATUS_IDLE; c++) {
 				mir_snprintf(tszStatus, "%d", c);
-				TCHAR *pszStatus = pcli->pfnGetStatusModeDescription(c, 0);
+				wchar_t *pszStatus = pcli->pfnGetStatusModeDescription(c, 0);
 				if (c == ID_STATUS_ONLINE || c == ID_STATUS_FREECHAT || c == ID_STATUS_INVISIBLE)
 					continue;
 				else {
 					SendDlgItemMessage(hwndDlg, IDC_STATUSMODE, CB_ADDSTRING, 0, (LPARAM)pszStatus);
 
-					if (!db_get_ts(NULL, protocolname, tszStatus, &dbv)) {
+					if (!db_get_ws(NULL, protocolname, tszStatus, &dbv)) {
 						if (c < ID_STATUS_FREECHAT)
-							ptszMessage[c - ID_STATUS_ONLINE - 1] = _tcsdup(dbv.ptszVal);
+							ptszMessage[c - ID_STATUS_ONLINE - 1] = wcsdup(dbv.ptszVal);
 						else if (c > ID_STATUS_INVISIBLE)
-							ptszMessage[c - ID_STATUS_ONLINE - 3] = _tcsdup(dbv.ptszVal);
+							ptszMessage[c - ID_STATUS_ONLINE - 3] = wcsdup(dbv.ptszVal);
 						db_free(&dbv);
 					}
 				}
@@ -61,7 +61,7 @@ INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 			SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 			break;
 		case IDC_DEFAULT:
-			SetDlgItemText(hwndDlg, IDC_MESSAGE, TranslateTS(ptszDefaultMsg[lastIndex]));
+			SetDlgItemText(hwndDlg, IDC_MESSAGE, TranslateW(ptszDefaultMsg[lastIndex]));
 			SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 			break;
 		case IDC_INTERVAL:
@@ -76,19 +76,19 @@ INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 	case WM_NOTIFY:
 		switch (((LPNMHDR)lParam)->code) {
 		case PSN_APPLY:
-			TCHAR ptszText[1024];
+			wchar_t ptszText[1024];
 			BOOL translated;
 
 			BOOL fEnabled = IsDlgButtonChecked(hwndDlg, IDC_ENABLEREPLIER) == 1;
 			db_set_b(NULL, protocolname, KEY_ENABLED, (BYTE)fEnabled);
 
 			if (fEnabled)
-				Menu_ModifyItem(hEnableMenu, LPGENT("Disable Auto&reply"), iconList[0].hIcolib);
+				Menu_ModifyItem(hEnableMenu, LPGENW("Disable Auto&reply"), iconList[0].hIcolib);
 			else
-				Menu_ModifyItem(hEnableMenu, LPGENT("Enable Auto&reply"), iconList[1].hIcolib);
+				Menu_ModifyItem(hEnableMenu, LPGENW("Enable Auto&reply"), iconList[1].hIcolib);
 
 			GetDlgItemText(hwndDlg, IDC_HEADING, ptszText, _countof(ptszText));
-			db_set_ts(NULL, protocolname, KEY_HEADING, ptszText);
+			db_set_ws(NULL, protocolname, KEY_HEADING, ptszText);
 
 			INT size = GetDlgItemInt(hwndDlg, IDC_INTERVAL, &translated, FALSE);
 			if (translated)
@@ -106,9 +106,9 @@ INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 					mir_snprintf(szStatus, "%d", c);
 
 					if (c<ID_STATUS_FREECHAT && ptszMessage[c - ID_STATUS_ONLINE - 1])
-						db_set_ts(NULL, protocolname, szStatus, ptszMessage[c - ID_STATUS_ONLINE - 1]);
+						db_set_ws(NULL, protocolname, szStatus, ptszMessage[c - ID_STATUS_ONLINE - 1]);
 					else if (c>ID_STATUS_INVISIBLE && ptszMessage[c - ID_STATUS_ONLINE - 3])
-						db_set_ts(NULL, protocolname, szStatus, ptszMessage[c - ID_STATUS_ONLINE - 3]);
+						db_set_ws(NULL, protocolname, szStatus, ptszMessage[c - ID_STATUS_ONLINE - 3]);
 					else
 						db_unset(NULL, protocolname, szStatus);
 				}
@@ -139,8 +139,8 @@ INT OptInit(WPARAM wParam, LPARAM)
 	odp.position = -790000000;
 	odp.hInstance = hinstance;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTION);
-	odp.pszTitle = LPGEN("Simple Auto Replier");
-	odp.pszGroup = LPGEN("Message sessions");
+	odp.szTitle.a = LPGEN("Simple Auto Replier");
+	odp.szGroup.a = LPGEN("Message sessions");
 	odp.flags = ODPF_BOLDGROUPS;
 	odp.pfnDlgProc = DlgProcOpts;
 	Options_AddPage(wParam, &odp);

@@ -6,28 +6,28 @@
 ;  Authors: Thief, idea by snwbrdr
 ;============================================================
 [If a contact didn't authorize you, this plugin puts an icon in front of the contact's name.]
-Этот плагин поместит значок напротив имени, если контакт не авторизовал вас, или вы не авторизовали его.
-[Show Auth icon]
-Показывать значок "Запрос"
+Помещает значок напротив имени контакта, если контакт не авторизовал вас, или вы не авторизовали его.
+[Show Request icon]
+Показывать значок "Запросить"
 [Show Grant icon]
 Показывать значок "Разрешить"
 [Plugin settings]
 Настройки
-[Enable menu item (restart required)]
-Добавить пункт меню (необходим перезапуск)
+[Enable menu item]
+Добавить пункт меню
 [Show icons only for recently added contacts]
 Значки только для недавно добавленных
+[Request]
+Запросить
+[Grant]
+Разрешить
+[Request & Grant]
+Запросить и Разрешить
 [Disable AuthState icons]
 Выкл. значки состояния авторизации
 [Enable AuthState icons]
 Вкл. значки состояния авторизации
-[Auth]
-Авторизация
-[Grant]
-Разрешить
-[Auth & Grant]
-Запрос & Разрешить
-[Auth State]
+[Auth state]
 Состояние авторизации
 [Icons]
 Значки

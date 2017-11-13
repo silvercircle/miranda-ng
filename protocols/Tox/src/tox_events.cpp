@@ -5,10 +5,9 @@ int CToxProto::OnModulesLoaded(WPARAM, LPARAM)
 	CToxProto::InitIcons();
 	CToxProto::InitMenus();
 
-	hProfileFolderPath = FoldersRegisterCustomPathT("Tox", Translate("Profiles folder"), MIRANDA_USERDATAT);
+	hProfileFolderPath = FoldersRegisterCustomPathT("Tox", "ProfilesFolder", MIRANDA_USERDATAT, TranslateT("Profiles folder"));
 
-	if (ServiceExists(MS_ASSOCMGR_ADDNEWURLTYPE))
-	{
+	if (ServiceExists(MS_ASSOCMGR_ADDNEWURLTYPE)) {
 		CreateServiceFunction(MODULE "/ParseUri", CToxProto::ParseToxUri);
 		AssocMgr_AddNewUrlTypeT("tox:", TranslateT("Tox URI scheme"), g_hInstance, IDI_TOX, MODULE "/ParseUri", 0);
 	}
@@ -24,10 +23,10 @@ void CToxProto::InitCustomDbEvents()
 
 	dbEventType.eventType = DB_EVENT_ACTION;
 	dbEventType.descr = Translate("Action");
-	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
+	DbEvent_RegisterType(&dbEventType);
 
 	dbEventType.eventType = DB_EVENT_CALL;
 	dbEventType.descr = Translate("Call");
 	dbEventType.eventIcon = GetIconHandle(IDI_AUDIO_START);
-	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
+	DbEvent_RegisterType(&dbEventType);
 }

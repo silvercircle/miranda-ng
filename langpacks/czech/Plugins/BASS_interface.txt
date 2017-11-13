@@ -32,20 +32,20 @@ Offline
 Online
 [Away]
 Na chvíli pryč
-[NA]
+[Not available]
 Nejsem tady
 [Occupied]
 Nemám čas
-[DND]
+[Do not disturb]
 Nerušit!
 [Free for chat]
 Mám volno
 [Invisible]
 Neviditelný
 [On the phone]
-Mám telefon
+Na telefonu
 [Out to lunch]
-Jsem na obědě
+Na obědě
 [Preview]
 Náhled
 ;file \plugins\BASS_interface\src\Main.cpp

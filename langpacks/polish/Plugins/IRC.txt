@@ -16,8 +16,6 @@ Włącz
 Nazwa serwera
 [Internet address]
 Adres internetowy
-[SSL]
-SSL
 [Port range]
 Zakres portów
 [Password]
@@ -103,7 +101,7 @@ Autoryzacja
 [Server]
 Serwer
 [User]
-Użytkownika
+Użytkownik
 [Away Info]
 Oddalony - Info
 [The server returned the following information. Please note that this information might be misleading and/or falsified]
@@ -258,10 +256,6 @@ Zapytania
 Wiadomości
 [Notices]
 Powiadomienia
-[CTCP]
-CTCP
-[DCC]
-DCC
 [Ignore mask (nick!user@host)]
 Ignoruj maskę (nazwa!użytkownik@host)
 [Network (*)]
@@ -308,10 +302,24 @@ BŁĄD DCC: Niewłaściwe sformowane żądanie CTCP od %s [%s]
 DCC: Żądanie wznowienia transferu plików od %s odrzucono
 [CTCP %s requested by %s]
 CTCP %s zażądane przez %s
+[%u second]
+%u sekunda
+[%u seconds]
+%u sekund
 [CTCP PING reply from %s: %u sec(s)]
 CTCP PING odpowiedź od %s: %u s
 [CTCP %s reply from %s: %s]
 CTCP %s odpowiedź od %s: %s
+[Owner]
+Właściciel
+[Admin]
+Admin
+[Op]
+
+[Halfop]
+
+[Voice]
+Głos
 [Downloading list (%u%%) - %u channels]
 Pobieranie listy (%u%%) - %u kanałów
 [Downloading list - %u channels]
@@ -332,10 +340,10 @@ Pobrano: %u kanałów
 dostępny od %s, bezczynny %s
 [Change nickname]
 Zmień nick
-[IRC error]
-Błąd IRC
 [Unknown]
 Nieznany
+[IRC error]
+Błąd IRC
 [Please enter the hostmask (nick!user@host)\nNOTE! Contacts on your contact list are never ignored]
 Proszę podać maskę hosta (nazwa!użytkownik@host)\nUWAGA! Kontakty na liście nigdy nie są ignorowane
 [Ignore]
@@ -503,23 +511,23 @@ Edytuj serwer
 [<Local IP: ]
 <Lokalne IP:\s
 [Event: Available]
-Zdarzenie: dostępny
+Zdarzenie: Dostępny
 [Event: Away]
-Zdarzenie: zaraz wracam
-[Event: N/A]
-Zdarzenie: wrócę później
+Zdarzenie: Zaraz wracam
+[Event: Not available]
+Zdarzenie: Wrócę później
 [Event: Occupied]
-Zdarzenie: zajęty
-[Event: DND]
-Zdarzenie: nie przeszkadzać
+Zdarzenie: Zajęty
+[Event: Do not disturb]
+Zdarzenie: Nie przeszkadzać
 [Event: Free for chat]
-Zdarzenie: porozmawiajmy
+Zdarzenie: Porozmawiajmy
 [Event: On the phone]
-Zdarzenie: przy telefonie
+Zdarzenie: Pod telefonem
 [Event: Out for lunch]
-Zdarzenie: na obiedzie
+Zdarzenie: Na obiedzie
 [Event: Disconnect]
-Zdarzenie: rozłączony
+Zdarzenie: Rozłączony
 [ALL NETWORKS]
 Wszystkie sieci
 [Click to set commands that will be performed for this event]
@@ -584,8 +592,6 @@ Ro&złącz
 &Dodaj do ignorowanych
 [%s (%s) is requesting a client-to-client chat connection.]
 %s (%s) żąda rozmowy za pomocą połączenia Klient-do-Klienta
-[Please enter the hostmask (nick!user@host) \nNOTE! Contacts on your contact list are never ignored]
-Proszę podać maskę hosta (nazwa!użytkownik@host)\nUWAGA! Kontakty z twojej listy nigdy nie są ignorowane
 [Join channel]
 Dołącz do kanału
 [Please enter a channel to join]
@@ -646,8 +652,6 @@ Proszę wpisać tekst powiadomienia
 Proszę wpisz nazwę kanału, do którego zaprosić
 [Invite to channel]
 Zaproś na kanał
-[NickServ]
-NickServ
 [Register nick]
 Zarejestruj nick
 [Auth nick]

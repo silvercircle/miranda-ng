@@ -1,6 +1,6 @@
 /*
 Copyright (ñ) 2012-13 Vladimir Lyubimov
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -223,38 +223,40 @@ void IsMenu()
 
 static INT_PTR AdvSt()
 {
-		if ((Enabled == 1)){
-			POPUPDATAT ppd = {0};
-			TCHAR * lptzText =L"";
-			db_set_b(NULL, "Skin", "UseSound", 0);
-			EnablePopupModule();
+	Thread_SetName("StartupSilenc: AdvSt");
 
-			if (PopUp == 1) {
-				lptzText = NonStatusAllow == 1 ? ALL_DISABLED_FLT : ALL_DISABLED;
-				ppd.lchIcon = IcoLib_GetIconByHandle((NonStatusAllow == 1) ? GetIconHandle(ALL_ENABLED_FLT) : GetIconHandle(MENU_NAME));
-				ppd.lchContact = NULL;
-				ppd.iSeconds = PopUpTime;
-				wcsncpy_s(ppd.lptzText, lptzText, _TRUNCATE);
-				lptzText = TranslateT(MENU_NAME);
-				wcsncpy_s(ppd.lptzContactName, lptzText, _TRUNCATE);
-				PUAddPopupT(&ppd);
-			}
+	if ((Enabled == 1)) {
+		POPUPDATAT ppd = {0};
+		wchar_t * lptzText =L"";
+		db_set_b(NULL, "Skin", "UseSound", 0);
+		EnablePopupModule();
 
-			timer = 2;
-			Sleep(delay * 1000);
-			timer = 0;
-
-			if (PopUp == 1) {
-				lptzText = (DefEnabled == 1 && DefPopup == 1) ? TranslateT(ALL_ENABLED_FLT) : ALL_ENABLED;
-				ppd.lchIcon = IcoLib_GetIconByHandle((DefEnabled == 1 && DefPopup == 1) ? GetIconHandle(ALL_ENABLED_FLT) : GetIconHandle(MENU_NAME));
-				wcsncpy_s(ppd.lptzText, lptzText, _TRUNCATE);
-				PUAddPopupT(&ppd);
-			}
-			if (DefEnabled == 1) { //predefined sound setting
-				db_set_b(NULL, "Skin", "UseSound", DefSound);
-			}
-			else db_set_b(NULL, "Skin", "UseSound", 1); //or enable sounds every starts
+		if (PopUp == 1) {
+			lptzText = NonStatusAllow == 1 ? ALL_DISABLED_FLT : ALL_DISABLED;
+			ppd.lchIcon = IcoLib_GetIconByHandle((NonStatusAllow == 1) ? GetIconHandle(ALL_ENABLED_FLT) : GetIconHandle(MENU_NAME));
+			ppd.lchContact = NULL;
+			ppd.iSeconds = PopUpTime;
+			wcsncpy_s(ppd.lptzText, lptzText, _TRUNCATE);
+			lptzText = TranslateW(MENU_NAMEW);
+			wcsncpy_s(ppd.lptzContactName, lptzText, _TRUNCATE);
+			PUAddPopupT(&ppd);
 		}
+
+		timer = 2;
+		Sleep(delay * 1000);
+		timer = 0;
+
+		if (PopUp == 1) {
+			lptzText = (DefEnabled == 1 && DefPopup == 1) ? TranslateT(ALL_ENABLED_FLT) : ALL_ENABLED;
+			ppd.lchIcon = IcoLib_GetIconByHandle((DefEnabled == 1 && DefPopup == 1) ? GetIconHandle(ALL_ENABLED_FLT) : GetIconHandle(MENU_NAME));
+			wcsncpy_s(ppd.lptzText, lptzText, _TRUNCATE);
+			PUAddPopupT(&ppd);
+		}
+		if (DefEnabled == 1) { //predefined sound setting
+			db_set_b(NULL, "Skin", "UseSound", DefSound);
+		}
+		else db_set_b(NULL, "Skin", "UseSound", 1); //or enable sounds every starts
+	}
 	return 0;
 }
 
@@ -265,13 +267,13 @@ INT_PTR StartupSilenceEnabled(WPARAM, LPARAM)
 	if (MenuItem == 1)
 		UpdateMenu();
 	if (PopUp == 1) {
-		TCHAR * lptzText = Enabled == 1 ? S_MODE_CHANGEDON : S_MODE_CHANGEDOFF;
+		wchar_t * lptzText = Enabled == 1 ? S_MODE_CHANGEDON : S_MODE_CHANGEDOFF;
 		POPUPDATAT ppd = {0};
 		ppd.lchIcon = IcoLib_GetIconByHandle((Enabled == 1) ? GetIconHandle(ENABLE_SILENCE) : GetIconHandle(DISABLE_SILENCE));
 		ppd.lchContact = NULL;
 		ppd.iSeconds = PopUpTime;
 		wcsncpy_s(ppd.lptzText, lptzText, _TRUNCATE);
-		lptzText = TranslateT(MENU_NAME);
+		lptzText = TranslateW(MENU_NAMEW);
 		wcsncpy_s(ppd.lptzContactName, lptzText, _TRUNCATE);
 		PUAddPopupT(&ppd);
 	}
@@ -300,9 +302,9 @@ static INT_PTR InitMenu()
 void UpdateMenu()
 {
 	if (Enabled == 1)
-		Menu_ModifyItem(hSSMenuToggleOnOff, _T(DISABLE_SILENCE), GetIconHandle(DISABLE_SILENCE));
+		Menu_ModifyItem(hSSMenuToggleOnOff, _A2W(DISABLE_SILENCE), GetIconHandle(DISABLE_SILENCE));
 	else
-		Menu_ModifyItem(hSSMenuToggleOnOff, _T(ENABLE_SILENCE), GetIconHandle(ENABLE_SILENCE));
+		Menu_ModifyItem(hSSMenuToggleOnOff, _A2W(ENABLE_SILENCE), GetIconHandle(ENABLE_SILENCE));
 
 	UpdateTTB();
 }
@@ -349,7 +351,7 @@ static INT_PTR CALLBACK DlgProcOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
 		LoadSettings();
-		SetDlgItemText(hwndDlg,  IDC_HST, mir_a2t(hostname));
+		SetDlgItemText(hwndDlg,  IDC_HST, mir_a2u(hostname));
 		CheckDlgButton(hwndDlg, IDC_DELAY, (Enabled == 1) ? BST_CHECKED : BST_UNCHECKED);
 		SendDlgItemMessage(hwndDlg, IDC_SSSPIN, UDM_SETBUDDY, (WPARAM)GetDlgItem(hwndDlg, IDC_SSTIME), 0);
 		SendDlgItemMessage(hwndDlg, IDC_SSSPIN, UDM_SETRANGE32, 10, 300);
@@ -396,7 +398,7 @@ static INT_PTR CALLBACK DlgProcOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			break;
 
 		case IDC_DELAY2:
-			if (!ServiceExists(POPUPONOFF)) {
+			if (!ServiceExists(MS_POPUP_QUERY)) {
 				MessageBox(0, NEEDPOPUP, NOTICE, MB_OK);
 				CheckDlgButton(hwndDlg, IDC_DELAY2, BST_UNCHECKED);
 				PopUp = (BYTE)db_set_b(NULL, MODULE_NAME, PopUpComp, 0);
@@ -461,9 +463,8 @@ int InitializeOptions(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_SSOPT);
-	odp.pszGroup = LPGEN("Events");//FIXME: move to...Group?
-	odp.pszTitle = MENU_NAME;
-	odp.groupPosition = 910000000;
+	odp.szGroup.a = LPGEN("Events");//FIXME: move to...Group?
+	odp.szTitle.a = MENU_NAME;
 	odp.flags = ODPF_BOLDGROUPS;
 	odp.pfnDlgProc = DlgProcOptions;
 	Options_AddPage(wParam, &odp);

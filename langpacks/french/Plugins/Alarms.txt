@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Alarms.dll
 ;  Plugin: Alarms
-;  Version: 0.4.0.5
+;  Version: 0.4.0.6
 ;  Authors: Scott Ellis
 ;============================================================
 [Sets once-off, daily, weekly and weekday alarms.]
@@ -17,7 +17,7 @@ Effacer
 [Alarms]
 Alarmes
 [Use popup plugin]
-Utiliser le plugin Popup
+Utiliser le plugin popup
 [Default snooze:]
 Son par défaut :
 [minutes]
@@ -84,8 +84,6 @@ Une fois
 
 [Weekdays]
 En semaine
-[Monthly]
-
 [Yearly]
 
 [i'm hiding]
@@ -98,6 +96,24 @@ Désactiver la prochaine occurrence
 Ne pas activer au démarrage
 [No reminder]
 Ne pas répéter
+[Selected days]
+
+[Mon]
+
+[Tue]
+
+[Wed]
+
+[Thu]
+
+[Fri]
+
+[Sat]
+
+[Sun]
+
+[Monthly]
+
 [Dismiss]
 
 [Snooze]

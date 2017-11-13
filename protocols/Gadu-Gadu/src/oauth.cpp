@@ -286,7 +286,7 @@ int GGPROTO::oauth_receivetoken()
 {
 	char szUrl[256], uin[32], *str, *token = NULL, *token_secret = NULL;
 	int res = 0;
-	HANDLE nlc = NULL;
+	HNETLIBCONN nlc = NULL;
 
 	UIN2IDA( getDword(GG_KEY_UIN, 0), uin);
 	char *password = getStringA(GG_KEY_PASSWORD);
@@ -311,25 +311,25 @@ int GGPROTO::oauth_receivetoken()
 	req.headersCount = 3;
 	req.headers = httpHeaders;
 
-	NETLIBHTTPREQUEST *resp = (NETLIBHTTPREQUEST *)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)m_hNetlibUser, (LPARAM)&req);
+	NETLIBHTTPREQUEST *resp = Netlib_HttpTransaction(m_hNetlibUser, &req);
 	if (resp) {
 		nlc = resp->nlc; 
 		if (resp->resultCode == 200 && resp->dataLength > 0 && resp->pData) {
-			TCHAR *xmlAction = mir_a2t(resp->pData);
-			HXML hXml = xmlParseString(xmlAction, 0, _T("result"));
+			wchar_t *xmlAction = mir_a2u(resp->pData);
+			HXML hXml = xmlParseString(xmlAction, 0, L"result");
 			if (hXml != NULL) {
-				HXML node = xmlGetChildByPath(hXml, _T("oauth_token"), 0);
-				token = node != NULL ? mir_t2a(xmlGetText(node)) : NULL;
+				HXML node = xmlGetChildByPath(hXml, L"oauth_token", 0);
+				token = node != NULL ? mir_u2a(xmlGetText(node)) : NULL;
 
-				node = xmlGetChildByPath(hXml, _T("oauth_token_secret"), 0);
-				token_secret = node != NULL ? mir_t2a(xmlGetText(node)) : NULL;
+				node = xmlGetChildByPath(hXml, L"oauth_token_secret", 0);
+				token_secret = node != NULL ? mir_u2a(xmlGetText(node)) : NULL;
 
 				xmlDestroyNode(hXml);
 			}
 			mir_free(xmlAction);
 		}
 		else debugLogA("oauth_receivetoken(): Invalid response code from HTTP request");
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)resp);
+		Netlib_FreeHttpRequest(resp);
 	}
 	else debugLogA("oauth_receivetoken(): No response from HTTP request");
 
@@ -356,9 +356,11 @@ int GGPROTO::oauth_receivetoken()
 	req.pData = str;
 	req.dataLength = (int)mir_strlen(str);
 
-	resp = (NETLIBHTTPREQUEST *)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)m_hNetlibUser, (LPARAM)&req);
-	if (resp) CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)resp);
-	else debugLogA("oauth_receivetoken(): No response from HTTP request");
+	resp = Netlib_HttpTransaction(m_hNetlibUser, &req);
+	if (resp)
+		Netlib_FreeHttpRequest(resp);
+	else
+		debugLogA("oauth_receivetoken(): No response from HTTP request");
 
 	// 3. Obtaining an Access Token
 	debugLogA("oauth_receivetoken(): Obtaining an Access Token...");
@@ -381,17 +383,17 @@ int GGPROTO::oauth_receivetoken()
 	httpHeaders[1].szName  = "Authorization";
 	httpHeaders[1].szValue = str;
 
-	resp = (NETLIBHTTPREQUEST *)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)m_hNetlibUser, (LPARAM)&req);
+	resp = Netlib_HttpTransaction(m_hNetlibUser, &req);
 	if (resp) {
 		if (resp->resultCode == 200 && resp->dataLength > 0 && resp->pData) {
-			TCHAR *xmlAction = mir_a2t(resp->pData);
-			HXML hXml = xmlParseString(xmlAction, 0, _T("result"));
+			wchar_t *xmlAction = mir_a2u(resp->pData);
+			HXML hXml = xmlParseString(xmlAction, 0, L"result");
 			if (hXml != NULL) {
-				HXML node = xmlGetChildByPath(hXml, _T("oauth_token"), 0);
-				token = mir_t2a(xmlGetText(node));
+				HXML node = xmlGetChildByPath(hXml, L"oauth_token", 0);
+				token = mir_u2a(xmlGetText(node));
 
-				node = xmlGetChildByPath(hXml, _T("oauth_token_secret"), 0);
-				token_secret = mir_t2a(xmlGetText(node));
+				node = xmlGetChildByPath(hXml, L"oauth_token_secret", 0);
+				token_secret = mir_u2a(xmlGetText(node));
 
 				xmlDestroyNode(hXml);
 			}
@@ -399,7 +401,7 @@ int GGPROTO::oauth_receivetoken()
 		}
 		else debugLogA("oauth_receivetoken(): Invalid response code from HTTP request");
 		Netlib_CloseHandle(resp->nlc);
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)resp);
+		Netlib_FreeHttpRequest(resp);
 	}
 	else debugLogA("oauth_receivetoken(): No response from HTTP request");
 

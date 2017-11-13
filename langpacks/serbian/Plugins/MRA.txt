@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: MRA.dll
 ;  Plugin: MRA protocol
-;  Version: 2.1.0.10
+;  Version: 2.1.1.1
 ;  Authors: Rozhuk Ivan
 ;============================================================
 [Miranda Mail.ru Agent protocol plugin.]
@@ -219,7 +219,11 @@ Muško
 [Avatars: can't open file %s, error]
 
 ;file \protocols\MRA\src\MraChat.cpp
-[CHAT plugin is required for conferences. Install it before chatting]
+[Owners]
+
+[Inviter]
+
+[Visitors]
 
 [invite sender]
 
@@ -298,6 +302,8 @@ Autorizuj
 [Send files: requested file: %S - not found in send files list.]
 
 ;file \protocols\MRA\src\MraIcons.cpp
+[Main icon]
+
 [Protocols]
 
 [MRA]

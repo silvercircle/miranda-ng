@@ -2,9 +2,19 @@
 
 /* MAIN FUNCTIONS */
 
+bool tox_version_is_compatible(uint32_t major, uint32_t minor, uint32_t patch)
+{
+	return CreateFunction<bool(*)(uint32_t, uint32_t, uint32_t)>(__FUNCTION__)(major, minor, patch);
+}
+
 struct Tox_Options *tox_options_new(TOX_ERR_OPTIONS_NEW *error)
 {
 	return CreateFunction<struct Tox_Options*(*)(TOX_ERR_OPTIONS_NEW*)>(__FUNCTION__)(error);
+}
+
+void tox_options_default(struct Tox_Options *options)
+{
+	CreateFunction<void(*)(struct Tox_Options*)>(__FUNCTION__)(options);
 }
 
 void tox_options_free(struct Tox_Options *options)
@@ -19,8 +29,7 @@ Tox *tox_new(const struct Tox_Options *options, TOX_ERR_NEW *error)
 
 void tox_kill(Tox *tox)
 {
-	CreateFunction<int(*)(const Tox*)>(__FUNCTION__)(tox);
-	tox = NULL;
+	CreateFunction<int(*)(Tox*)>(__FUNCTION__)(tox);
 }
 
 void tox_self_get_address(const Tox *tox, uint8_t *address)

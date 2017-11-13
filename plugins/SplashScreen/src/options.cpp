@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 #include "stdafx.h"
 
-TCHAR szPath2Spash[MAX_PATH], szSoundFilePath[MAX_PATH];
+wchar_t szPath2Spash[MAX_PATH], szSoundFilePath[MAX_PATH];
 
 // Reads values from db
 void ReadDbConfig()
@@ -66,30 +66,30 @@ INT_PTR CALLBACK DlgProcOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 			}
 			else {
 				ReadDbConfig();
-				TCHAR inBuf[80];
+				wchar_t inBuf[80];
 				DBVARIANT dbv = { 0 };
-				if (!db_get_ts(NULL, MODNAME, "Path", &dbv)) {
-					mir_tstrcpy(inBuf, dbv.ptszVal);
+				if (!db_get_ws(NULL, MODNAME, "Path", &dbv)) {
+					mir_wstrcpy(inBuf, dbv.ptszVal);
 					db_free(&dbv);
 				}
 				else
-					mir_tstrcpy(inBuf, _T("splash\\splash.png"));
+					mir_wstrcpy(inBuf, L"splash\\splash.png");
 				SetDlgItemText(hwndDlg, IDC_SPLASHPATH, inBuf);
 
-				if (!db_get_ts(NULL, MODNAME, "Sound", &dbv)) {
-					mir_tstrcpy(inBuf, dbv.ptszVal);
+				if (!db_get_ws(NULL, MODNAME, "Sound", &dbv)) {
+					mir_wstrcpy(inBuf, dbv.ptszVal);
 					db_free(&dbv);
 				}
 				else
-					mir_tstrcpy(inBuf, _T("sounds\\startup.wav"));
+					mir_wstrcpy(inBuf, L"sounds\\startup.wav");
 				SetDlgItemText(hwndDlg, IDC_SNDPATH, inBuf);
 
-				if (!db_get_ts(NULL, MODNAME, "VersionPrefix", &dbv)) {
-					mir_tstrcpy(inBuf, dbv.ptszVal);
+				if (!db_get_ws(NULL, MODNAME, "VersionPrefix", &dbv)) {
+					mir_wstrcpy(inBuf, dbv.ptszVal);
 					db_free(&dbv);
 				}
 				else
-					mir_tstrcpy(inBuf, _T(""));
+					mir_wstrcpy(inBuf, L"");
 				SetDlgItemText(hwndDlg, IDC_VERSIONPREFIX, inBuf);
 
 				if (options.active)
@@ -108,9 +108,9 @@ INT_PTR CALLBACK DlgProcOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 				if (options.showversion)
 					CheckDlgButton(hwndDlg, IDC_SHOWVERSION, BST_CHECKED);
 
-				SetDlgItemText(hwndDlg, IDC_SHOWTIME, _itot(options.showtime, inBuf, 10));
-				SetDlgItemText(hwndDlg, IDC_FISTEP, _itot(options.fisteps, inBuf, 10));
-				SetDlgItemText(hwndDlg, IDC_FOSTEP, _itot(options.fosteps, inBuf, 10));
+				SetDlgItemText(hwndDlg, IDC_SHOWTIME, _itow(options.showtime, inBuf, 10));
+				SetDlgItemText(hwndDlg, IDC_FISTEP, _itow(options.fisteps, inBuf, 10));
+				SetDlgItemText(hwndDlg, IDC_FOSTEP, _itow(options.fosteps, inBuf, 10));
 
 				SendDlgItemMessage(hwndDlg, IDC_SHOWTIME, EM_LIMITTEXT, 5, 0);
 			}
@@ -166,22 +166,22 @@ INT_PTR CALLBACK DlgProcOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 
 			case IDC_CHOOSESPLASH:
 				{
-					TCHAR szTempPath[MAX_PATH], initDir[MAX_PATH];
+					wchar_t szTempPath[MAX_PATH], initDir[MAX_PATH];
 
 					if (Exists(szSplashFile)) {
-						mir_tstrcpy(initDir, szSplashFile);
-						TCHAR *pos = _tcsrchr(initDir, _T('\\'));
+						mir_wstrcpy(initDir, szSplashFile);
+						wchar_t *pos = wcsrchr(initDir, '\\');
 						if (pos != NULL)
 							*pos = 0;
 					}
 					else {
-						szMirDir = Utils_ReplaceVarsT(_T("%miranda_path%"));
-						mir_tstrcpy(initDir, szMirDir);
+						szMirDir = Utils_ReplaceVarsW(L"%miranda_path%");
+						mir_wstrcpy(initDir, szMirDir);
 						mir_free(szMirDir);
 					}
 
-					TCHAR tmp[MAX_PATH];
-					mir_sntprintf(tmp, _T("%s (*.png, *.bmp)%c*.png;*.bmp%c%c"), TranslateT("Graphic files"), 0, 0, 0);
+					wchar_t tmp[MAX_PATH];
+					mir_snwprintf(tmp, L"%s (*.png, *.bmp)%c*.png;*.bmp%c%c", TranslateT("Graphic files"), 0, 0, 0);
 
 					OPENFILENAME ofn = { 0 };
 					ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400;
@@ -192,22 +192,22 @@ INT_PTR CALLBACK DlgProcOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 					ofn.Flags = OFN_HIDEREADONLY;
 					ofn.lpstrInitialDir = initDir;
 					*szTempPath = '\0';
-					ofn.lpstrDefExt = _T("");
+					ofn.lpstrDefExt = L"";
 
 					if (GetOpenFileName(&ofn)) {
-						mir_tstrcpy(szSplashFile, szTempPath);
+						mir_wstrcpy(szSplashFile, szTempPath);
 
 						#ifdef _DEBUG
-						logMessage(_T("Set path"), szSplashFile);
+						logMessage(L"Set path", szSplashFile);
 						#endif
 						// Make path relative
-						int result = PathToRelativeT(szTempPath, szPath2Spash);
-						if (result && mir_tstrlen(szPath2Spash) > 0) {
+						int result = PathToRelativeW(szTempPath, szPath2Spash);
+						if (result && mir_wstrlen(szPath2Spash) > 0) {
 							if (options.random) {
-								TCHAR *pos = _tcsrchr(szPath2Spash, _T('\\'));
+								wchar_t *pos = wcsrchr(szPath2Spash, '\\');
 								if (pos != NULL) {
 									*pos = 0;
-									mir_tstrcat(szPath2Spash, _T("\\"));
+									mir_wstrcat(szPath2Spash, L"\\");
 								}
 							}
 
@@ -222,24 +222,24 @@ INT_PTR CALLBACK DlgProcOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 
 			case IDC_CHOOSESND:
 				{
-					TCHAR szTempPath[MAX_PATH], initDir[MAX_PATH];
-					TCHAR *pos;
+					wchar_t szTempPath[MAX_PATH], initDir[MAX_PATH];
+					wchar_t *pos;
 
 					if (Exists(szSoundFile)) {
-						mir_tstrcpy(initDir, szSoundFile);
-						pos = _tcsrchr(initDir, _T('\\'));
+						mir_wstrcpy(initDir, szSoundFile);
+						pos = wcsrchr(initDir, '\\');
 						if (pos != NULL) *pos = 0;
 					}
 					else {
-						szMirDir = Utils_ReplaceVarsT(_T("%miranda_path%"));
-						mir_tstrcpy(initDir, szMirDir);
+						szMirDir = Utils_ReplaceVarsW(L"%miranda_path%");
+						mir_wstrcpy(initDir, szMirDir);
 						mir_free(szMirDir);
 					}
 
 					OPENFILENAME ofn = { 0 };
 					ofn.lStructSize = OPENFILENAME_SIZE_VERSION_400;
-					TCHAR tmp[MAX_PATH];
-					mir_sntprintf(tmp, _T("%s (*.wav, *.mp3)%c*.wav;*.mp3%c%c"), TranslateT("Sound Files"), 0, 0, 0);
+					wchar_t tmp[MAX_PATH];
+					mir_snwprintf(tmp, L"%s (*.wav, *.mp3)%c*.wav;*.mp3%c%c", TranslateT("Sound Files"), 0, 0, 0);
 					ofn.lpstrFilter = tmp;
 					ofn.hwndOwner = 0;
 					ofn.lpstrFile = szTempPath;
@@ -248,18 +248,18 @@ INT_PTR CALLBACK DlgProcOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 					ofn.Flags = OFN_HIDEREADONLY;
 					ofn.lpstrInitialDir = initDir;
 					*szTempPath = '\0';
-					ofn.lpstrDefExt = _T("");
+					ofn.lpstrDefExt = L"";
 
 					if (GetOpenFileName(&ofn)) {
-						mir_tstrcpy(szSoundFile, szTempPath);
+						mir_wstrcpy(szSoundFile, szTempPath);
 
 						#ifdef _DEBUG
-						logMessage(_T("Set sound path"), szSoundFile);
+						logMessage(L"Set sound path", szSoundFile);
 						#endif
 
 						// Make path relative
-						int result = PathToRelativeT(szTempPath, szSoundFilePath);
-						if (result && mir_tstrlen(szSoundFile) > 0)
+						int result = PathToRelativeW(szTempPath, szSoundFilePath);
+						if (result && mir_wstrlen(szSoundFile) > 0)
 							SetDlgItemText(hwndDlg, IDC_SNDPATH, szSoundFilePath);
 
 						SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
@@ -285,29 +285,29 @@ INT_PTR CALLBACK DlgProcOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 				switch (((LPNMHDR)lParam)->code) {
 				case PSN_APPLY:
 					{
-						TCHAR tmp[MAX_PATH];
+						wchar_t tmp[MAX_PATH];
 
 						GetDlgItemText(hwndDlg, IDC_SPLASHPATH, tmp, _countof(tmp));
-						db_set_ts(NULL, MODNAME, "Path", tmp);
+						db_set_ws(NULL, MODNAME, "Path", tmp);
 
 						GetDlgItemText(hwndDlg, IDC_SNDPATH, tmp, _countof(tmp));
-						db_set_ts(NULL, MODNAME, "Sound", tmp);
+						db_set_ws(NULL, MODNAME, "Sound", tmp);
 
 						GetDlgItemText(hwndDlg, IDC_VERSIONPREFIX, tmp, _countof(tmp));
-						db_set_ts(NULL, MODNAME, "VersionPrefix", tmp);
-						mir_tstrcpy(szPrefix, tmp);
+						db_set_ws(NULL, MODNAME, "VersionPrefix", tmp);
+						mir_wstrcpy(szPrefix, tmp);
 
 						GetDlgItemText(hwndDlg, IDC_SHOWTIME, tmp, _countof(tmp));
-						db_set_dw(NULL, MODNAME, "TimeToShow", _ttoi(tmp));
-						options.showtime = _ttoi(tmp);
+						db_set_dw(NULL, MODNAME, "TimeToShow", _wtoi(tmp));
+						options.showtime = _wtoi(tmp);
 
 						GetDlgItemText(hwndDlg, IDC_FISTEP, tmp, _countof(tmp));
-						db_set_dw(NULL, MODNAME, "FadeinSpeed", _ttoi(tmp));
-						options.fisteps = _ttoi(tmp);
+						db_set_dw(NULL, MODNAME, "FadeinSpeed", _wtoi(tmp));
+						options.fisteps = _wtoi(tmp);
 
 						GetDlgItemText(hwndDlg, IDC_FOSTEP, tmp, _countof(tmp));
-						db_set_dw(NULL, MODNAME, "FadeoutSpeed", _ttoi(tmp));
-						options.fosteps = _ttoi(tmp);
+						db_set_dw(NULL, MODNAME, "FadeoutSpeed", _wtoi(tmp));
+						options.fosteps = _wtoi(tmp);
 
 						if (IsDlgButtonChecked(hwndDlg, IDC_ACTIVE)) {
 							db_set_b(NULL, MODNAME, "Active", 1);
@@ -398,9 +398,9 @@ int OptInit(WPARAM wParam, LPARAM lParam)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
-	odp.pszGroup = LPGEN("Skins");
+	odp.szGroup.a = LPGEN("Skins");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_SPLASH_OPT);
-	odp.pszTitle = LPGEN("Splash Screen");
+	odp.szTitle.a = LPGEN("Splash Screen");
 	odp.pfnDlgProc = DlgProcOptions;
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);

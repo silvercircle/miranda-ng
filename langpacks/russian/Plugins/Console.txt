@@ -2,11 +2,11 @@
 ;============================================================
 ;  File: Console.dll
 ;  Plugin: Console
-;  Version: 0.0.7.3
+;  Version: 0.0.7.4
 ;  Authors: Bio
 ;============================================================
 [Console log window for Miranda.]
-Плагин окна консоли журнала Miranda NG.
+Окно консоли журнала Miranda NG.
 [Console]
 Консоль
 [Single window mode*]

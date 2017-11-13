@@ -78,11 +78,11 @@ void DlgFilterWords::onWMInitDialog()
 	static const struct
 	{
 		WORD iconId;
-		TCHAR* szTooltip;
+		wchar_t* szTooltip;
 		bool bDisabled;
 	} columnBand[] = {
-		{ IDI_COL_ADD, LPGENT("Add set"), false },
-		{ IDI_COL_DEL, LPGENT("Delete set"), true },
+		{ IDI_COL_ADD, LPGENW("Add set"), false },
+		{ IDI_COL_DEL, LPGENW("Delete set"), true },
 	};
 
 	array_each_(i, columnBand)
@@ -90,7 +90,7 @@ void DlgFilterWords::onWMInitDialog()
 		HICON hIcon = reinterpret_cast<HICON>(LoadImage(g_hInst, MAKEINTRESOURCE(columnBand[i].iconId), IMAGE_ICON, OS::smIconCX(), OS::smIconCY(), 0));
 		DWORD dwFlags = (columnBand[i].bDisabled ? BandCtrl::BCF_DISABLED : 0);
 
-		m_hActionButtons[i] = m_Band.addButton(dwFlags, hIcon, i, TranslateTS(columnBand[i].szTooltip));
+		m_hActionButtons[i] = m_Band.addButton(dwFlags, hIcon, i, TranslateW(columnBand[i].szTooltip));
 
 		DestroyIcon(hIcon);
 	}
@@ -109,20 +109,20 @@ void DlgFilterWords::onWMInitDialog()
 	}
 
 	// init other controls
-	static const TCHAR* szWordFilterModes[] = {
-		LPGENT("Filter words matching"),
-		LPGENT("Filter words containing"),
-		LPGENT("Filter words starting with"),
-		LPGENT("Filter words ending with"),
-		LPGENT("Filter messages matching"),
-		LPGENT("Filter messages containing"),
-		LPGENT("Filter messages starting with"),
-		LPGENT("Filter messages ending with"),
+	static const wchar_t* szWordFilterModes[] = {
+		LPGENW("Filter words matching"),
+		LPGENW("Filter words containing"),
+		LPGENW("Filter words starting with"),
+		LPGENW("Filter words ending with"),
+		LPGENW("Filter messages matching"),
+		LPGENW("Filter messages containing"),
+		LPGENW("Filter messages starting with"),
+		LPGENW("Filter messages ending with"),
 	};
 
 	array_each_(i, szWordFilterModes)
 	{
-		SendDlgItemMessage(m_hWnd, IDC_MODE, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TranslateTS(szWordFilterModes[i])));
+		SendDlgItemMessage(m_hWnd, IDC_MODE, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(TranslateW(szWordFilterModes[i])));
 	}
 
 	SendDlgItemMessage(m_hWnd, IDC_MODE, CB_SETCURSEL, 0, 0);
@@ -209,7 +209,7 @@ void DlgFilterWords::onSetSelChanging(HANDLE hItem, INT_PTR dwData)
 		// set name
 		HWND hText = GetDlgItem(m_hWnd, IDC_SETNAME);
 		int nLen = GetWindowTextLength(hText);
-		TCHAR* szText = new TCHAR[nLen + 1];
+		wchar_t* szText = new wchar_t[nLen + 1];
 
 		if (GetWindowText(hText, szText, nLen + 1)) {
 			pFilter->setName(szText);
@@ -221,15 +221,15 @@ void DlgFilterWords::onSetSelChanging(HANDLE hItem, INT_PTR dwData)
 		// words
 		hText = GetDlgItem(m_hWnd, IDC_WORDS);
 		nLen = GetWindowTextLength(hText);
-		szText = new TCHAR[nLen + 1];
+		szText = new wchar_t[nLen + 1];
 
 		if (GetWindowText(hText, szText, nLen + 1)) {
 			ext::string strText = szText;
 
-			utils::replaceAllInPlace(strText, _T("\r"), _T(""));
+			utils::replaceAllInPlace(strText, L"\r", L"");
 			pFilter->clearWords();
 
-			ext::string::size_type nPos = strText.find('\n');
+			size_t nPos = strText.find('\n');
 
 			while (nPos != ext::string::npos) {
 				if (nPos > 0)
@@ -270,7 +270,7 @@ void DlgFilterWords::onSetSelChanged(HANDLE hItem, INT_PTR dwData)
 		citer_each_(WordSet, i, pFilter->getWords())
 		{
 			strWords += *i;
-			strWords += _T("\r\n");
+			strWords += L"\r\n";
 		}
 
 		if (!strWords.empty())
@@ -279,8 +279,8 @@ void DlgFilterWords::onSetSelChanged(HANDLE hItem, INT_PTR dwData)
 		SetDlgItemText(m_hWnd, IDC_WORDS, strWords.c_str());
 	}
 	else {
-		SetDlgItemText(m_hWnd, IDC_SETNAME, _T(""));
-		SetDlgItemText(m_hWnd, IDC_WORDS, _T(""));
+		SetDlgItemText(m_hWnd, IDC_SETNAME, L"");
+		SetDlgItemText(m_hWnd, IDC_WORDS, L"");
 	}
 
 	// (de)activate band controls
@@ -297,8 +297,7 @@ void DlgFilterWords::clearFilters()
 	m_Filters.clear();
 }
 
-DlgFilterWords::DlgFilterWords() :
-	m_hWnd(NULL), m_bColProvided(false)
+DlgFilterWords::DlgFilterWords() : m_hWnd(NULL), m_bColProvided(false)
 {
 }
 

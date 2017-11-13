@@ -102,7 +102,7 @@ int ClcGetButtonId(HWND hwnd)
 struct MButtonExtension : public MButtonCtrl
 {
 	HICON hIconPrivate;
-	TCHAR szText[128];
+	wchar_t szText[128];
 	SIZE sLabel;
 	HIMAGELIST hIml;
 	int iIcon;
@@ -326,7 +326,7 @@ static void PaintWorker(MButtonExtension *ctl, HDC hdcPaint)
 				ctl->sLabel.cx = ctl->sLabel.cy = 0;
 			}
 			else {
-				GetTextExtentPoint32(hdcMem, ctl->szText, (int)mir_tstrlen(ctl->szText), &ctl->sLabel);
+				GetTextExtentPoint32(hdcMem, ctl->szText, (int)mir_wstrlen(ctl->szText), &ctl->sLabel);
 
 				if (g_cxsmIcon + ctl->sLabel.cx + 8 > rcClient.right - rcClient.left)
 					ctl->sLabel.cx = (rcClient.right - rcClient.left) - g_cxsmIcon - 8;
@@ -388,7 +388,7 @@ static LRESULT CALLBACK TSButtonWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 		break;
 
 	case WM_SETTEXT:
-		_tcsncpy_s(bct->szText, (TCHAR*)lParam, _TRUNCATE);
+		wcsncpy_s(bct->szText, (wchar_t*)lParam, _TRUNCATE);
 		break;
 
 	case BM_GETIMAGE:

@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: SmileyAdd.dll
 ;  Plugin: SmileyAdd
-;  Version: 0.2.3.18
+;  Version: 0.2.4.1
 ;  Authors: Peacow, nightwish, bid, borkra
 ;============================================================
 [Smiley support for Miranda NG.]
@@ -40,12 +40,6 @@ Maksymalna wysokość emotikon
 Minimalna wysokość emotikon
 [Smiley selector]
 Okno wyboru emotikon
-[Surround inserted smiley with spaces]
-Oddzielaj wstawione emotikony spacjami
-[Use first smiley for selection size]
-Pierwsza emotikona określa rozmiar zaznaczenia
-[IEView style window]
-Styl okna jak w IEView
 [Input area]
 Pole wpisywania
 [Enable smileys]
@@ -54,12 +48,18 @@ Włącz emotikony
 Nie zamieniaj przy kursorze
 [Built-in message dialog support]
 Wbudowane wsparcie dla okna rozmowy
-[Disable]
-Wyłącz
+[Enable]
+Włącz
 [Smiley button]
 Przycisk emotikon
+[Surround inserted smiley with spaces]
+Oddzielaj wstawione emotikony spacjami
+[Use first smiley for selection size]
+Pierwsza emotikona określa rozmiar zaznaczenia
+[IEView style window]
+Styl okna jak w IEView
 [Horizontal sorting]
-
+Sortowanie poziome
 ;file \plugins\SmileyAdd\src\dlgboxsubclass.cpp
 [Show smiley selection window]
 Pokaż okno wyboru emotikon
@@ -75,23 +75,23 @@ Połączenie HTTP SmileyAdd
 Przycisk emotikon
 [Assign smiley category]
 Przypisz kategorię emotikon
+[Background color]
+Kolor tła
 [Only one instance of SmileyAdd could be executed.\nRemove duplicate instances from 'Plugins' directory]
 Tylko jedna wtyczka SmilleyAdd może być uruchomiona.\nUsuń duplikaty z folderu "Plugins"
 ;file \plugins\SmileyAdd\src\options.cpp
-[Smileys]
-Emotikony
-[Customize]
-Personalizacja
-[Off]
-Wył.
-[Top]
-Góra
-[Bottom]
-Dół
+[Hide]
+Ukryj
+[Show]
+Pokaż
 [Smiley packs]
 Paczka emotikon
 [All files]
 Wszystkie pliki
+[Smileys]
+Emotikony
+[Customize]
+Personalizacja
 ;file \plugins\SmileyAdd\src\services.cpp
 [Protocol specific]
 Specyficzne dla protokołu

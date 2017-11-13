@@ -47,24 +47,24 @@ int AddStatusMode(OPTTREE_OPTION *options, int pos, LPTSTR prefix, DWORD flag)
 	if (!flag) return pos;
 	options[pos].dwFlag = flag;
 	options[pos].groupId = OPTTREE_CHECK;
-	options[pos].pszOptionName = (LPTSTR)mir_alloc(sizeof(TCHAR) * mir_tstrlen(prefix) + 32);
-	options[pos].pszSettingName = mir_tstrdup(prefix);
+	options[pos].pszOptionName = (LPTSTR)mir_alloc(sizeof(wchar_t) * mir_wstrlen(prefix) + 32);
+	options[pos].pszSettingName = mir_wstrdup(prefix);
 	options[pos].iconIndex = 0;
 
-	mir_tstrcpy(options[pos].pszOptionName, prefix);
-	mir_tstrcat(options[pos].pszOptionName, _T("/"));
+	mir_wstrcpy(options[pos].pszOptionName, prefix);
+	mir_wstrcat(options[pos].pszOptionName, L"/");
 	switch (flag)
 	{
-	case PF2_IDLE: mir_tstrcat(options[pos].pszOptionName, LPGENT("Offline")); break;
-	case PF2_ONLINE: mir_tstrcat(options[pos].pszOptionName, LPGENT("Online")); break;
-	case PF2_INVISIBLE: mir_tstrcat(options[pos].pszOptionName, LPGENT("Invisible")); break;
-	case PF2_SHORTAWAY: mir_tstrcat(options[pos].pszOptionName, LPGENT("Away")); break;
-	case PF2_LONGAWAY: mir_tstrcat(options[pos].pszOptionName, LPGENT("NA")); break;
-	case PF2_LIGHTDND: mir_tstrcat(options[pos].pszOptionName, LPGENT("Occupied")); break;
-	case PF2_HEAVYDND: mir_tstrcat(options[pos].pszOptionName, LPGENT("DND")); break;
-	case PF2_FREECHAT: mir_tstrcat(options[pos].pszOptionName, LPGENT("Free for chat")); break;
-	case PF2_OUTTOLUNCH: mir_tstrcat(options[pos].pszOptionName, LPGENT("Out to lunch")); break;
-	case PF2_ONTHEPHONE: mir_tstrcat(options[pos].pszOptionName, LPGENT("On the phone")); break;
+	case PF2_IDLE: mir_wstrcat(options[pos].pszOptionName, LPGENW("Offline")); break;
+	case PF2_ONLINE: mir_wstrcat(options[pos].pszOptionName, LPGENW("Online")); break;
+	case PF2_INVISIBLE: mir_wstrcat(options[pos].pszOptionName, LPGENW("Invisible")); break;
+	case PF2_SHORTAWAY: mir_wstrcat(options[pos].pszOptionName, LPGENW("Away")); break;
+	case PF2_LONGAWAY: mir_wstrcat(options[pos].pszOptionName, LPGENW("Not available")); break;
+	case PF2_LIGHTDND: mir_wstrcat(options[pos].pszOptionName, LPGENW("Occupied")); break;
+	case PF2_HEAVYDND: mir_wstrcat(options[pos].pszOptionName, LPGENW("Do not disturb")); break;
+	case PF2_FREECHAT: mir_wstrcat(options[pos].pszOptionName, LPGENW("Free for chat")); break;
+	case PF2_OUTTOLUNCH: mir_wstrcat(options[pos].pszOptionName, LPGENW("Out to lunch")); break;
+	case PF2_ONTHEPHONE: mir_wstrcat(options[pos].pszOptionName, LPGENW("On the phone")); break;
 	}
 	return pos + 1;
 }
@@ -151,7 +151,7 @@ INT_PTR CALLBACK DlgProcPopupGeneral(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 
 		// Dynamic Resize
 		CheckDlgButton(hwnd, IDC_DYNAMICRESIZE, PopupOptions.DynamicResize ? BST_CHECKED : BST_UNCHECKED);
-		SetDlgItemText(hwnd, IDC_USEMAXIMUMWIDTH, PopupOptions.DynamicResize ? LPGENT("Maximum width") : LPGENT("Width"));
+		SetDlgItemText(hwnd, IDC_USEMAXIMUMWIDTH, PopupOptions.DynamicResize ? LPGENW("Maximum width") : LPGENW("Width"));
 		// Minimum Width
 		CheckDlgButton(hwnd, IDC_USEMINIMUMWIDTH, PopupOptions.UseMinimumWidth ? BST_CHECKED : BST_UNCHECKED);
 		SendDlgItemMessage(hwnd, IDC_MINIMUMWIDTH_SPIN, UDM_SETRANGE, 0, (LPARAM)MAKELONG(SETTING_MAXIMUMWIDTH_MAX, SETTING_MINIMUMWIDTH_MIN));
@@ -181,7 +181,7 @@ INT_PTR CALLBACK DlgProcPopupGeneral(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 		{
 			HWND hCtrl = GetDlgItem(hwnd, IDC_CUSTOMPOS);
 			SendMessage(hCtrl, BUTTONSETASFLATBTN, TRUE, 0);
-			SendMessage(hCtrl, BUTTONADDTOOLTIP, (WPARAM)_T("Popup area"), BATF_TCHAR);
+			SendMessage(hCtrl, BUTTONADDTOOLTIP, (WPARAM)L"Popup area", BATF_UNICODE);
 			SendMessage(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx(IDI_RESIZE));
 		}
 		// Spreading combobox
@@ -203,6 +203,7 @@ INT_PTR CALLBACK DlgProcPopupGeneral(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 		// new status options
 		{
 			int protocolCount = 0;
+			statusOptionsCount = 0;
 			PROTOACCOUNT **protocols;
 			Proto_EnumAccounts(&protocolCount, &protocols);
 			DWORD globalFlags = 0;
@@ -217,15 +218,15 @@ INT_PTR CALLBACK DlgProcPopupGeneral(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 
 			statusOptions = new OPTTREE_OPTION[statusOptionsCount];
 
-			int pos = AddStatusModes(statusOptions, 0, LPGENT("Global Status"), globalFlags);
+			int pos = AddStatusModes(statusOptions, 0, LPGENW("Global Status"), globalFlags);
 			for (int i = 0; i < protocolCount; ++i) {
 				if (!protocols[i]->bIsVirtual) {
 					DWORD protoFlags = CallProtoService(protocols[i]->szModuleName, PS_GETCAPS, PFLAGNUM_2, 0);
 					if (!CountStatusModes(protoFlags))
 						continue;
 
-					TCHAR prefix[128];
-					mir_sntprintf(prefix, LPGENT("Protocol Status")_T("/%s"), protocols[i]->tszAccountName);
+					wchar_t prefix[128];
+					mir_snwprintf(prefix, LPGENW("Protocol Status")L"/%s", protocols[i]->tszAccountName);
 					pos = AddStatusModes(statusOptions, pos, prefix, protoFlags);
 				}
 			}
@@ -242,12 +243,12 @@ INT_PTR CALLBACK DlgProcPopupGeneral(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 					char prefix[128];
 					mir_snprintf(prefix, "Protocol Status/%s", protocols[i]->szModuleName);
 
-					TCHAR pszSettingName[256];
-					mir_sntprintf(pszSettingName, LPGENT("Protocol Status")_T("/%s"), protocols[i]->tszAccountName);
+					wchar_t pszSettingName[256];
+					mir_snwprintf(pszSettingName, LPGENW("Protocol Status")L"/%s", protocols[i]->tszAccountName);
 					OptTree_SetOptions(hwnd, IDC_STATUSES, statusOptions, statusOptionsCount, db_get_dw(NULL, MODULNAME, prefix, 0), pszSettingName);
 				}
 			}
-			OptTree_SetOptions(hwnd, IDC_STATUSES, statusOptions, statusOptionsCount, db_get_dw(NULL, MODULNAME, "Global Status", 0), LPGENT("Global Status"));
+			OptTree_SetOptions(hwnd, IDC_STATUSES, statusOptions, statusOptionsCount, db_get_dw(NULL, MODULNAME, "Global Status", 0), LPGENW("Global Status"));
 		}
 
 		TranslateDialogDefault(hwnd);	// do it on end of WM_INITDIALOG
@@ -528,12 +529,12 @@ INT_PTR CALLBACK DlgProcPopupGeneral(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 							char prefix[128];
 							mir_snprintf(prefix, "Protocol Status/%s", protocols[i]->szModuleName);
 
-							TCHAR pszSettingName[256];
-							mir_sntprintf(pszSettingName, _T("Protocol Status/%s"), protocols[i]->tszAccountName);
+							wchar_t pszSettingName[256];
+							mir_snwprintf(pszSettingName, L"Protocol Status/%s", protocols[i]->tszAccountName);
 							db_set_dw(NULL, MODULNAME, prefix, OptTree_GetOptions(hwnd, IDC_STATUSES, statusOptions, statusOptionsCount, pszSettingName));
 						}
 					}
-					db_set_dw(NULL, MODULNAME, "Global Status", OptTree_GetOptions(hwnd, IDC_STATUSES, statusOptions, statusOptionsCount, _T("Global Status")));
+					db_set_dw(NULL, MODULNAME, "Global Status", OptTree_GetOptions(hwnd, IDC_STATUSES, statusOptions, statusOptionsCount, L"Global Status"));
 				}
 				return TRUE;
 			}
@@ -580,8 +581,8 @@ INT_PTR CALLBACK DlgProcPopupGeneral(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 
 void ErrorMSG(int minValue, int maxValue)
 {
-	TCHAR str[128];
-	mir_sntprintf(str, TranslateT("You cannot specify a value lower than %d and higher than %d."), minValue, maxValue);
+	wchar_t str[128];
+	mir_snwprintf(str, TranslateT("You cannot specify a value lower than %d and higher than %d."), minValue, maxValue);
 	MSGERROR(str);
 }
 
@@ -589,7 +590,7 @@ void Check_ReorderPopups(HWND hwnd) {
 	if (!PopupOptions.ReorderPopups && PopupOptions.ReorderPopupsWarning) {
 		int res = MessageBox(hwnd,
 			TranslateT("'Reorder popups' option is currently disabled.\r\nThis may cause misaligned popups when used with\r\navatars and text replacement (mainly NewXstatusNotify).\r\n\r\nDo you want to enable popup reordering now?\r\n"),
-			TranslateT("Popup Plus Warning"), MB_ICONEXCLAMATION | MB_YESNOCANCEL);
+			TranslateT("Popup plus warning"), MB_ICONEXCLAMATION | MB_YESNOCANCEL);
 
 		switch (res) {
 		case IDYES:
@@ -626,11 +627,11 @@ INT_PTR CALLBACK PositionBoxDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 		SendDlgItemMessage(hwndDlg, IDC_TITLE, WM_SETFONT, (WPARAM)hFontTitle, TRUE);
 
 		SendDlgItemMessage(hwndDlg, IDOK, BUTTONSETASFLATBTN, TRUE, 0);
-		SendDlgItemMessage(hwndDlg, IDOK, BUTTONADDTOOLTIP, (WPARAM)_T("OK"), BATF_TCHAR);
+		SendDlgItemMessage(hwndDlg, IDOK, BUTTONADDTOOLTIP, (WPARAM)L"OK", BATF_UNICODE);
 		SendDlgItemMessage(hwndDlg, IDOK, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx(IDI_ACT_OK));
 
 		SendDlgItemMessage(hwndDlg, IDCANCEL, BUTTONSETASFLATBTN, TRUE, 0);
-		SendDlgItemMessage(hwndDlg, IDCANCEL, BUTTONADDTOOLTIP, (WPARAM)_T("Cancel"), BATF_TCHAR);
+		SendDlgItemMessage(hwndDlg, IDCANCEL, BUTTONADDTOOLTIP, (WPARAM)L"Cancel", BATF_UNICODE);
 		SendDlgItemMessage(hwndDlg, IDCANCEL, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadIconEx(IDI_ACT_CLOSE));
 
 		SetDlgItemInt(hwndDlg, IDC_TXT_TOP, PopupOptions.gapTop, FALSE);

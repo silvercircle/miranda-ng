@@ -42,7 +42,7 @@ static void TlenPsPostThread(void *ptr) {
 	TLENPSREQUESTTHREADDATA *data = (TLENPSREQUESTTHREADDATA *)ptr;
 	TlenProtocol *proto = data->proto;
 	TLEN_LIST_ITEM *item = data->item;
-	HANDLE socket = TlenWsConnect(proto, "ps.tlen.pl", 443);
+	HNETLIBCONN socket = TlenWsConnect(proto, "ps.tlen.pl", 443);
 	BOOL bSent = FALSE;
 	if (socket != NULL) {
 		char header[512];
@@ -89,7 +89,7 @@ static void TlenPsPost(TlenProtocol *proto, TLEN_LIST_ITEM *item) {
 	TLENPSREQUESTTHREADDATA *threadData = (TLENPSREQUESTTHREADDATA *)mir_alloc(sizeof(TLENPSREQUESTTHREADDATA));
 	threadData->proto = proto;
 	threadData->item = item;
-	forkthread(TlenPsPostThread, 0, threadData);
+	mir_forkthread(TlenPsPostThread, threadData);
 }
 
 static void TlenPsGetThread(void *ptr) {
@@ -99,7 +99,7 @@ static void TlenPsGetThread(void *ptr) {
 	FILE *fp;
 	fp = fopen( item->ft->files[0], "wb" );
 	if (fp) {
-		HANDLE socket = TlenWsConnect(proto, "ps.tlen.pl", 443);
+		HNETLIBCONN socket = TlenWsConnect(proto, "ps.tlen.pl", 443);
 		if (socket != NULL) {
 			XmlState xmlState;
 			char header[512];
@@ -162,7 +162,7 @@ static void TlenPsGet(TlenProtocol *proto, TLEN_LIST_ITEM *item) {
 	TLENPSREQUESTTHREADDATA *threadData = (TLENPSREQUESTTHREADDATA *)mir_alloc(sizeof(TLENPSREQUESTTHREADDATA));
 	threadData->proto = proto;
 	threadData->item = item;
-	forkthread(TlenPsGetThread, 0, threadData);
+	mir_forkthread(TlenPsGetThread, threadData);
 }
 
 void TlenProcessPic(XmlNode *node, TlenProtocol *proto) {
@@ -250,7 +250,7 @@ BOOL SendPicture(TlenProtocol *proto, MCONTACT hContact) {
 	if (!db_get(hContact, proto->m_szModuleName, "jid", &dbv)) {
 		char *jid = dbv.pszVal;
 		
-		TCHAR tszFilter[512], tszFileName[MAX_PATH];
+		wchar_t tszFilter[512], tszFileName[MAX_PATH];
 		Bitmap_GetFilter(tszFilter, _countof(tszFilter));
 		tszFileName[0] = '\0';
 
@@ -263,7 +263,7 @@ BOOL SendPicture(TlenProtocol *proto, MCONTACT hContact) {
 		ofn.Flags = OFN_FILEMUSTEXIST;
 		if (GetOpenFileName(&ofn)) {
 			long size;
-			FILE* fp = _tfopen(tszFileName, _T("rb"));
+			FILE* fp = _wfopen(tszFileName, L"rb");
 			if (fp) {
 				fseek(fp, 0, SEEK_END);
 				size = ftell(fp);

@@ -86,10 +86,9 @@ static void TimerAnswer(MCONTACT hContact, const TalkBot::MessageInfo* info)
 	T2Utf msg(info->Answer.c_str());
 	size_t bufsize = mir_strlen(msg);
 
-	CallContactService(hContact, PSS_MESSAGE, 0, (LPARAM)msg);
+	ProtoChainSend(hContact, PSS_MESSAGE, 0, (LPARAM)msg);
 
-	DBEVENTINFO dbei = { 0 };
-	dbei.cbSize = sizeof(dbei);
+	DBEVENTINFO dbei = {};
 	dbei.cbBlob = (int)bufsize;
 	dbei.pBlob = (PBYTE)(char*)msg;
 	dbei.eventType = EVENTTYPE_MESSAGE;
@@ -115,7 +114,7 @@ static void StartTyping(MCONTACT hContact, const TalkBot::MessageInfo*)
 
 void DoAnswer(MCONTACT hContact, const TalkBot::MessageInfo *info, bool sticky = false)
 {
-	if (info->Answer[0] == _T('\0'))
+	if (info->Answer[0] == '\0')
 		return;
 	int waitTime, thinkTime = 0;
 	int defWaitTime = Config.AnswerPauseTime * 1000;
@@ -191,12 +190,12 @@ void DoAnswer(MCONTACT hContact, const TalkBot::MessageInfo *info, bool sticky =
 		UpdateTimer();
 }
 
-void AnswerToContact(MCONTACT hContact, const TCHAR* messageToAnswer)
+void AnswerToContact(MCONTACT hContact, const wchar_t* messageToAnswer)
 {
 	if (Config.TalkWarnContacts && db_get_b(hContact, BOLTUN_KEY,
 		DB_CONTACT_WARNED, FALSE) == FALSE)
 	{
-		DoAnswer(hContact, new TalkBot::MessageInfo((const TCHAR*)Config.WarnText), true);
+		DoAnswer(hContact, new TalkBot::MessageInfo((const wchar_t*)Config.WarnText), true);
 		db_set_b(hContact, BOLTUN_KEY, DB_CONTACT_WARNED, TRUE);
 	}
 	else

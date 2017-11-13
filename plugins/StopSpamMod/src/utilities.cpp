@@ -17,13 +17,13 @@
 
 #include "stdafx.h"
 
-tstring DBGetContactSettingStringPAN(MCONTACT hContact, char const * szModule, char const * szSetting, tstring errorValue)
+wstring DBGetContactSettingStringPAN(MCONTACT hContact, char const * szModule, char const * szSetting, wstring errorValue)
 {
 	DBVARIANT dbv;
 	//if(db_get(hContact, szModule, szSetting, &dbv))
-	if (db_get_ts(hContact, szModule, szSetting, &dbv))
+	if (db_get_ws(hContact, szModule, szSetting, &dbv))
 		return errorValue;
-	//	if(DBVT_TCHAR == dbv.type )
+	//	if(DBVT_WCHAR == dbv.type )
 	errorValue = dbv.ptszVal;
 	db_free(&dbv);
 	return errorValue;
@@ -41,13 +41,13 @@ std::string DBGetContactSettingStringPAN_A(MCONTACT hContact, char const * szMod
 	return errorValue;
 }
 
-tstring &GetDlgItemString(HWND hwnd, int id)
+wstring &GetDlgItemString(HWND hwnd, int id)
 {
 	HWND h = GetDlgItem(hwnd, id);
 	int len = GetWindowTextLength(h);
-	TCHAR * buf = new TCHAR[len + 1];
+	wchar_t * buf = new wchar_t[len + 1];
 	GetWindowText(h, buf, len + 1);
-	static tstring s;
+	static wstring s;
 	s = buf;
 	delete[]buf;
 	return s;
@@ -64,26 +64,16 @@ bool ProtoInList(std::string proto)
 	return std::string::npos != GetProtoList().find(proto + "\r\n");
 }
 
-int CreateCListGroup(TCHAR* szGroupName)
-{
-	int hGroup = CallService(MS_CLIST_GROUPCREATE, 0, 0);
-
-	TCHAR* usTmp = szGroupName;
-	pcli->pfnRenameGroup(hGroup, usTmp);
-
-	return hGroup;
-}
-
-void DeleteCListGroupsByName(TCHAR* szGroupName)
+void DeleteCListGroupsByName(wchar_t* szGroupName)
 {
 	BYTE ConfirmDelete = db_get_b(NULL, "CList", "ConfirmDelete", SETTING_CONFIRMDELETE_DEFAULT);
 	if (ConfirmDelete)
 		db_set_b(NULL, "CList", "ConfirmDelete", 0);
 
-	TCHAR *szGroup;
-	for (int i = 1; (szGroup = pcli->pfnGetGroupName(i, NULL)) != NULL; i++)
+	wchar_t *szGroup;
+	for (int i = 1; (szGroup = Clist_GroupGetName(i, NULL)) != NULL; i++)
 		if (!mir_wstrcmp(szGroupName, szGroup))
-			CallService(MS_CLIST_GROUPDELETE, i, 0);
+			Clist_GroupDelete(i);
 
 	if (ConfirmDelete)
 		db_set_b(NULL, "CList", "ConfirmDelete", ConfirmDelete);
@@ -96,19 +86,19 @@ int RemoveTmp(WPARAM, LPARAM)
 	return 0;
 }
 
-tstring variables_parse(tstring const &tstrFormat, MCONTACT hContact)
+wstring variables_parse(wstring const &tstrFormat, MCONTACT hContact)
 {
 	if (gbVarsServiceExist) {
 		FORMATINFO fi;
-		TCHAR *tszParsed;
-		tstring tstrResult;
+		wchar_t *tszParsed;
+		wstring tstrResult;
 
 		memset(&fi, 0, sizeof(fi));
 		fi.cbSize = sizeof(fi);
-		fi.tszFormat = _tcsdup(tstrFormat.c_str());
+		fi.tszFormat = wcsdup(tstrFormat.c_str());
 		fi.hContact = hContact;
 		fi.flags |= FIF_TCHAR;
-		tszParsed = (TCHAR *)CallService(MS_VARS_FORMATSTRING, (WPARAM)&fi, 0);
+		tszParsed = (wchar_t *)CallService(MS_VARS_FORMATSTRING, (WPARAM)&fi, 0);
 		free(fi.tszFormat);
 		if (tszParsed) {
 			tstrResult = tszParsed;
@@ -119,20 +109,20 @@ tstring variables_parse(tstring const &tstrFormat, MCONTACT hContact)
 	return tstrFormat;
 }
 
-// case-insensitive mir_tstrcmp
+// case-insensitive mir_wstrcmp
 //by nullbie as i remember...
-#define NEWTSTR_MALLOC(A) (A==NULL) ? NULL : mir_tstrcpy((TCHAR*)mir_alloc(sizeof(TCHAR)*(mir_tstrlen(A)+1)),A)
-const int Stricmp(const TCHAR *str, const TCHAR *substr)
+#define NEWTSTR_MALLOC(A) (A==NULL) ? NULL : mir_wstrcpy((wchar_t*)mir_alloc(sizeof(wchar_t)*(mir_wstrlen(A)+1)),A)
+const int Stricmp(const wchar_t *str, const wchar_t *substr)
 {
 	int i = 0;
 
-	TCHAR *str_up = NEWTSTR_MALLOC(str);
-	TCHAR *substr_up = NEWTSTR_MALLOC(substr);
+	wchar_t *str_up = NEWTSTR_MALLOC(str);
+	wchar_t *substr_up = NEWTSTR_MALLOC(substr);
 
-	CharUpperBuff(str_up, (int)mir_tstrlen(str_up));
-	CharUpperBuff(substr_up, (int)mir_tstrlen(substr_up));
+	CharUpperBuff(str_up, (int)mir_wstrlen(str_up));
+	CharUpperBuff(substr_up, (int)mir_wstrlen(substr_up));
 
-	i = mir_tstrcmp(str_up, substr_up);
+	i = mir_wstrcmp(str_up, substr_up);
 
 	mir_free(str_up);
 	mir_free(substr_up);
@@ -140,7 +130,7 @@ const int Stricmp(const TCHAR *str, const TCHAR *substr)
 	return i;
 }
 
-TCHAR* ReqGetText(DBEVENTINFO* dbei)
+wchar_t* ReqGetText(DBEVENTINFO* dbei)
 {
 	if (!dbei->pBlob)
 		return 0;
@@ -162,15 +152,15 @@ TCHAR* ReqGetText(DBEVENTINFO* dbei)
 		WCHAR* msg = NULL;
 		msg = (dbei->flags&DBEF_UTF) ? mir_utf8decodeW(tstr) : mir_a2u(tstr);
 		mir_free(tstr);
-		return (TCHAR *)msg;
+		return (wchar_t *)msg;
 	};
 	return 0;
 }
 
-BOOL IsUrlContains(TCHAR * Str)
+BOOL IsUrlContains(wchar_t * Str)
 {
 	const int CountUrl = 11;
-	const TCHAR  URL[CountUrl][5] =
+	const wchar_t  URL[CountUrl][5] =
 	{
 		L"http",
 		L"www",
@@ -185,11 +175,11 @@ BOOL IsUrlContains(TCHAR * Str)
 		L".tv"
 	};
 
-	if (Str && mir_tstrlen(Str) > 0) {
-		TCHAR *StrLower = NEWTSTR_MALLOC(Str);
-		CharLowerBuff(StrLower, (int)mir_tstrlen(StrLower));
+	if (Str && mir_wstrlen(Str) > 0) {
+		wchar_t *StrLower = NEWTSTR_MALLOC(Str);
+		CharLowerBuff(StrLower, (int)mir_wstrlen(StrLower));
 		for (int i = 0; i < CountUrl; i++)
-			if (_tcsstr(StrLower, URL[i])) {
+			if (wcsstr(StrLower, URL[i])) {
 				mir_free(StrLower);
 				return 1;
 			}
@@ -198,55 +188,28 @@ BOOL IsUrlContains(TCHAR * Str)
 	return 0;
 }
 
-tstring GetContactUid(MCONTACT hContact, tstring Protocol)
+wstring GetContactUid(MCONTACT hContact, wstring Protocol)
 {
-	tstring Uid;
-	TCHAR dUid[32] = { 0 };
-	char aUid[32] = { 0 };
 	char *szProto = mir_utf8encodeW(Protocol.c_str());
-	CONTACTINFO ci;
-	memset(&ci, 0, sizeof(ci));
-
-	ci.hContact = hContact;
-	ci.szProto = szProto;
-	ci.cbSize = sizeof(ci);
-
-	ci.dwFlag = CNF_DISPLAYUID | CNF_TCHAR;
-	if (!CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)& ci)) {
-		switch (ci.type) {
-		case CNFT_ASCIIZ:
-			Uid = ci.pszVal;
-			mir_free((void *)ci.pszVal);
-			break;
-		case CNFT_DWORD:
-			_itoa_s(ci.dVal, aUid, 32, 10);
-			OemToChar(aUid, dUid);
-			Uid = dUid;
-			break;
-		default:
-			Uid = _T("");
-			break;
-		};
-	}
-	mir_free(szProto);
-	return Uid;
+	ptrW uid(Contact_GetInfo(CNF_DISPLAYUID, hContact, szProto));
+	return (uid) ? uid : L"";
 }
 
-void LogSpamToFile(MCONTACT hContact, tstring message)
+void LogSpamToFile(MCONTACT hContact, wstring message)
 {
 	if (!gbLogToFile) return;
 
-	tstring LogStrW, LogTime, LogProtocol, LogContactId, LogContactName;
+	wstring LogStrW, LogTime, LogProtocol, LogContactId, LogContactName;
 	std::fstream file;
-	TCHAR pszName[MAX_PATH];
+	wchar_t pszName[MAX_PATH];
 
 	if (hStopSpamLogDirH)
-		FoldersGetCustomPathT(hStopSpamLogDirH, pszName, MAX_PATH, _T(""));
+		FoldersGetCustomPathT(hStopSpamLogDirH, pszName, MAX_PATH, L"");
 	else
-		mir_tstrncpy(pszName, VARST(_T("%miranda_logpath%")), _countof(pszName));
+		mir_wstrncpy(pszName, VARSW(L"%miranda_logpath%"), _countof(pszName));
 
-	tstring filename = pszName;
-	filename += _T("\\stopspam_mod.log");
+	wstring filename = pszName;
+	filename += L"\\stopspam_mod.log";
 	file.open(filename.c_str(), std::ios::out | std::ios::app);
 
 	// Time Log line
@@ -258,16 +221,16 @@ void LogSpamToFile(MCONTACT hContact, tstring message)
 	// Time Log line
 
 	// Name, UID and Protocol Log line
-	LogProtocol = DBGetContactSettingStringPAN(hContact, "Protocol", "p", _T(""));
-	LogContactName = (TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0);
-	LogContactId = (LogProtocol == _T("")) ? _T("") : GetContactUid(hContact, LogProtocol);
+	LogProtocol = DBGetContactSettingStringPAN(hContact, "Protocol", "p", L"");
+	LogContactName = (wchar_t*)pcli->pfnGetContactDisplayName(hContact, 0);
+	LogContactId = (LogProtocol == L"") ? L"" : GetContactUid(hContact, LogProtocol);
 	// Name, UID  and Protocol Log line
 
-	LogStrW = _T("[") + LogTime.substr(0, LogTime.length() - 1) + _T("] ") +
-		LogContactId + _T(" - ") +
-		LogContactName + _T(" (") +
-		LogProtocol + _T("): ") +
-		message + _T("\n");
+	LogStrW = L"[" + LogTime.substr(0, LogTime.length() - 1) + L"] " +
+		LogContactId + L" - " +
+		LogContactName + L" (" +
+		LogProtocol + L"): " +
+		message + L"\n";
 
 	char *buf = mir_u2a(LogStrW.c_str());
 	file.write(buf, LogStrW.length());
@@ -289,16 +252,16 @@ void CleanProtocolTmpThread(std::string proto)
 
 	std::list<MCONTACT> contacts;
 	for (MCONTACT hContact = db_find_first(proto.c_str()); hContact; hContact = db_find_next(hContact, proto.c_str()))
-		if (db_get_b(hContact, "CList", "NotOnList", 0) || (_T("Not In List") == DBGetContactSettingStringPAN(hContact, "CList", "Group", _T(""))))
+		if (db_get_b(hContact, "CList", "NotOnList", 0) || (L"Not In List" == DBGetContactSettingStringPAN(hContact, "CList", "Group", L"")))
 			contacts.push_back(hContact);
 
 	boost::this_thread::sleep(boost::posix_time::seconds(5));
 	clean_mutex.lock();
 	std::list<MCONTACT>::iterator end = contacts.end();
 	for (std::list<MCONTACT>::iterator i = contacts.begin(); i != end; ++i) {
-		LogSpamToFile(*i, _T("Deleted"));
+		LogSpamToFile(*i, L"Deleted");
 		HistoryLogFunc(*i, "Deleted");
-		CallService(MS_DB_CONTACT_DELETE, (WPARAM)*i, 0);
+		db_delete_contact(*i);
 	}
 	clean_mutex.unlock();
 }
@@ -321,9 +284,9 @@ void CleanProtocolExclThread(std::string proto)
 	clean_mutex.lock();
 	std::list<MCONTACT>::iterator end = contacts.end();
 	for (std::list<MCONTACT>::iterator i = contacts.begin(); i != end; ++i) {
-		LogSpamToFile(*i, _T("Deleted"));
+		LogSpamToFile(*i, L"Deleted");
 		HistoryLogFunc(*i, "Deleted");
-		CallService(MS_DB_CONTACT_DELETE, (WPARAM)*i, 0);
+		db_delete_contact(*i);
 	}
 	clean_mutex.unlock();
 }
@@ -349,7 +312,7 @@ void CleanThread()
 
 void HistoryLog(MCONTACT hContact, char *data, int event_type, int flags)
 {
-	DBEVENTINFO Event = { sizeof(Event) };
+	DBEVENTINFO Event = {};
 	Event.szModule = pluginName;
 	Event.eventType = event_type;
 	Event.flags = flags | DBEF_UTF;
@@ -368,7 +331,7 @@ void HistoryLogFunc(MCONTACT hContact, std::string message)
 		std::string msg = message;
 		msg.append("\n");
 		msg.append("Protocol: ").append(GetContactProto(hContact)).append(" Contact: ");
-		msg.append(toUTF8((TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0))).append(" ID: ");
+		msg.append(toUTF8((wchar_t*)pcli->pfnGetContactDisplayName(hContact, 0))).append(" ID: ");
 		msg.append(toUTF8(GetContactUid(hContact, toUTF16(GetContactProto(hContact)))));
 		HistoryLog(NULL, (char*)msg.c_str(), EVENTTYPE_MESSAGE, DBEF_READ);
 	}

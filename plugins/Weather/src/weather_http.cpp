@@ -25,28 +25,27 @@ from the web using netlib
 
 #include "stdafx.h"
 
-HANDLE hNetlibUser, hNetlibHttp;
+HNETLIBUSER hNetlibUser;
+HNETLIBCONN hNetlibHttp;
 
-int findHeader(NETLIBHTTPREQUEST *nlhrReply, char *hdr)
+static int findHeader(const NETLIBHTTPREQUEST *nlhrReply, const char *hdr)
 {
-	int res = -1, i;
-	for (i = 0; i < nlhrReply->headersCount; i++) {
+	for (int i = 0; i < nlhrReply->headersCount; i++) {
 		if (_stricmp(nlhrReply->headers[i].szName, hdr) == 0) {
-			res = i;
-			break;
+			return i;
 		}
 	}
-	return res;
+	return -1;
 }
 
 //============  DOWNLOAD NEW WEATHER  ============
-
+//
 // function to download webpage from the internet
 // szUrl = URL of the webpage to be retrieved
 // return value = 0 for success, 1 or HTTP error code for failure
 // global var used: szData, szInfo = containing the retrieved data
-
-int InternetDownloadFile(char *szUrl, char *cookie, char *userAgent, TCHAR **szData)
+//
+int InternetDownloadFile(char *szUrl, char *cookie, char *userAgent, wchar_t **szData)
 {
 	if (userAgent == NULL || userAgent[0] == 0)
 		userAgent = NETLIB_USER_AGENT;
@@ -76,12 +75,12 @@ int InternetDownloadFile(char *szUrl, char *cookie, char *userAgent, TCHAR **szD
 		--nlhr.headersCount;
 
 	// download the page
-	NETLIBHTTPREQUEST *nlhrReply = (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)hNetlibUser, (LPARAM)&nlhr);
+	NETLIBHTTPREQUEST *nlhrReply = Netlib_HttpTransaction(hNetlibUser, &nlhr);
 	if (nlhrReply == 0) {
 		// if the data does not downloaded successfully (ie. disconnected), then return 1000 as error code
-		*szData = (TCHAR*)mir_alloc(512);
+		*szData = (wchar_t*)mir_alloc(512);
 		// store the error code in szData
-		mir_tstrcpy(*szData, _T("NetLib error occurred!!"));
+		mir_wstrcpy(*szData, L"NetLib error occurred!!");
 		hNetlibHttp = NULL;
 		return NLHRF_REDIRECT;
 	}
@@ -95,62 +94,70 @@ int InternetDownloadFile(char *szUrl, char *cookie, char *userAgent, TCHAR **szD
 
 			// allocate memory and save the retrieved data
 			int i = findHeader(nlhrReply, "Content-Type");
-			if (i != -1 && strstr(_strlwr((char*)nlhrReply->headers[i].szValue), "utf-8"))
+			// look for Content-Type=utf-8 in header
+			if (i != -1 && strstr(_strlwr(nlhrReply->headers[i].szValue), "utf-8"))
 				bIsUtf = true;
 			else {
-				char* end = nlhrReply->pData;
-				for (;;) {
+				char *end = nlhrReply->pData;
+				while (end) {
+					// look for
+					// <meta http-equiv="Content-Type" content="utf-8" />
 					char* beg = strstr(end, "<meta");
-					if (beg == NULL) break;
-					else {
-						char* method, tmp;
+					if (beg)
+					{
 						end = strchr(beg, '>');
-						tmp = *end; *end = 0;
+						if (end)
+						{
+							char tmp = *end;
+							*end = 0;
 
-						method = strstr(beg, "http-equiv=\"");
-						if (method && _strnicmp(method + 12, "Content-Type", 12) == 0 && strstr(method, "utf-8")) {
-							bIsUtf = true;
-							break;
+							char *method = strstr(beg, "http-equiv=\"");
+							if (method && _strnicmp(method + 12, "Content-Type", 12) == 0 && strstr(method, "utf-8")) {
+								bIsUtf = true;
+								*end = tmp;
+								break;
+							}
+							else *end = tmp;
 						}
-						else *end = tmp;
 					}
+					else
+						break;
 				}
 			}
 
-			TCHAR *retVal = NULL;
+			wchar_t *retVal = NULL;
 			if (bIsUtf)
-				retVal = mir_utf8decodeT(nlhrReply->pData);
+				retVal = mir_utf8decodeW(nlhrReply->pData);
 			if (retVal == NULL)
-				retVal = mir_a2t(nlhrReply->pData);
+				retVal = mir_a2u(nlhrReply->pData);
 			*szData = retVal;
 		}
 		else result = DATA_EMPTY;
 	}
 	// return error code if the recieved code is neither 200 OK nor 302 Moved
 	else {
-		*szData = (TCHAR*)mir_alloc(512);
+		*szData = (wchar_t*)mir_alloc(512);
 		// store the error code in szData
-		mir_sntprintf(*szData, 512, _T("Error occured! HTTP Error: %i\n"), nlhrReply->resultCode);
-		result = (int)nlhrReply->resultCode;
+		mir_snwprintf(*szData, 512, L"Error occured! HTTP Error: %i\n", nlhrReply->resultCode);
+		result = nlhrReply->resultCode;
 	}
 
 	hNetlibHttp = nlhrReply->nlc;
 	// make a copy of the retrieved data, then free the memory of the http reply
-	CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)nlhrReply);
+	Netlib_FreeHttpRequest(nlhrReply);
 	return result;
 }
 
 //============  NETLIB INITIALIZATION  ============
-
+//
 // initialize netlib support for weather protocol
 void NetlibInit(void)
 {
-	NETLIBUSER nlu = { 0 };
-	nlu.cbSize = sizeof(nlu);
-	nlu.flags = NUF_OUTGOING | NUF_HTTPCONNS | NUF_NOHTTPSOPTION | NUF_TCHAR;
+	NETLIBUSER nlu = {};
+	nlu.flags = NUF_OUTGOING | NUF_HTTPCONNS | NUF_NOHTTPSOPTION | NUF_UNICODE;
 	nlu.szSettingsModule = WEATHERPROTONAME;
-	nlu.ptszDescriptiveName = TranslateT("Weather HTTP connections");
-	hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
+	nlu.szDescriptiveName.w = TranslateT("Weather HTTP connections");
+	hNetlibUser = Netlib_RegisterUser(&nlu);
 }
 
 void NetlibHttpDisconnect(void)

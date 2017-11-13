@@ -26,7 +26,8 @@
 #include "version.h"
 
 #define MaxTextSize 64000
-#define ModuleName LPGEN("ChangeKeyboardLayout")
+#define ModuleName  LPGEN("ChangeKeyboardLayout")
+#define ModuleNameW LPGENW("ChangeKeyboardLayout")
 
 // History++ API
 #define MS_HPP_EG_WINDOW			"History++/ExtGrid/NewWindow"
@@ -88,8 +89,6 @@ typedef struct
 } PopupOptions;
 
 extern HINSTANCE hInst;
-
-extern HANDLE hChangeLayout, hGetLayoutOfText, hChangeTextLayout;
 
 extern HICON hPopupIcon, hCopyIcon;
 

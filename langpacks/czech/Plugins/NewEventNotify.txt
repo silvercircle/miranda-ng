@@ -79,7 +79,29 @@ Neoznamovat přečtené zprávy
 ;file \plugins\NewEventNotify\src\menuitem.cpp
 [Popups]
 Oznámení
-;file \plugins\NewEventNotify\src\neweventnotify.h
+;file \plugins\NewEventNotify\src\options.cpp
+[Event Notify]
+Oznámení události
+;file \plugins\NewEventNotify\src\popup.cpp
+[Received %d contacts.]
+Přijato %d kontaktů
+[ added you to the contact list]
+ si vás přidal do seznamu kontaktů
+[ requested authorization]
+ žádá o autorizaci
+[This is a sample message event :-)]
+Zkouška události Zpráva :-)
+[This is a sample URL event ;-)]
+Zkouška události Odkaz ;-)
+[This is a sample file event :-D]
+Zkouška události Soubor :-D
+[This is a sample other event ;-D]
+Zkouška jiné události ;-D
+[Plugin Test]
+Zkouška doplňku
+[[b]Number of new message(s): %d[/b]\n]
+\[b]Počet nových zpráv: %d[/b]\n
+;file \plugins\NewEventNotify\src\stdafx.h
 [Contacts]
 Kontakty
 [You were added!]
@@ -102,25 +124,3 @@ Informovat o událostech
 Zapnout oznámení nové události
 [Disable new event notification]
 Vypnout oznámení nové události
-;file \plugins\NewEventNotify\src\options.cpp
-[Event Notify]
-Oznámení události
-;file \plugins\NewEventNotify\src\popup.cpp
-[Received %d contacts.]
-Přijato %d kontaktů
-[ added you to the contact list]
- si vás přidal do seznamu kontaktů
-[ requested authorization]
- žádá o autorizaci
-[This is a sample message event :-)]
-Zkouška události Zpráva :-)
-[This is a sample URL event ;-)]
-Zkouška události Odkaz ;-)
-[This is a sample file event :-D]
-Zkouška události Soubor :-D
-[This is a sample other event ;-D]
-Zkouška  jiné události ;-D
-[Plugin Test]
-Zkouška doplňku
-[[b]Number of new message(s): %d[/b]\n]
-\[b]Počet nových zpráv: %d[/b]\n

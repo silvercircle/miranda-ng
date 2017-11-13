@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -22,7 +22,6 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include <tchar.h>
 #include <winsock2.h>
 #include <shlobj.h>
 #include <commctrl.h>
@@ -42,12 +41,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <win2k.h>
 
 #include <m_system.h>
-#include <m_system_cpp.h>
 #include <m_core.h>
 #include <newpluginapi.h>
 #include <m_database.h>
 #include <m_netlib.h>
-#include <m_clui.h>
 #include <m_crypto.h>
 #include <m_langpack.h>
 #include <m_clist.h>
@@ -62,7 +59,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_addcontact.h>
 #include <m_findadd.h>
 #include <m_icolib.h>
-#include <m_modernopt.h>
 #include <m_timezones.h>
 
 #include "version.h"

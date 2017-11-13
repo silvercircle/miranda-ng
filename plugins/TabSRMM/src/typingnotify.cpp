@@ -1,10 +1,8 @@
 #include "stdafx.h"
 
-HANDLE hTypingNotify;
+static HGENMENU hDisableMenu = nullptr;
 
-static HGENMENU hDisableMenu = NULL;
-
-static MWindowList hPopupsList = NULL;
+static MWindowList hPopupsList = nullptr;
 
 static BYTE   OnePopup;
 static BYTE   ShowMenu;
@@ -21,8 +19,8 @@ static int    newTimeout2;
 static BYTE   newTimeoutMode;
 static BYTE   newTimeoutMode2;
 static BYTE   newColorMode;
-static TCHAR  szStart[128];
-static TCHAR  szStop[128];
+static wchar_t  szStart[128];
+static wchar_t  szStop[128];
 
 static HANDLE hntfStarted = 0;
 static HANDLE hntfStopped = 0;
@@ -47,9 +45,9 @@ static INT_PTR EnableDisableMenuCommand(WPARAM, LPARAM)
 
 	if (PluginConfig.g_bPopupAvail) {
 		if (!Disabled)
-			Menu_ModifyItem(hDisableMenu, LPGENT("Disable &typing notification"), LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_ENABLED)));
+			Menu_ModifyItem(hDisableMenu, LPGENW("Disable &typing notification"), IcoLib_GetIcon("tabSRMM_popups_enabled"));
 		else
-			Menu_ModifyItem(hDisableMenu, LPGENT("Enable &typing notification"), LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_DISABLED)));
+			Menu_ModifyItem(hDisableMenu, LPGENW("Enable &typing notification"), IcoLib_GetIcon("tabSRMM_popups_disabled"));
 	}
 
 	return 0;
@@ -60,7 +58,7 @@ static LRESULT CALLBACK PopupDlgProc(HWND hWnd, UINT message, WPARAM wParam, LPA
 	switch (message) {
 	case WM_COMMAND:
 		if (HIWORD(wParam) == STN_CLICKED) {
-			CallService(MS_MSG_SENDMESSAGET, (WPARAM)PUGetContact(hWnd), 0);
+			CallService(MS_MSG_SENDMESSAGEW, (WPARAM)PUGetContact(hWnd), 0);
 			PUDeletePopup(hWnd);
 			return 1;
 		}
@@ -90,7 +88,7 @@ void TN_TypingMessage(MCONTACT hContact, int iMode)
 	if (!PluginConfig.g_bPopupAvail || Disabled)
 		return;
 
-	TCHAR *szContactName = pcli->pfnGetContactDisplayName(hContact, 0);
+	wchar_t *szContactName = pcli->pfnGetContactDisplayName(hContact, 0);
 
 	if (OnePopup) {
 		HWND hPopupWnd = WindowList_Find(hPopupsList, hContact);
@@ -107,16 +105,16 @@ void TN_TypingMessage(MCONTACT hContact, int iMode)
 	if (iMode == PROTOTYPE_CONTACTTYPING_OFF) {
 		if (StopDisabled)
 			return;
-		_tcsncpy_s(ppd.lptzContactName, szContactName, _TRUNCATE);
-		_tcsncpy_s(ppd.lptzText, szStop, _TRUNCATE);
+		wcsncpy_s(ppd.lptzContactName, szContactName, _TRUNCATE);
+		wcsncpy_s(ppd.lptzText, szStop, _TRUNCATE);
 		ppd.hNotification = hntfStopped;
 		notyping = 1;
 	}
 	else {
 		if (StartDisabled)
 			return;
-		_tcsncpy_s(ppd.lptzContactName, szContactName, _TRUNCATE);
-		_tcsncpy_s(ppd.lptzText, szStart, _TRUNCATE);
+		wcsncpy_s(ppd.lptzContactName, szContactName, _TRUNCATE);
+		wcsncpy_s(ppd.lptzText, szStart, _TRUNCATE);
 		ppd.hNotification = hntfStarted;
 		notyping = 0;
 	}
@@ -174,6 +172,8 @@ void TN_TypingMessage(MCONTACT hContact, int iMode)
 
 static INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	WORD idCtrl, wNotifyCode;
+
 	switch (msg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
@@ -227,8 +227,7 @@ static INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 		break;
 
 	case WM_COMMAND:
-	{
-		WORD idCtrl = LOWORD(wParam), wNotifyCode = HIWORD(wParam);
+		idCtrl = LOWORD(wParam), wNotifyCode = HIWORD(wParam);
 
 		if (wNotifyCode == CPN_COLOURCHANGED) {
 			SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
@@ -297,13 +296,13 @@ static INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				for (int i = 0; i < 2; i++) {
 					int notyping;
 					if (i == PROTOTYPE_CONTACTTYPING_OFF) {
-						_tcsncpy_s(ppd.lptzContactName, TranslateT("Contact"), _TRUNCATE);
-						_tcsncpy_s(ppd.lptzText, szStop, _TRUNCATE);
+						wcsncpy_s(ppd.lptzContactName, TranslateT("Contact"), _TRUNCATE);
+						wcsncpy_s(ppd.lptzText, szStop, _TRUNCATE);
 						notyping = 1;
 					}
 					else {
-						_tcsncpy_s(ppd.lptzContactName, TranslateT("Contact"), _TRUNCATE);
-						_tcsncpy_s(ppd.lptzText, szStart, _TRUNCATE);
+						wcsncpy_s(ppd.lptzContactName, TranslateT("Contact"), _TRUNCATE);
+						wcsncpy_s(ppd.lptzText, szStart, _TRUNCATE);
 						notyping = 0;
 					}
 
@@ -354,8 +353,8 @@ static INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 
 					ppd.lchIcon = PluginConfig.g_buttonBarIcons[ICON_DEFAULT_TYPING];
 					ppd.lchContact = wParam;
-					ppd.PluginWindowProc = NULL;
-					ppd.PluginData = NULL;
+					ppd.PluginWindowProc = nullptr;
+					ppd.PluginData = nullptr;
 					PUAddPopupT(&ppd);
 				}
 			}
@@ -419,7 +418,7 @@ static INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 
 		case IDC_TIMEOUT_VALUE:
 		case IDC_TIMEOUT_VALUE2:
-			int newValue = GetDlgItemInt(hwndDlg, idCtrl, NULL, 0);
+			int newValue = GetDlgItemInt(hwndDlg, idCtrl, nullptr, 0);
 
 			if (wNotifyCode == EN_KILLFOCUS) {
 				int oldValue;
@@ -448,8 +447,7 @@ static INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 
 			SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 		}
-	}
-	break;
+		break;
 
 	case WM_NOTIFY:
 		switch (((LPNMHDR)lParam)->idFrom) {
@@ -496,9 +494,8 @@ int TN_OptionsInitialize(WPARAM wParam, LPARAM)
 		odp.position = 100000000;
 		odp.hInstance = g_hInst;
 		odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_TYPINGNOTIFYPOPUP);
-		odp.pszTitle = LPGEN("Typing notify");
-		odp.pszGroup = LPGEN("Popups");
-		odp.groupPosition = 910000000;
+		odp.szTitle.a = LPGEN("Typing notify");
+		odp.szGroup.a = LPGEN("Popups");
 		odp.flags = ODPF_BOLDGROUPS;
 		odp.pfnDlgProc = DlgProcOpts;
 		Options_AddPage(wParam, &odp);
@@ -528,29 +525,29 @@ int TN_ModuleInit()
 		for (i = 0; i < _countof(colorPicker); i++)
 			colorPicker[i].color = M.GetDword(Module, colorPicker[i].desc, 0);
 
-	mir_sntprintf(szStart, TranslateT("...is typing a message."));
-	mir_sntprintf(szStop, TranslateT("...has stopped typing."));
+	mir_snwprintf(szStart, TranslateT("...is typing a message."));
+	mir_snwprintf(szStop, TranslateT("...has stopped typing."));
 
 	if (PluginConfig.g_bPopupAvail && ShowMenu) {
-		hTypingNotify = CreateServiceFunction("TypingNotify/EnableDisableMenuCommand", EnableDisableMenuCommand);
+		CreateServiceFunction("TypingNotify/EnableDisableMenuCommand", EnableDisableMenuCommand);
 
 		CMenuItem mi;
 		SET_UID(mi, 0xe18fd2cf, 0xcf90, 0x459e, 0xb6, 0xe6, 0x70, 0xec, 0xad, 0xc6, 0x73, 0xef);
 		if (!Disabled) {
 			mi.name.a = LPGEN("Disable &typing notification");
-			mi.hIcolibItem = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_ENABLED));
+			mi.hIcolibItem = IcoLib_GetIcon("tabSRMM_popups_enabled");
 		}
 		else {
 			mi.name.a = LPGEN("Enable &typing notification");
-			mi.hIcolibItem = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_DISABLED));
+			mi.hIcolibItem = IcoLib_GetIcon("tabSRMM_popups_disabled");
 		}
 		mi.pszService = "TypingNotify/EnableDisableMenuCommand";
-		mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Popups"), 0);
+		mi.root = Menu_CreateRoot(MO_MAIN, LPGENW("Popups"), 0);
 		hDisableMenu = Menu_AddMainMenuItem(&mi);
 	}
 
-	SkinAddNewSoundEx("TNStart", LPGEN("Instant messages"), LPGEN("Contact started typing"));
-	SkinAddNewSoundEx("TNStop", LPGEN("Instant messages"), LPGEN("Contact stopped typing"));
+	Skin_AddSound("TNStart", LPGENW("Instant messages"), LPGENW("Contact started typing"));
+	Skin_AddSound("TNStop", LPGENW("Instant messages"), LPGENW("Contact stopped typing"));
 	return 0;
 }
 

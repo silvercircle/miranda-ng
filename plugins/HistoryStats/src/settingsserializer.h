@@ -21,7 +21,6 @@ public:
 	void writeToDB();
 
 	bool isDBUpdateNeeded();
-	void updateDB();
 
 	int getLastPage();
 	void setLastPage(int nPage);
@@ -33,7 +32,7 @@ public:
 	void setShowSupportInfo(bool bShow);
 
 	ext::string getLastStatisticsFile();
-	void setLastStatisticsFile(const TCHAR* szFileName);
+	void setLastStatisticsFile(const wchar_t* szFileName);
 	bool canShowStatistics();
 	void showStatistics();
 };

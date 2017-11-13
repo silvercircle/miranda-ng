@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013-15 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2013-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -24,7 +24,8 @@ void CVkProto::RetrievePollingInfo()
 		return;
 	Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/messages.getLongPollServer.json", true, &CVkProto::OnReceivePollingInfo, AsyncHttpRequest::rpHigh)
 		<< INT_PARAM("use_ssl", 1)
-		<< VER_API);
+		<< INT_PARAM("lp_version", 2)
+	);
 }
 
 void CVkProto::OnReceivePollingInfo(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
@@ -35,35 +36,41 @@ void CVkProto::OnReceivePollingInfo(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *
 
 	JSONNode jnRoot;
 	JSONNode jnResponse = CheckJsonResponse(pReq, reply, jnRoot);
-	if (!jnResponse)
+	if (!jnResponse) {
+		if (!pReq->bNeedsRestart) {
+			debugLogA("CVkProto::OnReceivePollingInfo PollingThread not start (getLongPollServer error)");
+			m_pollingConn = nullptr;
+			ShutdownSession();
+		}
 		return;
+	}
 
 	char ts[32];
 	itoa(jnResponse["ts"].as_int(), ts, 10);
 
 	m_pollingTs = mir_strdup(ts);
-	m_pollingKey = mir_t2a(jnResponse["key"].as_mstring());
-	m_pollingServer = mir_t2a(jnResponse["server"].as_mstring());
+	m_pollingKey = mir_u2a(jnResponse["key"].as_mstring());
+	m_pollingServer = mir_u2a(jnResponse["server"].as_mstring());
 
 	if (!m_hPollingThread) {
-		debugLogA("CVkProto::OnReceivePollingInfo m_hPollingThread is NULL");
-		debugLogA("CVkProto::OnReceivePollingInfo m_pollingTs = \'%s' m_pollingKey = \'%s\' m_pollingServer = \'%s\'",
-			m_pollingTs ? m_pollingTs : "<NULL>",
-			m_pollingKey ? m_pollingKey : "<NULL>",
-			m_pollingServer ? m_pollingServer : "<NULL>");
-		if (m_pollingTs != NULL && m_pollingKey != NULL && m_pollingServer != NULL) {
+		debugLogA("CVkProto::OnReceivePollingInfo m_hPollingThread is nullptr");
+		debugLogA("CVkProto::OnReceivePollingInfo m_pollingTs = '%s' m_pollingKey = '%s' m_pollingServer = '%s'",
+			m_pollingTs ? m_pollingTs : "<nullptr>",
+			m_pollingKey ? m_pollingKey : "<nullptr>",
+			m_pollingServer ? m_pollingServer : "<nullptr>");
+		if (m_pollingTs != nullptr && m_pollingKey != nullptr && m_pollingServer != nullptr) {
 			debugLogA("CVkProto::OnReceivePollingInfo PollingThread starting...");
-			m_hPollingThread = ForkThreadEx(&CVkProto::PollingThread, NULL, NULL);
+			m_hPollingThread = ForkThreadEx(&CVkProto::PollingThread, nullptr, nullptr);
 		}
 		else {
 			debugLogA("CVkProto::OnReceivePollingInfo PollingThread not start");
-			m_pollingConn = NULL;
+			m_pollingConn = nullptr;
 			ShutdownSession();
 			return;
 		}
 	}
 	else
-		debugLogA("CVkProto::OnReceivePollingInfo m_hPollingThread is not NULL");
+		debugLogA("CVkProto::OnReceivePollingInfo m_hPollingThread is not nullptr");
 }
 
 void CVkProto::PollUpdates(const JSONNode &jnUpdates)
@@ -73,7 +80,6 @@ void CVkProto::PollUpdates(const JSONNode &jnUpdates)
 	int msgid, uid, flags, platform;
 	MCONTACT hContact;
 
-	
 	for (auto it = jnUpdates.begin(); it != jnUpdates.end(); ++it) {
 		const JSONNode &jnChild = (*it).as_array();
 		switch (jnChild[json_index_t(0)].as_int()) {
@@ -85,17 +91,17 @@ void CVkProto::PollUpdates(const JSONNode &jnUpdates)
 			uid = jnChild[3].as_int();
 			hContact = FindUser(uid);
 
-			if (hContact != NULL && (flags & VKFLAG_MSGUNREAD) && !CheckMid(m_incIds, msgid)) {
-				setDword(hContact, "LastMsgReadTime", time(NULL));
+			if (hContact != 0 && (flags & VKFLAG_MSGUNREAD) && !CheckMid(m_incIds, msgid)) {
+				setDword(hContact, "LastMsgReadTime", time(nullptr));
 				if (ServiceExists(MS_MESSAGESTATE_UPDATE)) {
-					MessageReadData data(time(NULL), MRD_TYPE_READTIME);
+					MessageReadData data(time(nullptr), MRD_TYPE_READTIME);
 					CallService(MS_MESSAGESTATE_UPDATE, hContact, (LPARAM)&data);
 				}
-				else 
+				else
 					SetSrmmReadStatus(hContact);
-				if (m_bUserForceOnlineOnActivity)
+				if (m_vkOptions.bUserForceInvisibleOnActivity)
 					SetInvisible(hContact);
-				if (m_bSyncReadMessageStatusFromServer)
+				if (m_vkOptions.bSyncReadMessageStatusFromServer)
 					MarkDialogAsRead(hContact);
 			}
 			break;
@@ -105,7 +111,7 @@ void CVkProto::PollUpdates(const JSONNode &jnUpdates)
 
 			// skip outgoing messages sent from a client
 			flags = jnChild[2].as_int();
-			if (flags & VKFLAG_MSGOUTBOX && !(flags & VKFLAG_MSGCHAT) && CheckMid(m_sendIds, msgid))
+			if (flags & VKFLAG_MSGOUTBOX && !(flags & VKFLAG_MSGCHAT) && !m_vkOptions.bSendVKLinksAsAttachments && CheckMid(m_sendIds, msgid))
 				break;
 
 			if (!mids.IsEmpty())
@@ -116,28 +122,29 @@ void CVkProto::PollUpdates(const JSONNode &jnUpdates)
 		case VKPOLL_READ_ALL_OUT:
 			uid = jnChild[1].as_int();
 			hContact = FindUser(uid);
-			if (hContact != NULL) {
-				setDword(hContact, "LastMsgReadTime", time(NULL));
+			if (hContact != 0) {
+				setDword(hContact, "LastMsgReadTime", time(nullptr));
 				if (ServiceExists(MS_MESSAGESTATE_UPDATE)) {
-					MessageReadData data(time(NULL), MRD_TYPE_READTIME);
+					MessageReadData data(time(nullptr), MRD_TYPE_READTIME);
 					CallService(MS_MESSAGESTATE_UPDATE, hContact, (LPARAM)&data);
 				}
 				else
 					SetSrmmReadStatus(hContact);
-				if (m_bUserForceOnlineOnActivity)
+
+				if (m_vkOptions.bUserForceInvisibleOnActivity)
 					SetInvisible(hContact);
 			}
 			break;
 		case VKPOLL_READ_ALL_IN:
 			uid = jnChild[1].as_int();
 			hContact = FindUser(uid);
-			if (hContact != NULL && m_bSyncReadMessageStatusFromServer)
+			if (hContact != 0 && m_vkOptions.bSyncReadMessageStatusFromServer)
 				MarkDialogAsRead(hContact);
 			break;
 
 		case VKPOLL_USR_ONLINE:
 			uid = -jnChild[1].as_int();
-			if ((hContact = FindUser(uid)) != NULL) {
+			if ((hContact = FindUser(uid)) != 0) {
 				setWord(hContact, "Status", ID_STATUS_ONLINE);
 				platform = jnChild[2].as_int();
 				SetMirVer(hContact, platform);
@@ -146,7 +153,7 @@ void CVkProto::PollUpdates(const JSONNode &jnUpdates)
 
 		case VKPOLL_USR_OFFLINE:
 			uid = -jnChild[1].as_int();
-			if ((hContact = FindUser(uid)) != NULL) {
+			if ((hContact = FindUser(uid)) != 0) {
 				setWord(hContact, "Status", ID_STATUS_OFFLINE);
 				db_unset(hContact, m_szModuleName, "ListeningTo");
 				SetMirVer(hContact, -1);
@@ -156,11 +163,15 @@ void CVkProto::PollUpdates(const JSONNode &jnUpdates)
 		case VKPOLL_USR_UTN:
 			uid = jnChild[1].as_int();
 			hContact = FindUser(uid);
-			if (hContact != NULL) {
+			if (hContact != 0) {
 				ForkThread(&CVkProto::ContactTypingThread, (void *)hContact);
-				if (m_bUserForceOnlineOnActivity)
+				if (m_vkOptions.bUserForceInvisibleOnActivity)
 					SetInvisible(hContact);
 			}
+			break;
+
+		case VKPOLL_CHAT_UTN:
+			ForkThread(&CVkProto::ChatContactTypingThread, new CVKChatContactTypingParam(jnChild[2].as_int(), jnChild[1].as_int()));
 			break;
 
 		case VKPOLL_CHAT_CHANGED:
@@ -180,7 +191,7 @@ int CVkProto::PollServer()
 	debugLogA("CVkProto::PollServer");
 	if (!IsOnline()) {
 		debugLogA("CVkProto::PollServer is dead (not online)");
-		m_pollingConn = NULL;
+		m_pollingConn = nullptr;
 		ShutdownSession();
 		return 0;
 	}
@@ -188,18 +199,19 @@ int CVkProto::PollServer()
 	debugLogA("CVkProto::PollServer (online)");
 	int iPollConnRetry = MAX_RETRIES;
 	NETLIBHTTPREQUEST *reply;
-	CMStringA szReqUrl(FORMAT, "https://%s?act=a_check&key=%s&ts=%s&wait=25&access_token=%s&mode=%d", m_pollingServer, m_pollingKey, m_pollingTs, m_szAccessToken, 106);
+	CMStringA szReqUrl(FORMAT, "https://%s?act=a_check&key=%s&ts=%s&wait=25&access_token=%s&mode=%d&version=%d", m_pollingServer, m_pollingKey, m_pollingTs, m_szAccessToken, 106, 2);
 	// see mode parametr description on https://vk.com/dev/using_longpoll (Russian version)
-	NETLIBHTTPREQUEST req = { sizeof(req) };
+	NETLIBHTTPREQUEST req = {};
+	req.cbSize = sizeof(req);
 	req.requestType = REQUEST_GET;
-	req.szUrl = mir_strdup(szReqUrl);
+	req.szUrl = szReqUrl.GetBuffer();
 	req.flags = VK_NODUMPHEADERS | NLHRF_PERSISTENT | NLHRF_HTTP11 | NLHRF_SSL;
 	req.timeout = 30000;
 	req.nlc = m_pollingConn;
 
-	while ((reply = (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)m_hNetlibUser, (LPARAM)&req)) == NULL) {
+	while ((reply = Netlib_HttpTransaction(m_hNetlibUser, &req)) == nullptr) {
 		debugLogA("CVkProto::PollServer is dead");
-		m_pollingConn = NULL;
+		m_pollingConn = nullptr;
 		if (iPollConnRetry && !m_bTerminated) {
 			iPollConnRetry--;
 			debugLogA("CVkProto::PollServer restarting %d", MAX_RETRIES - iPollConnRetry);
@@ -207,13 +219,10 @@ int CVkProto::PollServer()
 		}
 		else {
 			debugLogA("CVkProto::PollServer => ShutdownSession");
-			mir_free(req.szUrl);
 			ShutdownSession();
 			return 0;
 		}
 	}
-
-	mir_free(req.szUrl);
 
 	int retVal = 0;
 	if (reply->resultCode == 200) {
@@ -224,7 +233,7 @@ int CVkProto::PollServer()
 			retVal = -1;
 			debugLogA("Polling key expired, restarting polling thread");
 		}
-		else if (CheckJsonResult(NULL, jnRoot)) {
+		else if (CheckJsonResult(nullptr, jnRoot)) {
 			char ts[32];
 			itoa(jnRoot["ts"].as_int(), ts, 10);
 			m_pollingTs = mir_strdup(ts);
@@ -237,15 +246,15 @@ int CVkProto::PollServer()
 	else if ((reply->resultCode >= 400 && reply->resultCode <= 417)
 		|| (reply->resultCode >= 500 && reply->resultCode <= 509)) {
 		debugLogA("CVkProto::PollServer is dead. Error code - %d", reply->resultCode);
-		m_pollingConn = NULL;
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)reply);
+		m_pollingConn = nullptr;
+		Netlib_FreeHttpRequest(reply);
 		ShutdownSession();
 		return 0;
 	}
 
 	m_pollingConn = reply->nlc;
 
-	CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)reply);
+	Netlib_FreeHttpRequest(reply);
 	debugLogA("CVkProto::PollServer return %d", retVal);
 	return retVal;
 }
@@ -255,10 +264,14 @@ void CVkProto::PollingThread(void*)
 	debugLogA("CVkProto::PollingThread: entering");
 
 	while (!m_bTerminated)
-		if (PollServer() == -1)
+		if (PollServer() == -1 || !m_hPollingThread)
 			break;
 
-	m_hPollingThread = NULL;
-	m_pollingConn = NULL;
+	m_pollingConn = nullptr;
 	debugLogA("CVkProto::PollingThread: leaving");
+
+	if (m_hPollingThread) {
+		CloseHandle(m_hPollingThread);
+		m_hPollingThread = nullptr;
+	}
 }

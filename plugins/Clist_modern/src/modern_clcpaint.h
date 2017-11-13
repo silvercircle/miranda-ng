@@ -15,7 +15,7 @@ public:
 	BOOL   IsForegroundWindow(HWND hWnd);
 	HFONT  ChangeToFont(HDC hdc, ClcData *dat, int id, int *fontHeight);
 	int    GetBasicFontID(ClcContact *contact);
-	void   GetTextSize(SIZE *text_size, HDC hdcMem, RECT free_row_rc, TCHAR *szText, SortedList *plText, UINT uTextFormat, int smiley_height);
+	void   GetTextSize(SIZE *text_size, HDC hdcMem, RECT free_row_rc, wchar_t *szText, SortedList *plText, UINT uTextFormat, int smiley_height);
 	void   AddParam(MODERNMASK *mpModernMask, DWORD dwParamHash, const char* szValue, DWORD dwValueHash);
 	BOOL   CheckMiniMode(ClcData *dat, BOOL selected);
 
@@ -92,7 +92,7 @@ private:
 		//ADD new item above here
 		hi_LastItem
 	} enumHASHINDEX;
-	static const char * HASHTEXT[hi_LastItem];
+	static const char* HASHTEXT[hi_LastItem];
 	static DWORD HASH[hi_LastItem];
 
 	void _FillQuickHash();
@@ -101,13 +101,13 @@ private:
 	int  _GetGeneralisedStatus();
 	int  _GetRealStatus(ClcContact *pContact, int nStatus);
 	RECT _GetRectangle(ClcData *dat, RECT *row_rc, RECT *free_row_rc, int *left_pos, int *right_pos, BOOL left, int real_width, int width, int height, int horizontal_space);
-	void _DrawTextSmiley(HDC hdcMem, RECT *free_rc, SIZE * text_size, TCHAR *szText, int start, int len, SortedList *plText, UINT uTextFormat, BOOL ResizeSizeSmiley);
+	void _DrawTextSmiley(HDC hdcMem, RECT *free_rc, SIZE * text_size, wchar_t *szText, int start, int len, SortedList *plText, UINT uTextFormat, BOOL ResizeSizeSmiley);
 	void _AddParameter(MODERNMASK *mpModernMask, MASKPARAM * lpParam);
 	void _AddParamShort(MODERNMASK *mpModernMask, DWORD dwParamIndex, DWORD dwValueIndex);
 	void _FillParam(MASKPARAM * lpParam, DWORD dwParamHash, const char* szValue, DWORD dwValueHash);
 	MODERNMASK* _GetCLCContactRowBackModernMask(ClcGroup *group, ClcContact *Drawing, int indent, int index, BOOL selected, BOOL hottrack, ClcData *dat);
 	void _RTLRect(RECT *rect, int width);
-	void _PaintRowItemsEx(HWND hwnd, HDC hdcMem, ClcData *dat, ClcContact *Drawing, RECT row_rc, RECT free_row_rc, int selected, int hottrack);
+	void _PaintRowItemsEx(HDC hdcMem, ClcData *dat, ClcContact *Drawing, RECT row_rc, RECT free_row_rc, int selected, int hottrack);
 	void _DrawStatusIcon(ClcContact *Drawing, ClcData *dat, int iImage, HDC hdcMem, int x, int y, int cx, int cy, DWORD colorbg, DWORD colorfg, int mode);
 	BOOL _DrawNonEnginedBackground(HDC hdcMem, RECT *rcPaint, RECT clRect, ClcData *dat);
 	void _PaintClc(HWND hwnd, ClcData *dat, HDC hdc, RECT *rcPaint);
@@ -116,7 +116,7 @@ private:
 	BOOL __IsVisible(RECT *firtRect, RECT *secondRect);
 	void _GetBlendMode(IN ClcData *dat, IN ClcContact *Drawing, IN BOOL selected, IN BOOL hottrack, IN BOOL bFlag, OUT COLORREF * OutColourFg, OUT int * OutMode);
 	void _DrawContactItems(HDC hdcMem, ClcData *dat, ClcContact *Drawing, RECT *row_rc, RECT *free_row_rc, int selected, int hottrack, RECT *rcPaint);
-	void _PaintRowItems(HWND hwnd, HDC hdcMem, ClcData *dat, ClcContact *Drawing, RECT row_rc, RECT free_row_rc, int left_pos, int right_pos, int selected, int hottrack, RECT *rcPaint);
+	void _PaintRowItems(HDC hdcMem, ClcData *dat, ClcContact *Drawing, RECT row_rc, RECT free_row_rc, int left_pos, int right_pos, int selected, int hottrack, RECT *rcPaint);
 
 	void _DrawContactAvatar(HDC hdcMem, ClcData *dat, ClcContact *Drawing, RECT *row_rc, int& selected, int& hottrack, RECT *prcItem);
 	void _DrawContactIcon(HDC hdcMem, ClcData *dat, ClcContact *Drawing, int& selected, int& hottrack, RECT *prcItem);
@@ -167,11 +167,11 @@ private:
 		COLORREF tmpforecolour;
 
 		DWORD fRelease;
-		_PaintContext(HDC _hdcMem = NULL) :
-			hdcMem(_hdcMem), hdcMem2(NULL),
-			hBmpOsb2(NULL), oldbmp2(NULL),
-			hBmpOsb(NULL), oldbmp(NULL),
-			hBrushAlternateGrey(NULL),
+		_PaintContext(HDC _hdcMem = nullptr) :
+			hdcMem(_hdcMem), hdcMem2(nullptr),
+			hBmpOsb2(nullptr), oldbmp2(nullptr),
+			hBmpOsb(nullptr), oldbmp(nullptr),
+			hBrushAlternateGrey(nullptr),
 			tmpbkcolour(0), tmpforecolour(0),
 			fRelease(release_none) {};
 	};

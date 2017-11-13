@@ -59,14 +59,14 @@ void CIrcProto::ReadSettings(TDbSetting* sets, int count)
 					*(char**)ptr = NULL;
 			}
 			break;
-		case DBVT_TCHAR:
-			if (!getTString(p->name, &dbv)) {
+		case DBVT_WCHAR:
+			if (!getWString(p->name, &dbv)) {
 				if (p->size != -1) {
-					size_t len = min(p->size - 1, mir_tstrlen(dbv.ptszVal));
-					memcpy(ptr, dbv.pszVal, len*sizeof(TCHAR));
-					*(TCHAR*)&ptr[len*sizeof(TCHAR)] = 0;
+					size_t len = min(p->size - 1, mir_wstrlen(dbv.ptszVal));
+					memcpy(ptr, dbv.pszVal, len*sizeof(wchar_t));
+					*(wchar_t*)&ptr[len*sizeof(wchar_t)] = 0;
 				}
-				else *(TCHAR**)ptr = mir_tstrdup(dbv.ptszVal);
+				else *(wchar_t**)ptr = mir_wstrdup(dbv.ptszVal);
 				db_free(&dbv);
 			}
 			else {
@@ -74,9 +74,9 @@ void CIrcProto::ReadSettings(TDbSetting* sets, int count)
 					if (p->defStr == NULL)
 						*ptr = 0;
 					else
-						mir_tstrncpy((TCHAR*)ptr, p->defStr, (int)p->size);
+						mir_wstrncpy((wchar_t*)ptr, p->defStr, (int)p->size);
 				}
-				else *(TCHAR**)ptr = mir_tstrdup(p->defStr);
+				else *(wchar_t**)ptr = mir_wstrdup(p->defStr);
 			}
 			break;
 }	}	}
@@ -100,11 +100,11 @@ void CIrcProto::WriteSettings( TDbSetting* sets, int count )
 				setString(p->name, (char*)ptr);
 			break;
 
-		case DBVT_TCHAR:
+		case DBVT_WCHAR:
 			if (p->size == -1)
-				setTString(p->name, *(TCHAR**)ptr);
+				setWString(p->name, *(wchar_t**)ptr);
 			else
-				setTString(p->name, (TCHAR*)ptr);
+				setWString(p->name, (wchar_t*)ptr);
 			break;
 }	}	}
 
@@ -165,19 +165,16 @@ void RereadServers()
 {
 	g_servers.destroy();
 
-	DBCONTACTENUMSETTINGS dbces = { 0 };
-	dbces.pfnEnumProc = sttServerEnum;
-	dbces.szModule = SERVERSMODULE;
-	CallService(MS_DB_CONTACT_ENUMSETTINGS, NULL, (LPARAM)&dbces);
+	db_enum_settings(NULL, sttServerEnum, SERVERSMODULE);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-static void removeSpaces(TCHAR* p)
+static void removeSpaces(wchar_t* p)
 {
 	while (*p) {
 		if (*p == ' ')
-			memmove(p, p + 1, sizeof(TCHAR)*mir_tstrlen(p));
+			memmove(p, p + 1, sizeof(wchar_t)*mir_wstrlen(p));
 		p++;
 	}
 }
@@ -228,57 +225,39 @@ HANDLE GetIconHandle(int iconId)
 	return NULL;
 }
 
-void ReleaseIconEx(HICON hIcon)
-{
-	if (hIcon)
-		IcoLib_ReleaseIcon(hIcon);
-}
-
-void WindowSetIcon(HWND hWnd, int iconId)
-{
-	SendMessage(hWnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIconEx(iconId, true));
-	SendMessage(hWnd, WM_SETICON, ICON_SMALL, (LPARAM)LoadIconEx(iconId));
-}
-
-void WindowFreeIcon(HWND hWnd)
-{
-	ReleaseIconEx((HICON)SendMessage(hWnd, WM_SETICON, ICON_BIG, 0));
-	ReleaseIconEx((HICON)SendMessage(hWnd, WM_SETICON, ICON_SMALL, 0));
-}
-
 /////////////////////////////////////////////////////////////////////////////////////////
 // code page handler
 
-struct { UINT cpId; TCHAR *cpName; } static cpTable[] =
+struct { UINT cpId; wchar_t *cpName; } static cpTable[] =
 {
-	{	  874, LPGENT("Thai") },
-	{	  932, LPGENT("Japanese") },
-	{	  936, LPGENT("Simplified Chinese") },
-	{	  949, LPGENT("Korean") },
-	{	  950, LPGENT("Traditional Chinese") },
-	{	 1250, LPGENT("Central European") },
-	{	 1251, LPGENT("Cyrillic (Windows)") },
-	{	20866, LPGENT("Cyrillic (KOI8R)") },
-	{	 1252, LPGENT("Latin I") },
-	{	 1253, LPGENT("Greek") },
-	{	 1254, LPGENT("Turkish") },
-	{	 1255, LPGENT("Hebrew") },
-	{	 1256, LPGENT("Arabic") },
-	{	 1257, LPGENT("Baltic") },
-	{	 1258, LPGENT("Vietnamese") },
-	{	 1361, LPGENT("Korean (Johab)") }
+	{	  874, LPGENW("Thai") },
+	{	  932, LPGENW("Japanese") },
+	{	  936, LPGENW("Simplified Chinese") },
+	{	  949, LPGENW("Korean") },
+	{	  950, LPGENW("Traditional Chinese") },
+	{	 1250, LPGENW("Central European") },
+	{	 1251, LPGENW("Cyrillic (Windows)") },
+	{	20866, LPGENW("Cyrillic (KOI8R)") },
+	{	 1252, LPGENW("Latin I") },
+	{	 1253, LPGENW("Greek") },
+	{	 1254, LPGENW("Turkish") },
+	{	 1255, LPGENW("Hebrew") },
+	{	 1256, LPGENW("Arabic") },
+	{	 1257, LPGENW("Baltic") },
+	{	 1258, LPGENW("Vietnamese") },
+	{	 1361, LPGENW("Korean (Johab)") }
 };
 
 static CCtrlCombo* sttCombo;
 
-static BOOL CALLBACK sttLangAddCallback(TCHAR *str)
+static BOOL CALLBACK sttLangAddCallback(wchar_t *str)
 {
-	UINT cp = _ttoi(str);
+	UINT cp = _wtoi(str);
 	CPINFOEX cpinfo;
 	if (GetCPInfoEx(cp, 0, &cpinfo)) {
-		TCHAR* b = _tcschr(cpinfo.CodePageName, '(');
+		wchar_t* b = wcschr(cpinfo.CodePageName, '(');
 		if (b) {
-			TCHAR* e = _tcsrchr(cpinfo.CodePageName, ')');
+			wchar_t* e = wcsrchr(cpinfo.CodePageName, ')');
 			if (e) {
 				*e = 0;
 				sttCombo->AddString(b + 1, cp);
@@ -416,9 +395,9 @@ struct CServerDlg : public CProtoDlgBase<CIrcProto>
 
 static TDbSetting ConnectSettings[] =
 {
-	{ FIELD_OFFSET(CIrcProto, m_userID), "UserID", DBVT_TCHAR, _countof(pZero->m_userID) },
-	{ FIELD_OFFSET(CIrcProto, m_identSystem), "IdentSystem", DBVT_TCHAR, _countof(pZero->m_identSystem) },
-	{ FIELD_OFFSET(CIrcProto, m_identPort), "IdentPort", DBVT_TCHAR, _countof(pZero->m_identPort) },
+	{ FIELD_OFFSET(CIrcProto, m_userID), "UserID", DBVT_WCHAR, _countof(pZero->m_userID) },
+	{ FIELD_OFFSET(CIrcProto, m_identSystem), "IdentSystem", DBVT_WCHAR, _countof(pZero->m_identSystem) },
+	{ FIELD_OFFSET(CIrcProto, m_identPort), "IdentPort", DBVT_WCHAR, _countof(pZero->m_identPort) },
 
 	{ FIELD_OFFSET(CIrcProto, m_serverName ), "ServerName", DBVT_ASCIIZ, _countof(pZero->m_serverName) },
 	{ FIELD_OFFSET(CIrcProto, m_portStart ), "PortStart", DBVT_ASCIIZ, _countof(pZero->m_portStart) },
@@ -430,10 +409,10 @@ static TDbSetting ConnectSettings[] =
 	{ FIELD_OFFSET(CIrcProto, m_onlineNotificationTime) , "OnlineNotificationTime", DBVT_WORD, 0, 30 },
 	{ FIELD_OFFSET(CIrcProto, m_onlineNotificationLimit) , "OnlineNotificationLimit", DBVT_WORD, 0, 50 },
 	{ FIELD_OFFSET(CIrcProto, m_channelAwayNotification), "ChannelAwayNotification", DBVT_BYTE, 0, 1 },
-	{ FIELD_OFFSET(CIrcProto, m_nick), "Nick", DBVT_TCHAR, _countof(pZero->m_nick) },
-	{ FIELD_OFFSET(CIrcProto, m_pNick), "PNick", DBVT_TCHAR, _countof(pZero->m_pNick) },
-	{ FIELD_OFFSET(CIrcProto, m_alternativeNick), "AlernativeNick", DBVT_TCHAR, _countof(pZero->m_alternativeNick) },
-	{ FIELD_OFFSET(CIrcProto, m_name), "Name", DBVT_TCHAR, _countof(pZero->m_name) },
+	{ FIELD_OFFSET(CIrcProto, m_nick), "Nick", DBVT_WCHAR, _countof(pZero->m_nick) },
+	{ FIELD_OFFSET(CIrcProto, m_pNick), "PNick", DBVT_WCHAR, _countof(pZero->m_pNick) },
+	{ FIELD_OFFSET(CIrcProto, m_alternativeNick), "AlernativeNick", DBVT_WCHAR, _countof(pZero->m_alternativeNick) },
+	{ FIELD_OFFSET(CIrcProto, m_name), "Name", DBVT_WCHAR, _countof(pZero->m_name) },
 	{ FIELD_OFFSET(CIrcProto, m_disableDefaultServer), "DisableDefaultServer", DBVT_BYTE },
 	{ FIELD_OFFSET(CIrcProto, m_ident), "Ident", DBVT_BYTE },
 	{ FIELD_OFFSET(CIrcProto, m_identTimer), "IdentTimer", DBVT_BYTE },
@@ -619,8 +598,8 @@ void CConnectPrefsDlg::OnDeleteServer(CCtrlButton*)
 	m_del.Disable();
 
 	SERVER_INFO *pData = (SERVER_INFO*)m_serverCombo.GetItemData(i);
-	TCHAR temp[200];
-	mir_sntprintf(temp, TranslateT("Do you want to delete\r\n%s"), (TCHAR*)_A2T(pData->m_name));
+	wchar_t temp[200];
+	mir_snwprintf(temp, TranslateT("Do you want to delete\r\n%s"), (wchar_t*)_A2T(pData->m_name));
 	if (MessageBox(m_hwnd, temp, TranslateT("Delete server"), MB_YESNO | MB_ICONQUESTION) == IDYES) {
 		g_servers.remove(pData);
 
@@ -711,7 +690,7 @@ void CConnectPrefsDlg::OnApply()
 
 	m_nick.GetText(m_proto->m_nick, _countof(m_proto->m_nick));
 	removeSpaces(m_proto->m_nick);
-	_tcsncpy_s(m_proto->m_pNick, m_proto->m_nick, _TRUNCATE);
+	wcsncpy_s(m_proto->m_pNick, m_proto->m_nick, _TRUNCATE);
 	m_nick2.GetText(m_proto->m_alternativeNick, _countof(m_proto->m_alternativeNick));
 	removeSpaces(m_proto->m_alternativeNick);
 	m_userID.GetText(m_proto->m_userID, _countof(m_proto->m_userID));
@@ -765,7 +744,7 @@ void CConnectPrefsDlg::OnApply()
 
 	if (m_serverlistModified) {
 		m_serverlistModified = false;
-		CallService(MS_DB_MODULE_DELETE, 0, (LPARAM)SERVERSMODULE);
+		db_delete_module(0, SERVERSMODULE);
 
 		int j = m_serverCombo.GetCount();
 		if (j != CB_ERR && j != 0) {
@@ -796,7 +775,7 @@ void CConnectPrefsDlg::OnApply()
 
 static TDbSetting CtcpSettings[] =
 {
-	{ FIELD_OFFSET(CIrcProto, m_userInfo), "UserInfo", DBVT_TCHAR, _countof(pZero->m_userInfo) },
+	{ FIELD_OFFSET(CIrcProto, m_userInfo), "UserInfo", DBVT_WCHAR, _countof(pZero->m_userInfo) },
 	{ FIELD_OFFSET(CIrcProto, m_DCCPacketSize), "DccPacketSize", DBVT_WORD, 0, 4096 },
 	{ FIELD_OFFSET(CIrcProto, m_DCCPassive), "DccPassive", DBVT_BYTE },
 	{ FIELD_OFFSET(CIrcProto, m_DCCMode), "DCCMode", DBVT_BYTE },
@@ -845,11 +824,11 @@ void CCtcpPrefsDlg::OnInitDialog()
 	m_combo.AddStringA("4096");
 	m_combo.AddStringA("8192");
 
-	TCHAR szTemp[10];
-	mir_sntprintf(szTemp, _T("%u"), m_proto->m_DCCPacketSize);
+	wchar_t szTemp[10];
+	mir_snwprintf(szTemp, L"%u", m_proto->m_DCCPacketSize);
 	int i = m_combo.SelectString(szTemp);
 	if (i == CB_ERR)
-		m_combo.SelectString(_T("4096"));
+		m_combo.SelectString(L"4096");
 
 	if (m_proto->m_DCCChatAccept == 1)
 		m_radio1.SetState(true);
@@ -867,14 +846,14 @@ void CCtcpPrefsDlg::OnInitDialog()
 	else {
 		if (m_proto->m_IPFromServer) {
 			if (m_proto->m_myHost[0]) {
-				CMString s = (CMString)TranslateT("<Resolved IP: ") + (TCHAR*)_A2T(m_proto->m_myHost) + _T(">");
+				CMStringW s = (CMStringW)TranslateT("<Resolved IP: ") + (wchar_t*)_A2T(m_proto->m_myHost) + L">";
 				m_ip.SetText(s.c_str());
 			}
 			else m_ip.SetText(TranslateT("<Automatic>"));
 		}
 		else {
 			if (m_proto->m_myLocalHost[0]) {
-				CMString s = (CMString)TranslateT("<Local IP: ") + (TCHAR*)_A2T(m_proto->m_myLocalHost) + _T(">");
+				CMStringW s = (CMStringW)TranslateT("<Local IP: ") + (wchar_t*)_A2T(m_proto->m_myLocalHost) + L">";
 				m_ip.SetText(s.c_str());
 			}
 			else m_ip.SetText(TranslateT("<Automatic>"));
@@ -892,14 +871,14 @@ void CCtcpPrefsDlg::OnClicked(CCtrlData*)
 	else {
 		if (m_fromServer.GetState()) {
 			if (m_proto->m_myHost[0]) {
-				CMString s = (CMString)TranslateT("<Resolved IP: ") + (TCHAR*)_A2T(m_proto->m_myHost) + _T(">");
+				CMStringW s = (CMStringW)TranslateT("<Resolved IP: ") + (wchar_t*)_A2T(m_proto->m_myHost) + L">";
 				m_ip.SetText(s.c_str());
 			}
 			else m_ip.SetText(TranslateT("<Automatic>"));
 		}
 		else {
 			if (m_proto->m_myLocalHost[0]) {
-				CMString s = (CMString)TranslateT("<Local IP: ") + (TCHAR*)_A2T(m_proto->m_myLocalHost) + _T(">");
+				CMStringW s = (CMStringW)TranslateT("<Local IP: ") + (wchar_t*)_A2T(m_proto->m_myLocalHost) + L">";
 				m_ip.SetText(s.c_str());
 			}
 			else m_ip.SetText(TranslateT("<Automatic>"));
@@ -943,8 +922,8 @@ void CCtcpPrefsDlg::OnApply()
 
 static TDbSetting OtherSettings[] =
 {
-	{ FIELD_OFFSET(CIrcProto, m_quitMessage), "QuitMessage", DBVT_TCHAR, _countof(pZero->m_quitMessage) },
-	{ FIELD_OFFSET(CIrcProto, m_alias), "Alias", DBVT_TCHAR, -1 },
+	{ FIELD_OFFSET(CIrcProto, m_quitMessage), "QuitMessage", DBVT_WCHAR, _countof(pZero->m_quitMessage) },
+	{ FIELD_OFFSET(CIrcProto, m_alias), "Alias", DBVT_WCHAR, -1 },
 	{ FIELD_OFFSET(CIrcProto, m_codepage), "Codepage", DBVT_DWORD, 0, CP_ACP },
 	{ FIELD_OFFSET(CIrcProto, m_utfAutodetect), "UtfAutodetect", DBVT_BYTE },
 	{ FIELD_OFFSET(CIrcProto, m_perform), "Perform", DBVT_BYTE },
@@ -954,9 +933,9 @@ static TDbSetting OtherSettings[] =
 static char* sttPerformEvents[] = {
 	LPGEN("Event: Available"),
 	LPGEN("Event: Away"),
-	LPGEN("Event: N/A"),
+	LPGEN("Event: Not available"),
 	LPGEN("Event: Occupied"),
-	LPGEN("Event: DND"),
+	LPGEN("Event: Do not disturb"),
 	LPGEN("Event: Free for chat"),
 	LPGEN("Event: On the phone"),
 	LPGEN("Event: Out for lunch"),
@@ -1107,9 +1086,9 @@ void COtherPrefsDlg::OnPerform(CCtrlData*)
 
 void COtherPrefsDlg::OnAdd(CCtrlButton*)
 {
-	TCHAR* temp = m_pertormEdit.GetText();
+	wchar_t* temp = m_pertormEdit.GetText();
 
-	if (my_strstri(temp, _T("/away")))
+	if (my_strstri(temp, L"/away"))
 		MessageBox(NULL, TranslateT("The usage of /AWAY in your perform buffer is restricted\n as IRC sends this command automatically."), TranslateT("IRC Error"), MB_OK);
 	else {
 		int i = m_performCombo.GetCurSel();
@@ -1131,7 +1110,7 @@ void COtherPrefsDlg::OnDelete(CCtrlButton*)
 	if (i != CB_ERR) {
 		PERFORM_INFO* pPerf = (PERFORM_INFO*)m_performCombo.GetItemData(i);
 		if (pPerf != NULL) {
-			pPerf->mText = _T("");
+			pPerf->mText = L"";
 			m_pertormEdit.SetTextA("");
 			m_delete.Disable();
 			m_add.Disable();
@@ -1178,7 +1157,7 @@ void COtherPrefsDlg::OnApply()
 				continue;
 
 			if (!pPerf->mText.IsEmpty())
-				m_proto->setTString(pPerf->mSetting.c_str(), pPerf->mText.c_str());
+				m_proto->setWString(pPerf->mSetting.c_str(), pPerf->mText.c_str());
 			else
 				db_unset(NULL, m_proto->m_szModuleName, pPerf->mSetting.c_str());
 		}
@@ -1193,18 +1172,18 @@ void COtherPrefsDlg::addPerformComboValue(int idx, const char* szValueName)
 
 	PERFORM_INFO* pPref;
 	DBVARIANT dbv;
-	if (!m_proto->getTString(sSetting.c_str(), &dbv)) {
+	if (!m_proto->getWString(sSetting.c_str(), &dbv)) {
 		pPref = new PERFORM_INFO(sSetting.c_str(), dbv.ptszVal);
 		db_free(&dbv);
 	}
-	else pPref = new PERFORM_INFO(sSetting.c_str(), _T(""));
+	else pPref = new PERFORM_INFO(sSetting.c_str(), L"");
 	m_performCombo.SetItemData(idx, (LPARAM)pPref);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // 'add ignore' preferences dialog
 
-CAddIgnoreDlg::CAddIgnoreDlg(CIrcProto* _pro, const TCHAR* mask, CIgnorePrefsDlg* _owner)
+CAddIgnoreDlg::CAddIgnoreDlg(CIrcProto* _pro, const wchar_t* mask, CIgnorePrefsDlg* _owner)
 	: CProtoDlgBase<CIrcProto>(_pro, IDD_ADDIGNORE, false),
 	m_Ok(this, IDOK),
 	m_owner(_owner)
@@ -1214,7 +1193,7 @@ CAddIgnoreDlg::CAddIgnoreDlg(CIrcProto* _pro, const TCHAR* mask, CIgnorePrefsDlg
 	if (mask == NULL)
 		szOldMask[0] = 0;
 	else
-		_tcsncpy(szOldMask, mask, _countof(szOldMask));
+		wcsncpy(szOldMask, mask, _countof(szOldMask));
 
 	m_Ok.OnClick = Callback(this, &CAddIgnoreDlg::OnOk);
 }
@@ -1234,9 +1213,9 @@ void CAddIgnoreDlg::OnInitDialog()
 
 void CAddIgnoreDlg::OnOk(CCtrlButton*)
 {
-	TCHAR szMask[500];
-	TCHAR szNetwork[500];
-	CMString flags;
+	wchar_t szMask[500];
+	wchar_t szNetwork[500];
+	CMStringW flags;
 	if (IsDlgButtonChecked(m_hwnd, IDC_Q) == BST_CHECKED) flags += 'q';
 	if (IsDlgButtonChecked(m_hwnd, IDC_N) == BST_CHECKED) flags += 'n';
 	if (IsDlgButtonChecked(m_hwnd, IDC_I) == BST_CHECKED) flags += 'i';
@@ -1247,10 +1226,10 @@ void CAddIgnoreDlg::OnOk(CCtrlButton*)
 	GetDlgItemText(m_hwnd, IDC_MASK, szMask, _countof(szMask));
 	GetDlgItemText(m_hwnd, IDC_NETWORK, szNetwork, _countof(szNetwork));
 
-	CMString Mask = GetWord(szMask, 0);
+	CMStringW Mask = GetWord(szMask, 0);
 	if (Mask.GetLength() != 0) {
-		if (!_tcschr(Mask.c_str(), '!') && !_tcschr(Mask.c_str(), '@'))
-			Mask += _T("!*@*");
+		if (!wcschr(Mask.c_str(), '!') && !wcschr(Mask.c_str(), '@'))
+			Mask += L"!*@*";
 
 		if (!flags.IsEmpty()) {
 			if (*szOldMask)
@@ -1283,8 +1262,8 @@ static int CALLBACK IgnoreListSort(LPARAM lParam1, LPARAM lParam2, LPARAM lParam
 	if (!hwndDlg->GetHwnd())
 		return 1;
 
-	TCHAR temp1[512];
-	TCHAR temp2[512];
+	wchar_t temp1[512];
+	wchar_t temp2[512];
 
 	LVITEM lvm;
 	lvm.mask = LVIF_TEXT;
@@ -1300,7 +1279,7 @@ static int CALLBACK IgnoreListSort(LPARAM lParam1, LPARAM lParam2, LPARAM lParam
 	hwndDlg->m_list.GetItem(&lvm);
 
 	if (temp1[0] && temp2[0])
-		return mir_tstrcmpi(temp1, temp2);
+		return mir_wstrcmpi(temp1, temp2);
 
 	return (temp1[0] == 0) ? 1 : -1;
 }
@@ -1333,9 +1312,9 @@ static LRESULT CALLBACK ListviewSubclassProc(HWND hwnd, UINT msg, WPARAM wParam,
 
 void CIrcProto::InitIgnore(void)
 {
-	TCHAR szTemp[MAX_PATH];
-	mir_sntprintf(szTemp, _T("%%miranda_path%%\\Plugins\\%S_ignore.ini"), m_szModuleName);
-	TCHAR *szLoadFileName = Utils_ReplaceVarsT(szTemp);
+	wchar_t szTemp[MAX_PATH];
+	mir_snwprintf(szTemp, L"%%miranda_path%%\\Plugins\\%S_ignore.ini", m_szModuleName);
+	wchar_t *szLoadFileName = Utils_ReplaceVarsW(szTemp);
 	char* pszIgnoreData = IrcLoadFile(szLoadFileName);
 	if (pszIgnoreData != NULL) {
 		char *p1 = pszIgnoreData;
@@ -1365,7 +1344,7 @@ void CIrcProto::InitIgnore(void)
 
 		RewriteIgnoreSettings();
 		delete[] pszIgnoreData;
-		::_tremove(szLoadFileName);
+		::_wremove(szLoadFileName);
 	}
 	mir_free(szLoadFileName);
 
@@ -1375,12 +1354,12 @@ void CIrcProto::InitIgnore(void)
 		mir_snprintf(settingName, "IGNORE:%d", idx++);
 
 		DBVARIANT dbv;
-		if (getTString(settingName, &dbv))
+		if (getWString(settingName, &dbv))
 			break;
 
-		CMString mask = GetWord(dbv.ptszVal, 0);
-		CMString flags = GetWord(dbv.ptszVal, 1);
-		CMString network = GetWord(dbv.ptszVal, 2);
+		CMStringW mask = GetWord(dbv.ptszVal, 0);
+		CMStringW flags = GetWord(dbv.ptszVal, 1);
+		CMStringW network = GetWord(dbv.ptszVal, 2);
 		m_ignoreItems.insert(new CIrcIgnoreItem(mask.c_str(), flags.c_str(), network.c_str()));
 		db_free(&dbv);
 	}
@@ -1401,7 +1380,7 @@ void CIrcProto::RewriteIgnoreSettings(void)
 		mir_snprintf(settingName, "IGNORE:%d", i);
 
 		CIrcIgnoreItem& C = m_ignoreItems[i];
-		setTString(settingName, (C.mask + _T(" ") + C.flags + _T(" ") + C.network).c_str());
+		setWString(settingName, (C.mask + L" " + C.flags + L" " + C.network).c_str());
 	}
 }
 
@@ -1450,7 +1429,7 @@ void CIgnorePrefsDlg::OnInitDialog()
 		lvC.iSubItem = index;
 		lvC.cx = COLUMNS_SIZES[index];
 
-		TCHAR* text = NULL;
+		wchar_t* text = NULL;
 		switch (index) {
 		case 0: text = TranslateT("Ignore mask"); break;
 		case 1: text = TranslateT("Flags"); break;
@@ -1510,9 +1489,9 @@ void CIgnorePrefsDlg::OnEdit(CCtrlButton*)
 	if (!m_add.Enabled())
 		return;
 
-	TCHAR szMask[512];
-	TCHAR szFlags[512];
-	TCHAR szNetwork[512];
+	wchar_t szMask[512];
+	wchar_t szFlags[512];
+	wchar_t szNetwork[512];
 	int i = m_list.GetSelectionMark();
 	m_list.GetItemText(i, 0, szMask, 511);
 	m_list.GetItemText(i, 1, szFlags, 511);
@@ -1522,17 +1501,17 @@ void CIgnorePrefsDlg::OnEdit(CCtrlButton*)
 	HWND hWnd = dlg->GetHwnd();
 	SetWindowText(hWnd, TranslateT("Edit ignore"));
 	if (szFlags[0]) {
-		if (_tcschr(szFlags, 'q'))
+		if (wcschr(szFlags, 'q'))
 			CheckDlgButton(hWnd, IDC_Q, BST_CHECKED);
-		if (_tcschr(szFlags, 'n'))
+		if (wcschr(szFlags, 'n'))
 			CheckDlgButton(hWnd, IDC_N, BST_CHECKED);
-		if (_tcschr(szFlags, 'i'))
+		if (wcschr(szFlags, 'i'))
 			CheckDlgButton(hWnd, IDC_I, BST_CHECKED);
-		if (_tcschr(szFlags, 'd'))
+		if (wcschr(szFlags, 'd'))
 			CheckDlgButton(hWnd, IDC_D, BST_CHECKED);
-		if (_tcschr(szFlags, 'c'))
+		if (wcschr(szFlags, 'c'))
 			CheckDlgButton(hWnd, IDC_C, BST_CHECKED);
-		if (_tcschr(szFlags, 'm'))
+		if (wcschr(szFlags, 'm'))
 			CheckDlgButton(hWnd, IDC_M, BST_CHECKED);
 	}
 	SetDlgItemText(hWnd, IDC_MASK, szMask);
@@ -1547,7 +1526,7 @@ void CIgnorePrefsDlg::OnDelete(CCtrlButton*)
 	if (!m_del.Enabled())
 		return;
 
-	TCHAR szMask[512];
+	wchar_t szMask[512];
 	int i = m_list.GetSelectionMark();
 	m_list.GetItemText(i, 0, szMask, _countof(szMask));
 	m_proto->RemoveIgnore(szMask);
@@ -1576,7 +1555,7 @@ void CIgnorePrefsDlg::OnDestroy()
 
 	int i = m_list.GetItemCount();
 	for (int j = 0; j < i; j++) {
-		TCHAR szMask[512], szFlags[40], szNetwork[100];
+		wchar_t szMask[512], szFlags[40], szNetwork[100];
 		m_list.GetItemText(j, 0, szMask, _countof(szMask));
 		m_list.GetItemText(j, 1, szFlags, _countof(szFlags));
 		m_list.GetItemText(j, 2, szNetwork, _countof(szNetwork));
@@ -1613,17 +1592,17 @@ void CIgnorePrefsDlg::RebuildList()
 		lvItem.mask = LVIF_TEXT | LVIF_PARAM;
 		lvItem.iSubItem = 0;
 		lvItem.lParam = lvItem.iItem;
-		lvItem.pszText = (TCHAR*)C.mask.c_str();
+		lvItem.pszText = (wchar_t*)C.mask.c_str();
 		lvItem.iItem = m_list.InsertItem(&lvItem);
 
 		lvItem.mask = LVIF_TEXT;
 		lvItem.iSubItem = 1;
-		lvItem.pszText = (TCHAR*)C.flags.c_str();
+		lvItem.pszText = (wchar_t*)C.flags.c_str();
 		m_list.SetItem(&lvItem);
 
 		lvItem.mask = LVIF_TEXT;
 		lvItem.iSubItem = 2;
-		lvItem.pszText = (TCHAR*)C.network.c_str();
+		lvItem.pszText = (wchar_t*)C.network.c_str();
 		m_list.SetItem(&lvItem);
 	}
 
@@ -1654,23 +1633,23 @@ void CIgnorePrefsDlg::UpdateList()
 int CIrcProto::OnInitOptionsPages(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
-	odp.ptszTitle = m_tszUserName;
-	odp.ptszGroup = LPGENT("Network");
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR | ODPF_DONTTRANSLATE;
+	odp.szTitle.w = m_tszUserName;
+	odp.szGroup.w = LPGENW("Network");
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE | ODPF_DONTTRANSLATE;
 
-	odp.ptszTab = LPGENT("Account");
+	odp.szTab.w = LPGENW("Account");
 	odp.pDialog = new CConnectPrefsDlg(this);
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LPGENT("DCC and CTCP");
+	odp.szTab.w = LPGENW("DCC and CTCP");
 	odp.pDialog = new CCtcpPrefsDlg(this);
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LPGENT("Advanced");
+	odp.szTab.w = LPGENW("Advanced");
 	odp.pDialog = new COtherPrefsDlg(this);
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LPGENT("Ignore");
+	odp.szTab.w = LPGENW("Ignore");
 	odp.pDialog = new CIgnorePrefsDlg(this);
 	Options_AddPage(wParam, &odp);
 	return 0;
@@ -1680,11 +1659,11 @@ int CIrcProto::OnInitOptionsPages(WPARAM wParam, LPARAM)
 
 void CIrcProto::InitPrefs(void)
 {
-	ConnectSettings[0].defStr = _T("Miranda");
-	ConnectSettings[1].defStr = _T("UNIX");
-	ConnectSettings[2].defStr = _T("113");
-	ConnectSettings[3].defStr = _T("30");
-	ConnectSettings[4].defStr = _T("10");
+	ConnectSettings[0].defStr = L"Miranda";
+	ConnectSettings[1].defStr = L"UNIX";
+	ConnectSettings[2].defStr = L"113";
+	ConnectSettings[3].defStr = L"30";
+	ConnectSettings[4].defStr = L"10";
 
 	CtcpSettings[0].defStr = STR_USERINFO;
 
@@ -1708,18 +1687,18 @@ void CIrcProto::InitPrefs(void)
 	if (m_pNick[0] == 0) {
 		if (m_nick[0] != 0) {
 			memcpy(m_pNick, m_nick, sizeof(m_pNick));
-			setTString("PNick", m_nick);
+			setWString("PNick", m_nick);
 		}
 	}
 	else {
 		memcpy(m_nick, m_pNick, sizeof(m_nick));
-		setTString("Nick", m_nick);
+		setWString("Nick", m_nick);
 	}
 
 	m_mySpecifiedHostIP[0] = 0;
 
 	if (m_alias == NULL)
-		m_alias = mir_tstrdup(_T("/op /mode ## +ooo $1 $2 $3\r\n/dop /mode ## -ooo $1 $2 $3\r\n/voice /mode ## +vvv $1 $2 $3\r\n/dvoice /mode ## -vvv $1 $2 $3\r\n/j /join #$1 $2-\r\n/p /part ## $1-\r\n/w /whois $1\r\n/k /kick ## $1 $2-\r\n/q /query $1\r\n/logon /log on ##\r\n/logoff /log off ##\r\n/save /log buffer $1\r\n/slap /me slaps $1 around a bit with a large trout"));
+		m_alias = mir_wstrdup(L"/op /mode ## +ooo $1 $2 $3\r\n/dop /mode ## -ooo $1 $2 $3\r\n/voice /mode ## +vvv $1 $2 $3\r\n/dvoice /mode ## -vvv $1 $2 $3\r\n/j /join #$1 $2-\r\n/p /part ## $1-\r\n/w /whois $1\r\n/k /kick ## $1 $2-\r\n/q /query $1\r\n/logon /log on ##\r\n/logoff /log off ##\r\n/save /log buffer $1\r\n/slap /me slaps $1 around a bit with a large trout");
 
 	m_quickComboSelection = getDword("QuickComboSelection", m_serverComboSelection + 1);
 	m_myHost[0] = '\0';
@@ -1800,7 +1779,7 @@ struct CDlgAccMgrUI : public CProtoDlgBase<CIrcProto>
 
 		m_nick.GetText(m_proto->m_nick, _countof(m_proto->m_nick));
 		removeSpaces(m_proto->m_nick);
-		_tcsncpy_s(m_proto->m_pNick, m_proto->m_nick, _TRUNCATE);
+		wcsncpy_s(m_proto->m_pNick, m_proto->m_nick, _TRUNCATE);
 		m_nick2.GetText(m_proto->m_alternativeNick, _countof(m_proto->m_alternativeNick));
 		removeSpaces(m_proto->m_alternativeNick);
 		m_userID.GetText(m_proto->m_userID, _countof(m_proto->m_userID));
@@ -1837,9 +1816,9 @@ INT_PTR CIrcProto::SvcCreateAccMgrUI(WPARAM, LPARAM lParam)
 /////////////////////////////////////////////////////////////////////////////////////////
 // Initialize servers list
 
-static void sttImportIni(const TCHAR* szIniFile)
+static void sttImportIni(const wchar_t* szIniFile)
 {
-	FILE* serverFile = _tfopen(szIniFile, _T("r"));
+	FILE* serverFile = _wfopen(szIniFile, L"r");
 	if (serverFile == NULL)
 		return;
 
@@ -1860,22 +1839,22 @@ static void sttImportIni(const TCHAR* szIniFile)
 		db_set_s(NULL, SERVERSMODULE, buf2, p1);
 	}
 	fclose(serverFile);
-	::_tremove(szIniFile);
+	::_wremove(szIniFile);
 }
 
 void InitServers()
 {
-	TCHAR *szTemp = Utils_ReplaceVarsT(_T("%miranda_path%\\Plugins\\IRC_servers.ini"));
+	wchar_t *szTemp = Utils_ReplaceVarsW(L"%miranda_path%\\Plugins\\IRC_servers.ini");
 	sttImportIni(szTemp);
 	mir_free(szTemp);
 
 	RereadServers();
 
 	if (g_servers.getCount() == 0) {
-		TCHAR *szIniFile = Utils_ReplaceVarsT(_T("%temp%\\default_servers.ini"));
-		FILE *serverFile = _tfopen(szIniFile, _T("a"));
+		wchar_t *szIniFile = Utils_ReplaceVarsW(L"%temp%\\default_servers.ini");
+		FILE *serverFile = _wfopen(szIniFile, L"a");
 		if (serverFile) {
-			char* pszSvrs = (char*)LockResource(LoadResource(hInst, FindResource(hInst, MAKEINTRESOURCE(IDR_SERVERS), _T("TEXT"))));
+			char* pszSvrs = (char*)LockResource(LoadResource(hInst, FindResource(hInst, MAKEINTRESOURCE(IDR_SERVERS), L"TEXT")));
 			if (pszSvrs)
 				fwrite(pszSvrs, 1, mir_strlen(pszSvrs) + 1, serverFile);
 			fclose(serverFile);

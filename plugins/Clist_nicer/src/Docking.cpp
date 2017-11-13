@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-03 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -97,21 +97,21 @@ int Docking_ProcessWindowMessage(WPARAM wParam, LPARAM lParam)
 	MSG *msg = (MSG *)wParam;
 
 	if (msg->message == WM_DESTROY)
-		cfg::writeByte("CList", "Docked", (BYTE)docked);
+		db_set_b(NULL, "CList", "Docked", (BYTE)docked);
 	if (!docked && msg->message != WM_CREATE && msg->message != WM_MOVING && msg->message != WM_CREATEDOCKED && msg->message != WM_MOVE)
 		return 0;
 
 	switch (msg->message) {
 	case WM_CREATE:
 		//if (GetSystemMetrics(SM_CMONITORS)>1) return 0;
-		if (cfg::getByte("CList", "Docked", 0))
+		if (db_get_b(NULL, "CList", "Docked", 0))
 			PostMessage(msg->hwnd, WM_CREATEDOCKED, 0, 0);
 		draggingTitle = 0;
 		return 0;
 
 	case WM_CREATEDOCKED:
 		//we need to post a message just after creation to let main message function do some work
-		docked = (int)(char)cfg::getByte("CList", "Docked", 0);
+		docked = (int)(char)db_get_b(NULL, "CList", "Docked", 0);
 		if (IsWindowVisible(msg->hwnd) && !IsIconic(msg->hwnd)) {
 			RECT rc, rcMonitor;
 			memset(&abd, 0, sizeof(abd));

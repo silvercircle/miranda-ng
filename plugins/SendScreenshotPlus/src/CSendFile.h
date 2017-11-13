@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-09 Miranda ICQ/IM project,
 
 This file is part of Send Screenshot Plus, a Miranda IM plugin.
@@ -29,18 +29,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #ifndef _CSEND_FILE_H
 #define _CSEND_FILE_H
 
-//---------------------------------------------------------------------------
-class CSendFile : public CSend {
-	public:
-		// Deklaration Standardkonstruktor/Standarddestructor
-		CSendFile(HWND Owner, MCONTACT hContact, bool bAsync);
-		~CSendFile();
+class CSendFile : public CSend
+{
 
-		int Send();
+public:
+	// Deklaration Standardkonstruktor/Standarddestructor
+	CSendFile(HWND Owner, MCONTACT hContact, bool bAsync);
+	~CSendFile();
 
-	protected:
+	int Send();
 };
-
-//---------------------------------------------------------------------------*/
 
 #endif

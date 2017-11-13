@@ -5,7 +5,7 @@ Jabber Protocol Plugin for Miranda NG
 Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
 Copyright (c) 2007     Maxim Mluhov
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -33,50 +33,50 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /////////////////////////////////////////////////////////////////////////////////////////
 // XmlNodeIq class members
 
-XmlNodeIq::XmlNodeIq(const TCHAR *type, int id, LPCTSTR to) :
-	XmlNode(_T("iq"))
+XmlNodeIq::XmlNodeIq(const wchar_t *type, int id, LPCTSTR to) :
+	XmlNode(L"iq")
 {
-	if (type != NULL) *this << XATTR(_T("type"), type);
-	if (to   != NULL) *this << XATTR(_T("to"),   to);
+	if (type != nullptr) *this << XATTR(L"type", type);
+	if (to   != nullptr) *this << XATTR(L"to",   to);
 	if (id   != -1  ) *this << XATTRID(id);
 }
 
-XmlNodeIq::XmlNodeIq(const TCHAR *type, LPCTSTR idStr, LPCTSTR to) :
-	XmlNode(_T("iq"))
+XmlNodeIq::XmlNodeIq(const wchar_t *type, LPCTSTR idStr, LPCTSTR to) :
+	XmlNode(L"iq")
 {
-	if (type  != NULL) *this << XATTR(_T("type"), type );
-	if (to    != NULL) *this << XATTR(_T("to"),   to   );
-	if (idStr != NULL) *this << XATTR(_T("id"),   idStr);
+	if (type  != nullptr) *this << XATTR(L"type", type );
+	if (to    != nullptr) *this << XATTR(L"to",   to   );
+	if (idStr != nullptr) *this << XATTR(L"id",   idStr);
 }
 
-XmlNodeIq::XmlNodeIq(const TCHAR *type, HXML node, LPCTSTR to) :
-	XmlNode(_T("iq"))
+XmlNodeIq::XmlNodeIq(const wchar_t *type, HXML node, LPCTSTR to) :
+	XmlNode(L"iq")
 {
-	if (type  != NULL) *this << XATTR(_T("type"), type );
-	if (to    != NULL) *this << XATTR(_T("to"),   to   );
-	if (node  != NULL) {
-		const TCHAR *iqId = XmlGetAttrValue(*this, _T("id"));
-		if (iqId != NULL) *this << XATTR(_T("id"), iqId);
+	if (type  != nullptr) *this << XATTR(L"type", type );
+	if (to    != nullptr) *this << XATTR(L"to",   to   );
+	if (node  != nullptr) {
+		const wchar_t *iqId = XmlGetAttrValue(*this, L"id");
+		if (iqId != nullptr) *this << XATTR(L"id", iqId);
 	}
 }
 
 XmlNodeIq::XmlNodeIq(CJabberIqInfo *pInfo) :
-	XmlNode(_T("iq"))
+	XmlNode(L"iq")
 {
 	if (pInfo) {
-		if (pInfo->GetCharIqType() != NULL) *this << XATTR(_T("type"), _A2T(pInfo->GetCharIqType()));
-		if (pInfo->GetReceiver()   != NULL) *this << XATTR(_T("to"), pInfo->GetReceiver());
+		if (pInfo->GetCharIqType() != nullptr) *this << XATTR(L"type", _A2T(pInfo->GetCharIqType()));
+		if (pInfo->GetReceiver()   != nullptr) *this << XATTR(L"to", pInfo->GetReceiver());
 		if (pInfo->GetIqId()       != -1)   *this << XATTRID(pInfo->GetIqId());
 	}
 }
 
-XmlNodeIq::XmlNodeIq(const TCHAR *type, CJabberIqInfo *pInfo) :
-	XmlNode(_T("iq"))
+XmlNodeIq::XmlNodeIq(const wchar_t *type, CJabberIqInfo *pInfo) :
+	XmlNode(L"iq")
 {
-	if (type != NULL) *this << XATTR(_T("type"), type);
+	if (type != nullptr) *this << XATTR(L"type", type);
 	if (pInfo) {
-		if (pInfo->GetFrom()  != NULL) *this << XATTR(_T("to"), pInfo->GetFrom());
-		if (pInfo->GetIdStr() != NULL) *this << XATTR(_T("id"), pInfo->GetIdStr());
+		if (pInfo->GetFrom()  != nullptr) *this << XATTR(L"to", pInfo->GetFrom());
+		if (pInfo->GetIdStr() != nullptr) *this << XATTR(L"id", pInfo->GetIdStr());
 	}
 }
 
@@ -85,7 +85,7 @@ XmlNodeIq::XmlNodeIq(const TCHAR *type, CJabberIqInfo *pInfo) :
 
 XmlNode::XmlNode(LPCTSTR pszName)
 {
-	m_hXml = xmlCreateNode(T2UTF(pszName), NULL, 0);
+	m_hXml = xmlCreateNode(T2UTF(pszName), nullptr, 0);
 }
 
 XmlNode::XmlNode(LPCTSTR pszName, LPCTSTR ptszText)
@@ -110,7 +110,7 @@ XmlNode::~XmlNode()
 {
 	if (m_hXml) {
 		xmlDestroyNode(m_hXml);
-		m_hXml = NULL;
+		m_hXml = nullptr;
 }	}
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -118,15 +118,15 @@ XmlNode::~XmlNode()
 HXML __fastcall operator<<(HXML node, const XCHILDNS& child)
 {
 	HXML res = XmlAddChild(node, child.name);
-	XmlAddAttr(res, _T("xmlns"), child.ns);
+	XmlAddAttr(res, L"xmlns", child.ns);
 	return res;
 }
 
 HXML __fastcall operator<<(HXML node, const XQUERY& child)
 {
-	HXML n = XmlAddChild(node, _T("query"));
+	HXML n = XmlAddChild(node, L"query");
 	if (n)
-		XmlAddAttr(n, _T("xmlns"), child.ns);
+		XmlAddAttr(n, L"xmlns", child.ns);
 	return n;
 }
 
@@ -145,7 +145,7 @@ void __fastcall XmlAddAttr(HXML hXml, LPCTSTR pszName, int value)
 
 void __fastcall XmlAddAttr(HXML hXml, LPCTSTR pszName, unsigned __int64 value)
 {
-	TCHAR buf[60];
+	wchar_t buf[60];
 	_ui64tot(value, buf, 10);
 
     xmlAddAttr(hXml, T2UTF(pszName), T2UTF(buf));
@@ -153,9 +153,9 @@ void __fastcall XmlAddAttr(HXML hXml, LPCTSTR pszName, unsigned __int64 value)
 
 void __fastcall XmlAddAttrID(HXML hXml, int id)
 {
-	TCHAR text[100];
-	mir_sntprintf(text, _T(JABBER_IQID) _T("%d"), id);
-	XmlAddAttr(hXml, _T("id"), text);
+	wchar_t text[100];
+	mir_snwprintf(text, _T(JABBER_IQID) L"%d", id);
+	XmlAddAttr(hXml, L"id", text);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -184,7 +184,7 @@ void __fastcall XmlAddChild(HXML hXml, HXML n)
 
 HXML __fastcall XmlAddChild(HXML hXml, LPCTSTR name)
 {
-	return xmlAddChild(hXml, T2UTF(name), NULL);
+	return xmlAddChild(hXml, T2UTF(name), nullptr);
 }
 
 HXML __fastcall XmlAddChild(HXML hXml, LPCTSTR name, LPCTSTR value)
@@ -194,8 +194,8 @@ HXML __fastcall XmlAddChild(HXML hXml, LPCTSTR name, LPCTSTR value)
 
 HXML __fastcall XmlAddChild(HXML hXml, LPCTSTR name, int value)
 {
-	TCHAR buf[40];
-	_itot(value, buf, 10);
+	wchar_t buf[40];
+	_itow(value, buf, 10);
 	return xmlAddChild(hXml, T2UTF(name), buf);
 }
 
@@ -218,7 +218,7 @@ HXML __fastcall XmlGetChild(HXML hXml, LPCTSTR key)
 
 HXML __fastcall XmlGetChild(HXML hXml, LPCSTR key)
 {
-	LPTSTR wszKey = mir_a2t(key);
+	LPTSTR wszKey = mir_a2u(key);
 	HXML result = xmlGetNthChild(hXml, wszKey, 0);
 	mir_free(wszKey);
 	return result;
@@ -231,7 +231,7 @@ HXML __fastcall XmlGetChildByTag(HXML hXml, LPCTSTR key, LPCTSTR attrName, LPCTS
 
 HXML __fastcall XmlGetChildByTag(HXML hXml, LPCSTR key, LPCSTR attrName, LPCTSTR attrValue)
 {
-	LPTSTR wszKey = mir_a2t(key), wszName = mir_a2t(attrName);
+	LPTSTR wszKey = mir_a2u(key), wszName = mir_a2u(attrName);
 	HXML result = xmlGetChildByAttrValue(hXml, wszKey, wszName, attrValue);
 	mir_free(wszKey), mir_free(wszName);
 	return result;
@@ -246,22 +246,22 @@ HXML __fastcall XmlGetNthChild(HXML hXml, LPCTSTR tag, int nth)
 {
 	int i, num;
 
-	if (!hXml || tag == NULL || mir_tstrlen(tag) <= 0 || nth < 1)
-		return NULL;
+	if (!hXml || tag == nullptr || mir_wstrlen(tag) <= 0 || nth < 1)
+		return nullptr;
 
 	num = 1;
 	for (i=0; ; i++) {
 		HXML n = xmlGetChild(hXml, i);
 		if (!n)
 			break;
-		if (!mir_tstrcmp(tag, XmlGetName(n))) {
+		if (!mir_wstrcmp(tag, XmlGetName(n))) {
 			if (num == nth)
 				return n;
 
 			num++;
 	}	}
 
-	return NULL;
+	return nullptr;
 }
 
 LPCTSTR __fastcall XmlGetName(HXML xml)
@@ -271,7 +271,7 @@ LPCTSTR __fastcall XmlGetName(HXML xml)
 
 LPCTSTR __fastcall XmlGetText(HXML xml)
 {
-	return (xml) ? xmlGetText(xml) : NULL;
+	return (xml) ? xmlGetText(xml) : nullptr;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -280,21 +280,21 @@ void XPath::ProcessPath(LookupInfo &info, bool bCreate)
 {
 	if (!info.nodeName) return;
 
-	TCHAR *nodeName = (TCHAR *)alloca(sizeof(TCHAR) * (info.nodeName.length+1));
-	mir_tstrncpy(nodeName, info.nodeName.p, info.nodeName.length+1);
+	wchar_t *nodeName = (wchar_t *)alloca(sizeof(wchar_t) * (info.nodeName.length+1));
+	mir_wstrncpy(nodeName, info.nodeName.p, info.nodeName.length+1);
 
 	if (info.attrName && info.attrValue) {
-		TCHAR *attrName = (TCHAR *)alloca(sizeof(TCHAR)* (info.attrName.length + 1));
-		mir_tstrncpy(attrName, info.attrName.p, info.attrName.length + 1);
-		TCHAR *attrValue = (TCHAR *)alloca(sizeof(TCHAR)* (info.attrValue.length + 1));
-		mir_tstrncpy(attrValue, info.attrValue.p, info.attrValue.length + 1);
+		wchar_t *attrName = (wchar_t *)alloca(sizeof(wchar_t)* (info.attrName.length + 1));
+		mir_wstrncpy(attrName, info.attrName.p, info.attrName.length + 1);
+		wchar_t *attrValue = (wchar_t *)alloca(sizeof(wchar_t)* (info.attrValue.length + 1));
+		mir_wstrncpy(attrValue, info.attrValue.p, info.attrValue.length + 1);
 		HXML hXml = XmlGetChildByTag(m_hXml, nodeName, attrName, attrValue);
 
 		m_hXml = (hXml || !bCreate) ? hXml : (m_hXml << XCHILD(nodeName) << XATTR(attrName, attrValue));
 	}
 	else if (info.nodeIndex) {
-		int idx = _ttoi(info.nodeIndex.p);
-		m_hXml = mir_tstrcmp(nodeName, _T("*")) ? XmlGetNthChild(m_hXml, nodeName, idx) : XmlGetChild(m_hXml, idx - 1);
+		int idx = _wtoi(info.nodeIndex.p);
+		m_hXml = mir_wstrcmp(nodeName, L"*") ? XmlGetNthChild(m_hXml, nodeName, idx) : XmlGetChild(m_hXml, idx - 1);
 	}
 	else {
 		HXML hXml = XmlGetChild(m_hXml, nodeName);
@@ -322,11 +322,11 @@ XPath::PathType XPath::LookupImpl(bool bCreate)
 			case 0:
 				state = S_FINAL_ERROR;
 				break;
-			case _T('@'):
+			case '@':
 				info.attrName.Begin(p + 1);
 				state = S_ATTR_STEP;
 				break;
-			case _T('/'):
+			case '/':
 				break;
 			default:
 				info.nodeName.Begin(p);
@@ -352,11 +352,11 @@ XPath::PathType XPath::LookupImpl(bool bCreate)
 				info.nodeName.End(p);
 				state = S_FINAL_NODESET;
 				break;
-			case _T('['):
+			case '[':
 				info.nodeName.End(p);
 				state = S_NODE_OPENBRACKET;
 				break;
-			case _T('/'):
+			case '/':
 				info.nodeName.End(p);
 				state = S_START;
 				break;
@@ -370,12 +370,12 @@ XPath::PathType XPath::LookupImpl(bool bCreate)
 			case 0:
 				state = S_FINAL_ERROR;
 				break;
-			case _T('@'):
+			case '@':
 				info.attrName.Begin(p + 1);
 				state = S_NODE_ATTRNAME;
 				break;
-			case _T('0'): case _T('1'): case _T('2'): case _T('3'): case _T('4'):
-			case _T('5'): case _T('6'): case _T('7'): case _T('8'): case _T('9'):
+			case '0': case '1': case '2': case '3': case '4':
+			case '5': case '6': case '7': case '8': case '9':
 				info.nodeIndex.Begin(p);
 				state = S_NODE_INDEX;
 				break;
@@ -390,12 +390,12 @@ XPath::PathType XPath::LookupImpl(bool bCreate)
 			case 0:
 				state = S_FINAL_ERROR;
 				break;
-			case _T(']'):
+			case ']':
 				info.nodeIndex.End(p);
 				state = S_NODE_CLOSEBRACKET;
 				break;
-			case _T('0'): case _T('1'): case _T('2'): case _T('3'): case _T('4'):
-			case _T('5'): case _T('6'): case _T('7'): case _T('8'): case _T('9'):
+			case '0': case '1': case '2': case '3': case '4':
+			case '5': case '6': case '7': case '8': case '9':
 				break;
 			default:
 				state = S_FINAL_ERROR;
@@ -408,7 +408,7 @@ XPath::PathType XPath::LookupImpl(bool bCreate)
 			case 0:
 				state = S_FINAL_ERROR;
 				break;
-			case _T('='):
+			case '=':
 				info.attrName.End(p);
 				state = S_NODE_ATTREQUALS;
 				break;
@@ -422,7 +422,7 @@ XPath::PathType XPath::LookupImpl(bool bCreate)
 			case 0:
 				state = S_FINAL_ERROR;
 				break;
-			case _T('\''):
+			case '\'':
 				info.attrValue.Begin(p + 1);
 				state = S_NODE_ATTRVALUE;
 				break;
@@ -437,7 +437,7 @@ XPath::PathType XPath::LookupImpl(bool bCreate)
 			case 0:
 				state = S_FINAL_ERROR;
 				break;
-			case _T('\''):
+			case '\'':
 				info.attrValue.End(p);
 				state = S_NODE_ATTRCLOSEVALUE;
 				break;
@@ -451,7 +451,7 @@ XPath::PathType XPath::LookupImpl(bool bCreate)
 			case 0:
 				state = S_FINAL_ERROR;
 				break;
-			case _T(']'):
+			case ']':
 				state = S_NODE_CLOSEBRACKET;
 				break;
 			default:
@@ -465,7 +465,7 @@ XPath::PathType XPath::LookupImpl(bool bCreate)
 			case 0:
 				state = S_FINAL_NODE;
 				break;
-			case _T('/'):
+			case '/':
 				state = S_START;
 				break;
 			default:

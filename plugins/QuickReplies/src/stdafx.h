@@ -30,33 +30,20 @@ Boston, MA 02111-1307, USA.
 #include <m_message.h>
 #include <m_options.h>
 
-#include <m_msg_buttonsbar.h>
 #include <m_variables.h>
 
 #include "version.h"
 #include "resource.h"
 
 #define MODULE "QuickReplies"
-#define IDC_MESSAGE 1002
-#define IDC_CHATMESSAGE 1009
 
 #define MS_QUICKREPLIES_SERVICE MODULE"/Service"
 
 extern HINSTANCE hInstance;
-
-extern BYTE iNumber;
-
-extern HANDLE hOnOptInitialized;
-extern HANDLE hOnButtonPressed;
-extern HANDLE hQuickRepliesService;
-extern HANDLE hOnModulesLoaded;
-extern HANDLE hOnPreShutdown;
-
-INT_PTR QuickRepliesService(WPARAM wParam, LPARAM lParam);
+extern int iNumber;
 
 int OnModulesLoaded(WPARAM wParam, LPARAM lParam);
 int OnOptInitialized(WPARAM wParam, LPARAM lParam);
 int OnButtonPressed(WPARAM wParam, LPARAM lParam);
-int OnPreShutdown(WPARAM wParam, LPARAM lParam);
 
 #endif //__QUICK_REPLY_H__

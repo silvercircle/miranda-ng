@@ -2,9 +2,11 @@
 ;============================================================
 ;  File: VKontakte.dll
 ;  Plugin: VKontakte protocol
-;  Version: 0.1.1.16
+;  Version: 0.1.3.0
 ;  Authors: Miranda NG Team
 ;============================================================
+[Status message]
+Текст за състояние
 [off]
 изкл.
 [Other]
@@ -19,6 +21,8 @@
 Парола:
 [Advanced]
 Разширени
+[Group chats]
+Групови чатове
 [Bots challenge test]
 Тест за ботове
 [Instruction:]
@@ -27,6 +31,8 @@
 Пращане
 [Cancel]
 Отказ
+[Open in browser]
+Отваряне в браузер
 [Share]
 Сподели
 [URL:]
@@ -43,16 +49,14 @@ URL:
 Аудио
 [Video]
 Видео
-[Document]
-Документ
 [Link]
 Връзка
+[Document]
+Документ
 [(Unknown contact)]
 (Непознат контакт)
 [Message from]
 Съобщение от
-[Enter the text you see]
-Въведете текста, който виждате
 [Participants]
 Участници
 [Owners]
@@ -69,19 +73,51 @@ URL:
 Подробности за потребителя
 [&Kick]
 Изгонване
+[%s is typing a message...]
+%s пише съобщение...
+[Enter the text you see]
+Въведете текста, който виждате
+[Protocol is offline]
+Протоколът е извън линия
 [Network]
 Мрежа
 [Account]
 Акаунт
 [View]
 Преглед
+[Menu]
+Меню
+[English]
+Английски
+[Russian]
+Руски
+[Belarusian]
+Беларуски
+[Ukrainian]
+Украински
+[Spanish]
+Испански
+[Finnish]
+Фински
+[German]
+Немски
+[Italian]
+Италиански
 [%s server connection]
 %s връзка със сървъра
-[Status message]
-Текст за състояние
+[Mark messages as read]
+Маркиране на съобщенията като прочетени
 [Errors]
 Грешки
 [Notification]
 Уведомяване
 [Waiting...]
 Изчакване...
+[Interests]
+Интереси
+[Activities]
+Дейности
+[Music]
+Музика
+[Games]
+Игри

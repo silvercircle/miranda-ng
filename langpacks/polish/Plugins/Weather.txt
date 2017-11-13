@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Weather.dll
 ;  Plugin: Weather
-;  Version: 0.4.0.2
+;  Version: 0.4.0.3
 ;  Authors: Miranda NG Team
 ;============================================================
 [Retrieves weather information and displays it in your contact list.]
@@ -100,8 +100,6 @@ Edytuj stację pogodową
 Stacja pogodowa
 [City name]
 Nazwa miasta
-[ID]
-ID
 [Log Information]
 Informacje
 [Use internal history]
@@ -139,9 +137,9 @@ Tylko przy zmianie warunków
 [Colors]
 Kolory
 [Background color]
-Tło
+Kolor tła
 [Text color]
-Tekst
+Kolor tekstu
 [Use Windows colors]
 Użyj kolorów Windows
 [Popup Actions]
@@ -156,8 +154,8 @@ Wyświetlanie Popup
 Wyświetlaj
 [seconds]
 s
-[From Popup plugin]
-Z wtyczki Popup
+[From popup plugin]
+Z wtyczki popup
 [Permanent]
 Stałe
 [Popup Text]
@@ -247,7 +245,7 @@ Otwórz mapę pogodową
 [View history]
 Pokaż historię
 [Open log file]
-Otwórz raport pliku
+Otwórz plik raportu
 [Show user menu]
 Pokaż menu użytkownika
 [Show user detail]
@@ -341,7 +339,7 @@ Nie ustawiono adresu strony z kompletną prognozą. Możesz go ustawić w okienk
 Nie ustawiono adresu mapy pogodowej. Możesz go ustawić w okienku edycji ustawień.
 ;file \plugins\Weather\src\weather.cpp
 [Enable/disable auto update]
-Włącz/Wyłącz auto-aktualizacje
+Włącz/Wyłącz autoaktualizacje
 [Auto Update Enabled]
 Auto-aktualizacja włączona
 [Auto Update Disabled]
@@ -462,12 +460,12 @@ bajty
 [Description:]
 Opis:
 ;file \plugins\Weather\src\weather_ini.cpp
-[No update data file is found. Please check your Plugins\\Weather directory.]
-Nie znaleziono plików aktualizacji. Proszę sprawdzić folder Plugins\\Weather.
-[Invalid ini format for: %s]
-Niepoprawny format INI dla: %s
 [All update data has been reloaded.]
 Wszystkie aktualizacje danych zostały przeładowane.
+[Invalid ini format for: %s]
+Niepoprawny format INI dla: %s
+[No update data file is found. Please check your Plugins\\Weather directory.]
+Nie znaleziono plików aktualizacji. Proszę sprawdzić folder Plugins\\Weather.
 ;file \plugins\Weather\src\weather_mwin.cpp
 [Frame Font]
 Czcionka tekstu ramki
@@ -476,6 +474,8 @@ Czcionka tekstu tytułu ramki
 [Frame Background]
 Tło ramki
 ;file \plugins\Weather\src\weather_opt.cpp
+[Weather Protocol Text Preview]
+Podgląd tekstu protokołu pogody
 [Network]
 Protokoły
 [General]
@@ -484,8 +484,6 @@ Ogólne
 Wyświetlanie
 [Popups]
 Popupy
-[Weather Protocol Text Preview]
-Podgląd tekstu protokołu pogody
 ;file \plugins\Weather\src\weather_popup.cpp
 ;file \plugins\Weather\src\weather_svcs.cpp
 [Station ID]
@@ -518,10 +516,6 @@ Ekran w ramce
 [Unable to retrieve weather information for %s]
 Nie można pobrać informacji o pogodzie dla %s
 ;file \plugins\Weather\src\weather_userinfo.cpp
-[Current condition for %n]
-Aktualny stan dla %n
-[Last update on:   %u]
-Ostatnia aktualizacja:   %u
 [Variable]
 Zmienna
 [Information]
@@ -530,3 +524,7 @@ Informacje
 Pobieranie nowych danych, proszę czekać...
 [More Info]
 Więcej
+[Current condition for %n]
+Aktualny stan dla %n
+[Last update on:   %u]
+Ostatnia aktualizacja:   %u

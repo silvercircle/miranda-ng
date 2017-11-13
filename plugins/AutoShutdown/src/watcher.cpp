@@ -32,7 +32,6 @@ static HANDLE hHookSettingChanged;
 /* Weather Shutdown */
 static HANDLE hHookWeatherUpdated;
 /* Services */
-static HANDLE hServiceStartWatcher, hServiceStopWatcher, hServiceIsEnabled;
 static HANDLE hEventWatcherChanged;
 /* Misc */
 static HANDLE hHookModulesLoaded;
@@ -63,7 +62,7 @@ static void __inline ShutdownAndStopWatcher(void)
 /************************* Msg Shutdown *******************************/
 
 // ppBlob might get reallocated, must have been allocated using mir_alloc()
-static TCHAR* GetMessageText(BYTE **ppBlob, DWORD *pcbBlob)
+static wchar_t* GetMessageText(BYTE **ppBlob, DWORD *pcbBlob)
 {
 	(*ppBlob)[*pcbBlob] = 0;
 	size_t cb = mir_strlen((char*)*ppBlob);
@@ -92,7 +91,7 @@ static TCHAR* GetMessageText(BYTE **ppBlob, DWORD *pcbBlob)
 static int MsgEventAdded(WPARAM, LPARAM hDbEvent)
 {
 	if (currentWatcherType & SDWTF_MESSAGE) {
-		DBEVENTINFO dbe = { sizeof(dbe) };
+		DBEVENTINFO dbe = {};
 		dbe.cbBlob = db_event_getBlobSize(hDbEvent);
 		dbe.pBlob = (BYTE*)mir_alloc(dbe.cbBlob + 2); /* ensure term zero */
 		if (dbe.pBlob == NULL)
@@ -100,10 +99,10 @@ static int MsgEventAdded(WPARAM, LPARAM hDbEvent)
 		if (!db_event_get(hDbEvent, &dbe))
 			if (dbe.eventType == EVENTTYPE_MESSAGE && !(dbe.flags & DBEF_SENT)) {
 				DBVARIANT dbv;
-				if (!db_get_ts(NULL, "AutoShutdown", "Message", &dbv)) {
+				if (!db_get_ws(NULL, "AutoShutdown", "Message", &dbv)) {
 					TrimString(dbv.ptszVal);
-					TCHAR *pszMsg = GetMessageText(&dbe.pBlob, &dbe.cbBlob);
-					if (pszMsg != NULL && _tcsstr(pszMsg, dbv.ptszVal) != NULL)
+					wchar_t *pszMsg = GetMessageText(&dbe.pBlob, &dbe.cbBlob);
+					if (pszMsg != NULL && wcsstr(pszMsg, dbv.ptszVal) != NULL)
 						ShutdownAndStopWatcher(); /* msg with specified text recvd */
 					mir_free(dbv.ptszVal); /* does NULL check */
 				}
@@ -198,9 +197,9 @@ static int StatusSettingChanged(WPARAM wParam, LPARAM lParam)
 {
 	if (currentWatcherType&SDWTF_STATUS) {
 		DBCONTACTWRITESETTING *dbcws = (DBCONTACTWRITESETTING*)lParam;
-		if ((HANDLE)wParam != NULL && dbcws->value.wVal == ID_STATUS_OFFLINE && !mir_strcmp(dbcws->szSetting, "Status")) {
+		if ((HANDLE)wParam != NULL && dbcws->value.wVal == ID_STATUS_OFFLINE && !strcmp(dbcws->szSetting, "Status")) {
 			char *pszProto = GetContactProto(wParam);
-			if (pszProto != NULL && !mir_strcmp(dbcws->szModule, pszProto))
+			if (pszProto != NULL && !strcmp(dbcws->szModule, pszProto))
 				if (CheckAllContactsOffline())
 					ShutdownAndStopWatcher();
 		}
@@ -342,9 +341,9 @@ void InitWatcher(void)
 	hHookWeatherUpdated = NULL;
 	/* Services */
 	hEventWatcherChanged = CreateHookableEvent(ME_AUTOSHUTDOWN_WATCHERCHANGED);
-	hServiceStartWatcher = CreateServiceFunction(MS_AUTOSHUTDOWN_STARTWATCHER, ServiceStartWatcher);
-	hServiceStopWatcher = CreateServiceFunction(MS_AUTOSHUTDOWN_STOPWATCHER, ServiceStopWatcher);
-	hServiceIsEnabled = CreateServiceFunction(MS_AUTOSHUTDOWN_ISWATCHERENABLED, ServiceIsWatcherEnabled);
+	CreateServiceFunction(MS_AUTOSHUTDOWN_STARTWATCHER, ServiceStartWatcher);
+	CreateServiceFunction(MS_AUTOSHUTDOWN_STOPWATCHER, ServiceStopWatcher);
+	CreateServiceFunction(MS_AUTOSHUTDOWN_ISWATCHERENABLED, ServiceIsWatcherEnabled);
 }
 
 void UninitWatcher(void)
@@ -366,9 +365,6 @@ void UninitWatcher(void)
 	/* Weather Shutdown */
 	UnhookEvent(hHookWeatherUpdated); /* does NULL check */
 	/* Services */
-	DestroyServiceFunction(hServiceStartWatcher);
-	DestroyServiceFunction(hServiceStopWatcher);
-	DestroyServiceFunction(hServiceIsEnabled);
 	DestroyHookableEvent(hEventWatcherChanged);
 	/* Misc */
 	UnhookEvent(hHookModulesLoaded);

@@ -22,10 +22,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define DEFAULT_SECTION "Unknown"
 
-TCHAR szCurrentProfilePath[MAX_FOLDERS_PATH];
-TCHAR szCurrentProfile[MAX_FOLDERS_PATH];
-TCHAR szMirandaPath[MAX_FOLDERS_PATH];
-TCHAR szUserDataPath[MAX_FOLDERS_PATH];
+wchar_t szCurrentProfilePath[MAX_FOLDERS_PATH];
+wchar_t szCurrentProfile[MAX_FOLDERS_PATH];
+wchar_t szMirandaPath[MAX_FOLDERS_PATH];
+wchar_t szUserDataPath[MAX_FOLDERS_PATH];
 
 INT_PTR RegisterPathService(WPARAM, LPARAM lParam)
 {
@@ -67,9 +67,9 @@ INT_PTR GetPathService(WPARAM wParam, LPARAM lParam)
 	if (data->cbSize != sizeof(FOLDERSGETDATA))
 		return 1;
 
-	CMString buf(p->Expand());
+	CMStringW buf(p->Expand());
 	if (data->flags & FF_UNICODE)
-		_tcsncpy_s(data->szPathT, data->nMaxPathSize, buf, _TRUNCATE);
+		wcsncpy_s(data->szPathT, data->nMaxPathSize, buf, _TRUNCATE);
 	else
 		strncpy_s(data->szPath, data->nMaxPathSize, _T2A(buf), _TRUNCATE);
 	return 0;
@@ -79,15 +79,15 @@ INT_PTR GetPathService(WPARAM wParam, LPARAM lParam)
 
 int InitServices()
 {
-	CallService(MS_DB_GETPROFILEPATHT, _countof(szCurrentProfilePath), (LPARAM)szCurrentProfilePath);
-	CallService(MS_DB_GETPROFILENAMET, _countof(szCurrentProfile), (LPARAM)szCurrentProfile);
-	TCHAR *pos = _tcsrchr(szCurrentProfile, '.'); if (pos) *pos = 0;
+	Profile_GetPathW(_countof(szCurrentProfilePath), szCurrentProfilePath);
+	Profile_GetNameW(_countof(szCurrentProfile), szCurrentProfile);
+	wchar_t *pos = wcsrchr(szCurrentProfile, '.'); if (pos) *pos = 0;
 
 	GetModuleFileName(GetModuleHandleA("mir_app.mir"), szMirandaPath, _countof(szMirandaPath));
-	pos = _tcsrchr(szMirandaPath, '\\'); if (pos) *pos = 0;
+	pos = wcsrchr(szMirandaPath, '\\'); if (pos) *pos = 0;
 
-	TCHAR *szTemp = Utils_ReplaceVarsT(_T("%miranda_userdata%"));
-	mir_sntprintf(szUserDataPath, szTemp);
+	wchar_t *szTemp = Utils_ReplaceVarsW(L"%miranda_userdata%");
+	mir_snwprintf(szUserDataPath, szTemp);
 	mir_free(szTemp);
 
 	CreateServiceFunction(MS_FOLDERS_GET_PATH, GetPathService);

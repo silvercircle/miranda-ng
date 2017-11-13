@@ -17,7 +17,7 @@
 #include "m_popup.h"
 
 #include "resource.h"
-#include "Version.h"
+#include "version.h"
 
 extern HINSTANCE hInst;
 
@@ -33,7 +33,7 @@ struct NASettings {
 	bool local_only, debug_messages, log_to_file, use_pcspeaker, allow_execute;
 	sound_t sound;
 	int port;
-	std::tstring password, log_filename;
+	std::wstring password, log_filename;
 };
 
 extern NASettings g_settings;
@@ -46,5 +46,4 @@ void load_settings();
 
 int OptionsInitialize(WPARAM wParam, LPARAM lParam);
 
-extern std::tstring g_mirandaDir;
-#define LOG_ID LPGEN("NotifyAnything")
+extern std::wstring g_mirandaDir;

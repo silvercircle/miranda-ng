@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -74,7 +74,7 @@ MIR_CORE_DLL(int) List_GetIndex(SortedList* p_list, void* p_value, int* p_index)
 	int high = p_list->realCount - 1;
 
 	switch ((INT_PTR)p_list->sortFunc) {
-	case HandleKeySort:
+	case HandleKeySortT:
 	#ifdef _WIN64
 		{
 			const unsigned __int64 val = *(unsigned __int64 *)p_value;
@@ -96,7 +96,7 @@ MIR_CORE_DLL(int) List_GetIndex(SortedList* p_list, void* p_value, int* p_index)
 		break;
 	#endif
 
-	case NumericKeySort:
+	case NumericKeySortT:
 		{
 			const unsigned val = *(unsigned *)p_value;
 
@@ -116,7 +116,7 @@ MIR_CORE_DLL(int) List_GetIndex(SortedList* p_list, void* p_value, int* p_index)
 		}
 		break;
 
-	case PtrKeySort:
+	case PtrKeySortT:
 		while (low <= high) {
 			int i = (low + high) / 2;
 			const void* vali = p_list->items[i];

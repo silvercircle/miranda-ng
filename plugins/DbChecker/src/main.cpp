@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 HINSTANCE hInst;
 int hLangpack = 0;
 bool bServiceMode, bLaunchMiranda, bShortMode, bAutoExit;
-HANDLE hService;
 
 DbToolOptions opts = { 0 };
 
@@ -59,6 +58,8 @@ extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = { MIID_SERVIC
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
+static HANDLE hService; // do not remove it!
+
 static INT_PTR ServiceMode(WPARAM, LPARAM)
 {
 	bLaunchMiranda = bShortMode = bAutoExit = false;
@@ -73,7 +74,7 @@ static INT_PTR CheckProfile(WPARAM wParam, LPARAM lParam)
 	bLaunchMiranda = lParam != 0;
 	bAutoExit = lParam == 2;
 	bServiceMode = false;
-	_tcsncpy(opts.filename, (TCHAR*)wParam, _countof(opts.filename));
+	wcsncpy(opts.filename, (wchar_t*)wParam, _countof(opts.filename));
 	return DialogBox(hInst, MAKEINTRESOURCE(IDD_WIZARD), NULL, WizardDlgProc);
 }
 

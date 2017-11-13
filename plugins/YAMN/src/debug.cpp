@@ -14,21 +14,21 @@
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
 
-TCHAR DebugUserDirectory[MAX_PATH] = _T(".");
+wchar_t DebugUserDirectory[MAX_PATH] = L".";
 CRITICAL_SECTION FileAccessCS;
 
 #ifdef DEBUG_SYNCHRO
-TCHAR DebugSynchroFileName2[]=_T("%s\\yamn-debug.synchro.log");
+wchar_t DebugSynchroFileName2[]=L"%s\\yamn-debug.synchro.log";
 HANDLE SynchroFile;
 #endif
 
 #ifdef DEBUG_COMM
-TCHAR DebugCommFileName2[]=_T("%s\\yamn-debug.comm.log");
+wchar_t DebugCommFileName2[]=L"%s\\yamn-debug.comm.log";
 HANDLE CommFile;
 #endif
 
 #ifdef DEBUG_DECODE
-TCHAR DebugDecodeFileName2[]=_T("%s\\yamn-debug.decode.log");
+wchar_t DebugDecodeFileName2[]=L"%s\\yamn-debug.decode.log";
 HANDLE DecodeFile;
 #endif
 
@@ -38,26 +38,26 @@ HANDLE DecodeFile;
 void InitDebug()
 {
 #if defined (DEBUG_SYNCHRO) || defined (DEBUG_COMM) || defined (DEBUG_DECODE)
-	TCHAR DebugFileName[MAX_PATH];
+	wchar_t DebugFileName[MAX_PATH];
 #endif
 	InitializeCriticalSection(&FileAccessCS);
 
 #ifdef DEBUG_SYNCHRO
-	mir_sntprintf(DebugFileName, DebugSynchroFileName2, DebugUserDirectory);
+	mir_snwprintf(DebugFileName, DebugSynchroFileName2, DebugUserDirectory);
 	
 	SynchroFile=CreateFile(DebugFileName,GENERIC_WRITE,FILE_SHARE_WRITE|FILE_SHARE_READ,NULL,CREATE_ALWAYS,0,NULL);
 	DebugLog(SynchroFile,"Synchro debug file created by %s\n",YAMN_VER);
 #endif
 
 #ifdef DEBUG_COMM
-	mir_sntprintf(DebugFileName, DebugCommFileName2, DebugUserDirectory);
+	mir_snwprintf(DebugFileName, DebugCommFileName2, DebugUserDirectory);
 
 	CommFile=CreateFile(DebugFileName,GENERIC_WRITE,FILE_SHARE_WRITE|FILE_SHARE_READ,NULL,CREATE_ALWAYS,0,NULL);
 	DebugLog(CommFile,"Communication debug file created by %s\n",YAMN_VER);
 #endif
 
 #ifdef DEBUG_DECODE
-	mir_sntprintf(DebugFileName, DebugDecodeFileName2, DebugUserDirectory);
+	mir_snwprintf(DebugFileName, DebugDecodeFileName2, DebugUserDirectory);
 
 	DecodeFile=CreateFile(DebugFileName,GENERIC_WRITE,FILE_SHARE_WRITE|FILE_SHARE_READ,NULL,CREATE_ALWAYS,0,NULL);
 	DebugLog(DecodeFile,"Decoding kernel debug file created by %s\n",YAMN_VER);

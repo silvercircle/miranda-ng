@@ -16,8 +16,6 @@ Hasło:
 Zapisz hasło
 [Create new account]
 Utwórz nowe konto
-[Tlen]
-Tlen
 [Options]
 Opcje
 [Automatically reconnect after unintentional disconnection]
@@ -88,8 +86,8 @@ Tło
 Tekst
 [Delay]
 Wyświetlaj
-[&From Popup plugin]
-&Z wtyczki Popup
+[&From popup plugin]
+&Z wtyczki popup
 [&Custom]
 &Niestandardowe
 [P&ermanent]
@@ -101,7 +99,7 @@ Hasło Tlen
 [Cancel]
 Anuluj
 [Nickname:]
-Pseudonim:
+Nick:
 [First name:]
 Imię:
 [Last name:]
@@ -236,7 +234,7 @@ Powiadomienia
 [Network]
 Protokoły
 [These changes will take effect the next time you connect to the Tlen network.]
-Te zmiany wejdą w życie po ponownym połączeniu się z siecią Tlen.
+Te zmiany zostaną wprowadzone gdy ponownie połączysz się z siecią Tlen.
 [Tlen Protocol Option]
 Opcja protokołu Tlen
 [Accept all alerts]

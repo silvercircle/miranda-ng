@@ -4,7 +4,7 @@
 // 
 // Copyright © 2001-2004 Richard Hughes, Martin Öberg
 // Copyright © 2004-2009 Joe Kucera, Bio
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -252,12 +252,12 @@ void ChangeInfoData::BeginStringEdit(int iItem, RECT *rc, int i, WORD wVKey)
 	if ((si.displayType & LIM_TYPE) == LI_LONGSTRING) {
 		rc->right -= rc->bottom - rc->top;
 		hwndExpandButton = CreateWindowA("BUTTON", "", WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON | BS_ICON, rc->right, rc->top, rc->bottom - rc->top, rc->bottom - rc->top, hwndList, NULL, hInst, NULL);
-		SendMessage(hwndExpandButton, BM_SETIMAGE, IMAGE_ICON, (LPARAM)LoadImage(hInst, MAKEINTRESOURCE(IDI_EXPANDSTRINGEDIT), IMAGE_ICON, 0, 0, LR_SHARED));
+		SendMessage(hwndExpandButton, BM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIconByHandle(iconList[0].hIcolib));
 		mir_subclassWindow(hwndExpandButton, ExpandButtonSubclassProc);
 	}
 
 	dataStringEdit = this;
-	hwndEdit = CreateWindow(_T("EDIT"), _T(""), WS_VISIBLE | WS_CHILD | ES_AUTOHSCROLL | ((si.displayType&LIM_TYPE) == LI_NUMBER ? ES_NUMBER : 0) | (si.displayType&LIF_PASSWORD ? ES_PASSWORD : 0), rc->left, rc->top, rc->right - rc->left, rc->bottom - rc->top, hwndList, NULL, hInst, NULL);
+	hwndEdit = CreateWindow(L"EDIT", L"", WS_VISIBLE | WS_CHILD | ES_AUTOHSCROLL | ((si.displayType&LIM_TYPE) == LI_NUMBER ? ES_NUMBER : 0) | (si.displayType&LIF_PASSWORD ? ES_PASSWORD : 0), rc->left, rc->top, rc->right - rc->left, rc->bottom - rc->top, hwndList, NULL, hInst, NULL);
 	SetWindowTextUtf(hwndEdit, szValue);
 	if (alloced) SAFE_FREE(&szValue);
 	mir_subclassWindow(hwndEdit, StringEditSubclassProc);
@@ -265,7 +265,7 @@ void ChangeInfoData::BeginStringEdit(int iItem, RECT *rc, int i, WORD wVKey)
 	if ((si.displayType & LIM_TYPE) == LI_NUMBER) {
 		int *range = (int*)si.pList;
 		RECT rcUpDown;
-		hwndUpDown = CreateWindow(UPDOWN_CLASS, _T(""), WS_VISIBLE | WS_CHILD | UDS_AUTOBUDDY | UDS_ALIGNRIGHT | UDS_HOTTRACK | UDS_NOTHOUSANDS | UDS_SETBUDDYINT, 0, 0, 0, 0, hwndList, NULL, hInst, NULL);
+		hwndUpDown = CreateWindow(UPDOWN_CLASS, L"", WS_VISIBLE | WS_CHILD | UDS_AUTOBUDDY | UDS_ALIGNRIGHT | UDS_HOTTRACK | UDS_NOTHOUSANDS | UDS_SETBUDDYINT, 0, 0, 0, 0, hwndList, NULL, hInst, NULL);
 		SendMessage(hwndUpDown, UDM_SETRANGE32, range[0], range[1]);
 		SendMessage(hwndUpDown, UDM_SETPOS32, 0, sid.value);
 		if (!(si.displayType & LIF_ZEROISVALID) && sid.value == 0)
@@ -323,7 +323,7 @@ void ChangeInfoData::EndStringEdit(int save)
 		}
 
 		if (sid.changed) {
-			TCHAR tbuf[MAX_PATH];
+			wchar_t tbuf[MAX_PATH];
 
 			GetWindowText(hwndEdit, tbuf, _countof(tbuf));
 			ListView_SetItemText(hwndList, iEditItem, 1, tbuf);

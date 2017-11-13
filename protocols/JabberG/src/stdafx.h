@@ -5,7 +5,7 @@ Jabber Protocol Plugin for Miranda NG
 Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
 Copyright (c) 2007     Maxim Mluhov
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -27,11 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define _JABBER_H_
 
 #pragma warning(disable:4706 4121 4127)
-
-#define LISTFOREACH(var__, obj__, list__)	\
-	for (int var__ = 0; (var__ = obj__->ListFindNext(list__, var__)) >= 0; ++var__)
-#define LISTFOREACH_NODEF(var__, obj__, list__)	\
-	for (var__ = 0; (var__ = obj__->ListFindNext(list__, var__)) >= 0; ++var__)
 
 /*******************************************************************
  * Global header files
@@ -59,12 +54,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <newpluginapi.h>
 #include <m_system.h>
-#include <m_system_cpp.h>
 
 #include <m_avatars.h>
 #include <m_awaymsg.h>
 #include <m_button.h>
-#include <m_chat.h>
+#include <m_chat_int.h>
 #include <m_clist.h>
 #include <m_cluiframes.h>
 #include <m_contacts.h>
@@ -83,6 +77,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_protosvc.h>
 #include <m_protoint.h>
 #include <m_skin.h>
+#include <m_json.h>
 #include <m_string.h>
 #include <m_timezones.h>
 #include <m_toptoolbar.h>
@@ -97,7 +92,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_folders.h>
 #include <m_fingerprint.h>
 #include <m_jabber.h>
-#include <m_modernopt.h>
 #include <m_popup.h>
 #include <m_proto_listeningto.h>
 #include <m_nudge.h>
@@ -113,6 +107,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "jabber_byte.h"
 #include "jabber_ibb.h"
 #include "jabber_db_utils.h"
+
+struct SESSION_INFO : public GCSessionInfoBase {};
 
 struct CJabberProto;
 
@@ -146,7 +142,7 @@ public:
 	CCtrlFilterListView(CDlgBase* dlg, int ctrlId, bool trackFilter, bool keepHiglight);
 	~CCtrlFilterListView();
 
-	TCHAR *GetFilterText();
+	wchar_t *GetFilterText();
 	CCallback<CCtrlFilterListView> OnFilterChanged;
 
 protected:
@@ -156,7 +152,7 @@ protected:
 
 	void OnInit();
 	LRESULT CustomWndProc(UINT msg, WPARAM wParam, LPARAM lParam);
-	void FilterHighlight(TCHAR *filter);
+	void FilterHighlight(wchar_t *filter);
 };
 
 #if !defined(OPENFILENAME_SIZE_VERSION_400)
@@ -174,8 +170,9 @@ protected:
 #define JABBER_IQID "mir_"
 #define JABBER_MAX_JID_LEN  1024
 
-#define JABBER_GC_MSG_QUIT				LPGENT("I'm happy Miranda NG user. Get it at http://miranda-ng.org/.")
-#define JABBER_GC_MSG_SLAP				LPGENT("/me slaps %s around a bit with a large trout")
+#define JABBER_GC_MSG_QUIT				LPGENW("I'm happy Miranda NG user. Get it at https://miranda-ng.org/.")
+#define JABBER_GC_MSG_SLAP				LPGENW("/me slaps %s around a bit with a large trout")
+#define JABBER_SERVER_URL				"https://xmpp.net/services.php"
 
 // registered db event types
 #define EVENTTYPE_JABBER_CHATSTATES          2000
@@ -303,12 +300,12 @@ enum {
 struct CJabberHttpAuthParams
 {
 	enum {IQ = 1, MSG = 2} m_nType;
-	TCHAR *m_szFrom;
-	TCHAR *m_szIqId;
-	TCHAR *m_szThreadId;
-	TCHAR *m_szId;
-	TCHAR *m_szMethod;
-	TCHAR *m_szUrl;
+	wchar_t *m_szFrom;
+	wchar_t *m_szIqId;
+	wchar_t *m_szThreadId;
+	wchar_t *m_szId;
+	wchar_t *m_szMethod;
+	wchar_t *m_szUrl;
 	CJabberHttpAuthParams()
 	{
 		memset(this, 0, sizeof(CJabberHttpAuthParams));
@@ -332,7 +329,6 @@ struct CJabberHttpAuthParams
 /*******************************************************************
  * Global data structures and data type definitions
  *******************************************************************/
-typedef HANDLE JABBER_SOCKET;
 
 #define CAPS_BOOKMARK         0x0001
 #define CAPS_BOOKMARKS_LOADED 0x8000
@@ -348,8 +344,8 @@ typedef HANDLE JABBER_SOCKET;
 
 struct JABBER_CONN_DATA : public MZeroedObject
 {
-	TCHAR username[512];
-	TCHAR password[512];
+	wchar_t username[512];
+	wchar_t password[512];
 	char  server[128];
 	char  manualHost[128];
 	int   port;
@@ -367,7 +363,7 @@ struct ThreadData
 	char*    buffer;
 
 	// network support
-	JABBER_SOCKET s;
+	HNETLIBCONN s;
 	HANDLE iomutex; // protects i/o operations
 	CJabberProto *proto;
 
@@ -397,9 +393,9 @@ struct ThreadData
 
 	// connection & login data
 	JABBER_CONN_DATA conn;
-	TCHAR    resource[128];
-	TCHAR    fullJID[JABBER_MAX_JID_LEN];
-	ptrT     tszNewPassword;
+	wchar_t    resource[128];
+	wchar_t    fullJID[JABBER_MAX_JID_LEN];
+	ptrW     tszNewPassword;
 
 	class TJabberAuth *auth;
 	JabberCapsBits jabberServerCaps;
@@ -416,11 +412,11 @@ struct ThreadData
 
 struct JABBER_MODEMSGS
 {
-	TCHAR *szOnline;
-	TCHAR *szAway;
-	TCHAR *szNa;
-	TCHAR *szDnd;
-	TCHAR *szFreechat;
+	wchar_t *szOnline;
+	wchar_t *szAway;
+	wchar_t *szNa;
+	wchar_t *szDnd;
+	wchar_t *szFreechat;
 };
 
 typedef enum { FT_SI, FT_OOB, FT_BYTESTREAM, FT_IBB } JABBER_FT_TYPE;
@@ -438,12 +434,12 @@ struct filetransfer
 	PROTOFILETRANSFERSTATUS std;
 
 	JABBER_FT_TYPE type;
-	JABBER_SOCKET s;
+	HNETLIBCONN s;
 	JABBER_FILE_STATE state;
-	TCHAR *jid;
+	wchar_t *jid;
 	int    fileId;
-	TCHAR* szId;
-	TCHAR *sid;
+	wchar_t* szId;
+	wchar_t *sid;
 	int    bCompleted;
 	HANDLE hWaitEvent;
 
@@ -455,13 +451,13 @@ struct filetransfer
 	// Used by file receiving only
 	char* httpHostName;
 	WORD httpPort;
-	TCHAR *httpPath;
+	wchar_t *httpPath;
 	unsigned __int64 dwExpectedRecvFileSize;
 
 	// Used by file sending only
 	HANDLE hFileEvent;
 	unsigned __int64 *fileSize;
-	TCHAR *szDescription;
+	wchar_t *szDescription;
 
 	CJabberProto *ppro;
 };
@@ -496,11 +492,11 @@ struct JABBER_MUC_JIDLIST_INFO
 	~JABBER_MUC_JIDLIST_INFO();
 
 	JABBER_MUC_JIDLIST_TYPE type;
-	TCHAR *roomJid;	// filled-in by the WM_JABBER_REFRESH code
+	wchar_t *roomJid;	// filled-in by the WM_JABBER_REFRESH code
 	HXML   iqNode;
 	CJabberProto *ppro;
 
-	TCHAR *type2str(void) const;
+	wchar_t *type2str(void) const;
 };
 
 typedef void (CJabberProto::*JABBER_FORM_SUBMIT_FUNC)(HXML values, void *userdata);
@@ -529,7 +525,7 @@ public:
 
 	void CreateInfoItem(char *pszName, bool bCompact=false, LPARAM pUserData=0);
 	void SetInfoItemCallback(char *pszName, void (CJabberProto::*onEvent)(CJabberInfoFrame_Event *));
-	void UpdateInfoItem(char *pszName, HANDLE hIcolibItem, TCHAR *pszText);
+	void UpdateInfoItem(char *pszName, HANDLE hIcolibItem, wchar_t *pszText);
 	void ShowInfoItem(char *pszName, bool bShow);
 	void RemoveInfoItem(char *pszName);
 
@@ -560,7 +556,7 @@ private:
 	void UpdateSize();
 
 	void RemoveTooltip(int id);
-	void SetToolTip(int id, RECT *rc, TCHAR *pszText);
+	void SetToolTip(int id, RECT *rc, wchar_t *pszText);
 
 	void PaintSkinGlyph(HDC hdc, RECT *rc, char **glyphs, COLORREF fallback);
 	void PaintCompact(HDC hdc);
@@ -586,7 +582,7 @@ extern HINSTANCE hInst;
 extern HANDLE hExtraMood;
 extern HANDLE hExtraActivity;
 
-extern TCHAR szCoreVersion[];
+extern wchar_t szCoreVersion[];
 
 extern unsigned int g_nTempFileId;
 extern int g_cbCountries;
@@ -609,18 +605,17 @@ void TreeList_Reset(HWND hwnd);
 void TreeList_SetMode(HWND hwnd, int mode);
 HTREELISTITEM TreeList_GetActiveItem(HWND hwnd);
 void TreeList_SetSortMode(HWND hwnd, int col, BOOL descending);
-void TreeList_SetFilter(HWND hwnd, TCHAR *filter);
-HTREELISTITEM TreeList_AddItem(HWND hwnd, HTREELISTITEM hParent, TCHAR *text, LPARAM data);
+void TreeList_SetFilter(HWND hwnd, wchar_t *filter);
+HTREELISTITEM TreeList_AddItem(HWND hwnd, HTREELISTITEM hParent, wchar_t *text, LPARAM data);
 void TreeList_ResetItem(HWND hwnd, HTREELISTITEM hParent);
 void TreeList_MakeFakeParent(HTREELISTITEM hItem, BOOL flag);
-void TreeList_AppendColumn(HTREELISTITEM hItem, TCHAR *text);
+void TreeList_AppendColumn(HTREELISTITEM hItem, wchar_t *text);
 int TreeList_AddIcon(HWND hwnd, HICON hIcon, int iOverlay);
 void TreeList_SetIcon(HTREELISTITEM hItem, int iIcon, int iOverlay);
 LPARAM TreeList_GetData(HTREELISTITEM hItem);
 HTREELISTITEM TreeList_GetRoot(HWND hwnd);
 int TreeList_GetChildrenCount(HTREELISTITEM hItem);
 HTREELISTITEM TreeList_GetChild(HTREELISTITEM hItem, int i);
-void sttTreeList_RecursiveApply(HTREELISTITEM hItem, void (*func)(HTREELISTITEM, LPARAM), LPARAM data);
 void TreeList_Update(HWND hwnd);
 BOOL TreeList_ProcessMessage(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, UINT idc, BOOL *result);
 
@@ -638,13 +633,10 @@ typedef struct TJabberFormLayoutInfo *HJFORMLAYOUT;
 
 void JabberFormCreateUI(HWND hwndStatic, HXML xNode, int *formHeight, BOOL bCompact = FALSE);
 void JabberFormDestroyUI(HWND hwndStatic);
-void JabberFormSetInstruction(HWND hwndForm, const TCHAR *text);
+void JabberFormSetInstruction(HWND hwndForm, const wchar_t *text);
 HJFORMLAYOUT JabberFormCreateLayout(HWND hwndStatic); // use mir_free to destroy
-HJFORMCTRL JabberFormAppendControl(HWND hwndStatic, HJFORMLAYOUT layout_info, TJabberFormControlType type, const TCHAR *labelStr, const TCHAR *valueStr);
-void JabberFormAddListItem(HJFORMCTRL item, const TCHAR *text, bool selected);
+HJFORMCTRL JabberFormAppendControl(HWND hwndStatic, HJFORMLAYOUT layout_info, TJabberFormControlType type, const wchar_t *labelStr, const wchar_t *valueStr);
 void JabberFormLayoutControls(HWND hwndStatic, HJFORMLAYOUT layout_info, int *formHeight);
-
-void JabberFormCreateDialog(HXML xNode, TCHAR* defTitle, JABBER_FORM_SUBMIT_FUNC pfnSubmit, void *userdata);
 
 HXML JabberFormGetData(HWND hwndStatic, HXML xNode);
 
@@ -654,17 +646,12 @@ void   g_IconsInit();
 void   g_XstatusIconsInit();
 HANDLE g_GetIconHandle(int iconId);
 HICON  g_LoadIconEx(const char* name, bool big = false);
-void   g_ReleaseIcon(HICON hIcon);
 
 void   ImageList_AddIcon_Icolib(HIMAGELIST hIml, HICON hIcon);
-void   WindowSetIcon(HWND hWnd, CJabberProto *proto, const char* name);
-void   WindowFreeIcon(HWND hWnd);
-
-int    ReloadIconsEventHook(WPARAM wParam, LPARAM lParam);
 
 //---- jabber_libstr.c ----------------------------------------------
 
-int lstrcmp_null(const TCHAR *s1, const TCHAR *s2);
+int lstrcmp_null(const wchar_t *s1, const wchar_t *s2);
 
 //---- jabber_menu.c ------------------------------------------------
 
@@ -672,25 +659,19 @@ void   g_MenuInit();
 void   g_MenuUninit();
 int    g_OnToolbarInit(WPARAM, LPARAM);
 
-//---- jabber_misc.c ------------------------------------------------
-
-void   JabberChatDllError(void);
-int    JabberCompareJids(const TCHAR *jid1, const TCHAR *jid2);
-TCHAR* UnEscapeChatTags(TCHAR* str_in);
-
 //---- jabber_adhoc.cpp	---------------------------------------------
 
 struct CJabberAdhocStartupParams
 {
-	TCHAR *m_szJid;
-	TCHAR *m_szNode;
+	wchar_t *m_szJid;
+	wchar_t *m_szNode;
 	CJabberProto *m_pProto;
 
-	CJabberAdhocStartupParams(CJabberProto *proto, TCHAR* szJid, TCHAR* szNode = NULL)
+	CJabberAdhocStartupParams(CJabberProto *proto, wchar_t* szJid, wchar_t* szNode = nullptr)
 	{
 		m_pProto = proto;
-		m_szJid = mir_tstrdup(szJid);
-		m_szNode = szNode ? mir_tstrdup(szNode) : NULL;
+		m_szJid = mir_wstrdup(szJid);
+		m_szNode = szNode ? mir_wstrdup(szNode) : nullptr;
 	}
 	~CJabberAdhocStartupParams()
 	{
@@ -708,7 +689,7 @@ struct JabberAdHocData
 	RECT   frameRect;
 	HXML   AdHocNode;
 	HXML   CommandsNode;
-	TCHAR *ResponderJID;
+	wchar_t *ResponderJID;
 };
 
 //---- jabber_util.cpp ------------------------------------------------------------------
@@ -726,33 +707,33 @@ struct TStringPairs
 	const char* operator[](const char* name) const;
 
 	int numElems;
-	TStringPairsElem* elems;
+	TStringPairsElem *elems;
 };
 
 typedef char JabberShaStrBuf[2*MIR_SHA1_HASH_SIZE + 1];
 
-TCHAR*        __stdcall JabberNickFromJID(const TCHAR *jid);
-TCHAR*                  JabberPrepareJid(LPCTSTR jid);
+wchar_t*        __stdcall JabberNickFromJID(const wchar_t *jid);
+wchar_t*                  JabberPrepareJid(LPCTSTR jid);
 void          __stdcall JabberUrlDecodeW(WCHAR *str);
 char*         __stdcall JabberSha1(const char *str, JabberShaStrBuf buf);
-TCHAR*        __stdcall JabberStrFixLines(const TCHAR *str);
-void          __stdcall JabberHttpUrlDecode(TCHAR *str);
+wchar_t*        __stdcall JabberStrFixLines(const wchar_t *str);
+void          __stdcall JabberHttpUrlDecode(wchar_t *str);
 int           __stdcall JabberCombineStatus(int status1, int status2);
-TCHAR*        __stdcall JabberErrorStr(int errorCode);
-TCHAR*        __stdcall JabberErrorMsg(HXML errorNode, int *errorCode = NULL);
-time_t        __stdcall JabberIsoToUnixTime(const TCHAR *stamp);
-TCHAR*        __stdcall JabberStripJid(const TCHAR *jid, TCHAR *dest, size_t destLen);
+wchar_t*        __stdcall JabberErrorStr(int errorCode);
+wchar_t*        __stdcall JabberErrorMsg(HXML errorNode, int *errorCode = nullptr);
+time_t        __stdcall JabberIsoToUnixTime(const wchar_t *stamp);
+wchar_t*        __stdcall JabberStripJid(const wchar_t *jid, wchar_t *dest, size_t destLen);
 int           __stdcall JabberGetPacketID(HXML n);
-TCHAR*        __stdcall JabberId2string(int id);
+wchar_t*        __stdcall JabberId2string(int id);
 
 LPCTSTR       __stdcall JabberGetPictureType(HXML node, const char *picBuf);
 
-TCHAR* time2str(time_t _time, TCHAR *buf, size_t bufLen);
-time_t str2time(const TCHAR*);
+wchar_t* time2str(time_t _time, wchar_t *buf, size_t bufLen);
+time_t str2time(const wchar_t*);
 
-const TCHAR *JabberStrIStr(const TCHAR *str, const TCHAR *substr);
-void JabberCopyText(HWND hwnd, const TCHAR *text);
-CJabberProto *JabberChooseInstance(bool bIsLink=false);
+const wchar_t*  JabberStrIStr(const wchar_t *str, const wchar_t *substr);
+void          JabberCopyText(HWND hwnd, const wchar_t *text);
+CJabberProto* JabberChooseInstance(bool bIsLink=false);
 
 bool JabberReadXep203delay(HXML node, time_t &msgTime);
 
@@ -762,8 +743,5 @@ void UIShowControls(HWND hwndDlg, int *idList, int nCmdShow);
 //---- jabber_userinfo.cpp --------------------------------------------------------------
 
 void JabberUserInfoUpdate(MCONTACT hContact);
-
-//---- jabber_iq_handlers.cpp
-BOOL GetOSDisplayString(LPTSTR pszOS, int BUFSIZE);
 
 #endif

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -26,12 +26,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // a font identifier structure - used for registering a font, and getting one out again
 
-struct FontInternal : public FontIDT
+struct FontInternal : public FontIDW
 {
-	FontSettingsT value;
+	FontSettingsW value;
 	int hLangpack;
 
-	__inline TCHAR* getName() const { return TranslateTH(hLangpack, name); }
+	__inline wchar_t* getName() const { return TranslateW_LP(name, hLangpack); }
 
 	__inline bool isHeader() const
 	{
@@ -39,23 +39,23 @@ struct FontInternal : public FontIDT
 			return true;
 
 		if ((flags & FIDF_CLASSMASK) == 0)
-			if (_tcsstr(name, _T("Incoming nick")) || _tcsstr(name, _T("Outgoing nick")) || _tcsstr(name, _T("Incoming timestamp")) || _tcsstr(name, _T("Outgoing timestamp")))
+			if (wcsstr(name, L"Incoming nick") || wcsstr(name, L"Outgoing nick") || wcsstr(name, L"Incoming timestamp") || wcsstr(name, L"Outgoing timestamp"))
 				return true;
 		return false;
 	}
 };
 
-struct ColourInternal : public ColourIDT
+struct ColourInternal : public ColourIDW
 {
-	__inline TCHAR* getName() const { return TranslateTH(hLangpack, name); }
+	__inline wchar_t* getName() const { return TranslateW_LP(name, hLangpack); }
 
 	COLORREF value;
 	int hLangpack;
 };
 
-struct EffectInternal : public EffectIDT
+struct EffectInternal : public EffectIDW
 {
-	__inline TCHAR* getName() const { return TranslateTH(hLangpack, name); }
+	__inline wchar_t* getName() const { return TranslateW_LP(name, hLangpack); }
 
 	int hLangpack;
 };
@@ -66,7 +66,7 @@ struct EffectInternal : public EffectIDT
 typedef struct
 {
 	char *paramName;
-	TCHAR *groupName;
+	wchar_t *groupName;
 }
 	TreeItem;
 
@@ -77,4 +77,4 @@ extern OBJLIST<EffectInternal> effect_id_list;
 extern int code_page;
 extern HANDLE hFontReloadEvent, hColourReloadEvent;
 
-int  CreateFromFontSettings(FontSettingsT *fs, LOGFONT *lf);
+int  CreateFromFontSettings(FontSettingsW *fs, LOGFONT *lf);

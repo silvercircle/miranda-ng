@@ -3,14 +3,15 @@
 CSteamOptionsMain::CSteamOptionsMain(CSteamProto *proto, int idDialog, HWND hwndParent)
 	: CSteamDlgBase(proto, idDialog, false),
 	m_username(this, IDC_USERNAME), m_password(this, IDC_PASSWORD),
-	m_group(this, IDC_GROUP), m_biggerAvatars(this, IDC_BIGGER_AVATARS)
+	m_group(this, IDC_GROUP), m_biggerAvatars(this, IDC_BIGGER_AVATARS), m_showChatEvents(this, IDC_SHOW_CHAT_EVENTS)
 {
 	SetParent(hwndParent);
 
-	CreateLink(m_username, "Username", _T(""));
-	CreateLink(m_password, "Password", _T(""));
-	CreateLink(m_group, "DefaultGroup", _T("Steam"));
+	CreateLink(m_username, "Username", L"");
+	CreateLink(m_password, "Password", L"");
+	CreateLink(m_group, "DefaultGroup", L"Steam");
 	CreateLink(m_biggerAvatars, "UseBigAvatars", DBVT_BYTE, FALSE);
+	CreateLink(m_showChatEvents, "ShowChatEvents", DBVT_BYTE, TRUE);
 }
 
 void CSteamOptionsMain::OnInitDialog()
@@ -24,9 +25,9 @@ void CSteamOptionsMain::OnInitDialog()
 
 void CSteamOptionsMain::OnApply()
 {
-	TCHAR *group = m_group.GetText();
-	if (mir_tstrlen(group) > 0 && !Clist_GroupExists(group))
-		Clist_CreateGroup(0, group);
+	wchar_t *group = m_group.GetText();
+	if (mir_wstrlen(group) > 0 && !Clist_GroupExists(group))
+		Clist_GroupCreate(0, group);
 
 	if (m_proto->IsOnline())
 	{
@@ -61,7 +62,7 @@ void CSteamOptionsBlockList::OnInitDialog()
 	m_list.SetExtendedListViewStyle(LVS_EX_SUBITEMIMAGES | LVS_EX_FULLROWSELECT | LVS_EX_LABELTIP);
 
 	m_list.AddColumn(0, TranslateT("Name"), 220);
-	m_list.AddColumn(1, _T(""), 32 - GetSystemMetrics(SM_CXVSCROLL));
+	m_list.AddColumn(1, L"", 32 - GetSystemMetrics(SM_CXVSCROLL));
 }
 
 void CSteamOptionsBlockList::OnBlock(CCtrlButton*)

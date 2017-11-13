@@ -50,6 +50,8 @@ public:
 // _ad must be allocated using "new CAutoreplyData()"
 void __cdecl AutoreplyDelayThread(void *_ad)
 {
+	Thread_SetName("NewAwaySysMod: AutoreplyDelayThread");
+
 	CAutoreplyData *ad = (CAutoreplyData*)_ad;
 	_ASSERT(ad && ad->hContact && ad->Reply.GetLen());
 	char *szProto = GetContactProto(ad->hContact);
@@ -60,11 +62,10 @@ void __cdecl AutoreplyDelayThread(void *_ad)
 
 	T2Utf pszReply(ad->Reply);
 	int ReplyLen = (int)mir_strlen(pszReply);
-	CallContactService(ad->hContact, PSS_MESSAGE, 0, (LPARAM)pszReply);
+	ProtoChainSend(ad->hContact, PSS_MESSAGE, 0, (LPARAM)pszReply);
 
 	if (g_AutoreplyOptPage.GetDBValueCopy(IDC_REPLYDLG_LOGREPLY)) { // store in the history
-		DBEVENTINFO dbeo = { 0 };
-		dbeo.cbSize = sizeof(dbeo);
+		DBEVENTINFO dbeo = {};
 		dbeo.eventType = EVENTTYPE_MESSAGE;
 		dbeo.flags = DBEF_SENT | DBEF_UTF;
 		dbeo.szModule = szProto;
@@ -83,17 +84,8 @@ void __cdecl AutoreplyDelayThread(void *_ad)
 
 int IsSRMsgWindowOpen(MCONTACT hContact, int DefaultRetVal)
 {
-	if (ServiceExists(MS_MSG_GETWINDOWDATA)) {
-		MessageWindowData mwd = { 0 };
-		mwd.cbSize = sizeof(mwd);
-		MessageWindowInputData mwid = { 0 };
-		mwid.cbSize = sizeof(mwid);
-		mwid.uFlags = MSG_WINDOW_UFLAG_MSG_BOTH;
-		mwid.hContact = hContact;
-		return !CallService(MS_MSG_GETWINDOWDATA, (WPARAM)&mwid, (LPARAM)&mwd) && mwd.hwndWindow;
-	}
-
-	return DefaultRetVal;
+	MessageWindowData mwd;
+	return !Srmm_GetWindowData(hContact, mwd) && mwd.hwndWindow;
 }
 
 
@@ -231,7 +223,7 @@ int MsgEventAdded(WPARAM hContact, LPARAM lParam)
 	GetDynamicStatMsg(hContact); // it updates VarParseData.Message needed for %extratext% in the format
 	TCString Reply(*(TCString*)AutoreplyOptData.GetValue(IDC_REPLYDLG_PREFIX));
 	if (Reply != NULL && ServiceExists(MS_VARS_FORMATSTRING) && !g_SetAwayMsgPage.GetDBValueCopy(IDS_SAWAYMSG_DISABLEVARIABLES)) {
-		TCHAR *szResult = variables_parse(Reply, VarParseData.Message, hContact);
+		wchar_t *szResult = variables_parse(Reply, VarParseData.Message, hContact);
 		if (szResult != NULL) {
 			Reply = szResult;
 			mir_free(szResult);

@@ -46,7 +46,6 @@
 // Miranda IM headers
 #include <newpluginapi.h>
 #include <m_system.h>
-#include <m_system_cpp.h>
 #include <m_database.h>
 #include <m_netlib.h>
 #include <m_protocols.h>
@@ -59,7 +58,6 @@
 #include <m_clist.h>
 #include <m_options.h>
 #include <m_userinfo.h>
-#include <m_clui.h>
 #include <m_button.h>
 #include <m_message.h>
 #include <m_icolib.h>
@@ -102,7 +100,7 @@ typedef struct
 {
 	uin_t *recipients;
 	int recipients_count;
-	TCHAR id[32];
+	wchar_t id[32];
 	BOOL ignore;
 } GGGC;
 
@@ -307,11 +305,12 @@ extern IconItem iconList[];
 // Methods
 
 /* Helper functions */
-const TCHAR *http_error_string(int h);
+const wchar_t *http_error_string(int h);
 unsigned long crc_get(char *mem);
 int gg_normalizestatus(int status);
 char *gg_status2db(int status, const char *suffix);
-TCHAR *ws_strerror(int code);
+wchar_t *ws_strerror(int code);
+char *as_strerror(int code);
 uint32_t swap32(uint32_t x);
 const char *gg_version2string(int v);
 
@@ -323,15 +322,13 @@ void gg_icolib_init();
 HICON LoadIconEx(const char* name, bool big);
 HANDLE GetIconHandle(int iconId);
 void ReleaseIconEx(const char* name, bool big);
-void WindowSetIcon(HWND hWnd, const char* name);
-void WindowFreeIcon(HWND hWnd);
 
 /* URI parser functions */
 void gg_links_instancemenu_init();
 void gg_links_init();
 
 #define UIN2IDA(uin,id) _itoa(uin,id,10)
-#define UIN2IDT(uin,id) _itot(uin,id,10)
+#define UIN2IDT(uin,id) _itow(uin,id,10)
 
 // Debug functions
 const char *ggdebug_eventtype(gg_event *e);

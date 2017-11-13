@@ -3,42 +3,34 @@ extern "C"{
 	#include "otrlextensions.h"
 }
 
-TCHAR g_private_key_filename[MAX_PATH];
-TCHAR g_fingerprint_store_filename[MAX_PATH];
-TCHAR g_instag_filename[MAX_PATH];
+wchar_t g_private_key_filename[MAX_PATH];
+wchar_t g_fingerprint_store_filename[MAX_PATH];
+wchar_t g_instag_filename[MAX_PATH];
 HANDLE hPATH_MIROTR;
 Options options;
-#define DATA_DIRECTORY MIRANDA_USERDATAT _T("\\") _T(MODULENAME)
+#define DATA_DIRECTORY MIRANDA_USERDATAT L"\\" _A2W(MODULENAME)
 
 struct PROTOREGENKEYOPTIONS {
 	HWND refresh;
-	TCHAR proto[129];
+	wchar_t proto[129];
 };
 
-void SetFilenames(const TCHAR *path)
+void SetFilenames(const wchar_t *path)
 {
 	if (!path || !path[0]) 
 		return;
-	CreateDirectoryTreeT(path);
+	CreateDirectoryTreeW(path);
 	
-	mir_tstrcpy(g_private_key_filename, path);
-	mir_tstrcat(g_private_key_filename, _T("\\"));
-	mir_tstrcat(g_private_key_filename, _T(PRIVATE_KEY_FILENAME));
-	
-	mir_tstrcpy(g_fingerprint_store_filename, path);
-	mir_tstrcat(g_fingerprint_store_filename, _T("\\"));
-	mir_tstrcat(g_fingerprint_store_filename, _T(FINGERPRINT_STORE_FILENAME));
-	
-	mir_tstrcpy(g_instag_filename, path);
-	mir_tstrcat(g_instag_filename, _T("\\"));
-	mir_tstrcat(g_instag_filename, _T(INSTAG_FILENAME));
+	mir_snwprintf(g_private_key_filename,       L"%s\\" _A2W(PRIVATE_KEY_FILENAME),       path);
+	mir_snwprintf(g_fingerprint_store_filename, L"%s\\" _A2W(FINGERPRINT_STORE_FILENAME), path);
+	mir_snwprintf(g_instag_filename,            L"%s\\" _A2W(INSTAG_FILENAME),            path);
 }
 
-int FoldersChanged(WPARAM wParam, LPARAM lParam)
+int FoldersChanged(WPARAM, LPARAM)
 {
-	TCHAR path[MAX_PATH];
-	if ( FoldersGetCustomPathT(hPATH_MIROTR, path, _countof(path), _T("")))
-		SetFilenames( VARST(DATA_DIRECTORY));
+	wchar_t path[MAX_PATH];
+	if ( FoldersGetCustomPathT(hPATH_MIROTR, path, _countof(path), L""))
+		SetFilenames(VARSW(DATA_DIRECTORY));
 	else
 		SetFilenames(path);
 
@@ -55,7 +47,7 @@ void LoadFilenames()
 		FoldersChanged(0, 0);
 	}
 	else {
-		SetFilenames( VARST(DATA_DIRECTORY));
+		SetFilenames( VARSW(DATA_DIRECTORY));
 		ReadPrivkeyFiles();
 	}
 }
@@ -97,7 +89,6 @@ void LoadOptions()
 
 	options.bHavePopups = 0 != ServiceExists(MS_POPUP_ADDPOPUPT) && ServiceExists(MS_POPUP_SHOWMESSAGE);
 	options.bHaveSecureIM = 0 != ServiceExists("SecureIM/IsContactSecured");
-	options.bHaveButtonsBar = 0 != ServiceExists(MS_BB_ADDBUTTON);
 
 	LoadFilenames();
 }
@@ -120,7 +111,7 @@ void SaveOptions()
 	db_set_b(0, MODULENAME, "EndWindowClose", options.end_window_close ? 1 : 0);
 }
 
-extern "C" void set_context_contact(void *data, ConnContext *context)
+extern "C" void set_context_contact(void *, ConnContext *context)
 {
 	MCONTACT hContact = find_contact(context->username, context->protocol);
 	context->app_data = (void*)hContact;
@@ -128,7 +119,7 @@ extern "C" void set_context_contact(void *data, ConnContext *context)
 
 void ReadPrivkeyFiles()
 {
-	DEBUGOUT_T("READ privkey");
+	DEBUGOUTA("READ privkey");
 	lib_cs_lock();
 	otrl_privkey_read(otr_user_state, _T2A(g_private_key_filename));
 	otrl_privkey_read_fingerprints(otr_user_state, _T2A(g_fingerprint_store_filename), set_context_contact, 0);
@@ -137,9 +128,11 @@ void ReadPrivkeyFiles()
 
 static INT_PTR CALLBACK DlgProcMirOTROpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	TCHAR *prefix;
+	static bool bInit = true;
+	wchar_t *prefix;
 	switch ( msg ) {
 	case WM_INITDIALOG:
+		bInit = false;
 		TranslateDialogDefault( hwndDlg );
 
 		// set default policy radio
@@ -167,10 +160,11 @@ static INT_PTR CALLBACK DlgProcMirOTROpts(HWND hwndDlg, UINT msg, WPARAM wParam,
 		CheckDlgButton(hwndDlg, IDC_CHK_ENDOFFLINE, options.end_offline ? BST_CHECKED : BST_UNCHECKED);
 		CheckDlgButton(hwndDlg, IDC_CHK_ENDCLOSE, options.end_window_close ? BST_CHECKED : BST_UNCHECKED);
 
-		prefix = mir_utf8decodeT(options.prefix);
+		prefix = mir_utf8decodeW(options.prefix);
 		SetDlgItemText(hwndDlg, IDC_ED_PREFIX, prefix);
 		mir_free(prefix);
-		return TRUE;
+		bInit = true;
+		return FALSE;
 
 	case WM_COMMAND:
 		switch ( HIWORD( wParam )) {
@@ -187,11 +181,12 @@ static INT_PTR CALLBACK DlgProcMirOTROpts(HWND hwndDlg, UINT msg, WPARAM wParam,
 					case IDC_CHK_AUTOSHOW_VERIFY:
 					case IDC_CHK_ENDOFFLINE:
 					case IDC_CHK_ENDCLOSE:
-						SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
+						if (bInit)
+							SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 				}
 				break;
 			case EN_CHANGE:
-				if (LOWORD( wParam ) == IDC_ED_PREFIX && ( HWND )lParam == GetFocus())
+				if ((LOWORD( wParam ) == IDC_ED_PREFIX) && bInit)
 					SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 				break;
 		}
@@ -218,7 +213,7 @@ static INT_PTR CALLBACK DlgProcMirOTROpts(HWND hwndDlg, UINT msg, WPARAM wParam,
 			options.end_offline = (TRUE==IsDlgButtonChecked(hwndDlg, IDC_CHK_ENDOFFLINE));
 			options.end_window_close = (TRUE==IsDlgButtonChecked(hwndDlg, IDC_CHK_ENDCLOSE));
 
-			prefix = (TCHAR*)_alloca(sizeof(TCHAR)*OPTIONS_PREFIXLEN);
+			prefix = (wchar_t*)_alloca(sizeof(wchar_t)*OPTIONS_PREFIXLEN);
 			GetDlgItemText(hwndDlg, IDC_ED_PREFIX, prefix, OPTIONS_PREFIXLEN);
 
 			T2Utf prefix_utf(prefix);
@@ -240,13 +235,14 @@ static unsigned int CALLBACK regen_key_thread(void* param)
 {
 	Thread_Push(0);
 	PROTOREGENKEYOPTIONS *opts = (PROTOREGENKEYOPTIONS *)param;
-	TCHAR buff[512];
+	wchar_t buff[512];
 
-	mir_sntprintf(buff, TranslateT(LANG_OTR_ASK_NEWKEY), opts->proto);
+	mir_snwprintf(buff, TranslateW(LANG_OTR_ASK_NEWKEY), opts->proto);
 	EnableWindow(opts->refresh, FALSE);
 	if (IDYES == MessageBox(opts->refresh, buff, TranslateT(LANG_OTR_INFO), MB_ICONQUESTION|MB_YESNO)) {
-		char* proto = mir_t2a(opts->proto);
+		char* proto = mir_u2a(opts->proto);
 		otr_gui_create_privkey(0, proto, proto);
+		mir_free(proto);
 		SendMessage(opts->refresh, WMU_REFRESHPROTOLIST, 0, 0);
 	}
 	EnableWindow(opts->refresh, TRUE);
@@ -263,6 +259,58 @@ static char* GetProtoName(HWND lv, int iItem)
 	return (ListView_GetItem(lv, &item) == -1) ? NULL : (char*)item.lParam;
 }
 
+static void ChangeContactSetting(HWND hwndDlg, int iItem, bool changeHtml)
+{
+	if (iItem < 0)
+		return;
+
+	LVITEM lvi = { 0 };
+	lvi.mask = LVIF_PARAM;
+	lvi.iItem = iItem;
+	lvi.iSubItem = 0;
+	
+	ListView_GetItem(GetDlgItem(hwndDlg, IDC_LV_CONT_CONTACTS), &lvi);
+
+	ContactPolicyMap* cpm = (ContactPolicyMap*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
+	MCONTACT hContact = (MCONTACT)lvi.lParam;
+
+	// Handle HtmlConv
+	{
+		wchar_t buff[50];
+		ListView_GetItemText(GetDlgItem(hwndDlg, IDC_LV_CONT_CONTACTS), lvi.iItem, 3, buff, _countof(buff));
+
+		bool htmlEnabled = !wcsncmp(buff, TranslateW(LANG_YES), 50);
+		if (changeHtml) {
+			htmlEnabled = !htmlEnabled;
+		}
+
+		// Update wanted state
+		(*cpm)[hContact].htmlconv = htmlEnabled ? HTMLCONV_ENABLE : HTMLCONV_DISABLE;
+		ListView_SetItemText(GetDlgItem(hwndDlg, IDC_LV_CONT_CONTACTS), lvi.iItem, 3, TranslateW(htmlEnabled ? LANG_YES : LANG_NO));
+	}
+	
+	// Handle Policy
+	{
+		OtrlPolicy policy = CONTACT_DEFAULT_POLICY;
+
+		int sel = SendDlgItemMessage(hwndDlg, IDC_CMB_CONT_POLICY, CB_GETCURSEL, 0, 0);
+		if (sel != CB_ERR) {
+			int len = SendDlgItemMessage(hwndDlg, IDC_CMB_CONT_POLICY, CB_GETLBTEXTLEN, sel, 0);
+			if (len >= 0) {
+				wchar_t *text = new wchar_t[len + 1];
+				SendDlgItemMessage(hwndDlg, IDC_CMB_CONT_POLICY, CB_GETLBTEXT, sel, (LPARAM)text);
+				ListView_SetItemText(GetDlgItem(hwndDlg, IDC_LV_CONT_CONTACTS), iItem, 2, text);
+				policy = policy_from_string(text);
+				delete[] text;
+			}
+		}
+
+		(*cpm)[hContact].policy = policy;
+	}
+
+	SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
+}
+
 static INT_PTR CALLBACK DlgProcMirOTROptsProto(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	HWND lv = GetDlgItem(hwndDlg, IDC_LV_PROTO_PROTOS);
@@ -273,11 +321,11 @@ static INT_PTR CALLBACK DlgProcMirOTROptsProto(HWND hwndDlg, UINT msg, WPARAM wP
 		TranslateDialogDefault(hwndDlg);
 		{
 			HWND cmb = GetDlgItem(hwndDlg, IDC_CMB_PROTO_POLICY);
-			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateT(LANG_POLICY_DEFAULT));
-			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateT(LANG_POLICY_ALWAYS));
-			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateT(LANG_POLICY_OPP));
-			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateT(LANG_POLICY_MANUAL));
-			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateT(LANG_POLICY_NEVER));
+			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateW(LANG_POLICY_DEFAULT));
+			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateW(LANG_POLICY_ALWAYS));
+			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateW(LANG_POLICY_OPP));
+			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateW(LANG_POLICY_MANUAL));
+			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateW(LANG_POLICY_NEVER));
 			SendDlgItemMessage(hwndDlg, IDC_CMB_PROTO_POLICY, CB_SETCURSEL, (LPARAM)-1, 0);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_CMB_PROTO_POLICY), FALSE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BTN_PROTO_NEWKEY), FALSE);
@@ -295,17 +343,17 @@ static INT_PTR CALLBACK DlgProcMirOTROptsProto(HWND hwndDlg, UINT msg, WPARAM wP
 			lvc.fmt = LVCFMT_LEFT;
 
 			lvc.iSubItem = 0;
-			lvc.pszText = TranslateT(LANG_PROTO);
+			lvc.pszText = TranslateW(LANG_PROTO);
 			lvc.cx = 85;     // width of column in pixels
 			ListView_InsertColumn(lv, 0, &lvc);
 
 			lvc.iSubItem = 1;
-			lvc.pszText = TranslateT(LANG_POLICY);
+			lvc.pszText = TranslateW(LANG_POLICY);
 			lvc.cx = 80;     // width of column in pixels
 			ListView_InsertColumn(lv, 1, &lvc);
 
 			lvc.iSubItem = 2;
-			lvc.pszText = TranslateT(LANG_FINGERPRINT);
+			lvc.pszText = TranslateW(LANG_FINGERPRINT);
 			lvc.cx = 275;     // width of column in pixels
 			ListView_InsertColumn(lv, 2, &lvc);
 		}
@@ -331,11 +379,11 @@ static INT_PTR CALLBACK DlgProcMirOTROptsProto(HWND hwndDlg, UINT msg, WPARAM wP
 				item.lParam = (LPARAM)pppDesc[i]->szModuleName;
 				int ilvItem = ListView_InsertItem(lv, &item);
 
-				ListView_SetItemText(lv, ilvItem, 1, (TCHAR*)policy_to_string(db_get_dw(0, MODULENAME"_ProtoPol", pppDesc[i]->szModuleName, CONTACT_DEFAULT_POLICY)));
+				ListView_SetItemText(lv, ilvItem, 1, (wchar_t*)policy_to_string(db_get_dw(0, MODULENAME"_ProtoPol", pppDesc[i]->szModuleName, CONTACT_DEFAULT_POLICY)));
 
 				char fprint[45];
 				if (otrl_privkey_fingerprint(otr_user_state, fprint, pppDesc[i]->szModuleName, pppDesc[i]->szModuleName)) {
-					TCHAR *temp = mir_a2t(fprint);
+					wchar_t *temp = mir_a2u(fprint);
 					ListView_SetItemText(lv, ilvItem, 2, temp);
 					mir_free(temp);
 				}
@@ -360,10 +408,10 @@ static INT_PTR CALLBACK DlgProcMirOTROptsProto(HWND hwndDlg, UINT msg, WPARAM wP
 			case IDC_BTN_PROTO_FORGET:
 				sel = ListView_GetSelectionMark(GetDlgItem(hwndDlg, IDC_LV_PROTO_PROTOS));
 				if (sel != -1) {
-					TCHAR buff_proto[128];
+					wchar_t buff_proto[128];
 					ListView_GetItemText(GetDlgItem(hwndDlg, IDC_LV_PROTO_PROTOS), sel, 0, buff_proto, _countof(buff_proto));
-					TCHAR buff[512];
-					mir_sntprintf(buff, TranslateT(LANG_OTR_ASK_REMOVEKEY), buff_proto);
+					wchar_t buff[512];
+					mir_snwprintf(buff, TranslateW(LANG_OTR_ASK_REMOVEKEY), buff_proto);
 					if (IDYES == MessageBox(hwndDlg, buff, TranslateT(LANG_OTR_INFO), MB_ICONQUESTION | MB_YESNO)) {
 						char *proto = GetProtoName(lv, sel);
 						if (proto == NULL)
@@ -373,7 +421,7 @@ static INT_PTR CALLBACK DlgProcMirOTROptsProto(HWND hwndDlg, UINT msg, WPARAM wP
 						if (key) {
 							otrl_privkey_forget(key);
 							otrl_privkey_write(otr_user_state, _T2A(g_private_key_filename));
-							ListView_SetItemText(GetDlgItem(hwndDlg, IDC_LV_PROTO_PROTOS), sel, 2, _T(""));
+							ListView_SetItemText(GetDlgItem(hwndDlg, IDC_LV_PROTO_PROTOS), sel, 2, L"");
 						}
 					}
 				}
@@ -385,11 +433,11 @@ static INT_PTR CALLBACK DlgProcMirOTROptsProto(HWND hwndDlg, UINT msg, WPARAM wP
 			case IDC_CMB_PROTO_POLICY:
 				int proto = ListView_GetSelectionMark(GetDlgItem(hwndDlg, IDC_LV_PROTO_PROTOS));
 				if (proto == -1) break;
-				int sel = SendDlgItemMessage(hwndDlg, IDC_CMB_PROTO_POLICY, CB_GETCURSEL, 0, 0);
+				sel = SendDlgItemMessage(hwndDlg, IDC_CMB_PROTO_POLICY, CB_GETCURSEL, 0, 0);
 				if (sel == CB_ERR) break;
 				int len = SendDlgItemMessage(hwndDlg, IDC_CMB_PROTO_POLICY, CB_GETLBTEXTLEN, sel, 0);
 				if (len < 0) break;
-				TCHAR *text = new TCHAR[len + 1];
+				wchar_t *text = new wchar_t[len + 1];
 				SendDlgItemMessage(hwndDlg, IDC_CMB_PROTO_POLICY, CB_GETLBTEXT, sel, (LPARAM)text);
 				ListView_SetItemText(GetDlgItem(hwndDlg, IDC_LV_PROTO_PROTOS), proto, 1, text);
 				delete[] text;
@@ -415,14 +463,14 @@ static INT_PTR CALLBACK DlgProcMirOTROptsProto(HWND hwndDlg, UINT msg, WPARAM wP
 				EnableWindow(GetDlgItem(hwndDlg, IDC_CMB_PROTO_POLICY), TRUE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BTN_PROTO_NEWKEY), TRUE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BTN_PROTO_FORGET), TRUE);
-				TCHAR buff[50];
+				wchar_t buff[50];
 				ListView_GetItemText(((LPNMHDR)lParam)->hwndFrom, notif->iItem, 1, buff, _countof(buff));
 				SendDlgItemMessage(hwndDlg, IDC_CMB_PROTO_POLICY, CB_SELECTSTRING, (LPARAM)-1, (WPARAM)buff);
 			}
 		}
 		else if (((LPNMHDR)lParam)->code == PSN_APPLY) {
 			int cnt = ListView_GetItemCount(lv);
-			TCHAR policy[64];
+			wchar_t policy[64];
 			for (int i = 0; i < cnt; ++i) {
 				char *proto = GetProtoName(lv, i);
 				if (proto == NULL)
@@ -450,11 +498,11 @@ static INT_PTR CALLBACK DlgProcMirOTROptsContacts(HWND hwndDlg, UINT msg, WPARAM
 			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR) new ContactPolicyMap());
 
 			HWND cmb = GetDlgItem(hwndDlg, IDC_CMB_CONT_POLICY);
-			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateT(LANG_POLICY_DEFAULT));
-			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateT(LANG_POLICY_ALWAYS));
-			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateT(LANG_POLICY_OPP));
-			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateT(LANG_POLICY_MANUAL));
-			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateT(LANG_POLICY_NEVER));
+			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateW(LANG_POLICY_DEFAULT));
+			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateW(LANG_POLICY_ALWAYS));
+			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateW(LANG_POLICY_OPP));
+			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateW(LANG_POLICY_MANUAL));
+			SendMessage(cmb, CB_ADDSTRING, 0, (WPARAM)TranslateW(LANG_POLICY_NEVER));
 			EnableWindow(GetDlgItem(hwndDlg, IDC_CMB_CONT_POLICY), FALSE);
 
 			SendDlgItemMessage(hwndDlg, IDC_LV_CONT_CONTACTS, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);// | LVS_EX_CHECKBOXES);
@@ -468,22 +516,22 @@ static INT_PTR CALLBACK DlgProcMirOTROptsContacts(HWND hwndDlg, UINT msg, WPARAM
 			lvc.fmt = LVCFMT_LEFT;
 
 			lvc.iSubItem = 0;
-			lvc.pszText = TranslateT(LANG_CONTACT);
+			lvc.pszText = TranslateW(LANG_CONTACT);
 			lvc.cx = 150;     // width of column in pixels
 			ListView_InsertColumn(lv, 0, &lvc);
 
 			lvc.iSubItem = 1;
-			lvc.pszText = TranslateT(LANG_PROTO);
+			lvc.pszText = TranslateW(LANG_PROTO);
 			lvc.cx = 100;     // width of column in pixels
 			ListView_InsertColumn(lv, 1, &lvc);
 
 			lvc.iSubItem = 2;
-			lvc.pszText = TranslateT(LANG_POLICY);
+			lvc.pszText = TranslateW(LANG_POLICY);
 			lvc.cx = 90;     // width of column in pixels
 			ListView_InsertColumn(lv, 2, &lvc);
 
 			lvc.iSubItem = 3;
-			lvc.pszText = TranslateT(LANG_HTMLCONV);
+			lvc.pszText = TranslateW(LANG_HTMLCONV);
 			lvc.cx = 80;     // width of column in pixels
 			ListView_InsertColumn(lv, 3, &lvc);
 		}
@@ -508,14 +556,14 @@ static INT_PTR CALLBACK DlgProcMirOTROptsContacts(HWND hwndDlg, UINT msg, WPARAM
 					lvI.iItem = 0;
 					lvI.iSubItem = 0;
 					lvI.lParam = hContact;
-					lvI.pszText = (TCHAR*)contact_get_nameT(hContact);
+					lvI.pszText = (wchar_t*)contact_get_nameT(hContact);
 					lvI.iItem = ListView_InsertItem(lv, &lvI);
 
 					PROTOACCOUNT *pa = Proto_GetAccount(proto);
 					ListView_SetItemText(lv, lvI.iItem, 1, pa->tszAccountName);
 
-					ListView_SetItemText(lv, lvI.iItem, 2, (TCHAR*)policy_to_string((OtrlPolicy)db_get_dw(hContact, MODULENAME, "Policy", CONTACT_DEFAULT_POLICY)));
-					ListView_SetItemText(lv, lvI.iItem, 3, (db_get_b(hContact, MODULENAME, "HTMLConv", 0)) ? TranslateT(LANG_YES) : TranslateT(LANG_NO));
+					ListView_SetItemText(lv, lvI.iItem, 2, (wchar_t*)policy_to_string((OtrlPolicy)db_get_dw(hContact, MODULENAME, "Policy", CONTACT_DEFAULT_POLICY)));
+					ListView_SetItemText(lv, lvI.iItem, 3, (db_get_b(hContact, MODULENAME, "HTMLConv", 0)) ? TranslateW(LANG_YES) : TranslateW(LANG_NO));
 				}
 			}
 		}
@@ -526,29 +574,8 @@ static INT_PTR CALLBACK DlgProcMirOTROptsContacts(HWND hwndDlg, UINT msg, WPARAM
 		case CBN_SELCHANGE:
 			switch (LOWORD(wParam)) {
 			case IDC_CMB_CONT_POLICY:
-				MCONTACT hContact = 0;
 				int iUser = ListView_GetSelectionMark(GetDlgItem(hwndDlg, IDC_LV_CONT_CONTACTS));
-				if (iUser == -1) break;
-				int sel = SendDlgItemMessage(hwndDlg, IDC_CMB_CONT_POLICY, CB_GETCURSEL, 0, 0);
-				if (sel == CB_ERR) break;
-				int len = SendDlgItemMessage(hwndDlg, IDC_CMB_CONT_POLICY, CB_GETLBTEXTLEN, sel, 0);
-				if (len < 0) break;
-				TCHAR *text = new TCHAR[len + 1];
-				SendDlgItemMessage(hwndDlg, IDC_CMB_CONT_POLICY, CB_GETLBTEXT, sel, (LPARAM)text);
-				ListView_SetItemText(GetDlgItem(hwndDlg, IDC_LV_CONT_CONTACTS), iUser, 2, text);
-				OtrlPolicy policy = policy_from_string(text);
-				delete[] text;
-
-				LVITEM lvi = { 0 };
-				lvi.mask = LVIF_PARAM;
-				lvi.iItem = iUser;
-				lvi.iSubItem = 0;
-				ListView_GetItem(GetDlgItem(hwndDlg, IDC_LV_CONT_CONTACTS), &lvi);
-
-				ContactPolicyMap* cpm = (ContactPolicyMap*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
-				hContact = (MCONTACT)lvi.lParam;
-				(*cpm)[hContact].policy = policy;
-				SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
+				ChangeContactSetting(hwndDlg, iUser, false);
 				break;
 			}
 			break;
@@ -564,8 +591,8 @@ static INT_PTR CALLBACK DlgProcMirOTROptsContacts(HWND hwndDlg, UINT msg, WPARAM
 			// Using a const_iterator since we are not going to change the values.
 			for (ContactPolicyMap::const_iterator it = cpm->begin(); it != cpm->end(); ++it) {
 				if (!it->first) continue;
-				if (it->second.policy) db_set_dw(it->first, MODULENAME, "Policy", (DWORD)it->second.policy);
-				if (it->second.htmlconv) db_set_b(it->first, MODULENAME, "HTMLConv", it->second.htmlconv - 1);
+				db_set_dw(it->first, MODULENAME, "Policy", (DWORD)it->second.policy);
+				db_set_b(it->first, MODULENAME, "HTMLConv", it->second.htmlconv);
 			}
 			return TRUE;
 		}
@@ -578,34 +605,14 @@ static INT_PTR CALLBACK DlgProcMirOTROptsContacts(HWND hwndDlg, UINT msg, WPARAM
 				}
 				else {
 					EnableWindow(GetDlgItem(hwndDlg, IDC_CMB_CONT_POLICY), TRUE);
-					TCHAR buff[50];
+					wchar_t buff[50];
 					ListView_GetItemText(((LPNMHDR)lParam)->hwndFrom, notif->iItem, 2, buff, _countof(buff));
 					SendDlgItemMessage(hwndDlg, IDC_CMB_CONT_POLICY, CB_SELECTSTRING, (LPARAM)-1, (WPARAM)buff);
 				}
 			}
 			else if (((LPNMHDR)lParam)->code == NM_CLICK) {
 				if (notif->iSubItem == 3) {
-					LVITEM lvi;
-					lvi.mask = LVIF_PARAM;
-					lvi.iItem = notif->iItem;
-					if (lvi.iItem < 0) return FALSE;
-					lvi.iSubItem = 0;
-					SendDlgItemMessage(hwndDlg, IDC_LV_CONT_CONTACTS, LVM_GETITEM, 0, (LPARAM)&lvi);
-
-					MCONTACT hContact = (MCONTACT)lvi.lParam;
-					ContactPolicyMap *cp = (ContactPolicyMap *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
-					TCHAR buff[50];
-					ListView_GetItemText(((LPNMHDR)lParam)->hwndFrom, lvi.iItem, 3, buff, _countof(buff));
-					if (_tcsncmp(buff, TranslateT(LANG_YES), 50) == 0) {
-						(*cp)[hContact].htmlconv = HTMLCONV_DISABLE;
-						ListView_SetItemText(((LPNMHDR)lParam)->hwndFrom, lvi.iItem, 3, TranslateT(LANG_NO));
-					}
-					else {
-						(*cp)[hContact].htmlconv = HTMLCONV_ENABLE;
-						ListView_SetItemText(((LPNMHDR)lParam)->hwndFrom, lvi.iItem, 3, TranslateT(LANG_YES));
-					}
-					(*cp)[hContact].htmlconv += 1;
-					SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
+					ChangeContactSetting(hwndDlg, notif->iItem, true);
 				}
 			}
 		}
@@ -640,27 +647,27 @@ static INT_PTR CALLBACK DlgProcMirOTROptsFinger(HWND hwndDlg, UINT msg, WPARAM w
 			lvc.fmt = LVCFMT_LEFT;
 
 			lvc.iSubItem = 0;
-			lvc.pszText = TranslateT(LANG_CONTACT);
+			lvc.pszText = TranslateW(LANG_CONTACT);
 			lvc.cx = 100;     // width of column in pixels
 			ListView_InsertColumn(lv, 0, &lvc);
 
 			lvc.iSubItem = 1;
-			lvc.pszText = TranslateT(LANG_PROTO);
+			lvc.pszText = TranslateW(LANG_PROTO);
 			lvc.cx = 90;     // width of column in pixels
 			ListView_InsertColumn(lv, 1, &lvc);
 
 			lvc.iSubItem = 2;
-			lvc.pszText = TranslateT(LANG_ACTIVE);
+			lvc.pszText = TranslateW(LANG_ACTIVE);
 			lvc.cx = 50;     // width of column in pixels
 			ListView_InsertColumn(lv, 2, &lvc);
 
 			lvc.iSubItem = 3;
-			lvc.pszText = TranslateT(LANG_VERIFIED);
+			lvc.pszText = TranslateW(LANG_VERIFIED);
 			lvc.cx = 50;     // width of column in pixels
 			ListView_InsertColumn(lv, 3, &lvc);
 
 			lvc.iSubItem = 4;
-			lvc.pszText = TranslateT(LANG_FINGERPRINT);
+			lvc.pszText = TranslateW(LANG_FINGERPRINT);
 			lvc.cx = 300;     // width of column in pixels
 			ListView_InsertColumn(lv, 4, &lvc);
 		}
@@ -678,10 +685,10 @@ static INT_PTR CALLBACK DlgProcMirOTROptsFinger(HWND hwndDlg, UINT msg, WPARAM w
 			// items.
 			lvI.mask = LVIF_TEXT | LVIF_PARAM;// | LVIF_NORECOMPUTE;// | LVIF_IMAGE;
 
-			TCHAR *user, hash[45] = { 0 };
+			wchar_t *user, hash[45] = { 0 };
 			for (ConnContext *context = otr_user_state->context_root; context; context = context->next) {
 				if (context->app_data) {
-					user = (TCHAR*)contact_get_nameT((UINT_PTR)context->app_data);
+					user = (wchar_t*)contact_get_nameT((UINT_PTR)context->app_data);
 					if (user) {
 						PROTOACCOUNT *pa = Proto_GetAccount(context->protocol);
 
@@ -693,8 +700,8 @@ static INT_PTR CALLBACK DlgProcMirOTROptsFinger(HWND hwndDlg, UINT msg, WPARAM w
 							int d = ListView_InsertItem(lv, &lvI);
 
 							ListView_SetItemText(lv, d, 1, pa->tszAccountName);
-							ListView_SetItemText(lv, d, 2, (context->active_fingerprint == fp) ? TranslateT(LANG_YES) : TranslateT(LANG_NO));
-							ListView_SetItemText(lv, d, 3, (fp->trust && fp->trust[0] != '\0') ? TranslateT(LANG_YES) : TranslateT(LANG_NO));
+							ListView_SetItemText(lv, d, 2, (context->active_fingerprint == fp) ? TranslateW(LANG_YES) : TranslateW(LANG_NO));
+							ListView_SetItemText(lv, d, 3, (fp->trust && fp->trust[0] != '\0') ? TranslateW(LANG_YES) : TranslateW(LANG_NO));
 							ListView_SetItemText(lv, d, 4, hash);
 						}
 					}
@@ -718,7 +725,7 @@ static INT_PTR CALLBACK DlgProcMirOTROptsFinger(HWND hwndDlg, UINT msg, WPARAM w
 					Fingerprint *fp = (Fingerprint*)lvi.lParam;
 					FPModifyMap* fpm = (FPModifyMap*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
 					(*fpm)[fp] = FPM_NOTRUST;
-					ListView_SetItemText(GetDlgItem(hwndDlg, IDC_LV_FINGER_LIST), sel, 3, TranslateT(LANG_NO));
+					ListView_SetItemText(GetDlgItem(hwndDlg, IDC_LV_FINGER_LIST), sel, 3, TranslateW(LANG_NO));
 					SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 				}
 				break;
@@ -732,7 +739,7 @@ static INT_PTR CALLBACK DlgProcMirOTROptsFinger(HWND hwndDlg, UINT msg, WPARAM w
 					Fingerprint *fp = (Fingerprint*)lvi.lParam;
 					FPModifyMap* fpm = (FPModifyMap*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
 					(*fpm)[fp] = FPM_VERIFY;
-					ListView_SetItemText(GetDlgItem(hwndDlg, IDC_LV_FINGER_LIST), sel, 3, TranslateT(LANG_YES));
+					ListView_SetItemText(GetDlgItem(hwndDlg, IDC_LV_FINGER_LIST), sel, 3, TranslateW(LANG_YES));
 					SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 				}
 				break;
@@ -747,10 +754,10 @@ static INT_PTR CALLBACK DlgProcMirOTROptsFinger(HWND hwndDlg, UINT msg, WPARAM w
 					Fingerprint *fp = (Fingerprint*)lvi.lParam;
 					if (fp->context->active_fingerprint == fp) {
 						MCONTACT hContact = (UINT_PTR)fp->context->app_data;
-						TCHAR buff[1024], hash[45];
+						wchar_t buff[1024], hash[45];
 						otrl_privkey_hash_to_humanT(hash, fp->fingerprint);
 						PROTOACCOUNT *pa = Proto_GetAccount(GetContactProto(hContact));
-						mir_sntprintf(buff, TranslateT(LANG_FINGERPRINT_STILL_IN_USE), hash, contact_get_nameT(hContact), pa->tszAccountName);
+						mir_snwprintf(buff, TranslateW(LANG_FINGERPRINT_STILL_IN_USE), hash, contact_get_nameT(hContact), pa->tszAccountName);
 						ShowError(buff);
 					}
 					else {
@@ -777,10 +784,10 @@ static INT_PTR CALLBACK DlgProcMirOTROptsFinger(HWND hwndDlg, UINT msg, WPARAM w
 				case FPM_DELETE:
 					if (it->first->context->active_fingerprint == it->first) {
 						MCONTACT hContact = (UINT_PTR)it->first->context->app_data;
-						TCHAR buff[1024], hash[45];
+						wchar_t buff[1024], hash[45];
 						otrl_privkey_hash_to_humanT(hash, it->first->fingerprint);
 						PROTOACCOUNT *pa = Proto_GetAccount(GetContactProto(hContact));
-						mir_sntprintf(buff, TranslateT(LANG_FINGERPRINT_NOT_DELETED), hash, contact_get_nameT(hContact), pa->tszAccountName);
+						mir_snwprintf(buff, TranslateW(LANG_FINGERPRINT_NOT_DELETED), hash, contact_get_nameT(hContact), pa->tszAccountName);
 						ShowError(buff);
 					}
 					else otrl_context_forget_fingerprint(it->first, 1);
@@ -820,31 +827,31 @@ static INT_PTR CALLBACK DlgProcMirOTROptsFinger(HWND hwndDlg, UINT msg, WPARAM w
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-static int OpenOptions(WPARAM wParam, LPARAM lParam)
+static int OpenOptions(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.position = 100;
 	odp.hInstance = hInst;
-	odp.ptszGroup = LPGENT("Services");
-	odp.ptszTitle = _T("OTR");
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+	odp.szGroup.w = LPGENW("Services");
+	odp.szTitle.w = L"OTR";
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
 
-	odp.ptszTab = LANG_OPT_GENERAL;
+	odp.szTab.w = LANG_OPT_GENERAL;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_GENERAL);
 	odp.pfnDlgProc = DlgProcMirOTROpts;
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LANG_OPT_PROTO;
+	odp.szTab.w = LANG_OPT_PROTO;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_PROTO);
 	odp.pfnDlgProc = DlgProcMirOTROptsProto;
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LANG_OPT_CONTACTS;
+	odp.szTab.w = LANG_OPT_CONTACTS;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_CONTACTS);
 	odp.pfnDlgProc = DlgProcMirOTROptsContacts;
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LANG_OPT_FINGER;
+	odp.szTab.w = LANG_OPT_FINGER;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_FINGER);
 	odp.pfnDlgProc = DlgProcMirOTROptsFinger;
 	Options_AddPage(wParam, &odp);

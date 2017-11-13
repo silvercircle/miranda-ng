@@ -20,11 +20,11 @@ Niewidoczny
 Porozmawiajmy
 [Away]
 Zaraz wracam
-[NA]
+[Not available]
 Wrócę później
 [Occupied]
 Zajęty
-[DND]
+[Do not disturb]
 Nie przeszkadzać
 [Out to lunch]
 Na obiedzie
@@ -169,7 +169,7 @@ Anuluj
 [Log extra status changes]
 Zapisuj zmiany xstatusu
 [Log extra status changes to file]
-Zapisuj  zmiany xstatusu do pliku
+Zapisuj zmiany xstatusu do pliku
 [Log extra status changes to history]
 Zapisuj zmiany xstatusu w historii
 [Only when message window is open]
@@ -330,7 +330,7 @@ musi odebrać telefon
 [(U) had to answer the phone]
 musi odebrać telefon
 [User: On the phone]
-Status: Przy telefonie
+Status: Pod telefonem
 [User: from offline (has priority!)]
 Status: Z rozłączonego (ma priorytet!)
 [Status message removed]
@@ -344,7 +344,7 @@ xStatus: Zmiana opisu
 [Extra status changed]
 xStatus: Zmiana statusu
 [Extra status message removed]
-usunięto xstatus
+usunięto xStatus
 [Enable status notification]
 Włącz powiadomienie o statusie
 [Disable status notification]

@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Alarms.dll
 ;  Plugin: Alarms
-;  Version: 0.4.0.5
+;  Version: 0.4.0.6
 ;  Authors: Scott Ellis
 ;============================================================
 [Sets once-off, daily, weekly and weekday alarms.]
@@ -83,8 +83,6 @@
 Ежедневно
 [Weekdays]
 По будням
-[Monthly]
-Ежемесячно
 [Yearly]
 Ежегодно
 [i'm hiding]
@@ -97,6 +95,24 @@
 Не срабатывать при загрузке
 [No reminder]
 Не показывать в списке
+[Selected days]
+Выбранные дни
+[Mon]
+Пн
+[Tue]
+Вт
+[Wed]
+Ср
+[Thu]
+Чт
+[Fri]
+Пт
+[Sat]
+Сб
+[Sun]
+Вс
+[Monthly]
+Ежемесячно
 [Dismiss]
 Убрать
 [Snooze]

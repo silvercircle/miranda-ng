@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Alarms.dll
 ;  Plugin: Alarms
-;  Version: 0.4.0.5
+;  Version: 0.4.0.6
 ;  Authors: Scott Ellis
 ;============================================================
 [Sets once-off, daily, weekly and weekday alarms.]
@@ -84,8 +84,6 @@ akcije
 
 [Weekdays]
 
-[Monthly]
-
 [Yearly]
 
 [i'm hiding]
@@ -97,6 +95,24 @@ akcije
 [Don't trigger on startup]
 
 [No reminder]
+
+[Selected days]
+
+[Mon]
+
+[Tue]
+
+[Wed]
+
+[Thu]
+
+[Fri]
+
+[Sat]
+
+[Sun]
+
+[Monthly]
 
 [Dismiss]
 

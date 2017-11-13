@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -21,124 +21,54 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
-void CDbxMdb::AddToList(char *name, DWORD ofs)
+int CDbxMdb::InitModules()
 {
-	ModuleName *mn = (ModuleName*)HeapAlloc(m_hModHeap, 0, sizeof(ModuleName));
-	mn->name = name;
-	mn->ofs = ofs;
+	txn_ptr_ro trnlck(m_txn);
+	cursor_ptr_ro cursor(m_curModules);
 
-	if (m_lMods.getIndex(mn) != -1)
-		DatabaseCorruption(_T("%s (Module Name not unique)"));
-	m_lMods.insert(mn);
-
-	if (m_lOfs.getIndex(mn) != -1)
-		DatabaseCorruption(_T("%s (Module Offset not unique)"));
-	m_lOfs.insert(mn);
-}
-
-int CDbxMdb::InitModuleNames(void)
-{
-	m_maxModuleID = 0;
-
-	txn_ptr trnlck(m_pMdbEnv);
-	mdb_open(trnlck, "modules", MDB_INTEGERKEY, &m_dbModules);
-
-	cursor_ptr cursor(trnlck, m_dbModules);
-	if (!cursor)
-		return 1;
-
-	MDB_val key, data;
-	while (mdb_cursor_get(cursor, &key, &data, MDB_NEXT) == 0) {
-		DBModuleName *pmod = (DBModuleName*)data.mv_data;
-		if (pmod->dwSignature != DBMODULENAME_SIGNATURE)
-			DatabaseCorruption(NULL);
-
-		char *pVal = (char*)HeapAlloc(m_hModHeap, 0, pmod->cbName+1);
-		memcpy(pVal, pmod->name, pmod->cbName);
-		pVal[pmod->cbName] = 0;
-
-		int moduleId = *(int*)key.mv_data;
-		AddToList(pVal, moduleId);
-
-		if (moduleId > m_maxModuleID)
-			m_maxModuleID = moduleId;
+	MDBX_val key, data;
+	while (mdbx_cursor_get(cursor, &key, &data, MDBX_NEXT) == MDBX_SUCCESS) 
+	{
+		uint32_t iMod = *(uint32_t*)key.iov_base;
+		const char *szMod = (const char*)data.iov_base;
+		m_Modules[iMod] = szMod;
 	}
-	return 0;
-}
-
-DWORD CDbxMdb::FindExistingModuleNameOfs(const char *szName)
-{
-	ModuleName mn = { (char*)szName, 0 };
-	if (m_lastmn && !strcmp(mn.name, m_lastmn->name))
-		return m_lastmn->ofs;
-
-	int index = m_lMods.getIndex(&mn);
-	if (index != -1) {
-		ModuleName *pmn = m_lMods[index];
-		m_lastmn = pmn;
-		return pmn->ofs;
-	}
-
 	return 0;
 }
 
 // will create the offset if it needs to
-DWORD CDbxMdb::GetModuleNameOfs(const char *szName)
+uint32_t CDbxMdb::GetModuleID(const char *szName)
 {
-	DWORD ofsExisting = FindExistingModuleNameOfs(szName);
-	if (ofsExisting)
-		return ofsExisting;
+	uint32_t iHash = mir_hashstr(szName);
+	if (m_Modules.find(iHash) == m_Modules.end())
+	{
+		MDBX_val key = { &iHash, sizeof(iHash) }, data = { (void*)szName, strlen(szName) + 1 };
 
-	if (m_bReadOnly)
-		return 0;
-
-	int nameLen = (int)strlen(szName);
-
-	// need to create the module name
-	int newIdx = ++m_maxModuleID;
-	DBModuleName *pmod = (DBModuleName*)_alloca(sizeof(DBModuleName) + nameLen);
-	pmod->dwSignature = DBMODULENAME_SIGNATURE;
-	pmod->cbName = (char)nameLen;
-	strcpy(pmod->name, szName);
-	
-	MDB_val key = { sizeof(int), &newIdx }, data = { sizeof(DBModuleName) + nameLen, pmod };
-
-	for (;; Remap()) {
-		txn_ptr trnlck(m_pMdbEnv);
-		mdb_open(trnlck, "modules", MDB_INTEGERKEY, &m_dbModules);
-		MDB_CHECK(mdb_put(trnlck, m_dbModules, &key, &data, 0), -1);
-		if (trnlck.commit())
-			break;
+		for (;; Remap()) {
+			txn_ptr txn(m_pMdbEnv);
+			MDBX_CHECK(mdbx_put(txn, m_dbModules, &key, &data, 0), -1);
+			if (txn.commit() == MDBX_SUCCESS)
+				break;
+		}
+		m_Modules[iHash] = szName;
 	}
 
-	// add to cache
-	char *mod = (char*)HeapAlloc(m_hModHeap, 0, nameLen + 1);
-	strcpy(mod, szName);
-	AddToList(mod, newIdx);
-
-	// quit
-	return -1;
+	return iHash;
 }
 
-char* CDbxMdb::GetModuleNameByOfs(DWORD ofs)
+char* CDbxMdb::GetModuleName(uint32_t dwId)
 {
-	ModuleName mn = { NULL, ofs };
-	int index = m_lOfs.getIndex(&mn);
-	if (index != -1)
-		return m_lOfs[index]->name;
-
-	return NULL;
+	auto it = m_Modules.find(dwId);
+	return it != m_Modules.end() ? const_cast<char*>(it->second.c_str()) : nullptr;
 }
 
-STDMETHODIMP_(BOOL) CDbxMdb::EnumModuleNames(DBMODULEENUMPROC pFunc, void *pParam)
+STDMETHODIMP_(BOOL) CDbxMdb::EnumModuleNames(DBMODULEENUMPROC pFunc, const void *pParam)
 {
-	for (int i = 0; i < m_lMods.getCount(); i++) {
-		ModuleName *pmn = m_lMods[i];
-		int ret = pFunc(pmn->name, pmn->ofs, (LPARAM)pParam);
-		if (ret)
+	for (auto it = m_Modules.begin(); it != m_Modules.end(); ++it)
+		if (int ret = pFunc(it->second.c_str(), it->first, (LPARAM)pParam))
 			return ret;
-	}
+
 	return 0;
 }

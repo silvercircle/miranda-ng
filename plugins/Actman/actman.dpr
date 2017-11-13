@@ -180,9 +180,29 @@ begin
   end;
 end;
 
+function DoAddButton(wParam:WPARAM;lParam:LPARAM):int;cdecl;
+begin
+  Srmm_AddButton(pBBButton(lParam));
+  result := 0;
+end;
+
+function DoCallContactService(wParam:WPARAM;lParam:LPARAM):int;cdecl;
+var
+  ccs:PCCSDATA;
+begin
+  ccs := PCCSDATA(lParam);
+  result := Proto_ChainSend(0, ccs);
+end;
+
 function DoOpenUrl(wParam:WPARAM;lParam:LPARAM):int;cdecl;
 begin
   Utils_OpenUrl(PAnsiChar(lParam), byte(wParam));
+  result := 0;
+end;
+
+function DoSetStatus(wParam:WPARAM;lParam:LPARAM):int;cdecl;
+begin
+  Clist_SetStatusMode(wParam);
   result := 0;
 end;
 
@@ -232,6 +252,9 @@ begin
   CreateServiceFunction(MS_ACT_SELECT   ,@ActSelect);
 
   CreateServiceFunction('Utils/OpenURL',@DoOpenUrl);
+  CreateServiceFunction('Proto/CallContactService', @DoCallContactService);
+  CreateServiceFunction('Actman/ButtonsBar/AddButton', @DoAddButton);
+  CreateServiceFunction('CList/SetStatusMode', @DoSetStatus);
 
   HookEvent(ME_SYSTEM_MODULESLOADED,@OnModulesLoaded);
 end;

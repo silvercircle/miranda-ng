@@ -325,10 +325,10 @@ static INT_PTR CALLBACK PopupOptionsFrameProc(HWND hwndDlg, UINT uMsg, WPARAM wP
 
 			ppd.lchContact = NULL;
 			ppd.lchIcon = hIcon;
-			_tcsncpy(ppd.lptzContactName, TranslateT("Contact name"), MAX_CONTACTNAME);
-			TCHAR szPreviewText[250];
-			mir_sntprintf(szPreviewText, TranslateT("has returned after being absent since %d days"), rand() % 30);
-			_tcsncpy(ppd.lptzText, szPreviewText, MAX_SECONDLINE);
+			wcsncpy(ppd.lptzContactName, TranslateT("Contact name"), MAX_CONTACTNAME);
+			wchar_t szPreviewText[250];
+			mir_snwprintf(szPreviewText, TranslateT("has returned after being absent since %d days"), rand() % 30);
+			wcsncpy(ppd.lptzText, szPreviewText, MAX_SECONDLINE);
 
 			// Get current popups colors options
 			if (IsDlgButtonChecked(hwndDlg, IDC_COLORS_POPUP))
@@ -346,7 +346,7 @@ static INT_PTR CALLBACK PopupOptionsFrameProc(HWND hwndDlg, UINT uMsg, WPARAM wP
 
 			CallService(MS_POPUP_ADDPOPUPT, (WPARAM)&ppd, APF_NO_HISTORY);
 
-			_tcsncpy(ppd.lptzText, TranslateT("You awaited this contact!"), MAX_SECONDLINE);
+			wcsncpy(ppd.lptzText, TranslateT("You awaited this contact!"), MAX_SECONDLINE);
 			ppd.lchIcon = IcoLib_GetIcon("enabled_icon");
 
 			CallService(MS_POPUP_ADDPOPUPT, (WPARAM)&ppd, APF_NO_HISTORY);
@@ -433,15 +433,15 @@ static int OptionsInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
-	odp.ptszGroup = LPGENT("Contacts");
+	odp.szGroup.w = LPGENW("Contacts");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONSPANEL);
-	odp.ptszTitle = LPGENT("Buddy Expectator");
+	odp.szTitle.w = LPGENW("Buddy Expectator");
 	odp.pfnDlgProc = OptionsFrameProc;
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
 	Options_AddPage(wParam, &odp);
 
 	if (ServiceExists(MS_POPUP_ADDPOPUPT)) {
-		odp.ptszGroup = LPGENT("Popups");
+		odp.szGroup.w = LPGENW("Popups");
 		odp.pszTemplate = MAKEINTRESOURCEA(IDD_POPUPPANEL);
 		odp.pfnDlgProc = PopupOptionsFrameProc;
 		Options_AddPage(wParam, &odp);
@@ -456,12 +456,12 @@ INT_PTR CALLBACK UserinfoDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lpar
 	case WM_INITDIALOG:
 	{
 		time_t tmpTime;
-		TCHAR tmpBuf[51] = { 0 };
+		wchar_t tmpBuf[51] = { 0 };
 		tmpTime = getLastSeen((MCONTACT)lparam);
 		if (tmpTime == -1)
 			SetDlgItemText(hdlg, IDC_EDIT_LASTSEEN, TranslateT("not detected"));
 		else {
-			_tcsftime(tmpBuf, 50, _T("%#x"), gmtime(&tmpTime));
+			wcsftime(tmpBuf, 50, L"%#x, %#X", gmtime(&tmpTime));
 			SetDlgItemText(hdlg, IDC_EDIT_LASTSEEN, tmpBuf);
 		}
 
@@ -469,7 +469,7 @@ INT_PTR CALLBACK UserinfoDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lpar
 		if (tmpTime == -1)
 			SetDlgItemText(hdlg, IDC_EDIT_LASTINPUT, TranslateT("not found"));
 		else {
-			_tcsftime(tmpBuf, 50, _T("%#x"), gmtime(&tmpTime));
+			wcsftime(tmpBuf, 50, L"%#x, %#X", gmtime(&tmpTime));
 			SetDlgItemText(hdlg, IDC_EDIT_LASTINPUT, tmpBuf);
 		}
 
@@ -481,7 +481,7 @@ INT_PTR CALLBACK UserinfoDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lpar
 		if (isContactGoneFor((MCONTACT)lparam, options.iAbsencePeriod2))
 			SetDlgItemText(hdlg, IDC_EDIT_WILLNOTICE, TranslateT("This contact has been absent for an extended period of time."));
 		else
-			SetDlgItemText(hdlg, IDC_EDIT_WILLNOTICE, _T(""));
+			SetDlgItemText(hdlg, IDC_EDIT_WILLNOTICE, L"");
 
 		CheckDlgButton(hdlg, IDC_CHECK_MISSYOU, db_get_b((MCONTACT)lparam, MODULE_NAME, "MissYou", 0) ? BST_CHECKED : BST_UNCHECKED);
 		CheckDlgButton(hdlg, IDC_CHECK_NOTIFYALWAYS, db_get_b((MCONTACT)lparam, MODULE_NAME, "MissYouNotifyAlways", 0) ? BST_CHECKED : BST_UNCHECKED);
@@ -531,8 +531,7 @@ int UserinfoInit(WPARAM wparam, LPARAM lparam)
 		OPTIONSDIALOGPAGE uip = { sizeof(uip) };
 		uip.hInstance = hInst;
 		uip.pszTemplate = MAKEINTRESOURCEA(IDD_USERINFO);
-		uip.flags = ODPF_TCHAR;
-		uip.ptszTitle = LPGENT("Buddy Expectator");
+		uip.szTitle.a = LPGEN("Buddy Expectator");
 		uip.pfnDlgProc = UserinfoDlgProc;
 		UserInfo_AddPage(wparam, &uip);
 	}

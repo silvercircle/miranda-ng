@@ -25,13 +25,13 @@ InputString - строка для разбора;
 RowItemsList - список найденных элементов.
 Возвращаемое значение - количество элементов в списках. */
 
-WORD GetRowItems(TCHAR *InputString, RowItemInfo **RowItemsList)
+WORD GetRowItems(wchar_t *InputString, RowItemInfo **RowItemsList)
 {
-	TCHAR *begin, *end;
+	wchar_t *begin, *end;
 	WORD c = 0;
 
 	// Ищем слева открывающую скобку.
-	begin = _tcschr(InputString, '{');
+	begin = wcschr(InputString, '{');
 	// Если скобка найдена...
 	if (begin) {
 		// Выделяем память под указатели
@@ -41,31 +41,31 @@ WORD GetRowItems(TCHAR *InputString, RowItemInfo **RowItemsList)
 
 	do {
 		// Сразу вслед за ней ищем закрывающую.
-		end = _tcschr(begin, '}');
+		end = wcschr(begin, '}');
 
 		// Выделяем память под указатели
 		*RowItemsList = (RowItemInfo*)mir_realloc(*RowItemsList, sizeof(RowItemInfo) * (c + 1));
 
 		// Разбираем тег.
-		_stscanf(begin + 1, _T("%c%hd"),
+		swscanf(begin + 1, L"%c%hd",
 			&((*RowItemsList)[c].Alignment),
 			&((*RowItemsList)[c].Interval));
 
 		// Ищем далее открывающую скобку - это конец строки, соответствующей тегу.
-		begin = _tcschr(end, '{');
+		begin = wcschr(end, '{');
 
 		if (begin) {
 			// Выделяем память под строку.
-			(*RowItemsList)[c].String = (TCHAR*)mir_alloc(sizeof(TCHAR) * (begin - end));
+			(*RowItemsList)[c].String = (wchar_t*)mir_alloc(sizeof(wchar_t) * (begin - end));
 			// Копируем строку.
-			_tcsncpy((*RowItemsList)[c].String, end + 1, begin - end - 1);
+			wcsncpy((*RowItemsList)[c].String, end + 1, begin - end - 1);
 			(*RowItemsList)[c].String[begin - end - 1] = 0;
 		}
 		else {
 			// Выделяем память под строку.
-			(*RowItemsList)[c].String = (TCHAR*)mir_alloc(sizeof(TCHAR) * mir_tstrlen(end));
+			(*RowItemsList)[c].String = (wchar_t*)mir_alloc(sizeof(wchar_t) * mir_wstrlen(end));
 			// Копируем строку.
-			_tcsncpy((*RowItemsList)[c].String, end + 1, mir_tstrlen(end));
+			wcsncpy((*RowItemsList)[c].String, end + 1, mir_wstrlen(end));
 		}
 
 		c++;
@@ -118,12 +118,12 @@ Buffer - адрес строки для записи результата;
 Size - размер буфера.
 Возвращаемое значение: требуемый размер буфера.
 */
-size_t GetFormattedTraffic(DWORD Value, BYTE Unit, TCHAR *Buffer, size_t Size)
+size_t GetFormattedTraffic(DWORD Value, BYTE Unit, wchar_t *Buffer, size_t Size)
 {
-	TCHAR Str1[32], szUnit[4] = { ' ', 0 };
+	wchar_t Str1[32], szUnit[4] = { ' ', 0 };
 	DWORD Divider;
-	NUMBERFMT nf = { 0, 1, 3, _T(","), _T(" "), 0 };
-	TCHAR *Res; // Промежуточный результат.
+	NUMBERFMT nf = { 0, 1, 3, L",", L" ", 0 };
+	wchar_t *Res; // Промежуточный результат.
 
 	switch (Unit) {
 	case 0: //bytes
@@ -148,20 +148,20 @@ size_t GetFormattedTraffic(DWORD Value, BYTE Unit, TCHAR *Buffer, size_t Size)
 		return 0;
 	}
 
-	mir_sntprintf(Str1, _T("%d.%d"), Value / Divider, Value % Divider);
+	mir_snwprintf(Str1, L"%d.%d", Value / Divider, Value % Divider);
 	size_t l = GetNumberFormat(LOCALE_USER_DEFAULT, 0, Str1, &nf, NULL, 0);
 	if (!l) return 0;
-	l += mir_tstrlen(szUnit) + 1;
-	Res = (TCHAR*)malloc(l * sizeof(TCHAR));
+	l += mir_wstrlen(szUnit) + 1;
+	Res = (wchar_t*)malloc(l * sizeof(wchar_t));
 	if (!Res) return 0;
 	GetNumberFormat(LOCALE_USER_DEFAULT, 0, Str1, &nf, Res, (int)l);
-	mir_tstrcat(Res, szUnit);
+	mir_wstrcat(Res, szUnit);
 
 	if (Size && Buffer) {
-		mir_tstrcpy(Buffer, Res);
-		l = mir_tstrlen(Buffer);
+		mir_wstrcpy(Buffer, Res);
+		l = mir_wstrlen(Buffer);
 	}
-	else l = mir_tstrlen(Res) + 1;
+	else l = mir_wstrlen(Res) + 1;
 
 	free(Res);
 	return l;
@@ -174,76 +174,76 @@ Format: строка формата;
 Buffer: адрес буфера, куда функция помещает результат.
 Size - размер буфера. */
 
-size_t GetDurationFormatM(DWORD Duration, TCHAR *Format, TCHAR *Buffer, size_t Size)
+size_t GetDurationFormatM(DWORD Duration, wchar_t *Format, wchar_t *Buffer, size_t Size)
 {
 	size_t Length;
 	DWORD q;
 	WORD TokenIndex, FormatIndex;
-	TCHAR Token[256],  // Аккумулятор.
+	wchar_t Token[256],  // Аккумулятор.
 		*Res; // Промежуточный результат.
 
-	Res = (TCHAR*)malloc(sizeof(TCHAR)); // Выделяем чуть-чуть памяти под результат, но это только начало.
-	//SecureZeroMemory(Res, sizeof(TCHAR));
+	Res = (wchar_t*)malloc(sizeof(wchar_t)); // Выделяем чуть-чуть памяти под результат, но это только начало.
+	//SecureZeroMemory(Res, sizeof(wchar_t));
 	Res[0] = 0;
 
 	for (FormatIndex = 0; Format[FormatIndex];) {
 		// Ищем токены. Считается, что токен - только буквы.
 		TokenIndex = 0;
-		q = _istalpha(Format[FormatIndex]);
+		q = iswalpha(Format[FormatIndex]);
 		// Копируем символы в аккумулятор до смены флага.
 		do {
 			Token[TokenIndex++] = Format[FormatIndex++];
-		} while (q == _istalpha(Format[FormatIndex]));
+		} while (q == iswalpha(Format[FormatIndex]));
 		Token[TokenIndex] = 0;
 
 		// Что получили в аккумуляторе?
-		if (!mir_tstrcmp(Token, _T("d"))) {
+		if (!mir_wstrcmp(Token, L"d")) {
 			q = Duration / (60 * 60 * 24);
-			mir_sntprintf(Token, _T("%d"), q);
+			mir_snwprintf(Token, L"%d", q);
 			Duration -= q * 60 * 60 * 24;
 		}
-		else if (!mir_tstrcmp(Token, _T("h"))) {
+		else if (!mir_wstrcmp(Token, L"h")) {
 			q = Duration / (60 * 60);
-			mir_sntprintf(Token, _T("%d"), q);
+			mir_snwprintf(Token, L"%d", q);
 			Duration -= q * 60 * 60;
 		}
-		else if (!mir_tstrcmp(Token, _T("hh"))) {
+		else if (!mir_wstrcmp(Token, L"hh")) {
 			q = Duration / (60 * 60);
-			mir_sntprintf(Token, _T("%02d"), q);
+			mir_snwprintf(Token, L"%02d", q);
 			Duration -= q * 60 * 60;
 		}
-		else if (!mir_tstrcmp(Token, _T("m"))) {
+		else if (!mir_wstrcmp(Token, L"m")) {
 			q = Duration / 60;
-			mir_sntprintf(Token, _T("%d"), q);
+			mir_snwprintf(Token, L"%d", q);
 			Duration -= q * 60;
 		}
-		else if (!mir_tstrcmp(Token, _T("mm"))) {
+		else if (!mir_wstrcmp(Token, L"mm")) {
 			q = Duration / 60;
-			mir_sntprintf(Token, _T("%02d"), q);
+			mir_snwprintf(Token, L"%02d", q);
 			Duration -= q * 60;
 		}
-		else if (!mir_tstrcmp(Token, _T("s"))) {
+		else if (!mir_wstrcmp(Token, L"s")) {
 			q = Duration;
-			mir_sntprintf(Token, _T("%d"), q);
+			mir_snwprintf(Token, L"%d", q);
 			Duration -= q;
 		}
-		else if (!mir_tstrcmp(Token, _T("ss"))) {
+		else if (!mir_wstrcmp(Token, L"ss")) {
 			q = Duration;
-			mir_sntprintf(Token, _T("%02d"), q);
+			mir_snwprintf(Token, L"%02d", q);
 			Duration -= q;
 		}
 
 		// Добавим памяти, если нужно.
-		Length = mir_tstrlen(Res) + mir_tstrlen(Token) + 1;
-		Res = (TCHAR*)realloc(Res, Length * sizeof(TCHAR));
-		mir_tstrcat(Res, Token);
+		Length = mir_wstrlen(Res) + mir_wstrlen(Token) + 1;
+		Res = (wchar_t*)realloc(Res, Length * sizeof(wchar_t));
+		mir_wstrcat(Res, Token);
 	}
 
 	if (Size && Buffer) {
-		_tcsncpy(Buffer, Res, Size);
-		Length = mir_tstrlen(Buffer);
+		wcsncpy(Buffer, Res, Size);
+		Length = mir_wstrlen(Buffer);
 	}
-	else Length = mir_tstrlen(Res) + 1;
+	else Length = mir_wstrlen(Res) + 1;
 
 	free(Res);
 	return Length;

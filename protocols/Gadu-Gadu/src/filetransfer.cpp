@@ -85,14 +85,15 @@ void GGPROTO::dccconnect(uin_t uin)
 	gg_LeaveCriticalSection(&ft_mutex, "dccconnect", 36, 1, "ft_mutex", 1);
 }
 
-//////////////////////////////////////////////////////////
-// THREAD: File transfer fail
 struct ftfaildata
 {
 	MCONTACT hContact;
 	HANDLE hProcess;
 };
 
+//////////////////////////////////////////////////////////
+// THREAD: File transfer fail
+//
 void __cdecl GGPROTO::ftfailthread(void *param)
 {
 	struct ftfaildata *ft = (struct ftfaildata *)param;
@@ -119,12 +120,12 @@ HANDLE ftfail(GGPROTO *gg, MCONTACT hContact)
 	return ft->hProcess;
 }
 
-////////////////////////////////////////////////////////////
-// Main DCC connection session thread
-
 // Info refresh min time (msec) / half-sec
 #define GGSTATREFRESHEVERY	500
 
+////////////////////////////////////////////////////////////
+// Main DCC connection session thread
+//
 void __cdecl GGPROTO::dccmainthread(void*)
 {
 	uin_t uin;
@@ -380,14 +381,14 @@ void __cdecl GGPROTO::dccmainthread(void*)
 							{
 								// Make new ggtransfer struct
 								local_dcc->contact = (void*)getcontact(local_dcc->peer_uin, 0, 0, NULL);
-								TCHAR* filenameT = mir_utf8decodeT((char*)dcc->file_info.filename);
+								wchar_t* filenameT = mir_utf8decodeW((char*)dcc->file_info.filename);
 
 								PROTORECVFILET pre = {0};
-								pre.dwFlags = PRFF_TCHAR;
+								pre.dwFlags = PRFF_UNICODE;
 								pre.fileCount = 1;
 								pre.timestamp = time(NULL);
-								pre.descr.t = filenameT;
-								pre.files.t = &filenameT;
+								pre.descr.w = filenameT;
+								pre.files.w = &filenameT;
 								pre.lParam = (LPARAM)local_dcc;
 
 								gg_LeaveCriticalSection(&ft_mutex, "dccmainthread", 37, 7, "ft_mutex", 1);
@@ -658,10 +659,10 @@ void __cdecl GGPROTO::dccmainthread(void*)
 	debugLogA("dccmainthread(): end. DCC Server Thread Ending");
 }
 
-HANDLE GGPROTO::dccfileallow(HANDLE hTransfer, const TCHAR* szPath)
+HANDLE GGPROTO::dccfileallow(HANDLE hTransfer, const wchar_t* szPath)
 {
 	struct gg_dcc *dcc = (struct gg_dcc *) hTransfer;
-	char fileName[MAX_PATH], *path = mir_t2a(szPath);
+	char fileName[MAX_PATH], *path = mir_u2a(szPath);
 	mir_snprintf(fileName, "%s%s", path, dcc->file_info.filename);
 	dcc->folder = _strdup((char*)path);
 	dcc->tick = 0;
@@ -676,8 +677,8 @@ HANDLE GGPROTO::dccfileallow(HANDLE hTransfer, const TCHAR* szPath)
 	if ((dcc->file_fd = _open(fileName, _O_WRONLY | _O_APPEND | _O_BINARY | _O_CREAT, _S_IREAD | _S_IWRITE)) == -1)
 	{
 		debugLogA("dccfileallow(): Failed to create file \"%s\". errno=%d: %s", fileName, errno, strerror(errno));
-		TCHAR error[512];
-		mir_sntprintf(error, TranslateT("Cannot create transfer file. ERROR: %d: %s (dcc)\n%s"), errno, _tcserror(errno), szPath);
+		wchar_t error[512];
+		mir_snwprintf(error, TranslateT("Cannot create transfer file. ERROR: %d: %s (dcc)\n%s"), errno, _tcserror(errno), szPath);
 		showpopup(m_tszUserName, error, GG_POPUP_ERROR);
 		ProtoBroadcastAck((UINT_PTR)dcc->contact, ACKTYPE_FILE, ACKRESULT_FAILED, dcc, 0);
 		// Free transfer
@@ -698,10 +699,10 @@ HANDLE GGPROTO::dccfileallow(HANDLE hTransfer, const TCHAR* szPath)
 	return hTransfer;
 }
 
-HANDLE GGPROTO::dcc7fileallow(HANDLE hTransfer, const TCHAR* szPath)
+HANDLE GGPROTO::dcc7fileallow(HANDLE hTransfer, const wchar_t* szPath)
 {
 	struct gg_dcc7 *dcc7 = (struct gg_dcc7 *) hTransfer;
-	char fileName[MAX_PATH], *path = mir_t2a(szPath);
+	char fileName[MAX_PATH], *path = mir_u2a(szPath);
 	mir_snprintf(fileName, "%s%s", path, dcc7->filename);
 	dcc7->folder = _strdup((char*)path);
 	dcc7->tick = 0;
@@ -725,8 +726,8 @@ HANDLE GGPROTO::dcc7fileallow(HANDLE hTransfer, const TCHAR* szPath)
 	if ((dcc7->file_fd = _open(fileName, _O_WRONLY | _O_APPEND | _O_BINARY | _O_CREAT, _S_IREAD | _S_IWRITE)) == -1)
 	{
 		debugLogA("dcc7fileallow(): Failed to create file \"%s\". errno=%d: %s", fileName, errno, strerror(errno));
-		TCHAR error[512];
-		mir_sntprintf(error, TranslateT("Cannot create transfer file. ERROR: %d: %s (dcc7)\n%s"), errno, _tcserror(errno), szPath);
+		wchar_t error[512];
+		mir_snwprintf(error, TranslateT("Cannot create transfer file. ERROR: %d: %s (dcc7)\n%s"), errno, _tcserror(errno), szPath);
 		showpopup(m_tszUserName, error, GG_POPUP_ERROR);
 		gg_dcc7_reject(dcc7, GG_DCC7_REJECT_USER);
 		ProtoBroadcastAck((UINT_PTR)dcc7->contact, ACKTYPE_FILE, ACKRESULT_FAILED, dcc7, 0);
@@ -848,8 +849,8 @@ int GGPROTO::dcc7filecancel(HANDLE hTransfer)
 
 ////////////////////////////////////////////////////////////
 // File receiving allowed
-
-HANDLE GGPROTO::FileAllow(MCONTACT hContact, HANDLE hTransfer, const TCHAR* szPath)
+//
+HANDLE GGPROTO::FileAllow(MCONTACT, HANDLE hTransfer, const wchar_t* szPath)
 {
 	// Check if its proper dcc
 	struct gg_common *c = (struct gg_common *) hTransfer;
@@ -864,8 +865,8 @@ HANDLE GGPROTO::FileAllow(MCONTACT hContact, HANDLE hTransfer, const TCHAR* szPa
 
 ////////////////////////////////////////////////////////////
 // File transfer canceled
-
-int GGPROTO::FileCancel(MCONTACT hContact, HANDLE hTransfer)
+//
+int GGPROTO::FileCancel(MCONTACT, HANDLE hTransfer)
 {
 	// Check if its proper dcc
 	struct gg_common *c = (struct gg_common *) hTransfer;
@@ -880,8 +881,8 @@ int GGPROTO::FileCancel(MCONTACT hContact, HANDLE hTransfer)
 
 ////////////////////////////////////////////////////////////
 // File receiving denied
-
-int GGPROTO::FileDeny(MCONTACT hContact, HANDLE hTransfer, const TCHAR* szReason)
+//
+int GGPROTO::FileDeny(MCONTACT, HANDLE hTransfer, const wchar_t *)
 {
 	// Check if its proper dcc
 	struct gg_common *c = (struct gg_common *) hTransfer;
@@ -896,7 +897,7 @@ int GGPROTO::FileDeny(MCONTACT hContact, HANDLE hTransfer, const TCHAR* szReason
 
 ////////////////////////////////////////////////////////////
 // Called when received an file
-
+//
 int GGPROTO::RecvFile(MCONTACT hContact, PROTORECVFILET* pre)
 {
 	return Proto_RecvFile(hContact, pre);
@@ -904,8 +905,8 @@ int GGPROTO::RecvFile(MCONTACT hContact, PROTORECVFILET* pre)
 
 ////////////////////////////////////////////////////////////
 // Called when user sends a file
-
-HANDLE GGPROTO::SendFile(MCONTACT hContact, const TCHAR* szDescription, TCHAR** ppszFiles)
+//
+HANDLE GGPROTO::SendFile(MCONTACT hContact, const wchar_t *, wchar_t** ppszFiles)
 {
 	char *bslash, *filename;
 	DWORD ip, ver;
@@ -916,7 +917,7 @@ HANDLE GGPROTO::SendFile(MCONTACT hContact, const TCHAR* szDescription, TCHAR** 
 	if (!isonline())
 		return ftfail(this, hContact);
 
-	filename = mir_t2a(ppszFiles[0]);
+	filename = mir_u2a(ppszFiles[0]);
 
 	// Read user IP and port
 	ip = swap32(getDword(hContact, GG_KEY_CLIENTIP, 0));

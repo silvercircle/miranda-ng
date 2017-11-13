@@ -76,7 +76,7 @@ INT_PTR CMraProto::MraRequestAuthorization(WPARAM hContact, LPARAM)
 
 	CMStringW wszAuthMessage;
 	if (!mraGetStringW(NULL, "AuthMessage", wszAuthMessage))
-		wszAuthMessage = TranslateT(MRA_DEFAULT_AUTH_MESSAGE);
+		wszAuthMessage = TranslateW(MRA_DEFAULT_AUTH_MESSAGE);
 
 	if (wszAuthMessage.IsEmpty())
 		return 1;
@@ -111,11 +111,10 @@ INT_PTR CMraProto::MraSendEmail(WPARAM wParam, LPARAM)
 	DWORD dwContactEMailCount = GetContactEMailCount(wParam, FALSE);
 	if (dwContactEMailCount) {
 		if (dwContactEMailCount == 1) {
-			CMStringA szUrl, szEmail;
+			CMStringA szEmail;
 			if (GetContactFirstEMail(wParam, FALSE, szEmail)) {
 				szEmail.MakeLower();
-				szUrl.Format("https://e.mail.ru/cgi-bin/sentmsg?To=%s", szEmail);
-				MraMPopSessionQueueAddUrl(hMPopSessionQueue, szUrl);
+				MraMPopSessionQueueAddUrl(hMPopSessionQueue, "https://e.mail.ru/cgi-bin/sentmsg?To=" + szEmail);
 			}
 		}
 		else MraSelectEMailDlgShow(wParam, MRA_SELECT_EMAIL_TYPE_SEND_POSTCARD);
@@ -131,7 +130,7 @@ INT_PTR CMraProto::MraSendPostcard(WPARAM wParam, LPARAM)
 			CMStringA szUrl, szEmail;
 			if (GetContactFirstEMail(wParam, FALSE, szEmail)) {
 				szEmail.MakeLower();
-				szUrl.Format("http://cards.mail.ru/event.html?rcptname=%S&rcptemail=%s", pcli->pfnGetContactDisplayName(wParam, 0), szEmail);
+				szUrl.Format("http://cards.mail.ru/event.html?rcptname=%S&rcptemail=%s", _T2A(pcli->pfnGetContactDisplayName(wParam, 0)), szEmail.c_str());
 				MraMPopSessionQueueAddUrl(hMPopSessionQueue, szUrl);
 			}
 		}
@@ -281,12 +280,12 @@ int CMraProto::MraRebuildStatusMenu(WPARAM, LPARAM)
 
 	HGENMENU hRoot;
 	{
-		TCHAR szItem[MAX_PATH + 64];
-		mir_sntprintf(szItem, _T("%s Custom Status"), m_tszUserName);
+		wchar_t szItem[MAX_PATH + 64];
+		mir_snwprintf(szItem, L"%s Custom Status", m_tszUserName);
 
 		CMenuItem mi;
 		mi.root = pcli->pfnGetProtocolMenu(m_szModuleName);
-		mi.name.t = szItem;
+		mi.name.w = szItem;
 		mi.position = 10001;
 		hRoot = Menu_AddStatusMenuItem(&mi, m_szModuleName);
 	}
@@ -308,14 +307,14 @@ int CMraProto::MraRebuildStatusMenu(WPARAM, LPARAM)
 		if (i) {
 			mir_snprintf(szValueName, "XStatus%ldName", i);
 			if (mraGetStringW(NULL, szValueName, szStatusTitle))
-				mi.name.t = (TCHAR*)szStatusTitle.c_str();
+				mi.name.w = (wchar_t*)szStatusTitle.c_str();
 			else
-				mi.name.t = (TCHAR*)lpcszXStatusNameDef[i];
+				mi.name.w = (wchar_t*)lpcszXStatusNameDef[i];
 
 			mi.hIcolibItem = hXStatusAdvancedStatusIcons[i];
 		}
 		else {
-			mi.name.t = (TCHAR*)lpcszXStatusNameDef[i];
+			mi.name.w = (wchar_t*)lpcszXStatusNameDef[i];
 			mi.hIcolibItem = NULL;
 		}
 		hXStatusMenuItems[i] = Menu_AddStatusMenuItem(&mi, m_szModuleName);
@@ -340,8 +339,8 @@ HGENMENU CMraProto::CListCreateMenu(LONG lPosition, LONG lPopupPosition, BOOL bI
 
 		hRootMenu = Menu_GetProtocolRoot(this);
 		if (hRootMenu == NULL) {
-			mi.name.t = m_tszUserName;
-			mi.flags = CMIF_TCHAR | CMIF_KEEPUNTRANSLATED;
+			mi.name.w = m_tszUserName;
+			mi.flags = CMIF_UNICODE | CMIF_KEEPUNTRANSLATED;
 			mi.hIcolibItem = g_hMainIcon;
 			hRootMenu = Menu_AddProtoMenuItem(&mi);
 		}
@@ -354,11 +353,14 @@ HGENMENU CMraProto::CListCreateMenu(LONG lPosition, LONG lPopupPosition, BOOL bI
 		mi.position = lPosition;
 	}
 
+	SET_UID(mi, 0x83C8B6A7, 0xEC0D, 0x41D6, 0x8A, 0x0E, 0xAC, 0x90, 0x8C, 0xEE, 0xAF, 0xFE);
 	mi.flags = 0;
 	mi.name.a = LPGEN("Services...");
 	mi.hIcolibItem = g_hMainIcon;
 	hRootMenu = fnAddFunc(&mi, m_szModuleName);
+	UNSET_UID(mi);
 
+	mi.flags = CMIF_SYSTEM;
 	mi.root = hRootMenu;
 	mi.pszService = szServiceFunction;
 

@@ -32,7 +32,6 @@ struct DLGTEMPLATEEX
 
 #include <newpluginapi.h>
 #include <m_clist.h>
-#include <m_clui.h>
 #include <m_skin.h>
 #include <m_langpack.h>
 #include <m_database.h>
@@ -117,9 +116,7 @@ void NetlibInit();
 int InternetDownloadFile (CHAR *szUrl);
 extern char *szInfo;
 extern char *szData;
-extern HANDLE hNetlibUser;
-
-int db_get_static(MCONTACT hContact, const char *moduleName, const char *fn, char *buf, size_t cbSize);
+extern HNETLIBUSER hNetlibUser;
 
 #endif
 

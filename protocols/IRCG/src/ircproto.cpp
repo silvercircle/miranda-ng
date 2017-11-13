@@ -31,7 +31,7 @@ static int CompareSessions(const CDccSession* p1, const CDccSession* p2)
 	return INT_PTR(p1->di->hContact) - INT_PTR(p2->di->hContact);
 }
 
-CIrcProto::CIrcProto(const char* szModuleName, const TCHAR* tszUserName) :
+CIrcProto::CIrcProto(const char* szModuleName, const wchar_t* tszUserName) :
 	PROTO<CIrcProto>(szModuleName, tszUserName),
 	m_dcc_chats(10, CompareSessions),
 	m_dcc_xfers(10, CompareSessions),
@@ -156,8 +156,6 @@ CIrcProto::~CIrcProto()
 ////////////////////////////////////////////////////////////////////////////////////////
 // OnModulesLoaded - performs hook registration
 
-static COLORREF crCols[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-
 static int sttCheckPerform(const char *szSetting, LPARAM lParam)
 {
 	if (!_strnicmp(szSetting, "PERFORM:", 8)) {
@@ -173,54 +171,44 @@ static int sttCheckPerform(const char *szSetting, LPARAM lParam)
 
 int CIrcProto::OnModulesLoaded(WPARAM, LPARAM)
 {
-	NETLIBUSER nlu = { 0 };
-	TCHAR name[128];
+	wchar_t name[128];
+	mir_snwprintf(name, TranslateT("%s server connection"), m_tszUserName);
 
 	db_unset(NULL, m_szModuleName, "JTemp");
 
-	nlu.cbSize = sizeof(nlu);
-	nlu.flags = NUF_OUTGOING | NUF_INCOMING | NUF_HTTPCONNS | NUF_TCHAR;
+	NETLIBUSER nlu = {};
+	nlu.flags = NUF_OUTGOING | NUF_INCOMING | NUF_HTTPCONNS | NUF_UNICODE;
 	nlu.szSettingsModule = m_szModuleName;
-	mir_sntprintf(name, TranslateT("%s server connection"), m_tszUserName);
-	nlu.ptszDescriptiveName = name;
-	m_hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
+	nlu.szDescriptiveName.w = name;
+	m_hNetlibUser = Netlib_RegisterUser(&nlu);
 
-	nlu.flags = NUF_OUTGOING | NUF_INCOMING | NUF_HTTPCONNS | NUF_TCHAR;
+	nlu.flags = NUF_OUTGOING | NUF_INCOMING | NUF_HTTPCONNS | NUF_UNICODE;
 	char szTemp2[256];
 	mir_snprintf(szTemp2, "%s DCC", m_szModuleName);
 	nlu.szSettingsModule = szTemp2;
-	mir_sntprintf(name, TranslateT("%s client-to-client connections"), m_tszUserName);
-	nlu.ptszDescriptiveName = name;
-	hNetlibDCC = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
+	mir_snwprintf(name, TranslateT("%s client-to-client connections"), m_tszUserName);
+	nlu.szDescriptiveName.w = name;
+	hNetlibDCC = Netlib_RegisterUser(&nlu);
 
-	GCREGISTER gcr = { sizeof(GCREGISTER) };
+	GCREGISTER gcr = {};
 	gcr.dwFlags = GC_CHANMGR | GC_BOLD | GC_ITALICS | GC_UNDERLINE | GC_COLOR | GC_BKGCOLOR;
-	gcr.nColors = 16;
-	gcr.pColors = colors;
 	gcr.ptszDispName = m_tszUserName;
 	gcr.pszModule = m_szModuleName;
-	CallServiceSync(MS_GC_REGISTER, NULL, (LPARAM)&gcr);
+	Chat_Register(&gcr);
 
 	HookProtoEvent(ME_GC_EVENT, &CIrcProto::GCEventHook);
 	HookProtoEvent(ME_GC_BUILDMENU, &CIrcProto::GCMenuHook);
 
-	GCSESSION gcw = { sizeof(GCSESSION) };
-	gcw.iType = GCW_SERVER;
-	gcw.ptszID = SERVERWINDOW;
-	gcw.pszModule = m_szModuleName;
-	gcw.ptszName = NEWTSTR_ALLOCA((TCHAR*)_A2T(m_network));
-	CallServiceSync(MS_GC_NEWSESSION, 0, (LPARAM)&gcw);
+	Chat_NewSession(GCW_SERVER, m_szModuleName, SERVERWINDOW, _A2T(m_network));
 
-	GCDEST gcd = { m_szModuleName, SERVERWINDOW, GC_EVENT_CONTROL };
-	GCEVENT gce = { sizeof(gce), &gcd };
 	if (m_useServer && !m_hideServerWindow)
-		CallChatEvent(WINDOW_VISIBLE, (LPARAM)&gce);
+		Chat_Control(m_szModuleName, SERVERWINDOW, WINDOW_VISIBLE);
 	else
-		CallChatEvent(WINDOW_HIDDEN, (LPARAM)&gce);
+		Chat_Control(m_szModuleName, SERVERWINDOW, WINDOW_HIDDEN);
 
-	TCHAR szTemp[MAX_PATH];
-	mir_sntprintf(szTemp, _T("%%miranda_path%%\\Plugins\\%S_perform.ini"), m_szModuleName);
-	TCHAR *szLoadFileName = Utils_ReplaceVarsT(szTemp);
+	wchar_t szTemp[MAX_PATH];
+	mir_snwprintf(szTemp, L"%%miranda_path%%\\Plugins\\%S_perform.ini", m_szModuleName);
+	wchar_t *szLoadFileName = Utils_ReplaceVarsW(szTemp);
 	char* pszPerformData = IrcLoadFile(szLoadFileName);
 	if (pszPerformData != NULL) {
 		char *p1 = pszPerformData, *p2 = pszPerformData;
@@ -240,25 +228,21 @@ int CIrcProto::OnModulesLoaded(WPARAM, LPARAM)
 			setString(("PERFORM:" + sNetwork).c_str(), rtrim(p1));
 		}
 		delete[] pszPerformData;
-		::_tremove(szLoadFileName);
+		::_wremove(szLoadFileName);
 	}
 	mir_free(szLoadFileName);
 
 	if (!getByte("PerformConversionDone", 0)) {
 		OBJLIST<CMStringA> performToConvert(10);
-		DBCONTACTENUMSETTINGS dbces = { 0 };
-		dbces.pfnEnumProc = sttCheckPerform;
-		dbces.lParam = (LPARAM)&performToConvert;
-		dbces.szModule = m_szModuleName;
-		CallService(MS_DB_CONTACT_ENUMSETTINGS, NULL, (LPARAM)&dbces);
+		db_enum_settings(NULL, sttCheckPerform, m_szModuleName, &performToConvert);
 
 		for (int i = 0; i < performToConvert.getCount(); i++) {
 			CMStringA s = performToConvert[i];
 			DBVARIANT dbv;
-			if (!getTString(s, &dbv)) {
+			if (!getWString(s, &dbv)) {
 				db_unset(NULL, m_szModuleName, s);
 				s.MakeUpper();
-				setTString(s, dbv.ptszVal);
+				setWString(s, dbv.ptszVal);
 				db_free(&dbv);
 			}
 		}
@@ -272,17 +256,17 @@ int CIrcProto::OnModulesLoaded(WPARAM, LPARAM)
 	HookProtoEvent(ME_OPT_INITIALISE, &CIrcProto::OnInitOptionsPages);
 
 	if (m_nick[0]) {
-		TCHAR szBuf[40];
-		if (mir_tstrlen(m_alternativeNick) == 0) {
-			mir_sntprintf(szBuf, _T("%s%u"), m_nick, rand() % 9999);
-			setTString("AlernativeNick", szBuf);
-			mir_tstrncpy(m_alternativeNick, szBuf, 30);
+		wchar_t szBuf[40];
+		if (mir_wstrlen(m_alternativeNick) == 0) {
+			mir_snwprintf(szBuf, L"%s%u", m_nick, rand() % 9999);
+			setWString("AlernativeNick", szBuf);
+			mir_wstrncpy(m_alternativeNick, szBuf, 30);
 		}
 
-		if (mir_tstrlen(m_name) == 0) {
-			mir_sntprintf(szBuf, _T("Miranda%u"), rand() % 9999);
-			setTString("Name", szBuf);
-			mir_tstrncpy(m_name, szBuf, 200);
+		if (mir_wstrlen(m_name) == 0) {
+			mir_snwprintf(szBuf, L"Miranda%u", rand() % 9999);
+			setWString("Name", szBuf);
+			mir_wstrncpy(m_name, szBuf, 200);
 		}
 	}
 
@@ -297,22 +281,22 @@ MCONTACT __cdecl CIrcProto::AddToList(int, PROTOSEARCHRESULT* psr)
 	if (m_iStatus == ID_STATUS_OFFLINE || m_iStatus == ID_STATUS_CONNECTING)
 		return 0;
 
-	TCHAR *id = psr->id.t ? psr->id.t : psr->nick.t;
-	id = psr->flags & PSR_UNICODE ? mir_u2t((wchar_t*)id) : mir_a2t((char*)id);
+	wchar_t *id = psr->id.w ? psr->id.w : psr->nick.w;
+	id = psr->flags & PSR_UNICODE ? mir_wstrdup((wchar_t*)id) : mir_a2u((char*)id);
 
 	CONTACT user = { id, NULL, NULL, true, false, false };
 	MCONTACT hContact = CList_AddContact(&user, true, false);
 
 	if (hContact) {
 		DBVARIANT dbv1;
-		CMString S = _T("S");
+		CMStringW S = L"S";
 
 		if (getByte(hContact, "AdvancedMode", 0) == 0) {
 			S += user.name;
 			DoUserhostWithReason(1, S, true, user.name);
 		}
 		else {
-			if (!getTString(hContact, "UWildcard", &dbv1)) {
+			if (!getWString(hContact, "UWildcard", &dbv1)) {
 				S += dbv1.ptszVal;
 				DoUserhostWithReason(2, S, true, dbv1.ptszVal);
 				db_free(&dbv1);
@@ -323,7 +307,7 @@ MCONTACT __cdecl CIrcProto::AddToList(int, PROTOSEARCHRESULT* psr)
 			}
 		}
 		if (getByte("MirVerAutoRequest", 1))
-			PostIrcMessage(_T("/PRIVMSG %s \001VERSION\001"), user.name);
+			PostIrcMessage(L"/PRIVMSG %s \001VERSION\001", user.name);
 	}
 
 	mir_free(id);
@@ -341,7 +325,7 @@ int __cdecl CIrcProto::Authorize(MEVENT)
 ////////////////////////////////////////////////////////////////////////////////////////
 // AuthDeny - handles the unsuccessful authorization
 
-int __cdecl CIrcProto::AuthDeny(MEVENT, const TCHAR*)
+int __cdecl CIrcProto::AuthDeny(MEVENT, const wchar_t*)
 {
 	return 0;
 }
@@ -349,7 +333,7 @@ int __cdecl CIrcProto::AuthDeny(MEVENT, const TCHAR*)
 ////////////////////////////////////////////////////////////////////////////////////////
 // FileAllow - starts a file transfer
 
-HANDLE __cdecl CIrcProto::FileAllow(MCONTACT, HANDLE hTransfer, const TCHAR* szPath)
+HANDLE __cdecl CIrcProto::FileAllow(MCONTACT, HANDLE hTransfer, const wchar_t* szPath)
 {
 	DCCINFO* di = (DCCINFO*)hTransfer;
 
@@ -361,7 +345,7 @@ HANDLE __cdecl CIrcProto::FileAllow(MCONTACT, HANDLE hTransfer, const TCHAR* szP
 	di->sPath = szPath;
 	di->sFileAndPath = di->sPath + di->sFile;
 
-	CDccSession* dcc = new CDccSession(this, di);
+	CDccSession *dcc = new CDccSession(this, di);
 	AddDCCSession(di, dcc);
 	dcc->Connect();
 	return di;
@@ -374,7 +358,7 @@ int __cdecl CIrcProto::FileCancel(MCONTACT, HANDLE hTransfer)
 {
 	DCCINFO* di = (DCCINFO*)hTransfer;
 
-	CDccSession* dcc = FindDCCSession(di);
+	CDccSession *dcc = FindDCCSession(di);
 	if (dcc) {
 		InterlockedExchange(&dcc->dwWhatNeedsDoing, (long)FILERESUME_CANCEL);
 		SetEvent(dcc->hEvent);
@@ -386,7 +370,7 @@ int __cdecl CIrcProto::FileCancel(MCONTACT, HANDLE hTransfer)
 ////////////////////////////////////////////////////////////////////////////////////////
 // FileDeny - denies a file transfer
 
-int __cdecl CIrcProto::FileDeny(MCONTACT, HANDLE hTransfer, const TCHAR*)
+int __cdecl CIrcProto::FileDeny(MCONTACT, HANDLE hTransfer, const wchar_t*)
 {
 	DCCINFO* di = (DCCINFO*)hTransfer;
 	delete di;
@@ -396,17 +380,17 @@ int __cdecl CIrcProto::FileDeny(MCONTACT, HANDLE hTransfer, const TCHAR*)
 ////////////////////////////////////////////////////////////////////////////////////////
 // FileResume - processes file renaming etc
 
-int __cdecl CIrcProto::FileResume(HANDLE hTransfer, int* action, const TCHAR** szFilename)
+int __cdecl CIrcProto::FileResume(HANDLE hTransfer, int* action, const wchar_t** szFilename)
 {
 	DCCINFO* di = (DCCINFO*)hTransfer;
 
 	long i = (long)*action;
 
-	CDccSession* dcc = FindDCCSession(di);
+	CDccSession *dcc = FindDCCSession(di);
 	if (dcc) {
 		InterlockedExchange(&dcc->dwWhatNeedsDoing, i);
 		if (*action == FILERESUME_RENAME) {
-			TCHAR* szTemp = _tcsdup(*szFilename);
+			wchar_t* szTemp = wcsdup(*szFilename);
 			InterlockedExchangePointer((PVOID*)&dcc->NewFileName, szTemp);
 		}
 
@@ -414,21 +398,21 @@ int __cdecl CIrcProto::FileResume(HANDLE hTransfer, int* action, const TCHAR** s
 			unsigned __int64 dwPos = 0;
 
 			struct _stati64 statbuf;
-			if (_tstati64(di->sFileAndPath.c_str(), &statbuf) == 0 && (statbuf.st_mode & _S_IFDIR) == 0)
+			if (_wstat64(di->sFileAndPath.c_str(), &statbuf) == 0 && (statbuf.st_mode & _S_IFDIR) == 0)
 				dwPos = statbuf.st_size;
 
-			CMString sFileWithQuotes = di->sFile;
+			CMStringW sFileWithQuotes = di->sFile;
 
 			// if spaces in the filename surround witrh quotes
 			if (sFileWithQuotes.Find(' ', 0) != -1) {
-				sFileWithQuotes.Insert(0, _T("\""));
-				sFileWithQuotes.Insert(sFileWithQuotes.GetLength(), _T("\""));
+				sFileWithQuotes.Insert(0, L"\"");
+				sFileWithQuotes.Insert(sFileWithQuotes.GetLength(), L"\"");
 			}
 
 			if (di->bReverse)
-				PostIrcMessage(_T("/PRIVMSG %s \001DCC RESUME %s 0 %I64u %s\001"), di->sContactName.c_str(), sFileWithQuotes.c_str(), dwPos, dcc->di->sToken.c_str());
+				PostIrcMessage(L"/PRIVMSG %s \001DCC RESUME %s 0 %I64u %s\001", di->sContactName.c_str(), sFileWithQuotes.c_str(), dwPos, dcc->di->sToken.c_str());
 			else
-				PostIrcMessage(_T("/PRIVMSG %s \001DCC RESUME %s %u %I64u\001"), di->sContactName.c_str(), sFileWithQuotes.c_str(), di->iPort, dwPos);
+				PostIrcMessage(L"/PRIVMSG %s \001DCC RESUME %s %u %I64u\001", di->sContactName.c_str(), sFileWithQuotes.c_str(), di->iPort, dwPos);
 
 			return 0;
 		}
@@ -475,27 +459,29 @@ DWORD_PTR __cdecl CIrcProto::GetCaps(int type, MCONTACT)
 
 struct AckBasicSearchParam
 {
-	TCHAR buf[50];
+	wchar_t buf[50];
 };
 
 void __cdecl CIrcProto::AckBasicSearch(void *arg)
 {
+	Thread_SetName("IRC: AckBasicSearch");
+
 	AckBasicSearchParam *param = (AckBasicSearchParam*)arg;
 	PROTOSEARCHRESULT psr = { sizeof(psr) };
-	psr.flags = PSR_TCHAR;
-	psr.id.t = psr.nick.t = param->buf;
+	psr.flags = PSR_UNICODE;
+	psr.id.w = psr.nick.w = param->buf;
 	ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)1, (LPARAM)& psr);
 	ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE)1, 0);
 	delete param;
 }
 
-HANDLE __cdecl CIrcProto::SearchBasic(const TCHAR* szId)
+HANDLE __cdecl CIrcProto::SearchBasic(const wchar_t* szId)
 {
 	if (szId) {
 		if (m_iStatus != ID_STATUS_OFFLINE && m_iStatus != ID_STATUS_CONNECTING &&
 			szId && szId[0] && !IsChannel(szId)) {
 			AckBasicSearchParam* param = new AckBasicSearchParam;
-			mir_tstrncpy(param->buf, szId, 50);
+			mir_wstrncpy(param->buf, szId, 50);
 			ForkThread(&CIrcProto::AckBasicSearch, param);
 			return (HANDLE)1;
 		}
@@ -507,7 +493,7 @@ HANDLE __cdecl CIrcProto::SearchBasic(const TCHAR* szId)
 ////////////////////////////////////////////////////////////////////////////////////////
 // SendFile - sends a file
 
-HANDLE __cdecl CIrcProto::SendFile(MCONTACT hContact, const TCHAR*, TCHAR** ppszFiles)
+HANDLE __cdecl CIrcProto::SendFile(MCONTACT hContact, const wchar_t*, wchar_t** ppszFiles)
 {
 	DCCINFO* dci = NULL;
 	int iPort = 0;
@@ -535,7 +521,7 @@ HANDLE __cdecl CIrcProto::SendFile(MCONTACT hContact, const TCHAR*, TCHAR** ppsz
 		//get file size
 		while (ppszFiles[index]) {
 			struct _stati64 statbuf;
-			if (_tstati64(ppszFiles[index], &statbuf) == 0 && (statbuf.st_mode & _S_IFDIR) == 0) {
+			if (_wstat64(ppszFiles[index], &statbuf) == 0 && (statbuf.st_mode & _S_IFDIR) == 0) {
 				size = statbuf.st_size;
 				break;
 			}
@@ -548,7 +534,7 @@ HANDLE __cdecl CIrcProto::SendFile(MCONTACT hContact, const TCHAR*, TCHAR** ppsz
 		}
 
 		DBVARIANT dbv;
-		if (!getTString(hContact, "Nick", &dbv)) {
+		if (!getWString(hContact, "Nick", &dbv)) {
 			// set up a basic DCCINFO struct and pass it to a DCC object
 			dci = new DCCINFO;
 			dci->sFileAndPath = ppszFiles[index];
@@ -559,12 +545,12 @@ HANDLE __cdecl CIrcProto::SendFile(MCONTACT hContact, const TCHAR*, TCHAR** ppsz
 				dci->sFile = dci->sFileAndPath.Mid(i + 1);
 			}
 
-			CMString sFileWithQuotes = dci->sFile;
+			CMStringW sFileWithQuotes = dci->sFile;
 
 			// if spaces in the filename surround witrh quotes
 			if (sFileWithQuotes.Find(' ', 0) != -1) {
-				sFileWithQuotes.Insert(0, _T("\""));
-				sFileWithQuotes.Insert(sFileWithQuotes.GetLength(), _T("\""));
+				sFileWithQuotes.Insert(0, L"\"");
+				sFileWithQuotes.Insert(sFileWithQuotes.GetLength(), L"\"");
 			}
 
 			dci->hContact = hContact;
@@ -575,29 +561,29 @@ HANDLE __cdecl CIrcProto::SendFile(MCONTACT hContact, const TCHAR*, TCHAR** ppsz
 			dci->dwSize = size;
 
 			// create new dcc object
-			CDccSession* dcc = new CDccSession(this, dci);
+			CDccSession *dcc = new CDccSession(this, dci);
 
 			// keep track of all objects created
 			AddDCCSession(dci, dcc);
 
 			// need to make sure that %'s are doubled to avoid having chat interpret as color codes
-			CMString sFileCorrect = dci->sFile;
-			sFileCorrect.Replace(_T("%"), _T("%%"));
+			CMStringW sFileCorrect = dci->sFile;
+			sFileCorrect.Replace(L"%", L"%%");
 
 			// is it an reverse filetransfer (receiver acts as server)
 			if (dci->bReverse) {
-				TCHAR szTemp[256];
-				PostIrcMessage(_T("/CTCP %s DCC SEND %s 200 0 %I64u %u"),
+				wchar_t szTemp[256];
+				PostIrcMessage(L"/CTCP %s DCC SEND %s 200 0 %I64u %u",
 					dci->sContactName.c_str(), sFileWithQuotes.c_str(), dci->dwSize, dcc->iToken);
 
-				mir_sntprintf(szTemp,
+				mir_snwprintf(szTemp,
 					TranslateT("DCC reversed file transfer request sent to %s [%s]"),
 					dci->sContactName.c_str(), sFileCorrect.c_str());
 				DoEvent(GC_EVENT_INFORMATION, 0, m_info.sNick.c_str(), szTemp, NULL, NULL, NULL, true, false);
 
 				if (m_sendNotice) {
-					mir_sntprintf(szTemp,
-						_T("/NOTICE %s I am sending the file '\002%s\002' (%I64u kB) to you, please accept it. [Reverse transfer]"),
+					mir_snwprintf(szTemp,
+						L"/NOTICE %s I am sending the file '\002%s\002' (%I64u kB) to you, please accept it. [Reverse transfer]",
 						dci->sContactName.c_str(), sFileCorrect.c_str(), dci->dwSize / 1024);
 					PostIrcMessage(szTemp);
 				}
@@ -605,19 +591,19 @@ HANDLE __cdecl CIrcProto::SendFile(MCONTACT hContact, const TCHAR*, TCHAR** ppsz
 			else { // ... normal filetransfer.
 				iPort = dcc->Connect();
 				if (iPort) {
-					TCHAR szTemp[256];
-					PostIrcMessage(_T("/CTCP %s DCC SEND %s %u %u %I64u"),
+					wchar_t szTemp[256];
+					PostIrcMessage(L"/CTCP %s DCC SEND %s %u %u %I64u",
 						dci->sContactName.c_str(), sFileWithQuotes.c_str(), ulAdr, iPort, dci->dwSize);
 
-					mir_sntprintf(szTemp,
+					mir_snwprintf(szTemp,
 						TranslateT("DCC file transfer request sent to %s [%s]"),
 						dci->sContactName.c_str(), sFileCorrect.c_str());
 					DoEvent(GC_EVENT_INFORMATION, 0, m_info.sNick.c_str(), szTemp, NULL, NULL, NULL, true, false);
 
 					if (m_sendNotice) {
-						mir_sntprintf(szTemp,
-							_T("/NOTICE %s I am sending the file '\002%s\002' (%I64u kB) to you, please accept it. [IP: %s]"),
-							dci->sContactName.c_str(), sFileCorrect.c_str(), dci->dwSize / 1024, (TCHAR*)_A2T(ConvertIntegerToIP(ulAdr)));
+						mir_snwprintf(szTemp,
+							L"/NOTICE %s I am sending the file '\002%s\002' (%I64u kB) to you, please accept it. [IP: %s]",
+							dci->sContactName.c_str(), sFileCorrect.c_str(), dci->dwSize / 1024, (wchar_t*)_A2T(ConvertIntegerToIP(ulAdr)));
 						PostIrcMessage(szTemp);
 					}
 				}
@@ -628,8 +614,8 @@ HANDLE __cdecl CIrcProto::SendFile(MCONTACT hContact, const TCHAR*, TCHAR** ppsz
 			// fix for sending multiple files
 			index++;
 			while (ppszFiles[index]) {
-				if (_taccess(ppszFiles[index], 0) == 0) {
-					PostIrcMessage(_T("/DCC SEND %s %S"), dci->sContactName.c_str(), ppszFiles[index]);
+				if (_waccess(ppszFiles[index], 0) == 0) {
+					PostIrcMessage(L"/DCC SEND %s %S", dci->sContactName.c_str(), ppszFiles[index]);
 				}
 				index++;
 			}
@@ -658,16 +644,19 @@ struct TFakeAckParam
 
 void __cdecl CIrcProto::AckMessageFail(void *info)
 {
+	Thread_SetName("IRC: AckMessageFail");
 	ProtoBroadcastAck((UINT_PTR)info, ACKTYPE_MESSAGE, ACKRESULT_FAILED, NULL, (LPARAM)Translate("The protocol is not online"));
 }
 
 void __cdecl CIrcProto::AckMessageFailDcc(void *info)
 {
+	Thread_SetName("IRC: AckMessageFailDcc");
 	ProtoBroadcastAck((UINT_PTR)info, ACKTYPE_MESSAGE, ACKRESULT_FAILED, NULL, (LPARAM)Translate("The dcc chat connection is not active"));
 }
 
 void __cdecl CIrcProto::AckMessageSuccess(void *info)
 {
+	Thread_SetName("IRC: AckMessageSuccess");
 	TFakeAckParam *param = (TFakeAckParam*)info;
 	ProtoBroadcastAck(param->hContact, ACKTYPE_MESSAGE, ACKRESULT_SUCCESS, (HANDLE)param->msgid, 0);
 	delete param;
@@ -687,7 +676,7 @@ int __cdecl CIrcProto::SendMsg(MCONTACT hContact, int, const char* pszSrc)
 		return 0;
 	}
 
-	TCHAR *result;
+	wchar_t *result;
 	mir_utf8decode(NEWSTR_ALLOCA(pszSrc), &result);
 	PostIrcMessageWnd(NULL, hContact, result);
 	mir_free(result);
@@ -709,14 +698,17 @@ int CIrcProto::SetStatusInternal(int iNewStatus, bool bIsInternal)
 {
 	if (iNewStatus != ID_STATUS_OFFLINE && !m_network[0]) {
 		if (m_nick[0] && !m_disableDefaultServer) {
-			CQuickDlg* dlg = new CQuickDlg(this);
-			dlg->GetProto()->m_quickComboSelection = dlg->GetProto()->m_serverComboSelection + 1;
-			dlg->Show();
-			HWND hwnd = dlg->GetHwnd();
+			if (m_quickDlg == NULL) {
+				m_quickDlg = new CQuickDlg(this);
+				m_quickComboSelection = m_serverComboSelection + 1;
+				m_quickDlg->Show();
+			}
+			
+			HWND hwnd = m_quickDlg->GetHwnd();
 			SetWindowTextA(hwnd, "Miranda IRC");
 			SetDlgItemText(hwnd, IDC_TEXT, TranslateT("Please choose an IRC-network to go online. This network will be the default."));
 			SetDlgItemText(hwnd, IDC_CAPTION, TranslateT("Default network"));
-			WindowSetIcon(hwnd, IDI_MAIN);
+			Window_SetIcon_IcoLib(hwnd, GetIconHandle(IDI_MAIN));
 			ShowWindow(hwnd, SW_SHOW);
 			SetActiveWindow(hwnd);
 		}
@@ -724,14 +716,7 @@ int CIrcProto::SetStatusInternal(int iNewStatus, bool bIsInternal)
 	}
 
 	if (iNewStatus != ID_STATUS_OFFLINE && !m_nick[0] || !m_userID[0] || !m_name[0]) {
-		MIRANDASYSTRAYNOTIFY msn;
-		msn.cbSize = sizeof(MIRANDASYSTRAYNOTIFY);
-		msn.szProto = m_szModuleName;
-		msn.tszInfoTitle = TranslateT("IRC error");
-		msn.tszInfo = TranslateT("Connection cannot be established! You have not completed all necessary fields (Nickname, User ID and m_name).");
-		msn.dwInfoFlags = NIIF_ERROR | NIIF_INTERN_UNICODE;
-		msn.uTimeout = 15000;
-		CallService(MS_CLIST_SYSTRAY_NOTIFY, 0, (LPARAM)&msn);
+		Clist_TrayNotifyW(m_szModuleName, TranslateT("IRC error"), TranslateT("Connection cannot be established! You have not completed all necessary fields (Nickname, User ID and m_name)."), NIIF_ERROR, 15000);
 		return 0;
 	}
 
@@ -745,8 +730,8 @@ int CIrcProto::SetStatusInternal(int iNewStatus, bool bIsInternal)
 	}
 	else if ((iNewStatus == ID_STATUS_ONLINE || iNewStatus == ID_STATUS_FREECHAT) && IsConnected() && m_iStatus == ID_STATUS_AWAY) //go to online while connected
 	{
-		m_statusMessage = _T("");
-		PostIrcMessage(_T("/AWAY"));
+		m_statusMessage = L"";
+		PostIrcMessage(L"/AWAY");
 		return 0;
 	}
 	else if (iNewStatus == ID_STATUS_OFFLINE && IsConnected()) //go from online/away to offline
@@ -757,7 +742,7 @@ int CIrcProto::SetStatusInternal(int iNewStatus, bool bIsInternal)
 	}
 	else if (iNewStatus == ID_STATUS_AWAY && IsConnected()) //go to away while connected
 	{
-		PostIrcMessage(_T("/AWAY %s"), m_statusMessage.Mid(0, 450));
+		PostIrcMessage(L"/AWAY %s", m_statusMessage.Mid(0, 450).c_str());
 		return 0;
 	}
 	else if (iNewStatus == ID_STATUS_ONLINE && IsConnected()) //already online
@@ -773,18 +758,18 @@ int CIrcProto::SetStatusInternal(int iNewStatus, bool bIsInternal)
 
 HANDLE __cdecl CIrcProto::GetAwayMsg(MCONTACT hContact)
 {
-	WhoisAwayReply = _T("");
+	WhoisAwayReply = L"";
 	DBVARIANT dbv;
 
 	// bypass chat contacts.
 	if (!isChatRoom(hContact)) {
-		if (hContact && !getTString(hContact, "Nick", &dbv)) {
+		if (hContact && !getWString(hContact, "Nick", &dbv)) {
 			int i = getWord(hContact, "Status", ID_STATUS_OFFLINE);
 			if (i != ID_STATUS_AWAY) {
 				db_free(&dbv);
 				return 0;
 			}
-			CMString S = _T("WHOIS ");
+			CMStringW S = L"WHOIS ";
 			S += dbv.ptszVal;
 			if (IsConnected())
 				SendIrcMessage(S.c_str(), false);
@@ -798,7 +783,7 @@ HANDLE __cdecl CIrcProto::GetAwayMsg(MCONTACT hContact)
 ////////////////////////////////////////////////////////////////////////////////////////
 // SetAwayMsg - sets the away status message
 
-int __cdecl CIrcProto::SetAwayMsg(int status, const TCHAR* msg)
+int __cdecl CIrcProto::SetAwayMsg(int status, const wchar_t* msg)
 {
 	switch (status) {
 	case ID_STATUS_ONLINE:     case ID_STATUS_INVISIBLE:   case ID_STATUS_FREECHAT:
@@ -806,8 +791,8 @@ int __cdecl CIrcProto::SetAwayMsg(int status, const TCHAR* msg)
 		break;
 
 	default:
-		CMString newStatus = msg;
-		newStatus.Replace(_T("\r\n"), _T(" "));
+		CMStringW newStatus = msg;
+		newStatus.Replace(L"\r\n", L" ");
 		if (m_statusMessage.IsEmpty() || msg == NULL || m_statusMessage != newStatus) {
 			if (msg == NULL || *msg == 0)
 				m_statusMessage = STR_AWAYMESSAGE;
@@ -815,7 +800,7 @@ int __cdecl CIrcProto::SetAwayMsg(int status, const TCHAR* msg)
 				m_statusMessage = newStatus;
 
 			if (m_iStatus == ID_STATUS_AWAY)
-				PostIrcMessage(_T("/AWAY %s"), m_statusMessage.Mid(0, 450));
+				PostIrcMessage(L"/AWAY %s", m_statusMessage.Mid(0, 450).c_str());
 		}
 	}
 

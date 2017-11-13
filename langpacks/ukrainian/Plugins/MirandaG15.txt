@@ -35,12 +35,10 @@
 Показувати секунди
 [Use transition effects when changing screens]
 Використовувати ефекти при зміні екранів
+[Credits]
+Автори
 [About]
 Інформація
-[For updates and news check the thread on http://www.g15forums.com]
-Оновлення та новини шукайте в темі http://www.g15forums.com
-[Or visit http://www.mkleinhans.de]
-або відвідайте http://www.mkleinhans.de
 [Device:]
 Клавіатура:
 [If the screensaver is active:]
@@ -90,7 +88,7 @@
 [Contact signs on]
 Контакт входить в мережу
 [When a chat session is active, skip the following notifications for that contact:]
-Пропускати наступні сповіщення для контакта під час розмови з ним:
+Пропускати наступні сповіщення для контакту під час розмови з ним:
 [Chat session specific]
 Лише для сесії
 [Show timestamps]
@@ -103,8 +101,8 @@
 Емоції
 [Status changes]
 Зміни статусів
-[Special IRC events:]
-Тільки для IRC
+[Group chat events:]
+Події чатів:
 [Notices]
 Сповіщення
 [Channel events]
@@ -154,7 +152,7 @@
 [Fade out selection rectangle]
 Поступово затемнювати виділення
 [Typing notifications]
-Повідомлення про набір тексту
+Сповіщення про набір тексту
 [Show typing notifications]
 Відображати
 [Send typing notifications]

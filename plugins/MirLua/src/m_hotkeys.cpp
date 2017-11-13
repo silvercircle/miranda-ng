@@ -2,78 +2,83 @@
 
 void MakeHotkey(lua_State *L, HOTKEYDESC &hk)
 {
-	hk.cbSize = sizeof(HOTKEYDESC);
-
-	lua_pushliteral(L, "Flags");
-	lua_gettable(L, -2);
+	lua_getfield(L, -1, "Flags");
 	hk.dwFlags = lua_tointeger(L, -1);
 	lua_pop(L, 1);
 
-	if (!(hk.dwFlags & HKD_TCHAR))
-		hk.dwFlags |= HKD_TCHAR;
+	if (!(hk.dwFlags & HKD_UNICODE))
+		hk.dwFlags |= HKD_UNICODE;
 
-	lua_pushliteral(L, "Name");
-	lua_gettable(L, -2);
+	lua_getfield(L, -1, "Name");
 	hk.pszName = mir_utf8decodeA(luaL_checkstring(L, -1));
 	lua_pop(L, 1);
 
-	lua_pushliteral(L, "Description");
-	lua_gettable(L, -2);
-	hk.ptszDescription = mir_utf8decodeT((char*)lua_tostring(L, -1));
+	lua_getfield(L, -1, "Description");
+	hk.szDescription.w = mir_utf8decodeW(lua_tostring(L, -1));
 	lua_pop(L, 1);
 
-	lua_pushliteral(L, "Section");
-	lua_gettable(L, -2);
-	hk.ptszSection = mir_utf8decodeT(luaL_optstring(L, -1, MODULE));
+	lua_getfield(L, -1, "Section");
+	hk.szSection.w = mir_utf8decodeW(luaL_optstring(L, -1, MODULE));
 	lua_pop(L, 1);
 
-	lua_pushliteral(L, "Hotkey");
-	lua_gettable(L, -2);
+	lua_getfield(L, -1, "Hotkey");
 	hk.DefHotKey = lua_tointeger(L, -1);
 	lua_pop(L, 1);
 
-	lua_pushliteral(L, "Service");
-	lua_gettable(L, -2);
+	lua_getfield(L, -1, "Service");
 	hk.pszService = mir_utf8decodeA(luaL_checkstring(L, -1));
 	lua_pop(L, 1);
 
-	lua_pushliteral(L, "lParam");
-	lua_gettable(L, -2);
+	lua_getfield(L, -1, "lParam");
 	hk.lParam = (LPARAM)lua_touserdata(L, -1);
 	lua_pop(L, 1);
 }
 
-static int lua_Register(lua_State *L)
+static int hotkeys_Register(lua_State *L)
 {
-	if (lua_type(L, 1) != LUA_TTABLE)
-	{
-		lua_pushlightuserdata(L, 0);
-		return 1;
-	}
+	luaL_checktype(L, 1, LUA_TTABLE);
 
 	HOTKEYDESC hk;
 	MakeHotkey(L, hk);
 
-	INT_PTR res = ::CallService("CoreHotkeys/Register", (WPARAM)hScriptsLangpack, (LPARAM)&hk);
-	lua_pushinteger(L, res);
+	int hScriptLangpack = CMLuaEnviroment::GetEnviromentId(L);
+
+	INT_PTR res = Hotkey_Register(&hk, hScriptLangpack);
+	lua_pushboolean(L, res);
 
 	return 1;
 }
 
-static int lua_Unregister(lua_State *L)
+static int hotkeys_Unregister(lua_State *L)
 {
-	const char* name = luaL_checkstring(L, 1);
+	const char *name = luaL_checkstring(L, 1);
 
-	INT_PTR res = ::CallService("CoreHotkeys/Unregister", 0, (LPARAM)name);
-	lua_pushinteger(L, res);
+	Hotkey_Unregister(name);
 
-	return 1;
+	return 0;
 }
 
-static int lua_MakeHotkey(lua_State *L)
+static const char *mods[] = { "shift", "ctrl", "alt", "ext", NULL };
+
+static int hotkeys_MakeHotkey(lua_State *L)
 {
-	int mod = luaL_checkinteger(L, 1);
-	int vk = luaL_checkinteger(L, 2);
+	int mod = 0;
+	switch (lua_type(L, 1))
+	{
+	case LUA_TNUMBER:
+		mod = luaL_checkinteger(L, 1);
+		break;
+	case LUA_TSTRING:
+		mod = (1 << (luaL_checkoption(L, 1, NULL, mods) - 1));
+		break;
+	case LUA_TTABLE:
+		for (lua_pushnil(L); lua_next(L, 1); lua_pop(L, 1))
+			mod |= (1 << (luaL_checkoption(L, -1, NULL, mods) - 1));
+		break;
+	default:
+		luaL_argerror(L, 1, luaL_typename(L, 1));
+	}
+	int vk = luaL_checknumber(L, 2);
 
 	WORD res = HOTKEYCODE(mod, vk);
 	lua_pushinteger(L, res);
@@ -83,10 +88,9 @@ static int lua_MakeHotkey(lua_State *L)
 
 static luaL_Reg hotkeysApi[] =
 {
-	{ "Register", lua_Register },
-	{ "Unregister", lua_Unregister },
-
-	{ "MakeHotkey", lua_MakeHotkey },
+	{ "MakeHotkey", hotkeys_MakeHotkey },
+	{ "Register", hotkeys_Register },
+	{ "Unregister", hotkeys_Unregister },
 
 	{ NULL, NULL }
 };

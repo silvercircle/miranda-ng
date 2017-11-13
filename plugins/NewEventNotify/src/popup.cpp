@@ -85,7 +85,7 @@ int PopupAct(HWND hWnd, UINT mask, PLUGIN_DATA* pdata)
 					return 0;
 
 				for (int idx = 0;; idx++) {
-					CLISTEVENT *cle = (CLISTEVENT*)CallService(MS_CLIST_GETEVENT, (WPARAM)pdata->hContact, idx);
+					CLISTEVENT *cle = pcli->pfnGetEvent(pdata->hContact, idx);
 					if (cle == NULL)
 						break;
 
@@ -104,7 +104,7 @@ int PopupAct(HWND hWnd, UINT mask, PLUGIN_DATA* pdata)
 			EVENT_DATA_EX *eventData = pdata->firstEventData;
 			pdata->iLock = 1;
 			while (eventData) {
-				CallService(MS_CLIST_REMOVEEVENT, (WPARAM)pdata->hContact, (LPARAM)eventData->hEvent);
+				pcli->pfnRemoveEvent(pdata->hContact, eventData->hEvent);
 				db_event_markRead(pdata->hContact, eventData->hEvent);			
 				eventData = eventData->next;
 			}		
@@ -168,10 +168,10 @@ static LRESULT CALLBACK PopupDlgProc(HWND hWnd, UINT message, WPARAM wParam, LPA
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-static TCHAR* GetEventPreview(DBEVENTINFO *dbei)
+static wchar_t* GetEventPreview(DBEVENTINFO *dbei)
 {
-	TCHAR *comment1 = NULL;
-	TCHAR *comment2 = NULL;
+	wchar_t *comment1 = NULL;
+	wchar_t *comment2 = NULL;
 	char  *commentFix = NULL;
 
 	//now get text
@@ -180,22 +180,22 @@ static TCHAR* GetEventPreview(DBEVENTINFO *dbei)
 		if (dbei->pBlob) {
 			if (dbei->flags & DBEF_UTF) {
 				// utf-8 in blob
-				comment1 = mir_utf8decodeT((char*)dbei->pBlob);
+				comment1 = mir_utf8decodeW((char*)dbei->pBlob);
 			}
-			else if (dbei->cbBlob == (mir_tstrlen((TCHAR *)dbei->pBlob)+1)*(sizeof(TCHAR)+1)) {
+			else if (dbei->cbBlob == (mir_wstrlen((wchar_t *)dbei->pBlob)+1)*(sizeof(wchar_t)+1)) {
 				// wchar in blob (the old hack)
-				comment1 = mir_tstrdup((TCHAR*)dbei->pBlob);
+				comment1 = mir_wstrdup((wchar_t*)dbei->pBlob);
 			}
-			else comment1 = mir_a2t((char *)dbei->pBlob);
+			else comment1 = mir_a2u((char *)dbei->pBlob);
 		}
 		commentFix = POPUP_COMMENT_MESSAGE;
 		break;
 
 	case EVENTTYPE_URL:
 		// url
-		if (dbei->pBlob) comment2 = mir_a2t((char *)dbei->pBlob);
+		if (dbei->pBlob) comment2 = mir_a2u((char *)dbei->pBlob);
 		// comment
-		if (dbei->pBlob) comment1 = mir_a2t((char *)dbei->pBlob + mir_strlen((char *)dbei->pBlob) + 1);
+		if (dbei->pBlob) comment1 = mir_a2u((char *)dbei->pBlob + mir_strlen((char *)dbei->pBlob) + 1);
 		commentFix = POPUP_COMMENT_URL;
 		break;
 
@@ -203,10 +203,10 @@ static TCHAR* GetEventPreview(DBEVENTINFO *dbei)
 		if (dbei->pBlob) {
 			char *p = (char*)dbei->pBlob + sizeof(DWORD);
 			// filenames
-			comment2 = (dbei->flags & DBEF_UTF) ? mir_utf8decodeT(p) : mir_a2t(p);
+			comment2 = (dbei->flags & DBEF_UTF) ? mir_utf8decodeW(p) : mir_a2u(p);
 			p += mir_strlen(p) + 1;
 			// description
-			comment1 = (dbei->flags & DBEF_UTF) ? mir_utf8decodeT(p) : mir_a2t(p);
+			comment1 = (dbei->flags & DBEF_UTF) ? mir_utf8decodeW(p) : mir_a2u(p);
 		}
 		commentFix = POPUP_COMMENT_FILE;
 		break;
@@ -220,7 +220,7 @@ static TCHAR* GetEventPreview(DBEVENTINFO *dbei)
 			char* pcBlob = (char *)dbei->pBlob;
 			char* pcEnd = (char *)(dbei->pBlob + dbei->cbBlob);
 			int nContacts;
-			TCHAR szBuf[512];
+			wchar_t szBuf[512];
 
 			for (nContacts = 1; ; nContacts++) {
 				// Nick
@@ -231,8 +231,8 @@ static TCHAR* GetEventPreview(DBEVENTINFO *dbei)
 				if (pcBlob >= pcEnd)
 					break;
 			}
-			mir_sntprintf(szBuf, TranslateT("Received %d contacts."), nContacts);
-			comment1 = mir_tstrdup(szBuf);
+			mir_snwprintf(szBuf, TranslateT("Received %d contacts."), nContacts);
+			comment1 = mir_wstrdup(szBuf);
 		}
 		commentFix = POPUP_COMMENT_CONTACTS;
 		break;
@@ -247,8 +247,8 @@ static TCHAR* GetEventPreview(DBEVENTINFO *dbei)
 	case EVENTTYPE_ADDED:
 		if (dbei->pBlob) {
 			char szUin[16];
-			TCHAR szBuf[2048];
-			TCHAR* szNick = NULL;
+			wchar_t szBuf[2048];
+			wchar_t* szNick = NULL;
 			char *pszNick = (char *)dbei->pBlob + 8;
 			char *pszFirst = pszNick + mir_strlen(pszNick) + 1;
 			char *pszLast = pszFirst + mir_strlen(pszFirst) + 1;
@@ -257,24 +257,24 @@ static TCHAR* GetEventPreview(DBEVENTINFO *dbei)
 			mir_snprintf(szUin, "%d", *((DWORD*)dbei->pBlob));
 			if (mir_strlen(pszNick) > 0) {
 				if (dbei->flags & DBEF_UTF)
-					szNick = mir_utf8decodeT(pszNick);
+					szNick = mir_utf8decodeW(pszNick);
 				else
-					szNick = mir_a2t(pszNick);
+					szNick = mir_a2u(pszNick);
 			}
 			else if (mir_strlen(pszEmail) > 0) {
 				if (dbei->flags & DBEF_UTF)
-					szNick = mir_utf8decodeT(pszEmail);
+					szNick = mir_utf8decodeW(pszEmail);
 				else
-					szNick = mir_a2t(pszEmail);
+					szNick = mir_a2u(pszEmail);
 			}
 			else if (*((DWORD*)dbei->pBlob) > 0)
-				szNick = mir_a2t(szUin);
+				szNick = mir_a2u(szUin);
 
 			if (szNick) {
-				mir_tstrcpy(szBuf, szNick);
-				mir_tstrcat(szBuf, TranslateT(" added you to the contact list"));
+				mir_wstrcpy(szBuf, szNick);
+				mir_wstrcat(szBuf, TranslateT(" added you to the contact list"));
 				mir_free(szNick);
-				comment1 = mir_tstrdup(szBuf);
+				comment1 = mir_wstrdup(szBuf);
 			}
 		}
 		commentFix = POPUP_COMMENT_ADDED;
@@ -282,36 +282,20 @@ static TCHAR* GetEventPreview(DBEVENTINFO *dbei)
 
 	case EVENTTYPE_AUTHREQUEST:
 		if (dbei->pBlob) {
-			char szUin[16];
-			TCHAR szBuf[2048];
-			TCHAR* szNick = NULL;
-			char *pszNick = (char *)dbei->pBlob + 8;
-			char *pszFirst = pszNick + mir_strlen(pszNick) + 1;
-			char *pszLast  = pszFirst + mir_strlen(pszFirst) + 1;
-			char *pszEmail = pszLast + mir_strlen(pszLast) + 1;
+			DB_AUTH_BLOB blob(dbei->pBlob);
 
-			mir_snprintf(szUin, "%d", *((DWORD*)dbei->pBlob));
-			if (mir_strlen(pszNick) > 0) {
-				if (dbei->flags & DBEF_UTF)
-					szNick = mir_utf8decodeT(pszNick);
-				else
-					szNick = mir_a2t(pszNick);
+			wchar_t *szNick = NULL;
+			if (blob.get_nick())
+				szNick = dbei->getString(blob.get_nick());
+			else if (blob.get_email())
+				szNick = dbei->getString(blob.get_email());
+			else if (blob.get_uin()) {
+				char szUin[16];
+				szNick = mir_a2u(itoa(blob.get_uin(), szUin, 10));
 			}
-			else if (mir_strlen(pszEmail) > 0) {
-				if (dbei->flags & DBEF_UTF)
-					szNick = mir_utf8decodeT(pszEmail);
-				else
-					szNick = mir_a2t(pszEmail);
-			}
-			else if (*((DWORD*)dbei->pBlob) > 0)
-				szNick = mir_a2t(szUin);
 
-			if (szNick) {
-				mir_tstrcpy(szBuf, szNick);
-				mir_tstrcat(szBuf, TranslateT(" requested authorization"));
-				mir_free(szNick);
-				comment1 = mir_tstrdup(szBuf);
-			}
+			if (szNick)
+				comment1 = CMStringW(FORMAT, L"%s%s", szNick, TranslateT(" requested authorization")).Detach();
 		}
 		commentFix = POPUP_COMMENT_AUTH;
 		break;
@@ -321,7 +305,7 @@ static TCHAR* GetEventPreview(DBEVENTINFO *dbei)
 	//ASCIIZ    from name
 	//ASCIIZ    from e-mail
 	case ICQEVENTTYPE_WEBPAGER:
-		if (dbei->pBlob) comment1 = mir_a2t((const char *)dbei->pBlob);
+		if (dbei->pBlob) comment1 = mir_a2u((const char *)dbei->pBlob);
 		commentFix = POPUP_COMMENT_WEBPAGER;
 		break;
 
@@ -330,7 +314,7 @@ static TCHAR* GetEventPreview(DBEVENTINFO *dbei)
 	//ASCIIZ    from name
 	//ASCIIZ    from e-mail
 	case ICQEVENTTYPE_EMAILEXPRESS:
-		if (dbei->pBlob) comment1 = mir_a2t((const char *)dbei->pBlob);
+		if (dbei->pBlob) comment1 = mir_a2u((const char *)dbei->pBlob);
 		commentFix = POPUP_COMMENT_EMAILEXP;
 		break;
 
@@ -340,13 +324,13 @@ static TCHAR* GetEventPreview(DBEVENTINFO *dbei)
 		if (dbei->pBlob) {
 			if (dbei->flags & DBEF_UTF) {
 				// utf-8 in blob
-				comment1 = mir_utf8decodeT((char*)dbei->pBlob);
+				comment1 = mir_utf8decodeW((char*)dbei->pBlob);
 			}
-			else if (dbei->cbBlob == (mir_tstrlen((TCHAR *)dbei->pBlob)+1)*(sizeof(TCHAR)+1)) {
+			else if (dbei->cbBlob == (mir_wstrlen((wchar_t *)dbei->pBlob)+1)*(sizeof(wchar_t)+1)) {
 				// wchar in blob (the old hack)
-				comment1 = mir_tstrdup((TCHAR*)dbei->pBlob);
+				comment1 = mir_wstrdup((wchar_t*)dbei->pBlob);
 			}
-			else comment1 = mir_a2t((char *)dbei->pBlob);
+			else comment1 = mir_a2u((char *)dbei->pBlob);
 		}
 		commentFix = POPUP_COMMENT_SMS;
 		break;
@@ -357,52 +341,43 @@ static TCHAR* GetEventPreview(DBEVENTINFO *dbei)
 		if (dbei->pBlob) {
 			if (dbei->flags & DBEF_UTF) {
 				// utf-8 in blob
-				comment1 = mir_utf8decodeT((char*)dbei->pBlob);
+				comment1 = mir_utf8decodeW((char*)dbei->pBlob);
 			}
-			else if (dbei->cbBlob == (mir_tstrlen((TCHAR *)dbei->pBlob)+1)*(sizeof(TCHAR)+1)) {
+			else if (dbei->cbBlob == (mir_wstrlen((wchar_t *)dbei->pBlob)+1)*(sizeof(wchar_t)+1)) {
 				// wchar in blob (the old hack)
-				comment1 = mir_tstrdup((TCHAR*)dbei->pBlob);
+				comment1 = mir_wstrdup((wchar_t*)dbei->pBlob);
 			}
-			else comment1 = mir_a2t((char *)dbei->pBlob);
+			else comment1 = mir_a2u((char *)dbei->pBlob);
 		}
 		commentFix = POPUP_COMMENT_SMSCONFIRMATION;
 		break;
 
 	default:
-		if (ServiceExists(MS_DB_EVENT_GETTYPE)) {
-			DBEVENTTYPEDESCR *pei = (DBEVENTTYPEDESCR*)CallService(MS_DB_EVENT_GETTYPE, (WPARAM)dbei->szModule, (LPARAM)dbei->eventType);
-			// support for custom database event types
-			if (pei && dbei->pBlob) {
-				DBEVENTGETTEXT svc = {dbei, DBVT_TCHAR, CP_ACP};
-				TCHAR *pet = (TCHAR*)CallService(MS_DB_EVENT_GETTEXT, 0, (LPARAM)&svc);
-				if (pet) {
-					// we've got event text, move to our memory space
-					comment1 = mir_tstrdup(pet);
-					mir_free(pet);
-				}
-				commentFix = pei->descr;
-			}
-			else commentFix = POPUP_COMMENT_OTHER;
+		DBEVENTTYPEDESCR *pei = DbEvent_GetType(dbei->szModule, dbei->eventType);
+		// support for custom database event types
+		if (pei && dbei->pBlob) {
+			comment1 = DbEvent_GetTextW(dbei, CP_ACP);
+			commentFix = pei->descr;
 		}
 		else commentFix = POPUP_COMMENT_OTHER;
 	}
 
-	if ( mir_tstrlen(comment1) > 0) {
+	if (mir_wstrlen(comment1) > 0) {
 		mir_free(comment2);
 		return comment1;
 	}
-	if ( mir_tstrlen(comment2) > 0) {
+	if (mir_wstrlen(comment2) > 0) {
 		mir_free(comment1);
 		return comment2;
 	}
 	mir_free(comment1);
 	mir_free(comment2);
-	return TranslateTS( mir_a2t(commentFix));
+	return TranslateW( mir_a2u(commentFix));
 }
 
 int PopupShow(PLUGIN_OPTIONS* pluginOptions, MCONTACT hContact, MEVENT hEvent, UINT eventType)
 {
-	TCHAR* sampleEvent;
+	wchar_t* sampleEvent;
 	long iSeconds;
 
 	//there has to be a maximum number of popups shown at the same time
@@ -454,7 +429,7 @@ int PopupShow(PLUGIN_OPTIONS* pluginOptions, MCONTACT hContact, MEVENT hEvent, U
 	}
 
 	//get DBEVENTINFO with pBlob if preview is needed (when is test then is off)
-	DBEVENTINFO dbe = { sizeof(dbe) };
+	DBEVENTINFO dbe = {};
 	if (hEvent) {
 		if ((pluginOptions->bPreview || eventType == EVENTTYPE_ADDED || eventType == EVENTTYPE_AUTHREQUEST)) {
 			dbe.cbBlob = db_event_getBlobSize(hEvent);
@@ -490,12 +465,12 @@ int PopupShow(PLUGIN_OPTIONS* pluginOptions, MCONTACT hContact, MEVENT hEvent, U
 
 	// if hContact is NULL, && hEvent is NULL then popup is only Test
 	if ((hContact == NULL) && (hEvent == NULL)) {
-		_tcsncpy(pudw.lptzContactName, TranslateT("Plugin Test"), MAX_CONTACTNAME);
-		_tcsncpy(pudw.lptzText, TranslateTS(sampleEvent), MAX_SECONDLINE);
+		wcsncpy(pudw.lptzContactName, TranslateT("Plugin Test"), MAX_CONTACTNAME);
+		wcsncpy(pudw.lptzText, TranslateW(sampleEvent), MAX_SECONDLINE);
 	}
 	else { // get the needed event data
-		_tcsncpy(pudw.lptzContactName, (TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0), MAX_CONTACTNAME);
-		_tcsncpy(pudw.lptzText, ptrT(GetEventPreview(&dbe)), MAX_SECONDLINE);
+		wcsncpy(pudw.lptzContactName, (wchar_t*)pcli->pfnGetContactDisplayName(hContact, 0), MAX_CONTACTNAME);
+		wcsncpy(pudw.lptzText, ptrW(GetEventPreview(&dbe)), MAX_SECONDLINE);
 	}
 
 	PopupCount++;
@@ -538,14 +513,14 @@ int PopupUpdate(MCONTACT hContact, MEVENT hEvent)
 		SetTimer(pdata->hWnd, TIMER_TO_ACTION, pdata->iSeconds * 1000, NULL);
 	}
 
-	TCHAR lpzText[MAX_SECONDLINE*2] = _T("\0\0");
+	wchar_t lpzText[MAX_SECONDLINE*2] = L"\0\0";
 	if (pdata->pluginOptions->bShowHeaders)
-		mir_sntprintf(lpzText, TranslateT("[b]Number of new message(s): %d[/b]\n"), pdata->countEvent);
+		mir_snwprintf(lpzText, TranslateT("[b]Number of new message(s): %d[/b]\n"), pdata->countEvent);
 
 	int doReverse = pdata->pluginOptions->bShowON;
 
 	if ((pdata->firstShowEventData != pdata->firstEventData && doReverse) || (pdata->firstShowEventData != pdata->lastEventData && !doReverse))
-		mir_sntprintf(lpzText, _T("%s...\n"), lpzText);
+		mir_snwprintf(lpzText, L"%s...\n", lpzText);
 
 	//take the active event as starting one
 	EVENT_DATA_EX *eventData = pdata->firstShowEventData;
@@ -557,8 +532,7 @@ int PopupUpdate(MCONTACT hContact, MEVENT hEvent)
 		iEvent++;
 
 		//get DBEVENTINFO with pBlob if preview is needed (when is test then is off)
-		DBEVENTINFO dbe = {0};
-		dbe.cbSize = sizeof(dbe);
+		DBEVENTINFO dbe = {};
 		dbe.pBlob = NULL;
 		dbe.cbBlob = 0;
 		if (pdata->pluginOptions->bPreview && eventData->hEvent) {
@@ -570,20 +544,20 @@ int PopupUpdate(MCONTACT hContact, MEVENT hEvent)
 			db_event_get(eventData->hEvent, &dbe);
 
 		if (pdata->pluginOptions->bShowDate || pdata->pluginOptions->bShowTime) {
-			TCHAR timestamp[MAX_DATASIZE];
-			TCHAR formatTime[MAX_DATASIZE];
+			wchar_t timestamp[MAX_DATASIZE];
+			wchar_t formatTime[MAX_DATASIZE];
 			if (pdata->pluginOptions->bShowDate)
-				_tcsncpy(formatTime, _T("%Y.%m.%d"), _countof(formatTime));
+				wcsncpy(formatTime, L"%Y.%m.%d", _countof(formatTime));
 			else if (pdata->pluginOptions->bShowTime)
-				mir_tstrncat(formatTime, _T(" %H:%M"), _countof(formatTime) - mir_tstrlen(formatTime));
+				mir_wstrncat(formatTime, L" %H:%M", _countof(formatTime) - mir_wstrlen(formatTime));
 			time_t localTime = dbe.timestamp;
-			_tcsftime(timestamp, _countof(timestamp), formatTime, localtime(&localTime));
-			mir_sntprintf(lpzText, _T("%s[b][i]%s[/i][/b]\n"), lpzText, timestamp);
+			wcsftime(timestamp, _countof(timestamp), formatTime, localtime(&localTime));
+			mir_snwprintf(lpzText, L"%s[b][i]%s[/i][/b]\n", lpzText, timestamp);
 		}
 
 		// prepare event preview
-		TCHAR* szEventPreview = GetEventPreview(&dbe);
-		mir_sntprintf(lpzText, _T("%s%s"), lpzText, szEventPreview);
+		wchar_t* szEventPreview = GetEventPreview(&dbe);
+		mir_snwprintf(lpzText, L"%s%s", lpzText, szEventPreview);
 		mir_free(szEventPreview);
 		
 		if (dbe.pBlob)
@@ -595,11 +569,11 @@ int PopupUpdate(MCONTACT hContact, MEVENT hEvent)
 		else if ((iEvent >= pdata->pluginOptions->iNumberMsg && pdata->pluginOptions->iNumberMsg) || !eventData->prev)
 			break;
 
-		mir_sntprintf(lpzText, _T("%s\n"), lpzText);
+		mir_snwprintf(lpzText, L"%s\n", lpzText);
 	}
 
 	if ((doReverse && eventData->next) || (!doReverse && eventData->prev))
-		mir_sntprintf(lpzText, _T("%s\n..."), lpzText);
+		mir_snwprintf(lpzText, L"%s\n...", lpzText);
 
 	PUChangeTextT(pdata->hWnd, lpzText);
 	return 0;

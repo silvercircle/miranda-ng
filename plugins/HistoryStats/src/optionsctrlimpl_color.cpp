@@ -12,7 +12,7 @@ COLORREF OptionsCtrlImpl::Color::getColorValue()
 	return SendMessage(m_hColorWnd, CPM_GETCOLOUR, 0, 0);
 }
 
-OptionsCtrlImpl::Color::Color(OptionsCtrlImpl* pCtrl, Item* pParent, const TCHAR* szLabel, COLORREF crColor, DWORD dwFlags, INT_PTR dwData)
+OptionsCtrlImpl::Color::Color(OptionsCtrlImpl* pCtrl, Item* pParent, const wchar_t* szLabel, COLORREF crColor, DWORD dwFlags, INT_PTR dwData)
 	: Item(pCtrl, itColor, szLabel, dwFlags, dwData)
 	, m_hColorWnd(NULL)
 	, m_crColor(crColor)
@@ -54,7 +54,7 @@ void OptionsCtrlImpl::Color::onSelect()
 		DWORD dwStyle = WS_CHILD | WS_VISIBLE | WS_TABSTOP;
 
 		if (hTempWnd = CreateWindowEx(
-			0, _T(WNDCLASS_COLOURPICKER), NULL, dwStyle,
+			0, _A2W(WNDCLASS_COLOURPICKER), NULL, dwStyle,
 			r.left, r.top, r.right - r.left, r.bottom - r.top,
 			m_pCtrl->m_hTree, reinterpret_cast<HMENU>(ccColor), g_hInst, NULL))
 		{
@@ -130,7 +130,7 @@ void OptionsCtrlImpl::Color::childAdded(Item* pChild)
 	}
 }
 
-void OptionsCtrlImpl::Color::setLabel(const TCHAR* szLabel)
+void OptionsCtrlImpl::Color::setLabel(const wchar_t* szLabel)
 {
 	m_strLabel = szLabel;
 	

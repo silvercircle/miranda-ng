@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (с) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (с) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -296,7 +296,7 @@ static INT_PTR GetCountryByNumber(WPARAM wParam, LPARAM)
 		if ((int)wParam == countries[i].id)
 			return (INT_PTR)countries[i].szName;
 
-	return NULL;
+	return 0;
 }
 
 static INT_PTR GetCountryByISOCode(WPARAM wParam, LPARAM)
@@ -305,7 +305,7 @@ static INT_PTR GetCountryByISOCode(WPARAM wParam, LPARAM)
 		if ( mir_strcmpi((char*)wParam, countries[i].ISOcode) == 0)
 			return (INT_PTR)countries[i].szName;
 
-	return NULL;
+	return 0;
 }
 
 static INT_PTR GetCountryList(WPARAM wParam, LPARAM lParam)

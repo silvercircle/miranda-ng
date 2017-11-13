@@ -30,15 +30,9 @@
 #define CMIF_NOTOFFLIST        0x0040  // item won't appear on contacts that have the 'NotOnList' setting
 #define CMIF_UNMOVABLE         0x0080  // item's position cannot be changed
 #define CMIF_SYSTEM            0x0100  // item's presence & position cannot be changed
-							          
 #define CMIF_UNICODE           0x0200  // will use wchar_t* instead of char*
-#if defined(_UNICODE)
-#define CMIF_TCHAR CMIF_UNICODE
-#else
-#define CMIF_TCHAR 0
-#endif
-
 #define CMIF_KEEPUNTRANSLATED  0x0400 // don't translate a menu item
+#define CMIF_CUSTOM            0x0800 // custom menu item. doesn't exist in a code
 #define CMIF_DEFAULT           0x1000 // this menu item is the default one
 
 struct TMO_MenuItem
@@ -61,7 +55,7 @@ struct TMO_MenuItem
 	#define UNSET_UID(M) { MUUID tmp = MIID_LAST; M.uid = tmp; }
 #else
 	#define SET_UID(M,A,B,C,D1,D2,D3,D4,D5,D6,D7,D8) { M.uid = { A, B, C, {D1,D2,D3,D4,D5,D6,D7,D8}}; }
-#define UNSET_UID(M) { M.uid = MIID_LAST; }
+	#define UNSET_UID(M) { M.uid = MIID_LAST; }
 #endif
 
 #ifdef __cplusplus
@@ -131,7 +125,7 @@ EXTERN_C MIR_APP_DLL(HGENMENU) Menu_CreateRoot(int hMenuObject, LPCWSTR ptszName
 // wParam, lParam, return value as for WM_MEASUREITEM
 // See comments for clist/menumeasureitem
 
-EXTERN_C MIR_APP_DLL(BOOL) Menu_DrawItem(DRAWITEMSTRUCT *dis);
+EXTERN_C MIR_APP_DLL(BOOL) Menu_DrawItem(LPARAM);
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // enables or disables a menu item
@@ -164,13 +158,13 @@ EXTERN_C MIR_APP_DLL(int) Menu_GetItemInfo(HGENMENU hMenuItem, TMO_MenuItem &pIn
 // and clist/menudrawitem whne drawing a menu returned by one of the three menu
 // services below then it'll work but you won't get any icons
 
-EXTERN_C MIR_APP_DLL(BOOL) Menu_MeasureItem(MEASUREITEMSTRUCT *mis);
+EXTERN_C MIR_APP_DLL(BOOL) Menu_MeasureItem(LPARAM);
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // modify an existing menu item 
 // returns 0 on success, nonzero on failure
 
-EXTERN_C MIR_APP_DLL(int) Menu_ModifyItem(HGENMENU hMenuItem, const WCHAR *ptszName, HANDLE hIcon = INVALID_HANDLE_VALUE, int iFlags = -1);
+EXTERN_C MIR_APP_DLL(int) Menu_ModifyItem(HGENMENU hMenuItem, const wchar_t *ptszName, HANDLE hIcon = INVALID_HANDLE_VALUE, int iFlags = -1);
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Tries to process a keystroke
@@ -250,6 +244,7 @@ __forceinline int Menu_ConfigureObject(int hMenuObject, int iSetting, LPCSTR psz
 #define MCI_OPT_UNIQUENAME 1 // a unique name to menuitem(used to store it in database when enabled OPT_USERDEFINEDITEMS)
 #define MCI_OPT_HOTKEY     2 // DWORD value = MAKELONG(VK_*, VK_SHIFT)
 #define MCI_OPT_EXECPARAM  3 // INT_PTR or void*, associated with this item
+#define MCI_OPT_UID        4 // TMenuItem::uid as string like "2E407C55-5E89-4E83-9B79-15A803E7EE90"
 
 EXTERN_C MIR_APP_DLL(int) Menu_ConfigureItem(HGENMENU hItem, int iOption, INT_PTR value);
 

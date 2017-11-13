@@ -4,7 +4,7 @@ Jabber Protocol Plugin for Miranda NG
 
 Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void CJabberProto::SetMucConfig(HXML node, void *from)
 {
 	if (m_ThreadInfo && from) {
-		XmlNodeIq iq(_T("set"), SerialNext(), (TCHAR*)from);
+		XmlNodeIq iq(L"set", SerialNext(), (wchar_t*)from);
 		HXML query = iq << XQUERY(JABBER_FEAT_MUC_OWNER);
 		XmlAddChild(query, node);
 		m_ThreadInfo->send(iq);
@@ -42,24 +42,24 @@ void CJabberProto::SetMucConfig(HXML node, void *from)
 void CJabberProto::OnIqResultGetMuc(HXML iqNode, CJabberIqInfo*)
 {
 	debugLogA("<iq/> iqIdGetMuc");
-	LPCTSTR type = XmlGetAttrValue(iqNode, _T("type"));
-	if (type == NULL)
+	LPCTSTR type = XmlGetAttrValue(iqNode, L"type");
+	if (type == nullptr)
 		return;
-	LPCTSTR from = XmlGetAttrValue(iqNode, _T("from"));
-	if (from == NULL)
+	LPCTSTR from = XmlGetAttrValue(iqNode, L"from");
+	if (from == nullptr)
 		return;
 
-	if (!mir_tstrcmp(type, _T("result"))) {
-		HXML queryNode = XmlGetChild(iqNode , _T("query"));
-		if (queryNode != NULL) {
-			LPCTSTR str = XmlGetAttrValue(queryNode, _T("xmlns"));
-			if (!mir_tstrcmp(str, JABBER_FEAT_MUC_OWNER)) {
-				HXML xNode = XmlGetChild(queryNode , _T("x"));
-				if (xNode != NULL) {
-					str = XmlGetAttrValue(xNode, _T("xmlns"));
-					if (!mir_tstrcmp(str, JABBER_FEAT_DATA_FORMS))
+	if (!mir_wstrcmp(type, L"result")) {
+		HXML queryNode = XmlGetChild(iqNode, L"query");
+		if (queryNode != nullptr) {
+			LPCTSTR str = XmlGetAttrValue(queryNode, L"xmlns");
+			if (!mir_wstrcmp(str, JABBER_FEAT_MUC_OWNER)) {
+				HXML xNode = XmlGetChild(queryNode, L"x");
+				if (xNode != nullptr) {
+					str = XmlGetAttrValue(xNode, L"xmlns");
+					if (!mir_wstrcmp(str, JABBER_FEAT_DATA_FORMS))
 						//LaunchForm(xNode);
-						FormCreateDialog(xNode, _T("Jabber Conference Room Configuration"), &CJabberProto::SetMucConfig, mir_tstrdup(from));
+						FormCreateDialog(xNode, L"Jabber Conference Room Configuration", &CJabberProto::SetMucConfig, mir_wstrdup(from));
 				}
 			}
 		}
@@ -68,15 +68,14 @@ void CJabberProto::OnIqResultGetMuc(HXML iqNode, CJabberIqInfo*)
 
 static void sttFillJidList(HWND hwndDlg)
 {
-	TCHAR *filter = NULL;
-	if (GetWindowLongPtr(GetDlgItem(hwndDlg, IDC_FILTER), GWLP_USERDATA))
-	{
+	wchar_t *filter = nullptr;
+	if (GetWindowLongPtr(GetDlgItem(hwndDlg, IDC_FILTER), GWLP_USERDATA)) {
 		int filterLength = GetWindowTextLength(GetDlgItem(hwndDlg, IDC_FILTER)) + 1;
-		filter = (TCHAR *)_alloca(filterLength * sizeof(TCHAR));
+		filter = (wchar_t *)_alloca(filterLength * sizeof(wchar_t));
 		GetDlgItemText(hwndDlg, IDC_FILTER, filter, filterLength);
 	}
 
-	JABBER_MUC_JIDLIST_INFO *jidListInfo = (JABBER_MUC_JIDLIST_INFO *) GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
+	JABBER_MUC_JIDLIST_INFO *jidListInfo = (JABBER_MUC_JIDLIST_INFO *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
 	if (!jidListInfo)
 		return;
 
@@ -87,44 +86,44 @@ static void sttFillJidList(HWND hwndDlg)
 	LVITEM lvi;
 	lvi.mask = LVIF_PARAM;
 	lvi.iSubItem = 0;
-	for (int i=0; i<count; i++) {
+	for (int i = 0; i < count; i++) {
 		lvi.iItem = i;
 		if (ListView_GetItem(hwndList, &lvi) == TRUE)
-			if (lvi.lParam != -1 && lvi.lParam != NULL)
-				mir_free((void *) lvi.lParam);
+			if (lvi.lParam != -1 && lvi.lParam != 0)
+				mir_free((void *)lvi.lParam);
 	}
 	ListView_DeleteAllItems(hwndList);
 
 	// Populate displayed list from iqNode
-	TCHAR tszItemText[ JABBER_MAX_JID_LEN + 256 ];
+	wchar_t tszItemText[JABBER_MAX_JID_LEN + 256];
 	HXML iqNode = jidListInfo->iqNode;
-	if (iqNode != NULL) {
-		LPCTSTR from = XmlGetAttrValue(iqNode, _T("from"));
-		if (from != NULL) {
-			HXML queryNode = XmlGetChild(iqNode , _T("query"));
-			if (queryNode != NULL) {
+	if (iqNode != nullptr) {
+		LPCTSTR from = XmlGetAttrValue(iqNode, L"from");
+		if (from != nullptr) {
+			HXML queryNode = XmlGetChild(iqNode, L"query");
+			if (queryNode != nullptr) {
 				lvi.mask = LVIF_TEXT | LVIF_PARAM;
 				lvi.iSubItem = 0;
 				lvi.iItem = 0;
-				for (int i=0; ; i++) {
-					HXML itemNode = XmlGetChild(queryNode ,i);
+				for (int i = 0;; i++) {
+					HXML itemNode = XmlGetChild(queryNode, i);
 					if (!itemNode)
 						break;
 
-					LPCTSTR jid = XmlGetAttrValue(itemNode, _T("jid"));
-					if (jid != NULL) {
-						lvi.pszText = (TCHAR*)jid;
+					LPCTSTR jid = XmlGetAttrValue(itemNode, L"jid");
+					if (jid != nullptr) {
+						lvi.pszText = (wchar_t*)jid;
 						if (jidListInfo->type == MUC_BANLIST) {
-							LPCTSTR reason = XmlGetText(XmlGetChild(itemNode , _T("reason")));
-							if (reason != NULL) {
-								mir_sntprintf(tszItemText, _T("%s (%s)") , jid, reason);
+							LPCTSTR reason = XmlGetText(XmlGetChild(itemNode, L"reason"));
+							if (reason != nullptr) {
+								mir_snwprintf(tszItemText, L"%s (%s)", jid, reason);
 								lvi.pszText = tszItemText;
 							}
 						}
 						else if (jidListInfo->type == MUC_VOICELIST || jidListInfo->type == MUC_MODERATORLIST) {
-							LPCTSTR nick = XmlGetAttrValue(itemNode, _T("nick"));
-							if (nick != NULL) {
-								mir_sntprintf(tszItemText, _T("%s (%s)") , nick, jid);
+							LPCTSTR nick = XmlGetAttrValue(itemNode, L"nick");
+							if (nick != nullptr) {
+								mir_snwprintf(tszItemText, L"%s (%s)", nick, jid);
 								lvi.pszText = tszItemText;
 							}
 						}
@@ -132,7 +131,7 @@ static void sttFillJidList(HWND hwndDlg)
 						if (filter && *filter && !JabberStrIStr(lvi.pszText, filter))
 							continue;
 
-						lvi.lParam = (LPARAM)mir_tstrdup(jid);
+						lvi.lParam = (LPARAM)mir_wstrdup(jid);
 
 						ListView_InsertItem(hwndList, &lvi);
 						lvi.iItem++;
@@ -147,40 +146,51 @@ static void sttFillJidList(HWND hwndDlg)
 	ListView_InsertItem(hwndList, &lvi);
 
 	SendMessage(hwndList, WM_SETREDRAW, TRUE, 0);
-	RedrawWindow(hwndList, NULL, NULL, RDW_INVALIDATE);
+	RedrawWindow(hwndList, nullptr, nullptr, RDW_INVALIDATE);
 }
 
 static int sttJidListResizer(HWND, LPARAM, UTILRESIZECONTROL *urc)
 {
-	switch (urc->wId)
-	{
+	switch (urc->wId) {
 	case IDC_LIST:
-		return RD_ANCHORX_LEFT|RD_ANCHORY_TOP|RD_ANCHORX_WIDTH|RD_ANCHORY_HEIGHT;
+		return RD_ANCHORX_LEFT | RD_ANCHORY_TOP | RD_ANCHORX_WIDTH | RD_ANCHORY_HEIGHT;
 	case IDC_FILTER:
-		return RD_ANCHORX_LEFT|RD_ANCHORY_BOTTOM|RD_ANCHORX_WIDTH;
+		return RD_ANCHORX_LEFT | RD_ANCHORY_BOTTOM | RD_ANCHORX_WIDTH;
 	case IDC_BTN_FILTERRESET:
 	case IDC_BTN_FILTERAPPLY:
-		return RD_ANCHORX_RIGHT|RD_ANCHORY_BOTTOM;
+		return RD_ANCHORX_RIGHT | RD_ANCHORY_BOTTOM;
 	}
-	return RD_ANCHORX_LEFT|RD_ANCHORY_TOP;
+	return RD_ANCHORX_LEFT | RD_ANCHORY_TOP;
 }
+
+struct
+{
+	int idc;
+	char *title;
+	char *icon;
+	bool push;
+}
+static buttons[] =
+{
+	{ IDC_BTN_FILTERAPPLY, "Apply filter", "sd_filter_apply", false },
+	{ IDC_BTN_FILTERRESET, "Reset filter", "sd_filter_reset", false },
+};
 
 static INT_PTR CALLBACK JabberMucJidListDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	JABBER_MUC_JIDLIST_INFO *dat = (JABBER_MUC_JIDLIST_INFO*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
 	HWND hwndList = GetDlgItem(hwndDlg, IDC_LIST);
+	wchar_t title[256];
 
-	switch(msg) {
+	switch (msg) {
 	case WM_INITDIALOG:
+		TranslateDialogDefault(hwndDlg);
+		ListView_SetExtendedListViewStyle(hwndList, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 		{
-			LVCOLUMN lvc;
 			RECT rc;
-
-			TranslateDialogDefault(hwndDlg);
-
-			ListView_SetExtendedListViewStyle(hwndList, LVS_EX_FULLROWSELECT|LVS_EX_GRIDLINES);
 			GetClientRect(hwndList, &rc);
-			//rc.right -= GetSystemMetrics(SM_CXVSCROLL);
+
+			LVCOLUMN lvc;
 			lvc.mask = LVCF_WIDTH;
 			lvc.cx = rc.right - 20;
 			ListView_InsertColumn(hwndList, 0, &lvc);
@@ -189,19 +199,7 @@ static INT_PTR CALLBACK JabberMucJidListDlgProc(HWND hwndDlg, UINT msg, WPARAM w
 			SendMessage(hwndDlg, WM_JABBER_REFRESH, 0, lParam);
 			dat = (JABBER_MUC_JIDLIST_INFO*)lParam;
 
-			static struct
-			{
-				int idc;
-				char *title;
-				char *icon;
-				bool push;
-			} buttons[] =
-			{
-				{IDC_BTN_FILTERAPPLY,	"Apply filter",		"sd_filter_apply",	false},
-				{IDC_BTN_FILTERRESET,	"Reset filter",		"sd_filter_reset",	false},
-			};
-			for (int i=0; i < _countof(buttons); i++)
-			{
+			for (int i = 0; i < _countof(buttons); i++) {
 				SendDlgItemMessage(hwndDlg, buttons[i].idc, BM_SETIMAGE, IMAGE_ICON, (LPARAM)dat->ppro->LoadIconEx(buttons[i].icon));
 				SendDlgItemMessage(hwndDlg, buttons[i].idc, BUTTONSETASFLATBTN, TRUE, 0);
 				SendDlgItemMessage(hwndDlg, buttons[i].idc, BUTTONADDTOOLTIP, (WPARAM)buttons[i].title, 0);
@@ -209,7 +207,7 @@ static INT_PTR CALLBACK JabberMucJidListDlgProc(HWND hwndDlg, UINT msg, WPARAM w
 					SendDlgItemMessage(hwndDlg, buttons[i].idc, BUTTONSETASPUSHBTN, TRUE, 0);
 			}
 
-			Utils_RestoreWindowPosition(hwndDlg, NULL, dat->ppro->m_szModuleName, "jidListWnd_");
+			Utils_RestoreWindowPosition(hwndDlg, 0, dat->ppro->m_szModuleName, "jidListWnd_");
 		}
 		return TRUE;
 
@@ -227,28 +225,27 @@ static INT_PTR CALLBACK JabberMucJidListDlgProc(HWND hwndDlg, UINT msg, WPARAM w
 	case WM_JABBER_REFRESH:
 		{
 			// lParam is (JABBER_MUC_JIDLIST_INFO *)
-			TCHAR title[256];
 
 			// Clear current GWL_USERDATA, if any
-			if (dat != NULL)
+			if (dat != nullptr)
 				delete dat;
 
 			// Set new GWL_USERDATA
-			dat = (JABBER_MUC_JIDLIST_INFO *) lParam;
-			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR) dat);
+			dat = (JABBER_MUC_JIDLIST_INFO *)lParam;
+			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)dat);
 
 			// Populate displayed list from iqNode
-			mir_tstrncpy(title, TranslateT("JID List"), _countof(title));
-			if ((dat=(JABBER_MUC_JIDLIST_INFO *) lParam) != NULL) {
+			mir_wstrncpy(title, TranslateT("JID List"), _countof(title));
+			if ((dat = (JABBER_MUC_JIDLIST_INFO *)lParam) != nullptr) {
 				HXML iqNode = dat->iqNode;
-				if (iqNode != NULL) {
-					LPCTSTR from = XmlGetAttrValue(iqNode, _T("from"));
-					if (from != NULL) {
-						dat->roomJid = mir_tstrdup(from);
-						HXML queryNode = XmlGetChild(iqNode , _T("query"));
-						if (queryNode != NULL) {
-							TCHAR *localFrom = mir_tstrdup(from);
-							mir_sntprintf(title, TranslateT("%s, %d items (%s)"),
+				if (iqNode != nullptr) {
+					LPCTSTR from = XmlGetAttrValue(iqNode, L"from");
+					if (from != nullptr) {
+						dat->roomJid = mir_wstrdup(from);
+						HXML queryNode = XmlGetChild(iqNode, L"query");
+						if (queryNode != nullptr) {
+							wchar_t *localFrom = mir_wstrdup(from);
+							mir_snwprintf(title, TranslateT("%s, %d items (%s)"),
 								(dat->type == MUC_VOICELIST) ? TranslateT("Voice List") :
 								(dat->type == MUC_MEMBERLIST) ? TranslateT("Member List") :
 								(dat->type == MUC_MODERATORLIST) ? TranslateT("Moderator List") :
@@ -272,25 +269,24 @@ static INT_PTR CALLBACK JabberMucJidListDlgProc(HWND hwndDlg, UINT msg, WPARAM w
 			switch (((LPNMHDR)lParam)->code) {
 			case NM_CUSTOMDRAW:
 				{
-					NMLVCUSTOMDRAW *nm = (NMLVCUSTOMDRAW *) lParam;
+					NMLVCUSTOMDRAW *nm = (NMLVCUSTOMDRAW *)lParam;
 
 					switch (nm->nmcd.dwDrawStage) {
 					case CDDS_PREPAINT:
 					case CDDS_ITEMPREPAINT:
 						SetWindowLongPtr(hwndDlg, DWLP_MSGRESULT, CDRF_NOTIFYSUBITEMDRAW);
 						return TRUE;
-					case CDDS_SUBITEM|CDDS_ITEMPREPAINT:
+					case CDDS_SUBITEM | CDDS_ITEMPREPAINT:
 						{
 							RECT rc;
 							ListView_GetSubItemRect(nm->nmcd.hdr.hwndFrom, nm->nmcd.dwItemSpec, nm->iSubItem, LVIR_LABEL, &rc);
 							if (nm->iSubItem == 1) {
 								HICON hIcon;
 								if (nm->nmcd.lItemlParam == -1)
-									hIcon = (HICON)LoadImage(hInst, MAKEINTRESOURCE(IDI_ADDCONTACT), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), 0);
+									hIcon = g_LoadIconEx("addcontact");
 								else
-									hIcon = (HICON)LoadImage(hInst, MAKEINTRESOURCE(IDI_DELETE), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), 0);
-								DrawIconEx(nm->nmcd.hdc, (rc.left+rc.right-GetSystemMetrics(SM_CXSMICON))/2, (rc.top+rc.bottom-GetSystemMetrics(SM_CYSMICON))/2,hIcon, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), 0, GetSysColorBrush(COLOR_WINDOW), DI_NORMAL);
-								DestroyIcon(hIcon);
+									hIcon = g_LoadIconEx("delete");
+								DrawIconEx(nm->nmcd.hdc, (rc.left + rc.right - GetSystemMetrics(SM_CXSMICON)) / 2, (rc.top + rc.bottom - GetSystemMetrics(SM_CYSMICON)) / 2, hIcon, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), 0, GetSysColorBrush(COLOR_WINDOW), DI_NORMAL);
 								SetWindowLongPtr(hwndDlg, DWLP_MSGRESULT, CDRF_SKIPDEFAULT);
 								return TRUE;
 							}
@@ -298,18 +294,19 @@ static INT_PTR CALLBACK JabberMucJidListDlgProc(HWND hwndDlg, UINT msg, WPARAM w
 					}
 				}
 				break;
+			
 			case NM_CLICK:
 				{
-					NMLISTVIEW *nm = (NMLISTVIEW *) lParam;
+					NMLISTVIEW *nm = (NMLISTVIEW *)lParam;
 					LVITEM lvi;
 					LVHITTESTINFO hti;
-					TCHAR text[128];
+					wchar_t text[128];
 
 					if (nm->iSubItem < 1)
 						break;
 
-					hti.pt.x = (short) LOWORD(GetMessagePos());
-					hti.pt.y = (short) HIWORD(GetMessagePos());
+					hti.pt.x = (short)LOWORD(GetMessagePos());
+					hti.pt.y = (short)HIWORD(GetMessagePos());
 					ScreenToClient(nm->hdr.hwndFrom, &hti.pt);
 					if (ListView_SubItemHitTest(nm->hdr.hwndFrom, &hti) == -1)
 						break;
@@ -324,16 +321,16 @@ static INT_PTR CALLBACK JabberMucJidListDlgProc(HWND hwndDlg, UINT msg, WPARAM w
 					lvi.cchTextMax = _countof(text);
 					ListView_GetItem(nm->hdr.hwndFrom, &lvi);
 					if (lvi.lParam == -1) {
-						CMString szBuffer(dat->type2str());
-						if (!dat->ppro->EnterString(szBuffer, NULL, ESF_COMBO, "gcAddNick_"))
+						CMStringW szBuffer(dat->type2str());
+						if (!dat->ppro->EnterString(szBuffer, nullptr, ESF_COMBO, "gcAddNick_"))
 							break;
 
 						// Trim leading and trailing whitespaces
 						szBuffer.Trim();
 						if (szBuffer.IsEmpty())
 							break;
-						
-						CMString rsn(dat->type2str());
+
+						CMStringW rsn(dat->type2str());
 						if (dat->type == MUC_BANLIST) {
 							dat->ppro->EnterString(rsn, TranslateT("Reason to ban"), ESF_COMBO, "gcAddReason_");
 							if (szBuffer)
@@ -345,29 +342,30 @@ static INT_PTR CALLBACK JabberMucJidListDlgProc(HWND hwndDlg, UINT msg, WPARAM w
 					}
 					else {
 						//delete
-						TCHAR msgText[128];
+						wchar_t msgText[128];
 
-						mir_sntprintf(msgText, TranslateT("Removing %s?"), text);
-						if (MessageBox(hwndDlg, msgText, dat->type2str(), MB_YESNO|MB_SETFOREGROUND) == IDYES) {
-							dat->ppro->DeleteMucListItem(dat, (TCHAR*)lvi.lParam);
+						mir_snwprintf(msgText, TranslateT("Removing %s?"), text);
+						if (MessageBox(hwndDlg, msgText, dat->type2str(), MB_YESNO | MB_SETFOREGROUND) == IDYES) {
+							dat->ppro->DeleteMucListItem(dat, (wchar_t*)lvi.lParam);
 							mir_free((void *)lvi.lParam);
 							ListView_DeleteItem(nm->hdr.hwndFrom, hti.iItem);
-				}	}	}
+						}
+					}
+				}
 				break;
 			}
 			break;
 		}
 		break;
+
 	case WM_COMMAND:
 		if ((LOWORD(wParam) == IDC_BTN_FILTERAPPLY) ||
-			((LOWORD(wParam) == IDOK) && (GetFocus() == GetDlgItem(hwndDlg, IDC_FILTER))))
-		{
+			((LOWORD(wParam) == IDOK) && (GetFocus() == GetDlgItem(hwndDlg, IDC_FILTER)))) {
 			SetWindowLongPtr(GetDlgItem(hwndDlg, IDC_FILTER), GWLP_USERDATA, 1);
 			sttFillJidList(hwndDlg);
 		}
 		else if ((LOWORD(wParam) == IDC_BTN_FILTERRESET) ||
-			((LOWORD(wParam) == IDCANCEL) && (GetFocus() == GetDlgItem(hwndDlg, IDC_FILTER))))
-		{
+			((LOWORD(wParam) == IDCANCEL) && (GetFocus() == GetDlgItem(hwndDlg, IDC_FILTER)))) {
 			SetWindowLongPtr(GetDlgItem(hwndDlg, IDC_FILTER), GWLP_USERDATA, 0);
 			sttFillJidList(hwndDlg);
 		}
@@ -381,35 +379,33 @@ static INT_PTR CALLBACK JabberMucJidListDlgProc(HWND hwndDlg, UINT msg, WPARAM w
 			int count = ListView_GetItemCount(hwndList);
 			lvi.mask = LVIF_PARAM;
 			lvi.iSubItem = 0;
-			for (int i=0; i<count; i++) {
+			for (int i = 0; i < count; i++) {
 				lvi.iItem = i;
-				if (ListView_GetItem(hwndList, &lvi) == TRUE) {
-					if (lvi.lParam != -1 && lvi.lParam != NULL) {
-						mir_free((void *) lvi.lParam);
-					}
-				}
+				if (ListView_GetItem(hwndList, &lvi) == TRUE)
+					if (lvi.lParam != -1 && lvi.lParam != 0)
+						mir_free((void *)lvi.lParam);
 			}
 			ListView_DeleteAllItems(hwndList);
 
 			CJabberProto *ppro = dat->ppro;
 			switch (dat->type) {
 			case MUC_VOICELIST:
-				ppro->m_hwndMucVoiceList = NULL;
+				ppro->m_hwndMucVoiceList = nullptr;
 				break;
 			case MUC_MEMBERLIST:
-				ppro->m_hwndMucMemberList = NULL;
+				ppro->m_hwndMucMemberList = nullptr;
 				break;
 			case MUC_MODERATORLIST:
-				ppro->m_hwndMucModeratorList = NULL;
+				ppro->m_hwndMucModeratorList = nullptr;
 				break;
 			case MUC_BANLIST:
-				ppro->m_hwndMucBanList = NULL;
+				ppro->m_hwndMucBanList = nullptr;
 				break;
 			case MUC_ADMINLIST:
-				ppro->m_hwndMucAdminList = NULL;
+				ppro->m_hwndMucAdminList = nullptr;
 				break;
 			case MUC_OWNERLIST:
-				ppro->m_hwndMucOwnerList = NULL;
+				ppro->m_hwndMucOwnerList = nullptr;
 				break;
 			}
 
@@ -419,8 +415,8 @@ static INT_PTR CALLBACK JabberMucJidListDlgProc(HWND hwndDlg, UINT msg, WPARAM w
 
 	case WM_DESTROY:
 		// Clear GWL_USERDATA
-		if (dat != NULL) {
-			Utils_SaveWindowPosition(hwndDlg, NULL, dat->ppro->m_szModuleName, "jidListWnd_");
+		if (dat != nullptr) {
+			Utils_SaveWindowPosition(hwndDlg, 0, dat->ppro->m_szModuleName, "jidListWnd_");
 			delete dat;
 		}
 		break;
@@ -431,19 +427,19 @@ static INT_PTR CALLBACK JabberMucJidListDlgProc(HWND hwndDlg, UINT msg, WPARAM w
 static void CALLBACK JabberMucJidListCreateDialogApcProc(void* param)
 {
 	JABBER_MUC_JIDLIST_INFO *jidListInfo = (JABBER_MUC_JIDLIST_INFO *)param;
-	if (jidListInfo == NULL)
+	if (jidListInfo == nullptr)
 		return;
 
 	HXML iqNode = jidListInfo->iqNode;
-	if (iqNode == NULL)
+	if (iqNode == nullptr)
 		return;
 
-	LPCTSTR from  = XmlGetAttrValue(iqNode, _T("from"));
-	if (from == NULL)
+	LPCTSTR from = XmlGetAttrValue(iqNode, L"from");
+	if (from == nullptr)
 		return;
 
-	HXML queryNode = XmlGetChild(iqNode , _T("query"));
-	if (queryNode == NULL)
+	HXML queryNode = XmlGetChild(iqNode, L"query");
+	if (queryNode == nullptr)
 		return;
 
 	CJabberProto *ppro = jidListInfo->ppro;
@@ -472,7 +468,7 @@ static void CALLBACK JabberMucJidListCreateDialogApcProc(void* param)
 		return;
 	}
 
-	if (*pHwndJidList != NULL && IsWindow(*pHwndJidList)) {
+	if (*pHwndJidList != nullptr && IsWindow(*pHwndJidList)) {
 		SetForegroundWindow(*pHwndJidList);
 		SendMessage(*pHwndJidList, WM_JABBER_REFRESH, 0, (LPARAM)jidListInfo);
 	}
@@ -481,17 +477,17 @@ static void CALLBACK JabberMucJidListCreateDialogApcProc(void* param)
 
 void CJabberProto::OnIqResultMucGetJidList(HXML iqNode, JABBER_MUC_JIDLIST_TYPE listType)
 {
-	LPCTSTR type = XmlGetAttrValue(iqNode, _T("type"));
-	if (type == NULL)
+	LPCTSTR type = XmlGetAttrValue(iqNode, L"type");
+	if (type == nullptr)
 		return;
 
-	if (!mir_tstrcmp(type, _T("result"))) {
+	if (!mir_wstrcmp(type, L"result")) {
 		JABBER_MUC_JIDLIST_INFO *jidListInfo = new JABBER_MUC_JIDLIST_INFO;
-		if (jidListInfo != NULL) {
+		if (jidListInfo != nullptr) {
 			jidListInfo->type = listType;
 			jidListInfo->ppro = this;
-			jidListInfo->roomJid = NULL;	// Set in the dialog procedure
-			if ((jidListInfo->iqNode = xmlCopyNode(iqNode)) != NULL)
+			jidListInfo->roomJid = nullptr;	// Set in the dialog procedure
+			if ((jidListInfo->iqNode = xmlCopyNode(iqNode)) != nullptr)
 				CallFunctionAsync(JabberMucJidListCreateDialogApcProc, jidListInfo);
 			else
 				mir_free(jidListInfo);
@@ -543,9 +539,9 @@ JABBER_MUC_JIDLIST_INFO::~JABBER_MUC_JIDLIST_INFO()
 	mir_free(roomJid);
 }
 
-TCHAR* JABBER_MUC_JIDLIST_INFO::type2str() const
+wchar_t* JABBER_MUC_JIDLIST_INFO::type2str() const
 {
-	switch(type) {
+	switch (type) {
 		case MUC_VOICELIST:     return TranslateT("Voice List");
 		case MUC_MEMBERLIST:    return TranslateT("Member List");
 		case MUC_MODERATORLIST: return TranslateT("Moderator List");

@@ -20,7 +20,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 #include "job_generic.h"
-#include "..\..\libs\zlib\src\zip.h"
+#include "../../libs/zlib/src/zip.h"
 
 class PackerJob : public GenericJob
 {
@@ -37,7 +37,7 @@ private:
 	static int iRunningJobCount;
 
 	static void waitingThread(void *arg); 
-	static uLong getFileTime(TCHAR *file, tm_zip *tmzip, uLong *dt);
+	static uLong getFileTime(wchar_t *file, tm_zip *tmzip, uLong *dt);
 
 	void pack(); 
 	void getZipFilePath();

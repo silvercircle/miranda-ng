@@ -2,13 +2,13 @@
 ;============================================================
 ;  File: Import.dll
 ;  Plugin: Import contacts and messages
-;  Version: 0.95.4.2
+;  Version: 0.95.4.3
 ;  Authors: Miranda team
 ;============================================================
 [Imports contacts and messages from another Miranda profile or from an external program.]
 Импортирует контакты и сообщения из других профилей Miranda NG или из сторонних программ.
 [Choose how you would like to import:]
-Выберите, откуда необходимо произвести импорт данных:
+Выберите, откуда произвести импорт данных:
 [From a Miranda NG database.]
 Из базы Miranda NG.
 [This wizard will help you import contacts and message history from another Miranda profile or from an external program.]
@@ -26,7 +26,7 @@
 [Import completed]
 Импорт завершён
 [If at a future date you wish to use the wizard again, you can make it load again by going to the Plugins section of the Options dialog box.]
-Если вам в будущем понадобится этот мастер, отметьте плагин import.dll в настройках (раздел "Плагины").
+Если вам в будущем понадобится этот мастер, включите плагин import.dll в разделе "Настройки -> Плагины".
 [Miranda has found Miranda profiles with the following names. Please select the one you wish to import, or click "Other Profile" if your profile is not listed, or if the list is empty.]
 Miranda нашла следующие профили. Выберите профиль из списка, или нажмите "Другой профиль", если вашего профиля нет в списке или список пустой.
 [&Other Profile...]
@@ -162,7 +162,7 @@ Miranda нашла следующие профили. Выберите проф�
 [Miranda Import]
 Импорт Miranda NG
 [Miranda NG database]
-База Miranda NG
+База данных Miranda NG
 [All Files]
 Все файлы
 [Skipping duplicate group %s.]

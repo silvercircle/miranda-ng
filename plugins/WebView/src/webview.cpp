@@ -50,9 +50,9 @@ void ChangeMenuItem1()
 	// Enable or Disable auto updates
 	LPCTSTR ptszName;
 	if (!db_get_b(NULL, MODULENAME, DISABLE_AUTOUPDATE_KEY, 0))
-		ptszName = LPGENT("Auto update enabled");
+		ptszName = LPGENW("Auto update enabled");
 	else
-		ptszName = LPGENT("Auto update disabled");
+		ptszName = LPGENW("Auto update disabled");
 
 	Menu_ModifyItem(hMenuItem1, ptszName, LoadIcon(hInst, MAKEINTRESOURCE(IDI_SITE)));
 }
@@ -63,8 +63,8 @@ void ChangeMenuItemCountdown()
 	// countdown
 	HICON hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_UPDATEALL));
 
-	TCHAR countername[100];
-	mir_sntprintf(countername, TranslateT("%d minutes to update"), db_get_dw(NULL, MODULENAME, COUNTDOWN_KEY, 0));
+	wchar_t countername[100];
+	mir_snwprintf(countername, TranslateT("%d minutes to update"), db_get_dw(NULL, MODULENAME, COUNTDOWN_KEY, 0));
 
 	Menu_ModifyItem(hMenuItemCountdown, countername, hIcon, CMIF_KEEPUNTRANSLATED);
 }
@@ -96,7 +96,7 @@ void TxtclrLoop()
 {
 	for (MCONTACT hContact = db_find_first(MODULENAME); hContact != NULL; hContact = db_find_next(hContact, MODULENAME)) {
 		HWND hwndDlg = WindowList_Find(hWindowList, hContact);
-		SetDlgItemText(hwndDlg, IDC_DATA, _T(""));
+		SetDlgItemText(hwndDlg, IDC_DATA, L"");
 		InvalidateRect(hwndDlg, NULL, 1);
 	}
 }
@@ -106,7 +106,7 @@ void BGclrLoop()
 {
 	for (MCONTACT hContact = db_find_first(MODULENAME); hContact != NULL; hContact = db_find_next(hContact, MODULENAME)) {
 		HWND hwndDlg = (WindowList_Find(hWindowList, hContact));
-		SetDlgItemText(hwndDlg, IDC_DATA, _T(""));
+		SetDlgItemText(hwndDlg, IDC_DATA, L"");
 		SendDlgItemMessage(hwndDlg, IDC_DATA, EM_SETBKGNDCOLOR, 0, BackgoundClr);
 		InvalidateRect(hwndDlg, NULL, 1);
 	}
@@ -173,8 +173,8 @@ int Doubleclick(WPARAM wParam, LPARAM)
 
 	int action = db_get_b(hContact, MODULENAME, DBLE_WIN_KEY, 1);
 	if (action == 0) {
-		ptrT url(db_get_tsa(hContact, MODULENAME, "URL"));
-		Utils_OpenUrlT(url);
+		ptrW url(db_get_wsa(hContact, MODULENAME, "URL"));
+		Utils_OpenUrlW(url);
 
 		db_set_w(hContact, MODULENAME, "Status", ID_STATUS_ONLINE);
 	}
@@ -222,7 +222,7 @@ int SendToRichEdit(HWND hWindow, char *truncated, COLORREF rgbText, COLORREF rgb
 	DWORD  italic = 0;
 	DWORD  underline = 0;
 
-	SetDlgItemText(hWindow, IDC_DATA, _T(""));
+	SetDlgItemText(hWindow, IDC_DATA, L"");
 
 	CHARFORMAT2 cfFM;
 	memset(&cfFM, 0, sizeof(cfFM));
@@ -240,11 +240,11 @@ int SendToRichEdit(HWND hWindow, char *truncated, COLORREF rgbText, COLORREF rgb
 
 	cfFM.dwEffects = bold | italic | underline;
 
-	if (!db_get_ts(NULL, MODULENAME, FONT_FACE_KEY, &dbv)) {
-		mir_tstrcpy(cfFM.szFaceName, dbv.ptszVal);
+	if (!db_get_ws(NULL, MODULENAME, FONT_FACE_KEY, &dbv)) {
+		mir_wstrcpy(cfFM.szFaceName, dbv.ptszVal);
 		db_free(&dbv);
 	}
-	else mir_tstrcpy(cfFM.szFaceName, Def_font_face);
+	else mir_wstrcpy(cfFM.szFaceName, Def_font_face);
 
 	HDC hDC = GetDC(hWindow);
 	cfFM.yHeight = (BYTE)MulDiv(abs(g_lf.lfHeight), 120, GetDeviceCaps(GetDC(hWindow), LOGPIXELSY)) * (db_get_b(NULL, MODULENAME, FONT_SIZE_KEY, 14));
@@ -295,16 +295,16 @@ static int OptInitialise(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT);
-	odp.ptszGroup = LPGENT("Network");
-	odp.ptszTitle = _T(MODULENAME);
+	odp.szGroup.a = LPGEN("Network");
+	odp.szTitle.a = MODULENAME;
 	odp.pfnDlgProc = DlgProcOpt;
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);
 
 	// if popup service exists
 	if ((ServiceExists(MS_POPUP_ADDPOPUPT))) {
 		odp.pszTemplate = MAKEINTRESOURCEA(IDD_POPUP);
-		odp.ptszGroup = LPGENT("Popups");
+		odp.szGroup.w = LPGENW("Popups");
 		odp.pfnDlgProc = DlgPopUpOpts;
 		Options_AddPage(wParam, &odp);
 	}
@@ -327,7 +327,7 @@ void FontSettings(void)
 	g_lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
 	g_lf.lfQuality = DEFAULT_QUALITY;
 	g_lf.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
-	mir_tstrcpy(g_lf.lfFaceName, Def_font_face);
+	mir_wstrcpy(g_lf.lfFaceName, Def_font_face);
 }
 
 /*****************************************************************************/
@@ -443,9 +443,9 @@ int OnTopMenuCommand(WPARAM, LPARAM, MCONTACT singlecontact)
 INT_PTR WebsiteMenuCommand(WPARAM wParam, LPARAM)
 {
 	MCONTACT hContact = wParam;
-	ptrT url(db_get_tsa(hContact, MODULENAME, "URL"));
+	ptrW url(db_get_wsa(hContact, MODULENAME, "URL"));
 	if (url)
-		Utils_OpenUrlT(url);
+		Utils_OpenUrlW(url);
 
 	db_set_w(hContact, MODULENAME, "Status", ID_STATUS_ONLINE);
 	return 0;

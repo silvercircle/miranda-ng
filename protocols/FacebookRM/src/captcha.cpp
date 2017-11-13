@@ -3,7 +3,7 @@
 Facebook plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2011-15 Robert Pösel
+Copyright © 2011-17 Robert Pösel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -39,8 +39,7 @@ static INT_PTR CALLBACK CaptchaFormDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam
 	switch (msg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIconByHandle(GetIconHandle("key"), TRUE));
-		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIconByHandle(GetIconHandle("key")));
+		Window_SetIcon_IcoLib(hwndDlg, GetIconHandle("key"));
 		params = (CAPTCHA_FORM_PARAMS*)lParam;
 
 		SetDlgItemText(hwndDlg, IDC_INSTRUCTION, TranslateT("Enter the text you see"));
@@ -95,8 +94,7 @@ static INT_PTR CALLBACK CaptchaFormDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam
 		break;
 
 	case WM_DESTROY:
-		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_BIG, 0));
-		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, 0));
+		Window_FreeIcon_IcoLib(hwndDlg);
 		break;
 	}
 	return FALSE;
@@ -112,7 +110,7 @@ bool FacebookProto::RunCaptchaForm(std::string captchaUrl, std::string &result)
 	req.szUrl = (char*)captchaUrl.c_str();
 	req.flags = NLHRF_NODUMPHEADERS;
 
-	NETLIBHTTPREQUEST *reply = (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)facy.handle_, (LPARAM)&req);
+	NETLIBHTTPREQUEST *reply = Netlib_HttpTransaction(facy.handle_, &req);
 	if (reply == NULL)
 		return false;
 

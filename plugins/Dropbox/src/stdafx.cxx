@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (C) 2012-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -16,3 +16,5 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "stdafx.h"
+
+ULONG FileTransferParam::hFileProcess = 1;

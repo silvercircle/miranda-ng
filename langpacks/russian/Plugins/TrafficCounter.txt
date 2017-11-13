@@ -31,8 +31,8 @@
 Сброс на умолчания
 [Popup timeout]
 Длительность окна
-[From Popup plugin]
-По умолчанию
+[From popup plugin]
+Из плагина вспл. окон
 [Custom]
 Настроить
 [Test]
@@ -58,9 +58,9 @@
 [Total traffic]
 Общий трафик
 [Current online]
-Текущий онлайн
+Текущее время в сети
 [Total online]
-Общий онлайн
+Общее время в сети
 [General]
 Общее
 [Draw frame as skin element]

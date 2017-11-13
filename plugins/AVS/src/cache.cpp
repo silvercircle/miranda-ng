@@ -75,7 +75,7 @@ CacheNode* FindAvatarInCache(MCONTACT hContact, bool add, bool findAny)
 	if (szProto == NULL || !db_get_b(NULL, AVS_MODULE, szProto, 1))
 		return NULL;
 
-	avatarCacheEntry tmp;
+	AVATARCACHEENTRY tmp;
 	tmp.hContact = hContact;
 
 	mir_cslock lck(cachecs);
@@ -125,23 +125,24 @@ void NotifyMetaAware(MCONTACT hContact, CacheNode *node, AVATARCACHEENTRY *ace)
 		// Fire the event for avatar history
 		node->dwFlags &= ~AVH_MUSTNOTIFY;
 		if (node->szFilename[0] != '\0') {
-			CONTACTAVATARCHANGEDNOTIFICATION cacn = { 0 };
+			CONTACTAVATARCHANGEDNOTIFICATION cacn = {};
 			cacn.cbSize = sizeof(CONTACTAVATARCHANGEDNOTIFICATION);
 			cacn.hContact = hContact;
 			cacn.format = node->pa_format;
-			_tcsncpy(cacn.filename, node->szFilename, MAX_PATH);
-			cacn.filename[MAX_PATH - 1] = 0;
+			wcsncpy_s(cacn.filename, node->szFilename, _TRUNCATE);
 
 			// Get hash
 			char *szProto = GetContactProto(hContact);
 			if (szProto != NULL) {
 				DBVARIANT dbv = { 0 };
 				if (!db_get_s(hContact, szProto, "AvatarHash", &dbv)) {
-					if (dbv.type == DBVT_TCHAR)
-						_tcsncpy_s(cacn.hash, dbv.ptszVal, _TRUNCATE);
+					if (dbv.type == DBVT_WCHAR)
+						wcsncpy_s(cacn.hash, dbv.ptszVal, _TRUNCATE);
+					else if (dbv.type == DBVT_ASCIIZ)
+						wcsncpy_s(cacn.hash, _A2T(dbv.pszVal), _TRUNCATE);
 					else if (dbv.type == DBVT_BLOB) {
 						ptrA szHash(mir_base64_encode(dbv.pbVal, dbv.cpbVal));
-						_tcsncpy_s(cacn.hash, _A2T(szHash), _TRUNCATE);
+						wcsncpy_s(cacn.hash, _A2T(szHash), _TRUNCATE);
 					}
 					db_free(&dbv);
 				}
@@ -149,9 +150,9 @@ void NotifyMetaAware(MCONTACT hContact, CacheNode *node, AVATARCACHEENTRY *ace)
 
 			// Default value
 			if (cacn.hash[0] == '\0')
-				mir_sntprintf(cacn.hash, _T("AVS-HASH-%x"), GetFileHash(cacn.filename));
+				mir_snwprintf(cacn.hash, L"AVS-HASH-%x", GetFileHash(cacn.filename));
 
-			NotifyEventHooks(hEventContactAvatarChanged, (WPARAM)cacn.hContact, (LPARAM)&cacn);
+			NotifyEventHooks(hEventContactAvatarChanged, hContact, (LPARAM)&cacn);
 		}
 		else NotifyEventHooks(hEventContactAvatarChanged, hContact, NULL);
 	}
@@ -166,7 +167,7 @@ void DeleteAvatarFromCache(MCONTACT hContact, bool bForever)
 	if (g_shutDown)
 		return;
 
-	avatarCacheEntry tmp;
+	AVATARCACHEENTRY tmp;
 	tmp.hContact = GetContactThatHaveTheAvatar(hContact);
 
 	mir_cslock lck(cachecs);
@@ -192,7 +193,7 @@ int SetAvatarAttribute(MCONTACT hContact, DWORD attrib, int mode)
 	if (g_shutDown)
 		return 0;
 
-	avatarCacheEntry tmp;
+	AVATARCACHEENTRY tmp;
 	tmp.hContact = hContact;
 
 	mir_cslock lck(cachecs);
@@ -212,6 +213,8 @@ int SetAvatarAttribute(MCONTACT hContact, DWORD attrib, int mode)
 
 void PicLoader(LPVOID)
 {
+	Thread_SetName("AVS: PicLoader");
+
 	DWORD dwDelay = db_get_dw(NULL, AVS_MODULE, "picloader_sleeptime", 80);
 
 	if (dwDelay < 30)

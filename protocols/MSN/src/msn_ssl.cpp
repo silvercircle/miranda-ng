@@ -1,7 +1,7 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
 
-Copyright (c) 2012-2014 Miranda NG Team
+Copyright (c) 2012-2017 Miranda NG Team
 Copyright (c) 2006-2012 Boris Krasnovskiy.
 Copyright (c) 2003-2005 George Hazan.
 Copyright (c) 2002-2003 Richard Hughes (original version).
@@ -67,6 +67,7 @@ char* CMsnProto::getSslResult(char** parUrl, const char* parAuthInfo, const char
 			nlhr.headers[nlhr.headersCount].szValue = fnd;
 
 			fnd = strchr(fnd, '\r');
+			if (fnd == NULL) break;
 			*fnd = 0;
 			hdrprs = fnd + 2;
 			++nlhr.headersCount;
@@ -75,8 +76,7 @@ char* CMsnProto::getSslResult(char** parUrl, const char* parAuthInfo, const char
 	}
 
 	// download the page
-	NETLIBHTTPREQUEST *nlhrReply = (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION,
-		(WPARAM)hNetlibUserHttps, (LPARAM)&nlhr);
+	NETLIBHTTPREQUEST *nlhrReply = Netlib_HttpTransaction(hNetlibUserHttps, &nlhr);
 
 	if (nlhrReply) {
 		hHttpsConnection = nlhrReply->nlc;
@@ -93,7 +93,7 @@ char* CMsnProto::getSslResult(char** parUrl, const char* parAuthInfo, const char
 		nlhrReply->dataLength = 0;
 		nlhrReply->pData = NULL;
 
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)nlhrReply);
+		Netlib_FreeHttpRequest(nlhrReply);
 	}
 	else
 		hHttpsConnection = NULL;
@@ -103,7 +103,7 @@ char* CMsnProto::getSslResult(char** parUrl, const char* parAuthInfo, const char
 	return result;
 }
 
-bool CMsnProto::getMyAvatarFile(char *url, TCHAR *fname)
+bool CMsnProto::getMyAvatarFile(char *url, wchar_t *fname)
 {
 	NETLIBHTTPREQUEST nlhr = { 0 };
 	bool result = true;
@@ -120,16 +120,14 @@ bool CMsnProto::getMyAvatarFile(char *url, TCHAR *fname)
 	nlhr.headers[0].szValue = (char*)MSN_USER_AGENT;
 
 	// download the page
-	NETLIBHTTPREQUEST *nlhrReply = (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION,
-		(WPARAM)hNetlibUserHttps, (LPARAM)&nlhr);
-
+	NETLIBHTTPREQUEST *nlhrReply = Netlib_HttpTransaction(hNetlibUserHttps, &nlhr);
 	if (nlhrReply) {
 		if (nlhrReply->resultCode == 200 && nlhrReply->dataLength)
 			MSN_SetMyAvatar(fname, nlhrReply->pData, nlhrReply->dataLength);
 		else
 			result = false;
 
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)nlhrReply);
+		Netlib_FreeHttpRequest(nlhrReply);
 	}
 	return result;
 }

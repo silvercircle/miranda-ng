@@ -31,7 +31,7 @@ Boston, MA 02111-1307, USA.
 #include <m_skin.h>
 #include <m_langpack.h>
 #include <m_options.h>
-#include <m_system_cpp.h>
+#include <m_system.h>
 #include <m_popup.h>
 #include <m_hotkeys.h>
 #include <m_netlib.h>
@@ -39,7 +39,6 @@ Boston, MA 02111-1307, USA.
 #include <m_assocmgr.h>
 #include <win2k.h>
 #include <m_pluginupdater.h>
-#include <m_autobackups.h>
 
 #include <m_folders.h>
 
@@ -47,7 +46,10 @@ Boston, MA 02111-1307, USA.
 #include "resource.h"
 
 #if MIRANDA_VER < 0x0A00
-#include "Compat\compat.h"
+	#include <m_system_cpp.h>
+	#include "Compat/compat.h"
+#else
+	#include <m_autobackups.h>
 #endif
 
 #include "Notifications.h"
@@ -70,14 +72,14 @@ Boston, MA 02111-1307, USA.
 
 struct FILEURL
 {
-	TCHAR tszDownloadURL[2048];
-	TCHAR tszDiskPath[MAX_PATH];
+	wchar_t tszDownloadURL[2048];
+	wchar_t tszDiskPath[MAX_PATH];
 	int CRCsum;
 };
 
 struct FILEINFO
 {
-	TCHAR   tszOldName[MAX_PATH], tszNewName[MAX_PATH];
+	wchar_t   tszOldName[MAX_PATH], tszNewName[MAX_PATH];
 	FILEURL File;
 	BOOL    bEnabled, bDeleteOnly;
 };
@@ -86,7 +88,7 @@ typedef OBJLIST<FILEINFO> FILELIST;
 
 extern struct PlugOptions
 {
-	BYTE bUpdateOnStartup, bUpdateOnPeriod, bOnlyOnceADay, bForceRedownload, bSilentMode, bBackup;
+	BYTE bUpdateOnStartup, bUpdateOnPeriod, bOnlyOnceADay, bForceRedownload, bSilentMode, bBackup, bChangePlatform;
 	BOOL bSilent;
 
 	BYTE bPeriodMeasure;
@@ -104,21 +106,31 @@ extern struct PlugOptions
 	#define DEFAULT_ONLYONCEADAY      1
 #endif
 
+#define DEFAULT_UPDATE_URL                L"https://miranda-ng.org/distr/stable/x%d"
+#define DEFAULT_UPDATE_URL_TRUNK          L"https://miranda-ng.org/distr/x%d"
+#define DEFAULT_UPDATE_URL_TRUNK_SYMBOLS  L"https://miranda-ng.org/distr/pdb_x%d"
+
+
+#define FILENAME_X64 L"miranda64.exe"
+#define FILENAME_X32 L"miranda32.exe"
+
 #ifdef _WIN64
-	#define DEFAULT_UPDATE_URL                "http://miranda-ng.org/distr/stable/x64"
-	#define DEFAULT_UPDATE_URL_TRUNK          "http://miranda-ng.org/distr/x64"
-	#define DEFAULT_UPDATE_URL_TRUNK_SYMBOLS  "http://miranda-ng.org/distr/pdb_x64"
+    #define DEFAULT_BITS 64
+    #define DEFAULT_OPP_BITS 32
+	#define OLD_FILENAME FILENAME_X64
+	#define NEW_FILENAME FILENAME_X32
 #else
-	#define DEFAULT_UPDATE_URL                "http://miranda-ng.org/distr/stable/x32"
-	#define DEFAULT_UPDATE_URL_TRUNK          "http://miranda-ng.org/distr/x32"
-	#define DEFAULT_UPDATE_URL_TRUNK_SYMBOLS  "http://miranda-ng.org/distr/pdb_x32"
+    #define DEFAULT_BITS 32
+    #define DEFAULT_OPP_BITS 64
+	#define OLD_FILENAME FILENAME_X32
+	#define NEW_FILENAME FILENAME_X64
 #endif
 
-#define PLUGIN_INFO_URL	_T("http://miranda-ng.org/p/%s")
+#define PLUGIN_INFO_URL	L"https://miranda-ng.org/p/%s"
 
-#define DEFAULT_UPDATE_URL_OLD                "http://miranda-ng.org/distr/stable/x%platform%"
-#define DEFAULT_UPDATE_URL_TRUNK_OLD          "http://miranda-ng.org/distr/x%platform%"
-#define DEFAULT_UPDATE_URL_TRUNK_SYMBOLS_OLD  "http://miranda-ng.org/distr/pdb_x%platform%"
+#define DEFAULT_UPDATE_URL_OLD                "https://miranda-ng.org/distr/stable/x%platform%"
+#define DEFAULT_UPDATE_URL_TRUNK_OLD          "https://miranda-ng.org/distr/x%platform%"
+#define DEFAULT_UPDATE_URL_TRUNK_SYMBOLS_OLD  "https://miranda-ng.org/distr/pdb_x%platform%"
 
 #define UPDATE_MODE_CUSTOM			0
 #define UPDATE_MODE_STABLE			1
@@ -133,7 +145,9 @@ extern struct PlugOptions
 #define DB_SETTING_RESTART_COUNT	"RestartCount"
 #define DB_SETTING_LAST_UPDATE		"LastUpdate"
 #define DB_SETTING_DONT_SWITCH_TO_STABLE		"DontSwitchToStable"
+#define DB_SETTING_CHANGEPLATFORM	"ChangePlatform"
 #define DB_MODULE_FILES				MODNAME "Files"
+#define DB_MODULE_NEW_FILES         MODNAME "NewFiles"
 
 #define MAX_RETRIES			3
 
@@ -146,9 +160,10 @@ using namespace std;
 extern HINSTANCE hInst;
 
 extern DWORD g_mirandaVersion;
-extern TCHAR g_tszRoot[MAX_PATH], g_tszTempPath[MAX_PATH];
+extern wchar_t g_tszRoot[MAX_PATH], g_tszTempPath[MAX_PATH];
 extern aPopups PopupsList[POPUPS];
-extern HANDLE hPipe, hNetlibUser;
+extern HANDLE hPipe;
+extern HNETLIBUSER hNetlibUser;
 #if MIRANDA_VER >= 0x0A00
 extern IconItemT iconList[];
 #endif
@@ -176,7 +191,7 @@ public:
 struct ServListEntry
 {
 	ServListEntry(const char* _name, const char* _hash, int _crc) :
-		m_name( mir_a2t(_name)),
+		m_name( mir_a2u(_name)),
 		m_crc(_crc)
 	{
 		strncpy(m_szHash, _hash, sizeof(m_szHash));
@@ -187,7 +202,7 @@ struct ServListEntry
 		mir_free(m_name);
 	}
 
-	TCHAR *m_name;
+	wchar_t *m_name;
 	DWORD  m_crc;
 	char   m_szHash[32+1];
 };
@@ -211,13 +226,13 @@ void  UnloadCheck();
 void  UnloadListNew();
 void  UnloadNetlib();
 
-void  BackupFile(TCHAR *ptszSrcFileName, TCHAR *ptszBackFileName);
+void  BackupFile(wchar_t *ptszSrcFileName, wchar_t *ptszBackFileName);
 
-bool  ParseHashes(const TCHAR *ptszUrl, ptrT &baseUrl, SERVLIST &arHashes);
+bool  ParseHashes(const wchar_t *ptszUrl, ptrW &baseUrl, SERVLIST &arHashes);
 int   CompareHashes(const ServListEntry *p1, const ServListEntry *p2);
 
-TCHAR* GetDefaultUrl();
-bool   DownloadFile(FILEURL *pFileURL, HANDLE &nlc);
+wchar_t* GetDefaultUrl();
+bool   DownloadFile(FILEURL *pFileURL, HNETLIBCONN &nlc);
 
 void  ShowPopup(LPCTSTR Title, LPCTSTR Text, int Number);
 void  __stdcall RestartMe(void*);
@@ -225,19 +240,19 @@ void  __stdcall OpenPluginOptions(void*);
 void  CheckUpdateOnStartup();
 void  InitTimer(void *type);
 
-bool unzip(const TCHAR *ptszZipFile, TCHAR *ptszDestPath, TCHAR *ptszBackPath,bool ch);
+bool unzip(const wchar_t *ptszZipFile, wchar_t *ptszDestPath, wchar_t *ptszBackPath,bool ch);
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int CalculateModuleHash(const TCHAR *tszFileName, char *dest);
+int CalculateModuleHash(const wchar_t *tszFileName, char *dest);
 
 BOOL IsProcessElevated();
 bool PrepareEscalation();
 
-int SafeCreateDirectory(const TCHAR *ptszDirName);
-int SafeCopyFile(const TCHAR *ptszSrc, const TCHAR *ptszDst);
-int SafeMoveFile(const TCHAR *ptszSrc, const TCHAR *ptszDst);
-int SafeDeleteFile(const TCHAR *ptszSrc);
-int SafeCreateFilePath(TCHAR *pFolder);
+int SafeCreateDirectory(const wchar_t *ptszDirName);
+int SafeCopyFile(const wchar_t *ptszSrc, const wchar_t *ptszDst);
+int SafeMoveFile(const wchar_t *ptszSrc, const wchar_t *ptszDst);
+int SafeDeleteFile(const wchar_t *ptszSrc);
+int SafeCreateFilePath(wchar_t *pFolder);
 
 char *StrToLower(char *str);

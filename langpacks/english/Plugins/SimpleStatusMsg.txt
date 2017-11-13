@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: SimpleStatusMsg.dll
 ;  Plugin: Simple status message
-;  Version: 1.9.0.5
+;  Version: 1.9.0.6
 ;  Authors: Bartosz 'Dezeath' Bialek, Harven
 ;============================================================
 [Provides a simple way to set status and away messages.]
@@ -51,7 +51,7 @@
 [Show 'Status message...' item in status menu]
 [Clear History]
 [Clear Predefined]
-[* This feature is available only when using StartupStatus plugin.]
+[* This feature is available only when using StatusManager plugin.]
 [Status on startup]
 [Set status after]
 [milliseconds]
@@ -122,6 +122,7 @@
 [Are you sure you want to clear predefined status messages?]
 [Confirm clearing predefined]
 [<last status>]
+[Startup status]
 [Status]
 [General]
 [Advanced]

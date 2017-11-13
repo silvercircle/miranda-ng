@@ -3,7 +3,7 @@
 Facebook plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2009-11 Michal Zelinka, 2011-15 Robert Pösel
+Copyright © 2009-11 Michal Zelinka, 2011-17 Robert Pösel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -40,6 +40,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define FACEBOOK_KEY_MESSAGE_READ			"LastMsgReadTime"
 #define FACEBOOK_KEY_MESSAGE_READERS		"MessageReaders"
 
+// Thread specific DB keys 
+#define FACEBOOK_KEY_CHAT_CAN_REPLY			"CanReply"
+#define FACEBOOK_KEY_CHAT_READ_ONLY			"ReadOnly"
+#define FACEBOOK_KEY_CHAT_IS_ARCHIVED		"IsArchived"
+#define FACEBOOK_KEY_CHAT_IS_SUBSCRIBED		"IsSubscribed"
+
 // Contact and account DB keys
 #define FACEBOOK_KEY_KEEP_UNREAD			"KeepUnread"	// (byte) 1 = don't mark messages as read on server (works globally or per contact)
 
@@ -57,26 +63,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define FACEBOOK_KEY_PLACE					"Place"
 #define FACEBOOK_KEY_LAST_WALL				"LastWall"
 #define FACEBOOK_KEY_LOAD_PAGES				"LoadPages"
-#define FACEBOOK_KEY_INBOX_ONLY				"InboxOnly"
 #define FACEBOOK_KEY_FILTER_ADS				"FilterAds"
 #define FACEBOOK_KEY_LOGON_TS				"LogonTS"
-#define FACEBOOK_KEY_LOGIN_SYNC				"LoginSync"		// (byte) 0 = get only unread messages, 1 = sync messages since last activity (default is 0)
 #define FACEBOOK_KEY_LAST_ACTION_TS			"LastActionTS"
 #define FACEBOOK_KEY_MESSAGES_ON_OPEN		"MessagesOnOpen"
 #define FACEBOOK_KEY_MESSAGES_ON_OPEN_COUNT	"MessagesOnOpenCount"
 #define FACEBOOK_KEY_HIDE_CHATS				"HideChats"
 #define FACEBOOK_KEY_ENABLE_CHATS			"EnableChat"
+#define FACEBOOK_KEY_JOIN_EXISTING_CHATS	"JoinExistingChats"
 #define FACEBOOK_KEY_NOTIFICATIONS_CHATROOM	"NotificationsChatroom"
 #define FACEBOOK_KEY_NAME_AS_NICK			"NameAsNick"
+#define FACEBOOK_KEY_LOAD_ALL_CONTACTS		"LoadAllContacts"
+#define FACEBOOK_KEY_PAGES_ALWAYS_ONLINE	"PagesAlwaysOnline"
+#define FACEBOOK_KEY_TYPING_WHEN_INVISIBLE	"TypingWhenInvisible"
 
 // Account DB keys - notifications
 #define FACEBOOK_KEY_EVENT_NOTIFICATIONS_ENABLE	"EventNotificationsEnable"
 #define FACEBOOK_KEY_EVENT_FEEDS_ENABLE			"EventFeedsEnable"
-#define FACEBOOK_KEY_EVENT_OTHER_ENABLE			"EventOtherEnable"
-#define FACEBOOK_KEY_EVENT_CLIENT_ENABLE		"EventClientEnable"
 #define FACEBOOK_KEY_EVENT_FRIENDSHIP_ENABLE	"EventFriendshipEnable"
 #define FACEBOOK_KEY_EVENT_TICKER_ENABLE		"EventTickerEnable"
-#define FACEBOOK_KEY_EVENT_ON_THIS_DAY_ENABLE	"EventOnThisDayEnable"
+#define FACEBOOK_KEY_EVENT_ON_THIS_DAY_ENABLE	"EventMemoriesEnable"
 #define FACEBOOK_KEY_FEED_TYPE					"EventFeedsType"
 
 // Hidden account DB keys (can't be changed through GUI)
@@ -86,3 +92,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define FACEBOOK_KEY_NASEEMS_SPAM_MODE		"NaseemsSpamMode"			// [HIDDEN] - (byte) 1 = don't load messages sent from other instances (e.g., browser) - known as "Naseem's spam mode"
 #define FACEBOOK_KEY_OPEN_URL_BROWSER		"OpenUrlBrowser"			// [HIDDEN] - (unicode) = absolute path to browser to open url links with
 #define FACEBOOK_KEY_SEND_MESSAGE_TRIES		"SendMessageTries"			// [HIDDEN] - (byte) = number of tries to send message, default=1, min=1, max=5
+#define FACEBOOK_KEY_PAGE_PREFIX			"PagePrefix"				// [HIDDEN] - (unicode) = prefix for name of "page" contacts (requires restart to apply), default is emoji :page_facing_up: (written as unicode char)
+
+// Temporary key for login
+#define FACEBOOK_KEY_TRIED_DELETING_DEVICE_ID  "_TriedDeletingDeviceID"

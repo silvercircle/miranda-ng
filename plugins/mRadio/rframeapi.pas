@@ -181,14 +181,10 @@ end;
 
 function ColorReload(wParam:WPARAM;lParam:LPARAM):int;cdecl;
 var
-  cid:TColourID;
   wnd:HWND;
 begin
   result:=0;
-  cid.cbSize:=SizeOf(cid);
-  StrCopy(cid.group,cPluginName);
-  StrCopy(cid.name ,frm_back);
-  frm_bkg:=CallService(MS_COLOUR_GETA,twparam(@cid),0);
+  frm_bkg:=Colour_Get(cPluginName,frm_back);
   if hbr<>0 then DeleteObject(hbr);
   hbr:=CreateSolidBrush(frm_bkg);
 
@@ -207,7 +203,7 @@ var
   tr:TRECT;
   cid:TColourID;
 begin
-  if ServiceExists(MS_CLIST_FRAMES_ADDFRAME)=0 then
+  if not ServiceExists(MS_CLIST_FRAMES_ADDFRAME) then
     exit;
   if parent=0 then
     parent:=cli^.hwndContactList;

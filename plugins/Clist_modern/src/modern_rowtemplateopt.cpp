@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -23,19 +23,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "stdafx.h"
-#include "modern_clist.h"
-#include "modern_commonprototypes.h"
-#include "modern_row.h"
 
 void RefreshTree(HWND hwndDlg, HTREEITEM hti);
 static char* rowOptTmplStr;
 static ROWCELL* rowOptTmplRoot;
 static ROWCELL* rowOptTA[100];
-TCHAR *types[] = {
-	_T("none"), _T("text1"), _T("text2"), _T("text3"), _T("status"),
-	_T("avatar"), _T("extra"), _T("extra1"), _T("extra2"), _T("extra3"),
-	_T("extra4"), _T("extra5"), _T("extra6"), _T("extra7"), _T("extra8"),
-	_T("extra9"), _T("time"), _T("space"), _T("fspace")
+wchar_t *types[] = {
+	L"none", L"text1", L"text2", L"text3", L"status",
+	L"avatar", L"extra", L"extra1", L"extra2", L"extra3",
+	L"extra4", L"extra5", L"extra6", L"extra7", L"extra8",
+	L"extra9", L"time", L"space", L"fspace"
 };
 
 RECT da = { 205, 58, 440, 130 }; // Draw area
@@ -139,10 +136,10 @@ void rowOptGenerateTreeView(pROWCELL cell, HTREEITEM node, HWND hwnd)
 
 	switch (cell->cont) {
 	case TC_ROW:
-		tvis.item.pszText = _T("Line");
+		tvis.item.pszText = L"Line";
 		break;
 	case TC_COL:
-		tvis.item.pszText = _T("Column");
+		tvis.item.pszText = L"Column";
 	}
 
 	tvis.item.iImage = cell->child ? 1 : 2;
@@ -156,7 +153,7 @@ void rowOptGenerateTreeView(pROWCELL cell, HTREEITEM node, HWND hwnd)
 int rowOptFillRowTree(HWND hwnd)
 {
 	TreeView_DeleteAllItems(hwnd);
-	rowOptGenerateTreeView(rowOptTmplRoot, NULL, hwnd);
+	rowOptGenerateTreeView(rowOptTmplRoot, nullptr, hwnd);
 	TreeView_Expand(hwnd, TreeView_GetRoot(hwnd), TVM_EXPAND);
 	return 0;
 }
@@ -165,16 +162,16 @@ void rowOptAddContainer(HWND htree, HTREEITEM hti)
 {
 	TVINSERTSTRUCT tvis;
 	TVITEM tviparent;
-	ROWCELL *cell = NULL;
+	ROWCELL *cell = nullptr;
 
 	if (!hti) {
 		if (TreeView_GetRoot(htree))
 			return;
 
 		rowAddCell(rowOptTmplRoot, TC_ROW);
-		tvis.hParent = NULL;
+		tvis.hParent = nullptr;
 		tvis.hInsertAfter = TVI_ROOT;
-		tvis.item.pszText = _T("Line");
+		tvis.item.pszText = L"Line";
 		tvis.item.lParam = (LPARAM)rowOptTmplRoot;
 		cell = rowOptTmplRoot;
 	}
@@ -186,9 +183,9 @@ void rowOptAddContainer(HWND htree, HTREEITEM hti)
 		cell = (pROWCELL)tviparent.lParam;
 
 		if (cell->cont == TC_ROW)
-			tvis.item.pszText = _T("Column");
+			tvis.item.pszText = L"Column";
 		else
-			tvis.item.pszText = _T("Line");
+			tvis.item.pszText = L"Line";
 
 		if (cell->child) {
 			cell = cell->child;
@@ -268,7 +265,7 @@ void rowOptDelContainer(HWND htree, HTREEITEM hti)
 
 	}
 
-	((pROWCELL)tvi.lParam)->next = NULL;
+	((pROWCELL)tvi.lParam)->next = nullptr;
 	rowDeleteTree((pROWCELL)tvi.lParam);
 
 	{
@@ -302,7 +299,7 @@ void RefreshTree(HWND hwndDlg, HTREEITEM hti)
 	HWND htree = GetDlgItem(hwndDlg, IDC_ROWTREE);
 	pROWCELL  cell;
 	TVITEM    tvi = { 0 };
-	if (hti == NULL) hti = TreeView_GetRoot(htree);
+	if (hti == nullptr) hti = TreeView_GetRoot(htree);
 	while (hti)
 	{
 		tvi.hItem = hti;
@@ -311,22 +308,22 @@ void RefreshTree(HWND hwndDlg, HTREEITEM hti)
 		cell = (pROWCELL)tvi.lParam;
 		if (cell)
 		{
-			TCHAR buf[200] = { 0 };
+			wchar_t buf[200] = { 0 };
 			if (!cell->child)
 			{
 				if (cell->type == 0)
-					mir_sntprintf(buf, TranslateT("Empty %s cell"), cell->cont == TC_COL ? TranslateT("column") : TranslateT("line"));
+					mir_snwprintf(buf, TranslateT("Empty %s cell"), cell->cont == TC_COL ? TranslateT("column") : TranslateT("line"));
 				else
-					mir_tstrncpy(buf, TranslateTS(types[cell->type]), _countof(buf));
+					mir_wstrncpy(buf, TranslateW(types[cell->type]), _countof(buf));
 			}
 			else
 			{
 				if (cell->type == 0)
-					mir_tstrncpy(buf, (cell->cont != TC_COL ? TranslateT("columns") : TranslateT("lines")), _countof(buf));
+					mir_wstrncpy(buf, (cell->cont != TC_COL ? TranslateT("columns") : TranslateT("lines")), _countof(buf));
 				else
-					mir_sntprintf(buf, TranslateT("%s, contain %s"), TranslateTS(types[cell->type]), cell->cont != TC_COL ? TranslateT("columns") : TranslateT("lines"));
+					mir_snwprintf(buf, TranslateT("%s, contain %s"), TranslateW(types[cell->type]), cell->cont != TC_COL ? TranslateT("columns") : TranslateT("lines"));
 			}
-			if (cell->layer) mir_tstrncat(buf, TranslateT(" layered"), _countof(buf) - mir_tstrlen(buf));
+			if (cell->layer) mir_wstrncat(buf, TranslateT(" layered"), _countof(buf) - mir_wstrlen(buf));
 			tvi.mask = TVIF_HANDLE | TVIF_TEXT;
 			tvi.pszText = buf;
 			TreeView_SetItem(htree, &tvi);
@@ -338,7 +335,7 @@ void RefreshTree(HWND hwndDlg, HTREEITEM hti)
 		hti = TreeView_GetNextSibling(htree, hti);
 	}
 
-	RedrawWindow(hwndDlg, NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+	RedrawWindow(hwndDlg, nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ALLCHILDREN);
 }
 
 INT_PTR CALLBACK DlgTmplEditorOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -350,7 +347,7 @@ INT_PTR CALLBACK DlgTmplEditorOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
 		HWND htree = GetDlgItem(hwndDlg, IDC_ROWTREE);
 
 		TranslateDialogDefault(hwndDlg);
-		rowOptTmplStr = db_get_sa(NULL, "ModernData", "RowTemplate");
+		rowOptTmplStr = db_get_sa(0, "ModernData", "RowTemplate");
 		if (!rowOptTmplStr)
 			rowOptTmplStr = mir_strdup("<TR />");
 
@@ -360,34 +357,34 @@ INT_PTR CALLBACK DlgTmplEditorOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
 		int i, item;
 
 		for (i = 0; i < _countof(types); i++) {
-			item = SendDlgItemMessage(hwndDlg, IDC_CONTTYPE, CB_ADDSTRING, 0, (LPARAM)TranslateTS(types[i]));
+			item = SendDlgItemMessage(hwndDlg, IDC_CONTTYPE, CB_ADDSTRING, 0, (LPARAM)TranslateW(types[i]));
 			SendDlgItemMessage(hwndDlg, IDC_CONTTYPE, CB_SETITEMDATA, item, 0);
 		}
 		SendDlgItemMessage(hwndDlg, IDC_CONTTYPE, CB_SETCURSEL, 0, 0);
 
-		TCHAR *h_alignment[] = { _T("left"), _T("hCenter"), _T("right") };
+		wchar_t *h_alignment[] = { L"left", L"hCenter", L"right" };
 		for (i = 0; i < _countof(h_alignment); i++) {
-			item = SendDlgItemMessage(hwndDlg, IDC_HALIGN, CB_ADDSTRING, 0, (LPARAM)TranslateTS(h_alignment[i]));
+			item = SendDlgItemMessage(hwndDlg, IDC_HALIGN, CB_ADDSTRING, 0, (LPARAM)TranslateW(h_alignment[i]));
 			SendDlgItemMessage(hwndDlg, IDC_HALIGN, CB_SETITEMDATA, item, 0);
 		}
 		SendDlgItemMessage(hwndDlg, IDC_HALIGN, CB_SETCURSEL, 0, 0);
 
-		TCHAR *v_alignment[] = { _T("top"), _T("vCenter"), _T("bottom") };
+		wchar_t *v_alignment[] = { L"top", L"vCenter", L"bottom" };
 		for (i = 0; i < _countof(v_alignment); i++) {
-			item = SendDlgItemMessage(hwndDlg, IDC_VALIGN, CB_ADDSTRING, 0, (LPARAM)TranslateTS(v_alignment[i]));
+			item = SendDlgItemMessage(hwndDlg, IDC_VALIGN, CB_ADDSTRING, 0, (LPARAM)TranslateW(v_alignment[i]));
 			SendDlgItemMessage(hwndDlg, IDC_VALIGN, CB_SETITEMDATA, item, 0);
 		}
 		SendDlgItemMessage(hwndDlg, IDC_VALIGN, CB_SETCURSEL, 0, 0);
 
 		rowDeleteTree(rowOptTmplRoot);
-		rowOptTmplRoot = NULL;
+		rowOptTmplRoot = nullptr;
 		rowParse(rowOptTmplRoot, rowOptTmplRoot, rowOptTmplStr, hbuf, seq, rowOptTA);
 		seq = 0;
 		memset(rowOptTA, 0, sizeof(rowOptTA));
 		rowOptBuildTA(rowOptTmplRoot, (pROWCELL*)&rowOptTA, &seq);
 
 		rowOptFillRowTree(htree);
-		RefreshTree(hwndDlg, NULL);
+		RefreshTree(hwndDlg, nullptr);
 		TreeView_SelectItem(GetDlgItem(hwndDlg, IDC_ROWTREE), TreeView_GetRoot(GetDlgItem(hwndDlg, IDC_ROWTREE)));
 		rowOptShowSettings(hwndDlg);
 	}
@@ -411,7 +408,7 @@ INT_PTR CALLBACK DlgTmplEditorOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
 			if (HIWORD(wParam) == CBN_SELENDOK) {
 				int index = SendDlgItemMessage(hwndDlg, IDC_CONTTYPE, CB_GETCURSEL, 0, 0);
 				cell->type = index;
-				RefreshTree(hwndDlg, NULL);
+				RefreshTree(hwndDlg, nullptr);
 			}
 
 		case IDC_VALIGN:
@@ -427,7 +424,7 @@ INT_PTR CALLBACK DlgTmplEditorOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
 					cell->valign = TC_BOTTOM;
 					break;
 				}
-				RefreshTree(hwndDlg, NULL);
+				RefreshTree(hwndDlg, nullptr);
 			}
 
 		case IDC_HALIGN:
@@ -443,7 +440,7 @@ INT_PTR CALLBACK DlgTmplEditorOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
 					cell->halign = TC_RIGHT;
 					break;
 				}
-				RefreshTree(hwndDlg, NULL);
+				RefreshTree(hwndDlg, nullptr);
 			}
 		}
 
@@ -461,10 +458,10 @@ INT_PTR CALLBACK DlgTmplEditorOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
 			else if (lParam == (LPARAM)GetDlgItem(hwndDlg, IDC_CONTUP))
 				// Moving container to up
 			{
-				RedrawWindow(htree, &da, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+				RedrawWindow(htree, &da, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ALLCHILDREN);
 			}
-			RefreshTree(hwndDlg, NULL);
-			RedrawWindow(GetParent(hwndDlg), NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+			RefreshTree(hwndDlg, nullptr);
+			RedrawWindow(GetParent(hwndDlg), nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ALLCHILDREN);
 		}
 		return TRUE;
 	}
@@ -475,7 +472,7 @@ INT_PTR CALLBACK DlgTmplEditorOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
 			if (((LPNMHDR)lParam)->code == NM_SETCURSOR)
 				rowOptShowSettings(hwndDlg);
 			if (((LPNMHDR)lParam)->code == NM_CLICK)
-				RedrawWindow(hwndDlg, &da, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW);
+				RedrawWindow(hwndDlg, &da, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW);
 			break;
 
 		case 0: // Apply or Ok button is pressed

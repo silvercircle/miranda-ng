@@ -93,15 +93,15 @@ static INT_PTR CALLBACK DlgProcShakeOpt(HWND hwnd,UINT msg,WPARAM wParam,LPARAM 
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwnd);
 		{
-			TCHAR szBuf[20];
-			mir_sntprintf(szBuf, _T("%d"), shake.nMoveClist);
+			wchar_t szBuf[20];
+			mir_snwprintf(szBuf, L"%d", shake.nMoveClist);
 			SetDlgItemText(hwnd, IDC_LNUMBER_CLIST, szBuf);
-			mir_sntprintf(szBuf, _T("%d"), shake.nMoveChat);
+			mir_snwprintf(szBuf, L"%d", shake.nMoveChat);
 			SetDlgItemText(hwnd, IDC_LNUMBER_CHAT, szBuf);
 
-			mir_sntprintf(szBuf, _T("%d"), shake.nScaleClist);
+			mir_snwprintf(szBuf, L"%d", shake.nScaleClist);
 			SetDlgItemText(hwnd, IDC_LSCALE_CLIST, szBuf);
-			mir_sntprintf(szBuf, _T("%d"), shake.nScaleChat);
+			mir_snwprintf(szBuf, L"%d", shake.nScaleChat);
 			SetDlgItemText(hwnd, IDC_LSCALE_CHAT, szBuf);
 		}
 
@@ -130,9 +130,9 @@ static INT_PTR CALLBACK DlgProcShakeOpt(HWND hwnd,UINT msg,WPARAM wParam,LPARAM 
 		if ((HWND)lParam == GetDlgItem(hwnd, IDC_SNUMBER_CLIST) || (HWND)lParam == GetDlgItem(hwnd, IDC_SNUMBER_CHAT)
 			|| (HWND)lParam == GetDlgItem(hwnd, IDC_SSCALE_CLIST) || (HWND)lParam == GetDlgItem(hwnd, IDC_SSCALE_CHAT))
 		{
-			TCHAR szBuf[20];
+			wchar_t szBuf[20];
 			DWORD dwPos = SendMessage((HWND)lParam, TBM_GETPOS, 0, 0);
-			mir_sntprintf(szBuf, _T("%d"), dwPos);
+			mir_snwprintf(szBuf, L"%d", dwPos);
 			if ((HWND)lParam == GetDlgItem(hwnd, IDC_SNUMBER_CLIST))
 				SetDlgItemText(hwnd, IDC_LNUMBER_CLIST, szBuf);
 			if ((HWND)lParam == GetDlgItem(hwnd, IDC_SNUMBER_CHAT))
@@ -381,15 +381,15 @@ int NudgeOptInit(WPARAM wParam, LPARAM)
 	odp.position = -790000000;
 	odp.hInstance = hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_NUDGE);
-	odp.pszTitle = LPGEN("Nudge");
-	odp.pszGroup = LPGEN("Events");
-	odp.pszTab = LPGEN("Nudge");
+	odp.szTitle.a = LPGEN("Nudge");
+	odp.szGroup.a = LPGEN("Events");
+	odp.szTab.a = LPGEN("Nudge");
 	odp.flags = ODPF_BOLDGROUPS;
 	odp.pfnDlgProc = DlgProcNudgeOpt;
 	Options_AddPage(wParam, &odp);
 
 	odp.position = -790000001;
-	odp.pszTab = LPGEN("Window Shaking");
+	odp.szTab.a = LPGEN("Window Shaking");
 	odp.pfnDlgProc = DlgProcShakeOpt;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_SHAKE);
 	Options_AddPage(wParam, &odp);

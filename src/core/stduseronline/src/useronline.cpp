@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -26,15 +26,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static int uniqueEventId = 0;
 
-static bool Proto_IsAccountEnabled(PROTOACCOUNT *pa)
-{
-	return pa && ((pa->bIsEnabled && !pa->bDynDisabled) || pa->bOldProto);
-}
-
 static int UserOnlineSettingChanged(WPARAM hContact, LPARAM lParam)
 {
 	DBCONTACTWRITESETTING *cws = (DBCONTACTWRITESETTING*)lParam;
-	if (hContact == NULL || mir_strcmp(cws->szSetting, "Status"))
+	if (hContact == NULL || strcmp(cws->szSetting, "Status"))
 		return 0;
 
 	int newStatus = cws->value.wVal;
@@ -47,7 +42,7 @@ static int UserOnlineSettingChanged(WPARAM hContact, LPARAM lParam)
 		 int lastEvent = (int)db_get_dw(hContact, "UserOnline", "LastEvent", 0);
 
        if (lastEvent) {
-           CallService(MS_CLIST_REMOVEEVENT, hContact, (LPARAM)lastEvent);
+			 pcli->pfnRemoveEvent(hContact, lastEvent);
 			  db_set_dw(hContact, "UserOnline", "LastEvent", 0);
        }
     }
@@ -57,22 +52,20 @@ static int UserOnlineSettingChanged(WPARAM hContact, LPARAM lParam)
 			DWORD ticked = db_get_dw(NULL, "UserOnline", cws->szModule, GetTickCount());
 			// only play the sound (or show event) if this event happens at least 10 secs after the proto went from offline
 			if (GetTickCount() - ticked > (1000*10)) {
-				CLISTEVENT cle;
-				TCHAR tooltip[256];
+				wchar_t tooltip[256];
+				mir_snwprintf(tooltip, TranslateT("%s is online"), pcli->pfnGetContactDisplayName(hContact, 0));
 
-				memset(&cle, 0, sizeof(cle));
-				cle.cbSize = sizeof(cle);
-				cle.flags = CLEF_ONLYAFEW | CLEF_TCHAR;
+				CLISTEVENT cle = {};
+				cle.flags = CLEF_ONLYAFEW | CLEF_UNICODE;
 				cle.hContact = hContact;
 				cle.hDbEvent = uniqueEventId++;
 				cle.hIcon = Skin_LoadIcon(SKINICON_OTHER_USERONLINE, false);
 				cle.pszService = "UserOnline/Description";
-				mir_sntprintf(tooltip, TranslateT("%s is online"), pcli->pfnGetContactDisplayName(hContact, 0));
-				cle.ptszTooltip = tooltip;
-				CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
+				cle.szTooltip.w = tooltip;
+				pcli->pfnAddEvent(&cle);
 				IcoLib_ReleaseIcon(cle.hIcon, 0);
                 db_set_dw(cle.hContact, "UserOnline", "LastEvent", (DWORD)cle.hDbEvent);
-				SkinPlaySound("UserOnline");
+				Skin_PlaySound("UserOnline");
 			}
 		}
 	}
@@ -124,6 +117,6 @@ int LoadUserOnlineModule(void)
 	HookEvent(ME_PROTO_ACK, UserOnlineAck);
 	HookEvent(ME_SYSTEM_MODULESLOADED, UserOnlineModulesLoaded);
 	HookEvent(ME_PROTO_ACCLISTCHANGED, UserOnlineAccountsChanged);
-	SkinAddNewSoundEx("UserOnline", LPGEN("Alerts"), LPGEN("Online"));
+	Skin_AddSound("UserOnline", LPGENW("Alerts"), LPGENW("Online"));
 	return 0;
 }

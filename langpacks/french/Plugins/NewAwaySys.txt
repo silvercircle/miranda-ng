@@ -34,18 +34,18 @@
 &En ligne
 [&Away]
 &Absent
-[&NA]
+[&Not available]
 &Indisponible
 [Occ&upied]
 &Occupé
-[&DND]
+[&Do not disturb]
 &Ne pas déranger
 [&Free for chat]
-&OK pour un chat
+OK pour un &chat
 [&Invisible]
-
+In&visible
 [On the &phone]
-&Au téléphone
+Au &téléphone
 [Out to &lunch]
 &Parti manger
 [Autoreply format:]
@@ -80,10 +80,6 @@ Titre :
 
 [Delete]
 Effacer
-[Status messages:]
-Messages d'état :
-[Configure autoaway]
-
 [Wait]
 
 [seconds before closing the status message dialog (-1=don't close)]
@@ -213,7 +209,7 @@ Oui, je suis là.
 Absent
 [Been gone since %nas_awaysince_time%, will be back later.]
 
-[NA]
+[Not available]
 Indisponible
 [Give it up, I'm not in!]
 Laisse tomber, je suis sorti !
@@ -221,7 +217,7 @@ Laisse tomber, je suis sorti !
 Occupé
 [Not right now.]
 Pas maintenant, merci.
-[DND]
+[Do not disturb]
 Ne pas déranger
 [Give a guy some peace, would ya?]
 Tu veux bien me laisser en paix ?

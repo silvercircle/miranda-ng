@@ -51,7 +51,7 @@ void LoadCListModule()
 	HookEvent(ME_SKIN_ICONSCHANGED, CLIconsChanged);
 }
 
-static LRESULT CALLBACK ParentSubclassProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK ParentSubclassProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	CCList *dat = CWndUserData(hWnd).GetCList();
 	switch (Msg) {
@@ -282,12 +282,12 @@ LRESULT CALLBACK ContactListSubclassProc(HWND hWnd, UINT Msg, WPARAM wParam, LPA
 
 	case WM_MEASUREITEM:
 		if (!wParam) // if the message was sent by a menu
-			return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
+			return Menu_MeasureItem(lParam);
 		break;
 
 	case WM_DRAWITEM:
 		if (!wParam) // if the message was sent by a menu
-			return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
+			return Menu_DrawItem(lParam);
 		break;
 
 	case WM_CONTEXTMENU:
@@ -317,7 +317,7 @@ LRESULT CALLBACK ContactListSubclassProc(HWND hWnd, UINT Msg, WPARAM wParam, LPA
 					HMENU hMenu = Menu_BuildContactMenu(hContact);
 					if (hMenu) {
 						ClientToScreen(hWnd, &pt);
-						CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y, 0, hWnd, NULL), MPCF_CONTACTMENU), hContact);
+						Clist_MenuProcessCommand(TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y, 0, hWnd, NULL), MPCF_CONTACTMENU, hContact);
 						DestroyMenu(hMenu);
 						return 0;
 					}
@@ -343,7 +343,7 @@ CCList::CCList(HWND hTreeView) :
 	CWndUserData(GetParent(hTreeView)).SetCList(this);
 	OrigTreeViewProc = (WNDPROC)SetWindowLongPtr(hTreeView, GWLP_WNDPROC, (LONG_PTR)ContactListSubclassProc);
 	OrigParentProc = (WNDPROC)SetWindowLongPtr(GetParent(hTreeView), GWLP_WNDPROC, (LONG_PTR)ParentSubclassProc);
-	TreeView_SetImageList(hTreeView, CallService(MS_CLIST_GETICONSIMAGELIST, 0, 0), TVSIL_NORMAL);
+	TreeView_SetImageList(hTreeView, Clist_GetImageList(), TVSIL_NORMAL);
 	WindowList_Add(hCLWindowList, hTreeView, NULL);
 	TreeView_SetIndent(hTreeView, 5); // doesn't set it less than the initial value on my system, and i guess it's because of icons... but who knows - maybe it will work somewhere
 }
@@ -367,57 +367,35 @@ HTREEITEM CCList::AddContact(MCONTACT hContact)
 
 	TVINSERTSTRUCT tvIns;
 	memset(&tvIns, 0, sizeof(tvIns));
-	tvIns.hParent = AddGroup(db_get_s(hContact, "CList", "Group", _T("")));
+	tvIns.hParent = AddGroup(db_get_s(hContact, "CList", "Group", L""));
 	tvIns.item.pszText = pcli->pfnGetContactDisplayName(hContact, 0);
 	tvIns.hInsertAfter = TVI_ROOT;
 	tvIns.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM;
-	tvIns.item.iImage = tvIns.item.iSelectedImage = CallService(MS_CLIST_GETCONTACTICON, hContact, 0);
+	tvIns.item.iImage = tvIns.item.iSelectedImage = pcli->pfnGetContactIcon(hContact);
 	tvIns.item.lParam = Items.AddElem(CCLItemData(hContact));
 	return TreeView_InsertItem(hTreeView, &tvIns);
-}
-
-struct sGroupEnumData
-{
-	HANDLE hGroup;
-	TCString GroupName;
-};
-
-int GroupEnum(const char *szSetting, LPARAM lParam)
-{
-	sGroupEnumData *GroupEnumData = (sGroupEnumData*)lParam;
-	TCString GroupName = db_get_s(NULL, "CListGroups", szSetting, _T(" "));
-	if (!mir_tstrcmp(GroupEnumData->GroupName, &GroupName[1]))
-		GroupEnumData->hGroup = (HANDLE)(atol(szSetting) | HCONTACT_ISGROUP);
-	return 0;
 }
 
 // adds a new group if it doesn't exist yet; returns its hItem
 HTREEITEM CCList::AddGroup(TCString GroupName)
 {
-	if (GroupName == _T(""))
+	if (GroupName == L"")
 		return TVI_ROOT;
 
-	sGroupEnumData GroupEnumData;
-	GroupEnumData.GroupName = GroupName;
-	GroupEnumData.hGroup = NULL;
-	DBCONTACTENUMSETTINGS dbEnum;
-	memset(&dbEnum, 0, sizeof(dbEnum));
-	dbEnum.lParam = (LPARAM)&GroupEnumData;
-	dbEnum.pfnEnumProc = GroupEnum;
-	dbEnum.szModule = "CListGroups";
-	CallService(MS_DB_CONTACT_ENUMSETTINGS, NULL, (LPARAM)&dbEnum);
-	if (!GroupEnumData.hGroup) // means there is no such group in the groups list
+	MGROUP hGroupId = Clist_GroupExists(GroupName);
+	if (hGroupId == NULL)
 		return NULL;
 
-	HTREEITEM hGroupItem = FindContact((UINT_PTR)GroupEnumData.hGroup);
+	MCONTACT hContact = UINT_PTR(hGroupId) - 1 + HCONTACT_ISGROUP;
+	HTREEITEM hGroupItem = FindContact(hContact);
 	if (hGroupItem)
 		return hGroupItem; // exists already, just return its handle
 
 	TVINSERTSTRUCT tvIns = { 0 };
 	tvIns.hParent = TVI_ROOT;
-	tvIns.item.pszText = _tcsrchr(GroupName, '\\');
+	tvIns.item.pszText = wcsrchr(GroupName, '\\');
 	if (tvIns.item.pszText) {
-		TCString ParentGroupName(_T(""));
+		TCString ParentGroupName(L"");
 		tvIns.hParent = AddGroup(ParentGroupName.DiffCat(GroupName, tvIns.item.pszText));
 		tvIns.item.pszText++;
 	}
@@ -427,7 +405,7 @@ HTREEITEM CCList::AddGroup(TCString GroupName)
 	tvIns.item.mask = TVIF_TEXT | TVIF_STATE | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM;
 	tvIns.item.state = tvIns.item.stateMask = TVIS_BOLD | TVIS_EXPANDED;
 	tvIns.item.iImage = tvIns.item.iSelectedImage = IMAGE_GROUPOPEN;
-	tvIns.item.lParam = Items.AddElem(CCLItemData((UINT_PTR)GroupEnumData.hGroup));
+	tvIns.item.lParam = Items.AddElem(CCLItemData(hContact));
 	return TreeView_InsertItem(hTreeView, &tvIns);
 }
 
@@ -480,7 +458,7 @@ int CALLBACK CompareItemsCallback(LPARAM lParam1, LPARAM lParam2, LPARAM lParamS
 	if (IsHContactGroup(dat->Items[lParam2].hContact))
 		return 1;
 	
-	return CallService(MS_CLIST_CONTACTSCOMPARE, dat->Items[lParam1].hContact, dat->Items[lParam2].hContact);
+	return Clist_ContactCompare(dat->Items[lParam1].hContact, dat->Items[lParam2].hContact);
 }
 
 void CCList::SortContacts()

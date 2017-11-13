@@ -8,7 +8,7 @@ public:
 		HttpRequest(REQUEST_POST, STEAM_API_URL "/ISteamWebUserPresenceOAuth/Poll/v0001")
 	{
 		timeout = (STEAM_API_TIMEOUT + 5) * 1000;
-		flags |= NLHRF_PERSISTENT;
+		// flags |= NLHRF_PERSISTENT;
 
 		CMStringA data;
 		data.AppendFormat("access_token=%s&umqid=%s&message=%u&secidletime=%d&sectimeout=%d",
@@ -21,7 +21,7 @@ public:
 		SetData(data, data.GetLength());
 
 		AddHeader("Connection", "keep-alive");
-		AddHeader("Content-Type", "application/x-www-form-urlencoded");
+		AddHeader("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
 	}
 };
 

@@ -5,7 +5,7 @@ Jabber Protocol Plugin for Miranda NG
 Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
 Copyright (c) 2007     Maxim Mluhov
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -34,7 +34,7 @@ class CJabberInfoFrameItem : public MZeroedObject
 public:
 	char  *m_pszName;
 	HANDLE m_hIcolibIcon;
-	TCHAR *m_pszText;
+	wchar_t *m_pszText;
 	LPARAM m_pUserData;
 	bool   m_bCompact;
 	bool   m_bShow;
@@ -56,10 +56,10 @@ public:
 		mir_free(m_pszText);
 	}
 
-	void SetInfo(HANDLE hIcolibIcon, TCHAR *pszText)
+	void SetInfo(HANDLE hIcolibIcon, wchar_t *pszText)
 	{
 		mir_free(m_pszText);
-		m_pszText = pszText ? mir_tstrdup(pszText) : NULL;
+		m_pszText = pszText ? mir_wstrdup(pszText) : nullptr;
 		m_hIcolibIcon = hIcolibIcon;
 	}
 
@@ -75,54 +75,55 @@ CJabberInfoFrame::CJabberInfoFrame(CJabberProto *proto):
 	m_proto = proto;
 	m_clickedItem = -1;
 
-	if (!proto->m_options.DisableFrame && ServiceExists(MS_CLIST_FRAMES_ADDFRAME)) {
-		InitClass();
+	InitClass();
 
-		CLISTFrame frame = { sizeof(frame) };
-		HWND hwndClist = pcli->hwndContactList;
-		frame.hWnd = CreateWindowEx(0, _T("JabberInfoFrameClass"), NULL, WS_CHILD|WS_VISIBLE, 0, 0, 100, 100, hwndClist, NULL, hInst, this);
-		frame.align = alBottom;
-		frame.height = 2 * SZ_FRAMEPADDING + GetSystemMetrics(SM_CYSMICON) + SZ_LINEPADDING; // compact height by default
-		frame.Flags = F_VISIBLE|F_LOCKED|F_NOBORDER|F_TCHAR;
-		frame.tname = mir_a2t(proto->m_szModuleName);
-		frame.TBtname = proto->m_tszUserName;
-		m_frameId = CallService(MS_CLIST_FRAMES_ADDFRAME, (WPARAM)&frame, 0);
-		mir_free(frame.tname);
-		if (m_frameId == -1) {
-			DestroyWindow(frame.hWnd);
-			return;
-		}
-
-		m_hhkFontsChanged = HookEventMessage(ME_FONT_RELOAD, m_hwnd, WM_APP);
-		ReloadFonts();
-
-		m_hwndToolTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
-			WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,
-			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-			m_hwnd, NULL, hInst, NULL);
-		SetWindowPos(m_hwndToolTip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-
-		CreateInfoItem("$", true);
-		UpdateInfoItem("$", proto->GetIconHandle(IDI_JABBER), proto->m_tszUserName);
-
-		CreateInfoItem("$/JID", true);
-		UpdateInfoItem("$/JID", Skin_GetIconHandle(SKINICON_OTHER_USERDETAILS), _T("Offline"));
-		SetInfoItemCallback("$/JID", &CJabberProto::InfoFrame_OnSetup);
+	CLISTFrame frame = { sizeof(frame) };
+	HWND hwndClist = pcli->hwndContactList;
+	frame.hWnd = CreateWindowEx(0, L"JabberInfoFrameClass", nullptr, WS_CHILD|WS_VISIBLE, 0, 0, 100, 100, hwndClist, nullptr, hInst, this);
+	frame.align = alBottom;
+	frame.height = 2 * SZ_FRAMEPADDING + GetSystemMetrics(SM_CYSMICON) + SZ_LINEPADDING; // compact height by default
+	frame.Flags = F_VISIBLE|F_LOCKED|F_NOBORDER|F_UNICODE;
+	frame.tname = mir_a2u(proto->m_szModuleName);
+	frame.TBtname = proto->m_tszUserName;
+	m_frameId = CallService(MS_CLIST_FRAMES_ADDFRAME, (WPARAM)&frame, 0);
+	mir_free(frame.tname);
+	if (m_frameId == -1) {
+		DestroyWindow(frame.hWnd);
+		return;
 	}
+
+	m_hhkFontsChanged = HookEventMessage(ME_FONT_RELOAD, m_hwnd, WM_APP);
+	ReloadFonts();
+
+	m_hwndToolTip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, nullptr,
+		WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP,
+		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+		m_hwnd, nullptr, hInst, nullptr);
+	SetWindowPos(m_hwndToolTip, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+
+	CreateInfoItem("$", true);
+	UpdateInfoItem("$", proto->GetIconHandle(IDI_JABBER), proto->m_tszUserName);
+
+	CreateInfoItem("$/JID", true);
+	UpdateInfoItem("$/JID", Skin_GetIconHandle(SKINICON_OTHER_USERDETAILS), L"Offline");
+	SetInfoItemCallback("$/JID", &CJabberProto::InfoFrame_OnSetup);
 }
 
 CJabberInfoFrame::~CJabberInfoFrame()
 {
-	if (!m_hwnd) return;
-
-	if (m_hhkFontsChanged) UnhookEvent(m_hhkFontsChanged);
 	CallService(MS_CLIST_FRAMES_REMOVEFRAME, (WPARAM)m_frameId, 0);
-	SetWindowLongPtr(m_hwnd, GWLP_USERDATA, 0);
-	DestroyWindow(m_hwnd);
-	DestroyWindow(m_hwndToolTip);
-	DeleteObject(m_hfntText);
-	DeleteObject(m_hfntTitle);
-	m_hwnd = NULL;
+
+	if (m_hhkFontsChanged)
+		UnhookEvent(m_hhkFontsChanged);
+
+	if (m_hwnd != nullptr) {
+		SetWindowLongPtr(m_hwnd, GWLP_USERDATA, 0);
+		DestroyWindow(m_hwnd);
+		DestroyWindow(m_hwndToolTip);
+		DeleteObject(m_hfntText);
+		DeleteObject(m_hfntTitle);
+		m_hwnd = nullptr;
+	}
 }
 
 void CJabberInfoFrame::InitClass()
@@ -136,8 +137,8 @@ void CJabberInfoFrame::InitClass()
 	wcx.style = CS_DBLCLKS|CS_HREDRAW|CS_VREDRAW;
 	wcx.lpfnWndProc = GlobalWndProc;
 	wcx.hInstance = hInst;
-	wcx.lpszClassName = _T("JabberInfoFrameClass");
-	wcx.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wcx.lpszClassName = L"JabberInfoFrameClass";
+	wcx.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	RegisterClassEx(&wcx);
 	bClassRegistered = true;
 }
@@ -179,10 +180,10 @@ LRESULT CJabberInfoFrame::WndProc(UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_RBUTTONUP:
 		{
 			POINT pt = { LOWORD(lParam), HIWORD(lParam) };
-			MapWindowPoints(m_hwnd, NULL, &pt, 1);
+			MapWindowPoints(m_hwnd, nullptr, &pt, 1);
 			HMENU hMenu = (HMENU)CallService(MS_CLIST_MENUBUILDFRAMECONTEXT, m_frameId, 0);
-			int res = TrackPopupMenu(hMenu, TPM_RETURNCMD, pt.x, pt.y, 0, pcli->hwndContactList, NULL);
-			CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(res, 0), m_frameId);
+			int res = TrackPopupMenu(hMenu, TPM_RETURNCMD, pt.x, pt.y, 0, pcli->hwndContactList, nullptr);
+			Clist_MenuProcessCommand(res, 0, m_frameId);
 			return 0;
 		}
 
@@ -238,25 +239,15 @@ void CJabberInfoFrame::Update()
 void CJabberInfoFrame::ReloadFonts()
 {
 	LOGFONT lfFont;
-
-	FontIDT fontid = {0};
-	fontid.cbSize = sizeof(fontid);
-	_tcsncpy_s(fontid.group, _T("Jabber"), _TRUNCATE);
-	_tcsncpy_s(fontid.name, _T("Frame title"), _TRUNCATE);
-	m_clTitle = CallService(MS_FONT_GETT, (WPARAM)&fontid, (LPARAM)&lfFont);
+	m_clTitle = Font_GetW(L"Jabber", L"Frame title", &lfFont);
 	DeleteObject(m_hfntTitle);
 	m_hfntTitle = CreateFontIndirect(&lfFont);
 
-	_tcsncpy_s(fontid.name, _T("Frame text"), _TRUNCATE);
-	m_clText = CallService(MS_FONT_GETT, (WPARAM)&fontid, (LPARAM)&lfFont);
+	m_clText = Font_GetW(L"Jabber", L"Frame text",&lfFont);
 	DeleteObject(m_hfntText);
 	m_hfntText = CreateFontIndirect(&lfFont);
 
-	ColourIDT colourid = {0};
-	colourid.cbSize = sizeof(colourid);
-	_tcsncpy_s(colourid.group, _T("Jabber"), _TRUNCATE);
-	_tcsncpy_s(colourid.name, _T("Background"), _TRUNCATE);
-	m_clBack = CallService(MS_COLOUR_GETT, (WPARAM)&colourid, 0);
+	m_clBack = Colour_GetW(L"Jabber", L"Background");
 
 	UpdateSize();
 }
@@ -278,7 +269,7 @@ void CJabberInfoFrame::UpdateSize()
 		}
 		else {
 			CallService(MS_CLIST_FRAMES_SETFRAMEOPTIONS, MAKEWPARAM(FO_HEIGHT, m_frameId), height);
-			RedrawWindow(m_hwnd, NULL, NULL, RDW_INVALIDATE);
+			RedrawWindow(m_hwnd, nullptr, nullptr, RDW_INVALIDATE);
 		}
 	}
 	else CallService(MS_CLIST_FRAMES_SETFRAMEOPTIONS, MAKEWPARAM(FO_HEIGHT, m_frameId), height);
@@ -294,7 +285,7 @@ void CJabberInfoFrame::RemoveTooltip(int id)
 	SendMessage(m_hwndToolTip, TTM_DELTOOLW, 0, (LPARAM)&ti);
 }
 
-void CJabberInfoFrame::SetToolTip(int id, RECT *rc, TCHAR *pszText)
+void CJabberInfoFrame::SetToolTip(int id, RECT *rc, wchar_t *pszText)
 {
 	TOOLINFO ti = {0};
 	ti.cbSize = sizeof(TOOLINFO);
@@ -337,7 +328,7 @@ void CJabberInfoFrame::PaintSkinGlyph(HDC hdc, RECT *rc, char **glyphs, COLORREF
 void CJabberInfoFrame::PaintCompact(HDC hdc)
 {
 	RECT rc; GetClientRect(m_hwnd, &rc);
-	char *glyphs[] = { "Main,ID=ProtoInfo", "Main,ID=EventArea", "Main,ID=StatusBar", NULL };
+	char *glyphs[] = { "Main,ID=ProtoInfo", "Main,ID=EventArea", "Main,ID=StatusBar", nullptr };
 	PaintSkinGlyph(hdc, &rc, glyphs, m_clBack);
 
 	HFONT hfntSave = (HFONT)SelectObject(hdc, m_hfntTitle);
@@ -362,8 +353,8 @@ void CJabberInfoFrame::PaintCompact(HDC hdc)
 			if (item.m_hIcolibIcon) {
 				HICON hIcon = IcoLib_GetIconByHandle(item.m_hIcolibIcon);
 				if (hIcon) {
-					DrawIconEx(hdc, SZ_FRAMEPADDING, (rc.bottom-cy_icon)/2, hIcon, cx_icon, cy_icon, 0, NULL, DI_NORMAL);
-					g_ReleaseIcon(hIcon);
+					DrawIconEx(hdc, SZ_FRAMEPADDING, (rc.bottom-cy_icon)/2, hIcon, cx_icon, cy_icon, 0, nullptr, DI_NORMAL);
+					IcoLib_ReleaseIcon(hIcon);
 				}
 			}
 
@@ -375,10 +366,10 @@ void CJabberInfoFrame::PaintCompact(HDC hdc)
 				HICON hIcon = IcoLib_GetIconByHandle(item.m_hIcolibIcon);
 				if (hIcon) {
 					SetRect(&item.m_rcItem, cx, (rc.bottom-cy_icon)/2, cx+cx_icon, (rc.bottom-cy_icon)/2+cy_icon);
-					DrawIconEx(hdc, cx, (rc.bottom-cy_icon)/2, hIcon, cx_icon, cy_icon, 0, NULL, DI_NORMAL);
+					DrawIconEx(hdc, cx, (rc.bottom-cy_icon)/2, hIcon, cx_icon, cy_icon, 0, nullptr, DI_NORMAL);
 					cx -= cx_icon;
 
-					g_ReleaseIcon(hIcon);
+					IcoLib_ReleaseIcon(hIcon);
 
 					SetToolTip(item.m_tooltipId, &item.m_rcItem, item.m_pszText);
 				}
@@ -392,7 +383,7 @@ void CJabberInfoFrame::PaintCompact(HDC hdc)
 void CJabberInfoFrame::PaintNormal(HDC hdc)
 {
 	RECT rc; GetClientRect(m_hwnd, &rc);
-	char *glyphs[] = { "Main,ID=ProtoInfo", "Main,ID=EventArea", "Main,ID=StatusBar", NULL };
+	char *glyphs[] = { "Main,ID=ProtoInfo", "Main,ID=EventArea", "Main,ID=StatusBar", nullptr };
 	PaintSkinGlyph(hdc, &rc, glyphs, m_clBack);
 
 	HFONT hfntSave = (HFONT)SelectObject(hdc, GetStockObject(DEFAULT_GUI_FONT));
@@ -420,10 +411,10 @@ void CJabberInfoFrame::PaintNormal(HDC hdc)
 		if (item.m_hIcolibIcon) {
 			HICON hIcon = IcoLib_GetIconByHandle(item.m_hIcolibIcon);
 			if (hIcon) {
-				DrawIconEx(hdc, cx, cy + (line_height-cy_icon)/2, hIcon, cx_icon, cy_icon, 0, NULL, DI_NORMAL);
+				DrawIconEx(hdc, cx, cy + (line_height-cy_icon)/2, hIcon, cx_icon, cy_icon, 0, nullptr, DI_NORMAL);
 				cx += cx_icon + SZ_ICONSPACING;
 
-				g_ReleaseIcon(hIcon);
+				IcoLib_ReleaseIcon(hIcon);
 			}
 		}
 
@@ -458,12 +449,12 @@ void CJabberInfoFrame::SetInfoItemCallback(char *pszName, void (CJabberProto::*o
 		pItem->m_onEvent = onEvent;
 }
 
-void CJabberInfoFrame::UpdateInfoItem(char *pszName, HANDLE hIcolibIcon, TCHAR *pszText)
+void CJabberInfoFrame::UpdateInfoItem(char *pszName, HANDLE hIcolibIcon, wchar_t *pszText)
 {
 	if (CJabberInfoFrameItem *pItem = m_pItems.find((CJabberInfoFrameItem*)&pszName))
 		pItem->SetInfo(hIcolibIcon, pszText);
 	if (m_hwnd)
-		RedrawWindow(m_hwnd, NULL, NULL, RDW_INVALIDATE);
+		RedrawWindow(m_hwnd, nullptr, nullptr, RDW_INVALIDATE);
 }
 
 void CJabberInfoFrame::ShowInfoItem(char *pszName, bool bShow)
@@ -496,4 +487,19 @@ void CJabberInfoFrame::RemoveInfoItem(char *pszName)
 
 	if (bUpdate)
 		UpdateSize();
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+void CJabberProto::InitInfoFrame()
+{
+	if (!ServiceExists(MS_CLIST_FRAMES_ADDFRAME))
+		return;
+
+	if (!m_options.DisableFrame)
+		m_pInfoFrame = new CJabberInfoFrame(this);
+	else {
+		delete m_pInfoFrame;
+		m_pInfoFrame = nullptr;
+	}
 }

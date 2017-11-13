@@ -25,9 +25,8 @@ HINSTANCE hInst;
 #define MS_HISTORY_EXECUTE_TASK       "BasicHistory/ExecuteTask"
 
 HCURSOR     hCurSplitNS, hCurSplitWE;
-HANDLE  g_hMainThread=NULL;
+HANDLE  g_hMainThread = NULL;
 
-HANDLE hServiceShowContactHistory, hServiceDeleteAllContactHistory, hServiceExecuteTask;
 HANDLE *hEventIcons = NULL;
 int iconsNum = 3;
 HANDLE hToolbarButton;
@@ -36,7 +35,7 @@ HGENMENU hTaskMainMenu;
 std::vector<HGENMENU> taskMenus;
 bool g_SmileyAddAvail = false;
 char* metaContactProto = NULL;
-const IID IID_ITextDocument={0x8CC497C0, 0xA1DF, 0x11ce, {0x80, 0x98, 0x00, 0xAA, 0x00, 0x47, 0xBE, 0x5D}};
+const IID IID_ITextDocument = { 0x8CC497C0, 0xA1DF, 0x11ce, {0x80, 0x98, 0x00, 0xAA, 0x00, 0x47, 0xBE, 0x5D} };
 
 #define MODULE "BasicHistory"
 
@@ -67,7 +66,7 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 	return &pluginInfo;
 }
 
-extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = {MIID_UIHISTORY, MIID_LAST};
+extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = { MIID_UIHISTORY, MIID_LAST };
 
 void InitScheduler();
 void DeinitScheduler();
@@ -84,7 +83,7 @@ int PrebuildContactMenu(WPARAM hContact, LPARAM)
 	return 0;
 }
 
-int ToolbarModuleLoaded(WPARAM,LPARAM)
+int ToolbarModuleLoaded(WPARAM, LPARAM)
 {
 	TTBButton ttb = { 0 };
 	ttb.pszService = MS_HISTORY_SHOWCONTACTHISTORY;
@@ -143,10 +142,10 @@ void InitTaskMenuItems()
 		int pos = (int)taskMenus.size();
 		for (; taskIt != Options::instance->taskOptions.end(); ++taskIt) {
 			CMenuItem mi;
-			mi.flags = CMIF_TCHAR | CMIF_KEEPUNTRANSLATED;
+			mi.flags = CMIF_UNICODE | CMIF_KEEPUNTRANSLATED;
 			mi.pszService = MS_HISTORY_EXECUTE_TASK;
 			mi.root = hTaskMainMenu;
-			mi.name.t = (TCHAR*)taskIt->taskName.c_str();
+			mi.name.w = (wchar_t*)taskIt->taskName.c_str();
 			HGENMENU menu = Menu_AddMainMenuItem(&mi);
 			Menu_ConfigureItem(menu, MCI_OPT_EXECPARAM, pos++);
 			taskMenus.push_back(menu);
@@ -167,7 +166,7 @@ IconItem iconList[] =
 	{ LPGEN("Find Previous"),    "BasicHistory_findprev", IDI_FINDPREV },
 	{ LPGEN("Plus in export"),   "BasicHistory_plusex", IDI_PLUSEX },
 	{ LPGEN("Minus in export"),  "BasicHistory_minusex", IDI_MINUSEX },
-};										 
+};
 
 void InitIcolib()
 {
@@ -175,8 +174,8 @@ void InitIcolib()
 
 HICON LoadIconEx(int iconId, bool big)
 {
-	for (int i=0; i < _countof(iconList); i++)
-		if ( iconList[i].defIconID == iconId)
+	for (int i = 0; i < _countof(iconList); i++)
+		if (iconList[i].defIconID == iconId)
 			return IcoLib_GetIconByHandle(iconList[i].hIcolib, big);
 
 	return 0;
@@ -204,26 +203,26 @@ int HistoryContactDelete(WPARAM wParam, LPARAM)
 int ModulesLoaded(WPARAM, LPARAM)
 {
 	InitMenuItems();
-	
-	TCHAR ftpExe[MAX_PATH];
+
+	wchar_t ftpExe[MAX_PATH];
 	if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_PROGRAM_FILES, NULL, SHGFP_TYPE_CURRENT, ftpExe))) {
-		_tcscat_s(ftpExe, _T("\\WinSCP\\WinSCP.exe"));
+		wcscat_s(ftpExe, L"\\WinSCP\\WinSCP.exe");
 		DWORD atr = GetFileAttributes(ftpExe);
 		if (atr == INVALID_FILE_ATTRIBUTES || atr & FILE_ATTRIBUTE_DIRECTORY) {
-#ifdef _WIN64
+			#ifdef _WIN64
 			if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_PROGRAM_FILESX86, NULL, SHGFP_TYPE_CURRENT, ftpExe))) {
-				_tcscat_s(ftpExe, _T("\\WinSCP\\WinSCP.exe"));
+				wcscat_s(ftpExe, L"\\WinSCP\\WinSCP.exe");
 				atr = GetFileAttributes(ftpExe);
 				if (!(atr == INVALID_FILE_ATTRIBUTES || atr & FILE_ATTRIBUTE_DIRECTORY))
 					Options::instance->ftpExePathDef = ftpExe;
 			}
-#endif
+			#endif
 		}
 		else Options::instance->ftpExePathDef = ftpExe;
 	}
 
-	TCHAR *log = _T("%miranda_logpath%\\BasicHistory\\ftplog.txt");
-	TCHAR *logAbsolute = Utils_ReplaceVarsT(log);
+	wchar_t *log = L"%miranda_logpath%\\BasicHistory\\ftplog.txt";
+	wchar_t *logAbsolute = Utils_ReplaceVarsW(log);
 	Options::instance->ftpLogPath = logAbsolute;
 	mir_free(logAbsolute);
 	Options::instance->Load();
@@ -234,7 +233,7 @@ int ModulesLoaded(WPARAM, LPARAM)
 	HookEvent(ME_DB_CONTACT_DELETED, HistoryContactDelete);
 	HookEvent(ME_FONT_RELOAD, HistoryWindow::FontsChanged);
 	HookEvent(ME_SYSTEM_OKTOEXIT, DoLastTask);
-	
+
 	if (ServiceExists(MS_SMILEYADD_REPLACESMILEYS))
 		g_SmileyAddAvail = true;
 
@@ -245,17 +244,17 @@ int ModulesLoaded(WPARAM, LPARAM)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	hTaskMainMenu = NULL;
-	DuplicateHandle(GetCurrentProcess(),GetCurrentThread(),GetCurrentProcess(),&g_hMainThread,0,FALSE,DUPLICATE_SAME_ACCESS);
+	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &g_hMainThread, 0, FALSE, DUPLICATE_SAME_ACCESS);
 
 	hCurSplitNS = LoadCursor(NULL, IDC_SIZENS);
 	hCurSplitWE = LoadCursor(NULL, IDC_SIZEWE);
 
-	hServiceShowContactHistory = CreateServiceFunction(MS_HISTORY_SHOWCONTACTHISTORY, ShowContactHistory);
-	hServiceDeleteAllContactHistory = CreateServiceFunction(MS_HISTORY_DELETEALLCONTACTHISTORY, HistoryWindow::DeleteAllUserHistory);
-	hServiceExecuteTask = CreateServiceFunction(MS_HISTORY_EXECUTE_TASK, ExecuteTaskService);
+	CreateServiceFunction(MS_HISTORY_SHOWCONTACTHISTORY, ShowContactHistory);
+	CreateServiceFunction(MS_HISTORY_DELETEALLCONTACTHISTORY, HistoryWindow::DeleteAllUserHistory);
+	CreateServiceFunction(MS_HISTORY_EXECUTE_TASK, ExecuteTaskService);
 
 	Options::instance = new Options();
 
@@ -263,7 +262,7 @@ extern "C" int __declspec(dllexport) Load(void)
 	HookEvent(ME_OPT_INITIALISE, Options::InitOptions);
 
 	HistoryEventList::Init();
-	
+
 	Icon_Register(hInst, LPGEN("History"), iconList, _countof(iconList));
 	return 0;
 }
@@ -272,23 +271,18 @@ extern "C" int __declspec(dllexport) Unload(void)
 {
 	if (g_hMainThread)
 		CloseHandle(g_hMainThread);
-	g_hMainThread=NULL;
-	
-	DestroyServiceFunction(hServiceShowContactHistory);
-	DestroyServiceFunction(hServiceDeleteAllContactHistory);
-	DestroyServiceFunction(hServiceExecuteTask);
-	
+	g_hMainThread = NULL;
+
 	HistoryWindow::Deinit();
-	
+
 	DestroyCursor(hCurSplitNS);
 	DestroyCursor(hCurSplitWE);
-	
+
 	if (Options::instance != NULL) {
 		delete Options::instance;
 		Options::instance = NULL;
 	}
 
-	delete [] hEventIcons;
-
+	delete[] hEventIcons;
 	return 0;
 }

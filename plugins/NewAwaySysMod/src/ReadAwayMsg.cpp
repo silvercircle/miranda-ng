@@ -52,28 +52,25 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam
 	switch (msg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
+		Window_SetSkinIcon_IcoLib(hwndDlg, SKINICON_OTHER_MIRANDA);
+		Utils_RestoreWindowPosition(hwndDlg, NULL, MOD_NAME, RAMDLGSIZESETTING);
 		{
-			HICON hTitleIcon = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
-			SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)hTitleIcon);
-			SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)hTitleIcon);
-			Utils_RestoreWindowPosition(hwndDlg, NULL, MOD_NAME, RAMDLGSIZESETTING);
-			
 			READAWAYMSGDATA *awayData = new READAWAYMSGDATA;
 			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)awayData);
 			awayData->hContact = lParam;
 			awayData->hAwayMsgEvent = HookEventMessage(ME_PROTO_ACK, hwndDlg, UM_RAM_AWAYMSGACK);
-			awayData->hSeq = (HANDLE)CallContactService(awayData->hContact, PSS_GETAWAYMSG, 0, 0);
+			awayData->hSeq = (HANDLE)ProtoChainSend(awayData->hContact, PSS_GETAWAYMSG, 0, 0);
 			WindowList_Add(g_hReadWndList, hwndDlg, awayData->hContact);
 
-			TCHAR str[256], format[128];
-			TCHAR *contactName = pcli->pfnGetContactDisplayName(awayData->hContact, 0);
+			wchar_t str[256], format[128];
+			wchar_t *contactName = pcli->pfnGetContactDisplayName(awayData->hContact, 0);
 			char *szProto = GetContactProto(awayData->hContact);
-			TCHAR *status = pcli->pfnGetStatusModeDescription(db_get_w(awayData->hContact, szProto, "Status", ID_STATUS_OFFLINE), 0);
+			wchar_t *status = pcli->pfnGetStatusModeDescription(db_get_w(awayData->hContact, szProto, "Status", ID_STATUS_OFFLINE), 0);
 			GetWindowText(hwndDlg, format, _countof(format));
-			mir_sntprintf(str, format, status, contactName);
+			mir_snwprintf(str, format, status, contactName);
 			SetWindowText(hwndDlg, str);
 			GetDlgItemText(hwndDlg, IDC_READAWAYMSG_RETRIEVE, format, _countof(format));
-			mir_sntprintf(str, format, status);
+			mir_snwprintf(str, format, status);
 			SetDlgItemText(hwndDlg, IDC_READAWAYMSG_RETRIEVE, str);
 		}
 		return true;
@@ -91,12 +88,12 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam
 				UnhookEvent(awayData->hAwayMsgEvent);
 				awayData->hAwayMsgEvent = NULL;
 			}
-			const TCHAR *ptszStatusMsg = (const TCHAR*)ack->lParam;
+			const wchar_t *ptszStatusMsg = (const wchar_t*)ack->lParam;
 			SetDlgItemText(hwndDlg, IDC_READAWAYMSG_MSG, ptszStatusMsg);
 			ShowWindow(GetDlgItem(hwndDlg, IDC_READAWAYMSG_RETRIEVE), SW_HIDE);
 			ShowWindow(GetDlgItem(hwndDlg, IDC_READAWAYMSG_MSG), SW_SHOW);
 			SetDlgItemText(hwndDlg, IDOK, TranslateT("&Close"));
-			db_set_ts(awayData->hContact, "CList", "StatusMsg", ptszStatusMsg);
+			db_set_ws(awayData->hContact, "CList", "StatusMsg", ptszStatusMsg);
 		}
 		break;
 

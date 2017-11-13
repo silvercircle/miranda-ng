@@ -18,7 +18,7 @@ xСтатус буде очищено перед зміною тексту і в
 [If this option is "ON", xStatus doesn't depend on protocol status.]
 Якщо опція ввімкнена, xСтатус не буде залежати від статусу протоколу.
 [Use "Variables" plugin or not. If plugin used, you can use some transform, data and math functions. If plugin not used, work will be faster.]
-Використовувати плагін Variables чи ні. Цей плагін дозволяє трансформувати рядки, використовувати математичні функції і функції дати. Без цього плагіна WATrack буде працювати швидше.
+Використовувати плагін Variables чи ні. Цей плагін дозволяє трансформувати рядки, використовувати математичні функції і функції дати. Без нього WATrack працюватиме швидше.
 [Replaces "_" (underscores) globally in pasted os status text, sometimes may be useful]
 Замінювати "_" (підкреслення) пропусками в тексті, іноді може бути корисно.
 [Check file date and time to tag updates while playing.]
@@ -306,9 +306,9 @@ VBR або порожній
 [If this option is "ON", one template will be used with all protocols, protocol and player (media) statuses. Template option page will be changed next time.]
 Якщо опція ввімкнена, то буде застосовано один шаблон для всіх протоколів, а також плеєрів і статусів. Сторінка налаштування шаблонів зміниться після перезапуску.
 [Use player process injection to obtain info easier. Can provoke antivirus or firewall alarm.]
-Вбудовуватися в процес плеєра для полегшення отримання інформації. Може спровокувати тривогу фаєрволу або антивірусу.
+Вбудовуватися в процес плеєра для полегшення отримання інформації. Може спровокувати тривогу брандмауеру або антивірусу.
 [Keep opened file as active, not newly founded.]
-Використовувати відкритий файл в якості активного, а не новостворений.
+Вважати активним відкритий файл, а не новостворений.
 [Use this option if WATrack freeze while player running. Slower processing.]
 Увімкніть, якщо WATrack підвисає під час програвання. Більше навантаження на процесор.
 [Use "Variables" plugin]

@@ -46,7 +46,7 @@ static unsigned int CALLBACK generate_key_thread(void* param)
 	return 0;
 }
 
-INT_PTR CALLBACK GenKeyDlgBoxProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lParam) {
+INT_PTR CALLBACK GenKeyDlgBoxProc(HWND hWndDlg, UINT msg, WPARAM, LPARAM lParam) {
 	switch (msg) {
 	case WM_INITDIALOG:
 	{
@@ -56,9 +56,9 @@ INT_PTR CALLBACK GenKeyDlgBoxProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM 
 		}
 		TranslateDialogDefault(hWndDlg);
 		SetClassLongPtr(hWndDlg, GCLP_HICON, (LONG_PTR)IcoLib_GetIcon(ICON_OTR, 1));
-		TCHAR buff[256];
-		TCHAR *proto = mir_a2t((char*)lParam);
-		mir_sntprintf(buff, TranslateT(LANG_GENERATE_KEY), proto);
+		wchar_t buff[256];
+		wchar_t *proto = mir_a2u((char*)lParam);
+		mir_snwprintf(buff, TranslateW(LANG_GENERATE_KEY), proto);
 		mir_free(proto);
 		SetDlgItemText(hWndDlg, IDC_GENERATE, buff);
 		GenKeyData *data = (GenKeyData *)mir_calloc(sizeof(GenKeyData));
@@ -72,7 +72,6 @@ INT_PTR CALLBACK GenKeyDlgBoxProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM 
 	case WM_DESTROY:
 		SetClassLongPtr(hWndDlg, GCLP_HICON, 0);
 		IcoLib_Release(ICON_OTR, 1);
-		mir_free((char*)lParam);
 	}
 	return FALSE;
 }
@@ -80,7 +79,7 @@ INT_PTR CALLBACK GenKeyDlgBoxProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM 
 extern "C" {
 	/* Return the OTR policy for the given context. */
 	OtrlPolicy otr_gui_policy(void *opdata, ConnContext *context) {
-		DEBUGOUT_T("OTR_GUI_POLICY\n");
+		DEBUGOUTA("OTR_GUI_POLICY\n");
 		MCONTACT hContact = (UINT_PTR)opdata;
 		DWORD pol;
 		if (hContact) {
@@ -102,11 +101,11 @@ extern "C" {
 
 	/* Create a private key for the given accountname/protocol if
 	* desired. */
-	void otr_gui_create_privkey(void *opdata, const char *account_name, const char *protocol) {
-		DEBUGOUT_T("OTR_GUI_CREATE_PRIVKEY\n");
+	// otr_gui_create_privkey(void *opdata, const char *account_name, const char *protocol) {
+	void otr_gui_create_privkey(void *opdata, const char *, const char *protocol) {
+		DEBUGOUTA("OTR_GUI_CREATE_PRIVKEY\n");
 		if (opdata) {
-			mir_free((char*)protocol);
-			protocol = mir_strdup(GetContactProto((UINT_PTR)opdata));
+			protocol = GetContactProto((UINT_PTR)opdata);
 		}
 		if (!protocol) return;
 		DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_GENKEYNOTIFY), 0, GenKeyDlgBoxProc, (LPARAM)protocol);
@@ -119,8 +118,9 @@ extern "C" {
 	* If you return 1, messages such as heartbeats or other
 	* notifications may be sent to the user, which could result in "not
 	* logged in" errors if you're wrong. */
-	int otr_gui_is_logged_in(void *opdata, const char *accountname, const char *protocol, const char *recipient) {
-		DEBUGOUT_T("OTR_GUI_IS_LOGGED_IN\n");
+	//int otr_gui_is_logged_in(void *opdata, const char *accountname, const char *protocol, const char *recipient) {
+	int otr_gui_is_logged_in(void *opdata, const char *, const char *, const char *) {
+		DEBUGOUTA("OTR_GUI_IS_LOGGED_IN\n");
 		MCONTACT hContact = (UINT_PTR)opdata;
 		if (hContact) {
 			WORD status = db_get_w(hContact, GetContactProto(hContact), "Status", ID_STATUS_OFFLINE);
@@ -133,23 +133,25 @@ extern "C" {
 
 	/* Send the given IM to the given recipient from the given
 	* accountname/protocol. */
-	void otr_gui_inject_message(void *opdata, const char *accountname, const char *protocol, const char *recipient, const char *message) {
-		DEBUGOUT_T("OTR_GUI_INJECT_MESSAGE\n");
+	//void otr_gui_inject_message(void *opdata, const char *accountname, const char *protocol, const char *recipient, const char *message) {
+	void otr_gui_inject_message(void *opdata, const char *, const char *protocol, const char *, const char *message) {
+		DEBUGOUTA("OTR_GUI_INJECT_MESSAGE\n");
 		MCONTACT hContact = (UINT_PTR)opdata;
 		if (db_get_w(hContact, protocol, "Status", ID_STATUS_OFFLINE) != ID_STATUS_OFFLINE)
-			CallContactService(hContact, PSS_MESSAGE, PREF_BYPASS_OTR, (LPARAM)message);
+			ProtoChainSend(hContact, PSS_MESSAGE, PREF_BYPASS_OTR, (LPARAM)message);
 	}
 
 	/* When the list of ConnContexts changes (including a change in
 	* state), this is called so the UI can be updated. */
-	void otr_gui_update_context_list(void *opdata) {
+	//void otr_gui_update_context_list(void *opdata) {
+	void otr_gui_update_context_list(void *) {
 		//MessageBox(0, "Update Context List", "OTR Callback", MB_OK);
-		DEBUGOUT_T("OTR: Update Context List\n");
+		DEBUGOUTA("OTR: Update Context List\n");
 	}
 
 	/* A new fingerprint for the given user has been received. */
 	void otr_gui_new_fingerprint(void *opdata, OtrlUserState us, const char *accountname, const char *protocol, const char *username, unsigned char fingerprint[20]) {
-		DEBUGOUT_T("OTR_GUI_NEW_FINGERPRINT\n");
+		DEBUGOUTA("OTR_GUI_NEW_FINGERPRINT\n");
 		ConnContext *context = otrl_context_find(us, username, accountname, protocol, OTRL_INSTAG_BEST, TRUE, 0, add_appdata, opdata);
 		Fingerprint *fp = otrl_context_find_fingerprint(context, fingerprint, TRUE, 0);
 
@@ -160,34 +162,35 @@ extern "C" {
 	}
 
 	/* The list of known fingerprints has changed.  Write them to disk. */
-	void otr_gui_write_fingerprints(void *opdata) {
-		DEBUGOUT_T("OTR_GUI_WRITE_FINGERPRINTS\n");
+	//void otr_gui_write_fingerprints(void *opdata) {
+	void otr_gui_write_fingerprints(void *) {
+		DEBUGOUTA("OTR_GUI_WRITE_FINGERPRINTS\n");
 		//if(MessageBox(0, Translate("Would you like to save the current fingerprint list?"), Translate(MODULE), MB_YESNO) == IDYES)
 		otrl_privkey_write_fingerprints(otr_user_state, _T2A(g_fingerprint_store_filename));
 	}
 
 	/* A ConnContext has entered a secure state. */
 	void otr_gui_gone_secure(void *opdata, ConnContext *context) {
-		DEBUGOUT_T("OTR_GUI_GONE_SECURE\n");
+		DEBUGOUTA("OTR_GUI_GONE_SECURE\n");
 		MCONTACT hContact = (UINT_PTR)opdata;
 		TrustLevel trusted = otr_context_get_trust(context);
 		SetEncryptionStatus(hContact, trusted);
-		TCHAR buff[512];
+		wchar_t buff[512];
 		if (trusted == TRUST_PRIVATE) {
-			mir_sntprintf(buff, TranslateT(LANG_SESSION_START_OTR), contact_get_nameT(hContact));
+			mir_snwprintf(buff, TranslateW(LANG_SESSION_START_OTR), contact_get_nameT(hContact));
 		}
 		else if (trusted == TRUST_UNVERIFIED) {
 			if (options.autoshow_verify) SMPInitDialog(context); //VerifyContextDialog(context);
-			mir_sntprintf(buff, TranslateT(LANG_SESSION_START_OTR_VERIFY), contact_get_nameT(hContact));
+			mir_snwprintf(buff, TranslateW(LANG_SESSION_START_OTR_VERIFY), contact_get_nameT(hContact));
 		}
 		else { // should never happen
-			mir_sntprintf(buff, TranslateT(LANG_SESSION_NOT_STARTED_OTR), contact_get_nameT(hContact));
+			mir_snwprintf(buff, TranslateW(LANG_SESSION_NOT_STARTED_OTR), contact_get_nameT(hContact));
 		}
 		if (context->protocol_version < MIROTR_PROTO_LATEST){
-			size_t remaining = mir_tstrlen(buff);
-			TCHAR *offset = buff + remaining;
+			size_t remaining = mir_wstrlen(buff);
+			wchar_t *offset = buff + remaining;
 			remaining = _countof(buff) - remaining;
-			mir_sntprintf(offset, remaining, TranslateT("\nusing older protocol version %i"), context->protocol_version);
+			mir_snwprintf(offset, remaining, TranslateT("\nusing older protocol version %i"), context->protocol_version);
 		}
 		ShowMessage(hContact, buff);
 
@@ -196,11 +199,11 @@ extern "C" {
 	/* A ConnContext has left a secure state. */
 	void otr_gui_gone_insecure(void *opdata, ConnContext *context) {
 		MCONTACT hContact = (UINT_PTR)opdata;
-		DEBUGOUT_T("OTR_GUI_GONE_INSECURE\n");
-		TCHAR buff[512];
-		mir_sntprintf(buff, TranslateT(LANG_SESSION_TERMINATED_BY_OTR), contact_get_nameT(hContact));
+		DEBUGOUTA("OTR_GUI_GONE_INSECURE\n");
+		wchar_t buff[512];
+		mir_snwprintf(buff, TranslateW(LANG_SESSION_TERMINATED_BY_OTR), contact_get_nameT(hContact));
 		//MessageBox(0, buff, Translate("OTR Information"), MB_OK);
-		if (!Miranda_Terminated()) {
+		if (!Miranda_IsTerminated()) {
 			ShowMessage(hContact, buff);
 		}
 
@@ -212,33 +215,33 @@ extern "C" {
 	* already knew.  is_reply indicates whether we initiated the AKE. */
 	void otr_gui_still_secure(void *opdata, ConnContext *context, int is_reply) {
 		MCONTACT hContact = (UINT_PTR)opdata;
-		DEBUGOUT_T("OTR_GUI_STILL_SECURE\n");
+		DEBUGOUTA("OTR_GUI_STILL_SECURE\n");
 		TrustLevel trusted = otr_context_get_trust(context);
 		SetEncryptionStatus(hContact, trusted);
-		TCHAR buff[1024];
+		wchar_t buff[1024];
 		if (!is_reply) {
 			if (trusted == TRUST_PRIVATE) {
-				mir_sntprintf(buff, TranslateT(LANG_SESSION_CONTINUE_OTR), contact_get_nameT(hContact));
+				mir_snwprintf(buff, TranslateW(LANG_SESSION_CONTINUE_OTR), contact_get_nameT(hContact));
 			}
 			else if (trusted == TRUST_UNVERIFIED) {
 				if (options.autoshow_verify) SMPInitDialog(context); //VerifyContextDialog(context);
-				mir_sntprintf(buff, TranslateT(LANG_SESSION_CONTINUE_OTR_VERIFY), contact_get_nameT(hContact));
+				mir_snwprintf(buff, TranslateW(LANG_SESSION_CONTINUE_OTR_VERIFY), contact_get_nameT(hContact));
 			}
 			else { // should never happen
-				mir_sntprintf(buff, TranslateT(LANG_SESSION_NOT_STARTED_OTR), contact_get_nameT(hContact));
+				mir_snwprintf(buff, TranslateW(LANG_SESSION_NOT_STARTED_OTR), contact_get_nameT(hContact));
 			}
 			// opdata is hContact
 			ShowMessage(hContact, buff);
 		}
 		else {
 			if (trusted == TRUST_PRIVATE) {
-				mir_sntprintf(buff, TranslateT(LANG_SESSION_HAS_CONTINUE_OTR), contact_get_nameT(hContact));
+				mir_snwprintf(buff, TranslateW(LANG_SESSION_HAS_CONTINUE_OTR), contact_get_nameT(hContact));
 			}
 			else if (trusted == TRUST_UNVERIFIED) {
-				mir_sntprintf(buff, TranslateT(LANG_SESSION_HAS_CONTINUE_OTR_VERIFY), contact_get_nameT(hContact));
+				mir_snwprintf(buff, TranslateW(LANG_SESSION_HAS_CONTINUE_OTR_VERIFY), contact_get_nameT(hContact));
 			}
 			else { // should never happen
-				mir_sntprintf(buff, TranslateT(LANG_SESSION_NOT_STARTED_OTR), contact_get_nameT(hContact));
+				mir_snwprintf(buff, TranslateW(LANG_SESSION_NOT_STARTED_OTR), contact_get_nameT(hContact));
 			}
 
 		}
@@ -258,26 +261,31 @@ extern "C" {
 		return CallProtoService(proto, PS_GETCAPS, PFLAG_MAXLENOFMESSAGE, (LPARAM)opdata);
 	}
 
-	const char *account_name(void *opdata, const char *account, const char *protocol) {
+	//const char *account_name(void *opdata, const char *account, const char *protocol) {
+	const char *account_name(void *, const char *account, const char *) {
 		return account;
 	}
 
-	void account_name_free(void *opdata, const char *account_name) {
+	//void account_name_free(void *opdata, const char *account_name) {
+	void account_name_free(void *, const char *) {
 	}
 
 	void add_appdata(void *data, ConnContext *context) {
 		if (context)	context->app_data = data;
 	}
 
-	const char* resent_msg_prefix(void *opdata, ConnContext *context){
+	//const char* resent_msg_prefix(void *opdata, ConnContext *context) {
+	const char* resent_msg_prefix(void *, ConnContext *){
 		return "[resent]";
 	}
-	void resent_msg_prefix_free(void *opdata, const char *prefix){
+
+	//void resent_msg_prefix_free(void *opdata, const char *prefix) {
+	void resent_msg_prefix_free(void *, const char *){
 		return;
 	}
 
 	void handle_smp_event(void *opdata, OtrlSMPEvent smp_event, ConnContext *context, unsigned short progress_percent, char *question) {
-		DEBUGOUT_T("HANDLE_SMP_EVENT\n");
+		DEBUGOUTA("HANDLE_SMP_EVENT\n");
 		if (!context) return;
 		switch (smp_event){
 		case OTRL_SMPEVENT_NONE:
@@ -288,6 +296,7 @@ extern "C" {
 			break;
 		case OTRL_SMPEVENT_CHEATED:
 			otrl_message_abort_smp(otr_user_state, &ops, opdata, context);
+			// fall through
 		case OTRL_SMPEVENT_IN_PROGRESS:
 		case OTRL_SMPEVENT_SUCCESS:
 		case OTRL_SMPEVENT_FAILURE:
@@ -300,15 +309,16 @@ extern "C" {
 		}
 	}
 
-	void handle_msg_event(void *opdata, OtrlMessageEvent msg_event, ConnContext *context, const char *message, gcry_error_t err) {
+	//void handle_msg_event(void *opdata, OtrlMessageEvent msg_event, ConnContext *context, const char *message, gcry_error_t err) {
+	void handle_msg_event(void *opdata, OtrlMessageEvent msg_event, ConnContext *, const char *message, gcry_error_t err) {
 		DEBUGOUTA("HANDLE_MSG_EVENT\n");
 		MCONTACT hContact = (UINT_PTR)opdata;
-		const TCHAR* contact = contact_get_nameT(hContact);
+		const wchar_t* contact = contact_get_nameT(hContact);
 
-		typedef void(*msgfunc_t)(const MCONTACT, const TCHAR*);
+		typedef void(*msgfunc_t)(const MCONTACT, const wchar_t*);
 		msgfunc_t msgfunc = ShowMessage;
-		//		TCHAR* title = NULL;
-		TCHAR msg[512];
+		//		wchar_t* title = NULL;
+		wchar_t msg[512];
 		msg[0] = '\0';
 		switch (msg_event){
 		case OTRL_MSGEVENT_NONE:
@@ -318,11 +328,11 @@ extern "C" {
 			break;
 		case OTRL_MSGEVENT_ENCRYPTION_REQUIRED:
 			msgfunc = ShowMessageInline;
-			mir_tstrncpy(msg, TranslateT("Attempting to start a private conversation..."), _countof(msg));
+			mir_wstrncpy(msg, TranslateT("Attempting to start a private conversation..."), _countof(msg));
 			break;
 		case OTRL_MSGEVENT_ENCRYPTION_ERROR:
 			msgfunc = ShowMessageInline;
-			mir_tstrncpy(msg, TranslateT("An error occurred when encrypting your message.\nThe message was not sent"), _countof(msg));
+			mir_wstrncpy(msg, TranslateT("An error occurred when encrypting your message.\nThe message was not sent"), _countof(msg));
 			break;
 		case OTRL_MSGEVENT_CONNECTION_ENDED:
 			msgfunc = ShowMessageInline;
@@ -336,14 +346,14 @@ extern "C" {
 				mir_snwprintf(msg, _countof(msg), TranslateT("Error setting up private conversation: %s"), TranslateT("Malformed message received"));
 				break;
 			default:{
-				TCHAR* tmp = mir_utf8decodeT(gcry_strerror(err));
+				wchar_t* tmp = mir_utf8decodeW(gcry_strerror(err));
 				mir_snwprintf(msg, _countof(msg), TranslateT("Error setting up private conversation: %s"), tmp);
 				mir_free(tmp); }
 			}
 			break;
 		case OTRL_MSGEVENT_MSG_REFLECTED:
 			//			title = TranslateT("OTR Error");
-			mir_tstrncpy(msg, TranslateT("We are receiving our own OTR messages.\nYou are either trying to talk to yourself, or someone is reflecting your messages back at you"), _countof(msg));
+			mir_wstrncpy(msg, TranslateT("We are receiving our own OTR messages.\nYou are either trying to talk to yourself, or someone is reflecting your messages back at you"), _countof(msg));
 			break;
 		case OTRL_MSGEVENT_MSG_RESENT:
 			//			title = TranslateT("Message resent");
@@ -363,16 +373,17 @@ extern "C" {
 			break;
 		case OTRL_MSGEVENT_RCVDMSG_GENERAL_ERR:{
 			//			title = TranslateT("OTR Error");
-			TCHAR* tmp = mir_utf8decodeT(message);
-			mir_tstrncpy(msg, tmp, _countof(msg));
+			wchar_t* tmp = mir_utf8decodeW(message);
+			mir_wstrncpy(msg, tmp, _countof(msg));
 			mir_free(tmp);
 			break; }
 		case OTRL_MSGEVENT_RCVDMSG_UNENCRYPTED:{
 			//			title = TranslateT("Received unencrypted message");
 			msgfunc = ShowMessageInline;
-			TCHAR* tmp = mir_utf8decodeT(message);
+			wchar_t* tmp = mir_utf8decodeW(message);
 			mir_snwprintf(msg, _countof(msg), TranslateT("The following message received from '%s' was NOT encrypted:\n\n%s"), contact, tmp);
 			mir_free(tmp);
+			ProtoChainSend(hContact, PSS_MESSAGE, PREF_BYPASS_OTR, (LPARAM)message);
 			break; }
 		case OTRL_MSGEVENT_RCVDMSG_FOR_OTHER_INSTANCE:
 			//			title = TranslateT("Received message for a different session");
@@ -380,15 +391,16 @@ extern "C" {
 			break;
 		default:
 			//			title = TranslateT("OTR Error");
-			mir_tstrncpy(msg, TranslateT("unknown OTR message received, please report that to Miranda NG"), _countof(msg));
+			mir_wstrncpy(msg, TranslateT("unknown OTR message received, please report that to Miranda NG developers"), _countof(msg));
 		}
 		if (msg[0])
 			msgfunc(hContact, msg);
 	}
 
-	void otr_create_instag(void *opdata, const char *accountname, const char *protocol){
-		DEBUGOUT_T("OTR_CREATE_INSTAG\n");
-		FILE* instagf = _tfopen(g_instag_filename, _T("w+b"));
+	//void otr_create_instag(void *opdata, const char *accountname, const char *protocol) {
+	void otr_create_instag(void *, const char *accountname, const char *protocol){
+		DEBUGOUTA("OTR_CREATE_INSTAG\n");
+		FILE* instagf = _wfopen(g_instag_filename, L"w+b");
 		if (!instagf)
 			return;
 		otrl_instag_generate_FILEp(otr_user_state, instagf, accountname, protocol);

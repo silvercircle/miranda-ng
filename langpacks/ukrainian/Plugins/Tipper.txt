@@ -5,8 +5,8 @@
 ;  Version: 2.1.0.7
 ;  Authors: Scott Ellis, yaho
 ;============================================================
-[Tool Tip notification windows.]
-Плагін спливаючих підказок для списку контактів.
+[Tooltip notification windows.]
+Спливаючі підказки для списку контактів.
 [Layout]
 Розміщення
 [Text indent:]
@@ -172,7 +172,7 @@
 [Handle tray tooltips by Tipper]
 Перехоплювати підказки в треї
 [Hide offline protocols]
-Ховати відключені протоколи
+Ховати протоколи не в мережі
 [Expand to second level after:]
 Другий рівень підказки через:
 [ms]
@@ -197,12 +197,6 @@
 <Без мітки>
 [Add item]
 Додати
-[Add separator]
-Додати роздільник
-[Move up]
-Вище
-[Move down]
-Нижче
 [No icon]
 Без значка
 [Icon on left]
@@ -469,6 +463,8 @@ xСтатус:
 Заголовок у треї
 [Tipper]
 Підказки
+[Apply]
+Застосувати
 [Female]
 Жіноча
 [Male]

@@ -5,14 +5,30 @@
 ;  Version: 0.4.0.4
 ;  Authors: NightFox, Deathdemon, XF007, Goblineye Entertainment
 ;============================================================
+[On&line]
+&En línea
+[&Away]
+Fuer&a
+[&Not available]
+&No disponible
+[Occ&upied]
+Oc&upado
+[&Do not disturb]
+No &molestar
+[&Free for chat]
+&Libre para el chat
+[&Invisible]
+&Invisible
+[On the &phone]
+En el &teléfono
+[Out to &lunch]
+Salí a &comer
 [&Delete]
 &Borrar
 [Title:]
 Título:
 [Delete]
 Eliminar
-[Status messages:]
-Mensajes de estado:
 [seconds]
 segundos
 [%s message for %s]
@@ -41,7 +57,7 @@ En línea
 Sí, estoy aquí.
 [Away]
 Fuera
-[NA]
+[Not available]
 No disponible
 [Give it up, I'm not in!]
 ¡Dejenme, no estoy!
@@ -49,12 +65,12 @@ No disponible
 Ocupado
 [Not right now.]
 No en este momento.
-[DND]
+[Do not disturb]
 No molestar
 [Give a guy some peace, would ya?]
 Dame un poco de paz, ¿quieres?
 [Free for chat]
-Libre para el chat	
+Libre para el chat
 [I'm a chatbot!]
 ¡Soy un chatbot!
 [Invisible]
@@ -71,6 +87,10 @@ Ignorar
 Establecer mensaje de estado
 [Add]
 Añadir
+[Save]
+Guardar
+[Settings]
+Ajustes
 [Re&ad %s message]
 Leer %s mens&aje(s)
 [On]

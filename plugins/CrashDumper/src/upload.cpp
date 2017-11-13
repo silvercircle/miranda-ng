@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-HANDLE hNetlibUser;
+HNETLIBUSER hNetlibUser;
 
 static void arrayToHex(BYTE* data, size_t datasz, char* res)
 {
@@ -70,10 +70,10 @@ void OpenAuthUrl(const char* url)
 	if (user[0] && pass[0]) {
 		char str[256];
 		mir_snprintf(str, url, user); // XXX: fix me
-		mir_snprintf(str, "http://vi.miranda-ng.org/detail/%s", user);
+		mir_snprintf(str, "https://vi.miranda-ng.org/detail/%s", user);
 		Utils_OpenUrl(str);
 	}
-	else Utils_OpenUrl("http://vi.miranda-ng.org/");
+	else Utils_OpenUrl("https://vi.miranda-ng.org/");
 }
 
 void CreateAuthString(char* auth)
@@ -122,7 +122,7 @@ bool InternetDownloadFile(const char *szUrl, VerTrnsfr* szReq)
 
 	while (result == 0xBADBAD) {
 		// download the page
-		NETLIBHTTPREQUEST *nlhrReply = (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)hNetlibUser, (LPARAM)&nlhr);
+		NETLIBHTTPREQUEST *nlhrReply = Netlib_HttpTransaction(hNetlibUser, &nlhr);
 		if (nlhrReply) {
 			int i;
 
@@ -189,7 +189,7 @@ bool InternetDownloadFile(const char *szUrl, VerTrnsfr* szReq)
 			ShowMessage(0, TranslateT("Cannot upload Version Info. Host unreachable."));
 		}
 
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)nlhrReply);
+		Netlib_FreeHttpRequest(nlhrReply);
 	}
 
 	mir_free(szRedirUrl);
@@ -205,7 +205,7 @@ void __cdecl VersionInfoUploadThread(void* arg)
 	char user[64], pass[40];
 	GetLoginStr(user, sizeof(user), pass);
 	char str[256];
-	mir_snprintf(str, "http://vi.miranda-ng.org/en/upload?login=%s&pass=%s", user, pass);
+	mir_snprintf(str, "https://vi.miranda-ng.org/en/upload?login=%s&pass=%s", user, pass);
 
 	InternetDownloadFile(str, trn);
 	mir_free(trn->buf);
@@ -214,11 +214,11 @@ void __cdecl VersionInfoUploadThread(void* arg)
 
 void UploadInit(void)
 {
-	NETLIBUSER nlu = { sizeof(nlu) };
-	nlu.flags = NUF_OUTGOING | NUF_HTTPCONNS | NUF_NOHTTPSOPTION | NUF_TCHAR;
+	NETLIBUSER nlu = {};
+	nlu.flags = NUF_OUTGOING | NUF_HTTPCONNS | NUF_NOHTTPSOPTION | NUF_UNICODE;
 	nlu.szSettingsModule = (char*)PluginName;
-	nlu.ptszDescriptiveName = TranslateT("Crash Dumper HTTP connections");
-	hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
+	nlu.szDescriptiveName.w = TranslateT("Crash Dumper HTTP connections");
+	hNetlibUser = Netlib_RegisterUser(&nlu);
 }
 
 void UploadClose(void)
@@ -228,14 +228,14 @@ void UploadClose(void)
 
 bool ProcessVIHash(bool store)
 {
-	CMString buffer;
+	CMStringW buffer;
 	PrintVersionInfo(buffer, 0);
 
 	BYTE hash[16];
 	mir_md5_state_t context;
 
 	mir_md5_init(&context);
-	mir_md5_append(&context, (PBYTE)buffer.c_str(), buffer.GetLength()*sizeof(TCHAR));
+	mir_md5_append(&context, (PBYTE)buffer.c_str(), buffer.GetLength()*sizeof(wchar_t));
 	mir_md5_finish(&context, hash);
 
 	char hashstr[40];

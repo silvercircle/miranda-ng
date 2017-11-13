@@ -5,7 +5,7 @@ Jabber Protocol Plugin for Miranda NG
 Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
 Copyright (c) 2007     Maxim Mluhov
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -28,7 +28,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "jabber_caps.h"
 
-typedef enum {
+#define LISTFOREACH(var__, obj__, list__)	\
+	for (int var__ = 0; (var__ = obj__->ListFindNext(list__, var__)) >= 0; ++var__)
+#define LISTFOREACH_NODEF(var__, obj__, list__)	\
+	for (var__ = 0; (var__ = obj__->ListFindNext(list__, var__)) >= 0; ++var__)
+
+enum JABBER_LIST
+{
 	LIST_ROSTER,        // Roster list
 	LIST_CHATROOM,      // Groupchat room currently joined
 	LIST_ROOM,          // Groupchat room list to show on the Jabber groupchat dialog
@@ -38,35 +44,39 @@ typedef enum {
 	LIST_BOOKMARK,
 	LIST_VCARD_TEMP,
 	LIST_FTIQID
-} JABBER_LIST;
+};
 
-typedef enum {
+enum JABBER_SUBSCRIPTION
+{
 	SUB_NONE,
 	SUB_TO,
 	SUB_FROM,
 	SUB_BOTH
-} JABBER_SUBSCRIPTION;
+};
 
-typedef enum {
+enum JABBER_GC_AFFILIATION
+{
 	AFFILIATION_NONE,
 	AFFILIATION_OUTCAST,
 	AFFILIATION_MEMBER,
 	AFFILIATION_ADMIN,
 	AFFILIATION_OWNER
-} JABBER_GC_AFFILIATION;
+};
 
-typedef enum {
+enum JABBER_GC_ROLE
+{
 	ROLE_NONE,
 	ROLE_VISITOR,
 	ROLE_PARTICIPANT,
 	ROLE_MODERATOR
-} JABBER_GC_ROLE;
+};
 
-typedef enum {			// initial default to RSMODE_LASTSEEN
+enum JABBER_RESOURCE_MODE // initial default to RSMODE_LASTSEEN
+{
 	RSMODE_SERVER,		// always let server decide (always send correspondence without resouce name)
 	RSMODE_LASTSEEN,	// use the last seen resource (or let server decide if haven't seen anything yet)
-	RSMODE_MANUAL		// specify resource manually (see the defaultResource field - must not be NULL)
-} JABBER_RESOURCE_MODE;
+	RSMODE_MANUAL		// specify resource manually (see the defaultResource field - must not be nullptr)
+};
 
 class JABBER_RESOURCE_STATUS : public MZeroedObject
 {
@@ -80,29 +90,24 @@ public:
 	void Release();
 
 	int    m_iStatus;
-	ptrT   m_tszResourceName;
-	ptrT   m_tszStatusMessage;
+	ptrW   m_tszResourceName;
+	ptrW   m_tszStatusMessage;
 	int    m_iPriority; // resource priority, -128..+127
 	time_t m_dwIdleStartTime;// XEP-0012 support
 
 	// groupchat support
 	JABBER_GC_AFFILIATION m_affiliation;
 	JABBER_GC_ROLE m_role;
-	ptrT  m_tszNick;
-	ptrT  m_tszRealJid; // real jid for jabber conferences
+	ptrW  m_tszNick;
+	ptrW  m_tszRealJid; // real jid for jabber conferences
 
 	// XEP-0115 support
-	ptrT  m_tszCapsNode;
-	ptrT  m_tszCapsVer;
-	ptrT  m_tszCapsExt;
-	DWORD m_dwVersionRequestTime, m_dwDiscoInfoRequestTime;
+	CJabberClientPartialCaps *m_pCaps;
+	ptrW  m_tszCapsExt;
+	DWORD m_dwDiscoInfoRequestTime;
 
 	JabberCapsBits m_jcbCachedCaps;
 	JabberCapsBits m_jcbManualDiscoveredCaps;
-
-	// XEP-232 support
-	ptrT  m_tszOs, m_tszOsVersion;
-	ptrT  m_tszSoftware, m_tszSoftwareVersion, m_tszXMirandaCoreVersion;
 
 	// XEP-0085 gone event support
 	BOOL m_bMessageSessionActive;
@@ -145,13 +150,14 @@ struct JABBER_LIST_ITEM : public MZeroedObject
 	~JABBER_LIST_ITEM();
 
 	JABBER_LIST list;
-	TCHAR* jid;
+	wchar_t* jid;
+	MCONTACT hContact;
 
 	// LIST_ROSTER
 	// jid = jid of the contact
-	TCHAR* nick;
+	wchar_t* nick;
 
-	pResourceStatus findResource(const TCHAR *resourceName) const;
+	pResourceStatus findResource(const wchar_t *resourceName) const;
 	pResourceStatus getBestResource() const;
 	JABBER_RESOURCE_MODE resourceMode;
 	LIST<JABBER_RESOURCE_STATUS> arResources; // array of resources
@@ -162,18 +168,18 @@ struct JABBER_LIST_ITEM : public MZeroedObject
 		*getTemp();           // allocates m_pItemResource if needed
 
 	JABBER_SUBSCRIPTION subscription;
-	TCHAR* group;
-	TCHAR* photoFileName;
-	TCHAR* messageEventIdStr;
+	wchar_t* group;
+	wchar_t* photoFileName;
+	wchar_t* messageEventIdStr;
 
 	// LIST_AGENT
 	// jid = jid of the agent
-	TCHAR* name;
-	TCHAR* service;
+	wchar_t* name;
+	wchar_t* service;
 
 	// LIST_ROOM
 	// jid = room JID
-	TCHAR* type;	// room type
+	wchar_t* type;	// room type
 
 	// LIST_CHATROOM
 	// jid = room JID
@@ -200,11 +206,12 @@ struct JABBER_LIST_ITEM : public MZeroedObject
 
 	//LIST_BOOKMARK
 	// jid = room JID
-	TCHAR* password;	// password for room
-	BOOL bAutoJoin;
+	wchar_t* password;	// password for room
+	bool bAutoJoin;
 
-	BOOL bUseResource;
-	BOOL bHistoryRead;
+	bool bUseResource;
+	bool bHistoryRead;
+	bool bRealContact;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -214,8 +221,8 @@ struct JABBER_HTTP_AVATARS
 	char * Url;
 	MCONTACT hContact;
 
-	JABBER_HTTP_AVATARS(const TCHAR *tUrl, MCONTACT thContact)
-		: Url(mir_t2a(tUrl)), hContact(thContact) {}
+	JABBER_HTTP_AVATARS(const wchar_t *tUrl, MCONTACT thContact)
+		: Url(mir_u2a(tUrl)), hContact(thContact) {}
 
 	~JABBER_HTTP_AVATARS() { mir_free(Url); }
 

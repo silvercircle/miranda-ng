@@ -17,7 +17,7 @@ not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 */
 
-#include "commons.h"
+#include "stdafx.h"
 
 // Prototypes ///////////////////////////////////////////////////////////////////////////
 
@@ -40,13 +40,13 @@ HINSTANCE hInst;
 int hLangpack = 0;
 
 HANDLE hDictionariesFolder = NULL;
-TCHAR *dictionariesFolder;
+wchar_t *dictionariesFolder;
 
 HANDLE hCustomDictionariesFolder = NULL;
-TCHAR *customDictionariesFolder;
+wchar_t *customDictionariesFolder;
 
 HANDLE hFlagsDllFolder = NULL;
-TCHAR *flagsDllFolder;
+wchar_t *flagsDllFolder;
 
 HBITMAP hCheckedBmp;
 BITMAP bmpChecked;
@@ -71,16 +71,16 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 
 static int IconsChanged(WPARAM, LPARAM)
 {
-	StatusIconData sid = { sizeof(sid) };
+	StatusIconData sid = {};
 	sid.szModule = MODULE_NAME;
 	sid.hIconDisabled = IcoLib_GetIcon("spellchecker_disabled");
-	sid.flags = MBF_HIDDEN | MBF_TCHAR;
+	sid.flags = MBF_HIDDEN | MBF_UNICODE;
 
 	for (int i = 0; i < languages.getCount(); i++) {
 		sid.dwId = i;
 
-		TCHAR tmp[128];
-		mir_sntprintf(tmp, _T("%s - %s"), TranslateT("Spell Checker"), languages[i]->full_name);
+		wchar_t tmp[128];
+		mir_snwprintf(tmp, L"%s - %s", TranslateT("Spell Checker"), languages[i]->full_name);
 		sid.tszTooltip = tmp;
 
 		HICON hIcon = (opts.use_flags) ? IcoLib_GetIconByHandle(languages[i]->hIcolib) : IcoLib_GetIcon("spellchecker_enabled");
@@ -108,22 +108,22 @@ static int ModulesLoaded(WPARAM, LPARAM)
 
 	// Folders plugin support
 	if (hDictionariesFolder = FoldersRegisterCustomPathT(LPGEN("Spell Checker"), LPGEN("Dictionaries"), DICTIONARIES_FOLDER)) {
-		dictionariesFolder = (TCHAR *)mir_alloc(sizeof(TCHAR) * MAX_PATH);
-		FoldersGetCustomPathT(hDictionariesFolder, dictionariesFolder, MAX_PATH, _T("."));
+		dictionariesFolder = (wchar_t *)mir_alloc(sizeof(wchar_t) * MAX_PATH);
+		FoldersGetCustomPathT(hDictionariesFolder, dictionariesFolder, MAX_PATH, L".");
 	}
-	else dictionariesFolder = Utils_ReplaceVarsT(DICTIONARIES_FOLDER);
+	else dictionariesFolder = Utils_ReplaceVarsW(DICTIONARIES_FOLDER);
 
 	if (hCustomDictionariesFolder = FoldersRegisterCustomPathT(LPGEN("Spell Checker"), LPGEN("Custom Dictionaries"), CUSTOM_DICTIONARIES_FOLDER)) {
-		customDictionariesFolder = (TCHAR *)mir_alloc(sizeof(TCHAR) * MAX_PATH);
-		FoldersGetCustomPathT(hCustomDictionariesFolder, customDictionariesFolder, MAX_PATH, _T("."));
+		customDictionariesFolder = (wchar_t *)mir_alloc(sizeof(wchar_t) * MAX_PATH);
+		FoldersGetCustomPathT(hCustomDictionariesFolder, customDictionariesFolder, MAX_PATH, L".");
 	}
-	else customDictionariesFolder = Utils_ReplaceVarsT(CUSTOM_DICTIONARIES_FOLDER);
+	else customDictionariesFolder = Utils_ReplaceVarsW(CUSTOM_DICTIONARIES_FOLDER);
 
 	if (hFlagsDllFolder = FoldersRegisterCustomPathT(LPGEN("Spell Checker"), LPGEN("Flags DLL"), FLAGS_DLL_FOLDER)) {
-		flagsDllFolder = (TCHAR *)mir_alloc(sizeof(TCHAR) * MAX_PATH);
-		FoldersGetCustomPathT(hFlagsDllFolder, flagsDllFolder, MAX_PATH, _T("."));
+		flagsDllFolder = (wchar_t *)mir_alloc(sizeof(wchar_t) * MAX_PATH);
+		FoldersGetCustomPathT(hFlagsDllFolder, flagsDllFolder, MAX_PATH, L".");
 	}
-	else flagsDllFolder = Utils_ReplaceVarsT(FLAGS_DLL_FOLDER);
+	else flagsDllFolder = Utils_ReplaceVarsW(FLAGS_DLL_FOLDER);
 
 	InitOptions();
 
@@ -133,21 +133,21 @@ static int ModulesLoaded(WPARAM, LPARAM)
 
 	if (opts.use_flags) {
 		// Load flags dll
-		TCHAR flag_file[MAX_PATH];
-		mir_sntprintf(flag_file, _T("%s\\flags_icons.dll"), flagsDllFolder);
+		wchar_t flag_file[MAX_PATH];
+		mir_snwprintf(flag_file, L"%s\\flags_icons.dll", flagsDllFolder);
 		HMODULE hFlagsDll = LoadLibraryEx(flag_file, NULL, LOAD_LIBRARY_AS_DATAFILE);
 
-		TCHAR path[MAX_PATH];
+		wchar_t path[MAX_PATH];
 		GetModuleFileName(hInst, path, MAX_PATH);
 
 		SKINICONDESC sid = { 0 };
-		sid.flags = SIDF_ALL_TCHAR | SIDF_SORTED;
-		sid.section.t = LPGENT("Spell Checker") _T("/") LPGENT("Flags");
+		sid.flags = SIDF_ALL_UNICODE | SIDF_SORTED;
+		sid.section.w = LPGENW("Spell Checker") L"/" LPGENW("Flags");
 
 		// Get language flags
 		for (int i = 0; i < languages.getCount(); i++) {
 			Dictionary *p = languages[i];
-			sid.description.t = p->full_name;
+			sid.description.w = p->full_name;
 
 			char lang[32];
 			mir_snprintf(lang, "spell_lang_%d", i);
@@ -159,13 +159,13 @@ static int ModulesLoaded(WPARAM, LPARAM)
 
 			if (hFlag != NULL) {
 				sid.hDefaultIcon = hFlag;
-				sid.defaultFile.t = NULL;
+				sid.defaultFile.w = NULL;
 				sid.iDefaultIndex = 0;
 			}
 			else {
 				hFlagIcoLib = IcoLib_GetIcon("spellchecker_unknown");
 				sid.hDefaultIcon = hFlagIcoLib;
-				sid.defaultFile.t = NULL;
+				sid.defaultFile.w = NULL;
 				sid.iDefaultIndex = 0;
 			}
 
@@ -183,11 +183,11 @@ static int ModulesLoaded(WPARAM, LPARAM)
 	for (int j = 0; j < languages.getCount(); j++) {
 		Dictionary *dict = languages[j];
 
-		TCHAR filename[MAX_PATH];
-		mir_sntprintf(filename, _T("%s\\%s.ar"), customDictionariesFolder, dict->language);
+		wchar_t filename[MAX_PATH];
+		mir_snwprintf(filename, L"%s\\%s.ar", customDictionariesFolder, dict->language);
 		dict->autoReplace = new AutoReplaceMap(filename, dict);
 
-		if (mir_tstrcmp(dict->language, opts.default_language) == 0)
+		if (mir_wstrcmp(dict->language, opts.default_language) == 0)
 			dict->load();
 	}
 
@@ -196,25 +196,25 @@ static int ModulesLoaded(WPARAM, LPARAM)
 	HookEvent(ME_MSG_WINDOWPOPUP, MsgWindowPopup);
 	HookEvent(ME_MSG_ICONPRESSED, IconPressed);
 
-	StatusIconData sid = { sizeof(sid) };
+	StatusIconData sid = {};
 	sid.szModule = MODULE_NAME;
 	sid.hIconDisabled = IcoLib_GetIcon("spellchecker_disabled");
-	sid.flags = MBF_TCHAR | MBF_HIDDEN;
+	sid.flags = MBF_UNICODE | MBF_HIDDEN;
 
 	for (int i = 0; i < languages.getCount(); i++) {
 		sid.dwId = i;
 
-		TCHAR tmp[128];
-		mir_sntprintf(tmp, _T("%s - %s"), TranslateT("Spell Checker"), languages[i]->full_name);
+		wchar_t tmp[128];
+		mir_snwprintf(tmp, L"%s - %s", TranslateT("Spell Checker"), languages[i]->full_name);
 		sid.tszTooltip = tmp;
 		sid.hIcon = (opts.use_flags) ? IcoLib_GetIconByHandle(languages[i]->hIcolib) : IcoLib_GetIcon("spellchecker_enabled");
 		Srmm_AddIcon(&sid);
 	}
 
-	HOTKEYDESC hkd = { sizeof(hkd) };
+	HOTKEYDESC hkd = {};
 	hkd.pszName = "Spell Checker/Toggle";
-	hkd.pszSection = LPGEN("Spell Checker");
-	hkd.pszDescription = LPGEN("Enable/disable spell checker");
+	hkd.szSection.a = LPGEN("Spell Checker");
+	hkd.szDescription.a = LPGEN("Enable/disable spell checker");
 	hkd.DefHotKey = HOTKEYCODE(HOTKEYF_SHIFT | HOTKEYF_ALT, 'S');
 	hkd.lParam = HOTKEY_ACTION_TOGGLE;
 	Hotkey_Register(&hkd);

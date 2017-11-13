@@ -14,7 +14,7 @@ INT_PTR CALLBACK DlgProcOptsAccount(HWND hWndDlg, UINT msg, WPARAM wParam, LPARA
 			if (ppro->mraGetStringW(NULL, "e-mail", szBuff))
 				SetDlgItemText(hWndDlg, IDC_LOGIN, szBuff.c_str());
 		}
-		SetDlgItemText(hWndDlg, IDC_PASSWORD, _T(""));
+		SetDlgItemText(hWndDlg, IDC_PASSWORD, L"");
 		return TRUE;
 
 	case WM_COMMAND:
@@ -36,12 +36,12 @@ INT_PTR CALLBACK DlgProcOptsAccount(HWND hWndDlg, UINT msg, WPARAM wParam, LPARA
 	case WM_NOTIFY:
 		switch (((LPNMHDR)lParam)->code) {
 		case PSN_APPLY:
-			TCHAR szBuff[MAX_EMAIL_LEN];
+			wchar_t szBuff[MAX_EMAIL_LEN];
 			GetDlgItemText(hWndDlg, IDC_LOGIN, szBuff, _countof(szBuff));
-			ppro->setTString(NULL, "e-mail", szBuff);
+			ppro->setWString(NULL, "e-mail", szBuff);
 
 			if (GetDlgItemText(hWndDlg, IDC_PASSWORD, szBuff, _countof(szBuff))) {
-				ppro->setTString("Password", szBuff);
+				ppro->setWString("Password", szBuff);
 				SecureZeroMemory(szBuff, sizeof(szBuff));
 			}
 			return TRUE;
@@ -65,7 +65,7 @@ INT_PTR CALLBACK DlgProcAccount(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lP
 			if (ppro->mraGetStringW(NULL, "e-mail", szBuff))
 				SetDlgItemText(hWndDlg, IDC_LOGIN, szBuff.c_str());
 		}
-		SetDlgItemText(hWndDlg, IDC_PASSWORD, _T(""));
+		SetDlgItemText(hWndDlg, IDC_PASSWORD, L"");
 		return TRUE;
 
 	case WM_COMMAND:
@@ -86,12 +86,12 @@ INT_PTR CALLBACK DlgProcAccount(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lP
 	case WM_NOTIFY:
 		switch (((LPNMHDR)lParam)->code) {
 		case PSN_APPLY:
-			TCHAR szBuff[MAX_EMAIL_LEN];
+			wchar_t szBuff[MAX_EMAIL_LEN];
 			GetDlgItemText(hWndDlg, IDC_LOGIN, szBuff, _countof(szBuff));
 			ppro->mraSetStringW(NULL, "e-mail", szBuff);
 
 			if (GetDlgItemText(hWndDlg, IDC_PASSWORD, szBuff, _countof(szBuff))) {
-				ppro->setTString("Password", szBuff);
+				ppro->setWString("Password", szBuff);
 				SecureZeroMemory(szBuff, sizeof(szBuff));
 			}
 			return TRUE;
@@ -169,7 +169,7 @@ INT_PTR CALLBACK DlgProcOptsConnections(HWND hWndDlg, UINT msg, WPARAM wParam, L
 				HDC hDC = GetDC(NULL);// kegl
 				lf.lfCharSet = MRA_DEFAULT_RTF_FONT_CHARSET;
 				lf.lfHeight = -MulDiv(MRA_DEFAULT_RTF_FONT_SIZE, GetDeviceCaps(hDC, LOGPIXELSY), 72);
-				mir_tstrncpy(lf.lfFaceName, MRA_DEFAULT_RTF_FONT_NAME, LF_FACESIZE);
+				mir_wstrncpy(lf.lfFaceName, MRA_DEFAULT_RTF_FONT_NAME, LF_FACESIZE);
 				ReleaseDC(NULL, hDC);
 			}
 
@@ -186,7 +186,7 @@ INT_PTR CALLBACK DlgProcOptsConnections(HWND hWndDlg, UINT msg, WPARAM wParam, L
 	case WM_NOTIFY:
 		switch (((LPNMHDR)lParam)->code) {
 		case PSN_APPLY:
-			TCHAR szBuff[MAX_PATH];
+			wchar_t szBuff[MAX_PATH];
 			GetDlgItemText(hWndDlg, IDC_SERVER, szBuff, _countof(szBuff));
 			ppro->mraSetStringW(NULL, "Server", szBuff);
 			ppro->setWord("ServerPort", (WORD)GetDlgItemInt(hWndDlg, IDC_SERVERPORT, NULL, FALSE));
@@ -216,26 +216,26 @@ int CMraProto::OnOptionsInit(WPARAM wParam, LPARAM lParam)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.dwInitParam = (LPARAM)this;
 	odp.hInstance = g_hInstance;
-	odp.ptszTitle = m_tszUserName;
-	odp.ptszGroup = LPGENT("Network");
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+	odp.szTitle.w = m_tszUserName;
+	odp.szGroup.w = LPGENW("Network");
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
 
-	odp.ptszTab = LPGENT("Account");
+	odp.szTab.w = LPGENW("Account");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_ACCOUNT);
 	odp.pfnDlgProc = DlgProcOptsAccount;
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LPGENT("Connections");
+	odp.szTab.w = LPGENW("Connections");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_CONNECTIONS);
 	odp.pfnDlgProc = DlgProcOptsConnections;
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LPGENT("Files");
+	odp.szTab.w = LPGENW("Files");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_FILES);
 	odp.pfnDlgProc = MraFilesQueueDlgProcOpts;
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LPGENT("Avatars");
+	odp.szTab.w = LPGENW("Avatars");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_AVATRS);
 	odp.pfnDlgProc = MraAvatarsQueueDlgProcOpts;
 	Options_AddPage(wParam, &odp);

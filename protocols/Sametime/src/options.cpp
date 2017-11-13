@@ -6,31 +6,31 @@
 
 #define NUM_IDS		24
 
-TCHAR* client_names[NUM_IDS] = {
-	_T("Official Binary Library"),
-	_T("Official Java Applet"),
-	_T("Official Binary Application"), 
-	_T("Official Java Application"),
-	_T("Notes 6.5"),
-	_T("Notes 7.0"),
-	_T("Notes 8.0 Basic"),
-	_T("Notes 8.5.2"),
-	_T("Sametime Connect 8.0"),
-	_T("Sametime Connect 8.5.2"),
-	_T("ICT"),
-	_T("NotesBuddy"),
-	_T("NotesBuddy 4.15"),
-	_T("Sanity"),
-	_T("Perl"),
-	_T("PMR Alert"),
-	_T("Trillian (SourceForge)"),
-	_T("Trillian (IBM)"),
-	_T("Meanwhile Library"),
-	_T("Meanwhile (Python)"),
-	_T("Meanwhile (Gaim)"),
-	_T("Meanwhile (Adium)"),
-	_T("Meanwhile (Kopete)"),
-	_T("Custom")
+wchar_t* client_names[NUM_IDS] = {
+	L"Official Binary Library",
+	L"Official Java Applet",
+	L"Official Binary Application", 
+	L"Official Java Application",
+	L"Notes 6.5",
+	L"Notes 7.0",
+	L"Notes 8.0 Basic",
+	L"Notes 8.5.2",
+	L"Sametime Connect 8.0",
+	L"Sametime Connect 8.5.2",
+	L"ICT",
+	L"NotesBuddy",
+	L"NotesBuddy 4.15",
+	L"Sanity",
+	L"Perl",
+	L"PMR Alert",
+	L"Trillian (SourceForge)",
+	L"Trillian (IBM)",
+	L"Meanwhile Library",
+	L"Meanwhile (Python)",
+	L"Meanwhile (Gaim)",
+	L"Meanwhile (Adium)",
+	L"Meanwhile (Kopete)",
+	L"Custom"
 };
 int client_ids[NUM_IDS] = {
 	0x1000,
@@ -65,12 +65,12 @@ int client_ids[NUM_IDS] = {
 
 #define NUM_CVS		5
 
-TCHAR* CV_names[NUM_CVS] = {
-	_T("Sametime (Use old client version)"),
-	_T("Sametime (Miranda default)"),
-	_T("Sametime 8"),
-	_T("Sametime 8.5.1"),
-	_T("Sametime 8.5.2")
+wchar_t* CV_names[NUM_CVS] = {
+	L"Sametime (Use old client version)",
+	L"Sametime (Miranda default)",
+	L"Sametime 8",
+	L"Sametime 8.5.1",
+	L"Sametime 8.5.2"
 };
 int CV_major[NUM_CVS] = {
 	MW_PROTOCOL_VERSION_MAJOR,
@@ -102,21 +102,21 @@ static INT_PTR CALLBACK DlgProcOptNet(HWND hwndDlg, UINT msg, WPARAM wParam, LPA
 
 		WORD client_ver = proto->GetClientVersion();
 		if (client_ver) {
-			TCHAR verbuf[100];
-			mir_sntprintf(verbuf, TranslateT("Client protocol version: %03d.%03d"), (client_ver & 0xFF00) >> 8, client_ver & 0xFF);
+			wchar_t verbuf[100];
+			mir_snwprintf(verbuf, TranslateT("Client protocol version: %03d.%03d"), (client_ver & 0xFF00) >> 8, client_ver & 0xFF);
 			SetDlgItemText(hwndDlg, IDC_ST_CLIENTVER, verbuf);
 		}
 
 		WORD server_ver = proto->GetServerVersion();
 		if (server_ver) {
-			TCHAR verbuf[100];
-			mir_sntprintf(verbuf, TranslateT("Server protocol version: %03d.%03d"), (server_ver & 0xFF00) >> 8, server_ver & 0xFF);
+			wchar_t verbuf[100];
+			mir_snwprintf(verbuf, TranslateT("Server protocol version: %03d.%03d"), (server_ver & 0xFF00) >> 8, server_ver & 0xFF);
 			SetDlgItemText(hwndDlg, IDC_ST_SERVERVER, verbuf);
 		}
 
-		TCHAR *s = mir_utf8decodeT(proto->options.server_name); SetDlgItemText(hwndDlg, IDC_ED_SNAME, s); mir_free(s);
-		s = mir_utf8decodeT(proto->options.id); SetDlgItemText(hwndDlg, IDC_ED_NAME, s); mir_free(s);
-		s = mir_utf8decodeT(proto->options.pword); SetDlgItemText(hwndDlg, IDC_ED_PWORD, s); mir_free(s);
+		wchar_t *s = mir_utf8decodeW(proto->options.server_name); SetDlgItemText(hwndDlg, IDC_ED_SNAME, s); mir_free(s);
+		s = mir_utf8decodeW(proto->options.id); SetDlgItemText(hwndDlg, IDC_ED_NAME, s); mir_free(s);
+		s = mir_utf8decodeW(proto->options.pword); SetDlgItemText(hwndDlg, IDC_ED_PWORD, s); mir_free(s);
 
 		SetDlgItemInt(hwndDlg, IDC_ED_PORT, proto->options.port, FALSE);
 		CheckDlgButton(hwndDlg, IDC_CHK_GETSERVERCONTACTS, proto->options.get_server_contacts ? BST_CHECKED : BST_UNCHECKED);
@@ -162,11 +162,6 @@ static INT_PTR CALLBACK DlgProcOptNet(HWND hwndDlg, UINT msg, WPARAM wParam, LPA
 
 		if (!ServiceExists(MS_POPUP_ADDPOPUPT)) {
 			HWND hw = GetDlgItem(hwndDlg, IDC_RAD_ERRPOP);
-			EnableWindow(hw, FALSE);
-		}
-
-		if (!ServiceExists(MS_CLIST_SYSTRAY_NOTIFY)) {
-			HWND hw = GetDlgItem(hwndDlg, IDC_RAD_ERRBAL);
 			EnableWindow(hw, FALSE);
 		}
 
@@ -230,7 +225,7 @@ static INT_PTR CALLBACK DlgProcOptNet(HWND hwndDlg, UINT msg, WPARAM wParam, LPA
 
 			case IDC_BTN_IMPORTCONTACTS:
 				{
-					TCHAR import_filename[MAX_PATH]; import_filename[0] = 0;
+					wchar_t import_filename[MAX_PATH]; import_filename[0] = 0;
 
 					OPENFILENAME ofn = { 0 };
 					ofn.lStructSize = sizeof(ofn);
@@ -238,7 +233,7 @@ static INT_PTR CALLBACK DlgProcOptNet(HWND hwndDlg, UINT msg, WPARAM wParam, LPA
 					ofn.hwndOwner = hwndDlg;
 					ofn.Flags = CC_FULLOPEN;
 					ofn.nMaxFile = MAX_PATH;
-					ofn.lpstrFilter = _T("All\0*.*\0");
+					ofn.lpstrFilter = L"All\0*.*\0";
 					ofn.nFilterIndex = 1;
 					ofn.lpstrFileTitle = NULL;
 					ofn.nMaxFileTitle = 0;
@@ -291,7 +286,7 @@ static INT_PTR CALLBACK DlgProcOptNet(HWND hwndDlg, UINT msg, WPARAM wParam, LPA
 
 	case WM_NOTIFY:
 		if (((LPNMHDR)lParam)->code == PSN_APPLY) {
-			TCHAR ws[2048];
+			wchar_t ws[2048];
 
 			GetDlgItemText(hwndDlg, IDC_ED_SNAME, ws, LSTRINGLEN);
 			mir_strcpy(proto->options.server_name, T2Utf(ws));
@@ -347,11 +342,11 @@ static INT_PTR CALLBACK DlgProcOptNet(HWND hwndDlg, UINT msg, WPARAM wParam, LPA
 int CSametimeProto::OptInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR | ODPF_DONTTRANSLATE;
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE | ODPF_DONTTRANSLATE;
 	odp.hInstance = hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTNET);
-	odp.ptszTitle = m_tszUserName;
-	odp.ptszGroup = LPGENT("Network");
+	odp.szTitle.w = m_tszUserName;
+	odp.szGroup.w = LPGENW("Network");
 	odp.pfnDlgProc = DlgProcOptNet;
 	odp.dwInitParam = (LPARAM)this;
 	Options_AddPage(wParam, &odp);
@@ -403,16 +398,13 @@ void CSametimeProto::LoadOptions()
 	// if popups not installed, will be changed to 'ED_BAL' (balloons) in main.cpp, modules loaded
 	options.err_method = (ErrorDisplay)db_get_b(0, m_szModuleName, "ErrorDisplay", ED_POP);
 	// funny logic :) ... try to avoid message boxes
-	// if want baloons but no balloons, try popups
 	// if want popups but no popups, try baloons
-	// if, after that, you want balloons but no balloons, revert to message boxes
-	if (options.err_method == ED_BAL && !ServiceExists(MS_CLIST_SYSTRAY_NOTIFY)) options.err_method = ED_POP;
-	if (options.err_method == ED_POP && !ServiceExists(MS_POPUP_SHOWMESSAGE)) options.err_method = ED_BAL;
-	if (options.err_method == ED_BAL && !ServiceExists(MS_CLIST_SYSTRAY_NOTIFY)) options.err_method = ED_MB;
+	if (options.err_method == ED_POP && !ServiceExists(MS_POPUP_SHOWMESSAGE))
+		options.err_method = ED_BAL;
 
-	debugLog(_T("LoadOptions() loaded: ServerName:len=[%d], id:len=[%d], pword:len=[%d]"), options.server_name == NULL ? -1 : mir_strlen(options.server_name), options.id == NULL ? -1 : mir_strlen(options.id), options.pword == NULL ? -1 : mir_strlen(options.pword));
-	debugLog(_T("LoadOptions() loaded: port=[%d], encrypt_session=[%d], ClientID=[%d], ClientVersionMajor=[%d], ClientVersionMinor=[%d]"), options.port, options.encrypt_session, options.client_id, options.client_versionMajor, options.client_versionMinor);
-	debugLog(_T("LoadOptions() loaded: get_server_contacts=[%d], add_contacts=[%d], idle_as_away=[%d], err_method=[%d]"), options.get_server_contacts, options.add_contacts, options.idle_as_away, options.err_method);
+	debugLogW(L"LoadOptions() loaded: ServerName:len=[%d], id:len=[%d], pword:len=[%d]", options.server_name == NULL ? -1 : mir_strlen(options.server_name), options.id == NULL ? -1 : mir_strlen(options.id), options.pword == NULL ? -1 : mir_strlen(options.pword));
+	debugLogW(L"LoadOptions() loaded: port=[%d], encrypt_session=[%d], ClientID=[%d], ClientVersionMajor=[%d], ClientVersionMinor=[%d]", options.port, options.encrypt_session, options.client_id, options.client_versionMajor, options.client_versionMinor);
+	debugLogW(L"LoadOptions() loaded: get_server_contacts=[%d], add_contacts=[%d], idle_as_away=[%d], err_method=[%d]", options.get_server_contacts, options.add_contacts, options.idle_as_away, options.err_method);
 
 }
 

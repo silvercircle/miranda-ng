@@ -31,23 +31,23 @@
 [Disable autoreply when...]
 
 [On&line]
-
+&Prisutan
 [&Away]
-
-[&NA]
-
+&Neaktivan
+[&Not available]
+N&edostupan
 [Occ&upied]
-
-[&DND]
-
+&Zauzet
+[&Do not disturb]
+Ne &uznemiravaj
 [&Free for chat]
-
+Spreman za &razgovor
 [&Invisible]
-
+Ne&vidljiv
 [On the &phone]
-
+&Telefoniram
 [Out to &lunch]
-
+N&a ručku
 [Autoreply format:]
 
 [V]
@@ -80,10 +80,6 @@
 
 [Delete]
 Briši
-[Status messages:]
-Statusne poruke:
-[Configure autoaway]
-
 [Wait]
 
 [seconds before closing the status message dialog (-1=don't close)]
@@ -213,7 +209,7 @@ Da, tu sam.
 Neaktivan
 [Been gone since %nas_awaysince_time%, will be back later.]
 
-[NA]
+[Not available]
 Nedostupan
 [Give it up, I'm not in!]
 Nema svrhe, nisam tu!
@@ -221,7 +217,7 @@ Nema svrhe, nisam tu!
 Zauzet
 [Not right now.]
 Ne sad.
-[DND]
+[Do not disturb]
 Ne uznemiravaj
 [Give a guy some peace, would ya?]
 Iskuliraj, važi?

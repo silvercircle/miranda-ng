@@ -22,7 +22,7 @@ void Message::makeRawAvailable()
 			break;
 		}
 
-		m_Raw.assign(reinterpret_cast<const TCHAR*>(m_RawSource), m_nLength);
+		m_Raw.assign(reinterpret_cast<const wchar_t*>(m_RawSource), m_nLength);
 		m_Available |= Raw;
 	}
 	while (false);
@@ -36,22 +36,22 @@ void Message::makeRawAvailable()
 
 void Message::stripRawRTF()
 {
-	if (m_Raw.substr(0, 6) == _T("{\\rtf1"))
+	if (m_Raw.substr(0, 6) == L"{\\rtf1")
 		m_Raw = RTFFilter::filter(m_Raw);
 }
 
 void Message::stripBBCodes()
 {
-	static const TCHAR* szSimpleBBCodes[][2] = {
-		{ _T("[b]"), _T("[/b]") },
-		{ _T("[u]"), _T("[/u]") },
-		{ _T("[i]"), _T("[/i]") },
-		{ _T("[s]"), _T("[/s]") },
+	static const wchar_t* szSimpleBBCodes[][2] = {
+		{ L"[b]", L"[/b]" },
+		{ L"[u]", L"[/u]" },
+		{ L"[i]", L"[/i]" },
+		{ L"[s]", L"[/s]" },
 	};
 
-	static const TCHAR* szParamBBCodes[][2] = {
-		{ _T("[url="), _T("[/url]") },
-		{ _T("[color="), _T("[/color]") },
+	static const wchar_t* szParamBBCodes[][2] = {
+		{ L"[url=", L"[/url]" },
+		{ L"[color=", L"[/color]" },
 	};
 
 	// convert raw string to lower case
@@ -60,14 +60,14 @@ void Message::stripBBCodes()
 	// remove simple BBcodes
 	array_each_(i, szSimpleBBCodes)
 	{
-		const TCHAR* szOpenTag = szSimpleBBCodes[i][0];
-		const TCHAR* szCloseTag = szSimpleBBCodes[i][1];
+		const wchar_t* szOpenTag = szSimpleBBCodes[i][0];
+		const wchar_t* szCloseTag = szSimpleBBCodes[i][1];
 
 		int lenOpen = ext::strfunc::len(szOpenTag);
 		int lenClose = ext::strfunc::len(szCloseTag);
 
-		ext::string::size_type posOpen = 0;
-		ext::string::size_type posClose = 0;
+		size_t posOpen = 0;
+		size_t posClose = 0;
 
 		while (true) {
 			if ((posOpen = strRawLC.find(szOpenTag, posOpen)) == ext::string::npos)
@@ -88,15 +88,15 @@ void Message::stripBBCodes()
 	// remove BBcodes with parameters
 	array_each_(i, szParamBBCodes)
 	{
-		const TCHAR* szOpenTag = szParamBBCodes[i][0];
-		const TCHAR* szCloseTag = szParamBBCodes[i][1];
+		const wchar_t* szOpenTag = szParamBBCodes[i][0];
+		const wchar_t* szCloseTag = szParamBBCodes[i][1];
 
 		int lenOpen = ext::strfunc::len(szOpenTag);
 		int lenClose = ext::strfunc::len(szCloseTag);
 
-		ext::string::size_type posOpen = 0;
-		ext::string::size_type posOpen2 = 0;
-		ext::string::size_type posClose = 0;
+		size_t posOpen = 0;
+		size_t posOpen2 = 0;
+		size_t posClose = 0;
 
 		while (true) {
 			if ((posOpen = strRawLC.find(szOpenTag, posOpen)) == ext::string::npos)
@@ -120,31 +120,31 @@ void Message::stripBBCodes()
 
 void Message::filterLinks()
 {
-	static const TCHAR* szSpaces = _T(" \r\r\n");
-	static const TCHAR* szPrefixes = _T("([{<:\"'");
-	static const TCHAR* szSuffixes = _T(".,:;!?)]}>\"'");
-	static const TCHAR* szValidProtocol = _T("abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-	static const TCHAR* szValidHost = _T(".-abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+	static const wchar_t* szSpaces = L" \r\r\n";
+	static const wchar_t* szPrefixes = L"([{<:\"'";
+	static const wchar_t* szSuffixes = L".,:;!?)]}>\"'";
+	static const wchar_t* szValidProtocol = L"abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	static const wchar_t* szValidHost = L".-abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 	// init with raw text
 	m_WithoutLinks = getRaw();
 
 	ext::string& msg = m_WithoutLinks;
-	ext::string::size_type pos = -1;
+	size_t pos = -1;
 
 	// detect: protocol://[user[:password]@]host[/path]
 	while (true) {
-		if ((pos = msg.find(_T("://"), pos + 1)) == ext::string::npos)
+		if ((pos = msg.find(L"://", pos + 1)) == ext::string::npos)
 			break;
 
 		// find start of URL
-		ext::string::size_type pos_proto = msg.find_last_not_of(szValidProtocol, pos - 1);
+		size_t pos_proto = msg.find_last_not_of(szValidProtocol, pos - 1);
 
 		(pos_proto == ext::string::npos) ? pos_proto = 0 : ++pos_proto;
 
 		if (pos_proto < pos) {
 			// find end of URL
-			ext::string::size_type pos_last = msg.find_first_of(szSpaces, pos + 3);
+			size_t pos_last = msg.find_first_of(szSpaces, pos + 3);
 
 			(pos_last == ext::string::npos) ? pos_last = msg.length() - 1 : --pos_last;
 
@@ -153,20 +153,20 @@ void Message::filterLinks()
 				--pos_last;
 
 			// find slash: for host name validation
-			ext::string::size_type pos_slash = msg.find('/', pos + 3);
+			size_t pos_slash = msg.find('/', pos + 3);
 
 			if (pos_slash == ext::string::npos || pos_slash > pos_last)
 				pos_slash = pos_last + 1;
 
 			// find at: for host name validation
-			ext::string::size_type pos_at = msg.find('@', pos + 3);
+			size_t pos_at = msg.find('@', pos + 3);
 
 			if (pos_at == ext::string::npos || pos_at > pos_slash)
 				pos_at = pos + 2;
 
 			// check for valid host (x.x)
 			if (pos_slash - pos_at > 3) {
-				ext::string::size_type pos_invalid = msg.find_first_not_of(szValidHost, pos_at + 1);
+				size_t pos_invalid = msg.find_first_not_of(szValidHost, pos_at + 1);
 
 				if (pos_invalid == ext::string::npos || pos_invalid >= pos_slash) {
 					if (std::count(msg.begin() + pos_at + 1, msg.begin() + pos_slash, '.') >= 1) {
@@ -187,11 +187,11 @@ void Message::filterLinks()
 	pos = -1;
 
 	while (true) {
-		if ((pos = msg.find(_T("www."), pos + 1)) == ext::string::npos)
+		if ((pos = msg.find(L"www.", pos + 1)) == ext::string::npos)
 			break;
 
 		// find end of URL
-		ext::string::size_type pos_last = msg.find_first_of(szSpaces, pos + 4);
+		size_t pos_last = msg.find_first_of(szSpaces, pos + 4);
 
 		(pos_last == ext::string::npos) ? pos_last = msg.length() - 1 : --pos_last;
 
@@ -200,21 +200,21 @@ void Message::filterLinks()
 			--pos_last;
 
 		// find slash: for host name validation
-		ext::string::size_type pos_slash = msg.find('/', pos + 4);
+		size_t pos_slash = msg.find('/', pos + 4);
 
 		if (pos_slash == ext::string::npos || pos_slash > pos_last)
 			pos_slash = pos_last + 1;
 
 		// find at: for host name validation
-		ext::string::size_type pos_at = pos + 3;
+		size_t pos_at = pos + 3;
 
 		// check for valid host (x.x)
 		if (pos_slash - pos_at > 3) {
-			ext::string::size_type pos_invalid = msg.find_first_not_of(szValidHost, pos_at + 1);
+			size_t pos_invalid = msg.find_first_not_of(szValidHost, pos_at + 1);
 
 			if (pos_invalid == ext::string::npos || pos_invalid >= pos_slash) {
 				if (std::count(msg.begin() + pos_at + 1, msg.begin() + pos_slash, '.') >= 1) {
-					ext::string link = _T("http://") + msg.substr(pos, pos_last - pos + 1);
+					ext::string link = L"http://" + msg.substr(pos, pos_last - pos + 1);
 
 					// remove extracted link from message text
 					msg.erase(pos, link.length() - 7);
@@ -235,7 +235,7 @@ void Message::filterLinks()
 
 		if (pos > 0 && pos < msg.length() - 1) {
 			// find end of address
-			ext::string::size_type pos_last = msg.find_first_not_of(szValidHost, pos + 1);
+			size_t pos_last = msg.find_first_not_of(szValidHost, pos + 1);
 
 			(pos_last == ext::string::npos) ? pos_last = msg.length() - 1 : --pos_last;
 
@@ -244,7 +244,7 @@ void Message::filterLinks()
 				--pos_last;
 
 			// find start of address
-			ext::string::size_type pos_first = msg.find_last_of(szSpaces, pos - 1);
+			size_t pos_first = msg.find_last_of(szSpaces, pos - 1);
 
 			(pos_first == ext::string::npos) ? pos_first = 0 : ++pos_first;
 
@@ -262,8 +262,8 @@ void Message::filterLinks()
 					pos = pos_last - (link.length());
 
 					// prepend "mailto:" if missing
-					if (link.substr(0, 7) != _T("mailto:")) {
-						link.insert(0, _T("mailto:"));
+					if (link.substr(0, 7) != L"mailto:") {
+						link.insert(0, L"mailto:");
 					}
 
 					// TODO: put link in list

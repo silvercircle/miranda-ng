@@ -9,9 +9,7 @@
 //
 #include <winres.h>
 #include "..\..\..\include\statusmodes.h"
-
-
-
+#include "..\..\..\include\chat_resource.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -372,23 +370,6 @@ BEGIN
     PUSHBUTTON      "Create new",IDC_CREATENEW,134,119,66,14
 END
 
-IDD_OPT_TOOLBAR DIALOGEX 0, 0, 303, 229
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
-EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
-BEGIN
-    CONTROL         "",IDC_TOOLBARTREE,"SysTreeView32",TVS_SHOWSELALWAYS | TVS_NOTOOLTIPS | TVS_CHECKBOXES | TVS_FULLROWSELECT | WS_HSCROLL | WS_TABSTOP,1,4,301,171,WS_EX_CLIENTEDGE
-    PUSHBUTTON      "Reset",IDC_BBRESET,250,211,53,15
-    CONTROL         "Show in IM chats",IDC_IMCHECK,"Button",BS_AUTOCHECKBOX | BS_VCENTER | BS_MULTILINE | WS_TABSTOP,4,181,127,12
-    CONTROL         "Show in chat rooms",IDC_CHATCHECK,"Button",BS_AUTOCHECKBOX | BS_VCENTER | BS_MULTILINE | WS_TABSTOP,4,196,127,12
-    EDITTEXT        IDC_EDIT1,252,183,32,12,ES_AUTOHSCROLL
-    CONTROL         "",IDC_SPIN1,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | WS_GROUP,272,183,11,12
-    RTEXT           "Gap between buttons:",IDC_STATIC,136,183,104,12,SS_CENTERIMAGE
-    CONTROL         "Hide if there isn't enough space",IDC_CANBEHIDDEN,
-                    "Button",BS_AUTOCHECKBOX | BS_VCENTER | BS_MULTILINE | WS_TABSTOP,4,209,131,17
-    PUSHBUTTON      "Insert separator",IDC_SEPARATOR,137,211,103,15,BS_MULTILINE
-END
-
 IDD_OPT_CONTAINERS DIALOGEX 0, 0, 303, 221
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
@@ -430,8 +411,8 @@ EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Popups",IDC_STATIC,4,9,307,129
-    CONTROL         "...is &typing",IDC_START,"Button",BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,11,20,80,13
-    CONTROL         "...stopped t&yping",IDC_STOP,"Button",BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,11,46,80,13
+    CONTROL         "...is &typing",IDC_START,"Button",BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,11,20,95,13
+    CONTROL         "...stopped t&yping",IDC_STOP,"Button",BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,11,46,95,13
     CTEXT           "Back",IDC_STATIC,23,61,31,8
     CTEXT           "Text",IDC_STATIC,89,62,29,8
     CONTROL         "",IDC_TYPEON_TX,"ColourPicker",WS_TABSTOP,120,33,24,12
@@ -442,13 +423,13 @@ BEGIN
     CONTROL         "Only &one popup for each contact",IDC_ONEPOPUP,"Button",BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,11,109,250,13
     CONTROL         "Show &entry in the main menu",IDC_SHOWMENU,"Button",BS_AUTOCHECKBOX | BS_NOTIFY | WS_TABSTOP,11,122,247,13
     GROUPBOX        "...is typing",IDC_STATIC,8,151,148,58,WS_GROUP
-    CONTROL         "From Popup plugin",IDC_TIMEOUT_POPUP,"Button",BS_AUTORADIOBUTTON,16,161,130,10
+    CONTROL         "From popup plugin",IDC_TIMEOUT_POPUP,"Button",BS_AUTORADIOBUTTON,16,161,130,10
     CONTROL         "From protocol",IDC_TIMEOUT_PROTO,"Button",BS_AUTORADIOBUTTON,16,172,130,10
     CONTROL         "Permanent",IDC_TIMEOUT_PERMANENT,"Button",BS_AUTORADIOBUTTON,16,183,130,10
     CONTROL         "Custom",IDC_TIMEOUT_CUSTOM,"Button",BS_AUTORADIOBUTTON,16,194,95,10
     EDITTEXT        IDC_TIMEOUT_VALUE,125,193,25,12,ES_AUTOHSCROLL | ES_NUMBER
     GROUPBOX        "...stopped typing",IDC_STATIC,158,151,148,58,WS_GROUP
-    CONTROL         "From Popup plugin",IDC_TIMEOUT_POPUP2,"Button",BS_AUTORADIOBUTTON,166,161,130,10
+    CONTROL         "From popup plugin",IDC_TIMEOUT_POPUP2,"Button",BS_AUTORADIOBUTTON,166,161,130,10
     CONTROL         "Permanent",IDC_TIMEOUT_PERMANENT2,"Button",BS_AUTORADIOBUTTON,166,172,130,10
     CONTROL         "Custom",IDC_TIMEOUT_CUSTOM2,"Button",BS_AUTORADIOBUTTON,166,193,95,10
     EDITTEXT        IDC_TIMEOUT_VALUE2,275,192,25,12,ES_AUTOHSCROLL | ES_NUMBER
@@ -467,7 +448,7 @@ BEGIN
     GROUPBOX        "Templates",IDC_STATIC,3,4,108,94
     LISTBOX         IDC_TEMPLATELIST,8,14,97,81,LBS_OWNERDRAWVARIABLE | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Preview",IDC_STATIC,117,4,249,94
-    CONTROL         "",IDC_PREVIEW,"RichEdit50W",WS_VSCROLL | WS_TABSTOP | 0x844,122,14,236,80
+    CONTROL         "",IDC_SRMM_LOG,"RichEdit50W",WS_VSCROLL | WS_TABSTOP | 0x844,122,14,236,80
     GROUPBOX        "Edit template",IDC_STATIC,3,99,363,129
     EDITTEXT        IDC_EDITTEMPLATE,11,109,344,14,ES_AUTOHSCROLL
     LTEXT           "Double click a template to edit it. Select a template from the list box and click ""Update preview"" to show a preview message.",IDC_STATIC,11,126,342,26
@@ -517,20 +498,6 @@ BEGIN
     EDITTEXT        IDC_TABBORDEROUTERBOTTOM,232,104,28,13,ES_AUTOHSCROLL
     CONTROL         "",IDC_TABBORDERSPINOUTERBOTTOM,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,259,104,11,13
     GROUPBOX        "Tab layout tweaks",IDC_STATIC,3,35,297,118
-END
-
-IDD_ABOUT DIALOGEX 0, 0, 228, 140
-STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-EXSTYLE WS_EX_CONTROLPARENT
-CAPTION "About TabSRMM"
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
-BEGIN
-    LTEXT           "",IDC_STATIC,0,30,228,110,NOT WS_GROUP
-    CONTROL         "",IDC_HEADERBAR,"MHeaderbarCtrl",WS_TABSTOP,0,0,228,30
-    DEFPUSHBUTTON   "OK",IDOK,168,123,55,14
-    CTEXT           "Copyright 2004-2011 by the Miranda IM project, 2012-2015 by the Miranda NG project. More detailed copyright information can be found in the included README file.",IDC_COPYRIGHT,5,39,217,47
-    CONTROL         "Support and latest version information",IDC_SUPPORT,
-                    "Hyperlink",WS_TABSTOP | 0x1,18,91,192,12
 END
 
 IDD_OPT_SKIN DIALOGEX 0, 0, 303, 224
@@ -597,7 +564,7 @@ BEGIN
     CONTROL         "Log status changes (in open message windows only)",IDC_UPREFS_LOGSTATUS,
                     "Button",BS_AUTO3STATE | WS_TABSTOP,15,210,290,11
     PUSHBUTTON      "Revert to global options",IDC_REVERTGLOBAL,62,242,191,18
-    LTEXT           "You can set private message log options for this contact here. Filled boxes are inherited from the global settings which can be found on Message sessions -> Message log",IDC_STATIC,16,4,296,28
+    LTEXT           "You can set private message log options for this contact here. Filled boxes are inherited from the global settings which can be found on Options -> Message sessions -> Message log",IDC_STATIC,12,4,298,28
     CONTROL         "Use normal templates (uncheck to use simple templates)",IDC_UPREFS_NORMALTEMPLATES,
                     "Button",BS_AUTO3STATE | WS_TABSTOP,15,224,290,11
 END
@@ -637,63 +604,12 @@ BEGIN
     CONTROL         "",IDC_WARNGROUP,"Static",SS_ENHMETAFILE,0,74,297,2
 END
 
-IDD_MODERNOPTS DIALOGEX 0, 0, 369, 210
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
-EXSTYLE WS_EX_CONTROLPARENT
-FONT 8, "MS Shell Dlg", 0, 0, 0x1
-BEGIN
-    LTEXT           "Message sending:",IDC_TXT_TITLE2,0,64,185,8
-    LTEXT           "Window:",IDC_TXT_TITLE1,1,0,182,8
-    CONTROL         "Esc closes sessions (minimizes window if disabled)",IDC_CLOSEONESC,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,13,174,10
-    CONTROL         "Always pop up and activate new windows",IDC_ALWAYSPOPUP,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,25,174,10
-    CONTROL         "Create new windows in minimized state",IDC_CREATEMIN,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,37,174,10
-    CONTROL         "Check1",IDC_CHECK5,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,10,49,174,10
-    CONTROL         "Send on Shift+Enter",IDC_SENDSHIFTENTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,89,174,10
-    CONTROL         "Send message on 'Enter'",IDC_SENDENTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,101,174,10
-    CONTROL         "Send message on double 'Enter'",IDC_SENDDBLENTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,113,174,10
-    CONTROL         "Minimize the message window on send",IDC_MINSEND,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,125,174,10
-    LTEXT           "Tabs:",IDC_TXT_TITLE4,184,0,183,8
-    CONTROL         "Use tabbed interface",IDC_USETABS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,194,13,173,10
-    CONTROL         "Create new tabs without activating them",IDC_CREATENOACTIVATE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,194,25,173,10
-    CONTROL         "Pop up minimized window when a new tab is created",IDC_POPUPONCREATE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,194,37,173,10
-    CONTROL         "Automatically switch tabs in minimized windows",IDC_AUTOSWITCHTABS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,194,49,173,10
-    LTEXT           "History:",IDC_TXT_TITLE5,1,140,367,8
-    CONTROL         "Load unread events only",IDC_LOADUNREAD,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,10,153,135,10
-    CONTROL         "Load number of previous events",IDC_LOADCOUNT,"Button",BS_AUTORADIOBUTTON,10,166,138,10
-    CONTROL         "Load previous events less than",IDC_LOADTIME,"Button",BS_AUTORADIOBUTTON,10,179,138,10
-    CONTROL         "Always trim message log to",IDC_ALWAYSTRIM,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,192,146,10
-    EDITTEXT        IDC_LOADCOUNTN,164,164,39,12,ES_RIGHT | ES_NUMBER | WS_DISABLED
-    CONTROL         "",IDC_LOADCOUNTSPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS | UDS_HOTTRACK,203,163,10,14
-    EDITTEXT        IDC_LOADTIMEN,164,177,39,12,ES_RIGHT | ES_NUMBER | WS_DISABLED
-    CONTROL         "",IDC_LOADTIMESPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS | UDS_HOTTRACK | WS_DISABLED,200,175,10,14
-    EDITTEXT        IDC_TRIM,164,190,39,12,ES_RIGHT | ES_NUMBER | WS_DISABLED
-    CONTROL         "",IDC_TRIMSPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_NOTHOUSANDS | UDS_HOTTRACK | WS_DISABLED,200,189,10,14
-    LTEXT           "events",IDC_STATIC,206,192,82,8
-    LTEXT           "minutes old",IDC_STMINSOLD,206,179,83,8,WS_DISABLED
-    LTEXT           "Notifications:",IDC_TXT_TITLE3,184,64,183,8
-    CONTROL         "Don't announce when dialog is open",IDC_NOOPENNOTIFY,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,194,77,173,10
-    CONTROL         "Message events",IDC_NOTIFYMSG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,194,89,173,10
-    CONTROL         "File events",IDC_NOTIFYFILE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,194,101,173,10
-    CONTROL         "URL events",IDC_NOTIFYURL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,194,113,173,10
-    CONTROL         "Other events",IDC_NOTIFYOTHER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,194,125,173,10
-    CONTROL         "Send message on Ctrl+Enter (always enabled)",IDC_SENDCTRLENTER,
-                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,10,77,174,10
-END
-
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // Cursor
 //
 
-IDC_HYPERLINKHAND       CURSOR                  "..\\..\\..\\src\\mir_app\\res\\cursor_hyperlink.cur"
 IDC_DROP                CURSOR                  "..\\..\\..\\src\\mir_app\\res\\cursor_drag_copy.cur"
 IDC_DROPUSER            CURSOR                  "..\\..\\..\\src\\mir_app\\res\\cursor_drop_user.cur"
 
@@ -781,8 +697,6 @@ BEGIN
         MENUITEM "Send &later",                 ID_SENDMENU_SENDLATER
         MENUITEM SEPARATOR
         MENUITEM "Send unsafe (ignore timeouts)", ID_SENDMENU_SENDWITHOUTTIMEOUTS
-        MENUITEM SEPARATOR
-        MENUITEM "Send nudge",                  ID_SENDMENU_SENDNUDGE
     END
     POPUP "Protomenu"
     BEGIN
@@ -940,10 +854,6 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Save current window position as default", ID_OPTIONS_SAVECURRENTWINDOWPOSITIONASDEFAULT
     END
-    POPUP "Help"
-    BEGIN
-        MENUITEM "About TabSRMM...",            ID_HELP_ABOUTTABSRMM
-    END
 END
 
 
@@ -986,16 +896,6 @@ BEGIN
         RIGHTMARGIN, 291
         TOPMARGIN, 7
         BOTTOMMARGIN, 98
-    END
-
-    IDD_MODERNOPTS, DIALOG
-    BEGIN
-        VERTGUIDE, 10
-        VERTGUIDE, 184
-        VERTGUIDE, 194
-        BOTTOMMARGIN, 207
-        HORZGUIDE, 59
-        HORZGUIDE, 64
     END
 END
 #endif    // APSTUDIO_INVOKED

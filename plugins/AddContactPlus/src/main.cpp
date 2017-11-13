@@ -2,7 +2,7 @@
 AddContact+ plugin for Miranda NG
 
 Copyright (C) 2007-11 Bartosz 'Dezeath' Bia³ek
-Copyright (C) 2012-15 Miranda NG Team
+Copyright (C) 2012-17 Miranda NG Team
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -95,9 +95,9 @@ static int OnAccListChanged(WPARAM, LPARAM)
 		CMenuItem mi;
 		SET_UID(mi, 0xb19db907, 0x870e, 0x49fa, 0xa7, 0x1e, 0x43, 0x5e, 0xa8, 0xe5, 0x9b, 0xbd);
 		mi.position = 500020001;
-		mi.flags = CMIF_TCHAR;
+		mi.flags = CMIF_UNICODE;
 		mi.hIcolibItem = icon.hIcolib;
-		mi.name.t = LPGENT("&Add contact...");
+		mi.name.w = LPGENW("&Add contact...");
 		mi.pszService = MS_ADDCONTACTPLUS_SHOW;
 		hMainMenuItem = Menu_AddMainMenuItem(&mi);
 	}
@@ -126,11 +126,11 @@ static int CreateButton(WPARAM, LPARAM)
 
 static int OnModulesLoaded(WPARAM, LPARAM)
 {
-	HOTKEYDESC hkd = { sizeof(hkd) };
-	hkd.dwFlags = HKD_TCHAR;
+	HOTKEYDESC hkd = {};
+	hkd.dwFlags = HKD_UNICODE;
 	hkd.pszName = "AddContactPlus_OpenDialog";
-	hkd.ptszDescription = LPGENT("Open add contact dialog");
-	hkd.ptszSection = LPGENT("Main");
+	hkd.szDescription.w = LPGENW("Open add contact dialog");
+	hkd.szSection.w = LPGENW("Main");
 	hkd.pszService = MS_ADDCONTACTPLUS_SHOW;
 	hkd.DefHotKey = HOTKEYCODE(HOTKEYF_CONTROL | HOTKEYF_SHIFT, 'C') | HKF_MIRANDA_LOCAL;
 	Hotkey_Register(&hkd);
@@ -144,7 +144,7 @@ static int OnModulesLoaded(WPARAM, LPARAM)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	INITCOMMONCONTROLSEX icex = { sizeof(icex), ICC_USEREX_CLASSES };
 	InitCommonControlsEx(&icex);

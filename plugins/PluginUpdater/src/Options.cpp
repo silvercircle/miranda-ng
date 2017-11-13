@@ -22,15 +22,20 @@ Boston, MA 02111-1307, USA.
 PlugOptions opts;
 POPUP_OPTIONS PopupOptions = {0};
 
-int GetUpdateMode()
+static int GetBits(HWND hwndDlg)
+{
+	return IsDlgButtonChecked(hwndDlg, IDC_CHANGE_PLATFORM) ? DEFAULT_OPP_BITS : DEFAULT_BITS;
+}
+
+static int GetUpdateMode()
 {
 	int UpdateMode = db_get_b(NULL, MODNAME, DB_SETTING_UPDATE_MODE, -1);
 
 	// Check if there is url for custom mode
 	if (UpdateMode == UPDATE_MODE_CUSTOM) {
-		ptrT url(db_get_tsa(NULL, MODNAME, DB_SETTING_UPDATE_URL));
-		if (url == NULL || !_tcslen(url)) {
-			// No url for custom mode, reset that setting so it will be determined automatically			
+		ptrW url(db_get_wsa(NULL, MODNAME, DB_SETTING_UPDATE_URL));
+		if (url == NULL || !wcslen(url)) {
+			// No url for custom mode, reset that setting so it will be determined automatically
 			db_unset(NULL, MODNAME, DB_SETTING_UPDATE_MODE);
 			UpdateMode = -1;
 		}
@@ -39,36 +44,45 @@ int GetUpdateMode()
 	if (UpdateMode < 0 || UpdateMode > UPDATE_MODE_MAX_VALUE) {
 		// Missing or unknown mode, determine correct from version of running core
 		char coreVersion[512];
-		CallService(MS_SYSTEM_GETVERSIONTEXT, (WPARAM)_countof(coreVersion), (LPARAM)coreVersion);
+		Miranda_GetVersionText(coreVersion, _countof(coreVersion));
 		UpdateMode = (strstr(coreVersion, "alpha") == NULL) ? UPDATE_MODE_STABLE : UPDATE_MODE_TRUNK;
 	}
 
 	return UpdateMode;
 }
 
-TCHAR* GetDefaultUrl()
+wchar_t* GetDefaultUrl()
 {
+	wchar_t url[MAX_PATH];
 	switch (GetUpdateMode()) {
 	case UPDATE_MODE_STABLE:
-		return mir_tstrdup(_T(DEFAULT_UPDATE_URL));
+		mir_snwprintf(url, DEFAULT_UPDATE_URL, opts.bChangePlatform ? DEFAULT_OPP_BITS : DEFAULT_BITS);
+		return mir_wstrdup(url);
 	case UPDATE_MODE_TRUNK:
-		return mir_tstrdup(_T(DEFAULT_UPDATE_URL_TRUNK));
+		mir_snwprintf(url, DEFAULT_UPDATE_URL_TRUNK, opts.bChangePlatform ? DEFAULT_OPP_BITS : DEFAULT_BITS);
+		return mir_wstrdup(url);
 	case UPDATE_MODE_TRUNK_SYMBOLS:
-		return mir_tstrdup(_T(DEFAULT_UPDATE_URL_TRUNK_SYMBOLS));
+		mir_snwprintf(url, DEFAULT_UPDATE_URL_TRUNK_SYMBOLS, opts.bChangePlatform ? DEFAULT_OPP_BITS : DEFAULT_BITS);
+		return mir_wstrdup(url);
 	default:
-		return db_get_tsa(NULL, MODNAME, DB_SETTING_UPDATE_URL);
+		return db_get_wsa(NULL, MODNAME, DB_SETTING_UPDATE_URL);
 	}
 }
 
 static INT_PTR CALLBACK UpdateNotifyOptsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	wchar_t defurl[MAX_PATH];
+
 	switch (msg) {
 	case WM_INITDIALOG:
 		if (opts.bUpdateOnStartup) {
 			CheckDlgButton(hwndDlg, IDC_UPDATEONSTARTUP,  BST_CHECKED);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_ONLYONCEADAY), TRUE);
 		}
+		
 		CheckDlgButton(hwndDlg, IDC_ONLYONCEADAY, opts.bOnlyOnceADay ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hwndDlg, IDC_CHANGE_PLATFORM, opts.bChangePlatform ? BST_CHECKED : BST_UNCHECKED);
+
 		if (opts.bUpdateOnPeriod) {
 			CheckDlgButton(hwndDlg, IDC_UPDATEONPERIOD, BST_CHECKED);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_PERIOD), TRUE);
@@ -84,7 +98,7 @@ static INT_PTR CALLBACK UpdateNotifyOptsProc(HWND hwndDlg, UINT msg, WPARAM wPar
 
 		if (ServiceExists(MS_AB_BACKUP)) {
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BACKUP), TRUE);
-			SetDlgItemText(hwndDlg, IDC_BACKUP, LPGENT("Backup database before update"));
+			SetDlgItemText(hwndDlg, IDC_BACKUP, LPGENW("Backup database before update"));
 			if(opts.bBackup)
 				CheckDlgButton(hwndDlg, IDC_BACKUP, BST_CHECKED);
 		}
@@ -97,7 +111,7 @@ static INT_PTR CALLBACK UpdateNotifyOptsProc(HWND hwndDlg, UINT msg, WPARAM wPar
 			int UpdateMode = db_get_b(NULL, MODNAME, DB_SETTING_UPDATE_MODE, UPDATE_MODE_STABLE);
 			if (UpdateMode == UPDATE_MODE_STABLE)
 				db_set_b(NULL, MODNAME, DB_SETTING_UPDATE_MODE, UPDATE_MODE_TRUNK);
-			SetDlgItemText(hwndDlg,IDC_STABLE,LPGENT("Stable version (incompatible with current development version)"));
+			SetDlgItemText(hwndDlg,IDC_STABLE,LPGENW("Stable version (incompatible with current development version)"));
 		}
 		TranslateDialogDefault(hwndDlg);
 
@@ -107,26 +121,40 @@ static INT_PTR CALLBACK UpdateNotifyOptsProc(HWND hwndDlg, UINT msg, WPARAM wPar
 
 		switch (GetUpdateMode()) {
 			case UPDATE_MODE_STABLE:
-				SetDlgItemText(hwndDlg, IDC_CUSTOMURL, _T(DEFAULT_UPDATE_URL));
+				mir_snwprintf(defurl, DEFAULT_UPDATE_URL, GetBits(hwndDlg));
+				SetDlgItemText(hwndDlg, IDC_CUSTOMURL, defurl);
 				CheckDlgButton(hwndDlg, IDC_STABLE, BST_CHECKED);
 				break;
 			case UPDATE_MODE_TRUNK:
-				SetDlgItemText(hwndDlg, IDC_CUSTOMURL, _T(DEFAULT_UPDATE_URL_TRUNK));
+				mir_snwprintf(defurl, DEFAULT_UPDATE_URL_TRUNK, GetBits(hwndDlg));
+				SetDlgItemText(hwndDlg, IDC_CUSTOMURL, defurl);
 				CheckDlgButton(hwndDlg, IDC_TRUNK, BST_CHECKED);
 				break;
 			case UPDATE_MODE_TRUNK_SYMBOLS:
-				SetDlgItemText(hwndDlg, IDC_CUSTOMURL, _T(DEFAULT_UPDATE_URL_TRUNK_SYMBOLS));
+				mir_snwprintf(defurl, DEFAULT_UPDATE_URL_TRUNK_SYMBOLS, GetBits(hwndDlg));
+				SetDlgItemText(hwndDlg, IDC_CUSTOMURL, defurl);
 				CheckDlgButton(hwndDlg, IDC_TRUNK_SYMBOLS, BST_CHECKED);
 				break;
 			default:
 				CheckDlgButton(hwndDlg, IDC_CUSTOM, BST_CHECKED);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_CUSTOMURL), TRUE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHANGE_PLATFORM), FALSE);
 
-				ptrT url(db_get_tsa(NULL, MODNAME, DB_SETTING_UPDATE_URL));
+				ptrW url(db_get_wsa(NULL, MODNAME, DB_SETTING_UPDATE_URL));
 				if (url == NULL)
 					url = GetDefaultUrl();
 				SetDlgItemText(hwndDlg, IDC_CUSTOMURL, url);
 		}
+
+#ifndef _WIN64
+		SetDlgItemText(hwndDlg, IDC_CHANGE_PLATFORM, TranslateT("Change platform to 64-bit"));
+		{
+			BOOL bIsWow64 = FALSE;
+			IsWow64Process(GetCurrentProcess(), &bIsWow64);
+			if (!bIsWow64)
+				ShowWindow(GetDlgItem(hwndDlg, IDC_CHANGE_PLATFORM), SW_HIDE);
+		}
+#endif
 		return TRUE;
 
 	case WM_COMMAND:
@@ -151,24 +179,34 @@ static INT_PTR CALLBACK UpdateNotifyOptsProc(HWND hwndDlg, UINT msg, WPARAM wPar
 			break;
 
 		case IDC_TRUNK_SYMBOLS:
+			EnableWindow(GetDlgItem(hwndDlg, IDC_CHANGE_PLATFORM), TRUE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_CUSTOMURL), FALSE);
-			SetDlgItemText(hwndDlg, IDC_CUSTOMURL, _T(DEFAULT_UPDATE_URL_TRUNK_SYMBOLS));
+			mir_snwprintf(defurl, DEFAULT_UPDATE_URL_TRUNK_SYMBOLS, GetBits(hwndDlg));
+			SetDlgItemText(hwndDlg, IDC_CUSTOMURL, defurl);
 			SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 			break;
+
 		case IDC_TRUNK:
+			EnableWindow(GetDlgItem(hwndDlg, IDC_CHANGE_PLATFORM), TRUE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_CUSTOMURL), FALSE);
-			SetDlgItemText(hwndDlg, IDC_CUSTOMURL, _T(DEFAULT_UPDATE_URL_TRUNK));
+			mir_snwprintf(defurl, DEFAULT_UPDATE_URL_TRUNK, GetBits(hwndDlg));
+			SetDlgItemText(hwndDlg, IDC_CUSTOMURL, defurl);
 			SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 			break;
+
 		case IDC_STABLE:
+			EnableWindow(GetDlgItem(hwndDlg, IDC_CHANGE_PLATFORM), TRUE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_CUSTOMURL), FALSE);
-			SetDlgItemText(hwndDlg, IDC_CUSTOMURL, _T(DEFAULT_UPDATE_URL));
+			mir_snwprintf(defurl, DEFAULT_UPDATE_URL, GetBits(hwndDlg));
+			SetDlgItemText(hwndDlg, IDC_CUSTOMURL, defurl);
 			SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 			break;
+
 		case IDC_CUSTOM:
+			EnableWindow(GetDlgItem(hwndDlg, IDC_CHANGE_PLATFORM), FALSE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_CUSTOMURL), TRUE);
 			{
-				ptrT url(db_get_tsa(NULL, MODNAME, DB_SETTING_UPDATE_URL));
+				ptrW url(db_get_wsa(NULL, MODNAME, DB_SETTING_UPDATE_URL));
 				if (url == NULL)
 					url = GetDefaultUrl();
 				SetDlgItemText(hwndDlg, IDC_CUSTOMURL, url);
@@ -187,14 +225,24 @@ static INT_PTR CALLBACK UpdateNotifyOptsProc(HWND hwndDlg, UINT msg, WPARAM wPar
 				SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 			break;
 
-		case IDC_LINK_HOTKEY:
-			{
-				OPENOPTIONSDIALOG ood = {0};
-				ood.cbSize = sizeof(ood);
-				ood.pszGroup = "Customize";
-				ood.pszPage = "Hotkeys";
-				Options_Open(&ood);
+		case IDC_CHANGE_PLATFORM:
+			if (IsDlgButtonChecked(hwndDlg, IDC_STABLE)) {
+				mir_snwprintf(defurl, DEFAULT_UPDATE_URL, GetBits(hwndDlg));
+				SetDlgItemText(hwndDlg, IDC_CUSTOMURL, defurl);
 			}
+			else if (IsDlgButtonChecked(hwndDlg, IDC_TRUNK)) {
+				mir_snwprintf(defurl, DEFAULT_UPDATE_URL_TRUNK, GetBits(hwndDlg));
+				SetDlgItemText(hwndDlg, IDC_CUSTOMURL, defurl);
+			}
+			else if (IsDlgButtonChecked(hwndDlg, IDC_TRUNK_SYMBOLS)) {
+				mir_snwprintf(defurl, DEFAULT_UPDATE_URL_TRUNK_SYMBOLS, GetBits(hwndDlg));
+				SetDlgItemText(hwndDlg, IDC_CUSTOMURL, defurl);
+			}
+			SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
+			break;
+
+		case IDC_LINK_HOTKEY:
+			Options_Open(L"Customize", L"Hotkeys");
 			return true;
 		}
 		break;
@@ -212,20 +260,22 @@ static INT_PTR CALLBACK UpdateNotifyOptsProc(HWND hwndDlg, UINT msg, WPARAM wPar
 				db_set_b(NULL, MODNAME, "PeriodMeasure", opts.bPeriodMeasure = ComboBox_GetCurSel(GetDlgItem(hwndDlg, IDC_PERIODMEASURE)));
 				db_set_b(NULL, MODNAME, "SilentMode", opts.bSilentMode = IsDlgButtonChecked(hwndDlg, IDC_SILENTMODE));
 				db_set_b(NULL, MODNAME, "Backup", opts.bBackup = IsDlgButtonChecked(hwndDlg, IDC_BACKUP));
-				TCHAR buffer[3] = {0};
+				wchar_t buffer[3] = {0};
 				Edit_GetText(GetDlgItem(hwndDlg, IDC_PERIOD), buffer, _countof(buffer));
-				db_set_dw(NULL, MODNAME, "Period", opts.Period = _ttoi(buffer));
+				db_set_dw(NULL, MODNAME, "Period", opts.Period = _wtoi(buffer));
 
 				mir_forkthread(InitTimer, (void*)1);
 				
 				if ( IsDlgButtonChecked(hwndDlg, IDC_STABLE)) {
 					db_set_b(NULL, MODNAME, DB_SETTING_UPDATE_MODE, UPDATE_MODE_STABLE);
-					opts.bForceRedownload = 0;
+					if (!opts.bChangePlatform)
+						opts.bForceRedownload = 0;
 					db_unset(NULL, MODNAME, DB_SETTING_REDOWNLOAD);
 				}
 				else if ( IsDlgButtonChecked(hwndDlg, IDC_TRUNK)) {
 					db_set_b(NULL, MODNAME, DB_SETTING_UPDATE_MODE, UPDATE_MODE_TRUNK);
-					opts.bForceRedownload = 0;
+					if (!opts.bChangePlatform)
+						opts.bForceRedownload = 0;
 					db_unset(NULL, MODNAME, DB_SETTING_REDOWNLOAD);
 				}
 				else if ( IsDlgButtonChecked(hwndDlg, IDC_TRUNK_SYMBOLS)) {
@@ -237,13 +287,19 @@ static INT_PTR CALLBACK UpdateNotifyOptsProc(HWND hwndDlg, UINT msg, WPARAM wPar
 					}
 				}
 				else {
-					TCHAR tszUrl[100];
+					wchar_t tszUrl[100];
 					GetDlgItemText(hwndDlg, IDC_CUSTOMURL, tszUrl, _countof(tszUrl));
-					db_set_ts(NULL, MODNAME, DB_SETTING_UPDATE_URL, tszUrl);
+					db_set_ws(NULL, MODNAME, DB_SETTING_UPDATE_URL, tszUrl);
 					db_set_b(NULL, MODNAME, DB_SETTING_UPDATE_MODE, UPDATE_MODE_CUSTOM);
 					opts.bForceRedownload = 0;
 					db_unset(NULL, MODNAME, DB_SETTING_REDOWNLOAD);
 				}
+
+				if (IsDlgButtonChecked(hwndDlg, IDC_CHANGE_PLATFORM)) {
+					db_set_b(NULL, MODNAME, DB_SETTING_REDOWNLOAD, opts.bForceRedownload = 1);
+					db_set_b(NULL, MODNAME, DB_SETTING_CHANGEPLATFORM, opts.bChangePlatform = 1);
+				}
+				else db_set_b(NULL, MODNAME, DB_SETTING_CHANGEPLATFORM, opts.bChangePlatform = 0);
 			}
 		}
 	}
@@ -278,8 +334,8 @@ static INT_PTR CALLBACK DlgPopupOpts(HWND hdlg, UINT msg, WPARAM wParam, LPARAM 
 		SetDlgItemInt(hdlg, IDC_TIMEOUT_VALUE, PopupOptions.Timeout, TRUE);
 		//Mouse actions
 		for (int i = 0; i < _countof(PopupActions); i++) {
-			SendDlgItemMessage(hdlg, IDC_LC, CB_SETITEMDATA, SendDlgItemMessage(hdlg, IDC_LC, CB_ADDSTRING, 0, (LPARAM)TranslateTS(PopupActions[i].Text)), PopupActions[i].Action);
-			SendDlgItemMessage(hdlg, IDC_RC, CB_SETITEMDATA, SendDlgItemMessage(hdlg, IDC_RC, CB_ADDSTRING, 0, (LPARAM)TranslateTS(PopupActions[i].Text)), PopupActions[i].Action);
+			SendDlgItemMessage(hdlg, IDC_LC, CB_SETITEMDATA, SendDlgItemMessage(hdlg, IDC_LC, CB_ADDSTRING, 0, (LPARAM)TranslateW(PopupActions[i].Text)), PopupActions[i].Action);
+			SendDlgItemMessage(hdlg, IDC_RC, CB_SETITEMDATA, SendDlgItemMessage(hdlg, IDC_RC, CB_ADDSTRING, 0, (LPARAM)TranslateW(PopupActions[i].Text)), PopupActions[i].Action);
 		}
 		SendDlgItemMessage(hdlg, IDC_LC, CB_SETCURSEL, PopupOptions.LeftClickAction, 0);
 		SendDlgItemMessage(hdlg, IDC_RC, CB_SETCURSEL, PopupOptions.RightClickAction, 0);
@@ -448,17 +504,17 @@ static int OptInit(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.position = 100000000;
 	odp.hInstance = hInst;
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_UPDATENOTIFY);
-	odp.ptszGroup = LPGENT("Services");
-	odp.ptszTitle = LPGENT("Plugin Updater");
+	odp.szGroup.w = LPGENW("Services");
+	odp.szTitle.w = LPGENW("Plugin Updater");
 	odp.pfnDlgProc = UpdateNotifyOptsProc;
 	Options_AddPage(wParam, &odp);
 
 	if ( ServiceExists(MS_POPUP_ADDPOPUPT)) {
 		odp.pszTemplate = MAKEINTRESOURCEA(IDD_POPUP);
-		odp.ptszGroup = LPGENT("Popups");
-		odp.ptszTitle = LPGENT("Plugin Updater");
+		odp.szGroup.w = LPGENW("Popups");
+		odp.szTitle.w = LPGENW("Plugin Updater");
 		odp.pfnDlgProc = DlgPopupOpts;
 		Options_AddPage(wParam, &odp);
 	}

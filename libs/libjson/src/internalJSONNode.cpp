@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -38,7 +38,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 static const json_string CONST_TRUE(JSON_TEXT("true"));
 static const json_string CONST_FALSE(JSON_TEXT("false"));
-static const json_string CONST_NULL(JSON_TEXT("null"));
 
 #ifdef JSON_UNIT_TEST
 	void internalJSONNode::incinternalAllocCount(void){ JSONNode::incinternalAllocCount(); }
@@ -344,7 +343,7 @@ void internalJSONNode::Nullify(bool validation) const {
 void internalJSONNode::Nullify(void) const {
 #endif
 	_type = JSON_NULL;
-	_string = CONST_NULL;
+	_string.clear();
 	SetFetched(true);
 }
 

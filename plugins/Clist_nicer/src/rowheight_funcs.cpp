@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-03 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -126,44 +126,36 @@ int RowHeight::getMaxRowHeight(ClcData *dat, const HWND hwnd)
 	return max_height;
 }
 
-// Calc and store row height for all itens in the list
+// Calc and store row height for all items in the list
 void RowHeight::calcRowHeights(ClcData *dat, HWND hwnd)
 {
-	int indent, subindex, line_num;
-	ClcContact *Drawing;
-	ClcGroup *group;
 	DWORD dwStyle = GetWindowLongPtr(hwnd, GWL_STYLE);
 
 	// Draw lines
-	group = &dat->list;
+	ClcGroup *group = &dat->list;
 	group->scanIndex = 0;
-	indent = 0;
-	//subindex=-1;
-	line_num = -1;
+	int line_num = -1;
 
 	Clear(dat);
 
 	while (true) {
-		if (group->scanIndex == group->cl.count) {
+		if (group->scanIndex == group->cl.getCount()) {
 			group = group->parent;
-			indent--;
 			if (group == NULL) break;	// Finished list
 			group->scanIndex++;
 			continue;
 		}
 
 		// Get item to draw
-		Drawing = group->cl.items[group->scanIndex];
+		ClcContact *cc = group->cl[group->scanIndex];
 		line_num++;
 
 		// Calc row height
-		getRowHeight(dat, Drawing, line_num, dwStyle);
+		getRowHeight(dat, cc, line_num, dwStyle);
 
-		if (group->cl.items[group->scanIndex]->type == CLCIT_GROUP && /*!IsBadCodePtr((FARPROC)group->cl.items[group->scanIndex]->group) && */ (group->cl.items[group->scanIndex]->group->expanded & 0x0000ffff)) {
-			group = group->cl.items[group->scanIndex]->group;
-			indent++;
+		if (cc->type == CLCIT_GROUP && (cc->group->expanded & 0x0000ffff)) {
+			group = cc->group;
 			group->scanIndex = 0;
-			subindex = -1;
 			continue;
 		}
 		group->scanIndex++;
@@ -173,42 +165,33 @@ void RowHeight::calcRowHeights(ClcData *dat, HWND hwnd)
 // Calc item top Y (using stored data)
 int RowHeight::getItemTopY(ClcData *dat, int item)
 {
-	int i;
-	int y = 0;
-
 	if (item >= dat->row_heights_size)
 		return -1;
 
-	for (i = 0; i < item; i++) {
+	int y = 0;
+	for (int i = 0; i < item; i++)
 		y += dat->row_heights[i];
-	}
 
 	return y;
 }
-
 
 // Calc item bottom Y (using stored data)
 int RowHeight::getItemBottomY(ClcData *dat, int item)
 {
-	int i;
-	int y = 0;
-
 	if (item >= dat->row_heights_size)
 		return -1;
 
-	for (i = 0; i <= item; i++) {
+	int y = 0;
+	for (int i = 0; i <= item; i++)
 		y += dat->row_heights[i];
-	}
 
 	return y;
 }
-
 
 // Calc total height of rows (using stored data)
 int RowHeight::getTotalHeight(ClcData *dat)
 {
 	int y = 0;
-
 	for (int i = 0; i < dat->row_heights_size; i++)
 		y += dat->row_heights[i];
 

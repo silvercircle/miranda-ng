@@ -1,0 +1,371 @@
+﻿#muuid {fadd4a8a-1fd0-4398-83bd-e378b85ed8f1}
+;============================================================
+;  File: StatusManager.dll
+;  Plugin: Status manager
+;  Version: 0.11.2.1
+;  Authors: P Boon
+;============================================================
+[A connection checker and auto away module. Also allows you to define the status Miranda should set on startup, configurable per protocol.]
+Правярае наяўнасць далучэння і аўтаматычна перадалучае пры парывах. Дазваляе вам наладзіць, які статус будзе пры запуску Miranda у кожнага конта.
+[Available modules]
+
+[Keep status]
+Перадалучэнне
+[Automatically reconnects your accounts after protocol error or internet drop.]
+Правярае наяўнасць далучэння і аўтаматычна перадалучае пры парывах.
+[Startup status]
+Пачатковы статус
+[Allows you to define the status Miranda should set on startup, configurable per account.]
+Дазваляе вам наладзіць, які статус будзе пры запуску Miranda у кожнага конта.
+[Advanced auto away]
+
+[Improved auto away module with some more options than the built in, configurable per account.]
+
+[Note: Miranda NG will have to be restarted for changes to take effect.]
+Нататка: Змены запрацуюць пасля перазапуску праграмы.
+[General]
+Агульнае
+[Show popups]
+Паказваць вокны
+[Account connection]
+Далучэнне конту
+[Check connection]
+Правяраць
+[Maximum retries (0 - infinite)]
+Максімум спроб (0 - бясконца)
+[Delay between retries (secs)]
+Затрымка паміж спробамі (сек)
+[Accounts to check]
+Правяраць наступныя:
+[Dial-up]
+Выдалены доступ
+[Don't reconnect if no internet connection seems available]
+Не далучацца, калі няма злучэння з Інтэрнэтам
+[Continuously check for internet connection]
+Пастаянна правяраць далучэнне да Інтэрнэту
+[Do so by pinging host]
+Пінгаваць хост
+[Confirm status]
+Пацвердзіце статус
+[Close]
+Зачыніць
+[Cancel]
+Скасаваць
+[Profile]
+Профіль
+[Message]
+Паведамленне
+[Account]
+Конт
+[Set]
+Абраць
+[when full-screen mode is active]
+у поўнаэкранным рэжыме
+[when screen saver engages]
+пры запуску застаўкі
+[when workstation is locked]
+пры блакаванні кампутара
+[after]
+праз
+[minutes of inactivity]
+хвілін неактыўнасці
+[minutes of level 1 mode]
+хвілін рэжыму 1
+[only set when inactive]
+толькі пры неактыўнасці
+[Monitor Miranda's activity only]
+Сачыць толькі за Miranda
+[Reset status on return]
+Аднавіць статус пры вяртанні
+[Confirm resetting status]
+Пацвердзіць скід статусу
+[Only set if current status is]
+Толькі калі статус:
+[Command line]
+Камандны радок
+[Copy to clipboard]
+Капіяваць у буфер
+[Command line:]
+Камандны радок:
+[Create shortcut]
+Стварыць цэтлік
+[Add new profile]
+Дадаць профіль
+[Profile name]
+Імя профіля
+[Set window state]
+Стан вакна
+[Show dialog]
+Паказваць дыялог
+[Set status to offline before exit]
+"Адключаны" пры выйсці
+[Show CMDL]
+Кам. радок
+[Activate status profile]
+Статус-профіль
+[Set docked]
+Паркаваць
+[Other]
+Іншае
+[Status on startup]
+Статус пры запуску
+[ms]
+мс
+[Set after]
+праз
+[Timeout]
+Затрымка
+[s]
+з
+[Set window location]
+Пазіцыя вакна
+[Left]
+Злева
+[Top]
+Угару
+[Set window size]
+Памер вакна
+[Width]
+Шырыня
+[Height]
+Вышыня
+[Allow override]
+Змяняць
+[Note: status profiles can be created in the 'Status profiles' options screen]
+статус-профіль можна стварыць ва ўкладцы "Профілі статусаў".
+[Window on startup]
+Вакно пры запуску
+[Automatically dial on startup]
+далучацца пры старце
+[Automatically hang up on exit]
+Раздзіраць сувязь пры выйсці
+[Dial-up (experimental)]
+Dial-up (эксперыментальна)
+[Background color]
+Колер фону
+[Text color]
+Колер тэксту
+[Use Windows colors]
+Колеры Windows
+[Use default colors]
+Колеры па змаўчанні
+[Delay]
+Затрымка
+[On left click]
+Левая пстрычка
+[On right click]
+Правая пстрычка
+[Do nothing]
+Нічога не рабіць
+[Close popup]
+Зачыніць вакно
+[Cancel reconnecting]
+Адмена далучэння
+[Colors]
+Колеры
+[Preview]
+Прагляд
+[Events]
+Падзеі
+[Show when connection is lost]
+Абрыў злучэння
+[Show when a connection attempt is made]
+Спроба далучэння
+[Show when reconnection has finished]
+Паспяховае далучэнне
+[Show other messages]
+Іншыя
+[From popup plugin]
+Па змаўчанні
+[Custom]
+Наладзіць
+[Permanent]
+Увесь час
+[Show additional information in popups]
+Дадатковая інфармацыя
+[Use Miranda's message setting]
+Выкарыстоўваць налады Miranda
+[Use this message:]
+Выкарыстоўваць паведамленне:
+[Use %time% for the current time, %date% for the current date]
+%date% - сенняшняя дата; %time% - бягучы час
+[Variables...]
+Зменныя...
+[Specify settings for each account]
+Асабіста для кожнага конту
+[Use same settings for all accounts]
+Агульна для ўсіх контаў
+[Ignore Caps Lock, Num Lock and Scroll Lock keys]
+Ігнараваць клавішы Caps Lock, Num Lock і Scroll Lock
+[Check interval (secs)]
+Правяраць праз (сек):
+[Confirm dialog timeout (secs)]
+Падцвердзіць праз(сек)
+[This options are ignored because you enabled "Change my status mode to" in the "Idle" options dialog.]
+
+[Monitor keyboard activity]
+Сачыць за актыўнасцю клавіятуры
+[Monitor mouse activity]
+Сачыць за актыўнасцю мышы
+[Ignore CTRL, ALT, SHIFT, TAB, ESC and Windows keys]
+Ігнараваць клавішы Ctrl, Alt, Shift, Tab, Esc, Win
+[Ignore any key combination with above keys]
+Ігнараваць камбінацыі са згаданымі клавішамі
+[Accounts]
+Конты
+[Enable checking]
+Правяраць
+[Disable checking]
+Не правяраць
+[Set status message]
+Усталяваць статуснае паведамленне
+[Status]
+Статус
+[Add...]
+Дадаць...
+[Delete]
+Выдаліць
+[Create a TopToolBar button]
+Стварыць кнопку Панэлі кнопак
+[Show confirm dialog when loading]
+Пацвярджаць пры загрузцы
+[Create a main menu item]
+Пункт у галоўным меню
+[Status profiles]
+Профілі статусаў
+[Hotkey]
+Гарачая клавіша
+[In submenu]
+У падменю
+[Timers]
+Таймеры
+[Maximum delay (secs)]
+Макс. затрымка (сек)
+[Maximum account connecting time (secs)]
+Спрабаваць далучацца (сек):
+[Reconnecting]
+Перадалучэнне
+[Ignore locked status of accounts]
+Ігнараваць блакаваныя конты
+[Increase delay exponential]
+Павялічыць экспанентна
+[Set account offline before a connection attempt]
+Адключыць конт перад далучэннем
+[Cancel all if an account connects from another location]
+Адмяніць, калі конт далучаны з другога месца
+[Reconnect on APM resume]
+Перадалучыцца пасля спячага рэжыму
+[React on login errors]
+Улічваць памылкі ўваходу
+[Stop trying to reconnect]
+Спыніць далучэнне
+[Set delay to]
+Пачакаць
+[seconds]
+секунд(ы)
+[Consider connection lost after]
+Сувязь страчана пасля
+[failed pings]
+незад. пінг.
+[Continuously check interval (secs)]
+Парвяраць кожныя(сек)
+[Entering first auto-away status]
+Увод першага статуса аўта-адсутнасці
+[Entering second auto-away status]
+Увод другога статуса аўта-адсутнасці
+[Leaving first auto-away status]
+Выдаленне першага статуса аўта-адсутнасці
+[Pre-conditions]
+Перадумовы
+[Status: The status the account will change to\r\nAccount: The account changing state]
+Статус: Статус конта зменіцца на\r\nКонт: Змяненне стану конта
+[TriggerData]
+Дадзеныя трыгера
+[Becoming active without status change]
+Не змяняць статус пры вяртанні
+[Leaving second auto-away status]
+Выдаленне другога статуса аўта-адсутнасці
+[Set %s message for %s.]
+Уст. %s паведамленне для %s.
+[<last>]
+<апошні>
+[<current>]
+<бягучы>
+[<n/a>]
+<невядома>
+[Protocol]
+Пратакол
+[Closing in %d]
+Зачыніць (%d)
+[Status manager]
+
+[minutes of %s mode]
+хвілін рэжыму "%s"
+[Rules]
+Кіравала
+[Status messages]
+Паведамленні статусу
+[Auto away]
+Адсутнасць
+[%s connected from another location]
+%s далучаны з іншага месца
+[%s login error, cancel reconnecting]
+%s памылка далучэння, адмяняю далучэнне
+[%s login error (next retry (%d) in %d s)]
+%s памылка далучэння (спроба № %d праз %d з.)
+[%s status error (next retry (%d) in %d s)]
+%s памылка статусу (наступны паўтор (%d) праз %d з.)
+[Status error (next retry (%d) in %d s)]
+Памылка статусу (спроба № %d праз % з.)
+[%s\t(will be set to %s)\r\n]
+будзе
+[Resetting status... (last try (%d))%s]
+Скід статусу.. (апошняя спроба (%d))%s
+[Resetting status... (next retry (%d) in %d s)%s]
+Скід статусу.. (спроба № %d праз %d з.)%s
+[No internet connection seems available... (last try (%d))]
+Няма доступу да Інтэрнэту (апошняя спроба (%d))
+[No internet connection seems available... (next retry (%d) in %d s)]
+Няма доступу да Інтэрнэту (спроба № %d праз %d з.)
+[Status was set ok]
+Статус усталяваны
+[Giving up]
+Спыняю
+[Basic]
+Асноўныя
+[Advanced]
+Дадаткова
+[You broke the Internet!]
+Злучэнне з Інтэрнэт разарвана!
+[Popups]
+Усплывальныя вокны
+[<unknown>]
+<невядома>
+[Right]
+Справа
+[None]
+Няма
+[size: %d x %d]
+
+[loc: %d x %d]
+
+[Hidden]
+Утоены
+[Minimized]
+Згорнута
+[Normal]
+Звычайны
+[Create a status menu item]
+Стварыць пункт у меню
+[default]
+па змаўчанні
+[unknown]
+невядома
+[At least one profile must exist]
+Мінімум адзін профіль павінен існаваць
+[Your default profile will be changed]
+Профіль па змаўчанні будзе зменены
+[Pressed toolbar icon]
+Націснуты абразок панэлі
+[Released toolbar icon]
+Адпушчаны абразок панэлі

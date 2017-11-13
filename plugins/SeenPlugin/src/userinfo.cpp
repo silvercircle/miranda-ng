@@ -41,11 +41,11 @@ INT_PTR CALLBACK UserinfoDlgProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lpar
 
 	case WM_REFRESH_UI:
 		{
-			ptrT szout(db_get_tsa(NULL, S_MOD, "UserStamp"));
-			TCHAR *str = ParseString((szout != NULL) ? szout : DEFAULT_USERSTAMP, wparam);
+			ptrW szout(db_get_wsa(NULL, S_MOD, "UserStamp"));
+			wchar_t *str = ParseString((szout != NULL) ? szout : DEFAULT_USERSTAMP, wparam);
 			SetDlgItemText(hdlg, IDC_INFOTEXT, str);
 
-			if (!mir_tstrcmp(str, TranslateT("<unknown>")))
+			if (!mir_wstrcmp(str, TranslateT("<unknown>")))
 				EnableWindow(GetDlgItem(hdlg, IDC_INFOTEXT), FALSE);
 		}
 		break;
@@ -72,7 +72,7 @@ int UserinfoInit(WPARAM wparam, LPARAM lparam)
 		OPTIONSDIALOGPAGE uip = { sizeof(uip) };
 		uip.hInstance = hInstance;
 		uip.pszTemplate = MAKEINTRESOURCEA(IDD_USERINFO);
-		uip.pszTitle = LPGEN("Last seen");
+		uip.szTitle.a = LPGEN("Last seen");
 		uip.pfnDlgProc = UserinfoDlgProc;
 		UserInfo_AddPage(wparam, &uip);
 	}

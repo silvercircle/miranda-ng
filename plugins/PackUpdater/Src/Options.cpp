@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2011-2015 Mataes
+Copyright (C) 2011-2017 Mataes
 
 This is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
@@ -101,13 +101,8 @@ INT_PTR CALLBACK UpdateNotifyOptsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPA
 			break;
 
 		case IDC_LINK_HOTKEY:
-		{
-			OPENOPTIONSDIALOG ood = { sizeof(ood) };
-			ood.pszGroup = "Customize";
-			ood.pszPage = "Hotkeys";
-			Options_Open(&ood);
-		}
-		return true;
+			Options_Open(L"Customize", L"Hotkeys");
+			return true;
 
 		case IDC_MSG_BOXES2:
 		case IDC_ERRORS2:
@@ -196,8 +191,8 @@ INT_PTR CALLBACK DlgPopupOpts(HWND hdlg, UINT msg, WPARAM wParam, LPARAM lParam)
 		SetDlgItemInt(hdlg, IDC_TIMEOUT_VALUE, MyOptions.Timeout, TRUE);
 		//Mouse actions
 		for (i = 0; i < _countof(PopupActions); i++) {
-			SendDlgItemMessage(hdlg, IDC_LC, CB_SETITEMDATA, SendDlgItemMessage(hdlg, IDC_LC, CB_ADDSTRING, 0, (LPARAM)TranslateTS(PopupActions[i].Text)), PopupActions[i].Action);
-			SendDlgItemMessage(hdlg, IDC_RC, CB_SETITEMDATA, SendDlgItemMessage(hdlg, IDC_RC, CB_ADDSTRING, 0, (LPARAM)TranslateTS(PopupActions[i].Text)), PopupActions[i].Action);
+			SendDlgItemMessage(hdlg, IDC_LC, CB_SETITEMDATA, SendDlgItemMessage(hdlg, IDC_LC, CB_ADDSTRING, 0, (LPARAM)TranslateW(PopupActions[i].Text)), PopupActions[i].Action);
+			SendDlgItemMessage(hdlg, IDC_RC, CB_SETITEMDATA, SendDlgItemMessage(hdlg, IDC_RC, CB_ADDSTRING, 0, (LPARAM)TranslateW(PopupActions[i].Text)), PopupActions[i].Action);
 		}
 		SendDlgItemMessage(hdlg, IDC_LC, CB_SETCURSEL, MyOptions.LeftClickAction, 0);
 		SendDlgItemMessage(hdlg, IDC_RC, CB_SETCURSEL, MyOptions.RightClickAction, 0);
@@ -388,17 +383,17 @@ int OptInit(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.position = 100000000;
 	odp.hInstance = hInst;
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_UPDATENOTIFY);
-	odp.ptszGroup = LPGENT("Services");
-	odp.ptszTitle = LPGENT("Pack Updater");
+	odp.szGroup.w = LPGENW("Services");
+	odp.szTitle.w = LPGENW("Pack Updater");
 	odp.pfnDlgProc = UpdateNotifyOptsProc;
 	Options_AddPage(wParam, &odp);
 
 	if (ServiceExists(MS_POPUP_ADDPOPUPT)) {
 		odp.pszTemplate = MAKEINTRESOURCEA(IDD_POPUP);
-		odp.ptszGroup = LPGENT("Popups");
-		odp.ptszTitle = LPGENT("Pack Updater");
+		odp.szGroup.w = LPGENW("Popups");
+		odp.szTitle.w = LPGENW("Pack Updater");
 		odp.pfnDlgProc = DlgPopupOpts;
 		Options_AddPage(wParam, &odp);
 	}

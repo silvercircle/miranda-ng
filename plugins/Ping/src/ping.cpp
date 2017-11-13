@@ -4,7 +4,7 @@ CLIST_INTERFACE *pcli;
 HINSTANCE hInst;
 int hLangpack = 0;
 
-HANDLE hNetlibUser = 0;
+HNETLIBUSER hNetlibUser = 0;
 HANDLE hFillListEvent = 0;
 
 bool use_raw_ping = true;
@@ -83,18 +83,12 @@ int OnShutdown(WPARAM, LPARAM) {
 
 int OnModulesLoaded(WPARAM, LPARAM)
 {
-	NETLIBUSER nl_user = { 0 };
-	nl_user.cbSize = sizeof(nl_user);
+	NETLIBUSER nl_user = {};
 	nl_user.szSettingsModule = PLUG;
-	nl_user.flags = NUF_OUTGOING | NUF_HTTPCONNS | NUF_TCHAR;
-	nl_user.ptszDescriptiveName = TranslateT("Ping Plugin");
-	nl_user.szHttpGatewayHello = 0;
-	nl_user.szHttpGatewayUserAgent = 0;
-	nl_user.pfnHttpGatewayInit = 0;
-	nl_user.pfnHttpGatewayWrapSend = 0;
-	nl_user.pfnHttpGatewayUnwrapRecv = 0;
+	nl_user.flags = NUF_OUTGOING | NUF_HTTPCONNS | NUF_UNICODE;
+	nl_user.szDescriptiveName.w = TranslateT("Ping Plugin");
 
-	hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nl_user);
+	hNetlibUser = Netlib_RegisterUser(&nl_user);
 
 	InitUtils();
 
@@ -115,7 +109,7 @@ int OnModulesLoaded(WPARAM, LPARAM)
 
 	graphs_init();
 
-	if (options.logging) CallService(PLUG "/Log", (WPARAM)_T("start"), 0);
+	if (options.logging) CallService(PLUG "/Log", (WPARAM)L"start", 0);
 
 	return 0;
 }
@@ -131,21 +125,21 @@ static IconItem iconList[] =
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	use_raw_ping = false;
 	db_set_b(0, PLUG, "UsingRawSockets", (BYTE)use_raw_ping);
 
 	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &mainThread, THREAD_SET_CONTEXT, FALSE, 0);
-	hWakeEvent = CreateEvent(NULL, FALSE, FALSE, _T("Local\\ThreadWaitEvent"));
+	hWakeEvent = CreateEvent(NULL, FALSE, FALSE, L"Local\\ThreadWaitEvent");
 
 	// create services before loading options - so we can have the 'getlogfilename' service!
 	CreatePluginServices();
 
 	LoadOptions();
 
-	SkinAddNewSound("PingTimeout", "Ping Timout", 0);
-	SkinAddNewSound("PingReply", "Ping Reply", 0);
+	Skin_AddSound("PingTimeout", LPGENW("Ping"), LPGENW("Timeout"));
+	Skin_AddSound("PingReply", LPGENW("Ping"), LPGENW("Reply"));
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
 
@@ -166,7 +160,7 @@ extern "C" __declspec(dllexport) int Unload(void)
 
 	CloseHandle(mainThread);
 
-	if (options.logging) CallService(PLUG "/Log", (WPARAM)_T("stop"), 0);
+	if (options.logging) CallService(PLUG "/Log", (WPARAM)L"stop", 0);
 
 	return 0;
 }

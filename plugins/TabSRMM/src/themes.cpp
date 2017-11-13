@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
-// Copyright (ñ) 2012-15 Miranda NG project,
+// Copyright (ñ) 2012-17 Miranda NG project,
 // Copyright (c) 2000-09 Miranda ICQ/IM project,
 // all portions of this codebase are copyrighted to the people
 // listed in contributors.txt.
@@ -30,10 +30,10 @@
 #include "stdafx.h"
 
 static SKINDESC my_default_skin[] = {
-	IDR_SKIN_AERO, _T("tabskin_aero.png"),
-	IDR_SKIN_AERO_GLOW, _T("tabskin_aero_glow.png"),
-	IDR_SKIN_AERO_SWITCHBAR, _T("tabskin_aero_button.png"),
-	IDR_SKIN_LOGO, _T("unknown.png")
+	IDR_SKIN_AERO, L"tabskin_aero.png",
+	IDR_SKIN_AERO_GLOW, L"tabskin_aero_glow.png",
+	IDR_SKIN_AERO_SWITCHBAR, L"tabskin_aero_button.png",
+	IDR_SKIN_LOGO, L"unknown.png"
 };
 
 CSkin* Skin = 0;
@@ -108,10 +108,10 @@ AeroEffect *CSkin::m_pCurrentAeroEffect = 0;
 
 AeroEffect  CSkin::m_aeroEffects[AERO_EFFECT_LAST] = {
 	{
-		LPGENT("No effect"), 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0
+		LPGENW("No effect"), 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0
 	},
 	{
-		LPGENT("Milky Glass"),
+		LPGENW("Milky Glass"),
 		0xf5f5f5, 									/* base color */
 		0xaaaaaa,									/* gradient color */
 		70,											/* base alpha */
@@ -126,7 +126,7 @@ AeroEffect  CSkin::m_aeroEffects[AERO_EFFECT_LAST] = {
 		AeroEffectCallback_Milk						/* callback function to render the effect */
 	},
 	{
-		LPGENT("Carbon"),
+		LPGENW("Carbon"),
 		0xf0f0f0,
 		0x000000,
 		75,
@@ -141,7 +141,7 @@ AeroEffect  CSkin::m_aeroEffects[AERO_EFFECT_LAST] = {
 		AeroEffectCallback_Carbon
 	},
 	{
-		LPGENT("Semi transparent, custom colors"),
+		LPGENW("Semi transparent, custom colors"),
 		0xffffff,
 		0x444444,
 		60,
@@ -156,7 +156,7 @@ AeroEffect  CSkin::m_aeroEffects[AERO_EFFECT_LAST] = {
 		AeroEffectCallback_Solid
 	},
 	{
-		LPGENT("Silver shadow"),
+		LPGENW("Silver shadow"),
 		0xffffff,
 		0xa0a0a0,
 		80,
@@ -171,7 +171,7 @@ AeroEffect  CSkin::m_aeroEffects[AERO_EFFECT_LAST] = {
 		AeroEffectCallback_Solid
 	},
 	{
-		LPGENT("Custom (use own gradient colors)"),
+		LPGENW("Custom (use own gradient colors)"),
 		0xffffff,
 		0xa0a0a0,
 		80,
@@ -190,103 +190,103 @@ AeroEffect  CSkin::m_aeroEffects[AERO_EFFECT_LAST] = {
 // definition of the availbale skin items
 
 CSkinItem SkinItems[] = {
-	{ _T("Container"), "TSKIN_Container", ID_EXTBKCONTAINER,
+	{ L"Container", "TSKIN_Container", ID_EXTBKCONTAINER,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("Toolbar"), "TSKIN_Container", ID_EXTBKBUTTONBAR,
+	}, { L"Toolbar", "TSKIN_Container", ID_EXTBKBUTTONBAR,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("{-}Buttonpressed"), "TSKIN_BUTTONSPRESSED", ID_EXTBKBUTTONSPRESSED,
+	}, { L"{-}Buttonpressed", "TSKIN_BUTTONSPRESSED", ID_EXTBKBUTTONSPRESSED,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("Buttonnotpressed"), "TSKIN_BUTTONSNPRESSED", ID_EXTBKBUTTONSNPRESSED,
+	}, { L"Buttonnotpressed", "TSKIN_BUTTONSNPRESSED", ID_EXTBKBUTTONSNPRESSED,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("Buttonmouseover"), "TSKIN_BUTTONSMOUSEOVER", ID_EXTBKBUTTONSMOUSEOVER,
+	}, { L"Buttonmouseover", "TSKIN_BUTTONSMOUSEOVER", ID_EXTBKBUTTONSMOUSEOVER,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("Infopanelfield"), "TSKIN_INFOPANELFIELD", ID_EXTBKINFOPANEL,
+	}, { L"Infopanelfield", "TSKIN_INFOPANELFIELD", ID_EXTBKINFOPANEL,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("Titlebutton"), "TSKIN_TITLEBUTTON", ID_EXTBKTITLEBUTTON,
+	}, { L"Titlebutton", "TSKIN_TITLEBUTTON", ID_EXTBKTITLEBUTTON,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("Titlebuttonmouseover"), "TSKIN_TITLEBUTTONHOVER", ID_EXTBKTITLEBUTTONMOUSEOVER,
+	}, { L"Titlebuttonmouseover", "TSKIN_TITLEBUTTONHOVER", ID_EXTBKTITLEBUTTONMOUSEOVER,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("Titlebuttonpressed"), "TSKIN_TITLEBUTTONPRESSED", ID_EXTBKTITLEBUTTONPRESSED,
+	}, { L"Titlebuttonpressed", "TSKIN_TITLEBUTTONPRESSED", ID_EXTBKTITLEBUTTONPRESSED,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("Tabpage"), "TSKIN_TABPAGE", ID_EXTBKTABPAGE,
+	}, { L"Tabpage", "TSKIN_TABPAGE", ID_EXTBKTABPAGE,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("Tabitem"), "TSKIN_TABITEM", ID_EXTBKTABITEM,
+	}, { L"Tabitem", "TSKIN_TABITEM", ID_EXTBKTABITEM,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("Tabitem_active"), "TSKIN_TABITEMACTIVE", ID_EXTBKTABITEMACTIVE,
+	}, { L"Tabitem_active", "TSKIN_TABITEMACTIVE", ID_EXTBKTABITEMACTIVE,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("Tabitem_bottom"), "TSKIN_TABITEMBOTTOM", ID_EXTBKTABITEMBOTTOM,
+	}, { L"Tabitem_bottom", "TSKIN_TABITEMBOTTOM", ID_EXTBKTABITEMBOTTOM,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("Tabitem_active_bottom"), "TSKIN_TABITEMACTIVEBOTTOM", ID_EXTBKTABITEMACTIVEBOTTOM,
+	}, { L"Tabitem_active_bottom", "TSKIN_TABITEMACTIVEBOTTOM", ID_EXTBKTABITEMACTIVEBOTTOM,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("Frame"), "TSKIN_FRAME", ID_EXTBKFRAME,
+	}, { L"Frame", "TSKIN_FRAME", ID_EXTBKFRAME,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("MessageLog"), "TSKIN_MLOG", ID_EXTBKHISTORY,
+	}, { L"MessageLog", "TSKIN_MLOG", ID_EXTBKHISTORY,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("InputArea"), "TSKIN_INPUT", ID_EXTBKINPUTAREA,
+	}, { L"InputArea", "TSKIN_INPUT", ID_EXTBKINPUTAREA,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("FrameInactive"), "TSKIN_FRAMEINACTIVE", ID_EXTBKFRAMEINACTIVE,
+	}, { L"FrameInactive", "TSKIN_FRAMEINACTIVE", ID_EXTBKFRAMEINACTIVE,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("Tabitem_hottrack"), "TSKIN_TABITEMHOTTRACK", ID_EXTBKTABITEMHOTTRACK,
+	}, { L"Tabitem_hottrack", "TSKIN_TABITEMHOTTRACK", ID_EXTBKTABITEMHOTTRACK,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("Tabitem_hottrack_bottom"), "TSKIN_TABITEMHOTTRACKBOTTOM", ID_EXTBKTABITEMHOTTRACKBOTTOM,
+	}, { L"Tabitem_hottrack_bottom", "TSKIN_TABITEMHOTTRACKBOTTOM", ID_EXTBKTABITEMHOTTRACKBOTTOM,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("Statusbarpanel"), "TSKIN_STATUSBARPANEL", ID_EXTBKSTATUSBARPANEL,
+	}, { L"Statusbarpanel", "TSKIN_STATUSBARPANEL", ID_EXTBKSTATUSBARPANEL,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("Statusbar"), "TSKIN_STATUSBAR", ID_EXTBKSTATUSBAR,
+	}, { L"Statusbar", "TSKIN_STATUSBAR", ID_EXTBKSTATUSBAR,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("Userlist"), "TSKIN_USERLIST", ID_EXTBKUSERLIST,
+	}, { L"Userlist", "TSKIN_USERLIST", ID_EXTBKUSERLIST,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
-	}, { _T("InfoPanelBackground"), "TSKIN_INFOPANELBG", ID_EXTBKINFOPANELBG,
+	}, { L"InfoPanelBackground", "TSKIN_INFOPANELBG", ID_EXTBKINFOPANELBG,
 	8, CLCDEFAULT_CORNER,
 	0xf0f0f0, 0x42b1ff, 1, CLCDEFAULT_TEXTCOLOR, 40, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE, 0, 0
-	}, { _T("Sidebar Background"), "TSKIN_SIDEBARBG", ID_EXTBKSIDEBARBG,
+	}, { L"Sidebar Background", "TSKIN_SIDEBARBG", ID_EXTBKSIDEBARBG,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	0xb2e1ff, 0xb2e1ff, 1, CLCDEFAULT_TEXTCOLOR, 40, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE, 0, 0
@@ -294,7 +294,7 @@ CSkinItem SkinItems[] = {
 };
 
 static CSkinItem _defInfoPanel = {
-	_T("InfoPanelBackground"), "TSKIN_INFOPANELBG", ID_EXTBKINFOPANELBG,
+	L"InfoPanelBackground", "TSKIN_INFOPANELBG", ID_EXTBKINFOPANELBG,
 	8, CLCDEFAULT_CORNER,
 	0xf0f0f0, 0x62caff, 0, CLCDEFAULT_TEXTCOLOR, 255, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE, 0, 0
@@ -318,7 +318,7 @@ static DWORD __inline argb_from_cola(COLORREF col, UINT32 alpha)
 void TSAPI  DrawAlpha(HDC hDC, PRECT rc, DWORD clr_base, int alpha, DWORD clr_dest, BYTE clr_dest_trans, BYTE bGradient,
 	BYTE bCorner, DWORD dwRadius, CImageItem *imageItem)
 {
-	if (rc == NULL)
+	if (rc == nullptr)
 		return;
 
 	LONG realHeight = (rc->bottom - rc->top);
@@ -397,8 +397,8 @@ void TSAPI  DrawAlpha(HDC hDC, PRECT rc, DWORD clr_base, int alpha, DWORD clr_de
 		return;
 
 	void *pvBits;
-	HBITMAP hbitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &pvBits, NULL, 0x0);
-	if (hbitmap == NULL || pvBits == NULL) {
+	HBITMAP hbitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &pvBits, nullptr, 0x0);
+	if (hbitmap == nullptr || pvBits == nullptr) {
 		DeleteDC(hdc);
 		return;
 	}
@@ -473,8 +473,8 @@ void TSAPI  DrawAlpha(HDC hDC, PRECT rc, DWORD clr_base, int alpha, DWORD clr_de
 	}
 
 	// TL+BL CORNER
-	hbitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &pvBits, NULL, 0x0);
-	if (hbitmap == 0 || pvBits == NULL)  {
+	hbitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &pvBits, nullptr, 0x0);
+	if (hbitmap == 0 || pvBits == nullptr)  {
 		DeleteObject(BrMask);
 		DeleteDC(hdc);
 		return;
@@ -513,7 +513,7 @@ void TSAPI  DrawAlpha(HDC hDC, PRECT rc, DWORD clr_base, int alpha, DWORD clr_de
 	DeleteObject(hbitmap);
 
 	// TR+BR CORNER
-	hbitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &pvBits, NULL, 0x0);
+	hbitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &pvBits, nullptr, 0x0);
 	holdbitmap = (HBITMAP)SelectObject(hdc, hbitmap);
 	RoundRect(hdc, -1 - ulBitmapWidth, -1, ulBitmapWidth + 1, (realHeight + 1), dwRadius, dwRadius);
 
@@ -724,7 +724,7 @@ void __fastcall CImageItem::Render(const HDC hdc, const RECT *rc, bool fIgnoreGl
 }
 
 static CSkinItem StatusItem_Default = {
-	_T("Container"), "EXBK_Offline", ID_EXTBKCONTAINER,
+	L"Container", "EXBK_Offline", ID_EXTBKCONTAINER,
 	CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
 	CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, CLCDEFAULT_TEXTCOLOR, CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT,
 	CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT, CLCDEFAULT_MRGN_BOTTOM, CLCDEFAULT_IGNORE
@@ -732,25 +732,25 @@ static CSkinItem StatusItem_Default = {
 
 static struct
 {
-	TCHAR *szIniKey, *szIniName;
+	wchar_t *szIniKey, *szIniName;
 	char *szSetting;
 	unsigned int size;
 	int defaultval;
 } _tagSettings[] = {
-	_T("Global"), _T("SbarHeight"), "S_sbarheight", 1, 22,
-	_T("ClientArea"), _T("Left"), "S_tborder_outer_left", 1, 0,
-	_T("ClientArea"), _T("Right"), "S_tborder_outer_right", 1, 0,
-	_T("ClientArea"), _T("Top"), "S_tborder_outer_top", 1, 0,
-	_T("ClientArea"), _T("Bottom"), "S_tborder_outer_bottom", 1, 0,
-	_T("ClientArea"), _T("Inner"), "S_tborder", 1, 0,
-	_T("Global"), _T("TabTextNormal"), "S_tab_txt_normal", 5, 0,
-	_T("Global"), _T("TabTextActive"), "S_tab_txt_active", 5, 0,
-	_T("Global"), _T("TabTextUnread"), "S_tab_txt_unread", 5, 0,
-	_T("Global"), _T("TabTextHottrack"), "S_tab_txt_hottrack", 5, 0,
-	NULL, NULL, NULL, 0, 0
+	L"Global", L"SbarHeight", "S_sbarheight", 1, 22,
+	L"ClientArea", L"Left", "S_tborder_outer_left", 1, 0,
+	L"ClientArea", L"Right", "S_tborder_outer_right", 1, 0,
+	L"ClientArea", L"Top", "S_tborder_outer_top", 1, 0,
+	L"ClientArea", L"Bottom", "S_tborder_outer_bottom", 1, 0,
+	L"ClientArea", L"Inner", "S_tborder", 1, 0,
+	L"Global", L"TabTextNormal", "S_tab_txt_normal", 5, 0,
+	L"Global", L"TabTextActive", "S_tab_txt_active", 5, 0,
+	L"Global", L"TabTextUnread", "S_tab_txt_unread", 5, 0,
+	L"Global", L"TabTextHottrack", "S_tab_txt_hottrack", 5, 0,
+	nullptr, nullptr, nullptr, 0, 0
 };
 
-void CImageItem::Create(const TCHAR *szImageFile)
+void CImageItem::Create(const wchar_t *szImageFile)
 {
 	HBITMAP hbm = LoadPNG(szImageFile);
 	BITMAP bm;
@@ -795,15 +795,15 @@ void CImageItem::Create(const TCHAR *szImageFile)
 // @return char*: full path and filename to the .png image which represents this image item.
 // caller MUST delete it.
 
-TCHAR* CImageItem::Read(const TCHAR *szFilename)
+wchar_t* CImageItem::Read(const wchar_t *szFilename)
 {
-	TCHAR buffer[501];
-	TCHAR szDrive[MAX_PATH], szPath[MAX_PATH];
-	TCHAR	*szFinalName = 0;
+	wchar_t buffer[501];
+	wchar_t szDrive[MAX_PATH], szPath[MAX_PATH];
+	wchar_t	*szFinalName = 0;
 
-	GetPrivateProfileString(m_szName, _T("Glyph"), _T("None"), buffer, 500, szFilename);
-	if (mir_tstrcmp(buffer, _T("None"))) {
-		_stscanf(buffer, _T("%d,%d,%d,%d"), &m_glyphMetrics[0], &m_glyphMetrics[1],
+	GetPrivateProfileString(m_szName, L"Glyph", L"None", buffer, 500, szFilename);
+	if (mir_wstrcmp(buffer, L"None")) {
+		swscanf(buffer, L"%d,%d,%d,%d", &m_glyphMetrics[0], &m_glyphMetrics[1],
 			&m_glyphMetrics[2], &m_glyphMetrics[3]);
 		if (m_glyphMetrics[2] > m_glyphMetrics[0] && m_glyphMetrics[3] > m_glyphMetrics[1]) {
 			m_dwFlags |= IMAGE_GLYPH;
@@ -812,25 +812,25 @@ TCHAR* CImageItem::Read(const TCHAR *szFilename)
 		}
 	}
 
-	GetPrivateProfileString(m_szName, _T("Image"), _T("None"), buffer, 500, szFilename);
-	if (mir_tstrcmp(buffer, _T("None")) || m_dwFlags & IMAGE_GLYPH) {
-		szFinalName = new TCHAR[MAX_PATH];
+	GetPrivateProfileString(m_szName, L"Image", L"None", buffer, 500, szFilename);
+	if (mir_wstrcmp(buffer, L"None") || m_dwFlags & IMAGE_GLYPH) {
+		szFinalName = new wchar_t[MAX_PATH];
 		//strncpy(m_szName, &m_szName[1], sizeof(m_szName));
 		//m_szName[sizeof(m_szName) - 1] = 0;
-		_tsplitpath(szFilename, szDrive, szPath, NULL, NULL);
-		mir_sntprintf(szFinalName, MAX_PATH, _T("%s\\%s%s"), szDrive, szPath, buffer);
+		_wsplitpath(szFilename, szDrive, szPath, nullptr, nullptr);
+		mir_snwprintf(szFinalName, MAX_PATH, L"%s\\%s%s", szDrive, szPath, buffer);
 		if (!PathFileExists(szFinalName)) {
 			delete[] szFinalName;
 			szFinalName = 0;
 		}
-		m_alpha = GetPrivateProfileInt(m_szName, _T("Alpha"), 100, szFilename);
+		m_alpha = GetPrivateProfileInt(m_szName, L"Alpha", 100, szFilename);
 		m_alpha = min(m_alpha, 100);
 		m_alpha = (BYTE)((FLOAT)(((FLOAT)m_alpha) / 100) * 255);
 		m_bf.SourceConstantAlpha = m_alpha;
-		m_bLeft = GetPrivateProfileInt(m_szName, _T("Left"), 0, szFilename);
-		m_bRight = GetPrivateProfileInt(m_szName, _T("Right"), 0, szFilename);
-		m_bTop = GetPrivateProfileInt(m_szName, _T("Top"), 0, szFilename);
-		m_bBottom = GetPrivateProfileInt(m_szName, _T("Bottom"), 0, szFilename);
+		m_bLeft = GetPrivateProfileInt(m_szName, L"Left", 0, szFilename);
+		m_bRight = GetPrivateProfileInt(m_szName, L"Right", 0, szFilename);
+		m_bTop = GetPrivateProfileInt(m_szName, L"Top", 0, szFilename);
+		m_bBottom = GetPrivateProfileInt(m_szName, L"Bottom", 0, szFilename);
 		if (m_dwFlags & IMAGE_GLYPH) {
 			m_width = m_glyphMetrics[2];
 			m_height = m_glyphMetrics[3];
@@ -851,22 +851,22 @@ TCHAR* CImageItem::Read(const TCHAR *szFilename)
 				return(szFinalName);
 			}
 		}
-		GetPrivateProfileString(m_szName, _T("Fillcolor"), _T("None"), buffer, 500, szFilename);
-		if (mir_tstrcmp(buffer, _T("None"))) {
+		GetPrivateProfileString(m_szName, L"Fillcolor", L"None", buffer, 500, szFilename);
+		if (mir_wstrcmp(buffer, L"None")) {
 			COLORREF fillColor = CSkin::HexStringToLong(buffer);
 			m_fillBrush = CreateSolidBrush(fillColor);
 			m_dwFlags |= IMAGE_FILLSOLID;
 		}
 		else
 			m_fillBrush = 0;
-		GetPrivateProfileString(m_szName, _T("Colorkey"), _T("None"), buffer, 500, szFilename);
-		if (mir_tstrcmp(buffer, _T("None"))) {
+		GetPrivateProfileString(m_szName, L"Colorkey", L"None", buffer, 500, szFilename);
+		if (mir_wstrcmp(buffer, L"None")) {
 			CSkin::m_ContainerColorKey = CSkin::HexStringToLong(buffer);
 			if (CSkin::m_ContainerColorKeyBrush)
 				DeleteObject(CSkin::m_ContainerColorKeyBrush);
 			CSkin::m_ContainerColorKeyBrush = CreateSolidBrush(CSkin::m_ContainerColorKey);
 		}
-		GetPrivateProfileString(m_szName, _T("Stretch"), _T("None"), buffer, 500, szFilename);
+		GetPrivateProfileString(m_szName, L"Stretch", L"None", buffer, 500, szFilename);
 		if (buffer[0] == 'B' || buffer[0] == 'b')
 			m_bStretch = IMAGE_STRETCH_B;
 		else if (buffer[0] == 'h' || buffer[0] == 'H')
@@ -874,7 +874,7 @@ TCHAR* CImageItem::Read(const TCHAR *szFilename)
 		else if (buffer[0] == 'w' || buffer[0] == 'W')
 			m_bStretch = IMAGE_STRETCH_H;
 		m_hbm = 0;
-		if (GetPrivateProfileInt(m_szName, _T("Perpixel"), 0, szFilename))
+		if (GetPrivateProfileInt(m_szName, L"Perpixel", 0, szFilename))
 			m_dwFlags |= IMAGE_PERPIXEL_ALPHA;
 
 		return(szFinalName);
@@ -916,7 +916,7 @@ void CImageItem::SetBitmap32Alpha(HBITMAP hBitmap, BYTE bAlpha)
 
 	DWORD dwLen = bmp.bmWidth * bmp.bmHeight * (bmp.bmBitsPixel / 8);
 	BYTE *p = (BYTE *)mir_alloc(dwLen);
-	if (p == NULL)
+	if (p == nullptr)
 		return;
 	memset(p, 0, dwLen);
 
@@ -999,10 +999,10 @@ void CImageItem::Colorize(HBITMAP hBitmap, BYTE dr, BYTE dg, BYTE db, BYTE alpha
 /////////////////////////////////////////////////////////////////////////////////////////
 // load PNG image using core service(advaimg)
 
-HBITMAP TSAPI CImageItem::LoadPNG(const TCHAR *szFilename)
+HBITMAP TSAPI CImageItem::LoadPNG(const wchar_t *szFilename)
 {
 	HBITMAP hBitmap = 0;
-	hBitmap = (HBITMAP)CallService(MS_IMG_LOAD, (WPARAM)szFilename, IMGL_TCHAR);
+	hBitmap = (HBITMAP)CallService(MS_IMG_LOAD, (WPARAM)szFilename, IMGL_WCHAR);
 	return hBitmap;
 }
 
@@ -1015,8 +1015,8 @@ HBITMAP TSAPI CImageItem::LoadPNG(const TCHAR *szFilename)
 void CSkin::setFileName()
 {
 	DBVARIANT dbv;
-	if (0 == db_get_ts(0, SRMSGMOD_T, "ContainerSkin", &dbv)) {
-		PathToAbsoluteT(dbv.ptszVal, m_tszFileName, M.getSkinPath());
+	if (0 == db_get_ws(0, SRMSGMOD_T, "ContainerSkin", &dbv)) {
+		PathToAbsoluteW(dbv.ptszVal, m_tszFileName, M.getSkinPath());
 		db_free(&dbv);
 	}
 	else
@@ -1056,7 +1056,7 @@ void CSkin::Init(bool fStartup)
 
 bool CSkin::warnToClose() const
 {
-	if (::pFirstContainer == NULL)
+	if (::pFirstContainer == nullptr)
 		return true;
 
 	if (MessageBox(0,
@@ -1077,27 +1077,27 @@ void CSkin::UnloadAeroTabs()
 {
 	if (m_tabTop) {
 		delete m_tabTop;
-		m_tabTop = NULL;
+		m_tabTop = nullptr;
 	}
 
 	if (m_tabBottom) {
 		delete m_tabBottom;
-		m_tabBottom = NULL;
+		m_tabBottom = nullptr;
 	}
 
 	if (m_tabGlowTop) {
 		delete m_tabGlowTop;
-		m_tabGlowTop = NULL;
+		m_tabGlowTop = nullptr;
 	}
 
 	if (m_tabGlowBottom) {
 		delete m_tabGlowBottom;
-		m_tabGlowTop = NULL;
+		m_tabGlowBottom = nullptr;
 	}
 
 	if (m_switchBarItem) {
 		delete m_switchBarItem;
-		m_switchBarItem = NULL;
+		m_switchBarItem = nullptr;
 	}
 }
 
@@ -1195,23 +1195,23 @@ void CSkin::Unload()
 	m_DisableScrollbars = M.GetByte("disableVScroll", 0) ? true : false;
 }
 
-void CSkin::LoadIcon(const TCHAR *szSection, const TCHAR *name, HICON &hIcon)
+void CSkin::LoadIcon(const wchar_t *szSection, const wchar_t *name, HICON &hIcon)
 {
 	if (hIcon != 0)
 		DestroyIcon(hIcon);
 
-	TCHAR buffer[512];
-	GetPrivateProfileString(szSection, name, _T("none"), buffer, 250, m_tszFileName);
+	wchar_t buffer[512];
+	GetPrivateProfileString(szSection, name, L"none", buffer, 250, m_tszFileName);
 	buffer[500] = 0;
 
-	if (mir_tstrcmpi(buffer, _T("none"))) {
-		TCHAR szDrive[MAX_PATH], szDir[MAX_PATH], szImagePath[MAX_PATH];
+	if (mir_wstrcmpi(buffer, L"none")) {
+		wchar_t szDrive[MAX_PATH], szDir[MAX_PATH], szImagePath[MAX_PATH];
 
-		_tsplitpath(m_tszFileName, szDrive, szDir, NULL, NULL);
-		mir_sntprintf(szImagePath, _T("%s\\%s\\%s"), szDrive, szDir, buffer);
+		_wsplitpath(m_tszFileName, szDrive, szDir, nullptr, nullptr);
+		mir_snwprintf(szImagePath, L"%s\\%s\\%s", szDrive, szDir, buffer);
 		hIcon = (HICON)LoadImage(0, szImagePath, IMAGE_ICON, 16, 16, LR_LOADFROMFILE);
 	}
-	else hIcon = NULL;
+	else hIcon = nullptr;
 }
 
 
@@ -1224,63 +1224,63 @@ void CSkin::LoadIcon(const TCHAR *szSection, const TCHAR *name, HICON &hIcon)
 // @param szItem char *: the section name in the ini file which holds the definition for this
 //    item.
 
-void CSkin::ReadItem(const int id, const TCHAR *szItem)
+void CSkin::ReadItem(const int id, const wchar_t *szItem)
 {
-	TCHAR buffer[512];
-	TCHAR def_color[20];
+	wchar_t buffer[512];
+	wchar_t def_color[20];
 	COLORREF clr;
 	CSkinItem *defaults = &StatusItem_Default;
 
 	CSkinItem	*this_item = &m_SkinItems[id];
 
-	this_item->ALPHA = (int)GetPrivateProfileInt(szItem, _T("Alpha"), defaults->ALPHA, m_tszFileName);
+	this_item->ALPHA = (int)GetPrivateProfileInt(szItem, L"Alpha", defaults->ALPHA, m_tszFileName);
 	this_item->ALPHA = min(this_item->ALPHA, 100);
 
 	clr = RGB(GetBValue(defaults->COLOR), GetGValue(defaults->COLOR), GetRValue(defaults->COLOR));
-	mir_sntprintf(def_color, _T("%6.6x"), clr);
-	GetPrivateProfileString(szItem, _T("Color1"), def_color, buffer, 400, m_tszFileName);
+	mir_snwprintf(def_color, L"%6.6x", clr);
+	GetPrivateProfileString(szItem, L"Color1", def_color, buffer, 400, m_tszFileName);
 	this_item->COLOR = HexStringToLong(buffer);
 
 	clr = RGB(GetBValue(defaults->COLOR2), GetGValue(defaults->COLOR2), GetRValue(defaults->COLOR2));
-	mir_sntprintf(def_color, _T("%6.6x"), clr);
-	GetPrivateProfileString(szItem, _T("Color2"), def_color, buffer, 400, m_tszFileName);
+	mir_snwprintf(def_color, L"%6.6x", clr);
+	GetPrivateProfileString(szItem, L"Color2", def_color, buffer, 400, m_tszFileName);
 	this_item->COLOR2 = HexStringToLong(buffer);
 
-	this_item->COLOR2_TRANSPARENT = (BYTE)GetPrivateProfileInt(szItem, _T("COLOR2_TRANSPARENT"), defaults->COLOR2_TRANSPARENT, m_tszFileName);
+	this_item->COLOR2_TRANSPARENT = (BYTE)GetPrivateProfileInt(szItem, L"COLOR2_TRANSPARENT", defaults->COLOR2_TRANSPARENT, m_tszFileName);
 
 	this_item->CORNER = defaults->CORNER & CORNER_ACTIVE ? defaults->CORNER : 0;
-	GetPrivateProfileString(szItem, _T("Corner"), _T("None"), buffer, 400, m_tszFileName);
-	if (_tcsstr(buffer, _T("tl")))
+	GetPrivateProfileString(szItem, L"Corner", L"None", buffer, 400, m_tszFileName);
+	if (wcsstr(buffer, L"tl"))
 		this_item->CORNER |= CORNER_TL;
-	if (_tcsstr(buffer, _T("tr")))
+	if (wcsstr(buffer, L"tr"))
 		this_item->CORNER |= CORNER_TR;
-	if (_tcsstr(buffer, _T("bl")))
+	if (wcsstr(buffer, L"bl"))
 		this_item->CORNER |= CORNER_BL;
-	if (_tcsstr(buffer, _T("br")))
+	if (wcsstr(buffer, L"br"))
 		this_item->CORNER |= CORNER_BR;
 	if (this_item->CORNER)
 		this_item->CORNER |= CORNER_ACTIVE;
 
 	this_item->GRADIENT = defaults->GRADIENT & GRADIENT_ACTIVE ? defaults->GRADIENT : 0;
-	GetPrivateProfileString(szItem, _T("Gradient"), _T("None"), buffer, 400, m_tszFileName);
-	if (_tcsstr(buffer, _T("left")))
+	GetPrivateProfileString(szItem, L"Gradient", L"None", buffer, 400, m_tszFileName);
+	if (wcsstr(buffer, L"left"))
 		this_item->GRADIENT = GRADIENT_RL;
-	else if (_tcsstr(buffer, _T("right")))
+	else if (wcsstr(buffer, L"right"))
 		this_item->GRADIENT = GRADIENT_LR;
-	else if (_tcsstr(buffer, _T("up")))
+	else if (wcsstr(buffer, L"up"))
 		this_item->GRADIENT = GRADIENT_BT;
-	else if (_tcsstr(buffer, _T("down")))
+	else if (wcsstr(buffer, L"down"))
 		this_item->GRADIENT = GRADIENT_TB;
 	if (this_item->GRADIENT)
 		this_item->GRADIENT |= GRADIENT_ACTIVE;
 
-	this_item->MARGIN_LEFT = GetPrivateProfileInt(szItem, _T("Left"), defaults->MARGIN_LEFT, m_tszFileName);
-	this_item->MARGIN_RIGHT = GetPrivateProfileInt(szItem, _T("Right"), defaults->MARGIN_RIGHT, m_tszFileName);
-	this_item->MARGIN_TOP = GetPrivateProfileInt(szItem, _T("Top"), defaults->MARGIN_TOP, m_tszFileName);
-	this_item->MARGIN_BOTTOM = GetPrivateProfileInt(szItem, _T("Bottom"), defaults->MARGIN_BOTTOM, m_tszFileName);
-	this_item->BORDERSTYLE = GetPrivateProfileInt(szItem, _T("Radius"), defaults->BORDERSTYLE, m_tszFileName);
+	this_item->MARGIN_LEFT = GetPrivateProfileInt(szItem, L"Left", defaults->MARGIN_LEFT, m_tszFileName);
+	this_item->MARGIN_RIGHT = GetPrivateProfileInt(szItem, L"Right", defaults->MARGIN_RIGHT, m_tszFileName);
+	this_item->MARGIN_TOP = GetPrivateProfileInt(szItem, L"Top", defaults->MARGIN_TOP, m_tszFileName);
+	this_item->MARGIN_BOTTOM = GetPrivateProfileInt(szItem, L"Bottom", defaults->MARGIN_BOTTOM, m_tszFileName);
+	this_item->BORDERSTYLE = GetPrivateProfileInt(szItem, L"Radius", defaults->BORDERSTYLE, m_tszFileName);
 
-	GetPrivateProfileString(szItem, _T("Textcolor"), _T("ffffffff"), buffer, 400, m_tszFileName);
+	GetPrivateProfileString(szItem, L"Textcolor", L"ffffffff", buffer, 400, m_tszFileName);
 	this_item->TEXTCOLOR = HexStringToLong(buffer);
 	this_item->IGNORED = 0;
 }
@@ -1291,15 +1291,15 @@ void CSkin::ReadItem(const int id, const TCHAR *szItem)
 //
 // @param itemname char *: image item name, also section name in the .tsk file
 
-void CSkin::ReadImageItem(const TCHAR *itemname)
+void CSkin::ReadImageItem(const wchar_t *itemname)
 {
-	TCHAR buffer[512], szItemNr[30];
+	wchar_t buffer[512], szItemNr[30];
 
 	CImageItem tmpItem(itemname);
 
-	TCHAR *szImageFileName = tmpItem.Read(m_tszFileName);
+	wchar_t *szImageFileName = tmpItem.Read(m_tszFileName);
 
-	if (!mir_tstrcmpi(itemname, _T("$glyphs")) && szImageFileName != 0) {		// the glyph item MUST have a valid image
+	if (!mir_wstrcmpi(itemname, L"$glyphs") && szImageFileName != 0) {		// the glyph item MUST have a valid image
 		tmpItem.Create(szImageFileName);
 		if (tmpItem.getHbm()) {
 			m_glyphItem = tmpItem;
@@ -1312,12 +1312,12 @@ void CSkin::ReadImageItem(const TCHAR *itemname)
 
 	// handle the assignments of image items to skin items
 	for (int n = 0;; n++) {
-		mir_sntprintf(szItemNr, _T("Item%d"), n);
-		GetPrivateProfileString(itemname, szItemNr, _T("None"), buffer, 500, m_tszFileName);
-		if (!mir_tstrcmp(buffer, _T("None")))
+		mir_snwprintf(szItemNr, L"Item%d", n);
+		GetPrivateProfileString(itemname, szItemNr, L"None", buffer, 500, m_tszFileName);
+		if (!mir_wstrcmp(buffer, L"None"))
 			break;
 		for (int i = 0; i <= ID_EXTBK_LAST; i++) {
-			if (!mir_tstrcmpi(SkinItems[i].szName[0] == '{' ? &SkinItems[i].szName[3] : SkinItems[i].szName, buffer)) {
+			if (!mir_wstrcmpi(SkinItems[i].szName[0] == '{' ? &SkinItems[i].szName[3] : SkinItems[i].szName, buffer)) {
 				if (!(tmpItem.getFlags() & IMAGE_GLYPH)) {
 					if (szImageFileName)
 						tmpItem.Create(szImageFileName);
@@ -1329,7 +1329,7 @@ void CSkin::ReadImageItem(const TCHAR *itemname)
 				if (tmpItem.getHbm() || (tmpItem.getFlags() & IMAGE_GLYPH)) {
 					CImageItem *newItem = new CImageItem(tmpItem);
 					SkinItems[i].imageItem = newItem;
-					if (m_ImageItems == NULL)
+					if (m_ImageItems == nullptr)
 						m_ImageItems = newItem;
 					else {
 						CImageItem *pItem = m_ImageItems;
@@ -1370,14 +1370,13 @@ void CSkin::Load(void)
 
 	int i = 1, j = 0;
 	UINT  data;
-	TCHAR buffer[500];
+	wchar_t buffer[500];
 
-	if (!(GetPrivateProfileInt(_T("Global"), _T("Version"), 0, m_tszFileName) >= 1 && GetPrivateProfileInt(_T("Global"), _T("Signature"), 0, m_tszFileName) == 101))
+	if (!(GetPrivateProfileInt(L"Global", L"Version", 0, m_tszFileName) >= 1 && GetPrivateProfileInt(L"Global", L"Signature", 0, m_tszFileName) == 101))
 		return;
 
 	i = 0;
-	while (_tagSettings[i].szIniKey != NULL) {
-		data = 0;
+	while (_tagSettings[i].szIniKey != nullptr) {
 		data = GetPrivateProfileInt(_tagSettings[i].szIniKey, _tagSettings[i].szIniName,
 			_tagSettings[i].defaultval, m_tszFileName);
 		switch (_tagSettings[i].size) {
@@ -1388,10 +1387,10 @@ void CSkin::Load(void)
 			db_set_dw(0, SRMSGMOD_T, _tagSettings[i].szSetting, data);
 			break;
 		case 2:
-			db_set_w(NULL, SRMSGMOD_T, _tagSettings[i].szSetting, (WORD)data);
+			db_set_w(0, SRMSGMOD_T, _tagSettings[i].szSetting, (WORD)data);
 			break;
 		case 5:
-			GetPrivateProfileString(_tagSettings[i].szIniKey, _tagSettings[i].szIniName, _T("000000"),
+			GetPrivateProfileString(_tagSettings[i].szIniKey, _tagSettings[i].szIniName, L"000000",
 				buffer, 10, m_tszFileName);
 			db_set_dw(0, SRMSGMOD_T, _tagSettings[i].szSetting, HexStringToLong(buffer));
 			break;
@@ -1401,23 +1400,23 @@ void CSkin::Load(void)
 
 	m_DisableScrollbars = M.GetByte("disableVScroll", 0) ? true : false;
 
-	TCHAR *szSections = (TCHAR*)mir_alloc(6004);
+	wchar_t *szSections = (wchar_t*)mir_alloc(6004);
 	memset(szSections, 0, 6000);
 	GetPrivateProfileSectionNames(szSections, 3000, m_tszFileName);
 	szSections[3001] = szSections[3000] = 0;
-	TCHAR *p = szSections;
-	while (mir_tstrlen(p) > 1) {
+	wchar_t *p = szSections;
+	while (mir_wstrlen(p) > 1) {
 		if (p[0] != '%') {
-			p += (mir_tstrlen(p) + 1);
+			p += (mir_wstrlen(p) + 1);
 			continue;
 		}
 		for (i = 0; i <= ID_EXTBK_LAST; i++) {
-			if (!mir_tstrcmpi(&p[1], SkinItems[i].szName[0] == '{' ? &SkinItems[i].szName[3] : SkinItems[i].szName)) {
+			if (!mir_wstrcmpi(&p[1], SkinItems[i].szName[0] == '{' ? &SkinItems[i].szName[3] : SkinItems[i].szName)) {
 				ReadItem(i, p);
 				break;
 			}
 		}
-		p += (mir_tstrlen(p) + 1);
+		p += (mir_wstrlen(p) + 1);
 		j++;
 	}
 
@@ -1426,84 +1425,84 @@ void CSkin::Load(void)
 		M.getAeroState();		// refresh aero state (set to false when a skin is successfully loaded and active)
 	}
 
-	GetPrivateProfileString(_T("Avatars"), _T("BorderColor"), _T("000000"), buffer, 20, m_tszFileName);
+	GetPrivateProfileString(L"Avatars", L"BorderColor", L"000000", buffer, 20, m_tszFileName);
 	m_avatarBorderClr = (COLORREF)HexStringToLong(buffer);
 
-	GetPrivateProfileString(_T("Global"), _T("SideBarBG"), _T("None"), buffer, 20, m_tszFileName);
-	if (mir_tstrcmp(buffer, _T("None")))
+	GetPrivateProfileString(L"Global", L"SideBarBG", L"None", buffer, 20, m_tszFileName);
+	if (mir_wstrcmp(buffer, L"None"))
 		m_sideBarContainerBG = (COLORREF)HexStringToLong(buffer);
 	else
 		m_sideBarContainerBG = SkinItems[ID_EXTBKSIDEBARBG].COLOR;
 
-	m_bAvatarBorderType = GetPrivateProfileInt(_T("Avatars"), _T("BorderType"), 1, m_tszFileName);
+	m_bAvatarBorderType = GetPrivateProfileInt(L"Avatars", L"BorderType", 1, m_tszFileName);
 
-	LoadIcon(_T("Global"), _T("CloseGlyph"), CSkin::m_closeIcon);
-	LoadIcon(_T("Global"), _T("MaximizeGlyph"), CSkin::m_maxIcon);
-	LoadIcon(_T("Global"), _T("MinimizeGlyph"), CSkin::m_minIcon);
+	LoadIcon(L"Global", L"CloseGlyph", CSkin::m_closeIcon);
+	LoadIcon(L"Global", L"MaximizeGlyph", CSkin::m_maxIcon);
+	LoadIcon(L"Global", L"MinimizeGlyph", CSkin::m_minIcon);
 
-	m_frameSkins = GetPrivateProfileInt(_T("Global"), _T("framelessmode"), 0, m_tszFileName) ? true : false;
-	m_DisableScrollbars = GetPrivateProfileInt(_T("Global"), _T("NoScrollbars"), 0, m_tszFileName) ? true : false;
+	m_frameSkins = GetPrivateProfileInt(L"Global", L"framelessmode", 0, m_tszFileName) ? true : false;
+	m_DisableScrollbars = GetPrivateProfileInt(L"Global", L"NoScrollbars", 0, m_tszFileName) ? true : false;
 
-	m_SkinnedFrame_left = GetPrivateProfileInt(_T("WindowFrame"), _T("left"), 4, m_tszFileName);
-	m_SkinnedFrame_right = GetPrivateProfileInt(_T("WindowFrame"), _T("right"), 4, m_tszFileName);
-	m_SkinnedFrame_caption = GetPrivateProfileInt(_T("WindowFrame"), _T("Caption"), 24, m_tszFileName);
-	m_SkinnedFrame_bottom = GetPrivateProfileInt(_T("WindowFrame"), _T("bottom"), 4, m_tszFileName);
+	m_SkinnedFrame_left = GetPrivateProfileInt(L"WindowFrame", L"left", 4, m_tszFileName);
+	m_SkinnedFrame_right = GetPrivateProfileInt(L"WindowFrame", L"right", 4, m_tszFileName);
+	m_SkinnedFrame_caption = GetPrivateProfileInt(L"WindowFrame", L"Caption", 24, m_tszFileName);
+	m_SkinnedFrame_bottom = GetPrivateProfileInt(L"WindowFrame", L"bottom", 4, m_tszFileName);
 
-	m_titleBarButtonSize.cx = GetPrivateProfileInt(_T("WindowFrame"), _T("TitleButtonWidth"), 24, m_tszFileName);
-	m_titleBarButtonSize.cy = GetPrivateProfileInt(_T("WindowFrame"), _T("TitleButtonHeight"), 12, m_tszFileName);
-	m_titleButtonTopOff = GetPrivateProfileInt(_T("WindowFrame"), _T("TitleButtonTopOffset"), 0, m_tszFileName);
+	m_titleBarButtonSize.cx = GetPrivateProfileInt(L"WindowFrame", L"TitleButtonWidth", 24, m_tszFileName);
+	m_titleBarButtonSize.cy = GetPrivateProfileInt(L"WindowFrame", L"TitleButtonHeight", 12, m_tszFileName);
+	m_titleButtonTopOff = GetPrivateProfileInt(L"WindowFrame", L"TitleButtonTopOffset", 0, m_tszFileName);
 
-	m_titleBarRightOff = GetPrivateProfileInt(_T("WindowFrame"), _T("TitleBarRightOffset"), 0, m_tszFileName);
-	m_titleBarLeftOff = GetPrivateProfileInt(_T("WindowFrame"), _T("TitleBarLeftOffset"), 0, m_tszFileName);
+	m_titleBarRightOff = GetPrivateProfileInt(L"WindowFrame", L"TitleBarRightOffset", 0, m_tszFileName);
+	m_titleBarLeftOff = GetPrivateProfileInt(L"WindowFrame", L"TitleBarLeftOffset", 0, m_tszFileName);
 
-	m_captionOffset = GetPrivateProfileInt(_T("WindowFrame"), _T("CaptionOffset"), 3, m_tszFileName);
-	m_captionPadding = GetPrivateProfileInt(_T("WindowFrame"), _T("CaptionPadding"), 0, m_tszFileName);
-	m_sidebarTopOffset = GetPrivateProfileInt(_T("ClientArea"), _T("SidebarTop"), -1, m_tszFileName);
-	m_sidebarBottomOffset = GetPrivateProfileInt(_T("ClientArea"), _T("SidebarBottom"), -1, m_tszFileName);
+	m_captionOffset = GetPrivateProfileInt(L"WindowFrame", L"CaptionOffset", 3, m_tszFileName);
+	m_captionPadding = GetPrivateProfileInt(L"WindowFrame", L"CaptionPadding", 0, m_tszFileName);
+	m_sidebarTopOffset = GetPrivateProfileInt(L"ClientArea", L"SidebarTop", -1, m_tszFileName);
+	m_sidebarBottomOffset = GetPrivateProfileInt(L"ClientArea", L"SidebarBottom", -1, m_tszFileName);
 
-	m_bClipBorder = GetPrivateProfileInt(_T("WindowFrame"), _T("ClipFrame"), 0, m_tszFileName) ? true : false;
+	m_bClipBorder = GetPrivateProfileInt(L"WindowFrame", L"ClipFrame", 0, m_tszFileName) ? true : false;
 
 	BYTE radius_tl, radius_tr, radius_bl, radius_br;
-	TCHAR 	szFinalName[MAX_PATH];
-	TCHAR 	szDrive[MAX_PATH], szPath[MAX_PATH];
+	wchar_t 	szFinalName[MAX_PATH];
+	wchar_t 	szDrive[MAX_PATH], szPath[MAX_PATH];
 
-	radius_tl = GetPrivateProfileInt(_T("WindowFrame"), _T("RadiusTL"), 0, m_tszFileName);
-	radius_tr = GetPrivateProfileInt(_T("WindowFrame"), _T("RadiusTR"), 0, m_tszFileName);
-	radius_bl = GetPrivateProfileInt(_T("WindowFrame"), _T("RadiusBL"), 0, m_tszFileName);
-	radius_br = GetPrivateProfileInt(_T("WindowFrame"), _T("RadiusBR"), 0, m_tszFileName);
+	radius_tl = GetPrivateProfileInt(L"WindowFrame", L"RadiusTL", 0, m_tszFileName);
+	radius_tr = GetPrivateProfileInt(L"WindowFrame", L"RadiusTR", 0, m_tszFileName);
+	radius_bl = GetPrivateProfileInt(L"WindowFrame", L"RadiusBL", 0, m_tszFileName);
+	radius_br = GetPrivateProfileInt(L"WindowFrame", L"RadiusBR", 0, m_tszFileName);
 
 	CSkin::m_bRoundedCorner = radius_tl;
 
-	GetPrivateProfileString(_T("Theme"), _T("File"), _T("None"), buffer, MAX_PATH, m_tszFileName);
+	GetPrivateProfileString(L"Theme", L"File", L"None", buffer, MAX_PATH, m_tszFileName);
 
-	_tsplitpath(m_tszFileName, szDrive, szPath, NULL, NULL);
-	mir_sntprintf(szFinalName, _T("%s\\%s\\%s"), szDrive, szPath, buffer);
+	_wsplitpath(m_tszFileName, szDrive, szPath, nullptr, nullptr);
+	mir_snwprintf(szFinalName, L"%s\\%s\\%s", szDrive, szPath, buffer);
 	if (PathFileExists(szFinalName)) {
 		ReadThemeFromINI(szFinalName, 0, FALSE, m_fLoadOnStartup ? 0 : M.GetByte("skin_loadmode", 0));
 		CacheLogFonts();
 		CacheMsgLogIcons();
 	}
 
-	GetPrivateProfileString(_T("Global"), _T("MenuBarBG"), _T("None"), buffer, 20, m_tszFileName);
+	GetPrivateProfileString(L"Global", L"MenuBarBG", L"None", buffer, 20, m_tszFileName);
 	data = HexStringToLong(buffer);
 	if (m_MenuBGBrush) {
 		DeleteObject(m_MenuBGBrush);
 		m_MenuBGBrush = 0;
 	}
-	if (mir_tstrcmp(buffer, _T("None")))
+	if (mir_wstrcmp(buffer, L"None"))
 		m_MenuBGBrush = CreateSolidBrush(data);
 
-	GetPrivateProfileString(_T("Global"), _T("LightShadow"), _T("000000"), buffer, 20, m_tszFileName);
+	GetPrivateProfileString(L"Global", L"LightShadow", L"000000", buffer, 20, m_tszFileName);
 	data = HexStringToLong(buffer);
 	CSkin::m_SkinLightShadowPen = CreatePen(PS_SOLID, 1, RGB(GetRValue(data), GetGValue(data), GetBValue(data)));
-	GetPrivateProfileString(_T("Global"), _T("DarkShadow"), _T("000000"), buffer, 20, m_tszFileName);
+	GetPrivateProfileString(L"Global", L"DarkShadow", L"000000", buffer, 20, m_tszFileName);
 	data = HexStringToLong(buffer);
 	CSkin::m_SkinDarkShadowPen = CreatePen(PS_SOLID, 1, RGB(GetRValue(data), GetGValue(data), GetBValue(data)));
 
 	SkinCalcFrameWidth();
 
-	GetPrivateProfileString(_T("Global"), _T("FontColor"), _T("None"), buffer, 20, m_tszFileName);
-	if (mir_tstrcmp(buffer, _T("None")))
+	GetPrivateProfileString(L"Global", L"FontColor", L"None", buffer, 20, m_tszFileName);
+	if (mir_wstrcmp(buffer, L"None"))
 		CSkin::m_DefaultFontColor = HexStringToLong(buffer);
 	else
 		CSkin::m_DefaultFontColor = GetSysColor(COLOR_BTNTEXT);
@@ -1523,61 +1522,61 @@ void CSkin::Load(void)
 
 void CSkin::LoadItems()
 {
-	TCHAR *szSections = NULL;
-	TCHAR *p, *p1;
+	wchar_t *szSections = nullptr;
+	wchar_t *p, *p1;
 	TIconDesc tmpIconDesc = { 0 };
 
-	if (m_skinIcons == NULL)
+	if (m_skinIcons == nullptr)
 		m_skinIcons = (TIconDescW *)mir_calloc(sizeof(TIconDescW) * NR_MAXSKINICONS);
 
 	m_nrSkinIcons = 0;
 
-	szSections = (TCHAR*)mir_alloc((SECT_BUFFER_SIZE + 2) * sizeof(TCHAR));
-	memset(szSections, 0, ((SECT_BUFFER_SIZE + 2) * sizeof(TCHAR)));
+	szSections = (wchar_t*)mir_alloc((SECT_BUFFER_SIZE + 2) * sizeof(wchar_t));
+	memset(szSections, 0, ((SECT_BUFFER_SIZE + 2) * sizeof(wchar_t)));
 
-	GetPrivateProfileSection(_T("Icons"), szSections, SECT_BUFFER_SIZE, m_tszFileName);
+	GetPrivateProfileSection(L"Icons", szSections, SECT_BUFFER_SIZE, m_tszFileName);
 	szSections[SECT_BUFFER_SIZE] = 0;
 
 	p = szSections;
-	while (mir_tstrlen(p) > 1) {
-		p1 = _tcschr(p, (int)'=');
+	while (mir_wstrlen(p) > 1) {
+		p1 = wcschr(p, (int)'=');
 		if (p1)
 			*p1 = 0;
 		if (m_nrSkinIcons < NR_MAXSKINICONS && p1) {
-			LoadIcon(_T("Icons"), p, *(HICON*)&tmpIconDesc.uId);
+			LoadIcon(L"Icons", p, *(HICON*)&tmpIconDesc.uId);
 			if (tmpIconDesc.uId) {
 				memset(&m_skinIcons[m_nrSkinIcons], 0, sizeof(TIconDesc));
 				m_skinIcons[m_nrSkinIcons].uId = tmpIconDesc.uId;
 				m_skinIcons[m_nrSkinIcons].phIcon = (HICON *)(&m_skinIcons[m_nrSkinIcons].uId);
-				m_skinIcons[m_nrSkinIcons].szName = (TCHAR*)mir_alloc(sizeof(TCHAR) * (mir_tstrlen(p) + 1));
-				mir_tstrcpy(m_skinIcons[m_nrSkinIcons].szName, p);
+				m_skinIcons[m_nrSkinIcons].szName = (wchar_t*)mir_alloc(sizeof(wchar_t) * (mir_wstrlen(p) + 1));
+				mir_wstrcpy(m_skinIcons[m_nrSkinIcons].szName, p);
 				m_nrSkinIcons++;
 			}
 		}
 		if (p1)
 			*p1 = '=';
-		p += (mir_tstrlen(p) + 1);
+		p += (mir_wstrlen(p) + 1);
 	}
 
-	memset(szSections, 0, ((SECT_BUFFER_SIZE + 2) * sizeof(TCHAR)));
+	memset(szSections, 0, ((SECT_BUFFER_SIZE + 2) * sizeof(wchar_t)));
 	GetPrivateProfileSectionNames(szSections, SECT_BUFFER_SIZE, m_tszFileName);
 	szSections[SECT_BUFFER_SIZE] = 0;
 
 	p = szSections;
-	while (mir_tstrlen(p) > 1) {
+	while (mir_wstrlen(p) > 1) {
 		if (p[0] == '$')
 			ReadImageItem(p);
-		p += (mir_tstrlen(p) + 1);
+		p += (mir_wstrlen(p) + 1);
 	}
 	nextButtonID = IDC_TBFIRSTUID;
 
 	p = szSections;
 
 	mir_free(szSections);
-	g_ButtonSet.top = GetPrivateProfileInt(_T("ButtonArea"), _T("top"), 0, m_tszFileName);
-	g_ButtonSet.bottom = GetPrivateProfileInt(_T("ButtonArea"), _T("bottom"), 0, m_tszFileName);
-	g_ButtonSet.left = GetPrivateProfileInt(_T("ButtonArea"), _T("left"), 0, m_tszFileName);
-	g_ButtonSet.right = GetPrivateProfileInt(_T("ButtonArea"), _T("right"), 0, m_tszFileName);
+	g_ButtonSet.top = GetPrivateProfileInt(L"ButtonArea", L"top", 0, m_tszFileName);
+	g_ButtonSet.bottom = GetPrivateProfileInt(L"ButtonArea", L"bottom", 0, m_tszFileName);
+	g_ButtonSet.left = GetPrivateProfileInt(L"ButtonArea", L"left", 0, m_tszFileName);
+	g_ButtonSet.right = GetPrivateProfileInt(L"ButtonArea", L"right", 0, m_tszFileName);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -1666,17 +1665,17 @@ void CSkin::setupAeroSkins()
 	if (!m_fAeroSkinsValid)
 		return;
 
-	TCHAR	tszFilename[MAX_PATH], tszBasePath[MAX_PATH];
-	_tcsncpy_s(tszBasePath, M.getDataPath(), _TRUNCATE);
-	if (tszBasePath[mir_tstrlen(tszBasePath) - 1] != '\\')
-		mir_tstrcat(tszBasePath, _T("\\"));
+	wchar_t	tszFilename[MAX_PATH], tszBasePath[MAX_PATH];
+	wcsncpy_s(tszBasePath, M.getDataPath(), _TRUNCATE);
+	if (tszBasePath[mir_wstrlen(tszBasePath) - 1] != '\\')
+		mir_wstrcat(tszBasePath, L"\\");
 
 	// load unknown avatar..
 	if (0 == PluginConfig.g_hbmUnknown) {
-		mir_sntprintf(tszFilename, _T("%scustom_unknown.png"), tszBasePath);
+		mir_snwprintf(tszFilename, L"%scustom_unknown.png", tszBasePath);
 		if (!PathFileExists(tszFilename))
-			mir_sntprintf(tszFilename, _T("%sunknown.png"), tszBasePath);
-		PluginConfig.g_hbmUnknown = (HBITMAP)CallService(MS_IMG_LOAD, (WPARAM)tszFilename, IMGL_TCHAR);
+			mir_snwprintf(tszFilename, L"%sunknown.png", tszBasePath);
+		PluginConfig.g_hbmUnknown = (HBITMAP)CallService(MS_IMG_LOAD, (WPARAM)tszFilename, IMGL_WCHAR);
 		if (PluginConfig.g_hbmUnknown == 0) {
 			HDC dc = GetDC(0);
 			PluginConfig.g_hbmUnknown = CreateCompatibleBitmap(dc, 20, 20);
@@ -1684,9 +1683,9 @@ void CSkin::setupAeroSkins()
 		}
 	}
 
-	mir_sntprintf(tszFilename, _T("%scustom_tabskin_aero.png"), tszBasePath);
+	mir_snwprintf(tszFilename, L"%scustom_tabskin_aero.png", tszBasePath);
 	if (!PathFileExists(tszFilename))
-		mir_sntprintf(tszFilename, _T("%stabskin_aero.png"), tszBasePath);
+		mir_snwprintf(tszFilename, L"%stabskin_aero.png", tszBasePath);
 
 	BOOL isOpaque = false;
 	if (CMimAPI::m_pfnDwmGetColorizationColor && M.isAero())
@@ -1733,7 +1732,7 @@ void CSkin::setupAeroSkins()
 
 	m_dwmColorRGB = RGB((BYTE)fr, (BYTE)fg, (BYTE)fb);
 
-	FIBITMAP *fib = (FIBITMAP *)CallService(MS_IMG_LOAD, (WPARAM)tszFilename, IMGL_TCHAR | IMGL_RETURNDIB);
+	FIBITMAP *fib = (FIBITMAP *)CallService(MS_IMG_LOAD, (WPARAM)tszFilename, IMGL_WCHAR | IMGL_RETURNDIB);
 
 	HBITMAP hbm = FIF->FI_CreateHBITMAPFromDIB(fib);
 
@@ -1771,11 +1770,11 @@ void CSkin::setupAeroSkins()
 	m_tabBottom->setMetrics(bm.bmWidth, bm.bmHeight);
 
 
-	mir_sntprintf(tszFilename, _T("%scustom_tabskin_aero_glow.png"), tszBasePath);
+	mir_snwprintf(tszFilename, L"%scustom_tabskin_aero_glow.png", tszBasePath);
 	if (!PathFileExists(tszFilename))
-		mir_sntprintf(tszFilename, _T("%stabskin_aero_glow.png"), tszBasePath);
+		mir_snwprintf(tszFilename, L"%stabskin_aero_glow.png", tszBasePath);
 
-	fib = (FIBITMAP *)CallService(MS_IMG_LOAD, (WPARAM)tszFilename, IMGL_TCHAR | IMGL_RETURNDIB);
+	fib = (FIBITMAP *)CallService(MS_IMG_LOAD, (WPARAM)tszFilename, IMGL_WCHAR | IMGL_RETURNDIB);
 
 	COLORREF glowColor = M.GetDword(FONTMODULE, "aeroGlow", RGB(40, 40, 255));
 	hbm = FIF->FI_CreateHBITMAPFromDIB(fib);
@@ -1804,11 +1803,11 @@ void CSkin::setupAeroSkins()
 	m_tabGlowBottom->setMetrics(bm.bmWidth, bm.bmHeight);
 
 	// background item for the button switch bar
-	mir_sntprintf(tszFilename, _T("%scustom_tabskin_aero_button.png"), tszBasePath);
+	mir_snwprintf(tszFilename, L"%scustom_tabskin_aero_button.png", tszBasePath);
 	if (!PathFileExists(tszFilename))
-		mir_sntprintf(tszFilename, _T("%stabskin_aero_button.png"), tszBasePath);
+		mir_snwprintf(tszFilename, L"%stabskin_aero_button.png", tszBasePath);
 
-	hbm = (HBITMAP)CallService(MS_IMG_LOAD, (WPARAM)tszFilename, IMGL_TCHAR);
+	hbm = (HBITMAP)CallService(MS_IMG_LOAD, (WPARAM)tszFilename, IMGL_WCHAR);
 
 	CImageItem::Colorize(hbm, GetRValue(m_dwmColorRGB),
 		GetGValue(m_dwmColorRGB),
@@ -1920,7 +1919,7 @@ void CSkin::DrawDimmedIcon(HDC hdc, LONG left, LONG top, LONG dx, LONG dy, HICON
 	DeleteDC(dcMem);
 }
 
-UINT CSkin::NcCalcRichEditFrame(HWND hwnd, const TWindowData *mwdat, UINT skinID, UINT msg, WPARAM wParam, LPARAM lParam, WNDPROC MyWndProc)
+UINT CSkin::NcCalcRichEditFrame(HWND hwnd, const CTabBaseDlg *mwdat, UINT skinID, UINT msg, WPARAM wParam, LPARAM lParam, WNDPROC MyWndProc)
 {
 	NCCALCSIZE_PARAMS *nccp = (NCCALCSIZE_PARAMS *)lParam;
 	BOOL bReturn = FALSE;
@@ -1932,7 +1931,7 @@ UINT CSkin::NcCalcRichEditFrame(HWND hwnd, const TWindowData *mwdat, UINT skinID
 	}
 
 	LRESULT orig = mir_callNextSubclass(hwnd, MyWndProc, msg, wParam, lParam);
-	if (0 == mwdat)
+	if (mwdat == nullptr)
 		return orig;
 
 	if (CSkin::m_skinEnabled) {
@@ -1940,24 +1939,21 @@ UINT CSkin::NcCalcRichEditFrame(HWND hwnd, const TWindowData *mwdat, UINT skinID
 		if (!item->IGNORED)
 			return WVR_REDRAW;
 	}
-	if (mwdat->hTheme && wParam) {
+	if (mwdat->m_hTheme && wParam) {
 		RECT rcClient;
 		HDC hdc = GetDC(GetParent(hwnd));
 
-		if (GetThemeBackgroundContentRect(mwdat->hTheme, hdc, 1, 1, &nccp->rgrc[0], &rcClient) == S_OK) {
+		if (GetThemeBackgroundContentRect(mwdat->m_hTheme, hdc, 1, 1, &nccp->rgrc[0], &rcClient) == S_OK) {
 			if (EqualRect(&rcClient, &nccp->rgrc[0]))
 				InflateRect(&rcClient, -1, -1);
 			CopyRect(&nccp->rgrc[0], &rcClient);
 			bReturn = TRUE;
 		}
 		ReleaseDC(GetParent(hwnd), hdc);
-		if (bReturn)
-			return WVR_REDRAW;
-		else
-			return orig;
+		return (bReturn) ? WVR_REDRAW : orig;
 	}
-	if ((mwdat->sendMode & SMODE_MULTIPLE || mwdat->sendMode & SMODE_CONTAINER ||
-		mwdat->fEditNotesActive || mwdat->sendMode & SMODE_SENDLATER) && skinID == ID_EXTBKINPUTAREA) {
+	if ((mwdat->m_sendMode & SMODE_MULTIPLE || mwdat->m_sendMode & SMODE_CONTAINER ||
+		mwdat->m_bEditNotesActive || mwdat->m_sendMode & SMODE_SENDLATER) && skinID == ID_EXTBKINPUTAREA) {
 		InflateRect(&nccp->rgrc[0], -1, -1);
 		return WVR_REDRAW;
 	}
@@ -1968,16 +1964,16 @@ UINT CSkin::NcCalcRichEditFrame(HWND hwnd, const TWindowData *mwdat, UINT skinID
 // process WM_NCPAINT for the rich edit control. Draws a visual style border and avoid
 // classic static edge / client edge may also draw a colorized border around the control
 
-UINT CSkin::DrawRichEditFrame(HWND hwnd, const TWindowData *mwdat, UINT skinID, UINT msg, WPARAM wParam, LPARAM lParam, WNDPROC OldWndProc)
+UINT CSkin::DrawRichEditFrame(HWND hwnd, const CTabBaseDlg *mwdat, UINT skinID, UINT msg, WPARAM wParam, LPARAM lParam, WNDPROC OldWndProc)
 {
 	// do default processing (otherwise, NO scrollbar as it is painted in NC_PAINT)
-	LRESULT result = mir_callNextSubclass(hwnd, OldWndProc, msg, wParam, lParam);
-	if (0 == mwdat)
+	LRESULT result = (OldWndProc == nullptr) ? 0 : mir_callNextSubclass(hwnd, OldWndProc, msg, wParam, lParam);
+	if (mwdat == nullptr)
 		return result;
 
-	BOOL isEditNotesReason = ((mwdat->fEditNotesActive) && (skinID == ID_EXTBKINPUTAREA));
-	BOOL isSendLaterReason = ((mwdat->sendMode & SMODE_SENDLATER) && (skinID == ID_EXTBKINPUTAREA));
-	BOOL isMultipleReason = ((skinID == ID_EXTBKINPUTAREA) && (mwdat->sendMode & SMODE_MULTIPLE || mwdat->sendMode & SMODE_CONTAINER));
+	BOOL isEditNotesReason = ((mwdat->m_bEditNotesActive) && (skinID == ID_EXTBKINPUTAREA));
+	BOOL isSendLaterReason = ((mwdat->m_sendMode & SMODE_SENDLATER) && (skinID == ID_EXTBKINPUTAREA));
+	BOOL isMultipleReason = ((skinID == ID_EXTBKINPUTAREA) && (mwdat->m_sendMode & SMODE_MULTIPLE || mwdat->m_sendMode & SMODE_CONTAINER));
 
 	HDC hdc = GetWindowDC(hwnd);
 	RECT rcWindow;
@@ -2024,8 +2020,7 @@ UINT CSkin::DrawRichEditFrame(HWND hwnd, const TWindowData *mwdat, UINT skinID, 
 			FillRect(hdc, &rcWindow, br);
 			DeleteObject(br);
 		}
-		else
-			DrawThemeBackground(mwdat->hTheme, hdc, 1, 1, &rcWindow, &rcWindow);
+		else DrawThemeBackground(mwdat->m_hTheme, hdc, 1, 1, &rcWindow, &rcWindow);
 	}
 	ReleaseDC(hwnd, hdc);
 	return result;
@@ -2034,16 +2029,16 @@ UINT CSkin::DrawRichEditFrame(HWND hwnd, const TWindowData *mwdat, UINT skinID, 
 /////////////////////////////////////////////////////////////////////////////////////////
 // convert a html-style color string (without the #) to a 32bit COLORREF value
 //
-// @param szSource TCHAR*: the color value as string. format:
+// @param szSource wchar_t*: the color value as string. format:
 //  			   html-style without the leading #. e.g.
 //  			   "f3e355"
 //
 // @return COLORREF representation of the string value.
 
-DWORD __fastcall CSkin::HexStringToLong(const TCHAR *szSource)
+DWORD __fastcall CSkin::HexStringToLong(const wchar_t *szSource)
 {
-	TCHAR *stopped;
-	COLORREF clr = _tcstol(szSource, &stopped, 16);
+	wchar_t *stopped;
+	COLORREF clr = wcstol(szSource, &stopped, 16);
 	if (clr == -1)
 		return clr;
 	return(RGB(GetBValue(clr), GetGValue(clr), GetRValue(clr)));
@@ -2053,7 +2048,7 @@ DWORD __fastcall CSkin::HexStringToLong(const TCHAR *szSource)
 // Render text to the given HDC. This function is aero aware and will use uxtheme DrawThemeTextEx() when needed.
 // Paramaters are pretty much comparable to GDI DrawText() API
 
-int CSkin::RenderText(HDC hdc, HANDLE hTheme, const TCHAR *szText, RECT *rc, DWORD dtFlags, const int iGlowSize, COLORREF clr, bool fForceAero)
+int CSkin::RenderText(HDC hdc, HANDLE hTheme, const wchar_t *szText, RECT *rc, DWORD dtFlags, const int iGlowSize, COLORREF clr, bool fForceAero)
 {
 	if ((PluginConfig.m_bIsVista && !CSkin::m_skinEnabled && hTheme) || fForceAero) {
 		DTTOPTS dto = { 0 };
@@ -2154,7 +2149,7 @@ HBITMAP CSkin::CreateAeroCompatibleBitmap(const RECT &rc, HDC dc)
 	dib.bmiHeader.biBitCount = 32;
 	dib.bmiHeader.biCompression = BI_RGB;
 
-	return(CreateDIBSection(dc, &dib, DIB_RGB_COLORS, NULL, NULL, 0));
+	return CreateDIBSection(dc, &dib, DIB_RGB_COLORS, nullptr, nullptr, 0);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -2192,93 +2187,90 @@ void CSkin::MapClientToParent(HWND hwndClient, HWND hwndParent, RECT &rc)
 // @param hdc      HDC: handle to the device context in which painting should occur.
 // @param rcWindow RECT &: The window rectangle of the message dialog window
 
-void CSkin::RenderToolbarBG(const TWindowData *dat, HDC hdc, const RECT &rcWindow)
+void CTabBaseDlg::RenderToolbarBG(HDC hdc, const RECT &rcWindow) const
 {
-	if (dat) {
-		if (dat->pContainer->dwFlags & CNT_HIDETOOLBAR)
-			return;
+	if (m_pContainer->dwFlags & CNT_HIDETOOLBAR)
+		return;
 
-		bool	 bAero = M.isAero();
-		bool	 fTbColorsValid = PluginConfig.m_tbBackgroundHigh && PluginConfig.m_tbBackgroundLow;
-		BYTE	 bAlphaOffset = 0;
-		BOOL 	fMustDrawNonThemed = ((bAero || fTbColorsValid) && !M.GetByte(SRMSGMOD_T, "forceThemedToolbar", 0));
-		RECT 	rc, rcToolbar;
-		POINT	pt;
+	bool	 bAero = M.isAero();
+	bool	 fTbColorsValid = PluginConfig.m_tbBackgroundHigh && PluginConfig.m_tbBackgroundLow;
+	BYTE	 bAlphaOffset = 0;
+	BOOL 	fMustDrawNonThemed = ((bAero || fTbColorsValid) && !M.GetByte(SRMSGMOD_T, "forceThemedToolbar", 0));
+	RECT 	rc, rcToolbar;
+	POINT	pt;
 
-		if (!(dat->pContainer->dwFlags & CNT_BOTTOMTOOLBAR)) {
-			::GetWindowRect(::GetDlgItem(dat->hwnd, dat->bType == SESSIONTYPE_CHAT ? IDC_CHAT_LOG : IDC_LOG), &rc);
-			pt.y = rc.bottom + 0;
-			::ScreenToClient(dat->hwnd, &pt);
-			rcToolbar.top = pt.y;
-			rcToolbar.left = 0;
-			rcToolbar.right = rcWindow.right;
+	if (!(m_pContainer->dwFlags & CNT_BOTTOMTOOLBAR)) {
+		::GetWindowRect(m_log.GetHwnd(), &rc);
+		pt.y = rc.bottom + 0;
+		::ScreenToClient(m_hwnd, &pt);
+		rcToolbar.top = pt.y;
+		rcToolbar.left = 0;
+		rcToolbar.right = rcWindow.right;
 
-			if (dat->bType == SESSIONTYPE_IM) {
-				if (dat->dwFlags & MWF_ERRORSTATE)
-					rcToolbar.top += ERRORPANEL_HEIGHT;
-				if (dat->dwFlagsEx & MWF_SHOW_SCROLLINGDISABLED || dat->bNotOnList) {
-					rcToolbar.top += 20;
-					RECT	rcAdd;
-					rcAdd.left = 0; rcAdd.right = rcToolbar.right - rcToolbar.left;
-					rcAdd.bottom = rcToolbar.top - 1;
-					rcAdd.top = rcAdd.bottom - 20;
-					::DrawEdge(hdc, &rcAdd, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_RECT | BF_SOFT | BF_FLAT);
-				}
+		if (!isChat()) {
+			if (m_dwFlags & MWF_ERRORSTATE)
+				rcToolbar.top += ERRORPANEL_HEIGHT;
+			if (m_dwFlagsEx & MWF_SHOW_SCROLLINGDISABLED || m_bNotOnList) {
+				rcToolbar.top += 20;
+				RECT	rcAdd;
+				rcAdd.left = 0; rcAdd.right = rcToolbar.right - rcToolbar.left;
+				rcAdd.bottom = rcToolbar.top - 1;
+				rcAdd.top = rcAdd.bottom - 20;
+				::DrawEdge(hdc, &rcAdd, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_RECT | BF_SOFT | BF_FLAT);
 			}
-
-			::GetWindowRect(::GetDlgItem(dat->hwnd, dat->bType == SESSIONTYPE_CHAT ? IDC_CHAT_MESSAGE : IDC_MESSAGE), &rc);
-			pt.y = rc.top - (dat->bIsAutosizingInput ? 1 : 2);
-			::ScreenToClient(dat->hwnd, &pt);
-			rcToolbar.bottom = pt.y;
-		}
-		else {
-			GetWindowRect(::GetDlgItem(dat->hwnd, dat->bType == SESSIONTYPE_CHAT ? IDC_CHAT_MESSAGE : IDC_MESSAGE), &rc);
-			pt.y = rc.bottom - 2;
-			ScreenToClient(dat->hwnd, &pt);
-			rcToolbar.top = pt.y + 1;
-			rcToolbar.left = 0;
-			rcToolbar.right = rcWindow.right;
-			rcToolbar.bottom = rcWindow.bottom;
-		}
-		LONG cx = rcToolbar.right - rcToolbar.left;
-		LONG cy = rcToolbar.bottom - rcToolbar.top;
-
-		RECT rcCachedToolbar = { 0 };
-		rcCachedToolbar.right = cx;
-		rcCachedToolbar.bottom = cy;
-
-		if (dat->pContainer->cachedToolbarDC == 0)
-			dat->pContainer->cachedToolbarDC = ::CreateCompatibleDC(hdc);
-
-		if (dat->pContainer->szOldToolbarSize.cx != cx || dat->pContainer->szOldToolbarSize.cy != cy) {
-			if (dat->pContainer->oldhbmToolbarBG) {
-				::SelectObject(dat->pContainer->cachedToolbarDC, dat->pContainer->oldhbmToolbarBG);
-				::DeleteObject(dat->pContainer->hbmToolbarBG);
-			}
-			dat->pContainer->hbmToolbarBG = CSkin::CreateAeroCompatibleBitmap(rcCachedToolbar, hdc);// ::CreateCompatibleBitmap(hdc, cx, cy);
-			dat->pContainer->oldhbmToolbarBG = reinterpret_cast<HBITMAP>(::SelectObject(dat->pContainer->cachedToolbarDC, dat->pContainer->hbmToolbarBG));
-		}
-		dat->pContainer->szOldToolbarSize.cx = cx;
-		dat->pContainer->szOldToolbarSize.cy = cy;
-
-		if (!fMustDrawNonThemed && M.isVSThemed()) {
-			DrawThemeBackground(dat->hThemeToolbar, dat->pContainer->cachedToolbarDC, 6, 1, &rcCachedToolbar, &rcCachedToolbar);
-			dat->pContainer->bTBRenderingMode = 1;				// tell TSButton how to render the tool bar buttons
-		}
-		else {
-			dat->pContainer->bTBRenderingMode = (M.isVSThemed() ? 1 : 0);
-			m_tmp_tb_high = PluginConfig.m_tbBackgroundHigh ? PluginConfig.m_tbBackgroundHigh :
-				((bAero && m_pCurrentAeroEffect) ? m_pCurrentAeroEffect->m_clrToolbar : ::GetSysColor(COLOR_3DFACE));
-			m_tmp_tb_low = PluginConfig.m_tbBackgroundLow ? PluginConfig.m_tbBackgroundLow :
-				((bAero && m_pCurrentAeroEffect) ? m_pCurrentAeroEffect->m_clrToolbar2 : ::GetSysColor(COLOR_3DFACE));
-
-			bAlphaOffset = PluginConfig.m_tbBackgroundHigh ? 40 : 0;
-			::DrawAlpha(dat->pContainer->cachedToolbarDC, &rcCachedToolbar, m_tmp_tb_high, 55 + bAlphaOffset, m_tmp_tb_low, 0, 9, 0, 0, 0);
 		}
 
-		::BitBlt(hdc, rcToolbar.left, rcToolbar.top, cx, cy,
-			dat->pContainer->cachedToolbarDC, 0, 0, SRCCOPY);
+		::GetWindowRect(m_message.GetHwnd(), &rc);
+		pt.y = rc.top - (m_bIsAutosizingInput ? 1 : 2);
+		::ScreenToClient(m_hwnd, &pt);
+		rcToolbar.bottom = pt.y;
 	}
+	else {
+		GetWindowRect(m_message.GetHwnd(), &rc);
+		pt.y = rc.bottom - 2;
+		ScreenToClient(m_hwnd, &pt);
+		rcToolbar.top = pt.y + 1;
+		rcToolbar.left = 0;
+		rcToolbar.right = rcWindow.right;
+		rcToolbar.bottom = rcWindow.bottom;
+	}
+	LONG cx = rcToolbar.right - rcToolbar.left;
+	LONG cy = rcToolbar.bottom - rcToolbar.top;
+
+	RECT rcCachedToolbar = { 0 };
+	rcCachedToolbar.right = cx;
+	rcCachedToolbar.bottom = cy;
+
+	if (m_pContainer->cachedToolbarDC == 0)
+		m_pContainer->cachedToolbarDC = ::CreateCompatibleDC(hdc);
+
+	if (m_pContainer->szOldToolbarSize.cx != cx || m_pContainer->szOldToolbarSize.cy != cy) {
+		if (m_pContainer->oldhbmToolbarBG) {
+			::SelectObject(m_pContainer->cachedToolbarDC, m_pContainer->oldhbmToolbarBG);
+			::DeleteObject(m_pContainer->hbmToolbarBG);
+		}
+		m_pContainer->hbmToolbarBG = CSkin::CreateAeroCompatibleBitmap(rcCachedToolbar, hdc);// ::CreateCompatibleBitmap(hdc, cx, cy);
+		m_pContainer->oldhbmToolbarBG = reinterpret_cast<HBITMAP>(::SelectObject(m_pContainer->cachedToolbarDC, m_pContainer->hbmToolbarBG));
+	}
+	m_pContainer->szOldToolbarSize.cx = cx;
+	m_pContainer->szOldToolbarSize.cy = cy;
+
+	if (!fMustDrawNonThemed && M.isVSThemed()) {
+		DrawThemeBackground(m_hThemeToolbar, m_pContainer->cachedToolbarDC, 6, 1, &rcCachedToolbar, &rcCachedToolbar);
+		m_pContainer->bTBRenderingMode = 1;				// tell TSButton how to render the tool bar buttons
+	}
+	else {
+		m_pContainer->bTBRenderingMode = (M.isVSThemed() ? 1 : 0);
+		CSkin::m_tmp_tb_high = PluginConfig.m_tbBackgroundHigh ? PluginConfig.m_tbBackgroundHigh :
+			((bAero && CSkin::m_pCurrentAeroEffect) ? CSkin::m_pCurrentAeroEffect->m_clrToolbar : ::GetSysColor(COLOR_3DFACE));
+		CSkin::m_tmp_tb_low = PluginConfig.m_tbBackgroundLow ? PluginConfig.m_tbBackgroundLow :
+			((bAero && CSkin::m_pCurrentAeroEffect) ? CSkin::m_pCurrentAeroEffect->m_clrToolbar2 : ::GetSysColor(COLOR_3DFACE));
+
+		bAlphaOffset = PluginConfig.m_tbBackgroundHigh ? 40 : 0;
+		::DrawAlpha(m_pContainer->cachedToolbarDC, &rcCachedToolbar, CSkin::m_tmp_tb_high, 55 + bAlphaOffset, CSkin::m_tmp_tb_low, 0, 9, 0, 0, 0);
+	}
+
+	::BitBlt(hdc, rcToolbar.left, rcToolbar.top, cx, cy, m_pContainer->cachedToolbarDC, 0, 0, SRCCOPY);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -2290,7 +2282,7 @@ void CSkin::RenderToolbarBG(const TWindowData *dat, HDC hdc, const RECT &rcWindo
 
 HANDLE CSkin::InitiateBufferedPaint(const HDC hdcSrc, RECT& rc, HDC& hdcOut)
 {
-	return CMimAPI::m_pfnBeginBufferedPaint(hdcSrc, &rc, BPBF_TOPDOWNDIB, NULL, &hdcOut);
+	return CMimAPI::m_pfnBeginBufferedPaint(hdcSrc, &rc, BPBF_TOPDOWNDIB, nullptr, &hdcOut);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -2409,10 +2401,10 @@ void CSkin::initAeroEffect()
 	}
 
 	for (TContainerData *p = pFirstContainer; p; p = p->pNext) {
-		InvalidateRect(GetDlgItem(p->hwnd, IDC_MSGTABS), NULL, TRUE);
-		InvalidateRect(p->hwnd, NULL, TRUE);
-		if (IsWindow(GetDlgItem(p->hwnd, 5000)))
-			InvalidateRect(GetDlgItem(p->hwnd, 5000), NULL, TRUE);
+		InvalidateRect(GetDlgItem(p->m_hwnd, IDC_MSGTABS), nullptr, TRUE);
+		InvalidateRect(p->m_hwnd, nullptr, TRUE);
+		if (IsWindow(GetDlgItem(p->m_hwnd, 5000)))
+			InvalidateRect(GetDlgItem(p->m_hwnd, 5000), nullptr, TRUE);
 	}
 }
 
@@ -2437,48 +2429,45 @@ void CSkin::setAeroEffect(LRESULT effect)
 
 void CSkin::extractSkinsAndLogo(bool fForceOverwrite) const
 {
-	TCHAR tszBasePath[MAX_PATH];
-	_tcsncpy_s(tszBasePath, M.getDataPath(), _TRUNCATE);
-	if (tszBasePath[mir_tstrlen(tszBasePath) - 1] != '\\')
-		mir_tstrcat(tszBasePath, _T("\\"));
+	wchar_t tszBasePath[MAX_PATH];
+	wcsncpy_s(tszBasePath, M.getDataPath(), _TRUNCATE);
+	if (tszBasePath[mir_wstrlen(tszBasePath) - 1] != '\\')
+		mir_wstrcat(tszBasePath, L"\\");
 
-	CreateDirectoryTreeT(tszBasePath);
+	CreateDirectoryTreeW(tszBasePath);
 
 	m_fAeroSkinsValid = true;
 
 	for (int i = 0; i < _countof(my_default_skin); i++)
-		if (!Utils::extractResource(g_hInst, my_default_skin[i].ulID, _T("SKIN_GLYPH"), tszBasePath, my_default_skin[i].tszName, fForceOverwrite))
+		if (!Utils::extractResource(g_hInst, my_default_skin[i].ulID, L"SKIN_GLYPH", tszBasePath, my_default_skin[i].tszName, fForceOverwrite))
 			m_fAeroSkinsValid = false;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // redraw the splitter area between the message input and message log area only
 
-void CSkin::UpdateToolbarBG(TWindowData *dat)
+void CTabBaseDlg::UpdateToolbarBG()
 {
-	if (dat == NULL)
-		return;
-
 	RECT rcUpdate, rcTmp;
-	::GetWindowRect(::GetDlgItem(dat->hwnd, dat->bType == SESSIONTYPE_IM ? IDC_LOG : IDC_CHAT_LOG), &rcTmp);
+	::GetWindowRect(m_log.GetHwnd(), &rcTmp);
 
 	POINT	pt;
 	pt.x = rcTmp.left;
 	pt.y = rcTmp.top;
-	::ScreenToClient(dat->hwnd, &pt);
+	::ScreenToClient(m_hwnd, &pt);
 
 	rcUpdate.left = 0;
 	rcUpdate.top = pt.y;
 
-	::GetClientRect(dat->hwnd, &rcTmp);
+	::GetClientRect(m_hwnd, &rcTmp);
 	rcUpdate.right = rcTmp.right;
 	rcUpdate.bottom = rcTmp.bottom;
 
 	if (M.isAero() || M.isDwmActive())
-		dat->fLimitedUpdate = true; 	// skip unrelevant window updates when we have buffered paint avail
-	::RedrawWindow(dat->hwnd, &rcUpdate, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW);
-	::BB_RedrawButtons(dat);
-	dat->fLimitedUpdate = false;
+		m_fLimitedUpdate = true; 	// skip unrelevant window updates when we have buffered paint avail
+	::RedrawWindow(m_hwnd, &rcUpdate, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW);
+	BB_RedrawButtons();
+	m_fLimitedUpdate = false;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

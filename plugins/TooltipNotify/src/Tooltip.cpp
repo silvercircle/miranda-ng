@@ -4,7 +4,7 @@
 
 #include "stdafx.h"
 
-/*static*/ const TCHAR *CTooltip::s_szTooltipClass = _T("MimTooltipNotify");
+/*static*/ const wchar_t *CTooltip::s_szTooltipClass = L"MimTooltipNotify";
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -147,7 +147,7 @@ void CTooltip::Validate()
 	SIZE Size;
 	HDC hDC = GetDC(m_hWnd);
 	SelectObject(hDC, m_hFont);
-	GetTextExtentPoint32(hDC, m_szText, (int)mir_tstrlen(m_szText), &Size);
+	GetTextExtentPoint32(hDC, m_szText, (int)mir_wstrlen(m_szText), &Size);
 	SetWindowPos(m_hWnd, 0, 0, 0, Size.cx+6, Size.cy+4, 
 		SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOREDRAW);
 	ReleaseDC(m_hWnd, hDC);
@@ -192,9 +192,9 @@ void CTooltip::set_Position(INT x, INT y)
 	SetWindowPos(m_hWnd, 0, x, y, 0, 0, SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE);
 }
 
-void CTooltip::set_Text(const TCHAR* szText)
+void CTooltip::set_Text(const wchar_t* szText)
 {
 	if (m_szText) free(m_szText);
-	m_szText = _tcsdup(szText);
+	m_szText = wcsdup(szText);
 }
 

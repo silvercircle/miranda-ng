@@ -35,20 +35,20 @@ char *GetMirandaFolder(char *mimFolder, int size)
 
 int ConnectToMiranda()
 {
-	TCHAR tszPath[MAX_PATH];
+	wchar_t tszPath[MAX_PATH];
 	GetModuleFileName(NULL, tszPath, _countof(tszPath));
-	TCHAR *p = _tcsrchr(tszPath, '\\');
+	wchar_t *p = wcsrchr(tszPath, '\\');
 	if (p) p[1] = 0;
 
-	_tcsncat_s(tszPath, _T("libs"), _TRUNCATE);
-	DWORD cbPath = (DWORD)_tcslen(tszPath);
+	wcsncat_s(tszPath, L"libs", _TRUNCATE);
+	DWORD cbPath = (DWORD)wcslen(tszPath);
 
-	DWORD cbSize = GetEnvironmentVariable(_T("PATH"), NULL, 0);
-	TCHAR *ptszVal = new TCHAR[cbSize + MAX_PATH + 2];
-	_tcscpy(ptszVal, tszPath);
-	_tcscat(ptszVal, _T(";"));
-	GetEnvironmentVariable(_T("PATH"), ptszVal + cbPath + 1, cbSize);
-	SetEnvironmentVariable(_T("PATH"), ptszVal);
+	DWORD cbSize = GetEnvironmentVariable(L"PATH", NULL, 0);
+	wchar_t *ptszVal = new wchar_t[cbSize + MAX_PATH + 2];
+	wcscpy(ptszVal, tszPath);
+	wcscat(ptszVal, L";");
+	GetEnvironmentVariable(L"PATH", ptszVal + cbPath + 1, cbSize);
+	SetEnvironmentVariable(L"PATH", ptszVal);
 	delete[] ptszVal;
 
 	char pluginPath[1024];

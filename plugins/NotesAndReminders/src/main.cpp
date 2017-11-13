@@ -1,5 +1,6 @@
 #include "globals.h"
 
+CLIST_INTERFACE *pcli;
 HINSTANCE hinstance = NULL;
 HINSTANCE hmiranda = NULL;
 int hLangpack;
@@ -36,7 +37,7 @@ void BringAllNotesToFront(STICKYNOTE *pActive);
 void CloseNotesList();
 void CloseReminderList();
 
-INT_PTR PluginMenuCommandAddNew(WPARAM w, LPARAM l)
+INT_PTR PluginMenuCommandAddNew(WPARAM, LPARAM)
 {
 	STICKYNOTE *PSN = NewNote(0,0,0,0,NULL,NULL,TRUE,TRUE,0);
 	if(PSN)
@@ -44,46 +45,46 @@ INT_PTR PluginMenuCommandAddNew(WPARAM w, LPARAM l)
 	return 0;
 }
 
-INT_PTR PluginMenuCommandDeleteAll(WPARAM w, LPARAM l)
+INT_PTR PluginMenuCommandDeleteAll(WPARAM, LPARAM)
 {
-	if (g_Stickies && MessageBox(NULL, TranslateT("Are you sure you want to delete all notes?"), TranslateT(SECTIONNAME), MB_OKCANCEL) == IDOK)
+	if (g_Stickies && MessageBox(NULL, Translate("Are you sure you want to delete all notes?"), Translate(SECTIONNAME), MB_OKCANCEL) == IDOK)
 		DeleteNotes();
 	return 0;
 }
 
-INT_PTR PluginMenuCommandShowHide(WPARAM w, LPARAM l)
+static INT_PTR PluginMenuCommandShowHide(WPARAM, LPARAM)
 {
 	ShowHideNotes();
 	return 0;
 }
 
-INT_PTR PluginMenuCommandViewNotes(WPARAM w, LPARAM l)
+static INT_PTR PluginMenuCommandViewNotes(WPARAM, LPARAM)
 {
 	ListNotes();
 	return 0;
 }
 
-INT_PTR PluginMenuCommandAllBringFront(WPARAM w, LPARAM l)
+static INT_PTR PluginMenuCommandAllBringFront(WPARAM, LPARAM)
 {
 	BringAllNotesToFront(NULL);
 	return 0;
 }
 
-INT_PTR PluginMenuCommandNewReminder(WPARAM w, LPARAM l)
+static INT_PTR PluginMenuCommandNewReminder(WPARAM, LPARAM)
 {
 	NewReminder();
 	return 0;
 }
 
-INT_PTR PluginMenuCommandViewReminders(WPARAM w, LPARAM l)
+static INT_PTR PluginMenuCommandViewReminders(WPARAM, LPARAM)
 {
 	ListReminders();
 	return 0;
 }
 
-INT_PTR PluginMenuCommandDeleteReminders(WPARAM w, LPARAM l)
+static INT_PTR PluginMenuCommandDeleteReminders(WPARAM, LPARAM)
 {
-	if (RemindersList && MessageBox(NULL, TranslateT("Are you sure you want to delete all reminders?"), TranslateT(SECTIONNAME), MB_OKCANCEL) == IDOK)
+	if (RemindersList && MessageBox(NULL, Translate("Are you sure you want to delete all reminders?"), Translate(SECTIONNAME), MB_OKCANCEL) == IDOK)
 		DeleteReminders();
 	return 0;
 }
@@ -113,21 +114,20 @@ void InitIcons(void)
 	Icon_Register(hinstance, LPGEN("Sticky Notes"), iconList, _countof(iconList), MODULENAME);
 }
 
-int OnOptInitialise(WPARAM w, LPARAM L)
+static int OnOptInitialise(WPARAM w, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.position = 900002000;
 	odp.hInstance = hinstance;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_STNOTEOPTIONS);
-	odp.ptszTitle = SECTIONNAME;
-	odp.ptszGroup = LPGENT("Plugins");
+	odp.szTitle.a = SECTIONNAME;
+	odp.szGroup.a = LPGEN("Plugins");
 	odp.pfnDlgProc = DlgProcOptions;
-	odp.flags = ODPF_TCHAR;
 	Options_AddPage(w, &odp);
 	return 0;
 }
 
-int OnTopToolBarInit(WPARAM w, LPARAM L) 
+int OnTopToolBarInit(WPARAM, LPARAM)
 {
 	TTBButton ttb = { 0 };
 	ttb.dwFlags = TTBBF_VISIBLE | TTBBF_SHOWTOOLTIP;
@@ -150,27 +150,27 @@ static void InitServices()
 {
 	// register sounds
 
-	SkinAddNewSoundExT("AlertReminder", LPGENT("Alerts"), LPGENT("Reminder triggered"));
-	SkinAddNewSoundExT("AlertReminder2", LPGENT("Alerts"), LPGENT("Reminder triggered (Alternative 1)"));
-	SkinAddNewSoundExT("AlertReminder3", LPGENT("Alerts"), LPGENT("Reminder triggered (Alternative 2)"));
+	Skin_AddSound("AlertReminder",  LPGENW("Alerts"), LPGENW("Reminder triggered"));
+	Skin_AddSound("AlertReminder2", LPGENW("Alerts"), LPGENW("Reminder triggered (Alternative 1)"));
+	Skin_AddSound("AlertReminder3", LPGENW("Alerts"), LPGENW("Reminder triggered (Alternative 2)"));
 
 	// register menu command services
 
-	CreateServiceFunction(MODULENAME"/MenuCommandAddNew",PluginMenuCommandAddNew);
-	CreateServiceFunction(MODULENAME"/MenuCommandShowHide",PluginMenuCommandShowHide);
-	CreateServiceFunction(MODULENAME"/MenuCommandViewNotes",PluginMenuCommandViewNotes);
-	CreateServiceFunction(MODULENAME"/MenuCommandDeleteAll",PluginMenuCommandDeleteAll);
-	CreateServiceFunction(MODULENAME"/MenuCommandBringAllFront",PluginMenuCommandAllBringFront);
+	CreateServiceFunction(MODULENAME"/MenuCommandAddNew", PluginMenuCommandAddNew);
+	CreateServiceFunction(MODULENAME"/MenuCommandShowHide", PluginMenuCommandShowHide);
+	CreateServiceFunction(MODULENAME"/MenuCommandViewNotes", PluginMenuCommandViewNotes);
+	CreateServiceFunction(MODULENAME"/MenuCommandDeleteAll", PluginMenuCommandDeleteAll);
+	CreateServiceFunction(MODULENAME"/MenuCommandBringAllFront", PluginMenuCommandAllBringFront);
 
 	//
 
-	CreateServiceFunction(MODULENAME"/MenuCommandNewReminder",PluginMenuCommandNewReminder);
-	CreateServiceFunction(MODULENAME"/MenuCommandViewReminders",PluginMenuCommandViewReminders);
-	CreateServiceFunction(MODULENAME"/MenuCommandDeleteReminders",PluginMenuCommandDeleteReminders);
+	CreateServiceFunction(MODULENAME"/MenuCommandNewReminder", PluginMenuCommandNewReminder);
+	CreateServiceFunction(MODULENAME"/MenuCommandViewReminders", PluginMenuCommandViewReminders);
+	CreateServiceFunction(MODULENAME"/MenuCommandDeleteReminders", PluginMenuCommandDeleteReminders);
 
 	// register misc
 
-	CreateServiceFunction(MODULENAME"/OpenTriggeredReminder",OpenTriggeredReminder);
+	CreateServiceFunction(MODULENAME"/OpenTriggeredReminder", OpenTriggeredReminder);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -185,70 +185,71 @@ static void addMenuItem(CMenuItem &mi)
 	Menu_AddMainMenuItem(&mi);
 }
 
-int OnModulesLoaded(WPARAM wparam, LPARAM lparam)
+int OnModulesLoaded(WPARAM, LPARAM)
 {
 	// register fonts and hotkeys
 	RegisterFontServiceFonts();
 	RegisterKeyBindings();
 
-	g_AddContListMI = (BOOL)db_get_dw(0,MODULENAME,"AddContactMenuItems",1);
-	
+	g_AddContListMI = (BOOL)db_get_dw(0, MODULENAME, "AddContactMenuItems", 1);
+
 	// register menus
 	CMenuItem mi;
 	mi.root = Menu_CreateRoot(MO_MAIN, LPGENW("Notes && Reminders"), 1600000000);
-	mi.flags = CMIF_TCHAR;
+	Menu_ConfigureItem(mi.root, MCI_OPT_UID, "A5E140BC-D697-4689-B75B-8ECFB6FE5931");
+	mi.flags = CMIF_UNICODE;
 
 	mi.position = 1600000000;
 	mi.hIcolibItem = iconList[2].hIcolib;
-	mi.name.t = LPGENT("New &Note");
+	mi.name.w = LPGENW("New &Note");
 	mi.pszService = MODULENAME"/MenuCommandAddNew";
 	addMenuItem(mi);
 
 	mi.position = 1600000001;
 	mi.hIcolibItem = iconList[0].hIcolib;
-	mi.name.t = LPGENT("New &Reminder");
+	mi.name.w = LPGENW("New &Reminder");
 	mi.pszService = MODULENAME"/MenuCommandNewReminder";
 	addMenuItem(mi);
 
 	mi.position = 1600100000;
 	mi.hIcolibItem = iconList[3].hIcolib;
-	mi.name.t = LPGENT("&Show / Hide Notes");
+	mi.name.w = LPGENW("&Show / Hide Notes");
 	mi.pszService = MODULENAME"/MenuCommandShowHide";
 	addMenuItem(mi);
 
 	mi.position = 1600100001;
 	mi.hIcolibItem = iconList[13].hIcolib;
-	mi.name.t = LPGENT("Vie&w Notes");
+	mi.name.w = LPGENW("Vie&w Notes");
 	mi.pszService = MODULENAME"/MenuCommandViewNotes";
 	addMenuItem(mi);
 
 	mi.position = 1600100002;
 	mi.hIcolibItem = iconList[1].hIcolib;
-	mi.name.t = LPGENT("&Delete All Notes");
+	mi.name.w = LPGENW("&Delete All Notes");
 	mi.pszService = MODULENAME"/MenuCommandDeleteAll";
 	addMenuItem(mi);
 
 	mi.position = 1600100003;
 	mi.hIcolibItem = iconList[11].hIcolib;
-	mi.name.t = LPGENT("&Bring All to Front");
+	mi.name.w = LPGENW("&Bring All to Front");
 	mi.pszService = MODULENAME"/MenuCommandBringAllFront";
 	addMenuItem(mi);
 
 	mi.position = 1600200000;
 	mi.hIcolibItem = iconList[6].hIcolib;
-	mi.name.t = LPGENT("&View Reminders");
+	mi.name.w = LPGENW("&View Reminders");
 	mi.pszService = MODULENAME"/MenuCommandViewReminders";
 	addMenuItem(mi);
 
 	mi.position = 1600200001;
 	mi.hIcolibItem = iconList[5].hIcolib;
-	mi.name.t = LPGENT("D&elete All Reminders");
+	mi.name.w = LPGENW("D&elete All Reminders");
 	mi.pszService = MODULENAME"/MenuCommandDeleteReminders";
 	addMenuItem(mi);
 
 	// register misc
 	hkOptInit = HookEvent(ME_OPT_INITIALISE, OnOptInitialise);
-	hkTopToolbarInit = HookEvent("TopToolBar/ModuleLoaded", OnTopToolBarInit); 
+	hkTopToolbarInit = HookEvent("TopToolBar/ModuleLoaded", OnTopToolBarInit);
 	UnhookEvent(hkModulesLoaded);
 
 	// init vars and load all data
@@ -259,7 +260,7 @@ int OnModulesLoaded(WPARAM wparam, LPARAM lparam)
 	return 0;
 }
 
-extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
+extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 {
 	return &pluginInfo;
 }
@@ -289,7 +290,7 @@ extern "C" __declspec(dllexport) int Unload(void)
 	return 0;
 }
 
-BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD, LPVOID)
 {
 	hinstance = hinst;
 	return TRUE;
@@ -298,16 +299,17 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID lpvReserved)
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfo);
+	pcli = Clist_GetInterface();
 	hmiranda = GetModuleHandle(NULL);
 
-	INITCOMMONCONTROLSEX ctrls = {0};
+	INITCOMMONCONTROLSEX ctrls = { 0 };
 	ctrls.dwSize = sizeof(INITCOMMONCONTROLSEX);
 	ctrls.dwICC = ICC_DATE_CLASSES;
 	InitCommonControlsEx(&ctrls);
 
-	hRichedDll = LoadLibrary(_T("Msftedit.dll"));
+	hRichedDll = LoadLibrary("Msftedit.dll");
 	if (!hRichedDll) {
-		if (MessageBox(0, TranslateT("Miranda could not load the Notes & Reminders plugin, Msftedit.dll is missing. If you are using WINE, please make sure you have Msftedit.dll installed. Press 'Yes' to continue loading Miranda."), _T(SECTIONNAME), MB_YESNO | MB_ICONINFORMATION) != IDYES)
+		if (MessageBox(0, Translate("Miranda could not load the Notes & Reminders plugin, Msftedit.dll is missing. If you are using WINE, please make sure you have Msftedit.dll installed. Press 'Yes' to continue loading Miranda."), SECTIONNAME, MB_YESNO | MB_ICONINFORMATION) != IDYES)
 			return 1;
 		return 0;
 	}

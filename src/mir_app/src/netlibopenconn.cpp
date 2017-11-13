@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -47,7 +47,7 @@ DWORD DnsLookup(NetlibUser *nlu, const char *szHost)
 		if (host)
 			return *(u_long*)host->h_addr_list[0];
 
-		NetlibLogf(nlu, "%s %d: %s() for host %s failed (%u)", __FILE__, __LINE__, "gethostbyname", szHost, WSAGetLastError());
+		Netlib_Logf(nlu, "%s %d: %s() for host %s failed (%u)", __FILE__, __LINE__, "gethostbyname", szHost, WSAGetLastError());
 	}
 	__except(EXCEPTION_EXECUTE_HANDLER) {}
 
@@ -99,7 +99,7 @@ bool RecvUntilTimeout(NetlibConnection *nlc, char *buf, int len, int flags, DWOR
 
 	while ((dwTimeNow = GetTickCount()) < dwCompleteTime) {
 		if (WaitUntilReadable(nlc->s, dwCompleteTime - dwTimeNow) <= 0) return false;
-		nReceived = NLRecv(nlc, buf, len, flags);
+		nReceived = Netlib_Recv(nlc, buf, len, flags);
 		if (nReceived <= 0) return false;
 
 		buf += nReceived;
@@ -135,14 +135,14 @@ static int NetlibInitSocks4Connection(NetlibConnection *nlc, NetlibUser *nlu, NE
 		len += nHostLen;
 	}
 
-	if (NLSend(nlc, pInit, (int)len, MSG_DUMPPROXY) == SOCKET_ERROR) {
-		NetlibLogf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "NLSend", GetLastError());
+	if (Netlib_Send(nlc, pInit, (int)len, MSG_DUMPPROXY) == SOCKET_ERROR) {
+		Netlib_Logf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "Netlib_Send", GetLastError());
 		return 0;
 	}
 
 	char reply[8];
 	if (!RecvUntilTimeout(nlc, reply, sizeof(reply), MSG_DUMPPROXY, RECV_DEFAULT_TIMEOUT)) {
-		NetlibLogf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "RecvUntilTimeout", GetLastError());
+		Netlib_Logf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "RecvUntilTimeout", GetLastError());
 		return 0;
 	}
 
@@ -153,7 +153,7 @@ static int NetlibInitSocks4Connection(NetlibConnection *nlc, NetlibUser *nlu, NE
 		case 93: SetLastError(ERROR_INVALID_ACCESS); break;
 		default: SetLastError(ERROR_INVALID_DATA); break;
 	}
-	NetlibLogf(nlu, "%s %d: Proxy connection failed (%x %u)", __FILE__, __LINE__, (BYTE)reply[1], GetLastError());
+	Netlib_Logf(nlu, "%s %d: Proxy connection failed (%x %u)", __FILE__, __LINE__, (BYTE)reply[1], GetLastError());
 	return 0;
 }
 
@@ -165,19 +165,19 @@ static int NetlibInitSocks5Connection(NetlibConnection *nlc, NetlibUser *nlu, NE
 	buf[0] = 5;  //yep, socks5
 	buf[1] = 1;  //one auth method
 	buf[2] = nlu->settings.useProxyAuth?2:0;
-	if (NLSend(nlc, (char*)buf, 3, MSG_DUMPPROXY) == SOCKET_ERROR) {
-		NetlibLogf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "NLSend", GetLastError());
+	if (Netlib_Send(nlc, (char*)buf, 3, MSG_DUMPPROXY) == SOCKET_ERROR) {
+		Netlib_Logf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "Netlib_Send", GetLastError());
 		return 0;
 	}
 
 	//confirmation of auth method
 	if (!RecvUntilTimeout(nlc, (char*)buf, 2, MSG_DUMPPROXY, RECV_DEFAULT_TIMEOUT)) {
-		NetlibLogf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "RecvUntilTimeout", GetLastError());
+		Netlib_Logf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "RecvUntilTimeout", GetLastError());
 		return 0;
 	}
 	if ((buf[1] != 0 && buf[1] != 2)) {
 		SetLastError(ERROR_INVALID_ID_AUTHORITY);
-		NetlibLogf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "NLRecv", GetLastError());
+		Netlib_Logf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "Netlib_Recv", GetLastError());
 		return 0;
 	}
 
@@ -190,20 +190,20 @@ static int NetlibInitSocks5Connection(NetlibConnection *nlc, NetlibUser *nlu, NE
 		memcpy(pAuthBuf + 2, nlu->settings.szProxyAuthUser, nUserLen);
 		pAuthBuf[2 + nUserLen] = (BYTE)nPassLen;
 		memcpy(pAuthBuf + 3 + nUserLen, nlu->settings.szProxyAuthPassword, nPassLen);
-		if (NLSend(nlc, (char*)pAuthBuf, int(3 + nUserLen + nPassLen), MSG_DUMPPROXY) == SOCKET_ERROR) {
-			NetlibLogf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "NLSend", GetLastError());
+		if (Netlib_Send(nlc, (char*)pAuthBuf, int(3 + nUserLen + nPassLen), MSG_DUMPPROXY) == SOCKET_ERROR) {
+			Netlib_Logf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "Netlib_Send", GetLastError());
 			mir_free(pAuthBuf);
 			return 0;
 		}
 		mir_free(pAuthBuf);
 
 		if (!RecvUntilTimeout(nlc, (char*)buf, 2, MSG_DUMPPROXY, RECV_DEFAULT_TIMEOUT)) {
-			NetlibLogf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "RecvUntilTimeout", GetLastError());
+			Netlib_Logf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "RecvUntilTimeout", GetLastError());
 			return 0;
 		}
 		if (buf[1]) {
 			SetLastError(ERROR_ACCESS_DENIED);
-			NetlibLogf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "RecvUntilTimeout", GetLastError());
+			Netlib_Logf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "RecvUntilTimeout", GetLastError());
 			return 0;
 		}
 	}
@@ -235,15 +235,15 @@ static int NetlibInitSocks5Connection(NetlibConnection *nlc, NetlibUser *nlu, NE
 		*(PDWORD)(pInit + 4) = hostIP;
 	}
 	*(PWORD)(pInit + 4 + nHostLen) = htons(nloc->wPort);
-	if (NLSend(nlc, (char*)pInit, int(6 + nHostLen), MSG_DUMPPROXY) == SOCKET_ERROR) {
-		NetlibLogf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "NLSend", GetLastError());
+	if (Netlib_Send(nlc, (char*)pInit, int(6 + nHostLen), MSG_DUMPPROXY) == SOCKET_ERROR) {
+		Netlib_Logf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "Netlib_Send", GetLastError());
 		mir_free(pInit);
 		return 0;
 	}
 	mir_free(pInit);
 
 	if (!RecvUntilTimeout(nlc, (char*)buf, 5, MSG_DUMPPROXY, RECV_DEFAULT_TIMEOUT)) {
-		NetlibLogf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "RecvUntilTimeout", GetLastError());
+		Netlib_Logf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "RecvUntilTimeout", GetLastError());
 		return 0;
 	}
 
@@ -264,7 +264,7 @@ static int NetlibInitSocks5Connection(NetlibConnection *nlc, NetlibUser *nlu, NE
 			default: SetLastError(ERROR_INVALID_DATA); break;
 			}
 		}
-		NetlibLogf(nlu, "%s %d: Proxy conection failed. %s.", __FILE__, __LINE__, err);
+		Netlib_Logf(nlu, "%s %d: Proxy conection failed. %s.", __FILE__, __LINE__, err);
 		return 0;
 	}
 
@@ -280,11 +280,11 @@ static int NetlibInitSocks5Connection(NetlibConnection *nlc, NetlibUser *nlu, NE
 		nRecvSize = 17;
 		break;
 	default:
-		NetlibLogf(nlu, "%s %d: %s() unknown address type (%u)", __FILE__, __LINE__, "NetlibInitSocks5Connection", (int)buf[3]);
+		Netlib_Logf(nlu, "%s %d: %s() unknown address type (%u)", __FILE__, __LINE__, "NetlibInitSocks5Connection", (int)buf[3]);
 		return 0;
 	}
 	if (!RecvUntilTimeout(nlc, (char*)buf, nRecvSize, MSG_DUMPPROXY, RECV_DEFAULT_TIMEOUT)) {
-		NetlibLogf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "RecvUntilTimeout", GetLastError());
+		Netlib_Logf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "RecvUntilTimeout", GetLastError());
 		return 0;
 	}
 
@@ -294,68 +294,57 @@ static int NetlibInitSocks5Connection(NetlibConnection *nlc, NetlibUser *nlu, NE
 
 static bool NetlibInitHttpsConnection(NetlibConnection *nlc, NetlibUser *nlu, NETLIBOPENCONNECTION *nloc)
 {
-	//rfc2817
-	NETLIBHTTPREQUEST nlhrSend = { 0 };
-	char szUrl[512];
-
-	nlhrSend.cbSize = sizeof(nlhrSend);
-	nlhrSend.requestType = REQUEST_CONNECT;
-	nlhrSend.flags = NLHRF_GENERATEHOST | NLHRF_DUMPPROXY | NLHRF_SMARTAUTHHEADER | NLHRF_HTTP11 | NLHRF_NOPROXY | NLHRF_REDIRECT;
+	// rfc2817
+	CMStringA szUrl;
 	if (nlc->dnsThroughProxy)
-		mir_snprintf(szUrl, "%s:%u", nloc->szHost, nloc->wPort);
+		szUrl.Format("%s:%u", nloc->szHost, nloc->wPort);
 	else {
 		DWORD ip = DnsLookup(nlu, nloc->szHost);
 		if (ip == 0) return false;
-		mir_snprintf(szUrl, "%s:%u", inet_ntoa(*(PIN_ADDR)&ip), nloc->wPort);
+		szUrl.Format("%s:%u", inet_ntoa(*(PIN_ADDR)&ip), nloc->wPort);
 	}
-	nlhrSend.szUrl = szUrl;
+
+	NETLIBHTTPREQUEST nlhrSend = { 0 };
+	nlhrSend.cbSize = sizeof(nlhrSend);
+	nlhrSend.requestType = REQUEST_CONNECT;
+	nlhrSend.flags = NLHRF_DUMPPROXY | NLHRF_HTTP11 | NLHRF_NOPROXY | NLHRF_REDIRECT;
+	nlhrSend.szUrl = szUrl.GetBuffer();
 
 	nlc->usingHttpGateway = true;
 
-	if (NetlibHttpSendRequest((WPARAM)nlc, (LPARAM)&nlhrSend) == SOCKET_ERROR) {
+	if (Netlib_SendHttpRequest(nlc, &nlhrSend) == SOCKET_ERROR) {
 		nlc->usingHttpGateway = false;
-		return 0;
+		return false;
 	}
 
 	NETLIBHTTPREQUEST *nlhrReply = NetlibHttpRecv(nlc, MSG_DUMPPROXY | MSG_RAW, MSG_DUMPPROXY | MSG_RAW, true);
 	nlc->usingHttpGateway = false;
-	if (nlhrReply == NULL)
+	if (nlhrReply == nullptr)
 		return false;
 
 	if (nlhrReply->resultCode < 200 || nlhrReply->resultCode >= 300) {
 		if (nlhrReply->resultCode == 403 && nlc->dnsThroughProxy) {
-			NetlibHttpFreeRequestStruct(0, (LPARAM)nlhrReply);
+			Netlib_FreeHttpRequest(nlhrReply);
 			nlc->dnsThroughProxy = 0;
 			return NetlibInitHttpsConnection(nlc, nlu, nloc);
 		}
 
 		NetlibHttpSetLastErrorUsingHttpResult(nlhrReply->resultCode);
-		NetlibLogf(nlu, "%s %d: %s request failed (%u %s)", __FILE__, __LINE__, nlu->settings.proxyType == PROXYTYPE_HTTP ? "HTTP" : "HTTPS", nlhrReply->resultCode, nlhrReply->szResultDescr);
-		NetlibHttpFreeRequestStruct(0, (LPARAM)nlhrReply);
+		Netlib_Logf(nlu, "%s %d: %s request failed (%u %s)", __FILE__, __LINE__, nlu->settings.proxyType == PROXYTYPE_HTTP ? "HTTP" : "HTTPS", nlhrReply->resultCode, nlhrReply->szResultDescr);
+		Netlib_FreeHttpRequest(nlhrReply);
 		return 0;
 	}
-	NetlibHttpFreeRequestStruct(0, (LPARAM)nlhrReply);
-	//connected
-	return true;
+	Netlib_FreeHttpRequest(nlhrReply);
+	return true; // connected
 }
 
 static void FreePartiallyInitedConnection(NetlibConnection *nlc)
 {
 	DWORD dwOriginalLastError = GetLastError();
 
-	if (GetNetlibHandleType(nlc) == NLH_CONNECTION) {
-		if (nlc->s != INVALID_SOCKET)
-			closesocket(nlc->s);
-		mir_free(nlc->nlhpi.szHttpPostUrl);
-		mir_free(nlc->nlhpi.szHttpGetUrl);
-		mir_free((char*)nlc->nloc.szHost);
-		mir_free(nlc->szProxyServer);
-		NetlibDeleteNestedCS(&nlc->ncsSend);
-		NetlibDeleteNestedCS(&nlc->ncsRecv);
-		CloseHandle(nlc->hOkToCloseEvent);
-		DeleteCriticalSection(&nlc->csHttpSequenceNums);
-		mir_free(nlc);
-	}
+	if (GetNetlibHandleType(nlc) == NLH_CONNECTION)
+		delete nlc;
+
 	SetLastError(dwOriginalLastError);
 }
 
@@ -365,6 +354,7 @@ static bool my_connectIPv4(NetlibConnection *nlc, NETLIBOPENCONNECTION *nloc)
 	u_long notblocking = 1;
 	DWORD lasterr = 0;
 	static const TIMEVAL tv = { 1, 0 };
+	NetlibUser *nlu = nlc->nlu;
 
 	// if dwTimeout is zero then its an old style connection or new with a 0 timeout, select() will error quicker anyway
 	unsigned int dwTimeout = (nloc && (nloc->cbSize == sizeof(NETLIBOPENCONNECTION)) && (nloc->flags & NLOCF_V2) && (nloc->timeout>0)) ? nloc->timeout : 30;
@@ -378,37 +368,37 @@ static bool my_connectIPv4(NetlibConnection *nlc, NETLIBOPENCONNECTION *nloc)
 		ReleaseMutex(hConnectionOpenMutex);
 
 		// might of died in between the wait
-		if (Miranda_Terminated()) return false;
+		if (Miranda_IsTerminated()) return false;
 	}
 
 	PHOSTENT he;
-	SOCKADDR_IN sin = { 0 };
+	sockaddr_in sin = { 0 };
 	sin.sin_family = AF_INET;
 
 	if (nlc->proxyType) {
 		if (!nlc->szProxyServer) return false;
 
 		if (nloc)
-			NetlibLogf(nlc->nlu, "(%p) Connecting to proxy %s:%d for %s:%d ....", nlc, nlc->szProxyServer, nlc->wProxyPort, nloc->szHost, nloc->wPort);
+			Netlib_Logf(nlu, "(%p) Connecting to proxy %s:%d for %s:%d ....", nlc, nlc->szProxyServer, nlc->wProxyPort, nloc->szHost, nloc->wPort);
 		else
-			NetlibLogf(nlc->nlu, "(%p) Connecting to proxy %s:%d ....", nlc, nlc->szProxyServer, nlc->wProxyPort);
+			Netlib_Logf(nlu, "(%p) Connecting to proxy %s:%d ....", nlc, nlc->szProxyServer, nlc->wProxyPort);
 
 		sin.sin_port = htons(nlc->wProxyPort);
 		he = gethostbyname(nlc->szProxyServer);
 	}
 	else {
 		if (!nloc || !nloc->szHost || nloc->szHost[0] == '[' || strchr(nloc->szHost, ':')) return false;
-		NetlibLogf(nlc->nlu, "(%p) Connecting to server %s:%d....", nlc, nloc->szHost, nloc->wPort);
+		Netlib_Logf(nlu, "(%p) Connecting to server %s:%d....", nlc, nloc->szHost, nloc->wPort);
 
 		sin.sin_port = htons(nloc->wPort);
 		he = gethostbyname(nloc->szHost);
 	}
 
-	for (char** har = he->h_addr_list; *har && !Miranda_Terminated(); ++har) {
+	for (char** har = he->h_addr_list; *har && !Miranda_IsTerminated(); ++har) {
 		sin.sin_addr.s_addr = *(u_long*)*har;
 
-		char* szIp = NetlibAddressToString((SOCKADDR_INET_M*)&sin);
-		NetlibLogf(nlc->nlu, "(%p) Connecting to ip %s ....", nlc, szIp);
+		char *szIp = Netlib_AddressToString(&sin);
+		Netlib_Logf(nlu, "(%p) Connecting to ip %s ....", nlc, szIp);
 		mir_free(szIp);
 
 retry:
@@ -420,9 +410,9 @@ retry:
 		if (ioctlsocket(nlc->s, FIONBIO, &notblocking) != 0)
 			return false;
 
-		if (nlc->nlu->settings.specifyOutgoingPorts && nlc->nlu->settings.szOutgoingPorts  && nlc->nlu->settings.szOutgoingPorts[0]) {
-			if (!BindSocketToPort(nlc->nlu->settings.szOutgoingPorts, nlc->s, INVALID_SOCKET, &nlc->nlu->inportnum))
-				NetlibLogf(nlc->nlu, "Netlib connect: Not enough ports for outgoing connections specified");
+		if (nlu->settings.specifyOutgoingPorts && nlu->settings.szOutgoingPorts  && nlu->settings.szOutgoingPorts[0]) {
+			if (!BindSocketToPort(nlu->settings.szOutgoingPorts, nlc->s, INVALID_SOCKET, &nlu->inportnum))
+				Netlib_Logf(nlu, "Netlib connect: Not enough ports for outgoing connections specified");
 		}
 
 		// try a connect
@@ -470,12 +460,12 @@ retry:
 				}
 				break;
 			}
-			else if (Miranda_Terminated()) {
+			else if (Miranda_IsTerminated()) {
 				rc = SOCKET_ERROR;
 				lasterr = ERROR_TIMEOUT;
 				break;
 			}
-			else if (nloc->cbSize == sizeof(NETLIBOPENCONNECTION) && nloc->flags & NLOCF_V2 && nloc->waitcallback != NULL && nloc->waitcallback(&dwTimeout) == 0) {
+			else if (nloc->cbSize == sizeof(NETLIBOPENCONNECTION) && nloc->flags & NLOCF_V2 && nloc->waitcallback != nullptr && nloc->waitcallback(&dwTimeout) == 0) {
 				rc = SOCKET_ERROR;
 				lasterr = ERROR_TIMEOUT;
 				break;
@@ -504,6 +494,7 @@ static bool my_connectIPv6(NetlibConnection *nlc, NETLIBOPENCONNECTION *nloc)
 	if (!nloc)
 		return false;
 
+	NetlibUser *nlu = nlc->nlu;
 	int rc = SOCKET_ERROR, retrycnt = 0;
 	u_long notblocking = 1;
 	DWORD lasterr = 0;
@@ -521,11 +512,11 @@ static bool my_connectIPv6(NetlibConnection *nlc, NETLIBOPENCONNECTION *nloc)
 		ReleaseMutex(hConnectionOpenMutex);
 
 		// might of died in between the wait
-		if (Miranda_Terminated()) return false;
+		if (Miranda_IsTerminated()) return false;
 	}
 
 	char szPort[6];
-	addrinfo *air = NULL, *ai, hints = { 0 };
+	addrinfo *air = nullptr, *ai, hints = { 0 };
 
 	hints.ai_family = AF_UNSPEC;
 
@@ -542,11 +533,11 @@ static bool my_connectIPv6(NetlibConnection *nlc, NETLIBOPENCONNECTION *nloc)
 		if (!nlc->szProxyServer)
 			return false;
 
-		NetlibLogf(nlc->nlu, "(%p) Connecting to proxy %s:%d for %s:%d ....", nlc, nlc->szProxyServer, nlc->wProxyPort, nloc->szHost, nloc->wPort);
+		Netlib_Logf(nlu, "(%p) Connecting to proxy %s:%d for %s:%d ....", nlc, nlc->szProxyServer, nlc->wProxyPort, nloc->szHost, nloc->wPort);
 
 		_itoa(nlc->wProxyPort, szPort, 10);
 		if (GetAddrInfoA(nlc->szProxyServer, szPort, &hints, &air)) {
-			NetlibLogf(nlc->nlu, "%s %d: %s() for host %s failed (%u)", __FILE__, __LINE__, "getaddrinfo", nlc->szProxyServer, WSAGetLastError());
+			Netlib_Logf(nlu, "%s %d: %s() for host %s failed (%u)", __FILE__, __LINE__, "getaddrinfo", nlc->szProxyServer, WSAGetLastError());
 			return false;
 		}
 	}
@@ -554,18 +545,18 @@ static bool my_connectIPv6(NetlibConnection *nlc, NETLIBOPENCONNECTION *nloc)
 		if (!nloc->szHost)
 			return false;
 
-		NetlibLogf(nlc->nlu, "(%p) Connecting to server %s:%d....", nlc, nloc->szHost, nloc->wPort);
+		Netlib_Logf(nlu, "(%p) Connecting to server %s:%d....", nlc, nloc->szHost, nloc->wPort);
 
 		_itoa(nlc->nloc.wPort, szPort, 10);
 
 		if (GetAddrInfoA(nlc->nloc.szHost, szPort, &hints, &air)) {
-			NetlibLogf(nlc->nlu, "%s %d: %s() for host %s failed (%u)", __FILE__, __LINE__, "getaddrinfo", nlc->nloc.szHost, WSAGetLastError());
+			Netlib_Logf(nlu, "%s %d: %s() for host %s failed (%u)", __FILE__, __LINE__, "getaddrinfo", nlc->nloc.szHost, WSAGetLastError());
 			return false;
 		}
 	}
 
-	for (ai = air; ai && !Miranda_Terminated(); ai = ai->ai_next) {
-		NetlibLogf(nlc->nlu, "(%p) Connecting to ip %s ....", nlc, ptrA(NetlibAddressToString((SOCKADDR_INET_M*)ai->ai_addr)));
+	for (ai = air; ai && !Miranda_IsTerminated(); ai = ai->ai_next) {
+		Netlib_Logf(nlu, "(%p) Connecting to ip %s ....", nlc, ptrA(Netlib_AddressToString((sockaddr_in*)ai->ai_addr)));
 retry:
 		nlc->s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 		if (nlc->s == INVALID_SOCKET) {
@@ -579,11 +570,11 @@ retry:
 			return false;
 		}
 
-		if (nlc->nlu->settings.specifyOutgoingPorts && nlc->nlu->settings.szOutgoingPorts  && nlc->nlu->settings.szOutgoingPorts[0]) {
+		if (nlu->settings.specifyOutgoingPorts && nlu->settings.szOutgoingPorts  && nlu->settings.szOutgoingPorts[0]) {
 			SOCKET s = ai->ai_family == AF_INET ? nlc->s : INVALID_SOCKET;
 			SOCKET s6 = ai->ai_family == AF_INET6 ? nlc->s : INVALID_SOCKET;
-			if (!BindSocketToPort(nlc->nlu->settings.szOutgoingPorts, s, s6, &nlc->nlu->inportnum))
-				NetlibLogf(nlc->nlu, "Netlib connect: Not enough ports for outgoing connections specified");
+			if (!BindSocketToPort(nlu->settings.szOutgoingPorts, s, s6, &nlu->inportnum))
+				Netlib_Logf(nlu, "Netlib connect: Not enough ports for outgoing connections specified");
 		}
 
 		// try a connect
@@ -633,12 +624,12 @@ retry:
 				}
 				break;
 			}
-			else if (Miranda_Terminated()) {
+			else if (Miranda_IsTerminated()) {
 				rc = SOCKET_ERROR;
 				lasterr = ERROR_TIMEOUT;
 				break;
 			}
-			else if (nloc->cbSize == sizeof(NETLIBOPENCONNECTION) && nloc->flags & NLOCF_V2 && nloc->waitcallback != NULL && nloc->waitcallback(&dwTimeout) == 0) {
+			else if (nloc->cbSize == sizeof(NETLIBOPENCONNECTION) && nloc->flags & NLOCF_V2 && nloc->waitcallback != nullptr && nloc->waitcallback(&dwTimeout) == 0) {
 				rc = SOCKET_ERROR;
 				lasterr = ERROR_TIMEOUT;
 				break;
@@ -671,15 +662,15 @@ static bool my_connect(NetlibConnection *nlc, NETLIBOPENCONNECTION *nloc)
 
 static int NetlibHttpFallbackToDirect(NetlibConnection *nlc, NetlibUser *nlu, NETLIBOPENCONNECTION *nloc)
 {
-	NetlibDoClose(nlc, true);
+	NetlibDoCloseSocket(nlc, true);
 
-	NetlibLogf(nlu, "Fallback to direct connection");
+	Netlib_Logf(nlu, "Fallback to direct connection");
 
 	nlc->proxyAuthNeeded = false;
 	nlc->proxyType = 0;
-	replaceStr(nlc->szProxyServer, NULL);
+	replaceStr(nlc->szProxyServer, nullptr);
 	if (!my_connect(nlc, nloc)) {
-		NetlibLogf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "connect", WSAGetLastError());
+		Netlib_Logf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "connect", WSAGetLastError());
 		return false;
 	}
 	return true;
@@ -690,7 +681,7 @@ bool NetlibDoConnect(NetlibConnection *nlc)
 	NETLIBOPENCONNECTION *nloc = &nlc->nloc;
 	NetlibUser *nlu = nlc->nlu;
 
-	replaceStr(nlc->szProxyServer, NULL);
+	replaceStr(nlc->szProxyServer, nullptr);
 
 	bool usingProxy = false, forceHttps = false;
 	if (nlu->settings.useProxy) {
@@ -714,7 +705,7 @@ bool NetlibDoConnect(NetlibConnection *nlc)
 			if (usingProxy && (nlc->proxyType == PROXYTYPE_HTTPS || nlc->proxyType == PROXYTYPE_HTTP)) {
 				usingProxy = false;
 				nlc->proxyType = 0;
-				NetlibLogf(nlu, "Fallback to direct connection");
+				Netlib_Logf(nlu, "Fallback to direct connection");
 				continue;
 			}
 			if (nlu->settings.useProxy && !usingProxy && nlu->settings.proxyType == PROXYTYPE_IE && !forceHttps) {
@@ -724,7 +715,7 @@ bool NetlibDoConnect(NetlibConnection *nlc)
 					continue;
 			}
 		}
-		NetlibLogf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "connect", WSAGetLastError());
+		Netlib_Logf(nlu, "%s %d: %s() failed (%u)", __FILE__, __LINE__, "connect", WSAGetLastError());
 		return false;
 	}
 
@@ -754,10 +745,10 @@ bool NetlibDoConnect(NetlibConnection *nlc)
 
 		case PROXYTYPE_HTTP:
 			nlc->proxyAuthNeeded = true;
-			if (!(nlu->user.flags & NUF_HTTPGATEWAY || nloc->flags & NLOCF_HTTPGATEWAY) || nloc->flags & NLOCF_SSL) {
-				//NLOCF_HTTP not specified and no HTTP gateway available: try HTTPS
+			if (!(nloc->flags & NLOCF_HTTPGATEWAY) || nloc->flags & NLOCF_SSL) {
+				// NLOCF_HTTP not specified and no HTTP gateway available: try HTTPS
 				if (!NetlibInitHttpsConnection(nlc, nlu, nloc)) {
-					//can't do HTTPS: try direct
+					// can't do HTTPS: try direct
 					usingProxy = false;
 					if (!NetlibHttpFallbackToDirect(nlc, nlu, nloc))
 						return false;
@@ -775,14 +766,15 @@ bool NetlibDoConnect(NetlibConnection *nlc)
 		}
 	}
 	else if (nloc->flags & NLOCF_HTTPGATEWAY) {
-		if (!NetlibInitHttpConnection(nlc, nlu, nloc)) return false;
+		if (!NetlibInitHttpConnection(nlc, nlu, nloc))
+			return false;
 		nlc->usingDirectHttpGateway = true;
 	}
 
-	NetlibLogf(nlu, "(%d) Connected to %s:%d", nlc->s, nloc->szHost, nloc->wPort);
+	Netlib_Logf(nlu, "(%d) Connected to %s:%d", nlc->s, nloc->szHost, nloc->wPort);
 
 	if (NLOCF_SSL & nloc->flags)
-		return NetlibStartSsl((WPARAM)nlc, 0) != 0;
+		return Netlib_StartSsl(nlc, 0) != 0;
 
 	return true;
 }
@@ -811,11 +803,11 @@ bool NetlibReconnect(NetlibConnection *nlc)
 		}
 
 		if (!opened)
-			NetlibDoClose(nlc, true);
+			NetlibDoCloseSocket(nlc, true);
 	}
 
 	if (!opened) {
-		if (Miranda_Terminated())
+		if (Miranda_IsTerminated())
 			return false;
 
 		if (nlc->usingHttpGateway) {
@@ -827,34 +819,24 @@ bool NetlibReconnect(NetlibConnection *nlc)
 	return true;
 }
 
-INT_PTR NetlibOpenConnection(WPARAM wParam, LPARAM lParam)
+MIR_APP_DLL(HNETLIBCONN) Netlib_OpenConnection(NetlibUser *nlu, const NETLIBOPENCONNECTION *nloc)
 {
-	NETLIBOPENCONNECTION *nloc = (NETLIBOPENCONNECTION*)lParam;
-	if (nloc == NULL || nloc->cbSize != sizeof(NETLIBOPENCONNECTION) || nloc->szHost == NULL || nloc->wPort == 0) {
+	if (nloc == nullptr || nloc->cbSize != sizeof(NETLIBOPENCONNECTION) || nloc->szHost == nullptr || nloc->wPort == 0) {
+
 		SetLastError(ERROR_INVALID_PARAMETER);
-		return 0;
+		return nullptr;
 	}
 
-	NetlibUser *nlu = (NetlibUser*)wParam;
 	if (GetNetlibHandleType(nlu) != NLH_USER || !(nlu->user.flags & NUF_OUTGOING))
-		return 0;
+		return nullptr;
 
-	NetlibLogf(nlu, "Connection request to %s:%d (Flags %x)....", nloc->szHost, nloc->wPort, nloc->flags);
+	Netlib_Logf(nlu, "Connection request to %s:%d (Flags %x)....", nloc->szHost, nloc->wPort, nloc->flags);
 
-	NetlibConnection *nlc = (NetlibConnection*)mir_calloc(sizeof(struct NetlibConnection));
-	nlc->handleType = NLH_CONNECTION;
+	NetlibConnection *nlc = new NetlibConnection();
 	nlc->nlu = nlu;
 	nlc->nloc = *nloc;
 	nlc->nloc.szHost = mir_strdup(nloc->szHost);
-	nlc->s = INVALID_SOCKET;
-	nlc->s2 = INVALID_SOCKET;
 	nlc->dnsThroughProxy = nlu->settings.dnsThroughProxy != 0;
-
-	InitializeCriticalSection(&nlc->csHttpSequenceNums);
-	nlc->hOkToCloseEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
-	nlc->dontCloseNow = 0;
-	NetlibInitializeNestedCS(&nlc->ncsSend);
-	NetlibInitializeNestedCS(&nlc->ncsRecv);
 
 	if (!NetlibDoConnect(nlc)) {
 		FreePartiallyInitedConnection(nlc);
@@ -865,29 +847,60 @@ INT_PTR NetlibOpenConnection(WPARAM wParam, LPARAM lParam)
 		mir_cslock lck(csNetlibUser);
 		if (iUPnPCleanup == 0) {
 			iUPnPCleanup = 1;
-			forkthread(NetlibUPnPCleanup, 0, NULL);
+			mir_forkthread(NetlibUPnPCleanup);
 		}
 	}
 
-	return (INT_PTR)nlc;
+	return nlc;
 }
 
-INT_PTR NetlibStartSsl(WPARAM wParam, LPARAM lParam)
+MIR_APP_DLL(int) Netlib_StartSsl(HNETLIBCONN hConnection, const char *szHost)
 {
-	NetlibConnection *nlc = (NetlibConnection*)wParam;
-	if (nlc == NULL)
+	NetlibConnection *nlc = (NetlibConnection*)hConnection;
+	if (nlc == nullptr)
 		return 0;
 
-	NETLIBSSL *sp = (NETLIBSSL*)lParam;
-	const char *szHost = sp ? sp->host : nlc->nloc.szHost;
+	NetlibUser *nlu = nlc->nlu;
+	if (szHost == nullptr)
+		szHost = nlc->nloc.szHost;
 
-	NetlibLogf(nlc->nlu, "(%d %s) Starting SSL negotiation", nlc->s, szHost);
-	nlc->hSsl = sslApi.connect(nlc->s, szHost, nlc->nlu->settings.validateSSL);
+	Netlib_Logf(nlu, "(%d %s) Starting SSL negotiation", nlc->s, szHost);
+	nlc->hSsl = sslApi.connect(nlc->s, szHost, nlu->settings.validateSSL);
 
-	if (nlc->hSsl == NULL)
-		NetlibLogf(nlc->nlu, "(%d %s) Failure to negotiate SSL connection", nlc->s, szHost);
+	if (nlc->hSsl == nullptr)
+		Netlib_Logf(nlu, "(%d %s) Failure to negotiate SSL connection", nlc->s, szHost);
 	else
-		NetlibLogf(nlc->nlu, "(%d %s) SSL negotiation successful", nlc->s, szHost);
+		Netlib_Logf(nlu, "(%d %s) SSL negotiation successful", nlc->s, szHost);
 
-	return nlc->hSsl != NULL;
+	return nlc->hSsl != nullptr;
+}
+
+NetlibConnection::NetlibConnection()
+{
+	handleType = NLH_CONNECTION;
+	s = s2 = INVALID_SOCKET;
+	hOkToCloseEvent = CreateEvent(nullptr, TRUE, TRUE, nullptr);
+	NetlibInitializeNestedCS(&ncsSend);
+	NetlibInitializeNestedCS(&ncsRecv);
+}
+
+NetlibConnection::~NetlibConnection()
+{
+	handleType = 0;
+
+	if (s != INVALID_SOCKET)
+		closesocket(s);
+
+	mir_free(szNewUrl);
+	mir_free(szProxyServer);
+
+	mir_free(nlhpi.szHttpPostUrl);
+	mir_free(nlhpi.szHttpGetUrl);
+
+	mir_free((char*)nloc.szHost);
+
+	NetlibDeleteNestedCS(&ncsSend);
+	NetlibDeleteNestedCS(&ncsRecv);
+
+	CloseHandle(hOkToCloseEvent);
 }

@@ -16,10 +16,10 @@ Version:
 Beschreibung:
 [Copyright:]
 Copyright:
-[Contact:]
-Kontakt:
-[WWW:]
-Website:
+[E-mail:]
+E-Mail:
+[Homepage:]
+Homepage:
 [Account]
 Konto
 [Name:]
@@ -28,10 +28,6 @@ Name:
 Server:
 [Port:]
 Port:
-[SSL]
-SSL
-[APOP]
-APOP
 [User Name:]
 Benutzer:
 [Password:]
@@ -100,11 +96,11 @@ Offline
 Online
 [Away]
 Abwesend
-[N/A]
-N/A
+[Not available]
+Außer Haus
 [Occupied]
 Beschäftigt
-[DND]
+[Do not disturb]
 Bitte nicht stören
 [Free for chat]
 Für Chat bereit
@@ -199,12 +195,12 @@ Unbekannter Fehler
 ;file \plugins\YAMN\src\browser\mailbrowser.cpp
 [%s - %d new mail messages, %d total]
 %s - %d neue E-Mails, %d gesamt
-[- new mail message(s)]
-- neue E-Mail(s)
 [%s : %d new mail message(s), %d total]
 %s : %d neue E-Mail(s), %d gesamt
 [%d new mail message(s), %d total]
 %d neue E-Mail(s), %d gesamt
+[- new mail message(s)]
+- neue E-Mail(s)
 [No new mail message, %d spam(s)]
 Keine neue E-Mail, %d Spam-Mail(s)
 [Invalid]

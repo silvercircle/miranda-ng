@@ -1,7 +1,7 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
 
-Copyright (c) 2012-2014 Miranda NG Team
+Copyright (c) 2012-2017 Miranda NG Team
 Copyright (c) 2006-2012 Boris Krasnovskiy.
 Copyright (c) 2003-2005 George Hazan.
 Copyright (c) 2002-2003 Richard Hughes (original version).
@@ -87,6 +87,7 @@ int CMsnProto::MSN_HandleErrors(ThreadData* info, char* cmdString)
 
 	case ERR_DETAILED_ERR_IN_PAYLOAD:
 	case ERR_LIST_UNAVAILABLE:
+	case ERR_INVALID_USER:
 		char* tErrWords[4];
 		if (sttDivideWords(cmdString, _countof(tErrWords), tErrWords) == _countof(tErrWords))
 			HReadBuffer(info, 0).surelyRead(atol(tErrWords[3]));
@@ -106,10 +107,12 @@ int CMsnProto::MSN_HandleErrors(ThreadData* info, char* cmdString)
 		return 0;
 
 	case ERR_AUTHENTICATION_FAILED:
-		if (info->mType != SERVER_SWITCHBOARD) {
-			MSN_ShowError("Your username or password is incorrect");
-			ProtoBroadcastAck(NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_WRONGPASSWORD);
-		}
+		MSN_ShowError("Your username or password is incorrect");
+		ProtoBroadcastAck(NULL, ACKTYPE_LOGIN, ACKRESULT_FAILED, NULL, LOGINERR_WRONGPASSWORD);
+		return 1;
+
+	case 999:
+		MSN_ShowError("Unknown error (999) occured, logging off");
 		return 1;
 
 	default:

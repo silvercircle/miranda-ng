@@ -95,7 +95,6 @@ begin
   end;
 
   FillChar(dbeiExisting, SizeOf(dbeiExisting), Byte(0));
-  dbeiExisting.cbSize := SizeOf(dbeiExisting);
   dbeiExisting.cbBlob := 0;
   db_event_get(hExistingDbEvent, @dbeiExisting);
   dwFirstEventTimeStamp := dbeiExisting.timestamp;
@@ -108,7 +107,6 @@ begin
   end;
 
   FillChar(dbeiExisting, SizeOf(dbeiExisting), Byte(0));
-  dbeiExisting.cbSize := SizeOf(dbeiExisting);
   dbeiExisting.cbBlob := 0;
   db_event_get(hExistingDbEvent, @dbeiExisting);
   dwLastEventTimeStamp := dbeiExisting.timestamp;
@@ -134,7 +132,6 @@ begin
     while (hExistingDbEvent <> 0) do
     begin
       FillChar(dbeiExisting, SizeOf(dbeiExisting), Byte(0));
-      dbeiExisting.cbSize := SizeOf(dbeiExisting);
       dbeiExisting.cbBlob := 0;
       db_event_get(hExistingDbEvent, @dbeiExisting);
       // compare event
@@ -208,7 +205,6 @@ var
   s: WideString;
 begin
   FillChar(dbei, SizeOf(dbei), Byte(0));
-  dbei.cbSize := SizeOf(dbei);
   dbei.eventType := EVENTTYPE_MESSAGE;
   dbei.flags := Direction;
   proto := GetContactProto(hContact);
@@ -533,6 +529,7 @@ var
   tempstr: PAnsiChar;
 var
   dbei: TDBEVENTINFO;
+  evSize: integer;
   proto: AnsiString;
   pt: int_ptr;
   fsz: cardinal;
@@ -624,14 +621,14 @@ begin
         // [preMultiLine] модификатор для восприятия многострочного текста
         if DoMapFile then // Загружаем файл
         begin
-          CallService(MS_DB_SETSAFETYMODE, wParam(FALSE), 0);
+          db_set_safety_mode(0);
           case WorkPattern.IType of
             1: TextImportProcedure;
             2: BinImportProcedure;
           end; // case
         end; // DoMapFile
       finally
-        CallService(MS_DB_SETSAFETYMODE, wParam(true), 0);
+		  db_set_safety_mode(1);
         DoMessage(ITXT_THREAD_FINISH, AddedMessages, Duplicates);
         DoUnMapFile;
         RegExpr.Free;

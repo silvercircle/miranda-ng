@@ -98,8 +98,18 @@
 #define COLOR_BG_NAVAILDEFAULT	RGB(255,189,189)
 #define COLOR_TX_DEFAULT		RGB(0,0,0)
 
+#define ICO_RESET				"reset"
+#define ICO_POPUP				"popup"
+#define ICO_SOUND				"sound"
 #define ICO_NOTIFICATION_OFF	"notification_off"
 #define ICO_NOTIFICATION_ON		"notification_on"
+#define ICO_XSTATUS				"xstatus"
+#define ICO_DISABLEALL			"disable_all"
+#define ICO_ENABLEALL			"enable_all"
+#define ICO_VARIABLES			"variables"
+#define ICO_STATUS_MESSAGE		"status_message"
+#define ICO_LOGGING_XSTATUS		"logging_xstatus"
+#define ICO_LOGGING_SMSG		"logging_status_message"
 
 #define JS_PARSE_XMPP_URI		"/ParseXmppURI"
 
@@ -109,21 +119,21 @@
 
 typedef struct tagSTATUS
 {
-	TCHAR lpzMStatusText[MAX_STATUSTEXT];
-	TCHAR lpzFStatusText[MAX_STATUSTEXT];
-	TCHAR lpzUStatusText[MAX_STATUSTEXT];
-	TCHAR lpzStandardText[MAX_STANDARDTEXT];
+	wchar_t lpzMStatusText[MAX_STATUSTEXT];
+	wchar_t lpzFStatusText[MAX_STATUSTEXT];
+	wchar_t lpzUStatusText[MAX_STATUSTEXT];
+	wchar_t lpzStandardText[MAX_STANDARDTEXT];
 	char lpzSkinSoundName[MAX_SKINSOUNDNAME];
-	TCHAR lpzSkinSoundDesc[MAX_SKINSOUNDDESC];
-	TCHAR lpzSkinSoundFile[MAX_PATH];
+	wchar_t lpzSkinSoundDesc[MAX_SKINSOUNDDESC];
+	wchar_t lpzSkinSoundFile[MAX_PATH];
 	COLORREF colorBack;
 	COLORREF colorText;
 } STATUS;
 
 typedef struct {
 	MCONTACT hContact;
-	TCHAR *oldstatusmsg;
-	TCHAR *newstatusmsg;
+	wchar_t *oldstatusmsg;
+	wchar_t *newstatusmsg;
 	char *proto;
 	int compare;
 } STATUSMSGINFO;
@@ -149,9 +159,10 @@ extern HINSTANCE hInst;
 extern HGENMENU hEnableDisableMenu;
 extern STATUS StatusList[STATUS_COUNT];
 extern STATUS StatusListEx[STATUSEX_COUNT];
+extern IconItem iconList[];
 
-TCHAR* GetStr(STATUSMSGINFO *n, const TCHAR *tmplt);
-void LogSMsgToDB(STATUSMSGINFO *smi, const TCHAR *tmplt);
-void BlinkIcon(MCONTACT hContact, HICON hIcon, TCHAR *stzText);
+wchar_t* GetStr(STATUSMSGINFO *n, const wchar_t *tmplt);
+void LogSMsgToDB(STATUSMSGINFO *smi, const wchar_t *tmplt);
+void BlinkIcon(MCONTACT hContact, HICON hIcon, wchar_t *stzText);
 void PlayChangeSound(MCONTACT hContact, const char *name);
 #endif //COMMON_H

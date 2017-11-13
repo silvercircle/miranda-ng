@@ -30,7 +30,7 @@
 
 [Browse...]
 
-[Go to the "Customize -> Folders" to change settings]
+[Go to the "Options -> Customize -> Folders" to change settings]
 
 [Compress backup to zip-archive]
 
@@ -38,20 +38,22 @@
 
 [Disable popups]
 
+[Use Dropbox]
+
+[Backup profile folder]
+
 ;file \plugins\Db_autobackups\src\backup.cpp
-[Miranda NG database]
-
-[Created by:]
-
 [Backup in progress]
 
 [Copying database file...]
 
+[Uploading to Dropbox failed]
+
+[Error]
+
 [Database backed up]
 
 [Database back up in process...]
-
-[Error]
 
 ;file \plugins\Db_autobackups\src\main.cpp
 [Miranda NG databases]
@@ -102,3 +104,6 @@ sve datoteke
 [Error creating backup folder]
 
 ;file \plugins\Db_autobackups\src\stdafx.h
+;file \plugins\Db_autobackups\src\zip.cpp
+[Miranda NG [%s] database backup]
+

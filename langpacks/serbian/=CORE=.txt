@@ -1,7 +1,7 @@
 ﻿;============================================================
 ;  File: miranda32/64.exe
 ;  Module: Miranda Core
-;  Version: 0.95.5
+;  Version: 0.95.7
 ;============================================================
 ;file \src\core\stdauth\res\resource.rc
 [Authorization request]
@@ -45,151 +45,10 @@ Standardno, koristiti istu poruku opet
 Standardno, koristiti unetu poruku:
 [Use %time% for the current time, %date% for the current date]
 %date% - datum; %time% - tačno vreme
-[Status messages:]
-Statusne poruke:
 [Change %s message]
 IZmeniti poruku - "%s"
 [Closing in %d]
 Zatvaram (%d)
-;file \src\core\stdchat\res\chat.rc
-[&Send]
-&Slanje
-[&Emoticons]
-&Emotikoni
-[&Bold]
-&Bold
-[&Italic]
-&Kurziv
-[&Underline]
-&Podvučeno
-[&Color]
-B&oja
-[&Background color]
-Boja &pozadine
-[&History]
-&Istorija
-[&Filter]
-&Filter
-[&Room settings]
-Parametri so&be
-[&Show/Hide nick list]
-Prikazati/sakriti spis&ak
-[Show these events only:]
-Prikazati samo događaje:
-[Actions]
-Akcije
-[Messages]
-Poruke
-[Nick changes]
-Promene nadimka
-[Users joining]
-Pridošle korisnike
-[Users leaving]
-Otišle korisnike
-[Topic changes]
-Izmene tema
-[Status changes]
-Izmene statusa
-[Information]
-Obaveštenje
-[Disconnects]
-Prekide veze
-[User kicks]
-Izbačene korisnike
-[Notices]
-naznake
-[Options]
-Podešavanja
-[Log options]
-Log opcije
-[Log timestamp]
-Vremena loga
-[Timestamp]
-Vreme
-[Other name]
-Drugi naziv
-[Your name]
-Vaše ime
-[Enable highlighting]
-Omogući isticanje
-[Limit log text to (events):]
-Ograniči log na (događaji):
-[Trim to (KB)]
-Ograniči na (KB)
-[Words to highlight (wildcards allowed)]
-Istakni reči (dozvoljen asterisk)
-[Enable logging to disk]
-Omogući log na disku
-[Log directory]
-Log folder
-[Other]
-Ostalo
-[Add new rooms to group:]
-Dodaj nove sobe u grupu:
-[Nick list row distance (pixels):]
-Razmak između redova nadimaka (piksel):
-[Use same style as in the message log]
-Isti stil iz loga poruka
-[Use default colors]
-Standardne boje
-[Use custom colors]
-Naknadno odabrane boje
-[Popups for the Chat plugin]
-Poruke plug-ina za razgovor
-[Timeout (s)]
-Timeout (s)
-[Text]
-Tekst
-[Background]
-Pozadina
-[(Setting timeout to 0 means default setting and -1 means indefinite time)]
-(Podešavanje 0 je standardno, -1 znači neodređen period)
-[List]
-Spisak
-[&Message]
-&Poruka
-[Log]
-Log
-[Clear lo&g]
-&Obrisati log
-[Co&py all]
-Ko&piranje svega
-[Word lookup]
-Pronađi reč
-[Wikipedia]
-Vikipedija
-[Link]
-Link
-[Open a &new browser window]
-Otvoriti u &novom prozoru brauzera
-[&Open in current browser window]
-Otvoriti u &trenutnom prozoru brauzera
-[&Copy link]
-Kopiraj li&nk
-[Message]
-Poruka
-[Undo]
-Undo
-[Redo]
-Ponovo
-[Copy]
-Kopiranje
-[Cut]
-Izmesti
-[Paste]
-Ubaci
-[Select all]
-Izaberi sve
-[Clear]
-Izbriši sve
-[Tabs]
-Jezičci
-[&Close tab]
-&Zatvori jezičak
-[C&lose other tabs]
-Z&atvori ostale jezičke
-[&Open at this position]
-&Otvori na ovom mestu
 ;file \src\core\stdclist\res\resource.rc
 [Delete contact]
 Brisanje kontakta
@@ -387,16 +246,6 @@ Odeljci jednake širine
 Ivice na panelima
 [Show resize grip indicator]
 Prikaži indikator pri razvlačenju
-[Ordering:]
-Sortiranje:
-[Contact list:]
-Spisak kontakata:
-[If window is partially covered, bring it to front]
-Ako je deo prozora prekriven, prikaz svega skrivenog
-[Window:]
-prozor:
-[Contact list background:]
-Pozadina spiska kontakata
 [&Main menu]
 Glavni &meni
 [E&xit]
@@ -409,23 +258,25 @@ Glavni &meni
 &Prisutan\tCtrl+1
 [&Away\tCtrl+2]
 &Neaktivan\tCtrl+2
-[&NA\tCtrl+3]
+[&Not available\tCtrl+3]
 N&edostupan\tCtrl+3
 [Occ&upied\tCtrl+4]
 &Zauzet\tCtrl+4
-[&DND\tCtrl+5]
-Ne &Uznemiravati\tCtrl+5
+[&Do not disturb\tCtrl+5]
+Ne &uznemiravaj\tCtrl+5
 [&Free for chat\tCtrl+6]
-Spreman za &razgovor\tCtrl+7
+Spreman za &razgovor\tCtrl+6
 [&Invisible\tCtrl+7]
 Ne&vidljiv\tCtrl+7
 [On the &phone\tCtrl+8]
-Na &telefonu\tCtrl+8
+&Telefoniram\tCtrl+8
 [Out to &lunch\tCtrl+9]
 N&a ručku\tCtrl+9
 ;file \src\core\stdfile\res\resource.rc
 [Send file(s)]
 Šalji datoteke
+[&Send]
+&Slanje
 [Cancel]
 Otkazivanje
 [To:]
@@ -440,6 +291,8 @@ Ukupna veličina
 Opis:
 [&User menu]
 &Korisnički meni
+[&History]
+&Istorija
 [Incoming file transfer]
 Pristigla datoteka
 [A&ccept]
@@ -572,10 +425,6 @@ Podešavanja pasivnog režima
 Pasivni režim zbog aplikacije preko celog ekrana
 [Disable sounds on idle]
 Pasivni režim bez zvukova
-[Become idle if computer is left unattended for:]
-Pasivni režim posle:
-[Idle (auto-away):]
-Pasivni režim (auto-neaktivan):
 ;file \src\core\stdmsg\res\resource.rc
 [Automatically popup window when:]
 Odmah prikaži prozor kada:
@@ -593,8 +442,6 @@ Zasebna veličina i pozicija prozora svakog kontakta
 Poređaj novootvorene prozore
 [Show 'Send' button]
 Prikaži taster za slanje
-[Show username on top row]
-Korisničko ime u prvom redu
 [Show toolbar buttons on top row]
 Prikaži tastere opcija u prvom redu
 [Send message on double 'Enter']
@@ -623,10 +470,6 @@ Greška, protokol prijavljuje sledeće:
 usled slanja ove poruke:
 [Try again]
 Pokušaj ponovo
-[Message session]
-Razgovor
-[&Details]
-&Detalji
 [Message window event log]
 Log događaja tokom razgovora
 [Show names]
@@ -649,6 +492,14 @@ Učitaj određen broj ranijih događaja
 Učitaj broj ranijih događaja, na osnovu
 [minutes old]
 minuta starosti
+[Use a tabbed interface]
+Upotreba interfesa sa jezičcima
+[Close tab on double click]
+Dvoklik zatvara jezičak
+[Restore previously open tabs when showing the window]
+Prikaz prethodno otvorenih jezičaka po otvaranju prozora
+[Show tabs at the bottom]
+Jezičci u dnu
 [Send typing notifications to the following users when you are typing a message to them:]
 Slanje obaveštenja o kucanju poruke odabranim korisnicima
 [Show typing notifications when a user is typing a message]
@@ -661,20 +512,110 @@ Prikaži obaveštenja o kucanju poruka i kada nema otvorenih razgovora
 Žmiganje u tray-u i u spisku kontakata
 [Show balloon popup]
 Prikaži balone 
-[Save the window position for each contact]
-Zapamti položaj prozora svakog kontakta
-[Message window behavior:]
-Navike prozora za poruke
-[Messaging:]
-Komunikacija:
+[Show these events only:]
+Prikazati samo događaje:
+[Actions]
+Akcije
+[Messages]
+Poruke
+[Nick changes]
+Promene nadimka
+[Users joining]
+Pridošle korisnike
+[Users leaving]
+Otišle korisnike
+[Topic changes]
+Izmene tema
+[Status changes]
+Izmene statusa
+[Information]
+Obaveštenje
+[Disconnects]
+Prekide veze
+[User kicks]
+Izbačene korisnike
+[Notices]
+naznake
+[Options]
+Podešavanja
+[Log options]
+Log opcije
+[Log timestamp]
+Vremena loga
+[Timestamp]
+Vreme
+[Other name]
+Drugi naziv
+[Your name]
+Vaše ime
+[Enable highlighting]
+Omogući isticanje
+[Limit log text to (events):]
+Ograniči log na (događaji):
+[Trim to (KB)]
+Ograniči na (KB)
+[Words to highlight (wildcards allowed)]
+Istakni reči (dozvoljen asterisk)
+[Enable logging to disk]
+Omogući log na disku
+[Log directory]
+Log folder
+[Other]
+Ostalo
+[Add new rooms to group:]
+Dodaj nove sobe u grupu:
+[Nick list row distance (pixels):]
+Razmak između redova nadimaka (piksel):
+[Use same style as in the message log]
+Isti stil iz loga poruka
+[Use default colors]
+Standardne boje
+[Use custom colors]
+Naknadno odabrane boje
+[Popups for the Chat plugin]
+Poruke plug-ina za razgovor
+[Timeout (s)]
+Timeout (s)
+[Text]
+Tekst
+[Background]
+Pozadina
+[(Setting timeout to 0 means default setting and -1 means indefinite time)]
+(Podešavanje 0 je standardno, -1 znači neodređen period)
+[Message]
+Poruka
+[Undo]
+Undo
+[Redo]
+Ponovo
+[Copy]
+Kopiranje
+[Cut]
+Izmesti
+[Paste]
+Ubaci
+[Select all]
+Izaberi sve
+[Clear]
+Izbriši sve
+[Tabs]
+Jezičci
+[&Close tab]
+&Zatvori jezičak
+[C&lose other tabs]
+Z&atvori ostale jezičke
+[&Open at this position]
+&Otvori na ovom mestu
+[Log]
+Log
 [C&lear log]
 Izbriši &log
 [&Copy]
 &Kopiranje
+[Co&py all]
+Ko&piranje svega
 [Select &all]
 &Izaberi sve
-[&Open link]
-&Otvori link
 [Paste and send]
 Ubaci i pošalji
 [Delete]
@@ -832,8 +773,6 @@ Ovde dodaješ kontakte u listu
 Konfiguracija programa Miranda NG
 [Apply]
 Primeni
-[Switch to simple options]
-Obična podešavanja
 [Please select a subentry from the list]
 Odabir pojedinačnog unosa
 [Install database settings]
@@ -920,16 +859,6 @@ Mesto:
 Ime:
 [Enable sound events]
 Dozvoliti audio obaveštenja
-[Icons]
-Ikonice
-[Show category:]
-Kategorija
-[&Load icon set...]
-&Učitavanje kompleta ikonica...
-[&Import icons >>]
-&Uvoz ikonica >>
-[Download more icons]
-Pronađi još ikonica na Miranda NG sajtu
 [The following events are being ignored:]
 Ignorišu se događaji:
 [URLs]
@@ -972,6 +901,8 @@ U glavni odeljak ikonica
 U
 [<< &Import]
 << &Uvoz
+[Download more icons]
+Pronađi još ikonica na Miranda NG sajtu
 [To default status icons]
 U odeljak glavnih ikonica statusa
 [Logging...]
@@ -1004,15 +935,15 @@ Potvrditi SSL sertifikate
 Dolazne konekcije
 [Enable UPnP port mapping]
 Dozvoliti mapiranje portova putem UPnP
-[You will need to reconnect for the changes you have made on this page to take effect.]
-Kako bi podešavanja stupila na snagu, morate se ponovo konektovati.
+[These changes will take effect the next time you connect to the network.]
+
 [Please complete the following form to create a new user profile]
 Popunite obrazac profla i kreirajte novi profil
 [Profile]
 Profil
 [e.g., Workplace]
 Radno mesto
-[You can select a different profile driver from the default, it may offer more features or abilities, if in doubt use the default.]
+[You can select a different database driver from the default, it may offer more features or abilities, if in doubt use the default.]
 Odabir posebnog drajvera baze je dozvoljen, kao i dodatne mogućnosti istih. Bez više informacija izaberi obične.
 [e.g., dbx mmap]
 Npr. dbx map
@@ -1046,6 +977,12 @@ Dekoracija teksta
 Boja teksta
 [Choose font]
 Izbor fonta
+[Icons]
+Ikonice
+[&Load icon set...]
+&Učitavanje kompleta ikonica...
+[&Import icons >>]
+&Uvoz ikonica >>
 [Menu objects]
 Celine Menija
 [Menu items]
@@ -1118,24 +1055,6 @@ Restartujem Mirandu NG.\nMolim sačekajte...
 Konzola za prikaz greški
 [Error notifications]
 Obaveštenja o greškama
-[Headers:]
-Naslovi:
-[This font is used to display main section titles or text elements.]
-Ovaj font koristi se za prikaz većih naslova i delova teksta.
-[Normal text:]
-Običan tekst:
-[This font is used to display most text elements or section bodies.]
-Ovaj font koristi se za prikaz teksta u celosti.
-[Minor notes:]
-Manje bitne naznake:
-[This font is used to display various additional notes.]
-Ovaj font koristi se za obaveštenja i fusnote.
-[Welcome to Miranda NG's account manager!\nHere you can set up your IM accounts.\n\nSelect an account from the list on the left to see the available options. Alternatively, just click on the Plus sign underneath the list to set up a new IM account.]
-Dobrodošli u izbornik naloga Mirande NG!\nPodešavanja svakog od naloga se nalaze ovde.\nOdabir naloga levo omogućava dalja podešavanja. Ukoliko želite, klikom na znak 'plus' možete napraviti nov IM nalog.
-[Event icon legend:]
-Opis ikonica događaja
-[Choose events you wish to ignore:]
-Ignorisani događaji:
 [Font effect]
 Dekoracija teksta
 [Effect:]
@@ -1206,6 +1125,14 @@ Jezik:
 Osvežiti jezički paket
 [Download more language packs]
 Preuzimanje jezičkih paketa
+[Show in IM chats]
+
+[Show in chat rooms]
+
+[Gap between buttons:]
+
+[Hide if there isn't enough space]
+
 [Tray]
 Tray
 [&Hide/Show]
@@ -1242,14 +1169,30 @@ pronađi/dodaj
 &Dodaj na spisak
 [Send &message]
 &Slanje poruke
-[Open in &new window]
-Otvoriti &u novom prozoru
-[&Open in existing window]
-Otvoriti u &trenutnom prozoru
+[&Open link]
+&Otvori link
+[&Copy link]
+Kopiraj li&nk
 [Cancel change]
 Otkazati izmene
 [Ungroup]
 Izdvoj iz grupe
+[List]
+Spisak
+[&Message]
+&Poruka
+[Clear lo&g]
+&Obrisati log
+[Word lookup]
+Pronađi reč
+[Yandex]
+
+[Wikipedia (en)]
+
+[Google Maps]
+
+[Google Translate]
+
 ;file \src\core\stdauth\src\auth.cpp
 [%s requests authorization]
 &s zahteva autorizaciju
@@ -1316,7 +1259,183 @@ Mmm... hrana.
 neaktivnooo
 [Status]
 Status
-;file \src\core\stdchat\src\main.cpp
+;file \src\core\stdclist\src\clcfonts.cpp
+[Standard contacts]
+Klasični kontakti
+[Online contacts to whom you have a different visibility]
+Kontakti (na vezi) sa posebnim podešavanjem vidljivosti
+[Offline contacts]
+Kontakti koji nisu na vezi
+[Contacts which are 'not on list']
+Kontakti 'van spiska korisnika'
+[Group member counts]
+Broj korisnika grupe
+[Dividers]
+Razdvajanje linijom
+[Offline contacts to whom you have a different visibility]
+Kontakti (nisu na vezi) sa posebnim podešavanjem vidljivosti
+[Selected text]
+Odabran tekst
+[Hottrack text]
+Tekst 'pod kursorom'
+[Quicksearch text]
+Brzo pretraži tekst
+;file \src\core\stdclist\src\clcopts.cpp
+[Not focused]
+Van fokusa
+[Offline]
+Odsutan
+[Online]
+Prisutan
+[Away]
+Neaktivan
+[Not available]
+Nedostupan
+[Occupied]
+Zauzet
+[Do not disturb]
+Ne uznemiravaj
+[Free for chat]
+Spreman za razgovor
+[Invisible]
+Nevidljiv
+[Out to lunch]
+Na ručku
+[On the phone]
+Telefoniram
+[List background]
+Pozadina spiska
+;file \src\core\stdclist\src\clistopts.cpp
+[Global]
+Standardno
+;file \src\core\stdclist\src\cluiopts.cpp
+;file \src\core\stdcrypt\src\encrypt.cpp
+[Standard crypto provider]
+Standardni protokol enkripcije
+;file \src\core\stdemail\src\email.cpp
+[User has not registered an e-mail address]
+Korisnik nije registrovan e-mail adresom
+[Send e-mail]
+Slanje e-maila
+[&E-mail]
+
+;file \src\core\stdfile\src\file.cpp
+[File from %s]
+Datoteka od: %s
+[bytes]
+bajtova
+[&File]
+&Datoteka
+[File &transfers...]
+&Primljene/poslate datoteke
+[Incoming]
+Pristigle
+[Complete]
+Dovršene
+[Error]
+Greška
+[Denied]
+Odbijeno
+;file \src\core\stdfile\src\fileexistsdlg.cpp
+[%s file]
+%s datoteka
+[All files]
+Sve datoteke
+;file \src\core\stdfile\src\fileopts.cpp
+[Executable files]
+Izvršne datoteke
+[Events]
+Događaji
+;file \src\core\stdfile\src\filerecvdlg.cpp
+[Select folder]
+Izbor foldera
+[My received files]
+Pristigle datoteke (lokalno)
+[View user's history]
+Vidi istoriju korisnika
+[User menu]
+Korisnički meni
+[Canceled]
+Otkazano
+[This file transfer has been canceled by the other side]
+Slanje/prijem datoteke je već otkazano od strane drugog korisnika
+;file \src\core\stdfile\src\filesenddlg.cpp
+[%d files]
+%d datoteka
+[%d directories]
+%d direktorijuma
+;file \src\core\stdfile\src\filexferdlg.cpp
+[This file has not yet been scanned for viruses. Are you certain you want to open it?]
+Datoteka nije bezbedna od virusa. Potvrda otvaranja:
+[File received]
+Preuzeta datoteka
+[of]
+ukupno
+[Request sent, waiting for acceptance...]
+Zahtev je poslat, čeka se odgovor...
+[Waiting for connection...]
+Uspostavljanje veze...
+[Unable to initiate transfer.]
+Uspostavljanje veze nije moguće.
+[Contact menu]
+Meni kontakta
+[Open...]
+Otvori...
+[sec]
+sek
+[remaining]
+vremena preostalo
+[Decision sent]
+Odluka poslata
+[Connecting...]
+Uspostavljanje veze...
+[Connecting to proxy...]
+Uspostavljanje veze sa proksijem
+[Connected]
+Veza uspostavljena
+[Initializing...]
+Otpočinjanje...
+[Moving to next file...]
+Sledeća datoteka...
+[Sending...]
+Slanje...
+[Receiving...]
+Prijem...
+[File transfer denied]
+Odbijen prenos datoteke.
+[File transfer failed]
+Neuspešan prenos datoteke.
+[Transfer completed.]
+Prenos podataka završen.
+[Transfer completed, open file.]
+Prenos podataka završen, otvori datoteku.
+[Transfer completed, open folder.]
+Prenos podataka završen, otvori folder.
+[Scanning for viruses...]
+Proveravam viruse...
+[Transfer and virus scan complete]
+Prenos podataka i provera virusa dovršeni
+;file \src\core\stdfile\src\ftmanager.cpp
+[Outgoing]
+Odlazni
+;file \src\core\stdhelp\src\about.cpp
+[< Copyright]
+< Zaštita prava
+;file \src\core\stdhelp\src\help.cpp
+[&Help]
+&Pomoć
+[&About...]
+&O programu...
+[&Support]
+&Korisnička podrška
+[&Miranda NG homepage]
+&Sajt Miranda NG
+[&Report bug]
+Prijavi &grešku
+;file \src\core\stdidle\src\idle.cpp
+[Idle]
+Pasivni režim
+;file \src\core\stdmsg\src\chat_manager.cpp
 [Chat module]
 Modul za komunikaciju
 [Group chat log background]
@@ -1329,15 +1448,7 @@ Pozadina spiska korisnika
 Međulinije spiska nadimaka
 [Nick list background (selected)]
 Pozadina spiska nadimaka (odabrano)
-;file \src\core\stdchat\src\options.cpp
-[Use a tabbed interface]
-Upotreba interfesa sa jezičcima
-[Close tab on double click]
-Dvoklik zatvara jezičak
-[Restore previously open tabs when showing the window]
-Prikaz prethodno otvorenih jezičaka po otvaranju prozora
-[Show tabs at the bottom]
-Jezičci u dnu
+;file \src\core\stdmsg\src\chat_options.cpp
 [Send message by pressing the 'Enter' key]
 Slanje poruka pritiskom na 'Enter'
 [Send message by pressing the 'Enter' key twice]
@@ -1356,10 +1467,6 @@ Prikaz tastera za upravljanje prozorom za razgovor
 Prikaz tastera za ukrašavanje teksta tokom kucanja
 [Show button menus when right clicking the buttons]
 Prikaz opcija menija desnim klikom na tastere prozora
-[Show new windows cascaded]
-Poređaj novootvorene prozore
-[Save the size and position of chat rooms]
-Zapamti položaj i veličinu prozora pričaonice
 [Show the topic of the room on your contact list (if supported)]
 Prikaz teme (pričaonica) u spisku kontakata (ako je podržano)
 [Do not play sounds when the chat room is focused]
@@ -1556,8 +1663,6 @@ Poruke
 Sobe za razgovor
 [Group chats log]
 Log-ovi soba za razgovor
-[Options for using a tabbed interface]
-Opcije korišćenja interfejsa sa jezičcima
 [Appearance and functionality of chat room windows]
 Izgled i ponašanje prozora soba za razgovor
 [Appearance of the message log]
@@ -1570,50 +1675,17 @@ Odabir ikonica u log-u poruka
 Odabir ikonica u tray-u
 [Popups to display]
 Odabir balončića
-[Select folder]
-Izbor foldera
 [Message sessions]
 Celi razgovori
 [General]
 Uopšteno
 [Chat log]
 Log-ovi razgovora
+[Chat]
+
 [Popups]
 Balončići
-;file \src\core\stdchat\src\tools.cpp
-[Look up '%s':]
-Pronađi '%s':
-[No word to look up]
-Nije navedena reč za pretragu
-[&Message %s]
-&Poruka %s
-;file \src\core\stdchat\src\window.cpp
-[Insert a smiley]
-Ubaci smeška
-[Make the text bold (CTRL+B)]
-Podebljaj tekst (CTRL+B)
-[Make the text italicized (CTRL+I)]
-Ulepšaj tekst kurzivom (CTRL+I)
-[Make the text underlined (CTRL+U)]
-Podvuci tekst (CTRL+U)
-[Select a background color for the text (CTRL+L)]
-Boja pozadine teksta (CTRL+L)
-[Select a foreground color for the text (CTRL+K)]
-Boja teksta (CTRL+K)
-[Show the history (CTRL+H)]
-Prikaži raniji tok razgovora (CTRL+H)
-[Show/hide the nick list (CTRL+N)]
-Prikaži / skloni listu nadimaka (CTRL+N)
-[Control this room (CTRL+O)]
-Upravljaj sobom za razgovor (CTRL+O)
-[Enable/disable the event filter (CTRL+F)]
-Uključi / isključi filter za razgovor (CTRL+F)
-[Close current tab (CTRL+F4)]
-Zatvori aktivni jezičak (CTRL+F4)
-[Nickname]
-Nadimak
-[Unique ID]
-Jedinstveni broj (ID)
+;file \src\core\stdmsg\src\chat_window.cpp
 [%s: chat room (%u user)]
 %s: soba za razgovor (%u korisnik)
 [%s: chat room (%u users)]
@@ -1622,180 +1694,10 @@ Jedinstveni broj (ID)
 %s: razgovor
 [%s: message session (%u users)]
 %s: razgovor (%u korisnik(a))
-;file \src\core\stdclist\src\clcfonts.cpp
-[Standard contacts]
-Klasični kontakti
-[Online contacts to whom you have a different visibility]
-Kontakti (na vezi) sa posebnim podešavanjem vidljivosti
-[Offline contacts]
-Kontakti koji nisu na vezi
-[Contacts which are 'not on list']
-Kontakti 'van spiska korisnika'
-[Group member counts]
-Broj korisnika grupe
-[Dividers]
-Razdvajanje linijom
-[Offline contacts to whom you have a different visibility]
-Kontakti (nisu na vezi) sa posebnim podešavanjem vidljivosti
-[Selected text]
-Odabran tekst
-[Hottrack text]
-Tekst 'pod kursorom'
-[Quicksearch text]
-Brzo pretraži tekst
-;file \src\core\stdclist\src\clcopts.cpp
-[Not focused]
-Van fokusa
-[Offline]
-Odsutan
-[Online]
-Prisutan
-[Away]
-Neaktivan
-[NA]
-Nedostupan
-[Occupied]
-Zauzet
-[DND]
-Ne uznemiravaj
-[Free for chat]
-Spreman za razgovor
-[Invisible]
-Nevidljiv
-[Out to lunch]
-Na ručku
-[On the phone]
-Telefoniram
-[List background]
-Pozadina spiska
-;file \src\core\stdclist\src\clistopts.cpp
-[Global]
-Standardno
-;file \src\core\stdclist\src\cluiopts.cpp
-;file \src\core\stdcrypt\src\encrypt.cpp
-[Standard crypto provider]
-Standardni protokol enkripcije
-;file \src\core\stdemail\src\email.cpp
-[User has not registered an e-mail address]
-Korisnik nije registrovan e-mail adresom
-[Send e-mail]
-Slanje e-maila
-[&E-mail]
-
-;file \src\core\stdfile\src\file.cpp
-[File from %s]
-Datoteka od: %s
-[bytes]
-bajtova
-[&File]
-&Datoteka
-[File &transfers...]
-&Primljene/poslate datoteke
-[Incoming]
-Pristigle
-[Complete]
-Dovršene
-[Error]
-Greška
-[Denied]
-Odbijeno
-;file \src\core\stdfile\src\fileexistsdlg.cpp
-[%s file]
-%s datoteka
-[All files]
-Sve datoteke
-;file \src\core\stdfile\src\fileopts.cpp
-[Executable files]
-Izvršne datoteke
-[Events]
-Događaji
-;file \src\core\stdfile\src\filerecvdlg.cpp
-[My received files]
-Pristigle datoteke (lokalno)
-[View user's history]
-Vidi istoriju korisnika
-[User menu]
-Korisnički meni
-[Canceled]
-Otkazano
-[This file transfer has been canceled by the other side]
-Slanje/prijem datoteke je već otkazano od strane drugog korisnika
-;file \src\core\stdfile\src\filesenddlg.cpp
-[%d files]
-%d datoteka
-[%d directories]
-%d direktorijuma
-;file \src\core\stdfile\src\filexferdlg.cpp
-[This file has not yet been scanned for viruses. Are you certain you want to open it?]
-Datoteka nije bezbedna od virusa. Potvrda otvaranja:
-[File received]
-Preuzeta datoteka
-[of]
-ukupno
-[Request sent, waiting for acceptance...]
-Zahtev je poslat, čeka se odgovor...
-[Waiting for connection...]
-Uspostavljanje veze...
-[Unable to initiate transfer.]
-Uspostavljanje veze nije moguće.
-[Contact menu]
-Meni kontakta
-[Open...]
-Otvori...
-[sec]
-sek
-[remaining]
-vremena preostalo
-[Decision sent]
-Odluka poslata
-[Connecting...]
-Uspostavljanje veze...
-[Connecting to proxy...]
-Uspostavljanje veze sa proksijem
-[Connected]
-Veza uspostavljena
-[Initializing...]
-Otpočinjanje...
-[Moving to next file...]
-Sledeća datoteka...
-[Sending...]
-Slanje...
-[Receiving...]
-Prijem...
-[File transfer denied]
-Odbijen prenos datoteke.
-[File transfer failed]
-Neuspešan prenos datoteke.
-[Transfer completed.]
-Prenos podataka završen.
-[Transfer completed, open file.]
-Prenos podataka završen, otvori datoteku.
-[Transfer completed, open folder.]
-Prenos podataka završen, otvori folder.
-[Scanning for viruses...]
-Proveravam viruse...
-[Transfer and virus scan complete]
-Prenos podataka i provera virusa dovršeni
-;file \src\core\stdfile\src\ftmanager.cpp
-[Outgoing]
-Odlazni
-;file \src\core\stdhelp\src\about.cpp
-[< Copyright]
-< Zaštita prava
-;file \src\core\stdhelp\src\help.cpp
-[&Help]
-&Pomoć
-[&About...]
-&O programu...
-[&Support]
-&Korisnička podrška
-[&Miranda NG homepage]
-&Sajt Miranda NG
-[&Report bug]
-Prijavi &grešku
-;file \src\core\stdidle\src\idle.cpp
-[Idle]
-Pasivni režim
+[Nickname]
+Nadimak
+[Unique ID]
+Jedinstveni broj (ID)
 ;file \src\core\stdmsg\src\cmdlist.cpp
 [The message send timed out.]
 Rok poruke istekao.
@@ -1807,6 +1709,8 @@ Slanje poruke (10x10)
 ;file \src\core\stdmsg\src\msgdialog.cpp
 [Last message received on %s at %s.]
 Poslednja poruka primljena %s u %s.
+[Message session]
+Razgovor
 [%s is typing a message...]
 %s kuca poruku...
 ;file \src\core\stdmsg\src\msglog.cpp
@@ -1841,8 +1745,6 @@ Log poruke
 ** Novi kontakti **
 [** Unknown contacts **]
 ** Nepoznati kontakti **
-[Show balloon popup (unsupported system)]
-Prikaži balončiće (sistem nepodržan)
 [Messaging log]
 Log razgovora
 [Typing notify]
@@ -1854,6 +1756,40 @@ Poruka od: %s
 %s kuca poruku
 [Typing notification]
 Obaveštenje o kucanju
+[View user's history (CTRL+H)]
+Vidi istoriju korisnika (CTRL+H)
+[&Bold]
+&Bold
+[Make the text bold (CTRL+B)]
+Podebljaj tekst (CTRL+B)
+[&Italic]
+&Kurziv
+[Make the text italicized (CTRL+I)]
+Ulepšaj tekst kurzivom (CTRL+I)
+[&Underline]
+&Podvučeno
+[Make the text underlined (CTRL+U)]
+Podvuci tekst (CTRL+U)
+[&Color]
+B&oja
+[Select a foreground color for the text (CTRL+K)]
+Boja teksta (CTRL+K)
+[&Background color]
+Boja &pozadine
+[Select a background color for the text (CTRL+L)]
+Boja pozadine teksta (CTRL+L)
+[&Room settings]
+Parametri so&be
+[Control this room (CTRL+O)]
+Upravljaj sobom za razgovor (CTRL+O)
+[&Show/hide nick list]
+Prikazati/sakriti spis&ak
+[Show/hide the nick list (CTRL+N)]
+Prikaži / skloni listu nadimaka (CTRL+N)
+[&Filter]
+&Filter
+[Enable/disable the event filter (CTRL+F)]
+Uključi / isključi filter za razgovor (CTRL+F)
 [Miranda could not load the built-in message module, msftedit.dll is missing. Press 'Yes' to continue loading Miranda.]
 Miranda ne može da upotrebi sopstveni modul za poruke, ne postoji msftedit.dll. Odgovor 'Da' za nastavak učitavanja.
 [Instant messages]
@@ -1929,6 +1865,28 @@ Muško
 Žensko
 [<not specified>]
 <neodređeno>
+[Single]
+
+[Close relationships]
+
+[Engaged]
+
+[Married]
+
+[Divorced]
+
+[Separated]
+
+[Widowed]
+
+[Actively searching]
+
+[In love]
+
+[It's complicated]
+
+[In a civil union]
+
 [Summary]
 Rezime
 [Contact]
@@ -2077,7 +2035,26 @@ Naznka od: %s - %s
 Tema je '%s'
 [The topic is '%s' (set by %s)]
 Tema je '%s' (od strane: %s)
+[Look up '%s':]
+Pronađi '%s':
+[No word to look up]
+Nije navedena reč za pretragu
+[&Message %s]
+&Poruka %s
 ;file \src\mir_app\src\clcitems.cpp
+;file \src\mir_app\src\clistgroups.cpp
+[New group]
+Nova grupa
+[Are you sure you want to delete group '%s'? This operation cannot be undone.]
+Potvrdi brisanje grupe '%s' i svih zapamćenih izmena:
+[Delete group]
+Briši grupu
+[You already have a group with that name. Please enter a unique name for the group.]
+Već postoji grupa sa tim imenom. Unesi jedinstveno ime grupe.
+[Rename group]
+Promeni ime grupe
+[This group]
+Ova grupa
 ;file \src\mir_app\src\clistmod.cpp
 [Connecting]
 Povezivanje
@@ -2140,7 +2117,14 @@ Miranda nema podršku za (taj) profil!
 Miranda ne može da otvori taj profil
 [Miranda can't understand that profile]
 Miranda ne razume sadržaj datog profila
-;file \src\mir_app\src\dbini.cpp
+;file \src\mir_app\src\db_events.cpp
+[Authorization request from %s%s: %s]
+Zahtev za autorizaciju od %s%s: %s
+[You were added by %s%s]
+%s%s vas dodaje na spisak kontakata.
+[Contacts: ]
+Kontakti:
+;file \src\mir_app\src\db_ini.cpp
 [Security systems to prevent malicious changes are in place and you will be warned before every change that is made.]
 Sistem(i) zaštite za prevenciju štetnih promena su pokrenuti i obaveštavaju korisnika o svakoj promeni.
 [Security systems to prevent malicious changes are in place and you will be warned before changes that are known to be unsafe.]
@@ -2155,14 +2139,11 @@ Ova izmena ume da bude vrlo štetna.
 Ova izmena može biti štetna.
 [Invalid setting type for '%s'. The first character of every value must be b, w, d, l, s, e, u, g, h or n.]
 Nedozvoljen tip podešavanja za: '%s'. Prvi znak svake vrednosti mora biti b, w, d, l, s, e, u, g, h ili n.
-;file \src\mir_app\src\dbutils.cpp
-[Authorization request from %s%s: %s]
-Zahtev za autorizaciju od %s%s: %s
-[You were added by %s%s]
-%s%s vas dodaje na spisak kontakata.
-[Contacts: ]
-Kontakti:
 ;file \src\mir_app\src\DefaultExtraIcons.cpp
+[Homepage]
+
+[Phone/SMS]
+
 [Chat activity]
 Aktivnosti razgovora
 ;file \src\mir_app\src\extraicons.cpp
@@ -2184,7 +2165,7 @@ Sve mreže
 [Handle]
 Koristeći
 [&Find/add contacts...]
-%Pretraži/dodaj kontakte...
+&Pretraži/dodaj kontakte...
 ;file \src\mir_app\src\FontOptions.cpp
 [Failed to create file]
 Datoteka nije kreirana
@@ -2212,10 +2193,6 @@ Tekstualne datoteke
 Greška pri upisu datoteke
 [Customize]
 Podešavanja
-[Sample text]
-Primer teksta
-[Fonts]
-Fontovi
 ;file \src\mir_app\src\FontService.cpp
 [Headers]
 Zaglavlja
@@ -2223,19 +2200,6 @@ Zaglavlja
 Bazični tekst
 [Small text]
 Dodatni tekst
-;file \src\mir_app\src\groups.cpp
-[New group]
-Nova grupa
-[Are you sure you want to delete group '%s'? This operation cannot be undone.]
-Potvrdi brisanje grupe '%s' i svih zapamćenih izmena:
-[Delete group]
-Briši grupu
-[You already have a group with that name. Please enter a unique name for the group.]
-Već postoji grupa sa tim imenom. Unesi jedinstveno ime grupe.
-[Rename group]
-Promeni ime grupe
-[This group]
-Ova grupa
 ;file \src\mir_app\src\hotkey_opts.cpp
 [Browser: Back]
 
@@ -2314,12 +2278,12 @@ Pregledaj podešavanja log-a
 [Open 'Find user' dialog]
 Otvori prozor za pretragu korisnika
 ;file \src\mir_app\src\lpopts.cpp
+[built-in]
+predefinisani
 [(incompatible)]
 (nekompatibilni)
 [Unknown]
 Nepoznati
-[built-in]
-predefinisani
 [Languages]
 Jezici
 ;file \src\mir_app\src\menu_clist.cpp
@@ -2385,8 +2349,6 @@ Neuspelo dodeljivanje metakontaktu-
 [Assignment failure]
 Dodeljivanje nije uspelo
 ;file \src\mir_app\src\meta_edit.cpp
-[ID]
-
 [Protocol]
 Protokol
 [Send offline]
@@ -2442,8 +2404,6 @@ Nijedan kontakt nije na vezi.
 [Select metacontact]
 Odaberite metakontakt
 ;file \src\mir_app\src\meta_utils.cpp
-[Sender]
-Pošiljalac
 [Could not retrieve contact protocol]
 Protokol ovog kontakta ne odgovara na zahtev
 [Assignment error]
@@ -2461,10 +2421,10 @@ Neuspešan upis protokola kontakta u metakontakt
 [Could not write nickname of contact to metacontact]
 Neuspešan upis nadimka kontakta u metakontakt
 ;file \src\mir_app\src\movetogroup.cpp
-[&Move to group]
-&Stavi u grupu
 [<Root group>]
 <Glavna grupa (root)>
+[&Move to group]
+&Stavi u grupu
 ;file \src\mir_app\src\netliblog.cpp
 [Standard Netlib log]
 Tipičan Netlib log
@@ -2582,18 +2542,20 @@ UPOZORENJE! Nalog će biti izbrisan. Sva podešavanja, kontakti i istorije razgo
 Nalog je uspešno nadograđen. Miranda mora biti ponovo pokrenuta za njegovu aktivaciju.\n\nZa restart pritisnite Da, ako želite da nadogradite još neki od nalog pritisnite Ne
 [This account uses legacy protocol plugin. Use Miranda NG options dialogs to change its preferences.]
 Odabrani nalog koristi zastareli plug-in protokola. Izmene podešavanja su moguće putem opcija Mirande NG.
-[Account name must be filled.]
-Morate uneti naziv naloga
-[Account error]
-Greška s nalogom
-[Account name has to be unique. Please enter unique name.]
-Naziv naloga mora biti jedinstven. Molim unesite ponovo.
+[Welcome to Miranda NG's account manager!\nHere you can set up your IM accounts.\n\nSelect an account from the list on the left to see the available options. Alternatively, just click on the Plus sign underneath the list to set up a new IM account.]
+Dobrodošli u izbornik naloga Mirande NG!\nPodešavanja svakog od naloga se nalaze ovde.\nOdabir naloga levo omogućava dalja podešavanja. Ukoliko želite, klikom na znak 'plus' možete napraviti nov IM nalog.
 [Create new account]
 Otvaranje naloga
 [Editing account]
 Izmena naloga
 [Upgrading account]
 Nadogradnja naloga
+[Account name must be filled.]
+Morate uneti naziv naloga
+[Account error]
+Greška s nalogom
+[Account name has to be unique. Please enter unique name.]
+Naziv naloga mora biti jedinstven. Molim unesite ponovo.
 [Account is disabled. Please activate it to access options.]
 Nalog je isključen. Podešavanja će biti omogućena po uključivanju.
 [New account]
@@ -2604,12 +2566,6 @@ Izbriši nalog
 Podešavanja...
 [Upgrade account]
 Nadogradi nalog
-[Account ID]
-Jedinstveni broj (ID) naloga
-[<unknown>]
-<nepoznato>
-[Protocol is not loaded.]
-Protokol nije učitan.
 [Rename]
 Promena naziva
 [Configure]
@@ -2624,6 +2580,12 @@ Nalog je uključen. Isključiti?
 Nalog %s je obrisan.
 [You need to disable plugin to delete this account]
 Za brisanje naloga potrebno je isključiti plug-in
+[Account ID]
+Jedinstveni broj (ID) naloga
+[<unknown>]
+<nepoznato>
+[Protocol is not loaded.]
+Protokol nije učitan.
 [&Accounts...]
 &Nalozi...
 ;file \src\mir_app\src\proto_order.cpp
@@ -2736,6 +2698,12 @@ Glavne ikonice
 Zvučne datoteke
 [WAV files]
 WAV datoteke
+;file \src\mir_app\src\srmm_base.cpp
+;file \src\mir_app\src\srmm_toolbar.cpp
+[<Separator>]
+<Razdelnik>
+[Toolbar]
+
 ;file \src\mir_app\src\utils.cpp
 [Unspecified]
 Nije navedeno

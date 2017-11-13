@@ -4,7 +4,7 @@ Jabber Protocol Plugin for Miranda NG
 
 Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -24,10 +24,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "stdafx.h"
 
-int lstrcmp_null(const TCHAR *s1, const TCHAR *s2)
+int lstrcmp_null(const wchar_t *s1, const wchar_t *s2)
 {
 	if (!s1 && !s2) return 0;
 	if (!s1) return -1;
 	if (!s2) return 1;
-	return mir_tstrcmp(s1, s2);
+	return mir_wstrcmp(s1, s2);
 }

@@ -7,7 +7,6 @@
 ;============================================================
 [Database autobackuper plugin.]
 Плагін стварэння рэзервовых копій профілю.
-;file \plugins\Db_autobackups\res\db_autobackups.rc
 [Backup progress]
 Ход працэсу рэзервавання
 [Cancel]
@@ -30,7 +29,7 @@
 Захоўваць у тэчку:
 [Browse...]
 Адкрыць...
-[Go to the "Customize -> Folders" to change settings]
+[Go to the "Options -> Customize -> Folders" to change settings]
 Адкрыйце "Тонкая налада -> Тэчкі" для змены налад
 [Compress backup to zip-archive]
 Сціск рэзервовай копіі ў архіў
@@ -38,20 +37,22 @@
 Адключыць індыкатар выканання
 [Disable popups]
 Адключыць усплывальныя вокны
-;file \plugins\Db_autobackups\src\backup.cpp
-[Miranda NG database]
-Рэзервовая копія профіля
-[Created by:]
-Створана:
+[Use Dropbox]
+
+[Backup profile folder]
+
 [Backup in progress]
 Рэзерваванне падчас
 [Copying database file...]
 Капіяванне файла базы...
-[Database backed up]
-Профіль зарэзерваваны
+[Uploading to Dropbox failed]
+
 [Error]
 Памылка
-;file \plugins\Db_autobackups\src\main.cpp
+[Database backed up]
+Профіль зарэзерваваны
+[Database back up in process...]
+Рэзерваванне профілю...
 [Miranda NG databases]
 Базы данных Miranda NG
 [Compressed Miranda NG databases]
@@ -68,9 +69,10 @@
 Рэзерваванне профіля
 [Backup folder]
 Тэчка рэзервавання
-;file \plugins\Db_autobackups\src\options.cpp
 [path to Miranda root folder]
 шлях да тэчкі праграмы
+[path to folder containing Miranda profiles]
+
 [name of current Miranda profile (filename, without extension)]
 імя бягучага профіля (толькі імя, без пашырэння)
 [will return parsed string %miranda_profilesdir%\\%miranda_profilename%]
@@ -97,4 +99,5 @@
 Абярыце тэчку для рэзервовых копій
 [Error creating backup folder]
 Памылка пры стварэнні тэчкі для рэзервовага капіравання
-;file \plugins\Db_autobackups\src\stdafx.h
+[Miranda NG [%s] database backup]
+Рэзервовая копія профіля Miranda NG [%s]

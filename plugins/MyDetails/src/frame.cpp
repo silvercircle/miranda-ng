@@ -22,8 +22,8 @@ Boston, MA 02111-1307, USA.
 // Prototypes /////////////////////////////////////////////////////////////////////////////////////
 
 #define WINDOW_NAME_PREFIX		"mydetails_window"
-#define WINDOW_CLASS_NAME		_T("MyDetailsFrame")
-#define CONTAINER_CLASS_NAME	_T("MyDetailsFrameContainer")
+#define WINDOW_CLASS_NAME		L"MyDetailsFrame"
+#define CONTAINER_CLASS_NAME	L"MyDetailsFrameContainer"
 
 #define ID_FRAME_TIMER			1011
 #define ID_RECALC_TIMER			1012
@@ -33,9 +33,9 @@ Boston, MA 02111-1307, USA.
 
 #define IDC_HAND				MAKEINTRESOURCE(32649)
 
-#define DEFAULT_NICKNAME		_T("<no nickname>")
-#define DEFAULT_STATUS_MESSAGE	_T("<no status message>")
-#define DEFAULT_LISTENING_TO	_T("<nothing playing>")
+#define DEFAULT_NICKNAME		L"<no nickname>"
+#define DEFAULT_STATUS_MESSAGE	L"<no status message>"
+#define DEFAULT_LISTENING_TO	L"<nothing playing>"
 
 
 // Messages
@@ -62,13 +62,13 @@ HGENMENU hMenuShowHideFrame = 0;
 #define FONT_LISTENING_TO 4
 #define NUM_FONTS 5
 
-FontIDT font_id[NUM_FONTS];
+FontIDW font_id[NUM_FONTS];
 HFONT hFont[NUM_FONTS];
 COLORREF font_colour[NUM_FONTS];
 
 // Defaults
 char *font_settings[] = { "NicknameFont", "AccountFont", "StatusFont", "StatusMessageFont", "ListeningToFont" };
-TCHAR *font_names[] = { LPGENT("Nickname"), LPGENT("Account"), LPGENT("Status"), LPGENT("Status message"), LPGENT("Listening to") };
+wchar_t *font_names[] = { LPGENW("Nickname"), LPGENW("Account"), LPGENW("Status"), LPGENW("Status message"), LPGENW("Listening to") };
 char font_sizes[] = { 13, 8, 8, 8, 8 };
 BYTE font_styles[] = { DBFONTF_BOLD, 0, 0, DBFONTF_ITALIC, DBFONTF_ITALIC };
 COLORREF font_colors[] = { RGB(0, 0, 0), RGB(0, 0, 0), RGB(0, 0, 0), RGB(150, 150, 150), RGB(150, 150, 150) };
@@ -198,7 +198,7 @@ int ReloadFont(WPARAM, LPARAM)
 			DeleteObject(hFont[i]);
 
 		LOGFONT log_font;
-		font_colour[i] = CallService(MS_FONT_GETT, (WPARAM)&font_id[i], (LPARAM)&log_font);
+		font_colour[i] = Font_GetW(font_id[i], &log_font);
 		hFont[i] = CreateFontIndirect(&log_font);
 	}
 
@@ -208,8 +208,8 @@ int ReloadFont(WPARAM, LPARAM)
 
 int ReloadColour(WPARAM, LPARAM)
 {
-	opts.bkg_color = (COLORREF)CallService(MS_COLOUR_GET, (WPARAM)&bg_colour, 0);
-	opts.draw_avatar_border_color = (COLORREF)CallService(MS_COLOUR_GET, (WPARAM)&av_colour, 0);
+	opts.bkg_color = Colour_Get(bg_colour.group, bg_colour.name);
+	opts.draw_avatar_border_color = Colour_Get(av_colour.group, av_colour.name);
 
 	RefreshFrame();
 	return 0;
@@ -225,20 +225,20 @@ int CreateFrame()
 {
 	HDC hdc = GetDC(NULL);
 
-	ColourRegister(&bg_colour);
-	ColourRegister(&av_colour);
+	Colour_Register(&bg_colour);
+	Colour_Register(&av_colour);
 	ReloadColour(0, 0);
 	HookEvent(ME_COLOUR_RELOAD, ReloadColour);
 
 	for (int i = 0; i < NUM_FONTS; i++) {
 		memset(&font_id[i], 0, sizeof(font_id[i]));
 
-		font_id[i].cbSize = sizeof(FontIDT);
-		mir_tstrncpy(font_id[i].group, LPGENT("My details"), _countof(font_id[i].group));
-		mir_tstrncpy(font_id[i].name, font_names[i], _countof(font_id[i].name));
+		font_id[i].cbSize = sizeof(FontIDW);
+		mir_wstrncpy(font_id[i].group, LPGENW("My details"), _countof(font_id[i].group));
+		mir_wstrncpy(font_id[i].name, font_names[i], _countof(font_id[i].name));
 		mir_strncpy(font_id[i].dbSettingsGroup, MODULE_NAME, _countof(font_id[i].dbSettingsGroup));
-		mir_tstrncpy(font_id[i].backgroundName, LPGENT("Background"), _countof(font_id[i].backgroundName));
-		mir_tstrncpy(font_id[i].backgroundGroup, LPGENT("My details"), _countof(font_id[i].backgroundGroup));
+		mir_wstrncpy(font_id[i].backgroundName, LPGENW("Background"), _countof(font_id[i].backgroundName));
+		mir_wstrncpy(font_id[i].backgroundGroup, LPGENW("My details"), _countof(font_id[i].backgroundGroup));
 
 		mir_strncpy(font_id[i].prefix, font_settings[i], _countof(font_id[i].prefix));
 
@@ -246,10 +246,10 @@ int CreateFrame()
 		font_id[i].deffontsettings.size = -MulDiv(font_sizes[i], GetDeviceCaps(hdc, LOGPIXELSY), 72);
 		font_id[i].deffontsettings.style = font_styles[i];
 		font_id[i].deffontsettings.charset = DEFAULT_CHARSET;
-		mir_tstrncpy(font_id[i].deffontsettings.szFace, _T("Tahoma"), _countof(font_id[i].deffontsettings.szFace));
+		mir_wstrncpy(font_id[i].deffontsettings.szFace, L"Tahoma", _countof(font_id[i].deffontsettings.szFace));
 		font_id[i].order = i;
 		font_id[i].flags = FIDF_DEFAULTVALID;
-		FontRegisterT(&font_id[i]);
+		Font_RegisterW(&font_id[i]);
 	}
 
 	ReleaseDC(NULL, hdc);
@@ -282,7 +282,7 @@ int CreateFrame()
 		Frame.hWnd = hwnd_frame;
 		Frame.align = alTop;
 		Frame.hIcon = Skin_LoadIcon(SKINICON_OTHER_FRAME);
-		Frame.Flags = F_VISIBLE | F_SHOWTB | F_SHOWTBTIP | F_NOBORDER | F_SKINNED | F_TCHAR;
+		Frame.Flags = F_VISIBLE | F_SHOWTB | F_SHOWTBTIP | F_NOBORDER | F_SKINNED | F_UNICODE;
 		Frame.height = 100;
 		frame_id = CallService(MS_CLIST_FRAMES_ADDFRAME, (WPARAM)&Frame, 0);
 
@@ -328,12 +328,14 @@ int CreateFrame()
 		// Create menu item
 
 		CMenuItem mi;
+		mi.root = Menu_CreateRoot(MO_MAIN, LPGENW("My details"), 500010000);
+		Menu_ConfigureItem(mi.root, MCI_OPT_UID, "8C1C981C-4F28-4C4C-9121-544156210CE9");
+
 		SET_UID(mi, 0x69a43f1d, 0x6ebd, 0x4e41, 0xa6, 0xbd, 0x18, 0xea, 0xc4, 0x3, 0x90, 0x35);
-		mi.flags = CMIF_TCHAR;
-		mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("My details"), 500010000);
+		mi.flags = CMIF_UNICODE;
 		mi.position = 1;
 		mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_USERDETAILS);
-		mi.name.t = LPGENT("Show my details");
+		mi.name.w = LPGENW("Show my details");
 		mi.pszService = MODULE_NAME"/ShowHideMyDetails";
 		hMenuShowHideFrame = Menu_AddMainMenuItem(&mi);
 		Menu_ConfigureItem(hMenuShowHideFrame, MCI_OPT_EXECPARAM, -0x7FFFFFFF);
@@ -442,7 +444,7 @@ RECT GetRect(HDC hdc, RECT rc, SIZE s, UINT uFormat, int next_top, int text_left
 		uFormat &= ~DT_END_ELLIPSIS;
 
 		RECT rc_tmp = rc;
-		DrawText(hdc, _T(" ..."), 4, &rc_tmp, DT_CALCRECT | uFormat);
+		DrawText(hdc, L" ...", 4, &rc_tmp, DT_CALCRECT | uFormat);
 
 		s.cx += rc_tmp.right - rc_tmp.left;
 	}
@@ -475,13 +477,13 @@ RECT GetRect(HDC hdc, RECT rc, SIZE s, UINT uFormat, int next_top, int text_left
 	return r;
 }
 
-RECT GetRect(HDC hdc, RECT rc, const TCHAR *text, const TCHAR *def_text, Protocol *proto, UINT uFormat,
+RECT GetRect(HDC hdc, RECT rc, const wchar_t *text, const wchar_t *def_text, Protocol *proto, UINT uFormat,
 	int next_top, int text_left, bool smileys = true, bool frame = true, bool end_elipsis_on_frame = true)
 {
-	const TCHAR *tmp;
+	const wchar_t *tmp;
 
 	if (text[0] == '\0')
-		tmp = TranslateTS(def_text);
+		tmp = TranslateW(def_text);
 	else
 		tmp = text;
 
@@ -491,16 +493,16 @@ RECT GetRect(HDC hdc, RECT rc, const TCHAR *text, const TCHAR *def_text, Protoco
 	RECT r_tmp = rc;
 
 	// Only first line
-	TCHAR *tmp2 = mir_tstrdup(tmp);
-	TCHAR *pos = _tcschr(tmp2, '\r');
+	wchar_t *tmp2 = mir_wstrdup(tmp);
+	wchar_t *pos = wcschr(tmp2, '\r');
 	if (pos != NULL)
 		pos[0] = '\0';
-	pos = _tcschr(tmp2, '\n');
+	pos = wcschr(tmp2, '\n');
 	if (pos != NULL)
 		pos[0] = '\0';
 
 	if (smileys)
-		DRAW_TEXT(hdc, tmp2, (int)mir_tstrlen(tmp2), &r_tmp, uFormat | DT_CALCRECT, proto->name);
+		DRAW_TEXT(hdc, tmp2, (int)mir_wstrlen(tmp2), &r_tmp, uFormat | DT_CALCRECT, proto->name);
 	else
 		DrawText(hdc, tmp2, -1, &r_tmp, uFormat | DT_CALCRECT);
 
@@ -745,7 +747,7 @@ void CalcRectangles(HWND hwnd)
 		if (opts.show_protocol_cycle_button)
 			tmp_r.right -= 2 * ICON_SIZE;
 
-		data->proto_rect = GetRect(hdc, tmp_r, proto->description, _T(""), proto, uFormat, next_top, tmp_text_left, false, true, false);
+		data->proto_rect = GetRect(hdc, tmp_r, proto->description, L"", proto, uFormat, next_top, tmp_text_left, false, true, false);
 
 		if (opts.show_protocol_cycle_button) {
 			data->draw_proto_cycle = true;
@@ -1001,6 +1003,7 @@ HBITMAP CreateBitmap32(int cx, int cy)
 		DIB_RGB_COLORS,
 		(void **)&ptPixels,
 		NULL, 0);
+
 	return DirectBitmap;
 }
 
@@ -1018,20 +1021,20 @@ void EraseBackground(HWND hwnd, HDC hdc)
 	}
 }
 
-void DrawTextWithRect(HDC hdc, const TCHAR *text, const TCHAR *def_text, RECT rc, UINT uFormat, bool mouse_over, Protocol *proto)
+void DrawTextWithRect(HDC hdc, const wchar_t *text, const wchar_t *def_text, RECT rc, UINT uFormat, bool mouse_over, Protocol *proto)
 {
-	const TCHAR *tmp;
+	const wchar_t *tmp;
 	if (text[0] == '\0')
-		tmp = TranslateTS(def_text);
+		tmp = TranslateW(def_text);
 	else
 		tmp = text;
 
 	// Only first line
-	TCHAR *tmp2 = mir_tstrdup(tmp);
-	TCHAR *pos = _tcsrchr(tmp2, '\r');
+	wchar_t *tmp2 = mir_wstrdup(tmp);
+	wchar_t *pos = wcsrchr(tmp2, '\r');
 	if (pos != NULL)
 		pos[0] = '\0';
-	pos = _tcschr(tmp2, '\n');
+	pos = wcschr(tmp2, '\n');
 	if (pos != NULL)
 		pos[0] = '\0';
 
@@ -1052,7 +1055,7 @@ void DrawTextWithRect(HDC hdc, const TCHAR *text, const TCHAR *def_text, RECT rc
 		uFormat &= ~DT_END_ELLIPSIS;
 
 		rc_tmp = r;
-		text_height = DrawText(hdc, _T(" ..."), 4, &rc_tmp, DT_CALCRECT | uFormat);
+		text_height = DrawText(hdc, L" ...", 4, &rc_tmp, DT_CALCRECT | uFormat);
 		rc_tmp.top += (r.bottom - r.top - text_height) >> 1;
 		rc_tmp.bottom = rc_tmp.top + text_height;
 
@@ -1070,10 +1073,10 @@ void DrawTextWithRect(HDC hdc, const TCHAR *text, const TCHAR *def_text, RECT rc
 		}
 	}
 
-	DRAW_TEXT(hdc, tmp2, (int)mir_tstrlen(tmp2), &r, uFormat, proto->name);
+	DRAW_TEXT(hdc, tmp2, (int)mir_wstrlen(tmp2), &r, uFormat, proto->name);
 
 	if (mouse_over)
-		DrawText(hdc, _T(" ..."), 4, &rc_tmp, uFormat);
+		DrawText(hdc, L" ...", 4, &rc_tmp, uFormat);
 
 	SelectClipRgn(hdc, NULL);
 	DeleteObject(rgn);
@@ -1264,7 +1267,7 @@ void Draw(HWND hwnd, HDC hdc_orig)
 		SelectObject(hdc, hFont[FONT_STATUS]);
 		SetTextColor(hdc, font_colour[FONT_STATUS]);
 
-		DRAW_TEXT(hdc, proto->status_name, (int)mir_tstrlen(proto->status_name), &rc, uFormat, proto->name);
+		DRAW_TEXT(hdc, proto->status_name, (int)mir_wstrlen(proto->status_name), &rc, uFormat, proto->name);
 
 		SelectClipRgn(hdc, NULL);
 		DeleteObject(rgn);
@@ -1369,7 +1372,7 @@ void MakeHover(HWND hwnd, bool draw, bool *hover, POINT *p, RECT *r)
 
 			InvalidateRect(hwnd, NULL, FALSE);
 
-			TRACKMOUSEEVENT tme;
+			TRACKMOUSEEVENT tme = { 0 };
 			tme.cbSize = sizeof(TRACKMOUSEEVENT);
 			tme.dwFlags = TME_LEAVE;
 			tme.hwndTrack = hwnd;
@@ -1395,7 +1398,7 @@ void ShowGlobalStatusMenu(HWND hwnd, MyDetailsFrameData *data, POINT &p)
 		| (opts.draw_text_align_right ? TPM_RIGHTALIGN : TPM_LEFTALIGN), p.x, p.y, 0, hwnd, NULL);
 
 	if (ret)
-		CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(LOWORD(ret), MPCF_MAINMENU), 0);
+		Clist_MenuProcessCommand(LOWORD(ret), MPCF_MAINMENU, 0);
 }
 
 void ShowProtocolStatusMenu(HWND hwnd, MyDetailsFrameData *data, Protocol *proto, POINT &p)
@@ -1415,10 +1418,10 @@ void ShowProtocolStatusMenu(HWND hwnd, MyDetailsFrameData *data, Protocol *proto
 
 			if (mii.cch != 0) {
 				mii.cch++;
-				mii.dwTypeData = (TCHAR *)malloc(sizeof(TCHAR) * mii.cch);
+				mii.dwTypeData = (wchar_t *)malloc(sizeof(wchar_t) * mii.cch);
 				GetMenuItemInfo(menu, i, TRUE, &mii);
 
-				if (mir_tstrcmp(mii.dwTypeData, proto->description) == 0)
+				if (mir_wstrcmp(mii.dwTypeData, proto->description) == 0)
 					submenu = GetSubMenu(menu, i);
 
 				free(mii.dwTypeData);
@@ -1438,7 +1441,7 @@ void ShowProtocolStatusMenu(HWND hwnd, MyDetailsFrameData *data, Protocol *proto
 			| (opts.draw_text_align_right ? TPM_RIGHTALIGN : TPM_LEFTALIGN), p.x, p.y, 0, hwnd, NULL);
 
 		if (ret)
-			CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(LOWORD(ret), MPCF_MAINMENU), 0);
+			Clist_MenuProcessCommand(LOWORD(ret), MPCF_MAINMENU, 0);
 	}
 	else {
 		// Well, lets do it by hand
@@ -1474,8 +1477,8 @@ void ShowListeningToMenu(HWND hwnd, MyDetailsFrameData *data, Protocol *proto, P
 	TranslateMenu(submenu);
 
 	// Add this proto to menu
-	TCHAR tmp[128];
-	mir_sntprintf(tmp, TranslateT("Enable listening to for %s"), proto->description);
+	wchar_t tmp[128];
+	mir_snwprintf(tmp, TranslateT("Enable listening to for %s"), proto->description);
 
 	MENUITEMINFO mii = { 0 };
 	mii.cbSize = sizeof(mii);
@@ -1483,7 +1486,7 @@ void ShowListeningToMenu(HWND hwnd, MyDetailsFrameData *data, Protocol *proto, P
 	mii.fType = MFT_STRING;
 	mii.fState = proto->ListeningToEnabled() ? MFS_CHECKED : 0;
 	mii.dwTypeData = tmp;
-	mii.cch = (int)mir_tstrlen(tmp);
+	mii.cch = (int)mir_wstrlen(tmp);
 	mii.wID = 1;
 
 	if (!proto->CanSetListeningTo())
@@ -1543,7 +1546,7 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 		SetCycleTime(hwnd);
 		SetStatusMessageRefreshTime(hwnd);
 		{
-			TRACKMOUSEEVENT tme;
+			TRACKMOUSEEVENT tme = { 0 };
 			tme.cbSize = sizeof(TRACKMOUSEEVENT);
 			tme.dwFlags = TME_HOVER | TME_LEAVE;
 			tme.hwndTrack = hwnd;
@@ -1662,7 +1665,7 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 					mii.fMask = MIIM_ID | MIIM_TYPE;
 					mii.fType = MFT_STRING;
 					mii.dwTypeData = protocols->Get(i)->description;
-					mii.cch = (int)mir_tstrlen(protocols->Get(i)->description);
+					mii.cch = (int)mir_wstrlen(protocols->Get(i)->description);
 					mii.wID = i + 1;
 
 					if (i == data->protocol_number) {
@@ -1692,10 +1695,10 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 		break;
 
 	case WM_MEASUREITEM:
-		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
+		return Menu_MeasureItem(lParam);
 
 	case WM_DRAWITEM:
-		return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
+		return Menu_DrawItem(lParam);
 
 	case WM_CONTEXTMENU:
 		proto = protocols->Get(data->protocol_number);
@@ -1712,15 +1715,15 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				TranslateMenu(submenu);
 
 				// Add this proto to menu
-				TCHAR tmp[128];
-				mir_sntprintf(tmp, TranslateT("Set my avatar for %s..."), proto->description);
+				wchar_t tmp[128];
+				mir_snwprintf(tmp, TranslateT("Set my avatar for %s..."), proto->description);
 
 				MENUITEMINFO mii = { 0 };
 				mii.cbSize = sizeof(mii);
 				mii.fMask = MIIM_ID | MIIM_TYPE;
 				mii.fType = MFT_STRING;
 				mii.dwTypeData = tmp;
-				mii.cch = (int)mir_tstrlen(tmp);
+				mii.cch = (int)mir_wstrlen(tmp);
 				mii.wID = 1;
 
 				if (!proto->CanSetAvatar()) {
@@ -1752,15 +1755,15 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				TranslateMenu(submenu);
 
 				// Add this proto to menu
-				TCHAR tmp[128];
-				mir_sntprintf(tmp, TranslateT("Set my nickname for %s..."), proto->description);
+				wchar_t tmp[128];
+				mir_snwprintf(tmp, TranslateT("Set my nickname for %s..."), proto->description);
 
 				MENUITEMINFO mii = { 0 };
 				mii.cbSize = sizeof(mii);
 				mii.fMask = MIIM_ID | MIIM_TYPE;
 				mii.fType = MFT_STRING;
 				mii.dwTypeData = tmp;
-				mii.cch = (int)mir_tstrlen(tmp);
+				mii.cch = (int)mir_wstrlen(tmp);
 				mii.wID = 1;
 
 				if (!proto->CanSetNick()) {
@@ -1793,7 +1796,7 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 			// In status message?
 			else if (data->draw_away_msg && InsideRect(&p, &data->away_msg_rect)) {
-				TCHAR tmp[128];
+				wchar_t tmp[128];
 
 				HMENU menu = LoadMenu(hInst, MAKEINTRESOURCE(IDR_MENU1));
 				HMENU submenu = GetSubMenu(menu, 3);
@@ -1801,14 +1804,14 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 				if (protocols->CanSetStatusMsgPerProtocol()) {
 					// Add this proto to menu
-					mir_sntprintf(tmp, TranslateT("Set my status message for %s..."), proto->description);
+					mir_snwprintf(tmp, TranslateT("Set my status message for %s..."), proto->description);
 
 					MENUITEMINFO mii = { 0 };
 					mii.cbSize = sizeof(mii);
 					mii.fMask = MIIM_ID | MIIM_TYPE;
 					mii.fType = MFT_STRING;
 					mii.dwTypeData = tmp;
-					mii.cch = (int)mir_tstrlen(tmp);
+					mii.cch = (int)mir_wstrlen(tmp);
 					mii.wID = 1;
 
 					if (!proto->CanSetStatusMsg()) {
@@ -1820,14 +1823,14 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				}
 
 				// Add this to menu
-				mir_sntprintf(tmp, TranslateT("Set my status message for %s..."), pcli->pfnGetStatusModeDescription(proto->status, 0));
+				mir_snwprintf(tmp, TranslateT("Set my status message for %s..."), pcli->pfnGetStatusModeDescription(proto->status, 0));
 
 				MENUITEMINFO mii = { 0 };
 				mii.cbSize = sizeof(mii);
 				mii.fMask = MIIM_ID | MIIM_TYPE;
 				mii.fType = MFT_STRING;
 				mii.dwTypeData = tmp;
-				mii.cch = (int)mir_tstrlen(tmp);
+				mii.cch = (int)mir_wstrlen(tmp);
 				mii.wID = 2;
 
 				if (proto->status == ID_STATUS_OFFLINE) {
@@ -1882,8 +1885,8 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 					RemoveMenu(submenu, ID_DONT_CYCLE_THROUGH_PROTOS, MF_BYCOMMAND);
 
 				// Add this proto to menu
-				TCHAR tmp[128];
-				mir_sntprintf(tmp, TranslateT("Enable listening to for %s"), proto->description);
+				wchar_t tmp[128];
+				mir_snwprintf(tmp, TranslateT("Enable listening to for %s"), proto->description);
 
 				MENUITEMINFO mii = { 0 };
 				mii.cbSize = sizeof(mii);
@@ -1891,7 +1894,7 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				mii.fType = MFT_STRING;
 				mii.fState = proto->ListeningToEnabled() ? MFS_CHECKED : 0;
 				mii.dwTypeData = tmp;
-				mii.cch = (int)mir_tstrlen(tmp);
+				mii.cch = (int)mir_wstrlen(tmp);
 				mii.wID = 5;
 				if (!proto->CanSetListeningTo())
 					mii.fState |= MFS_DISABLED;
@@ -1899,14 +1902,14 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				InsertMenuItem(submenu, 0, TRUE, &mii);
 
 				// Add this to menu
-				mir_sntprintf(tmp, TranslateT("Set my status message for %s..."), pcli->pfnGetStatusModeDescription(proto->status, 0));
+				mir_snwprintf(tmp, TranslateT("Set my status message for %s..."), pcli->pfnGetStatusModeDescription(proto->status, 0));
 
 				memset(&mii, 0, sizeof(mii));
 				mii.cbSize = sizeof(mii);
 				mii.fMask = MIIM_ID | MIIM_TYPE;
 				mii.fType = MFT_STRING;
 				mii.dwTypeData = tmp;
-				mii.cch = (int)mir_tstrlen(tmp);
+				mii.cch = (int)mir_wstrlen(tmp);
 				mii.wID = 4;
 
 				if (proto->status == ID_STATUS_OFFLINE) {
@@ -1918,14 +1921,14 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 				if (protocols->CanSetStatusMsgPerProtocol()) {
 					// Add this proto to menu
-					mir_sntprintf(tmp, TranslateT("Set my status message for %s..."), proto->description);
+					mir_snwprintf(tmp, TranslateT("Set my status message for %s..."), proto->description);
 
 					memset(&mii, 0, sizeof(mii));
 					mii.cbSize = sizeof(mii);
 					mii.fMask = MIIM_ID | MIIM_TYPE;
 					mii.fType = MFT_STRING;
 					mii.dwTypeData = tmp;
-					mii.cch = (int)mir_tstrlen(tmp);
+					mii.cch = (int)mir_wstrlen(tmp);
 					mii.wID = 3;
 
 					if (!proto->CanSetStatusMsg()) {
@@ -1936,14 +1939,14 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 					InsertMenuItem(submenu, 0, TRUE, &mii);
 				}
 
-				mir_sntprintf(tmp, TranslateT("Set my nickname for %s..."), proto->description);
+				mir_snwprintf(tmp, TranslateT("Set my nickname for %s..."), proto->description);
 
 				memset(&mii, 0, sizeof(mii));
 				mii.cbSize = sizeof(mii);
 				mii.fMask = MIIM_ID | MIIM_TYPE;
 				mii.fType = MFT_STRING;
 				mii.dwTypeData = tmp;
-				mii.cch = (int)mir_tstrlen(tmp);
+				mii.cch = (int)mir_wstrlen(tmp);
 				mii.wID = 2;
 
 				if (!proto->CanSetNick()) {
@@ -1953,14 +1956,14 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 				InsertMenuItem(submenu, 0, TRUE, &mii);
 
-				mir_sntprintf(tmp, TranslateT("Set my avatar for %s..."), proto->description);
+				mir_snwprintf(tmp, TranslateT("Set my avatar for %s..."), proto->description);
 
 				memset(&mii, 0, sizeof(mii));
 				mii.cbSize = sizeof(mii);
 				mii.fMask = MIIM_ID | MIIM_TYPE;
 				mii.fType = MFT_STRING;
 				mii.dwTypeData = tmp;
-				mii.cch = (int)mir_tstrlen(tmp);
+				mii.cch = (int)mir_wstrlen(tmp);
 				mii.wID = 1;
 
 				if (!proto->CanSetAvatar()) {
@@ -2047,7 +2050,7 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 	case WM_NCMOUSELEAVE:
 	case WM_MOUSELEAVE:
 		{
-			TRACKMOUSEEVENT tme;
+			TRACKMOUSEEVENT tme = { 0 };
 			tme.cbSize = sizeof(TRACKMOUSEEVENT);
 			tme.dwFlags = TME_HOVER;
 			tme.hwndTrack = hwnd;
@@ -2065,7 +2068,7 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 	case WM_MOUSEHOVER:
 		{
-			TRACKMOUSEEVENT tme;
+			TRACKMOUSEEVENT tme = { 0 };
 			tme.cbSize = sizeof(TRACKMOUSEEVENT);
 			tme.dwFlags = TME_LEAVE;
 			tme.hwndTrack = hwnd;
@@ -2228,7 +2231,7 @@ INT_PTR HideFrameFunc(WPARAM, LPARAM)
 
 void FixMainMenu()
 {
-	Menu_ModifyItem(hMenuShowHideFrame, MyDetailsFrameVisible() ? LPGENT("Hide my details") : LPGENT("Show my details"));
+	Menu_ModifyItem(hMenuShowHideFrame, MyDetailsFrameVisible() ? LPGENW("Hide my details") : LPGENW("Show my details"));
 }
 
 #include <math.h>
@@ -2386,13 +2389,13 @@ int SettingsChangedHook(WPARAM wParam, LPARAM lParam)
 	if ((HANDLE)wParam == NULL) {
 		Protocol *proto = protocols->Get(cws->szModule);
 
-		if (!mir_strcmp(cws->szSetting, "MyHandle")
-			|| !mir_strcmp(cws->szSetting, "UIN")
-			|| !mir_strcmp(cws->szSetting, "Nick")
-			|| !mir_strcmp(cws->szSetting, "FirstName")
-			|| !mir_strcmp(cws->szSetting, "e-mail")
-			|| !mir_strcmp(cws->szSetting, "LastName")
-			|| !mir_strcmp(cws->szSetting, "JID")) {
+		if (!strcmp(cws->szSetting, "MyHandle")
+			|| !strcmp(cws->szSetting, "UIN")
+			|| !strcmp(cws->szSetting, "Nick")
+			|| !strcmp(cws->szSetting, "FirstName")
+			|| !strcmp(cws->szSetting, "e-mail")
+			|| !strcmp(cws->szSetting, "LastName")
+			|| !strcmp(cws->szSetting, "JID")) {
 			// Name changed
 			if (proto != NULL)
 				PostMessage(hwnd_frame, MWM_NICK_CHANGED, (WPARAM)proto->name, 0);
@@ -2400,7 +2403,7 @@ int SettingsChangedHook(WPARAM wParam, LPARAM lParam)
 		else if (strstr(cws->szModule, "Away"))
 			// Status message changed
 			PostMessage(hwnd_frame, MWM_STATUS_MSG_CHANGED, 0, 0);
-		else if (proto != NULL && mir_strcmp(cws->szSetting, "ListeningTo") == 0)
+		else if (proto != NULL && strcmp(cws->szSetting, "ListeningTo") == 0)
 			PostMessage(hwnd_frame, MWM_LISTENINGTO_CHANGED, (WPARAM)proto->name, 0);
 	}
 

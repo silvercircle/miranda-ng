@@ -14,9 +14,11 @@
 [Description:]
 Описание:
 [Copyright:]
-Права:
-[Contact:]
-Контакт:
+Авторские права:
+[E-mail:]
+Почта:
+[Homepage:]
+Сайт:
 [Account]
 Учётная запись
 [Name:]
@@ -93,11 +95,11 @@
 В сети
 [Away]
 Отсутствую
-[N/A]
+[Not available]
 Недоступен
 [Occupied]
 Занят
-[DND]
+[Do not disturb]
 Не беспокоить
 [Free for chat]
 Готов болтать
@@ -187,12 +189,12 @@ YAMN: сбой подключения
  - ошибка подключения
 [%s - %d new mail messages, %d total]
 %s - %d новых писем (%d всего)
-[- new mail message(s)]
-- новых писем
 [%s : %d new mail message(s), %d total]
 %s : %d новых писем (%d всего)
 [%d new mail message(s), %d total]
 %d новых писем (%d всего)
+[- new mail message(s)]
+- есть новые сообщения
 [No new mail message, %d spam(s)]
 Нет новых писем (%d спамерских)
 [Invalid]

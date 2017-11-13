@@ -24,13 +24,13 @@ BOOL gbVarsServiceExist = FALSE;
 INT interval;
 int hLangpack;
 
-TCHAR* ptszDefaultMsg[] = {
-	TranslateT("I am currently away. I will reply to you when I am back."),
-	TranslateT("I am currently very busy and can't spare any time to talk with you. Sorry..."),
-	TranslateT("I am not available right now."),
-	TranslateT("I am now doing something, I will talk to you later."),
-	TranslateT("I am on the phone right now. I will get back to you very soon."),
-	TranslateT("I am having meal right now. I will get back to you very soon.")
+wchar_t* ptszDefaultMsg[] = {
+	LPGENW("I am currently away. I will reply to you when I am back."),
+	LPGENW("I am currently very busy and can't spare any time to talk with you. Sorry..."),
+	LPGENW("I am not available right now."),
+	LPGENW("I am now doing something, I will talk to you later."),
+	LPGENW("I am on the phone right now. I will get back to you very soon."),
+	LPGENW("I am having meal right now. I will get back to you very soon.")
 };
 
 PLUGININFOEX pluginInfoEx = {
@@ -64,9 +64,9 @@ INT_PTR ToggleEnable(WPARAM, LPARAM)
 	db_set_b(NULL, protocolname, KEY_ENABLED, fEnabled);
 
 	if (fEnabled)
-		Menu_ModifyItem(hEnableMenu, LPGENT("Disable Auto&reply"), iconList[0].hIcolib);
+		Menu_ModifyItem(hEnableMenu, LPGENW("Disable Auto&reply"), iconList[0].hIcolib);
 	else
-		Menu_ModifyItem(hEnableMenu, LPGENT("Enable Auto&reply"), iconList[1].hIcolib);
+		Menu_ModifyItem(hEnableMenu, LPGENW("Enable Auto&reply"), iconList[1].hIcolib);
 	return 0;
 }
 
@@ -77,9 +77,9 @@ INT_PTR Toggle(WPARAM hContact, LPARAM)
 	on = !on;
 
 	if (on)
-		Menu_ModifyItem(hToggle, LPGENT("Turn off Autoanswer"), iconList[0].hIcolib);
+		Menu_ModifyItem(hToggle, LPGENW("Turn off Autoanswer"), iconList[0].hIcolib);
 	else
-		Menu_ModifyItem(hToggle, LPGENT("Turn on Autoanswer"), iconList[1].hIcolib);
+		Menu_ModifyItem(hToggle, LPGENW("Turn on Autoanswer"), iconList[1].hIcolib);
 	return 0;
 }
 
@@ -87,42 +87,44 @@ INT OnPreBuildContactMenu(WPARAM hContact, LPARAM)
 {
 	BOOL on = !db_get_b(hContact, protocolname, "TurnedOn", 0);
 	if (on)
-		Menu_ModifyItem(hToggle, LPGENT("Turn off Autoanswer"), iconList[0].hIcolib);
+		Menu_ModifyItem(hToggle, LPGENW("Turn off Autoanswer"), iconList[0].hIcolib);
 	else
-		Menu_ModifyItem(hToggle, LPGENT("Turn on Autoanswer"), iconList[1].hIcolib);
+		Menu_ModifyItem(hToggle, LPGENW("Turn on Autoanswer"), iconList[1].hIcolib);
 	return 0;
 }
 
 INT CheckDefaults(WPARAM, LPARAM)
 {
-	DBVARIANT dbv;
-	TCHAR *ptszDefault;
-	char szStatus[6] = { 0 };
-
 	interval = db_get_w(NULL, protocolname, KEY_REPEATINTERVAL, 300);
 
-	if (db_get_ts(NULL, protocolname, KEY_HEADING, &dbv))
+	wchar_t *ptszVal = db_get_wsa(NULL, protocolname, KEY_HEADING);
+	if (ptszVal == 0)
 		// Heading not set
-		db_set_ts(NULL, protocolname, KEY_HEADING, TranslateT("Dear %user%, the owner left the following message:"));
+		db_set_ws(NULL, protocolname, KEY_HEADING, TranslateT("Dear %user%, the owner left the following message:"));
 	else
-		db_free(&dbv);
+		mir_free(ptszVal);
 
 	for (int c = ID_STATUS_ONLINE; c < ID_STATUS_IDLE; c++) {
-		mir_snprintf(szStatus, "%d", c);
 		if (c == ID_STATUS_ONLINE || c == ID_STATUS_FREECHAT || c == ID_STATUS_INVISIBLE)
 			continue;
 		else {
-			if (db_get_ts(NULL, protocolname, szStatus, &dbv)) {
+			char szStatus[6] = { 0 };
+			mir_snprintf(szStatus, "%d", c);
+			ptszVal = db_get_wsa(NULL, protocolname, szStatus);
+			if (ptszVal == 0) {
+				wchar_t *ptszDefault;
 				if (c < ID_STATUS_FREECHAT)
 					// This mode does not have a preset message
 					ptszDefault = ptszDefaultMsg[c - ID_STATUS_ONLINE - 1];
 				else if (c > ID_STATUS_INVISIBLE)
 					ptszDefault = ptszDefaultMsg[c - ID_STATUS_ONLINE - 3];
+				else
+					ptszDefault = 0;
 				if (ptszDefault)
-					db_set_ts(NULL, protocolname, szStatus, ptszDefault);
+					db_set_ws(NULL, protocolname, szStatus, TranslateW(ptszDefault));
 			}
 			else
-				db_free(&dbv);
+				mir_free(ptszVal);
 		}
 	}
 	HookEvent(ME_CLIST_PREBUILDCONTACTMENU, OnPreBuildContactMenu);
@@ -131,9 +133,9 @@ INT CheckDefaults(WPARAM, LPARAM)
 
 	BOOL fEnabled = db_get_b(NULL, protocolname, KEY_ENABLED, 1);
 	if (fEnabled)
-		Menu_ModifyItem(hEnableMenu, LPGENT("Disable Auto&reply"), iconList[0].hIcolib);
+		Menu_ModifyItem(hEnableMenu, LPGENW("Disable Auto&reply"), iconList[0].hIcolib);
 	else
-		Menu_ModifyItem(hEnableMenu, LPGENT("Enable Auto&reply"), iconList[1].hIcolib);
+		Menu_ModifyItem(hEnableMenu, LPGENW("Enable Auto&reply"), iconList[1].hIcolib);
 	return 0;
 }
 
@@ -148,20 +150,24 @@ INT addEvent(WPARAM hContact, LPARAM hDBEvent)
 	if (status == ID_STATUS_ONLINE || status == ID_STATUS_FREECHAT || status == ID_STATUS_INVISIBLE)
 		return FALSE;
 
-	DBEVENTINFO dbei = { sizeof(dbei) };
-	db_event_get(hDBEvent, &dbei); /// detect size of msg
+	// detect size of msg
+	DBEVENTINFO dbei = {};
+	if (db_event_get(hDBEvent, &dbei))
+		return 0;
 
-	if ((dbei.eventType != EVENTTYPE_MESSAGE) || (dbei.flags == DBEF_READ))
-		return FALSE; /// we need EVENTTYPE_MESSAGE event..
-	else {	/// needed event has occured..
-		DBVARIANT dbv;
-
+	if ((dbei.eventType != EVENTTYPE_MESSAGE) || (dbei.flags == DBEF_READ)) {
+		// we need EVENTTYPE_MESSAGE event..
+		return FALSE;
+	}
+	else {
+		// needed event has occured..
 		if (!dbei.cbBlob)	/// invalid size
 			return FALSE;
 
-		if (db_get_ts(hContact, "Protocol", "p", &dbv)) // Contact with no protocol ?!!
+		wchar_t *ptszVal = db_get_wsa(hContact, "Protocol", "p");
+		if (ptszVal == NULL) // Contact with no protocol ?!!
 			return FALSE;
-		db_free(&dbv);
+		mir_free(ptszVal);
 
 		if (db_get_b(hContact, "CList", "NotOnList", 0))
 			return FALSE;
@@ -172,46 +178,44 @@ INT addEvent(WPARAM hContact, LPARAM hDBEvent)
 		if (!(dbei.flags & DBEF_SENT)) {
 			int timeBetween = time(NULL) - db_get_dw(hContact, protocolname, "LastReplyTS", 0);
 			if (timeBetween > interval || db_get_w(hContact, protocolname, "LastStatus", 0) != status) {
-				char szStatus[6] = { 0 };
-				int msgLen = 1;
+				size_t msgLen = 1;
 				int isQun = db_get_b(hContact, pszProto, "IsQun", 0);
 				if (isQun)
 					return FALSE;
 
+				char szStatus[6] = { 0 };
 				mir_snprintf(szStatus, "%d", status);
-				if (!db_get_ts(NULL, protocolname, szStatus, &dbv)) {
-					if (*dbv.ptszVal) {
-						DBVARIANT dbvHead = { 0 }, dbvNick = { 0 };
-						CMString ptszTemp;
-						TCHAR *ptszTemp2;
+				ptszVal = db_get_wsa(NULL, protocolname, szStatus);
+				if (ptszVal) {
+					if (*ptszVal) {
+						CMStringW ptszTemp;
 
-						db_get_ts(hContact, pszProto, "Nick", &dbvNick);
-						if (mir_tstrcmp(dbvNick.ptszVal, NULL) == 0) {
-							db_free(&dbvNick);
+						wchar_t *ptszNick = db_get_wsa(hContact, pszProto, "Nick");
+						if (ptszNick == 0) {
+							mir_free(ptszVal);
 							return FALSE;
 						}
 
-						msgLen += (int)mir_tstrlen(dbv.ptszVal);
-						if (!db_get_ts(NULL, protocolname, KEY_HEADING, &dbvHead)) {
-							ptszTemp = dbvHead.ptszVal;
-							ptszTemp.Replace(_T("%user%"), dbvNick.ptszVal);
-							msgLen += (int)(mir_tstrlen(ptszTemp));
+						msgLen += mir_wstrlen(ptszVal);
+
+						wchar_t *ptszHead = db_get_wsa(NULL, protocolname, KEY_HEADING);
+						if (ptszHead != NULL) {
+							ptszTemp = ptszHead;
+							ptszTemp.Replace(L"%user%", ptszNick);
+							msgLen += mir_wstrlen(ptszTemp);
+							mir_free(ptszHead);
 						}
-						ptszTemp2 = (TCHAR*)mir_alloc(sizeof(TCHAR) * (msgLen + 5));
-						mir_sntprintf(ptszTemp2, msgLen + 5, _T("%s\r\n\r\n%s"), ptszTemp.c_str(), dbv.ptszVal);
+
+						wchar_t *ptszTemp2 = (wchar_t*)mir_alloc(sizeof(wchar_t) * (msgLen + 5));
+						mir_snwprintf(ptszTemp2, msgLen + 5, L"%s\r\n\r\n%s", ptszTemp.c_str(), ptszVal);
 						if (ServiceExists(MS_VARS_FORMATSTRING)) {
-							FORMATINFO fi = { 0 };
-							fi.cbSize = sizeof(fi);
-							fi.flags = FIF_TCHAR;
-							fi.tszFormat = ptszTemp2;
-							ptszTemp = (TCHAR*)CallService(MS_VARS_FORMATSTRING, (WPARAM)&fi, 0);
+							ptszTemp = variables_parse(ptszTemp2, 0, hContact);
 						}
-						else ptszTemp = Utils_ReplaceVarsT(ptszTemp2);
+						else ptszTemp = Utils_ReplaceVarsW(ptszTemp2);
 
 						T2Utf pszUtf(ptszTemp);
-						CallContactService(hContact, PSS_MESSAGE, 0, pszUtf);
+						ProtoChainSend(hContact, PSS_MESSAGE, 0, pszUtf);
 
-						dbei.cbSize = sizeof(dbei);
 						dbei.eventType = EVENTTYPE_MESSAGE;
 						dbei.flags = DBEF_UTF | DBEF_SENT; //DBEF_READ;
 						dbei.szModule = pszProto;
@@ -221,12 +225,9 @@ INT addEvent(WPARAM hContact, LPARAM hDBEvent)
 						db_event_add(hContact, &dbei);
 
 						mir_free(ptszTemp2);
-						if (dbvNick.ptszVal)
-							db_free(&dbvNick);
-						if (dbvHead.ptszVal)
-							db_free(&dbvHead);
+						mir_free(ptszNick);
 					}
-					db_free(&dbv);
+					mir_free(ptszVal);
 				}
 			}
 		}
@@ -239,14 +240,14 @@ INT addEvent(WPARAM hContact, LPARAM hDBEvent)
 
 IconItemT iconList[] =
 {
-	{ LPGENT("Disable Auto&reply"), "Disable Auto&reply", IDI_OFF },
-	{ LPGENT("Enable Auto&reply"), "Enable Auto&reply", IDI_ON }
+	{ LPGENW("Disable Auto&reply"), "Disable Auto&reply", IDI_OFF },
+	{ LPGENW("Enable Auto&reply"), "Enable Auto&reply", IDI_ON }
 };
 
 extern "C" int __declspec(dllexport)Load(void)
 {
 	mir_getLP(&pluginInfoEx);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	CreateServiceFunction(protocolname"/ToggleEnable", ToggleEnable);
 	CreateServiceFunction(protocolname"/ToggleAutoanswer", Toggle);
@@ -255,13 +256,13 @@ extern "C" int __declspec(dllexport)Load(void)
 
 	SET_UID(mi, 0xac1c64a, 0x82ca, 0x4845, 0x86, 0x89, 0x59, 0x76, 0x12, 0x74, 0x72, 0x7b);
 	mi.position = 500090000;
-	mi.name.t = _T("");
+	mi.name.w = L"";
 	mi.pszService = protocolname"/ToggleEnable";
 	hEnableMenu = Menu_AddMainMenuItem(&mi);
 
 	SET_UID(mi, 0xb290cccd, 0x4ecc, 0x475e, 0x87, 0xcb, 0x51, 0xf4, 0x3b, 0xc3, 0x44, 0x9c);
 	mi.position = -0x7FFFFFFF;
-	mi.name.t = _T("");
+	mi.name.w = L"";
 	mi.pszService = protocolname"/ToggleAutoanswer";
 	hToggle = Menu_AddContactMenuItem(&mi);
 
@@ -270,7 +271,7 @@ extern "C" int __declspec(dllexport)Load(void)
 	HookEvent(ME_DB_EVENT_ADDED, addEvent);
 	HookEvent(ME_SYSTEM_MODULESLOADED, CheckDefaults);
 
-	Icon_RegisterT(hinstance, _T("Simple Auto Replier"), iconList, _countof(iconList));
+	Icon_RegisterT(hinstance, L"Simple Auto Replier", iconList, _countof(iconList));
 
 	return 0;
 }

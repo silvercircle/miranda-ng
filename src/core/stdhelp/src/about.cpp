@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "stdafx.h"
 
-#define STR_VERSION_FORMAT _T("Miranda NG\nv%S")
+#define STR_VERSION_FORMAT L"Miranda NG\nv%S"
 
 INT_PTR CALLBACK DlgProcAbout(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -32,7 +32,7 @@ INT_PTR CALLBACK DlgProcAbout(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 	switch (msg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
-		{	TCHAR filename[MAX_PATH], *productCopyright;
+		{	wchar_t filename[MAX_PATH], *productCopyright;
 			DWORD unused;
 			DWORD verInfoSize;
 			UINT blockSize;
@@ -42,21 +42,21 @@ INT_PTR CALLBACK DlgProcAbout(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 			verInfoSize = GetFileVersionInfoSize(filename, &unused);
 			pVerInfo = mir_alloc(verInfoSize);
 			GetFileVersionInfo(filename, 0, verInfoSize, pVerInfo);
-			VerQueryValue(pVerInfo, _T("\\StringFileInfo\\000004b0\\LegalCopyright"), (LPVOID*)&productCopyright, &blockSize);
+			VerQueryValue(pVerInfo, L"\\StringFileInfo\\000004b0\\LegalCopyright", (LPVOID*)&productCopyright, &blockSize);
 			SetDlgItemText(hwndDlg, IDC_DEVS, productCopyright);
 			mir_free(pVerInfo);
 		}
 		{
 			char productVersion[56];
-			CallService(MS_SYSTEM_GETVERSIONTEXT, _countof(productVersion), (LPARAM)productVersion);
+			Miranda_GetVersionText(productVersion, _countof(productVersion));
 
-			TCHAR str[64];
-			mir_sntprintf(str, STR_VERSION_FORMAT, productVersion);
+			wchar_t str[64];
+			mir_snwprintf(str, STR_VERSION_FORMAT, productVersion);
 			SetDlgItemText(hwndDlg, IDC_HEADERBAR, str);
 		}
 		ShowWindow(GetDlgItem(hwndDlg, IDC_CREDITSFILE), SW_HIDE);
 		{
-			HRSRC   hResInfo = FindResource(hInst, MAKEINTRESOURCE(IDR_CREDITS), _T("TEXT"));
+			HRSRC   hResInfo = FindResource(hInst, MAKEINTRESOURCE(IDR_CREDITS), L"TEXT");
 			DWORD   ResSize = SizeofResource(hInst, hResInfo);
 			HGLOBAL hRes = LoadResource(hInst, hResInfo);
 			char*   pszMsg = (char*)LockResource(hRes);
@@ -65,11 +65,11 @@ INT_PTR CALLBACK DlgProcAbout(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 				char* pszMsgt = (char*)alloca(ResSize + 1);
 				memcpy(pszMsgt, pszMsg, ResSize); pszMsgt[ResSize] = 0;
 
-				TCHAR *ptszMsg;
+				wchar_t *ptszMsg;
 				if (ResSize >=3 && pszMsgt[0] == '\xef' && pszMsgt[1] == '\xbb' && pszMsgt[2] == '\xbf')
-					ptszMsg = Utf8DecodeT(pszMsgt + 3);
+					ptszMsg = Utf8DecodeW(pszMsgt + 3);
 				else
-					ptszMsg = mir_a2t_cp(pszMsgt, 1252);
+					ptszMsg = mir_a2u_cp(pszMsgt, 1252);
 
 				SetDlgItemText(hwndDlg, IDC_CREDITSFILE, ptszMsg);
 				UnlockResource(pszMsg);
@@ -77,7 +77,7 @@ INT_PTR CALLBACK DlgProcAbout(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPar
 			}
 			FreeResource(hRes);
 		}
-		Window_SetIcon_IcoLib(hwndDlg, SKINICON_OTHER_MIRANDA);
+		Window_SetSkinIcon_IcoLib(hwndDlg, SKINICON_OTHER_MIRANDA);
 		return TRUE;
 
 	case WM_COMMAND:

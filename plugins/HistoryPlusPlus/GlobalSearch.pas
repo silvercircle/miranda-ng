@@ -443,7 +443,7 @@ begin
 
   ContactList := TObjectList.Create;
 
-  ilContacts.Handle := CallService(MS_CLIST_GETICONSIMAGELIST, 0, 0);
+  ilContacts.Handle := Clist_GetImageList();
   // delphi 2006 doesn't save toolbar's flat property in dfm if it is True
   // delphi 2006 doesn't save toolbar's edgeborder property in dfm
   ToolBar.Flat := True;
@@ -530,11 +530,9 @@ begin
     else
     begin
       li.Caption := LastAddedContact.Name;
-      // li.Caption := CurContactName;
       Inc(ContactsFound);
     end;
-    li.ImageIndex := CallService(MS_CLIST_GETCONTACTICON, CurContact, 0);
-    // meTest.Lines.Add(CurContactName+' icon is '+IntToStr(CallService(MS_CLIST_GETCONTACTICON,CurContact,0)));
+    li.ImageIndex := cli^.pfnGetContactIcon(CurContact);
     li.Data := Pointer(CurContact);
   end;
 
@@ -1674,23 +1672,20 @@ begin
         inherited;
         if Message.Result <> 0 then
           exit;
-        Message.Result := CallService(MS_CLIST_MENUPROCESSCOMMAND,
-          MAKEWPARAM(Message.WParamLo, MPCF_CONTACTMENU), UserMenuContact);
+        Message.Result := Clist_MenuProcessCommand(Message.WParamLo, MPCF_CONTACTMENU, UserMenuContact);
         exit;
       end;
     WM_MEASUREITEM:
       if Self.UserMenu <> 0 then
       begin
-        Message.Result := CallService(MS_CLIST_MENUMEASUREITEM, Message.wParam,
-          Message.LParam);
+        Message.Result := Menu_MeasureItem(Message.LParam);
         if Message.Result <> 0 then
           exit;
       end;
     WM_DRAWITEM:
       if Self.UserMenu <> 0 then
       begin
-        Message.Result := CallService(MS_CLIST_MENUDRAWITEM, Message.wParam,
-          Message.LParam);
+        Message.Result := Menu_DrawItem(Message.LParam);
         if Message.Result <> 0 then
           exit;
       end;

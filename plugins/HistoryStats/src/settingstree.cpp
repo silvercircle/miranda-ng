@@ -23,14 +23,14 @@ SettingsTree::SettingsTree(const ext::string& config) :
 void SettingsTree::clear()
 {
 	m_Keys.clear();
-	setKey(_T(""));
+	setKey(L"");
 }
 
 void SettingsTree::fromString(const ext::string& config)
 {
 	m_Keys.clear();
 
-	ext::string::size_type i = 0;
+	size_t i = 0;
 	ext::string curKey;
 
 	while (i < config.length()) {
@@ -45,13 +45,13 @@ void SettingsTree::fromString(const ext::string& config)
 			while (i < config.length() && config[i] != '}') {
 				if (config[i] == ':') {
 					curSetting = curVal;
-					curVal = _T("");
+					curVal = L"";
 				}
 				else if (config[i] == ';') {
 					vals[curSetting] = curVal;
 
-					curSetting = _T("");
-					curVal = _T("");
+					curSetting = L"";
+					curVal = L"";
 				}
 				else if (config[i] == '\\') {
 					++i;
@@ -62,24 +62,24 @@ void SettingsTree::fromString(const ext::string& config)
 				++i;
 			}
 
-			curKey = _T("");
+			curKey = L"";
 		}
 		else curKey += config[i];
 
 		++i;
 	}
 
-	setKey(_T(""));
+	setKey(L"");
 }
 
 ext::string SettingsTree::toString() const
 {
-	static const TCHAR* replaces[5][2] = {
-		{ _T("\\"), _T("\\\\") },
-		{ _T("{"), _T("\\{") },
-		{ _T("}"), _T("\\}") },
-		{ _T(":"), _T("\\:") },
-		{ _T(";"), _T("\\;") }
+	static const wchar_t* replaces[5][2] = {
+		{ L"\\", L"\\\\" },
+		{ L"{", L"\\{" },
+		{ L"}", L"\\}" },
+		{ L":", L"\\:" },
+		{ L";", L"\\;" }
 	};
 
 	ext::string data;
@@ -89,12 +89,12 @@ ext::string SettingsTree::toString() const
 		const ValueMap& vals = i->second;
 
 		data += i->first;
-		data += _T("{");
+		data += L"{";
 
 		citer_each_(ValueMap, j, vals)
 		{
 			data += j->first;
-			data += _T(":");
+			data += L":";
 
 			ext::string tempSecond = j->second;
 
@@ -104,16 +104,16 @@ ext::string SettingsTree::toString() const
 			}
 
 			data += tempSecond;
-			data += _T(";");
+			data += L";";
 		}
 
-		data += _T("}");
+		data += L"}";
 	}
 
 	return data;
 }
 
-void SettingsTree::setKey(const TCHAR* key)
+void SettingsTree::setKey(const wchar_t* key)
 {
 	m_CurKey = key;
 
@@ -125,32 +125,32 @@ void SettingsTree::setKey(const TCHAR* key)
 		m_pCurValues = NULL;
 }
 
-bool SettingsTree::readBool(const TCHAR* setting, bool errorValue) const
+bool SettingsTree::readBool(const wchar_t* setting, bool errorValue) const
 {
 	if (m_pCurValues) {
 		ValueMap::iterator i = m_pCurValues->find(setting);
 
 		if (i != m_pCurValues->end()) {
-			return (i->second == _T("y"));
+			return (i->second == L"y");
 		}
 	}
 
 	return errorValue;
 }
 
-int SettingsTree::readInt(const TCHAR* setting, int errorValue) const
+int SettingsTree::readInt(const wchar_t* setting, int errorValue) const
 {
 	if (m_pCurValues) {
 		ValueMap::iterator i = m_pCurValues->find(setting);
 
 		if (i != m_pCurValues->end())
-			return _ttoi(i->second.c_str());
+			return _wtoi(i->second.c_str());
 	}
 
 	return errorValue;
 }
 
-int SettingsTree::readIntRanged(const TCHAR* setting, int errorValue, int minValue, int maxValue) const
+int SettingsTree::readIntRanged(const wchar_t* setting, int errorValue, int minValue, int maxValue) const
 {
 	int value = readInt(setting, errorValue);
 	if (minValue <= value && value <= maxValue)
@@ -159,7 +159,7 @@ int SettingsTree::readIntRanged(const TCHAR* setting, int errorValue, int minVal
 	return errorValue;
 }
 
-ext::string SettingsTree::readStr(const TCHAR* setting, const TCHAR* errorValue) const
+ext::string SettingsTree::readStr(const wchar_t* setting, const wchar_t* errorValue) const
 {
 	if (m_pCurValues) {
 		ValueMap::iterator i = m_pCurValues->find(setting);
@@ -171,28 +171,28 @@ ext::string SettingsTree::readStr(const TCHAR* setting, const TCHAR* errorValue)
 	return errorValue;
 }
 
-void SettingsTree::writeBool(const TCHAR* setting, bool value)
+void SettingsTree::writeBool(const wchar_t* setting, bool value)
 {
 	makeKeyValid();
 
-	(*m_pCurValues)[setting] = value ? _T("y") : _T("n");
+	(*m_pCurValues)[setting] = value ? L"y" : L"n";
 }
 
-void SettingsTree::writeInt(const TCHAR* setting, int value)
+void SettingsTree::writeInt(const wchar_t* setting, int value)
 {
 	makeKeyValid();
 
 	(*m_pCurValues)[setting] = utils::intToString(value);
 }
 
-void SettingsTree::writeStr(const TCHAR* setting, const TCHAR* value)
+void SettingsTree::writeStr(const wchar_t* setting, const wchar_t* value)
 {
 	makeKeyValid();
 
 	(*m_pCurValues)[setting] = value;
 }
 
-bool SettingsTree::hasSetting(const TCHAR* setting) const
+bool SettingsTree::hasSetting(const wchar_t* setting) const
 {
 	if (m_pCurValues) {
 		ValueMap::const_iterator i = m_pCurValues->find(setting);
@@ -203,7 +203,7 @@ bool SettingsTree::hasSetting(const TCHAR* setting) const
 	return false;
 }
 
-bool SettingsTree::delSetting(const TCHAR* setting)
+bool SettingsTree::delSetting(const wchar_t* setting)
 {
 	if (m_pCurValues) {
 		ValueMap::iterator i = m_pCurValues->find(setting);

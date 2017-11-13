@@ -36,7 +36,6 @@ Boston, MA 02111-1307, USA.
 #include <m_clist.h>
 #include <m_options.h>
 #include <m_xstatus.h>
-#include <m_clui.h>
 #include <m_genmenu.h>
 #include <m_hotkeys.h>
 #include <m_extraicons.h>
@@ -48,14 +47,14 @@ Boston, MA 02111-1307, USA.
 #include <m_toptoolbar.h>
 #include <m_listeningto.h>
 
-#include "..\utils\mir_options.h"
-#include "..\utils\mir_buffer.h"
-#include "..\utils\utf8_helpers.h"
+#include "../../utils/mir_options.h"
+#include "../../utils/mir_buffer.h"
+#include "../../utils/utf8_helpers.h"
 
 #include "music.h"
 #include "resource.h"
 #include "options.h"
-#include "Version.h"
+#include "version.h"
 
 // Prototypes ///////////////////////////////////////////////////////////////////////////
 
@@ -88,15 +87,15 @@ void StartTimer();
 struct ProtocolInfo
 {
 	char proto[128];
-	TCHAR account[128];
+	wchar_t account[128];
 	HGENMENU hMenu;
 	int old_xstatus;
-	TCHAR old_xstatus_name[1024];
-	TCHAR old_xstatus_message[1024];
+	wchar_t old_xstatus_name[1024];
+	wchar_t old_xstatus_message[1024];
 };
 
 ProtocolInfo *GetProtoInfo(char *proto);
-void m_log(const TCHAR *function, const TCHAR *fmt, ...);
+void m_log(const wchar_t *function, const wchar_t *fmt, ...);
 
 
 static bool IsEmpty(const char *str)
@@ -108,10 +107,25 @@ static bool IsEmpty(const WCHAR *str)
 	return str == NULL || str[0] == 0;
 }
 
-#define DUP(_X_) ( IsEmpty(_X_) ? NULL : mir_tstrdup(_X_))
-#define DUPD(_X_, _DEF_) ( IsEmpty(_X_) ? mir_tstrdup(_DEF_) : mir_tstrdup(_X_))
-#define U2T(_X_) ( IsEmpty(_X_) ? NULL : mir_u2t(_X_))
-#define U2TD(_X_, _DEF_) ( IsEmpty(_X_) ? mir_u2t(_DEF_) : mir_u2t(_X_))
+#define DUP(_X_) ( IsEmpty(_X_) ? NULL : mir_wstrdup(_X_))
+#define DUPD(_X_, _DEF_) ( IsEmpty(_X_) ? mir_wstrdup(_DEF_) : mir_wstrdup(_X_))
+#define U2T(_X_) ( IsEmpty(_X_) ? NULL : mir_wstrdup(_X_))
+#define U2TD(_X_, _DEF_) ( IsEmpty(_X_) ? mir_wstrdup(_DEF_) : mir_wstrdup(_X_))
+#define UNKNOWN(_X_) ( _X_ == NULL || _X_[0] == '\0' ? opts.unknown : _X_ )
 
+void InitServices();
+
+void ReplaceTemplate(Buffer<wchar_t> *out, MCONTACT hContact, wchar_t *templ, wchar_t **vars, int numVars);
+
+wchar_t* VariablesParseInfo(ARGUMENTSINFO *ai);
+wchar_t* VariablesParseType(ARGUMENTSINFO *ai);
+wchar_t* VariablesParseArtist(ARGUMENTSINFO *ai);
+wchar_t* VariablesParseAlbum(ARGUMENTSINFO *ai);
+wchar_t* VariablesParseTitle(ARGUMENTSINFO *ai);
+wchar_t* VariablesParseTrack(ARGUMENTSINFO *ai);
+wchar_t* VariablesParseYear(ARGUMENTSINFO *ai);
+wchar_t* VariablesParseGenre(ARGUMENTSINFO *ai);
+wchar_t* VariablesParseLength(ARGUMENTSINFO *ai);
+wchar_t* VariablesParsePlayer(ARGUMENTSINFO *ai);
 
 #endif // __COMMONS_H__

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 struct DlgChangePassParam
 {
 	CDb3Mmap *db;
-	TCHAR newPass[100];
+	wchar_t newPass[100];
 	int wrongPass;
 };
 
@@ -81,7 +81,7 @@ static INT_PTR CALLBACK sttEnterPassword(HWND hwndDlg, UINT uMsg, WPARAM wParam,
 		else SetDlgItemText(hwndDlg, IDC_HEADERBAR, TranslateT("Please type in your password"));
 
 		oldLangID = 0;
-		SetTimer(hwndDlg, 1, 200, NULL);
+		SetTimer(hwndDlg, 1, 200, nullptr);
 		LanguageChanged(hwndDlg);
 		return TRUE;
 
@@ -101,6 +101,19 @@ static INT_PTR CALLBACK sttEnterPassword(HWND hwndDlg, UINT uMsg, WPARAM wParam,
 
 		case IDOK:
 			GetDlgItemText(hwndDlg, IDC_USERPASS, param->newPass, _countof(param->newPass));
+			
+			wchar_t tszPath[MAX_PATH];
+			PathToAbsoluteW(L"\\mirandaboot.ini", tszPath);
+			if (GetPrivateProfileInt(L"Database", L"RememberPassword", 0, tszPath)) {
+				CREDENTIAL cred = { 0 };
+				cred.Type = CRED_TYPE_GENERIC;
+				cred.TargetName = L"Miranda NG/Database";
+				cred.CredentialBlobSize = DWORD(mir_wstrlen(param->newPass) * sizeof(wchar_t) + sizeof(wchar_t));
+				cred.CredentialBlob = (LPBYTE)param->newPass;
+				cred.Persist = CRED_PERSIST_LOCAL_MACHINE;
+				CredWrite(&cred, 0);
+			}
+
 			EndDialog(hwndDlg, IDOK);
 		}
 		break;
@@ -121,11 +134,17 @@ bool CDb3Mmap::EnterPassword(const BYTE *pKey, const size_t keyLen)
 {
 	DlgChangePassParam param = { this };
 	while (true) {
-		// Esc pressed
-		if (IDOK != DialogBoxParam(g_hInst, MAKEINTRESOURCE(IDD_LOGIN), 0, sttEnterPassword, (LPARAM)&param))
-			return false;
+		PCREDENTIAL pCred;
+		if (param.wrongPass == 0 && CredRead(L"Miranda NG/Dbx_mmap", CRED_TYPE_GENERIC, 0, &pCred)) {
+			m_crypto->setPassword(T2Utf((wchar_t*)pCred->CredentialBlob));
+			CredFree(pCred);
+		}
+		else {
+			if (IDOK != DialogBoxParam(g_hInst, MAKEINTRESOURCE(IDD_LOGIN), 0, sttEnterPassword, (LPARAM)&param))
+				return false;
+			m_crypto->setPassword(T2Utf(param.newPass));
+		}
 
-		m_crypto->setPassword(T2Utf(param.newPass));
 		if (m_crypto->setKey(pKey, keyLen)) {
 			m_bUsesPassword = true;
 			SecureZeroMemory(&param, sizeof(param));
@@ -141,7 +160,7 @@ bool CDb3Mmap::EnterPassword(const BYTE *pKey, const size_t keyLen)
 static bool CheckOldPassword(HWND hwndDlg, CDb3Mmap *db)
 {
 	if (db->usesPassword()) {
-		TCHAR buf[100];
+		wchar_t buf[100];
 		GetDlgItemText(hwndDlg, IDC_OLDPASS, buf, _countof(buf));
 		if (!db->m_crypto->checkPassword(T2Utf(buf))) {
 			SetDlgItemText(hwndDlg, IDC_HEADERBAR, TranslateT("Wrong old password entered!"));
@@ -154,7 +173,7 @@ static bool CheckOldPassword(HWND hwndDlg, CDb3Mmap *db)
 static INT_PTR CALLBACK sttChangePassword(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	DlgChangePassParam *param = (DlgChangePassParam*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
-	TCHAR buf[100];
+	wchar_t buf[100];
 
 	switch (uMsg) {
 	case WM_INITDIALOG:
@@ -165,7 +184,7 @@ static INT_PTR CALLBACK sttChangePassword(HWND hwndDlg, UINT uMsg, WPARAM wParam
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
 
 		oldLangID = 0;
-		SetTimer(hwndDlg, 1, 200, NULL);
+		SetTimer(hwndDlg, 1, 200, nullptr);
 		LanguageChanged(hwndDlg);
 		return TRUE;
 
@@ -192,22 +211,22 @@ static INT_PTR CALLBACK sttChangePassword(HWND hwndDlg, UINT uMsg, WPARAM wParam
 			}
 			else {
 				param->db->WriteSignature(dbSignatureU);
-				param->db->SetPassword(NULL);
+				param->db->SetPassword(nullptr);
 				param->db->StoreKey();
 				EndDialog(hwndDlg, IDREMOVE);
 			}
 			break;
 
 		case IDOK:
-			TCHAR buf2[100];
+			wchar_t buf2[100];
 			GetDlgItemText(hwndDlg, IDC_USERPASS1, buf2, _countof(buf2));
-			if (mir_tstrlen(buf2) < 3) {
+			if (mir_wstrlen(buf2) < 3) {
 				SetDlgItemText(hwndDlg, IDC_HEADERBAR, TranslateT("Password is too short!"));
 				goto LBL_Error;
 			}
 
 			GetDlgItemText(hwndDlg, IDC_USERPASS2, buf, _countof(buf));
-			if (mir_tstrcmp(buf2, buf)) {
+			if (mir_wstrcmp(buf2, buf)) {
 				SetDlgItemText(hwndDlg, IDC_HEADERBAR, TranslateT("Passwords do not match!"));
 				goto LBL_Error;
 			}
@@ -229,7 +248,7 @@ static INT_PTR CALLBACK sttChangePassword(HWND hwndDlg, UINT uMsg, WPARAM wParam
 
 	case WM_DESTROY:
 		KillTimer(hwndDlg, 1);
-		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
+		Window_FreeIcon_IcoLib(hwndDlg);
 	}
 
 	return FALSE;
@@ -288,7 +307,7 @@ static int OnOptionsInit(PVOID obj, WPARAM wParam, LPARAM)
 	odp.hInstance = g_hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONS);
 	odp.flags = ODPF_BOLDGROUPS;
-	odp.pszTitle = LPGEN("Database");
+	odp.szTitle.a = LPGEN("Database");
 	odp.pfnDlgProc = DlgProcOptions;
 	odp.dwInitParam = (LPARAM)obj;
 	Options_AddPage(wParam, &odp);
@@ -313,17 +332,13 @@ static int OnModulesLoaded(PVOID obj, WPARAM, LPARAM)
 	CMenuItem mi;
 
 	// main menu item
-	SET_UID(mi, 0x3a93aa5e, 0xe731, 0x445e, 0x8d, 0x3b, 0x6d, 0x2c, 0xdd, 0xde, 0xde, 0xe7);
-	mi.name.t = LPGENT("Database");
-	mi.position = 500000000;
-	mi.flags = CMIF_TCHAR;
-	mi.hIcolibItem = iconList[0].hIcolib;
-	HGENMENU hMenuRoot = Menu_AddMainMenuItem(&mi);
+	mi.root = Menu_CreateRoot(MO_MAIN, LPGENW("Database"), 500000000, iconList[0].hIcolib);
+	Menu_ConfigureItem(mi.root, MCI_OPT_UID, "F7C5567C-D1EE-484B-B4F6-24677A5AAAEF");
 
 	SET_UID(mi, 0x50321866, 0xba1, 0x46dd, 0xb3, 0xa6, 0xc3, 0xcc, 0x55, 0xf2, 0x42, 0x9e);
+	mi.flags = CMIF_UNICODE;
 	mi.hIcolibItem = iconList[1].hIcolib;
-	mi.name.t = db->GetMenuTitle();
-	mi.root = hMenuRoot;
+	mi.name.w = db->GetMenuTitle();
 	mi.pszService = MS_DB_CHANGEPASSWORD;
 	hSetPwdMenu = Menu_AddMainMenuItem(&mi);
 	return 0;

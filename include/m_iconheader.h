@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-2007 Miranda ICQ/IM project,
 Copyright (c) 2007 Artem Shpynov
 
@@ -27,15 +27,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef M_ICONHEADER_H__
 #define M_ICONHEADER_H__ 1
 
-#define MIRANDAICOTABCLASS _T("MirandaIcoTabClass")
+#define MIRANDAICOTABCLASS L"MirandaIcoTabClass"
 
 #define MITCF_SHAREDICON	0x01
 #define MITCF_UNICODE		0x02
-#ifdef _UNICODE
-	#define	MITCF_TCHAR		MITCF_UNICODE
-#else
-	#define	MITCF_TCHAR		0
-#endif
 
 #define ITCM_FIRST			(WM_USER+1024)
 #define ITCM_LAST			(ITCM_FIRST+64)
@@ -53,10 +48,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef struct {
 	HICON	hIcon;
 	union {
-		TCHAR	*tcsName;
-		TCHAR	*lptzName;
+		wchar_t	*tcsName;
+		wchar_t	*lptzName;
 		char	*lpzName;
-		WCHAR	*lpwzName;
+		wchar_t	*lpwzName;
 	};
 	DWORD	flag;
 	LPARAM	data;
@@ -71,10 +66,10 @@ typedef struct {
 #define MIcoTab_GetItemData(hwnd, idx)	\
 	(SendMessage((hwnd), ITCM_GETITEMDATA, (idx), 0))
 
-static __forceinline void MIcoTab_AddItem(HWND hwnd, TCHAR *lptzName, HICON hIcon, LPARAM data, BOOL bSharedIcon)
+static __forceinline void MIcoTab_AddItem(HWND hwnd, wchar_t *lptzName, HICON hIcon, LPARAM data, BOOL bSharedIcon)
 {
 	MIcoTab mit = {0};
-	mit.flag = (bSharedIcon?MITCF_SHAREDICON:0)|MITCF_TCHAR;
+	mit.flag = (bSharedIcon?MITCF_SHAREDICON:0)| MITCF_UNICODE;
 	mit.hIcon = hIcon;
 	mit.tcsName = lptzName;
 	mit.data = data;

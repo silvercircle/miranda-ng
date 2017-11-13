@@ -43,8 +43,8 @@
 Помилки
 [Suppress error messages]
 Ігнорувати помилки
-[Display using Popup or OSD plugin]
-Викор. плагін Popup або OSD
+[Display using popup or OSD plugin]
+Викор. сплив вікна або OSD
 [Expert options]
 Режим експерта
 [Disable download protection]
@@ -133,8 +133,8 @@
 Затримка сплив. вікна
 [Delay]
 Затримка
-[From Popup plugin]
-За замовчанням
+[From popup plugin]
+З плагіна сплив. вікон
 [Permanent]
 Постійно
 [Preview]

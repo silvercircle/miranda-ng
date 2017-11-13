@@ -5,9 +5,9 @@
  * ColTimeline
  */
 
-ColTimeline::ColTimeline()
-	: m_nSource(0), m_nSourceType(2), m_nIgnoreOld(0), m_bDetail(true), m_nDays(7),
-	m_hSource(NULL), m_hIgnoreOld(NULL), m_hDetail(NULL), m_hDays(NULL)
+ColTimeline::ColTimeline() : m_nSource(0), m_nSourceType(2), m_nIgnoreOld(0), m_bDetail(true), 
+	m_nDays(7), m_hSource(NULL), m_hIgnoreOld(NULL), m_hDetail(NULL), m_hDays(NULL),
+	m_nTimelineWidth(0), m_nFirstDay(0), m_nLastDay(0)
 {
 }
 
@@ -43,28 +43,28 @@ void ColTimeline::impl_configWrite(SettingsTree& settings) const
 void ColTimeline::impl_configToUI(OptionsCtrl& Opt, OptionsCtrl::Item hGroup)
 {
 	m_hSource    = Opt.insertCombo(hGroup, TranslateT("Data source"));
-	m_hIgnoreOld = Opt.insertEdit(hGroup, TranslateT("Drop everything older than (days, 0=no limit)"), _T(""), OptionsCtrl::OCF_NUMBER);
+	m_hIgnoreOld = Opt.insertEdit(hGroup, TranslateT("Drop everything older than (days, 0=no limit)"), L"", OptionsCtrl::OCF_NUMBER);
 	m_hDetail    = Opt.insertCheck(hGroup, TranslateT("Details for every bar (tooltip)"));
-	m_hDays      = Opt.insertEdit (hGroup, TranslateT("Number of days to group"), _T(""), OptionsCtrl::OCF_NUMBER);
+	m_hDays      = Opt.insertEdit (hGroup, TranslateT("Number of days to group"), L"", OptionsCtrl::OCF_NUMBER);
 
-	static const TCHAR* sourceTexts[] = {
-		LPGENT("Characters (incoming)"),
-		LPGENT("Characters (outgoing)"),
-		LPGENT("Characters (all)"),
-		LPGENT("Characters (in/out ratio)"),
-		LPGENT("Messages (incoming)"),
-		LPGENT("Messages (outgoing)"),
-		LPGENT("Messages (all)"),
-		LPGENT("Messages (in/out ratio)"),
-		LPGENT("Chats (incoming)"),
-		LPGENT("Chats (outgoing)"),
-		LPGENT("Chats (all)"),
-		LPGENT("Chats (in/out ratio)"),
+	static const wchar_t* sourceTexts[] = {
+		LPGENW("Characters (incoming)"),
+		LPGENW("Characters (outgoing)"),
+		LPGENW("Characters (all)"),
+		LPGENW("Characters (in/out ratio)"),
+		LPGENW("Messages (incoming)"),
+		LPGENW("Messages (outgoing)"),
+		LPGENW("Messages (all)"),
+		LPGENW("Messages (in/out ratio)"),
+		LPGENW("Chats (incoming)"),
+		LPGENW("Chats (outgoing)"),
+		LPGENW("Chats (all)"),
+		LPGENW("Chats (in/out ratio)"),
 	};
 
 	array_each_(i, sourceTexts)
 	{
-		Opt.addComboItem(m_hSource, TranslateTS(sourceTexts[i]));
+		Opt.addComboItem(m_hSource, TranslateW(sourceTexts[i]));
 	}
 
 	Opt.setComboSelected(m_hSource   , 4 * m_nSource + m_nSourceType);
@@ -96,7 +96,7 @@ int ColTimeline::impl_configGetRestrictions(ext::string* pDetails) const
 
 ext::string ColTimeline::impl_contactDataGetUID() const
 {
-	return ext::str(ext::format(_T("timeline-|")) % m_nSource);
+	return ext::str(ext::format(L"timeline-|") % m_nSource);
 }
 
 void ColTimeline::impl_contactDataPrepare(Contact& contact) const
@@ -168,20 +168,20 @@ Column::StyleList ColTimeline::impl_outputGetAdditionalStyles(IDProvider& idp)
 	{
 		m_CSS = idp.getID();
 
-		l.push_back(StylePair(_T("div.") + m_CSS, _T("position: relative; left: 50%; margin-left: -") + utils::intToString(m_nTimelineWidth / 2) + _T("px; width: ") + utils::intToString(m_nTimelineWidth) + _T("px; height: 49px;")));
+		l.push_back(StylePair(L"div." + m_CSS, L"position: relative; left: 50%; margin-left: -" + utils::intToString(m_nTimelineWidth / 2) + L"px; width: " + utils::intToString(m_nTimelineWidth) + L"px; height: 49px;"));
 		
 		if (m_nSourceType != 3)
 		{
-			l.push_back(StylePair(_T("div.") + m_CSS + _T(" div"),     _T("position: absolute; top: 0px; width: 3px; height: 49px; overflow: hidden;")));
-			l.push_back(StylePair(_T("div.") + m_CSS + _T(" div div"), _T("position: absolute; left: 0px; width: 3px; background-color: ") + utils::colorToHTML(con::ColorBar) + _T(";")));
-			l.push_back(StylePair(_T("div.") + m_CSS + _T(" div.l"),   _T("position: absolute; top: 24px; left: 0px; height: 1px; width: ") + utils::intToString(m_nTimelineWidth) + _T("px; background-color: ") + utils::colorToHTML(con::ColorBarLine) + _T("; z-index: 9;")));
+			l.push_back(StylePair(L"div." + m_CSS + L" div",     L"position: absolute; top: 0px; width: 3px; height: 49px; overflow: hidden;"));
+			l.push_back(StylePair(L"div." + m_CSS + L" div div", L"position: absolute; left: 0px; width: 3px; background-color: " + utils::colorToHTML(con::ColorBar) + L";"));
+			l.push_back(StylePair(L"div." + m_CSS + L" div.l",   L"position: absolute; top: 24px; left: 0px; height: 1px; width: " + utils::intToString(m_nTimelineWidth) + L"px; background-color: " + utils::colorToHTML(con::ColorBarLine) + L"; z-index: 9;"));
 		}
 		else
 		{
-			l.push_back(StylePair(_T("div.") + m_CSS + _T(" div"),       _T("position: absolute; top: 0px; width: 3px; height: 49px; overflow: hidden; z-index: 9;")));
-			l.push_back(StylePair(_T("div.") + m_CSS + _T(" div div.o"), _T("position: absolute; left: 0px; width: 3px; background-color: ") + utils::colorToHTML(con::ColorOut) + _T(";")));
-			l.push_back(StylePair(_T("div.") + m_CSS + _T(" div div.i"), _T("position: absolute; top: 24px; left: 0px; width: 3px; background-color: ") + utils::colorToHTML(con::ColorIn) + _T(";")));
-			l.push_back(StylePair(_T("div.") + m_CSS + _T(" div.l"),     _T("position: absolute; top: 24px; left: 0px; height: 1px; width: ") + utils::intToString(m_nTimelineWidth) + _T("px; background-color: ") + utils::colorToHTML(con::ColorIOLine) + _T("; z-index: 8;")));
+			l.push_back(StylePair(L"div." + m_CSS + L" div",       L"position: absolute; top: 0px; width: 3px; height: 49px; overflow: hidden; z-index: 9;"));
+			l.push_back(StylePair(L"div." + m_CSS + L" div div.o", L"position: absolute; left: 0px; width: 3px; background-color: " + utils::colorToHTML(con::ColorOut) + L";"));
+			l.push_back(StylePair(L"div." + m_CSS + L" div div.i", L"position: absolute; top: 24px; left: 0px; width: 3px; background-color: " + utils::colorToHTML(con::ColorIn) + L";"));
+			l.push_back(StylePair(L"div." + m_CSS + L" div.l",     L"position: absolute; top: 24px; left: 0px; height: 1px; width: " + utils::intToString(m_nTimelineWidth) + L"px; background-color: " + utils::colorToHTML(con::ColorIOLine) + L"; z-index: 8;"));
 		}
 	}
 
@@ -190,27 +190,27 @@ Column::StyleList ColTimeline::impl_outputGetAdditionalStyles(IDProvider& idp)
 
 void ColTimeline::impl_outputRenderHeader(ext::ostream& tos, int row, int rowSpan) const
 {
-	static const TCHAR* szSourceDesc[] = {
-		LPGENT("incoming characters"),
-		LPGENT("outgoing characters"),
-		LPGENT("all characters"),
-		LPGENT("in/out ratio of characters"),
-		LPGENT("incoming messages"),
-		LPGENT("outgoing messages"),
-		LPGENT("all messages"),
-		LPGENT("in/out ratio of messages"),
-		LPGENT("incoming chats"),
-		LPGENT("outgoing chats"),
-		LPGENT("all chats"),
-		LPGENT("in/out ratio of chats"),
+	static const wchar_t* szSourceDesc[] = {
+		LPGENW("incoming characters"),
+		LPGENW("outgoing characters"),
+		LPGENW("all characters"),
+		LPGENW("in/out ratio of characters"),
+		LPGENW("incoming messages"),
+		LPGENW("outgoing messages"),
+		LPGENW("all messages"),
+		LPGENW("in/out ratio of messages"),
+		LPGENW("incoming chats"),
+		LPGENW("outgoing chats"),
+		LPGENW("all chats"),
+		LPGENW("in/out ratio of chats"),
 	};
 
 	if (row == 1)
 	{
 		ext::string strTitle = str(ext::kformat(TranslateT("Timeline for #{data}"))
-			% _T("#{data}") * TranslateTS(szSourceDesc[4 * m_nSource + m_nSourceType]));
+			% L"#{data}" * TranslateW(szSourceDesc[4 * m_nSource + m_nSourceType]));
 
-		writeRowspanTD(tos, getCustomTitle(TranslateT("Timeline"), strTitle) + _T("<div style=\"width: ") + utils::intToString(m_nTimelineWidth) + _T("px;\"></div>"), row, 1, rowSpan);
+		writeRowspanTD(tos, getCustomTitle(TranslateT("Timeline"), strTitle) + L"<div style=\"width: " + utils::intToString(m_nTimelineWidth) + L"px;\"></div>", row, 1, rowSpan);
 	}
 }
 
@@ -271,7 +271,7 @@ void ColTimeline::outputRenderRowInOut(ext::ostream& tos, const Contact& contact
 
 	if (usePNG())
 	{
-		tos << _T("<td class=\"img_middle\">");
+		tos << L"<td class=\"img_middle\">";
 
 		// draw graph
 		Canvas canvas(m_nTimelineWidth, 49);
@@ -311,16 +311,16 @@ void ColTimeline::outputRenderRowInOut(ext::ostream& tos, const Contact& contact
 		
 		if (getStatistic()->newFilePNG(canvas, strFinalFile))
 		{
-			tos << _T("<img src=\"") << strFinalFile << _T("\"/>");
+			tos << L"<img src=\"" << strFinalFile << L"\" alt=\"\" />";
 		}
 
-		tos << _T("</td>") << ext::endl;
+		tos << L"</td>" << ext::endl;
 	}
 	else
 	{
-		tos << _T("<td class=\"bars_middle\">")
-			<< _T("<div class=\"") << m_CSS << _T("\">")
-			<< _T("<div class=\"l\"></div>") << ext::endl;
+		tos << L"<td class=\"bars_middle\">"
+			<< L"<div class=\"" << m_CSS << L"\">"
+			<< L"<div class=\"l\"></div>" << ext::endl;
 
 		for (curDay = m_nFirstDay; curDay <= m_nLastDay; curDay += m_nDays)
 		{
@@ -342,42 +342,42 @@ void ColTimeline::outputRenderRowInOut(ext::ostream& tos, const Contact& contact
 			{
 				int rightDay = min(curDay + m_nDays - 1, m_nLastDay);
 
-				tos << _T("<div title=\"");
+				tos << L"<div title=\"";
 
 				if (rightDay != curDay)
 				{
 					tos	<< utils::htmlEscape(ext::str(ext::kformat(TranslateT("[#{start_date}-#{end_date}] #{amount}"))
-							% _T("#{start_date}") * utils::timestampToDate(curDay * 86400)
-							% _T("#{end_date}") * utils::timestampToDate(rightDay * 86400)
-							% _T("#{amount}") * utils::intToGrouped(part_top)));
+							% L"#{start_date}" * utils::timestampToDate(curDay * 86400)
+							% L"#{end_date}" * utils::timestampToDate(rightDay * 86400)
+							% L"#{amount}" * utils::intToGrouped(part_top)));
 				}
 				else
 				{
 					tos	<< utils::htmlEscape(ext::str(ext::kformat(TranslateT("[#{date}] #{amount}"))
-							% _T("#{date}") * utils::timestampToDate(curDay * 86400)
-							% _T("#{amount}") * utils::intToGrouped(part_top)));
+							% L"#{date}" * utils::timestampToDate(curDay * 86400)
+							% L"#{amount}" * utils::intToGrouped(part_top)));
 				}
 
-				tos	<< _T("\" style=\"left: ")
-					<< (3 * ((curDay - m_nFirstDay) / m_nDays))	<< _T("px;\">");
+				tos	<< L"\" style=\"left: "
+					<< (3 * ((curDay - m_nFirstDay) / m_nDays))	<< L"px;\">";
 			}
 			else if (bar_len != 0)
 			{
-				tos << _T("<div style=\"left: ") << (3 * ((curDay - m_nFirstDay) / m_nDays)) << _T("px;\">");
+				tos << L"<div style=\"left: " << (3 * ((curDay - m_nFirstDay) / m_nDays)) << L"px;\">";
 			}
 
 			if (bar_len != 0)
 			{
-				tos << _T("<div style=\"top: ") << (24 - bar_len) << _T("px; height: ") << (1 + 2 * bar_len) << _T("px;\"></div>");
+				tos << L"<div style=\"top: " << (24 - bar_len) << L"px; height: " << (1 + 2 * bar_len) << L"px;\"></div>";
 			}
 
 			if (m_bDetail || bar_len != 0)
 			{
-				tos << _T("</div>") << ext::endl;
+				tos << L"</div>" << ext::endl;
 			}
 		}
 
-		tos << _T("</div></td>") << ext::endl;
+		tos << L"</div></td>" << ext::endl;
 	}
 }
 
@@ -389,7 +389,7 @@ void ColTimeline::outputRenderRowRatio(ext::ostream& tos, const Contact& contact
 
 	if (usePNG())
 	{
-		tos << _T("<td class=\"img_middle\">");
+		tos << L"<td class=\"img_middle\">";
 
 		// draw graph
 		Canvas canvas(m_nTimelineWidth, 49);
@@ -446,16 +446,16 @@ void ColTimeline::outputRenderRowRatio(ext::ostream& tos, const Contact& contact
 		
 		if (getStatistic()->newFilePNG(canvas, strFinalFile))
 		{
-			tos << _T("<img src=\"") << strFinalFile << _T("\"/>");
+			tos << L"<img src=\"" << strFinalFile << L"\" alt=\"\" />";
 		}
 
-		tos << _T("</td>") << ext::endl;
+		tos << L"</td>" << ext::endl;
 	}
 	else
 	{
-		tos << _T("<td class=\"bars_middle\">")
-			<< _T("<div class=\"") << m_CSS << _T("\">")
-			<< _T("<div class=\"l\"></div>") << ext::endl;
+		tos << L"<td class=\"bars_middle\">"
+			<< L"<div class=\"" << m_CSS << L"\">"
+			<< L"<div class=\"l\"></div>" << ext::endl;
 
 		for (curDay = m_nFirstDay; curDay <= m_nLastDay; curDay += m_nDays)
 		{
@@ -486,47 +486,47 @@ void ColTimeline::outputRenderRowRatio(ext::ostream& tos, const Contact& contact
 			{
 				int rightDay = min(curDay + m_nDays - 1, m_nLastDay);
 
-				tos << _T("<div title=\"");
+				tos << L"<div title=\"";
 
 				if (rightDay != curDay)
 				{
 					tos << utils::htmlEscape(ext::str(ext::kformat(TranslateT("[#{start_date}-#{end_date}] #{out_amount} (out) / #{in_amount} (in)"))
-							% _T("#{start_date}") * utils::timestampToDate(curDay * 86400)
-							% _T("#{end_date}") * utils::timestampToDate(rightDay * 86400)
-							% _T("#{out_amount}") * utils::intToGrouped(part_out)
-							% _T("#{in_amount}") * utils::intToGrouped(part_in)));
+							% L"#{start_date}" * utils::timestampToDate(curDay * 86400)
+							% L"#{end_date}" * utils::timestampToDate(rightDay * 86400)
+							% L"#{out_amount}" * utils::intToGrouped(part_out)
+							% L"#{in_amount}" * utils::intToGrouped(part_in)));
 				}
 				else
 				{
 					tos << utils::htmlEscape(ext::str(ext::kformat(TranslateT("[#{date}] #{out_amount} (out) / #{in_amount} (in)"))
-							% _T("#{date}") * utils::timestampToDate(curDay * 86400)
-							% _T("#{out_amount}") * utils::intToGrouped(part_out)
-							% _T("#{in_amount}") * utils::intToGrouped(part_in)));
+							% L"#{date}" * utils::timestampToDate(curDay * 86400)
+							% L"#{out_amount}" * utils::intToGrouped(part_out)
+							% L"#{in_amount}" * utils::intToGrouped(part_in)));
 				}
 
-				tos << _T("\" style=\"left: ")
-					<< (3 * ((curDay - m_nFirstDay) / m_nDays)) << _T("px;\">");
+				tos << L"\" style=\"left: "
+					<< (3 * ((curDay - m_nFirstDay) / m_nDays)) << L"px;\">";
 			}
 			else if (bar_len != 0)
 			{
-				tos << _T("<div style=\"left: ") << (3 * ((curDay - m_nFirstDay) / m_nDays)) << _T("px;\">");
+				tos << L"<div style=\"left: " << (3 * ((curDay - m_nFirstDay) / m_nDays)) << L"px;\">";
 			}
 
 			if (bar_len < 0)
 			{
-				tos << _T("<div class=\"i\" style=\"height: ") << -bar_len << _T("px;\"></div>");
+				tos << L"<div class=\"i\" style=\"height: " << -bar_len << L"px;\"></div>";
 			}
 			else if (bar_len > 0)
 			{
-				tos << _T("<div class=\"o\" style=\"top: ") << (25 - bar_len) << _T("px; height: ") << bar_len << _T("px;\"></div>");
+				tos << L"<div class=\"o\" style=\"top: " << (25 - bar_len) << L"px; height: " << bar_len << L"px;\"></div>";
 			}
 
 			if (m_bDetail || bar_len != 0)
 			{
-				tos << _T("</div>") << ext::endl;
+				tos << L"</div>" << ext::endl;
 			}
 		}
 
-		tos << _T("</div></td>") << ext::endl;
+		tos << L"</div></td>" << ext::endl;
 	}
 }

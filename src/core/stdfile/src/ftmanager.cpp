@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -268,7 +268,7 @@ static INT_PTR CALLBACK FtMgrDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 			HWND hwndTab = GetDlgItem(hwnd, IDC_TABS);
 
 			TranslateDialogDefault(hwnd);
-			Window_SetIcon_IcoLib(hwnd, SKINICON_EVENT_FILE);
+			Window_SetSkinIcon_IcoLib(hwnd, SKINICON_EVENT_FILE);
 
 			dat = (struct TFtMgrData *)mir_calloc(sizeof(struct TFtMgrData));
 

@@ -1,7 +1,7 @@
 ﻿;============================================================
 ;  File: miranda32/64.exe
 ;  Module: Miranda Core
-;  Version: 0.95.5
+;  Version: 0.95.7
 ;============================================================
 [Authorization request]
 Запит авторизації
@@ -43,148 +43,10 @@
 Використ. це повідомлення як стандартне:
 [Use %time% for the current time, %date% for the current date]
 %date% - нинішня дата; %time% - поточний час
-[Status messages:]
-Статусні повідомлення:
 [Change %s message]
 Змінити повідомлення "%s"
 [Closing in %d]
 Закриття (%d)
-[&Send]
-Над&іслати
-[&Emoticons]
-Смайли
-[&Bold]
-&Жирний
-[&Italic]
-&Курсив
-[&Underline]
-&Підкреслений
-[&Color]
-&Колір
-[&Background color]
-Колір фону
-[&History]
-&Історія
-[&Filter]
-Фільтр
-[&Room settings]
-&Налаштування кімнати
-[&Show/Hide nick list]
-&Показати/сховати список
-[Show these events only:]
-Показувати лише:
-[Actions]
-Дії
-[Messages]
-Повідомлення
-[Nick changes]
-Зміни ніків
-[Users joining]
-Входи до чату
-[Users leaving]
-Виходи з чату
-[Topic changes]
-Зміни теми
-[Status changes]
-Зміни статусів
-[Information]
-Інформація
-[Disconnects]
-Відключення
-[User kicks]
-Стусани
-[Notices]
-Приватні повідомл.
-[Options]
-Налаштування
-[Log options]
-Налаштування журналу
-[Log timestamp]
-Формат дати
-[Timestamp]
-Час
-[Other name]
-Імена інших
-[Your name]
-Ваше ім'я
-[Enable highlighting]
-Увімкнути підсвічування
-[Limit log text to (events):]
-Кількість подій у журналі:
-[Trim to (KB)]
-Обрізати до (КБ)
-[Words to highlight (wildcards allowed)]
-Підсвічувати слова (дозволені маски)
-[Enable logging to disk]
-Записувати журнал на диск
-[Log directory]
-Папка журналу
-[Other]
-Інше
-[Add new rooms to group:]
-Додавати кімнати до групи:
-[Nick list row distance (pixels):]
-Відстань між рядками (пікселі):
-[Use same style as in the message log]
-Використ. стиль журналу повідомлень
-[Use default colors]
-Стандартні кольори
-[Use custom colors]
-Вказати кольори
-[Popups for the Chat plugin]
-Спливаючі вікна чату
-[Timeout (s)]
-Затримка (с)
-[Text]
-Текст
-[Background]
-Фон
-[(Setting timeout to 0 means default setting and -1 means indefinite time)]
-(0 = стандартне значення, -1 = безкінечно)
-[List]
-Список
-[&Message]
-Повідомлення
-[Log]
-Журнал
-[Clear lo&g]
-&Очистити журнал
-[Co&py all]
-Коп&іювати все
-[Word lookup]
-Пошук слова
-[Link]
-Посилання
-[Open a &new browser window]
-Відкрити в новому вікні
-[&Open in current browser window]
-Відкрити в поточному вікні
-[&Copy link]
-Копіювати по&силання
-[Message]
-Повідомлення
-[Undo]
-Скасувати
-[Redo]
-Повторити
-[Copy]
-Копіювати
-[Cut]
-Вирізати
-[Paste]
-Вставити
-[Select all]
-Вибрати все
-[Clear]
-Очистити
-[Tabs]
-Вкладки
-[&Close tab]
-&Закрити вкладку
-[C&lose other tabs]
-З&акрити інші вкладки
-[&Open at this position]
-Від&крити на цій позиції
 [Delete contact]
 Видалити контакт
 [No]
@@ -381,16 +243,6 @@
 Бордюр на панелях
 [Show resize grip indicator]
 Індикатор зміни розміру
-[Ordering:]
-Впорядкування:
-[Contact list:]
-Список контактів:
-[If window is partially covered, bring it to front]
-Якщо вікно частково перекрите, помістити його наверх
-[Window:]
-Вікно:
-[Contact list background:]
-Фон списку контактів:
 [&Main menu]
 Головне меню
 [E&xit]
@@ -403,11 +255,11 @@
 В &мережі\tCtrl+1
 [&Away\tCtrl+2]
 &Відсутній\tCtrl+2
-[&NA\tCtrl+3]
+[&Not available\tCtrl+3]
 Не&доступний\tCtrl+3
 [Occ&upied\tCtrl+4]
 &Зайнятий\tCtrl+4
-[&DND\tCtrl+5]
+[&Do not disturb\tCtrl+5]
 Не т&урбувати\tCtrl+5
 [&Free for chat\tCtrl+6]
 &Готовий до чату\tCtrl+6
@@ -419,6 +271,8 @@
 Обід&аю\tCtrl+9
 [Send file(s)]
 Надіслати файл(и)
+[&Send]
+Над&іслати
 [Cancel]
 Скасувати
 [To:]
@@ -433,6 +287,8 @@
 Опис:
 [&User menu]
 &Меню користувача
+[&History]
+&Історія
 [Incoming file transfer]
 Вхідний файл
 [A&ccept]
@@ -563,10 +419,6 @@
 Режим очікування, якщо запущена повноекранна програма
 [Disable sounds on idle]
 Вимикати звуки при переході до режиму очікування
-[Become idle if computer is left unattended for:]
-Режим очікування, якщо комп'ютер неактивний протягом:
-[Idle (auto-away):]
-Режим очікування:
 [Automatically popup window when:]
 Відкривати вікно, якщо:
 [In background]
@@ -583,8 +435,6 @@
 Розміщувати нові вікна каскадом
 [Show 'Send' button]
 Показувати кнопку "Надіслати"
-[Show username on top row]
-Показувати ім'я у верхньому рядку
 [Show toolbar buttons on top row]
 Кнопки у верхньому рядку
 [Send message on double 'Enter']
@@ -613,10 +463,6 @@
 при спробі надіслати повідомлення:
 [Try again]
 Повторити
-[Message session]
-Вікно повідомлень
-[&Details]
-Деталі &користувача
 [Message window event log]
 Журнал у вікні повідомлень
 [Show names]
@@ -639,6 +485,14 @@
 Події, отримані пізніше ніж
 [minutes old]
 хвилин тому
+[Use a tabbed interface]
+Увімкнути вкладки
+[Close tab on double click]
+Закривати подвійним клацанням
+[Restore previously open tabs when showing the window]
+Відновлювати попередньо відкриті вкладки при показі вікна
+[Show tabs at the bottom]
+Вкладки внизу
 [Send typing notifications to the following users when you are typing a message to them:]
 Сповіщати цих користувачів, коли ви друкуєте повідомлення для них:
 [Show typing notifications when a user is typing a message]
@@ -651,20 +505,110 @@
 Блиманням у треї та списку контактів
 [Show balloon popup]
 Підказкою в треї
-[Save the window position for each contact]
-Зберігати позицію вікна для кожного контакту
-[Message window behavior:]
-Поведінка вікна повідомлень:
-[Messaging:]
-Повідомлення:
+[Show these events only:]
+Показувати лише:
+[Actions]
+Дії
+[Messages]
+Повідомлення
+[Nick changes]
+Зміни ніків
+[Users joining]
+Входи до чату
+[Users leaving]
+Виходи з чату
+[Topic changes]
+Зміни теми
+[Status changes]
+Зміни статусів
+[Information]
+Інформація
+[Disconnects]
+Відключення
+[User kicks]
+Стусани
+[Notices]
+Приватні повідомл.
+[Options]
+Налаштування
+[Log options]
+Налаштування журналу
+[Log timestamp]
+Формат дати
+[Timestamp]
+Час
+[Other name]
+Імена інших
+[Your name]
+Ваше ім'я
+[Enable highlighting]
+Увімкнути підсвічування
+[Limit log text to (events):]
+Кількість подій у журналі:
+[Trim to (KB)]
+Обрізати до (КБ)
+[Words to highlight (wildcards allowed)]
+Підсвічувати слова (дозволені маски)
+[Enable logging to disk]
+Записувати журнал на диск
+[Log directory]
+Папка журналу
+[Other]
+Інше
+[Add new rooms to group:]
+Додавати кімнати до групи:
+[Nick list row distance (pixels):]
+Відстань між рядками (пікселі):
+[Use same style as in the message log]
+Використ. стиль журналу повідомлень
+[Use default colors]
+Стандартні кольори
+[Use custom colors]
+Вказати кольори
+[Popups for the Chat plugin]
+Спливаючі вікна чату
+[Timeout (s)]
+Затримка (с)
+[Text]
+Текст
+[Background]
+Фон
+[(Setting timeout to 0 means default setting and -1 means indefinite time)]
+(0 = стандартне значення, -1 = безкінечно)
+[Message]
+Повідомлення
+[Undo]
+Скасувати
+[Redo]
+Повторити
+[Copy]
+Копіювати
+[Cut]
+Вирізати
+[Paste]
+Вставити
+[Select all]
+Вибрати все
+[Clear]
+Очистити
+[Tabs]
+Вкладки
+[&Close tab]
+&Закрити вкладку
+[C&lose other tabs]
+З&акрити інші вкладки
+[&Open at this position]
+Від&крити на цій позиції
+[Log]
+Журнал
 [C&lear log]
 &Очистити журнал
 [&Copy]
 &Копіювати
+[Co&py all]
+Коп&іювати все
 [Select &all]
 Виділити &все
-[&Open link]
-&Відкрити в браузері
 [Paste and send]
 Вставити й надіслати
 [Delete]
@@ -780,7 +724,7 @@
 [Miranda NG profile manager]
 Менеджер профілів
 [Manage your Miranda NG profile]
-Виберіть aбо створіть профіль користувача
+Виберіть або створіть профіль користувача
 [&Run]
 &Запуск
 [&Exit]
@@ -819,8 +763,6 @@
 Налаштуйте Miranda NG згідно своїх вподобань
 [Apply]
 Застосувати
-[Switch to simple options]
-Спрощений вигляд
 [Please select a subentry from the list]
 Виберіть підпункт зі списку
 [Install database settings]
@@ -905,16 +847,6 @@
 Ім'я:
 [Enable sound events]
 Увімкнути звуки
-[Icons]
-Значки
-[Show category:]
-Категорія:
-[&Load icon set...]
-&Вибрати набір значків...
-[&Import icons >>]
-&Імпорт значків >>
-[Download more icons]
-Завантажити більше значків
 [The following events are being ignored:]
 Ці події ігноруватимуться:
 [URLs]
@@ -957,6 +889,8 @@
 До
 [<< &Import]
 << &Імпорт
+[Download more icons]
+Завантажити більше значків
 [To default status icons]
 Стандартні значки
 [Logging...]
@@ -989,15 +923,15 @@
 Вхідні з'єднання
 [Enable UPnP port mapping]
 Увімкнути перенаправлення портів UPnP
-[You will need to reconnect for the changes you have made on this page to take effect.]
-Зміни наберуть чинності при наступному вході до мережі.
+[These changes will take effect the next time you connect to the network.]
+Зміни наберуть чинності при наступному вході в мережу.
 [Please complete the following form to create a new user profile]
 Щоб створити новий профіль, заповніть форму
 [Profile]
 Профіль
 [e.g., Workplace]
 наприклад, "Робочий"
-[You can select a different profile driver from the default, it may offer more features or abilities, if in doubt use the default.]
+[You can select a different database driver from the default, it may offer more features or abilities, if in doubt use the default.]
 Виберіть драйвер бази даних. Інший драйвер може мати більше функцій та можливостей. Якщо не впевнені, користуйтеся стандартним драйвером.
 [e.g., dbx mmap]
 наприклад, dbx_mmap
@@ -1031,6 +965,12 @@
 Колір тексту
 [Choose font]
 Шрифт
+[Icons]
+Значки
+[&Load icon set...]
+&Вибрати набір значків...
+[&Import icons >>]
+&Імпорт значків >>
 [Menu objects]
 Види меню
 [Menu items]
@@ -1052,7 +992,7 @@
 [Default]
 Стандартний
 [Set]
-Вказати
+Встановити
 [Enable icons]
 Увімкнути значки
 [Show accounts in the following order,\ndrag to choose another order:]
@@ -1103,24 +1043,6 @@ Miranda NG перезапускається.\nЗачекайте...
 Консоль помилок
 [Error notifications]
 Сповіщення про помилки
-[Headers:]
-Заголовки:
-[This font is used to display main section titles or text elements.]
-Шрифт для заголовків основних розділів чи текстових елементів.
-[Normal text:]
-Звичайний текст:
-[This font is used to display most text elements or section bodies.]
-Шрифт для більшості текстових елементів чи розділів.
-[Minor notes:]
-Дрібний текст:
-[This font is used to display various additional notes.]
-Шрифт для додаткового тексту, приміток.
-[Welcome to Miranda NG's account manager!\nHere you can set up your IM accounts.\n\nSelect an account from the list on the left to see the available options. Alternatively, just click on the Plus sign underneath the list to set up a new IM account.]
-Вітаємо в менеджері облікових записів програми Miranda NG!\nТут можна налаштувати свої облікові записи мереж обміну миттєвими повідомленнями.\n\nЩоб побачити доступні можливості, виберіть обліковий запис зі списку ліворуч. Щоб створити новий обліковий запис, натисніть значок "+" унизу.
-[Event icon legend:]
-Події:
-[Choose events you wish to ignore:]
-Виберіть події, які будуть ігноруватися:
 [Font effect]
 Ефект шрифту
 [Effect:]
@@ -1176,7 +1098,7 @@ UIN, E-mail тощо
 [Show user information]
 Показувати дані користувача
 [Display subcontact nickname]
-Використовувати нік субконтакта
+Використовувати нік субконтакту
 [Display subcontact display name]
 Використовувати коротке ім'я
 [Lock name to first contact]
@@ -1191,6 +1113,14 @@ UIN, E-mail тощо
 Перезавантажити мовний пакет
 [Download more language packs]
 Завантажити додаткові переклади
+[Show in IM chats]
+Показувати у звичайному вікні
+[Show in chat rooms]
+Показувати у вікні чату
+[Gap between buttons:]
+Проміжок кнопок:
+[Hide if there isn't enough space]
+Ховати, якщо недостатньо місця
 [Tray]
 Трей
 [&Hide/Show]
@@ -1227,14 +1157,28 @@ UIN, E-mail тощо
 Додати до списку
 [Send &message]
 Надіслати &повідомлення
-[Open in &new window]
-Відкрити в &новому вікні
-[&Open in existing window]
-&Відкрити в поточному вікні
+[&Open link]
+&Відкрити в браузері
+[&Copy link]
+Копіювати по&силання
 [Cancel change]
 Скасувати зміну
 [Ungroup]
 Розгрупувати
+[List]
+Список
+[&Message]
+Повідомлення
+[Clear lo&g]
+&Очистити журнал
+[Word lookup]
+Пошук слова
+[Yandex]
+Яндекс
+[Google Maps]
+Мапи Google
+[Google Translate]
+Перекладач Google
 [%s requests authorization]
 %s запитує авторизацію
 [%u requests authorization]
@@ -1297,6 +1241,166 @@ UIN, E-mail тощо
 очікування...
 [Status]
 Статус
+[Standard contacts]
+Звичайні контакти
+[Online contacts to whom you have a different visibility]
+Контакти зі зміненою видимістю (в мережі)
+[Offline contacts]
+Відключені контакти
+[Contacts which are 'not on list']
+Контакти поза списком
+[Group member counts]
+Лічильники груп
+[Dividers]
+Роздільники
+[Offline contacts to whom you have a different visibility]
+Контакти зі зміненою видимістю (відключені)
+[Selected text]
+Виділений текст
+[Hottrack text]
+Текст під курсором
+[Quicksearch text]
+Швидкий пошук
+[Not focused]
+Список неактивний
+[Offline]
+Не в мережі
+[Online]
+В мережі
+[Away]
+Відсутній
+[Not available]
+Недоступний
+[Occupied]
+Зайнятий
+[Do not disturb]
+Не турбувати
+[Free for chat]
+Готовий до чату
+[Invisible]
+Невидимий
+[Out to lunch]
+Обідаю
+[On the phone]
+Телефоную
+[List background]
+Фон списку
+[Global]
+Глобальні
+[Standard crypto provider]
+Стандартний постачальник шифрування
+[User has not registered an e-mail address]
+Користувач не зареєстрував свою адресу E-mail.
+[Send e-mail]
+Надіслати E-mail
+[&E-mail]
+&Пошта
+[File from %s]
+Файл від %s
+[bytes]
+байт
+[&File]
+Ф&айл
+[File &transfers...]
+&Передача файлів...
+[Incoming]
+Вхідні
+[Complete]
+Завершено
+[Error]
+Помилка
+[Denied]
+Відхилено
+[%s file]
+%s файл
+[All files]
+Усі файли
+[Executable files]
+Виконувані файли
+[Events]
+Події
+[Select folder]
+Вибрати папку
+[My received files]
+Отримані файли
+[View user's history]
+Історія
+[User menu]
+Меню користувача
+[Canceled]
+Скасовані
+[This file transfer has been canceled by the other side]
+Передачу файлу скасовано іншою стороною
+[%d files]
+%d файлів
+[%d directories]
+%d папок
+[This file has not yet been scanned for viruses. Are you certain you want to open it?]
+Цей файл ще не перевірено антивірусом. Бажаєте відкрити цей файл?
+[File received]
+Отримано файл
+[of]
+з
+[Request sent, waiting for acceptance...]
+Запит надіслано, очікування підтвердження...
+[Waiting for connection...]
+Очікування з'єднання...
+[Unable to initiate transfer.]
+Неможливо розпочати передачу.
+[Contact menu]
+Меню контакту
+[Open...]
+Відкрити...
+[sec]
+с
+[remaining]
+залишилось
+[Decision sent]
+Рішення надіслано
+[Connecting...]
+З'єднання...
+[Connecting to proxy...]
+З'єднання з проксі...
+[Connected]
+Під'єднаний
+[Initializing...]
+Ініціалізація...
+[Moving to next file...]
+Наступний файл...
+[Sending...]
+Надсилання...
+[Receiving...]
+Отримання...
+[File transfer denied]
+Відмовлено
+[File transfer failed]
+Невдала передача файлу
+[Transfer completed.]
+Передачу завершено.
+[Transfer completed, open file.]
+Передачу завершено, відкрити файл.
+[Transfer completed, open folder.]
+Передачу завершено, відкрити папку.
+[Scanning for viruses...]
+Перевірка на віруси...
+[Transfer and virus scan complete]
+Передачу та перевірку на віруси завершено
+[Outgoing]
+Вихідні
+[< Copyright]
+< Права
+[&Help]
+Довідка
+[&About...]
+Про Miranda NG
+[&Support]
+П&ідтримка користувачів
+[&Miranda NG homepage]
+Сайт Miranda NG
+[&Report bug]
+Повідомити про помилку
+[Idle]
+Очікування
 [Chat module]
 Чати
 [Group chat log background]
@@ -1309,14 +1413,6 @@ UIN, E-mail тощо
 Лінії списку користувачів
 [Nick list background (selected)]
 Фон списку користувачів (вибране)
-[Use a tabbed interface]
-Увімкнути вкладки
-[Close tab on double click]
-Закривати подвійним клацанням
-[Restore previously open tabs when showing the window]
-Відновлювати попередньо відкриті вкладки при показі вікна
-[Show tabs at the bottom]
-Вкладки внизу
 [Send message by pressing the 'Enter' key]
 Надсилати натисканням Enter
 [Send message by pressing the 'Enter' key twice]
@@ -1335,10 +1431,6 @@ UIN, E-mail тощо
 Показувати кнопки форматування тексту
 [Show button menus when right clicking the buttons]
 Показувати меню кнопки за натисненням правою кнопкою миші
-[Show new windows cascaded]
-Розміщувати нові вікна каскадом
-[Save the size and position of chat rooms]
-Зберігати розмір і позицію вікон чату
 [Show the topic of the room on your contact list (if supported)]
 Показувати тему кімнати в списку контактів (якщо підтримується)
 [Do not play sounds when the chat room is focused]
@@ -1362,7 +1454,7 @@ UIN, E-mail тощо
 [Limit user names in the message log to 20 characters]
 Обмежити імена в журналі до 20 символів
 [Add ':' to auto-completed user names]
-Додавати ":" до імен користувачів
+Додавати двокрапку (:) до імен користувачів при автозавершенні
 [Strip colors from messages in the log]
 Заборонити кольори в журналі
 [Enable the 'event filter' for new rooms]
@@ -1535,8 +1627,6 @@ UIN, E-mail тощо
 Групові чати
 [Group chats log]
 Журнал чатів
-[Options for using a tabbed interface]
-Налаштування вкладок
 [Appearance and functionality of chat room windows]
 Інтерфейс та функції вікон чатів
 [Appearance of the message log]
@@ -1549,48 +1639,16 @@ UIN, E-mail тощо
 Значки в треї
 [Popups to display]
 Спливаючі вікна
-[Select folder]
-Вибрати папку
 [Message sessions]
 Бесіди
 [General]
 Загальне
 [Chat log]
 Журнал чату
+[Chat]
+Чат
 [Popups]
 Спливаючі вікна
-[Look up '%s':]
-Шукати "%s" у
-[No word to look up]
-Нічого шукати
-[&Message %s]
-&Написати %s
-[Insert a smiley]
-Вставити смайл
-[Make the text bold (CTRL+B)]
-Виділити жирним (Ctrl+B)
-[Make the text italicized (CTRL+I)]
-Виділити курсивом (Ctrl+I)
-[Make the text underlined (CTRL+U)]
-Підкреслити (Ctrl+U)
-[Select a background color for the text (CTRL+L)]
-Вибрати фон тексту (Ctrl+L)
-[Select a foreground color for the text (CTRL+K)]
-Вибрати колір тексту (Ctrl+K)
-[Show the history (CTRL+H)]
-Показати історію (Ctrl+H)
-[Show/hide the nick list (CTRL+N)]
-Показати/сховати список користувачів (Ctrl+N)
-[Control this room (CTRL+O)]
-Налаштування кімнати (Ctrl+O)
-[Enable/disable the event filter (CTRL+F)]
-Увімк./вимк. фільтр подій (Ctrl+F)
-[Close current tab (CTRL+F4)]
-Закрити поточну вкладку (Ctrl+F4)
-[Nickname]
-Нік
-[Unique ID]
-Унікальний ID
 [%s: chat room (%u user)]
 %s - Чат (%u)
 [%s: chat room (%u users)]
@@ -1599,164 +1657,10 @@ UIN, E-mail тощо
 %s - Бесіда
 [%s: message session (%u users)]
 %s - Бесіда (%u)
-[Standard contacts]
-Звичайні контакти
-[Online contacts to whom you have a different visibility]
-Контакти зі зміненою видимістю (в мережі)
-[Offline contacts]
-Відключені контакти
-[Contacts which are 'not on list']
-Контакти поза списком
-[Group member counts]
-Лічильники груп
-[Dividers]
-Роздільники
-[Offline contacts to whom you have a different visibility]
-Контакти зі зміненою видимістю (відключені)
-[Selected text]
-Виділений текст
-[Hottrack text]
-Текст під курсором
-[Quicksearch text]
-Швидкий пошук
-[Not focused]
-Список неактивний
-[Offline]
-Не в мережі
-[Online]
-В мережі
-[Away]
-Відсутній
-[NA]
-Недоступний
-[Occupied]
-Зайнятий
-[DND]
-Не турбувати
-[Free for chat]
-Готовий до чату
-[Invisible]
-Невидимий
-[Out to lunch]
-Обідаю
-[On the phone]
-Телефоную
-[List background]
-Фон списку
-[Global]
-Глобальні
-[Standard crypto provider]
-Стандартний постачальник шифрування
-[User has not registered an e-mail address]
-Користувач не зареєстрував свою адресу E-mail.
-[Send e-mail]
-Надіслати E-mail
-[&E-mail]
-&Пошта
-[File from %s]
-Файл від %s
-[bytes]
-байт
-[&File]
-Ф&айл
-[File &transfers...]
-&Передача файлів...
-[Incoming]
-Вхідні
-[Complete]
-Завершено
-[Error]
-Помилка
-[Denied]
-Відхилено
-[%s file]
-%s файл
-[All files]
-Усі файли
-[Executable files]
-Виконувані файли
-[Events]
-Події
-[My received files]
-Отримані файли
-[View user's history]
-Історія
-[User menu]
-Меню користувача
-[Canceled]
-Скасовані
-[This file transfer has been canceled by the other side]
-Передачу файлу скасовано іншою стороною
-[%d files]
-%d файлів
-[%d directories]
-%d папок
-[This file has not yet been scanned for viruses. Are you certain you want to open it?]
-Цей файл ще не перевірено антивірусом. Бажаєте відкрити цей файл?
-[File received]
-Отримано файл
-[of]
-з
-[Request sent, waiting for acceptance...]
-Запит надіслано, очікування підтвердження...
-[Waiting for connection...]
-Очікування з'єднання...
-[Unable to initiate transfer.]
-Неможливо розпочати передачу.
-[Contact menu]
-Меню контакту
-[Open...]
-Відкрити...
-[sec]
-с
-[remaining]
-залишилось
-[Decision sent]
-Рішення надіслано
-[Connecting...]
-З'єднання...
-[Connecting to proxy...]
-З'єднання з проксі...
-[Connected]
-Під'єднаний
-[Initializing...]
-Ініціалізація...
-[Moving to next file...]
-Наступний файл...
-[Sending...]
-Надсилання...
-[Receiving...]
-Отримання...
-[File transfer denied]
-Відмовлено
-[File transfer failed]
-Невдала передача файлу
-[Transfer completed.]
-Передачу завершено.
-[Transfer completed, open file.]
-Передачу завершено, відкрити файл.
-[Transfer completed, open folder.]
-Передачу завершено, відкрити папку.
-[Scanning for viruses...]
-Перевірка на віруси...
-[Transfer and virus scan complete]
-Передачу та перевірку на віруси завершено
-[Outgoing]
-Вихідні
-[< Copyright]
-< Права
-[&Help]
-Довідка
-[&About...]
-Про Miranda NG
-[&Support]
-П&ідтримка користувачів
-[&Miranda NG homepage]
-Сайт Miranda NG
-[&Report bug]
-Повідомити про помилку
-[Idle]
-Очікування
+[Nickname]
+Нік
+[Unique ID]
+Унікальний ID
 [The message send timed out.]
 Час надсилання повідомлення вичерпано.
 [Incoming message (10x10)]
@@ -1765,6 +1669,8 @@ UIN, E-mail тощо
 Вихідне повідомлення (10x10)
 [Last message received on %s at %s.]
 Останнє повідомлення отримано %s о %s
+[Message session]
+Вікно повідомлень
 [%s is typing a message...]
 %s друкує вам повідомлення...
 [Me]
@@ -1797,8 +1703,6 @@ UIN, E-mail тощо
 ** Нові контакти **
 [** Unknown contacts **]
 ** Невідомі контакти **
-[Show balloon popup (unsupported system)]
-Показувати підказки (система не підтримується)
 [Messaging log]
 Журнал
 [Typing notify]
@@ -1809,6 +1713,40 @@ UIN, E-mail тощо
 %s друкує вам повідомлення
 [Typing notification]
 Увага!
+[View user's history (CTRL+H)]
+Історія (CTRL+H)
+[&Bold]
+&Жирний
+[Make the text bold (CTRL+B)]
+Виділити жирним (Ctrl+B)
+[&Italic]
+&Курсив
+[Make the text italicized (CTRL+I)]
+Виділити курсивом (Ctrl+I)
+[&Underline]
+&Підкреслений
+[Make the text underlined (CTRL+U)]
+Підкреслити (Ctrl+U)
+[&Color]
+&Колір
+[Select a foreground color for the text (CTRL+K)]
+Вибрати колір тексту (Ctrl+K)
+[&Background color]
+Колір фону
+[Select a background color for the text (CTRL+L)]
+Вибрати фон тексту (Ctrl+L)
+[&Room settings]
+&Налаштування кімнати
+[Control this room (CTRL+O)]
+Налаштування кімнати (Ctrl+O)
+[&Show/hide nick list]
+&Показати/сховати список
+[Show/hide the nick list (CTRL+N)]
+Показати/сховати список користувачів (Ctrl+N)
+[&Filter]
+Фільтр
+[Enable/disable the event filter (CTRL+F)]
+Увімк./вимк. фільтр подій (Ctrl+F)
 [Miranda could not load the built-in message module, msftedit.dll is missing. Press 'Yes' to continue loading Miranda.]
 Неможливо завантажити вбудований модуль повідомлень, оскільки Msftedit.dll відсутній. Натисніть "Так" щоб продовжити запуск програми.
 [Instant messages]
@@ -1879,6 +1817,26 @@ UIN, E-mail тощо
 Жіноча
 [<not specified>]
 <не вказано>
+[Single]
+Неодружений/Незаміжня
+[Close relationships]
+Зустрічаюсь
+[Engaged]
+Заручений(а)
+[Married]
+Одружений/Заміжня
+[Divorced]
+Розлучений(а)
+[Separated]
+Проживаємо окремо
+[Widowed]
+Вдівець/вдова
+[Actively searching]
+В активному пошуку
+[In love]
+Закоханий(а)
+[It's complicated]
+Усе складно
 [Summary]
 Коротко
 [Contact]
@@ -2019,6 +1977,24 @@ UIN, E-mail тощо
 Тема: %s
 [The topic is '%s' (set by %s)]
 Тема %s (встановив %s)
+[Look up '%s':]
+Шукати "%s" у
+[No word to look up]
+Нічого шукати
+[&Message %s]
+&Написати %s
+[New group]
+Нова група
+[Are you sure you want to delete group '%s'? This operation cannot be undone.]
+Справді бажаєте видалити групу "%s"?\nРезультати цієї дії є незворотними.
+[Delete group]
+Видалити групу
+[You already have a group with that name. Please enter a unique name for the group.]
+Група з такою назвою вже існує. Будь ласка, вкажіть іншу назву.
+[Rename group]
+Перейменувати групу
+[This group]
+Ця група
 [Connecting]
 З'єднання
 [Connecting (attempt %d)]
@@ -2075,6 +2051,12 @@ Miranda не може відкрити '%s'.\nНе знайдено відпов
 Miranda не може відкрити цей профіль
 [Miranda can't understand that profile]
 Miranda не може зрозуміти цей профіль
+[Authorization request from %s%s: %s]
+Запит авторизації від %s%s: %s
+[You were added by %s%s]
+Вас додав %s%s
+[Contacts: ]
+Контакти:\s
 [Security systems to prevent malicious changes are in place and you will be warned before every change that is made.]
 Захист від небезпечних змін увімкнено, вас попередять про будь-які зміни налаштувань.
 [Security systems to prevent malicious changes are in place and you will be warned before changes that are known to be unsafe.]
@@ -2089,12 +2071,6 @@ Miranda не може зрозуміти цей профіль
 Невідомо, чи є ця зміна налаштувань безпечною.
 [Invalid setting type for '%s'. The first character of every value must be b, w, d, l, s, e, u, g, h or n.]
 Неправильний тип налаштувань для '%s'. Першою літерою будь-якого значения має бути b, w, d, l, s, e, u, g, h або n.
-[Authorization request from %s%s: %s]
-Запит авторизації від %s%s: %s
-[You were added by %s%s]
-Вас додав %s%s
-[Contacts: ]
-Контакти:\s
 [Chat activity]
 Активність у чаті
 [You haven't filled in the search field. Please enter a search term and try again.]
@@ -2141,28 +2117,12 @@ Ctrl+Знайти додає контакт
 Помилка запису файлу
 [Customize]
 Тонке налаштування
-[Sample text]
-Зразок тексту
-[Fonts]
-Шрифти
 [Headers]
 Заголовки
 [Generic text]
 Звичайний текст
 [Small text]
 Дрібний текст
-[New group]
-Нова група
-[Are you sure you want to delete group '%s'? This operation cannot be undone.]
-Справді бажаєте видалити групу "%s"?\nРезультати цієї дії є незворотними.
-[Delete group]
-Видалити групу
-[You already have a group with that name. Please enter a unique name for the group.]
-Група з такою назвою вже існує. Будь ласка, вкажіть іншу назву.
-[Rename group]
-Перейменувати групу
-[This group]
-Ця група
 [Remove shortcut]
 Видалити
 [Add another shortcut]
@@ -2193,12 +2153,12 @@ Miranda
 Опції журналу з'єднань
 [Open 'Find user' dialog]
 Знайти/додати контакти
+[built-in]
+вбудований
 [(incompatible)]
 (несумісний)
 [Unknown]
 Невідомо
-[built-in]
-вбудований
 [Languages]
 Локалізації
 [Custom status]
@@ -2305,8 +2265,6 @@ xСтатус
 Не знайдено контактів у мережі.
 [Select metacontact]
 Виберіть метаконтакт
-[Sender]
-Відправник
 [Could not retrieve contact protocol]
 Не можу визначити протокол контакту
 [Assignment error]
@@ -2323,10 +2281,10 @@ xСтатус
 Помилка запису унікального ID контакту в метаконтакт
 [Could not write nickname of contact to metacontact]
 Не можу записати нік контакту в метаконтакт
-[&Move to group]
-Пере&містити до групи
 [<Root group>]
 <Коренева група>
+[&Move to group]
+Пере&містити до групи
 [Standard Netlib log]
 Стандартний журнал Netlib
 [No times]
@@ -2435,18 +2393,20 @@ xСтатус
 Ваш обліковий запис успішно оновлено. Для його активації необхідно перезапустити Miranda.\n\n\Щоб перезапустити програму зараз, натисніть "Так". Щоб оновити інший обліковий запис, натисніть "Ні".
 [This account uses legacy protocol plugin. Use Miranda NG options dialogs to change its preferences.]
 Цей обліковий запис використовує застарілий протокол. Зміна особистих даних користувача відбувається в основному діалозі налаштувань.
-[Account name must be filled.]
-Введіть ім'я облікового запису.
-[Account error]
-Помилка облікового запису
-[Account name has to be unique. Please enter unique name.]
-Назва облікового запису має бути унікальною. Вкажіть унікальну назву.
+[Welcome to Miranda NG's account manager!\nHere you can set up your IM accounts.\n\nSelect an account from the list on the left to see the available options. Alternatively, just click on the Plus sign underneath the list to set up a new IM account.]
+Вітаємо в менеджері облікових записів програми Miranda NG!\nТут можна налаштувати свої облікові записи мереж обміну миттєвими повідомленнями.\n\nЩоб побачити доступні можливості, виберіть обліковий запис зі списку ліворуч. Щоб створити новий обліковий запис, натисніть значок "+" унизу.
 [Create new account]
 Створити новий запис
 [Editing account]
 Зміна облікового запису
 [Upgrading account]
 Оновлення облікового запису
+[Account name must be filled.]
+Введіть ім'я облікового запису.
+[Account error]
+Помилка облікового запису
+[Account name has to be unique. Please enter unique name.]
+Назва облікового запису має бути унікальною. Вкажіть унікальну назву.
 [Account is disabled. Please activate it to access options.]
 Обліковий запис вимкнено. Активуйте його для доступу до налаштувань.
 [New account]
@@ -2457,12 +2417,6 @@ xСтатус
 Налаштувати...
 [Upgrade account]
 Оновити обліковий запис
-[Account ID]
-ID облікового запису
-[<unknown>]
-<невідомо>
-[Protocol is not loaded.]
-Протокол не запущений.
 [Rename]
 Перейменувати
 [Configure]
@@ -2477,6 +2431,12 @@ ID облікового запису
 Видалення облікового запису %s
 [You need to disable plugin to delete this account]
 Перед видаленням облікового запису необхідно вимкнути плагін
+[Account ID]
+ID облікового запису
+[<unknown>]
+<невідомо>
+[Protocol is not loaded.]
+Протокол не запущений.
 [&Accounts...]
 Облікові записи...
 [Account]
@@ -2583,6 +2543,10 @@ ANSI-плагін
 Звукові файли
 [WAV files]
 Файли WAV
+[<Separator>]
+<Роздільник>
+[Toolbar]
+Панель кнопок
 [Unspecified]
 <не вказано>
 [Afghanistan]

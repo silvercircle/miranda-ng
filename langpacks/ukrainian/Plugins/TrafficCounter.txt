@@ -31,8 +31,8 @@
 Скинути
 [Popup timeout]
 Тривалість вікна
-[From Popup plugin]
-За замовчанням
+[From popup plugin]
+З плагіна сплив. вікон
 [Custom]
 Налаштувати
 [Test]
@@ -58,9 +58,9 @@
 [Total traffic]
 Загальний трафік
 [Current online]
-Поточний онлайн
+Поточний час в мережі
 [Total online]
-Загальний онлайн
+Загальний час в мережі
 [General]
 Загальне
 [Draw frame as skin element]

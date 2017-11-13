@@ -43,13 +43,13 @@ INT_PTR CALLBACK PSPProcEdit(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam,
 				SendDlgItemMessage(hDlg, IDC_PAGETITLE, WM_SETFONT, (WPARAM)hBoldFont, 0);
 
 				if (!mir_strcmp(pszSetting, SET_CONTACT_MYNOTES))
-					SetDlgItemText(hDlg, IDC_PAGETITLE, LPGENT("My notes:"));
+					SetDlgItemText(hDlg, IDC_PAGETITLE, LPGENW("My notes:"));
 				else
-					SetDlgItemText(hDlg, IDC_PAGETITLE, LPGENT("About:"));
+					SetDlgItemText(hDlg, IDC_PAGETITLE, LPGENW("About:"));
 
 				TranslateDialogDefault(hDlg);
 				
-				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_ABOUT, pszSetting, DBVT_TCHAR));
+				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_ABOUT, pszSetting, DBVT_WCHAR));
 
 				// remove static edge in aero mode
 				if (IsAeroMode())

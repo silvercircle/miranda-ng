@@ -1,7 +1,7 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
 
-Copyright (c) 2012-2014 Miranda NG Team
+Copyright (c) 2012-2017 Miranda NG Team
 Copyright (c) 2006-2012 Boris Krasnovskiy.
 Copyright (c) 2003-2005 George Hazan.
 Copyright (c) 2002-2003 Richard Hughes (original version).
@@ -23,6 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "stdafx.h"
 #include "msn_proto.h"
 #include "m_smileyadd.h"
+
+const char sttVoidUid[] = "{00000000-0000-0000-0000-000000000000}";
 
 void CMsnProto::Lists_Uninit(void)
 {
@@ -66,10 +68,15 @@ MsnContact* CMsnProto::Lists_Get(MCONTACT hContact)
 
 MsnPlace* CMsnProto::Lists_GetPlace(const char* wlid)
 {
-	mir_cslock lck(m_csLists);
-
 	char *szEmail, *szInst;
 	parseWLID(NEWSTR_ALLOCA(wlid), NULL, &szEmail, &szInst);
+
+	return Lists_GetPlace(szEmail, szInst);
+}
+
+MsnPlace* CMsnProto::Lists_GetPlace(const char* szEmail, const char *szInst)
+{
+	mir_cslock lck(m_csLists);
 
 	if (szInst == NULL)
 		szInst = (char*)sttVoidUid;
@@ -95,6 +102,8 @@ MsnPlace* CMsnProto::Lists_AddPlace(const char* email, const char* id, unsigned 
 		pl->id = mir_strdup(id);
 		pl->cap1 = cap1;
 		pl->cap2 = cap2;
+		pl->client = 11;
+		*pl->szClientVer = 0;
 		pl->p2pMsgId = 0;
 		pl->p2pPktNum = 0;
 		p->places.insert(pl);
@@ -132,28 +141,6 @@ int CMsnProto::Lists_GetNetId(const char* email)
 	MsnContact *p = m_arContacts.find((MsnContact*)&email);
 	return p ? p->netId : NETID_UNKNOWN;
 }
-
-#ifdef OBSOLETE
-unsigned CMsnProto::p2p_getMsgId(const char* wlid, int inc)
-{
-	mir_cslock lck(m_csLists);
-	MsnPlace *p = Lists_GetPlace(wlid);
-
-	unsigned res = p && p->p2pMsgId ? p->p2pMsgId : MSN_GenRandom();
-	if (p)
-		p->p2pMsgId = res + inc;
-
-	return res;
-}
-
-unsigned CMsnProto::p2p_getPktNum(const char* wlid)
-{
-	mir_cslock lck(m_csLists);
-
-	MsnPlace *p = Lists_GetPlace(wlid);
-	return p ? p->p2pPktNum++ : 0;
-}
-#endif
 
 int CMsnProto::Lists_Add(int list, int netId, const char* email, MCONTACT hContact, const char* nick, const char* invite)
 {
@@ -215,7 +202,7 @@ void CMsnProto::Lists_Populate(void)
 			else
 				Lists_Add(0, netId, szEmail, hContact);
 		}
-		else if (!isChatRoom(hContact)) CallService(MS_DB_CONTACT_DELETE, hContact, 0);
+		else if (!isChatRoom(hContact)) db_delete_contact(hContact);
 		hContact = hNext;
 	}
 }
@@ -237,13 +224,13 @@ void CMsnProto::MSN_CleanupLists(void)
 		if (p.hContact && !(p.list & (LIST_LL | LIST_FL | LIST_PL)) && p.list != LIST_RL) {
 			int count = db_event_count(p.hContact);
 			if (count) {
-				TCHAR text[256];
-				TCHAR *sze = mir_a2t(p.email);
-				mir_sntprintf(text, TranslateT("Contact %s has been removed from the server.\nWould you like to keep it as \"Local Only\" contact to preserve history?"), sze);
+				wchar_t text[256];
+				wchar_t *sze = mir_a2u(p.email);
+				mir_snwprintf(text, TranslateT("Contact %s has been removed from the server.\nWould you like to keep it as \"Local Only\" contact to preserve history?"), sze);
 				mir_free(sze);
 
-				TCHAR title[128];
-				mir_sntprintf(title, TranslateT("%s protocol"), m_tszUserName);
+				wchar_t title[128];
+				mir_snwprintf(title, TranslateT("%s protocol"), m_tszUserName);
 
 				if (MessageBox(NULL, text, title, MB_YESNO | MB_ICONQUESTION | MB_SETFOREGROUND) == IDYES) {
 					MSN_AddUser(p.hContact, p.email, 0, LIST_LL);
@@ -253,13 +240,13 @@ void CMsnProto::MSN_CleanupLists(void)
 			}
 
 			if (!(p.list & (LIST_LL | LIST_FL))) {
-				CallService(MS_DB_CONTACT_DELETE, (WPARAM)p.hContact, 0);
+				db_delete_contact(p.hContact);
 				p.hContact = NULL;
 			}
 		}
 
 		if (p.list & (LIST_LL | LIST_FL) && p.hContact) {
-			TCHAR path[MAX_PATH];
+			wchar_t path[MAX_PATH];
 			MSN_GetCustomSmileyFileName(p.hContact, path, _countof(path), "", 0);
 			if (path[0]) {
 				SMADD_CONT cont;
@@ -329,7 +316,7 @@ void CMsnProto::MSN_CreateContList(void)
 	}
 
 	cxml.Append("</ml>");
-	msnNsThread->sendPacketPayload("PUT", "MSGR\\CONTACTS", "%s", cxml);
+	msnNsThread->sendPacketPayload("PUT", "MSGR\\CONTACTS", "%s", cxml.c_str());
 
 	if (msnP24Ver > 1)
 		msnNsThread->sendPacketPayload("PUT", "MSGR\\SUBSCRIPTIONS", "<subscribe><presence><buddies><all /></buddies></presence><messaging><im /><conversations /></messaging><notifications><partners>%s<partner>ABCH</partner></partners></notifications></subscribe>",
@@ -362,7 +349,7 @@ static void AddPrivacyListEntries(HWND hwndList, CMsnProto *proto)
 	for (int i = 0; i < proto->m_arContacts.getCount(); ++i) {
 		MsnContact &cont = proto->m_arContacts[i];
 		if (!(cont.list & (LIST_FL | LIST_LL))) {
-			cii.pszText = (TCHAR*)cont.email;
+			cii.pszText = (wchar_t*)cont.email;
 			hItem = (HANDLE)SendMessage(hwndList, CLM_ADDINFOITEMA, 0, (LPARAM)&cii);
 
 			SendMessage(hwndList, CLM_SETEXTRAIMAGE, (WPARAM)hItem, MAKELPARAM(0, (cont.list & LIST_LL) ? 1 : 0));
@@ -454,7 +441,7 @@ static void SaveSettings(MCONTACT hItem, HWND hwndList, CMsnProto* proto)
 					continue;
 			}
 			else if (IsHContactInfo(hItem)) {
-				TCHAR buf[MSN_MAX_EMAIL_LEN];
+				wchar_t buf[MSN_MAX_EMAIL_LEN];
 				SendMessage(hwndList, CLM_GETITEMTEXT, (WPARAM)hItem, (LPARAM)buf);
 				WideCharToMultiByte(CP_ACP, 0, buf, -1, szEmail, sizeof(szEmail), 0, 0);
 
@@ -476,7 +463,7 @@ static void SaveSettings(MCONTACT hItem, HWND hwndList, CMsnProto* proto)
 
 			if (xorMask & (LIST_FL | LIST_LL) && !(newMask & (LIST_FL | LIST_LL))) {
 				if (!IsHContactInfo(hItem)) {
-					CallService(MS_DB_CONTACT_DELETE, (WPARAM)hItem, 0);
+					db_delete_contact(hItem);
 					MsnContact* msc = proto->Lists_Get(szEmail);
 					if (msc) msc->hContact = NULL;
 				}

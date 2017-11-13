@@ -26,12 +26,12 @@ Ping:
 
 [Login Server:]
 Server:
-[ICQ#:]
-ICQ#:
+[ICQ number:]
+Identifikátor:
 [Password:]
 Heslo:
-[You will need to reconnect to the ICQ network for the changes you have made on this page to take effect.]
-Změny se projeví až při příštím připojení do sítě ICQ.
+[These changes will take effect the next time you connect to the ICQ network.]
+Provedené změny se projeví až při dalším připojení k síti ICQ.
 ;file \protocols\ICQCorp\src\options.cpp
 [Network]
 Sítě
@@ -40,11 +40,9 @@ Sítě
 
 [You need specify ICQ Corporate login server.]
 
-[Your ICQ Corp number and password combination was rejected by the ICQ Corporate server. Please go to M->Options->ICQCorp and try again.]
+[Your ICQ Corp number and password combination was rejected by the ICQ Corporate server. Please go to Options -> Network -> ICQCorp and try again.]
 
 ;file \protocols\ICQCorp\src\services.cpp
-[ICQ number:]
-Identifikátor:
 [%d file]
 %d soubor
 [%d files]

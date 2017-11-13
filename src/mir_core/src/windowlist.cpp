@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -47,9 +47,10 @@ MIR_CORE_DLL(MWindowList) WindowList_Create(void)
 	return new TWindowList();
 }
 
-MIR_CORE_DLL(void) WindowList_Destroy(MWindowList hList)
+MIR_CORE_DLL(void) WindowList_Destroy(MWindowList &hList)
 {
 	delete hList;
+	hList = nullptr;
 }
 
 MIR_CORE_DLL(int) WindowList_Add(MWindowList hList, HWND hwnd, MCONTACT hContact)

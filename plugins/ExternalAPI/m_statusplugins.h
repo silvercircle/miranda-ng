@@ -23,23 +23,17 @@
 
 // -- common status -- (all three plugins)
 typedef struct {
-	int cbSize;
-	char *szName;	// pointer to protocol modulename
-	TCHAR *szMsg;	// pointer to the status message (may be NULL)
-	WORD status;	// the status
-	WORD lastStatus;// last status
-	TCHAR *tszAccName;
+	char *m_szName;	// pointer to protocol modulename
+	TCHAR *m_szMsg;	// pointer to the status message (may be NULL)
+	WORD m_status;	// the status
+	WORD m_lastStatus;// last status
+	TCHAR *m_tszAccName;
 } PROTOCOLSETTINGEX;
 
 // wParam = PROTOCOLSETTINGEX*** (keep it like this for compatibility)
 // lParam = 0
 // returns 0 on success
 #define MS_CS_SETSTATUSEX				"CommonStatus/SetStatusEx"
-
-// wParam = PROTOCOLSETTINGEX*** (keep it like this for compatibility)
-// lParam = timeout
-// returns hwnd
-#define MS_CS_SHOWCONFIRMDLGEX			"CommonStatus/ShowConfirmDialogEx"
 
 // wParam = 0
 // lParam = 0
@@ -135,19 +129,11 @@ typedef struct {
 
 __inline static int announce_status_change(char *szProto, int newstatus, TCHAR *szMsg) {
 
-	PROTOCOLSETTINGEX ps;
-
-	ZeroMemory(&ps, sizeof(PROTOCOLSETTINGEX));
-	ps.cbSize = sizeof(PROTOCOLSETTINGEX);
-	if (szProto != NULL) {
-		ps.lastStatus = CallProtoService(szProto, PS_GETSTATUS, 0, 0);
-	} else {
-		ps.lastStatus = CallService(MS_CLIST_GETSTATUSMODE, 0, 0);
-	}
-	ps.status = newstatus;
-	ps.szMsg = szMsg;
-	ps.szName = szProto;
-
+	PROTOCOLSETTINGEX ps = { 0 };
+	ps.m_lastStatus = szProto != NULL ? CallProtoService(szProto, PS_GETSTATUS, 0, 0) : CallService(MS_CLIST_GETSTATUSMODE, 0, 0);
+	ps.m_status = newstatus;
+	ps.m_szMsg = szMsg;
+	ps.m_szName = szProto;
 	return CallService(MS_KS_ANNOUNCESTATUSCHANGE, 0, (LPARAM)&ps);
 }
 

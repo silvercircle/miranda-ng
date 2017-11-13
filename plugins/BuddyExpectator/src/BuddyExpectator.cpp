@@ -27,7 +27,6 @@ int hLangpack;
 
 DWORD timer_id = 0;
 
-HANDLE hContactReturnedAction, hContactStillAbsentAction, hMissYouAction, hMenuMissYouClick;
 HGENMENU hContactMenu;
 
 HICON hIcon;
@@ -84,7 +83,7 @@ time_t getLastInputMsg(MCONTACT hContact)
 {
 	MEVENT hDbEvent = db_event_last(hContact);
 	while (hDbEvent) {
-		DBEVENTINFO dbei = { sizeof(dbei) };
+		DBEVENTINFO dbei = {};
 		db_event_get(hDbEvent, &dbei);
 		if (dbei.eventType == EVENTTYPE_MESSAGE && !(dbei.flags & DBEF_SENT))
 			return dbei.timestamp;
@@ -166,14 +165,14 @@ LRESULT CALLBACK PopupDlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 	switch (message) {
 	case WM_COMMAND:
 		if (HIWORD(wParam) == STN_CLICKED) {
-			CallServiceSync(MS_CLIST_REMOVEEVENT, (WPARAM)PUGetContact(hWnd), 0);
-			CallServiceSync("BuddyExpectator/actionReturned", (WPARAM)PUGetContact(hWnd), 0);
+			pcli->pfnRemoveEvent(PUGetContact(hWnd), 0);
+			CallServiceSync("BuddyExpectator/actionReturned", PUGetContact(hWnd), 0);
 			PUDeletePopup(hWnd);
 		}
 		break;
 
 	case WM_CONTEXTMENU:
-		CallServiceSync(MS_CLIST_REMOVEEVENT, (WPARAM)PUGetContact(hWnd), 0);
+		pcli->pfnRemoveEvent(PUGetContact(hWnd), 0);
 		setLastSeen(PUGetContact(hWnd));
 		PUDeletePopup(hWnd);
 		break;
@@ -191,14 +190,14 @@ LRESULT CALLBACK PopupDlgProcNoSet(HWND hWnd, UINT message, WPARAM wParam, LPARA
 	switch (message) {
 	case WM_COMMAND:
 		if (HIWORD(wParam) == STN_CLICKED) {
-			CallServiceSync(MS_CLIST_REMOVEEVENT, (WPARAM)PUGetContact(hWnd), 0);
+			pcli->pfnRemoveEvent(PUGetContact(hWnd), 0);
 			CallServiceSync("BuddyExpectator/actionStillAbsent", (WPARAM)PUGetContact(hWnd), 0);
 			PUDeletePopup(hWnd);
 		}
 		break;
 
 	case WM_CONTEXTMENU:
-		CallServiceSync(MS_CLIST_REMOVEEVENT, (WPARAM)PUGetContact(hWnd), 0);
+		pcli->pfnRemoveEvent(PUGetContact(hWnd), 0);
 		PUDeletePopup(hWnd);
 		break;
 
@@ -231,8 +230,8 @@ bool isContactGoneFor(MCONTACT hContact, int days)
 				ppd.lchContact = hContact;
 				ppd.lchIcon = IcoLib_GetIcon("enabled_icon");
 
-				mir_sntprintf(ppd.lptzContactName, TranslateT("Hiding %s (%S)"), pcli->pfnGetContactDisplayName(hContact, 0), GetContactProto(hContact));
-				mir_sntprintf(ppd.lptzText, TranslateT("%d days since last message"), daysSinceMessage);
+				mir_snwprintf(ppd.lptzContactName, TranslateT("Hiding %s (%S)"), pcli->pfnGetContactDisplayName(hContact, 0), GetContactProto(hContact));
+				mir_snwprintf(ppd.lptzText, TranslateT("%d days since last message"), daysSinceMessage);
 
 				if (!options.iUsePopupColors) {
 					ppd.colorBack = options.iPopupColorBack;
@@ -247,26 +246,26 @@ bool isContactGoneFor(MCONTACT hContact, int days)
 
 				CallService(MS_POPUP_ADDPOPUPT, (WPARAM)&ppd, APF_NEWDATA);
 
-				SkinPlaySound("buddyExpectatorHide");
+				Skin_PlaySound("buddyExpectatorHide");
 			}
 
 	return (daysSinceOnline >= days && (daysSinceMessage == -1 || daysSinceMessage >= days));
 }
 
-void ReturnNotify(MCONTACT hContact, TCHAR *message)
+void ReturnNotify(MCONTACT hContact, wchar_t *message)
 {
 	if (db_get_b(hContact, "CList", "NotOnList", 0) == 1 || db_get_b(hContact, "CList", "Hidden", 0) == 1)
 		return;
 
-	SkinPlaySound("buddyExpectatorReturn");
+	Skin_PlaySound("buddyExpectatorReturn");
 
 	if (options.iShowPopup > 0) {
 		// Display Popup
 		POPUPDATAT ppd = { 0 };
 		ppd.lchContact = hContact;
 		ppd.lchIcon = hIcon;
-		_tcsncpy(ppd.lptzContactName, (TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0), MAX_CONTACTNAME);
-		_tcsncpy(ppd.lptzText, message, MAX_SECONDLINE);
+		wcsncpy(ppd.lptzContactName, (wchar_t*)pcli->pfnGetContactDisplayName(hContact, 0), MAX_CONTACTNAME);
+		wcsncpy(ppd.lptzText, message, MAX_SECONDLINE);
 		if (!options.iUsePopupColors) {
 			ppd.colorBack = options.iPopupColorBack;
 			ppd.colorText = options.iPopupColorFore;
@@ -278,22 +277,21 @@ void ReturnNotify(MCONTACT hContact, TCHAR *message)
 	}
 
 	if (options.iShowEvent > 0) {
-		CLISTEVENT cle = { sizeof(cle) };
+		CLISTEVENT cle = {};
 		cle.hContact = hContact;
 		cle.hIcon = hIcon;
 		cle.pszService = "BuddyExpectator/actionReturned";
-		cle.flags = CLEF_TCHAR;
+		cle.flags = CLEF_UNICODE;
 
-		TCHAR* nick = (TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0);
-		TCHAR tmpMsg[512];
-		mir_sntprintf(tmpMsg, _T("%s %s"), nick, message);
-		cle.ptszTooltip = tmpMsg;
-
-		CallServiceSync(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
+		wchar_t* nick = (wchar_t*)pcli->pfnGetContactDisplayName(hContact, 0);
+		wchar_t tmpMsg[512];
+		mir_snwprintf(tmpMsg, L"%s %s", nick, message);
+		cle.szTooltip.w = tmpMsg;
+		pcli->pfnAddEvent(&cle);
 	}
 }
 
-void GoneNotify(MCONTACT hContact, TCHAR *message)
+void GoneNotify(MCONTACT hContact, wchar_t *message)
 {
 	if (db_get_b(hContact, "CList", "NotOnList", 0) == 1 || db_get_b(hContact, "CList", "Hidden", 0) == 1)
 		return;
@@ -303,8 +301,8 @@ void GoneNotify(MCONTACT hContact, TCHAR *message)
 		POPUPDATAT ppd = { 0 };
 		ppd.lchContact = hContact;
 		ppd.lchIcon = hIcon;
-		_tcsncpy(ppd.lptzContactName, (TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0), MAX_CONTACTNAME);
-		_tcsncpy(ppd.lptzText, message, MAX_SECONDLINE);
+		wcsncpy(ppd.lptzContactName, (wchar_t*)pcli->pfnGetContactDisplayName(hContact, 0), MAX_CONTACTNAME);
+		wcsncpy(ppd.lptzText, message, MAX_SECONDLINE);
 		if (!options.iUsePopupColors) {
 			ppd.colorBack = options.iPopupColorBack;
 			ppd.colorText = options.iPopupColorFore;
@@ -317,18 +315,17 @@ void GoneNotify(MCONTACT hContact, TCHAR *message)
 	}
 
 	if (options.iShowEvent2 > 0) {
-		CLISTEVENT cle = { sizeof(cle) };
+		CLISTEVENT cle = {};
 		cle.hContact = hContact;
 		cle.hIcon = hIcon;
 		cle.pszService = "BuddyExpectator/actionStillAbsent";
 
-		TCHAR* nick = (TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0);
-		TCHAR tmpMsg[512];
-		mir_sntprintf(tmpMsg, _T("%s %s"), nick, message);
-		cle.ptszTooltip = tmpMsg;
-		cle.flags = CLEF_TCHAR;
-
-		CallServiceSync(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
+		wchar_t* nick = (wchar_t*)pcli->pfnGetContactDisplayName(hContact, 0);
+		wchar_t tmpMsg[512];
+		mir_snwprintf(tmpMsg, L"%s %s", nick, message);
+		cle.szTooltip.w = tmpMsg;
+		cle.flags = CLEF_UNICODE;
+		pcli->pfnAddEvent(&cle);
 	}
 }
 
@@ -346,7 +343,7 @@ INT_PTR MissYouAction(WPARAM wParam, LPARAM lParam)
 	}
 	else hContact = wParam;
 
-	CallService(MS_MSG_SENDMESSAGET, hContact, 0);
+	CallService(MS_MSG_SENDMESSAGEW, hContact, 0);
 	return 0;
 }
 
@@ -363,7 +360,7 @@ INT_PTR ContactReturnedAction(WPARAM hContact, LPARAM lParam)
 	}
 
 	if (options.iShowMessageWindow > 0)
-		CallService(MS_MSG_SENDMESSAGET, hContact, 0);
+		CallService(MS_MSG_SENDMESSAGEW, hContact, 0);
 
 	if (options.iShowUDetails > 0)
 		CallService(MS_USERINFO_SHOWDIALOG, hContact, 0);
@@ -386,7 +383,7 @@ INT_PTR ContactStillAbsentAction(WPARAM hContact, LPARAM lParam)
 
 	switch (options.action2) {
 	case GCA_DELETE:
-		CallService(MS_DB_CONTACT_DELETE, hContact, 0);
+		db_delete_contact(hContact);
 		break;
 	case GCA_UDETAILS:
 		CallService(MS_USERINFO_SHOWDIALOG, hContact, 0);
@@ -437,9 +434,9 @@ int onPrebuildContactMenu(WPARAM hContact, LPARAM)
 		return 0;
 
 	if (db_get_b(hContact, MODULE_NAME, "MissYou", 0))
-		Menu_ModifyItem(hContactMenu, LPGENT("Disable Miss You"), iconList[1].hIcolib);
+		Menu_ModifyItem(hContactMenu, LPGENW("Disable Miss You"), iconList[1].hIcolib);
 	else
-		Menu_ModifyItem(hContactMenu, LPGENT("Enable Miss You"), iconList[2].hIcolib);
+		Menu_ModifyItem(hContactMenu, LPGENW("Enable Miss You"), iconList[2].hIcolib);
 
 	Menu_ShowItem(hContactMenu, !db_get_b(hContact, proto, "ChatRoom", 0) && (CallProtoService(proto, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_IMSEND));
 	return 0;
@@ -459,7 +456,7 @@ int onExtraImageApplying(WPARAM hContact, LPARAM)
 int SettingChanged(WPARAM hContact, LPARAM lParam)
 {
 	DBCONTACTWRITESETTING *inf = (DBCONTACTWRITESETTING*)lParam;
-	if (hContact == NULL || inf->value.type == DBVT_DELETED || mir_strcmp(inf->szSetting, "Status") != 0)
+	if (hContact == NULL || inf->value.type == DBVT_DELETED || strcmp(inf->szSetting, "Status") != 0)
 		return 0;
 
 	if (db_get_b(hContact, "CList", "NotOnList", 0) == 1)
@@ -487,8 +484,8 @@ int SettingChanged(WPARAM hContact, LPARAM lParam)
 
 			ppd.lchContact = hContact;
 			ppd.lchIcon = IcoLib_GetIcon("enabled_icon");
-			_tcsncpy(ppd.lptzContactName, (TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0), MAX_CONTACTNAME);
-			_tcsncpy(ppd.lptzText, TranslateT("You awaited this contact!"), MAX_SECONDLINE);
+			wcsncpy(ppd.lptzContactName, (wchar_t*)pcli->pfnGetContactDisplayName(hContact, 0), MAX_CONTACTNAME);
+			wcsncpy(ppd.lptzText, TranslateT("You awaited this contact!"), MAX_SECONDLINE);
 			if (!options.iUsePopupColors) {
 				ppd.colorBack = options.iPopupColorBack;
 				ppd.colorText = options.iPopupColorFore;
@@ -503,7 +500,7 @@ int SettingChanged(WPARAM hContact, LPARAM lParam)
 
 			CallService(MS_POPUP_ADDPOPUPT, (WPARAM)&ppd, APF_NEWDATA);
 
-			SkinPlaySound("buddyExpectatorMissYou");
+			Skin_PlaySound("buddyExpectatorMissYou");
 		}
 	}
 
@@ -519,17 +516,17 @@ int SettingChanged(WPARAM hContact, LPARAM lParam)
 
 	unsigned int AbsencePeriod = db_get_dw(hContact, MODULE_NAME, "iAbsencePeriod", options.iAbsencePeriod);
 	if (isContactGoneFor(hContact, AbsencePeriod)) {
-		TCHAR* message = TranslateT("has returned after a long absence.");
-		TCHAR tmpBuf[251] = { 0 };
+		wchar_t* message = TranslateT("has returned after a long absence.");
+		wchar_t tmpBuf[251] = { 0 };
 		time_t tmpTime = getLastSeen(hContact);
 		if (tmpTime != -1) {
-			_tcsftime(tmpBuf, 250, TranslateT("has returned after being absent since %#x"), gmtime(&tmpTime));
+			wcsftime(tmpBuf, 250, TranslateT("has returned after being absent since %#x"), gmtime(&tmpTime));
 			message = tmpBuf;
 		}
 		else {
 			tmpTime = getLastInputMsg(hContact);
 			if (tmpTime != -1) {
-				_tcsftime(tmpBuf, 250, TranslateT("has returned after being absent since %#x"), gmtime(&tmpTime));
+				wcsftime(tmpBuf, 250, TranslateT("has returned after being absent since %#x"), gmtime(&tmpTime));
 				message = tmpBuf;
 			}
 		}
@@ -551,15 +548,15 @@ void CALLBACK TimerProc(HWND, UINT, UINT_PTR, DWORD)
 		if (proto && (db_get_b(hContact, proto, "ChatRoom", 0) == 0) && (CallProtoService(proto, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_IMSEND) && isContactGoneFor(hContact, options.iAbsencePeriod2) && (db_get_b(hContact, MODULE_NAME, "StillAbsentNotified", 0) == 0))
 		{
 			db_set_b(hContact, MODULE_NAME, "StillAbsentNotified", 1);
-			SkinPlaySound("buddyExpectatorStillAbsent");
+			Skin_PlaySound("buddyExpectatorStillAbsent");
 
-			TCHAR* message = TranslateT("has not returned after a long absence.");
+			wchar_t* message = TranslateT("has not returned after a long absence.");
 			time_t tmpTime;
-			TCHAR tmpBuf[251] = { 0 };
+			wchar_t tmpBuf[251] = { 0 };
 			tmpTime = getLastSeen(hContact);
 			if (tmpTime != -1)
 			{
-				_tcsftime(tmpBuf, 250, TranslateT("has not returned after being absent since %#x"), gmtime(&tmpTime));
+				wcsftime(tmpBuf, 250, TranslateT("has not returned after being absent since %#x"), gmtime(&tmpTime));
 				message = tmpBuf;
 			}
 			else
@@ -567,7 +564,7 @@ void CALLBACK TimerProc(HWND, UINT, UINT_PTR, DWORD)
 				tmpTime = getLastInputMsg(hContact);
 				if (tmpTime != -1)
 				{
-					_tcsftime(tmpBuf, 250, TranslateT("has not returned after being absent since %#x"), gmtime(&tmpTime));
+					wcsftime(tmpBuf, 250, TranslateT("has not returned after being absent since %#x"), gmtime(&tmpTime));
 					message = tmpBuf;
 				}
 			}
@@ -595,10 +592,10 @@ int ModulesLoaded(WPARAM, LPARAM)
 	HookEvent(ME_USERINFO_INITIALISE, UserinfoInit);
 
 	// add sounds support
-	SkinAddNewSoundExT("buddyExpectatorReturn", LPGENT("BuddyExpectator"), LPGENT("Contact returned"));
-	SkinAddNewSoundExT("buddyExpectatorStillAbsent", LPGENT("BuddyExpectator"), LPGENT("Contact still absent"));
-	SkinAddNewSoundExT("buddyExpectatorMissYou", LPGENT("BuddyExpectator"), LPGENT("Miss you event"));
-	SkinAddNewSoundExT("buddyExpectatorHide", LPGENT("BuddyExpectator"), LPGENT("Hide contact event"));
+	Skin_AddSound("buddyExpectatorReturn", LPGENW("BuddyExpectator"), LPGENW("Contact returned"));
+	Skin_AddSound("buddyExpectatorStillAbsent", LPGENW("BuddyExpectator"), LPGENW("Contact still absent"));
+	Skin_AddSound("buddyExpectatorMissYou", LPGENW("BuddyExpectator"), LPGENW("Miss you event"));
+	Skin_AddSound("buddyExpectatorHide", LPGENW("BuddyExpectator"), LPGENW("Hide contact event"));
 
 	timer_id = SetTimer(0, 0, 1000 * 60 * 60 * 4, TimerProc); // check every 4 hours
 
@@ -611,10 +608,10 @@ int ModulesLoaded(WPARAM, LPARAM)
 
 		CMenuItem mi;
 		SET_UID(mi, 0xc48c31d4, 0x56b6, 0x48c6, 0x8e, 0xe9, 0xe6, 0x57, 0xb5, 0x80, 0xb8, 0x1e);
-		mi.flags = CMIF_TCHAR;
+		mi.flags = CMIF_UNICODE;
 		mi.hIcolibItem = iconList[2].hIcolib;
 		mi.position = 200000;
-		mi.name.t = LPGENT("Enable Miss You");
+		mi.name.w = LPGENW("Enable Miss You");
 		mi.pszService = "BuddyExpectator/actionMissYouClick";
 		hContactMenu = Menu_AddContactMenuItem(&mi);
 	}
@@ -650,11 +647,6 @@ int ContactAdded(WPARAM hContact, LPARAM)
 
 int onShutdown(WPARAM, LPARAM)
 {
-	DestroyServiceFunction(hContactReturnedAction);
-	DestroyServiceFunction(hContactStillAbsentAction);
-	DestroyServiceFunction(hMissYouAction);
-	DestroyServiceFunction(hMenuMissYouClick);
-
 	IcoLib_ReleaseIcon(hIcon);
 	return 0;
 }
@@ -662,14 +654,14 @@ int onShutdown(WPARAM, LPARAM)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	InitOptions();
 
-	hContactReturnedAction = CreateServiceFunction("BuddyExpectator/actionReturned", ContactReturnedAction);
-	hContactStillAbsentAction = CreateServiceFunction("BuddyExpectator/actionStillAbsent", ContactStillAbsentAction);
-	hMissYouAction = CreateServiceFunction("BuddyExpectator/actionMissYou", MissYouAction);
-	hMenuMissYouClick = CreateServiceFunction("BuddyExpectator/actionMissYouClick", MenuMissYouClick);
+	CreateServiceFunction("BuddyExpectator/actionReturned", ContactReturnedAction);
+	CreateServiceFunction("BuddyExpectator/actionStillAbsent", ContactStillAbsentAction);
+	CreateServiceFunction("BuddyExpectator/actionMissYou", MissYouAction);
+	CreateServiceFunction("BuddyExpectator/actionMissYouClick", MenuMissYouClick);
 
 	HookEvent(ME_DB_CONTACT_SETTINGCHANGED, SettingChanged);
 	HookEvent(ME_SYSTEM_MODULESLOADED, ModulesLoaded);

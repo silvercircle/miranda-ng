@@ -1,6 +1,6 @@
 /*
 
-Copyright 2000-12 Miranda IM, 2012-15 Miranda NG project,
+Copyright 2000-12 Miranda IM, 2012-17 Miranda NG project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -56,7 +56,7 @@ void msgQueue_add(MCONTACT hContact, int id, char *szMsg, int flags)
 
 	mir_cslock lck(csMsgQueue);
 	if (!msgQueue.getCount() && !timerId)
-		timerId = SetTimer(NULL, 0, 5000, MsgTimer);
+		timerId = SetTimer(nullptr, 0, 5000, MsgTimer);
 	msgQueue.insert(item);
 }
 
@@ -71,20 +71,20 @@ TMsgQueue* msgQueue_find(MCONTACT hContact, int id)
 			msgQueue.remove(i);
 
 			if (!msgQueue.getCount() && timerId) {
-				KillTimer(NULL, timerId);
+				KillTimer(nullptr, timerId);
 				timerId = 0;
 			}
 
 			return item;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 void msgQueue_processack(MCONTACT hContact, int id, BOOL success, const char *szErr)
 {
 	TMsgQueue *p = msgQueue_find(hContact, id);
-	if (p == NULL)
+	if (p == nullptr)
 		return;
 
 	if (!success) {
@@ -92,7 +92,7 @@ void msgQueue_processack(MCONTACT hContact, int id, BOOL success, const char *sz
 		return;
 	}
 
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	dbei.eventType = EVENTTYPE_MESSAGE;
 	dbei.flags = DBEF_SENT | DBEF_UTF | (p->flags & PREF_RTL ? DBEF_RTL : 0);
 	dbei.szModule = GetContactProto(hContact);
@@ -100,8 +100,10 @@ void msgQueue_processack(MCONTACT hContact, int id, BOOL success, const char *sz
 	dbei.cbBlob = (DWORD)(mir_strlen(p->szMsg) + 1);
 	dbei.pBlob = (PBYTE)p->szMsg;
 
-	MessageWindowEvent evt = { sizeof(evt), id, hContact, &dbei };
-	NotifyEventHooks(hHookWinWrite, 0, (LPARAM)&evt);
+	MessageWindowEvent evt = { id, hContact, &dbei };
+	NotifyEventHooks(pci->hevPreCreate, 0, (LPARAM)&evt);
+
+	p->szMsg = (char*)dbei.pBlob;
 
 	db_event_add(hContact, &dbei);
 

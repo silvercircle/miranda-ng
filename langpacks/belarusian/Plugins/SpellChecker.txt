@@ -2,12 +2,11 @@
 ;============================================================
 ;  File: SpellChecker.dll
 ;  Plugin: Spell checker
-;  Version: 0.2.6.2
-;  Authors: Ricardo Pescuma Domenecci, FREAK_THEMIGHTY
+;  Version: 0.2.6.4
+;  Authors: Ricardo Pescuma Domenecci, Wishmaster
 ;============================================================
 [Spell checker for the message windows. Uses Hunspell to do the checking.]
 Праверка арфаграфіі ў вакне паведамленняў. Выкарыстоўвае Hunspell для праверкі.
-;file \plugins\SpellChecker\res\resource.rc
 [Replacements]
 Замены
 [Enable auto-replacements]
@@ -64,11 +63,18 @@
 Выкарыстоўваць слоўнікі з іншых праграм
 [Avoid removing underscores (slows down checking of long texts)]
 Не выдаляць падкрэсленні (запавольвае праверку вялікіх тэкстаў)
-;file \plugins\SpellChecker\src\ardialog.cpp
+[The wrong word can't be empty!]
+
 [Wrong Correction]
 Няслушнае выпраўленне
-;file \plugins\SpellChecker\src\dictionary.cpp
-;file \plugins\SpellChecker\src\options.cpp
+[The correction can't be empty!]
+
+[The correction can't be equal to the wrong word!]
+
+[Tagalog (Philippines)]
+
+[German (Germany)]
+
 [Message sessions]
 Гутаркі
 [Auto-replacements]
@@ -91,7 +97,6 @@
 Няслушнае слова
 [Correction]
 Выпраўленне
-;file \plugins\SpellChecker\src\spellchecker.cpp
 [Dictionaries]
 Слоўнікі
 [Custom Dictionaries]
@@ -108,7 +113,8 @@
 Выключаны
 [Unknown]
 Невядома
-;file \plugins\SpellChecker\src\utils.cpp
+[There are %d spelling errors. Are you sure you want to send this message?]
+
 [Other...]
 Іншае...
 [Always replace with]

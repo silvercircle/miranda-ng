@@ -25,7 +25,6 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICQ                 ICON                    "icq.ico"
 IDI_EXPANDSTRINGEDIT    ICON                    "expandst.ico"
 
 /////////////////////////////////////////////////////////////////////////////
@@ -115,13 +114,13 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,46,288,10
     CONTROL         "Update contacts' details on the server's list when I change them in mine",IDC_SAVETOSERVER,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,59,290,10
-    GROUPBOX        "ICQ avatars",IDC_STATIC,4,98,302,70
+    GROUPBOX        "ICQ avatars",IDC_STATIC,4,98,302,56
     CONTROL         "Enable avatar support",IDC_ENABLEAVATARS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,110,288,10
     CONTROL         "Check avatar validity before saving *",IDC_STRICTAVATARCHECK,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,124,288,10
     CONTROL         "Load avatars automatically (like ICQ Lite)",IDC_AUTOLOADAVATARS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,138,288,10
-    LTEXT           "You will need to reconnect to the ICQ network for the changes you have made on this page to take effect.",IDC_RECONNECTREQD,10,172,290,16,NOT WS_VISIBLE
+    LTEXT           "These changes will take effect the next time you connect to the ICQ network.",IDC_RECONNECTREQD,10,172,290,16,NOT WS_VISIBLE
     LTEXT           "You cannot enable/disable the server-side contact list while you are connected to the ICQ network.",IDC_OFFLINETOENABLE,10,192,290,16,NOT WS_VISIBLE
     CTEXT           "Note: The options marked with an asterisk have important side-effects or caveats that may not be initially apparent documented in the help.",IDC_STATIC,10,212,290,16
 END
@@ -143,7 +142,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,72,288,10
     CONTROL         "Passive mode (i.e., do not initiate new connections)",IDC_DCPASSIVE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,84,288,10
-    GROUPBOX        "Extra Features",IDC_STATIC,4,103,302,93
+    GROUPBOX        "Extra Features",IDC_STATIC,4,103,302,79
     CONTROL         "Enable Custom status support for xtraz",IDC_XSTATUSENABLE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,115,288,10
     CONTROL         "Enable Custom status support for moods",IDC_MOODSENABLE,
@@ -153,7 +152,6 @@ BEGIN
     CONTROL         "Auto-retrieve Custom status details",IDC_XSTATUSAUTO,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,153,288,10
     CONTROL         "Block known Spam Bots",IDC_KILLSPAMBOTS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,166,288,10
-    CONTROL         "Enable AIM contacts support",IDC_AIMENABLE,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,12,180,288,10
 END
 
 IDD_OPT_ICQPRIVACY DIALOGEX 0, 0, 310, 234

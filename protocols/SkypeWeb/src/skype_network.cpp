@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2015-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -19,14 +19,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 void CSkypeProto::InitNetwork()
 {
-	TCHAR name[128];
-	mir_sntprintf(name, TranslateT("%s connection"), m_tszUserName);
-	NETLIBUSER nlu = { 0 };
-	nlu.cbSize = sizeof(nlu);
+	CMStringW name(FORMAT, TranslateT("%s connection"), m_tszUserName);
+
+	NETLIBUSER nlu = {};
 	nlu.flags = NUF_OUTGOING | NUF_INCOMING | NUF_HTTPCONNS | NUF_UNICODE;
-	nlu.ptszDescriptiveName = name;
+	nlu.szDescriptiveName.w = name.GetBuffer();
 	nlu.szSettingsModule = m_szModuleName;
-	m_hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
+	m_hNetlibUser = Netlib_RegisterUser(&nlu);
 }
 
 void CSkypeProto::UnInitNetwork()
@@ -37,7 +36,9 @@ void CSkypeProto::UnInitNetwork()
 
 void CSkypeProto::ShutdownConnections()
 {
-	Netlib_Shutdown(m_pollingConnection);
-	Netlib_Shutdown(m_TrouterConnection);
+	Netlib_CloseHandle(m_pollingConnection);
+	Netlib_CloseHandle(m_TrouterConnection);
+
+	m_pollingConnection = m_TrouterConnection = 0;
 	//Netlib_Shutdown(m_hNetlibUser);
 }

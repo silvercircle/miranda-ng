@@ -6,11 +6,11 @@
 ;  Authors: George Hazan
 ;============================================================
 [Miranda NG Database Checker.]
-Плагін перевірки баз даних Miranda NG.
+Перевірка баз даних Miranda NG.
 [Welcome to the Miranda Database Wizard]
 Ласкаво просимо до майстра бази даних
 [Using this Wizard you can compact your Miranda profile database to remove dead space created during normal usage, as well as repair a large number of issues that could affect the database.]
-Використовуючи цей майстер, ви можете зменшити розмір профілю видаленням "мертвого" простору.
+За допомогою цього майстра можна зменшити розмір бази даних профілю шляхом видалення "мертвого" простору.
 [To continue, click Next.]
 Натисніть "Далі" для продовження.
 [This program is licensed under the terms of the GNU General Public License.]
@@ -26,7 +26,7 @@
 [Select Miranda Profile]
 Вибір профілю Miranda NG
 [You can choose the Miranda profile database to compact or repair.]
-Виберіть профіль Miranda NG для стиснення або відновлення.
+Виберіть базу даних Miranda NG для стиснення або відновлення.
 [Select the &profile database from the list below. If the database you wish to use is not listed here then click Other to browse your computer.]
 Виберіть профіль бази зі списку. Якщо його немає в списку, натисніть "Ще..." для пошуку на комп'ютері.
 [&File:]
@@ -60,7 +60,7 @@
 [Cleaning Options]
 Опції очищення
 [You can choose to remove information from the database while it is being processed.]
-Ви можете видалити інформацію з бази під час процесу.
+Ви можете видалити інформацію з бази під час обробки.
 [Erase all histories]
 Видалити всю історію
 [Removes all the saved history for all contacts in the database.]
@@ -72,7 +72,7 @@
 [Convert old Unicode messages to UTF8]
 Конвертувати старі Unicode повідомлення в UTF8
 [Converts history messages in pre-0.7 format (ANSI+UCS2) to the new UTF8 format supported by 0.7. Saves the database space in most cases (recommended).]
-Конвертує історію повідомлень з формату <0.7 (ANSI+UCS2) в новий формат UTF8. У більшості випадків допомагає зберегти місце на диску (рекомендується).
+Конвертує історію повідомлень з формату <0.7 (ANSI+UCS2) в новий формат UTF8. У більшості випадків економить місце на диску (рекомендується).
 [Working...]
 Виконання...
 [Please wait while the requested operations are being performed.]
@@ -84,7 +84,7 @@
 [Launch Miranda with this profile]
 Запустити Miranda NG з цим профілем
 [Launches Miranda with the profile that was just worked on.]
-Запускає Miranda NG з обробленим профілем
+Запускає Miranda NG з обробленим профілем.
 [Backup:]
 Резерв:
 [The processing of the database has been completed. Click Next to return to the start of the wizard to select another database to check, or click Finish to exit the wizard.]
@@ -98,17 +98,17 @@
 [Processing has not yet completed, if you go back now then the changes that have currently been made will be rolled back and the original database will be restored. Do you still want to go back?]
 Обробка ще не завершена; якщо ви перейдете назад зараз, то зміни не будуть застосовані до оригінальної бази даних. Ви хочете перейти назад?
 [Database Checker cannot find a suitable database plugin to open '%s'.]
-Плагін перевірки не може знайти відповідного драйвера БД для відкриття "%s".
+Плагін перевірки не може знайти відповідного драйвера бази для відкриття "%s".
 [Error]
 Помилка
 [Database driver '%s' doesn't support checking.]
-Драйвер профілю "%s" не підтримує перевірку.
+Драйвер бази "%s" не підтримує перевірку.
 [Database]
-Профіль
+База даних
 [Total size]
 Размір
 [Miranda Databases (*.dat)]
-Бази Miranda NG (*.dat)
+Бази даних Miranda NG (*.dat)
 [All Files]
 Усі файли
 [Errors were encountered, however you selected not to backup the original database. It is strongly recommended that you do so in case important data was omitted. Do you wish to keep a backup of the original database?]

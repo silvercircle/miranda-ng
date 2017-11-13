@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: ListeningTo.dll
 ;  Plugin: ListeningTo
-;  Version: 0.3.0.0
+;  Version: 0.4.0.0
 ;  Authors: Ricardo Pescuma Domenecci
 ;============================================================
 [Handles listening information to/for contacts.]
@@ -93,12 +93,10 @@ foobar2000 (установите плагин вручную)
 Музыка (включено)
 [Listening to (disabled)]
 Музыка (выключено)
-[ListeningTo]
-Музыка в статусе
-[Listening to music]
-Слушаю музыку
 [Send to %s]
 Отправлять в %s
+[Listening to music]
+Слушаю музыку
 [Send to all protocols]
 Отправлять всем протоколам
 [Listening info]
@@ -133,6 +131,8 @@ foobar2000 (установите плагин вручную)
 Выключить ListeningTo (для всех протоколов)
 [Enable ListeningTo (to all protocols)]
 Включить ListeningTo (для всех протоколов)
+[ListeningTo]
+Музыка в статусе
 [<Unknown>]
 <Неизвестно>
 [<Nothing is playing now>]

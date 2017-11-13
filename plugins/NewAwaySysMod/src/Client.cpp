@@ -30,11 +30,13 @@ HANDLE g_hUpdateMsgsThread = NULL;
 
 void __cdecl UpdateMsgsThreadProc(void *)
 {
+	Thread_SetName("NewAwaySysMod: UpdateMsgsThreadProc");
+
 	int numAccs;
 	PROTOACCOUNT **accs;
 	Proto_EnumAccounts(&numAccs, &accs);
 
-	while (WaitForSingleObject(g_hTerminateUpdateMsgsThread, 0) == WAIT_TIMEOUT && !Miranda_Terminated()) {
+	while (WaitForSingleObject(g_hTerminateUpdateMsgsThread, 0) == WAIT_TIMEOUT && !Miranda_IsTerminated()) {
 		DWORD MinUpdateTimeDifference = (DWORD)g_MoreOptPage.GetDBValueCopy(IDC_MOREOPTDLG_UPDATEMSGSPERIOD) * 1000; // in milliseconds
 		for (int i = 0; i < numAccs; i++) {
 			PROTOACCOUNT *p = accs[i];
@@ -45,7 +47,7 @@ void __cdecl UpdateMsgsThreadProc(void *)
 				}
 				if (CallProtoService(p->szModuleName, PS_GETCAPS, PFLAGNUM_3, 0) & Proto_Status2Flag(Status) && g_ProtoStates[p->szModuleName].CurStatusMsg.GetUpdateTimeDifference() >= MinUpdateTimeDifference) {
 					TCString CurMsg(GetDynamicStatMsg(INVALID_CONTACT_ID, p->szModuleName));
-					if ((TCString)g_ProtoStates[p->szModuleName].CurStatusMsg != (const TCHAR*)CurMsg) { // if the message has changed
+					if ((TCString)g_ProtoStates[p->szModuleName].CurStatusMsg != (const wchar_t*)CurMsg) { // if the message has changed
 						g_ProtoStates[p->szModuleName].CurStatusMsg = CurMsg;
 						CallAllowedPS_SETAWAYMSG(p->szModuleName, Status, CurMsg);
 					}
@@ -126,8 +128,8 @@ void ChangeProtoMessages(char* szProto, int iMode, const TCString &Msg)
 
 	for (int i = 0; i < _countof(StatusDbSettings); i++) {
 		if (iMode == StatusDbSettings[i].Status) {
-			db_set_ts(NULL, "SRAway", CString(StatusDbSettings[i].Setting) + "Msg", CurMsg);
-			db_set_ts(NULL, "SRAway", CString(StatusDbSettings[i].Setting) + "Default", CurMsg); // TODO: make it more accurate, and change not only here, but when changing status messages through UpdateMsgsTimerFunc too; and when changing messages through AutoAway() ?
+			db_set_ws(NULL, "SRAway", CString(StatusDbSettings[i].Setting) + "Msg", CurMsg);
+			db_set_ws(NULL, "SRAway", CString(StatusDbSettings[i].Setting) + "Default", CurMsg); // TODO: make it more accurate, and change not only here, but when changing status messages through UpdateMsgsTimerFunc too; and when changing messages through AutoAway() ?
 			break;
 		}
 	}
@@ -147,7 +149,7 @@ int GetRecentGroupID(int iMode)
 		return g_Messages_RecentRootID;
 
 	for (int Order = 0; Order < TreeCtrl->m_value.GetSize(); Order++) // find a group named accordingly to the current status
-		if (TreeCtrl->m_value[Order].ParentID == g_Messages_RecentRootID && TreeCtrl->m_value[Order].Flags & TIF_GROUP && !mir_tstrcmpi(TreeCtrl->m_value[Order].Title, iMode ? pcli->pfnGetStatusModeDescription(iMode, 0) : MSGTREE_RECENT_OTHERGROUP))
+		if (TreeCtrl->m_value[Order].ParentID == g_Messages_RecentRootID && TreeCtrl->m_value[Order].Flags & TIF_GROUP && !mir_wstrcmpi(TreeCtrl->m_value[Order].Title, iMode ? pcli->pfnGetStatusModeDescription(iMode, 0) : MSGTREE_RECENT_OTHERGROUP))
 			return TreeCtrl->m_value[Order].ID;
 
 	return -1;
@@ -169,23 +171,23 @@ int ICQStatusToGeneralStatus(int bICQStat)
 TCString VariablesEscape(TCString Str)
 {
 	if (!Str.GetLen()) {
-		return _T("");
+		return L"";
 	}
 	enum eState
 	{
 		ST_TEXT, ST_QUOTE
 	};
 	eState State = ST_QUOTE;
-	TCString Result(_T("`"));
-	const TCHAR *p = Str;
+	TCString Result(L"`");
+	const wchar_t *p = Str;
 	while (*p) {
 		if (*p == '`') {
 			if (State == ST_TEXT) {
-				Result += _T("````");
+				Result += L"````";
 				State = ST_QUOTE;
 			}
 			else {
-				Result += _T("``");
+				Result += L"``";
 			}
 		}
 		else {

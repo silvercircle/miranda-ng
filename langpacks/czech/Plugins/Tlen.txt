@@ -16,8 +16,6 @@ Heslo:
 Uložit heslo
 [Create new account]
 Zřídit nový účet
-[Tlen]
-Tlen
 [Options]
 Možnosti
 [Automatically reconnect after unintentional disconnection]
@@ -88,7 +86,7 @@ Pozadí
 Text
 [Delay]
 Prodleva
-[&From Popup plugin]
+[&From popup plugin]
 G&lobální nastavení
 [&Custom]
 &Vlastní
@@ -274,7 +272,7 @@ Přeposílání
 
 ;file \protocols\Tlen\src\tlen_svc.cpp
 [Tlen login]
-
+Tlen login
 [You need to be connected to Tlen account to set avatar.]
 
 ;file \protocols\Tlen\src\tlen_thread.cpp

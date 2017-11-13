@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Weather.dll
 ;  Plugin: Weather
-;  Version: 0.4.0.2
+;  Version: 0.4.0.3
 ;  Authors: Miranda NG Team
 ;============================================================
 [Retrieves weather information and displays it in your contact list.]
@@ -100,8 +100,6 @@ Vidljivost
 
 [City name]
 
-[ID]
-
 [Log Information]
 
 [Use internal history]
@@ -156,7 +154,7 @@ Boje operativnog sistema
 
 [seconds]
 sekundi
-[From Popup plugin]
+[From popup plugin]
 
 [Permanent]
 
@@ -462,11 +460,11 @@ bajtova
 [Description:]
 Opis:
 ;file \plugins\Weather\src\weather_ini.cpp
-[No update data file is found. Please check your Plugins\\Weather directory.]
+[All update data has been reloaded.]
 
 [Invalid ini format for: %s]
 
-[All update data has been reloaded.]
+[No update data file is found. Please check your Plugins\\Weather directory.]
 
 ;file \plugins\Weather\src\weather_mwin.cpp
 [Frame Font]
@@ -476,6 +474,8 @@ Opis:
 [Frame Background]
 
 ;file \plugins\Weather\src\weather_opt.cpp
+[Weather Protocol Text Preview]
+
 [Network]
 Mreža
 [General]
@@ -484,8 +484,6 @@ Uopšteno
 
 [Popups]
 Balončići
-[Weather Protocol Text Preview]
-
 ;file \plugins\Weather\src\weather_popup.cpp
 ;file \plugins\Weather\src\weather_svcs.cpp
 [Station ID]
@@ -518,10 +516,6 @@ Balončići
 [Unable to retrieve weather information for %s]
 
 ;file \plugins\Weather\src\weather_userinfo.cpp
-[Current condition for %n]
-
-[Last update on:   %u]
-
 [Variable]
 
 [Information]
@@ -529,4 +523,8 @@ Obaveštenje
 [Retrieving new data, please wait...]
 
 [More Info]
+
+[Current condition for %n]
+
+[Last update on:   %u]
 

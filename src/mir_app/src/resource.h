@@ -12,12 +12,12 @@
 #define IDI_SMS                         103
 #define IDI_ONLINE                      104
 #define IDI_OFFLINE                     105
+#define IDD_OPT_TOOLBAR                 106
 #define IDD_OPT_FONTS                   107
 #define IDD_OPT_GENMENU                 108
 #define IDD_OPT_PROTOCOLORDER           109
 #define IDD_OPT_ICOLIB                  110
 #define IDD_ICOLIB_IMPORT               111
-#define IDD_MODERNOPT_FONTS             112
 #define IDI_LOADED_GRAY                 113
 #define IDI_NOTLOADED_GRAY              114
 #define IDD_ADDED                       115
@@ -33,14 +33,10 @@
 #define IDI_INVISIBLE                   130
 #define IDI_NA                          131
 #define IDI_LOAD                        132
+#define IDR_SRMM						133
 #define IDD_OPT_SOUND                   134
 #define IDI_RECVMSG                     136
 #define IDI_URL                         138
-#define IDD_MODERNOPT_ACCOUNTS          139
-#define IDD_MODERNOPT_MODULES           140
-#define IDD_MODERNOPT_STATUS            141
-#define IDD_MODERNOPT_IDLE              142
-#define IDD_MODERNOPT_IGNORE            143
 #define IDI_MCMENUOFF                   144
 #define IDI_MCMENU                      145
 #define IDI_MCCONVERT                   146
@@ -92,7 +88,6 @@
 #define IDI_NOTICK                      205
 #define IDD_OPT_PLUGINS                 206
 #define IDI_TICK                        206
-#define IDD_OPT_ICONS                   207
 #define IDI_FILE                        207
 #define IDI_ADDCONTACT                  210
 #define IDI_SMALLDOT                    211
@@ -220,6 +215,7 @@
 #define IDC_URLS                        1037
 #define IDC_COLORTEXT                   1038
 #define IDC_REPLY                       1039
+#define IDC_TOOLBARTREE						 1040
 #define IDC_URL                         1041
 #define IDC_FONTGROUP                   1042
 #define IDC_BTN_RESET                   1045
@@ -230,6 +226,7 @@
 #define IDC_NAMENICK                    1049
 #define IDC_NAMEFIRST                   1050
 #define IDC_NAMELAST                    1051
+#define IDC_BBRESET                     1052
 #define IDC_NICK                        1053
 #define IDC_BTN_EXPORT                  1054
 #define IDC_FONTLIST                    1056
@@ -278,6 +275,12 @@
 #define IDC_TXT_PASSWORD                1097
 #define IDC_TXT_COMBO                   1098
 #define IDC_TXT_RICHEDIT                1099
+#define IDC_IMCHECK                     1100
+#define IDC_CHATCHECK                   1101
+#define IDC_CANBEHIDDEN                 1102
+#define IDC_SPIN1								 1103
+#define IDC_SEPARATOR						 1104
+#define IDC_EDIT1								 1105
 #define IDC_BUILDTIME                   1108
 #define IDC_CREDITSFILE                 1109
 #define IDC_NUMBER                      1113
@@ -368,7 +371,6 @@
 #define IDC_NEWNAME                     1341
 #define IDC_MOVE                        1342
 #define IDC_LEAVE                       1343
-#define IDC_MODERN                      1346
 #define IDC_CATEGORYLIST                1366
 #define IDC_LOADICONS                   1369
 #define IDC_STICONSGROUP                1371
@@ -471,20 +473,6 @@
 #define IDC_PROTOCOL                    1580
 #define IDC_CONTRIBLINK                 1586
 #define IDC_DEVS                        1589
-#define IDC_TXT_TITLE1                  1592
-#define IDC_TXT_TITLE2                  1593
-#define IDC_TXT_TITLE3                  1594
-#define IDC_TXT_TITLE4                  1595
-#define IDC_TXT_TITLE5                  1596
-#define IDC_TXT_TITLE6                  1597
-#define IDC_TXT_TITLE7                  1598
-#define IDC_TXT_TITLE8                  1599
-#define IDC_PREVIEWSMALL                1600
-#define IDC_PREVIEWGENERAL              1601
-#define IDC_PREVIEWHEADER               1602
-#define IDC_CHOOSEFONTHEADER            1603
-#define IDC_CHOOSEFONTGENERAL           1604
-#define IDC_CHOOSEFONTSMALL             1605
 #define IDC_IDLEONWINDOWS               1637
 #define IDC_IDLEONMIRANDA               1638
 #define IDC_SCREENSAVER                 1642
@@ -551,7 +539,6 @@
 #define IDC_LST_ERRORS                  1731
 #define IDC_LV_ERRORS                   1733
 #define IDC_HEADERBAR                   1734
-#define IDC_LV_LEGEND                   1735
 #define IDC_ENABLEBETA                  1737
 #define IDC_ENABLESTABLE                1738
 #define IDC_STORELASTPROFILE            1739
@@ -577,13 +564,12 @@
 #define POPUP_GROUPHIDEOFFLINE          40006
 #define POPUP_HIDEOFFLINEROOT           40007
 #define POPUP_DISABLEGROUPS             40008
-#define IDC_SENDMESSAGE                 40009
+#define IDM_SENDMESSAGE                 40009
 #define IDM_COPYALL                     40011
 #define IDM_SELECTALL                   40012
 #define IDM_CLEAR                       40013
-#define IDM_OPENNEW                     40014
-#define IDM_OPENEXISTING                40015
-#define IDM_COPYLINK                    40016
+#define IDM_OPENLINK                    40014
+#define IDM_COPYLINK                    40015
 #define POPUP_HIDEMIRANDA               40017
 #define ID_CANCELCHANGE                 40018
 #define POPUP_GROUPSHOWOFFLINE          40019
@@ -594,6 +580,14 @@
 #define POPUP_DELETEGROUP               40053
 #define ID_GROUP                        40066
 #define ID_UNGROUP                      40067
+#define IDM_SEARCH_GOOGLE               40080
+#define IDM_SEARCH_BING                 40081
+#define IDM_SEARCH_YANDEX               40082
+#define IDM_SEARCH_WIKIPEDIA            40083
+#define IDM_SEARCH_GOOGLE_MAPS          40084
+#define IDM_SEARCH_GOOGLE_TRANSLATE     40085
+#define IDM_SEARCH_YAHOO                40086
+#define IDM_SEARCH_FOODNETWORK          40087
 
 // Next default values for new objects
 // 

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (C) 2012-15 Miranda NG project,
+Copyright (C) 2012-17 Miranda NG project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -25,30 +25,28 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <m_imgsrvc.h>
 
-MIR_CORE_DLL(HBITMAP) Bitmap_Load(const TCHAR *ptszFileName)
+MIR_CORE_DLL(HBITMAP) Bitmap_Load(const wchar_t *ptszFileName)
 {
-	TCHAR szFilename[MAX_PATH];
-	if (!PathToAbsoluteT(ptszFileName, szFilename))
-		_tcsncpy_s(szFilename, ptszFileName, _TRUNCATE);
+	wchar_t szFilename[MAX_PATH];
+	if (!PathToAbsoluteW(ptszFileName, szFilename))
+		wcsncpy_s(szFilename, ptszFileName, _TRUNCATE);
 
 	if (!ServiceExists(MS_IMG_LOAD))
 		return NULL;
 
-	return (HBITMAP)CallService(MS_IMG_LOAD, (WPARAM)szFilename, IMGL_TCHAR);
+	return (HBITMAP)CallService(MS_IMG_LOAD, (WPARAM)szFilename, IMGL_WCHAR);
 }
 
-MIR_CORE_DLL(void) Bitmap_GetFilter(TCHAR *dest, size_t destLen)
+MIR_CORE_DLL(void) Bitmap_GetFilter(wchar_t *dest, size_t destLen)
 {
 	if (dest == NULL)
 		return;
 
-	CMString filter;
-	filter.AppendFormat(_T("%s (*.bmp;*.jpg;*.gif;*.png)%c*.BMP;*.RLE;*.JPG;*.JPEG;*.GIF;*.PNG%c"), TranslateT("All Files"), 0, 0);
-	filter.AppendFormat(_T("%s (*.bmp;*.rle)%c*.BMP;*.RLE%c"), TranslateT("Windows bitmaps"), 0, 0);
-	filter.AppendFormat(_T("%s (*.jpg;*.jpeg)%c*.JPG;*.JPEG%c"), TranslateT("JPEG bitmaps"), 0, 0);
-	filter.AppendFormat(_T("%s (*.gif)%c*.GIF%c"), TranslateT("GIF bitmaps"), 0, 0);
-	filter.AppendFormat(_T("%s (*.png)%c*.PNG%c"), TranslateT("PNG bitmaps"), 0, 0);
-	filter.AppendChar(0);
-
-	_tcsncpy_s(dest, destLen, filter, filter.GetLength());
+	mir_snwprintf(dest, destLen,
+		L"%s (*.bmp;*.jpg;*.gif;*.png)%c*.BMP;*.RLE;*.JPG;*.JPEG;*.GIF;*.PNG%c"
+		L"%s (*.bmp;*.rle)%c*.BMP;*.RLE%c"
+		L"%s (*.jpg;*.jpeg)%c*.JPG;*.JPEG%c"
+		L"%s (*.gif)%c*.GIF%c"
+		L"%s (*.png)%c*.PNG%c%c",
+		TranslateT("All Files"), 0, 0, TranslateT("Windows bitmaps"), 0, 0, TranslateT("JPEG bitmaps"), 0, 0, TranslateT("GIF bitmaps"), 0, 0, TranslateT("PNG bitmaps"), 0, 0, 0);
 }

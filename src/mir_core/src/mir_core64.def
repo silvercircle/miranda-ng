@@ -73,8 +73,8 @@ Utf8DecodeW                    @72
 Utf8Encode                     @73
 Utf8EncodeCP                   @74
 Utf8EncodeW                    @75
-forkthread                     @76
-forkthreadex                   @77
+mir_forkthread                 @76
+mir_forkthreadex               @77
 ltrim                          @78
 ltrimp                         @79
 mir_a2u                        @80
@@ -474,32 +474,22 @@ mir_wstrcmpi                  @280
 ?UnlockBuffer@?$CMSimpleStringT@_W@@QEAAXXZ @538 NONAME
 ?c_str@?$CMSimpleStringT@D@@QEBAPEBDXZ @539 NONAME
 ?c_str@?$CMSimpleStringT@_W@@QEBAPEB_WXZ @540 NONAME
-??0CCtrlBase@@QEAA@AEBV0@@Z @609 NONAME
+?EndModal@CDlgBase@@QEAAX_J@Z @541 NONAME
+??0CCtrlBase@@AEAA@AEBV0@@Z @609 NONAME
 ??0CCtrlBase@@QEAA@PEAVCDlgBase@@H@Z @610 NONAME
-??0CCtrlButton@@QEAA@AEBV0@@Z @611 NONAME
+??4CCtrlBase@@AEAAAEAV0@AEBV0@@Z @611 NONAME
 ??0CCtrlButton@@QEAA@PEAVCDlgBase@@H@Z @612 NONAME
-??0CCtrlCheck@@QEAA@AEBV0@@Z @613 NONAME
 ??0CCtrlCheck@@QEAA@PEAVCDlgBase@@H@Z @614 NONAME
-??0CCtrlClc@@QEAA@AEBV0@@Z @615 NONAME
 ??0CCtrlClc@@QEAA@PEAVCDlgBase@@H@Z @616 NONAME
-??0CCtrlCombo@@QEAA@AEBV0@@Z @617 NONAME
 ??0CCtrlCombo@@QEAA@PEAVCDlgBase@@H@Z @618 NONAME
-??0CCtrlData@@QEAA@AEBV0@@Z @619 NONAME
 ??0CCtrlData@@QEAA@PEAVCDlgBase@@H@Z @620 NONAME
-??0CCtrlEdit@@QEAA@AEBV0@@Z @621 NONAME
 ??0CCtrlEdit@@QEAA@PEAVCDlgBase@@H@Z @622 NONAME
-??0CCtrlHyperlink@@QEAA@AEBV0@@Z @623 NONAME
 ??0CCtrlHyperlink@@QEAA@PEAVCDlgBase@@HPEBD@Z @624 NONAME
-??0CCtrlListBox@@QEAA@AEBV0@@Z @625 NONAME
 ??0CCtrlListBox@@QEAA@PEAVCDlgBase@@H@Z @626 NONAME
-??0CCtrlListView@@QEAA@AEBV0@@Z @627 NONAME
 ??0CCtrlListView@@QEAA@PEAVCDlgBase@@H@Z @628 NONAME
-??0CCtrlMButton@@QEAA@AEBV0@@Z @629 NONAME
 ??0CCtrlMButton@@QEAA@PEAVCDlgBase@@HHPEBD@Z @630 NONAME
 ??0CCtrlMButton@@QEAA@PEAVCDlgBase@@HPEAUHICON__@@PEBD@Z @631 NONAME
-??0CCtrlPages@@QEAA@AEBV0@@Z @632 NONAME
 ??0CCtrlPages@@QEAA@PEAVCDlgBase@@H@Z @633 NONAME
-??0CCtrlTreeView@@QEAA@AEBV0@@Z @634 NONAME
 ??0CCtrlTreeView@@QEAA@PEAVCDlgBase@@H@Z @635 NONAME
 ??0CDataLink@@QEAA@AEBV0@@Z @636 NONAME
 ??0CDataLink@@QEAA@E@Z @637 NONAME
@@ -524,19 +514,6 @@ mir_wstrcmpi                  @280
 ??1CDataLink@@UEAA@XZ @658 NONAME
 ??1CDbLink@@UEAA@XZ @659 NONAME
 ??1CDlgBase@@UEAA@XZ @660 NONAME
-??4CCtrlBase@@QEAAAEAV0@AEBV0@@Z @662 NONAME
-??4CCtrlButton@@QEAAAEAV0@AEBV0@@Z @663 NONAME
-??4CCtrlCheck@@QEAAAEAV0@AEBV0@@Z @664 NONAME
-??4CCtrlClc@@QEAAAEAV0@AEBV0@@Z @665 NONAME
-??4CCtrlCombo@@QEAAAEAV0@AEBV0@@Z @666 NONAME
-??4CCtrlData@@QEAAAEAV0@AEBV0@@Z @667 NONAME
-??4CCtrlEdit@@QEAAAEAV0@AEBV0@@Z @668 NONAME
-??4CCtrlHyperlink@@QEAAAEAV0@AEBV0@@Z @669 NONAME
-??4CCtrlListBox@@QEAAAEAV0@AEBV0@@Z @670 NONAME
-??4CCtrlListView@@QEAAAEAV0@AEBV0@@Z @671 NONAME
-??4CCtrlMButton@@QEAAAEAV0@AEBV0@@Z @672 NONAME
-??4CCtrlPages@@QEAAAEAV0@AEBV0@@Z @673 NONAME
-??4CCtrlTreeView@@QEAAAEAV0@AEBV0@@Z @674 NONAME
 ??4CDataLink@@QEAAAEAV0@AEBV0@@Z @675 NONAME
 ??4CDbLink@@QEAAAEAV0@AEBV0@@Z @676 NONAME
 ??4CDlgBase@@QEAAAEAV0@AEBV0@@Z @677 NONAME
@@ -599,9 +576,9 @@ mir_wstrcmpi                  @280
 ?EditLabel@CCtrlClc@@QEAAXPEAX@Z @741 NONAME
 ?EditLabel@CCtrlListView@@QEAAPEAUHWND__@@H@Z @742 NONAME
 ?EditLabel@CCtrlTreeView@@QEAAPEAUHWND__@@PEAU_TREEITEM@@@Z @743 NONAME
-?Enable@CCtrlBase@@QEAAXH@Z @744 NONAME
+?Enable@CCtrlBase@@QEAAX_N@Z @744 NONAME
 ?EnableGroupView@CCtrlListView@@QEAAHH@Z @745 NONAME
-?Enabled@CCtrlBase@@QEBAHXZ @746 NONAME
+?Enabled@CCtrlBase@@QEBA_NXZ @746 NONAME
 ?EndEditLabel@CCtrlClc@@QEAAX_N@Z @747 NONAME
 ?EndEditLabelNow@CCtrlTreeView@@QEAAXH@Z @748 NONAME
 ?EnsureVisible@CCtrlClc@@QEAAXPEAX_N@Z @749 NONAME
@@ -611,7 +588,7 @@ mir_wstrcmpi                  @280
 ?Expand@CCtrlTreeView@@QEAAXPEAU_TREEITEM@@K@Z @753 NONAME
 ?FindContact@CCtrlClc@@QEAAPEAXI@Z @754 NONAME
 ?FindControl@CDlgBase@@AEAAPEAVCCtrlBase@@H@Z @755 NONAME
-?FindGroup@CCtrlClc@@QEAAPEAXPEAX@Z @756 NONAME
+?FindGroup@CCtrlClc@@QEAAPEAXH@Z @756 NONAME
 ?FindItem@CCtrlListView@@QEAAHHPEBUtagLVFINDINFOW@@@Z @757 NONAME
 ?FindNamedItem@CCtrlTreeView@@QEAAPEAU_TREEITEM@@PEAU2@PEB_W@Z @758 NONAME
 ?FindString@CCtrlCombo@@QEAAHPEB_WH_N@Z @759 NONAME
@@ -701,7 +678,7 @@ mir_wstrcmpi                  @280
 ?GetNumberOfWorkAreas@CCtrlListView@@QEAAHPEAI@Z @843 NONAME
 ?GetOrigin@CCtrlListView@@QEAAHPEAUtagPOINT@@@Z @844 NONAME
 ?GetOutlineColor@CCtrlListView@@QEAAKXZ @845 NONAME
-?GetParent@CCtrlBase@@QEAAPEAVCDlgBase@@XZ @846 NONAME
+?GetParent@CCtrlBase@@QEBAPEAVCDlgBase@@XZ @846 NONAME
 ?GetParent@CCtrlTreeView@@QEAAPEAU_TREEITEM@@PEAU2@@Z @847 NONAME
 ?GetPrevSibling@CCtrlTreeView@@QEAAPEAU_TREEITEM@@PEAU2@@Z @848 NONAME
 ?GetPrevVisible@CCtrlTreeView@@QEAAPEAU_TREEITEM@@PEAU2@@Z @849 NONAME
@@ -820,7 +797,7 @@ mir_wstrcmpi                  @280
 ?SelectSetFirstVisible@CCtrlTreeView@@QEAAXPEAU_TREEITEM@@@Z @968 NONAME
 ?SelectString@CCtrlCombo@@QEAAHPEA_W@Z @969 NONAME
 ?SelectString@CCtrlListBox@@QEAAHPEA_W@Z @970 NONAME
-?SendMsg@CCtrlBase@@QEAA_JI_K_J@Z @971 NONAME
+?SendMsg@CCtrlBase@@QEBA_JI_K_J@Z @971 NONAME
 ?SetBkBitmap@CCtrlClc@@QEAAXKPEAUHBITMAP__@@@Z @972 NONAME
 ?SetBkColor@CCtrlClc@@QEAAXK@Z @973 NONAME
 ?SetBkColor@CCtrlListView@@QEAAHK@Z @974 NONAME
@@ -933,7 +910,7 @@ mir_wstrcmpi                  @280
 ?SelectRange@CCtrlTreeView@@QEAAXPEAU_TREEITEM@@0@Z @1091 NONAME
 ?Unselect@CCtrlTreeView@@QEAAXPEAU_TREEITEM@@@Z @1092 NONAME
 ?UnselectAll@CCtrlTreeView@@QEAAXXZ @1093 NONAME
-?MoveItemAbove@CCtrlTreeView@@AEAAPEAU_TREEITEM@@PEAU2@0@Z @1094 NONAME
+?MoveItemAbove@CCtrlTreeView@@AEAAPEAU_TREEITEM@@PEAU2@00@Z @1094 NONAME
 ?GetCurrPage@CCtrlPages@@AEAAPEAUTPageInfo@1@XZ @1095 NONAME
 ?Fail@CDlgBase@@QEAAXXZ @1096 NONAME
 ?OnApply@CCtrlPages@@MEAAXXZ @1097 NONAME
@@ -987,3 +964,91 @@ mir_sha256_final @1144
 mir_sha256_hash @1145
 mir_sha256_init @1146
 mir_sha256_write @1147
+mir_forkthreadowner @1148
+hex2bin @1149
+hex2binW @1150
+mir_hmac_sha256 @1151
+Utf8toUcs2 @1152
+db_add_contact @1153
+db_delete_contact @1154
+db_enum_modules @1155
+db_enum_residents @1156
+db_enum_settings @1157
+db_get_contact_count @1158
+db_is_contact @1159
+db_set_safety_mode @1160
+db_delete_module @1161 
+??0CCtrlSpin@@QEAA@PEAVCDlgBase@@H@Z @1163 NONAME
+??1CCtrlSpin@@UEAA@XZ @1164 NONAME
+??_7CCtrlSpin@@6B@ @1166 NONAME
+?SetMaxLength@CCtrlEdit@@QEAAXI@Z @1167 NONAME
+?SetRange@CCtrlSpin@@QEAAXGG@Z @1168 NONAME
+db_get_current @1169
+CallFunctionSync @1170
+??0CProgress@@QEAA@PEAVCDlgBase@@H@Z @1172 NONAME
+??0CTimer@@QEAA@AEBV0@@Z @1173 NONAME
+??0CTimer@@QEAA@PEAVCDlgBase@@H@Z @1174 NONAME
+??1CProgress@@UEAA@XZ @1175 NONAME
+??4CTimer@@QEAAAEAV0@AEBV0@@Z @1177 NONAME
+??_7CProgress@@6B@ @1178 NONAME
+??_7CTimer@@6B@ @1179 NONAME
+?FindTimer@CDlgBase@@AEAAPEAVCTimer@@H@Z @1180 NONAME
+?GetEventId@CTimer@@QEBAHXZ @1181 NONAME
+?Move@CProgress@@QEAAGG@Z @1182 NONAME
+?OnTimer@CDlgBase@@MEAAXPEAVCTimer@@@Z @1183 NONAME
+?OnTimer@CTimer@@UEAAHXZ @1184 NONAME
+?SetPosition@CProgress@@QEAAXG@Z @1185 NONAME
+?SetRange@CProgress@@QEAAXGG@Z @1186 NONAME
+?SetStep@CProgress@@QEAAXG@Z @1187 NONAME
+?Start@CTimer@@QEAAXH@Z @1188 NONAME
+?Stop@CTimer@@QEAAXXZ @1189 NONAME
+?AddTimer@CDlgBase@@IEAAXPEAVCTimer@@@Z @1190 NONAME
+??0CCtrlBase@@AEAA@PEAUHWND__@@@Z @1191 NONAME
+?FindControl@CDlgBase@@AEAAPEAVCCtrlBase@@PEAUHWND__@@@Z @1192 NONAME
+?GetItemRect@CCtrlListBox@@QEAAHHPEAUtagRECT@@@Z @1193 NONAME
+?SetItemHeight@CCtrlListBox@@QEAAXHH@Z @1194 NONAME
+?UseSystemColors@CCtrlBase@@QEAAXXZ @1195 NONAME
+?SetPosition@CCtrlSpin@@QEAAXG@Z @1196 NONAME
+?GetPosition@CCtrlSpin@@QEAAGXZ @1197 NONAME
+?OnNotify@CCtrlSpin@@EEAAHHPEAUtagNMHDR@@@Z @1198 NONAME
+?GetCount@CCtrlPages@@QEAAHXZ @1199 NONAME
+?GetActivePage@CCtrlPages@@QEBAPEAVCDlgBase@@XZ @1200 NONAME
+?InsertPage@CCtrlPages@@AEAAXPEAUTPageInfo@1@@Z @1201 NONAME
+?GetDlgIndex@CCtrlPages@@QEAAHPEAVCDlgBase@@@Z @1202 NONAME
+?GetNthPage@CCtrlPages@@QEAAPEAVCDlgBase@@H@Z @1203 NONAME
+?GetItemPage@CCtrlPages@@AEAAPEAUTPageInfo@1@H@Z @1204 NONAME
+?RemovePage@CCtrlPages@@QEAAXH@Z @1205 NONAME
+??0MBinBuffer@@QEAA@XZ @1206 NONAME
+??1MBinBuffer@@QEAA@XZ @1207 NONAME
+??4MBinBuffer@@QEAAAEAV0@AEBV0@@Z @1208 NONAME
+?append@MBinBuffer@@QEAAXPEAX_K@Z @1209 NONAME
+?appendBefore@MBinBuffer@@QEAAXPEAX_K@Z @1210 NONAME
+?data@MBinBuffer@@QEBAPEADXZ @1211 NONAME
+?isEmpty@MBinBuffer@@QEBA_NXZ @1212 NONAME
+?length@MBinBuffer@@QEBA_KXZ @1213 NONAME
+?remove@MBinBuffer@@QEAAX_K@Z @1214 NONAME
+??ACDlgBase@@QEAAPEAVCCtrlBase@@H@Z @1215 NONAME
+??0CSplitter@@QEAA@PEAVCDlgBase@@H@Z @1217 NONAME
+??1CSplitter@@UEAA@XZ @1218 NONAME
+??_7CSplitter@@6B@ @1220 NONAME
+?CustomWndProc@CSplitter@@MEAA_JI_K_J@Z @1221 NONAME
+?GetPos@CSplitter@@QEBAHXZ @1222 NONAME
+?OnInit@CSplitter@@MEAAXXZ @1223 NONAME
+?SwapPages@CCtrlPages@@QEAAXHH@Z @1224 NONAME
+?IsPushed@CCtrlButton@@QEBA_NXZ @1225 NONAME
+?Push@CCtrlButton@@QEAAX_N@Z @1226 NONAME
+?Hide@CCtrlBase@@QEAAXXZ @1227 NONAME
+?Show@CCtrlBase@@QEAAX_N@Z @1228 NONAME
+??0CCtrlRichEdit@@QEAA@PEAVCDlgBase@@H@Z @1229 NONAME
+??1CCtrlRichEdit@@UEAA@XZ @1230 NONAME
+??_7CCtrlRichEdit@@6B@ @1231 NONAME
+?GetRichTextLength@CCtrlRichEdit@@QEBAHH@Z @1232 NONAME
+?SetRichText@CCtrlRichEdit@@QEAAHPEB_W@Z @1233 NONAME
+?SetRichTextRtf@CCtrlRichEdit@@QEAAHPEBD@Z @1234 NONAME
+?GetRichTextRtf@CCtrlRichEdit@@QEBAPEAD_N0@Z @1236 NONAME
+?SetReadOnly@CCtrlRichEdit@@QEAAX_N@Z @1237 NONAME
+?Hide@CDlgBase@@QEAAXXZ @1238 NONAME
+?Resize@CDlgBase@@QEAAXXZ @1239 NONAME
+Utils_IsRtl @1240
+HookTemporaryEvent @1241
+?Click@CCtrlButton@@QEAAXXZ @1242 NONAME

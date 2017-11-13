@@ -35,14 +35,14 @@ static INT_PTR CALLBACK TlenPopupsDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam,
 typedef struct TabDefStruct {
 	DLGPROC dlgProc;
 	DWORD dlgId;
-	TCHAR *tabName;
+	wchar_t *tabName;
 } TabDef;
 
 static TabDef tabPages[] = {
-						{TlenBasicOptDlgProc, IDD_OPTIONS_BASIC, LPGENT("General")},
-						{TlenVoiceOptDlgProc, IDD_OPTIONS_VOICE, LPGENT("Voice Chats")},
-						{TlenAdvOptDlgProc, IDD_OPTIONS_ADVANCED, LPGENT("Advanced")},
-						{TlenPopupsDlgProc, IDD_OPTIONS_POPUPS, LPGENT("Notifications")}
+						{TlenBasicOptDlgProc, IDD_OPTIONS_BASIC, LPGENW("General")},
+						{TlenVoiceOptDlgProc, IDD_OPTIONS_VOICE, LPGENW("Voice Chats")},
+						{TlenAdvOptDlgProc, IDD_OPTIONS_ADVANCED, LPGENW("Advanced")},
+						{TlenPopupsDlgProc, IDD_OPTIONS_POPUPS, LPGENW("Notifications")}
 						};
 
 void TlenLoadOptions(TlenProtocol *proto)
@@ -86,14 +86,14 @@ int TlenProtocol::OptionsInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
-	odp.ptszGroup = LPGENT("Network");
-	odp.ptszTitle = m_tszUserName;
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+	odp.szGroup.w = LPGENW("Network");
+	odp.szTitle.w = m_tszUserName;
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
 	odp.dwInitParam = (LPARAM)this;
 	for (int i = 0; i < _countof(tabPages); i++) {
 		odp.pszTemplate = MAKEINTRESOURCEA(tabPages[i].dlgId);
 		odp.pfnDlgProc = tabPages[i].dlgProc;
-		odp.ptszTab = tabPages[i].tabName;
+		odp.szTab.w = tabPages[i].tabName;
 		Options_AddPage(wParam, &odp);
 	}
 	return 0;
@@ -122,7 +122,7 @@ INT_PTR CALLBACK TlenAccMgrUIDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			proto = (TlenProtocol *)lParam;
 			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)proto);
 			TranslateDialogDefault(hwndDlg);
-			if (!db_get_ts(NULL, proto->m_szModuleName, "LoginName", &dbv)) {
+			if (!db_get_ws(NULL, proto->m_szModuleName, "LoginName", &dbv)) {
 				SetDlgItemText(hwndDlg, IDC_EDIT_USERNAME, dbv.ptszVal);
 				db_free(&dbv);
 			}
@@ -208,7 +208,7 @@ static INT_PTR CALLBACK TlenBasicOptDlgProc(HWND hwndDlg, UINT msg, WPARAM wPara
 			proto = (TlenProtocol *)lParam;
 			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)proto);
 			TranslateDialogDefault(hwndDlg);
-			if (!db_get_ts(NULL, proto->m_szModuleName, "LoginName", &dbv)) {
+			if (!db_get_ws(NULL, proto->m_szModuleName, "LoginName", &dbv)) {
 				SetDlgItemText(hwndDlg, IDC_EDIT_USERNAME, dbv.ptszVal);
 				db_free(&dbv);
 			}
@@ -412,20 +412,20 @@ static INT_PTR CALLBACK TlenAdvOptDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam,
 			proto = (TlenProtocol *)lParam;
 			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)proto);
 			TranslateDialogDefault(hwndDlg);
-			if (!db_get_ts(NULL, proto->m_szModuleName, "LoginServer", &dbv)) {
+			if (!db_get_ws(NULL, proto->m_szModuleName, "LoginServer", &dbv)) {
 				SetDlgItemText(hwndDlg, IDC_EDIT_LOGIN_SERVER, dbv.ptszVal);
 				db_free(&dbv);
 			}
-			else SetDlgItemText(hwndDlg, IDC_EDIT_LOGIN_SERVER, _T("tlen.pl"));
+			else SetDlgItemText(hwndDlg, IDC_EDIT_LOGIN_SERVER, L"tlen.pl");
 
 			EnableWindow(GetDlgItem(hwndDlg, IDC_HOST), TRUE);
 			EnableWindow(GetDlgItem(hwndDlg, IDC_HOSTPORT), TRUE);
 
-			if (!db_get_ts(NULL, proto->m_szModuleName, "ManualHost", &dbv)) {
+			if (!db_get_ws(NULL, proto->m_szModuleName, "ManualHost", &dbv)) {
 				SetDlgItemText(hwndDlg, IDC_HOST, dbv.ptszVal);
 				db_free(&dbv);
 			}
-			else SetDlgItemText(hwndDlg, IDC_HOST, _T("s1.tlen.pl"));
+			else SetDlgItemText(hwndDlg, IDC_HOST, L"s1.tlen.pl");
 
 			SetDlgItemInt(hwndDlg, IDC_HOSTPORT, db_get_w(NULL, proto->m_szModuleName, "ManualPort", TLEN_DEFAULT_PORT), FALSE);
 
@@ -458,15 +458,15 @@ static INT_PTR CALLBACK TlenAdvOptDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam,
 			EnableWindow(GetDlgItem(hwndDlg, IDC_FILE_PROXY_PASSWORD), bChecked);
 
 			SendDlgItemMessage(hwndDlg, IDC_FILE_PROXY_TYPE, CB_ADDSTRING, 0, (LPARAM)TranslateT("Forwarding"));
-			SendDlgItemMessage(hwndDlg, IDC_FILE_PROXY_TYPE, CB_ADDSTRING, 0, (LPARAM)_T("SOCKS4"));
-			SendDlgItemMessage(hwndDlg, IDC_FILE_PROXY_TYPE, CB_ADDSTRING, 0, (LPARAM)_T("SOCKS5"));
+			SendDlgItemMessage(hwndDlg, IDC_FILE_PROXY_TYPE, CB_ADDSTRING, 0, (LPARAM)L"SOCKS4");
+			SendDlgItemMessage(hwndDlg, IDC_FILE_PROXY_TYPE, CB_ADDSTRING, 0, (LPARAM)L"SOCKS5");
 			SendDlgItemMessage(hwndDlg, IDC_FILE_PROXY_TYPE, CB_SETCURSEL, db_get_w(NULL, proto->m_szModuleName, "FileProxyType", 0), 0);
-			if (!db_get_ts(NULL, proto->m_szModuleName, "FileProxyHost", &dbv)) {
+			if (!db_get_ws(NULL, proto->m_szModuleName, "FileProxyHost", &dbv)) {
 				SetDlgItemText(hwndDlg, IDC_FILE_PROXY_HOST, dbv.ptszVal);
 				db_free(&dbv);
 			}
 			SetDlgItemInt(hwndDlg, IDC_FILE_PROXY_PORT, db_get_w(NULL, proto->m_szModuleName, "FileProxyPort", 0), FALSE);
-			if (!db_get_ts(NULL, proto->m_szModuleName, "FileProxyUsername", &dbv)) {
+			if (!db_get_ws(NULL, proto->m_szModuleName, "FileProxyUsername", &dbv)) {
 				SetDlgItemText(hwndDlg, IDC_FILE_PROXY_USER, dbv.ptszVal);
 				db_free(&dbv);
 			}
@@ -594,7 +594,7 @@ static INT_PTR CALLBACK TlenAdvOptDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam,
 #define POPUP_DEFAULT_COLORBKG 0xDCBDA5
 #define POPUP_DEFAULT_COLORTXT 0x000000
 
-static void MailPopupPreview(DWORD colorBack, DWORD colorText, TCHAR *title, TCHAR *emailInfo, int delay)
+static void MailPopupPreview(DWORD colorBack, DWORD colorText, wchar_t *title, wchar_t *emailInfo, int delay)
 {
 	if (!ServiceExists(MS_POPUP_ADDPOPUPT))
 		return;
@@ -602,8 +602,8 @@ static void MailPopupPreview(DWORD colorBack, DWORD colorText, TCHAR *title, TCH
 	HICON hIcon = GetIcolibIcon(IDI_MAIL);
 	ppd.lchIcon = CopyIcon(hIcon);
 	ReleaseIcolibIcon(hIcon);
-	_tcsncpy(ppd.lptzContactName, title, MAX_CONTACTNAME-1);
-	_tcsncpy(ppd.lptzText, emailInfo,MAX_SECONDLINE-1);
+	wcsncpy(ppd.lptzContactName, title, MAX_CONTACTNAME-1);
+	wcsncpy(ppd.lptzText, emailInfo,MAX_SECONDLINE-1);
 	ppd.colorBack = colorBack;
 	ppd.colorText = colorText;
 	ppd.iSeconds = delay;
@@ -648,7 +648,7 @@ static INT_PTR CALLBACK TlenPopupsDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam,
 			case IDC_PREVIEW:
 				{
 					int delay;
-					TCHAR title[256];
+					wchar_t title[256];
 					if (IsDlgButtonChecked(hwndDlg, IDC_DELAY_POPUP)) {
 						delay=0;
 					} else if (IsDlgButtonChecked(hwndDlg, IDC_DELAY_PERMANENT)) {
@@ -656,11 +656,11 @@ static INT_PTR CALLBACK TlenPopupsDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam,
 					} else {
 						delay=GetDlgItemInt(hwndDlg, IDC_DELAY, NULL, FALSE);
 					}
-					mir_sntprintf(title, TranslateT("%S mail"), proto->m_szModuleName);
+					mir_snwprintf(title, TranslateT("%S mail"), proto->m_szModuleName);
 					MailPopupPreview((DWORD) SendDlgItemMessage(hwndDlg,IDC_COLORBKG,CPM_GETCOLOUR,0,0),
 									(DWORD) SendDlgItemMessage(hwndDlg,IDC_COLORTXT,CPM_GETCOLOUR,0,0),
 									title,
-									_T("From: test@test.test\nSubject: test"),
+									L"From: test@test.test\nSubject: test",
 									delay);
 				}
 

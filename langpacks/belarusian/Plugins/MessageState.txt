@@ -5,8 +5,29 @@
 ;  Version: 0.0.1.0
 ;  Authors: MikalaiR
 ;============================================================
-;file \plugins\MessageState\src\clist_extra.cpp
-;file \plugins\MessageState\src\global.h
-;file \plugins\MessageState\src\messagestate.cpp
+[Displays icons in message window showing whether your last outgoing message was read / is still unread.]
+
+[MessageState unread extra icon]
+
+[Unread message icon]
+
+[Read message icon]
+
+[Failed sending icon]
+
+[Sending message icon]
+
+[Unread clist extra icon]
+
+[Last message is not read]
+Апошняе паведамленне не прачытана
+[Last message read]
+Апошняе паведамленне прачытана
+[Last message was not sent]
+Апошняе паведамленне не адаслана
 [Sending...]
 Перадача...
+[Last message read at %X %x]
+Апошняе паведамленне прачытана ў %X %x
+[Last message read (unknown time)]
+Апошняе паведамленне прачытана (час невядомы)

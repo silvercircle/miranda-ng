@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
-// Copyright (ñ) 2012-15 Miranda NG project,
+// Copyright (ñ) 2012-17 Miranda NG project,
 // Copyright (c) 2000-09 Miranda ICQ/IM project,
 // all portions of this codebase are copyrighted to the people
 // listed in contributors.txt.
@@ -31,14 +31,14 @@
 
 struct TSideBarNotify
 {
-	NMHDR 				nmHdr;
-	const TWindowData*	dat;
+	NMHDR nmHdr;
+	CTabBaseDlg *dat;
 };
 /* layout description structure */
 
 struct TSideBarLayout
 {
-	TCHAR szName[50];  // everything wants a name...
+	wchar_t szName[50];  // everything wants a name...
 	LONG  width;       // width of the switchbar element (a single button)
 	LONG  height;      // height of a single switchbar element
 	DWORD dwFlags;     // flags, obviously :)
@@ -61,7 +61,7 @@ class CSideBarButton
 {
 public:
 	CSideBarButton(const UINT id, CSideBar *sideBar);
-	CSideBarButton(const TWindowData *dat, CSideBar *sideBar);
+	CSideBarButton(CTabBaseDlg *dat, CSideBar *sideBar);
 	~CSideBarButton();
 
 	LONG                  getHeight() const { return(m_sz.cy); }
@@ -70,8 +70,8 @@ public:
 	const bool            isTopAligned() const { return(m_isTopAligned); }
 	const HWND            getHwnd() const { return(m_hwnd); }
 	const UINT            getID() const { return(m_id); }
-	const MCONTACT        getContactHandle() const { return(m_dat->hContact); }
-	const TWindowData*    getDat() const { return(m_dat); }
+	const MCONTACT        getContactHandle() const { return(m_dat->m_hContact); }
+	const CTabBaseDlg*    getDat() const { return(m_dat); }
 	const TSideBarLayout* getLayout() const { return(m_sideBarLayout); }
 
 	void                  RenderThis(const HDC hdc) const;
@@ -91,7 +91,7 @@ private:
 private:
 	const TSideBarLayout* m_sideBarLayout;
 	HWND                  m_hwnd;           // window handle for the TSButton object
-	const TWindowData*    m_dat;            // session data
+	CTabBaseDlg          *m_dat;            // session data
 	UINT                  m_id;             // control id
 	bool                  m_isTopAligned;
 	SIZE                  m_sz;
@@ -130,9 +130,9 @@ public:
 	~CSideBar();
 
 	void                  Init();
-	void                  addSession(const TWindowData *dat, int position);
-	HRESULT               removeSession(const TWindowData *dat);
-	void                  updateSession(const TWindowData *dat);
+	void                  addSession(CTabBaseDlg *dat, int position);
+	HRESULT               removeSession(CTabBaseDlg *dat);
+	void                  updateSession(CTabBaseDlg *dat);
 
 	void                  processScrollerButtons(UINT cmd);
 	void                  Layout(const RECT *rc = 0, bool fOnlyCalc = false);
@@ -149,15 +149,15 @@ public:
 	const CSideBarButton* getScrollDown() const { return(m_down); }
 	bool                  isSkinnedContainer() const { return(CSkin::m_skinEnabled ? true : false); }
 	const UINT            getLayoutId() const { return(m_uLayout); }
-	void                  invalidateButton(const TWindowData *dat);
+	void                  invalidateButton(CTabBaseDlg *dat);
 
 	const CSideBarButton* setActiveItem(const CSideBarButton *newItem)
 	{
 		CSideBarButton *oldItem = m_activeItem;
 		m_activeItem = const_cast<CSideBarButton *>(newItem);
 		if (oldItem)
-			::InvalidateRect(oldItem->getHwnd(), NULL, FALSE);
-		::InvalidateRect(m_activeItem->getHwnd(), NULL, FALSE);
+			::InvalidateRect(oldItem->getHwnd(), nullptr, FALSE);
+		::InvalidateRect(m_activeItem->getHwnd(), nullptr, FALSE);
 		scrollIntoView(m_activeItem);
 		return(oldItem);
 	}
@@ -171,7 +171,7 @@ public:
 	}
 	HWND                  getScrollWnd() const { return(m_hwndScrollWnd); }
 	const CSideBarButton* getHoveredClose() const { return(m_hoveredClose); }
-	const CSideBarButton* setActiveItem(const TWindowData *dat);
+	const CSideBarButton* setActiveItem(const CTabBaseDlg *dat);
 
 	static LRESULT CALLBACK wndProcStub(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -189,7 +189,7 @@ private:
 	void                  populateAll();
 	void                  removeAll();
 	void                  Invalidate();
-	CSideBarButton*       findSession(const TWindowData *dat);
+	CSideBarButton*       findSession(const CTabBaseDlg *dat);
 	CSideBarButton*       findSession(const MCONTACT hContact);
 
 	LRESULT CALLBACK      wndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);

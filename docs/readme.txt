@@ -48,8 +48,8 @@ b) Update to the latest alpha version.
    section of our website.
 c) Check the list of known bugs.
    The official buglist is available at:
-   http://trac.miranda-ng.org/report
-   Look here before you submit a new report, dont submit a new report if
+   https://github.com/miranda-ng/miranda-ng/issues
+   Look here before you submit a new report, don't submit a new report if
    it has already been reported.
 d) Submit a bugreport.
 
@@ -67,7 +67,7 @@ b) Plugins
 
 5. Contact
 ----------
-The official webpage for the Miranda NG project is http://www.miranda-ng.org.
+The official webpage for the Miranda NG project is https://www.miranda-ng.org.
 
 
 6. Support
@@ -85,10 +85,10 @@ will increase.
 
 7. License and Copyright
 ------------------------
-Source code is available at: http://svn.miranda-ng.org/
+Source code is available at: https://github.com/miranda-ng/miranda-ng/
 
 Miranda NG is released under the terms of the GNU General Public License. See
-"License.txt" for more details.
+"LICENSE" for more details.
 
 Miranda NG is copyright 2000-2012 by the people listed in contributors.txt.
 

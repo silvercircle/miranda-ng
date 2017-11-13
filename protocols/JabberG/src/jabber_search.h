@@ -5,7 +5,7 @@ Jabber Protocol Plugin for Miranda NG
 Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
 Copyright (c) 2007     Artem Shpynov
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 Module implements a search according to XEP-0055: Jabber Search
 http://www.xmpp.org/extensions/xep-0055.html
@@ -28,8 +28,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef struct _tagJabberSearchFieldsInfo
 {
-	TCHAR * szFieldName;
-	TCHAR * szFieldCaption;
+	wchar_t * szFieldName;
+	wchar_t * szFieldCaption;
 	HWND hwndCaptionItem;
 	HWND hwndValueItem;
 } JabberSearchFieldsInfo;
@@ -51,16 +51,16 @@ typedef struct _tagJabberSearchData
 
 typedef struct tag_Data
 {
-	TCHAR *Label;
-	TCHAR * Var;
-	TCHAR * defValue;
+	wchar_t *Label;
+	wchar_t * Var;
+	wchar_t * defValue;
 	BOOL  bHidden;
 	BOOL  bReadOnly;
 	int Order;
 
 } Data;
 
-static HWND searchHandleDlg=NULL;
+static HWND searchHandleDlg=nullptr;
 
 //local functions declarations
 static int JabberSearchFrameProc(HWND hwnd, int msg, WPARAM wParam, LPARAM lParam);
@@ -69,8 +69,8 @@ static void JabberIqResultGetSearchFields(HXML iqNode, void *userdata);
 static void JabberSearchFreeData(HWND hwndDlg, JabberSearchData * dat);
 static void JabberSearchRefreshFrameScroll(HWND hwndDlg, JabberSearchData * dat);
 static INT_PTR CALLBACK JabberSearchAdvancedDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
-static void JabberSearchDeleteFromRecent(TCHAR * szAddr,BOOL deleteLastFromDB);
-void SearchAddToRecent(TCHAR * szAddr, HWND hwnd);
+static void JabberSearchDeleteFromRecent(wchar_t * szAddr,BOOL deleteLastFromDB);
+void SearchAddToRecent(wchar_t * szAddr, HWND hwnd);
 
 // Implementation of MAP class (the list
 template <typename _KEYTYPE , int (*COMPARATOR)(_KEYTYPE*, _KEYTYPE*) >
@@ -84,16 +84,16 @@ public:
 private:
 	typedef struct _tagRECORD
 	{
-		_tagRECORD(_KEYTYPE * key, TCHAR * value=NULL)	{ _key=key; _value=value; _order=0; _destroyKeyProc=NULL;	}
+		_tagRECORD(_KEYTYPE * key, wchar_t * value=nullptr)	{ _key=key; _value=value; _order=0; _destroyKeyProc=nullptr;	}
 		~_tagRECORD()
 		{
 			if (_key && _destroyKeyProc)
 				_destroyKeyProc(_key);
-			_key=NULL;
-			_destroyKeyProc=NULL;
+			_key=nullptr;
+			_destroyKeyProc=nullptr;
 		}
 		_KEYTYPE *_key;
-		TCHAR * _value;
+		wchar_t * _value;
 		int _order;
 		DESTROYKEYPROC _destroyKeyProc;
 	} _RECORD;
@@ -133,7 +133,7 @@ private:
 			_RECORD * rec=_Records[i];
 			if (rec->_order==index)	return rec;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 public:
@@ -148,7 +148,7 @@ public:
 		while (record=_Records[i++]) delete record;
 	}
 
-	int insert(_KEYTYPE* Key, TCHAR *Value)
+	int insert(_KEYTYPE* Key, wchar_t *Value)
 	{
 		_RECORD * rec= new _RECORD(Key,Value);
 		int index=_Records.getIndex(rec);
@@ -168,7 +168,7 @@ public:
 		}
 		return index;
 	}
-	int insertCopyKey(_KEYTYPE* Key, TCHAR *Value, _KEYTYPE** _KeyReturn, COPYKEYPROC CopyProc, DESTROYKEYPROC DestroyProc)
+	int insertCopyKey(_KEYTYPE* Key, wchar_t *Value, _KEYTYPE** _KeyReturn, COPYKEYPROC CopyProc, DESTROYKEYPROC DestroyProc)
 	{
 		_RECORD * rec= new _RECORD(Key,Value);
 		int index=_Records.getIndex(rec);
@@ -179,7 +179,7 @@ public:
 			{
 				delete rec;
 				DestroyProc(newKey);
-				if (_KeyReturn) *_KeyReturn=NULL;
+				if (_KeyReturn) *_KeyReturn=nullptr;
 			}
 			else
 			{
@@ -198,7 +198,7 @@ public:
 		}
 		return index;
 	}
-	inline TCHAR* operator[](_KEYTYPE* _KEY) const
+	inline wchar_t* operator[](_KEYTYPE* _KEY) const
 	{
 		_RECORD rec(_KEY);
 		int index=_Records.getIndex(&rec);
@@ -208,34 +208,34 @@ public:
 			if (rv->_value)
 				return rv->_value;
 			else
-				return _T("");
+				return L"";
 		}
 		else
-			return NULL;
+			return nullptr;
 	}
-	inline TCHAR* operator[](int index) const
+	inline wchar_t* operator[](int index) const
 	{
 		_RECORD * rv=_Records[index];
 		if (rv) return rv->_value;
-		else return NULL;
+		else return nullptr;
 	}
 	inline _KEYTYPE* getKeyName(int index)
 	{
 		_RECORD * rv=_Records[index];
 		if (rv) return rv->_key;
-		else return NULL;
+		else return nullptr;
 	}
-	inline TCHAR * getUnOrdered(int index)
+	inline wchar_t * getUnOrdered(int index)
 	{
 		_RECORD * rec=_getUnorderedRec(index);
 		if (rec) return rec->_value;
-		else return NULL;
+		else return nullptr;
 	}
 	inline _KEYTYPE * getUnOrderedKeyName(int index)
 	{
 		_RECORD * rec=_getUnorderedRec(index);
 		if (rec) return rec->_key;
-		else return NULL;
+		else return nullptr;
 	}
 	inline int getCount()
 	{
@@ -260,7 +260,7 @@ public:
 	}
 };
 
-inline int TCharKeyCmp(TCHAR* a, TCHAR* b)
+inline int TCharKeyCmp(wchar_t* a, wchar_t* b)
 {
-	return (int)(mir_tstrcmpi(a,b));
+	return (int)(mir_wstrcmpi(a,b));
 }

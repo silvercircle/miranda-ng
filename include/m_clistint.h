@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_clist.h>
 #endif 
 
+#include <m_system_cpp.h>
 #include <m_protocols.h>
 #include <m_clc.h>
 
@@ -73,23 +74,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define GROUP_ALLOCATE_STEP  8
 
-struct ContactList
-{
-	struct ClcContact** items;
-	int count, limit, increment;
-	void* sortFunc;
-};
+struct ClcContact;
+struct ClcData;
+struct ClcCacheEntry;
 
-struct EventList
+struct ClcGroup : public MZeroedObject
 {
-	struct CListEvent** items;
-	int count, limit, increment;
-	void* sortFunc;
-};
+	__forceinline ClcGroup(int _limit) :
+		cl(_limit)
+	{}
 
-struct ClcGroup
-{
-	ContactList cl;
+	LIST<ClcContact> cl;
 	int expanded, hideOffline, groupId;
 	ClcGroup *parent;
 	int scanIndex;
@@ -109,7 +104,7 @@ struct ClcContactBase
 	BYTE flags;
 	union {
 		struct {
-			int    iImage;
+			int iImage;
 			MCONTACT hContact;
 		};
 		struct {
@@ -118,12 +113,17 @@ struct ClcContactBase
 		};
 	};
 	WORD  iExtraImage[EXTRA_ICON_COUNT];
-	TCHAR szText[120-EXTRA_ICON_COUNT];
+	wchar_t szText[120-EXTRA_ICON_COUNT];
 	char *proto; // MS_PROTO_GETBASEPROTO
+	ClcCacheEntry *pce; // cache is persistent, contacts aren't
 };
 
-struct ClcDataBase
+struct ClcDataBase : public MZeroedObject
 {
+	__forceinline ClcDataBase() :
+		list(50)
+	{}
+
 	ClcGroup list;
 	int rowHeight;
 	int yScroll;
@@ -132,7 +132,7 @@ struct ClcDataBase
 	int scrollTime;
 	HIMAGELIST himlHighlight;
 	int groupIndent;
-	TCHAR szQuickSearch[128];
+	wchar_t szQuickSearch[128];
 	int iconXSpace;
 	HWND hwndRenameEdit;
 	COLORREF bkColour, selBkColour, selTextColour, hotTextColour, quickSearchColour;
@@ -152,23 +152,29 @@ struct ClcDataBase
 	DWORD exStyle;
 	POINT ptInfoTip;
 	int infoTipTimeout;
-	HANDLE hInfoTipItem;
+	DWORD hInfoTipItem;
 	HIMAGELIST himlExtraColumns;
 	int extraColumnsCount;
 	int extraColumnSpacing;
 	int checkboxSize;
-	int showSelAlways;
-	int showIdle;
-	int noVScrollbar;
-	int useWindowsColours;
-	int needsResort;
-	int filterSearch;
+	bool bShowSelAlways, bShowIdle, bNoVScrollbar, bUseWindowsColours;
+	bool bNeedsResort, bFilterSearch, bLockScrollbar;
 };
 
-struct ClcContact;
-struct ClcData;
-struct CListEvent;
-struct ClcCacheEntry;
+struct CListEvent : public CLISTEVENT, public MZeroedObject
+{
+	~CListEvent()
+	{
+		mir_free(pszService);
+		mir_free(szTooltip.a);
+	}
+
+	int imlIconIndex;
+	int flashesDone;
+
+	int menuId;
+	int imlIconOverlayIndex;
+};
 
 struct trayIconInfo_t
 {
@@ -176,18 +182,18 @@ struct trayIconInfo_t
 	char*  szProto;
 	HICON  hBaseIcon;
 	int    isBase;
-	TCHAR* ptszToolTip;
+	wchar_t* ptszToolTip;
 };
 
-typedef struct _menuProto
+struct MenuProto
 {
 	char *szProto; //This is DLL-based unique name
 	HGENMENU pMenu;
 	HICON hIcon;
-}
-	MenuProto;
+};
 
-/* constants */
+/////////////////////////////////////////////////////////////////////////////////////////
+// constants
 
 #define DRAGSTAGE_NOTMOVED  0
 #define DRAGSTAGE_ACTIVE    1
@@ -235,9 +241,19 @@ typedef struct _menuProto
 #define TIM_CALLBACK   (WM_USER+1857)
 #define TIM_CREATE     (WM_USER+1858)
 
-/***************************************************************************
- * CLIST_INTERFACE structure definition
- ***************************************************************************/
+/////////////////////////////////////////////////////////////////////////////////////////
+// functions
+
+EXTERN_C MIR_APP_DLL(DWORD) Clist_ContactToHItem(ClcContact *contact);
+EXTERN_C MIR_APP_DLL(HANDLE) Clist_ContactToItemHandle(ClcContact *contact, DWORD *nmFlags);
+
+EXTERN_C MIR_APP_DLL(void) Clist_Broadcast(int msg, WPARAM wParam, LPARAM lParam);
+EXTERN_C MIR_APP_DLL(void) Clist_BroadcastAsync(int msg, WPARAM wParam, LPARAM lParam);
+
+EXTERN_C MIR_APP_DLL(bool) Clist_FindItem(HWND hwnd, ClcData *dat, DWORD dwItem, ClcContact **contact, ClcGroup **subgroup, int *isVisible);
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// CLIST_INTERFACE structure definition
 
 struct ClcProtoStatus
 {
@@ -248,8 +264,8 @@ struct ClcProtoStatus
 struct ClcCacheEntryBase
 {
 	MCONTACT hContact;
-	TCHAR* tszName;
-	TCHAR* tszGroup;
+	wchar_t* tszName;
+	wchar_t* tszGroup;
 	int    bIsHidden;
 };
 
@@ -266,7 +282,7 @@ struct CLIST_INTERFACE
 
 	/* clc.h */
 	void  (*pfnClcOptionsChanged)(void);
-	void  (*pfnClcBroadcast)(int, WPARAM, LPARAM);
+	void  (*pfnUnused1)();
 	HMENU (*pfnBuildGroupPopupMenu)(struct ClcGroup*); // unused
 
 	LRESULT (CALLBACK *pfnContactListControlWndProc)(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -276,67 +292,69 @@ struct CLIST_INTERFACE
 	void (*pfnUnregisterFileDropping)(HWND hwnd);
 
 	/* clcidents.c */
-	int    (*pfnGetRowsPriorTo)(ClcGroup *group, ClcGroup *subgroup, int contactIndex);
-	int    (*pfnFindItem)(HWND hwnd, struct ClcData *dat, DWORD dwItem, ClcContact **contact, ClcGroup **subgroup, int *isVisible);
-	int    (*pfnGetRowByIndex)(struct ClcData *dat, int testindex, ClcContact **contact, ClcGroup **subgroup);
-	HANDLE (*pfnContactToHItem)(ClcContact *contact);
-	HANDLE (*pfnContactToItemHandle)(ClcContact *contact, DWORD *nmFlags);
+	ClcContact* (*pfnFindItem)(DWORD dwItem, ClcContact *contact);
+
+	int (*pfnGetRowsPriorTo)(ClcGroup *group, ClcGroup *subgroup, int contactIndex);
+	int (*pfnGetRowByIndex)(ClcData *dat, int testindex, ClcContact **contact, ClcGroup **subgroup);
+	int (*pfnGetContactHiddenStatus)(MCONTACT hContact, char *szProto, ClcData *dat);
+	int (*pfnIsVisibleContact)(ClcCacheEntry *pce, ClcGroup *group);
 
 	/* clcitems.c */
 	ClcContact* (*pfnCreateClcContact)(void);
-	struct ClcGroup* (*pfnAddGroup)(HWND hwnd, struct ClcData *dat, const TCHAR *szName, DWORD flags, int groupId, int calcTotalMembers);
+	struct ClcGroup* (*pfnAddGroup)(HWND hwnd, ClcData *dat, const wchar_t *szName, DWORD flags, int groupId, int calcTotalMembers);
 	struct ClcGroup* (*pfnRemoveItemFromGroup)(HWND hwnd, ClcGroup *group, ClcContact *contact, int updateTotalCount);
 
 	void (*pfnFreeContact)(ClcContact *contact);
 	void (*pfnFreeGroup)(ClcGroup *group);
 
-	int  (*pfnAddInfoItemToGroup)(ClcGroup *group, int flags, const TCHAR *pszText);
-	int  (*pfnAddItemToGroup)(ClcGroup *group, int iAboveItem);
-	int  (*pfnAddContactToGroup)(struct ClcData *dat, ClcGroup *group, MCONTACT hContact);
-	void (*pfnAddContactToTree)(HWND hwnd, struct ClcData *dat, MCONTACT hContact, int updateTotalCount, int checkHideOffline);
+	ClcContact* (*pfnAddInfoItemToGroup)(ClcGroup *group, int flags, const wchar_t *pszText);
+	ClcContact* (*pfnAddItemToGroup)(ClcGroup *group, int iAboveItem);
+	ClcContact* (*pfnAddContactToGroup)(ClcData *dat, ClcGroup *group, MCONTACT hContact);
+	
+	void (*pfnAddContactToTree)(HWND hwnd, ClcData *dat, MCONTACT hContact, int updateTotalCount, int checkHideOffline);
 	void (*pfnDeleteItemFromTree)(HWND hwnd, MCONTACT hItem);
-	void (*pfnRebuildEntireList)(HWND hwnd, struct ClcData *dat);
+	void (*pfnRebuildEntireList)(HWND hwnd, ClcData *dat);
 	int  (*pfnGetGroupContentsCount)(ClcGroup *group, int visibleOnly);
-	void (*pfnSortCLC)(HWND hwnd, struct ClcData *dat, int useInsertionSort);
-	void (*pfnSaveStateAndRebuildList)(HWND hwnd, struct ClcData *dat);
+	void (*pfnSortCLC)(HWND hwnd, ClcData *dat, int useInsertionSort);
+	void (*pfnSaveStateAndRebuildList)(HWND hwnd, ClcData *dat);
 
 	/* clcmsgs.c */
-	LRESULT (*pfnProcessExternalMessages)(HWND hwnd, struct ClcData *dat, UINT msg, WPARAM wParam, LPARAM lParam);
+	LRESULT (*pfnProcessExternalMessages)(HWND hwnd, ClcData *dat, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	/* clcpaint.c */
-	void  (*pfnPaintClc)(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint);
+	void  (*pfnPaintClc)(HWND hwnd, ClcData *dat, HDC hdc, RECT * rcPaint);
 
 	/* clcutils.c */
-	TCHAR* (*pfnGetGroupCountsText)(struct ClcData *dat, ClcContact *contact);
-	int   (*pfnHitTest)(HWND hwnd, struct ClcData *dat, int testx, int testy, ClcContact **contact, ClcGroup **group, DWORD * flags);
-	void  (*pfnScrollTo)(HWND hwnd, struct ClcData *dat, int desty, int noSmooth);
-	void  (*pfnEnsureVisible)(HWND hwnd, struct ClcData *dat, int iItem, int partialOk);
-	void  (*pfnRecalcScrollBar)(HWND hwnd, struct ClcData *dat);
-	void  (*pfnSetGroupExpand)(HWND hwnd, struct ClcData *dat, ClcGroup *group, int newState);
-	void  (*pfnDoSelectionDefaultAction)(HWND hwnd, struct ClcData *dat);
-	int   (*pfnFindRowByText)(HWND hwnd, struct ClcData *dat, const TCHAR *text, int prefixOk);
-	void  (*pfnEndRename)(HWND hwnd, struct ClcData *dat, int save);
-	void  (*pfnDeleteFromContactList)(HWND hwnd, struct ClcData *dat);
-	void  (*pfnBeginRenameSelection)(HWND hwnd, struct ClcData *dat);
-	void  (*pfnCalcEipPosition)(struct ClcData *dat, ClcContact *contact, ClcGroup *group, POINT *result);
-	int   (*pfnGetDropTargetInformation)(HWND hwnd, struct ClcData *dat, POINT pt);
+	wchar_t* (*pfnGetGroupCountsText)(ClcData *dat, ClcContact *contact);
+	int   (*pfnHitTest)(HWND hwnd, ClcData *dat, int testx, int testy, ClcContact **contact, ClcGroup **group, DWORD * flags);
+	void  (*pfnScrollTo)(HWND hwnd, ClcData *dat, int desty, int noSmooth);
+	void  (*pfnEnsureVisible)(HWND hwnd, ClcData *dat, int iItem, int partialOk);
+	void  (*pfnRecalcScrollBar)(HWND hwnd, ClcData *dat);
+	void  (*pfnSetGroupExpand)(HWND hwnd, ClcData *dat, ClcGroup *group, int newState);
+	void  (*pfnDoSelectionDefaultAction)(HWND hwnd, ClcData *dat);
+	int   (*pfnFindRowByText)(HWND hwnd, ClcData *dat, const wchar_t *text, int prefixOk);
+	void  (*pfnEndRename)(HWND hwnd, ClcData *dat, int save);
+	void  (*pfnDeleteFromContactList)(HWND hwnd, ClcData *dat);
+	void  (*pfnBeginRenameSelection)(HWND hwnd, ClcData *dat);
+	void  (*pfnCalcEipPosition)(ClcData *dat, ClcContact *contact, ClcGroup *group, POINT *result);
+	int   (*pfnGetDropTargetInformation)(HWND hwnd, ClcData *dat, POINT pt);
 	int   (*pfnClcStatusToPf2)(int status);
-	int   (*pfnIsHiddenMode)(struct ClcData *dat, int status);
-	void  (*pfnHideInfoTip)(HWND hwnd, struct ClcData *dat);
+	int   (*pfnIsHiddenMode)(ClcData *dat, int status);
+	void  (*pfnHideInfoTip)(HWND hwnd, ClcData *dat);
 	void  (*pfnNotifyNewContact)(HWND hwnd, MCONTACT hContact);
 	DWORD (*pfnGetDefaultExStyle)(void);
 	void  (*pfnGetDefaultFontSetting)(int i, LOGFONT* lf, COLORREF* colour);
 	void  (*pfnGetFontSetting)(int i, LOGFONT* lf, COLORREF* colour);
-	void  (*pfnLoadClcOptions)(HWND hwnd, struct ClcData *dat, BOOL bFirst);
-	void  (*pfnRecalculateGroupCheckboxes)(HWND hwnd, struct ClcData *dat);
+	void  (*pfnLoadClcOptions)(HWND hwnd, ClcData *dat, BOOL bFirst);
+	void  (*pfnRecalculateGroupCheckboxes)(HWND hwnd, ClcData *dat);
 	void  (*pfnSetGroupChildCheckboxes)(ClcGroup *group, int checked);
-	void  (*pfnInvalidateItem)(HWND hwnd, struct ClcData *dat, int iItem);
+	void  (*pfnInvalidateItem)(HWND hwnd, ClcData *dat, int iItem);
 
-	int   (*pfnGetRowBottomY)(struct ClcData *dat, int item);
-	int   (*pfnGetRowHeight)(struct ClcData *dat, int item);
-	int   (*pfnGetRowTopY)(struct ClcData *dat, int item);
-	int   (*pfnGetRowTotalHeight)(struct ClcData *dat);
-	int   (*pfnRowHitTest)(struct ClcData *dat, int y);
+	int   (*pfnGetRowBottomY)(ClcData *dat, int item);
+	int   (*pfnGetRowHeight)(ClcData *dat, int item);
+	int   (*pfnGetRowTopY)(ClcData *dat, int item);
+	int   (*pfnGetRowTotalHeight)(ClcData *dat);
+	int   (*pfnRowHitTest)(ClcData *dat, int y);
 
 	/* clistevents.c */
 	int   (*pfnEventsProcessContactDoubleClick)(MCONTACT hContact);
@@ -344,10 +362,10 @@ struct CLIST_INTERFACE
 
 	/* clistmod.c */
 	int    (*pfnIconFromStatusMode)(const char *szProto, int status, MCONTACT hContact);
-	int    (*pfnShowHide)(WPARAM, LPARAM);
+	int    (*pfnShowHide)(void);
 	
 	#define GSMDF_UNTRANSLATED 4 // don't tranlate the result
-	TCHAR* (*pfnGetStatusModeDescription)(int mode, int flags);
+	wchar_t* (*pfnGetStatusModeDescription)(int mode, int flags);
 
 	/* clistsettings.c */
 	ClcCacheEntry* (*pfnGetCacheEntry)(MCONTACT hContact);
@@ -356,20 +374,19 @@ struct CLIST_INTERFACE
 	void           (*pfnFreeCacheItem)(ClcCacheEntry*);
 
 	#define GCDNF_NOMYHANDLE 1 // will never return the user's custom name
-	#define GCDNF_UNICODE    2 // will return TCHAR* instead of char*
 	#define GCDNF_NOCACHE    4 // will not use the cache
 
-	TCHAR* (*pfnGetContactDisplayName)(MCONTACT hContact, int mode);
+	wchar_t* (*pfnGetContactDisplayName)(MCONTACT hContact, int mode);
 	void   (*pfnInvalidateDisplayNameCacheEntry)(MCONTACT hContact);
 
 	/* clisttray.c */
-	void (*pfnTrayIconUpdateWithImageList)(int iImage, const TCHAR *szNewTip, char *szPreferredProto);
+	void (*pfnTrayIconUpdateWithImageList)(int iImage, const wchar_t *szNewTip, char *szPreferredProto);
 	void (*pfnTrayIconUpdateBase)(const char *szChangedProto);
 	void (*pfnTrayIconSetToBase)(char *szPreferredProto);
 	void (*pfnTrayIconIconsChanged)(void);
 	int  (*pfnTrayIconPauseAutoHide)(WPARAM wParam, LPARAM lParam);
 	INT_PTR (*pfnTrayIconProcessMessage)(WPARAM wParam, LPARAM lParam);
-	int  (*pfnCListTrayNotify)(MIRANDASYSTRAYNOTIFY*);
+	int (*blablabla5)();
 
 	/* clui.c */
 	LRESULT (CALLBACK *pfnContactListWndProc)(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -381,33 +398,24 @@ struct CLIST_INTERFACE
 	void (*pfnOnCreateClc)(void);
 
 	/* contact.c */
-	void (*pfnChangeContactIcon)(MCONTACT hContact, int iIcon, int add);
+	void (*pfnChangeContactIcon)(MCONTACT hContact, int iIcon);
 	void (*pfnLoadContactTree)(void);
 	int  (*pfnCompareContacts)(const ClcContact *contact1, const ClcContact *contact2);
-	void (*pfnSortContacts)(void);
-	int  (*pfnSetHideOffline)(WPARAM wParam, LPARAM lParam);
+	int  (*pfnSetHideOffline)(int newValue); // TRUE, FALSE or -1 to revert the current setting
 
 	/* docking.c */
 	int (*pfnDocking_ProcessWindowMessage)(WPARAM wParam, LPARAM lParam);
 
-	/* group.c */
-	TCHAR* (*pfnGetGroupName)(int idx, DWORD* pdwFlags);
-	int    (*pfnRenameGroup)(int groupID, TCHAR* newName);
-
-	/* keyboard.c */
-	int   (*pfnHotKeysRegister)(HWND hwnd);
-	void  (*pfnHotKeysUnregister)(HWND hwnd);
-	int   (*pfnHotKeysProcess)(HWND hwnd, WPARAM wParam, LPARAM lParam);
-	int   (*pfnHotkeysProcessMessage)(WPARAM wParam, LPARAM lParam);
+	int   (*blablabla1)();
+	int   (*blablabla2)();
+	int   (*blablabla3)();
+	int   (*blablabla4)();
 
 	/*************************************************************************************
 	 * version 2 - events processing
 	 *************************************************************************************/
 
-	EventList events;
-
-	struct CListEvent* (*pfnCreateEvent)(void);
-	void  (*pfnFreeEvent)(struct CListEvent*);
+	OBJLIST<CListEvent> *events;
 
 	struct CListEvent* (*pfnAddEvent)(CLISTEVENT*);
 	CLISTEVENT* (*pfnGetEvent)(MCONTACT hContact, int idx);
@@ -448,7 +456,7 @@ struct CLIST_INTERFACE
 	int      shellVersion;
 	UINT_PTR cycleTimerId;
 	int      cycleStep;
-	TCHAR*   szTip;
+	wchar_t*   szTip;
 	BOOL     bTrayMenuOnScreen;
 
 	HICON  (*pfnGetIconFromStatusMode)(MCONTACT hContact, const char *szProto, int status);
@@ -459,11 +467,11 @@ struct CLIST_INTERFACE
 	int    (*pfnTrayIconAdd)(HWND hwnd, const char *szProto, const char *szIconProto, int status);
 	int    (*pfnTrayIconDestroy)(HWND hwnd);
 	int    (*pfnTrayIconInit)(HWND hwnd);
-	TCHAR* (*pfnTrayIconMakeTooltip)(const TCHAR *szPrefix, const char *szProto);
+	wchar_t* (*pfnTrayIconMakeTooltip)(const wchar_t *szPrefix, const char *szProto);
 	void   (*pfnTrayIconRemove)(HWND hwnd, const char *szProto);
 	int    (*pfnTrayIconSetBaseInfo)(HICON hIcon, const char *szPreferredProto);
 	void   (*pfnTrayIconTaskbarCreated)(HWND hwnd);
-	int    (*pfnTrayIconUpdate)(HICON hNewIcon, const TCHAR *szNewTip, const char *szPreferredProto, int isBase);
+	int    (*pfnTrayIconUpdate)(HICON hNewIcon, const wchar_t *szNewTip, const char *szPreferredProto, int isBase);
 
 	VOID   (CALLBACK *pfnTrayCycleTimerProc)(HWND hwnd, UINT message, UINT_PTR idEvent, DWORD dwTime);
 
@@ -491,13 +499,9 @@ struct CLIST_INTERFACE
 // retrieves the pointer to a CLIST_INTERFACE structure
 // NOTE: valid only for the clist clone building, not for the regular use
 
-#define MS_CLIST_RETRIEVE_INTERFACE "CList/RetrieveInterface"
+EXTERN_C MIR_APP_DLL(CLIST_INTERFACE*) Clist_GetInterface(void);
 
 #ifndef MIR_APP_EXPORTS
 	extern CLIST_INTERFACE *pcli;
-
-	__forceinline void mir_getCLI()
-	{	pcli = (CLIST_INTERFACE*)CallService(MS_CLIST_RETRIEVE_INTERFACE, 0, 0);
-	}
 #endif
 #endif // M_CLISTINT_H__

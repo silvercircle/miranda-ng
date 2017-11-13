@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Steam.dll
 ;  Plugin: Steam protocol
-;  Version: 0.11.4.2
+;  Version: 0.11.6.1
 ;  Authors: Miranda NG Team, Robert Pösel
 ;============================================================
 [Steam protocol support for Miranda NG.]
@@ -19,6 +19,10 @@
 Контакты
 [Use bigger avatars]
 Большие аватары
+[Message sessions]
+Беседы
+[Show chat state events (i.e., user closed chat session)]
+Отображать изменения состояния чата (напр., пользователь закрыл окно)
 [Captcha]
 Проверочный код
 [Cancel]
@@ -35,6 +39,8 @@
 Сохранить пароль
 [Enter the password to continue.]
 Введите пароль, чтобы продолжить.
+[As an added account security measure, you'll need to grant access by entering the SMS code we've just sent to your mobile phone.]
+Учётная запись защищена двухэтапной авторизацией. Необходимо дать к ней доступ, введя код, высланный на ваш мобильный телефон.
 [Steam game]
 Игра Steam
 [Looking to play]
@@ -61,8 +67,10 @@
 Сеть
 [Blocked contacts]
 Заблокированные контакты
-[Connection token expired. Please login again.]
-Токен соединения устарел. Пожалуйста, войдите заново.
+[Cannot obtain connection token.]
+Не удалось получить токен соединения.
+[Unknown login error.]
+Неизвестная ошибка при входе.
 [Steam menu chooser]
 Выбор меню Steam
 [Request authorization]
@@ -83,3 +91,5 @@
 %s подключение
 [You cannot send messages when you are offline.]
 Вы не можете отправлять сообщения без подключения к сети.
+[closed chat session]
+закрыл(а) окно беседы

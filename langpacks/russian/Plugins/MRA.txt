@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: MRA.dll
 ;  Plugin: MRA protocol
-;  Version: 2.1.0.10
+;  Version: 2.1.1.1
 ;  Authors: Rozhuk Ivan
 ;============================================================
 [Miranda Mail.ru Agent protocol plugin.]
@@ -215,8 +215,10 @@ xСтатус "%s"
 Аватары: сервер вернул HTTP код: %lu
 [Avatars: can't open file %s, error]
 Аватары: невозможно открыть %s, ошибка
-[CHAT plugin is required for conferences. Install it before chatting]
-Для конференций требуется модуль Chat или tabSRMM 1.0+.
+[Owners]
+Владельцы
+[Visitors]
+Посетители
 [invite sender]
 отправитель приглашения
 [invite new members]
@@ -240,7 +242,7 @@ xСтатус "%s"
 [My World]
 Мой мир
 [Web search]
-Поиск в вебе
+Поиск в Интернете
 [Update all users info]
 Обновить информацию всех пользователей
 [Check users avatars updates]
@@ -291,6 +293,8 @@ xСтатус "%s"
 Отправка файлов: невозможно открыть файл %s, ошибка
 [Send files: requested file: %S - not found in send files list.]
 Отправка файлов: запрошенный файл: %S - не найден среди файлов подготовленных к отправке
+[Main icon]
+Главный значок
 [Protocols]
 Протоколы
 [MRA]

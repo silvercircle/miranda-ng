@@ -84,11 +84,11 @@ Opis:
 &Dostępny
 [&Away]
 &Zaraz wracam
-[&NA]
+[&Not available]
 &Wrócę później
 [Occ&upied]
 Za&jęty
-[&DND]
+[&Do not disturb]
 &Nie przeszkadzać
 [&Free for chat]
 &Chętny do rozmowy
@@ -125,7 +125,7 @@ Status
 [Status message]
 Opis
 [Listening to]
-Obecnie Słucham
+Teraz odtwarzane
 [My details]
 Moje dane
 [Background]

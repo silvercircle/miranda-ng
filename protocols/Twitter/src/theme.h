@@ -1,5 +1,5 @@
 /*
-Copyright © 2012-15 Miranda NG team
+Copyright © 2012-17 Miranda NG team
 Copyright © 2009 Jim Porter
 
 This program is free software: you can redistribute it and/or modify
@@ -22,5 +22,5 @@ void InitIcons(void);
 HANDLE GetIconHandle(const char *name);
 
 void InitContactMenus(void);
-void UninitContactMenus(void);
 void ShowContactMenus(bool show);
+void TwitterInitSounds(void);

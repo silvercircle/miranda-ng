@@ -48,23 +48,15 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD, LPVOID)
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
-
-#ifdef DEBUG
-	{
-		int flag = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
-		flag |= _CRTDBG_LEAK_CHECK_DF|_CRTDBG_CHECK_ALWAYS_DF;
-		_CrtSetDbgFlag(flag);
-	}
-#endif
+	pcli = Clist_GetInterface();
 
 	CreateServiceFunction("Linklist/MenuCommand", LinkList_Main);
 
 	CMenuItem mi;
 	SET_UID(mi, 0x2964dc6c, 0x9cf9, 0x4f20, 0x8f, 0x8a, 0xc6, 0xfe, 0xe2, 0x65, 0xac, 0xc9);
-	mi.flags = CMIF_TCHAR;
+	mi.flags = CMIF_UNICODE;
 	mi.hIcolibItem = LoadIcon(hInst, MAKEINTRESOURCE(IDI_LINKLISTICON));
-	mi.name.t = LPGENT("&Create Linklist");
+	mi.name.w = LPGENW("&Create Linklist");
 	mi.pszService = "Linklist/MenuCommand";
 	Menu_AddContactMenuItem(&mi);
 
@@ -77,7 +69,7 @@ extern "C" __declspec(dllexport) int Load(void)
 	wndclass.hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_LINKLISTICON));
 	wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wndclass.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
-	wndclass.lpszClassName = _T("Progressbar");
+	wndclass.lpszClassName = L"Progressbar";
 	RegisterClass(&wndclass);
 
 	splitCursor = LoadCursor(NULL, IDC_SIZENS);
@@ -104,8 +96,8 @@ int InitOptionsDlg(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
-	odp.pszGroup = LPGEN("History");
-	odp.pszTitle = LPGEN("History Linklist");
+	odp.szGroup.a = LPGEN("History");
+	odp.szTitle.a = LPGEN("History Linklist");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONS_DLG);
 	odp.pfnDlgProc = OptionsDlgProc;
 	odp.flags = ODPF_BOLDGROUPS;
@@ -132,7 +124,7 @@ static INT_PTR LinkList_Main(WPARAM hContact, LPARAM)
 
 	int histCount = db_event_count(hContact), actCount = 0;
 
-	DBEVENTINFO dbe = { sizeof(dbe) };
+	DBEVENTINFO dbe = {};
 	dbe.cbBlob = db_event_getBlobSize(hEvent);
 	dbe.pBlob = (PBYTE)mir_alloc(dbe.cbBlob + 1);
 	db_event_get(hEvent, &dbe);
@@ -140,7 +132,7 @@ static INT_PTR LinkList_Main(WPARAM hContact, LPARAM)
 
 	RECT DesktopRect;
 	GetWindowRect(GetDesktopWindow(), &DesktopRect);
-	HWND hWndProgress = CreateWindow(_T("Progressbar"), TranslateT("Processing history..."), WS_OVERLAPPED, CW_USEDEFAULT, CW_USEDEFAULT, 350, 45, NULL, NULL, hInst, NULL);
+	HWND hWndProgress = CreateWindow(L"Progressbar", TranslateT("Processing history..."), WS_OVERLAPPED, CW_USEDEFAULT, CW_USEDEFAULT, 350, 45, NULL, NULL, hInst, NULL);
 	if (hWndProgress == NULL) {
 		mir_free(dbe.pBlob);
 		MessageBox(NULL, TranslateT("Could not create window!"), TranslateT("Error"), MB_OK | MB_ICONEXCLAMATION );

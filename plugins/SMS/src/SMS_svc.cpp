@@ -32,21 +32,21 @@ int LoadModules(void)
 	SET_UID(mi, 0x3ce387db, 0xbaac, 0x490f, 0xac, 0xab, 0x8c, 0xf7, 0xe9, 0xcd, 0x86, 0xa1);
 	mi.position = 300050000;
 	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_SMS);
-	mi.name.t = SMS_SEND_STR;
+	mi.name.w = SMS_SEND_STR;
 	mi.pszService = szServiceFunction;
-	mi.flags = CMIF_TCHAR;
+	mi.flags = CMIF_UNICODE;
 	Menu_AddMainMenuItem(&mi);
 
 	SET_UID(mi, 0x736e4cff, 0x769e, 0x45dc, 0x8b, 0x78, 0x83, 0xf9, 0xe4, 0xbb, 0x81, 0x9e);
 	mi.position = -2000070000;
 	mi.hIcolibItem = Skin_LoadIcon(SKINICON_OTHER_SMS);
-	mi.name.t = SMS_SEND_CM_STR;
+	mi.name.w = SMS_SEND_CM_STR;
 	mi.pszService = szServiceFunction;
-	mi.flags = CMIF_TCHAR;
+	mi.flags = CMIF_UNICODE;
 	ssSMSSettings.hContactMenuItems[0] = Menu_AddContactMenuItem(&mi);
 
-	SkinAddNewSoundEx("RecvSMSMsg", PROTOCOL_NAMEA, LPGEN("Incoming SMS Message"));
-	SkinAddNewSoundEx("RecvSMSConfirmation", PROTOCOL_NAMEA, LPGEN("Incoming SMS Confirmation"));
+	Skin_AddSound("RecvSMSMsg", PROTOCOL_NAMEW, LPGENW("Incoming SMS Message"));
+	Skin_AddSound("RecvSMSConfirmation", PROTOCOL_NAMEW, LPGENW("Incoming SMS Confirmation"));
 
 	RefreshAccountList(NULL, NULL);
 
@@ -94,7 +94,7 @@ int ReadMsgSMS(WPARAM, LPARAM lParam)
 {
 	CLISTEVENT *cle = (CLISTEVENT*)lParam;
 
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	if ((dbei.cbBlob = db_event_getBlobSize(((CLISTEVENT*)lParam)->hDbEvent)) == -1)
 		return 1;
 	dbei.pBlob = (PBYTE)_alloca(dbei.cbBlob);
@@ -115,7 +115,7 @@ int ReadAckSMS(WPARAM, LPARAM lParam)
 {
 	CLISTEVENT *cle = (CLISTEVENT*)lParam;
 
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	if ((dbei.cbBlob = db_event_getBlobSize(cle->hDbEvent)) == -1)
 		return 1;
 	dbei.pBlob = (PBYTE)_alloca(dbei.cbBlob);
@@ -133,7 +133,7 @@ int ReadAckSMS(WPARAM, LPARAM lParam)
 
 void RestoreUnreadMessageAlerts(void)
 {
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 
 	for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact))
 		for (MEVENT hDbEvent = db_event_firstUnread(hContact); hDbEvent; hDbEvent = db_event_next(hContact, hDbEvent)) {

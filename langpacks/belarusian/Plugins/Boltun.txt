@@ -7,7 +7,6 @@
 ;============================================================
 [Boltun, the chat bot in the russian language.]
 Балбатун, чат-бот для рускай мовы.
-;file \plugins\Boltun\res\Boltun.rc
 [Boltun]
 Балбатун
 [Boltun Autochat everybody]
@@ -46,11 +45,10 @@
 Пачынаць адказы з маленькай літары.
 [Don't use "I don't understand"-like answers]
 Не выкарыстоўваць адказы тыпу "Не зразумеў?"
-;file \plugins\Boltun\src\stdafx.h
 [Message sessions]
 Гутаркі
 [Mind Files]
-Mind файлы
+
 [All Files]
 Усе файлы
 [Boltun/Auto Chat]
@@ -59,6 +57,8 @@ Mind файлы
 Балбатун/Не размаўляць
 [Boltun/Start Chatting]
 Балбатун/пачаць размову
+[Hello. I'm Boltun! I'll talk to you, while my owner is away. Please write without mistakes!]
+Прывітанне, я - Балбатун! Я з табой паразмаўляю, пакуль гаспадара няма. Калі ласка, пішы без памылак!
 [Boltun Error]
 Памылка Балбатуна
 [Failed to load base of remarks. Error at line %d of %s. (Or few lines before).]

@@ -52,14 +52,14 @@ void GetISO8061Time(SYSTEMTIME *stLocal, LPTSTR lpszString, DWORD dwSize)
 
 	if (clsdates) {
 		GetDateFormat(LOCALE_INVARIANT, 0, stLocal, TEXT("d MMM yyyy"), lpszString, dwSize);
-		int dlen = (int)mir_tstrlen(lpszString);
+		int dlen = (int)mir_wstrlen(lpszString);
 		GetTimeFormat(LOCALE_INVARIANT, 0, stLocal, TEXT(" H:mm:ss"), lpszString + dlen, dwSize - dlen);
 	}
 	else {
 		int offset = GetTZOffset();
 
 		// Build a string showing the date and time.
-		mir_sntprintf(lpszString, dwSize, TEXT("%d-%02d-%02d %02d:%02d:%02d%+03d%02d"),
+		mir_snwprintf(lpszString, dwSize, TEXT("%d-%02d-%02d %02d:%02d:%02d%+03d%02d"),
 			stLocal->wYear, stLocal->wMonth, stLocal->wDay,
 			stLocal->wHour, stLocal->wMinute, stLocal->wSecond,
 			offset / 60, offset % 60);
@@ -100,14 +100,14 @@ PLUGININFOEX* GetMirInfo(HMODULE hModule)
 	return bpi(mirandaVersion);
 }
 
-void GetInternetExplorerVersion(CMString &buffer)
+void GetInternetExplorerVersion(CMStringW &buffer)
 {
 	HKEY hKey;
 	DWORD size;
 
-	TCHAR ieVersion[1024] = { 0 };
-	TCHAR ieBuild[512] = { 0 };
-	TCHAR iVer[64] = { 0 };
+	wchar_t ieVersion[1024] = { 0 };
+	wchar_t ieBuild[512] = { 0 };
+	wchar_t iVer[64] = { 0 };
 
 	if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT("SOFTWARE\\Microsoft\\Internet Explorer"), 0, KEY_QUERY_VALUE, &hKey)) {
 		size = _countof(ieBuild);
@@ -129,13 +129,13 @@ void GetInternetExplorerVersion(CMString &buffer)
 	if (ieVersion[0] == 0) {
 		if (iVer[0] == 0)
 			buffer.Append(TEXT("<not installed>"));
-		else if (mir_tstrcmp(iVer, TEXT("100")) == 0)
+		else if (mir_wstrcmp(iVer, TEXT("100")) == 0)
 			buffer.Append(TEXT("1.0"));
-		else if (mir_tstrcmp(iVer, TEXT("101")) == 0)
+		else if (mir_wstrcmp(iVer, TEXT("101")) == 0)
 			buffer.Append(TEXT("NT"));
-		else if (mir_tstrcmp(iVer, TEXT("102")) == 0)
+		else if (mir_wstrcmp(iVer, TEXT("102")) == 0)
 			buffer.Append(TEXT("2.0"));
-		else if (mir_tstrcmp(iVer, TEXT("103")) == 0)
+		else if (mir_wstrcmp(iVer, TEXT("103")) == 0)
 			buffer.Append(TEXT("3.0"));
 	}
 	else buffer.Append(ieVersion);
@@ -144,9 +144,9 @@ void GetInternetExplorerVersion(CMString &buffer)
 		buffer.AppendFormat(TEXT(" (build %s)"), ieBuild);
 }
 
-void TrimMultiSpaces(TCHAR *str)
+void TrimMultiSpaces(wchar_t *str)
 {
-	TCHAR *src = str, *dest = str;
+	wchar_t *src = str, *dest = str;
 	bool trimst = false;
 
 	for (;;) {
@@ -164,23 +164,23 @@ void TrimMultiSpaces(TCHAR *str)
 	}
 }
 
-void GetProcessorString(CMString &buffer)
+void GetProcessorString(CMStringW &buffer)
 {
 	HKEY hKey;
 	DWORD size;
 
-	TCHAR cpuIdent[512] = { 0 };
-	TCHAR cpuName[512] = { 0 };
+	wchar_t cpuIdent[512] = { 0 };
+	wchar_t cpuName[512] = { 0 };
 
 	if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT("Hardware\\Description\\System\\CentralProcessor\\0"), 0, KEY_QUERY_VALUE, &hKey)) {
 		size = _countof(cpuName);
 		if (RegQueryValueEx(hKey, TEXT("ProcessorNameString"), NULL, NULL, (LPBYTE)cpuName, &size) != ERROR_SUCCESS)
-			mir_tstrcpy(cpuName, TEXT("Unknown"));
+			mir_wstrcpy(cpuName, TEXT("Unknown"));
 
 		size = _countof(cpuIdent);
 		if (RegQueryValueEx(hKey, TEXT("Identifier"), NULL, NULL, (LPBYTE)cpuIdent, &size) != ERROR_SUCCESS)
 			if (RegQueryValueEx(hKey, TEXT("VendorIdentifier"), NULL, NULL, (LPBYTE)cpuIdent, &size) != ERROR_SUCCESS)
-				mir_tstrcpy(cpuIdent, TEXT("Unknown"));
+				mir_wstrcpy(cpuIdent, TEXT("Unknown"));
 
 		RegCloseKey(hKey);
 	}
@@ -197,7 +197,7 @@ void GetProcessorString(CMString &buffer)
 		buffer.AppendFormat(TEXT(" [%u CPUs]"), si.dwNumberOfProcessors);
 }
 
-void GetFreeMemoryString(CMString &buffer)
+void GetFreeMemoryString(CMStringW &buffer)
 {
 	unsigned ram;
 	MEMORYSTATUSEX ms = { 0 };
@@ -207,7 +207,7 @@ void GetFreeMemoryString(CMString &buffer)
 	buffer.AppendFormat(TEXT("Installed RAM: %u MBytes"), ram);
 }
 
-void GetFreeDiskString(LPCTSTR dirname, CMString &buffer)
+void GetFreeDiskString(LPCTSTR dirname, CMStringW &buffer)
 {
 	ULARGE_INTEGER tnb, tfb, fs = { 0 };
 	GetDiskFreeSpaceEx(dirname, &fs, &tnb, &tfb);
@@ -216,7 +216,7 @@ void GetFreeDiskString(LPCTSTR dirname, CMString &buffer)
 	buffer.AppendFormat(TEXT("Free disk space on Miranda partition: %u MBytes"), fs.LowPart);
 }
 
-void ReadableExceptionInfo(PEXCEPTION_RECORD excrec, CMString& buffer)
+void ReadableExceptionInfo(PEXCEPTION_RECORD excrec, CMStringW& buffer)
 {
 	buffer.Append(TEXT("Exception: "));
 
@@ -317,7 +317,7 @@ void ReadableExceptionInfo(PEXCEPTION_RECORD excrec, CMString& buffer)
 	}
 }
 
-void GetAdminString(CMString &buffer)
+void GetAdminString(CMStringW &buffer)
 {
 	BOOL b;
 	__try {
@@ -341,9 +341,9 @@ void GetAdminString(CMString &buffer)
 	buffer.AppendFormat(TEXT("Administrator privileges: %s"), b ? TEXT("Yes") : TEXT("No"));
 }
 
-void GetLanguageString(CMString &buffer)
+void GetLanguageString(CMStringW &buffer)
 {
-	TCHAR name1[256], name2[256], name3[256], name4[256];
+	wchar_t name1[256], name2[256], name3[256], name4[256];
 
 	GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SENGLANGUAGE, name1, 256);
 	GetLocaleInfo(LOCALE_SYSTEM_DEFAULT, LOCALE_SENGLANGUAGE, name2, 256);
@@ -354,11 +354,11 @@ void GetLanguageString(CMString &buffer)
 	buffer.AppendFormat(TEXT("OS Languages: (UI | Locale (User/System)) : %s/%s | %s/%s"), name3, name4, name1, name2);
 }
 
-void GetLanguagePackString(CMString &buffer)
+void GetLanguagePackString(CMStringW &buffer)
 {
 	buffer.Append(TEXT("Language pack: "));
 	if (packlcid != LOCALE_USER_DEFAULT) {
-		TCHAR lang[MAX_PATH], ctry[MAX_PATH];
+		wchar_t lang[MAX_PATH], ctry[MAX_PATH];
 		if (GetLocaleInfo(packlcid, LOCALE_SENGLANGUAGE, lang, MAX_PATH)) {
 			if (GetLocaleInfo(packlcid, LOCALE_SISO3166CTRYNAME, ctry, MAX_PATH))
 				buffer.AppendFormat(TEXT("%s (%s) [%04x]"), lang, ctry, packlcid);
@@ -372,7 +372,7 @@ void GetLanguagePackString(CMString &buffer)
 		buffer.Append(TEXT("No language pack installed"));
 }
 
-void GetWow64String(CMString &buffer)
+void GetWow64String(CMStringW &buffer)
 {
 	BOOL wow64 = 0;
 	if (!IsWow64Process(GetCurrentProcess(), &wow64))
@@ -382,27 +382,7 @@ void GetWow64String(CMString &buffer)
 		buffer.Append(TEXT(" [running inside WOW64]"));
 }
 
-
-bool CreateDirectoryTree(LPTSTR szDir)
-{
-	DWORD dwAttr = GetFileAttributes(szDir);
-	if (dwAttr != INVALID_FILE_ATTRIBUTES && (dwAttr & FILE_ATTRIBUTE_DIRECTORY))
-		return true;
-
-	TCHAR* pszSlash = _tcsrchr(szDir, TEXT('\\'));
-	if (pszSlash == NULL)
-		return false;
-
-	*pszSlash = 0;
-	bool res = CreateDirectoryTree(szDir);
-	*pszSlash = TEXT('\\');
-
-	if (res) res = CreateDirectory(szDir, NULL) != 0;
-
-	return res;
-}
-
-void GetVersionInfo(HMODULE hLib, CMString& buffer)
+void GetVersionInfo(HMODULE hLib, CMStringW& buffer)
 {
 	HRSRC hVersion = FindResource(hLib, MAKEINTRESOURCE(VS_VERSION_INFO), RT_VERSION);
 	if (hVersion != NULL) {
@@ -426,9 +406,9 @@ void GetVersionInfo(HMODULE hLib, CMString& buffer)
 	}
 }
 
-void StoreStringToClip(CMString& buffer)
+void StoreStringToClip(CMStringW& buffer)
 {
-	int bufLen = (buffer.GetLength() + 1) * sizeof(TCHAR);
+	int bufLen = (buffer.GetLength() + 1) * sizeof(wchar_t);
 	HANDLE hData = GlobalAlloc(GMEM_MOVEABLE, bufLen);
 	LPSTR buf = (LPSTR)GlobalLock(hData);
 
@@ -445,7 +425,7 @@ void StoreStringToClip(CMString& buffer)
 	}
 }
 
-bool IsPluginEnabled(TCHAR* filename)
+bool IsPluginEnabled(wchar_t* filename)
 {
 	char* fname;
 	crsi_t2a(fname, filename);

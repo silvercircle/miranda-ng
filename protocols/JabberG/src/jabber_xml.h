@@ -5,7 +5,7 @@ Jabber Protocol Plugin for Miranda NG
 Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
 Copyright (c) 2007     Maxim Mluhov
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -57,7 +57,7 @@ LPCTSTR __fastcall XmlGetAttrValue(HXML, LPCTSTR key);
 
 struct XmlNode
 {
-	__forceinline XmlNode() { m_hXml = NULL; }
+	__forceinline XmlNode() { m_hXml = nullptr; }
 
 	__forceinline XmlNode(LPCTSTR pszString, int* numBytes, LPCTSTR ptszTag)
 	{
@@ -83,13 +83,13 @@ class CJabberIqInfo;
 
 struct XmlNodeIq : public XmlNode
 {
-	XmlNodeIq(const TCHAR *type, int id = -1, const TCHAR *to = NULL);
-	XmlNodeIq(const TCHAR *type, const TCHAR *idStr, const TCHAR *to);
-	XmlNodeIq(const TCHAR *type, HXML node, const TCHAR *to);
+	XmlNodeIq(const wchar_t *type, int id = -1, const wchar_t *to = nullptr);
+	XmlNodeIq(const wchar_t *type, const wchar_t *idStr, const wchar_t *to);
+	XmlNodeIq(const wchar_t *type, HXML node, const wchar_t *to);
 	// new request
 	XmlNodeIq(CJabberIqInfo *pInfo);
 	// answer to request
-	XmlNodeIq(const TCHAR *type, CJabberIqInfo *pInfo);
+	XmlNodeIq(const wchar_t *type, CJabberIqInfo *pInfo);
 };
 
 typedef void (*JABBER_XML_CALLBACK)(HXML, void*);
@@ -169,7 +169,7 @@ struct XCHILD
 {
 	LPCTSTR name, value;
 
-	__forceinline XCHILD(LPCTSTR _name, LPCTSTR _value = NULL) :
+	__forceinline XCHILD(LPCTSTR _name, LPCTSTR _value = nullptr) :
 		name(_name),
 		value(_value)
 		{}
@@ -185,7 +185,7 @@ struct XCHILDNS
 {
 	LPCTSTR name, ns;
 
-	__forceinline XCHILDNS(LPCTSTR _name, LPCTSTR _ns = NULL) :
+	__forceinline XCHILDNS(LPCTSTR _name, LPCTSTR _ns = nullptr) :
 		name(_name),
 		ns(_ns)
 		{}
@@ -215,20 +215,20 @@ HXML __fastcall operator<<(HXML node, const XQUERY& child);
 // Samples:
 //    LPCTSTR s = XPathT(node, "child/subchild[@attr='value']");          // get node text
 //    LPCTSTR s = XPathT(node, "child/subchild[2]/@attr");                // get attribute value
-//    XPathT(node, "child/subchild[@name='test']/@attr") = _T("Hello");   // create path if needed and set attribute value
+//    XPathT(node, "child/subchild[@name='test']/@attr") = L"Hello";   // create path if needed and set attribute value
 //
-//    XPathT(node, "child/subchild[@name='test']") = _T("Hello");         // TODO: create path if needed and set node text
+//    XPathT(node, "child/subchild[@name='test']") = L"Hello";         // TODO: create path if needed and set node text
 
 #define XPathT(a,b) XPath(a, _T(b))
 
 class XPath
 {
 public:
-	__forceinline XPath(HXML hXml, TCHAR *path):
+	__forceinline XPath(HXML hXml, wchar_t *path):
 		m_type(T_UNKNOWN),
 		m_hXml(hXml),
 		m_szPath(path),
-		m_szParam(NULL)
+		m_szParam(nullptr)
 		{}
 
 	// Read data
@@ -239,34 +239,34 @@ public:
 			case T_NODE: return m_hXml;
 			case T_NODESET: return XmlGetNthChild(m_hXml, m_szParam, 1);
 		}
-		return NULL;
+		return nullptr;
 	}
 	operator LPTSTR()
 	{
 		switch (Lookup())
 		{
-			case T_ATTRIBUTE: return (TCHAR *)XmlGetAttrValue(m_hXml, m_szParam);
-			case T_NODE: return (TCHAR *)XmlGetText(m_hXml);
-			case T_NODESET: return (TCHAR *)XmlGetText(XmlGetNthChild(m_hXml, m_szParam, 1));
+			case T_ATTRIBUTE: return (wchar_t *)XmlGetAttrValue(m_hXml, m_szParam);
+			case T_NODE: return (wchar_t *)XmlGetText(m_hXml);
+			case T_NODESET: return (wchar_t *)XmlGetText(XmlGetNthChild(m_hXml, m_szParam, 1));
 		}
-		return NULL;
+		return nullptr;
 	}
 	operator int()
 	{
-		if (TCHAR *s = *this) return _ttoi(s);
+		if (wchar_t *s = *this) return _wtoi(s);
 		return 0;
 	}
-	__forceinline bool operator== (TCHAR *str)
+	__forceinline bool operator== (wchar_t *str)
 	{
-		return !mir_tstrcmp((LPCTSTR)*this, str);
+		return !mir_wstrcmp((LPCTSTR)*this, str);
 	}
-	__forceinline bool operator!= (TCHAR *str)
+	__forceinline bool operator!= (wchar_t *str)
 	{
-		return mir_tstrcmp((LPCTSTR)*this, str) ? true : false;
+		return mir_wstrcmp((LPCTSTR)*this, str) ? true : false;
 	}
 	HXML operator[] (int idx)
 	{
-		return (Lookup() == T_NODESET) ? XmlGetNthChild(m_hXml, m_szParam, idx) : NULL;
+		return (Lookup() == T_NODESET) ? XmlGetNthChild(m_hXml, m_szParam, idx) : nullptr;
 	}
 
 	// Write data
@@ -280,8 +280,8 @@ public:
 	}
 	void operator= (int value)
 	{
-		TCHAR buf[16];
-		_itot(value, buf, 10);
+		wchar_t buf[16];
+		_itow(value, buf, 10);
 		*this = buf;
 	}
 
@@ -322,11 +322,11 @@ private:
 
 	struct LookupString
 	{
-		void Begin(const TCHAR *p_) { p = p_; }
-		void End(const TCHAR *p_) { length = p_ - p; }
+		void Begin(const wchar_t *p_) { p = p_; }
+		void End(const wchar_t *p_) { length = p_ - p; }
 		operator bool() { return p ? true : false; }
 
-		const TCHAR *p;
+		const wchar_t *p;
 		int length;
 
 	};
@@ -353,13 +353,13 @@ class XPathFmt: public XPath
 {
 public:
 	enum { BUFSIZE = 512 };
-	XPathFmt(HXML hXml, TCHAR *path, ...): XPath(hXml, m_buf)
+	XPathFmt(HXML hXml, wchar_t *path, ...): XPath(hXml, m_buf)
 	{
 		*m_buf = 0;
 
 		va_list args;
 		va_start(args, path);
-		mir_vsntprintf(m_buf, BUFSIZE, path, args);
+		mir_vsnwprintf(m_buf, BUFSIZE, path, args);
 		m_buf[BUFSIZE-1] = 0;
 		va_end(args);
 	}
@@ -378,7 +378,7 @@ public:
 	}
 
 private:
-	TCHAR m_buf[BUFSIZE];
+	wchar_t m_buf[BUFSIZE];
 };
 
 #endif

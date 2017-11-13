@@ -1,5 +1,5 @@
 /*
-Copyright © 2012-15 Miranda NG team
+Copyright © 2012-17 Miranda NG team
 Copyright © 2009 Jim Porter
 
 This program is free software: you can redistribute it and/or modify
@@ -24,47 +24,45 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 void TwitterProto::UpdateChat(const twitter_user &update)
 {
-	GCDEST gcd = { m_szModuleName, m_tszUserName, GC_EVENT_MESSAGE };
-	GCEVENT gce = { sizeof(gce), &gcd };
-	gce.pDest = &gcd;
+	GCEVENT gce = { m_szModuleName, m_tszUserName, GC_EVENT_MESSAGE };
 	gce.bIsMe = (update.username == twit_.get_username());
 	gce.dwFlags = GCEF_ADDTOLOG;
-	gce.ptszUID = mir_a2t(update.username.c_str());
+	gce.ptszUID = mir_a2u(update.username.c_str());
 	//TODO: write code here to replace % with %% in update.status.text (which is a std::string)
 
 	std::string chatText = update.status.text;
 
 	replaceAll(chatText, "%", "%%");
 
-	gce.ptszText = mir_a2t_cp(chatText.c_str(), CP_UTF8);
-	//gce.ptszText = mir_a2t_cp(update.status.text.c_str(),CP_UTF8);
+	gce.ptszText = mir_a2u_cp(chatText.c_str(), CP_UTF8);
+	//gce.ptszText = mir_a2u_cp(update.status.text.c_str(),CP_UTF8);
 	gce.time = static_cast<DWORD>(update.status.time);
 
 	DBVARIANT nick;
 	MCONTACT hContact = UsernameToHContact(update.username.c_str());
 	if (hContact && !db_get_s(hContact, "CList", "MyHandle", &nick)) {
-		gce.ptszNick = mir_a2t(nick.pszVal);
+		gce.ptszNick = mir_a2u(nick.pszVal);
 		db_free(&nick);
 	}
 	else
-		gce.ptszNick = mir_a2t(update.username.c_str());
+		gce.ptszNick = mir_a2u(update.username.c_str());
 
-	CallServiceSync(MS_GC_EVENT, 0, reinterpret_cast<LPARAM>(&gce));
+	Chat_Event(&gce);
 
-	mir_free(const_cast<TCHAR*>(gce.ptszNick));
-	mir_free(const_cast<TCHAR*>(gce.ptszUID));
-	mir_free(const_cast<TCHAR*>(gce.ptszText));
+	mir_free(const_cast<wchar_t*>(gce.ptszNick));
+	mir_free(const_cast<wchar_t*>(gce.ptszUID));
+	mir_free(const_cast<wchar_t*>(gce.ptszText));
 }
 
 int TwitterProto::OnChatOutgoing(WPARAM, LPARAM lParam)
 {
 	GCHOOK *hook = reinterpret_cast<GCHOOK*>(lParam);
-	if (mir_strcmp(hook->pDest->pszModule, m_szModuleName))
+	if (mir_strcmp(hook->pszModule, m_szModuleName))
 		return 0;
 
-	switch (hook->pDest->iType) {
+	switch (hook->iType) {
 	case GC_USER_MESSAGE:
-		debugLog(_T("**Chat - Outgoing message: %s"), hook->ptszText);
+		debugLogW(L"**Chat - Outgoing message: %s", hook->ptszText);
 		{
 			T2Utf text(hook->ptszText);
 
@@ -78,7 +76,7 @@ int TwitterProto::OnChatOutgoing(WPARAM, LPARAM lParam)
 
 	case GC_USER_PRIVMESS:
 	{
-		ptrA text(mir_t2a(hook->ptszUID));
+		ptrA text(mir_u2a(hook->ptszUID));
 		CallService(MS_MSG_SENDMESSAGE, WPARAM(UsernameToHContact(text)), 0);
 	}
 	break;
@@ -90,48 +88,38 @@ int TwitterProto::OnChatOutgoing(WPARAM, LPARAM lParam)
 // TODO: remove nick?
 void TwitterProto::AddChatContact(const char *name, const char *nick)
 {
-	GCDEST gcd = { m_szModuleName, m_tszUserName, GC_EVENT_JOIN };
-	GCEVENT gce = { sizeof(gce), &gcd };
-	gce.time = DWORD(time(0));
-	gce.ptszNick = mir_a2t(nick ? nick : name);
-	gce.ptszUID = mir_a2t(name);
-	gce.ptszStatus = _T("Normal");
-	CallServiceSync(MS_GC_EVENT, 0, reinterpret_cast<LPARAM>(&gce));
+	ptrW wszId(mir_a2u(name));
+	ptrW wszNick(mir_a2u(nick ? nick : name));
 
-	mir_free(const_cast<TCHAR*>(gce.ptszNick));
-	mir_free(const_cast<TCHAR*>(gce.ptszUID));
+	GCEVENT gce = { m_szModuleName, m_tszUserName, GC_EVENT_JOIN };
+	gce.time = DWORD(time(0));
+	gce.ptszNick = wszNick;
+	gce.ptszUID = wszId;
+	gce.ptszStatus = L"Normal";
+	Chat_Event(&gce);
 }
 
 void TwitterProto::DeleteChatContact(const char *name)
 {
-	GCDEST gcd = { m_szModuleName, m_tszUserName, GC_EVENT_PART };
-	GCEVENT gce = { sizeof(gce), &gcd };
-	gce.time = DWORD(time(0));
-	gce.ptszNick = mir_a2t(name);
-	gce.ptszUID = gce.ptszNick;
-	CallServiceSync(MS_GC_EVENT, 0, reinterpret_cast<LPARAM>(&gce));
+	ptrW wszId(mir_a2u(name));
 
-	mir_free(const_cast<TCHAR*>(gce.ptszNick));
+	GCEVENT gce = { m_szModuleName, m_tszUserName, GC_EVENT_PART };
+	gce.time = DWORD(time(0));
+	gce.ptszNick = wszId;
+	gce.ptszUID = gce.ptszNick;
+	Chat_Event(&gce);
 }
 
 INT_PTR TwitterProto::OnJoinChat(WPARAM, LPARAM suppress)
 {
 	// ***** Create the group chat session
-	GCSESSION gcw = { sizeof(gcw) };
-	gcw.iType = GCW_CHATROOM;
-	gcw.pszModule = m_szModuleName;
-	gcw.ptszName = m_tszUserName;
-	gcw.ptszID = m_tszUserName;
-	CallServiceSync(MS_GC_NEWSESSION, 0, (LPARAM)&gcw);
+	Chat_NewSession(GCW_CHATROOM, m_szModuleName, m_tszUserName, m_tszUserName);
 
 	if (m_iStatus != ID_STATUS_ONLINE)
 		return 0;
 
 	// ***** Create a group
-	GCDEST gcd = { m_szModuleName, m_tszUserName, GC_EVENT_ADDGROUP };
-	GCEVENT gce = { sizeof(gce), &gcd };
-	gce.ptszStatus = _T("Normal");
-	CallServiceSync(MS_GC_EVENT, 0, reinterpret_cast<LPARAM>(&gce));
+	Chat_AddGroup(m_szModuleName, m_tszUserName, TranslateT("Normal"));
 
 	// ***** Hook events
 	HookProtoEvent(ME_GC_EVENT, &TwitterProto::OnChatOutgoing);
@@ -148,19 +136,13 @@ INT_PTR TwitterProto::OnLeaveChat(WPARAM, LPARAM)
 {
 	in_chat_ = false;
 
-	GCDEST gcd = { m_szModuleName, m_tszUserName, GC_EVENT_CONTROL };
-	GCEVENT gce = { sizeof(gce), &gcd };
-
-	CallServiceSync(MS_GC_EVENT, SESSION_OFFLINE, reinterpret_cast<LPARAM>(&gce));
-	CallServiceSync(MS_GC_EVENT, SESSION_TERMINATE, reinterpret_cast<LPARAM>(&gce));
+	Chat_Control(m_szModuleName, m_tszUserName, SESSION_OFFLINE);
+	Chat_Terminate(m_szModuleName, m_tszUserName);
 	return 0;
 }
 
 void TwitterProto::SetChatStatus(int status)
 {
-	GCDEST gcd = { m_szModuleName, m_tszUserName, GC_EVENT_CONTROL };
-	GCEVENT gce = { sizeof(gce), &gcd };
-
 	if (status == ID_STATUS_ONLINE) {
 		// Add all friends to contact list
 		for (MCONTACT hContact = db_find_first(m_szModuleName); hContact; hContact = db_find_next(hContact, m_szModuleName)) {
@@ -183,9 +165,8 @@ void TwitterProto::SetChatStatus(int status)
 
 		// For some reason, I have to send an INITDONE message, even if I'm not actually
 		// initializing the room...
-		CallServiceSync(MS_GC_EVENT, SESSION_INITDONE, reinterpret_cast<LPARAM>(&gce));
-		CallServiceSync(MS_GC_EVENT, SESSION_ONLINE, reinterpret_cast<LPARAM>(&gce));
+		Chat_Control(m_szModuleName, m_tszUserName, SESSION_INITDONE);
+		Chat_Control(m_szModuleName, m_tszUserName, SESSION_ONLINE);
 	}
-	else
-		CallServiceSync(MS_GC_EVENT, SESSION_OFFLINE, reinterpret_cast<LPARAM>(&gce));
+	else Chat_Control(m_szModuleName, m_tszUserName, SESSION_OFFLINE);
 }

@@ -60,7 +60,6 @@
 #define IDI_ADDSTATUS                   441
 #define IDI_REMSTATUS                   442
 #define IDI_ACTION                      443
-#define IDR_MENU                        451
 #define IDI_STATUS3                     453
 #define IDI_STATUS2                     454
 #define IDI_STATUS4                     455
@@ -74,8 +73,6 @@
 #define IDC_HYPERLINKHAND               600
 #define IDC_DRAGCURSOR                  601
 #define IDC_TABS                        1000
-#define IDC_LOG                         1001
-#define IDC_MESSAGE                     1002
 #define IDC_AUTOPOPUP                   1003
 #define IDC_AUTOMIN                     1005
 #define IDC_STAYMINIMIZED               1006
@@ -88,7 +85,7 @@
 #define IDC_LIMITCHATSTABS              1013
 #define IDC_LIMITCHATSTABSNUM           1014
 #define IDC_LIMITCHATSTABSNUMSPIN       1015
-#define IDC_SPLITTER                    1017
+#define IDC_SMILEY                      1016
 #define IDC_SHOWNAMES                   1020
 #define IDC_USETABS                     1022
 #define IDC_SHOWSECONDS                 1023
@@ -121,8 +118,6 @@
 #define IDC_ADD                         1070
 #define IDC_USERMENU                    1071
 #define IDC_QUOTE                       1072
-#define IDC_HISTORY                     1080
-#define IDC_SMILEYS                     1081
 #define IDC_REMEMBER                    1082
 #define IDC_INFOBAR_NAME                1090
 #define IDC_INFOBAR_STATUS              1091
@@ -171,21 +166,9 @@
 #define IDC_XSTATUSICON                 1646
 #define IDC_INPUTLINES                  1647
 #define IDC_INPUTLINESSPIN              1648
-#define IDC_CHAT_LOG                    5005
-#define IDC_CHAT_SPLITTERX              5006
-#define IDC_CHAT_SMILEY                 5007
-#define IDC_CHAT_SPLITTERY              5008
-#define IDC_CHAT_MESSAGE                5009
-#define IDC_CHAT_BOLD                   5010
-#define IDC_CHAT_ITALICS                5011
-#define IDC_CHAT_UNDERLINE              5012
-#define IDC_CHAT_FILTER                 5013
-#define IDC_CHAT_CHANMGR                5014
-#define IDC_CHAT_SHOWNICKLIST           5016
-#define IDC_CHAT_COLOR                  5017
-#define IDC_CHAT_BKGCOLOR               5019
+#define IDC_SPLITTERX                   5006
+#define IDC_SPLITTERY                   5008
 #define IDC_CHAT_CHECKBOXES             5021
-#define IDC_CHAT_HISTORY                5022
 #define IDC_CHAT_NICKROW                5024
 #define IDC_CHAT_LOGLIMIT               5024
 #define IDC_CHAT_SPIN1                  5028
@@ -210,7 +193,6 @@
 #define IDC_CHAT_TEXTO                  5069
 #define IDC_CHAT_LOGGING                5069
 #define IDC_CHAT_COLORTEXT              5070
-#define IDC_CHAT_LIST                   5072
 #define IDC_CHAT_1                      5075
 #define IDC_CHAT_2                      5076
 #define IDC_CHAT_3                      5077

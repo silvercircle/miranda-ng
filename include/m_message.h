@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -26,112 +26,93 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define M_MESSAGE_H__ 1
 
 #include <m_database.h>
+#include <m_langpack.h>
 
-extern int hLangpack;
+/////////////////////////////////////////////////////////////////////////////////////////
+// brings up the send message dialog for a contact
+// wParam = (MCONTACT)hContact
+// lParam = (LPARAM)(char*)szText
+// returns 0 on success or nonzero on failure
+// returns immediately, just after the dialog is shown
+// szText is the text to put in the edit box of the window (but not send)
+// szText = NULL will not use any text
+// szText != NULL is only supported on v0.1.2.0+
 
-//brings up the send message dialog for a contact
-//wParam = (MCONTACT)hContact
-//lParam = (LPARAM)(char*)szText
-//returns 0 on success or nonzero on failure
-//returns immediately, just after the dialog is shown
-//szText is the text to put in the edit box of the window (but not send)
-//szText = NULL will not use any text
-//szText != NULL is only supported on v0.1.2.0+
 #define MS_MSG_SENDMESSAGE   "SRMsg/SendCommand"
 #define MS_MSG_SENDMESSAGEW  "SRMsg/SendCommandW"
 
-#ifdef _UNICODE
-#define MS_MSG_SENDMESSAGET MS_MSG_SENDMESSAGEW
-#else
-#define MS_MSG_SENDMESSAGET MS_MSG_SENDMESSAGE
-#endif
+/////////////////////////////////////////////////////////////////////////////////////////
+// reads a message from contact list event structure
+// wParam = 0 (unused)
+// lParam = (CLISTEVT*)pEvent
+// always returns 0
 
-#define ME_MSG_WINDOWEVENT "MessageAPI/WindowEvent"
-//wparam = 0
-//lparam = (WPARAM)(MessageWindowEventData*)hWindowEvent;
-//Event types
-#define MSG_WINDOW_EVT_OPENING 1 //window is about to be opened
-#define MSG_WINDOW_EVT_OPEN    2 //window has been opened
-#define MSG_WINDOW_EVT_CLOSING 3 //window is about to be closed
-#define MSG_WINDOW_EVT_CLOSE   4 //window has been closed
-#define MSG_WINDOW_EVT_CUSTOM  5 //custom event for message plugins to use (custom uFlags may be used)
+#define MS_MSG_READMESSAGE   "SRMsg/ReadMessage"
+#define MS_MSG_TYPINGMESSAGE "SRMsg/TypingMessage"
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// gets fired when a message window appears/disappears
+// wparam = 0
+// lparam = (WPARAM)(MessageWindowEventData*)hWindowEvent;
+
+#define MSG_WINDOW_EVT_OPENING 1 // window is about to be opened
+#define MSG_WINDOW_EVT_OPEN    2 // window has been opened
+#define MSG_WINDOW_EVT_CLOSING 3 // window is about to be closed
+#define MSG_WINDOW_EVT_CLOSE   4 // window has been closed
 
 #define MSG_WINDOW_UFLAG_MSG_FROM 0x00000001
 #define MSG_WINDOW_UFLAG_MSG_TO   0x00000002
 #define MSG_WINDOW_UFLAG_MSG_BOTH 0x00000004
 
-typedef struct {
-	int cbSize;
-	MCONTACT hContact;
+struct MessageWindowEventData
+{
+	MCONTACT hContact; 
 	HWND hwndWindow; // top level window for the contact
-	const char* szModule; // used to get plugin type (which means you could use local if needed)
-	unsigned int uType; // see event types above
-	unsigned int uFlags; // used to indicate message direction for all event types except custom
-	void *local; // used to store pointer to custom data
-	HWND hwndInput; // input area window for the contact (or NULL if there is none)
-	HWND hwndLog; // log area window for the contact (or NULL if there is none)
-} MessageWindowEventData;
+	uint32_t uType;  // see event types above
+	uint32_t uFlags; // used to indicate message direction for all event types except custom
+	HWND hwndInput;  // input area window for the contact (or NULL if there is none)
+	HWND hwndLog;    // log area window for the contact (or NULL if there is none)
+};
 
-typedef struct {
-	int cbSize;
-	HICON hIcon; 
-	TCHAR tszText[100];
-} StatusTextData;
+#define ME_MSG_WINDOWEVENT "MessageAPI/WindowEvent"
 
-//wparam = (MCONTACT)hContact
-//lparam = (StatusTextData*) or NULL to clear statusbar
-//Sets a statusbar line text for the appropriate contact
-#define MS_MSG_SETSTATUSTEXT "MessageAPI/SetStatusText"
-
-//wparam = 0
-//lparam = 0
-//Returns a dword with the current message api version
-//Current version is 0, 0, 0, 4
-#define MS_MSG_GETWINDOWAPI "MessageAPI/WindowAPI"
-
-//wparam = (char*)szBuf
-//lparam = (int)cbSize size of buffer
-//Sets the window class name in wParam (ex. "SRMM" for srmm.dll)
-#define MS_MSG_GETWINDOWCLASS "MessageAPI/WindowClass"
-
-typedef struct {
-	int cbSize;
-	MCONTACT hContact;
-	int uFlags; // see uflags above
-} MessageWindowInputData;
+/////////////////////////////////////////////////////////////////////////////////////////
+// retrieves some particular info about a SRMM window by contact
+// returns 0 if a window was found or an error code otherwise
 
 #define MSG_WINDOW_STATE_EXISTS  0x00000001 // Window exists should always be true if hwndWindow exists
 #define MSG_WINDOW_STATE_VISIBLE 0x00000002
 #define MSG_WINDOW_STATE_FOCUS   0x00000004
 #define MSG_WINDOW_STATE_ICONIC  0x00000008
 
-typedef struct {
-	int cbSize;
-	MCONTACT hContact;
-	int uFlags;  // should be same as input data unless 0, then it will be the actual type
+struct MessageWindowData
+{
 	HWND hwndWindow; //top level window for the contact or NULL if no window exists
 	int uState; // see window states
-	void *local; // used to store pointer to custom data
-} MessageWindowData;
+	class CSrmmBaseDialog *pDlg; // window class object
+};
 
-//wparam = (MessageWindowInputData*)
-//lparam = (MessageWindowData*)
-//returns 0 on success and returns non-zero (1) on error or if no window data exists for that hcontact
-#define MS_MSG_GETWINDOWDATA "MessageAPI/GetWindowData"
+EXTERN_C MIR_APP_DLL(int) Srmm_GetWindowData(MCONTACT hContact, MessageWindowData &mwd);
 
-//wparam = 0 (unused)
-//lparam = (MessageWindowEvent*)
-//fired before SRMM writes an entered message into the database
+/////////////////////////////////////////////////////////////////////////////////////////
+// sets the status text & icon in a window associated with hContact
+
+EXTERN_C MIR_APP_DLL(void) Srmm_SetStatusText(MCONTACT hContact, const wchar_t *wszText, HICON hIcon = nullptr);
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// wparam = 0 (unused)
+// lparam = (MessageWindowEvent*)
+// fired before SRMM writes an entered message into the database
 #define ME_MSG_PRECREATEEVENT    "MessageAPI/PreCreateEvent"
 
-typedef struct {
-	int cbSize;
+struct MessageWindowEvent
+{
 	int seq;      // number returned by PSS_MESSAGE
 	MCONTACT hContact;
 	DBEVENTINFO *dbei; // database event written on the basis of message sent
-} MessageWindowEvent;
+};
 
-/////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SRMM popup menu
 
 // wParam = 0
@@ -148,8 +129,8 @@ typedef struct {
 #define MSG_WINDOWPOPUP_INPUT    1
 #define MSG_WINDOWPOPUP_LOG      2
 
-typedef struct {
-	int cbSize;
+struct MessageWindowPopupData
+{
 	unsigned int uType; // see popup types above
 	unsigned int uFlags; // used to indicate in which window the popup was requested
 	MCONTACT hContact;
@@ -157,80 +138,57 @@ typedef struct {
 	HMENU hMenu;	// The handle to the menu
 	POINT pt; // The point, in screen coords
 	int selection; // The menu control id or 0 if no one was selected
-} MessageWindowPopupData;
+};
 
-/////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // status icons
 
 #define MBF_DISABLED       0x01
 #define MBF_HIDDEN         0x02
 #define MBF_UNICODE        0x04
 
-#ifdef _UNICODE
-	#define MBF_TCHAR MBF_UNICODE
-#else
-	#define MBF_TCHAR 0
-#endif
-
-typedef struct {
-	int   cbSize;                    // must be equal to sizeof(StatusIconData)
+struct StatusIconData
+{
 	char *szModule;                  // used in combo with the dwId below to create a unique identifier
 	DWORD dwId;                      // uniquely defines a button inside a module
 	HICON hIcon, hIconDisabled;      // hIconDisabled is optional - if null, will use hIcon in the disabled state
 	int   flags;                     // bitwize OR of MBF_* flags above
 	union {
 		char *szTooltip;              // controlled by MBF_UNICODE
-		TCHAR *tszTooltip;
+		wchar_t *tszTooltip;
 		wchar_t *wszTooltip;
 	};
-} StatusIconData;
+};
 
 #define MBCF_RIGHTBUTTON   0x01     // if this flag is specified, the click was a right button - otherwize it was a left click
 
-typedef struct {
-	int   cbSize;
-	POINT clickLocation;             // click location, in screen coordinates
-	char *szModule;
-	DWORD dwId;
-	int   flags;                       // bitwize OR of MBCF_* flags above
-} StatusIconClickData;
+// adds an icon
+EXTERN_C MIR_APP_DLL(int) Srmm_AddIcon(StatusIconData *sid, int _hLang = hLangpack);
 
-// wParam = (int)hLangpack
-// lParam = (StatusIconData *)&StatusIconData
-// #define MS_MSG_ADDICON "MessageAPI/AddIcon"
+// removes an icon
+EXTERN_C MIR_APP_DLL(void) Srmm_RemoveIcon(const char *szProto, DWORD iconId);
 
-__forceinline INT_PTR Srmm_AddIcon(StatusIconData *sid)
-{	return CallService("MessageAPI/AddIcon", hLangpack, (LPARAM)sid);
-}
-
-// wParam = 0 (unused)
-// lParam = (StatusIconData *)&StatusIconData
-// only szModule and szId are used
-#define MS_MSG_REMOVEICON "MessageAPI/RemoveIcon"
-
-__forceinline void Srmm_RemoveIcon(StatusIconData *sid)
-{	CallService(MS_MSG_REMOVEICON, 0, (LPARAM)sid);
-}
-
-// wParam = (HANDLE)hContact
-// lParam = (StatusIconData *)&StatusIconData
 // if hContact is null, icon is modified for all contacts
 // otherwise, only the flags field is valid
 // if either hIcon, hIconDisabled or szTooltip is null, they will not be modified
-#define MS_MSG_MODIFYICON "MessageAPI/ModifyIcon"
-
-__forceinline void Srmm_ModifyIcon(MCONTACT hContact, StatusIconData *sid)
-{	CallService(MS_MSG_MODIFYICON, hContact, (LPARAM)sid);
-}
+EXTERN_C MIR_APP_DLL(int) Srmm_ModifyIcon(MCONTACT hContact, StatusIconData *sid);
 
 // wParam = (HANDLE)hContact
 // lParam = (int)zero-based index of a visible icon
 // returns (StatusIconData*)icon description filled for the required contact
 // don't free this memory.
+EXTERN_C MIR_APP_DLL(StatusIconData*) Srmm_GetNthIcon(MCONTACT hContact, int index);
 
-__forceinline StatusIconData* Srmm_GetNthIcon(MCONTACT hContact, int index)
-{	return (StatusIconData*)CallService("MessageAPI/GetNthIcon", hContact, index);
-}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// status icons click notification
+
+struct StatusIconClickData
+{
+	POINT clickLocation;             // click location, in screen coordinates
+	char *szModule;
+	DWORD dwId;
+	int   flags;                       // bitwize OR of MBCF_* flags above
+};
 
 // wParam = (HANDLE)hContact;
 // lParam = (StatusIconClickData *)&StatusIconClickData;
@@ -241,5 +199,104 @@ __forceinline StatusIconData* Srmm_GetNthIcon(MCONTACT hContact, int index)
 // lParam = (StatusIconkData*)pIcon
 // catch to be notified about the icon list's change.
 #define ME_MSG_ICONSCHANGED   "MessageAPI/IconsChanged"
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// srmm toolbar icons' support
+
+// default section for all SRMM toolbar hotkeys
+#define BB_HK_SECTION         LPGEN("Message window toolbar")
+
+// button state flags
+#define BBSF_HIDDEN           (1<<0)
+#define BBSF_DISABLED         (1<<1)
+#define BBSF_PUSHED           (1<<2)
+#define BBSF_RELEASED         (1<<3)
+
+// button flags
+#define BBBF_DISABLED			(1<<0)
+#define BBBF_HIDDEN				(1<<1)
+#define BBBF_ISPUSHBUTTON		(1<<2)
+#define BBBF_ISARROWBUTTON		(1<<3)
+#define BBBF_ISCHATBUTTON		(1<<4)
+#define BBBF_ISIMBUTTON			(1<<5)
+#define BBBF_ISRSIDEBUTTON		(1<<7)
+#define BBBF_CANBEHIDDEN		(1<<8)
+#define BBBF_ISSEPARATOR		(1<<9)
+#define BBBF_CANTBEHIDDEN		(1<<10)
+#define BBBF_CREATEBYID			(1<<11)  // only for the internal use
+
+struct BBButton
+{
+	const char    *pszModuleName;  // module name without spaces and underline symbols (e.g. "tabsrmm")
+	int            dwButtonID;     // your button ID, will be combined with pszModuleName for storing settings, etc...
+
+	const wchar_t *pwszText;       // button's text, might be NULL
+	const wchar_t *pwszTooltip;    // button's tooltip, might be NULL
+	DWORD          dwDefPos;       // default order pos of button, counted from window edge (left or right)
+	                               // use value >100, because internal buttons using 10,20,30... 80, etc
+	DWORD          bbbFlags;       // combine of BBBF_ flags above
+	HANDLE         hIcon;          // Handle to icolib registered icon
+	const char    *pszHotkey;      // name of the registered hotkey or NULL
+};
+
+// adds a new toolbar button
+// returns 0 on success and nonzero value otherwise
+EXTERN_C MIR_APP_DLL(int) Srmm_AddButton(const BBButton *bbdi, int = hLangpack);
+
+// modifies the existing toolbar button
+// returns 0 on success and nonzero value otherwise
+EXTERN_C MIR_APP_DLL(int) Srmm_ModifyButton(BBButton *bbdi);
+
+// removes a toolbar button identified by a structure
+// returns 0 on success and nonzero value otherwise
+EXTERN_C MIR_APP_DLL(int) Srmm_RemoveButton(BBButton *bbdi);
+
+// retrieves data from a toolbar button to a structure
+// returns 0 on success and nonzero value otherwise
+EXTERN_C MIR_APP_DLL(int) Srmm_GetButtonState(HWND hwndDlg, BBButton *bbdi);
+
+// applies a new data to a toolbar button
+// returns 0 on success and nonzero value otherwise
+EXTERN_C MIR_APP_DLL(int) Srmm_SetButtonState(MCONTACT hContact, BBButton *bbdi);
+
+// resets toolbar settings to these default values
+// returns 0 on success and nonzero value otherwise
+EXTERN_C MIR_APP_DLL(void) Srmm_ResetToolbar();
+
+// updates all toolbar icons in a message dialog
+EXTERN_C MIR_APP_DLL(void) Srmm_UpdateToolbarIcons(HWND hdlg);
+
+// draws all toolbar icons in a message dialog
+EXTERN_C MIR_APP_DLL(void) Srmm_RedrawToolbarIcons(HWND hwndDlg);
+
+// ToolBar loaded event
+// This event will be send after module loaded and after each toolbar reset
+// You should add your buttons on this event
+// NOTE: this event is temporary, you need to hook it using HookTemporaryEvent
+#define ME_MSG_TOOLBARLOADED "SRMM/ButtonsBar/ModuleLoaded"
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// toolbar button clicked event
+
+// wParam = (HANDLE)hContact;
+// lParam = (CustomButtonClickData*) pointer to the click data;
+// catch to show a popup menu, etc.
+#define ME_MSG_BUTTONPRESSED "SRMM/ButtonsBar/ButtonPressed"
+
+// event flags
+#define BBCF_RIGHTBUTTON	(1<<0)
+#define BBCF_SHIFTPRESSED	(1<<1)
+#define BBCF_CONTROLPRESSED	(1<<2)
+#define BBCF_ARROWCLICKED	(1<<3)
+
+struct CustomButtonClickData
+{
+	char    *pszModule;   // button owners name
+	POINT    pt;          // screen coordinates for menus
+	DWORD    dwButtonId;  // registered button ID
+	HWND     hwndFrom;    // button parents HWND
+	MCONTACT hContact;
+	DWORD    flags;       // BBCF_ flags
+};
 
 #endif // M_MESSAGE_H__

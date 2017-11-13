@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -41,19 +41,19 @@ static INT_PTR AboutCommand(WPARAM wParam, LPARAM)
 
 static INT_PTR IndexCommand(WPARAM, LPARAM)
 {
-	Utils_OpenUrl("http://wiki.miranda-ng.org");
+	Utils_OpenUrl("https://wiki.miranda-ng.org");
 	return 0;
 }
 
 static INT_PTR WebsiteCommand(WPARAM, LPARAM)
 {
-	Utils_OpenUrl("http://miranda-ng.org");
+	Utils_OpenUrl("https://miranda-ng.org");
 	return 0;
 }
 
 static INT_PTR BugCommand(WPARAM, LPARAM)
 {
-	Utils_OpenUrl("http://trac.miranda-ng.org/newticket");
+	Utils_OpenUrl("https://github.com/miranda-ng/miranda-ng/issues/new");
 	return 0;
 }
 
@@ -74,7 +74,8 @@ int LoadHelpModule(void)
 	CreateServiceFunction("Help/BugCommand", BugCommand);
 
 	CMenuItem mi;
-	mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("&Help"), 2000090000);
+	mi.root = Menu_CreateRoot(MO_MAIN, LPGENW("&Help"), 2000090000);
+	Menu_ConfigureItem(mi.root, MCI_OPT_UID, "8824ECA5-6942-46D7-9D07-1BA600E0D02E");
 
 	SET_UID(mi, 0xf3ebf1fa, 0x587c, 0x494d, 0xbd, 0x33, 0x7f, 0x88, 0xb3, 0x61, 0x1e, 0xd3);
 	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_OTHER_MIRANDA);

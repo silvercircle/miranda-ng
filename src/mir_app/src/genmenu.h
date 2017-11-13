@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -35,21 +35,26 @@ struct TMO_IntMenuItem;
 struct TMO_LinkedList
 {
 	TMO_IntMenuItem
-		*first, // first element of submenu, or NULL
-		*last;  // last element of submenu, or NULL
+		*first, // first element of submenu, or nullptr
+		*last;  // last element of submenu, or nullptr
+
+	void insert(TMO_IntMenuItem*);
+	void remove(TMO_IntMenuItem*);
 };
 
 struct TMO_IntMenuItem
 {
 	DWORD        signature;
 	int          iCommand;
-	int          iconId;          // icon index in the section's image list
-	TMO_MenuItem mi;              // user-defined data
-	char*        UniqName;        // unique name
-	TCHAR*       CustomName;
-	HANDLE       hIcolibItem;     // handle of iconlib item
+	int          iconId;           // icon index in the section's image list
+	TMO_MenuItem mi;               // user-defined data
+	char*        pszUniqName;      // unique name
+	wchar_t*       ptszCustomName;
+	HANDLE       hIcolibItem;      // handle of iconlib item
 	HBITMAP      hBmp;
-	int          originalPosition;
+	int          originalPosition; // !!!!!!!!!!!!!!!!!!!!!!!!
+	bool         customVisible;
+
 	DWORD        hotKey;
 	WPARAM       execParam;
 	void*        pUserData;
@@ -67,7 +72,7 @@ struct TIntMenuObject : public MZeroedObject
 
 	int id;
 	char *pszName;
-	TCHAR *ptszDisplayName;
+	wchar_t *ptszDisplayName;
 
 	//ExecService
 	//LPARAM lParam;//owner data
@@ -90,7 +95,7 @@ struct TIntMenuObject : public MZeroedObject
 
 	TMO_LinkedList m_items;
 	HIMAGELIST m_hMenuIcons;
-	BOOL m_bUseUserDefinedItems;
+	bool m_bUseUserDefinedItems;
 
 	void freeItem(TMO_IntMenuItem*);
 };
@@ -100,12 +105,7 @@ extern LIST<TIntMenuObject> g_menus;
 #define SEPARATORPOSITIONINTERVAL	100000
 
 // internal usage
-void GetMenuItemName(TMO_IntMenuItem *pMenuItem, char* pszDest, size_t cbDestSize);
-
 TMO_IntMenuItem* MO_GetIntMenuItem(HGENMENU);
-
-int MO_DrawMenuItem(LPDRAWITEMSTRUCT dis);
-int MO_MeasureMenuItem(LPMEASUREITEMSTRUCT mis);
 
 int MO_ProcessCommandBySubMenuIdent(int menuID, int command, LPARAM lParam);
 
@@ -119,13 +119,11 @@ TMO_IntMenuItem *MO_RecursiveWalkMenu(TMO_IntMenuItem*, pfnWalkFunc, void*);
 int InitGenMenu();
 int UninitGenMenu();
 
-TMO_IntMenuItem * GetMenuItemByGlobalID(int globalMenuID);
-BOOL	FindMenuHanleByGlobalID(HMENU hMenu, int globalID, struct _MenuItemHandles * dat);	//GenMenu.c
+int Menu_LoadFromDatabase(TMO_IntMenuItem *pimi, void *param);
 
 LPTSTR GetMenuItemText(TMO_IntMenuItem*);
 
 int GenMenuOptInit(WPARAM wParam, LPARAM);
-int GetMenuItembyId(const int objpos, const int id);
 
 TIntMenuObject* GetMenuObjbyId(const int id);
 

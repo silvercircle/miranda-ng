@@ -234,8 +234,8 @@ class CAnnivList
 		int result;
 
 		if (pDlg) {
-			TCHAR szText1[MAX_PATH];
-			TCHAR szText2[MAX_PATH];
+			wchar_t szText1[MAX_PATH];
+			wchar_t szText2[MAX_PATH];
 
 			szText1[0] = szText2[0] = 0;
 			switch (pDlg->_sortHeader) {
@@ -244,14 +244,14 @@ class CAnnivList
 			case COLUMN_DESC:
 				ListView_GetItemText(pDlg->_hList, iItem1, pDlg->_sortHeader, szText1, _countof(szText1));
 				ListView_GetItemText(pDlg->_hList, iItem2, pDlg->_sortHeader, szText2, _countof(szText2));
-				result = pDlg->_sortOrder * mir_tstrcmp(szText1, szText2);
+				result = pDlg->_sortOrder * mir_wstrcmp(szText1, szText2);
 				break;
 
 			case COLUMN_AGE:
 			case COLUMN_ETA:
 				ListView_GetItemText(pDlg->_hList, iItem1, pDlg->_sortHeader, szText1, _countof(szText1));
 				ListView_GetItemText(pDlg->_hList, iItem2, pDlg->_sortHeader, szText2, _countof(szText2));
-				result = pDlg->_sortOrder * (_ttoi(szText1) - _ttoi(szText2));
+				result = pDlg->_sortOrder * (_wtoi(szText1) - _wtoi(szText2));
 				break;
 
 			case COLUMN_DATE: 
@@ -314,12 +314,12 @@ class CAnnivList
 				ListView_SetExtendedListViewStyle(pDlg->_hList, LVS_EX_FULLROWSELECT);
 
 				// add columns
-				if (pDlg->AddColumn(CAnnivList::COLUMN_ETA, LPGENT("ETA"), 40)
-					|| pDlg->AddColumn(CAnnivList::COLUMN_CONTACT, LPGENT("Contact"), 160)
-					|| pDlg->AddColumn(CAnnivList::COLUMN_PROTO, LPGENT("Proto"), 50)
-					|| pDlg->AddColumn(CAnnivList::COLUMN_AGE, LPGENT("Age/Nr."), 40)
-					|| pDlg->AddColumn(CAnnivList::COLUMN_DESC, LPGENT("Anniversary"), 100)
-					|| pDlg->AddColumn(CAnnivList::COLUMN_DATE, LPGENT("Date"), 80))
+				if (pDlg->AddColumn(CAnnivList::COLUMN_ETA, LPGENW("ETA"), 40)
+					|| pDlg->AddColumn(CAnnivList::COLUMN_CONTACT, LPGENW("Contact"), 160)
+					|| pDlg->AddColumn(CAnnivList::COLUMN_PROTO, LPGENW("Proto"), 50)
+					|| pDlg->AddColumn(CAnnivList::COLUMN_AGE, LPGENW("Age/Nr."), 40)
+					|| pDlg->AddColumn(CAnnivList::COLUMN_DESC, LPGENW("Anniversary"), 100)
+					|| pDlg->AddColumn(CAnnivList::COLUMN_DATE, LPGENW("Date"), 80))
 					break;
 
 				TranslateDialogDefault(hDlg);
@@ -437,7 +437,7 @@ class CAnnivList
 				CItemData* pid = pDlg->ItemData(pDlg->_curSel);
 
 				// process contact menu command
-				if (pid && CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(LOWORD(wParam), MPCF_CONTACTMENU), (LPARAM)pid->_hContact))
+				if (pid && Clist_MenuProcessCommand(LOWORD(wParam), MPCF_CONTACTMENU, pid->_hContact))
 					break;
 
 				switch (LOWORD(wParam)) {
@@ -497,10 +497,10 @@ class CAnnivList
 			break;
 
 		case WM_DRAWITEM:
-			return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
+			return Menu_DrawItem(lParam);
 
 		case WM_MEASUREITEM:
-			return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
+			return Menu_MeasureItem(lParam);
 
 		case WM_WINDOWPOSCHANGING:
 			if (PtrIsValid(pDlg)) {
@@ -601,7 +601,7 @@ class CAnnivList
 		lvc.cx = db_get_w(NULL, MODNAME, pszSetting, defaultWidth);
 		lvc.mask = LVCF_WIDTH | LVCF_TEXT;
 		lvc.iSubItem = iSubItem;
-		lvc.pszText = TranslateTS(pszText);
+		lvc.pszText = TranslateW(pszText);
 		return ListView_InsertColumn(_hList, lvc.iSubItem++, &lvc) == -1;
 	}
 
@@ -666,7 +666,7 @@ class CAnnivList
 	 **/
 	BYTE AddRow(MCONTACT hContact, LPCSTR pszProto, MAnnivDate &ad, MTime &mtNow, WORD wDaysBefore) 
 	{
-		TCHAR szText[MAX_PATH];
+		wchar_t szText[MAX_PATH];
 		int diff, iItem = -1;
 		CItemData *pdata;
 	
@@ -688,7 +688,7 @@ class CAnnivList
 					if (!pdata)
 						return FALSE;
 					// add item
-					iItem = AddItem(_itot(diff, szText, 10), (LPARAM)pdata);
+					iItem = AddItem(_itow(diff, szText, 10), (LPARAM)pdata);
 					if (iItem == -1) {
 						delete pdata;
 						return FALSE;
@@ -698,15 +698,15 @@ class CAnnivList
 					AddSubItem(iItem, COLUMN_CONTACT, DB::Contact::DisplayName(hContact));
 
 					// third column: protocol
-					TCHAR *ptszProto = mir_a2t(pszProto);
+					wchar_t *ptszProto = mir_a2u(pszProto);
 					AddSubItem(iItem, COLUMN_PROTO, ptszProto);
 					mir_free(ptszProto);
 
 					// forth line: age
 					if (ad.Age(&mtNow))
-						AddSubItem(iItem, COLUMN_AGE, _itot(ad.Age(&mtNow), szText, 10));
+						AddSubItem(iItem, COLUMN_AGE, _itow(ad.Age(&mtNow), szText, 10));
 					else
-						AddSubItem(iItem, COLUMN_AGE, _T("???"));
+						AddSubItem(iItem, COLUMN_AGE, L"???");
 
 					// fifth line: anniversary
 					AddSubItem(iItem, COLUMN_DESC, (LPTSTR)ad.Description());
@@ -768,7 +768,7 @@ class CAnnivList
 					// add anniversaries
 					if (_filter.bFilterIndex != FILTER_BIRTHDAY && (!_filter.pszProto || !_strcmpi(pszProto, _filter.pszProto))) 
 						for (i = 0; !ad.DBGetAnniversaryDate(hContact, i); i++)
-							if (!_filter.pszAnniv || !mir_tstrcmpi(_filter.pszAnniv, ad.Description()))
+							if (!_filter.pszAnniv || !mir_wstrcmpi(_filter.pszAnniv, ad.Description()))
 								AddRow(hContact, pszProto, ad, mtNow, wDaysBefore);
 				}
 			}
@@ -977,11 +977,10 @@ void DlgAnniversaryListLoadModule()
 {
 	CreateServiceFunction(MS_USERINFO_REMINDER_LIST, DlgAnniversaryListShow);
 
-	HOTKEYDESC hk = { 0 };
-	hk.cbSize = sizeof(HOTKEYDESC);
-	hk.pszSection = MODNAME;
+	HOTKEYDESC hk = {};
 	hk.pszName = "AnniversaryList";
-	hk.pszDescription = LPGEN("Popup anniversary list");
+	hk.szSection.a = MODNAME;
+	hk.szDescription.a = LPGEN("Popup anniversary list");
 	hk.pszService = MS_USERINFO_REMINDER_LIST;
 	Hotkey_Register(&hk);
 }

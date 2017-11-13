@@ -14,7 +14,43 @@ bool CSteamProto::IsMe(const char *steamId)
 	return false;
 }
 
-void CSteamProto::OnGotRsaKey(const NETLIBHTTPREQUEST *response)
+bool CSteamProto::Relogin()
+{
+	ptrA token(getStringA("TokenSecret"));
+	if (mir_strlen(token) <= 0)
+		return false;
+
+	HttpRequest *request = new LogonRequest(token);
+	HttpResponse *response = request->Send(m_hNetlibUser);
+
+	bool success = false;
+	if (CheckResponse(response))
+	{
+		JSONROOT root(response->pData);
+		if (root != NULL) {
+			JSONNode *node = json_get(root, "error");
+
+			ptrW error(json_as_string(node));
+			if (!mir_wstrcmpi(error, L"OK"))
+			{
+				node = json_get(root, "umqid");
+				setString("UMQID", ptrA(mir_u2a(ptrW(json_as_string(node)))));
+
+				node = json_get(root, "message");
+				setDword("MessageID", json_as_int(node));
+
+				success = true;
+			}
+		}
+	}
+
+	delete request;
+	delete response;
+
+	return success;
+}
+
+void CSteamProto::OnGotRsaKey(const HttpResponse *response)
 {
 	if (!CheckResponse(response))
 		return;
@@ -56,7 +92,10 @@ void CSteamProto::OnGotRsaKey(const NETLIBHTTPREQUEST *response)
 	mir_free(encryptedPassword);
 
 	// run authorization request
-	T2Utf username(getTStringA("Username"));
+	T2Utf username(getWStringA("Username"));
+
+	ptrA twoFactorCode(getStringA("TwoFactorCode"));
+	if (!twoFactorCode) twoFactorCode = mir_strdup("");
 
 	ptrA guardId(getStringA("GuardId"));
 	if (!guardId) guardId = mir_strdup("");
@@ -69,11 +108,11 @@ void CSteamProto::OnGotRsaKey(const NETLIBHTTPREQUEST *response)
 	if (!captchaText) captchaText = mir_strdup("");
 
 	PushRequest(
-		new AuthorizationRequest(username, base64RsaEncryptedPassword, timestamp.c_str(), "", guardCode, guardId, captchaId, captchaText),
+		new AuthorizationRequest(username, base64RsaEncryptedPassword, timestamp.c_str(), twoFactorCode, guardCode, guardId, captchaId, captchaText),
 		&CSteamProto::OnAuthorization);
 }
 
-void CSteamProto::OnAuthorization(const NETLIBHTTPREQUEST *response)
+void CSteamProto::OnAuthorization(const HttpResponse *response)
 {
 	if (!CheckResponse(response))
 	{
@@ -97,30 +136,61 @@ void CSteamProto::OnAuthorization(const NETLIBHTTPREQUEST *response)
 	OnAuthorizationSuccess(root);
 }
 
+void CSteamProto::DeleteAuthSettings()
+{
+	delSetting("TwoFactorCode");
+	delSetting("GuardId");
+	delSetting("GuardCode");
+	delSetting("CaptchaId");
+	delSetting("CaptchaText");
+}
+
 void CSteamProto::OnAuthorizationError(const JSONNode &node)
 {
 	std::string message = node["message"].as_string();
-	ptrT messageT(mir_utf8decodeT(message.c_str()));
-	if (!mir_tstrcmpi(messageT, _T("Incorrect login.")))
+	ptrW messageT(mir_utf8decodeW(message.c_str()));
+	debugLogA("CSteamProto::OnAuthorizationError: %s", message.c_str());
+
+	if (!mir_wstrcmpi(messageT, L"Incorrect login."))
 	{
 		// We can't continue with incorrect login/password
-		delSetting("GuardId");
-		delSetting("GuardCode");
-		delSetting("CaptchaId");
-		delSetting("CaptchaText");
+		DeleteAuthSettings();
 		SetStatus(ID_STATUS_OFFLINE);
 		return;
 	}
 
-	T2Utf username(getTStringA("Username"));
+	T2Utf username(getWStringA("Username"));
 
 	if (node["requires_twofactor"].as_bool())
 	{
+		debugLogA("CSteamProto::OnAuthorizationError: requires twofactor");
+
+		CSteamTwoFactorDialog twoFactorDialog(this);
+		if (twoFactorDialog.DoModal() != DIALOG_RESULT_OK)
+		{
+			DeleteAuthSettings();
+			SetStatus(ID_STATUS_OFFLINE);
+			return;
+		}
+
+		setString("TwoFactorCode", twoFactorDialog.GetTwoFactorCode());
+
+		PushRequest(
+			new GetRsaKeyRequest(username),
+			&CSteamProto::OnGotRsaKey);
+		return;
+	}
+
+	if (node["clear_password_field"].as_bool())
+	{
+		debugLogA("CSteamProto::OnAuthorizationError: clear password field");
 		return;
 	}
 
 	if (node["emailauth_needed"].as_bool())
 	{
+		debugLogA("CSteamProto::OnAuthorizationError: emailauth needed");
+
 		std::string guardId = node["emailsteamid"].as_string();
 		ptrA oldGuardId(getStringA("GuardId"));
 		if (mir_strcmp(guardId.c_str(), oldGuardId) == 0)
@@ -135,13 +205,14 @@ void CSteamProto::OnAuthorizationError(const JSONNode &node)
 
 		std::string domain = node["emaildomain"].as_string();
 
+		// Make absolute link
+		if (domain.find("://") == std::string::npos)
+			domain = "http://" + domain;
+
 		CSteamGuardDialog guardDialog(this, domain.c_str());
-		if (!guardDialog.DoModal())
+		if (guardDialog.DoModal() != DIALOG_RESULT_OK)
 		{
-			delSetting("GuardId");
-			delSetting("GuardCode");
-			delSetting("CaptchaId");
-			delSetting("CaptchaText");
+			DeleteAuthSettings();
 			SetStatus(ID_STATUS_OFFLINE);
 			return;
 		}
@@ -157,6 +228,8 @@ void CSteamProto::OnAuthorizationError(const JSONNode &node)
 
 	if (node["captcha_needed"].as_bool())
 	{
+		debugLogA("CSteamProto::OnAuthorizationError: captcha needed");
+
 		std::string captchaId = node["captcha_gid"].as_string();
 
 		GetCaptchaRequest *request = new GetCaptchaRequest(captchaId.c_str());
@@ -165,10 +238,9 @@ void CSteamProto::OnAuthorizationError(const JSONNode &node)
 
 		CSteamCaptchaDialog captchaDialog(this, (BYTE*)response->pData, response->dataLength);
 		delete response;
-		if (!captchaDialog.DoModal())
+		if (captchaDialog.DoModal() != DIALOG_RESULT_OK)
 		{
-			delSetting("CaptchaId");
-			delSetting("CaptchaText");
+			DeleteAuthSettings();
 			SetStatus(ID_STATUS_OFFLINE);
 			return;
 		}
@@ -182,19 +254,13 @@ void CSteamProto::OnAuthorizationError(const JSONNode &node)
 		return;
 	}
 
-	delSetting("GuardId");
-	delSetting("GuardCode");
-	delSetting("CaptchaId");
-	delSetting("CaptchaText");
+	DeleteAuthSettings();
 	SetStatus(ID_STATUS_OFFLINE);
 }
 
 void CSteamProto::OnAuthorizationSuccess(const JSONNode &node)
 {
-	delSetting("GuardId");
-	delSetting("GuardCode");
-	delSetting("CaptchaId");
-	delSetting("CaptchaText");
+	DeleteAuthSettings();
 
 	if (!node["login_complete"].as_bool())
 	{
@@ -222,14 +288,19 @@ void CSteamProto::OnAuthorizationSuccess(const JSONNode &node)
 		new GetSessionRequest(token.c_str(), steamId.c_str(), cookie.c_str()),
 		&CSteamProto::OnGotSession);
 
+	// We need to load homepage to get sessionid cookie
+	PushRequest(
+		new GetSessionRequest2(),
+		&CSteamProto::OnGotSession);
+
 	PushRequest(
 		new LogonRequest(token.c_str()),
 		&CSteamProto::OnLoggedOn);
 }
 
-void CSteamProto::OnGotSession(const NETLIBHTTPREQUEST *response)
+void CSteamProto::OnGotSession(const HttpResponse *response)
 {
-	if(!response)
+	if (!response)
 		return;
 
 	for (int i = 0; i < response->headersCount; i++)
@@ -248,21 +319,47 @@ void CSteamProto::OnGotSession(const NETLIBHTTPREQUEST *response)
 
 void CSteamProto::HandleTokenExpired()
 {
-	// Notify error to user
-	ShowNotification(_T("Steam"), TranslateT("Connection token expired. Please login again."));
-
 	// Delete expired token
 	delSetting("TokenSecret");
 
-	// Set status to offline
-	SetStatus(ID_STATUS_OFFLINE);
+	// Try to relogin automatically (but only once)
+	if (isLoginAgain) {
+		// Notify error to user
+		ShowNotification(L"Steam", TranslateT("Cannot obtain connection token."));
+
+		// Just go offline; it also resets the isLoginAgain to false
+		SetStatus(ID_STATUS_OFFLINE);
+	}
+	else
+	{
+		// Remember we are trying to relogin
+		isLoginAgain = true;
+
+		// Remember status user wanted
+		int desiredStatus = m_iDesiredStatus;
+
+		// Set status to offline
+		SetStatus(ID_STATUS_OFFLINE);
+
+		// Try to login again automatically
+		SetStatus(desiredStatus);
+	}
 }
 
-void CSteamProto::OnLoggedOn(const NETLIBHTTPREQUEST *response)
+void CSteamProto::OnLoggedOn(const HttpResponse *response)
 {
 	if (!CheckResponse(response))
 	{
+		if (response && response->resultCode == HTTP_CODE_UNAUTHORIZED)
+		{
+			// Probably expired TokenSecret
+			HandleTokenExpired();
+			return;
+		}
+
 		// Probably timeout or no connection, we can do nothing here
+		ShowNotification(L"Steam", TranslateT("Unknown login error."));
+
 		SetStatus(ID_STATUS_OFFLINE);
 		return;
 	}
@@ -270,8 +367,8 @@ void CSteamProto::OnLoggedOn(const NETLIBHTTPREQUEST *response)
 	JSONROOT root(response->pData);
 
 	JSONNode *node = json_get(root, "error");
-	ptrT error(json_as_string(node));
-	if (mir_tstrcmpi(error, _T("OK")) || response->resultCode == HTTP_CODE_UNAUTHORIZED)
+	ptrW error(json_as_string(node));
+	if (mir_wstrcmpi(error, L"OK"))
 	{
 		// Probably expired TokenSecret
 		HandleTokenExpired();
@@ -279,22 +376,29 @@ void CSteamProto::OnLoggedOn(const NETLIBHTTPREQUEST *response)
 	}
 
 	node = json_get(root, "umqid");
-	setString("UMQID", ptrA(mir_u2a(ptrT(json_as_string(node)))));
+	setString("UMQID", ptrA(mir_u2a(ptrW(json_as_string(node)))));
 
 	node = json_get(root, "message");
 	setDword("MessageID", json_as_int(node));
+	
+	if (m_lastMessageTS <= 0) {
+		node = json_get(root, "utc_timestamp");
+		time_t timestamp = _wtoi64(ptrW(json_as_string(node)));
+		setDword("LastMessageTS", timestamp);
+	}
 
 	// load contact list
 	ptrA token(getStringA("TokenSecret"));
 	ptrA steamId(getStringA("SteamID"));
 
-	PushRequest(
+	// send this request immediately, so we can start polling thread with already loaded all contacts
+	SendRequest(
 		new GetFriendListRequest(token, steamId),
 		&CSteamProto::OnGotFriendList);
 
-	// start polling thread
-	m_hPollingThread = ForkThreadEx(&CSteamProto::PollingThread, 0, NULL);
-
 	// go to online now
 	ProtoBroadcastAck(NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, (HANDLE)ID_STATUS_CONNECTING, m_iStatus = m_iDesiredStatus);
+
+	// start polling thread
+	m_hPollingThread = ForkThreadEx(&CSteamProto::PollingThread, 0, NULL);
 }

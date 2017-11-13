@@ -10,7 +10,7 @@ typedef struct
 {
 	char *szServiceName;
 }
-MirOTRMenuExecParam,*lpMirOTRMenuExecParam;
+MirOTRMenuExecParam, *lpMirOTRMenuExecParam;
 
 ////////////////////////////////////////////
 // MirOTR MENU
@@ -19,7 +19,7 @@ MirOTRMenuExecParam,*lpMirOTRMenuExecParam;
 static HGENMENU AddMirOTRMenuItem(TMO_MenuItem *pmi, const char *pszService)
 {
 	// add owner data
-	lpMirOTRMenuExecParam cmep = ( lpMirOTRMenuExecParam )mir_calloc(sizeof(MirOTRMenuExecParam));
+	lpMirOTRMenuExecParam cmep = (lpMirOTRMenuExecParam)mir_calloc(sizeof(MirOTRMenuExecParam));
 	cmep->szServiceName = mir_strdup(pszService);
 	return Menu_AddItem(hMirOTRMenuObject, pmi, cmep);
 }
@@ -27,12 +27,12 @@ static HGENMENU AddMirOTRMenuItem(TMO_MenuItem *pmi, const char *pszService)
 //called with:
 //wparam - ownerdata
 //lparam - lparam from winproc
-INT_PTR MirOTRMenuExecService(WPARAM wParam,LPARAM lParam)
+INT_PTR MirOTRMenuExecService(WPARAM wParam, LPARAM lParam)
 {
-	if (wParam!=0) {
-		lpMirOTRMenuExecParam cmep=(lpMirOTRMenuExecParam)wParam;
+	if (wParam != 0) {
+		lpMirOTRMenuExecParam cmep = (lpMirOTRMenuExecParam)wParam;
 		//call with wParam=(MCONTACT)hContact
-		CallService(cmep->szServiceName,lParam,0);
+		CallService(cmep->szServiceName, lParam, 0);
 	}
 	return 0;
 }
@@ -64,28 +64,28 @@ INT_PTR MirOTRMenuCheckService(WPARAM wParam, LPARAM)
 		if (mi.flags & CMIF_NOTNOTPRIVATE && level == TRUST_NOT_PRIVATE) return FALSE;
 
 		if (pcpp->MenuItemHandle == hStatusInfoItem) {
-			TCHAR text[128];
+			wchar_t text[128];
 
 			switch (level) {
 			case TRUST_PRIVATE:
-				mir_sntprintf(text, _T("%s [v%i]"), TranslateT(LANG_STATUS_PRIVATE), context->protocol_version);
+				mir_snwprintf(text, L"%s [v%i]", TranslateW(LANG_STATUS_PRIVATE), context->protocol_version);
 				Menu_ModifyItem(hStatusInfoItem, text, IcoLib_GetIconHandle(ICON_PRIVATE));
 				break;
 
 			case TRUST_UNVERIFIED:
-				mir_sntprintf(text, _T("%s [v%i]"), TranslateT(LANG_STATUS_UNVERIFIED), context->protocol_version);
+				mir_snwprintf(text, L"%s [v%i]", TranslateW(LANG_STATUS_UNVERIFIED), context->protocol_version);
 				Menu_ModifyItem(hStatusInfoItem, text, IcoLib_GetIconHandle(ICON_UNVERIFIED));
 				break;
 
 			case TRUST_FINISHED:
-				Menu_ModifyItem(hStatusInfoItem, TranslateT(LANG_STATUS_FINISHED), IcoLib_GetIconHandle(ICON_UNVERIFIED));
+				Menu_ModifyItem(hStatusInfoItem, TranslateW(LANG_STATUS_FINISHED), IcoLib_GetIconHandle(ICON_UNVERIFIED));
 				break;
 
 			default:
-				Menu_ModifyItem(hStatusInfoItem, TranslateT(LANG_STATUS_DISABLED), IcoLib_GetIconHandle(ICON_NOT_PRIVATE));
+				Menu_ModifyItem(hStatusInfoItem, TranslateW(LANG_STATUS_DISABLED), IcoLib_GetIconHandle(ICON_NOT_PRIVATE));
 			}
 		}
-		else if (pcpp->MenuItemHandle == hHTMLConvMenuItem) 
+		else if (pcpp->MenuItemHandle == hHTMLConvMenuItem)
 			Menu_SetChecked(hHTMLConvMenuItem, db_get_b(hContact, MODULENAME, "HTMLConv", 0) != 0);
 	}
 	return TRUE;
@@ -121,10 +121,10 @@ LRESULT CALLBACK PopupMenuWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 {
 	switch (message) {
 	case WM_MEASUREITEM:
-		if (Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam)) return TRUE;
+		if (Menu_MeasureItem(lParam)) return TRUE;
 		break;
 	case WM_DRAWITEM:
-		if (Menu_DrawItem((LPDRAWITEMSTRUCT)lParam)) return TRUE;
+		if (Menu_DrawItem(lParam)) return TRUE;
 		break;
 	case WM_COMMAND:
 		if (Menu_ProcessCommandById(wParam, GetWindowLongPtr(hwnd, GWLP_USERDATA)))
@@ -150,9 +150,9 @@ void InitMirOTRMenu(void)
 	WNDCLASS wc = { 0 };
 	wc.hInstance = hInst;
 	wc.lpfnWndProc = PopupMenuWndProc;
-	wc.lpszClassName = _T("MirOTRPopupMenuProcessor");
+	wc.lpszClassName = L"MirOTRPopupMenuProcessor";
 	RegisterClass(&wc);
-	hDummyPaintWin = CreateWindowEx(0, _T("MirOTRPopupMenuProcessor"), NULL, 0, 0, 0, 1, 1, 0, 0, hInst, 0);
+	hDummyPaintWin = CreateWindowEx(0, L"MirOTRPopupMenuProcessor", NULL, 0, 0, 0, 1, 1, 0, 0, hInst, 0);
 
 	CreateServiceFunction("MirOTRMenuExecService", MirOTRMenuExecService);
 	CreateServiceFunction("MirOTRMenuCheckService", MirOTRMenuCheckService);
@@ -167,37 +167,37 @@ void InitMirOTRMenu(void)
 
 	// menu items
 	CMenuItem mi;
-	mi.flags = CMIF_DISABLED | CMIF_TCHAR;
-	mi.name.t = LPGENT("OTR Status");
+	mi.flags = CMIF_DISABLED | CMIF_UNICODE;
+	mi.name.w = LPGENW("OTR Status");
 	mi.position = 0;
 	hStatusInfoItem = AddMirOTRMenuItem(&mi, NULL);
 
-	mi.flags = CMIF_TCHAR | CMIF_NOTPRIVATE | CMIF_NOTUNVERIFIED;
-	mi.name.t = LANG_MENU_START;
+	mi.flags = CMIF_UNICODE | CMIF_NOTPRIVATE | CMIF_NOTUNVERIFIED;
+	mi.name.w = LANG_MENU_START;
 	mi.position = 100001;
 	mi.hIcolibItem = IcoLib_GetIconHandle(ICON_UNVERIFIED);
 	AddMirOTRMenuItem(&mi, MS_OTR_MENUSTART);
 
-	mi.flags = CMIF_TCHAR | CMIF_NOTNOTPRIVATE | CMIF_NOTFINISHED;
-	mi.name.t = LANG_MENU_REFRESH;
+	mi.flags = CMIF_UNICODE | CMIF_NOTNOTPRIVATE | CMIF_NOTFINISHED;
+	mi.name.w = LANG_MENU_REFRESH;
 	mi.position = 100002;
 	mi.hIcolibItem = IcoLib_GetIconHandle(ICON_FINISHED);
 	AddMirOTRMenuItem(&mi, MS_OTR_MENUREFRESH);
 
-	mi.flags = CMIF_TCHAR | CMIF_NOTNOTPRIVATE;
-	mi.name.t = LANG_MENU_STOP;
+	mi.flags = CMIF_UNICODE | CMIF_NOTNOTPRIVATE;
+	mi.name.w = LANG_MENU_STOP;
 	mi.position = 100003;
 	mi.hIcolibItem = IcoLib_GetIconHandle(ICON_NOT_PRIVATE);
 	AddMirOTRMenuItem(&mi, MS_OTR_MENUSTOP);
 
-	mi.flags = CMIF_TCHAR | CMIF_NOTNOTPRIVATE | CMIF_NOTFINISHED;
-	mi.name.t = LANG_MENU_VERIFY;
+	mi.flags = CMIF_UNICODE | CMIF_NOTNOTPRIVATE | CMIF_NOTFINISHED;
+	mi.name.w = LANG_MENU_VERIFY;
 	mi.position = 200001;
 	mi.hIcolibItem = IcoLib_GetIconHandle(ICON_PRIVATE);
 	AddMirOTRMenuItem(&mi, MS_OTR_MENUVERIFY);
 
-	mi.flags = CMIF_TCHAR | CMIF_CHECKED;
-	mi.name.t = LANG_MENU_TOGGLEHTML;
+	mi.flags = CMIF_UNICODE | CMIF_CHECKED;
+	mi.name.w = LANG_MENU_TOGGLEHTML;
 	mi.position = 300001;
 	mi.hIcolibItem = 0;
 	hHTMLConvMenuItem = AddMirOTRMenuItem(&mi, MS_OTR_MENUTOGGLEHTML);
@@ -208,8 +208,8 @@ void UninitMirOTRMenu(void)
 	DestroyWindow(hDummyPaintWin);
 	hDummyPaintWin = 0;
 
-	UnregisterClass(_T("MirOTRPopupMenuProcessor"), hInst);
-	
+	UnregisterClass(L"MirOTRPopupMenuProcessor", hInst);
+
 	Menu_RemoveObject(hMirOTRMenuObject);
 	hMirOTRMenuObject = 0;
 }

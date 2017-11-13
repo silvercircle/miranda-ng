@@ -19,123 +19,88 @@
 
 #include "stdafx.h"
 
-static TCHAR *parseGetParent(ARGUMENTSINFO *ai)
+static wchar_t *parseGetParent(ARGUMENTSINFO *ai)
 {
 	if (ai->argc != 2)
 		return NULL;
 
-	MCONTACT hContact = NULL;
-
-	CONTACTSINFO ci = { sizeof(ci) };
-	ci.tszContact = ai->targv[1];
-	ci.flags = 0xFFFFFFFF ^ (CI_TCHAR == 0 ? CI_UNICODE : 0);
-	int count = getContactFromString(&ci);
-	if (count == 1 && ci.hContacts != NULL) {
-		hContact = ci.hContacts[0];
-		mir_free(ci.hContacts);
-	}
-	else {
-		mir_free(ci.hContacts);
+	MCONTACT hContact = getContactFromString(ai->targv[1], CI_ALLFLAGS);
+	if (hContact == INVALID_CONTACT_ID)
 		return NULL;
-	}
 
 	hContact = db_mc_getMeta(hContact);
 	if (hContact == NULL)
 		return NULL;
 
-	ptrT szUniqueID;
+	ptrW szUniqueID;
 	char* szProto = GetContactProto(hContact);
 	if (szProto != NULL)
 		szUniqueID = getContactInfoT(CNF_UNIQUEID, hContact);
 
 	if (szUniqueID == NULL) {
 		szProto = PROTOID_HANDLE;
-		TCHAR tszID[40];
-		mir_sntprintf(tszID, _T("%p"), hContact);
-		szUniqueID = mir_tstrdup(tszID);
+		wchar_t tszID[40];
+		mir_snwprintf(tszID, L"%p", hContact);
+		szUniqueID = mir_wstrdup(tszID);
 	}
 
-	return CMString(FORMAT, _T("<%S:%s>"), szProto, szUniqueID).Detach();
+	return CMStringW(FORMAT, L"<%S:%s>", szProto, szUniqueID).Detach();
 }
 
-static TCHAR *parseGetDefault(ARGUMENTSINFO *ai)
+static wchar_t *parseGetDefault(ARGUMENTSINFO *ai)
 {
 	if (ai->argc != 2)
 		return NULL;
 
-	MCONTACT hContact = NULL;
-
-	CONTACTSINFO ci = { 0 };
-	ci.cbSize = sizeof(ci);
-	ci.tszContact = ai->targv[1];
-	ci.flags = 0xFFFFFFFF ^ (CI_TCHAR == 0 ? CI_UNICODE : 0);
-	int count = getContactFromString(&ci);
-	if (count == 1 && ci.hContacts != NULL) {
-		hContact = ci.hContacts[0];
-		mir_free(ci.hContacts);
-	}
-	else {
-		mir_free(ci.hContacts);
+	MCONTACT hContact = getContactFromString(ai->targv[1], CI_ALLFLAGS);
+	if (hContact == INVALID_CONTACT_ID)
 		return NULL;
-	}
 
 	hContact = db_mc_getDefault(hContact);
 	if (hContact == NULL)
 		return NULL;
 
-	ptrT szUniqueID;
+	ptrW szUniqueID;
 	char* szProto = GetContactProto(hContact);
 	if (szProto != NULL)
 		szUniqueID = getContactInfoT(CNF_UNIQUEID, hContact);
 
 	if (szUniqueID == NULL) {
 		szProto = PROTOID_HANDLE;
-		TCHAR tszID[40];
-		mir_sntprintf(tszID, _T("%p"), hContact);
-		szUniqueID = mir_tstrdup(tszID);
+		wchar_t tszID[40];
+		mir_snwprintf(tszID, L"%p", hContact);
+		szUniqueID = mir_wstrdup(tszID);
 	}
 
-	return CMString(FORMAT, _T("<%S:%s>"), szProto, szUniqueID).Detach();
+	return CMStringW(FORMAT, L"<%S:%s>", szProto, szUniqueID).Detach();
 }
 
-static TCHAR *parseGetMostOnline(ARGUMENTSINFO *ai)
+static wchar_t *parseGetMostOnline(ARGUMENTSINFO *ai)
 {
 	if (ai->argc != 2)
 		return NULL;
 
-	MCONTACT hContact = NULL;
-
-	CONTACTSINFO ci = { 0 };
-	ci.cbSize = sizeof(ci);
-	ci.tszContact = ai->targv[1];
-	ci.flags = 0xFFFFFFFF ^ (CI_TCHAR == 0 ? CI_UNICODE : 0);
-	int count = getContactFromString(&ci);
-	if (count == 1 && ci.hContacts != NULL) {
-		hContact = ci.hContacts[0];
-		mir_free(ci.hContacts);
-	}
-	else {
-		mir_free(ci.hContacts);
+	MCONTACT hContact = getContactFromString(ai->targv[1], CI_ALLFLAGS);
+	if (hContact == INVALID_CONTACT_ID)
 		return NULL;
-	}
 
 	hContact = db_mc_getMostOnline(hContact);
 	if (hContact == NULL)
 		return NULL;
 
-	ptrT szUniqueID;
+	ptrW szUniqueID;
 	char *szProto = GetContactProto(hContact);
 	if (szProto != NULL)
 		szUniqueID = getContactInfoT(CNF_UNIQUEID, hContact);
 
 	if (szUniqueID == NULL) {
 		szProto = PROTOID_HANDLE;
-		TCHAR tszID[40];
-		mir_sntprintf(tszID, _T("%p"), hContact);
-		szUniqueID = mir_tstrdup(tszID);
+		wchar_t tszID[40];
+		mir_snwprintf(tszID, L"%p", hContact);
+		szUniqueID = mir_wstrdup(tszID);
 	}
 
-	return CMString(FORMAT, _T("<%S:%s>"), szProto, szUniqueID).Detach();
+	return CMStringW(FORMAT, L"<%S:%s>", szProto, szUniqueID).Detach();
 }
 
 void registerMetaContactsTokens()

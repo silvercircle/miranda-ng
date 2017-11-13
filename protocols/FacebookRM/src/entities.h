@@ -3,7 +3,7 @@
 Facebook plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2009-11 Michal Zelinka, 2011-15 Robert Pösel
+Copyright ï¿½ 2009-11 Michal Zelinka, 2011-17 Robert Pï¿½sel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -40,51 +40,75 @@ struct facebook_user
 	bool deleted;
 	bool idle;
 
+	bool updated;
+
 	ClientType client;
+	ContactType type;
 
 	facebook_user()
 	{
 		this->handle = NULL;
 		this->status_id = ID_STATUS_OFFLINE;
 		this->gender = this->last_active = 0;
-		this->deleted = this->idle = false;
+		this->deleted = this->idle = this->updated = false;
 		this->client = CLIENT_WEB;
+		this->type = CONTACT_NONE;
 	}
 
-	TCHAR *getMirVer()
+	wchar_t *getMirVer()
 	{
 		switch (this->client) {
 		case CLIENT_APP:
-			return _T(FACEBOOK_CLIENT_APP);
+			return FACEBOOK_CLIENT_APP;
 		case CLIENT_MESSENGER:
-			return _T(FACEBOOK_CLIENT_MESSENGER);
+			return FACEBOOK_CLIENT_MESSENGER;
 		case CLIENT_OTHER:
-			return _T(FACEBOOK_CLIENT_OTHER);
+			return FACEBOOK_CLIENT_OTHER;
 		case CLIENT_MOBILE:
-			return _T(FACEBOOK_CLIENT_MOBILE);
+			return FACEBOOK_CLIENT_MOBILE;
 		case CLIENT_WEB:
 		default:
-			return _T(FACEBOOK_CLIENT_WEB);
+			return FACEBOOK_CLIENT_WEB;
 		}
 	}
+};
+
+struct chatroom_participant
+{
+	std::string user_id;
+	std::string nick;	
+	ParticipantRole role;	
+	bool is_former;
+	bool loaded;
+
+	chatroom_participant() : loaded(false), is_former(false), role(ROLE_NONE) {}
 };
 
 struct facebook_chatroom
 {	
 	std::string thread_id;
-	std::tstring chat_name;
-	std::map<std::string, std::string> participants;
+	std::wstring chat_name;
+	std::map<std::string, chatroom_participant> participants;
+	bool can_reply;
+	bool is_archived;
+	bool is_subscribed;
+	bool read_only;
 
-	facebook_chatroom(std::string thread_id) : thread_id(thread_id) {}
+	facebook_chatroom(std::string thread_id) : thread_id(thread_id) {
+		this->can_reply = true;
+		this->is_archived = false;
+		this->is_subscribed = true;
+		this->read_only = false;
+	}
 };
 
 struct facebook_message
 {
 	std::string user_id;
-	std::string sender_name;
 	std::string message_text;	
 	std::string message_id;
 	std::string thread_id;
+	std::string data;
 	time_t time;
 	bool isIncoming;
 	bool isUnread;
@@ -96,7 +120,8 @@ struct facebook_message
 	facebook_message()
 	{
 		this->time = 0;
-		this->isUnread = this->isIncoming = true;
+		this->isUnread = true;
+		this->isIncoming = true;
 		this->isChat = false;
 		this->type = MESSAGE;
 		this->flag_ = 0;
@@ -109,6 +134,7 @@ struct facebook_notification
 	std::string text;
 	std::string link;
 	std::string id;
+	const char *icon;
 	time_t time;
 	bool seen;
 	HWND hWndPopup;
@@ -118,6 +144,25 @@ struct facebook_notification
 		this->time = 0;
 		this->seen = false;
 		this->hWndPopup = NULL;
+		this->icon = NULL;
+	}
+
+	void setIcon(const std::string &iconUrl)
+	{
+		if (iconUrl == "https://www.facebook.com/rsrc.php/v3/yj/r/6WffvhOaXGY.png")
+			icon = "like";
+		else if (iconUrl == "https://www.facebook.com/rsrc.php/v3/y1/r/RvGKklgAefT.png")
+			icon = "love";
+		else if (iconUrl == "https://www.facebook.com/rsrc.php/v3/yV/r/McJA2ZjdJmf.png")
+			icon = "haha";
+		else if (iconUrl == "https://www.facebook.com/rsrc.php/v3/yL/r/IfsimazVjj4.png")
+			icon = "wow";
+		else if (iconUrl == "https://www.facebook.com/rsrc.php/v3/yH/r/jOeSrGlcPLG.png")
+			icon = "sad";
+		else if (iconUrl == "https://www.facebook.com/rsrc.php/v3/y9/r/6K8v8Ju8kL2.png")
+			icon = "angry";
+		else
+			icon = NULL;
 	}
 };
 
@@ -182,9 +227,9 @@ struct wall_data
 		this->title = NULL;
 		this->isPage = false;
 	}
-	wall_data(std::string user_id, TCHAR *title, bool isPage = false) : user_id(user_id), title(title), isPage(isPage) {}
+	wall_data(std::string user_id, wchar_t *title, bool isPage = false) : user_id(user_id), title(title), isPage(isPage) {}
 	std::string user_id;
-	TCHAR *title;
+	wchar_t *title;
 	bool isPage;
 };
 
@@ -199,7 +244,7 @@ struct post_status_data {
 
 struct open_url
 {
-	open_url(TCHAR *browser, TCHAR *url) : browser(browser), url(url) {}
-	TCHAR *browser;
-	TCHAR *url;	
+	open_url(wchar_t *browser, wchar_t *url) : browser(browser), url(url) {}
+	wchar_t *browser;
+	wchar_t *url;	
 };

@@ -19,17 +19,17 @@
 
 #include "stdafx.h"
 
-static TCHAR *getFullWinampTitleText()
+static wchar_t *getFullWinampTitleText()
 {
-	HWND hwndWinamp = FindWindow(_T("STUDIO"), NULL);
+	HWND hwndWinamp = FindWindow(L"STUDIO", NULL);
 	if (hwndWinamp == NULL)
-		hwndWinamp = FindWindow(_T("Winamp v1.x"), NULL);
+		hwndWinamp = FindWindow(L"Winamp v1.x", NULL);
 
 	if (hwndWinamp == NULL)
 		return NULL;
 
 	SIZE_T dwWinTextLength = (GetWindowTextLength(hwndWinamp) + 1);
-	TCHAR *szWinText = (TCHAR*)mir_alloc(dwWinTextLength * sizeof(TCHAR));
+	wchar_t *szWinText = (wchar_t*)mir_alloc(dwWinTextLength * sizeof(wchar_t));
 	if (szWinText == NULL)
 		return NULL;
 
@@ -37,64 +37,64 @@ static TCHAR *getFullWinampTitleText()
 		mir_free(szWinText);
 		return NULL;
 	}
-	TCHAR *szTitle = (TCHAR*)mir_alloc((2 * mir_tstrlen(szWinText) + 1)*sizeof(TCHAR));
+	wchar_t *szTitle = (wchar_t*)mir_alloc((2 * mir_wstrlen(szWinText) + 1)*sizeof(wchar_t));
 	if (szTitle == NULL) {
 		mir_free(szWinText);
 		return NULL;
 	}
-	mir_tstrcpy(szTitle, szWinText);
-	mir_tstrcpy(szTitle + mir_tstrlen(szTitle), szWinText);
+	mir_wstrcpy(szTitle, szWinText);
+	mir_wstrcpy(szTitle + mir_wstrlen(szTitle), szWinText);
 	mir_free(szWinText);
 
 	return szTitle;
 }
 
-static TCHAR *parseWinampSong(ARGUMENTSINFO *ai)
+static wchar_t *parseWinampSong(ARGUMENTSINFO *ai)
 {
 	if (ai->argc != 1)
 		return NULL;
 
-	TCHAR *res = NULL;
-	TCHAR *szTitle = getFullWinampTitleText();
+	wchar_t *res = NULL;
+	wchar_t *szTitle = getFullWinampTitleText();
 	if (szTitle == NULL)
 		return NULL;
 
-	TCHAR *scur = _tcschr(szTitle, '.');
-	TCHAR *cur;
-	if ((scur == NULL) || ((cur = _tcsstr(scur, _T(" - Winamp"))) == NULL) || (scur >= cur) || (scur > (szTitle + mir_tstrlen(szTitle) - 2)) || (cur > (szTitle + mir_tstrlen(szTitle)))) {
+	wchar_t *scur = wcschr(szTitle, '.');
+	wchar_t *cur;
+	if ((scur == NULL) || ((cur = wcsstr(scur, L" - Winamp")) == NULL) || (scur >= cur) || (scur > (szTitle + mir_wstrlen(szTitle) - 2)) || (cur > (szTitle + mir_wstrlen(szTitle)))) {
 		mir_free(szTitle);
 		return NULL;
 	}
 	scur++;
 	scur++;
 	*cur = '\0';
-	res = mir_tstrdup(scur);
+	res = mir_wstrdup(scur);
 	mir_free(szTitle);
 	ai->flags |= AIF_DONTPARSE;
 
 	return res;
 }
 
-static TCHAR *parseWinampState(ARGUMENTSINFO *ai)
+static wchar_t *parseWinampState(ARGUMENTSINFO *ai)
 {
 	if (ai->argc != 1)
 		return NULL;
 
-	TCHAR *res = NULL;
-	TCHAR *szTitle = getFullWinampTitleText();
+	wchar_t *res = NULL;
+	wchar_t *szTitle = getFullWinampTitleText();
 	if (szTitle == NULL)
 		return NULL;
 
-	TCHAR *scur = _tcschr(szTitle, '.');
-	TCHAR *cur;
-	if (scur == NULL || (cur = _tcsstr(scur, _T(" - Winamp"))) == NULL)
-		res = mir_tstrdup(TranslateT("Stopped"));
-	else if ((!_tcsncmp(cur + 10, _T("[Stopped]"), 9)))
-		res = mir_tstrdup(TranslateT("Stopped"));
-	else if ((!_tcsncmp(cur + 10, _T("[Paused]"), 8)))
-		res = mir_tstrdup(TranslateT("Paused"));
+	wchar_t *scur = wcschr(szTitle, '.');
+	wchar_t *cur;
+	if (scur == NULL || (cur = wcsstr(scur, L" - Winamp")) == NULL)
+		res = mir_wstrdup(TranslateT("Stopped"));
+	else if ((!wcsncmp(cur + 10, L"[Stopped]", 9)))
+		res = mir_wstrdup(TranslateT("Stopped"));
+	else if ((!wcsncmp(cur + 10, L"[Paused]", 8)))
+		res = mir_wstrdup(TranslateT("Paused"));
 	else
-		res = mir_tstrdup(_T("Playing"));
+		res = mir_wstrdup(L"Playing");
 	mir_free(szTitle);
 	return res;
 }

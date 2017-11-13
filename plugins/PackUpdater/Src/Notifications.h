@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2011-2015 Mataes
+Copyright (C) 2011-2017 Mataes
 
 This is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
@@ -64,9 +64,9 @@ typedef struct tagMYOPTIONS {
 } MYOPTIONS;
 
 static struct {
-	TCHAR *Text;
+	wchar_t *Text;
 	int Action;
 } PopupActions[] = {
-	LPGENT("Close popup"), PCA_CLOSEPOPUP,
-	LPGENT("Do nothing"), PCA_DONOTHING
+	LPGENW("Close popup"), PCA_CLOSEPOPUP,
+	LPGENW("Do nothing"), PCA_DONOTHING
 };

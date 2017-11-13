@@ -362,14 +362,10 @@ function LoadFont(Order: Integer; F: TFont): TFont;
 const
   size: Integer = -11;
 var
-  fid: TFontID;
   lf: TLogFontA;
   col: TColor;
 begin
-  fid.cbSize := sizeof(fid);
-  fid.group := hppName;
-  lstrcpya(fid.name, hppFontItems[Order].name { TRANSLATE-IGNORE } );
-  col := CallService(MS_FONT_GETA, WPARAM(@fid), LPARAM(@lf));
+  col := Font_Get(hppName, hppFontItems[Order].name, @lf);
   F.handle := CreateFontIndirectA(lf);
   F.color := col;
   Result := F;
@@ -592,7 +588,7 @@ begin
   end;
 
   // Register in SmileyAdd
-  SmileyAddEnabled := boolean(ServiceExists(MS_SMILEYADD_REPLACESMILEYS));
+  SmileyAddEnabled := ServiceExists(MS_SMILEYADD_REPLACESMILEYS);
 end;
 
 procedure PrepareSaveDialog(SaveDialog: TSaveDialog; SaveFormat: TSaveFormat; AllFormats: boolean = false);

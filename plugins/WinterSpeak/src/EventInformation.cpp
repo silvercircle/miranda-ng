@@ -8,11 +8,11 @@
 EventInformation::EventInformation() : m_event_strings(), m_event_info()
 {
 	// insert the event strings into a map for easy access
-	m_event_strings[EVENTTYPE_MESSAGE]	    = TranslateW(L"incoming message from %u");
-	m_event_strings[EVENTTYPE_URL]          = TranslateW(L"incoming URL from %u");
-	m_event_strings[EVENTTYPE_ADDED]        = TranslateW(L"you have been added to %u's contact list");
-	m_event_strings[EVENTTYPE_AUTHREQUEST]  = TranslateW(L"%u requests your authorization");
-	m_event_strings[EVENTTYPE_FILE]         = TranslateW(L"there is an incoming file from %u");
+	m_event_strings[EVENTTYPE_MESSAGE]	    = TranslateT("incoming message from %u");
+	m_event_strings[EVENTTYPE_URL]          = TranslateT("incoming URL from %u");
+	m_event_strings[EVENTTYPE_ADDED]        = TranslateT("you have been added to %u's contact list");
+	m_event_strings[EVENTTYPE_AUTHREQUEST]  = TranslateT("%u requests your authorization");
+	m_event_strings[EVENTTYPE_FILE]         = TranslateT("there is an incoming file from %u");
 
 	memset(&m_event_info, 0, sizeof(m_event_info));
 }
@@ -33,7 +33,6 @@ bool EventInformation::isValidEvent(MEVENT event)
 	memset(&m_event_info, 0, sizeof(m_event_info));
 
 	// find out and assign the space we need for the new event
-	m_event_info.cbSize = sizeof(m_event_info);
 	m_event_info.cbBlob = db_event_getBlobSize(event);// CallService(MS_DB_EVENT_GETBLOBSIZE, reinterpret_cast<LPARAM>(event), 0);
 
 	if (-1 == m_event_info.cbBlob)
@@ -65,9 +64,9 @@ bool EventInformation::isValidEvent(MEVENT event)
 //------------------------------------------------------------------------------
 std::wstring EventInformation::getMessage()
 {
-	const std::wstring intro = TranslateW(L"%u says");
+	const std::wstring intro = TranslateT("%u says");
 
-	return intro + L" " + mir_a2t_cp((char*)m_event_info.pBlob, CP_UTF8);
+	return intro + L" " + mir_a2u_cp((char*)m_event_info.pBlob, CP_UTF8);
 }
 
 //------------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-09 Miranda ICQ/IM project,
 
 This file is part of Send Screenshot Plus, a Miranda IM plugin.
@@ -29,7 +29,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #ifndef _CSEND_H
 #define _CSEND_H
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 #define SS_AUTOSEND				1
 #define SS_DELETEAFTERSSEND		2
 
@@ -42,12 +43,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define GC_RESULT_ERROR				202
 #define GC_RESULT_NOSESSION			209
 
-const TCHAR SS_ERR_INIT[]			=LPGENT("Unable to initiate %s.");
-const TCHAR SS_ERR_MAPI[]			=LPGENT("MAPI error (%i):\n%s.");
-const TCHAR SS_ERR_RESPONSE[]		=LPGENT("Unknown response from %s (%i)");
-const TCHAR SS_ERR_NORESPONSE[]		=LPGENT("Got no response from %s (%i)");
+const wchar_t SS_ERR_INIT[]			=LPGENW("Unable to initiate %s.");
+const wchar_t SS_ERR_MAPI[]			=LPGENW("MAPI error (%i):\n%s.");
+const wchar_t SS_ERR_RESPONSE[]		=LPGENW("Unknown response from %s (%i)");
+const wchar_t SS_ERR_NORESPONSE[]		=LPGENW("Got no response from %s (%i)");
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 class CSend {
 	public:
 		CSend(HWND Owner, MCONTACT hContact, bool bAsync, bool bSilent=false); // oder (TfrmMain & Owner)
@@ -56,25 +58,25 @@ class CSend {
 		virtual int Send() = NULL; // returns 1 if sent (you must delete class) and 0 when still sending (class deletes itself)
 		int SendSilent() {m_bAsync=m_bSilent=true; return Send();};
 		
-		void SetFile(TCHAR* file){mir_free(m_pszFile), m_pszFile=mir_tstrdup(file);};
-		void SetFile(char* file){mir_free(m_pszFile), m_pszFile=mir_a2t(file);};
-		void SetDescription(TCHAR* descr){mir_free(m_pszFileDesc), m_pszFileDesc=mir_tstrdup(descr);};
+		void SetFile(const wchar_t* file) { replaceStrW(m_pszFile, file); }
+		void SetFile(const char* file) { mir_free(m_pszFile), m_pszFile=mir_a2u(file); }
+		void SetDescription(const wchar_t* descr){ replaceStrW(m_pszFileDesc, descr); }
 		void SetContact(MCONTACT hContact);
 		char* GetURL(){return m_URL;};
 		char* GetURLthumbnail(){return m_URLthumb;};
 		BYTE GetEnableItem() {return m_EnableItem;};
-		TCHAR* GetErrorMsg() {return m_ErrorMsg;};
+		wchar_t* GetErrorMsg() {return m_ErrorMsg;};
 
 		bool			m_bDeleteAfterSend;
 	protected:
 		bool			m_bAsync;
 		bool			m_bSilent;
-		TCHAR*			m_pszFile;
-		TCHAR*			m_pszFileDesc;
+		wchar_t*			m_pszFile;
+		wchar_t*			m_pszFileDesc;
 		char*			m_URL;
 		char*			m_URLthumb;
 		static int OnSend(void *obj, WPARAM wParam, LPARAM lParam);
-		TCHAR*			m_pszSendTyp;		//hold string for error mess
+		wchar_t*			m_pszSendTyp;		//hold string for error mess
 		char*			m_pszProto;			//Contact Proto Modul
 		MCONTACT		m_hContact;			//Contact handle
 		BYTE			m_EnableItem;		//hold flag for send type
@@ -94,8 +96,8 @@ class CSend {
 		HANDLE			m_hOnSend;							//HookEventObj on ME_PROTO_ACK
 
 		MSGBOX			m_box;
-		TCHAR*			m_ErrorMsg;
-		TCHAR*			m_ErrorTitle;
+		wchar_t*			m_ErrorMsg;
+		wchar_t*			m_ErrorTitle;
 		
 		void Unhook(){if(m_hOnSend) {UnhookEvent(m_hOnSend);m_hOnSend = NULL;}}
 		void DB_EventAdd(WORD EventType);
@@ -128,7 +130,7 @@ class CSend {
 		static int GetJSONInteger(const char* json, size_t jsonlen, const char* variable,int defvalue);
 		static bool GetJSONBool(const char* json, size_t jsonlen, const char* variable);
 		void HTTPFormDestroy(NETLIBHTTPREQUEST* nlhr); /// use to free data inside "nlhr" created by HTTPFormCreate
-		int HTTPFormCreate(NETLIBHTTPREQUEST* nlhr,int requestType,char* url,HTTPFormData* frm,size_t frmNum); /// returns "0" on success, Exit() will be called on failure (stop processing)
+		int HTTPFormCreate(NETLIBHTTPREQUEST* nlhr, int requestType, const char* url, HTTPFormData* frm, size_t frmNum); /// returns "0" on success, Exit() will be called on failure (stop processing)
 };
 
 #endif

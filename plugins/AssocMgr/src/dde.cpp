@@ -32,7 +32,7 @@ static HANDLE hHookModulesLoaded, hHookPreShutdown;
 // pszFilePath needs to be allocated using mir_alloc()
 static void __stdcall FileActionAsync(void *param)
 {
-	TCHAR *pszFilePath = (TCHAR*)param;
+	wchar_t *pszFilePath = (wchar_t*)param;
 	/* invoke main handler */
 	switch (InvokeFileHandler(pszFilePath)) { /* pszFilePath is always a long path name */
 	case 0: /* success */ break;
@@ -48,7 +48,7 @@ static void __stdcall FileActionAsync(void *param)
 // pszUrl needs to be allocated using mir_alloc()
 static void __stdcall UrlActionAsync(void *param)
 {
-	TCHAR *pszUrl = (TCHAR*)param;
+	wchar_t *pszUrl = (wchar_t*)param;
 	/* invoke main handler */
 	switch (InvokeUrlHandler(pszUrl)) {
 	case 0: /* success */ break;
@@ -64,24 +64,22 @@ static void __stdcall UrlActionAsync(void *param)
 /************************* Conversation ***************************/
 
 #define DDEMESSAGETIMEOUT      30000
-#define WNDCLASS_DDEMSGWINDOW  _T("MirandaDdeMsgWindow")
+#define WNDCLASS_DDEMSGWINDOW  L"MirandaDdeMsgWindow"
 
 // returned pointer points into a substring of ppszString
 // returns an empty string if the string does not have enough arguments
-static TCHAR* GetExecuteParam(TCHAR **ppszString)
+static wchar_t* GetExecuteParam(wchar_t **ppszString)
 {
-	TCHAR *pszParam, *p;
-	BOOL fQuoted;
-
-	fQuoted = (**ppszString == _T('"'));
-	pszParam = *ppszString;
-	if (fQuoted) pszParam++;
-	p = _tcschr(pszParam, (TCHAR)(fQuoted ? _T('"') : _T(',')));
+	bool fQuoted = (**ppszString == '"');
+	wchar_t *pszParam = *ppszString;
+	if (fQuoted)
+		pszParam++;
+	wchar_t *p = wcschr(pszParam, (wchar_t)(fQuoted ? '"' : ','));
 	if (p != NULL) {
 		*(p++) = 0;
-		if (fQuoted && *p == _T(',')) p++;
+		if (fQuoted && *p == ',') p++;
 	}
-	else p = &pszParam[mir_tstrlen(pszParam)];
+	else p = &pszParam[mir_wstrlen(pszParam)];
 	*ppszString = p;
 	return pszParam;
 }
@@ -102,38 +100,36 @@ static LRESULT CALLBACK DdeMessageWindow(HWND hwnd, UINT msg, WPARAM wParam, LPA
 				if (hSzApp) GlobalDeleteAtom(hSzApp);
 				if (hSzTopic) GlobalDeleteAtom(hSzTopic);
 			}
-			return 0;
 		}
+		return 0;
+
 	case WM_DDE_EXECUTE: /* posted message */
-		{
-			HGLOBAL hCommand;
-			TCHAR *pszCommand;
+		HGLOBAL hCommand;
+		if (UnpackDDElParam(msg, lParam, NULL, (PUINT_PTR)&hCommand)) {
+			/* ANSI execute command can't happen for shell */
+			if (IsWindowUnicode((HWND)wParam)) {
+				wchar_t *pszCommand = (wchar_t*)GlobalLock(hCommand);
+				if (pszCommand != NULL) {
+					wchar_t *pszAction = GetExecuteParam(&pszCommand);
+					wchar_t *pszArg = GetExecuteParam(&pszCommand);
+					if (pszArg != NULL) {
+						/* we are inside miranda here, we make it async so the shell does
+							* not timeout regardless what the plugins try to do. */
+						if (!mir_wstrcmpi(pszAction, L"file"))
+							CallFunctionAsync(FileActionAsync, mir_wstrdup(pszArg));
+						else if (!mir_wstrcmpi(pszAction, L"url"))
+							CallFunctionAsync(UrlActionAsync, mir_wstrdup(pszArg));
+					}
+					GlobalUnlock(hCommand);
+				}
+			}
+
 			DDEACK ack;
 			memset(&ack, 0, sizeof(ack));
-			if (UnpackDDElParam(msg, lParam, NULL, (PUINT_PTR)&hCommand)) {
-				/* ANSI execute command can't happen for shell */
-				if (IsWindowUnicode((HWND)wParam)) {
-					pszCommand = (TCHAR*)GlobalLock(hCommand);
-					if (pszCommand != NULL) {
-						TCHAR *pszAction = GetExecuteParam(&pszCommand);
-						TCHAR *pszArg = GetExecuteParam(&pszCommand);
-						if (pszArg != NULL) {
-							/* we are inside miranda here, we make it async so the shell does
-							 * not timeout regardless what the plugins try to do. */
-							if (!mir_tstrcmpi(pszAction, _T("file")))
-								CallFunctionAsync(FileActionAsync, pszArg);
-							else if (!mir_tstrcmpi(pszAction, _T("url")))
-								CallFunctionAsync(UrlActionAsync, pszArg);
-						}
-						GlobalUnlock(hCommand);
-					}
-				}
-
-				lParam = ReuseDDElParam(lParam, msg, WM_DDE_ACK, *(PUINT)&ack, (UINT_PTR)hCommand);
-				if (!PostMessage((HWND)wParam, WM_DDE_ACK, (WPARAM)hwnd, lParam)) {
-					GlobalFree(hCommand);
-					FreeDDElParam(WM_DDE_ACK, lParam);
-				}
+			lParam = ReuseDDElParam(lParam, msg, WM_DDE_ACK, *(PUINT)&ack, (UINT_PTR)hCommand);
+			if (!PostMessage((HWND)wParam, WM_DDE_ACK, (WPARAM)hwnd, lParam)) {
+				GlobalFree(hCommand);
+				FreeDDElParam(WM_DDE_ACK, lParam);
 			}
 		}
 		return 0;
@@ -165,16 +161,16 @@ static LRESULT CALLBACK DdeMessageWindow(HWND hwnd, UINT msg, WPARAM wParam, LPA
 }
 
 // CloseHandle() the return value
-static HANDLE StartupMainProcess(TCHAR *pszDatabasePath)
+static HANDLE StartupMainProcess(wchar_t *pszDatabasePath)
 {
-	TCHAR *p, szPath[MAX_PATH];
+	wchar_t *p, szPath[MAX_PATH];
 
 	/* we are inside RunDll32 here */
 	if (!GetModuleFileName(hInst, szPath, _countof(szPath))) return NULL;
-	p = _tcsrchr(szPath, _T('\\'));
-	if (p != NULL) { *p = 0; p = _tcsrchr(szPath, _T('\\')); }
+	p = wcsrchr(szPath, '\\');
+	if (p != NULL) { *p = 0; p = wcsrchr(szPath, '\\'); }
 	if (p == NULL) return NULL;
-	mir_tstrcpy(++p, _T("miranda32.exe"));
+	mir_wstrcpy(++p, L"miranda32.exe");
 
 	/* inherit startup data from RunDll32 process */
 	STARTUPINFO si;
@@ -186,39 +182,31 @@ static HANDLE StartupMainProcess(TCHAR *pszDatabasePath)
 	return pi.hProcess;
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif 
+// entry point for RunDll32, this is also WaitForDDEW
+EXTERN_C __declspec(dllexport) void CALLBACK WaitForDDE(HWND, HINSTANCE, wchar_t *pszCmdLine, int)
+{
+	HANDLE pHandles[2];
+	DWORD dwTick;
 
-	// entry point for RunDll32, this is also WaitForDDEW
-	__declspec(dllexport) void CALLBACK WaitForDDE(HWND, HINSTANCE, TCHAR *pszCmdLine, int)
-	{
-		HANDLE pHandles[2];
-		DWORD dwTick;
-
-		/* wait for dde window to be available (avoiding race condition) */
-		pHandles[0] = CreateEvent(NULL, TRUE, FALSE, WNDCLASS_DDEMSGWINDOW);
-		if (pHandles[0] != NULL) {
-			pHandles[1] = StartupMainProcess(pszCmdLine); /* obeys nCmdShow using GetStartupInfo() */
-			if (pHandles[1] != NULL) {
-				dwTick = GetTickCount();
-				/* either process terminated or dde window created */
-				if (WaitForMultipleObjects(_countof(pHandles), pHandles, FALSE, DDEMESSAGETIMEOUT) == WAIT_OBJECT_0) {
-					dwTick = GetTickCount() - dwTick;
-					if (dwTick < DDEMESSAGETIMEOUT)
-						WaitForInputIdle(pHandles[1], DDEMESSAGETIMEOUT - dwTick);
-				}
-				CloseHandle(pHandles[1]);
+	/* wait for dde window to be available (avoiding race condition) */
+	pHandles[0] = CreateEvent(NULL, TRUE, FALSE, WNDCLASS_DDEMSGWINDOW);
+	if (pHandles[0] != NULL) {
+		pHandles[1] = StartupMainProcess(pszCmdLine); /* obeys nCmdShow using GetStartupInfo() */
+		if (pHandles[1] != NULL) {
+			dwTick = GetTickCount();
+			/* either process terminated or dde window created */
+			if (WaitForMultipleObjects(_countof(pHandles), pHandles, FALSE, DDEMESSAGETIMEOUT) == WAIT_OBJECT_0) {
+				dwTick = GetTickCount() - dwTick;
+				if (dwTick < DDEMESSAGETIMEOUT)
+					WaitForInputIdle(pHandles[1], DDEMESSAGETIMEOUT - dwTick);
 			}
-			CloseHandle(pHandles[0]);
+			CloseHandle(pHandles[1]);
 		}
-		/* shell called WaitForInputIdle() on us to detect when dde is ready,
-		 * we are ready now: exit helper process */
+		CloseHandle(pHandles[0]);
 	}
-
-#ifdef __cplusplus
+	/* shell called WaitForInputIdle() on us to detect when dde is ready,
+		* we are ready now: exit helper process */
 }
-#endif
 
 /************************* Misc ***********************************/
 

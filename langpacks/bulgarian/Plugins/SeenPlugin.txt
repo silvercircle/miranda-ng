@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: SeenPlugin.dll
 ;  Plugin: Last seen
-;  Version: 5.0.5.2
+;  Version: 5.0.5.3
 ;  Authors: Heiko Schillinger, YB
 ;============================================================
 [Last seen options]
@@ -39,11 +39,11 @@ Popup цветове
 На линия
 [Away]
 Отсъстващ
-[NA]
+[Not available]
 Недостъпен
 [Occupied]
 Зает
-[DND]
+[Do not disturb]
 Не безпокойте
 [On the phone]
 На телефона

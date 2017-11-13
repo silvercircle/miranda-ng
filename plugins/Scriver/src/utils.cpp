@@ -27,37 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define TTI_NONE 0
 #endif
 
-wchar_t* a2w(const char *src, int len)
-{
-	wchar_t *wline;
-	int i;
-	if (len < 0) {
-		len = (int)mir_strlen(src);
-	}
-	wline = (wchar_t*)mir_alloc(2 * (len + 1));
-	for (i = 0; i < len; i++) {
-		wline[i] = src[i];
-	}
-	wline[i] = 0;
-	return wline;
-}
-
-static int mimFlags = 0;
-
-enum MIMFLAGS
-{
-	MIM_CHECKED = 1,
-	MIM_UNICODE = 2
-};
-
-int IsUnicodeMIM()
-{
-	if (!(mimFlags & MIM_CHECKED))
-		mimFlags = MIM_CHECKED | MIM_UNICODE;
-
-	return TRUE;
-}
-
 const char *filename = "scriver.log";
 
 void logInfo(const char *fmt, ...)
@@ -67,7 +36,7 @@ void logInfo(const char *fmt, ...)
 	va_list vararg;
 	int strsize;
 	FILE *flog = fopen(filename, "at");
-	if (flog != NULL) {
+	if (flog != nullptr) {
 		GetLocalTime(&time);
 		va_start(vararg, fmt);
 		str = (char*)malloc(strsize = 2048);
@@ -81,123 +50,33 @@ void logInfo(const char *fmt, ...)
 	}
 }
 
-int GetRichTextLength(HWND hwnd, int codepage, BOOL inBytes)
+void rtrimText(wchar_t *text)
 {
-	GETTEXTLENGTHEX gtl;
-	gtl.codepage = codepage;
-	if (inBytes) {
-		gtl.flags = GTL_NUMBYTES;
-	}
-	else {
-		gtl.flags = GTL_NUMCHARS;
-	}
-	gtl.flags |= GTL_PRECISE | GTL_USECRLF;
-	return (int)SendMessage(hwnd, EM_GETTEXTLENGTHEX, (WPARAM)&gtl, 0);
-}
-
-char* GetRichTextUtf(HWND hwnd)
-{
-	int textBufferSize = GetRichTextLength(hwnd, CP_UTF8, TRUE);
-	if (textBufferSize == 0)
-		return NULL;
-
-	textBufferSize++;
-	char *textBuffer = (char*)mir_alloc(textBufferSize);
-
-	GETTEXTEX  gt = { 0 };
-	gt.cb = textBufferSize;
-	gt.flags = GT_USECRLF;
-	gt.codepage = CP_UTF8;
-	SendMessage(hwnd, EM_GETTEXTEX, (WPARAM)&gt, (LPARAM)textBuffer);
-	return textBuffer;
-}
-
-int SetRichText(HWND hwnd, const TCHAR *text)
-{
-	SETTEXTEX st;
-	st.flags = ST_DEFAULT;
-	st.codepage = 1200;
-	SendMessage(hwnd, EM_SETTEXTEX, (WPARAM)&st, (LPARAM)text);
-
-	return GetRichTextLength(hwnd, 1200, FALSE);
-}
-
-int SetRichTextRTF(HWND hwnd, const char *text)
-{
-	SETTEXTEX st;
-	st.flags = ST_DEFAULT;
-	st.codepage = CP_UTF8;
-	SendMessage(hwnd, EM_SETTEXTEX, (WPARAM)&st, (LPARAM)text);
-
-	return GetRichTextLength(hwnd, 1200, FALSE);
-}
-
-static DWORD CALLBACK RichTextStreamCallback(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG cb, LONG * pcb)
-{
-	static DWORD dwRead;
-	char **ppText = (char**)dwCookie;
-
-	if (*ppText == NULL) {
-		*ppText = (char*)mir_alloc(cb + 1);
-		memcpy(*ppText, pbBuff, cb);
-		(*ppText)[cb] = 0;
-		*pcb = cb;
-		dwRead = cb;
-	}
-	else {
-		char *p = (char*)mir_alloc(dwRead + cb + 1);
-		memcpy(p, *ppText, dwRead);
-		memcpy(p + dwRead, pbBuff, cb);
-		p[dwRead + cb] = 0;
-		mir_free(*ppText);
-		*ppText = p;
-		*pcb = cb;
-		dwRead += cb;
-	}
-
-	return 0;
-}
-
-char* GetRichTextRTF(HWND hwnd)
-{
-	if (hwnd == 0)
-		return NULL;
-
-	char *pszText = NULL;
-	EDITSTREAM stream = { 0 };
-	stream.pfnCallback = RichTextStreamCallback;
-	stream.dwCookie = (DWORD_PTR)&pszText; // pass pointer to pointer
-	SendMessage(hwnd, EM_STREAMOUT, SF_RTFNOOBJS | SFF_PLAINRTF | SF_USECODEPAGE | (CP_UTF8 << 16), (LPARAM)&stream);
-	return pszText; // pszText contains the text
-}
-
-void rtrimText(TCHAR *text)
-{
-	static TCHAR szTrimString[] = _T(":;,.!?\'\"><()[]- \r\n");
-	size_t iLen = mir_tstrlen(text) - 1;
-	while (_tcschr(szTrimString, text[iLen])) {
-		text[iLen] = _T('\0');
+	static wchar_t szTrimString[] = L":;,.!?\'\"><()[]- \r\n";
+	size_t iLen = mir_wstrlen(text) - 1;
+	while (wcschr(szTrimString, text[iLen])) {
+		text[iLen] = '\0';
 		iLen--;
 	}
 }
 
-TCHAR* limitText(TCHAR *text, int limit)
+wchar_t* limitText(wchar_t *text, int limit)
 {
-	size_t len = mir_tstrlen(text);
+	size_t len = mir_wstrlen(text);
 	if (len > g_dat.limitNamesLength) {
-		TCHAR *ptszTemp = (TCHAR*)mir_alloc(sizeof(TCHAR) * (limit + 4));
-		_tcsncpy(ptszTemp, text, limit + 1);
-		_tcsncpy(ptszTemp + limit, _T("..."), 4);
+		wchar_t *ptszTemp = (wchar_t*)mir_alloc(sizeof(wchar_t) * (limit + 4));
+		wcsncpy(ptszTemp, text, limit + 1);
+		wcsncpy(ptszTemp + limit, L"...", 4);
 		return ptszTemp;
 	}
 	return text;
 }
-TCHAR* GetRichTextWord(HWND hwnd, POINTL *ptl)
+
+wchar_t* GetRichTextWord(HWND hwnd, POINT *ptl)
 {
-	TCHAR* pszWord = NULL;
 	long iCharIndex, start, end, iRes;
-	pszWord = GetRichEditSelection(hwnd);
-	if (pszWord == NULL) {
+	wchar_t *pszWord = GetRichEditSelection(hwnd);
+	if (pszWord == nullptr) {
 		iCharIndex = SendMessage(hwnd, EM_CHARFROMPOS, 0, (LPARAM)ptl);
 		if (iCharIndex >= 0) {
 			start = SendMessage(hwnd, EM_FINDWORDBREAK, WB_LEFT, iCharIndex); //-iChars;
@@ -206,7 +85,7 @@ TCHAR* GetRichTextWord(HWND hwnd, POINTL *ptl)
 				TEXTRANGE tr;
 				CHARRANGE cr;
 				memset(&tr, 0, sizeof(TEXTRANGE));
-				pszWord = (TCHAR*)mir_alloc(sizeof(TCHAR) * (end - start + 1));
+				pszWord = (wchar_t*)mir_alloc(sizeof(wchar_t) * (end - start + 1));
 				cr.cpMin = start;
 				cr.cpMax = end;
 				tr.chrg = cr;
@@ -214,14 +93,14 @@ TCHAR* GetRichTextWord(HWND hwnd, POINTL *ptl)
 				iRes = SendMessage(hwnd, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
 				if (iRes <= 0) {
 					mir_free(pszWord);
-					pszWord = NULL;
+					pszWord = nullptr;
 				}
 			}
 		}
 	}
-	if (pszWord != NULL) {
+	if (pszWord != nullptr)
 		rtrimText(pszWord);
-	}
+
 	return pszWord;
 }
 
@@ -231,55 +110,36 @@ static DWORD CALLBACK StreamOutCallback(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG 
 	msi->sendBuffer = (char*)mir_realloc(msi->sendBuffer, msi->sendBufferSize + cb + 2);
 	memcpy(msi->sendBuffer + msi->sendBufferSize, pbBuff, cb);
 	msi->sendBufferSize += cb;
-	*((TCHAR*)(msi->sendBuffer + msi->sendBufferSize)) = '\0';
+	*((wchar_t*)(msi->sendBuffer + msi->sendBufferSize)) = '\0';
 	*pcb = cb;
 	return 0;
 }
 
-TCHAR *GetRichEditSelection(HWND hwnd)
+wchar_t *GetRichEditSelection(HWND hwnd)
 {
 	CHARRANGE sel;
 	SendMessage(hwnd, EM_EXGETSEL, 0, (LPARAM)&sel);
-	if (sel.cpMin != sel.cpMax) {
-		MessageSendQueueItem msi;
-		EDITSTREAM stream;
-		DWORD dwFlags = 0;
-		memset(&stream, 0, sizeof(stream));
-		stream.pfnCallback = StreamOutCallback;
-		stream.dwCookie = (DWORD_PTR)&msi;
-		dwFlags = SF_TEXT | SF_UNICODE | SFF_SELECTION;
-		msi.sendBuffer = NULL;
-		msi.sendBufferSize = 0;
-		SendMessage(hwnd, EM_STREAMOUT, (WPARAM)dwFlags, (LPARAM)&stream);
-		return (TCHAR*)msi.sendBuffer;
-	}
-	return NULL;
+	if (sel.cpMin == sel.cpMax)
+		return nullptr;
+		
+	MessageSendQueueItem msi;
+	msi.sendBuffer = nullptr;
+	msi.sendBufferSize = 0;
+
+	EDITSTREAM stream;
+	memset(&stream, 0, sizeof(stream));
+	stream.pfnCallback = StreamOutCallback;
+	stream.dwCookie = (DWORD_PTR)&msi;
+	SendMessage(hwnd, EM_STREAMOUT, SF_TEXT | SF_UNICODE | SFF_SELECTION, (LPARAM)&stream);
+	return (wchar_t*)msi.sendBuffer;
 }
-
-void AppendToBuffer(char *&buffer, size_t &cbBufferEnd, size_t &cbBufferAlloced, const char *fmt, ...)
-{
-	va_list va;
-	int charsDone;
-
-	va_start(va, fmt);
-	for (;;) {
-		charsDone = mir_vsnprintf(buffer + cbBufferEnd, cbBufferAlloced - cbBufferEnd, fmt, va);
-		if (charsDone >= 0)
-			break;
-		cbBufferAlloced += 1024;
-		buffer = (char*)mir_realloc(buffer, cbBufferAlloced);
-	}
-	va_end(va);
-	cbBufferEnd += charsDone;
-}
-
 
 int MeasureMenuItem(WPARAM, LPARAM lParam)
 {
 	LPMEASUREITEMSTRUCT mis = (LPMEASUREITEMSTRUCT)lParam;
-	if (mis->itemData != (ULONG_PTR)g_dat.hButtonIconList && mis->itemData != (ULONG_PTR)g_dat.hSearchEngineIconList && mis->itemData != (ULONG_PTR)g_dat.hChatButtonIconList) {
+	if (mis->itemData != (ULONG_PTR)g_dat.hButtonIconList && mis->itemData != (ULONG_PTR)g_dat.hSearchEngineIconList && mis->itemData != (ULONG_PTR)g_dat.hChatButtonIconList)
 		return FALSE;
-	}
+
 	mis->itemWidth = max(0, GetSystemMetrics(SM_CXSMICON) - GetSystemMetrics(SM_CXMENUCHECK) + 4);
 	mis->itemHeight = GetSystemMetrics(SM_CYSMICON) + 2;
 	return TRUE;
@@ -367,7 +227,7 @@ char *url_encode(char *str)
 	return buf;
 }
 
-void SearchWord(TCHAR * word, int engine)
+void SearchWord(wchar_t *word, int engine)
 {
 	char szURL[4096];
 	if (word && word[0]) {
@@ -417,38 +277,23 @@ void SetSearchEngineIcons(HMENU hMenu, HIMAGELIST hImageList)
 	}
 }
 
-void GetContactUniqueId(SrmmWindowData *dat, char *buf, int maxlen)
+void CSrmmWindow::GetContactUniqueId(char *buf, int maxlen)
 {
-	CONTACTINFO ci;
-	memset(&ci, 0, sizeof(ci));
-	ci.cbSize = sizeof(ci);
-	ci.hContact = dat->hContact;
-	ci.szProto = dat->szProto;
-	ci.dwFlag = CNF_UNIQUEID;
-	buf[0] = 0;
-	if (!CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ci)) {
-		switch (ci.type) {
-		case CNFT_ASCIIZ:
-			strncpy_s(buf, maxlen, (char*)ci.pszVal, _TRUNCATE);
-			mir_free(ci.pszVal);
-			break;
-		case CNFT_DWORD:
-			mir_snprintf(buf, maxlen, "%u", ci.dVal);
-			break;
-		}
-	}
+	ptrW id(Contact_GetInfo(CNF_UNIQUEID, m_hContact, m_szProto));
+	if (id != nullptr)
+		strncpy_s(buf, maxlen, _T2A(id), _TRUNCATE);
 }
 
-HWND CreateToolTip(HWND hwndParent, LPTSTR ptszText, LPTSTR ptszTitle, RECT* rect)
+HWND CreateToolTip(HWND hwndParent, LPTSTR ptszText, LPTSTR ptszTitle, RECT *rect)
 {
 	TOOLINFO ti = { 0 };
 	HWND hwndTT;
 	hwndTT = CreateWindowEx(WS_EX_TOPMOST,
-		TOOLTIPS_CLASS, NULL,
+		TOOLTIPS_CLASS, nullptr,
 		WS_POPUP | TTS_NOPREFIX,
 		CW_USEDEFAULT, CW_USEDEFAULT,
 		CW_USEDEFAULT, CW_USEDEFAULT,
-		hwndParent, NULL, g_hInst, NULL);
+		hwndParent, nullptr, g_hInst, nullptr);
 
 	SetWindowPos(hwndTT, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 	ti.cbSize = sizeof(TOOLINFO);
@@ -472,7 +317,7 @@ void SetToolTipText(HWND hwndParent, HWND hwndTT, LPTSTR ptszText, LPTSTR ptszTi
 	SendMessage(hwndTT, TTM_SETTITLE, TTI_NONE, (LPARAM)ptszTitle);
 }
 
-void SetToolTipRect(HWND hwndParent, HWND hwndTT, RECT* rect)
+void SetToolTipRect(HWND hwndParent, HWND hwndTT, RECT *rect)
 {
 	TOOLINFO ti = { sizeof(ti) };
 	ti.hinst = g_hInst;
@@ -481,55 +326,43 @@ void SetToolTipRect(HWND hwndParent, HWND hwndTT, RECT* rect)
 	SendMessage(hwndTT, TTM_NEWTOOLRECT, 0, (LPARAM)&ti);
 }
 
-/* toolbar-related stuff, to be moved to a separate file */
-
-HDWP ResizeToolbar(HWND hwnd, HDWP hdwp, int width, int vPos, int height, int cControls, const ToolbarButton * buttons, int controlVisibility)
+void SetButtonsPos(HWND hwndDlg, MCONTACT hContact, bool bShow)
 {
-	HWND hCtrl;
-	int i;
-	int lPos = 0;
-	int rPos = width;
-	for (i = 0; i < cControls; i++) {
-		if (!buttons[i].alignment && (controlVisibility & (1 << i))) {
-			lPos += buttons[i].spacing;
-			hCtrl = GetDlgItem(hwnd, buttons[i].controlId);
-			if (NULL != hCtrl) /* Wine fix. */
-				hdwp = DeferWindowPos(hdwp, hCtrl, 0, lPos, vPos, buttons[i].width, height, SWP_NOZORDER);
-			lPos += buttons[i].width;
+	HDWP hdwp = BeginDeferWindowPos(Srmm_GetButtonCount());
+
+	RECT rc;
+	GetWindowRect(GetDlgItem(hwndDlg, IDC_SPLITTERY), &rc);
+	POINT pt = { 0, rc.top };
+	ScreenToClient(hwndDlg, &pt);
+	pt.y -= 20;
+
+	int iLeftX = 2, iRightX = rc.right - rc.left - 2;
+	int iGap = db_get_b(0, SRMM_MODULE, "ButtonsBarGap", 1);
+
+	CustomButtonData *cbd;
+	for (int i = 0; cbd = Srmm_GetNthButton(i); i++) {
+		HWND hwndButton = GetDlgItem(hwndDlg, cbd->m_dwButtonCID);
+		if (hwndButton == nullptr)
+			continue;
+
+		if (cbd->m_dwButtonCID == IDC_ADD)
+			if (!db_get_b(hContact, "CList", "NotOnList", 0)) {
+				ShowWindow(hwndButton, SW_HIDE);
+				continue;
+			}
+
+		ShowWindow(hwndButton, bShow ? SW_SHOW : SW_HIDE);
+
+		int width = iGap + cbd->m_iButtonWidth;
+		if (cbd->m_bRSided) {
+			iRightX -= width;
+			hdwp = DeferWindowPos(hdwp, hwndButton, nullptr, iRightX, pt.y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+		}
+		else {
+			hdwp = DeferWindowPos(hdwp, hwndButton, nullptr, iLeftX, pt.y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+			iLeftX += width;
 		}
 	}
-	for (i = cControls - 1; i >= 0; i--) {
-		if (buttons[i].alignment && (controlVisibility & (1 << i))) {
-			rPos -= buttons[i].spacing + buttons[i].width;
-			hCtrl = GetDlgItem(hwnd, buttons[i].controlId);
-			if (NULL != hCtrl) /* Wine fix. */
-				hdwp = DeferWindowPos(hdwp, hCtrl, 0, rPos, vPos, buttons[i].width, height, SWP_NOZORDER);
-		}
-	}
-	return hdwp;
-}
 
-void ShowToolbarControls(HWND hwndDlg, int cControls, const ToolbarButton* buttons, int controlVisibility, int state)
-{
-	for (int i = 0; i < cControls; i++)
-		ShowWindow(GetDlgItem(hwndDlg, buttons[i].controlId), (controlVisibility & (1 << i)) ? state : SW_HIDE);
-}
-
-int GetToolbarWidth(int cControls, const ToolbarButton * buttons)
-{
-	int w = 0;
-	for (int i = 0; i < cControls; i++)
-		if (buttons[i].controlId != IDC_SMILEYS || g_dat.smileyAddInstalled)
-			w += buttons[i].width + buttons[i].spacing;
-
-	return w;
-}
-
-BOOL IsToolbarVisible(int cControls, int visibilityFlags)
-{
-	for (int i = 0; i < cControls; i++)
-		if (visibilityFlags & (1 << i))
-			return TRUE;
-
-	return FALSE;
+	EndDeferWindowPos(hdwp);
 }

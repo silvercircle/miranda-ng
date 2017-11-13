@@ -23,12 +23,18 @@ Popup настройки
 Настройки
 [Version:]
 Версия:
+[Delete]
+Изтриване
 ['Online' means:]
 "На линия" означава:
 [Filters]
 Филтри
-[UP]
-Нагоре
+[Move down]
+Местене надолу
+[Move up]
+Местене нагоре
+[Add]
+Добавяне
 [Rule editor]
 Редактор на правила
 [Application name]

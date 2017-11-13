@@ -6,7 +6,7 @@ Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
 Copyright (c) 2007-09  Maxim Mluhov
 Copyright (c) 2007-09  Victor Pavlychko
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -84,6 +84,8 @@ struct CJabberOptions
 	CMOption<BYTE> ProcessXMPPLinks;
 	CMOption<BYTE> IgnoreRosterGroups;
 
+	CMOption<BYTE> UseOMEMO;
+
 	CJabberOptions(PROTO_INTERFACE *proto) :
 		BsDirect(proto, "BsDirect", TRUE),
 		AllowVersionRequests(proto, "AllowVersionRequests", TRUE),
@@ -138,7 +140,8 @@ struct CJabberOptions
 		ConnectionKeepAliveInterval(proto, "ConnectionKeepAliveInterval", 60000),
 		ConnectionKeepAliveTimeout(proto, "ConnectionKeepAliveTimeout", 50000),
 		ProcessXMPPLinks(proto, "ProcessXMPPLinks", FALSE),
-		IgnoreRosterGroups(proto, "IgnoreRosterGroups", FALSE)
+		IgnoreRosterGroups(proto, "IgnoreRosterGroups", FALSE),
+		UseOMEMO(proto, "UseOMEMO", FALSE)
 	{}
 };
 

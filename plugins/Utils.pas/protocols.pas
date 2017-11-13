@@ -74,8 +74,8 @@ const
     ID_STATUS_ONTHEPHONE);
 const
   StatNames:array [0..NumStatus-1] of PWideChar=(
-  'Default'{'Offline'},'Online','Invisible','Away','N/A','Occupied','DND',
-  'Free for chat','Out to lunch','On the Phone');
+  'Default'{'Offline'},'Online','Invisible','Away','Not available','Occupied','Do not disturb',
+  'Free for chat','Out to lunch','On the phone');
 
 type
   pMyProto = ^tMyProto;
@@ -226,8 +226,7 @@ begin
   begin
     SetWindowLongPtrW(list,GWL_STYLE,
         GetWindowLongPtrW(list,GWL_STYLE) or LVS_SHAREIMAGELISTS);
-    ListView_SetImageList(list,
-      CallService(MS_CLIST_GETICONSIMAGELIST,0,0),LVSIL_SMALL);
+    ListView_SetImageList(list,Clist_GetImageList,LVSIL_SMALL);
     lvc.mask:=LVCF_FMT+LVCF_IMAGE
   end
   else
@@ -309,8 +308,7 @@ begin
   begin
     SetWindowLongPtrW(list,GWL_STYLE,
         GetWindowLongPtrW(list,GWL_STYLE) or LVS_SHAREIMAGELISTS);
-    ListView_SetImageList(list,
-      CallService(MS_CLIST_GETICONSIMAGELIST,0,0),LVSIL_SMALL);
+    ListView_SetImageList(list,Clist_GetImageList,LVSIL_SMALL);
     lvc.mask:=LVCF_FMT+LVCF_IMAGE
   end
   else
@@ -450,11 +448,11 @@ begin
 
       p:=StrCopyE(buf,name);
       StrCopy(p,PS_GETCUSTOMSTATUSEX);
-      if ServiceExists(buf)<>0 then
+      if ServiceExists(buf) then
         status:=status or psf_icq;
 
       StrCopy(p,PS_SET_LISTENINGTO);
-      if ServiceExists(buf)<>0 then
+      if ServiceExists(buf) then
         status:=status or psf_tunes;
 
     end;

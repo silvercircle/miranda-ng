@@ -26,17 +26,31 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_NOTIFICATION        ICON                    "notify.ico"
+
 IDI_FRIENDADD           ICON                    "add.ico"
+
 IDI_BAN                 ICON                    "ban.ico"
+
 IDI_FRIENDDEL           ICON                    "delete.ico"
+
 IDI_READMSG             ICON                    "read.ico"
+
 IDI_ABUSE               ICON                    "report.ico"
+
 IDI_VISITPROFILE        ICON                    "home.ico"
+
 IDI_HISTORY             ICON                    "history.ico"
+
 IDI_KEYS                ICON                    "key.ico"
+
 IDI_BROADCAST           ICON                    "broadcast.ico"
+
 IDI_STATUS              ICON                    "status.ico"
+
 IDI_WALL                ICON                    "wall.ico"
+
+IDI_MARKMESSAGESASREAD  ICON                    "markread.ico"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -46,12 +60,20 @@ IDI_WALL                ICON                    "wall.ico"
 #ifdef APSTUDIO_INVOKED
 GUIDELINES DESIGNINFO
 BEGIN
+    IDD_OPT_MENU, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 302
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 105
+    END
+
     IDD_OPT_VIEW, DIALOG
     BEGIN
         LEFTMARGIN, 4
         RIGHTMARGIN, 298
         TOPMARGIN, 7
-        BOTTOMMARGIN, 177
+        BOTTOMMARGIN, 202
     END
 
     IDD_OPT_FEEDS, DIALOG
@@ -73,7 +95,7 @@ BEGIN
         LEFTMARGIN, 4
         RIGHTMARGIN, 297
         TOPMARGIN, 7
-        BOTTOMMARGIN, 187
+        BOTTOMMARGIN, 227
     END
 
     IDD_OPT_MAIN, DIALOG
@@ -85,9 +107,15 @@ BEGIN
         VERTGUIDE, 155
         VERTGUIDE, 162
         VERTGUIDE, 167
+        VERTGUIDE, 180
+        VERTGUIDE, 192
         VERTGUIDE, 288
         TOPMARGIN, 7
-        BOTTOMMARGIN, 202
+        BOTTOMMARGIN, 182
+    END
+
+    IDD_CAPTCHAFORM, DIALOG
+    BEGIN
     END
 
     IDD_INVITE, DIALOG
@@ -111,7 +139,16 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 309
         TOPMARGIN, 7
-        BOTTOMMARGIN, 137
+        BOTTOMMARGIN, 127
+    END
+
+    IDD_CONTACTDELETE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 276
+        VERTGUIDE, 29
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 80
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -122,7 +159,24 @@ END
 // Dialog
 //
 
-IDD_OPT_VIEW DIALOGEX 0, 0, 304, 184
+IDD_OPT_MENU DIALOGEX 0, 0, 309, 112
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Show in protocol menu ",IDC_STATIC,7,8,295,93
+    CONTROL         "Create new chat",IDC_SHOW_MENU0,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,19,280,10
+    CONTROL         "Status message",IDC_SHOW_MENU1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,30,280,10
+    CONTROL         "Send message to my wall",IDC_SHOW_MENU2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,41,280,10
+    CONTROL         "Load news from VK",IDC_SHOW_MENU3,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,52,280,10
+    CONTROL         "Load history for all contacts from VK",IDC_SHOW_MENU4,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,63,280,10
+    CONTROL         "Wipe contacts missing in friend list",IDC_SHOW_MENU5,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,74,280,10
+    CONTROL         "Visit profile",IDC_SHOW_MENU6,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,85,280,10
+END
+
+IDD_OPT_VIEW DIALOGEX 0, 0, 304, 209
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
@@ -135,20 +189,24 @@ BEGIN
     GROUPBOX        "BBCode support on news and event notifications",IDC_STATIC,4,50,294,48,WS_GROUP
     CONTROL         "off",IDC_NEWSBBC_OFF,"Button",BS_AUTORADIOBUTTON,12,61,129,10
     CONTROL         "basic ([b], [i], [u], [s])",IDC_NEWSBBC_BASIC,"Button",BS_AUTORADIOBUTTON,12,72,129,10
-    CONTROL         "advanced (+[url], [size], [color])",IDC_NEWSBBC_ADV,
+    CONTROL         "advanced (+[url], [size], [color], [code])",IDC_NEWSBBC_ADV,
                     "Button",BS_AUTORADIOBUTTON,154,61,129,10
     CONTROL         "Use this setting also for attachments on news and notifications",IDC_BBC_ATT_NEWS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,83,278,10
-    GROUPBOX        "Other",IDC_STATIC,4,138,293,36
     GROUPBOX        "BBCode support on attachments",IDC_STATIC,4,99,294,38,WS_GROUP
     CONTROL         "off",IDC_ATTBBC_OFF,"Button",BS_AUTORADIOBUTTON,12,110,129,10
     CONTROL         "basic ([b], [i], [u], [s])",IDC_ATTBBC_BASIC,"Button",BS_AUTORADIOBUTTON,12,121,129,10
-    CONTROL         "advanced (+[url], [size], [color])",IDC_ATTBBC_ADV,
+    CONTROL         "advanced (+[url], [size], [color], [code])",IDC_ATTBBC_ADV,
                     "Button",BS_AUTORADIOBUTTON,154,110,129,10
+    GROUPBOX        "Other",IDC_STATIC,4,138,294,57
     CONTROL         "Process stickers as smileys",IDC_STICKERS_AS_SMYLES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,149,278,10
     CONTROL         "Shorten links for audio attachments",IDC_SHOTEN_LINKS_FOR_AUDIO,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,160,278,10
+    CONTROL         "Use non-standard popups for news and event notifications",IDC_USENOSTDPOPUPS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,171,278,10
+    CONTROL         "Add message link to messages with attachments",IDC_ADD_MES_LINK_MES_ATT,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,182,278,10
 END
 
 IDD_OPT_FEEDS DIALOGEX 0, 0, 304, 232
@@ -190,6 +248,7 @@ BEGIN
     CONTROL         "Invites",IDC_N_INVITES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,217,129,10
     CONTROL         "Reposts",IDC_N_REPOSTS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,154,195,129,10
     CONTROL         "Mentions in comments",IDC_N_MENTIONS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,154,206,129,10
+    CONTROL         "Accepted friend requests",IDC_N_FRIENDACCEPTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,154,217,129,10
 END
 
 IDD_ACCMGRUI DIALOGEX 0, 0, 186, 68
@@ -204,67 +263,71 @@ BEGIN
     CONTROL         "Open VKontakte site",IDC_URL,"Hyperlink",WS_TABSTOP,0,49,174,12
 END
 
-IDD_OPT_ADV DIALOGEX 0, 0, 304, 197
+IDD_OPT_ADV DIALOGEX 0, 0, 304, 233
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Advanced",IDC_STATIC,4,8,293,83
-    CONTROL         "Hide chats on startup",IDC_HIDECHATS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,19,278,10
+    GROUPBOX        "Advanced",IDC_STATIC,4,8,293,101
+    CONTROL         "Hide chats on startup",IDC_HIDECHATS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,17,278,10
     CONTROL         "Sync read message status from server",IDC_SYNC_MSG_STATUS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,30,268,10                    
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,28,268,10
     CONTROL         "Always notify as unread for all incoming message",IDC_MESASUREAD,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,41,278,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,39,278,10
     CONTROL         "Force invisible status upon user activity",IDC_FORCE_ONLINE_ON_ACT,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,52,278,10
-    LTEXT           "Invisible interval timeout (min):",IDC_STATIC,16,67,184,8
-    EDITTEXT        IDC_ED_INT_INVIS,204,63,40,14,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "",IDC_SPIN_INT_INVIS,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,244,63,14,14
-    CONTROL         "Use non-standard urlEncode for sent messages (less traffic)",IDC_USENOSTDURLENCODE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,78,278,10
-    GROUPBOX        "When I ban user...",IDC_STATIC,4,92,293,33
-    CONTROL         "Report abuse",IDC_REPORT_ABUSE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,102,129,10
-    CONTROL         "Clear server history",IDC_CLEAR_SERVER_HISTORY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,113,129,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,50,278,10
+    LTEXT           "Invisible interval timeout (min):",IDC_STATIC,16,63,184,8
+    EDITTEXT        IDC_ED_INT_INVIS,204,60,40,13,ES_RIGHT | ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_SPIN_INT_INVIS,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,244,60,14,13
+    CONTROL         "Send VK-objects links as attachments",IDC_SENDVKURLSASATTACH,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,74,278,10
+    CONTROL         "and load sent attachments",IDC_LOADSENTATTACH,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,21,85,269,10
+    CONTROL         "Notify about changes of contacts audio broadcast",IDC_POPUP_CONTACT_MUSIC,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,96,278,10
+    GROUPBOX        "When I ban user...",IDC_STATIC,4,108,293,33
+    CONTROL         "Report abuse",IDC_REPORT_ABUSE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,118,129,10
+    CONTROL         "Clear server history",IDC_CLEAR_SERVER_HISTORY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,129,129,10
     CONTROL         "Remove from friend list",IDC_REMOVE_FROM_FRENDLIST,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,102,141,10
-    CONTROL         "Remove from contact list",IDC_REMOVE_FROM_CLIST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,113,141,10
-    GROUPBOX        "Broadcast music...",IDC_STATIC_SEND_MUSIC_METOD,4,128,293,58,WS_GROUP
-    CONTROL         "off",IDC_SEND_MUSIC_NONE,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,12,139,278,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,118,141,10
+    CONTROL         "Remove from contact list",IDC_REMOVE_FROM_CLIST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,129,141,10
+    GROUPBOX        "Broadcast music...",IDC_STATIC_SEND_MUSIC_METOD,4,142,293,58,WS_GROUP
+    CONTROL         "off",IDC_SEND_MUSIC_NONE,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,12,153,278,10
     CONTROL         "as regular status for unknown music and audio status otherwise",IDC_SEND_MUSIC_BROADCAST_AND_STATUS,
-                    "Button",BS_AUTORADIOBUTTON | WS_TABSTOP,12,150,278,10
-    CONTROL         "as audio status only",IDC_SEND_MUSIC_BROADCAST,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,12,161,278,10
-    CONTROL         "as regular status only",IDC_SEND_MUSIC_STATUS,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,12,172,278,10   
+                    "Button",BS_AUTORADIOBUTTON | WS_TABSTOP,12,164,278,10
+    CONTROL         "as audio status only",IDC_SEND_MUSIC_BROADCAST,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,12,175,278,10
+    CONTROL         "as regular status only",IDC_SEND_MUSIC_STATUS,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,12,186,278,10
+    GROUPBOX        "Group chats",IDC_STATIC_CHATS,4,199,293,27,WS_GROUP
+    LTEXT           "Message for return to group chat:",IDC_STATIC,12,210,120,8
+    EDITTEXT        IDC_RET_CHAT_MES,134,208,157,12,ES_AUTOHSCROLL
 END
 
-IDD_OPT_MAIN DIALOGEX 0, 0, 304, 213
+IDD_OPT_MAIN DIALOGEX 0, 0, 304, 187
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Login settings",IDC_STATIC,4,8,293,50
+    GROUPBOX        "Login settings",IDC_STATIC,4,8,293,49
     RTEXT           "E-mail or phone number:",IDC_STATIC,12,17,150,10
     EDITTEXT        IDC_LOGIN,167,16,121,12,ES_AUTOHSCROLL
-    RTEXT           "Password:",IDC_STATIC,12,29,150,10
-    EDITTEXT        IDC_PASSWORD,167,29,121,12,ES_PASSWORD | ES_AUTOHSCROLL
+    RTEXT           "Password:",IDC_STATIC,12,30,150,10
+    EDITTEXT        IDC_PASSWORD,167,30,121,12,ES_PASSWORD | ES_AUTOHSCROLL
     CONTROL         "Open VKontakte site",IDC_URL,"Hyperlink",WS_TABSTOP,59,44,174,11
-    GROUPBOX        "Local settings",IDC_STATIC,4,59,293,65
+    GROUPBOX        "Local settings",IDC_STATIC,4,58,293,122
     RTEXT           "Contact list group:",IDC_STATIC,12,71,150,8
     EDITTEXT        IDC_GROUPNAME,167,69,121,12,ES_AUTOHSCROLL
-    CONTROL         "Server-side delivery confirmation",IDC_DELIVERY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,88,278,10
+    RTEXT           "Language for names and titles:",IDC_STATIC,12,86,148,10
+    COMBOBOX        IDC_COMBO_LANGUAGE,167,84,121,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Mark message as read:",IDC_STATIC,12,101,150,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_COMBO_MARKASREAD,167,101,121,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Sync history on protocol online:",IDC_STATIC,12,117,150,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_COMBO_SYNCHISTORY,167,117,121,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Load last messages when message window open and local history is empty",IDC_LASTHISTORYLOAD,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,133,278,10
     CONTROL         "Use local time for received messages",IDC_USE_LOCAL_TIME,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,99,278,10
-    CONTROL         "Automatically wipe local contacts missing in your friend list",IDC_AUTOCLEAN,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,110,278,10
-    GROUPBOX        "Mark message as read...",IDC_STATIC_MARK_AS_READ,4,127,293,33,WS_GROUP
-    CONTROL         "on read",IDC_ONREAD,"Button",BS_AUTORADIOBUTTON,12,138,138,10
-    CONTROL         "on receive",IDC_ONRECEIVE,"Button",BS_AUTORADIOBUTTON,12,148,138,10
-    CONTROL         "on reply",IDC_ONREPLY,"Button",BS_AUTORADIOBUTTON,155,138,133,10
-    CONTROL         "on typing",IDC_ONTYPING,"Button",BS_AUTORADIOBUTTON,155,148,133,10
-    GROUPBOX        "Sync history on protocol online...",IDC_STATIC_SYNC_HISTORY,4,163,293,36,WS_GROUP
-    CONTROL         "off",IDC_SYNC_OFF,"Button",BS_AUTORADIOBUTTON,12,174,138,10
-    CONTROL         "automatically",IDC_SYNC_AUTO,"Button",BS_AUTORADIOBUTTON,12,185,138,10
-    CONTROL         "for last 1 day",IDC_SYNC_LAST1DAY,"Button",BS_AUTORADIOBUTTON,155,174,133,10
-    CONTROL         "for last 3 days",IDC_SYNC_LAST3DAY,"Button",BS_AUTORADIOBUTTON,155,185,133,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,143,278,10
+    CONTROL         "Load only friends to local contact list",IDC_LOADONLYFRIENDS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,153,278,10
+    CONTROL         "Server-side delivery confirmation",IDC_DELIVERY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,163,278,10
 END
 
 IDD_CAPTCHAFORM DIALOGEX 0, 0, 258, 224
@@ -273,14 +336,15 @@ EXSTYLE WS_EX_CONTROLPARENT
 CAPTION "Bots challenge test"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    EDITTEXT        IDC_VALUE,4,203,137,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_VALUE,4,192,155,14,ES_AUTOHSCROLL
     CONTROL         "",IDC_WHITERECT,"Static",SS_LEFTNOWORDWRAP | WS_GROUP,0,0,258,25
     LTEXT           "Instruction:",IDC_TITLE,7,7,243,8,NOT WS_GROUP
     EDITTEXT        IDC_INSTRUCTION,17,16,233,8,ES_MULTILINE | ES_READONLY | NOT WS_BORDER
     CONTROL         "",IDC_FRAME1,"Static",SS_ETCHEDHORZ,0,26,258,1
-    CONTROL         "",IDC_FRAME2,"Static",SS_ETCHEDHORZ,0,197,258,1
-    DEFPUSHBUTTON   "Submit",IDOK,146,203,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,200,203,50,14
+    CONTROL         "",IDC_FRAME2,"Static",SS_ETCHEDHORZ,0,188,258,1
+    DEFPUSHBUTTON   "Submit",IDOK,163,192,46,14
+    PUSHBUTTON      "Cancel",IDCANCEL,210,192,43,14
+    PUSHBUTTON      "Open in browser",IDOPENBROWSER,163,208,90,14
 END
 
 IDD_INVITE DIALOGEX 0, 0, 191, 65
@@ -307,17 +371,30 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,160,211,50,14
 END
 
-IDD_WALLPOST DIALOGEX 0, 0, 316, 144
-STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_WALLPOST DIALOGEX 0, 0, 316, 134
+STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_3DLOOK | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "Share",IDOK,205,123,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,259,123,50,14
+    PUSHBUTTON      "Share",IDOK,205,113,50,14,WS_DISABLED
+    PUSHBUTTON      "Cancel",IDCANCEL,259,113,50,14
     EDITTEXT        IDC_ED_MSG,7,7,302,70,ES_MULTILINE | ES_AUTOHSCROLL
     EDITTEXT        IDC_ED_URL,61,82,248,12,ES_AUTOHSCROLL
     RTEXT           "URL:",IDC_STATIC,7,84,49,8
     CONTROL         "Only for friends",IDC_ONLY_FRIENDS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,61,98,248,10
-    CTEXT           "Attention",IDC_ST_WARNING,7,112,302,10
+END
+
+IDD_CONTACTDELETE DIALOGEX 0, 0, 283, 87
+STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_3DLOOK | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,117,66,50,14
+    CTEXT           "",IDC_STATIC_TXT,7,7,275,18
+    CONTROL         "",IDC_CH_REMOVE_FROM_FRIEND,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,29,33,254,10
+    CONTROL         "",IDC_CH_CLEARHISTORY,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,29,45,253,10
 END
 
 

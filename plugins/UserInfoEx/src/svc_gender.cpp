@@ -92,7 +92,7 @@ static int OnCListApplyIcons(MCONTACT hContact, LPARAM)
 
 static int OnContactSettingChanged(MCONTACT hContact, DBCONTACTWRITESETTING* pdbcws)
 {
-	if (hContact && pdbcws && (pdbcws->value.type <= DBVT_BYTE) && !mir_strcmp(pdbcws->szSetting, SET_CONTACT_GENDER))
+	if (hContact && pdbcws && (pdbcws->value.type <= DBVT_BYTE) && !strcmp(pdbcws->szSetting, SET_CONTACT_GENDER))
 		OnCListApplyIcons(hContact, 0);
 
 	return 0;
@@ -117,7 +117,7 @@ bool SvcGenderEnableExtraIcons(bool bEnable, bool bUpdateDB)
 
 	if (g_eiGender) { // Gender checked or dropdown select
 		if (ghExtraIconSvc == INVALID_HANDLE_VALUE)
-			ghExtraIconSvc = ExtraIcon_RegisterIcolib("gender", LPGEN("Gender (uinfoex)"), ICO_COMMON_MALE);
+			ghExtraIconSvc = ExtraIcon_RegisterIcolib("gender", LPGEN("Gender (UInfoEx)"), ICO_COMMON_MALE);
 
 		// hook events
 		if (hChangedHook == NULL) 

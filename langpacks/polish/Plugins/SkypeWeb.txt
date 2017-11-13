@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: SkypeWeb.dll
 ;  Plugin: Skype protocol (Web)
-;  Version: 0.12.2.2
+;  Version: 0.12.2.4
 ;  Authors: Miranda NG Team
 ;============================================================
 [Skype protocol support for Miranda NG. Based on new Skype for Web.]
@@ -54,6 +54,8 @@ Protokół Powiązania Skype
 Admin
 [User]
 Użytkownik
+[Enter new nickname]
+Wprowadź nowy nick
 [This chat is going to be destroyed forever with all its contents. This action cannot be undone. Are you sure?]
 Ten czat zostanie zniszczony wraz z zawartością. Ta operacja nie będzie mogła zostać cofnięta. Czy jesteś pewien?
 [Warning]
@@ -62,8 +64,8 @@ Ostrzeżenie
 &Zaproś użytkownika...
 [&Leave chat session]
 &Opuść pokój
-[&Change topic]
-&Zmień temat
+[&Change topic...]
+&Zmień temat...
 [Kick &user]
 Wykop &użytkownika
 [Set &role]
@@ -72,12 +74,16 @@ Wybierz &rolę
 &Admin
 [&User]
 &Użytkownik
+[Change nick...]
+Zmień nick...
 [Enter new chatroom topic]
 Wprowadź nowy temat pokoju
 ;file \protocols\SkypeWeb\src\skype_contacts.cpp
 [Are you sure?]
 Jesteś pewien?
 ;file \protocols\SkypeWeb\src\skype_db.cpp
+[Incoming call]
+Połączenie przychodzące
 [Edited message]
 Wiadomość edytowana
 [Action]
@@ -88,13 +94,15 @@ Informacje o rozmowie
 Informacje o transferze pliku
 [URI object]
 Obiekt URI
+[Moji]
+Moji
+[File]
+Plik
 [Unknown event]
 Nieznane zdarzenie
-[Incoming call]
-Połączenie przychodzące
 ;file \protocols\SkypeWeb\src\skype_events.cpp
-[Invalid data!]
-Nieprawidłowe dane!
+[SkypeWeb error: Invalid data!]
+Błąd SkypeWeb: Nieprawidłowe dane!
 [[b]Original message:[/b]\n%s\n]
 \[b]Wiadomość oryginalna:[/b]\n%s\n
 [Original message:\n%s\n]
@@ -138,7 +146,7 @@ Protokoły
 [Authentication failed. Invalid username.]
 Autoryzacja nie powiodła się. Nieprawidłowa nazwa użytkownika.
 [Authentication failed. Bad username or password.]
-Autoryzacja nie powiodła sie. Błędna nazwa użytkownika lub hasło.
+Autoryzacja nie powiodła się. Błędna nazwa użytkownika lub hasło.
 [Too many failed authentication attempts with given username or IP.]
 Zbyt wiele nieudanych prób autoryzacji z podaną nazwą użytkownika lub IP.
 [Authentication failed. Unknown error.]
@@ -184,8 +192,8 @@ Rozmowy
 Dźwięk rozmowy przychodzącej
 [Incoming call canceled sound]
 Dźwięk anulowania rozmowy przychodzącej
+[Skypename]
+Nazwa Skype
 ;file \protocols\SkypeWeb\src\skype_trouter.cpp
-[Failed to establish a TRouter connection.]
-Nie udało się ustanowić połączenia TRouter.
 [Incoming call from %s]
 Przychodząca rozmowa od %s

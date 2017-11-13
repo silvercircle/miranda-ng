@@ -30,7 +30,7 @@ static const checkboxes[] = {
 INT_PTR CALLBACK OptionsProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
 	DWORD flags = db_get_dw(NULL, MODULENAME, "flags", vf_default);
-	TCHAR buffer[64] = { 0 };
+	wchar_t buffer[64] = { 0 };
 	int i;
 
 	switch (msg) {
@@ -48,7 +48,7 @@ INT_PTR CALLBACK OptionsProc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
 			for (i = 0; i < 4; i++)
 			{
 				GetDlgItemText(hdlg, checkboxes[i].idc, buffer, (_countof(buffer) - 3));
-				mir_tstrcat(buffer, _T(" *"));
+				mir_wstrcat(buffer, L" *");
 				SetDlgItemText(hdlg, checkboxes[i].idc, buffer);
 			}
 		}
@@ -107,9 +107,9 @@ int OptionsInit(WPARAM wparam, LPARAM)
 	odp.position = 955000000;
 	odp.hInstance = hinstance;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONS);
-	odp.pszTitle = MODULENAME;
+	odp.szTitle.a = MODULENAME;
 	odp.pfnDlgProc = OptionsProc;
-	odp.pszGroup = LPGEN("Customize");
+	odp.szGroup.a = LPGEN("Customize");
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wparam, &odp);
 	return 0;

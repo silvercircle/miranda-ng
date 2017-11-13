@@ -46,7 +46,8 @@ enum
 	UTM_REQUEST_IDLE,
 	UTM_LOCK_QUEUE,
 	UTM_UNLOCK_QUEUE,
-	UTM_REQUEST_REMOVE
+	UTM_REQUEST_REMOVE,
+	UTM_AVATAR_CHANGED
 };
 
 bool UpdatePopupPosition(PopupWnd2 *prev, PopupWnd2 *wnd)
@@ -196,6 +197,13 @@ static LRESULT CALLBACK PopupThreadManagerWndProc(HWND hwnd, UINT message, WPARA
 			gLockCount = 0;
 		break;
 
+	case UTM_AVATAR_CHANGED:
+		for (int i = 0; i < popupList.getCount(); i++) {
+			PopupWnd2 *p = popupList[i];
+			if (p->getContact() == wParam)
+				SendMessage(p->getHwnd(), UM_AVATARCHANGED, 0, 0);
+		}
+		break;
 	}
 	return DefWindowProc(hwnd, message, wParam, lParam);
 }
@@ -203,6 +211,8 @@ static LRESULT CALLBACK PopupThreadManagerWndProc(HWND hwnd, UINT message, WPARA
 //  thread func
 static unsigned __stdcall PopupThread(void *)
 {
+	Thread_SetName("Popup: PopupThread");
+
 	//  Create manager window
 	DWORD err;
 	WNDCLASSEX wcl;
@@ -216,17 +226,17 @@ static unsigned __stdcall PopupThread(void *)
 	wcl.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wcl.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
 	wcl.lpszMenuName = NULL;
-	wcl.lpszClassName = _T("PopupThreadManagerWnd");
+	wcl.lpszClassName = L"PopupThreadManagerWnd";
 	wcl.hIconSm = (HICON)LoadImage(hInst, MAKEINTRESOURCE(IDI_POPUP), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
 	g_wndClass.cPopupThreadManagerWnd = RegisterClassEx(&wcl);
 	err = GetLastError();
 	if (!g_wndClass.cPopupThreadManagerWnd) {
-		TCHAR msg[1024];
-		mir_sntprintf(msg, TranslateT("Failed to register %s class."), wcl.lpszClassName);
+		wchar_t msg[1024];
+		mir_snwprintf(msg, TranslateT("Failed to register %s class."), wcl.lpszClassName);
 		MSGERROR(msg);
 	}
 
-	gHwndManager = CreateWindow(_T("PopupThreadManagerWnd"), NULL, 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP, NULL, hInst, NULL);
+	gHwndManager = CreateWindow(L"PopupThreadManagerWnd", NULL, 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP, NULL, hInst, NULL);
 	SetWindowPos(gHwndManager, 0, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_DEFERERASE | SWP_NOSENDCHANGING | SWP_HIDEWINDOW);
 
 	MSG msg;
@@ -242,10 +252,18 @@ static unsigned __stdcall PopupThread(void *)
 /////////////////////////////////////////////////////////////////////////////////////////
 // interface
 
+static int sttAvatarChanged(WPARAM wParam, LPARAM)
+{
+	PostMessage(gHwndManager, UTM_AVATAR_CHANGED, wParam, 0);
+	return 0;
+}
+
 void LoadPopupThread()
 {
 	unsigned threadId;
 	hThread = mir_forkthreadex(PopupThread, NULL, &threadId);
+
+	HookEvent(ME_AV_AVATARCHANGED, sttAvatarChanged);
 }
 
 void StopPopupThread()

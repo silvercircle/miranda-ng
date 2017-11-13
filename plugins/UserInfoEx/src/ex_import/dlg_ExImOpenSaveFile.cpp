@@ -19,10 +19,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "..\stdafx.h"
+#include "../stdafx.h"
 
-#define HKEY_MIRANDA_PLACESBAR	_T("Software\\Miranda NG\\PlacesBar")
-#define HKEY_WINPOL_PLACESBAR	_T("Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\ComDlg32\\PlacesBar")
+#define HKEY_MIRANDA_PLACESBAR	L"Software\\Miranda NG\\PlacesBar"
+#define HKEY_WINPOL_PLACESBAR	L"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\ComDlg32\\PlacesBar"
 
 /**
  * This function maps the current users registry to a dummy key and
@@ -56,9 +56,9 @@ static void InitAlteredPlacesBar()
 			CHAR szProfilePath[MAX_PATH];
 
 			// default places: Desktop, My Documents, My Computer
-			dwFolderID = 0;	 RegSetValueEx(hkPlacesBar, _T("Place0"), 0, REG_DWORD, (PBYTE)&dwFolderID, sizeof(DWORD));
-			dwFolderID = 5;	RegSetValueEx(hkPlacesBar, _T("Place1"), 0, REG_DWORD, (PBYTE)&dwFolderID, sizeof(DWORD));
-			dwFolderID = 17; RegSetValueEx(hkPlacesBar, _T("Place2"), 0, REG_DWORD, (PBYTE)&dwFolderID, sizeof(DWORD));
+			dwFolderID = 0;	 RegSetValueEx(hkPlacesBar, L"Place0", 0, REG_DWORD, (PBYTE)&dwFolderID, sizeof(DWORD));
+			dwFolderID = 5;	RegSetValueEx(hkPlacesBar, L"Place1", 0, REG_DWORD, (PBYTE)&dwFolderID, sizeof(DWORD));
+			dwFolderID = 17; RegSetValueEx(hkPlacesBar, L"Place2", 0, REG_DWORD, (PBYTE)&dwFolderID, sizeof(DWORD));
 
 			// Miranda's installation path
 			GetModuleFileNameA(GetModuleHandleA("mir_app.mir"), szMirandaPath, _countof(szMirandaPath));
@@ -69,7 +69,7 @@ static void InitAlteredPlacesBar()
 			}
 
 			// Miranda's profile path
-			if (!CallService(MS_DB_GETPROFILEPATH, _countof(szProfilePath), (LPARAM)szProfilePath))
+			if (!Profile_GetPathA(_countof(szProfilePath), szProfilePath))
 			{
 				// only add if different from profile path
 				RegSetValueExA(hkPlacesBar, "Place4", 0, REG_SZ, (PBYTE)szProfilePath, (DWORD)mir_strlen(szProfilePath) + 1);
@@ -106,7 +106,7 @@ static LRESULT CALLBACK PlacesBarSubclassProc(HWND hWnd, UINT uMsg, WPARAM wPara
 {
 	if (uMsg == TB_ADDBUTTONS) {
 		TBBUTTON *tbb = (TBBUTTON *)lParam;
-		TCHAR szBtnText[MAX_PATH];
+		wchar_t szBtnText[MAX_PATH];
 		int iString;
 		HWND hWndToolTip;
 
@@ -114,7 +114,7 @@ static LRESULT CALLBACK PlacesBarSubclassProc(HWND hWnd, UINT uMsg, WPARAM wPara
 			// miranda button
 			switch (tbb->idCommand) {
 			case 41063:
-				mir_tstrncpy(szBtnText, TranslateT("Miranda NG"), _countof(szBtnText));
+				mir_wstrncpy(szBtnText, TranslateT("Miranda NG"), _countof(szBtnText));
 				iString = SendMessage(hWnd, TB_ADDSTRING, NULL, (LPARAM)szBtnText);
 				if (iString != -1) tbb->iString = iString;
 				// set tooltip
@@ -280,7 +280,7 @@ int DlgExIm_OpenFileName(HWND hWndParent, LPCSTR pszTitle, LPCSTR pszFilter, LPS
 	ofn.Flags |= OFN_PATHMUSTEXIST;
 	if (!GetOpenFileNameA(&ofn)) {
 		DWORD dwError = CommDlgExtendedError();
-		if (dwError) MsgErr(ofn.hwndOwner, LPGENT("The OpenFileDialog returned an error: %d!"), dwError);
+		if (dwError) MsgErr(ofn.hwndOwner, LPGENW("The OpenFileDialog returned an error: %d!"), dwError);
 		return -1;
 	}
 	SaveInitialDir(pszFile);
@@ -307,7 +307,7 @@ int DlgExIm_SaveFileName(HWND hWndParent, LPCSTR pszTitle, LPCSTR pszFilter, LPS
 	if (!GetSaveFileNameA(&ofn)) {
 		DWORD dwError = CommDlgExtendedError();
 
-		if (dwError) MsgErr(ofn.hwndOwner, LPGENT("The SaveFileDialog returned an error: %d!"), dwError);
+		if (dwError) MsgErr(ofn.hwndOwner, LPGENW("The SaveFileDialog returned an error: %d!"), dwError);
 		return -1;
 	}
 	SaveInitialDir(pszFile);

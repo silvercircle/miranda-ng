@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -66,7 +66,7 @@ typedef struct {
 
 typedef struct {
 	char szModule[128];
-	TCHAR szMsg[1];
+	wchar_t szMsg[1];
 } DUMPMSG;
 
 
@@ -111,7 +111,7 @@ static HGENMENU hMenu = NULL;
 static void LoadSettings();
 static void ShowConsole(int show);
 static INT_PTR ShowHideConsole(WPARAM wParam, LPARAM lParam);
-static int Openfile(TCHAR *outputFile, int selection);
+static int Openfile(wchar_t *outputFile, int selection);
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -165,7 +165,7 @@ static void ShowConsole(int show)
 		RedrawWindow(pActive->hList, NULL, NULL, RDW_INVALIDATE | RDW_FRAME | RDW_UPDATENOW | RDW_ERASE);
 
 	if (hMenu)
-		Menu_ModifyItem(hMenu, show ? LPGENT("Hide Console") : LPGENT("Show Console"));
+		Menu_ModifyItem(hMenu, show ? LPGENW("Hide Console") : LPGENW("Show Console"));
 
 	if (hTTBButt)
 		CallService(MS_TTB_SETBUTTONSTATE, (WPARAM)hTTBButt, show ? TTBST_PUSHED : 0);
@@ -205,22 +205,22 @@ typedef struct
 	UINT control;
 	UINT icon;
 	int  type;
-	TCHAR *tooltip;
+	wchar_t *tooltip;
 } controlinfo;
 
 
 static controlinfo ctrls[] =
 {
 	// IDC_SCROLL & IDC_PAUSE must be first
-	{ IDC_SCROLL, IDI_SCROLL, BUTTONSETASFLATBTN, LPGENT("Scrolling (Ctrl+Q)") },
-	{ IDC_PAUSE, IDI_STARTED, BUTTONSETASFLATBTN, LPGENT("Pause logging (Ctrl+P)") },
-	{ IDC_SAVE, IDI_SAVE, BUTTONSETASFLATBTN, LPGENT("Save log to file (Ctrl+S)") },
-	{ IDC_COPY, IDI_COPY, BUTTONSETASFLATBTN, LPGENT("Copy selected log (Ctrl+C)") },
-	{ IDC_DELETE, IDI_DELETE, BUTTONSETASFLATBTN, LPGENT("Delete selected (Del)") },
-	{ IDC_OPTIONS, IDI_OPTIONS, BUTTONSETASFLATBTN, LPGENT("Log options (Ctrl+O)") },
-	{ IDC_STARTALL, IDI_START, BUTTONSETASFLATBTN, LPGENT("Start logging in all tabs") },
-	{ IDC_PAUSEALL, IDI_PAUSE, BUTTONSETASFLATBTN, LPGENT("Pause logging in all tabs") },
-	{ IDC_CLOSE, IDI_CLOSE, BUTTONSETASFLATBTN, LPGENT("Close tab (Ctrl+W)") },
+	{ IDC_SCROLL, IDI_SCROLL, BUTTONSETASFLATBTN, LPGENW("Scrolling (Ctrl+Q)") },
+	{ IDC_PAUSE, IDI_STARTED, BUTTONSETASFLATBTN, LPGENW("Pause logging (Ctrl+P)") },
+	{ IDC_SAVE, IDI_SAVE, BUTTONSETASFLATBTN, LPGENW("Save log to file (Ctrl+S)") },
+	{ IDC_COPY, IDI_COPY, BUTTONSETASFLATBTN, LPGENW("Copy selected log (Ctrl+C)") },
+	{ IDC_DELETE, IDI_DELETE, BUTTONSETASFLATBTN, LPGENW("Delete selected (Del)") },
+	{ IDC_OPTIONS, IDI_OPTIONS, BUTTONSETASFLATBTN, LPGENW("Log options (Ctrl+O)") },
+	{ IDC_STARTALL, IDI_START, BUTTONSETASFLATBTN, LPGENW("Start logging in all tabs") },
+	{ IDC_PAUSEALL, IDI_PAUSE, BUTTONSETASFLATBTN, LPGENW("Pause logging in all tabs") },
+	{ IDC_CLOSE, IDI_CLOSE, BUTTONSETASFLATBTN, LPGENW("Close tab (Ctrl+W)") },
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -331,7 +331,7 @@ static INT_PTR CALLBACK LogDlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LP
 			HWND hwnd = GetDlgItem(hwndDlg, ctrls[i].control);
 			SendMessage(hwnd, ctrls[i].type, 0, 0);
 			SendMessage(hwnd, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcons[i + ICON_FIRST]);
-			SendMessage(hwnd, BUTTONADDTOOLTIP, (WPARAM)TranslateTS(ctrls[i].tooltip), BATF_TCHAR);
+			SendMessage(hwnd, BUTTONADDTOOLTIP, (WPARAM)TranslateW(ctrls[i].tooltip), BATF_UNICODE);
 		}
 
 		CheckDlgButton(hwndDlg, IDC_SCROLL, dat->Scroll ? BST_CHECKED : BST_UNCHECKED);
@@ -372,23 +372,23 @@ static INT_PTR CALLBACK LogDlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LP
 		if (dat && !dat->Paused) {
 			LVITEM lvi = { 0 };
 			int last = 0x7fffffff;
-			TCHAR szBreak;
+			wchar_t szBreak;
 			DWORD len, tmplen;
 			DWORD wraplen = gWrapLen;
-			TCHAR *str = ((DUMPMSG *)lParam)->szMsg;
+			wchar_t *str = ((DUMPMSG *)lParam)->szMsg;
 
 			lvi.iItem = 0x7fffffff;
 
-			str = _tcstok(str, _T("\n"));
+			str = wcstok(str, L"\n");
 
 			if (gIcons && str != NULL) {
 				lvi.mask = LVIF_TEXT | LVIF_IMAGE;
 
-				if (_tcsstr(str, _T("Data received"))) {
+				if (wcsstr(str, L"Data received")) {
 					if (gSeparator) ListView_InsertItem(dat->hList, &lvi);
 					lvi.iImage = IMG_IN;
 				}
-				else if (_tcsstr(str, _T("Data sent"))) {
+				else if (wcsstr(str, L"Data sent")) {
 					if (gSeparator) ListView_InsertItem(dat->hList, &lvi);
 					lvi.iImage = IMG_OUT;
 				}
@@ -404,7 +404,7 @@ static INT_PTR CALLBACK LogDlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LP
 
 			while (str != NULL) {
 				lvi.pszText = &str[0];
-				tmplen = len = (DWORD)mir_tstrlen(lvi.pszText);
+				tmplen = len = (DWORD)mir_wstrlen(lvi.pszText);
 
 				while (len > wraplen) {
 					szBreak = lvi.pszText[wraplen];
@@ -423,7 +423,7 @@ static INT_PTR CALLBACK LogDlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LP
 
 				last = ListView_InsertItem(dat->hList, &lvi);
 
-				str = _tcstok(NULL, _T("\n"));
+				str = wcstok(NULL, L"\n");
 
 				if (str) dat->newline = 1;
 				lvi.iImage = IMG_EMPTY;
@@ -477,8 +477,8 @@ static INT_PTR CALLBACK LogDlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LP
 		case IDC_COPY:
 		{
 			int idx = 0;
-			TCHAR szText[128];
-			TCHAR *src, *dst, *buf;
+			wchar_t szText[MAX_WRAPLEN + 1];
+			wchar_t *src, *dst, *buf;
 			int flags = LVNI_BELOW;
 			int count = ListView_GetSelectedCount(dat->hList);
 
@@ -487,7 +487,7 @@ static INT_PTR CALLBACK LogDlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LP
 			else
 				count = ListView_GetItemCount(dat->hList);
 
-			dst = buf = (TCHAR *)malloc((count * (sizeof(szText) + 1) + 1) * sizeof(TCHAR));
+			dst = buf = (wchar_t *)malloc((count * (sizeof(szText) + 1) + 1) * sizeof(wchar_t));
 			if (!buf) break;
 
 			while ((idx = ListView_GetNextItem(dat->hList, idx, flags)) > 0) {
@@ -502,10 +502,10 @@ static INT_PTR CALLBACK LogDlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LP
 
 			if (dst - buf > 0 && OpenClipboard(hwndDlg)) {
 				EmptyClipboard();
-				HGLOBAL hClipboardData = GlobalAlloc(GMEM_DDESHARE, (dst - buf + 1) * sizeof(TCHAR));
+				HGLOBAL hClipboardData = GlobalAlloc(GMEM_DDESHARE, (dst - buf + 1) * sizeof(wchar_t));
 				if (hClipboardData) {
-					TCHAR *pchData = (TCHAR *)GlobalLock(hClipboardData);
-					mir_tstrcpy(pchData, buf);
+					wchar_t *pchData = (wchar_t *)GlobalLock(hClipboardData);
+					mir_wstrcpy(pchData, buf);
 					GlobalUnlock(hClipboardData);
 					SetClipboardData(CF_UNICODETEXT, hClipboardData);
 				}
@@ -541,21 +541,21 @@ static INT_PTR CALLBACK LogDlgProc(HWND hwndDlg, UINT message, WPARAM wParam, LP
 
 		case IDC_SAVE:
 		{
-			TCHAR szFile[MAX_PATH];
+			wchar_t szFile[MAX_PATH];
 
 			if (!Openfile(szFile, ListView_GetSelectedCount(dat->hList))) break;
 
-			FILE *fp = _tfopen(szFile, _T("wt"));
+			FILE *fp = _wfopen(szFile, L"wt");
 			if (fp) {
 				int idx = 0;
-				TCHAR szText[128];
+				wchar_t szText[MAX_WRAPLEN + 1];
 				int flags = LVNI_BELOW;
 				if (ListView_GetSelectedCount(dat->hList))
 					flags |= LVNI_SELECTED;
 
 				while ((idx = ListView_GetNextItem(dat->hList, idx, flags)) > 0) {
 					ListView_GetItemText(dat->hList, idx, 0, szText, _countof(szText));
-					_ftprintf(fp, _T("%s\n"), szText);
+					fwprintf(fp, L"%s\n", szText);
 				}
 				fclose(fp);
 			}
@@ -608,20 +608,19 @@ static INT_PTR CALLBACK ConsoleDlgProc(HWND hwndDlg, UINT message, WPARAM wParam
 	switch (message) {
 	case WM_INITDIALOG:
 	{
-		TCHAR title[MAX_PATH];
-		TCHAR name[MAX_PATH] = { 0 };
-		TCHAR path[MAX_PATH] = { 0 };
+		wchar_t title[MAX_PATH];
+		wchar_t name[MAX_PATH] = { 0 };
+		wchar_t path[MAX_PATH] = { 0 };
 
 		hTabs = GetDlgItem(hwndDlg, IDC_TABS);
 
 		// restore position
 		Utils_RestoreWindowPosition(hwndDlg, NULL, "Console", "Console", RWPF_HIDDEN);
 
-		CallService(MS_DB_GETPROFILENAMET, (WPARAM)_countof(name), (LPARAM)name);
+		Profile_GetNameW(_countof(name), name);
+		Profile_GetPathW(_countof(path), path);
 
-		CallService(MS_DB_GETPROFILEPATHT, (WPARAM)_countof(path), (LPARAM)path);
-
-		mir_sntprintf(title, _T("%s - %s\\%s"), TranslateT("Miranda Console"), path, name);
+		mir_snwprintf(title, L"%s - %s\\%s", TranslateT("Miranda Console"), path, name);
 
 		SetWindowText(hwndDlg, title);
 		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)hIcons[0]);
@@ -929,11 +928,11 @@ static int OnFastDump(WPARAM wParam, LPARAM lParam)
 		LOGMSG *logMsg = (LOGMSG *)lParam;
 		DWORD headlen = (DWORD)mir_strlen(logMsg->pszHead);
 		DWORD msglen = (DWORD)mir_strlen(logMsg->pszMsg);
-		DWORD len = (headlen + msglen + 1) * sizeof(TCHAR) + sizeof(DUMPMSG);
+		DWORD len = (headlen + msglen + 1) * sizeof(wchar_t) + sizeof(DUMPMSG);
 		DUMPMSG *dumpMsg = (DUMPMSG *)mir_alloc(len);
-		TCHAR *str = dumpMsg->szMsg;
+		wchar_t *str = dumpMsg->szMsg;
 
-		char *szModule = (wParam) ? ((NETLIBUSER *)wParam)->szDescriptiveName : "[Core]";
+		char *szModule = (wParam) ? ((NETLIBUSER *)wParam)->szDescriptiveName.a : "[Core]";
 		mir_strncpy(dumpMsg->szModule, szModule, _countof(dumpMsg->szModule));
 
 		wchar_t *ucs2 = mir_a2u(logMsg->pszHead);
@@ -1059,8 +1058,8 @@ static int OptInit(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONS);
-	odp.pszGroup = LPGEN("Services");
-	odp.pszTitle = LPGEN("Console");
+	odp.szGroup.a = LPGEN("Services");
+	odp.szTitle.a = LPGEN("Console");
 	odp.pfnDlgProc = OptDlgProc;
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);
@@ -1072,15 +1071,7 @@ static int OptInit(WPARAM wParam, LPARAM)
 static int OnColourChange(WPARAM, LPARAM)
 {
 	if (hwndConsole) {
-		ColourID cid = { 0 };
-
-		cid.cbSize = sizeof(cid);
-		mir_strcpy(cid.group, "Console");
-		mir_strcpy(cid.name, "Background");
-		mir_strcpy(cid.dbSettingsGroup, "Console");
-		mir_strcpy(cid.setting, "BgColor");
-
-		colBackground = (COLORREF)CallService(MS_COLOUR_GET, (WPARAM)&cid, 0);
+		colBackground = Colour_Get("Console", "Background");
 		if (colBackground != -1)
 			SendMessage(hwndConsole, HM_SETCOLOR, (WPARAM)hfLogFont, (LPARAM)colBackground);
 	}
@@ -1093,13 +1084,7 @@ static int OnFontChange(WPARAM, LPARAM)
 	if (hwndConsole) {
 		HFONT hf = NULL;
 		LOGFONT LogFont = { 0 };
-		FontIDT fid = { 0 };
-		fid.cbSize = sizeof(fid);
-
-		mir_tstrncpy(fid.group, LPGENT("Console"), _countof(fid.group));
-		mir_tstrncpy(fid.name, LPGENT("Text"), _countof(fid.name));
-
-		colLogFont = (COLORREF)CallService(MS_FONT_GETT, (WPARAM)&fid, (LPARAM)&LogFont);
+		colLogFont = Font_GetW(L"Console", L"Text", &LogFont);
 
 		if (LogFont.lfHeight != 0) {
 			hf = CreateFontIndirect(&LogFont);
@@ -1118,40 +1103,39 @@ static int OnSystemModulesLoaded(WPARAM, LPARAM)
 {
 	CreateServiceFunction(MS_CONSOLE_SHOW_HIDE, ShowHideConsole);
 
-	FontIDT fid = { 0 };
+	FontIDW fid = { 0 };
 	fid.cbSize = sizeof(fid);
-	mir_tstrncpy(fid.group, LPGENT("Console"), _countof(fid.group));
-	mir_tstrncpy(fid.name, LPGENT("Text"), _countof(fid.name));
+	mir_wstrncpy(fid.group, LPGENW("Console"), _countof(fid.group));
+	mir_wstrncpy(fid.name, LPGENW("Text"), _countof(fid.name));
 	mir_strncpy(fid.dbSettingsGroup, "Console", _countof(fid.dbSettingsGroup));
 	mir_strncpy(fid.prefix, "ConsoleFont", _countof(fid.prefix));
-	mir_tstrncpy(fid.backgroundGroup, LPGENT("Console"), _countof(fid.backgroundGroup));
-	mir_tstrncpy(fid.backgroundName, LPGENT("Background"), _countof(fid.backgroundName));
+	mir_wstrncpy(fid.backgroundGroup, LPGENW("Console"), _countof(fid.backgroundGroup));
+	mir_wstrncpy(fid.backgroundName, LPGENW("Background"), _countof(fid.backgroundName));
 	fid.flags = FIDF_DEFAULTVALID;
 	fid.deffontsettings.charset = DEFAULT_CHARSET;
 	fid.deffontsettings.colour = RGB(0, 0, 0);
 	fid.deffontsettings.size = 10;
 	fid.deffontsettings.style = 0;
-	mir_tstrncpy(fid.deffontsettings.szFace, _T("Courier"), _countof(fid.deffontsettings.szFace));
-	FontRegisterT(&fid);
+	mir_wstrncpy(fid.deffontsettings.szFace, L"Courier", _countof(fid.deffontsettings.szFace));
+	Font_RegisterW(&fid);
 
 	HookEvent(ME_FONT_RELOAD, OnFontChange);
 
-	ColourIDT cid = { 0 };
+	ColourIDW cid = { 0 };
 	cid.cbSize = sizeof(cid);
-	mir_tstrncpy(cid.group, LPGENT("Console"), _countof(cid.group));
-	mir_tstrncpy(cid.name, LPGENT("Background"), _countof(cid.name));
+	mir_wstrncpy(cid.group, LPGENW("Console"), _countof(cid.group));
+	mir_wstrncpy(cid.name, LPGENW("Background"), _countof(cid.name));
 	mir_strncpy(cid.dbSettingsGroup, "Console", _countof(cid.dbSettingsGroup));
 	mir_strncpy(cid.setting, "BgColor", _countof(cid.setting));
 	cid.defcolour = RGB(255, 255, 255);
-	ColourRegisterT(&cid);
+	Colour_RegisterW(&cid);
 
 	HookEvent(ME_COLOUR_RELOAD, OnColourChange);
 
-	HOTKEYDESC hkd = { 0 };
-	hkd.cbSize = sizeof(hkd);
+	HOTKEYDESC hkd = {};
 	hkd.pszName = "Console_Show_Hide";
-	hkd.pszDescription = LPGEN("Show/Hide Console");
-	hkd.pszSection = "Main";
+	hkd.szSection.a = "Main";
+	hkd.szDescription.a = LPGEN("Show/Hide Console");
 	hkd.pszService = MS_CONSOLE_SHOW_HIDE;
 	hkd.DefHotKey = HOTKEYCODE(HOTKEYF_EXT, 'C');
 	Hotkey_Register(&hkd);
@@ -1161,10 +1145,10 @@ static int OnSystemModulesLoaded(WPARAM, LPARAM)
 
 		CMenuItem mi;
 		SET_UID(mi, 0x6d97694e, 0x2024, 0x4560, 0xbb, 0xbc, 0x20, 0x62, 0x7e, 0x5, 0xdf, 0xb3);
-		mi.flags = CMIF_TCHAR;
+		mi.flags = CMIF_UNICODE;
 		mi.hIcolibItem = hIcons[0];
 		mi.position = 1900000000;
-		mi.name.t = (IsWindowVisible(hwndConsole)) ? LPGENT("Hide Console") : LPGENT("Show Console");
+		mi.name.w = (IsWindowVisible(hwndConsole)) ? LPGENW("Hide Console") : LPGENW("Show Console");
 		mi.pszService = MS_CONSOLE_SHOW_HIDE;
 		hMenu = Menu_AddMainMenuItem(&mi);
 
@@ -1258,25 +1242,25 @@ void ShutdownConsole(void)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-TCHAR *addstring(TCHAR *str, TCHAR *add) {
-	mir_tstrcpy(str, add);
-	return str + mir_tstrlen(add) + 1;
+wchar_t *addstring(wchar_t *str, wchar_t *add) {
+	mir_wstrcpy(str, add);
+	return str + mir_wstrlen(add) + 1;
 }
 
 
-static int Openfile(TCHAR *outputFile, int selection)
+static int Openfile(wchar_t *outputFile, int selection)
 {
-	TCHAR filename[MAX_PATH + 2] = _T("");
-	TCHAR *title;
+	wchar_t filename[MAX_PATH + 2] = L"";
+	wchar_t *title;
 
-	TCHAR *filter, *tmp, *tmp1, *tmp2;
+	wchar_t *filter, *tmp, *tmp1, *tmp2;
 	tmp1 = TranslateT("Text Files (*.txt)");
 	tmp2 = TranslateT("All Files");
-	filter = tmp = (TCHAR*)_alloca((mir_tstrlen(tmp1) + mir_tstrlen(tmp2) + 11)*sizeof(TCHAR));
+	filter = tmp = (wchar_t*)_alloca((mir_wstrlen(tmp1) + mir_wstrlen(tmp2) + 11)*sizeof(wchar_t));
 	tmp = addstring(tmp, tmp1);
-	tmp = addstring(tmp, _T("*.TXT"));
+	tmp = addstring(tmp, L"*.TXT");
 	tmp = addstring(tmp, tmp2);
-	tmp = addstring(tmp, _T("*"));
+	tmp = addstring(tmp, L"*");
 	*tmp = 0;
 
 	if (selection)
@@ -1292,11 +1276,11 @@ static int Openfile(TCHAR *outputFile, int selection)
 	ofn.Flags = OFN_HIDEREADONLY | OFN_SHAREAWARE | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
 	ofn.lpstrTitle = title;
 	ofn.nMaxFile = MAX_PATH;
-	ofn.lpstrDefExt = _T("txt");
+	ofn.lpstrDefExt = L"txt";
 
 	if (!GetSaveFileName(&ofn))
 		return 0;
-	mir_tstrcpy(outputFile, filename);
+	mir_wstrcpy(outputFile, filename);
 	return 1;
 }
 

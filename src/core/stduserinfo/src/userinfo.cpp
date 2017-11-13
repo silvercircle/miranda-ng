@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -46,7 +46,7 @@ struct DetailsPageData
 	HWND hwnd;
 	HTREEITEM hItem;
 	int changed, hLangpack;
-	TCHAR *ptszTitle, *ptszTab;
+	wchar_t *ptszTitle, *ptszTab;
 };
 
 struct DetailsData
@@ -60,36 +60,36 @@ struct DetailsData
 	DetailsPageData *opd;
 	RECT rcDisplay,  rcDisplayTab;
 	int updateAnimFrame;
-	TCHAR szUpdating[64];
+	wchar_t szUpdating[64];
 	int *infosUpdated;
 };
 
-TCHAR* getTitle(OPTIONSDIALOGPAGE *p)
+wchar_t* getTitle(OPTIONSDIALOGPAGE *p)
 {
-	return (p->flags & ODPF_DONTTRANSLATE) ? p->ptszTitle : TranslateTH(p->hLangpack, p->ptszTitle);
+	return (p->flags & ODPF_DONTTRANSLATE) ? p->szTitle.w : TranslateW_LP(p->szTitle.w, p->hLangpack);
 }
 
-TCHAR* getTab(OPTIONSDIALOGPAGE *p)
+wchar_t* getTab(OPTIONSDIALOGPAGE *p)
 {
-	return (p->flags & ODPF_DONTTRANSLATE) ? p->ptszTab : TranslateTH(p->hLangpack, p->ptszTab);
+	return (p->flags & ODPF_DONTTRANSLATE) ? p->szTab.w : TranslateW_LP(p->szTab.w, p->hLangpack);
 }
 
 static int PageSortProc(OPTIONSDIALOGPAGE *item1, OPTIONSDIALOGPAGE *item2)
 {
 	int res;
-	TCHAR *s1 = getTitle(item1), *s2 = getTitle(item2);
-	if (!mir_tstrcmp(s1, TranslateT("Summary"))) return -1;
-	if (!mir_tstrcmp(s2, TranslateT("Summary"))) return 1;
-	if (res = mir_tstrcmp(s1, s2)) return res;
+	wchar_t *s1 = getTitle(item1), *s2 = getTitle(item2);
+	if (!mir_wstrcmp(s1, TranslateT("Summary"))) return -1;
+	if (!mir_wstrcmp(s2, TranslateT("Summary"))) return 1;
+	if (res = mir_wstrcmp(s1, s2)) return res;
 
 	s1 = getTab(item1), s2 = getTab(item2);
 	if (s1 && !s2) return -1;
 	if (!s1 && s2) return 1;
 	if (!s1 && !s2) return 0;
 
-	if (s1 && !mir_tstrcmp(s1, TranslateT("General"))) return -1;
-	if (s2 && !mir_tstrcmp(s2, TranslateT("General"))) return 1;
-	return mir_tstrcmp(s1, s2);
+	if (s1 && !mir_wstrcmp(s1, TranslateT("General"))) return -1;
+	if (s2 && !mir_wstrcmp(s2, TranslateT("General"))) return 1;
+	return mir_wstrcmp(s1, s2);
 }
 
 static INT_PTR ShowDetailsDialogCommand(WPARAM wParam, LPARAM)
@@ -115,14 +115,14 @@ static INT_PTR ShowDetailsDialogCommand(WPARAM wParam, LPARAM)
 	psh.hwndParent = NULL;
 	psh.nPages = opi.pageCount;
 	psh.pStartPage = 0;
-	psh.pszCaption = (TCHAR*)wParam;	  //more abuses of structure: this is hContact
+	psh.pszCaption = (wchar_t*)wParam;	  //more abuses of structure: this is hContact
 	psh.ppsp = (PROPSHEETPAGE*)opi.odp;		  //blatent misuse of the structure, but what the hell
 
 	CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_DETAILS), NULL, DlgProcDetails, (LPARAM)&psh);
 	for (int i = 0; i < opi.pageCount; i++) {
 		//cleanup moved to WM_DESTROY
-		if (opi.odp[i].pszGroup != NULL)
-			mir_free(opi.odp[i].pszGroup);
+		if (opi.odp[i].szGroup.w != NULL)
+			mir_free(opi.odp[i].szGroup.a);
 		if ((DWORD_PTR)opi.odp[i].pszTemplate & 0xFFFF0000)
 			mir_free((char*)opi.odp[i].pszTemplate);
 	}
@@ -147,19 +147,16 @@ static INT_PTR AddDetailsPage(WPARAM wParam, LPARAM lParam)
 	dst->pszTemplate = ((DWORD_PTR)odp->pszTemplate & 0xFFFF0000) ? mir_strdup(odp->pszTemplate) : odp->pszTemplate;
 
 	if (odp->flags & ODPF_UNICODE) {
-		dst->ptszTitle = (odp->ptszTitle == 0) ? NULL : mir_wstrdup(odp->ptszTitle);
-		dst->ptszTab = (!(odp->flags & ODPF_USERINFOTAB) || !odp->ptszTab) ? NULL : mir_wstrdup(odp->ptszTab);
+		dst->szTitle.w = (odp->szTitle.w == 0) ? NULL : mir_wstrdup(odp->szTitle.w);
+		dst->szTab.w = (odp->flags & ODPF_USERINFOTAB) ? mir_wstrdup(odp->szTab.w) : NULL;
 	}
 	else {
-		dst->ptszTitle = mir_a2t(odp->pszTitle);
-		dst->ptszTab = (!(odp->flags & ODPF_USERINFOTAB) || !odp->pszTab) ? NULL : mir_a2t(odp->pszTab);
+		dst->szTitle.w = mir_a2u(odp->szTitle.a);
+		dst->szTab.w = (odp->flags & ODPF_USERINFOTAB) ? mir_a2u(odp->szTab.a) : NULL;
 	}
 
 	dst->hLangpack = odp->hLangpack;
 	dst->flags = odp->flags;
-	dst->groupPosition = odp->groupPosition;
-	dst->hGroupIcon = odp->hGroupIcon;
-	dst->hIcon = odp->hIcon;
 	dst->dwInitParam = odp->dwInitParam;
 	opi->pageCount++;
 	return 0;
@@ -180,13 +177,13 @@ static void CreateDetailsTabs(HWND hwndDlg, DetailsData *dat, DetailsPageData *p
 	TabCtrl_DeleteAllItems(hwndTab);
 	for (int i = 0; i < dat->pageCount; i++) {
 		DetailsPageData &odp = dat->opd[i];
-		if (!odp.ptszTab || mir_tstrcmp(odp.ptszTitle, ppg->ptszTitle))
+		if (!odp.ptszTab || mir_wstrcmp(odp.ptszTitle, ppg->ptszTitle))
 			continue;
 
-		tie.pszText = TranslateTH(odp.hLangpack, odp.ptszTab);
+		tie.pszText = TranslateW_LP(odp.ptszTab, odp.hLangpack);
 		tie.lParam = i;
 		TabCtrl_InsertItem(hwndTab, pages, &tie);
-		if (!mir_tstrcmp(odp.ptszTab, ppg->ptszTab))
+		if (!mir_wstrcmp(odp.ptszTab, ppg->ptszTab))
 			sel = pages;
 		pages++;
 	}
@@ -238,7 +235,7 @@ static INT_PTR CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 	switch (msg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
-		Window_SetIcon_IcoLib(hwndDlg, SKINICON_OTHER_USERDETAILS);
+		Window_SetSkinIcon_IcoLib(hwndDlg, SKINICON_OTHER_USERDETAILS);
 		{
 			PROPSHEETHEADER *psh = (PROPSHEETHEADER*)lParam;
 			dat = (DetailsData*)mir_calloc(sizeof(DetailsData));
@@ -248,14 +245,14 @@ static INT_PTR CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			WindowList_Add(hWindowList, hwndDlg, dat->hContact);
 
 			//////////////////////////////////////////////////////////////////////
-			TCHAR *name, oldTitle[256], newTitle[256];
+			wchar_t *name, oldTitle[256], newTitle[256];
 			if (dat->hContact == NULL)
 				name = TranslateT("Owner");
 			else
 				name = pcli->pfnGetContactDisplayName(dat->hContact, 0);
 
 			GetWindowText(hwndDlg, oldTitle, _countof(oldTitle));
-			mir_sntprintf(newTitle, oldTitle, name);
+			mir_snwprintf(newTitle, oldTitle, name);
 			SetWindowText(hwndDlg, newTitle);
 
 			//////////////////////////////////////////////////////////////////////
@@ -268,8 +265,8 @@ static INT_PTR CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 			LPTSTR ptszLastTab;
 			DBVARIANT dbv;
-			if (!db_get_ts(NULL, "UserInfo", "LastTab", &dbv)) {
-				ptszLastTab = NEWTSTR_ALLOCA(dbv.ptszVal);
+			if (!db_get_ws(NULL, "UserInfo", "LastTab", &dbv)) {
+				ptszLastTab = NEWWSTR_ALLOCA(dbv.ptszVal);
 				db_free(&dbv);
 			}
 			else ptszLastTab = NULL;
@@ -289,11 +286,11 @@ static INT_PTR CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				p.dlgParam = odp[i].dwInitParam;
 				p.hInst = odp[i].hInstance;
 
-				p.ptszTitle = odp[i].ptszTitle;
-				p.ptszTab = odp[i].ptszTab;
+				p.ptszTitle = odp[i].szTitle.w;
+				p.ptszTab = odp[i].szTab.w;
 				p.hLangpack = odp[i].hLangpack;
 
-				if (i && p.ptszTab && !mir_tstrcmp(dat->opd[i - 1].ptszTitle, p.ptszTitle)) {
+				if (i && p.ptszTab && !mir_wstrcmp(dat->opd[i - 1].ptszTitle, p.ptszTitle)) {
 					p.hItem = dat->opd[i - 1].hItem;
 					continue;
 				}
@@ -306,8 +303,8 @@ static INT_PTR CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				if (odp[i].flags & ODPF_DONTTRANSLATE)
 					tvis.item.pszText = p.ptszTitle;
 				else
-					tvis.item.pszText = TranslateTH(p.hLangpack, p.ptszTitle);
-				if (ptszLastTab && !mir_tstrcmp(tvis.item.pszText, ptszLastTab))
+					tvis.item.pszText = TranslateW_LP(p.ptszTitle, p.hLangpack);
+				if (ptszLastTab && !mir_wstrcmp(tvis.item.pszText, ptszLastTab))
 					dat->currentPage = i;
 				p.hItem = TreeView_InsertItem(hwndTree, &tvis);
 			}
@@ -318,7 +315,7 @@ static INT_PTR CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			TCITEM tci;
 			tci.mask = TCIF_TEXT | TCIF_IMAGE;
 			tci.iImage = -1;
-			tci.pszText = _T("X");
+			tci.pszText = L"X";
 			TabCtrl_InsertItem(hwndTab, 0, &tci);
 
 			GetWindowRect(hwndTab, &dat->rcDisplayTab);
@@ -343,7 +340,7 @@ static INT_PTR CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			dat->updateAnimFrame = 0;
 			GetDlgItemText(hwndDlg, IDC_UPDATING, dat->szUpdating, _countof(dat->szUpdating));
 			SendMessage(hwndDlg, M_CHECKONLINE, 0, 0);
-			if (!CallContactService(dat->hContact, PSS_GETINFO, SGIF_ONOPEN, 0)) {
+			if (!ProtoChainSend(dat->hContact, PSS_GETINFO, SGIF_ONOPEN, 0)) {
 				EnableWindow(GetDlgItem(hwndDlg, IDC_UPDATE), FALSE);
 				SetTimer(hwndDlg, 1, 100, NULL);
 			}
@@ -354,8 +351,8 @@ static INT_PTR CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 		return TRUE;
 
 	case WM_TIMER:
-		TCHAR str[128];
-		mir_sntprintf(str, _T("%.*s%s%.*s"), dat->updateAnimFrame % 10, _T("........."), dat->szUpdating, dat->updateAnimFrame % 10, _T("........."));
+		wchar_t str[128];
+		mir_snwprintf(str, L"%.*s%s%.*s", dat->updateAnimFrame % 10, L".........", dat->szUpdating, dat->updateAnimFrame % 10, L".........");
 		SetDlgItemText(hwndDlg, IDC_UPDATING, str);
 		if (++dat->updateAnimFrame == UPDATEANIMFRAMES)
 			dat->updateAnimFrame = 0;
@@ -565,7 +562,7 @@ static INT_PTR CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				dat->infosUpdated = NULL;
 			}
 			if (dat->hContact != NULL) {
-				if (!CallContactService(dat->hContact, PSS_GETINFO, 0, 0)) {
+				if (!ProtoChainSend(dat->hContact, PSS_GETINFO, 0, 0)) {
 					EnableWindow(GetDlgItem(hwndDlg, IDC_UPDATE), FALSE);
 					ShowWindow(GetDlgItem(hwndDlg, IDC_UPDATING), SW_SHOW);
 					SetTimer(hwndDlg, 1, 100, NULL);
@@ -580,14 +577,14 @@ static INT_PTR CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 		break;
 
 	case WM_DESTROY:
-		TCHAR name[128];
+		wchar_t name[128];
 		TVITEM tvi;
 		tvi.mask = TVIF_TEXT;
 		tvi.hItem = dat->opd[dat->currentPage].hItem;
 		tvi.pszText = name;
 		tvi.cchTextMax = _countof(name);
 		TreeView_GetItem(GetDlgItem(hwndDlg, IDC_PAGETREE), &tvi);
-		db_set_ts(NULL, "UserInfo", "LastTab", name);
+		db_set_ws(NULL, "UserInfo", "LastTab", name);
 
 		Window_FreeIcon_IcoLib(hwndDlg);
 		SendDlgItemMessage(hwndDlg, IDC_NAME, WM_SETFONT, SendDlgItemMessage(hwndDlg, IDC_WHITERECT, WM_GETFONT, 0, 0), 0);
@@ -613,7 +610,7 @@ static INT_PTR CALLBACK DlgProcDetails(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 static int ShutdownUserInfo(WPARAM, LPARAM)
 {
-	WindowList_BroadcastAsync(hWindowList, WM_DESTROY, 0, 0);
+	WindowList_Broadcast(hWindowList, WM_DESTROY, 0, 0);
 	WindowList_Destroy(hWindowList);
 	return 0;
 }

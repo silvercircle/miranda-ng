@@ -17,11 +17,11 @@ not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  
 */
 
-#include "..\stdafx.h"
+#include "../stdafx.h"
 
 MRadio::MRadio()
 {
-	name = _T("mRadio");
+	name = L"mRadio";
 	needPoll = TRUE;
 }
 
@@ -43,9 +43,9 @@ int MRadio::GetData()
 		if (!db_get_s(hContact, "mRadio", "Nick", &dbv)) {
 			listening_info.cbSize = sizeof(listening_info);
 			listening_info.dwFlags = LTI_TCHAR;
-			listening_info.ptszArtist = mir_tstrdup(_T("Radio"));
-			listening_info.ptszType = mir_tstrdup(_T("Radio"));
-			listening_info.ptszTitle = mir_a2t(dbv.pszVal);
+			listening_info.ptszArtist = mir_wstrdup(L"Radio");
+			listening_info.ptszType = mir_wstrdup(L"Radio");
+			listening_info.ptszTitle = mir_a2u(dbv.pszVal);
 
 			db_free(&dbv);
 			return 1;

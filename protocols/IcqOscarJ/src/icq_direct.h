@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2009 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -28,32 +28,29 @@
 
 struct filetransfer: public basic_filetransfer
 {
-  int status;
-  int sending;
-  int iCurrentFile;
-  int currentIsDir;
-  DWORD dwCookie;
-  DWORD dwUin;
-  DWORD dwRemotePort;
-  MCONTACT hContact;
-  char *szFilename;
-  char *szDescription;
-  char *szSavePath;
-  char *szThisFile;
-  char *szThisSubdir;
-  char **pszFiles;
-  DWORD dwThisFileSize;
-  DWORD dwThisFileDate;
-  DWORD dwTotalSize;
-  DWORD dwFileCount;
-  DWORD dwTransferSpeed;
-  DWORD dwBytesDone, dwFileBytesDone;
-  int fileId;
-  HANDLE hConnection;
-  DWORD dwLastNotify;
-  int   nVersion;   // Was this sent with a v7 or a v8 packet?
-  BOOL bDC;         // Was this received over a DC or through server?
-  BOOL bEmptyDesc;  // Was the description empty ?
+	int status;
+	int sending;
+	int currentIsDir;
+	DWORD dwUin;
+	DWORD dwRemotePort;
+	char *szFilename;
+	char *szDescription;
+	char *szSavePath;
+	char *szThisFile;
+	char *szThisSubdir;
+	char **pszFiles;
+	DWORD dwThisFileSize;
+	DWORD dwThisFileDate;
+	DWORD dwTotalSize;
+	DWORD dwFileCount;
+	DWORD dwTransferSpeed;
+	DWORD dwBytesDone, dwFileBytesDone;
+	int fileId;
+	HNETLIBCONN hConnection;
+	DWORD dwLastNotify;
+	int   nVersion;   // Was this sent with a v7 or a v8 packet?
+	BOOL bDC;         // Was this received over a DC or through server?
+	BOOL bEmptyDesc;  // Was the description empty ?
 };
 
 #define DIRECTCONN_STANDARD   0
@@ -64,27 +61,27 @@ struct filetransfer: public basic_filetransfer
 
 struct directconnect
 {
-  MCONTACT hContact;
-  HANDLE hConnection;
-  DWORD dwConnectionCookie;
-  int type;
-  WORD wVersion;
-  int incoming;
-  int wantIdleTime;
-  int packetPending;
-  DWORD dwRemotePort;
-  DWORD dwRemoteUin;
-  DWORD dwRemoteExternalIP;
-  DWORD dwRemoteInternalIP;
-  DWORD dwLocalExternalIP;
-  DWORD dwLocalInternalIP;
-  int initialised;
-  int handshake;
-  DWORD dwThreadId;
-  filetransfer *ft;
-  DWORD dwReqId;  // Reverse Connect request cookie
+	MCONTACT hContact;
+	HNETLIBCONN hConnection;
+	DWORD dwConnectionCookie;
+	int type;
+	WORD wVersion;
+	int incoming;
+	int wantIdleTime;
+	int packetPending;
+	DWORD dwRemotePort;
+	DWORD dwRemoteUin;
+	DWORD dwRemoteExternalIP;
+	DWORD dwRemoteInternalIP;
+	DWORD dwLocalExternalIP;
+	DWORD dwLocalInternalIP;
+	int initialised;
+	int handshake;
+	DWORD dwThreadId;
+	filetransfer *ft;
+	DWORD dwReqId;  // Reverse Connect request cookie
 };
 
-int  DecryptDirectPacket(directconnect* dc, PBYTE buf, size_t wLen);
+int DecryptDirectPacket(directconnect *dc, PBYTE buf, size_t wLen);
 
 #endif /* __ICQ_DIRECT_H */

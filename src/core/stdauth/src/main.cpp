@@ -2,7 +2,7 @@
 
 Standard Send/Recv Auth plugin for Miranda NG
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 int LoadSendRecvAuthModule(void);
 
+CLIST_INTERFACE *pcli;
 HINSTANCE hInst;
 int hLangpack;
 
@@ -56,6 +57,7 @@ extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = { MIID_SRAUTH
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
+	pcli = Clist_GetInterface();
 
 	LoadSendRecvAuthModule();
 	return 0;

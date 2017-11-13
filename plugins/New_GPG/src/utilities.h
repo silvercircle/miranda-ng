@@ -16,11 +16,11 @@
 
 #ifndef UTILITIES_H
 #define UTILITIES_H
-TCHAR* __stdcall UniGetContactSettingUtf(MCONTACT hContact, const char *szModule,const char* szSetting, TCHAR* szDef);
+wchar_t* __stdcall UniGetContactSettingUtf(MCONTACT hContact, const char *szModule,const char* szSetting, wchar_t* szDef);
 char* __stdcall UniGetContactSettingUtf(MCONTACT hContact, const char *szModule,const char* szSetting, char* szDef);
-void GetFilePath(TCHAR *WindowTittle, char *szSetting, TCHAR *szExt, TCHAR *szExtDesc);
-TCHAR *GetFilePath(TCHAR *WindowTittle, TCHAR *szExt, TCHAR *szExtDesc, bool save_file = false);
-void GetFolderPath(TCHAR *WindowTittle, char *szSetting);
+void GetFilePath(wchar_t *WindowTittle, char *szSetting, wchar_t *szExt, wchar_t *szExtDesc);
+wchar_t *GetFilePath(wchar_t *WindowTittle, wchar_t *szExt, wchar_t *szExtDesc, bool save_file = false);
+void GetFolderPath(wchar_t *WindowTittle, char *szSetting);
 
 void storeOutput(HANDLE ahandle, string *output);
 
@@ -29,7 +29,7 @@ void setClistIcon(MCONTACT);
 
 void send_encrypted_msgs_thread(void*);
 
-int ComboBoxAddStringUtf(HWND hCombo, const TCHAR *szString, DWORD data);
+int ComboBoxAddStringUtf(HWND hCombo, const wchar_t *szString, DWORD data);
 bool isContactSecured(MCONTACT hContact);
 bool isContactHaveKey(MCONTACT hContact);
 bool isTabsrmmUsed();
@@ -50,7 +50,6 @@ public:
 		flags = 0;
 		timestamp = time(0);
 		szModule = 0;
-		cbSize = 0;
 		cbBlob = DWORD(mir_strlen(msg)+1);
 		pBlob = (PBYTE)msg;
 	}
@@ -62,7 +61,6 @@ public:
 		flags = 0;
 		timestamp = time;
 		szModule = 0;
-		cbSize = 0;
 	}
 	db_event(char* msg, DWORD time, int type)
 	{
@@ -75,7 +73,6 @@ public:
 		flags = 0;
 		timestamp = time;
 		szModule = 0;
-		cbSize = 0;
 	}
 	db_event(char* msg, int type)
 	{
@@ -88,7 +85,6 @@ public:
 			eventType = EVENTTYPE_MESSAGE;
 		timestamp = time(0);
 		szModule = 0;
-		cbSize = 0;
 	}
 	db_event(char* msg, DWORD time, int type, DWORD _flags)
 	{
@@ -101,9 +97,9 @@ public:
 		flags = _flags;
 		timestamp = time;
 		szModule = 0;
-		cbSize = 0;
 	}
 };
+
 void HistoryLog(MCONTACT, db_event);
 void fix_line_term(std::string &s);
 void fix_line_term(std::wstring &s);

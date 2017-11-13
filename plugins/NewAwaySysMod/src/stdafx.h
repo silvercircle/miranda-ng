@@ -34,7 +34,6 @@
 #include <time.h>
 #include <shellapi.h>
 #include <crtdbg.h>
-#include <tchar.h>
 #include <stdarg.h>
 
 #include "newpluginapi.h"
@@ -46,11 +45,10 @@
 #include "m_protosvc.h"
 #include "m_options.h"
 #include "m_netlib.h"
-#include "..\..\protocols\IcqOscarJ\src\icq_constants.h"
+#include "../../protocols/IcqOscarJ/src/icq_constants.h"
 #include "m_skin.h"
 #include "m_awaymsg.h"
 #include "m_utils.h"
-#include "m_system_cpp.h"
 #include "m_history.h"
 #include "m_icolib.h"
 #include "m_message.h"
@@ -76,15 +74,15 @@
 #define CBSSTATE_PRESSED 2
 #define CBSSTATE_DISABLED 3
 
-#define VAR_AWAYSINCE_TIME _T("nas_awaysince_time")
-#define VAR_AWAYSINCE_DATE _T("nas_awaysince_date")
-#define VAR_STATDESC _T("nas_statdesc")
-#define VAR_MYNICK _T("nas_mynick")
-#define VAR_REQUESTCOUNT _T("nas_requestcount")
-#define VAR_MESSAGENUM _T("nas_messagecount")
-#define VAR_TIMEPASSED _T("nas_timepassed")
-#define VAR_PREDEFINEDMESSAGE _T("nas_predefinedmessage")
-#define VAR_PROTOCOL _T("nas_protocol")
+#define VAR_AWAYSINCE_TIME L"nas_awaysince_time"
+#define VAR_AWAYSINCE_DATE L"nas_awaysince_date"
+#define VAR_STATDESC L"nas_statdesc"
+#define VAR_MYNICK L"nas_mynick"
+#define VAR_REQUESTCOUNT L"nas_requestcount"
+#define VAR_MESSAGENUM L"nas_messagecount"
+#define VAR_TIMEPASSED L"nas_timepassed"
+#define VAR_PREDEFINEDMESSAGE L"nas_predefinedmessage"
+#define VAR_PROTOCOL L"nas_protocol"
 
 #define SENDSMSG_EVENT_MSG 0x1
 #define SENDSMSG_EVENT_URL 0x2
@@ -137,13 +135,15 @@
 #define WRITE_INTERPRET 4
 #define WRITE_CMSG 8
 
-#define TOGGLE_SOE_COMMAND LPGENT("Toggle autoreply on/off")
-#define DISABLE_SOE_COMMAND LPGENT("Toggle autoreply off")
-#define ENABLE_SOE_COMMAND LPGENT("Toggle autoreply on")
+#define TOGGLE_SOE_COMMAND LPGENW("Toggle autoreply on/off")
+#define DISABLE_SOE_COMMAND LPGENW("Toggle autoreply off")
+#define ENABLE_SOE_COMMAND LPGENW("Toggle autoreply on")
 
 #define STR_XSTATUSDESC TranslateT("extended status")
 
 #define MOD_NAME "NewAwaySys"
+#define MOD_NAMEW L"NewAwaySys"
+
 #define LOG_ID MOD_NAME // LogService log ID
 #define LOG_PREFIX MOD_NAME ": " // netlib.log prefix for all NAS' messages
 
@@ -180,7 +180,7 @@
 #define DB_SENDCOUNT "SendCount"
 #define MESSAGES_DB_MSGTREEDEF "MsgTreeDef"
 
-#define MSGTREE_RECENT_OTHERGROUP _T("Other")
+#define MSGTREE_RECENT_OTHERGROUP L"Other"
 
 // GetMsgFormat flags
 #define GMF_PERSONAL 1 // is also used to get global status message, when hContact = NULL (szProto = NULL)
@@ -198,7 +198,7 @@
 #define VPF_XSTATUS 1 // use "extended status" instead of the usual status description in %nas_statdesc%, and XStatus message in %nas_message%
 
 // options dialog
-#define OPT_TITLE LPGENT("Away System")
+#define OPT_TITLE LPGENW("Away System")
 #define OPT_MAINGROUP LPGEN("Status")
 #define OPT_POPUPGROUP LPGEN("Popups")
 
@@ -294,13 +294,12 @@ extern MWindowList g_hReadWndList;
 INT_PTR GetContactStatMsg(WPARAM wParam, LPARAM lParam);
 
 // AwayOpt.cpp
-int ModernOptInitialise(WPARAM wParam, LPARAM lParam);
 int OptsDlgInit(WPARAM wParam, LPARAM); // called on opening of the options dialog
 void InitOptions(); // called once when plugin is loaded
 
 //int ShowPopupNotification(COptPage &PopupNotifyData, MCONTACT hContact, int iStatusMode);
 void ShowLog(TCString &LogFilePath);
-void ShowMsg(TCHAR *szFirstLine, TCHAR *szSecondLine = _T(""), bool IsErrorMsg = false, int Timeout = 0);
+void ShowMsg(wchar_t *szFirstLine, wchar_t *szSecondLine = L"", bool IsErrorMsg = false, int Timeout = 0);
 
 #define AWAYSYS_STATUSMSGREQUEST_SOUND "AwaySysStatusMsgRequest"
 #define ME_AWAYSYS_WORKAROUND "AwaySys/_CallService"
@@ -320,12 +319,12 @@ static __inline int LogMessage(const char *Format, ...)
 	va_start(va, Format);
 	mir_vsnprintf(szText + (_countof(LOG_PREFIX) - 1), sizeof(szText) - (_countof(LOG_PREFIX) - 1), Format, va);
 	va_end(va);
-	return CallService(MS_NETLIB_LOG, NULL, (LPARAM)szText);
+	return Netlib_Log(NULL, szText);
 }
 
-__inline int CallAllowedPS_SETAWAYMSG(const char *szProto, int iMode, const TCHAR *szMsg)
+__inline int CallAllowedPS_SETAWAYMSG(const char *szProto, int iMode, const wchar_t *szMsg)
 { // we must use this function everywhere we want to call PS_SETAWAYMSG, otherwise NAS won't allow to change the message!
-	LogMessage("PS_SETAWAYMSG called by NAS. szProto=%s, Status=%d, Msg:\n%S", szProto, iMode, szMsg ? szMsg : _T("NULL"));
+	LogMessage("PS_SETAWAYMSG called by NAS. szProto=%s, Status=%d, Msg:\n%S", szProto, iMode, szMsg ? szMsg : L"NULL");
 	return CallProtoService(szProto, PS_SETAWAYMSG, iMode, (LPARAM)szMsg);
 }
 

@@ -1,6 +1,6 @@
 /*
 Fingerprint NG (client version) icons module for Miranda NG
-Copyright © 2006-12 ghazan, mataes, HierOS, FYR, Bio, nullbie, faith_healer and all respective contributors.
+Copyright © 2006-17 ghazan, mataes, HierOS, FYR, Bio, nullbie, faith_healer and all respective contributors.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include "stdafx.h"
 
 static UINT g_LPCodePage;
-static TCHAR g_szSkinLib[MAX_PATH];
+static wchar_t g_szSkinLib[MAX_PATH];
 static HANDLE hExtraIcon = NULL;
 static HANDLE hFolderChanged = NULL, hIconFolder = NULL;
 
@@ -37,7 +37,7 @@ static INT_PTR ServiceGetClientIconW(WPARAM wParam, LPARAM lParam);
 *	prepares upperstring masks and registers them in IcoLib
 */
 
-static TCHAR* getSectionName(int flag)
+static wchar_t* getSectionName(int flag)
 {
 	switch (flag)
 	{
@@ -57,20 +57,20 @@ void __fastcall Prepare(KN_FP_MASK* mask, bool bEnable)
 	if (!mask->szMask || !bEnable)
 		return;
 
-	size_t iMaskLen = mir_tstrlen(mask->szMask) + 1;
-	LPTSTR pszNewMask = (LPTSTR)HeapAlloc(hHeap, HEAP_NO_SERIALIZE, iMaskLen * sizeof(TCHAR));
-	_tcscpy_s(pszNewMask, iMaskLen, mask->szMask);
-	_tcsupr_s(pszNewMask, iMaskLen);
+	size_t iMaskLen = mir_wstrlen(mask->szMask) + 1;
+	LPTSTR pszNewMask = (LPTSTR)HeapAlloc(hHeap, HEAP_NO_SERIALIZE, iMaskLen * sizeof(wchar_t));
+	wcscpy_s(pszNewMask, iMaskLen, mask->szMask);
+	_wcsupr_s(pszNewMask, iMaskLen);
 	mask->szMaskUpper = pszNewMask;
 
-	TCHAR destfile[MAX_PATH];
+	wchar_t destfile[MAX_PATH];
 	if (mask->iIconIndex == IDI_NOTFOUND || mask->iIconIndex == IDI_UNKNOWN || mask->iIconIndex == IDI_UNDETECTED)
 		GetModuleFileName(g_hInst, destfile, MAX_PATH);
 	else {
-		_tcsncpy_s(destfile, g_szSkinLib, _TRUNCATE);
+		wcsncpy_s(destfile, g_szSkinLib, _TRUNCATE);
 
 		struct _stat64i32 stFileInfo;
-		if (_tstat(destfile, &stFileInfo) == -1)
+		if (_wstat(destfile, &stFileInfo) == -1)
 			return;
 	}
 
@@ -79,11 +79,11 @@ void __fastcall Prepare(KN_FP_MASK* mask, bool bEnable)
 		return;
 
 	SKINICONDESC sid = { 0 };
-	sid.flags = SIDF_ALL_TCHAR;
-	sid.section.t = SectName;
+	sid.flags = SIDF_ALL_UNICODE;
+	sid.section.w = SectName;
 	sid.pszName = mask->szIconName;
-	sid.description.t = mask->szClientDescription;
-	sid.defaultFile.t = destfile;
+	sid.description.w = mask->szClientDescription;
+	sid.defaultFile.w = destfile;
 	sid.iDefaultIndex = -mask->iIconIndex;
 	mask->hIcolibItem = IcoLib_AddIcon(&sid);
 }
@@ -141,13 +141,13 @@ void RegisterIcons()
 
 static void SetSrmmIcon(MCONTACT hContact, LPTSTR ptszMirver)
 {
-	StatusIconData sid = { sizeof(sid) };
+	StatusIconData sid = {};
 	sid.szModule = MODULENAME;
 	sid.dwId = 1;
-	sid.flags = MBF_TCHAR;
+	sid.flags = MBF_UNICODE;
 	sid.tszTooltip = ptszMirver;
 
-	if (mir_tstrlen(ptszMirver))
+	if (mir_wstrlen(ptszMirver))
 		sid.hIcon = (HICON)ServiceGetClientIconW((WPARAM)ptszMirver, TRUE);
 	else
 		sid.flags |= MBF_HIDDEN;
@@ -168,10 +168,6 @@ int __fastcall ApplyFingerprintImage(MCONTACT hContact, LPTSTR szMirVer)
 
 	if (arMonitoredWindows.getIndex((HANDLE)hContact) != -1)
 		SetSrmmIcon(hContact, szMirVer);
-
-	MCONTACT hMeta = db_mc_getMeta(hContact);
-	if (hMeta && db_mc_getMostOnline(hMeta) == hContact)
-		db_set_ts(hMeta, META_PROTO, "MirVer", szMirVer);
 
 	return 0;
 }
@@ -241,7 +237,7 @@ BOOL __fastcall WildCompareW(LPWSTR wszName, LPWSTR wszMask)
 	return FALSE;
 }
 
-static void MatchMasks(TCHAR* szMirVer, short *base, short *overlay, short *overlay2, short *overlay3, short *overlay4)
+static void MatchMasks(wchar_t* szMirVer, short *base, short *overlay, short *overlay2, short *overlay3, short *overlay4)
 {
 	int i = 0, j = -1, k = -1, n = -1, m = -1;
 
@@ -254,11 +250,11 @@ static void MatchMasks(TCHAR* szMirVer, short *base, short *overlay, short *over
 			continue;
 
 		if (p.iIconIndex != IDI_NOTFOUND && p.iIconIndex != IDI_UNKNOWN && p.iIconIndex != IDI_UNDETECTED) {
-			TCHAR destfile[MAX_PATH];
-			_tcsncpy_s(destfile, g_szSkinLib, _TRUNCATE);
+			wchar_t destfile[MAX_PATH];
+			wcsncpy_s(destfile, g_szSkinLib, _TRUNCATE);
 
 			struct _stat64i32 stFileInfo;
-			if (_tstat(destfile, &stFileInfo) == -1)
+			if (_wstat(destfile, &stFileInfo) == -1)
 				i = NOTFOUND_MASK_NUMBER;
 		}
 		break;
@@ -276,7 +272,7 @@ static void MatchMasks(TCHAR* szMirVer, short *base, short *overlay, short *over
 				continue;
 
 			struct _stat64i32 stFileInfo;
-			if (_tstat(g_szSkinLib, &stFileInfo) != -1)
+			if (_wstat(g_szSkinLib, &stFileInfo) != -1)
 				break;
 		}
 
@@ -330,8 +326,8 @@ void __fastcall GetIconsIndexesA(LPSTR szMirVer, short *base, short *overlay, sh
 		return;
 	}
 
-	LPTSTR tszMirVerUp = mir_a2t(szMirVer);
-	_tcsupr(tszMirVerUp);
+	LPTSTR tszMirVerUp = mir_a2u(szMirVer);
+	wcsupr(tszMirVerUp);
 	MatchMasks(tszMirVerUp, base, overlay, overlay2, overlay3, overlay4);
 	mir_free(tszMirVerUp);
 }
@@ -438,18 +434,17 @@ HBITMAP __inline CreateBitmap32(int cx, int cy)
 */
 HBITMAP __fastcall CreateBitmap32Point(int cx, int cy, LPVOID* bits)
 {
-	BITMAPINFO bmpi = { 0 };
 	LPVOID ptPixels = NULL;
-	HBITMAP DirectBitmap;
 
 	if (cx < 0 || cy < 0) return NULL;
 
+	BITMAPINFO bmpi = { 0 };
 	bmpi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	bmpi.bmiHeader.biWidth = cx;
 	bmpi.bmiHeader.biHeight = cy;
 	bmpi.bmiHeader.biPlanes = 1;
 	bmpi.bmiHeader.biBitCount = 32;
-	DirectBitmap = CreateDIBSection(NULL, &bmpi, DIB_RGB_COLORS, &ptPixels, NULL, 0);
+	HBITMAP DirectBitmap = CreateDIBSection(NULL, &bmpi, DIB_RGB_COLORS, &ptPixels, NULL, 0);
 
 	GdiFlush();
 	if (ptPixels) memset(ptPixels, 0, cx * cy * 4);
@@ -727,7 +722,7 @@ HANDLE __fastcall GetIconIndexFromFI(LPTSTR szMirVer)
 		fiList[nFICount].dwArray = val;
 
 		if (hIcon != NULL) {
-			hFoundImage = (HANDLE)CallService(MS_CLIST_EXTRA_ADD_ICON, (WPARAM)hIcon, 0);
+			hFoundImage = ExtraIcon_AddIcon(hIcon);
 			fiList[nFICount].hRegisteredImage = hFoundImage;
 			DestroyIcon(hIcon);
 		}
@@ -845,33 +840,12 @@ int OnExtraImageApply(WPARAM hContact, LPARAM)
 	if (hContact == NULL)
 		return 0;
 
-	ptrT tszMirver;
+	ptrW tszMirver;
 	char *szProto = GetContactProto(hContact);
 	if (szProto != NULL)
-		tszMirver = db_get_tsa(hContact, szProto, "MirVer");
+		tszMirver = db_get_wsa(hContact, szProto, "MirVer");
 
 	ApplyFingerprintImage(hContact, tszMirver);
-	return 0;
-}
-
-/****************************************************************************************
-*	 OnMetaDefaultChanged
-*	 update MC icon according to its default contact
-*/
-
-static int OnMetaDefaultChanged(WPARAM hMeta, LPARAM hSub)
-{
-	if (hSub != NULL) {
-		char *szProto = GetContactProto(hSub);
-		if (szProto != NULL) {
-			ptrT tszMirver(db_get_tsa(hSub, szProto, "MirVer"));
-			if (tszMirver)
-				db_set_ts(hMeta, META_PROTO, "MirVer", tszMirver);
-			else
-				db_unset(hMeta, META_PROTO, "MirVer");
-		}
-	}
-
 	return 0;
 }
 
@@ -886,10 +860,10 @@ static int OnContactSettingChanged(WPARAM hContact, LPARAM lParam)
 		return 0;
 
 	DBCONTACTWRITESETTING *cws = (DBCONTACTWRITESETTING*)lParam;
-	if (cws && cws->szSetting && !mir_strcmp(cws->szSetting, "MirVer")) {
+	if (cws && cws->szSetting && !strcmp(cws->szSetting, "MirVer")) {
 		switch (cws->value.type) {
 		case DBVT_UTF8:
-			ApplyFingerprintImage(hContact, ptrT(mir_utf8decodeT(cws->value.pszVal)));
+			ApplyFingerprintImage(hContact, ptrW(mir_utf8decodeW(cws->value.pszVal)));
 			break;
 		case DBVT_ASCIIZ:
 			ApplyFingerprintImage(hContact, _A2T(cws->value.pszVal));
@@ -915,19 +889,19 @@ static int OnSrmmWindowEvent(WPARAM, LPARAM lParam)
 		return 0;
 
 	MessageWindowEventData *event = (MessageWindowEventData *)lParam;
-	if (event == NULL || event->cbSize < sizeof(MessageWindowEventData))
+	if (event == NULL)
 		return 0;
 
 	if (event->uType == MSG_WINDOW_EVT_OPEN) {
-		ptrT ptszMirVer;
+		ptrW ptszMirVer;
 		char *szProto = GetContactProto(event->hContact);
 		if (szProto != NULL)
-			ptszMirVer = db_get_tsa(event->hContact, szProto, "MirVer");
+			ptszMirVer = db_get_wsa(event->hContact, szProto, "MirVer");
 		SetSrmmIcon(event->hContact, ptszMirVer);
 		arMonitoredWindows.insert((HANDLE)event->hContact);
 	}
 	else if (event->uType == MSG_WINDOW_EVT_CLOSE)
-		arMonitoredWindows.remove(event->hContact);
+		arMonitoredWindows.remove((HANDLE)event->hContact);
 
 	return 0;
 }
@@ -947,12 +921,14 @@ int OnModulesLoaded(WPARAM, LPARAM)
 	HookEvent(ME_OPT_INITIALISE, OnOptInitialise);
 	HookEvent(ME_MSG_WINDOWEVENT, OnSrmmWindowEvent);
 
-	PathToAbsoluteT(DEFAULT_SKIN_FOLDER, g_szSkinLib);
+	HookEvent(ME_MC_DEFAULTTCHANGED, OnExtraImageApply);
+
+	PathToAbsoluteW(DEFAULT_SKIN_FOLDER, g_szSkinLib);
 
 	RegisterIcons();
 
 	if (db_get_b(NULL, MODULENAME, "StatusBarIcon", 1)) {
-		StatusIconData sid = { sizeof(sid) };
+		StatusIconData sid = {};
 		sid.szModule = MODULENAME;
 		sid.flags = MBF_HIDDEN;
 		sid.dwId = 1;
@@ -965,7 +941,6 @@ int OnModulesLoaded(WPARAM, LPARAM)
 void InitFingerModule()
 {
 	HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
-	HookEvent(ME_MC_DEFAULTTCHANGED, OnMetaDefaultChanged);
 
 	CreateServiceFunction(MS_FP_SAMECLIENTSW, ServiceSameClientsW);
 	CreateServiceFunction(MS_FP_GETCLIENTDESCRW, ServiceGetClientDescrW);

@@ -2,13 +2,13 @@
 ;============================================================
 ;  File: New_GPG.dll
 ;  Plugin: GPG
-;  Version: 0.0.0.11
+;  Version: 0.0.0.14
 ;  Authors: sss
 ;============================================================
 [New GPG encryption support plugin, based on code from old GPG plugin and SecureIM.]
 Unterstützung für GPG, basierend auf Code aus dem alten GPG Plugin und SecureIM.
 ;file \plugins\New_GPG\res\new_gpg.rc
-[Load Public GPG key]
+[Load public GPG key]
 Öffentlichen GPG-Schlüssel laden
 [Load from file]
 Aus Datei laden
@@ -154,8 +154,8 @@ Offen:
 Zu:
 [Strip all tags in outgoing messages]
 Alle Tags aus ausgehenden Nachrichten entfernen
-[Turn on presence signing (Jabber) (required by XEP 0-27)]
-Presence signing aktivieren (Jabber) (erfordert durch XEP 0-27)
+[Turn on presence signing (Jabber) (required by XEP-0027)]
+Presence signing aktivieren (Jabber) (erfordert durch XEP-0027)
 [Export keys]
 Schlüssel exportieren
 [Import keys]
@@ -165,8 +165,6 @@ Schlüssel importieren
 GPG-Verschlüsselung ausschalten
 [GPG Turn on encryption]
 GPG-Verschlüsselung einschalten
-[Load GPG public key]
-Öffentlichen GPG-Schlüssel laden
 [Toggle GPG encryption]
 GPG-Verschlüsselung umschalten
 [Send public key]
@@ -297,12 +295,8 @@ Metakontakt entdeckt
 Sie haben eine verschlüsselte Nachricht von einem Kontakt empfangen der die Verschlüsselung deaktiviert hat.\nWollen Sie die Verschlüsselung für diesen Kontakt deaktivieren?
 [Do you want to try to decrypt encrypted message?]
 Wollen Sie versuchen, die verschlüsselte Nachricht zu entschlüsseln?
-[failed to decrypt message, GPG returned error, turn on debug log for more details]
-Konnte Nachricht nicht entschlüsseln, GPG gab einen Fehler zurück, schalten Sie den Debugverlauf für weitere Informationen ein.
 [We're trying to encrypt with untrusted key. Do you want to trust this key permanently?]
 Sie versuchen, mit nicht vertrauenswürdigem Schlüssel zu verschlüsseln, wollen Sie diesem Schlüssel dauerhaft vertrauen?
-[failed to encrypt message, GPG returned error, turn on debug log for more details]
-Konnte Nachricht nicht verschlüsseln, GPG gab einen Fehler zurück, schalten Sie den Debugverlauf für weitere Informationen ein.
 [Something is wrong, GPG does not understand us, aborting encryption.]
 Etwas läuft falsch, GPG versteht uns nicht, breche Verschlüsselung ab.
 ;file \plugins\New_GPG\src\options.cpp

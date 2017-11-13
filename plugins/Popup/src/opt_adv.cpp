@@ -29,10 +29,10 @@ LRESULT CALLBACK AvatarTrackBarWndProc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 LRESULT CALLBACK AlphaTrackBarWndProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // effekt name for drop down box
-LIST<TCHAR> g_lstPopupVfx(5, _tcsicmp);
+LIST<wchar_t> g_lstPopupVfx(5, wcsicmp);
 void OptAdv_RegisterVfx(char *name)
 {
-	g_lstPopupVfx.insert(mir_a2t(name));
+	g_lstPopupVfx.insert(mir_a2u(name));
 }
 
 void OptAdv_UnregisterVfx()
@@ -68,7 +68,7 @@ void LoadOption_AdvOpts()
 	// Effects
 	PopupOptions.UseAnimations = db_get_b(NULL, MODULNAME, "UseAnimations", TRUE);
 	PopupOptions.UseEffect = db_get_b(NULL, MODULNAME, "Fade", TRUE);
-	PopupOptions.Effect = (LPTSTR)DBGetContactSettingStringX(NULL, MODULNAME, "Effect", "", DBVT_TCHAR);
+	PopupOptions.Effect = (LPTSTR)DBGetContactSettingStringX(NULL, MODULNAME, "Effect", "", DBVT_WCHAR);
 	PopupOptions.FadeIn = db_get_dw(NULL, MODULNAME, "FadeInTime", SETTING_FADEINTIME_DEFAULT);
 	PopupOptions.FadeOut = db_get_dw(NULL, MODULNAME, "FadeOutTime", SETTING_FADEOUTTIME_DEFAULT);
 
@@ -78,7 +78,7 @@ void LoadOption_AdvOpts()
 
 INT_PTR CALLBACK DlgProcPopupAdvOpts(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	TCHAR tstr[64];
+	wchar_t tstr[64];
 	static bool bDlgInit = false;	// some controls send WM_COMMAND before or during WM_INITDIALOG
 	UINT idCtrl;
 
@@ -88,7 +88,7 @@ INT_PTR CALLBACK DlgProcPopupAdvOpts(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 	{
 		hwndBox = CreateWindowEx(
 			WS_EX_TOOLWINDOW | WS_EX_TOPMOST,		//  dwStyleEx
-			_T(BOXPREVIEW_WNDCLASS),			//  Class name
+			BOXPREVIEW_WNDCLASS,			//  Class name
 			NULL,								//  Title
 			DS_SETFONT | DS_FIXEDSYS | WS_POPUP,	//  dwStyle
 			CW_USEDEFAULT,						//  x
@@ -161,7 +161,7 @@ INT_PTR CALLBACK DlgProcPopupAdvOpts(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 			SendDlgItemMessage(hwnd, IDC_TRANS_SLIDER, TBM_SETRANGE, FALSE, MAKELONG(1, 255));
 			SendDlgItemMessage(hwnd, IDC_TRANS_SLIDER, TBM_SETPOS, TRUE, PopupOptions.Alpha);
 			mir_subclassWindow(GetDlgItem(hwnd, IDC_TRANS_SLIDER), AlphaTrackBarWndProc);
-			mir_sntprintf(tstr, _T("%d%%"), Byte2Percentile(PopupOptions.Alpha));
+			mir_snwprintf(tstr, L"%d%%", Byte2Percentile(PopupOptions.Alpha));
 			SetDlgItemText(hwnd, IDC_TRANS_PERCENT, tstr);
 			CheckDlgButton(hwnd, IDC_TRANS_OPAQUEONHOVER, PopupOptions.OpaqueOnHover ? BST_CHECKED : BST_UNCHECKED);
 			{
@@ -208,9 +208,9 @@ INT_PTR CALLBACK DlgProcPopupAdvOpts(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 				ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, TranslateT("Fade in/out")), -1);
 				DWORD dwActiveItem = (DWORD)PopupOptions.UseEffect;
 				for (int i = 0; i < g_lstPopupVfx.getCount(); ++i) {
-					DWORD dwItem = ComboBox_AddString(hCtrl, TranslateTS(g_lstPopupVfx[i]));
+					DWORD dwItem = ComboBox_AddString(hCtrl, TranslateW(g_lstPopupVfx[i]));
 					ComboBox_SetItemData(hCtrl, dwItem, i);
-					if (PopupOptions.UseEffect && !mir_tstrcmp(g_lstPopupVfx[i], PopupOptions.Effect))
+					if (PopupOptions.UseEffect && !mir_wstrcmp(g_lstPopupVfx[i], PopupOptions.Effect))
 						dwActiveItem = dwItem;
 				}
 				SendDlgItemMessage(hwnd, IDC_EFFECT, CB_SETCURSEL, dwActiveItem, 0);
@@ -236,7 +236,7 @@ INT_PTR CALLBACK DlgProcPopupAdvOpts(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 
 		case IDC_TRANS_SLIDER:
 			PopupOptions.Alpha = (BYTE)SendDlgItemMessage(hwnd, IDC_TRANS_SLIDER, TBM_GETPOS, 0, 0);
-			mir_sntprintf(tstr, TranslateT("%d%%"), Byte2Percentile(PopupOptions.Alpha));
+			mir_snwprintf(tstr, TranslateT("%d%%"), Byte2Percentile(PopupOptions.Alpha));
 			SetDlgItemText(hwnd, IDC_TRANS_PERCENT, tstr);
 			SendMessage(GetParent(hwnd), PSM_CHANGED, 0, 0);
 			break;
@@ -341,7 +341,7 @@ INT_PTR CALLBACK DlgProcPopupAdvOpts(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 				int iEffect = ComboBox_GetItemData((HWND)lParam, ComboBox_GetCurSel((HWND)lParam));
 				PopupOptions.UseEffect = (iEffect != -2) ? TRUE : FALSE;
 				mir_free(PopupOptions.Effect);
-				PopupOptions.Effect = mir_tstrdup((iEffect >= 0) ? g_lstPopupVfx[iEffect] : _T(""));
+				PopupOptions.Effect = mir_wstrdup((iEffect >= 0) ? g_lstPopupVfx[iEffect] : L"");
 
 				BOOL enable = PopupOptions.UseAnimations || PopupOptions.UseEffect;
 				EnableWindow(GetDlgItem(hwnd, IDC_FADEIN_TXT1), enable);
@@ -512,7 +512,7 @@ INT_PTR CALLBACK DlgProcPopupAdvOpts(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 				// Effects
 				db_set_b(NULL, MODULNAME, "UseAnimations", PopupOptions.UseAnimations);
 				db_set_b(NULL, MODULNAME, "Fade", PopupOptions.UseEffect);
-				db_set_ts(NULL, MODULNAME, "Effect", PopupOptions.Effect);
+				db_set_ws(NULL, MODULNAME, "Effect", PopupOptions.Effect);
 				db_set_dw(NULL, MODULNAME, "FadeInTime", PopupOptions.FadeIn);
 				db_set_dw(NULL, MODULNAME, "FadeOutTime", PopupOptions.FadeOut);
 				// other old stuff
@@ -544,7 +544,7 @@ LRESULT CALLBACK AvatarTrackBarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 
 	case WM_MOUSEMOVE:
 	{
-		TRACKMOUSEEVENT tme;
+		TRACKMOUSEEVENT tme = { 0 };
 		tme.cbSize = sizeof(tme);
 		tme.dwFlags = TME_LEAVE;
 		tme.dwHoverTime = HOVER_DEFAULT;
@@ -593,7 +593,7 @@ LRESULT CALLBACK AlphaTrackBarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 
 	case WM_MOUSEMOVE:
 	{
-		TRACKMOUSEEVENT tme;
+		TRACKMOUSEEVENT tme = { 0 };
 		tme.cbSize = sizeof(tme);
 		tme.dwFlags = TME_LEAVE;
 		tme.dwHoverTime = HOVER_DEFAULT;

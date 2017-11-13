@@ -22,50 +22,48 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "chat.h"
 
-MCONTACT AddRoom(const char *pszModule, const TCHAR *pszRoom, const TCHAR *pszDisplayName, int iType)
+MCONTACT AddRoom(const char *pszModule, const wchar_t *pszRoom, const wchar_t *pszDisplayName, int iType)
 {
-	TCHAR pszGroup[50]; *pszGroup = '\0';
-	ptrT groupName(db_get_tsa(NULL, CHAT_MODULE, "AddToGroup"));
+	wchar_t pszGroup[50]; *pszGroup = '\0';
+	ptrW groupName(db_get_wsa(0, CHAT_MODULE, "AddToGroup"));
 	if (groupName)
-		_tcsncpy_s(pszGroup, groupName, _TRUNCATE);
+		wcsncpy_s(pszGroup, groupName, _TRUNCATE);
 	else
-		mir_tstrcpy(pszGroup, _T("Chat rooms"));
+		mir_wstrcpy(pszGroup, L"Chat rooms");
 
 	if (pszGroup[0])  {
-		HANDLE hGroup = Clist_GroupExists(pszGroup);
+		MGROUP hGroup = Clist_GroupExists(pszGroup);
 		if (hGroup == 0) {
-			hGroup = Clist_CreateGroup(0, pszGroup);
-			if (hGroup) {
-				CallService(MS_CLUI_GROUPADDED, (WPARAM)hGroup, 0);
-				CallService(MS_CLIST_GROUPSETEXPANDED, (WPARAM)hGroup, 1);
-			}
+			hGroup = Clist_GroupCreate(0, pszGroup);
+			if (hGroup)
+				Clist_GroupSetExpanded(hGroup, 1);
 		}
 	}
 
 	MCONTACT hContact = chatApi.FindRoom(pszModule, pszRoom);
 	if (hContact) { //contact exist, make sure it is in the right group
 		if (pszGroup[0]) {
-			ptrT grpName(db_get_tsa(hContact, "CList", "Group"));
-			if (!mir_tstrcmp(pszGroup, grpName))
-				db_set_ts(hContact, "CList", "Group", pszGroup);
+			ptrW grpName(db_get_wsa(hContact, "CList", "Group"));
+			if (!mir_wstrcmp(pszGroup, grpName))
+				db_set_ws(hContact, "CList", "Group", pszGroup);
 		}
 
 		db_set_w(hContact, pszModule, "Status", ID_STATUS_OFFLINE);
-		db_set_ts(hContact, pszModule, "Nick", pszDisplayName);
+		db_set_ws(hContact, pszModule, "Nick", pszDisplayName);
 		return hContact;
 	}
 
 	// here we create a new one since no one is to be found
-	if ((hContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0)) == NULL)
-		return NULL;
+	if ((hContact = db_add_contact()) == 0)
+		return 0;
 
 	Proto_AddToContact(hContact, pszModule);
 	if (pszGroup[0])
-		db_set_ts(hContact, "CList", "Group", pszGroup);
+		db_set_ws(hContact, "CList", "Group", pszGroup);
 	else
 		db_unset(hContact, "CList", "Group");
-	db_set_ts(hContact, pszModule, "Nick", pszDisplayName);
-	db_set_ts(hContact, pszModule, "ChatRoomID", pszRoom);
+	db_set_ws(hContact, pszModule, "Nick", pszDisplayName);
+	db_set_ws(hContact, pszModule, "ChatRoomID", pszRoom);
 	db_set_b(hContact, pszModule, "ChatRoom", (BYTE)iType);
 	db_set_w(hContact, pszModule, "Status", ID_STATUS_OFFLINE);
 	return hContact;
@@ -107,33 +105,28 @@ int RoomDoubleclicked(WPARAM hContact, LPARAM)
 		return 0;
 
 	char *szProto = GetContactProto(hContact);
-	if (chatApi.MM_FindModule(szProto) == NULL)
+	if (chatApi.MM_FindModule(szProto) == nullptr)
 		return 0;
 	if (db_get_b(hContact, szProto, "ChatRoom", 0) == 0)
 		return 0;
 
-	ptrT roomid(db_get_tsa(hContact, szProto, "ChatRoomID"));
-	if (roomid == NULL)
+	ptrW roomid(db_get_wsa(hContact, szProto, "ChatRoomID"));
+	if (roomid == nullptr)
 		return 0;
 
-	SESSION_INFO *si = chatApi.SM_FindSession(roomid, szProto);
+	SESSION_INFO *si = SM_FindSession(roomid, szProto);
 	if (si) {
 		// is the "toggle visibility option set, so we need to close the window?
-		if (si->hWnd != NULL &&
-			 db_get_b(NULL, CHAT_MODULE, "ToggleVisibility", 0) == 1 &&
-			 !CallService(MS_CLIST_GETEVENT, hContact, 0) &&
-			 IsWindowVisible(si->hWnd) && !IsIconic(si->hWnd))
-		{
-			if (chatApi.OnDblClickSession)
-				chatApi.OnDblClickSession(si);
+		if (si->pDlg != nullptr && db_get_b(0, CHAT_MODULE, "ToggleVisibility", 0) == 1 && !cli.pfnGetEvent(hContact, 0) && IsWindowVisible(si->pDlg->GetHwnd()) && !IsIconic(si->pDlg->GetHwnd())) {
+			si->pDlg->CloseTab();
 			return 1;
 		}
-		chatApi.ShowRoom(si, WINDOW_VISIBLE, TRUE);
+		chatApi.ShowRoom(si);
 	}
 	return 1;
 }
 
-INT_PTR EventDoubleclicked(WPARAM,LPARAM lParam)
+static INT_PTR EventDoubleclicked(WPARAM,LPARAM lParam)
 {
 	return RoomDoubleclicked((WPARAM)((CLISTEVENT*)lParam)->hContact, 0);
 }
@@ -178,12 +171,12 @@ int PrebuildContactMenu(WPARAM hContact, LPARAM)
 				if (db_get_w(hContact, szProto, "Status", 0) == ID_STATUS_OFFLINE) {
 					if (ProtoServiceExists(szProto, PS_JOINCHAT)) {
 						bEnabledJoin = true;
-						Menu_ModifyItem(hJoinMenuItem, LPGENT("&Join chat"));
+						Menu_ModifyItem(hJoinMenuItem, LPGENW("&Join chat"));
 					}
 				}
 				else {
 					bEnabledJoin = true;
-					Menu_ModifyItem(hJoinMenuItem, LPGENT("&Open chat window"));
+					Menu_ModifyItem(hJoinMenuItem, LPGENW("&Open chat window"));
 				}
 			}
 			bEnabledLeave = ProtoServiceExists(szProto, PS_LEAVECHAT) != 0;
@@ -195,51 +188,49 @@ int PrebuildContactMenu(WPARAM hContact, LPARAM)
 	return 0;
 }
 
-INT_PTR PrebuildContactMenuSvc(WPARAM wParam, LPARAM lParam)
+BOOL AddEvent(MCONTACT hContact, HICON hIcon, MEVENT hEvent, int type, wchar_t* fmt, ...)
 {
-	return PrebuildContactMenu(wParam, lParam);
-}
+	wchar_t szBuf[4096];
 
-BOOL AddEvent(MCONTACT hContact, HICON hIcon, MEVENT hEvent, int type, TCHAR* fmt, ...)
-{
-	TCHAR szBuf[4096];
-
-	if (!fmt || !fmt[0] || mir_tstrlen(fmt) > 2000)
+	if (!fmt || !fmt[0] || mir_wstrlen(fmt) > 2000)
 		return FALSE;
 
 	va_list marker;
 	va_start(marker, fmt);
-	mir_vsntprintf(szBuf, _countof(szBuf), fmt, marker);
+	mir_vsnwprintf(szBuf, _countof(szBuf), fmt, marker);
 	va_end(marker);
 
-	CLISTEVENT cle = { 0 };
-	cle.cbSize = sizeof(cle);
+	CLISTEVENT cle = {};
 	cle.hContact = hContact;
 	cle.hDbEvent = hEvent;
-	cle.flags = type | CLEF_TCHAR;
+	cle.flags = type | CLEF_UNICODE;
 	cle.hIcon = hIcon;
-	cle.pszService = "GChat/DblClickEvent" ;
-	cle.ptszTooltip = TranslateTS(szBuf);
+	cle.pszService = "GChat/DblClickEvent";
+	cle.szTooltip.w = TranslateW(szBuf);
+
+	if (!ServiceExists(cle.pszService))
+		CreateServiceFunction(cle.pszService, &EventDoubleclicked);
+
 	if (type) {
-		if (!CallService(MS_CLIST_GETEVENT, hContact, 0))
-			CallService(MS_CLIST_ADDEVENT, hContact, (LPARAM)&cle);
+		if (!cli.pfnGetEvent(hContact, 0))
+			cli.pfnAddEvent(&cle);
 	}
 	else {
-		if (CallService(MS_CLIST_GETEVENT, hContact, 0))
-			CallService(MS_CLIST_REMOVEEVENT, hContact, (LPARAM)GC_FAKE_EVENT);
-		CallService(MS_CLIST_ADDEVENT, hContact, (LPARAM)&cle);
+		if (cli.pfnGetEvent(hContact, 0))
+			cli.pfnRemoveEvent(hContact, GC_FAKE_EVENT);
+		cli.pfnAddEvent(&cle);
 	}
 	return TRUE;
 }
 
-MCONTACT FindRoom(const char *pszModule, const TCHAR *pszRoom)
+MCONTACT FindRoom(const char *pszModule, const wchar_t *pszRoom)
 {
 	for (MCONTACT hContact = db_find_first(pszModule); hContact; hContact = db_find_next(hContact, pszModule)) {
 		if (!db_get_b(hContact, pszModule, "ChatRoom", 0))
 			continue;
 
-		ptrT roomid(db_get_tsa(hContact, pszModule, "ChatRoomID"));
-		if (roomid != NULL && !mir_tstrcmpi(roomid, pszRoom))
+		ptrW roomid(db_get_wsa(hContact, pszModule, "ChatRoomID"));
+		if (roomid != nullptr && !mir_wstrcmpi(roomid, pszRoom))
 			return hContact;
 	}
 

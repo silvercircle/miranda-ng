@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
-// Copyright (ñ) 2012-15 Miranda NG project,
+// Copyright (ñ) 2012-17 Miranda NG project,
 // Copyright (c) 2000-09 Miranda ICQ/IM project,
 // all portions of this codebase are copyrighted to the people
 // listed in contributors.txt.
@@ -124,7 +124,7 @@ private:
 	void    qMgrFillList(bool fClear = true);
 	void    qMgrSetupColumns();
 	void    qMgrSaveColumns();
-	LRESULT qMgrAddFilter(const MCONTACT hContact, const TCHAR* tszNick);
+	LRESULT qMgrAddFilter(const MCONTACT hContact, const wchar_t* tszNick);
 
 	LIST<void> m_sendLaterContactList;
 	LIST<CSendLaterJob> m_sendLaterJobList;

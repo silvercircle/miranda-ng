@@ -1,0 +1,61 @@
+﻿#muuid {621f886b-a7f6-457f-9d62-8ee84c275993}
+;============================================================
+;  File: ModernOpt.dll
+;  Plugin: ModernOpt
+;  Version: 0.1.0.0
+;  Authors: Victor Pavlychko, George Hazan
+;============================================================
+[Support for new options design.]
+Podpora nového stylu nastavení.
+;file \plugins\ModernOpt\res\resource.rc
+[Visit official Miranda NG website]
+Přejít na domovskou stránku projektu
+[Sample page]
+Ukázková stránka
+[Miranda NG Options]
+Miranda - možnosti nastavení
+[Use arrow keys to choose category]
+Požadovanou kategorii vyberete pomocí šipek
+[Cancel]
+Zrušit
+[Apply]
+Použít
+[Switch to classic options]
+Přepnout do původního způsobu konfigurace
+[Advanced]
+Extra
+;file \plugins\ModernOpt\src\modernopt.cpp
+[Home]
+Domov
+[Miranda NG configuration center]
+Centrum nastavení Mirandy NG
+[Accounts]
+Účty
+[Setup your account information to start messaging.]
+Zadání a správa informací k účtům jednotlivých sítí.
+[Style]
+Vzhled
+[Change the look of Miranda NG according to your taste.]
+V této sekci lze změnit vzhled Mirandy.
+[Contacts]
+Kontakty
+[Configure behavior of your contact list.]
+Konfigurace funkcí seznamu kontaktů.
+[Chats]
+Diskuse
+[Customize look&&feel of your chat windows here.]
+Úprava vzhledu a chování komunikačních oken.
+[Ignore]
+Filtrování
+[Ban those users and events, you are annoyed with.]
+Obtěžuje vás někdo nebo něco při komunikaci? Vyzkoušejte náš filtr.
+[Status]
+Stavy
+[Set your status messages and idle reporting.]
+Definice stavových zpráv, nálady, automatických odpovědí apod.
+[Plugins]
+Doplňky
+[Miranda NG is all about plugins. Manage all the plugins you have here.]
+Miranda NG je postavena na možnosti vše měnit a rozšiřovat pomocí doplňků.
+[You have some unsaved changes here.\n Do you wish to apply settings before switching?]
+Některé ze změn nejsou uloženy.\nChcete je uložit?

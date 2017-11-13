@@ -5,7 +5,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -26,11 +26,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #pragma once
-
+/*
 #ifndef DB_USEHELPERFUNCTIONS		// to supress static inline db helpers
 #define DB_NOHELPERFUNCTIONS
 #endif
-
+*/
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS		// to suppress secure warnings in VC2005
 #endif
@@ -73,7 +73,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdio.h>
 
 #include <newpluginapi.h>
-#include <m_system_cpp.h>
+#include <m_system.h>
 #include <win2k.h>
 #include <m_database.h>
 #include <m_langpack.h>
@@ -81,17 +81,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_protosvc.h>
 #include <m_clist.h>
 #include <m_skin.h>
+#include <m_skin_eng.h>
+#include <m_message.h>
+#include <m_skinbutton.h>
 #include <m_contacts.h>
 #include <m_avatars.h>
 #include <m_icolib.h>
 #include <m_fontservice.h>
+#include <m_hotkeys.h>
+#include <m_metacontacts.h>
 #include <m_timezones.h>
 #include <m_extraicons.h>
 #include <m_xstatus.h>
 #include <m_cluiframes.h>
-#include <m_modernopt.h>
+#include <m_protoint.h>
 #include <m_netlib.h>
-
 #include <m_toptoolbar.h>
 #include <m_metacontacts.h>
 #include <m_variables.h>
@@ -99,19 +103,26 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_folders.h>
 
 #include "modern_global_structure.h"
-#include "modern_clc.h"
+#include "modern_defsettings.h"
 #include "modern_clist.h"
+#include "modern_clc.h"
+#include "modern_row.h"
+#include "modern_skinselector.h"
+#include "modern_skinengine.h"
+#include "modern_statusbar.h"
 #include "cluiframes.h"
+#include "modern_commonprototypes.h"
 #include "modern_rowheight_funcs.h"
 #include "modern_cache_funcs.h"
 #include "modern_log.h"
+
 #include "resource.h"
 
 #define DEFAULT_SKIN_FOLDER		"Skins\\Modern contact list"
-extern TCHAR SkinsFolder[MAX_PATH];
+extern wchar_t SkinsFolder[MAX_PATH];
 
-//macros to free data and set it pointer to NULL
-#define mir_free_and_nil(x) {mir_free((void*)x); x=NULL;}
+//macros to free data and set it pointer to nullptr
+#define mir_free_and_nil(x) {mir_free((void*)x); x = 0;}
 // shared vars
 
 #define CLUI_FRAME_AUTOHIDENOTIFY  512
@@ -157,8 +168,6 @@ char* __cdecl strstri(char *a, const char *b);
 
 HBITMAP ske_CreateDIB32(int cx, int cy);
 
-void InitDisplayNameCache(void);
-void FreeDisplayNameCache();
 int CLUI_ShowWindowMod(HWND hwnd, int cmd);
 
 void MakeButtonSkinned(HWND hWnd);
@@ -172,13 +181,9 @@ void MakeButtonSkinned(HWND hWnd);
 #endif
 
 #define strsetA(a,b) {if (a) mir_free_and_nill(a); a=mir_strdup(b);}
-#define strsetT(a,b) {if (a) mir_free_and_nill(a); a=mir_tstrdup(b);}
+#define strsetT(a,b) {if (a) mir_free_and_nill(a); a=mir_wstrdup(b);}
 
-extern void TRACE_ERROR();
-extern BOOL DebugDeleteObject(HGDIOBJ a);
-extern void IvalidateDisplayNameCache(DWORD mode);
-
-extern LIST<ClcCacheEntry> clistCache;
+void TRACE_ERROR();
 
 HICON LoadSmallIcon(HINSTANCE hInstance, int idx);
 BOOL DestroyIcon_protect(HICON icon);
@@ -202,8 +207,6 @@ enum
 #define MirandaLoading() ((g_CluiData.bSTATE<STATE_NORMAL))
 #define MirandaExiting() ((g_CluiData.bSTATE>STATE_NORMAL))
 
-char * strdupn(const char * src, int len);
-
 #define SORTBY_NAME	   0
 #define SORTBY_STATUS  1
 #define SORTBY_LASTMSG 2
@@ -221,7 +224,7 @@ int AniAva_InitModule();								   // HAVE TO BE AFTER GDI+ INITIALIZED
 int AniAva_UnloadModule();
 int AniAva_UpdateOptions();								   //reload options, //hot enable/disable engine
 
-int AniAva_AddAvatar(MCONTACT hContact, TCHAR * szFilename, int width, int heigth);  // adds avatars to be displayed
+int AniAva_AddAvatar(MCONTACT hContact, wchar_t * szFilename, int width, int heigth);  // adds avatars to be displayed
 int AniAva_SetAvatarPos(MCONTACT hContact, RECT *rc, int overlayIdx, BYTE bAlpha);	   // update avatars pos
 int AniAva_InvalidateAvatarPositions(MCONTACT hContact);	   // reset positions of avatars to be drawn (still be painted at same place)
 int AniAva_RemoveInvalidatedAvatars();					   // all avatars without validated position will be stop painted and probably removed
@@ -249,10 +252,6 @@ int AniAva_RenderAvatar(MCONTACT hContact, HDC hdcMem, RECT *rc);
 #define CCI_TIME           (1<<15)
 #define CCI_OTHER         ~( CCI_NAME|CCI_GROUP|CCI_PROTO|CCI_STATUS|CCI_LINES|CCI_TIME )
 #define CCI_ALL            (0xFFFFFFFF)
-
-void CListSettings_FreeCacheItemData(ClcCacheEntry *pDst);
-int CLUI_SyncGetPDNCE(WPARAM wParam, LPARAM lParam);
-WORD pdnce___GetStatus(ClcCacheEntry *pdnce);
 
 /* move to list module */
 typedef void(*ItemDestuctor)(void*);
@@ -301,15 +300,16 @@ public:
 	{
 		_strKey = _strdup(hsKey._strKey);
 		_dwKey = hsKey._dwKey;
+		return *this;
 	}
 
 #ifdef _UNICODE
 	HashStringKeyNoCase(const wchar_t* szKey)
 	{
 		int codepage = 0;
-		int cbLen = WideCharToMultiByte(codepage, 0, szKey, -1, NULL, 0, NULL, NULL);
+		int cbLen = WideCharToMultiByte(codepage, 0, szKey, -1, nullptr, 0, nullptr, nullptr);
 		char* result = (char*)malloc(cbLen + 1);
-		WideCharToMultiByte(codepage, 0, szKey, -1, result, cbLen, NULL, NULL);
+		WideCharToMultiByte(codepage, 0, szKey, -1, result, cbLen, nullptr, nullptr);
 		result[cbLen] = 0;
 
 		_strKey = result;
@@ -320,7 +320,7 @@ public:
 	~HashStringKeyNoCase()
 	{
 		free(_strKey);
-		_strKey = NULL;
+		_strKey = nullptr;
 		_dwKey = 0;
 	}
 

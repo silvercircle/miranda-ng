@@ -1,5 +1,5 @@
 /*
-Copyright © 2012-15 Miranda NG team
+Copyright © 2012-17 Miranda NG team
 Copyright © 2009 Jim Porter
 
 This program is free software: you can redistribute it and/or modify
@@ -22,9 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "proto.h"
 #include "twitter.h"
 
-static const TCHAR *sites[] = {
-	_T("https://api.twitter.com/"),
-	_T("https://identi.ca/api/")
+static const wchar_t *sites[] = {
+	L"https://api.twitter.com/",
+	L"https://identi.ca/api/"
 };
 
 INT_PTR CALLBACK first_run_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -39,7 +39,7 @@ INT_PTR CALLBACK first_run_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
 
 		DBVARIANT dbv;
-		if (!proto->getTString(TWITTER_KEY_GROUP, &dbv)) {
+		if (!proto->getWString(TWITTER_KEY_GROUP, &dbv)) {
 			SetDlgItemText(hwndDlg, IDC_GROUP, dbv.ptszVal);
 			db_free(&dbv);
 		}
@@ -80,7 +80,7 @@ INT_PTR CALLBACK first_run_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 		if (reinterpret_cast<NMHDR*>(lParam)->code == PSN_APPLY) {
 			proto = reinterpret_cast<TwitterProto*>(GetWindowLongPtr(hwndDlg, GWLP_USERDATA));
 			char str[128];
-			TCHAR tstr[128];
+			wchar_t tstr[128];
 
 			GetDlgItemTextA(hwndDlg, IDC_SERVER, str, _countof(str) - 1);
 			if (str[mir_strlen(str) - 1] != '/')
@@ -88,7 +88,7 @@ INT_PTR CALLBACK first_run_dialog(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 			proto->setString(TWITTER_KEY_BASEURL, str);
 
 			GetDlgItemText(hwndDlg, IDC_GROUP, tstr, _countof(tstr));
-			proto->setTString(TWITTER_KEY_GROUP, tstr);
+			proto->setWString(TWITTER_KEY_GROUP, tstr);
 
 			return true;
 		}
@@ -109,23 +109,23 @@ INT_PTR CALLBACK tweet_proc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 		proto = reinterpret_cast<TwitterProto*>(lParam);
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
 		SendDlgItemMessage(hwndDlg, IDC_TWEETMSG, EM_LIMITTEXT, 140, 0);
-		SetDlgItemText(hwndDlg, IDC_CHARACTERS, _T("140"));
+		SetDlgItemText(hwndDlg, IDC_CHARACTERS, L"140");
 
 		// Set window title
-		TCHAR title[512];
-		mir_sntprintf(title, _T("Send Tweet for %s"), proto->m_tszUserName);
+		wchar_t title[512];
+		mir_snwprintf(title, L"Send Tweet for %s", proto->m_tszUserName);
 		SetWindowText(hwndDlg, title);
 		return true;
 
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDOK) {
-			TCHAR msg[141];
+			wchar_t msg[141];
 			proto = reinterpret_cast<TwitterProto*>(GetWindowLongPtr(hwndDlg, GWLP_USERDATA));
 
 			GetDlgItemText(hwndDlg, IDC_TWEETMSG, msg, _countof(msg));
 			ShowWindow(hwndDlg, SW_HIDE);
 
-			char *narrow = mir_t2a_cp(msg, CP_UTF8);
+			char *narrow = mir_u2a_cp(msg, CP_UTF8);
 			proto->ForkThread(&TwitterProto::SendTweetWorker, narrow);
 
 			EndDialog(hwndDlg, wParam);
@@ -295,21 +295,21 @@ namespace popup_options
 
 	struct
 	{
-		TCHAR *name;
-		TCHAR *text;
+		wchar_t *name;
+		wchar_t *text;
 	} const quotes[] = {
 		{
-			_T("Dorothy Parker"), _T("If, with the literate, I am\n")
-			_T("Impelled to try an epigram,\n")
-			_T("I never seek to take the credit;\n")
-			_T("We all assume that Oscar said it.") },
-			{ _T("Steve Ballmer"), _T("I have never, honestly, thrown a chair in my life.") },
-			{ _T("James Joyce"), _T("I think I would know Nora's fart anywhere. I think ")
-			_T("I could pick hers out in a roomful of farting women.") },
-			{ _T("Brooke Shields"), _T("Smoking kills. If you're killed, you've lost a very ")
-			_T("important part of your life.") },
-			{ _T("Yogi Berra"), _T("Always go to other peoples' funerals, otherwise ")
-			_T("they won't go to yours.") },
+			L"Dorothy Parker", L"If, with the literate, I am\n"
+			L"Impelled to try an epigram,\n"
+			L"I never seek to take the credit;\n"
+			L"We all assume that Oscar said it." },
+			{ L"Steve Ballmer", L"I have never, honestly, thrown a chair in my life." },
+			{ L"James Joyce", L"I think I would know Nora's fart anywhere. I think "
+			L"I could pick hers out in a roomful of farting women." },
+			{ L"Brooke Shields", L"Smoking kills. If you're killed, you've lost a very "
+			L"important part of your life." },
+			{ L"Yogi Berra", L"Always go to other peoples' funerals, otherwise "
+			L"they won't go to yours." },
 	};
 
 	static void preview(HWND hwndDlg)
@@ -318,8 +318,7 @@ namespace popup_options
 
 		// Pick a random contact
 		MCONTACT hContact = 0;
-		int n_contacts = (int)CallService(MS_DB_CONTACT_GETCOUNT, 0, 0);
-
+		int n_contacts = db_get_contact_count();
 		if (n_contacts != 0) {
 			int contact = rand() % n_contacts;
 			hContact = db_find_first();
@@ -329,8 +328,8 @@ namespace popup_options
 
 		// Pick a random quote
 		int q = rand() % _countof(quotes);
-		_tcsncpy(popup.lptzContactName, quotes[q].name, MAX_CONTACTNAME);
-		_tcsncpy(popup.lptzText, quotes[q].text, MAX_SECONDLINE);
+		wcsncpy(popup.lptzContactName, quotes[q].name, MAX_CONTACTNAME);
+		wcsncpy(popup.lptzText, quotes[q].text, MAX_SECONDLINE);
 
 		popup.lchContact = hContact;
 		popup.iSeconds = get_timeout(hwndDlg);

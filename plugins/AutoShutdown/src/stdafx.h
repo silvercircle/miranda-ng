@@ -42,7 +42,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <newpluginapi.h>
 #include <m_database.h>
-#include <m_clui.h>
 #include <m_langpack.h>
 #include <m_skin.h>
 #include <m_protosvc.h>
@@ -57,7 +56,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_icolib.h>
 #include <m_hotkeys.h>
 
-#include "../Utils/mir_fonts.h"
+#include "../../utils/mir_fonts.h"
 
 #include <m_weather.h>
 #include <m_toptoolbar.h>

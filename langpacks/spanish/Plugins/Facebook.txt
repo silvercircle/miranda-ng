@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Facebook.dll
 ;  Plugin: Facebook RM
-;  Version: 0.2.11.4
+;  Version: 0.3.3.2
 ;  Authors: Michal Zelinka, Robert Pösel
 ;============================================================
 [Facebook protocol support for Miranda NG.]
@@ -43,26 +43,18 @@ Grupo predeterminado:
 Establecer automáticamente bandera 'Ignorar el cambio de estado'
 [Use bigger avatars]
 Usar avatares grandes
-[Event notifications]
-Notificaciones de eventos
-[Notifications]
-Notificaciones
 [News feed types to notify:]
 Tipos de noticias a notificar:
-[Other events]
-Otros eventos
-[Client notifications]
-Notificaciones cliente
+[Use balloon notifications in system tray instead of popups]
+Globos de aviso en la bandeja en vez de ventanas emergentes
 [Use this server for opening links:]
 Abrir enlaces con este servidor:
-[Use balloon notifications in system tray instead of popups]
-Globos de aviso en la  bandeja en vez de ventanas emergentes
-[Preview]
-Previsualizar
 [Post Miranda statuses to Wall]
 Enviar estados de Miranda al Muro
 [Allow posting statuses to my pages (may slow down login)]
 Permitir publicar estados a mis páginas (puede ralentizar sesión)
+[Advanced]
+Avanzado
 [Bots challenge test]
 Prueba de reto Bots
 [Instruction:]
@@ -83,14 +75,14 @@ Introduzca el texto que aparece
 &Detalles del usuario
 [User &history]
 &Historial del usuario
+[Notifications]
+Notificaciones
 [Login error: %s]
 Error de inicio de sesión: %s
 [Unknown error]
 Error desconocido
 [Login error: Invalid request.]
 Error de inicio de sesión: Solicitud no válida.
-[Login error: Some Facebook things are required.]
-Error de inicio de sesión: Se necesitan algunas cosas de Facebook.
 [Login error, probably bad login credentials.]
 Error de inicio de sesión, las credenciales de inicio de sesión probablemente son malas.
 [Need confirmation for sending messages to other clients.\nOpen Facebook website and try to send message to this contact again!]
@@ -141,14 +133,6 @@ Por defecto
 << Contactos
 [What's on your mind, %s?]
 ¿Qué hay en tu mente, %s?
-[Sample event]
-Evento de ejemplo
-[Sample request]
-Ejemplo de solicitud
-[Sample newsfeed]
-Ejemplo de noticias
-[Sample notification]
-Notificación de ejemplo
 [a sticker]
 una etiqueta
 [files]
@@ -161,10 +145,10 @@ fotos
 una foto
 [User sent %s:]
 El usuario le envió %s:
-[This message is no longer available, because it was marked as abusive or spam.]
-Este mensaje ya no está disponible, porque estaba marcado como abusivo o correo no deseado.
 [%s is typing a message...]
 %s está escribiendo un mensaje...
+[This message is no longer available, because it was marked as abusive or spam.]
+Este mensaje ya no está disponible, porque estaba marcado como abusivo o correo no deseado.
 [You cannot send messages when you are offline.]
 No puede enviar mensajes cuando no esté conectado.
 [Contact is back on server-list.]
@@ -187,16 +171,10 @@ Mensajería
 Compartir estado...
 [Own wall]
 Propio muro
-[Loading newsfeeds...]
-Cargando noticias...
-[Checking friend requests...]
-Comprobando solicitudes de amistad...
-[Refreshing buddy list...]
-Refrescando lista de amigos...
 [Do you want to cancel your friendship with '%s'?]
 ¿Quiere cancelar su amistad con '%s'?
-[News feeds]
-Nuevas noticias
+[Other events]
+Otros eventos
 [Visit profile]
 Visitar perfil
 [Show 'Share status' window]
@@ -221,6 +199,18 @@ Fuentes noticias
 Detalles de amistad
 [Captcha form icon]
 Formulario Captcha icono
+[Angry]
+Me enoja
+[Haha]
+Me divierte
+[Like]
+Me gusta
+[Love]
+Me encanta
+[Sad]
+Me entristece
+[Wow]
+Me asombra
 [Visit friendship details]
 Visitar detalles de amistad
 [Cancel friendship]
@@ -233,9 +223,7 @@ Solicitud de amistad
 Aprobar amistad
 [Services...]
 Servicios...
-[Refresh Buddy List]
-Refrescar lista de amigos
-[Check Friends Requests]
+[Check friendship requests]
 Comprobar solicitudes de amistad
-[Check Newsfeeds]
+[Check newsfeeds]
 Comprobar fuentes de noticias

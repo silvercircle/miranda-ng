@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-04 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -43,7 +43,7 @@ typedef struct
 	COLORREF bkgColor;
 	COLORREF avatarBorderColor;
 	int avatarRoundCornerRadius;
-	TCHAR noAvatarText[128];
+	wchar_t noAvatarText[128];
 	BOOL respectHidden;
 	BOOL resizeIfSmaller;
 	BOOL fAero;
@@ -248,11 +248,11 @@ void StartAnimatedGif(ACCData* data)
 	if (format != PA_FORMAT_GIF)
 		return;
 
-	FREE_IMAGE_FORMAT fif = fei->FI_GetFileTypeT(ace->szFilename, 0);
+	FREE_IMAGE_FORMAT fif = fei->FI_GetFileTypeU(ace->szFilename, 0);
 	if (fif == FIF_UNKNOWN)
-		fif = fei->FI_GetFIFFromFilenameT(ace->szFilename);
+		fif = fei->FI_GetFIFFromFilenameU(ace->szFilename);
 
-	data->ag.multi = fei->FI_OpenMultiBitmapT(fif, ace->szFilename, FALSE, TRUE, FALSE, GIF_LOAD256);
+	data->ag.multi = fei->FI_OpenMultiBitmapU(fif, ace->szFilename, FALSE, TRUE, FALSE, GIF_LOAD256);
 	if (data->ag.multi == NULL)
 		return;
 
@@ -347,7 +347,7 @@ static void NotifyAvatarChange(HWND hwnd)
 	SendMessage(GetParent(hwnd), WM_NOTIFY, 0, (LPARAM)&pshn);
 }
 
-static void DrawText(HDC hdc, HFONT hFont, const RECT &rc, const TCHAR *text)
+static void DrawText(HDC hdc, HFONT hFont, const RECT &rc, const wchar_t *text)
 {
 	HGDIOBJ oldFont = SelectObject(hdc, hFont);
 
@@ -469,7 +469,7 @@ static LRESULT CALLBACK ACCWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 		return TRUE;
 
 	case AVATAR_SETNOAVATARTEXT:
-		mir_tstrncpy(data->noAvatarText, TranslateTS((TCHAR*)lParam), _countof(data->noAvatarText));
+		mir_wstrncpy(data->noAvatarText, TranslateW((wchar_t*)lParam), _countof(data->noAvatarText));
 		Invalidate(hwnd);
 		return TRUE;
 
@@ -496,11 +496,11 @@ static LRESULT CALLBACK ACCWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 			int *height = (int*)lParam;
 
 			// Get avatar
-			avatarCacheEntry *ace;
+			AVATARCACHEENTRY *ace;
 			if (data->hContact == NULL)
-				ace = (avatarCacheEntry *)CallService(MS_AV_GETMYAVATAR, 0, (LPARAM)data->proto);
+				ace = (AVATARCACHEENTRY *)CallService(MS_AV_GETMYAVATAR, 0, (LPARAM)data->proto);
 			else
-				ace = (avatarCacheEntry *)CallService(MS_AV_GETAVATARBITMAP, (WPARAM)data->hContact, 0);
+				ace = (AVATARCACHEENTRY *)CallService(MS_AV_GETAVATARBITMAP, (WPARAM)data->hContact, 0);
 
 			if (ace == NULL || ace->bmHeight == 0 || ace->bmWidth == 0 || (data->respectHidden && (ace->dwFlags & AVS_HIDEONCLIST))) {
 				*width = 0;

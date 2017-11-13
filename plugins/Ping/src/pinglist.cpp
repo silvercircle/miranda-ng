@@ -63,17 +63,17 @@ void write_ping_address(PINGADDRESS &i)
 	}
 
 	db_set_dw(0, buff, "Id", i.item_id);
-	db_set_ts(0, buff, "Address", i.pszName);
-	db_set_ts(0, buff, "Label", i.pszLabel);
+	db_set_ws(0, buff, "Address", i.pszName);
+	db_set_ws(0, buff, "Label", i.pszLabel);
 	db_set_w(0, buff, "Status", i.status);
 	db_set_dw(0, buff, "Port", i.port);
 	db_set_s(0, buff, "Proto", i.pszProto);
-	if (mir_tstrlen(i.pszCommand))
-		db_set_ts(0, buff, "Command", i.pszCommand);
+	if (mir_wstrlen(i.pszCommand))
+		db_set_ws(0, buff, "Command", i.pszCommand);
 	else
 		db_unset(0, buff, "Command");
-	if (mir_tstrlen(i.pszParams))
-		db_set_ts(0, buff, "CommandParams", i.pszParams);
+	if (mir_wstrlen(i.pszParams))
+		db_set_ws(0, buff, "CommandParams", i.pszParams);
 	else
 		db_unset(0, buff, "CommandParams");
 	db_set_w(0, buff, "SetStatus", i.set_status);
@@ -115,14 +115,14 @@ bool read_ping_address(PINGADDRESS &pa) {
 	if ((pa.item_id = db_get_dw(0, buff, "Id", 0)) == 0)	return false;
 
 	DBVARIANT dbv;
-	if (!db_get_ts(0, buff, "Address", &dbv)) {
-		mir_tstrncpy(pa.pszName, dbv.ptszVal, _countof(pa.pszName));
+	if (!db_get_ws(0, buff, "Address", &dbv)) {
+		mir_wstrncpy(pa.pszName, dbv.ptszVal, _countof(pa.pszName));
 		db_free(&dbv);
 	}
 	else return false;
 
-	if (!db_get_ts(0, buff, "Label", &dbv)) {
-		mir_tstrncpy(pa.pszLabel, dbv.ptszVal, _countof(pa.pszLabel));
+	if (!db_get_ws(0, buff, "Label", &dbv)) {
+		mir_wstrncpy(pa.pszLabel, dbv.ptszVal, _countof(pa.pszLabel));
 		db_free(&dbv);
 	}
 	else return false;
@@ -138,14 +138,14 @@ bool read_ping_address(PINGADDRESS &pa) {
 	}
 	else pa.pszProto[0] = '\0';
 
-	if (!db_get_ts(0, buff, "Command", &dbv)) {
-		mir_tstrncpy(pa.pszCommand, dbv.ptszVal, _countof(pa.pszCommand));
+	if (!db_get_ws(0, buff, "Command", &dbv)) {
+		mir_wstrncpy(pa.pszCommand, dbv.ptszVal, _countof(pa.pszCommand));
 		db_free(&dbv);
 	}
 	else
 		pa.pszCommand[0] = '\0';
-	if (!db_get_ts(0, buff, "CommandParams", &dbv)) {
-		mir_tstrncpy(pa.pszParams, dbv.ptszVal, _countof(pa.pszParams));
+	if (!db_get_ws(0, buff, "CommandParams", &dbv)) {
+		mir_wstrncpy(pa.pszParams, dbv.ptszVal, _countof(pa.pszParams));
 		db_free(&dbv);
 	}
 	else

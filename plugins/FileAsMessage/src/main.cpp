@@ -26,7 +26,7 @@ HANDLE hHookDbSettingChange, hHookContactAdded, hHookSkinIconsChanged;
 
 HICON hIcons[5];
 
-static IconItem iconList[] =
+IconItem iconList[] =
 {
 	{ LPGEN("Play"), "FePlay", IDI_PLAY },
 	{ LPGEN("Pause"), "FePause", IDI_PAUSE },
@@ -41,13 +41,12 @@ int iIconId[5] = { 3, 2, 4, 1, 0 };
 //  wParam - Section name
 //  lParam - Icon ID
 //
-int OnSkinIconsChanged(WPARAM wParam, LPARAM lParam)
+int OnSkinIconsChanged(WPARAM, LPARAM)
 {
 	for (int indx = 0; indx < _countof(hIcons); indx++)
 		hIcons[indx] = IcoLib_GetIconByHandle(iconList[indx].hIcolib);
 
 	WindowList_Broadcast(hFileList, WM_FE_SKINCHANGE, 0, 0);
-
 	return 0;
 }
 
@@ -55,12 +54,15 @@ int OnSettingChanged(WPARAM hContact, LPARAM lParam)
 {
 	DBCONTACTWRITESETTING *cws = (DBCONTACTWRITESETTING*)lParam;
 
-	HWND hwnd = WindowList_Find(hFileList, hContact);
-	PostMessage(hwnd, WM_FE_STATUSCHANGE, 0, 0);
+	if (hContact && !strcmp(cws->szSetting, "Status"))
+	{
+		HWND hwnd = WindowList_Find(hFileList, hContact);
+		PostMessage(hwnd, WM_FE_STATUSCHANGE, 0, 0);
+	}
 	return 0;
 }
 
-INT_PTR OnRecvFile(WPARAM wParam, LPARAM lParam)
+INT_PTR OnRecvFile(WPARAM, LPARAM lParam)
 {
 	CLISTEVENT *clev = (CLISTEVENT*)lParam;
 
@@ -74,23 +76,23 @@ INT_PTR OnRecvFile(WPARAM wParam, LPARAM lParam)
 	/*
 	else
 	{
-	if(hwnd != 0) WindowList_Remove(hFileList, hwnd);
-	FILEECHO *fe = new FILEECHO((HANDLE)clev->hContact);
-	fe->inSend = FALSE;
-	hwnd = CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_MAIN), NULL, (DLGPROC)DialogProc, (LPARAM)fe);
-	if(hwnd == NULL)
-	{
-	delete fe;
-	return 0;
-	}
-	//SendMessage(hwnd, WM_FE_SERVICE, 0, TRUE);
-	ShowWindow(hwnd, SW_SHOWNORMAL);
+		if(hwnd != 0) WindowList_Remove(hFileList, hwnd);
+		FILEECHO *fe = new FILEECHO((HANDLE)clev->hContact);
+		fe->inSend = FALSE;
+		hwnd = CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_MAIN), NULL, DialogProc, (LPARAM)fe);
+		if(hwnd == NULL)
+		{
+			delete fe;
+			return 0;
+		}
+		//SendMessage(hwnd, WM_FE_SERVICE, 0, TRUE);
+		ShowWindow(hwnd, SW_SHOWNORMAL);
 	}
 	*/
 	return 1;
 }
 
-INT_PTR OnSendFile(WPARAM wParam, LPARAM lParam)
+INT_PTR OnSendFile(WPARAM wParam, LPARAM)
 {
 	HWND hwnd = WindowList_Find(hFileList, wParam);
 	if (IsWindow(hwnd))
@@ -142,14 +144,14 @@ INT_PTR OnRecvMessage(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-int OnOptInitialise(WPARAM wParam, LPARAM lParam)
+int OnOptInitialise(WPARAM wParam, LPARAM)
 {
-	OPTIONSDIALOGPAGE odp = { 0 };
+	OPTIONSDIALOGPAGE odp = {};
 	odp.hInstance = hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONS);
-	odp.ptszTitle = _T(SERVICE_TITLE);
-	odp.ptszGroup = LPGENT("Events");
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+	odp.szTitle.a = SERVICE_TITLE;
+	odp.szGroup.a = LPGEN("Events");
+	odp.flags = ODPF_BOLDGROUPS;
 	odp.pfnDlgProc = OptionsDlgProc;
 	Options_AddPage(wParam, &odp);
 	return 0;
@@ -159,7 +161,7 @@ int OnOptInitialise(WPARAM wParam, LPARAM lParam)
 // MirandaPluginInfo()
 // Called by Miranda to get Version
 //
-extern "C" __declspec(dllexport) PLUGININFOEX *MirandaPluginInfoEx(DWORD dwVersion)
+extern "C" __declspec(dllexport) PLUGININFOEX *MirandaPluginInfoEx(DWORD)
 {
 	return &pluginInfo;
 }
@@ -168,7 +170,7 @@ extern "C" __declspec(dllexport) PLUGININFOEX *MirandaPluginInfoEx(DWORD dwVersi
 // Startup initializing
 //
 
-static int OnModulesLoaded(WPARAM wparam, LPARAM lparam)
+static int OnModulesLoaded(WPARAM, LPARAM)
 {
 	for (int indx = 0; indx < _countof(hIcons); indx++)
 		hIcons[indx] = IcoLib_GetIconByHandle(iconList[indx].hIcolib);
@@ -178,7 +180,7 @@ static int OnModulesLoaded(WPARAM wparam, LPARAM lparam)
 	CMenuItem mi;
 	SET_UID(mi, 0xe4a98d2a, 0xa54a, 0x4db1, 0x8d, 0x29, 0xd, 0x5c, 0xf1, 0x10, 0x69, 0x35);
 	mi.position = 200011;
-	mi.hIcolibItem = hIcons[ICON_MAIN];
+	mi.hIcolibItem = iconList[ICON_MAIN].hIcolib;
 	mi.name.a = LPGEN("File As Message...");
 	mi.pszService = SERVICE_NAME "/FESendFile";
 	mi.flags = CMIF_NOTOFFLINE;
@@ -189,7 +191,7 @@ static int OnModulesLoaded(WPARAM wparam, LPARAM lparam)
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	InitCRC32();
 
@@ -233,7 +235,7 @@ extern "C" __declspec(dllexport) int Unload(void)
 //
 // DllMain()
 //
-int WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID pReserved)
+int WINAPI DllMain(HINSTANCE hInstance, DWORD, LPVOID)
 {
 	hInst = hInstance;
 	return TRUE;

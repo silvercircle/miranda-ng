@@ -6,10 +6,8 @@
 //************************************************************************
 // constructor
 //************************************************************************
-CLCDTextObject::CLCDTextObject()
+CLCDTextObject::CLCDTextObject() : m_bWordWrap(false), m_hFont(NULL), m_iFontHeight(0)
 {
-	m_hFont = NULL;
-	m_iFontHeight = 0;
 	// Initialize DRAWTEXTPARAMS
 	memset(&m_dtp, 0, sizeof(DRAWTEXTPARAMS));
     m_dtp.cbSize = sizeof(DRAWTEXTPARAMS);
@@ -36,7 +34,7 @@ bool CLCDTextObject::Initialize()
 	m_hFont = (HFONT) GetStockObject(DEFAULT_GUI_FONT);
     if(NULL != m_hFont)
 	{   
-		SetFontFaceName(_T("Small Fonts"));
+		SetFontFaceName(L"Small Fonts");
 		SetFontPointSize(6);
 	}
 	return true;
@@ -110,7 +108,7 @@ void CLCDTextObject::SetFontFaceName(tstring strFontName)
     memset(&lf, 0, sizeof(lf));
     GetObject(m_hFont, sizeof(LOGFONT), &lf);
 
-    _tcsncpy(lf.lfFaceName, strFontName.c_str(), LF_FACESIZE);
+    wcsncpy(lf.lfFaceName, strFontName.c_str(), LF_FACESIZE);
 
     SetFont(lf);
 }

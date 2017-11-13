@@ -192,7 +192,7 @@ int ParseStatusParam(char *status)
 
 char *PrettyStatusMode(int status, char *buffer, int size)
 {
-	TCHAR *data = pcli->pfnGetStatusModeDescription(status, 0);
+	wchar_t *data = pcli->pfnGetStatusModeDescription(status, 0);
 	if (data)
 		strncpy_s(buffer, size, _T2A(data), _TRUNCATE);
 	else
@@ -247,7 +247,7 @@ void HandleStatusCommand(PCommand command, TArgument *argv, int argc, PReply rep
 				}
 
 				PrettyStatusMode(old, po, sizeof(po));
-				CallService(MS_CLIST_SETSTATUSMODE, status, 0);
+				Clist_SetStatusMode(status);
 				char pn[128];
 				PrettyStatusMode(status, pn, sizeof(pn));
 
@@ -785,7 +785,7 @@ void HandleMessageCommand(PCommand command, TArgument *argv, int argc, PReply re
 
 			if (hContact) {
 				bShouldProcessAcks = TRUE;
-				HANDLE hProcess = (HANDLE)CallContactService(hContact, PSS_MESSAGE, 0, (LPARAM)message);
+				HANDLE hProcess = (HANDLE)ProtoChainSend(hContact, PSS_MESSAGE, 0, (LPARAM)message);
 				const int MAX_COUNT = 60;
 				int counter = 0;
 				while (((ack = GetAck(hProcess)) == NULL) && (counter < MAX_COUNT)) {
@@ -801,7 +801,6 @@ void HandleMessageCommand(PCommand command, TArgument *argv, int argc, PReply re
 
 							DBEVENTINFO e = { 0 };
 							char module[128];
-							e.cbSize = sizeof(DBEVENTINFO);
 							e.eventType = EVENTTYPE_MESSAGE;
 							e.flags = DBEF_SENT;
 
@@ -1288,7 +1287,7 @@ void __cdecl OpenMessageWindowThread(void *data)
 {
 	MCONTACT hContact = (UINT_PTR)data;
 	if (hContact) {
-		CallServiceSync(MS_MSG_SENDMESSAGET, hContact, 0);
+		CallServiceSync(MS_MSG_SENDMESSAGEW, hContact, 0);
 	}
 }
 
@@ -1373,7 +1372,7 @@ void AddHistoryEvent(DBEVENTINFO *dbEvent, char *contact, PReply reply)
 	TimeZone_ToString(dbEvent->timestamp, "D, s", timestamp, sizeof(timestamp));
 
 	char *sender = (dbEvent->flags & DBEF_SENT) ? Translate("[me]") : contact;
-	char *message = DbGetEventTextA(dbEvent, CP_ACP);
+	char *message = DbEvent_GetTextA(dbEvent, CP_ACP);
 
 	static char buffer[8192];
 	mir_snprintf(buffer, "[%s] %15s: %s", timestamp, sender, message);
@@ -1406,7 +1405,7 @@ void HandleHistoryCommand(PCommand command, TArgument *argv, int argc, PReply re
 				char buffer[4096];
 				int count;
 				int contacts = 0;
-				DBEVENTINFO dbEvent = { sizeof(dbEvent) };
+				DBEVENTINFO dbEvent = {};
 
 				reply->code = MIMRES_SUCCESS;
 				mir_snprintf(reply->message, Translate("No unread messages found."));
@@ -1457,7 +1456,7 @@ void HandleHistoryCommand(PCommand command, TArgument *argv, int argc, PReply re
 						reply->code = MIMRES_SUCCESS;
 
 						while (hEvent) {
-							DBEVENTINFO dbEvent = { sizeof(dbEvent) };
+							DBEVENTINFO dbEvent = {};
 							if (!db_event_get(hEvent, &dbEvent)) //if successful call
 								if (!(dbEvent.flags & DBEF_READ))
 									AddHistoryEvent(&dbEvent, contact, reply);
@@ -1499,7 +1498,7 @@ void HandleHistoryCommand(PCommand command, TArgument *argv, int argc, PReply re
 							if (count > 0) {
 								int index = 0;
 								MEVENT hEvent = db_event_first(hContact);
-								DBEVENTINFO dbEvent = { sizeof(DBEVENTINFO) };
+								DBEVENTINFO dbEvent = {};
 								char message[4096];
 								dbEvent.pBlob = (PBYTE)message;
 
@@ -1555,7 +1554,7 @@ void HandleVersionCommand(PCommand command, TArgument*, int argc, PReply reply)
 		else {
 			char miranda[512];
 			DWORD v = pluginInfo.version;
-			CallService(MS_SYSTEM_GETVERSIONTEXT, (WPARAM) sizeof(miranda), (LPARAM)miranda);
+			Miranda_GetVersionText(miranda, sizeof(miranda));
 			mir_snprintf(reply->message, "Miranda %s\nCmdLine v.%d.%d.%d.%d", miranda, ((v >> 24) & 0xFF), ((v >> 16) & 0xFF), ((v >> 8) & 0xFF), (v & 0xFF));
 		}
 	}
@@ -1569,7 +1568,7 @@ void HandleSetNicknameCommand(PCommand command, TArgument *argv, int argc, PRepl
 		mir_strcpy(protocol, argv[2]);
 		mir_strcpy(nickname, argv[3]);
 
-		int res = CallProtoService(protocol, PS_SETMYNICKNAME, SMNN_TCHAR, (LPARAM)nickname);
+		int res = CallProtoService(protocol, PS_SETMYNICKNAME, SMNN_UNICODE, (LPARAM)nickname);
 
 		if (res == 0) {
 			reply->code = MIMRES_SUCCESS;
@@ -1609,6 +1608,40 @@ void HandleIgnoreCommand(PCommand command, TArgument *argv, int argc, PReply rep
 		*reply->message = 0;
 	}
 	else HandleWrongParametersCount(command, reply);
+}
+
+void HandleLuaCommand(PCommand command, TArgument *argv, int argc, PReply reply)
+{
+	if (argc <= 3) {
+		HandleWrongParametersCount(command, reply);
+		return;
+	}
+
+	if (_stricmp(argv[2], "call") == 0) {
+		wchar_t *result = argc == 4
+			? lua_call(NULL, _A2T(argv[3]))
+			: lua_call(_A2T(argv[3]), _A2T(argv[4]));
+		mir_strcpy(reply->message, _T2A(result));
+		mir_free(result);
+		reply->code = MIMRES_SUCCESS;
+		return;
+	}
+
+	if (_stricmp(argv[2], "exec") == 0) {
+		ptrW result(lua_exec(_A2T(argv[3])));
+		mir_strcpy(reply->message, _T2A(result));
+		reply->code = MIMRES_SUCCESS;
+		return;
+	}
+
+	if (_stricmp(argv[2], "eval") == 0) {
+		ptrW result(lua_eval(_A2T(argv[3])));
+		mir_strcpy(reply->message, _T2A(result));
+		reply->code = MIMRES_SUCCESS;
+		return;
+	}
+
+	HandleUnknownParameter(command, argv[2], reply);
 }
 
 void HandleCommand(PCommand command, TArgument *argv, int argc, PReply reply)
@@ -1680,6 +1713,10 @@ void HandleCommand(PCommand command, TArgument *argv, int argc, PReply reply)
 
 	case MIMCMD_IGNORE:
 		HandleIgnoreCommand(command, argv, argc, reply);
+		return;
+
+	case MIMCMD_LUA:
+		HandleLuaCommand(command, argv, argc, reply);
 		return;
 
 	default:

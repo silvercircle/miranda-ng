@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -27,103 +27,94 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern HANDLE hConnectionHeaderMutex, hSendEvent, hRecvEvent;
 
-INT_PTR NetlibSend(WPARAM wParam, LPARAM lParam)
-{
-	NetlibConnection *nlc = (NetlibConnection*)wParam;
-	NETLIBBUFFER *nlb = (NETLIBBUFFER*)lParam;
-	if (nlb == NULL) {
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return SOCKET_ERROR;
-	}
+/////////////////////////////////////////////////////////////////////////////////////////
 
+MIR_APP_DLL(int) Netlib_Send(HNETLIBCONN nlc, const char *buf, int len, int flags)
+{
 	if (!NetlibEnterNestedCS(nlc, NLNCS_SEND))
 		return SOCKET_ERROR;
 
 	int result;
-	if (nlc->usingHttpGateway && !(nlb->flags & MSG_RAW)) {
-		if (!(nlb->flags & MSG_NOHTTPGATEWAYWRAP) && nlc->nlu->user.pfnHttpGatewayWrapSend) {
-			NetlibDumpData(nlc, (PBYTE)nlb->buf, nlb->len, 1, nlb->flags);
-			result = nlc->nlu->user.pfnHttpGatewayWrapSend((HANDLE)nlc, (PBYTE)nlb->buf, nlb->len, nlb->flags | MSG_NOHTTPGATEWAYWRAP, NetlibSend);
+	if (nlc->usingHttpGateway && !(flags & MSG_RAW)) {
+		if (!(flags & MSG_NOHTTPGATEWAYWRAP) && nlc->nlu->user.pfnHttpGatewayWrapSend) {
+			NetlibDumpData(nlc, (PBYTE)buf, len, 1, flags);
+			result = nlc->nlu->user.pfnHttpGatewayWrapSend(nlc, (PBYTE)buf, len, flags | MSG_NOHTTPGATEWAYWRAP);
 		}
-		else result = NetlibHttpGatewayPost(nlc, nlb->buf, nlb->len, nlb->flags);
+		else result = NetlibHttpGatewayPost(nlc, buf, len, flags);
 	}
 	else {
-		NetlibDumpData(nlc, (PBYTE)nlb->buf, nlb->len, 1, nlb->flags);
+		NetlibDumpData(nlc, (PBYTE)buf, len, 1, flags);
 		if (nlc->hSsl)
-			result = sslApi.write(nlc->hSsl, nlb->buf, nlb->len);
+			result = sslApi.write(nlc->hSsl, buf, len);
 		else
-			result = send(nlc->s, nlb->buf, nlb->len, nlb->flags & 0xFFFF);
+			result = send(nlc->s, buf, len, flags & 0xFFFF);
 	}
 	NetlibLeaveNestedCS(&nlc->ncsSend);
 
-	NETLIBNOTIFY nln = { nlb, result };
+	NETLIBNOTIFY nln = { buf, len, flags, result };
 	NotifyFastHook(hSendEvent, (WPARAM)&nln, (LPARAM)&nlc->nlu->user);
 
 	return result;
 }
 
-INT_PTR NetlibRecv(WPARAM wParam, LPARAM lParam)
+/////////////////////////////////////////////////////////////////////////////////////////
+
+MIR_APP_DLL(int) Netlib_Recv(HNETLIBCONN nlc, char *buf, int len, int flags)
 {
-	NetlibConnection *nlc = (NetlibConnection*)wParam;
-	NETLIBBUFFER* nlb = (NETLIBBUFFER*)lParam;
-	int recvResult;
-
-	if (nlb == NULL) {
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return SOCKET_ERROR;
-	}
-
 	if (!NetlibEnterNestedCS(nlc, NLNCS_RECV))
 		return SOCKET_ERROR;
 
-	if (nlc->usingHttpGateway && !(nlb->flags & MSG_RAW))
-		recvResult = NetlibHttpGatewayRecv(nlc, nlb->buf, nlb->len, nlb->flags);
+	int recvResult;
+	if (nlc->usingHttpGateway && !(flags & MSG_RAW))
+		recvResult = NetlibHttpGatewayRecv(nlc, buf, len, flags);
 	else {
-		if (nlc->hSsl)
-			recvResult = sslApi.read(nlc->hSsl, nlb->buf, nlb->len, (nlb->flags & MSG_PEEK) != 0);
+		if (!nlc->foreBuf.isEmpty()) {
+			recvResult = min(len, (int)nlc->foreBuf.length());
+			memcpy(buf, nlc->foreBuf.data(), recvResult);
+			nlc->foreBuf.remove(recvResult);
+		}
+		else if (nlc->hSsl)
+			recvResult = sslApi.read(nlc->hSsl, buf, len, (flags & MSG_PEEK) != 0);
 		else
-			recvResult = recv(nlc->s, nlb->buf, nlb->len, nlb->flags & 0xFFFF);
+			recvResult = recv(nlc->s, buf, len, flags & 0xFFFF);
 	}
 	NetlibLeaveNestedCS(&nlc->ncsRecv);
 	if (recvResult <= 0)
 		return recvResult;
 
-	NetlibDumpData(nlc, (PBYTE)nlb->buf, recvResult, 0, nlb->flags);
+	NetlibDumpData(nlc, (PBYTE)buf, recvResult, 0, flags);
 
-	if ((nlb->flags & MSG_PEEK) == 0) {
-		NETLIBNOTIFY nln = { nlb, recvResult };
+	if ((flags & MSG_PEEK) == 0) {
+		NETLIBNOTIFY nln = { buf, len, flags, recvResult };
 		NotifyFastHook(hRecvEvent, (WPARAM)&nln, (LPARAM)&nlc->nlu->user);
 	}
 	return recvResult;
 }
 
-static int ConnectionListToSocketList(HANDLE *hConns, fd_set *fd, int& pending)
+/////////////////////////////////////////////////////////////////////////////////////////
+
+static int ConnectionListToSocketList(const HNETLIBCONN *hConns, fd_set *fd, int& pending)
 {
 	FD_ZERO(fd);
 	for (int i = 0; hConns[i] && hConns[i] != INVALID_HANDLE_VALUE && i < FD_SETSIZE; i++) {
-		NetlibConnection *nlcCheck = (NetlibConnection*)hConns[i];
+		NetlibConnection *nlcCheck = hConns[i];
 		if (nlcCheck->handleType != NLH_CONNECTION && nlcCheck->handleType != NLH_BOUNDPORT) {
 			SetLastError(ERROR_INVALID_DATA);
 			return 0;
 		}
 		FD_SET(nlcCheck->s, fd);
-		if (sslApi.pending(nlcCheck->hSsl))
+		if (!nlcCheck->foreBuf.isEmpty() || sslApi.pending(nlcCheck->hSsl))
 			pending++;
 	}
 	return 1;
 }
 
-INT_PTR NetlibSelect(WPARAM, LPARAM lParam)
+MIR_APP_DLL(int) Netlib_Select(NETLIBSELECT *nls)
 {
-	NETLIBSELECT *nls = (NETLIBSELECT*)lParam;
-	if (nls == NULL || nls->cbSize != sizeof(NETLIBSELECT)) {
+	if (nls == nullptr) {
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return SOCKET_ERROR;
 	}
-
-	TIMEVAL tv;
-	tv.tv_sec = nls->dwTimeout/1000;
-	tv.tv_usec = (nls->dwTimeout%1000)*1000;
 
 	int pending = 0;
 	fd_set readfd, writefd, exceptfd;
@@ -139,13 +130,15 @@ INT_PTR NetlibSelect(WPARAM, LPARAM lParam)
 	if (pending)
 		return 1;
 
-	return select(0, &readfd, &writefd, &exceptfd, nls->dwTimeout == INFINITE ? NULL : &tv);
+	TIMEVAL tv;
+	tv.tv_sec = nls->dwTimeout / 1000;
+	tv.tv_usec = (nls->dwTimeout % 1000) * 1000;
+	return select(0, &readfd, &writefd, &exceptfd, nls->dwTimeout == INFINITE ? nullptr : &tv);
 }
 
-INT_PTR NetlibSelectEx(WPARAM, LPARAM lParam)
+MIR_APP_DLL(int) Netlib_SelectEx(NETLIBSELECTEX *nls)
 {
-	NETLIBSELECTEX *nls = (NETLIBSELECTEX*)lParam;
-	if (nls == NULL || nls->cbSize != sizeof(NETLIBSELECTEX)) {
+	if (nls == nullptr) {
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return SOCKET_ERROR;
 	}
@@ -166,77 +159,86 @@ INT_PTR NetlibSelectEx(WPARAM, LPARAM lParam)
 	}
 	ReleaseMutex(hConnectionHeaderMutex);
 
-	int rc = (pending) ? pending : select(0, &readfd, &writefd, &exceptfd, nls->dwTimeout == INFINITE ? NULL : &tv);
+	int rc = (pending) ? pending : select(0, &readfd, &writefd, &exceptfd, nls->dwTimeout == INFINITE ? nullptr : &tv);
 
 	WaitForSingleObject(hConnectionHeaderMutex, INFINITE);
 	/* go thru each passed HCONN array and grab its socket handle, then give it to FD_ISSET()
 	to see if an event happened for that socket, if it has it will be returned as TRUE (otherwise not)
 	This happens for read/write/except */
-	NetlibConnection *conn = NULL;
+	NetlibConnection *conn = nullptr;
 	int j;
 	for (j = 0; j < FD_SETSIZE; j++) {
 		conn = (NetlibConnection*)nls->hReadConns[j];
-		if (conn == NULL || conn == INVALID_HANDLE_VALUE) break;
+		if (conn == nullptr || conn == INVALID_HANDLE_VALUE) break;
 
 		if (sslApi.pending(conn->hSsl))
 			nls->hReadStatus[j] = TRUE;
-		if (conn->usingHttpGateway && conn->nlhpi.szHttpGetUrl == NULL && conn->dataBuffer == NULL)
-			nls->hReadStatus[j] = (conn->pHttpProxyPacketQueue != NULL);
+		if (conn->usingHttpGateway && conn->nlhpi.szHttpGetUrl == nullptr && conn->szProxyBuf.IsEmpty())
+			nls->hReadStatus[j] = (conn->pHttpProxyPacketQueue != nullptr);
 		else
 			nls->hReadStatus[j] = FD_ISSET(conn->s, &readfd);
 	}
 	for (j = 0; j < FD_SETSIZE; j++) {
 		conn = (NetlibConnection*)nls->hWriteConns[j];
-		if (conn == NULL || conn == INVALID_HANDLE_VALUE) break;
+		if (conn == nullptr || conn == INVALID_HANDLE_VALUE) break;
 		nls->hWriteStatus[j] = FD_ISSET(conn->s, &writefd);
 	}
 	for (j = 0; j < FD_SETSIZE; j++) {
 		conn = (NetlibConnection*)nls->hExceptConns[j];
-		if (conn == NULL || conn == INVALID_HANDLE_VALUE) break;
+		if (conn == nullptr || conn == INVALID_HANDLE_VALUE) break;
 		nls->hExceptStatus[j] = FD_ISSET(conn->s, &exceptfd);
 	}
 	ReleaseMutex(hConnectionHeaderMutex);
 	return rc;
 }
 
-bool NetlibStringToAddress(const char* str, SOCKADDR_INET_M* addr)
+/////////////////////////////////////////////////////////////////////////////////////////
+
+MIR_APP_DLL(bool) Netlib_StringToAddress(const char *str, SOCKADDR_INET_M *addr)
 {
 	if (!str) return false;
 
 	int len = sizeof(SOCKADDR_INET_M);
-	return !WSAStringToAddressA((char*)str, AF_INET6, NULL, (PSOCKADDR)addr, &len);
+	return !WSAStringToAddressA((char*)str, AF_INET6, nullptr, (PSOCKADDR)addr, &len);
 }
 
-char* NetlibAddressToString(SOCKADDR_INET_M* addr)
+MIR_APP_DLL(char*) Netlib_AddressToString(sockaddr_in *addr)
 {
 	char saddr[128];
 	DWORD len = sizeof(saddr);
-	if (!WSAAddressToStringA((PSOCKADDR)addr, sizeof(*addr), NULL, saddr, &len))
+	if (!WSAAddressToStringA((PSOCKADDR)addr, sizeof(*addr), nullptr, saddr, &len))
 		return mir_strdup(saddr);
 
-	if (addr->si_family == AF_INET) {
-		char *szIp = inet_ntoa(addr->Ipv4.sin_addr);
-		if (addr->Ipv4.sin_port != 0) {
-			mir_snprintf(saddr, "%s:%d", szIp, htons(addr->Ipv4.sin_port));
+	if (addr->sin_family == AF_INET) {
+		char *szIp = inet_ntoa(addr->sin_addr);
+		if (addr->sin_port != 0) {
+			mir_snprintf(saddr, "%s:%d", szIp, htons(addr->sin_port));
 			return mir_strdup(saddr);
 		}
 		return mir_strdup(szIp);
 	}
-	return NULL;
+	return nullptr;
 }
 
-void NetlibGetConnectionInfo(NetlibConnection *nlc, NETLIBCONNINFO *connInfo)
-{
-	if (!nlc || !connInfo || connInfo->cbSize < sizeof(NETLIBCONNINFO)) return;
+/////////////////////////////////////////////////////////////////////////////////////////
 
-	SOCKADDR_INET_M sin = { 0 };
+MIR_APP_DLL(int) Netlib_GetConnectionInfo(HNETLIBCONN hConnection, NETLIBCONNINFO *connInfo)
+{
+	NetlibConnection *nlc = (NetlibConnection*)hConnection;
+	if (!nlc || !connInfo)
+		return 1;
+
+	sockaddr_in sin = { 0 };
 	int len = sizeof(sin);
 	if (!getsockname(nlc->s, (PSOCKADDR)&sin, &len)) {
-		connInfo->wPort = ntohs(sin.Ipv4.sin_port);
-		connInfo->dwIpv4 = sin.si_family == AF_INET ? htonl(sin.Ipv4.sin_addr.s_addr) : 0;
-		strncpy_s(connInfo->szIpPort, ptrA(NetlibAddressToString(&sin)), _TRUNCATE);
+		connInfo->wPort = ntohs(sin.sin_port);
+		connInfo->dwIpv4 = sin.sin_family == AF_INET ? htonl(sin.sin_addr.s_addr) : 0;
+		strncpy_s(connInfo->szIpPort, ptrA(Netlib_AddressToString(&sin)), _TRUNCATE);
 	}
+	return 0;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////
 
 inline bool IsAddrGlobal(const IN6_ADDR *a)
 {
@@ -244,21 +246,21 @@ inline bool IsAddrGlobal(const IN6_ADDR *a)
 	return High != 0 && High != 0xf0;
 }
 
-static NETLIBIPLIST* GetMyIpv6(unsigned flags)
+MIR_APP_DLL(NETLIBIPLIST*) Netlib_GetMyIp(bool bGlobalOnly)
 {
-	addrinfo *air = NULL, *ai, hints = { 0 };
+	addrinfo *air = nullptr, *ai, hints = { 0 };
 	const char *szMyHost = "";
 
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_flags = AI_PASSIVE;
 
-	if (GetAddrInfoA(szMyHost, NULL, &hints, &air))
-		return NULL;
+	if (GetAddrInfoA(szMyHost, nullptr, &hints, &air))
+		return nullptr;
 
 	unsigned n = 0;
 	for (ai = air; ai; ai = ai->ai_next) {
 		SOCKADDR_INET_M *iaddr = (SOCKADDR_INET_M*)ai->ai_addr;
-		if (ai->ai_family == AF_INET || (ai->ai_family == AF_INET6 && (!(flags & 1) || IsAddrGlobal(&iaddr->Ipv6.sin6_addr))))
+		if (ai->ai_family == AF_INET || (ai->ai_family == AF_INET6 && (!bGlobalOnly || IsAddrGlobal(&iaddr->Ipv6.sin6_addr))))
 			++n;
 	}
 
@@ -267,12 +269,9 @@ static NETLIBIPLIST* GetMyIpv6(unsigned flags)
 
 	unsigned i = 0;
 	for (ai = air; ai; ai = ai->ai_next) {
-		SOCKADDR_INET_M *iaddr = (SOCKADDR_INET_M*)ai->ai_addr;
-		if (ai->ai_family == AF_INET ||
-			(ai->ai_family == AF_INET6 &&
-			(!(flags & 1) || IsAddrGlobal(&iaddr->Ipv6.sin6_addr))))
-		{
-			char *szIp = NetlibAddressToString(iaddr);
+		sockaddr_in6 *iaddr = (sockaddr_in6*)ai->ai_addr;
+		if (ai->ai_family == AF_INET || (ai->ai_family == AF_INET6 && (!bGlobalOnly || IsAddrGlobal(&iaddr->sin6_addr)))) {
+			char *szIp = Netlib_AddressToString((sockaddr_in*)iaddr);
 			if (szIp)
 				strncpy_s(addr->szIp[i++], szIp, _TRUNCATE);
 			mir_free(szIp);
@@ -300,9 +299,4 @@ static NETLIBIPLIST* GetMyIpv4(void)
 		strncpy_s(addr->szIp[i], inet_ntoa(*(PIN_ADDR)he->h_addr_list[i]), _TRUNCATE);
 
 	return addr;
-}
-
-NETLIBIPLIST* GetMyIp(unsigned flags)
-{
-	return GetMyIpv6(flags);
 }

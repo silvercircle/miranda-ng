@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-03 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -31,13 +31,12 @@ extern ImageItem *g_glyphItem;
 
 extern int hClcProtoCount;
 
-extern HIMAGELIST hCListImages;
 static BYTE divide3[765] = { 255 };
 extern char *im_clients[];
 extern HICON im_clienthIcons[];
 extern HICON overlayicons[];
 
-extern TCHAR *statusNames[];
+extern wchar_t *statusNames[];
 
 extern LONG g_cxsmIcon, g_cysmIcon;
 
@@ -201,7 +200,7 @@ void PaintNotifyArea(HDC hDC, RECT *rc)
 	rc->left += 26;
 	int iCount = GetMenuItemCount(cfg::dat.hMenuNotify);
 	if (cfg::dat.hUpdateContact != 0) {
-		TCHAR *szName = pcli->pfnGetContactDisplayName(cfg::dat.hUpdateContact, 0);
+		wchar_t *szName = pcli->pfnGetContactDisplayName(cfg::dat.hUpdateContact, 0);
 		int iIcon = pcli->pfnGetContactIcon(cfg::dat.hUpdateContact);
 
 		ImageList_DrawEx(hCListImages, iIcon, hDC, rc->left, (rc->bottom + rc->top - g_cysmIcon) / 2, g_cxsmIcon, g_cysmIcon, CLR_NONE, CLR_NONE, ILD_NORMAL);
@@ -216,7 +215,7 @@ void PaintNotifyArea(HDC hDC, RECT *rc)
 		GetMenuItemInfo(cfg::dat.hMenuNotify, iCount - 1, TRUE, &mii);
 
 		NotifyMenuItemExData *nmi = (struct NotifyMenuItemExData *) mii.dwItemData;
-		TCHAR *szName = pcli->pfnGetContactDisplayName(nmi->hContact, 0);
+		wchar_t *szName = pcli->pfnGetContactDisplayName(nmi->hContact, 0);
 		int iIcon = pcli->pfnGetContactIcon(nmi->hContact);
 		ImageList_DrawEx(hCListImages, iIcon, hDC, rc->left, (rc->bottom + rc->top - g_cysmIcon) / 2, g_cxsmIcon, g_cysmIcon, CLR_NONE, CLR_NONE, ILD_NORMAL);
 		rc->left += 18;
@@ -263,7 +262,7 @@ static int __fastcall DrawAvatar(HDC hdcMem, RECT *rc, ClcContact *contact, int 
 	if (!cfg::dat.bAvatarServiceAvail || dat->bisEmbedded)
 		return 0;
 
-	if (contact->ace != NULL && contact->ace->cbSize == sizeof(struct avatarCacheEntry)) {
+	if (contact->ace != NULL && contact->ace->cbSize == sizeof(struct AVATARCACHEENTRY)) {
 		if (contact->ace->dwFlags & AVS_HIDEONCLIST)
 			return (cfg::dat.dwFlags & CLUI_FRAME_ALWAYSALIGNNICK) ? avatar_size + 2 : 0;
 
@@ -436,7 +435,7 @@ void __inline PaintItem(HDC hdcMem, ClcGroup *group, ClcContact *contact, int in
 
 	BYTE type = contact->type;
 	BYTE flags = contact->flags;
-	int  selected = index == dat->selection && (dat->showSelAlways || dat->exStyle &CLS_EX_SHOWSELALWAYS || g_focusWnd == hwnd) && type != CLCIT_DIVIDER;
+	int  selected = index == dat->selection && (dat->bShowSelAlways || dat->exStyle & CLS_EX_SHOWSELALWAYS || g_focusWnd == hwnd) && type != CLCIT_DIVIDER;
 	avatar_done = FALSE;
 
 	TExtraCache *cEntry;
@@ -486,7 +485,7 @@ set_bg_l:
 	}
 	else if (type == CLCIT_DIVIDER) {
 		ChangeToFont(hdcMem, dat, FONTID_DIVIDERS, &fontHeight);
-		GetTextExtentPoint32(hdcMem, contact->szText, (int)mir_tstrlen(contact->szText), &textSize);
+		GetTextExtentPoint32(hdcMem, contact->szText, (int)mir_wstrlen(contact->szText), &textSize);
 	}
 	else if (type == CLCIT_CONTACT && flags & CONTACTF_NOTONLIST)
 		ChangeToFont(hdcMem, dat, FONTID_NOTONLIST, &fontHeight);
@@ -500,15 +499,15 @@ set_bg_l:
 	else
 		ChangeToFont(hdcMem, dat, FONTID_CONTACTS, &fontHeight);
 
-	TCHAR *szCounts = NULL;
+	wchar_t *szCounts = NULL;
 	if (type == CLCIT_GROUP) {
-		GetTextExtentPoint32(hdcMem, contact->szText, (int)mir_tstrlen(contact->szText), &textSize);
+		GetTextExtentPoint32(hdcMem, contact->szText, (int)mir_wstrlen(contact->szText), &textSize);
 		int width = textSize.cx;
 		szCounts = pcli->pfnGetGroupCountsText(dat, contact);
 		if (szCounts[0]) {
-			GetTextExtentPoint32(hdcMem, _T(" "), 1, &spaceSize);
+			GetTextExtentPoint32(hdcMem, L" ", 1, &spaceSize);
 			ChangeToFont(hdcMem, dat, FONTID_GROUPCOUNTS, &fontHeight);
-			GetTextExtentPoint32(hdcMem, szCounts, (int)mir_tstrlen(szCounts), &countsSize);
+			GetTextExtentPoint32(hdcMem, szCounts, (int)mir_wstrlen(szCounts), &countsSize);
 			width += spaceSize.cx + countsSize.cx;
 		}
 	}
@@ -590,7 +589,7 @@ set_bg_l:
 
 			// check for special cases (first item, single item, last item)
 			// this will only change the shape for this status. Color will be blended over with ALPHA value
-			if (!ssingleitem->IGNORED && scanIndex == 0 && group->cl.count == 1 && group->parent != NULL) {
+			if (!ssingleitem->IGNORED && scanIndex == 0 && group->cl.getCount() == 1 && group->parent != NULL) {
 				rc.left = ssingleitem->MARGIN_LEFT + bg_indent_l;
 				rc.top = y + ssingleitem->MARGIN_TOP;
 				rc.right = clRect->right - ssingleitem->MARGIN_RIGHT - bg_indent_r;
@@ -614,7 +613,7 @@ set_bg_l:
 				if (check_selected)
 					DrawAlpha(hdcMem, &rc, ssingleitem->COLOR, ssingleitem->ALPHA, ssingleitem->COLOR2, ssingleitem->COLOR2_TRANSPARENT, ssingleitem->GRADIENT, ssingleitem->CORNER, ssingleitem->BORDERSTYLE, ssingleitem->imageItem);
 			}
-			else if (scanIndex == 0 && group->cl.count > 1 && !sfirstitem->IGNORED && group->parent != NULL) {
+			else if (scanIndex == 0 && group->cl.getCount() > 1 && !sfirstitem->IGNORED && group->parent != NULL) {
 				rc.left = sfirstitem->MARGIN_LEFT + bg_indent_l;
 				rc.top = y + sfirstitem->MARGIN_TOP;
 				rc.right = clRect->right - sfirstitem->MARGIN_RIGHT - bg_indent_r;
@@ -638,7 +637,7 @@ set_bg_l:
 				if (check_selected)
 					DrawAlpha(hdcMem, &rc, sfirstitem->COLOR, sfirstitem->ALPHA, sfirstitem->COLOR2, sfirstitem->COLOR2_TRANSPARENT, sfirstitem->GRADIENT, sfirstitem->CORNER, sfirstitem->BORDERSTYLE, sfirstitem->imageItem);
 			}
-			else if (scanIndex == group->cl.count - 1 && !slastitem->IGNORED && group->parent != NULL) {
+			else if (scanIndex == group->cl.getCount() - 1 && !slastitem->IGNORED && group->parent != NULL) {
 				// last item of group
 				rc.left = slastitem->MARGIN_LEFT + bg_indent_l;
 				rc.top = y + slastitem->MARGIN_TOP;
@@ -664,7 +663,7 @@ set_bg_l:
 					DrawAlpha(hdcMem, &rc, slastitem->COLOR, slastitem->ALPHA, slastitem->COLOR2, slastitem->COLOR2_TRANSPARENT, slastitem->GRADIENT, slastitem->CORNER, slastitem->BORDERSTYLE, slastitem->imageItem);
 			}
 			// --- Non-grouped items ---
-			else if (type != CLCIT_GROUP && group->parent == NULL && !sfirstitem_NG->IGNORED && scanIndex != group->cl.count - 1 && !(*bFirstNGdrawn)) {
+			else if (type != CLCIT_GROUP && group->parent == NULL && !sfirstitem_NG->IGNORED && scanIndex != group->cl.getCount() - 1 && !(*bFirstNGdrawn)) {
 				// first NON-grouped
 				*bFirstNGdrawn = TRUE;
 				rc.left = sfirstitem_NG->MARGIN_LEFT + bg_indent_l;
@@ -690,7 +689,7 @@ set_bg_l:
 				if (check_selected)
 					DrawAlpha(hdcMem, &rc, sfirstitem_NG->COLOR, sfirstitem_NG->ALPHA, sfirstitem_NG->COLOR2, sfirstitem_NG->COLOR2_TRANSPARENT, sfirstitem_NG->GRADIENT, sfirstitem_NG->CORNER, sfirstitem->BORDERSTYLE, sfirstitem->imageItem);
 			}
-			else if (type != CLCIT_GROUP && group->parent == NULL && !slastitem_NG->IGNORED && scanIndex == group->cl.count - 1 && (*bFirstNGdrawn)) {
+			else if (type != CLCIT_GROUP && group->parent == NULL && !slastitem_NG->IGNORED && scanIndex == group->cl.getCount() - 1 && (*bFirstNGdrawn)) {
 				// last item of list (NON-group)
 				// last NON-grouped
 				rc.left = slastitem_NG->MARGIN_LEFT + bg_indent_l;
@@ -767,7 +766,7 @@ set_bg_l:
 		StatusItems_t *scollapsed = arStatusItems[ID_EXTBKCOLLAPSEDDGROUP - ID_STATUS_OFFLINE];
 
 		ChangeToFont(hdcMem, dat, FONTID_GROUPS, &fontHeight);
-		if (contact->group->cl.count == 0) {
+		if (contact->group->cl.getCount() == 0) {
 			if (!sempty->IGNORED) {
 				rc.left = sempty->MARGIN_LEFT + bg_indent_l;
 				rc.top = y + sempty->MARGIN_TOP;
@@ -809,7 +808,7 @@ set_bg_l:
 				rc.top = y + sselected->MARGIN_TOP;
 				rc.right = clRect->right - sselected->MARGIN_RIGHT - bg_indent_r;
 				rc.bottom = y + rowHeight - sselected->MARGIN_BOTTOM;
-				if (cfg::getByte("CLCExt", "EXBK_EqualSelection", 0) == 1 && savedCORNER != -1)
+				if (db_get_b(NULL, "CLCExt", "EXBK_EqualSelection", 0) == 1 && savedCORNER != -1)
 					DrawAlpha(hdcMem, &rc, sselected->COLOR, sselected->ALPHA, sselected->COLOR2, sselected->COLOR2_TRANSPARENT, sselected->GRADIENT, savedCORNER, sselected->BORDERSTYLE, sselected->imageItem);
 				else
 					DrawAlpha(hdcMem, &rc, sselected->COLOR, sselected->ALPHA, sselected->COLOR2, sselected->COLOR2_TRANSPARENT, sselected->GRADIENT, sselected->CORNER, sselected->BORDERSTYLE, sselected->imageItem);
@@ -929,7 +928,7 @@ bgskipped:
 				colourFg = dat->fontInfo[FONTID_NOTONLIST].colour;
 				mode = ILD_BLEND50;
 			}
-			if (type == CLCIT_CONTACT && dat->showIdle && (flags & CONTACTF_IDLE) && contact->wStatus != ID_STATUS_OFFLINE)
+			if (type == CLCIT_CONTACT && dat->bShowIdle && (flags & CONTACTF_IDLE) && contact->wStatus != ID_STATUS_OFFLINE)
 				mode = ILD_SELECTED;
 
 			if (pi_selectiveIcon && av_right) {
@@ -970,7 +969,7 @@ bgskipped:
 		rc2.left = rcContent.left;
 		rc2.right = rc2.left - dat->rightMargin + ((clRect->right - rc2.left - textSize.cx) >> 1) - 3;
 		DrawEdge(hdcMem, &rc2, BDR_SUNKENOUTER, BF_RECT);
-		TextOut(hdcMem, rc2.right + 3, y + ((rowHeight - fontHeight) >> 1), contact->szText, (int)mir_tstrlen(contact->szText));
+		TextOut(hdcMem, rc2.right + 3, y + ((rowHeight - fontHeight) >> 1), contact->szText, (int)mir_wstrlen(contact->szText));
 		rc2.left = rc2.right + 6 + textSize.cx;
 		rc2.right = clRect->right - dat->rightMargin;
 		DrawEdge(hdcMem, &rc2, BDR_SUNKENOUTER, BF_RECT);
@@ -1003,7 +1002,7 @@ bgskipped:
 			int labelWidth = textSize.cx + countsSize.cx + spaceSize.cx;
 			int offset = (g_center) ? ((rc2.right - rc2.left) - labelWidth) / 2 : 0;
 
-			TextOut(hdcMem, rc2.left + offset + textSize.cx + spaceSize.cx, rc2.top + groupCountsFontTopShift, szCounts, (int)mir_tstrlen(szCounts));
+			TextOut(hdcMem, rc2.left + offset + textSize.cx + spaceSize.cx, rc2.top + groupCountsFontTopShift, szCounts, (int)mir_wstrlen(szCounts));
 			rightLineStart = rc2.left + offset + textSize.cx + spaceSize.cx + countsSize.cx + 2;
 
 			if (selected && !g_ignoreselforgroups)
@@ -1062,7 +1061,7 @@ bgskipped:
 		}
 	}
 	else {
-		TCHAR *szText = contact->szText;
+		wchar_t *szText = contact->szText;
 
 		rcContent.top = y + ((rowHeight - fontHeight) >> 1);
 
@@ -1104,14 +1103,14 @@ bgskipped:
 				RECT rc2 = rcContent;
 				int fHeight = 0;
 
-				TCHAR szResult[80];
-				if (TimeZone_PrintDateTime(cEntry->hTimeZone, _T("t"), szResult, _countof(szResult), 0))
+				wchar_t szResult[80];
+				if (TimeZone_PrintDateTime(cEntry->hTimeZone, L"t", szResult, _countof(szResult), 0))
 					goto nodisplay;
 
 				COLORREF oldColor = GetTextColor(hdcMem);
 				int idOldFont = dat->currentFontID;
 				ChangeToFont(hdcMem, dat, FONTID_TIMESTAMP, &fHeight);
-				GetTextExtentPoint32(hdcMem, szResult, (int)mir_tstrlen(szResult), &szTime);
+				GetTextExtentPoint32(hdcMem, szResult, (int)mir_wstrlen(szResult), &szTime);
 				verticalfit = (rowHeight - fHeight >= g_cysmIcon + 1);
 
 				if (av_right) {
@@ -1192,7 +1191,7 @@ bgskipped:
 						LONG rightIconsTop = rcContent.bottom - g_cysmIcon;
 						LONG old_right = rcContent.right;
 						ULONG textCounter = 0;
-						size_t ulLen = mir_tstrlen(szText);
+						size_t ulLen = mir_wstrlen(szText);
 						LONG old_bottom = rcContent.bottom;
 						DWORD i_dtFlags = DT_WORDBREAK | DT_NOPREFIX | dt_2ndrowflags;
 						dtp.cbSize = sizeof(dtp);
@@ -1216,7 +1215,7 @@ bgskipped:
 	if (selected) {
 		if (type != CLCIT_DIVIDER) {
 			RECT rc2;
-			int qlen = (int)mir_tstrlen(dat->szQuickSearch);
+			int qlen = (int)mir_wstrlen(dat->szQuickSearch);
 			if (hPreviousFont)
 				SelectObject(hdcMem, hPreviousFont);
 			SetTextColor(hdcMem, dat->quickSearchColour);
@@ -1261,8 +1260,8 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT *rcPaint)
 	int grey = 0;
 	BOOL bFirstNGdrawn = FALSE;
 	int line_num = -1;
-	COLORREF tmpbkcolour = style & CLS_CONTACTLIST ? (dat->useWindowsColours ? GetSysColor(COLOR_3DFACE) : dat->bkColour) : dat->bkColour;
-	selBlend = cfg::getByte("CLCExt", "EXBK_SelBlend", 1);
+	COLORREF tmpbkcolour = style & CLS_CONTACTLIST ? (dat->bUseWindowsColours ? GetSysColor(COLOR_3DFACE) : dat->bkColour) : dat->bkColour;
+	selBlend = db_get_b(NULL, "CLCExt", "EXBK_SelBlend", 1);
 	g_inCLCpaint = TRUE;
 	g_focusWnd = GetFocus();
 	my_status = GetGeneralisedStatus();
@@ -1293,8 +1292,8 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT *rcPaint)
 	mirror_always = (cfg::dat.bUseDCMirroring == 1);
 	mirror_rtltext = (cfg::dat.bUseDCMirroring == 3);
 
-	g_center = cfg::getByte("CLCExt", "EXBK_CenterGroupnames", 0) && !dat->bisEmbedded;
-	g_ignoreselforgroups = cfg::getByte("CLC", "IgnoreSelforGroups", 0);
+	g_center = db_get_b(NULL, "CLCExt", "EXBK_CenterGroupnames", 0) && !dat->bisEmbedded;
+	g_ignoreselforgroups = db_get_b(NULL, "CLC", "IgnoreSelforGroups", 0);
 
 	if (dat->greyoutFlags & pcli->pfnClcStatusToPf2(my_status) || style & WS_DISABLED)
 		grey = 1;
@@ -1423,18 +1422,19 @@ bgdone:
 
 	g_list_avatars = 0;
 	while (true) {
-		if (group->scanIndex == group->cl.count) {
-			group = group->parent;
-			if (group == NULL) break;	// Finished list
+		if (group->scanIndex == group->cl.getCount()) {
+			if ((group = group->parent) == NULL)
+				break;
 			group->scanIndex++;
 			continue;
 		}
 
-		if (group->cl.items[group->scanIndex]->cFlags & ECF_AVATAR)
+		ClcContact *cc = group->cl[group->scanIndex];
+		if (cc->cFlags & ECF_AVATAR)
 			g_list_avatars++;
 
-		if (group->cl.items[group->scanIndex]->type == CLCIT_GROUP && (group->cl.items[group->scanIndex]->group->expanded)) {
-			group = group->cl.items[group->scanIndex]->group;
+		if (cc->type == CLCIT_GROUP && (cc->group->expanded)) {
+			group = cc->group;
 			group->scanIndex = 0;
 			continue;
 		}
@@ -1444,33 +1444,32 @@ bgdone:
 
 	group = &dat->list;
 	group->scanIndex = 0;
+
 	int indent = 0;
-
 	for (int index = 0; y < rcPaint->bottom;) {
-		if (group->scanIndex == group->cl.count) {
-			group = group->parent;
-			indent--;
-			if (group == NULL)
+		if (group->scanIndex == group->cl.getCount()) {
+			if ((group = group->parent) == NULL)
 				break;
-
 			group->scanIndex++;
+			indent--;
 			continue;
 		}
 
 		line_num++;
+		ClcContact *cc = group->cl[group->scanIndex];
 		if (cfg::dat.bForceRefetchOnPaint)
-			group->cl.items[group->scanIndex]->ace = (struct avatarCacheEntry*) - 1;
+			cc->ace = (struct AVATARCACHEENTRY*) - 1;
 
 		if (y > rcPaint->top - dat->row_heights[line_num] && y <= rcPaint->bottom) {
-			if (group->cl.items[group->scanIndex]->ace == (struct avatarCacheEntry*) - 1)
-				group->cl.items[group->scanIndex]->ace = (struct avatarCacheEntry *)CallService(MS_AV_GETAVATARBITMAP, (WPARAM)group->cl.items[group->scanIndex]->hContact, 0);
-			RowHeight::getRowHeight(dat, group->cl.items[group->scanIndex], line_num, style);
-			PaintItem(hdcMem, group, group->cl.items[group->scanIndex], indent, y, dat, index, hwnd, style, &clRect, &bFirstNGdrawn, groupCountsFontTopShift, dat->row_heights[line_num]);
+			if (cc->ace == (struct AVATARCACHEENTRY*) - 1)
+				cc->ace = (struct AVATARCACHEENTRY *)CallService(MS_AV_GETAVATARBITMAP, (WPARAM)cc->hContact, 0);
+			RowHeight::getRowHeight(dat, cc, line_num, style);
+			PaintItem(hdcMem, group, cc, indent, y, dat, index, hwnd, style, &clRect, &bFirstNGdrawn, groupCountsFontTopShift, dat->row_heights[line_num]);
 		}
 		index++;
 		y += dat->row_heights[line_num];
-		if (group->cl.items[group->scanIndex]->type == CLCIT_GROUP && (group->cl.items[group->scanIndex]->group->expanded)) {
-			group = group->cl.items[group->scanIndex]->group;
+		if (cc->type == CLCIT_GROUP && (cc->group->expanded)) {
+			group = cc->group;
 			indent++;
 			group->scanIndex = 0;
 			continue;

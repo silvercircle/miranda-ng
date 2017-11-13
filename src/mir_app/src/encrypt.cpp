@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -35,15 +35,15 @@ static LIST<CRYPTO_PROVIDER> arProviders(5, CompareFunc);
 static INT_PTR srvRegister(WPARAM wParam, LPARAM lParam)
 {
 	CRYPTO_PROVIDER *p = (CRYPTO_PROVIDER*)lParam;
-	if (p == NULL || p->dwSize != sizeof(CRYPTO_PROVIDER))
+	if (p == nullptr || p->dwSize != sizeof(CRYPTO_PROVIDER))
 		return 1;
 
 	CRYPTO_PROVIDER *pNew = new CRYPTO_PROVIDER(*p);
 	pNew->pszName = mir_strdup(p->pszName);
 	if (pNew->dwFlags & CPF_UNICODE)
-		pNew->ptszDescr = mir_u2t(TranslateW_LP(p->pwszDescr, wParam));
+		pNew->ptszDescr = mir_wstrdup(TranslateW_LP(p->pwszDescr, wParam));
 	else
-		pNew->ptszDescr = mir_a2t(TranslateA_LP(p->pszDescr, wParam));
+		pNew->ptszDescr = mir_a2u(TranslateA_LP(p->pszDescr, wParam));
 	arProviders.insert(pNew);
 	return 0;
 }

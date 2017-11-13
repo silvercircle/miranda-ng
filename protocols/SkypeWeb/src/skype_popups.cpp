@@ -2,14 +2,14 @@
 
 void CSkypeProto::InitPopups()
 {
-	TCHAR desc[256];
+	wchar_t desc[256];
 	char name[256];
 	POPUPCLASS ppc = { sizeof(ppc) };
 	ppc.flags = PCF_TCHAR;
 
-	mir_sntprintf(desc, _T("%s %s"), m_tszUserName, TranslateT("Notifications"));
+	mir_snwprintf(desc, L"%s %s", m_tszUserName, TranslateT("Notifications"));
 	mir_snprintf(name, "%s_%s", m_szModuleName, "Notification");
-	ppc.ptszDescription = desc;
+	ppc.pwszDescription = desc;
 	ppc.pszName = name;
 	ppc.hIcon = GetIcon(IDI_NOTIFY);
 	ppc.colorBack = RGB(255, 255, 255);
@@ -17,9 +17,9 @@ void CSkypeProto::InitPopups()
 	ppc.iSeconds = 5;
 	m_PopupClasses.insert(Popup_RegisterClass(&ppc));
 
-	mir_sntprintf(desc, _T("%s %s"), m_tszUserName, TranslateT("Errors"));
+	mir_snwprintf(desc, L"%s %s", m_tszUserName, TranslateT("Errors"));
 	mir_snprintf(name, "%s_%s", m_szModuleName, "Error");
-	ppc.ptszDescription = desc;
+	ppc.pwszDescription = desc;
 	ppc.pszName = name;
 	ppc.hIcon = GetIcon(IDI_ERRORICON);
 	ppc.colorBack = RGB(255, 255, 255);
@@ -27,9 +27,9 @@ void CSkypeProto::InitPopups()
 	ppc.iSeconds = -1;
 	m_PopupClasses.insert(Popup_RegisterClass(&ppc));
 
-	mir_sntprintf(desc, _T("%s %s"), m_tszUserName, TranslateT("Calls"));
+	mir_snwprintf(desc, L"%s %s", m_tszUserName, TranslateT("Calls"));
 	mir_snprintf(name, "%s_%s", m_szModuleName, "Call");
-	ppc.ptszDescription = desc;
+	ppc.pwszDescription = desc;
 	ppc.pszName = name;
 	ppc.hIcon = GetIcon(IDI_CALL);
 	ppc.colorBack = RGB(255, 255, 255);
@@ -42,41 +42,34 @@ void CSkypeProto::InitPopups()
 void CSkypeProto::UninitPopups()
 {
 	for (int i = 0; i < m_PopupClasses.getCount(); i++)
-	{
 		Popup_UnregisterClass(m_PopupClasses[i]);
-	}
 }
 
-void CSkypeProto::ShowNotification(const TCHAR *caption, const TCHAR *message, MCONTACT hContact, int type)
+void CSkypeProto::ShowNotification(const wchar_t *caption, const wchar_t *message, MCONTACT hContact, int type)
 {
-	if (Miranda_Terminated())
+	if (Miranda_IsTerminated())
 		return;
 
 	if (ServiceExists(MS_POPUP_ADDPOPUPCLASS)) {
 		CMStringA className(FORMAT, "%s_", m_szModuleName);
 
-		switch (type)
-		{
+		switch (type) {
 		case 1:
-			{
-				className.Append("Error");
-				break;
-			}
+			className.Append("Error");
+			break;
+
 		case SKYPE_DB_EVENT_TYPE_INCOMING_CALL:
-			{
-				className.Append("Call");
-				break;
-			}
+			className.Append("Call");
+			break;
+
 		default:
-			{
-				className.Append("Notification");
-				break;
-			}
+			className.Append("Notification");
+			break;
 		}
 
 		POPUPDATACLASS ppd = { sizeof(ppd) };
-		ppd.ptszTitle = caption;
-		ppd.ptszText = message;
+		ppd.pwszTitle = caption;
+		ppd.pwszText = message;
 		ppd.pszClassName = className.GetBuffer();
 		ppd.hContact = hContact;
 
@@ -88,7 +81,7 @@ void CSkypeProto::ShowNotification(const TCHAR *caption, const TCHAR *message, M
 	}
 }
 
-void CSkypeProto::ShowNotification(const TCHAR *message, MCONTACT hContact)
+void CSkypeProto::ShowNotification(const wchar_t *message, MCONTACT hContact)
 {
 	ShowNotification(_T(MODULE), message, hContact);
 }

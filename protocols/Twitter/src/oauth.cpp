@@ -1,5 +1,5 @@
 /*
-Copyright © 2012-15 Miranda NG team
+Copyright © 2012-17 Miranda NG team
 Copyright © 2009 Jim Porter
 
 This program is free software: you can redistribute it and/or modify
@@ -251,7 +251,7 @@ map<wstring, wstring> mir_twitter::CrackURL(wstring url)
 		//debugLogW("**CRACK::3 - port is %s", port1);
 		explicitPort = L"1";
 	}
-	else ppro_->debugLogW(L"**CRACK - not a proper URL? doesn't have a colon. URL is %s", url);
+	else ppro_->debugLogW(L"**CRACK - not a proper URL? doesn't have a colon. URL is %s", url.c_str());
 
 	for (size_t i = 1; i < urlToks2.size(); ++i) {
 		if (i > 1) {
@@ -308,7 +308,7 @@ wstring mir_twitter::OAuthNormalizeUrl(const wstring& url)
 	if (Compare(brokenURL[L"scheme"], L"http", false) && !(Compare(brokenURL[L"port"], L"80", false)) ||
 		(Compare(brokenURL[L"scheme"], L"https", false) && !(Compare(brokenURL[L"port"], L"443", false))))
 	{
-		mir_snwprintf(port, _countof(port), L":%s", brokenURL[L"port"]);
+		mir_snwprintf(port, _countof(port), L":%s", brokenURL[L"port"].c_str());
 	}
 
 	// InternetCrackUrl includes ? and # elements in the path, 
@@ -396,5 +396,5 @@ wstring mir_twitter::OAuthCreateSignature(const wstring& signatureBase, const ws
 	string data = WideToUTF8(signatureBase);
 	mir_hmac_sha1(digest, (PBYTE)keyBytes.c_str(), keyBytes.size(), (PBYTE)data.c_str(), data.size());
 	ptrA encoded(mir_base64_encode(digest, sizeof(digest)));
-	return UrlEncode((TCHAR*)_A2T(encoded));
+	return UrlEncode((wchar_t*)_A2T(encoded));
 }

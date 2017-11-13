@@ -1,5 +1,5 @@
 /*
-Copyright © 2012-15 Miranda NG team
+Copyright © 2012-17 Miranda NG team
 Copyright © 2009 Jim Porter
 
 This program is free software: you can redistribute it and/or modify
@@ -46,7 +46,7 @@ PLUGININFOEX pluginInfo = {
 
 static int compare_protos(const TwitterProto *p1, const TwitterProto *p2)
 {
-	return mir_tstrcmp(p1->m_tszUserName, p2->m_tszUserName);
+	return mir_wstrcmp(p1->m_tszUserName, p2->m_tszUserName);
 }
 
 OBJLIST<TwitterProto> g_Instances(1, compare_protos);
@@ -70,7 +70,7 @@ extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = { MIID_PROTOC
 /////////////////////////////////////////////////////////////////////////////////////////
 // Load
 
-static PROTO_INTERFACE* protoInit(const char *proto_name, const TCHAR *username)
+static PROTO_INTERFACE* protoInit(const char *proto_name, const wchar_t *username)
 {
 	TwitterProto *proto = new TwitterProto(proto_name, username);
 	g_Instances.insert(proto);
@@ -83,12 +83,10 @@ static int protoUninit(PROTO_INTERFACE *proto)
 	return 0;
 }
 
-static HANDLE g_hEvents[1];
-
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	PROTOCOLDESCRIPTOR pd = { 0 };
 	pd.cbSize = sizeof(pd);
@@ -100,7 +98,7 @@ extern "C" int __declspec(dllexport) Load(void)
 
 	InitIcons();
 	InitContactMenus();
-
+	TwitterInitSounds();
 	return 0;
 }
 
@@ -109,9 +107,5 @@ extern "C" int __declspec(dllexport) Load(void)
 
 extern "C" int __declspec(dllexport) Unload(void)
 {
-	UninitContactMenus();
-	for (size_t i = 1; i < _countof(g_hEvents); i++)
-		UnhookEvent(g_hEvents[i]);
-
 	return 0;
 }

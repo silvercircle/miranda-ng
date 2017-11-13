@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2010 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -72,7 +72,7 @@ int CIcqProto::getContactUid(MCONTACT hContact, DWORD *pdwUin, uid_str *ppszUid)
 			break;
 
 		case DBVT_ASCIIZ:
-			if (ppszUid && m_bAimEnabled) {
+			if (ppszUid) {
 				mir_strcpy(*ppszUid, dbv.pszVal);
 				iRes = 0;
 			}
@@ -80,7 +80,7 @@ int CIcqProto::getContactUid(MCONTACT hContact, DWORD *pdwUin, uid_str *ppszUid)
 			break;
 
 		case DBVT_UTF8:
-			if (ppszUid && m_bAimEnabled) {
+			if (ppszUid) {
 				mir_strcpy(*ppszUid, dbv.pszVal);
 				mir_utf8decode(*ppszUid, NULL);
 				iRes = 0;
@@ -169,7 +169,7 @@ void CIcqProto::setStatusMsgVar(MCONTACT hContact, char* szStatusMsg, bool isAns
 
 		char *oldStatusMsg = NULL;
 		DBVARIANT dbv;
-		if (!db_get_ts(hContact, "CList", "StatusMsg", &dbv)) {
+		if (!db_get_ws(hContact, "CList", "StatusMsg", &dbv)) {
 			oldStatusMsg = make_utf8_string(dbv.ptszVal);
 			db_free(&dbv);
 		}
@@ -191,7 +191,7 @@ int CIcqProto::IsICQContact(MCONTACT hContact)
 
 MEVENT CIcqProto::AddEvent(MCONTACT hContact, WORD wType, DWORD dwTime, DWORD flags, size_t cbBlob, PBYTE pBlob)
 {
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	dbei.szModule = m_szModuleName;
 	dbei.timestamp = dwTime;
 	dbei.flags = flags;

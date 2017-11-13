@@ -32,7 +32,7 @@ int Utils::getDeleteTimeMin()
 	return -1;
 }
 
-int Utils::msgBox(TCHAR *stzMsg, UINT uType)
+int Utils::msgBox(wchar_t *stzMsg, UINT uType)
 {
 	HWND hwnd = (uDlg != NULL) ? uDlg->m_hwnd : 0;
 	return MessageBox(hwnd, stzMsg, TranslateT("FTP File"), uType);
@@ -44,26 +44,33 @@ int Utils::msgBoxA(char *szMsg, UINT uType)
 	return MessageBoxA(hwnd, szMsg, Translate("FTP File"), uType);
 }
 
-HICON Utils::loadIconEx(char *szName)
+HICON Utils::loadIconEx(const char *szName)
 {
 	char buff[100];
 	mir_snprintf(buff, "%s_%s", MODULE, szName);
 	return IcoLib_GetIcon(buff);
 }
 
-TCHAR* Utils::getFileNameFromPath(TCHAR *stzPath)
+HANDLE Utils::getIconHandle(const char *szName)
 {
-	TCHAR *pch = _tcsrchr(stzPath, '\\');
-	if (pch) return pch + 1;
-	else return _T("file.zip");
+	char buff[100];
+	mir_snprintf(buff, "%s_%s", MODULE, szName);
+	return IcoLib_GetIconHandle(buff);
 }
 
-TCHAR* Utils::getTextFragment(TCHAR *stzText, size_t length, TCHAR *buff)
+wchar_t* Utils::getFileNameFromPath(wchar_t *stzPath)
 {
-	if (mir_tstrlen(stzText) > length) {
-		mir_tstrcpy(buff, stzText);
+	wchar_t *pch = wcsrchr(stzPath, '\\');
+	if (pch) return pch + 1;
+	else return L"file.zip";
+}
+
+wchar_t* Utils::getTextFragment(wchar_t *stzText, size_t length, wchar_t *buff)
+{
+	if (mir_wstrlen(stzText) > length) {
+		mir_wstrcpy(buff, stzText);
 		buff[length - 1] = 0;
-		mir_tstrcat(buff, _T("..."));
+		mir_wstrcat(buff, L"...");
 		return buff;
 	}
 
@@ -88,9 +95,9 @@ void Utils::copyToClipboard(char *szText)
 const char from_chars[] = "àáâãäå¸æçèéêëìíîïğñòóôõö÷øùúûüışÿÀÁÂÃÄÅ¨ÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖ×ØÙÚÛÜİŞß !@#$%^&=,{}[];'`";
 const char to_chars[] = "abvgdeezziiklmnoprstufhccwwqyqeuaABVGDEEZZIIKLMNOPRSTUFHCCWWQYQEUA_________________";
 
-char* Utils::makeSafeString(TCHAR *input, char *output)
+char* Utils::makeSafeString(wchar_t *input, char *output)
 {
-	char *buff = mir_t2a(input);
+	char *buff = mir_u2a(input);
 	size_t length = mir_strlen(buff);
 
 	for (UINT i = 0; i < length; i++) {
@@ -148,18 +155,18 @@ void Utils::curlSetOpt(CURL *hCurl, ServerList::FTP *ftp, char *url, struct curl
 
 INT_PTR CALLBACK Utils::DlgProcSetFileName(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	TCHAR *fileName = (TCHAR *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
+	wchar_t *fileName = (wchar_t *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
 
 	switch (msg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
-		fileName = (TCHAR *)lParam;
+		fileName = (wchar_t *)lParam;
 		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)fileName);
 		SetDlgItemText(hwndDlg, IDC_NAME, fileName);
 
 		if (GetDlgCtrlID((HWND)wParam) != IDC_NAME) {
 			SetFocus(GetDlgItem(hwndDlg, IDC_NAME));
-			SendDlgItemMessage(hwndDlg, IDC_NAME, EM_SETSEL, 0, mir_tstrlen(fileName) - 4);
+			SendDlgItemMessage(hwndDlg, IDC_NAME, EM_SETSEL, 0, mir_wstrlen(fileName) - 4);
 			return FALSE;
 		}
 
@@ -182,7 +189,7 @@ INT_PTR CALLBACK Utils::DlgProcSetFileName(HWND hwndDlg, UINT msg, WPARAM wParam
 	return FALSE;
 }
 
-bool Utils::setFileNameDlg(TCHAR *nameBuff)
+bool Utils::setFileNameDlg(wchar_t *nameBuff)
 {
 	if (DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_DLG_NAME), 0, DlgProcSetFileName, (LPARAM)nameBuff) == IDOK)
 		return true;
@@ -192,14 +199,14 @@ bool Utils::setFileNameDlg(TCHAR *nameBuff)
 
 bool Utils::setFileNameDlgA(char *nameBuff)
 {
-	TCHAR buff[64];
-	TCHAR *tmp = mir_a2t(nameBuff);
-	mir_tstrcpy(buff, tmp);
+	wchar_t buff[64];
+	wchar_t *tmp = mir_a2u(nameBuff);
+	mir_wstrcpy(buff, tmp);
 	FREE(tmp);
 
 	bool res = setFileNameDlg(buff);
 	if (res) {
-		char *p = mir_t2a(buff);
+		char *p = mir_u2a(buff);
 		mir_strcpy(nameBuff, p);
 		FREE(p);
 	}

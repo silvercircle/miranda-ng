@@ -2,12 +2,28 @@
 ;============================================================
 ;  File: VKontakte.dll
 ;  Plugin: VKontakte protocol
-;  Version: 0.1.1.7
+;  Version: 0.1.2.5
 ;  Authors: Miranda NG Team
 ;============================================================
 [VKontakte protocol support for Miranda NG.]
 
 ;file \protocols\VKontakte\res\resource.rc
+[Show in protocol menu ]
+
+[Create new chat]
+Založit novou diskusi
+[Status message]
+Zpráva stavu
+[Send message to my wall]
+
+[Load news from VK]
+
+[Load history for all contacts from VK]
+
+[Wipe contacts missing in friend list]
+
+[Visit profile]
+Zobrazit profil
 [[img] BBCode support for image]
 
 [off]
@@ -22,17 +38,19 @@ vyp
 
 [basic ([b], [i], [u], [s])]
 
-[advanced (+[url], [size], [color])]
+[advanced (+[url], [size], [color], [code])]
 
 [Use this setting also for attachments on news and notifications]
 
-[Other]
-Ostatní
 [BBCode support on attachments]
 
+[Other]
+Ostatní
 [Process stickers as smileys]
 
 [Shorten links for audio attachments]
+
+[Use non-standard popups for news and event notifications]
 
 [News and event notifications]
 
@@ -55,7 +73,7 @@ Ostatní
 [News types]
 
 [Wall posts]
-
+Příspěvky ze zdi
 [Photos]
 Fotografie
 [Photos tags]
@@ -88,6 +106,8 @@ Pozvání
 
 [Mentions in comments]
 
+[Accepted friend requests]
+
 [E-mail or phone number:]
 E-mail nebo telefonní číslo:
 [Password:]
@@ -98,6 +118,8 @@ Heslo:
 Extra
 [Hide chats on startup]
 
+[Sync read message status from server]
+
 [Always notify as unread for all incoming message]
 Vždy upozornit všechny příchozí zprávy jako nepřečtené
 [Force invisible status upon user activity]
@@ -105,6 +127,10 @@ Vždy upozornit všechny příchozí zprávy jako nepřečtené
 [Invisible interval timeout (min):]
 
 [Use non-standard urlEncode for sent messages (less traffic)]
+
+[Send VK-objects links as attachments]
+
+[and load sent attachments]
 
 [When I ban user...]
 
@@ -124,11 +150,17 @@ Vždy upozornit všechny příchozí zprávy jako nepřečtené
 
 [as regular status only]
 
+[Group chats]
+Skupinové rozhovory
+[Message for return to group chat:]
+
 [Login settings]
 
 [Local settings]
 
 [Contact list group:]
+
+[Language for names and titles:]
 
 [Server-side delivery confirmation]
 
@@ -136,23 +168,9 @@ Vždy upozornit všechny příchozí zprávy jako nepřečtené
 Použít lokální čas počítače pro příchozí zprávy
 [Automatically wipe local contacts missing in your friend list]
 
-[Mark message as read...]
-Označit zprávu jako přečtenou...
-[on read]
-při přečtení
-[on receive]
-při přijetí
-[on reply]
-při odpovězení
-[on typing]
-při psaní
-[Sync history on protocol online...]
+[Mark message as read:]
 
-[automatically]
-
-[for last 1 day]
-
-[for last 3 days]
+[Sync history on protocol online:]
 
 [Bots challenge test]
 Kontrola robotů
@@ -162,6 +180,8 @@ Instrukce:
 Potvrdit
 [Cancel]
 Zrušit
+[Open in browser]
+Otevřít v prohlížeči
 [Invite user to chat]
 Pozvat uživatele k diskusi
 [Choose one of your contacts to be invited:]
@@ -174,11 +194,9 @@ Označte kontakty, které chcete pozvat do nové diskuse
 
 [Share]
 Sdílet
-[Url:]
+[URL:]
 Odkaz:
 [Only for friends]
-
-[Attention]
 
 ;file \protocols\VKontakte\src\misc.cpp
 [Captcha form icon]
@@ -186,7 +204,7 @@ Ikona okna s captcha kódem
 [Notification icon]
 Ikona upozornění
 [Read message icon]
-
+Ikona přečtené zprávy
 [Visit profile icon]
 
 [Load server history icon]
@@ -205,6 +223,8 @@ Ikona upozornění
 
 [Wall message icon]
 
+[Mark messages as read icon]
+
 [Protocols]
 Protokoly
 [VKontakte]
@@ -213,14 +233,22 @@ Protokoly
 
 [Error]
 Chyba
+[You have to validate your account before you can use VK in Miranda NG]
+
 [Error %d. Data will not be sent or received.]
 
 [One of the parameters specified was missing or invalid]
 
 [Access to adding post denied]
 
-[Enter confirmation code]
+[Enter the missing digits between %s and %s of the phone number linked to your account]
 
+[Attention!]
+
+[Enter confirmation code]
+Zadejte potvrzovací kód
+[Enter new nickname]
+Zadejte novou přezdívku
 [Message read: %s]
 Zpráva byla přečtena: %s
 [has invited you to a group]
@@ -277,8 +305,10 @@ Dokument
 Příspěvek na zdi
 [Link]
 Adresa
-[Image]
-Obrázek
+[Product]
+
+[Price]
+
 [Gift]
 Dárek
 [Unsupported or unknown attachment type: %s]
@@ -289,9 +319,6 @@ Nepodporovaný nebo neznámý typ přílohy: %s
 Zpráva od
 [at]
 
-;file \protocols\VKontakte\src\vk_captcha.cpp
-[Enter the text you see]
-Zadejte text, který vidíte
 ;file \protocols\VKontakte\src\vk_chats.cpp
 [Participants]
 Účastníci
@@ -309,6 +336,10 @@ Vlastníci
 
 [change chat title to]
 
+[changed chat cover:]
+
+[deleted chat cover]
+
 [chat action not supported]
 
 [Unknown]
@@ -319,8 +350,6 @@ neznámý
 Tato diskuse bude navždy zrušena s veškerým jejím obsahem. Tuto akci nelze vrátit zpět. Přejete si pokračovat?
 [Warning]
 Upozornění
-[I'm back]
-
 [You've been kicked by ]
 
 [Chat]
@@ -333,16 +362,35 @@ Pozvat už&ivatele
 Zruši&t místnost
 [&User details]
 Informace o &uživateli
-[Visit profile]
-Zobrazit profil
+[Change nick]
+
 [&Kick]
 Vy&kopnout
+[%s is typing a message...]
+%s píše zprávu...
+;file \protocols\VKontakte\src\vk_dialogs.cpp
+[Enter the text you see]
+Zadejte text, který vidíte
+[Wall message for %s]
+
 ;file \protocols\VKontakte\src\vk_feed.cpp
+[New news]
+Nové novinky
+[New notifications]
+Nová upozornění
 [User was tagged in these photos:]
 
+[(photos)]
+(fotky)
+[(attachments)]
+(přílohy)
 [News from %s\n%s]
 
+[News from %s]
+
 [\tRepost from %s\n%s]
+
+[Repost from %s]
 
 [Video description:]
 
@@ -351,6 +399,22 @@ Vy&kopnout
 [Topic text:]
 
 ;file \protocols\VKontakte\src\vk_files.cpp
+[Protocol is offline]
+Protokol je offline
+[File does not exist]
+
+[File type not supported]
+
+[Error open file]
+
+[Error read file]
+
+[File upload error]
+
+[Upload server returned empty URL]
+
+[Invalid or unknown recipient user ID]
+
 [Couldn't save file]
 
 [Invalid album id]
@@ -369,12 +433,20 @@ Vy&kopnout
 
 [Unknown error occurred]
 
-[File upload error]
-
 ;file \protocols\VKontakte\src\vk_history.cpp
 [Are you sure to reload all messages from vk.com?\nLocal contact history will be deleted and reloaded from the server.\nIt may take a long time.\nDo you want to continue?]
 
-[Attention!]
+[Are you sure you want to reload all messages for all contacts from vk.com?\nLocal contact history will be deleted and reloaded from the server.\nIt may take a very long time and/or corrupt Miranda database.\nWe recommend check your database before reloading messages and after it (Miranda32.exe /svc:dbchecker or Miranda64.exe /svc:dbchecker).\nDo you want to continue?]
+
+[Error loading message history from server.]
+
+[Loading messages for all contacts is completed.]
+
+[Loading history]
+
+[Error loading message history for %s from server.]
+
+[Loading messages for %s is completed.]
 
 ;file \protocols\VKontakte\src\vk_options.cpp
 [Network]
@@ -385,16 +457,50 @@ Sítě
 
 [View]
 Zobrazit
+[Menu]
+Menu
+[Account language]
+
+[English]
+angličtina
+[Russian]
+ruština
+[Belarusian]
+běloruština
+[Ukrainian]
+ukrajinština
+[Spanish]
+španělština
+[Finnish]
+finština
+[German]
+němčina
+[Italian]
+italština
+[automatically]
+
+[for last 1 day]
+
+[for last 3 days]
+
+[on read]
+při přečtení
+[on receive]
+při přijetí
+[on reply]
+při odpovězení
+[on typing]
+při psaní
+[These changes will take effect after Miranda NG restart.\nWould you like to restart it now?]
+Provedené změny se projeví až po restartu Mirandy NG.\nPřejete si ji nyní restartovat?
+[VKontakte protocol]
+
 ;file \protocols\VKontakte\src\vk_proto.cpp
 [%s server connection]
 %s - spojení se serverem
-[Create new chat]
-Založit novou diskusi
-[Status message]
-Zpráva stavu
-[Send message to my wall]
+[VKontakte newsfeed & notification event]
 
-[Load news from VK]
+[Mark messages as read]
 
 [Send message to user\'s wall]
 
@@ -437,8 +543,31 @@ Oznámení
 ČEKÁNÍ...
 [Enter new status message]
 
+;file \protocols\VKontakte\src\vk_struct.cpp
+[I\'m back]
+
 ;file \protocols\VKontakte\src\vk_thread.cpp
+[Service message]
+
+[Interests]
+Zájmy
+[Activities]
+Činnosti
+[Music]
+Hudba
+[Movies]
+
+[TV]
+
+[Books]
+
+[Games]
+Hry
+[Quotes]
+
 [Please authorize me to add you to my friend list.]
+
+[Are you sure to wipe local contacts missing in your friend list?]
 
 [Are you sure to delete %s from your friend list?]
 
@@ -465,9 +594,4 @@ Oznámení
 [\nIt will also]
 
 [Are you sure to report abuse on %s?]
-
-;file \protocols\VKontakte\src\vk_wallpost.cpp
-[Wall message for]
-
-[Attention! Message body or url should not be empty!]
 

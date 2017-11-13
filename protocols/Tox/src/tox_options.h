@@ -19,6 +19,11 @@ private:
 	CCtrlCheck m_enableUdp;
 	CCtrlCheck m_enableIPv6;
 
+	CCtrlEdit m_maxConnectRetries;
+	CCtrlSpin m_maxConnectRetriesSpin;
+	CCtrlEdit m_maxReconnectRetries;
+	CCtrlSpin m_maxReconnectRetriesSpin;
+
 protected:
 	void OnInitDialog();
 
@@ -117,12 +122,16 @@ private:
 
 	CCtrlNodeList m_nodes;
 	CCtrlButton m_addNode;
+	CCtrlButton m_updateNodes;
 
 protected:
 	void OnInitDialog();
 	void OnApply();
 
+	void ReloadNodeList();
+
 	void OnAddNode(CCtrlBase*);
+	void OnUpdateNodes(CCtrlBase*);
 	void OnNodeListDoubleClick(CCtrlBase*);
 	void OnNodeListClick(CCtrlListView::TEventInfo *evt);
 	void OnNodeListKeyDown(CCtrlListView::TEventInfo *evt);

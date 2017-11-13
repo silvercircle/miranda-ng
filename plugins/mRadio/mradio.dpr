@@ -65,7 +65,7 @@ begin
   StrCopyW(pc,'plugins\mradio.ini');
   FastWideToAnsi(buf,storage);
   mGetMem(storagep,MAX_PATH+32);
-  CallService(MS_DB_GETPROFILEPATH,MAX_PATH-1,tlparam(storagep));
+  Profile_GetPathA(MAX_PATH,storagep);
   StrCat(storagep,'\mradio.ini');
 
   DBWriteDWord(0,PluginName,optVersion,PluginInfo.version); //??
@@ -79,10 +79,9 @@ begin
   StrCopy(szTemp,Translate('%s server connection'));
   StrReplace(szTemp,'%s',PluginName);
   nlu.szDescriptiveName.a:=szTemp;
-  nlu.cbSize             :=SizeOf(nlu);
   nlu.flags              :=NUF_HTTPCONNS or NUF_NOHTTPSOPTION or NUF_OUTGOING;
   nlu.szSettingsModule   :=PluginName;
-  hNetLib:=CallService(MS_NETLIB_REGISTERUSER,0,tlparam(@nlu));
+  hNetLib:=Netlib_RegisterUser(@nlu);
 
 //  CallService(MS_RADIO_COMMAND,MRC_RECORD,2); record off - not so necessary
 
@@ -130,7 +129,7 @@ begin
 
   DestroyHookableEvent(hhRadioStatus);
 
-  CallService(MS_NETLIB_CLOSEHANDLE,hNetLib,0);
+  Netlib_CloseHandle(hNetLib);
 
   mFreeMem(storage);
   mFreeMem(storagep);

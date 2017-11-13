@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Twitter.dll
 ;  Plugin: Twitter protocol
-;  Version: 1.3.0.1
+;  Version: 1.3.0.2
 ;  Authors: dentist, omniwolf, Thief
 ;============================================================
 [Twitter protocol support for Miranda NG.]
@@ -26,7 +26,7 @@
 [Miscellaneous options]
 Дод. налаштування
 [Use group chat for Twitter feed]
-Чат для відображення повідомлень
+Повідомлення у вигляді чату
 [Base URL:]
 URL:
 [Polling rate:]
@@ -35,8 +35,8 @@ URL:
 кожні
 [sec]
 с
-[Please cycle your connection for these changes to take effect]
-Будь ласка, перепідключіться, щоб зміни набрали чинності.
+[These changes will take effect the next time you connect to the Twitter network.]
+Зміни наберуть чинності при наступному вході в мережу Twitter.
 [Treat tweets as messages]
 Твіти як повідомлення
 [Enable popup notifications for tweets]
@@ -69,8 +69,14 @@ URL:
 Введіть PIN-код з Twitter-у
 [Enter the PIN provided by Twitter to complete your sign in. This is a one time process until you recreate your Miranda Twitter account.]
 Введіть PIN-код, наданий Twitter, щоб завершити процес входу. Це потрібно зробити один раз, поки ви не створите свій обліковий запис Twitter у Miranda заново.
+[Normal]
+Звичайний
 [OAuth variables are out of sequence, they have been reset. Please reconnect and reauthorize Miranda to Twitter.com (do the PIN stuff again)]
 Змінні OAuth втратили послідовність і були обнулені. Будь ласка, з'єднайтеся знову і авторизуйте Miranda на Twitter.com (ще раз з PIN-кодом)
+[Failed to get Twitter Access Tokens, please go offline and try again. If this keeps happening, check your internet connection.]
+Не вдалося отримати токени доступу Twitter, відключіться і спробуйте знову. Якщо наступна спроба буде невдалою, перевірте з'єднання з Інтернетом.
+[You're missing the Nick key in the database. This isn't really a big deal, but you'll notice some minor quirks (self contact in list, no group chat outgoing message highlighting, etc). To fix it either add it manually or recreate your Miranda Twitter account]
+У базі відсутнє налаштування "Nick". Це може спричинити незначні помилки, як-от появу самого себе у списку, відсутність підсвітки вихідних повідомлень у групових чатах тощо. Щоб їх уникнути, додайте це налаштування вручну або створіть свій обліковий запис Twitter у Miranda заново.
 [Send Tweet...]
 Надіслати твіт...
 [Network]
@@ -90,7 +96,7 @@ Twitter (аватари)
 [%s Protocol]
 Протокол %s
 [Don't be crazy! Everyone knows the max tweet size is 140, and you're trying to fit %d chars in there?]
-Усім відомо, що максимальна довжина твіта - 140 символів. Навіщо ви намагаєтесь умістити сюди %d символів?
+Максимальна довжина твіта становить 140 символів. Навіщо ви намагаєтесь умістити сюди %d символів?
 [Twitter Icon]
 Значок Twitter
 [Tweet]
@@ -99,5 +105,9 @@ Twitter (аватари)
 Відповісти на твіт
 [Visit Homepage]
 Сайт
+[First tweet from new contact]
+Перший твіт від нового контакту
+[New tweet]
+Новий твіт
 [Reply...]
 Відповідь...

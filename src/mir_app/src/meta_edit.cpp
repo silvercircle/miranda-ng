@@ -32,7 +32,7 @@ struct
 	MCONTACT hDefaultContact;                // HANDLE of the new default contact
 	MCONTACT hOfflineContact;
 	int num_deleted,                         // DWORD number of deleted contacts
-		 num_contacts;                        // DWORD number of contacts
+		num_contacts;                        // DWORD number of contacts
 	MCONTACT hDeletedContacts[MAX_CONTACTS]; // HANDLEs of the subcontacts to be removed from this metacontact
 	MCONTACT hContact[MAX_CONTACTS];         // HANDLEs of the subcontacts, in the order they should be in
 }
@@ -42,7 +42,7 @@ static g_data; // global CHANGES structure
 
 static void FillContactList(HWND hList)
 {
-	TCHAR buff[256];
+	wchar_t buff[256];
 
 	SendMessage(hList, LVM_DELETEALLITEMS, 0, 0);
 
@@ -52,8 +52,8 @@ static void FillContactList(HWND hList)
 	for (int i = 0; i < g_data.num_contacts; i++) {
 		LvItem.iItem = i;
 
-		TCHAR *ptszCDN = cli.pfnGetContactDisplayName(g_data.hContact[i], 0);
-		if (ptszCDN == NULL)
+		wchar_t *ptszCDN = cli.pfnGetContactDisplayName(g_data.hContact[i], 0);
+		if (ptszCDN == nullptr)
 			ptszCDN = TranslateT("(Unknown contact)");
 
 		LvItem.iSubItem = 0; // clist display name
@@ -71,19 +71,19 @@ static void FillContactList(HWND hList)
 			if (!db_get(g_data.hContact[i], szProto, szField, &dbv)) {
 				switch (dbv.type) {
 				case DBVT_ASCIIZ:
-					_tcsncpy_s(buff, _A2T(dbv.pszVal), _TRUNCATE);
+					wcsncpy_s(buff, _A2T(dbv.pszVal), _TRUNCATE);
 					break;
 				case DBVT_WCHAR:
-					_tcsncpy_s(buff, dbv.ptszVal, _TRUNCATE);
+					wcsncpy_s(buff, dbv.ptszVal, _TRUNCATE);
 					break;
 				case DBVT_BYTE:
-					_itot(dbv.bVal, buff, 10);
+					_itow(dbv.bVal, buff, 10);
 					break;
 				case DBVT_WORD:
-					_itot(dbv.wVal, buff, 10);
+					_itow(dbv.wVal, buff, 10);
 					break;
 				case DBVT_DWORD:
-					_itot(dbv.dVal, buff, 10);
+					_itow(dbv.dVal, buff, 10);
 					break;
 				default:
 					buff[0] = 0;
@@ -96,7 +96,7 @@ static void FillContactList(HWND hList)
 			SendMessage(hList, LVM_SETITEM, 0, (LPARAM)&LvItem); // Enter text to SubItems
 
 			LvItem.iSubItem = 2; // protocol
-			_tcsncpy_s(buff, (pa == NULL) ? _A2T(szProto) : pa->tszAccountName, _TRUNCATE);
+			wcsncpy_s(buff, (pa == nullptr) ? _A2T(szProto) : pa->tszAccountName, _TRUNCATE);
 			ListView_SetItem(hList, &LvItem);
 		}
 		else {
@@ -167,9 +167,9 @@ static void ApplyChanges()
 		PROTO_AVATAR_INFORMATION ai = { 0 };
 		ai.hContact = g_data.hMeta;
 		ai.format = PA_FORMAT_UNKNOWN;
-		_tcsncpy_s(ai.filename, _T("X"), _TRUNCATE);
+		wcsncpy_s(ai.filename, L"X", _TRUNCATE);
 		if (CallProtoService(META_PROTO, PS_GETAVATARINFO, 0, (LPARAM)&ai) == GAIR_SUCCESS)
-			db_set_ts(g_data.hMeta, "ContactPhoto", "File", ai.filename);
+			db_set_ws(g_data.hMeta, "ContactPhoto", "File", ai.filename);
 	}
 }
 
@@ -197,7 +197,7 @@ LRESULT ProcessCustomDraw(LPARAM lParam)
 *
 * @param hwndDlg : HANDLE to the <b>'Edit'</b> Dialog.
 * @param uMsg : Specifies the message received by this dialog.
-* @param wParam : Specifies additional message-specific information. 
+* @param wParam : Specifies additional message-specific information.
 * @param lParam : Specifies additional message-specific information (handle of MetaContact to edit)
 *
 * @return TRUE if the dialog processed the message, FALSE if it did not.
@@ -213,10 +213,10 @@ static INT_PTR CALLBACK Meta_EditDialogProc(HWND hwndDlg, UINT msg, WPARAM wPara
 	switch (msg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadIconEx(I_EDIT));
+		Window_SetIcon_IcoLib(hwndDlg, Meta_GetIconHandle(I_EDIT));
 		{
 			DBCachedContact *cc = currDb->m_cache->GetCachedContact(lParam);
-			if (cc == NULL) {
+			if (cc == nullptr) {
 				DestroyWindow(hwndDlg);
 				return FALSE;
 			}
@@ -270,8 +270,8 @@ static INT_PTR CALLBACK Meta_EditDialogProc(HWND hwndDlg, UINT msg, WPARAM wPara
 
 	case WMU_SETTITLE:
 		{
-			TCHAR *ptszCDN = cli.pfnGetContactDisplayName(lParam, 0);
-			if (ptszCDN == NULL)
+			wchar_t *ptszCDN = cli.pfnGetContactDisplayName(lParam, 0);
+			if (ptszCDN == nullptr)
 				ptszCDN = TranslateT("(Unknown contact)");
 
 			SetDlgItemText(hwndDlg, IDC_ED_NAME, ptszCDN);
@@ -287,7 +287,7 @@ static INT_PTR CALLBACK Meta_EditDialogProc(HWND hwndDlg, UINT msg, WPARAM wPara
 				// enable buttons
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BTN_REM), sel != -1);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BTN_SETDEFAULT), sel != -1 && g_data.hContact[sel] != g_data.hDefaultContact);
-				
+
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BTN_UP), sel > 0);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_BTN_DOWN), (sel != -1 && sel < g_data.num_contacts - 1));
 
@@ -304,7 +304,7 @@ static INT_PTR CALLBACK Meta_EditDialogProc(HWND hwndDlg, UINT msg, WPARAM wPara
 			switch (LOWORD(wParam)) {
 			case IDC_VALIDATE: // Apply changes, if there is still one contact attached to the metacontact.
 				if (g_data.num_contacts == 0) { // Otherwise, delete the metacontact.
-					if (IDYES == MessageBox(hwndDlg, TranslateT(szDelMsg), TranslateT("Delete metacontact?"), MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON1)) {
+					if (IDYES == MessageBox(hwndDlg, TranslateW(szDelMsg), TranslateT("Delete metacontact?"), MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON1)) {
 						Meta_Delete(g_data.hMeta, 0);
 						DestroyWindow(hwndDlg);
 					}
@@ -319,7 +319,7 @@ static INT_PTR CALLBACK Meta_EditDialogProc(HWND hwndDlg, UINT msg, WPARAM wPara
 			case IDOK:
 				if (IsWindowEnabled(GetDlgItem(hwndDlg, IDC_VALIDATE))) { // If there are changes that could be made,
 					if (g_data.num_contacts == 0) { // do the work that would have be done if the 'Apply' button was clicked.
-						if (IDYES == MessageBox(hwndDlg, TranslateT(szDelMsg), TranslateT("Delete metacontact?"), MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON1)) {
+						if (IDYES == MessageBox(hwndDlg, TranslateW(szDelMsg), TranslateT("Delete metacontact?"), MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON1)) {
 							Meta_Delete(g_data.hMeta, 0);
 							DestroyWindow(hwndDlg);
 						}
@@ -370,7 +370,7 @@ static INT_PTR CALLBACK Meta_EditDialogProc(HWND hwndDlg, UINT msg, WPARAM wPara
 					}
 					else {
 						g_data.hDefaultContact = 0;
-						SetDlgItemText(hwndDlg, IDC_ED_DEFAULT, _T("None"));
+						SetDlgItemText(hwndDlg, IDC_ED_DEFAULT, L"None");
 					}
 				}
 
@@ -428,7 +428,7 @@ static INT_PTR CALLBACK Meta_EditDialogProc(HWND hwndDlg, UINT msg, WPARAM wPara
 		return TRUE;
 
 	case WM_DESTROY:
-		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_BIG, 0));
+		Window_FreeIcon_IcoLib(hwndDlg);
 		EndDialog(hwndDlg, IDCANCEL);
 		break;
 	}

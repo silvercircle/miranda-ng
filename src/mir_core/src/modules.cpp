@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -48,7 +48,8 @@ struct TService
 {
 	DWORD nameHash;
 	HINSTANCE hOwner;
-	union {
+	union
+	{
 		MIRANDASERVICE pfnService;
 		MIRANDASERVICEPARAM pfnServiceParam;
 		MIRANDASERVICEOBJ pfnServiceObj;
@@ -173,12 +174,12 @@ MIR_CORE_DLL(int) CallPluginEventHook(HINSTANCE hInst, HANDLE hEvent, WPARAM wPa
 
 		int returnVal;
 		switch (s->type) {
-			case 1:	returnVal = s->pfnHook(wParam, lParam);	break;
-			case 2:	returnVal = s->pfnHookParam(wParam, lParam, s->lParam); break;
-			case 3:	returnVal = s->pfnHookObj(s->object, wParam, lParam); break;
-			case 4:	returnVal = s->pfnHookObjParam(s->object, wParam, lParam, s->lParam); break;
-			case 5:	returnVal = SendMessage(s->hwnd, s->message, wParam, lParam); break;
-			default: continue;
+		case 1:	returnVal = s->pfnHook(wParam, lParam);	break;
+		case 2:	returnVal = s->pfnHookParam(wParam, lParam, s->lParam); break;
+		case 3:	returnVal = s->pfnHookObj(s->object, wParam, lParam); break;
+		case 4:	returnVal = s->pfnHookObjParam(s->object, wParam, lParam, s->lParam); break;
+		case 5:	returnVal = SendMessage(s->hwnd, s->message, wParam, lParam); break;
+		default: continue;
 		}
 		if (returnVal)
 			return returnVal;
@@ -203,12 +204,12 @@ static int CallHookSubscribers(THook *p, WPARAM wParam, LPARAM lParam)
 
 		int returnVal;
 		switch (s->type) {
-			case 1:	returnVal = s->pfnHook(wParam, lParam);	break;
-			case 2:	returnVal = s->pfnHookParam(wParam, lParam, s->lParam); break;
-			case 3:	returnVal = s->pfnHookObj(s->object, wParam, lParam); break;
-			case 4:	returnVal = s->pfnHookObjParam(s->object, wParam, lParam, s->lParam); break;
-			case 5:	returnVal = SendMessage(s->hwnd, s->message, wParam, lParam); break;
-			default: continue;
+		case 1:	returnVal = s->pfnHook(wParam, lParam);	break;
+		case 2:	returnVal = s->pfnHookParam(wParam, lParam, s->lParam); break;
+		case 3:	returnVal = s->pfnHookObj(s->object, wParam, lParam); break;
+		case 4:	returnVal = s->pfnHookObjParam(s->object, wParam, lParam, s->lParam); break;
+		case 5:	returnVal = SendMessage(s->hwnd, s->message, wParam, lParam); break;
+		default: continue;
 		}
 		if (returnVal)
 			return returnVal;
@@ -255,8 +256,8 @@ static void CALLBACK HookToMainAPCFunc(ULONG_PTR dwParam)
 MIR_CORE_DLL(int) NotifyEventHooks(HANDLE hEvent, WPARAM wParam, LPARAM lParam)
 {
 	switch (checkHook((THook*)hEvent)) {
-		case hookInvalid: return -1;
-		case hookEmpty: return 0;
+	case hookInvalid: return -1;
+	case hookEmpty: return 0;
 	}
 
 	if (GetCurrentThreadId() == mainThreadId)
@@ -274,8 +275,8 @@ MIR_CORE_DLL(int) NotifyEventHooks(HANDLE hEvent, WPARAM wParam, LPARAM lParam)
 MIR_CORE_DLL(int) NotifyFastHook(HANDLE hEvent, WPARAM wParam, LPARAM lParam)
 {
 	switch (checkHook((THook*)hEvent)) {
-		case hookInvalid: return -1;
-		case hookEmpty: return 0;
+	case hookInvalid: return -1;
+	case hookEmpty: return 0;
 	}
 
 	return CallHookSubscribers((THook*)hEvent, wParam, lParam);
@@ -284,8 +285,8 @@ MIR_CORE_DLL(int) NotifyFastHook(HANDLE hEvent, WPARAM wParam, LPARAM lParam)
 extern "C" MIR_CORE_DLL(int) GetSubscribersCount(THook* pHook)
 {
 	switch (checkHook(pHook)) {
-		case hookInvalid:
-		case hookEmpty: return 0;
+	case hookInvalid:
+	case hookEmpty: return 0;
 	}
 	return pHook->subscriberCount;
 }
@@ -330,6 +331,30 @@ MIR_CORE_DLL(HANDLE) HookEventObj(const char *name, MIRANDAHOOKOBJ hookProc, voi
 MIR_CORE_DLL(HANDLE) HookEventObjParam(const char *name, MIRANDAHOOKOBJPARAM hookProc, void* object, LPARAM lParam)
 {
 	return HookEventInt(4, name, (MIRANDAHOOK)hookProc, object, lParam);
+}
+
+MIR_CORE_DLL(HANDLE) HookTemporaryEvent(const char *name, MIRANDAHOOK hookProc)
+{
+	mir_cslockfull lck(csHooks);
+
+	int idx;
+	if ((idx = hooks.getIndex((THook*)name)) == -1) {
+		lck.unlock();
+		hookProc(0, 0);
+		return NULL;
+	}
+
+	THook *p = hooks[idx];
+	p->subscriber = (THookSubscriber*)mir_realloc(p->subscriber, sizeof(THookSubscriber)*(p->subscriberCount + 1));
+
+	THookSubscriber &s = p->subscriber[p->subscriberCount];
+	memset(&s, 0, sizeof(THookSubscriber));
+	s.type = 1;
+	s.pfnHook = hookProc;
+	s.hOwner = GetInstByAddress(hookProc);
+
+	p->subscriberCount++;
+	return (HANDLE)((p->id << 16) | p->subscriberCount);
 }
 
 MIR_CORE_DLL(HANDLE) HookEventMessage(const char *name, HWND hwnd, UINT message)
@@ -511,7 +536,7 @@ MIR_CORE_DLL(int) DestroyServiceFunction(HANDLE hService)
 	return 0;
 }
 
-MIR_CORE_DLL(int) ServiceExists(const char *name)
+MIR_CORE_DLL(bool) ServiceExists(const char *name)
 {
 	if (name == NULL)
 		return FALSE;
@@ -537,10 +562,10 @@ MIR_CORE_DLL(INT_PTR) CallService(const char *name, WPARAM wParam, LPARAM lParam
 	LPARAM fnParam = pService->lParam;
 	void* object = pService->object;
 	switch (flags) {
-		case 1:  return ((MIRANDASERVICEPARAM)pfnService)(wParam, lParam, fnParam);
-		case 2:  return ((MIRANDASERVICEOBJ)pfnService)(object, wParam, lParam);
-		case 3:  return ((MIRANDASERVICEOBJPARAM)pfnService)(object, wParam, lParam, fnParam);
-		default: return pfnService(wParam, lParam);
+	case 1:  return ((MIRANDASERVICEPARAM)pfnService)(wParam, lParam, fnParam);
+	case 2:  return ((MIRANDASERVICEOBJ)pfnService)(object, wParam, lParam);
+	case 3:  return ((MIRANDASERVICEOBJPARAM)pfnService)(object, wParam, lParam, fnParam);
+	default: return pfnService(wParam, lParam);
 	}
 }
 
@@ -571,6 +596,8 @@ MIR_CORE_DLL(INT_PTR) CallServiceSync(const char *name, WPARAM wParam, LPARAM lP
 	return item.result;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
+
 MIR_CORE_DLL(int) CallFunctionAsync(void(__stdcall *func)(void *), void *arg)
 {
 	if (GetCurrentThreadId() == mainThreadId)
@@ -579,6 +606,35 @@ MIR_CORE_DLL(int) CallFunctionAsync(void(__stdcall *func)(void *), void *arg)
 		QueueMainThread((PAPCFUNC)func, arg, 0);
 	return 0;
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+struct TSyncCallParam
+{
+	INT_PTR(__stdcall *func)(void *);
+	void *arg;
+	HANDLE hDoneEvent;
+	INT_PTR result;
+};
+
+static void CALLBACK CallFuncToMainAPCFunc(ULONG_PTR dwParam)
+{
+	TSyncCallParam *item = (TSyncCallParam*)dwParam;
+	item->result = (*item->func)(item->arg);
+	SetEvent(item->hDoneEvent);
+}
+
+MIR_CORE_DLL(INT_PTR) CallFunctionSync(INT_PTR(__stdcall *func)(void *), void *arg)
+{
+	if (GetCurrentThreadId() == mainThreadId)
+		return func(arg);
+
+	TSyncCallParam param = { func, arg, getThreadEvent() };
+	QueueMainThread(CallFuncToMainAPCFunc, &param, param.hDoneEvent);
+	return param.result;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
 
 MIR_CORE_DLL(void) KillModuleServices(HINSTANCE hInst)
 {

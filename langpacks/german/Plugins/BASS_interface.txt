@@ -32,11 +32,11 @@ Offline
 Online
 [Away]
 Abwesend
-[NA]
+[Not available]
 Außer Haus
 [Occupied]
 Beschäftigt
-[DND]
+[Do not disturb]
 Bitte nicht stören
 [Free for chat]
 Für Chat bereit

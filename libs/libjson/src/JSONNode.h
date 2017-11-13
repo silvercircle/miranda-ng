@@ -118,7 +118,7 @@ public:
 
 	json_string as_string(void) const;
 #if defined(M_STRING_H__)
-	CMString as_mstring(void) const;
+	CMStringW as_mstring(void) const;
 #endif
 	long as_int(void) const;
 	double as_float(void) const;
@@ -152,8 +152,8 @@ public:
 	#endif
 	JSONNode& operator<<(const JSONNode & node);
 	void reserve(json_index_t size);
-	JSONNode JSON_PTR_LIB pop_back(json_index_t pos);
-	JSONNode JSON_PTR_LIB pop_back(const json_string & name_t);
+	JSONNode* JSON_PTR_LIB pop_back(json_index_t pos);
+	JSONNode* JSON_PTR_LIB pop_back(const json_string & name_t);
 	#ifdef JSON_CASE_INSENSITIVE_FUNCTIONS
 		JSONNode JSON_PTR_LIB pop_back_nocase(const json_string & name_t);
 	#endif

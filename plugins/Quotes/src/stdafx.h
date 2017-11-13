@@ -10,7 +10,7 @@
 #include <comdef.h>
 #include <commctrl.h>
 #include <ShellAPI.h>
-#include <sys\stat.h>
+#include <sys/stat.h>
 #include <CommDlg.h>
 #include <fstream>
 #include <msapi/comptr.h>
@@ -50,12 +50,11 @@ typedef std::wistream tistream;
 typedef boost::posix_time::wtime_input_facet ttime_input_facet;
 typedef boost::posix_time::wtime_facet ttime_facet;
 
-inline std::string quotes_t2a(const TCHAR* t)
+inline std::string quotes_t2a(const wchar_t* t)
 {
 	std::string s;
-	char* p = mir_t2a(t);
-	if (p)
-	{
+	char* p = mir_u2a(t);
+	if (p) {
 		s = p;
 		mir_free(p);
 	}
@@ -65,23 +64,16 @@ inline std::string quotes_t2a(const TCHAR* t)
 inline tstring quotes_a2t(const char* s)
 {
 	tstring t;
-	TCHAR* p = mir_a2t(s);
-	if (p)
-	{
+	wchar_t* p = mir_a2u(s);
+	if (p) {
 		t = p;
 		mir_free(p);
 	}
 	return t;
 }
 
-inline int quotes_stricmp(LPCTSTR p1, LPCTSTR p2)
-{
-	return mir_tstrcmpi(p1, p2);
-}
-
 #include "resource.h"
 #include "version.h"
-#include "WorkingThread.h"
 #include "IconLib.h"
 #include "QuoteInfoDlg.h"
 #include "ModuleInfo.h"
@@ -113,6 +105,7 @@ inline int quotes_stricmp(LPCTSTR p1, LPCTSTR p2)
 #include "QuotesProviderVisitorFormater.h"
 #include "QuotesProviderVisitorTendency.h"
 #include "QuotesProviderVisitorFormatSpecificator.h"
+#define CHART_IMPLEMENT
 #ifdef CHART_IMPLEMENT
 #include "QuoteChart.h"
 #include "Chart.h"
@@ -123,43 +116,4 @@ inline int quotes_stricmp(LPCTSTR p1, LPCTSTR p2)
 #include "IXMLEngine.h"
 #include "XMLEngineMI.h"
 
-namespace detail
-{
-	template<typename T, typename TD> struct safe_string_impl
-	{
-		typedef T* PTR;
-
-		safe_string_impl(PTR p) : m_p(p){}
-		~safe_string_impl(){ TD::dealloc(m_p); }
-
-		PTR m_p;
-	};
-
-	template<typename T> struct MirandaFree
-	{
-		static void dealloc(T* p){ mir_free(p); }
-	};
-
-	template<typename T> struct OwnerFree
-	{
-		static void dealloc(T* p){ ::free(p); }
-	};
-}
-
-template<typename T> struct mir_safe_string : public detail::safe_string_impl < T, detail::MirandaFree<T> >
-{
-	mir_safe_string(PTR p) : detail::safe_string_impl<T, detail::MirandaFree<T>>(p){}
-};
-
-template<typename T> struct safe_string : public detail::safe_string_impl < T, detail::OwnerFree<T> >
-{
-	safe_string(PTR p) : detail::safe_string_impl<T, detail::OwnerFree<T>>(p){}
-};
-
 extern HINSTANCE g_hInstance;
-
-// #ifdef MIRANDA_VER
-// #undef MIRANDA_VER
-// #endif
-
-// TODO: reference additional headers your program requires here

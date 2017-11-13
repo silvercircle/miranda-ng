@@ -25,6 +25,9 @@
   <ImportGroup Label="PropertySheets">
     <Import Project="$(ProjectDir)..\..\build\vc.common\plugin.props" />
   </ImportGroup>
+  <PropertyGroup>
+    <IncludePath>$(WindowsSdkDir)include;$(VCInstallDir)include;$(IncludePath)</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <ExceptionHandling>Sync</ExceptionHandling>

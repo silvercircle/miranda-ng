@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -121,7 +121,7 @@ MIR_CORE_DLL(void) mirstr_unlock(CMStringData* pThis)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // don't remove it
-// this code just instantiates templates for CMString[A/W]
+// this code just instantiates templates for CMStringW[A/W]
 
 template CMStringW;
 template MIR_CORE_EXPORT CMStringW CALLBACK operator + (const CMStringW& str1, const CMStringW& str2);

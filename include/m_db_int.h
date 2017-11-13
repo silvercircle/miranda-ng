@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -109,7 +109,7 @@ interface MIDatabase
 	STDMETHOD_(MEVENT, FindNextEvent)(MCONTACT contactID, MEVENT hDbEvent) PURE;
 	STDMETHOD_(MEVENT, FindPrevEvent)(MCONTACT contactID, MEVENT hDbEvent) PURE;
 
-	STDMETHOD_(BOOL, EnumModuleNames)(DBMODULEENUMPROC pFunc, void *pParam) PURE;
+	STDMETHOD_(BOOL, EnumModuleNames)(DBMODULEENUMPROC pFunc, const void *pParam) PURE;
 
 	STDMETHOD_(BOOL, GetContactSetting)(MCONTACT contactID, LPCSTR szModule, LPCSTR szSetting, DBVARIANT *dbv) PURE;
 	STDMETHOD_(BOOL, GetContactSettingStr)(MCONTACT contactID, LPCSTR szModule, LPCSTR szSetting, DBVARIANT *dbv) PURE;
@@ -117,9 +117,9 @@ interface MIDatabase
 	STDMETHOD_(BOOL, FreeVariant)(DBVARIANT *dbv) PURE;
 	STDMETHOD_(BOOL, WriteContactSetting)(MCONTACT contactID, DBCONTACTWRITESETTING *dbcws) PURE;
 	STDMETHOD_(BOOL, DeleteContactSetting)(MCONTACT contactID, LPCSTR szModule, LPCSTR szSetting) PURE;
-	STDMETHOD_(BOOL, EnumContactSettings)(MCONTACT contactID, DBCONTACTENUMSETTINGS* dbces) PURE;
+	STDMETHOD_(BOOL, EnumContactSettings)(MCONTACT contactID, DBSETTINGENUMPROC pfnEnumProc, const char *szModule, const void *param) PURE;
 	STDMETHOD_(BOOL, SetSettingResident)(BOOL bIsResident, const char *pszSettingName) PURE;
-	STDMETHOD_(BOOL, EnumResidentSettings)(DBMODULEENUMPROC pFunc, void *pParam) PURE;
+	STDMETHOD_(BOOL, EnumResidentSettings)(DBMODULEENUMPROC pFunc, const void *pParam) PURE;
 	STDMETHOD_(BOOL, IsSettingEncrypted)(LPCSTR szModule, LPCSTR szSetting) PURE;
 
 	STDMETHOD_(BOOL, MetaDetouchSub)(DBCachedContact*, int nSub) PURE;
@@ -144,7 +144,7 @@ struct DBCHeckCallback
 	HANDLE hOutFile;
 	int    bCheckOnly, bBackup, bAggressive, bEraseHistory, bMarkRead, bConvertUtf;
 
-	void (*pfnAddLogMessage)(int type, const TCHAR* ptszFormat, ...);
+	void (*pfnAddLogMessage)(int type, const wchar_t* ptszFormat, ...);
 };
 
 interface MIDatabaseChecker
@@ -176,7 +176,7 @@ struct DATABASELINK
 {
 	int cbSize;
 	char* szShortName;  // uniqie short database name
-	TCHAR* szFullName;  // in English, auto-translated by the core
+	wchar_t* szFullName;  // in English, auto-translated by the core
 
 	/*
 		profile: pointer to a string which contains full path + name
@@ -184,7 +184,7 @@ struct DATABASELINK
 			the time of this call, profile will be C:\..\<name>.dat
 		Returns: 0 on success, non zero on failure - error contains extended error information, see EMKPRF_*
 	*/
-	int (*makeDatabase)(const TCHAR *profile);
+	int (*makeDatabase)(const wchar_t *profile);
 
 	/*
 		profile: [in] a null terminated string to file path of selected profile
@@ -196,14 +196,14 @@ struct DATABASELINK
 			etc.
 		Returns: 0 on success, non zero on failure
 	*/
-	int (*grokHeader)(const TCHAR *profile);
+	int (*grokHeader)(const wchar_t *profile);
 
 	/*
 	Affect: Tell the database to create all services/hooks that a 3.xx legacy database might support into link,
 		which is a PLUGINLINK structure
 	Returns: 0 on success, nonzero on failure
 	*/
-	MIDatabase* (*Load)(const TCHAR *profile, BOOL bReadOnly);
+	MIDatabase* (*Load)(const wchar_t *profile, BOOL bReadOnly);
 
 	/*
 	Affect: The database plugin should shutdown, unloading things from the core and freeing internal structures
@@ -216,78 +216,34 @@ struct DATABASELINK
 	Returns a pointer to the database checker or NULL if a database doesn't support checking
 	When you don't need this object aanymore,  call its Destroy() method
 	*/
-	MIDatabaseChecker* (*CheckDB)(const TCHAR *profile, int *error);
+	MIDatabaseChecker* (*CheckDB)(const wchar_t *profile, int *error);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // cache access function
 
-#if defined(__cplusplus)
-extern "C"
-{
-#endif
-
-MIR_CORE_DLL(DBCachedContact*) db_get_contact(MCONTACT);
-
-#if defined(__cplusplus)
-}
-#endif
+EXTERN_C MIR_CORE_DLL(DBCachedContact*) db_get_contact(MCONTACT);
 
 ///////////////////////////////////////////////////////////////////////////////
-// Database list's services
+// Database list's functions
 
-// MS_DB_REGISTER_PLUGIN : registers a database plugin
-// wParam : 0 (unused)
-// lParam : DATABASELINK* = database link description
+EXTERN_C MIR_CORE_DLL(MIDatabase*) db_get_current(void);
 
-#define MS_DB_REGISTER_PLUGIN "DB/RegisterPlugin"
+// registers a database plugin
 
-__forceinline void RegisterDatabasePlugin(DATABASELINK* pDescr)
-{	CallService(MS_DB_REGISTER_PLUGIN, 0, (LPARAM)pDescr);
-}
+EXTERN_C MIR_APP_DLL(void) RegisterDatabasePlugin(DATABASELINK *pDescr);
 
-// MS_DB_FIND_PLUGIN : looks for a database plugin suitable to open this file
-// wParam : 0 (unused)
-// lParam : const TCHAR* = name of the database file
+// looks for a database plugin suitable to open this file
 // returns DATABASELINK* of the required plugin or NULL on error
 
-#define MS_DB_FIND_PLUGIN "DB/FindPlugin"
+EXTERN_C MIR_APP_DLL(DATABASELINK*) FindDatabasePlugin(const wchar_t *ptszFileName);
 
-__forceinline DATABASELINK* FindDatabasePlugin(const TCHAR* ptszFileName)
-{	return (DATABASELINK*)CallService(MS_DB_FIND_PLUGIN, 0, (LPARAM)ptszFileName);
-}
+// initializes a database instance
 
-// MS_DB_GET_CURRENT : returns the database pointer for the current profile
-// wParam : 0 (unused)
-// lParam : 0 (unused)
-// returns MIDatabase* of the current profile or NULL on error
+EXTERN_C MIR_APP_DLL(void) InitDbInstance(MIDatabase *pDatabase);
 
-#define MS_DB_GET_CURRENT "DB/GetCurrentDb"
+// destroys a database instance
 
-__forceinline MIDatabase* GetCurrentDatabase(void)
-{	return (MIDatabase*)CallService(MS_DB_GET_CURRENT, 0, 0);
-}
-
-// MS_DB_INIT_INSTANCE : initializes a database instance
-// wParam : 0 (unused)
-// lParam : MIDatabase* = pointer to a database instance
-// returns 0
-
-#define MS_DB_INIT_INSTANCE "DB/InitDbInstance"
-
-__forceinline void InitDbInstance(MIDatabase* pDatabase)
-{	CallService(MS_DB_INIT_INSTANCE, 0, (LPARAM)pDatabase);
-}
-
-// MS_DB_DESTROY_INSTANCE : destroys a database instance
-// wParam : 0 (unused)
-// lParam : MIDatabase* = pointer to a database instance
-// returns 0
-
-#define MS_DB_DESTROY_INSTANCE "DB/DestroyDbInstance"
-
-__forceinline void DestroyDbInstance(MIDatabase* pDatabase)
-{	CallService(MS_DB_DESTROY_INSTANCE, 0, (LPARAM)pDatabase);
-}
+EXTERN_C MIR_APP_DLL(void) DestroyDbInstance(MIDatabase *pDatabase);
 
 #endif // M_DB_INT_H__

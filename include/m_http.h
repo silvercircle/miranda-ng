@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ń) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ń) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -41,6 +41,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define HTTP_CODE_RESET_CONTENT						205
 #define HTTP_CODE_PARTIAL_CONTENT					206
 #define HTTP_CODE_MULTI_STATUS						207
+
+#define HTTP_CODE_SUCCESS(code) ((code) <= (HTTP_CODE_MULTI_STATUS) && (code) >= (HTTP_CODE_OK))
 
 // 3xx Redirection
 #define HTTP_CODE_MULTIPLE_CHOICES					300
@@ -112,6 +114,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define HTTP_CODE_BANDWIDTH_LIMIT_EXCEEDED			509
 #define HTTP_CODE_NOT_EXTENDED						510
 #define HTTP_CODE_NETWORK_AUTHENTICATION_REQUIRED	511
+#define HTTP_CODE_WEB_SERVER_IS_DOWN				521
 #define HTTP_CODE_NETWORK_READ_TIMEOUT_ERROR		598
 #define HTTP_CODE_NETWORK_CONNECT_TIMEOUT_ERROR		599
 

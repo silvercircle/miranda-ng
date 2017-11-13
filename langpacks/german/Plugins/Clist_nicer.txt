@@ -8,8 +8,8 @@
 [Displays contacts, event notifications, protocol status.]
 Zeigt Kontakte, Ereignisse und Protokollstatus an.
 ;file \plugins\Clist_nicer\res\resource.rc
-[Clist Nicer exception]
-CList-Nicer-Ausnahme
+[Clist nicer exception]
+Clist-Nicer-Ausnahme
 [Copy to clipboard]
 In Zwischenablage kopieren
 [Continue]
@@ -18,16 +18,6 @@ Wiederholen
 Miranda beenden
 [Although the exception was caught and you may continue working with Miranda, you should restart the program as soon as possible. The exception may have damaged internal data structures and can have a serious impact on stability.]
 Obwohl die Ausnahme abgefangen wurde und Sie mit Miranda weiterarbeiten können, sollten Sie das Programm baldestmöglich neu starten. Die Ausnahme könnte interne Datenstrukturen beschädigt haben und einen nennenswerten Einfluss auf die Stabilität ausüben.
-[About CList Nicer+]
-Über CList Nicer+
-[Clist Nicer+]
-CList Nicer+
-[Copyright © 2004-2010 by the Miranda IM project, 2012-2015 by the Miranda NG project. More detailed copyright information can be found in the included README file.]
-Copyright 2004-2011 beim Miranda-IM-Projekt, 2012-2015 beim Miranda-NG-Projekt. Detaillierte Informationen sind in der enthaltenen README-Datei zu finden.
-[Version]
-Version
-[Support and latest version information]
-Support und Informationen zur neusten Version
 [Delete contact]
 Kontakt löschen
 [No]
@@ -424,8 +414,8 @@ Immer offline erscheinen bzw. Kontakt blockieren
 Sonstige
 [Hide this contact from the list]
 Kontakt nicht in der Kontaktliste anzeigen
-[To show a previously hidden contact, navigate to Options -> Events -> Ignore, search the contact in the list and tick the checkbox next to its name.]
-Um einen bereits versteckten Kontakt wieder einzublenden, unter Einstellungen -> Ereignisse -> Ignorieren einen Haken neben seinem Namen setzen.
+[To show a previously hidden contact, navigate to Options -> Contacts -> Ignore, search the contact in the list and tick the checkbox next to its name.]
+Um einen bereits versteckten Kontakt wieder einzublenden, unter Einstellungen -> Kontakte -> Ignorieren einen Haken neben seinem Namen setzen.
 [Display options]
 Anzeigeoptionen
 [Show contact with priority]
@@ -450,18 +440,18 @@ B&eenden
 On&line\tStrg+1
 [&Away\tCtrl+2]
 &Abwesend\tStrg+2
-[&NA\tCtrl+3]
+[&Not available\tCtrl+3]
 Au&ßer Haus\tStrg+3
 [Occ&upied\tCtrl+4]
 Besch&äftigt\tStrg+4
-[&DND\tCtrl+5]
+[&Do not disturb\tCtrl+5]
 Bitte nicht st&ören\tStrg+5
 [&Free for chat\tCtrl+6]
 &Für Chat bereit\tStrg+6
 [&Invisible\tCtrl+7]
 Uns&ichtbar\tStrg+7
 [On the &phone\tCtrl+8]
-Am Telefon\tStrg+8
+Am &Telefon\tStrg+8
 [Out to &lunch\tCtrl+9]
 &Beim Essen\tStrg+9
 ;file \plugins\Clist_nicer\src\CLCButton.cpp
@@ -498,11 +488,11 @@ Offline
 Online
 [Away]
 Abwesend
-[NA]
+[Not available]
 Außer Haus
 [Occupied]
 Beschäftigt
-[DND]
+[Do not disturb]
 Bitte nicht stören
 [Free for chat]
 Für Chat bereit
@@ -628,8 +618,8 @@ Status auswählen
 Die geforderte Aktion erfordert einen ausgewählten Kontakt. Bitte wählen Sie einen Kontakt aus der Kontaktliste aus und widerholen Sie die Aktion.
 [Parameter mismatch]
 Parameter stimmen nicht überein
-[The service %s specified by the %s button definition was not found. You may need to install additional plugins.]
-Der Dienst %s, angegeben in %s Button-Definition, wurde nicht gefunden. Gegebenenfalls müssen Sie zusätzliche Plugins installieren.
+[The service %S specified by the %S button definition was not found. You may need to install additional plugins.]
+Der Dienst %S, angegeben in %S Button-Definition, wurde nicht gefunden. Gegebenenfalls müssen Sie zusätzliche Plugins installieren.
 [Service failure]
 Dienstfehler
 [You need the FloatingContacts plugin, cause the embedded floating contacts were removed.]
@@ -693,14 +683,6 @@ Unten
 A&uf
 [&Down]
 Ab
-[Frames]
-Frames
-[Show all frames]
-Alle Frames anzeigen
-[Show all title bars]
-Alle Titelleisten anzeigen
-[Hide all title bars]
-Alle Titelleisten verstecken
 [Lock frame]
 Keine Größenänderung
 [Visible]
@@ -711,6 +693,14 @@ Titelzeile anzeigen
 Skinnbarer Frame
 [Floating]
 Frei bewegend
+[Frames]
+Frames
+[Show all frames]
+Alle Frames anzeigen
+[Show all title bars]
+Alle Titelleisten anzeigen
+[Hide all title bars]
+Alle Titelleisten verstecken
 ;file \plugins\Clist_nicer\src\cluiopts.cpp
 [Title bar]
 Titelleiste
@@ -743,8 +733,6 @@ Kontakte suchen/hinzu&fügen...
 Erscheinungsbild
 [&Options...]
 Einstellungen...
-[&About the contact list...]
-Über die Kont&aktliste...
 ;file \plugins\Clist_nicer\src\viewmodes.cpp
 [Ungrouped contacts]
 Nicht gruppierte Kontakte
@@ -762,8 +750,8 @@ Minuten
 Stunden
 [Days]
 Tage
-[Current view mode: %s]
-aktueller Kontaktfilter: %s
+[Current view mode: %S]
+aktueller Kontaktfilter: %S
 [Filtering]
 Filtern
 [*** All contacts ***]

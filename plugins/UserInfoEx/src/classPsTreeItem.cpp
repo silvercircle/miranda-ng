@@ -29,9 +29,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  **/
 BOOL CALLBACK BoldGroupTitlesEnumChildren(HWND hWnd, LPARAM lParam)
 {
-	 TCHAR szClass[64];
+	 wchar_t szClass[64];
 	 GetClassName(hWnd, szClass, 64);
-	 if (!mir_tstrcmp(szClass, _T("Button")) && (GetWindowLongPtr(hWnd, GWL_STYLE) & 0x0F) == BS_GROUPBOX)
+	 if (!mir_wstrcmp(szClass, L"Button") && (GetWindowLongPtr(hWnd, GWL_STYLE) & 0x0F) == BS_GROUPBOX)
 			SendMessage(hWnd, WM_SETFONT, lParam, NULL);
 	 return TRUE;
 }
@@ -44,23 +44,19 @@ BOOL CALLBACK BoldGroupTitlesEnumChildren(HWND hWnd, LPARAM lParam)
  *			odp			- optiondialogpage structure with the info about the item to add
  * return: nothing
  **/
-CPsTreeItem::CPsTreeItem()
+CPsTreeItem::CPsTreeItem() : _idDlg(NULL), _pTemplate(NULL), _hInst(NULL), _pfnDlgProc(NULL), _hWnd(NULL), _dwFlags(NULL),
+	_hItem(NULL), // handle to the treeview item
+	_iParent(-1), // index to the parent item
+	_iImage(-1), // index of treeview item's image
+	_bState(NULL), // initial state of this treeitem
+	_pszName(NULL), // original name, given by plugin (not customized)
+	_ptszLabel(NULL),
+	_pszProto(NULL),
+	_pszPrefix(NULL),
+	_hContact(NULL),
+	_iPosition(0),
+	_initParam(0)
 {
-	_idDlg = NULL;
-	_pTemplate = NULL;
-	_hInst = NULL;
-	_pfnDlgProc = NULL;
-	_hWnd = NULL;
-	_dwFlags = NULL;
-	_hItem = NULL;			// handle to the treeview item
-	_iParent = -1;			// index to the parent item
-	_iImage = -1;			// index of treeview item's image
-	_bState = NULL;			// initial state of this treeitem
-	_pszName = NULL;		// original name, given by plugin (not customized)
-	_ptszLabel = NULL;
-	_pszProto = NULL;
-	_pszPrefix = NULL;
-	_hContact = NULL;
 }
 
 /**
@@ -215,9 +211,11 @@ BYTE	CPsTreeItem::HasName(const LPCSTR pszName) const
 void CPsTreeItem::Rename(const LPTSTR pszLabel)
 {
 	if (pszLabel && *pszLabel) {
-		LPTSTR pszDup = mir_tstrdup(pszLabel);
+		LPTSTR pszDup = mir_wstrdup(pszLabel);
 		if (pszDup) {
-			replaceStrT(_ptszLabel, pszDup);
+			if (_ptszLabel)
+				mir_free(_ptszLabel);
+			_ptszLabel =  pszDup;
 			// convert disallowed characters
 			while(*pszDup) {
 				switch(*pszDup) {
@@ -255,9 +253,9 @@ int CPsTreeItem::ItemLabel(const BYTE bReadDBValue)
 		else
 			pszName = _pszName;
 
-		LPTSTR ptszLabel = mir_utf8decodeT(pszName);
+		LPTSTR ptszLabel = mir_utf8decodeW(pszName);
 		if (ptszLabel) {
-			_ptszLabel = mir_tstrdup(TranslateTS(ptszLabel));
+			_ptszLabel = mir_wstrdup(TranslateW(ptszLabel));
 			mir_free(ptszLabel);
 		}
 	}
@@ -281,7 +279,7 @@ HICON CPsTreeItem::ProtoIcon()
 	int ProtoCount;
 	Proto_EnumAccounts(&ProtoCount, &pa);
 	for (int i = 0; i < ProtoCount; i++) {
-		if (!mir_tstrncmpi(pa[i]->tszAccountName, _A2T(_pszName), mir_tstrlen(pa[i]->tszAccountName))) {
+		if (!mir_wstrncmpi(pa[i]->tszAccountName, _A2T(_pszName), mir_wstrlen(pa[i]->tszAccountName))) {
 			CHAR szIconID[MAX_PATH];
 			mir_snprintf(szIconID, "core_status_%s1", pa[i]->szModuleName);
 			HICON hIco = IcoLib_GetIcon(szIconID);
@@ -316,12 +314,13 @@ int CPsTreeItem::Icon(HIMAGELIST hIml, OPTIONSDIALOGPAGE *odp, BYTE bInitIconsOn
 	HICON hIcon = IcoLib_GetIcon(pszIconName);
 	if (!hIcon) {
 		bool bNeedFree = false;
+		ptrW pwszSection(mir_a2u(SECT_TREE));
 
 		SKINICONDESC sid = { 0 };
-		sid.flags = SIDF_ALL_TCHAR;
+		sid.flags = SIDF_ALL_UNICODE;
 		sid.pszName = (LPSTR)pszIconName;
-		sid.description.t = _ptszLabel;
-		sid.section.t = LPGENT(SECT_TREE);
+		sid.description.w = _ptszLabel;
+		sid.section.w = pwszSection;
 
 		// the item to insert brings along an icon?
 		if (odp->flags & ODPF_ICON) {
@@ -329,11 +328,11 @@ int CPsTreeItem::Icon(HIMAGELIST hIml, OPTIONSDIALOGPAGE *odp, BYTE bInitIconsOn
 			if (odp->hInstance == ghInst) {
 
 				// the pszGroup holds the iconfile for items added by uinfoex
-				sid.defaultFile.t = odp->ptszGroup;
+				sid.defaultFile.w = odp->szGroup.w;
 
 				// icon library exists?
-				if (sid.defaultFile.t)
-					sid.iDefaultIndex = (INT_PTR)odp->hIcon;
+				if (sid.defaultFile.w)
+					sid.iDefaultIndex = odp->dwInitParam;
 				// no valid icon library
 				else {
 					bNeedFree = true;
@@ -343,10 +342,7 @@ int CPsTreeItem::Icon(HIMAGELIST hIml, OPTIONSDIALOGPAGE *odp, BYTE bInitIconsOn
 			}
 			// default icon is delivered by the page to add
 			else {
-				if (odp->hIcon)
-					sid.hDefaultIcon = odp->hIcon;
-				else
-					sid.hDefaultIcon = ImageList_GetIcon(hIml, 0, ILD_NORMAL), bNeedFree = true;
+				sid.hDefaultIcon = ImageList_GetIcon(hIml, 0, ILD_NORMAL), bNeedFree = true;
 				sid.iDefaultIndex = -1;
 			}
 		}
@@ -387,7 +383,7 @@ int CPsTreeItem::Icon(HIMAGELIST hIml, OPTIONSDIALOGPAGE *odp, BYTE bInitIconsOn
 int CPsTreeItem::Create(CPsHdr* pPsh, OPTIONSDIALOGPAGE *odp)
 {
 	int err;
-	TCHAR szTitle[ MAXSETTING ];
+	wchar_t szTitle[ MAXSETTING ];
 
 	// check parameter
 	if (pPsh && pPsh->_dwSize == sizeof(CPsHdr) && odp && PtrIsValid(odp->hInstance)) {
@@ -405,23 +401,23 @@ int CPsTreeItem::Create(CPsHdr* pPsh, OPTIONSDIALOGPAGE *odp)
 
 		if (pPsh->_dwFlags & PSF_PROTOPAGESONLY) {
 			if (_dwFlags & ODPF_USERINFOTAB)
-				mir_sntprintf(szTitle, _T("%s %d\\%s"), odp->ptszTitle, pPsh->_nSubContact+1, odp->ptszTab);
+				mir_snwprintf(szTitle, L"%s %d\\%s", odp->szTitle.w, pPsh->_nSubContact+1, odp->szTab.w);
 			else
-				mir_sntprintf(szTitle, _T("%s %d"), odp->ptszTitle, pPsh->_nSubContact+1);
+				mir_snwprintf(szTitle, L"%s %d", odp->szTitle.w, pPsh->_nSubContact+1);
 		}
 		else {
 			if (_dwFlags & ODPF_USERINFOTAB)
-				mir_sntprintf(szTitle, _T("%s\\%s"), odp->ptszTitle, odp->ptszTab);
+				mir_snwprintf(szTitle, L"%s\\%s", odp->szTitle.w, odp->szTab.w);
 			else
-				mir_tstrcpy(szTitle, odp->ptszTitle);
+				mir_wstrcpy(szTitle, odp->szTitle.w);
 		}
 		// set the unique utf8 encoded name for the item
 		if (err = Name(szTitle, (_dwFlags & ODPF_UNICODE) == ODPF_UNICODE)) 
-			MsgErr(NULL, LPGENT("Creating unique name for a page failed with %d and error code %d"), err, GetLastError());
+			MsgErr(NULL, LPGENW("Creating unique name for a page failed with %d and error code %d"), err, GetLastError());
 
 		// read label from database or create it
 		else if (err = ItemLabel(TRUE)) 
-			MsgErr(NULL, LPGENT("Creating the label for a page failed with %d and error code %d"), err, GetLastError());
+			MsgErr(NULL, LPGENW("Creating the label for a page failed with %d and error code %d"), err, GetLastError());
 		else {
 			// load icon for the item
 			Icon(pPsh->_hImages, odp, (pPsh->_dwFlags & PSTVF_INITICONS) == PSTVF_INITICONS);
@@ -441,7 +437,7 @@ int CPsTreeItem::Create(CPsHdr* pPsh, OPTIONSDIALOGPAGE *odp)
 
 			// error for no longer supported dialog template type
 			if (((UINT_PTR)odp->pszTemplate & 0xFFFF0000)) 
-				MsgErr(NULL, LPGENT("The dialog template type is no longer supported"));
+				MsgErr(NULL, LPGENW("The dialog template type is no longer supported"));
 			else {
 				// fetch dialog resource id
 				_idDlg = (INT_PTR)odp->pszTemplate;
@@ -484,7 +480,7 @@ WORD CPsTreeItem::DBSaveItemState(LPCSTR pszGroup, int iItemPosition, UINT iStat
 
 	// save label
 	if ((dwFlags & PSTVF_LABEL_CHANGED) && (_dwFlags & PSTVF_LABEL_CHANGED))
-		numErrors += db_set_ts(NULL, MODNAME, GlobalPropertyKey(SET_ITEM_LABEL), Label());
+		numErrors += db_set_ws(NULL, MODNAME, GlobalPropertyKey(SET_ITEM_LABEL), Label());
 
 	// save position
 	if ((dwFlags & PSTVF_POS_CHANGED) && !(dwFlags & PSTVF_SORTTREE))

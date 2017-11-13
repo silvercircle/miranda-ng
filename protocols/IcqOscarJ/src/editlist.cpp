@@ -4,7 +4,7 @@
 // 
 // Copyright © 2001-2004 Richard Hughes, Martin Öberg
 // Copyright © 2004-2009 Joe Kucera, Bio
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -79,7 +79,7 @@ void ChangeInfoData::BeginListEdit(int iItem, RECT *rc, int iSetting, WORD wVKey
 	UpdateWindow(hwndList);
 
 	dataListEdit = this;
-	hwndListEdit = CreateWindowEx(WS_EX_TOOLWINDOW | WS_EX_TOPMOST, _T("LISTBOX"), _T(""), WS_POPUP | WS_BORDER | WS_VSCROLL,
+	hwndListEdit = CreateWindowEx(WS_EX_TOOLWINDOW | WS_EX_TOPMOST, L"LISTBOX", L"", WS_POPUP | WS_BORDER | WS_VSCROLL,
 											rc->left, rc->bottom, rc->right - rc->left, 150, NULL, NULL, hInst, NULL);
 	SendMessage(hwndListEdit, WM_SETFONT, (WPARAM)hListFont, 0);
 	int itemHeight = SendMessage(hwndListEdit, LB_GETITEMHEIGHT, 0, 0);
@@ -174,8 +174,8 @@ void ChangeInfoData::EndListEdit(int save)
 
 			if (sid.changed) {
 				char buf[MAX_PATH];
-				TCHAR tbuf[MAX_PATH];
-				if (utf8_to_tchar_static(ICQTranslateUtfStatic(pItem.text, buf, _countof(buf)), tbuf, _countof(buf)))
+				wchar_t tbuf[MAX_PATH];
+				if (make_unicode_string_static(ICQTranslateUtfStatic(pItem.text, buf, _countof(buf)), tbuf, _countof(buf)))
 					ListView_SetItemText(hwndList, iEditItem, 1, tbuf);
 
 				EnableDlgItem(GetParent(hwndList), IDC_SAVE, TRUE);

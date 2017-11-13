@@ -2,13 +2,13 @@
 ;============================================================
 ;  File: New_GPG.dll
 ;  Plugin: GPG
-;  Version: 0.0.0.11
+;  Version: 0.0.0.14
 ;  Authors: sss
 ;============================================================
 [New GPG encryption support plugin, based on code from old GPG plugin and SecureIM.]
 Zapewnia obsługę szyfrowania przez GPG.
 ;file \plugins\New_GPG\res\new_gpg.rc
-[Load Public GPG key]
+[Load public GPG key]
 Wczytaj klucz publiczny GPG
 [Load from file]
 Wczytaj z pliku
@@ -154,8 +154,8 @@ Otwórz:
 Zamknij:
 [Strip all tags in outgoing messages]
 Wytnij wszystkie tagi w wiadomościach wychodzących
-[Turn on presence signing (Jabber) (required by XEP 0-27)]
-Włącz podpisywanie obecności (Jabber) (wymagane przez XEP 0-27)
+[Turn on presence signing (Jabber) (required by XEP-0027)]
+Włącz podpisywanie obecności (Jabber) (wymagane przez XEP-0027)
 [Export keys]
 Eksportuj klucze
 [Import keys]
@@ -165,8 +165,6 @@ Importuj klucze
 Wyłącz GPG
 [GPG Turn on encryption]
 Włącz GPG
-[Load GPG public key]
-Wczytaj klucz publiczny GPG
 [Toggle GPG encryption]
 Przełącz szyfrowanie GPG
 [Send public key]
@@ -297,12 +295,8 @@ Wykryto metakontakt
 Otrzymano zaszyfrowaną wiadomość od kontaktu, dla którego szyfrowanie jest wyłączone.\nCzy chcesz włączyć szyfrowanie dla tego kontaktu?
 [Do you want to try to decrypt encrypted message?]
 Czy chcesz spróbować odszyfrować zaszyfrowaną wiadomość?
-[failed to decrypt message, GPG returned error, turn on debug log for more details]
-Nie udało się odszyfrować wiadomości, GPG zwrócił błąd, włącz log debugowania, aby uzyskać więcej szczegółów.
 [We're trying to encrypt with untrusted key. Do you want to trust this key permanently?]
 Próbujemy zaszyfrować niezaufanym kluczem. Czy chcesz na stałe zaufać temu kluczowi?
-[failed to encrypt message, GPG returned error, turn on debug log for more details]
-Nie udało się zaszyfrować wiadomości, GPG zwrócił błąd, włącz log debugowania, aby uzyskać więcej informacji.
 [Something is wrong, GPG does not understand us, aborting encryption.]
 Coś jest nie tak, GPG nas nie rozumie, anulowanie szyfrowania.
 ;file \plugins\New_GPG\src\options.cpp

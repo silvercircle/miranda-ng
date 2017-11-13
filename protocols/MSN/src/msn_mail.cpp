@@ -1,7 +1,7 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
 
-Copyright (c) 2012-2014 Miranda NG Team
+Copyright (c) 2012-2017 Miranda NG Team
 Copyright (c) 2007-2012 Boris Krasnovskiy.
 
 This program is free software; you can redistribute it and/or
@@ -207,8 +207,8 @@ void CMsnProto::processMailData(char* mailData)
 
 void CMsnProto::sttNotificationMessage(char* msgBody, bool isInitial)
 {
-	TCHAR tBuffer[512];
-	TCHAR tBuffer2[512];
+	wchar_t tBuffer[512];
+	wchar_t tBuffer2[512];
 	int  UnreadMessages = mUnreadMessages;
 	int  UnreadJunkEmails = mUnreadJunkEmails;
 	bool ShowPopup = isInitial;
@@ -255,14 +255,14 @@ void CMsnProto::sttNotificationMessage(char* msgBody, bool isInitial)
 		wchar_t* mimeSubjectW = tFileInfo.decode(Subject);
 
 
-		mir_sntprintf(tBuffer2, TranslateT("Subject: %s"), mimeSubjectW);
+		mir_snwprintf(tBuffer2, TranslateT("Subject: %s"), mimeSubjectW);
 
 
 
-		TCHAR* msgtxt = _stricmp(From, Fromaddr) ?
+		wchar_t* msgtxt = _stricmp(From, Fromaddr) ?
 			TranslateT("Hotmail from %s (%S)") : TranslateT("Hotmail from %s");
 
-		mir_sntprintf(tBuffer, msgtxt, mimeFromW, Fromaddr);
+		mir_snwprintf(tBuffer, msgtxt, mimeFromW, Fromaddr);
 		mir_free(mimeFromW);
 		mir_free(mimeSubjectW);
 		ShowPopup = true;
@@ -271,8 +271,8 @@ void CMsnProto::sttNotificationMessage(char* msgBody, bool isInitial)
 		const char* MailData = tFileInfo["Mail-Data"];
 		if (MailData != NULL) processMailData((char*)MailData);
 
-		mir_sntprintf(tBuffer, m_tszUserName);
-		mir_sntprintf(tBuffer2, TranslateT("Unread mail is available: %d in Inbox and %d in other folders."), mUnreadMessages, mUnreadJunkEmails);
+		mir_snwprintf(tBuffer, m_tszUserName);
+		mir_snwprintf(tBuffer2, TranslateT("Unread mail is available: %d in Inbox and %d in other folders."), mUnreadMessages, mUnreadJunkEmails);
 	}
 
 	if (UnreadMessages == mUnreadMessages && UnreadJunkEmails == mUnreadJunkEmails  && !isInitial)
@@ -282,23 +282,21 @@ void CMsnProto::sttNotificationMessage(char* msgBody, bool isInitial)
 
 	MCONTACT hContact = MSN_HContactFromEmail(MyOptions.szEmail);
 	if (hContact) {
-		CallService(MS_CLIST_REMOVEEVENT, hContact, (LPARAM)1);
+		pcli->pfnRemoveEvent(hContact, 1);
 		displayEmailCount(hContact);
 
 		if (ShowPopup && !getByte("DisableHotmailTray", 1)) {
-			CLISTEVENT cle = { 0 };
-
-			cle.cbSize = sizeof(cle);
-			cle.hContact = hContact;
-			cle.hDbEvent = 1;
-			cle.flags = CLEF_URGENT | CLEF_TCHAR;
-			cle.hIcon = Skin_LoadIcon(SKINICON_OTHER_SENDEMAIL);
-			cle.ptszTooltip = tBuffer2;
 			char buf[64];
 			mir_snprintf(buf, "%s%s", m_szModuleName, MS_GOTO_INBOX);
-			cle.pszService = buf;
 
-			CallService(MS_CLIST_ADDEVENT, hContact, (LPARAM)&cle);
+			CLISTEVENT cle = {};
+			cle.hContact = hContact;
+			cle.hDbEvent = 1;
+			cle.flags = CLEF_URGENT | CLEF_UNICODE;
+			cle.hIcon = Skin_LoadIcon(SKINICON_OTHER_SENDEMAIL);
+			cle.szTooltip.w = tBuffer2;
+			cle.pszService = buf;
+			pcli->pfnAddEvent(&cle);
 		}
 	}
 
@@ -306,7 +304,7 @@ void CMsnProto::sttNotificationMessage(char* msgBody, bool isInitial)
 
 	// Disable to notify receiving hotmail
 	if (ShowPopup && !getByte("DisableHotmail", 0)) {
-		SkinPlaySound(mailsoundname);
+		Skin_PlaySound(mailsoundname);
 
 		const char *msgurl = tFileInfo["Message-URL"];
 		if (msgurl) {
@@ -379,20 +377,20 @@ void CMsnProto::displayEmailCount(MCONTACT hContact)
 {
 	if (!emailEnabled || getByte("DisableHotmailCL", 0)) return;
 
-	TCHAR* name = GetContactNameT(hContact);
+	wchar_t* name = GetContactNameT(hContact);
 	if (name == NULL) return;
 
-	TCHAR* ch = name - 1;
+	wchar_t* ch = name - 1;
 	do {
-		ch = _tcschr(ch + 1, '[');
-	} while (ch && !_istdigit(ch[1]));
+		ch = wcschr(ch + 1, '[');
+	} while (ch && !iswdigit(ch[1]));
 	if (ch) *ch = 0;
-	rtrimt(name);
+	rtrimw(name);
 
-	TCHAR szNick[128];
-	mir_sntprintf(szNick, getByte("DisableHotmailJunk", 0) ? _T("%s [%d]") : _T("%s [%d][%d]"), name, mUnreadMessages, mUnreadJunkEmails);
+	wchar_t szNick[128];
+	mir_snwprintf(szNick, getByte("DisableHotmailJunk", 0) ? L"%s [%d]" : L"%s [%d][%d]", name, mUnreadMessages, mUnreadJunkEmails);
 
 	nickChg = true;
-	setTString(hContact, "Nick", szNick);
+	setWString(hContact, "Nick", szNick);
 	nickChg = false;
 }

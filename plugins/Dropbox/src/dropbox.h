@@ -26,23 +26,22 @@ public:
 	virtual ~CDropbox();
 
 private:
-	HANDLE hNetlibConnection;
-	ULONG  hFileProcess;
+	HNETLIBUSER hNetlibConnection;
 	ULONG  hMessageProcess;
 
-	HANDLE hFileSentEventHook;
+	HANDLE hUploadedEventHook;
 
 	MCONTACT hDefaultContact;
-	MCONTACT hTransferContact;
-	HWND     hTransferWindow;
 
 	HGENMENU contactMenuItems[CMI_MAX];
+
+	std::map<MCONTACT, HWND> interceptedContacts;
 
 	LIST<FileTransferParam> transfers;
 
 	// hooks
 	static int OnProtoAck(WPARAM wParam, LPARAM lParam);
-	static int OnPreShutdown(WPARAM wParam, LPARAM lParam);
+	int OnToolbarLoaded(WPARAM wParam, LPARAM lParam);
 	int OnModulesLoaded(WPARAM wParam, LPARAM lParam);
 	int OnContactDeleted(WPARAM wParam, LPARAM lParam);
 	int OnOptionsInitialized(WPARAM wParam, LPARAM lParam);
@@ -50,11 +49,8 @@ private:
 	int OnSrmmWindowOpened(WPARAM wParam, LPARAM lParam);
 	int OnTabSrmmButtonPressed(WPARAM wParam, LPARAM lParam);
 	int OnFileDialogCancelled(WPARAM wParam, LPARAM lParam);
-	int OnFileDialogSuccessed(WPARAM wParam, LPARAM lParam);
 
 	// services
-	static HANDLE CreateProtoServiceFunctionObj(const char *szService, MIRANDASERVICEOBJ serviceProc, void *obj);
-
 	static INT_PTR ProtoGetCaps(WPARAM wParam, LPARAM lParam);
 	static INT_PTR ProtoGetName(WPARAM wParam, LPARAM lParam);
 	static INT_PTR ProtoLoadIcon(WPARAM wParam, LPARAM lParam);
@@ -64,12 +60,16 @@ private:
 	INT_PTR ProtoSendMessage(WPARAM wParam, LPARAM lParam);
 	static INT_PTR ProtoReceiveMessage(WPARAM wParam, LPARAM lParam);
 
-	INT_PTR SendFileToDropbox(WPARAM wParam, LPARAM lParam);
+	INT_PTR ProtoSendFileInterceptor(WPARAM wParam, LPARAM lParam);
+
+	INT_PTR UploadToDropbox(WPARAM wParam, LPARAM lParam);
+	INT_PTR UploadToDropboxAsync(WPARAM wParam, LPARAM lParam);
 
 	// commands
 	static void CommandHelp(void *arg);
-	static void CommandContent(void *arg);
+	static void CommandList(void *arg);
 	static void CommandShare(void *arg);
+	static void CommandSearch(void *arg);
 	static void CommandDelete(void *arg);
 
 	// access token
@@ -81,21 +81,22 @@ private:
 	static UINT RequestAccessTokenAsync(void *owner, void *param);
 
 	// account info
-	void RequestAccountInfo();
+	static void __cdecl RequestAccountInfo(void*);
 
 	// transfers
-	void SendFile(const char *path, const char *data, size_t size);
-	void SendFileChunkedFirst(const char *data, size_t size, char *uploadId, size_t &offset);
-	void SendFileChunkedNext(const char *data, size_t size, const char *uploadId, size_t &offset);
-	void SendFileChunkedLast(const char *path, const char *uploadId);
+	char* UploadFile(const char *data, size_t size, char *path);
+	void StartUploadSession(const char *data, size_t size, char *sessionId);
+	void AppendToUploadSession(const char *data, size_t size, const char *sessionId, size_t offset);
+	char* FinishUploadSession(const char *data, size_t size, const char *sessionId, size_t offset, char *path);
 
-	void CreateFolder(const char *encodedPath);
+	void CreateFolder(const char *path);
 
 	void CreateDownloadUrl(const char *path, char *url);
 
-	static UINT SendFilesAsync(void *owner, void *arg);
-	static UINT SendFilesAndEventAsync(void *owner, void *arg);
-	static UINT SendFilesAndReportAsync(void *owner, void *arg);
+	static UINT UploadToDropbox(void *owner, void *arg);
+
+	static UINT UploadAndRaiseEvent(void *owner, void *arg);
+	static UINT UploadAndReportProgress(void *owner, void *arg);
 
 	// contacts
 	MCONTACT GetDefaultContact();
@@ -106,19 +107,22 @@ private:
 
 	static INT_PTR SendFilesToDropboxCommand(void *obj, WPARAM wParam, LPARAM lParam);
 
-	// SRMM
-	static void DisableSrmmButton(MCONTACT hContact);
-
 	// utils
+	static char* PreparePath(const char *oldPath, char *newPath);
+	static char* PreparePath(const wchar_t *oldPath, char *newPath);
+
+	static bool IsAccountIntercepted(const char *module);
+
 	static char* HttpStatusToText(HTTP_STATUS status);
-	static void HandleHttpResponseError(NETLIBHTTPREQUEST *response);
+	static void HandleHttpResponse(NETLIBHTTPREQUEST *response);
+	static JSONNode HandleJsonResponse(NETLIBHTTPREQUEST *response);
 
 	static MEVENT AddEventToDb(MCONTACT hContact, WORD type, DWORD flags, DWORD cbBlob, PBYTE pBlob);
 
-	void SendToContact(MCONTACT hContact, const char* data);
-	void PasteToInputArea(MCONTACT hContact, const char* data);
-	void PasteToClipboard(const char* data);
-	void Report(MCONTACT hContact, const char* data);
+	void SendToContact(MCONTACT hContact, const wchar_t *data);
+	void PasteToInputArea(MCONTACT hContact, const wchar_t *data);
+	void PasteToClipboard(const wchar_t *data);
+	void Report(MCONTACT hContact, const wchar_t *data);
 
 	template<int(CDropbox::*Event)(WPARAM, LPARAM)>
 	static int GlobalEvent(void *obj, WPARAM wParam, LPARAM lParam)

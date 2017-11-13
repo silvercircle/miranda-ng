@@ -280,7 +280,7 @@ void __cdecl TlenServerThread(ThreadData *info)
 		if (info->proto->m_iDesiredStatus != ID_STATUS_OFFLINE) {
 
 			info->proto->isConnected = TRUE;
-			forkthread(TlenKeepAliveThread, 0, info->proto);
+			mir_forkthread(TlenKeepAliveThread, info->proto);
 
 			TlenXmlInitState(&xmlState);
 			TlenXmlSetCallback(&xmlState, 1, ELEM_OPEN, (void (__cdecl *)(XmlNode *,void *))TlenProcessStreamOpening, info);
@@ -561,7 +561,7 @@ static void TlenProcessIqGetVersion(TlenProtocol *proto, XmlNode *node)
 	if ( os == NULL ) os = TlenTextEncode("Windows");
 
 	mir_strcpy(mversion, "Miranda NG ");
-	CallService(MS_SYSTEM_GETVERSIONTEXT, sizeof( mversion ) - 11, ( LPARAM )mversion + 11 );
+	Miranda_GetVersionText(mversion + 11, sizeof(mversion) - 11);
 	mir_strcat(mversion, " (Tlen v.");
 	mir_strcat(mversion, TLEN_VERSION_STRING);
 	mir_strcat(mversion, ")");
@@ -701,7 +701,7 @@ static void TlenProcessMessage(XmlNode *node, ThreadData *info)
 						} else {
 							MEVENT hDbEvent = db_event_last(hContact);
 							if (hDbEvent != NULL) {
-								DBEVENTINFO dbei = { sizeof(dbei) }; 
+								DBEVENTINFO dbei = {}; 
 								db_event_get( hDbEvent, &dbei);
 								if (msgTime < dbei.timestamp) {
 									msgTime = dbei.timestamp + 1;
@@ -807,7 +807,7 @@ static void TlenProcessIq(XmlNode *node, ThreadData *info)
 										if (item->group) mir_free(item->group);
 										if ((groupNode=TlenXmlGetChild(itemNode, "group")) != NULL && groupNode->text != NULL) {
 											item->group = TlenGroupDecode(groupNode->text);
-											Clist_CreateGroup(0, _A2T(item->group));
+											Clist_GroupCreate(0, _A2T(item->group));
 											db_set_s(hContact, "CList", "Group", item->group);
 										}
 										else {
@@ -991,7 +991,7 @@ static void TlenProcessM(XmlNode *node, ThreadData *info)
 						else {
 							if (info->proto->tlenOptions.logAlerts)
 								TlenLogMessage(info->proto, hContact, 0, Translate("An alert has been received."));
-							SkinPlaySound("TlenAlertNotify");
+							Skin_PlaySound("TlenAlertNotify");
 						}
 					}
 				}
@@ -1069,8 +1069,8 @@ static void TlenMailPopup(TlenProtocol *proto, char *title, char *emailInfo)
 
 	POPUPDATAT ppd = { 0 };
 	ppd.lchIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_MAIL));
-	_tcsncpy(ppd.lptzContactName, _A2T(title), MAX_CONTACTNAME -1);
-	_tcsncpy(ppd.lptzText, _A2T(emailInfo), MAX_SECONDLINE - 1);
+	wcsncpy(ppd.lptzContactName, _A2T(title), MAX_CONTACTNAME -1);
+	wcsncpy(ppd.lptzText, _A2T(emailInfo), MAX_SECONDLINE - 1);
 	ppd.colorBack = db_get_dw(NULL, proto->m_szModuleName, "MailPopupBack", 0);
 	ppd.colorText = db_get_dw(NULL, proto->m_szModuleName, "MailPopupText", 0);
 	BYTE delayMode = db_get_b(NULL, proto->m_szModuleName, "MailPopupDelayMode", 0);
@@ -1107,7 +1107,7 @@ static void TlenProcessN(XmlNode *node, ThreadData *info)
 		TlenStringAppend(&str, &strSize, "%s: %s", Translate("Subject"), s);
 		popupText = TlenTextDecode(str);
 		TlenMailPopup(info->proto, popupTitle, popupText);
-		SkinPlaySound("TlenMailNotify");
+		Skin_PlaySound("TlenMailNotify");
 
 		mir_free(popupTitle);
 		mir_free(popupText);
@@ -1211,7 +1211,7 @@ static void TlenProcessV(XmlNode *node, ThreadData *info)
 		if ((e=TlenXmlGetAttrValue(node, "e")) != NULL) {
 			if (!mir_strcmp(e, "1")) {
 				if ((id=TlenXmlGetAttrValue(node, "i")) != NULL) {
-					SkinPlaySound("TlenVoiceNotify");
+					Skin_PlaySound("TlenVoiceNotify");
 					TlenVoiceAccept(info->proto, id, from);
 				}
 			} else if (!mir_strcmp(e, "3")) {
@@ -1266,7 +1266,7 @@ static void TlenProcessV(XmlNode *node, ThreadData *info)
 							if ((p=TlenXmlGetAttrValue(node, "p")) != NULL) {
 								item->ft->wPort = atoi(p);
 								TlenVoiceStart(item->ft, 0);
-								//forkthread((void (__cdecl *)(void*))TlenVoiceReceiveThread, 0, item->ft);
+								//forkthread((pThreadFunc)TlenVoiceReceiveThread, 0, item->ft);
 							}
 						}
 					}
@@ -1305,14 +1305,13 @@ static void TlenProcessV(XmlNode *node, ThreadData *info)
 
 static void __cdecl TlenKeepAliveThread(void *ptr)
 {
-	NETLIBSELECT nls = {0};
-
 	TlenProtocol *proto = (TlenProtocol *)ptr;
-	nls.cbSize = sizeof(NETLIBSELECT);
+
+	NETLIBSELECT nls = {};
 	nls.dwTimeout = 60000;	// 60000 millisecond (1 minute)
 	nls.hExceptConns[0] = proto->threadData->s;
 	for (;;) {
-		if (CallService(MS_NETLIB_SELECT, 0, (LPARAM) &nls) != 0)
+		if (Netlib_Select(&nls) != 0)
 			break;
 		if (proto->tlenOptions.sendKeepAlive)
 			TlenSend(proto, " \t ");

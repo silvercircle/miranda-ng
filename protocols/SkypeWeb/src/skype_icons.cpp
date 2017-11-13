@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2015-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -19,20 +19,20 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 IconItemT CSkypeProto::Icons[] =
 {
-	{ LPGENT("Protocol icon"),        "main",             IDI_SKYPE         },
-	{ LPGENT("Create new chat icon"), "conference",       IDI_CONFERENCE    },
-	{ LPGENT("Sync history icon"),    "synchistory",      IDI_SYNCHISTORY   },
-	{ LPGENT("Block user icon"),      "user_block",       IDI_BLOCKUSER     },
-	{ LPGENT("Unblock user icon"),    "user_unblock",     IDI_UNBLOCKUSER   },
-	{ LPGENT("Incoming call icon"),   "inc_call",         IDI_CALL          },
-	{ LPGENT("Notification icon"),    "notify",           IDI_NOTIFY        },
-	{ LPGENT("Error icon"),           "error",            IDI_ERRORICON     },
-	{ LPGENT("Action icon"),          "me_action",        IDI_ACTION_ME     }
+	{ LPGENW("Protocol icon"),        "main",             IDI_SKYPE         },
+	{ LPGENW("Create new chat icon"), "conference",       IDI_CONFERENCE    },
+	{ LPGENW("Sync history icon"),    "synchistory",      IDI_SYNCHISTORY   },
+	{ LPGENW("Block user icon"),      "user_block",       IDI_BLOCKUSER     },
+	{ LPGENW("Unblock user icon"),    "user_unblock",     IDI_UNBLOCKUSER   },
+	{ LPGENW("Incoming call icon"),   "inc_call",         IDI_CALL          },
+	{ LPGENW("Notification icon"),    "notify",           IDI_NOTIFY        },
+	{ LPGENW("Error icon"),           "error",            IDI_ERRORICON     },
+	{ LPGENW("Action icon"),          "me_action",        IDI_ACTION_ME     }
 };
 
 void CSkypeProto::InitIcons()
 {
-	Icon_RegisterT(g_hInstance, LPGENT("Protocols") L"/" LPGENT(MODULE), Icons, _countof(Icons), MODULE);
+	Icon_RegisterT(g_hInstance, LPGENW("Protocols") L"/" _A2W(MODULE), Icons, _countof(Icons), MODULE);
 }
 
 HICON CSkypeProto::GetIcon(int iconId)

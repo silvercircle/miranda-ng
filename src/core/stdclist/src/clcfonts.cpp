@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -28,19 +28,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 struct
 {
-	const TCHAR *tszName;
+	const wchar_t *tszName;
 	int iMask;
 }
 static clistFontDescr[] =
 {
-	{ LPGENT("Standard contacts"),                                        FIDF_CLASSGENERAL },
-	{ LPGENT("Online contacts to whom you have a different visibility"),  FIDF_CLASSGENERAL },
-	{ LPGENT("Offline contacts"),                                         FIDF_CLASSGENERAL },
-	{ LPGENT("Contacts which are 'not on list'"),                         FIDF_CLASSGENERAL },
-	{ LPGENT("Groups"),                                                   FIDF_CLASSHEADER  },
-	{ LPGENT("Group member counts"),                                      FIDF_CLASSHEADER  },
-	{ LPGENT("Dividers"),                                                 FIDF_CLASSSMALL   },
-	{ LPGENT("Offline contacts to whom you have a different visibility"), FIDF_CLASSGENERAL }
+	{ LPGENW("Standard contacts"),                                        FIDF_CLASSGENERAL },
+	{ LPGENW("Online contacts to whom you have a different visibility"),  FIDF_CLASSGENERAL },
+	{ LPGENW("Offline contacts"),                                         FIDF_CLASSGENERAL },
+	{ LPGENW("Contacts which are 'not on list'"),                         FIDF_CLASSGENERAL },
+	{ LPGENW("Groups"),                                                   FIDF_CLASSHEADER  },
+	{ LPGENW("Group member counts"),                                      FIDF_CLASSHEADER  },
+	{ LPGENW("Dividers"),                                                 FIDF_CLASSSMALL   },
+	{ LPGENW("Offline contacts to whom you have a different visibility"), FIDF_CLASSGENERAL }
 };
 
 static int FS_FontsChanged(WPARAM, LPARAM)
@@ -51,10 +51,10 @@ static int FS_FontsChanged(WPARAM, LPARAM)
 
 void RegisterCListFonts()
 {
-	FontIDT fontid = { sizeof(fontid) };
+	FontIDW fontid = { sizeof(fontid) };
 	fontid.flags = FIDF_DEFAULTVALID | FIDF_ALLOWREREGISTER | FIDF_APPENDNAME | FIDF_NOAS | FIDF_SAVEPOINTSIZE | FIDF_ALLOWEFFECTS;
 	strncpy(fontid.dbSettingsGroup, "CLC", sizeof(fontid.dbSettingsGroup));
-	_tcsncpy(fontid.group, LPGENT("Contact list"), _countof(fontid.group));
+	wcsncpy(fontid.group, LPGENW("Contact list"), _countof(fontid.group));
 
 	HDC hdc = GetDC(NULL);
 	for (int i = 0; i < _countof(clistFontDescr); i++) {
@@ -62,7 +62,7 @@ void RegisterCListFonts()
 		pcli->pfnGetFontSetting(i, &lf, &fontid.deffontsettings.colour);
 		lf.lfHeight = -MulDiv(lf.lfHeight, GetDeviceCaps(hdc, LOGPIXELSY), 72);
 
-		_tcsncpy_s(fontid.deffontsettings.szFace, lf.lfFaceName, _TRUNCATE);
+		wcsncpy_s(fontid.deffontsettings.szFace, lf.lfFaceName, _TRUNCATE);
 		fontid.deffontsettings.charset = lf.lfCharSet;
 		fontid.deffontsettings.size = (char)lf.lfHeight;
 		fontid.deffontsettings.style = (lf.lfWeight >= FW_BOLD ? DBFONTF_BOLD : 0) | (lf.lfItalic ? DBFONTF_ITALIC : 0);
@@ -70,45 +70,45 @@ void RegisterCListFonts()
 		fontid.flags &= ~FIDF_CLASSMASK;
 		fontid.flags |= clistFontDescr[i].iMask;
 
-		_tcsncpy(fontid.name, clistFontDescr[i].tszName, _countof(fontid.name));
+		wcsncpy(fontid.name, clistFontDescr[i].tszName, _countof(fontid.name));
 
 		char idstr[10];
 		mir_snprintf(idstr, "Font%d", i);
 		strncpy(fontid.prefix, idstr, _countof(fontid.prefix));
 		fontid.order = i;
-		FontRegisterT(&fontid);
+		Font_RegisterW(&fontid);
 	}
 	ReleaseDC(NULL, hdc);
 
 	// and colours
-	ColourIDT colourid = { 0 };
-	colourid.cbSize = sizeof(ColourIDT);
+	ColourIDW colourid = { 0 };
+	colourid.cbSize = sizeof(ColourIDW);
 	colourid.order = 0;
 	strncpy(colourid.dbSettingsGroup, "CLC", sizeof(colourid.dbSettingsGroup));
 
 	strncpy(colourid.setting, "BkColour", sizeof(colourid.setting));
-	_tcsncpy(colourid.name, LPGENT("Background"), _countof(colourid.name));
-	_tcsncpy(colourid.group, LPGENT("Contact list"), _countof(colourid.group));
+	wcsncpy(colourid.name, LPGENW("Background"), _countof(colourid.name));
+	wcsncpy(colourid.group, LPGENW("Contact list"), _countof(colourid.group));
 	colourid.defcolour = CLCDEFAULT_BKCOLOUR;
-	ColourRegisterT(&colourid);
+	Colour_RegisterW(&colourid);
 
 	strncpy(colourid.setting, "SelTextColour", sizeof(colourid.setting));
-	_tcsncpy(colourid.name, LPGENT("Selected text"), _countof(colourid.name));
+	wcsncpy(colourid.name, LPGENW("Selected text"), _countof(colourid.name));
 	colourid.order = 1;
 	colourid.defcolour = CLCDEFAULT_SELTEXTCOLOUR;
-	ColourRegisterT(&colourid);
+	Colour_RegisterW(&colourid);
 
 	strncpy(colourid.setting, "HotTextColour", sizeof(colourid.setting));
-	_tcsncpy(colourid.name, LPGENT("Hottrack text"), _countof(colourid.name));
+	wcsncpy(colourid.name, LPGENW("Hottrack text"), _countof(colourid.name));
 	colourid.order = 1;
 	colourid.defcolour = CLCDEFAULT_HOTTEXTCOLOUR;
-	ColourRegisterT(&colourid);
+	Colour_RegisterW(&colourid);
 
 	strncpy(colourid.setting, "QuickSearchColour", sizeof(colourid.setting));
-	_tcsncpy(colourid.name, LPGENT("Quicksearch text"), _countof(colourid.name));
+	wcsncpy(colourid.name, LPGENW("Quicksearch text"), _countof(colourid.name));
 	colourid.order = 1;
 	colourid.defcolour = CLCDEFAULT_QUICKSEARCHCOLOUR;
-	ColourRegisterT(&colourid);
+	Colour_RegisterW(&colourid);
 
 	HookEvent(ME_FONT_RELOAD, FS_FontsChanged);
 }
@@ -129,7 +129,7 @@ void LoadClcOptions(HWND hwnd, struct ClcData *dat, BOOL bFirst)
 
 		HFONT holdfont = (HFONT)SelectObject(hdc, dat->fontInfo[i].hFont);
 		SIZE fontSize;
-		GetTextExtentPoint32(hdc, _T("x"), 1, &fontSize);
+		GetTextExtentPoint32(hdc, L"x", 1, &fontSize);
 		SelectObject(hdc, holdfont);
 
 		dat->fontInfo[i].fontHeight = fontSize.cy;

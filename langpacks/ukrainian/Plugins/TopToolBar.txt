@@ -6,7 +6,7 @@
 ;  Authors: Bethoven
 ;============================================================
 [ToptoolBar adds buttons in top frame for fast access.]
-Додає панель кнопок для швидкого доступу до функцій Miranda і ваших програм.
+Панель кнопок для швидкого доступу до функцій Miranda і ваших програм.
 [Buttons order and visibility]
 Порядок і видимість кнопок
 [Button height]
@@ -47,28 +47,28 @@
 Відкрити меню статусів
 [Show/hide offline contacts]
 Показати/сховати відключених
-[Hide offline contacts]
-Сховати відключених
 [Show offline contacts]
 Показати відключених
+[Hide offline contacts]
+Сховати відключених
 [Enable/disable metacontacts]
 Увімк./вимк. метаконтакти
-[Disable metacontacts]
-Вимкнути метаконтакти
 [Enable metacontacts]
 Увімкнути метаконтакти
+[Disable metacontacts]
+Вимкнути метаконтакти
 [Enable/disable groups]
 Увімк./вимк. групи
-[Enable groups]
-Увімкнути групи
 [Disable groups]
 Вимкнути групи
+[Enable groups]
+Увімкнути групи
 [Enable/disable sounds]
 Увімк./вимк. звуки
-[Disable sounds]
-Вимкнути звуки
 [Enable sounds]
 Увімкнути звуки
+[Disable sounds]
+Вимкнути звуки
 [Minimize contact list]
 Сховати список контактів
 [Exit]
@@ -77,8 +77,8 @@
 За замовчанням
 [TopToolBar background]
 Фон панелі кнопок
-[Frames service has not been found, so plugin will be disabled.\nTo run it you need to install and / or enable contact list plugin that supports it:\n- Modern contact list\n- Nicer+\nYou can get them at http://wiki.miranda-ng.org/Download]
-Ваш плагін списку контактів не підтримує службу фреймів, необхідний для їх роботи, тому плагін панелі кнопок був вимкнений.\nДля роботи панелі кнопок потрібно встановити та/або ввімкнути один з таких плагінів списку контактів:\n- Modern contact list\n- Nicer+\nВи можете завантажити їх на http://wiki.miranda-ng.org/Download
+[Frames service has not been found, so plugin will be disabled.\nTo run it you need to install and / or enable contact list plugin that supports it:\n- Modern contact list\n- Clist nicer\nYou can get them at https://wiki.miranda-ng.org/Download]
+Ваш плагін списку контактів не підтримує службу, необхідну для роботи фреймів, тому плагін TopToolBar був вимкнений.\nДля роботи панелі кнопок потрібно встановити та/або ввімкнути один з таких плагінів списку контактів:\n- Modern contact list\n- Clist nicer\nВи можете завантажити їх на https://wiki.miranda-ng.org/Download
 [TopToolBar]
 Панель кнопок
 [Contact list]

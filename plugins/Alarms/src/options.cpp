@@ -11,11 +11,12 @@ Options options;
 // defined in header
 //#define		WMU_INITOPTLIST		(WM_USER + 20)
 
-typedef struct AddEditParam_tag {
+struct AddEditParam
+{
 	ALARM *alarm_ptr;
 	BOOL edit;
 	BOOL self_add;
-} AddEditParam;
+};
 
 HGENMENU hMainMenuItem = 0;
 
@@ -26,7 +27,7 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 {
 	ALARM *add_edit_alarm = (ALARM *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
 	SYSTEMTIME temp_time;
-	TCHAR buff[MAX_PATH];
+	wchar_t buff[MAX_PATH];
 	BOOL bChecked;
 
 	switch (msg) {
@@ -43,7 +44,15 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 		SendDlgItemMessage(hwndDlg, IDC_DAY, CB_SETCURSEL, 0, 0);
 
 		for (int i = 1; i <= 31; i++)
-			SendDlgItemMessage(hwndDlg, IDC_DAYNUM, CB_INSERTSTRING, (WPARAM)-1, (LPARAM)_itot(i, buff, 10));
+			SendDlgItemMessage(hwndDlg, IDC_DAYNUM, CB_INSERTSTRING, (WPARAM)-1, (LPARAM)_itow(i, buff, 10));
+
+		EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY1), FALSE);
+		EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY2), FALSE);
+		EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY3), FALSE);
+		EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY4), FALSE);
+		EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY5), FALSE);
+		EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY6), FALSE);
+		EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY7), FALSE);
 
 		SendDlgItemMessage(hwndDlg, IDC_DAYNUM, CB_SETCURSEL, 0, 0);
 
@@ -86,6 +95,34 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 					EnableWindow(GetDlgItem(hwndDlg, IDC_DAY), FALSE);
 					EnableWindow(GetDlgItem(hwndDlg, IDC_DAYNUM), FALSE);
 					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_SUSPEND), TRUE);
+
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY1), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY2), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY3), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY4), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY5), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY6), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY7), FALSE);
+
+					break;
+
+				case OC_SELECTED_DAYS:
+					CheckDlgButton(hwndDlg, IDC_RAD_DAYS, BST_CHECKED);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_BTN_CAL), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_DATE), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_DAY), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_DAYNUM), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_RELMIN), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_SUSPEND), TRUE);
+
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY1), TRUE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY2), TRUE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY3), TRUE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY4), TRUE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY5), TRUE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY6), TRUE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY7), TRUE);
+
 					break;
 
 				case OC_WEEKDAYS:
@@ -96,6 +133,15 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 					EnableWindow(GetDlgItem(hwndDlg, IDC_DAYNUM), FALSE);
 					EnableWindow(GetDlgItem(hwndDlg, IDC_RELMIN), FALSE);
 					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_SUSPEND), TRUE);
+
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY1), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY2), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY3), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY4), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY5), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY6), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY7), FALSE);
+
 					break;
 
 				case OC_ONCE:
@@ -103,6 +149,15 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 					EnableWindow(GetDlgItem(hwndDlg, IDC_DAY), FALSE);
 					EnableWindow(GetDlgItem(hwndDlg, IDC_DAYNUM), FALSE);
 					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_SUSPEND), FALSE);
+
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY1), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY2), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY3), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY4), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY5), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY6), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY7), FALSE);
+
 					break;
 
 				case OC_WEEKLY:
@@ -112,6 +167,15 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 					EnableWindow(GetDlgItem(hwndDlg, IDC_DAYNUM), FALSE);
 					EnableWindow(GetDlgItem(hwndDlg, IDC_RELMIN), FALSE);
 					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_SUSPEND), TRUE);
+
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY1), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY2), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY3), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY4), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY5), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY6), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY7), FALSE);
+
 					break;
 
 				case OC_MONTHLY:
@@ -121,6 +185,15 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 					EnableWindow(GetDlgItem(hwndDlg, IDC_DAY), FALSE);
 					EnableWindow(GetDlgItem(hwndDlg, IDC_RELMIN), FALSE);
 					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_SUSPEND), TRUE);
+
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY1), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY2), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY3), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY4), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY5), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY6), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY7), FALSE);
+
 					break;
 
 				case OC_YEARLY:
@@ -128,8 +201,32 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 					EnableWindow(GetDlgItem(hwndDlg, IDC_DAY), FALSE);
 					EnableWindow(GetDlgItem(hwndDlg, IDC_DAYNUM), FALSE);
 					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_SUSPEND), TRUE);
+
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY1), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY2), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY3), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY4), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY5), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY6), FALSE);
+					EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY7), FALSE);
+
 					break;
 				}
+				if (add_edit_alarm->day_mask & ALDF_1)
+					CheckDlgButton(hwndDlg, IDC_CHK_DAY1, TRUE);
+				if (add_edit_alarm->day_mask & ALDF_2)
+					CheckDlgButton(hwndDlg, IDC_CHK_DAY2, TRUE);
+				if (add_edit_alarm->day_mask & ALDF_3)
+					CheckDlgButton(hwndDlg, IDC_CHK_DAY3, TRUE);
+				if (add_edit_alarm->day_mask & ALDF_4)
+					CheckDlgButton(hwndDlg, IDC_CHK_DAY4, TRUE);
+				if (add_edit_alarm->day_mask & ALDF_5)
+					CheckDlgButton(hwndDlg, IDC_CHK_DAY5, TRUE);
+				if (add_edit_alarm->day_mask & ALDF_6)
+					CheckDlgButton(hwndDlg, IDC_CHK_DAY6, TRUE);
+				if (add_edit_alarm->day_mask & ALDF_7)
+					CheckDlgButton(hwndDlg, IDC_CHK_DAY7, TRUE);
+
 
 				CheckDlgButton(hwndDlg, IDC_CHK_SUSPEND, (add_edit_alarm->flags & ALF_SUSPENDED) ? BST_CHECKED : BST_UNCHECKED);
 				CheckDlgButton(hwndDlg, IDC_CHK_NOSTARTUP, (add_edit_alarm->flags & ALF_NOSTARTUP) ? BST_CHECKED : BST_UNCHECKED);
@@ -139,7 +236,7 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				SendDlgItemMessage(hwndDlg, IDC_TIME, DTM_SETSYSTEMTIME, (WPARAM)GDT_VALID, (LPARAM)&add_edit_alarm->time);
 				SendDlgItemMessage(hwndDlg, IDC_DATE, DTM_SETSYSTEMTIME, (WPARAM)GDT_VALID, (LPARAM)&add_edit_alarm->time);
 				SendDlgItemMessage(hwndDlg, IDC_DAYNUM, CB_SETCURSEL, add_edit_alarm->time.wDay - 1, 0);
-				SetDlgItemInt(hwndDlg, IDC_RELMIN, MinutesInFuture(add_edit_alarm->time, add_edit_alarm->occurrence), FALSE);
+				SetDlgItemInt(hwndDlg, IDC_RELMIN, MinutesInFuture(add_edit_alarm->time, add_edit_alarm->occurrence, add_edit_alarm->day_mask), FALSE);
 
 				if (add_edit_alarm->action & AAF_SOUND) {
 					CheckDlgButton(hwndDlg, IDC_CHK_ASOUND, BST_CHECKED);
@@ -211,6 +308,8 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			add_edit_alarm->occurrence = OC_ONCE;
 		else if (IsDlgButtonChecked(hwndDlg, IDC_RAD_DAILY))
 			add_edit_alarm->occurrence = OC_DAILY;
+		else if (IsDlgButtonChecked(hwndDlg, IDC_RAD_DAYS))
+			add_edit_alarm->occurrence = OC_SELECTED_DAYS;
 		else if (IsDlgButtonChecked(hwndDlg, IDC_RAD_WEEKDAYS))
 			add_edit_alarm->occurrence = OC_WEEKDAYS;
 		else if (IsDlgButtonChecked(hwndDlg, IDC_RAD_WEEKLY))
@@ -227,6 +326,35 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			SendDlgItemMessage(hwndDlg, IDC_DATE, DTM_SETRANGE, (WPARAM)(GDTR_MIN | GDTR_MAX), (LPARAM)r);
 		}
 
+		if (IsDlgButtonChecked(hwndDlg, IDC_CHK_DAY1))
+			add_edit_alarm->day_mask |= ALDF_1;
+		else
+			add_edit_alarm->day_mask &= ~ALDF_1;
+		if (IsDlgButtonChecked(hwndDlg, IDC_CHK_DAY2))
+			add_edit_alarm->day_mask |= ALDF_2;
+		else
+			add_edit_alarm->day_mask &= ~ALDF_2;
+		if (IsDlgButtonChecked(hwndDlg, IDC_CHK_DAY3))
+			add_edit_alarm->day_mask |= ALDF_3;
+		else
+			add_edit_alarm->day_mask &= ~ALDF_3;
+		if (IsDlgButtonChecked(hwndDlg, IDC_CHK_DAY4))
+			add_edit_alarm->day_mask |= ALDF_4;
+		else
+			add_edit_alarm->day_mask &= ~ALDF_4;
+		if (IsDlgButtonChecked(hwndDlg, IDC_CHK_DAY5))
+			add_edit_alarm->day_mask |= ALDF_5;
+		else
+			add_edit_alarm->day_mask &= ~ALDF_5;
+		if (IsDlgButtonChecked(hwndDlg, IDC_CHK_DAY6))
+			add_edit_alarm->day_mask |= ALDF_6;
+		else
+			add_edit_alarm->day_mask &= ~ALDF_6;
+		if (IsDlgButtonChecked(hwndDlg, IDC_CHK_DAY7))
+			add_edit_alarm->day_mask |= ALDF_7;
+		else
+			add_edit_alarm->day_mask &= ~ALDF_7;
+
 		if (add_edit_alarm->occurrence == OC_ONCE || add_edit_alarm->occurrence == OC_YEARLY)
 			SendDlgItemMessage(hwndDlg, IDC_DATE, DTM_GETSYSTEMTIME, 0, (LPARAM)&add_edit_alarm->time);
 
@@ -241,7 +369,7 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 		add_edit_alarm->time.wMinute = temp_time.wMinute;
 		add_edit_alarm->time.wSecond = temp_time.wSecond;
 
-		UpdateAlarm(add_edit_alarm->time, add_edit_alarm->occurrence);
+		UpdateAlarm(add_edit_alarm->time, add_edit_alarm->occurrence, add_edit_alarm->day_mask);
 		return TRUE;
 
 	case WMU_SETTIME:
@@ -252,7 +380,7 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 		SendDlgItemMessage(hwndDlg, IDC_DAY, CB_SETCURSEL, add_edit_alarm->time.wDayOfWeek, 0);
 		SendDlgItemMessage(hwndDlg, IDC_TIME, DTM_SETSYSTEMTIME, (WPARAM)GDT_VALID, (LPARAM)&add_edit_alarm->time);
 		SendDlgItemMessage(hwndDlg, IDC_DAYNUM, CB_SETCURSEL, add_edit_alarm->time.wDay - 1, 0);
-		SetDlgItemInt(hwndDlg, IDC_RELMIN, MinutesInFuture(add_edit_alarm->time, add_edit_alarm->occurrence), FALSE);
+		SetDlgItemInt(hwndDlg, IDC_RELMIN, MinutesInFuture(add_edit_alarm->time, add_edit_alarm->occurrence, add_edit_alarm->day_mask), FALSE);
 		return TRUE;
 
 	case WM_NOTIFY:
@@ -325,6 +453,15 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				EnableWindow(GetDlgItem(hwndDlg, IDC_DAYNUM), FALSE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_RELMIN), TRUE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_SUSPEND), FALSE);
+
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY1), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY2), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY3), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY4), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY5), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY6), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY7), FALSE);
+
 				SendMessage(hwndDlg, WMU_UPDATETIME, 0, 0);
 				SendMessage(hwndDlg, WMU_SETTIME, 0, 0);
 				break;
@@ -337,6 +474,15 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				EnableWindow(GetDlgItem(hwndDlg, IDC_DAYNUM), FALSE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_RELMIN), TRUE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_SUSPEND), TRUE);
+
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY1), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY2), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY3), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY4), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY5), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY6), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY7), FALSE);
+
 				SendMessage(hwndDlg, WMU_UPDATETIME, 0, 0);
 				SendMessage(hwndDlg, WMU_SETTIME, 0, 0);
 				break;
@@ -349,6 +495,15 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				EnableWindow(GetDlgItem(hwndDlg, IDC_DAYNUM), FALSE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_RELMIN), FALSE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_SUSPEND), TRUE);
+
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY1), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY2), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY3), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY4), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY5), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY6), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY7), FALSE);
+
 				SendMessage(hwndDlg, WMU_UPDATETIME, 0, 0);
 				SendMessage(hwndDlg, WMU_SETTIME, 0, 0);
 				break;
@@ -361,6 +516,15 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				EnableWindow(GetDlgItem(hwndDlg, IDC_DAYNUM), FALSE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_RELMIN), FALSE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_SUSPEND), TRUE);
+
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY1), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY2), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY3), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY4), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY5), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY6), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY7), FALSE);
+
 				SendMessage(hwndDlg, WMU_UPDATETIME, 0, 0);
 				SendMessage(hwndDlg, WMU_SETTIME, 0, 0);
 				break;
@@ -373,6 +537,15 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				EnableWindow(GetDlgItem(hwndDlg, IDC_DAYNUM), TRUE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_RELMIN), FALSE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_SUSPEND), TRUE);
+
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY1), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY2), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY3), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY4), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY5), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY6), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY7), FALSE);
+
 				SendMessage(hwndDlg, WMU_UPDATETIME, 0, 0);
 				SendMessage(hwndDlg, WMU_SETTIME, 0, 0);
 				break;
@@ -385,8 +558,41 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				EnableWindow(GetDlgItem(hwndDlg, IDC_DAYNUM), FALSE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_RELMIN), TRUE);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_SUSPEND), TRUE);
+
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY1), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY2), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY3), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY4), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY5), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY6), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY7), FALSE);
+
 				SendMessage(hwndDlg, WMU_UPDATETIME, 0, 0);
 				SendMessage(hwndDlg, WMU_SETTIME, 0, 0);
+				break;
+
+			case IDC_RAD_DAYS:
+				EnableWindow(GetDlgItem(hwndDlg, IDC_BTN_CAL), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_DATE), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_DAY), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDOK), TRUE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_DAYNUM), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_RELMIN), FALSE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_SUSPEND), TRUE);
+
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY1), TRUE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY2), TRUE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY3), TRUE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY4), TRUE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY5), TRUE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY6), TRUE);
+				EnableWindow(GetDlgItem(hwndDlg, IDC_CHK_DAY7), TRUE);
+
+				SendMessage(hwndDlg, WMU_UPDATETIME, 0, 0);
+				SendMessage(hwndDlg, WMU_SETTIME, 0, 0);
+				break;
+			case IDC_CHK_DAY1: case IDC_CHK_DAY2: case IDC_CHK_DAY3: case IDC_CHK_DAY4: case IDC_CHK_DAY5: case IDC_CHK_DAY6: case IDC_CHK_DAY7:
+				EnableWindow(GetDlgItem(hwndDlg, IDOK), TRUE);
 				break;
 
 			case IDC_CHK_ACOMMAND:
@@ -402,7 +608,7 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				EnableWindow(GetDlgItem(hwndDlg, IDC_RAD_SND3), bChecked);
 				EnableWindow(GetDlgItem(hwndDlg, IDC_RAD_SPK), bChecked);
 				// drop though
-	
+
 			case IDC_RAD_SND1:
 			case IDC_RAD_SND2:
 			case IDC_RAD_SND3:
@@ -417,10 +623,10 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			case IDOK:
 				{
 					GetDlgItemText(hwndDlg, IDC_TITLE, buff, _countof(buff));
-					replaceStrT(add_edit_alarm->szTitle, buff);
+					replaceStrW(add_edit_alarm->szTitle, buff);
 
 					GetDlgItemText(hwndDlg, IDC_DESC, buff, _countof(buff));
-					replaceStrT(add_edit_alarm->szDesc, buff);
+					replaceStrW(add_edit_alarm->szDesc, buff);
 
 					if (add_edit_alarm->szTitle == 0 || add_edit_alarm->szTitle[0] == '\0') {
 						MessageBox(hwndDlg, TranslateT("Please enter a title for this alarm."), TranslateT("Error"), MB_OK | MB_ICONERROR);
@@ -429,7 +635,38 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 
 					SendMessage(hwndDlg, WMU_UPDATETIME, 0, 0);
 
-					if (!UpdateAlarm(add_edit_alarm->time, add_edit_alarm->occurrence)) {
+					if (IsDlgButtonChecked(hwndDlg, IDC_CHK_DAY1))
+						add_edit_alarm->day_mask |= ALDF_1;
+					else
+						add_edit_alarm->day_mask &= ~ALDF_1;
+					if (IsDlgButtonChecked(hwndDlg, IDC_CHK_DAY2))
+						add_edit_alarm->day_mask |= ALDF_2;
+					else
+						add_edit_alarm->day_mask &= ~ALDF_2;
+					if (IsDlgButtonChecked(hwndDlg, IDC_CHK_DAY3))
+						add_edit_alarm->day_mask |= ALDF_3;
+					else
+						add_edit_alarm->day_mask &= ~ALDF_3;
+					if (IsDlgButtonChecked(hwndDlg, IDC_CHK_DAY4))
+						add_edit_alarm->day_mask |= ALDF_4;
+					else
+						add_edit_alarm->day_mask &= ~ALDF_4;
+					if (IsDlgButtonChecked(hwndDlg, IDC_CHK_DAY5))
+						add_edit_alarm->day_mask |= ALDF_5;
+					else
+						add_edit_alarm->day_mask &= ~ALDF_5;
+					if (IsDlgButtonChecked(hwndDlg, IDC_CHK_DAY6))
+						add_edit_alarm->day_mask |= ALDF_6;
+					else
+						add_edit_alarm->day_mask &= ~ALDF_6;
+					if (IsDlgButtonChecked(hwndDlg, IDC_CHK_DAY7))
+						add_edit_alarm->day_mask |= ALDF_7;
+					else
+						add_edit_alarm->day_mask &= ~ALDF_7;
+
+
+
+					if (!UpdateAlarm(add_edit_alarm->time, add_edit_alarm->occurrence, add_edit_alarm->day_mask)) {
 						MessageBox(hwndDlg, TranslateT("The alarm time you have selected is in the past."), TranslateT("Error"), MB_OK | MB_ICONERROR);
 						return TRUE;
 					}
@@ -445,11 +682,12 @@ static INT_PTR CALLBACK DlgProcAddEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 					add_edit_alarm->flags |= IsDlgButtonChecked(hwndDlg, IDC_CHK_NOSTARTUP) ? ALF_NOSTARTUP : 0;
 					add_edit_alarm->flags |= IsDlgButtonChecked(hwndDlg, IDC_CHK_NOREMINDER) ? ALF_NOREMINDER : 0;
 
+
 					if (add_edit_alarm->action & AAF_COMMAND) {
 						GetDlgItemText(hwndDlg, IDC_ED_COMMAND, buff, _countof(buff));
-						replaceStrT(add_edit_alarm->szCommand, buff);
+						replaceStrW(add_edit_alarm->szCommand, buff);
 						GetDlgItemText(hwndDlg, IDC_ED_PARAMS, buff, _countof(buff));
-						replaceStrT(add_edit_alarm->szCommandParams, buff);
+						replaceStrW(add_edit_alarm->szCommandParams, buff);
 					}
 
 					if (add_edit_alarm->action & AAF_SOUND) {
@@ -575,13 +813,16 @@ void AddMenuItem()
 	if (hMainMenuItem) return;
 
 	CMenuItem mi;
+	if (!ServiceExists(MS_CLIST_FRAMES_ADDFRAME)) {
+		mi.root = Menu_CreateRoot(MO_MAIN, LPGENW("Alarms"), mi.position);
+		Menu_ConfigureItem(mi.root, MCI_OPT_UID, "24F03563-01BE-4118-8297-E94375A783E7");
+	}
+
 	SET_UID(mi, 0xd50b94e4, 0x8edd, 0x4083, 0x91, 0x93, 0x7c, 0x6a, 0xb8, 0x1, 0x41, 0xb9);
 	mi.hIcolibItem = IcoLib_GetIconHandle("alarms_menu_set");
 	mi.name.a = "Set alarm";
 	mi.pszService = MODULE "/NewAlarm";
 	mi.position = 500010000;
-	if (!ServiceExists(MS_CLIST_FRAMES_ADDFRAME))
-		mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Alarms"), mi.position);
 	hMainMenuItem = Menu_AddMainMenuItem(&mi);
 }
 
@@ -974,8 +1215,8 @@ int OptInit(WPARAM wParam, LPARAM)
 	odp.position = -790000000;
 	odp.hInstance = hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT1);
-	odp.pszTitle = LPGEN("Alarms");
-	odp.pszGroup = LPGEN("Events");
+	odp.szTitle.a = LPGEN("Alarms");
+	odp.szGroup.a = LPGEN("Events");
 	odp.flags = ODPF_BOLDGROUPS;
 	odp.pfnDlgProc = DlgProcOpts;
 	Options_AddPage(wParam, &odp);

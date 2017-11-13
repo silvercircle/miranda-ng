@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -45,7 +45,7 @@ MIR_APP_DLL(HMENU) Menu_BuildTrayMenu(void)
 MIR_APP_DLL(HGENMENU) Menu_AddTrayMenuItem(TMO_MenuItem *pmi)
 {
 	HGENMENU pimi = Menu_AddItem(hTrayMenuObject, pmi, mir_strdup(pmi->pszService));
-	replaceStr(pimi->UniqName, pmi->pszService);
+	replaceStr(pimi->pszUniqName, pmi->pszService);
 	return pimi;
 }
 
@@ -80,12 +80,12 @@ static INT_PTR FreeOwnerDataTrayMenu(WPARAM, LPARAM lParam)
 static INT_PTR TrayMenuOnAddService(WPARAM wParam, LPARAM lParam)
 {
 	MENUITEMINFO *mii = (MENUITEMINFO*)wParam;
-	if (mii == NULL)
+	if (mii == nullptr)
 		return 0;
 
 	if (hTrayMainMenuItemProxy == (HGENMENU)lParam) {
 		mii->fMask |= MIIM_SUBMENU;
-		mii->hSubMenu = hMainMenu;
+		mii->hSubMenu = hMainMenu = Menu_GetMainMenu();
 	}
 
 	if (hTrayStatusMenuItemProxy == (HGENMENU)lParam) {
@@ -94,6 +94,11 @@ static INT_PTR TrayMenuOnAddService(WPARAM wParam, LPARAM lParam)
 	}
 
 	return TRUE;
+}
+
+static INT_PTR ShowHideStub(WPARAM, LPARAM)
+{
+	return cli.pfnShowHide();
 }
 
 void InitTrayMenus(void)
@@ -116,10 +121,11 @@ void InitTrayMenus(void)
 	SET_UID(mi, 0x6c202553, 0xb4d5, 0x403c, 0xa6, 0x82, 0x2, 0xd8, 0x2b, 0x42, 0xba, 0x9e);
 	mi.flags = CMIF_DEFAULT;
 	mi.position = 100000;
-	mi.pszService = MS_CLIST_SHOWHIDE;
+	mi.pszService = "CList/ShowHide";
 	mi.name.a = LPGEN("&Hide/show");
 	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_OTHER_SHOWHIDE);
 	Menu_AddTrayMenuItem(&mi);
+	CreateServiceFunction(mi.pszService, ShowHideStub);
 
 	SET_UID(mi, 0x10e9b2f0, 0xeef2, 0x4684, 0xa7, 0xa7, 0xde, 0x7f, 0x2a, 0xb3, 0x5b, 0x30);
 	mi.flags = 0;

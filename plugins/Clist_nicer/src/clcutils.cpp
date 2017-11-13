@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-03 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -35,9 +35,9 @@ extern int /*g_isConnecting,*/ during_sizing;
 
 extern void ( *saveRecalcScrollBar )(HWND hwnd, struct ClcData *dat);
 
-static int MY_pathIsAbsolute(const TCHAR *path)
+static int MY_pathIsAbsolute(const wchar_t *path)
 {
-	if (!path || !(mir_tstrlen(path) > 2))
+	if (!path || !(mir_wstrlen(path) > 2))
 		return 0;
 
 	if ((path[1] == ':' && path[2] == '\\') || (path[0] == '\\' && path[1] == '\\'))
@@ -46,53 +46,53 @@ static int MY_pathIsAbsolute(const TCHAR *path)
 	return 0;
 }
 
-size_t MY_pathToRelative(const TCHAR *pSrc, TCHAR *pOut)
+size_t MY_pathToRelative(const wchar_t *pSrc, wchar_t *pOut)
 {
 	size_t dwSrcLen, dwProfilePathLen;
 
 	if (!pSrc || !pOut)
 		return 0;
-	dwSrcLen = mir_tstrlen(pSrc);
+	dwSrcLen = mir_wstrlen(pSrc);
 	if (!dwSrcLen || dwSrcLen > (MAX_PATH - 1))
 		return 0;
 	if (!MY_pathIsAbsolute(pSrc))
 		goto path_not_abs;
 
-	TCHAR szTmp[MAX_PATH];
-	memcpy(szTmp, pSrc, (dwSrcLen * sizeof(TCHAR)));
+	wchar_t szTmp[MAX_PATH];
+	memcpy(szTmp, pSrc, (dwSrcLen * sizeof(wchar_t)));
 	szTmp[dwSrcLen] = 0;
-	_tcslwr(szTmp);
-	if (_tcsstr(szTmp, cfg::dat.tszProfilePath)) {
-		dwProfilePathLen = mir_tstrlen(cfg::dat.tszProfilePath);
-		memcpy(pOut, (pSrc + (dwProfilePathLen - 1)), ((dwSrcLen - (dwProfilePathLen - 1)) * sizeof(TCHAR)));
+	wcslwr(szTmp);
+	if (wcsstr(szTmp, cfg::dat.tszProfilePath)) {
+		dwProfilePathLen = mir_wstrlen(cfg::dat.tszProfilePath);
+		memcpy(pOut, (pSrc + (dwProfilePathLen - 1)), ((dwSrcLen - (dwProfilePathLen - 1)) * sizeof(wchar_t)));
 		pOut[0] = '.';
 		pOut[dwSrcLen] = 0;
 		return (dwSrcLen - (dwProfilePathLen - 1));
 	}
 
 path_not_abs:
-	memcpy(pOut, pSrc, (dwSrcLen * sizeof(TCHAR)));
+	memcpy(pOut, pSrc, (dwSrcLen * sizeof(wchar_t)));
 	pOut[dwSrcLen] = 0;
 	return dwSrcLen;
 }
 
-size_t MY_pathToAbsolute(const TCHAR *pSrc, TCHAR *pOut)
+size_t MY_pathToAbsolute(const wchar_t *pSrc, wchar_t *pOut)
 {
 	size_t dwSrcLen;
 
 	if (!pSrc || !pOut)
 		return 0;
-	dwSrcLen = mir_tstrlen(pSrc);
+	dwSrcLen = mir_wstrlen(pSrc);
 	if (!dwSrcLen || dwSrcLen > (MAX_PATH - 1))
 		return 0;
 
 	if (MY_pathIsAbsolute(pSrc) && pSrc[0] != '.') {
-		memcpy(pOut, pSrc, (dwSrcLen * sizeof(TCHAR)));
+		memcpy(pOut, pSrc, (dwSrcLen * sizeof(wchar_t)));
 		pOut[dwSrcLen] = 0;
 		return dwSrcLen;
 	}
 	if (pSrc[0] == '.')
-		return (mir_sntprintf(pOut, MAX_PATH, _T("%s\\%s"), cfg::dat.tszProfilePath, pSrc));
+		return (mir_snwprintf(pOut, MAX_PATH, L"%s\\%s", cfg::dat.tszProfilePath, pSrc));
 
 	return 0;
 }
@@ -164,16 +164,16 @@ int RTL_HitTest(HWND hwnd, struct ClcData *dat, int testx, ClcContact *hitcontac
 		hFont = reinterpret_cast<HFONT>(SelectObject(hdc, dat->fontInfo[FONTID_GROUPS].hFont));
 	else
 		hFont = reinterpret_cast<HFONT>(SelectObject(hdc, dat->fontInfo[FONTID_CONTACTS].hFont));
-	GetTextExtentPoint32(hdc, hitcontact->szText, (int)mir_tstrlen(hitcontact->szText), &textSize);
+	GetTextExtentPoint32(hdc, hitcontact->szText, (int)mir_wstrlen(hitcontact->szText), &textSize);
 	width = textSize.cx;
 	if (hitcontact->type == CLCIT_GROUP) {
-		TCHAR *szCounts;
+		wchar_t *szCounts;
 		szCounts = pcli->pfnGetGroupCountsText(dat, hitcontact);
 		if (szCounts[0]) {
-			GetTextExtentPoint32(hdc, _T(" "), 1, &textSize);
+			GetTextExtentPoint32(hdc, L" ", 1, &textSize);
 			width += textSize.cx;
 			SelectObject(hdc, dat->fontInfo[FONTID_GROUPCOUNTS].hFont);
-			GetTextExtentPoint32(hdc, szCounts, (int)mir_tstrlen(szCounts), &textSize);
+			GetTextExtentPoint32(hdc, szCounts, (int)mir_wstrlen(szCounts), &textSize);
 			width += textSize.cx;
 		}
 	}
@@ -305,16 +305,16 @@ int HitTest(HWND hwnd, struct ClcData *dat, int testx, int testy, ClcContact **c
 		hFont = reinterpret_cast<HFONT>(SelectObject(hdc, dat->fontInfo[FONTID_GROUPS].hFont));
 	else
 		hFont = reinterpret_cast<HFONT>(SelectObject(hdc, dat->fontInfo[FONTID_CONTACTS].hFont));
-	GetTextExtentPoint32(hdc, hitcontact->szText, (int)mir_tstrlen(hitcontact->szText), &textSize);
+	GetTextExtentPoint32(hdc, hitcontact->szText, (int)mir_wstrlen(hitcontact->szText), &textSize);
 	width = textSize.cx;
 	if (hitcontact->type == CLCIT_GROUP) {
-		TCHAR *szCounts;
+		wchar_t *szCounts;
 		szCounts = pcli->pfnGetGroupCountsText(dat, hitcontact);
 		if (szCounts[0]) {
-			GetTextExtentPoint32(hdc, _T(" "), 1, &textSize);
+			GetTextExtentPoint32(hdc, L" ", 1, &textSize);
 			width += textSize.cx;
 			SelectObject(hdc, dat->fontInfo[FONTID_GROUPCOUNTS].hFont);
-			GetTextExtentPoint32(hdc, szCounts, (int)mir_tstrlen(szCounts), &textSize);
+			GetTextExtentPoint32(hdc, szCounts, (int)mir_wstrlen(szCounts), &textSize);
 			width += textSize.cx;
 		}
 	}
@@ -392,18 +392,20 @@ void ScrollTo(HWND hwnd, struct ClcData *dat, int desty, int noSmooth)
 		CoolSB_SetScrollPos(hwnd, SB_VERT, dat->yScroll, TRUE);
 	else
 		SetScrollPos(hwnd, SB_VERT, dat->yScroll, TRUE);
-	dat->forceScroll = 0;
+	dat->bForceScroll = false;
 }
 
 void RecalcScrollBar(HWND hwnd, struct ClcData *dat)
 {
-	SCROLLINFO si = { 0 };
-	RECT clRect;
-	NMCLISTCONTROL nm;
+	if (dat->bLockScrollbar)
+		return;
 
 	RowHeight::calcRowHeights(dat, hwnd);
 
+	RECT clRect;
 	GetClientRect(hwnd, &clRect);
+
+	SCROLLINFO si = { 0 };
 	si.cbSize = sizeof(si);
 	si.fMask = SIF_ALL;
 	si.nMin = 0;
@@ -412,7 +414,7 @@ void RecalcScrollBar(HWND hwnd, struct ClcData *dat)
 	si.nPos = dat->yScroll;
 
 	if (GetWindowLongPtr(hwnd, GWL_STYLE) & CLS_CONTACTLIST) {
-		if (dat->noVScrollbar == 0) {
+		if (!dat->bNoVScrollbar) {
 			if (cfg::dat.bSkinnedScrollbar && !dat->bisEmbedded)
 				CoolSB_SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
 			else
@@ -426,12 +428,13 @@ void RecalcScrollBar(HWND hwnd, struct ClcData *dat)
 			SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
 	}
 	ScrollTo(hwnd, dat, dat->yScroll, 1);
+
+	NMCLISTCONTROL nm;
 	nm.hdr.code = CLN_LISTSIZECHANGE;
 	nm.hdr.hwndFrom = hwnd;
 	nm.hdr.idFrom = GetDlgCtrlID(hwnd);
 	nm.pt.y = si.nMax;
 	SendMessage(GetParent(hwnd), WM_NOTIFY, 0, (LPARAM)& nm);
-	//saveRecalcScrollBar(hwnd, dat);
 }
 
 void SetGroupExpand(HWND hwnd, struct ClcData *dat, ClcGroup *group, int newState)
@@ -533,7 +536,7 @@ void BeginRenameSelection(HWND hwnd, struct ClcData *dat)
 			if (h < dat->fontInfo[i].fontHeight + 2) h = dat->fontInfo[i].fontHeight + 2;
 	}
 
-	dat->hwndRenameEdit = CreateWindowEx(0, _T("RICHEDIT50W"), contact->szText, WS_CHILD | WS_BORDER | ES_MULTILINE | ES_AUTOHSCROLL, x, y, clRect.right - x, h, hwnd, NULL, g_hInst, NULL);
+	dat->hwndRenameEdit = CreateWindowEx(0, L"RICHEDIT50W", contact->szText, WS_CHILD | WS_BORDER | ES_MULTILINE | ES_AUTOHSCROLL, x, y, clRect.right - x, h, hwnd, NULL, g_hInst, NULL);
 	{
 		if ((contact->type == CLCIT_CONTACT && contact->pExtra->dwCFlags & ECF_RTLNICK) || (contact->type == CLCIT_GROUP && contact->isRtl)) {
 			PARAFORMAT2 pf2;
@@ -541,13 +544,13 @@ void BeginRenameSelection(HWND hwnd, struct ClcData *dat)
 			pf2.cbSize = sizeof(pf2);
 			pf2.dwMask = PFM_RTLPARA;
 			pf2.wEffects = PFE_RTLPARA;
-			SetWindowText(dat->hwndRenameEdit, _T(""));
+			SetWindowText(dat->hwndRenameEdit, L"");
 			SendMessage(dat->hwndRenameEdit, EM_SETPARAFORMAT, 0, (LPARAM)&pf2);
 			SetWindowText(dat->hwndRenameEdit, contact->szText);
 		}
 	}
 
-	//dat->hwndRenameEdit = CreateWindow(_T("EDIT"), contact->szText, WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, x, y, clRect.right - x, dat->rowHeight, hwnd, NULL, g_hInst, NULL);
+	//dat->hwndRenameEdit = CreateWindow(L"EDIT", contact->szText, WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, x, y, clRect.right - x, dat->rowHeight, hwnd, NULL, g_hInst, NULL);
 	mir_subclassWindow(dat->hwndRenameEdit, RenameEditSubclassProc);
 	SendMessage(dat->hwndRenameEdit, WM_SETFONT, (WPARAM)(contact->type == CLCIT_GROUP ? dat->fontInfo[FONTID_GROUPS].hFont : dat->fontInfo[FONTID_CONTACTS].hFont), 0);
 	SendMessage(dat->hwndRenameEdit, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN | EC_USEFONTINFO, 0);
@@ -572,19 +575,19 @@ void LoadClcOptions(HWND hwnd, struct ClcData *dat, BOOL bFirst)
 
 		HFONT holdfont = (HFONT)SelectObject(hdc, dat->fontInfo[i].hFont);
 		SIZE fontSize;
-		GetTextExtentPoint32(hdc, _T("x"), 1, &fontSize);
+		GetTextExtentPoint32(hdc, L"x", 1, &fontSize);
 		SelectObject(hdc, holdfont);
 
 		dat->fontInfo[i].fontHeight = fontSize.cy;
 	}
 	ReleaseDC(hwnd, hdc);
 
-	dat->min_row_heigh = (int)cfg::getByte("CLC", "RowHeight", CLCDEFAULT_ROWHEIGHT);
-	dat->group_row_height = (int)cfg::getByte("CLC", "GRowHeight", CLCDEFAULT_ROWHEIGHT);
+	dat->min_row_heigh = (int)db_get_b(NULL, "CLC", "RowHeight", CLCDEFAULT_ROWHEIGHT);
+	dat->group_row_height = (int)db_get_b(NULL, "CLC", "GRowHeight", CLCDEFAULT_ROWHEIGHT);
 	dat->row_border = 0;
-	dat->rightMargin = cfg::getByte("CLC", "RightMargin", CLCDEFAULT_LEFTMARGIN);
-	dat->bkColour = cfg::getByte("CLC", "UseWinColours", CLCDEFAULT_USEWINDOWSCOLOURS) ?
-		GetSysColor(COLOR_3DFACE) : cfg::getDword("CLC", "BkColour", CLCDEFAULT_BKCOLOUR);
+	dat->rightMargin = db_get_b(NULL, "CLC", "RightMargin", CLCDEFAULT_LEFTMARGIN);
+	dat->bkColour = db_get_b(NULL, "CLC", "UseWinColours", CLCDEFAULT_USEWINDOWSCOLOURS) ?
+		GetSysColor(COLOR_3DFACE) : db_get_dw(NULL, "CLC", "BkColour", CLCDEFAULT_BKCOLOUR);
 
 	coreCli.pfnLoadClcOptions(hwnd, dat, bFirst);
 
@@ -611,7 +614,7 @@ void LoadClcOptions(HWND hwnd, struct ClcData *dat, BOOL bFirst)
 		}
 	}
 
-	if (cfg::getByte("CLCExt", "EXBK_FillWallpaper", 0)) {
+	if (db_get_b(NULL, "CLCExt", "EXBK_FillWallpaper", 0)) {
 		char wpbuf[MAX_PATH];
 		if (dat->hBmpBackground) {
 			DeleteObject(dat->hBmpBackground);

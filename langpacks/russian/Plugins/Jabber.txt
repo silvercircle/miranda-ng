@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Jabber.dll
 ;  Plugin: Jabber protocol
-;  Version: 0.11.0.4
+;  Version: 0.11.0.5
 ;  Authors: George Hazan, Maxim Mluhov, Victor Pavlychko, Artem Shpynov, Michael Stepura
 ;============================================================
 [Jabber (XMPP) protocol support for Miranda NG.]
@@ -86,13 +86,13 @@ TLS
 [Specify external address:]
 Внешний адрес:
 [Allow file sending through bytestream proxy server:]
-Передача через потоковый прокси сервер:
+Передача через потоковый прокси-сервер:
 [Miscellaneous]
 Прочее
 [Hint:]
 !!!!
 [Try to uncheck all checkmarks above if you're experiencing troubles with sending files. But it can cause problems with transfer of large files.]
-Отключите все опции, если у вас проблемы с отправкой файлов. Могут возникнуть проблемы с передачей больших файлов.
+Отключите все настройки, если у вас проблемы с отправкой файлов. Могут возникнуть проблемы с передачей больших файлов.
 [Jabber Account Registration]
 Регистрация учётной записи Jabber
 [Jabber Form]
@@ -108,7 +108,7 @@ Jabber форма
 [Complete]
 Готово
 [Jabber Password]
-Jabber Пароль
+Пароль Jabber
 [Remember password for this session]
 Запомнить пароль для этой сессии
 [Save password permanently]
@@ -256,7 +256,7 @@ Jabber vCard: добавление телефона
 [URL]
 Ссылка
 [Auto-join (Automatically join Bookmarks must be enabled in Miranda options)]
-Автовход (Необходимо включить автоматический вход в настройках)
+Автовход (нужно включить автоматический вход в настройках)
 [Room JID/ URL:]
 JID / URL:
 [Bookmark Name:]
@@ -323,14 +323,6 @@ JID / URL:
 Обновить
 [Node:]
 Узел:
-[Account type:]
-Тип уч. записи:
-[Login server:]
-Сервер:
-[Register account now]
-Зарегистрировать уч. запись
-[Jabber Account Information:]
-Информация об уч. записи Jabber:
 [Member Information]
 Права доступа
 [Role:]
@@ -433,6 +425,8 @@ Jabber Ad-Hoc команды на %s
 Комнаты чата
 [Links]
 Ссылки
+[Bytestream Proxy not available]
+Bytestream Proxy недоступно
 [Supports Service Discovery info]
 Информация о службах
 [Supports Service Discovery items list]
@@ -456,13 +450,13 @@ Jabber Ad-Hoc команды на %s
 [Supports multi-user chat]
 Поддержка чата
 [Can report chat state in a chat session]
-Сообщение о состоянии чата в чат сессии
+Сообщение о состоянии чата в сессию чата
 [Can report information about the last activity of the user]
 Сообщение о последней активности пользователя
 [Can report own version information]
 Сообщение версий
 [Can report local time of the user]
-Сообщение локального времени
+Сообщение местного времени
 [Can send and receive ping requests]
 Приём и отправка пингов (ping)
 [Supports data forms]
@@ -521,6 +515,8 @@ xHTML формат чат сообщений
 Поддержка обмена ростера
 [Supports direct chat invitations (XEP-0249)]
 Поддержка прямых приглашений в чат (XEP-0249)
+[Receives information about OMEMO devices]
+Получение сведений об устройствах OMEMO
 [Enter the text you see]
 Введите текст, который видите
 [None]
@@ -605,9 +601,9 @@ xHTML формат чат сообщений
 В сети
 [Away]
 Отсутствую
-[NA]
+[Not available]
 Недоступен
-[DND]
+[Do not disturb]
 Не беспокоить
 [Free for chat]
 Готов болтать
@@ -681,6 +677,8 @@ xHTML формат чат сообщений
 Невозможно отправить - не в сети.
 [Jabber Error]
 Jabber ошибка
+[Outgoing XML parsing error]
+Ошибка при разборе исходящего XML
 [request timeout.]
 таймаут запроса.
 [Node hierarchy]
@@ -761,6 +759,8 @@ Jabber ошибка
 Загрузка...
 [Please wait for room list to download.]
 Пожалуйста, подождите пока список комнат загрузится.
+[Please specify group chat directory first.]
+Сначала укажите директорию чата.
 [Bookmarks...]
 Закладки...
 [Change nickname in <%s>]
@@ -795,6 +795,10 @@ Jabber ошибка
 Команда AdHoc
 [OpenID Request]
 Запрос OpenID
+[Add contact]
+Добавить контакт
+[Open]
+Открыть
 [Discovery succeeded]
 Определение завершено
 [Discovery failed]
@@ -860,7 +864,7 @@ Jabber ошибка
 [Registration successful]
 Регистрация успешно пройдена
 [Password is successfully changed. Don't forget to update your password in the Jabber protocol option.]
-Пароль успешно изменён. Не забудьте обновить ваш пароль в настройках учётной записи Jabber.
+Пароль успешно изменён. Не забудьте обновить свой пароль в настройках учётной записи Jabber.
 [Password cannot be changed.]
 Пароль не может быть изменён
 [Jabber Bookmarks Error]
@@ -947,8 +951,6 @@ Jabber ошибка
 Высочайший приоритет (по выбору сервера)
 [Status Message]
 Статусное сообщение
-[CHAT plugin is required for conferences. Install it before chatting]
-Для конференций требуется модуль Chat или tabSRMM 1.0+.
 [To]
 В
 [From]
@@ -971,6 +973,10 @@ Jabber ошибка
 Вы уверены?
 [Incoming note]
 Входящая заметка
+[Do you want to create OMEMO session with new device:]
+Создать сессию OMEMO с новым устройством:
+[OMEMO: New session]
+OMEMO: Новая сессия
 [Afar]
 Афар
 [Abkhazian]
@@ -1342,7 +1348,7 @@ Jabber ошибка
 [Zulu]
 Зулусский
 [These changes will take effect the next time you connect to the Jabber network.]
-Изменения вступят в силу при следующем входе в сеть Jabber.
+Эти изменения вступят в силу при следующем подключении к сети Jabber.
 [Jabber Protocol Option]
 Настройки протокола Jabber
 [This operation will kill your account, roster and all other information stored at the server. Are you ready to do that?]
@@ -1352,7 +1358,7 @@ Jabber ошибка
 [You can change your password only when you are online]
 Чтобы сменить пароль, необходимо подключиться к сети
 [You must be online]
-Вам нужно подключиться к сети
+Необходимо подключиться к сети
 [Messaging]
 Сообщения
 [Send messages slower, but with full acknowledgment]
@@ -1411,6 +1417,8 @@ Jabber ошибка
 Разрешать передачу файлов только внутри потока (не раскрывать свой IP)
 [Accept HTTP Authentication requests (XEP-0070)]
 Принимать запросы аутентификации HTTP (XEP-0070)
+[Use OMEMO encryption for messages if possible (Experimental! WIP!)]
+Шифровать сообщения с помощью OMEMO (если возможно) (Экспериментально!)
 [General]
 Общее
 [Autoaccept multiuser chat invitations]
@@ -1463,8 +1471,10 @@ XML для MS Excel (кодировка UTF-8)
 Защищённая сеть XMPP (старый стиль)
 [LiveJournal Talk]
 ЖЖ
+[Odnoklassniki]
+Одноклассники
 [Some changes will take effect the next time you connect to the Jabber network.]
-Некоторые изменения вступят в силу после следующего подключения к сети.
+Некоторые изменения вступят в силу при следующем подключении к сети Jabber.
 [Set New Password for %s@%S]
 Установка нового пароля для %s@%S
 [New password does not match.]
@@ -1597,6 +1607,8 @@ XML для MS Excel (кодировка UTF-8)
 Не найдено ни одного совместимого механизма передачи файлов
 [Protocol is offline or no JID]
 Протокол не в сети или нет JID
+[No valid OMEMO session exists]
+Не существует действительной сессии OMEMO
 [Command completed successfully]
 Команда выполнена успешно
 [Error occurred during processing command]
@@ -1619,10 +1631,8 @@ XML для MS Excel (кодировка UTF-8)
 Установить статус и статусное сообщение
 [Status]
 Статус
-[Extended Away (N/A)]
-Недоступен (Н/Д)
-[Do Not Disturb]
-Не беспокоить
+[Extended away (Not available)]
+Недоступен
 [Invisible]
 Невидимый
 [Offline]
@@ -1646,7 +1656,7 @@ XML для MS Excel (кодировка UTF-8)
 [There is no messages to forward]
 Нет сообщений для пересылки
 [Forward options]
-Опции пересылки
+Настройки пересылки
 [%d message(s) to be forwarded]
 %d сообщений(я) для пересылки
 [Mark messages as read]
@@ -1663,6 +1673,8 @@ XML для MS Excel (кодировка UTF-8)
 Подтвердите выключение программы
 [There is no group chats to leave]
 Нет чатов для отключения
+[Choose the group chats you want to leave]
+Выберите чаты, которые желаете покинуть
 [Error %s %s\r\nPlease select other server]
 Ошибка %s %s\r\nПожалуйста, выберите другой сервер
 [Error: unknown reply received\r\nPlease select other server]
@@ -1676,7 +1688,7 @@ XML для MS Excel (кодировка UTF-8)
 [Please wait...\r\nConnecting search server...]
 Подождите...\r\nПодключение к серверу поиска...
 [You have to be connected to server]
-Нужно подключение к серверу
+Необходимо подключение к серверу
 [closed chat session]
 закрыл окно чата
 [sent subscription request]
@@ -1837,6 +1849,8 @@ Jabber vCard: редактирование телефона
 Заметка
 [%s connection]
 %s подключение
+[<advanced status slot>]
+<слот расширенного статуса>
 [Afraid]
 Испуганный
 [Amazed]
@@ -2134,7 +2148,7 @@ Jabber vCard: редактирование телефона
 [on the phone]
 по телефону
 [on video phone]
-по видео телефону
+по видеотелефону
 [Traveling]
 В дороге
 [commuting]
@@ -2173,11 +2187,7 @@ Jabber vCard: редактирование телефона
 Настроения
 [Activities]
 Занятия
-[I'm happy Miranda NG user. Get it at http://miranda-ng.org/.]
-Я использую Miranda NG (http://miranda-ng.org/.)
+[I'm happy Miranda NG user. Get it at https://miranda-ng.org/.]
+Я использую Miranda NG (https://miranda-ng.org/.)
 [/me slaps %s around a bit with a large trout]
 /me шарахнул %s веслом по голове
-[First Name]
-Имя
-[Last Name]
-Фамилия

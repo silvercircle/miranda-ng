@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2011-2015 Mataes
+Copyright (C) 2011-2017 Mataes
 
 This is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
@@ -25,15 +25,14 @@ BOOL Silent;
 int ModulesLoaded(WPARAM, LPARAM)
 {
 	Silent = true;
-	HOTKEYDESC hkd = { 0 };
-	hkd.cbSize = sizeof(hkd);
-	hkd.dwFlags = HKD_TCHAR;
+	
+	HOTKEYDESC hkd = {};
+	hkd.dwFlags = HKD_UNICODE;
 	hkd.pszName = "Check for pack updates";
-	hkd.ptszDescription = LPGENT("Check for pack updates");
-	hkd.ptszSection = LPGENT("Pack Updater");
+	hkd.szDescription.w = LPGENW("Check for pack updates");
+	hkd.szSection.w = LPGENW("Pack Updater");
 	hkd.pszService = MODNAME"/CheckUpdates";
 	hkd.DefHotKey = HOTKEYCODE(HOTKEYF_CONTROL, VK_F10) | HKF_MIRANDA_LOCAL;
-	hkd.lParam = FALSE;
 	Hotkey_Register(&hkd);
 
 	if (AllowUpdateOnStartup())
@@ -58,12 +57,12 @@ INT_PTR EmptyFolder(WPARAM, LPARAM lParam)
 		NULL,
 		FO_DELETE,
 		tszRoot,
-		_T(""),
+		L"",
 		FOF_NOERRORUI |
 		FOF_SILENT,
 		false,
 		0,
-		_T("") };
+		L"" };
 	if (lParam)
 		file_op.fFlags |= FOF_NOCONFIRMATION;
 	SHFileOperation(&file_op);

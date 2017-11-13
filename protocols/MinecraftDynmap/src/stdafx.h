@@ -3,7 +3,7 @@
 Minecraft Dynmap plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2015 Robert Pösel
+Copyright © 2015-17 Robert Pösel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -40,7 +40,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <newpluginapi.h>
 #include <m_system.h>
-#include <m_system_cpp.h>
 #include <m_chat.h>
 #include <m_clist.h>
 #include <m_langpack.h>
@@ -62,6 +61,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "version.h"
 
 class MinecraftDynmapProto;
+
+#include "../../utils/std_string_utils.h"
 
 #include "utils.h"
 #include "proto.h"

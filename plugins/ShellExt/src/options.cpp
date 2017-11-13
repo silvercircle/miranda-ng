@@ -7,7 +7,7 @@ static void AutoSize(HWND hwnd)
   HFONT hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
   HFONT hOldFont = (HFONT)SelectObject(hDC, hFont);
 
-  TCHAR szBuf[MAX_PATH];
+  wchar_t szBuf[MAX_PATH];
   int i = GetWindowText(hwnd, szBuf, _countof(szBuf));
 
   SIZE tS;
@@ -20,19 +20,19 @@ static void AutoSize(HWND hwnd)
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-static TCHAR* COM_OKSTR[2] = {
-	LPGENT("Problem, registration missing/deleted."),
-	LPGENT("Successfully created shell registration.") };
-static TCHAR* COM_APPROVEDSTR[2] = { LPGENT("Not Approved"), LPGENT("Approved") };
+static wchar_t* COM_OKSTR[2] = {
+	LPGENW("Problem, registration missing/deleted."),
+	LPGENW("Successfully created shell registration.") };
+static wchar_t* COM_APPROVEDSTR[2] = { LPGENW("Not Approved"), LPGENW("Approved") };
 
 static void InitControls(HWND hwndDlg)
 {
 	int comReg = IsCOMRegistered();
 
-	TCHAR szBuf[MAX_PATH];
-	mir_sntprintf(szBuf, _T("%s (%s)"),
-		TranslateTS(COM_OKSTR[(comReg & COMREG_OK) != 0]),
-		TranslateTS(COM_APPROVEDSTR[(comReg & COMREG_APPROVED) != 0]));
+	wchar_t szBuf[MAX_PATH];
+	mir_snwprintf(szBuf, L"%s (%s)",
+		TranslateW(COM_OKSTR[(comReg & COMREG_OK) != 0]),
+		TranslateW(COM_APPROVEDSTR[(comReg & COMREG_APPROVED) != 0]));
 	SetDlgItemText(hwndDlg, IDC_STATUS, szBuf);
 	
 	// auto size the static windows to fit their text
@@ -111,9 +111,9 @@ int OnOptionsInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE opt = { sizeof(opt) };
 	opt.flags = ODPF_BOLDGROUPS;
-	opt.pszGroup = LPGEN("Services");
+	opt.szGroup.a = LPGEN("Services");
+	opt.szTitle.a = LPGEN("Shell context menus");
 	opt.position = -1066;
-	opt.pszTitle = LPGEN("Shell context menus");
 	opt.pszTemplate = MAKEINTRESOURCEA(IDD_SHLOPTS);
 	opt.hInstance = hInst;
 	opt.pfnDlgProc = OptDialogProc;

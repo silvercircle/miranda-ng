@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Tox.dll
 ;  Plugin: Tox protocol
-;  Version: 0.11.1.14
+;  Version: 0.11.1.25
 ;  Authors: Miranda NG Team
 ;============================================================
 [Name:]
@@ -17,6 +17,8 @@ Guardar contraseña
 Cancelar
 [Add]
 Añadir
+[Update]
+Actualizar
 [Port]
 Puerto
 [&Cancel]
@@ -47,3 +49,5 @@ Error
 Red
 [Account]
 Cuenta
+[Unknown error]
+Error desconocido

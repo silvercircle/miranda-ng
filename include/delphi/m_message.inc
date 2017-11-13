@@ -47,27 +47,6 @@ const
   MSG_WINDOW_EVT_OPEN    = 2; // window has been opened
   MSG_WINDOW_EVT_CLOSING = 3; // window is about to be closed
   MSG_WINDOW_EVT_CLOSE   = 4; // window has been closed
-  MSG_WINDOW_EVT_CUSTOM  = 5; // custom event for message plugins to use
-                              // (custom uFlags may be used)
-  MSG_WINDOW_UFLAG_MSG_FROM = $00000001;
-  MSG_WINDOW_UFLAG_MSG_TO   = $00000002;
-  MSG_WINDOW_UFLAG_MSG_BOTH = $00000004;
-
-type
-  PMessageWindowEventData = ^TMessageWindowEventData;
-  TMessageWindowEventData = record
-    cbSize    : int;
-    hContact  : TMCONTACT;
-    hwndWindow: HWND;      // top level window for the contact
-    szModule  : PAnsiChar; // used to get plugin type (which means you could use
-                           // local if needed)
-    uType     : uint;      // see event types above
-    uFlags    : uint;      // used to indicate message direction for all event
-                           // types except custom
-    local     : pointer;   // used to store pointer to custom data
-    hwndInput : HWND;      // input area window for the contact (or NULL if there is none)
-    hwndLog   : HWND;      // log area window for the contact (or NULL if there is none)
-  end;
 
 const
   { wparam=0
@@ -83,72 +62,36 @@ const
   }
   MS_MSG_GETWINDOWCLASS:PAnsiChar = 'MessageAPI/WindowClass';
 
-type
-  PMessageWindowInputData = ^TMessageWindowInputData;
-  TMessageWindowInputData = record
-    cbSize  : int;
-    hContact: TMCONTACT;
-    uFlags  : int; // see uflags above
-  end;
-
 const
-  MSG_WINDOW_STATE_EXISTS  = $00000001; // Window exists should always be true
-                                        // if hwndWindow exists
+  MSG_WINDOW_STATE_EXISTS  = $00000001; // Window exists should always be true if hwndWindow exists
   MSG_WINDOW_STATE_VISIBLE = $00000002;
   MSG_WINDOW_STATE_FOCUS   = $00000004;
   MSG_WINDOW_STATE_ICONIC  = $00000008;
 
 type
-  PMessageWindowOutputData = ^TMessageWindowOutputData;
-  TMessageWindowOutputData = record
-    cbSize    : int;
-    hContact  : TMCONTACT;
-    uFlags    : int;     // should be same as input data unless 0, then it
-                         // will be the actual type
+  PMessageWindowData = ^TMessageWindowData;
+  TMessageWindowData = record
     hwndWindow: HWND;    // top level window for the contact or NULL if no window exists
     uState    : int;     // see window states
     local     : pointer; // used to store pointer to custom data
   end;
-  PMessageWindowData = PMessageWindowOutputData;
-  TMessageWindowData = TMessageWindowOutputData;
 
-const
-{ wparam=(MessageWindowInputData*)
-  lparam=(MessageWindowOutputData*)
-  returns 0 on success and returns non-zero (1) on error or if no window data
-  exists for that hcontact
+function Srmm_GetWindowData(hContact:TMCONTACT; pResult:PMessageWindowData) : int; stdcall; external AppDll;
+
+{ wparam=0(unused)
+  lparam=(pMessageWindowEvent) event written
+  fired before SRMM writes an entered message into the database
 }
-  MS_MSG_GETWINDOWDATA:PAnsiChar = 'MessageAPI/GetWindowData';
-
-type
-  PStatusTextData = ^TStatusTextData;
-  TStatusTextData = record
-    cbSize :int;
-    hIcon  :HICON;
-    tszText:array [0..99] of WideChar;
-  end;
-
-{ wparam=(TMCONTACT)hContact
-  lparam=PStatusTextData or NIL to clear statusbar
-  Sets a statusbar line text for the appropriate contact
-}
-const
-  MS_MSG_SETSTATUSTEXT:PAnsiChar = 'MessageAPI/SetStatusText';
 
 type
   pMessageWindowEvent = ^tMessageWindowEvent;
   tMessageWindowEvent = record
-    cbSize   :int;
     seq      :int;          // number returned by PSS_MESSAGE
     hContact :TMCONTACT;
     dbei     :PDBEVENTINFO; // database event written on the basis of message sent
   end;
 
 const
-{ wparam=0(unused)
-  lparam=(pMessageWindowEvent) event written
-  fired before SRMM writes an entered message into the database
-}
   ME_MSG_PRECREATEEVENT:PAnsiChar = 'MessageAPI/PreCreateEvent';
 
 { wParam = 0
@@ -167,7 +110,6 @@ const
 
 type
   tMessageWindowPopupData = record
-    cbSize   :int;
     uType    :uint;     // see popup types above
     uFlags   :uint;     // used to indicate in which window the popup was requested
     hContact :TMCONTACT;
@@ -186,7 +128,6 @@ const
 type
   pStatusIconData = ^tStatusIconData;
   tStatusIconData = record
-    cbSize       :int;       // must be equal to sizeof(StatusIconData)
     szModule     :PAnsiChar; // used in combo with the dwId below to create a unique identifier
     dwId         :dword;     // uniquely defines a button inside a module
     hIcon,
@@ -202,7 +143,6 @@ const
 type
   pStatusIconClickData = ^tStatusIconClickData;
   tStatusIconClickData = record
-    cbSize       :int;
     clickLocation:TPOINT;    // click location, in screen coordinates
     szModule     :PAnsiChar;
     dwId         :dword;
@@ -210,36 +150,6 @@ type
   end;
 
 const
-{
-  wParam = hLangpack
-  lParam = (StatusIconData *)&StatusIconData
-}
-  MS_MSG_ADDICON:PAnsiChar = 'MessageAPI/AddIcon';
-
-{
-  wParam = 0
-  lParam = (StatusIconData *)&StatusIconData
-  only szModule and szId are used
-}
-  MS_MSG_REMOVEICON:PAnsiChar = 'MessageAPI/RemoveIcon';
-
-{
-  wParam = (HANDLE)hContact
-  lParam = (int)zero-based index of a visible icon
-  returns (StatusIconData*)icon description filled for the required contact
-  don't free this memory.
-}
-  MS_MSG_GETNTHICON:PAnsiChar = 'MessageAPI/GetNthIcon';
-
-{
- wParam = (HANDLE)hContact
- lParam = (StatusIconData *)&StatusIconData
- if hContact is null, icon is modified for all contacts
- otherwise, only the flags field is valid
- if either hIcon, hIconDisabled or szTooltip is null, they will not be modified
-}
-  MS_MSG_MODIFYICON:PAnsiChar = 'MessageAPI/ModifyIcon';
-
 {
  wParam = (HANDLE)hContact;
  lParam = (StatusIconClickData *)&StatusIconClickData;

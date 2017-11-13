@@ -6,7 +6,7 @@ HINSTANCE hInst;
 int hLangpack;
 bool bIsVistaPlus;
 
-TCHAR tszLogPath[MAX_PATH];
+wchar_t tszLogPath[MAX_PATH];
 
 PLUGININFOEX pluginInfoEx = {
 	sizeof(PLUGININFOEX),
@@ -28,7 +28,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID)
 		bIsVistaPlus = GetProcAddress( GetModuleHandleA("kernel32.dll"), "GetProductInfo") != NULL;
 
 		GetTempPath(_countof(tszLogPath), tszLogPath);
-		_tcscat_s(tszLogPath, _countof(tszLogPath), _T("shlext.log"));
+		wcscat_s(tszLogPath, _countof(tszLogPath), L"shlext.log");
 
 		hInst = hinstDLL;
 		DisableThreadLibraryCalls(hinstDLL);
@@ -83,7 +83,7 @@ STDAPI DllCanUnloadNow()
 
 struct HRegKey
 {
-	HRegKey(HKEY hRoot, const TCHAR *ptszKey) : m_key(NULL)
+	HRegKey(HKEY hRoot, const wchar_t *ptszKey) : m_key(NULL)
 	{	RegCreateKeyEx(hRoot, ptszKey, 0, 0, 0, KEY_SET_VALUE | KEY_CREATE_SUB_KEY, 0, &m_key, 0);
 	}
 	
@@ -102,7 +102,7 @@ char str4[] = "Apartment";
  
 STDAPI DllRegisterServer()
 {
-	HRegKey k1(HKEY_CLASSES_ROOT, _T("miranda.shlext"));
+	HRegKey k1(HKEY_CLASSES_ROOT, L"miranda.shlext");
 	if (k1 == NULL)
 		return E_FAIL;
 
@@ -114,7 +114,7 @@ STDAPI DllRegisterServer()
 
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	HRegKey kClsid(HKEY_CLASSES_ROOT, _T("CLSID\\{72013A26-A94C-11d6-8540-A5E62932711D}"));
+	HRegKey kClsid(HKEY_CLASSES_ROOT, L"CLSID\\{72013A26-A94C-11d6-8540-A5E62932711D}");
 	if (kClsid == NULL)
 		return E_FAIL;
 
@@ -123,13 +123,13 @@ STDAPI DllRegisterServer()
 	if ( RegSetValueA(kClsid, "ProgID", REG_SZ, str3, sizeof(str3)))
 		return E_FAIL;
 
-	HRegKey kInprocServer(kClsid, _T("InprocServer32"));
+	HRegKey kInprocServer(kClsid, L"InprocServer32");
 	if (kInprocServer == NULL)
 		return E_FAIL;
 
-	TCHAR tszFileName[MAX_PATH];
+	wchar_t tszFileName[MAX_PATH];
 	GetModuleFileName(hInst, tszFileName, _countof(tszFileName));
-	if ( RegSetValueEx(kInprocServer, NULL, 0, REG_SZ, (LPBYTE)tszFileName, sizeof(TCHAR)*(lstrlen(tszFileName)+1)))
+	if ( RegSetValueEx(kInprocServer, NULL, 0, REG_SZ, (LPBYTE)tszFileName, sizeof(wchar_t)*(lstrlen(tszFileName)+1)))
 		return E_FAIL;
 	if ( RegSetValueExA(kInprocServer, "ThreadingModel", 0, REG_SZ, (PBYTE)str4, sizeof(str4)))
 		return E_FAIL;
@@ -143,7 +143,7 @@ STDAPI DllRegisterServer()
 
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	HRegKey k2(HKEY_LOCAL_MACHINE, _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Shell Extensions\\Approved"));
+	HRegKey k2(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Shell Extensions\\Approved");
 	if (k2 == NULL)
 		return E_FAIL;
 	if ( RegSetValueExA(k2, str2, 0, REG_SZ, (PBYTE)str1, str1len))
@@ -162,7 +162,7 @@ STDAPI DllUnregisterServer()
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfoEx);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	InvokeThreadServer();
 	HookEvent(ME_OPT_INITIALISE, OnOptionsInit);

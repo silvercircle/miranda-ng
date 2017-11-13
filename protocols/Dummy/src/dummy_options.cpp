@@ -20,6 +20,21 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 //////////////////////////////////////////////////////////////////////////////
 // Account manager dialog
 
+void onTemplateSelected(HWND hwndDlg, CDummyProto *ppro, int templateId)
+{
+	// Enable custom fields when selected custom template
+	EnableWindow(GetDlgItem(hwndDlg, IDC_ID_TEXT), templateId == 0);
+	EnableWindow(GetDlgItem(hwndDlg, IDC_ID_SETTING), templateId == 0);
+
+	ptrA tszIdText(templateId > 0 ? mir_strdup(Translate(templates[templateId].text)) : ppro->getStringA(DUMMY_ID_TEXT));
+	if (tszIdText != NULL)
+		SetDlgItemTextA(hwndDlg, IDC_ID_TEXT, tszIdText);
+
+	ptrA tszIdSetting(templateId > 0 ? mir_strdup(templates[templateId].setting) : ppro->getStringA(DUMMY_ID_SETTING));
+	if (tszIdSetting != NULL)
+		SetDlgItemTextA(hwndDlg, IDC_ID_SETTING, tszIdSetting);
+}
+
 INT_PTR CALLBACK DummyAccountProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	CDummyProto *ppro = (CDummyProto*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
@@ -31,39 +46,59 @@ INT_PTR CALLBACK DummyAccountProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
 		ppro = (CDummyProto*)lParam;
 		SetWindowLongPtr( hwndDlg, GWLP_USERDATA, lParam );
 
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon, true));
-		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon));
+		Window_SetIcon_IcoLib(hwndDlg, ppro->m_hProtoIcon);
 		{
-			ptrA tszIdText(ppro->getStringA(DUMMY_ID_TEXT));
-			if (tszIdText != NULL)
-				SetDlgItemTextA(hwndDlg, IDC_ID_TEXT, tszIdText);
+			SendDlgItemMessageA(hwndDlg, IDC_TEMPLATE, CB_INSERTSTRING, 0, reinterpret_cast<LPARAM>(Translate(templates[0].name)));
+			for (size_t i = 1; i < _countof(templates); i++)
+				SendDlgItemMessageA(hwndDlg, IDC_TEMPLATE, CB_INSERTSTRING, i, reinterpret_cast<LPARAM>(templates[i].name));
+		
+			int templateId = ppro->getTemplateId();
+			SendDlgItemMessage(hwndDlg, IDC_TEMPLATE, CB_SETCURSEL, templateId, 0);
 
-			ptrA tszIdSetting(ppro->getStringA(DUMMY_ID_SETTING));
-			if (tszIdSetting != NULL)
-				SetDlgItemTextA(hwndDlg, IDC_ID_SETTING, tszIdSetting);
+			boolean allowSending = ppro->getByte(DUMMY_KEY_ALLOW_SENDING, 0);
+			CheckDlgButton(hwndDlg, IDC_ALLOW_SENDING, allowSending ? BST_CHECKED : BST_UNCHECKED);
+
+			onTemplateSelected(hwndDlg, ppro, templateId);
 		}
 		return TRUE;
 
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
+		case IDC_TEMPLATE:
+			if (HIWORD(wParam) == CBN_SELCHANGE) {
+				int templateId = SendDlgItemMessage(hwndDlg, IDC_TEMPLATE, CB_GETCURSEL, 0, 0);
+				onTemplateSelected(hwndDlg, ppro, templateId);
+				SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
+			}
+			break;
 		case IDC_ID_TEXT:
 		case IDC_ID_SETTING:
 			if (HIWORD(wParam) == EN_CHANGE && (HWND)lParam == GetFocus()) {
 				SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 				break;
 			}
+		default:
+			SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 		}
 		break;
 
 	case WM_NOTIFY:
 		switch (((LPNMHDR)lParam)->code) {
 		case PSN_APPLY:
-			char str[128];
-			GetDlgItemTextA(hwndDlg, IDC_ID_TEXT, str, _countof(str));
-			ppro->setString(DUMMY_ID_TEXT, str);
+			int templateId = SendDlgItemMessage(hwndDlg, IDC_TEMPLATE, CB_GETCURSEL, 0, 0);
+			ppro->setByte(DUMMY_ID_TEMPLATE, templateId);
 
-			GetDlgItemTextA(hwndDlg, IDC_ID_SETTING, str, _countof(str));
-			ppro->setString(DUMMY_ID_SETTING, str);
+			// Save custom fields only when this is custom template
+			if (templateId == 0) {
+				char str[128];
+				GetDlgItemTextA(hwndDlg, IDC_ID_TEXT, str, _countof(str));
+				ppro->setString(DUMMY_ID_TEXT, str);
+
+				GetDlgItemTextA(hwndDlg, IDC_ID_SETTING, str, _countof(str));
+				ppro->setString(DUMMY_ID_SETTING, str);
+			}
+
+			ppro->setByte(DUMMY_KEY_ALLOW_SENDING, IsDlgButtonChecked(hwndDlg, IDC_ALLOW_SENDING));
 		}
 		break;
 
@@ -72,8 +107,7 @@ INT_PTR CALLBACK DummyAccountProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM
 		break;
 
 	case WM_DESTROY:
-		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_BIG, 0));
-		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
+		Window_FreeIcon_IcoLib(hwndDlg);
 		break;
 	}
 

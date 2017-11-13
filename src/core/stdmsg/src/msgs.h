@@ -1,6 +1,6 @@
 /*
 
-Copyright 2000-12 Miranda IM, 2012-15 Miranda NG project,
+Copyright 2000-12 Miranda IM, 2012-17 Miranda NG project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -25,64 +25,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <richedit.h>
 #include <richole.h>
 
-struct NewMessageWindowLParam
-{
-	MCONTACT hContact;
-	const char *szInitialText;
-	int isWchar;
-	int noActivate;
-};
-
-struct SrmmWindowData : public MZeroedObject
-{
-	SrmmWindowData() :
-		cmdList(20)
-		{}
-
-	MCONTACT hContact;
-	MEVENT hDbEventFirst, hDbEventLast;
-	HBRUSH hBkgBrush;
-	HFONT hFont;
-	int splitterPos, originalSplitterPos;
-	SIZE minEditBoxSize;
-	RECT minEditInit;
-	int lineHeight;
-	int windowWasCascaded;
-	DWORD nFlash;
-	int nLabelRight;
-	int nTypeSecs;
-	int nTypeMode;
-	int avatarWidth;
-	int avatarHeight;
-	int limitAvatarH;
-	HBITMAP avatarPic;
-	DWORD nLastTyping;
-	int showTyping;
-	DWORD lastMessage;
-	HWND hwndStatus;
-	HANDLE hTimeZone;
-	char *szProto;
-	WORD wStatus;
-	WORD wOldStatus;
-	int cmdListInd;
-	LIST<TCHAR> cmdList;
-	bool bIsAutoRTL, bIsMeta;
-	WORD wMinute;
-
-	__forceinline MCONTACT getActiveContact() const
-	{	return (bIsMeta) ? db_mc_getSrmmSub(hContact) : hContact;
-	}
-};
-
 #define DM_REMAKELOG         (WM_USER+11)
 #define HM_DBEVENTADDED      (WM_USER+12)
 #define DM_CASCADENEWWINDOW  (WM_USER+13)
 #define DM_OPTIONSAPPLIED    (WM_USER+14)
-#define DM_SPLITTERMOVED     (WM_USER+15)
+#define DM_CLOSETAB          (WM_USER+15)
 #define DM_UPDATETITLE       (WM_USER+16)
 #define DM_APPENDTOLOG       (WM_USER+17)
 #define DM_NEWTIMEZONE       (WM_USER+18)
-#define DM_SCROLLLOGTOBOTTOM (WM_USER+19)
 #define DM_TYPING            (WM_USER+20)
 #define DM_UPDATEWINICON     (WM_USER+21)
 #define DM_UPDATELASTMESSAGE (WM_USER+22)
@@ -92,41 +42,107 @@ struct SrmmWindowData : public MZeroedObject
 #define DM_GETAVATAR         (WM_USER+26)
 #define DM_UPDATESIZEBAR     (WM_USER+27)
 #define HM_AVATARACK         (WM_USER+28)
-#define DM_GETWINDOWSTATE    (WM_USER+30)
 #define DM_STATUSICONCHANGE  (WM_USER+31)
 
 #define EVENTTYPE_JABBER_CHATSTATES     2000
 #define EVENTTYPE_JABBER_PRESENCE       2001
 
-struct CREOleCallback : public IRichEditOleCallback
+class CMsgDialog : public CSrmmBaseDialog
 {
-	CREOleCallback() : refCount(0), nextStgId(0), pictStg(NULL) {}
-	unsigned refCount;
-	IStorage *pictStg;
-	int nextStgId;
+	typedef CSrmmBaseDialog CSuper;
+	friend class CTabbedWindow;
 
-	STDMETHOD(QueryInterface)(REFIID riid, LPVOID FAR * lplpObj);
-	STDMETHOD_(ULONG,AddRef)(THIS);
-	STDMETHOD_(ULONG,Release)(THIS);
+protected:
+	CCtrlButton m_btnOk;
 
-	STDMETHOD(ContextSensitiveHelp)(BOOL fEnterMode);
-	STDMETHOD(GetNewStorage)(LPSTORAGE FAR * lplpstg);
-	STDMETHOD(GetInPlaceContext)(LPOLEINPLACEFRAME FAR * lplpFrame, LPOLEINPLACEUIWINDOW FAR * lplpDoc, LPOLEINPLACEFRAMEINFO lpFrameInfo);
-	STDMETHOD(ShowContainerUI)(BOOL fShow);
-	STDMETHOD(QueryInsertObject)(LPCLSID lpclsid, LPSTORAGE lpstg, LONG cp);
-	STDMETHOD(DeleteObject)(LPOLEOBJECT lpoleobj);
-	STDMETHOD(QueryAcceptData)(LPDATAOBJECT lpdataobj, CLIPFORMAT FAR * lpcfFormat, DWORD reco, BOOL fReally, HGLOBAL hMetaPict);
-	STDMETHOD(GetClipboardData)(CHARRANGE FAR *lpchrg, DWORD reco, LPDATAOBJECT FAR * lplpdataobj);
-	STDMETHOD(GetDragDropEffect)(BOOL fDrag, DWORD grfKeyState, LPDWORD pdwEffect);
-	STDMETHOD(GetContextMenu)(WORD seltype, LPOLEOBJECT lpoleobj, CHARRANGE FAR * lpchrg, HMENU FAR * lphmenu) ;
+	CMsgDialog(int idDialog, SESSION_INFO *si = nullptr);
 };
 
-INT_PTR CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
+class CSrmmWindow : public CMsgDialog
+{
+	friend class CTabbedWindow;
+	typedef CMsgDialog CSuper;
+	
+	static LRESULT CALLBACK TabSubclassProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+	virtual LRESULT WndProc_Log(UINT msg, WPARAM wParam, LPARAM lParam) override;
+	virtual LRESULT WndProc_Message(UINT msg, WPARAM wParam, LPARAM lParam) override;
+
+	CCtrlBase m_avatar;
+	CSplitter m_splitter;
+
+	void NotifyTyping(int mode);
+	void ShowAvatar(void);
+	void ShowTime(void);
+	void SetupStatusBar(void);
+	void StreamInEvents(MEVENT hDbEventFirst, int count, bool bAppend);
+
+	char *m_szProto;
+	HFONT m_hFont;
+	HBRUSH m_hBkgBrush;
+
+	SIZE m_minEditBoxSize;
+	RECT m_minEditInit;
+
+	int m_windowWasCascaded;
+	DWORD m_nFlash;
+	int m_nTypeSecs, m_nTypeMode;
+	int m_limitAvatarH;
+	DWORD m_nLastTyping;
+	DWORD m_lastMessage;
+	HANDLE m_hTimeZone;
+	WORD m_wStatus, m_wOldStatus;
+	WORD m_wMinute;
+	bool m_bIsMeta, m_bShowTyping;
+
+public:
+	bool m_bIsAutoRTL, m_bNoActivate;
+	MEVENT m_hDbEventFirst, m_hDbEventLast;
+
+	int m_avatarWidth, m_avatarHeight;
+	int m_splitterPos, m_originalSplitterPos;
+	int m_lineHeight;
+
+	int m_cmdListInd;
+	LIST<wchar_t> m_cmdList;
+
+	HBITMAP m_avatarPic;
+	wchar_t *m_wszInitialText;
+	CTabbedWindow *m_pOwner;
+
+public:
+	CSrmmWindow(CTabbedWindow*, MCONTACT hContact);
+
+	virtual void OnInitDialog() override;
+	virtual void OnDestroy() override;
+
+	virtual INT_PTR DlgProc(UINT msg, WPARAM wParam, LPARAM lParam) override;
+	virtual int Resizer(UTILRESIZECONTROL *urc) override;
+	
+	virtual void CloseTab() override;
+	virtual void LoadSettings() override {}
+	virtual void ScrollToBottom() override;
+	virtual void SetStatusText(const wchar_t*, HICON) override;
+	virtual void UpdateTitle() override {}
+
+	void OnSplitterMoved(CSplitter*);
+
+	void onClick_Ok(CCtrlButton*);
+
+	void OnOptionsApplied(bool bUpdateAvatar);
+
+	void UpdateReadChars(void);
+
+	__forceinline MCONTACT getActiveContact() const
+	{	return (m_bIsMeta) ? db_mc_getSrmmSub(m_hContact) : m_hContact;
+	}
+};
+
 INT_PTR CALLBACK ErrorDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 int  DbEventIsForMsgWindow(DBEVENTINFO *dbei);
 int  DbEventIsShown(DBEVENTINFO *dbei);
-void StreamInEvents(HWND hwndDlg, MEVENT hDbEventFirst, int count, int fAppend);
-int  SendMessageDirect(const TCHAR *szMsg, MCONTACT hContact, char *szProto);
+int  SendMessageDirect(const wchar_t *szMsg, MCONTACT hContact);
+INT_PTR SendMessageCmd(MCONTACT hContact, wchar_t *msg);
 
 void LoadMsgLogIcons(void);
 void FreeMsgLogIcons(void);
@@ -189,6 +205,8 @@ bool LoadMsgDlgFont(int i, LOGFONT* lf, COLORREF* colour);
 #define SRMSGSET_MSGTIMEOUT_MIN    5000 // minimum value (5 seconds)
 #define SRMSGSET_FLASHCOUNT        "FlashMax"
 #define SRMSGDEFSET_FLASHCOUNT     5
+#define SRMSGSET_BUTTONGAP         "ButtonsBarGap"
+#define SRMSGDEFSET_BUTTONGAP      1 
 
 #define SRMSGSET_LOADHISTORY       "LoadHistory"
 #define SRMSGDEFSET_LOADHISTORY    LOADHISTORY_UNREAD

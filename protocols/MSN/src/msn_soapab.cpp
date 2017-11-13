@@ -1,7 +1,7 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
 
-Copyright (c) 2012-2014 Miranda NG Team
+Copyright (c) 2012-2017 Miranda NG Team
 Copyright (c) 2007-2012 Boris Krasnovskiy.
 
 This program is free software; you can redistribute it and/or
@@ -839,7 +839,7 @@ bool CMsnProto::MSN_ABFind(const char* szMethod, const char* szGuid, bool deltas
 	return status == 200;
 }
 
-bool CMsnProto::MSN_ABRefreshClist(void)
+bool CMsnProto::MSN_ABRefreshClist(unsigned int nTry)
 {
 	NETLIBHTTPREQUEST nlhr = { 0 };
 	NETLIBHTTPHEADER headers[2];
@@ -862,7 +862,7 @@ bool CMsnProto::MSN_ABRefreshClist(void)
 
 	// Query addressbook
 	mHttpsTS = clock();
-	NETLIBHTTPREQUEST *nlhrReply = (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)hNetlibUserHttps, (LPARAM)&nlhr);
+	NETLIBHTTPREQUEST *nlhrReply = Netlib_HttpTransaction(hNetlibUserHttps, &nlhr);
 	mHttpsTS = clock();
 	if (nlhrReply)  {
 		hHttpsConnection = nlhrReply->nlc;
@@ -903,6 +903,7 @@ bool CMsnProto::MSN_ABRefreshClist(void)
 						int lstId = LIST_FL;
 						if (mir_strcmpi(ezxml_txt(ezxml_child(cont, "isBlocked")), "true") == 0) lstId = LIST_BL;
 						else if (mir_strcmp(ezxml_txt(ezxml_child(cont, "contactState")), "2") == 0) lstId = LIST_PL;
+						else if (mir_strcmp(szEmail, "echo123") == 0) lstId = LIST_LL; /* Seems to be dead */
 						Lists_Add(lstId, netId, szEmail, NULL, pszNickname);
 						char szWLId[128];
 						mir_snprintf(szWLId, sizeof(szWLId), "%d:%s", netId, szEmail);
@@ -939,9 +940,16 @@ bool CMsnProto::MSN_ABRefreshClist(void)
 				}
 				ezxml_free(xmlm);
 			}
+		} else if (nlhrReply->resultCode == 400 && !nTry) {
+			// FIXME: No idea how to properly refresh WLSSC cookie required, therefore
+			// complete relogin :( For this we nuke auth token so that relogin is encforeced
+			// until we have a better solution 
+			authSkypeComToken.Clear();
+			if (MSN_AuthOAuth() > 0) return MSN_ABRefreshClist(1);
 		}
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)nlhrReply);
-	} else hHttpsConnection = NULL;
+		Netlib_FreeHttpRequest(nlhrReply);
+	}
+	else hHttpsConnection = NULL;
 	return bRet;
 }
 

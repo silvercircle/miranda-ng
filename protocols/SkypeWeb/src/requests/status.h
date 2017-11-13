@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2015-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -31,6 +31,26 @@ public:
 
 		JSONNode node(JSON_NODE);
 		node << JSONNode("status", status);
+
+		Body << VALUE(node.write().c_str());
+	}
+};
+
+class SetStatusMsgRequest : public HttpRequest
+{
+public:
+	SetStatusMsgRequest(const char *status, LoginInfo &li) :
+		HttpRequest(REQUEST_POST, "api.skype.com/users/self/profile/partial")
+	{
+		Headers
+			<< CHAR_VALUE("Accept", "application/json, text/javascript")
+			<< CHAR_VALUE("X-Skypetoken", li.api.szToken)
+			<< CHAR_VALUE("Content-Type", "application/json; charset=UTF-8");
+
+		JSONNode node, payload;
+		payload.set_name("payload");
+		node << (payload << JSONNode("mood", status));
+
 
 		Body << VALUE(node.write().c_str());
 	}

@@ -31,7 +31,7 @@ struct MraGroupItem
 
 struct CMraProto : public PROTO<CMraProto>
 {
-				CMraProto(const char*, const TCHAR*);
+				CMraProto(const char*, const wchar_t*);
 				~CMraProto();
 
 	// ====================================================================================
@@ -42,43 +42,43 @@ struct CMraProto : public PROTO<CMraProto>
 	virtual	MCONTACT  __cdecl AddToListByEvent(int flags, int iContact, MEVENT hDbEvent);
 
 	virtual	int       __cdecl Authorize(MEVENT hDBEvent);
-	virtual	int       __cdecl AuthDeny(MEVENT hDBEvent, const TCHAR* szReason);
+	virtual	int       __cdecl AuthDeny(MEVENT hDBEvent, const wchar_t* szReason);
 	virtual	int       __cdecl AuthRecv(MCONTACT hContact, PROTORECVEVENT*);
 
-	virtual	HANDLE    __cdecl FileAllow(MCONTACT hContact, HANDLE hTransfer, const TCHAR* szPath);
+	virtual	HANDLE    __cdecl FileAllow(MCONTACT hContact, HANDLE hTransfer, const wchar_t* szPath);
 	virtual	int       __cdecl FileCancel(MCONTACT hContact, HANDLE hTransfer);
-	virtual	int       __cdecl FileDeny(MCONTACT hContact, HANDLE hTransfer, const TCHAR* szReason);
+	virtual	int       __cdecl FileDeny(MCONTACT hContact, HANDLE hTransfer, const wchar_t* szReason);
 
 	virtual	DWORD_PTR __cdecl GetCaps(int type, MCONTACT hContact = NULL);
 	virtual	int       __cdecl GetInfo(MCONTACT hContact, int infoType);
 
-	virtual	HANDLE    __cdecl SearchBasic(const TCHAR* id);
-	virtual	HANDLE    __cdecl SearchByEmail(const TCHAR* email);
-	virtual	HANDLE    __cdecl SearchByName(const TCHAR* nick, const TCHAR* firstName, const TCHAR* lastName);
+	virtual	HANDLE    __cdecl SearchBasic(const wchar_t* id);
+	virtual	HANDLE    __cdecl SearchByEmail(const wchar_t* email);
+	virtual	HANDLE    __cdecl SearchByName(const wchar_t* nick, const wchar_t* firstName, const wchar_t* lastName);
 	virtual	HWND      __cdecl SearchAdvanced(HWND owner);
 	virtual	HWND      __cdecl CreateExtendedSearchUI(HWND owner);
 
 	virtual	int       __cdecl RecvContacts(MCONTACT hContact, PROTORECVEVENT*);
 
 	virtual	int       __cdecl SendContacts(MCONTACT hContact, int flags, int nContacts, MCONTACT *hContactsList);
-	virtual	HANDLE    __cdecl SendFile(MCONTACT hContact, const TCHAR *szDescription, TCHAR **ppszFiles);
+	virtual	HANDLE    __cdecl SendFile(MCONTACT hContact, const wchar_t *szDescription, wchar_t **ppszFiles);
 	virtual	int       __cdecl SendMsg(MCONTACT hContact, int flags, const char* msg);
 
 	virtual	int       __cdecl SetApparentMode(MCONTACT hContact, int mode);
 	virtual	int       __cdecl SetStatus(int iNewStatus);
 
 	virtual	HANDLE    __cdecl GetAwayMsg(MCONTACT hContact);
-	virtual	int       __cdecl SetAwayMsg(int m_iStatus, const TCHAR* msg);
+	virtual	int       __cdecl SetAwayMsg(int m_iStatus, const wchar_t* msg);
 
 	virtual	int       __cdecl UserIsTyping(MCONTACT hContact, int type);
 
 	virtual	int       __cdecl OnEvent(PROTOEVENTTYPE eventType, WPARAM wParam, LPARAM lParam);
 
 	void   ShowFormattedErrorMessage(LPWSTR lpwszErrText, DWORD dwErrorCode);
-	void   MraPopupShowW(MCONTACT hContact, DWORD dwType, DWORD dwFlags, LPWSTR lpszTitle, LPCWSTR lpszMessage);
-	void   MraPopupShowFromContactW(MCONTACT hContact, DWORD dwType, DWORD dwFlags, LPCWSTR lpszMessage);
-	__forceinline void MraPopupShowFromAgentW(DWORD dwType, DWORD dwFlags, LPCWSTR lpszMessage) {
-		MraPopupShowFromContactW(NULL, dwType, dwFlags, lpszMessage); }
+	void   MraPopupShowW(MCONTACT hContact, DWORD dwType, LPWSTR lpszTitle, LPCWSTR lpszMessage);
+	void   MraPopupShowFromContactW(MCONTACT hContact, DWORD dwType, LPCWSTR lpszMessage);
+	__forceinline void MraPopupShowFromAgentW(DWORD dwType, LPCWSTR lpszMessage) {
+		MraPopupShowFromContactW(NULL, dwType, lpszMessage); }
 
 	__forceinline bool mraGetStaticStringA(MCONTACT Contact, const char *ValueName, char *Ret, size_t RetBuffSize, size_t *pRetBuffSize) {
 		return DB_GetStaticStringA(Contact, m_szModuleName, ValueName, Ret, RetBuffSize, pRetBuffSize); }
@@ -166,7 +166,7 @@ struct CMraProto : public PROTO<CMraProto>
 	HANDLE   hSendQueueHandle, hFilesQueueHandle, hMPopSessionQueue;
 
 	HANDLE   m_heNudgeReceived;
-	HANDLE   m_hConnection;
+	HNETLIBCONN m_hConnection;
 	DWORD	   m_dwNextPingSendTickTime;
 	DWORD    m_dwPingPeriod;
 	volatile DWORD	m_dwThreadWorkerLastPingTime;
@@ -215,7 +215,7 @@ struct CMraProto : public PROTO<CMraProto>
 	DWORD  MraProxyAck(DWORD dwStatus, const CMStringA &szEmail, DWORD dwIDRequest, DWORD dwDataType, const CMStringA &lpszData, const CMStringA &szAddresses, MRA_GUID mguidSessionID);
 	DWORD  MraChangeUserBlogStatus(DWORD dwFlags, const CMStringW &wszText, DWORDLONG dwBlogStatusID);
 
-	DWORD  MraSendPacket(HANDLE hConnection, DWORD dwCMDNum, DWORD dwType, LPVOID lpData, size_t dwDataSize);
+	DWORD  MraSendPacket(HNETLIBCONN hConnection, DWORD dwCMDNum, DWORD dwType, LPVOID lpData, size_t dwDataSize);
 	DWORD  MraSendCMD(DWORD dwType, LPVOID lpData, size_t dwDataSize);
 	DWORD  MraSendQueueCMD(HANDLE hSendQueueHandle, DWORD dwFlags, MCONTACT hContact, DWORD dwAckType, LPBYTE lpbDataQueue, size_t dwDataQueueSize, DWORD dwType, LPVOID lpData, size_t dwDataSize);
 
@@ -289,7 +289,7 @@ struct CMraProto : public PROTO<CMraProto>
 	bool   MraSendReplyBlogStatus(MCONTACT hContact);
 	DWORD  MraSelectEMailDlgShow(MCONTACT hContact, DWORD dwType);
 
-	DWORD	 MraMrimProxyConnect(HANDLE hMraMrimProxyData, HANDLE *phConnection);
+	DWORD	 MraMrimProxyConnect(HANDLE hMraMrimProxyData, HNETLIBCONN *phConnection);
 
 	DWORD  MraMPopSessionQueueAddUrl(HANDLE hMPopSessionQueue, const CMStringA &szUrl);
 	DWORD  MraMPopSessionQueueAddUrlAndEMail(HANDLE hMPopSessionQueue, const CMStringA &, CMStringA &szEmail);
@@ -302,7 +302,7 @@ struct CMraProto : public PROTO<CMraProto>
 	DWORD  MraFilesQueueCancel(HANDLE hFilesQueueHandle, DWORD dwIDRequest, BOOL bSendDecline);
 	DWORD  MraFilesQueueStartMrimProxy(HANDLE hFilesQueueHandle, DWORD dwIDRequest);
 	DWORD  MraFilesQueueSendMirror(HANDLE hFilesQueueHandle, DWORD dwIDRequest, const CMStringA &szAddresses);
-	bool   MraFilesQueueHandCheck(HANDLE hConnection, MRA_FILES_QUEUE_ITEM *pmrafqFilesQueueItem);
+	bool   MraFilesQueueHandCheck(HNETLIBCONN hConnection, MRA_FILES_QUEUE_ITEM *pmrafqFilesQueueItem);
 	HANDLE MraFilesQueueConnectOut(MRA_FILES_QUEUE_ITEM *pmrafqFilesQueueItem);
 	HANDLE MraFilesQueueConnectIn(MRA_FILES_QUEUE_ITEM *pmrafqFilesQueueItem);
 	DWORD  MraFilesQueueAccept(HANDLE hFilesQueueHandle, DWORD dwIDRequest, LPCWSTR lpwszPath, size_t dwPathSize);
@@ -311,7 +311,6 @@ struct CMraProto : public PROTO<CMraProto>
 	void   __cdecl MraFilesQueueSendThreadProc(LPVOID lpParameter);
 
 	bool    bChatExists;
-	void    MraChatDllError();
 	bool    MraChatRegister();
 	INT_PTR MraChatSessionNew(MCONTACT hContactChatSession);
 	void    MraChatSessionDestroy(MCONTACT hContactChatSession);

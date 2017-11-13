@@ -100,23 +100,23 @@ static LRESULT CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 		break;
 
 	case WM_LBUTTONDBLCLK:
-		BriefInfo((WPARAM)data->hContact, 0);
+		BriefInfo(data->hContact, 0);
 		break;
 
 	case WM_COMMAND:	 //Needed by the contact's context menu
-		if (CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(LOWORD(wParam), MPCF_CONTACTMENU), (LPARAM)data->hContact))
+		if (Clist_MenuProcessCommand(LOWORD(wParam), MPCF_CONTACTMENU, data->hContact))
 			break;
 		return FALSE;
 
 	case WM_MEASUREITEM:	//Needed by the contact's context menu
-		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
+		return Menu_MeasureItem(lParam);
 
 	case WM_DRAWITEM:	//Needed by the contact's context menu
-		return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
+		return Menu_DrawItem(lParam);
 
 	case WM_NOTIFY:
 		if (((LPNMHDR)lParam)->code == NM_AVATAR_CHANGED) {
-			BOOL newava = CallService(MS_AV_GETAVATARBITMAP, (WPARAM)data->hContact, 0) != 0;
+			BOOL newava = CallService(MS_AV_GETAVATARBITMAP, data->hContact, 0) != 0;
 			if (newava != data->haveAvatar) {
 				LONG_PTR style = GetWindowLongPtr(data->hAvt, GWL_STYLE);
 				data->haveAvatar = newava;
@@ -136,7 +136,6 @@ static LRESULT CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 			RECT r, rc;
 
 			if (GetUpdateRect(hwnd, &r, FALSE)) {
-				DBVARIANT dbv = { 0 };
 				PAINTSTRUCT ps;
 				LOGFONT lfnt, lfnt1;
 				COLORREF fntc, fntc1;
@@ -156,18 +155,10 @@ static LRESULT CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 				}
 
 				clr = db_get_dw(NULL, WEATHERPROTONAME, "ColorMwinFrame", GetSysColor(COLOR_3DFACE));
+				fntc = Font_GetW(_A2W(WEATHERPROTONAME), LPGENW("Frame Font"), &lfnt);
+				fntc1 = Font_GetW(_A2W(WEATHERPROTONAME), LPGENW("Frame Title Font"), &lfnt1);
 
-				{
-					FontIDT fntid = { 0 };
-					mir_tstrcpy(fntid.group, _T(WEATHERPROTONAME));
-					mir_tstrcpy(fntid.name, LPGENT("Frame Font"));
-					fntc = CallService(MS_FONT_GETT, (WPARAM)&fntid, (LPARAM)&lfnt);
-
-					mir_tstrcpy(fntid.name, LPGENT("Frame Title Font"));
-					fntc1 = CallService(MS_FONT_GETT, (WPARAM)&fntid, (LPARAM)&lfnt1);
-				}
-
-				db_get_ts(data->hContact, WEATHERCONDITION, "WeatherInfo", &dbv);
+				ptrW tszInfo(db_get_wsa(data->hContact, WEATHERCONDITION, "WeatherInfo"));
 
 				GetClientRect(hwnd, &rc);
 
@@ -197,11 +188,11 @@ static LRESULT CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 
 				HFONT hfnt = CreateFontIndirect(&lfnt1);
 				HFONT hfntold = (HFONT)SelectObject(hdc, hfnt);
+
+				wchar_t *nick = (wchar_t*)pcli->pfnGetContactDisplayName(data->hContact, 0);
+
 				SIZE fontSize;
-
-				TCHAR *nick = (TCHAR*)pcli->pfnGetContactDisplayName(data->hContact, 0);
-
-				GetTextExtentPoint32(hdc, _T("|"), 1, &fontSize);
+				GetTextExtentPoint32(hdc, L"|", 1, &fontSize);
 
 				rc.top += 1;
 				rc.left += picSize + fontSize.cx;
@@ -214,19 +205,18 @@ static LRESULT CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 				SelectObject(hdc, hfntold);
 				DeleteObject(hfnt);
 
-				if (dbv.pszVal) {
+				if (tszInfo) {
 					HFONT hFont = CreateFontIndirect(&lfnt);
 					HFONT hFontOld = (HFONT)SelectObject(hdc, hFont);
 
 					SetTextColor(hdc, fntc);
-					DrawText(hdc, dbv.ptszVal, -1, &rc, DT_LEFT | DT_EXPANDTABS);
+					DrawText(hdc, tszInfo, -1, &rc, DT_LEFT | DT_EXPANDTABS);
 
 					SelectObject(hdc, hFontOld);
 					DeleteObject(hFont);
 				}
 				EndPaint(hwnd, &ps);
 				IcoLib_ReleaseIcon(hIcon);
-				db_free(&dbv);
 			}
 			break;
 		}
@@ -240,13 +230,14 @@ static LRESULT CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 static void addWindow(MCONTACT hContact)
 {
 	DBVARIANT dbv;
-	db_get_ts(hContact, WEATHERPROTONAME, "Nick", &dbv);
+	if (db_get_ws(hContact, WEATHERPROTONAME, "Nick", &dbv))
+		return;
 
-	TCHAR winname[512];
-	mir_sntprintf(winname, _T("Weather: %s"), dbv.ptszVal);
+	wchar_t winname[512];
+	mir_snwprintf(winname, L"Weather: %s", dbv.ptszVal);
 	db_free(&dbv);
 
-	HWND hWnd = CreateWindow(_T("WeatherFrame"), _T(""), WS_CHILD | WS_VISIBLE,
+	HWND hWnd = CreateWindow(L"WeatherFrame", L"", WS_CHILD | WS_VISIBLE,
 		0, 0, 10, 10, pcli->hwndContactList, NULL, hInst, (void*)hContact);
 	WindowList_Add(hMwinWindowList, hWnd, hContact);
 
@@ -256,7 +247,7 @@ static void addWindow(MCONTACT hContact)
 	Frame.cbSize = sizeof(Frame);
 	Frame.hWnd = hWnd;
 	Frame.align = alBottom;
-	Frame.Flags = F_VISIBLE | F_NOBORDER | F_TCHAR;
+	Frame.Flags = F_VISIBLE | F_NOBORDER | F_UNICODE;
 	Frame.height = 32;
 	DWORD frameID = CallService(MS_CLIST_FRAMES_ADDFRAME, (WPARAM)&Frame, 0);
 
@@ -282,7 +273,6 @@ void UpdateMwinData(MCONTACT hContact)
 		RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 }
 
-
 INT_PTR Mwin_MenuClicked(WPARAM wParam, LPARAM)
 {
 	BOOL addwnd = WindowList_Find(hMwinWindowList, wParam) == NULL;
@@ -293,21 +283,18 @@ INT_PTR Mwin_MenuClicked(WPARAM wParam, LPARAM)
 	return 0;
 }
 
-
 int BuildContactMenu(WPARAM wparam, LPARAM)
 {
-	int flags = db_get_dw((MCONTACT)wparam, WEATHERPROTONAME, "mwin", 0) ? CMIF_CHECKED : 0;
+	int flags = db_get_dw(wparam, WEATHERPROTONAME, "mwin", 0) ? CMIF_CHECKED : 0;
 	Menu_ModifyItem(hMwinMenu, NULL, INVALID_HANDLE_VALUE, flags);
 	return 0;
 }
-
 
 int RedrawFrame(WPARAM, LPARAM)
 {
 	WindowList_Broadcast(hMwinWindowList, WM_REDRAWWIN, 0, 0);
 	return 0;
 }
-
 
 void InitMwin(void)
 {
@@ -326,24 +313,24 @@ void InitMwin(void)
 	wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wndclass.hbrBackground = 0; //(HBRUSH)(COLOR_3DFACE+1);
 	wndclass.lpszMenuName = NULL;
-	wndclass.lpszClassName = _T("WeatherFrame");
+	wndclass.lpszClassName = L"WeatherFrame";
 	RegisterClass(&wndclass);
 
-	ColourIDT colourid = { 0 };
-	colourid.cbSize = sizeof(ColourIDT);
+	ColourIDW colourid = { 0 };
+	colourid.cbSize = sizeof(ColourIDW);
 	mir_strcpy(colourid.dbSettingsGroup, WEATHERPROTONAME);
 	mir_strcpy(colourid.setting, "ColorMwinFrame");
-	mir_tstrcpy(colourid.name, LPGENT("Frame Background"));
-	mir_tstrcpy(colourid.group, _T(WEATHERPROTONAME));
+	mir_wstrcpy(colourid.name, LPGENW("Frame Background"));
+	mir_wstrcpy(colourid.group, _A2W(WEATHERPROTONAME));
 	colourid.defcolour = GetSysColor(COLOR_3DFACE);
-	ColourRegisterT(&colourid);
+	Colour_RegisterW(&colourid);
 
-	FontIDT fontid = { 0 };
-	fontid.cbSize = sizeof(FontIDT);
+	FontIDW fontid = { 0 };
+	fontid.cbSize = sizeof(FontIDW);
 	fontid.flags = FIDF_ALLOWREREGISTER | FIDF_DEFAULTVALID;
 	mir_strcpy(fontid.dbSettingsGroup, WEATHERPROTONAME);
-	mir_tstrcpy(fontid.group, _T(WEATHERPROTONAME));
-	mir_tstrcpy(fontid.name, LPGENT("Frame Font"));
+	mir_wstrcpy(fontid.group, _A2W(WEATHERPROTONAME));
+	mir_wstrcpy(fontid.name, LPGENW("Frame Font"));
 	mir_strcpy(fontid.prefix, "fnt0");
 
 	HDC hdc = GetDC(NULL);
@@ -351,15 +338,15 @@ void InitMwin(void)
 	ReleaseDC(0, hdc);
 
 	fontid.deffontsettings.charset = DEFAULT_CHARSET;
-	mir_tstrcpy(fontid.deffontsettings.szFace, _T("Verdana"));
-	mir_tstrcpy(fontid.backgroundGroup, _T(WEATHERPROTONAME));
-	mir_tstrcpy(fontid.backgroundName, LPGENT("Frame Background"));
-	FontRegisterT(&fontid);
+	mir_wstrcpy(fontid.deffontsettings.szFace, L"Verdana");
+	mir_wstrcpy(fontid.backgroundGroup, _A2W(WEATHERPROTONAME));
+	mir_wstrcpy(fontid.backgroundName, LPGENW("Frame Background"));
+	Font_RegisterW(&fontid);
 
 	fontid.deffontsettings.style = DBFONTF_BOLD;
-	mir_tstrcpy(fontid.name, LPGENT("Frame Title Font"));
+	mir_wstrcpy(fontid.name, LPGENW("Frame Title Font"));
 	mir_strcpy(fontid.prefix, "fnt1");
-	FontRegisterT(&fontid);
+	Font_RegisterW(&fontid);
 
 	for (MCONTACT hContact = db_find_first(WEATHERPROTONAME); hContact; hContact = db_find_next(hContact, WEATHERPROTONAME))
 		if (db_get_dw(hContact, WEATHERPROTONAME, "mwin", 0))
@@ -375,7 +362,7 @@ void DestroyMwin(void)
 		if (frameId)
 			CallService(MS_CLIST_FRAMES_REMOVEFRAME, frameId, 0);
 	}
-	UnregisterClass(_T("WeatherFrame"), hInst);
+	UnregisterClass(L"WeatherFrame", hInst);
 	WindowList_Destroy(hMwinWindowList);
 	UnhookEvent(hFontHook);
 }

@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Tox.dll
 ;  Plugin: Tox protocol
-;  Version: 0.11.1.14
+;  Version: 0.11.1.25
 ;  Authors: Miranda NG Team
 ;============================================================
 [Tox protocol support for Miranda NG.]
@@ -49,6 +49,8 @@
 Профіль Tox зашифровано. Щоб продовжити, введіть пароль.
 [Add]
 Додати
+[Update]
+Оновити
 [IPv4 address/ Host]
 IPv4 адреса/ Хост
 [IPv6 address (optional)]
@@ -95,8 +97,6 @@ IPv6 адреса (необов'язково)
 Вихідний дзвінок
 [To:]
 Для:
-[Group chat]
-Чат
 [Unable to initialize Tox core]
 Неможливо ініціалізувати ядро Tox
 [Profiles folder]
@@ -127,18 +127,6 @@ IPv6 адреса (необов'язково)
 Вхідний дзвінок від %s
 [Outgoing call to %s]
 Вихідний дзвінок до %s
-[Unable to find input audio device]
-Пристрій аудіовходу не знайдено
-[Video call is unsupported]
-Відеовиклики не підтримуються
-[Call canceled]
-Дзвінок скасовано
-[Unable to find output audio device]
-Пристрій аудіовиходу не знайдено
-[Call started]
-Початок бесіди
-[Call ended]
-Завершення бесіди
 [%s connection]
 З'єднання %s
 [Tox profile]
@@ -157,6 +145,8 @@ IPv6 адреса (необов'язково)
 Введіть IPv4
 [Error]
 Помилка
+[Enter port]
+Вкажіть порт
 [Enter public key]
 Введіть відкритий ключ
 [Common nodes]
@@ -205,3 +195,7 @@ IPv6 адреса (необов'язково)
 Неправильний формат даних
 [Unknown error]
 Невідома помилка
+[Message length exceeded TOX_MAX_MESSAGE_LENGTH]
+Довжина повідомлення перевищує TOX_MAX_MESSAGE_LENGTH
+[Attempted to send a zero-length message]
+Спроба надіслати порожнє повідомлення

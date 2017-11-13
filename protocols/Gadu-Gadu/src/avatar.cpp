@@ -25,35 +25,35 @@
 
 //////////////////////////////////////////////////////////
 // Avatars support
-
-void GGPROTO::getAvatarFilename(MCONTACT hContact, TCHAR *pszDest, int cbLen)
+//
+void GGPROTO::getAvatarFilename(MCONTACT hContact, wchar_t *pszDest, int cbLen)
 {
-	int tPathLen = mir_sntprintf(pszDest, cbLen, _T("%s\\%S"), VARST( _T("%miranda_avatarcache%")), m_szModuleName);
+	int tPathLen = mir_snwprintf(pszDest, cbLen, L"%s\\%S", VARSW( L"%miranda_avatarcache%"), m_szModuleName);
 
-	if (_taccess(pszDest, 0)) {
-		int ret = CreateDirectoryTreeT(pszDest);
+	if (_waccess(pszDest, 0)) {
+		int ret = CreateDirectoryTreeW(pszDest);
 		if (ret == 0)
-			debugLog(_T("getAvatarFilename(): Created new directory for avatar cache: %s."), pszDest);
+			debugLogW(L"getAvatarFilename(): Created new directory for avatar cache: %s.", pszDest);
 		else {
-			debugLog(_T("getAvatarFilename(): Can not create directory for avatar cache: %s. errno=%d: %s"), pszDest, errno, strerror(errno));
-			TCHAR error[512];
-			mir_sntprintf(error, TranslateT("Cannot create avatars cache directory. ERROR: %d: %s\n%s"), errno, _tcserror(errno), pszDest);
+			debugLogW(L"getAvatarFilename(): Can not create directory for avatar cache: %s. errno=%d: %s", pszDest, errno, ws_strerror(errno));
+			wchar_t error[512];
+			mir_snwprintf(error, TranslateT("Cannot create avatars cache directory. ERROR: %d: %s\n%s"), errno, ws_strerror(errno), pszDest);
 			showpopup(m_tszUserName, error, GG_POPUP_ERROR | GG_POPUP_ALLOW_MSGBOX | GG_POPUP_ONCE);
 		}
 	}
 
-	const TCHAR *avatartype = ProtoGetAvatarExtension(getByte(hContact, GG_KEY_AVATARTYPE, GG_KEYDEF_AVATARTYPE));
+	const wchar_t *avatartype = ProtoGetAvatarExtension(getByte(hContact, GG_KEY_AVATARTYPE, GG_KEYDEF_AVATARTYPE));
 
 	if (hContact != NULL) {
 		DBVARIANT dbv;
 		if (!getString(hContact, GG_KEY_AVATARHASH, &dbv)) {
-			TCHAR* avatarHashT = mir_a2t(dbv.pszVal);
-			mir_sntprintf(pszDest + tPathLen, cbLen - tPathLen, _T("\\%s%s"), avatarHashT, avatartype);
+			wchar_t* avatarHashT = mir_a2u(dbv.pszVal);
+			mir_snwprintf(pszDest + tPathLen, cbLen - tPathLen, L"\\%s%s", avatarHashT, avatartype);
 			mir_free(avatarHashT);
 			db_free(&dbv);
 		}
 	}
-	else mir_sntprintf(pszDest + tPathLen, cbLen - tPathLen, _T("\\%S avatar%s"), m_szModuleName, avatartype);
+	else mir_snwprintf(pszDest + tPathLen, cbLen - tPathLen, L"\\%S avatar%s", m_szModuleName, avatartype);
 }
 
 bool GGPROTO::getAvatarFileInfo(uin_t uin, char **avatarurl, char **avatarts)
@@ -68,7 +68,7 @@ bool GGPROTO::getAvatarFileInfo(uin_t uin, char **avatarurl, char **avatarts)
 	req.szUrl = szUrl;
 	req.flags = NLHRF_NODUMP | NLHRF_HTTP11 | NLHRF_REDIRECT;
 
-	NETLIBHTTPREQUEST *resp = (NETLIBHTTPREQUEST *)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)m_hNetlibUser, (LPARAM)&req);
+	NETLIBHTTPREQUEST *resp = Netlib_HttpTransaction(m_hNetlibUser, &req);
 	if (resp == NULL) {
 		debugLogA("getAvatarFileInfo(): No response from HTTP request");
 		return false;
@@ -76,26 +76,26 @@ bool GGPROTO::getAvatarFileInfo(uin_t uin, char **avatarurl, char **avatarts)
 
 	if (resp->resultCode != 200 || !resp->dataLength || !resp->pData) {
 		debugLogA("getAvatarFileInfo(): Invalid response code from HTTP request");
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)resp);
+		Netlib_FreeHttpRequest(resp);
 		return false;
 	}
 
 	if ((strncmp(resp->pData, "<result>", 8) == 0) || (strncmp(resp->pData, "<?xml", 5) == 0)){
 
 		//if this url returned xml data (before and after 11.2013 gg convention)
-		TCHAR *xmlAction = mir_a2t(resp->pData);
-		HXML hXml = xmlParseString(xmlAction, 0, _T("result"));
+		wchar_t *xmlAction = mir_a2u(resp->pData);
+		HXML hXml = xmlParseString(xmlAction, 0, L"result");
 		if (hXml != NULL) {
-			HXML node = xmlGetChildByPath(hXml, _T("users/user/avatars/avatar"), 0);
-			const TCHAR *blank = (node != NULL) ? xmlGetAttrValue(node, _T("blank")) : NULL;
-			if (blank != NULL && mir_tstrcmp(blank, _T("1"))) {
-				node = xmlGetChildByPath(hXml, _T("users/user/avatars/avatar/timestamp"), 0);
-				*avatarts = node != NULL ? mir_t2a(xmlGetText(node)) : NULL;
-				node = xmlGetChildByPath(hXml, _T("users/user/avatars/avatar/bigavatar"), 0); //new gg convention
+			HXML node = xmlGetChildByPath(hXml, L"users/user/avatars/avatar", 0);
+			const wchar_t *blank = (node != NULL) ? xmlGetAttrValue(node, L"blank") : NULL;
+			if (blank != NULL && mir_wstrcmp(blank, L"1")) {
+				node = xmlGetChildByPath(hXml, L"users/user/avatars/avatar/timestamp", 0);
+				*avatarts = node != NULL ? mir_u2a(xmlGetText(node)) : NULL;
+				node = xmlGetChildByPath(hXml, L"users/user/avatars/avatar/bigavatar", 0); //new gg convention
 				if (node == NULL){
-					node = xmlGetChildByPath(hXml, _T("users/user/avatars/avatar/originBigAvatar"), 0); //old gg convention
+					node = xmlGetChildByPath(hXml, L"users/user/avatars/avatar/originBigAvatar", 0); //old gg convention
 				}
-				*avatarurl = node != NULL ? mir_t2a(xmlGetText(node)) : NULL;
+				*avatarurl = node != NULL ? mir_u2a(xmlGetText(node)) : NULL;
 			}
 			xmlDestroyNode(hXml);
 		}
@@ -118,14 +118,14 @@ bool GGPROTO::getAvatarFileInfo(uin_t uin, char **avatarurl, char **avatarts)
 				}
 			}
 		}
-
-	} else {
+	}
+	else {
 		debugLogA("getAvatarFileInfo(): Invalid response code from HTTP request, unknown format");
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)resp);
+		Netlib_FreeHttpRequest(resp);
 		return false;
 	}
 
-	CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)resp);
+	Netlib_FreeHttpRequest(resp);
 	return true;
 }
 
@@ -250,7 +250,7 @@ void __cdecl GGPROTO::avatarrequestthread(void*)
 			req.szUrl = data->szAvatarURL;
 			req.flags = NLHRF_NODUMP | NLHRF_HTTP11 | NLHRF_REDIRECT;
 
-			NETLIBHTTPREQUEST *resp = (NETLIBHTTPREQUEST *)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)m_hNetlibUser, (LPARAM)&req);
+			NETLIBHTTPREQUEST *resp = Netlib_HttpTransaction(m_hNetlibUser, &req);
 			if (resp) {
 				if (resp->resultCode == 200 && resp->dataLength > 0 && resp->pData) {
 					int file_fd;
@@ -262,21 +262,21 @@ void __cdecl GGPROTO::avatarrequestthread(void*)
 					setByte(data->hContact, GG_KEY_AVATARTYPE, (BYTE)avatarType);
 
 					getAvatarFilename(ai.hContact, ai.filename, _countof(ai.filename));
-					file_fd = _topen(ai.filename, _O_WRONLY | _O_TRUNC | _O_BINARY | _O_CREAT, _S_IREAD | _S_IWRITE);
+					file_fd = _wopen(ai.filename, _O_WRONLY | _O_TRUNC | _O_BINARY | _O_CREAT, _S_IREAD | _S_IWRITE);
 					if (file_fd != -1) {
 						_write(file_fd, resp->pData, resp->dataLength);
 						_close(file_fd);
 						result = 1;
-						debugLog(_T("avatarrequestthread() new avatar_transfers item. Saved data from url=%s to file=%s."), data->szAvatarURL, ai.filename);
+						debugLogW(L"avatarrequestthread() new avatar_transfers item. Saved data to file=%s.", ai.filename);
 					} else {
-						debugLog(_T("avatarrequestthread(): _topen file %s error. errno=%d: %s"), ai.filename, errno, strerror(errno));
-						TCHAR error[512];
-						mir_sntprintf(error, TranslateT("Cannot create avatar file. ERROR: %d: %s\n%s"), errno, _tcserror(errno), ai.filename);
+						debugLogW(L"avatarrequestthread(): _wopen file %s error. errno=%d: %s", ai.filename, errno, ws_strerror(errno));
+						wchar_t error[512];
+						mir_snwprintf(error, TranslateT("Cannot create avatar file. ERROR: %d: %s\n%s"), errno, ws_strerror(errno), ai.filename);
 						showpopup(m_tszUserName, error, GG_POPUP_ERROR);
 					}
 				}
 				else debugLogA("avatarrequestthread(): Invalid response code from HTTP request");
-				CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)resp);
+				Netlib_FreeHttpRequest(resp);
 			}
 			else debugLogA("avatarrequestthread(): No response from HTTP request");
 
@@ -358,12 +358,12 @@ void __cdecl GGPROTO::setavatarthread(void *param)
 	debugLogA("setavatarthread(): started. Trying to set user avatar.");
 
 	//read file
-	TCHAR *szFilename = (TCHAR*)param;
-	int file_fd = _topen(szFilename, _O_RDONLY | _O_BINARY, _S_IREAD);
+	wchar_t *szFilename = (wchar_t*)param;
+	int file_fd = _wopen(szFilename, _O_RDONLY | _O_BINARY, _S_IREAD);
 	if (file_fd == -1) {
-		debugLogA("setavatarthread(): Failed to open avatar file errno=%d: %s.", errno, strerror(errno));
-		TCHAR error[512];
-		mir_sntprintf(error, TranslateT("Cannot open avatar file. ERROR: %d: %s\n%s"), errno, _tcserror(errno), szFilename);
+		debugLogW(L"setavatarthread(): Failed to open avatar file errno=%d: %s", errno, ws_strerror(errno));
+		wchar_t error[512];
+		mir_snwprintf(error, TranslateT("Cannot open avatar file. ERROR: %d: %s\n%s"), errno, ws_strerror(errno), szFilename);
 		showpopup(m_tszUserName, error, GG_POPUP_ERROR);
 		mir_free(szFilename);
 		int prevType = getByte(GG_KEY_AVATARTYPEPREV, -1);
@@ -436,7 +436,7 @@ void __cdecl GGPROTO::setavatarthread(void *param)
 	//send request
 	int resultSuccess = 0;
 	int needRepeat = 0;
-	NETLIBHTTPREQUEST* resp = (NETLIBHTTPREQUEST *)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)m_hNetlibUser, (LPARAM)&req);
+	NETLIBHTTPREQUEST* resp = Netlib_HttpTransaction(m_hNetlibUser, &req);
 	if (resp) {
 		if (resp->resultCode == 200 && resp->dataLength > 0 && resp->pData) {
 			debugLogA("setavatarthread(): 1 resp.data= %s", resp->pData);
@@ -447,7 +447,7 @@ void __cdecl GGPROTO::setavatarthread(void *param)
 				needRepeat = 1;
 			}
 		}
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)resp);
+		Netlib_FreeHttpRequest(resp);
 	} else {
 		debugLogA("setavatarthread(): No response from HTTP request");
 	}
@@ -471,18 +471,17 @@ void __cdecl GGPROTO::setavatarthread(void *param)
 		req.pData = data;
 		req.dataLength = int(dataLen);
 
-		resp = (NETLIBHTTPREQUEST *)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)m_hNetlibUser, (LPARAM)&req);
+		resp = Netlib_HttpTransaction(m_hNetlibUser, &req);
 		if (resp) {
 			if (resp->resultCode == 200 && resp->dataLength > 0 && resp->pData) {
 				debugLogA("setavatarthread(): 2 resp.data= %s", resp->pData);
 				resultSuccess = 1;
-			} else {
-				debugLogA("setavatarthread(): Invalid response code from HTTP request [%d]", resp->resultCode);
 			}
-			CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)resp);
-		} else {
-			debugLogA("setavatarthread(): No response from HTTP request");
+			else debugLogA("setavatarthread(): Invalid response code from HTTP request [%d]", resp->resultCode);
+
+			Netlib_FreeHttpRequest(resp);
 		}
+		else debugLogA("setavatarthread(): No response from HTTP request");
 	}
 
 	//clean and end thread
@@ -507,10 +506,10 @@ void __cdecl GGPROTO::setavatarthread(void *param)
 
 }
 
-void GGPROTO::setAvatar(const TCHAR *szFilename)
+void GGPROTO::setAvatar(const wchar_t *szFilename)
 {
 #ifdef DEBUGMODE
 	debugLogA("setAvatar(): ForkThread 3 GGPROTO::setavatarthread");
 #endif
-	ForkThread(&GGPROTO::setavatarthread, mir_tstrdup(szFilename));
+	ForkThread(&GGPROTO::setavatarthread, mir_wstrdup(szFilename));
 }

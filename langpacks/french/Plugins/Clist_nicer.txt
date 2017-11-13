@@ -8,8 +8,8 @@
 [Displays contacts, event notifications, protocol status.]
 Affiche les contacts, les notifications d'événements, les états des protocoles.
 ;file \plugins\Clist_nicer\res\resource.rc
-[Clist Nicer exception]
-Exception de CList Nicer
+[Clist nicer exception]
+Exception de Clist nicer
 [Copy to clipboard]
 Copier dans le Presse-Papiers
 [Continue]
@@ -18,16 +18,6 @@ Continuer
 Quitter Miranda
 [Although the exception was caught and you may continue working with Miranda, you should restart the program as soon as possible. The exception may have damaged internal data structures and can have a serious impact on stability.]
 L'exception a été capturée et vous pouvez continuer à travailler avec Miranda, cependant vous devez redémarrer le programme dès que possible. L'exception peut avoir endommagé les structures de données internes et peut avoir un impact grave sur la stabilité.
-[About CList Nicer+]
-À propos de CList Nicer+
-[Clist Nicer+]
-Clist Nicer+
-[Copyright © 2004-2010 by the Miranda IM project, 2012-2015 by the Miranda NG project. More detailed copyright information can be found in the included README file.]
-Copyright © 2004-2010 by the Miranda IM project, 2012-2015 by the Miranda NG project. Plus d'informations sur le copyright peuvent être trouvées dans le fichier README inclus.
-[Version]
-Version
-[Support and latest version information]
-
 [Delete contact]
 Supprimer un contact
 [No]
@@ -424,8 +414,8 @@ Toujours apparaître déconnecté (contact bloqué)
 Autre
 [Hide this contact from the list]
 Cacher ce contact de la liste
-[To show a previously hidden contact, navigate to Options -> Events -> Ignore, search the contact in the list and tick the checkbox next to its name.]
-Pour afficher un contact bloqué, aller dans Paramètres -> Évènements -> Ignorer et cocher le contact en question.
+[To show a previously hidden contact, navigate to Options -> Contacts -> Ignore, search the contact in the list and tick the checkbox next to its name.]
+Pour afficher un contact bloqué, aller dans Paramètres -> Contacts -> Ignorer et cocher le contact en question.
 [Display options]
 Options d'affichage
 [Show contact with priority]
@@ -447,23 +437,23 @@ Afficher l'heure locale
 [&Offline\tCtrl+0]
 &Hors ligne\tCtrl+0
 [On&line\tCtrl+1]
-En &ligne\tCtrl+1
+&En ligne\tCtrl+1
 [&Away\tCtrl+2]
 &Absent\tCtrl+2
-[&NA\tCtrl+3]
+[&Not available\tCtrl+3]
 &Indisponible\tCtrl+3
 [Occ&upied\tCtrl+4]
-Occ&upé\tCtrl+4
-[&DND\tCtrl+5]
+&Occupé\tCtrl+4
+[&Do not disturb\tCtrl+5]
 &Ne pas déranger\tCtrl+5
 [&Free for chat\tCtrl+6]
-Ok pour un &chat\tCtrl+6
+OK pour un &chat\tCtrl+6
 [&Invisible\tCtrl+7]
-&Invisible\tCtrl+7
+In&visible\tCtrl+7
 [On the &phone\tCtrl+8]
 Au &téléphone\tCtrl+8
 [Out to &lunch\tCtrl+9]
-Parti &manger\tCtrl+9
+&Parti manger\tCtrl+9
 ;file \plugins\Clist_nicer\src\CLCButton.cpp
 [Show menu]
 Afficher le menu
@@ -498,11 +488,11 @@ Hors ligne
 En ligne
 [Away]
 Absent
-[NA]
+[Not available]
 Indisponible
 [Occupied]
 Occupé
-[DND]
+[Do not disturb]
 Ne pas déranger
 [Free for chat]
 OK pour un chat
@@ -628,7 +618,7 @@ Choix du mode d'état
 L'action demandée requière un contact valide. Veuillez sélectionner un contact de votre liste, et réessayer.
 [Parameter mismatch]
 
-[The service %s specified by the %s button definition was not found. You may need to install additional plugins.]
+[The service %S specified by the %S button definition was not found. You may need to install additional plugins.]
 
 [Service failure]
 
@@ -693,14 +683,6 @@ Image skinnée
 &Vers le Haut
 [&Down]
 &Vers le Bas
-[Frames]
-Cadres
-[Show all frames]
-Montrer tous les cadres
-[Show all title bars]
-Montrer toutes les barres de titres
-[Hide all title bars]
-Cacher toutes les barres de titres
 [Lock frame]
 Cadre vérouillé
 [Visible]
@@ -711,6 +693,14 @@ Afficher la barre de titre
 Image skinée
 [Floating]
 Flottant
+[Frames]
+Cadres
+[Show all frames]
+Montrer tous les cadres
+[Show all title bars]
+Montrer toutes les barres de titres
+[Hide all title bars]
+Cacher toutes les barres de titres
 ;file \plugins\Clist_nicer\src\cluiopts.cpp
 [Title bar]
 Barre de titre
@@ -743,8 +733,6 @@ Voir boutons supplémentaires
 Apparence
 [&Options...]
 &Paramètres...
-[&About the contact list...]
-À propos de l&a liste de contact...
 ;file \plugins\Clist_nicer\src\viewmodes.cpp
 [Ungrouped contacts]
 Contacts non-groupés
@@ -762,8 +750,8 @@ Minutes
 Heures
 [Days]
 Jours
-[Current view mode: %s]
-Mode actuel : %s
+[Current view mode: %S]
+Mode actuel : %S
 [Filtering]
 Filtres
 [*** All contacts ***]

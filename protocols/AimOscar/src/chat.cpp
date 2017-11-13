@@ -18,111 +18,82 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-static const COLORREF crCols[16] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
-
 void CAimProto::chat_register(void)
 {
-	GCREGISTER gcr = { sizeof(gcr) };
+	GCREGISTER gcr = {};
 	gcr.dwFlags = GC_TYPNOTIF | GC_CHANMGR;
-	gcr.nColors = 16;
-	gcr.pColors = (COLORREF*)crCols;
 	gcr.ptszDispName = m_tszUserName;
 	gcr.pszModule = m_szModuleName;
-	CallServiceSync(MS_GC_REGISTER, 0, (LPARAM)&gcr);
+	Chat_Register(&gcr);
 
 	HookProtoEvent(ME_GC_EVENT, &CAimProto::OnGCEvent);
 	HookProtoEvent(ME_GC_BUILDMENU, &CAimProto::OnGCMenuHook);
 }
 
-void CAimProto::chat_start(const char* id, unsigned short exchange)
+void CAimProto::chat_start(const char *id, unsigned short exchange)
 {
-	TCHAR *idt = mir_a2t(id);
+	wchar_t *idt = mir_a2u(id);
+	Chat_NewSession(GCW_CHATROOM, m_szModuleName, idt, idt);
 
-	GCSESSION gcw = { sizeof(gcw) };
-	gcw.iType = GCW_CHATROOM;
-	gcw.pszModule = m_szModuleName;
-	gcw.ptszName = idt;
-	gcw.ptszID = idt;
-	CallServiceSync(MS_GC_NEWSESSION, 0, (LPARAM)&gcw);
+	Chat_AddGroup(m_szModuleName, idt, TranslateT("Me"));
+	Chat_AddGroup(m_szModuleName, idt, TranslateT("Others"));
 
-	GCDEST gcd = { m_szModuleName, idt, GC_EVENT_ADDGROUP };
-	GCEVENT gce = { sizeof(gce), &gcd };
-	gce.ptszStatus = TranslateT("Me");
-	CallServiceSync(MS_GC_EVENT, 0, (LPARAM)&gce);
-
-	gcd.iType = GC_EVENT_ADDGROUP;
-	gce.ptszStatus = TranslateT("Others");
-	CallServiceSync(MS_GC_EVENT, 0, (LPARAM)&gce);
-
-	gcd.iType = GC_EVENT_CONTROL;
-	CallServiceSync(MS_GC_EVENT, SESSION_INITDONE, (LPARAM)&gce);
-	CallServiceSync(MS_GC_EVENT, SESSION_ONLINE, (LPARAM)&gce);
-	CallServiceSync(MS_GC_EVENT, WINDOW_VISIBLE, (LPARAM)&gce);
+	Chat_Control(m_szModuleName, idt, SESSION_INITDONE);
+	Chat_Control(m_szModuleName, idt, SESSION_ONLINE);
+	Chat_Control(m_szModuleName, idt, WINDOW_VISIBLE);
 
 	setWord(find_chat_contact(id), "Exchange", exchange);
 
 	mir_free(idt);
 }
 
-void CAimProto::chat_event(const char* id, const char* sn, int evt, const TCHAR* msg)
+void CAimProto::chat_event(const char* id, const char* sn, int evt, const wchar_t* msg)
 {
-	TCHAR *idt = mir_a2t(id);
-	TCHAR *snt = mir_a2t(sn);
+	ptrW idt(mir_a2u(id));
+	ptrW snt(mir_a2u(sn));
 
 	MCONTACT hContact = contact_from_sn(sn);
-	TCHAR *nick = hContact ? (TCHAR*)pcli->pfnGetContactDisplayName(
-		WPARAM(hContact), 0) : snt;
+	wchar_t *nick = hContact ? (wchar_t*)pcli->pfnGetContactDisplayName(hContact, 0) : snt;
 
-	GCDEST gcd = { m_szModuleName, idt, evt };
-	GCEVENT gce = { sizeof(gce), &gcd };
+	GCEVENT gce = { m_szModuleName, idt, evt };
 	gce.dwFlags = GCEF_ADDTOLOG;
-	gce.pDest = &gcd;
 	gce.ptszNick = nick;
 	gce.ptszUID = snt;
 	gce.bIsMe = _stricmp(sn, m_username) == 0;
 	gce.ptszStatus = gce.bIsMe ? TranslateT("Me") : TranslateT("Others");
 	gce.ptszText = msg;
 	gce.time = time(NULL);
-	CallServiceSync(MS_GC_EVENT, 0, (LPARAM)&gce);
-
-	mir_free(snt);
-	mir_free(idt);
+	Chat_Event(&gce);
 }
 
 void CAimProto::chat_leave(const char* id)
 {
-	TCHAR *idt = mir_a2t(id);
-
-	GCDEST gcd = { m_szModuleName, idt, GC_EVENT_CONTROL };
-	GCEVENT gce = { sizeof(gce), &gcd };
-	gce.pDest = &gcd;
-	CallServiceSync(MS_GC_EVENT, SESSION_OFFLINE, (LPARAM)&gce);
-	CallServiceSync(MS_GC_EVENT, SESSION_TERMINATE, (LPARAM)&gce);
-
-	mir_free(idt);
+	ptrW idt(mir_a2u(id));
+	Chat_Control(m_szModuleName, idt, SESSION_OFFLINE);
+	Chat_Terminate(m_szModuleName, idt);
 }
-
 
 int CAimProto::OnGCEvent(WPARAM, LPARAM lParam)
 {
 	GCHOOK *gch = (GCHOOK*)lParam;
 	if (!gch) return 1;
 
-	if (mir_strcmp(gch->pDest->pszModule, m_szModuleName)) return 0;
+	if (mir_strcmp(gch->pszModule, m_szModuleName))
+		return 0;
 
-	char *id = mir_t2a(gch->pDest->ptszID);
+	char *id = mir_u2a(gch->ptszID);
 	chat_list_item* item = find_chat_by_id(id);
+	if (item == NULL)
+		return 0;
 
-	if (item == NULL) return 0;
-
-	switch (gch->pDest->iType) {
+	switch (gch->iType) {
 	case GC_SESSION_TERMINATE:
 		aim_sendflap(item->hconn, 0x04, 0, NULL, item->seqno);
 		Netlib_Shutdown(item->hconn);
 		break;
 
 	case GC_USER_MESSAGE:
-		if (gch->ptszText && mir_tstrlen(gch->ptszText))
+		if (gch->ptszText && mir_wstrlen(gch->ptszText))
 			aim_chat_send_message(item->hconn, item->seqno, T2Utf(gch->ptszText));
 		break;
 
@@ -133,7 +104,7 @@ int CAimProto::OnGCEvent(WPARAM, LPARAM lParam)
 
 	case GC_USER_PRIVMESS:
 		{
-			char* sn = mir_t2a(gch->ptszUID);
+			char* sn = mir_u2a(gch->ptszUID);
 			MCONTACT hContact = contact_from_sn(sn);
 			mir_free(sn);
 			CallService(MS_MSG_SENDMESSAGE, hContact, 0);
@@ -155,7 +126,7 @@ int CAimProto::OnGCEvent(WPARAM, LPARAM lParam)
 
 	case GC_USER_NICKLISTMENU:
 		{
-			char *sn = mir_t2a(gch->ptszUID);
+			char *sn = mir_u2a(gch->ptszUID);
 			MCONTACT hContact = contact_from_sn(sn);
 			mir_free(sn);
 
@@ -186,36 +157,33 @@ int CAimProto::OnGCEvent(WPARAM, LPARAM lParam)
 int CAimProto::OnGCMenuHook(WPARAM, LPARAM lParam)
 {
 	GCMENUITEMS *gcmi = (GCMENUITEMS*)lParam;
-
-	if (gcmi == NULL || _stricmp(gcmi->pszModule, m_szModuleName)) return 0;
+	if (mir_strcmp(gcmi->pszModule, m_szModuleName))
+		return 0;
 
 	if (gcmi->Type == MENU_ON_LOG) {
 		static const struct gc_item Items[] = {
-			{ TranslateT("&Invite user..."), 10, MENU_ITEM, FALSE },
-			{ TranslateT("&Leave chat session"), 20, MENU_ITEM, FALSE }
+			{ LPGENW("&Invite user..."), 10, MENU_ITEM, FALSE },
+			{ LPGENW("&Leave chat session"), 20, MENU_ITEM, FALSE }
 		};
-		gcmi->nItems = _countof(Items);
-		gcmi->Item = (gc_item*)Items;
+		Chat_AddMenuItems(gcmi->hMenu, _countof(Items), Items);
 	}
 	else if (gcmi->Type == MENU_ON_NICKLIST) {
-		char* sn = mir_t2a(gcmi->pszUID);
+		char* sn = mir_u2a(gcmi->pszUID);
 		if (!mir_strcmp(m_username, sn)) {
 			static const struct gc_item Items[] = {
-				{ TranslateT("User &details"), 10, MENU_ITEM, FALSE },
-				{ TranslateT("User &history"), 20, MENU_ITEM, FALSE },
-				{ _T(""), 100, MENU_SEPARATOR, FALSE },
-				{ TranslateT("&Leave chat session"), 110, MENU_ITEM, FALSE }
+				{ LPGENW("User &details"), 10, MENU_ITEM, FALSE },
+				{ LPGENW("User &history"), 20, MENU_ITEM, FALSE },
+				{ L"", 100, MENU_SEPARATOR, FALSE },
+				{ LPGENW("&Leave chat session"), 110, MENU_ITEM, FALSE }
 			};
-			gcmi->nItems = _countof(Items);
-			gcmi->Item = (gc_item*)Items;
+			Chat_AddMenuItems(gcmi->hMenu, _countof(Items), Items);
 		}
 		else {
 			static const struct gc_item Items[] = {
-				{ TranslateT("User &details"), 10, MENU_ITEM, FALSE },
-				{ TranslateT("User &history"), 20, MENU_ITEM, FALSE }
+				{ LPGENW("User &details"), 10, MENU_ITEM, FALSE },
+				{ LPGENW("User &history"), 20, MENU_ITEM, FALSE }
 			};
-			gcmi->nItems = _countof(Items);
-			gcmi->Item = (gc_item*)Items;
+			Chat_AddMenuItems(gcmi->hMenu, _countof(Items), Items);
 		}
 		mir_free(sn);
 	}

@@ -1,0 +1,53 @@
+﻿#muuid {e876fe63-0701-4cda-bed5-7c73a379c1d1}
+;============================================================
+;  File: CloudFile.dll
+;  Plugin: CloudFile
+;  Version: 0.11.0.2
+;  Authors: Miranda NG Team
+;============================================================
+[Allows you to transfer files via cloud services.]
+Загрузка и пересылка файлов с помощью облачных хранилищ.
+[Default service]
+Служба по умолчанию
+[General]
+Общее
+[Autosend download link to contact]
+Автоматически отправлять ссылку на загрузку контакту
+[Paste download link into message input area]
+Вставлять ссылку на загрузку в поле отправки сообщения
+[Copy download link to clipboard]
+Копировать ссылку на загрузку в буфер обмена
+[Download link]
+Ссылка на загрузку
+[Do nothing]
+Ничего не делать
+[Try to rename]
+Попытаться переименовать
+[Try to replace]
+Попытаться заменить
+[On conflict when upload]
+При конфликте загрузки
+[Authorization]
+Авторизация
+[Cancel]
+Отмена
+[Enter authorization code:]
+Введите код авторизации:
+[Allow access to team]
+Разрешить доступ к группе
+[Go to this link]
+Перейти по этой ссылке
+[Upload file(s)]
+Загрузить файл(ы)
+[Yandex.Disk]
+Яндекс.Диск
+[Upload to...]
+Загрузить на...
+[Upload]
+Загрузить
+[None]
+Нет
+[Services]
+Службы
+[Upload files to...]
+Загрузить файл в...

@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
-// Copyright (ñ) 2012-15 Miranda NG project,
+// Copyright (ñ) 2012-17 Miranda NG project,
 // Copyright (c) 2000-09 Miranda ICQ/IM project,
 // all portions of this codebase are copyrighted to the people
 // listed in contributors.txt.
@@ -94,11 +94,11 @@ static void PaintWorker(TSButtonCtrl *ctl, HDC hdcPaint)
 		bf_buttonglyph.AlphaFormat = 0;
 	}
 
-	if (ctl == NULL || hdcPaint == NULL)
+	if (ctl == nullptr || hdcPaint == nullptr)
 		return;
 
-	TWindowData *dat = (TWindowData*)GetWindowLongPtr(GetParent(ctl->hwnd), GWLP_USERDATA);
-	if (dat == NULL)
+	CSrmmWindow *dat = (CSrmmWindow*)GetWindowLongPtr(GetParent(ctl->hwnd), GWLP_USERDATA);
+	if (dat == nullptr)
 		return;
 
 	HDC      hdcMem;
@@ -111,7 +111,7 @@ static void PaintWorker(TSButtonCtrl *ctl, HDC hdcPaint)
 	CopyRect(&rcContent, &rcClient);
 
 	if (CMimAPI::m_haveBufferedPaint) {
-		hbp = CMimAPI::m_pfnBeginBufferedPaint(hdcPaint, &rcContent, BPBF_TOPDOWNDIB, NULL, &hdcMem);
+		hbp = CMimAPI::m_pfnBeginBufferedPaint(hdcPaint, &rcContent, BPBF_TOPDOWNDIB, nullptr, &hdcMem);
 		hbmMem = hOld = 0;
 	}
 	else {
@@ -134,7 +134,7 @@ static void PaintWorker(TSButtonCtrl *ctl, HDC hdcPaint)
 				item = &SkinItems[(ctl->stateId == PBS_NORMAL || ctl->stateId == PBS_DISABLED) ? ID_EXTBKBUTTONSNPRESSED : (ctl->stateId == PBS_HOT ? ID_EXTBKBUTTONSMOUSEOVER : ID_EXTBKBUTTONSPRESSED)];
 				realItem = item;
 			}
-			CSkin::SkinDrawBG(ctl->hwnd, ctl->pContainer->hwnd, ctl->pContainer, &rcContent, hdcMem);
+			CSkin::SkinDrawBG(ctl->hwnd, ctl->pContainer->m_hwnd, ctl->pContainer, &rcContent, hdcMem);
 			if (!item->IGNORED) {
 				RECT rc1 = rcClient;
 				rc1.left += item->MARGIN_LEFT;
@@ -154,11 +154,11 @@ static void PaintWorker(TSButtonCtrl *ctl, HDC hdcPaint)
 				GetWindowRect(ctl->hwnd, &rcWin);
 				POINT 	pt;
 				pt.x = rcWin.left;
-				ScreenToClient(dat->hwnd, &pt);
+				ScreenToClient(dat->GetHwnd(), &pt);
 				BitBlt(hdcMem, 0, 0, rcClient.right - rcClient.left, rcClient.bottom - rcClient.top,
-					dat->pContainer->cachedToolbarDC, pt.x, 1, SRCCOPY);
+					dat->m_pContainer->cachedToolbarDC, pt.x, 1, SRCCOPY);
 			}
-			if (ctl->hThemeToolbar && ctl->bIsThemed && 1 == dat->pContainer->bTBRenderingMode) {
+			if (ctl->hThemeToolbar && ctl->bIsThemed && 1 == dat->m_pContainer->bTBRenderingMode) {
 				if (bAero || PluginConfig.m_WinVerMajor >= 6)
 					DrawThemeBackground(ctl->hThemeToolbar, hdcMem, 8, RBStateConvert2Flat(state), &rcClient, &rcClient);
 				else
@@ -181,14 +181,13 @@ static void PaintWorker(TSButtonCtrl *ctl, HDC hdcPaint)
 	}
 	else {
 		if (ctl->pContainer && CSkin::m_skinEnabled) {
-			CSkinItem *item, *realItem = 0;
+			CSkinItem *item;
 			if (ctl->bTitleButton)
 				item = &SkinItems[ctl->stateId == PBS_NORMAL ? ID_EXTBKTITLEBUTTON : (ctl->stateId == PBS_HOT ? ID_EXTBKTITLEBUTTONMOUSEOVER : ID_EXTBKTITLEBUTTONPRESSED)];
-			else {
+			else
 				item = &SkinItems[(ctl->stateId == PBS_NORMAL || ctl->stateId == PBS_DISABLED) ? ID_EXTBKBUTTONSNPRESSED : (ctl->stateId == PBS_HOT ? ID_EXTBKBUTTONSMOUSEOVER : ID_EXTBKBUTTONSPRESSED)];
-				realItem = item;
-			}
-			CSkin::SkinDrawBG(ctl->hwnd, ctl->pContainer->hwnd, ctl->pContainer, &rcClient, hdcMem);
+
+			CSkin::SkinDrawBG(ctl->hwnd, ctl->pContainer->m_hwnd, ctl->pContainer, &rcClient, hdcMem);
 			if (!item->IGNORED) {
 				RECT rc1 = rcClient;
 				rc1.left += item->MARGIN_LEFT;
@@ -211,7 +210,7 @@ static void PaintWorker(TSButtonCtrl *ctl, HDC hdcPaint)
 			else {
 				CSkin::m_switchBarItem->setAlphaFormat(AC_SRC_ALPHA, state == PBS_NORMAL ? 140 : 240);
 				if (state == PBS_PRESSED) {
-					RECT	rc = rcClient;
+					RECT rc = rcClient;
 					InflateRect(&rc, -1, -1);
 					HBRUSH bBack = CreateSolidBrush(PluginConfig.m_tbBackgroundLow ? PluginConfig.m_tbBackgroundLow : GetSysColor(COLOR_3DDKSHADOW));
 					FillRect(hdcMem, &rc, bBack);
@@ -229,9 +228,7 @@ static void PaintWorker(TSButtonCtrl *ctl, HDC hdcPaint)
 		}
 	}
 
-	/*
-	 * render content
-	 */
+	// render content
 	if (ctl->arrow) {
 		rcContent.top += 2;
 		rcContent.bottom -= 2;
@@ -277,7 +274,7 @@ static void PaintWorker(TSButtonCtrl *ctl, HDC hdcPaint)
 		RECT rcText;
 		CopyRect(&rcText, &rcClient);
 
-		TCHAR szText[MAX_PATH];
+		wchar_t szText[MAX_PATH];
 		GetWindowText(ctl->hwnd, szText, _countof(szText));
 		SetBkMode(hdcMem, TRANSPARENT);
 		HFONT hOldFont = (HFONT)SelectObject(hdcMem, ctl->hFont);
@@ -291,16 +288,16 @@ static void PaintWorker(TSButtonCtrl *ctl, HDC hdcPaint)
 		}
 
 		SIZE sz;
-		GetTextExtentPoint32(hdcMem, szText, (int)mir_tstrlen(szText), &sz);
+		GetTextExtentPoint32(hdcMem, szText, (int)mir_wstrlen(szText), &sz);
 		if (ctl->cHot) {
 			SIZE szHot;
 			GetTextExtentPoint32A(hdcMem, "&", 1, &szHot);
 			sz.cx -= szHot.cx;
 		}
 		if (ctl->arrow)
-			DrawState(hdcMem, NULL, NULL, (LPARAM)ctl->arrow, 0, rcClient.right - rcClient.left - 5 - PluginConfig.m_smcxicon + (!ctl->hThemeButton && ctl->stateId == PBS_PRESSED ? 1 : 0), (rcClient.bottom - rcClient.top) / 2 - PluginConfig.m_smcyicon / 2 + (!ctl->hThemeButton && ctl->stateId == PBS_PRESSED ? 1 : 0), PluginConfig.m_smcxicon, PluginConfig.m_smcyicon, IsWindowEnabled(ctl->hwnd) ? DST_ICON : DST_ICON | DSS_DISABLED);
+			DrawState(hdcMem, nullptr, nullptr, (LPARAM)ctl->arrow, 0, rcClient.right - rcClient.left - 5 - PluginConfig.m_smcxicon + (!ctl->hThemeButton && ctl->stateId == PBS_PRESSED ? 1 : 0), (rcClient.bottom - rcClient.top) / 2 - PluginConfig.m_smcyicon / 2 + (!ctl->hThemeButton && ctl->stateId == PBS_PRESSED ? 1 : 0), PluginConfig.m_smcxicon, PluginConfig.m_smcyicon, IsWindowEnabled(ctl->hwnd) ? DST_ICON : DST_ICON | DSS_DISABLED);
 		SelectObject(hdcMem, ctl->hFont);
-		DrawState(hdcMem, NULL, NULL, (LPARAM)szText, mir_tstrlen(szText), (rcText.right - rcText.left - sz.cx) / 2 + (!ctl->hThemeButton && ctl->stateId == PBS_PRESSED ? 1 : 0), ctl->hThemeButton ? (rcText.bottom - rcText.top - sz.cy) / 2 : (rcText.bottom - rcText.top - sz.cy) / 2 - (ctl->stateId == PBS_PRESSED ? 0 : 1), sz.cx, sz.cy, IsWindowEnabled(ctl->hwnd) || ctl->hThemeButton ? DST_PREFIXTEXT | DSS_NORMAL : DST_PREFIXTEXT | DSS_DISABLED);
+		DrawState(hdcMem, nullptr, nullptr, (LPARAM)szText, mir_wstrlen(szText), (rcText.right - rcText.left - sz.cx) / 2 + (!ctl->hThemeButton && ctl->stateId == PBS_PRESSED ? 1 : 0), ctl->hThemeButton ? (rcText.bottom - rcText.top - sz.cy) / 2 : (rcText.bottom - rcText.top - sz.cy) / 2 - (ctl->stateId == PBS_PRESSED ? 0 : 1), sz.cx, sz.cy, IsWindowEnabled(ctl->hwnd) || ctl->hThemeButton ? DST_PREFIXTEXT | DSS_NORMAL : DST_PREFIXTEXT | DSS_DISABLED);
 		SelectObject(hdcMem, hOldFont);
 	}
 
@@ -328,18 +325,18 @@ static LRESULT CALLBACK TSButtonWndProc(HWND hwndDlg, UINT msg, WPARAM wParam, L
 		return 0;
 
 	case WM_PAINT:
-	{
 		PAINTSTRUCT ps;
-		HDC hdcPaint = BeginPaint(hwndDlg, &ps);
-		if (hdcPaint) {
-			if (bct->sitem)
-				bct->sitem->RenderThis(hdcPaint);
-			else
-				PaintWorker(bct, hdcPaint);
-			EndPaint(hwndDlg, &ps);
+		{
+			HDC hdcPaint = BeginPaint(hwndDlg, &ps);
+			if (hdcPaint) {
+				if (bct->sitem)
+					bct->sitem->RenderThis(hdcPaint);
+				else
+					PaintWorker(bct, hdcPaint);
+				EndPaint(hwndDlg, &ps);
+			}
 		}
-	}
-	return 0;
+		return 0;
 
 	case BM_SETIMAGE:
 		if (wParam == IMAGE_ICON) {
@@ -366,21 +363,21 @@ static LRESULT CALLBACK TSButtonWndProc(HWND hwndDlg, UINT msg, WPARAM wParam, L
 
 			DeleteObject(ii.hbmMask);
 			DeleteObject(ii.hbmColor);
-			bct->hBitmap = NULL;
-			InvalidateRect(bct->hwnd, NULL, TRUE);
+			bct->hBitmap = nullptr;
+			InvalidateRect(bct->hwnd, nullptr, TRUE);
 		}
 		else if (wParam == IMAGE_BITMAP) {
 			bct->hBitmap = (HBITMAP)lParam;
 			if (bct->hIconPrivate)
 				DestroyIcon(bct->hIconPrivate);
-			bct->hIcon = bct->hIconPrivate = NULL;
-			InvalidateRect(bct->hwnd, NULL, TRUE);
+			bct->hIcon = bct->hIconPrivate = nullptr;
+			InvalidateRect(bct->hwnd, nullptr, TRUE);
 		}
 		return 0;
 
 	case BUTTONSETARROW: // turn arrow on/off
 		bct->arrow = (HICON)wParam;
-		InvalidateRect(bct->hwnd, NULL, TRUE);
+		InvalidateRect(bct->hwnd, nullptr, TRUE);
 		return 0;
 
 	case BUTTONSETASDIMMED:
@@ -397,7 +394,7 @@ static LRESULT CALLBACK TSButtonWndProc(HWND hwndDlg, UINT msg, WPARAM wParam, L
 
 	case BUTTONSETASNORMAL:
 		bct->stateId = (wParam) ? PBS_NORMAL : PBS_DISABLED;
-		InvalidateRect(bct->hwnd, NULL, FALSE);
+		InvalidateRect(bct->hwnd, nullptr, FALSE);
 		break;
 
 	case BUTTONGETSTATEID:
@@ -423,7 +420,7 @@ static LRESULT CALLBACK TSButtonWndProc(HWND hwndDlg, UINT msg, WPARAM wParam, L
 	case WM_MBUTTONUP:
 		if (bct->sitem)
 			if (bct->sitem->getDat())
-				SendMessage(bct->sitem->getDat()->hwnd, WM_CLOSE, 1, 0);
+				SendMessage(bct->sitem->getDat()->GetHwnd(), WM_CLOSE, 1, 0);
 		break;
 
 	case WM_LBUTTONDOWN:
@@ -431,7 +428,7 @@ static LRESULT CALLBACK TSButtonWndProc(HWND hwndDlg, UINT msg, WPARAM wParam, L
 			if (bct->sitem->testCloseButton() != -1)
 				return TRUE;
 			bct->stateId = PBS_PRESSED;
-			InvalidateRect(bct->hwnd, NULL, TRUE);
+			InvalidateRect(bct->hwnd, nullptr, TRUE);
 			bct->sitem->activateSession();
 		}
 
@@ -442,11 +439,11 @@ static LRESULT CALLBACK TSButtonWndProc(HWND hwndDlg, UINT msg, WPARAM wParam, L
 				bct->stateId = PBS_PRESSED;
 			else if (LOWORD(lParam) > rc.right - 12) {
 				if (GetDlgCtrlID(hwndDlg) == IDOK || bct->stateId != PBS_DISABLED) {
-					WORD w = (WORD)((INT_PTR)bct->arrow & 0x0000ffff);
+					WORD w = LOWORD((INT_PTR)bct->arrow);
 					SendMessage(GetParent(hwndDlg), WM_COMMAND, MAKELONG(w, BN_CLICKED), (LPARAM)hwndDlg);
 				}
 			}
-			InvalidateRect(bct->hwnd, NULL, TRUE);
+			InvalidateRect(bct->hwnd, nullptr, TRUE);
 			return 0;
 		}
 		break;
@@ -454,7 +451,7 @@ static LRESULT CALLBACK TSButtonWndProc(HWND hwndDlg, UINT msg, WPARAM wParam, L
 	case WM_LBUTTONUP:
 		if (bct->sitem) {
 			if (bct->sitem->testCloseButton() != -1) {
-				SendMessage(bct->sitem->getDat()->hwnd, WM_CLOSE, 1, 0);
+				SendMessage(bct->sitem->getDat()->GetHwnd(), WM_CLOSE, 1, 0);
 				return TRUE;
 			}
 		}
@@ -462,7 +459,7 @@ static LRESULT CALLBACK TSButtonWndProc(HWND hwndDlg, UINT msg, WPARAM wParam, L
 
 	case WM_MOUSEMOVE:
 		if (bct->arrow && bct->stateId == PBS_HOT)
-			InvalidateRect(bct->hwnd, NULL, TRUE);
+			InvalidateRect(bct->hwnd, nullptr, TRUE);
 
 		if (bct->sitem) {
 			if (bct->sitem->testCloseButton() != -1) {
@@ -481,8 +478,8 @@ static LRESULT CALLBACK TSButtonWndProc(HWND hwndDlg, UINT msg, WPARAM wParam, L
 	case WM_TIMER: // use a timer to check if they have did a mouseout
 		if (wParam == BUTTON_POLLID) {
 			RECT rc;
-			POINT pt;
 			GetWindowRect(hwndDlg, &rc);
+			POINT pt;
 			GetCursorPos(&pt);
 			if (!PtInRect(&rc, pt)) { // mouse must be gone, trigger mouse leave
 				PostMessage(hwndDlg, WM_MOUSELEAVE, 0, 0L);

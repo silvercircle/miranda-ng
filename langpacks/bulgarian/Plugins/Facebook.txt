@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Facebook.dll
 ;  Plugin: Facebook RM
-;  Version: 0.2.11.4
+;  Version: 0.3.3.2
 ;  Authors: Michal Zelinka, Robert Pösel
 ;============================================================
 [Facebook protocol support for Miranda NG.]
@@ -41,22 +41,16 @@ URL:
 Автозадаване на флаг "Игнориране промените на състояния"
 [Use bigger avatars]
 Ползване на по-големи аватари
-[Event notifications]
-Уведомявания за събития
-[Notifications]
-Уведомявания
 [News feed types to notify:]
 Уведомяване за следните новини:
-[Other events]
-Други събития
-[Client notifications]
-Уведомявания
+[Extra]
+Допълнителни
 [Use balloon notifications in system tray instead of popups]
 Ползване на балонни известия в трея вместо popup
-[Preview]
-Образец
 [Post Miranda statuses to Wall]
 Публикуване на състоянията от Miranda на стената
+[Advanced]
+Разширени
 [Bots challenge test]
 Тест за ботове
 [Instruction:]
@@ -69,10 +63,10 @@ URL:
 Въведете текста, който виждате
 [Myself]
 Аз
-[User]
-Потребител
 [Friend]
 Приятел
+[User]
+Потребител
 [&Invite user...]
 Покани потребител...
 [&Leave chat session]
@@ -81,10 +75,10 @@ URL:
 Подробности за потребителя
 [User &history]
 История на потребителя
+[Notifications]
+Уведомявания
 [Unknown error]
 Непозната грешка
-[Login error: Some Facebook things are required.]
-Грешка при вписване: Необходими са някой неща за Facebook.
 [Login error, probably bad login credentials.]
 Грешка при вписване вероятно поради сгрешени данни за вписване.
 [Need confirmation for sending messages to other clients.\nOpen Facebook website and try to send message to this contact again!]
@@ -97,18 +91,6 @@ URL:
 Стандарт
 [<< Contacts]
 << Контакти
-[Sample event]
-Примерно събитие
-[Sample request]
-Пример за молба
-[Sample newsfeed]
-Пример за новина
-[Sample notification]
-Пример за уведомяване
-[Sample friendship]
-Пример за приятелсттво
-[Sample ticker]
-Пример за стикер
 [a sticker]
 стикер
 [files]
@@ -139,8 +121,8 @@ URL:
 Събития
 [Messaging]
 Съобщения
-[News feeds]
-Новини
+[Other events]
+Други събития
 [Notification]
 Уведомяване
 [Newsfeed event]
@@ -149,6 +131,18 @@ URL:
 Друго събитие
 [Mind]
 Мисли си
+[Angry]
+Ядосан
+[Haha]
+Ха-ха
+[Like]
+Харесва ми
+[Love]
+Любов
+[Sad]
+Тъжно
+[Wow]
+Еха
 [Request friendship]
 Молба за приятелство
 [Services...]

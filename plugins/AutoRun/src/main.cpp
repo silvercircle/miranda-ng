@@ -24,16 +24,16 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD, LPVOID)
 	return TRUE;
 }
 
-void GetProfilePath(TCHAR *res, size_t resLen)
+void GetProfilePath(wchar_t *res, size_t resLen)
 {
-	TCHAR dbname[MAX_PATH], exename[MAX_PATH];
-	CallService(MS_DB_GETPROFILENAMET, _countof(dbname), (LPARAM)dbname);
+	wchar_t dbname[MAX_PATH], exename[MAX_PATH];
+	Profile_GetNameW(_countof(dbname), dbname);
 	GetModuleFileName(NULL, exename, _countof(exename));
 
-	TCHAR *p = _tcsrchr(dbname, '.');
+	wchar_t *p = wcsrchr(dbname, '.');
 	if (p) *p = 0;
 
-	mir_sntprintf(res, resLen, _T("\"%s\" \"/profile:%s\""), exename, dbname);
+	mir_snwprintf(res, resLen, L"\"%s\" \"/profile:%s\"", exename, dbname);
 }
 
 static void SetAutorun(BOOL autorun)
@@ -43,15 +43,15 @@ static void SetAutorun(BOOL autorun)
 	switch (autorun) {
 	case TRUE:
 		if ( RegCreateKeyEx(ROOT_KEY, SUB_KEY, 0, NULL, 0, KEY_CREATE_SUB_KEY|KEY_SET_VALUE,NULL,&hKey,&dw) == ERROR_SUCCESS) {
-			TCHAR result[MAX_PATH];
+			wchar_t result[MAX_PATH];
 			GetProfilePath(result, _countof(result));
-			RegSetValueEx(hKey, _T("MirandaNG"), 0, REG_SZ, (BYTE*)result, sizeof(TCHAR)*mir_tstrlen(result));
+			RegSetValueEx(hKey, L"MirandaNG", 0, REG_SZ, (BYTE*)result, sizeof(wchar_t)*(DWORD)mir_wstrlen(result));
 			RegCloseKey(hKey);
 		}
 		break;
 	case FALSE:
 		if ( RegOpenKey(ROOT_KEY, SUB_KEY, &hKey) == ERROR_SUCCESS) {
-			RegDeleteValue(hKey, _T("MirandaNG"));
+			RegDeleteValue(hKey, L"MirandaNG");
 			RegCloseKey(hKey);
 		}
 		break;
@@ -64,13 +64,13 @@ static BOOL CmpCurrentAndRegistry()
 	if ( RegOpenKeyEx(ROOT_KEY, SUB_KEY, 0, KEY_QUERY_VALUE, &hKey) != ERROR_SUCCESS)
 		return FALSE;
 
-	TCHAR result[MAX_PATH], dbpath[MAX_PATH];
+	wchar_t result[MAX_PATH], dbpath[MAX_PATH];
 	DWORD dwBufLen = MAX_PATH;
-	if ( RegQueryValueEx(hKey, _T("MirandaNG"), NULL, NULL, (LPBYTE)dbpath, &dwBufLen) != ERROR_SUCCESS)
+	if ( RegQueryValueEx(hKey, L"MirandaNG", NULL, NULL, (LPBYTE)dbpath, &dwBufLen) != ERROR_SUCCESS)
 		return FALSE;
 	
 	GetProfilePath(result, _countof(result));
-	return mir_tstrcmpi(result, dbpath) == 0;
+	return mir_wstrcmpi(result, dbpath) == 0;
 }
 
 static INT_PTR CALLBACK DlgProcAutorunOpts(HWND hwndDlg, UINT msg, WPARAM, LPARAM lParam)
@@ -106,8 +106,8 @@ static int AutorunOptInitialise(WPARAM wParam,LPARAM)
 	odp.position = 100100000;
 	odp.hInstance = hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_AUTORUN);
-	odp.pszTitle = ModuleName;
-	odp.pszGroup = LPGEN("Services");
+	odp.szTitle.a = ModuleName;
+	odp.szGroup.a = LPGEN("Services");
 	odp.pfnDlgProc = DlgProcAutorunOpts;
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);

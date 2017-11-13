@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
-// Copyright (ñ) 2012-15 Miranda NG project,
+// Copyright (ñ) 2012-17 Miranda NG project,
 // Copyright (c) 2000-09 Miranda ICQ/IM project,
 // all portions of this codebase are copyrighted to the people
 // listed in contributors.txt.
@@ -43,14 +43,14 @@
 
 struct SendJob
 {
-	HANDLE   hSendId;
+	int      iSendId;
 	char    *szSendBuffer;
 	size_t   iSendLength;	// length of message in utf-8 octets (used to check maxlen)
 	int      sendCount;
 	MCONTACT hContact;
 	HWND     hOwnerWnd;
 	unsigned iStatus;
-	TCHAR    szErrorMsg[128];
+	wchar_t    szErrorMsg[128];
 	DWORD    dwFlags;
 	int      iAcksNeeded;
 	HANDLE   hEventSplit;
@@ -85,26 +85,20 @@ public:
 	SendJob *getJobByIndex(const int index) { return(&m_jobs[index]); }
 
 	void   clearJob(const int index);
-	int    findNextFailed(const TWindowData *dat) const;
-	void   handleError(TWindowData *dat, const int iEntry) const;
-	int    addTo(TWindowData *dat, size_t iLen, int dwFlags);
-	int    sendQueued(TWindowData *dat, const int iEntry);
+	int    findNextFailed(const CTabBaseDlg *dat) const;
+	void   handleError(CTabBaseDlg *dat, const int iEntry) const;
+	int    addTo(CTabBaseDlg *dat, size_t iLen, int dwFlags);
+	int    sendQueued(CTabBaseDlg *dat, const int iEntry);
 	size_t getSendLength(const int iEntry);
-	void   checkQueue(const TWindowData *dat) const;
-	void   logError(const TWindowData *dat, int iSendJobIndex, const TCHAR *szErrMsg) const;
-	void   recallFailed(const TWindowData *dat, int iEntry) const;
-	void   showErrorControls(TWindowData *dat, const int showCmd) const;
-	int    ackMessage(TWindowData *dat, WPARAM wParam, LPARAM lParam);
-	int    doSendLater(int iIndex, TWindowData *dat, MCONTACT hContact = 0, bool fIsSendLater = true);
-	/*
-	 * static members
-	 */
-	static int     TSAPI RTL_Detect(const wchar_t *pszwText);
-	static int     TSAPI GetProtoIconFromList(const char *szProto, int iStatus);
+	void   checkQueue(const CTabBaseDlg *dat) const;
+	void   logError(CTabBaseDlg *dat, int iSendJobIndex, const wchar_t *szErrMsg) const;
+	void   recallFailed(CTabBaseDlg *dat, int iEntry) const;
+	void   showErrorControls(CTabBaseDlg *dat, const int showCmd) const;
+	int    ackMessage(CTabBaseDlg *dat, WPARAM wParam, LPARAM lParam);
+	int    doSendLater(int iIndex, CTabBaseDlg *dat, MCONTACT hContact = 0, bool fIsSendLater = true);
+
+	// static members
 	static LRESULT TSAPI WarnPendingJobs(unsigned int uNrMessages);
-	static void    TSAPI NotifyDeliveryFailure(const TWindowData *dat);
-	static void    TSAPI UpdateSaveAndSendButton(TWindowData *dat);
-	static void    TSAPI EnableSending(const TWindowData *dat, const int iMode);
 
 private:
 	SendJob m_jobs[NR_SENDJOBS];
@@ -115,6 +109,6 @@ extern SendQueue *sendQueue;
 
 int  TSAPI ActivateExistingTab(TContainerData *pContainer, HWND hwndChild);
 void TSAPI ShowMultipleControls(const HWND hwndDlg, const UINT * controls, int cControls, int state);
-void TSAPI HandleIconFeedback(TWindowData *dat, HICON iIcon);
+void TSAPI HandleIconFeedback(CTabBaseDlg *dat, HICON iIcon);
 
 #endif /* __SENDQUEUE_H */

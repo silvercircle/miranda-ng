@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -156,7 +156,7 @@ MIR_CORE_DLL(int) PathToAbsoluteW(const WCHAR *pSrc, WCHAR *pOut, const WCHAR *b
 
 	WCHAR buf[MAX_PATH];
 	if (pSrc[0] < ' ')
-		return mir_sntprintf(pOut, MAX_PATH, _T("%s"), pSrc);
+		return mir_snwprintf(pOut, MAX_PATH, L"%s", pSrc);
 
 	if (PathIsAbsoluteW(pSrc))
 		return GetFullPathName(pSrc, MAX_PATH, pOut, NULL);
@@ -167,7 +167,7 @@ MIR_CORE_DLL(int) PathToAbsoluteW(const WCHAR *pSrc, WCHAR *pOut, const WCHAR *b
 	if (pSrc[0] == '\\')
 		pSrc++;
 
-	mir_sntprintf(buf, MAX_PATH, _T("%s%s"), base, pSrc);
+	mir_snwprintf(buf, MAX_PATH, L"%s%s", base, pSrc);
 	return GetFullPathName(buf, MAX_PATH, pOut, NULL);
 }
 

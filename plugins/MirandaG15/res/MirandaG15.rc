@@ -93,11 +93,6 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,97,281,9
     PUSHBUTTON      "Credits",IDC_CREDITS,110,230,90,11
     GROUPBOX        "About",IDC_GRP3,0,199,300,44
-    CTEXT           "Mirandag15 + TrillianG15",IDC_STC6,80,204,136,8,SS_CENTERIMAGE | NOT WS_GROUP
-    CTEXT           "For updates and news check the thread on http://www.g15forums.com",IDC_STC7,2,212,292,9,NOT WS_GROUP
-    CTEXT           "Or visit http://www.mkleinhans.de",IDC_STC8,2,221,290,8,NOT WS_GROUP
-    LTEXT           "mail@mkleinhans.de",IDC_STC9,232,232,66,9,NOT WS_GROUP
-    LTEXT           "© 2006 by Martin Kleinhans",IDC_STC10,2,232,90,9,NOT WS_GROUP
     COMBOBOX        IDC_DEVICE,80,9,128,11,CBS_DROPDOWNLIST | WS_TABSTOP
     RTEXT           "Device:",IDC_DEVICE_STATIC,8,11,63,9,NOT WS_GROUP
     LTEXT           "If the screensaver is active:",IDC_STC14,6,51,289,9,NOT WS_GROUP
@@ -146,7 +141,7 @@ BEGIN
     CONTROL         "User events",IDC_NOTIFY_IRC_USERS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,110,184,76,9
     CONTROL         "Emotes",IDC_NOTIFY_IRC_EMOTES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,110,195,76,9
     CONTROL         "Status changes",IDC_NOTIFY_IRC_STATUS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,110,206,76,9
-    LTEXT           "Special IRC events:",IDC_STC4,110,151,64,9,NOT WS_GROUP
+    LTEXT           "Group chat events:",IDC_STC4,110,151,64,9,NOT WS_GROUP
     CONTROL         "Notices",IDC_NOTIFY_IRC_NOTICES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,110,173,74,9
     CONTROL         "Channel events",IDC_NOTIFY_IRC_CHANNEL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,110,217,76,9
     CONTROL         "Cut off nicknames after",IDC_NOTIFY_NICKCUTOFF,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,46,90,9

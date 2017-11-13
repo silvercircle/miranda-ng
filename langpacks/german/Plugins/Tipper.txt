@@ -5,8 +5,8 @@
 ;  Version: 2.1.0.7
 ;  Authors: Scott Ellis, yaho
 ;============================================================
-[Tool Tip notification windows.]
-ToolTip Fenster.
+[Tooltip notification windows.]
+Tooltip Fenster.
 ;file \plugins\TipperYM\res\resource.rc
 [Layout]
 Layout
@@ -200,12 +200,6 @@ Ungültige Ersetzung
 <Keine Beschriftung>
 [Add item]
 Objekt hinzufügen
-[Add separator]
-Trennlinie hinzufügen
-[Move up]
-Hoch
-[Move down]
-Runter
 [No icon]
 Kein Icon
 [Icon on left]
@@ -478,13 +472,23 @@ Werte
 Traytitel
 [Tipper]
 Tipper
+[Copy item]
+Eintrag kopieren
+[Arrow up]
+Pfeil hoch
+[Arrow down]
+Pfeil runter
+[Reload]
+Neu laden
+[Apply]
+Übernehmen
 ;file \plugins\TipperYM\src\translations.cpp
 [Female]
 weiblich
 [Male]
 männlich
 [%dy %dd %dh %dm]
-&dJ %dT %dS %dM
+%dJ %dT %dS %dM
 [%dd]
 %dT
 [[No translation]]

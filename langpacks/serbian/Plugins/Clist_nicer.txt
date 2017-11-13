@@ -8,7 +8,7 @@
 [Displays contacts, event notifications, protocol status.]
 
 ;file \plugins\Clist_nicer\res\resource.rc
-[Clist Nicer exception]
+[Clist nicer exception]
 
 [Copy to clipboard]
 
@@ -17,16 +17,6 @@
 [Exit Miranda]
 
 [Although the exception was caught and you may continue working with Miranda, you should restart the program as soon as possible. The exception may have damaged internal data structures and can have a serious impact on stability.]
-
-[About CList Nicer+]
-
-[Clist Nicer+]
-
-[Copyright © 2004-2010 by the Miranda IM project, 2012-2015 by the Miranda NG project. More detailed copyright information can be found in the included README file.]
-
-[Version]
-Verzija
-[Support and latest version information]
 
 [Delete contact]
 Brisanje kontakta
@@ -424,7 +414,7 @@ Vidljivost
 Ostalo
 [Hide this contact from the list]
 
-[To show a previously hidden contact, navigate to Options -> Events -> Ignore, search the contact in the list and tick the checkbox next to its name.]
+[To show a previously hidden contact, navigate to Options -> Contacts -> Ignore, search the contact in the list and tick the checkbox next to its name.]
 
 [Display options]
 
@@ -450,18 +440,18 @@ Glavni &meni
 &Prisutan\tCtrl+1
 [&Away\tCtrl+2]
 &Neaktivan\tCtrl+2
-[&NA\tCtrl+3]
+[&Not available\tCtrl+3]
 N&edostupan\tCtrl+3
 [Occ&upied\tCtrl+4]
 &Zauzet\tCtrl+4
-[&DND\tCtrl+5]
-Ne &Uznemiravati\tCtrl+5
+[&Do not disturb\tCtrl+5]
+Ne &uznemiravaj\tCtrl+5
 [&Free for chat\tCtrl+6]
-Spreman za &razgovor\tCtrl+7
+Spreman za &razgovor\tCtrl+6
 [&Invisible\tCtrl+7]
 Ne&vidljiv\tCtrl+7
 [On the &phone\tCtrl+8]
-Na &telefonu\tCtrl+8
+&Telefoniram\tCtrl+8
 [Out to &lunch\tCtrl+9]
 N&a ručku\tCtrl+9
 ;file \plugins\Clist_nicer\src\CLCButton.cpp
@@ -498,11 +488,11 @@ Odsutan
 Prisutan
 [Away]
 Neaktivan
-[NA]
+[Not available]
 Nedostupan
 [Occupied]
 Zauzet
-[DND]
+[Do not disturb]
 Ne uznemiravaj
 [Free for chat]
 Spreman za razgovor
@@ -628,7 +618,7 @@ Standardno
 
 [Parameter mismatch]
 
-[The service %s specified by the %s button definition was not found. You may need to install additional plugins.]
+[The service %S specified by the %S button definition was not found. You may need to install additional plugins.]
 
 [Service failure]
 
@@ -693,14 +683,6 @@ Brzo pretraži tekst
 
 [&Down]
 
-[Frames]
-Okviri
-[Show all frames]
-
-[Show all title bars]
-
-[Hide all title bars]
-
 [Lock frame]
 
 [Visible]
@@ -710,6 +692,14 @@ Prikaz naslovne trake
 [Skinned frame]
 
 [Floating]
+
+[Frames]
+Okviri
+[Show all frames]
+
+[Show all title bars]
+
+[Hide all title bars]
 
 ;file \plugins\Clist_nicer\src\cluiopts.cpp
 [Title bar]
@@ -743,8 +733,6 @@ Prikaz naslovne trake
 
 [&Options...]
 &Podešavanja...
-[&About the contact list...]
-
 ;file \plugins\Clist_nicer\src\viewmodes.cpp
 [Ungrouped contacts]
 
@@ -762,7 +750,7 @@ Prikaz naslovne trake
 
 [Days]
 
-[Current view mode: %s]
+[Current view mode: %S]
 
 [Filtering]
 

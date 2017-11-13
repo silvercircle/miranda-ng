@@ -13,7 +13,7 @@ using namespace std;
 #include <m_clist.h>
 #include <m_skin.h>
 #include <m_contacts.h>
-#include <m_system_cpp.h>
+#include <m_system.h>
 
 #include <m_variables.h>
 #include <m_folders.h>
@@ -27,11 +27,15 @@ using namespace std;
 
 #include "globals.h"
 #include "stopspam.h"
-#include "eventhooker.h"
 #include "version.h"
 #include "resource.h"
 #include "utilities.h"
-#include "include\utf8.h"
+#include "include/utf8.h"
 
 extern HINSTANCE hInst;
 extern HANDLE hStopSpamLogDirH;
+
+int OnDbContactSettingChanged(WPARAM w, LPARAM l);
+int OnDbEventFilterAdd(WPARAM w, LPARAM l);
+int OnDbEventAdded(WPARAM hContact, LPARAM hDbEvent);
+int OnOptInit(WPARAM w, LPARAM l);

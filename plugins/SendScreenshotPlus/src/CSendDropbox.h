@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-09 Miranda ICQ/IM project,
 
 This file is part of Send Screenshot Plus, a Miranda IM plugin.
@@ -31,25 +31,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "Utils.h"
 
-//---------------------------------------------------------------------------
-class CSendDropbox : public CSend {
-	public:
-		CSendDropbox(HWND Owner, MCONTACT hContact, bool bAsync);
-		~CSendDropbox();
+class CSendDropbox : public CSend
+{
 
-		int Send();
+public:
+	CSendDropbox(HWND Owner, MCONTACT hContact, bool bAsync);
+	~CSendDropbox();
 
-	protected:
-		EventHandle m_hEvent;
-		HANDLE m_hDropHook;
-		HANDLE m_hDropSend;
+	int Send();
 
-		void SendThread();
-		static void SendThreadWrapper(void *Obj);
-		static int OnDropSend(void*, WPARAM, LPARAM);
-		static int OnDropAck(void*, WPARAM, LPARAM);
+protected:
+	void SendThread();
+	static void SendThreadWrapper(void *Obj);
+	static int OnDropAck(void*, WPARAM, LPARAM);
 };
-
-//---------------------------------------------------------------------------
 
 #endif

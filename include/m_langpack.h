@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-12 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -42,26 +42,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 EXTERN_C MIR_CORE_DLL(void)     Langpack_SortDuplicates(void);
 
 EXTERN_C MIR_CORE_DLL(int)      LoadLangPackModule(void);
-EXTERN_C MIR_CORE_DLL(int)      LoadLangPack(const TCHAR *szLangPack);
-EXTERN_C MIR_CORE_DLL(void)     ReloadLangpack(TCHAR *pszStr);
+EXTERN_C MIR_CORE_DLL(int)      LoadLangPack(const wchar_t *szLangPack);
+EXTERN_C MIR_CORE_DLL(void)     ReloadLangpack(wchar_t *pszStr);
 
-EXTERN_C MIR_CORE_DLL(char*)    TranslateA_LP(const char* str, int hLang);
-EXTERN_C MIR_CORE_DLL(wchar_t*) TranslateW_LP(const wchar_t* str, int hLang);
+EXTERN_C MIR_CORE_DLL(char*)    TranslateA_LP(const char *str, int hLang);
+EXTERN_C MIR_CORE_DLL(wchar_t*) TranslateW_LP(const wchar_t *str, int hLang);
 EXTERN_C MIR_CORE_DLL(void)     TranslateDialog_LP(HWND hDlg, int hLang);
 
 #define Translate(s) TranslateA_LP(s, hLangpack)
 #define TranslateW(s) TranslateW_LP(s, hLangpack)
+#define TranslateT(s) TranslateW_LP(_A2W(s), hLangpack)
 #define TranslateDialogDefault(h) TranslateDialog_LP(h,hLangpack)
-
-#ifdef _UNICODE
-	#define TranslateT(s)	 TranslateW_LP(_T(s),hLangpack)
-	#define TranslateTS(s)	 TranslateW_LP(s,hLangpack)
-	#define TranslateTH(l,s) TranslateW_LP(s,l)
-#else
-	#define TranslateT(s)	 TranslateA_LP(s,hLangpack)
-	#define TranslateTS(s)	 TranslateA_LP(s,hLangpack)
-	#define TranslateTH(l,s) TranslateA_LP(s,l)
-#endif
 
 // If you're storing some string for calling later-on Translate or using it
 // with an API call that does translation automatically marked with
@@ -70,11 +61,7 @@ EXTERN_C MIR_CORE_DLL(void)     TranslateDialog_LP(HWND hDlg, int hLang);
 
 #define LPGEN(s)			s
 #define LPGENW(s)			L ## s
-#ifdef _UNICODE
-	#define LPGENT(s)		_T(s)
-#else
-	#define LPGENT(s)		s
-#endif
+
 //Those macros do NOTHING. They are just markers for lpgen.pl.
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -99,21 +86,15 @@ EXTERN_C MIR_CORE_DLL(int) Langpack_GetDefaultLocale(void);
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // returns the strdup/wcsdup of lparam according to the langpack
-// returns a string converted from char* to TCHAR* using the langpack codepage.
+// returns a string converted from char* to wchar_t* using the langpack codepage.
 // This string should be freed using mir_free() then
 
-EXTERN_C MIR_CORE_DLL(TCHAR*) Langpack_PcharToTchar(const char* pszStr);
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// initializes the plugin-specific translation context  v0.10.0+
-// always returns 0
-
-EXTERN_C MIR_CORE_DLL(void) mir_getLP(const PLUGININFOEX *pInfo, int *_hLang = &hLangpack);
+EXTERN_C MIR_CORE_DLL(wchar_t*) Langpack_PcharToTchar(const char *pszStr);
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // reloads langpack
 // wParam = 0 (ignored)
-// lParam = (LPARAM)(TCHAR*)langpack file name or NULL to reload the current one
+// lParam = (LPARAM)(wchar_t*)langpack file name or NULL to reload the current one
 // always returns 0
 
 #define MS_LANGPACK_RELOAD "LangPack/Reload"

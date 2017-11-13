@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Tox.dll
 ;  Plugin: Tox protocol
-;  Version: 0.11.1.14
+;  Version: 0.11.1.25
 ;  Authors: Miranda NG Team
 ;============================================================
 [Tox protocol support for Miranda NG.]
@@ -23,8 +23,6 @@ Tox ID:
 Парола:
 [Default group:]
 Станд. група:
-[Tox]
-Tox
 [Create Tox profile]
 Създаване на профил
 [Import Tox profile]
@@ -53,6 +51,8 @@ DNS име:
 Tox профилът е шифрован. Въведете паролата за да продължите.
 [Add]
 Добавяне
+[Update]
+Обнови
 [IPv4 address/ Host]
 IPv4 адрес/ Хост
 [IPv6 address (optional)]
@@ -99,8 +99,6 @@ IPv6 адрес (незадължително)
 Изходящо обаждане
 [To:]
 За:
-[Group chat]
-Групов чат
 [Profiles folder]
 Папка на профилите
 [Action]
@@ -119,16 +117,6 @@ IPv6 адрес (незадължително)
 Входящо обаждане от %s
 [Outgoing call to %s]
 Изходящо обаждане от %s
-[Unable to find input audio device]
-Не може да бъде открит микрофон
-[Video call is unsupported]
-Видео обажданията не се поддържат
-[Unable to find output audio device]
-Не може да бъде открит говорител
-[Call started]
-Начало на разговора
-[Call ended]
-Край на разговора
 [%s connection]
 %s връзка
 [Tox profile]
@@ -169,3 +157,5 @@ Tox профил
 Контактът вече присъства в списъка ви с контакти
 [Query]
 Търсене
+[Unknown error]
+Непозната грешка

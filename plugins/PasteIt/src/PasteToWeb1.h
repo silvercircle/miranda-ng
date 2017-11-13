@@ -28,9 +28,9 @@ protected:
 public:
 	PasteToWeb1();
 	virtual ~PasteToWeb1();
-	virtual TCHAR* GetName()
+	virtual wchar_t* GetName()
 	{
-		return _T("pastebin.com");
+		return L"pastebin.com";
 	}
 	virtual void ConfigureSettings();
 	virtual std::list<PasteFormat> GetFormats();

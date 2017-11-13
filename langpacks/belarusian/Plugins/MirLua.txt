@@ -1,0 +1,37 @@
+﻿#muuid {27d41d81-991f-4dc6-8749-b0321c87e694}
+;============================================================
+;  File: MirLua.dll
+;  Plugin: MirLua
+;  Version: 0.11.8.5
+;  Authors: Miranda NG team
+;============================================================
+[Extends Miranda NG functionality with Lua scripts.]
+Пашырае функцыянал Miranda NG з дапамогай lua скрыптоў.
+[Reload all]
+
+[Scripts]
+Скрыпты
+[Popup on script error]
+
+[General]
+Агульнае
+[Popup on obsolete methods]
+
+[C libs folder]
+
+[Scripts folder]
+Каталог скыптоў
+[Script]
+Скрыпт
+[Loaded]
+
+[Failed]
+Не атрымалася
+[Open]
+Адкрыць
+[Reload]
+Перагрузіць
+[Common scripts]
+Агульныя скрыпты
+[Services]
+Службы

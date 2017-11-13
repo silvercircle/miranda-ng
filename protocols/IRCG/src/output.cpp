@@ -21,87 +21,87 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "stdafx.h"
 
-static CMString FormatOutput(const CIrcMessage* pmsg)
+static CMStringW FormatOutput(const CIrcMessage* pmsg)
 {
-	CMString sMessage;
+	CMStringW sMessage;
 
 	if (pmsg->m_bIncoming) { // Is it an incoming message?
-		if (pmsg->sCommand == _T("WALLOPS") && pmsg->parameters.getCount() > 0) {
-			TCHAR temp[200]; *temp = '\0';
-			mir_sntprintf(temp, TranslateT("WallOps from %s: "), pmsg->prefix.sNick.c_str());
+		if (pmsg->sCommand == L"WALLOPS" && pmsg->parameters.getCount() > 0) {
+			wchar_t temp[200]; *temp = '\0';
+			mir_snwprintf(temp, TranslateT("WallOps from %s: "), pmsg->prefix.sNick.c_str());
 			sMessage = temp;
 			for (int i = 0; i < (int)pmsg->parameters.getCount(); i++) {
 				sMessage += pmsg->parameters[i];
 				if (i != pmsg->parameters.getCount() - 1)
-					sMessage += _T(" ");
+					sMessage += L" ";
 			}
 			goto THE_END;
 		}
 
-		if (pmsg->sCommand == _T("INVITE") && pmsg->parameters.getCount() > 1) {
-			TCHAR temp[256]; *temp = '\0';
-			mir_sntprintf(temp, TranslateT("%s invites you to %s"), pmsg->prefix.sNick.c_str(), pmsg->parameters[1].c_str());
+		if (pmsg->sCommand == L"INVITE" && pmsg->parameters.getCount() > 1) {
+			wchar_t temp[256]; *temp = '\0';
+			mir_snwprintf(temp, TranslateT("%s invites you to %s"), pmsg->prefix.sNick.c_str(), pmsg->parameters[1].c_str());
 			sMessage = temp;
 			for (int i = 2; i < (int)pmsg->parameters.getCount(); i++) {
-				sMessage += _T(": ") + pmsg->parameters[i];
+				sMessage += L": " + pmsg->parameters[i];
 				if (i != pmsg->parameters.getCount() - 1)
-					sMessage += _T(" ");
+					sMessage += L" ";
 			}
 			goto THE_END;
 		}
 
-		int index = _ttoi(pmsg->sCommand.c_str());
+		int index = _wtoi(pmsg->sCommand.c_str());
 		if (index == 301 && pmsg->parameters.getCount() > 0) {
-			TCHAR temp[500]; *temp = '\0';
-			mir_sntprintf(temp, TranslateT("%s is away"), pmsg->parameters[1].c_str());
+			wchar_t temp[500]; *temp = '\0';
+			mir_snwprintf(temp, TranslateT("%s is away"), pmsg->parameters[1].c_str());
 			sMessage = temp;
 			for (int i = 2; i < (int)pmsg->parameters.getCount(); i++) {
-				sMessage += _T(": ") + pmsg->parameters[i];
+				sMessage += L": " + pmsg->parameters[i];
 				if (i != pmsg->parameters.getCount() - 1)
-					sMessage += _T(" ");
+					sMessage += L" ";
 			}
 			goto THE_END;
 		}
 
 		if ((index == 443 || index == 441) && pmsg->parameters.getCount() > 3)
-			return pmsg->parameters[1] + _T(" ") + pmsg->parameters[3] + _T(": ") + pmsg->parameters[2];
+			return pmsg->parameters[1] + L" " + pmsg->parameters[3] + L": " + pmsg->parameters[2];
 
 		if (index == 303) {  // ISON command
 			sMessage = TranslateT("These are online: ");
 			for (int i = 1; i < (int)pmsg->parameters.getCount(); i++) {
 				sMessage += pmsg->parameters[i];
 				if (i != pmsg->parameters.getCount() - 1)
-					sMessage += _T(", ");
+					sMessage += L", ";
 			}
 			goto THE_END;
 		}
 
 		if ((index > 400 || index < 500) && pmsg->parameters.getCount() > 2 && pmsg->sCommand[0] == '4') //all error messages
-			return pmsg->parameters[2] + _T(": ") + pmsg->parameters[1];
+			return pmsg->parameters[2] + L": " + pmsg->parameters[1];
 	}
-	else if (pmsg->sCommand == _T("NOTICE") && pmsg->parameters.getCount() > 1) {
-		TCHAR temp[500]; *temp = '\0';
+	else if (pmsg->sCommand == L"NOTICE" && pmsg->parameters.getCount() > 1) {
+		wchar_t temp[500]; *temp = '\0';
 
 		int l = pmsg->parameters[1].GetLength();
 		if (l > 3 && pmsg->parameters[1][0] == 1 && pmsg->parameters[1][l - 1] == 1) {
 			// CTCP reply
-			CMString tempstr = pmsg->parameters[1];
+			CMStringW tempstr = pmsg->parameters[1];
 			tempstr.Delete(0, 1);
 			tempstr.Delete(tempstr.GetLength() - 1, 1);
-			CMString type = GetWord(tempstr.c_str(), 0);
-			if (mir_tstrcmpi(type.c_str(), _T("ping")) == 0)
-				mir_sntprintf(temp, TranslateT("CTCP %s reply sent to %s"), type.c_str(), pmsg->parameters[0].c_str());
+			CMStringW type = GetWord(tempstr.c_str(), 0);
+			if (mir_wstrcmpi(type.c_str(), L"ping") == 0)
+				mir_snwprintf(temp, TranslateT("CTCP %s reply sent to %s"), type.c_str(), pmsg->parameters[0].c_str());
 			else
-				mir_sntprintf(temp, TranslateT("CTCP %s reply sent to %s: %s"), type.c_str(), pmsg->parameters[0].c_str(), GetWordAddress(tempstr.c_str(), 1));
+				mir_snwprintf(temp, TranslateT("CTCP %s reply sent to %s: %s"), type.c_str(), pmsg->parameters[0].c_str(), GetWordAddress(tempstr.c_str(), 1));
 			sMessage = temp;
 		}
 		else {
-			mir_sntprintf(temp, TranslateT("Notice to %s: "), pmsg->parameters[0].c_str());
+			mir_snwprintf(temp, TranslateT("Notice to %s: "), pmsg->parameters[0].c_str());
 			sMessage = temp;
 			for (int i = 1; i < (int)pmsg->parameters.getCount(); i++) {
 				sMessage += pmsg->parameters[i];
 				if (i != pmsg->parameters.getCount() - 1)
-					sMessage += _T(" ");
+					sMessage += L" ";
 			}
 		}
 		goto THE_END;
@@ -111,18 +111,18 @@ static CMString FormatOutput(const CIrcMessage* pmsg)
 
 	if (pmsg->m_bIncoming) {
 		if (pmsg->parameters.getCount() < 2 && pmsg->parameters.getCount() > 0)
-			return pmsg->sCommand + _T(" : ") + pmsg->parameters[0];
+			return pmsg->sCommand + L" : " + pmsg->parameters[0];
 
 		if (pmsg->parameters.getCount() > 1)
 		for (int i = 1; i < (int)pmsg->parameters.getCount(); i++)
-			sMessage += pmsg->parameters[i] + _T(" ");
+			sMessage += pmsg->parameters[i] + L" ";
 	}
 	else {
 		if (pmsg->prefix.sNick.GetLength())
-			sMessage = pmsg->prefix.sNick + _T(" ");
-		sMessage += pmsg->sCommand + _T(" ");
+			sMessage = pmsg->prefix.sNick + L" ";
+		sMessage += pmsg->sCommand + L" ";
 		for (int i = 0; i < (int)pmsg->parameters.getCount(); i++)
-			sMessage += pmsg->parameters[i] + _T(" ");
+			sMessage += pmsg->parameters[i] + L" ";
 	}
 
 THE_END:
@@ -131,19 +131,19 @@ THE_END:
 
 BOOL CIrcProto::ShowMessage(const CIrcMessage* pmsg)
 {
-	CMString mess = FormatOutput(pmsg);
+	CMStringW mess = FormatOutput(pmsg);
 
 	if (!pmsg->m_bIncoming)
-		mess.Replace(_T("%%"), _T("%"));
+		mess.Replace(L"%%", L"%");
 
-	int iTemp = _ttoi(pmsg->sCommand.c_str());
+	int iTemp = _wtoi(pmsg->sCommand.c_str());
 
 	//To active window
 	if ((iTemp > 400 || iTemp < 500) && pmsg->sCommand[0] == '4' //all error messages	
-		|| pmsg->sCommand == _T("303")		//ISON command
-		|| pmsg->sCommand == _T("INVITE")
-		|| ((pmsg->sCommand == _T("NOTICE")) && ((pmsg->parameters.getCount() > 2) ? (_tcsstr(pmsg->parameters[1].c_str(), _T("\001")) == NULL) : false)) // CTCP answers should go to m_network Log window!
-		|| pmsg->sCommand == _T("515"))		//chanserv error
+		|| pmsg->sCommand == L"303"		//ISON command
+		|| pmsg->sCommand == L"INVITE"
+		|| ((pmsg->sCommand == L"NOTICE") && ((pmsg->parameters.getCount() > 2) ? (wcsstr(pmsg->parameters[1].c_str(), L"\001") == NULL) : false)) // CTCP answers should go to m_network Log window!
+		|| pmsg->sCommand == L"515")		//chanserv error
 	{
 		DoEvent(GC_EVENT_INFORMATION, NULL, pmsg->m_bIncoming ? pmsg->prefix.sNick.c_str() : m_info.sNick.c_str(), mess.c_str(), NULL, NULL, NULL, true, pmsg->m_bIncoming ? false : true);
 		return TRUE;

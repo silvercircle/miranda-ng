@@ -5,7 +5,7 @@
  *      Author: Antonio
  */
 
-#include "../common.h" // #TODO Remove Miranda-dependency
+#include "../stdafx.h" // #TODO Remove Miranda-dependency
 
 #include "BinTreeNodeReader.h"
 #include "WAException.h"
@@ -159,6 +159,7 @@ ReadData* BinTreeNodeReader::readString(int token)
 
 	switch (token) {
 	case 0:
+		delete ret;
 		return NULL;
 
 	case 252:

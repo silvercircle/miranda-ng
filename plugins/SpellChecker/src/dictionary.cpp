@@ -17,27 +17,27 @@ not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 */
 
-#include "commons.h"
+#include "stdafx.h"
 
-#define APPPATH  _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\%s")
-#define MUICACHE _T("Software\\Microsoft\\Windows\\ShellNoRoam\\MUICache")
+#define APPPATH  L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\%s"
+#define MUICACHE L"Software\\Microsoft\\Windows\\ShellNoRoam\\MUICache"
 
 
 // Additional languages that i could not find in Windows
 struct {
-	TCHAR *language;
-	TCHAR *localized_name;
+	wchar_t *language;
+	wchar_t *localized_name;
 } aditionalLanguages[] = {
-	{ _T("tl_PH"), LPGENT("Tagalog (Philippines)") },
-	{ _T("de_frami_neu"), LPGENT("German (Germany)") }
+	{ L"tl_PH", LPGENW("Tagalog (Philippines)") },
+	{ L"de_frami_neu", LPGENW("German (Germany)") }
 };
 
 struct {
-	TCHAR *name;
-	TCHAR *key;
+	wchar_t *name;
+	wchar_t *key;
 } otherHunspellApps[] = {
-	{ _T("Thunderbird"), _T("thunderbird.exe") },
-	{ _T("Firefox"), _T("firefox.exe") }
+	{ L"Thunderbird", L"thunderbird.exe" },
+	{ L"Firefox", L"firefox.exe" }
 };
 
 struct {
@@ -355,19 +355,19 @@ void LoadThread(LPVOID hd);
 class HunspellDictionary : public Dictionary
 {
 protected:
-	TCHAR fileWithoutExtension[1024];
-	TCHAR userPath[1024];
+	wchar_t fileWithoutExtension[1024];
+	wchar_t userPath[1024];
 	volatile int loaded;
 	Hunspell *hunspell;
-	TCHAR *wordChars;
+	wchar_t *wordChars;
 	UINT codePage;
 
 	void loadCustomDict()
 	{
-		TCHAR filename[1024];
-		mir_sntprintf(filename, _T("%s\\%s.cdic"), userPath, language);
+		wchar_t filename[1024];
+		mir_snwprintf(filename, L"%s\\%s.cdic", userPath, language);
 
-		FILE *file = _tfopen(filename, _T("rb"));
+		FILE *file = _wfopen(filename, L"rb");
 		if (file != NULL) {
 			char tmp[1024];
 			int c, pos = 0;
@@ -388,14 +388,14 @@ protected:
 		}
 	}
 
-	void appendToCustomDict(const TCHAR *word)
+	void appendToCustomDict(const wchar_t *word)
 	{
-		CreateDirectoryTreeT(userPath);
+		CreateDirectoryTreeW(userPath);
 
-		TCHAR filename[1024];
-		mir_sntprintf(filename, _T("%s\\%s.cdic"), userPath, language);
+		wchar_t filename[1024];
+		mir_snwprintf(filename, L"%s\\%s.cdic", userPath, language);
 
-		FILE *file = _tfopen(filename, _T("ab"));
+		FILE *file = _wfopen(filename, L"ab");
 		if (file != NULL) {
 			char tmp[1024];
 			toHunspell(tmp, word, _countof(tmp));
@@ -404,7 +404,7 @@ protected:
 		}
 	}
 
-	virtual void addWordInternal(const TCHAR * word)
+	virtual void addWordInternal(const wchar_t * word)
 	{
 		if (loaded != LANGUAGE_LOADED)
 			return;
@@ -415,12 +415,12 @@ protected:
 		hunspell->add(hunspell_word);
 	}
 
-	void toHunspell(char *hunspellWord, const TCHAR *word, size_t hunspellWordLen)
+	void toHunspell(char *hunspellWord, const wchar_t *word, size_t hunspellWordLen)
 	{
 		WideCharToMultiByte(codePage, 0, word, -1, hunspellWord, (int)hunspellWordLen, NULL, NULL);
 	}
 
-	TCHAR* fromHunspell(const char *hunspellWord)
+	wchar_t* fromHunspell(const char *hunspellWord)
 	{
 		int len = MultiByteToWideChar(codePage, 0, hunspellWord, -1, NULL, 0);
 		WCHAR *ret = (WCHAR *)malloc((len + 1) * sizeof(WCHAR));
@@ -428,31 +428,31 @@ protected:
 		return ret;
 	}
 
-	TCHAR* fromHunspellAndFree(char *hunspellWord)
+	wchar_t* fromHunspellAndFree(char *hunspellWord)
 	{
 		if (hunspellWord == NULL)
 			return NULL;
 
-		TCHAR *ret = fromHunspell(hunspellWord);
+		wchar_t *ret = fromHunspell(hunspellWord);
 		free(hunspellWord);
 		return ret;
 	}
 
 public:
-	HunspellDictionary(TCHAR *aLanguage, TCHAR *aFileWithoutExtension, TCHAR *anUserPath, TCHAR *aSource)
+	HunspellDictionary(wchar_t *aLanguage, wchar_t *aFileWithoutExtension, wchar_t *anUserPath, wchar_t *aSource)
 	{
-		mir_tstrncpy(language, aLanguage, _countof(language));
-		mir_tstrncpy(fileWithoutExtension, aFileWithoutExtension, _countof(fileWithoutExtension));
-		mir_tstrncpy(userPath, anUserPath, _countof(userPath));
+		mir_wstrncpy(language, aLanguage, _countof(language));
+		mir_wstrncpy(fileWithoutExtension, aFileWithoutExtension, _countof(fileWithoutExtension));
+		mir_wstrncpy(userPath, anUserPath, _countof(userPath));
 		if (aSource == NULL)
-			source[0] = _T('\0');
+			source[0] = '\0';
 		else
-			mir_tstrncpy(source, aSource, _countof(source));
+			mir_wstrncpy(source, aSource, _countof(source));
 
 		loaded = LANGUAGE_NOT_LOADED;
-		localized_name[0] = _T('\0');
-		english_name[0] = _T('\0');
-		full_name[0] = _T('\0');
+		localized_name[0] = '\0';
+		english_name[0] = '\0';
+		full_name[0] = '\0';
 		hunspell = NULL;
 		wordChars = NULL;
 		codePage = CP_ACP;
@@ -467,16 +467,16 @@ public:
 			free(wordChars);
 	}
 
-	TCHAR * merge(TCHAR * s1, TCHAR *s2)
+	wchar_t * merge(wchar_t * s1, wchar_t *s2)
 	{
-		int len1 = (s1 == NULL ? 0 : mir_tstrlen(s1));
-		int len2 = (s2 == NULL ? 0 : mir_tstrlen(s2));
+		int len1 = (s1 == NULL ? 0 : mir_wstrlen(s1));
+		int len2 = (s2 == NULL ? 0 : mir_wstrlen(s2));
 
-		TCHAR *ret;
+		wchar_t *ret;
 		if (len1 > 0 && len2 > 0) {
-			ret = (TCHAR *)malloc(sizeof(TCHAR) * (len1 + len2 + 1));
-			mir_tstrncpy(ret, s1, len1 + 1);
-			mir_tstrncpy(&ret[len1], s2, len2 + 1);
+			ret = (wchar_t *)malloc(sizeof(wchar_t) * (len1 + len2 + 1));
+			mir_wstrncpy(ret, s1, len1 + 1);
+			mir_wstrncpy(&ret[len1], s2, len2 + 1);
 
 			FREE(s1);
 			FREE(s2);
@@ -490,7 +490,7 @@ public:
 			FREE(s1);
 		}
 		else {
-			ret = (TCHAR *)malloc(sizeof(TCHAR));
+			ret = (wchar_t *)malloc(sizeof(wchar_t));
 			ret[0] = 0;
 
 			FREE(s1);
@@ -498,15 +498,15 @@ public:
 		}
 
 		// Remove duplicated chars
-		int last = mir_tstrlen(ret) - 1;
+		int last = mir_wstrlen(ret) - 1;
 		for (int i = 0; i <= last; i++) {
-			TCHAR c = ret[i];
+			wchar_t c = ret[i];
 			for (int j = last; j > i; j--) {
 				if (c != ret[j])
 					continue;
 				if (j != last)
 					ret[j] = ret[last];
-				ret[last] = _T('\0');
+				ret[last] = '\0';
 				last--;
 			}
 		}
@@ -530,13 +530,12 @@ public:
 		// Get codepage
 		const char *dic_enc = hunspell->get_dic_encoding();
 
-		TCHAR *hwordchars;
+		wchar_t *hwordchars;
 		if (mir_strcmp(dic_enc, "UTF-8") == 0) {
 			codePage = CP_UTF8;
 
-
-			int wcs_len;
-			hwordchars = fromHunspell((char *)hunspell->get_wordchars_utf16(&wcs_len));
+			const std::vector<w_char> wordchars_utf16 = hunspell->get_wordchars_utf16();
+			hwordchars = fromHunspell((char *)&wordchars_utf16[0]);
 
 		}
 		else {
@@ -551,8 +550,8 @@ public:
 			hwordchars = fromHunspell(hunspell->get_wordchars());
 		}
 
-		TCHAR *casechars = fromHunspellAndFree(get_casechars(dic_enc));
-		TCHAR *try_string = fromHunspellAndFree(hunspell->get_try_string());
+		wchar_t *casechars = fromHunspellAndFree(get_casechars(dic_enc));
+		wchar_t *try_string = fromHunspellAndFree(hunspell->get_try_string());
 
 		wordChars = merge(merge(casechars, hwordchars), try_string);
 
@@ -570,7 +569,7 @@ public:
 	}
 
 	// Return TRUE if the word is correct
-	virtual BOOL spell(const TCHAR *word)
+	virtual BOOL spell(const wchar_t *word)
 	{
 		load();
 		if (loaded != LANGUAGE_LOADED)
@@ -585,7 +584,7 @@ public:
 	}
 
 	// Return a list of suggestions to a word
-	virtual Suggestions suggest(const TCHAR * word)
+	virtual Suggestions suggest(const wchar_t * word)
 	{
 		Suggestions ret = { 0 };
 
@@ -601,7 +600,7 @@ public:
 
 		if (ret.count > 0 && words != NULL) {
 			// Oki, lets make our array
-			ret.words = (TCHAR **)malloc(ret.count * sizeof(TCHAR *));
+			ret.words = (wchar_t **)malloc(ret.count * sizeof(wchar_t *));
 			for (unsigned i = 0; i < ret.count; i++) {
 				ret.words[i] = fromHunspell(words[i]);
 				free(words[i]);
@@ -614,7 +613,7 @@ public:
 	}
 
 	// Return a list of auto suggestions to a word
-	virtual Suggestions autoSuggest(const TCHAR * word)
+	virtual Suggestions autoSuggest(const wchar_t * word)
 	{
 		Suggestions ret = { 0 };
 
@@ -626,14 +625,14 @@ public:
 		toHunspell(hunspell_word, word, _countof(hunspell_word));
 
 		char ** words;
-		int count = hunspell->suggest_auto(&words, hunspell_word);
+		int count = hunspell->suggest(&words, hunspell_word);
 
 		if (count <= 0)
 			return ret;
 
 		// Oki, lets make our array
 		ret.count = count;
-		ret.words = (TCHAR **)malloc(ret.count * sizeof(TCHAR *));
+		ret.words = (wchar_t **)malloc(ret.count * sizeof(wchar_t *));
 		for (int i = 0; i < count; i++) {
 			ret.words[i] = fromHunspell(words[i]);
 			free(words[i]);
@@ -645,7 +644,7 @@ public:
 
 	// Return a list of auto suggestions to a word
 	// You have to free the list AND each item
-	virtual TCHAR * autoSuggestOne(const TCHAR * word)
+	virtual wchar_t * autoSuggestOne(const wchar_t * word)
 	{
 		load();
 		if (loaded != LANGUAGE_LOADED)
@@ -655,12 +654,12 @@ public:
 		toHunspell(hunspell_word, word, _countof(hunspell_word));
 
 		char ** words;
-		int count = hunspell->suggest_auto(&words, hunspell_word);
+		int count = hunspell->suggest(&words, hunspell_word);
 
 		if (count <= 0)
 			return NULL;
 
-		TCHAR *ret = fromHunspell(words[0]);
+		wchar_t *ret = fromHunspell(words[0]);
 
 		// Oki, lets make our array
 		for (int i = 0; i < count; i++)
@@ -671,7 +670,7 @@ public:
 	}
 
 	// Return TRUE if the char is a word char
-	virtual BOOL isWordChar(TCHAR c)
+	virtual BOOL isWordChar(wchar_t c)
 	{
 		if (c == 0)
 			return FALSE;
@@ -680,7 +679,7 @@ public:
 		if (loaded != LANGUAGE_LOADED)
 			return TRUE;
 
-		return _tcschr(wordChars, (_TINT)c) != NULL;
+		return wcschr(wordChars, c) != NULL;
 	}
 
 	// Assert that all needed data is loaded
@@ -699,14 +698,14 @@ public:
 
 
 	// Add a word to the user custom dict
-	virtual void addWord(const TCHAR * word)
+	virtual void addWord(const wchar_t * word)
 	{
 		addWordInternal(word);
 		appendToCustomDict(word);
 	}
 
 	// Add a word to the list of ignored words
-	virtual void ignoreWord(const TCHAR * word)
+	virtual void ignoreWord(const wchar_t * word)
 	{
 		addWordInternal(word);
 	}
@@ -726,20 +725,20 @@ LIST<Dictionary> *tmp_dicts;
 // To get the names of the languages
 BOOL CALLBACK EnumLocalesProc(LPTSTR lpLocaleString)
 {
-	TCHAR *stopped = NULL;
-	USHORT langID = (USHORT)_tcstol(lpLocaleString, &stopped, 16);
+	wchar_t *stopped = NULL;
+	USHORT langID = (USHORT)wcstol(lpLocaleString, &stopped, 16);
 
-	TCHAR ini[32];
-	TCHAR end[32];
+	wchar_t ini[32];
+	wchar_t end[32];
 	GetLocaleInfo(MAKELCID(langID, 0), LOCALE_SISO639LANGNAME, ini, _countof(ini));
 	GetLocaleInfo(MAKELCID(langID, 0), LOCALE_SISO3166CTRYNAME, end, _countof(end));
 
-	TCHAR name[64];
-	mir_sntprintf(name, _T("%s_%s"), ini, end);
+	wchar_t name[64];
+	mir_snwprintf(name, L"%s_%s", ini, end);
 
 	for (int i = 0; i < tmp_dicts->getCount(); i++) {
 		Dictionary *dict = (*tmp_dicts)[i];
-		if (mir_tstrcmpi(dict->language, name) == 0) {
+		if (mir_wstrcmpi(dict->language, name) == 0) {
 			GetLocaleInfo(MAKELCID(langID, 0), LOCALE_SENGLANGUAGE, dict->english_name, _countof(dict->english_name));
 
 			GetLocaleInfo(MAKELCID(langID, 0), LOCALE_SLANGUAGE, dict->localized_name, _countof(dict->localized_name));
@@ -748,20 +747,20 @@ BOOL CALLBACK EnumLocalesProc(LPTSTR lpLocaleString)
 			if (dict->localized_name[0] == 0)
 				GetLocaleInfo(MAKELCID(langID, 0), LOCALE_SNATIVEDISPLAYNAME, dict->localized_name, _countof(dict->localized_name));
 			if (dict->localized_name[0] == 0 && dict->english_name[0] != 0) {
-				TCHAR country[1024];
+				wchar_t country[1024];
 				GetLocaleInfo(MAKELCID(langID, 0), LOCALE_SENGCOUNTRY, country, _countof(country));
 
-				TCHAR localName[1024];
+				wchar_t localName[1024];
 				if (country[0] != 0)
-					mir_sntprintf(localName, _T("%s (%s)"), dict->english_name, country);
+					mir_snwprintf(localName, L"%s (%s)", dict->english_name, country);
 				else
-					mir_tstrncpy(localName, dict->english_name, _countof(localName));
+					mir_wstrncpy(localName, dict->english_name, _countof(localName));
 
-				mir_tstrncpy(dict->localized_name, TranslateTS(localName), _countof(dict->localized_name));
+				mir_wstrncpy(dict->localized_name, TranslateW(localName), _countof(dict->localized_name));
 			}
 
 			if (dict->localized_name[0] != 0) {
-				mir_sntprintf(dict->full_name, _T("%s [%s]"), dict->localized_name, dict->language);
+				mir_snwprintf(dict->full_name, L"%s [%s]", dict->localized_name, dict->language);
 			}
 			break;
 		}
@@ -779,41 +778,41 @@ void GetDictsInfo(LIST<Dictionary> &dicts)
 	for (int i = 0; i < dicts.getCount(); i++) {
 		Dictionary *dict = dicts[i];
 
-		if (dict->full_name[0] == _T('\0')) {
+		if (dict->full_name[0] == '\0') {
 			DBVARIANT dbv;
 
 			char lang[128];
 			WideCharToMultiByte(CP_ACP, 0, dict->language, -1, lang, sizeof(lang), NULL, NULL);
-			if (!db_get_ts(NULL, MODULE_NAME, lang, &dbv)) {
-				mir_tstrncpy(dict->localized_name, dbv.ptszVal, _countof(dict->localized_name));
+			if (!db_get_ws(NULL, MODULE_NAME, lang, &dbv)) {
+				mir_wstrncpy(dict->localized_name, dbv.ptszVal, _countof(dict->localized_name));
 				db_free(&dbv);
 			}
 
-			if (dict->localized_name[0] == _T('\0')) {
+			if (dict->localized_name[0] == '\0') {
 				for (size_t j = 0; j < _countof(aditionalLanguages); j++) {
-					if (!mir_tstrcmp(aditionalLanguages[j].language, dict->language)) {
-						mir_tstrncpy(dict->localized_name, TranslateTS(aditionalLanguages[j].localized_name), _countof(dict->localized_name));
+					if (!mir_wstrcmp(aditionalLanguages[j].language, dict->language)) {
+						mir_wstrncpy(dict->localized_name, TranslateW(aditionalLanguages[j].localized_name), _countof(dict->localized_name));
 						break;
 					}
 				}
 			}
 
-			if (dict->localized_name[0] != _T('\0')) {
-				mir_sntprintf(dict->full_name, _T("%s [%s]"), dict->localized_name, dict->language);
+			if (dict->localized_name[0] != '\0') {
+				mir_snwprintf(dict->full_name, L"%s [%s]", dict->localized_name, dict->language);
 			}
 			else {
-				mir_tstrncpy(dict->full_name, dict->language, _countof(dict->full_name));
+				mir_wstrncpy(dict->full_name, dict->language, _countof(dict->full_name));
 			}
 		}
 	}
 }
 
 
-void GetHunspellDictionariesFromFolder(LIST<Dictionary> &dicts, TCHAR *path, TCHAR *user_path, TCHAR *source)
+void GetHunspellDictionariesFromFolder(LIST<Dictionary> &dicts, wchar_t *path, wchar_t *user_path, wchar_t *source)
 {
 	// Load the language files and create an array with then
-	TCHAR file[1024];
-	mir_sntprintf(file, _T("%s\\*.dic"), path);
+	wchar_t file[1024] = { 0 };
+	mir_snwprintf(file, L"%s\\*.dic", path);
 
 	BOOL found = FALSE;
 
@@ -821,7 +820,7 @@ void GetHunspellDictionariesFromFolder(LIST<Dictionary> &dicts, TCHAR *path, TCH
 	HANDLE hFFD = FindFirstFile(file, &ffd);
 	if (hFFD != INVALID_HANDLE_VALUE) {
 		do {
-			mir_sntprintf(file, _T("%s\\%s"), path, ffd.cFileName);
+			mir_snwprintf(file, L"%s\\%s", path, ffd.cFileName);
 
 			// Check .dic
 			DWORD attrib = GetFileAttributes(file);
@@ -829,29 +828,29 @@ void GetHunspellDictionariesFromFolder(LIST<Dictionary> &dicts, TCHAR *path, TCH
 				continue;
 
 			// See if .aff exists too
-			mir_tstrcpy(&file[mir_tstrlen(file) - 4], _T(".aff"));
+			mir_wstrcpy(&file[mir_wstrlen(file) - 4], L".aff");
 			attrib = GetFileAttributes(file);
 			if (attrib == 0xFFFFFFFF || (attrib & FILE_ATTRIBUTE_DIRECTORY))
 				continue;
 
-			ffd.cFileName[mir_tstrlen(ffd.cFileName) - 4] = _T('\0');
+			ffd.cFileName[mir_wstrlen(ffd.cFileName) - 4] = '\0';
 
-			TCHAR *lang = ffd.cFileName;
+			wchar_t *lang = ffd.cFileName;
 
 			// Replace - for _
-			for (size_t i = 0; i < mir_tstrlen(lang); i++)
-				if (lang[i] == _T('-'))
-					lang[i] = _T('_');
+			for (size_t i = 0; i < mir_wstrlen(lang); i++)
+				if (lang[i] == '-')
+					lang[i] = '_';
 
 			// Check if dict is new
 			bool exists = false;
 			for (int i = 0; i < dicts.getCount() && !exists; i++)
-				if (mir_tstrcmp(dicts[i]->language, lang) == 0)
+				if (mir_wstrcmp(dicts[i]->language, lang) == 0)
 					exists = true;
 
 			if (!exists) {
 				found = TRUE;
-				file[mir_tstrlen(file) - 4] = _T('\0');
+				file[mir_wstrlen(file) - 4] = '\0';
 				dicts.insert(new HunspellDictionary(lang, file, user_path, source));
 			}
 		} while (FindNextFile(hFFD, &ffd));
@@ -862,7 +861,7 @@ void GetHunspellDictionariesFromFolder(LIST<Dictionary> &dicts, TCHAR *path, TCH
 
 
 // Return a list of avaible languages
-void GetAvaibleDictionaries(LIST<Dictionary> &dicts, TCHAR *path, TCHAR *user_path)
+void GetAvaibleDictionaries(LIST<Dictionary> &dicts, wchar_t *path, wchar_t *user_path)
 {
 	// Get miranda folder dicts
 	GetHunspellDictionariesFromFolder(dicts, path, user_path, NULL);
@@ -870,14 +869,14 @@ void GetAvaibleDictionaries(LIST<Dictionary> &dicts, TCHAR *path, TCHAR *user_pa
 	if (opts.use_other_apps_dicts) {
 		// Get other apps dicts
 		for (int i = 0; i < _countof(otherHunspellApps); i++) {
-			TCHAR key[1024];
-			mir_sntprintf(key, APPPATH, otherHunspellApps[i].key);
+			wchar_t key[1024];
+			mir_snwprintf(key, APPPATH, otherHunspellApps[i].key);
 
 			HKEY hKey = 0;
 			LONG lResult = 0;
 			if (ERROR_SUCCESS == RegOpenKeyEx(HKEY_LOCAL_MACHINE, key, 0, KEY_QUERY_VALUE, &hKey)) {
 				DWORD size = _countof(key);
-				lResult = RegQueryValueEx(hKey, _T("Path"), NULL, NULL, (LPBYTE)key, &size);
+				lResult = RegQueryValueEx(hKey, L"Path", NULL, NULL, (LPBYTE)key, &size);
 				RegCloseKey(hKey);
 			}
 			else {
@@ -894,9 +893,9 @@ void GetAvaibleDictionaries(LIST<Dictionary> &dicts, TCHAR *path, TCHAR *user_pa
 						if (ERROR_SUCCESS != RegEnumValue(hKey, local, key, &cchValue, NULL, NULL, NULL, NULL))
 							break;
 						key[cchValue] = 0;
-						TCHAR *pos;
-						if (pos = _tcsrchr(key, _T('\\'))) {
-							if (!mir_tstrcmpi(&pos[1], otherHunspellApps[i].key)) {
+						wchar_t *pos;
+						if (pos = wcsrchr(key, '\\')) {
+							if (!mir_wstrcmpi(&pos[1], otherHunspellApps[i].key)) {
 								pos[0] = 0;
 								lResult = ERROR_SUCCESS;
 								break;
@@ -908,8 +907,8 @@ void GetAvaibleDictionaries(LIST<Dictionary> &dicts, TCHAR *path, TCHAR *user_pa
 			}
 
 			if (ERROR_SUCCESS == lResult) {
-				TCHAR folder[1024];
-				mir_sntprintf(folder, _T("%s\\Dictionaries"), key);
+				wchar_t folder[1024];
+				mir_snwprintf(folder, L"%s\\Dictionaries", key);
 
 				GetHunspellDictionariesFromFolder(languages, folder, user_path, otherHunspellApps[i].name);
 			}
@@ -924,7 +923,7 @@ void GetAvaibleDictionaries(LIST<Dictionary> &dicts, TCHAR *path, TCHAR *user_pa
 	// Sort dicts
 	for (int i = 0; i < dicts.getCount(); i++) {
 		for (int j = i + 1; j < dicts.getCount(); j++) {
-			if (mir_tstrcmp(dicts[i]->full_name, dicts[j]->full_name) > 0) {
+			if (mir_wstrcmp(dicts[i]->full_name, dicts[j]->full_name) > 0) {
 				Dictionary *dict = dicts[i];
 				sl->items[i] = dicts[j];
 				sl->items[j] = dict;

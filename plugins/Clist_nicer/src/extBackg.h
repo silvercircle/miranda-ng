@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-03 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -71,14 +71,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 BOOL CheckItem(int item, HWND hwndDlg);
 BOOL isValidItem(void);
-void extbk_export(const TCHAR *file);
-void extbk_import(const TCHAR *file, HWND hwndDlg);
+void extbk_export(const wchar_t *file);
+void extbk_import(const wchar_t *file, HWND hwndDlg);
 
 void LoadExtBkSettingsFromDB();
 void IMG_LoadItems();
 void __fastcall IMG_RenderImageItem(HDC hdc, ImageItem *item, RECT *rc);
 void IMG_InitDecoder();
-void LoadPerContactSkins(const TCHAR *file);
+void LoadPerContactSkins(const wchar_t *file);
 
 static void SaveCompleteStructToDB();
 StatusItems_t *GetProtocolStatusItem(const char *szProto);

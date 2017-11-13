@@ -6,7 +6,7 @@ Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-08  George Hazan
 Copyright (c) 2007     Maxim Mluhov
 Copyright (c) 2008-09  Dmitriy Chervov
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -101,9 +101,6 @@ struct IJabberInterface
 	// Returns Jabber plugin version.
 	virtual DWORD STDMETHODCALLTYPE GetJabberVersion() const = 0;
 
-	// Compares JIDs by their node@domain part (without resource name).
-	virtual int STDMETHODCALLTYPE CompareJIDs(LPCTSTR jid1, LPCTSTR jid2) = 0;
-
 	// Returns contact handle for given JID, or NULL on error.
 	virtual MCONTACT STDMETHODCALLTYPE	ContactFromJID(LPCTSTR jid) = 0;
 
@@ -160,7 +157,7 @@ struct IJabberInterface
 	virtual LPTSTR STDMETHODCALLTYPE GetResourceFeatures(LPCTSTR jid) = 0;
 
 	// Returns the connection handle
-	virtual HANDLE STDMETHODCALLTYPE GetHandle(void) = 0;
+	virtual HNETLIBUSER STDMETHODCALLTYPE GetHandle(void) = 0;
 };
 
 /*
@@ -196,7 +193,7 @@ Returns FALSE if all is Ok, and TRUE otherwise.
 
 /*
 A hook to be called during extensions list's creation
-wParam = (WPARAM)(LIST<TCHAR>*) - extensions list to be populated;
+wParam = (WPARAM)(LIST<wchar_t>*) - extensions list to be populated;
 lParam = (LPARAM)(IJabberInterface*).
 Returns FALSE if all is Ok, and TRUE otherwise.
 */

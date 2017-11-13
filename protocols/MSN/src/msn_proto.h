@@ -1,7 +1,7 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
 
-Copyright (c) 2012-2014 Miranda NG Team
+Copyright (c) 2012-2017 Miranda NG Team
 Copyright (c) 2009-2012 Boris Krasnovskiy.
 
 This program is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 struct CMsnProto : public PROTO<CMsnProto>
 {
-	CMsnProto(const char*, const TCHAR*);
+	CMsnProto(const char*, const wchar_t*);
 	~CMsnProto();
 
 	//====================================================================================
@@ -36,27 +36,24 @@ struct CMsnProto : public PROTO<CMsnProto>
 	virtual	MCONTACT  __cdecl AddToListByEvent(int flags, int iContact, MEVENT hDbEvent);
 
 	virtual	int       __cdecl Authorize(MEVENT hDbEvent);
-	virtual	int       __cdecl AuthDeny(MEVENT hDbEvent, const TCHAR* szReason);
+	virtual	int       __cdecl AuthDeny(MEVENT hDbEvent, const wchar_t* szReason);
 	virtual	int       __cdecl AuthRecv(MCONTACT hContact, PROTORECVEVENT*);
-	virtual	int       __cdecl AuthRequest(MCONTACT hContact, const TCHAR* szMessage);
+	virtual	int       __cdecl AuthRequest(MCONTACT hContact, const wchar_t* szMessage);
 
-	virtual	HANDLE    __cdecl FileAllow(MCONTACT hContact, HANDLE hTransfer, const TCHAR* szPath);
+	virtual	HANDLE    __cdecl FileAllow(MCONTACT hContact, HANDLE hTransfer, const wchar_t* szPath);
 	virtual	int       __cdecl FileCancel(MCONTACT hContact, HANDLE hTransfer);
-	virtual	int       __cdecl FileDeny(MCONTACT hContact, HANDLE hTransfer, const TCHAR* szReason);
-	virtual	int       __cdecl FileResume(HANDLE hTransfer, int* action, const TCHAR** szFilename);
+	virtual	int       __cdecl FileDeny(MCONTACT hContact, HANDLE hTransfer, const wchar_t* szReason);
+	virtual	int       __cdecl FileResume(HANDLE hTransfer, int* action, const wchar_t** szFilename);
 
 	virtual	DWORD_PTR __cdecl GetCaps(int type, MCONTACT hContact = NULL);
 	virtual	int       __cdecl GetInfo(MCONTACT hContact, int infoType);
 
-	virtual	HANDLE    __cdecl SearchBasic(const TCHAR* id);
-	virtual	HANDLE    __cdecl SearchByEmail(const TCHAR* email);
+	virtual	HANDLE    __cdecl SearchBasic(const wchar_t* id);
+	virtual	HANDLE    __cdecl SearchByEmail(const wchar_t* email);
 
 	virtual	int       __cdecl RecvMsg(MCONTACT hContact, PROTORECVEVENT*);
 	virtual	int       __cdecl RecvContacts(MCONTACT hContact, PROTORECVEVENT*);
 
-#ifdef OBSOLETE
-	virtual	HANDLE    __cdecl SendFile(MCONTACT hContact, const TCHAR* szDescription, TCHAR** ppszFiles);
-#endif
 	virtual	int       __cdecl SendMsg(MCONTACT hContact, int flags, const char* msg);
 	virtual	int       __cdecl SendContacts(MCONTACT hContact, int flags, int nContacts, MCONTACT *hContactsList);
 
@@ -64,7 +61,7 @@ struct CMsnProto : public PROTO<CMsnProto>
 	virtual	int       __cdecl SetStatus(int iNewStatus);
 
 	virtual	HANDLE    __cdecl GetAwayMsg(MCONTACT hContact);
-	virtual	int       __cdecl SetAwayMsg(int m_iStatus, const TCHAR* msg);
+	virtual	int       __cdecl SetAwayMsg(int m_iStatus, const wchar_t* msg);
 
 	virtual	int       __cdecl UserIsTyping(MCONTACT hContact, int type);
 
@@ -74,38 +71,29 @@ struct CMsnProto : public PROTO<CMsnProto>
 	INT_PTR  __cdecl SvcCreateAccMgrUI(WPARAM wParam, LPARAM lParam);
 
 	INT_PTR  __cdecl GetAvatarInfo(WPARAM wParam, LPARAM lParam);
-	INT_PTR  __cdecl GetMyAwayMsg(WPARAM wParam,LPARAM lParam);
+	INT_PTR  __cdecl GetMyAwayMsg(WPARAM wParam, LPARAM lParam);
 
 	INT_PTR  __cdecl GetAvatar(WPARAM wParam, LPARAM lParam);
 	INT_PTR  __cdecl SetAvatar(WPARAM wParam, LPARAM lParam);
 	INT_PTR  __cdecl GetAvatarCaps(WPARAM wParam, LPARAM lParam);
-
-	INT_PTR  __cdecl GetCurrentMedia(WPARAM wParam, LPARAM lParam);
-	INT_PTR  __cdecl SetCurrentMedia(WPARAM wParam, LPARAM lParam);
 
 	INT_PTR  __cdecl SetNickName(WPARAM wParam, LPARAM lParam);
 	INT_PTR  __cdecl SendNudge(WPARAM wParam, LPARAM lParam);
 
 	INT_PTR  __cdecl GetUnreadEmailCount(WPARAM wParam, LPARAM lParam);
 
-	INT_PTR  __cdecl ManageAccount(WPARAM wParam, LPARAM lParam);
-
 	INT_PTR  __cdecl OnLeaveChat(WPARAM wParam, LPARAM lParam);
 
 	//====| Events |======================================================================
-	int  __cdecl OnContactDeleted(WPARAM wParam,LPARAM lParam);
+	int  __cdecl OnContactDeleted(WPARAM wParam, LPARAM lParam);
 	int  __cdecl OnIdleChanged(WPARAM wParam, LPARAM lParam);
 	int  __cdecl OnGroupChange(WPARAM wParam, LPARAM lParam);
 	int  __cdecl OnModulesLoaded(WPARAM wParam, LPARAM lParam);
-	int  __cdecl OnOptionsInit(WPARAM wParam,LPARAM lParam);
-	int  __cdecl OnPrebuildContactMenu(WPARAM wParam,LPARAM lParam);
-	int  __cdecl OnPreShutdown(WPARAM wParam,LPARAM lParam);
-	int  __cdecl OnContactDoubleClicked(WPARAM wParam,LPARAM lParam);
-	int  __cdecl OnDbSettingChanged(WPARAM wParam,LPARAM lParam);
-	int  __cdecl OnUserInfoInit(WPARAM wParam,LPARAM lParam);
-#ifdef OBSOLETE
-	int  __cdecl OnWindowEvent(WPARAM wParam, LPARAM lParam);
-#endif
+	int  __cdecl OnOptionsInit(WPARAM wParam, LPARAM lParam);
+	int  __cdecl OnPrebuildContactMenu(WPARAM wParam, LPARAM lParam);
+	int  __cdecl OnPreShutdown(WPARAM wParam, LPARAM lParam);
+	int  __cdecl OnContactDoubleClicked(WPARAM wParam, LPARAM lParam);
+	int  __cdecl OnDbSettingChanged(WPARAM wParam, LPARAM lParam);
 	int  __cdecl OnWindowPopup(WPARAM wParam, LPARAM lParam);
 
 	//====| Data |========================================================================
@@ -113,15 +101,14 @@ struct CMsnProto : public PROTO<CMsnProto>
 	// Security Tokens
 	char *pAuthToken, *tAuthToken;
 	char *oimSendToken;
-	char *authStrToken, *authSecretToken;
-	char *authContactToken;
-	char *authStorageToken;
+	char *authSecretToken;
+	OAuthToken authStrToken, authContactToken, authStorageToken, authSSLToken, authSkypeComToken;
+	SkypeToken authSkypeToken;
 	char *hotSecretToken, *hotAuthToken;
-	char *authUser, *authUIC, *authCookies, *authSSLToken, *authAccessToken, *authRefreshToken, *authSkypeComToken, *authSkypeToken;
-	bool bAskingForAuth;
+	char *authUser, *authUIC, *authCookies, *authRefreshToken;
+	bool bAskingForAuth, bPassportAuth;
 	int  authMethod;
-	time_t authTokenExpiretime;
-	bool bSentBND;
+	bool bSentBND, bIgnoreATH;
 
 	char *abCacheKey, *sharingCacheKey, *storageCacheKey;
 
@@ -135,10 +122,6 @@ struct CMsnProto : public PROTO<CMsnProto>
 	LIST<GCThreadData> m_arGCThreads;
 
 	mir_cs m_csSessions;
-#ifdef OBSOLETE
-	OBJLIST<filetransfer> m_arSessions;
-	OBJLIST<directconnection> m_arDirect;
-#endif
 
 	mir_cs csMsgQueue;
 	int msgQueueSeq;
@@ -165,7 +148,7 @@ struct CMsnProto : public PROTO<CMsnProto>
 	bool        usingGateway;
 
 	char*       msnExternalIP;
-	char*		msnRegistration;
+	char*       msnRegistration;
 	char*       msnPreviousUUX;
 	char*       msnLastStatusMsg;
 
@@ -184,8 +167,8 @@ struct CMsnProto : public PROTO<CMsnProto>
 	clock_t		mStatusMsgTS;
 
 	HANDLE		msnSearchId;
-	HANDLE		hNetlibUserHttps;
-	HANDLE		hHttpsConnection;
+	HNETLIBUSER	hNetlibUserHttps;
+	HNETLIBCONN hHttpsConnection;
 	HANDLE		hMSNNudge;
 	HANDLE      hPopupError, hPopupHotmail, hPopupNotify;
 
@@ -197,10 +180,10 @@ struct CMsnProto : public PROTO<CMsnProto>
 	void        InitCustomFolders(void);
 
 	char*       getSslResult(char** parUrl, const char* parAuthInfo, const char* hdrs, unsigned& status);
-	bool        getMyAvatarFile(char *url, TCHAR *fname);
+	bool        getMyAvatarFile(char *url, wchar_t *fname);
 
 	void        MSN_GoOffline(void);
-	void        MSN_GetCustomSmileyFileName(MCONTACT hContact, TCHAR* pszDest, size_t cbLen, const char* SmileyName, int Type);
+	void        MSN_GetCustomSmileyFileName(MCONTACT hContact, wchar_t* pszDest, size_t cbLen, const char* SmileyName, int Type);
 
 	const char*	MirandaStatusToMSN(int status);
 	WORD        MSNStatusToMiranda(const char *status);
@@ -210,37 +193,27 @@ struct CMsnProto : public PROTO<CMsnProto>
 	void        MSN_SetServerStatus(int newStatus);
 	void        MSN_FetchRecentMessages(time_t since = 0);
 	void        MSN_StartStopTyping(GCThreadData* info, bool start);
-	void        MSN_SendTyping(ThreadData* info, const char* email, int netId, bool bTyping );
+	void        MSN_SendTyping(ThreadData* info, const char* email, int netId, bool bTyping);
 
-	void        MSN_InitSB(ThreadData* info, const char* szEmail);
 	void        MSN_ReceiveMessage(ThreadData* info, char* cmdString, char* params);
 	int			MSN_HandleCommands(ThreadData* info, char* cmdString);
 	int			MSN_HandleErrors(ThreadData* info, char* cmdString);
 	void        MSN_ProcessNotificationMessage(char* buf, size_t bufLen);
 	void        MSN_ProcessStatusMessage(ezxml_t xmli, const char* wlid);
 	void        MSN_ProcessNLN(const char *userStatus, const char *wlid, char *userNick, const char *objid, char *cmdstring);
-	void        MSN_ProcessPage(char* buf, unsigned len);
-	void        MSN_ProcessRemove(char* buf, size_t len);
-	void        MSN_ProcessAdd(char* buf, size_t len);
 	void        MSN_ProcessYFind(char* buf, size_t len);
-	void		MSN_ProcessURIObject(MCONTACT hContact, ezxml_t xmli);
-	void        MSN_CustomSmiley(const char* msgBody, char* email, char* nick, int iSmileyType);
-	void        MSN_InviteMessage(ThreadData* info, char* msgBody, char* email, char* nick);
-	void        MSN_SetMirVer(MCONTACT hContact, DWORD dwValue, bool always);
+	void        MSN_ProcessURIObject(MCONTACT hContact, ezxml_t xmli);
+	void        MSN_SetMirVer(MCONTACT hContact, MsnPlace *place);
 
 	void        LoadOptions(void);
 
 	void        InitPopups(void);
-	void        MSN_ShowPopup(const TCHAR* nickname, const TCHAR* msg, int flags, const char* url);
-	void        MSN_ShowPopup(const MCONTACT hContact, const TCHAR* msg, int flags);
+	void        MSN_ShowPopup(const wchar_t* nickname, const wchar_t* msg, int flags, const char* url);
+	void        MSN_ShowPopup(const MCONTACT hContact, const wchar_t* msg, int flags);
 	void        MSN_ShowError(const char* msgtext, ...);
-
-#ifdef OBSOLETE
-	void        MSN_SetNicknameUtf(const char* nickname);
-#endif
 	void        MSN_SendNicknameUtf(const char* nickname);
 
-	typedef struct { TCHAR *szName; const char *szMimeType; unsigned char *data; size_t dataSize; } StoreAvatarData;
+	typedef struct { wchar_t *szName; const char *szMimeType; unsigned char *data; size_t dataSize; } StoreAvatarData;
 	void __cdecl msn_storeAvatarThread(void* arg);
 
 	void __cdecl msn_storeProfileThread(void*);
@@ -267,8 +240,6 @@ struct CMsnProto : public PROTO<CMsnProto>
 	INT_PTR __cdecl MsnSendHotmail(WPARAM wParam, LPARAM);
 	INT_PTR __cdecl MsnEditProfile(WPARAM, LPARAM);
 	INT_PTR __cdecl MsnInviteCommand(WPARAM wParam, LPARAM lParam);
-	INT_PTR __cdecl MsnSendNetMeeting(WPARAM wParam, LPARAM lParam);
-	INT_PTR __cdecl SetNicknameUI(WPARAM wParam, LPARAM lParam);
 	INT_PTR __cdecl MsnViewProfile(WPARAM wParam, LPARAM lParam);
 	INT_PTR __cdecl MsnSetupAlerts(WPARAM wParam, LPARAM lParam);
 
@@ -278,6 +249,7 @@ struct CMsnProto : public PROTO<CMsnProto>
 	void __cdecl msn_keepAliveThread(void* arg);
 	void __cdecl msn_loginThread(void* arg);
 	void __cdecl msn_IEAuthThread(void* arg);
+	void __cdecl msn_refreshOAuthThread(void*);
 	void __cdecl MSNServerThread(void* arg);
 
 	void __cdecl MsnFileAckThread(void* arg);
@@ -287,8 +259,8 @@ struct CMsnProto : public PROTO<CMsnProto>
 
 	void __cdecl MsnGetAwayMsgThread(void* arg);
 
-	void __cdecl p2p_sendFeedThread(void* arg );
-	void __cdecl p2p_fileActiveThread(void* arg );
+	void __cdecl p2p_sendFeedThread(void* arg);
+	void __cdecl p2p_fileActiveThread(void* arg);
 	void __cdecl p2p_filePassiveThread(void* arg);
 
 	void __cdecl MsgQueue_AllClearThread(void* arg);
@@ -298,18 +270,9 @@ struct CMsnProto : public PROTO<CMsnProto>
 
 	void         Threads_Uninit(void);
 	void         MSN_CloseConnections(void);
-	int          MSN_GetChatThreads(ThreadData** parResult);
-	int          MSN_GetActiveThreads(ThreadData**);
 	ThreadData*  MSN_GetThreadByConnection(HANDLE hConn);
-	ThreadData*  MSN_GetThreadByContact(const char* wlid, TInfoType type = SERVER_SWITCHBOARD);
-	GCThreadData*MSN_GetThreadByChatId(const TCHAR* chatId);
-	ThreadData*  MSN_GetP2PThreadByContact(const char *wlid);
-	void         MSN_StartP2PTransferByContact(const char* wlid);
-	ThreadData*  MSN_GetThreadByPort(WORD wPort);
-	ThreadData*  MSN_GetUnconnectedThread(const char* wlid, TInfoType type = SERVER_SWITCHBOARD);
-	ThreadData*  MSN_GetOtherContactThread(ThreadData* thread);
-	
-	ThreadData*  MSN_StartSB(const char* uid, bool& isOffline);
+	GCThreadData* MSN_GetThreadByChatId(const wchar_t* chatId);
+
 	void __cdecl ThreadStub(void* arg);
 
 	/////////////////////////////////////////////////////////////////////////////////////////
@@ -330,102 +293,24 @@ struct CMsnProto : public PROTO<CMsnProto>
 
 	OBJLIST<chunkedmsg> msgCache;
 
-	int   addCachedMsg(const char* id, const char* msg, const size_t offset,
-						const size_t portion, const size_t totsz, const bool bychunk);
+	int    addCachedMsg(const char* id, const char* msg, const size_t offset, const size_t portion, const size_t totsz, const bool bychunk);
 	size_t getCachedMsgSize(const char* id);
-	bool  getCachedMsg(const int idx, char*& msg, size_t& size);
-	bool  getCachedMsg(const char* id, char*& msg, size_t& size);
-	void  clearCachedMsg(int idx = -1);
-	void  CachedMsg_Uninit(void);
-
-	/////////////////////////////////////////////////////////////////////////////////////////
-	// MSN P2P session support
-
-#ifdef OBSOLETE
-	void  p2p_clearDormantSessions(void);
-	void  p2p_cancelAllSessions(void);
-	void  p2p_redirectSessions(const char* wlid);
-	void  p2p_startSessions(const char* wlid);
-	void  p2p_clearThreadSessions(MCONTACT hContact, TInfoType mType);
-
-	void  p2p_invite(unsigned iAppID, filetransfer* ft, const char *wlid);
-	void  p2p_inviteDc(filetransfer* ft, const char *wlid);
-	void  p2p_processMsg(ThreadData* info, char* msgbody, const char* wlid);
-	void  p2p_processMsgV2(ThreadData* info, char* msgbody, const char* wlid);
-	void  p2p_processSIP(ThreadData* info, char* msgbody, P2PB_Header* hdr, const char* wlid);
-
-	void  p2p_AcceptTransfer(MimeHeaders& tFileInfo, MimeHeaders& tFileInfo2, const char* wlid);
-	void  p2p_InitDirectTransfer(MimeHeaders& tFileInfo, MimeHeaders& tFileInfo2, const char* wlid);
-	void  p2p_InitDirectTransfer2(MimeHeaders& tFileInfo, MimeHeaders& tFileInfo2, const char* wlid);
-	void  p2p_InitFileTransfer(ThreadData* info, MimeHeaders& tFileInfo, MimeHeaders& tFileInfo2, const char* wlid);
-	void  p2p_pictureTransferFailed(filetransfer* ft);
-	void  p2p_savePicture2disk(filetransfer* ft);
-
-	bool  p2p_createListener(filetransfer* ft, directconnection *dc, MimeHeaders& chdrs);
-	void  p2p_startConnect(const char* wlid, const char* szCallID, const char* addr, const char* port, bool ipv6);
-
-	void  p2p_sendAbortSession(filetransfer* ft);
-	void  p2p_sendAck(const char *wlid, P2PB_Header* hdrdata);
-	void  p2p_sendAvatarInit(filetransfer* ft);
-	void  p2p_sendBye(filetransfer* ft);
-	void  p2p_sendCancel(filetransfer* ft);
-	void  p2p_sendMsg(const char *wlid, unsigned appId, P2PB_Header& hdrdata, char* msgbody, size_t msgsz);
-	void  p2p_sendMsg(ThreadData* info, const char *wlid, unsigned appId, P2PB_Header& hdrdata, char* msgbody, size_t msgsz);
-	void  p2p_sendNoCall(filetransfer* ft);
-	void  p2p_sendSlp(int iKind, filetransfer *ft, MimeHeaders &pHeaders, MimeHeaders &pContent, const char *wlid = NULL);
-	void  p2p_sendRedirect(filetransfer* ft);
-	void  p2p_sendStatus(filetransfer* ft, long lStatus);
-
-	void  p2p_sendFeedStart(filetransfer* ft);
-	LONG  p2p_sendPortion(filetransfer* ft, ThreadData* T, bool isV2);
-	void  p2p_sendRecvFileDirectly(ThreadData* info);
-	bool  p2p_connectTo(ThreadData* info, directconnection *dc);
-	bool  p2p_listen(ThreadData* info, directconnection *dc);
-
-	void  p2p_registerSession(filetransfer* ft);
-	void  p2p_unregisterSession(filetransfer* ft);
-	void  p2p_sessionComplete(filetransfer* ft);
-
-	void P2pSessions_Uninit(void);
-
-	filetransfer*  p2p_getAvatarSession(MCONTACT hContact);
-	filetransfer*  p2p_getThreadSession(MCONTACT hContact, TInfoType mType);
-	filetransfer*  p2p_getSessionByID(unsigned id);
-	filetransfer*  p2p_getSessionByUniqueID(unsigned id);
-	filetransfer*  p2p_getSessionByCallID(const char* CallID, const char* wlid);
-
-	bool     p2p_sessionRegistered(filetransfer* ft);
-	bool     p2p_isAvatarOnly(MCONTACT hContact);
-	unsigned p2p_getMsgId(const char* wlid, int inc);
-	unsigned p2p_getPktNum(const char* wlid);
-
-	void  p2p_registerDC(directconnection* ft);
-	void  p2p_unregisterDC(directconnection* dc);
-	directconnection*  p2p_getDCByCallID(const char* CallID, const char* wlid);
-
-	/////////////////////////////////////////////////////////////////////////////////////////
-	// MSN MSNFTP file transfer
-
-	void msnftp_invite(filetransfer *ft);
-	void msnftp_sendAcceptReject(filetransfer *ft, bool acc);
-	void msnftp_startFileSend(ThreadData* info, const char* Invcommand, const char* Invcookie);
-
-	int  MSN_HandleMSNFTP(ThreadData *info, char *cmdString);
-
-	void __cdecl msnftp_sendFileThread(void* arg);
-#endif
+	bool   getCachedMsg(const int idx, char*& msg, size_t& size);
+	bool   getCachedMsg(const char* id, char*& msg, size_t& size);
+	void   clearCachedMsg(int idx = -1);
+	void   CachedMsg_Uninit(void);
 
 	/////////////////////////////////////////////////////////////////////////////////////////
 	//	MSN Chat support
 
 	int  MSN_ChatInit(GCThreadData *info, const char *pszID, const char *pszTopic);
 	void MSN_ChatStart(ezxml_t xmli);
-	void MSN_KillChatSession(const TCHAR* id);
+	void MSN_KillChatSession(const wchar_t* id);
 	void MSN_Kickuser(GCHOOK *gch);
 	void MSN_Promoteuser(GCHOOK *gch, const char *pszRole);
-	const TCHAR *MSN_GCGetRole(GCThreadData* thread, const char *pszWLID);
-	void MSN_GCProcessThreadActivity(ezxml_t xmli, const TCHAR *mChatID);
-	void MSN_GCAddMessage(TCHAR *mChatID, MCONTACT hContact, char *email, time_t ts, bool sentMsg, char *msgBody);
+	const wchar_t *MSN_GCGetRole(GCThreadData* thread, const char *pszWLID);
+	void MSN_GCProcessThreadActivity(ezxml_t xmli, const wchar_t *mChatID);
+	void MSN_GCAddMessage(wchar_t *mChatID, MCONTACT hContact, char *email, time_t ts, bool sentMsg, char *msgBody);
 	void MSN_GCRefreshThreadsInfo(void);
 
 	MCONTACT MSN_GetChatInernalHandle(MCONTACT hContact);
@@ -449,6 +334,7 @@ struct CMsnProto : public PROTO<CMsnProto>
 	MsnContact* Lists_GetNext(int& i);
 
 	MsnPlace* Lists_GetPlace(const char* wlid);
+	MsnPlace* Lists_GetPlace(const char* szEmail, const char *szInst);
 	MsnPlace* Lists_AddPlace(const char* email, const char* id, unsigned cap1, unsigned cap2);
 
 	void     Lists_Uninit(void);
@@ -457,11 +343,10 @@ struct CMsnProto : public PROTO<CMsnProto>
 
 	void     MSN_CreateContList(void);
 	void     MSN_CleanupLists(void);
-	void     MSN_FindYahooUser(const char* email);
 	bool     MSN_RefreshContactList(void);
 
 	bool     MSN_IsMyContact(MCONTACT hContact);
-	bool     MSN_IsMeByContact(MCONTACT hContact, char* szEmail  = NULL);
+	bool     MSN_IsMeByContact(MCONTACT hContact, char* szEmail = NULL);
 	bool     MSN_AddUser(MCONTACT hContact, const char* email, int netId, int flags, const char *msg = NULL);
 	void     MSN_AddAuthRequest(const char *email, const char *nick, const char *reason);
 	void     MSN_SetContactDb(MCONTACT hContact, const char *szEmail);
@@ -491,18 +376,18 @@ struct CMsnProto : public PROTO<CMsnProto>
 
 	int       MSN_GetPassportAuth(void);
 	int       MSN_SkypeAuth(const char *pszNonce, char *pszUIC);
-	int       MSN_DoOAuth(void);
 	char*     GenerateLoginBlob(char* challenge);
 	void      LoadAuthTokensDB(void);
 	void      SaveAuthTokensDB(void);
-	bool	  parseLoginPage(char *pszHTML, NETLIBHTTPREQUEST *nlhr, CMStringA *post);
+	bool	    parseLoginPage(char *pszHTML, NETLIBHTTPREQUEST *nlhr, CMStringA *post);
 	int       LoginSkypeOAuth(const char *pRefreshToken);
-	bool      RefreshOAuth(const char *pszRefreshToken, const char *pszService, char *pszAccessToken, char *pszOutRefreshToken=NULL, time_t *ptExpires=NULL);
+	bool      RefreshOAuth(const char *pszRefreshToken, const char *pszService, CMStringA *pszAccessToken, CMStringA *pszOutRefreshToken, time_t *ptExpires);
 	int       MSN_AuthOAuth(void);
-	CMStringA HotmailLogin(const char* url);
+	int       MSN_RefreshOAuthTokens(bool bJustCheck);
+	void      MSN_SendATH(ThreadData *info);
+	CMStringA HotmailLogin(const char *url);
 	void	    FreeAuthTokens(void);
 	int       GetMyNetID(void);
-	const char *GetSkypeToken(bool bAsAuthHeader);
 	LPCSTR    GetMyUsername(int netId);
 
 	/////////////////////////////////////////////////////////////////////////////////////////
@@ -511,8 +396,8 @@ struct CMsnProto : public PROTO<CMsnProto>
 	void   AvatarQueue_Init(void);
 	void   AvatarQueue_Uninit(void);
 
-	void   MSN_GetAvatarFileName(MCONTACT hContact, TCHAR* pszDest, size_t cbLen, const TCHAR *ext);
-	int    MSN_SetMyAvatar(const TCHAR* szFname, void* pData, size_t cbLen);
+	void   MSN_GetAvatarFileName(MCONTACT hContact, wchar_t* pszDest, size_t cbLen, const wchar_t *ext);
+	int    MSN_SetMyAvatar(const wchar_t* szFname, void* pData, size_t cbLen);
 
 	void   __cdecl MSN_AvatarsThread(void*);
 
@@ -562,13 +447,13 @@ struct CMsnProto : public PROTO<CMsnProto>
 	bool MSN_ABAddRemoveContact(const char* szCntId, int netId, bool add, bool allowRecurse = true);
 	unsigned MSN_ABContactAdd(const char* szEmail, const char* szNick, int netId, const char* szInvite, bool search, bool retry = false, bool allowRecurse = true);
 	void MSN_ABUpdateDynamicItem(bool allowRecurse = true);
-	bool MSN_ABRefreshClist(void);
+	bool MSN_ABRefreshClist(unsigned int nTry = 0);
 
 	ezxml_t abSoapHdr(const char* service, const char* scenario, ezxml_t& tbdy, char*& httphdr);
 	char* GetABHost(const char* service, bool isSharing);
 	void SetAbParam(MCONTACT hContact, const char *name, const char *par);
 	void UpdateABHost(const char* service, const char* url);
-	void UpdateABCacheKey(ezxml_t bdy,  bool isSharing);
+	void UpdateABCacheKey(ezxml_t bdy, bool isSharing);
 
 	ezxml_t getSoapResponse(ezxml_t bdy, const char* service);
 	ezxml_t getSoapFault(ezxml_t bdy, bool err);
@@ -585,8 +470,8 @@ struct CMsnProto : public PROTO<CMsnProto>
 	bool MSN_StoreShareItem(const char* id, bool allowRecurse = true);
 	bool MSN_StoreCreateRelationships(bool allowRecurse = true);
 	bool MSN_StoreDeleteRelationships(bool tile, bool allowRecurse = true);
-	bool MSN_StoreCreateDocument(const TCHAR *sztName, const char *szMimeType, const char *szPicData, bool allowRecurse = true);
-	bool MSN_StoreUpdateDocument(const TCHAR *sztName, const char *szMimeType, const char *szPicData, bool allowRecurse = true);
+	bool MSN_StoreCreateDocument(const wchar_t *sztName, const char *szMimeType, const char *szPicData, bool allowRecurse = true);
+	bool MSN_StoreUpdateDocument(const wchar_t *sztName, const char *szMimeType, const char *szPicData, bool allowRecurse = true);
 	bool MSN_StoreFindDocuments(bool allowRecurse = true);
 
 	ezxml_t storeSoapHdr(const char* service, const char* scenario, ezxml_t& tbdy, char*& httphdr);
@@ -600,8 +485,8 @@ struct CMsnProto : public PROTO<CMsnProto>
 
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	TCHAR *m_DisplayNameCache;
-	TCHAR* GetContactNameT(MCONTACT hContact);
+	wchar_t *m_DisplayNameCache;
+	wchar_t* GetContactNameT(MCONTACT hContact);
 
 	int    getStringUtf(MCONTACT hContact, const char* name, DBVARIANT* result);
 	int    getStringUtf(const char* name, DBVARIANT* result);

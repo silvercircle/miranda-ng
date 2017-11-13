@@ -2,15 +2,15 @@
 ;============================================================
 ;  File: Popup.dll
 ;  Plugin: Popup plus
-;  Version: 2.1.1.11
+;  Version: 2.1.1.12
 ;  Authors: MPK, Merlin_de (Luca Santarelli, Victor Pavlychko)
 ;============================================================
 [Provides popup notification services for different plugins.]
 
 ;file \plugins\Popup\res\resource.rc
-[Content && Style]
-Contenu && Style
-[Go to Customize > Fonts && Colors for fonts and colors options]
+[Content and Style]
+Contenu et Style
+[Go to Customize -> Fonts and Colors for fonts and colors options]
 
 [Miscellaneous]
 Divers
@@ -150,7 +150,7 @@ Clic gauche :
 Désactiver si l'état général est :
 [Disable when relevant protocol's status is...]
 Désactiver si l'état du protocole est :
-[Colors can be configured in\r\nCustomize > Fonts and colors]
+[Colors can be configured in\r\nCustomize -> Fonts and colors]
 
 [More...]
 
@@ -338,11 +338,11 @@ En ligne
 Invisible
 [Away]
 Absent
-[NA]
+[Not available]
 Indisponible
 [Occupied]
 Occupé
-[DND]
+[Do not disturb]
 Ne pas déranger
 [Free for chat]
 OK pour un chat
@@ -372,7 +372,7 @@ Angle haut droit
 
 ['Reorder popups' option is currently disabled.\r\nThis may cause misaligned popups when used with\r\navatars and text replacement (mainly NewXstatusNotify).\r\n\r\nDo you want to enable popup reordering now?\r\n]
 
-[Popup Plus Warning]
+[Popup plus warning]
 Avertissement de Popup Plus
 ;file \plugins\Popup\src\opt_skins.cpp
 [Failed to register %s class.]
@@ -407,7 +407,7 @@ Rafraîchir
 [Notify]
 
 ;file \plugins\Popup\src\skin.cpp
-[The skin you are trying to load is designed\r\nfor newer version of Popup Plus. And will not\r\ndisplay properly.\r\n\r\nPlease choose another skin.]
+[The skin you are trying to load is designed\r\nfor newer version of Popup plus. And will not\r\ndisplay properly.\r\n\r\nPlease choose another skin.]
 
 ;file \plugins\Popup\src\srmm_menu.cpp
 [Auto]

@@ -1,4 +1,4 @@
-#include "common.h"
+#include "stdafx.h"
 #include "version.h"
 
 CLIST_INTERFACE *pcli;
@@ -26,7 +26,7 @@ PLUGININFOEX pluginInfo = {
 
 static int compare_protos(const WhatsAppProto *p1, const WhatsAppProto *p2)
 {
-	return mir_tstrcmp(p1->m_tszUserName, p2->m_tszUserName);
+	return mir_wstrcmp(p1->m_tszUserName, p2->m_tszUserName);
 }
 
 OBJLIST<WhatsAppProto> g_Instances(1, compare_protos);
@@ -37,7 +37,7 @@ DWORD WINAPI DllMain(HINSTANCE hInstance, DWORD, LPVOID)
 	return TRUE;
 }
 
-extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD mirandaVersion)
+extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 {
 	return &pluginInfo;
 }
@@ -50,7 +50,7 @@ extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = { MIID_PROTOC
 /////////////////////////////////////////////////////////////////////////////////////////
 // Load
 
-static PROTO_INTERFACE* protoInit(const char *proto_name, const TCHAR *username)
+static PROTO_INTERFACE* protoInit(const char *proto_name, const wchar_t *username)
 {
 	WhatsAppProto *proto = new WhatsAppProto(proto_name, username);
 	g_Instances.insert(proto);
@@ -66,7 +66,7 @@ static int protoUninit(PROTO_INTERFACE* proto)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	PROTOCOLDESCRIPTOR pd = { 0 };
 	pd.cbSize = sizeof(pd);
@@ -80,8 +80,8 @@ extern "C" int __declspec(dllexport) Load(void)
 	//InitContactMenus();
 
 	// Init native User-Agent
-	WORD v[4];
-	CallService(MS_SYSTEM_GETFILEVERSION, 0, LPARAM(&v));
+	MFileVersion v;
+	Miranda_GetFileVersion(&v);
 
 	WAConnection::globalInit();
 	return 0;

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -22,9 +22,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-//include
 #include "stdafx.h"
-#include "modern_commonprototypes.h"
 #include "version.h"
 
 #include "modern_clui.h"
@@ -35,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CHECKRES(sub) if (sub != S_OK) return S_FALSE;
 
 HINSTANCE g_hInst = 0, g_hMirApp = 0;
-CLIST_INTERFACE *pcli = NULL;
+CLIST_INTERFACE *pcli = nullptr;
 CLIST_INTERFACE corecli = { 0 };
 CLUIDATA g_CluiData = { 0 };
 int hLangpack;
@@ -106,7 +104,7 @@ extern "C" __declspec(dllexport) int Unload(void)
 
 	if (IsWindow(pcli->hwndContactList))
 		DestroyWindow(pcli->hwndContactList);
-	pcli->hwndContactList = NULL;
+	pcli->hwndContactList = nullptr;
 
 	ToolbarButtonUnloadModule();
 	BackgroundsUnloadModule();
@@ -114,7 +112,6 @@ extern "C" __declspec(dllexport) int Unload(void)
 	XPThemesUnloadModule();
 
 	UnloadAvatarOverlayIcon();
-	UninitSkinHotKeys();
 	FreeRowCell();
 	EventArea_UnloadModule();
 
@@ -122,6 +119,9 @@ extern "C" __declspec(dllexport) int Unload(void)
 	return 0;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
+
+static int cliShowHideStub() { return cliShowHide(false); }
 
 static HRESULT SubclassClistInterface()
 {
@@ -132,12 +132,13 @@ static HRESULT SubclassClistInterface()
 	//  'save*' - pointer to stored default parent handle
 	//	'cli_*'	- new handler with default core service calling
 
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 	corecli = *pcli;
 
 	pcli->hInst = g_hInst;
 	pcli->bDisplayLocked = TRUE;
 
+	pcli->pfnCreateCacheItem = cliCreateCacheItem;
 	pcli->pfnCheckCacheItem = cliCheckCacheItem;
 	pcli->pfnFreeCacheItem = cliFreeCacheItem;
 	pcli->pfnInvalidateDisplayNameCacheEntry = cliInvalidateDisplayNameCacheEntry;
@@ -150,20 +151,19 @@ static HRESULT SubclassClistInterface()
 
 	pcli->pfnBeginRenameSelection = cliBeginRenameSelection;
 	pcli->pfnCreateClcContact = cliCreateClcContact;
-	pcli->pfnCreateCacheItem = cliCreateCacheItem;
 	pcli->pfnGetRowBottomY = cliGetRowBottomY;
 	pcli->pfnGetRowHeight = cliGetRowHeight;
 	pcli->pfnGetRowTopY = cliGetRowTopY;
 	pcli->pfnGetRowTotalHeight = cliGetRowTotalHeight;
-	pcli->pfnInvalidateRect = CLUI__cliInvalidateRect;
-	pcli->pfnGetCacheEntry = cliGetCacheEntry;
+	pcli->pfnInvalidateRect = cliInvalidateRect;
 	pcli->pfnOnCreateClc = CLUI::cliOnCreateClc;
 	pcli->pfnPaintClc = CLCPaint::cliPaintClc;
 	pcli->pfnRebuildEntireList = cliRebuildEntireList;
+	pcli->pfnIsVisibleContact = cliIsVisibleContact;
 	pcli->pfnRecalcScrollBar = cliRecalcScrollBar;
 	pcli->pfnRowHitTest = cliRowHitTest;
 	pcli->pfnScrollTo = cliScrollTo;
-	pcli->pfnShowHide = cliShowHide;
+	pcli->pfnShowHide = cliShowHideStub;
 	pcli->pfnHitTest = cliHitTest;
 	pcli->pfnCompareContacts = cliCompareContacts;
 	pcli->pfnGetIconFromStatusMode = cliGetIconFromStatusMode;
@@ -171,27 +171,21 @@ static HRESULT SubclassClistInterface()
 	pcli->pfnGetRowByIndex = cliGetRowByIndex;
 	pcli->pfnGetRowsPriorTo = cliGetRowsPriorTo;
 	pcli->pfnGetGroupContentsCount = cliGetGroupContentsCount;
-	pcli->pfnCreateEvent = cliCreateEvent;
 	pcli->pfnFindRowByText = cliFindRowByText;
+	pcli->pfnGetContactHiddenStatus = CLVM_GetContactHiddenStatus;
 
-	//partialy overloaded - call default handlers from inside
+	// partialy overloaded - call default handlers from inside
 	pcli->pfnGetContactIcon = cli_GetContactIcon;
 	pcli->pfnIconFromStatusMode = cli_IconFromStatusMode;
 	pcli->pfnLoadCluiGlobalOpts = CLUI_cli_LoadCluiGlobalOpts;
+	pcli->pfnLoadClcOptions = cli_LoadCLCOptions;
 	pcli->pfnSortCLC = cli_SortCLC;
-	pcli->pfnAddGroup = cli_AddGroup;
-	pcli->pfnGetGroupCountsText = cli_GetGroupCountsText;
+	pcli->pfnAddContactToGroup = cli_AddContactToGroup;
 	pcli->pfnAddContactToTree = cli_AddContactToTree;
-	pcli->pfnAddInfoItemToGroup = cli_AddInfoItemToGroup;
-	pcli->pfnAddItemToGroup = cli_AddItemToGroup;
 	pcli->pfnContactListWndProc = CLUI::cli_ContactListWndProc;
-	pcli->pfnDeleteItemFromTree = cli_DeleteItemFromTree;
 	pcli->pfnFreeContact = cli_FreeContact;
-	pcli->pfnFreeGroup = cli_FreeGroup;
-	pcli->pfnChangeContactIcon = cli_ChangeContactIcon;
 	pcli->pfnSetContactCheckboxes = cli_SetContactCheckboxes;
 	pcli->pfnTrayIconProcessMessage = cli_TrayIconProcessMessage;
-	pcli->pfnSaveStateAndRebuildList = cli_SaveStateAndRebuildList;
 	pcli->pfnContactListControlWndProc = cli_ContactListControlWndProc;
 	pcli->pfnProcessExternalMessages = cli_ProcessExternalMessages;
 	pcli->pfnAddEvent = cli_AddEvent;

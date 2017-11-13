@@ -268,7 +268,7 @@ TString<T>& TString<T>::operator = (const T *pStr)
 	return *this;
 }
 
-template class TString<TCHAR>;
+template class TString<wchar_t>;
 template class TString<char>;
 template class TString<WCHAR>;
 
@@ -278,13 +278,13 @@ CString db_get_s(MCONTACT hContact, const char *szModule, const char *szSetting,
 	return CString(p == NULL ? szDefaultValue : p);
 }
 
-TCString db_get_s(MCONTACT hContact, const char *szModule, const char *szSetting, const TCHAR *szDefaultValue)
+TCString db_get_s(MCONTACT hContact, const char *szModule, const char *szSetting, const wchar_t *szDefaultValue)
 {
-	ptrT p( db_get_tsa(hContact, szModule, szSetting));
+	ptrW p( db_get_wsa(hContact, szModule, szSetting));
 	return TCString(p == NULL ? szDefaultValue : p);
 }
 
-TCString DBGetContactSettingAsString(MCONTACT hContact, const char *szModule, const char *szSetting, const TCHAR *szDefaultValue)
+TCString DBGetContactSettingAsString(MCONTACT hContact, const char *szModule, const char *szSetting, const wchar_t *szDefaultValue)
 { // also converts numeric values to a string
 	DBVARIANT dbv = {0};
 	int iRes = db_get_ws(hContact, szModule, szSetting, &dbv);
@@ -297,7 +297,7 @@ TCString DBGetContactSettingAsString(MCONTACT hContact, const char *szModule, co
 	else if (dbv.type == DBVT_BYTE || dbv.type == DBVT_WORD || dbv.type == DBVT_DWORD)
 	{
 		long value = (dbv.type == DBVT_DWORD) ? dbv.dVal : (dbv.type == DBVT_WORD ? dbv.wVal : dbv.bVal);
-		_ultot(value, Result.GetBuffer(64), 10);
+		_ultow(value, Result.GetBuffer(64), 10);
 		Result.ReleaseBuffer();
 	}
 	else Result = szDefaultValue;

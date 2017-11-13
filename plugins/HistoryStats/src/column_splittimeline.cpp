@@ -73,52 +73,52 @@ void ColSplitTimeline::impl_configToUI(OptionsCtrl& Opt, OptionsCtrl::Item hGrou
 	OptionsCtrl::Radio hTempRadio;
 
 	m_hSource                 = Opt.insertCombo(hGroup, TranslateT("Data source"));
-	m_hIgnoreOld              = Opt.insertEdit(hGroup, TranslateT("Drop everything older than (days, 0=no limit)"), _T(""), OptionsCtrl::OCF_NUMBER);
+	m_hIgnoreOld              = Opt.insertEdit(hGroup, TranslateT("Drop everything older than (days, 0=no limit)"), L"", OptionsCtrl::OCF_NUMBER);
 	hTemp                     = Opt.insertGroup(hGroup, TranslateT("\"Split\" type"));
 		m_hVisMode             = Opt.insertRadio(hTemp, NULL, TranslateT("Hours of day"), OptionsCtrl::OCF_DISABLECHILDSONUNCHECK);
-			m_hHODGroup         = Opt.insertEdit (m_hVisMode, TranslateT("Number of days to group"), _T(""), OptionsCtrl::OCF_NUMBER);
+			m_hHODGroup         = Opt.insertEdit (m_hVisMode, TranslateT("Number of days to group"), L"", OptionsCtrl::OCF_NUMBER);
 		hTempRadio             = Opt.insertRadio(hTemp, m_hVisMode, TranslateT("Days of week"), OptionsCtrl::OCF_DISABLECHILDSONUNCHECK);
-			m_hDOWGroup         = Opt.insertEdit (hTempRadio, TranslateT("Number of weeks to group"), _T(""), OptionsCtrl::OCF_NUMBER);
+			m_hDOWGroup         = Opt.insertEdit (hTempRadio, TranslateT("Number of weeks to group"), L"", OptionsCtrl::OCF_NUMBER);
 		hTempRadio             = Opt.insertRadio(hTemp, m_hVisMode, TranslateT("Custom (for experts only)"), OptionsCtrl::OCF_DISABLECHILDSONUNCHECK);
 			hTemp               = Opt.insertGroup(hTempRadio, TranslateT("Column setup"));
 				m_hBlockUnit     = Opt.insertCombo(hTemp, TranslateT("Block unit"));
-				m_hUnitsPerBlock = Opt.insertEdit (hTemp, TranslateT("Units per block"), _T(""), OptionsCtrl::OCF_NUMBER);
-				m_hBlocks        = Opt.insertEdit (hTemp, TranslateT("Blocks per column"), _T(""), OptionsCtrl::OCF_NUMBER);
+				m_hUnitsPerBlock = Opt.insertEdit (hTemp, TranslateT("Units per block"), L"", OptionsCtrl::OCF_NUMBER);
+				m_hBlocks        = Opt.insertEdit (hTemp, TranslateT("Blocks per column"), L"", OptionsCtrl::OCF_NUMBER);
 			hTemp               = Opt.insertGroup(hTempRadio, TranslateT("Graph alignment"));
 				m_hGraphAlign    = Opt.insertRadio(hTemp, NULL, TranslateT("Align on day boundary"));
 				                   Opt.insertRadio(hTemp, m_hGraphAlign, TranslateT("Align on week boundary"));
-			m_hCustomGroup      = Opt.insertEdit (hTempRadio, TranslateT("Number of columns to group"), _T(""), OptionsCtrl::OCF_NUMBER);
+			m_hCustomGroup      = Opt.insertEdit (hTempRadio, TranslateT("Number of columns to group"), L"", OptionsCtrl::OCF_NUMBER);
 	m_hTopPerColumn           = Opt.insertCheck(hGroup, TranslateT("Calculate maximum per column (not per graph)"));
 
-	static const TCHAR* sourceTexts[] = {
-		LPGENT("Characters (incoming)"),
-		LPGENT("Characters (outgoing)"),
-		LPGENT("Characters (all)"),
-		LPGENT("Characters (in/out ratio)"),
-		LPGENT("Messages (incoming)"),
-		LPGENT("Messages (outgoing)"),
-		LPGENT("Messages (all)"),
-		LPGENT("Messages (in/out ratio)"),
-		LPGENT("Chats (incoming)"),
-		LPGENT("Chats (outgoing)"),
-		LPGENT("Chats (all)"),
-		LPGENT("Chats (in/out ratio)"),
+	static const wchar_t* sourceTexts[] = {
+		LPGENW("Characters (incoming)"),
+		LPGENW("Characters (outgoing)"),
+		LPGENW("Characters (all)"),
+		LPGENW("Characters (in/out ratio)"),
+		LPGENW("Messages (incoming)"),
+		LPGENW("Messages (outgoing)"),
+		LPGENW("Messages (all)"),
+		LPGENW("Messages (in/out ratio)"),
+		LPGENW("Chats (incoming)"),
+		LPGENW("Chats (outgoing)"),
+		LPGENW("Chats (all)"),
+		LPGENW("Chats (in/out ratio)"),
 	};
 
 	array_each_(i, sourceTexts)
 	{
-		Opt.addComboItem(m_hSource, TranslateTS(sourceTexts[i]));
+		Opt.addComboItem(m_hSource, TranslateW(sourceTexts[i]));
 	}
 
-	static const TCHAR* unitTexts[] = {
-		LPGENT("Hours"),
-		LPGENT("Days"),
-		LPGENT("Weeks"),
+	static const wchar_t* unitTexts[] = {
+		LPGENW("Hours"),
+		LPGENW("Days"),
+		LPGENW("Weeks"),
 	};
 
 	array_each_(i, unitTexts)
 	{
-		Opt.addComboItem(m_hBlockUnit, TranslateTS(unitTexts[i]));
+		Opt.addComboItem(m_hBlockUnit, TranslateW(unitTexts[i]));
 	}
 
 	Opt.setComboSelected(m_hSource       , 4 * m_nSource + m_nSourceType);
@@ -162,7 +162,7 @@ ext::string ColSplitTimeline::impl_contactDataGetUID() const
 {
 	SplitParams params = getParams();
 	
-	return ext::str(ext::format(_T("splittimeline-|-|-|"))
+	return ext::str(ext::format(L"splittimeline-|-|-|")
 		% m_nSource
 		% params.hours_in_block
 		% params.alignment);
@@ -250,35 +250,35 @@ void ColSplitTimeline::impl_contactDataMerge(Contact& contact, const Contact& in
 
 void ColSplitTimeline::impl_outputRenderHeader(ext::ostream& tos, int row, int rowSpan) const
 {
-	static const TCHAR* szTypeDesc[] = {
-		LPGENT("Hours of day timeline"),
-		LPGENT("Days of week timeline"),
-		LPGENT("\"Split\" timeline"),
+	static const wchar_t* szTypeDesc[] = {
+		LPGENW("Hours of day timeline"),
+		LPGENW("Days of week timeline"),
+		LPGENW("\"Split\" timeline"),
 	};
 
-	static const TCHAR* szSourceDesc[] = {
-		LPGENT("incoming characters"),
-		LPGENT("outgoing characters"),
-		LPGENT("all characters"),
-		LPGENT("in/out ratio of characters"),
-		LPGENT("incoming messages"),
-		LPGENT("outgoing messages"),
-		LPGENT("all messages"),
-		LPGENT("in/out ratio of messages"),
-		LPGENT("incoming chats"),
-		LPGENT("outgoing chats"),
-		LPGENT("all chats"),
-		LPGENT("in/out ratio of chats"),
+	static const wchar_t* szSourceDesc[] = {
+		LPGENW("incoming characters"),
+		LPGENW("outgoing characters"),
+		LPGENW("all characters"),
+		LPGENW("in/out ratio of characters"),
+		LPGENW("incoming messages"),
+		LPGENW("outgoing messages"),
+		LPGENW("all messages"),
+		LPGENW("in/out ratio of messages"),
+		LPGENW("incoming chats"),
+		LPGENW("outgoing chats"),
+		LPGENW("all chats"),
+		LPGENW("in/out ratio of chats"),
 	};
 
 	if (row == 1)
 	{
 		SplitParams params = getParams();
 		ext::string strTitle = str(ext::kformat(TranslateT("#{type} for #{data}"))
-			% _T("#{type}") * TranslateTS(szTypeDesc[params.effective_vis_mode])
-			% _T("#{data}") * TranslateTS(szSourceDesc[4 * m_nSource + m_nSourceType]));
+			% L"#{type}" * TranslateW(szTypeDesc[params.effective_vis_mode])
+			% L"#{data}" * TranslateW(szSourceDesc[4 * m_nSource + m_nSourceType]));
 
-		writeRowspanTD(tos, getCustomTitle(TranslateTS(szTypeDesc[params.effective_vis_mode]), strTitle) + _T("<div style=\"width: ") + utils::intToString(m_nTimelineWidth) + _T("px;\"></div>"), row, 1, rowSpan);
+		writeRowspanTD(tos, getCustomTitle(TranslateW(szTypeDesc[params.effective_vis_mode]), strTitle) + L"<div style=\"width: " + utils::intToString(m_nTimelineWidth) + L"px;\"></div>", row, 1, rowSpan);
 	}
 }
 
@@ -459,7 +459,7 @@ void ColSplitTimeline::outputRenderRowInOut(ext::ostream& tos, const Contact& co
 		}
 	}
 
-	tos << _T("<td class=\"img_middle\">");
+	tos << L"<td class=\"img_middle\">";
 
 	// draw graph
 	Canvas canvas(m_nTimelineWidth, 49);
@@ -548,10 +548,10 @@ void ColSplitTimeline::outputRenderRowInOut(ext::ostream& tos, const Contact& co
 	
 	if (getStatistic()->newFilePNG(canvas, strFinalFile))
 	{
-		tos << _T("<img src=\"") << strFinalFile << _T("\"/>");
+		tos << L"<img src=\"" << strFinalFile << L"\" alt=\"\" />";
 	}
 
-	tos << _T("</td>") << ext::endl;
+	tos << L"</td>" << ext::endl;
 }
 
 void ColSplitTimeline::outputRenderRowRatio(ext::ostream& tos, const Contact& contact, DisplayType)
@@ -559,7 +559,7 @@ void ColSplitTimeline::outputRenderRowRatio(ext::ostream& tos, const Contact& co
 	SplitParams params = getParams();
 	const TimelineMap* pData = reinterpret_cast<const TimelineMap*>(contact.getSlot(contactDataSlotGet()));
 
-	tos << _T("<td class=\"img_middle\">");
+	tos << L"<td class=\"img_middle\">";
 
 	// draw graph
 	Canvas canvas(m_nTimelineWidth, 49);
@@ -631,8 +631,8 @@ void ColSplitTimeline::outputRenderRowRatio(ext::ostream& tos, const Contact& co
 
 	if (getStatistic()->newFilePNG(canvas, strFinalFile))
 	{
-		tos << _T("<img src=\"") << strFinalFile << _T("\"/>");
+		tos << L"<img src=\"" << strFinalFile << L"\" alt=\"\" />";
 	}
 
-	tos << _T("</td>") << ext::endl;
+	tos << L"</td>" << ext::endl;
 }

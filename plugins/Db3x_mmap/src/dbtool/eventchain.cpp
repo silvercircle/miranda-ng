@@ -3,7 +3,7 @@
 Miranda Database Tool
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright 2000-2011 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -22,7 +22,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#include "..\stdafx.h"
+#include "../stdafx.h"
 
 #define DBEF_ALL (DBEF_READ | DBEF_SENT | DBEF_RTL | DBEF_UTF | DBEF_ENCRYPTED)
 
@@ -33,8 +33,8 @@ static DWORD eventCount;
 static DWORD lastTimestamp;
 static DWORD ofsFirstUnread, tsFirstUnread;
 static DWORD memsize = 0;
-static DBEvent* memblock = NULL;
-static DBEvent* dbePrevEvent = NULL;
+static DBEvent* memblock = nullptr;
+static DBEvent* dbePrevEvent = nullptr;
 
 void CDb3Mmap::ConvertOldEvent(DBEvent*& dbei)
 {
@@ -56,7 +56,7 @@ void CDb3Mmap::ConvertOldEvent(DBEvent*& dbei)
 
 	if (msglenW > 0 && msglenW <= msglen) {
 		char* utf8str = Utf8EncodeW((WCHAR*)&dbei->blob[msglen]);
-		if (utf8str == NULL)
+		if (utf8str == nullptr)
 			return;
 
 		dbei->cbBlob = (DWORD)mir_strlen(utf8str) + 1;
@@ -98,7 +98,7 @@ void CDb3Mmap::FinishUp(DWORD ofsLast, DBContact *dbc)
 	if (memsize && memblock) {
 		free(memblock);
 		memsize = 0;
-		memblock = NULL;
+		memblock = nullptr;
 	}
 }
 
@@ -123,7 +123,7 @@ DWORD CDb3Mmap::WriteEvent(DBEvent *dbe)
 	DWORD ofs = WriteSegment(WSOFS_END, dbe, offsetof(DBEvent, blob) + dbe->cbBlob);
 	if (ofs == WS_ERROR) {
 		free(memblock);
-		memblock = NULL;
+		memblock = nullptr;
 		memsize = 0;
 		return 0;
 	}
@@ -135,7 +135,7 @@ int CDb3Mmap::WorkEventChain(DWORD ofsContact, DBContact *dbc, int firstTime)
 	int isUnread = 0;
 
 	if (firstTime) {
-		dbePrevEvent = NULL;
+		dbePrevEvent = nullptr;
 		ofsPrevEvent = 0;
 		ofsDestPrevEvent = 0;
 		ofsThisEvent = dbc->ofsFirstEvent;
@@ -219,7 +219,7 @@ int CDb3Mmap::WorkEventChain(DWORD ofsContact, DBContact *dbc, int firstTime)
 		return ERROR_SUCCESS;
 	}
 
-	DBEvent *dbePrev = NULL;
+	DBEvent *dbePrev = nullptr;
 	if (dbePrevEvent && dbeOld.timestamp == lastTimestamp) {
 		int len = offsetof(DBEvent, blob) + dbePrevEvent->cbBlob;
 		dbePrev = (DBEvent*)malloc(len);

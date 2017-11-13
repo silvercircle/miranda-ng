@@ -13,8 +13,8 @@
 Установить стандартное
 [Delete default picture]
 Удалить стандартное
-[CAUTION: These pictures are NOT your own avatars.\nTo set your own Avatar go to Main menu | View/change my details | Avatars.]
-ПРЕДУПРЕЖДЕНИЕ: Эти изображения НЕ ВАШИ аватары. Установить свой аватар вы можете через "Главное меню -> Личные данные -> Аватары".
+[CAUTION: These pictures are NOT your own avatars.\nTo set your own avatar go to Main menu -> View/change my details -> Avatar.]
+ВНИМАНИЕ! Эти изображения НЕ ВАШИ аватары. Вы можете установить свой аватар в разделе "Главное меню -> Личные данные -> Аватар".
 [Try to draw avatar background transparent (for images without transparency)]
 Выводить фон аватара прозрачным (для аватаров без прозрачности)
 [Number of points to define background:]
@@ -89,8 +89,8 @@
 Мой глобальный кэш аватаров
 [Fatal error, image services not found. Avatar services will be disabled.]
 Фатальная ошибка, служба изображений не найдена. Служба аватаров будет отключена.
-[Avatar Service]
-Служба аватар
+[Avatar service]
+Служба аватаров
 [Set avatar options for %s]
 Настройки аватара для %s
 [Delete picture file from disk (may be necessary to force a reload, but will delete local pictures)?]
@@ -110,9 +110,7 @@
 [No avatar]
 Без аватара
 [Are you sure you want to remove your avatar?]
-Вы хотите удалить ваш аватар?
-[Global Avatar]
-Глобальный аватар
+Вы хотите удалить свой аватар?
 [Avatar]
 Аватар
 [All files]
@@ -131,7 +129,7 @@ Flash анимация
 XML файлы
 [Grow avatar to fit max allowed protocol size]
 Увеличивать аватар до максимального размера
-[Set My Avatar]
+[Set my avatar]
 Установить мой аватар
-[Set My Avatar for %s]
+[Set my avatar for %s]
 Сменить мой аватар для %s

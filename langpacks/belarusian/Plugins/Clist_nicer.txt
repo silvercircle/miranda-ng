@@ -7,9 +7,8 @@
 ;============================================================
 [Displays contacts, event notifications, protocol status.]
 Паказвае кантакты, з'явы, статусы протоколаў.
-;file \plugins\Clist_nicer\res\resource.rc
-[Clist Nicer exception]
-Выключэнні Clist Nicer
+[Clist nicer exception]
+Выключэнні Clist nicer
 [Copy to clipboard]
 Капіяваць у буфер абмену
 [Continue]
@@ -18,14 +17,6 @@
 Выйсці з Міранды
 [Although the exception was caught and you may continue working with Miranda, you should restart the program as soon as possible. The exception may have damaged internal data structures and can have a serious impact on stability.]
 Было злоўлена выключэнне. Вы можаце і далей працаваць з праграмай, але пажадана перазапусціць Міранду як мага хутчэй. Магчыма, пашкоджаны ўнутраныя структуры дадзеных і гэта можа аказаць сур'ёзны ўплыў на стабільнасць.
-[About CList Nicer+]
-Пра Nicer+
-[Copyright © 2004-2010 by the Miranda IM project, 2012-2015 by the Miranda NG project. More detailed copyright information can be found in the included README file.]
-Аўтарскія правы 2004-2010 Miranda IM, 2012-2015 Miranda NG. Падрабязней ў файле Readme.
-[Version]
-Версія
-[Support and latest version information]
-Падтрымка і інфармацыя пра апошнюю версію
 [Delete contact]
 Выдаліць кантакт
 [No]
@@ -35,7 +26,7 @@
 [Hide from list only, in order to keep their history and ignore/visibility settings]
 Схаваць са спісу (захаваецца гісторыя і налады бачнасці)
 [Use Options -> Contacts -> Ignore to unhide contacts.]
-Налады -> Кантакты -> Ігнараваць, каб адлюстраваць кантакты.
+"Налады -> Кантакты -> Ігнараваць", каб адлюстраваць кантакты.
 [Are you sure you want to delete %s?]
 Выдаліць %s са спісу?
 [This will erase all history and settings for this contact!]
@@ -136,6 +127,8 @@
 Не адлучаць адключаныя кантакты
 [Hide as offline]
 Хаваць як адключаных
+[Tree hide offline]
+
 [Right align contacts]
 Выраўняць па правым краі
 [Avatars]
@@ -264,6 +257,8 @@
 Схаваць паласу прагорткі
 [Gray out entire list when:]
 Зрабіць шэрым, калі:
+[Tree gray out]
+
 [Contact list background]
 Фон спісу
 [Use Windows colors]
@@ -418,8 +413,8 @@
 Іншае
 [Hide this contact from the list]
 Схаваць кантакт са спісу
-[To show a previously hidden contact, navigate to Options -> Events -> Ignore, search the contact in the list and tick the checkbox next to its name.]
-Каб паказаць раней схаваны кантакт, адкрыйце Налады -> Падзеі -> Ігнараваць, знайдзіце кантакт, і пастаўце галачку перад яго імем.
+[To show a previously hidden contact, navigate to Options -> Contacts -> Ignore, search the contact in the list and tick the checkbox next to its name.]
+Каб паказаць раней схаваны кантакт, адкрыйце "Налады -> Кантакты -> Ігнараваць", знайдзіце кантакт, і пастаўце галачку перад яго імем.
 [Display options]
 Опцыі адлюстравання
 [Show contact with priority]
@@ -439,26 +434,25 @@
 [&Status]
 Статус
 [&Offline\tCtrl+0]
-Адключаны
+Ад&ключаныtCtrl+0
 [On&line\tCtrl+1]
-Далучаны
+&Далучаны\tCtrl+1
 [&Away\tCtrl+2]
-Адышоў
-[&NA\tCtrl+3]
-Недасяжны
+&Адсутнічаю\tCtrl+2
+[&Not available\tCtrl+3]
+Неда&ступны\tCtrl+3
 [Occ&upied\tCtrl+4]
-Заняты
-[&DND\tCtrl+5]
-Не турбаваць
+Зан&яты\tCtrl+4
+[&Do not disturb\tCtrl+5]
+Не &турбаваць\tCtrl+5
 [&Free for chat\tCtrl+6]
-Вольны
+&Вольны\tCtrl+6
 [&Invisible\tCtrl+7]
-Нябачны
+&Нябачны\tCtrl+7
 [On the &phone\tCtrl+8]
-Тэлефон
+На тэле&фоне\tCtrl+8
 [Out to &lunch\tCtrl+9]
-За ежай
-;file \plugins\Clist_nicer\src\CLCButton.cpp
+А&бедаю\tCtrl+9
 [Show menu]
 Меню
 [Show/Hide offline contacts]
@@ -483,7 +477,6 @@
 Наладзіць рэжымы выгляду
 [Clear view mode]
 Сцерці рэжым выгляду
-;file \plugins\Clist_nicer\src\clcopts.cpp
 [Not focused]
 Не ў фокусе
 [Offline]
@@ -492,11 +485,11 @@
 Далучаны
 [Away]
 Адсутнічаю
-[NA]
-Недасяжны
+[Not available]
+Недаступны
 [Occupied]
 Заняты
-[DND]
+[Do not disturb]
 Не турбаваць
 [Free for chat]
 Вольны
@@ -556,10 +549,8 @@
 Дадаткова
 [Skins]
 Скіны
-;file \plugins\Clist_nicer\src\clcpaint.cpp
 [No events...]
 Падзей няма...
-;file \plugins\Clist_nicer\src\clistmenus.cpp
 [Add permanently]
 Дадаць у спіс
 [Revert to default]
@@ -578,10 +569,8 @@
 Налады адлюстравання і ігнараванні для %s
 [&Contact list settings...]
 Налады кантакт-ліста...
-;file \plugins\Clist_nicer\src\clistopts.cpp
 [Global]
 Глабальныя
-;file \plugins\Clist_nicer\src\clui.cpp
 [Toggle show online/offline]
 Укл/Выкл адключаных карыстачоў
 [Toggle groups]
@@ -606,8 +595,12 @@
 Мае кантакты
 [Default]
 Змаўчанні
+[Overlay icons]
+
 [%s connecting]
 %s Далучэнне
+[Connecting icons]
+
 [Menu]
 Меню
 [Open main menu]
@@ -618,8 +611,8 @@
 Для гэтага дзеяння неабходны правільны выбар кантакту. Абярыце кантакт са спісу і паўтарыце.
 [Parameter mismatch]
 Неадпаведнасць параметру
-[The service %s specified by the %s button definition was not found. You may need to install additional plugins.]
-Сервіс %s пазначаны кнопкай %s не знойдзены. Магчыма, для гэтага патрэбны дадатковы плагін.
+[The service %S specified by the %S button definition was not found. You may need to install additional plugins.]
+Сервіс %S пазначаны кнопкай %S не знойдзены. Магчыма, для гэтага патрэбны дадатковы плагін.
 [Service failure]
 Збой службы
 [You need the FloatingContacts plugin, cause the embedded floating contacts were removed.]
@@ -652,7 +645,6 @@
 Хуткі пошук
 [Embedded frames border]
 Мяжа фрэймаў
-;file \plugins\Clist_nicer\src\cluiframes.cpp
 [&FrameTitle]
 &Загаловак фрэйма
 [&Visible]
@@ -683,14 +675,6 @@
 &Уверх
 [&Down]
 У&ніз
-[Frames]
-Фрэймы
-[Show all frames]
-Паказаць усе фрэймы
-[Show all title bars]
-Паказваць назвы
-[Hide all title bars]
-Схаваць назвы
 [Lock frame]
 Замацаваць фрэйм
 [Visible]
@@ -701,7 +685,14 @@
 Ужываць скін да фрэйма
 [Floating]
 Плывучае
-;file \plugins\Clist_nicer\src\cluiopts.cpp
+[Frames]
+Фрэймы
+[Show all frames]
+Паказаць усе фрэймы
+[Show all title bars]
+Паказваць назвы
+[Hide all title bars]
+Схаваць назвы
 [Title bar]
 Загаловак
 [Tool Window]
@@ -710,15 +701,12 @@
 Тонкая рамка
 [No border]
 Без рамкі
-;file \plugins\Clist_nicer\src\Docking.cpp
 [The contact list cannot be docked when using the default title bar and border. Use a toolwindow or borderless style instead.]
 Немагчыма паркаваць спіс кантактаў пры выкарыстанні мяжы і загалоўка па змаўчанні. Выкарыстоўвайце стыль "Без меж" ці "Панэль"
 [Contact list docking]
 Паркоўка
-;file \plugins\Clist_nicer\src\extBackg.cpp
 [Load and apply]
 Загрузіць і ўжыць
-;file \plugins\Clist_nicer\src\groupmenu.cpp
 [Show metacontact protocol icons]
 Паказваць значкі метакантактаў
 [Show additional buttons]
@@ -733,9 +721,6 @@
 Знешні выгляд
 [&Options...]
 &Налады
-[&About the contact list...]
-Пра спіс кантактаў...
-;file \plugins\Clist_nicer\src\viewmodes.cpp
 [Ungrouped contacts]
 Кантакты па-за гуртамі
 [And]
@@ -752,8 +737,8 @@
 Гадзін
 [Days]
 Дзён
-[Current view mode: %s]
-Бягучы рэжым выгляду: %s
+[Current view mode: %S]
+Бягучы рэжым выгляду: %S
 [Filtering]
 Фільтраванне
 [*** All contacts ***]

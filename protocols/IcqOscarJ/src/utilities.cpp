@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2010 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -207,7 +207,7 @@ int MirandaStatusToSupported(int nMirandaStatus)
 
 char* MirandaStatusToStringUtf(int mirandaStatus)
 { // return miranda status description in utf-8, use unicode service is possible
-	return tchar_to_utf8(pcli->pfnGetStatusModeDescription(mirandaStatus, 0));
+	return make_utf8_string(pcli->pfnGetStatusModeDescription(mirandaStatus, 0));
 }
 
 char** CIcqProto::MirandaStatusToAwayMsg(int nStatus)
@@ -370,18 +370,17 @@ void CIcqProto::InitContactsCache()
 
 void CIcqProto::UninitContactsCache(void)
 {
-	{	mir_cslock l(contactsCacheMutex);
+	mir_cslock l(contactsCacheMutex);
 
-		// cleanup the cache
-		for (int i = 0; i < contactsCache.getCount(); i++) {
-			icq_contacts_cache *cache_item = contactsCache[i];
+	// cleanup the cache
+	for (int i = 0; i < contactsCache.getCount(); i++) {
+		icq_contacts_cache *cache_item = contactsCache[i];
 
-			SAFE_FREE((void**)&cache_item->szUid);
-			SAFE_FREE((void**)&cache_item);
-		}
-
-		contactsCache.destroy();
+		SAFE_FREE((void**)&cache_item->szUid);
+		SAFE_FREE((void**)&cache_item);
 	}
+
+	contactsCache.destroy();
 }
 
 
@@ -419,7 +418,8 @@ MCONTACT CIcqProto::HandleFromCacheByUid(DWORD dwUin, const char *szUid)
 
 MCONTACT CIcqProto::HContactFromUIN(DWORD dwUin, int *Added)
 {
-	if (Added) *Added = 0;
+	if (Added)
+		*Added = 0;
 
 	MCONTACT hContact = HandleFromCacheByUid(dwUin, NULL);
 	if (hContact)
@@ -438,11 +438,11 @@ MCONTACT CIcqProto::HContactFromUIN(DWORD dwUin, int *Added)
 		hContact = db_find_next(hContact, m_szModuleName);
 	}
 
-	//not present: add
+	// not present: add
 	if (Added) {
 		debugLogA("Attempt to create ICQ contact %u", dwUin);
 
-		hContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
+		hContact = db_add_contact();
 		if (!hContact) {
 			debugLogA("Failed to create ICQ contact %u", dwUin);
 			return INVALID_CONTACT_ID;
@@ -450,7 +450,7 @@ MCONTACT CIcqProto::HContactFromUIN(DWORD dwUin, int *Added)
 
 		if (Proto_AddToContact(hContact, m_szModuleName) != 0) {
 			// For some reason we failed to register the protocol to this contact
-			CallService(MS_DB_CONTACT_DELETE, hContact, 0);
+			db_delete_contact(hContact);
 			debugLogA("Failed to register ICQ contact %u", dwUin);
 			return INVALID_CONTACT_ID;
 		}
@@ -486,13 +486,12 @@ MCONTACT CIcqProto::HContactFromUID(DWORD dwUin, const char *szUid, int *Added)
 	if (dwUin)
 		return HContactFromUIN(dwUin, Added);
 
-	if (Added) *Added = 0;
-
-	if (!m_bAimEnabled)
-		return INVALID_CONTACT_ID;
+	if (Added)
+		*Added = 0;
 
 	MCONTACT hContact = HandleFromCacheByUid(dwUin, szUid);
-	if (hContact) return hContact;
+	if (hContact)
+		return hContact;
 
 	hContact = db_find_first(m_szModuleName);
 	while (hContact) {
@@ -513,7 +512,7 @@ MCONTACT CIcqProto::HContactFromUID(DWORD dwUin, const char *szUid, int *Added)
 	if (Added) {
 		debugLogA("Attempt to create ICQ contact by string <%s>", szUid);
 
-		hContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
+		hContact = db_add_contact();
 		Proto_AddToContact(hContact, m_szModuleName);
 
 		setString(hContact, UNIQUEIDSETTING, szUid);
@@ -529,7 +528,6 @@ MCONTACT CIcqProto::HContactFromUID(DWORD dwUin, const char *szUid, int *Added)
 		}
 		AddToContactsCache(hContact, 0, szUid);
 		*Added = 1;
-
 		return hContact;
 	}
 
@@ -540,7 +538,7 @@ MCONTACT CIcqProto::HContactFromAuthEvent(MEVENT hEvent)
 {
 	DWORD body[3];
 
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	dbei.cbBlob = sizeof(DWORD) * 2;
 	dbei.pBlob = (PBYTE)&body;
 
@@ -561,7 +559,7 @@ char* NickFromHandle(MCONTACT hContact)
 	if (hContact == INVALID_CONTACT_ID)
 		return null_strdup(Translate("<invalid>"));
 
-	return null_strdup((char *)pcli->pfnGetContactDisplayName(hContact, 0));
+	return null_strdup(_T2A(pcli->pfnGetContactDisplayName(hContact, 0)));
 }
 
 char* NickFromHandleUtf(MCONTACT hContact)
@@ -569,7 +567,7 @@ char* NickFromHandleUtf(MCONTACT hContact)
 	if (hContact == INVALID_CONTACT_ID)
 		return ICQTranslateUtf(LPGEN("<invalid>"));
 
-	return tchar_to_utf8((TCHAR*)pcli->pfnGetContactDisplayName(hContact, 0));
+	return make_utf8_string(pcli->pfnGetContactDisplayName(hContact, 0));
 }
 
 char* strUID(DWORD dwUIN, char *pszUID)
@@ -905,6 +903,7 @@ bool IsStringUIN(const char *pszString)
 
 void __cdecl CIcqProto::ProtocolAckThread(icq_ack_args* pArguments)
 {
+	Thread_SetName("ICQ: ProtocolAckThread");
 	Sleep(150);
 
 	if (pArguments->nAckResult == ACKRESULT_SUCCESS)
@@ -987,6 +986,7 @@ int CIcqProto::IsMetaInfoChanged(MCONTACT hContact)
 
 void __cdecl CIcqProto::SetStatusNoteThread(void *pDelay)
 {
+	Thread_SetName("ICQ: SetStatusNoteThread");
 	if (pDelay)
 		SleepEx((UINT_PTR)pDelay, TRUE);
 
@@ -1317,16 +1317,6 @@ bool CIcqProto::validateStatusMessageRequest(MCONTACT hContact, WORD byMessageTy
 	return true;
 }
 
-
-void __fastcall SAFE_DELETE(MZeroedObject **p)
-{
-	if (*p) {
-		delete *p;
-		*p = NULL;
-	}
-}
-
-
 void __fastcall SAFE_FREE(void** p)
 {
 	if (*p) {
@@ -1334,7 +1324,6 @@ void __fastcall SAFE_FREE(void** p)
 		*p = NULL;
 	}
 }
-
 
 void* __fastcall SAFE_MALLOC(size_t size)
 {
@@ -1348,7 +1337,6 @@ void* __fastcall SAFE_MALLOC(size_t size)
 	return p;
 }
 
-
 void* __fastcall SAFE_REALLOC(void* p, size_t size)
 {
 	if (p)
@@ -1357,7 +1345,6 @@ void* __fastcall SAFE_REALLOC(void* p, size_t size)
 	return SAFE_MALLOC(size);
 }
 
-
 DWORD ICQWaitForSingleObject(HANDLE hObject, DWORD dwMilliseconds, int bWaitAlways)
 {
 	DWORD dwResult;
@@ -1365,32 +1352,30 @@ DWORD ICQWaitForSingleObject(HANDLE hObject, DWORD dwMilliseconds, int bWaitAlwa
 	do { // will get WAIT_IO_COMPLETION for QueueUserAPC(), ignore it unless terminating
 		dwResult = WaitForSingleObjectEx(hObject, dwMilliseconds, TRUE);
 	}
-	while (dwResult == WAIT_IO_COMPLETION && (bWaitAlways || !Miranda_Terminated()));
+	while (dwResult == WAIT_IO_COMPLETION && (bWaitAlways || !Miranda_IsTerminated()));
 
 	return dwResult;
 }
 
 
-HANDLE NetLib_OpenConnection(HANDLE hUser, const char* szIdent, NETLIBOPENCONNECTION* nloc)
+HNETLIBCONN NetLib_OpenConnection(HNETLIBUSER hUser, const char* szIdent, NETLIBOPENCONNECTION* nloc)
 {
 	Netlib_Logf(hUser, "%sConnecting to %s:%u", szIdent ? szIdent : "", nloc->szHost, nloc->wPort);
 
 	nloc->cbSize = sizeof(NETLIBOPENCONNECTION);
 	nloc->flags |= NLOCF_V2;
-
-	return (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)hUser, (LPARAM)nloc);
+	return Netlib_OpenConnection(hUser, nloc);
 }
 
 
-HANDLE CIcqProto::NetLib_BindPort(NETLIBNEWCONNECTIONPROC_V2 pFunc, void* lParam, WORD* pwPort, DWORD* pdwIntIP)
+HNETLIBBIND CIcqProto::NetLib_BindPort(NETLIBNEWCONNECTIONPROC_V2 pFunc, void* lParam, WORD* pwPort, DWORD* pdwIntIP)
 {
-	NETLIBBIND nlb = { 0 };
-	nlb.cbSize = sizeof(NETLIBBIND);
+	NETLIBBIND nlb = {};
 	nlb.pfnNewConnectionV2 = pFunc;
 	nlb.pExtra = lParam;
 	SetLastError(ERROR_INVALID_PARAMETER); // this must be here - NetLib does not set any error :((
-
-	HANDLE hBoundPort = (HANDLE)CallService(MS_NETLIB_BINDPORT, (WPARAM)m_hDirectNetlibUser, (LPARAM)&nlb);
+	
+	HNETLIBBIND hBoundPort = Netlib_BindPort(m_hDirectNetlibUser, &nlb);
 
 	if (pwPort) *pwPort = nlb.wPort;
 	if (pdwIntIP) *pdwIntIP = nlb.dwInternalIP;
@@ -1399,10 +1384,11 @@ HANDLE CIcqProto::NetLib_BindPort(NETLIBNEWCONNECTIONPROC_V2 pFunc, void* lParam
 }
 
 
-void NetLib_CloseConnection(HANDLE *hConnection, int bServerConn)
+void NetLib_CloseConnection(HNETLIBCONN *hConnection, int bServerConn)
 {
 	if (*hConnection) {
-		NetLib_SafeCloseHandle(hConnection);
+		Netlib_CloseHandle(*hConnection);
+		*hConnection = NULL;
 
 		if (bServerConn)
 			FreeGatewayIndex(*hConnection);
@@ -1427,7 +1413,7 @@ int CIcqProto::NetLog_Direct(const char *fmt, ...)
 	va_start(va, fmt);
 	mir_vsnprintf(szText, sizeof(szText), fmt, va);
 	va_end(va);
-	return CallService(MS_NETLIB_LOG, (WPARAM)m_hDirectNetlibUser, (LPARAM)szText);
+	return Netlib_Log(m_hDirectNetlibUser, szText);
 }
 
 int CIcqProto::NetLog_Uni(BOOL bDC, const char *fmt, ...)
@@ -1438,8 +1424,8 @@ int CIcqProto::NetLog_Uni(BOOL bDC, const char *fmt, ...)
 	mir_vsnprintf(szText, sizeof(szText), fmt, va);
 	va_end(va);
 
-	HANDLE hNetlib = (bDC) ? m_hDirectNetlibUser : m_hNetlibUser;
-	return CallService(MS_NETLIB_LOG, (WPARAM)hNetlib, (LPARAM)szText);
+	HNETLIBUSER hNetlib = (bDC) ? m_hDirectNetlibUser : m_hNetlibUser;
+	return Netlib_Log(hNetlib, szText);
 }
 
 char* __fastcall ICQTranslateUtf(const char *src)
@@ -1551,7 +1537,7 @@ const char* ExtractFileName(const char *fullname)
 }
 
 
-char* FileNameToUtf(const TCHAR *filename)
+char* FileNameToUtf(const wchar_t *filename)
 {
 	WCHAR *usFileName = NULL;
 	int wchars = GetLongPathName(filename, usFileName, 0);
@@ -1565,10 +1551,10 @@ char* FileNameToUtf(const TCHAR *filename)
 int FileAccessUtf(const char *path, int mode)
 {
 	size_t size = mir_strlen(path) + 2;
-	TCHAR *szPath = (TCHAR*)_alloca(size * sizeof(TCHAR));
+	wchar_t *szPath = (wchar_t*)_alloca(size * sizeof(wchar_t));
 
-	if (utf8_to_tchar_static(path, szPath, size))
-		return _taccess(szPath, mode);
+	if (make_unicode_string_static(path, szPath, size))
+		return _waccess(szPath, mode);
 
 	return -1;
 }
@@ -1577,10 +1563,10 @@ int FileAccessUtf(const char *path, int mode)
 int FileStatUtf(const char *path, struct _stati64 *buffer)
 {
 	size_t size = mir_strlen(path) + 2;
-	TCHAR *szPath = (TCHAR*)_alloca(size * sizeof(TCHAR));
+	wchar_t *szPath = (wchar_t*)_alloca(size * sizeof(wchar_t));
 
-	if (utf8_to_tchar_static(path, szPath, size))
-		return _tstati64(szPath, buffer);
+	if (make_unicode_string_static(path, szPath, size))
+		return _wstat64(szPath, buffer);
 
 	return -1;
 }
@@ -1590,10 +1576,10 @@ int MakeDirUtf(const char *dir)
 {
 	int wRes = -1;
 	size_t size = mir_strlen(dir) + 2;
-	TCHAR *szDir = (TCHAR*)_alloca(size * sizeof(TCHAR));
+	wchar_t *szDir = (wchar_t*)_alloca(size * sizeof(wchar_t));
 
-	if (utf8_to_tchar_static(dir, szDir, size)) { // _tmkdir can created only one dir at once
-		wRes = _tmkdir(szDir);
+	if (make_unicode_string_static(dir, szDir, size)) { // _wmkdir can created only one dir at once
+		wRes = _wmkdir(szDir);
 		// check if dir not already existed - return success if yes
 		if (wRes == -1 && errno == 17 /* EEXIST */)
 			wRes = 0;
@@ -1605,7 +1591,7 @@ int MakeDirUtf(const char *dir)
 
 				*szLast = '\0';
 				if (!MakeDirUtf(dir))
-					wRes = _tmkdir(szDir);
+					wRes = _wmkdir(szDir);
 
 				*szLast = cOld;
 			}
@@ -1619,10 +1605,10 @@ int MakeDirUtf(const char *dir)
 int OpenFileUtf(const char *filename, int oflag, int pmode)
 {
 	size_t size = mir_strlen(filename) + 2;
-	TCHAR *szFile = (TCHAR*)_alloca(size * sizeof(TCHAR));
+	wchar_t *szFile = (wchar_t*)_alloca(size * sizeof(wchar_t));
 
-	if (utf8_to_tchar_static(filename, szFile, size))
-		return _topen(szFile, oflag, pmode);
+	if (make_unicode_string_static(filename, szFile, size))
+		return _wopen(szFile, oflag, pmode);
 
 	return -1;
 }
@@ -1646,11 +1632,11 @@ void SetWindowTextUcs(HWND hWnd, WCHAR *text)
 char* GetWindowTextUtf(HWND hWnd)
 {
 	int nLen = GetWindowTextLength(hWnd);
-	TCHAR *szText = (TCHAR*)_alloca((nLen + 2) * sizeof(TCHAR));
+	wchar_t *szText = (wchar_t*)_alloca((nLen + 2) * sizeof(wchar_t));
 
 	GetWindowText(hWnd, szText, nLen + 1);
 
-	return tchar_to_utf8(szText);
+	return make_utf8_string(szText);
 }
 
 
@@ -1663,9 +1649,9 @@ char* GetDlgItemTextUtf(HWND hwndDlg, int iItem)
 void SetWindowTextUtf(HWND hWnd, const char *szText)
 {
 	size_t size = mir_strlen(szText) + 2;
-	TCHAR *tszText = (TCHAR*)_alloca(size * sizeof(TCHAR));
+	wchar_t *tszText = (wchar_t*)_alloca(size * sizeof(wchar_t));
 
-	if (utf8_to_tchar_static(szText, tszText, size))
+	if (make_unicode_string_static(szText, tszText, size))
 		SetWindowText(hWnd, tszText);
 }
 

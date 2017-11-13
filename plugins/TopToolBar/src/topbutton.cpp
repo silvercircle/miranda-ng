@@ -35,7 +35,7 @@ DWORD TopButtonInt::CheckFlags(DWORD Flags)
 	}
 	if (BitChanged(TTBBF_SHOWTOOLTIP)) {
 		dwFlags ^= TTBBF_SHOWTOOLTIP;
-		SendMessage(hwnd, BUTTONADDTOOLTIP, (WPARAM)((dwFlags & TTBBF_SHOWTOOLTIP) ? ptszTooltip : _T("")), BATF_TCHAR);
+		SendMessage(hwnd, BUTTONADDTOOLTIP, (WPARAM)((dwFlags & TTBBF_SHOWTOOLTIP) ? ptszTooltip : L""), BATF_UNICODE);
 	}
 	// next settings changing visual side, requires additional actions
 	if (BitChanged(TTBBF_VISIBLE)) {
@@ -53,7 +53,7 @@ DWORD TopButtonInt::CheckFlags(DWORD Flags)
 void TopButtonInt::CreateWnd()
 {
 	if (!(dwFlags & TTBBF_ISSEPARATOR)) {
-		hwnd = CreateWindow(TTB_BUTTON_CLASS, _T(""), BS_PUSHBUTTON | WS_CHILD | WS_TABSTOP | SS_NOTIFY, 0, 0, g_ctrl->nButtonWidth, g_ctrl->nButtonHeight, g_ctrl->hWnd, NULL, hInst, this);
+		hwnd = CreateWindow(TTB_BUTTON_CLASS, L"", BS_PUSHBUTTON | WS_CHILD | WS_TABSTOP | SS_NOTIFY, 0, 0, g_ctrl->nButtonWidth, g_ctrl->nButtonHeight, g_ctrl->hWnd, NULL, hInst, this);
 
 		if (dwFlags & TTBBF_ASPUSHBUTTON)
 			SendMessage(hwnd, BUTTONSETASPUSHBTN, 1, 0);
@@ -65,7 +65,7 @@ void TopButtonInt::CreateWnd()
 	}
 	// maybe SEPWIDTH, not g_ctrl->nButtonWidth?
 	else
-		hwnd = CreateWindow(_T("STATIC"), _T(""), WS_CHILD | SS_NOTIFY, 0, 0, g_ctrl->nButtonWidth, g_ctrl->nButtonHeight, g_ctrl->hWnd, NULL, hInst, 0);
+		hwnd = CreateWindow(L"STATIC", L"", WS_CHILD | SS_NOTIFY, 0, 0, g_ctrl->nButtonWidth, g_ctrl->nButtonHeight, g_ctrl->hWnd, NULL, hInst, 0);
 
 	SetWindowLongPtr(hwnd, GWLP_USERDATA, id);
 	SetBitmap();
@@ -98,7 +98,7 @@ void TopButtonInt::LoadSettings()
 		pszName = db_get_sa(0, TTB_OPTDIR, AS(buf, buf2, "_name"));
 		
 		mir_free(ptszProgram);
-		ptszProgram = db_get_tsa(0, TTB_OPTDIR, AS(buf, buf2, "_lpath"));
+		ptszProgram = db_get_wsa(0, TTB_OPTDIR, AS(buf, buf2, "_lpath"));
 
 		arrangedpos = db_get_b(0, TTB_OPTDIR, AS(buf, buf2, "_Position"), Buttons.getCount());
 		if (db_get_b(0, TTB_OPTDIR, AS(buf, buf2, "_Visible"), oldv) > 0)
@@ -134,7 +134,7 @@ void TopButtonInt::SaveSettings(int *SepCnt, int *LaunchCnt)
 		AS(buf2, "Launch", buf1);
 
 		db_set_s(0, TTB_OPTDIR, AS(buf, buf2, "_name"), pszName);
-		db_set_ts(0, TTB_OPTDIR, AS(buf, buf2, "_lpath"), ptszProgram);
+		db_set_ws(0, TTB_OPTDIR, AS(buf, buf2, "_lpath"), ptszProgram);
 		db_set_b(0, TTB_OPTDIR, AS(buf, buf2, "_Position"), arrangedpos);
 		db_set_b(0, TTB_OPTDIR, AS(buf, buf2, "_Visible"), isVisible());
 	}
@@ -151,15 +151,14 @@ void TopButtonInt::SetBitmap()
 	curstyle &= (~SS_ICON);
 
 	if (dwFlags & TTBBF_ISSEPARATOR) {
-		SetWindowLongPtr(hwnd, GWL_STYLE, curstyle | SS_BITMAP);
-		SendMessage(hwnd, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hBmpSeparator);
-		SendMessage(hwnd, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hBmpSeparator);
+		SetWindowLongPtr(hwnd, GWL_STYLE, curstyle | SS_ICON);
+		SendMessage(hwnd, BM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIconByHandle(iconList[9].hIcolib));
 	}
 	else {
 		if (GetWindowLongPtr(hwnd, GWL_STYLE) & SS_ICON)
 			SetWindowLongPtr(hwnd, GWL_STYLE, curstyle | SS_ICON);
 
-		TCHAR *pTooltip;
+		wchar_t *pTooltip;
 		if (bPushed) {
 			SendMessage(hwnd, BM_SETIMAGE, IMAGE_ICON, (LPARAM)(hIconDn ? hIconDn : hIconUp));
 			SendMessage(hwnd, BM_SETCHECK, BST_CHECKED, 0);
@@ -172,6 +171,6 @@ void TopButtonInt::SetBitmap()
 			pTooltip = ptszTooltipUp;
 		}
 		if (pTooltip)
-			SendMessage(hwnd, BUTTONADDTOOLTIP, (WPARAM)TranslateTH(hLangpack, pTooltip), BATF_TCHAR);
+			SendMessage(hwnd, BUTTONADDTOOLTIP, (WPARAM)TranslateW_LP(pTooltip, hLangpack), BATF_UNICODE);
 	}
 }

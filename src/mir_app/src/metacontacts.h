@@ -55,7 +55,7 @@ int  Meta_SuppressStatus(int suppress);
 int  Meta_CopyContactNick(DBCachedContact *cc, MCONTACT hContact);
 int  Meta_SetAllNicks();
 int  Meta_SwapContacts(DBCachedContact *cc, int contact_number1, int contact_number2);
-void Meta_GetSubNick(MCONTACT hMeta, int i, CMString &tszDest);
+void Meta_GetSubNick(MCONTACT hMeta, int i, CMStringW &tszDest);
 
 MCONTACT Meta_GetMostOnline(DBCachedContact *cc);
 MCONTACT Meta_GetMostOnlineSupporting(DBCachedContact *cc, int pflagnum, unsigned long capability);
@@ -66,8 +66,6 @@ DBCachedContact* CheckMeta(MCONTACT hMeta);
 // function to copy history from one contact to another - courtesy JdGordon with mods (thx)
 void Meta_FixStatus(DBCachedContact *ccMeta);
 void Meta_UpdateSrmmIcon(DBCachedContact *ccMeta, int iStatus);
-
-char *Meta_GetUniqueIdentifier(MCONTACT hContact, DWORD *pused);
 
 INT_PTR Meta_GetCaps(WPARAM wParam,LPARAM lParam);
 INT_PTR Meta_GetName(WPARAM wParam,LPARAM lParam);
@@ -95,7 +93,7 @@ struct MetaOptions
 	int set_status_from_offline_delay;
 };
 
-extern MetaOptions options;
+extern MetaOptions g_metaOptions;
 
 int Meta_OptInit(WPARAM wParam, LPARAM lParam);
 int Meta_ReadOptions();
@@ -104,8 +102,8 @@ int Meta_ReadOptions();
 void CreateApiServices();
 
 typedef enum {I_MENUOFF, I_MENU, I_CONVERT, I_ADD, I_EDIT, I_SETDEFAULT, I_REMOVE} IconIndex;
-HICON LoadIconEx(IconIndex i);
-HANDLE GetIconHandle(IconIndex i);
+HICON Meta_LoadIconEx(IconIndex i, bool big = false);
+HANDLE Meta_GetIconHandle(IconIndex i);
 
 extern HANDLE hEventForceSend, hEventUnforceSend, hSubcontactsChanged;
 extern POINT menuMousePoint;
@@ -124,6 +122,6 @@ extern POINT menuMousePoint;
 #ifndef MS_CLUI_GETVERSION
 #define MS_CLUI_GETVERSION      "CLUI/GetVersion"
 
-#define szDelMsg LPGEN("You are going to remove all the contacts associated with this metacontact.\nThis will delete the metacontact.\n\nProceed anyway?")
+#define szDelMsg LPGENW("You are going to remove all the contacts associated with this metacontact.\nThis will delete the metacontact.\n\nProceed anyway?")
 
 #endif

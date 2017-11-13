@@ -20,11 +20,11 @@
 
 [Away]
 
-[NA]
+[Not available]
 
 [Occupied]
 
-[DND]
+[Do not disturb]
 
 [Out to lunch]
 

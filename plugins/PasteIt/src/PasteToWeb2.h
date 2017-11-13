@@ -27,9 +27,9 @@ protected:
 public:
 	PasteToWeb2();
 	virtual ~PasteToWeb2();
-	virtual TCHAR* GetName()
+	virtual wchar_t* GetName()
 	{
-		return _T("wklej.to");
+		return L"wklej.to";
 	}
 	virtual void ConfigureSettings();
 	virtual std::list<PasteFormat> GetFormats();

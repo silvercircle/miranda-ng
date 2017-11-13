@@ -67,9 +67,8 @@ int MsgAck(WPARAM, LPARAM lParam)
 				DBEVENTINFO dbei = { 0 };
 				DBVARIANT dbv;
 				int reuse = db_get_b(ack->hContact,modname, "Reuse", 0);
-				if (!db_get_ts(ack->hContact, modname, "PounceMsg", &dbv) && (dbv.ptszVal[0] != '\0')) {
+				if (!db_get_ws(ack->hContact, modname, "PounceMsg", &dbv) && (dbv.ptszVal[0] != '\0')) {
 					T2Utf pszUtf(dbv.ptszVal);
-					dbei.cbSize = sizeof(dbei);
 					dbei.eventType = EVENTTYPE_MESSAGE;
 					dbei.flags = DBEF_UTF | DBEF_SENT;
 					dbei.szModule = (char*)ack->szModule;
@@ -83,7 +82,7 @@ int MsgAck(WPARAM, LPARAM lParam)
 					db_set_b(ack->hContact, modname, "Reuse", (BYTE)(reuse-1));
 				else {
 					db_set_b(ack->hContact,modname, "Reuse", 0);
-					db_set_ws(ack->hContact, modname, "PounceMsg", _T(""));
+					db_set_ws(ack->hContact, modname, "PounceMsg", L"");
 				}
 			}
 			WindowList_Remove(hWindowList,(HWND)ack->hProcess);
@@ -95,11 +94,11 @@ int MsgAck(WPARAM, LPARAM lParam)
 int BuddyPounceOptInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
 	odp.hInstance = hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONS);
-	odp.ptszGroup = LPGENT("Message sessions");
-	odp.ptszTitle = LPGENT("Buddy Pounce");
+	odp.szGroup.w = LPGENW("Message sessions");
+	odp.szTitle.w = LPGENW("Buddy Pounce");
 	odp.pfnDlgProc = BuddyPounceOptionsDlgProc;
 	Options_AddPage(wParam, &odp);
 	return 0;
@@ -142,9 +141,9 @@ int CheckDate(MCONTACT hContact)
 	return 0;
 }
 
-void SendPounce(TCHAR *text, MCONTACT hContact)
+void SendPounce(wchar_t *text, MCONTACT hContact)
 {
-	if (HANDLE hSendId = (HANDLE)CallContactService(hContact, PSS_MESSAGE, 0, T2Utf(text))) 
+	if (HANDLE hSendId = (HANDLE)ProtoChainSend(hContact, PSS_MESSAGE, 0, T2Utf(text))) 
 		WindowList_Add(hWindowList, (HWND)hSendId, hContact);
 }
 
@@ -153,14 +152,14 @@ int UserOnlineSettingChanged(WPARAM hContact, LPARAM lParam)
 	DBCONTACTWRITESETTING *cws=(DBCONTACTWRITESETTING*)lParam;
 
 	char *szProto = GetContactProto(hContact);
-	if(hContact == NULL || mir_strcmp(cws->szSetting,"Status")) return 0;
+	if(hContact == NULL || strcmp(cws->szSetting,"Status")) return 0;
 	if (szProto && (CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_IM)) {
 		int newStatus = cws->value.wVal;
 		int oldStatus = db_get_w(hContact,"UserOnline","OldStatus",ID_STATUS_OFFLINE);
 		
 		if (newStatus != oldStatus && hContact != NULL && newStatus != ID_STATUS_OFFLINE) {
 			DBVARIANT dbv;
-			if (!db_get_ts(hContact, modname, "PounceMsg", &dbv) && (dbv.ptszVal[0] != '\0')) {
+			if (!db_get_ws(hContact, modname, "PounceMsg", &dbv) && (dbv.ptszVal[0] != '\0')) {
 				// check my status
 				if (statusCheck(db_get_w(hContact, modname, "SendIfMyStatusIsFLAG", 0), CallProtoService(szProto, PS_GETSTATUS,0,0)) 
 				// check the contacts status
@@ -169,7 +168,7 @@ int UserOnlineSettingChanged(WPARAM hContact, LPARAM lParam)
 					if (CheckDate(hContact)) {
 						if (db_get_w(hContact, modname, "ConfirmTimeout", 0)) {
 							SendPounceDlgProcStruct *spdps = (SendPounceDlgProcStruct *)mir_alloc(sizeof(SendPounceDlgProcStruct));
-							TCHAR *message = mir_tstrdup(dbv.ptszVal); // will get free()ed in the send confirm window proc
+							wchar_t *message = mir_wstrdup(dbv.ptszVal); // will get free()ed in the send confirm window proc
 							spdps->hContact = hContact;
 							spdps->message = message;
 							CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_CONFIRMSEND), 0, SendPounceDlgProc, (LPARAM)spdps);
@@ -198,7 +197,7 @@ INT_PTR BuddyPounceMenuCommand(WPARAM hContact, LPARAM)
 INT_PTR AddSimpleMessage(WPARAM wParam, LPARAM lParam)
 {
 	MCONTACT hContact = wParam;
-	TCHAR* message = (TCHAR*)lParam;
+	wchar_t* message = (wchar_t*)lParam;
 	db_set_ws(hContact, modname, "PounceMsg", message);
 	db_set_w(hContact, modname, "SendIfMyStatusIsFLAG", (WORD)db_get_w(NULL, modname, "SendIfMyStatusIsFLAG",1));
 	db_set_w(hContact, modname, "SendIfTheirStatusIsFLAG", (WORD)db_get_w(NULL, modname, "SendIfTheirStatusIsFLAG",1));
@@ -211,14 +210,14 @@ INT_PTR AddSimpleMessage(WPARAM wParam, LPARAM lParam)
 INT_PTR AddToPounce(WPARAM wParam, LPARAM lParam)
 {
 	MCONTACT hContact = wParam;
-	TCHAR* message = (TCHAR*)lParam;
+	wchar_t* message = (wchar_t*)lParam;
 	DBVARIANT dbv;
-	if (!db_get_ts(hContact, modname, "PounceMsg",&dbv))
+	if (!db_get_ws(hContact, modname, "PounceMsg",&dbv))
 	{
-		TCHAR* newPounce = (TCHAR*)mir_alloc(mir_tstrlen(dbv.ptszVal) + mir_tstrlen(message) + 1);
+		wchar_t* newPounce = (wchar_t*)mir_alloc(mir_wstrlen(dbv.ptszVal) + mir_wstrlen(message) + 1);
 		if (!newPounce) return 1;
-		mir_tstrcpy(newPounce, dbv.ptszVal);
-		mir_tstrcat(newPounce, message);
+		mir_wstrcpy(newPounce, dbv.ptszVal);
+		mir_wstrcat(newPounce, message);
 		db_set_ws(hContact, modname, "PounceMsg", newPounce);
 		mir_free(newPounce);
 		db_free(&dbv);
@@ -233,7 +232,7 @@ INT_PTR AddToPounce(WPARAM wParam, LPARAM lParam)
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, MainInit);
 	HookEvent(ME_DB_CONTACT_SETTINGCHANGED, UserOnlineSettingChanged); 

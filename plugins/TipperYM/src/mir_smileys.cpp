@@ -20,6 +20,8 @@ Boston, MA 02111-1307, USA.
 
 #include "stdafx.h"
 
+#include <tchar.h>
+
 int InitTipperSmileys()
 {
 	// Register smiley category
@@ -40,7 +42,7 @@ SMILEYPARSEINFO Smileys_PreParse(LPCTSTR lpString, int nCount, const char *proto
 		return NULL;
 
 	if (nCount == -1)
-		nCount = (int)mir_tstrlen(lpString);
+		nCount = (int)mir_wstrlen(lpString);
 
 	SMILEYPARSEINFO info = (SMILEYPARSEINFO)mir_calloc(sizeof(tagSMILEYPARSEINFO));
 	info->pieces = ReplaceSmileys(lpString, nCount, protocol, &info->max_height);
@@ -69,7 +71,7 @@ void Smileys_FreeParse(SMILEYPARSEINFO parseInfo)
 int Smileys_DrawText(HDC hDC, LPCTSTR lpString, int nCount, LPRECT lpRect, UINT uFormat, SMILEYPARSEINFO parseInfo)
 {
 	if (nCount == -1)
-		nCount = (int)mir_tstrlen(lpString);
+		nCount = (int)mir_wstrlen(lpString);
 
 	if (uFormat & DT_CALCRECT) {
 		SIZE text_size = GetTextSize(hDC, lpString, parseInfo, uFormat, (lpRect->right - lpRect->left));
@@ -104,13 +106,13 @@ int Smileys_DrawText(HDC hDC, LPCTSTR lpString, int nCount, LPRECT lpRect, UINT 
 	return text_size.cy;
 }
 
-SIZE GetTextSize(HDC hdcMem, const TCHAR *szText, SMILEYPARSEINFO info, UINT uTextFormat, int max_width)
+SIZE GetTextSize(HDC hdcMem, const wchar_t *szText, SMILEYPARSEINFO info, UINT uTextFormat, int max_width)
 {
 	SIZE text_size = { 0 };
 	int text_height;
 	int row_count = 0, pos_x = 0;
 
-	if (szText == NULL || _tcsclen(szText) == 0) {
+	if (szText == NULL || wcslen(szText) == 0) {
 		text_size.cy = 0;
 		text_size.cx = 0;
 	}
@@ -124,7 +126,7 @@ SIZE GetTextSize(HDC hdcMem, const TCHAR *szText, SMILEYPARSEINFO info, UINT uTe
 		}
 		else {
 			// Get real height of the line
-			text_height = DrawText(hdcMem, _T("A"), 1, &text_rc, DT_CALCRECT | uTextFormat);
+			text_height = DrawText(hdcMem, L"A", 1, &text_rc, DT_CALCRECT | uTextFormat);
 
 			// See each item of list
 			int i;
@@ -177,7 +179,7 @@ SIZE GetTextSize(HDC hdcMem, const TCHAR *szText, SMILEYPARSEINFO info, UINT uTe
 	return text_size;
 }
 
-void DrawTextSmiley(HDC hdcMem, RECT free_rc, const TCHAR *szText, int len, SMILEYPARSEINFO info, UINT uTextFormat)
+void DrawTextSmiley(HDC hdcMem, RECT free_rc, const wchar_t *szText, int len, SMILEYPARSEINFO info, UINT uTextFormat)
 {
 	if (szText == NULL)
 		return;
@@ -196,13 +198,13 @@ void DrawTextSmiley(HDC hdcMem, RECT free_rc, const TCHAR *szText, int len, SMIL
 		i = 0;
 
 	// Get real height of the line
-	text_height = DrawText(hdcMem, _T("A"), 1, &tmp_rc, DT_CALCRECT | uTextFormat);
+	text_height = DrawText(hdcMem, L"A", 1, &tmp_rc, DT_CALCRECT | uTextFormat);
 
 	mir_ptr<COLOR32> pBits(SaveAlpha(&free_rc));
 
 	// Just draw ellipsis
 	if (free_rc.right <= free_rc.left)
-		DrawText(hdcMem, _T("..."), 3, &free_rc, uTextFormat & ~DT_END_ELLIPSIS);
+		DrawText(hdcMem, L"...", 3, &free_rc, uTextFormat & ~DT_END_ELLIPSIS);
 	else {
 		// Draw text and smileys
 		RECT text_rc = free_rc;
@@ -304,7 +306,7 @@ void DestroySmileyList(SortedList* p_list)
 }
 
 // Generate the list of smileys / text to be drawn
-SortedList *ReplaceSmileys(const TCHAR *text, int text_size, const char *protocol, int *max_smiley_height)
+SortedList *ReplaceSmileys(const wchar_t *text, int text_size, const char *protocol, int *max_smiley_height)
 {
 	*max_smiley_height = 0;
 
@@ -322,7 +324,7 @@ SortedList *ReplaceSmileys(const TCHAR *text, int text_size, const char *protoco
 	// Parse it!
 	SMADD_BATCHPARSE2 sp = { 0 };
 	sp.cbSize = sizeof(sp);
-	sp.str = (TCHAR *)text;
+	sp.str = (wchar_t *)text;
 	sp.flag = SAFL_TCHAR;
 	sp.Protocolname = (opt.iSmileyAddFlags & SMILEYADD_USEPROTO) ? smileyProto : "tipper";
 	SMADD_BATCHPARSERES *spres = (SMADD_BATCHPARSERES *)CallService(MS_SMILEYADD_BATCHPARSE, 0, (LPARAM)&sp);
@@ -333,11 +335,11 @@ SortedList *ReplaceSmileys(const TCHAR *text, int text_size, const char *protoco
 	// Lets add smileys
 	SortedList *plText = List_Create(0, 10);
 
-	TCHAR *word_start, *word_end;
-	TCHAR *smiley_start, *smiley_end;
-	TCHAR *last_text_pos = _tcsninc(text, text_size);
+	wchar_t *word_start, *word_end;
+	wchar_t *smiley_start, *smiley_end;
+	wchar_t *last_text_pos = _tcsninc(text, text_size);
 
-	word_start = word_end = (TCHAR *)text;
+	word_start = word_end = (wchar_t *)text;
 
 	for (unsigned i = 0; i < sp.numSmileys; i++) {
 		// Get smile position

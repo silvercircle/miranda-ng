@@ -22,15 +22,13 @@ Port:
 
 [Ping:]
 
-[ICQ Corp]
-
 [Login Server:]
 
 [ICQ number:]
 
 [Password:]
 Šifra
-[You will need to reconnect to the ICQ network for the changes you have made on this page to take effect.]
+[These changes will take effect the next time you connect to the ICQ network.]
 
 ;file \protocols\ICQCorp\src\options.cpp
 [Network]

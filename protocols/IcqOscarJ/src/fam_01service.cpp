@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2010 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -363,15 +363,15 @@ void CIcqProto::handleServiceFam(BYTE *pBuffer, size_t wBufferLength, snac_heade
 		nloc.szHost = pServer;
 		nloc.wPort = wPort;
 
-		HANDLE hConnection = NetLib_OpenConnection(m_hNetlibUser, wFamily == ICQ_AVATAR_FAMILY ? "Avatar " : NULL, &nloc);
+		HNETLIBCONN hConnection = NetLib_OpenConnection(m_hNetlibUser, wFamily == ICQ_AVATAR_FAMILY ? "Avatar " : NULL, &nloc);
 
 		if (hConnection == NULL)
 			debugLogA("Unable to connect to ICQ new family server.");
 		// we want the handler to be called even if the connecting failed
 		else if (bServerSSL) { /* Start SSL session if requested */
-			debugLogA("(%p) Starting SSL negotiation", CallService(MS_NETLIB_GETSOCKET, (WPARAM)hConnection, 0));
+			debugLogA("(%p) Starting SSL negotiation", Netlib_GetSocket(hConnection));
 
-			if (!CallService(MS_NETLIB_STARTSSL, (WPARAM)hConnection, 0)) {
+			if (!Netlib_StartSsl(hConnection, NULL)) {
 				debugLogA("Unable to connect to ICQ new family server, SSL could not be negotiated");
 				NetLib_CloseConnection(&hConnection, FALSE);
 			}
@@ -405,7 +405,7 @@ void CIcqProto::handleServiceFam(BYTE *pBuffer, size_t wBufferLength, snac_heade
 				if (m_bAvatarsEnabled && !info->bMyAvatarInited) { // signal the server after login
 					// this refreshes avatar state - it used to work automatically, but now it does not
 					if (getByte("ForceOurAvatar", 0)) { // keep our avatar
-						TCHAR *file = GetOwnAvatarFileName();
+						wchar_t *file = GetOwnAvatarFileName();
 						SetMyAvatar(0, (LPARAM)file);
 						SAFE_FREE(&file);
 					}
@@ -470,7 +470,7 @@ char* CIcqProto::buildUinList(int subtype, size_t wMaxLen, MCONTACT *hContactRes
 	WORD wCurrentLen = 0;
 	int add;
 
-	char *szList = (char*)SAFE_MALLOC(CallService(MS_DB_CONTACT_GETCOUNT, 0, 0) * UINMAXLEN);
+	char *szList = (char*)SAFE_MALLOC(db_get_contact_count() * UINMAXLEN);
 
 	char szLen[2];
 	szLen[1] = '\0';
@@ -579,31 +579,19 @@ void CIcqProto::setUserInfo()
 	size_t wAdditionalData = 0;
 	BYTE bXStatus = getContactXStatus(NULL);
 
-	if (m_bAimEnabled)
-		wAdditionalData += 16;
-#ifdef DBG_CAPMTN
-	wAdditionalData += 16;
-#endif
+	wAdditionalData += 16; // MTN
+	wAdditionalData += 16; // symbol ids
 	wAdditionalData += 16; // unicode
-#ifdef DBG_NEWCAPS
-	wAdditionalData += 16;
-#endif
-#ifdef DBG_CAPXTRAZ
-	wAdditionalData += 16;
-#endif
-#ifdef DBG_OSCARFT
-	wAdditionalData += 16;
-#endif
+	wAdditionalData += 16; // new caps
+	wAdditionalData += 16; // xtraz
+	wAdditionalData += 16; // oscar file transfers
+
 	if (m_bAvatarsEnabled)
 		wAdditionalData += 16;
 	if (m_bXStatusEnabled && bXStatus != 0)
 		wAdditionalData += 16;
-#ifdef DBG_CAPHTML
-	wAdditionalData += 16;
-#endif
-#ifdef DBG_AIMCONTACTSEND
-	wAdditionalData += 16;
-#endif
+	wAdditionalData += 16; // html
+	wAdditionalData += 16; // string user id support
 
 	wAdditionalData += CustomCapList.getCount() * 16;
 
@@ -623,60 +611,45 @@ void CIcqProto::setUserInfo()
 	packWord(&packet, 0x0005);
 	packWord(&packet, WORD(48 + wAdditionalData));
 
-#ifdef DBG_CAPMTN
 	packDWord(&packet, 0x563FC809); // CAP_TYPING
 	packDWord(&packet, 0x0B6F41BD);
 	packDWord(&packet, 0x9F794226);
 	packDWord(&packet, 0x09DFA2F3);
-#endif
 
 	packShortCapability(&packet, 0x1349);  // AIM_CAPS_ICQSERVERRELAY
 
 	// Broadcasts the capability to receive UTF8 encoded messages
 	packShortCapability(&packet, 0x134E);  // CAP_UTF8MSGS
 
-#ifdef DBG_NEWCAPS
 	// Tells server we understand to new format of caps
 	packShortCapability(&packet, 0x0000);  // CAP_SHORTCAPS
-#endif
 
-#ifdef DBG_CAPXTRAZ
 	packDWord(&packet, 0x1a093c6c); // CAP_XTRAZ
 	packDWord(&packet, 0xd7fd4ec5); // Broadcasts the capability to handle
 	packDWord(&packet, 0x9d51a647); // Xtraz
 	packDWord(&packet, 0x4e34f5a0);
-#endif
 
 	if (m_bAvatarsEnabled)
 		packShortCapability(&packet, 0x134C);  // CAP_DEVILS
 
-#ifdef DBG_OSCARFT
 	// Broadcasts the capability to receive Oscar File Transfers
 	packShortCapability(&packet, 0x1343);  // CAP_AIM_FILE
-#endif
 
 	// Tells the server we can speak to AIM
-	if (m_bAimEnabled)
-		packShortCapability(&packet, 0x134D);  // CAP_AIM_COMPATIBLE
-
-#ifdef DBG_AIMCONTACTSEND
+	packShortCapability(&packet, 0x134D);  // CAP_AIM_COMPATIBLE
 	packShortCapability(&packet, 0x134B);  // CAP_SENDBUDDYLIST
-#endif
 
 	if (m_bXStatusEnabled && bXStatus != 0)
 		packBuffer(&packet, capXStatus[bXStatus - 1], BINARY_CAP_SIZE);
 
 	packShortCapability(&packet, 0x1344);      // CAP_ICQDIRECT
-
-#ifdef DBG_CAPHTML
 	packShortCapability(&packet, 0x0002);      // CAP_HTMLMSGS
-#endif
 
 	packDWord(&packet, 0x4D697261);   // Miranda Signature
 	packDWord(&packet, 0x6E64614E);
 
-	WORD v[4];
-	CallService(MS_SYSTEM_GETFILEVERSION, 0, (LPARAM)v);
+	MFileVersion v;
+	Miranda_GetFileVersion(&v);
 	packWord(&packet, v[0]);
 	packWord(&packet, v[1]);
 	packWord(&packet, v[2]);
@@ -878,12 +851,8 @@ void CIcqProto::handleServUINSettings(int nPort, serverthread_info *info)
 	}
 	info->isMigrating = false;
 
-	if (m_bAimEnabled) {
-		char **szAwayMsg = NULL;
-		mir_cslock l(m_modeMsgsMutex);
-
-		szAwayMsg = MirandaStatusToAwayMsg(m_iStatus);
-		if (szAwayMsg)
-			icq_sendSetAimAwayMsgServ(*szAwayMsg);
-	}
+	mir_cslock l(m_modeMsgsMutex);
+	char **szAwayMsg = MirandaStatusToAwayMsg(m_iStatus);
+	if (szAwayMsg)
+		icq_sendSetAimAwayMsgServ(*szAwayMsg);
 }

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (с) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (с) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -29,9 +29,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "modern_image_array.h"
 #include "m_xpTheme.h"
 
-#include "modern_defsettings.h"
-#include "modern_clist.h"
-
 // Новый формат настроек.
 #define TRAY_ICON_MODE_GLOBAL		1
 #define TRAY_ICON_MODE_ACC			2
@@ -55,22 +52,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define MAXSTATUSMSGLEN		256
 
-#define INTM_NAMECHANGED     (WM_USER+10)
-#define INTM_ICONCHANGED     (WM_USER+11)
-#define INTM_GROUPCHANGED    (WM_USER+12)
-#define INTM_GROUPSCHANGED   (WM_USER+13)
-#define INTM_CONTACTADDED    (WM_USER+14)
-#define INTM_CONTACTDELETED  (WM_USER+15)
-#define INTM_HIDDENCHANGED   (WM_USER+16)
-#define INTM_INVALIDATE      (WM_USER+17)
-#define INTM_APPARENTMODECHANGED (WM_USER+18)
-#define INTM_SETINFOTIPHOVERTIME (WM_USER+19)
-#define INTM_NOTONLISTCHANGED   (WM_USER+20)
-#define INTM_RELOADOPTIONS   (WM_USER+21)
-#define INTM_NAMEORDERCHANGED (WM_USER+22)
-#define INTM_IDLECHANGED         (WM_USER+23)
-#define INTM_SCROLLBARCHANGED (WM_USER+24)
-#define INTM_PROTOCHANGED (WM_USER+25)
 #define INTM_STATUSMSGCHANGED	(WM_USER+26)
 #define INTM_STATUSCHANGED	(WM_USER+27)
 #define INTM_AVATARCHANGED	(WM_USER+28)
@@ -78,14 +59,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define CLBF_TILEVTOROWHEIGHT        0x0100
 
-#define TIMERID_RENAME				10
-#define TIMERID_DRAGAUTOSCROLL		11
-#define TIMERID_INFOTIP				13
-#define TIMERID_REBUILDAFTER		14
-#define TIMERID_DELAYEDRESORTCLC	15
 #define TIMERID_SUBEXPAND			21
 #define TIMERID_INVALIDATE			22
-#define TIMERID_INVALIDATE_FULL		25
 #define TIMERID_RECALCSCROLLBAR		26
 
 #define TIMERID_FIRST	TIMERID_RENAME
@@ -119,16 +94,8 @@ void clcSetDelayTimer(UINT_PTR uIDEvent, HWND hwnd, int nDelay = -1);
 #define FONTID_VIEMODES		23
 #define FONTID_MODERN_MAX 23
 
-#define DROPTARGET_OUTSIDE    0
-#define DROPTARGET_ONSELF     1
-#define DROPTARGET_ONNOTHING  2
-#define DROPTARGET_ONGROUP    3
-#define DROPTARGET_ONCONTACT  4
-#define DROPTARGET_INSERTION  5
 #define DROPTARGET_ONMETACONTACT  6
 #define DROPTARGET_ONSUBCONTACT  7
-
-ClcGroup;
 
 #define CONTACTF_ONLINE    1
 #define CONTACTF_INVISTO   2
@@ -136,7 +103,6 @@ ClcGroup;
 #define CONTACTF_NOTONLIST 8
 #define CONTACTF_CHECKED   16
 #define CONTACTF_IDLE      32
-//#define CONTACTF_STATUSMSG 64
 
 #define AVATAR_POS_DONT_HAVE -1
 #define AVATAR_POS_ANIMATED -2
@@ -209,13 +175,12 @@ struct tContactItems
 struct ClcContact : public ClcContactBase
 {
 	ClcContact *subcontacts;
-	BYTE SubAllocated;
-	BYTE SubExpanded;
-	BYTE isSubcontact;
-	//	int status;
-	BOOL image_is_special;
+	int  iSubAllocated, iSubNumber;
+
+	bool bSubExpanded, bImageIsSpecial;
+	
 	int avatar_pos;
-	avatarCacheEntry *avatar_data;
+	AVATARCACHEENTRY *avatar_data;
 	SIZE avatar_size;
 	CSmileyString ssText;
 
@@ -225,7 +190,6 @@ struct ClcContact : public ClcContactBase
 	RECT pos_avatar;
 	RECT pos_icon;
 	RECT pos_label;
-	RECT pos_rename_rect;
 	RECT pos_contact_time;
 	RECT pos_extra[EXTRA_ICON_COUNT];
 	DWORD lastPaintCounter;
@@ -236,15 +200,30 @@ struct ClcContact : public ClcContactBase
 	BOOL ext_fItemsValid;
 	tContactItems ext_mpItemsDesc[EXTRA_ICON_COUNT + 10];  //up to 10 items
 
-	__forceinline bool isChat() const
-	{
-		return (type == CLCIT_CONTACT) && (db_get_b(hContact, proto, "ChatRoom", 0) != 0);
+	__forceinline bool isCheckBox(DWORD_PTR style) const
+	{	return (style & CLS_CHECKBOXES && type == CLCIT_CONTACT) || (style & CLS_GROUPCHECKBOXES && type == CLCIT_GROUP) || (type == CLCIT_INFO && flags & CLCIIF_CHECKBOX);
 	}
+	__forceinline bool isChat() const
+	{	return (type == CLCIT_CONTACT) && (db_get_b(hContact, proto, "ChatRoom", 0) != 0);
+	}
+};
+
+struct ClcLineInfo
+{
+	BOOL  show;
+	int   top_space;
+	BOOL  draw_smileys;
+	int   type;
+	wchar_t text[TEXT_TEXT_MAX_LENGTH];
+	BOOL  xstatus_has_priority;
+	BOOL  show_status_if_no_away;
+	BOOL  show_listening_if_no_away;
+	BOOL  use_name_and_message_for_xstatus;
 };
 
 struct ClcModernFontInfo {
 	HFONT hFont;
-	int fontHeight, changed;
+	int  fontHeight, changed;
 	COLORREF colour;
 	BYTE effect;
 	COLORREF effectColour1;
@@ -255,34 +234,32 @@ struct ClcData : public ClcDataBase
 {
 	BYTE HiLightMode;
 	BYTE doubleClickExpand;
-	int MetaIgnoreEmptyExtra;
-	BYTE expandMeta;
 	BYTE IsMetaContactsEnabled;
 	time_t last_tick_time;
-	BOOL force_in_dialog;
-	int subIndent;
-	int rightMargin;
+	bool bForceInDialog, bPlaceOfflineToRoot, bMetaIgnoreEmptyExtra, bMetaExpanding;
+	int  subIndent;
+	int  rightMargin;
 	HBITMAP hMenuBackground;
 	DWORD MenuBkColor, MenuBkHiColor, MenuTextColor, MenuTextHiColor;
-	int MenuBmpUse;
+	int  MenuBmpUse;
 
 	// Row height
 	int *row_heights;
-	int row_heights_size;
-	int row_heights_allocated;
+	int  row_heights_size;
+	int  row_heights_allocated;
 
 	// Avatar cache
 	IMAGE_ARRAY_DATA avatar_cache;
 
 	// Row
-	int row_min_heigh;
-	int row_border;
-	int row_before_group_space;
+	int  row_min_heigh;
+	int  row_border;
+	int  row_before_group_space;
 
 	BOOL row_variable_height;
 	BOOL row_align_left_items_to_left;
 	BOOL row_align_right_items_to_right;
-	int row_items[NUM_ITEM_TYPE];
+	int  row_items[NUM_ITEM_TYPE];
 	BOOL row_hide_group_icon;
 	BYTE row_align_group_mode;
 
@@ -292,13 +269,13 @@ struct ClcData : public ClcDataBase
 	COLORREF avatars_border_color;
 	BOOL avatars_round_corners;
 	BOOL avatars_use_custom_corner_size;
-	int avatars_custom_corner_size;
+	int  avatars_custom_corner_size;
 	BOOL avatars_ignore_size_for_row_height;
 	BOOL avatars_draw_overlay;
-	int avatars_overlay_type;
+	int  avatars_overlay_type;
 
-	int avatars_maxheight_size;
-	int avatars_maxwidth_size;
+	int  avatars_maxheight_size;
+	int  avatars_maxwidth_size;
 
 	// Icon
 	BOOL icon_hide_on_avatar;
@@ -314,7 +291,7 @@ struct ClcData : public ClcDataBase
 	BOOL text_align_right;
 	BOOL text_replace_smileys;
 	BOOL text_resize_smileys;
-	int text_smiley_height;
+	int  text_smiley_height;
 	BOOL text_use_protocol_smileys;
 	BOOL text_ignore_size_for_row_height;
 
@@ -322,71 +299,27 @@ struct ClcData : public ClcDataBase
 	BOOL first_line_draw_smileys;
 	BOOL first_line_append_nick;
 
-	// Second line
-	BOOL second_line_show;
-	int second_line_top_space;
-	BOOL second_line_draw_smileys;
-	int second_line_type;
-	TCHAR second_line_text[TEXT_TEXT_MAX_LENGTH];
-	BOOL second_line_xstatus_has_priority;
-	BOOL second_line_show_status_if_no_away;
-	BOOL second_line_show_listening_if_no_away;
-	BOOL second_line_use_name_and_message_for_xstatus;
+	// Second & third line
+	ClcLineInfo secondLine, thirdLine;
 
-	// Third line
-	BOOL third_line_show;
-	int third_line_top_space;
-	BOOL third_line_draw_smileys;
-	int third_line_type;
-	TCHAR third_line_text[TEXT_TEXT_MAX_LENGTH];
-	BOOL third_line_xstatus_has_priority;
-	BOOL third_line_show_status_if_no_away;
-	BOOL third_line_show_listening_if_no_away;
-	BOOL third_line_use_name_and_message_for_xstatus;
-	struct ClcModernFontInfo fontModernInfo[FONTID_MODERN_MAX + 1];
-	HWND hWnd;
-	BYTE menuOwnerType;
-	int menuOwnerID;
+	ClcModernFontInfo fontModernInfo[FONTID_MODERN_MAX + 1];
+	HWND  hWnd;
+	BYTE  menuOwnerType;
+	int   menuOwnerID;
 	DWORD m_paintCouter; //range is enoght to 49 days if painting will occure each one millisecond
-	BYTE useMetaIcon;
-	BYTE drawOverlayedStatus;
-	int nInsertionLevel;
+	BYTE  drawOverlayedStatus;
+	int   nInsertionLevel;
 
-	BYTE dbbMetaHideExtra;
-	BYTE dbbBlendInActiveState;
-	BYTE dbbBlend25;
+	BYTE  dbbMetaHideExtra;
+	BYTE  dbbBlendInActiveState;
+	BYTE  dbbBlend25;
 
 	XPTHANDLE hCheckBoxTheme;
 	BYTE bCompactMode;
-};
 
-struct SHORTDATA
-{
-	HWND    hWnd;
-	BOOL    contact_time_show_only_if_different;
-	int     text_smiley_height;
-	BOOL    text_replace_smileys;
-	BOOL    text_use_protocol_smileys;
-
-	// Second line
-	BOOL    second_line_show;
-	BOOL    second_line_draw_smileys;
-	int     second_line_type;
-	TCHAR   second_line_text[TEXT_TEXT_MAX_LENGTH];
-	BOOL    second_line_xstatus_has_priority;
-	BOOL    second_line_show_status_if_no_away;
-	BOOL    second_line_show_listening_if_no_away;
-	BOOL    second_line_use_name_and_message_for_xstatus;
-
-	// Third line
-	BOOL    third_line_show;
-	BOOL    third_line_draw_smileys;
-	int     third_line_type;
-	TCHAR   third_line_text[TEXT_TEXT_MAX_LENGTH];
-	BOOL    third_line_xstatus_has_priority;
-	BOOL    third_line_show_status_if_no_away;
-	BOOL    third_line_show_listening_if_no_away;
-	BOOL    third_line_use_name_and_message_for_xstatus;
+	__forceinline int getRowHeight(int iRow) const
+	{ return (row_variable_height) ? row_heights[iRow] : rowHeight;
+	}
 };
 
 typedef struct tagOVERLAYICONINFO
@@ -397,55 +330,40 @@ typedef struct tagOVERLAYICONINFO
 	int listID;
 } OVERLAYICONINFO;
 
-//clc.c
-void    ClcOptionsChanged(void);
+// clc.c
+void  ClcOptionsChanged(void);
 
-//clcidents.c
-int     cliGetRowsPriorTo(ClcGroup *group, ClcGroup *subgroup, int contactIndex);
-int     FindItem(HWND hwnd, ClcData *dat, DWORD hItem, ClcContact **contact, ClcGroup **subgroup, int *isVisible, BOOL isIgnoreSubcontacts);
-int     cliGetRowByIndex(ClcData *dat, int testindex, ClcContact **contact, ClcGroup **subgroup);
-HANDLE  ContactToHItem(ClcContact *contact);
-HANDLE  ContactToItemHandle(ClcContact *contact, DWORD *nmFlags);
-void    ClearRowByIndexCache();
+// clcidents.c
+int   cliGetRowsPriorTo(ClcGroup *group, ClcGroup *subgroup, int contactIndex);
+int   cliGetRowByIndex(ClcData *dat, int testindex, ClcContact **contact, ClcGroup **subgroup);
 
-//clcitems.c
-ClcGroup *cli_AddGroup(HWND hwnd, ClcData *dat, const TCHAR *szName, DWORD flags, int groupId, int calcTotalMembers);
-void    cli_FreeGroup(ClcGroup *group);
-int     cli_AddInfoItemToGroup(ClcGroup *group, int flags, const TCHAR *pszText);
-void    cliRebuildEntireList(HWND hwnd, ClcData *dat);
-void    cli_DeleteItemFromTree(HWND hwnd, MCONTACT hItem);
-void    cli_AddContactToTree(HWND hwnd, ClcData *dat, MCONTACT hContact, int updateTotalCount, int checkHideOffline);
-void    cli_SortCLC(HWND hwnd, ClcData *dat, int useInsertionSort);
-int     GetNewSelection(ClcGroup *group, int selection, int direction);
+// clcitems.c
+ClcContact* cli_AddContactToGroup(ClcData *dat, ClcGroup *group, MCONTACT hContact);
+int   cliIsVisibleContact(ClcCacheEntry *pce, ClcGroup *group);
+void  cliRebuildEntireList(HWND hwnd, ClcData *dat);
+void  cli_AddContactToTree(HWND hwnd, ClcData *dat, MCONTACT hContact, int updateTotalCount, int checkHideOffline);
+void  cli_SortCLC(HWND hwnd, ClcData *dat, int useInsertionSort);
+int   GetNewSelection(ClcGroup *group, int selection, int direction);
 
-//clcmsgs.c
+// clcmsgs.c
 LRESULT cli_ProcessExternalMessages(HWND hwnd, ClcData *dat, UINT msg, WPARAM wParam, LPARAM lParam);
 
-//clcutils.c
-void    cliRecalcScrollBar(HWND hwnd, ClcData *dat);
-void    cliBeginRenameSelection(HWND hwnd, ClcData *dat);
-int     cliHitTest(HWND hwnd, ClcData *dat, int testx, int testy, ClcContact **contact, ClcGroup **group, DWORD *flags);
-void    cliScrollTo(HWND hwnd, ClcData *dat, int desty, int noSmooth);
-int     GetDropTargetInformation(HWND hwnd, ClcData *dat, POINT pt);
-void    LoadCLCOptions(HWND hwnd, ClcData *dat, BOOL bFirst);
+// clcutils.c
+void  cliRecalcScrollBar(HWND hwnd, ClcData *dat);
+void  cliBeginRenameSelection(HWND hwnd, ClcData *dat);
+int   cliHitTest(HWND hwnd, ClcData *dat, int testx, int testy, ClcContact **contact, ClcGroup **group, DWORD *flags);
+void  cliScrollTo(HWND hwnd, ClcData *dat, int desty, int noSmooth);
+int   GetDropTargetInformation(HWND hwnd, ClcData *dat, POINT pt);
+void  cli_LoadCLCOptions(HWND hwnd, ClcData *dat, BOOL bFirst);
 
+COLORREF cliGetColor(char *module, char *color, COLORREF defColor);
 
-//clcpaint.c
-void    CLCPaint_cliPaintClc(HWND hwnd, ClcData *dat, HDC hdc, RECT *rcPaint);
+// clcopts.c
+int   ClcOptInit(WPARAM wParam, LPARAM lParam);
+DWORD GetDefaultExStyle(void);
+void  GetFontSetting(int i, LOGFONT *lf, COLORREF *colour, BYTE *effect, COLORREF *eColour1, COLORREF *eColour2);
 
-//clcopts.c
-int     ClcOptInit(WPARAM wParam, LPARAM lParam);
-DWORD   GetDefaultExStyle(void);
-void    GetFontSetting(int i, LOGFONT *lf, COLORREF *colour, BYTE *effect, COLORREF *eColour1, COLORREF *eColour2);
-
-//clistsettings.c
-TCHAR * GetContactDisplayNameW(MCONTACT hContact, int mode);
-
-//groups.c
-TCHAR*  GetGroupNameTS(int idx, DWORD* pdwFlags);
-int     RenameGroupT(WPARAM groupID, LPARAM newName);
-
-int     GetContactCachedStatus(MCONTACT hContact);
-char   *GetContactCachedProtocol(MCONTACT hContact);
+// groups.c
+int   GetContactCachedStatus(MCONTACT hContact);
 
 #endif /* _CLC_H_ */

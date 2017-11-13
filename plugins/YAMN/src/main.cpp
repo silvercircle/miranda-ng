@@ -12,11 +12,11 @@
 
 //--------------------------------------------------------------------------------------------------
 
-TCHAR ProfileName[MAX_PATH];
-TCHAR UserDirectory[MAX_PATH];
+wchar_t ProfileName[MAX_PATH];
+wchar_t UserDirectory[MAX_PATH];
 
-TCHAR	szMirandaDir[MAX_PATH];
-TCHAR	szProfileDir[MAX_PATH];
+wchar_t	szMirandaDir[MAX_PATH];
+wchar_t	szProfileDir[MAX_PATH];
 
 int YAMN_STATUS;
 
@@ -27,9 +27,9 @@ HANDLE hAccountFolder;
 HINSTANCE *hDllPlugins;
 static int iDllPlugins = 0;
 
-
 YAMN_VARIABLES YAMNVar;
 
+CLIST_INTERFACE *pcli;
 int hLangpack;
 
 PLUGININFOEX pluginInfo = {
@@ -58,14 +58,14 @@ HGENMENU hMenuItemContApp = 0;
 
 #define FIXED_TAB_SIZE 100                  // default value for fixed width tabs
 
-static void GetProfileDirectory(TCHAR *szPath, int cbPath)
+static void GetProfileDirectory(wchar_t *szPath, int cbPath)
 //This is copied from Miranda's sources. In 0.2.1.0 it is needed, in newer vesions of Miranda use MS_DB_GETPROFILEPATH service
 {
-	TCHAR tszOldPath[MAX_PATH];
-	CallService(MS_DB_GETPROFILEPATHT, _countof(tszOldPath), (LPARAM)tszOldPath);
-	mir_tstrcat(tszOldPath, _T("\\*.book"));
+	wchar_t tszOldPath[MAX_PATH];
+	Profile_GetPathW(_countof(tszOldPath), tszOldPath);
+	mir_wstrcat(tszOldPath, L"\\*.book");
 
-	VARST ptszNewPath( _T("%miranda_userdata%"));
+	VARSW ptszNewPath( L"%miranda_userdata%");
 
 	SHFILEOPSTRUCT file_op = {
 		NULL,
@@ -75,10 +75,10 @@ static void GetProfileDirectory(TCHAR *szPath, int cbPath)
 		FOF_NOERRORUI | FOF_NOCONFIRMATION | FOF_SILENT,
 		false,
 		0,
-		_T("") };
+		L"" };
 	SHFileOperation(&file_op);
 
-	_tcsncpy(szPath, ptszNewPath, cbPath);
+	wcsncpy(szPath, ptszNewPath, cbPath);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -99,13 +99,13 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 /////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef _DEBUG
-static TCHAR unknownCP[1500] = {0};
+static wchar_t unknownCP[1500] = {0};
 #endif
 // The callback function
 BOOL CALLBACK EnumSystemCodePagesProc(LPTSTR cpStr)
 {
     //Convert code page string to number
-    UINT cp = _ttoi(cpStr);
+    UINT cp = _wtoi(cpStr);
     if (!IsValidCodePage(cp))
         return TRUE;
 
@@ -125,8 +125,8 @@ BOOL CALLBACK EnumSystemCodePagesProc(LPTSTR cpStr)
 		}
 		#ifdef _DEBUG
 		if (!found) {
-			mir_tstrcat(unknownCP, info.CodePageName);
-			mir_tstrcat(unknownCP, _T("\n"));
+			mir_wstrcat(unknownCP, info.CodePageName);
+			mir_wstrcat(unknownCP, L"\n");
 		}
 		#endif
 	}
@@ -206,8 +206,8 @@ void WINAPI g_ReleaseIcon( HICON hIcon )
 
 static void LoadPlugins()
 {
-	TCHAR szSearchPath[MAX_PATH];
-	mir_sntprintf(szSearchPath, _T("%s\\Plugins\\YAMN\\*.dll"), szMirandaDir);
+	wchar_t szSearchPath[MAX_PATH];
+	mir_snwprintf(szSearchPath, L"%s\\Plugins\\YAMN\\*.dll", szMirandaDir);
 
 	hDllPlugins = NULL;
 
@@ -216,20 +216,20 @@ static void LoadPlugins()
 	if (hFind != INVALID_HANDLE_VALUE) {
 		do {
 			//rewritten from Miranda sources... Needed because Win32 API has a bug in FindFirstFile, search is done for *.dlllllll... too
-			TCHAR *dot = _tcsrchr(fd.cFileName, '.');
+			wchar_t *dot = wcsrchr(fd.cFileName, '.');
 			if (dot == NULL )
 				continue;
 
 			// we have a dot
-			int len = (int)mir_tstrlen(fd.cFileName); // find the length of the string
-			TCHAR* end = fd.cFileName+len; // get a pointer to the NULL
+			int len = (int)mir_wstrlen(fd.cFileName); // find the length of the string
+			wchar_t* end = fd.cFileName+len; // get a pointer to the NULL
 			int safe = (end-dot)-1;	// figure out how many chars after the dot are "safe", not including NULL
 
-			if ((safe != 3) || (mir_tstrcmpi(dot+1, _T("dll")) != 0)) //not bound, however the "dll" string should mean only 3 chars are compared
+			if ((safe != 3) || (mir_wstrcmpi(dot+1, L"dll") != 0)) //not bound, however the "dll" string should mean only 3 chars are compared
 				continue;
 
-			TCHAR szPluginPath[MAX_PATH];
-			mir_sntprintf(szPluginPath, _T("%s\\Plugins\\YAMN\\%s"), szMirandaDir, fd.cFileName);
+			wchar_t szPluginPath[MAX_PATH];
+			mir_snwprintf(szPluginPath, L"%s\\Plugins\\YAMN\\%s", szMirandaDir, fd.cFileName);
 			HINSTANCE hDll = LoadLibrary(szPluginPath);
 			if (hDll == NULL)
 				continue;
@@ -260,15 +260,16 @@ static void LoadPlugins()
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
+	pcli = Clist_GetInterface();
 
 	YAMN_STATUS = ID_STATUS_OFFLINE;
 
 	//	we get the Miranda Root Path
-	PathToAbsoluteT( _T("."), szMirandaDir);
+	PathToAbsoluteW( L".", szMirandaDir);
 
 	// retrieve the current profile name
-	CallService(MS_DB_GETPROFILENAMET, (WPARAM)_countof(ProfileName), (LPARAM)ProfileName);	//not to pass entire array to fcn
-	TCHAR *fc = _tcsrchr(ProfileName, '.');
+	Profile_GetNameW(_countof(ProfileName), ProfileName);
+	wchar_t *fc = wcsrchr(ProfileName, '.');
 	if ( fc != NULL ) *fc = 0;
 
 	//	we get the user path where our yamn-account.book.ini is stored from mirandaboot.ini file
@@ -288,10 +289,6 @@ extern "C" int __declspec(dllexport) Load(void)
 	pd.szName = YAMN_DBMODULE;
 	pd.type = PROTOTYPE_VIRTUAL;
 	Proto_RegisterModule(&pd);
-
-	InitializeCriticalSection(&AccountStatusCS);
-	InitializeCriticalSection(&FileWritingCS);
-	InitializeCriticalSection(&PluginRegCS);
 
 	if (NULL == (NoWriterEV = CreateEvent(NULL, TRUE, TRUE, NULL)))
 		return 1;
@@ -327,20 +324,19 @@ extern "C" int __declspec(dllexport) Load(void)
 
 	CreateServiceFunctions();
 
-	SkinAddNewSoundEx(YAMN_NEWMAILSOUND, YAMN_DBMODULE, YAMN_NEWMAILSNDDESC);
-	SkinAddNewSoundEx(YAMN_CONNECTFAILSOUND, YAMN_DBMODULE, YAMN_CONNECTFAILSNDDESC);
+	Skin_AddSound(YAMN_NEWMAILSOUND,  L"YAMN", YAMN_NEWMAILSNDDESC);
+	Skin_AddSound(YAMN_CONNECTFAILSOUND, L"YAMN", YAMN_CONNECTFAILSNDDESC);
 
 	HookEvents();
 
 	LoadIcons();
 	LoadPlugins();
 
-	HOTKEYDESC hkd = {0};
-	hkd.cbSize = sizeof(hkd);
+	HOTKEYDESC hkd = {};
 	hkd.pszName = "YAMN_hotkey";
 	hkd.pszService = MS_YAMN_FORCECHECK;
-	hkd.pszSection = YAMN_DBMODULE;
-	hkd.pszDescription = LPGEN("Check mail");
+	hkd.szSection.a = YAMN_DBMODULE;
+	hkd.szDescription.a = LPGEN("Check mail");
 	hkd.DefHotKey = HOTKEYCODE(HOTKEYF_CONTROL, VK_F11);
 	Hotkey_Register(&hkd);
 
@@ -382,13 +378,6 @@ extern "C" int __declspec(dllexport) Unload(void)
 	CloseHandle(NoWriterEV);
 	CloseHandle(WriteToFileEV);
 	CloseHandle(ExitEV);
-
-	DeleteCriticalSection(&AccountStatusCS);
-	DeleteCriticalSection(&FileWritingCS);
-	DeleteCriticalSection(&PluginRegCS);
-
-	UnhookEvents();
-	DestroyServiceFunctions();
 
 	UnloadPlugins();
 

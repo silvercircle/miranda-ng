@@ -1,7 +1,7 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
 
-Copyright (c) 2012-2014 Miranda NG Team
+Copyright (c) 2012-2017 Miranda NG Team
 Copyright (c) 2006-2012 Boris Krasnovskiy.
 Copyright (c) 2003-2005 George Hazan.
 Copyright (c) 2002-2003 Richard Hughes (original version).
@@ -22,15 +22,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-static TCHAR* a2tf(const TCHAR* str, bool unicode)
+static wchar_t* a2tf(const wchar_t* str, bool unicode)
 {
 	if (str == NULL)
 		return NULL;
 
-	return unicode ? mir_tstrdup(str) : mir_a2t((char*)str);
+	return unicode ? mir_wstrdup(str) : mir_a2u((char*)str);
 }
 
-void overrideStr(TCHAR*& dest, const TCHAR* src, bool unicode, const TCHAR* def)
+void overrideStr(wchar_t*& dest, const wchar_t* src, bool unicode, const wchar_t* def)
 {
 	mir_free(dest);
 	dest = NULL;
@@ -38,7 +38,7 @@ void overrideStr(TCHAR*& dest, const TCHAR* src, bool unicode, const TCHAR* def)
 	if (src != NULL)
 		dest = a2tf(src, unicode);
 	else if (def != NULL)
-		dest = mir_tstrdup(def);
+		dest = mir_wstrdup(def);
 }
 
 char* arrayToHex(BYTE* data, size_t datasz)
@@ -98,7 +98,10 @@ void parseWLID(char* wlid, char** net, char** email, char** inst)
 	col = strchr(wlid, ';');
 	if (col) {
 		*col = 0;
-		if (inst) *inst = col + 1;
+		if (inst) {
+			*inst = col + 1;
+			if (strncmp(*inst, "epid=", 5)==0) *inst+=5;
+		}
 	}
 	else if (inst)
 		*inst = NULL;
@@ -295,21 +298,21 @@ void  stripHTML(char* str)
 
 // Process a string, and double all % characters, according to chat.dll's restrictions
 // Returns a pointer to the new string (old one is not freed)
-TCHAR* EscapeChatTags(const TCHAR* pszText)
+wchar_t* EscapeChatTags(const wchar_t* pszText)
 {
 	int nChars = 0;
-	for (const TCHAR* p = pszText; (p = _tcschr(p, '%')) != NULL; p++)
+	for (const wchar_t* p = pszText; (p = wcschr(p, '%')) != NULL; p++)
 		nChars++;
 
 	if (nChars == 0)
-		return mir_tstrdup(pszText);
+		return mir_wstrdup(pszText);
 
-	TCHAR *pszNewText = (TCHAR*)mir_alloc(sizeof(TCHAR)*(mir_tstrlen(pszText) + 1 + nChars));
+	wchar_t *pszNewText = (wchar_t*)mir_alloc(sizeof(wchar_t)*(mir_wstrlen(pszText) + 1 + nChars));
 	if (pszNewText == NULL)
-		return mir_tstrdup(pszText);
+		return mir_wstrdup(pszText);
 
-	const TCHAR *s = pszText;
-	TCHAR *d = pszNewText;
+	const wchar_t *s = pszText;
+	wchar_t *d = pszNewText;
 	while (*s) {
 		if (*s == '%')
 			*d++ = '%';
@@ -317,18 +320,6 @@ TCHAR* EscapeChatTags(const TCHAR* pszText)
 	}
 	*d = 0;
 	return pszNewText;
-}
-
-TCHAR* UnEscapeChatTags(TCHAR* str_in)
-{
-	TCHAR *s = str_in, *d = str_in;
-	while (*s) {
-		if ((*s == '%' && s[1] == '%') || (*s == '\n' && s[1] == '\n'))
-			s++;
-		*d++ = *s++;
-	}
-	*d = 0;
-	return str_in;
 }
 
 #pragma comment(lib, "Rpcrt4.lib")

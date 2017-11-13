@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "..\stdafx.h"
+#include "../stdafx.h"
 
 /***********************************************************************************************************
  * windows procedure
@@ -187,11 +187,11 @@ BYTE CProgress::UpdateContact(LPCTSTR pszFormat, ...)
 	if (_hDlg != NULL) {
 		HWND hProg = GetDlgItem(_hDlg, IDC_PROGRESS2);
 		if (pszFormat) {
-			TCHAR buf[MAX_PATH];
+			wchar_t buf[MAX_PATH];
 			va_list vl;
 
 			va_start(vl, pszFormat);
-			mir_vsntprintf(buf, _countof(buf), TranslateTS(pszFormat), vl);
+			mir_vsnwprintf(buf, _countof(buf), TranslateW(pszFormat), vl);
 			va_end(vl);
 			SetDlgItemText(_hDlg, TXT_CONTACT, buf);	 
 		}
@@ -213,15 +213,15 @@ BYTE CProgress::UpdateSetting(LPCTSTR pszFormat, ...)
 	if (_hDlg != NULL) {
 		HWND hProg = GetDlgItem(_hDlg, IDC_PROGRESS);
 		if (pszFormat) {
-			TCHAR buf[MAX_PATH];
-			TCHAR tmp[MAX_PATH];
+			wchar_t buf[MAX_PATH];
+			wchar_t tmp[MAX_PATH];
 			va_list vl;
 
 			va_start(vl, pszFormat);
-			mir_vsntprintf(buf, _countof(buf), TranslateTS(pszFormat), vl);
+			mir_vsnwprintf(buf, _countof(buf), TranslateW(pszFormat), vl);
 			va_end(vl);
 			GetDlgItemText(_hDlg, TXT_SETTING, tmp, _countof(tmp));
-			if (mir_tstrcmpi(tmp,buf))
+			if (mir_wstrcmpi(tmp,buf))
 				SetDlgItemText(_hDlg, TXT_SETTING, buf);
 		}
 		SendMessage(hProg, PBM_SETPOS, (int)SendMessage(hProg, PBM_GETPOS, 0, 0) + 1, 0);

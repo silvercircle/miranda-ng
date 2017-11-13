@@ -1,7 +1,7 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
 
-Copyright (c) 2012-2014 Miranda NG Team
+Copyright (c) 2012-2017 Miranda NG Team
 Copyright (c) 2007-2012 Boris Krasnovskiy.
 
 This program is free software; you can redistribute it and/or
@@ -126,7 +126,8 @@ static LRESULT CALLBACK IEEmbedServerWindowProcedure(HWND hwnd, UINT message, WP
 			break; */
 		
 		case WM_KEYDOWN:
-			(*view)->translateAccelerator(message, wParam, lParam);
+			if (LOWORD(wParam) != VK_BACK)
+				(*view)->translateAccelerator(message, wParam, lParam);
 			break;
 		
 			/*

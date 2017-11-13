@@ -6,7 +6,7 @@ Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
 Copyright (c) 2007-09  Maxim Mluhov
 Copyright (c) 2007-09  Victor Pavlychko
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -35,7 +35,7 @@ public:
 	CIconPool();
 	~CIconPool();
 
-	void RegisterIcon(const char *name, TCHAR *filename, int iconid, TCHAR *szSection, TCHAR *szDescription);
+	void RegisterIcon(const char *name, wchar_t *filename, int iconid, wchar_t *szSection, wchar_t *szDescription);
 
 	HANDLE GetIcolibHandle(const char *name);
 	char *GetIcolibName(const char *name);

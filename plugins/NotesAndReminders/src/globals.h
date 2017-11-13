@@ -21,7 +21,7 @@
 
 #include "miscutils.h"
 #include "resource.h"
-#include "Version.h"
+#include "version.h"
 
 #define MODULENAME	"StickyNotes"
 #define SECTIONNAME	LPGEN("Notes & Reminders")
@@ -48,7 +48,7 @@ typedef struct {
 
 typedef struct {
 	HWND SNHwnd,REHwnd;
-	BOOL Visible,OnTop;
+	BOOL bVisible, bOnTop;
 	char *data;
 	ULARGE_INTEGER ID;		// FILETIME in UTC
 	char *title;
@@ -75,7 +75,7 @@ extern void CreateMsgWindow(void);
 extern void DestroyMsgWindow(void);
 
 extern STICKYNOTE* NewNote(int Ax,int Ay,int Aw,int Ah,char *Data,
-						   ULARGE_INTEGER *ID,BOOL Visible,BOOL OnTop,int scrollV);
+						   ULARGE_INTEGER *ID,BOOL Visible,BOOL bOnTop,int scrollV);
 extern void LoadNotes(BOOL bIsStartup);
 extern void SaveNotes(void);
 extern void DeleteNotes(void);
@@ -122,7 +122,7 @@ extern int g_Transparency;
 
 extern char *g_RemindSMS;
 
-extern TCHAR *g_lpszAltBrowser;
+extern char *g_lpszAltBrowser;
 
 extern int g_reminderListGeom[4];
 extern int g_reminderListColGeom[2];

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-03 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -150,7 +150,7 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint)
 	int grey = 0, groupCountsFontTopShift;
 	HBRUSH hBrushAlternateGrey = NULL;
 	// yes I know about GetSysColorBrush()
-	COLORREF tmpbkcolour = style & CLS_CONTACTLIST ? (dat->useWindowsColours ? GetSysColor(COLOR_3DFACE) : dat->bkColour) : dat->bkColour;
+	COLORREF tmpbkcolour = style & CLS_CONTACTLIST ? (dat->bUseWindowsColours ? GetSysColor(COLOR_3DFACE) : dat->bkColour) : dat->bkColour;
 
 	if (dat->greyoutFlags & pcli->pfnClcStatusToPf2(status) || style & WS_DISABLED)
 		grey = 1;
@@ -253,7 +253,7 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint)
 	group->scanIndex = 0;
 	indent = 0;
 	for (index = 0; y < rcPaint->bottom;) {
-		if (group->scanIndex == group->cl.count) {
+		if (group->scanIndex == group->cl.getCount()) {
 			group = group->parent;
 			indent--;
 			if (group == NULL)
@@ -262,14 +262,14 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint)
 			continue;
 		}
 
-		ClcContact *cc = group->cl.items[group->scanIndex];
+		ClcContact *cc = group->cl[group->scanIndex];
 		if (y > rcPaint->top - dat->rowHeight) {
 			int iImage = -1;
-			int selected = index == dat->selection && (dat->showSelAlways || dat->exStyle & CLS_EX_SHOWSELALWAYS || GetFocus() == hwnd) && cc->type != CLCIT_DIVIDER;
+			int selected = index == dat->selection && (dat->bShowSelAlways || dat->exStyle & CLS_EX_SHOWSELALWAYS || GetFocus() == hwnd) && cc->type != CLCIT_DIVIDER;
 			int hottrack = dat->exStyle & CLS_EX_TRACKSELECT && cc->type != CLCIT_DIVIDER && dat->iHotTrack == index;
 			SIZE textSize, countsSize = { 0 }, spaceSize = { 0 };
 			int width, checkboxWidth;
-			TCHAR *szCounts = NULL;
+			wchar_t *szCounts = NULL;
 
 			// alternating grey
 			if (style & CLS_GREYALTERNATE && index & 1) {
@@ -304,14 +304,14 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint)
 				ChangeToFont(hdcMem, dat, FONTID_OFFLINE, &fontHeight);
 			else
 				ChangeToFont(hdcMem, dat, FONTID_CONTACTS, &fontHeight);
-			GetTextExtentPoint32(hdcMem, cc->szText, (int)mir_tstrlen(cc->szText), &textSize);
+			GetTextExtentPoint32(hdcMem, cc->szText, (int)mir_wstrlen(cc->szText), &textSize);
 			width = textSize.cx;
 			if (cc->type == CLCIT_GROUP) {
 				szCounts = pcli->pfnGetGroupCountsText(dat, cc);
 				if (szCounts[0]) {
-					GetTextExtentPoint32(hdcMem, _T(" "), 1, &spaceSize);
+					GetTextExtentPoint32(hdcMem, L" ", 1, &spaceSize);
 					ChangeToFont(hdcMem, dat, FONTID_GROUPCOUNTS, &fontHeight);
-					GetTextExtentPoint32(hdcMem, szCounts, (int)mir_tstrlen(szCounts), &countsSize);
+					GetTextExtentPoint32(hdcMem, szCounts, (int)mir_wstrlen(szCounts), &countsSize);
 					width += spaceSize.cx + countsSize.cx;
 				}
 			}
@@ -359,9 +359,7 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint)
 					colourFg = dat->fontInfo[FONTID_NOTONLIST].colour;
 					mode = ILD_BLEND50;
 				}
-				if (cc->type == CLCIT_CONTACT && dat->showIdle
-					&& (cc->flags & CONTACTF_IDLE)
-					&& GetRealStatus(cc, ID_STATUS_OFFLINE) != ID_STATUS_OFFLINE)
+				if (cc->type == CLCIT_CONTACT && dat->bShowIdle && (cc->flags & CONTACTF_IDLE) && GetRealStatus(cc, ID_STATUS_OFFLINE) != ID_STATUS_OFFLINE)
 					mode = ILD_SELECTED;
 				ImageList_DrawEx(himlCListClc, iImage, hdcMem, dat->leftMargin + indent * dat->groupIndent + checkboxWidth,
 					y + ((dat->rowHeight - 16) >> 1), 0, 0, CLR_NONE, colourFg, mode);
@@ -376,7 +374,7 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint)
 				rc.right = rc.left + ((clRect.right - rc.left - textSize.cx) >> 1) - 3;
 				DrawEdge(hdcMem, &rc, BDR_SUNKENOUTER, BF_RECT);
 				TextOut(hdcMem, rc.right + 3, y + ((dat->rowHeight - fontHeight) >> 1), cc->szText,
-					(int)mir_tstrlen(cc->szText));
+					(int)mir_wstrlen(cc->szText));
 				rc.left = rc.right + 6 + textSize.cx;
 				rc.right = clRect.right;
 				DrawEdge(hdcMem, &rc, BDR_SUNKENOUTER, BF_RECT);
@@ -392,7 +390,7 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint)
 					if (rc.right < rc.left + 4)
 						rc.right = clRect.right + 1;
 					else
-						TextOut(hdcMem, rc.right, rc.top + groupCountsFontTopShift, szCounts, (int)mir_tstrlen(szCounts));
+						TextOut(hdcMem, rc.right, rc.top + groupCountsFontTopShift, szCounts, (int)mir_wstrlen(szCounts));
 					ChangeToFont(hdcMem, dat, FONTID_GROUPS, &fontHeight);
 					if (selected)
 						SetTextColor(hdcMem, dat->selTextColour);
@@ -400,12 +398,12 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint)
 						SetHotTrackColour(hdcMem, dat);
 					rc.right--;
 					ExtTextOut(hdcMem, rc.left, rc.top, ETO_CLIPPED, &rc, cc->szText,
-						(int)mir_tstrlen(cc->szText), NULL);
+						(int)mir_wstrlen(cc->szText), NULL);
 				}
 				else
 					TextOut(hdcMem, dat->leftMargin + indent * dat->groupIndent + checkboxWidth + dat->iconXSpace,
 						y + ((dat->rowHeight - fontHeight) >> 1), cc->szText,
-						(int)mir_tstrlen(cc->szText));
+						(int)mir_wstrlen(cc->szText));
 				if (dat->exStyle & CLS_EX_LINEWITHGROUPS) {
 					rc.top = y + (dat->rowHeight >> 1);
 					rc.bottom = rc.top + 2;
@@ -416,7 +414,7 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint)
 				}
 			}
 			else {
-				TCHAR *szText = cc->szText;
+				wchar_t *szText = cc->szText;
 				RECT rc;
 				rc.left = dat->leftMargin + indent * dat->groupIndent + checkboxWidth + dat->iconXSpace;
 				rc.top = y + ((dat->rowHeight - fontHeight) >> 1);
@@ -426,9 +424,9 @@ void PaintClc(HWND hwnd, struct ClcData *dat, HDC hdc, RECT * rcPaint)
 			}
 			if (selected) {
 				if (cc->type != CLCIT_DIVIDER) {
-					TCHAR *szText = cc->szText;
+					wchar_t *szText = cc->szText;
 					RECT rc;
-					int qlen = (int)mir_tstrlen(dat->szQuickSearch);
+					int qlen = (int)mir_wstrlen(dat->szQuickSearch);
 					SetTextColor(hdcMem, dat->quickSearchColour);
 					rc.left = dat->leftMargin + indent * dat->groupIndent + checkboxWidth + dat->iconXSpace;
 					rc.top = y + ((dat->rowHeight - fontHeight) >> 1);

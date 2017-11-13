@@ -5,7 +5,7 @@ INT_PTR SVC_OTRSendMessage(WPARAM wParam,LPARAM lParam){
 
 	CCSDATA *ccs = (CCSDATA *) lParam;
 
-	DEBUGOUT_T("SENDING\n");
+	DEBUGOUTW(L"SENDING\n");
 		DEBUGOUTA("'");
 		DEBUGOUTA((const char*)ccs->lParam);
 		DEBUGOUTA("'\n");
@@ -26,7 +26,7 @@ INT_PTR SVC_OTRSendMessage(WPARAM wParam,LPARAM lParam){
 
 	// don't filter OTR messages being sent (OTR messages should only happen *after* the otrl_message_sending call below)
 	if(strncmp(oldmessage, "?OTR", 4) == 0) {
-		DEBUGOUT_T("OTR message without PREF_BYPASS_OTR\n");
+		DEBUGOUTW(L"OTR message without PREF_BYPASS_OTR\n");
 		return Proto_ChainSend(wParam, ccs);
 	}
 
@@ -45,7 +45,7 @@ INT_PTR SVC_OTRSendMessage(WPARAM wParam,LPARAM lParam){
 	
 	if (err) { /* Be *sure* not to send out plaintext */
 		DEBUGOUTA("otrl_message_sending err");
-		ShowError(TranslateT(LANG_ENCRYPTION_ERROR));
+		ShowError(TranslateW(LANG_ENCRYPTION_ERROR));
 		otrl_message_free(newmessage);
 		return 1;
 	}
@@ -108,10 +108,10 @@ INT_PTR SVC_OTRRecvMessage(WPARAM wParam,LPARAM lParam)
 	mir_free(uname);
 	
 	OtrlTLV *tlv = otrl_tlv_find(tlvs, OTRL_TLV_DISCONNECTED);
-	if (tlv && !Miranda_Terminated()) {
+	if (tlv && !Miranda_IsTerminated()) {
 		/* Notify the user that the other side disconnected. */
-		TCHAR buff[256];
-		mir_sntprintf(buff, TranslateT(LANG_SESSION_TERMINATED_BY_OTR), contact_get_nameT(ccs->hContact));
+		wchar_t buff[256];
+		mir_snwprintf(buff, TranslateW(LANG_SESSION_TERMINATED_BY_OTR), contact_get_nameT(ccs->hContact));
 		SetEncryptionStatus(ccs->hContact, otr_context_get_trust(context)); // required since libotr 4!?
 		ShowMessage(ccs->hContact, buff);
 	}

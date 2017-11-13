@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2012-15 Miranda NG team (http://miranda-ng.org)
+Copyright (C) 2012-17 Miranda NG team (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -58,6 +58,9 @@ static LRESULT CALLBACK MSubclassWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 
 MIR_CORE_DLL(void) mir_subclassWindow(HWND hWnd, WNDPROC wndProc)
 {
+	if (hWnd == nullptr)
+		return;
+
 	MSubclassData *p = arSubclass.find((MSubclassData*)&hWnd);
 	if (p == NULL) {
 		p = new MSubclassData;

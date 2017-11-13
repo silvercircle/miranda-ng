@@ -13,7 +13,6 @@
 #include <m_options.h>
 #include <m_protocols.h>
 #include <m_system.h>
-#include <m_system_cpp.h>
 #include "win2k.h"
 
 #include <m_toptoolbar.h>
@@ -44,9 +43,8 @@ INT_PTR SilenceConnection(WPARAM wParam, LPARAM lParam);
 //lParam = 0 - not in use
 #define SS_SILENCE_CONNECTION "StartupSilence/SilenceConnection"
 
-#define POPUPONOFF "Popup/EnableDisableMenuCommand"
-
 #define MENU_NAME			LPGEN("Silence at startup")
+#define MENU_NAMEW			LPGENW("Silence at startup")
 #define DISABLE_SILENCE		LPGEN("Toggle Silence OFF")
 #define ENABLE_SILENCE		LPGEN("Toggle Silence ON")
 #define DISABLE_SILENCETTB	LPGEN("Toggle Silence OFF TTB")
@@ -60,15 +58,15 @@ INT_PTR SilenceConnection(WPARAM wParam, LPARAM lParam);
 #define SS_IS_ON Translate("Silence At Startup is ON")
 #define SS_IS_OFF Translate("Silence At Startup is OFF")
 #define TTBNAME Translate("Toggle Silence At Startup")
-#define NOTICE TranslateT(MENU_NAME)
-#define NEEDTTBMOD TranslateT("You have to install \"TopToolBar\" to use this option.")
-#define NEEDPOPUP TranslateT("You have to install \"YAPP\" or \"Popup+\" to use this option.")
+#define NOTICE TranslateW(MENU_NAMEW)
+#define NEEDTTBMOD TranslateT("You have to install TopToolBar plugin to use this option.")
+#define NEEDPOPUP TranslateT("You have to install popup plugin to use this option.")
 
 static IconItem iconList[] = {
-	{MENU_NAME, MENU_NAME, IDI_SSICON},
-	{ALL_ENABLED_FLT, ALL_ENABLED_FLT, IDI_SSFILTEREDON},
-	{DISABLE_SILENCE, DISABLE_SILENCE, IDI_SSDISABLE},
-	{ENABLE_SILENCE, ENABLE_SILENCE, IDI_SSENABLE}
+	{ MENU_NAME, MENU_NAME, IDI_SSICON},
+	{ ALL_ENABLED_FLT, ALL_ENABLED_FLT, IDI_SSFILTEREDON},
+	{ DISABLE_SILENCE, DISABLE_SILENCE, IDI_SSDISABLE},
+	{ ENABLE_SILENCE, ENABLE_SILENCE, IDI_SSENABLE}
 };
 
 static IconItem iconttbList[] = {

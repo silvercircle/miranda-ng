@@ -1,11 +1,11 @@
 #include "stdafx.h"
 
-MIRANDA_HOOK_EVENT(ME_DB_EVENT_ADDED, wParam, lParam)
+int OnDbEventAdded(WPARAM wParam, LPARAM lParam)
 {
+	UNREFERENCED_PARAMETER(wParam);
 	MEVENT hDbEvent = (MEVENT)lParam;
 
-	DBEVENTINFO dbei = { 0 };
-	dbei.cbSize = sizeof(dbei);
+	DBEVENTINFO dbei = {};
 	dbei.cbBlob = db_event_getBlobSize(hDbEvent);
 	if (-1 == dbei.cbBlob)
 		return 0;
@@ -27,7 +27,7 @@ MIRANDA_HOOK_EVENT(ME_DB_EVENT_ADDED, wParam, lParam)
 		if (db_get_b(hcntct, "CList", "NotOnList", 0) && !db_get_b(hcntct, pluginName, answeredSetting, 0) && !IsExistMyMessage(hcntct)) {
 			if (!plSets->HandleAuthReq.Get()) {
 				char *buf = mir_utf8encodeW(variables_parse(plSets->AuthRepl.Get(), hcntct).c_str());
-				CallContactService(hcntct, PSS_MESSAGE, 0, (LPARAM)buf);
+				ProtoChainSend(hcntct, PSS_MESSAGE, 0, (LPARAM)buf);
 				mir_free(buf);
 			}
 
@@ -46,7 +46,7 @@ MIRANDA_HOOK_EVENT(ME_DB_EVENT_ADDED, wParam, lParam)
 	return 0;
 }
 
-MIRANDA_HOOK_EVENT(ME_DB_EVENT_FILTER_ADD, w, l)
+int OnDbEventFilterAdd(WPARAM w, LPARAM l)
 {
 	MCONTACT hContact = (MCONTACT)w;
 	DBEVENTINFO *dbei = (DBEVENTINFO*)l;
@@ -106,7 +106,7 @@ MIRANDA_HOOK_EVENT(ME_DB_EVENT_FILTER_ADD, w, l)
 		// if answer not empty
 		if (answer.length() > 0) {
 			// if message equal right answer...
-			if (plSets->AnswNotCaseSens.Get() ? !mir_tstrcmpi(message.c_str(), answer.c_str()) : !mir_tstrcmp(message.c_str(), answer.c_str())) {
+			if (plSets->AnswNotCaseSens.Get() ? !mir_wstrcmpi(message.c_str(), answer.c_str()) : !mir_wstrcmp(message.c_str(), answer.c_str())) {
 				// unhide contact
 				db_unset(hContact, "CList", "Hidden");
 
@@ -120,7 +120,7 @@ MIRANDA_HOOK_EVENT(ME_DB_EVENT_FILTER_ADD, w, l)
 				// send congratulation
 
 				char * buf = mir_utf8encodeW(variables_parse(plSets->Congratulation.Get(), hContact).c_str());
-				CallContactService(hContact, PSS_MESSAGE, 0, (LPARAM)buf);
+				ProtoChainSend(hContact, PSS_MESSAGE, 0, (LPARAM)buf);
 				mir_free(buf);
 
 				// process the event
@@ -140,7 +140,7 @@ MIRANDA_HOOK_EVENT(ME_DB_EVENT_FILTER_ADD, w, l)
 
 
 		char * buf = mir_utf8encodeW(q.c_str());
-		CallContactService(hContact, PSS_MESSAGE, 0, (LPARAM)buf);
+		ProtoChainSend(hContact, PSS_MESSAGE, 0, (LPARAM)buf);
 		mir_free(buf);
 
 
@@ -161,39 +161,41 @@ MIRANDA_HOOK_EVENT(ME_DB_EVENT_FILTER_ADD, w, l)
 	return 1;
 }
 
-MIRANDA_HOOK_EVENT(ME_OPT_INITIALISE, w, l)
+int OnOptInit(WPARAM w, LPARAM l)
 {
+	UNREFERENCED_PARAMETER(l);
+
 	OPTIONSDIALOGPAGE odp = { 0 };
-	odp.pszGroup = LPGEN("Message sessions");
-	odp.pszTitle = pluginName;
+	odp.szGroup.a = LPGEN("Message sessions");
+	odp.szTitle.a = pluginName;
 	odp.position = -1;
 	odp.hInstance = hInst;
 
-	odp.pszTab = LPGEN("General");
+	odp.szTab.a = LPGEN("General");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_MAIN);
 	odp.pfnDlgProc = MainDlgProc;
 	Options_AddPage(w, &odp);
 
-	odp.pszTab = LPGEN("Messages");
+	odp.szTab.a = LPGEN("Messages");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_MESSAGES);
 	odp.pfnDlgProc = MessagesDlgProc;
 	Options_AddPage(w, &odp);
 
-	odp.pszTab = LPGEN("Accounts");
+	odp.szTab.a = LPGEN("Accounts");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_PROTO);
 	odp.pfnDlgProc = ProtoDlgProc;
 	Options_AddPage(w, &odp);
 	return 0;
 }
 
-MIRANDA_HOOK_EVENT(ME_DB_CONTACT_SETTINGCHANGED, hContact, l)
+int OnDbContactSettingchanged(WPARAM hContact, LPARAM l)
 {
 	DBCONTACTWRITESETTING *cws = (DBCONTACTWRITESETTING*)l;
 
 	// if CList/NotOnList is being deleted then remove answeredSetting
-	if (mir_strcmp(cws->szModule, "CList"))
+	if (strcmp(cws->szModule, "CList"))
 		return 0;
-	if (mir_strcmp(cws->szSetting, "NotOnList"))
+	if (strcmp(cws->szSetting, "NotOnList"))
 		return 0;
 
 	if (!cws->value.type) {

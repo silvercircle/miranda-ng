@@ -18,10 +18,10 @@ static HTREEITEM AddLine(HWND hTree,TopButtonInt *b, HTREEITEM hItem, HIMAGELIST
 	tvis.item.mask = TVIF_PARAM | TVIF_TEXT | TVIF_STATE | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
 
 	int index;
-	TCHAR* tmp;
+	wchar_t* tmp;
 
 	if (b->dwFlags & TTBBF_ISSEPARATOR) {
-		tvis.item.pszText = _T("------------------");
+		tvis.item.pszText = L"------------------";
 		index = -1;
 		tmp = 0;
 	}
@@ -33,8 +33,8 @@ static HTREEITEM AddLine(HWND hTree,TopButtonInt *b, HTREEITEM hItem, HIMAGELIST
 		}
 		else index = ImageList_AddIcon(il, b->hIconUp);
 
-		tmp = mir_a2t( b->pszName );
-		tvis.item.pszText = TranslateTS(tmp);
+		tmp = mir_a2u( b->pszName );
+		tvis.item.pszText = TranslateW(tmp);
 	}
 	tvis.item.iImage = tvis.item.iSelectedImage = index;
 
@@ -239,7 +239,7 @@ static INT_PTR CALLBACK ButOrderOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			//----- Launch buttons -----
 
 			if (ctrlid == IDC_BROWSE) {
-				TCHAR str[MAX_PATH];
+				wchar_t str[MAX_PATH];
 				OPENFILENAME ofn = {0};
 
 				GetDlgItemText(hwndDlg, IDC_EPATH, str, _countof(str));
@@ -251,7 +251,7 @@ static INT_PTR CALLBACK ButOrderOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 				ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_EXPLORER;
 				ofn.nMaxFile = _countof(str);
 				ofn.nMaxFileTitle = MAX_PATH;
-				ofn.lpstrDefExt = _T("exe");
+				ofn.lpstrDefExt = L"exe";
 				if (!GetOpenFileName(&ofn))
 					break;
 
@@ -272,7 +272,7 @@ static INT_PTR CALLBACK ButOrderOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 				TreeView_GetItem(hTree, &tvi);
 
 				TopButtonInt* btn = (TopButtonInt*)tvi.lParam;
-				TCHAR buf [256];
+				wchar_t buf [256];
 				// probably, condition not needs
 				if (btn->dwFlags & TTBBF_ISLBUTTON) {
 					if (!(btn->dwFlags & TTBBF_OPTIONAL)) {
@@ -298,7 +298,7 @@ static INT_PTR CALLBACK ButOrderOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 					TreeView_SetItem(hTree, &tvi);
 
 					GetDlgItemText(hwndDlg, IDC_EPATH, buf, _countof(buf));
-					replaceStrT(btn->ptszProgram, buf);
+					replaceStrW(btn->ptszProgram, buf);
 				}
 				break;
 			}
@@ -309,7 +309,7 @@ static INT_PTR CALLBACK ButOrderOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 				ttb.hIconDn = (HICON)LoadImage(hInst, MAKEINTRESOURCE(IDI_RUN), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
 				ttb.dwFlags = TTBBF_VISIBLE | TTBBF_ISLBUTTON | TTBBF_INTERNAL | TTBBF_OPTIONAL;
 				ttb.name = LPGEN("Default");
-				ttb.program = _T("Execute Path");
+				ttb.program = L"Execute Path";
 				TopButtonInt* b = CreateButton(&ttb);
 
 				// get selection for insert
@@ -509,7 +509,7 @@ static INT_PTR CALLBACK ButOrderOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			TreeView_GetItem(hTree, &tvi);
 			if ( (hti.flags & (TVHT_ONITEM | TVHT_ONITEMRIGHT)) || (hti.hItem==TVI_FIRST)) {
 				TVINSERTSTRUCT tvis;
-				TCHAR name[128];
+				wchar_t name[128];
 				tvis.item.mask = TVIF_HANDLE | TVIF_PARAM | TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_STATE;
 				tvis.item.stateMask = 0xFFFFFFFF;
 				tvis.item.pszText = name;
@@ -544,10 +544,10 @@ int TTBOptInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
-	odp.pszGroup = LPGEN("Contact list");
+	odp.szGroup.a = LPGEN("Contact list");
 	odp.position = -1000000000;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_BUTORDER);
-	odp.pszTitle = LPGEN("Toolbar");
+	odp.szTitle.a = LPGEN("Toolbar");
 	odp.pfnDlgProc = ButOrderOpts;
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);

@@ -10,6 +10,7 @@ enum HTTP_STATUS
 	HTTP_STATUS_FORBIDDEN = 403,
 	HTTP_STATUS_NOT_FOUND = 404,
 	HTTP_STATUS_METHOD_NOT_ALLOWED = 405,
+	HTTP_STATUS_CONFLICT = 409,
 	HTTP_STATUS_TOO_MANY_REQUESTS = 429,
 	HTTP_STATUS_SERVICE_UNAVAILABLE = 503,
 	HTTP_STATUS_INSUFICIENTE_STORAGE = 507
@@ -154,11 +155,11 @@ public:
 			mir_free(pData);
 	}
 
-	NETLIBHTTPREQUEST* Send(HANDLE hNetlibConnection)
+	NETLIBHTTPREQUEST* Send(HNETLIBUSER hNetlibConnection)
 	{
 		m_szUrl.Replace('\\', '/');
 		szUrl = m_szUrl.GetBuffer();
-		return (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)hNetlibConnection, (LPARAM)this);
+		return Netlib_HttpTransaction(hNetlibConnection, this);
 	}
 };
 

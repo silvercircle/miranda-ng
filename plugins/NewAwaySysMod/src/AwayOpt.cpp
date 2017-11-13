@@ -25,16 +25,13 @@
 #include "m_clc.h"
 #include "GroupCheckbox.h"
 
-//NightFox
-#include <m_modernopt.h>
-
 int g_Messages_RecentRootID, g_Messages_PredefinedRootID;
 CIconList g_IconList;
 
 // Set window size and center its controls
 void MySetPos(HWND hwndParent)
 {
-	HWND hWndTab = FindWindowEx(GetParent(hwndParent), NULL, _T("SysTabControl32"), _T(""));
+	HWND hWndTab = FindWindowEx(GetParent(hwndParent), NULL, L"SysTabControl32", L"");
 	if (!hWndTab) {
 		_ASSERT(0);
 		return;
@@ -115,13 +112,13 @@ static Dlg1DefMsgDlgItems[] = {
 
 struct {
 	int DlgItem, IconIndex;
-	TCHAR* Text;
+	wchar_t* Text;
 }
 static Dlg1Buttons[] = {
-	IDC_MESSAGEDLG_NEWMSG, ILI_NEWMESSAGE, LPGENT("Create new message"),
-	IDC_MESSAGEDLG_NEWCAT, ILI_NEWCATEGORY, LPGENT("Create new category"),
-	IDC_MESSAGEDLG_DEL, ILI_DELETE, LPGENT("Delete"),
-	IDC_MESSAGEDLG_VARS, ILI_NOICON, LPGENT("Open Variables help dialog"),
+	IDC_MESSAGEDLG_NEWMSG, ILI_NEWMESSAGE, LPGENW("Create new message"),
+	IDC_MESSAGEDLG_NEWCAT, ILI_NEWCATEGORY, LPGENW("Create new category"),
+	IDC_MESSAGEDLG_DEL, ILI_DELETE, LPGENW("Delete"),
+	IDC_MESSAGEDLG_VARS, ILI_NOICON, LPGENW("Open Variables help dialog"),
 };
 
 static INT_PTR CALLBACK MessagesOptDlg(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -140,13 +137,13 @@ static INT_PTR CALLBACK MessagesOptDlg(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 		// init image buttons
 		for (int i = 0; i < _countof(Dlg1Buttons); i++) {
 			HWND hButton = GetDlgItem(hwndDlg, Dlg1Buttons[i].DlgItem);
-			SendMessage(hButton, BUTTONADDTOOLTIP, (WPARAM)TranslateTS(Dlg1Buttons[i].Text), BATF_TCHAR);
+			SendMessage(hButton, BUTTONADDTOOLTIP, (WPARAM)TranslateW(Dlg1Buttons[i].Text), BATF_UNICODE);
 			SendMessage(hButton, BUTTONSETASFLATBTN, TRUE, 0);
 		}
 		// now default status message buttons
 		for (int i = 0; i < _countof(Dlg1DefMsgDlgItems); i++) {
 			HWND hButton = GetDlgItem(hwndDlg, Dlg1DefMsgDlgItems[i].DlgItem);
-			SendMessage(hButton, BUTTONADDTOOLTIP, (WPARAM)pcli->pfnGetStatusModeDescription(Dlg1DefMsgDlgItems[i].Status, 0), BATF_TCHAR);
+			SendMessage(hButton, BUTTONADDTOOLTIP, (WPARAM)pcli->pfnGetStatusModeDescription(Dlg1DefMsgDlgItems[i].Status, 0), BATF_UNICODE);
 			SendMessage(hButton, BUTTONSETASPUSHBTN, TRUE, 0);
 			SendMessage(hButton, BUTTONSETASFLATBTN, TRUE, 0);
 			g_OrigDefStatusButtonMsgProc = (WNDPROC)SetWindowLongPtr(hButton, GWLP_WNDPROC, (LONG_PTR)DefStatusButtonSubclassProc);
@@ -192,7 +189,7 @@ static INT_PTR CALLBACK MessagesOptDlg(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 					TCString Msg;
 					GetDlgItemText(hwndDlg, IDC_MESSAGEDLG_MSGDATA, Msg.GetBuffer(AWAY_MSGDATA_MAX), AWAY_MSGDATA_MAX);
 					Msg.ReleaseBuffer();
-					if (((CTreeItem*)pnm->ItemOld)->User_Str1 != (const TCHAR*)Msg) {
+					if (((CTreeItem*)pnm->ItemOld)->User_Str1 != (const wchar_t*)Msg) {
 						((CTreeItem*)pnm->ItemOld)->User_Str1 = Msg;
 						MsgTree->SetModified(true);
 					}
@@ -201,10 +198,10 @@ static INT_PTR CALLBACK MessagesOptDlg(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 					ChangeLock++;
 					if (!(pnm->ItemNew->Flags & TIF_ROOTITEM)) {
 						SetDlgItemText(hwndDlg, IDC_MESSAGEDLG_MSGTITLE, pnm->ItemNew->Title);
-						SetDlgItemText(hwndDlg, IDC_MESSAGEDLG_MSGDATA, (pnm->ItemNew->Flags & TIF_GROUP) ? _T("") : ((CTreeItem*)pnm->ItemNew)->User_Str1);
+						SetDlgItemText(hwndDlg, IDC_MESSAGEDLG_MSGDATA, (pnm->ItemNew->Flags & TIF_GROUP) ? L"" : ((CTreeItem*)pnm->ItemNew)->User_Str1);
 					}
 					else {
-						SetDlgItemText(hwndDlg, IDC_MESSAGEDLG_MSGTITLE, _T(""));
+						SetDlgItemText(hwndDlg, IDC_MESSAGEDLG_MSGTITLE, L"");
 						if (pnm->ItemNew->ID == g_Messages_RecentRootID)
 							SetDlgItemText(hwndDlg, IDC_MESSAGEDLG_MSGDATA, TranslateT("Your most recent status messages are placed in this category. It's not recommended that you put your messages manually here, as they'll be replaced by your recent messages."));
 						else {
@@ -375,7 +372,7 @@ static INT_PTR CALLBACK MoreOptDlg(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
 		SendDlgItemMessage(hwndDlg, IDC_MOREOPTDLG_UPDATEMSGSPERIOD_SPIN, UDM_SETRANGE32, 30, 99999);
 		for (int i = 0; i < _countof(Dlg2StatusButtons); i++) {
 			HWND hButton = GetDlgItem(hwndDlg, Dlg2StatusButtons[i].DlgItem);
-			SendMessage(hButton, BUTTONADDTOOLTIP, (WPARAM)pcli->pfnGetStatusModeDescription(Dlg2StatusButtons[i].Status, 0), BATF_TCHAR);
+			SendMessage(hButton, BUTTONADDTOOLTIP, (WPARAM)pcli->pfnGetStatusModeDescription(Dlg2StatusButtons[i].Status, 0), BATF_UNICODE);
 			SendMessage(hButton, BUTTONSETASPUSHBTN, TRUE, 0);
 			SendMessage(hButton, BUTTONSETASFLATBTN, TRUE, 0);
 		}
@@ -515,25 +512,25 @@ INT_PTR CALLBACK AutoreplyOptDlg(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 
 			HWND hCombo = GetDlgItem(hwndDlg, IDC_REPLYDLG_ONLYIDLEREPLY_COMBO);
 			struct {
-				TCHAR *Text;
+				wchar_t *Text;
 				int Meaning;
 			}
 			static IdleComboValues[] = {
-				_T("Windows"), AUTOREPLY_IDLE_WINDOWS,
-				_T("Miranda"), AUTOREPLY_IDLE_MIRANDA
+				L"Windows", AUTOREPLY_IDLE_WINDOWS,
+				L"Miranda", AUTOREPLY_IDLE_MIRANDA
 			};
 
 			for (int i = 0; i < _countof(IdleComboValues); i++)
-				SendMessage(hCombo, CB_SETITEMDATA, SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)TranslateTS(IdleComboValues[i].Text)), IdleComboValues[i].Meaning);
+				SendMessage(hCombo, CB_SETITEMDATA, SendMessage(hCombo, CB_ADDSTRING, 0, (LPARAM)TranslateW(IdleComboValues[i].Text)), IdleComboValues[i].Meaning);
 
 			for (int i = 0; i < _countof(Dlg3StatusButtons); i++) {
 				HWND hButton = GetDlgItem(hwndDlg, Dlg3StatusButtons[i].DlgItem);
-				SendMessage(hButton, BUTTONADDTOOLTIP, (WPARAM)pcli->pfnGetStatusModeDescription(Dlg3StatusButtons[i].Status, 0), BATF_TCHAR);
+				SendMessage(hButton, BUTTONADDTOOLTIP, (WPARAM)pcli->pfnGetStatusModeDescription(Dlg3StatusButtons[i].Status, 0), BATF_UNICODE);
 				SendMessage(hButton, BUTTONSETASPUSHBTN, TRUE, 0);
 				SendMessage(hButton, BUTTONSETASFLATBTN, TRUE, 0);
 			}
 			HWND hButton = GetDlgItem(hwndDlg, IDC_REPLYDLG_VARS);
-			SendMessage(hButton, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Open Variables help dialog"), BATF_TCHAR);
+			SendMessage(hButton, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Open Variables help dialog"), BATF_UNICODE);
 			SendMessage(hButton, BUTTONSETASFLATBTN, TRUE, 0);
 
 			SendDlgItemMessage(hwndDlg, IDC_MOREOPTDLG_EVNTMSG, BUTTONSETASTHEMEDBTN, TRUE, 0);
@@ -544,22 +541,22 @@ INT_PTR CALLBACK AutoreplyOptDlg(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 			// init tooltips
 			struct {
 				int m_dlgItemID;
-				TCHAR *Text;
+				wchar_t *Text;
 			}
 			Tooltips[] = {
-				IDC_REPLYDLG_RESETCOUNTERWHENSAMEICON, LPGENT("When this checkbox is ticked, NewAwaySys counts \"send times\" starting from the last status message change, even if status mode didn't change.\nWhen the checkbox isn't ticked, \"send times\" are counted from last status mode change (i.e., disabled state is more restrictive)."),
-				IDC_MOREOPTDLG_EVNTMSG, LPGENT("Message"),
-				IDC_MOREOPTDLG_EVNTURL, LPGENT("URL"),
-				IDC_MOREOPTDLG_EVNTFILE, LPGENT("File")
+				IDC_REPLYDLG_RESETCOUNTERWHENSAMEICON, LPGENW("When this checkbox is ticked, NewAwaySys counts \"send times\" starting from the last status message change, even if status mode didn't change.\nWhen the checkbox isn't ticked, \"send times\" are counted from last status mode change (i.e., disabled state is more restrictive)."),
+				IDC_MOREOPTDLG_EVNTMSG, LPGENW("Message"),
+				IDC_MOREOPTDLG_EVNTURL, LPGENW("URL"),
+				IDC_MOREOPTDLG_EVNTFILE, LPGENW("File")
 			};
-			hWndTooltips = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, _T(""), WS_POPUP | TTS_NOPREFIX, 0, 0, 0, 0, NULL, NULL, GetModuleHandleA("mir_app.mir"), NULL);
+			hWndTooltips = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, L"", WS_POPUP | TTS_NOPREFIX, 0, 0, 0, 0, NULL, NULL, GetModuleHandleA("mir_app.mir"), NULL);
 			TOOLINFO ti = { 0 };
 			ti.cbSize = sizeof(ti);
 			ti.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
 			ti.hwnd = hwndDlg;
 			for (int i = 0; i < _countof(Tooltips); i++) {
 				ti.uId = (UINT_PTR)GetDlgItem(hwndDlg, Tooltips[i].m_dlgItemID);
-				ti.lpszText = TranslateTS(Tooltips[i].Text);
+				ti.lpszText = TranslateW(Tooltips[i].Text);
 				SendMessage(hWndTooltips, TTM_ADDTOOL, 0, (LPARAM)&ti);
 			}
 			SendMessage(hWndTooltips, TTM_SETMAXTIPWIDTH, 0, 500);
@@ -669,220 +666,14 @@ Dlg4DefMsgDlgItems[] = {
 
 static struct {
 	int DlgItem, IconIndex;
-	TCHAR* Text;
+	wchar_t* Text;
 }
 Dlg4Buttons[] = {
-	IDC_MESSAGEDLG_NEWMSG, ILI_NEWMESSAGE, LPGENT("Create new message"),
-	IDC_MESSAGEDLG_NEWCAT, ILI_NEWCATEGORY, LPGENT("Create new category"),
-	IDC_MESSAGEDLG_DEL, ILI_DELETE, LPGENT("Delete"),
-	IDC_MESSAGEDLG_VARS, ILI_NOICON, LPGENT("Open Variables help dialog"),
+	IDC_MESSAGEDLG_NEWMSG, ILI_NEWMESSAGE, LPGENW("Create new message"),
+	IDC_MESSAGEDLG_NEWCAT, ILI_NEWCATEGORY, LPGENW("Create new category"),
+	IDC_MESSAGEDLG_DEL, ILI_DELETE, LPGENW("Delete"),
+	IDC_MESSAGEDLG_VARS, ILI_NOICON, LPGENW("Open Variables help dialog"),
 };
-
-INT_PTR CALLBACK MessagesModernOptDlg(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	static int ChangeLock = 0;
-	static CMsgTree* MsgTree = NULL;
-
-	switch (msg) {
-	case WM_INITDIALOG:
-		TranslateDialogDefault(hwndDlg);
-		MySetPos(hwndDlg);
-		ChangeLock++;
-		g_MessagesOptPage.SetWnd(hwndDlg);
-		SendDlgItemMessage(hwndDlg, IDC_MESSAGEDLG_MSGTITLE, EM_LIMITTEXT, TREEITEMTITLE_MAXLEN, 0);
-		SendDlgItemMessage(hwndDlg, IDC_MESSAGEDLG_MSGDATA, EM_LIMITTEXT, AWAY_MSGDATA_MAX, 0);
-
-		// init image buttons
-		for (int i = 0; i < _countof(Dlg4Buttons); i++) {
-			HWND hButton = GetDlgItem(hwndDlg, Dlg4Buttons[i].DlgItem);
-			SendMessage(hButton, BUTTONADDTOOLTIP, (WPARAM)TranslateTS(Dlg4Buttons[i].Text), BATF_TCHAR);
-			SendMessage(hButton, BUTTONSETASFLATBTN, TRUE, 0);
-		}
-		// now default status message buttons
-		for (int i = 0; i < _countof(Dlg4DefMsgDlgItems); i++) {
-			HWND hButton = GetDlgItem(hwndDlg, Dlg4DefMsgDlgItems[i].DlgItem);
-			SendMessage(hButton, BUTTONADDTOOLTIP, (WPARAM)pcli->pfnGetStatusModeDescription(Dlg4DefMsgDlgItems[i].Status, 0), BATF_TCHAR);
-			SendMessage(hButton, BUTTONSETASPUSHBTN, TRUE, 0);
-			SendMessage(hButton, BUTTONSETASFLATBTN, TRUE, 0);
-			g_OrigDefStatusButtonMsgProc = (WNDPROC)SetWindowLongPtr(hButton, GWLP_WNDPROC, (LONG_PTR)DefStatusButtonSubclassProc);
-		}
-		SendMessage(hwndDlg, UM_ICONSCHANGED, 0, 0);
-		g_MessagesOptPage.DBToMemToPage();
-		_ASSERT(!MsgTree);
-		MsgTree = new CMsgTree(GetDlgItem(hwndDlg, IDC_MESSAGEDLG_MSGTREE));
-		if (!MsgTree->SetSelection(MsgTree->GetDefMsg(ID_STATUS_AWAY), MTSS_BYID))
-			MsgTree->SetSelection(g_Messages_PredefinedRootID, MTSS_BYID);
-
-		ChangeLock--;
-		return true;
-
-	case UM_ICONSCHANGED:
-		for (int i = 0; i < _countof(Dlg4DefMsgDlgItems); i++)
-			SendDlgItemMessage(hwndDlg, Dlg4DefMsgDlgItems[i].DlgItem, BM_SETIMAGE, IMAGE_ICON, (LPARAM)g_IconList[Dlg4DefMsgDlgItems[i].IconIndex]);
-
-		for (int i = 0; i < _countof(Dlg4Buttons); i++)
-			if (Dlg4Buttons[i].IconIndex != ILI_NOICON)
-				SendDlgItemMessage(hwndDlg, Dlg4Buttons[i].DlgItem, BM_SETIMAGE, IMAGE_ICON, (LPARAM)g_IconList[Dlg4Buttons[i].IconIndex]);
-
-		variables_skin_helpbutton(hwndDlg, IDC_MESSAGEDLG_VARS);
-		break;
-
-	case WM_NOTIFY:
-		if (((NMHDR*)lParam)->code == PSN_APPLY) {
-			HWND hTreeView = GetDlgItem(hwndDlg, IDC_MESSAGEDLG_MSGTREE);
-			HTREEITEM hSelectedItem = TreeView_GetSelection(hTreeView);
-			ChangeLock++;
-			TreeView_SelectItem(hTreeView, NULL);
-			TreeView_SelectItem(hTreeView, hSelectedItem);
-			ChangeLock--;
-			MsgTree->Save();
-			return true;
-		}
-
-		if (((LPNMHDR)lParam)->idFrom == IDC_MESSAGEDLG_MSGTREE) {
-			PNMMSGTREE pnm = (PNMMSGTREE)lParam;
-			switch (((LPNMHDR)lParam)->code) {
-			case MTN_SELCHANGED:
-				if (pnm->ItemOld && !(pnm->ItemOld->Flags & (TIF_ROOTITEM | TIF_GROUP))) {
-					TCString Msg;
-					GetDlgItemText(hwndDlg, IDC_MESSAGEDLG_MSGDATA, Msg.GetBuffer(AWAY_MSGDATA_MAX), AWAY_MSGDATA_MAX);
-					Msg.ReleaseBuffer();
-					if (((CTreeItem*)pnm->ItemOld)->User_Str1 != (const TCHAR*)Msg) {
-						((CTreeItem*)pnm->ItemOld)->User_Str1 = Msg;
-						MsgTree->SetModified(true);
-					}
-				}
-				if (pnm->ItemNew) {
-					ChangeLock++;
-					if (!(pnm->ItemNew->Flags & TIF_ROOTITEM)) {
-						SetDlgItemText(hwndDlg, IDC_MESSAGEDLG_MSGTITLE, pnm->ItemNew->Title);
-						SetDlgItemText(hwndDlg, IDC_MESSAGEDLG_MSGDATA, (pnm->ItemNew->Flags & TIF_GROUP) ? _T("") : ((CTreeItem*)pnm->ItemNew)->User_Str1);
-					}
-					else {
-						SetDlgItemText(hwndDlg, IDC_MESSAGEDLG_MSGTITLE, _T(""));
-						if (pnm->ItemNew->ID == g_Messages_RecentRootID)
-							SetDlgItemText(hwndDlg, IDC_MESSAGEDLG_MSGDATA, TranslateT("Your most recent status messages are placed in this category. It's not recommended that you put your messages manually here, as they'll be replaced by your recent messages."));
-						else {
-							_ASSERT(pnm->ItemNew->ID == g_Messages_PredefinedRootID);
-							SetDlgItemText(hwndDlg, IDC_MESSAGEDLG_MSGDATA, TranslateT("You can put your frequently used and favorite messages in this category."));
-						}
-					}
-					for (int i = 0; i < _countof(Dlg4DefMsgDlgItems); i++) {
-						COptItem_Checkbox *Checkbox = (COptItem_Checkbox*)g_MessagesOptPage.Find(Dlg4DefMsgDlgItems[i].DlgItem);
-						Checkbox->SetWndValue(g_MessagesOptPage.GetWnd(), MsgTree->GetDefMsg(Dlg4DefMsgDlgItems[i].Status) == pnm->ItemNew->ID);
-					}
-					ChangeLock--;
-				}
-				EnableMessagesOptDlgControls(MsgTree);
-				return 0;
-
-			case MTN_DEFMSGCHANGED:
-				if (!ChangeLock) {
-					CBaseTreeItem* SelectedItem = MsgTree->GetSelection();
-					_ASSERT(SelectedItem);
-					if ((pnm->ItemOld && pnm->ItemOld->ID == SelectedItem->ID) || (pnm->ItemNew && pnm->ItemNew->ID == SelectedItem->ID)) { // SelectedItem contains the same info as one of ItemOld or ItemNew - so we'll just use SelectedItem and won't bother with identifying which of ItemOld or ItemNew is currently selected
-						for (int i = 0; i < _countof(Dlg4DefMsgDlgItems); i++) {
-							COptItem_Checkbox *Checkbox = (COptItem_Checkbox*)g_MessagesOptPage.Find(Dlg4DefMsgDlgItems[i].DlgItem);
-							Checkbox->SetWndValue(g_MessagesOptPage.GetWnd(), MsgTree->GetDefMsg(Dlg4DefMsgDlgItems[i].Status) == SelectedItem->ID);
-						}
-					}
-				}
-				if (!ChangeLock)
-					SendMessage(GetParent(hwndDlg), PSM_CHANGED, (WPARAM)hwndDlg, 0);
-				return 0;
-
-			case MTN_ITEMRENAMED:
-				{
-					CBaseTreeItem *SelectedItem = MsgTree->GetSelection();
-					_ASSERT(SelectedItem);
-					if (pnm->ItemNew->ID == SelectedItem->ID && !ChangeLock) {
-						ChangeLock++;
-						SetDlgItemText(hwndDlg, IDC_MESSAGEDLG_MSGTITLE, pnm->ItemNew->Title);
-						ChangeLock--;
-					}
-				} // go through
-			case MTN_ENDDRAG:
-			case MTN_NEWCATEGORY:
-			case MTN_NEWMESSAGE:
-			case MTN_DELETEITEM:
-			case TVN_ITEMEXPANDED:
-				if (!ChangeLock)
-					SendMessage(GetParent(hwndDlg), PSM_CHANGED, (WPARAM)hwndDlg, 0);
-				return 0;
-			}
-		}
-		break;
-
-	case WM_COMMAND:
-		switch (HIWORD(wParam)) {
-		case BN_CLICKED:
-			switch (LOWORD(wParam)) {
-			case IDC_MESSAGEDLG_DEF_ONL:
-			case IDC_MESSAGEDLG_DEF_AWAY:
-			case IDC_MESSAGEDLG_DEF_NA:
-			case IDC_MESSAGEDLG_DEF_OCC:
-			case IDC_MESSAGEDLG_DEF_DND:
-			case IDC_MESSAGEDLG_DEF_FFC:
-			case IDC_MESSAGEDLG_DEF_INV:
-			case IDC_MESSAGEDLG_DEF_OTP:
-			case IDC_MESSAGEDLG_DEF_OTL:
-				for (int i = 0; i < _countof(Dlg4DefMsgDlgItems); i++) {
-					if (LOWORD(wParam) == Dlg4DefMsgDlgItems[i].DlgItem) {
-						// PSM_CHANGED is sent here through MTN_DEFMSGCHANGED, so we don't need to send it once more
-						MsgTree->SetDefMsg(Dlg4DefMsgDlgItems[i].Status, MsgTree->GetSelection()->ID);
-						break;
-					}
-				}
-				break;
-			case IDC_MESSAGEDLG_VARS:
-				my_variables_showhelp(hwndDlg, IDC_MESSAGEDLG_MSGDATA);
-				break;
-			case IDC_MESSAGEDLG_DEL:
-				MsgTree->EnsureVisible(MsgTree->GetSelection()->hItem);
-				MsgTree->DeleteSelectedItem();
-				break;
-			case IDC_MESSAGEDLG_NEWCAT:
-				MsgTree->AddCategory();
-				SetFocus(GetDlgItem(hwndDlg, IDC_MESSAGEDLG_MSGTITLE));
-				break;
-			case IDC_MESSAGEDLG_NEWMSG:
-				MsgTree->AddMessage();
-				SetFocus(GetDlgItem(hwndDlg, IDC_MESSAGEDLG_MSGTITLE));
-				break;
-			case IDC_LNK_AUTOAWAY:
-				OPENOPTIONSDIALOG ood = { sizeof(ood) };
-				ood.pszPage = "Status";
-				ood.pszTab = "Autoreply";
-				Options_OpenPage(&ood);
-			}
-			break;
-		case EN_CHANGE:
-			if (LOWORD(wParam) == IDC_MESSAGEDLG_MSGDATA || LOWORD(wParam) == IDC_MESSAGEDLG_MSGTITLE) {
-				if (!ChangeLock) {
-					if (LOWORD(wParam) == IDC_MESSAGEDLG_MSGTITLE) {
-						CBaseTreeItem* TreeItem = MsgTree->GetSelection();
-						if (TreeItem && !(TreeItem->Flags & TIF_ROOTITEM)) {
-							GetDlgItemText(hwndDlg, IDC_MESSAGEDLG_MSGTITLE, TreeItem->Title.GetBuffer(TREEITEMTITLE_MAXLEN), TREEITEMTITLE_MAXLEN);
-							TreeItem->Title.ReleaseBuffer();
-							ChangeLock++;
-							MsgTree->UpdateItem(TreeItem->ID);
-							ChangeLock--;
-						}
-					}
-					MsgTree->SetModified(true);
-					SendMessage(GetParent(hwndDlg), PSM_CHANGED, (WPARAM)hwndDlg, 0);
-				}
-			}
-		}
-		break;
-
-	case WM_DESTROY:
-		delete MsgTree;
-		MsgTree = NULL;
-		g_MessagesOptPage.SetWnd(NULL);
-	}
-	return 0;
-}
 
 // ================================================ Contact list ================================================
 // Based on the code from built-in Miranda ignore module
@@ -1234,25 +1025,25 @@ int OptsDlgInit(WPARAM wParam, LPARAM)
 	optDi.hInstance = g_hInstance;
 	optDi.flags = ODPF_BOLDGROUPS;
 
-	optDi.pszTitle = OPT_MAINGROUP;
+	optDi.szTitle.a = OPT_MAINGROUP;
 	optDi.pfnDlgProc = MessagesOptDlg;
 	optDi.pszTemplate = MAKEINTRESOURCEA(IDD_MESSAGES);
-	optDi.pszTab = LPGEN("Status messages");
+	optDi.szTab.a = LPGEN("Status messages");
 	Options_AddPage(wParam, &optDi);
 
 	optDi.pfnDlgProc = MoreOptDlg;
 	optDi.pszTemplate = MAKEINTRESOURCEA(IDD_MOREOPTDIALOG);
-	optDi.pszTab = LPGEN("Main options");
+	optDi.szTab.a = LPGEN("Main options");
 	Options_AddPage(wParam, &optDi);
 
 	optDi.pfnDlgProc = AutoreplyOptDlg;
 	optDi.pszTemplate = MAKEINTRESOURCEA(IDD_AUTOREPLY);
-	optDi.pszTab = LPGEN("Autoreply");
+	optDi.szTab.a = LPGEN("Autoreply");
 	Options_AddPage(wParam, &optDi);
 
 	optDi.pfnDlgProc = ContactsOptDlg;
 	optDi.pszTemplate = MAKEINTRESOURCEA(IDD_CONTACTSOPTDLG);
-	optDi.pszTab = LPGEN("Contacts");
+	optDi.szTab.a = LPGEN("Contacts");
 	Options_AddPage(wParam, &optDi);
 	return 0;
 }
@@ -1289,11 +1080,11 @@ void InitOptions()
 	g_MsgTreePage.Items.AddElem(new COptItem_IntDBSetting(IDS_MESSAGEDLG_DEF_AWAY, StatusToDBSetting(ID_STATUS_AWAY, MESSAGES_DB_MSGTREEDEF), DBVT_WORD, false, ID));
 	DefMsgTree.AddElem(CTreeItem(TranslateT("Away"), ParentID1, ID++, 0, TranslateT("Been gone since %nas_awaysince_time%, will be back later.")));
 	g_MsgTreePage.Items.AddElem(new COptItem_IntDBSetting(IDS_MESSAGEDLG_DEF_NA, StatusToDBSetting(ID_STATUS_NA, MESSAGES_DB_MSGTREEDEF), DBVT_WORD, false, ID));
-	DefMsgTree.AddElem(CTreeItem(TranslateT("NA"), ParentID1, ID++, 0, TranslateT("Give it up, I'm not in!")));
+	DefMsgTree.AddElem(CTreeItem(TranslateT("Not available"), ParentID1, ID++, 0, TranslateT("Give it up, I'm not in!")));
 	g_MsgTreePage.Items.AddElem(new COptItem_IntDBSetting(IDS_MESSAGEDLG_DEF_OCC, StatusToDBSetting(ID_STATUS_OCCUPIED, MESSAGES_DB_MSGTREEDEF), DBVT_WORD, false, ID));
 	DefMsgTree.AddElem(CTreeItem(TranslateT("Occupied"), ParentID1, ID++, 0, TranslateT("Not right now.")));
 	g_MsgTreePage.Items.AddElem(new COptItem_IntDBSetting(IDS_MESSAGEDLG_DEF_DND, StatusToDBSetting(ID_STATUS_DND, MESSAGES_DB_MSGTREEDEF), DBVT_WORD, false, ID));
-	DefMsgTree.AddElem(CTreeItem(TranslateT("DND"), ParentID1, ID++, 0, TranslateT("Give a guy some peace, would ya?")));
+	DefMsgTree.AddElem(CTreeItem(TranslateT("Do not disturb"), ParentID1, ID++, 0, TranslateT("Give a guy some peace, would ya?")));
 	g_MsgTreePage.Items.AddElem(new COptItem_IntDBSetting(IDS_MESSAGEDLG_DEF_FFC, StatusToDBSetting(ID_STATUS_FREECHAT, MESSAGES_DB_MSGTREEDEF), DBVT_WORD, false, ID));
 	DefMsgTree.AddElem(CTreeItem(TranslateT("Free for chat"), ParentID1, ID++, 0, TranslateT("I'm a chatbot!")));
 	g_MsgTreePage.Items.AddElem(new COptItem_IntDBSetting(IDS_MESSAGEDLG_DEF_INV, StatusToDBSetting(ID_STATUS_INVISIBLE, MESSAGES_DB_MSGTREEDEF), DBVT_WORD, false, ID));
@@ -1362,33 +1153,4 @@ void InitOptions()
 	g_AutoreplyOptPage.Items.AddElem(new COptItem_Edit(IDC_REPLYDLG_PREFIX, "ReplyPrefix", AWAY_MSGDATA_MAX, AUTOREPLY_DEF_PREFIX, IDC_REPLYDLG_ENABLEREPLY));
 	g_AutoreplyOptPage.Items.AddElem(new COptItem_Generic(IDC_REPLYDLG_VARS, IDC_REPLYDLG_ENABLEREPLY));
 	g_AutoreplyOptPage.Items.AddElem(new COptItem_Generic(IDC_REPLYDLG_STATIC_EXTRATEXT, IDC_REPLYDLG_ENABLEREPLY));
-}
-
-// NightFox
-int ModernOptInitialise(WPARAM wParam, LPARAM)
-{
-	static int iBoldControls[] =
-	{
-		IDC_TXT_TITLE1,
-		IDC_TXT_TITLE2,
-		IDC_TXT_TITLE3,
-		MODERNOPT_CTRL_LAST
-	};
-
-	MODERNOPTOBJECT obj = { 0 };
-	obj.cbSize = sizeof(obj);
-	obj.dwFlags = MODEROPT_FLG_TCHAR | MODEROPT_FLG_NORESIZE;
-	obj.hInstance = g_hInstance;
-	obj.iSection = MODERNOPT_PAGE_STATUS;
-	obj.iType = MODERNOPT_TYPE_SECTIONPAGE;
-	obj.iBoldControls = iBoldControls;
-	//	obj.lpzClassicGroup = NULL;
-	obj.lpzClassicPage = "Status";
-	obj.lpzClassicTab = "Main options";
-	//	obj.lpzHelpUrl = "http://wiki.miranda-im.org/";
-
-	obj.lpzTemplate = MAKEINTRESOURCEA(IDD_MODERNOPT_MESSAGES);
-	obj.pfnDlgProc = MessagesModernOptDlg;
-	CallService(MS_MODERNOPT_ADDOBJECT, wParam, (LPARAM)&obj);
-	return 0;
 }

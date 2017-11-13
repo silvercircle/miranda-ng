@@ -25,19 +25,19 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 // Dialog
 //
 
-IDD_DELETECONTACT DIALOGEX 0, 0, 284, 90
+IDD_DELETECONTACT DIALOGEX 0, 0, 294, 101
 STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_CONTROLPARENT
 CAPTION "Delete contact"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     CONTROL         "Are you sure you want to delete %s?",IDC_TOPLINE,"Static",SS_SIMPLE | SS_NOPREFIX | WS_GROUP,7,7,270,8
-    LTEXT           "This will erase all history and settings for this contact!",IDC_STATIC,7,18,239,14
-    PUSHBUTTON      "Yes",IDYES,54,38,65,14
-    DEFPUSHBUTTON   "No",IDNO,162,38,65,14
+    LTEXT           "This will erase all history and settings for this contact!",IDC_STATIC,7,18,239,16
+    PUSHBUTTON      "Yes",IDYES,58,38,65,14
+    DEFPUSHBUTTON   "No",IDNO,172,38,65,14
     CONTROL         "Hide from list only, in order to keep their history and ignore/visibility settings",IDC_HIDE,
-                    "Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,65,270,9
-    LTEXT           "Use Options -> Contacts -> Ignore to unhide contacts.",IDC_STATIC,20,78,257,8
+                    "Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,65,280,9
+    LTEXT           "Use Options -> Contacts -> Ignore to unhide contacts.",IDC_STATIC,20,78,257,16
 END
 
 IDD_OPT_HOTKEY DIALOGEX 0, 0, 238, 136
@@ -311,60 +311,31 @@ IDC_HYPERLINKHAND       CURSOR                  "..\\..\\..\\src\\mir_app\\res\\
 IDC_DROP                CURSOR                  "..\\..\\..\\src\\mir_app\\res\\cursor_drag_copy.cur"
 IDC_DROPUSER            CURSOR                  "..\\..\\..\\src\\mir_app\\res\\cursor_drop_user.cur"
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// Menu
-//
+///////////////////////////////////////////////////////////////////////////// 
+// 
+// Menu 
+// 
 
-IDR_CLISTMENU MENU
-BEGIN
-    POPUP "&Main menu"
-    BEGIN
-        MENUITEM SEPARATOR
-        MENUITEM "E&xit",                       ID_ICQ_EXIT
-    END
-    POPUP "&Status"
-    BEGIN
-        MENUITEM "&Offline\tCtrl+0",            ID_STATUS_OFFLINE, CHECKED
-        MENUITEM "On&line\tCtrl+1",             ID_STATUS_ONLINE
-        MENUITEM "&Away\tCtrl+2",               ID_STATUS_AWAY
-        MENUITEM "&NA\tCtrl+3",                 ID_STATUS_NA
-        MENUITEM "Occ&upied\tCtrl+4",           ID_STATUS_OCCUPIED
-        MENUITEM "&DND\tCtrl+5",                ID_STATUS_DND
-        MENUITEM "&Free for chat\tCtrl+6",      ID_STATUS_FREECHAT
-        MENUITEM "&Invisible\tCtrl+7",          ID_STATUS_INVISIBLE
-        MENUITEM "On the &phone\tCtrl+8",       ID_STATUS_ONTHEPHONE
-        MENUITEM "Out to &lunch\tCtrl+9",       ID_STATUS_OUTTOLUNCH
-    END
-END
-
-IDR_CONTEXT MENU
-BEGIN
-    POPUP "Tray"
-    BEGIN
-        MENUITEM "&Hide/Show",                  ID_TRAY_HIDE
-        MENUITEM SEPARATOR
-        MENUITEM "E&xit",                       ID_TRAY_EXIT
-    END
-    POPUP "Nowhere"
-    BEGIN
-        MENUITEM "&New group",                  POPUP_NEWGROUP
-        MENUITEM SEPARATOR
-        MENUITEM "&Hide offline users",         POPUP_HIDEOFFLINE
-        MENUITEM "Hide &offline users out here", POPUP_HIDEOFFLINEROOT
-        MENUITEM "Hide &empty groups",          POPUP_HIDEEMPTYGROUPS
-        MENUITEM "Disable &groups",             POPUP_DISABLEGROUPS
-        MENUITEM SEPARATOR
-        MENUITEM "Hide Miranda",                POPUP_HIDEMIRANDA
-    END
-    POPUP "Group"
-    BEGIN
-        MENUITEM "&New subgroup",               POPUP_NEWSUBGROUP
-        MENUITEM "&Hide offline users in here", POPUP_GROUPHIDEOFFLINE
-        MENUITEM SEPARATOR
-        MENUITEM "&Rename group",               POPUP_RENAMEGROUP
-        MENUITEM "&Delete group",               POPUP_DELETEGROUP
-    END
+IDR_CLISTMENU MENU 
+BEGIN 
+	POPUP "&Main menu" 
+	BEGIN 
+		MENUITEM SEPARATOR 
+		MENUITEM "E&xit",                       ID_ICQ_EXIT 
+	END 
+	POPUP "&Status" 
+	BEGIN 
+		MENUITEM "&Offline\tCtrl+0",            ID_STATUS_OFFLINE, CHECKED 
+		MENUITEM "On&line\tCtrl+1",             ID_STATUS_ONLINE 
+		MENUITEM "&Away\tCtrl+2",               ID_STATUS_AWAY 
+		MENUITEM "&Not available\tCtrl+3",      ID_STATUS_NA 
+		MENUITEM "Occ&upied\tCtrl+4",           ID_STATUS_OCCUPIED 
+		MENUITEM "&Do not disturb\tCtrl+5",     ID_STATUS_DND 
+		MENUITEM "&Free for chat\tCtrl+6",      ID_STATUS_FREECHAT 
+		MENUITEM "&Invisible\tCtrl+7",          ID_STATUS_INVISIBLE 
+		MENUITEM "On the &phone\tCtrl+8",       ID_STATUS_ONTHEPHONE 
+		MENUITEM "Out to &lunch\tCtrl+9",       ID_STATUS_OUTTOLUNCH 
+	END 
 END
 
 #endif    // Русский (Россия) resources

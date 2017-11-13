@@ -17,9 +17,9 @@
 
 #include "stdafx.h"
 
-MIRANDA_HOOK_EVENT(ME_DB_EVENT_ADDED, hContact, hDbEvent)
+int OnDbEventAdded(WPARAM hContact, LPARAM hDbEvent)
 {
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	dbei.cbBlob = db_event_getBlobSize(hDbEvent);
 	if (dbei.cbBlob == -1)
 		return 0;
@@ -49,7 +49,7 @@ MIRANDA_HOOK_EVENT(ME_DB_EVENT_ADDED, hContact, hDbEvent)
 					db_set_ws(hcntct, "CList", "Group", gbSpammersGroup.c_str());
 				BYTE msg = 1;
 				if (gbIgnoreURL) {
-					TCHAR* EventText = ReqGetText(&dbei); //else return NULL
+					wchar_t* EventText = ReqGetText(&dbei); //else return NULL
 					msg = !IsUrlContains(EventText);
 					mir_free(EventText);
 				}
@@ -61,7 +61,7 @@ MIRANDA_HOOK_EVENT(ME_DB_EVENT_ADDED, hContact, hDbEvent)
 				}
 				if (msg) {
 					ptrA buff(mir_utf8encodeW(variables_parse(gbAuthRepl, hcntct).c_str()));
-					CallContactService(hcntct, PSS_MESSAGE, 0, (LPARAM)buff);
+					ProtoChainSend(hcntct, PSS_MESSAGE, 0, (LPARAM)buff);
 				}
 				return 1;
 			}
@@ -70,7 +70,7 @@ MIRANDA_HOOK_EVENT(ME_DB_EVENT_ADDED, hContact, hDbEvent)
 	return 0;
 }
 
-MIRANDA_HOOK_EVENT(ME_DB_EVENT_FILTER_ADD, w, l)
+int OnDbEventFilterAdd(WPARAM w, LPARAM l)
 {
 	MCONTACT hContact = (MCONTACT)w;
 	if (!l) //fix potential DEP crash
@@ -110,7 +110,7 @@ MIRANDA_HOOK_EVENT(ME_DB_EVENT_FILTER_ADD, w, l)
 		// reject processing of the event
 		return 1;
 
-	tstring message;
+	wstring message;
 
 	if (dbei->flags & DBEF_UTF) {
 		wchar_t* msg_u;
@@ -136,14 +136,14 @@ MIRANDA_HOOK_EVENT(ME_DB_EVENT_FILTER_ADD, w, l)
 	bool answered = false;
 	if (gbMathExpression) {
 		if (boost::algorithm::all(message, boost::is_digit())) {
-			int num = _ttoi(message.c_str());
+			int num = _wtoi(message.c_str());
 			int math_answer = db_get_dw(hContact, pluginName, "MathAnswer", 0);
 			if (num && math_answer)
 				answered = (num == math_answer);
 		}
 	}
 	else if (!gbRegexMatch)
-		answered = gbCaseInsensitive ? (!Stricmp(message.c_str(), (variables_parse(gbAnswer, hContact).c_str()))) : (!mir_tstrcmp(message.c_str(), (variables_parse(gbAnswer, hContact).c_str())));
+		answered = gbCaseInsensitive ? (!Stricmp(message.c_str(), (variables_parse(gbAnswer, hContact).c_str()))) : (!mir_wstrcmp(message.c_str(), (variables_parse(gbAnswer, hContact).c_str())));
 	else {
 		if (gbCaseInsensitive) {
 			std::string check(toUTF8(variables_parse(gbAnswer, hContact))), msg(toUTF8(message));
@@ -173,15 +173,15 @@ MIRANDA_HOOK_EVENT(ME_DB_EVENT_FILTER_ADD, w, l)
 
 		// send congratulation
 		if (bSendMsg) {
-			tstring prot = DBGetContactSettingStringPAN(NULL, dbei->szModule, "AM_BaseProto", _T(""));
+			wstring prot = DBGetContactSettingStringPAN(NULL, dbei->szModule, "AM_BaseProto", L"");
 			// for notICQ protocols or disable auto auth. reqwest
-			if ((Stricmp(_T("ICQ"), prot.c_str())) || (!gbAutoReqAuth)) {
+			if ((Stricmp(L"ICQ", prot.c_str())) || (!gbAutoReqAuth)) {
 				char * buf = mir_utf8encodeW(variables_parse(gbCongratulation, hContact).c_str());
-				CallContactService(hContact, PSS_MESSAGE, 0, (LPARAM)buf);
+				ProtoChainSend(hContact, PSS_MESSAGE, 0, (LPARAM)buf);
 				mir_free(buf);
 			}
 			// Note: For ANSI can be not work
-			if (!Stricmp(_T("ICQ"), prot.c_str())) {
+			if (!Stricmp(L"ICQ", prot.c_str())) {
 				// grand auth.
 				if (gbAutoAuth)
 					CallProtoService(dbei->szModule, "/GrantAuth", w, 0);
@@ -193,38 +193,38 @@ MIRANDA_HOOK_EVENT(ME_DB_EVENT_FILTER_ADD, w, l)
 				};
 				// auto auth. reqwest with send congratulation
 				if (gbAutoReqAuth)
-					CallContactService(hContact, PSS_AUTHREQUEST, 0, (LPARAM)variables_parse(gbCongratulation, hContact).c_str());
+					ProtoChainSend(hContact, PSS_AUTHREQUEST, 0, (LPARAM)variables_parse(gbCongratulation, hContact).c_str());
 			}
 		}
 		return 0;
 	}
 	// URL contains check
-	bSendMsg = (bSendMsg && gbIgnoreURL) ? (!IsUrlContains((TCHAR *)message.c_str())) : bSendMsg;
+	bSendMsg = (bSendMsg && gbIgnoreURL) ? (!IsUrlContains((wchar_t *)message.c_str())) : bSendMsg;
 	// if message message does not contain infintite talk protection prefix
 	// and question count for this contact is less then maximum
 	if (bSendMsg) {
-		if ((!gbInfTalkProtection || tstring::npos == message.find(_T("StopSpam automatic message:\r\n")))
+		if ((!gbInfTalkProtection || wstring::npos == message.find(L"StopSpam automatic message:\r\n"))
 			&& (!gbMaxQuestCount || db_get_dw(hContact, pluginName, "QuestionCount", 0) < gbMaxQuestCount)) {
 			// send question
-			tstring q;
+			wstring q;
 			if (gbInfTalkProtection)
-				q += _T("StopSpam automatic message:\r\n");
+				q += L"StopSpam automatic message:\r\n";
 			if (gbMathExpression) { //parse math expression in question
-				tstring tmp_question = gbQuestion;
+				wstring tmp_question = gbQuestion;
 				std::list<int> args;
-				std::list<TCHAR> actions;
-				tstring::size_type p1 = gbQuestion.find(_T("X")), p2 = 0;
-				const tstring expr_chars = _T("X+-/*"), expr_acts = _T("+-/*");
-				while (p1 < gbQuestion.length() && p1 != tstring::npos && expr_chars.find(gbQuestion[p1]) != tstring::npos) {
+				std::list<wchar_t> actions;
+				wstring::size_type p1 = gbQuestion.find(L"X"), p2 = 0;
+				const wstring expr_chars = L"X+-/*", expr_acts = L"+-/*";
+				while (p1 < gbQuestion.length() && p1 != wstring::npos && expr_chars.find(gbQuestion[p1]) != wstring::npos) {
 					std::string arg;
 					p2 = p1;
-					for (p1 = gbQuestion.find(_T("X"), p1); (p1 < gbQuestion.length()) && (gbQuestion[p1] == L'X'); ++p1)
+					for (p1 = gbQuestion.find(L"X", p1); (p1 < gbQuestion.length()) && (gbQuestion[p1] == L'X'); ++p1)
 						arg += get_random_num(1);
 
 					tmp_question.replace(p2, arg.size(), toUTF16(arg));
 					args.push_back(atoi(arg.c_str()));
 
-					if ((p1 < gbQuestion.length()) && (p1 != tstring::npos) && (expr_acts.find(gbQuestion[p1]) != tstring::npos))
+					if ((p1 < gbQuestion.length()) && (p1 != wstring::npos) && (expr_acts.find(gbQuestion[p1]) != wstring::npos))
 						actions.push_back(gbQuestion[p1]);
 					++p1;
 				}
@@ -234,25 +234,25 @@ MIRANDA_HOOK_EVENT(ME_DB_EVENT_FILTER_ADD, w, l)
 				while (!args.empty()) {
 					if (!actions.empty()) {
 						switch (actions.front()) {
-						case _T('+'):
+						case '+':
 							{
 								math_answer += args.front();
 								args.pop_front();
 							}
 							break;
-						case _T('-'):
+						case '-':
 							{
 								math_answer -= args.front();
 								args.pop_front();
 							}
 							break;
-						case _T('/'):
+						case '/':
 							{
 								math_answer /= args.front();
 								args.pop_front();
 							}
 							break;
-						case _T('*'):
+						case '*':
 							{
 								math_answer *= args.front();
 								args.pop_front();
@@ -270,7 +270,7 @@ MIRANDA_HOOK_EVENT(ME_DB_EVENT_FILTER_ADD, w, l)
 			else
 				q += variables_parse(gbQuestion, hContact);
 
-			CallContactService(hContact, PSS_MESSAGE, 0, ptrA(mir_utf8encodeW(q.c_str())));
+			ProtoChainSend(hContact, PSS_MESSAGE, 0, ptrA(mir_utf8encodeW(q.c_str())));
 
 			// increment question count
 			DWORD questCount = db_get_dw(hContact, pluginName, "QuestionCount", 0);
@@ -297,15 +297,15 @@ MIRANDA_HOOK_EVENT(ME_DB_EVENT_FILTER_ADD, w, l)
 	return 1;
 }
 
-MIRANDA_HOOK_EVENT(ME_DB_CONTACT_SETTINGCHANGED, w, l)
+int OnDbContactSettingChanged(WPARAM w, LPARAM l)
 {
 	MCONTACT hContact = (MCONTACT)w;
 	DBCONTACTWRITESETTING * cws = (DBCONTACTWRITESETTING*)l;
 
 	// if CList/NotOnList is being deleted then remove answeredSetting
-	if (mir_strcmp(cws->szModule, "CList"))
+	if (strcmp(cws->szModule, "CList"))
 		return 0;
-	if (mir_strcmp(cws->szSetting, "NotOnList"))
+	if (strcmp(cws->szSetting, "NotOnList"))
 		return 0;
 	if (!cws->value.type) {
 		db_unset(hContact, pluginName, "Answered");

@@ -27,28 +27,24 @@
 Папка за резервните копия:
 [Browse...]
 Преглед...
-[Go to the "Customize -> Folders" to change settings]
-Можете да промените настройките от Персонализиране>Папки
+[Go to the "Options -> Customize -> Folders" to change settings]
+Можете да промените настройките от "Персонализиране > Папки"
 [Compress backup to zip-archive]
 Компресиране в .zip архив
 [Disable progress bar]
 Изключване на лентата за напредък
 [Disable popups]
 Изключване на Popups
-[Miranda NG database]
-База данни на Miranda NG
-[Created by:]
-Създадена от:
 [Backup in progress]
 Създава се резервно копие
 [Copying database file...]
 Файлът на базата данни се копира...
+[Error]
+Грешка
 [Database backed up]
 Създадено е резервно копие на базата данни
 [Database back up in process...]
 Създава се резервно копие...
-[Error]
-Грешка
 [Miranda NG databases]
 База данни на Miranda NG
 [Compressed Miranda NG databases]

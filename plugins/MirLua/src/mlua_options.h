@@ -1,6 +1,8 @@
 #ifndef _LUA_OPTIONS_H_
 #define _LUA_OPTIONS_H_
 
+#include <m_gui.h>
+
 class CCtrlScriptList : public CCtrlListView
 {
 private:
@@ -15,10 +17,12 @@ public:
 	CCallback<TEventInfo> OnClick;
 };
 
-
-class CLuaOptions : public CDlgBase
+class CMLuaOptions : public CPluginDlgBase
 {
 private:
+	CCtrlCheck m_popupOnError;
+	CCtrlCheck m_popupOnObsolete;
+
 	bool isScriptListInit;
 	CCtrlScriptList m_scripts;
 	CCtrlButton m_reload;
@@ -35,20 +39,10 @@ protected:
 	INT_PTR DlgProc(UINT msg, WPARAM wParam, LPARAM lParam);
 
 public:
-	CLuaOptions(int idDialog);
-
-	void CreateLink(CCtrlData& ctrl, const char *szSetting, BYTE type, DWORD iValue);
-	void CreateLink(CCtrlData& ctrl, const char *szSetting, TCHAR *szValue);
+	CMLuaOptions(int idDialog);
 
 	static int OnOptionsInit(WPARAM wParam, LPARAM);
-
-	template<class T>
-	__inline void CreateLink(CCtrlData &ctrl, CMOption<T> &option)
-	{
-		ctrl.CreateDbLink(new CMOptionLink<T>(option));
-	}
-
-	static CDlgBase *CreateOptionsPage() { return new CLuaOptions(IDD_OPTIONS); }
+	static CDlgBase *CreateOptionsPage() { return new CMLuaOptions(IDD_OPTIONS); }
 };
 
 #endif //_LUA_OPTIONS_H_

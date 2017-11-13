@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -26,48 +26,57 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef int (WINAPI *pfnMain)(LPTSTR);
 
-int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE, LPTSTR cmdLine, int)
-{
-	TCHAR tszPath[MAX_PATH];
-	GetModuleFileName(hInstance, tszPath, _countof(tszPath));
+#ifdef _WIN64
+const wchar_t wszRuntimeUrl[] = L"https://download.visualstudio.microsoft.com/download/pr/11100230/15ccb3f02745c7b206ad10373cbca89b/VC_redist.x64.exe";
+#else
+const wchar_t wszRuntimeUrl[] = L"https://download.visualstudio.microsoft.com/download/pr/11100229/78c1e864d806e36f6035d80a0e80399e/VC_redist.x86.exe";
+#endif
 
-	TCHAR *p = _tcsrchr(tszPath, '\\');
-	if (p == NULL)
+const wchar_t wszQuestion[] = L"Miranda NG needs the Visual Studio runtime library, but it cannot be loaded. Do you want to load it from Inernet?";
+
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPTSTR cmdLine, int)
+{
+	wchar_t wszPath[MAX_PATH];
+	GetModuleFileNameW(hInstance, wszPath, _countof(wszPath));
+
+	wchar_t *p = wcsrchr(wszPath, '\\');
+	if (p == nullptr)
 		return 4;
 
 	// if current dir isn't set
 	p[1] = 0;
-	SetCurrentDirectory(tszPath);
+	SetCurrentDirectoryW(wszPath);
 
-	// all old dlls must be removed
-	CheckDlls();
+	wcsncat_s(wszPath, L"libs", _TRUNCATE);
+	SetDllDirectoryW(wszPath);
 
-	_tcsncat_s(tszPath, _T("libs"), _TRUNCATE);
-	DWORD cbPath = (DWORD)_tcslen(tszPath);
-
-	DWORD cbSize = GetEnvironmentVariable(_T("PATH"), NULL, 0);
-	TCHAR *ptszVal = new TCHAR[cbSize + MAX_PATH + 2];
-	_tcscpy(ptszVal, tszPath);
-	_tcscat(ptszVal, _T(";"));
-	GetEnvironmentVariable(_T("PATH"), ptszVal + cbPath + 1, cbSize);
-	SetEnvironmentVariable(_T("PATH"), ptszVal);
+	wcsncat_s(wszPath, L"\\ucrtbase.dll", _TRUNCATE);
+	LoadLibraryW(wszPath);
 
 	int retVal;
-	HINSTANCE hMirApp = LoadLibrary(_T("mir_app.mir"));
-	if (hMirApp == NULL) {
-		MessageBox(NULL, _T("mir_app.mir cannot be loaded"), _T("Fatal error"), MB_ICONERROR | MB_OK);
+	HINSTANCE hMirApp = LoadLibraryW(L"mir_app.mir");
+	if (hMirApp == nullptr) {
 		retVal = 1;
+
+		// zlib depends on runtime only. if it cannot be loaded too, we need to load a runtime
+		HINSTANCE hZlib = LoadLibraryW(L"Libs\\zlib.mir");
+		if (hZlib == nullptr) {
+			if (IDYES == MessageBoxW(nullptr, wszQuestion, L"Missing runtime library", MB_ICONERROR | MB_YESNOCANCEL)) {
+				ShellExecuteW(nullptr, L"open", wszRuntimeUrl, NULL, NULL, SW_NORMAL);
+				retVal = 3;
+			}
+		}
+		else MessageBoxW(nullptr, L"mir_app.mir cannot be loaded", L"Fatal error", MB_ICONERROR | MB_OK);
 	}
 	else {
 		pfnMain fnMain = (pfnMain)GetProcAddress(hMirApp, "mir_main");
-		if (fnMain == NULL) {
-			MessageBox(NULL, _T("invalid mir_app.mir present, program exiting"), _T("Fatal error"), MB_ICONERROR | MB_OK);
+		if (fnMain == nullptr) {
+			MessageBoxW(nullptr, L"invalid mir_app.mir present, program exiting", L"Fatal error", MB_ICONERROR | MB_OK);
 			retVal = 2;
 		}
 		else
 			retVal = fnMain(cmdLine);
 		FreeLibrary(hMirApp);
 	}
-	delete[] ptszVal;
 	return retVal;
 }

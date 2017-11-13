@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: OpenSSL.dll
 ;  Plugin: OpenSSL SSL API module
-;  Version: 0.1.0.1
+;  Version: 0.1.0.2
 ;  Authors: Miranda NG Team
 ;============================================================
 [Core driver to provide OpenSSL-based SSL services.]
@@ -11,3 +11,7 @@
 Клиент не может расшифровать сообщение сервера. Возможные причины: сервер не поддерживает SSL, либо требует не существующий пакет безопасности
 [Host we are connecting to is not the one certificate was issued for]
 Выданный сертификат не соответствует имени сервера, к которому производится подключение
+[OpenSSL library loading failed]
+Не удалось загрузить библиотеку OpenSSL
+[OpenSSL error]
+Ошибка OpenSSL

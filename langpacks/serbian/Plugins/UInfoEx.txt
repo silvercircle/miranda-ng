@@ -136,7 +136,7 @@ Boje operativnog sistema
 Standardne boje
 [Delay]
 
-[From Popup plugin]
+[From popup plugin]
 
 [Custom]
 Izmenjeno
@@ -605,6 +605,10 @@ Pretraga
 ;file \plugins\UserInfoEx\src\mir_icolib.h
 [Extended user info]
 
+[Dialogs]
+
+[Buttons]
+
 ;file \plugins\UserInfoEx\src\mir_menuitems.cpp
 [Export/import contact]
 
@@ -1070,23 +1074,28 @@ Balončići
 
 [Widowed]
 
+[Actively searching]
+
+[In love]
+
+[It's complicated]
+
+[In a civil union]
+
 [jun.]
 
 [sen.]
 
 ;file \plugins\UserInfoEx\src\svc_constants.h
-;file \plugins\UserInfoEx\src\svc_contactinfo.cpp
-['(Unknown Contact)']
-'(Nepoznat kontakt)'
 ;file \plugins\UserInfoEx\src\svc_email.cpp
 [Send e-mail]
 Slanje e-maila
 [Memory allocation error!]
 
-[E-mail (uinfoex)]
+[E-mail (UInfoEx)]
 
 ;file \plugins\UserInfoEx\src\svc_gender.cpp
-[Gender (uinfoex)]
+[Gender (UInfoEx)]
 
 ;file \plugins\UserInfoEx\src\svc_homepage.cpp
 [User has no valid homepage]
@@ -1095,10 +1104,10 @@ Slanje e-maila
 
 [&Homepage]
 
-[Homepage (uinfoex)]
+[Homepage (UInfoEx)]
 
 ;file \plugins\UserInfoEx\src\svc_phone.cpp
-[Phone (uinfoex)]
+[Phone (UInfoEx)]
 
 ;file \plugins\UserInfoEx\src\svc_refreshci.cpp
 [[b]%s (%S)...[/b]\n%d Contacts remaining]
@@ -1150,7 +1159,7 @@ Slanje e-maila
 
 [Anniversary Reminder]
 
-[Reminder (uinfoex)]
+[Reminder (UInfoEx)]
 
 ;file \plugins\UserInfoEx\src\ex_import\classExImContactBase.cpp
 [contact identification]
@@ -1238,6 +1247,6 @@ Dovršene
 [FATAL: An exception was thrown while importing contacts from xmlCard!]
 
 ;file \plugins\UserInfoEx\src\Flags\svc_flags.cpp
-[Flags (uinfoex)]
+[Flags (UInfoEx)]
 
 ;file \plugins\UserInfoEx\src\Flags\svc_flagsicons.cpp

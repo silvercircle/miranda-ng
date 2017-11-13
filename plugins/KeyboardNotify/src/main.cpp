@@ -28,6 +28,7 @@
 
 HINSTANCE g_hInst;
 
+CLIST_INTERFACE *pcli;
 int hLangpack;
 
 DWORD IDThread = 0;
@@ -112,11 +113,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD, LPVOID)
 }
 
 int InitializeOptions(WPARAM, LPARAM);
-void LoadSettings(void);
-int HookWindowsHooks(void);
-int UnhookWindowsHooks(void);
-void destroyProcessList(void);
-
 BOOL CheckMsgWnd(MCONTACT, BOOL *);
 
 BOOL checkOpenWindow(MCONTACT hContact)
@@ -204,7 +200,7 @@ BOOL checkGlobalXstatus()
 
 DBEVENTINFO createMsgEventInfo(MCONTACT hContact)
 {
-	DBEVENTINFO einfo = { sizeof(einfo) };
+	DBEVENTINFO einfo = {};
 	einfo.eventType = EVENTTYPE_MESSAGE;
 	einfo.szModule = GetContactProto(hContact);
 	return einfo;
@@ -215,7 +211,7 @@ DBEVENTINFO readEventInfo(MEVENT hDbEvent, MCONTACT hContact)
 	if (hDbEvent == NCONVERS_BLINKID) // we need to handle nconvers' blink event
 		return createMsgEventInfo(hContact);
 
-	DBEVENTINFO einfo = { sizeof(einfo) };
+	DBEVENTINFO einfo = {};
 	db_event_get(hDbEvent, &einfo);
 	return einfo;
 }
@@ -257,7 +253,7 @@ BOOL checkUnopenEvents()
 	if (nExternCount && bFlashOnOther)
 		return TRUE;
 
-	for (nIndex = 0; pCLEvent = (CLISTEVENT*)CallService(MS_CLIST_GETEVENT, -1, nIndex); nIndex++) {
+	for (nIndex = 0; pCLEvent = pcli->pfnGetEvent(-1, nIndex); nIndex++) {
 		DBEVENTINFO einfo = readEventInfo(pCLEvent->hDbEvent, pCLEvent->hContact);
 
 		if ((einfo.eventType == EVENTTYPE_MESSAGE && bFlashOnMsg) ||
@@ -277,6 +273,8 @@ static void __cdecl FlashThreadFunction(void*)
 	BOOL bEvent = FALSE;
 	DWORD dwEventStarted = 0, dwFlashStarted = 0;
 	BYTE data, unchangedLeds;
+	
+	Thread_SetName("KeyboardNotify: FlashThreadFunction");
 
 	while (TRUE) {
 		unchangedLeds = (BYTE)(LedState(VK_PAUSE) * !bFlashLed[2] + ((LedState(VK_NUMLOCK) * !bFlashLed[0]) << 1) + ((LedState(VK_CAPITAL) * !bFlashLed[1]) << 2));
@@ -339,7 +337,7 @@ BOOL checkMsgTimestamp(MCONTACT hContact, MEVENT hEventCurrent, DWORD timestampC
 		return TRUE;
 
 	for (MEVENT hEvent = db_event_prev(hContact, hEventCurrent); hEvent; hEvent = db_event_prev(hContact, hEvent)) {
-		DBEVENTINFO einfo = { sizeof(einfo) };
+		DBEVENTINFO einfo = {};
 		if (!db_event_get(hEvent, &einfo)) {
 			if ((einfo.timestamp + wSecondsOlder) <= timestampCurrent)
 				return TRUE;
@@ -401,7 +399,7 @@ BOOL checkXstatus(char *szProto)
 static int PluginMessageEventHook(WPARAM hContact, LPARAM hEvent)
 {
 	//get DBEVENTINFO without pBlob
-	DBEVENTINFO einfo = { sizeof(einfo) };
+	DBEVENTINFO einfo = {};
 	if (!db_event_get(hEvent, &einfo) && !(einfo.flags & DBEF_SENT))
 		if ((einfo.eventType == EVENTTYPE_MESSAGE && bFlashOnMsg && checkOpenWindow(hContact) && checkMsgTimestamp(hContact, hEvent, einfo.timestamp)) ||
 			(einfo.eventType == EVENTTYPE_URL     && bFlashOnURL) ||
@@ -431,7 +429,7 @@ static VOID CALLBACK ReminderTimer(HWND, UINT, UINT_PTR, DWORD)
 		return;
 	}
 
-	for (nIndex = 0; !bReminderDisabled && (pCLEvent = (CLISTEVENT*)CallService(MS_CLIST_GETEVENT, -1, nIndex)); nIndex++) {
+	for (nIndex = 0; !bReminderDisabled && (pCLEvent = pcli->pfnGetEvent(-1, nIndex)); nIndex++) {
 		DBEVENTINFO einfo = readEventInfo(pCLEvent->hDbEvent, pCLEvent->hContact);
 
 		if ((einfo.eventType == EVENTTYPE_MESSAGE && bFlashOnMsg) ||
@@ -465,7 +463,7 @@ static INT_PTR StartBlinkService(WPARAM wParam, LPARAM lParam)
 	nExternCount += (unsigned int)wParam;
 	if (bFlashOnOther && checkNotifyOptions() && checkGlobalStatus() && checkGlobalXstatus()) {
 		if (lParam)
-			useExternSequence((TCHAR *)lParam);
+			useExternSequence((wchar_t *)lParam);
 		SetEvent(hFlashEvent);
 	}
 
@@ -492,10 +490,10 @@ static INT_PTR IsFlashingActiveService(WPARAM, LPARAM)
 
 INT_PTR NormalizeSequenceService(WPARAM, LPARAM lParam)
 {
-	TCHAR strAux[MAX_PATH + 1], *strIn = (TCHAR*)lParam;
+	wchar_t strAux[MAX_PATH + 1], *strIn = (wchar_t*)lParam;
 
-	_tcsncpy_s(strAux, strIn, _TRUNCATE);
-	_tcsncpy_s(strIn, MAX_PATH, normalizeCustomString(strAux), _TRUNCATE);
+	wcsncpy_s(strAux, strIn, _TRUNCATE);
+	wcsncpy_s(strIn, MAX_PATH, normalizeCustomString(strAux), _TRUNCATE);
 
 	return (INT_PTR)strIn;
 }
@@ -520,165 +518,27 @@ void createProcessList(void)
 	int count = db_get_w(NULL, KEYBDMODULE, "processcount", 0);
 
 	ProcessList.count = 0;
-	ProcessList.szFileName = (TCHAR **)malloc(count * sizeof(TCHAR *));
+	ProcessList.szFileName = (wchar_t **)mir_alloc(count * sizeof(wchar_t *));
 	if (ProcessList.szFileName) {
 		for (int i = 0; i < count; i++)
-			ProcessList.szFileName[i] = db_get_tsa(NULL, KEYBDMODULE, fmtDBSettingName("process%d", i));
+			ProcessList.szFileName[i] = db_get_wsa(NULL, KEYBDMODULE, fmtDBSettingName("process%d", i));
 
 		ProcessList.count = count;
 	}
 }
 
-void LoadSettings(void)
+void destroyProcessList(void)
 {
-	bFlashOnMsg = db_get_b(NULL, KEYBDMODULE, "onmsg", DEF_SETTING_ONMSG);
-	bFlashOnURL = db_get_b(NULL, KEYBDMODULE, "onurl", DEF_SETTING_ONURL);
-	bFlashOnFile = db_get_b(NULL, KEYBDMODULE, "onfile", DEF_SETTING_ONFILE);
-	bFlashOnOther = db_get_b(NULL, KEYBDMODULE, "onother", DEF_SETTING_OTHER);
-	bFullScreenMode = db_get_b(NULL, KEYBDMODULE, "fscreenmode", DEF_SETTING_FSCREEN);
-	bScreenSaverRunning = db_get_b(NULL, KEYBDMODULE, "ssaverrunning", DEF_SETTING_SSAVER);
-	bWorkstationLocked = db_get_b(NULL, KEYBDMODULE, "wstationlocked", DEF_SETTING_LOCKED);
-	bProcessesAreRunning = db_get_b(NULL, KEYBDMODULE, "procsrunning", DEF_SETTING_PROCS);
-	bWorkstationActive = db_get_b(NULL, KEYBDMODULE, "wstationactive", DEF_SETTING_ACTIVE);
-	bFlashIfMsgOpen = db_get_b(NULL, KEYBDMODULE, "ifmsgopen", DEF_SETTING_IFMSGOPEN);
-	bFlashIfMsgWinNotTop = db_get_b(NULL, KEYBDMODULE, "ifmsgnottop", DEF_SETTING_IFMSGNOTTOP);
-	bFlashIfMsgOlder = db_get_b(NULL, KEYBDMODULE, "ifmsgolder", DEF_SETTING_IFMSGOLDER);
-	wSecondsOlder = db_get_w(NULL, KEYBDMODULE, "secsolder", DEF_SETTING_SECSOLDER);
-	bFlashUntil = db_get_b(NULL, KEYBDMODULE, "funtil", DEF_SETTING_FLASHUNTIL);
-	wBlinksNumber = db_get_w(NULL, KEYBDMODULE, "nblinks", DEF_SETTING_NBLINKS);
-	bMirandaOrWindows = db_get_b(NULL, KEYBDMODULE, "mirorwin", DEF_SETTING_MIRORWIN);
-	wStatusMap = db_get_w(NULL, KEYBDMODULE, "status", DEF_SETTING_STATUS);
-	wReminderCheck = db_get_w(NULL, KEYBDMODULE, "remcheck", DEF_SETTING_CHECKTIME);
-	bFlashLed[0] = db_get_b(NULL, KEYBDMODULE, "fnum", DEF_SETTING_FLASHNUM);
-	bFlashLed[1] = db_get_b(NULL, KEYBDMODULE, "fcaps", DEF_SETTING_FLASHCAPS);
-	bFlashLed[2] = db_get_b(NULL, KEYBDMODULE, "fscroll", DEF_SETTING_FLASHSCROLL);
-	bFlashEffect = db_get_b(NULL, KEYBDMODULE, "feffect", DEF_SETTING_FLASHEFFECT);
-	bSequenceOrder = db_get_b(NULL, KEYBDMODULE, "order", DEF_SETTING_SEQORDER);
-	wCustomTheme = db_get_w(NULL, KEYBDMODULE, "custom", DEF_SETTING_CUSTOMTHEME);
-	bTrillianLedsMsg = db_get_b(NULL, KEYBDMODULE, "ledsmsg", DEF_SETTING_LEDSMSG);
-	bTrillianLedsURL = db_get_b(NULL, KEYBDMODULE, "ledsurl", DEF_SETTING_LEDSURL);
-	bTrillianLedsFile = db_get_b(NULL, KEYBDMODULE, "ledsfile", DEF_SETTING_LEDSFILE);
-	bTrillianLedsOther = db_get_b(NULL, KEYBDMODULE, "ledsother", DEF_SETTING_LEDSOTHER);
-	wStartDelay = db_get_w(NULL, KEYBDMODULE, "sdelay", DEF_SETTING_STARTDELAY);
-	bFlashSpeed = db_get_b(NULL, KEYBDMODULE, "speed", DEF_SETTING_FLASHSPEED);
-	switch (bFlashSpeed) {
-	case 0:	 nWaitDelay = 1500; break;
-	case 1:  nWaitDelay = 0750; break;
-	case 2:  nWaitDelay = 0250; break;
-	case 3:  nWaitDelay = 0150; break;
-	case 4:  nWaitDelay = 0100; break;
-	default: nWaitDelay = 0050; break;
-	}
-	setFlashingSequence();
-	bEmulateKeypresses = db_get_b(NULL, KEYBDMODULE, "keypresses", DEF_SETTING_KEYPRESSES);
-	bOverride = db_get_b(NULL, KEYBDMODULE, "override", DEF_SETTING_OVERRIDE);
-	// Create hidden settings (for test button) if needed
-	if (db_get_b(NULL, KEYBDMODULE, "testnum", -1) == -1)
-		db_set_b(NULL, KEYBDMODULE, "testnum", DEF_SETTING_TESTNUM);
-	if (db_get_b(NULL, KEYBDMODULE, "testsecs", -1) == -1)
-		db_set_b(NULL, KEYBDMODULE, "testsecs", DEF_SETTING_TESTSECS);
-	for (int i = 0; i < ProtoList.protoCount; i++)
-		if (ProtoList.protoInfo[i].visible) {
-			unsigned int j;
-			ProtoList.protoInfo[i].enabled = db_get_b(NULL, KEYBDMODULE, ProtoList.protoInfo[i].szProto, DEF_SETTING_PROTOCOL);
-			for (j = 0; j < ProtoList.protoInfo[i].xstatus.count; j++)
-				ProtoList.protoInfo[i].xstatus.enabled[j] = db_get_b(NULL, KEYBDMODULE, fmtDBSettingName("%sxstatus%d", ProtoList.protoInfo[i].szProto, j), DEF_SETTING_XSTATUS);
-		}
-
-	bMetaProtoEnabled = db_mc_isEnabled();
-
-	destroyProcessList();
-	createProcessList();
-	UnhookWindowsHooks();
-	HookWindowsHooks();
-}
-
-
-void GetWindowsVersion(void)
-{
-	OSVERSIONINFOEX osvi = { sizeof(OSVERSIONINFOEX) };
-	BOOL bOsVersionInfoEx = GetVersionEx((OSVERSIONINFO *)&osvi);
-
-	if (!bOsVersionInfoEx) {
-		osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-		if (!GetVersionEx((OSVERSIONINFO *)&osvi))
-			osvi.dwPlatformId = VER_PLATFORM_WIN32_WINDOWS;
-	}
-}
-
-
-void updateXstatusProto(PROTOCOL_INFO *protoInfo)
-{
-	if (!ProtoServiceExists(protoInfo->szProto, PS_GETCUSTOMSTATUSEX))
+	if (ProcessList.szFileName == NULL)
 		return;
 
-	// Retrieve xstatus.count
-	CUSTOM_STATUS xstatus = { sizeof(xstatus) };
-	xstatus.flags = CSSF_STATUSES_COUNT;
-	xstatus.wParam = &(protoInfo->xstatus.count);
-	CallProtoService(protoInfo->szProto, PS_GETCUSTOMSTATUSEX, 0, (LPARAM)&xstatus);
-	(protoInfo->xstatus.count)++;	// Don't forget about xstatus=0 (None)
+	for (int i = 0; i < ProcessList.count; i++)
+		if (ProcessList.szFileName[i])
+			mir_free(ProcessList.szFileName[i]);
 
-	// Alloc and initiailize xstatus.enabled array
-	protoInfo->xstatus.enabled = (BOOL *)malloc(protoInfo->xstatus.count * sizeof(BOOL));
-	if (!protoInfo->xstatus.enabled)
-		protoInfo->xstatus.count = 0;
-	else
-		for (unsigned i = 0; i < protoInfo->xstatus.count; i++)
-			protoInfo->xstatus.enabled[i] = FALSE;
-}
-
-
-void createProtocolList(void)
-{
-	PROTOACCOUNT **proto;
-	Proto_EnumAccounts(&ProtoList.protoCount, &proto);
-	ProtoList.protoInfo = (PROTOCOL_INFO *)malloc(ProtoList.protoCount * sizeof(PROTOCOL_INFO));
-	if (!ProtoList.protoInfo) {
-		ProtoList.protoCount = 0;
-		return;
-	}
-
-	for (int i = 0; i < ProtoList.protoCount; i++) {
-		ProtoList.protoInfo[i].xstatus.count = 0;
-		ProtoList.protoInfo[i].xstatus.enabled = NULL;
-		ProtoList.protoInfo[i].szProto = (char *)malloc(mir_strlen(proto[i]->szModuleName) + 1);
-		if (!ProtoList.protoInfo[i].szProto) {
-			ProtoList.protoInfo[i].enabled = FALSE;
-			ProtoList.protoInfo[i].visible = FALSE;
-		}
-		else {
-			mir_strcpy(ProtoList.protoInfo[i].szProto, proto[i]->szModuleName);
-			ProtoList.protoInfo[i].enabled = FALSE;
-			if (!mir_strcmp(proto[i]->szModuleName, META_PROTO))
-				ProtoList.protoInfo[i].visible = FALSE;
-			else {
-				ProtoList.protoInfo[i].visible = TRUE;
-				updateXstatusProto(&(ProtoList.protoInfo[i]));
-			}
-		}
-	}
-}
-
-
-// We use the profile name to create the first part of each event name
-// We do so to avoid problems between different instances of the plugin concurrently running
-void createEventPrefix(TCHAR *prefixName, size_t maxLen)
-{
-	size_t len;
-	TCHAR profileName[MAX_PATH + 1], *str;
-
-	getAbsoluteProfileName(profileName, MAX_PATH);
-
-	while (str = _tcschr(profileName, _T('\\')))
-		*str = _T('/');
-	if ((len = mir_tstrlen(profileName)) <= maxLen)
-		_tcsncpy_s(prefixName, maxLen, profileName, _TRUNCATE);
-	else {
-		str = profileName + len - maxLen / 2;
-		_tcsncpy_s(prefixName, (maxLen / 2), profileName, _TRUNCATE);
-		mir_tstrcat(prefixName, str);
-	}
+	mir_free(ProcessList.szFileName);
+	ProcessList.count = 0;
+	ProcessList.szFileName = NULL;
 }
 
 //========================== Windows hooks ==========================
@@ -789,15 +649,201 @@ int HookWindowsHooks()
 	return 0;
 }
 
+int UnhookWindowsHooks()
+{
+	if (hReminderTimer)
+		KillTimer(NULL, hReminderTimer);
+	if (hMouseHook)
+		UnhookWindowsHookEx(hMouseHook);
+	if (hKeyBoardHook)
+		UnhookWindowsHookEx(hKeyBoardHook);
+	if (hMirandaMouseHook)
+		UnhookWindowsHookEx(hMirandaMouseHook);
+	if (hMirandaKeyBoardHook)
+		UnhookWindowsHookEx(hMirandaKeyBoardHook);
+	if (hMirandaWndProcHook)
+		UnhookWindowsHookEx(hMirandaWndProcHook);
+
+	hReminderTimer = 0;
+	hMouseHook = hKeyBoardHook = hMirandaMouseHook = hMirandaKeyBoardHook = hMirandaWndProcHook = NULL;
+	return 0;
+}
+
+void LoadSettings(void)
+{
+	bFlashOnMsg = db_get_b(NULL, KEYBDMODULE, "onmsg", DEF_SETTING_ONMSG);
+	bFlashOnURL = db_get_b(NULL, KEYBDMODULE, "onurl", DEF_SETTING_ONURL);
+	bFlashOnFile = db_get_b(NULL, KEYBDMODULE, "onfile", DEF_SETTING_ONFILE);
+	bFlashOnOther = db_get_b(NULL, KEYBDMODULE, "onother", DEF_SETTING_OTHER);
+	bFullScreenMode = db_get_b(NULL, KEYBDMODULE, "fscreenmode", DEF_SETTING_FSCREEN);
+	bScreenSaverRunning = db_get_b(NULL, KEYBDMODULE, "ssaverrunning", DEF_SETTING_SSAVER);
+	bWorkstationLocked = db_get_b(NULL, KEYBDMODULE, "wstationlocked", DEF_SETTING_LOCKED);
+	bProcessesAreRunning = db_get_b(NULL, KEYBDMODULE, "procsrunning", DEF_SETTING_PROCS);
+	bWorkstationActive = db_get_b(NULL, KEYBDMODULE, "wstationactive", DEF_SETTING_ACTIVE);
+	bFlashIfMsgOpen = db_get_b(NULL, KEYBDMODULE, "ifmsgopen", DEF_SETTING_IFMSGOPEN);
+	bFlashIfMsgWinNotTop = db_get_b(NULL, KEYBDMODULE, "ifmsgnottop", DEF_SETTING_IFMSGNOTTOP);
+	bFlashIfMsgOlder = db_get_b(NULL, KEYBDMODULE, "ifmsgolder", DEF_SETTING_IFMSGOLDER);
+	wSecondsOlder = db_get_w(NULL, KEYBDMODULE, "secsolder", DEF_SETTING_SECSOLDER);
+	bFlashUntil = db_get_b(NULL, KEYBDMODULE, "funtil", DEF_SETTING_FLASHUNTIL);
+	wBlinksNumber = db_get_w(NULL, KEYBDMODULE, "nblinks", DEF_SETTING_NBLINKS);
+	bMirandaOrWindows = db_get_b(NULL, KEYBDMODULE, "mirorwin", DEF_SETTING_MIRORWIN);
+	wStatusMap = db_get_w(NULL, KEYBDMODULE, "status", DEF_SETTING_STATUS);
+	wReminderCheck = db_get_w(NULL, KEYBDMODULE, "remcheck", DEF_SETTING_CHECKTIME);
+	bFlashLed[0] = db_get_b(NULL, KEYBDMODULE, "fnum", DEF_SETTING_FLASHNUM);
+	bFlashLed[1] = db_get_b(NULL, KEYBDMODULE, "fcaps", DEF_SETTING_FLASHCAPS);
+	bFlashLed[2] = db_get_b(NULL, KEYBDMODULE, "fscroll", DEF_SETTING_FLASHSCROLL);
+	bFlashEffect = db_get_b(NULL, KEYBDMODULE, "feffect", DEF_SETTING_FLASHEFFECT);
+	bSequenceOrder = db_get_b(NULL, KEYBDMODULE, "order", DEF_SETTING_SEQORDER);
+	wCustomTheme = db_get_w(NULL, KEYBDMODULE, "custom", DEF_SETTING_CUSTOMTHEME);
+	bTrillianLedsMsg = db_get_b(NULL, KEYBDMODULE, "ledsmsg", DEF_SETTING_LEDSMSG);
+	bTrillianLedsURL = db_get_b(NULL, KEYBDMODULE, "ledsurl", DEF_SETTING_LEDSURL);
+	bTrillianLedsFile = db_get_b(NULL, KEYBDMODULE, "ledsfile", DEF_SETTING_LEDSFILE);
+	bTrillianLedsOther = db_get_b(NULL, KEYBDMODULE, "ledsother", DEF_SETTING_LEDSOTHER);
+	wStartDelay = db_get_w(NULL, KEYBDMODULE, "sdelay", DEF_SETTING_STARTDELAY);
+	bFlashSpeed = db_get_b(NULL, KEYBDMODULE, "speed", DEF_SETTING_FLASHSPEED);
+	switch (bFlashSpeed) {
+	case 0:	 nWaitDelay = 1500; break;
+	case 1:  nWaitDelay = 0750; break;
+	case 2:  nWaitDelay = 0250; break;
+	case 3:  nWaitDelay = 0150; break;
+	case 4:  nWaitDelay = 0100; break;
+	default: nWaitDelay = 0050; break;
+	}
+	setFlashingSequence();
+	bEmulateKeypresses = db_get_b(NULL, KEYBDMODULE, "keypresses", DEF_SETTING_KEYPRESSES);
+	bOverride = db_get_b(NULL, KEYBDMODULE, "override", DEF_SETTING_OVERRIDE);
+	// Create hidden settings (for test button) if needed
+	if (db_get_b(NULL, KEYBDMODULE, "testnum", -1) == -1)
+		db_set_b(NULL, KEYBDMODULE, "testnum", DEF_SETTING_TESTNUM);
+	if (db_get_b(NULL, KEYBDMODULE, "testsecs", -1) == -1)
+		db_set_b(NULL, KEYBDMODULE, "testsecs", DEF_SETTING_TESTSECS);
+	for (int i = 0; i < ProtoList.protoCount; i++)
+		if (ProtoList.protoInfo[i].visible) {
+			unsigned int j;
+			ProtoList.protoInfo[i].enabled = db_get_b(NULL, KEYBDMODULE, ProtoList.protoInfo[i].szProto, DEF_SETTING_PROTOCOL);
+			for (j = 0; j < ProtoList.protoInfo[i].xstatus.count; j++)
+				ProtoList.protoInfo[i].xstatus.enabled[j] = db_get_b(NULL, KEYBDMODULE, fmtDBSettingName("%sxstatus%d", ProtoList.protoInfo[i].szProto, j), DEF_SETTING_XSTATUS);
+		}
+
+	bMetaProtoEnabled = db_mc_isEnabled();
+
+	destroyProcessList();
+	createProcessList();
+	UnhookWindowsHooks();
+	HookWindowsHooks();
+}
+
+
+void GetWindowsVersion(void)
+{
+	OSVERSIONINFOEX osvi = { sizeof(OSVERSIONINFOEX) };
+	BOOL bOsVersionInfoEx = GetVersionEx((OSVERSIONINFO *)&osvi);
+
+	if (!bOsVersionInfoEx) {
+		osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+		if (!GetVersionEx((OSVERSIONINFO *)&osvi))
+			osvi.dwPlatformId = VER_PLATFORM_WIN32_WINDOWS;
+	}
+}
+
+
+void updateXstatusProto(PROTOCOL_INFO *protoInfo)
+{
+	if (!ProtoServiceExists(protoInfo->szProto, PS_GETCUSTOMSTATUSEX))
+		return;
+
+	// Retrieve xstatus.count
+	CUSTOM_STATUS xstatus = { sizeof(xstatus) };
+	xstatus.flags = CSSF_STATUSES_COUNT;
+	xstatus.wParam = &(protoInfo->xstatus.count);
+	CallProtoService(protoInfo->szProto, PS_GETCUSTOMSTATUSEX, 0, (LPARAM)&xstatus);
+	(protoInfo->xstatus.count)++;	// Don't forget about xstatus=0 (None)
+
+	// Alloc and initiailize xstatus.enabled array
+	protoInfo->xstatus.enabled = (BOOL *)mir_alloc(protoInfo->xstatus.count * sizeof(BOOL));
+	if (!protoInfo->xstatus.enabled)
+		protoInfo->xstatus.count = 0;
+	else
+		for (unsigned i = 0; i < protoInfo->xstatus.count; i++)
+			protoInfo->xstatus.enabled[i] = FALSE;
+}
+
+
+void createProtocolList(void)
+{
+	PROTOACCOUNT **proto;
+	Proto_EnumAccounts(&ProtoList.protoCount, &proto);
+	ProtoList.protoInfo = (PROTOCOL_INFO *)mir_alloc(ProtoList.protoCount * sizeof(PROTOCOL_INFO));
+	if (!ProtoList.protoInfo) {
+		ProtoList.protoCount = 0;
+		return;
+	}
+
+	for (int i = 0; i < ProtoList.protoCount; i++) {
+		ProtoList.protoInfo[i].xstatus.count = 0;
+		ProtoList.protoInfo[i].xstatus.enabled = NULL;
+		ProtoList.protoInfo[i].szProto = mir_strdup(proto[i]->szModuleName);
+		if (!ProtoList.protoInfo[i].szProto) {
+			ProtoList.protoInfo[i].enabled = FALSE;
+			ProtoList.protoInfo[i].visible = FALSE;
+		}
+		else {
+			ProtoList.protoInfo[i].enabled = FALSE;
+			if (!mir_strcmp(proto[i]->szModuleName, META_PROTO))
+				ProtoList.protoInfo[i].visible = FALSE;
+			else {
+				ProtoList.protoInfo[i].visible = TRUE;
+				updateXstatusProto(&(ProtoList.protoInfo[i]));
+			}
+		}
+	}
+}
+
+static void destroyProtocolList(void)
+{
+	if (ProtoList.protoInfo == NULL)
+		return;
+
+	for (int i = 0; i < ProtoList.protoCount; i++) {
+		if (ProtoList.protoInfo[i].szProto)
+			mir_free(ProtoList.protoInfo[i].szProto);
+		if (ProtoList.protoInfo[i].xstatus.enabled)
+			mir_free(ProtoList.protoInfo[i].xstatus.enabled);
+	}
+
+	mir_free(ProtoList.protoInfo);
+	ProtoList.protoCount = 0;
+	ProtoList.protoInfo = NULL;
+}
+
+
+
+// We use the profile name to create the first part of each event name
+// We do so to avoid problems between different instances of the plugin concurrently running
+void createEventPrefix(wchar_t *prefixName, size_t maxLen)
+{
+	size_t len;
+	wchar_t profileName[MAX_PATH + 1], *str;
+
+	getAbsoluteProfileName(profileName, MAX_PATH);
+
+	while (str = wcschr(profileName, '\\'))
+		*str = '/';
+	if ((len = mir_wstrlen(profileName)) <= maxLen)
+		wcsncpy_s(prefixName, maxLen, profileName, _TRUNCATE);
+	else {
+		str = profileName + len - maxLen / 2;
+		wcsncpy_s(prefixName, (maxLen / 2), profileName, _TRUNCATE);
+		mir_wstrcat(prefixName, str);
+	}
+}
+
+
 BOOL CheckMsgWnd(MCONTACT hContact, BOOL *focus)
 {
 	if (hContact) {
-		MessageWindowData mwd = { sizeof(MessageWindowData) };
-		MessageWindowInputData mwid = { sizeof(MessageWindowInputData) };
-		mwid.hContact = hContact;
-		mwid.uFlags = MSG_WINDOW_UFLAG_MSG_BOTH;
-		mwd.hContact = hContact;
-		if (!CallService(MS_MSG_GETWINDOWDATA, (WPARAM)&mwid, (LPARAM)&mwd) && mwd.hwndWindow) {
+		MessageWindowData mwd;
+		if (!Srmm_GetWindowData(hContact, mwd) && mwd.hwndWindow) {
 			*focus = mwd.uState & MSG_WINDOW_STATE_FOCUS;
 			return TRUE;
 		}
@@ -813,7 +859,7 @@ void countUnopenEvents(int *msgCount, int *fileCount, int *urlCount, int *otherC
 	int nIndex;
 	CLISTEVENT *pCLEvent;
 
-	for (nIndex = 0; pCLEvent = (CLISTEVENT*)CallService(MS_CLIST_GETEVENT, -1, nIndex); nIndex++) {
+	for (nIndex = 0; pCLEvent = pcli->pfnGetEvent(-1, nIndex); nIndex++) {
 		DBEVENTINFO einfo = readEventInfo(pCLEvent->hDbEvent, pCLEvent->hContact);
 
 		if (metaCheckProtocol(einfo.szModule, pCLEvent->hContact, einfo.eventType)) {
@@ -857,16 +903,16 @@ static int OnPreshutdown(WPARAM, LPARAM)
 
 static int ModulesLoaded(WPARAM, LPARAM)
 {
-	TCHAR eventPrefix[MAX_PATH + 1], eventName[MAX_PATH + 1];
+	wchar_t eventPrefix[MAX_PATH + 1], eventName[MAX_PATH + 1];
 
 	createProtocolList();
 	LoadSettings();
 
 	// Create some synchronisation objects
 	createEventPrefix(eventPrefix, MAX_PATH - 11);
-	mir_sntprintf(eventName, _T("%s/FlashEvent"), eventPrefix);
+	mir_snwprintf(eventName, L"%s/FlashEvent", eventPrefix);
 	hFlashEvent = CreateEvent(NULL, FALSE, FALSE, eventName);
-	mir_sntprintf(eventName, _T("%s/ExitEvent"), eventPrefix);
+	mir_snwprintf(eventName, L"%s/ExitEvent", eventPrefix);
 	hExitEvent = CreateEvent(NULL, FALSE, FALSE, eventName);
 
 	hThread = mir_forkthread(FlashThreadFunction, 0);
@@ -887,6 +933,7 @@ static int ModulesLoaded(WPARAM, LPARAM)
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfo);
+	pcli = Clist_GetInterface();
 
 	GetWindowsVersion();
 	OpenKeyboardDevice();
@@ -898,57 +945,6 @@ extern "C" __declspec(dllexport) int Load(void)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Unload
-
-int UnhookWindowsHooks()
-{
-	if (hReminderTimer)
-		KillTimer(NULL, hReminderTimer);
-	if (hMouseHook)
-		UnhookWindowsHookEx(hMouseHook);
-	if (hKeyBoardHook)
-		UnhookWindowsHookEx(hKeyBoardHook);
-	if (hMirandaMouseHook)
-		UnhookWindowsHookEx(hMirandaMouseHook);
-	if (hMirandaKeyBoardHook)
-		UnhookWindowsHookEx(hMirandaKeyBoardHook);
-	if (hMirandaWndProcHook)
-		UnhookWindowsHookEx(hMirandaWndProcHook);
-
-	hReminderTimer = 0;
-	hMouseHook = hKeyBoardHook = hMirandaMouseHook = hMirandaKeyBoardHook = hMirandaWndProcHook = NULL;
-	return 0;
-}
-
-void destroyProcessList(void)
-{
-	if (ProcessList.szFileName == NULL)
-		return;
-
-	for (int i = 0; i < ProcessList.count; i++)
-		if (ProcessList.szFileName[i])
-			mir_free(ProcessList.szFileName[i]);
-
-	free(ProcessList.szFileName);
-	ProcessList.count = 0;
-	ProcessList.szFileName = NULL;
-}
-
-static void destroyProtocolList(void)
-{
-	if (ProtoList.protoInfo == NULL)
-		return;
-
-	for (int i = 0; i < ProtoList.protoCount; i++) {
-		if (ProtoList.protoInfo[i].szProto)
-			free(ProtoList.protoInfo[i].szProto);
-		if (ProtoList.protoInfo[i].xstatus.enabled)
-			free(ProtoList.protoInfo[i].xstatus.enabled);
-	}
-
-	free(ProtoList.protoInfo);
-	ProtoList.protoCount = 0;
-	ProtoList.protoInfo = NULL;
-}
 
 extern "C" __declspec(dllexport) int Unload(void)
 {

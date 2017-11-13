@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (C) 2012-15 Miranda NG project,
+Copyright (C) 2012-17 Miranda NG project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -36,8 +36,8 @@ extern HANDLE hAckEvent;
 
 MIR_APP_DLL(PROTOCOLDESCRIPTOR*) Proto_IsProtocolLoaded(const char *szProtoName)
 {
-	if (szProtoName == NULL)
-		return NULL;
+	if (szProtoName == nullptr)
+		return nullptr;
 	
 	PROTOCOLDESCRIPTOR tmp;
 	tmp.szName = (char*)szProtoName;
@@ -50,22 +50,6 @@ MIR_APP_DLL(void) Proto_EnumProtocols(int *nProtos, PROTOCOLDESCRIPTOR ***pProto
 {
 	if (nProtos) *nProtos = protos.getCount();
 	if (pProtos) *pProtos = protos.getArray();
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-
-MIR_APP_DLL(void) ProtoLogA(struct PROTO_INTERFACE *pThis, LPCSTR szFormat, va_list args)
-{
-	char buf[4096];
-	int res = _vsnprintf(buf, _countof(buf), szFormat, args);
-	CallService(MS_NETLIB_LOG, (WPARAM)(pThis ? pThis->m_hNetlibUser : NULL), (LPARAM)((res != -1) ? buf : CMStringA().FormatV(szFormat, args)));
-}
-
-MIR_APP_DLL(void) ProtoLogW(struct PROTO_INTERFACE *pThis, LPCWSTR wszFormat, va_list args)
-{
-	WCHAR buf[4096];
-	int res = _vsnwprintf(buf, _countof(buf), wszFormat, args);
-	CallService(MS_NETLIB_LOGW, (WPARAM)(pThis ? pThis->m_hNetlibUser : NULL), (LPARAM)((res != -1) ? buf : CMStringW().FormatV(wszFormat, args)));
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -84,7 +68,7 @@ MIR_APP_DLL(void) ProtoConstructor(PROTO_INTERFACE *pThis, LPCSTR pszModuleName,
 	pThis->m_iStatus = pThis->m_iDesiredStatus = ID_STATUS_OFFLINE;
 	pThis->m_szModuleName = mir_strdup(pszModuleName);
 	pThis->m_hProtoIcon = IcoLib_IsManaged(Skin_LoadProtoIcon(pszModuleName, ID_STATUS_ONLINE));
-	pThis->m_tszUserName = mir_tstrdup(ptszUserName);
+	pThis->m_tszUserName = mir_wstrdup(ptszUserName);
 	db_set_resident(pThis->m_szModuleName, "Status");
 }
 
@@ -139,10 +123,10 @@ MIR_APP_DLL(HANDLE) ProtoForkThreadEx(PROTO_INTERFACE *pThis, ProtoThreadFunc pF
 
 MIR_APP_DLL(void) ProtoWindowAdd(PROTO_INTERFACE *pThis, HWND hwnd)
 {
-	if (pThis->m_hWindowList == NULL)
+	if (pThis->m_hWindowList == nullptr)
 		pThis->m_hWindowList = WindowList_Create();
 
-	WindowList_Add(pThis->m_hWindowList, hwnd, NULL);
+	WindowList_Add(pThis->m_hWindowList, hwnd, 0);
 }
 
 MIR_APP_DLL(void) ProtoWindowRemove(PROTO_INTERFACE *pThis, HWND hwnd)
@@ -155,99 +139,130 @@ MIR_APP_DLL(void) ProtoWindowRemove(PROTO_INTERFACE *pThis, HWND hwnd)
 MIR_APP_DLL(LPCTSTR) ProtoGetAvatarExtension(int format)
 {
 	if (format == PA_FORMAT_PNG)
-		return _T(".png");
+		return L".png";
 	if (format == PA_FORMAT_JPEG)
-		return _T(".jpg");
+		return L".jpg";
 	if (format == PA_FORMAT_ICON)
-		return _T(".ico");
+		return L".ico";
 	if (format == PA_FORMAT_BMP)
-		return _T(".bmp");
+		return L".bmp";
 	if (format == PA_FORMAT_GIF)
-		return _T(".gif");
+		return L".gif";
 	if (format == PA_FORMAT_SWF)
-		return _T(".swf");
+		return L".swf";
 	if (format == PA_FORMAT_XML)
-		return _T(".xml");
+		return L".xml";
 
-	return _T("");
+	return L"";
 }
 
-MIR_APP_DLL(int) ProtoGetAvatarFormat(const TCHAR *ptszFileName)
+MIR_APP_DLL(int) ProtoGetAvatarFormat(const wchar_t *ptszFileName)
 {
-	if (ptszFileName == NULL)
+	if (ptszFileName == nullptr)
 		return PA_FORMAT_UNKNOWN;
 
-	const TCHAR *ptszExt = _tcsrchr(ptszFileName, '.');
-	if (ptszExt == NULL)
+	const wchar_t *ptszExt = wcsrchr(ptszFileName, '.');
+	if (ptszExt == nullptr)
 		return PA_FORMAT_UNKNOWN;
 
-	if (!_tcsicmp(ptszExt, _T(".png")))
+	if (!wcsicmp(ptszExt, L".png"))
 		return PA_FORMAT_PNG;
 
-	if (!_tcsicmp(ptszExt, _T(".jpg")) || !_tcsicmp(ptszExt, _T(".jpeg")))
+	if (!wcsicmp(ptszExt, L".jpg") || !wcsicmp(ptszExt, L".jpeg"))
 		return PA_FORMAT_JPEG;
 
-	if (!_tcsicmp(ptszExt, _T(".ico")))
+	if (!wcsicmp(ptszExt, L".ico"))
 		return PA_FORMAT_ICON;
 
-	if (!_tcsicmp(ptszExt, _T(".bmp")) || !_tcsicmp(ptszExt, _T(".rle")))
+	if (!wcsicmp(ptszExt, L".bmp") || !wcsicmp(ptszExt, L".rle"))
 		return PA_FORMAT_BMP;
 
-	if (!_tcsicmp(ptszExt, _T(".gif")))
+	if (!wcsicmp(ptszExt, L".gif"))
 		return PA_FORMAT_GIF;
 
-	if (!_tcsicmp(ptszExt, _T(".swf")))
+	if (!wcsicmp(ptszExt, L".swf"))
 		return PA_FORMAT_SWF;
 
-	if (!_tcsicmp(ptszExt, _T(".xml")))
+	if (!wcsicmp(ptszExt, L".xml"))
 		return PA_FORMAT_XML;
 
 	return PA_FORMAT_UNKNOWN;
 }
 
-MIR_APP_DLL(int) ProtoGetBufferFormat(const void *pBuffer, const TCHAR **ptszExtension)
+MIR_APP_DLL(int) ProtoGetBufferFormat(const void *pBuffer, const wchar_t **ptszExtension)
 {
 	if (!memcmp(pBuffer, "\x89PNG", 4)) {
-		if (ptszExtension) *ptszExtension = _T(".png");
+		if (ptszExtension) *ptszExtension = L".png";
 		return PA_FORMAT_PNG;
 	}
 
 	if (!memcmp(pBuffer, "GIF8", 4)) {
-		if (ptszExtension) *ptszExtension = _T(".gif");
+		if (ptszExtension) *ptszExtension = L".gif";
 		return PA_FORMAT_GIF;
 	}
 
 	if (!memicmp(pBuffer, "<?xml", 5)) {
-		if (ptszExtension) *ptszExtension = _T(".xml");
+		if (ptszExtension) *ptszExtension = L".xml";
 		return PA_FORMAT_XML;
 	}
 
 	if (!memcmp(pBuffer, "\xFF\xD8\xFF\xE0", 4) || !memcmp(pBuffer, "\xFF\xD8\xFF\xE1", 4)) {
-		if (ptszExtension) *ptszExtension = _T(".jpg");
+		if (ptszExtension) *ptszExtension = L".jpg";
 		return PA_FORMAT_JPEG;
 	}
 
 	if (!memcmp(pBuffer, "BM", 2)) {
-		if (ptszExtension) *ptszExtension = _T(".bmp");
+		if (ptszExtension) *ptszExtension = L".bmp";
 		return PA_FORMAT_BMP;
 	}
 
-	if (ptszExtension) *ptszExtension = _T("");
+	if (ptszExtension) *ptszExtension = L"";
 	return PA_FORMAT_UNKNOWN;
 }
 
-MIR_APP_DLL(int) ProtoGetAvatarFileFormat(const TCHAR *ptszFileName)
+MIR_APP_DLL(int) ProtoGetAvatarFileFormat(const wchar_t *ptszFileName)
 {
-	HANDLE hFile = CreateFile(ptszFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	HANDLE hFile = CreateFile(ptszFileName, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (hFile == INVALID_HANDLE_VALUE)
 		return PA_FORMAT_UNKNOWN;
 
 	DWORD dwBytes;
 	char buf[32];
-	BOOL res = ReadFile(hFile, buf, _countof(buf), &dwBytes, NULL);
+	BOOL res = ReadFile(hFile, buf, _countof(buf), &dwBytes, nullptr);
 	CloseHandle(hFile);
 
 	return (res && dwBytes == _countof(buf)) ? ProtoGetBufferFormat(buf) : PA_FORMAT_UNKNOWN;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+// mime type functions
+
+static wchar_t *wszMimeTypes[] =
+{
+	L"application/octet-stream", // PA_FORMAT_UNKNOWN
+	L"image/png",                // PA_FORMAT_PNG
+	L"image/jpeg",               // PA_FORMAT_JPEG
+	L"image/icon",               // PA_FORMAT_ICON
+	L"image/bmp",                // PA_FORMAT_BMP
+	L"image/gif",                // PA_FORMAT_GIF
+	L"image/swf",                // PA_FORMAT_SWF
+	L"application/xml"           // PA_FORMAT_XML
+};
+
+MIR_APP_DLL(const wchar_t*) ProtoGetAvatarMimeType(int iFileType)
+{
+	if (iFileType >= 0 && iFileType < _countof(wszMimeTypes))
+		return wszMimeTypes[iFileType];
+	return nullptr;
+}
+
+MIR_APP_DLL(int) ProtoGetAvatarFormatByMimeType(const wchar_t *pwszMimeType)
+{
+	for (int i = 0; i < _countof(wszMimeTypes); i++)
+		if (!mir_wstrcmp(pwszMimeType, wszMimeTypes[i]))
+			return i;
+	
+	return PA_FORMAT_UNKNOWN;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -255,12 +270,12 @@ MIR_APP_DLL(int) ProtoGetAvatarFileFormat(const TCHAR *ptszFileName)
 
 MCONTACT PROTO_INTERFACE::AddToList(int, PROTOSEARCHRESULT*)
 {
-	return NULL; // error
+	return 0; // error
 }
 
 MCONTACT PROTO_INTERFACE::AddToListByEvent(int, int, MEVENT)
 {
-	return NULL; // error
+	return 0; // error
 }
 
 int PROTO_INTERFACE::Authorize(MEVENT)
@@ -268,7 +283,7 @@ int PROTO_INTERFACE::Authorize(MEVENT)
 	return 1; // error
 }
 
-int PROTO_INTERFACE::AuthDeny(MEVENT, const TCHAR*)
+int PROTO_INTERFACE::AuthDeny(MEVENT, const wchar_t*)
 {
 	return 1; // error
 }
@@ -278,14 +293,14 @@ int PROTO_INTERFACE::AuthRecv(MCONTACT, PROTORECVEVENT*)
 	return 1; // error
 }
 
-int PROTO_INTERFACE::AuthRequest(MCONTACT, const TCHAR*)
+int PROTO_INTERFACE::AuthRequest(MCONTACT, const wchar_t*)
 {
 	return 1; // error
 }
 
-HANDLE PROTO_INTERFACE::FileAllow(MCONTACT, HANDLE, const TCHAR*)
+HANDLE PROTO_INTERFACE::FileAllow(MCONTACT, HANDLE, const wchar_t*)
 {
-	return NULL; // error
+	return nullptr; // error
 }
 
 int PROTO_INTERFACE::FileCancel(MCONTACT, HANDLE)
@@ -293,12 +308,12 @@ int PROTO_INTERFACE::FileCancel(MCONTACT, HANDLE)
 	return 1; // error
 }
 
-int PROTO_INTERFACE::FileDeny(MCONTACT, HANDLE, const TCHAR*)
+int PROTO_INTERFACE::FileDeny(MCONTACT, HANDLE, const wchar_t*)
 {
 	return 1; // error
 }
 
-int PROTO_INTERFACE::FileResume(HANDLE, int*, const TCHAR**)
+int PROTO_INTERFACE::FileResume(HANDLE, int*, const wchar_t**)
 {
 	return 1; // error
 }
@@ -313,29 +328,29 @@ int PROTO_INTERFACE::GetInfo(MCONTACT, int)
 	return 1; // error
 }
 
-HANDLE PROTO_INTERFACE::SearchBasic(const TCHAR*)
+HANDLE PROTO_INTERFACE::SearchBasic(const wchar_t*)
 {
-	return NULL; // error
+	return nullptr; // error
 }
 
-HANDLE PROTO_INTERFACE::SearchByEmail(const TCHAR*)
+HANDLE PROTO_INTERFACE::SearchByEmail(const wchar_t*)
 {
-	return NULL; // error
+	return nullptr; // error
 }
 
-HANDLE PROTO_INTERFACE::SearchByName(const TCHAR*, const TCHAR*, const TCHAR*)
+HANDLE PROTO_INTERFACE::SearchByName(const wchar_t*, const wchar_t*, const wchar_t*)
 {
-	return NULL; // error
+	return nullptr; // error
 }
 
 HWND PROTO_INTERFACE::SearchAdvanced(HWND)
 {
-	return NULL; // error
+	return nullptr; // error
 }
 
 HWND PROTO_INTERFACE::CreateExtendedSearchUI(HWND)
 {
-	return NULL; // error
+	return nullptr; // error
 }
 
 int PROTO_INTERFACE::RecvContacts(MCONTACT, PROTORECVEVENT*)
@@ -364,9 +379,9 @@ int PROTO_INTERFACE::SendContacts(MCONTACT, int, int, MCONTACT*)
 	return 1; // error
 }
 
-HANDLE PROTO_INTERFACE::SendFile(MCONTACT, const TCHAR*, TCHAR**)
+HANDLE PROTO_INTERFACE::SendFile(MCONTACT, const wchar_t*, wchar_t**)
 {
-	return NULL; // error
+	return nullptr; // error
 }
 
 int PROTO_INTERFACE::SendMsg(MCONTACT, int, const char*)
@@ -391,7 +406,7 @@ int PROTO_INTERFACE::SetStatus(int)
 
 HANDLE PROTO_INTERFACE::GetAwayMsg(MCONTACT)
 {
-	return NULL; // no away message
+	return nullptr; // no away message
 }
 
 int PROTO_INTERFACE::RecvAwayMsg(MCONTACT, int, PROTORECVEVENT*)
@@ -399,7 +414,7 @@ int PROTO_INTERFACE::RecvAwayMsg(MCONTACT, int, PROTORECVEVENT*)
 	return 1; // error
 }
 
-int PROTO_INTERFACE::SetAwayMsg(int, const TCHAR*)
+int PROTO_INTERFACE::SetAwayMsg(int, const wchar_t*)
 {
 	return 1; // error
 }

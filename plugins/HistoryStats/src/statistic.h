@@ -10,7 +10,6 @@
 #include <list>
 
 #include "settings.h"
-#include "protocol.h"
 #include "message.h"
 
 class Contact; // forward declaration instead of #include "contact.h"
@@ -83,8 +82,9 @@ private:
 	Contact* m_pTotals;
 	Contact* m_pOmitted;
 
-	// did we really omit something
-	bool m_bActuallyOmitted;
+	bool
+		m_bActuallyOmitted,  // did we really omit something
+		m_bResult;           // result of calculations
 
 	// start time for statistics
 	DWORD m_TimeStarted;
@@ -133,7 +133,7 @@ private:
 
 	// misc routines
 	DWORD getTimeStarted() { return m_TimeStarted; }
-	bool shouldTerminate() { return (WaitForSingleObject(m_hCancelEvent, 0) == WAIT_OBJECT_0) || (bool_(mu::system::terminated())); }
+	bool shouldTerminate() { return (WaitForSingleObject(m_hCancelEvent, 0) == WAIT_OBJECT_0) || bool_(Miranda_IsTerminated()); }
 	void handleAddMessage(Contact& contact, Message& msg);
 	void handleAddChat(Contact& contact, bool bOutgoing, DWORD localTimestampStarted, DWORD duration);
 
@@ -159,7 +159,7 @@ private:
 	// private constructor & main statistic creation routine
 	explicit Statistic(const Settings& settings, InvocationSource invokedFrom, HINSTANCE hInst);
 	bool createStatistics();
-	bool createStatisticsSteps();
+	void createStatisticsSteps();
 	static void __cdecl threadProc(void *lpParameter);
 	static void __cdecl threadProcSteps(void *lpParameter);
 
@@ -182,8 +182,8 @@ public:
 
 	// file management
 	ext::string createFile(const ext::string& desiredName);
-	bool newFile(const TCHAR* fileExt, ext::string& writeFile, ext::string& finalURL);
-	bool newFilePNG(ext::string& writeFile, ext::string& finalURL) { return newFile(_T(".png"), writeFile, finalURL); }
+	bool newFile(const wchar_t* fileExt, ext::string& writeFile, ext::string& finalURL);
+	bool newFilePNG(ext::string& writeFile, ext::string& finalURL) { return newFile(L".png", writeFile, finalURL); }
 	bool newFilePNG(Canvas& canvas, ext::string& finalURL);
 };
 

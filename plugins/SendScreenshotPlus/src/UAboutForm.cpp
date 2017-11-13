@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (с) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (с) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-09 Miranda ICQ/IM project,
 
 This file is part of Send Screenshot Plus, a Miranda IM plugin.
@@ -41,7 +41,8 @@ void TfrmAbout::Unload()
 	}
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 TfrmAbout::CHandleMapping TfrmAbout::_HandleMapping;
 
 INT_PTR CALLBACK TfrmAbout::DlgTfrmAbout(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -84,47 +85,43 @@ INT_PTR CALLBACK TfrmAbout::DlgTfrmAbout(HWND hWnd, UINT msg, WPARAM wParam, LPA
 	return FALSE;
 }
 
-//---------------------------------------------------------------------------
-//WM_INITDIALOG:
+/////////////////////////////////////////////////////////////////////////////////////////
+// WM_INITDIALOG:
+
 LRESULT TfrmAbout::wmInitdialog(WPARAM, LPARAM)
 {
 	// Headerbar
 	SendDlgItemMessage(m_hWnd, IDC_HEADERBAR, WM_SETICON, ICON_BIG, (LPARAM)GetIcon(ICO_MAIN));
 
-	//License
+	// License
 	{
-		TCHAR* pszText = NULL;
-		mir_tstradd(pszText, _T(__COPYRIGHT));
-		mir_tstradd(pszText, _T("\r\n\r\n"));
+		CMStringW pszText(_A2W(__COPYRIGHT));
+		pszText.Append(L"\r\n\r\n");
 
-		HRSRC hRes = FindResource(g_hSendSS, MAKEINTRESOURCE(IDR_LICENSE), _T("TEXT"));
+		HRSRC hRes = FindResource(g_hSendSS, MAKEINTRESOURCE(IDR_LICENSE), L"TEXT");
 		DWORD size = SizeofResource(g_hSendSS, hRes);
 		char* data = (char*)mir_alloc(size + 1);
 		memcpy(data, LockResource(LoadResource(g_hSendSS, hRes)), size);
 		data[size] = '\0';
-		TCHAR* pszCopyright = mir_a2t(data);
+		pszText.AppendFormat(L"%S", data);
 		mir_free(data);
-		mir_tstradd(pszText, pszCopyright);
-		mir_free(pszCopyright);
 		SetDlgItemText(m_hWnd, IDC_LICENSE, pszText);
-		mir_free(pszText);
 	}
 
-	//Credit
+	// Credit
 	{
-		HRSRC hRes = FindResource(g_hSendSS, MAKEINTRESOURCE(IDR_CREDIT), _T("TEXT"));
+		HRSRC hRes = FindResource(g_hSendSS, MAKEINTRESOURCE(IDR_CREDIT), L"TEXT");
 		DWORD size = SizeofResource(g_hSendSS, hRes);
 		char* data = (char*)mir_alloc(size + 1);
 		memcpy(data, LockResource(LoadResource(g_hSendSS, hRes)), size);
 		data[size] = '\0';
-		TCHAR* pszText = mir_a2t(data);
+		wchar_t* pszText = mir_a2u(data);
 		mir_free(data);
 		SetDlgItemText(m_hWnd, IDC_CREDIT, pszText);
 		mir_free(pszText);
 	}
 
-	SendMessage(m_hWnd, WM_SETICON, ICON_BIG, (LPARAM)GetIcon(ICO_MAIN));
-	SendMessage(m_hWnd, WM_SETICON, ICON_SMALL, (LPARAM)GetIcon(ICO_MAINXS));
+	Window_SetIcon_IcoLib(m_hWnd, GetIconHandle(ICO_MAIN));
 
 	//init controls
 	btnPageClick();
@@ -133,10 +130,11 @@ LRESULT TfrmAbout::wmInitdialog(WPARAM, LPARAM)
 	return FALSE;
 }
 
-//WM_COMMAND:
+/////////////////////////////////////////////////////////////////////////////////////////
+// WM_COMMAND:
+
 LRESULT TfrmAbout::wmCommand(WPARAM wParam, LPARAM)
 {
-	//---------------------------------------------------------------------------
 	if (HIWORD(wParam) == BN_CLICKED) {
 		switch (LOWORD(wParam)) {
 		case IDCANCEL: // ESC pressed
@@ -156,7 +154,9 @@ LRESULT TfrmAbout::wmCommand(WPARAM wParam, LPARAM)
 	return FALSE;
 }
 
-//WM_CLOSE:
+/////////////////////////////////////////////////////////////////////////////////////////
+// WM_CLOSE:
+
 LRESULT TfrmAbout::wmClose(WPARAM, LPARAM)
 {
 	SendMessage(m_hWndOwner, UM_CLOSING, (WPARAM)m_hWnd, (LPARAM)IDD_UAboutForm);
@@ -164,7 +164,8 @@ LRESULT TfrmAbout::wmClose(WPARAM, LPARAM)
 	return FALSE;
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 TfrmAbout::TfrmAbout(HWND Owner)
 {
 	m_hWndOwner = Owner;
@@ -180,14 +181,15 @@ TfrmAbout::~TfrmAbout()
 	_HandleMapping.erase(m_hWnd);
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 void TfrmAbout::btnPageClick()
 {
 	HWND hCtrl = GetDlgItem(m_hWnd, IDA_CONTRIBLINK);
-	const TCHAR* credits = TranslateT("Credits");
-	const TCHAR* copyright = TranslateT("Copyright");
-	const TCHAR* title;
-	const TCHAR* button;
+	const wchar_t* credits = TranslateT("Credits");
+	const wchar_t* copyright = TranslateT("Copyright");
+	const wchar_t* title;
+	const wchar_t* button;
 	if (!m_Page) {
 		ShowWindow(GetDlgItem(m_hWnd, IDC_CREDIT), SW_HIDE);
 		ShowWindow(GetDlgItem(m_hWnd, IDC_LICENSE), SW_SHOW);
@@ -203,10 +205,10 @@ void TfrmAbout::btnPageClick()
 		button = copyright;
 	}
 	SetWindowText(hCtrl, button);
-	TCHAR newTitle[128];
-	TCHAR* pszPlug = mir_a2t(__PLUGIN_NAME);
-	TCHAR* pszVer = mir_a2t(__VERSION_STRING_DOTS);
-	mir_sntprintf(newTitle, _T("%s - %s\nv%s"), pszPlug, title, pszVer);
+	wchar_t newTitle[128];
+	wchar_t* pszPlug = mir_a2u(__PLUGIN_NAME);
+	wchar_t* pszVer = mir_a2u(__VERSION_STRING_DOTS);
+	mir_snwprintf(newTitle, L"%s - %s\nv%s", pszPlug, title, pszVer);
 	mir_free(pszPlug);
 	mir_free(pszVer);
 	SetDlgItemText(m_hWnd, IDC_HEADERBAR, newTitle);

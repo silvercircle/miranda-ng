@@ -158,7 +158,7 @@ unsigned long GetExternIP(const char *szURL, const char *szPattern)
 	IN_ADDR externIP;
 	externIP.s_addr = 0;
 
-	NETLIBHTTPREQUEST *nlreply = (NETLIBHTTPREQUEST *)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)hNetlibUser, (LPARAM)& nlhr);
+	NETLIBHTTPREQUEST *nlreply = Netlib_HttpTransaction(hNetlibUser, &nlhr);
 	if (nlreply) {
 		if (nlreply->resultCode >= 200 && nlreply->resultCode < 300) {
 			nlreply->pData[nlreply->dataLength] = 0;// make sure its null terminated
@@ -178,7 +178,7 @@ unsigned long GetExternIP(const char *szURL, const char *szPattern)
 			if ((externIP.s_addr = inet_addr(pszIp)) == INADDR_NONE)
 				externIP.s_addr = 0;
 		}
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)nlreply);
+		Netlib_FreeHttpRequest(nlreply);
 	}
 	::SetCursor(hPrevCursor);
 	return ntohl(externIP.s_addr);
@@ -443,7 +443,7 @@ bool bShowShareNewFileDlg(HWND hwndOwner, STFileShareInfo * pstNewShare)
 	ofn.lStructSize = sizeof(OPENFILENAME);
 
 	char temp[MAX_PATH];
-	mir_snprintf(temp, _T("%s (*.*)%c*.*%c%c"), Translate("All files"), 0, 0, 0);
+	mir_snprintf(temp, "%s (*.*)%c*.*%c%c", Translate("All files"), 0, 0, 0);
 	ofn.lpstrFilter = temp;
 
 	ofn.lpstrFile = pstNewShare->pszRealPath;
@@ -462,7 +462,7 @@ bool bShowShareNewFileDlg(HWND hwndOwner, STFileShareInfo * pstNewShare)
 		| OFN_ALLOWMULTISELECT;
 	ofn.hwndOwner = hwndOwner;
 	ofn.hInstance = hInstance;
-	ofn.lpstrTitle = TranslateT("Specify a file to share");
+	ofn.lpstrTitle = Translate("Specify a file to share");
 	ofn.lpTemplateName = MAKEINTRESOURCE(IDD_NEW_SHARE_PROPERTIES);
 	ofn.lpfnHook = ShareNewFileDialogHook;
 	ofn.lCustData = (LPARAM)pstNewShare;
@@ -505,7 +505,7 @@ bool bShowShareNewFileDlg(HWND hwndOwner, STFileShareInfo * pstNewShare)
 					pstNewShare->pszRealPath[pstNewShare->dwMaxRealPath] = '\0';
 
 					if (CallService(MS_HTTP_ADD_CHANGE_REMOVE, 0, (LPARAM)pstNewShare)) {
-						MessageBox(NULL, TranslateT("Failed to share new file"), MSG_BOX_TITEL, MB_OK);
+						MessageBox(NULL, Translate("Failed to share new file"), MSG_BOX_TITEL, MB_OK);
 						return false;
 					}
 					pszFileNamePos++;
@@ -516,7 +516,7 @@ bool bShowShareNewFileDlg(HWND hwndOwner, STFileShareInfo * pstNewShare)
 	}
 	else {
 		if (CallService(MS_HTTP_ADD_CHANGE_REMOVE, 0, (LPARAM)pstNewShare)) {
-			MessageBox(NULL, TranslateT("Failed to share new file"), MSG_BOX_TITEL, MB_OK);
+			MessageBox(NULL, Translate("Failed to share new file"), MSG_BOX_TITEL, MB_OK);
 			return false;
 		}
 	}
@@ -722,36 +722,36 @@ static INT_PTR CALLBACK DlgProcStatsticView(HWND hwndDlg, UINT msg, WPARAM wPara
 			LVCOLUMN cCol = { 0 };
 			cCol.mask = LVCF_TEXT | LVCF_WIDTH;
 			cCol.cx = db_get_w(NULL, MODULE, "StatWnd_cx1", 126);
-			cCol.pszText = TranslateT("Share name");
+			cCol.pszText = Translate("Share name");
 			ListView_InsertColumn(hShareList, 0, &cCol);
 			cCol.cx = db_get_w(NULL, MODULE, "StatWnd_cx2", 48);
-			cCol.pszText = TranslateT("Max Downloads");
+			cCol.pszText = Translate("Max Downloads");
 			ListView_InsertColumn(hShareList, 1, &cCol);
 			cCol.cx = db_get_w(NULL, MODULE, "StatWnd_cx3", 96);
-			cCol.pszText = TranslateT("Allowed IP");
+			cCol.pszText = Translate("Allowed IP");
 			ListView_InsertColumn(hShareList, 2, &cCol);
 			cCol.cx = db_get_w(NULL, MODULE, "StatWnd_cx4", 104);
-			cCol.pszText = TranslateT("Allowed Mask");
+			cCol.pszText = Translate("Allowed Mask");
 			ListView_InsertColumn(hShareList, 3, &cCol);
 			cCol.cx = db_get_w(NULL, MODULE, "StatWnd_cx5", 252);
-			cCol.pszText = TranslateT("Real path");
+			cCol.pszText = Translate("Real path");
 			ListView_InsertColumn(hShareList, 4, &cCol);
 
 			cCol.mask = LVCF_TEXT | LVCF_WIDTH;
 			cCol.cx = db_get_w(NULL, MODULE, "StatWnd_cx6", 142);
-			cCol.pszText = TranslateT("Share name");
+			cCol.pszText = Translate("Share name");
 			ListView_InsertColumn(hUserList, 0, &cCol);
 			cCol.cx = db_get_w(NULL, MODULE, "StatWnd_cx7", 111);
-			cCol.pszText = TranslateT("User");
+			cCol.pszText = Translate("User");
 			ListView_InsertColumn(hUserList, 1, &cCol);
 			cCol.cx = db_get_w(NULL, MODULE, "StatWnd_cx8", 100);
-			cCol.pszText = TranslateT("Agent");
+			cCol.pszText = Translate("Agent");
 			ListView_InsertColumn(hUserList, 2, &cCol);
 			cCol.cx = db_get_w(NULL, MODULE, "StatWnd_cx9", 100);
-			cCol.pszText = TranslateT("Completed");
+			cCol.pszText = Translate("Completed");
 			ListView_InsertColumn(hUserList, 3, &cCol);
 			cCol.cx = db_get_w(NULL, MODULE, "StatWnd_cx10", 100);
-			cCol.pszText = TranslateT("Speed");
+			cCol.pszText = Translate("Speed");
 			ListView_InsertColumn(hUserList, 4, &cCol);
 
 			bool b = db_get_b(NULL, MODULE, "StatWnd_ShowHidden", 0) != 0;
@@ -805,7 +805,7 @@ static INT_PTR CALLBACK DlgProcStatsticView(HWND hwndDlg, UINT msg, WPARAM wPara
 					strncpy(&szServPath[1], fileName + 1, MAX_PATH - 2);
 
 				if (CallService(MS_HTTP_ADD_CHANGE_REMOVE, 0, (LPARAM)&stNewShare)) {
-					MessageBox(NULL, TranslateT("Failed to share new file"), MSG_BOX_TITEL, MB_OK);
+					MessageBox(NULL, Translate("Failed to share new file"), MSG_BOX_TITEL, MB_OK);
 					return false;
 				}
 			}
@@ -915,18 +915,18 @@ static INT_PTR CALLBACK DlgProcStatsticView(HWND hwndDlg, UINT msg, WPARAM wPara
 					if (ListView_GetItem(hShareList, &sItem)) {
 						string sLink = sCreateLink(sItem.pszText);
 						if (sLink.size() <= 0) {
-							MessageBox(hwndDlg, TranslateT("Selected link size is 0"), MSG_BOX_TITEL, MB_OK);
+							MessageBox(hwndDlg, Translate("Selected link size is 0"), MSG_BOX_TITEL, MB_OK);
 							return TRUE;
 						}
 
 						if (LOWORD(wParam) == ID_SHARELIST_COPYLINK) {
 							if (!OpenClipboard(hwndDlg)) {
-								MessageBox(hwndDlg, TranslateT("Failed to get access to clipboard"), MSG_BOX_TITEL, MB_OK);
+								MessageBox(hwndDlg, Translate("Failed to get access to clipboard"), MSG_BOX_TITEL, MB_OK);
 								return TRUE;
 							}
 
 							if (!EmptyClipboard()) {
-								MessageBox(hwndDlg, TranslateT("Failed to get close the clipboard"), MSG_BOX_TITEL, MB_OK);
+								MessageBox(hwndDlg, Translate("Failed to get close the clipboard"), MSG_BOX_TITEL, MB_OK);
 								return TRUE;
 							}
 
@@ -940,15 +940,15 @@ static INT_PTR CALLBACK DlgProcStatsticView(HWND hwndDlg, UINT msg, WPARAM wPara
 
 							HANDLE hMyData = SetClipboardData(CF_TEXT, hglbCopy);
 							if (!hMyData)
-								MessageBox(hwndDlg, TranslateT("Failed to set clipboard data"), MSG_BOX_TITEL, MB_OK);
+								MessageBox(hwndDlg, Translate("Failed to set clipboard data"), MSG_BOX_TITEL, MB_OK);
 
 							CloseClipboard();
 						}
 						else Utils_OpenUrl(sLink.c_str());
 					}
-					else MessageBox(hwndDlg, TranslateT("ListView_GetItem failed"), MSG_BOX_TITEL, MB_OK);
+					else MessageBox(hwndDlg, Translate("ListView_GetItem failed"), MSG_BOX_TITEL, MB_OK);
 				}
-				else MessageBox(hwndDlg, TranslateT("No share selected"), MSG_BOX_TITEL, MB_OK);
+				else MessageBox(hwndDlg, Translate("No share selected"), MSG_BOX_TITEL, MB_OK);
 
 				return TRUE;
 			}
@@ -997,7 +997,7 @@ static INT_PTR CALLBACK DlgProcStatsticView(HWND hwndDlg, UINT msg, WPARAM wPara
 void SendLinkToUser(WPARAM wParam, char *pszSrvPath)
 {
 	string sLink = sCreateLink(pszSrvPath);
-	CallService(MS_MSG_SENDMESSAGET, wParam, (LPARAM)sLink.c_str());
+	CallService(MS_MSG_SENDMESSAGE, wParam, (LPARAM)sLink.c_str());
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -1122,24 +1122,24 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			{// Url Address
 				SetDlgItemText(hwndDlg, IDC_URL_ADDRESS, sUrlAddress.c_str());
 				HWND hComboBox = GetDlgItem(hwndDlg, IDC_URL_ADDRESS);
-				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)_T("http://checkip.dyndns.org"));
-				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)_T("http://checkip.dyndns.org:8245/"));
-				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)_T("http://dynamic.zoneedit.com/checkip.html"));
-				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)_T("http://ipdetect.dnspark.com/"));
-				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)_T("http://update.dynu.com/basic/ipcheck.asp"));
-				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)_T("http://www.dnsart.com/myip.php"));
-				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)_T("http://www.dnsart.com:7777/myip.php"));
+				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)"http://checkip.dyndns.org");
+				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)"http://checkip.dyndns.org:8245/");
+				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)"http://dynamic.zoneedit.com/checkip.html");
+				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)"http://ipdetect.dnspark.com/");
+				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)"http://update.dynu.com/basic/ipcheck.asp");
+				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)"http://www.dnsart.com/myip.php");
+				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)"http://www.dnsart.com:7777/myip.php");
 			}
 
 			{// Page keyword
 				SetDlgItemText(hwndDlg, IDC_PAGE_KEYWORD, sPageKeyword.c_str());
 				HWND hComboBox = GetDlgItem(hwndDlg, IDC_PAGE_KEYWORD);
 				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)"");
-				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)LPGENT("Current IP Address: "));
-				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)LPGENT("Current Address: "));
-				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)LPGENT("IP Address: "));
-				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)LPGENT("You are browsing from"));
-				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)_T("<HTML><BODY>"));
+				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)LPGEN("Current IP Address: "));
+				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)LPGEN("Current Address: "));
+				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)LPGEN("IP Address: "));
+				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)LPGEN("You are browsing from"));
+				SendMessage(hComboBox, CB_ADDSTRING, 0, (LPARAM)"<HTML><BODY>");
 			}
 
 			SetDlgItemInt(hwndDlg, IDC_MAX_SPEED, nMaxUploadSpeed >> 10, true);
@@ -1238,14 +1238,14 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 				bool bNew = IsDlgButtonChecked(hwndDlg, IDC_ADD_STATISTICS_MENU_ITEM) == BST_CHECKED;
 				if (b != bNew) {
 					db_set_b(NULL, MODULE, "AddStatisticsMenuItem", bNew);
-					MessageBox(hwndDlg, TranslateT("You need to restart Miranda to change the main menu"), MSG_BOX_TITEL, MB_OK);
+					MessageBox(hwndDlg, Translate("You need to restart Miranda to change the main menu"), MSG_BOX_TITEL, MB_OK);
 				}
 
 				b = db_get_b(NULL, MODULE, "AddAcceptConMenuItem", 1) != 0;
 				bNew = IsDlgButtonChecked(hwndDlg, IDC_ACCEPT_COM_MENU_ITEM) == BST_CHECKED;
 				if (b != bNew) {
 					db_set_b(NULL, MODULE, "AddAcceptConMenuItem", bNew);
-					MessageBox(hwndDlg, TranslateT("You need to restart Miranda to change the main menu"), MSG_BOX_TITEL, MB_OK);
+					MessageBox(hwndDlg, Translate("You need to restart Miranda to change the main menu"), MSG_BOX_TITEL, MB_OK);
 				}
 
 				bNew = IsDlgButtonChecked(hwndDlg, IDC_WRITE_LOG_FILE) == BST_CHECKED;
@@ -1342,9 +1342,9 @@ int OptionsInitialize(WPARAM wParam, LPARAM /*lParam*/)
 	odp.position = 900000000;
 	odp.hInstance = hInstance;
 	odp.pszTemplate = MAKEINTRESOURCE(IDD_OPT_HTTP_SERVER);
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
-	odp.ptszTitle = LPGENT("HTTP Server");
-	odp.ptszGroup = LPGENT("Network");
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
+	odp.szTitle.w = LPGENW("HTTP Server");
+	odp.szGroup.w = LPGENW("Network");
 	odp.pfnDlgProc = OptionsDlgProc;
 	Options_AddPage(wParam, &odp);
 	return 0;
@@ -1474,25 +1474,25 @@ void InitGuiElements()
 	hShowStatisticsViewService = CreateServiceFunction(MS_SHOW_STATISTICS_VIEW, nShowStatisticsView);
 
 	CMenuItem mi;
+	mi.flags = CMIF_UNICODE;
 	SET_UID(mi, 0xb30a6ab5, 0x17a8, 0x4e2e, 0x84, 0x52, 0x5f, 0xbc, 0x83, 0x35, 0xf2, 0x6);
 	mi.hIcolibItem = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_SHARE_NEW_FILE));
 	mi.position = -2000019955;
-	mi.name.t = LPGENT("HTTP Share new file");
+	mi.name.w = LPGENW("HTTP Share new file");
 	mi.pszService = MS_SHARE_NEW_FILE;
 	hShareNewFileMenuItem = Menu_AddContactMenuItem(&mi);
 
 	if (db_get_b(NULL, MODULE, "AddStatisticsMenuItem", 1) != 0) {
 		SET_UID(mi, 0x68db84c9, 0xe6b4, 0x4b4f, 0x93, 0x4b, 0xfd, 0x34, 0x2d, 0x83, 0x11, 0xe7);
 		mi.position = 1000085005;
-		mi.flags = CMIF_TCHAR;
-		mi.name.t = LPGENT("Show HTTP server statistics");
+		mi.name.w = LPGENW("Show HTTP server statistics");
 		mi.pszService = MS_SHOW_STATISTICS_VIEW;
 		hShowStatisticsViewMenuItem = Menu_AddMainMenuItem(&mi);
 	}
 
 	hEventOptionsInitialize = HookEvent(ME_OPT_INITIALISE, OptionsInitialize);
 	if (!hEventOptionsInitialize)
-		MessageBox(NULL, _T("Failed to HookEvent ME_OPT_INITIALISE"), MSG_BOX_TITEL, MB_OK);
+		MessageBox(NULL, "Failed to HookEvent ME_OPT_INITIALISE", MSG_BOX_TITEL, MB_OK);
 
 	bShowPopups = db_get_b(NULL, MODULE, "ShowPopups", bShowPopups) != 0;
 }

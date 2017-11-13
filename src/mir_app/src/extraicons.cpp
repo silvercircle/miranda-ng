@@ -1,7 +1,7 @@
 /*
 
 Copyright (C) 2009 Ricardo Pescuma Domenecci
-Copyright (C) 2012-15 Miranda NG project
+Copyright (C) 2012-17 Miranda NG project
 
 This is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
@@ -35,8 +35,8 @@ int SortFunc(const ExtraIcon *p1, const ExtraIcon *p2)
 	if (ret != 0)
 		return ret;
 
-	int id1 = (p1->getType() != EXTRAICON_TYPE_GROUP) ? ((BaseExtraIcon*) p1)->getID() : 0;
-	int id2 = (p2->getType() != EXTRAICON_TYPE_GROUP) ? ((BaseExtraIcon*) p2)->getID() : 0;
+	int id1 = (p1->getType() != EXTRAICON_TYPE_GROUP) ? ((BaseExtraIcon*)p1)->getID() : 0;
+	int id2 = (p2->getType() != EXTRAICON_TYPE_GROUP) ? ((BaseExtraIcon*)p2)->getID() : 0;
 	return id1 - id2;
 }
 
@@ -46,9 +46,6 @@ LIST<BaseExtraIcon> registeredExtraIcons(10);
 BOOL clistRebuildAlreadyCalled = FALSE;
 BOOL clistApplyAlreadyCalled = FALSE;
 
-int clistFirstSlot = 0;
-int clistSlotCount = 0;
-
 // Functions ////////////////////////////////////////////////////////////////////////////
 
 int InitOptionsCallback(WPARAM wParam, LPARAM lParam);
@@ -56,17 +53,13 @@ int InitOptionsCallback(WPARAM wParam, LPARAM lParam);
 // Called when all the modules are loaded
 int ModulesLoaded(WPARAM, LPARAM)
 {
-	// add our modules to the KnownModules list
-	CallService("DBEditorpp/RegisterSingleModule", (WPARAM) MODULE_NAME, 0);
-	CallService("DBEditorpp/RegisterSingleModule", (WPARAM) MODULE_NAME "Groups", 0);
-
 	HookEvent(ME_OPT_INITIALISE, InitOptionsCallback);
 	return 0;
 }
 
 int GetNumberOfSlots()
 {
-	return clistSlotCount;
+	return EXTRA_ICON_COUNT;
 }
 
 int ConvertToClistSlot(int slot)
@@ -74,12 +67,12 @@ int ConvertToClistSlot(int slot)
 	if (slot < 0)
 		return slot;
 
-	return clistFirstSlot + slot;
+	return slot + 1;
 }
 
 int ExtraImage_ExtraIDToColumnNum(int extra)
 {
-	return (extra < 1 || extra > EXTRA_ICON_COUNT) ? -1 : extra-1;
+	return (extra < 1 || extra > EXTRA_ICON_COUNT) ? -1 : extra - 1;
 }
 
 int Clist_SetExtraIcon(MCONTACT hContact, int slot, HANDLE hImage)
@@ -87,7 +80,7 @@ int Clist_SetExtraIcon(MCONTACT hContact, int slot, HANDLE hImage)
 	if (cli.hwndContactTree == 0)
 		return -1;
 
-	int icol = ExtraImage_ExtraIDToColumnNum( ConvertToClistSlot(slot));
+	int icol = ExtraImage_ExtraIDToColumnNum(ConvertToClistSlot(slot));
 	if (icol == -1)
 		return -1;
 
@@ -95,7 +88,7 @@ int Clist_SetExtraIcon(MCONTACT hContact, int slot, HANDLE hImage)
 	if (hItem == 0)
 		return -1;
 
-	SendMessage(cli.hwndContactTree, CLM_SETEXTRAIMAGE, (WPARAM)hItem, MAKELPARAM(icol,hImage));
+	SendMessage(cli.hwndContactTree, CLM_SETEXTRAIMAGE, (WPARAM)hItem, MAKELPARAM(icol, hImage));
 	return 0;
 }
 
@@ -103,9 +96,9 @@ ExtraIcon* GetExtraIcon(HANDLE id)
 {
 	int i = (INT_PTR)id;
 	if (i < 1 || i > extraIconsByHandle.getCount())
-		return NULL;
+		return nullptr;
 
-	return extraIconsByHandle[i-1];
+	return extraIconsByHandle[i - 1];
 }
 
 ExtraIcon* GetExtraIconBySlot(int slot)
@@ -115,26 +108,26 @@ ExtraIcon* GetExtraIconBySlot(int slot)
 		if (extra->getSlot() == slot)
 			return extra;
 	}
-	return NULL;
+	return nullptr;
 }
 
 BaseExtraIcon* GetExtraIconByName(const char *name)
 {
-	for (int i=0; i < registeredExtraIcons.getCount(); i++) {
+	for (int i = 0; i < registeredExtraIcons.getCount(); i++) {
 		BaseExtraIcon *extra = registeredExtraIcons[i];
 		if (mir_strcmp(name, extra->getName()) == 0)
 			return extra;
 	}
-	return NULL;
+	return nullptr;
 }
 
 static void LoadGroups(LIST<ExtraIconGroup> &groups)
 {
-	int count = db_get_w(NULL, MODULE_NAME "Groups", "Count", 0);
-	for (int i=0; i < count; i++) {
+	int count = db_get_w(0, MODULE_NAME "Groups", "Count", 0);
+	for (int i = 0; i < count; i++) {
 		char setting[512];
 		mir_snprintf(setting, "%d_count", i);
-		unsigned int items = db_get_w(NULL, MODULE_NAME "Groups", setting, 0);
+		unsigned int items = db_get_w(0, MODULE_NAME "Groups", setting, 0);
 		if (items < 1)
 			continue;
 
@@ -143,12 +136,12 @@ static void LoadGroups(LIST<ExtraIconGroup> &groups)
 
 		for (unsigned int j = 0; j < items; j++) {
 			mir_snprintf(setting, "%d_%d", i, j);
-			ptrA szIconName(db_get_sa(NULL, MODULE_NAME "Groups", setting));
+			ptrA szIconName(db_get_sa(0, MODULE_NAME "Groups", setting));
 			if (IsEmpty(szIconName))
 				continue;
 
 			BaseExtraIcon *extra = GetExtraIconByName(szIconName);
-			if (extra == NULL)
+			if (extra == nullptr)
 				continue;
 
 			group->m_items.insert(extra);
@@ -174,33 +167,33 @@ static ExtraIconGroup* IsInGroup(LIST<ExtraIconGroup> &groups, BaseExtraIcon *ex
 				return group;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 void RebuildListsBasedOnGroups(LIST<ExtraIconGroup> &groups)
 {
 	extraIconsByHandle.destroy();
 
-	for (int i=0; i < registeredExtraIcons.getCount(); i++)
+	for (int i = 0; i < registeredExtraIcons.getCount(); i++)
 		extraIconsByHandle.insert(registeredExtraIcons[i]);
 
-	for (int k=0; k < extraIconsBySlot.getCount(); k++) {
+	for (int k = 0; k < extraIconsBySlot.getCount(); k++) {
 		ExtraIcon *extra = extraIconsBySlot[k];
 		if (extra->getType() == EXTRAICON_TYPE_GROUP)
 			delete extra;
 	}
 	extraIconsBySlot.destroy();
 
-	for (int i=0; i < groups.getCount(); i++) {
+	for (int i = 0; i < groups.getCount(); i++) {
 		ExtraIconGroup *group = groups[i];
 
 		for (int j = 0; j < group->m_items.getCount(); j++)
-			extraIconsByHandle.put(group->m_items[j]->getID()-1, group);
+			extraIconsByHandle.put(group->m_items[j]->getID() - 1, group);
 
 		extraIconsBySlot.insert(group);
 	}
 
-	for (int k=0; k < extraIconsByHandle.getCount(); k++) {
+	for (int k = 0; k < extraIconsByHandle.getCount(); k++) {
 		ExtraIcon *extra = extraIconsByHandle[k];
 		if (extra->getType() != EXTRAICON_TYPE_GROUP)
 			extraIconsBySlot.insert(extra);
@@ -213,7 +206,7 @@ MIR_APP_DLL(void) KillModuleExtraIcons(int _hLang)
 {
 	LIST<ExtraIcon> arDeleted(1);
 
-	for (int i=registeredExtraIcons.getCount()-1; i >= 0; i--) {
+	for (int i = registeredExtraIcons.getCount() - 1; i >= 0; i--) {
 		BaseExtraIcon *p = registeredExtraIcons[i];
 		if (p->m_hLangpack == _hLang) {
 			registeredExtraIcons.remove(i);
@@ -228,7 +221,7 @@ MIR_APP_DLL(void) KillModuleExtraIcons(int _hLang)
 	LoadGroups(groups);
 	RebuildListsBasedOnGroups(groups);
 
-	for (int k=0; k < arDeleted.getCount(); k++)
+	for (int k = 0; k < arDeleted.getCount(); k++)
 		delete arDeleted[k];
 }
 
@@ -240,7 +233,7 @@ int ClistExtraListRebuild(WPARAM, LPARAM)
 
 	ResetIcons();
 
-	for (int i=0; i < extraIconsBySlot.getCount(); i++)
+	for (int i = 0; i < extraIconsBySlot.getCount(); i++)
 		extraIconsBySlot[i]->rebuildIcons();
 
 	return 0;
@@ -248,12 +241,12 @@ int ClistExtraListRebuild(WPARAM, LPARAM)
 
 int ClistExtraImageApply(WPARAM hContact, LPARAM)
 {
-	if (hContact == NULL)
+	if (hContact == 0)
 		return 0;
 
 	clistApplyAlreadyCalled = TRUE;
 
-	for (int i=0; i < extraIconsBySlot.getCount(); i++)
+	for (int i = 0; i < extraIconsBySlot.getCount(); i++)
 		extraIconsBySlot[i]->applyIcon(hContact);
 
 	return 0;
@@ -261,12 +254,12 @@ int ClistExtraImageApply(WPARAM hContact, LPARAM)
 
 int ClistExtraClick(WPARAM hContact, LPARAM lParam)
 {
-	if (hContact == NULL)
+	if (hContact == 0)
 		return 0;
 
 	int clistSlot = (int)lParam;
 
-	for (int i=0; i < extraIconsBySlot.getCount(); i++) {
+	for (int i = 0; i < extraIconsBySlot.getCount(); i++) {
 		ExtraIcon *extra = extraIconsBySlot[i];
 		if (ConvertToClistSlot(extra->getSlot()) == clistSlot) {
 			extra->onClick(hContact);
@@ -283,10 +276,9 @@ int ClistExtraClick(WPARAM hContact, LPARAM lParam)
 HANDLE hEventExtraImageListRebuilding, hEventExtraImageApplying, hEventExtraClick;
 
 static bool bImageCreated = false;
-static int g_mutex_bSetAllExtraIconsCycle = 0;
 static HIMAGELIST hExtraImageList;
 
-HANDLE ExtraIcon_Add(HICON hIcon)
+MIR_APP_DLL(HANDLE) ExtraIcon_AddIcon(HICON hIcon)
 {
 	if (hExtraImageList == 0 || hIcon == 0)
 		return INVALID_HANDLE_VALUE;
@@ -297,7 +289,7 @@ HANDLE ExtraIcon_Add(HICON hIcon)
 
 void fnReloadExtraIcons()
 {
-	SendMessage(cli.hwndContactTree, CLM_SETEXTRASPACE, db_get_b(NULL,"CLUI","ExtraColumnSpace",18), 0);
+	SendMessage(cli.hwndContactTree, CLM_SETEXTRASPACE, db_get_b(0, "CLUI", "ExtraColumnSpace", 18), 0);
 	SendMessage(cli.hwndContactTree, CLM_SETEXTRAIMAGELIST, 0, 0);
 
 	if (hExtraImageList)
@@ -307,7 +299,7 @@ void fnReloadExtraIcons()
 
 	SendMessage(cli.hwndContactTree, CLM_SETEXTRAIMAGELIST, 0, (LPARAM)hExtraImageList);
 	SendMessage(cli.hwndContactTree, CLM_SETEXTRACOLUMNS, EXTRA_ICON_COUNT, 0);
-	NotifyEventHooks(hEventExtraImageListRebuilding,0,0);
+	NotifyEventHooks(hEventExtraImageListRebuilding, 0, 0);
 	bImageCreated = true;
 }
 
@@ -316,7 +308,6 @@ void fnSetAllExtraIcons(MCONTACT hContact)
 	if (cli.hwndContactTree == 0)
 		return;
 
-	g_mutex_bSetAllExtraIconsCycle = 1;
 	bool hcontgiven = (hContact != 0);
 
 	if (!bImageCreated)
@@ -324,37 +315,38 @@ void fnSetAllExtraIcons(MCONTACT hContact)
 
 	SendMessage(cli.hwndContactTree, CLM_SETEXTRACOLUMNS, EXTRA_ICON_COUNT, 0);
 
-	if (hContact == NULL)
+	if (hContact == 0)
 		hContact = db_find_first();
 
 	for (; hContact; hContact = db_find_next(hContact)) {
-		ClcCacheEntry* pdnce = (ClcCacheEntry*)cli.pfnGetCacheEntry(hContact);
-		if (pdnce == NULL)
-			continue;
-
 		NotifyEventHooks(hEventExtraImageApplying, hContact, 0);
-		if (hcontgiven) break;
-		Sleep(0);
+		if (hcontgiven)
+			break;
 	}
 
-	g_mutex_bSetAllExtraIconsCycle = 0;
-	cli.pfnInvalidateRect(cli.hwndContactTree, NULL, FALSE);
-	Sleep(0);
+	cli.pfnInvalidateRect(cli.hwndContactTree, nullptr, FALSE);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Services
+// external functions
 
-static void EI_PostCreate(BaseExtraIcon *extra, const char *name, int _hLang)
+static void EI_PostCreate(BaseExtraIcon *extra, const char *name, int flags, int _hLang)
 {
 	char setting[512];
 	mir_snprintf(setting, "Position_%s", name);
-	extra->setPosition(db_get_w(NULL, MODULE_NAME, setting, 1000));
+	extra->setPosition(db_get_w(0, MODULE_NAME, setting, 1000));
 
 	mir_snprintf(setting, "Slot_%s", name);
-	int slot = db_get_w(NULL, MODULE_NAME, setting, 1);
-	if (slot == (WORD)-1)
+	int slot = db_get_w(0, MODULE_NAME, setting, -100);
+	if (slot == EMPTY_EXTRA_ICON)
 		slot = -1;
+	else if (slot == -100) {
+		if (flags & EIF_DISABLED_BY_DEFAULT) {
+			db_set_w(0, MODULE_NAME, setting, EMPTY_EXTRA_ICON);
+			slot = -1;
+		}
+		else slot = 1;
+	}
 	extra->setSlot(slot);
 
 	extra->m_hLangpack = _hLang;
@@ -366,7 +358,7 @@ static void EI_PostCreate(BaseExtraIcon *extra, const char *name, int _hLang)
 	LoadGroups(groups);
 
 	ExtraIconGroup *group = IsInGroup(groups, extra);
-	if (group != NULL)
+	if (group != nullptr)
 		RebuildListsBasedOnGroups(groups);
 	else {
 		for (int i = 0; i < groups.getCount(); i++)
@@ -375,7 +367,7 @@ static void EI_PostCreate(BaseExtraIcon *extra, const char *name, int _hLang)
 		extraIconsBySlot.insert(extra);
 	}
 
-	if (slot >= 0 || group != NULL) {
+	if (slot >= 0 || group != nullptr) {
 		if (clistRebuildAlreadyCalled)
 			extra->rebuildIcons();
 
@@ -394,48 +386,48 @@ static void EI_PostCreate(BaseExtraIcon *extra, const char *name, int _hLang)
 	}
 }
 
-EXTERN_C MIR_APP_DLL(HANDLE) ExtraIcon_RegisterCallback(const char *name, const char *description, const char *descIcon, 
+EXTERN_C MIR_APP_DLL(HANDLE) ExtraIcon_RegisterCallback(const char *name, const char *description, const char *descIcon,
 	MIRANDAHOOK RebuildIcons, MIRANDAHOOK ApplyIcon,
-	MIRANDAHOOKPARAM OnClick, LPARAM onClickParam, int _hLang)
+	MIRANDAHOOKPARAM OnClick, LPARAM onClickParam, int flags, int _hLang)
 {
 	// EXTRAICON_TYPE_CALLBACK 
 	if (IsEmpty(name) || IsEmpty(description))
 		return 0;
 
-	if (ApplyIcon == NULL || RebuildIcons == NULL)
+	if (ApplyIcon == nullptr || RebuildIcons == nullptr)
 		return 0;
 
 	// no way to merge
-	if (GetExtraIconByName(name) != NULL)
+	if (GetExtraIconByName(name) != nullptr)
 		return 0;
 
-	ptrT tszDesc(mir_a2t(description));
-	TCHAR *desc = TranslateTH(_hLang, tszDesc);
+	ptrW tszDesc(mir_a2u(description));
+	wchar_t *desc = TranslateW_LP(tszDesc, _hLang);
 
 	int id = registeredExtraIcons.getCount() + 1;
-	BaseExtraIcon *extra = new CallbackExtraIcon(id, name, desc, descIcon == NULL ? "" : descIcon, RebuildIcons, ApplyIcon, OnClick, onClickParam);
-	EI_PostCreate(extra, name, _hLang);
+	BaseExtraIcon *extra = new CallbackExtraIcon(id, name, desc, descIcon == nullptr ? "" : descIcon, RebuildIcons, ApplyIcon, OnClick, onClickParam);
+	EI_PostCreate(extra, name, flags, _hLang);
 	return (HANDLE)id;
 }
 
 EXTERN_C MIR_APP_DLL(HANDLE) ExtraIcon_RegisterIcolib(const char *name, const char *description, const char *descIcon,
-	MIRANDAHOOKPARAM OnClick, LPARAM onClickParam, int _hLang)
+	MIRANDAHOOKPARAM OnClick, LPARAM onClickParam, int flags, int _hLang)
 {
 	if (IsEmpty(name) || IsEmpty(description))
 		return 0;
 
-	ptrT tszDesc(mir_a2t(description));
-	TCHAR *desc = TranslateTH(_hLang, tszDesc);
+	ptrW tszDesc(mir_a2u(description));
+	wchar_t *desc = TranslateW_LP(tszDesc, _hLang);
 
 	BaseExtraIcon *extra = GetExtraIconByName(name);
-	if (extra != NULL) {
+	if (extra != nullptr) {
 		if (extra->getType() != EXTRAICON_TYPE_ICOLIB)
 			return 0;
 
 		// Found one, now merge it
-		if (mir_tstrcmpi(extra->getDescription(), desc)) {
-			CMString newDesc = extra->getDescription();
-			newDesc += _T(" / ");
+		if (mir_wstrcmpi(extra->getDescription(), desc)) {
+			CMStringW newDesc = extra->getDescription();
+			newDesc += L" / ";
 			newDesc += desc;
 			extra->setDescription(newDesc.c_str());
 		}
@@ -443,7 +435,7 @@ EXTERN_C MIR_APP_DLL(HANDLE) ExtraIcon_RegisterIcolib(const char *name, const ch
 		if (!IsEmpty(descIcon))
 			extra->setDescIcon(descIcon);
 
-		if (OnClick != NULL)
+		if (OnClick != nullptr)
 			extra->setOnClick(OnClick, onClickParam);
 
 		if (extra->getSlot() > 0) {
@@ -457,8 +449,8 @@ EXTERN_C MIR_APP_DLL(HANDLE) ExtraIcon_RegisterIcolib(const char *name, const ch
 	}
 
 	int id = registeredExtraIcons.getCount() + 1;
-	extra = new IcolibExtraIcon(id, name, desc, descIcon == NULL ? "" : descIcon, OnClick, onClickParam);
-	EI_PostCreate(extra, name, _hLang);
+	extra = new IcolibExtraIcon(id, name, desc, descIcon == nullptr ? "" : descIcon, OnClick, onClickParam);
+	EI_PostCreate(extra, name, flags, _hLang);
 	return (HANDLE)id;
 }
 
@@ -466,11 +458,11 @@ EXTERN_C MIR_APP_DLL(HANDLE) ExtraIcon_RegisterIcolib(const char *name, const ch
 
 MIR_APP_DLL(int) ExtraIcon_SetIcon(HANDLE hExtraIcon, MCONTACT hContact, HANDLE hImage)
 {
-	if (hExtraIcon == NULL || hContact == NULL)
+	if (hExtraIcon == nullptr || hContact == 0)
 		return -1;
 
 	ExtraIcon *extra = GetExtraIcon(hExtraIcon);
-	if (extra == NULL)
+	if (extra == nullptr)
 		return -1;
 
 	return extra->setIcon((INT_PTR)hExtraIcon, hContact, hImage);
@@ -478,11 +470,11 @@ MIR_APP_DLL(int) ExtraIcon_SetIcon(HANDLE hExtraIcon, MCONTACT hContact, HANDLE 
 
 MIR_APP_DLL(int) ExtraIcon_SetIconByName(HANDLE hExtraIcon, MCONTACT hContact, const char *icoName)
 {
-	if (hExtraIcon == NULL || hContact == NULL)
+	if (hExtraIcon == nullptr || hContact == 0)
 		return -1;
 
 	ExtraIcon *extra = GetExtraIcon(hExtraIcon);
-	if (extra == NULL)
+	if (extra == nullptr)
 		return -1;
 
 	return extra->setIconByName((INT_PTR)hExtraIcon, hContact, icoName);
@@ -490,19 +482,14 @@ MIR_APP_DLL(int) ExtraIcon_SetIconByName(HANDLE hExtraIcon, MCONTACT hContact, c
 
 MIR_APP_DLL(int) ExtraIcon_Clear(HANDLE hExtraIcon, MCONTACT hContact)
 {
-	if (hExtraIcon == NULL || hContact == NULL)
+	if (hExtraIcon == nullptr || hContact == 0)
 		return -1;
 
 	ExtraIcon *extra = GetExtraIcon(hExtraIcon);
-	if (extra == NULL)
+	if (extra == nullptr)
 		return -1;
 
-	return extra->setIcon((INT_PTR)hExtraIcon, hContact, NULL);
-}
-
-static INT_PTR svcExtraIcon_Add(WPARAM wParam, LPARAM)
-{
-	return (INT_PTR)ExtraIcon_Add((HICON)wParam);
+	return extra->setIcon((INT_PTR)hExtraIcon, hContact, nullptr);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -516,13 +503,7 @@ static IconItem iconList[] =
 
 void LoadExtraIconsModule()
 {
-	DWORD ret = CallService(MS_CLUI_GETCAPS, CLUICAPS_FLAGS2, 0);
-	clistFirstSlot = HIWORD(ret);
-	clistSlotCount = LOWORD(ret);
-
-	// Services
-	CreateServiceFunction(MS_CLIST_EXTRA_ADD_ICON, svcExtraIcon_Add);
-
+	// Events
 	hEventExtraClick = CreateHookableEvent(ME_CLIST_EXTRA_CLICK);
 	hEventExtraImageApplying = CreateHookableEvent(ME_CLIST_EXTRA_IMAGE_APPLY);
 	hEventExtraImageListRebuilding = CreateHookableEvent(ME_CLIST_EXTRA_LIST_REBUILD);

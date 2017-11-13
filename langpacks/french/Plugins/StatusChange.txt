@@ -14,11 +14,11 @@ Hors ligne
 En ligne
 [Away]
 Absent
-[NA]
+[Not available]
 Indisponible
 [Occupied]
 Occupé
-[DND]
+[Do not disturb]
 Ne pas déranger
 [Free for chat]
 OK pour un chat

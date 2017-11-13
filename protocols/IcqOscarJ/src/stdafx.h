@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2010 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -57,7 +57,6 @@
 // Miranda IM SDK includes
 #include <newpluginapi.h> // This must be included first
 #include <m_clist.h>
-#include <m_clui.h>
 #include <m_database.h>
 #include <m_langpack.h>
 #include <m_message.h>
@@ -66,7 +65,6 @@
 #include <m_protosvc.h>
 #include <m_options.h>
 #include <m_system.h>
-#include <m_system_cpp.h>
 #include <m_userinfo.h>
 #include <m_utils.h>
 #include <m_idle.h>
@@ -101,7 +99,6 @@
 #include "icq_constants.h"
 #include "capabilities.h"
 #include "guids.h"
-#include "init.h"
 #include "stdpackets.h"
 #include "tlv.h"
 #include "channels.h"
@@ -120,3 +117,4 @@
 
 extern LIST<CIcqProto> g_Instances;
 extern bool g_bTerminated;
+extern IconItem iconList[];

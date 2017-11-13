@@ -1,7 +1,7 @@
 #define __MAJOR_VERSION            0
 #define __MINOR_VERSION            11
-#define __RELEASE_NUM              4
-#define __BUILD_NUM                6
+#define __RELEASE_NUM              8
+#define __BUILD_NUM                5
 
 #include <stdver.h>
 
@@ -10,5 +10,5 @@
 #define __DESCRIPTION              "Extends Miranda NG functionality with Lua scripts."
 #define __AUTHOR                   "Miranda NG team"
 #define __AUTHOREMAIL              ""
-#define __AUTHORWEB                "http://miranda-ng.org/p/MirLua/"
-#define __COPYRIGHT                "© 2015 Miranda NG project"
+#define __AUTHORWEB                "https://miranda-ng.org/p/MirLua/"
+#define __COPYRIGHT                "© 2015-17 Miranda NG project"

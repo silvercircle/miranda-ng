@@ -34,15 +34,15 @@ CLIST_INTERFACE *pcli;
 int hLangpack = 0; // Поддержка плагинозависимого перевода.
 BOOL bPopupExists = FALSE, bVariablesExists = FALSE, bTooltipExists = FALSE;
 
-static TCHAR tszFormat[] =
-_T("{I4}\x0D\x0A\x0A\
+static wchar_t tszFormat[] =
+_A2W("{I4}\x0D\x0A\x0A\
 {R65}?tc_GetTraffic(%extratext%,now,sent,d)\x0D\x0A\x0A\
 {R115}?tc_GetTraffic(%extratext%,now,received,d)\x0D\x0A\x0A\
 {R165}?tc_GetTraffic(%extratext%,total,both,d)\x0D\x0A\x0A\
 {L180}?if3(?tc_GetTime(%extratext%,now,hh:mm:ss),)\x0D\x0A\x0A\
 {L230}?if3(?tc_GetTime(%extratext%,total,d hh:mm),)");
 
-TCHAR* TRAFFIC_COUNTER_WINDOW_CLASS = _T("TrafficCounterWnd");
+wchar_t *TRAFFIC_COUNTER_WINDOW_CLASS = L"TrafficCounterWnd";
 
 /*-------------------------------------------------------------------------------------------------------------------*/
 //TRAFFIC COUNTER
@@ -64,8 +64,8 @@ char Traffic_PopupTimeoutValue;
 
 unsigned short int Traffic_LineHeight;
 //
-TCHAR Traffic_CounterFormat[512];
-TCHAR Traffic_TooltipFormat[512];
+wchar_t Traffic_CounterFormat[512];
+wchar_t Traffic_TooltipFormat[512];
 //
 HANDLE Traffic_FrameID = NULL;
 
@@ -84,8 +84,8 @@ BYTE online_count = 0;
 //font service support
 /*-------------------------------------------------------------------------------------------------------------------*/
 int TrafficFontHeight = 0;
-FontIDT TrafficFontID;
-ColourIDT TrafficBackgroundColorID;
+FontIDW TrafficFontID;
+ColourIDW TrafficBackgroundColorID;
 
 //---------------------------------------------------------------------------------------------
 // Для ToolTip
@@ -131,7 +131,7 @@ extern "C" int __declspec(dllexport) Load(void)
 {
 	// Получаем дескриптор языкового пакета.
 	mir_getLP(&pluginInfoEx);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	HookEvent(ME_OPT_INITIALISE, TrafficCounterOptInitialise);
 	HookEvent(ME_SYSTEM_MODULESLOADED, TrafficCounterModulesLoaded);
@@ -215,27 +215,27 @@ int TrafficCounterModulesLoaded(WPARAM, LPARAM)
 	Traffic_PopupTimeoutValue = db_get_b(NULL, TRAFFIC_SETTINGS_GROUP, SETTINGS_POPUP_TIMEOUT_VALUE, 5);
 
 	// Формат счётчика для каждого активного протокола
-	if (db_get_ts(NULL, TRAFFIC_SETTINGS_GROUP, SETTINGS_COUNTER_FORMAT, &dbv) == 0) {
-		if (mir_tstrlen(dbv.ptszVal) > 0)
-			mir_tstrncpy(Traffic_CounterFormat, dbv.ptszVal, _countof(Traffic_CounterFormat));
+	if (db_get_ws(NULL, TRAFFIC_SETTINGS_GROUP, SETTINGS_COUNTER_FORMAT, &dbv) == 0) {
+		if (mir_wstrlen(dbv.ptszVal) > 0)
+			mir_wstrncpy(Traffic_CounterFormat, dbv.ptszVal, _countof(Traffic_CounterFormat));
 		//
 		db_free(&dbv);
 	}
 	else //defaults here
 	{
-		mir_tstrcpy(Traffic_CounterFormat, tszFormat);
+		mir_wstrcpy(Traffic_CounterFormat, tszFormat);
 	}
 
 	// Формат всплывающих подсказок
-	if (db_get_ts(NULL, TRAFFIC_SETTINGS_GROUP, SETTINGS_TOOLTIP_FORMAT, &dbv) == 0) {
-		if (mir_tstrlen(dbv.ptszVal) > 0)
-			mir_tstrncpy(Traffic_TooltipFormat, dbv.ptszVal, _countof(Traffic_TooltipFormat));
+	if (db_get_ws(NULL, TRAFFIC_SETTINGS_GROUP, SETTINGS_TOOLTIP_FORMAT, &dbv) == 0) {
+		if (mir_wstrlen(dbv.ptszVal) > 0)
+			mir_wstrncpy(Traffic_TooltipFormat, dbv.ptszVal, _countof(Traffic_TooltipFormat));
 		//
 		db_free(&dbv);
 	}
 	else //defaults here
 	{
-		mir_tstrcpy(Traffic_TooltipFormat, _T("Traffic Counter"));
+		mir_wstrcpy(Traffic_TooltipFormat, L"Traffic Counter");
 	}
 
 	Traffic_AdditionSpace = db_get_b(NULL, TRAFFIC_SETTINGS_GROUP, SETTINGS_ADDITION_SPACE, 0);
@@ -244,9 +244,9 @@ int TrafficCounterModulesLoaded(WPARAM, LPARAM)
 	OverallInfo.Total.Timer = db_get_dw(NULL, TRAFFIC_SETTINGS_GROUP, SETTINGS_TOTAL_ONLINE_TIME, 0);
 
 	//register traffic font
-	TrafficFontID.cbSize = sizeof(FontIDT);
-	mir_tstrcpy(TrafficFontID.group, LPGENT("Traffic counter"));
-	mir_tstrcpy(TrafficFontID.name, LPGENT("Font"));
+	TrafficFontID.cbSize = sizeof(FontIDW);
+	mir_wstrcpy(TrafficFontID.group, LPGENW("Traffic counter"));
+	mir_wstrcpy(TrafficFontID.name, LPGENW("Font"));
 	mir_strcpy(TrafficFontID.dbSettingsGroup, TRAFFIC_SETTINGS_GROUP);
 	mir_strcpy(TrafficFontID.prefix, "Font");
 	TrafficFontID.flags = FIDF_DEFAULTVALID | FIDF_SAVEPOINTSIZE;
@@ -254,18 +254,18 @@ int TrafficCounterModulesLoaded(WPARAM, LPARAM)
 	TrafficFontID.deffontsettings.colour = GetSysColor(COLOR_BTNTEXT);
 	TrafficFontID.deffontsettings.size = 12;
 	TrafficFontID.deffontsettings.style = 0;
-	mir_tstrcpy(TrafficFontID.deffontsettings.szFace, _T("Arial"));
+	mir_wstrcpy(TrafficFontID.deffontsettings.szFace, L"Arial");
 	TrafficFontID.order = 0;
-	FontRegisterT(&TrafficFontID);
+	Font_RegisterW(&TrafficFontID);
 
 	// Регистрируем цвет фона
-	TrafficBackgroundColorID.cbSize = sizeof(ColourIDT);
-	mir_tstrcpy(TrafficBackgroundColorID.group, LPGENT("Traffic counter"));
-	mir_tstrcpy(TrafficBackgroundColorID.name, LPGENT("Font"));
+	TrafficBackgroundColorID.cbSize = sizeof(ColourIDW);
+	mir_wstrcpy(TrafficBackgroundColorID.group, LPGENW("Traffic counter"));
+	mir_wstrcpy(TrafficBackgroundColorID.name, LPGENW("Font"));
 	mir_strcpy(TrafficBackgroundColorID.dbSettingsGroup, TRAFFIC_SETTINGS_GROUP);
 	mir_strcpy(TrafficBackgroundColorID.setting, "FontBkColor");
 	TrafficBackgroundColorID.defcolour = GetSysColor(COLOR_BTNFACE);
-	ColourRegisterT(&TrafficBackgroundColorID);
+	Colour_RegisterW(&TrafficBackgroundColorID);
 
 	HookEvent(ME_FONT_RELOAD, UpdateFonts);
 
@@ -275,11 +275,10 @@ int TrafficCounterModulesLoaded(WPARAM, LPARAM)
 	CreateServiceFunction("TrafficCounter/ShowHide", MenuCommand_TrafficShowHide);
 	// Регистрируем горячую клавишу для показа/скрытия фрейма
 	{
-		HOTKEYDESC hkd = { 0 };
-		hkd.cbSize = sizeof(hkd);
+		HOTKEYDESC hkd = {};
 		hkd.DefHotKey = HOTKEYCODE(HOTKEYF_CONTROL | HOTKEYF_SHIFT, 'T');
-		hkd.pszSection = "Traffic Counter";
-		hkd.pszDescription = LPGEN("Show/Hide frame");
+		hkd.szSection.a = "Traffic Counter";
+		hkd.szDescription.a = LPGEN("Show/Hide frame");
 		hkd.pszName = "TC_Show_Hide";
 		hkd.pszService = "TrafficCounter/ShowHide";
 		Hotkey_Register(&hkd);
@@ -333,9 +332,9 @@ void SaveSettings(BYTE OnlyCnt)
 	db_set_b(NULL, TRAFFIC_SETTINGS_GROUP, SETTINGS_POPUP_TIMEOUT_VALUE, Traffic_PopupTimeoutValue);
 	//
 	// Формат счётчиков
-	db_set_ts(NULL, TRAFFIC_SETTINGS_GROUP, SETTINGS_COUNTER_FORMAT, Traffic_CounterFormat);
+	db_set_ws(NULL, TRAFFIC_SETTINGS_GROUP, SETTINGS_COUNTER_FORMAT, Traffic_CounterFormat);
 
-	db_set_ts(NULL, TRAFFIC_SETTINGS_GROUP, SETTINGS_TOOLTIP_FORMAT, Traffic_TooltipFormat);
+	db_set_ws(NULL, TRAFFIC_SETTINGS_GROUP, SETTINGS_TOOLTIP_FORMAT, Traffic_TooltipFormat);
 
 	db_set_b(NULL, TRAFFIC_SETTINGS_GROUP, SETTINGS_ADDITION_SPACE, Traffic_AdditionSpace);
 	// Сохраняем флаги
@@ -348,10 +347,9 @@ int TrafficRecv(WPARAM wParam, LPARAM lParam)
 {
 	NETLIBNOTIFY *nln = (NETLIBNOTIFY*)wParam;
 	NETLIBUSER *nlu = (NETLIBUSER*)lParam;
-	int i;
 
 	if (nln->result > 0)
-		for (i = 0; i < NumberOfAccounts; i++)
+		for (int i = 0; i < NumberOfAccounts; i++)
 			if (!mir_strcmp(ProtoList[i].name, nlu->szSettingsModule))
 				InterlockedExchangeAdd(&ProtoList[i].AllStatistics[ProtoList[i].NumberOfRecords - 1].Incoming, nln->result);
 	return 0;
@@ -361,10 +359,9 @@ int TrafficSend(WPARAM wParam, LPARAM lParam)
 {
 	NETLIBNOTIFY *nln = (NETLIBNOTIFY*)wParam;
 	NETLIBUSER *nlu = (NETLIBUSER*)lParam;
-	int i;
 
 	if (nln->result > 0)
-		for (i = 0; i < NumberOfAccounts; i++)
+		for (int i = 0; i < NumberOfAccounts; i++)
 			if (!mir_strcmp(ProtoList[i].name, nlu->szSettingsModule))
 				InterlockedExchangeAdd(&ProtoList[i].AllStatistics[ProtoList[i].NumberOfRecords - 1].Outgoing, nln->result);
 	return 0;
@@ -387,7 +384,7 @@ int TrafficCounter_Draw(HWND hwnd, HDC hDC)
 
 static void TC_AlphaText(HDC hDC, LPCTSTR lpString, RECT* lpRect, UINT format, BYTE ClistModernPresent)
 {
-	int nCount = (int)mir_tstrlen(lpString);
+	int nCount = (int)mir_wstrlen(lpString);
 
 	if (ClistModernPresent)
 		AlphaText(hDC, lpString, nCount, lpRect, format, Traffic_FontColor);
@@ -406,12 +403,6 @@ static void TC_DrawIconEx(HDC hdc, int xLeft, int yTop, HICON hIcon, HBRUSH hbrF
 int PaintTrafficCounterWindow(HWND hwnd, HDC hDC)
 {
 	RECT        rect, rect2;
-	HFONT		old_font;
-	int			i, dx, height, width;
-	HBRUSH		b, t;
-	HDC			hdc;
-	HBITMAP		hbmp, oldbmp;
-	BITMAPINFO  RGB32BitsBITMAPINFO = { 0 };
 	BLENDFUNCTION aga = { AC_SRC_OVER, 0, 0xFF, AC_SRC_ALPHA };
 	DWORD SummarySession, SummaryTotal;
 
@@ -420,27 +411,25 @@ int PaintTrafficCounterWindow(HWND hwnd, HDC hDC)
 		&& db_get_b(NULL, "ModernData", "EnableLayering", 1);
 
 	GetClientRect(hwnd, &rect);
-	height = rect.bottom - rect.top;
-	width = rect.right - rect.left;
+	int height = rect.bottom - rect.top;
+	int width = rect.right - rect.left;
 
 	// Свой контекст устройства.
-	hdc = CreateCompatibleDC(hDC);
-	//
+	HDC hdc = CreateCompatibleDC(hDC);
+
+	BITMAPINFO RGB32BitsBITMAPINFO = { 0 };
 	RGB32BitsBITMAPINFO.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	RGB32BitsBITMAPINFO.bmiHeader.biWidth = width;
 	RGB32BitsBITMAPINFO.bmiHeader.biHeight = height;
 	RGB32BitsBITMAPINFO.bmiHeader.biPlanes = 1;
 	RGB32BitsBITMAPINFO.bmiHeader.biBitCount = 32;
 	RGB32BitsBITMAPINFO.bmiHeader.biCompression = BI_RGB;
-	hbmp = CreateDIBSection(NULL,
-		&RGB32BitsBITMAPINFO,
-		DIB_RGB_COLORS,
-		NULL,
-		NULL, 0);
-	oldbmp = (HBITMAP)SelectObject(hdc, hbmp);
+	
+	HBITMAP hbmp = CreateDIBSection(NULL, &RGB32BitsBITMAPINFO, DIB_RGB_COLORS, NULL, NULL, 0);
+	HBITMAP oldbmp = (HBITMAP)SelectObject(hdc, hbmp);
 
-	b = CreateSolidBrush(Traffic_BkColor);
-	t = CreateSolidBrush(KeyColor);
+	HBRUSH b = CreateSolidBrush(Traffic_BkColor);
+	HBRUSH t = CreateSolidBrush(KeyColor);
 
 	if (ClistModernPresent
 		&& unOptions.DrawFrmAsSkin) {
@@ -462,7 +451,7 @@ int PaintTrafficCounterWindow(HWND hwnd, HDC hDC)
 		AlphaBlend(hdc, 0, 0, width, height, hdc, 0, 0, width, height, aga);
 	}
 
-	old_font = (HFONT)SelectObject(hdc, Traffic_h_font);
+	HFONT old_font = (HFONT)SelectObject(hdc, Traffic_h_font);
 
 	// Ограничиваем область рисования
 	rect.top += 2;
@@ -476,10 +465,10 @@ int PaintTrafficCounterWindow(HWND hwnd, HDC hDC)
 	if (!bVariablesExists) {
 		SummarySession = SummaryTotal = 0;
 		// Для каждого аккаунта
-		for (i = 0; i < NumberOfAccounts; i++) {
+		for (int i = 0; i < NumberOfAccounts; i++) {
 			// Только если разрешено его отображение.
 			if (ProtoList[i].Visible && ProtoList[i].Enabled) {
-				dx = 0;
+				int dx = 0;
 				// Изображаем иконку аккаунта.
 				if (unOptions.DrawProtoIcon) {
 					TC_DrawIconEx(hdc, rect.left, rect.top,
@@ -495,23 +484,23 @@ int PaintTrafficCounterWindow(HWND hwnd, HDC hDC)
 				// Следующие позиции строятся от правого края.
 				// Общее время.
 				if (unOptions.DrawTotalTimeCounter) {
-					TCHAR bu[32];
+					wchar_t bu[32];
 
-					GetDurationFormatM(ProtoList[i].Total.Timer, _T("h:mm:ss"), bu, 32);
+					GetDurationFormatM(ProtoList[i].Total.Timer, L"h:mm:ss", bu, 32);
 					TC_AlphaText(hdc, bu, &rect, DT_SINGLELINE | DT_RIGHT | DT_TOP, ClistModernPresent);
 				}
 				// Текущее время.
 				if (unOptions.DrawCurrentTimeCounter) {
-					TCHAR bu[32];
+					wchar_t bu[32];
 
-					GetDurationFormatM(ProtoList[i].Session.Timer, _T("h:mm:ss"), bu, 32);
+					GetDurationFormatM(ProtoList[i].Session.Timer, L"h:mm:ss", bu, 32);
 					rect.right -= 50;
 					TC_AlphaText(hdc, bu, &rect, DT_SINGLELINE | DT_RIGHT | DT_TOP, ClistModernPresent);
 					rect.right += 50;
 				}
 				// Изображаем общий трафик.
 				if (unOptions.DrawTotalTraffic) {
-					TCHAR bu[32];
+					wchar_t bu[32];
 
 					GetFormattedTraffic(ProtoList[i].TotalSentTraffic + ProtoList[i].TotalRecvTraffic, 3, bu, 32);
 					rect.right -= 100;
@@ -523,7 +512,7 @@ int PaintTrafficCounterWindow(HWND hwnd, HDC hDC)
 				}
 				// Изображаем текущий трафик.
 				if (unOptions.DrawCurrentTraffic) {
-					TCHAR bu[32];
+					wchar_t bu[32];
 
 					GetFormattedTraffic(ProtoList[i].CurrentRecvTraffic + ProtoList[i].CurrentSentTraffic, 3, bu, 32);
 					rect.right -= 150;
@@ -540,7 +529,7 @@ int PaintTrafficCounterWindow(HWND hwnd, HDC hDC)
 		// Рисуем суммарный трафик выбранных аккаунтов.
 		if (unOptions.ShowSummary) {
 			// Изображаем иконку.
-			dx = 0;
+			int dx = 0;
 			if (unOptions.DrawProtoIcon) {
 				TC_DrawIconEx(hdc, rect.left, rect.top,
 					Skin_LoadIcon(SKINICON_OTHER_MIRANDA), b, ClistModernPresent);
@@ -549,7 +538,7 @@ int PaintTrafficCounterWindow(HWND hwnd, HDC hDC)
 			// Выводим текст
 			// Изображаем имя
 			if (unOptions.DrawProtoName) {
-				TCHAR *bu = mir_a2t("Summary");
+				wchar_t *bu = mir_a2u("Summary");
 
 				rect.left += dx;
 				TC_AlphaText(hdc, bu, &rect, DT_SINGLELINE | DT_LEFT | DT_TOP, ClistModernPresent);
@@ -558,23 +547,23 @@ int PaintTrafficCounterWindow(HWND hwnd, HDC hDC)
 			}
 			// Общее время.
 			if (unOptions.DrawTotalTimeCounter) {
-				TCHAR bu[32];
+				wchar_t bu[32];
 
-				GetDurationFormatM(OverallInfo.Total.Timer, _T("h:mm:ss"), bu, 32);
+				GetDurationFormatM(OverallInfo.Total.Timer, L"h:mm:ss", bu, 32);
 				TC_AlphaText(hdc, bu, &rect, DT_SINGLELINE | DT_RIGHT | DT_TOP, ClistModernPresent);
 			}
 			// Текущее время.
 			if (unOptions.DrawCurrentTimeCounter) {
-				TCHAR bu[32];
+				wchar_t bu[32];
 
-				GetDurationFormatM(OverallInfo.Session.Timer, _T("h:mm:ss"), bu, 32);
+				GetDurationFormatM(OverallInfo.Session.Timer, L"h:mm:ss", bu, 32);
 				rect.right -= 50;
 				TC_AlphaText(hdc, bu, &rect, DT_SINGLELINE | DT_RIGHT | DT_TOP, ClistModernPresent);
 				rect.right += 50;
 			}
 			// Изображаем общий трафик.
 			if (unOptions.DrawTotalTraffic) {
-				TCHAR bu[32];
+				wchar_t bu[32];
 
 				GetFormattedTraffic(SummaryTotal, 3, bu, 32);
 				rect.right -= 100;
@@ -583,7 +572,7 @@ int PaintTrafficCounterWindow(HWND hwnd, HDC hDC)
 			}
 			// Изображаем текущий трафик.
 			if (unOptions.DrawCurrentTraffic) {
-				TCHAR bu[32];
+				wchar_t bu[32];
 
 				GetFormattedTraffic(SummarySession, 3, bu, 32);
 				rect.right -= 150;
@@ -595,7 +584,7 @@ int PaintTrafficCounterWindow(HWND hwnd, HDC hDC)
 		// Рисуем всеобщий трафик.
 		if (unOptions.ShowOverall) {
 			// Изображаем иконку.
-			dx = 0;
+			int dx = 0;
 			if (unOptions.DrawProtoIcon) {
 				TC_DrawIconEx(hdc, rect.left, rect.top,
 					Skin_LoadIcon(SKINICON_OTHER_MIRANDA), b, ClistModernPresent);
@@ -604,7 +593,7 @@ int PaintTrafficCounterWindow(HWND hwnd, HDC hDC)
 			// Выводим текст
 			// Изображаем имя
 			if (unOptions.DrawProtoName) {
-				TCHAR *bu = mir_a2t("Overall");
+				wchar_t *bu = mir_a2u("Overall");
 
 				rect.left += dx;
 				TC_AlphaText(hdc, bu, &rect, DT_SINGLELINE | DT_LEFT | DT_TOP, ClistModernPresent);
@@ -614,7 +603,7 @@ int PaintTrafficCounterWindow(HWND hwnd, HDC hDC)
 			// Следующие позиции строятся от правого края.
 			// Изображаем общий трафик.
 			if (unOptions.DrawTotalTraffic) {
-				TCHAR bu[32];
+				wchar_t bu[32];
 
 				GetFormattedTraffic(OverallInfo.TotalSentTraffic + OverallInfo.TotalRecvTraffic, 3, bu, 32);
 				rect.right -= 100;
@@ -623,7 +612,7 @@ int PaintTrafficCounterWindow(HWND hwnd, HDC hDC)
 			}
 			// Изображаем текущий трафик.
 			if (unOptions.DrawCurrentTraffic) {
-				TCHAR bu[32];
+				wchar_t bu[32];
 
 				GetFormattedTraffic(OverallInfo.CurrentRecvTraffic + OverallInfo.CurrentSentTraffic, 3, bu, 32);
 				rect.right -= 150;
@@ -632,50 +621,49 @@ int PaintTrafficCounterWindow(HWND hwnd, HDC hDC)
 			}
 		}
 	}
-	else
+	else {
 		//-------------
 		// Если есть Variables - рисуем по-новому
 		//-------------
-	{
 		RowItemInfo *ItemsList;
 		WORD ItemsNumber, RowsNumber;
 
 		// Готовим список строк для Variables и иконок.
-		TCHAR **ExtraText = (TCHAR**)mir_alloc(sizeof(TCHAR*));
+		wchar_t **ExtraText = (wchar_t**)mir_alloc(sizeof(wchar_t*));
 		HICON *ahIcon = (HICON*)mir_alloc(sizeof(HICON));
 		RowsNumber = 0;
 		// Цикл по аккаунтам.
-		for (i = 0; i < NumberOfAccounts; i++) {
+		for (int i = 0; i < NumberOfAccounts; i++) {
 			if (ProtoList[i].Visible && ProtoList[i].Enabled) {
-				ExtraText = (TCHAR**)mir_realloc(ExtraText, sizeof(TCHAR*) * (RowsNumber + 1));
+				ExtraText = (wchar_t**)mir_realloc(ExtraText, sizeof(wchar_t*) * (RowsNumber + 1));
 				ahIcon = (HICON*)mir_realloc(ahIcon, sizeof(HICON) * (RowsNumber + 1));
 
-				ExtraText[RowsNumber] = mir_a2t(ProtoList[i].name);
+				ExtraText[RowsNumber] = mir_a2u(ProtoList[i].name);
 				ahIcon[RowsNumber++] = Skin_LoadProtoIcon(ProtoList[i].name, CallProtoService(ProtoList[i].name, PS_GETSTATUS, 0, 0));
 			}
 		}
 		// Ещё 2 особых элемента.
 		if (unOptions.ShowSummary) {
-			ExtraText = (TCHAR**)mir_realloc(ExtraText, sizeof(TCHAR*) * (RowsNumber + 1));
+			ExtraText = (wchar_t**)mir_realloc(ExtraText, sizeof(wchar_t*) * (RowsNumber + 1));
 			ahIcon = (HICON*)mir_realloc(ahIcon, sizeof(HICON) * (RowsNumber + 1));
 
-			ExtraText[RowsNumber] = mir_a2t("summary");
+			ExtraText[RowsNumber] = mir_a2u("summary");
 			ahIcon[RowsNumber++] = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
 		}
 		if (unOptions.ShowOverall) {
-			ExtraText = (TCHAR**)mir_realloc(ExtraText, sizeof(TCHAR*) * (RowsNumber + 1));
+			ExtraText = (wchar_t**)mir_realloc(ExtraText, sizeof(wchar_t*) * (RowsNumber + 1));
 			ahIcon = (HICON*)mir_realloc(ahIcon, sizeof(HICON) * (RowsNumber + 1));
 
-			ExtraText[RowsNumber] = mir_a2t("overall");
+			ExtraText[RowsNumber] = mir_a2u("overall");
 			ahIcon[RowsNumber++] = Skin_LoadIcon(SKINICON_OTHER_MIRANDA);
 		}
 
 		// Рисуем свой счётчик для каждого из выбранных протоколов
-		for (i = 0; i < RowsNumber; i++) {
-			TCHAR *buf = variables_parse(Traffic_CounterFormat, ExtraText[i], NULL);
+		for (int i = 0; i < RowsNumber; i++) {
+			wchar_t *buf = variables_parse(Traffic_CounterFormat, ExtraText[i], NULL);
 			if (ItemsNumber = GetRowItems(buf, &ItemsList)) {
 				// Рисуем текст.
-				for (dx = 0; dx < ItemsNumber; dx++) {
+				for (int dx = 0; dx < ItemsNumber; dx++) {
 					// Делаем копию прямоугольника для рисования.
 					memcpy(&rect2, &rect, sizeof(RECT));
 					rect2.bottom = rect2.top + Traffic_LineHeight;
@@ -954,7 +942,7 @@ LRESULT CALLBACK TrafficCounterWndProc_MW(HWND hwnd, UINT msg, WPARAM wParam, LP
 
 		case TIMER_TOOLTIP:
 			{
-				TCHAR *TooltipText;
+				wchar_t *TooltipText;
 				CLCINFOTIP ti = { 0 };
 				RECT rt;
 
@@ -1075,8 +1063,8 @@ void NotifyOnSend(void)
 	memset(&ppd, 0, sizeof(ppd));
 	ppd.lchContact = NULL;
 	ppd.lchIcon = Skin_LoadIcon(SKINICON_EVENT_MESSAGE);
-	_tcsncpy(ppd.lptzContactName, TranslateT("Traffic counter notification"), MAX_CONTACTNAME);
-	mir_sntprintf(ppd.lptzText, TranslateT("%d kilobytes sent"), notify_send_size = OverallInfo.CurrentSentTraffic >> 10);
+	wcsncpy(ppd.lptzContactName, TranslateT("Traffic counter notification"), MAX_CONTACTNAME);
+	mir_snwprintf(ppd.lptzText, TranslateT("%d kilobytes sent"), notify_send_size = OverallInfo.CurrentSentTraffic >> 10);
 	ppd.colorBack = Traffic_PopupBkColor;
 	ppd.colorText = Traffic_PopupFontColor;
 	ppd.PluginWindowProc = NULL;
@@ -1091,8 +1079,8 @@ void NotifyOnRecv(void)
 	memset(&ppd, 0, sizeof(ppd));
 	ppd.lchContact = NULL;
 	ppd.lchIcon = Skin_LoadIcon(SKINICON_EVENT_MESSAGE);
-	_tcsncpy(ppd.lptzContactName, TranslateT("Traffic counter notification"), MAX_CONTACTNAME);
-	mir_sntprintf(ppd.lptzText, TranslateT("%d kilobytes received"), notify_recv_size = OverallInfo.CurrentRecvTraffic >> 10);
+	wcsncpy(ppd.lptzContactName, TranslateT("Traffic counter notification"), MAX_CONTACTNAME);
+	mir_snwprintf(ppd.lptzText, TranslateT("%d kilobytes received"), notify_recv_size = OverallInfo.CurrentRecvTraffic >> 10);
 	ppd.colorBack = Traffic_PopupBkColor;
 	ppd.colorText = Traffic_PopupFontColor;
 	ppd.PluginWindowProc = NULL;
@@ -1110,16 +1098,14 @@ void CreateProtocolList(void)
 	ProtoList = (PROTOLIST*)mir_alloc(sizeof(PROTOLIST)*(NumberOfAccounts));
 	//
 	for (i = 0; i < NumberOfAccounts; i++) {
-		ProtoList[i].name = (char*)mir_alloc(mir_strlen(acc[i]->szModuleName) + 1);
-		mir_strcpy(ProtoList[i].name, acc[i]->szModuleName);
-		ProtoList[i].tszAccountName = (TCHAR*)mir_alloc(sizeof(TCHAR) * (1 + mir_tstrlen(acc[i]->tszAccountName)));
-		mir_tstrcpy(ProtoList[i].tszAccountName, acc[i]->tszAccountName);
-		//
+		ProtoList[i].name = mir_strdup(acc[i]->szModuleName);
+		ProtoList[i].tszAccountName = mir_wstrdup(acc[i]->tszAccountName);
+
 		ProtoList[i].Flags = db_get_b(NULL, ProtoList[i].name, SETTINGS_PROTO_FLAGS, 3);
 		ProtoList[i].CurrentRecvTraffic =
 			ProtoList[i].CurrentSentTraffic =
 			ProtoList[i].Session.Timer = 0;
-		//
+
 		ProtoList[i].Enabled = acc[i]->bIsEnabled;
 		ProtoList[i].State = 0;
 
@@ -1175,15 +1161,13 @@ int ProtocolAckHook(WPARAM, LPARAM lParam)
 int UpdateFonts(WPARAM, LPARAM)
 {
 	LOGFONT logfont;
-	//if no font service
-	if (!ServiceExists(MS_FONT_GETT)) return 0;
 	//update traffic font
 	if (Traffic_h_font) DeleteObject(Traffic_h_font);
-	Traffic_FontColor = CallService(MS_FONT_GETT, (WPARAM)&TrafficFontID, (LPARAM)&logfont);
+	Traffic_FontColor = Font_GetW(TrafficFontID, &logfont);
 	Traffic_h_font = CreateFontIndirect(&logfont);
-	//
+
 	TrafficFontHeight = abs(logfont.lfHeight) + 1;
-	Traffic_BkColor = CallService(MS_COLOUR_GETT, (WPARAM)&TrafficBackgroundColorID, 0);
+	Traffic_BkColor = Colour_GetW(TrafficBackgroundColorID);
 
 	// Ключевой цвет
 	UseKeyColor = db_get_b(NULL, "ModernSettings", "UseKeyColor", 1);

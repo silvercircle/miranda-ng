@@ -1,5 +1,5 @@
 ﻿/*
-Copyright (c) 2015 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2015-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -27,7 +27,6 @@ public:
 		timeout = 60000;
 		flags |= NLHRF_PERSISTENT;
 		Headers
-			<< CHAR_VALUE("Connection", "keep-alive")
 			<< CHAR_VALUE("Accept", "application/json, text/javascript")
 			<< FORMAT_VALUE("RegistrationToken", "registrationToken=%s", li.endpoint.szToken);
 	}

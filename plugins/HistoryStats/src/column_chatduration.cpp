@@ -4,10 +4,8 @@
 /*
  * ColChatDuration
  */
-
-ColChatDuration::ColChatDuration()
-	: m_nVisMode(3), m_bGraph(true), m_bDetail(true), 
-	m_hVisMode(NULL), m_hGraph(NULL), m_hDetail(NULL)
+ColChatDuration::ColChatDuration() : m_nVisMode(3), m_bGraph(true), m_bDetail(true), 
+	m_hVisMode(NULL), m_hGraph(NULL), m_hDetail(NULL), m_nMaxForGraph(0)
 {
 }
 
@@ -66,13 +64,13 @@ Column::StyleList ColChatDuration::impl_outputGetAdditionalStyles(IDProvider& id
 	{
 		m_CSS = idp.getID();
 
-		l.push_back(StylePair(_T("td.") + m_CSS,                _T("vertical-align: middle; padding: 2px 2px 2px 2px;")));
-		l.push_back(StylePair(_T("td.") + m_CSS + _T(" div.n"), _T("text-align: center;")));
+		l.push_back(StylePair(L"td." + m_CSS,                L"vertical-align: middle; padding: 2px 2px 2px 2px;"));
+		l.push_back(StylePair(L"td." + m_CSS + L" div.n", L"text-align: center;"));
 
 		if (!usePNG())
 		{
-			l.push_back(StylePair(_T("div.") + m_CSS,               _T("position: relative; left: 50%; margin-left: -35px; width: 70px; height: 15px; background-color: ") + utils::colorToHTML(con::ColorBarBack) + _T(";")));
-			l.push_back(StylePair(_T("div.") + m_CSS + _T(" div"),  _T("position: absolute; top: 0px; left: 0px; height: 15px; overflow: hidden; background-color: ") + utils::colorToHTML(con::ColorBar) + _T(";")));
+			l.push_back(StylePair(L"div." + m_CSS,               L"position: relative; left: 50%; margin-left: -35px; width: 70px; height: 15px; background-color: " + utils::colorToHTML(con::ColorBarBack) + L";"));
+			l.push_back(StylePair(L"div." + m_CSS + L" div",  L"position: absolute; top: 0px; left: 0px; height: 15px; overflow: hidden; background-color: " + utils::colorToHTML(con::ColorBar) + L";"));
 		}
 	}
 
@@ -81,17 +79,17 @@ Column::StyleList ColChatDuration::impl_outputGetAdditionalStyles(IDProvider& id
 
 void ColChatDuration::impl_outputRenderHeader(ext::ostream& tos, int row, int rowSpan) const
 {
-	static const TCHAR* szVisModeDesc[] = {
-		LPGENT("Minimum chat duration"),
-		LPGENT("Average chat duration"),
-		LPGENT("Maximum chat duration"),
-		LPGENT("Total chat duration"),
+	static const wchar_t* szVisModeDesc[] = {
+		LPGENW("Minimum chat duration"),
+		LPGENW("Average chat duration"),
+		LPGENW("Maximum chat duration"),
+		LPGENW("Total chat duration"),
 	};
 
 	if (row == 1)
 	{
-		ext::string szLong = TranslateTS(szVisModeDesc[m_nVisMode]);
-		writeRowspanTD(tos, getCustomTitle(TranslateT("Chat duration"), szLong + (m_bGraph ? _T("<div style=\"width: 70px;\"></div>") : _T(""))), row, 1, rowSpan);
+		ext::string szLong = TranslateW(szVisModeDesc[m_nVisMode]);
+		writeRowspanTD(tos, getCustomTitle(TranslateT("Chat duration"), szLong) + (m_bGraph ? L"<div style=\"width: 70px;\"></div>" : L""), row, 1, rowSpan);
 	}
 }
 
@@ -139,11 +137,11 @@ void ColChatDuration::impl_outputRenderRow(ext::ostream& tos, const Contact& con
 	// begin output
 	if (m_bGraph)
 	{
-		tos << _T("<td class=\"") << m_CSS;
+		tos << L"<td class=\"" << m_CSS;
 	}
 	else
 	{
-		tos << _T("<td class=\"num");
+		tos << L"<td class=\"num";
 	}
 
 	// read and format data
@@ -164,11 +162,11 @@ void ColChatDuration::impl_outputRenderRow(ext::ostream& tos, const Contact& con
 	// output tooltip
 	if (m_bDetail)
 	{
-		static const TCHAR* szPrefixes[] = {
-			LPGENT("[Min] #{amount}"),
-			LPGENT("[Avg] #{amount}"),
-			LPGENT("[Max] #{amount}"),
-			LPGENT("[Sum] #{amount}"),
+		static const wchar_t* szPrefixes[] = {
+			LPGENW("[Min] #{amount}"),
+			LPGENW("[Avg] #{amount}"),
+			LPGENW("[Max] #{amount}"),
+			LPGENW("[Sum] #{amount}"),
 		};
 
 		ext::string strTooltip;
@@ -178,26 +176,26 @@ void ColChatDuration::impl_outputRenderRow(ext::ostream& tos, const Contact& con
 		{
 			if (i != m_nVisMode)
 			{
-				strTooltip += ext::str(ext::kformat(TranslateTS(szPrefixes[i])) % _T("#{amount}") * strAll[i]);
+				strTooltip += ext::str(ext::kformat(TranslateW(szPrefixes[i])) % L"#{amount}" * strAll[i]);
 				++nSegments;
 
 				if (nSegments < 3)
 				{
-					strTooltip += _T(" / ");
+					strTooltip += L" / ";
 				}
 			}
 		}
 
-		tos << _T("\" title=\"") << utils::htmlEscape(strTooltip) << _T("\">");
+		tos << L"\" title=\"" << utils::htmlEscape(strTooltip) << L"\">";
 	}
 	else
 	{
-		tos << _T("\">");
+		tos << L"\">";
 	}
 
 	if (m_bGraph)
 	{
-		tos << _T("<div class=\"n\">")
+		tos << L"<div class=\"n\">"
 			<< utils::htmlEscape(strAll[m_nVisMode]);
 
 		if (display == asContact || m_nVisMode != 3)
@@ -228,23 +226,23 @@ void ColChatDuration::impl_outputRenderRow(ext::ostream& tos, const Contact& con
 				
 				if (getStatistic()->newFilePNG(canvas, strFinalFile))
 				{
-					tos << _T("<br/><img src=\"") << strFinalFile << _T("\"/>");
+					tos << L"<br/><img src=\"" << strFinalFile << L"\" alt=\"\" />";
 				}
 			}
 			else
 			{
-				tos << _T("</div>")
-					<< _T("<div class=\"") << m_CSS << _T("\">")
-					<< _T("<div style=\"width: ") << barW << _T("px;\"></div>");					
+				tos << L"</div>"
+					<< L"<div class=\"" << m_CSS << L"\">"
+					<< L"<div style=\"width: " << barW << L"px;\"></div>";					
 			}
 		}
 
-		tos << _T("</div>");
+		tos << L"</div>";
 	}
 	else
 	{
 		tos << utils::htmlEscape(strAll[m_nVisMode]);
 	}
 
-	tos << _T("</td>") << ext::endl;
+	tos << L"</td>" << ext::endl;
 }

@@ -25,8 +25,6 @@ A queue to request items. One request is done at a time, REQUEST_WAIT_TIME milis
 ACKRESULT_STATUS. This thread only requests the avatar (and maybe add it to the cache queue)
 */
 
-#define REQUEST_WAIT_TIME 3000
-
 // Time to wait before re-requesting an avatar that failed
 #define REQUEST_FAIL_WAIT_TIME (3 * 60 * 60 * 1000)
 
@@ -46,7 +44,7 @@ static void RequestThread(void *vParam);
 
 extern HANDLE hShutdownEvent;
 extern int DeleteAvatar(MCONTACT hContact);
-extern void MakePathRelative(MCONTACT hContact, TCHAR *path);
+extern void MakePathRelative(MCONTACT hContact, wchar_t *path);
 int Proto_GetDelayAfterFail(const char *proto);
 BOOL Proto_IsFetchingWhenProtoNotVisibleAllowed(const char *proto);
 BOOL Proto_IsFetchingWhenContactOfflineAllowed(const char *proto);
@@ -99,7 +97,7 @@ static BOOL PollContactCanHaveAvatar(MCONTACT hContact, const char *szProto)
 // Return true if this contact has to be checked
 static BOOL PollCheckContact(MCONTACT hContact)
 {
-	return !db_get_b(hContact, "ContactPhoto", "Locked", 0) && FindAvatarInCache(hContact, FALSE, TRUE) != NULL;
+	return !db_get_b(hContact, "ContactPhoto", "Locked", 0) && FindAvatarInCache(hContact, false, true) != NULL;
 }
 
 static void QueueRemove(MCONTACT hContact)
@@ -113,7 +111,8 @@ static void QueueRemove(MCONTACT hContact)
 	}
 }
 
-static void QueueAdd(MCONTACT hContact, int waitTime)
+// Add an contact to a queue
+void QueueAdd(MCONTACT hContact, int waitTime)
 {
 	if (fei == NULL || g_shutDown)
 		return;
@@ -131,12 +130,6 @@ static void QueueAdd(MCONTACT hContact, int waitTime)
 	queue.insert(item);
 }
 
-// Add an contact to a queue
-void QueueAdd(MCONTACT hContact)
-{
-	QueueAdd(hContact, REQUEST_WAIT_TIME);
-}
-
 void ProcessAvatarInfo(MCONTACT hContact, int type, PROTO_AVATAR_INFORMATION *pai, const char *szProto)
 {
 	QueueRemove(hContact);
@@ -150,7 +143,7 @@ void ProcessAvatarInfo(MCONTACT hContact, int type, PROTO_AVATAR_INFORMATION *pa
 		db_unset(hContact, "ContactPhoto", "RFile");
 		if (!db_get_b(hContact, "ContactPhoto", "Locked", 0))
 			db_unset(hContact, "ContactPhoto", "Backup");
-		db_set_ts(hContact, "ContactPhoto", "File", pai->filename);
+		db_set_ws(hContact, "ContactPhoto", "File", pai->filename);
 		db_set_w(hContact, "ContactPhoto", "Format", pai->format);
 
 		if (pai->format == PA_FORMAT_PNG || pai->format == PA_FORMAT_JPEG
@@ -215,6 +208,8 @@ int FetchAvatarFor(MCONTACT hContact, char *szProto)
 
 static void RequestThread(void *)
 {
+	Thread_SetName("AVS: RequestThread");
+
 	while (!g_shutDown) {
 		mir_cslockfull lck(cs);
 

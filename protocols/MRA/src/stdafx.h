@@ -22,11 +22,9 @@
 
 #include <newpluginapi.h>
 #include <m_system.h>
-#include <m_system_cpp.h>
 #include <m_protocols.h>
 #include <m_clist.h>
 #include <m_cluiframes.h>
-#include <m_clui.h>
 #include <m_genmenu.h>
 #include <m_ignore.h>
 #include <m_message.h>
@@ -46,7 +44,7 @@
 #include <m_nudge.h>
 #include <m_folders.h>
 #include <m_avatars.h>
-#include <m_chat.h>
+#include <m_chat_int.h>
 #include <m_extraicons.h>
 #include <m_music.h>
 #include <m_xstatus.h>
@@ -57,7 +55,7 @@
 #define PROTO_VERSION_MINOR     21
 
 #include "resource.h"
-#include "..\xstatus_MRA\src\resource.h"
+#include "../xstatus_MRA/src/resource.h"
 
 #include "Sdk/MemoryFind.h"
 #include "Sdk/MemoryFindByte.h"
@@ -200,7 +198,7 @@ CMStringA CopyNumber(const CMStringA&);
 CMStringW DecodeXML(const CMStringW &lptszMessage);
 CMStringW EncodeXML(const CMStringW &lptszMessage);
 
-bool      IsHTTPSProxyUsed(HANDLE hConnection);
+bool      IsHTTPSProxyUsed(HNETLIBUSER hConnection);
 bool      IsContactMraProto(MCONTACT hContact);
 bool      IsEMailMR(const CMStringA& szEmail);
 bool      GetEMailFromString(const CMStringA& szBuff, CMStringA& szEmail);

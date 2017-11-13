@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-03 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -72,7 +72,7 @@ static INT_PTR CALLBACK DlgProcCluiOpts(HWND hwndDlg, UINT msg, WPARAM wParam, L
 
 		{
 			DBVARIANT dbv;
-			if (!db_get_ts(NULL, "CList", "TitleText", &dbv)) {
+			if (!db_get_ws(NULL, "CList", "TitleText", &dbv)) {
 				SetDlgItemText(hwndDlg, IDC_TITLETEXT, dbv.ptszVal);
 				db_free(&dbv);
 			}
@@ -167,9 +167,9 @@ static INT_PTR CALLBACK DlgProcCluiOpts(HWND hwndDlg, UINT msg, WPARAM wParam, L
 			db_set_b(NULL, "CLUI", "ClientAreaDrag", (BYTE)IsDlgButtonChecked(hwndDlg, IDC_CLIENTDRAG));
 			db_set_b(NULL, "CList", "Min2Tray", (BYTE)IsDlgButtonChecked(hwndDlg, IDC_MIN2TRAY));
 			{
-				TCHAR title[256];
+				wchar_t title[256];
 				GetDlgItemText(hwndDlg, IDC_TITLETEXT, title, _countof(title));
-				db_set_ts(NULL, "CList", "TitleText", title);
+				db_set_ws(NULL, "CList", "TitleText", title);
 				SetWindowText(pcli->hwndContactList, title);
 			}
 			pcli->pfnLoadCluiGlobalOpts();
@@ -310,14 +310,14 @@ int CluiOptInit(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = g_hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_CLUI);
-	odp.pszTitle = LPGEN("Window");
-	odp.pszGroup = LPGEN("Contact list");
+	odp.szTitle.a = LPGEN("Window");
+	odp.szGroup.a = LPGEN("Contact list");
 	odp.pfnDlgProc = DlgProcCluiOpts;
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);
 
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_SBAR);
-	odp.pszTitle = LPGEN("Status bar");
+	odp.szTitle.a = LPGEN("Status bar");
 	odp.pfnDlgProc = DlgProcSBarOpts;
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);

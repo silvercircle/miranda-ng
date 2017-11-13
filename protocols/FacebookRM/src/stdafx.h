@@ -3,7 +3,7 @@
 Facebook plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2009-11 Michal Zelinka, 2011-15 Robert Pösel
+Copyright © 2009-11 Michal Zelinka, 2011-17 Robert Pösel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -61,15 +61,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <m_imgsrvc.h>
 #include <m_http.h>
 #include <m_messagestate.h>
+#include <m_gui.h>
 
 class FacebookProto;
 
+#include "../../utils/std_string_utils.h"
+
 #include "constants.h"
-#include "definitions.h"
 #include "entities.h"
 #include "http.h"
+#include "http_request.h"
 #include "list.hpp"
-#include "utils.h"
 #include "client.h"
 #include "proto.h"
 #include "json.h"
@@ -79,6 +81,47 @@ class FacebookProto;
 #include "resource.h"
 #include "version.h"
 
+#include "requests/contacts.h"
+#include "requests/feeds.h"
+#include "requests/history.h"
+#include "requests/channel.h"
+#include "requests/login.h"
+#include "requests/messages.h"
+#include "requests/notifications.h"
+#include "requests/profile.h"
+#include "requests/search.h"
+#include "requests/status.h"
+#include "requests/utils.h"
+
 extern HINSTANCE g_hInstance;
 extern std::string g_strUserAgent;
 extern DWORD g_mirandaVersion;
+
+class ScopedLock
+{
+public:
+	ScopedLock(HANDLE h, int t = INFINITE) : handle_(h), timeout_(t)
+	{
+		WaitForSingleObject(handle_,timeout_);
+	}
+	~ScopedLock()
+	{
+		if(handle_)
+			ReleaseMutex(handle_);
+	}
+	void Unlock()
+	{
+		ReleaseMutex(handle_);
+		handle_ = 0;
+	}
+private:
+	HANDLE handle_;
+	int timeout_;
+};
+
+template <typename T>
+__inline static void FreeList(const LIST<T> &lst)
+{
+	for (int i = 0; i < lst.getCount(); i++)
+		mir_free(lst[i]);
+}

@@ -3,7 +3,7 @@
 Facebook plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2009-11 Michal Zelinka, 2011-15 Robert Pösel
+Copyright © 2009-11 Michal Zelinka, 2011-17 Robert Pösel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,35 +22,32 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-void updateStringUtf(FacebookProto *proto, MCONTACT hContact, const char *key, const std::string &value) {
-	bool update_required = true;
-
-	DBVARIANT dbv;
-	if (!proto->getStringUtf(hContact, key, &dbv)) {
-		update_required = mir_strcmp(dbv.pszVal, value.c_str()) != 0;
-		db_free(&dbv);
-	}
-
-	if (update_required) {
-		proto->setStringUtf(hContact, key, value.c_str());
-	}
-}
-
 void FacebookProto::SaveName(MCONTACT hContact, const facebook_user *fbu)
 {
+	if (fbu->type == CONTACT_PAGE) {
+		// Page has only nickname and no first/last names
+		std::string nick = m_pagePrefix + " " + fbu->real_name;
+
+		setStringUtf(hContact, FACEBOOK_KEY_NICK, nick.c_str());
+		delSetting(hContact, FACEBOOK_KEY_FIRST_NAME);
+		delSetting(hContact, FACEBOOK_KEY_SECOND_NAME);
+		delSetting(hContact, FACEBOOK_KEY_LAST_NAME);
+		return;
+	}
+
 	// Save nick
 	std::string nick = fbu->real_name;
-	if (!getBool(FACEBOOK_KEY_NAME_AS_NICK, 1) && !fbu->nick.empty())
+	if (!getBool(FACEBOOK_KEY_NAME_AS_NICK, DEFAULT_NAME_AS_NICK) && !fbu->nick.empty())
 		nick = fbu->nick;
 
-	updateStringUtf(this, hContact, FACEBOOK_KEY_NICK, nick);
+	setStringUtf(hContact, FACEBOOK_KEY_NICK, nick.c_str());
 
 	// Explode whole name into first, second and last name
 	std::vector<std::string> names;
 	utils::text::explode(fbu->real_name, " ", &names);
 
-	updateStringUtf(this, hContact, FACEBOOK_KEY_FIRST_NAME, names.size() > 0 ? names.front().c_str() : "");
-	updateStringUtf(this, hContact, FACEBOOK_KEY_LAST_NAME, names.size() > 1 ? names.back().c_str() : "");
+	setStringUtf(hContact, FACEBOOK_KEY_FIRST_NAME, names.size() > 0 ? names.front().c_str() : "");
+	setStringUtf(hContact, FACEBOOK_KEY_LAST_NAME, names.size() > 1 ? names.back().c_str() : "");
 
 	std::string middle;
 	if (names.size() > 2) {
@@ -61,7 +58,7 @@ void FacebookProto::SaveName(MCONTACT hContact, const facebook_user *fbu)
 			middle += names.at(i);
 		}
 	}
-	updateStringUtf(this, hContact, FACEBOOK_KEY_SECOND_NAME, middle);
+	setStringUtf(hContact, FACEBOOK_KEY_SECOND_NAME, middle.c_str());
 }
 
 bool FacebookProto::IsMyContact(MCONTACT hContact, bool include_chat)
@@ -86,7 +83,7 @@ MCONTACT FacebookProto::ChatIDToHContact(const std::string &chat_id)
 	auto it = facy.chat_id_to_hcontact.find(chat_id);
 	if (it != facy.chat_id_to_hcontact.end()) {
 		// Check if contact is still valid
-		if (CallService(MS_DB_CONTACT_IS, (WPARAM)it->second) == 1)
+		if (db_is_contact((WPARAM)it->second) == 1)
 			return it->second;
 		else
 			facy.chat_id_to_hcontact.erase(it);
@@ -118,7 +115,7 @@ MCONTACT FacebookProto::ContactIDToHContact(const std::string &user_id)
 	std::map<std::string, MCONTACT>::iterator it = facy.user_id_to_hcontact.find(user_id);
 	if (it != facy.user_id_to_hcontact.end()) {
 		// Check if contact is still valid
-		if (CallService(MS_DB_CONTACT_IS, (WPARAM)it->second) == 1)
+		if (db_is_contact((WPARAM)it->second) == 1)
 			return it->second;
 		else
 			facy.user_id_to_hcontact.erase(it);
@@ -172,37 +169,24 @@ std::string FacebookProto::ThreadIDToContactID(const std::string &thread_id)
 	// We don't have any contact with this thread_id cached, we must ask server	
 	if (isOffline())
 		return "";
-
-	std::string data = "client=mercury";
-	data += "&__user=" + facy.self_.user_id;
-	data += "&__dyn=" + facy.__dyn();
-	data += "&__req=" + facy.__req();
-	data += "&fb_dtsg=" + facy.dtsg_;
-	data += "&ttstamp=" + facy.ttstamp_;
-	data += "&__rev=" + facy.__rev();
-
-	data += "&threads[thread_ids][0]=" + utils::url::encode(thread_id);
-
+	
+	HttpRequest *request = new ThreadInfoRequest(&facy, true, thread_id.c_str());
+	http::response resp = facy.sendRequest(request);
+	
 	std::string user_id;
-	http::response resp = facy.flap(REQUEST_THREAD_INFO, &data); // NOTE: Request revised 1.9.2015
 
 	if (resp.code == HTTP_CODE_OK) {
-		CODE_BLOCK_TRY
+		try {
+			facebook_json_parser(this).parse_thread_info(&resp.data, &user_id);
 
-			facebook_json_parser* p = new facebook_json_parser(this);
-		p->parse_thread_info(&resp.data, &user_id);
-		delete p;
+			if (!user_id.empty())
+				facy.thread_id_to_user_id.insert(std::make_pair(thread_id, user_id));
 
-		if (!user_id.empty())
-			facy.thread_id_to_user_id.insert(std::make_pair(thread_id, user_id));
-
-		debugLogA("*** Thread info processed");
-
-		CODE_BLOCK_CATCH
-
+			debugLogA("*** Thread info processed");
+		} 
+		catch (const std::exception &e) {
 			debugLogA("*** Error processing thread info: %s", e.what());
-
-		CODE_BLOCK_END
+		}
 	}
 
 	return user_id;
@@ -213,60 +197,106 @@ void FacebookProto::LoadContactInfo(facebook_user* fbu)
 	if (isOffline())
 		return;
 
-	// TODO: support for more friends at once
-	std::string data = "ids[0]=" + utils::url::encode(fbu->user_id);
+	LIST<char> userIds(1);
+	userIds.insert(mir_strdup(fbu->user_id.c_str()));
 
-	data += "&__user=" + facy.self_.user_id;
-	data += "&__dyn=" + facy.__dyn();
-	data += "&__req=" + facy.__req();
-	data += "&fb_dtsg=" + facy.dtsg_;
-	data += "&ttstamp=" + facy.ttstamp_;
-	data += "&__rev=" + facy.__rev();
+	HttpRequest *request = new UserInfoRequest(&facy, userIds);
+	http::response resp = facy.sendRequest(request);
 
-	http::response resp = facy.flap(REQUEST_USER_INFO, &data); // NOTE: Request revised 1.9.2015
+	FreeList(userIds);
+	userIds.destroy();
 
 	if (resp.code == HTTP_CODE_OK) {
-		CODE_BLOCK_TRY
-
-			facebook_json_parser* p = new facebook_json_parser(this);
-			p->parse_user_info(&resp.data, fbu);
-			delete p;
-
+		try {
+			facebook_json_parser(this).parse_user_info(&resp.data, fbu);
 			debugLogA("*** Contact thread info processed");
-
-		CODE_BLOCK_CATCH
-
+		}
+		catch (const std::exception &e) {
 			debugLogA("*** Error processing contact thread info: %s", e.what());
-
-		CODE_BLOCK_END
+		}
 	}
 }
 
 void FacebookProto::LoadParticipantsNames(facebook_chatroom *fbc)
 {
-	for (std::map<std::string, std::string>::iterator it = fbc->participants.begin(); it != fbc->participants.end(); ++it) {
-		if (it->second.empty()) {
-			if (!mir_strcmp(it->first.c_str(), facy.self_.user_id.c_str()))
-				it->second = facy.self_.real_name;
+	std::vector<std::string> namelessIds;
+
+	// TODO: We could load all names from server at once by skipping this for cycle and using namelessIds as all in participants list, but we would lost our local names of our contacts. But maybe that's not a problem?
+	for (auto it = fbc->participants.begin(); it != fbc->participants.end(); ++it) {
+		const char *id = it->first.c_str();
+		chatroom_participant &user = it->second;
+
+		if (!user.loaded) {
+			if (!mir_strcmp(id, facy.self_.user_id.c_str())) {
+				user.nick = facy.self_.real_name;
+				user.role = ROLE_ME;
+				user.loaded = true;
+			}
 			else {
-				MCONTACT hContact = ContactIDToHContact(it->first.c_str());
+				MCONTACT hContact = ContactIDToHContact(id);
 				if (hContact != NULL) {
 					DBVARIANT dbv;
 					if (!getStringUtf(hContact, FACEBOOK_KEY_NICK, &dbv)) {
-						it->second = dbv.pszVal;
+						user.nick = dbv.pszVal;
 						db_free(&dbv);
 					}
-					// TODO: set correct role (friend/user) for this contact here - need rework participants map to <id, participant>
+					if (user.role == ROLE_NONE) {
+						int type = getByte(hContact, FACEBOOK_KEY_CONTACT_TYPE);
+						if (type == CONTACT_FRIEND)
+							user.role = ROLE_FRIEND;
+						else
+							user.role = ROLE_NONE;
+					}					
+					user.loaded = true;
 				}
 
-				// TODO: load unknown contact's names from server
-				if (it->second.empty())
-					it->second = it->first;
-
-				//if (isOffline())
-				//	return;
+				if (!user.loaded)
+					namelessIds.push_back(id);
 			}
 		}
+	}
+
+	// if (isOffline())
+	//	return;
+
+	if (!namelessIds.empty()) {
+		// we have some contacts without name, let's load them all from the server
+
+		LIST<char> userIds(1);
+		for (std::string::size_type i = 0; i < namelessIds.size(); i++) {
+			userIds.insert(mir_strdup(namelessIds.at(i).c_str()));
+		}
+
+		HttpRequest *request = new UserInfoRequest(&facy, userIds);
+		http::response resp = facy.sendRequest(request);
+		
+		FreeList(userIds);
+		userIds.destroy();
+
+		if (resp.code == HTTP_CODE_OK) {
+			try {
+				// TODO: We can cache these results and next time (e.g. for different chatroom) we can use that already cached names
+				facebook_json_parser(this).parse_chat_participant_names(&resp.data, &fbc->participants);
+				debugLogA("*** Participant names processed");
+			}
+			catch (const std::exception &e) {
+				debugLogA("*** Error processing participant names: %s", e.what());
+			}
+		}
+	}
+}
+
+void FacebookProto::JoinChatrooms()
+{
+	for (MCONTACT hContact = db_find_first(m_szModuleName); hContact; hContact = db_find_next(hContact, m_szModuleName)) {
+		if (!isChatRoom(hContact))
+			continue;
+		
+		// Ignore archived and unsubscribed chats
+		if (getBool(hContact, FACEBOOK_KEY_CHAT_IS_ARCHIVED, false) || !getBool(hContact, FACEBOOK_KEY_CHAT_IS_SUBSCRIBED, true))
+			continue;
+
+		OnJoinChat(hContact, NULL);
 	}
 }
 
@@ -275,81 +305,37 @@ void FacebookProto::LoadChatInfo(facebook_chatroom *fbc)
 	if (isOffline())
 		return;
 
-	std::string data = "client=mercury";
-	data += "&__user=" + facy.self_.user_id;
-	data += "&__dyn=" + facy.__dyn();
-	data += "&__req=" + facy.__req();
-	data += "&fb_dtsg=" + facy.dtsg_;
-	data += "&ttstamp=" + facy.ttstamp_;
-	data += "&__rev=" + facy.__rev();
-
-	std::string thread_id = utils::url::encode(fbc->thread_id);
-
-	// request info about thread
-	data += "&threads[thread_ids][0]=" + thread_id;
-
-	http::response resp = facy.flap(REQUEST_THREAD_INFO, &data); // NOTE: Request revised 1.9.2015
+	// request info about chat thread
+	HttpRequest *request = new ThreadInfoRequest(&facy, true, fbc->thread_id.c_str());
+	http::response resp = facy.sendRequest(request);
 
 	if (resp.code != HTTP_CODE_OK) {
 		facy.handle_error("LoadChatInfo");
 		return;
 	}
 
-	CODE_BLOCK_TRY
-
-		facebook_json_parser* p = new facebook_json_parser(this);
-		p->parse_chat_info(&resp.data, fbc);
-		delete p;
+	try {
+		facebook_json_parser(this).parse_chat_info(&resp.data, fbc);
 
 		// Load missing participants names
 		LoadParticipantsNames(fbc);
 
 		// If chat has no name, create name from participants list
 		if (fbc->chat_name.empty()) {
-			unsigned int namesUsed = 0;
-
-			for (std::map<std::string, std::string>::iterator it = fbc->participants.begin(); it != fbc->participants.end(); ++it) {
-				std::string participant = it->second;
-
-				// Ignore empty and numeric only participant names
-				if (participant.empty() || participant.find_first_not_of("0123456789") == std::string::npos)
-					continue;
-
-				if (namesUsed > 0)
-					fbc->chat_name += _T(", ");
-
-				std::tstring tname = _A2T(participant.c_str(), CP_UTF8);
-				fbc->chat_name += utils::text::prepare_name(tname, false);
-				
-				if (++namesUsed >= FACEBOOK_CHATROOM_NAMES_COUNT)
-					break;
-			}
-
-			if (fbc->participants.size() > namesUsed) {
-				TCHAR more[200];
-				mir_sntprintf(more, TranslateT("%s and more (%d)"), fbc->chat_name.c_str(), fbc->participants.size() - namesUsed);
-				fbc->chat_name = more;
-			}
-
-			// If there are no participants to create a name from, use just thread_id
-			if (fbc->chat_name.empty())
-				fbc->chat_name = std::tstring(_A2T(fbc->thread_id.c_str())); // TODO: is this needed? Isn't it showed automatically as id if there is no name?
+			std::string newName = GenerateChatName(fbc);
+			fbc->chat_name = _A2T(newName.c_str(), CP_UTF8);
 		}
 
-		//ReceiveMessages(messages, true); // don't let it fall into infinite cycle, solve it somehow...
-
 		debugLogA("*** Chat thread info processed");
-
-	CODE_BLOCK_CATCH
-
+	}
+	catch (const std::exception &e) {
 		debugLogA("*** Error processing chat thread info: %s", e.what());
-
-	CODE_BLOCK_END
+	}
 
 	facy.handle_success("LoadChatInfo");
 }
 
-MCONTACT FacebookProto::AddToContactList(facebook_user* fbu, ContactType type, bool force_add, bool add_temporarily)
+MCONTACT FacebookProto::AddToContactList(facebook_user* fbu, bool force_add, bool add_temporarily)
 {
 	// Ignore self user completely
 	if (fbu->user_id == facy.self_.user_id)
@@ -364,10 +350,10 @@ MCONTACT FacebookProto::AddToContactList(facebook_user* fbu, ContactType type, b
 	}
 
 	// Try to make a new contact
-	MCONTACT hContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD);
+	MCONTACT hContact = db_add_contact();
 
 	if (hContact && Proto_AddToContact(hContact, m_szModuleName) != 0) {
-		CallService(MS_DB_CONTACT_DELETE, hContact);
+		db_delete_contact(hContact);
 		hContact = NULL;
 	}
 
@@ -383,14 +369,14 @@ MCONTACT FacebookProto::AddToContactList(facebook_user* fbu, ContactType type, b
 
 		std::string homepage = FACEBOOK_URL_PROFILE + fbu->user_id;
 		setString(hContact, "Homepage", homepage.c_str());
-		setTString(hContact, "MirVer", fbu->getMirVer());
+		setWString(hContact, "MirVer", fbu->getMirVer());
 
 		db_unset(hContact, "CList", "MyHandle");
 
 		if (m_tszDefaultGroup)
-			db_set_ts(hContact, "CList", "Group", m_tszDefaultGroup);
+			db_set_ws(hContact, "CList", "Group", m_tszDefaultGroup);
 
-		setByte(hContact, FACEBOOK_KEY_CONTACT_TYPE, type);
+		setByte(hContact, FACEBOOK_KEY_CONTACT_TYPE, fbu->type);
 
 		if (getByte(FACEBOOK_KEY_DISABLE_STATUS_NOTIFY, 0))
 			CallService(MS_IGNORE_IGNORE, hContact, (LPARAM)IGNOREEVENT_USERONLINE);
@@ -416,8 +402,7 @@ void FacebookProto::SetAllContactStatuses(int status)
 		if (isChatRoom(hContact))
 			continue;
 
-		if (getWord(hContact, "Status", 0) != status)
-			setWord(hContact, "Status", status);
+		setWord(hContact, "Status", status);
 	}
 }
 
@@ -434,22 +419,16 @@ void FacebookProto::DeleteContactFromServer(void *data)
 	if (isOffline())
 		return;
 
-	std::string query = "norefresh=true&unref=button_dropdown&confirmed=1&__a=1";
-	query += "&fb_dtsg=" + facy.dtsg_;
-	query += "&uid=" + id;
-	query += "&__user=" + facy.self_.user_id;
-	query += "&ttstamp=" + facy.ttstamp_;
-
-	std::string get_query = "norefresh=true&unref=button_dropdown&uid=" + id;
-
-	// Get unread inbox threads
-	http::response resp = facy.flap(REQUEST_DELETE_FRIEND, &query, &get_query);
+	// Delete contact from server
+	HttpRequest *request = new DeleteFriendRequest(&facy, id.c_str());
+	http::response resp = facy.sendRequest(request);
 
 	if (resp.data.find("\"payload\":null", 0) != std::string::npos)
 	{
-		facebook_user* fbu = facy.buddies.find(id);
+		// FIXME: Remember that we deleted this contact, so we won't accidentally add him at status change
+		/* facebook_user* fbu = facy.buddies.find(id);
 		if (fbu != NULL)
-			fbu->deleted = true;
+			fbu->deleted = true; */
 
 		MCONTACT hContact = ContactIDToHContact(id);
 
@@ -460,7 +439,7 @@ void FacebookProto::DeleteContactFromServer(void *data)
 			setDword(hContact, FACEBOOK_KEY_DELETED, ::time(NULL));
 		}
 
-		NotifyEvent(m_tszUserName, TranslateT("Contact was removed from your server list."), NULL, FACEBOOK_EVENT_FRIENDSHIP);
+		NotifyEvent(m_tszUserName, TranslateT("Contact was removed from your server list."), NULL, EVENT_FRIENDSHIP);
 	}
 	else {
 		facy.client_notify(TranslateT("Error occurred when removing contact from server."));
@@ -483,13 +462,9 @@ void FacebookProto::AddContactToServer(void *data)
 	if (isOffline())
 		return;
 
-	std::string query = "action=add_friend&how_found=profile_button&ref_param=ts&outgoing_id=&unwanted=&logging_location=&no_flyout_on_click=false&ego_log_data=&lsd=";
-	query += "&fb_dtsg=" + facy.dtsg_;
-	query += "&to_friend=" + id;
-	query += "&__user=" + facy.self_.user_id;
-
-	// Get unread inbox threads
-	http::response resp = facy.flap(REQUEST_ADD_FRIEND, &query);
+	// Request friendship
+	HttpRequest *request = new AddFriendRequest(&facy, id.c_str());
+	http::response resp = facy.sendRequest(request);
 
 	if (resp.data.find("\"success\":true", 0) != std::string::npos) {
 		MCONTACT hContact = ContactIDToHContact(id);
@@ -498,7 +473,7 @@ void FacebookProto::AddContactToServer(void *data)
 		if (hContact != NULL)
 			setByte(hContact, FACEBOOK_KEY_CONTACT_TYPE, CONTACT_REQUEST);
 
-		NotifyEvent(m_tszUserName, TranslateT("Request for friendship was sent."), NULL, FACEBOOK_EVENT_FRIENDSHIP);
+		NotifyEvent(m_tszUserName, TranslateT("Request for friendship was sent."), NULL, EVENT_FRIENDSHIP);
 	}
 	else facy.client_notify(TranslateT("Error occurred when requesting friendship."));
 
@@ -523,18 +498,14 @@ void FacebookProto::ApproveContactToServer(void *data)
 	if (!id)
 		return;
 
-	std::string query = "action=confirm";
-	query += "&id=" + std::string(id);
-	query += "&__user=" + facy.self_.user_id;
-	query += "&fb_dtsg=" + facy.dtsg_;
-
-	// Ignore friendship request
-	http::response resp = facy.flap(REQUEST_FRIENDSHIP, &query);
+	// Confirm friendship request
+	HttpRequest *request = new AnswerFriendshipRequest(&facy, id, AnswerFriendshipRequest::CONFIRM);
+	http::response resp = facy.sendRequest(request);
 
 	if (resp.data.find("\"success\":true") != std::string::npos)
 	{
 		setByte(hContact, FACEBOOK_KEY_CONTACT_TYPE, CONTACT_FRIEND);
-		NotifyEvent(m_tszUserName, TranslateT("Request for friendship was accepted."), NULL, FACEBOOK_EVENT_FRIENDSHIP);
+		NotifyEvent(m_tszUserName, TranslateT("Request for friendship was accepted."), NULL, EVENT_FRIENDSHIP);
 	}
 	else facy.client_notify(TranslateT("Error occurred when accepting friendship request."));
 
@@ -559,18 +530,14 @@ void FacebookProto::CancelFriendsRequest(void *data)
 	if (!id)
 		return;
 
-	std::string query = "confirmed=1";
-	query += "&fb_dtsg=" + facy.dtsg_;
-	query += "&__user=" + facy.self_.user_id;
-	query += "&friend=" + std::string(id);
-
 	// Cancel (our) friendship request
-	http::response resp = facy.flap(REQUEST_CANCEL_FRIENDSHIP, &query);
+	HttpRequest *request = new CancelFriendshipRequest(&facy, id);
+	http::response resp = facy.sendRequest(request);
 
 	if (resp.data.find("\"payload\":null", 0) != std::string::npos)
 	{
 		setByte(hContact, FACEBOOK_KEY_CONTACT_TYPE, CONTACT_NONE);
-		NotifyEvent(m_tszUserName, TranslateT("Request for friendship was canceled."), NULL, FACEBOOK_EVENT_FRIENDSHIP);
+		NotifyEvent(m_tszUserName, TranslateT("Request for friendship was canceled."), NULL, EVENT_FRIENDSHIP);
 	}
 	else facy.client_notify(TranslateT("Error occurred when canceling friendship request."));
 
@@ -595,22 +562,18 @@ void FacebookProto::IgnoreFriendshipRequest(void *data)
 	if (!id)
 		return;
 
-	std::string query = "action=reject";
-	query += "&id=" + std::string(id);
-	query += "&__user=" + facy.self_.user_id;
-	query += "&fb_dtsg=" + facy.dtsg_;
-
 	// Ignore friendship request
-	http::response resp = facy.flap(REQUEST_FRIENDSHIP, &query);
+	HttpRequest *request = new AnswerFriendshipRequest(&facy, id, AnswerFriendshipRequest::REJECT);
+	http::response resp = facy.sendRequest(request);
 
 	if (resp.data.find("\"success\":true") != std::string::npos)
 	{
 		setByte(hContact, FACEBOOK_KEY_CONTACT_TYPE, CONTACT_NONE);
-		NotifyEvent(m_tszUserName, TranslateT("Request for friendship was ignored."), NULL, FACEBOOK_EVENT_FRIENDSHIP);
+		NotifyEvent(m_tszUserName, TranslateT("Request for friendship was ignored."), NULL, EVENT_FRIENDSHIP);
 
 		// Delete this contact, if he's temporary
 		if (db_get_b(hContact, "CList", "NotOnList", 0))
-			CallService(MS_DB_CONTACT_DELETE, hContact);
+			db_delete_contact(hContact);
 	}
 	else facy.client_notify(TranslateT("Error occurred when ignoring friendship request."));
 
@@ -632,14 +595,9 @@ void FacebookProto::SendPokeWorker(void *p)
 		return;
 	}
 
-	std::string data = "poke_target=" + *id;
-	data += "&do_confirm=0";
-	data += "&fb_dtsg=" + facy.dtsg_;
-	data += "&__user=" + facy.self_.user_id;
-	data += "&ttstamp=" + facy.ttstamp_;
-
 	// Send poke
-	http::response resp = facy.flap(REQUEST_POKE, &data);
+	HttpRequest *request = new SendPokeRequest(&facy, id->c_str());
+	http::response resp = facy.sendRequest(request);
 
 	if (resp.data.find("\"payload\":null", 0) != std::string::npos) {
 		resp.data = utils::text::slashu_to_utf8(
@@ -653,13 +611,96 @@ void FacebookProto::SendPokeWorker(void *p)
 		message = utils::text::html_entities_decode(
 			utils::text::remove_html(message));
 
-		ptrT tmessage(mir_utf8decodeT(message.c_str()));
-		NotifyEvent(m_tszUserName, tmessage, NULL, FACEBOOK_EVENT_OTHER);
+		ptrW tmessage(mir_utf8decodeW(message.c_str()));
+		NotifyEvent(m_tszUserName, tmessage, NULL, EVENT_OTHER);
 	}
 
 	facy.handle_success("SendPokeWorker");
 
 	delete id;
+}
+
+void FacebookProto::RefreshUserInfo(void *data)
+{
+	if (data == NULL)
+		return;
+
+	MCONTACT hContact = *(MCONTACT*)data;
+	delete (MCONTACT*)data;
+
+	ptrA user_id(getStringA(hContact, FACEBOOK_KEY_ID));
+	if (user_id == NULL || isOffline()) {
+		ProtoBroadcastAck(hContact, ACKTYPE_GETINFO, ACKRESULT_FAILED, (HANDLE)0, 0);
+		return;
+	}
+	
+	facebook_user fbu;
+	fbu.user_id = user_id;
+
+	LoadContactInfo(&fbu);
+
+	// TODO: don't duplicate code this way, refactor all this userInfo loading
+	// TODO: load more info about user (authorization state,...)
+
+	std::string homepage = FACEBOOK_URL_PROFILE + fbu.user_id;
+	setString(hContact, "Homepage", homepage.c_str());
+
+	if (!fbu.real_name.empty()) {
+		SaveName(hContact, &fbu);
+	}
+
+	if (fbu.gender) {
+		setByte(hContact, "Gender", fbu.gender);
+	}
+
+	int oldType = getByte(hContact, FACEBOOK_KEY_CONTACT_TYPE, CONTACT_NONE);
+	// From server we won't get request/approve types, only none, so we don't want to overwrite and lost it in that case
+	if (fbu.type != CONTACT_NONE || (oldType != CONTACT_REQUEST && oldType != CONTACT_APPROVE)) {
+		setByte(hContact, FACEBOOK_KEY_CONTACT_TYPE, fbu.type);
+	}
+
+	// If this contact is page, set it as invisible (if enabled in options)
+	if (getBool(FACEBOOK_KEY_PAGES_ALWAYS_ONLINE, DEFAULT_PAGES_ALWAYS_ONLINE) && fbu.type == CONTACT_PAGE) {
+		setWord(hContact, "Status", ID_STATUS_INVISIBLE);
+	}
+
+	CheckAvatarChange(hContact, fbu.image_url);
+
+	// Load additional info from profile page (e.g., birthday)
+	http::response resp = facy.sendRequest(new ProfileInfoRequest(facy.mbasicWorks, fbu.user_id.c_str()));
+
+	if (resp.code == HTTP_CODE_OK) {
+		std::string birthday = utils::text::source_get_value(&resp.data, 4, ">Birthday</", "<td", ">", "</td>");
+		birthday = utils::text::remove_html(birthday);
+
+		std::string::size_type pos = birthday.find(" ");
+		std::string::size_type pos2 = birthday.find(",");
+		if (pos != std::string::npos) {
+			std::string month = birthday.substr(0, pos);
+			std::string day = birthday.substr(pos + 1, pos2 != std::string::npos ? pos2 - pos - 1 : std::string::npos);
+
+			setByte(hContact, "BirthDay", atoi(day.c_str()));
+
+			const static char *months[] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+			for (int i = 0; i < 12; i++) {
+				if (!mir_strcmp(months[i], month.c_str())) {
+					setByte(hContact, "BirthMonth", i + 1);
+					break;
+				}
+			}
+
+			if (pos2 != std::string::npos) {
+				std::string year = birthday.substr(pos2 + 2, 4);
+				setWord(hContact, "BirthYear", atoi(year.c_str()));
+			}
+			else {
+				// We have to set ANY year, otherwise UserInfoEx shows completely wrong date
+				setWord(hContact, "BirthYear", 1800);
+			}
+		}
+	}
+
+	ProtoBroadcastAck(hContact, ACKTYPE_GETINFO, ACKRESULT_SUCCESS, (HANDLE)0, 0);
 }
 
 

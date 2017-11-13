@@ -30,12 +30,15 @@ var
   mi:TMO_MenuItem;
 begin
   FillChar(mi, sizeof(mi), 0);
-  mi.root      :=Menu_CreateRoot(MO_MAIN, 'Watrack', 0, 0, 0);
-  mi.hIcon     :=IcoLib_GetIcon(IcoBtnEnable,0);
-  mi.szName.a  :='Disable WATrack';
-  mi.pszService:=MS_WAT_PLUGINSTATUS;
-  mi.position  :=MenuDisablePos;
-  hMenuDisable:=Menu_AddMainMenuItem(@mi);
+  mi.root := hMenuRoot;
+  Menu_ConfigureItem(mi.root, MCI_OPT_UID, 'CAEA4B95-A873-429F-A083-BB2DF51E2E45');
+
+  SET_UID(@mi, '85F2D289-04D2-4C7F-A223-A629CED253F0');
+  mi.hIcon     := IcoLib_GetIcon(IcoBtnEnable,0);
+  mi.szName.a  := 'Disable WATrack';
+  mi.pszService:= MS_WAT_PLUGINSTATUS;
+  mi.position  := MenuDisablePos;
+  hMenuDisable := Menu_AddMainMenuItem(@mi);
 end;
 
 procedure ChangeMenuIcons(f1:cardinal);
@@ -47,7 +50,7 @@ begin
   else
     Menu_ModifyItem(hMenuDisable, 'Disable WATrack', IcoLib_GetIcon(IcoBtnEnable,0));
 
-  if ServiceExists(MS_TTB_SETBUTTONSTATE)<>0 then
+  if ServiceExists(MS_TTB_SETBUTTONSTATE) then
   begin
     if f1<>0 then
     begin
@@ -72,7 +75,7 @@ begin
   Menu_ModifyItem(hMenuDisable, nil, IcoLib_GetIcon(IcoBtnEnable,0));
 
   // toptoolbar
-  if ServiceExists(MS_TTB_GETBUTTONOPTIONS)<>0 then
+  if ServiceExists(MS_TTB_GETBUTTONOPTIONS) then
   begin
     CallService(MS_TTB_GETBUTTONOPTIONS,(ttbState shl 16)+TTBO_ALLDATA,tlparam(@ttb));
     ttb.hIconDn:=IcoLib_GetIcon(IcoBtnEnable,0);

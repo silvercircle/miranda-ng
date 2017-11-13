@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -38,25 +38,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CSSF_STR_SIZES      0x0200  // returns sizes of custom status name & message (wParam & lParam members) in chars
 #define CSSF_UNICODE        0x1000  // strings are in UCS-2
 
-#if defined(_UNICODE)
-  #define CSSF_TCHAR  CSSF_UNICODE
-#else
-  #define CSSF_TCHAR  0
-#endif
-
 typedef struct {
   int cbSize;         // size of the structure
   int flags;          // combination of CSSF_*
   int *status;        // custom status id
   union {
 	  char *pszName;    // buffer for custom status name
-	  TCHAR *ptszName;
-	  WCHAR *pwszName;
+	  wchar_t *ptszName;
+	  wchar_t *pwszName;
   };
   union {
 	  char *pszMessage; // buffer for custom status message
-	  TCHAR *ptszMessage;
-	  WCHAR *pwszMessage;
+	  wchar_t *ptszMessage;
+	  wchar_t *pwszMessage;
   };
   WPARAM *wParam;     // extra params, see flags
   LPARAM *lParam;

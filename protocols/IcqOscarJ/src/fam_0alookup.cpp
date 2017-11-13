@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2010 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -92,27 +92,27 @@ void CIcqProto::handleLookupEmailReply(BYTE* buf, size_t wLen, DWORD dwCookie)
 	debugLogA("SNAC(0x0A,0x3): Lookup reply");
 
 	sr.hdr.cbSize = sizeof(sr);
-	sr.hdr.flags = PSR_TCHAR;
-	sr.hdr.email.t = ansi_to_tchar(pCookie->szObject);
+	sr.hdr.flags = PSR_UNICODE;
+	sr.hdr.email.w = ansi_to_unicode(pCookie->szObject);
 
 	// Syntax check, read chain
 	if (wLen >= 4 && (pChain = readIntoTLVChain(&buf, wLen, 0))) {
 		for (WORD i = 1; TRUE; i++) { // collect the results
 			char *szUid = pChain->getString(0x01, i);
 			if (!szUid) break;
-			sr.hdr.id.t = ansi_to_tchar(szUid);
-			sr.hdr.nick.t = sr.hdr.id.t;
+			sr.hdr.id.w = ansi_to_unicode(szUid);
+			sr.hdr.nick.w = sr.hdr.id.w;
 			// broadcast the result
 			if (pCookie->dwMainId)
 				ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)pCookie->dwMainId, (LPARAM)&sr);
 			else
 				ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)dwCookie, (LPARAM)&sr);
-			SAFE_FREE(&sr.hdr.id.t);
+			SAFE_FREE(&sr.hdr.id.w);
 			SAFE_FREE(&szUid);
 		}
 		disposeChain(&pChain);
 	}
-	SAFE_FREE(&sr.hdr.email.t);
+	SAFE_FREE(&sr.hdr.email.w);
 
 	ReleaseLookupCookie(dwCookie, pCookie);
 }

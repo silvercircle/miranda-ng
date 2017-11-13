@@ -18,7 +18,7 @@ Boston, MA 02111-1307, USA.
 */
 
 
-#include "..\stdafx.h"
+#include "../stdafx.h"
 extern "C"
 {
 #include "iTunesCOMInterface_i.c"
@@ -26,7 +26,7 @@ extern "C"
 
 ITunes::ITunes()
 {
-	name = _T("iTunes");
+	name = L"iTunes";
 	needPoll = TRUE;
 
 	filename[0] = L'\0';
@@ -40,7 +40,7 @@ ITunes::ITunes()
 
 void ITunes::FindWindow()
 {
-	hwnd = ::FindWindow(_T("iTunes"), _T("iTunes"));
+	hwnd = ::FindWindow(L"iTunes", L"iTunes");
 }
 
 void ITunes::FreeTempData()
@@ -103,14 +103,14 @@ BOOL ITunes::FillCache()
 
 	CALL(track->get_Year(&lret));
 	if (lret > 0) {
-		listening_info.ptszYear = (TCHAR*)mir_alloc(10 * sizeof(TCHAR));
-		_itot(lret, listening_info.ptszYear, 10);
+		listening_info.ptszYear = (wchar_t*)mir_alloc(10 * sizeof(wchar_t));
+		_itow(lret, listening_info.ptszYear, 10);
 	}
 
 	CALL(track->get_TrackNumber(&lret));
 	if (lret > 0) {
-		listening_info.ptszTrack = (TCHAR*)mir_alloc(10 * sizeof(TCHAR));
-		_itot(lret, listening_info.ptszTrack, 10);
+		listening_info.ptszTrack = (wchar_t*)mir_alloc(10 * sizeof(wchar_t));
+		_itow(lret, listening_info.ptszTrack, 10);
 	}
 
 	CALL(track->get_Genre(&ret));
@@ -118,19 +118,19 @@ BOOL ITunes::FillCache()
 
 	CALL(track->get_Duration(&lret));
 	if (lret > 0) {
-		listening_info.ptszLength = (TCHAR*)mir_alloc(10 * sizeof(TCHAR));
+		listening_info.ptszLength = (wchar_t*)mir_alloc(10 * sizeof(wchar_t));
 
 		int s = lret % 60;
 		int m = (lret / 60) % 60;
 		int h = (lret / 60) / 60;
 
 		if (h > 0)
-			mir_sntprintf(listening_info.ptszLength, 9, _T("%d:%02d:%02d"), h, m, s);
+			mir_snwprintf(listening_info.ptszLength, 9, L"%d:%02d:%02d", h, m, s);
 		else
-			mir_sntprintf(listening_info.ptszLength, 9, _T("%d:%02d"), m, s);
+			mir_snwprintf(listening_info.ptszLength, 9, L"%d:%02d", m, s);
 	}
 
-	listening_info.ptszType = mir_tstrdup(_T("Music"));
+	listening_info.ptszType = mir_wstrdup(L"Music");
 
 	if (listening_info.ptszTitle == NULL) {
 		// Get from filename
@@ -140,14 +140,14 @@ BOOL ITunes::FillCache()
 		else
 			p = filename;
 
-		listening_info.ptszTitle = mir_u2t(p);
+		listening_info.ptszTitle = mir_wstrdup(p);
 
-		TCHAR *pt = _tcsrchr(listening_info.ptszTitle, '.');
+		wchar_t *pt = wcsrchr(listening_info.ptszTitle, '.');
 		if (pt != NULL)
-			*p = _T('\0');
+			*p = '\0';
 	}
 
-	listening_info.ptszPlayer = mir_tstrdup(name);
+	listening_info.ptszPlayer = mir_wstrdup(name);
 
 	listening_info.cbSize = sizeof(listening_info);
 	listening_info.dwFlags = LTI_TCHAR;

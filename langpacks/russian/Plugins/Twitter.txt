@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Twitter.dll
 ;  Plugin: Twitter protocol
-;  Version: 1.3.0.1
+;  Version: 1.3.0.2
 ;  Authors: dentist, omniwolf, Thief
 ;============================================================
 [Twitter protocol support for Miranda NG.]
@@ -16,7 +16,7 @@
 [Username:]
 Пользователь:
 [<Sign in to link your Twitter account>]
-<Войдите, чтобы подключить учётную запись Twitter>
+<Подключитесь, чтобы войти в вашу учётную запись Twitter>
 [Send Tweet]
 Отправить твит
 [Send]
@@ -26,7 +26,7 @@
 [Miscellaneous options]
 Другие параметры
 [Use group chat for Twitter feed]
-Чат для отображения сообщений
+Отображать сообщения в виде группового чата
 [Base URL:]
 URL:
 [Polling rate:]
@@ -35,8 +35,8 @@ URL:
 каждые
 [sec]
 с
-[Please cycle your connection for these changes to take effect]
-Переподключитесь, чтобы изменения вступили в силу
+[These changes will take effect the next time you connect to the Twitter network.]
+Эти изменения вступят в силу при следующем подключении к сети Twitter.
 [Treat tweets as messages]
 Твиты в виде сообщений
 [Enable popup notifications for tweets]
@@ -68,9 +68,15 @@ URL:
 [Enter Twitter PIN]
 Введите PIN-код из Twitter-а
 [Enter the PIN provided by Twitter to complete your sign in. This is a one time process until you recreate your Miranda Twitter account.]
-Введите PIN-код, предоставленный Twitter-ом, чтобы завершить процесс входа. Это требуется сделать один раз, пока вы не пересоздадите вашу учётную запись Twitter в Miranda NG.
+Введите PIN-код, предоставленный Twitter-ом, чтобы завершить процесс входа. Это нужно сделать один раз, пока вы не пересоздадите свою учётную запись в Miranda NG.
+[Normal]
+Обычный
 [OAuth variables are out of sequence, they have been reset. Please reconnect and reauthorize Miranda to Twitter.com (do the PIN stuff again)]
 Переменные OAuth потеряли последовательность и были обнулены. Пожалуйста, подсоединитесь снова и авторизуйте Miranda на Twitter.com (ещё раз с PIN-кодом)
+[Failed to get Twitter Access Tokens, please go offline and try again. If this keeps happening, check your internet connection.]
+Не удалось получить токены доступа Twitter, отключитесь и попробуйте снова. Если это будет повторяться, проверьте соединение с Интернетом.
+[You're missing the Nick key in the database. This isn't really a big deal, but you'll notice some minor quirks (self contact in list, no group chat outgoing message highlighting, etc). To fix it either add it manually or recreate your Miranda Twitter account]
+В базе отсутствует настройка "Nick". Это не страшно, но чревато некоторыми ошибками (вы заметите самого себя в списке, отсутствие подсветки исходящих сообщений в групповых чатах). Чтобы это исправить, добавьте недостающую настройку самостоятельно или пересоздайте свою учётную запись в Miranda NG
 [Send Tweet...]
 Отправить твит...
 [Network]
@@ -90,7 +96,7 @@ Twitter (аватары)
 [%s Protocol]
 Протокол %s
 [Don't be crazy! Everyone knows the max tweet size is 140, and you're trying to fit %d chars in there?]
-Все знают, что максимальная длина твита - 140 символов, почему вы пытаетесь запихнуть сюда %d символов?
+Все знают, что максимальная длина твита составляет 140 символов, почему вы пытаетесь втиснуть сюда %d?
 [Twitter Icon]
 Значок Twitter
 [Tweet]
@@ -99,5 +105,9 @@ Twitter (аватары)
 Ответить на твит
 [Visit Homepage]
 Сайт
+[First tweet from new contact]
+Первый твит от нового контакта
+[New tweet]
+Новый твит
 [Reply...]
 Ответ...

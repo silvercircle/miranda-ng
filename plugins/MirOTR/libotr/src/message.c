@@ -1,6 +1,6 @@
 /*
  *  Off-the-Record Messaging library
- *  Copyright (C) 2004-2014  Ian Goldberg, David Goulet, Rob Smits,
+ *  Copyright (C) 2004-2015  Ian Goldberg, David Goulet, Rob Smits,
  *                           Chris Alexander, Willy Lew, Lisa Du,
  *                           Nikita Borisov
  *                           <otr@cypherpunks.ca>
@@ -467,7 +467,7 @@ static gcry_error_t send_or_error_auth(const OtrlMessageAppOps *ops,
     if (!err) {
 	const char *msg = context->auth.lastauthmsg;
 	if (msg && *msg) {
-	    time_t now;
+		time_t now;
 	    fragment_and_send(ops, opdata, context, msg,
 		    OTRL_FRAGMENT_SEND_ALL, NULL);
 	    now = time(NULL);
@@ -1506,7 +1506,7 @@ int otrl_message_receiving(OtrlUserState us, const OtrlMessageAppOps *ops,
 			    unsigned char* nextmsg;
 			    int nextmsglen;
 			    OtrlTLV *sendtlv;
-			    char *sendsmp;
+			    char *sendsmp = NULL;
 			    otrl_sm_step3(context->smstate, tlv->data,
 				    tlv->len, &nextmsg, &nextmsglen);
 
@@ -1561,7 +1561,7 @@ int otrl_message_receiving(OtrlUserState us, const OtrlMessageAppOps *ops,
 			    unsigned char* nextmsg;
 			    int nextmsglen;
 			    OtrlTLV *sendtlv;
-			    char *sendsmp;
+			    char *sendsmp = NULL;
 			    err = otrl_sm_step4(context->smstate, tlv->data,
 				    tlv->len, &nextmsg, &nextmsglen);
 			    /* Set trust level based on result */

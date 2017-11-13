@@ -2,7 +2,7 @@
 
 int hLangpack = 0;
 HINSTANCE hInst;
-HANDLE hServiceOpenFolder, hButtonTopToolbar;
+HANDLE hButtonTopToolbar;
 
 PLUGININFOEX pluginInfoEx =
 {
@@ -29,16 +29,16 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD, LPVOID)
 
 static INT_PTR MenuCommand_OpenFolder(WPARAM, LPARAM)
 {
-	TCHAR szMirandaPath[MAX_PATH];
+	wchar_t szMirandaPath[MAX_PATH];
 	GetModuleFileName(GetModuleHandle(NULL), szMirandaPath, _countof(szMirandaPath));
-	TCHAR *p = _tcsrchr(szMirandaPath, '\\');
+	wchar_t *p = wcsrchr(szMirandaPath, '\\');
 	if (p)
 		p[1] = 0;
 
 	if ( GetAsyncKeyState( VK_CONTROL ) & 0x8000 )
-		ShellExecute(0, _T("explore"), szMirandaPath, 0, 0, SW_SHOWNORMAL);
+		ShellExecute(0, L"explore", szMirandaPath, 0, 0, SW_SHOWNORMAL);
 	else
-		ShellExecute(0, _T("open"), szMirandaPath, 0, 0, SW_SHOWNORMAL);
+		ShellExecute(0, L"open", szMirandaPath, 0, 0, SW_SHOWNORMAL);
 
 	return 0;
 }
@@ -79,7 +79,7 @@ extern "C" int __declspec(dllexport) Load()
 {
 	mir_getLP(&pluginInfoEx);
 
-	hServiceOpenFolder = CreateServiceFunction(MS_OPENFOLDER_OPEN, MenuCommand_OpenFolder);
+	CreateServiceFunction(MS_OPENFOLDER_OPEN, MenuCommand_OpenFolder);
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, ModulesLoaded);
 
@@ -87,12 +87,11 @@ extern "C" int __declspec(dllexport) Load()
 	Icon_Register(hInst, LPGEN("Open Folder"), &icon, 1, OPENFOLDER_MODULE_NAME);
 	
 	// hotkeys service (0.8+)
-	HOTKEYDESC hotkey = { 0 };
-	hotkey.cbSize = sizeof(hotkey);
-	hotkey.dwFlags = HKD_TCHAR;
+	HOTKEYDESC hotkey = {};
+	hotkey.dwFlags = HKD_UNICODE;
 	hotkey.pszName = "Open Folder";
-	hotkey.ptszDescription = LPGENT("Open Folder");
-	hotkey.ptszSection = LPGENT("Main");
+	hotkey.szDescription.w = LPGENW("Open Folder");
+	hotkey.szSection.w = LPGENW("Main");
 	hotkey.pszService = MS_OPENFOLDER_OPEN;
 	hotkey.DefHotKey = MAKEWORD( 'O', HOTKEYF_SHIFT | HOTKEYF_ALT );
 	Hotkey_Register(&hotkey);
@@ -100,9 +99,9 @@ extern "C" int __declspec(dllexport) Load()
 	CMenuItem mi;
 	SET_UID(mi, 0xbba6ad01, 0x755a, 0x4d01, 0x94, 0xee, 0x57, 0x84, 0x18, 0x70, 0x77, 0x4f);
 	mi.position = 0x7FFFFFFF;
-	mi.flags = CMIF_TCHAR;
+	mi.flags = CMIF_UNICODE;
 	mi.hIcolibItem = icon.hIcolib;
-	mi.name.t = LPGENT("Open Folder");
+	mi.name.w = LPGENW("Open Folder");
 	mi.pszService = MS_OPENFOLDER_OPEN;
 	Menu_AddMainMenuItem(&mi);
 
@@ -113,6 +112,5 @@ extern "C" int __declspec(dllexport) Load()
 
 extern "C" int __declspec(dllexport) Unload()
 {
-	DestroyServiceFunction(hServiceOpenFolder);
 	return 0;
 }

@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Jabber.dll
 ;  Plugin: Jabber protocol
-;  Version: 0.11.0.4
+;  Version: 0.11.0.5
 ;  Authors: George Hazan, Maxim Mluhov, Victor Pavlychko, Artem Shpynov, Michael Stepura
 ;============================================================
 [Jabber (XMPP) protocol support for Miranda NG.]
@@ -54,7 +54,7 @@ Active Directory логін
 [Priority:]
 Пріоритет:
 [Use hostname as resource]
-Ім'я хоста в якості ресурсу
+Ім'я хоста як ресурс
 [List of public servers]
 Публічні сервери
 [Port:]
@@ -323,14 +323,6 @@ JID / URL:
 Оновити
 [Node:]
 Вузол:
-[Account type:]
-Тип обл. запису:
-[Login server:]
-Сервер:
-[Register account now]
-Зареєструвати обл. запис
-[Jabber Account Information:]
-Інформація обл. запису Jabber:
 [Member Information]
 Права доступу
 [Role:]
@@ -433,6 +425,8 @@ XML-консоль
 Чат-кімнати
 [Links]
 Посилання
+[Bytestream Proxy not available]
+Bytestream Proxy недоступний
 [Supports Service Discovery info]
 Інформація про служби
 [Supports Service Discovery items list]
@@ -462,7 +456,7 @@ XML-консоль
 [Can report own version information]
 Повідомлення версій
 [Can report local time of the user]
-Повідомлення локального часу
+Повідомлення місцевого часу
 [Can send and receive ping requests]
 Прийом і відправка пінгів (ping)
 [Supports data forms]
@@ -521,6 +515,8 @@ xHTML-формат повідомлень чату
 Підтримка Roster Exchange
 [Supports direct chat invitations (XEP-0249)]
 Підтримка прямих запрошень до чату (XEP-0249)
+[Receives information about OMEMO devices]
+Прийом інформації про пристрої OMEMO
 [Enter the text you see]
 Введіть текст, який бачите
 [None]
@@ -605,9 +601,9 @@ xHTML-формат повідомлень чату
 В мережі
 [Away]
 Відсутній
-[NA]
+[Not available]
 Недоступний
-[DND]
+[Do not disturb]
 Не турбувати
 [Free for chat]
 Готовий до чату
@@ -682,7 +678,7 @@ xHTML-формат повідомлень чату
 [Jabber Error]
 Помилка Jabber
 [Outgoing XML parsing error]
-Помилка синтаксичного аналізу вихідного XML
+Помилка аналізу вихідного XML
 [request timeout.]
 таймаут запиту.
 [Node hierarchy]
@@ -764,7 +760,7 @@ xHTML-формат повідомлень чату
 [Please wait for room list to download.]
 Будь ласка, зачекайте поки список кімнат завантажиться.
 [Please specify group chat directory first.]
-Будь ласка, вкажіть групу для чат-кімнат.
+Будь ласка, вкажіть спочатку директорію чатів.
 [Bookmarks...]
 Закладки...
 [Change nickname in <%s>]
@@ -799,6 +795,8 @@ xHTML-формат повідомлень чату
 Команда AdHoc
 [OpenID Request]
 Запит OpenID
+[Add contact]
+Додати контакт
 [Discovery succeeded]
 Визначення завершено
 [Discovery failed]
@@ -951,8 +949,6 @@ xHTML-формат повідомлень чату
 Найвищий пріоритет (за вибором сервера)
 [Status Message]
 Статусне повідомлення
-[CHAT plugin is required for conferences. Install it before chatting]
-Для конференцій потрібен плагін StdChat або TabSRMM.
 [To]
 До
 [From]
@@ -1415,6 +1411,8 @@ xHTML-формат повідомлень чату
 Дозволяти передачу файлів тільки всередині потоку (не розкривати свій IP)
 [Accept HTTP Authentication requests (XEP-0070)]
 Приймати запити аутентифікації HTTP (XEP-0070)
+[Use OMEMO encryption for messages if possible (Experimental! WIP!)]
+Шифрувати повідомлення за допомогою OMEMO (якщо можливо) (Експериментально!)
 [General]
 Загальне
 [Autoaccept multiuser chat invitations]
@@ -1472,9 +1470,9 @@ Google Hangouts
 [Odnoklassniki]
 Однокласники
 [Some changes will take effect the next time you connect to the Jabber network.]
-Деякі зміни наберуть чинності при наступному вході до мережі.
+Деякі зміни наберуть чинності при наступному вході в мережу Jabber.
 [Set New Password for %s@%S]
-Установка нового паролю для %s@%S
+Установка нового пароля для %s@%S
 [New password does not match.]
 Новий пароль не збігається
 [Current password is incorrect.]
@@ -1627,10 +1625,8 @@ Google Hangouts
 Встановити статус і статусне повідомлення
 [Status]
 Статус
-[Extended Away (N/A)]
-Недоступний (Н/Д)
-[Do Not Disturb]
-Не турбувати
+[Extended away (Not available)]
+Недоступний
 [Invisible]
 Невидимий
 [Offline]
@@ -1847,6 +1843,8 @@ Jabber vCard: редагування телефону
 Нотатка
 [%s connection]
 З'єднання %s
+[<advanced status slot>]
+<розширений статус>
 [Afraid]
 Переляканий
 [Amazed]
@@ -2183,283 +2181,7 @@ Jabber vCard: редагування телефону
 Настрої
 [Activities]
 Заняття
-[I'm happy Miranda NG user. Get it at http://miranda-ng.org/.]
-Я використовую Miranda NG (http://miranda-ng.org/)
+[I'm happy Miranda NG user. Get it at https://miranda-ng.org/.]
+Я використовую Miranda NG (https://miranda-ng.org/)
 [/me slaps %s around a bit with a large trout]
 /me торохнув %s веслом по голові
-[One or more addresses for communication related to abusive traffic]
-Одна або кілька адрес для зв'язку з питань скарг
-[One or more addresses for customer feedback]
-Одна або кілька адрес для відгуків клієнтів
-[One or more addresses for communication related to sales and marketing]
-Одна або кілька адрес для зв'язку з питать продажів і маркетингу
-[One or more addresses for communication related to security concerns]
-Одна або кілька адрес для зв'язку з питать проблем безпеки
-[One or more addresses for customer support]
-Одна або кілька адрес для підтримки користувачів
-[The Jabber ID of a single entity to which an operation applies]
-JID особи, до якої застосовується операція
-[The Jabber ID of one or more entities to which an operation applies]
-JID однієї або декількох осіб, до яких застосовується операція
-[The Jabber IDs associated with active sessions]
-JID, пов'язані з активною сесією
-[The number of online entities that are active]
-Кількість осіб онлайн, які є активними
-[A list of entities with administrative privileges]
-Список осіб з правами адміністратора
-[The text of an announcement to be sent to active users or all users]
-Текст повідомлення, яке буде відправлено активним користувачам або всім користувачам
-[A list of entities with whom communication is blocked]
-Список осіб, спілкування з якими блокується
-[The number of seconds to delay before applying a change]
-Кількість секунд затримки перед тим, як застосувати зміни
-[The Jabber IDs that have been disabled]
-JID, які були відключені
-[The number of disabled entities]
-Кількість відключених осіб
-[The email address for a user]
-Адреса E-mail користувача
-[The given (first) name of a user]
-Ім'я користувача
-[The number of online entities that are idle]
-Кількість осіб онлайн, які перебувають у режимі очікування
-[The IP addresses of an account's online sessions]
-IP-адреси онлайн-сесій облікового запису
-[The last login time (per XEP-0082) of a user]
-Час останного входу користувача в систему за XEP-0082
-[The number of logins per minute for an account]
-Кількість входів на хвилину для облікового запису
-[The maximum number of items associated with a search or list]
-Максимальна кількість елементів, пов'язаних з пошуком або списком
-[The text of a message of the day]
-Текст повідомлення
-[The names of an account's online sessions]
-Імена онлайн-сесій облікового запису
-[The Jabber IDs associated with online users]
-JID користувачів онлайн
-[The number of online entities]
-Кількість осіб онлайн
-[The password for an account]
-Пароль
-[Password verification]
-Перевірка пароля
-[A list of registered entities]
-Список зареєстрованих осіб
-[The number of registered entities]
-Кількість зареєстрованих суб'єктів
-[Number of roster items for an account]
-Кількість елементів ростеру для облікового запису
-[The number of stanzas being sent per second by an account]
-Кількість подій, що відправляються з облікового запису за секунду
-[The family (last) name of a user]
-Прізвище
-[The text of a welcome message]
-Текст вітального повідомлення
-[A list of entities with whom communication is allowed]
-Список осіб, з якими дозволено спілкування
-[First Name]
-Ім'я
-[Last Name]
-Прізвище
-[Desired Nickname]
-Нік
-[Your URL]
-Ваша сторінка
-[Email Address]
-Пошта
-[FAQ Entry]
-Запитання та відповіді
-[Whether to allow occupants to invite others]
-Дозволити учасникам запрошувати інших
-[Whether to allow occupants to change subject]
-Дозволити учасникам змінювати тему
-[Whether to enable logging of room conversations]
-Включити запис журналу чат-кімнати
-[Natural language for room discussions]
-Мова спілкування в чат-кімнаті
-[Maximum number of room occupants]
-Максимальна кількість учасників чат-кімнати
-[Whether to make room members-only]
-Тільки для учасників
-[Whether to make room moderated]
-Модерувати чат-кімнату
-[Whether a password is required to enter]
-Вхід з паролем
-[Whether to make room persistent]
-Зробити кімнату постійною
-[Roles for which presence is broadcast]
-Ролі, для яких транслюється присутність
-[Whether to allow public searching for room]
-Дозволити публічний пошук чат-кімнати
-[Full list of room admins]
-Список адміністраторів чат-кімнати
-[Short description of room]
-Короткий опис чат-кімнати
-[Natural-language room name]
-Назва чат-кімнати мовою, встановленою для спілкування
-[Full list of room owners]
-Список власників чат-кімнати
-[The room password]
-Пароль чат-кімнати
-[Affiliations that may discover real JIDs of occupants]
-Ролі, які можуть бачити реальні JID учасників
-[Precondition: node configuration with the specified access model]
-Умова: конфігурація вузла із зазначеною моделлю доступу
-[Whether to allow the subscription]
-Дозволити підписку
-[The SubID of the subscription]
-SubID підписки
-[The NodeID of the relevant node]
-NodeID відповідного вузла
-[The address (JID) of the subscriber]
-JID абонента
-[Whether an entity wants to receive or disable notifications]
-Особа бажає отримувати або відключити сповіщення
-[Whether an entity wants to receive digests (aggregations) of notifications or all notifications individually]
-Особа бажає отримувати дайджест сповіщення або всі сповіщення індивідуально
-[The minimum number of milliseconds between sending any two notification digests]
-Мінімальний час (мс) між відправленнями сповіщень або дайджестів
-[The date and time at which a leased subscription will end or has ended]
-Дата й час, коли обрана підписка закінчиться або закінчилась
-[Whether an entity wants to receive an XMPP message body in addition to the payload format]
-Особа бажає отримувати XMPP-повідомлення на додачу до формату корисного навантаження
-[The presence states for which an entity wants to receive notifications]
-Стани присутності, для яких особа бажає отримувати сповіщення
-[Who may subscribe and retrieve items]
-Хто може підписуватися і отримувати елементи
-[The URL of an XSL transformation which can be applied to payloads in order to generate an appropriate message body element.]
-Адреса перетвореного XSL, яка може бути застосована до корисного навантаження, щоб генерувати відповідний елемент у повідомленні.
-[The collection with which a node is affiliated]
-Колекція, для якої вузол є афілійованим
-[The URL of an XSL transformation which can be applied to the payload format in order to generate a valid Data Forms result that the client could display using a generic Data Forms rendering engine]
-Адреси перетворених XSL, які можуть бути застосовані як корисне навантаження для того, щоб створити дійсні форми даних, які клієнт може відображати за допомогою універсальної системи рендерингу даних
-[Whether to deliver payloads with event notifications]
-Доставка корисного навантаження з сповіщенням про події
-[Whether owners or publisher should receive replies to items]
-Власники або видавці повинні отримувати відповіді до статей
-[Who may associate leaf nodes with a collection]
-Хто може пов'язати кінцеві вузли в колекцію
-[The list of JIDs that may associated leaf nodes with a collection]
-Список JID, що можуть пов'язати кінцеві вузли в колекцію
-[The child nodes (leaf or collection) associated with a collection]
-Дочірні вузли (листя або колекції), пов'язані з колекцією
-[The maximum number of child nodes that can be associated with a collection]
-Максимальна кількість дочірніх вузлів, які можуть бути пов'язані з колекцією
-[The maximum number of items to persist]
-Максимальна кількість елементів для збереження
-[The maximum payload size in bytes]
-Максимальний розмір даних (у байтах)
-[Whether the node is a leaf (default) or a collection]
-Вузол є листом (за замовчанням) чи колекцією
-[Whether to notify subscribers when the node configuration changes]
-Інформувати абонентів про зміну конфігурації вузла
-[Whether to notify subscribers when the node is deleted]
-Інформувати абонентів про видалення вузла
-[Whether to notify subscribers when items are removed from the node]
-Інформувати абонентів про видалення елементів з вузла
-[Whether to persist items to storage]
-Зберігати елементи на накопичувач
-[Whether to deliver notifications to available users only]
-Доставляти сповіщення наявним користувачам
-[The publisher model]
-Модель видання
-[The specific multi-user chat rooms to specify for replyroom]
-MUC, що вказує на replyroom
-[The specific JID(s) to specify for replyto]
-JID, що вказує на replyto
-[The roster group(s) allowed to subscribe and retrieve items]
-Групи ростеру, яким дозволяється підписатися і отримувати елементи
-[Whether to send items to new subscribers]
-Надсилати елементи новим абонентам
-[Whether to allow subscriptions]
-Дозволити підписку
-[A friendly name for the node]
-Ім'я
-[The type of node data, usually specified by the namespace of the payload (if any); MAY be list-single rather than text-single]
-Тип даних вузла, зазвичай визначається простір імен корисного навантаження (при наявності); МОЖЕ бути тільки список або тільки текст
-[The JIDs of those to contact with questions]
-JID для запитань
-[The date and time when the node was created]
-Дата і час створення вузла
-[The JID of the node creator]
-JID автора
-[A description of the node]
-Опис
-[The default language of the node]
-Мова за замовчанням
-[The number of subscribers to the node]
-Кількість абонентів
-[The JIDs of those with an affiliation of owner]
-JID власників
-[The JIDs of those with an affiliation of publisher]
-JID видавців
-[The name of the node]
-Ім'я
-[Payload type]
-Тип даних
-[Whether to automatically authorize subscription requests]
-Автоматично приймати запити підписки
-[Whether to automatically accept file transfers]
-Автоматично приймати передачі файлів
-[Whether to automatically open new messages]
-Автоматично відкривати нові повідомлення
-[Whether to automatically go offline when idle]
-Автоматично перейти в "не в мережі" в режимі очікування
-[Whether to play sounds]
-Грати звуки
-[A list of pending file transfers]
-Список файлів, які очікують прийому
-[A list of joined group chat rooms]
-Список тих, хто приєднався до чату
-[A presence or availability status]
-Присутність і статус присутності
-[The status message text]
-Текст статусного повідомлення
-[The new priority for the client]
-Новий пріоритет
-[Account name associated with the user]
-Ім'я облікового запису, пов'язаного з цим користувачем
-[Familiar name of the user]
-Близький друг
-[Password or secret for the user]
-Пароль або ключ користувача
-[Full name of the user]
-Повне ім'я
-[First name or given name of the user]
-Ім'я
-[Last name, surname, or family name of the user]
-Прізвище
-[Email address of the user]
-Пошта
-[Street portion of a physical or mailing address]
-Вулиця
-[Locality portion of a physical or mailing address]
-Населений пункт
-[Region portion of a physical or mailing address]
-Регіон
-[Postal code portion of a physical or mailing address]
-Поштовий індекс
-[Family Name]
-Прізвище
-[Whether to accept the invitation]
-Приймати запрошення
-[Another resource with which to continue the session]
-Інший ресурс, з якого продовжено сеанс
-[Disclosure of content, decryption keys or identities]
-Розкриття вмісту, дешифрування ключів або тотожностей
-[Whether may send Chat State Notifications per XEP-0085]
-Надсилати сповіщення стану чат-кімнати за XEP-0085
-[Whether allowed to use XHTML-IM formatting per XEP-0071]
-Дозволити використання форматування XHTML-IM за XEP-0071
-[Primary written language of the chat (each value appears in order of preference and conforms to RFC 4646 and the IANA registry)]
-Основна мова чату (кожне значення з'являється в порядку переваги і відповідає RFC 4646 та реєстру IANA)
-[Whether allowed to log messages (i.e., whether Off-The-Record mode is required)]
-Дозволити лог повідомлень (тобто, Off-The-Record режиму не потрібно)
-[Whether to renegotiate the session]
-Переглянути сесії
-[Minimum security level]
-Мінімальний рівень безпеки
-[Whether to terminate the session]
-Слід припинити сеанс
-[Whether to enable Message Receipts per XEP-0184]
-Увімкнути сповіщення про доставку повідомлень за XEP-0184

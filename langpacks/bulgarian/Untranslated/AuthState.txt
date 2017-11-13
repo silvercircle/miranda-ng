@@ -1,2 +1,4 @@
-﻿[Auth & Grant]
-[Auth State]
+﻿[Show Request icon]
+[Request]
+[Request & Grant]
+[Auth state]

@@ -16,8 +16,6 @@ Aktivieren
 Servername
 [Internet address]
 Internetadresse
-[SSL]
-SSL
 [Port range]
 Portbereich
 [Password]
@@ -105,7 +103,7 @@ Server
 [User]
 Benutzer
 [Away Info]
-Awayinfo
+Abwesenheitsinfo
 [The server returned the following information. Please note that this information might be misleading and/or falsified]
 Der Server liefert die folgenden Informationen. Beachten Sie aber, dass diese verfälscht oder nicht richtig sein könnten.
 [CTCP information]
@@ -258,10 +256,6 @@ Querys
 Nachrichten
 [Notices]
 Notizen
-[CTCP]
-CTCP
-[DCC]
-DCC
 [Ignore mask (nick!user@host)]
 Ignoriermaske (nick!user@host)
 [Network (*)]
@@ -308,10 +302,24 @@ DCC-FEHLER: Fehlerhafte CTCP-Anfrage von %s [%s]
 DCC: Anfrage Dateiübertragungsbericht von %s abgelehnt
 [CTCP %s requested by %s]
 CTCP %s Anfrage von %s
+[%u second]
+%u Sekunde
+[%u seconds]
+%u Sekunden
 [CTCP PING reply from %s: %u sec(s)]
 CTCP-PING-Antwort von %s: %u Sekunde(n)
 [CTCP %s reply from %s: %s]
 CTCP %s Antwort von %s: %s
+[Owner]
+Inhaber
+[Admin]
+Administrator
+[Op]
+Op
+[Halfop]
+Halfop
+[Voice]
+Stimme
 [Downloading list (%u%%) - %u channels]
 Laden der Liste (%u%%) - %u Channels
 [Downloading list - %u channels]
@@ -332,10 +340,10 @@ Fertig: %u Channels
 Online seit %s, untätig %s
 [Change nickname]
 Nickname ändern
-[IRC error]
-IRC-Hinweis
 [Unknown]
 Unbekannt
+[IRC error]
+IRC-Fehler
 [Please enter the hostmask (nick!user@host)\nNOTE! Contacts on your contact list are never ignored]
 Bitte Hostmaske eingeben (nick!user@host)\nKontakte auf der Kontaktliste werden nie ignoriert
 [Ignore]
@@ -506,11 +514,11 @@ Server bearbeiten
 Ereignis: Verfügbar
 [Event: Away]
 Ereignis: Abwesend
-[Event: N/A]
+[Event: Not available]
 Ereignis: Außer Haus
 [Event: Occupied]
 Ereignis: Beschäftigt
-[Event: DND]
+[Event: Do not disturb]
 Ereignis: Bitte nicht stören
 [Event: Free for chat]
 Ereignis: Für Chat bereit
@@ -584,8 +592,6 @@ Unterbrochen
 Benutzer &ignorieren
 [%s (%s) is requesting a client-to-client chat connection.]
 %s (%s) bittet um eine Client-to-Client-Chatverbindung.
-[Please enter the hostmask (nick!user@host) \nNOTE! Contacts on your contact list are never ignored]
-Bitte geben Sie eine Hostmaske (nick!user@host) ein.\nHinweis: Kontakte in Ihrer Kontaktliste werden niemals ignoriert!
 [Join channel]
 Channel betreten
 [Please enter a channel to join]
@@ -646,8 +652,6 @@ Bitte die Notiz hier eingeben.
 Bitte den Namen des Channels hier eingeben.
 [Invite to channel]
 In einen anderen Channel einladen
-[NickServ]
-NickServ
 [Register nick]
 Nick registrieren
 [Auth nick]

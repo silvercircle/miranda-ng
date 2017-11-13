@@ -69,9 +69,8 @@ int statusicon_nr[9];
 HIMAGELIST AddStatusIconsToImageList(const char *szProto, int status_flags)
 {
 	int num_icons = 1;
-	int i;
 
-	for (i = 0; i < 9; ++i)
+	for (int i = 0; i < 9; ++i)
 		if (Proto_Status2Flag(ID_STATUS_ONLINE + i) & status_flags)
 			num_icons++;
 
@@ -82,7 +81,7 @@ HIMAGELIST AddStatusIconsToImageList(const char *szProto, int status_flags)
 	statusicon_nr[0] = 0;
 
 	int j = 1;
-	for (i = 0; i < 9; ++i) {
+	for (int i = 0; i < 9; ++i) {
 		if (Proto_Status2Flag(ID_STATUS_ONLINE + i) & status_flags) {
 			hicon = Skin_LoadProtoIcon(szProto, ID_STATUS_ONLINE + i);
 			ImageList_AddIcon(himlIcons, hicon);
@@ -100,7 +99,7 @@ HIMAGELIST AddStatusIconsToImageList(const char *szProto, int status_flags)
 HWND WINAPI CreateStatusComboBoxEx(HWND hwndDlg, struct MsgBoxData *data)
 {
 	int j = 0, cur_sel = 0;
-	TCHAR *status_desc;
+	wchar_t *status_desc;
 
 	if (!(data->m_iDlgFlags & DLG_SHOW_STATUS))
 		return NULL;
@@ -116,9 +115,9 @@ HWND WINAPI CreateStatusComboBoxEx(HWND hwndDlg, struct MsgBoxData *data)
 		cbei.mask = CBEIF_LPARAM | CBEIF_TEXT | CBEIF_IMAGE | CBEIF_SELECTEDIMAGE;
 
 	if (data->m_bOnStartup)
-		status_desc = (TCHAR *)TranslateT("<startup>");
+		status_desc = (wchar_t *)TranslateT("<startup>");
 	else
-		status_desc = (TCHAR *)TranslateT("<current>");
+		status_desc = (wchar_t *)TranslateT("<current>");
 	cbei.iItem = j;
 	cbei.pszText = (LPTSTR)status_desc;
 
@@ -172,7 +171,7 @@ HWND WINAPI CreateStatusComboBoxEx(HWND hwndDlg, struct MsgBoxData *data)
 		int profileCount = (int)CallService(MS_SS_GETPROFILECOUNT, (WPARAM)&defaultProfile, 0);
 
 		for (int i = 0; i < profileCount; ++i) {
-			TCHAR tszProfileName[128];
+			wchar_t tszProfileName[128];
 			CallService(MS_SS_GETPROFILENAME, (WPARAM)i, (LPARAM)tszProfileName);
 
 			cbei.iItem = j;
@@ -216,11 +215,9 @@ HWND WINAPI CreateStatusComboBoxEx(HWND hwndDlg, struct MsgBoxData *data)
 
 HWND WINAPI CreateRecentComboBoxEx(HWND hwndDlg, struct MsgBoxData *data)
 {
-	int i, j;
 	char buff[16];
 	BOOL found = FALSE;
-	DBVARIANT dbv;
-	TCHAR text[128];
+	wchar_t text[128];
 
 	HWND handle = CreateWindowEx(0, WC_COMBOBOXEX, NULL,
 					WS_TABSTOP | CBS_NOINTEGRALHEIGHT | WS_VISIBLE | WS_CHILD | CBS_DROPDOWNLIST,
@@ -232,19 +229,21 @@ HWND WINAPI CreateRecentComboBoxEx(HWND hwndDlg, struct MsgBoxData *data)
 	else
 		cbei.mask = CBEIF_LPARAM | CBEIF_TEXT | CBEIF_IMAGE | CBEIF_SELECTEDIMAGE;
 
-	j = db_get_w(NULL, "SimpleStatusMsg", "LMMsg", 1);
+	int j = db_get_w(NULL, "SimpleStatusMsg", "LMMsg", 1);
 
-	for (i = 1; i <= data->max_hist_msgs; ++i) {
+	for (int i = 1; i <= data->max_hist_msgs; ++i) {
 		// history messages
 		if (j < 1)
 			j = data->max_hist_msgs;
 		mir_snprintf(buff, "SMsg%d", j);
 		j--;
-		if (!db_get_ts(NULL, "SimpleStatusMsg", buff, &dbv)) {
-			if (dbv.ptszVal != NULL && *dbv.ptszVal != '\0') {
+
+		wchar_t *tszStatusMsg = db_get_wsa(NULL, "SimpleStatusMsg", buff);
+		if (tszStatusMsg != NULL) {
+			if (*tszStatusMsg != '\0') {
 				found = TRUE;
 				cbei.iItem = -1;
-				cbei.pszText = (LPTSTR)dbv.ptszVal;
+				cbei.pszText = tszStatusMsg;
 				if (data->m_iDlgFlags & DLG_SHOW_LIST_ICONS) {
 					cbei.iImage = I_ICON_HIST;
 					cbei.iSelectedImage = I_ICON_HIST;
@@ -254,11 +253,11 @@ HWND WINAPI CreateRecentComboBoxEx(HWND hwndDlg, struct MsgBoxData *data)
 				cbei.lParam = MAKELPARAM(HISTORY_MSG, j + 1);
 
 				if (SendMessage(handle, CBEM_INSERTITEM, 0, (LPARAM)&cbei) == -1) {
-					db_free(&dbv);
+					mir_free(tszStatusMsg);
 					break;
 				}
 			}
-			db_free(&dbv);
+			mir_free(tszStatusMsg);
 		}
 	}
 
@@ -275,12 +274,12 @@ HWND WINAPI CreateRecentComboBoxEx(HWND hwndDlg, struct MsgBoxData *data)
 	else if (data->m_iDlgFlags & DLG_SHOW_BUTTONS_INLIST) {
 		if (found) {
 			if (data->m_iDlgFlags & DLG_SHOW_LIST_ICONS) {
-				mir_sntprintf(text, TranslateT("Clear history"));
+				mir_snwprintf(text, TranslateT("Clear history"));
 				cbei.iImage = I_ICON_CLEAR;
 				cbei.iSelectedImage = I_ICON_CLEAR;
 			}
 			else {
-				mir_sntprintf(text, _T("## %s ##"), TranslateT("Clear history"));
+				mir_snwprintf(text, L"## %s ##", TranslateT("Clear history"));
 				cbei.iIndent = 1;
 			}
 			cbei.iItem = -1;
@@ -292,12 +291,12 @@ HWND WINAPI CreateRecentComboBoxEx(HWND hwndDlg, struct MsgBoxData *data)
 
 		cbei.iItem = -1;
 		if (data->m_iDlgFlags & DLG_SHOW_LIST_ICONS) {
-			mir_sntprintf(text, TranslateT("Add to predefined"));
+			mir_snwprintf(text, TranslateT("Add to predefined"));
 			cbei.iImage = I_ICON_ADD;
 			cbei.iSelectedImage = I_ICON_ADD;
 		}
 		else {
-			mir_sntprintf(text, _T("## %s ##"), TranslateT("Add to predefined"));
+			mir_snwprintf(text, L"## %s ##", TranslateT("Add to predefined"));
 			cbei.iIndent = 1;
 		}
 		cbei.pszText = (LPTSTR)text;
@@ -306,13 +305,13 @@ HWND WINAPI CreateRecentComboBoxEx(HWND hwndDlg, struct MsgBoxData *data)
 		SendMessage(handle, CBEM_INSERTITEM, 0, (LPARAM)&cbei);
 
 		if (data->m_iDlgFlags & DLG_SHOW_LIST_ICONS) {
-			mir_sntprintf(text, TranslateT("Delete selected"));
+			mir_snwprintf(text, TranslateT("Delete selected"));
 			cbei.iImage = I_ICON_DEL;
 			cbei.iSelectedImage = I_ICON_DEL;
 		}
 		else {
 			cbei.iIndent = 1;
-			mir_sntprintf(text, _T("## %s ##"), TranslateT("Delete selected"));
+			mir_snwprintf(text, L"## %s ##", TranslateT("Delete selected"));
 		}
 		cbei.iItem = -1;
 		cbei.pszText = (LPTSTR)text;
@@ -330,18 +329,14 @@ HWND WINAPI CreateRecentComboBoxEx(HWND hwndDlg, struct MsgBoxData *data)
 			EnableWindow(GetDlgItem(hwndDlg, IDC_BDEL), FALSE);
 	}
 
-	for (i = 1; i <= data->num_def_msgs; ++i) {
+	for (int i = 1; i <= data->num_def_msgs; ++i) {
 		// predefined messages
 		mir_snprintf(buff, "DefMsg%d", i);
-		if (!db_get_ts(NULL, "SimpleStatusMsg", buff, &dbv)) {
-			if (dbv.ptszVal) {
-				if (!mir_tstrlen(dbv.ptszVal)) {
-					db_free(&dbv);
-					continue;
-				}
-
+		wchar_t *tszStatusMsg = db_get_wsa(NULL, "SimpleStatusMsg", buff);
+		if (tszStatusMsg != NULL) {
+			if (*tszStatusMsg != '\0') {
 				cbei.iItem = -1;
-				cbei.pszText = (LPTSTR)dbv.ptszVal;
+				cbei.pszText = tszStatusMsg;
 				if (data->m_iDlgFlags & DLG_SHOW_LIST_ICONS) {
 					cbei.iImage = I_ICON_MSG;
 					cbei.iSelectedImage = I_ICON_MSG;
@@ -353,7 +348,8 @@ HWND WINAPI CreateRecentComboBoxEx(HWND hwndDlg, struct MsgBoxData *data)
 				if (SendMessage(handle, CBEM_INSERTITEM, 0, (LPARAM)&cbei) == -1)
 					break;
 			}
-			db_free(&dbv);
+
+			mir_free(tszStatusMsg);
 		}
 	}
 
@@ -440,16 +436,16 @@ VOID APIENTRY HandlePopupMenu(HWND hwnd, POINT pt, HWND edit_control)
 			break;
 
 		case IDM_DELETE:
-			SetWindowText(edit_control, _T(""));
+			SetWindowText(edit_control, L"");
 			SendMessage(GetParent(hwnd), WM_COMMAND, MAKEWPARAM(IDC_EDIT1, EN_CHANGE), (LPARAM)edit_control);
 			break;
 
 		case ID__FORTUNEAWAYMSG:
-			Utils_OpenUrl("http://miranda-ng.org/");
+			Utils_OpenUrl("https://miranda-ng.org/");
 			break;
 
 		case ID__VARIABLES:
-			Utils_OpenUrl("http://miranda-ng.org/");
+			Utils_OpenUrl("https://miranda-ng.org/");
 			break;
 
 		case ID__VARIABLES_MOREVARIABLES:
@@ -469,20 +465,20 @@ VOID APIENTRY HandlePopupMenu(HWND hwnd, POINT pt, HWND edit_control)
 				break;
 
 			if (EmptyClipboard()) {
-				TCHAR item_string[128];
+				wchar_t item_string[128];
 				GetMenuString(hmenu, m_selection, (LPTSTR)&item_string, 128, MF_BYCOMMAND);
 
-				int len = (int)mir_tstrlen(item_string);
+				int len = (int)mir_wstrlen(item_string);
 				if (len) {
 					LPTSTR lptstrCopy;
-					HGLOBAL hglbCopy = GlobalAlloc(GMEM_MOVEABLE, (len + 1) * sizeof(TCHAR));
+					HGLOBAL hglbCopy = GlobalAlloc(GMEM_MOVEABLE, (len + 1) * sizeof(wchar_t));
 					if (hglbCopy == NULL) {
 						CloseClipboard();
 						break;
 					}
 					lptstrCopy = (LPTSTR)GlobalLock(hglbCopy);
-					memcpy(lptstrCopy, item_string, len * sizeof(TCHAR));
-					lptstrCopy[len] = (TCHAR)0;
+					memcpy(lptstrCopy, item_string, len * sizeof(wchar_t));
+					lptstrCopy[len] = (wchar_t)0;
 					GlobalUnlock(hglbCopy);
 
 					SetClipboardData(CF_UNICODETEXT, hglbCopy);
@@ -535,15 +531,15 @@ static LRESULT CALLBACK EditBoxSubProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, L
 		}
 		if (wParam == 127 && GetKeyState(VK_CONTROL) & 0x8000) {	// Ctrl + Backspace
 			DWORD start, end;
-			TCHAR *text;
+			wchar_t *text;
 			int textLen;
 			SendMessage(hwndDlg, EM_GETSEL, (WPARAM)&end, NULL);
 			SendMessage(hwndDlg, WM_KEYDOWN, VK_LEFT, 0);
 			SendMessage(hwndDlg, EM_GETSEL, (WPARAM)&start, NULL);
 			textLen = GetWindowTextLength(hwndDlg);
-			text = (TCHAR *)mir_alloc(sizeof(TCHAR) * (textLen + 1));
+			text = (wchar_t *)mir_alloc(sizeof(wchar_t) * (textLen + 1));
 			GetWindowText(hwndDlg, text, textLen + 1);
-			memmove(text + start, text + end, sizeof(TCHAR) * (textLen + 1 - end));
+			memmove(text + start, text + end, sizeof(wchar_t) * (textLen + 1 - end));
 			SetWindowText(hwndDlg, text);
 			mir_free(text);
 			SendMessage(hwndDlg, EM_SETSEL, start, start);
@@ -597,7 +593,7 @@ int AddToPredefined(HWND hwndDlg, struct MsgBoxData *data)
 {
 	COMBOBOXEXITEM newitem = {0};
 	int len = 0, num_items;
-	TCHAR msg[1024], text[1024];
+	wchar_t msg[1024], text[1024];
 
 	if (IsWindowEnabled(GetDlgItem(hwndDlg, IDC_EDIT1)))
 		len = GetDlgItemText(hwndDlg, IDC_EDIT1, msg, _countof(msg));
@@ -613,7 +609,7 @@ int AddToPredefined(HWND hwndDlg, struct MsgBoxData *data)
 		newitem.pszText = text;
 
 		SendMessage(data->recent_cbex, CBEM_GETITEM, 0, (LPARAM)&newitem);
-		if (LOWORD(newitem.lParam) == PREDEFINED_MSG && !mir_tstrcmp(text, msg))
+		if (LOWORD(newitem.lParam) == PREDEFINED_MSG && !mir_wstrcmp(text, msg))
 			return num_items;
 	}
 
@@ -644,7 +640,7 @@ void ClearHistory(struct MsgBoxData *data, int cur_sel)
 
 	for (i = 1; i <= data->max_hist_msgs; i++) {
 		mir_snprintf(text, "SMsg%d", i);
-		db_set_ts(NULL, "SimpleStatusMsg", text, _T(""));
+		db_set_ws(NULL, "SimpleStatusMsg", text, L"");
 	}
 	db_set_s(NULL, "SimpleStatusMsg", "LastMsg", "");
 	for (i = 0; i < accounts->count; i++) {
@@ -680,8 +676,8 @@ void ClearHistory(struct MsgBoxData *data, int cur_sel)
 
 void DisplayCharsCount(struct MsgBoxData *dlg_data, HWND hwndDlg)
 {
-	TCHAR msg[1024];
-	TCHAR status_text[128];
+	wchar_t msg[1024];
+	wchar_t status_text[128];
 	int len, lines = 1;
 
 	if (dlg_data->m_iCountdown != -2)
@@ -696,14 +692,13 @@ void DisplayCharsCount(struct MsgBoxData *dlg_data, HWND hwndDlg)
 				lines++;
 		}
 	}
-	mir_sntprintf(status_text, TranslateT("OK (%d)"), len - (lines - 1));
+	mir_snwprintf(status_text, TranslateT("OK (%d)"), len - (lines - 1));
 	SetDlgItemText(hwndDlg, IDC_OK, status_text);
 }
 
 void SetEditControlText(struct MsgBoxData *data, HWND hwndDlg, int iStatus)
 {
 	int flags, fcursel = CB_ERR, num_start;
-	DBVARIANT dbv, dbv2;
 	char setting[80];
 
 	num_start = SendMessage(data->recent_cbex, CB_GETCOUNT, 0, 0);
@@ -718,19 +713,21 @@ void SetEditControlText(struct MsgBoxData *data, HWND hwndDlg, int iStatus)
 		else
 			mir_snprintf(setting, "LastMsg");
 
-		if (!db_get(NULL, "SimpleStatusMsg", setting, &dbv)) {
-			if (dbv.pszVal && mir_strlen(dbv.pszVal)) {
-				if (!db_get_ts(NULL, "SimpleStatusMsg", dbv.pszVal, &dbv2)) {
-					if (dbv2.ptszVal && mir_tstrlen(dbv2.ptszVal)) {
-						SetDlgItemText(hwndDlg, IDC_EDIT1, dbv2.ptszVal);
-						fcursel = SendMessage(data->recent_cbex, CB_FINDSTRINGEXACT, num_start, (LPARAM)dbv2.ptszVal);
+		char *szSetting = db_get_sa(NULL, "SimpleStatusMsg", setting);
+		if (szSetting != NULL) {
+			if (*szSetting != '\0') {
+				wchar_t *tszStatusMsg = db_get_wsa(NULL, "SimpleStatusMsg", szSetting);
+				if (tszStatusMsg != NULL) {
+					if (*tszStatusMsg != '\0') {
+						SetDlgItemText(hwndDlg, IDC_EDIT1, tszStatusMsg);
+						fcursel = SendMessage(data->recent_cbex, CB_FINDSTRINGEXACT, num_start, (LPARAM)tszStatusMsg);
 						if (fcursel != CB_ERR)
 							SendMessage(data->recent_cbex, CB_SETCURSEL, (WPARAM)fcursel, 0);
 					}
-					db_free(&dbv2);
+					mir_free(tszStatusMsg);
 				}
 			}
-			db_free(&dbv);
+			mir_free(szSetting);
 		}
 	}
 	else if (flags & STATUS_DEFAULT_MSG) {
@@ -748,12 +745,13 @@ void SetEditControlText(struct MsgBoxData *data, HWND hwndDlg, int iStatus)
 		else
 			mir_snprintf(setting, "Default");
 
-		if (!db_get_ts(NULL, "SRAway", StatusModeToDbSetting(iStatus, setting), &dbv)) {
-			SetDlgItemText(hwndDlg, IDC_EDIT1, dbv.ptszVal);
-			fcursel = SendMessage(data->recent_cbex, CB_FINDSTRINGEXACT, num_start, (LPARAM)dbv.ptszVal);
+		wchar_t *tszStatusMsg = db_get_wsa(NULL, "SRAway", StatusModeToDbSetting(iStatus, setting));
+		if (tszStatusMsg != NULL) {
+			SetDlgItemText(hwndDlg, IDC_EDIT1, tszStatusMsg);
+			fcursel = SendMessage(data->recent_cbex, CB_FINDSTRINGEXACT, num_start, (LPARAM)tszStatusMsg);
 			if (fcursel != CB_ERR)
 				SendMessage(data->recent_cbex, CB_SETCURSEL, (WPARAM)fcursel, 0);
-			db_free(&dbv);
+			mir_free(tszStatusMsg);
 		}
 	}
 	else if (flags & STATUS_LAST_STATUS_MSG) {
@@ -762,12 +760,13 @@ void SetEditControlText(struct MsgBoxData *data, HWND hwndDlg, int iStatus)
 		else
 			mir_snprintf(setting, "Msg");
 
-		if (!db_get_ts(NULL, "SRAway", StatusModeToDbSetting(iStatus, setting), &dbv)) {
-			SetDlgItemText(hwndDlg, IDC_EDIT1, dbv.ptszVal);
-			fcursel = SendMessage(data->recent_cbex, CB_FINDSTRINGEXACT, num_start, (LPARAM)dbv.ptszVal);
+		wchar_t *tszStatusMsg = db_get_wsa(NULL, "SRAway", StatusModeToDbSetting(iStatus, setting));
+		if (tszStatusMsg != NULL) {
+			SetDlgItemText(hwndDlg, IDC_EDIT1, tszStatusMsg);
+			fcursel = SendMessage(data->recent_cbex, CB_FINDSTRINGEXACT, num_start, (LPARAM)tszStatusMsg);
 			if (fcursel != CB_ERR)
 				SendMessage(data->recent_cbex, CB_SETCURSEL, (WPARAM)fcursel, 0);
-			db_free(&dbv);
+			mir_free(tszStatusMsg);
 		}
 	}
 
@@ -777,27 +776,27 @@ void SetEditControlText(struct MsgBoxData *data, HWND hwndDlg, int iStatus)
 
 void ChangeDlgStatus(HWND hwndDlg, struct MsgBoxData *msgbox_data, int iStatus)
 {
-	TCHAR szTitle[256], szProtoName[128];
+	wchar_t szTitle[256], szProtoName[128];
 	BOOL bDisabled = msgbox_data->m_szProto && !(CallProtoService(msgbox_data->m_szProto, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGSEND);
 
-	mir_sntprintf(szProtoName, msgbox_data->m_szProto ? Proto_GetAccount(msgbox_data->m_szProto)->tszAccountName : TranslateT("global"));
+	mir_snwprintf(szProtoName, msgbox_data->m_szProto ? Proto_GetAccount(msgbox_data->m_szProto)->tszAccountName : TranslateT("global"));
 	if (iStatus == ID_STATUS_CURRENT) {
 		if (msgbox_data->m_bOnStartup)
-			mir_sntprintf(szTitle, TranslateT("%s message (%s)"), TranslateT("<startup>"), szProtoName);
+			mir_snwprintf(szTitle, TranslateT("%s message (%s)"), TranslateT("<startup>"), szProtoName);
 		else
-			mir_sntprintf(szTitle, TranslateT("%s message (%s)"), TranslateT("<current>"), szProtoName);
+			mir_snwprintf(szTitle, TranslateT("%s message (%s)"), TranslateT("<current>"), szProtoName);
 	}
 	else if (iStatus > ID_STATUS_CURRENT) {
-		TCHAR buff[128];
+		wchar_t buff[128];
 
 		char buff1[128];
 		CallService(MS_SS_GETPROFILENAME, iStatus - 40083, (LPARAM)buff1);
 		MultiByteToWideChar(Langpack_GetDefaultCodePage(), 0, buff1, -1, buff, 128);
 
-		mir_sntprintf(szTitle, TranslateT("%s message (%s)"), (TCHAR *)buff, szProtoName);
+		mir_snwprintf(szTitle, TranslateT("%s message (%s)"), buff, szProtoName);
 	}
 	else
-		mir_sntprintf(szTitle, TranslateT("%s message (%s)"), pcli->pfnGetStatusModeDescription(iStatus, 0), szProtoName);
+		mir_snwprintf(szTitle, TranslateT("%s message (%s)"), pcli->pfnGetStatusModeDescription(iStatus, 0), szProtoName);
 	SetWindowText(hwndDlg, szTitle);
 
 	if (iStatus == ID_STATUS_CURRENT)
@@ -805,15 +804,15 @@ void ChangeDlgStatus(HWND hwndDlg, struct MsgBoxData *msgbox_data, int iStatus)
 	else if (iStatus > ID_STATUS_CURRENT)
 		iStatus = GetCurrentStatus(NULL);
 
-	IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)Skin_LoadProtoIcon(msgbox_data->m_szProto, iStatus)));
-	IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)Skin_LoadProtoIcon(msgbox_data->m_szProto, iStatus)));
+	Window_FreeIcon_IcoLib(hwndDlg);
+	Window_SetProtoIcon_IcoLib(hwndDlg, msgbox_data->m_szProto, iStatus);
 
 	if (!bDisabled && ((Proto_Status2Flag(iStatus) & msgbox_data->m_iStatusMsgModes)
 		|| (iStatus == ID_STATUS_OFFLINE && (Proto_Status2Flag(ID_STATUS_INVISIBLE) & msgbox_data->m_iStatusMsgModes))))
 	{
 		int num_items = SendMessage(msgbox_data->recent_cbex, CB_GETCOUNT, 0, 0);
 		int fcursel = CB_ERR, num_start = num_items - msgbox_data->num_def_msgs - 1;
-		TCHAR msg[1024];
+		wchar_t msg[1024];
 
 		if (!IsWindowEnabled(GetDlgItem(hwndDlg, IDC_EDIT1)))
 			EnableWindow(GetDlgItem(hwndDlg, IDC_EDIT1), TRUE);
@@ -891,7 +890,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 	switch (uMsg) {
 		case WM_INITDIALOG:
 		{
-			TCHAR szTitle[256], szFormat[256], szProtoName[128];
+			wchar_t szTitle[256], szFormat[256], szProtoName[128];
 			struct MsgBoxInitData *init_data;
 			struct MsgBoxData *copy_init_data;
 			INITCOMMONCONTROLSEX icex = {0};
@@ -905,16 +904,16 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 			TranslateDialogDefault(hwndDlg);
 			init_data = (struct MsgBoxInitData *)lParam;
 			GetWindowText(hwndDlg, szFormat, _countof(szFormat));
-			mir_sntprintf(szProtoName, init_data->m_szProto ? Proto_GetAccount(init_data->m_szProto)->tszAccountName : TranslateT("global"));
+			mir_snwprintf(szProtoName, init_data->m_szProto ? Proto_GetAccount(init_data->m_szProto)->tszAccountName : TranslateT("global"));
 
 			if (init_data->m_iStatus == ID_STATUS_CURRENT) {
 				if (init_data->m_bOnStartup)
-					mir_sntprintf(szTitle, szFormat, TranslateT("<startup>"), szProtoName);
+					mir_snwprintf(szTitle, szFormat, TranslateT("<startup>"), szProtoName);
 				else
-					mir_sntprintf(szTitle, szFormat, TranslateT("<current>"), szProtoName);
+					mir_snwprintf(szTitle, szFormat, TranslateT("<current>"), szProtoName);
 			}
 			else
-				mir_sntprintf(szTitle, szFormat, pcli->pfnGetStatusModeDescription(init_data->m_iStatus, 0), szProtoName);
+				mir_snwprintf(szTitle, szFormat, pcli->pfnGetStatusModeDescription(init_data->m_iStatus, 0), szProtoName);
 			SetWindowText(hwndDlg, szTitle);
 
 			int icoStatus = ID_STATUS_OFFLINE;
@@ -924,8 +923,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 				icoStatus = init_data->m_iStatus;
 			if (icoStatus < ID_STATUS_OFFLINE)
 				icoStatus = ID_STATUS_OFFLINE;
-			SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)Skin_LoadProtoIcon(init_data->m_szProto, icoStatus));
-			SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)Skin_LoadProtoIcon(init_data->m_szProto, icoStatus));
+			Window_SetProtoIcon_IcoLib(hwndDlg, init_data->m_szProto, icoStatus);
 
 			copy_init_data = (struct MsgBoxData *)mir_alloc(sizeof(struct MsgBoxData));
 
@@ -999,7 +997,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 
 			SetEditControlText(copy_init_data, hwndDlg, copy_init_data->m_iStatus);
 			if ((copy_init_data->m_iDlgFlags & DLG_SHOW_BUTTONS) || (copy_init_data->m_iDlgFlags & DLG_SHOW_BUTTONS_FLAT)) {
-				TCHAR msg[1024];
+				wchar_t msg[1024];
 
 				if (!GetDlgItemText(hwndDlg, IDC_EDIT1, msg, _countof(msg)))
 					EnableWindow(GetDlgItem(hwndDlg, IDC_BADD), FALSE);
@@ -1098,8 +1096,8 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 				break;
 			}
 			else {
-				TCHAR str[64];
-				mir_sntprintf(str, TranslateT("Closing in %d"), msgbox_data->m_iCountdown);
+				wchar_t str[64];
+				mir_snwprintf(str, TranslateT("Closing in %d"), msgbox_data->m_iCountdown);
 				SetDlgItemText(hwndDlg, IDC_OK, str);
 			}
 			msgbox_data->m_iCountdown--;
@@ -1109,7 +1107,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 			switch (LOWORD(wParam)) {
 				case IDC_OK:
 				{
-					TCHAR tszMsg[1024];
+					wchar_t tszMsg[1024];
 					int iStatus, iMsgLen = 0, iProfileStatus = 0;
 					BOOL bCurrentStatus = FALSE;
 
@@ -1133,7 +1131,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 							db_set_s(NULL, "SimpleStatusMsg", szSetting, "");
 
 							mir_snprintf(szSetting, "%sMsg", msgbox_data->m_szProto);
-							db_set_ts(NULL, "SRAway", StatusModeToDbSetting(msgbox_data->m_iStatus, szSetting), _T(""));
+							db_set_ws(NULL, "SRAway", StatusModeToDbSetting(msgbox_data->m_iStatus, szSetting), L"");
 						}
 						else {
 							db_set_s(NULL, "SimpleStatusMsg", "LastMsg", "");
@@ -1155,10 +1153,10 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 
 								mir_snprintf(szSetting, "%sMsg", accounts->pa[j]->szModuleName);
 								iStatus = msgbox_data->m_bOnStartup ? GetStartupStatus(accounts->pa[j]->szModuleName) : GetCurrentStatus(accounts->pa[j]->szModuleName);
-								db_set_ts(NULL, "SRAway", StatusModeToDbSetting(iStatus, szSetting), _T(""));
+								db_set_ws(NULL, "SRAway", StatusModeToDbSetting(iStatus, szSetting), L"");
 							}
 
-							db_set_ts(NULL, "SRAway", StatusModeToDbSetting(msgbox_data->m_iStatus, "Msg"), _T("")); // for compatibility with some plugins
+							db_set_ws(NULL, "SRAway", StatusModeToDbSetting(msgbox_data->m_iStatus, "Msg"), L""); // for compatibility with some plugins
 						}
 
 						if (bCurrentStatus)
@@ -1170,20 +1168,20 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 					}
 					else {
 						char buff[64], buff2[80];
-						DBVARIANT dbv;
-						BOOL found = FALSE;
+						bool found = false;
 
 						for (int i = 1; i <= msgbox_data->max_hist_msgs; i++) {
 							mir_snprintf(buff, "SMsg%d", i);
-							if (!db_get_ts(NULL, "SimpleStatusMsg", buff, &dbv)) {
-								if (!mir_tstrcmp(dbv.ptszVal, tszMsg)) {
-									found = TRUE;
+							wchar_t *tszStatusMsg = db_get_wsa(NULL, "SimpleStatusMsg", buff);
+							if (tszStatusMsg != NULL) {
+								if (!mir_wstrcmp(tszStatusMsg, tszMsg)) {
+									found = true;
 									if (msgbox_data->m_szProto) {
 										mir_snprintf(buff2, "Last%sMsg", msgbox_data->m_szProto);
 										db_set_s(NULL, "SimpleStatusMsg", buff2, buff);
 
 										mir_snprintf(buff2, "%sMsg", msgbox_data->m_szProto);
-										db_set_ts(NULL, "SRAway", StatusModeToDbSetting(msgbox_data->m_iStatus, buff2), tszMsg);
+										db_set_ws(NULL, "SRAway", StatusModeToDbSetting(msgbox_data->m_iStatus, buff2), tszMsg);
 									}
 									else {
 										db_set_s(NULL, "SimpleStatusMsg", "LastMsg", buff);
@@ -1205,13 +1203,13 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 
 											mir_snprintf(buff2, "%sMsg", accounts->pa[j]->szModuleName);
 											iStatus = msgbox_data->m_bOnStartup ? GetStartupStatus(accounts->pa[j]->szModuleName) : GetCurrentStatus(accounts->pa[j]->szModuleName);
-											db_set_ts(NULL, "SRAway", StatusModeToDbSetting(iStatus, buff2), tszMsg);
+											db_set_ws(NULL, "SRAway", StatusModeToDbSetting(iStatus, buff2), tszMsg);
 										}
 									}
-									db_free(&dbv);
+									mir_free(tszStatusMsg);
 									break;
 								}
-								db_free(&dbv);
+								mir_free(tszStatusMsg);
 							}
 						}
 
@@ -1224,14 +1222,14 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 								last_modified_msg++;
 
 							mir_snprintf(buff, "SMsg%d", last_modified_msg);
-							db_set_ts(NULL, "SimpleStatusMsg", buff, tszMsg);
+							db_set_ws(NULL, "SimpleStatusMsg", buff, tszMsg);
 
 							if (msgbox_data->m_szProto) {
 								mir_snprintf(buff2, "Last%sMsg", msgbox_data->m_szProto);
 								db_set_s(NULL, "SimpleStatusMsg", buff2, buff);
 
 								mir_snprintf(buff2, "%sMsg", msgbox_data->m_szProto);
-								db_set_ts(NULL, "SRAway", StatusModeToDbSetting(msgbox_data->m_iStatus, buff2), tszMsg);
+								db_set_ws(NULL, "SRAway", StatusModeToDbSetting(msgbox_data->m_iStatus, buff2), tszMsg);
 							}
 							else {
 								db_set_s(NULL, "SimpleStatusMsg", "LastMsg", buff);
@@ -1253,14 +1251,14 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 
 									mir_snprintf(buff2, "%sMsg", accounts->pa[j]->szModuleName);
 									iStatus = msgbox_data->m_bOnStartup ? GetStartupStatus(accounts->pa[j]->szModuleName) : GetCurrentStatus(accounts->pa[j]->szModuleName);
-									db_set_ts(NULL, "SRAway", StatusModeToDbSetting(iStatus, buff2), tszMsg);
+									db_set_ws(NULL, "SRAway", StatusModeToDbSetting(iStatus, buff2), tszMsg);
 								}
 							}
 							db_set_w(NULL, "SimpleStatusMsg", "LMMsg", (WORD)last_modified_msg);
 						}
 
 						if (!msgbox_data->m_szProto)
-							db_set_ts(NULL, "SRAway", StatusModeToDbSetting(msgbox_data->m_iStatus, "Msg"), tszMsg); // for compatibility with some plugins
+							db_set_ws(NULL, "SRAway", StatusModeToDbSetting(msgbox_data->m_iStatus, "Msg"), tszMsg); // for compatibility with some plugins
 
 						if (bCurrentStatus)
 							SetStatusMessage(msgbox_data->m_szProto, msgbox_data->m_iInitialStatus, ID_STATUS_CURRENT, tszMsg, msgbox_data->m_bOnStartup);
@@ -1287,7 +1285,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 							DisplayCharsCount(msgbox_data, hwndDlg);
 							SendMessage(msgbox_data->recent_cbex, CB_SETCURSEL, -1, 0);
 							if ((msgbox_data->m_iDlgFlags & DLG_SHOW_BUTTONS) || (msgbox_data->m_iDlgFlags & DLG_SHOW_BUTTONS_FLAT)) {
-								TCHAR msg[1024];
+								wchar_t msg[1024];
 
 								if (IsWindowEnabled(GetDlgItem(hwndDlg, IDC_BDEL)))
 									EnableWindow(GetDlgItem(hwndDlg, IDC_BDEL), FALSE);
@@ -1339,7 +1337,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 				switch (HIWORD(wParam)) {
 					case CBN_SELENDOK:
 					{
-						TCHAR text[1024];
+						wchar_t text[1024];
 						int cur_sel = SendMessage(msgbox_data->recent_cbex, CB_GETCURSEL, 0, 0);
 						COMBOBOXEXITEM cbitem = {0};
 
@@ -1368,7 +1366,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 							if (MessageBox(NULL, TranslateT("Are you sure you want to clear status message history?"), TranslateT("Confirm clearing history"), MB_ICONQUESTION | MB_YESNO) == IDYES)
 								ClearHistory(msgbox_data, cur_sel);
 							else if (IsWindowEnabled(GetDlgItem(hwndDlg, IDC_EDIT1))) {
-								TCHAR msg[1024];
+								wchar_t msg[1024];
 								int fcursel = CB_ERR, num_start;
 								num_start = SendMessage(msgbox_data->recent_cbex, CB_GETCOUNT, 0, 0);
 								num_start -= msgbox_data->num_def_msgs + 1;
@@ -1388,7 +1386,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 							if (LOWORD(histitem.lParam) == HISTORY_MSG) {
 								char szSetting[16];
 								mir_snprintf(szSetting, "SMsg%d", (int)HIWORD(histitem.lParam));
-								db_set_ts(NULL, "SimpleStatusMsg", szSetting, _T(""));
+								db_set_ws(NULL, "SimpleStatusMsg", szSetting, L"");
 								SendMessage(msgbox_data->recent_cbex, CBEM_DELETEITEM, (WPARAM)msgbox_data->curr_sel_msg, 0);
 							}
 							if (LOWORD(histitem.lParam) == PREDEFINED_MSG) {
@@ -1506,7 +1504,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 
 						if (LOWORD(histitem.lParam) == HISTORY_MSG) {
 							mir_snprintf(buff, "SMsg%d", (int)HIWORD(histitem.lParam));
-							db_set_ts(NULL, "SimpleStatusMsg", buff, _T(""));
+							db_set_ws(NULL, "SimpleStatusMsg", buff, L"");
 						}
 						else if (LOWORD(histitem.lParam) == PREDEFINED_MSG)
 							msgbox_data->m_bPredefChanged = TRUE;
@@ -1520,7 +1518,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 							EnableWindow(GetDlgItem(hwndDlg, IDC_BDEL), FALSE);
 						}
 						else {
-							TCHAR text[1024];
+							wchar_t text[1024];
 
 							if (cur_sel - 1 >= 0)
 								cur_sel--;
@@ -1585,7 +1583,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 			if (msgbox_data->m_bPredefChanged) {
 				int i, num_items, new_num_def_msgs = 0;
 				COMBOBOXEXITEM cbitem = {0};
-				TCHAR text[1024];
+				wchar_t text[1024];
 				char buff[64];
 
 				num_items = SendMessage(msgbox_data->recent_cbex, CB_GETCOUNT, 0, 0);
@@ -1600,7 +1598,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 					mir_snprintf(buff, "DefMsg%d", i);
 					if (LOWORD(cbitem.lParam) == PREDEFINED_MSG) {
 						new_num_def_msgs++;
-						db_set_ts(NULL, "SimpleStatusMsg", buff, text);
+						db_set_ws(NULL, "SimpleStatusMsg", buff, text);
 					}
 					else
 						db_unset(NULL, "SimpleStatusMsg", buff);
@@ -1616,8 +1614,7 @@ INT_PTR CALLBACK AwayMsgBoxDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARA
 			ReleaseIconEx("predef");
 			ReleaseIconEx("add");
 			ReleaseIconEx("clear");
-			IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_BIG, 0));
-			IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, 0));
+			Window_FreeIcon_IcoLib(hwndDlg);
 
 			hwndSAMsgDialog = NULL;
 			mir_free(msgbox_data);

@@ -6,7 +6,7 @@ Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-08  George Hazan
 Copyright (c) 2007     Maxim Mluhov
 Copyright (c) 2008-09  Dmitriy Chervov
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -125,7 +125,7 @@ public:
 	CJabberMessageManager(CJabberProto *proto);
 	~CJabberMessageManager();
 
-	CJabberMessagePermanentInfo* AddPermanentHandler(JABBER_PERMANENT_MESSAGE_HANDLER pHandler, int nMessageTypes, DWORD dwParamsToParse, const TCHAR *szXmlns, BOOL bAllowPartialNs, const TCHAR *szTag, void *pUserData = NULL, MESSAGE_USER_DATA_FREE_FUNC pUserDataFree = NULL, int iPriority = JH_PRIORITY_DEFAULT);
+	CJabberMessagePermanentInfo* AddPermanentHandler(JABBER_PERMANENT_MESSAGE_HANDLER pHandler, int nMessageTypes, DWORD dwParamsToParse, const wchar_t *szXmlns, BOOL bAllowPartialNs, const wchar_t *szTag, void *pUserData = nullptr, MESSAGE_USER_DATA_FREE_FUNC pUserDataFree = nullptr, int iPriority = JH_PRIORITY_DEFAULT);
 	bool DeletePermanentHandler(CJabberMessagePermanentInfo *pInfo);
 
 	bool HandleMessagePermanent(HXML node, ThreadData *pThreadData);

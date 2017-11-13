@@ -2,8 +2,7 @@
 
 int CToxProto::MapStatus(int status)
 {
-	switch (status)
-	{
+	switch (status) {
 	case ID_STATUS_FREECHAT:
 	case ID_STATUS_ONTHEPHONE:
 		status = ID_STATUS_ONLINE;
@@ -25,8 +24,7 @@ int CToxProto::MapStatus(int status)
 TOX_USER_STATUS CToxProto::MirandaToToxStatus(int status)
 {
 	TOX_USER_STATUS userstatus = TOX_USER_STATUS_NONE;
-	switch (status)
-	{
+	switch (status) {
 	case ID_STATUS_AWAY:
 		userstatus = TOX_USER_STATUS_AWAY;
 		break;
@@ -40,8 +38,7 @@ TOX_USER_STATUS CToxProto::MirandaToToxStatus(int status)
 int CToxProto::ToxToMirandaStatus(TOX_USER_STATUS userstatus)
 {
 	int status = ID_STATUS_OFFLINE;
-	switch (userstatus)
-	{
+	switch (userstatus) {
 	case TOX_USER_STATUS_NONE:
 		status = ID_STATUS_ONLINE;
 		break;
@@ -55,10 +52,9 @@ int CToxProto::ToxToMirandaStatus(TOX_USER_STATUS userstatus)
 	return status;
 }
 
-TCHAR* CToxProto::ToxErrorToString(TOX_ERR_NEW error)
+wchar_t* CToxProto::ToxErrorToString(TOX_ERR_NEW error)
 {
-	switch (error)
-	{
+	switch (error) {
 	case TOX_ERR_NEW_NULL:
 		return TranslateT("One of the arguments is missing");
 	case TOX_ERR_NEW_MALLOC:
@@ -82,15 +78,33 @@ TCHAR* CToxProto::ToxErrorToString(TOX_ERR_NEW error)
 	}
 }
 
-void CToxProto::ShowNotification(const TCHAR *caption, const TCHAR *message, int flags, MCONTACT hContact)
+wchar_t* CToxProto::ToxErrorToString(TOX_ERR_FRIEND_SEND_MESSAGE error)
 {
-	if (Miranda_Terminated())
-	{
+	switch (error) {
+	case TOX_ERR_FRIEND_SEND_MESSAGE_NULL:
+		return TranslateT("One of the arguments is missing");
+	case TOX_ERR_FRIEND_SEND_MESSAGE_FRIEND_NOT_FOUND:
+		return TranslateT("The friend ID did not designate a valid friend");
+	case TOX_ERR_FRIEND_SEND_MESSAGE_FRIEND_NOT_CONNECTED:
+		return TranslateT("This client is currently not connected to the friend");
+	case TOX_ERR_FRIEND_SEND_MESSAGE_SENDQ:
+		return TranslateT("An allocation error occurred while increasing the send queue size");
+	case TOX_ERR_FRIEND_SEND_MESSAGE_TOO_LONG:
+		return TranslateT("Message length exceeded TOX_MAX_MESSAGE_LENGTH");
+	case TOX_ERR_FRIEND_SEND_MESSAGE_EMPTY:
+		return TranslateT("Attempted to send a zero-length message");
+	default:
+		return TranslateT("Unknown error");
+	}
+}
+
+void CToxProto::ShowNotification(const wchar_t *caption, const wchar_t *message, int flags, MCONTACT hContact)
+{
+	if (Miranda_IsTerminated()) {
 		return;
 	}
 
-	if (ServiceExists(MS_POPUP_ADDPOPUPT) && db_get_b(NULL, "Popup", "ModuleIsEnabled", 1))
-	{
+	if (ServiceExists(MS_POPUP_ADDPOPUPT) && db_get_b(NULL, "Popup", "ModuleIsEnabled", 1)) {
 		POPUPDATAT ppd = { 0 };
 		ppd.lchContact = hContact;
 		wcsncpy(ppd.lpwzContactName, caption, MAX_CONTACTNAME);
@@ -104,19 +118,19 @@ void CToxProto::ShowNotification(const TCHAR *caption, const TCHAR *message, int
 	MessageBox(NULL, message, caption, MB_OK | flags);
 }
 
-void CToxProto::ShowNotification(const TCHAR *message, int flags, MCONTACT hContact)
+void CToxProto::ShowNotification(const wchar_t *message, int flags, MCONTACT hContact)
 {
-	ShowNotification(_T(MODULE), message, flags, hContact);
+	ShowNotification(_A2W(MODULE), message, flags, hContact);
 }
 
-bool CToxProto::IsFileExists(const TCHAR* path)
+bool CToxProto::IsFileExists(const wchar_t* path)
 {
-	return _taccess(path, 0) == 0;
+	return _waccess(path, 0) == 0;
 }
 
 MEVENT CToxProto::AddEventToDb(MCONTACT hContact, WORD type, DWORD timestamp, DWORD flags, PBYTE pBlob, size_t cbBlob)
 {
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	dbei.szModule = this->m_szModuleName;
 	dbei.timestamp = timestamp;
 	dbei.eventType = type;
@@ -128,18 +142,16 @@ MEVENT CToxProto::AddEventToDb(MCONTACT hContact, WORD type, DWORD timestamp, DW
 
 INT_PTR CToxProto::ParseToxUri(WPARAM, LPARAM lParam)
 {
-	TCHAR *uri = (TCHAR*)lParam;
-	if (mir_tstrlen(uri) <= 4)
+	wchar_t *uri = (wchar_t*)lParam;
+	if (mir_wstrlen(uri) <= 4)
 		return 1;
 
 	if (Accounts.getCount() == 0)
 		return 1;
 
 	CToxProto *proto = NULL;
-	for (int i = 0; i < Accounts.getCount(); i++)
-	{
-		if (Accounts[i]->IsOnline())
-		{
+	for (int i = 0; i < Accounts.getCount(); i++) {
+		if (Accounts[i]->IsOnline()) {
 			proto = Accounts[i];
 			break;
 		}
@@ -147,12 +159,12 @@ INT_PTR CToxProto::ParseToxUri(WPARAM, LPARAM lParam)
 	if (proto == NULL)
 		return 1;
 
-	if (_tcschr(uri, _T('@')) != NULL)
+	if (wcschr(uri, '@') != NULL)
 		return 1;
 
 	PROTOSEARCHRESULT psr = { sizeof(psr) };
 	psr.flags = PSR_UTF8;
-	psr.id.a = mir_t2a(&uri[4]);
+	psr.id.a = mir_u2a(&uri[4]);
 
 	ADDCONTACTSTRUCT acs = { HANDLE_SEARCHRESULT };
 	acs.szProto = proto->m_szModuleName;

@@ -112,7 +112,7 @@ void TlenResultSetRoster(TlenProtocol *proto, XmlNode *queryNode) {
 							if (item->group) mir_free(item->group);
 							if ((groupNode = TlenXmlGetChild(itemNode, "group")) != NULL && groupNode->text != NULL) {
 								item->group = TlenGroupDecode(groupNode->text);
-								Clist_CreateGroup(0, _A2T(item->group));
+								Clist_GroupCreate(0, _A2T(item->group));
 								// Don't set group again if already correct, or Miranda may show wrong group count in some case
 								if (!db_get(hContact, "CList", "Group", &dbv)) {
 									if (mir_strcmp(dbv.pszVal, item->group))
@@ -151,7 +151,7 @@ void TlenIqResultRoster(TlenProtocol *proto, XmlNode *iqNode)
 			TLEN_SUBSCRIPTION sub;
 			TLEN_LIST_ITEM *item;
 			char *jid, *name, *nick;
-			int i, oldStatus;
+			int i;
 
 			for (i = 0; i < queryNode->numChild; i++) {
 				itemNode = queryNode->child[i];
@@ -184,7 +184,7 @@ void TlenIqResultRoster(TlenProtocol *proto, XmlNode *iqNode)
 							if (item->group) mir_free(item->group);
 							if ((groupNode = TlenXmlGetChild(itemNode, "group")) != NULL && groupNode->text != NULL) {
 								item->group = TlenGroupDecode(groupNode->text);
-								Clist_CreateGroup(0, _A2T(item->group));
+								Clist_GroupCreate(0, _A2T(item->group));
 								// Don't set group again if already correct, or Miranda may show wrong group count in some case
 								if (!db_get(hContact, "CList", "Group", &dbv)) {
 									if (mir_strcmp(dbv.pszVal, item->group))
@@ -217,22 +217,13 @@ void TlenIqResultRoster(TlenProtocol *proto, XmlNode *iqNode)
 					if (szJid != NULL) {
 						if (!TlenListExist(proto, LIST_ROSTER, szJid)) {
 							proto->debugLogA("Syncing roster: deleting 0x%x", hContact);
-							CallService(MS_DB_CONTACT_DELETE, hContact, 0);
+							db_delete_contact(hContact);
 						}
 					}
 					hContact = hNext;
 				}
 			}
 
-			Menu_ModifyItem(proto->hMenuMUC, NULL, INVALID_HANDLE_VALUE, 0);
-			if (proto->hMenuChats != NULL)
-				Menu_ModifyItem(proto->hMenuChats, NULL, INVALID_HANDLE_VALUE, 0);
-
-			proto->isOnline = TRUE;
-			proto->debugLogA("Status changed via THREADSTART");
-			oldStatus = proto->m_iStatus;
-			TlenSendPresence(proto, proto->m_iDesiredStatus);
-			ProtoBroadcastAck(proto->m_szModuleName, NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, (HANDLE)oldStatus, proto->m_iStatus);
 		}
 	}
 }
@@ -417,7 +408,7 @@ void TlenIqResultSearch(TlenProtocol *proto, XmlNode *iqNode)
 		if ((queryNode = TlenXmlGetChild(iqNode, "query")) == NULL) return;
 		if (!db_get(NULL, proto->m_szModuleName, "LoginServer", &dbv)) {
 			jsr.hdr.cbSize = sizeof(TLEN_SEARCH_RESULT);
-			jsr.hdr.flags = PSR_TCHAR;
+			jsr.hdr.flags = PSR_UNICODE;
 			for (i = 0; i < queryNode->numChild; i++) {
 				itemNode = queryNode->child[i];
 				if (!mir_strcmp(itemNode->name, "item")) {
@@ -429,47 +420,47 @@ void TlenIqResultSearch(TlenProtocol *proto, XmlNode *iqNode)
 							mir_snprintf(jsr.jid, "%s@%s", jid, dbv.pszVal);
 						}
 						jsr.jid[sizeof(jsr.jid) - 1] = '\0';
-						jsr.hdr.id.t = mir_a2t(jid);
+						jsr.hdr.id.w = mir_a2u(jid);
 						if ((n = TlenXmlGetChild(itemNode, "nick")) != NULL && n->text != NULL) {
 							char* buf = TlenTextDecode(n->text);
-							jsr.hdr.nick.t = mir_a2t(buf);
+							jsr.hdr.nick.w = mir_a2u(buf);
 							mir_free(buf);
 						}
 						else {
-							jsr.hdr.nick.t = mir_tstrdup(TEXT(""));
+							jsr.hdr.nick.w = mir_wstrdup(TEXT(""));
 						}
 						if ((n = TlenXmlGetChild(itemNode, "first")) != NULL && n->text != NULL) {
 							char* buf = TlenTextDecode(n->text);
-							jsr.hdr.firstName.t = mir_a2t(buf);
+							jsr.hdr.firstName.w = mir_a2u(buf);
 							mir_free(buf);
 						}
 						else {
-							jsr.hdr.firstName.t = mir_tstrdup(TEXT(""));
+							jsr.hdr.firstName.w = mir_wstrdup(TEXT(""));
 						}
 						if ((n = TlenXmlGetChild(itemNode, "last")) != NULL && n->text != NULL) {
 							char* buf = TlenTextDecode(n->text);
-							jsr.hdr.lastName.t = mir_a2t(buf);
+							jsr.hdr.lastName.w = mir_a2u(buf);
 							mir_free(buf);
 						}
 						else {
-							jsr.hdr.lastName.t = mir_tstrdup(TEXT(""));
+							jsr.hdr.lastName.w = mir_wstrdup(TEXT(""));
 						}
 						if ((n = TlenXmlGetChild(itemNode, "email")) != NULL && n->text != NULL) {
 							char* buf = TlenTextDecode(n->text);
-							jsr.hdr.email.t = mir_a2t(buf);
+							jsr.hdr.email.w = mir_a2u(buf);
 							mir_free(buf);
 						}
 						else {
-							jsr.hdr.email.t = mir_tstrdup(TEXT(""));
+							jsr.hdr.email.w = mir_wstrdup(TEXT(""));
 						}
 
 						ProtoBroadcastAck(proto->m_szModuleName, NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)id, (LPARAM)&jsr);
 						found = 1;
-						mir_free(jsr.hdr.id.t);
-						mir_free(jsr.hdr.nick.t);
-						mir_free(jsr.hdr.firstName.t);
-						mir_free(jsr.hdr.lastName.t);
-						mir_free(jsr.hdr.email.t);
+						mir_free(jsr.hdr.id.w);
+						mir_free(jsr.hdr.nick.w);
+						mir_free(jsr.hdr.firstName.w);
+						mir_free(jsr.hdr.lastName.w);
+						mir_free(jsr.hdr.email.w);
 					}
 				}
 			}
@@ -480,7 +471,7 @@ void TlenIqResultSearch(TlenProtocol *proto, XmlNode *iqNode)
 					else
 						mir_snprintf(jsr.jid, "%s@%s", proto->searchJID, dbv.pszVal);
 
-					jsr.hdr.nick.t = jsr.hdr.firstName.t = jsr.hdr.lastName.t = jsr.hdr.email.t = jsr.hdr.id.t = TEXT("");
+					jsr.hdr.nick.w = jsr.hdr.firstName.w = jsr.hdr.lastName.w = jsr.hdr.email.w = jsr.hdr.id.w = TEXT("");
 					ProtoBroadcastAck(proto->m_szModuleName, NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)id, (LPARAM)&jsr);
 				}
 				mir_free(proto->searchJID);
@@ -552,6 +543,19 @@ void TlenIqResultTcfg(TlenProtocol *proto, XmlNode *iqNode)
 		if ((node = TlenXmlGetChild(miniMailNode, "avatar-remove")) != NULL) {
 			GetConfigItem(node, proto->threadData->tlenConfig.avatarRemove, TRUE, &proto->threadData->tlenConfig.avatarRemoveMthd);
 		}
+
+
+		//continue connecting
+		Menu_ModifyItem(proto->hMenuMUC, NULL, INVALID_HANDLE_VALUE, 0);
+		if (proto->hMenuChats != NULL)
+			Menu_ModifyItem(proto->hMenuChats, NULL, INVALID_HANDLE_VALUE, 0);
+	
+		proto->isOnline = TRUE;
+		proto->debugLogA("Status changed via THREADSTART");
+		int oldStatus = proto->m_iStatus;
+		TlenSendPresence(proto, proto->m_iDesiredStatus);
+		ProtoBroadcastAck(proto->m_szModuleName, NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, (HANDLE)oldStatus, proto->m_iStatus);
+
 	}
 }
 

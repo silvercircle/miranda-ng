@@ -26,9 +26,9 @@ void CALLBACK sttMainThreadCallback(ULONG_PTR dwParam)
 	free(ppd);
 }
 
-void __stdcall	ShowPopup(TCHAR *line1, TCHAR *line2, int flags)
+void __stdcall	ShowPopup(wchar_t *line1, wchar_t *line2, int flags)
 {
-	if (CallService(MS_SYSTEM_TERMINATED, 0, 0)) return;
+	if (Miranda_IsTerminated()) return;
 
 	if (ServiceExists(MS_POPUP_ADDPOPUPCLASS)) {
 		ShowClassPopupT("pingpopups", line1, line2);
@@ -38,8 +38,8 @@ void __stdcall	ShowPopup(TCHAR *line1, TCHAR *line2, int flags)
 
 		ppd->lchContact = NULL;
 		ppd->lchIcon = (flags ? hIconResponding : hIconNotResponding);
-		mir_tstrncpy(ppd->lptzContactName, line1, _countof(ppd->lptzContactName));
-		mir_tstrncpy(ppd->lptzText, line2, _countof(ppd->lptzText));
+		mir_wstrncpy(ppd->lptzContactName, line1, _countof(ppd->lptzContactName));
+		mir_wstrncpy(ppd->lptzText, line2, _countof(ppd->lptzText));
 
 		ppd->colorBack = GetSysColor(COLOR_BTNFACE);
 		ppd->colorText = GetSysColor(COLOR_WINDOWTEXT);
@@ -51,7 +51,7 @@ void __stdcall	ShowPopup(TCHAR *line1, TCHAR *line2, int flags)
 		QueueUserAPC(sttMainThreadCallback, mainThread, (ULONG_PTR)ppd);
 	}
 	else{
-		MessageBox(NULL, line2, _T(PLUG) _T(" Message"), MB_OK | MB_ICONINFORMATION);
+		MessageBox(NULL, line2, _A2W(PLUG) L" Message", MB_OK | MB_ICONINFORMATION);
 		return;
 	}
 }
@@ -89,11 +89,11 @@ INT_PTR PluginPing(WPARAM, LPARAM lParam)
 		//GetLocalTime(&systime);
 		NETLIBOPENCONNECTION conn = { 0 };
 		conn.cbSize = sizeof(NETLIBOPENCONNECTION);
-		conn.szHost = mir_t2a(pa->pszName);
+		conn.szHost = mir_u2a(pa->pszName);
 		conn.wPort = pa->port;
 		conn.timeout = options.ping_timeout;
 
-		HANDLE s = (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)hNetlibUser, (LPARAM)&conn);
+		HNETLIBCONN s = Netlib_OpenConnection(hNetlibUser, &conn);
 		mir_free((void*)conn.szHost);
 
 		clock_t end_tcp = clock();
@@ -101,7 +101,7 @@ INT_PTR PluginPing(WPARAM, LPARAM lParam)
 		if (s) {
 			LINGER l;
 			char buf[1024];
-			SOCKET socket = (SOCKET)CallService(MS_NETLIB_GETSOCKET, (WPARAM)s, (LPARAM)NLOCF_HTTP);
+			SOCKET socket = Netlib_GetSocket(s);
 			l.l_onoff = 1;
 			l.l_linger = 0;
 			setsockopt(socket, SOL_SOCKET, SO_LINGER, (char *)&l, sizeof(l));
@@ -205,8 +205,8 @@ INT_PTR DblClick(WPARAM wParam, LPARAM) {
 	CallService(PLUG "/GetPingList", 0, (LPARAM)&pl);
 	for (pinglist_it i = pl.begin(); i != pl.end(); ++i) {
 		if (i->item_id == (DWORD)wParam) {
-			if (mir_tstrlen(i->pszCommand)) {
-				ShellExecute(0, _T("open"), i->pszCommand, i->pszParams, 0, SW_SHOW);
+			if (mir_wstrlen(i->pszCommand)) {
+				ShellExecute(0, L"open", i->pszCommand, i->pszParams, 0, SW_SHOW);
 			}
 			else {
 				return CallService(PLUG "/ToggleEnabled", wParam, 0);
@@ -221,20 +221,20 @@ void import_ping_address(int index, PINGADDRESS &pa) {
 	DBVARIANT dbv;
 	char buf[256];
 	mir_snprintf(buf, "Address%d", index);
-	if (!db_get_ts(0, "PingPlug", buf, &dbv)) {
-		mir_tstrncpy(pa.pszName, dbv.ptszVal, _countof(pa.pszName));
+	if (!db_get_ws(0, "PingPlug", buf, &dbv)) {
+		mir_wstrncpy(pa.pszName, dbv.ptszVal, _countof(pa.pszName));
 		db_free(&dbv);
 	}
 	else
-		mir_tstrncpy(pa.pszName, TranslateT("Unknown Address"), _countof(pa.pszName));
+		mir_wstrncpy(pa.pszName, TranslateT("Unknown Address"), _countof(pa.pszName));
 
 	mir_snprintf(buf, "Label%d", index);
-	if (!db_get_ts(0, "PingPlug", buf, &dbv)) {
-		mir_tstrncpy(pa.pszLabel, dbv.ptszVal, _countof(pa.pszLabel));
+	if (!db_get_ws(0, "PingPlug", buf, &dbv)) {
+		mir_wstrncpy(pa.pszLabel, dbv.ptszVal, _countof(pa.pszLabel));
 		db_free(&dbv);
 	}
 	else
-		mir_tstrncpy(pa.pszLabel, TranslateT("Unknown"), _countof(pa.pszLabel));
+		mir_wstrncpy(pa.pszLabel, TranslateT("Unknown"), _countof(pa.pszLabel));
 
 	mir_snprintf(buf, "Port%d", index);
 	pa.port = (int)db_get_dw(0, "PingPlug", buf, -1);
@@ -314,7 +314,7 @@ void InitUtils()
 	test.flags = PCF_TCHAR;
 	test.hIcon = hIconResponding;
 	test.iSeconds = -1;
-	test.ptszDescription = TranslateT("Ping");
+	test.pwszDescription = TranslateT("Ping");
 	test.pszName = "pingpopups";
 	test.PluginWindowProc = NullWindowProc;
 	if (hPopupClass = Popup_RegisterClass(&test))

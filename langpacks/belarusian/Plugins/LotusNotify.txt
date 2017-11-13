@@ -7,7 +7,6 @@
 ;============================================================
 [Notify about new mail in Lotus Database]
 Паведаміце аб новай пошце ў базе Lotus
-;file \plugins\LotusNotify\res\LotusNotify.rc
 [Lotus connection settings]
 Налады далучэння Lotus
 [Primary server:]
@@ -28,6 +27,8 @@
 хв.
 [(0-disabled)]
 0-выключана
+[Keep connection on error]
+
 [Set popup colors]
 Колер вакна
 [Background]
@@ -50,6 +51,8 @@
 Паказаць паведамленне памылкі
 [Remember newest message ID and don't show older]
 Запамінаць найноўшы ID паведамлення і не паказваць старэй
+[...even if popup not clicked]
+
 [Clear popups history]
 Выдаліць гісторыю усплывальных вокнаў
 [Filter messages containing the following:]
@@ -62,7 +65,6 @@
 Каму / Копія
 [Offline status mean:]
 Аўтаномны статус:
-;file \plugins\LotusNotify\src\LotusNotify.cpp
 [Unable to load all required Lotus API functions]
 Не ўдалося загрузіць усе неабходныя функцыі Lotus API
 [Lotus Notes Client not detected. Check plugin configuration description on install.txt]

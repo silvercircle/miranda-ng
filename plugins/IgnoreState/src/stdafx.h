@@ -35,13 +35,13 @@
 #include <m_extraicons.h>
 
 #include "resource.h"
-#include "Version.h"
+#include "version.h"
 
 #define MODULENAME "IgnoreState"
 
 struct IGNOREITEMS
 {
-	TCHAR* name;
+	wchar_t* name;
 	int   type;
 	int   icon;
 	bool  filtered;

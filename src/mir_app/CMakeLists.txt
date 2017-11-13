@@ -1,0 +1,11 @@
+file(GLOB SOURCES "src/*.h" "src/*.cpp" "res/*.rc")
+if(CMAKE_CL_64)
+	list(APPEND SOURCES "src/mir_app64.def")
+else()
+	list(APPEND SOURCES "src/mir_app.def")
+endif()
+set(TARGET mir_app)
+include(${CMAKE_SOURCE_DIR}/cmake/lib.cmake)
+
+set_target_properties(${TARGET} PROPERTIES COMPILE_DEFINITIONS "MIR_APP_EXPORTS")
+target_link_libraries(${TARGET} Zlib)

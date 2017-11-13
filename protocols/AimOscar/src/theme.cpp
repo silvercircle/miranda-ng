@@ -27,37 +27,37 @@ static IconItem iconList[] =
 	{	LPGEN("Add"),                    "add",         IDI_ADD             },
 	{	LPGEN("Block"),                  "block",       IDI_BLOCK           },
 	{	LPGEN("Profile"),                "profile",     IDI_PROFILE         },
-	{	LPGEN("AOL Mail"),               "mail",        IDI_MAIL            },
-	{	LPGEN("AIM Icon"),               "aim",         IDI_AIM             },
+	{	LPGEN("AOL mail"),               "mail",        IDI_MAIL            },
+	{	LPGEN("AIM icon"),               "aim",         IDI_AIM             },
 	{	LPGEN("Hiptop"),                 "hiptop",      IDI_HIPTOP          },
-	{	LPGEN("AOL Bot"),                "bot",         IDI_BOT             },
+	{	LPGEN("AOL bot"),                "bot",         IDI_BOT             },
 	{	LPGEN("Admin"),                  "admin",       IDI_ADMIN           },
 	{	LPGEN("Confirmed"),              "confirm",     IDI_CONFIRMED       },
-	{	LPGEN("Not Confirmed"),          "uconfirm",    IDI_UNCONFIRMED     },
+	{	LPGEN("Not confirmed"),          "uconfirm",    IDI_UNCONFIRMED     },
 	{	LPGEN("Blocked list"),           "away",        IDI_AWAY            },
 	{	LPGEN("Idle"),                   "idle",        IDI_IDLE            },
 	{	LPGEN("AOL"),                    "aol",         IDI_AOL             },
 
-	{	LPGEN("Foreground Color"),       "foreclr",     IDI_FOREGROUNDCOLOR },
-	{	LPGEN("Background Color"),       "backclr",     IDI_BACKGROUNDCOLOR },
+	{	LPGEN("Foreground color"),       "foreclr",     IDI_FOREGROUNDCOLOR },
+	{	LPGEN("Background color"),       "backclr",     IDI_BACKGROUNDCOLOR },
 	{	LPGEN("Bold"),                   "bold",        IDI_BOLD            },
-	{	LPGEN("Not Bold"),               "nbold",       IDI_NBOLD           },
+	{	LPGEN("Not bold"),               "nbold",       IDI_NBOLD           },
 	{	LPGEN("Italic"),                 "italic",      IDI_ITALIC          },
-	{	LPGEN("Not Italic"),             "nitalic",     IDI_NITALIC         },
+	{	LPGEN("Not italic"),             "nitalic",     IDI_NITALIC         },
 	{	LPGEN("Underline"),              "undrln",      IDI_UNDERLINE       },
-	{	LPGEN("Not Underline"),          "nundrln",     IDI_NUNDERLINE      },
+	{	LPGEN("Not underline"),          "nundrln",     IDI_NUNDERLINE      },
 	{	LPGEN("Subscript"),              "sub_scrpt",   IDI_SUBSCRIPT       },
-	{	LPGEN("Not Subscript"),          "nsub_scrpt",  IDI_NSUBSCRIPT      },
+	{	LPGEN("Not subscript"),          "nsub_scrpt",  IDI_NSUBSCRIPT      },
 	{	LPGEN("Superscript"),            "sup_scrpt",   IDI_SUPERSCRIPT     },
-	{	LPGEN("Not Superscript"),        "nsup_scrpt",  IDI_NSUPERSCRIPT    },
-	{	LPGEN("Normal Script"),          "norm_scrpt",  IDI_NORMALSCRIPT    },
-	{	LPGEN("Not Normal Script"),      "nnorm_scrpt", IDI_NNORMALSCRIPT   }
+	{	LPGEN("Not superscript"),        "nsup_scrpt",  IDI_NSUPERSCRIPT    },
+	{	LPGEN("Normal script"),          "norm_scrpt",  IDI_NORMALSCRIPT    },
+	{	LPGEN("Not normal script"),      "nnorm_scrpt", IDI_NNORMALSCRIPT   }
 };
 
 void InitIcons(void)
 {
 	Icon_Register(hInstance, "Protocols/AIM", iconList, 14, "AIM");
-	Icon_Register(hInstance, "Protocols/AIM/" LPGEN("Profile Editor"), iconList+14, 14, "AIM");
+	Icon_Register(hInstance, "Protocols/AIM/" LPGEN("Profile editor"), iconList + 14, 14, "AIM");
 }
 
 HICON LoadIconEx(const char *name, bool big)
@@ -69,8 +69,8 @@ HICON LoadIconEx(const char *name, bool big)
 
 HANDLE GetIconHandle(const char *name)
 {
-	for (int i=0; i < _countof(iconList); i++)
-		if ( !mir_strcmp(iconList[i].szName, name))
+	for (int i = 0; i < _countof(iconList); i++)
+		if (!mir_strcmp(iconList[i].szName, name))
 			return iconList[i].hIcolib;
 
 	return NULL;
@@ -81,12 +81,6 @@ void ReleaseIconEx(const char *name, bool big)
 	char szSettingName[100];
 	mir_snprintf(szSettingName, "%s_%s", "AIM", name);
 	IcoLib_Release(szSettingName, big);
-}
-
-void Window_SetIcon(HWND hWnd, const char* name)
-{
-	SendMessage(hWnd, WM_SETICON, ICON_BIG,   (LPARAM)LoadIconEx( name, true ));
-	SendMessage(hWnd, WM_SETICON, ICON_SMALL, (LPARAM)LoadIconEx( name ));
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -139,14 +133,14 @@ void set_contact_icon(CAimProto* ppro, MCONTACT hContact)
 void remove_AT_icons(CAimProto* ppro)
 {
 	for (MCONTACT hContact = db_find_first(ppro->m_szModuleName); hContact; hContact = db_find_next(hContact, ppro->m_szModuleName))
-		if (!ppro->isChatRoom(hContact)) 
+		if (!ppro->isChatRoom(hContact))
 			ExtraIcon_Clear(hExtraAT, hContact);
 }
 
 void remove_ES_icons(CAimProto* ppro)
 {
 	for (MCONTACT hContact = db_find_first(ppro->m_szModuleName); hContact; hContact = db_find_next(hContact, ppro->m_szModuleName))
-		if (!ppro->isChatRoom(hContact)) 
+		if (!ppro->isChatRoom(hContact))
 			ExtraIcon_Clear(hExtraES, hContact);
 }
 
@@ -164,8 +158,8 @@ void add_ES_icons(CAimProto* ppro)
 
 void InitExtraIcons(void)
 {
-	hExtraAT = ExtraIcon_RegisterIcolib("aimaccounttype", LPGEN("AIM Account Type"), "AIM_aol");
-	hExtraES = ExtraIcon_RegisterIcolib("aimextstatus", LPGEN("AIM Extended Status"), "AIM_hiptop");
+	hExtraAT = ExtraIcon_RegisterIcolib("aimaccounttype", LPGEN("AIM account type"), "AIM_aol");
+	hExtraES = ExtraIcon_RegisterIcolib("aimextstatus", LPGEN("AIM extended status"), "AIM_hiptop");
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -185,19 +179,19 @@ int CAimProto::OnPreBuildContactMenu(WPARAM hContact, LPARAM)
 
 	switch (m_pd_mode) {
 	case 1:
-		Menu_ModifyItem(m_hBlockContextMenuItem, LPGENT("&Block"));
+		Menu_ModifyItem(m_hBlockContextMenuItem, LPGENW("&Block"));
 		break;
 
 	case 2:
-		Menu_ModifyItem(m_hBlockContextMenuItem, LPGENT("&Unblock"));
+		Menu_ModifyItem(m_hBlockContextMenuItem, LPGENW("&Unblock"));
 		break;
 
 	case 3:
-		Menu_ModifyItem(m_hBlockContextMenuItem, m_allow_list.find_id(id) ? LPGENT("&Block") : LPGENT("&Unblock"));
+		Menu_ModifyItem(m_hBlockContextMenuItem, m_allow_list.find_id(id) ? LPGENW("&Block") : LPGENW("&Unblock"));
 		break;
 
 	case 4:
-		Menu_ModifyItem(m_hBlockContextMenuItem, m_block_list.find_id(id) ? LPGENT("&Unblock") : LPGENT("&Block"));
+		Menu_ModifyItem(m_hBlockContextMenuItem, m_block_list.find_id(id) ? LPGENW("&Unblock") : LPGENW("&Block"));
 		break;
 
 	default:
@@ -216,21 +210,21 @@ void CAimProto::InitMainMenus(void)
 	CreateProtoService(mi.pszService, &CAimProto::ManageAccount);
 	mi.position = 201001;
 	mi.hIcolibItem = GetIconHandle("aim");
-	mi.name.a = LPGEN("Manage Account");
+	mi.name.a = LPGEN("Manage account");
 	m_hMainMenu[0] = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 
 	mi.pszService = "/InstantIdle";
 	CreateProtoService(mi.pszService, &CAimProto::InstantIdle);
 	mi.position = 201002;
 	mi.hIcolibItem = GetIconHandle("idle");
-	mi.name.a = LPGEN("Instant Idle");
+	mi.name.a = LPGEN("Instant idle");
 	m_hMainMenu[1] = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 
 	mi.pszService = "/JoinChatRoom";
 	CreateProtoService(mi.pszService, &CAimProto::JoinChatUI);
 	mi.position = 201003;
 	mi.hIcolibItem = GetIconHandle("aol");
-	mi.name.a = LPGEN( "Join Chat Room" );
+	mi.name.a = LPGEN("Join chat room");
 	m_hMainMenu[2] = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 }
 
@@ -239,11 +233,11 @@ void CAimProto::InitContactMenus(void)
 	CMenuItem mi;
 
 	SET_UID(mi, 0xb961e2af, 0x87a, 0x4fbf, 0xb5, 0x32, 0x6, 0xe2, 0x18, 0xad, 0x29, 0xac);
-	CreateProtoService("/GetHTMLAwayMsg",&CAimProto::GetHTMLAwayMsg);
+	CreateProtoService("/GetHTMLAwayMsg", &CAimProto::GetHTMLAwayMsg);
 	mi.pszService = "/GetHTMLAwayMsg";
 	mi.position = -2000006000;
 	mi.hIcolibItem = GetIconHandle("away");
-	mi.name.a = LPGEN("Read &HTML Away Message");
+	mi.name.a = LPGEN("Read &HTML away message");
 	mi.flags = CMIF_NOTOFFLINE | CMIF_HIDDEN;
 	m_hHTMLAwayContextMenuItem = Menu_AddContactMenuItem(&mi, m_szModuleName);
 
@@ -252,16 +246,16 @@ void CAimProto::InitContactMenus(void)
 	mi.pszService = "/GetProfile";
 	mi.position = -2000005090;
 	mi.hIcolibItem = GetIconHandle("profile");
-	mi.name.a = LPGEN("Read Profile");
+	mi.name.a = LPGEN("Read profile");
 	mi.flags = CMIF_NOTOFFLINE;
 	Menu_AddContactMenuItem(&mi, m_szModuleName);
 
 	SET_UID(mi, 0x3928ba10, 0x69bc, 0x4ec9, 0x96, 0x48, 0xa4, 0x1b, 0xbe, 0x58, 0x4a, 0x7e);
-	CreateProtoService("/AddToServerList", &CAimProto::AddToServerList); 
+	CreateProtoService("/AddToServerList", &CAimProto::AddToServerList);
 	mi.pszService = "/AddToServerList";
 	mi.position = -2000005080;
 	mi.hIcolibItem = GetIconHandle("add");
-	mi.name.a = LPGEN("Add To Server List");
+	mi.name.a = LPGEN("Add to server list");
 	mi.flags = CMIF_NOTONLINE | CMIF_HIDDEN;
 	m_hAddToServerListContextMenuItem = Menu_AddContactMenuItem(&mi, m_szModuleName);
 

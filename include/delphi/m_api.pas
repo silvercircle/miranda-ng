@@ -42,7 +42,7 @@ interface
 {$ENDIF}
 
 uses
-  Windows,Messages;//, FreeImage;
+  Windows,CommCtrl,Messages;//, FreeImage;
 
 // often used
 const
@@ -194,15 +194,12 @@ var
   {$include m_awaymsg.inc}
   {$include m_button.inc}
   {$include m_button_int.inc}
-  {$include m_chat.inc}
   {$include m_clc.inc}
   {$include m_clistint.inc}
-  {$include m_clui.inc}
   {$include m_cluiframes.inc}
   {$include m_contacts.inc}
   {$include m_crypto.inc}
   {$include m_database.inc}
-  {$include m_db_int.inc}
   {$include m_descbutton.inc}
   {$include m_email.inc}
   {$include m_extraicons.inc}
@@ -221,7 +218,6 @@ var
   {$include m_langpack.inc}
   {$include m_message.inc}
   {$include m_metacontacts.inc}
-  {$include m_modernopt.inc}
   {$include m_netlib.inc}
   {$include m_options.inc}
   {$include m_pluginupdater.inc}

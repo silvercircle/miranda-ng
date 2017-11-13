@@ -5,7 +5,7 @@
 ;  Version: 2.1.0.7
 ;  Authors: Scott Ellis, yaho
 ;============================================================
-[Tool Tip notification windows.]
+[Tooltip notification windows.]
 
 ;file \plugins\TipperYM\res\resource.rc
 [Layout]
@@ -199,12 +199,6 @@ Dodatne ikonice
 [<No Label>]
 
 [Add item]
-
-[Add separator]
-
-[Move up]
-
-[Move down]
 
 [No icon]
 
@@ -478,6 +472,16 @@ Razdvajanje linijom
 
 [Tipper]
 
+[Copy item]
+
+[Arrow up]
+
+[Arrow down]
+
+[Reload]
+
+[Apply]
+Primeni
 ;file \plugins\TipperYM\src\translations.cpp
 [Female]
 Žensko

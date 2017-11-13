@@ -104,7 +104,7 @@
 #define TIME  60
 #define Def_color_bg     0x00ffffff
 #define Def_color_txt    0x00000000
-#define Def_font_face    _T("Courier")
+#define Def_font_face    L"Courier"
 #define Def_font_size    14
 #define HK_SHOWHIDE      3001
 
@@ -144,7 +144,7 @@ extern HWND ContactHwnd;
 extern HINSTANCE hInst;
 extern HMENU hMenu;
 extern int bpStatus;
-extern HANDLE hNetlibUser;
+extern HNETLIBUSER hNetlibUser;
 extern MWindowList hWindowList;
 extern HGENMENU hMenuItem1, hMenuItemCountdown;
 extern char optionsname[80];
@@ -156,7 +156,7 @@ void SavewinSettings(void);
 void ValidatePosition(HWND hwndDlg);
 int  ModulesLoaded(WPARAM wParam, LPARAM lParam);
 void ChangeMenuItem3();
-TCHAR* FixButtonText(TCHAR *url, size_t len);
+wchar_t* FixButtonText(wchar_t *url, size_t len);
 int  ContactMenuItemUpdateData (WPARAM wParam, LPARAM lParam);
 
 int Doubleclick(WPARAM wParam, LPARAM lParam);
@@ -224,8 +224,8 @@ INT_PTR CALLBACK DlgProcContactOpt(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM
 void AckFunc(void *dummy);
 int  SiteDeleted(WPARAM wParam, LPARAM lParam);
 
-int  WErrorPopup(MCONTACT hContact, TCHAR *textdisplay);
-int  WAlertPopup(MCONTACT hContact, TCHAR *displaytext);
+int  WErrorPopup(MCONTACT hContact, wchar_t *textdisplay);
+int  WAlertPopup(MCONTACT hContact, wchar_t *displaytext);
 
 //////////////////////
 // wrappers

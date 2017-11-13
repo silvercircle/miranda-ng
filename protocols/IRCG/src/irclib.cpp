@@ -29,14 +29,14 @@ int CDccSession::nDcc = 0;
 
 static int CompareHandlers( const CIrcHandler* p1, const CIrcHandler* p2 )
 {
-	return mir_tstrcmp( p1->m_name, p2->m_name );
+	return mir_wstrcmp( p1->m_name, p2->m_name );
 }
 
 OBJLIST<CIrcHandler> CIrcProto::m_handlers( 30, CompareHandlers );
 
 ////////////////////////////////////////////////////////////////////
 
-CIrcMessage::CIrcMessage( CIrcProto* _pro, const TCHAR* lpszCmdLine, int codepage, bool bIncoming, bool bNotify ) :
+CIrcMessage::CIrcMessage( CIrcProto* _pro, const wchar_t* lpszCmdLine, int codepage, bool bIncoming, bool bNotify ) :
 	m_proto( _pro ),
 	m_bIncoming( bIncoming ),
 	m_bNotify( bNotify ),
@@ -59,7 +59,7 @@ CIrcMessage::CIrcMessage(const CIrcMessage& m) :
 	prefix.sHost = m.prefix.sHost;
 
 	for (int i = 0; i < m.parameters.getCount(); i++)
-		parameters.insert(new CMString(m.parameters[i]));
+		parameters.insert(new CMStringW(m.parameters[i]));
 }
 
 CIrcMessage::~CIrcMessage()
@@ -68,7 +68,7 @@ CIrcMessage::~CIrcMessage()
 
 void CIrcMessage::Reset()
 {
-	prefix.sNick = prefix.sUser = prefix.sHost = sCommand = _T("");
+	prefix.sNick = prefix.sUser = prefix.sHost = sCommand = L"";
 	m_bIncoming = false;
 	m_bNotify = true;
 
@@ -89,29 +89,29 @@ CIrcMessage& CIrcMessage::operator = (const CIrcMessage& m)
 	return *this;
 }
 
-CIrcMessage& CIrcMessage::operator = (const TCHAR* lpszCmdLine)
+CIrcMessage& CIrcMessage::operator = (const wchar_t* lpszCmdLine)
 {
 	Reset();
 	ParseIrcCommand(lpszCmdLine);
 	return *this;
 }
 
-void CIrcMessage::ParseIrcCommand(const TCHAR* lpszCmdLine)
+void CIrcMessage::ParseIrcCommand(const wchar_t* lpszCmdLine)
 {
-	const TCHAR* p1 = lpszCmdLine;
-	const TCHAR* p2 = lpszCmdLine;
+	const wchar_t* p1 = lpszCmdLine;
+	const wchar_t* p2 = lpszCmdLine;
 
 	// prefix exists ?
 	if (*p1 == ':') {
 		// break prefix into its components (nick!user@host)
 		p2 = ++p1;
-		while (*p2 && !_tcschr(_T(" !"), *p2))
+		while (*p2 && !wcschr(L" !", *p2))
 			++p2;
 		prefix.sNick.SetString(p1, p2 - p1);
 		if (*p2 != '!')
 			goto end_of_prefix;
 		p1 = ++p2;
-		while (*p2 && !_tcschr(_T(" @"), *p2))
+		while (*p2 && !wcschr(L" @", *p2))
 			++p2;
 		prefix.sUser.SetString(p1, p2 - p1);
 		if (*p2 != '@')
@@ -145,14 +145,14 @@ end_of_prefix:
 			// seek end-of-message
 			while (*p2)
 				++p2;
-			parameters.insert(new CMString(p1, p2 - p1));
+			parameters.insert(new CMStringW(p1, p2 - p1));
 			break;
 		}
 		else {
 			// seek end of parameter
 			while (*p2 && *p2 != ' ')
 				++p2;
-			parameters.insert(new CMString(p1, p2 - p1));
+			parameters.insert(new CMStringW(p1, p2 - p1));
 			// see next parameter
 			while (*p2 && *p2 == ' ')
 				++p2;
@@ -168,13 +168,13 @@ int CIrcProto::getCodepage() const
 	return (con != NULL) ? codepage : CP_ACP;
 }
 
-void CIrcProto::SendIrcMessage(const TCHAR* msg, bool bNotify, int cp)
+void CIrcProto::SendIrcMessage(const wchar_t* msg, bool bNotify, int cp)
 {
 	if (cp == -1)
 		cp = getCodepage();
 
 	if (this) {
-		char* str = mir_t2a_cp(msg, cp);
+		char* str = mir_u2a_cp(msg, cp);
 		rtrim(str);
 		int cbLen = (int)mir_strlen(str);
 		str = (char*)mir_realloc(str, cbLen + 3);
@@ -184,7 +184,7 @@ void CIrcProto::SendIrcMessage(const TCHAR* msg, bool bNotify, int cp)
 
 		if (bNotify) {
 			CIrcMessage ircMsg(this, msg, cp);
-			if (!ircMsg.sCommand.IsEmpty() && ircMsg.sCommand != _T("QUIT"))
+			if (!ircMsg.sCommand.IsEmpty() && ircMsg.sCommand != L"QUIT")
 				Notify(&ircMsg);
 		}
 	}
@@ -198,11 +198,10 @@ bool CIrcProto::Connect(const CIrcSessionInfo& info)
 	ncon.cbSize = sizeof(ncon);
 	ncon.szHost = info.sServer.c_str();
 	ncon.wPort = info.iPort;
-	con = (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)m_hNetlibUser, (LPARAM)&ncon);
+	con = Netlib_OpenConnection(m_hNetlibUser, &ncon);
 	if (con == NULL) {
-		TCHAR szTemp[300];
-		mir_sntprintf(szTemp, _T("\0035%s \002%s\002 (%S: %u)."),
-			TranslateT("Failed to connect to"), si.sNetwork.c_str(), si.sServer.c_str(), si.iPort);
+		wchar_t szTemp[300];
+		mir_snwprintf(szTemp, L"\0035%s \002%s\002 (%S: %u).", TranslateT("Failed to connect to"), si.sNetwork.c_str(), si.sServer.c_str(), si.iPort);
 		DoEvent(GC_EVENT_INFORMATION, SERVERWINDOW, NULL, szTemp, NULL, NULL, NULL, true, false);
 		return false;
 	}
@@ -210,7 +209,7 @@ bool CIrcProto::Connect(const CIrcSessionInfo& info)
 	FindLocalIP(con); // get the local ip used for filetransfers etc
 
 	if (info.m_iSSL > 0) {
-		if (!CallService(MS_NETLIB_STARTSSL, (WPARAM)con, 0) && info.m_iSSL == 2) {
+		if (!Netlib_StartSsl(con, 0) && info.m_iSSL == 2) {
 			Netlib_CloseHandle(con);
 			con = NULL;
 			m_info.Reset();
@@ -218,7 +217,7 @@ bool CIrcProto::Connect(const CIrcSessionInfo& info)
 		}
 	}
 
-	if (Miranda_Terminated()) {
+	if (Miranda_IsTerminated()) {
 		Disconnect();
 		return false;
 	}
@@ -230,18 +229,18 @@ bool CIrcProto::Connect(const CIrcSessionInfo& info)
 	Sleep(100);
 	if (info.sPassword.GetLength())
 		NLSend("PASS %s\r\n", info.sPassword.c_str());
-	NLSend(_T("NICK %s\r\n"), info.sNick.c_str());
+	NLSend(L"NICK %s\r\n", info.sNick.c_str());
 
-	CMString userID = GetWord(info.sUserID.c_str(), 0);
-	TCHAR szHostName[MAX_PATH];
+	CMStringW userID = GetWord(info.sUserID.c_str(), 0);
+	wchar_t szHostName[MAX_PATH];
 	DWORD cbHostName = _countof(szHostName);
 	GetComputerName(szHostName, &cbHostName);
-	CMString HostName = GetWord(szHostName, 0);
+	CMStringW HostName = GetWord(szHostName, 0);
 	if (userID.IsEmpty())
-		userID = _T("Miranda");
+		userID = L"Miranda";
 	if (HostName.IsEmpty())
-		HostName = _T("host");
-	NLSend(_T("USER %s %s %s :%s\r\n"), userID.c_str(), HostName.c_str(), _T("server"), info.sFullName.c_str());
+		HostName = L"host";
+	NLSend(L"USER %s %s %s :%s\r\n", userID.c_str(), HostName.c_str(), L"server", info.sFullName.c_str());
 
 	return con != NULL;
 }
@@ -255,8 +254,8 @@ void CIrcProto::Disconnect(void)
 
 	KillIdent();
 
-	if (m_quitMessage && m_quitMessage[0])
-		NLSend(_T("QUIT :%s\r\n"), m_quitMessage);
+	if (m_quitMessage[0])
+		NLSend(L"QUIT :%s\r\n", m_quitMessage);
 	else
 		NLSend("QUIT \r\n");
 
@@ -283,16 +282,16 @@ int CIrcProto::NLSend(const unsigned char* buf, int cbBuf)
 	return Netlib_Send(con, (const char*)buf, cbBuf, MSG_DUMPASTEXT);
 }
 
-int CIrcProto::NLSend(const TCHAR* fmt, ...)
+int CIrcProto::NLSend(const wchar_t* fmt, ...)
 {
 	va_list marker;
 	va_start(marker, fmt);
 
-	TCHAR szBuf[1024 * 4];
-	mir_vsntprintf(szBuf, _countof(szBuf), fmt, marker);
+	wchar_t szBuf[1024 * 4];
+	mir_vsnwprintf(szBuf, _countof(szBuf), fmt, marker);
 	va_end(marker);
 
-	char* buf = mir_t2a_cp(szBuf, getCodepage());
+	char* buf = mir_u2a_cp(szBuf, getCodepage());
 	int result = NLSend((unsigned char*)buf, (int)mir_strlen(buf));
 	mir_free(buf);
 	return result;
@@ -332,7 +331,7 @@ void CIrcProto::KillIdent()
 	}
 }
 
-void CIrcProto::InsertIncomingEvent(TCHAR* pszRaw)
+void CIrcProto::InsertIncomingEvent(wchar_t* pszRaw)
 {
 	CIrcMessage msg(this, pszRaw, true);
 	Notify(&msg);
@@ -341,12 +340,12 @@ void CIrcProto::InsertIncomingEvent(TCHAR* pszRaw)
 
 void CIrcProto::createMessageFromPchar(const char* p)
 {
-	TCHAR* ptszMsg;
+	wchar_t* ptszMsg;
 	if (codepage != CP_UTF8 && m_utfAutodetect) {
 		if (mir_utf8decodecp(NEWSTR_ALLOCA(p), codepage, &ptszMsg) == NULL)
-			ptszMsg = mir_a2t_cp(p, codepage);
+			ptszMsg = mir_a2u_cp(p, codepage);
 	}
-	else ptszMsg = mir_a2t_cp(p, codepage);
+	else ptszMsg = mir_a2u_cp(p, codepage);
 	CIrcMessage msg(this, ptszMsg, codepage, true);
 	Notify(&msg);
 	mir_free(ptszMsg);
@@ -358,12 +357,12 @@ void CIrcProto::DoReceive()
 	int cbInBuf = 0;
 
 	if (m_info.bIdentServer && m_info.iIdentServerPort != NULL) {
-		NETLIBBIND nb = { 0 };
-		nb.cbSize = sizeof(NETLIBBIND);
+		NETLIBBIND nb = {};
 		nb.pfnNewConnectionV2 = DoIdent;
 		nb.pExtra = this;
 		nb.wPort = m_info.iIdentServerPort;
-		hBindPort = (HANDLE)CallService(MS_NETLIB_BINDPORT, (WPARAM)m_hNetlibUser, (LPARAM)&nb);
+		
+		hBindPort = Netlib_BindPort(m_hNetlibUser, &nb);
 		if (!hBindPort || nb.wPort != m_info.iIdentServerPort) {
 			debugLogA("Error: unable to bind local port %u", m_info.iIdentServerPort);
 			KillIdent();
@@ -438,11 +437,12 @@ void CIrcProto::DoReceive()
 
 void __cdecl CIrcProto::ThreadProc(void*)
 {
+	Thread_SetName("IRC: CIrcProto");
 	DoReceive();
 	m_info.Reset();
 }
 
-void CIrcProto::AddDCCSession(MCONTACT, CDccSession* dcc)
+void CIrcProto::AddDCCSession(MCONTACT, CDccSession *dcc)
 {
 	mir_cslock lck(m_dcc);
 
@@ -453,7 +453,7 @@ void CIrcProto::AddDCCSession(MCONTACT, CDccSession* dcc)
 	m_dcc_chats.insert(dcc);
 }
 
-void CIrcProto::AddDCCSession(DCCINFO*, CDccSession* dcc)
+void CIrcProto::AddDCCSession(DCCINFO*, CDccSession *dcc)
 {
 	mir_cslock lck(m_dcc);
 	m_dcc_xfers.insert(dcc);
@@ -470,7 +470,7 @@ void CIrcProto::RemoveDCCSession(MCONTACT hContact)
 		}
 }
 
-void CIrcProto::RemoveDCCSession(DCCINFO* pdci)
+void CIrcProto::RemoveDCCSession(DCCINFO *pdci)
 {
 	mir_cslock lck(m_dcc);
 
@@ -493,7 +493,7 @@ CDccSession* CIrcProto::FindDCCSession(MCONTACT hContact)
 	return 0;
 }
 
-CDccSession* CIrcProto::FindDCCSession(DCCINFO* pdci)
+CDccSession* CIrcProto::FindDCCSession(DCCINFO *pdci)
 {
 	mir_cslock lck(m_dcc);
 
@@ -517,15 +517,15 @@ CDccSession* CIrcProto::FindDCCSendByPort(int iPort)
 	return 0;
 }
 
-CDccSession* CIrcProto::FindDCCRecvByPortAndName(int iPort, const TCHAR* szName)
+CDccSession* CIrcProto::FindDCCRecvByPortAndName(int iPort, const wchar_t* szName)
 {
 	mir_cslock lck(m_dcc);
 
 	for (int i = 0; i < m_dcc_xfers.getCount(); i++) {
 		CDccSession* p = m_dcc_xfers[i];
 		DBVARIANT dbv;
-		if (!getTString(p->di->hContact, "Nick", &dbv)) {
-			if (p->di->iType == DCC_SEND && !p->di->bSender && !mir_tstrcmpi(szName, dbv.ptszVal) && iPort == p->di->iPort) {
+		if (!getWString(p->di->hContact, "Nick", &dbv)) {
+			if (p->di->iType == DCC_SEND && !p->di->bSender && !mir_wstrcmpi(szName, dbv.ptszVal) && iPort == p->di->iPort) {
 				db_free(&dbv);
 				return p;
 			}
@@ -547,7 +547,7 @@ CDccSession* CIrcProto::FindPassiveDCCSend(int iToken)
 	return 0;
 }
 
-CDccSession* CIrcProto::FindPassiveDCCRecv(CMString sName, CMString sToken)
+CDccSession* CIrcProto::FindPassiveDCCRecv(CMStringW sName, CMStringW sToken)
 {
 	mir_cslock lck(m_dcc);
 
@@ -588,7 +588,7 @@ void CIrcProto::CheckDCCTimeout(void)
 
 ////////////////////////////////////////////////////////////////////
 
-CIrcIgnoreItem::CIrcIgnoreItem(const TCHAR* _mask, const TCHAR* _flags, const TCHAR* _network) :
+CIrcIgnoreItem::CIrcIgnoreItem(const wchar_t* _mask, const wchar_t* _flags, const wchar_t* _network) :
 	mask(_mask),
 	flags(_flags),
 	network(_network)
@@ -596,9 +596,9 @@ CIrcIgnoreItem::CIrcIgnoreItem(const TCHAR* _mask, const TCHAR* _flags, const TC
 }
 
 CIrcIgnoreItem::CIrcIgnoreItem(int codepage, const char* _mask, const char* _flags, const char* _network) :
-	mask((TCHAR*)_A2T(_mask, codepage)),
-	flags((TCHAR*)_A2T(_flags, codepage)),
-	network((TCHAR*)_A2T(_network, codepage))
+	mask((wchar_t*)_A2T(_mask, codepage)),
+	flags((wchar_t*)_A2T(_flags, codepage)),
+	network((wchar_t*)_A2T(_network, codepage))
 {
 }
 
@@ -634,18 +634,18 @@ CIrcSessionInfo::CIrcSessionInfo(const CIrcSessionInfo& si) :
 void CIrcSessionInfo::Reset()
 {
 	sServer = "";
-	sServerName = _T("");
+	sServerName = L"";
 	iPort = 0;
-	sNick = _T("");
-	sUserID = _T("");
-	sFullName = _T("");
+	sNick = L"";
+	sUserID = L"";
+	sFullName = L"";
 	sPassword = "";
 	bIdentServer = false;
 	bNickFlag = false;
 	m_iSSL = 0;
-	sIdentServerType = _T("");
+	sIdentServerType = L"";
 	iIdentServerPort = 0;
-	sNetwork = _T("");
+	sNetwork = L"";
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -657,14 +657,8 @@ void CIrcProto::OnIrcMessage(const CIrcMessage* pmsg)
 		if (pfn) {
 			// call member function. if it returns 'false',
 			// call the default handling
-			__try {
-				if (!(this->*pfn)(pmsg))
-					OnIrcDefault(pmsg);
-			}
-			__except (EXCEPTION_EXECUTE_HANDLER) // dedicated to Sava :)
-			{
-				debugLogA("IRC handler feels sick: %S", pmsg->sCommand.c_str());
-			}
+			if (!(this->*pfn)(pmsg))
+				OnIrcDefault(pmsg);
 		}
 		else // handler not found. call default handler
 			OnIrcDefault(pmsg);
@@ -672,7 +666,7 @@ void CIrcProto::OnIrcMessage(const CIrcMessage* pmsg)
 	else OnIrcDisconnected();
 }
 
-PfnIrcMessageHandler CIrcProto::FindMethod(const TCHAR* lpszName)
+PfnIrcMessageHandler CIrcProto::FindMethod(const wchar_t* lpszName)
 {
 	CIrcHandler temp(lpszName, NULL);
 	CIrcHandler* p = m_handlers.find(&temp);
@@ -717,7 +711,7 @@ unsigned long ConvertIPToInteger(char* IP)
 ////////////////////////////////////////////////////////////////////
 
 // initialize basic stuff needed for the dcc objects, also start a timer for checking the status of connections (timeouts)
-CDccSession::CDccSession(CIrcProto* _pro, DCCINFO* pdci) :
+CDccSession::CDccSession(CIrcProto* _pro, DCCINFO *pdci) :
 	m_proto(_pro),
 	NewFileName(0),
 	dwWhatNeedsDoing(0),
@@ -766,7 +760,7 @@ CDccSession::~CDccSession() // destroy all that needs destroying
 	}
 
 	if (di->iType == DCC_CHAT) {
-		CDccSession* dcc = m_proto->FindDCCSession(di->hContact);
+		CDccSession *dcc = m_proto->FindDCCSession(di->hContact);
 		if (dcc && this == dcc) {
 			m_proto->RemoveDCCSession(di->hContact); // objects automatically remove themselves from the list of objects
 			m_proto->setWord(di->hContact, "Status", ID_STATUS_OFFLINE);
@@ -813,7 +807,7 @@ int CDccSession::NLReceive(const unsigned char* buf, int cbBuf)
 	return n;
 }
 
-int CDccSession::SendStuff(const TCHAR* fmt)
+int CDccSession::SendStuff(const wchar_t* fmt)
 {
 	CMStringA buf = _T2A(fmt, m_proto->getCodepage());
 	return NLSend((const unsigned char*)buf.c_str(), buf.GetLength());
@@ -836,6 +830,8 @@ int CDccSession::Connect()
 
 void __cdecl CDccSession::ConnectProc(void *pparam)
 {
+	Thread_SetName("IRC: ConnectProc");
+
 	CDccSession* pThis = (CDccSession*)pparam;
 	if (!pThis->con)
 		pThis->SetupConnection();
@@ -858,13 +854,13 @@ int CDccSession::SetupConnection()
 
 	// Set up stuff needed for the filetransfer dialog (if it is a filetransfer)
 	if (di->iType == DCC_SEND) {
-		file[0] = (TCHAR*)di->sFileAndPath.c_str();
+		file[0] = (wchar_t*)di->sFileAndPath.c_str();
 		file[1] = 0;
 
-		pfts.tszCurrentFile = (TCHAR*)di->sFileAndPath.c_str();
-		pfts.tszWorkingDir = (TCHAR*)di->sPath.c_str();
+		pfts.tszCurrentFile = (wchar_t*)di->sFileAndPath.c_str();
+		pfts.tszWorkingDir = (wchar_t*)di->sPath.c_str();
 		pfts.hContact = di->hContact;
-		pfts.flags = PFTS_TCHAR + ((di->bSender) ? PFTS_SENDING : PFTS_RECEIVING);
+		pfts.flags = PFTS_UNICODE + ((di->bSender) ? PFTS_SENDING : PFTS_RECEIVING);
 		pfts.totalFiles = 1;
 		pfts.currentFileNumber = 0;
 		pfts.totalBytes = di->dwSize;
@@ -877,13 +873,11 @@ int CDccSession::SetupConnection()
 
 	// create a listening socket for outgoing chat/send requests. The remote computer connects to this computer. Used for both chat and filetransfer.
 	if (di->bSender && !di->bReverse) {
-		NETLIBBIND nb = { 0 };
-		nb.cbSize = sizeof(NETLIBBIND);
+		NETLIBBIND nb = {};
 		nb.pfnNewConnectionV2 = DoIncomingDcc; // this is the (helper) function to be called once an incoming connection is made. The 'real' function that is called is IncomingConnection()
-		nb.pExtra = (void *)this;
-		nb.wPort = 0;
-		hBindPort = (HANDLE)CallService(MS_NETLIB_BINDPORT, (WPARAM)m_proto->hNetlibDCC, (LPARAM)&nb);
-
+		nb.pExtra = this;
+		
+		hBindPort = Netlib_BindPort(m_proto->hNetlibDCC, &nb);
 		if (hBindPort == NULL) {
 			delete this; // dcc objects destroy themselves when the connection has been closed or failed for some reasson.
 			return 0;
@@ -900,7 +894,7 @@ int CDccSession::SetupConnection()
 		ncon.cbSize = sizeof(ncon);
 		ncon.szHost = ConvertIntegerToIP(di->dwAdr);
 		ncon.wPort = (WORD)di->iPort;
-		con = (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)m_proto->hNetlibDCC, (LPARAM)&ncon);
+		con = Netlib_OpenConnection(m_proto->hNetlibDCC, &ncon);
 	}
 
 	// If a remote computer initiates a filetransfer this is used to connect to that computer (the user has chosen to accept but it is possible the file exists/needs to be resumed etc still)
@@ -956,27 +950,25 @@ int CDccSession::SetupConnection()
 
 		// hack for passive filetransfers
 		if (di->iType == DCC_SEND && !di->bSender && di->bReverse) {
-			NETLIBBIND nb = { 0 };
-			nb.cbSize = sizeof(NETLIBBIND);
+			NETLIBBIND nb = {};
 			nb.pfnNewConnectionV2 = DoIncomingDcc; // this is the (helper) function to be called once an incoming connection is made. The 'real' function that is called is IncomingConnection()
-			nb.pExtra = (void *)this;
-			nb.wPort = 0;
-			hBindPort = (HANDLE)CallService(MS_NETLIB_BINDPORT, (WPARAM)m_proto->hNetlibDCC, (LPARAM)&nb);
+			nb.pExtra = this;
 
+			hBindPort = Netlib_BindPort(m_proto->hNetlibDCC, &nb);
 			if (hBindPort == NULL) {
-				m_proto->DoEvent(GC_EVENT_INFORMATION, 0, m_proto->m_info.sNick.c_str(), LPGENT("DCC ERROR: Unable to bind local port for passive file transfer"), NULL, NULL, NULL, true, false);
+				m_proto->DoEvent(GC_EVENT_INFORMATION, 0, m_proto->m_info.sNick.c_str(), LPGENW("DCC ERROR: Unable to bind local port for passive file transfer"), NULL, NULL, NULL, true, false);
 				delete this; // dcc objects destroy themselves when the connection has been closed or failed for some reasson.
 				return 0;
 			}
 
 			di->iPort = nb.wPort; // store the port internally so it is possible to search for it (for resuming of filetransfers purposes)
 
-			CMString sFileWithQuotes = di->sFile;
+			CMStringW sFileWithQuotes = di->sFile;
 
 			// if spaces in the filename surround with quotes
 			if (sFileWithQuotes.Find(' ', 0) != -1) {
-				sFileWithQuotes.Insert(0, _T("\""));
-				sFileWithQuotes.Insert(sFileWithQuotes.GetLength(), _T("\""));
+				sFileWithQuotes.Insert(0, L"\"");
+				sFileWithQuotes.Insert(sFileWithQuotes.GetLength(), L"\"");
 			}
 
 			// send out DCC RECV command for passive filetransfers
@@ -987,7 +979,7 @@ int CDccSession::SetupConnection()
 				ulAdr = m_proto->m_IPFromServer ? ConvertIPToInteger(m_proto->m_myHost) : nb.dwExternalIP;
 
 			if (di->iPort && ulAdr)
-				m_proto->PostIrcMessage(_T("/CTCP %s DCC SEND %s %u %u %I64u %s"), di->sContactName.c_str(), sFileWithQuotes.c_str(), ulAdr, di->iPort, di->dwSize, di->sToken.c_str());
+				m_proto->PostIrcMessage(L"/CTCP %s DCC SEND %s %u %u %I64u %s", di->sContactName.c_str(), sFileWithQuotes.c_str(), ulAdr, di->iPort, di->dwSize, di->sToken.c_str());
 
 			return TRUE;
 		}
@@ -998,7 +990,7 @@ int CDccSession::SetupConnection()
 		ncon.szHost = ConvertIntegerToIP(di->dwAdr);
 		ncon.wPort = (WORD)di->iPort;
 
-		con = (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)m_proto->hNetlibDCC, (LPARAM)&ncon);
+		con = Netlib_OpenConnection(m_proto->hNetlibDCC, &ncon);
 	}
 
 	// if for some reason the plugin has failed to connect to the remote computer the object is destroyed.
@@ -1018,7 +1010,7 @@ int CDccSession::SetupConnection()
 }
 
 // called by netlib for incoming connections on a listening socket (chat/filetransfer)
-int CDccSession::IncomingConnection(HANDLE hConnection, DWORD dwIP)
+int CDccSession::IncomingConnection(HNETLIBCONN hConnection, DWORD dwIP)
 {
 	con = hConnection;
 	if (con == NULL) {
@@ -1039,6 +1031,8 @@ int CDccSession::IncomingConnection(HANDLE hConnection, DWORD dwIP)
 // here we decide which function to use for communicating with the remote computer, depending on connection type
 void __cdecl CDccSession::ThreadProc(void *pparam)
 {
+	Thread_SetName("IRC: CDccSession::ThreadProc");
+
 	CDccSession* pThis = (CDccSession*)pparam;
 
 	// if it is an incoming connection on a listening port, then we should close the listenting port so only one can connect (the one you offered
@@ -1078,7 +1072,7 @@ void CDccSession::DoSendFile()
 	// is there a connection?
 	if (con) {
 		// open the file for reading
-		int hFile = _topen(di->sFileAndPath.c_str(), _O_RDONLY | _O_BINARY, _S_IREAD);
+		int hFile = _wopen(di->sFileAndPath.c_str(), _O_RDONLY | _O_BINARY, _S_IREAD);
 		if (hFile >= 0) {
 			unsigned __int64 dwLastAck = 0;
 
@@ -1098,12 +1092,11 @@ void CDccSession::DoSendFile()
 			tLastActivity = time(0);
 
 			// create a packet receiver to handle receiving ack's from the remote computer.
-			HANDLE hPackrcver = (HANDLE)CallService(MS_NETLIB_CREATEPACKETRECVER, (WPARAM)con, sizeof(DWORD));
-			NETLIBPACKETRECVER npr;
-			npr.cbSize = sizeof(NETLIBPACKETRECVER);
+			HANDLE hPackrcver = Netlib_CreatePacketReceiver(con, sizeof(DWORD));
+
+			NETLIBPACKETRECVER npr = {};
 			npr.dwTimeout = 60 * 1000;
 			npr.bufferSize = sizeof(DWORD);
-			npr.bytesUsed = 0;
 
 			// until the connection is dropped it will spin around in this while() loop
 			while (con) {
@@ -1128,7 +1121,7 @@ void CDccSession::DoSendFile()
 					DWORD dwPacket = NULL;
 
 					do {
-						dwRead = CallService(MS_NETLIB_GETMOREPACKETS, (WPARAM)hPackrcver, (LPARAM)&npr);
+						dwRead = Netlib_GetMorePackets(hPackrcver, &npr);
 						npr.bytesUsed = sizeof(DWORD);
 
 						if (dwRead <= 0)
@@ -1149,7 +1142,7 @@ void CDccSession::DoSendFile()
 					DWORD dwPacket = 0;
 
 					do {
-						dwRead = CallService(MS_NETLIB_GETMOREPACKETS, (WPARAM)hPackrcver, (LPARAM)&npr);
+						dwRead = Netlib_GetMorePackets(hPackrcver, &npr);
 						npr.bytesUsed = sizeof(DWORD);
 						if (dwRead <= 0)
 							break; // connection closed, or a timeout occurred.
@@ -1221,7 +1214,7 @@ void CDccSession::DoReceiveFile()
 	ProtoBroadcastAck(m_proto->m_szModuleName, di->hContact, ACKTYPE_FILE, ACKRESULT_NEXTFILE, (void *)di, 0);
 
 	// open the file for writing (and reading in case it is a resume)
-	int hFile = _topen(di->sFileAndPath.c_str(),
+	int hFile = _wopen(di->sFileAndPath.c_str(),
 		(dwWhatNeedsDoing == FILERESUME_RESUME ? _O_APPEND : _O_TRUNC | _O_CREAT) | _O_RDWR | _O_BINARY,
 		_S_IREAD | _S_IWRITE);
 	if (hFile >= 0) {
@@ -1382,15 +1375,15 @@ VOID CALLBACK DCCTimerProc(HWND, UINT, UINT_PTR idEvent, DWORD)
 }
 
 // helper function for incoming dcc connections.
-void DoIncomingDcc(HANDLE hConnection, DWORD dwRemoteIP, void * p1)
+void DoIncomingDcc(HNETLIBCONN hConnection, DWORD dwRemoteIP, void * p1)
 {
-	CDccSession* dcc = (CDccSession*)p1;
+	CDccSession *dcc = (CDccSession*)p1;
 	dcc->IncomingConnection(hConnection, dwRemoteIP);
 }
 
 // ident server
 
-void DoIdent(HANDLE hConnection, DWORD, void* extra)
+void DoIdent(HNETLIBCONN hConnection, DWORD, void* extra)
 {
 	CIrcProto *ppro = (CIrcProto*)extra;
 

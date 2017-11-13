@@ -22,7 +22,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "..\stdafx.h"
+#include "../stdafx.h"
 
 #define M_ENABLE_SUBCTLS			(WM_APP+1)
 
@@ -97,7 +97,7 @@ MsgWndData::~MsgWndData()
 
 void MsgWndData::FlagsIconSet()
 {
-	StatusIconData sid = { sizeof(sid) };
+	StatusIconData sid = {};
 	sid.szModule = MODNAMEFLAGS;
 	if (!g_bShowStatusIconFlag)
 		sid.flags = MBF_HIDDEN;
@@ -112,7 +112,7 @@ void MsgWndData::FlagsIconSet()
 
 void UpdateStatusIcons()
 {
-	StatusIconData sid = { sizeof(sid) };
+	StatusIconData sid = {};
 	sid.szModule = MODNAMEFLAGS;
 	if (!g_bShowStatusIconFlag)
 		sid.flags = MBF_HIDDEN;
@@ -170,9 +170,9 @@ static int OnContactSettingChanged(WPARAM hContact, LPARAM lParam)
 
 	/* user details update */
 	DBCONTACTWRITESETTING *dbcws = (DBCONTACTWRITESETTING*)lParam;
-	if (!mir_strcmp(dbcws->szSetting, SET_CONTACT_COUNTRY) ||
-		 !mir_strcmp(dbcws->szSetting, SET_CONTACT_ORIGIN_COUNTRY) ||
-		 !mir_strcmp(dbcws->szSetting, SET_CONTACT_COMPANY_COUNTRY))
+	if (!strcmp(dbcws->szSetting, SET_CONTACT_COUNTRY) ||
+		 !strcmp(dbcws->szSetting, SET_CONTACT_ORIGIN_COUNTRY) ||
+		 !strcmp(dbcws->szSetting, SET_CONTACT_COMPANY_COUNTRY))
 	{
 		/* Extra Image */
 		SetExtraImage(hContact);
@@ -220,7 +220,7 @@ void SvcFlagsLoadModule()
 
 	char szId[20];
 	mir_snprintf(szId, (langid == 0xFFFF) ? "%s_0x%X" : "%s_%i", "flags", langid); /* buffer safe */
-	hExtraIconSvc = ExtraIcon_RegisterIcolib("Flags", LPGEN("Flags (uinfoex)"), szId);
+	hExtraIconSvc = ExtraIcon_RegisterIcolib("Flags", LPGEN("Flags (UInfoEx)"), szId);
 }
 
 /**
@@ -234,7 +234,7 @@ void SvcFlagsLoadModule()
 void SvcFlagsOnModulesLoaded()
 {
 	/* Status Icon */
-	StatusIconData sid = { sizeof(sid) };
+	StatusIconData sid = {};
 	sid.szModule = MODNAMEFLAGS;
 	if (!g_bShowStatusIconFlag)
 		sid.flags = MBF_HIDDEN;

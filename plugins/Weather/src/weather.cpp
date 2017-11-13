@@ -92,7 +92,7 @@ int WeatherShutdown(WPARAM, LPARAM)
 	SaveOptions();					// save options once more
 	status = ID_STATUS_OFFLINE;		// set status to offline
 
-	CallService(MS_NETLIB_SHUTDOWN, (WPARAM)hNetlibHttp, 0);
+	Netlib_Shutdown(hNetlibHttp);
 
 	WindowList_Broadcast(hWindowList, WM_CLOSE, 0, 0);
 	WindowList_Broadcast(hDataWindowList, WM_CLOSE, 0, 0);
@@ -177,7 +177,7 @@ extern "C" int __declspec(dllexport) Unload(void)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfoEx);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	// initialize global variables
 	InitVar();
@@ -226,13 +226,13 @@ extern "C" int __declspec(dllexport) Load(void)
 	InitServices();
 
 	// add sound event
-	SkinAddNewSoundExT("weatherupdated", _T(WEATHERPROTONAME), LPGENT("Weather Condition Changed"));
-	SkinAddNewSoundExT("weatheralert", _T(WEATHERPROTONAME), LPGENT("Weather Alert Issued"));
+	Skin_AddSound("weatherupdated", _A2W(WEATHERPROTONAME), LPGENW("Weather Condition Changed"));
+	Skin_AddSound("weatheralert", _A2W(WEATHERPROTONAME), LPGENW("Weather Alert Issued"));
 
 	// window needed for popup commands
-	TCHAR SvcFunc[100];
-	mir_sntprintf(SvcFunc, _T("%s__PopupWindow"), _T(WEATHERPROTONAME));
-	hPopupWindow = CreateWindowEx(WS_EX_TOOLWINDOW, _T("static"), SvcFunc, 0, CW_USEDEFAULT, CW_USEDEFAULT,
+	wchar_t SvcFunc[100];
+	mir_snwprintf(SvcFunc, L"%s__PopupWindow", _A2W(WEATHERPROTONAME));
+	hPopupWindow = CreateWindowEx(WS_EX_TOOLWINDOW, L"static", SvcFunc, 0, CW_USEDEFAULT, CW_USEDEFAULT,
 		CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP, NULL, hInst, NULL);
 	SetWindowLongPtr(hPopupWindow, GWLP_WNDPROC, (LONG_PTR)PopupWndProc);
 	return 0;

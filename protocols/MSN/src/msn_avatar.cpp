@@ -1,7 +1,7 @@
 /*
 Plugin for Miranda NG for communicating with users of the MSN Messenger protocol.
 
-Copyright (ñ) 2012-15 Miranda NG Team
+Copyright (ñ) 2012-17 Miranda NG Team
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -61,17 +61,17 @@ bool CMsnProto::loadHttpAvatar(AvatarQueueEntry *p)
 	nlhr.headers = (NETLIBHTTPHEADER*)&nlbhHeaders;
 	nlhr.headersCount = 1;
 
-	NETLIBHTTPREQUEST *nlhrReply = (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)m_hNetlibUser, (LPARAM)&nlhr);
+	NETLIBHTTPREQUEST *nlhrReply = Netlib_HttpTransaction(m_hNetlibUser, &nlhr);
 	if (nlhrReply == NULL)
 		return false;
 
 	if (nlhrReply->resultCode != 200 || nlhrReply->dataLength == 0) {
 LBL_Error:
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)nlhrReply);
+		Netlib_FreeHttpRequest(nlhrReply);
 		return false;
 	}
 
-	const TCHAR *szExt;
+	const wchar_t *szExt;
 	int fmt = ProtoGetBufferFormat(nlhrReply->pData, &szExt);
 	if (fmt == PA_FORMAT_UNKNOWN)
 		goto LBL_Error;
@@ -80,9 +80,9 @@ LBL_Error:
 	ai.format = fmt;
 	ai.hContact = p->hContact;
 	MSN_GetAvatarFileName(ai.hContact, ai.filename, _countof(ai.filename), szExt);
-	_tremove(ai.filename);
+	_wremove(ai.filename);
 
-	int fileId = _topen(ai.filename, _O_CREAT | _O_TRUNC | _O_WRONLY | O_BINARY, _S_IREAD | _S_IWRITE);
+	int fileId = _wopen(ai.filename, _O_CREAT | _O_TRUNC | _O_WRONLY | O_BINARY, _S_IREAD | _S_IWRITE);
 	if (fileId == -1)
 		goto LBL_Error;
 
@@ -90,7 +90,7 @@ LBL_Error:
 	_close(fileId);
 
 	ProtoBroadcastAck(p->hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, &ai, 0);
-	CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)nlhrReply);
+	Netlib_FreeHttpRequest(nlhrReply);
 	return true;
 }
 

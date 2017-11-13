@@ -24,7 +24,7 @@
 [All other]
 Другое
 [Typing]
-Печатает
+Набирает текст
 [Protocols]
 Протоколы
 [Suppress notifications upon connection for]
@@ -71,14 +71,8 @@
 Всплывающие уведомления
 [Other status]
 Другой статус
-[Tooltip Notify: Online]
-Уведомления: В сети
-[Tooltip Notify: Offline]
-Уведомления: Не в сети
-[Tooltip Notify: Other]
-Уведомления: Другое
-[Tooltip Notify: Typing]
-Уведомления: Печатает
+[Other]
+Другое
 [Popups]
 Всплывающие окна
 [** New contacts **]

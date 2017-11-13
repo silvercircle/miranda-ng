@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
-// Copyright (ñ) 2012-15 Miranda NG project,
+// Copyright (ñ) 2012-17 Miranda NG project,
 // Copyright (c) 2000-09 Miranda ICQ/IM project,
 // all portions of this codebase are copyrighted to the people
 // listed in contributors.txt.
@@ -33,7 +33,7 @@
 #ifndef __TASKBAR_H
 #define __TASKBAR_H
 
-#define PROXYCLASSNAME  _T("TabSRMM_DWMProxy")
+#define PROXYCLASSNAME  L"TabSRMM_DWMProxy"
 extern HINSTANCE g_hInst;
 
 class CProxyWindow;
@@ -50,7 +50,7 @@ public:
 	virtual void  update() = 0;
 
 protected:
-	const TWindowData  *m_dat;
+	const CTabBaseDlg *m_dat;
 	const CProxyWindow *m_pWnd;
 
 	HBITMAP m_hbmThumb, m_hbmOld;
@@ -80,35 +80,37 @@ public:
 	void update();
 
 private:
-	void renderContent();
+	virtual void renderContent() override;
 };
 
 class CThumbMUC : public CThumbBase
 {
+	SESSION_INFO *si;
+
 public:
-	CThumbMUC(const CProxyWindow* pWnd);
+	CThumbMUC(const CProxyWindow* pWnd, SESSION_INFO*);
 	virtual ~CThumbMUC() {};
 	void update();
 
 private:
-	void renderContent();
+	virtual void renderContent() override;
 };
 
 class CProxyWindow
 {
 public:
-	CProxyWindow(TWindowData *dat);
+	CProxyWindow(CTabBaseDlg *dat);
 	~CProxyWindow();
 
 	void updateIcon(const HICON hIcon) const;
-	void updateTitle(const TCHAR *tszTitle) const;
+	void updateTitle(const wchar_t *tszTitle) const;
 	void setBigIcon(const HICON hIcon, bool fInvalidate = true);
 	void setOverlayIcon(const HICON hIcon, bool fInvalidate = true);
 	void activateTab() const;
 	void Invalidate() const;
 	void verifyDwmState();
 
-	__inline const TWindowData* getDat() const { return m_dat; }
+	__inline const CTabBaseDlg* getDat() const { return m_dat; }
 	__inline const LONG getWidth() const { return m_width; }
 	__inline const LONG getHeight() const { return m_height; }
 	__inline const HWND getHwnd() const { return m_hwndProxy; }
@@ -116,11 +118,9 @@ public:
 	__inline const HICON getOverlayIcon() const { return m_hOverlayIcon; }
 
 	static LRESULT CALLBACK stubWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	static void	add(TWindowData *dat);
-	static void verify(TWindowData *dat);
 
 private:
-	TWindowData *m_dat;
+	CTabBaseDlg *m_dat;
 
 	HWND m_hwndProxy;
 	LONG m_width, m_height;
@@ -143,7 +143,7 @@ public:
 		m_isEnabled = IsWinVer7Plus() ? true : false;
 
 		if (m_isEnabled) {
-			::CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_ALL, IID_ITaskbarList3, (void**)&m_pTaskbarInterface);
+			::CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_ALL, IID_ITaskbarList3, (void**)&m_pTaskbarInterface);
 			updateMetrics();
 			if (0 == m_pTaskbarInterface)
 				m_isEnabled = false;
@@ -155,7 +155,7 @@ public:
 		WNDCLASSEX wcex = { sizeof(wcex) };
 		wcex.lpfnWndProc = CProxyWindow::stubWndProc;
 		wcex.hInstance = g_hInst;
-		wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+		wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
 		wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 		wcex.lpszClassName = PROXYCLASSNAME;
 		::RegisterClassEx(&wcex);
@@ -181,7 +181,7 @@ public:
 	void unRegisterTab(const HWND hwndTab) const;
 	void SetTabActive(const HWND hwndTab, const HWND hwndGroup) const;
 
-	//const TCHAR*	getFileNameFromWindow			(const HWND hWnd);
+	//const wchar_t*	getFileNameFromWindow			(const HWND hWnd);
 private:
 	ITaskbarList3 *m_pTaskbarInterface;
 

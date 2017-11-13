@@ -39,13 +39,11 @@ int OnDBEventFilterAdd(WPARAM wParam, LPARAM lParam)
 {
 	MCONTACT hContact = wParam;
 	DBEVENTINFO *dbei = (DBEVENTINFO *)lParam;
-	char *msgblob;
 	char protoOption[256] = {0};
 	int buflen = MAX_BUFFER_LENGTH;
-	TCHAR buf[MAX_BUFFER_LENGTH];
-	TCHAR *message = NULL, *challengeW = NULL, *tmpW = NULL;
-	TCHAR *whitelist = NULL, *ptok;
-	TCHAR mexpr[64];
+	wchar_t buf[MAX_BUFFER_LENGTH];
+	wchar_t *challengeW = NULL, *tmpW = NULL;
+	wchar_t mexpr[64];
 	int maxmsglen = 0, a, b, i;
 	BOOL bayesEnabled = _getOptB("BayesEnabled", defaultBayesEnabled);
 	BOOL bCorrectResponse = FALSE;
@@ -65,7 +63,6 @@ int OnDBEventFilterAdd(WPARAM wParam, LPARAM lParam)
 			dequeue_messages();
 			last_queue_check = time(NULL);
 		}
-
 
 	/*** Check for conditional and unconditional approval ***/
 
@@ -115,37 +112,40 @@ int OnDBEventFilterAdd(WPARAM wParam, LPARAM lParam)
 		db_set_b(hContact, "CList", "Hidden", 1);
 
 	// Fetch the incoming message body
+	char *msgblob;
 	if (dbei->eventType == EVENTTYPE_MESSAGE) {
 		msgblob = (char *)dbei->pBlob;
-	} else if (dbei->eventType == EVENTTYPE_AUTHREQUEST) {
-		msgblob = (char *)(dbei->pBlob + sizeof(DWORD) + sizeof(HANDLE));
-		for(a=4;a>0;a--)
+	}
+	else if (dbei->eventType == EVENTTYPE_AUTHREQUEST) {
+		msgblob = (char *)(dbei->pBlob + sizeof(DWORD) + sizeof(DWORD));
+		for(a = 4; a > 0; a--)
 			msgblob += mir_strlen(msgblob)+1;
 	}
+	else msgblob = NULL;
 
+	wchar_t *message = NULL;
 	if (dbei->flags & DBEF_UTF)
 		message = mir_utf8decodeW(msgblob);
 	else
 		message = mir_a2u(msgblob);
-
 	
 	/*** Check for words in white-list ***/
-
 	if (_getOptB("ApproveOnMsgIn", defaultApproveOnMsgIn)) {
-		whitelist = (TCHAR*)malloc(2048 * sizeof(TCHAR));
+		wchar_t *whitelist = (wchar_t*)malloc(2048 * sizeof(wchar_t));
 		if (whitelist != NULL) {
 			_getOptS(whitelist, 2048, "ApproveOnMsgInWordlist", defaultApproveOnMsgInWordlist);
 			if (_isregex(whitelist)) {
 				if (_regmatch(message, whitelist))
 					bCorrectResponse = TRUE;
-			} else {
-				ptok = _tcstok(whitelist, L" ");
+			}
+			else {
+				wchar_t *ptok = wcstok(whitelist, L" ");
 				while (ptok != NULL) {
-					if (_tcsstr(message, ptok)) {
+					if (wcsstr(message, ptok)) {
 						bCorrectResponse = TRUE;
 						break;
 					}
-					ptok = _tcstok(NULL, L" ");
+					ptok = wcstok(NULL, L" ");
 				}
 			}
 			free(whitelist);
@@ -159,7 +159,7 @@ int OnDBEventFilterAdd(WPARAM wParam, LPARAM lParam)
 				db_unset(hContact, "CList", "Delete");
 				if (_getOptB("ReplyOnSuccess", defaultReplyOnSuccess) && (_getCOptB(hContact, "MsgSent", 0))) {
 					T2Utf response(_getOptS(buf, buflen, "SuccessResponse", defaultSuccessResponse));
-					CallContactService(hContact, PSS_MESSAGE, 0, response);
+					ProtoChainSend(hContact, PSS_MESSAGE, 0, response);
 				}
 				return 0;
 			}
@@ -179,7 +179,7 @@ int OnDBEventFilterAdd(WPARAM wParam, LPARAM lParam)
 					bCorrectResponse = TRUE;
 			} else {
 				if (_tcsstr_cc(message, buf, _getOptB("ResponseCC", defaultResponseCC)) &&
-					(mir_tstrlen(message) == mir_tstrlen(buf)))
+					(mir_wstrlen(message) == mir_wstrlen(buf)))
 					bCorrectResponse = TRUE;
 			}
 			break;
@@ -196,7 +196,7 @@ int OnDBEventFilterAdd(WPARAM wParam, LPARAM lParam)
 					}
 				} else {
 					if (_tcsstr_cc(message, buf, _getOptB("ResponseCC", defaultResponseCC)) &&
-						(mir_tstrlen(message) == mir_tstrlen(buf))) {
+						(mir_wstrlen(message) == mir_wstrlen(buf))) {
 						bCorrectResponse = TRUE;
 						break;
 					}
@@ -207,8 +207,8 @@ int OnDBEventFilterAdd(WPARAM wParam, LPARAM lParam)
 		case SPAMOTRON_MODE_MATH:
 			if (message == NULL)
 				break;
-			_itot(_getCOptD(hContact, "ResponseMath", -1), buf, 10);
-			if (_tcsstr(message, buf) && (mir_tstrlen(buf) == mir_tstrlen(message))) {
+			_itow(_getCOptD(hContact, "ResponseMath", -1), buf, 10);
+			if (wcsstr(message, buf) && (mir_wstrlen(buf) == mir_wstrlen(message))) {
 				bCorrectResponse = TRUE;
 			}
 			break;
@@ -225,26 +225,25 @@ int OnDBEventFilterAdd(WPARAM wParam, LPARAM lParam)
 		db_unset(hContact, "CList", "ResponseNum");
 		if (_getOptB("ReplyOnSuccess", defaultReplyOnSuccess)) {
 			T2Utf response(_getOptS(buf, buflen, "SuccessResponse", defaultSuccessResponse));
-			CallContactService(hContact, PSS_MESSAGE, 0,	response);
+			ProtoChainSend(hContact, PSS_MESSAGE, 0,	response);
 		}
 		_notify(hContact, POPUP_APPROVED, TranslateT("Contact %s approved."), NULL);
 
 		// Resubmit pending authorization request
 		if (_getCOptB(hContact, "AuthEventPending", FALSE)) {
 			DBVARIANT _dbv;
-			TCHAR AuthEventModule[100];
+			wchar_t AuthEventModule[100];
 			char* szAuthEventModule;
 			if (db_get(hContact, PLUGIN_NAME, "AuthEvent", &_dbv) == 0) {
 				DBEVENTINFO *_dbei = (DBEVENTINFO *)malloc(sizeof(DBEVENTINFO));
 				if (_dbei != NULL) {
 					memcpy(&_dbei->cbBlob, _dbv.pbVal, sizeof(DWORD));
 					_dbei->eventType = EVENTTYPE_AUTHREQUEST;
-					_getCOptS(AuthEventModule, 100, hContact, "AuthEventModule", _T("ICQ"));
+					_getCOptS(AuthEventModule, 100, hContact, "AuthEventModule", L"ICQ");
 					szAuthEventModule = mir_u2a(AuthEventModule);
 					_dbei->szModule = szAuthEventModule;
 					_dbei->timestamp = dbei->timestamp;
 					_dbei->flags = 0;
-					_dbei->cbSize = sizeof(DBEVENTINFO);
 					_dbei->pBlob = _dbv.pbVal + sizeof(DWORD);
 					db_event_add(hContact,_dbei);
 					db_unset(hContact, PLUGIN_NAME, "AuthEvent");
@@ -290,7 +289,7 @@ int OnDBEventFilterAdd(WPARAM wParam, LPARAM lParam)
 	// Completely reject if duplicate incoming message found
 	if (_getOptD("MaxSameMsgCountPerDay", defaultMaxSameMsgCountPerDay) > 0 &&
 		_getCOptD(hContact, "SameMsgCount", 0) >= _getOptD("MaxSameMsgCountPerDay", defaultMaxSameMsgCountPerDay) &&
-		mir_tstrcmp(message, _getCOptS(buf, buflen, hContact, "LastInMsg", _T(""))) == 0) {
+		mir_wstrcmp(message, _getCOptS(buf, buflen, hContact, "LastInMsg", L"")) == 0) {
 			_notify(hContact, POPUP_BLOCKED, TranslateT("Message from %s rejected because it reached a maximum for same responses per day."), message);
 			if (bayesEnabled)
 				queue_message(hContact, dbei->timestamp, message);
@@ -336,16 +335,16 @@ int OnDBEventFilterAdd(WPARAM wParam, LPARAM lParam)
 		}
 
 	// Accept if event is EVENTTYPE_AUTHREQUEST and ReplyOnAuth is NOT set
-		if (dbei->eventType == EVENTTYPE_AUTHREQUEST && !_getOptB("ReplyOnAuth", defaultReplyOnAuth))
-			return 0;
+	if (dbei->eventType == EVENTTYPE_AUTHREQUEST && !_getOptB("ReplyOnAuth", defaultReplyOnAuth))
+		return 0;
 	// Accept if event is EVENTTYPE_MESSAGE and ReplyOnMsg is NOT set
-		if (dbei->eventType == EVENTTYPE_MESSAGE && !_getOptB("ReplyOnMsg", defaultReplyOnMsg))
-			return 0;
-		
+	if (dbei->eventType == EVENTTYPE_MESSAGE && !_getOptB("ReplyOnMsg", defaultReplyOnMsg))
+		return 0;
+
 	/*** Send Challenge ***/
 
-	challengeW = (TCHAR *)malloc(maxmsglen*sizeof(TCHAR));
-	tmpW = (TCHAR *)malloc(maxmsglen*sizeof(TCHAR));
+	challengeW = (wchar_t *)malloc(maxmsglen * sizeof(wchar_t));
+	tmpW = (wchar_t *)malloc(maxmsglen * sizeof(wchar_t));
 	switch (_getOptB("Mode", defaultMode)) {
 	case SPAMOTRON_MODE_PLAIN:
 		if (dbei->eventType == EVENTTYPE_AUTHREQUEST)
@@ -353,22 +352,22 @@ int OnDBEventFilterAdd(WPARAM wParam, LPARAM lParam)
 		else
 			_getOptS(challengeW, maxmsglen, "Challenge", defaultChallenge);
 		ReplaceVars(challengeW, maxmsglen);
-		CallContactService(hContact, PSS_MESSAGE, 0, T2Utf(challengeW));
+		ProtoChainSend(hContact, PSS_MESSAGE, 0, T2Utf(challengeW));
 		_notify(hContact, POPUP_CHALLENGE, TranslateT("Sending plain challenge to %s."), message);
 		break;
-		
+
 	case SPAMOTRON_MODE_ROTATE:
 		if (dbei->eventType == EVENTTYPE_AUTHREQUEST)
 			_getOptS(challengeW, maxmsglen, "AuthChallenge", defaultAuthChallenge);
 		else
 			_getOptS(challengeW, maxmsglen, "Challenge", defaultChallenge);
 		_getOptS(buf, buflen, "Response", defaultResponse);
-		if (_getCOptD(hContact, "ResponseNum", 0) >= (unsigned int)(get_response_num(buf)-1))
+		if (_getCOptD(hContact, "ResponseNum", 0) >= (unsigned int)(get_response_num(buf) - 1))
 			_setCOptD(hContact, "ResponseNum", -1);
 
 		_setCOptD(hContact, "ResponseNum", _getCOptD(hContact, "ResponseNum", -1) + 1);
 		ReplaceVarsNum(challengeW, maxmsglen, _getCOptD(hContact, "ResponseNum", 0));
-		CallContactService(hContact, PSS_MESSAGE, 0, T2Utf(challengeW));
+		ProtoChainSend(hContact, PSS_MESSAGE, 0, T2Utf(challengeW));
 		_notify(hContact, POPUP_CHALLENGE, TranslateT("Sending round-robin challenge to %s."), message);
 		break;
 
@@ -381,21 +380,21 @@ int OnDBEventFilterAdd(WPARAM wParam, LPARAM lParam)
 		srand(time(NULL));
 		_setCOptD(hContact, "ResponseNum", rand() % get_response_num(buf));
 		ReplaceVarsNum(challengeW, maxmsglen, _getCOptD(hContact, "ResponseNum", 0));
-		CallContactService(hContact, PSS_MESSAGE, 0, T2Utf(challengeW));
+		ProtoChainSend(hContact, PSS_MESSAGE, 0, T2Utf(challengeW));
 		_notify(hContact, POPUP_CHALLENGE, TranslateT("Sending random challenge to %s."), message);
 		break;
 
 	case SPAMOTRON_MODE_MATH:
 		a = (rand() % 10) + 1;
 		b = (rand() % 10) + 1;
-		mir_sntprintf(mexpr, _T("%d + %d"), a, b);
+		mir_snwprintf(mexpr, L"%d + %d", a, b);
 		if (dbei->eventType == EVENTTYPE_AUTHREQUEST)
 			_getOptS(challengeW, maxmsglen, "AuthChallengeMath", defaultAuthChallengeMath);
 		else
 			_getOptS(challengeW, maxmsglen, "ChallengeMath", defaultChallengeMath);
-		ReplaceVar(challengeW, maxmsglen, _T("%mathexpr%"), mexpr);
+		ReplaceVar(challengeW, maxmsglen, L"%mathexpr%", mexpr);
 		_setCOptD(hContact, "ResponseMath", a + b);
-		CallContactService(hContact, PSS_MESSAGE, 0, T2Utf(challengeW));
+		ProtoChainSend(hContact, PSS_MESSAGE, 0, T2Utf(challengeW));
 		_notify(hContact, POPUP_CHALLENGE, TranslateT("Sending math expression challenge to %s."), message);
 		break;
 	}
@@ -415,17 +414,17 @@ int OnDBEventFilterAdd(WPARAM wParam, LPARAM lParam)
 	/*** Do any post-send procedures we need to do ***/
 
 	// Increment MsgSent if it was sent the same day. Otherwise set it to 1.
-	if (isOneDay(dbei->timestamp, _getCOptD(hContact, "MsgSentTime",0)))
-		_setCOptD(hContact, "MsgSent", _getCOptD(hContact, "MsgSent", 0)+1);
-	else 
+	if (isOneDay(dbei->timestamp, _getCOptD(hContact, "MsgSentTime", 0)))
+		_setCOptD(hContact, "MsgSent", _getCOptD(hContact, "MsgSent", 0) + 1);
+	else
 		_setCOptD(hContact, "MsgSent", 1);
 	_setCOptD(hContact, "MsgSentTime", dbei->timestamp);
 
 	// Save Last Msg and update SameMsgCount
 	if (message != NULL) {
-		if (mir_tstrcmp(_getCOptS(buf, buflen, hContact, "LastInMsg", _T("")), message) == 0)
-			_setCOptD(hContact, "SameMsgCount", 1+_getCOptD(hContact, "SameMsgCount", 0));
-		else 
+		if (mir_wstrcmp(_getCOptS(buf, buflen, hContact, "LastInMsg", L""), message) == 0)
+			_setCOptD(hContact, "SameMsgCount", 1 + _getCOptD(hContact, "SameMsgCount", 0));
+		else
 			_setCOptD(hContact, "SameMsgCount", 1);
 		_setCOptTS(hContact, "LastInMsg", message);
 	}
@@ -446,10 +445,11 @@ int OnDBEventFilterAdd(WPARAM wParam, LPARAM lParam)
 				_setCOptB(hContact, "AuthEventPending", TRUE);
 				free(eventdata);
 			}
-		} else {
+		}
+		else {
 			if (_getOptB("MarkMsgUnreadOnApproval", defaultMarkMsgUnreadOnApproval)) {
 				DBVARIANT _dbv;
-				DWORD dbei_size = 3*sizeof(DWORD) + sizeof(WORD) + dbei->cbBlob + (DWORD)mir_strlen(dbei->szModule)+1;
+				DWORD dbei_size = 3 * sizeof(DWORD) + sizeof(WORD) + dbei->cbBlob + (DWORD)mir_strlen(dbei->szModule) + 1;
 				PBYTE eventdata = (PBYTE)malloc(dbei_size);
 				PBYTE pos = eventdata;
 				if (eventdata != NULL && dbei->cbBlob > 0) {
@@ -461,16 +461,17 @@ int OnDBEventFilterAdd(WPARAM wParam, LPARAM lParam)
 						db_free(&_dbv);
 					}
 					memcpy(pos, &dbei->eventType, sizeof(WORD));
-					memcpy(pos+sizeof(WORD), &dbei->flags, sizeof(DWORD));
-					memcpy(pos+sizeof(WORD)+sizeof(DWORD), &dbei->timestamp, sizeof(DWORD));
-					memcpy(pos+sizeof(WORD)+sizeof(DWORD)*2, dbei->szModule, mir_strlen(dbei->szModule)+1);
-					memcpy(pos+sizeof(WORD)+sizeof(DWORD)*2+mir_strlen(dbei->szModule)+1, &dbei->cbBlob, sizeof(DWORD));
-					memcpy(pos+sizeof(WORD)+sizeof(DWORD)*3+mir_strlen(dbei->szModule)+1, dbei->pBlob, dbei->cbBlob);
+					memcpy(pos + sizeof(WORD), &dbei->flags, sizeof(DWORD));
+					memcpy(pos + sizeof(WORD) + sizeof(DWORD), &dbei->timestamp, sizeof(DWORD));
+					memcpy(pos + sizeof(WORD) + sizeof(DWORD) * 2, dbei->szModule, mir_strlen(dbei->szModule) + 1);
+					memcpy(pos + sizeof(WORD) + sizeof(DWORD) * 2 + mir_strlen(dbei->szModule) + 1, &dbei->cbBlob, sizeof(DWORD));
+					memcpy(pos + sizeof(WORD) + sizeof(DWORD) * 3 + mir_strlen(dbei->szModule) + 1, dbei->pBlob, dbei->cbBlob);
 					db_set_blob(hContact, PLUGIN_NAME, "LastMsgEvents", eventdata, (pos - eventdata) + dbei_size);
 					free(eventdata);
 				}
-				
-			} else {
+
+			}
+			else {
 				dbei->flags |= DBEF_READ;
 				db_event_add(hContact, dbei);
 			}
@@ -483,7 +484,7 @@ int OnDBEventFilterAdd(WPARAM wParam, LPARAM lParam)
 void RemoveNotOnListSettings()
 {
 	DBVARIANT dbv;
-	char protoName[256] = {0};
+	char protoName[256] = { 0 };
 	MCONTACT hContact = db_find_first();
 	mir_strcpy(protoName, "proto_");
 	while (hContact != NULL) {
@@ -509,7 +510,7 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 extern "C" __declspec(dllexport) int Load()
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	srand((unsigned)time(0));
 	bayesdb = NULL;

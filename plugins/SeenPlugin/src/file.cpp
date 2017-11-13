@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "stdafx.h"
 
 BOOL g_bFileActive;
-static TCHAR *g_ptszFileStamp, *g_ptszFileName;
+static wchar_t *g_ptszFileStamp, *g_ptszFileName;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Prepares the log file:
@@ -30,18 +30,18 @@ static TCHAR *g_ptszFileStamp, *g_ptszFileName;
 
 void InitFileOutput(void)
 {
-	ptrT tszFileName(db_get_tsa(NULL, S_MOD, "FileName"));
+	ptrW tszFileName(db_get_wsa(NULL, S_MOD, "FileName"));
 	if (tszFileName == NULL)
-		tszFileName = mir_tstrdup(DEFAULT_FILENAME);
-	replaceStrT(g_ptszFileName, VARST(tszFileName));
+		tszFileName = mir_wstrdup(DEFAULT_FILENAME);
+	replaceStrW(g_ptszFileName, VARSW(tszFileName));
 
-	TCHAR *tszPath = NEWTSTR_ALLOCA(g_ptszFileName);
-	TCHAR *p = _tcsrchr(tszPath, '\\');
+	wchar_t *tszPath = NEWWSTR_ALLOCA(g_ptszFileName);
+	wchar_t *p = wcsrchr(tszPath, '\\');
 	if (p) *p = 0;
-	CreateDirectoryTreeT(tszPath);
+	CreateDirectoryTreeW(tszPath);
 	
-	ptrT tszFileStamp(db_get_tsa(NULL, S_MOD, "FileStamp"));
-	replaceStrT(g_ptszFileStamp, (tszFileStamp == NULL) ? DEFAULT_FILESTAMP : tszFileStamp);
+	ptrW tszFileStamp(db_get_wsa(NULL, S_MOD, "FileStamp"));
+	replaceStrW(g_ptszFileStamp, (tszFileStamp == NULL) ? DEFAULT_FILESTAMP : tszFileStamp);
 }
 
 void UninitFileOutput()
@@ -55,9 +55,9 @@ void UninitFileOutput()
 
 void FileWrite(MCONTACT hcontact)
 {
-	FILE *log = _tfopen(ParseString(g_ptszFileName, hcontact), _T("a"));
+	FILE *log = _wfopen(ParseString(g_ptszFileName, hcontact), L"a");
 	if (log != NULL) {
-		_fputts(ParseString(g_ptszFileStamp, hcontact), log);
+		fputws(ParseString(g_ptszFileStamp, hcontact), log);
 		fputs("\r\n", log);
 		fclose(log);
 	}

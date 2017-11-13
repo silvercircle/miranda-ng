@@ -34,27 +34,16 @@ enum SEARCHENGINES {
 	SEARCHENGINE_FOODNETWORK = 8
 };
 
-int IsUnicodeMIM();
-TCHAR *limitText(TCHAR *text, int limit);
+wchar_t *limitText(wchar_t *text, int limit);
 void logInfo(const char *fmt, ...);
-int GetRichTextLength(HWND hwnd, int codepage, BOOL inBytes);
-TCHAR *GetRichEditSelection(HWND hwnd);
-char* GetRichTextRTF(HWND hwnd);
-char* GetRichTextUtf(HWND hwnd);
-TCHAR *GetRichTextWord(HWND hwnd, POINTL *pt);
-int SetRichText(HWND hwnd, const TCHAR *text);
-int SetRichTextRTF(HWND hwnd, const char *text);
-void SearchWord(TCHAR * word, int engine);
-HDWP ResizeToolbar(HWND hwnd, HDWP hdwp, int width, int vPos, int height, int cControls, const ToolbarButton * buttons, int controlVisibility);
-void ShowToolbarControls(HWND hwndDlg, int cControls, const ToolbarButton * buttons, int controlVisibility, int state);
-void AppendToBuffer(char *&buffer, size_t &cbBufferEnd, size_t &cbBufferAlloced, const char *fmt, ...);
+wchar_t *GetRichEditSelection(HWND hwnd);
+wchar_t *GetRichTextWord(HWND hwnd, POINT *pt);
+void SearchWord(wchar_t * word, int engine);
 int MeasureMenuItem(WPARAM wParam, LPARAM lParam);
 int DrawMenuItem(WPARAM wParam, LPARAM lParam);
 void SetSearchEngineIcons(HMENU hMenu, HIMAGELIST hImageList);
-void GetContactUniqueId(SrmmWindowData *dat, char *buf, int maxlen);
 HWND CreateToolTip(HWND hwndParent, LPTSTR ptszText, LPTSTR ptszTitle, RECT *rect);
 void SetToolTipText(HWND hwndParent, HWND hwndTT, LPTSTR ptszText, LPTSTR ptszTitle);
 void SetToolTipRect(HWND hwndParent, HWND hwndTT, RECT* rect);
-int GetToolbarWidth(int cControls, const ToolbarButton * buttons);
-BOOL IsToolbarVisible(int cControls, int visibilityFlags);
+void SetButtonsPos(HWND hwndDlg, MCONTACT hContact, bool bShow);
 #endif

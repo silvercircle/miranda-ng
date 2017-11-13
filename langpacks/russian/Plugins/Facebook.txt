@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Facebook.dll
 ;  Plugin: Facebook RM
-;  Version: 0.2.11.4
+;  Version: 0.3.3.2
 ;  Authors: Michal Zelinka, Robert Pösel
 ;============================================================
 [Facebook protocol support for Miranda NG.]
@@ -43,44 +43,52 @@
 Большие аватары
 [Prefer real names instead of nicknames]
 Предпочитать реальные имена вместо ников
-[Event notifications]
-Уведомления
-[Notifications]
-Уведомления
-[News feeds (WARNING: Causes excessive network traffic!)]
-Новости (Предупреждение: высокое потребление сетевого трафика)
+[Load also Messenger contacts at login (not only Facebook friends)]
+При входе загружать также контакты из Messenger (а не только друзей)
+[Use Invisible status for Facebook Pages (instead of Offline)]
+Статус "Невидимый" у страниц Facebook (вместо "Не в сети")
+[Popup notifications]
+Настройка уведомлений вспл. окнами
+[Show notifications]
+Показывать уведомления
+[Show wall posts (news feed) (WARNING: Causes excessive network traffic!)]
+Показывать сообщения со стены (новостная лента) (ВНИМАНИЕ: Большой расход трафика!)
 [News feed types to notify:]
 Уведомлять о типах новостей:
 [Don't show advertising posts]
 Не показывать рекламные публикации
-[Other events]
-Другие события
-[Client notifications]
-Уведомления клиента
-[Friendship notifications]
-Уведомления о дружбе
-[Ticker feeds]
-Тиккер
-[Show "On this day" posts at login]
-При входе показывать события "В этот день"
-[Use this server for opening links:]
-Тип сайта для открытия ссылок:
+[Show friendships changes (when someone removes/approves you)]
+Показывать изменения запросов дружбы (когда удалили/приняли ваш запрос)
+[Show real-time friends activity (ticker feed)]
+Показывать активность друзей в реальном времени
+[Show my "On this day" posts at login]
+Показывать сообщения "В этот день" при входе
+[Chatroom logging]
+Ведение журнала в чатах
+[Log notifications into special chatroom]
+Вести журнал уведомлений в специальном чате
+[Extra]
+Дополнительно
 [Use balloon notifications in system tray instead of popups]
 Уведомлять подсказкой в трее вместо всплывающих окон
-[Use logging notifications into special chatroom]
-Запись уведомлений в специальную комнату чата
-[Preview]
-Тест
+[Use this server for opening links:]
+Тип сайта для открытия ссылок:
 [Statuses]
 Статусы
 [Post Miranda statuses to Wall]
 Публиковать статусы Miranda на стену
 [Turn off chat on Facebook when going to offline in Miranda]
 Отключать чат на сайте при уходе в оффлайн в Miranda NG
-[Map unsupported statuses to Invisible (instead of Online)]
-Неподдерживаемые статусы, как Невидимый (вместо 'В сети')
+[Map unsupported statuses to Invisible (instead of Away)]
+Неподдерживаемые статусы, как "Невидимый" (вместо "Отсутствую")
 [Allow posting statuses to my pages (may slow down login)]
 Разрешить публиковать статусы на своих страницах (замедляет вход)
+[Advanced]
+Дополнительно
+[Send typing notifications even when Invisible]
+Отправлять уведомления о наборе текста в режиме "Невидимый"
+[Typing is one way how user is determined active. If you don't want to be seen "active 1 min ago" on Facebook, uncheck this option and also don't interact with website at all. Sending messages from Miranda should be ok, but don't 100% rely on it either.]
+Набор текста - один из показателей активности пользователя. Если вы не хотите, чтобы контакты видели, что вы были "активен 1 минуту назад", выключите эту настройку и не взаимодействуйте с сайтом. Отправка сообщений из Miranda не раскроет вас, но не полагайтесь полностью на эту настройку.
 [Bots challenge test]
 Защита от ботов
 [Instruction:]
@@ -89,8 +97,6 @@
 Передать
 [Messages]
 Сообщения
-[Receive messages from "inbox" folder only]
-Принимать сообщения только из папки "входящие"
 [Keep messages as unread on server (don't send "seen" info)]
 Не помечать сообщения на сервере как прочитанные
 [Show stickers as custom smileys (EXPERIMENTAL)]
@@ -101,22 +107,30 @@
 Включить поддержку многопользовательских чатов
 [Do not open chat windows on creation]
 Не открывать окна комнат чата при создании
+[Automatically join active chats that exist in contact list]
+Автоматически подключаться к активным чатам из списка контактов
 [History synchronization]
 Синхронизация истории
-[Load last messages (24 hours old) on login (EXPERIMENTAL)]
-Загрузка сообщений за последние 24 часа при входе (Экспериментально)
 [Load last messages on opening message window (EXPERIMENTAL)]
 Подгружать последние сообщения при открытии окна (Экспериментально)
 [Number of messages to load:]
 Количество подгружаемых сообщений:
+[Facebook Login Approval]
+Подтверждение входа в Facebook
+[Your security settings requires to input a security code to access your account from unknown browsers.\n\nYou can get the code via Facebook application on your phone or click button below to receive it via SMS.]
+Для доступа к вашей учётной записи из незнакомого браузера требуется ввести проверочный код.\n\nВы можете получить его через мобильное приложение Facebook или нажать расположенную ниже кнопку, чтобы получить SMS с кодом.
+[Send SMS]
+Отправить SMS
 [Enter the text you see]
 Введите текст, который видите
+[Former]
+Бывший
 [Myself]
 Я
-[User]
-Пользователь
 [Friend]
 Друг
+[User]
+Пользователь
 [&Invite user...]
 &Пригласить пользователя...
 [&Leave chat session]
@@ -125,26 +139,40 @@
 &Данные контакта
 [User &history]
 &История пользователя
+[Notifications]
+Уведомления
+[%s and more (%d)]
+%s и ещё (%d)
 [Login error: %s]
 Ошибка входа: %s
 [Unknown error]
 Неизвестная ошибка
 [Login error: Invalid request.]
 Ошибка входа: Неверный запрос.
-[Login error: Some Facebook things are required.]
-Ошибка входа: Требуются дополнительные вещи от Facebook
+[You entered too many invalid verification codes. Plugin will disconnect.]
+Вы слишком часто вводили неверный код. Протокол отключается.
+[You entered wrong verification code. Try it again.]
+Введён неверный код. Попробуйте ещё раз.
 [Login error: Your account is temporarily locked. You need to confirm this device from web browser.]
 Ошибка входа: Ваша учётная запись заблокирована. Требуется пройти подтверждение в браузере.
+[Check last login]
+Проверить последний вход
+[Do you recognize this activity?]
+Вы узнаёте эту активность?
+[Login error: You need to confirm last unknown login or revoke it from web browser.]
+Ошибка входа: Вам необходимо подтвердить последний неизвестный вход или отозвать его из веб-браузера.
+[Login error: Facebook thinks your computer is infected. Solve it by logging in via 'private browsing' mode of your web browser and run their antivirus check.]
+Ошибка входа: Facebook полагает, что ваш компьютер заражён. Зайдите в свою учётную запись с помощью браузера в режиме 'приватного просмотра' и запустите антивирусную проверку.
 [Login error: Captcha code is required. You need to confirm this device from web browser.]
 Ошибка входа: Требуется ввести капчу. Требуется пройти подтверждение в браузере.
 [Login error, probably bad login credentials.]
 Ошибка входа, скорее всего неверный логин.
 [Could not load communication token. You should report this and wait for plugin update.]
-Невозможно загрузить токен авторизации. Оставьте отчёт о данной ошибке и ждите обновления плагина.
+Невозможно загрузить токен авторизации. Оставьте отчёт об ошибке и ждите обновления плагина.
 [Could not load all required data. Plugin may still work correctly, but you should report this and wait for plugin update.]
-Невозможно загрузить все требуемые данные. Возможна корректная работа плагина, тем не менее оставьте отчёт о данной ошибке и ждите обновления плагина.
+Невозможно загрузить все требуемые данные. Нормальная работа плагина возможна, тем не менее оставьте отчёт об ошибке и ждите обновления плагина.
 [Contact doesn't have required data in database.]
-В базе отсутствуют необходимые данные контакта.
+В базе отсутствуют требуемые данные контакта.
 [Need confirmation for sending messages to other clients.\nOpen Facebook website and try to send message to this contact again!]
 Требуется подтверждение разрешения отправки сообщений на другие клиенты.\nОткройте сайт Facebook и попробуйте заново отправить сообщение этому контакту!
 [User cancel captcha challenge.]
@@ -153,6 +181,10 @@
 Таймаут отправки сообщения.
 [Status update was successful.]
 Успешное обновление статуса.
+[Error occurred when requesting verification SMS code.]
+Произошла ошибка при запросе SMS с кодом подтверждения.
+[Verification SMS code was sent to your mobile phone.]
+SMS с кодом подтверждения отправлено на ваш мобильный телефон.
 [Please enter a username.]
 Пожалуйста, введите имя пользователя.
 [Please enter a password.]
@@ -179,8 +211,6 @@
 Друзьям, кроме знакомых
 [Only me]
 Только мне
-[%s and more (%d)]
-%s и ещё (%d)
 [Contact was removed from your server list.]
 Контакт удалён из списка на сервере.
 [Error occurred when removing contact from server.]
@@ -200,27 +230,13 @@
 [Request for friendship was ignored.]
 Запрос дружбы был проигнорирован.
 [Error occurred when ignoring friendship request.]
-Произошла ошибка игнора запроса дружбы.
+Произошла ошибка игнорирования запроса дружбы.
 [Default]
 По умолчанию
 [<< Contacts]
 << Контакты
 [What's on your mind, %s?]
 О чём вы думаете, %s?
-[Sample event]
-Пример события
-[Sample request]
-Пример запроса
-[Sample newsfeed]
-Пример новости
-[Sample notification]
-Пример уведомления
-[Sample friendship]
-Пример уведомления о дружбе
-[Sample ticker]
-Пример тиккера
-[Sample on this day]
-Пример события "В этот день"
 [a sticker]
 стикер
 [a link]
@@ -233,22 +249,52 @@
 фотографии
 [a photo]
 фотографию
+[a video]
+видео
+[a GIF]
+анимированное изображение
 [User sent %s:]
 Контакт послал %s:
 [User sent an unsupported attachment. Open your browser to see it.]
 Контакт послал неподдерживаемое вложение. Для просмотра перейдите на сайт.
-[This message is no longer available, because it was marked as abusive or spam.]
-Сообщение недоступно, поскольку было отмечено, как оскорбительное или спам.
 [%s is typing a message...]
-%s набирает сообщение...
+%s набирает текст...
+[This message is no longer available, because it was marked as abusive or spam.]
+Сообщение недоступно, поскольку было отмечено как оскорбительное или спам.
 [You cannot send messages when you are offline.]
 Вы не можете отправлять сообщения без подключения к сети.
 [Contact is back on server-list.]
 Контакт снова в списке на сервере.
 [Contact is no longer on server-list.]
 Контакта больше нет в списке на сервере.
+[Loading history started.]
+Загрузка истории начата.
+[Loading messages: %d/%d]
+Загружено сообщений: %d/%d
+[Loading history completed.]
+Загрузка истории завершена.
+[<attachment without text>]
+<вложение без текста>
+[Loading memories...]
+Загрузка воспоминаний...
 [On this day]
 В этот день
+[Found %d memories.]
+Найдено воспоминаний: %d.
+[Loading notifications...]
+Загрузка уведомлений...
+[Found %d notifications.]
+Найдено уведомлений: %d.
+[Loading friendship requests...]
+Загрузка запросов дружбы...
+[Found %d friendship requests (%d seen).]
+Найдено запросов дружбы: %d (просмотрено: %d)
+[Found %d friendship requests.]
+Найдено запросов дружбы: %d.
+[Loading wall posts...]
+Загрузка записей со стены...
+[Found %d wall posts.]
+Найдено сообщений со стены: %d.
 [%s server connection]
 Подключение к серверу %s
 [Unable to initialize Netlib for %s.]
@@ -269,20 +315,24 @@
 Статус...
 [Own wall]
 Своя стена
-[Loading newsfeeds...]
-Загрузка новостей...
-[Checking friend requests...]
-Проверка запросов дружбы...
-[Refreshing buddy list...]
-Обновление списка друзей...
+[Loading history is already in progress. It can't run for more contacts at once so please wait until it finishes.]
+Выполняется загрузка истории. Эта возможность не работает для нескольких контактов одновременно, пожалуйста, подождите завершения.
+[This will load all messages from the server. To avoid having duplicate messages in your history, delete existing messages manually before continuing.\nLoading process might take a while, so be patient.\n\nDo you want to continue?]
+Все сообщения будут загружены с сервера. Чтобы избежать дублирования сообщений в истории, сперва удалите существующие сообщения вручную.\nПроцесс загрузки может занять некоторое время.\n\nВы хотите продолжить?
 [Do you want to cancel your friendship with '%s'?]
 Вы уверены, что хотите удалить '%s' из друзей?
-[News feeds]
-Новости
+[Client errors]
+Ошибки клиента
+[Wall posts]
+Сообщения со стены
+[Other events]
+Другие события
 [Friendship events]
 События дружбы
-[On this day posts]
-События "В этот день"
+[Real-time friends activity]
+Активность друзей в реальном времени
+[Memories]
+Воспоминания
 [Visit profile]
 Профиль на сайте
 [Visit notifications]
@@ -299,8 +349,6 @@
 Событие дружбы
 [Ticker event]
 Тиккер
-[On this day event]
-Событие "В этот день"
 [Message read: %s by %s]
 Сообщение прочтено в: %s пользователем %s
 [Message read: %s]
@@ -321,10 +369,24 @@
 Сообщение прочтено
 [Captcha form icon]
 Значок формы с капчей
+[Angry]
+Возмутительно
+[Haha]
+Ха-ха
+[Like]
+Нравится
+[Love]
+Супер
+[Sad]
+Сочувствую
+[Wow]
+Ух ты!
 [Visit friendship details]
 Информация о дружбе
 [Visit conversation]
 Беседа на сайте
+[Load history]
+Загрузить историю
 [Cancel friendship]
 Удалить из друзей
 [Cancel friendship request]
@@ -337,9 +399,11 @@
 Отклонить запрос дружбы
 [Services...]
 Службы...
-[Refresh Buddy List]
-Обновить список друзей
-[Check Friends Requests]
+[Check friendship requests]
 Проверить запросы дружбы
-[Check Newsfeeds]
+[Check newsfeeds]
 Проверить новости
+[Check memories]
+Проверить воспоминания
+[Check notifications]
+Проверить уведомления

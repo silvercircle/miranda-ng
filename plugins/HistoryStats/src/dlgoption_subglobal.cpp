@@ -22,19 +22,19 @@ INT_PTR CALLBACK DlgOption::SubGlobal::staticInfoProc(HWND hDlg, UINT msg, WPARA
 			const SupportInfo& info = *reinterpret_cast<const SupportInfo*>(lParam);
 
 			SetDlgItemText(hDlg, IDC_PLUGIN, info.szPlugin);
-			SetDlgItemText(hDlg, IDC_FEATURES, TranslateTS(info.szTeaser));
-			SetDlgItemText(hDlg, IDC_DESCRIPTION, TranslateTS(info.szDescription));
+			SetDlgItemText(hDlg, IDC_FEATURES, TranslateW(info.szTeaser));
+			SetDlgItemText(hDlg, IDC_DESCRIPTION, TranslateW(info.szDescription));
 
 			static const WORD LinkIDs[] = { IDC_LINK2, IDC_LINK1 };
 
-			ext::string linkTexts = TranslateTS(info.szLinkTexts);
+			ext::string linkTexts = TranslateW(info.szLinkTexts);
 			ext::string linkURLs = info.szLinkURLs;
 			int nCurLink = 0;
 
 			if (!linkTexts.empty()) {
 				while (!linkTexts.empty() && nCurLink < _countof(LinkIDs)) {
-					ext::string::size_type posTexts = linkTexts.rfind('|');
-					ext::string::size_type posURLs = linkURLs.rfind('|');
+					size_t posTexts = linkTexts.rfind('|');
+					size_t posURLs = linkURLs.rfind('|');
 
 					if (posTexts == ext::string::npos || posURLs == ext::string::npos) {
 						posTexts = posURLs = -1;
@@ -42,9 +42,9 @@ INT_PTR CALLBACK DlgOption::SubGlobal::staticInfoProc(HWND hDlg, UINT msg, WPARA
 
 					ext::string linkLabel = linkURLs.substr(posURLs + 1);
 
-					linkLabel += _T(" [");
+					linkLabel += L" [";
 					linkLabel += linkTexts.substr(posTexts + 1);
-					linkLabel += _T("]");
+					linkLabel += L"]";
 
 					SetDlgItemText(hDlg, LinkIDs[nCurLink], linkLabel.c_str());
 
@@ -94,10 +94,10 @@ INT_PTR CALLBACK DlgOption::SubGlobal::staticInfoProc(HWND hDlg, UINT msg, WPARA
 			if (HIWORD(wParam) == STN_CLICKED) {
 				HWND hLink = reinterpret_cast<HWND>(lParam);
 				int nLen = GetWindowTextLength(hLink);
-				TCHAR* szTitle = new TCHAR[nLen + 1];
+				wchar_t* szTitle = new wchar_t[nLen + 1];
 
 				if (GetWindowText(hLink, szTitle, nLen + 1)) {
-					TCHAR* szEndOfURL = (TCHAR*)ext::strfunc::str(szTitle, _T(" ["));
+					wchar_t* szEndOfURL = (wchar_t*)ext::strfunc::str(szTitle, L" [");
 					if (szEndOfURL) {
 						*szEndOfURL = '\0';
 						g_pSettings->openURL(szTitle);
@@ -112,7 +112,7 @@ INT_PTR CALLBACK DlgOption::SubGlobal::staticInfoProc(HWND hDlg, UINT msg, WPARA
 
 	case WM_CTLCOLORSTATIC:
 		HWND hStatic = reinterpret_cast<HWND>(lParam);
-		TCHAR szClassName[64];
+		wchar_t szClassName[64];
 
 		if (GetClassName(hStatic, szClassName, _countof(szClassName)) && ext::strfunc::cmp(szClassName, WC_EDIT) == 0) {
 			HDC hDC = reinterpret_cast<HDC>(wParam);
@@ -246,7 +246,7 @@ void DlgOption::SubGlobal::onWMInitDialog()
 	{
 		m_hHideContactMenuProtos.push_back(m_Options.insertCheck(
 			m_hProtocols,
-			Protocol::getDisplayName(protoList[i]->szModuleName).c_str(),
+			protoList[i]->tszAccountName,
 			0,
 			reinterpret_cast<INT_PTR>(protoList[i]->szModuleName)));
 	}
@@ -313,10 +313,10 @@ void DlgOption::SubGlobal::initSupportInfo()
 	static const SupportInfo Infos[] = {
 		{
 			TranslateT("At this time there is no external plugin supported."),
-			LPGENT(""),
-			LPGENT(""),
-			LPGENT(""),
-			_T("")
+			LPGENW(""),
+			LPGENW(""),
+			LPGENW(""),
+			L""
 		},
 	};
 
@@ -335,14 +335,14 @@ void DlgOption::SubGlobal::initSupportInfo()
 	tvi.item.state = TVIS_EXPANDED | TVIS_BOLD;
 	tvi.item.stateMask = TVIS_EXPANDED | TVIS_BOLD;
 
-	tvi.item.pszText = const_cast<TCHAR*>(TranslateT("Supported plugins (double-click to learn more):"));
+	tvi.item.pszText = const_cast<wchar_t*>(TranslateT("Supported plugins (double-click to learn more):"));
 	tvi.hParent = TreeView_InsertItem(hInfo, &tvi);
 
 	tvi.item.stateMask &= ~TVIS_BOLD;
 
 	array_each_(i, Infos)
 	{
-		tvi.item.pszText = const_cast<TCHAR*>(Infos[i].szPlugin);
+		tvi.item.pszText = const_cast<wchar_t*>(Infos[i].szPlugin);
 		tvi.item.lParam = reinterpret_cast<LPARAM>(&Infos[i]);
 		TreeView_InsertItem(hInfo, &tvi);
 	}
@@ -385,9 +385,9 @@ void DlgOption::SubGlobal::rearrangeControls()
 void DlgOption::SubGlobal::toggleInfo()
 {
 	HWND hInfo = GetDlgItem(getHWnd(), IDC_INFO);
-	const TCHAR* szInfoLabelText = m_bShowInfo ? LPGENT("HistoryStats supports several plugins. Click to hide info...") : LPGENT("HistoryStats supports several plugins. Click to learn more...");
+	const wchar_t* szInfoLabelText = m_bShowInfo ? LPGENW("HistoryStats supports several plugins. Click to hide info...") : LPGENW("HistoryStats supports several plugins. Click to learn more...");
 
-	SetDlgItemText(getHWnd(), IDC_INFOLABEL, TranslateTS(szInfoLabelText));
+	SetDlgItemText(getHWnd(), IDC_INFOLABEL, TranslateW(szInfoLabelText));
 	ShowWindow(hInfo, m_bShowInfo ? SW_SHOW : SW_HIDE);
 	EnableWindow(hInfo, BOOL_(m_bShowInfo));
 

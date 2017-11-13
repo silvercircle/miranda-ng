@@ -15,13 +15,11 @@ class CMLua
 private:
 	lua_State *L;
 
-	static void KillModuleEventHooks();
-	static void KillModuleServices();
+	void SetPaths();
+
+	static void KillLuaRefs();
 
 public:
-	static LIST<void> Hooks;
-	static LIST<void> Events;
-	static LIST<void> Services;
 	static LIST<void> HookRefs;
 	static LIST<void> ServiceRefs;
 
@@ -33,7 +31,9 @@ public:
 	void Load();
 	void Unload();
 
-	static int HookEventObjParam(void *obj, WPARAM wParam, LPARAM lParam, LPARAM param);
+	INT_PTR Call(WPARAM, LPARAM);
+	INT_PTR Exec(WPARAM, LPARAM);
+	INT_PTR Eval(WPARAM, LPARAM);
 };
 
 #endif //_LUA_CORE_H_

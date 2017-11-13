@@ -52,10 +52,10 @@ void DeInitProtocolData()
 
 // Protocol Class ///////////////////////////////////////////////////////////////////////////////////////////
 
-Protocol::Protocol(const char *aName, const TCHAR *descr)
+Protocol::Protocol(const char *aName, const wchar_t *descr)
 {
 	mir_strncpy(name, aName, _countof(name));
-	mir_tstrncpy(description, descr, _countof(description));
+	mir_wstrncpy(description, descr, _countof(description));
 
 	data_changed = true;
 
@@ -81,14 +81,13 @@ Protocol::Protocol(const char *aName, const TCHAR *descr)
 }
 
 Protocol::~Protocol()
-{
-}
+{}
 
-void Protocol::lcopystr(TCHAR *dest, TCHAR *src, size_t maxlen)
+void Protocol::lcopystr(wchar_t *dest, wchar_t *src, size_t maxlen)
 {
-	if (mir_tstrcmp(dest, src) != 0) {
+	if (mir_wstrcmp(dest, src) != 0) {
 		data_changed = true;
-		mir_tstrncpy(dest, src, (DWORD)maxlen);
+		mir_wstrncpy(dest, src, (DWORD)maxlen);
 	}
 }
 
@@ -110,10 +109,10 @@ int Protocol::GetStatus()
 
 	// check if protocol supports custom status
 	CUSTOM_STATUS css = { sizeof(css) };
-	TCHAR tszXStatusName[256], tszXStatusMessage[1024];
+	wchar_t tszXStatusName[256], tszXStatusMessage[1024];
 	if (ProtoServiceExists(name, PS_GETCUSTOMSTATUSEX)) {
 		// check if custom status is set
-		css.flags = CSSF_TCHAR | CSSF_MASK_STATUS | CSSF_MASK_NAME | CSSF_MASK_MESSAGE | CSSF_DEFAULT_NAME;
+		css.flags = CSSF_UNICODE | CSSF_MASK_STATUS | CSSF_MASK_NAME | CSSF_MASK_MESSAGE | CSSF_DEFAULT_NAME;
 		css.status = &custom_status;
 		css.ptszName = tszXStatusName;
 		css.ptszMessage = tszXStatusMessage;
@@ -128,13 +127,13 @@ int Protocol::GetStatus()
 		custom_status = 0;
 
 	if (custom_status == 0) {
-		TCHAR *tmp = pcli->pfnGetStatusModeDescription(status, 0);
+		wchar_t *tmp = pcli->pfnGetStatusModeDescription(status, 0);
 		lcopystr(status_name, tmp, _countof(status_name));
 	}
 	else {
-		TCHAR *p = (tszXStatusName[0] != 0) ? TranslateTS(tszXStatusName) : TranslateT("<no status name>");
+		wchar_t *p = (tszXStatusName[0] != 0) ? TranslateW(tszXStatusName) : TranslateT("<no status name>");
 		if (tszXStatusMessage[0])
-			mir_sntprintf(status_name, _T("%s: %s"), p, tszXStatusMessage);
+			mir_snwprintf(status_name, L"%s: %s", p, tszXStatusMessage);
 		else
 			lcopystr(status_name, p, _countof(status_name));
 	}
@@ -161,16 +160,15 @@ void Protocol::SetStatus(int aStatus)
 		PROTOCOLSETTINGEX **pse = (PROTOCOLSETTINGEX **)mir_calloc(pCount * sizeof(PROTOCOLSETTINGEX *));
 		for (i = 0; i < pCount; i++) {
 			pse[i] = (PROTOCOLSETTINGEX *)mir_calloc(sizeof(PROTOCOLSETTINGEX));
-			pse[i]->szName = "";
+			pse[i]->m_szName = "";
 		}
 
-		pse[0]->cbSize = sizeof(PROTOCOLSETTINGEX);
-		pse[0]->status = aStatus;
-		pse[0]->szName = name;
+		pse[0]->m_status = aStatus;
+		pse[0]->m_szName = name;
 
-		TCHAR status_msg[256];
+		wchar_t status_msg[256];
 		GetStatusMsg(aStatus, status_msg, _countof(status_msg));
-		pse[0]->szMsg = status_msg;
+		pse[0]->m_szMsg = status_msg;
 
 		CallService(MS_CS_SETSTATUSEX, (WPARAM)&pse, 0);
 
@@ -182,7 +180,7 @@ void Protocol::SetStatus(int aStatus)
 		CallProtoService(name, PS_SETSTATUS, aStatus, 0);
 
 		if (CanSetStatusMsg(aStatus)) {
-			TCHAR status_msg[MS_MYDETAILS_GETMYSTATUSMESSAGE_BUFFER_SIZE];
+			wchar_t status_msg[MS_MYDETAILS_GETMYSTATUSMESSAGE_BUFFER_SIZE];
 			GetStatusMsg(aStatus, status_msg, _countof(status_msg));
 			SetStatusMsg(aStatus, status_msg);
 		}
@@ -209,32 +207,32 @@ bool Protocol::CanSetStatusMsg(int aStatus)
 	return CanGetStatusMsg(aStatus);
 }
 
-void Protocol::GetStatusMsg(int aStatus, TCHAR *msg, size_t msg_size)
+void Protocol::GetStatusMsg(int aStatus, wchar_t *msg, size_t msg_size)
 {
 	if (!CanGetStatusMsg())
-		lcopystr(msg, _T(""), msg_size);
+		lcopystr(msg, L"", msg_size);
 	else if (aStatus == status && ProtoServiceExists(name, PS_GETMYAWAYMSG)) {
-		ptrT tmp((TCHAR *)CallProtoService(name, PS_GETMYAWAYMSG, 0, SGMA_TCHAR));
-		lcopystr(msg, tmp == NULL ? _T("") : tmp, msg_size);
+		ptrW tmp((wchar_t *)CallProtoService(name, PS_GETMYAWAYMSG, 0, SGMA_UNICODE));
+		lcopystr(msg, tmp == NULL ? L"" : tmp, msg_size);
 	}
-	else if (ServiceExists(MS_AWAYMSG_GETSTATUSMSGT)) {
-		ptrT tmp((TCHAR *)CallService(MS_AWAYMSG_GETSTATUSMSGT, (WPARAM)aStatus, (LPARAM)name));
-		lcopystr(msg, tmp == NULL ? _T("") : tmp, msg_size);
+	else if (ServiceExists(MS_AWAYMSG_GETSTATUSMSGW)) {
+		ptrW tmp((wchar_t *)CallService(MS_AWAYMSG_GETSTATUSMSGW, (WPARAM)aStatus, (LPARAM)name));
+		lcopystr(msg, tmp == NULL ? L"" : tmp, msg_size);
 	}
 }
 
-TCHAR* Protocol::GetStatusMsg()
+wchar_t* Protocol::GetStatusMsg()
 {
 	GetStatusMsg(status, status_message, _countof(status_message));
 	return status_message;
 }
 
-void Protocol::SetStatusMsg(const TCHAR *message)
+void Protocol::SetStatusMsg(const wchar_t *message)
 {
 	SetStatusMsg(GetStatus(), message);
 }
 
-void Protocol::SetStatusMsg(int aStatus, const TCHAR *message)
+void Protocol::SetStatusMsg(int aStatus, const wchar_t *message)
 {
 	if (!CanSetStatusMsg(aStatus))
 		return;
@@ -265,18 +263,13 @@ void Protocol::GetAvatar()
 	ace = NULL;
 
 	// Get HBITMAP from cache
-	ace = (avatarCacheEntry *)CallService(MS_AV_GETMYAVATAR, 0, (LPARAM)name);
+	ace = (AVATARCACHEENTRY *)CallService(MS_AV_GETMYAVATAR, 0, (LPARAM)name);
 	if (ace != NULL)
 		avatar_bmp = ace->hbmPic;
 
 	data_changed = true;
 }
 
-
-bool Protocol::CanGetNick()
-{
-	return ServiceExists(MS_CONTACT_GETCONTACTINFO) != FALSE;
-}
 
 int Protocol::GetNickMaxLength()
 {
@@ -289,31 +282,10 @@ int Protocol::GetNickMaxLength()
 	return ret;
 }
 
-TCHAR *Protocol::GetNick()
+wchar_t* Protocol::GetNick()
 {
-	// See if can get one
-	if (!CanGetNick())
-		return NULL;
-
-	// Get it
-	CONTACTINFO ci = { 0 };
-	ci.cbSize = sizeof(ci);
-	ci.hContact = NULL;
-	ci.szProto = name;
-	ci.dwFlag = CNF_DISPLAY;
-
-#ifdef UNICODE
-	ci.dwFlag |= CNF_UNICODE;
-#endif
-
-	if (!CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)& ci)) {
-		// CNF_DISPLAY always returns a string type
-		lcopystr(nickname, ci.pszVal, _countof(nickname));
-		mir_free(ci.pszVal);
-	}
-	else
-		lcopystr(nickname, _T(""), _countof(nickname));
-
+	ptrW nick(Contact_GetInfo(CNF_DISPLAY, NULL, name));
+	lcopystr(nickname, (nick != NULL) ? nick : L"", _countof(nickname));
 	return nickname;
 }
 
@@ -322,7 +294,7 @@ bool Protocol::CanSetNick()
 	return can_set_nick;
 }
 
-void Protocol::SetNick(const TCHAR *nick)
+void Protocol::SetNick(const wchar_t *nick)
 {
 	// See if can get one
 	if (!CanSetNick())
@@ -332,7 +304,7 @@ void Protocol::SetNick(const TCHAR *nick)
 		return;
 
 	// Get it
-	CallProtoService(name, PS_SETMYNICKNAME, SMNN_TCHAR, (LPARAM)nick);
+	CallProtoService(name, PS_SETMYNICKNAME, SMNN_UNICODE, (LPARAM)nick);
 }
 
 bool Protocol::CanSetAvatar()
@@ -340,10 +312,10 @@ bool Protocol::CanSetAvatar()
 	return g_bAvsExist && CallService(MS_AV_CANSETMYAVATAR, (WPARAM)name, 0);
 }
 
-void Protocol::SetAvatar(const TCHAR *file_name)
+void Protocol::SetAvatar(const wchar_t *file_name)
 {
 	if (CanSetAvatar())
-		CallService(MS_AV_SETMYAVATART, (WPARAM)name, (LPARAM)file_name);
+		CallService(MS_AV_SETMYAVATARW, (WPARAM)name, (LPARAM)file_name);
 }
 
 bool Protocol::CanGetListeningTo()
@@ -361,16 +333,16 @@ bool Protocol::ListeningToEnabled()
 	return CanSetListeningTo() && CallService(MS_LISTENINGTO_ENABLED, (WPARAM)name, 0) != 0;
 }
 
-TCHAR *Protocol::GetListeningTo()
+wchar_t *Protocol::GetListeningTo()
 {
 	if (!CanGetListeningTo()) {
-		lcopystr(listening_to, _T(""), _countof(listening_to));
+		lcopystr(listening_to, L"", _countof(listening_to));
 		return listening_to;
 	}
 
 	DBVARIANT dbv = { 0 };
-	if (db_get_ts(NULL, name, "ListeningTo", &dbv)) {
-		lcopystr(listening_to, _T(""), _countof(listening_to));
+	if (db_get_ws(NULL, name, "ListeningTo", &dbv)) {
+		lcopystr(listening_to, L"", _countof(listening_to));
 		return listening_to;
 	}
 
@@ -471,22 +443,22 @@ bool ProtocolArray::CanSetAvatars()
 	return g_bAvsExist;
 }
 
-void ProtocolArray::SetAvatars(const TCHAR *file_name)
+void ProtocolArray::SetAvatars(const wchar_t *file_name)
 {
 	if (!CanSetAvatars())
 		return;
 
-	CallService(MS_AV_SETMYAVATART, NULL, (WPARAM)file_name);
+	CallService(MS_AV_SETMYAVATARW, NULL, (WPARAM)file_name);
 }
 
-void ProtocolArray::SetNicks(const TCHAR *nick)
+void ProtocolArray::SetNicks(const wchar_t *nick)
 {
 	if (nick == NULL || nick[0] == '\0')
 		return;
 
-	mir_tstrncpy(default_nick, nick, _countof(default_nick));
+	mir_wstrncpy(default_nick, nick, _countof(default_nick));
 
-	db_set_ts(0, MODULE_NAME, SETTING_DEFAULT_NICK, nick);
+	db_set_ws(0, MODULE_NAME, SETTING_DEFAULT_NICK, nick);
 
 	for (int i = 0; i < buffer_len; i++)
 		buffer[i]->SetNick(default_nick);
@@ -495,22 +467,22 @@ void ProtocolArray::SetNicks(const TCHAR *nick)
 
 void ProtocolArray::SetStatus(int aStatus)
 {
-	CallService(MS_CLIST_SETSTATUSMODE, aStatus, 0);
+	Clist_SetStatusMode(aStatus);
 }
 
-void ProtocolArray::SetStatusMsgs(const TCHAR *message)
+void ProtocolArray::SetStatusMsgs(const wchar_t *message)
 {
 	for (int i = ID_STATUS_OFFLINE; i <= ID_STATUS_IDLE; i++)
 		SetStatusMsgs(i, message);
 }
 
-void ProtocolArray::SetStatusMsgs(int status, const TCHAR *message)
+void ProtocolArray::SetStatusMsgs(int status, const wchar_t *message)
 {
-	db_set_ts(NULL, "SRAway", StatusModeToDbSetting(status, "Msg"), message);
+	db_set_ws(NULL, "SRAway", StatusModeToDbSetting(status, "Msg"), message);
 
 	// Save default also
 	if (!db_get_b(NULL, "SRAway", StatusModeToDbSetting(status, "UsePrev"), 0))
-		db_set_ts(NULL, "SRAway", StatusModeToDbSetting(status, "Default"), message);
+		db_set_ws(NULL, "SRAway", StatusModeToDbSetting(status, "Default"), message);
 
 	for (int i = 0; i < buffer_len; i++)
 		if (buffer[i]->status == status)
@@ -519,37 +491,37 @@ void ProtocolArray::SetStatusMsgs(int status, const TCHAR *message)
 
 void ProtocolArray::GetDefaultNick()
 {
-	ptrT tszNick(db_get_tsa(0, MODULE_NAME, SETTING_DEFAULT_NICK));
+	ptrW tszNick(db_get_wsa(0, MODULE_NAME, SETTING_DEFAULT_NICK));
 	if (tszNick)
-		mir_tstrncpy(default_nick, tszNick, _countof(default_nick));
+		mir_wstrncpy(default_nick, tszNick, _countof(default_nick));
 	else
 		default_nick[0] = '\0';
 }
 
 void ProtocolArray::GetDefaultAvatar()
 {
-	ptrT tszFile(db_get_tsa(0, "ContactPhoto", "File"));
+	ptrW tszFile(db_get_wsa(0, "ContactPhoto", "File"));
 	if (tszFile)
-		mir_tstrncpy(default_avatar_file, tszFile, _countof(default_avatar_file));
+		mir_wstrncpy(default_avatar_file, tszFile, _countof(default_avatar_file));
 	else
 		default_avatar_file[0] = '\0';
 }
 
-TCHAR *ProtocolArray::GetDefaultStatusMsg()
+wchar_t *ProtocolArray::GetDefaultStatusMsg()
 {
 	return GetDefaultStatusMsg(CallService(MS_CLIST_GETSTATUSMODE, 0, 0));
 }
 
-TCHAR *ProtocolArray::GetDefaultStatusMsg(int status)
+wchar_t *ProtocolArray::GetDefaultStatusMsg(int status)
 {
 	default_status_message[0] = '\0';
 
 	if (status == ID_STATUS_CONNECTING)
 		status = ID_STATUS_OFFLINE;
 
-	TCHAR *tmp = (TCHAR *)CallService(MS_AWAYMSG_GETSTATUSMSGT, (WPARAM)status, 0);
+	wchar_t *tmp = (wchar_t *)CallService(MS_AWAYMSG_GETSTATUSMSGW, (WPARAM)status, 0);
 	if (tmp != NULL) {
-		mir_tstrncpy(default_status_message, tmp, _countof(default_status_message));
+		mir_wstrncpy(default_status_message, tmp, _countof(default_status_message));
 		mir_free(tmp);
 	}
 

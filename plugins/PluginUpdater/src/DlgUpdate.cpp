@@ -36,13 +36,15 @@ static void SelectAll(HWND hDlg, bool bEnable)
 	}
 }
 
-static void SetStringText(HWND hWnd, size_t i, TCHAR *ptszText)
+static void SetStringText(HWND hWnd, size_t i, wchar_t *ptszText)
 {
 	ListView_SetItemText(hWnd, i, 1, ptszText);
 }
 
 static void ApplyUpdates(void *param)
 {
+	Thread_SetName("PluginUpdater: ApplyUpdates");
+
 	HWND hDlg = (HWND)param;
 	OBJLIST<FILEINFO> &todo = *(OBJLIST<FILEINFO> *)GetWindowLongPtr(hDlg, GWLP_USERDATA);
 	if (todo.getCount() == 0) {
@@ -58,14 +60,14 @@ static void ApplyUpdates(void *param)
 	AutoHandle pipe(hPipe);
 	HWND hwndList = GetDlgItem(hDlg, IDC_LIST_UPDATES);
 	//create needed folders after escalating priviledges. Folders creates when we actually install updates
-	TCHAR tszFileTemp[MAX_PATH], tszFileBack[MAX_PATH];
-	mir_sntprintf(tszFileBack, _T("%s\\Backups"), g_tszRoot);
+	wchar_t tszFileTemp[MAX_PATH], tszFileBack[MAX_PATH];
+	mir_snwprintf(tszFileBack, L"%s\\Backups", g_tszRoot);
 	SafeCreateDirectory(tszFileBack);
-	mir_sntprintf(tszFileTemp, _T("%s\\Temp"), g_tszRoot);
+	mir_snwprintf(tszFileTemp, L"%s\\Temp", g_tszRoot);
 	SafeCreateDirectory(tszFileTemp);
 
 	// 2) Download all plugins
-	HANDLE nlc = NULL;
+	HNETLIBCONN nlc = NULL;
 	for (int i=0; i < todo.getCount(); i++) {
 		ListView_EnsureVisible(hwndList, i, FALSE);
 		if (!todo[i].bEnabled) {
@@ -85,7 +87,7 @@ static void ApplyUpdates(void *param)
 				// interrupt update as we require all components to be updated
 				Netlib_CloseHandle(nlc);
 				PostMessage(hDlg, UM_ERROR, 0, 0);
-				SkinPlaySound("updatefailed");
+				Skin_PlaySound("updatefailed");
 				return;
 			}
 			SetStringText(hwndList, i, TranslateT("Succeeded."));
@@ -94,23 +96,23 @@ static void ApplyUpdates(void *param)
 	Netlib_CloseHandle(nlc);
 
 	// 3) Unpack all zips
-	VARST tszMirandaPath(_T("%miranda_path%"));
+	VARSW tszMirandaPath(L"%miranda_path%");
 	for (int i = 0; i < todo.getCount(); i++) {
 		FILEINFO& p = todo[i];
 		if (p.bEnabled) {
 			if (p.bDeleteOnly) {
 				// we need only to backup the old file
-				TCHAR *ptszRelPath = p.tszNewName + _tcslen(tszMirandaPath) + 1, tszBackFile[MAX_PATH];
-				mir_sntprintf(tszBackFile, _T("%s\\%s"), tszFileBack, ptszRelPath);
+				wchar_t *ptszRelPath = p.tszNewName + wcslen(tszMirandaPath) + 1, tszBackFile[MAX_PATH];
+				mir_snwprintf(tszBackFile, L"%s\\%s", tszFileBack, ptszRelPath);
 				BackupFile(p.tszNewName, tszBackFile);
 			}
 			else {
 				// if file name differs, we also need to backup the old file here
 				// otherwise it would be replaced by unzip
-				if ( _tcsicmp(p.tszOldName, p.tszNewName)) {
-					TCHAR tszSrcPath[MAX_PATH], tszBackFile[MAX_PATH];
-					mir_sntprintf(tszSrcPath, _T("%s\\%s"), tszMirandaPath, p.tszOldName);
-					mir_sntprintf(tszBackFile, _T("%s\\%s"), tszFileBack, p.tszOldName);
+				if (_wcsicmp(p.tszOldName, p.tszNewName)) {
+					wchar_t tszSrcPath[MAX_PATH], tszBackFile[MAX_PATH];
+					mir_snwprintf(tszSrcPath, L"%s\\%s", tszMirandaPath, p.tszOldName);
+					mir_snwprintf(tszBackFile, L"%s\\%s", tszFileBack, p.tszOldName);
 					BackupFile(tszSrcPath, tszBackFile);
 				}
 
@@ -119,32 +121,64 @@ static void ApplyUpdates(void *param)
 			}
 		}
 	}
-	SkinPlaySound("updatecompleted");
+	Skin_PlaySound("updatecompleted");
 
 #if MIRANDA_VER < 0x0A00
 	// 4) Change title of clist
-	ptrT title(db_get_tsa(NULL, "CList", "TitleText"));
-	if (!lstrcmpi(title, _T("Miranda IM")))
-		db_set_ts(NULL, "CList", "TitleText", _T("Miranda NG"));
+	ptrW title(db_get_wsa(NULL, "CList", "TitleText"));
+	if (!lstrcmpi(title, L"Miranda IM"))
+		db_set_ws(NULL, "CList", "TitleText", L"Miranda NG");
 #endif
-
-	opts.bForceRedownload = false;
-	db_unset(NULL, MODNAME, DB_SETTING_REDOWNLOAD);
 
 	db_set_b(NULL, MODNAME, DB_SETTING_RESTART_COUNT, 5);
 
+#if MIRANDA_VER >= 0x0A00
 	if (opts.bBackup)
-		CallService(MS_AB_BACKUP);
+		CallService(MS_AB_BACKUP, 0, 0);
+#endif
+
+	if (opts.bChangePlatform) {
+		wchar_t mirandaPath[MAX_PATH];
+		GetModuleFileName(NULL, mirandaPath, _countof(mirandaPath));
+		db_set_ws(NULL, MODNAME, "OldBin2", mirandaPath);
+
+		db_unset(NULL, MODNAME, DB_SETTING_CHANGEPLATFORM);
+	}
+	else {
+		ptrW oldbin(db_get_wsa(NULL, MODNAME, "OldBin2"));
+		if (oldbin) {
+			SafeDeleteFile(oldbin);
+			db_unset(NULL, MODNAME, "OldBin2");
+		}
+	}
+
+	if (opts.bForceRedownload) {
+		opts.bForceRedownload = 0;
+		db_unset(NULL, MODNAME, DB_SETTING_REDOWNLOAD);
+	}
 
 	// 5) Prepare Restart
 	int rc = MessageBox(hDlg, TranslateT("Update complete. Press Yes to restart Miranda now or No to postpone a restart until the exit."), TranslateT("Plugin Updater"), MB_YESNO | MB_ICONQUESTION);
 	PostMessage(hDlg, WM_CLOSE, 0, 0);
-	if (rc == IDYES)
+	if (rc == IDYES) {
 #if MIRANDA_VER >= 0x0A00
-		CallServiceSync(MS_SYSTEM_RESTART, db_get_b(NULL, MODNAME, "RestartCurrentProfile", 1) ? 1 : 0, 0);
+		BOOL bRestartCurrentProfile = db_get_b(NULL, MODNAME, "RestartCurrentProfile", 1) ? 1 : 0;
+		if (opts.bChangePlatform) {
+			wchar_t mirstartpath[MAX_PATH];
+
+#ifdef _WIN64
+			mir_snwprintf(mirstartpath, L"%s\\miranda32.exe", tszMirandaPath);
+#else
+			mir_snwprintf(mirstartpath, L"%s\\miranda64.exe", tszMirandaPath);
+#endif
+			CallServiceSync(MS_SYSTEM_RESTART, bRestartCurrentProfile, (LPARAM)mirstartpath);
+		}
+		else
+			CallServiceSync(MS_SYSTEM_RESTART, bRestartCurrentProfile);
 #else
 		CallFunctionAsync(RestartMe, 0);
 #endif
+	}
 }
 
 static void ResizeVert(HWND hDlg, int yy)
@@ -164,8 +198,7 @@ static INT_PTR CALLBACK DlgUpdate(HWND hDlg, UINT message, WPARAM wParam, LPARAM
 		TranslateDialogDefault(hDlg);
 		SendMessage(hwndList, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT | LVS_EX_CHECKBOXES);
 #if MIRANDA_VER >= 0x0A00
-		SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIconByHandle(iconList[0].hIcolib));
-		SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIconByHandle(iconList[0].hIcolib, 1));
+		Window_SetIcon_IcoLib(hDlg, iconList[0].hIcolib);
 #else
 		SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIcon("check_update"));
 		SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIcon("check_update",1));
@@ -176,10 +209,10 @@ static INT_PTR CALLBACK DlgUpdate(HWND hDlg, UINT message, WPARAM wParam, LPARAM
 			{
 				wchar_t szPath[MAX_PATH];
 				GetModuleFileName(NULL, szPath, _countof(szPath));
-				TCHAR *ext = _tcsrchr(szPath, '.');
+				wchar_t *ext = wcsrchr(szPath, '.');
 				if (ext != NULL)
 					*ext = '\0';
-				_tcscat(szPath, _T(".test"));
+				wcscat(szPath, L".test");
 				HANDLE hFile = CreateFile(szPath, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 				if (hFile == INVALID_HANDLE_VALUE)
 					// Running Windows Vista or later (major version >= 6).
@@ -237,9 +270,9 @@ static INT_PTR CALLBACK DlgUpdate(HWND hDlg, UINT message, WPARAM wParam, LPARAM
 			for (int i = 0; i < todo.getCount(); ++i) {
 				LVITEM lvI = {0};
 				lvI.mask = LVIF_TEXT | LVIF_PARAM | LVIF_GROUPID | LVIF_NORECOMPUTE;
-				lvI.iGroupId = (_tcsstr(todo[i].tszOldName, _T("Plugins")) != NULL) ? 1 :
-					((_tcsstr(todo[i].tszOldName, _T("Languages")) != NULL) ? 3 :
-						((_tcsstr(todo[i].tszOldName, _T("Icons")) != NULL) ? 4 : 2));
+				lvI.iGroupId = (wcsstr(todo[i].tszOldName, L"Plugins") != NULL) ? 1 :
+					((wcsstr(todo[i].tszOldName, L"Languages") != NULL) ? 3 :
+						((wcsstr(todo[i].tszOldName, L"Icons") != NULL) ? 4 : 2));
 				lvI.iSubItem = 0;
 				lvI.lParam = (LPARAM)&todo[i];
 				lvI.pszText = todo[i].tszOldName;
@@ -309,13 +342,15 @@ static INT_PTR CALLBACK DlgUpdate(HWND hDlg, UINT message, WPARAM wParam, LPARAM
 				return TRUE;
 
 			case IDC_DETAILS:
-				if (bShowDetails = !bShowDetails) {
-					ResizeVert(hDlg, 242);
-					SetDlgItemText(hDlg, IDC_DETAILS, TranslateT("<< Details"));
-				}
-				else {
+				if (bShowDetails) {
 					ResizeVert(hDlg, 60);
 					SetDlgItemText(hDlg, IDC_DETAILS, TranslateT("Details >>"));
+					bShowDetails = false;
+				}
+				else {
+					ResizeVert(hDlg, 242);
+					SetDlgItemText(hDlg, IDC_DETAILS, TranslateT("<< Details"));
+					bShowDetails = true;
 				}
 				break;
 
@@ -344,7 +379,7 @@ static INT_PTR CALLBACK DlgUpdate(HWND hDlg, UINT message, WPARAM wParam, LPARAM
 		break;
 
 	case WM_DESTROY:
-		IcoLib_ReleaseIcon((HICON)SendMessage(hDlg, WM_SETICON, ICON_SMALL, 0));
+		Window_FreeIcon_IcoLib(hDlg);
 		Utils_SaveWindowPosition(hDlg, NULL, MODNAME, "ConfirmWindow");
 		hwndDialog = NULL;
 		delete (OBJLIST<FILEINFO> *)GetWindowLongPtr(hDlg, GWLP_USERDATA);
@@ -361,6 +396,8 @@ static INT_PTR CALLBACK DlgUpdate(HWND hDlg, UINT message, WPARAM wParam, LPARAM
 
 static void DlgUpdateSilent(void *param)
 {
+	Thread_SetName("PluginUpdater: DlgUpdateSilent");
+
 	OBJLIST<FILEINFO> &UpdateFiles = *(OBJLIST<FILEINFO> *)param;
 	if (UpdateFiles.getCount() == 0) {
 		delete &UpdateFiles;
@@ -375,16 +412,16 @@ static void DlgUpdateSilent(void *param)
 
 	AutoHandle pipe(hPipe);
 	//create needed folders after escalating priviledges. Folders creates when we actually install updates
-	TCHAR tszFileTemp[MAX_PATH], tszFileBack[MAX_PATH];
+	wchar_t tszFileTemp[MAX_PATH], tszFileBack[MAX_PATH];
 
-	mir_sntprintf(tszFileBack, _T("%s\\Backups"), g_tszRoot);
+	mir_snwprintf(tszFileBack, L"%s\\Backups", g_tszRoot);
 	SafeCreateDirectory(tszFileBack);
 
-	mir_sntprintf(tszFileTemp, _T("%s\\Temp"), g_tszRoot);
+	mir_snwprintf(tszFileTemp, L"%s\\Temp", g_tszRoot);
 	SafeCreateDirectory(tszFileTemp);
 
 	// 2) Download all plugins
-	HANDLE nlc = NULL;
+	HNETLIBCONN nlc = NULL;
 	// Count all updates that have been enabled
 	int count = 0;
 	for (int i = 0; i < UpdateFiles.getCount(); i++) {
@@ -394,7 +431,7 @@ static void DlgUpdateSilent(void *param)
 			if (!DownloadFile(pFileUrl, nlc)) {
 				// interrupt update as we require all components to be updated
 				Netlib_CloseHandle(nlc);
-				SkinPlaySound("updatefailed");
+				Skin_PlaySound("updatefailed");
 				delete &UpdateFiles;
 				return;
 			}
@@ -411,23 +448,23 @@ static void DlgUpdateSilent(void *param)
 	}
 
 	// 3) Unpack all zips
-	VARST tszMirandaPath(_T("%miranda_path%"));
+	VARSW tszMirandaPath(L"%miranda_path%");
 	for (int i = 0; i < UpdateFiles.getCount(); i++) {
 		FILEINFO& p = UpdateFiles[i];
 		if (p.bEnabled) {
 			if (p.bDeleteOnly) {
 				// we need only to backup the old file
-				TCHAR *ptszRelPath = p.tszNewName + _tcslen(tszMirandaPath) + 1, tszBackFile[MAX_PATH];
-				mir_sntprintf(tszBackFile, _T("%s\\%s"), tszFileBack, ptszRelPath);
+				wchar_t *ptszRelPath = p.tszNewName + wcslen(tszMirandaPath) + 1, tszBackFile[MAX_PATH];
+				mir_snwprintf(tszBackFile, L"%s\\%s", tszFileBack, ptszRelPath);
 				BackupFile(p.tszNewName, tszBackFile);
 			}
 			else {
 				// if file name differs, we also need to backup the old file here
 				// otherwise it would be replaced by unzip
-				if (_tcsicmp(p.tszOldName, p.tszNewName)) {
-					TCHAR tszSrcPath[MAX_PATH], tszBackFile[MAX_PATH];
-					mir_sntprintf(tszSrcPath, _T("%s\\%s"), tszMirandaPath, p.tszOldName);
-					mir_sntprintf(tszBackFile, _T("%s\\%s"), tszFileBack, p.tszOldName);
+				if (_wcsicmp(p.tszOldName, p.tszNewName)) {
+					wchar_t tszSrcPath[MAX_PATH], tszBackFile[MAX_PATH];
+					mir_snwprintf(tszSrcPath, L"%s\\%s", tszMirandaPath, p.tszOldName);
+					mir_snwprintf(tszBackFile, L"%s\\%s", tszFileBack, p.tszOldName);
 					BackupFile(tszSrcPath, tszBackFile);
 				}
 
@@ -438,46 +475,35 @@ static void DlgUpdateSilent(void *param)
 		}
 	}
 	delete &UpdateFiles;
-	SkinPlaySound("updatecompleted");
+	Skin_PlaySound("updatecompleted");
 
 #if MIRANDA_VER < 0x0A00
 	// 4) Change title of clist
-	ptrT title = db_get_tsa(NULL, "CList", "TitleText");
-	if (!_tcsicmp(title, _T("Miranda IM")))
-		db_set_ts(NULL, "CList", "TitleText", _T("Miranda NG"));
+	ptrW title = db_get_wsa(NULL, "CList", "TitleText");
+	if (!_wcsicmp(title, L"Miranda IM"))
+		db_set_ws(NULL, "CList", "TitleText", L"Miranda NG");
 #endif
 
 	opts.bForceRedownload = false;
 	db_unset(NULL, MODNAME, DB_SETTING_REDOWNLOAD);
 
+	opts.bChangePlatform = false;
+	db_unset(NULL, MODNAME, DB_SETTING_CHANGEPLATFORM);
+
 	db_set_b(NULL, MODNAME, DB_SETTING_RESTART_COUNT, 5);
 	db_set_b(NULL, MODNAME, DB_SETTING_NEED_RESTART, 1);
 
 	// 5) Prepare Restart
-	TCHAR tszTitle[100];
-	mir_sntprintf(tszTitle, TranslateT("%d component(s) was updated"), count);
+	wchar_t tszTitle[100];
+	mir_snwprintf(tszTitle, TranslateT("%d component(s) was updated"), count);
 
-	if (ServiceExists(MS_POPUP_ADDPOPUPT) && db_get_b(NULL, "Popup", "ModuleIsEnabled", 1)) {
+	if (ServiceExists(MS_POPUP_ADDPOPUPT) && db_get_b(NULL, "Popup", "ModuleIsEnabled", 1))
 		ShowPopup(tszTitle,TranslateT("You need to restart your Miranda to apply installed updates."),POPUP_TYPE_MSG);
-	} else {
-		bool notified = false;
-
-		if (ServiceExists(MS_CLIST_SYSTRAY_NOTIFY)) {
-			MIRANDASYSTRAYNOTIFY err;
-			err.szProto = MODULEA;
-			err.cbSize = sizeof(err);
-			err.dwInfoFlags = NIIF_INTERN_UNICODE | NIIF_INFO;
-			err.tszInfoTitle = tszTitle;
-			err.tszInfo = TranslateT("You need to restart your Miranda to apply installed updates.");
-			err.uTimeout = 30000;
-
-			notified = !CallService(MS_CLIST_SYSTRAY_NOTIFY, 0, (LPARAM)&err);
-		}
-
-		if (!notified) {
+	else {
+		if (Clist_TrayNotifyW(MODULEA, tszTitle, TranslateT("You need to restart your Miranda to apply installed updates."), NIIF_INFO, 30000)) {
 			// Error, let's try to show MessageBox as last way to inform user about successful update
-			TCHAR tszText[200];
-			mir_sntprintf(tszText, _T("%s\n\n%s"), TranslateT("You need to restart your Miranda to apply installed updates."), TranslateT("Would you like to restart it now?"));
+			wchar_t tszText[200];
+			mir_snwprintf(tszText, L"%s\n\n%s", TranslateT("You need to restart your Miranda to apply installed updates."), TranslateT("Would you like to restart it now?"));
 
 			if (MessageBox(NULL, tszText, tszTitle, MB_ICONINFORMATION | MB_YESNO) == IDYES)
 #if MIRANDA_VER >= 0x0A00
@@ -502,74 +528,91 @@ static void __stdcall LaunchDialog(void *param)
 
 struct
 {
-	TCHAR *oldName, *newName;
+	wchar_t *oldName, *newName;
 }
 static renameTable[] =
 {
-	{ _T("svc_dbepp.dll"),                  _T("Plugins\\dbeditorpp.dll") },
-	{ _T("svc_crshdmp.dll"),                _T("Plugins\\crashdumper.dll") },
-	{ _T("crashdmp.dll"),                   _T("Plugins\\crashdumper.dll") },
-	{ _T("crashrpt.dll"),                   _T("Plugins\\crashdumper.dll") },
-	{ _T("attache.dll"),                    _T("Plugins\\crashdumper.dll") },
-	{ _T("svc_vi.dll"),                     _T("Plugins\\crashdumper.dll") },
-	{ _T("crashrpt.dll"),                   _T("Plugins\\crashdumper.dll") },
-	{ _T("versioninfo.dll"),                _T("Plugins\\crashdumper.dll") },
-	{ _T("advsplashscreen.dll"),            _T("Plugins\\splashscreen.dll") },
-	{ _T("import_sa.dll"),                  _T("Plugins\\import.dll") },
-	{ _T("newnr.dll"),                      _T("Plugins\\notesreminders.dll") },
-	{ _T("dbtool.exe"),                     _T("Plugins\\dbchecker.dll") },
-	{ _T("dbtool_sa.exe"),                  _T("Plugins\\dbchecker.dll") },
-	{ _T("clist_mw.dll"),                   _T("Plugins\\clist_nicer.dll") },
-	{ _T("bclist.dll"),                     _T("Plugins\\clist_blind.dll") },
-	{ _T("otr.dll"),                        _T("Plugins\\mirotr.dll") },
-	{ _T("ttnotify.dll"),                   _T("Plugins\\tooltipnotify.dll") },
-	{ _T("newstatusnotify.dll"),            _T("Plugins\\newxstatusnotify.dll") },
-	{ _T("rss.dll"),                        _T("Plugins\\newsaggregator.dll") },
-	{ _T("dbx_3x.dll"),                     _T("Plugins\\dbx_mmap.dll") },
-	{ _T("actman30.dll"),                   _T("Plugins\\actman.dll") },
-	{ _T("skype.dll"),                      _T("Plugins\\skypeweb.dll") },
-	{ _T("skypeclassic.dll"),               _T("Plugins\\skypeweb.dll") },
+	{ L"svc_dbepp.dll",                  L"Plugins\\dbeditorpp.dll" },
+	{ L"svc_crshdmp.dll",                L"Plugins\\crashdumper.dll" },
+	{ L"crashdmp.dll",                   L"Plugins\\crashdumper.dll" },
+	{ L"crashrpt.dll",                   L"Plugins\\crashdumper.dll" },
+	{ L"attache.dll",                    L"Plugins\\crashdumper.dll" },
+	{ L"svc_vi.dll",                     L"Plugins\\crashdumper.dll" },
+	{ L"crashrpt.dll",                   L"Plugins\\crashdumper.dll" },
+	{ L"versioninfo.dll",                L"Plugins\\crashdumper.dll" },
+	{ L"advsplashscreen.dll",            L"Plugins\\splashscreen.dll" },
+	{ L"import_sa.dll",                  L"Plugins\\import.dll" },
+	{ L"newnr.dll",                      L"Plugins\\notesreminders.dll" },
+	{ L"dbtool.exe",                     L"Plugins\\dbchecker.dll" },
+	{ L"dbtool_sa.exe",                  L"Plugins\\dbchecker.dll" },
+	{ L"clist_mw.dll",                   L"Plugins\\clist_nicer.dll" },
+	{ L"bclist.dll",                     L"Plugins\\clist_blind.dll" },
+	{ L"otr.dll",                        L"Plugins\\mirotr.dll" },
+	{ L"ttnotify.dll",                   L"Plugins\\tooltipnotify.dll" },
+	{ L"newstatusnotify.dll",            L"Plugins\\newxstatusnotify.dll" },
+	{ L"rss.dll",                        L"Plugins\\newsaggregator.dll" },
+	{ L"dbx_3x.dll",                     L"Plugins\\dbx_mmap.dll" },
+	{ L"actman30.dll",                   L"Plugins\\actman.dll" },
+	{ L"skype.dll",                      L"Plugins\\skypeweb.dll" },
+	{ L"skypeclassic.dll",               L"Plugins\\skypeweb.dll" },
+	{ L"historysweeper.dll",             L"Plugins\\historysweeperlight.dll" },
+	{ L"advancedautoaway.dll",           L"Plugins\\statusmanager.dll" },
+	{ L"keepstatus.dll",                 L"Plugins\\statusmanager.dll" },
+	{ L"startupstatus.dll",              L"Plugins\\statusmanager.dll" },
 
 #if MIRANDA_VER >= 0x0A00
-	{ _T("dbx_mmap_sa.dll"),                _T("Plugins\\dbx_mmap.dll") },
-	{ _T("dbx_tree.dll"),                   _T("Plugins\\dbx_mmap.dll") },
-	{ _T("rc4.dll"),                        NULL },
-	{ _T("athena.dll"),                     NULL },
-	{ _T("skypekit.exe"),                   NULL },
+	{ L"dbx_mmap_sa.dll",                L"Plugins\\dbx_mmap.dll" },
+	{ L"dbx_tree.dll",                   L"Plugins\\dbx_mmap.dll" },
+	{ L"rc4.dll",                        NULL },
+	{ L"athena.dll",                     NULL },
+	{ L"skypekit.exe",                   NULL },
+	{ L"mir_app.dll",                    NULL },
+	{ L"mir_core.dll",                   NULL },
+	{ L"zlib.dll",                       NULL },
 #endif
 
-	{ _T("proto_newsaggr.dll"),             _T("Icons\\proto_newsaggregator.dll") },
-	{ _T("clienticons_*.dll"),              _T("Icons\\fp_icons.dll") },
-	{ _T("fp_*.dll"),                       _T("Icons\\fp_icons.dll") },
+	{ L"proto_newsaggr.dll",             L"Icons\\proto_newsaggregator.dll" },
+	{ L"clienticons_*.dll",              L"Icons\\fp_icons.dll" },
+	{ L"fp_*.dll",                       L"Icons\\fp_icons.dll" },
 
-	{ _T("langpack_*.txt"),                 _T("Languages\\*") },
+	{ L"langpack_*.txt",                 L"Languages\\*" },
 
-	{ _T("clist_classic.dll"),              NULL },
-	{ _T("chat.dll"),                       NULL },
-	{ _T("srmm.dll"),                       NULL },
-	{ _T("stdurl.dll"),                     NULL },
-	{ _T("extraicons.dll"),                 NULL },
-	{ _T("firstrun.dll"),                   NULL },
-	{ _T("flashavatars.dll"),               NULL },
-	{ _T("gender.dll"),                     NULL },
-	{ _T("langman.dll"),                    NULL },
-	{ _T("metacontacts.dll"),               NULL },
-	{ _T("xfire.dll"),                      NULL },
-	{ _T("WART-*.exe"),                     NULL },
+	{ L"pcre16.dll",                     NULL },
+	{ L"clist_classic.dll",              NULL },
+	{ L"chat.dll",                       NULL },
+	{ L"srmm.dll",                       NULL },
+	{ L"stdchat.dll",                    NULL },
+	{ L"stdurl.dll",                     NULL },
+	{ L"extraicons.dll",                 NULL },
+	{ L"firstrun.dll",                   NULL },
+	{ L"flashavatars.dll",               NULL },
+	{ L"gender.dll",                     NULL },
+	{ L"gtalkext.dll",                   NULL },
+	{ L"langman.dll",                    NULL },
+	{ L"metacontacts.dll",               NULL },
+	{ L"modernopt.dll",                  NULL },
+	{ L"msvcp100.dll",                   NULL },
+	{ L"msvcr100.dll",                   NULL },
+	{ L"xfire.dll",                      NULL },
+	{ L"yahoo.dll",                      NULL },
+	{ L"yahoogroups.dll",                NULL },
+	{ L"WART-*.exe",                     NULL },
 };
 
-static bool CheckFileRename(const TCHAR *ptszOldName, TCHAR *pNewName)
+// Checks if file needs to be renamed and copies it in pNewName
+// Returns true if smth. was copied
+static bool CheckFileRename(const wchar_t *ptszOldName, wchar_t *pNewName)
 {
 	for (int i = 0; i < _countof(renameTable); i++) {
-		if (wildcmpit(ptszOldName, renameTable[i].oldName)) {
-			TCHAR *ptszDest = renameTable[i].newName;
+		if (wildcmpiw(ptszOldName, renameTable[i].oldName)) {
+			wchar_t *ptszDest = renameTable[i].newName;
 			if (ptszDest == NULL)
 				*pNewName = 0;
 			else {
-				_tcsncpy_s(pNewName, MAX_PATH, ptszDest, _TRUNCATE);
-				size_t cbLen = _tcslen(ptszDest) - 1;
+				wcsncpy_s(pNewName, MAX_PATH, ptszDest, _TRUNCATE);
+				size_t cbLen = wcslen(ptszDest) - 1;
 				if (pNewName[cbLen] == '*')
-					_tcsncpy_s(pNewName + cbLen, MAX_PATH - cbLen, ptszOldName, _TRUNCATE);
+					wcsncpy_s(pNewName + cbLen, MAX_PATH - cbLen, ptszOldName, _TRUNCATE);
 			}
 			return true;
 		}
@@ -579,81 +622,87 @@ static bool CheckFileRename(const TCHAR *ptszOldName, TCHAR *pNewName)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
-
-static bool isValidExtension(const TCHAR *ptszFileName)
+// We only update ".dll", ".exe" and ".ico"
+static bool isValidExtension(const wchar_t *ptszFileName)
 {
-	const TCHAR *pExt = _tcsrchr(ptszFileName, '.');
+	const wchar_t *pExt = wcsrchr(ptszFileName, '.');
 
-	return (pExt != NULL) && (!_tcsicmp(pExt, _T(".dll")) || !_tcsicmp(pExt, _T(".exe")) || !_tcsicmp(pExt, _T(".txt")));
+	return (pExt != NULL) && (!_wcsicmp(pExt, L".dll") || !_wcsicmp(pExt, L".exe") || !_wcsicmp(pExt, L".txt"));
 }
 
-static int ScanFolder(const TCHAR *tszFolder, size_t cbBaseLen, int level, const TCHAR *tszBaseUrl, SERVLIST& hashes, OBJLIST<FILEINFO> *UpdateFiles)
+// We only scan subfolders "Plugins", "Icons", "Languages", "Libs", "Core"
+static bool isValidDirectory(const wchar_t *ptszDirName)
 {
-	// skip updater's own folder
-	if (!_tcsicmp(tszFolder, g_tszRoot))
-		return 0;
+	return !_wcsicmp(ptszDirName, L"Plugins") || !_wcsicmp(ptszDirName, L"Icons") || !_wcsicmp(ptszDirName, L"Languages") || !_wcsicmp(ptszDirName, L"Libs") || !_wcsicmp(ptszDirName, L"Core");
+}
 
-	// skip profile folder
-	TCHAR tszProfilePath[MAX_PATH];
-	CallService(MS_DB_GETPROFILEPATHT, _countof(tszProfilePath), (LPARAM)tszProfilePath);
-	if (!_tcsicmp(tszFolder, tszProfilePath))
-		return 0;
-
-	TCHAR tszBuf[MAX_PATH];
-	mir_sntprintf(tszBuf, _T("%s\\*"), tszFolder);
+// Scans folders recursively
+static int ScanFolder(const wchar_t *tszFolder, size_t cbBaseLen, const wchar_t *tszBaseUrl, SERVLIST& hashes, OBJLIST<FILEINFO> *UpdateFiles, int level = 0)
+{
+	wchar_t tszBuf[MAX_PATH];
+	mir_snwprintf(tszBuf, L"%s\\*", tszFolder);
 
 	WIN32_FIND_DATA ffd;
 	HANDLE hFind = FindFirstFile(tszBuf, &ffd);
 	if (hFind == INVALID_HANDLE_VALUE)
 		return 0;
 
-	Netlib_LogfT(hNetlibUser,_T("Scanning folder %s"), tszFolder);
+	Netlib_LogfW(hNetlibUser,L"Scanning folder %s", tszFolder);
 
 	int count = 0;
 	do {
 		if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 			// Scan recursively all subfolders
-			if (_tcscmp(ffd.cFileName, _T(".")) && _tcscmp(ffd.cFileName, _T(".."))) {
-				mir_sntprintf(tszBuf, _T("%s\\%s"), tszFolder, ffd.cFileName);
-				count += ScanFolder(tszBuf, cbBaseLen, level + 1, tszBaseUrl, hashes, UpdateFiles);
+			if (isValidDirectory(ffd.cFileName)) {
+				mir_snwprintf(tszBuf, L"%s\\%s", tszFolder, ffd.cFileName);
+				count += ScanFolder(tszBuf, cbBaseLen, tszBaseUrl, hashes, UpdateFiles, level + 1);
 			}
 		}
 		else if (isValidExtension(ffd.cFileName)) {
 			// calculate the current file's relative name and store it into tszNewName
-			TCHAR tszNewName[MAX_PATH];
-			if (!CheckFileRename(ffd.cFileName, tszNewName)) {
-				if (level == 0)
-					_tcsncpy(tszNewName, ffd.cFileName, MAX_PATH);
-				else
-					mir_sntprintf(tszNewName, _T("%s\\%s"), tszFolder + cbBaseLen, ffd.cFileName);
+			wchar_t tszNewName[MAX_PATH];
+			if (CheckFileRename(ffd.cFileName, tszNewName)) {
+				Netlib_LogfW(hNetlibUser, L"File %s will be renamed to %s.", ffd.cFileName, tszNewName);
+				// Yes, we need the old file name, because this will be hashed later
+				mir_snwprintf(tszBuf, L"%s\\%s", tszFolder, ffd.cFileName);
+			}
+			else {
+				if (level == 0) {
+					// Rename Miranda*.exe
+					wcsncpy_s(tszNewName, opts.bChangePlatform && !mir_wstrcmpi(ffd.cFileName, OLD_FILENAME) ? NEW_FILENAME : ffd.cFileName, _TRUNCATE);
+					mir_snwprintf(tszBuf, L"%s\\%s", tszFolder, tszNewName);
+				}
+				else {
+					mir_snwprintf(tszNewName, L"%s\\%s", tszFolder + cbBaseLen, ffd.cFileName);
+					mir_snwprintf(tszBuf, L"%s\\%s", tszFolder, ffd.cFileName);
+				}
 			}
 
-			TCHAR *ptszUrl;
+			wchar_t *ptszUrl;
 			int MyCRC;
-			mir_sntprintf(tszBuf, _T("%s\\%s"), tszFolder, ffd.cFileName);
 
 			bool bDeleteOnly = (tszNewName[0] == 0);
 			// this file is not marked for deletion
 			if (!bDeleteOnly) {
-				TCHAR *pName = tszNewName;
+				wchar_t *pName = tszNewName;
 				ServListEntry *item = hashes.find((ServListEntry*)&pName);
 				// Not in list? Check for trailing 'W' or 'w'
 				if (item == NULL) {
-					TCHAR *p = _tcsrchr(tszNewName, '.');
+					wchar_t *p = wcsrchr(tszNewName, '.');
 					if (p[-1] != 'w' && p[-1] != 'W') {
-						Netlib_LogfT(hNetlibUser, _T("File %s: Not found on server, skipping"), ffd.cFileName);
+						Netlib_LogfW(hNetlibUser, L"File %s: Not found on server, skipping", ffd.cFileName);
 						continue;
 					}
 
 					// remove trailing w or W and try again
 					int iPos = int(p - tszNewName) - 1;
-					strdelt(p - 1, 1);
+					strdelw(p - 1, 1);
 					if ((item = hashes.find((ServListEntry*)&pName)) == NULL) {
-						Netlib_LogfT(hNetlibUser, _T("File %s: Not found on server, skipping"), ffd.cFileName);
+						Netlib_LogfW(hNetlibUser, L"File %s: Not found on server, skipping", ffd.cFileName);
 						continue;
 					}
 
-					strdelt(tszNewName + iPos, 1);
+					strdelw(tszNewName + iPos, 1);
 				}
 
 #if MIRANDA_VER >= 0x0A00
@@ -665,11 +714,11 @@ static int ScanFolder(const TCHAR *tszFolder, size_t cbBaseLen, int level, const
 						CalculateModuleHash(tszBuf, szMyHash);
 						// hashes are the same, skipping
 						if (strcmp(szMyHash, item->m_szHash) == 0) {
-							Netlib_LogfT(hNetlibUser, _T("File %s: Already up-to-date, skipping"), ffd.cFileName);
+							Netlib_LogfW(hNetlibUser, L"File %s: Already up-to-date, skipping", ffd.cFileName);
 							continue;
 						}
 						else
-							Netlib_LogfT(hNetlibUser, _T("File %s: Update available"), ffd.cFileName);
+							Netlib_LogfW(hNetlibUser, L"File %s: Update available", ffd.cFileName);
 					}
 					__except (EXCEPTION_EXECUTE_HANDLER)
 					{
@@ -677,7 +726,7 @@ static int ScanFolder(const TCHAR *tszFolder, size_t cbBaseLen, int level, const
 					}
 				}
 				else
-					Netlib_LogfT(hNetlibUser, _T("File %s: Forcing redownload"), ffd.cFileName);
+					Netlib_LogfW(hNetlibUser, L"File %s: Forcing redownload", ffd.cFileName);
 #endif
 
 				ptszUrl = item->m_name;
@@ -685,34 +734,34 @@ static int ScanFolder(const TCHAR *tszFolder, size_t cbBaseLen, int level, const
 			}
 			else {
 				// file was marked for deletion, add it to the list anyway
-				Netlib_LogfT(hNetlibUser, _T("File %s: Marked for deletion"), ffd.cFileName);
-				ptszUrl = _T("");
+				Netlib_LogfW(hNetlibUser, L"File %s: Marked for deletion", ffd.cFileName);
+				ptszUrl = L"";
 				MyCRC = 0;
 			}
 
 			// Yeah, we've got new version.
 			FILEINFO *FileInfo = new FILEINFO;
 			// copy the relative old name
-			_tcsncpy(FileInfo->tszOldName, tszBuf + cbBaseLen, _countof(FileInfo->tszOldName));
+			wcsncpy(FileInfo->tszOldName, tszBuf + cbBaseLen, _countof(FileInfo->tszOldName));
 			FileInfo->bDeleteOnly = bDeleteOnly;
 			if (FileInfo->bDeleteOnly) {
 				// save the full old name for deletion
-				_tcsncpy(FileInfo->tszNewName, tszBuf, _countof(FileInfo->tszNewName));
+				wcsncpy(FileInfo->tszNewName, tszBuf, _countof(FileInfo->tszNewName));
 			}
 			else {
-				_tcsncpy(FileInfo->tszNewName, ptszUrl, _countof(FileInfo->tszNewName));
+				wcsncpy(FileInfo->tszNewName, ptszUrl, _countof(FileInfo->tszNewName));
 			}
 
-			_tcsncpy(tszBuf, ptszUrl, _countof(tszBuf));
-			TCHAR *p = _tcsrchr(tszBuf, '.');
+			wcsncpy(tszBuf, ptszUrl, _countof(tszBuf));
+			wchar_t *p = wcsrchr(tszBuf, '.');
 			if (p) *p = 0;
-			p = _tcsrchr(tszBuf, '\\');
+			p = wcsrchr(tszBuf, '\\');
 			p = (p) ? p + 1 : tszBuf;
-			_tcslwr(p);
+			_wcslwr(p);
 
-			mir_sntprintf(FileInfo->File.tszDiskPath, _T("%s\\Temp\\%s.zip"), g_tszRoot, p);
-			mir_sntprintf(FileInfo->File.tszDownloadURL, _T("%s/%s.zip"), tszBaseUrl, tszBuf);
-			for (p = _tcschr(FileInfo->File.tszDownloadURL, '\\'); p != 0; p = _tcschr(p, '\\'))
+			mir_snwprintf(FileInfo->File.tszDiskPath, L"%s\\Temp\\%s.zip", g_tszRoot, p);
+			mir_snwprintf(FileInfo->File.tszDownloadURL, L"%s/%s.zip", tszBaseUrl, tszBuf);
+			for (p = wcschr(FileInfo->File.tszDownloadURL, '\\'); p != 0; p = wcschr(p, '\\'))
 				*p++ = '/';
 
 			// remember whether the user has decided not to update this component with this particular new version
@@ -721,6 +770,7 @@ static int ScanFolder(const TCHAR *tszFolder, size_t cbBaseLen, int level, const
 			FileInfo->File.CRCsum = MyCRC;
 			UpdateFiles->insert(FileInfo);
 
+			// If we are in the silent mode, only count enabled plugins, otherwise count all
 			if (!opts.bSilent || FileInfo->bEnabled)
 				count++;
 		}
@@ -731,10 +781,13 @@ static int ScanFolder(const TCHAR *tszFolder, size_t cbBaseLen, int level, const
 	return count;
 }
 
+// Thread checks for updates
 static void CheckUpdates(void *)
 {
-	Netlib_LogfT(hNetlibUser, _T("Checking for updates"));
-	TCHAR tszTempPath[MAX_PATH];
+	Netlib_LogfW(hNetlibUser, L"Checking for updates");
+	Thread_SetName("PluginUpdater: CheckUpdates");
+
+	wchar_t tszTempPath[MAX_PATH];
 	DWORD dwLen = GetTempPath(_countof(tszTempPath), tszTempPath);
 	if (tszTempPath[dwLen - 1] == '\\')
 		tszTempPath[dwLen - 1] = 0;
@@ -742,13 +795,13 @@ static void CheckUpdates(void *)
 	if (!opts.bSilent)
 		ShowPopup(TranslateT("Plugin Updater"), TranslateT("Checking for new updates..."), POPUP_TYPE_INFO);
 
-	ptrT updateUrl(GetDefaultUrl()), baseUrl;
+	ptrW updateUrl(GetDefaultUrl()), baseUrl;
 	SERVLIST hashes(50, CompareHashes);
 	bool success = ParseHashes(updateUrl, baseUrl, hashes);
 	if (success) {
 		FILELIST *UpdateFiles = new FILELIST(20);
-		VARST dirname(_T("%miranda_path%"));
-		int count = ScanFolder(dirname, lstrlen(dirname) + 1, 0, baseUrl, hashes, UpdateFiles);
+		VARSW dirname(L"%miranda_path%");
+		int count = ScanFolder(dirname, lstrlen(dirname) + 1, baseUrl, hashes, UpdateFiles);
 
 		// Show dialog
 		if (count == 0) {
@@ -765,7 +818,7 @@ static void CheckUpdates(void *)
 	hCheckThread = NULL;
 }
 
-static void DoCheck(bool bSilent)
+static void DoCheck(bool bSilent = true)
 {
 	if (hCheckThread)
 		ShowPopup(TranslateT("Plugin Updater"), TranslateT("Update checking already started!"), POPUP_TYPE_INFO);
@@ -794,7 +847,7 @@ void UninitCheck()
 // menu item command
 static INT_PTR MenuCommand(WPARAM, LPARAM)
 {
-	Netlib_LogfT(hNetlibUser, _T("Update started manually!"));
+	Netlib_LogfW(hNetlibUser, L"Update started manually!");
 	DoCheck(false);
 	return 0;
 }
@@ -820,8 +873,8 @@ void CheckUpdateOnStartup()
 			if ((now - was) < 86400)
 				return;
 		}
-		Netlib_LogfT(hNetlibUser, _T("Update on startup started!"));
-		DoCheck(true);
+		Netlib_LogfW(hNetlibUser, L"Update on startup started!");
+		DoCheck();
 	}
 }
 
@@ -829,7 +882,7 @@ void CheckUpdateOnStartup()
 
 static void CALLBACK TimerAPCProc(void *, DWORD, DWORD)
 {
-	DoCheck(true);
+	DoCheck();
 }
 
 static LONGLONG PeriodToMilliseconds(const int period, BYTE &periodMeasure)
@@ -854,6 +907,7 @@ void InitTimer(void *type)
 {
 	if (!opts.bUpdateOnPeriod)
 		return;
+	Thread_SetName("PluginUpdater: InitTimer");
 
 	LONGLONG interval;
 

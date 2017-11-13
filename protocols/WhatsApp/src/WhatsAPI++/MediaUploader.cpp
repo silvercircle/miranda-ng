@@ -1,4 +1,4 @@
-#include "../common.h"
+#include "../stdafx.h"
 #include "MediaUploader.h"
 
 // TODO get rid of unneeded headers added by NETLIBHTTPREQUEST. it sould look like this:
@@ -19,7 +19,7 @@ static NETLIBHTTPHEADER s_imageHeaders[] =
 	{ "Content-Type", "multipart/form-data; boundary=zzXXzzYYzzXXzzQQ" }
 };
 
-static std::vector<unsigned char>* sttFileToMem(const TCHAR *ptszFileName)
+static std::vector<unsigned char>* sttFileToMem(const wchar_t *ptszFileName)
 {
 	HANDLE hFile = CreateFile(ptszFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE)
@@ -51,12 +51,11 @@ namespace MediaUploader
 		nlhr.szUrl = (char*)host.c_str();
 		nlhr.headers = s_imageHeaders;
 		nlhr.headersCount = _countof(s_imageHeaders);
-		nlhr.flags = NLHRF_HTTP11 | NLHRF_GENERATEHOST | NLHRF_REMOVEHOST | NLHRF_SSL;
+		nlhr.flags = NLHRF_HTTP11 | NLHRF_SSL;
 		nlhr.pData = (char*)allVector.data();
 		nlhr.dataLength = (int)allVector.size();
 
-		NETLIBHTTPREQUEST* pnlhr = (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION,
-			(WPARAM)WASocketConnection::hNetlibUser, (LPARAM)&nlhr);
+		NETLIBHTTPREQUEST *pnlhr = Netlib_HttpTransaction(g_hNetlibUser, &nlhr);
 
 		string data = pnlhr->pData;
 
@@ -74,10 +73,7 @@ namespace MediaUploader
 	{
 		string filePath = message->media_url;
 		string to = message->key.remote_jid;
-		long fileSize = message->media_size;
 		string extension = split(filePath, '.')[1];
-
-		const BYTE *path = (const BYTE*)filePath.c_str();
 
 		uint8_t digest[16];
 		md5_string(filePath, digest);
@@ -99,8 +95,6 @@ namespace MediaUploader
 		hBAOS += "Content-Type: " + getMimeFromExtension(extension) + "\r\n\r\n";
 
 		string fBAOS = "\r\n--" + boundary + "--\r\n";
-		long contentlength = sizeof(hBAOS) + sizeof(fBAOS) + fileSize;
-
 		return sendData(url, hBAOS, filePath, fBAOS);
 	}
 

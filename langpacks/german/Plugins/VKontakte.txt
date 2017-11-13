@@ -2,12 +2,28 @@
 ;============================================================
 ;  File: VKontakte.dll
 ;  Plugin: VKontakte protocol
-;  Version: 0.1.1.16
+;  Version: 0.1.3.0
 ;  Authors: Miranda NG Team
 ;============================================================
 [VKontakte protocol support for Miranda NG.]
 VKontakte-Protokoll für Miranda NG.
 ;file \protocols\VKontakte\res\resource.rc
+[Show in protocol menu ]
+Im Protokollmenü anzeigen
+[Create new chat]
+Neuen Chat erstellen
+[Status message]
+Statusnachricht
+[Send message to my wall]
+Nachricht auf meine Pinnwand senden
+[Load news from VK]
+Neuigkeiten von VK laden
+[Load history for all contacts from VK]
+Verlauf für alle Kontakte von VK laden
+[Wipe contacts missing in friend list]
+Kontakte außerhalb der Freundesliste löschen
+[Visit profile]
+Profil ansehen
 [[img] BBCode support for image]
 \[img]-BBCode-Unterstützung für Bilder
 [off]
@@ -22,18 +38,22 @@ Für Vorschau, max. 604x604px
 BBCode-Unterstützung für Neuigkeiten- und Ereignisbenachrichtigungen
 [basic ([b], [i], [u], [s])]
 Basis ([b], [i], [u], [s])
-[advanced (+[url], [size], [color])]
-Erweitert (+[url], [size], [color])
+[advanced (+[url], [size], [color], [code])]
+Erweitert (+[url], [size], [color], [code])
 [Use this setting also for attachments on news and notifications]
 Diese Einstellung auch für Anhänge in Neuigkeiten und Benachrichtigungen anwenden
-[Other]
-Sonstige
 [BBCode support on attachments]
 BBCode-Unterstützung für Anhänge
+[Other]
+Sonstige
 [Process stickers as smileys]
 Sticker als Smileys darstellen
 [Shorten links for audio attachments]
 Links für Audioanhänge abkürzen
+[Use non-standard popups for news and event notifications]
+Nicht-Standard-Popups für Neuigkeiten und Ereignisbenachrichtigungen verwenden
+[Add message link to messages with attachments]
+Nachrichtenlink zu Nachrichten mit Anhängen hinzufügen
 [News and event notifications]
 Neuigkeiten- und Ereignisbenachrichtigungen
 [WARNING: Causes excessive network traffic!!!]
@@ -88,6 +108,8 @@ Einladungen
 Reposts
 [Mentions in comments]
 In Beiträgen erwähnt
+[Accepted friend requests]
+Angenommene Freundesanfragen
 [E-mail or phone number:]
 E-Mail oder Telefonnummer:
 [Password:]
@@ -106,8 +128,12 @@ Alle eingehenden Nachrichten immer als ungelesen benachrichtigen
 Unsichtbarstatus bei Benutzeraktivität erzwingen
 [Invisible interval timeout (min):]
 Intervall der Unsichtbarkeit (Min.):
-[Use non-standard urlEncode for sent messages (less traffic)]
-Nicht-Standard urlEncode für gesendete Nachrichten verwenden (weniger Verkehr)
+[Send VK-objects links as attachments]
+Links zu VK-Objekten als Anhang senden
+[and load sent attachments]
+und gesendete Anhänge laden
+[Notify about changes of contacts audio broadcast]
+Über Änderungen des Audioübertragungsstatus von Kontakten benachrichtigen
 [When I ban user...]
 Wenn ich einen Benutzer banne...
 [Report abuse]
@@ -126,36 +152,30 @@ Als regulärer Status für unbekannte Musik, sonst Audiostatus
 Nur als Audiostatus
 [as regular status only]
 Nur als regulärer Status
+[Group chats]
+Gruppenchats
+[Message for return to group chat:]
+Nachricht beim Zurückkehren ins Gruppenchat:
 [Login settings]
 Anmeldeeinstellungen
 [Local settings]
 Lokale Einstellungen
 [Contact list group:]
 Kontaktlistengruppe:
-[Server-side delivery confirmation]
-Serverseitige Empfangsbestätigungen
+[Language for names and titles:]
+Sprache für Namen und Titel:
+[Mark message as read:]
+Nachricht als gelesen markieren:
+[Sync history on protocol online:]
+Verlauf synchronisieren wenn Protokoll online:
+[Load last messages when message window open and local history is empty]
+Letzte Nachrichten laden wenn Nachrichtenfenster offen und lokaler Verlauf leer ist
 [Use local time for received messages]
 Lokale Zeit für empfangene Nachrichten verwenden
-[Automatically wipe local contacts missing in your friend list]
-Lokale Kontakte, die nicht in Ihrer Freundesliste sind, automatisch löschen
-[Mark message as read...]
-Nachricht als gelesen markieren...
-[on read]
-Beim Lesen
-[on receive]
-Beim Empfangen
-[on reply]
-Beim Antworten
-[on typing]
-Beim Tippen
-[Sync history on protocol online...]
-Verlauf synchronisieren wenn Protokoll online geht...
-[automatically]
-Automatisch
-[for last 1 day]
-Den letzten Tag
-[for last 3 days]
-Die letzten 3 Tage
+[Load only friends to local contact list]
+Nur Freunde in lokale Kontaktliste laden
+[Server-side delivery confirmation]
+Serverseitige Empfangsbestätigungen
 [Bots challenge test]
 Bot-Challenge-Test
 [Instruction:]
@@ -164,6 +184,8 @@ Anweisung:
 Senden
 [Cancel]
 Abbrechen
+[Open in browser]
+Im Browser öffnen
 [Invite user to chat]
 Benutzer zum Chat einladen
 [Choose one of your contacts to be invited:]
@@ -180,8 +202,6 @@ Teilen
 URL:
 [Only for friends]
 Nur für Freunde
-[Attention]
-Achtung
 ;file \protocols\VKontakte\src\misc.cpp
 [Captcha form icon]
 Captcha Form. Icon
@@ -207,6 +227,8 @@ Benutzer-bannen-Icon
 Statusicon
 [Wall message icon]
 Pinnwandicon
+[Mark messages as read icon]
+Nachrichten-als-gelesen-markieren-Icon
 [Protocols]
 Protokolle
 [VKontakte]
@@ -215,14 +237,28 @@ VKontakte
 Zugriff verweigert! Daten werden nicht gesendet oder empfangen!
 [Error]
 Fehler
+[You have to validate your account before you can use VK in Miranda NG]
+Sie müssen Ihr Konto verifizieren bevor Sie VK in Miranda NG verwenden können.
 [Error %d. Data will not be sent or received.]
 Fehler %d. Daten werden weder gesendet noch empfangen.
 [One of the parameters specified was missing or invalid]
 Einer der angegebenen Parameter fehlte oder war ungültig.
 [Access to adding post denied]
 Zugriff auf Pinnwand verweigert
+[Can't send messages for users from blacklist]
+Nachrichten können nicht an Benutzer auf schwarzer Liste gesendet werden.
+[Can't send messages for users without dialogs]
+Nachrichten können nicht an Benutzer ohne vorherige Unterhaltung gesendet werden.
+[Can't send messages to this user due to their privacy settings]
+Nachrichten können nicht an diesen Benutzer wegen seiner Privatsphäre-Einstellungen gesendet werden.
+[Enter the missing digits between %s and %s of the phone number linked to your account]
+Geben Sie die fehlenden Ziffern zwischen %s und %s der mit Ihrem Konto verknüpften Telefonnummer ein.
+[Attention!]
+Achtung!
 [Enter confirmation code]
 Bestätigungscode eingeben
+[Enter new nickname]
+Neuen Nicknamen eingeben
 [Message read: %s]
 Nachricht gelesen: %s
 [has invited you to a group]
@@ -273,12 +309,16 @@ Anhänge:
 Audio
 [Video]
 Video
+[Link]
+Link
 [Document]
 Dokument
 [Wall post]
 Pinnwandeintrag
-[Link]
-Link
+[Product]
+Produkt
+[Price]
+Preis
 [Gift]
 Geschenk
 [Unsupported or unknown attachment type: %s]
@@ -289,14 +329,19 @@ Nicht unterstützter oder unbekannter Anhangtyp: %s
 Nachricht von
 [at]
 um
-;file \protocols\VKontakte\src\vk_captcha.cpp
-[Enter the text you see]
-Geben Sie den Text ein, den Sie sehen
+[User restored control over own page]
+Benutzer hat Kontrolle über seine eigene Seite wiederhergestellt.
+[User was deactivated (deleted)]
+Benutzer wurde deaktiviert (gelöscht)
+[User was deactivated (banned)]
+Benutzer wurde deaktiviert (gebannt)
 ;file \protocols\VKontakte\src\vk_chats.cpp
 [Participants]
 Teilnehmer
 [Owners]
 Besitzer
+[Message link]
+Nachrichtenlink
 [create chat]
 Chat erstellt
 [kick user]
@@ -323,8 +368,6 @@ Neuen Chattitel eingeben
 Dieser Chat wird für immer mit seinem ganzen Inhalt zerstört. Diese Aktion kann nicht rückgängig gemacht werden. Sind Sie sich sicher?
 [Warning]
 Warnung
-[I'm back]
-Ich bin zurück
 [You've been kicked by ]
 Sie wurden gekickt von\s
 [Chat]
@@ -337,17 +380,44 @@ Benutzer e&inladen
 Raum &zerstören
 [&User details]
 Kontakt&profil
-[Visit profile]
-Profil ansehen
+[Change nick]
+Nick ändern
 [&Kick]
 &Kick
+[%s is typing a message...]
+%s tippt eine Nachricht...
+;file \protocols\VKontakte\src\vk_dialogs.cpp
+[Enter the text you see]
+Geben Sie den Text ein, den Sie sehen
+[Wall message for %s]
+Pinnwandnachricht für %s
+[You delete %s from the contact list.\nWhat needs to be done additionally?]
+Sie haben %s aus Ihrer Kontaktliste gelöscht.
+[Remove %s from your friend list]
+%s aus Ihrer Freundesliste entfernen
+[Clear server history with %s]
+Serververlauf mit %s löschen
+[Deleting %s from contact list]
+%s aus Ihrer Kontaktliste löschen
 ;file \protocols\VKontakte\src\vk_feed.cpp
+[New news]
+Neue Neuigkeiten
+[New notifications]
+Neue Benachrichtigungen
 [User was tagged in these photos:]
 Benutzer wurde in diesen Fotos markiert:
+[(photos)]
+(Fotos)
+[(attachments)]
+(Anhänge)
 [News from %s\n%s]
 Neuigkeiten von %s\n%s
+[News from %s]
+Neuigkeiten von %s
 [\tRepost from %s\n%s]
 \tGeteilt von %s\n%s
+[Repost from %s]
+Geteilt von %s
 [Video description:]
 Videobeschreibung:
 [Post text:]
@@ -392,8 +462,19 @@ Unbekannter Fehler aufgetreten
 ;file \protocols\VKontakte\src\vk_history.cpp
 [Are you sure to reload all messages from vk.com?\nLocal contact history will be deleted and reloaded from the server.\nIt may take a long time.\nDo you want to continue?]
 Möchten Sie wirklich alle Nachrichten von vk.com neu laden?\nDer lokale Verlauf des Kontaktes wird gelöscht und vom Server neu geladen.\nDas kann lange dauern.\nMöchten Sie fortfahren?
-[Attention!]
-Achtung!
+[Are you sure you want to reload all messages for all contacts from vk.com?\nLocal contact history will be deleted and reloaded from the server.\nIt may take a very long time and/or corrupt Miranda database.\nWe recommend check your database before reloading messages and after it (Miranda32.exe /svc:dbchecker or Miranda64.exe /svc:dbchecker).\nDo you want to continue?]
+Sind Sie sich sicher, dass Sie alle Nachrichten für alle Kontakte von vk.com laden wollen?\nDer lokale Verlauf Ihrer Kontakte wird gelöscht und vom Server neu geladen.\nDies kann sehr lange Zeit dauern und/oder die Miranda-Datenbank beschädigen.\nWir empfehlen Ihnen eine Überprüfung Ihrer Datenbank vorher und nachher (Miranda32.exe /svc:dbchecker oder Miranda64.exe /svc:dbchecker).\nMöchten Sie fortfahren?
+[Error loading message history from server.]
+Fehler beim Laden des Verlaufes vom Server.
+[Loading messages for all contacts is completed.]
+Nachrichten für alle Kontakte wurden komplett geladen.
+[Loading history]
+Verlauf laden
+[Error loading message history for %s from server.]
+Vehler beim Laden des Nachrichtenverlaufes von %s vom Server.
+[Loading messages for %s is completed.]
+Laden der Nachrichten von %s ist fertig.
+;file \protocols\VKontakte\src\vk_messages.cpp
 ;file \protocols\VKontakte\src\vk_options.cpp
 [Network]
 Netzwerk
@@ -403,18 +484,52 @@ Konto
 Neuigkeiten und Benachrichtigungen
 [View]
 Anzeige
+[Menu]
+Menü
+[Account language]
+Kontosprache
+[English]
+Englisch
+[Russian]
+Russisch
+[Belarusian]
+Weißrussisch
+[Ukrainian]
+Ukrainisch
+[Spanish]
+Spanisch
+[Finnish]
+Finnisch
+[German]
+Deutsch
+[Italian]
+Italienisch
+[automatically]
+Automatisch
+[for last 1 day]
+Den letzten Tag
+[for last 3 days]
+Die letzten 3 Tage
+[on read]
+Beim Lesen
+[on receive]
+Beim Empfangen
+[on reply]
+Beim Antworten
+[on typing]
+Beim Tippen
+[These changes will take effect after Miranda NG restart.\nWould you like to restart it now?]
+Diese Änderungen werden erst nach einem Neustart von Miranda NG wirksam.\nMöchten Sie es jetzt neu starten?
+[VKontakte protocol]
+VKontakte-Protokoll
 ;file \protocols\VKontakte\src\vk_proto.cpp
 [%s server connection]
 %s Serververbindung
-[Create new chat]
-Neuen Chat erstellen
-[Status message]
-Statusnachricht
-[Send message to my wall]
-Nachricht auf meine Pinnwand senden
-[Load news from VK]
-Neuigkeiten von VK laden
-[Send message to user\'s wall]
+[VKontakte newsfeed & notification event]
+VKontakte Newsfeed- und Benachrichtigungsereignis
+[Mark messages as read]
+Nachrichten als gelesen markieren
+[Send message to user's wall]
 Nachricht auf Pinnwand des Benutzers senden
 [Add as friend]
 Als Freund hinzufügen
@@ -440,6 +555,8 @@ Für immer
 Fehler
 [Notification]
 Benachrichtigung
+[VK user activate/deactivate action]
+VK-Benutzer wurde aktiviert/deaktiviert
 [User %s added as friend]
 Benutzer %s wurde als Freund hinzugefügt.
 [You cannot add yourself as friend]
@@ -455,9 +572,34 @@ Lade Statusnachricht von vk.com.\nDies kann einige Zeit dauern.
 Warten...
 [Enter new status message]
 Neue Statusnachricht eingeben
+;file \protocols\VKontakte\src\vk_struct.cpp
+[I'm back]
+Ich bin zurück
 ;file \protocols\VKontakte\src\vk_thread.cpp
+[Service message]
+Dienstnachricht
+[%s is listening to]
+%s hört gerade
+[Interests]
+Interessen
+[Activities]
+Aktivitäten
+[Music]
+Musik
+[Movies]
+Filme
+[TV]
+Fernsehen
+[Books]
+Bücher
+[Games]
+Spiele
+[Quotes]
+Zitate
 [Please authorize me to add you to my friend list.]
 Bitte autorisieren Sie mich, Sie zu meiner Freundesliste hinzuzufügen.
+[Are you sure to wipe local contacts missing in your friend list?]
+Sind Sie sich sicher dass Sie lokale Kontakte außerhalb Ihrer Freundesliste löschen wollen?
 [Are you sure to delete %s from your friend list?]
 Sind Sie sich sicher dass Sie %s von Ihrer Freundesliste löschen wollen?
 [User %s was deleted from your friend list]
@@ -484,8 +626,3 @@ Wollen Sie %s wirklich bannen? %s%sFortfahren?
 \Dies wird auch
 [Are you sure to report abuse on %s?]
 Wollen Sie wirklich Missbrauch durch %s melden?
-;file \protocols\VKontakte\src\vk_wallpost.cpp
-[Wall message for]
-Pinnwandnachricht für
-[Attention! Message body or url should not be empty!]
-Achtung! Nachrichtentext oder -URL sollte nicht leer sein!

@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Facebook.dll
 ;  Plugin: Facebook RM
-;  Version: 0.2.11.4
+;  Version: 0.3.3.2
 ;  Authors: Michal Zelinka, Robert Pösel
 ;============================================================
 [Facebook protocol support for Miranda NG.]
@@ -46,44 +46,52 @@ Automatisch 'Ignoriere Statusänderung-Flag' setzen
 Größere Avatare nutzen
 [Prefer real names instead of nicknames]
 Echte Namen anstatt Nicknamen verwenden
-[Event notifications]
-Ereignisbenachrichtigungen
-[Notifications]
-Benachrichtigungen
-[News feeds (WARNING: Causes excessive network traffic!)]
-Newsfeeds (WARNUNG: Verursacht exzessiven Netzwerkverkehr!)
+[Load also Messenger contacts at login (not only Facebook friends)]
+Beim Anmelden auch Messenger-Kontakte laden (nicht nur Facebook-Freunde)
+[Use Invisible status for Facebook Pages (instead of Offline)]
+Unsichtbar-Status für Facebook-Seiten verwenden (anstatt Offline)
+[Popup notifications]
+Popup-Benachrichtigungen
+[Show notifications]
+Benachrichtigungen anzeigen
+[Show wall posts (news feed) (WARNING: Causes excessive network traffic!)]
+Newsfeed-Einträge anzeigen (WARNUNG: Verursacht exzessiven Netzwerkverkehr!)
 [News feed types to notify:]
 Newsfeed-Ereignisse melden:
 [Don't show advertising posts]
 Werbebeiträge nicht anzeigen
-[Other events]
-Sonstige Ereignisse
-[Client notifications]
-Clientbenachrichtigungen
-[Friendship notifications]
-Freundschaftsbenachrichtigungen
-[Ticker feeds]
-Ticker-Feeds
-[Show "On this day" posts at login]
-Beiträge "an diesem Tag" beim Anmelden anzeigen
-[Use this server for opening links:]
-Öffne Links auf diesem Server:
+[Show friendships changes (when someone removes/approves you)]
+Freundschaftsänderungen anzeigen (wenn jemand Sie entfernt/annimmt)
+[Show real-time friends activity (ticker feed)]
+Echtzeit-Freundesaktivität (Ticker-Feed) anzeigen
+[Show my "On this day" posts at login]
+Meine Beiträge "an diesem Tag" beim Anmelden anzeigen
+[Chatroom logging]
+Chatraum-Aufzeichnungen
+[Log notifications into special chatroom]
+Benachrichtigungen in speziellem Chatraum aufzeichnen
+[Extra]
+Extras
 [Use balloon notifications in system tray instead of popups]
 Ballonereignisse im Systemtray anstatt Popups verwenden
-[Use logging notifications into special chatroom]
-Benachrichtigungen in einem speziellen Chatraum aufzeichnen
-[Preview]
-Vorschau
+[Use this server for opening links:]
+Öffne Links auf diesem Server:
 [Statuses]
 Status
 [Post Miranda statuses to Wall]
 Miranda-Status auf die Pinnwand setzen
 [Turn off chat on Facebook when going to offline in Miranda]
 Facebook-Chat abmelden wenn Miranda offline geht
-[Map unsupported statuses to Invisible (instead of Online)]
-Nicht-unterstützte Status auf 'Unsichtbar' setzen (anstatt 'Online')
+[Map unsupported statuses to Invisible (instead of Away)]
+Nicht-unterstützte Status auf 'Unsichtbar' setzen (anstatt 'Abwesend')
 [Allow posting statuses to my pages (may slow down login)]
 Posten von Status auf meinen Seiten erlauben (kann Anmeldung verlangsamen)
+[Advanced]
+Erweitert
+[Send typing notifications even when Invisible]
+Tippenbenachrichtigungen auch senden wenn unsichtbar
+[Typing is one way how user is determined active. If you don't want to be seen "active 1 min ago" on Facebook, uncheck this option and also don't interact with website at all. Sending messages from Miranda should be ok, but don't 100% rely on it either.]
+Tippen ist eine Art, wie Benutzer als aktiv erkannt werden. Wenn Sie nicht als "vor 1 Min aktiv gesehen werden wollen, dann deaktivieren Sie diese Einstellung und agieren Sie nicht mit der Webseite. Senden von Nachrichten aus Miranda sollte ok sein, aber verlassen Sie sich nicht drauf.
 [Bots challenge test]
 Bot-Challenge-Test
 [Instruction:]
@@ -92,8 +100,6 @@ Hinweis
 Senden
 [Messages]
 Nachrichten
-[Receive messages from "inbox" folder only]
-Nur Nachrichten aus "Postfach"-Verzeichnis abrufen
 [Keep messages as unread on server (don't send "seen" info)]
 Nachrichten auf dem Server als ungelesen belassen ("Gesehen"-Info nicht senden)
 [Show stickers as custom smileys (EXPERIMENTAL)]
@@ -104,24 +110,32 @@ Mehrbenutzerchats
 Unterstützung für Mehrbenutzerchats aktivieren
 [Do not open chat windows on creation]
 Chatfenster bei der Erzeugung nicht öffnen
+[Automatically join active chats that exist in contact list]
+Aktiven Chats in der Kontaktliste automatisch beitreten
 [History synchronization]
 Verlauf synchronisieren
-[Load last messages (24 hours old) on login (EXPERIMENTAL)]
-Letzte Nachrichten (24 Stunden alt) bei Anmeldung laden (EXPERIMENTELL)
 [Load last messages on opening message window (EXPERIMENTAL)]
 Letzte Nachrichten beim Öffnen des Nachrichtenfensters laden (EXPERIMENTELL)
 [Number of messages to load:]
 Lade Anzahl Nachrichten:
+[Facebook Login Approval]
+Facebook-Anmeldegenehmigung
+[Your security settings requires to input a security code to access your account from unknown browsers.\n\nYou can get the code via Facebook application on your phone or click button below to receive it via SMS.]
+Ihre Sicherheitseinstellungen erfordern es, dass Sie jedesmal, wenn Sie mit einem unbekannten Browser auf Ihr Konto zugreifen, einen Sicherheitscode eingeben.\n\nSie erhalten einen solchen Code über die Facebook-Anwendung auf Ihrem Telefon, oder klicken Sie auf den Button unten, um ihn per SMS zu erhalten.
+[Send SMS]
+SMS senden
 ;file \protocols\FacebookRM\src\captcha.cpp
 [Enter the text you see]
 Geben Sie den Text ein, den Sie sehen
 ;file \protocols\FacebookRM\src\chat.cpp
+[Former]
+Ehemaliger
 [Myself]
 Ich
-[User]
-Benutzer
 [Friend]
 Freund
+[User]
+Benutzer
 [&Invite user...]
 Kontakt e&inladen...
 [&Leave chat session]
@@ -130,6 +144,10 @@ Chatsitzung ver&lassen
 Benutzer&details
 [User &history]
 Kontakt&verlauf
+[Notifications]
+Benachrichtigungen
+[%s and more (%d)]
+%s und mehr (%d)
 ;file \protocols\FacebookRM\src\communication.cpp
 [Login error: %s]
 Anmeldefehler: %s
@@ -137,10 +155,20 @@ Anmeldefehler: %s
 Unbekannter Fehler
 [Login error: Invalid request.]
 Anmeldefehler: Ungültige Anfrage.
-[Login error: Some Facebook things are required.]
-Anmeldefehler: Einige Facebook-Dinge werden benötigt.
+[You entered too many invalid verification codes. Plugin will disconnect.]
+Sie haben zu viele falsche Überprüfungscodes eingegeben. Verbindung wird getrennt.
+[You entered wrong verification code. Try it again.]
+Sie haben einen falschen Überprüfungscode eingegeben. Versuchen Sie es nochmal.
 [Login error: Your account is temporarily locked. You need to confirm this device from web browser.]
 Anmeldefehler: Ihr Konto ist vorrübergehend gesperrt. Sie müssen dieses Gerät in Ihrem Webbrowser bestätigen.
+[Check last login]
+Letzte Anmeldung überprüfen
+[Do you recognize this activity?]
+Erinnern Sie sich an diese Aktivität?
+[Login error: You need to confirm last unknown login or revoke it from web browser.]
+Anmeldefehler: Sie müssen die letzte unbekannte Anmeldung bestätigen oder diese über Ihren Webbrowser widerrufen.
+[Login error: Facebook thinks your computer is infected. Solve it by logging in via 'private browsing' mode of your web browser and run their antivirus check.]
+Anmeldefehler: Facebook denkt, dass Ihr Computer infiziert ist. Lösen Sie dies, indem sie sich im "Privat Browsen"-Modus Ihres Webbrowsers anmelden und deren Antiviren-Überprüfung ausführen.
 [Login error: Captcha code is required. You need to confirm this device from web browser.]
 Anmeldefehler: Captcha-Code wird benötigt. Sie müssen dieses Gerät in Ihrem Webbrowser bestätigen.
 [Login error, probably bad login credentials.]
@@ -159,6 +187,10 @@ Benutzer hat Captcha-Challenge abgebrochen.
 Zeitüberschreitung beim Senden der Nachricht.
 [Status update was successful.]
 Status-Aktualisierung erfolgreich.
+[Error occurred when requesting verification SMS code.]
+Fehler beim Anfordern des Überprüfungscodes per SMS.
+[Verification SMS code was sent to your mobile phone.]
+Überprüfungscode wurde per SMS an Ihr Mobiltelefon gesendet.
 ;file \protocols\FacebookRM\src\connection.cpp
 [Please enter a username.]
 Bitte geben Sie einen Benutzernamen ein.
@@ -188,8 +220,6 @@ Freunde ohne Bekannte
 [Only me]
 Nur ich
 ;file \protocols\FacebookRM\src\contacts.cpp
-[%s and more (%d)]
-%s und mehr (%d)
 [Contact was removed from your server list.]
 Kontakt wurde aus Ihrer Server-Liste entfernt.
 [Error occurred when removing contact from server.]
@@ -217,20 +247,6 @@ Standard
 << Kontakte
 [What's on your mind, %s?]
 Was machen Sie gerade, %s?
-[Sample event]
-Beispielereignis
-[Sample request]
-Beispielanfrage
-[Sample newsfeed]
-Beispielnewsfeed
-[Sample notification]
-Beispielbenachrichtigung
-[Sample friendship]
-Beispielfreundschaft
-[Sample ticker]
-Beispielticker
-[Sample on this day]
-Beispiel "an diesem Tag"
 ;file \protocols\FacebookRM\src\json.cpp
 [a sticker]
 ein Sticker
@@ -244,14 +260,18 @@ eine Datei
 Fotos
 [a photo]
 ein Foto
+[a video]
+ein Video
+[a GIF]
+ein GIF
 [User sent %s:]
 Benutzer hat Ihnen %s gesendet:
 [User sent an unsupported attachment. Open your browser to see it.]
 Benutzer hat Ihnen einen nicht unterstützten Anhang gesendet. Öffnen Sie Ihren Browser, um ihn anzusehen.
-[This message is no longer available, because it was marked as abusive or spam.]
-Diese Nachricht ist nicht mehr verfügbar, da sie als Missbrauch oder Spam markiert wurde.
 [%s is typing a message...]
 %s tippt eine Nachricht...
+[This message is no longer available, because it was marked as abusive or spam.]
+Diese Nachricht ist nicht mehr verfügbar, da sie als Missbrauch oder Spam markiert wurde.
 ;file \protocols\FacebookRM\src\messages.cpp
 [You cannot send messages when you are offline.]
 Nachrichten senden ist nicht möglich, wenn Sie offline sind.
@@ -260,8 +280,34 @@ Nachrichten senden ist nicht möglich, wenn Sie offline sind.
 Kontakt ist wieder in Ihrer Server-Liste.
 [Contact is no longer on server-list.]
 Kontakt ist nicht mehr in Ihrer Server-Liste.
+[Loading history started.]
+Laden des Verlaufes begonnen.
+[Loading messages: %d/%d]
+Lade Nachrichten: %d/%d
+[Loading history completed.]
+Verlauf komplett geladen.
+[<attachment without text>]
+<Anhang ohne Text>
+[Loading memories...]
+Erinnerungen laden...
 [On this day]
 An diesem Tag
+[Found %d memories.]
+%d Erinnerungen gefunden.
+[Loading notifications...]
+Benachrichtigungen laden...
+[Found %d notifications.]
+%d Benachrichtigungen gefunden.
+[Loading friendship requests...]
+Freundschaftsanfragen laden...
+[Found %d friendship requests (%d seen).]
+%d Freundschaftsanfragen gefunden (%d gesehen).
+[Found %d friendship requests.]
+%d Freundschaftsanfragen gefunden.
+[Loading wall posts...]
+Pinnwand-Einträge laden...
+[Found %d wall posts.]
+%d Pinnwand-Einträge gefunden.
 ;file \protocols\FacebookRM\src\proto.cpp
 [%s server connection]
 %s Serververbindung
@@ -283,20 +329,24 @@ Nachrichten
 Status teilen...
 [Own wall]
 Eigene Pinnwand
-[Loading newsfeeds...]
-Newsfeeds laden...
-[Checking friend requests...]
-Freundschaftsanfragen überprüfen...
-[Refreshing buddy list...]
-Freundesliste aktualisieren...
+[Loading history is already in progress. It can't run for more contacts at once so please wait until it finishes.]
+Es wird bereits ein Verlauf geladen. Es kann nur für einen Kontakt auf einmal ausgeführt werden, also warten Sie bitte bis es beendet ist.
+[This will load all messages from the server. To avoid having duplicate messages in your history, delete existing messages manually before continuing.\nLoading process might take a while, so be patient.\n\nDo you want to continue?]
+Dies läd alle Nachrichten vom Server. Um doppelte Nachrichten im Verlauf zu vermeiden, löschen Sie alle existierenden Nachrichten manuell bevor Sie fortfahren.\nDer Prozess des ladens kann eine Weile dauern, also gedulden Sie sich bitte.\nMöchten Sie fortfahren?
 [Do you want to cancel your friendship with '%s'?]
 Möchten Sie Ihre Freundschaft mit "%s" beenden?
-[News feeds]
-Newsfeeds
+[Client errors]
+Client-Fehler
+[Wall posts]
+Pinnwand-Einträge
+[Other events]
+Sonstige Ereignisse
 [Friendship events]
 Freundschaftsereignisse
-[On this day posts]
-Beiträge an diesem Tag
+[Real-time friends activity]
+Echtzeit-Freundesaktivität
+[Memories]
+Erinnerungen
 [Visit profile]
 Profil besuchen
 [Visit notifications]
@@ -313,8 +363,6 @@ Anderes Ereignis
 Freundschaftsereignis
 [Ticker event]
 Ticker-Ereignis
-[On this day event]
-Ereignis an diesem Tag
 [Message read: %s by %s]
 Nachricht gelesen: %s von %s
 [Message read: %s]
@@ -336,10 +384,24 @@ Unterhaltung
 Nachricht gelesen
 [Captcha form icon]
 Captcha Form. Icon
+[Angry]
+Wütend
+[Haha]
+Haha
+[Like]
+Gefällt mir
+[Love]
+Liebe
+[Sad]
+Traurig
+[Wow]
+Wow
 [Visit friendship details]
 Freundschaft-Details besuchen
 [Visit conversation]
 Unterhaltung besuchen
+[Load history]
+Verlauf laden
 [Cancel friendship]
 Freundschaft beenden
 [Cancel friendship request]
@@ -352,9 +414,11 @@ Freundschaft genehmigen
 Freundschaftsanfrage ablehnen
 [Services...]
 Dienste...
-[Refresh Buddy List]
-Freundesliste aktualisieren
-[Check Friends Requests]
+[Check friendship requests]
 Freundschaftsanfragen überprüfen
-[Check Newsfeeds]
+[Check newsfeeds]
 Newsfeeds überprüfen
+[Check memories]
+Erinnerungen überprüfen
+[Check notifications]
+Benachrichtigungen überprüfen

@@ -22,7 +22,6 @@ CLIST_INTERFACE *pcli;
 HINSTANCE hInst;
 int hLangpack;
 
-HANDLE hServiceUpload, hServiceShowManager, hServiceContactMenu, hServiceMainMenu;
 HGENMENU hMenu, hMainMenu, hSubMenu[ServerList::FTP_COUNT], hMainSubMenu[ServerList::FTP_COUNT];
 
 extern UploadDialog *uDlg;
@@ -89,32 +88,32 @@ static void InitIcolib()
 
 void InitMenuItems()
 {
-	TCHAR stzName[256];
+	wchar_t stzName[256];
 
 	CMenuItem mi;
-	mi.flags = CMIF_TCHAR;
+	SET_UID(mi, 0xB7132F5A, 0x65FC, 0x42C5, 0xB4, 0xCB, 0x54, 0xBC, 0xAC, 0x58, 0x34, 0xE9);
+	mi.flags = CMIF_UNICODE;
 	mi.hIcolibItem = iconList[ServerList::FTP_COUNT].hIcolib;
 	mi.position = 3000090001;
-	mi.name.t = LPGENT("FTP File");
+	mi.name.w = LPGENW("FTP File");
 
 	hMainMenu = Menu_AddMainMenuItem(&mi);
 	if (opt.bUseSubmenu)
 		hMenu = Menu_AddContactMenuItem(&mi);
 
 	memset(&mi, 0, sizeof(mi));
-	mi.name.t = stzName;
+	mi.name.w = stzName;
+	mi.flags = CMIF_UNICODE | CMIF_SYSTEM;
 
 	CMenuItem mi2;
-	mi2.flags = CMIF_TCHAR;
+	mi2.flags = CMIF_UNICODE | CMIF_SYSTEM;
 	mi2.pszService = MS_FTPFILE_CONTACTMENU;
 
 	for (int i = 0; i < ServerList::FTP_COUNT; i++) {
 		if (DB::getStringF(0, MODULE, "Name%d", i, stzName))
-			mir_sntprintf(stzName, TranslateT("FTP Server %d"), i + 1);
+			mir_snwprintf(stzName, TranslateT("FTP Server %d"), i + 1);
 
-		mi.flags = CMIF_TCHAR;
 		mi.root = (opt.bUseSubmenu) ? hMenu : 0;
-
 		mi.hIcolibItem = iconList[i].hIcolib;
 		hSubMenu[i] = Menu_AddContactMenuItem(&mi);
 		Menu_ConfigureItem(hSubMenu[i], MCI_OPT_EXECPARAM, i + 1000);
@@ -124,7 +123,7 @@ void InitMenuItems()
 
 		mi2.root = hSubMenu[i];
 		mi2.pszService = MS_FTPFILE_CONTACTMENU;
-		mi2.name.t = LPGENT("Upload file(s)");
+		mi2.name.w = LPGENW("Upload file(s)");
 		HGENMENU tmp = Menu_AddContactMenuItem(&mi2);
 		Menu_ConfigureItem(tmp, MCI_OPT_EXECPARAM, mi2.position = i + UploadJob::FTP_RAWFILE);
 
@@ -134,7 +133,7 @@ void InitMenuItems()
 
 		mi2.root = hSubMenu[i];
 		mi2.pszService = MS_FTPFILE_CONTACTMENU;
-		mi2.name.t = LPGENT("Zip and upload file(s)");
+		mi2.name.w = LPGENW("Zip and upload file(s)");
 		tmp = Menu_AddContactMenuItem(&mi2);
 		Menu_ConfigureItem(tmp, MCI_OPT_EXECPARAM, i + UploadJob::FTP_ZIPFILE);
 
@@ -144,7 +143,7 @@ void InitMenuItems()
 
 		mi2.root = hSubMenu[i];
 		mi2.pszService = MS_FTPFILE_CONTACTMENU;
-		mi2.name.t = LPGENT("Zip and upload folder");
+		mi2.name.w = LPGENW("Zip and upload folder");
 		tmp = Menu_AddContactMenuItem(&mi2);
 		Menu_ConfigureItem(tmp, MCI_OPT_EXECPARAM, i + UploadJob::FTP_ZIPFOLDER);
 
@@ -154,10 +153,11 @@ void InitMenuItems()
 	}
 
 	memset(&mi, 0, sizeof(mi));
-	mi.flags = CMIF_TCHAR;
+	SET_UID(mi, 0x0C17CAD7, 0x7F23, 0x449B, 0xB9, 0xCD, 0xFF, 0x50, 0xDA, 0x69, 0xF3, 0x6F);
+	mi.flags = CMIF_UNICODE;
 	mi.hIcolibItem = iconList[ServerList::FTP_COUNT].hIcolib;
 	mi.position = 3000090001;
-	mi.name.t = LPGENT("FTP File manager");
+	mi.name.w = LPGENW("FTP File manager");
 	mi.pszService = MS_FTPFILE_SHOWMANAGER;
 	mi.root = hMainMenu;
 	Menu_AddMainMenuItem(&mi);
@@ -169,29 +169,25 @@ void InitMenuItems()
 
 void InitHotkeys()
 {
-	HOTKEYDESC hk = { 0 };
-	hk.cbSize = sizeof(hk);
-	hk.pszDescription = LPGEN("Show FTPFile manager");
+	HOTKEYDESC hk = {};
+	hk.szSection.a = MODULE;
+	hk.szDescription.a = LPGEN("Show FTPFile manager");
 	hk.pszName = "FTP_ShowManager";
-	hk.pszSection = MODULE;
 	hk.pszService = MS_FTPFILE_SHOWMANAGER;
 	Hotkey_Register(&hk);
 }
 
 void InitTabsrmmButton()
 {
-	if (ServiceExists(MS_BB_ADDBUTTON)) {
-		BBButton btn = { 0 };
-		btn.cbSize = sizeof(btn);
-		btn.dwButtonID = 1;
-		btn.pszModuleName = MODULE;
-		btn.dwDefPos = 105;
-		btn.hIcon = iconList[ServerList::FTP_COUNT].hIcolib;
-		btn.bbbFlags = BBBF_ISARROWBUTTON | BBBF_ISIMBUTTON | BBBF_ISLSIDEBUTTON | BBBF_CANBEHIDDEN;
-		btn.ptszTooltip = TranslateT("FTP File");
-		CallService(MS_BB_ADDBUTTON, 0, (LPARAM)&btn);
-		HookEvent(ME_MSG_BUTTONPRESSED, TabsrmmButtonPressed);
-	}
+	BBButton btn = {};
+	btn.dwButtonID = 1;
+	btn.pszModuleName = MODULE;
+	btn.dwDefPos = 105;
+	btn.hIcon = iconList[ServerList::FTP_COUNT].hIcolib;
+	btn.bbbFlags = BBBF_ISARROWBUTTON | BBBF_ISIMBUTTON | BBBF_CANBEHIDDEN;
+	btn.pwszTooltip = TranslateT("FTP File");
+	Srmm_AddButton(&btn);
+	HookEvent(ME_MSG_BUTTONPRESSED, TabsrmmButtonPressed);
 }
 
 //------------ MENU & BUTTON HANDLERS ------------//
@@ -356,8 +352,8 @@ int ModulesLoaded(WPARAM, LPARAM)
 	InitMenuItems();
 	InitTabsrmmButton();
 
-	SkinAddNewSoundEx(SOUND_UPCOMPLETE, LPGEN("FTP File"), LPGEN("File upload complete"));
-	SkinAddNewSoundEx(SOUND_CANCEL, LPGEN("FTP File"), LPGEN("Upload canceled"));
+	Skin_AddSound(SOUND_UPCOMPLETE, LPGENW("FTP File"), LPGENW("File upload complete"));
+	Skin_AddSound(SOUND_CANCEL, LPGENW("FTP File"), LPGENW("Upload canceled"));
 
 	curl_global_init(CURL_GLOBAL_ALL);
 
@@ -387,7 +383,7 @@ int Shutdown(WPARAM, LPARAM)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfoEx);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 #ifdef _DEBUG
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -399,10 +395,10 @@ extern "C" int __declspec(dllexport) Load(void)
 	HookEvent(ME_SYSTEM_PRESHUTDOWN, Shutdown);
 	HookEvent(ME_OPT_INITIALISE, Options::InitOptions);
 
-	hServiceUpload = CreateServiceFunction(MS_FTPFILE_UPLOAD, UploadService);
-	hServiceShowManager = CreateServiceFunction(MS_FTPFILE_SHOWMANAGER, ShowManagerService);
-	hServiceContactMenu = CreateServiceFunction(MS_FTPFILE_CONTACTMENU, ContactMenuService);
-	hServiceMainMenu = CreateServiceFunction(MS_FTPFILE_MAINMENU, MainMenuService);
+	CreateServiceFunction(MS_FTPFILE_UPLOAD, UploadService);
+	CreateServiceFunction(MS_FTPFILE_SHOWMANAGER, ShowManagerService);
+	CreateServiceFunction(MS_FTPFILE_CONTACTMENU, ContactMenuService);
+	CreateServiceFunction(MS_FTPFILE_MAINMENU, MainMenuService);
 
 	InitIcolib();
 	InitHotkeys();
@@ -415,9 +411,5 @@ extern "C" int __declspec(dllexport) Load(void)
 
 extern "C" int __declspec(dllexport) Unload(void)
 {
-	DestroyServiceFunction(hServiceUpload);
-	DestroyServiceFunction(hServiceShowManager);
-	DestroyServiceFunction(hServiceContactMenu);
-	DestroyServiceFunction(hServiceMainMenu);
 	return 0;
 }

@@ -4,7 +4,7 @@ Jabber Protocol Plugin for Miranda NG
 
 Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -28,44 +28,44 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /////////////////////////////////////////////////////////////////////////////////////////
 // ntlm auth - LanServer based authorization
 
-TNtlmAuth::TNtlmAuth(ThreadData *info, const char* mechanism, const TCHAR *hostname) :
+TNtlmAuth::TNtlmAuth(ThreadData *info, const char *mechanism, const wchar_t *hostname) :
 	TJabberAuth(info)
 {
 	szName = mechanism;
 	szHostName = hostname;
 
-	const TCHAR *szProvider;
+	const wchar_t *szProvider;
 	if (!mir_strcmp(mechanism, "GSS-SPNEGO"))
-		szProvider = _T("Negotiate");
+		szProvider = L"Negotiate";
 	else if (!mir_strcmp(mechanism, "GSSAPI"))
-		szProvider = _T("GSSAPI");
+		szProvider = L"Kerberos";
 	else if (!mir_strcmp(mechanism, "NTLM"))
-		szProvider = _T("NTLM");
+		szProvider = L"NTLM";
 	else {
 LBL_Invalid:
 		bIsValid = false;
-		hProvider = NULL;
+		hProvider = nullptr;
 		return;
 	}
 
-	TCHAR szSpn[1024] = _T("");
-	if (mir_strcmp(mechanism, "NTLM"))
-		if (!getSpn(szSpn, _countof(szSpn)) && !mir_strcmp(mechanism, "GSSAPI"))
+	wchar_t szSpn[1024]; szSpn[0] = 0;
+	if (!mir_strcmp(mechanism, "GSSAPI"))
+		if (!getSpn(szSpn, _countof(szSpn)))
 			goto LBL_Invalid;
 
-	if ((hProvider = Netlib_InitSecurityProvider2(szProvider, szSpn)) == NULL)
+	if ((hProvider = Netlib_InitSecurityProvider(szProvider, szSpn)) == nullptr)
 		bIsValid = false;
 }
 
 TNtlmAuth::~TNtlmAuth()
 {
-	if (hProvider != NULL)
-		Netlib_DestroySecurityProvider(NULL, hProvider);
+	if (hProvider != nullptr)
+		Netlib_DestroySecurityProvider(hProvider);
 }
 
-bool TNtlmAuth::getSpn(TCHAR* szSpn, size_t dwSpnLen)
+bool TNtlmAuth::getSpn(wchar_t* szSpn, size_t dwSpnLen)
 {
-	TCHAR szFullUserName[128] = _T("");
+	wchar_t szFullUserName[128] = L"";
 	ULONG szFullUserNameLen = _countof(szFullUserName);
 	if (!GetUserNameEx(NameDnsDomain, szFullUserName, &szFullUserNameLen)) {
 		szFullUserName[0] = 0;
@@ -73,54 +73,54 @@ bool TNtlmAuth::getSpn(TCHAR* szSpn, size_t dwSpnLen)
 		GetUserNameEx(NameSamCompatible, szFullUserName, &szFullUserNameLen);
 	}
 
-	TCHAR *name = _tcsrchr(szFullUserName, '\\');
+	wchar_t *name = wcsrchr(szFullUserName, '\\');
 	if (name) *name = 0;
 	else return false;
 
 	if (szHostName && szHostName[0]) {
-		TCHAR *szFullUserNameU = _tcsupr(mir_tstrdup(szFullUserName));
-		mir_sntprintf(szSpn, dwSpnLen, _T("xmpp/%s/%s@%s"), szHostName, szFullUserName, szFullUserNameU);
+		wchar_t *szFullUserNameU = wcsupr(mir_wstrdup(szFullUserName));
+		mir_snwprintf(szSpn, dwSpnLen, L"xmpp/%s/%s@%s", szHostName, szFullUserName, szFullUserNameU);
 		mir_free(szFullUserNameU);
 	}
 	else {
 		const char* connectHost = info->conn.manualHost[0] ? info->conn.manualHost : info->conn.server;
 
 		unsigned long ip = inet_addr(connectHost);
-		PHOSTENT host = (ip == INADDR_NONE) ? NULL : gethostbyaddr((char*)&ip, 4, AF_INET);
+		PHOSTENT host = (ip == INADDR_NONE) ? nullptr : gethostbyaddr((char*)&ip, 4, AF_INET);
 		if (host && host->h_name)
 			connectHost = host->h_name;
 
-		TCHAR *connectHostT = mir_a2t(connectHost);
-		mir_sntprintf(szSpn, dwSpnLen, _T("xmpp/%s@%s"), connectHostT, _tcsupr(szFullUserName));
+		wchar_t *connectHostT = mir_a2u(connectHost);
+		mir_snwprintf(szSpn, dwSpnLen, L"xmpp/%s@%s", connectHostT, wcsupr(szFullUserName));
 		mir_free(connectHostT);
 	}
 
-	Netlib_Logf(NULL, "SPN: %S", szSpn);
+	Netlib_Logf(nullptr, "SPN: %S", szSpn);
 	return true;
 }
 
 char* TNtlmAuth::getInitialRequest()
 {
 	if (!hProvider)
-		return NULL;
+		return nullptr;
 
 	// This generates login method advertisement packet
 	if (info->conn.password[0] != 0)
-		return Netlib_NtlmCreateResponse2(hProvider, "", info->conn.username, info->conn.password, &complete);
+		return Netlib_NtlmCreateResponse(hProvider, "", info->conn.username, info->conn.password, complete);
 
-	return Netlib_NtlmCreateResponse2(hProvider, "", NULL, NULL, &complete);
+	return Netlib_NtlmCreateResponse(hProvider, "", nullptr, nullptr, complete);
 }
 
-char* TNtlmAuth::getChallenge(const TCHAR *challenge)
+char* TNtlmAuth::getChallenge(const wchar_t *challenge)
 {
 	if (!hProvider)
-		return NULL;
+		return nullptr;
 
-	ptrA text((!mir_tstrcmp(challenge, _T("="))) ? mir_strdup("") : mir_t2a(challenge));
+	ptrA text((!mir_wstrcmp(challenge, L"=")) ? mir_strdup("") : mir_u2a(challenge));
 	if (info->conn.password[0] != 0)
-		return Netlib_NtlmCreateResponse2(hProvider, text, info->conn.username, info->conn.password, &complete);
+		return Netlib_NtlmCreateResponse(hProvider, text, info->conn.username, info->conn.password, complete);
 	
-	return Netlib_NtlmCreateResponse2(hProvider, text, NULL, NULL, &complete);
+	return Netlib_NtlmCreateResponse(hProvider, text, nullptr, nullptr, complete);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -137,10 +137,10 @@ TMD5Auth::~TMD5Auth()
 {
 }
 
-char* TMD5Auth::getChallenge(const TCHAR *challenge)
+char* TMD5Auth::getChallenge(const wchar_t *challenge)
 {
 	if (iCallCount > 0)
-		return NULL;
+		return nullptr;
 
 	iCallCount++;
 
@@ -211,7 +211,7 @@ TScramAuth::TScramAuth(ThreadData *info) :
 	TJabberAuth(info)
 {
 	szName = "SCRAM-SHA-1";
-	cnonce = msg1 = serverSignature = NULL;
+	cnonce = msg1 = serverSignature = nullptr;
 }
 
 TScramAuth::~TScramAuth()
@@ -238,7 +238,7 @@ void TScramAuth::Hi(BYTE* res, char* passw, size_t passwLen, char* salt, size_t 
 	}
 }
 
-char* TScramAuth::getChallenge(const TCHAR *challenge)
+char* TScramAuth::getChallenge(const wchar_t *challenge)
 {
 	unsigned chlLen, saltLen = 0;
 	ptrA snonce, salt;
@@ -246,10 +246,10 @@ char* TScramAuth::getChallenge(const TCHAR *challenge)
 
 	ptrA chl((char*)mir_base64_decode(_T2A(challenge), &chlLen));
 
-	for (char *p = strtok(NEWSTR_ALLOCA(chl), ","); p != NULL; p = strtok(NULL, ",")) {
+	for (char *p = strtok(NEWSTR_ALLOCA(chl), ","); p != nullptr; p = strtok(nullptr, ",")) {
 		if (*p == 'r' && p[1] == '=') { // snonce
 			if (strncmp(cnonce, p + 2, mir_strlen(cnonce)))
-				return NULL;
+				return nullptr;
 			snonce = mir_strdup(p + 2);
 		}
 		else if (*p == 's' && p[1] == '=') // salt
@@ -258,10 +258,10 @@ char* TScramAuth::getChallenge(const TCHAR *challenge)
 			ind = atoi(p + 2);
 	}
 
-	if (snonce == NULL || salt == NULL || ind == -1)
-		return NULL;
+	if (snonce == nullptr || salt == nullptr || ind == -1)
+		return nullptr;
 
-	ptrA passw(mir_utf8encodeT(info->conn.password));
+	ptrA passw(mir_utf8encodeW(info->conn.password));
 	size_t passwLen = mir_strlen(passw);
 
 	BYTE saltedPassw[MIR_SHA1_HASH_SIZE];
@@ -315,7 +315,7 @@ char* TScramAuth::getInitialRequest()
 	return mir_base64_encode((PBYTE)buf, cbLen);
 }
 
-bool TScramAuth::validateLogin(const TCHAR *challenge)
+bool TScramAuth::validateLogin(const wchar_t *challenge)
 {
 	unsigned chlLen;
 	ptrA chl((char*)mir_base64_decode(_T2A(challenge), &chlLen));
@@ -356,7 +356,7 @@ char* TPlainAuth::getInitialRequest()
 TJabberAuth::TJabberAuth(ThreadData* pInfo) :
 	bIsValid(true),
 	complete(0),
-	szName(NULL),
+	szName(nullptr),
 	info(pInfo)
 {
 }
@@ -367,15 +367,15 @@ TJabberAuth::~TJabberAuth()
 
 char* TJabberAuth::getInitialRequest()
 {
-	return NULL;
+	return nullptr;
 }
 
-char* TJabberAuth::getChallenge(const TCHAR*)
+char* TJabberAuth::getChallenge(const wchar_t*)
 {
-	return NULL;
+	return nullptr;
 }
 
-bool TJabberAuth::validateLogin(const TCHAR*)
+bool TJabberAuth::validateLogin(const wchar_t*)
 {
 	return true;
 }

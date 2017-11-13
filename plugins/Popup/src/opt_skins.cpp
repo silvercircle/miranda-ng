@@ -42,27 +42,27 @@ void RegisterOptPrevBox()
 	wcl.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wcl.hbrBackground = NULL; // (HBRUSH)GetStockObject(LTGRAY_BRUSH);
 	wcl.lpszMenuName = NULL;
-	wcl.lpszClassName = _T(BOXPREVIEW_WNDCLASS);
+	wcl.lpszClassName = BOXPREVIEW_WNDCLASS;
 	wcl.hIconSm = (HICON)LoadImage(hInst, MAKEINTRESOURCE(IDI_POPUP), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
 	g_wndClass.cPopupPreviewBoxWndclass = RegisterClassEx(&wcl);
 	err = GetLastError();
 	if (!g_wndClass.cPopupPreviewBoxWndclass) {
-		TCHAR msg[1024];
-		mir_sntprintf(msg, TranslateT("Failed to register %s class."), wcl.lpszClassName);
+		wchar_t msg[1024];
+		mir_snwprintf(msg, TranslateT("Failed to register %s class."), wcl.lpszClassName);
 		MSGERROR(msg);
 	}
 
 	//  register custom class for dialog box with drop-shadow attribute
 	//  "#32770" stays for class name of default system dialog box
-	GetClassInfoEx(hInst, _T("#32770"), &wcl);
+	GetClassInfoEx(hInst, L"#32770", &wcl);
 	wcl.hInstance = hInst;
-	wcl.lpszClassName = _T("PopupPlusDlgBox");
+	wcl.lpszClassName = L"PopupPlusDlgBox";
 	wcl.style |= CS_DROPSHADOW;
 	g_wndClass.cPopupPlusDlgBox = RegisterClassEx(&wcl);
 	err = GetLastError();
 	if (!g_wndClass.cPopupPlusDlgBox) {
-		TCHAR msg[1024];
-		mir_sntprintf(msg, TranslateT("Failed to register %s class."), wcl.lpszClassName);
+		wchar_t msg[1024];
+		mir_snwprintf(msg, TranslateT("Failed to register %s class."), wcl.lpszClassName);
 		MSGERROR(msg);
 	}
 }
@@ -74,7 +74,7 @@ static void updatePreviewImage(HWND hwndBox)
 	POPUPDATA2 ppd;
 	memset(&ppd, 0, sizeof(ppd));
 	ppd.cbSize = sizeof(ppd);
-	ppd.flags = PU2_TCHAR;
+	ppd.flags = PU2_UNICODE;
 	ppd.lchIcon = Skin_LoadIcon(SKINICON_STATUS_ONLINE);
 	ppd.lptzTitle = TranslateT("Skin preview");
 	ppd.lptzText = TranslateT("Just take a look at this skin... ;)");
@@ -94,7 +94,7 @@ static void updatePreviewImage(HWND hwndBox)
 
 static void DrawPreview(HWND hwnd, HDC hdc)
 {
-	BITMAPINFO bi;
+	BITMAPINFO bi = { 0 };
 	bi.bmiHeader.biSize = sizeof(bi.bmiHeader);
 	bi.bmiHeader.biWidth = 8;
 	bi.bmiHeader.biHeight = -8;
@@ -184,11 +184,11 @@ int  SkinOptionList_AddSkin(OPTTREE_OPTION* &options, int *OptionsCount, int pos
 			options[pos].dwFlag = (DWORD)(1 << (i - 1));
 			options[pos].groupId = OPTTREE_CHECK;
 			options[pos].iconIndex = 0;
-			options[pos].pszSettingName = mir_tstrdup(_T("Skin options"));
-			options[pos].pszOptionName = (LPTSTR)mir_alloc(sizeof(TCHAR)*(
-				mir_tstrlen(options[pos].pszSettingName) +
+			options[pos].pszSettingName = mir_wstrdup(L"Skin options");
+			options[pos].pszOptionName = (LPTSTR)mir_alloc(sizeof(wchar_t)*(
+				mir_wstrlen(options[pos].pszSettingName) +
 				mir_strlen(skin->getFlagName(i)) + 10));
-			wsprintf(options[pos].pszOptionName, _T("%s/%hs"), options[pos].pszSettingName, skin->getFlagName(i)); // !!!!!!!!!!!!!
+			wsprintf(options[pos].pszOptionName, L"%s/%hs", options[pos].pszSettingName, skin->getFlagName(i)); // !!!!!!!!!!!!!
 			options[pos].bState = skin->getFlag(i) ? TRUE : FALSE;
 			options[pos].Data = i;	// skin flag index
 			*dwGlobalOptions |= skin->getFlag(i) ? (1 << (i - 1)) : 0;
@@ -201,12 +201,12 @@ int  SkinOptionList_AddSkin(OPTTREE_OPTION* &options, int *OptionsCount, int pos
 /////////////////////////////////////////////////////////////////////////////////////////
 
 static LPTSTR mainOption[] = {
-	LPGENT("Show clock"),
-	LPGENT("Drop shadow effect"),
-	LPGENT("Drop shadow effect") _T("/") LPGENT("non rectangular"),
-	LPGENT("Enable Aero Glass (Vista+)"),
-	LPGENT("Use Windows colors"),
-	LPGENT("Use advanced text render") };
+	LPGENW("Show clock"),
+	LPGENW("Drop shadow effect"),
+	LPGENW("Drop shadow effect") L"/" LPGENW("non rectangular"),
+	LPGENW("Enable Aero Glass (Vista+)"),
+	LPGENW("Use Windows colors"),
+	LPGENW("Use advanced text render") };
 
 int SkinOptionList_AddMain(OPTTREE_OPTION* &options, int *OptionsCount, int pos, DWORD *dwGlobalOptions)
 {
@@ -245,11 +245,11 @@ int SkinOptionList_AddMain(OPTTREE_OPTION* &options, int *OptionsCount, int pos,
 		options[pos].dwFlag = (1 << i);
 		options[pos].groupId = OPTTREE_CHECK;
 		options[pos].iconIndex = 0;
-		options[pos].pszSettingName = mir_tstrdup(LPGENT("Global settings"));
-		options[pos].pszOptionName = (LPTSTR)mir_alloc(sizeof(TCHAR)*(
-			mir_tstrlen(options[pos].pszSettingName) +
-			mir_tstrlen(mainOption[i]) + 10));
-		wsprintf(options[pos].pszOptionName, _T("%s/%s"), options[pos].pszSettingName, mainOption[i]); // !!!!!!!!!!!!!
+		options[pos].pszSettingName = mir_wstrdup(LPGENW("Global settings"));
+		options[pos].pszOptionName = (LPTSTR)mir_alloc(sizeof(wchar_t)*(
+			mir_wstrlen(options[pos].pszSettingName) +
+			mir_wstrlen(mainOption[i]) + 10));
+		wsprintf(options[pos].pszOptionName, L"%s/%s", options[pos].pszSettingName, mainOption[i]); // !!!!!!!!!!!!!
 		options[pos].bState = bCheck;
 		pos++;
 	}
@@ -282,18 +282,18 @@ bool SkinOptionList_Update(OPTTREE_OPTION* &options, int *OptionsCount, HWND hwn
 	char prefix[128];
 	mir_snprintf(prefix, "skin.%S", PopupOptions.SkinPack);
 	OptTree_SetOptions(hwndDlg, IDC_SKIN_LIST_OPT, options, *OptionsCount,
-		db_get_dw(NULL, MODULNAME, prefix, dwSkinOptions), _T("Skin options"));
+		db_get_dw(NULL, MODULNAME, prefix, dwSkinOptions), L"Skin options");
 
 	// check "Global Settings"
 	OptTree_SetOptions(hwndDlg, IDC_SKIN_LIST_OPT, options, *OptionsCount,
-		dwGlobalOptions, _T("Global settings"));
+		dwGlobalOptions, L"Global settings");
 
 	return true;
 }
 
 void LoadOption_Skins() {
 	// skin pack
-	PopupOptions.SkinPack = (LPTSTR)DBGetContactSettingStringX(NULL, MODULNAME, "SkinPack", "* Popup Classic", DBVT_TCHAR);
+	PopupOptions.SkinPack = (LPTSTR)DBGetContactSettingStringX(NULL, MODULNAME, "SkinPack", "* Popup Classic", DBVT_WCHAR);
 	// more Skin options
 	PopupOptions.DisplayTime = db_get_b(NULL, MODULNAME, "DisplayTime", TRUE);
 	PopupOptions.DropShadow = db_get_b(NULL, MODULNAME, "DropShadow", TRUE);
@@ -314,13 +314,13 @@ INT_PTR CALLBACK DlgProcPopSkinsOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 		int index = -1;
 		OptTree_ProcessMessage(hwndDlg, msg, wParam, lParam, &index, IDC_SKIN_LIST_OPT, skinOptions, skinOptionsCount);
 		if (index != -1) {
-			if (mir_tstrcmp(skinOptions[index].pszSettingName, _T("Skin options")) == 0) {
+			if (mir_wstrcmp(skinOptions[index].pszSettingName, L"Skin options") == 0) {
 				const PopupSkin *skin = 0;
 				if (skin = skins.getSkin(PopupOptions.SkinPack)) {
 					skin->setFlag(skinOptions[index].Data, skinOptions[index].bState ? true : false);
 				}
 			}
-			else if (mir_tstrcmp(skinOptions[index].pszSettingName, _T("Global settings")) == 0) {
+			else if (mir_wstrcmp(skinOptions[index].pszSettingName, L"Global settings") == 0) {
 				switch (skinOptions[index].dwFlag) {
 				case (1 << 0) :
 					PopupOptions.DisplayTime = skinOptions[index].bState;
@@ -399,11 +399,11 @@ INT_PTR CALLBACK DlgProcPopSkinsOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 					break;
 
 				case IDC_GETSKINS:
-					Utils_OpenUrl("http://miranda-ng.org/addons/category/13");
+					Utils_OpenUrl("https://miranda-ng.org/addons/category/13");
 					break;
 
 				case IDC_BTN_RELOAD:
-					LPTSTR pszOldSkin = NEWTSTR_ALLOCA(PopupOptions.SkinPack);
+					LPTSTR pszOldSkin = NEWWSTR_ALLOCA(PopupOptions.SkinPack);
 					skins.load();
 					hCtrl = GetDlgItem(hwndDlg, IDC_SKINLIST);
 					ListBox_ResetContent(hCtrl);
@@ -414,11 +414,11 @@ INT_PTR CALLBACK DlgProcPopSkinsOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 					ListBox_SetCurSel(hCtrl, ListBox_FindString(hCtrl, 0, PopupOptions.SkinPack));
 
 					// make shure we have select skin (ListBox_SetCurSel may be fail)
-					TCHAR szNewSkin[128];
+					wchar_t szNewSkin[128];
 					ListBox_GetText(hCtrl, ListBox_GetCurSel(hCtrl), &szNewSkin);
-					if (mir_tstrcmp(pszOldSkin, szNewSkin) != 0) {
+					if (mir_wstrcmp(pszOldSkin, szNewSkin) != 0) {
 						mir_free(PopupOptions.SkinPack);
-						PopupOptions.SkinPack = mir_tstrdup(szNewSkin);
+						PopupOptions.SkinPack = mir_wstrdup(szNewSkin);
 					}
 
 					const PopupSkin *skin = 0;
@@ -440,7 +440,7 @@ INT_PTR CALLBACK DlgProcPopSkinsOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 					{
 						// Skin list change
 						mir_free(PopupOptions.SkinPack);
-						PopupOptions.SkinPack = mir_tstrdup((TCHAR *)SendDlgItemMessage(
+						PopupOptions.SkinPack = mir_wstrdup((wchar_t *)SendDlgItemMessage(
 							hwndDlg,
 							IDC_SKINLIST,
 							LB_GETITEMDATA,
@@ -449,7 +449,7 @@ INT_PTR CALLBACK DlgProcPopSkinsOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 						const PopupSkin *skin = 0;
 						if (skin = skins.getSkin(PopupOptions.SkinPack)) {
 							mir_free(PopupOptions.SkinPack);
-							PopupOptions.SkinPack = mir_tstrdup(skin->getName());
+							PopupOptions.SkinPack = mir_wstrdup(skin->getName());
 
 							// update Skin Option List
 							bDlgInit = false;
@@ -477,7 +477,7 @@ INT_PTR CALLBACK DlgProcPopSkinsOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			case PSN_APPLY:
 				{
 					// skin pack
-					db_set_ts(NULL, MODULNAME, "SkinPack", PopupOptions.SkinPack);
+					db_set_ws(NULL, MODULNAME, "SkinPack", PopupOptions.SkinPack);
 					// skin options
 					const PopupSkin *skin = 0;
 					if (skin = skins.getSkin(PopupOptions.SkinPack))
@@ -550,12 +550,12 @@ static void BoxPreview_OnPaint(HWND hwnd, HDC mydc, int mode)
 			rc.left += 30; //  10+16+4 -- icon
 			rc.right -= (rc.right - rc.left) / 3;
 			rc.bottom -= (rc.bottom - rc.top) / 3;
-			DrawText(mydc, _T(MODULNAME_LONG), -1, &rc, DT_CENTER | DT_NOPREFIX | DT_SINGLELINE | DT_VCENTER);
+			DrawText(mydc, MODULNAME_LONG, -1, &rc, DT_CENTER | DT_NOPREFIX | DT_SINGLELINE | DT_VCENTER);
 			GetClientRect(hwnd, &rc);
 			rc.left += 30; //  10+16+4 -- icon
 			rc.left += (rc.right - rc.left) / 3;
 			rc.top += (rc.bottom - rc.top) / 3;
-			DrawText(mydc, _T(MODULNAME_LONG), -1, &rc, DT_CENTER | DT_NOPREFIX | DT_SINGLELINE | DT_VCENTER);
+			DrawText(mydc, MODULNAME_LONG, -1, &rc, DT_CENTER | DT_NOPREFIX | DT_SINGLELINE | DT_VCENTER);
 			GetClientRect(hwnd, &rc);
 			FrameRect(mydc, &rc, (HBRUSH)GetStockObject(BLACK_BRUSH));
 			SelectObject(mydc, hfnt);

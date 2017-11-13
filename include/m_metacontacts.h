@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2004-07 Scott Ellis (www.scottellis.com.au mail@scottellis.com.au)
 Copyright (c) 2004 Universite Louis PASTEUR, STRASBOURG.
 
@@ -27,7 +27,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <m_core.h>
 
 // standard module for all mc-related information
-#define META_PROTO "MetaContacts"
+#define META_PROTO   "MetaContacts"
+#define META_PROTOW L"MetaContacts"
 
 //gets the handle for the 'most online' contact
 //wParam=(HANDLE)hMetaContact

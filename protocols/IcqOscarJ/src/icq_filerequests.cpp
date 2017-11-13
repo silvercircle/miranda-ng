@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2009 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -152,18 +152,18 @@ void CIcqProto::handleFileRequest(PBYTE buf, DWORD dwUin, DWORD dwCookie, DWORD 
 	ft->bEmptyDesc = bEmptyDesc;
 
 	// Send chain event
-	TCHAR* ptszFileName = mir_utf8decodeT(pszFileName);
+	wchar_t* ptszFileName = mir_utf8decodeW(pszFileName);
 
 	PROTORECVFILET pre = { 0 };
-	pre.dwFlags = PRFF_TCHAR;
+	pre.dwFlags = PRFF_UNICODE;
 	pre.fileCount = 1;
 	pre.timestamp = time(NULL);
-	pre.descr.t = mir_utf8decodeT(pszDescription);
-	pre.files.t = &ptszFileName;
+	pre.descr.w = mir_utf8decodeW(pszDescription);
+	pre.files.w = &ptszFileName;
 	pre.lParam = (LPARAM)ft;
 	ProtoChainRecvFile(hContact, &pre);
 
-	mir_free(pre.descr.t);
+	mir_free(pre.descr.w);
 	mir_free(ptszFileName);
 }
 
@@ -185,8 +185,7 @@ void CIcqProto::icq_CancelFileTransfer(filetransfer* ft)
 
 		ProtoBroadcastAck(ft->hContact, ACKTYPE_FILE, ACKRESULT_FAILED, ft, 0);
 
-		if (!FindFileTransferDC(ft)) { // Release orphan structure only
-			SafeReleaseFileTransfer((void**)&ft);
-		}
+		if (!FindFileTransferDC(ft)) // Release orphan structure only
+			SafeReleaseFileTransfer((basic_filetransfer**)&ft);
 	}
 }

@@ -34,11 +34,11 @@
 
 [&Away]
 
-[&NA]
+[&Not available]
 
 [Occ&upied]
 
-[&DND]
+[&Do not disturb]
 
 [&Free for chat]
 
@@ -79,10 +79,6 @@
 [New category]
 
 [Delete]
-
-[Status messages:]
-Statusne poruke:
-[Configure autoaway]
 
 [Wait]
 
@@ -213,7 +209,7 @@ Statusne poruke
 
 [Been gone since %nas_awaysince_time%, will be back later.]
 
-[NA]
+[Not available]
 
 [Give it up, I'm not in!]
 
@@ -221,7 +217,7 @@ Statusne poruke
 
 [Not right now.]
 
-[DND]
+[Do not disturb]
 
 [Give a guy some peace, would ya?]
 

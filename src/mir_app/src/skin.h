@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define WM_HOTKEYUNREGISTERED   (WM_USER+721)
 
-typedef enum { HKT_GLOBAL, HKT_LOCAL, HKT_MANUAL, HKT_COUNT } THotkeyType;
+enum THotkeyType { HKT_GLOBAL, HKT_LOCAL, HKT_MANUAL };
 
 struct THotkeyBoxData
 {
@@ -37,8 +37,8 @@ struct THotkeyBoxData
 struct THotkeyItem
 {
 	THotkeyType  type;
-	char        *pszService, *pszName; // pszName is valid _only_ for "root"   hotkeys
-	TCHAR       *ptszSection, *ptszDescription;
+	char        *pszService, *pszName; // pszName is valid _only_ for "root" hotkeys
+	wchar_t     *pwszSection, *pwszDescription;
 	LPARAM       lParam;
 	WORD         DefHotkey, Hotkey;
 	bool         Enabled;
@@ -56,8 +56,10 @@ struct THotkeyItem
 
 	bool         UnregisterHotkey;	// valid only during WM_APP message in options UI, used to remove unregistered hotkeys from options
 
-	__inline TCHAR* getSection() const { return TranslateTH(hLangpack, ptszSection); }
-	__inline TCHAR* getDescr() const { return TranslateTH(hLangpack, ptszDescription); }
+	__inline char* getName() const { return (rootHotkey) ? rootHotkey->pszName : pszName; }
+
+	__inline wchar_t* getSection() const { return TranslateW_LP(pwszSection, hLangpack); }
+	__inline wchar_t* getDescr() const { return TranslateW_LP(pwszDescription, hLangpack); }
 };
 
 extern LIST<THotkeyItem> hotkeys;
@@ -70,6 +72,3 @@ int HotkeyOptionsInit(WPARAM, LPARAM);
 void FreeHotkey(THotkeyItem *item);
 void RegisterHotkeys();
 void UnregisterHotkeys();
-
-void HotkeyEditCreate(HWND hwnd);
-void HotkeyEditDestroy(HWND hwnd);

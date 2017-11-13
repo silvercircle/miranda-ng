@@ -64,8 +64,8 @@ void UploadJob::addToUploadDlg()
 {
 	for (UINT i = 0; i < m_files.size(); i++) {
 		UploadJob *jobCopy = new UploadJob(this);
-		mir_tstrcpy(jobCopy->m_tszFilePath, m_files[i]);
-		mir_tstrcpy(jobCopy->m_tszFileName, Utils::getFileNameFromPath(jobCopy->m_tszFilePath));
+		mir_wstrcpy(jobCopy->m_tszFilePath, m_files[i]);
+		mir_wstrcpy(jobCopy->m_tszFileName, Utils::getFileNameFromPath(jobCopy->m_tszFilePath));
 		Utils::makeSafeString(jobCopy->m_tszFileName, jobCopy->m_szSafeFileName);
 
 		UploadDialog::Tab *newTab = new UploadDialog::Tab(jobCopy);
@@ -85,7 +85,7 @@ void UploadJob::autoSend()
 	if (szProto == NULL)
 		return;
 
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	dbei.eventType = EVENTTYPE_MESSAGE;
 	dbei.flags = DBEF_SENT;
 	dbei.szModule = szProto;
@@ -93,7 +93,7 @@ void UploadJob::autoSend()
 	dbei.cbBlob = (DWORD)mir_strlen(m_szFileLink) + 1;
 	dbei.pBlob = (PBYTE)m_szFileLink;
 	db_event_add(m_hContact, &dbei);
-	CallContactService(m_hContact, PSS_MESSAGE, 0, (LPARAM)m_szFileLink);
+	ProtoChainSend(m_hContact, PSS_MESSAGE, 0, (LPARAM)m_szFileLink);
 	CallServiceSync(MS_MSG_SENDMESSAGE, (WPARAM)m_hContact, 0);
 }
 
@@ -148,7 +148,7 @@ void UploadJob::waitingThread(void *arg)
 {
 	UploadJob *job = (UploadJob *)arg;
 
-	while (!Miranda_Terminated()) {
+	while (!Miranda_IsTerminated()) {
 		mir_cslockfull lock(mutexJobCount);
 		if (iRunningJobCount < MAX_RUNNING_JOBS) {
 			iRunningJobCount++;
@@ -245,9 +245,9 @@ INT_PTR CALLBACK UploadJob::DlgProcFileExists(HWND hwndDlg, UINT msg, WPARAM wPa
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
 		{
-			TCHAR buff[256];
-			TCHAR *fileName = mir_a2t((char *)lParam);
-			mir_sntprintf(buff, TranslateT("File exists - %s"), fileName);
+			wchar_t buff[256];
+			wchar_t *fileName = mir_a2u((char *)lParam);
+			mir_snwprintf(buff, TranslateT("File exists - %s"), fileName);
 			SetWindowText(hwndDlg, buff);
 			FREE(fileName);
 		}
@@ -266,7 +266,7 @@ void UploadJob::upload()
 {
 	refreshTab(true);
 
-	m_fp = _tfopen(m_tszFilePath, _T("rb"));
+	m_fp = _wfopen(m_tszFilePath, L"rb");
 	if (m_fp == NULL) {
 		Utils::msgBox(TranslateT("Error occurred when opening local file.\nAborting file upload..."), MB_OK | MB_ICONERROR);
 		return;
@@ -277,7 +277,7 @@ void UploadJob::upload()
 		headerList = curl_slist_append(headerList, getChmodString());
 
 	struct _stat fileInfo;
-	_tstat(m_tszFilePath, &fileInfo);
+	_wstat(m_tszFilePath, &fileInfo);
 	m_uiFileSize = (UINT64)fileInfo.st_size;
 
 	CURL *hCurl = curlInit(getUrlString(), headerList);
@@ -339,7 +339,7 @@ void UploadJob::upload()
 		}
 
 		DBEntry::add(this);
-		SkinPlaySound(SOUND_UPCOMPLETE);
+		Skin_PlaySound(SOUND_UPCOMPLETE);
 	}
 
 	setStatus(STATUS_COMPLETED);
@@ -391,10 +391,10 @@ void UploadJob::updateStats()
 		m_avgSpeed /= _countof(m_lastSpeed) + 1;
 		m_lastSpeed[0] = speed;
 
-		mir_sntprintf(m_tab->m_stzSpeed, _T("%0.1f kB/s"), m_avgSpeed);
+		mir_snwprintf(m_tab->m_stzSpeed, L"%0.1f kB/s", m_avgSpeed);
 
 		double perc = m_uiFileSize ? ((double)m_uiTotalSent / m_uiFileSize) * 100 : 0;
-		mir_sntprintf(m_tab->m_stzComplet, _T("%0.1f%% (%d kB/%d kB)"), perc, (int)m_uiTotalSent / 1024, (int)m_uiFileSize / 1024);
+		mir_snwprintf(m_tab->m_stzComplet, L"%0.1f%% (%d kB/%d kB)", perc, (int)m_uiTotalSent / 1024, (int)m_uiFileSize / 1024);
 
 		long s = (m_uiFileSize - m_uiTotalSent) / (long)(m_avgSpeed * 1024);
 		int d = (s / 60 / 60 / 24);
@@ -402,10 +402,10 @@ void UploadJob::updateStats()
 		int m = (s - d * 60 * 60 * 24 - h * 60 * 60) / 60;
 		s = s - (d * 24 * 60 * 60) - (h * 60 * 60) - (m * 60);
 
-		TCHAR buff[256];
-		if (d > 0) mir_sntprintf(buff, _T("%dd %02d:%02d:%02d"), d, h, m, s);
-		else mir_sntprintf(buff, _T("%02d:%02d:%02d"), h, m, s);
-		mir_sntprintf(m_tab->m_stzRemain, _T("%s (%d kB/%d kB)"), buff, (m_uiFileSize - m_uiTotalSent) / 1024, m_uiFileSize / 1024);
+		wchar_t buff[256];
+		if (d > 0) mir_snwprintf(buff, L"%dd %02d:%02d:%02d", d, h, m, s);
+		else mir_snwprintf(buff, L"%02d:%02d:%02d", h, m, s);
+		mir_snwprintf(m_tab->m_stzRemain, L"%s (%d kB/%d kB)", buff, (m_uiFileSize - m_uiTotalSent) / 1024, m_uiFileSize / 1024);
 
 		refreshTab(false);
 	}
@@ -434,11 +434,11 @@ void UploadJob::refreshTab(bool bTabChanged)
 		if (bTabChanged) {
 			if (isPaused()) {
 				SendDlgItemMessage(uDlg->m_hwnd, IDC_BTN_PAUSE, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Utils::loadIconEx("resume"));
-				SendDlgItemMessage(uDlg->m_hwnd, IDC_BTN_PAUSE, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Resume"), BATF_TCHAR);
+				SendDlgItemMessage(uDlg->m_hwnd, IDC_BTN_PAUSE, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Resume"), BATF_UNICODE);
 			}
 			else {
 				SendDlgItemMessage(uDlg->m_hwnd, IDC_BTN_PAUSE, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Utils::loadIconEx("pause"));
-				SendDlgItemMessage(uDlg->m_hwnd, IDC_BTN_PAUSE, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Pause"), BATF_TCHAR);
+				SendDlgItemMessage(uDlg->m_hwnd, IDC_BTN_PAUSE, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Pause"), BATF_UNICODE);
 			}
 
 			ShowWindow(GetDlgItem(uDlg->m_hwnd, IDC_ST_REMAIN), !isCompleted() ? SW_SHOW : SW_HIDE);
@@ -449,9 +449,9 @@ void UploadJob::refreshTab(bool bTabChanged)
 		}
 
 		if (isCompleted()) {
-			SetDlgItemText(uDlg->m_hwnd, IDC_UP_SPEED, _T(""));
-			SetDlgItemText(uDlg->m_hwnd, IDC_UP_COMPLETED, _T(""));
-			SetDlgItemText(uDlg->m_hwnd, IDC_UP_REMAIN, _T(""));
+			SetDlgItemText(uDlg->m_hwnd, IDC_UP_SPEED, L"");
+			SetDlgItemText(uDlg->m_hwnd, IDC_UP_COMPLETED, L"");
+			SetDlgItemText(uDlg->m_hwnd, IDC_UP_REMAIN, L"");
 
 			SetDlgItemTextA(uDlg->m_hwnd, IDC_ED_URL, m_szFileLink);
 			SendDlgItemMessage(uDlg->m_hwnd, IDC_PB_UPLOAD, PBM_SETRANGE32, 0, (LPARAM)100);
@@ -493,10 +493,10 @@ void UploadJob::closeAllTabs()
 
 void UploadJob::createToolTip()
 {
-	mir_sntprintf(uDlg->m_tszToolTipText, TranslateT("Status: %s\r\nFile: %s\r\nServer: %S"),
+	mir_snwprintf(uDlg->m_tszToolTipText, TranslateT("Status: %s\r\nFile: %s\r\nServer: %S"),
 		getStatusString(), m_tszFileName, m_ftp->m_szServer);
 
 	if (m_tab->m_stzSpeed[0] && m_tab->m_stzComplet[0] && m_tab->m_stzRemain[0])
-		mir_sntprintf(uDlg->m_tszToolTipText, TranslateT("%s\r\nSpeed: %s\r\nCompleted: %s\r\nRemaining: %s"),
+		mir_snwprintf(uDlg->m_tszToolTipText, TranslateT("%s\r\nSpeed: %s\r\nCompleted: %s\r\nRemaining: %s"),
 			uDlg->m_tszToolTipText, m_tab->m_stzSpeed, m_tab->m_stzComplet, m_tab->m_stzRemain);
 }

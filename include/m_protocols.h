@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http:// miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -106,12 +106,6 @@ typedef struct {
 #define PFTS_UNICODE   2
 #define PFTS_UTF       4
 
-#if defined(_UNICODE)
-	#define PFTS_TCHAR  PFTS_UNICODE
-#else
-	#define PFTS_TCHAR  0
-#endif
-
 typedef struct tagPROTOFILETRANSFERSTATUS
 {
 	size_t cbSize;
@@ -120,8 +114,8 @@ typedef struct tagPROTOFILETRANSFERSTATUS
 
 	union {
 		char **pszFiles;
-		TCHAR **ptszFiles;
-		WCHAR **pwszFiles;
+		wchar_t **ptszFiles;
+		wchar_t **pwszFiles;
 	};
 
 	int totalFiles;
@@ -131,14 +125,14 @@ typedef struct tagPROTOFILETRANSFERSTATUS
 
 	union {
 		char *szWorkingDir;
-		TCHAR *tszWorkingDir;
-		WCHAR *wszWorkingDir;
+		wchar_t *tszWorkingDir;
+		wchar_t *wszWorkingDir;
 	};
 
 	union {
 		char *szCurrentFile;
-		TCHAR *tszCurrentFile;
-		WCHAR *wszCurrentFile;
+		wchar_t *tszCurrentFile;
+		wchar_t *wszCurrentFile;
 	};
 
 	unsigned __int64 currentFileSize;
@@ -167,7 +161,7 @@ typedef struct tagPROTOFILETRANSFERSTATUS
 #define PROTOTYPE_OTHER       10000    // avoid using this if at all possible
 
  // initializes an empty account
-typedef struct PROTO_INTERFACE* (*pfnInitProto)(const char* szModuleName, const TCHAR* szUserName);
+typedef struct PROTO_INTERFACE* (*pfnInitProto)(const char* szModuleName, const wchar_t* szUserName);
 
 // deallocates an account instance
 typedef int (*pfnUninitProto)(PROTO_INTERFACE*);
@@ -276,7 +270,7 @@ typedef struct tagACCOUNT
 {
 	int    cbSize;          // sizeof this structure
 	char*  szModuleName;    // unique physical account name (matches database module name)
-	TCHAR* tszAccountName;  // user-defined account name
+	wchar_t* tszAccountName;  // user-defined account name
 	char*  szProtoName;     // physical protocol name
 	bool   bIsEnabled;      // is account enabled?
 	bool   bIsVisible;      // is account visible?
@@ -311,7 +305,7 @@ typedef struct tagACC_CREATE
 {
 	const char *pszBaseProto;
 	const char *pszInternal;
-	const TCHAR *ptszAccountName;
+	const wchar_t *ptszAccountName;
 } ACC_CREATE;
 
 __forceinline PROTOACCOUNT* ProtoCreateAccount(ACC_CREATE *pAccountDef)
@@ -417,7 +411,7 @@ ProtoBroadcastAck(), listeners must hook ME_PROTO_ACK, note that lParam = ACKDAT
 typedef struct {
 	MCONTACT hContact;         // this might have to be set by the caller too
 	int format;                // PA_FORMAT_*
-	WCHAR filename[MAX_PATH];  // full path to filename which contains the avatar
+	wchar_t filename[MAX_PATH];  // full path to filename which contains the avatar
 } PROTO_AVATAR_INFORMATION;
 
 #define GAIF_FORCE 1          // force an update of the avatar if there is none
@@ -477,6 +471,12 @@ EXTERN_C MIR_APP_DLL(int) Proto_RemoveFromContact(MCONTACT, const char *szProto)
 
 EXTERN_C MIR_APP_DLL(INT_PTR) Proto_ChainSend(int iOrder, CCSDATA *ccs);
 
+__forceinline INT_PTR ProtoChainSend(MCONTACT hContact, const char *szProtoService, WPARAM wParam, LPARAM lParam)
+{
+	CCSDATA ccs = { hContact, szProtoService, wParam, lParam };
+	return Proto_ChainSend(0, &ccs);
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // Call the next service in the chain for this receive operation
 // The return value should be returned immediately
@@ -491,7 +491,7 @@ EXTERN_C MIR_APP_DLL(INT_PTR) Proto_ChainSend(int iOrder, CCSDATA *ccs);
 
 EXTERN_C MIR_APP_DLL(INT_PTR) Proto_ChainRecv(int iOrder, CCSDATA *ccs);
 
-__forceinline INT_PTR ProtoChainRecv(MCONTACT hContact, char *szService, WPARAM wParam, LPARAM lParam)
+__forceinline INT_PTR ProtoChainRecv(MCONTACT hContact, const char *szService, WPARAM wParam, LPARAM lParam)
 {
 	CCSDATA ccs = { hContact, szService, wParam, lParam };
 	return Proto_ChainRecv(0, &ccs);

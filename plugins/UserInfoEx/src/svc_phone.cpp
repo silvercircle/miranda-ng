@@ -109,10 +109,10 @@ static int OnContactSettingChanged(MCONTACT hContact, DBCONTACTWRITESETTING* pdb
 {
 	if (hContact && pdbcws && pdbcws->szSetting && 
 			((pdbcws->value.type & DBVTF_VARIABLELENGTH) || (pdbcws->value.type == DBVT_DELETED)) &&
-			(!mir_strcmp(pdbcws->szSetting, SET_CONTACT_PHONE) ||
-			 !mir_strcmp(pdbcws->szSetting, SET_CONTACT_CELLULAR) ||
-			 !mir_strcmp(pdbcws->szSetting, SET_CONTACT_COMPANY_PHONE) ||
-			 !mir_strcmp(pdbcws->szSetting, SET_CONTACT_COMPANY_CELLULAR) ||
+			(!strcmp(pdbcws->szSetting, SET_CONTACT_PHONE) ||
+			 !strcmp(pdbcws->szSetting, SET_CONTACT_CELLULAR) ||
+			 !strcmp(pdbcws->szSetting, SET_CONTACT_COMPANY_PHONE) ||
+			 !strcmp(pdbcws->szSetting, SET_CONTACT_COMPANY_CELLULAR) ||
 			 !strncmp(pdbcws->szSetting, "MyPhone0", 8)))
 		OnCListApplyIcons(hContact, 0);
 
@@ -146,7 +146,7 @@ bool SvcPhoneEnableExtraIcons(bool bEnable, bool bUpdateDB)
 			hApplyIconHook = HookEvent(ME_CLIST_EXTRA_IMAGE_APPLY, (MIRANDAHOOK)OnCListApplyIcons);
 
 		if (ghExtraIconSvc == INVALID_HANDLE_VALUE)
-			ghExtraIconSvc = ExtraIcon_RegisterIcolib("sms", LPGEN("Phone (uinfoex)"), ICO_BTN_CELLULAR);
+			ghExtraIconSvc = ExtraIcon_RegisterIcolib("sms", LPGEN("Phone (UInfoEx)"), ICO_BTN_CELLULAR);
 	}
 	else {
 		if (hChangedHook) {

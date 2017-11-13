@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -21,48 +21,29 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
-
-static int ModCompare(const ModuleName *mn1, const ModuleName *mn2)
-{
-	return strcmp(mn1->name, mn2->name);
-}
-
-static int OfsCompare(const ModuleName *mn1, const ModuleName *mn2)
-{
-	return (mn1->ofs - mn2->ofs);
-}
-
-static int stringCompare2(const char *p1, const char *p2)
-{
-	return strcmp(p1, p2);
-}
+#include "stdafx.h"
 
 CDbxMdb::CDbxMdb(const TCHAR *tszFileName, int iMode) :
 	m_safetyMode(true),
 	m_bReadOnly((iMode & DBMODE_READONLY) != 0),
 	m_bShared((iMode & DBMODE_SHARED) != 0),
-	m_dwMaxContactId(1),
-	m_lMods(50, ModCompare),
-	m_lOfs(50, OfsCompare),
-	m_lResidentSettings(50, stringCompare2)
+	m_lResidentSettings(50, strcmp),
+	m_maxContactId(1)
 {
-	m_tszProfileName = mir_tstrdup(tszFileName);
+	m_tszProfileName = mir_wstrdup(tszFileName);
 	InitDbInstance(this);
 
-	mdb_env_create(&m_pMdbEnv);
-	mdb_env_set_maxdbs(m_pMdbEnv, 10);
+	mdbx_env_create(&m_pMdbEnv);
+	mdbx_env_set_maxdbs(m_pMdbEnv, 10);
+	mdbx_env_set_userctx(m_pMdbEnv, this);
+//	mdbx_env_set_assert(m_pMdbEnv, LMDBX_FailAssert);
 
-	m_codePage = CallService(MS_LANGPACK_GETCODEPAGE, 0, 0);
-	m_hModHeap = HeapCreate(0, 0, 0);
+	m_codePage = Langpack_GetDefaultCodePage();
 }
 
 CDbxMdb::~CDbxMdb()
 {
-	// destroy modules
-	HeapDestroy(m_hModHeap);
-
-	mdb_env_close(m_pMdbEnv);
+	mdbx_env_close(m_pMdbEnv);
 
 	DestroyServiceFunction(hService);
 	UnhookEvent(hHook);
@@ -85,143 +66,190 @@ CDbxMdb::~CDbxMdb()
 
 int CDbxMdb::Load(bool bSkipInit)
 {
-	if (!Remap())
+	if (Map() != MDBX_SUCCESS)
 		return EGROKPRF_CANTREAD;
 
 	if (!bSkipInit) {
 		txn_ptr trnlck(m_pMdbEnv);
-		mdb_open(trnlck, "global", MDB_CREATE | MDB_INTEGERKEY, &m_dbGlobal);
-		mdb_open(trnlck, "contacts", MDB_CREATE | MDB_INTEGERKEY, &m_dbContacts);
-		mdb_open(trnlck, "modules", MDB_CREATE | MDB_INTEGERKEY, &m_dbModules);
-		mdb_open(trnlck, "events", MDB_CREATE | MDB_INTEGERKEY, &m_dbEvents);
-		mdb_open(trnlck, "eventsrt", MDB_CREATE | MDB_INTEGERKEY, &m_dbEventsSort);
-		mdb_open(trnlck, "settings", MDB_CREATE, &m_dbSettings);
 
-		DWORD keyVal = 1;
-		MDB_val key = { sizeof(DWORD), &keyVal }, data;
-		if (mdb_get(trnlck, m_dbGlobal, &key, &data) == MDB_SUCCESS) {
-			DBHeader *hdr = (DBHeader*)data.mv_data;
+		unsigned int defFlags = MDBX_CREATE;
+
+		mdbx_dbi_open(trnlck, "global", defFlags | MDBX_INTEGERKEY, &m_dbGlobal);
+		mdbx_dbi_open(trnlck, "crypto", defFlags, &m_dbCrypto);
+		mdbx_dbi_open(trnlck, "contacts", defFlags | MDBX_INTEGERKEY, &m_dbContacts);
+		mdbx_dbi_open(trnlck, "modules", defFlags | MDBX_INTEGERKEY, &m_dbModules);
+		mdbx_dbi_open(trnlck, "events", defFlags | MDBX_INTEGERKEY, &m_dbEvents);
+
+		mdbx_dbi_open_ex(trnlck, "eventsrt", defFlags, &m_dbEventsSort, DBEventSortingKey::Compare, nullptr);
+		mdbx_dbi_open_ex(trnlck, "settings", defFlags, &m_dbSettings, DBSettingKey::Compare, nullptr);
+
+		uint32_t keyVal = 1;
+		MDBX_val key = { &keyVal, sizeof(keyVal) }, data;
+		if (mdbx_get(trnlck, m_dbGlobal, &key, &data) == MDBX_SUCCESS) 
+		{
+			const DBHeader *hdr = (const DBHeader*)data.iov_base;
 			if (hdr->dwSignature != DBHEADER_SIGNATURE)
-				DatabaseCorruption(NULL);
+				return EGROKPRF_DAMAGED;
+			if (hdr->dwVersion != DBHEADER_VERSION)
+				return EGROKPRF_OBSOLETE;
 
-			memcpy(&m_header, data.mv_data, sizeof(m_header));
+			m_header = *hdr;
 		}
-		else {
+		else 
+		{
 			m_header.dwSignature = DBHEADER_SIGNATURE;
-			m_header.dwVersion = 1;
-			data.mv_data = &m_header; data.mv_size = sizeof(m_header);
-			mdb_put(trnlck, m_dbGlobal, &key, &data, 0);
+			m_header.dwVersion = DBHEADER_VERSION;
+			data.iov_base = &m_header; data.iov_len = sizeof(m_header);
+			mdbx_put(trnlck, m_dbGlobal, &key, &data, 0);
 
 			keyVal = 0;
-			DBContact dbc = { DBCONTACT_SIGNATURE, 0, 0, 0 };
-			data.mv_data = &dbc; data.mv_size = sizeof(dbc);
-			mdb_put(trnlck, m_dbContacts, &key, &data, 0);
+			DBContact dbc = { 0, 0, 0 };
+			data.iov_base = &dbc; data.iov_len = sizeof(dbc);
+			mdbx_put(trnlck, m_dbContacts, &key, &data, 0);
 		}
 		trnlck.commit();
 
-		if (InitModuleNames()) return EGROKPRF_CANTREAD;
-		if (InitCrypt())       return EGROKPRF_CANTREAD;
+		{
+			MDBX_val key, val;
+
+			mdbx_txn_begin(m_pMdbEnv, nullptr, MDBX_RDONLY, &m_txn);
+
+			mdbx_cursor_open(m_txn, m_dbEvents, &m_curEvents);
+			if (mdbx_cursor_get(m_curEvents, &key, &val, MDBX_LAST) == MDBX_SUCCESS)
+				m_dwMaxEventId = *(MEVENT*)key.iov_base;
+
+			mdbx_cursor_open(m_txn, m_dbEventsSort, &m_curEventsSort);
+			mdbx_cursor_open(m_txn, m_dbSettings, &m_curSettings);
+			mdbx_cursor_open(m_txn, m_dbModules, &m_curModules);
+
+			mdbx_cursor_open(m_txn, m_dbContacts, &m_curContacts);
+			if (mdbx_cursor_get(m_curContacts, &key, &val, MDBX_LAST) == MDBX_SUCCESS)
+				m_maxContactId = *(MCONTACT*)key.iov_base;
+
+			MDBX_stat st;
+			mdbx_dbi_stat(m_txn, m_dbContacts, &st, sizeof(st));
+			m_contactCount = st.ms_entries;
+
+			mdbx_txn_reset(m_txn);
+		}
+
+
+		if (InitModules()) return EGROKPRF_DAMAGED;
+		if (InitCrypt())       return EGROKPRF_DAMAGED;
 
 		// everything is ok, go on
 		if (!m_bReadOnly) {
-			// we don't need events in the service mode
-			if (ServiceExists(MS_DB_SETSAFETYMODE)) {
-				hContactDeletedEvent = CreateHookableEvent(ME_DB_CONTACT_DELETED);
-				hContactAddedEvent = CreateHookableEvent(ME_DB_CONTACT_ADDED);
-				hSettingChangeEvent = CreateHookableEvent(ME_DB_CONTACT_SETTINGCHANGED);
-				hEventMarkedRead = CreateHookableEvent(ME_DB_EVENT_MARKED_READ);
+			// retrieve the event handles
+			hContactDeletedEvent = CreateHookableEvent(ME_DB_CONTACT_DELETED);
+			hContactAddedEvent = CreateHookableEvent(ME_DB_CONTACT_ADDED);
+			hSettingChangeEvent = CreateHookableEvent(ME_DB_CONTACT_SETTINGCHANGED);
+			hEventMarkedRead = CreateHookableEvent(ME_DB_EVENT_MARKED_READ);
 
-				hEventAddedEvent = CreateHookableEvent(ME_DB_EVENT_ADDED);
-				hEventDeletedEvent = CreateHookableEvent(ME_DB_EVENT_DELETED);
-				hEventFilterAddedEvent = CreateHookableEvent(ME_DB_EVENT_FILTER_ADD);
-			}
+			hEventAddedEvent = CreateHookableEvent(ME_DB_EVENT_ADDED);
+			hEventDeletedEvent = CreateHookableEvent(ME_DB_EVENT_DELETED);	  
+			hEventFilterAddedEvent = CreateHookableEvent(ME_DB_EVENT_FILTER_ADD);
 		}
 
 		FillContacts();
 	}
 
-	return ERROR_SUCCESS;
+	return EGROKPRF_NOERROR;
 }
 
 int CDbxMdb::Create(void)
 {
-	m_dwFileSize = 0;
-	return (Remap()) ? 0 : EGROKPRF_CANTREAD;
+	return (Map() == MDBX_SUCCESS) ? 0 : EGROKPRF_CANTREAD;
 }
+
+size_t iDefHeaderOffset = 0;
+BYTE bDefHeader[] = { 0 };
 
 int CDbxMdb::Check(void)
 {
-	HANDLE hFile = CreateFile(m_tszProfileName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
-	if (hFile == INVALID_HANDLE_VALUE)
+	FILE *pFile = _wfopen(m_tszProfileName, L"rb");
+	if (pFile == nullptr)
 		return EGROKPRF_CANTREAD;
 
-	LARGE_INTEGER iFileSize;
-	GetFileSizeEx(hFile, &iFileSize);
-	m_dwFileSize = (iFileSize.LowPart & 0xFFFFF000);
+	fseek(pFile, (LONG)iDefHeaderOffset, SEEK_SET);
+	BYTE buf[_countof(bDefHeader)];
+	size_t cbRead = fread(buf, 1, _countof(buf), pFile);
+	fclose(pFile);
+	if (cbRead != _countof(buf))
+		return EGROKPRF_DAMAGED;
 
-	DWORD dummy = 0;
-	char buf[32];
-	if (!ReadFile(hFile, buf, sizeof(buf), &dummy, NULL)) {
-		CloseHandle(hFile);
-		return EGROKPRF_CANTREAD;
-	}
-
-	CloseHandle(hFile);
-	return (memcmp(buf + 16, "\xDE\xC0\xEF\xBE", 4)) ? EGROKPRF_UNKHEADER : 0;
+	return (memcmp(buf, bDefHeader, _countof(bDefHeader))) ? EGROKPRF_UNKHEADER : 0;
 }
 
 int CDbxMdb::PrepareCheck(int*)
 {
-	InitModuleNames();
+	InitModules();
 	return InitCrypt();
 }
 
 STDMETHODIMP_(void) CDbxMdb::SetCacheSafetyMode(BOOL bIsSet)
 {
-	mir_cslock lck(m_csDbAccess);
 	m_safetyMode = bIsSet != 0;
+}
+
+int CDbxMdb::Map()
+{
+	unsigned int mode = MDBX_NOSUBDIR | MDBX_NOTLS | MDBX_MAPASYNC | MDBX_WRITEMAP | MDBX_NOSYNC;
+	if (m_bReadOnly)
+		mode |= MDBX_RDONLY;
+	mdbx_env_open(m_pMdbEnv, _T2A(m_tszProfileName), mode, 0664);
+	mdbx_env_set_mapsize(m_pMdbEnv, 0x1000000);
+	return MDBX_SUCCESS;
+
 }
 
 bool CDbxMdb::Remap()
 {
-	m_dwFileSize += 0x100000;
-	mdb_env_set_mapsize(m_pMdbEnv, m_dwFileSize);
-
-	int mode = MDB_NOSYNC | MDB_NOSUBDIR;
-	if (m_bReadOnly)
-		mode += MDB_RDONLY;
-	else
-		mode += MDB_WRITEMAP;
-	return mdb_env_open(m_pMdbEnv, _T2A(m_tszProfileName), mode, 0664) == MDB_SUCCESS;
+	MDBX_envinfo ei;
+	mdbx_env_info(m_pMdbEnv, &ei, sizeof(ei));
+	return mdbx_env_set_mapsize(m_pMdbEnv, ei.mi_mapsize + 0x100000) == MDBX_SUCCESS;
 }
+
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
 static DWORD DatabaseCorrupted = 0;
 static const TCHAR *msg = NULL;
 static DWORD dwErr = 0;
-static TCHAR tszPanic[] = LPGENT("Miranda has detected corruption in your database. This corruption may be fixed by DbChecker plugin. Please download it from http://miranda-ng.org/p/DbChecker/. Miranda will now shut down.");
+static wchar_t tszPanic[] = LPGENW("Miranda has detected corruption in your database. This corruption may be fixed by DbChecker plugin. Please download it from https://miranda-ng.org/p/DbChecker/. Miranda will now shut down.");
 
-void __cdecl dbpanic(void *)
+EXTERN_C void __cdecl dbpanic(void *)
 {
 	if (msg) {
 		if (dwErr == ERROR_DISK_FULL)
 			msg = TranslateT("Disk is full. Miranda will now shut down.");
 
 		TCHAR err[256];
-		mir_sntprintf(err, SIZEOF(err), msg, TranslateT("Database failure. Miranda will now shut down."), dwErr);
+		mir_snwprintf(err, msg, TranslateT("Database failure. Miranda will now shut down."), dwErr);
 
 		MessageBox(0, err, TranslateT("Database Error"), MB_SETFOREGROUND | MB_TOPMOST | MB_APPLMODAL | MB_ICONWARNING | MB_OK);
 	}
-	else MessageBox(0, TranslateTS(tszPanic), TranslateT("Database Panic"), MB_SETFOREGROUND | MB_TOPMOST | MB_APPLMODAL | MB_ICONWARNING | MB_OK);
+	else MessageBox(0, TranslateW(tszPanic), TranslateT("Database Panic"), MB_SETFOREGROUND | MB_TOPMOST | MB_APPLMODAL | MB_ICONWARNING | MB_OK);
 	TerminateProcess(GetCurrentProcess(), 255);
+}
+
+
+EXTERN_C void LMDBX_FailAssert(MDBX_env *env, const char *text)
+{
+	((CDbxMdb*)mdbx_env_get_userctx(env))->DatabaseCorruption(_A2T(text));
+}
+
+EXTERN_C void LMDBX_Log(const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	Netlib_Log(0, CMStringA().FormatV(fmt, args));
+	va_end(args);
 }
 
 void CDbxMdb::DatabaseCorruption(const TCHAR *text)
 {
 	int kill = 0;
 
-	mir_cslockfull lck(m_csDbAccess);
 	if (DatabaseCorrupted == 0) {
 		DatabaseCorrupted++;
 		kill++;
@@ -234,7 +262,6 @@ void CDbxMdb::DatabaseCorruption(const TCHAR *text)
 		Sleep(INFINITE);
 		return;
 	}
-	lck.unlock();
 
 	if (kill) {
 		_beginthread(dbpanic, 0, NULL);
@@ -256,8 +283,6 @@ int CDbxMdb::Start(DBCHeckCallback *callback)
 int CDbxMdb::CheckDb(int, int)
 {
 	return ERROR_OUT_OF_PAPER;
-
-	// return (this->*Workers[phase])(firstTime);
 }
 
 void CDbxMdb::Destroy()

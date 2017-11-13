@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -25,9 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef M_MOD_SKIN_SELECTOR_H_INC
 #define M_MOD_SKIN_SELECTOR_H_INC
-
-#include "newpluginapi.h"
-#include "stdafx.h"
 
 #define MAXVALUE 20
 
@@ -65,23 +62,15 @@ struct LISTMODERNMASK
 };
 
 /// PROTOTYPES
-int AddModernMaskToList(MODERNMASK *mm, LISTMODERNMASK *mmTemplateList);
 int AddStrModernMaskToList(DWORD maskID, char *szStr, char *objectName, LISTMODERNMASK *mmTemplateList);
 int SortMaskList(LISTMODERNMASK *mmList);
-
-int DeleteMaskByItID(DWORD mID, LISTMODERNMASK *mmTemplateList);
 int ClearMaskList(LISTMODERNMASK *mmTemplateList);
-int ExchangeMasksByID(DWORD mID1, DWORD mID2, LISTMODERNMASK *mmTemplateList);
 
-int ParseToModernMask(MODERNMASK *mm, char *szText);
-BOOL CompareModernMask(MODERNMASK *mmValue, MODERNMASK *mmTemplate);
-BOOL CompareStrWithModernMask(char * szValue, MODERNMASK *mmTemplate);
-MODERNMASK * FindMaskByStr(char * szValue, LISTMODERNMASK * mmTemplateList);
-DWORD mod_CalcHash(const char * a);
-char * ModernMaskToString(MODERNMASK *mm, char *buf, UINT bufsize);
-int RegisterObjectByParce(char * ObjectName, char *Params);
+BOOL CompareStrWithModernMask(char *szValue, MODERNMASK *mmTemplate);
+DWORD mod_CalcHash(const char *a);
+int RegisterObjectByParce(char *ObjectName, char *Params);
 SKINOBJECTDESCRIPTOR* skin_FindObjectByRequest(char *szValue, LISTMODERNMASK *mmTemplateList);
 SKINOBJECTDESCRIPTOR* skin_FindObjectByMask(MODERNMASK *mm, LISTMODERNMASK *mmTemplateList);
-TCHAR * GetParamNT(char * string, TCHAR * buf, int buflen, BYTE paramN, char Delim, BOOL SkipSpaces);
+wchar_t * GetParamNT(char *string, wchar_t *buf, int buflen, BYTE paramN, char Delim, BOOL SkipSpaces);
 int SkinDrawGlyphMask(HDC hdc, RECT *rcSize, RECT *rcClip, MODERNMASK *ModernMask);
 #endif

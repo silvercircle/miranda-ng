@@ -2,8 +2,8 @@
 
 char *szFEMode[] =
 {
-	"Recv file",
-	"Send file"
+	LPGEN("Receive file"),
+	LPGEN("Send file")
 };
 
 char* ltoax(char* s, DWORD value)
@@ -62,7 +62,7 @@ char cCmdList[CMD_COUNT] =
 	'.'
 };
 
-static int CALLBACK PopupDlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK PopupDlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	MCONTACT hContact = PUGetContact(hWnd);
 	HWND hDlg = (HWND)PUGetPluginData(hWnd);
@@ -71,7 +71,7 @@ static int CALLBACK PopupDlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 	case WM_COMMAND:
 	{
 		PUDeletePopup(hWnd);
-		CallService(MS_CLIST_REMOVEEVENT, hContact, 0);
+		pcli->pfnRemoveEvent(hContact, 0);
 
 		if (IsWindow(hDlg))
 		{
@@ -101,16 +101,16 @@ void MakePopupMsg(HWND hDlg, MCONTACT hContact, char *msg)
 	if (hDlg == hFocused || hDlg == GetParent(hFocused)) return;
 
 	//
-	//The text for the second line. You could even make something like: char lpzText[128]; mir_tstrcpy(lpzText, "Hello world!"); It's your choice.
+	//The text for the second line. You could even make something like: char lpzText[128]; mir_wstrcpy(lpzText, "Hello world!"); It's your choice.
 	//
 	POPUPDATA ppd = { 0 };
 	ppd.lchContact = hContact;
 	ppd.lchIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_SMALLICON));
-	mir_tstrcpy(ppd.lpzContactName, (char *)pcli->pfnGetContactDisplayName(hContact, 0));
-	mir_tstrcpy(ppd.lpzText, msg);
+	mir_strcpy(ppd.lpzContactName, _T2A(pcli->pfnGetContactDisplayName(hContact, 0)));
+	mir_strcpy(ppd.lpzText, msg);
 	ppd.colorBack = GetSysColor(COLOR_INFOBK);
 	ppd.colorText = GetSysColor(COLOR_INFOTEXT);
-	ppd.PluginWindowProc = (WNDPROC)PopupDlgProc;
+	ppd.PluginWindowProc = PopupDlgProc;
 	ppd.PluginData = (void*)hDlg;
 	ppd.iSeconds = -1;
 	PUAddPopup(&ppd);
@@ -175,7 +175,7 @@ char *stateMsg[][2] =
 (char*)STATE_PRERECV,"PreRecv",
 (char*)STATE_OPERATE,"Operate",
 (char*)STATE_ACKREQ,"AckReq",
-(char*)STATE_CANCELLED,"Cancelled",
+(char*)STATE_CANCELLED,"Canceled",
 (char*)STATE_FINISHED,"Finished",
 (char*)STATE_PAUSED,"Paused"
 };
@@ -239,9 +239,9 @@ void FILEECHO::setState(DWORD state)
 
 void FILEECHO::updateTitle()
 {
-	char newtitle[256], *contactName;
+	char newtitle[256];
 
-	contactName = (char*)pcli->pfnGetContactDisplayName(hContact, 0);
+	char *contactName = _T2A(pcli->pfnGetContactDisplayName(hContact, 0));
 	if (iState == STATE_OPERATE && chunkCount != 0)
 		mir_snprintf(newtitle, "%d%% - %s: %s", chunkSent * 100 / chunkCount, Translate(szFEMode[inSend]), contactName);
 	else
@@ -450,7 +450,7 @@ void FILEECHO::incomeRequest(char *param)
 	setState(STATE_PRERECV);
 	inSend = FALSE;
 
-	SkinPlaySound("RecvFile");
+	Skin_PlaySound("RecvFile");
 	int AutoMin = db_get_b(NULL, "SRFile", "AutoMin", 0);
 	if (db_get_b(NULL, "SRFile", "AutoAccept", 0) && !db_get_b(hContact, "CList", "NotOnList", 0))
 	{
@@ -463,15 +463,13 @@ void FILEECHO::incomeRequest(char *param)
 	//	else
 	if (!IsWindowVisible(hDlg) && !AutoMin)
 	{
-		CLISTEVENT cle;
-		memset(&cle, 0, sizeof(cle));
-		cle.cbSize = sizeof(cle);
+		CLISTEVENT cle = {};
 		cle.hContact = hContact;
 		cle.hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_SMALLICON));
 		cle.flags = CLEF_URGENT;
 		cle.hDbEvent = 0;
 		cle.pszService = SERVICE_NAME "/FERecvFile";
-		CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
+		pcli->pfnAddEvent(&cle);
 
 		MakePopupMsg(hDlg, hContact, "Incoming file...");
 	}
@@ -548,9 +546,9 @@ void FILEECHO::onRecvTimer()
 		if (db_get_b(NULL, "SRFile", "AutoClose", 0))
 		{
 			PostMessage(hDlg, WM_CLOSE, 0, 0);
-			CallService(MS_CLIST_REMOVEEVENT, hContact, 0);
+			pcli->pfnRemoveEvent(hContact, 0);
 		}
-		SkinPlaySound("FileDone");
+		Skin_PlaySound("FileDone");
 		destroyTransfer();
 		buffer[0] = 'x'; buffer[1] = 0;
 	}
@@ -620,7 +618,7 @@ void FILEECHO::onSendTimer()
 	char prefix[128];
 	mir_snprintf(prefix, "%X,%X,%X>", chunkIndx + 1, chunkPos[chunkIndx], chksum);
 #ifdef DEBUG
-	overhead += mir_tstrlen((char*)buffer);
+	overhead += mir_wstrlen((char*)buffer);
 #endif
 	sendCmd(0, CMD_DATA, (char*)buffer, (char*)prefix);
 	chunkAck[chunkIndx] = CHUNK_SENT;
@@ -721,7 +719,7 @@ void FILEECHO::cmdDACK(char *param)
 		char *msg = Translate("Sent successfully");
 		SetDlgItemText(hDlg, IDC_STATUS, msg);
 
-		SkinPlaySound("FileDone");
+		Skin_PlaySound("FileDone");
 		destroyTransfer();
 		MakePopupMsg(hDlg, hContact, msg);
 		setState(STATE_FINISHED);
@@ -844,20 +842,19 @@ void FILEECHO::perform(char *str)
 	};
 };
 
-int FILEECHO::sendCmd(int id, int cmd, char *szParam, char *szPrefix)
+int FILEECHO::sendCmd(int, int cmd, char *szParam, char *szPrefix)
 {
-	char *buf;
-	int retval;
-	int buflen = (int)mir_tstrlen(szServicePrefix) + (int)mir_tstrlen(szParam) + 2;
+	int buflen = (int)mir_strlen(szServicePrefix) + (int)mir_strlen(szParam) + 2;
 	if (szPrefix != NULL)
-		buflen += (int)mir_tstrlen(szPrefix);
+		buflen += (int)mir_strlen(szPrefix);
 
-	buf = (char*)malloc(buflen);
+	char *buf = (char*)malloc(buflen);
 	if (szPrefix == NULL)
 		mir_snprintf(buf, buflen, "%s%c%s", szServicePrefix, cCmdList[cmd], szParam);
 	else
 		mir_snprintf(buf, buflen, "%s%c%s%s", szServicePrefix, cCmdList[cmd], szPrefix, szParam);
-	retval = CallContactService(hContact, PSS_MESSAGE, 0, (LPARAM)buf);
+
+	int retval = ProtoChainSend(hContact, PSS_MESSAGE, 0, (LPARAM)buf);
 	free(buf);
 	updateProgress();
 	return retval;
@@ -987,6 +984,7 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch (uMsg)
 	{
 	case WM_INITDIALOG:
+		TranslateDialogDefault(hDlg);
 	{
 		dat = (FILEECHO*)lParam;
 		dat->hDlg = hDlg;
@@ -996,11 +994,8 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		hwndStatus = CreateStatusWindow(WS_CHILD | WS_VISIBLE, "", hDlg, IDC_STATUS);
 		SetWindowLongPtr(hDlg, GWLP_USERDATA, (LONG_PTR)dat);
 		WindowList_Add(hFileList, hDlg, dat->hContact);
-		SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hIcons[ICON_MAIN]);
-		SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hIcons[ICON_MAIN]);
+		Window_SetIcon_IcoLib(hDlg, iconList[ICON_MAIN].hIcolib);
 		SendDlgItemMessage(hDlg, IDC_STOP, BUTTONADDTOOLTIP, (WPARAM)Translate(hint_controls[ICON_STOP]), 0);
-
-		//SetDlgItemText(hDlg, IDC_FILENAME, "C:\\!Developer\\!Miranda\\miranda\\bin\\release\\emo\\biggrin.gif");
 
 		mir_subclassWindow(GetDlgItem(hDlg, IDC_PROGRESS), ProgressWndProc);
 
@@ -1009,9 +1004,6 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SendDlgItemMessage(hDlg, IDC_STOP, BUTTONSETASFLATBTN, 0, 0);
 		SendDlgItemMessage(hDlg, IDC_STOP, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcons[ICON_STOP]);
 		dat->setState(STATE_IDLE);
-
-		//ShowWindow(hDlg, SW_HIDE);
-		//UpdateWindow(hDlg);
 
 		if (dat->inSend)
 			PostMessage(hDlg, WM_COMMAND, IDC_BROWSE, NULL);
@@ -1026,8 +1018,7 @@ INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return TRUE;
 	}
 	case WM_FE_SKINCHANGE:
-		SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hIcons[ICON_MAIN]);
-		SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hIcons[ICON_MAIN]);
+		Window_SetIcon_IcoLib(hDlg, iconList[ICON_MAIN].hIcolib);
 		dat->setState(dat->iState);
 		SendDlgItemMessage(hDlg, IDC_STOP, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcons[ICON_STOP]);
 

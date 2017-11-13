@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2015-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -19,11 +19,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 INT_PTR CSkypeProto::SvcGetAvatarCaps(WPARAM wParam, LPARAM lParam)
 {
-	switch (wParam)
-	{
+	switch (wParam) {
 	case AF_MAXSIZE:
-		((POINT*)lParam)->x = 150;
-		((POINT*)lParam)->y = 150;
+		((POINT*)lParam)->x = 98;
+		((POINT*)lParam)->y = 98;
 		return 0;
 
 	case AF_MAXFILESIZE:
@@ -44,8 +43,7 @@ INT_PTR CSkypeProto::SvcGetAvatarCaps(WPARAM wParam, LPARAM lParam)
 
 void CSkypeProto::ReloadAvatarInfo(MCONTACT hContact)
 {
-	if (hContact == NULL)
-	{
+	if (hContact == NULL) {
 		CallService(MS_AV_REPORTMYAVATARCHANGED, (WPARAM)m_szModuleName, 0);
 		return;
 	}
@@ -68,7 +66,7 @@ void CSkypeProto::OnReceiveAvatar(const NETLIBHTTPREQUEST *response, void *arg)
 	setByte(hContact, "AvatarType", ai.format);
 	GetAvatarFileName(hContact, ai.filename, _countof(ai.filename));
 
-	FILE *out = _tfopen(ai.filename, _T("wb"));
+	FILE *out = _wfopen(ai.filename, L"wb");
 	if (out == NULL) {
 		ProtoBroadcastAck(hContact, ACKTYPE_AVATAR, ACKRESULT_FAILED, &ai, 0);
 		return;
@@ -100,11 +98,11 @@ INT_PTR CSkypeProto::SvcGetAvatarInfo(WPARAM, LPARAM lParam)
 
 	pai->format = getByte(pai->hContact, "AvatarType", PA_FORMAT_JPEG);
 
-	TCHAR tszFileName[MAX_PATH];
+	wchar_t tszFileName[MAX_PATH];
 	GetAvatarFileName(pai->hContact, tszFileName, _countof(tszFileName));
-	_tcsncpy(pai->filename, tszFileName, _countof(pai->filename));
+	wcsncpy(pai->filename, tszFileName, _countof(pai->filename));
 
-	if (::_taccess(pai->filename, 0) == 0 && !getBool(pai->hContact, "NeedNewAvatar", 0))
+	if (::_waccess(pai->filename, 0) == 0 && !getBool(pai->hContact, "NeedNewAvatar", 0))
 		return GAIR_SUCCESS;
 
 	if (IsOnline()) {
@@ -119,32 +117,32 @@ INT_PTR CSkypeProto::SvcGetAvatarInfo(WPARAM, LPARAM lParam)
 
 INT_PTR CSkypeProto::SvcGetMyAvatar(WPARAM wParam, LPARAM lParam)
 {
-	TCHAR path[MAX_PATH];
+	wchar_t path[MAX_PATH];
 	GetAvatarFileName(NULL, path, _countof(path));
-	_tcsncpy((TCHAR*)wParam, path, (int)lParam);
+	wcsncpy((wchar_t*)wParam, path, (int)lParam);
 	return 0;
 }
 
-void CSkypeProto::GetAvatarFileName(MCONTACT hContact, TCHAR* pszDest, size_t cbLen)
+void CSkypeProto::GetAvatarFileName(MCONTACT hContact, wchar_t* pszDest, size_t cbLen)
 {
-	int tPathLen = mir_sntprintf(pszDest, cbLen, _T("%s\\%s"), VARST(_T("%miranda_avatarcache%")), m_tszUserName);
+	int tPathLen = mir_snwprintf(pszDest, cbLen, L"%s\\%s", VARSW(L"%miranda_avatarcache%"), m_tszUserName);
 
 	DWORD dwAttributes = GetFileAttributes(pszDest);
 	if (dwAttributes == 0xffffffff || (dwAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
-		CreateDirectoryTreeT(pszDest);
+		CreateDirectoryTreeW(pszDest);
 
 	pszDest[tPathLen++] = '\\';
 
-	const TCHAR* szFileType = ProtoGetAvatarExtension(getByte(hContact, "AvatarType", PA_FORMAT_JPEG));
-	CMStringA username(ptrA(getStringA(hContact, SKYPE_SETTINGS_ID)));
+	const wchar_t* szFileType = ProtoGetAvatarExtension(getByte(hContact, "AvatarType", PA_FORMAT_JPEG));
+	CMStringA username(Contacts[hContact]);
 	username.Replace("live:", "__live_");
 	username.Replace("facebook:", "__facebook_");
-	mir_sntprintf(pszDest + tPathLen, MAX_PATH - tPathLen, _T("%S%s"), username.c_str(), szFileType);
+	mir_snwprintf(pszDest + tPathLen, MAX_PATH - tPathLen, L"%S%s", username.c_str(), szFileType);
 }
 
-void CSkypeProto::SetAvatarUrl(MCONTACT hContact, CMString &tszUrl)
+void CSkypeProto::SetAvatarUrl(MCONTACT hContact, CMStringW &tszUrl)
 {
-	ptrT oldUrl(getTStringA(hContact, "AvatarUrl"));
+	ptrW oldUrl(getWStringA(hContact, "AvatarUrl"));
 	if (oldUrl != NULL)
 		if (tszUrl == oldUrl)
 			return;
@@ -154,7 +152,7 @@ void CSkypeProto::SetAvatarUrl(MCONTACT hContact, CMString &tszUrl)
 		ProtoBroadcastAck(hContact, ACKTYPE_AVATAR, ACKRESULT_SUCCESS, NULL, 0);
 	}
 	else {
-		setTString(hContact, "AvatarUrl", tszUrl.GetBuffer());
+		setWString(hContact, "AvatarUrl", tszUrl.GetBuffer());
 		setByte(hContact, "NeedNewAvatar", 1);
 		PROTO_AVATAR_INFORMATION ai = { 0 };
 		ai.hContact = hContact;
@@ -166,52 +164,37 @@ void CSkypeProto::SetAvatarUrl(MCONTACT hContact, CMString &tszUrl)
 
 INT_PTR CSkypeProto::SvcSetMyAvatar(WPARAM, LPARAM lParam)
 {
-	TCHAR *path = (TCHAR*)lParam;
-	TCHAR avatarPath[MAX_PATH];
+	wchar_t *path = (wchar_t*)lParam;
+	wchar_t avatarPath[MAX_PATH];
 	GetAvatarFileName(NULL, avatarPath, _countof(avatarPath));
-	if (path != NULL)
-	{
-		if (!CopyFile(path, avatarPath, FALSE))
-		{
-			debugLogA("CSkypeProto::SetMyAvatar: failed to copy new avatar to avatar cache");
-			return -1;
-		}
+	if (path != NULL) {
+		if (CopyFile(path, avatarPath, FALSE)) {
+			FILE *hFile = _wfopen(path, L"rb");
+			if (hFile) {
+				fseek(hFile, 0, SEEK_END);
+				size_t length = ftell(hFile);
+				if (length != -1) {
+					rewind(hFile);
 
-		FILE *hFile = _tfopen(path, L"rb");
-		if (!hFile)
-		{
-			debugLogA("CSkypeProto::SetMyAvatar: failed to open avatar file");
-			return -1;
-		}
+					mir_ptr<BYTE> data((PBYTE)mir_alloc(length));
 
-		fseek(hFile, 0, SEEK_END);
-		size_t length = ftell(hFile);
-		if (length == -1)
-		{
-			debugLogA("CSkypeProto::SvcSetMyAvatar: failed to get avatar file size");
-			fclose(hFile);
-			return -1;
-		}
-		rewind(hFile);
+					if (data != NULL && fread(data, sizeof(BYTE), length, hFile) == length) {
+						const char *szMime = "image/jpeg";
+						if (fii)
+							szMime = fii->FI_GetFIFMimeType(fii->FI_GetFIFFromFilenameU(path));
 
-		ptrA data((char*)mir_alloc(length));
-
-		if (data == NULL || fread(data, sizeof(char), length, hFile) != length)
-		{
-			debugLogA("CSkypeProto::SvcSetMyAvatar: failed to read avatar file");
-			fclose(hFile);
-			return -1;
+						PushRequest(new SetAvatarRequest(data, length, szMime, li), &CSkypeProto::OnSentAvatar);
+						fclose(hFile);
+						return 0;
+					}
+				}
+				fclose(hFile);
+			}
 		}
-		fclose(hFile);
-		PushRequest(new SetAvatarRequest(data, length, li), &CSkypeProto::OnSentAvatar);
+		return -1;
 	}
-	else
-	{
-		if (IsFileExists(avatarPath))
-		{
-			DeleteFile(avatarPath);
-		}
-	}
+	else if (IsFileExists(avatarPath))
+		DeleteFile(avatarPath);
 
 	return 0;
 }

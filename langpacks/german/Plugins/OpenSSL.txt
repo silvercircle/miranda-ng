@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: OpenSSL.dll
 ;  Plugin: OpenSSL SSL API module
-;  Version: 0.1.0.1
+;  Version: 0.1.0.2
 ;  Authors: Miranda NG Team
 ;============================================================
 [Core driver to provide OpenSSL-based SSL services.]
@@ -12,3 +12,7 @@ Kerntreiber für OpenSSL-basierende SSL-Dienste.
 Konnte die Hostnachricht nicht entschlüsseln. Mögliche Ursachen: Der Host unterstützt SSL nicht oder erfordert ein nicht existierendes Sicherheitspaket.
 [Host we are connecting to is not the one certificate was issued for]
 Wir verbinden nicht zu dem Host, auf den das Zertiflikat ausgestellt ist.
+[OpenSSL library loading failed]
+Laden der OpenSSL-Bibliothek fehlgeschlagen.
+[OpenSSL error]
+OpenSSL-Fehler

@@ -1,5 +1,5 @@
 ﻿/*
-Copyright (c) 2015 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2015-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -32,7 +32,7 @@ time_t CSkypeProto::IsoToUnixTime(const char *stamp)
 	// skip '-' chars
 	int si = 0, sj = 0;
 	while (true) {
-		if (p[si] == _T('-'))
+		if (p[si] == '-')
 			si++;
 		else if (!(p[sj++] = p[si++]))
 			break;
@@ -347,10 +347,8 @@ char *CSkypeProto::RemoveHtml(const char *text)
 	std::string new_string = "";
 	std::string data = text;
 
-	for (std::string::size_type i = 0; i < data.length(); i++)
-	{
-		if (data.at(i) == '<')
-		{
+	for (std::string::size_type i = 0; i < data.length(); i++) {
+		if (data.at(i) == '<') {
 			i = data.find(">", i);
 			if (i == std::string::npos)
 				break;
@@ -368,13 +366,51 @@ char *CSkypeProto::RemoveHtml(const char *text)
 				std::string entity = data.substr(begin + 1, i - begin - 1);
 
 				bool found = false;
-				for (int j = 0; j < _countof(htmlEntities); j++)
-				{
-					if (!mir_strcmpi(entity.c_str(), htmlEntities[j].entity))
-					{
-						new_string += htmlEntities[j].symbol;
+				if (entity.length() > 1 && entity.at(0) == '#') {
+					// Numeric replacement
+					bool hex = false;
+					if (entity.at(1) == 'x') {
+						hex = true;
+						entity = entity.substr(2);
+					}
+					else {
+						entity = entity.substr(1);
+					}
+					if (!entity.empty()) {
 						found = true;
-						break;
+						errno = 0;
+						unsigned long value = strtoul(entity.c_str(), NULL, hex ? 16 : 10);
+						if (errno != 0) { // error with conversion in strtoul, ignore the result
+							found = false;
+						}
+						else if (value <= 127) { // U+0000 .. U+007F
+							new_string += (char)value;
+						}
+						else if (value >= 128 && value <= 2047) { // U+0080 .. U+07FF
+							new_string += (char)(192 + (value / 64));
+							new_string += (char)(128 + (value % 64));
+						}
+						else if (value >= 2048 && value <= 65535) { // U+0800 .. U+FFFF
+							new_string += (char)(224 + (value / 4096));
+							new_string += (char)(128 + ((value / 64) % 64));
+							new_string += (char)(128 + (value % 64));
+						}
+						else {
+							new_string += (char)((value >> 24) & 0xFF);
+							new_string += (char)((value >> 16) & 0xFF);
+							new_string += (char)((value >> 8) & 0xFF);
+							new_string += (char)((value) & 0xFF);
+						}
+					}
+				}
+				else {
+					// Keyword replacement
+					for (int j = 0; j < _countof(htmlEntities); j++) {
+						if (!mir_strcmpi(entity.c_str(), htmlEntities[j].entity)) {
+							new_string += htmlEntities[j].symbol;
+							found = true;
+							break;
+						}
 					}
 				}
 
@@ -393,8 +429,7 @@ char *CSkypeProto::RemoveHtml(const char *text)
 
 const char *CSkypeProto::MirandaToSkypeStatus(int status)
 {
-	switch (status)
-	{
+	switch (status) {
 	case ID_STATUS_AWAY:
 		return "Away";
 
@@ -426,9 +461,9 @@ int CSkypeProto::SkypeToMirandaStatus(const char *status)
 		return ID_STATUS_OFFLINE;
 }
 
-bool CSkypeProto::IsFileExists(std::tstring path)
+bool CSkypeProto::IsFileExists(std::wstring path)
 {
-	return _taccess(path.c_str(), 0) == 0;
+	return _waccess(path.c_str(), 0) == 0;
 }
 
 // url parsing
@@ -438,7 +473,7 @@ CMStringA CSkypeProto::ParseUrl(const char *url, const char *token)
 	const char *start = strstr(url, token);
 	if (start == NULL)
 		return CMStringA();
-	
+
 	start = start + mir_strlen(token);
 	const char *end = strchr(start, '/');
 	if (end == NULL)
@@ -451,7 +486,7 @@ CMStringA CSkypeProto::GetStringChunk(const char *haystack, const char *start, c
 	const char *sstart = strstr(haystack, start);
 	if (sstart == NULL)
 		return CMStringA();
-	
+
 	sstart = sstart + mir_strlen(start);
 	const char *send = strstr(sstart, end);
 	if (send == NULL)
@@ -480,14 +515,14 @@ CMStringA CSkypeProto::GetServerFromUrl(const char *url)
 
 INT_PTR CSkypeProto::ParseSkypeUriService(WPARAM, LPARAM lParam)
 {
-	TCHAR *arg = (TCHAR *)lParam;
+	wchar_t *arg = (wchar_t *)lParam;
 	if (arg == NULL)
 		return 1;
 
 	// skip leading prefix
-	TCHAR szUri[1024];
-	_tcsncpy_s(szUri, arg, _TRUNCATE);
-	TCHAR *szJid = _tcschr(szUri, _T(':'));
+	wchar_t szUri[1024];
+	wcsncpy_s(szUri, arg, _TRUNCATE);
+	wchar_t *szJid = wcschr(szUri, ':');
 	if (szJid == NULL)
 		return 1;
 
@@ -496,24 +531,21 @@ INT_PTR CSkypeProto::ParseSkypeUriService(WPARAM, LPARAM lParam)
 		return 1;
 
 	// command code
-	TCHAR *szCommand = szJid;
-	szCommand = _tcschr(szCommand, _T('?'));
+	wchar_t *szCommand = szJid;
+	szCommand = wcschr(szCommand, '?');
 	if (szCommand)
 		*(szCommand++) = 0;
 
 	// parameters
-	TCHAR *szSecondParam = szCommand ? _tcschr(szCommand, _T('&')) : NULL;
+	wchar_t *szSecondParam = szCommand ? wcschr(szCommand, '&') : NULL;
 	if (szSecondParam)
 		*(szSecondParam++) = 0;
 
 	// no command or message command
-	if (!szCommand || (szCommand && !mir_tstrcmpi(szCommand, _T("chat"))))
-	{
-		if (szSecondParam)
-		{
-			TCHAR *szChatId = _tcsstr(szSecondParam, _T("id="));
-			if (szChatId)
-			{
+	if (!szCommand || (szCommand && !mir_wstrcmpi(szCommand, L"chat"))) {
+		if (szSecondParam) {
+			wchar_t *szChatId = wcsstr(szSecondParam, L"id=");
+			if (szChatId) {
 				szChatId += 5;
 				StartChatRoom(szChatId, szChatId);
 				return 0;
@@ -523,22 +555,23 @@ INT_PTR CSkypeProto::ParseSkypeUriService(WPARAM, LPARAM lParam)
 		CallService(MS_MSG_SENDMESSAGE, (WPARAM)hContact, NULL);
 		return 0;
 	}
-	else if (!mir_tstrcmpi(szCommand, _T("call")))
-	{
+	
+	if (!mir_wstrcmpi(szCommand, L"call")) {
 		MCONTACT hContact = AddContact(_T2A(szJid), true);
 		NotifyEventHooks(g_hCallEvent, (WPARAM)hContact, (LPARAM)0);
 		return 0;
 	}
-	else if (!mir_tstrcmpi(szCommand, _T("userinfo"))){ return 0; }
-	else if (!mir_tstrcmpi(szCommand, _T("add")))
-	{
+	
+	if (!mir_wstrcmpi(szCommand, L"userinfo")) 
+		return 0;
+	
+	if (!mir_wstrcmpi(szCommand, L"add")) {
 		MCONTACT hContact = FindContact(_T2A(szJid));
-		if (hContact == NULL)
-		{
+		if (hContact == NULL) {
 			PROTOSEARCHRESULT psr = { 0 };
 			psr.cbSize = sizeof(psr);
-			psr.id.t = mir_tstrdup(szJid);
-			psr.nick.t = mir_tstrdup(szJid);
+			psr.id.w = mir_wstrdup(szJid);
+			psr.nick.w = mir_wstrdup(szJid);
 			psr.flags = PSR_UNICODE;
 
 			ADDCONTACTSTRUCT acs = { 0 };
@@ -550,16 +583,16 @@ INT_PTR CSkypeProto::ParseSkypeUriService(WPARAM, LPARAM lParam)
 		}
 		return 0;
 	}
-	if (!mir_tstrcmpi(szCommand, _T("sendfile")))
-	{
-		//CONTACT hContact = AddContact(_T2A(szJid), true);
-		//CallService(MS_FILE_SENDFILE, hContact, NULL);
+
+	if (!mir_wstrcmpi(szCommand, L"sendfile")) {
+		MCONTACT hContact = AddContact(_T2A(szJid), true);
+		CallService(MS_FILE_SENDFILE, hContact, NULL);
 		return 1;
 	}
-	if (!mir_tstrcmpi(szCommand, _T("voicemail")))
-	{
+
+	if (!mir_wstrcmpi(szCommand, L"voicemail"))
 		return 1;
-	}
+
 	return 1;
 }
 

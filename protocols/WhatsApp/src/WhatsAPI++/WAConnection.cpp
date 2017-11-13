@@ -5,7 +5,7 @@
  *      Author: Antonio
  */
 
-#include "../common.h" // #TODO Remove Miranda-dependency
+#include "../stdafx.h" // #TODO Remove Miranda-dependency
 
 #include "ProtocolTreeNode.h"
 #include "utilities.h"
@@ -92,6 +92,7 @@ void WAConnection::logData(const char *format, ...)
 	char tmp[4000];
 	vsprintf_s(tmp, format, args);
 	rawConn->log(">> ", tmp);
+	va_end(args);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -122,8 +123,10 @@ WAConnection::WAConnection(const std::string &user, const std::string &resource,
 
 WAConnection::~WAConnection()
 {
+	m_pMutex->lock();
 	for (auto it = pending_server_requests.begin(); it != pending_server_requests.end(); ++it)
 		delete it->second;
+	m_pMutex->unlock();
 }
 
 std::string WAConnection::gidToGjid(const std::string &gid)
@@ -246,7 +249,7 @@ void WAConnection::parseAck(ProtocolTreeNode *node) throw(WAException)
 	const string &from = node->getAttributeValue("from");
 	const string &cls = node->getAttributeValue("class");
 	const string &id = node->getAttributeValue("id");
-	const string &ts = node->getAttributeValue("t");
+	// const string &ts = node->getAttributeValue("t");
 
 	if (cls == "message" && m_pEventHandler != NULL) {
 		FMessage msg(from, true, id);
@@ -286,13 +289,18 @@ void WAConnection::parseIq(ProtocolTreeNode *node) throw(WAException)
 		if (id.empty())
 			throw WAException("missing 'id' attribute in iq stanza", WAException::CORRUPT_STREAM_EX, 0);
 
+		m_pMutex->lock();
 		std::map<string, IqResultHandler*>::iterator it = this->pending_server_requests.find(id);
 		if (it != this->pending_server_requests.end()) {
 			it->second->parse(node, from);
 			delete it->second;
 			this->pending_server_requests.erase(id);
+			m_pMutex->unlock();
+			return;
 		}
-		else if (id.compare(0, this->user.size(), this->user) == 0) {
+
+		m_pMutex->unlock();
+		if (id.compare(0, this->user.size(), this->user) == 0) {
 			ProtocolTreeNode *accountNode = node->getChild(0);
 			ProtocolTreeNode::require(accountNode, "account");
 			const string &kind = accountNode->getAttributeValue("kind");
@@ -327,12 +335,14 @@ void WAConnection::parseIq(ProtocolTreeNode *node) throw(WAException)
 		}
 	}
 	else if (type == "error") {
+		m_pMutex->lock();
 		std::map<string, IqResultHandler*>::iterator it = this->pending_server_requests.find(id);
 		if (it != this->pending_server_requests.end()) {
 			it->second->error(node);
 			delete it->second;
 			this->pending_server_requests.erase(id);
 		}
+		m_pMutex->unlock();
 	}
 	else if (type == "get") {
 		ProtocolTreeNode *childNode = node->getChild(0);
@@ -355,9 +365,9 @@ void WAConnection::parseIq(ProtocolTreeNode *node) throw(WAException)
 			if (xmlns == "jabber:iq:roster") {
 				std::vector<ProtocolTreeNode*> itemNodes(childNode->getAllChildren("item"));
 				for (size_t i = 0; i < itemNodes.size(); i++) {
-					ProtocolTreeNode *itemNode = itemNodes[i];
-					const string &jid = itemNode->getAttributeValue("jid");
-					const string &subscription = itemNode->getAttributeValue("subscription");
+					// ProtocolTreeNode *itemNode = itemNodes[i];
+					// const string &jid = itemNode->getAttributeValue("jid");
+					// const string &subscription = itemNode->getAttributeValue("subscription");
 					// ask = itemNode->getAttributeValue("ask");
 				}
 			}
@@ -599,7 +609,6 @@ void WAConnection::parseReceipt(ProtocolTreeNode *node) throw(WAException)
 {
 	const string &from = node->getAttributeValue("from");
 	const string &id = node->getAttributeValue("id");
-	const string &ts = node->getAttributeValue("t");
 
 	if (m_pEventHandler != NULL) {
 		FMessage msg(from, false, id);
@@ -630,24 +639,26 @@ std::vector<ProtocolTreeNode*>* WAConnection::processGroupSettings(const std::ve
 
 void WAConnection::sendActive() throw(WAException)
 {
-	out.write(ProtocolTreeNode("presence") << XATTR("type", "active"));
+	ProtocolTreeNode n("presence");
+	out.write(n << XATTR("type", "active"));
 }
 
 void WAConnection::sendAvailableForChat() throw(WAException)
 {
-	out.write(ProtocolTreeNode("presence") << XATTR("name", this->nick));
+	ProtocolTreeNode n("presence");
+	out.write(n << XATTR("name", this->nick));
 }
 
 void WAConnection::sendClientConfig(const std::string &sound, const std::string &pushID, bool preview, const std::string &platform) throw(WAException)
 {
-	ProtocolTreeNode *configNode = new ProtocolTreeNode("config")
-		<< XATTR("xmlns", "urn:xmpp:whatsapp:push") << XATTR("sound", sound) << XATTR("id", pushID) << XATTR("preview", preview ? "1" : "0") << XATTR("platform", platform);
-
+	m_pMutex->lock();
 	std::string id = makeId("config_");
 	this->pending_server_requests[id] = new IqSendClientConfigHandler(this);
+	m_pMutex->unlock();
 
-	out.write(ProtocolTreeNode("iq", configNode)
-		<< XATTR("id", id) << XATTR("type", "set") << XATTR("to", this->domain));
+	ProtocolTreeNode iq("iq", new ProtocolTreeNode("config")
+		<< XATTR("xmlns", "urn:xmpp:whatsapp:push") << XATTR("sound", sound) << XATTR("id", pushID) << XATTR("preview", preview ? "1" : "0") << XATTR("platform", platform));
+	out.write(iq << XATTR("id", id) << XATTR("type", "set") << XATTR("to", this->domain));
 }
 
 void WAConnection::sendClientConfig(const std::string &pushID, bool preview, const std::string &platform, bool defaultSettings, bool groupSettings, const std::vector<GroupSetting>& groups) throw(WAException)
@@ -658,28 +669,32 @@ void WAConnection::sendClientConfig(const std::string &pushID, bool preview, con
 		<< XATTR("default", defaultSettings ? "1" : "0") << XATTR("groups", groupSettings ? "1" : "0");
 
 	std::string id = makeId("config_");
-	out.write(ProtocolTreeNode("iq", configNode) << XATTR("id", id) << XATTR("type", "set") << XATTR("to", this->domain));
+	ProtocolTreeNode iq("iq", configNode);
+	out.write(iq << XATTR("id", id) << XATTR("type", "set") << XATTR("to", this->domain));
 }
 
 void WAConnection::sendClose() throw(WAException)
 {
-	out.write(ProtocolTreeNode("presence") << XATTR("type", "unavailable"));
+	ProtocolTreeNode n("presence");
+	out.write(n << XATTR("type", "unavailable"));
 	out.streamEnd();
 }
 
 void WAConnection::sendComposing(const std::string &to) throw(WAException)
 {
-	out.write(ProtocolTreeNode("chatstate", new ProtocolTreeNode("composing")) << XATTR("to", to));
+	ProtocolTreeNode n("chatstate", new ProtocolTreeNode("composing"));
+	out.write(n << XATTR("to", to));
 }
 
 void WAConnection::sendDeleteAccount() throw (WAException)
 {
+	m_pMutex->lock();
 	std::string id = makeId("del_acct_");
 	this->pending_server_requests[id] = new IqResultSendDeleteAccount(this);
+	m_pMutex->unlock();
 
-	ProtocolTreeNode *node1 = new ProtocolTreeNode("remove") << XATTR("xmlns", "urn:xmpp:whatsapp:account");
-	out.write(ProtocolTreeNode("iq", node1)
-		<< XATTR("id", id) << XATTR("type", "get") << XATTR("to", "s.whatsapp.net"));
+	ProtocolTreeNode iq("iq", new ProtocolTreeNode("remove") << XATTR("xmlns", "urn:xmpp:whatsapp:account"));
+	out.write(iq << XATTR("id", id) << XATTR("type", "get") << XATTR("to", "s.whatsapp.net"));
 }
 
 void WAConnection::sendGetGroups() throw (WAException)
@@ -687,47 +702,50 @@ void WAConnection::sendGetGroups() throw (WAException)
 	m_pMutex->lock();
 	std::string id = makeId("iq_");
 	this->pending_server_requests[id] = new IqResultGetGroupsHandler(this, "participating");
-
-	out.write(ProtocolTreeNode("iq", new ProtocolTreeNode("list") << XATTR("type", "participating"))
-		<< XATTR("xmlns", "w:g") << XATTR("id", id) << XATTR("type", "get") << XATTR("to", "g.us"));
 	m_pMutex->unlock();
+
+	ProtocolTreeNode iq("iq", new ProtocolTreeNode("list") << XATTR("type", "participating"));
+	out.write(iq << XATTR("xmlns", "w:g") << XATTR("id", id) << XATTR("type", "get") << XATTR("to", "g.us"));
 }
 
 void WAConnection::sendGetPicture(const char *jid, const char *type) throw (WAException)
 {
+	m_pMutex->lock();
 	std::string id = makeId("iq_");
 	this->pending_server_requests[id] = new IqResultGetPhotoHandler(this, jid);
+	m_pMutex->unlock();
 
-	ProtocolTreeNode *listNode = new ProtocolTreeNode("picture") << XATTR("type", type);
-
-	out.write(ProtocolTreeNode("iq", listNode)
-		<< XATTR("id", id) << XATTR("to", jid) << XATTR("xmlns", "w:profile:picture") << XATTR("type", "get"));
+	ProtocolTreeNode iq("iq", new ProtocolTreeNode("picture") << XATTR("type", type));
+	out.write(iq << XATTR("id", id) << XATTR("to", jid) << XATTR("xmlns", "w:profile:picture") << XATTR("type", "get"));
 }
 
 void WAConnection::sendGetPrivacyList() throw (WAException)
 {
+	m_pMutex->lock();
 	std::string id = makeId("privacylist_");
 	this->pending_server_requests[id] = new IqResultPrivayListHandler(this);
+	m_pMutex->unlock();
 
-	ProtocolTreeNode *listNode = new ProtocolTreeNode("list") << XATTR("name", "default");
-	ProtocolTreeNode *queryNode = new ProtocolTreeNode("query", listNode) << XATTR("xmlns", "jabber:iq:privacy");
-	out.write(ProtocolTreeNode("iq", queryNode) << XATTR("id", id) << XATTR("type", "get"));
+	ProtocolTreeNode iq("iq", new ProtocolTreeNode("query", 
+		new ProtocolTreeNode("list") << XATTR("name", "default")) << XATTR("xmlns", "jabber:iq:privacy"));
+	out.write(iq << XATTR("id", id) << XATTR("type", "get"));
 }
 
 void WAConnection::sendGetServerProperties() throw (WAException)
 {
+	m_pMutex->lock();
 	std::string id = makeId("get_server_properties_");
 	this->pending_server_requests[id] = new IqResultServerPropertiesHandler(this);
+	m_pMutex->unlock();
 
-	ProtocolTreeNode *listNode = new ProtocolTreeNode("list") << XATTR("type", "props");
-
-	out.write(ProtocolTreeNode("iq", listNode) << XATTR("xmlns", "w:g2")
-		<< XATTR("id", id) << XATTR("type", "get") << XATTR("to", "g.us"));
+	ProtocolTreeNode iq("iq", new ProtocolTreeNode("list") << XATTR("type", "props"));
+	out.write(iq << XATTR("xmlns", "w:g2") << XATTR("id", id) << XATTR("type", "get") << XATTR("to", "g.us"));
 }
 
 void WAConnection::sendInactive() throw(WAException)
 {
-	out.write(ProtocolTreeNode("presence") << XATTR("type", "inactive"));
+	ProtocolTreeNode n("presence");
+	out.write(n << XATTR("type", "inactive"));
 }
 
 void WAConnection::sendAck(ProtocolTreeNode *node, const char *classType)
@@ -779,9 +797,11 @@ void WAConnection::sendMessageWithMedia(FMessage* message)  throw (WAException)
 
 	// request node for image, audio or video upload
 	if (message->media_wa_type == FMessage::WA_TYPE_IMAGE || message->media_wa_type == FMessage::WA_TYPE_AUDIO || message->media_wa_type == FMessage::WA_TYPE_VIDEO) {
+		m_pMutex->lock();
 		std::string id = makeId("iq_");
 		this->pending_server_requests[id] = new MediaUploadResponseHandler(this, *message);
-		
+		m_pMutex->unlock();
+
 		ProtocolTreeNode *mediaNode = new ProtocolTreeNode("media");
 		mediaNode << XATTR("hash", message->media_name) << XATTR("type", FMessage::getMessage_WA_Type_StrValue(message->media_wa_type)) << XATTR("size", std::to_string(message->media_size));
 	
@@ -940,50 +960,56 @@ void WAConnection::sendMessageWithBody(FMessage* message) throw (WAException)
 
 void WAConnection::sendMessageReceived(const FMessage &message) throw(WAException)
 {
-	out.write(ProtocolTreeNode("receipt") << XATTR("type", "read")
-		<< XATTR("to", message.key.remote_jid) << XATTR("id", message.key.id));
+	ProtocolTreeNode n("receipt");
+	out.write(n << XATTR("type", "read") << XATTR("to", message.key.remote_jid) << XATTR("id", message.key.id));
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
 void WAConnection::sendPaused(const std::string &to) throw(WAException)
 {
-	out.write(ProtocolTreeNode("chatstate", new ProtocolTreeNode("paused")) << XATTR("to", to));
+	ProtocolTreeNode n("chatstate", new ProtocolTreeNode("paused"));
+	out.write(n << XATTR("to", to));
 }
 
 void WAConnection::sendPing() throw(WAException)
 {
+	m_pMutex->lock();
 	std::string id = makeId("ping_");
 	this->pending_server_requests[id] = new IqResultPingHandler(this);
+	m_pMutex->unlock();
 
-	ProtocolTreeNode *pingNode = new ProtocolTreeNode("ping");
-	out.write(ProtocolTreeNode("iq", pingNode) 
-		<< XATTR("id", id) << XATTR("xmlns", "w:p") << XATTR("type", "get") << XATTR("to", "s.whatsapp.net"));
+	ProtocolTreeNode iq("iq", new ProtocolTreeNode("ping"));
+	out.write(iq << XATTR("id", id) << XATTR("xmlns", "w:p") << XATTR("type", "get") << XATTR("to", "s.whatsapp.net"));
 }
 
 void WAConnection::sendPong(const std::string &id) throw(WAException)
 {
-	out.write(ProtocolTreeNode("iq")
-		<< XATTR("type", "result") << XATTR("to", this->domain) << XATTR("id", id));
+	ProtocolTreeNode iq("iq");
+	out.write(iq << XATTR("type", "result") << XATTR("to", this->domain) << XATTR("id", id));
 }
 
 void WAConnection::sendPresenceSubscriptionRequest(const std::string &to) throw(WAException)
 {
-	out.write(ProtocolTreeNode("presence") << XATTR("type", "subscribe") << XATTR("to", to));
+	ProtocolTreeNode n("presence");
+	out.write(n << XATTR("type", "subscribe") << XATTR("to", to));
 }
 
 void WAConnection::sendSetPicture(const char *jid, std::vector<unsigned char>* data, std::vector<unsigned char>* preview) throw (WAException)
 {
+	m_pMutex->lock();
 	std::string id = this->makeId("set_photo_");
 	this->pending_server_requests[id] = new IqResultSetPhotoHandler(this, jid);
+	m_pMutex->unlock();
 
 	std::vector<ProtocolTreeNode*>* messageChildren = new std::vector<ProtocolTreeNode*>();
 	if (preview)
 		messageChildren->push_back(new ProtocolTreeNode("picture", preview, NULL) << XATTR("type", "preview"));
 	if (data)
 		messageChildren->push_back(new ProtocolTreeNode("picture", data, NULL) << XATTR("type", "image"));
-	out.write(ProtocolTreeNode("iq", NULL, messageChildren)
-		<< XATTR("id", id) << XATTR("type", "set") << XATTR("to", jid) << XATTR("xmlns", "w:profile:picture"));
+
+	ProtocolTreeNode iq("iq", NULL, messageChildren);
+	out.write(iq << XATTR("id", id) << XATTR("type", "set") << XATTR("to", jid) << XATTR("xmlns", "w:profile:picture"));
 }
 
 void WAConnection::sendStatusUpdate(std::string& status) throw (WAException)
@@ -1001,22 +1027,24 @@ void WAConnection::sendStatusUpdate(std::string& status) throw (WAException)
 
 void WAConnection::sendGetGroupInfo(const std::string &gjid) throw (WAException)
 {
+	m_pMutex->lock();
 	std::string id = makeId("iq_");
 	this->pending_server_requests[id] = new IqResultGetGroupInfoHandler(this);
+	m_pMutex->unlock();
 
-	ProtocolTreeNode *queryNode = new ProtocolTreeNode("query") << XATTR("request", "interactive");
-	out.write(ProtocolTreeNode("iq", queryNode) << XATTR("xmlns", "w:g2")
-		<< XATTR("id", id) << XATTR("type", "get") << XATTR("to", gjid));
+	ProtocolTreeNode iq("iq", new ProtocolTreeNode("query") << XATTR("request", "interactive"));
+	out.write(iq << XATTR("xmlns", "w:g2") << XATTR("id", id) << XATTR("type", "get") << XATTR("to", gjid));
 }
 
 void WAConnection::sendGetParticipants(const std::string &gjid) throw (WAException)
 {
+	m_pMutex->lock();
 	std::string id = makeId("iq_");
 	this->pending_server_requests[id] = new IqResultGetGroupParticipantsHandler(this);
+	m_pMutex->unlock();
 
-	ProtocolTreeNode *listNode = new ProtocolTreeNode("list");
-	out.write(ProtocolTreeNode("iq", listNode) << XATTR("xmlns", "w:g")
-		<< XATTR("id", id) << XATTR("type", "get") << XATTR("to", gjid));
+	ProtocolTreeNode iq("iq", new ProtocolTreeNode("list"));
+	out.write(iq << XATTR("xmlns", "w:g") << XATTR("id", id) << XATTR("type", "get") << XATTR("to", gjid));
 }
 
 void WAConnection::readAttributeList(ProtocolTreeNode *node, std::vector<std::string>& vector, const std::string &tag, const std::string &attribute) throw (WAException)
@@ -1031,24 +1059,27 @@ void WAConnection::readAttributeList(ProtocolTreeNode *node, std::vector<std::st
 void WAConnection::sendCreateGroupChat(const std::string &subject) throw (WAException)
 {
 	logData("sending create group: %s", subject.c_str());
+
+	m_pMutex->lock();
 	std::string id = makeId("create_group_");
 	this->pending_server_requests[id] = new IqResultCreateGroupChatHandler(this, subject);
+	m_pMutex->unlock();
 
-	ProtocolTreeNode *groupNode = new ProtocolTreeNode("group") << XATTR("action", "create") << XATTR("subject", subject);
-
-	out.write(ProtocolTreeNode("iq", groupNode) << XATTR("xmlns", "w:g")
-		<< XATTR("id", id) << XATTR("type", "set") << XATTR("to", "g.us"));
+	ProtocolTreeNode iq("iq", new ProtocolTreeNode("group") << XATTR("action", "create") << XATTR("subject", subject));
+	out.write(iq << XATTR("xmlns", "w:g") << XATTR("id", id) << XATTR("type", "set") << XATTR("to", "g.us"));
 }
 
 void WAConnection::sendClearDirty(const std::string &category) throw (WAException)
 {
+	m_pMutex->lock();
 	std::string id = makeId("clean_dirty_");
 	this->pending_server_requests[id] = new IqResultClearDirtyHandler(this);
+	m_pMutex->unlock();
 
 	ProtocolTreeNode *categoryNode = new ProtocolTreeNode("category") << XATTR("name", category);
 	ProtocolTreeNode *cleanNode = new ProtocolTreeNode("clean", categoryNode) << XATTR("xmlns", "urn:xmpp:whatsapp:dirty");
-	out.write(ProtocolTreeNode("iq", cleanNode)
-		<< XATTR("id", id) << XATTR("type", "set") << XATTR("to", "s.whatsapp.net"));
+	ProtocolTreeNode iq("iq", cleanNode);
+	out.write(iq << XATTR("id", id) << XATTR("type", "set") << XATTR("to", "s.whatsapp.net"));
 }
 
 void WAConnection::sendJoinLeaveGroup(const char *gjid, bool bJoin) throw (WAException)
@@ -1057,8 +1088,8 @@ void WAConnection::sendJoinLeaveGroup(const char *gjid, bool bJoin) throw (WAExc
 
 	ProtocolTreeNode *groupNode = new ProtocolTreeNode("group") << XATTR("id", gjid);
 	ProtocolTreeNode *leaveNode = new ProtocolTreeNode((bJoin) ? "join" : "leave", groupNode);
-	out.write(ProtocolTreeNode("iq", leaveNode) << XATTR("xmlns", "w:g2")
-		<< XATTR("id", id) << XATTR("type", "set") << XATTR("to", "g.us"));
+	ProtocolTreeNode iq("iq", leaveNode);
+	out.write(iq << XATTR("xmlns", "w:g2") << XATTR("id", id) << XATTR("type", "set") << XATTR("to", "g.us"));
 }
 
 void WAConnection::sendAddParticipants(const std::string &gjid, const std::vector<std::string> &participants) throw (WAException)
@@ -1080,10 +1111,8 @@ void WAConnection::sendVerbParticipants(const std::string &gjid, const std::vect
 	for (size_t i = 0; i < size; i++)
 		(*children)[i] = new ProtocolTreeNode("participant") << XATTR("jid", participants[i]);
 
-	ProtocolTreeNode *innerNode = new ProtocolTreeNode(inner_tag, NULL, children);
-
-	out.write(ProtocolTreeNode("iq", innerNode) << XATTR("xmlns", "w:g")
-		<< XATTR("id", id) << XATTR("type", "set") << XATTR("to", gjid));
+	ProtocolTreeNode iq("iq", new ProtocolTreeNode(inner_tag, NULL, children));
+	out.write(iq << XATTR("xmlns", "w:g") << XATTR("id", id) << XATTR("type", "set") << XATTR("to", gjid));
 }
 
 void WAConnection::sendSetNewSubject(const std::string &gjid, const std::string &subject) throw (WAException)
@@ -1091,8 +1120,6 @@ void WAConnection::sendSetNewSubject(const std::string &gjid, const std::string 
 	std::string id = this->makeId("iq_");
 
 	std::vector<unsigned char> *data = new std::vector<unsigned char>(subject.begin(), subject.end());
-	ProtocolTreeNode *subjectNode = new ProtocolTreeNode("subject", data);
-
-	out.write(ProtocolTreeNode("iq", subjectNode) << XATTR("xmlns", "w:g2")
-		<< XATTR("id", id) << XATTR("type", "set") << XATTR("to", gjid));
+	ProtocolTreeNode iq("iq", new ProtocolTreeNode("subject", data));
+	out.write(iq << XATTR("xmlns", "w:g2") << XATTR("id", id) << XATTR("type", "set") << XATTR("to", gjid));
 }

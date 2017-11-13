@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2015-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-HANDLE CSkypeProto::SearchBasic(const TCHAR* id)
+HANDLE CSkypeProto::SearchBasic(const wchar_t* id)
 {
 	ForkThread(&CSkypeProto::SearchBasicThread, (void *)id);
 	return (HANDLE)1;
@@ -26,9 +26,8 @@ HANDLE CSkypeProto::SearchBasic(const TCHAR* id)
 void CSkypeProto::SearchBasicThread(void* id)
 {
 	debugLogA("CSkypeProto::OnSearchBasicThread");
-	if (IsOnline())
-	{
-		ptrA szString(mir_urlEncode(T2Utf((TCHAR*)id)));
+	if (IsOnline()) {
+		ptrA szString(mir_urlEncode(T2Utf((wchar_t*)id)));
 		SendRequest(new GetSearchRequest(szString, li), &CSkypeProto::OnSearch);
 	}
 }
@@ -53,19 +52,19 @@ void CSkypeProto::OnSearch(const NETLIBHTTPREQUEST *response)
 		return;
 	}
 
-	const JSONNode &items = root.as_array();
-	for (size_t i = 0; i < items.size(); i++)
-	{
-		const JSONNode &item = items[i];
-		const JSONNode &ContactCards = item["ContactCards"];
-		const JSONNode &Skype = ContactCards["Skype"];
+	const JSONNode &items = root["results"].as_array();
+	for (auto it = items.begin(); it != items.end(); ++it) {
+		const JSONNode &item = (*it)["nodeProfileData"];
+
+		std::string skypeId = item["skypeId"].as_string();
+		std::string name = item["name"].as_string();
 
 		PROTOSEARCHRESULT psr = { sizeof(psr) };
 		psr.flags = PSR_UTF8;
-		psr.id.a = mir_strdup(Skype["SkypeName"].as_string().c_str());
-		psr.nick.a = mir_strdup(Skype["DisplayName"].as_string().c_str());
+		psr.id.a = const_cast<char*>(skypeId.c_str());
+		psr.nick.a = const_cast<char*>(name.c_str());
 		ProtoBroadcastAck(0, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)1, (LPARAM)&psr);
 	}
-	
+
 	ProtoBroadcastAck(0, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE)1, 0);
 }

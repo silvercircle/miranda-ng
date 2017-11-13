@@ -3,30 +3,41 @@
 
 class CToxThread
 {
-public:
+private:
 	Tox *tox;
-	ToxAv *toxAv;
-	bool isConnected;
-	bool isTerminated;
+	ToxAV *toxAV;
 
-	mir_cs toxLock;
-
-	CToxThread() : tox(NULL), toxAv(NULL),
-		isConnected(false), isTerminated(false) { }
-
-	void Do()
+public:
+	CToxThread(Tox_Options *options, TOX_ERR_NEW *error = NULL)
+		: tox(NULL), toxAV(NULL)
 	{
-		{
-			mir_cslock lock(toxLock);
-			tox_iterate(tox);
-			if (toxAv)
-				toxav_do(toxAv);
-		}
-		uint32_t interval = tox_iteration_interval(tox);
-		Sleep(interval);
+		tox = tox_new(options, error);
 	}
 
-	void Stop() { isTerminated = true; }
+	~CToxThread()
+	{
+		if (toxAV)
+		{
+			toxav_kill(toxAV);
+			toxAV = NULL;
+		}
+
+		if (tox)
+		{
+			tox_kill(tox);
+			tox = NULL;
+		}
+	}
+
+	Tox* Tox()
+	{
+		return tox;
+	}
+
+	ToxAV* ToxAV()
+	{
+		return toxAV;
+	}
 };
 
 #endif //_TOX_THREAD_H_

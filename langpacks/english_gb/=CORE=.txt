@@ -1,7 +1,7 @@
 ﻿;============================================================
 ;  File: miranda32/64.exe
 ;  Module: Miranda Core
-;  Version: 0.95.5
+;  Version: 0.95.7
 ;============================================================
 [Authorization request]
 Authorisation request
@@ -9,14 +9,6 @@ Authorisation request
 &Authorise
 [Add to contact list if authorized]
 Add to contact list if authorised
-[&Color]
-&Colour
-[&Background color]
-&Background colour
-[Use default colors]
-Use default colours
-[Use custom colors]
-Use custom colours
 [Minimize to tray]
 Minimise to tray
 [Gray out entire list when:]
@@ -31,8 +23,10 @@ Use Windows colours
 Minimise the file transfer window
 [Minimize the message window on send]
 Minimise the message window on send
-[Message window behavior:]
-Message window behaviour:
+[Use default colors]
+Use default colours
+[Use custom colors]
+Use custom colours
 [Send authorization request]
 Send authorisation request
 [Run program when Miranda NG starts (e.g., tail -f, dbgview, etc.):]
@@ -61,22 +55,26 @@ Secondary colour:
 %s requested authorisation\n%u on %s
 [%s requested authorization\n%s on %s]
 %s requested authorisation\n%s on %s
-[Timestamp has same color as the event]
-Timestamp has same colour as the event
-[Strip colors from messages in the log]
-Strip colours from messages in the log
-[Make the text italicized (CTRL+I)]
-Make the text italicised (CTRL+I)
-[Select a background color for the text (CTRL+L)]
-Select a background colour for the text (CTRL+L)
-[Select a foreground color for the text (CTRL+K)]
-Select a foreground colour for the text (CTRL+K)
 [Canceled]
 Cancelled
 [This file transfer has been canceled by the other side]
 This file transfer has been cancelled by the other side
 [Initializing...]
 Initialising...
+[Timestamp has same color as the event]
+Timestamp has same colour as the event
+[Strip colors from messages in the log]
+Strip colours from messages in the log
+[Make the text italicized (CTRL+I)]
+Make the text italicised (CTRL+I)
+[&Color]
+&Colour
+[Select a foreground color for the text (CTRL+K)]
+Select a foreground colour for the text (CTRL+K)
+[&Background color]
+&Background colour
+[Select a background color for the text (CTRL+L)]
+Select a background colour for the text (CTRL+L)
 [Please authorize my request and add me to your contact list.]
 Please authorise my request and add me to your contact list.
 [Authorization request from %s%s: %s]

@@ -32,43 +32,23 @@ HEMREGISTRATION hLotusRegister = 0;
 boolean volatile Plugin_Terminated = false;
 mir_cs checkthreadCS;
 
-HANDLE hMenuService = NULL;
 HGENMENU hMenuHandle = NULL;
 HANDLE hCheckEvent = NULL;
-HANDLE hCheckHook = NULL;
-HANDLE hHookModulesLoaded = NULL;
-HANDLE hHookPreShutdown = NULL;
 
-HANDLE hOptInit = NULL;
 static HWND hTimerWnd = (HWND)NULL;
 static UINT TID = (UINT)2006;
 
-char settingServer[MAX_SETTING_STR] = "";
-char settingServerSec[MAX_SETTING_STR] = "";
-char settingDatabase[MAX_SETTING_STR] = "";
-char settingCommand[MAX_SETTING_STR] = "";
-char settingParameters[MAX_SETTING_STR] = "";
-TCHAR settingFilterSubject[MAX_SETTING_STR] = TEXT("");
-TCHAR settingFilterSender[MAX_SETTING_STR] = TEXT("");
-TCHAR settingFilterTo[MAX_SETTING_STR] = TEXT("");
-char settingPassword[MAX_SETTING_STR] = "";
+char settingServer[MAX_SETTING_STR] = "", settingServerSec[MAX_SETTING_STR] = "", settingDatabase[MAX_SETTING_STR] = "",
+	settingCommand[MAX_SETTING_STR] = "", settingParameters[MAX_SETTING_STR] = "", settingPassword[MAX_SETTING_STR] = "";
+wchar_t settingFilterSubject[MAX_SETTING_STR] = TEXT(""), settingFilterSender[MAX_SETTING_STR] = TEXT(""), settingFilterTo[MAX_SETTING_STR] = TEXT("");
 
-COLORREF settingBgColor;
-COLORREF settingFgColor;
-int settingInterval = 0;
-int settingInterval1 = 0;
+COLORREF settingBgColor, settingFgColor;
+int settingInterval = 0, settingInterval1 = 0;
 DWORD settingNewestID = 0;
-BYTE settingSetColours = 0;
-BYTE settingShowError = 1;
-BYTE settingIniAnswer = -1;
-BYTE settingIniCheck = 0;
-BYTE settingOnceOnly = 0;
-BYTE settingNonClickedOnly = 0;
-BYTE settingNewest = 0;
-BYTE settingEvenNonClicked = 0;
+BYTE settingSetColours = 0, settingShowError = 1, settingIniAnswer = -1, settingIniCheck = 0,
+	settingOnceOnly = 0, settingNonClickedOnly = 0, settingNewest = 0, settingEvenNonClicked = 0, settingKeepConnection = 1;
 BOOL settingStatus[STATUS_COUNT];
 BOOL bMirandaCall=FALSE;
-BYTE settingKeepConnection = 1;
 
 struct HISTORIA *first = NULL;
 BOOL running = FALSE;
@@ -77,12 +57,12 @@ BOOL isPopupWaiting = FALSE;
 int currentStatus = ID_STATUS_OFFLINE;
 int diffstat = 0;
 int startuperror = 0;
-TCHAR *startuperrors[] = {
-		LPGENT("Unable to load all required Lotus API functions"),
-		LPGENT("Lotus Notes Client not detected. Check plugin configuration description on install.txt"),
-		LPGENT("Unable to initialize Notes."),
-		LPGENT("Lotus Notes Extension Manager was not registered. Authentication function will not work properly"),
-		LPGENT("In notes.ini file there is no required entry EXTMGR_ADDINS=plugindllnamewithout\".dll\"")
+wchar_t *startuperrors[] = {
+		LPGENW("Unable to load all required Lotus API functions"),
+		LPGENW("Lotus Notes Client not detected. Check plugin configuration description on install.txt"),
+		LPGENW("Unable to initialize Notes."),
+		LPGENW("Lotus Notes Extension Manager was not registered. Authentication function will not work properly"),
+		LPGENW("In notes.ini file there is no required entry EXTMGR_ADDINS=plugindllnamewithout\".dll\"")
 	};
 
 
@@ -146,7 +126,7 @@ void ExtClear()
 {
 	STATUS status;
 	if (0 != hLotusRegister) {
-		status = (EMDeregister1) (&hLotusRegister); //we was registered, so let's unregister
+		status = EMDeregister1(&hLotusRegister); //we was registered, so let's unregister
 	} else {
 		status = NOERROR;
 	}
@@ -158,12 +138,10 @@ void ExtClear()
 //check if msg was clicked and exists on msgs list
 struct HISTORIA* getEl(DWORD id)
 {
-	struct HISTORIA *cur = first;
-	while(cur != NULL)
+	for(struct HISTORIA *cur = first; cur != NULL; cur = cur->next)
 	{
 		if(cur->noteID == id)
 			return cur;
-		cur = cur->next;
 	}
 	return NULL;
 }
@@ -262,18 +240,17 @@ void init_pluginname()
 BOOL strrep(char *src, char *needle, char *newstring)
 {
 	char *found, begining[MAX_SETTING_STR], tail[MAX_SETTING_STR];
-	int pos=0;
 
 	//strset(begining,' ');
 	//strset(tail,' ');
 	if(!(found=strstr(src,needle)))
 		return FALSE;
 
-	pos = (int)(found-src);
+	size_t pos = (found-src);
 	strncpy_s(begining, _countof(begining), src, pos);
 	begining[pos]='\0';
 
-	pos = pos+(int)mir_strlen(needle);
+	pos += mir_strlen(needle);
 	strncpy_s(tail, _countof(tail), src+pos, _countof(tail));
 	begining[pos]='\0';
 
@@ -285,30 +262,30 @@ BOOL strrep(char *src, char *needle, char *newstring)
 //check if given string contain filter string
 //param field=	0-sender
 //				1-subject
-BOOL checkFilters(TCHAR* str, int field)
+BOOL checkFilters(wchar_t* str, int field)
 {
-	TCHAR buff[512] = _T("");
-	TCHAR *strptr = NULL;
+	wchar_t buff[512] = L"";
+	wchar_t *strptr = NULL;
 	switch(field) {
 	case 0:
-		_tcsncpy_s(buff, settingFilterSender, _TRUNCATE);
+		wcsncpy_s(buff, settingFilterSender, _TRUNCATE);
 		break;
 	case 1:
-		_tcsncpy_s(buff, settingFilterSubject, _TRUNCATE);
+		wcsncpy_s(buff, settingFilterSubject, _TRUNCATE);
 		break;
 	case 2:
-		_tcsncpy_s(buff, settingFilterTo, _TRUNCATE);
+		wcsncpy_s(buff, settingFilterTo, _TRUNCATE);
 		break;
 	}
 
 
-	while(strptr = _tcschr(buff, ';'))
+	while(strptr = wcschr(buff, ';'))
 	{
-		TCHAR tmp[512] = TEXT(""), *ptr;
-		_tcsncpy_s(tmp, buff, (strptr-buff));
-		_tcsncpy_s(buff, strptr + 1, _TRUNCATE);
+		wchar_t tmp[512] = TEXT(""), *ptr;
+		wcsncpy_s(tmp, buff, (strptr-buff));
+		wcsncpy_s(buff, strptr + 1, _TRUNCATE);
 
-		if(_tcsstr(_tcslwr(ptr=_tcsdup(str)),_tcslwr(tmp)))
+		if(wcsstr(wcslwr(ptr=wcsdup(str)),wcslwr(tmp)))
 		{
 			free(ptr);
 			return TRUE;
@@ -459,7 +436,7 @@ BOOL checkNotesIniFile(BOOL bInfo)
 
 
 //popup plugin to show popup function
-void showMsg(TCHAR* sender,TCHAR* text, DWORD id, char *strUID)
+void showMsg(wchar_t* sender,wchar_t* text, DWORD id, char *strUID)
 {
 
 	POPUPDATAT ppd;
@@ -469,14 +446,14 @@ void showMsg(TCHAR* sender,TCHAR* text, DWORD id, char *strUID)
 	//99% of the times you'll just copy this line.
 	//1% of the times you may wish to change the contact's name. I don't know why you should, but you can.
 	//char * lpzText;
-	//The text for the second line. You could even make something like: char lpzText[128]; mir_tstrcpy(lpzText, "Hello world!"); It's your choice.
+	//The text for the second line. You could even make something like: char lpzText[128]; mir_wstrcpy(lpzText, "Hello world!"); It's your choice.
 
 	POPUPATT * mpd = (POPUPATT*)malloc(sizeof(POPUPATT));
 	memset(&ppd, 0, sizeof(ppd)); //This is always a good thing to do.
 	ppd.lchContact = NULL; //(HANDLE)hContact; //Be sure to use a GOOD handle, since this will not be checked.
 	ppd.lchIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_ICON1));
-	_tcscpy_s(ppd.lptzContactName, _countof(ppd.lptzContactName), sender);
-	_tcscpy_s(ppd.lptzText, _countof(ppd.lptzText), text);
+	wcscpy_s(ppd.lptzContactName, _countof(ppd.lptzContactName), sender);
+	wcscpy_s(ppd.lptzText, _countof(ppd.lptzText), text);
 	if(settingSetColours)
 	{
 		ppd.colorBack = settingBgColor;
@@ -501,18 +478,18 @@ void showMsg(TCHAR* sender,TCHAR* text, DWORD id, char *strUID)
 //what to do with error msg
 void ErMsgW(WCHAR* msg)
 {
-	TCHAR* msgT = mir_u2t(msg);
+	wchar_t* msgT = mir_wstrdup(msg);
 	ErMsgT(msgT);
 	mir_free(msgT);
 }
-///TODO TCHAR->WCHAR and test
-void ErMsgT(TCHAR* msg)
+///TODO wchar_t->WCHAR and test
+void ErMsgT(wchar_t* msg)
 {
 	log_p(L"Error: %S", msg);
 	if(settingShowError && !isPopupWaiting) {
-		TCHAR buffer[256+14];
-		_tcsncpy_s(buffer, _T("LotusNotify: "), _TRUNCATE);
-		_tcscat_s(buffer, msg);
+		wchar_t buffer[256+14];
+		wcsncpy_s(buffer, L"LotusNotify: ", _TRUNCATE);
+		wcscat_s(buffer, msg);
 		isPopupWaiting = TRUE;
 		PUShowMessageT(buffer, SM_WARNING);
 		isPopupWaiting = FALSE;
@@ -528,8 +505,8 @@ void ErMsgByLotusCode(STATUS erno)
 	WCHAR far error_text_UNICODE[200];
     WORD text_len;
 
-    text_len = (OSLoadString1)(NULLHANDLE, erno, error_text_LMBCS, sizeof(error_text_LMBCS)-1);
-	(OSTranslate1)(OS_TRANSLATE_LMBCS_TO_UNICODE, error_text_LMBCS, (WORD)mir_strlen(error_text_LMBCS), error_text_UNICODEatCHAR, sizeof(error_text_UNICODEatCHAR)-1);
+    text_len = OSLoadString1(NULLHANDLE, erno, error_text_LMBCS, sizeof(error_text_LMBCS)-1);
+	OSTranslate1(OS_TRANSLATE_LMBCS_TO_UNICODE, error_text_LMBCS, (WORD)mir_strlen(error_text_LMBCS), error_text_UNICODEatCHAR, sizeof(error_text_UNICODEatCHAR)-1);
 	memcpy(error_text_UNICODE, error_text_UNICODEatCHAR, sizeof(error_text_UNICODE));
 
 	ErMsgW(error_text_UNICODE);
@@ -543,12 +520,12 @@ int check() {
 		int cnt;
 		for(cnt = 0; cnt <= 4; cnt++)
 			if(startuperror >> cnt & 1)
-				ErMsgT(TranslateTS(startuperrors[cnt]));
+				ErMsgT(TranslateW(startuperrors[cnt]));
 		return 1;
 	}
 
-	if (Plugin_Terminated || Miranda_Terminated()){
-		log_p(L"check: Plugin_Terminated (=%d) OR Miranda_Terminated()", Plugin_Terminated);
+	if (Plugin_Terminated || Miranda_IsTerminated()){
+		log_p(L"check: Plugin_Terminated (=%d) OR Miranda_IsTerminated()", Plugin_Terminated);
 		return 0;
 	}
 
@@ -585,32 +562,33 @@ void checkthread(void*)
 	char        field_date[MAXALPHATIMEDATE + 1];
 
 	char        field_lotus_LMBCS[MAX_FIELD];
-	char        field_lotus_UNICODEatCHAR[MAX_FIELD * sizeof(TCHAR)];
-	WCHAR       field_from_UNICODE[MAX_FIELD];
-	WCHAR       field_subject_UNICODE[MAX_FIELD];
-	WCHAR       field_to_UNICODE[MAX_FIELD];
-	WCHAR       field_copy_UNICODE[MAX_FIELD];
+	char        field_lotus_UNICODEatCHAR[MAX_FIELD * sizeof(wchar_t)];
+	WCHAR field_from_UNICODE[MAX_FIELD], field_subject_UNICODE[MAX_FIELD], field_to_UNICODE[MAX_FIELD],field_copy_UNICODE[MAX_FIELD];
 
 	mir_cslock lck(checkthreadCS);
 	log(L"checkthread: inside new check thread");
 
-	if (error = (NotesInitThread1)()) {
+	if (error = NotesInitThread1()) {
 		goto errorblock;
 	}
+#ifdef _DEBUG
 	log(L"checkthread: Started NotesInitThread");
+#endif
 
-	if (error = (OSPathNetConstruct1)(NULL, settingServer, settingDatabase, fullpath)) {
+	if (error = OSPathNetConstruct1(NULL, settingServer, settingDatabase, fullpath)) {
 		goto errorblock;
 	}
+#ifdef _DEBUG
 	log_p(L"checkthread: OSPathNetConstruct: %S", fullpath);
+#endif
 
-	if (error = (NSFDbOpen1)(fullpath, &db_handle)) {
+	if (error = NSFDbOpen1(fullpath, &db_handle)) {
 		if (mir_strcmp(settingServerSec, "") != 0) {
-			if (error = (OSPathNetConstruct1)(NULL, settingServerSec, settingDatabase, fullpath)) {
+			if (error = OSPathNetConstruct1(NULL, settingServerSec, settingDatabase, fullpath)) {
 				goto errorblock;
 			}
 			else {
-				if (error = (NSFDbOpen1)(fullpath, &db_handle)) {
+				if (error = NSFDbOpen1(fullpath, &db_handle)) {
 					goto errorblock;
 				}
 			}
@@ -620,30 +598,38 @@ void checkthread(void*)
 		}
 	}
 	assert(db_handle);
+#ifdef _DEBUG
 	log(L"checkthread: DBOpened");
+#endif
 
-	if (error = (SECKFMGetUserName1)(UserName)) {
+	if (error = SECKFMGetUserName1(UserName)) {
 		goto errorblock0;
 	}
 	assert(UserName);
+#ifdef _DEBUG
 	log_p(L"checkthread: Username: %S", UserName);
+#endif
 
 	/* Get the unread list */
-	if (error = (NSFDbGetUnreadNoteTable1)(db_handle, UserName, (WORD)mir_strlen(UserName), TRUE, &hTable)) {
+	if (error = NSFDbGetUnreadNoteTable1(db_handle, UserName, (WORD)mir_strlen(UserName), TRUE, &hTable)) {
 		goto errorblock0;
 	}
+#ifdef _DEBUG
 	log(L"checkthread: Unread Table got");
+#endif
 
 	//error = IDTableCopy (hTable, &hOriginalTable);
 	//IDDestroyTable (hTable);
-	if (error = (NSFDbUpdateUnread1)(db_handle, hTable)) {
+	if (error = NSFDbUpdateUnread1(db_handle, hTable)) {
 		goto errorblock;
 	}
+#ifdef _DEBUG
 	log(L"checkthread: Unread Table updated");
+#endif
 	assert(hTable);
 
 
-	while ((IDScan1)(hTable, fFirst, &noteID)) {
+	while (IDScan1(hTable, fFirst, &noteID)) {
 
 		WORD Att;
 		BLOCKID bhAttachment;
@@ -655,12 +641,14 @@ void checkthread(void*)
 		TIMEDATE     sendDate;
 		char strLink[4 * 16];
 
-		if (Plugin_Terminated || Miranda_Terminated()) {
-			log_p(L"checkthread: Plugin_Terminated (=%d) OR Miranda_Terminated()", Plugin_Terminated);
+		if (Plugin_Terminated || Miranda_IsTerminated()) {
+			log_p(L"checkthread: Plugin_Terminated (=%d) OR Miranda_IsTerminated()", Plugin_Terminated);
 			break;
 		}
 
+#ifdef _DEBUG
 		log_p(L"checkthread: Getting info about: %d", noteID);
+#endif
 
 		fFirst = FALSE;
 		assert(noteID);
@@ -674,21 +662,27 @@ void checkthread(void*)
 			continue;
 		}
 
+#ifdef _DEBUG
 		log(L"checkthread: skiped-don't show again and note was not showed (ID not on list)");
+#endif
 
 		if (settingOnceOnly && settingNonClickedOnly && (getEl(noteID))->clicked == TRUE) {
 			//show again, but only not clicked (id added to list on Left Button click)
 			continue;
 		}
 
+#ifdef _DEBUG
 		log(L"checkthread: skiped-show again, but only not clicked (id added to list on Left Button click)");
+#endif
 
 		if (settingNewest && settingNewestID >= noteID) {
 			//only newest option enabled, so if old id don't show it
 			continue;
 		}
 
+#ifdef _DEBUG
 		log(L"checkthread: skiped-only newest option enabled, so if old id don't show it");
+#endif
 
 		// remember newest id depending on options set
 		if (settingNewest&&settingEvenNonClicked && (noteID > settingNewestID))
@@ -697,13 +691,15 @@ void checkthread(void*)
 		//if(((!settingOnceOnly||(settingOnceOnly&&settingNonClickedOnly))&&existElem(noteID))||(settingNewest&&settingNewestID>=noteID))
 		//continue;
 
-		if (error = (NSFNoteOpen1)(db_handle, noteID, 0, &note_handle)) {
+		if (error = NSFNoteOpen1(db_handle, noteID, 0, &note_handle)) {
 			continue;
 		}
 
+#ifdef _DEBUG
 		log_p(L"checkthread: Opened Note: %d", noteID);
+#endif
 
-		(NSFDbGetNoteInfo1)(db_handle,      /* DBHANDLE */
+		NSFDbGetNoteInfo1(db_handle,      /* DBHANDLE */
 			noteID,			/* NOTEID   */
 			&retNoteOID,		/* out: OID */
 			&retModified,		/* out:     */
@@ -718,28 +714,28 @@ void checkthread(void*)
 
 		log_p(L"checkthread: got noteInfo, built link: %S", strLink);
 
-		field_len = (NSFItemGetText1)(note_handle, MAIL_FROM_ITEM, field_lotus_LMBCS, (WORD)sizeof(field_lotus_LMBCS));
-		(OSTranslate1)(OS_TRANSLATE_LMBCS_TO_UNICODE, field_lotus_LMBCS, field_len, field_lotus_UNICODEatCHAR, sizeof(field_lotus_UNICODEatCHAR));
-		memcpy(field_from_UNICODE, field_lotus_UNICODEatCHAR, field_len * sizeof(TCHAR));
+		field_len = NSFItemGetText1(note_handle, MAIL_FROM_ITEM, field_lotus_LMBCS, (WORD)sizeof(field_lotus_LMBCS));
+		OSTranslate1(OS_TRANSLATE_LMBCS_TO_UNICODE, field_lotus_LMBCS, field_len, field_lotus_UNICODEatCHAR, sizeof(field_lotus_UNICODEatCHAR));
+		memcpy(field_from_UNICODE, field_lotus_UNICODEatCHAR, field_len * sizeof(wchar_t));
 		field_from_UNICODE[field_len] = '\0';
 
-		(NSFItemGetTime1)(note_handle, MAIL_POSTEDDATE_ITEM, &sendDate);
-		error = (ConvertTIMEDATEToText1)(NULL, NULL, &sendDate, field_date, MAXALPHATIMEDATE, &field_len);
+		NSFItemGetTime1(note_handle, MAIL_POSTEDDATE_ITEM, &sendDate);
+		error = ConvertTIMEDATEToText1(NULL, NULL, &sendDate, field_date, MAXALPHATIMEDATE, &field_len);
 		field_date[field_len] = '\0';
 
-		field_len = (NSFItemGetText1)(note_handle, MAIL_SUBJECT_ITEM, field_lotus_LMBCS, (WORD)sizeof(field_lotus_LMBCS));
-		(OSTranslate1)(OS_TRANSLATE_LMBCS_TO_UNICODE, field_lotus_LMBCS, field_len, field_lotus_UNICODEatCHAR, sizeof(field_lotus_UNICODEatCHAR));
-		memcpy(field_subject_UNICODE, field_lotus_UNICODEatCHAR, field_len * sizeof(TCHAR));
+		field_len = NSFItemGetText1(note_handle, MAIL_SUBJECT_ITEM, field_lotus_LMBCS, (WORD)sizeof(field_lotus_LMBCS));
+		OSTranslate1(OS_TRANSLATE_LMBCS_TO_UNICODE, field_lotus_LMBCS, field_len, field_lotus_UNICODEatCHAR, sizeof(field_lotus_UNICODEatCHAR));
+		memcpy(field_subject_UNICODE, field_lotus_UNICODEatCHAR, field_len * sizeof(wchar_t));
 		field_subject_UNICODE[field_len] = '\0';
 
-		field_len = (NSFItemGetText1)(note_handle, MAIL_SENDTO_ITEM, field_lotus_LMBCS, (WORD)sizeof(field_lotus_LMBCS));
-		(OSTranslate1)(OS_TRANSLATE_LMBCS_TO_UNICODE, field_lotus_LMBCS, field_len, field_lotus_UNICODEatCHAR, sizeof(field_lotus_UNICODEatCHAR));
-		memcpy(field_to_UNICODE, field_lotus_UNICODEatCHAR, field_len * sizeof(TCHAR));
+		field_len = NSFItemGetText1(note_handle, MAIL_SENDTO_ITEM, field_lotus_LMBCS, (WORD)sizeof(field_lotus_LMBCS));
+		OSTranslate1(OS_TRANSLATE_LMBCS_TO_UNICODE, field_lotus_LMBCS, field_len, field_lotus_UNICODEatCHAR, sizeof(field_lotus_UNICODEatCHAR));
+		memcpy(field_to_UNICODE, field_lotus_UNICODEatCHAR, field_len * sizeof(wchar_t));
 		field_to_UNICODE[field_len] = '\0';
 
-		field_len = (NSFItemGetText1)(note_handle, MAIL_COPYTO_ITEM, field_lotus_LMBCS, (WORD)sizeof(field_lotus_LMBCS));
-		(OSTranslate1)(OS_TRANSLATE_LMBCS_TO_UNICODE, field_lotus_LMBCS, field_len, field_lotus_UNICODEatCHAR, sizeof(field_lotus_UNICODEatCHAR));
-		memcpy(field_copy_UNICODE, field_lotus_UNICODEatCHAR, field_len * sizeof(TCHAR));
+		field_len = NSFItemGetText1(note_handle, MAIL_COPYTO_ITEM, field_lotus_LMBCS, (WORD)sizeof(field_lotus_LMBCS));
+		OSTranslate1(OS_TRANSLATE_LMBCS_TO_UNICODE, field_lotus_LMBCS, field_len, field_lotus_UNICODEatCHAR, sizeof(field_lotus_UNICODEatCHAR));
+		memcpy(field_copy_UNICODE, field_lotus_UNICODEatCHAR, field_len * sizeof(wchar_t));
 		field_copy_UNICODE[field_len] = '\0';
 
 
@@ -748,11 +744,11 @@ void checkthread(void*)
 		memset(msgSubject, 0, sizeof(msgSubject));
 
 		if (mir_wstrlen(field_from_UNICODE) < 512 && mir_wstrlen(field_from_UNICODE) > 3 && wcsstr(field_from_UNICODE, L"CN=") == field_from_UNICODE)
-			_tcsncpy_s(msgFrom, &(field_from_UNICODE[3]), wcscspn(field_from_UNICODE, L"/") - 3);
+			wcsncpy_s(msgFrom, &(field_from_UNICODE[3]), wcscspn(field_from_UNICODE, L"/") - 3);
 		else
-			_tcsncpy_s(msgFrom, field_from_UNICODE, _TRUNCATE);
+			wcsncpy_s(msgFrom, field_from_UNICODE, _TRUNCATE);
 
-		for (Att = 0; (MailGetMessageAttachmentInfo1)(note_handle, Att, &bhAttachment, NULL, &cSize, NULL, NULL, NULL, NULL); Att++)
+		for (Att = 0; MailGetMessageAttachmentInfo1(note_handle, Att, &bhAttachment, NULL, &cSize, NULL, NULL, NULL, NULL); Att++)
 			attSize += cSize;
 
 #ifdef _DEBUG
@@ -779,11 +775,11 @@ void checkthread(void*)
 
 		if (attSize) {
 			WCHAR field_attachments_UNICODE[MAX_FIELD];
-			mir_sntprintf(field_attachments_UNICODE, TranslateW(L"Attachments: %d bytes"), attSize);
-			mir_sntprintf(msgSubject, L"%S\n%s\n%s", field_date, field_subject_UNICODE, field_attachments_UNICODE);
+			mir_snwprintf(field_attachments_UNICODE, TranslateT("Attachments: %d bytes"), attSize);
+			mir_snwprintf(msgSubject, L"%S\n%s\n%s", field_date, field_subject_UNICODE, field_attachments_UNICODE);
 		}
 		else {
-			mir_sntprintf(msgSubject, L"%S\n%s", field_date, field_subject_UNICODE);
+			mir_snwprintf(msgSubject, L"%S\n%s", field_date, field_subject_UNICODE);
 		}
 
 		//check if this is not filtered msg
@@ -794,33 +790,41 @@ void checkthread(void*)
 			log(L"checkthread: filters checked - positive");
 			///TODO eliminate popups with blank fields
 			showMsg(msgFrom, msgSubject, noteID, strLink);
-			SkinPlaySound("LotusNotify");
+			Skin_PlaySound("LotusNotify");
 		}
 		else {
 			log(L"checkthread: filters checked - negative");
 		}
 
-		if (error = (NSFNoteClose1)(note_handle)) {
+		if (error = NSFNoteClose1(note_handle)) {
 			continue;
 		}
+#ifdef _DEBUG
 		log_p(L"checkthread: Close note id: %d", noteID);
+#endif
 
 	}
 
-	if (error = (IDDestroyTable1)(hTable)) {
+	if (error = IDDestroyTable1(hTable)) {
 		goto errorblock0;
 	}
+#ifdef _DEBUG
 	log(L"checkthread: Table destroyed");
+#endif
 
-	if (error = (NSFDbClose1)(db_handle)) {
+	if (error = NSFDbClose1(db_handle)) {
 		goto errorblock;
 	}
+#ifdef _DEBUG
 	log(L"checkthread: DB closed");
+#endif
 
 	//NotesTerm();
-	(NotesTermThread1)();
+	NotesTermThread1();
 
+#ifdef _DEBUG
 	log(L"checkthread: Terminating Notes thread");
+#endif
 	running = FALSE;
 	if (currentStatus != ID_STATUS_OFFLINE)
 		Menu_EnableItem(hMenuHandle, !running);
@@ -828,7 +832,7 @@ void checkthread(void*)
 
 errorblock0:
 	log(L"checkthread: errorblock0");
-	(NSFDbClose1)(db_handle);
+	NSFDbClose1(db_handle);
 errorblock:
 	log_p(L"checkthread: errorblock. error=%d", error);
 	ErMsgByLotusCode(error);
@@ -855,7 +859,7 @@ static int eventCheck(WPARAM, LPARAM)
 
 
 //on click to menu callback function
-INT_PTR PluginMenuCommand(WPARAM wParam, LPARAM lParam)
+static INT_PTR PluginMenuCommand(WPARAM wParam, LPARAM lParam)
 {
 	NotifyEventHooks(hCheckEvent, wParam, lParam); //create event to check lotus
 	return 0;
@@ -863,7 +867,7 @@ INT_PTR PluginMenuCommand(WPARAM wParam, LPARAM lParam)
 
 
 //window timer callback function, called on timer event
-void CALLBACK atTime(HWND, UINT, UINT_PTR idEvent, DWORD)
+static void CALLBACK atTime(HWND, UINT, UINT_PTR idEvent, DWORD)
 {
 	log(L"atTime: start");
 	KillTimer(hTimerWnd, idEvent);
@@ -900,49 +904,46 @@ void fillServersList(HWND hwndDlg)
 	STATUS    error = NOERROR;        /* Error return from API routines. */
 	char      ServerString[MAXPATH];  /* String to hold server names.   */
 	LPSTR     szServerString = ServerString;
-	USHORT i;
 
 	if (!hLotusDll) {
 		return;
 	}
 
-	error = (NSGetServerList1)(NULL, &hServerList);
+	error = NSGetServerList1(NULL, &hServerList);
 	if (error == NOERROR) {
 
-		pServerList = (BYTE far *)(OSLockObject1)(hServerList);
+		pServerList = (BYTE far *) OSLockObject1(hServerList);
 		wServerCount = (WORD)*pServerList;
 
 		pwServerLength = (WORD *)(pServerList + sizeof(WORD));
 
 		pServerName = (BYTE far *) pServerList + sizeof(wServerCount) + ((wServerCount)* sizeof(WORD));
 
-		for (i = 0; i < wServerCount; pServerName += pwServerLength[i], i++) {
+		for (USHORT i = 0; i < wServerCount; pServerName += pwServerLength[i], i++) {
 			memmove(szServerString, pServerName, pwServerLength[i]);
 			szServerString[pwServerLength[i]] = '\0';
 			decodeServer(ServerString);
 			SendDlgItemMessageA(hwndDlg, IDC_SERVER, CB_ADDSTRING, 0, (LPARAM)szServerString);
 		}
-		(OSUnlockObject1)(hServerList);
-		(OSMemFree1)(hServerList);
+		OSUnlockObject1(hServerList);
+		OSMemFree1(hServerList);
 
 	}
 	else {
 		ErMsgByLotusCode(error);
 	}
-
-	return;
 }
 
 
 //gets default settings from notes.ini file
-void lookupLotusDefaultSettings(HWND hwndDlg)
+static void lookupLotusDefaultSettings(HWND hwndDlg)
 {
 	char tmp[MAXENVVALUE + 1];
 	// Get the info from the .ini file
 	if (hLotusDll) {
-		if ((OSGetEnvironmentString1)("MailFile", tmp, MAXENVVALUE)) //path to mail file
+		if (OSGetEnvironmentString1("MailFile", tmp, MAXENVVALUE)) //path to mail file
 			SetDlgItemTextA(hwndDlg, IDC_DATABASE, tmp); //and set fields in opt. dialog
-		if ((OSGetEnvironmentString1)("MailServer", tmp, MAXENVVALUE)) //server name
+		if (OSGetEnvironmentString1("MailServer", tmp, MAXENVVALUE)) //server name
 		{
 			decodeServer(tmp);
 			SetDlgItemTextA(hwndDlg, IDC_SERVER, tmp);
@@ -952,7 +953,7 @@ void lookupLotusDefaultSettings(HWND hwndDlg)
 }
 
 // get variables values stored in db.
-void LoadSettings()
+static void LoadSettings()
 {
 	settingInterval = (INT)db_get_dw(NULL, PLUGINNAME, "LNInterval", 15);
 	settingInterval1 = (INT)db_get_dw(NULL, PLUGINNAME, "LNInterval1", 0);
@@ -984,16 +985,16 @@ void LoadSettings()
 		db_free(&dbv);
 	}
 
-	if (!db_get_ts(NULL, PLUGINNAME, "LNFilterSender", &dbv)) {
-		_tcsncpy_s(settingFilterSender, dbv.ptszVal, _TRUNCATE);
+	if (!db_get_ws(NULL, PLUGINNAME, "LNFilterSender", &dbv)) {
+		wcsncpy_s(settingFilterSender, dbv.ptszVal, _TRUNCATE);
 		db_free(&dbv);
 	}
-	if (!db_get_ts(NULL, PLUGINNAME, "LNFilterSubject", &dbv)) {
-		_tcsncpy_s(settingFilterSubject, dbv.ptszVal, _TRUNCATE);
+	if (!db_get_ws(NULL, PLUGINNAME, "LNFilterSubject", &dbv)) {
+		wcsncpy_s(settingFilterSubject, dbv.ptszVal, _TRUNCATE);
 		db_free(&dbv);
 	}
-	if (!db_get_ts(NULL, PLUGINNAME, "LNFilterTo", &dbv)) {
-		_tcsncpy_s(settingFilterTo, dbv.ptszVal, _TRUNCATE);
+	if (!db_get_ws(NULL, PLUGINNAME, "LNFilterTo", &dbv)) {
+		wcsncpy_s(settingFilterTo, dbv.ptszVal, _TRUNCATE);
 		db_free(&dbv);
 	}
 
@@ -1018,7 +1019,7 @@ void LoadSettings()
 	//lookupLotusDefaultSettings();
 }
 
-void SaveSettings(HWND hwndDlg)
+static void SaveSettings(HWND hwndDlg)
 {
 	char buff[128];
 	GetDlgItemTextA(hwndDlg, IDC_SERVER, settingServer, _countof(settingServer));
@@ -1050,39 +1051,37 @@ void SaveSettings(HWND hwndDlg)
 
 	settingFilterSender[0] = 0;
 	for (int i = 0; i < SendDlgItemMessage(hwndDlg, IDC_FILTER_SENDER, CB_GETCOUNT, 0, 0); i++) {
-		TCHAR text[512] = TEXT("");
+		wchar_t text[512] = TEXT("");
 		SendDlgItemMessage(hwndDlg, IDC_FILTER_SENDER, CB_GETLBTEXT, (WPARAM)i, (LPARAM)text);
-		_tcscat_s(settingFilterSender, _countof(settingFilterSender), text);
-		_tcscat_s(settingFilterSender, _countof(settingFilterSender), TEXT(";"));
+		wcscat_s(settingFilterSender, _countof(settingFilterSender), text);
+		wcscat_s(settingFilterSender, _countof(settingFilterSender), TEXT(";"));
 	}
-	db_set_ts(NULL, PLUGINNAME, "LNFilterSender", settingFilterSender);
+	db_set_ws(NULL, PLUGINNAME, "LNFilterSender", settingFilterSender);
 
 	settingFilterSubject[0] = 0;
 	for (int i = 0; i < SendDlgItemMessage(hwndDlg, IDC_FILTER_SUBJECT, CB_GETCOUNT, 0, 0); i++) {
-		TCHAR text[512] = TEXT("");
+		wchar_t text[512] = TEXT("");
 		SendDlgItemMessage(hwndDlg, IDC_FILTER_SUBJECT, CB_GETLBTEXT, (WPARAM)i, (LPARAM)text);
-		_tcscat_s(settingFilterSubject, _countof(settingFilterSubject), text);
-		_tcscat_s(settingFilterSubject, _countof(settingFilterSubject), TEXT(";"));
+		wcscat_s(settingFilterSubject, _countof(settingFilterSubject), text);
+		wcscat_s(settingFilterSubject, _countof(settingFilterSubject), TEXT(";"));
 	}
-	db_set_ts(NULL, PLUGINNAME, "LNFilterSubject", settingFilterSubject);
+	db_set_ws(NULL, PLUGINNAME, "LNFilterSubject", settingFilterSubject);
 
 	settingFilterTo[0] = 0;
 	for (int i = 0; i < SendDlgItemMessage(hwndDlg, IDC_FILTER_TO, CB_GETCOUNT, 0, 0); i++) {
-		TCHAR text[512] = TEXT("");
+		wchar_t text[512] = TEXT("");
 		SendDlgItemMessage(hwndDlg, IDC_FILTER_TO, CB_GETLBTEXT, (WPARAM)i, (LPARAM)text);
-		_tcscat_s(settingFilterTo, _countof(settingFilterTo), text);
-		_tcscat_s(settingFilterTo, _countof(settingFilterTo), TEXT(";"));
+		wcscat_s(settingFilterTo, _countof(settingFilterTo), text);
+		wcscat_s(settingFilterTo, _countof(settingFilterTo), TEXT(";"));
 	}
-	db_set_ts(NULL, PLUGINNAME, "LNFilterTo", settingFilterTo);
+	db_set_ws(NULL, PLUGINNAME, "LNFilterTo", settingFilterTo);
 }
 
 //callback function to speak with user interactions in options page
-INT_PTR CALLBACK DlgProcLotusNotifyConnectionOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK DlgProcLotusNotifyConnectionOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	static bool bInit = false;
 
-	int i;
-	char text[MAXENVVALUE];
 	switch (msg) {
 	case WM_INITDIALOG://initialize dialog, so set properties from db.
 		bInit = true;
@@ -1123,13 +1122,16 @@ INT_PTR CALLBACK DlgProcLotusNotifyConnectionOpts(HWND hwndDlg, UINT msg, WPARAM
 		case IDC_SERVER:
 			switch (HIWORD(wParam)) {
 			case CBN_SELCHANGE:
-				i = SendDlgItemMessage(hwndDlg, IDC_SERVER, CB_GETCURSEL, 0, 0);
+			{
+				int i = SendDlgItemMessage(hwndDlg, IDC_SERVER, CB_GETCURSEL, 0, 0);
+				char text[MAXENVVALUE];
 				SendDlgItemMessageA(hwndDlg, IDC_SERVER, CB_GETLBTEXT, (WPARAM)i, (LPARAM)text);
 				SetDlgItemTextA(hwndDlg, IDC_SERVER, text);
 				if (!bInit) {
 					PostMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 				}
 				break;
+			}
 
 			case CBN_DROPDOWN:
 				SendDlgItemMessage(hwndDlg, IDC_SERVER, CB_RESETCONTENT, 0, 0);
@@ -1175,7 +1177,7 @@ INT_PTR CALLBACK DlgProcLotusNotifyConnectionOpts(HWND hwndDlg, UINT msg, WPARAM
 	return FALSE;
 }
 
-INT_PTR CALLBACK DlgProcLotusNotifyPopupOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK DlgProcLotusNotifyPopupOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	static bool bInit = false;
 
@@ -1287,51 +1289,49 @@ INT_PTR CALLBACK DlgProcLotusNotifyPopupOpts(HWND hwndDlg, UINT msg, WPARAM wPar
 	return FALSE;
 }
 
-INT_PTR CALLBACK DlgProcLotusNotifyMiscOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK DlgProcLotusNotifyMiscOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	static bool bInit = false;
 
-	HWND hwndList;
-	TCHAR buff[512];
-	char tmp[255];
-	int index, size;
-	TCHAR* strptr;
+	wchar_t* strptr;
 	LVITEM lvI = { 0 };
 	LVCOLUMN lvc = { 0 };
 	switch (msg) {
 	case WM_INITDIALOG://initialize dialog, so set properties from db.
+	{
+		wchar_t buff[512];
 		bInit = true;
 		TranslateDialogDefault(hwndDlg);//translate miranda function
 		LoadSettings();
 
 		//fill filter combos
 
-		_tcsncpy_s(buff, settingFilterSender, _TRUNCATE);
-		while (strptr = _tcschr(buff, TEXT(';'))) {
-			TCHAR tmp[512] = TEXT("");
-			_tcsncpy_s(tmp, buff, (strptr - buff));
+		wcsncpy_s(buff, settingFilterSender, _TRUNCATE);
+		while (strptr = wcschr(buff, TEXT(';'))) {
+			wchar_t tmp[512] = TEXT("");
+			wcsncpy_s(tmp, buff, (strptr - buff));
 			SendDlgItemMessage(hwndDlg, IDC_FILTER_SENDER, CB_ADDSTRING, 0, (LPARAM)tmp);
-			_tcsncpy_s(buff, strptr + 1, _TRUNCATE);
+			wcsncpy_s(buff, strptr + 1, _TRUNCATE);
 		}
 
-		_tcsncpy_s(buff, settingFilterSubject, _TRUNCATE);
-		while (strptr = _tcschr(buff, TEXT(';'))) {
-			TCHAR tmp[512] = TEXT("");
-			_tcsncpy_s(tmp, buff, (strptr - buff));
+		wcsncpy_s(buff, settingFilterSubject, _TRUNCATE);
+		while (strptr = wcschr(buff, TEXT(';'))) {
+			wchar_t tmp[512] = TEXT("");
+			wcsncpy_s(tmp, buff, (strptr - buff));
 			SendDlgItemMessage(hwndDlg, IDC_FILTER_SUBJECT, CB_ADDSTRING, 0, (LPARAM)tmp);
-			_tcsncpy_s(buff, strptr + 1, _TRUNCATE);
+			wcsncpy_s(buff, strptr + 1, _TRUNCATE);
 		}
 
-		_tcsncpy_s(buff, settingFilterTo, _TRUNCATE);
-		while (strptr = _tcschr(buff, TEXT(';'))) {
-			TCHAR tmp[512] = TEXT("");
-			_tcsncpy_s(tmp, buff, (strptr - buff));
+		wcsncpy_s(buff, settingFilterTo, _TRUNCATE);
+		while (strptr = wcschr(buff, TEXT(';'))) {
+			wchar_t tmp[512] = TEXT("");
+			wcsncpy_s(tmp, buff, (strptr - buff));
 			SendDlgItemMessage(hwndDlg, IDC_FILTER_TO, CB_ADDSTRING, 0, (LPARAM)tmp);
-			_tcsncpy_s(buff, strptr + 1, _TRUNCATE);
+			wcsncpy_s(buff, strptr + 1, _TRUNCATE);
 		}
 
 		// initialise and fill listbox
-		hwndList = GetDlgItem(hwndDlg, IDC_STATUS);
+		HWND hwndList = GetDlgItem(hwndDlg, IDC_STATUS);
 		ListView_DeleteAllItems(hwndList);
 
 		SendMessage(hwndList, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT | LVS_EX_CHECKBOXES);
@@ -1359,11 +1359,14 @@ INT_PTR CALLBACK DlgProcLotusNotifyMiscOpts(HWND hwndDlg, UINT msg, WPARAM wPara
 
 		bInit = false;
 		break;
-
+	}
 	case WM_COMMAND://user changed something, so get changes to variables
+	{
 		if (!bInit && (HIWORD(wParam) == EN_CHANGE)) {
 			PostMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 		}
+		char tmp[255];
+		int index, size;
 		switch (LOWORD(wParam)) {
 		case IDC_BUTTON_ADD_SENDER_FILTER:
 			GetDlgItemTextA(hwndDlg, IDC_FILTER_SENDER, tmp, _countof(tmp));
@@ -1406,7 +1409,7 @@ INT_PTR CALLBACK DlgProcLotusNotifyMiscOpts(HWND hwndDlg, UINT msg, WPARAM wPara
 			break;
 		}
 		break;
-
+	}
 	case WM_NOTIFY://apply changes so write it to db
 		if (bInit) {
 			break;
@@ -1452,21 +1455,21 @@ int LotusNotifyOptInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
-	odp.ptszGroup = LPGENT("Plugins");
-	odp.ptszTitle = LPGENT(__PLUGIN_NAME);
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+	odp.szGroup.w = LPGENW("Plugins");
+	odp.szTitle.w = _A2W(__PLUGIN_NAME);
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
 
-	odp.ptszTab = LPGENT("Connection");
+	odp.szTab.w = LPGENW("Connection");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_LOTUS_CONECTION);
 	odp.pfnDlgProc = DlgProcLotusNotifyConnectionOpts;
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LPGENT("Popup");
+	odp.szTab.w = LPGENW("Popup");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_LOTUS_POPUP);
 	odp.pfnDlgProc = DlgProcLotusNotifyPopupOpts;
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LPGENT("Miscellaneous");
+	odp.szTab.w = LPGENW("Miscellaneous");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_LOTUS_MISC);
 	odp.pfnDlgProc = DlgProcLotusNotifyMiscOpts;
 	Options_AddPage(wParam, &odp);
@@ -1501,12 +1504,13 @@ INT_PTR TMLoadIcon(WPARAM wParam, LPARAM)
 	UINT id;
 
 	switch (wParam & 0xFFFF) {
-	case PLI_ONLINE:
-	case PLI_PROTOCOL: id = IDI_ICON1; break; // IDI_TM is the main icon for the protocol
-	case PLI_OFFLINE: id = IDI_ICON2; break;
-	default: return 0;
+	case PLI_PROTOCOL:
+		id = IDI_ICON1;
+		break; // IDI_TM is the main icon for the protocol
+	default:
+		return 0;
 	}
-	return (INT_PTR)LoadImage(hInst, MAKEINTRESOURCE(id), IMAGE_ICON, GetSystemMetrics(wParam&PLIF_SMALL ? SM_CXSMICON : SM_CXICON), GetSystemMetrics(wParam&PLIF_SMALL ? SM_CYSMICON : SM_CYICON), 0);
+	return (INT_PTR)LoadImage(hInst, MAKEINTRESOURCE(id), IMAGE_ICON, GetSystemMetrics(wParam & PLIF_SMALL ? SM_CXSMICON : SM_CXICON), GetSystemMetrics(wParam & PLIF_SMALL ? SM_CYSMICON : SM_CYICON), 0);
 }
 
 
@@ -1528,7 +1532,7 @@ INT_PTR SetStatus(WPARAM wParam, LPARAM lParam)
 				int cnt;
 				for (cnt = 0; cnt <= 4; cnt++)
 					if (startuperror >> cnt & 1)
-						ErMsgT(TranslateTS(startuperrors[cnt]));
+						ErMsgT(TranslateW(startuperrors[cnt]));
 				return 1;
 			}
 
@@ -1544,7 +1548,7 @@ INT_PTR SetStatus(WPARAM wParam, LPARAM lParam)
 		}
 	}
 	else {
-		int retv = 0;
+		int retv;
 		if (settingStatus[wParam - ID_STATUS_ONLINE])
 			retv = SetStatus(ID_STATUS_OFFLINE, lParam);
 		else
@@ -1555,7 +1559,7 @@ INT_PTR SetStatus(WPARAM wParam, LPARAM lParam)
 		// the status has been changed to unknown  (maybe run some more code)
 	}
 	//broadcast the message
-	if (currentStatus != wParam)
+	if (currentStatus != (int)wParam)
 		ProtoBroadcastAck(PLUGINNAME, NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, (HANDLE)currentStatus, wParam);
 	currentStatus = wParam;
 
@@ -1563,37 +1567,23 @@ INT_PTR SetStatus(WPARAM wParam, LPARAM lParam)
 }
 
 
-void checkEnvPath(TCHAR *path)
+void checkEnvPath(wchar_t *path)
 {
-	TCHAR *cur;
-	TCHAR nowy[2048] = { 0 };
-	TCHAR *found;
-	int len;
-
 	log_p(L"checkEnvPath: [%s]", path);
 
-	_tcslwr(path);
-	cur = _tgetenv(_T("PATH"));
-	_tcslwr(cur);
-	found = _tcsstr(cur, path);
-	len = (int)mir_tstrlen(path);
-	if (found != NULL && (found[len] == ';' || found[len] == 0 || (found[len] == '\\' && (found[len + 1] == ';' || found[len + 1] == 0)))) {
+	wcslwr(path);
+	wchar_t *cur = _wgetenv(L"PATH");
+	wcslwr(cur);
+	wchar_t *found = wcsstr(cur, path);
+	size_t len = mir_wstrlen(path);
+	if (found != NULL && (found[len] == ';' || found[len] == 0 || (found[len] == '\\' && (found[len + 1] == ';' || found[len + 1] == 0))))
 		return;
-	}
 
-	assert(mir_tstrlen(path) + mir_tstrlen(cur) + 1 < _countof(nowy));
-	_tcsncpy_s(nowy, _T("PATH="), _TRUNCATE);
-	_tcscat_s(nowy, cur);
-	if (cur[mir_tstrlen(cur) - 1] != ';')
-		_tcscat_s(nowy, _T(";"));
-	_tcscat_s(nowy, path);
-	_tcscat_s(nowy, _T(";"));
-
-	_tputenv(nowy);
+	_wputenv(CMStringW(FORMAT, L"PATH=%s;%s;", cur, path));
 }
 
 //GetStatus
-INT_PTR GetStatus(WPARAM, LPARAM)
+static INT_PTR GetStatus(WPARAM, LPARAM)
 {
 	return currentStatus;
 }
@@ -1604,14 +1594,14 @@ INT_PTR GetStatus(WPARAM, LPARAM)
 static int modulesloaded(WPARAM, LPARAM)
 {
 	int cnt;
-	TCHAR path[255] = { 0 };
+	wchar_t path[255] = { 0 };
 
 	log(L"Modules loaded, lets start LN...");
 
 	GetLotusPath(path, sizeof(path));
 	checkEnvPath(path);
-	_tcscat_s(path, _countof(path), _T("nnotes.dll"));
-	assert(mir_tstrlen(path) > 0);
+	wcscat_s(path, _countof(path), L"nnotes.dll");
+	assert(mir_wstrlen(path) > 0);
 
 	log_p(L"Loading dll: %s", path);
 
@@ -1629,7 +1619,7 @@ static int modulesloaded(WPARAM, LPARAM)
 
 			log(L"Initializing Lotus");
 
-			if ((NotesInitExtended1)(0, NULL)) {
+			if (NotesInitExtended1(0, NULL)) {
 
 				//initialize lotus    //TODO: Lotus can terminate miranda process here with msgbox "Shared Memory from a previous Notes/Domino run has been detected, this process will exit now"
 				startuperror += 4;
@@ -1653,7 +1643,7 @@ static int modulesloaded(WPARAM, LPARAM)
 	assert(startuperror == 0);
 	for (cnt = 0; cnt <= 4; cnt++) {
 		if (startuperror >> cnt & 1)
-			ErMsgT(TranslateTS(startuperrors[cnt]));
+			ErMsgT(TranslateW(startuperrors[cnt]));
 	}
 
 	return 0;
@@ -1666,7 +1656,7 @@ static int preshutdown(WPARAM, LPARAM)
 	Plugin_Terminated = true;
 	deleteElements();
 	if (hLotusDll) {
-		(NotesTerm1)();
+		NotesTerm1();
 		FreeLibrary(hLotusDll);
 	}
 	return 0;
@@ -1676,7 +1666,7 @@ static int preshutdown(WPARAM, LPARAM)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	Plugin_Terminated = false;
 
@@ -1700,19 +1690,19 @@ extern "C" int __declspec(dllexport) Load(void)
 	if (!(hCheckEvent = CreateHookableEvent("LotusNotify/Check"))) //check if there is another copy of plugin running
 		second = TRUE;
 
-	hCheckHook = HookEvent("LotusNotify/Check", eventCheck); //hook function to menu click event
+	HookEvent("LotusNotify/Check", eventCheck); //hook function to menu click event
 
 	if (!second) //if its first plugin instance
 	{
 		//function that will be called on menu click
-		hMenuService = CreateServiceFunction("LotusNotify/MenuCommand", PluginMenuCommand);
+		CreateServiceFunction("LotusNotify/MenuCommand", PluginMenuCommand);
 
 		CMenuItem mi;
 		SET_UID(mi, 0x4519458, 0xb55a, 0x4e22, 0xac, 0x95, 0x5e, 0xa4, 0x4d, 0x92, 0x65, 0x65);
 		mi.position = -0x7FFFFFFF; //on top menu position
-		mi.flags = CMIF_TCHAR;
+		mi.flags = CMIF_UNICODE;
 		mi.hIcolibItem = LoadIcon(hInst, MAKEINTRESOURCE(IDI_ICON1));
-		mi.name.t = LPGENT("&Check Lotus");
+		mi.name.w = LPGENW("&Check Lotus");
 		mi.pszService = "LotusNotify/MenuCommand"; //service name thet listning for menu call
 		hMenuHandle = Menu_AddMainMenuItem(&mi); //create menu pos.
 
@@ -1738,14 +1728,11 @@ extern "C" int __declspec(dllexport) Load(void)
 
 	LoadSettings(); //read from db to variables
 
-	SkinAddNewSoundExT("LotusNotify", LPGENT("Lotus Notify"), LPGENT("New Lotus document detected"));
+	Skin_AddSound("LotusNotify", LPGENW("Lotus Notify"), LPGENW("New Lotus document detected"));
 
-	hOptInit = HookEvent(ME_OPT_INITIALISE, LotusNotifyOptInit); //register service to hook option call
-	assert(hOptInit);
-	hHookModulesLoaded = HookEvent(ME_SYSTEM_MODULESLOADED, modulesloaded); //hook event that all plugins are loaded
-	assert(hHookModulesLoaded);
-	hHookPreShutdown = HookEvent(ME_SYSTEM_PRESHUTDOWN, preshutdown);
-	assert(hHookPreShutdown);
+	HookEvent(ME_OPT_INITIALISE, LotusNotifyOptInit); //register service to hook option call
+	HookEvent(ME_SYSTEM_MODULESLOADED, modulesloaded); //hook event that all plugins are loaded
+	HookEvent(ME_SYSTEM_PRESHUTDOWN, preshutdown);
 
 	log(L"Load: ok");
 	return 0;
@@ -1757,12 +1744,7 @@ extern "C" int __declspec(dllexport) Unload()
 	Plugin_Terminated = true;
 	mir_cslock lck(checkthreadCS);
 
-	if (hMenuService) DestroyServiceFunction(hMenuService);
-	if (hCheckEvent) DestroyHookableEvent(hCheckEvent);
-	if (hOptInit) UnhookEvent(hOptInit);
-	if (hCheckHook) UnhookEvent(hCheckHook);
-	if (hHookModulesLoaded) UnhookEvent(hHookModulesLoaded);
-	if (hHookPreShutdown) UnhookEvent(hHookPreShutdown);
+	DestroyHookableEvent(hCheckEvent);
 
 	log(L"Unload: ok");
 	logUnregister();

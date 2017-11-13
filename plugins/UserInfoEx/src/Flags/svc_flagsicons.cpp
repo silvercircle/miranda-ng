@@ -22,7 +22,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "..\stdafx.h"
+#include "../stdafx.h"
 
 /************************* Bitmap Access **************************/
 
@@ -284,7 +284,7 @@ static INT_PTR ServiceCreateMergedFlagIcon(WPARAM wParam,LPARAM lParam)
 void InitIcons()
 {
 	// all those flag icons storing in a large 24bit opaque bitmap to reduce file size
-	FIBITMAP *dib = LoadResource(IDB_FLAGSPNG, _T("PNG"));
+	FIBITMAP *dib = LoadResource(IDB_FLAGSPNG, L"PNG");
 	if (dib == NULL)
 		return;
 
@@ -342,12 +342,12 @@ void InitIcons()
 		if (phIconHandles != NULL) {
 			char szId[20];
 			SKINICONDESC sid = { 0 };
-			sid.section.t = LPGENT("Country flags");
+			sid.section.w = LPGENW("Country flags");
 			sid.pszName = szId; // name to refer to icon when playing and in db
-			sid.flags = SIDF_SORTED | SIDF_TCHAR;
+			sid.flags = SIDF_SORTED | SIDF_UNICODE;
 
 			for (int i=0; i < nCountriesCount; i++) {
-				sid.description.t = mir_a2t(LPGEN(countries[i].szName));
+				sid.description.w = mir_a2u(LPGEN(countries[i].szName));
 				/* create identifier */
 				mir_snprintf(szId, (countries[i].id == 0xFFFF) ? "%s0x%X" : "%s%i", "flags_", countries[i].id); /* buffer safe */
 				int index = CountryNumberToBitmapIndex(countries[i].id);
@@ -358,7 +358,7 @@ void InitIcons()
 				phIconHandles[index] = IcoLib_AddIcon(&sid);
 				if (sid.hDefaultIcon != NULL)
 					DestroyIcon(sid.hDefaultIcon);
-				mir_free(sid.description.t); sid.description.t = NULL;
+				mir_free(sid.description.w); sid.description.w = NULL;
 			}
 		}
 		ImageList_Destroy(himl);

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-09 Miranda ICQ/IM project,
 
 This file is part of Send Screenshot Plus, a Miranda IM plugin.
@@ -26,22 +26,23 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-//---------------------------------------------------------------------------
 #include "stdafx.h"
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 CSendHost_ImageShack::CSendHost_ImageShack(HWND Owner, MCONTACT hContact, bool bAsync)
 	: CSend(Owner, hContact, bAsync)
 {
 	m_EnableItem = SS_DLG_DESCRIPTION | SS_DLG_AUTOSEND | SS_DLG_DELETEAFTERSSEND;
-	m_pszSendTyp = LPGENT("Image upload");
+	m_pszSendTyp = LPGENW("Image upload");
 }
 
 CSendHost_ImageShack::~CSendHost_ImageShack()
 {
-};
+}
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 int CSendHost_ImageShack::Send()
 {
 	if (!g_hNetlibUser) { /// check Netlib
@@ -50,11 +51,11 @@ int CSendHost_ImageShack::Send()
 		return !m_bAsync;
 	}
 	memset(&m_nlhr, 0, sizeof(m_nlhr));
-	char* tmp; tmp = mir_t2a(m_pszFile);
+	char* tmp; tmp = mir_u2a(m_pszFile);
 	HTTPFormData frm[] = {
-		//		{"Referer",HTTPFORM_HEADER("http://www.imageshack.us/upload_api.php")},
+		//{ "Referer", HTTPFORM_HEADER("http://www.imageshack.us/upload_api.php") },
 		{ "fileupload", HTTPFORM_FILE(tmp) },
-		//{"rembar","yes"},// no info bar on thumb
+		//{ "rembar", "yes" },// no info bar on thumb
 		{ "public", "no" },
 		{ "key", HTTPFORM_8BIT(DEVKEY_IMAGESHACK) },
 	};
@@ -74,7 +75,7 @@ int CSendHost_ImageShack::Send()
 void CSendHost_ImageShack::SendThread()
 {
 	/// send DATA and wait for m_nlreply
-	NETLIBHTTPREQUEST* reply = (NETLIBHTTPREQUEST*)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)g_hNetlibUser, (LPARAM)&m_nlhr);
+	NETLIBHTTPREQUEST* reply = Netlib_HttpTransaction(g_hNetlibUser, &m_nlhr);
 	HTTPFormDestroy(&m_nlhr);
 	if (reply) {
 		if (reply->resultCode >= 200 && reply->resultCode < 300 && reply->dataLength) {
@@ -95,24 +96,24 @@ void CSendHost_ImageShack::SendThread()
 				}
 				else mir_freeAndNil(m_URLthumb);
 
-				CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)reply);
+				Netlib_FreeHttpRequest(reply);
 				svcSendMsgExit(url); return;
 			}
 			else {/// check error mess from server
 				url = GetHTMLContent(reply->pData, "<error ", "</error>");
-				TCHAR* err = NULL;
-				if (url) err = mir_a2t(url);
+				wchar_t* err = NULL;
+				if (url) err = mir_a2u(url);
 				if (!err || !*err) {/// fallback to server response mess
 					mir_free(err);
-					err = mir_a2t(reply->pData);
+					err = mir_a2u(reply->pData);
 				}
-				Error(_T("%s"), err);
+				Error(L"%s", err);
 				mir_free(err);
 			}
 		}
 		else Error(SS_ERR_RESPONSE, m_pszSendTyp, reply->resultCode);
 
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)reply);
+		Netlib_FreeHttpRequest(reply);
 	}
 	else Error(SS_ERR_NORESPONSE, m_pszSendTyp, m_nlhr.resultCode);
 

@@ -4,7 +4,7 @@ Jabber Protocol Plugin for Miranda NG
 
 Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -28,34 +28,34 @@ BOOL CJabberProto::WsInit(void)
 {
 	m_lastTicks = ::GetTickCount();
 
-	TCHAR name[128];
-	mir_sntprintf(name, TranslateT("%s connection"), m_tszUserName);
+	wchar_t name[128];
+	mir_snwprintf(name, TranslateT("%s connection"), m_tszUserName);
 
-	NETLIBUSER nlu = { sizeof(nlu) };
-	nlu.flags = NUF_OUTGOING | NUF_INCOMING | NUF_HTTPCONNS | NUF_TCHAR;	// | NUF_HTTPGATEWAY;
-	nlu.ptszDescriptiveName = name;
+	NETLIBUSER nlu = {};
+	nlu.flags = NUF_OUTGOING | NUF_INCOMING | NUF_HTTPCONNS | NUF_UNICODE;
+	nlu.szDescriptiveName.w = name;
 	nlu.szSettingsModule = m_szModuleName;
-	m_hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
-	return m_hNetlibUser != NULL;
+	m_hNetlibUser = Netlib_RegisterUser(&nlu);
+	return m_hNetlibUser != nullptr;
 }
 
 void CJabberProto::WsUninit(void)
 {
 	Netlib_CloseHandle(m_hNetlibUser);
-	m_hNetlibUser = NULL;
+	m_hNetlibUser = nullptr;
 }
 
-JABBER_SOCKET CJabberProto::WsConnect(char* host, WORD port)
+HNETLIBCONN CJabberProto::WsConnect(char* host, WORD port)
 {
-	NETLIBOPENCONNECTION nloc = { 0 };
+	NETLIBOPENCONNECTION nloc = {};
 	nloc.cbSize = sizeof(nloc);
 	nloc.szHost = host;
 	nloc.wPort = port;
 	nloc.timeout = 6;
-	return (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)m_hNetlibUser, (LPARAM)&nloc);
+	return Netlib_OpenConnection(m_hNetlibUser, &nloc);
 }
 
-int CJabberProto::WsSend(JABBER_SOCKET hConn, char* data, int datalen, int flags)
+int CJabberProto::WsSend(HNETLIBCONN hConn, char* data, int datalen, int flags)
 {
 	m_lastTicks = ::GetTickCount();
 	int len;
@@ -67,7 +67,7 @@ int CJabberProto::WsSend(JABBER_SOCKET hConn, char* data, int datalen, int flags
 	return len;
 }
 
-int CJabberProto::WsRecv(JABBER_SOCKET hConn, char* data, long datalen, int flags)
+int CJabberProto::WsRecv(HNETLIBCONN hConn, char* data, long datalen, int flags)
 {
 	int ret;
 

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (C) 2012-15 Miranda NG project,
+Copyright (C) 2012-17 Miranda NG project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "stdafx.h"
 
-#include "..\..\..\libs\zlib\src\zlib.h"
+#include "../../../libs/zlib/src/zlib.h"
 
 struct ExternalKey
 {

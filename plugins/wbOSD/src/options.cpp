@@ -11,7 +11,7 @@ Distributed under GNU's GPL 2 or later
 
 COLORREF pencustcolors[16];
 
-const static osdmsg defstr = { _T(""), 0, RGB(0, 0, 0), 0, 0 };
+const static osdmsg defstr = { L"", 0, RGB(0, 0, 0), 0, 0 };
 
 void FillCheckBoxTree(HWND hwndTree, DWORD style)
 {
@@ -127,11 +127,11 @@ void loadDBSettings(plgsettings *ps)
 	ps->showWhen = db_get_dw(NULL, THIS_MODULE, "showWhen", DEFAULT_SHOWWHEN);
 
 	DBVARIANT dbv;
-	if (!db_get_ts(NULL, THIS_MODULE, "message_format", &dbv)) {
-		mir_tstrcpy(ps->msgformat, dbv.ptszVal);
+	if (!db_get_ws(NULL, THIS_MODULE, "message_format", &dbv)) {
+		mir_wstrcpy(ps->msgformat, dbv.ptszVal);
 		db_free(&dbv);
 	}
-	else mir_tstrcpy(ps->msgformat, DEFAULT_MESSAGEFORMAT);
+	else mir_wstrcpy(ps->msgformat, DEFAULT_MESSAGEFORMAT);
 
 	ps->announce = db_get_dw(NULL, THIS_MODULE, "announce", DEFAULT_ANNOUNCE);
 
@@ -149,12 +149,12 @@ void loadDBSettings(plgsettings *ps)
 	ps->lf.lfQuality = db_get_b(NULL, THIS_MODULE, "fntQuality", DEFAULT_FNT_QUALITY);
 	ps->lf.lfPitchAndFamily = db_get_b(NULL, THIS_MODULE, "fntPitchAndFamily", DEFAULT_FNT_PITCHANDFAM);
 
-	if (!db_get_ts(NULL, THIS_MODULE, "fntFaceName", &dbv)) {
-		mir_tstrcpy(ps->lf.lfFaceName, dbv.ptszVal);
+	if (!db_get_ws(NULL, THIS_MODULE, "fntFaceName", &dbv)) {
+		mir_wstrcpy(ps->lf.lfFaceName, dbv.ptszVal);
 		db_free(&dbv);
 	}
 	else
-		mir_tstrcpy(ps->lf.lfFaceName, DEFAULT_FNT_FACENAME);
+		mir_wstrcpy(ps->lf.lfFaceName, DEFAULT_FNT_FACENAME);
 }
 
 void saveDBSettings(plgsettings *ps)
@@ -176,7 +176,7 @@ void saveDBSettings(plgsettings *ps)
 	db_set_b(NULL, THIS_MODULE, "transparent", ps->transparent);
 	db_set_b(NULL, THIS_MODULE, "messages", ps->messages);
 	db_set_b(NULL, THIS_MODULE, "a_user", ps->a_user);
-	db_set_ts(NULL, THIS_MODULE, "message_format", ps->msgformat);
+	db_set_ws(NULL, THIS_MODULE, "message_format", ps->msgformat);
 
 	db_set_b(NULL, THIS_MODULE, "align", ps->align);
 	db_set_b(NULL, THIS_MODULE, "salign", ps->salign);
@@ -201,7 +201,7 @@ void saveDBSettings(plgsettings *ps)
 	db_set_b(NULL, THIS_MODULE, "fntClipPrecision", ps->lf.lfClipPrecision);
 	db_set_b(NULL, THIS_MODULE, "fntQuality", ps->lf.lfQuality);
 	db_set_b(NULL, THIS_MODULE, "fntPitchAndFamily", ps->lf.lfPitchAndFamily);
-	db_set_ts(NULL, THIS_MODULE, "fntFaceName", ps->lf.lfFaceName);
+	db_set_ws(NULL, THIS_MODULE, "fntFaceName", ps->lf.lfFaceName);
 
 	db_set_dw(NULL, THIS_MODULE, "announce", ps->announce);
 
@@ -249,8 +249,8 @@ INT_PTR CALLBACK OptDlgProc(HWND hDlg, UINT msg, WPARAM wparam, LPARAM lparam)
 		SendDlgItemMessage(hDlg, IDC_SLIDER1, TBM_SETPOS, TRUE, (LPARAM)ps->alpha);
 
 		{
-			TCHAR buf[20];
-			mir_sntprintf(buf, _T("%d %%"), ps->alpha * 100 / 255);
+			wchar_t buf[20];
+			mir_snwprintf(buf, L"%d %%", ps->alpha * 100 / 255);
 			SetDlgItemText(hDlg, IDC_ALPHATXT, buf);
 		}
 
@@ -265,8 +265,8 @@ INT_PTR CALLBACK OptDlgProc(HWND hDlg, UINT msg, WPARAM wparam, LPARAM lparam)
 		ps = (plgsettings*)GetWindowLongPtr(hDlg, GWLP_USERDATA);
 		ps->alpha = SendDlgItemMessage(hDlg, IDC_SLIDER1, TBM_GETPOS, 0, 0);
 		{
-			TCHAR buf[20];
-			mir_sntprintf(buf, _T("%d %%"), ps->alpha * 100 / 255);
+			wchar_t buf[20];
+			mir_snwprintf(buf, L"%d %%", ps->alpha * 100 / 255);
 			SetDlgItemText(hDlg, IDC_ALPHATXT, buf);
 		}
 		goto xxx;
@@ -411,13 +411,12 @@ int OptionsInit(WPARAM wparam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.position = 150000000;
-	odp.groupPosition = 950000000;
 	odp.hInstance = hI;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_DIALOG1);
-	odp.ptszGroup = LPGENT("Plugins");
-	odp.ptszTitle = LPGENT("OSD");
+	odp.szGroup.w = LPGENW("Plugins");
+	odp.szTitle.w = LPGENW("OSD");
 	odp.pfnDlgProc = OptDlgProc;
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
 	Options_AddPage(wparam, &odp);
 	return 0;
 }

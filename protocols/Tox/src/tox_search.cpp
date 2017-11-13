@@ -5,9 +5,7 @@ ToxHexAddress ResolveToxAddressFromDnsRecordV1(const std::string &dnsRecord)
 	std::smatch match;
 	std::regex regex("^v=tox1;id=([A-Fa-f0-9]{76})(;sign=(\\S+))?$");
 	if (std::regex_search(dnsRecord, match, regex))
-	{
 		return ToxHexAddress(match[1]);
-	}
 	return ToxHexAddress::Empty();
 }
 
@@ -26,12 +24,10 @@ ToxHexAddress ResolveToxAddressFromDnsRecordV3(void *dns, uint32_t requestId, co
 {
 	std::smatch match;
 	std::regex regex("^v=tox3;id=([a-z0-5.]+)$");
-	if (std::regex_search(dnsRecord, match, regex))
-	{
+	if (std::regex_search(dnsRecord, match, regex)) {
 		std::string id = match[1];
 		uint8_t data[TOX_ADDRESS_SIZE];
-		if (tox_decrypt_dns3_TXT(dns, data, (uint8_t*)id.c_str(), (uint32_t)id.length(), requestId) != TOX_ERROR)
-		{
+		if (tox_decrypt_dns3_TXT(dns, data, (uint8_t*)id.c_str(), (uint32_t)id.length(), requestId) != TOX_ERROR) {
 			return ToxHexAddress(data, TOX_ADDRESS_SIZE);
 		}
 	}
@@ -44,11 +40,9 @@ ToxHexAddress ResolveToxAddressFromDns(const char *dnsQuery)
 
 	DNS_RECORDA *record = NULL;
 	DNS_STATUS status = DnsQuery_A(dnsQuery, DNS_TYPE_TEXT, DNS_QUERY_STANDARD, NULL, (PDNS_RECORD*)&record, NULL);
-	while (status == ERROR_SUCCESS && record)
-	{
+	while (status == ERROR_SUCCESS && record) {
 		DNS_TXT_DATAA *txt = &record->Data.Txt;
-		if (record->wType == DNS_TYPE_TEXT && txt->dwStringCount)
-		{
+		if (record->wType == DNS_TYPE_TEXT && txt->dwStringCount) {
 			address = ResolveToxAddressFromDnsRecordV1(txt->pStringArray[0]);
 			break;
 		}
@@ -59,15 +53,41 @@ ToxHexAddress ResolveToxAddressFromDns(const char *dnsQuery)
 	return address;
 }
 
+ToxHexAddress ResolveToxAddressFromToxme(HNETLIBUSER hNetlib, const char *query)
+{
+	ToxHexAddress address = ToxHexAddress::Empty();
+
+	HttpRequest request(REQUEST_POST, "https://toxme.io/api");
+	JSONNode root(JSON_NODE);
+	root
+		<< JSONNode("action", 3)
+		<< JSONNode("name", query);
+	json_string data = root.write();
+	request.SetData(data.c_str(), data.length());
+
+	NLHR_PTR response(request.Send(hNetlib));
+	if (response->resultCode != HTTP_CODE_OK || !response->pData)
+		return ToxHexAddress::Empty();
+
+	root = JSONNode::parse(response->pData);
+	if (root.empty())
+		return ToxHexAddress::Empty();
+
+	json_string id = root.at("tox_id").as_string();
+	return ToxHexAddress(id.c_str());
+}
+
 void CToxProto::SearchByNameAsync(void *arg)
 {
+	Thread_SetName("TOX: SearchByNameAsync");
+
 	char *query = (char*)arg;
 	char *name = strtok(query, "@");
-	char *domain = strtok(NULL, "");
+	// char *domain = strtok(NULL, "");
 
-	int resolved = 0;
+	/*int resolved = 0;
 
-	if (IsFileExists((TCHAR*)VARST(_T(TOX_INI_PATH))))
+	if (IsFileExists((wchar_t*)VARSW(_T(TOX_INI_PATH))))
 	{
 		char fileName[MAX_PATH];
 		mir_strcpy(fileName, VARS(TOX_INI_PATH));
@@ -139,6 +159,20 @@ void CToxProto::SearchByNameAsync(void *arg)
 
 			ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)1, (LPARAM)&psr);
 		}
+	}*/
+
+	ToxHexAddress address = ResolveToxAddressFromToxme(m_hNetlibUser, query);
+	if (!address.IsEmpty()) {
+		PROTOSEARCHRESULT psr = { sizeof(PROTOSEARCHRESULT) };
+		psr.flags = PSR_UTF8;
+		psr.id.a = mir_strdup(address);
+		psr.nick.a = mir_strdup(name);
+
+		char email[MAX_PATH];
+		mir_snprintf(email, "%s@toxme.io", name);
+		psr.email.a = mir_strdup(email);
+
+		ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)1, (LPARAM)&psr);
 	}
 
 	ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE)1, 0);
@@ -147,6 +181,7 @@ void CToxProto::SearchByNameAsync(void *arg)
 
 void CToxProto::SearchFailedAsync(void*)
 {
+	Thread_SetName("TOX: SearchFailedAsync");
 	ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_FAILED, (HWND)1, 0);
 }
 
@@ -154,8 +189,7 @@ INT_PTR CToxProto::SearchDlgProc(HWND hwnd, UINT uMsg, WPARAM, LPARAM lParam)
 {
 	CToxProto *proto = (CToxProto*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 
-	switch (uMsg)
-	{
+	switch (uMsg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwnd);
 		{
@@ -174,8 +208,7 @@ INT_PTR CToxProto::SearchDlgProc(HWND hwnd, UINT uMsg, WPARAM, LPARAM lParam)
 
 HWND CToxProto::OnSearchAdvanced(HWND owner)
 {
-	if (!IsOnline())
-	{
+	if (!IsOnline()) {
 		// we cannot add someone to friend list while tox is offline
 		return NULL;
 	}
@@ -183,15 +216,15 @@ HWND CToxProto::OnSearchAdvanced(HWND owner)
 	std::smatch match;
 	std::regex regex("^\\s*([A-Fa-f0-9]{76})\\s*$");
 
-	TCHAR text[MAX_PATH];
+	wchar_t text[MAX_PATH];
 	GetDlgItemText(owner, IDC_SEARCH, text, _countof(text));
 
 	const std::string query = T2Utf(text).str();
-	if (std::regex_search(query, match, regex))
-	{
+	if (std::regex_search(query, match, regex)) {
 		std::string address = match[1];
 
 		PROTOSEARCHRESULT psr = { sizeof(psr) };
+		psr.flags = PSR_UTF8;
 		psr.id.a = mir_strdup(query.c_str());
 
 		ADDCONTACTSTRUCT acs = { HANDLE_SEARCHRESULT };
@@ -202,8 +235,7 @@ HWND CToxProto::OnSearchAdvanced(HWND owner)
 
 		ForkThread(&CToxProto::SearchFailedAsync, NULL);
 	}
-	else
-	{
+	else {
 		regex = "^\\s*(([^ @/:;()\"']+)(@[A-Za-z]+.[A-Za-z]{2,6})?)\\s*$";
 		if (std::regex_search(query, match, regex))
 			ForkThread(&CToxProto::SearchByNameAsync, mir_strdup(query.c_str()));
@@ -215,10 +247,5 @@ HWND CToxProto::OnSearchAdvanced(HWND owner)
 
 HWND CToxProto::OnCreateExtendedSearchUI(HWND owner)
 {
-	return CreateDialogParam(
-		g_hInstance,
-		MAKEINTRESOURCE(IDD_SEARCH),
-		owner,
-		SearchDlgProc,
-		(LPARAM)this);
+	return CreateDialogParam(g_hInstance, MAKEINTRESOURCE(IDD_SEARCH), owner, SearchDlgProc, (LPARAM)this);
 }

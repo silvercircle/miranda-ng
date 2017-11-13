@@ -2,58 +2,11 @@
 ;============================================================
 ;  File: Clist_modern.dll
 ;  Plugin: Modern contact list
-;  Version: 0.9.1.3
+;  Version: 0.9.1.7
 ;  Authors: Artem Shpynov, Ricardo Pescuma Domenecci and Anton Senko based on clist_mw by Bethoven
 ;============================================================
 [Displays contacts, event notifications, protocol status with advanced visual modifications. Supported multi-window modifications, enhanced metacontact cooperation.]
 Паказвае кантакты, падзеі, статусы пратаколаў з пашыранымі функцыямі афармлення (скіны). Мультываконная мадыфікацыя, пашыраная падтрымка метакантактаў.
-;file \plugins\Clist_modern\res\resource.rc
-[Transparency:]
-Празрыстасць:
-[Window behavior:]
-Паводзіны спісу:
-[List sorting:]
-Сартаванне спісу:
-[Status bar:]
-Панэль статусу:
-[List content:]
-Утрыманне спісу:
-[Show counts of number of contacts in a group]
-Паказваць колькасць кантактаў у гуртах
-[Hide group counts when there are none online]
-Хаваць лічыльнік, калі няма далучаных кантактаў
-[1st:]
-1-шы:
-[2nd:]
-2-гі:
-[3rd:]
-3-ці:
-[Always on top]
-Па-над усімі вокнамі
-[Hide contact list after]
-Хаваць спіс пасля
-[seconds]
-секунд(ы)
-[Fade contact list in/out]
-Плыўна схаваць спіс
-[Transparent contact list]
-Празрысты спіс кантактаў
-[Inactive opacity:]
-Акно неактыўнае:
-[Active opacity:]
-Вакно актыўнае:
-[Show avatars]
-Паказваць аватары
-[Animate avatars]
-Анімацыя аватараў
-[Show contact time in list]
-Паказваць час кантакту
-[Compact mode]
-Кампактны рэжым
-[Show protocol names]
-Паказваць пратаколы
-[Show status text]
-Паказваць тэкст статусу
 [Settings]
 Налады
 [Background color:]
@@ -94,6 +47,8 @@
 УВАГА: \tСкіны могуць змяняць Ваш профіль. Адкат немагчымы. \n\t\tКалі ласка, зрабіце РЭЗЕРВОВУЮ КОПІЮ профіля.
 [* Restart may be required for all changes to take effect]
 * Для змяненняў патрэбны перазапуск
+[Skin folder]
+
 [Available view modes]
 Даступныя рэжымы выгляду
 [Include protocols]
@@ -122,6 +77,8 @@
 Рэжым статусу
 [Automatically clear this view mode after]
 Аўтаматычна скідаць гэты рэжым пасля
+[seconds]
+секунд(ы)
 [View mode options]
 Налады рэжыму выгляду
 [Editing view mode]
@@ -146,8 +103,8 @@
 Шматрадковая панэль статусу:
 [Accounts per line]
 Контаў у радку
-[* To increase status bar height:\nset in Main menu: Frames -> Status Bar -> Show title then pull appeared title of status bar up or down.]
-* Змена вышыні радка статусу: "Галоўнае меню -> Фрэймы -> Панэль статусу -> Плывучы рэжым" і расцягніце панэль.
+[* To increase status bar height:\nset in Main menu -> Frames -> Status Bar -> Show title then pull appeared title of status bar up or down.]
+
 [Hold [Shift] to inverse [Right Click] behavior.]
 Shift + Правы клік - Галоўнае меню
 [[Ctrl]+[Left Click] to filter only protocol. Click on empty space to show all.]
@@ -158,6 +115,8 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 Наладзіць конт
 [Hide account completely]
 Схаваць конт
+[Show protocol names]
+Паказваць пратаколы
 [Show status name]
 Імя Статуса
 [Show xStatus name]
@@ -193,7 +152,7 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 [Hide from list only, in order to keep their history and ignore/visibility settings]
 Схаваць са спісу (захаваецца гісторыя і налады бачнасці)
 [Use Options -> Contacts -> Ignore to unhide contacts.]
-Налады -> Кантакты -> Ігнараваць, каб адлюстраваць кантакты.
+"Налады -> Кантакты -> Ігнараваць", каб адлюстраваць кантакты.
 [Are you sure you want to delete %s?]
 Выдаліць %s са спісу?
 [This will erase all history and settings for this contact!]
@@ -212,6 +171,12 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 Спіс кантактаў
 [Contact list sorting]
 Сартаванне спісу кантактаў
+[1st:]
+1-шы:
+[2nd:]
+2-гі:
+[3rd:]
+3-ці:
 [Place offline users out of groups]
 Адключаных паказваць па-за гуртамі
 [Gamma correction]
@@ -228,6 +193,8 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 Тып вылучэння
 [Bring to front if covered]
 Перасоўваць на пярэдні план
+[Hide contact list after]
+Хаваць спіс пасля
 [Automatically resize window to height of list]
 Аўтаматычна змяняць памер вакна
 [maximum]
@@ -294,6 +261,10 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 Гурты
 [Draw a line alongside group names]
 Лінія ўздоўж назваў гуртоў
+[Show counts of number of contacts in a group]
+Паказваць колькасць кантактаў у гуртах
+[Hide group counts when there are none online]
+Хаваць лічыльнік, калі няма далучаных кантактаў
 [Sort groups alphabetically]
 Сартаваць гурты па алфавіце
 [Quicksearch in open groups only]
@@ -324,8 +295,22 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 Абразок у трэі
 [Use xStatus icon]
 Абразок xСтатуса
+[Icon mode]
+
+[For similar statuses]
+
 [Global status]
 Агульны статус
+[Single account]
+
+[Cycle icons]
+
+[All accounts]
+
+[For different statuses]
+
+[Cycle period, seconds]
+
 [Additional stuff]
 Дадаткова
 [Ignore empty extra icons places (arrange to right).]
@@ -354,6 +339,8 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 Час як элемент радка
 [Appearance]
 Знешні выгляд
+[Always on top]
+Па-над усімі вокнамі
 [Pin to desktop]
 Прымацаваць ды стала
 [Client area margins]
@@ -374,6 +361,14 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 Схаваць у сістэмны латок
 [Translucency options]
 Налады празрыстасці
+[Fade contact list in/out]
+Плыўна схаваць спіс
+[Transparent contact list]
+Празрысты спіс кантактаў
+[Inactive opacity:]
+Акно неактыўнае:
+[Active opacity:]
+Вакно актыўнае:
 [Enable drop shadow (restart required)]
 Уключыць цень (патрэбен перазапуск)
 [Frames]
@@ -390,8 +385,8 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 Рэжым без скінаў
 [Disable skin engine]
 Выключыць скіны
-[Enable Aero Glass (Vista+)]
-Стыль Аэро (Vista+)
+[Enable Aero Glass (Vista, Win 7)]
+Стыль Аэро (Vista, Win 7)
 [Order of items:]
 Парадак элементаў:
 [Minimum row height:]
@@ -416,8 +411,12 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 Кампактны рэжым (аватары і дадатковы тэкст толькі ў абраных кантактаў)
 [Draw border on avatar]
 Рамкі на выявах
+[Show avatars]
+Паказваць аватары
 [Draw overlay icons]
 Абразкі на аватарах
+[Max size (pixels):]
+
 [Round corners of avatars]
 Закругленыя аватары
 [Ignore size for row height calcs]
@@ -436,6 +435,8 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 вышыня
 [width]
 шырыня
+[Animate avatars]
+Анімацыя аватараў
 [Use old render method (fast, but has artifacts)]
 Стары метад адмалёўкі (хутчэй, але могуць быць "артэфакты")
 [Hide icon when showing avatar]
@@ -555,26 +556,25 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 [&Status]
 Статус
 [&Offline\tCtrl+0]
-Адключаны
+Ад&ключаныtCtrl+0
 [On&line\tCtrl+1]
-Далучаны
+&Далучаны\tCtrl+1
 [&Away\tCtrl+2]
-Адышоў
-[&NA\tCtrl+3]
-Недасяжны
+&Адсутнічаю\tCtrl+2
+[&Not available\tCtrl+3]
+Неда&ступны\tCtrl+3
 [Occ&upied\tCtrl+4]
-Заняты
-[&DND\tCtrl+5]
-Не турбаваць
+Зан&яты\tCtrl+4
+[&Do not disturb\tCtrl+5]
+Не &турбаваць\tCtrl+5
 [&Free for chat\tCtrl+6]
-Вольны
+&Вольны\tCtrl+6
 [&Invisible\tCtrl+7]
-Нябачны
+&Нябачны\tCtrl+7
 [On the &phone\tCtrl+8]
-Тэлефон
+На тэле&фоне\tCtrl+8
 [Out to &lunch\tCtrl+9]
-За ежай
-;file \plugins\Clist_modern\src\cluiframes.cpp
+А&бедаю\tCtrl+9
 [&Visible]
 &Бачнасць
 [&Show title]
@@ -601,15 +601,14 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 &Уверх
 [&Down]
 У&ніз
+[Lock frame]
+Замацаваць фрэйм
 [Show all frames]
 Паказаць усе
 [Show all title bars]
 Паказваць назвы
 [Hide all title bars]
 Схаваць назвы
-[Lock frame]
-Замацаваць фрэйм
-;file \plugins\Clist_modern\src\groupmenu.cpp
 [&Hide/show]
 С&хаваць/паказаць
 [&Find/add contacts...]
@@ -620,7 +619,6 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 Пра праграму
 [&Show offline users in here]
 Паказаць адключаных у гурце
-;file \plugins\Clist_modern\src\modern_clc.cpp
 [Do you want contact '%s' to be converted to metacontact and '%s' be added to it?]
 Жадаеце канверсаваць '%s' у метакантакт і дадаць '%s' у яго?
 [Converting to metacontact]
@@ -659,7 +657,6 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 Фон панэлі статуса
 [Frames title bar background]
 Фон загалоўка фрэймаў
-;file \plugins\Clist_modern\src\modern_clcopts.cpp
 [Contact names]
 Кантакты
 [Row items]
@@ -671,11 +668,11 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 [Standard contacts]
 Стандартныя кантакты
 [Away contacts]
-Кантакт "адышоў"
-[DND contacts]
+Кантакт "адсутнічаю"
+[Do not disturb contacts]
 Кантакт "не турбаваць"
-[NA contacts]
-Кантакт "недасяжны"
+[Not available contacts]
+Кантакт "недаступны"
 [Occupied contacts]
 Кантакт "заняты"
 [Free for chat contacts]
@@ -738,11 +735,11 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 Далучаны
 [Away]
 Адсутнічаю
-[NA]
+[Not available]
 Недаступны
 [Occupied]
 Заняты
-[DND]
+[Do not disturb]
 Не турбаваць
 [Free for chat]
 Вольны
@@ -778,14 +775,12 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 Спіс
 [Window]
 Акно
-;file \plugins\Clist_modern\src\modern_clistevents.cpp
 [No events]
 Падзей няма
 [Event area background]
 Фон вобласці падзей
 [Event area]
 Вобласць падзей
-;file \plugins\Clist_modern\src\modern_clistmenus.cpp
 [&Contact rate]
 Рэйтынг кантакту
 [None]
@@ -806,7 +801,6 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 Рэйтынг кантакту: высокі
 [Show even if offline]
 Паказваць адключаных
-;file \plugins\Clist_modern\src\modern_clistopts.cpp
 [Avatar]
 Аватар
 [Icon]
@@ -825,10 +819,12 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 Радок
 [Row design]
 Дызайн радка
-;file \plugins\Clist_modern\src\modern_clistsettings.cpp
 [(Unknown contact)]
 (Невядомы кантакт)
-;file \plugins\Clist_modern\src\modern_clui.cpp
+[Show avatar]
+
+[Hide avatar]
+
 [Show contact &avatar]
 Паказаць аватар
 [Hide contact &avatar]
@@ -837,16 +833,14 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 Мае кантакты
 [My Contacts]
 Мае кантакты
-;file \plugins\Clist_modern\src\modern_keyboard.cpp
-[Close Miranda]
-Зачыніць праграму
 [Main]
 Галоўны
+[Close Miranda]
+Зачыніць праграму
 [Restore last status]
 Аднавіць апошні стан статусу
 [Show/Hide offline users]
 Паказаць/Скрыць адключаных
-;file \plugins\Clist_modern\src\modern_rowtemplateopt.cpp
 [Empty %s cell]
 Пуста %s клетак
 [column]
@@ -861,7 +855,6 @@ Ctrl + Левы клік укл. фільтр па пратаколу, клік 
 %s, утрымлівае %s
 [ layered]
 слаіста
-;file \plugins\Clist_modern\src\modern_skinopt.cpp
 [( unknown )]
 ( невядома )
 [%s\n\n%s\n\nAuthor(s):\t %s\nContact:\t %s\nWeb:\t %s\n\nFile:\t %s]
@@ -879,7 +872,7 @@ Angeli-Ka (графіка), FYR (шаблон)
 [Skin information]
 Інфармацыя
 [Preview is not available\n\n%s\n----------------------\n\n%s\n\nAUTHOR(S):\n%s\n\nCONTACT:\n%s\n\nHOMEPAGE:\n%s]
-Прадпрагляд не даступны\n\n%s\n----------------------\n\n%s\n\nАўтар(ы):\n%s\n\nКантакт:\n%s\n\nWeb:\n%s
+Прадпрагляд недаступны\n\n%s\n----------------------\n\n%s\n\nАўтар(ы):\n%s\n\nКантакт:\n%s\n\nWeb:\n%s
 [%s\n\n%s\n\nAUTHORS:\n%s\n\nCONTACT:\n%s\n\nWEB:\n%s\n\n\n]
 %s\n\n%s\n\nАЎТАРЫ:\n%s\n\nКАНТАКТ:\n%s\n\nWEB:\n%s\n\n\n
 [graphics by Angeli-Ka\ntemplate by FYR]
@@ -892,8 +885,6 @@ Angeli-Ka (графіка), FYR (шаблон)
 Стандартны скін
 [%Default Skin%]
 %Стандартны Скін%
-;file \plugins\Clist_modern\src\modern_statusbar.cpp
-;file \plugins\Clist_modern\src\modern_statusbar_options.cpp
 [<<Global>>]
 <<Агульнае>>
 [Left]
@@ -906,7 +897,6 @@ Angeli-Ka (графіка), FYR (шаблон)
 Угару
 [Bottom]
 Знізу
-;file \plugins\Clist_modern\src\modern_toolbar.cpp
 [Main menu]
 Галоўнае меню
 [Status menu]
@@ -941,7 +931,6 @@ Angeli-Ka (графіка), FYR (шаблон)
 Фон панэлі кнопак
 [Toolbar upgrade]
 Аднаўленне панэлі кнопак
-;file \plugins\Clist_modern\src\modern_viewmodebar.cpp
 [Ungrouped contacts]
 Кантакты па-за гуртамі
 [And]

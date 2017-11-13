@@ -12,36 +12,26 @@ void __stdcall ShowToastNotification(void* p)
 	if (!db_get_b(0, "Popup", "ModuleIsEnabled", 1))
 		return;
 
-	ptrT imagePath;
+	ptrW imagePath;
 	if (td->hContact != NULL && td->hContact != INVALID_CONTACT_ID)
 	{
 		const char* szProto = GetContactProto(td->hContact);
-
 		if (ProtoServiceExists(szProto, PS_GETAVATARINFO))
 		{
 			PROTO_AVATAR_INFORMATION pai = { td->hContact };
 			if (CallProtoService(szProto, PS_GETAVATARINFO, 0, (LPARAM)&pai) == GAIR_SUCCESS)
 			{
-				imagePath = mir_tstrdup(pai.filename);
+				imagePath = mir_wstrdup(pai.filename);
 			}
 		}
 
 		if (imagePath == NULL)
 		{
-			if (szProto)
-			{
-				imagePath = ToasterImage(szProto);
-			}
+			if (szProto)	imagePath = ToasterImage(szProto);
 			else
 			{
-				if (td->iType == 1 && td->hBitmap)
-				{
-					imagePath = ToasterImage(td->hBitmap);
-				}
-				else if (td->iType == 2 && td->hIcon)
-				{
-					imagePath = ToasterImage(td->hIcon);
-				}
+				if (td->iType == 1 && td->hBitmap)		imagePath = ToasterImage(td->hBitmap);
+				else if (td->iType == 2 && td->hIcon)	imagePath = ToasterImage(td->hIcon);
 			}
 		}
 	}
@@ -53,34 +43,17 @@ void __stdcall ShowToastNotification(void* p)
 		}
 	}
 
-	ToastNotification *notification = new ToastNotification(td->tszText, td->tszTitle, imagePath);
-		
-	HRESULT hr = notification->Initialize();
-	if (SUCCEEDED(hr))
-	{
-		ToastHandlerData *thd = new ToastHandlerData();
-		thd->hContact   = td->hContact;
-		thd->vPopupData = td->vPopupData;
-		thd->pPopupProc = td->pPopupProc;
-		thd->tstNotification = notification;
-
-		notification->Show(new ToastEventHandler(thd));
-		lstNotifications.insert(notification);
-	}
-	else
-	{
-		delete notification;
-	}
+	new (std::nothrow) ToastNotification(td->tszText, td->tszTitle, imagePath, td->hContact, td->pPopupProc, td->vPopupData);
 }
 
 static INT_PTR GetPopupData(WPARAM wParam, LPARAM)
 {
-	return (INT_PTR)((ToastEventHandler*)wParam)->GetPluginData();
+	return (INT_PTR)((ToastNotification*)wParam)->GetPluginData();
 }
 
 static INT_PTR GetPopupContact(WPARAM wParam, LPARAM)
 {
-	return (INT_PTR)((ToastEventHandler*)wParam)->GetContact();
+	return (INT_PTR)((ToastNotification*)wParam)->GetContact();
 }
 
 static INT_PTR CreatePopup(WPARAM wParam, LPARAM)
@@ -106,7 +79,7 @@ static INT_PTR CreatePopupW(WPARAM wParam, LPARAM)
 	td->vPopupData = ppd->PluginData;
 	td->pPopupProc = ppd->PluginWindowProc;
 
-	CallFunctionAsync(&ShowToastNotification, td);
+	CallFunctionAsync(ShowToastNotification, td);
 	return 0;
 }
 
@@ -136,12 +109,11 @@ static INT_PTR CreatePopup2(WPARAM wParam, LPARAM)
 	td->vPopupData = ppd->PluginData;
 	td->pPopupProc = ppd->PluginWindowProc;
 
-	CallFunctionAsync(&ShowToastNotification, td);
-
+	CallFunctionAsync(ShowToastNotification, td);
 	return 0;
 }
 
-static INT_PTR RegisterClass(WPARAM, LPARAM lParam)
+static INT_PTR RegisterPopupClass(WPARAM, LPARAM lParam)
 {
 	POPUPCLASS *pc = (POPUPCLASS*)lParam;
 
@@ -164,25 +136,24 @@ static INT_PTR CreateClassPopup(WPARAM, LPARAM lParam)
 
 		if (it->second->iFlags & PCF_TCHAR)
 		{
-			td = new ToastData(ppc->hContact, ppc->ptszTitle, ppc->ptszText, it->second->hIcon);
+			td = new ToastData(ppc->hContact, ppc->pwszTitle, ppc->pwszText, it->second->hIcon);
 		}
 		else
 		{
-			td = new ToastData(ppc->hContact, mir_utf8decodeT(ppc->pszTitle), mir_utf8decodeT(ppc->pszText), it->second->hIcon);
+			td = new ToastData(ppc->hContact, ptrW(mir_utf8decodeW(ppc->pszTitle)), ptrW(mir_utf8decodeW(ppc->pszText)), it->second->hIcon);
 		}
 
 		td->vPopupData = ppc->PluginData;
 		td->pPopupProc = it->second->pPopupProc;
 
-		CallFunctionAsync(&ShowToastNotification, td);
+		CallFunctionAsync(ShowToastNotification, td);
 	}
 
 	return 0;
 }
 
-static INT_PTR UnRegisterClass(WPARAM, LPARAM lParam)
+static INT_PTR UnRegisterPopupClass(WPARAM, LPARAM lParam)
 {
-
 	for (auto it = mp_Classes.begin(); it != mp_Classes.end(); it++)
 	{
 		if (it->second == (void*)lParam)
@@ -198,34 +169,29 @@ static INT_PTR UnRegisterClass(WPARAM, LPARAM lParam)
 void CleanupClasses()
 {
 	for (auto it = mp_Classes.begin(); it != mp_Classes.end(); ++it)
-	{
 		delete it->second;
-	}
 	mp_Classes.clear();
 }
 
 static INT_PTR PopupQuery(WPARAM wParam, LPARAM)
 {
-	switch (wParam) {
+	switch (wParam) 
+	{
 	case PUQS_ENABLEPOPUPS:
 	{
 		bool enabled = db_get_b(0, "Popup", "ModuleIsEnabled", 1) != 0;
 		if (!enabled) db_set_b(0, "Popup", "ModuleIsEnabled", 1);
 		return !enabled;
 	}
-	break;
 	case PUQS_DISABLEPOPUPS:
 	{
 		bool enabled = db_get_b(0, "Popup", "ModuleIsEnabled", 1) != 0;
 		if (enabled) db_set_b(0, "Popup", "ModuleIsEnabled", 0);
-		CallFunctionAsync(&HideAllToasts, NULL);
+		CallFunctionAsync(HideAllToasts, NULL);
 		return enabled;
 	}
-	break;
-
 	case PUQS_GETSTATUS:
 		return db_get_b(0, "Popup", "ModuleIsEnabled", 1);
-
 	default:
 		return 1;
 	}
@@ -248,22 +214,30 @@ static INT_PTR ShowMessageW(WPARAM wParam, LPARAM lParam)
 	}
 
 	ToastData *td = new ToastData(NULL, NULL, (wchar_t*)wParam, hIcon);
-	CallFunctionAsync(&ShowToastNotification, td);
+	CallFunctionAsync(ShowToastNotification, td);
 
 	return 0;
 }
 
 static INT_PTR ShowMessage(WPARAM wParam, LPARAM lParam)
 {
-	ptrT tszText(mir_utf8decodeW((char*)wParam));
+	ptrW tszText(mir_utf8decodeW((char*)wParam));
 	return ShowMessageW(tszText, lParam);
 }
 
+static INT_PTR HideToast(WPARAM, LPARAM lParam)
+{
+	ToastNotification* pNotification = reinterpret_cast<ToastNotification*>(lParam);
+	mir_cslock lck(csNotifications);
+	if (lstNotifications.getIndex(pNotification) != -1)
+		lstNotifications.remove(pNotification);
+	return 0;
+}
 void __stdcall HideAllToasts(void*)
 {
 	mir_cslock lck(csNotifications);
-	for (int i = 0; i < lstNotifications.getCount(); i++)
-		lstNotifications[i].Hide();
+	while (lstNotifications.getCount())
+		lstNotifications.remove(0);
 }
 
 void InitServices()
@@ -278,9 +252,11 @@ void InitServices()
 	CreateServiceFunction(MS_POPUP_QUERY, PopupQuery);
 
 	CreateServiceFunction(MS_POPUP_ADDPOPUPCLASS, CreateClassPopup);
-	CreateServiceFunction(MS_POPUP_REGISTERCLASS, RegisterClass);
-	CreateServiceFunction(MS_POPUP_UNREGISTERCLASS, UnRegisterClass);
+	CreateServiceFunction(MS_POPUP_REGISTERCLASS, RegisterPopupClass);
+	CreateServiceFunction(MS_POPUP_UNREGISTERCLASS, UnRegisterPopupClass);
 
 	CreateServiceFunction(MS_POPUP_GETPLUGINDATA, GetPopupData);
 	CreateServiceFunction(MS_POPUP_GETCONTACT, GetPopupContact);
+
+	CreateServiceFunction(MS_POPUP_DESTROYPOPUP, HideToast);
 }

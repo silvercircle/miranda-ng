@@ -236,9 +236,9 @@ INT_PTR CALLBACK DlgProcPopupActions(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 					LVGROUP group = { 0 };
 					group.cbSize = sizeof(group);
 					group.mask = LVGF_HEADER | LVGF_GROUPID;
-					LPTSTR wszGroup = mir_a2t(szGroup);
-					group.pszHeader = TranslateTS(wszGroup);
-					group.cchHeader = (int)mir_tstrlen(wszGroup);
+					LPTSTR wszGroup = mir_a2u(szGroup);
+					group.pszHeader = TranslateW(wszGroup);
+					group.cchHeader = (int)mir_wstrlen(wszGroup);
 					grpId = group.iGroupId = groups.getCount();
 					ListView_InsertGroup(hwndList, -1, &group);
 					mir_free(wszGroup);
@@ -248,8 +248,8 @@ INT_PTR CALLBACK DlgProcPopupActions(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 				LVITEM item = { 0 };
 				item.mask = LVIF_IMAGE | LVIF_PARAM | LVIF_TEXT | LVIF_STATE | LVIF_INDENT;
 				item.iItem = i;
-				ptrT tszName(mir_a2t(szName));
-				item.pszText = TranslateTS(tszName);
+				ptrW tszName(mir_a2u(szName));
+				item.pszText = TranslateW(tszName);
 				item.iImage = ImageList_AddIcon(hImgList, gActions[i]->lchIcon);
 				item.lParam = i;
 				item.mask |= LVIF_GROUPID;

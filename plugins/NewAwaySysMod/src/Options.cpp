@@ -151,7 +151,7 @@ TCString COptItem::GetStrDBVal(const CString &sModule, CString *sDBSettingPrefix
 void COptItem::SetStrDBVal(const CString &sModule, TCString &Str, CString *sDBSettingPrefix)
 {
 	if (sDBSetting != NULL && !m_bReadOnly) {
-		db_set_ts(NULL, sModule, sDBSettingPrefix ? (*sDBSettingPrefix + sDBSetting) : sDBSetting, Str);
+		db_set_ws(NULL, sModule, sDBSettingPrefix ? (*sDBSettingPrefix + sDBSetting) : sDBSetting, Str);
 	}
 }
 
@@ -283,10 +283,10 @@ int TreeReadEnum(const char *szSetting, LPARAM lParam)
 			pItem.ParentID = ParentID;
 			pItem.Flags = Flags;
 			pItem.hItem = NULL;
-			pItem.Title = db_get_s(NULL, pData->sModule, *pData->sDBSettingPrefix + szSetting, _T(""));
+			pItem.Title = db_get_s(NULL, pData->sModule, *pData->sDBSettingPrefix + szSetting, L"");
 			pItem.User_Str1 = (pData->TreeCtrl->User_Str1_DBName == NULL) ? NULL :
 				db_get_s(NULL, pData->sModule,
-				*pData->sDBSettingPrefix + pData->TreeCtrl->sDBSetting + pData->TreeCtrl->User_Str1_DBName + (szSetting + Len), (TCHAR*)NULL);
+				*pData->sDBSettingPrefix + pData->TreeCtrl->sDBSetting + pData->TreeCtrl->User_Str1_DBName + (szSetting + Len), (wchar_t*)NULL);
 		}
 	}
 	return 0;
@@ -299,13 +299,8 @@ void COptItem_TreeCtrl::DBToMem(const CString &sModule, CString *sDBSettingPrefi
 
 	m_value.RemoveAll();
 	sTreeReadEnumData pData(this, sModule, *sDBSettingPrefix);
+	db_enum_settings(NULL, TreeReadEnum, sModule, &pData);
 
-	DBCONTACTENUMSETTINGS dbEnum;
-	dbEnum.lParam = (LPARAM)&pData;
-	dbEnum.ofsSettings = 0;
-	dbEnum.pfnEnumProc = TreeReadEnum;
-	dbEnum.szModule = sModule;
-	CallService(MS_DB_CONTACT_ENUMSETTINGS, NULL, (LPARAM)&dbEnum);
 	if (!m_value.GetSize()) {
 		m_value = m_defValue;
 	}
@@ -331,7 +326,7 @@ void COptItem_TreeCtrl::MemToDB(const CString &sModule, CString *sDBSettingPrefi
 			CString StrID;
 			_itoa(m_value[i].ID, StrID.GetBuffer(64), 10);
 			StrID.ReleaseBuffer();
-			db_set_ts(NULL, sModule, *sDBSettingPrefix + sDBSetting + TREEITEM_DBSTR_TITLE + StrID, m_value[i].Title);
+			db_set_ws(NULL, sModule, *sDBSettingPrefix + sDBSetting + TREEITEM_DBSTR_TITLE + StrID, m_value[i].Title);
 			if (!(TreeFlags & TREECTRL_FLAG_IS_SINGLE_LEVEL))
 				db_set_w(NULL, sModule, *sDBSettingPrefix + sDBSetting + TREEITEM_DBSTR_PARENT + StrID, m_value[i].ParentID);
 
@@ -340,7 +335,7 @@ void COptItem_TreeCtrl::MemToDB(const CString &sModule, CString *sDBSettingPrefi
 				db_set_b(NULL, sModule, *sDBSettingPrefix + sDBSetting + TREEITEM_DBSTR_FLAGS + StrID, m_value[i].Flags);
 
 			if (User_Str1_DBName != NULL && m_value[i].User_Str1 != NULL)
-				db_set_ts(NULL, sModule, *sDBSettingPrefix + sDBSetting + User_Str1_DBName + StrID, m_value[i].User_Str1);
+				db_set_ws(NULL, sModule, *sDBSettingPrefix + sDBSetting + User_Str1_DBName + StrID, m_value[i].User_Str1);
 		}
 		COptItem::MemToDB(sModule, sDBSettingPrefix);
 	}
@@ -481,12 +476,7 @@ void COptItem_TreeCtrl::CleanDBSettings(const CString &sModule, CString *sDBSett
 	sTreeDeleteEnumData TreeDeleteEnumData;
 	TreeDeleteEnumData.TreeCtrl = this;
 	TreeDeleteEnumData.sDBSettingPrefix = sDBSettingPrefix;
-	DBCONTACTENUMSETTINGS dbEnum;
-	dbEnum.lParam = (LPARAM)&TreeDeleteEnumData;
-	dbEnum.ofsSettings = 0;
-	dbEnum.pfnEnumProc = TreeDeleteEnum;
-	dbEnum.szModule = sModule;
-	CallService(MS_DB_CONTACT_ENUMSETTINGS, NULL, (LPARAM)&dbEnum);
+	db_enum_settings(NULL, TreeDeleteEnum, sModule, &TreeDeleteEnumData);
 
 	for (int i = 0; i < TreeDeleteEnumData.TreeSettings.GetSize(); i++)
 		db_unset(NULL, sModule, TreeDeleteEnumData.TreeSettings[i]);
@@ -660,7 +650,7 @@ int ListReadEnum(const char *szSetting, LPARAM lParam)
 	int Len = pData->sDBSettingPrefix.GetLen() + pData->ListCtrl->sDBSetting.GetLen() + _countof(LISTITEM_DBSTR_TEXT) - 1;
 	if (!strncmp(szSetting, pData->sDBSettingPrefix + pData->ListCtrl->sDBSetting + LISTITEM_DBSTR_TEXT, Len) && isdigit(szSetting[Len])) {
 		int ID = atol(szSetting + Len);
-		pData->ListCtrl->m_value.SetAtGrow(ID).Text = db_get_s(NULL, pData->sModule, *pData->sDBSettingPrefix + szSetting, _T(""));
+		pData->ListCtrl->m_value.SetAtGrow(ID).Text = db_get_s(NULL, pData->sModule, *pData->sDBSettingPrefix + szSetting, L"");
 	}
 	return 0;
 }
@@ -672,12 +662,8 @@ void COptItem_ListCtrl::DBToMem(const CString &sModule, CString *sDBSettingPrefi
 
 	m_value.RemoveAll();
 	sListReadEnumData pData(this, sModule, *sDBSettingPrefix);
-	DBCONTACTENUMSETTINGS dbEnum;
-	dbEnum.lParam = (LPARAM)&pData;
-	dbEnum.ofsSettings = 0;
-	dbEnum.pfnEnumProc = ListReadEnum;
-	dbEnum.szModule = sModule;
-	CallService(MS_DB_CONTACT_ENUMSETTINGS, NULL, (LPARAM)&dbEnum);
+	db_enum_settings(NULL, ListReadEnum, sModule, &pData);
+
 	if (!m_value.GetSize())
 		m_value = m_defValue;
 	else {
@@ -703,7 +689,7 @@ void COptItem_ListCtrl::MemToDB(const CString &sModule, CString *sDBSettingPrefi
 			CString StrID;
 			_itoa(i, StrID.GetBuffer(64), 10);
 			StrID.ReleaseBuffer();
-			db_set_ts(NULL, sModule, *sDBSettingPrefix + sDBSetting + LISTITEM_DBSTR_TEXT + StrID, m_value[i].Text);
+			db_set_ws(NULL, sModule, *sDBSettingPrefix + sDBSetting + LISTITEM_DBSTR_TEXT + StrID, m_value[i].Text);
 		}
 		COptItem::MemToDB(sModule, sDBSettingPrefix);
 	}
@@ -722,7 +708,7 @@ void COptItem_ListCtrl::MemToWnd(HWND hWnd)
 	SendMessage(hListView, LB_RESETCONTENT, 0, 0);
 
 	for (int i = 0; i < m_value.GetSize(); i++)
-		SendMessage(hListView, LB_INSERTSTRING, -1, (LPARAM)(TCHAR*)m_value[i].Text);
+		SendMessage(hListView, LB_INSERTSTRING, -1, (LPARAM)(wchar_t*)m_value[i].Text);
 
 	SendMessage(hListView, WM_SETREDRAW, true, 0);
 	COptItem::MemToWnd(hWnd);
@@ -752,12 +738,7 @@ void COptItem_ListCtrl::CleanDBSettings(const CString &sModule, CString *sDBSett
 	sListDeleteEnumData ListDeleteEnumData;
 	ListDeleteEnumData.ListCtrl = this;
 	ListDeleteEnumData.sDBSettingPrefix = sDBSettingPrefix;
-	DBCONTACTENUMSETTINGS dbEnum;
-	dbEnum.lParam = (LPARAM)&ListDeleteEnumData;
-	dbEnum.ofsSettings = 0;
-	dbEnum.pfnEnumProc = ListDeleteEnum;
-	dbEnum.szModule = sModule;
-	CallService(MS_DB_CONTACT_ENUMSETTINGS, NULL, (LPARAM)&dbEnum);
+	db_enum_settings(NULL, ListDeleteEnum, sModule, &ListDeleteEnumData);
 
 	for (int i = 0; i < ListDeleteEnumData.ListSettings.GetSize(); i++)
 		db_unset(NULL, sModule, ListDeleteEnumData.ListSettings[i]);
@@ -794,7 +775,7 @@ void COptItem_ListCtrl::ModifyItem(HWND hWnd, int ID, CListItem &Item)
 	int TopIndex = SendMessage(hListView, LB_GETTOPINDEX, 0, 0);
 	int Res = SendMessage(hListView, LB_DELETESTRING, ID, 0);
 	_ASSERT(Res != LB_ERR);
-	Res = SendMessage(hListView, LB_INSERTSTRING, ID, (LPARAM)(TCHAR*)(Item.Text));
+	Res = SendMessage(hListView, LB_INSERTSTRING, ID, (LPARAM)(wchar_t*)(Item.Text));
 	_ASSERT(Res != LB_ERR && Res != LB_ERRSPACE);
 	SendMessage(hListView, LB_SETCURSEL, CurSel, 0);
 	SendMessage(hListView, LB_SETTOPINDEX, TopIndex, 0);
@@ -808,7 +789,7 @@ CListItem* COptItem_ListCtrl::InsertItem(HWND hWnd, int ID, CListItem &Item)
 // ID is position at which to insert the item; -1 = add to the end of the list
 {
 	HWND hListView = GetDlgItem(hWnd, m_dlgItemID);
-	int Res = SendMessage(hListView, LB_INSERTSTRING, ID, (LPARAM)(TCHAR*)(Item.Text)); // LB_INSERTSTRING doesn't sort the lists even with LBS_SORT style
+	int Res = SendMessage(hListView, LB_INSERTSTRING, ID, (LPARAM)(wchar_t*)(Item.Text)); // LB_INSERTSTRING doesn't sort the lists even with LBS_SORT style
 	_ASSERT(Res != LB_ERR && Res != LB_ERRSPACE);
 	int i = m_value.AddElem(Item);
 	m_bModified = true;

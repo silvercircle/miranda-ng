@@ -45,11 +45,11 @@ LRESULT CALLBACK GraphWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 			WindowData *wd = (WindowData *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 
 			if (wd->hwnd_chk_grid == 0) {
-				wd->hwnd_chk_grid = CreateWindow(_T("BUTTON"), TranslateT("Show grid lines"), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX, 0, 0, 0, 0, hwnd, 0, hInst, 0);
+				wd->hwnd_chk_grid = CreateWindow(L"BUTTON", TranslateT("Show grid lines"), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX, 0, 0, 0, 0, hwnd, 0, hInst, 0);
 				SendMessage(wd->hwnd_chk_grid, BM_SETCHECK, wd->show_grid ? BST_CHECKED : BST_UNCHECKED, 0);
 			}
 			if (wd->hwnd_chk_stat == 0) {
-				wd->hwnd_chk_stat = CreateWindow(_T("BUTTON"), TranslateT("Show stats"), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX, 0, 0, 0, 0, hwnd, 0, hInst, 0);
+				wd->hwnd_chk_stat = CreateWindow(L"BUTTON", TranslateT("Show stats"), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX, 0, 0, 0, 0, hwnd, 0, hInst, 0);
 				SendMessage(wd->hwnd_chk_stat, BM_SETCHECK, wd->show_stat ? BST_CHECKED : BST_UNCHECKED, 0);
 			}
 			KillTimer(hwnd, ID_REPAINT_TIMER);
@@ -187,23 +187,23 @@ LRESULT CALLBACK GraphWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 			SetBkMode(hdc, TRANSPARENT);
 			SetTextColor(hdc, GetSysColor(COLOR_3DDKSHADOW));
-			TCHAR buff[64];
+			wchar_t buff[64];
 			if (wd->show_grid)
 			{
-				mir_sntprintf(buff, TranslateT("%d ms"), MARK_TIME);
-				TextOut(hdc, r.right - 100, r.bottom - (int)(unit_height * MARK_TIME + 0.5f), buff, (int)mir_tstrlen(buff));
+				mir_snwprintf(buff, TranslateT("%d ms"), MARK_TIME);
+				TextOut(hdc, r.right - 100, r.bottom - (int)(unit_height * MARK_TIME + 0.5f), buff, (int)mir_wstrlen(buff));
 			}
 
 			if (wd->show_stat)
 			{
 				SetTextColor(hdc, RGB(255, 0, 0));
-				mir_sntprintf(buff, TranslateT("AVG %.1lf ms"), avg);
-				TextOut(hdc, r.left + 10, r.bottom - (int)(avg * unit_height + 0.5f), buff, (int)mir_tstrlen(buff));
+				mir_snwprintf(buff, TranslateT("AVG %.1lf ms"), avg);
+				TextOut(hdc, r.left + 10, r.bottom - (int)(avg * unit_height + 0.5f), buff, (int)mir_wstrlen(buff));
 				if (max_value != avg) {
-					mir_sntprintf(buff, TranslateT("MAX %hd ms"), max_value);
-					TextOut(hdc, r.left + 10, r.bottom - (int)(max_value * unit_height + 0.5f), buff, (int)mir_tstrlen(buff));
-					mir_sntprintf(buff, TranslateT("MIN %hd ms"), min_value);
-					TextOut(hdc, r.left + 10, r.bottom - (int)(min_value * unit_height + 0.5f), buff, (int)mir_tstrlen(buff));
+					mir_snwprintf(buff, TranslateT("MAX %hd ms"), max_value);
+					TextOut(hdc, r.left + 10, r.bottom - (int)(max_value * unit_height + 0.5f), buff, (int)mir_wstrlen(buff));
+					mir_snwprintf(buff, TranslateT("MIN %hd ms"), min_value);
+					TextOut(hdc, r.left + 10, r.bottom - (int)(min_value * unit_height + 0.5f), buff, (int)mir_wstrlen(buff));
 				}
 			}
 
@@ -272,18 +272,18 @@ INT_PTR ShowGraph(WPARAM wParam, LPARAM lParam) {
 	wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wndclass.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
 	wndclass.lpszMenuName = NULL;
-	wndclass.lpszClassName = _T(PLUG) _T("GraphWindow");
+	wndclass.lpszClassName = _A2W(PLUG) L"GraphWindow";
 	RegisterClass(&wndclass);
 
-	TCHAR title[256];
-	mir_tstrncpy(title, TranslateT("Ping Graph"), _countof(title));
+	wchar_t title[256];
+	mir_wstrncpy(title, TranslateT("Ping Graph"), _countof(title));
 	if (lParam) {
-		mir_tstrncat(title, _T(" - "), _countof(title) - mir_tstrlen(title));
-		mir_tstrncat(title, (TCHAR *)lParam, _countof(title) - mir_tstrlen(title));
+		mir_wstrncat(title, L" - ", _countof(title) - mir_wstrlen(title));
+		mir_wstrncat(title, (wchar_t *)lParam, _countof(title) - mir_wstrlen(title));
 	}
 
 	HWND parent = 0;
-	hGraphWnd = CreateWindowEx(0, _T(PLUG) _T("GraphWindow"), title,
+	hGraphWnd = CreateWindowEx(0, _A2W(PLUG) L"GraphWindow", title,
 		(WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN) & ~CS_VREDRAW & ~CS_HREDRAW,
 		0, 0, 800, 600, parent, NULL, hInst, NULL);
 

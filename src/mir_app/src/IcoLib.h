@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -28,41 +28,57 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define SECTIONPARAM_FLAGS(lparam) HIBYTE(HIWORD(lparam))
 #define SECTIONPARAM_HAVEPAGE	0x0001
 
-struct SectionItem
+struct SectionItem : public MZeroedObject
 {
-	TCHAR* name;
-	int    flags;
-	int    maxOrder;
-	int    ref_count;
+	ptrW name;
+	int  flags, maxOrder, ref_count;
 };
 
 struct IconSourceFile
 {
 	int ref_count;
-	TCHAR file[MAX_PATH];
+	wchar_t file[MAX_PATH];
 };
 
-struct IconSourceItem
+struct IconSourceItemKey
 {
 	IconSourceFile* file;
-	int          indx;
-	int          cx, cy;
-
-	int          ref_count;
-
-	HICON        icon;
-	int          icon_ref_count;
-
-	BYTE*        icon_data;
-	int          icon_size;
+	int   indx;
+	int   cx, cy;
 };
 
-struct IcolibItem
+class IconSourceItem : public MZeroedObject
+{
+	IconSourceItemKey key;
+	int   ref_count;
+
+	BYTE* icon_data;
+	int   icon_size;
+
+public:
+	IconSourceItem(const IconSourceItemKey&);
+	~IconSourceItem();
+
+	__inline void addRef() { ref_count++; }
+	int release();
+
+	HICON getIcon();
+	int   getIconData(HICON icon);
+	int   releaseIcon();
+
+	static int compare(const IconSourceItem *p1, const IconSourceItem *p2);
+
+public:
+	HICON icon;
+	int   icon_ref_count;
+};
+
+struct IcolibItem : public MZeroedObject
 {
 	char*           name;
 	SectionItem*    section;
 	int             orderID;
-	TCHAR*          description;
+	wchar_t*        description;
 	IconSourceFile* default_file;
 	int             default_indx;
 	int             cx, cy;
@@ -72,11 +88,14 @@ struct IcolibItem
 	IconSourceItem* source_big;
 	IconSourceItem* default_icon;
 
-	TCHAR*          temp_file;
+	wchar_t*        temp_file;
 	HICON           temp_icon;
 	BOOL            temp_reset;
 
-	__inline TCHAR* getDescr() const { return TranslateTH(hLangpack, description); }
+	__inline ~IcolibItem() { clear(); }
+	__inline wchar_t* getDescr() const { return TranslateW_LP(description, hLangpack); }
+
+	void clear();
 };
 
 // extracticon.c
@@ -85,10 +104,7 @@ UINT _ExtractIconEx(LPCTSTR lpszFile, int iconIndex, int cxIcon, int cyIcon, HIC
 
 void __fastcall SafeDestroyIcon(HICON &icon);
 
-int   IconSourceItem_Release(IconSourceItem* &pitem);
-int   IconSourceItem_ReleaseIcon(IconSourceItem *item);
-HICON IconSourceItem_GetIcon(IconSourceItem *item);
-IconSourceItem* GetIconSourceItem(const TCHAR* file, int indx, int cxIcon, int cyIcon);
+IconSourceItem* GetIconSourceItem(const wchar_t* file, int indx, int cxIcon, int cyIcon);
 
 IcolibItem* IcoLib_FindHIcon(HICON hIcon, bool &big);
 IcolibItem* IcoLib_FindIcon(const char* pszIconName);

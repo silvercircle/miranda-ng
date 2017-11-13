@@ -46,10 +46,9 @@ static int OnOptionsInitialise(WPARAM wParam, LPARAM)
 	odp.position = 100000000;
 	odp.hInstance = hInstance;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_WWI);
-	odp.ptszTitle = LPGENT("Birthdays");
-	odp.ptszGroup = LPGENT("Contacts");
-	odp.groupPosition = 910000000;
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+	odp.szTitle.w = LPGENW("Birthdays");
+	odp.szGroup.w = LPGENW("Contacts");
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
 	odp.pfnDlgProc = DlgProcOptions;
 	Options_AddPage(wParam, &odp);
 	return 0;
@@ -58,7 +57,7 @@ static int OnOptionsInitialise(WPARAM wParam, LPARAM)
 static int OnContactSettingChanged(WPARAM hContact, LPARAM lParam)
 {
 	DBCONTACTWRITESETTING *dw = (DBCONTACTWRITESETTING *)lParam;
-	if ((mir_strcmp(dw->szModule, DUMMY_MODULE) == 0) && (mir_strcmp(dw->szSetting, DUMMY_SETTING) == 0))
+	if ((strcmp(dw->szModule, DUMMY_MODULE) == 0) && (strcmp(dw->szSetting, DUMMY_SETTING) == 0))
 		RefreshContactListIcons(hContact);
 
 	return 0;

@@ -30,45 +30,46 @@ Počet uložených kopií:
 Složka pro zálohování profilů:
 [Browse...]
 Procházet...
-[Go to the "Customize -> Folders" to change settings]
-Nastavení změníte v sekci Vlastní úpravy -> Složky
+[Go to the "Options -> Customize -> Folders" to change settings]
+Nastavení změníte v Možnosti -> Vlastní úpravy -> Složky
 [Compress backup to zip-archive]
 Komprimovat zálohu do zip-archivu
 [Disable progress bar]
 Vypnout ukazatel průběhu
 [Disable popups]
 Vypnout oznámení
+[Use Dropbox]
+Použít Dropbox
+[Backup profile folder]
+Složka pro zálohy profilu
 ;file \plugins\Db_autobackups\src\backup.cpp
-[Miranda NG database]
-Databáze Mirandy NG
-[Created by:]
-Vytvořeno:
 [Backup in progress]
 Probíhá zálohování
 [Copying database file...]
 Kopírování souborů s profilem...
+[Uploading to Dropbox failed]
+Nahrávání na Dropbox selhalo
+[Error]
+Chyba
 [Database backed up]
 Databáze zálohována
 [Database back up in process...]
 Probíhá záloha databáze...
-[Error]
-Chyba
-;file \plugins\Db_autobackups\src\headers.h
-[Backup profile]
-Zazálohovat profil
-[Save profile as...]
-Uložit profil jako...
 ;file \plugins\Db_autobackups\src\main.cpp
-[Database]
-Databáze
-[Database backups]
-Zálohování databáze
 [Miranda NG databases]
 Databáze Mirandy NG
 [Compressed Miranda NG databases]
 Komprimované databáze Mirandy NG
 [All files]
 Všechny soubory
+[Database]
+Databáze
+[Backup profile]
+Zazálohovat profil
+[Save profile as...]
+Uložit profil jako...
+[Database backups]
+Zálohování databáze
 [Backup folder]
 Složka pro zálohování profilů
 ;file \plugins\Db_autobackups\src\options.cpp
@@ -102,3 +103,7 @@ minut
 Vyberte složku pro zálohování profilů
 [Error creating backup folder]
 Chyba při vytváření složky pro zálohování
+;file \plugins\Db_autobackups\src\stdafx.h
+;file \plugins\Db_autobackups\src\zip.cpp
+[Miranda NG [%s] database backup]
+Miranda NG [%s] záloha databáze

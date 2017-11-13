@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (c) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -29,9 +29,6 @@ Modified by FYR
 // Module for working with lines text and avatars
 
 #include "stdafx.h"
-#include "modern_cache_funcs.h"
-#include "newpluginapi.h"
-#include "./modern_gettextasync.h"
 #include "modern_sync.h"
 
 typedef BOOL(*ExecuteOnAllContactsFuncPtr) (ClcContact *contact, BOOL subcontact, void *param);
@@ -39,21 +36,18 @@ typedef BOOL(*ExecuteOnAllContactsFuncPtr) (ClcContact *contact, BOOL subcontact
 /////////////////////////////////////////////////////////////////////////////////////////
 // Module static declarations
 
-static int CopySkipUnprintableChars(TCHAR *to, TCHAR * buf, DWORD size);
+static int CopySkipUnprintableChars(wchar_t *to, wchar_t * buf, DWORD size);
 
 static BOOL ExecuteOnAllContacts(ClcData *dat, ExecuteOnAllContactsFuncPtr func, void *param);
 static BOOL ExecuteOnAllContactsOfGroup(ClcGroup *group, ExecuteOnAllContactsFuncPtr func, void *param);
-int CLUI_SyncGetShortData(WPARAM wParam, LPARAM lParam);
-void CListSettings_FreeCacheItemData(ClcCacheEntry *pDst);
-void CListSettings_FreeCacheItemDataOption(ClcCacheEntry *pDst, DWORD flag);
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Get time zone for contact
-
+//
 void Cache_GetTimezone(ClcData *dat, MCONTACT hContact)
 {
 	ClcCacheEntry *pdnce = pcli->pfnGetCacheEntry(hContact);
-	if (dat == NULL && pcli->hwndContactTree)
+	if (dat == nullptr && pcli->hwndContactTree)
 		dat = (ClcData *)GetWindowLongPtr(pcli->hwndContactTree, 0);
 
 	if (dat && dat->hWnd == pcli->hwndContactTree) {
@@ -64,26 +58,28 @@ void Cache_GetTimezone(ClcData *dat, MCONTACT hContact)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Get all lines of text
-
-void Cache_GetText(ClcData *dat, ClcContact *contact, BOOL forceRenew)
+//
+void Cache_GetText(ClcData *dat, ClcContact *contact)
 {
 	Cache_GetFirstLineText(dat, contact);
-	if (!dat->force_in_dialog) {
-		ClcCacheEntry *pdnce = pcli->pfnGetCacheEntry(contact->hContact);
-		if ((dat->second_line_show && (forceRenew || pdnce->szSecondLineText == NULL)) || (dat->third_line_show && (forceRenew || pdnce->szThirdLineText == NULL)))
-			gtaAddRequest(dat, contact->hContact);
+
+	if (!dat->bForceInDialog) {
+		if (dat->secondLine.show)
+			Cache_GetNthLineText(dat, contact->pce, 2);
+		if (dat->thirdLine.show)
+			Cache_GetNthLineText(dat, contact->pce, 3);
 	}
 }
 
-void CSmileyString::AddListeningToIcon(SHORTDATA *dat, TCHAR *szText)
+void CSmileyString::AddListeningToIcon(ClcData *dat, wchar_t *szText)
 {
 	iMaxSmileyHeight = 0;
 	DestroySmileyList();
 
-	if (szText == NULL)
+	if (szText == nullptr)
 		return;
 
-	int text_size = (int)mir_tstrlen(szText);
+	int text_size = (int)mir_wstrlen(szText);
 
 	plText = List_Create(0, 1);
 
@@ -117,7 +113,6 @@ void CSmileyString::AddListeningToIcon(SHORTDATA *dat, TCHAR *szText)
 	// Add text
 	{
 		ClcContactTextPiece *piece = (ClcContactTextPiece *)mir_alloc(sizeof(ClcContactTextPiece));
-
 		piece->type = TEXT_PIECE_TYPE_TEXT;
 		piece->start_pos = 0;
 		piece->len = text_size;
@@ -127,15 +122,13 @@ void CSmileyString::AddListeningToIcon(SHORTDATA *dat, TCHAR *szText)
 
 void CSmileyString::_CopySmileyList(SortedList *plInput)
 {
-	//	ASSERT( plText == NULL );
-
-	if (!plInput || plInput->realCount == 0) return;
+	if (!plInput || plInput->realCount == 0)
+		return;
+	
 	plText = List_Create(0, 1);
-	for (int i = 0; i < plInput->realCount; i++)
-	{
+	for (int i = 0; i < plInput->realCount; i++) {
 		ClcContactTextPiece *pieceFrom = (ClcContactTextPiece *)plInput->items[i];
-		if (pieceFrom != NULL)
-		{
+		if (pieceFrom != nullptr) {
 			ClcContactTextPiece *piece = (ClcContactTextPiece *)mir_alloc(sizeof(ClcContactTextPiece));
 			*piece = *pieceFrom;
 			if (pieceFrom->type == TEXT_PIECE_TYPE_SMILEY)
@@ -147,18 +140,17 @@ void CSmileyString::_CopySmileyList(SortedList *plInput)
 
 void CSmileyString::DestroySmileyList()
 {
-	//ASSERT( plText == NULL );
-
-	if (plText == NULL) return;
+	if (plText == nullptr)
+		return;
 
 	if (IsBadReadPtr(plText, sizeof(SortedList))) {
-		plText = NULL;
+		plText = nullptr;
 		return;
 	}
 
 	if (plText->realCount != 0) {
 		for (int i = 0; i < plText->realCount; i++) {
-			if (plText->items[i] != NULL) {
+			if (plText->items[i] != nullptr) {
 				ClcContactTextPiece *piece = (ClcContactTextPiece *)plText->items[i];
 
 				if (!IsBadWritePtr(piece, sizeof(ClcContactTextPiece))) {
@@ -172,33 +164,32 @@ void CSmileyString::DestroySmileyList()
 	}
 	mir_free(plText);
 
-	plText = NULL;
+	plText = nullptr;
 }
 
-/*
-* Parsing of text for smiley
-*/
-
-void CSmileyString::ReplaceSmileys(SHORTDATA *dat, ClcCacheEntry *pdnce, TCHAR * szText, BOOL replace_smileys)
+/////////////////////////////////////////////////////////////////////////////////////////
+// Parsing of text for smiley
+//
+void CSmileyString::ReplaceSmileys(ClcData *dat, ClcCacheEntry *pdnce, wchar_t * szText, BOOL replace_smileys)
 {
 	int last_pos = 0;
 	iMaxSmileyHeight = 0;
 
 	DestroySmileyList();
 
-	if (!dat->text_replace_smileys || !replace_smileys || szText == NULL)
+	if (!dat->text_replace_smileys || !replace_smileys || szText == nullptr)
 		return;
 
-	int text_size = (int)mir_tstrlen(szText);
+	int text_size = (int)mir_wstrlen(szText);
 
 	// Call service for the first time to see if needs to be used...
 	SMADD_BATCHPARSE2 sp = { 0 };
 	sp.cbSize = sizeof(sp);
 
 	if (dat->text_use_protocol_smileys) {
-		sp.Protocolname = pdnce->m_cache_cszProto;
+		sp.Protocolname = pdnce->m_pszProto;
 
-		if (db_get_b(NULL, "CLC", "Meta", SETTING_USEMETAICON_DEFAULT) != 1 && pdnce->m_cache_cszProto != NULL && mir_strcmp(pdnce->m_cache_cszProto, META_PROTO) == 0) {
+		if (db_get_b(0, "CLC", "Meta", SETTING_USEMETAICON_DEFAULT) != 1 && pdnce->m_pszProto != nullptr && mir_strcmp(pdnce->m_pszProto, META_PROTO) == 0) {
 			MCONTACT hContact = db_mc_getMostOnline(pdnce->hContact);
 			if (hContact != 0)
 				sp.Protocolname = GetContactProto(hContact);
@@ -212,14 +203,14 @@ void CSmileyString::ReplaceSmileys(SHORTDATA *dat, ClcCacheEntry *pdnce, TCHAR *
 	SMADD_BATCHPARSERES *spr = (SMADD_BATCHPARSERES*)CallService(MS_SMILEYADD_BATCHPARSE, 0, (LPARAM)&sp);
 
 	// Did not find a simley
-	if (spr == NULL || (INT_PTR)spr == CALLSERVICE_NOTFOUND)
+	if (spr == nullptr || (INT_PTR)spr == CALLSERVICE_NOTFOUND)
 		return;
 
 	// Lets add smileys
 	plText = List_Create(0, 1);
 
 	for (unsigned i = 0; i < sp.numSmileys; ++i) {
-		if (spr[i].hIcon != NULL) { // For deffective smileypacks
+		if (spr[i].hIcon != nullptr) { // For deffective smileypacks
 			// Add text
 			if (spr[i].startChar - last_pos > 0) {
 				ClcContactTextPiece *piece = (ClcContactTextPiece *)mir_alloc(sizeof(ClcContactTextPiece));
@@ -275,24 +266,24 @@ void CSmileyString::ReplaceSmileys(SHORTDATA *dat, ClcCacheEntry *pdnce, TCHAR *
 	}
 }
 
-/*
-*	Getting Status name
-*  -1 for XStatus, 1 for Status
-*/
-int GetStatusName(TCHAR *text, int text_size, ClcCacheEntry *pdnce, BOOL xstatus_has_priority)
+/////////////////////////////////////////////////////////////////////////////////////////
+// Getting Status name
+// returns -1 for XStatus, 1 for Status
+//
+int GetStatusName(wchar_t *text, int text_size, ClcCacheEntry *pdnce, BOOL xstatus_has_priority)
 {
 	BOOL noAwayMsg = FALSE;
 	BOOL noXstatus = FALSE;
 	// Hide status text if Offline  /// no offline
-	WORD nStatus = pdnce___GetStatus(pdnce);
+	WORD nStatus = pdnce->getStatus();
 	if ((nStatus == ID_STATUS_OFFLINE || nStatus == 0) && g_CluiData.bRemoveAwayMessageForOffline) noAwayMsg = TRUE;
 	if (nStatus == ID_STATUS_OFFLINE || nStatus == 0) noXstatus = TRUE;
 	text[0] = '\0';
 	// Get XStatusName
-	if (!noAwayMsg && !noXstatus &&  xstatus_has_priority && pdnce->hContact && pdnce->m_cache_cszProto) {
+	if (!noAwayMsg && !noXstatus &&  xstatus_has_priority && pdnce->hContact && pdnce->m_pszProto) {
 		DBVARIANT dbv = { 0 };
-		if (!db_get_ts(pdnce->hContact, pdnce->m_cache_cszProto, "XStatusName", &dbv)) {
-			//mir_tstrncpy(text, dbv.pszVal, text_size);
+		if (!db_get_ws(pdnce->hContact, pdnce->m_pszProto, "XStatusName", &dbv)) {
+			//mir_wstrncpy(text, dbv.pszVal, text_size);
 			CopySkipUnprintableChars(text, dbv.ptszVal, text_size - 1);
 			db_free(&dbv);
 
@@ -302,16 +293,16 @@ int GetStatusName(TCHAR *text, int text_size, ClcCacheEntry *pdnce, BOOL xstatus
 	}
 
 	// Get Status name
-	TCHAR *tmp = pcli->pfnGetStatusModeDescription(nStatus, 0);
+	wchar_t *tmp = pcli->pfnGetStatusModeDescription(nStatus, 0);
 	if (tmp && *tmp) {
-		mir_tstrncpy(text, tmp, text_size);
+		mir_wstrncpy(text, tmp, text_size);
 		return 1;
 	}
 
 	// Get XStatusName
-	if (!noAwayMsg && !noXstatus && !xstatus_has_priority && pdnce->hContact && pdnce->m_cache_cszProto) {
+	if (!noAwayMsg && !noXstatus && !xstatus_has_priority && pdnce->hContact && pdnce->m_pszProto) {
 		DBVARIANT dbv = { 0 };
-		if (!db_get_ts(pdnce->hContact, pdnce->m_cache_cszProto, "XStatusName", &dbv)) {
+		if (!db_get_ws(pdnce->hContact, pdnce->m_pszProto, "XStatusName", &dbv)) {
 			CopySkipUnprintableChars(text, dbv.ptszVal, text_size - 1);
 			db_free(&dbv);
 
@@ -323,47 +314,40 @@ int GetStatusName(TCHAR *text, int text_size, ClcCacheEntry *pdnce, BOOL xstatus
 	return 1;
 }
 
-/*
-* Get Listening to information
-*/
-
-void GetListeningTo(TCHAR *text, int text_size, ClcCacheEntry *pdnce)
+/////////////////////////////////////////////////////////////////////////////////////////
+// Get Listening to information
+//
+void GetListeningTo(wchar_t *text, int text_size, ClcCacheEntry *pdnce)
 {
-	DBVARIANT dbv = { 0 };
-	WORD wStatus = pdnce___GetStatus(pdnce);
-	text[0] = _T('\0');
+	*text = '\0';
 
-	if (wStatus == ID_STATUS_OFFLINE || wStatus == 0)
+	if (pdnce->m_iStatus == ID_STATUS_OFFLINE || pdnce->m_iStatus == 0)
 		return;
 
-	if (!db_get_ts(pdnce->hContact, pdnce->m_cache_cszProto, "ListeningTo", &dbv)) {
-		CopySkipUnprintableChars(text, dbv.ptszVal, text_size - 1);
-		db_free(&dbv);
-	}
+	ptrW tszValue(db_get_wsa(pdnce->hContact, pdnce->m_pszProto, "ListeningTo"));
+	if (tszValue != nullptr)
+		CopySkipUnprintableChars(text, tszValue, text_size - 1);
 }
 
-/*
-*	Getting Status message (Away message)
-*  -1 for XStatus, 1 for Status
-*/
-
-int GetStatusMessage(TCHAR *text, int text_size, ClcCacheEntry *pdnce, BOOL xstatus_has_priority)
+/////////////////////////////////////////////////////////////////////////////////////////
+// Getting Status message(Away message)
+// returns -1 for XStatus, 1 for Status
+//
+int GetStatusMessage(wchar_t *text, int text_size, ClcCacheEntry *pdnce, BOOL xstatus_has_priority)
 {
-	DBVARIANT dbv = { 0 };
 	BOOL noAwayMsg = FALSE;
-	WORD wStatus = pdnce___GetStatus(pdnce);
-	text[0] = '\0';
+	WORD wStatus = pdnce->getStatus();
+	*text = '\0';
+
 	// Hide status text if Offline  /// no offline
+	if (wStatus == ID_STATUS_OFFLINE || wStatus == 0)
+		noAwayMsg = TRUE;
 
-	if (wStatus == ID_STATUS_OFFLINE || wStatus == 0) noAwayMsg = TRUE;
 	// Get XStatusMsg
-	if (!noAwayMsg  && xstatus_has_priority && pdnce->hContact && pdnce->m_cache_cszProto) {
-		// Try to get XStatusMsg
-		if (!db_get_ts(pdnce->hContact, pdnce->m_cache_cszProto, "XStatusMsg", &dbv)) {
-			//mir_tstrncpy(text, dbv.pszVal, text_size);
-			CopySkipUnprintableChars(text, dbv.ptszVal, text_size - 1);
-			db_free(&dbv);
-
+	if (!noAwayMsg  && xstatus_has_priority && pdnce->hContact && pdnce->m_pszProto) {
+		ptrW tszXStatusMsg(db_get_wsa(pdnce->hContact, pdnce->m_pszProto, "XStatusMsg"));
+		if (tszXStatusMsg != nullptr) {
+			CopySkipUnprintableChars(text, tszXStatusMsg, text_size - 1);
 			if (text[0] != '\0')
 				return -1;
 		}
@@ -371,24 +355,20 @@ int GetStatusMessage(TCHAR *text, int text_size, ClcCacheEntry *pdnce, BOOL xsta
 
 	// Get StatusMsg
 	if (pdnce->hContact && text[0] == '\0') {
-		if (!db_get_ts(pdnce->hContact, "CList", "StatusMsg", &dbv)) {
-			//mir_tstrncpy(text, dbv.pszVal, text_size);
-			CopySkipUnprintableChars(text, dbv.ptszVal, text_size - 1);
-			db_free(&dbv);
-
+		ptrW tszStatusMsg(db_get_wsa(pdnce->hContact, "CList", "StatusMsg"));
+		if (tszStatusMsg != nullptr) {
+			CopySkipUnprintableChars(text, tszStatusMsg, text_size - 1);
 			if (text[0] != '\0')
 				return 1;
 		}
 	}
 
 	// Get XStatusMsg
-	if (!noAwayMsg && !xstatus_has_priority && pdnce->hContact && pdnce->m_cache_cszProto && text[0] == '\0') {
+	if (!noAwayMsg && !xstatus_has_priority && pdnce->hContact && pdnce->m_pszProto && text[0] == '\0') {
 		// Try to get XStatusMsg
-		if (!db_get_ts(pdnce->hContact, pdnce->m_cache_cszProto, "XStatusMsg", &dbv)) {
-			//mir_tstrncpy(text, dbv.pszVal, text_size);
-			CopySkipUnprintableChars(text, dbv.ptszVal, text_size - 1);
-			db_free(&dbv);
-
+		ptrW tszXStatusMsg(db_get_wsa(pdnce->hContact, pdnce->m_pszProto, "XStatusMsg"));
+		if (tszXStatusMsg != nullptr) {
+			CopySkipUnprintableChars(text, tszXStatusMsg, text_size - 1);
 			if (text[0] != '\0')
 				return -1;
 		}
@@ -397,85 +377,67 @@ int GetStatusMessage(TCHAR *text, int text_size, ClcCacheEntry *pdnce, BOOL xsta
 	return 1;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
+//	Get the text for specified lines
 
-/*
-*	Get the text for specified lines
-*/
-int Cache_GetLineText(
-	ClcCacheEntry *pdnce, int type, LPTSTR text, int text_size, TCHAR *variable_text, BOOL xstatus_has_priority,
-	BOOL show_status_if_no_away, BOOL show_listening_if_no_away, BOOL use_name_and_message_for_xstatus,
-	BOOL pdnce_time_show_only_if_different)
+int Cache_GetLineText(ClcCacheEntry *pdnce, int type, LPTSTR text, int text_size, ClcLineInfo &line)
 {
-	if (text == NULL)
+	if (text == nullptr)
 		return TEXT_EMPTY;
 	text[0] = '\0';
 
 	switch (type) {
 	case TEXT_STATUS:
-		if (GetStatusName(text, text_size, pdnce, xstatus_has_priority) == -1 && use_name_and_message_for_xstatus) {
-			DBVARIANT dbv = { 0 };
-
+LBL_Status:
+		if (GetStatusName(text, text_size, pdnce, line.xstatus_has_priority) == -1 && line.use_name_and_message_for_xstatus) {
 			// Try to get XStatusMsg
-			if (!db_get_ts(pdnce->hContact, pdnce->m_cache_cszProto, "XStatusMsg", &dbv)) {
-				if (dbv.ptszVal != NULL && dbv.ptszVal[0] != 0) {
-					TCHAR *tmp = NEWTSTR_ALLOCA(text);
-					mir_sntprintf(text, text_size, _T("%s: %s"), tmp, dbv.ptszVal);
-					CopySkipUnprintableChars(text, text, text_size - 1);
-				}
-				db_free(&dbv);
+			ptrW tszXStatusMsg(db_get_wsa(pdnce->hContact, pdnce->m_pszProto, "XStatusMsg"));
+			if (tszXStatusMsg != nullptr && tszXStatusMsg[0] != 0) {
+				wchar_t *tmp = NEWWSTR_ALLOCA(text);
+				mir_snwprintf(text, text_size, L"%s: %s", tmp, tszXStatusMsg);
+				CopySkipUnprintableChars(text, text, text_size - 1);
 			}
 		}
-
 		return TEXT_STATUS;
 
 	case TEXT_NICKNAME:
-		if (pdnce->hContact && pdnce->m_cache_cszProto) {
-			DBVARIANT dbv = { 0 };
-			if (!db_get_ts(pdnce->hContact, pdnce->m_cache_cszProto, "Nick", &dbv)) {
-				mir_tstrncpy(text, dbv.ptszVal, text_size);
-				db_free(&dbv);
+		if (pdnce->hContact && pdnce->m_pszProto) {
+			ptrW tszNick(db_get_wsa(pdnce->hContact, pdnce->m_pszProto, "Nick"));
+			if (tszNick != nullptr) {
+				mir_wstrncpy(text, tszNick, text_size);
 				CopySkipUnprintableChars(text, text, text_size - 1);
 			}
 		}
-
 		return TEXT_NICKNAME;
 
 	case TEXT_STATUS_MESSAGE:
-		if (GetStatusMessage(text, text_size, pdnce, xstatus_has_priority) == -1 && use_name_and_message_for_xstatus) {
-			DBVARIANT dbv = { 0 };
-
+		if (GetStatusMessage(text, text_size, pdnce, line.xstatus_has_priority) == -1 && line.use_name_and_message_for_xstatus) {
 			// Try to get XStatusName
-			if (!db_get_ts(pdnce->hContact, pdnce->m_cache_cszProto, "XStatusName", &dbv)) {
-				if (dbv.pszVal != NULL && dbv.pszVal[0] != 0) {
-					TCHAR *tmp = NEWTSTR_ALLOCA(text);
-					mir_sntprintf(text, text_size, _T("%s: %s"), dbv.pszVal, tmp);
-				}
+			ptrW tszXStatusName(db_get_wsa(pdnce->hContact, pdnce->m_pszProto, "XStatusName"));
+			if (tszXStatusName != nullptr && tszXStatusName[0] != 0) {
+				wchar_t *tmp = NEWWSTR_ALLOCA(text);
+				mir_snwprintf(text, text_size, L"%s: %s", tszXStatusName, tmp);
 				CopySkipUnprintableChars(text, text, text_size - 1);
-				db_free(&dbv);
 			}
 		}
-		else if (use_name_and_message_for_xstatus && xstatus_has_priority) {
-			DBVARIANT dbv = { 0 };
+		else if (line.use_name_and_message_for_xstatus && line.xstatus_has_priority) {
 			// Try to get XStatusName
-			if (!db_get_ts(pdnce->hContact, pdnce->m_cache_cszProto, "XStatusName", &dbv)) {
-				if (dbv.ptszVal != NULL && dbv.ptszVal[0] != 0)
-					mir_tstrncpy(text, dbv.ptszVal, text_size);
+			ptrW tszXStatusName(db_get_wsa(pdnce->hContact, pdnce->m_pszProto, "XStatusName"));
+			if (tszXStatusName != nullptr && tszXStatusName[0] != 0) {
+				mir_wstrncpy(text, tszXStatusName, text_size);
 				CopySkipUnprintableChars(text, text, text_size - 1);
-				db_free(&dbv);
 			}
 		}
 
 		if (text[0] == '\0') {
-			if (show_listening_if_no_away) {
-				Cache_GetLineText(pdnce, TEXT_LISTENING_TO, text, text_size, variable_text, xstatus_has_priority, 0, 0, use_name_and_message_for_xstatus, pdnce_time_show_only_if_different);
+			if (line.show_listening_if_no_away) {
+				GetListeningTo(text, text_size, pdnce);
 				if (text[0] != '\0')
 					return TEXT_LISTENING_TO;
 			}
 
-			if (show_status_if_no_away) {
-				//re-request status if no away
-				return Cache_GetLineText(pdnce, TEXT_STATUS, text, text_size, variable_text, xstatus_has_priority, 0, 0, use_name_and_message_for_xstatus, pdnce_time_show_only_if_different);
-			}
+			if (line.show_status_if_no_away) // re-request status if no away
+				goto LBL_Status;
 		}
 		return TEXT_STATUS_MESSAGE;
 
@@ -484,130 +446,108 @@ int Cache_GetLineText(
 		return TEXT_LISTENING_TO;
 
 	case TEXT_TEXT:
-	{
-		TCHAR *tmp = variables_parsedup(variable_text, pdnce->tszName, pdnce->hContact);
-		mir_tstrncpy(text, tmp, text_size);
-		mir_free(tmp);
-		CopySkipUnprintableChars(text, text, text_size - 1);
-	}
-	return TEXT_TEXT;
+		{
+			ptrW tmp(variables_parsedup(line.text, pdnce->tszName, pdnce->hContact));
+			mir_wstrncpy(text, tmp, text_size);
+			CopySkipUnprintableChars(text, text, text_size - 1);
+		}
+		return TEXT_TEXT;
 
 	case TEXT_CONTACT_TIME:
 		if (pdnce->hTimeZone) {
 			// Get pdnce time
 			text[0] = 0;
-			TimeZone_PrintDateTime(pdnce->hTimeZone, _T("t"), text, text_size, 0);
+			TimeZone_PrintDateTime(pdnce->hTimeZone, L"t", text, text_size, 0);
 		}
-
 		return TEXT_CONTACT_TIME;
 	}
 
 	return TEXT_EMPTY;
 }
 
-/*
-*	Get the text for First Line
-*/
+/////////////////////////////////////////////////////////////////////////////////////////
+//	Get the text for First Line
+
 void Cache_GetFirstLineText(ClcData *dat, ClcContact *contact)
 {
 	if (GetCurrentThreadId() != g_dwMainThreadID)
 		return;
 
-	ClcCacheEntry *pdnce = pcli->pfnGetCacheEntry(contact->hContact);
-	TCHAR *name = pcli->pfnGetContactDisplayName(contact->hContact, 0);
-	if (dat->first_line_append_nick && (!dat->force_in_dialog)) {
+	ClcCacheEntry *pdnce = contact->pce;
+	wchar_t *name = pcli->pfnGetContactDisplayName(contact->hContact, 0);
+	if (dat->first_line_append_nick && !dat->bForceInDialog) {
 		DBVARIANT dbv = { 0 };
-		if (!db_get_ts(pdnce->hContact, pdnce->m_cache_cszProto, "Nick", &dbv)) {
-			TCHAR nick[_countof(contact->szText)];
-			mir_tstrncpy(nick, dbv.ptszVal, _countof(contact->szText));
+		if (!db_get_ws(pdnce->hContact, pdnce->m_pszProto, "Nick", &dbv)) {
+			wchar_t nick[_countof(contact->szText)];
+			mir_wstrncpy(nick, dbv.ptszVal, _countof(contact->szText));
 			db_free(&dbv);
 
 			// They are the same -> use the name to keep the case
-			if (mir_tstrcmpi(name, nick) == 0)
-				mir_tstrncpy(contact->szText, name, _countof(contact->szText));
+			if (mir_wstrcmpi(name, nick) == 0)
+				mir_wstrncpy(contact->szText, name, _countof(contact->szText));
 			else // Append then
-				mir_sntprintf(contact->szText, _T("%s - %s"), name, nick);
+				mir_snwprintf(contact->szText, L"%s - %s", name, nick);
 		}
-		else mir_tstrncpy(contact->szText, name, _countof(contact->szText));
+		else mir_wstrncpy(contact->szText, name, _countof(contact->szText));
 	}
-	else mir_tstrncpy(contact->szText, name, _countof(contact->szText));
+	else mir_wstrncpy(contact->szText, name, _countof(contact->szText));
 
-	if (!dat->force_in_dialog) {
-		SHORTDATA data = { 0 };
-		Sync(CLUI_SyncGetShortData, (WPARAM)pcli->hwndContactTree, (LPARAM)&data);
-		contact->ssText.ReplaceSmileys(&data, pdnce, contact->szText, dat->first_line_draw_smileys);
-	}
+	if (!dat->bForceInDialog)
+		contact->ssText.ReplaceSmileys(dat, pdnce, contact->szText, dat->first_line_draw_smileys);
 }
 
-/*
-*	Get the text for Second Line
-*/
+/////////////////////////////////////////////////////////////////////////////////////////
+// Get the text for Second Line
 
-void Cache_GetSecondLineText(SHORTDATA *dat, ClcCacheEntry *pdnce)
+void Cache_GetNthLineText(ClcData *dat, ClcCacheEntry *pdnce, int n)
 {
-	TCHAR Text[240 - EXTRA_ICON_COUNT] = { 0 };
-	int type = TEXT_EMPTY;
+	wchar_t Text[240 - EXTRA_ICON_COUNT]; Text[0] = 0;
+	ClcLineInfo &line = (n == 2) ? dat->secondLine : dat->thirdLine;
+	wchar_t* &szText = (n == 2) ? pdnce->szSecondLineText : pdnce->szThirdLineText;
 
-	if (dat->second_line_show)
-		type = Cache_GetLineText(pdnce, dat->second_line_type, Text, _countof(Text), dat->second_line_text,
-		dat->second_line_xstatus_has_priority, dat->second_line_show_status_if_no_away, dat->second_line_show_listening_if_no_away,
-		dat->second_line_use_name_and_message_for_xstatus, dat->contact_time_show_only_if_different);
-
+	// in most cases replaceStrW does nothing
+	if (!line.show) {
+		replaceStrW(szText, nullptr);
+		return;
+	}
+	
+	int type = Cache_GetLineText(pdnce, line.type, Text, _countof(Text), line);
+	if (Text[0] == 0) {
+		replaceStrW(szText, nullptr);
+		return;
+	}
+	
 	Text[_countof(Text) - 1] = 0; //to be sure that it is null terminated string
+	replaceStrW(szText, Text);
 
-	replaceStrT(pdnce->szSecondLineText, (dat->second_line_show) ? Text : NULL);
-
-	if (pdnce->szSecondLineText) {
-		if (type == TEXT_LISTENING_TO && pdnce->szSecondLineText[0] != _T('\0'))
-			pdnce->ssSecondLine.AddListeningToIcon(dat, pdnce->szSecondLineText);
-		else
-			pdnce->ssSecondLine.ReplaceSmileys(dat, pdnce, pdnce->szSecondLineText, dat->second_line_draw_smileys);
-	}
+	CSmileyString &ss = (n == 2) ? pdnce->ssSecondLine : pdnce->ssThirdLine;
+	if (type == TEXT_LISTENING_TO && szText[0] != '\0')
+		ss.AddListeningToIcon(dat, szText);
+	else
+		ss.ReplaceSmileys(dat, pdnce, szText, line.draw_smileys);
 }
 
-/*
-*	Get the text for Third Line
-*/
-void Cache_GetThirdLineText(SHORTDATA *dat, ClcCacheEntry *pdnce)
+/////////////////////////////////////////////////////////////////////////////////////////
+
+void RemoveTag(wchar_t *to, wchar_t *tag)
 {
-	TCHAR Text[240 - EXTRA_ICON_COUNT] = { 0 };
-	int type = TEXT_EMPTY;
-	if (dat->third_line_show)
-		type = Cache_GetLineText(pdnce, dat->third_line_type, Text, _countof(Text), dat->third_line_text,
-		dat->third_line_xstatus_has_priority, dat->third_line_show_status_if_no_away, dat->third_line_show_listening_if_no_away,
-		dat->third_line_use_name_and_message_for_xstatus, dat->contact_time_show_only_if_different);
-
-	Text[_countof(Text) - 1] = 0; //to be sure that it is null terminated string
-
-	replaceStrT(pdnce->szThirdLineText, (dat->third_line_show) ? Text : NULL);
-	if (pdnce->szThirdLineText) {
-		if (type == TEXT_LISTENING_TO && pdnce->szThirdLineText[0] != _T('\0'))
-			pdnce->ssThirdLine.AddListeningToIcon(dat, pdnce->szThirdLineText);
-		else
-			pdnce->ssThirdLine.ReplaceSmileys(dat, pdnce, pdnce->szThirdLineText, dat->third_line_draw_smileys);
-	}
-}
-
-void RemoveTag(TCHAR *to, TCHAR *tag)
-{
-	TCHAR *st = to;
-	int len = (int)mir_tstrlen(tag);
-	int lastsize = (int)mir_tstrlen(to) + 1;
-	while (st = _tcsstr(st, tag)) {
+	wchar_t *st = to;
+	int len = (int)mir_wstrlen(tag);
+	int lastsize = (int)mir_wstrlen(to) + 1;
+	while (st = wcsstr(st, tag)) {
 		lastsize -= len;
-		memmove((void*)st, (void*)(st + len), (lastsize)*sizeof(TCHAR));
+		memmove((void*)st, (void*)(st + len), (lastsize)*sizeof(wchar_t));
 	}
 }
 
-/*
-*	Copy string with removing Escape chars from text
-*   And BBcodes
-*/
-static int CopySkipUnprintableChars(TCHAR *to, TCHAR * buf, DWORD size)
+/////////////////////////////////////////////////////////////////////////////////////////
+// Copy string with removing Escape chars from text and BBcodes
+
+static int CopySkipUnprintableChars(wchar_t *to, wchar_t * buf, DWORD size)
 {
 	DWORD i;
 	BOOL keep = 0;
-	TCHAR * cp = to;
+	wchar_t * cp = to;
 	if (!to) return 0;
 	if (!buf) {
 		to[0] = '\0';
@@ -630,26 +570,28 @@ static int CopySkipUnprintableChars(TCHAR *to, TCHAR * buf, DWORD size)
 	*cp = 0;
 
 	//remove bbcodes: [b] [i] [u]  <b> <i> <u>
-	RemoveTag(to, _T("[b]")); RemoveTag(to, _T("[/b]"));
-	RemoveTag(to, _T("[u]")); RemoveTag(to, _T("[/u]"));
-	RemoveTag(to, _T("[i]")); RemoveTag(to, _T("[/i]"));
+	RemoveTag(to, L"[b]"); RemoveTag(to, L"[/b]");
+	RemoveTag(to, L"[u]"); RemoveTag(to, L"[/u]");
+	RemoveTag(to, L"[i]"); RemoveTag(to, L"[/i]");
 
-	RemoveTag(to, _T("<b>")); RemoveTag(to, _T("</b>"));
-	RemoveTag(to, _T("<u>")); RemoveTag(to, _T("</u>"));
-	RemoveTag(to, _T("<i>")); RemoveTag(to, _T("</i>"));
+	RemoveTag(to, L"<b>"); RemoveTag(to, L"</b>");
+	RemoveTag(to, L"<u>"); RemoveTag(to, L"</u>");
+	RemoveTag(to, L"<i>"); RemoveTag(to, L"</i>");
 
-	RemoveTag(to, _T("[B]")); RemoveTag(to, _T("[/b]"));
-	RemoveTag(to, _T("[U]")); RemoveTag(to, _T("[/u]"));
-	RemoveTag(to, _T("[I]")); RemoveTag(to, _T("[/i]"));
+	RemoveTag(to, L"[B]"); RemoveTag(to, L"[/b]");
+	RemoveTag(to, L"[U]"); RemoveTag(to, L"[/u]");
+	RemoveTag(to, L"[I]"); RemoveTag(to, L"[/i]");
 
-	RemoveTag(to, _T("<B>")); RemoveTag(to, _T("</B>"));
-	RemoveTag(to, _T("<U>")); RemoveTag(to, _T("</U>"));
-	RemoveTag(to, _T("<I>")); RemoveTag(to, _T("</I>"));
+	RemoveTag(to, L"<B>"); RemoveTag(to, L"</B>");
+	RemoveTag(to, L"<U>"); RemoveTag(to, L"</U>");
+	RemoveTag(to, L"<I>"); RemoveTag(to, L"</I>");
 	return i;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
 // If ExecuteOnAllContactsFuncPtr returns FALSE, stop loop
 // Return TRUE if finished, FALSE if was stoped
+//
 static BOOL ExecuteOnAllContacts(ClcData *dat, ExecuteOnAllContactsFuncPtr func, void *param)
 {
 	return ExecuteOnAllContactsOfGroup(&dat->list, func, param);
@@ -660,29 +602,28 @@ static BOOL ExecuteOnAllContactsOfGroup(ClcGroup *group, ExecuteOnAllContactsFun
 	if (!group)
 		return TRUE;
 
-	for (int scanIndex = 0; scanIndex < group->cl.count; scanIndex++) {
-		if (group->cl.items[scanIndex]->type == CLCIT_CONTACT) {
-			if (!func(group->cl.items[scanIndex], FALSE, param))
+	for (int scanIndex = 0; scanIndex < group->cl.getCount(); scanIndex++) {
+		if (group->cl[scanIndex]->type == CLCIT_CONTACT) {
+			if (!func(group->cl[scanIndex], FALSE, param))
 				return FALSE;
 
-			if (group->cl.items[scanIndex]->SubAllocated > 0) {
-				for (int i = 0; i < group->cl.items[scanIndex]->SubAllocated; i++)
-					if (!func(&group->cl.items[scanIndex]->subcontacts[i], TRUE, param))
+			if (group->cl[scanIndex]->iSubAllocated > 0) {
+				for (int i = 0; i < group->cl[scanIndex]->iSubAllocated; i++)
+					if (!func(&group->cl[scanIndex]->subcontacts[i], TRUE, param))
 						return FALSE;
 			}
 		}
-		else if (group->cl.items[scanIndex]->type == CLCIT_GROUP)
-			if (!ExecuteOnAllContactsOfGroup(group->cl.items[scanIndex]->group, func, param))
+		else if (group->cl[scanIndex]->type == CLCIT_GROUP)
+			if (!ExecuteOnAllContactsOfGroup(group->cl[scanIndex]->group, func, param))
 				return FALSE;
 	}
 
 	return TRUE;
 }
 
-
-/*
-*	Avatar working routines
-*/
+/////////////////////////////////////////////////////////////////////////////////////////
+// Avatar working routines
+//
 BOOL UpdateAllAvatarsProxy(ClcContact *contact, BOOL, void *param)
 {
 	Cache_GetAvatar((ClcData *)param, contact);
@@ -704,10 +645,10 @@ BOOL ReduceAvatarPosition(ClcContact *contact, BOOL, void *param)
 
 void Cache_ProceedAvatarInList(ClcData *dat, ClcContact *contact)
 {
-	avatarCacheEntry * ace = contact->avatar_data;
+	AVATARCACHEENTRY *ace = contact->avatar_data;
 	int old_pos = contact->avatar_pos;
 
-	if (ace == NULL || ace->dwFlags == AVS_BITMAP_EXPIRED || ace->hbmPic == NULL) {
+	if (ace == nullptr || ace->dwFlags == AVS_BITMAP_EXPIRED || ace->hbmPic == nullptr) {
 		// Avatar was not ready or removed - need to remove it from cache
 		if (old_pos >= 0) {
 			ImageArray_RemoveImage(&dat->avatar_cache, old_pos);
@@ -718,8 +659,7 @@ void Cache_ProceedAvatarInList(ClcData *dat, ClcContact *contact)
 			return;
 		}
 	}
-	else if (contact->avatar_data->hbmPic != NULL) //Lets Add it
-	{
+	else if (contact->avatar_data->hbmPic != nullptr) { // let's add it
 		// Clipping width and height
 		LONG width_clip = dat->avatars_maxwidth_size ? dat->avatars_maxwidth_size : dat->avatars_maxheight_size;
 		LONG height_clip = dat->avatars_maxheight_size;
@@ -729,7 +669,7 @@ void Cache_ProceedAvatarInList(ClcData *dat, ClcContact *contact)
 		else
 			height_clip = width_clip * ace->bmHeight / ace->bmWidth;
 
-		if (wildcmpit(contact->avatar_data->szFilename, _T("*.gif"))) {
+		if (wildcmpiw(contact->avatar_data->szFilename, L"*.gif")) {
 			if (old_pos == AVATAR_POS_ANIMATED)
 				AniAva_RemoveAvatar(contact->hContact);
 
@@ -743,8 +683,9 @@ void Cache_ProceedAvatarInList(ClcData *dat, ClcContact *contact)
 		}
 
 		// Create objs
-		void * pt;
 		HDC hdc = CreateCompatibleDC(dat->avatar_cache.hdc);
+
+		void *pt;
 		HBITMAP hDrawBmp = ske_CreateDIB32Point(width_clip, height_clip, &pt);
 		HBITMAP oldBmp = (HBITMAP)SelectObject(hdc, hDrawBmp);
 
@@ -772,19 +713,19 @@ void Cache_GetAvatar(ClcData *dat, ClcContact *contact)
 	// workaround for avatar service
 	if (g_CluiData.bSTATE != STATE_NORMAL) {
 		contact->avatar_pos = AVATAR_POS_DONT_HAVE;
-		contact->avatar_data = NULL;
+		contact->avatar_data = nullptr;
 		return;
 	}
 
 	if (dat->avatars_show && !db_get_b(contact->hContact, "CList", "HideContactAvatar", 0)) {
-		contact->avatar_data = (avatarCacheEntry *)CallService(MS_AV_GETAVATARBITMAP, contact->hContact, 0);
-		if (contact->avatar_data == NULL || contact->avatar_data->cbSize != sizeof(avatarCacheEntry) || contact->avatar_data->dwFlags == AVS_BITMAP_EXPIRED)
-			contact->avatar_data = NULL;
+		contact->avatar_data = (AVATARCACHEENTRY*)CallService(MS_AV_GETAVATARBITMAP, contact->hContact, 0);
+		if (contact->avatar_data == nullptr || contact->avatar_data->cbSize != sizeof(AVATARCACHEENTRY) || contact->avatar_data->dwFlags == AVS_BITMAP_EXPIRED)
+			contact->avatar_data = nullptr;
 
-		if (contact->avatar_data != NULL)
-			contact->avatar_data->t_lastAccess = (DWORD)time(NULL);
+		if (contact->avatar_data != nullptr)
+			contact->avatar_data->t_lastAccess = (DWORD)time(nullptr);
 	}
-	else contact->avatar_data = NULL;
+	else contact->avatar_data = nullptr;
 
 	Cache_ProceedAvatarInList(dat, contact);
 }

@@ -2,36 +2,36 @@
 #include <locale.h>
 
 
-TCHAR *_tcstolower(TCHAR *dst)
+wchar_t *_tcstolower(wchar_t *dst)
 {
 	if (dst == NULL)
 		return NULL;
 	
-	SIZE_T dst_len = mir_tstrlen(dst);
+	SIZE_T dst_len = mir_wstrlen(dst);
 	for (SIZE_T i = 0; i < dst_len; i ++)
-		dst[i] = _totlower(dst[i]);
+		dst[i] = towlower(dst[i]);
 	return dst;
 }
 
-TCHAR *_tcstoupper(TCHAR *dst)
+wchar_t *_tcstoupper(wchar_t *dst)
 {
 	if (dst == NULL)
 		return NULL;
 	
-	SIZE_T dst_len = mir_tstrlen(dst);
+	SIZE_T dst_len = mir_wstrlen(dst);
 	for (SIZE_T i = 0; i < dst_len; i ++)
-		dst[i] = _totupper(dst[i]);
+		dst[i] = towupper(dst[i]);
 	return dst;
 }
 
-BOOL _isregex(TCHAR* strSearch)
+BOOL _isregex(wchar_t* strSearch)
 {
 	BOOL ret = FALSE;
 	pcre16 *re;
 	const char *error;
 	int erroroffs, rc;
-	TCHAR *regex;
-	TCHAR regex_parse[] = _T("/(.*)/([igsm]*)");
+	wchar_t *regex;
+	wchar_t regex_parse[] = L"/(.*)/([igsm]*)";
 	int ovector[9];
 
 	if (strSearch == NULL)
@@ -39,10 +39,10 @@ BOOL _isregex(TCHAR* strSearch)
 	re = pcre16_compile(regex_parse, 0, &error, &erroroffs, NULL);
 	if (re == NULL)
 		return FALSE;
-	regex = mir_tstrdup(strSearch);
+	regex = mir_wstrdup(strSearch);
 	if (regex == NULL)
 		goto err_out;
-	rc = pcre16_exec(re, NULL, regex, (int)mir_tstrlen(regex), 0, 0, ovector, 9);
+	rc = pcre16_exec(re, NULL, regex, (int)mir_wstrlen(regex), 0, 0, ovector, 9);
 	if (rc == 3)
 		ret = TRUE;
 	mir_free(regex);
@@ -52,15 +52,15 @@ err_out:
 	return ret;
 }
 
-BOOL _isvalidregex(TCHAR* strSearch)
+BOOL _isvalidregex(wchar_t* strSearch)
 {
 	BOOL ret = FALSE;
 	pcre16 *re;
 	const char *error;
 	int erroroffs, rc;
-	TCHAR *regex, *regexp, *mod;
+	wchar_t *regex, *regexp, *mod;
 	int opts = 0;
-	TCHAR regex_parse[] = _T("/(.*)/([igsm]*)");
+	wchar_t regex_parse[] = L"/(.*)/([igsm]*)";
 	int ovector[9];
 
 	if (strSearch == NULL)
@@ -68,12 +68,12 @@ BOOL _isvalidregex(TCHAR* strSearch)
 	re = pcre16_compile(regex_parse, 0, &error, &erroroffs, NULL);
 	if (re == NULL)
 		return FALSE;
-	regex = mir_tstrdup(strSearch);
+	regex = mir_wstrdup(strSearch);
 	if (regex == NULL) {
 		pcre16_free(re);
 		return FALSE;
 	}
-	rc = pcre16_exec(re, NULL, regex, (int)mir_tstrlen(regex), 0, 0, ovector, 9);
+	rc = pcre16_exec(re, NULL, regex, (int)mir_wstrlen(regex), 0, 0, ovector, 9);
 	pcre16_free(re);
 	if (rc != 3)
 		goto err_out;
@@ -82,11 +82,11 @@ BOOL _isvalidregex(TCHAR* strSearch)
 	mod = regex + ovector[4];
 	mod[ovector[5] - ovector[4]] = 0;
 
-	if (_tcsstr(mod, _T("i")))
+	if (wcsstr(mod, L"i"))
 		opts |= PCRE_CASELESS;
-	if (_tcsstr(mod, _T("m")))
+	if (wcsstr(mod, L"m"))
 		opts |= PCRE_MULTILINE;
-	if (_tcsstr(mod, _T("s")))
+	if (wcsstr(mod, L"s"))
 		opts |= PCRE_DOTALL;
 
 	re = pcre16_compile(regexp, opts, &error, &erroroffs, NULL);
@@ -100,15 +100,15 @@ err_out:
 	return ret;
 }
 
-BOOL _regmatch(TCHAR* str, TCHAR* strSearch)
+BOOL _regmatch(wchar_t* str, wchar_t* strSearch)
 {
 	BOOL ret = FALSE;
 	pcre16 *re;
 	const char *error;
 	int erroroffs, rc;
-	TCHAR *regex, *regexp, *data = NULL, *mod;
+	wchar_t *regex, *regexp, *data = NULL, *mod;
 	int opts = 0;
-	TCHAR regex_parse[] = _T("^/(.*)/([igsm]*)");
+	wchar_t regex_parse[] = L"^/(.*)/([igsm]*)";
 	int ovector[9];
 
 	if (str == NULL || strSearch == NULL)
@@ -116,12 +116,12 @@ BOOL _regmatch(TCHAR* str, TCHAR* strSearch)
 	re = pcre16_compile(regex_parse, 0, &error, &erroroffs, NULL);
 	if (re == NULL)
 		return FALSE; // [TODO] and log some error
-	regex = mir_tstrdup(strSearch);
+	regex = mir_wstrdup(strSearch);
 	if (regex == NULL) {
 		pcre16_free(re);
 		return FALSE;
 	}
-	rc = pcre16_exec(re, NULL, regex, (int)mir_tstrlen(regex), 0, 0, ovector, 9);
+	rc = pcre16_exec(re, NULL, regex, (int)mir_wstrlen(regex), 0, 0, ovector, 9);
 	pcre16_free(re);
 	if (rc != 3)
 		goto err_out; // [TODO] and log some error (better check for valid regex on options save)
@@ -130,20 +130,20 @@ BOOL _regmatch(TCHAR* str, TCHAR* strSearch)
 	mod = regex + ovector[4];
 	mod[ovector[5] - ovector[4]] = 0;
 
-	data = mir_tstrdup(str);
+	data = mir_wstrdup(str);
 	if (data == NULL)
 		goto err_out;
-	if (_tcsstr(mod, _T("i")))
+	if (wcsstr(mod, L"i"))
 		opts |= PCRE_CASELESS;
-	if (_tcsstr(mod, _T("m")))
+	if (wcsstr(mod, L"m"))
 		opts |= PCRE_MULTILINE;
-	if (_tcsstr(mod, _T("s")))
+	if (wcsstr(mod, L"s"))
 		opts |= PCRE_DOTALL;
 
 	re = pcre16_compile(regexp, opts, &error, &erroroffs, NULL);
 	if (re == NULL)
 		goto err_out;
-	rc = pcre16_exec(re, NULL, data, (int)mir_tstrlen(data), 0, 0, NULL, 0);
+	rc = pcre16_exec(re, NULL, data, (int)mir_wstrlen(data), 0, 0, NULL, 0);
 	pcre16_free(re);
 	if (rc >= 0)
 		ret = TRUE;
@@ -154,14 +154,14 @@ err_out:
 	return ret;
 }
 
-int get_response_id(const TCHAR* strvar)
+int get_response_id(const wchar_t* strvar)
 {
 	int ret = 0;
 	pcre16 *re;
 	const char *error;
 	int erroroffs, rc;
-	TCHAR *_str, *_strvar;
-	TCHAR regex[] = _T("^%response([#-_]([0-9]+))?%$");
+	wchar_t *_str, *_strvar;
+	wchar_t regex[] = L"^%response([#-_]([0-9]+))?%$";
 	int ovector[9];
 
 	if (strvar == NULL)
@@ -169,65 +169,65 @@ int get_response_id(const TCHAR* strvar)
 	re = pcre16_compile(regex, 0, &error, &erroroffs, NULL);
 	if (re == NULL)
 		return 0; // [TODO] and log some error
-	_strvar = mir_tstrdup(strvar);
+	_strvar = mir_wstrdup(strvar);
 	if (_strvar == NULL) {
 		pcre16_free(re);
 		return 0;
 	}
-	rc = pcre16_exec(re, NULL, _strvar, (int)mir_tstrlen(_strvar), 0, 0, ovector, 9);
+	rc = pcre16_exec(re, NULL, _strvar, (int)mir_wstrlen(_strvar), 0, 0, ovector, 9);
 	pcre16_free(re);
 	if (rc < 0) {
 		ret = -1;
 	} else if (rc == 3) {
 		_str = _strvar + ovector[4];
 		_str[ovector[5] - ovector[4]] = 0;
-		ret = _ttoi(_str);
+		ret = _wtoi(_str);
 	}
 	mir_free(_strvar);
 
 	return ret;
 }
 
-int get_response_num(const TCHAR *str)
+int get_response_num(const wchar_t *str)
 {
 	int i = 0;
-	TCHAR *tmp, *strc;
+	wchar_t *tmp, *strc;
 	
 	if (str == NULL)
 		return 0;
-	strc = mir_tstrdup(str);
+	strc = mir_wstrdup(str);
 	if (strc == NULL)
 		return 0;
-	tmp = _tcstok(strc, _T("\r\n"));
+	tmp = wcstok(strc, L"\r\n");
 	while (tmp) {
 		i ++;
-		tmp = _tcstok(NULL, _T("\r\n")); /* Move next. */
+		tmp = wcstok(NULL, L"\r\n"); /* Move next. */
 	}
 	mir_free(strc);
 
 	return i;
 }
 
-TCHAR* get_response(TCHAR* dst, unsigned int dstlen, int num)
+wchar_t* get_response(wchar_t* dst, unsigned int dstlen, int num)
 {
 	int i = 0;
-	TCHAR *tmp, *src;
+	wchar_t *tmp, *src;
 
 	if (dst == NULL || dstlen == 0 || num < 0)
 		return dst;
-	src = (TCHAR*)mir_alloc(MAX_BUFFER_LENGTH * sizeof(TCHAR));
+	src = (wchar_t*)mir_alloc(MAX_BUFFER_LENGTH * sizeof(wchar_t));
 	if (src == NULL)
 		goto err_out;
 	_getOptS(src, MAX_BUFFER_LENGTH, "Response", defaultResponse);
-	tmp = _tcstok(src, _T("\r\n"));
+	tmp = wcstok(src, L"\r\n");
 	while (tmp) {
 		if (i == num) {
-			mir_tstrcpy(dst, tmp);
+			mir_wstrcpy(dst, tmp);
 			mir_free(src);
 			return dst;
 		}
 		i ++;
-		tmp = _tcstok(NULL, _T("\r\n")); /* Move next. */
+		tmp = wcstok(NULL, L"\r\n"); /* Move next. */
 	}
 	mir_free(src);
 err_out:
@@ -235,20 +235,20 @@ err_out:
 	return dst;
 }
 
-TCHAR* _tcsstr_cc(TCHAR* str, TCHAR* strSearch, BOOL cc)
+wchar_t* _tcsstr_cc(wchar_t* str, wchar_t* strSearch, BOOL cc)
 {
-	TCHAR *ret = NULL, *_str = NULL, *_strSearch = NULL;
+	wchar_t *ret = NULL, *_str = NULL, *_strSearch = NULL;
 
 	if (cc)
-		return _tcsstr(str, strSearch);
+		return wcsstr(str, strSearch);
 
-	_str = mir_tstrdup(str);
+	_str = mir_wstrdup(str);
 	if (_str == NULL)
 		goto err_out;
-	_strSearch = mir_tstrdup(strSearch);
+	_strSearch = mir_wstrdup(strSearch);
 	if (_strSearch == NULL)
 		goto err_out;
-	ret = _tcsstr(_tcstolower(_str), _tcstolower(_strSearch));
+	ret = wcsstr(_tcstolower(_str), _tcstolower(_strSearch));
 	if (ret != NULL)
 		ret = ((ret - _str) + str);
 err_out:
@@ -258,40 +258,40 @@ err_out:
 	return ret;
 }
 
-BOOL Contains(TCHAR* dst, TCHAR* src) // Checks for occurence of substring from src in dst
+BOOL Contains(wchar_t* dst, wchar_t* src) // Checks for occurence of substring from src in dst
 {
 	BOOL ret = FALSE;
-	TCHAR *tsrc = NULL, *tdst = NULL, *token, *token_end;
+	wchar_t *tsrc = NULL, *tdst = NULL, *token, *token_end;
 	SIZE_T dst_len;
 
 	if (dst == NULL || src == NULL)
 		return FALSE;
-	tsrc = mir_tstrdup(src);
+	tsrc = mir_wstrdup(src);
 	if (tsrc == NULL)
 		goto err_out;
-	tdst = mir_tstrdup(dst);
+	tdst = mir_wstrdup(dst);
 	if (tdst == NULL)
 		goto err_out;
 	tdst = _tcstoupper(tdst);
-	dst_len = mir_tstrlen(tdst);
-	token = _tcstok(tsrc, _T(","));
+	dst_len = mir_wstrlen(tdst);
+	token = wcstok(tsrc, L",");
 	while (token) {
-		token_end = (token + mir_tstrlen(token));
-		while (!_tcsncmp(token, _T(" "), 1)) { /* Skeep spaces at start. */
+		token_end = (token + mir_wstrlen(token));
+		while (!wcsncmp(token, L" ", 1)) { /* Skeep spaces at start. */
 			token ++;
 		}
 		/* Skeep spaces at end. */
-		while (token > token_end && _tcschr((token_end - 1), _T(' '))) {
+		while (token > token_end && wcschr((token_end - 1), ' ')) {
 			token_end --;
 			token_end[0] = 0;
 		}
 		/* Compare. */
 		if (dst_len == (token_end - token) &&
-		    0 == memcmp(tdst, _tcstoupper(token), (dst_len * sizeof(TCHAR)))) {
+		    0 == memcmp(tdst, _tcstoupper(token), (dst_len * sizeof(wchar_t)))) {
 			ret = TRUE;
 			break;		
 		}
-		token = _tcstok(NULL, _T(",")); /* Move next. */
+		token = wcstok(NULL, L","); /* Move next. */
 	}
 err_out:
 	mir_free(tsrc);
@@ -321,49 +321,49 @@ BOOL isOneDay(DWORD timestamp1, DWORD timestamp2)
 	return FALSE;
 }
 
-TCHAR* ReplaceVar(TCHAR *dst, unsigned int len, const TCHAR *var, const TCHAR *rvar)
+wchar_t* ReplaceVar(wchar_t *dst, unsigned int len, const wchar_t *var, const wchar_t *rvar)
 {
-	TCHAR *var_start;
+	wchar_t *var_start;
 	SIZE_T dst_len, var_len, rvar_len;
 
 	if (dst == NULL || var == NULL || rvar == NULL)
 		return NULL;
-	dst_len = mir_tstrlen(dst);
-	var_len = mir_tstrlen(var);
-	rvar_len = mir_tstrlen(rvar);
-	var_start = _tcsstr(dst, var);
+	dst_len = mir_wstrlen(dst);
+	var_len = mir_wstrlen(var);
+	rvar_len = mir_wstrlen(rvar);
+	var_start = wcsstr(dst, var);
 	while (var_start) {
 		if (len < (dst_len + rvar_len - var_len + 1))
 			return NULL; /* Out of buf space. */
 		memmove((var_start + rvar_len),
 		    (var_start + var_len),
-		    (((dst + dst_len + 1) - (var_start + var_len)) * sizeof(TCHAR)));
+		    (((dst + dst_len + 1) - (var_start + var_len)) * sizeof(wchar_t)));
 		if (var_len >= rvar_len) { /* Buf data size not changed or decreased. */
 			dst_len -= (var_len - rvar_len);
 		} else { /* Buf data size increased. */
 			dst_len += (rvar_len - var_len);
 		}
-		memcpy(var_start, rvar, (rvar_len * sizeof(TCHAR)));
-		var_start = _tcsstr(dst, var); /* Move next. */
+		memcpy(var_start, rvar, (rvar_len * sizeof(wchar_t)));
+		var_start = wcsstr(dst, var); /* Move next. */
 	}
 
 	return dst;
 }
 
-TCHAR* ReplaceVars(TCHAR *dst, unsigned int len)
+wchar_t* ReplaceVars(wchar_t *dst, unsigned int len)
 {
 	return ReplaceVarsNum(dst, len, -1);
 }
 
-TCHAR* ReplaceVarsNum(TCHAR *dst, unsigned int len, int num)
+wchar_t* ReplaceVarsNum(wchar_t *dst, unsigned int len, int num)
 {
-	TCHAR response[MAX_BUFFER_LENGTH];
+	wchar_t response[MAX_BUFFER_LENGTH];
 	int ret, i;
 	pcre16 *re;
 	const char *error;
 	int erroroffs, rc;
-	TCHAR *_str, *tmp, **r = NULL, **tr, *ttmp, *dstcopy;
-	TCHAR regex[] = _T("%response([#-_]([0-9]+))?%");
+	wchar_t *_str, *tmp, **r = NULL, **tr, *ttmp, *dstcopy;
+	wchar_t regex[] = L"%response([#-_]([0-9]+))?%";
 	int ovector[9];
 
 	re = pcre16_compile(regex, 0, &error, &erroroffs, NULL);
@@ -371,25 +371,25 @@ TCHAR* ReplaceVarsNum(TCHAR *dst, unsigned int len, int num)
 		return FALSE; // [TODO] and log some error
 	_getOptS(response, _countof(response), "Response", defaultResponse);	
 
-	ttmp = _tcstok(response, _T("\r\n"));
+	ttmp = wcstok(response, L"\r\n");
 	for (i = 0; ttmp != NULL; i ++) {
-		tr = (TCHAR**)mir_realloc(r, ((i + 1) * sizeof(TCHAR*)));
+		tr = (wchar_t**)mir_realloc(r, ((i + 1) * sizeof(wchar_t*)));
 		if (tr == NULL)
 			goto err_out;
 		r = tr;
 		r[i] = ttmp;
-		ttmp = _tcstok(NULL, _T("\r\n")); /* Move next. */
+		ttmp = wcstok(NULL, L"\r\n"); /* Move next. */
 	}
 
 	do {
-		_str = mir_tstrdup(dst);
-		dstcopy = mir_tstrdup(dst);
+		_str = mir_wstrdup(dst);
+		dstcopy = mir_wstrdup(dst);
 		if (_str == NULL || dstcopy == NULL) {
 			mir_free(_str);
 			mir_free(dstcopy);
 			goto err_out;
 		}
-		rc = pcre16_exec(re, NULL, _str, (int)mir_tstrlen(_str), 0, 0, ovector, 9);
+		rc = pcre16_exec(re, NULL, _str, (int)mir_wstrlen(_str), 0, 0, ovector, 9);
 		if (rc < 0) {
 			ret = -1;
 		} else if (rc == 3) {
@@ -397,7 +397,7 @@ TCHAR* ReplaceVarsNum(TCHAR *dst, unsigned int len, int num)
 			ttmp[ovector[1] - ovector[0]] = 0;
 			tmp = _str + ovector[4];
 			tmp[ovector[5] - ovector[4]] = 0;
-			ret = _ttoi(tmp);
+			ret = _wtoi(tmp);
 		} else {
 			ttmp = dstcopy + ovector[0];
 			ttmp[ovector[1] - ovector[0]] = 0;
@@ -423,11 +423,11 @@ err_out:
 	return dst;
 } 
 
-int _notify(MCONTACT hContact, BYTE type, TCHAR *message, TCHAR *origmessage)
+int _notify(MCONTACT hContact, BYTE type, wchar_t *message, wchar_t *origmessage)
 {
 	char *tmp, *tmporig;
-	TCHAR msg[MAX_BUFFER_LENGTH];
-	mir_sntprintf(msg, message, pcli->pfnGetContactDisplayName(hContact, 0));
+	wchar_t msg[MAX_BUFFER_LENGTH];
+	mir_snwprintf(msg, message, pcli->pfnGetContactDisplayName(hContact, 0));
 
 	if (_getOptB("LogActions", defaultLogActions)) {
 		tmp = mir_u2a(msg);
@@ -458,11 +458,11 @@ int LogToSystemHistory(char *message, char *origmessage)
 {
 	char msg[MAX_BUFFER_LENGTH];
 	time_t tm;
-	DBEVENTINFO dbei;
 
 	if (message == NULL)
 		return 0;
-	dbei.cbSize = sizeof(DBEVENTINFO);
+
+	DBEVENTINFO dbei = {};
 	dbei.timestamp = time(&tm);
 	dbei.szModule = PLUGIN_NAME;
 	dbei.pBlob = (PBYTE)msg;
@@ -488,10 +488,7 @@ void MarkUnread(MCONTACT hContact)
 	if (db_get(hContact, PLUGIN_NAME, "LastMsgEvents", &_dbv) == 0) {
 		pos = _dbv.pbVal;
 		while (pos - _dbv.pbVal < _dbv.cpbVal) {
-			DBEVENTINFO _dbei;
-			memset(&_dbei, 0, sizeof(_dbei));
-			_dbei.cbSize = sizeof(_dbei);
-
+			DBEVENTINFO _dbei = {};
 			memcpy(&_dbei.eventType, pos, sizeof(WORD)); pos += sizeof(WORD);
 			memcpy(&_dbei.flags, pos, sizeof(DWORD)); pos += sizeof(DWORD);
 			memcpy(&_dbei.timestamp, pos, sizeof(DWORD)); pos += sizeof(DWORD);

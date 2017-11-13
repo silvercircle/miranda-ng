@@ -6,15 +6,11 @@
 
 class WASocketConnection : public ISocketConnection
 {
-public:
-	static HANDLE hNetlibUser;
-
-private:
 	int readSize;
 	int maxBufRead;
 	bool connected;
 
-	HANDLE hConn;
+	HNETLIBCONN hConn;
 
 public:
 	WASocketConnection(const std::string &dir, int port) throw (WAException);
@@ -28,12 +24,11 @@ public:
 	virtual void write(const std::vector<unsigned char>& b, int length);
 	// virtual void write(const std::vector<unsigned char>& bytes, int offset, int length);
 	virtual void makeNonBlock();
-	virtual int waitForRead();
 	virtual void forceShutdown();
 	
 	virtual void log(const char *prefix, const char *str);
 
-	static void initNetwork(HANDLE hNetlibUser) throw (WAException);
+	static void initNetwork(HNETLIBUSER hNetlibUser) throw (WAException);
 	static void quitNetwork();
 };
 

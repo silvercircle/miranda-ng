@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -38,7 +38,7 @@ static int AutoAwaySound(WPARAM, LPARAM)
 static void Proto_SetStatus(const char *szProto, unsigned status)
 {
 	if (CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGSEND) {
-		ptrT awayMsg((TCHAR*)CallService(MS_AWAYMSG_GETSTATUSMSGW, status, (LPARAM)szProto));
+		ptrW awayMsg((wchar_t*)CallService(MS_AWAYMSG_GETSTATUSMSGW, status, (LPARAM)szProto));
 		CallProtoService(szProto, PS_SETAWAYMSG, status, awayMsg);
 	}
 
@@ -97,9 +97,15 @@ static int AutoAwayEvent(WPARAM, LPARAM lParam)
 	return 0;
 }
 
+static int OnModulesLoaded(WPARAM, LPARAM)
+{
+	HookEvent(ME_IDLE_CHANGED, AutoAwayEvent);
+	return 0;
+}
+
 int LoadAutoAwayModule()
 {
+	HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
 	HookEvent(ME_SKIN_PLAYINGSOUND, AutoAwaySound);
-	HookEvent(ME_IDLE_CHANGED, AutoAwayEvent);
 	return 0;
 }

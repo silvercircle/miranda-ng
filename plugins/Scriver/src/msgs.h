@@ -29,20 +29,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 struct ToolbarButton
 {
-	TCHAR *name;
+	wchar_t *name;
 	UINT controlId;
 	int alignment;
 	int spacing;
 	int width;
-};
-
-struct ErrorWindowData
-{
-	TCHAR *szName;
-	TCHAR *szDescription;
-	TCHAR *szText;
-	MessageSendQueueItem *queueItem;
-	HWND hwndParent;
 };
 
 struct TabCtrlData
@@ -75,171 +66,246 @@ struct ParentWindowData
 	int bMinimized;
 	int bVMaximized;
 	int bTopmost;
+	int iSplitterX, iSplitterY;
+
 	int windowWasCascaded;
 	TabCtrlData *tabCtrlDat;
 	BOOL isChat;
 	ParentWindowData *prev, *next;
 };
 
-struct MessageWindowTabData
-{
-	HWND hwnd;
-	MCONTACT hContact;
-	char *szProto;
-	ParentWindowData *parent;
-	HICON hIcon;
-};
-
 #define NMWLP_INCOMING 1
 
-struct NewMessageWindowLParam
+class CScriverWindow : public CSrmmBaseDialog
 {
-	MCONTACT hContact;
-	BOOL isChat;
-	int isWchar;
-	LPCSTR szInitialText;
-	int flags;
-};
+	typedef CSrmmBaseDialog CSuper;
 
-struct CommonWindowData
-{
-	ParentWindowData *parent;
-	HWND hwndLog;
-	int minLogBoxHeight, minEditBoxHeight;
+protected:
+	CScriverWindow(int iDialog, SESSION_INFO* = nullptr);
+
+	int InputAreaShortcuts(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+public:
+	virtual void CloseTab() override;
+	virtual void LoadSettings() override;
+	virtual void SetStatusText(const wchar_t*, HICON) override;
+
+	void Reattach(HWND hwndContainer);
+
+	ParentWindowData *m_pParent;
+	int m_minLogBoxHeight, m_minEditBoxHeight;
+	HWND m_hwndIeview;
 	TCmdList *cmdList, *cmdListCurrent;
 };
 
-struct SrmmWindowData : public CommonWindowData
+class CSrmmWindow : public CScriverWindow
 {
-	HWND hwnd;
-	MCONTACT hContact;
-	int tabId;
-	HWND hwndParent;
-	MEVENT hDbEventFirst, hDbEventLast, hDbUnreadEventFirst;
-	int splitterPos;
-	int desiredInputAreaHeight;
-	SIZE toolbarSize;
-	int windowWasCascaded;
-	int nTypeSecs;
-	int nTypeMode;
-	HBITMAP avatarPic;
-	DWORD nLastTyping;
-	int showTyping;
-	int showUnread;
-	DWORD lastMessage;
-	char *szProto;
-	WORD wStatus;
-	time_t startTime;
-	time_t lastEventTime;
-	int lastEventType;
-	DWORD flags;
-	int messagesInProgress;
-	struct avatarCacheEntry *ace;
-	int isMixed;
-	int sendAllConfirm;
-	HICON statusIcon;
-	HICON statusIconBig;
-	HICON statusIconOverlay;
-	InfobarWindowData *infobarData;
+	typedef CScriverWindow CSuper;
+
+	CCtrlButton m_btnOk, m_btnAdd, m_btnUserMenu, m_btnQuote, m_btnDetails;
+	CSplitter m_splitter;
+
+	virtual LRESULT WndProc_Log(UINT msg, WPARAM wParam, LPARAM lParam);
+	virtual LRESULT WndProc_Message(UINT msg, WPARAM wParam, LPARAM lParam);
+
+	bool   m_bIncoming, m_bShowTyping;
+	
+	MEVENT m_hDbEventFirst, m_hDbEventLast, m_hDbUnreadEventFirst;
+	SIZE   m_toolbarSize;
+	int    m_iWindowWasCascaded;
+	int    m_nTypeSecs, m_nTypeMode, m_nLastTyping;
+	int    m_iShowUnread;
+	WORD   m_wStatus;
+	DWORD  m_lastMessage;
+	int    m_iMessagesInProgress;
+	int    m_iSendAllConfirm;
+	HICON  m_hStatusIcon, m_hStatusIconBig, m_hStatusIconOverlay;
+
+	void   GetContactUniqueId(char *buf, int maxlen);
+	HICON  GetTabIcon();
+	void   GetTitlebarIcon(struct TitleBarData *tbd);
+	void   MessageDialogResize(int w, int h);
+	void   ShowAvatar();
+	void   SetDialogToType();
+	void   SetStatusIcon();
+	void   StreamInEvents(MEVENT hDbEventFirst, int count, int fAppend);
+	void   UpdateReadChars();
+
+	bool   IsTypingNotificationEnabled();
+	bool   IsTypingNotificationSupported();
+	void   NotifyTyping(int mode);
+
+public:  // info bar support
+	HWND   m_hwndInfo;
+	HWND   m_hXStatusTip;
+
+	void   CreateInfobar();
+	void   SetupInfobar();
+	void   RefreshInfobar();
+
+public:
+	char *m_szProto;
+	time_t m_startTime, m_lastEventTime;
+	int m_lastEventType;
+	int m_isMixed;
+	bool m_bUseRtl, m_bUseIEView;
+
+	wchar_t *m_wszInitialText;
+	HBITMAP m_hbmpAvatarPic;
+	AVATARCACHEENTRY *m_ace;
+
+public:
+	CSrmmWindow(MCONTACT hContact, bool bIncoming);
+
+	virtual void OnInitDialog() override;
+	virtual void OnDestroy() override;
+
+	virtual void UpdateStatusBar() override;
+	virtual void UpdateTitle() override;
+
+	virtual INT_PTR DlgProc(UINT msg, WPARAM wParam, LPARAM lParam) override;
+
+	void onClick_Ok(CCtrlButton*);
+	void onClick_Add(CCtrlButton*);
+	void onClick_Quote(CCtrlButton*);
+	void onClick_Details(CCtrlButton*);
+	void onClick_History(CCtrlButton*);
+	void onClick_UserMenu(CCtrlButton*);
+
+	void onChange_Message(CCtrlEdit*);
+
+	void onChanged_Splitter(CSplitter*);
 };
 
+class CChatRoomDlg : public CScriverWindow
+{
+	typedef CScriverWindow CSuper;
 
-#define HM_DBEVENTADDED			(WM_USER+10)
-#define DM_REMAKELOG			(WM_USER+11)
-#define DM_CASCADENEWWINDOW		(WM_USER+13)
-#define DM_OPTIONSAPPLIED		(WM_USER+14)
-#define DM_SPLITTERMOVED		(WM_USER+15)
-#define DM_APPENDTOLOG			(WM_USER+17)
-#define DM_ERRORDECIDED			(WM_USER+18)
-#define DM_SCROLLLOGTOBOTTOM	(WM_USER+19)
-#define DM_TYPING				(WM_USER+20)
-#define DM_UPDATELASTMESSAGE	(WM_USER+22)
-#define DM_USERNAMETOCLIP		(WM_USER+23)
-#define DM_CHANGEICONS			(WM_USER+24)
-#define DM_UPDATEICON			(WM_USER+25)
-#define DM_GETAVATAR			(WM_USER+27)
-#define HM_ACKEVENT				(WM_USER+29)
+	CCtrlButton m_btnOk;
+	CSplitter m_splitterX, m_splitterY;
 
-#define DM_SENDMESSAGE			(WM_USER+30)
-#define DM_STARTMESSAGESENDING	(WM_USER+31)
-#define DM_SHOWMESSAGESENDING	(WM_USER+32)
-#define DM_STOPMESSAGESENDING	(WM_USER+33)
-#define DM_SHOWERRORMESSAGE		(WM_USER+34)
+	void MessageDialogResize(int w, int h);
+	void TabAutoComplete(void);
 
-#define DM_CLEARLOG				(WM_USER+46)
-#define DM_SWITCHSTATUSBAR		(WM_USER+47)
-#define DM_SWITCHTOOLBAR		(WM_USER+48)
-#define DM_SWITCHTITLEBAR		(WM_USER+49)
-#define DM_SWITCHINFOBAR		(WM_USER+50)
-#define DM_SWITCHRTL			(WM_USER+51)
-#define DM_SWITCHTYPING			(WM_USER+53)
-#define DM_MESSAGESENDING		(WM_USER+54)
-#define DM_GETWINDOWSTATE		(WM_USER+55)
-#define DM_STATUSICONCHANGE		(WM_USER+56)
+	virtual LRESULT WndProc_Log(UINT msg, WPARAM wParam, LPARAM lParam) override;
+	virtual LRESULT WndProc_Message(UINT msg, WPARAM wParam, LPARAM lParam) override;
+	virtual LRESULT WndProc_Nicklist(UINT msg, WPARAM wParam, LPARAM lParam) override;
 
-#define DM_MYAVATARCHANGED		(WM_USER+62)
-#define DM_PROTOAVATARCHANGED	(WM_USER+63)
-#define DM_AVATARCHANGED		(WM_USER+64)
+	static INT_PTR CALLBACK FilterWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-#define EM_SUBCLASSED			(WM_USER+0x101)
-#define EM_UNSUBCLASSED			(WM_USER+0x102)
+	wchar_t m_wszSearch[255];
+	wchar_t *m_wszSearchQuery, *m_wszSearchResult;
+	SESSION_INFO *m_pLastSession;
+
+public:
+	CChatRoomDlg(SESSION_INFO *si);
+
+	virtual void OnInitDialog() override;
+	virtual void OnDestroy() override;
+
+	virtual INT_PTR DlgProc(UINT uMsg, WPARAM wParam, LPARAM lParam) override;
+	
+	virtual void RedrawLog() override;
+	virtual void ScrollToBottom() override;
+	virtual void ShowFilterMenu() override;
+	virtual void StreamInEvents(LOGINFO* lin, bool bRedraw) override;
+	virtual void UpdateNickList() override;
+	virtual void UpdateOptions() override;
+	virtual void UpdateStatusBar() override;
+	virtual void UpdateTitle() override;
+
+	void onChange_Message(CCtrlEdit*);
+
+	void onClick_Ok(CCtrlButton*);
+	void onClick_Filter(CCtrlButton*);
+	void onClick_ShowList(CCtrlButton*);
+
+	void OnSplitterX(CSplitter*);
+	void OnSplitterY(CSplitter*);
+
+	void FixTabIcons();
+};
+
+#define HM_DBEVENTADDED        (WM_USER+10)
+#define DM_REMAKELOG           (WM_USER+11)
+#define DM_CASCADENEWWINDOW    (WM_USER+13)
+#define DM_OPTIONSAPPLIED      (WM_USER+14)
+#define DM_APPENDTOLOG         (WM_USER+17)
+#define DM_ERRORDECIDED        (WM_USER+18)
+#define DM_SCROLLLOGTOBOTTOM   (WM_USER+19)
+#define DM_TYPING              (WM_USER+20)
+#define DM_UPDATELASTMESSAGE   (WM_USER+22)
+#define DM_USERNAMETOCLIP      (WM_USER+23)
+#define DM_CHANGEICONS         (WM_USER+24)
+#define DM_UPDATEICON          (WM_USER+25)
+#define DM_GETAVATAR           (WM_USER+27)
+#define HM_ACKEVENT            (WM_USER+29)
+
+#define DM_SENDMESSAGE         (WM_USER+30)
+#define DM_STARTMESSAGESENDING (WM_USER+31)
+#define DM_SHOWMESSAGESENDING  (WM_USER+32)
+#define DM_STOPMESSAGESENDING  (WM_USER+33)
+#define DM_SHOWERRORMESSAGE    (WM_USER+34)
+
+#define DM_CLEARLOG            (WM_USER+46)
+#define DM_SWITCHSTATUSBAR     (WM_USER+47)
+#define DM_SWITCHTOOLBAR       (WM_USER+48)
+#define DM_SWITCHTITLEBAR      (WM_USER+49)
+#define DM_SWITCHINFOBAR       (WM_USER+50)
+#define DM_SWITCHRTL           (WM_USER+51)
+#define DM_SWITCHTYPING        (WM_USER+53)
+#define DM_MESSAGESENDING      (WM_USER+54)
+#define DM_STATUSICONCHANGE    (WM_USER+56)
+
+#define DM_MYAVATARCHANGED     (WM_USER+62)
+#define DM_PROTOAVATARCHANGED  (WM_USER+63)
+#define DM_AVATARCHANGED       (WM_USER+64)
+
+#define EM_SUBCLASSED          (WM_USER+0x101)
+#define EM_UNSUBCLASSED        (WM_USER+0x102)
 
 #define EVENTTYPE_JABBER_CHATSTATES	2000
 #define EVENTTYPE_JABBER_PRESENCE	2001
 
-struct CREOleCallback : public IRichEditOleCallback
+class CErrorDlg : public CDlgBase
 {
-	CREOleCallback() : refCount(0), nextStgId(0), pictStg(NULL) {}
-	unsigned refCount;
-	IStorage *pictStg;
-	int nextStgId;
+	ptrW m_wszText;
+	CMStringW m_wszName, m_wszDescr;
+	MessageSendQueueItem *m_queueItem;
+	HWND m_hwndParent;
 
-	STDMETHOD(QueryInterface)(REFIID riid, LPVOID FAR *lplpObj);
-	STDMETHOD_(ULONG,AddRef)(THIS);
-	STDMETHOD_(ULONG,Release)(THIS);
-	
-	STDMETHOD(ContextSensitiveHelp) (BOOL fEnterMode);
-	STDMETHOD(GetNewStorage) (LPSTORAGE FAR *lplpstg);
-	STDMETHOD(GetInPlaceContext) (LPOLEINPLACEFRAME FAR *lplpFrame, LPOLEINPLACEUIWINDOW FAR *lplpDoc, LPOLEINPLACEFRAMEINFO lpFrameInfo);
-	STDMETHOD(ShowContainerUI) (BOOL fShow);
-	STDMETHOD(QueryInsertObject) (LPCLSID lpclsid, LPSTORAGE lpstg, LONG cp);
-	STDMETHOD(DeleteObject) (LPOLEOBJECT lpoleobj);
-	STDMETHOD(QueryAcceptData) (LPDATAOBJECT lpdataobj, CLIPFORMAT FAR *lpcfFormat, DWORD reco, BOOL fReally, HGLOBAL hMetaPict);
-	STDMETHOD(GetClipboardData) (CHARRANGE FAR *lpchrg, DWORD reco, LPDATAOBJECT FAR *lplpdataobj);
-	STDMETHOD(GetDragDropEffect) (BOOL fDrag, DWORD grfKeyState, LPDWORD pdwEffect);
-	STDMETHOD(GetContextMenu) (WORD seltype, LPOLEOBJECT lpoleobj, CHARRANGE FAR *lpchrg, HMENU FAR *lphmenu);
+	CCtrlButton m_btnOk, m_btnCancel;
+
+protected:
+	virtual void OnInitDialog() override;
+
+public:
+	CErrorDlg(const wchar_t *pwszDescr, HWND, MessageSendQueueItem*);
+
+	void onOk(CCtrlButton*);
+	void onCancel(CCtrlButton*);
 };
 
-struct CREOleCallback2 : public CREOleCallback
-{
-	STDMETHOD(QueryAcceptData) (LPDATAOBJECT lpdataobj, CLIPFORMAT FAR *lpcfFormat, DWORD reco, BOOL fReally, HGLOBAL hMetaPict);
-};
-
-INT_PTR CALLBACK DlgProcParentWindow(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK DlgProcMessage(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK ErrorDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 int DbEventIsShown(DBEVENTINFO &dbei);
 int DbEventIsCustomForMsgWindow(DBEVENTINFO *dbei);
 int DbEventIsMessageOrCustom(DBEVENTINFO *dbei);
-void StreamInEvents(HWND hwndDlg, MEVENT hDbEventFirst, int count, int fAppend);
 void LoadMsgLogIcons(void);
 void FreeMsgLogIcons(void);
-TCHAR *GetNickname(MCONTACT hContact, const char *szProto);
 int IsAutoPopup(MCONTACT hContact);
 
-#define MSGFONTID_MYMSG			0
-#define MSGFONTID_YOURMSG		1
-#define MSGFONTID_MYNAME		2
-#define MSGFONTID_MYTIME		3
-#define MSGFONTID_MYCOLON		4
-#define MSGFONTID_YOURNAME		5
-#define MSGFONTID_YOURTIME		6
-#define MSGFONTID_YOURCOLON		7
-#define MSGFONTID_MESSAGEAREA	8
-#define MSGFONTID_NOTICE		9
-#define MSGFONTID_MYURL			10
-#define MSGFONTID_YOURURL		11
-#define MSGFONTID_INFOBAR_NAME	12
+#define MSGFONTID_MYMSG           0
+#define MSGFONTID_YOURMSG         1
+#define MSGFONTID_MYNAME          2
+#define MSGFONTID_MYTIME          3
+#define MSGFONTID_MYCOLON         4
+#define MSGFONTID_YOURNAME        5
+#define MSGFONTID_YOURTIME        6
+#define MSGFONTID_YOURCOLON       7
+#define MSGFONTID_MESSAGEAREA     8
+#define MSGFONTID_NOTICE          9
+#define MSGFONTID_MYURL          10
+#define MSGFONTID_YOURURL        11
+#define MSGFONTID_INFOBAR_NAME   12
 #define MSGFONTID_INFOBAR_STATUS 13
 
 void LoadMsgDlgFont(int i, LOGFONT *lf, COLORREF *colour);
@@ -249,7 +315,7 @@ extern int fontOptionsListSize;
 #define LOADHISTORY_COUNT		1
 #define LOADHISTORY_TIME		2
 
-#define SRMMMOD						"SRMM"
+#define SRMM_MODULE						"SRMM"
 
 #define SRMSGSET_USETABS			"UseTabs"
 #define SRMSGDEFSET_USETABS			1

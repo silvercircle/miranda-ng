@@ -1,5 +1,5 @@
 /*
-Copyright © 2012-15 Miranda NG team
+Copyright © 2012-17 Miranda NG team
 Copyright © 2009 Jim Porter
 
 This program is free software: you can redistribute it and/or modify
@@ -162,21 +162,21 @@ bool TwitterProto::NegotiateConnection()
 		}
 
 		//write those bitches to the db foe latta
-		setTString(TWITTER_KEY_OAUTH_TOK, oauthToken.c_str());
-		setTString(TWITTER_KEY_OAUTH_TOK_SECRET, oauthTokenSecret.c_str());
+		setWString(TWITTER_KEY_OAUTH_TOK, oauthToken.c_str());
+		setWString(TWITTER_KEY_OAUTH_TOK_SECRET, oauthTokenSecret.c_str());
 
 		// this looks like bad code.. can someone clean this up please?  or confirm that it's ok
 		wchar_t buf[1024] = {};
 		mir_snwprintf(buf, _countof(buf), AuthorizeUrl.c_str(), oauthToken.c_str());
 
-		debugLogW(_T("**NegotiateConnection - Launching %s"), buf);
+		debugLogW(L"**NegotiateConnection - Launching %s", buf);
 		ShellExecute(NULL, L"open", buf, NULL, NULL, SW_SHOWNORMAL);
 
 		ShowPinDialog();
 	}
 
-	if (!getTString(TWITTER_KEY_GROUP, &dbv)) {
-		CallService(MS_CLIST_GROUPCREATE, 0, (LPARAM)dbv.ptszVal);
+	if (!getWString(TWITTER_KEY_GROUP, &dbv)) {
+		Clist_GroupCreate(0, dbv.ptszVal);
 		db_free(&dbv);
 	}
 
@@ -193,7 +193,7 @@ bool TwitterProto::NegotiateConnection()
 			realAccessTok = true;
 			//debugLogW("**NegotiateConnection - we have an oauthAccessToken already in the db - %s", oauthAccessToken); 
 		}
-		else { debugLogA("**NegotiateConnection - oauthAccesToken too small? this is.. weird."); }
+		else debugLogA("**NegotiateConnection - oauthAccesToken too small? this is.. weird.");
 	}
 
 	dbTOKSec = getWString(TWITTER_KEY_OAUTH_ACCESS_TOK_SECRET, &dbv);
@@ -290,7 +290,7 @@ bool TwitterProto::NegotiateConnection()
 	debugLogA("**NegotiateConnection - Setting Consumer Keys and verifying creds...");
 
 	if (screenName.empty()) {
-		ShowPopup(TranslateT("You're missing the Nick key in the database. This isn't really a big deal, but you'll notice some minor quirks (self contact in list, no group chat outgoing message highlighting, etc). To fix it either add it manually or reset your Twitter account in the Miranda account options"));
+		ShowPopup(TranslateT("You're missing the Nick key in the database. This isn't really a big deal, but you'll notice some minor quirks (self contact in list, no group chat outgoing message highlighting, etc). To fix it either add it manually or recreate your Miranda Twitter account"));
 		debugLogA("**NegotiateConnection - Missing the Nick key in the database.  Everything will still work, but it's nice to have");
 	}
 
@@ -396,11 +396,11 @@ void TwitterProto::UpdateAvatarWorker(void *p)
 	// db_get_s returns 0 when it suceeds, so if this suceeds it will return 0, or false.
 	// therefore if it returns 1, or true, we want to return as there is no such user.
 	// as a side effect, dbv now has the username in it i think
-	if (getTString(data->hContact, TWITTER_KEY_UN, &dbv))
+	if (getWString(data->hContact, TWITTER_KEY_UN, &dbv))
 		return;
 
 	std::string ext = data->url.substr(data->url.rfind('.')); // finds the filetype of the avatar
-	std::tstring filename = GetAvatarFolder() + _T('\\') + dbv.ptszVal + (TCHAR*)_A2T(ext.c_str()); // local filename and path
+	std::wstring filename = GetAvatarFolder() + L'\\' + dbv.ptszVal + (wchar_t*)_A2T(ext.c_str()); // local filename and path
 	db_free(&dbv);
 
 	PROTO_AVATAR_INFORMATION ai = { 0 };
@@ -412,12 +412,12 @@ void TwitterProto::UpdateAvatarWorker(void *p)
 		return; // lets just ignore unknown formats... if not it crashes miranda. should probably speak to borkra about this.
 	}
 
-	_tcsncpy(ai.filename, filename.c_str(), MAX_PATH); // puts the local file name in the avatar struct, to a max of 260 chars (as of now)
+	wcsncpy(ai.filename, filename.c_str(), MAX_PATH); // puts the local file name in the avatar struct, to a max of 260 chars (as of now)
 
 	debugLogA("***** Updating avatar: %s", data->url.c_str());
 	mir_cslock lck(avatar_lock_);
 
-	if (CallService(MS_SYSTEM_TERMINATED, 0, 0)) // if miranda is shutting down...
+	if (Miranda_IsTerminated()) // if miranda is shutting down...
 	{
 		debugLogA("***** Terminating avatar update early: %s", data->url.c_str());
 		return;
@@ -535,8 +535,8 @@ void TwitterProto::ShowContactPopup(MCONTACT hContact, const std::string &text, 
 		popup.colorBack = GetSysColor(COLOR_WINDOWTEXT);
 
 	DBVARIANT dbv;
-	if (!db_get_ts(hContact, "CList", "MyHandle", &dbv) || !getTString(hContact, TWITTER_KEY_UN, &dbv)) {
-		_tcsncpy(popup.lptzContactName, dbv.ptszVal, MAX_CONTACTNAME);
+	if (!db_get_ws(hContact, "CList", "MyHandle", &dbv) || !getWString(hContact, TWITTER_KEY_UN, &dbv)) {
+		wcsncpy(popup.lptzContactName, dbv.ptszVal, MAX_CONTACTNAME);
 		db_free(&dbv);
 	}
 
@@ -574,7 +574,7 @@ void TwitterProto::UpdateStatuses(bool pre_read, bool popups, bool tweetToMsg)
 
 			// i think we maybe should just do that DBEF_READ line instead of stopping ALL this code.  have to test.
 			if (tweetToMsg) {
-				DBEVENTINFO dbei = { sizeof(dbei) };
+				DBEVENTINFO dbei = {};
 				dbei.pBlob = (BYTE*)(i->status.text.c_str());
 				dbei.cbBlob = (int)i->status.text.size() + 1;
 				dbei.eventType = TWITTER_DB_EVENT_TYPE_TWEET;
@@ -589,6 +589,7 @@ void TwitterProto::UpdateStatuses(bool pre_read, bool popups, bool tweetToMsg)
 			if (!pre_read && popups) {
 				std::stringstream url;
 				url << std::string("https://twitter.com/") << i->username << std::string("/status/") << i->status.id;
+				Skin_PlaySound("TwitterNew");
 				ShowContactPopup(hContact, i->status.text, new std::string(url.str()));
 			}
 		}

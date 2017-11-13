@@ -136,8 +136,8 @@ Utiliser les couleurs Windows
 Couleurs par défaut
 [Delay]
 
-[From Popup plugin]
-Comme le plugin Popup
+[From popup plugin]
+Comme le plugin popup
 [Custom]
 Défini
 [Permanent]
@@ -369,7 +369,7 @@ Poissons
 [Rename Item]
 Renommer l'élément
 [Hide Item]
-Cacher  l'élément
+Cacher l'élément
 [Show Items:]
 Voir les éléments :
 [Reset to defaults]
@@ -604,6 +604,10 @@ Attention : La version de votre pack d'icônes n'est pas prévue pour votre User
 Principales
 ;file \plugins\UserInfoEx\src\mir_icolib.h
 [Extended user info]
+
+[Dialogs]
+
+[Buttons]
 
 ;file \plugins\UserInfoEx\src\mir_menuitems.cpp
 [Export/import contact]
@@ -1070,23 +1074,28 @@ Maison automatisée
 
 [Widowed]
 
+[Actively searching]
+
+[In love]
+Amoureux
+[It's complicated]
+
+[In a civil union]
+
 [jun.]
 
 [sen.]
 
 ;file \plugins\UserInfoEx\src\svc_constants.h
-;file \plugins\UserInfoEx\src\svc_contactinfo.cpp
-['(Unknown Contact)']
-'(Contacts Inconnus)'
 ;file \plugins\UserInfoEx\src\svc_email.cpp
 [Send e-mail]
 Envoyer un courriel
 [Memory allocation error!]
 Erreur d'allocution de mémoire !
-[E-mail (uinfoex)]
+[E-mail (UInfoEx)]
 
 ;file \plugins\UserInfoEx\src\svc_gender.cpp
-[Gender (uinfoex)]
+[Gender (UInfoEx)]
 
 ;file \plugins\UserInfoEx\src\svc_homepage.cpp
 [User has no valid homepage]
@@ -1095,10 +1104,10 @@ Le contact n'a pas de page web valdie
 Voir la page web
 [&Homepage]
 
-[Homepage (uinfoex)]
+[Homepage (UInfoEx)]
 
 ;file \plugins\UserInfoEx\src\svc_phone.cpp
-[Phone (uinfoex)]
+[Phone (UInfoEx)]
 
 ;file \plugins\UserInfoEx\src\svc_refreshci.cpp
 [[b]%s (%S)...[/b]\n%d Contacts remaining]
@@ -1150,7 +1159,7 @@ Rappel d'anniversaire
 Rappel d'anniversaire : c'est bientôt
 [Anniversary Reminder]
 Rappel d'anniversaire
-[Reminder (uinfoex)]
+[Reminder (UInfoEx)]
 
 ;file \plugins\UserInfoEx\src\ex_import\classExImContactBase.cpp
 [contact identification]
@@ -1238,6 +1247,6 @@ Terminé
 [FATAL: An exception was thrown while importing contacts from xmlCard!]
 
 ;file \plugins\UserInfoEx\src\Flags\svc_flags.cpp
-[Flags (uinfoex)]
+[Flags (UInfoEx)]
 
 ;file \plugins\UserInfoEx\src\Flags\svc_flagsicons.cpp

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -46,7 +46,7 @@ struct MIM_TIMEZONE
 	unsigned hash;
 	int offset;
 
-	TCHAR	tszName[MIM_TZ_NAMELEN];            // windows name for the time zone
+	wchar_t	tszName[MIM_TZ_NAMELEN];            // windows name for the time zone
 	wchar_t szDisplay[MIM_TZ_DISPLAYLEN];    // more descriptive display name (that's what usually appears in dialogs)
 	                                          // every hour should be sufficient.
 	TIME_ZONE_INFORMATION tzi;
@@ -82,13 +82,13 @@ mir_time FileTimeToUnixTime(LPFILETIME pft)
 	return (mir_time)(ll / 10000000);
 }
 
-void FormatTime(const SYSTEMTIME *st, const TCHAR *szFormat, TCHAR *szDest, size_t cbDest)
+void FormatTime(const SYSTEMTIME *st, const wchar_t *szFormat, wchar_t *szDest, size_t cbDest)
 {
 	if (szDest == NULL || cbDest == 0) return;
 
-	CMString tszTemp;
+	CMStringW tszTemp;
 
-	for (const TCHAR* pFormat = szFormat; *pFormat; ++pFormat) {
+	for (const wchar_t* pFormat = szFormat; *pFormat; ++pFormat) {
 		DWORD fmt = 0;
 		bool date = false, iso = false;
 		switch (*pFormat) {
@@ -126,9 +126,9 @@ void FormatTime(const SYSTEMTIME *st, const TCHAR *szFormat, TCHAR *szDest, size
 			continue;
 		}
 
-		TCHAR dateTimeStr[64];
+		wchar_t dateTimeStr[64];
 		if (iso)
-			tszTemp.AppendFormat(_T("%d-%02d-%02dT%02d:%02d:%02dZ"), st->wYear, st->wMonth, st->wDay, st->wHour, st->wMinute, st->wSecond);
+			tszTemp.AppendFormat(L"%d-%02d-%02dT%02d:%02d:%02dZ", st->wYear, st->wMonth, st->wDay, st->wHour, st->wMinute, st->wSecond);
 		else if (date) {
 			GetDateFormat(LOCALE_USER_DEFAULT, fmt, st, NULL, dateTimeStr, _countof(dateTimeStr));
 			tszTemp.Append(dateTimeStr);
@@ -139,10 +139,8 @@ void FormatTime(const SYSTEMTIME *st, const TCHAR *szFormat, TCHAR *szDest, size
 		}
 	}
 
-	_tcsncpy_s(szDest, cbDest, tszTemp, _TRUNCATE);
+	wcsncpy_s(szDest, cbDest, tszTemp, _TRUNCATE);
 }
-
-#define fnSystemTimeToTzSpecificLocalTime SystemTimeToTzSpecificLocalTime
 
 MIR_CORE_DLL(int) TimeZone_GetTimeZoneTime(HANDLE hTZ, SYSTEMTIME *st)
 {
@@ -154,7 +152,7 @@ MIR_CORE_DLL(int) TimeZone_GetTimeZoneTime(HANDLE hTZ, SYSTEMTIME *st)
 	else if (tz && tz != &myInfo.myTZ) {
 		SYSTEMTIME sto;
 		GetSystemTime(&sto);
-		return !fnSystemTimeToTzSpecificLocalTime(&tz->tzi, &sto, st);
+		return !SystemTimeToTzSpecificLocalTime(&tz->tzi, &sto, st);
 	}
 	else
 		GetLocalTime(st);
@@ -168,7 +166,7 @@ MIR_CORE_DLL(LPCTSTR) TimeZone_GetName(HANDLE hTZ)
 	if (tz == NULL)
 		return myInfo.myTZ.tszName;
 	else if (tz == UTC_TIME_HANDLE)
-		return _T("UTC");
+		return L"UTC";
 
 	return tz->tszName;
 }
@@ -178,10 +176,10 @@ MIR_CORE_DLL(LPCTSTR) TimeZone_GetDescription(LPCTSTR TZname)
 	for (int i = 0; i < g_timezonesBias.getCount(); i++) {
 		MIM_TIMEZONE *tz = g_timezonesBias[i];
 
-		if (!mir_tstrcmp(tz->tszName, TZname))
+		if (!mir_wstrcmp(tz->tszName, TZname))
 			return tz->szDisplay;
 	}
-	return _T("");
+	return L"";
 }
 
 static void CalcTsOffset(MIM_TIMEZONE *tz)
@@ -193,7 +191,7 @@ static void CalcTsOffset(MIM_TIMEZONE *tz)
 	SystemTimeToFileTime(&st, &ft);
 	mir_time ts1 = FileTimeToUnixTime(&ft);
 
-	if (!fnSystemTimeToTzSpecificLocalTime(&tz->tzi, &st, &stl))
+	if (!SystemTimeToTzSpecificLocalTime(&tz->tzi, &st, &stl))
 		return;
 
 	SystemTimeToFileTime(&stl, &ft);
@@ -220,7 +218,7 @@ MIR_CORE_DLL(HANDLE) TimeZone_CreateByName(LPCTSTR tszName, DWORD dwFlags)
 	if (tszName == NULL)
 		return (dwFlags & (TZF_DIFONLY | TZF_KNOWNONLY)) ? NULL : &myInfo.myTZ;
 
-	if (mir_tstrcmp(myInfo.myTZ.tszName, tszName) == 0)
+	if (mir_wstrcmp(myInfo.myTZ.tszName, tszName) == 0)
 		return (dwFlags & TZF_DIFONLY) ? NULL : &myInfo.myTZ;
 
 	MIM_TIMEZONE tzsearch;
@@ -244,7 +242,7 @@ MIR_CORE_DLL(HANDLE) TimeZone_CreateByContact(MCONTACT hContact, LPCSTR szModule
 	if (szModule == NULL) szModule = "UserInfo";
 
 	DBVARIANT dbv;
-	if (!db_get_ts(hContact, szModule, "TzName", &dbv)) {
+	if (!db_get_ws(hContact, szModule, "TzName", &dbv)) {
 		HANDLE res = TimeZone_CreateByName(dbv.ptszVal, dwFlags);
 		db_free(&dbv);
 		if (res) return res;
@@ -253,7 +251,7 @@ MIR_CORE_DLL(HANDLE) TimeZone_CreateByContact(MCONTACT hContact, LPCSTR szModule
 	signed char timezone = (signed char)db_get_b(hContact, szModule, "Timezone", -1);
 	if (timezone == -1) {
 		char *szProto = GetContactProto(hContact);
-		if (!db_get_ts(hContact, szProto, "TzName", &dbv)) {
+		if (!db_get_ws(hContact, szProto, "TzName", &dbv)) {
 			HANDLE res = TimeZone_CreateByName(dbv.ptszVal, dwFlags);
 			db_free(&dbv);
 			if (res) return res;
@@ -295,7 +293,7 @@ MIR_CORE_DLL(void) TimeZone_StoreByContact(MCONTACT hContact, LPCSTR szModule, H
 
 	MIM_TIMEZONE *tz = (MIM_TIMEZONE*)hTZ;
 	if (tz) {
-		db_set_ts(hContact, szModule, "TzName", tz->tszName);
+		db_set_ws(hContact, szModule, "TzName", tz->tszName);
 		db_set_b(hContact, szModule, "Timezone", (char)((tz->tzi.Bias + tz->tzi.StandardBias) / 30));
 	}
 	else {
@@ -381,11 +379,11 @@ static const ListMessages* GetListMessages(HWND hWnd, DWORD dwFlags)
 		return NULL;
 
 	if (!(dwFlags & (TZF_PLF_CB | TZF_PLF_LB))) {
-		TCHAR	tszClassName[128];
+		wchar_t	tszClassName[128];
 		GetClassName(hWnd, tszClassName, _countof(tszClassName));
-		if (!mir_tstrcmpi(tszClassName, _T("COMBOBOX")))
+		if (!mir_wstrcmpi(tszClassName, L"COMBOBOX"))
 			dwFlags |= TZF_PLF_CB;
-		else if (!mir_tstrcmpi(tszClassName, _T("LISTBOX")))
+		else if (!mir_wstrcmpi(tszClassName, L"LISTBOX"))
 			dwFlags |= TZF_PLF_LB;
 	}
 	if (dwFlags & TZF_PLF_CB)
@@ -407,7 +405,7 @@ MIR_CORE_DLL(int) TimeZone_SelectListItem(MCONTACT hContact, LPCSTR szModule, HW
 	if (szModule == NULL) szModule = "UserInfo";
 
 	int iSelection = 0;
-	ptrT tszName(db_get_tsa(hContact, szModule, "TzName"));
+	ptrW tszName(db_get_wsa(hContact, szModule, "TzName"));
 	if (tszName != NULL) {
 		unsigned hash = mir_hashstrT(tszName);
 		for (int i = 0; i < g_timezonesBias.getCount(); i++) {
@@ -477,7 +475,7 @@ MIR_CORE_DLL(DWORD) TimeZone_ToLocal(DWORD timeVal)
 
 MIR_CORE_DLL(char*) TimeZone_ToString(mir_time timeVal, const char *szFormat, char *szDest, size_t cchDest)
 {
-	TCHAR *szTemp = (TCHAR*)alloca(cchDest*sizeof(TCHAR));
+	wchar_t *szTemp = (wchar_t*)alloca(cchDest*sizeof(wchar_t));
 	TimeZone_PrintTimeStamp(NULL, timeVal, _A2T(szFormat), szTemp, cchDest, 0);
 	WideCharToMultiByte(CP_ACP, 0, szTemp, -1, szDest, (int)cchDest, NULL, NULL);
 	return szDest;
@@ -491,11 +489,11 @@ MIR_CORE_DLL(wchar_t*) TimeZone_ToStringW(mir_time timeVal, const wchar_t *wszFo
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void GetLocalizedString(HKEY hSubKey, const TCHAR *szName, wchar_t *szBuf, DWORD cbLen)
+void GetLocalizedString(HKEY hSubKey, const wchar_t *szName, wchar_t *szBuf, DWORD cbLen)
 {
 	DWORD dwLength = cbLen * sizeof(wchar_t);
 	RegQueryValueEx(hSubKey, szName, NULL, NULL, (unsigned char *)szBuf, &dwLength);
-	szBuf[min(dwLength / sizeof(TCHAR), cbLen - 1)] = 0;
+	szBuf[min(dwLength / sizeof(wchar_t), cbLen - 1)] = 0;
 }
 
 void RecalculateTime(void)
@@ -508,9 +506,7 @@ void RecalculateTime(void)
 	DYNAMIC_TIME_ZONE_INFORMATION dtzi;
 
 	if (pfnGetDynamicTimeZoneInformation && pfnGetDynamicTimeZoneInformation(&dtzi) != TIME_ZONE_ID_INVALID) {
-		TCHAR *myTzKey = mir_u2t(dtzi.TimeZoneKeyName);
-		_tcsncpy_s(myInfo.myTZ.tszName, myTzKey, _TRUNCATE);
-		mir_free(myTzKey);
+		wcsncpy_s(myInfo.myTZ.tszName, dtzi.TimeZoneKeyName, _TRUNCATE);
 		found = true;
 	}
 
@@ -521,7 +517,7 @@ void RecalculateTime(void)
 
 		if (!found) {
 			if (!mir_wstrcmp(tz.tzi.StandardName, myInfo.myTZ.tzi.StandardName) || !mir_wstrcmp(tz.tzi.DaylightName, myInfo.myTZ.tzi.DaylightName)) {
-				_tcsncpy_s(myInfo.myTZ.tszName, tz.tszName, _TRUNCATE);
+				wcsncpy_s(myInfo.myTZ.tszName, tz.tszName, _TRUNCATE);
 				found = true;
 			}
 		}
@@ -533,7 +529,7 @@ void InitTimeZones(void)
 	REG_TZI_FORMAT	tzi;
 	HKEY			hKey;
 
-	const TCHAR *tszKey = _T("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones");
+	const wchar_t *tszKey = L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones";
 
 	/*
 	 * use GetDynamicTimeZoneInformation() on Vista+ - this will return a structure with
@@ -541,12 +537,12 @@ void InitTimeZones(void)
 	 * localized systems or systems with a MUI pack installed
 	 */
 	if (IsWinVerVistaPlus())
-		pfnGetDynamicTimeZoneInformation = (pfnGetDynamicTimeZoneInformation_t)GetProcAddress(GetModuleHandle(_T("kernel32")), "GetDynamicTimeZoneInformation");
+		pfnGetDynamicTimeZoneInformation = (pfnGetDynamicTimeZoneInformation_t)GetProcAddress(GetModuleHandle(L"kernel32"), "GetDynamicTimeZoneInformation");
 
 	if (ERROR_SUCCESS == RegOpenKeyEx(HKEY_LOCAL_MACHINE, tszKey, 0, KEY_ENUMERATE_SUB_KEYS, &hKey)) {
 		DWORD	dwIndex = 0;
 		HKEY	hSubKey;
-		TCHAR	tszName[MIM_TZ_NAMELEN];
+		wchar_t	tszName[MIM_TZ_NAMELEN];
 
 		DWORD dwSize = _countof(tszName);
 		while (ERROR_NO_MORE_ITEMS != RegEnumKeyEx(hKey, dwIndex++, tszName, &dwSize, NULL, NULL, 0, NULL)) {
@@ -554,7 +550,7 @@ void InitTimeZones(void)
 				dwSize = sizeof(tszName);
 
 				DWORD dwLength = sizeof(tzi);
-				if (ERROR_SUCCESS != RegQueryValueEx(hSubKey, _T("TZI"), NULL, NULL, (unsigned char *)&tzi, &dwLength))
+				if (ERROR_SUCCESS != RegQueryValueEx(hSubKey, L"TZI", NULL, NULL, (unsigned char *)&tzi, &dwLength))
 					continue;
 
 				MIM_TIMEZONE *tz = new MIM_TIMEZONE;
@@ -565,13 +561,13 @@ void InitTimeZones(void)
 				tz->tzi.DaylightDate = tzi.DaylightDate;
 				tz->tzi.DaylightBias = tzi.DaylightBias;
 
-				mir_tstrcpy(tz->tszName, tszName);
+				mir_wstrcpy(tz->tszName, tszName);
 				tz->hash = mir_hashstrT(tszName);
 				tz->offset = INT_MIN;
 
-				GetLocalizedString(hSubKey, _T("Display"), tz->szDisplay, _countof(tz->szDisplay));
-				GetLocalizedString(hSubKey, _T("Std"), tz->tzi.StandardName, _countof(tz->tzi.StandardName));
-				GetLocalizedString(hSubKey, _T("Dlt"), tz->tzi.DaylightName, _countof(tz->tzi.DaylightName));
+				GetLocalizedString(hSubKey, L"Display", tz->szDisplay, _countof(tz->szDisplay));
+				GetLocalizedString(hSubKey, L"Std", tz->tzi.StandardName, _countof(tz->tzi.StandardName));
+				GetLocalizedString(hSubKey, L"Dlt", tz->tzi.DaylightName, _countof(tz->tzi.DaylightName));
 
 				g_timezones.insert(tz);
 				g_timezonesBias.insert(tz);

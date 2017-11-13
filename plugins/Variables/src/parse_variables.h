@@ -18,12 +18,12 @@
 */
 
 typedef struct {
-	TCHAR *szName;
-	TCHAR *szText;
+	wchar_t *szName;
+	wchar_t *szText;
 	DWORD dwOwnerThread;
 } VARIABLEREGISTER;
 
-#define PUT					_T("put")
-#define PUTS				_T("puts")
-#define GET					_T("get")
+#define PUT					L"put"
+#define PUTS				L"puts"
+#define GET					L"get"
 

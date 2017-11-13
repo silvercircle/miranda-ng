@@ -66,56 +66,56 @@ LPCSTR lpcszStatusUri[] =
 
 LPCWSTR lpcszXStatusNameDef[] =
 {
-	LPGENT("None"),
-	LPGENT("Sick"),
-	LPGENT("Home"),
-	LPGENT("Eating"),
-	LPGENT("Compass"),
-	LPGENT("On WC"),
-	LPGENT("Cooking"),
-	LPGENT("Walking"),
-	LPGENT("Alien"),
-	LPGENT("Shrimp"),
-	LPGENT("Got lost"),
-	LPGENT("Crazy"),
-	LPGENT("Duck"),
-	LPGENT("Playing"),
-	LPGENT("Smoking"),
-	LPGENT("Office"),
-	LPGENT("Meeting"),
-	LPGENT("Beer"),
-	LPGENT("Coffee"),
-	LPGENT("Working"),
-	LPGENT("Relaxing"),
-	LPGENT("On the phone"),
-	LPGENT("In institute"),
-	LPGENT("At school"),
-	LPGENT("Wrong number"),
-	LPGENT("Laughing"),
-	LPGENT("Malicious"),
-	LPGENT("Imp"),
-	LPGENT("Blind"),
-	LPGENT("Disappointed"),
-	LPGENT("Almost crying"),
-	LPGENT("Fearful"),
-	LPGENT("Angry"),
-	LPGENT("Vampire"),
-	LPGENT("Ass"),
-	LPGENT("Love"),
-	LPGENT("Sleeping"),
-	LPGENT("Cool!"),
-	LPGENT("Peace!"),
-	LPGENT("Cock a snook"),
-	LPGENT("Get out"),
-	LPGENT("Death"),
-	LPGENT("Rocket"),
-	LPGENT("Devil-fish"),
-	LPGENT("Heavy metal"),
-	LPGENT("Things look bad"),
-	LPGENT("Squirrel"),
-	LPGENT("Star"),
-	LPGENT("Music"),
-	LPGENT("Dating"),
+	LPGENW("None"),
+	LPGENW("Sick"),
+	LPGENW("Home"),
+	LPGENW("Eating"),
+	LPGENW("Compass"),
+	LPGENW("On WC"),
+	LPGENW("Cooking"),
+	LPGENW("Walking"),
+	LPGENW("Alien"),
+	LPGENW("Shrimp"),
+	LPGENW("Got lost"),
+	LPGENW("Crazy"),
+	LPGENW("Duck"),
+	LPGENW("Playing"),
+	LPGENW("Smoking"),
+	LPGENW("Office"),
+	LPGENW("Meeting"),
+	LPGENW("Beer"),
+	LPGENW("Coffee"),
+	LPGENW("Working"),
+	LPGENW("Relaxing"),
+	LPGENW("On the phone"),
+	LPGENW("In institute"),
+	LPGENW("At school"),
+	LPGENW("Wrong number"),
+	LPGENW("Laughing"),
+	LPGENW("Malicious"),
+	LPGENW("Imp"),
+	LPGENW("Blind"),
+	LPGENW("Disappointed"),
+	LPGENW("Almost crying"),
+	LPGENW("Fearful"),
+	LPGENW("Angry"),
+	LPGENW("Vampire"),
+	LPGENW("Ass"),
+	LPGENW("Love"),
+	LPGENW("Sleeping"),
+	LPGENW("Cool!"),
+	LPGENW("Peace!"),
+	LPGENW("Cock a snook"),
+	LPGENW("Get out"),
+	LPGENW("Death"),
+	LPGENW("Rocket"),
+	LPGENW("Devil-fish"),
+	LPGENW("Heavy metal"),
+	LPGENW("Things look bad"),
+	LPGENW("Squirrel"),
+	LPGENW("Star"),
+	LPGENW("Music"),
+	LPGENW("Dating"),
 	NULL
 };
 
@@ -196,9 +196,9 @@ int CMraProto::MraDbSettingChanged(WPARAM hContact, LPARAM lParam)
 
 	// это наш контакт, он не временный (есть в списке на сервере) и его обновление разрешено
 	if (IsContactMra(hContact) && !db_get_b(hContact, "CList", "NotOnList", 0) && getDword(hContact, "HooksLocked", FALSE) == FALSE) {
-		if (!mir_strcmp(cws->szModule, "CList")) {
+		if (!strcmp(cws->szModule, "CList")) {
 			// MyHandle setting
-			if (!mir_strcmp(cws->szSetting, "MyHandle")) {
+			if (!strcmp(cws->szSetting, "MyHandle")) {
 				// always store custom nick
 				CMStringW wszNick;
 				if (cws->value.type == DBVT_DELETED) {
@@ -222,7 +222,7 @@ int CMraProto::MraDbSettingChanged(WPARAM hContact, LPARAM lParam)
 				}
 			}
 			// Group setting
-			else if (!mir_strcmp(cws->szSetting, "Group")) {
+			else if (!strcmp(cws->szSetting, "Group")) {
 				CMStringW wszGroup;
 				// manage group on server
 				switch (cws->value.type) {
@@ -243,11 +243,11 @@ int CMraProto::MraDbSettingChanged(WPARAM hContact, LPARAM lParam)
 				}
 			}
 			// NotOnList setting. Has a temporary contact just been added permanently?
-			else if (!mir_strcmp(cws->szSetting, "NotOnList")) {
+			else if (!strcmp(cws->szSetting, "NotOnList")) {
 				if (cws->value.type == DBVT_DELETED || (cws->value.type == DBVT_BYTE && cws->value.bVal == 0)) {
 					CMStringW wszAuthMessage;
 					if (!mraGetStringW(NULL, "AuthMessage", wszAuthMessage))
-						wszAuthMessage = TranslateT(MRA_DEFAULT_AUTH_MESSAGE);
+						wszAuthMessage = TranslateW(MRA_DEFAULT_AUTH_MESSAGE);
 
 					db_unset(hContact, "CList", "Hidden");
 
@@ -259,7 +259,7 @@ int CMraProto::MraDbSettingChanged(WPARAM hContact, LPARAM lParam)
 				}
 			}
 			// Hidden setting
-			else if (!mir_strcmp(cws->szSetting, "Hidden")) {
+			else if (!strcmp(cws->szSetting, "Hidden")) {
 				DWORD dwContactFlag = GetContactFlags(hContact);
 				if (cws->value.type == DBVT_DELETED || (cws->value.type == DBVT_BYTE && cws->value.bVal == 0))
 					dwContactFlag &= ~CONTACT_FLAG_SHADOW;
@@ -270,8 +270,8 @@ int CMraProto::MraDbSettingChanged(WPARAM hContact, LPARAM lParam)
 			}
 		}
 		// Ignore section
-		else if (!mir_strcmp(cws->szModule, "Ignore")) {
-			if (!mir_strcmp(cws->szSetting, "Mask1")) {
+		else if (!strcmp(cws->szModule, "Ignore")) {
+			if (!strcmp(cws->szSetting, "Mask1")) {
 				DWORD dwContactFlag = GetContactFlags(hContact);
 				if (cws->value.type == DBVT_DELETED || (cws->value.type == DBVT_DWORD && cws->value.dVal&IGNOREEVENT_MESSAGE) == 0)
 					dwContactFlag &= ~CONTACT_FLAG_IGNORE;
@@ -282,8 +282,8 @@ int CMraProto::MraDbSettingChanged(WPARAM hContact, LPARAM lParam)
 			}
 		}
 		// User info section
-		else if (!mir_strcmp(cws->szModule, "UserInfo")) {
-			if (!mir_strcmp(cws->szSetting, "MyPhone0") || !mir_strcmp(cws->szSetting, "MyPhone1") || !mir_strcmp(cws->szSetting, "MyPhone2"))
+		else if (!strcmp(cws->szModule, "UserInfo")) {
+			if (!strcmp(cws->szSetting, "MyPhone0") || !strcmp(cws->szSetting, "MyPhone1") || !strcmp(cws->szSetting, "MyPhone2"))
 				MraModifyContact(hContact);
 		}
 	}
@@ -304,15 +304,15 @@ INT_PTR CMraProto::MraSetListeningTo(WPARAM, LPARAM lParam)
 	LISTENINGTOINFO *pliInfo = (LISTENINGTOINFO*)lParam;
 
 	if (pliInfo == NULL || pliInfo->cbSize != sizeof(LISTENINGTOINFO)) {
-		MraChangeUserBlogStatus(MRIM_BLOG_STATUS_MUSIC, _T(""), 0);
+		MraChangeUserBlogStatus(MRIM_BLOG_STATUS_MUSIC, L"", 0);
 		delSetting(DBSETTING_BLOGSTATUSMUSIC);
 	}
 	else if (pliInfo->dwFlags & LTI_UNICODE) {
 		CMStringW wszListeningTo;
 		if (ServiceExists(MS_LISTENINGTO_GETPARSEDTEXT))
-			wszListeningTo = ptrT((LPWSTR)CallService(MS_LISTENINGTO_GETPARSEDTEXT, (WPARAM)L"%track%. %title% - %artist% - %player%", (LPARAM)pliInfo));
+			wszListeningTo = ptrW((LPWSTR)CallService(MS_LISTENINGTO_GETPARSEDTEXT, (WPARAM)L"%track%. %title% - %artist% - %player%", (LPARAM)pliInfo));
 		else
-			wszListeningTo.Format(L"%s. %s - %s - %s", pliInfo->ptszTrack ? pliInfo->ptszTrack : _T(""), pliInfo->ptszTitle ? pliInfo->ptszTitle : _T(""), pliInfo->ptszArtist ? pliInfo->ptszArtist : _T(""), pliInfo->ptszPlayer ? pliInfo->ptszPlayer : _T(""));
+			wszListeningTo.Format(L"%s. %s - %s - %s", pliInfo->ptszTrack ? pliInfo->ptszTrack : L"", pliInfo->ptszTitle ? pliInfo->ptszTitle : L"", pliInfo->ptszArtist ? pliInfo->ptszArtist : L"", pliInfo->ptszPlayer ? pliInfo->ptszPlayer : L"");
 
 		mraSetStringExW(NULL, DBSETTING_BLOGSTATUSMUSIC, wszListeningTo);
 		MraChangeUserBlogStatus(MRIM_BLOG_STATUS_MUSIC, wszListeningTo, 0);
@@ -328,7 +328,7 @@ int CMraProto::MraMusicChanged(WPARAM wParam, LPARAM lParam)
 		// stopped
 		if (1 == lParam) {
 			delSetting(DBSETTING_BLOGSTATUSMUSIC);
-			MraChangeUserBlogStatus(MRIM_BLOG_STATUS_MUSIC, _T(""), 0);
+			MraChangeUserBlogStatus(MRIM_BLOG_STATUS_MUSIC, L"", 0);
 		}
 		break;
 
@@ -336,7 +336,7 @@ int CMraProto::MraMusicChanged(WPARAM wParam, LPARAM lParam)
 		SONGINFO *psiSongInfo;
 		if (WAT_RES_OK == CallService(MS_WAT_GETMUSICINFO, WAT_INF_UNICODE, (LPARAM)&psiSongInfo)) {
 			CMStringW wszMusic;
-			wszMusic.Format(_T("%ld. %s - %s - %s"), psiSongInfo->track, psiSongInfo->artist, psiSongInfo->title, psiSongInfo->player);
+			wszMusic.Format(L"%ld. %s - %s - %s", psiSongInfo->track, psiSongInfo->artist, psiSongInfo->title, psiSongInfo->player);
 			mraSetStringExW(NULL, DBSETTING_BLOGSTATUSMUSIC, wszMusic);
 			MraChangeUserBlogStatus(MRIM_BLOG_STATUS_MUSIC, wszMusic, 0);
 		}
@@ -374,7 +374,7 @@ DWORD CMraProto::MraSetXStatusInternal(DWORD dwXStatus)
 	DWORD dwOldStatusMode = InterlockedExchange((volatile LONG*)&m_iXStatus, dwXStatus);
 	setByte(DBSETTING_XSTATUSID, (BYTE)dwXStatus);
 
-	MraSendNewStatus(m_iStatus, dwXStatus, _T(""), _T(""));
+	MraSendNewStatus(m_iStatus, dwXStatus, L"", L"");
 
 	return dwOldStatusMode;
 }
@@ -466,9 +466,9 @@ INT_PTR CMraProto::MraGetXStatusEx(WPARAM hContact, LPARAM lParam)
 				return 1;
 
 			if (pData->flags & CSSF_UNICODE)
-				mir_tstrncpy(pData->ptszName, lpcszXStatusNameDef[dwXStatus], (STATUS_TITLE_MAX + 1));
+				mir_wstrncpy(pData->ptszName, lpcszXStatusNameDef[dwXStatus], (STATUS_TITLE_MAX + 1));
 			else {
-				size_t dwStatusTitleSize = mir_tstrlen(lpcszXStatusNameDef[dwXStatus]);
+				size_t dwStatusTitleSize = mir_wstrlen(lpcszXStatusNameDef[dwXStatus]);
 				if (dwStatusTitleSize > STATUS_TITLE_MAX)
 					dwStatusTitleSize = STATUS_TITLE_MAX;
 
@@ -531,7 +531,7 @@ DWORD CMraProto::MraSendNewStatus(DWORD dwStatusMir, DWORD dwXStatusMir, const C
 			mir_snprintf(szValueName, "XStatus%ldName", dwXStatusMir);
 			// custom xstatus name
 			if (!mraGetStringW(NULL, szValueName, wszStatusTitle))
-				wszStatusTitle = TranslateTS(lpcszXStatusNameDef[dwXStatusMir]);
+				wszStatusTitle = TranslateW(lpcszXStatusNameDef[dwXStatusMir]);
 		}
 		else wszStatusTitle = pwszStatusTitle;
 
@@ -625,7 +625,7 @@ INT_PTR CMraProto::MraGetMyAvatar(WPARAM wParam, LPARAM lParam)
 {
 	CMStringW wszFileName;
 	if (MraAvatarsGetFileName(hAvatarsQueueHandle, NULL, GetContactAvatarFormat(NULL, PA_FORMAT_DEFAULT), wszFileName) == NO_ERROR) {
-		mir_tstrncpy((LPTSTR)wParam, wszFileName, (size_t)lParam);
+		mir_wstrncpy((LPTSTR)wParam, wszFileName, (size_t)lParam);
 		return 0;
 	}
 	return 1;
@@ -644,7 +644,7 @@ int CMraProto::OnGroupChanged(WPARAM hContact, LPARAM lParam)
 		MraGroupItem *pGrp = NULL;
 		for (int i = 0; i < m_groups.getCount(); i++) {
 			MraGroupItem &p = m_groups[i];
-			if (!mir_tstrcmp(p.m_name, cgc->pszOldName)) {
+			if (!mir_wstrcmp(p.m_name, cgc->pszOldName)) {
 				pGrp = &p;
 				break;
 			}

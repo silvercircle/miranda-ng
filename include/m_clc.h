@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -25,9 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef M_CLC_H__
 #define M_CLC_H__ 1
 
-//This module is new in 0.1.2.1
-
-#define CLISTCONTROL_CLASS  "CListControl"
+#define CLISTCONTROL_CLASS   "CListControl"
+#define CLISTCONTROL_CLASSW L"CListControl"
 
 //styles
 #define CLS_MANUALUPDATE    0x0001	 //todo
@@ -84,7 +83,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CLM_GETFONT           (CLM_FIRST+18)   //wParam = fontId, see clm_setfont. returns hFont.
 #define CLM_GETINDENT         (CLM_FIRST+19)   //wParam = new group indent
 #define CLM_GETISEARCHSTRING  (CLM_FIRST+20)   //lParam = (char*)pszStr, max 120 bytes, returns number of chars in string
-#define CLM_GETITEMTEXT       (CLM_FIRST+21)   //wParam = hItem, lParam = (TCHAR*)pszStr, max 120 bytes
+#define CLM_GETITEMTEXT       (CLM_FIRST+21)   //wParam = hItem, lParam = (wchar_t*)pszStr, max 120 bytes
 #define CLM_GETSCROLLTIME     (CLM_FIRST+22)   //returns time in ms
 #define CLM_GETSELECTION      (CLM_FIRST+23)   //returns hItem
 #define CLM_SETEXTRASPACE     (CLM_FIRST+24)   //wParam=extra space between icons
@@ -153,7 +152,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CLM_SETLEFTMARGIN     (CLM_FIRST+47)   //wParam = pixels
 typedef struct {
 	int cbSize;
-	const TCHAR *pszText;
+	const wchar_t *pszText;
 	HANDLE hParentGroup;
 	DWORD flags;
 	HICON hIcon;     //todo

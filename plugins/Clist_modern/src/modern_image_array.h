@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -65,7 +65,7 @@ void ImageArray_Initialize(IMAGE_ARRAY_DATA *iad, BOOL width_based, int grow_ste
 void ImageArray_Clear(IMAGE_ARRAY_DATA *iad);
 
 // Free data
-// If keep_bitmap is TRUE, doesn't delete de bitmap and return its handle. Else, return NULL
+// If keep_bitmap is TRUE, doesn't delete de bitmap and return its handle. Else, return nullptr
 HBITMAP ImageArray_Free(IMAGE_ARRAY_DATA *iad, BOOL keep_bitmap);
 
 // Add image to the list (return the index of the image or -1 on error)

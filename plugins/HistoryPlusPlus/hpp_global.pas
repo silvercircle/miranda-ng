@@ -73,6 +73,11 @@ type
 
   TRTLMode = (hppRTLDefault,hppRTLEnable,hppRTLDisable);
 
+  TOldDBEventInfo = record
+    cbSize   : dword;
+    d        : TDBEventInfo;
+  end;
+
   PHistoryItem = ^THistoryItem;
   THistoryItem = record
     Time: DWord;
@@ -166,7 +171,7 @@ const
   hppAuthorEmail = 'themiron@mail.ru, artemf@mail.ru';
   hppCopyright   = '© 2006-2009 theMIROn, 2003-2006 Art Fedorov. History+ parts © 2001 Christian Kastner';
 
-  hppHomePageURL  = 'http://miranda-ng.org/p/HistoryPP/';
+  hppHomePageURL  = 'https://miranda-ng.org/p/HistoryPP/';
 
   hppIPName     = 'historypp_icons.dll';
 
@@ -270,7 +275,6 @@ const
 
 var
   hppCodepage: Cardinal;
-  hppRichEditVersion: Integer;
 
 {$I m_historypp.inc}
 

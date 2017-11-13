@@ -7,8 +7,8 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "afxres.h"
-#include "..\src\constants.h"
+#include "winres.h"
+
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
@@ -32,13 +32,14 @@ END
 
 2 TEXTINCLUDE 
 BEGIN
-    "#include ""afxres.h""\r\n"
-    "#include ""..\\src\\constants.h""\0"
+    "#include ""winres.h""\r\n"
+    "\0"
 END
 
 3 TEXTINCLUDE 
 BEGIN
-    "\r\0"
+    "\r\n"
+    "\0"
 END
 
 #endif    // APSTUDIO_INVOKED
@@ -52,13 +53,35 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_FACEBOOK            ICON                    "facebook.ico"
+
 IDI_MIND                ICON                    "mind.ico"
+
 IDI_POKE                ICON                    "poke.ico"
+
 IDI_NOTIFICATION        ICON                    "notification.ico"
+
 IDI_NEWSFEED            ICON                    "feeds.ico"
+
 IDI_FRIENDS             ICON                    "friends.ico"
+
 IDI_CONVERSATION        ICON                    "conversation.ico"
+
 IDI_READ                ICON                    "read.ico"
+
+IDI_MEMORIES            ICON                    "memories.ico"
+
+IDI_ANGRY               ICON                    "angry.ico"
+
+IDI_HAHA                ICON                    "haha.ico"
+
+IDI_LIKE                ICON                    "like.ico"
+
+IDI_LOVE                ICON                    "love.ico"
+
+IDI_SAD                 ICON                    "sad.ico"
+
+IDI_WOW                 ICON                    "wow.ico"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -101,7 +124,7 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,110,94,44,15
 END
 
-IDD_OPTIONS DIALOGEX 0, 0, 305, 190
+IDD_OPTIONS DIALOGEX 0, 0, 305, 195
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
@@ -113,14 +136,18 @@ BEGIN
     EDITTEXT        IDC_PW,84,34,123,13,ES_PASSWORD | ES_AUTOHSCROLL
     CONTROL         "Create a new Facebook account",IDC_NEWACCOUNTLINK,
                     "Hyperlink",WS_TABSTOP,84,53,189,10
-    GROUPBOX        "Contacts",IDC_STATIC,7,77,291,74
+    GROUPBOX        "Contacts",IDC_STATIC,7,77,291,103
     LTEXT           "Default group:",IDC_STATIC,17,91,61,8,0,WS_EX_RIGHT
     EDITTEXT        IDC_GROUP,84,89,123,13,ES_AUTOHSCROLL
     CONTROL         "Automatically set 'Ignore status change' flag",IDC_SET_IGNORE_STATUS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,107,271,10
     CONTROL         "Use bigger avatars",IDC_BIGGER_AVATARS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,120,271,10
-	CONTROL         "Prefer real names instead of nicknames",IDC_NAME_AS_NICK,
+    CONTROL         "Prefer real names instead of nicknames",IDC_NAME_AS_NICK,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,134,271,10
+    CONTROL         "Load also Messenger contacts at login (not only Facebook friends)",IDC_LOAD_ALL_CONTACTS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,148,271,10
+    CONTROL         "Use Invisible status for Facebook Pages (instead of Offline)",IDC_PAGES_ALWAYS_ONLINE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,163,271,10
 END
 
 IDD_OPTIONS_EVENTS DIALOGEX 0, 0, 305, 227
@@ -128,26 +155,27 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Event notifications",IDC_STATIC,6,7,292,137
-    CONTROL         "Notifications",IDC_NOTIFICATIONS_ENABLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,23,272,8
-    CONTROL         "News feeds (WARNING: Causes excessive network traffic!)",IDC_FEEDS_ENABLE,
+    GROUPBOX        "Popup notifications",IDC_STATIC,6,7,292,118
+    CONTROL         "Show notifications",IDC_NOTIFICATIONS_ENABLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,23,272,8
+    CONTROL         "Show wall posts (news feed) (WARNING: Causes excessive network traffic!)",IDC_FEEDS_ENABLE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,36,272,8
-    RTEXT           "News feed types to notify:",IDC_STATIC,26,48,117,8
-    COMBOBOX        IDC_FEED_TYPE,150,46,138,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Don't show advertising posts",IDC_FILTER_ADS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,150,63,138,8
-    CONTROL         "Other events",IDC_OTHER_ENABLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,72,272,8
-    CONTROL         "Client notifications",IDC_CLIENT_ENABLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,85,272,8
-    CONTROL         "Friendship notifications",IDC_FRIENDSHIP_ENABLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,99,272,8
-    CONTROL         "Ticker feeds",IDC_TICKER_ENABLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,113,272,8
-    CONTROL         "Show ""On this day"" posts at login",IDC_ON_THIS_DAY_ENABLE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,128,272,8
-    RTEXT           "Use this server for opening links:",IDC_STATIC,13,154,139,8
-    COMBOBOX        IDC_URL_SERVER,156,151,138,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "News feed types to notify:",IDC_STATIC,46,48,137,8
+    COMBOBOX        IDC_FEED_TYPE,191,46,97,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Don't show advertising posts",IDC_FILTER_ADS,"Button",BS_AUTOCHECKBOX | BS_LEFTTEXT | BS_RIGHT | WS_TABSTOP,46,63,242,8
+    CONTROL         "Show friendships changes (when someone removes/approves you)",IDC_FRIENDSHIP_ENABLE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,79,272,8
+    CONTROL         "Show real-time friends activity (ticker feed)",IDC_TICKER_ENABLE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,93,272,8
+    CONTROL         "Show my ""On this day"" posts at login",IDC_ON_THIS_DAY_ENABLE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,108,272,8
+    GROUPBOX        "Chatroom logging",IDC_STATIC,6,130,292,33
+    CONTROL         "Log notifications into special chatroom",IDC_NOTIFICATIONS_CHATROOM,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,145,272,8
+    GROUPBOX        "Extra",IDC_STATIC,6,169,292,46
     CONTROL         "Use balloon notifications in system tray instead of popups",IDC_SYSTRAY_NOTIFY,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,170,272,8
-    CONTROL         "Use logging notifications into special chatroom",IDC_NOTIFICATIONS_CHATROOM,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,184,272,8
-    PUSHBUTTON      "Preview",IDC_PREVIEW,116,199,68,14
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,183,272,8
+    RTEXT           "Use this server for opening links:",IDC_STATIC,16,199,167,8
+    COMBOBOX        IDC_URL_SERVER,191,196,97,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_OPTIONS_STATUSES DIALOGEX 0, 0, 308, 226
@@ -159,10 +187,14 @@ BEGIN
     CONTROL         "Post Miranda statuses to Wall",IDC_SET_STATUS,"Button",BS_AUTOCHECKBOX | BS_TOP | WS_TABSTOP,13,21,281,10
     CONTROL         "Turn off chat on Facebook when going to offline in Miranda",IDC_DISCONNECT_CHAT,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,34,281,10
-    CONTROL         "Map unsupported statuses to Invisible (instead of Online)",IDC_MAP_STATUSES,
+    CONTROL         "Map unsupported statuses to Invisible (instead of Away)",IDC_MAP_STATUSES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,47,281,10
     CONTROL         "Allow posting statuses to my pages (may slow down login)",IDC_LOAD_PAGES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,61,281,10
+    GROUPBOX        "Advanced",IDC_STATIC,7,85,294,67
+    CONTROL         "Send typing notifications even when Invisible",IDC_TYPING_WHEN_INVISIBLE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,98,281,10
+    LTEXT           "Typing is one way how user is determined active. If you don't want to be seen ""active 1 min ago"" on Facebook, uncheck this option and also don't interact with website at all. Sending messages from Miranda should be ok, but don't 100% rely on it either.",IDC_STATIC,32,112,262,39
 END
 
 IDD_CAPTCHAFORM DIALOGEX 0, 0, 258, 224
@@ -186,26 +218,36 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Messages",IDC_STATIC,7,7,294,57
-    CONTROL         "Receive messages from ""inbox"" folder only",IDC_INBOX_ONLY,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,19,281,10
+    GROUPBOX        "Messages",IDC_STATIC,7,7,294,43
     CONTROL         "Keep messages as unread on server (don't send ""seen"" info)",IDC_KEEP_UNREAD,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,33,281,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,19,281,10
     CONTROL         "Show stickers as custom smileys (EXPERIMENTAL)",IDC_CUSTOM_SMILEYS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,48,281,10
-    GROUPBOX        "Multi user chats",IDC_STATIC,7,70,294,43
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,34,281,10
+    GROUPBOX        "Multi user chats",IDC_STATIC,7,56,294,57
     CONTROL         "Enable multi user chats support",IDC_ENABLE_CHATS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,83,281,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,69,281,10
     CONTROL         "Do not open chat windows on creation",IDC_HIDE_CHATS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,83,281,10
+    CONTROL         "Automatically join active chats that exist in contact list",IDC_JOIN_EXISTING_CHATS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,97,281,10
-    GROUPBOX        "History synchronization",IDC_STATIC,7,121,294,59
-    CONTROL         "Load last messages (24 hours old) on login (EXPERIMENTAL)",IDC_LOGIN_SYNC,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,135,281,10
+    GROUPBOX        "History synchronization",IDC_STATIC,7,121,294,44
     CONTROL         "Load last messages on opening message window (EXPERIMENTAL)",IDC_MESSAGES_ON_OPEN,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,149,281,10
-    RTEXT           "Number of messages to load:",IDC_STATIC,13,163,231,8
-    EDITTEXT        IDC_MESSAGES_COUNT,249,160,34,14,ES_AUTOHSCROLL
-    CONTROL         "",IDC_MESSAGES_COUNT_SPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,283,160,11,14
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,134,281,10
+    RTEXT           "Number of messages to load:",IDC_STATIC,13,148,231,8
+    EDITTEXT        IDC_MESSAGES_COUNT,249,145,34,14,ES_AUTOHSCROLL
+    CONTROL         "",IDC_MESSAGES_COUNT_SPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,283,145,11,14
+END
+
+IDD_GUARD DIALOGEX 0, 0, 285, 104
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Facebook Login Approval"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Your security settings requires to input a security code to access your account from unknown browsers.\n\nYou can get the code via Facebook application on your phone or click button below to receive it via SMS.",IDC_STATIC,7,7,264,54
+    PUSHBUTTON      "Send SMS",IDC_SEND_SMS,7,84,59,15
+    EDITTEXT        IDC_TEXT,7,65,264,12,ES_AUTOHSCROLL | ES_NUMBER
+    DEFPUSHBUTTON   "OK",IDOK,159,84,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,221,84,50,14
 END
 
 
@@ -256,7 +298,7 @@ BEGIN
         VERTGUIDE, 288
         VERTGUIDE, 298
         TOPMARGIN, 7
-        BOTTOMMARGIN, 183
+        BOTTOMMARGIN, 188
     END
 
     IDD_OPTIONS_EVENTS, DIALOG
@@ -264,7 +306,9 @@ BEGIN
         LEFTMARGIN, 6
         RIGHTMARGIN, 298
         VERTGUIDE, 16
-        VERTGUIDE, 150
+        VERTGUIDE, 46
+        VERTGUIDE, 183
+        VERTGUIDE, 191
         VERTGUIDE, 288
         TOPMARGIN, 7
         BOTTOMMARGIN, 219
@@ -295,20 +339,36 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 224
     END
+
+    IDD_GUARD, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 284
+        VERTGUIDE, 271
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 94
+        HORZGUIDE, 84
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
+//
+// AFX_DIALOG_LAYOUT
+//
+IDD_OPTIONS_STATUSES AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
-
-
 
 #ifndef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
 //
 // Generated from the TEXTINCLUDE 3 resource.
 //
-
+
+
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
 

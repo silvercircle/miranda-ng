@@ -2,9 +2,9 @@
 
 struct BBCodeInfo
 {
-	TCHAR *start;
-	TCHAR *end;
-	bool(*func)(IFormattedTextDraw *ftd, CHARRANGE range, TCHAR *txt, DWORD cookie);
+	wchar_t *start;
+	wchar_t *end;
+	bool(*func)(IFormattedTextDraw *ftd, CHARRANGE range, wchar_t *txt, DWORD cookie);
 	DWORD cookie;
 };
 
@@ -14,7 +14,7 @@ enum {
 	BBS_IMG1, BBS_IMG2
 };
 
-static bool bbCodeSimpleFunc(IFormattedTextDraw *ftd, CHARRANGE range, TCHAR *, DWORD cookie)
+static bool bbCodeSimpleFunc(IFormattedTextDraw *ftd, CHARRANGE range, wchar_t *, DWORD cookie)
 {
 	CHARFORMAT cf = { 0 };
 	cf.cbSize = sizeof(cf);
@@ -55,12 +55,12 @@ static bool bbCodeSimpleFunc(IFormattedTextDraw *ftd, CHARRANGE range, TCHAR *, 
 	ts->TxSendMessage(EM_SETSEL, range.cpMin, -1, &lResult);
 	ts->TxSendMessage(EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf, &lResult);
 	ts->TxSendMessage(EM_SETSEL, range.cpMin, range.cpMax, &lResult);
-	ts->TxSendMessage(EM_REPLACESEL, FALSE, (LPARAM)_T(""), &lResult);
+	ts->TxSendMessage(EM_REPLACESEL, FALSE, (LPARAM)L"", &lResult);
 
 	return true;
 }
 
-static bool bbCodeImageFunc(IFormattedTextDraw *ftd, CHARRANGE range, TCHAR *txt, DWORD)
+static bool bbCodeImageFunc(IFormattedTextDraw *ftd, CHARRANGE range, wchar_t *txt, DWORD)
 {
 	ITextServices *ts = ftd->getTextService();
 	ITextDocument *td = ftd->getTextDocument();
@@ -73,9 +73,9 @@ static bool bbCodeImageFunc(IFormattedTextDraw *ftd, CHARRANGE range, TCHAR *txt
 	td->Freeze(&cnt);
 
 #ifdef _WIN64
-	bool res = InsertBitmap(RichEditOle, CacheIconToEmf((HICON)_tstoi64(txt)));
+	bool res = InsertBitmap(RichEditOle, CacheIconToEmf((HICON)_wtoi64(txt)));
 #else
-	bool res = InsertBitmap(RichEditOle, CacheIconToEmf((HICON)_ttoi(txt)));
+	bool res = InsertBitmap(RichEditOle, CacheIconToEmf((HICON)_wtoi(txt)));
 #endif
 
 	td->Unfreeze(&cnt);
@@ -85,24 +85,24 @@ static bool bbCodeImageFunc(IFormattedTextDraw *ftd, CHARRANGE range, TCHAR *txt
 
 static BBCodeInfo bbCodes[] =
 {
-	{ _T("[b]"), 0, bbCodeSimpleFunc, BBS_BOLD_S },
-	{ _T("[/b]"), 0, bbCodeSimpleFunc, BBS_BOLD_E },
-	{ _T("[i]"), 0, bbCodeSimpleFunc, BBS_ITALIC_S },
-	{ _T("[/i]"), 0, bbCodeSimpleFunc, BBS_ITALIC_E },
-	{ _T("[u]"), 0, bbCodeSimpleFunc, BBS_UNDERLINE_S },
-	{ _T("[/u]"), 0, bbCodeSimpleFunc, BBS_UNDERLINE_E },
-	{ _T("[s]"), 0, bbCodeSimpleFunc, BBS_STRIKEOUT_S },
-	{ _T("[/s]"), 0, bbCodeSimpleFunc, BBS_STRIKEOUT_E },
+	{ L"[b]", 0, bbCodeSimpleFunc, BBS_BOLD_S },
+	{ L"[/b]", 0, bbCodeSimpleFunc, BBS_BOLD_E },
+	{ L"[i]", 0, bbCodeSimpleFunc, BBS_ITALIC_S },
+	{ L"[/i]", 0, bbCodeSimpleFunc, BBS_ITALIC_E },
+	{ L"[u]", 0, bbCodeSimpleFunc, BBS_UNDERLINE_S },
+	{ L"[/u]", 0, bbCodeSimpleFunc, BBS_UNDERLINE_E },
+	{ L"[s]", 0, bbCodeSimpleFunc, BBS_STRIKEOUT_S },
+	{ L"[/s]", 0, bbCodeSimpleFunc, BBS_STRIKEOUT_E },
 
-	//	{ _T("[color="),  _T("]"),     bbCodeSimpleFunc, BBS_COLOR_S },
-	//	{ _T("[/color]"), 0,           bbCodeSimpleFunc, BBS_COLOR_E }
+	//	{ L"[color=",  L"]",     bbCodeSimpleFunc, BBS_COLOR_S },
+	//	{ L"[/color]", 0,           bbCodeSimpleFunc, BBS_COLOR_E }
 
-	{ _T("[$hicon="), _T("$]"), bbCodeImageFunc, 0 }
+	{ L"[$hicon=", L"$]", bbCodeImageFunc, 0 }
 
-	//	{ _T("[url]"),   _T("[/url]"), bbCodeSimpleFunc, BBS_URL1 },
-	//	{ _T("[url="),    _T("]"),     bbCodeSimpleFunc, BBS_URL2 },
-	//	{ _T("[url]"),   _T("[/url]"), bbCodeSimpleFunc, BBS_IMG1 },
-	//	{ _T("[url="),    _T("]"),     bbCodeSimpleFunc, BBS_IMG2 },
+	//	{ L"[url]",   L"[/url]", bbCodeSimpleFunc, BBS_URL1 },
+	//	{ L"[url=",    L"]",     bbCodeSimpleFunc, BBS_URL2 },
+	//	{ L"[url]",   L"[/url]", bbCodeSimpleFunc, BBS_IMG1 },
+	//	{ L"[url=",    L"]",     bbCodeSimpleFunc, BBS_IMG2 },
 };
 static int bbCodeCount = sizeof(bbCodes) / sizeof(*bbCodes);
 
@@ -115,7 +115,7 @@ void bbCodeParse(IFormattedTextDraw *ftd)
 	for (bool found = true; found;) {
 		found = false;
 		CHARRANGE fRange; fRange.cpMin = -1;
-		TCHAR *fText = 0;
+		wchar_t *fText = 0;
 		BBCodeInfo *fBBCode = NULL;
 
 		for (int i = 0; i < bbCodeCount; i++) {
@@ -145,12 +145,16 @@ void bbCodeParse(IFormattedTextDraw *ftd)
 				fBBCode = bbCodes + i;
 				found = true;
 
-				if (fText) delete[] fText;
+				if (fText)
+				{
+					delete[] fText;
+					fText = nullptr;
+				}
 				if (bbCodes[i].end) {
 					TEXTRANGE trg;
 					trg.chrg.cpMin = fte.chrg.cpMin;
 					trg.chrg.cpMax = fte.chrgText.cpMin;
-					trg.lpstrText = new TCHAR[trg.chrg.cpMax - trg.chrg.cpMin + 1];
+					trg.lpstrText = new wchar_t[trg.chrg.cpMax - trg.chrg.cpMin + 1];
 					ts->TxSendMessage(EM_GETTEXTRANGE, 0, (LPARAM)&trg, &lResult);
 					fText = trg.lpstrText;
 				}

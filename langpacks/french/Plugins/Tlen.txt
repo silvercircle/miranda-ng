@@ -16,8 +16,6 @@ Passe :
 Enregistrer le mot de passe
 [Create new account]
 Créer un compte
-[Tlen]
-
 [Options]
 Paramètres
 [Automatically reconnect after unintentional disconnection]
@@ -88,8 +86,8 @@ Arrière-plan
 Texte
 [Delay]
 
-[&From Popup plugin]
-
+[&From popup plugin]
+&Comme le plugin popup
 [&Custom]
 &Défini
 [P&ermanent]
@@ -125,7 +123,7 @@ Chats vocaux
 [Publicly visible status]
 État visible par tout le monde
 [Save changes]
-Sauver les modifs
+Sauvegarder les changements
 [Avatar]
 Avatar
 [Avatar Options]
@@ -236,7 +234,7 @@ Notifications
 [Network]
 Réseau
 [These changes will take effect the next time you connect to the Tlen network.]
-Certains changements ne prendront effets qu'à la reconnexion au réseau Tlen.
+Ces changements ne prendront effet qu'à la prochaine connexion au réseau Tlen.
 [Tlen Protocol Option]
 Options
 [Accept all alerts]

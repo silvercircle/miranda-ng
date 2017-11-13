@@ -3,7 +3,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-12 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -50,8 +50,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 EXTERN_C MIR_CORE_DLL(void) Utils_OpenUrl(const char *pszUrl, bool bOpenInNewWindow = true);
 EXTERN_C MIR_CORE_DLL(void) Utils_OpenUrlW(const wchar_t *pszUrl, bool bOpenInNewWindow = true);
 
-#define Utils_OpenUrlT Utils_OpenUrlW
-
 /////////////////////////////////////////////////////////////////////////////////////////
 // Resizes a dialog by calling a custom routine to move the individual
 // Returns 0 on success, or nonzero on failure
@@ -91,7 +89,7 @@ lParam = 0
 Returns a pointer to the string containing the country name on success,
 or NULL on failure
 */
-#define MS_UTILS_GETCOUNTRYBYNUMBER   "Utils/GetCountryByNumber"
+#define MS_UTILS_GETCOUNTRYBYNUMBER "Utils/GetCountryByNumber"
 
 /* Gets the name of a country given its ISO code	v0.1.2.0+
 wParam = (char*)ISOcode
@@ -99,7 +97,7 @@ lParam = 0
 Returns a pointer to the string containing the country name on success,
 or NULL on failure
 */
-#define MS_UTILS_GETCOUNTRYBYISOCODE   "Utils/GetCountryByISOCode"
+#define MS_UTILS_GETCOUNTRYBYISOCODE "Utils/GetCountryByISOCode"
 
 /* Gets the full list of country IDs	 v0.1.2.0+
 wParam = (WPARAM)(int*)piCount
@@ -114,7 +112,7 @@ struct CountryListEntry {
 	const char *szName;
 	char ISOcode[3];
 };
-#define MS_UTILS_GETCOUNTRYLIST    "Utils/GetCountryList"
+#define MS_UTILS_GETCOUNTRYLIST "Utils/GetCountryList"
 
 /////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////// Window lists //////////////////////////////////////
@@ -134,7 +132,7 @@ EXTERN_C MIR_CORE_DLL(MWindowList) WindowList_Create(void);
 /////////////////////////////////////////////////////////////////////////////////////////
 // destroys a window list
 
-EXTERN_C MIR_CORE_DLL(void) WindowList_Destroy(MWindowList hList);
+EXTERN_C MIR_CORE_DLL(void) WindowList_Destroy(MWindowList &hList);
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // adds a window to the specified window list
@@ -169,7 +167,7 @@ EXTERN_C MIR_CORE_DLL(int) WindowList_BroadcastAsync(MWindowList hList, UINT mes
 /***************************** Hyperlink windows ********************************/
 
 //there aren't any services here, because you don't need them.
-#define WNDCLASS_HYPERLINK	 _T("Hyperlink")
+#define WNDCLASS_HYPERLINK	 L"Hyperlink"
 //the control will obey the SS_LEFT (0), SS_CENTER (1), and SS_RIGHT (2) styles
 //the control will send STN_CLICKED via WM_COMMAND when the link itself is clicked
 
@@ -239,8 +237,8 @@ EXTERN_C MIR_CORE_DLL(int) Utils_AssertInsideScreen(RECT *rc);
 // An 'All Bitmaps' item is always first and 'All Files' is last.
 // The returned string is already translated.
 
-EXTERN_C MIR_CORE_DLL(HBITMAP) Bitmap_Load(const TCHAR *ptszFileName);
-EXTERN_C MIR_CORE_DLL(void) Bitmap_GetFilter(TCHAR *dest, size_t destLen);
+EXTERN_C MIR_CORE_DLL(HBITMAP) Bitmap_Load(const wchar_t *ptszFileName);
+EXTERN_C MIR_CORE_DLL(void) Bitmap_GetFilter(wchar_t *dest, size_t destLen);
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Converts a path to a relative path
@@ -263,8 +261,6 @@ EXTERN_C MIR_CORE_DLL(int) PathToRelative(const char *pszSrc, char *pszOut, cons
 EXTERN_C MIR_CORE_DLL(int) PathToRelativeW(const wchar_t *pwszSrc, wchar_t *pwszOut, const wchar_t* pwszBase);
 #endif
 
-#define PathToRelativeT PathToRelativeW
-
 /////////////////////////////////////////////////////////////////////////////////////////
 // Saves a path to a absolute path (from the miranda directory)
 //
@@ -284,16 +280,12 @@ EXTERN_C MIR_CORE_DLL(int) PathToAbsolute(const char *pszSrc, char *pszOut, cons
 EXTERN_C MIR_CORE_DLL(int) PathToAbsoluteW(const wchar_t *pwszSrc, wchar_t *pwszOut, const wchar_t* pwszBase);
 #endif
 
-#define PathToAbsoluteT PathToAbsoluteW
-
 /////////////////////////////////////////////////////////////////////////////////////////
 // Creates a directory tree (even more than one directories levels are missing)
 // Returns 0 on success or an error code otherwise
 
 EXTERN_C MIR_CORE_DLL(int) CreateDirectoryTree(const char *pszDir);
 EXTERN_C MIR_CORE_DLL(int) CreateDirectoryTreeW(const wchar_t *pwszDir);
-
-#define CreateDirectoryTreeT CreateDirectoryTreeW
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Creates all subdirectories required to create a file with the file name given
@@ -302,8 +294,6 @@ EXTERN_C MIR_CORE_DLL(int) CreateDirectoryTreeW(const wchar_t *pwszDir);
 EXTERN_C MIR_CORE_DLL(void) CreatePathToFile(char *wszFilePath);
 EXTERN_C MIR_CORE_DLL(void) CreatePathToFileW(wchar_t *wszFilePath);
 
-#define CreatePathToFileT CreatePathToFileW
-
 /////////////////////////////////////////////////////////////////////////////////////////
 // Checks if a file name is absolute or not
 // returns TRUE if yes or FALSE if not
@@ -311,19 +301,21 @@ EXTERN_C MIR_CORE_DLL(void) CreatePathToFileW(wchar_t *wszFilePath);
 EXTERN_C MIR_CORE_DLL(int) PathIsAbsolute(const char *pSrc);
 EXTERN_C MIR_CORE_DLL(int) PathIsAbsoluteW(const wchar_t *pSrc);
 
-#define PathIsAbsoluteT PathIsAbsoluteW
-
 /////////////////////////////////////////////////////////////////////////////////////////
 // Generates Random number of any length
-// wParam = size - length of the random number to generate
-// lParam = (LPARAM)(char*)pszArray - pointer to array to fill with random number
-// Always returns 0
+// cbLen = length of the random number to generate
+// pszDest = pointer to array to fill with random number
 
 EXTERN_C MIR_CORE_DLL(void) Utils_GetRandom(void *pszDest, size_t cbLen);
 
 /////////////////////////////////////////////////////////////////////////////////////////
+// Checks if a string is RTL
+
+EXTERN_C MIR_CORE_DLL(bool) Utils_IsRtl(const wchar_t *pszwText);
+
+/////////////////////////////////////////////////////////////////////////////////////////
 // Replace variables in text
-// wParam = (char*/TCHAR*/WCHAR*)string (depends on RVF_UNICODE/RVF_TCHAR flag)
+// wParam = (char*/wchar_t*/wchar_t*)string (depends on RVF_UNICODE/RVF_TCHAR flag)
 // lParam = (REPLACEVARSDATA *) data about variables, item with key = 0 terminates the list
 // returns new string, use mir_free to destroy
 
@@ -364,8 +356,6 @@ struct REPLACEVARSARRAY
 EXTERN_C MIR_APP_DLL(char*) Utils_ReplaceVars(const char *szData, MCONTACT hContact = 0, REPLACEVARSARRAY *vars = NULL);
 EXTERN_C MIR_APP_DLL(wchar_t*) Utils_ReplaceVarsW(const wchar_t *szData, MCONTACT hContact = 0, REPLACEVARSARRAY *vars = NULL);
 
-#define Utils_ReplaceVarsT Utils_ReplaceVarsW
-
 #if defined(__cplusplus)
 	#if !defined(M_SYSTEM_CPP_H__)
 		#include "m_system_cpp.h"
@@ -384,8 +374,6 @@ EXTERN_C MIR_APP_DLL(wchar_t*) Utils_ReplaceVarsW(const wchar_t *szData, MCONTAC
 			ptrW(Utils_ReplaceVarsW(str))
 		{}
 	};
-
-	typedef VARSW VARST;
 #endif
 
 /////////////////////////////////////////////////////////////////////////////////////////

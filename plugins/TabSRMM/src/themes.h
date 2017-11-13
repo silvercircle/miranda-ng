@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
-// Copyright (ñ) 2012-15 Miranda NG project,
+// Copyright (ñ) 2012-17 Miranda NG project,
 // Copyright (c) 2000-09 Miranda ICQ/IM project,
 // all portions of this codebase are copyrighted to the people
 // listed in contributors.txt.
@@ -33,7 +33,7 @@
 #ifndef __THEMES_H
 #define __THEMES_H
 
-HBITMAP IMG_LoadLogo(const TCHAR *szName);
+HBITMAP IMG_LoadLogo(const wchar_t *szName);
 
 class CSideBarButton;
 
@@ -118,7 +118,7 @@ void CustomizeButton(HWND hwndButton);
 
 struct AeroEffect
 {
-	TCHAR    tszName[40];
+	wchar_t    tszName[40];
 	DWORD    m_baseColor;
 	DWORD    m_gradientColor;
 	BYTE     m_baseAlpha;
@@ -148,10 +148,10 @@ public:
 		*this = From;
 		m_nextItem = 0;
 	}
-	CImageItem(const TCHAR *szName)
+	CImageItem(const wchar_t *szName)
 	{
 		memset(this, 0, sizeof(CImageItem));
-		mir_sntprintf(m_szName, szName);
+		mir_snwprintf(m_szName, szName);
 		m_szName[39] = 0;
 	}
 
@@ -220,19 +220,19 @@ public:
 		const BLENDFUNCTION &bf = m_bf;
 		return(bf);
 	}
-	const TCHAR*      getName() const { return (m_szName); }
-	TCHAR*            Read(const TCHAR *szFilename);
-	void              Create(const TCHAR *szImageFile);
+	const wchar_t*      getName() const { return (m_szName); }
+	wchar_t*            Read(const wchar_t *szFilename);
+	void              Create(const wchar_t *szImageFile);
 	void __fastcall   Render(const HDC hdc, const RECT *rc, bool fIgnoreGlyph) const;
 	static void TSAPI	PreMultiply(HBITMAP hBitmap, int mode);
 	static void TSAPI	SetBitmap32Alpha(HBITMAP hBitmap, BYTE bAlpha = 255);
 	static void TSAPI	Colorize(HBITMAP hBitmap, BYTE dr, BYTE dg, BYTE db, BYTE alpha = 0);
-	static HBITMAP TSAPI LoadPNG(const TCHAR *szFilename);
+	static HBITMAP TSAPI LoadPNG(const wchar_t *szFilename);
 
 public:
 	bool			m_fValid;									// verified item, indicates that all parameters are valid
 private:
-	TCHAR 		 	m_szName[40];								// everything wants a name, an image item doesn't need one though
+	wchar_t 		 	m_szName[40];								// everything wants a name, an image item doesn't need one though
 	HBITMAP 		m_hbm;										// the bitmap handle
 	BYTE    		m_bLeft, m_bRight, m_bTop, m_bBottom;      	// sizing margins for the outer 8 image parts
 	BYTE    		m_alpha;									// constant alpha for the entire image, applied via m_bf. sums with perpixel alpha
@@ -250,7 +250,7 @@ private:
 
 
 struct CSkinItem {
-	TCHAR szName[40];
+	wchar_t szName[40];
 	char szDBname[40];
 	int statusID;
 
@@ -335,11 +335,11 @@ public:
 	void  Unload();
 	void  UnloadAeroTabs();
 	void  setFileName();
-	void  ReadItem(const int id, const TCHAR *section);
+	void  ReadItem(const int id, const wchar_t *section);
 	void  LoadItems();
-	void  LoadIcon(const TCHAR *szSection, const TCHAR *name, HICON &hIcon);
-	void  ReadImageItem(const TCHAR *szItemName);
-	void  ReadButtonItem(const TCHAR *itemName) const;
+	void  LoadIcon(const wchar_t *szSection, const wchar_t *name, HICON &hIcon);
+	void  ReadImageItem(const wchar_t *szItemName);
+	void  ReadButtonItem(const wchar_t *itemName) const;
 	bool  haveGlyphItem() const { return(m_fHaveGlyph); }
 	int   getNrIcons() const { return(m_nrSkinIcons); }
 	DWORD getDwmColor() const { return(m_dwmColor); }
@@ -370,13 +370,12 @@ public:
 	static void TSAPI		SkinDrawBGFromDC(HWND hwndClient, HWND hwnd, RECT *rcClient, HDC hdcTarget);
 	static void TSAPI		SkinDrawBG(HWND hwndClient, HWND hwnd, TContainerData *pContainer, RECT *rcClient, HDC hdcTarget);
 	static void TSAPI		DrawDimmedIcon(HDC hdc, LONG left, LONG top, LONG dx, LONG dy, HICON hIcon, BYTE alpha);
-	static DWORD __fastcall HexStringToLong(const TCHAR *szSource);
-	static UINT TSAPI		DrawRichEditFrame(HWND hwnd, const TWindowData *mwdat, UINT skinID, UINT msg, WPARAM wParam, LPARAM lParam, WNDPROC OldWndProc);
-	static UINT TSAPI		NcCalcRichEditFrame(HWND hwnd, const TWindowData *mwdat, UINT skinID, UINT msg, WPARAM wParam, LPARAM lParam, WNDPROC OldWndProc);
+	static DWORD __fastcall HexStringToLong(const wchar_t *szSource);
+	static UINT TSAPI		DrawRichEditFrame(HWND hwnd, const CTabBaseDlg *mwdat, UINT skinID, UINT msg, WPARAM wParam, LPARAM lParam, WNDPROC OldWndProc);
+	static UINT TSAPI		NcCalcRichEditFrame(HWND hwnd, const CTabBaseDlg *mwdat, UINT skinID, UINT msg, WPARAM wParam, LPARAM lParam, WNDPROC OldWndProc);
 	static HBITMAP TSAPI 	CreateAeroCompatibleBitmap(const RECT &rc, HDC dc);
-	static int TSAPI		RenderText(HDC hdc, HANDLE hTheme, const TCHAR *szText, RECT *rc, DWORD dtFlags, const int iGlowSize = DEFAULT_GLOW_SIZE, COLORREF clr = 0, bool fForceAero = false);
+	static int TSAPI		RenderText(HDC hdc, HANDLE hTheme, const wchar_t *szText, RECT *rc, DWORD dtFlags, const int iGlowSize = DEFAULT_GLOW_SIZE, COLORREF clr = 0, bool fForceAero = false);
 	static void TSAPI		MapClientToParent(HWND hwndClient, HWND hwndParent, RECT &rc);
-	static void TSAPI		RenderToolbarBG(const TWindowData *dat, HDC hdc, const RECT &rcWindow);
 	static HBITMAP TSAPI	ResizeBitmap(HBITMAP hBmpSrc, LONG width, LONG height, bool &mustFree);
 	static void	TSAPI		ApplyAeroEffect(const HDC hdc, const RECT* rc, int iEffectArea);
 	static void	TSAPI		setAeroEffect(const LRESULT effect);
@@ -384,7 +383,6 @@ public:
 	static HANDLE TSAPI		InitiateBufferedPaint(const HDC hdcSrc, RECT& rc, HDC& hdcOut);
 	static void TSAPI		FinalizeBufferedPaint(HANDLE hbp, RECT *rc);
 	static bool __fastcall	DrawItem(const HDC hdc, const RECT *rc, const CSkinItem *item);
-	static void	TSAPI		UpdateToolbarBG(TWindowData *dat);
 	static void TSAPI		FillBack(const HDC hdc, RECT* rc);
 	static bool TSAPI		IsThemed(void);
 
@@ -431,7 +429,7 @@ public:
 	static bool			m_fAeroSkinsValid;
 
 private:
-	TCHAR			m_tszFileName[MAX_PATH];				// full path and filename of the currently loaded skin
+	wchar_t			m_tszFileName[MAX_PATH];				// full path and filename of the currently loaded skin
 	CSkinItem*		m_SkinItems;
 	CImageItem*		m_ImageItems;							// the list of image item objects
 	CImageItem		m_glyphItem;
@@ -466,14 +464,14 @@ struct TabControlData
 	int	iHoveredTabIndex;
 	int	iHoveredCloseIcon;
 	HWND    hwndDrag;
-	TWindowData *dragDat;
+	CSrmmWindow *dragDat;
 	HIMAGELIST himlDrag;
 	BOOL    bRefreshWithoutClip;
 	BOOL    fSavePos;
 	BOOL    fTipActive;
 	BOOL	fAeroTabs;
 	BOOL	fCloseButton;
-	TWindowData* helperDat;				// points to the client data of the active tab
+	CSrmmWindow* helperDat;				// points to the client data of the active tab
 	CImageItem*			helperItem, *helperGlowItem;				// aero ui, holding the skin image for the tabs
 };
 
@@ -484,7 +482,7 @@ extern CSkin *Skin;
 */
 
 struct ButtonItem {
-	TCHAR   szName[40];
+	wchar_t   szName[40];
 	HWND    hWnd;
 	LONG    xOff, yOff;
 	LONG    width, height;
@@ -494,17 +492,17 @@ struct ButtonItem {
 	LONG_PTR pressedGlyphMetrics[4];
 	DWORD   dwFlags, dwStockFlags;
 	DWORD   uId;
-	TCHAR   szTip[256];
+	wchar_t szTip[256];
 	char    szService[256];
 	char    szModule[256], szSetting[256];
 	BYTE    bValuePush[256], bValueRelease[256];
 	DWORD   type;
-	void(*pfnAction)(ButtonItem *item, HWND hwndDlg, TWindowData *dat, HWND hwndItem);
-	void(*pfnCallback)(ButtonItem *item, HWND hwndDlg, TWindowData *dat, HWND hwndItem);
-	TCHAR   tszLabel[40];
+	void(*pfnAction)(ButtonItem *item, HWND hwndDlg, CTabBaseDlg *dat, HWND hwndItem);
+	void(*pfnCallback)(ButtonItem *item, HWND hwndDlg, CTabBaseDlg *dat, HWND hwndItem);
+	wchar_t   tszLabel[40];
 	ButtonItem* nextItem;
 	HANDLE  hContact;
-	TWindowData *dat;
+	CSrmmWindow *dat;
 };
 
 typedef struct _tagButtonSet {

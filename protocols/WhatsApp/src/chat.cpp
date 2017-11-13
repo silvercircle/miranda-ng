@@ -1,6 +1,6 @@
-#include "common.h"
+#include "stdafx.h"
 
-static const TCHAR *sttStatuses[] = { LPGENT("Members"), LPGENT("Owners") };
+static const wchar_t *sttStatuses[] = { LPGENW("Members"), LPGENW("Owners") };
 
 enum
 {
@@ -16,12 +16,12 @@ enum
 /////////////////////////////////////////////////////////////////////////////////////////
 // protocol menu handler - create a new group
 
-INT_PTR __cdecl WhatsAppProto::OnCreateGroup(WPARAM wParam, LPARAM lParam)
+INT_PTR __cdecl WhatsAppProto::OnCreateGroup(WPARAM, LPARAM)
 {
 	ENTER_STRING es = { 0 };
 	es.cbSize = sizeof(es);
 	es.type = ESF_MULTILINE;
-	es.caption = _T("Enter a subject for new group");
+	es.caption = L"Enter a subject for new group";
 	es.szModuleName = m_szModuleName;
 	if (EnterString(&es)) {
 		if (isOnline()) {
@@ -37,18 +37,18 @@ INT_PTR __cdecl WhatsAppProto::OnCreateGroup(WPARAM wParam, LPARAM lParam)
 /////////////////////////////////////////////////////////////////////////////////////////
 // handler to pass events from SRMM to WAConnection
 
-int WhatsAppProto::onGroupChatEvent(WPARAM wParam, LPARAM lParam)
+int WhatsAppProto::onGroupChatEvent(WPARAM, LPARAM lParam)
 {
 	GCHOOK *gch = (GCHOOK*)lParam;
-	if (mir_strcmp(gch->pDest->pszModule, m_szModuleName))
+	if (mir_strcmp(gch->pszModule, m_szModuleName))
 		return 0;
 
-	std::string chat_id(T2Utf(gch->pDest->ptszID));
+	std::string chat_id(T2Utf(gch->ptszID));
 	WAChatInfo *pInfo = SafeGetChat(chat_id);
 	if (pInfo == NULL)
 		return 0;
 
-	switch (gch->pDest->iType) {
+	switch (gch->iType) {
 	case GC_USER_LOGMENU:
 		ChatLogMenuHook(pInfo, gch);
 		break;
@@ -85,7 +85,7 @@ int WhatsAppProto::onGroupChatEvent(WPARAM wParam, LPARAM lParam)
 			setWord(hContact, "Status", ID_STATUS_ONLINE);
 
 			db_set_b(hContact, "CList", "Hidden", 1);
-			setTString(hContact, "Nick", gch->ptszUID);
+			setWString(hContact, "Nick", gch->ptszUID);
 			db_set_dw(hContact, "Ignore", "Mask1", 0);
 		}
 		CallService(MS_MSG_SENDMESSAGE, hContact, 0);
@@ -100,17 +100,17 @@ int WhatsAppProto::onGroupChatEvent(WPARAM wParam, LPARAM lParam)
 
 static gc_item sttLogListItems[] =
 {
-	{ LPGENT("&Invite a user"),      IDM_INVITE,    MENU_ITEM },
+	{ LPGENW("&Invite a user"),      IDM_INVITE,    MENU_ITEM },
 	{ NULL, 0, MENU_SEPARATOR },
-	{ LPGENT("&Room options"),       0,             MENU_NEWPOPUP },
-	{ LPGENT("View/change &topic"),  IDM_TOPIC,     MENU_POPUPITEM },
-	{ LPGENT("&Quit chat session"),  IDM_LEAVE,     MENU_POPUPITEM },
+	{ LPGENW("&Room options"),       0,             MENU_NEWPOPUP },
+	{ LPGENW("View/change &topic"),  IDM_TOPIC,     MENU_POPUPITEM },
+	{ LPGENW("&Quit chat session"),  IDM_LEAVE,     MENU_POPUPITEM },
 #ifdef _DEBUG
-	{ LPGENT("Set &avatar"),         IDM_AVATAR,    MENU_POPUPITEM }, // doesn't work, therefore commented out
+	{ LPGENW("Set &avatar"),         IDM_AVATAR,    MENU_POPUPITEM }, // doesn't work, therefore commented out
 #endif
 	{ NULL, 0, MENU_SEPARATOR },
-	{ LPGENT("Copy room &JID"),      IDM_CPY_RJID,  MENU_ITEM },
-	{ LPGENT("Copy room topic"),     IDM_CPY_TOPIC, MENU_ITEM },
+	{ LPGENW("Copy room &JID"),      IDM_CPY_RJID,  MENU_ITEM },
+	{ LPGENW("Copy room topic"),     IDM_CPY_TOPIC, MENU_ITEM },
 };
 
 void WhatsAppProto::ChatLogMenuHook(WAChatInfo *pInfo, struct GCHOOK *gch)
@@ -145,8 +145,8 @@ void WhatsAppProto::ChatLogMenuHook(WAChatInfo *pInfo, struct GCHOOK *gch)
 
 void WhatsAppProto::EditChatSubject(WAChatInfo *pInfo)
 {
-	CMString title(FORMAT, TranslateT("Set new subject for %s"), pInfo->tszNick);
-	ptrT tszOldValue(getTStringA(pInfo->hContact, WHATSAPP_KEY_NICK));
+	CMStringW title(FORMAT, TranslateT("Set new subject for %s"), pInfo->tszNick);
+	ptrW tszOldValue(getWStringA(pInfo->hContact, WHATSAPP_KEY_NICK));
 
 	ENTER_STRING es = { 0 };
 	es.cbSize = sizeof(es);
@@ -165,7 +165,7 @@ void WhatsAppProto::EditChatSubject(WAChatInfo *pInfo)
 
 void WhatsAppProto::SetChatAvatar(WAChatInfo *pInfo)
 {
-	TCHAR tszFileName[MAX_PATH], filter[256];
+	wchar_t tszFileName[MAX_PATH], filter[256];
 	Bitmap_GetFilter(filter, _countof(filter));
 
 	OPENFILENAME ofn = { 0 };
@@ -175,10 +175,10 @@ void WhatsAppProto::SetChatAvatar(WAChatInfo *pInfo)
 	ofn.lpstrFile = tszFileName;
 	ofn.nMaxFile = ofn.nMaxFileTitle = _countof(tszFileName);
 	ofn.Flags = OFN_HIDEREADONLY;
-	ofn.lpstrInitialDir = _T(".");
-	ofn.lpstrDefExt = _T("");
+	ofn.lpstrInitialDir = L".";
+	ofn.lpstrDefExt = L"";
 	if (GetOpenFileName(&ofn))
-		if (_taccess(tszFileName, 4) != -1)
+		if (_waccess(tszFileName, 4) != -1)
 			InternalSetAvatar(pInfo->hContact, _T2A(pInfo->tszJid), tszFileName);
 }
 
@@ -187,12 +187,12 @@ void WhatsAppProto::SetChatAvatar(WAChatInfo *pInfo)
 
 static gc_item sttNickListItems[] =
 {
-	{ LPGENT("&Add to roster"), IDM_ADD_RJID, MENU_POPUPITEM },
+	{ LPGENW("&Add to roster"), IDM_ADD_RJID, MENU_POPUPITEM },
 	{ NULL, 0, MENU_SEPARATOR },
-	{ LPGENT("&Kick"), IDM_KICK, MENU_ITEM },
+	{ LPGENW("&Kick"), IDM_KICK, MENU_ITEM },
 	{ NULL, 0, MENU_SEPARATOR },
-	{ LPGENT("Copy &nickname"), IDM_CPY_NICK, MENU_ITEM },
-	{ LPGENT("Copy real &JID"), IDM_CPY_RJID, MENU_ITEM },
+	{ LPGENW("Copy &nickname"), IDM_CPY_NICK, MENU_ITEM },
+	{ LPGENW("Copy real &JID"), IDM_CPY_RJID, MENU_ITEM },
 };
 
 void WhatsAppProto::NickListMenuHook(WAChatInfo *pInfo, struct GCHOOK *gch)
@@ -207,7 +207,7 @@ void WhatsAppProto::NickListMenuHook(WAChatInfo *pInfo, struct GCHOOK *gch)
 		break;
 
 	case IDM_CPY_NICK:
-		utils::copyText(pcli->hwndContactList, GetChatUserNick(std::string((char*)_T2A(gch->ptszUID))));
+		utils::copyText(pcli->hwndContactList, ptrW(GetChatUserNick(std::string((char*)_T2A(gch->ptszUID)))));
 		break;
 
 	case IDM_CPY_RJID:
@@ -216,7 +216,7 @@ void WhatsAppProto::NickListMenuHook(WAChatInfo *pInfo, struct GCHOOK *gch)
 	}
 }
 
-void WhatsAppProto::AddChatUser(WAChatInfo *pInfo, const TCHAR *ptszJid)
+void WhatsAppProto::AddChatUser(WAChatInfo*, const wchar_t *ptszJid)
 {
 	std::string jid((char*)_T2A(ptszJid));
 	MCONTACT hContact = ContactIDToHContact(jid);
@@ -225,9 +225,9 @@ void WhatsAppProto::AddChatUser(WAChatInfo *pInfo, const TCHAR *ptszJid)
 
 	PROTOSEARCHRESULT psr = { 0 };
 	psr.cbSize = sizeof(psr);
-	psr.flags = PSR_TCHAR;
-	psr.id.t = (TCHAR*)ptszJid;
-	psr.nick.t = GetChatUserNick(jid);
+	psr.flags = PSR_UNICODE;
+	psr.id.w = (wchar_t*)ptszJid;
+	psr.nick.w = GetChatUserNick(jid);
 
 	ADDCONTACTSTRUCT acs = { 0 };
 	acs.handleType = HANDLE_SEARCHRESULT;
@@ -236,7 +236,7 @@ void WhatsAppProto::AddChatUser(WAChatInfo *pInfo, const TCHAR *ptszJid)
 	CallService(MS_ADDCONTACT_SHOW, (WPARAM)pcli->hwndContactList, (LPARAM)&acs);
 }
 
-void WhatsAppProto::KickChatUser(WAChatInfo *pInfo, const TCHAR *ptszJid)
+void WhatsAppProto::KickChatUser(WAChatInfo *pInfo, const wchar_t *ptszJid)
 {
 	if (!isOnline())
 		return;
@@ -250,10 +250,10 @@ void WhatsAppProto::KickChatUser(WAChatInfo *pInfo, const TCHAR *ptszJid)
 /////////////////////////////////////////////////////////////////////////////////////////
 // Leave groupchat emulator for contact's deletion
 
-int WhatsAppProto::OnDeleteChat(WPARAM hContact, LPARAM lParam)
+int WhatsAppProto::OnDeleteChat(WPARAM hContact, LPARAM)
 {
 	if (isChatRoom(hContact) && isOnline()) {
-		ptrT tszID(getTStringA(hContact, WHATSAPP_KEY_ID));
+		ptrW tszID(getWStringA(hContact, WHATSAPP_KEY_ID));
 		if (tszID)
 			m_pConnection->sendJoinLeaveGroup(_T2A(tszID), false);
 	}
@@ -264,7 +264,7 @@ int WhatsAppProto::OnDeleteChat(WPARAM hContact, LPARAM lParam)
 /////////////////////////////////////////////////////////////////////////////////////////
 // handler to customize chat menus
 
-int WhatsAppProto::OnChatMenu(WPARAM wParam, LPARAM lParam)
+int WhatsAppProto::OnChatMenu(WPARAM, LPARAM lParam)
 {
 	GCMENUITEMS *gcmi = (GCMENUITEMS*)lParam;
 	if (gcmi == NULL)
@@ -273,14 +273,10 @@ int WhatsAppProto::OnChatMenu(WPARAM wParam, LPARAM lParam)
 	if (mir_strcmpi(gcmi->pszModule, m_szModuleName))
 		return 0;
 
-	if (gcmi->Type == MENU_ON_LOG) {
-		gcmi->nItems = _countof(sttLogListItems);
-		gcmi->Item = sttLogListItems;
-	}
-	else if (gcmi->Type == MENU_ON_NICKLIST) {
-		gcmi->nItems = _countof(sttNickListItems);
-		gcmi->Item = sttNickListItems;
-	}
+	if (gcmi->Type == MENU_ON_LOG)
+		Chat_AddMenuItems(gcmi->hMenu, _countof(sttLogListItems), sttLogListItems);
+	else if (gcmi->Type == MENU_ON_NICKLIST)
+		Chat_AddMenuItems(gcmi->hMenu, _countof(sttNickListItems), sttNickListItems);
 
 	return 0;
 }
@@ -290,7 +286,7 @@ int WhatsAppProto::OnChatMenu(WPARAM wParam, LPARAM lParam)
 
 WAChatInfo* WhatsAppProto::InitChat(const std::string &jid, const std::string &nick)
 {
-	TCHAR *ptszJid = str2t(jid), *ptszNick = str2t(nick);
+	wchar_t *ptszJid = str2t(jid), *ptszNick = str2t(nick);
 
 	WAChatInfo *pInfo = new WAChatInfo(ptszJid, ptszNick);
 	m_chats[jid] = pInfo;
@@ -302,25 +298,15 @@ WAChatInfo* WhatsAppProto::InitChat(const std::string &jid, const std::string &n
 		setString(hOldContact, "ChatRoomID", jid.c_str());
 	}
 
-	GCSESSION gcw = { sizeof(GCSESSION) };
-	gcw.iType = GCW_CHATROOM;
-	gcw.pszModule = m_szModuleName;
-	gcw.ptszName = ptszNick;
-	gcw.ptszID = ptszJid;
-	CallServiceSync(MS_GC_NEWSESSION, NULL, (LPARAM)&gcw);
+	Chat_NewSession(GCW_CHATROOM, m_szModuleName, ptszJid, ptszNick);
 
 	pInfo->hContact = (hOldContact != NULL) ? hOldContact : ContactIDToHContact(jid);
 
-	GCDEST gcd = { m_szModuleName, ptszJid, GC_EVENT_ADDGROUP };
-	GCEVENT gce = { sizeof(gce), &gcd };
-	for (int i = _countof(sttStatuses) - 1; i >= 0; i--) {
-		gce.ptszStatus = TranslateTS(sttStatuses[i]);
-		CallServiceSync(MS_GC_EVENT, NULL, (LPARAM)&gce);
-	}
+	for (int i = _countof(sttStatuses) - 1; i >= 0; i--)
+		Chat_AddGroup(m_szModuleName, ptszJid, TranslateW(sttStatuses[i]));
 
-	gcd.iType = GC_EVENT_CONTROL;
-	CallServiceSync(MS_GC_EVENT, getBool(WHATSAPP_KEY_AUTORUNCHATS, true) ? SESSION_INITDONE : WINDOW_HIDDEN, (LPARAM)&gce);
-	CallServiceSync(MS_GC_EVENT, SESSION_ONLINE, (LPARAM)&gce);
+	Chat_Control(m_szModuleName, ptszJid, getBool(WHATSAPP_KEY_AUTORUNCHATS, true) ? SESSION_INITDONE : WINDOW_HIDDEN);
+	Chat_Control(m_szModuleName, ptszJid, SESSION_ONLINE);
 
 	if (m_pConnection)
 		m_pConnection->sendGetParticipants(jid);
@@ -328,17 +314,17 @@ WAChatInfo* WhatsAppProto::InitChat(const std::string &jid, const std::string &n
 	return pInfo;
 }
 
-TCHAR* WhatsAppProto::GetChatUserNick(const std::string &jid)
+wchar_t* WhatsAppProto::GetChatUserNick(const std::string &jid)
 {
-	TCHAR* tszNick;
+	wchar_t* tszNick;
 	if (m_szJid != jid) {
 		MCONTACT hContact = ContactIDToHContact(jid);
-		tszNick = (hContact == 0) ? utils::removeA(str2t(jid)) : mir_tstrdup(pcli->pfnGetContactDisplayName(hContact, 0));
+		tszNick = (hContact == 0) ? utils::removeA(str2t(jid)) : mir_wstrdup(pcli->pfnGetContactDisplayName(hContact, 0));
 	}
 	else tszNick = str2t(m_szNick);
 
 	if (tszNick == NULL)
-		tszNick = mir_tstrdup(TranslateT("Unknown user"));
+		tszNick = mir_wstrdup(TranslateT("Unknown user"));
 	return tszNick;
 }
 
@@ -351,7 +337,7 @@ WAChatInfo* WhatsAppProto::SafeGetChat(const std::string &jid)
 ///////////////////////////////////////////////////////////////////////////////
 // WAGroupListener members
 
-void WhatsAppProto::onGroupInfo(const std::string &jid, const std::string &owner, const std::string &subject, const std::string &subject_owner, int time_subject, int time_created)
+void WhatsAppProto::onGroupInfo(const std::string &jid, const std::string &owner, const std::string &subject, const std::string &subject_owner, int time_subject, int)
 {
 	WAChatInfo *pInfo = SafeGetChat(jid);
 	if (pInfo == NULL) {
@@ -359,11 +345,7 @@ void WhatsAppProto::onGroupInfo(const std::string &jid, const std::string &owner
 		pInfo->bActive = true;
 		time_subject = 0;
 	}
-	else {
-		GCDEST gcd = { m_szModuleName, pInfo->tszJid, GC_EVENT_CONTROL };
-		GCEVENT gce = { sizeof(gce), &gcd };
-		CallServiceSync(MS_GC_EVENT, SESSION_ONLINE, (LPARAM)&gce);
-	}
+	else Chat_Control(m_szModuleName, pInfo->tszJid, SESSION_ONLINE);
 
 	if (!subject.empty()) {
 		pInfo->tszOwner = str2t(owner);
@@ -393,20 +375,18 @@ void WhatsAppProto::onGroupMessage(const FMessage &pMsg)
 		msg += pMsg.media_url;
 	}
 
-	ptrT tszText(str2t(msg));
-	ptrT tszUID(str2t(pMsg.remote_resource));
-	ptrT tszNick(GetChatUserNick(pMsg.remote_resource));
+	ptrW tszText(str2t(msg));
+	ptrW tszUID(str2t(pMsg.remote_resource));
+	ptrW tszNick(GetChatUserNick(pMsg.remote_resource));
 
-	GCDEST gcd = { m_szModuleName, pInfo->tszJid, GC_EVENT_MESSAGE };
-
-	GCEVENT gce = { sizeof(gce), &gcd };
+	GCEVENT gce = { m_szModuleName, pInfo->tszJid, GC_EVENT_MESSAGE };
 	gce.dwFlags = GCEF_ADDTOLOG;
 	gce.ptszUID = tszUID;
 	gce.ptszNick = tszNick;
 	gce.time = pMsg.timestamp;
 	gce.ptszText = tszText;
 	gce.bIsMe = m_szJid == pMsg.remote_resource;
-	CallServiceSync(MS_GC_EVENT, NULL, (LPARAM)&gce);
+	Chat_Event(&gce);
 
 	if (isOnline())
 		m_pConnection->sendMessageReceived(pMsg);
@@ -418,25 +398,23 @@ void WhatsAppProto::onGroupNewSubject(const std::string &gjid, const std::string
 	if (pInfo == NULL)
 		return;
 
-	ptrT tszText(str2t(newSubject));
-	ptrT tszTextDb(getTStringA(pInfo->hContact, WHATSAPP_KEY_NICK));
-	if (!mir_tstrcmp(tszText, tszTextDb)) // notify about subject change only if differs from the stored one
+	ptrW tszText(str2t(newSubject));
+	ptrW tszTextDb(getWStringA(pInfo->hContact, WHATSAPP_KEY_NICK));
+	if (!mir_wstrcmp(tszText, tszTextDb)) // notify about subject change only if differs from the stored one
 		return;
 
-	ptrT tszUID(str2t(author));
-	ptrT tszNick(GetChatUserNick(author));
+	ptrW tszUID(str2t(author));
+	ptrW tszNick(GetChatUserNick(author));
 
-	GCDEST gcd = { m_szModuleName, pInfo->tszJid, GC_EVENT_TOPIC };
-
-	GCEVENT gce = { sizeof(gce), &gcd };
+	GCEVENT gce = { m_szModuleName, pInfo->tszJid, GC_EVENT_TOPIC };
 	gce.dwFlags = GCEF_ADDTOLOG + ((ts == 0) ? GCEF_NOTNOTIFY : 0);
 	gce.ptszUID = tszUID;
 	gce.ptszNick = tszNick;
 	gce.time = ts;
 	gce.ptszText = tszText;
-	CallServiceSync(MS_GC_EVENT, NULL, (LPARAM)&gce);
+	Chat_Event(&gce);
 
-	setTString(pInfo->hContact, WHATSAPP_KEY_NICK, tszText);
+	setWString(pInfo->hContact, WHATSAPP_KEY_NICK, tszText);
 }
 
 void WhatsAppProto::onGroupAddUser(const std::string &gjid, const std::string &ujid, int ts)
@@ -445,17 +423,15 @@ void WhatsAppProto::onGroupAddUser(const std::string &gjid, const std::string &u
 	if (pInfo == NULL || !pInfo->bActive)
 		return;
 
-	ptrT tszUID(str2t(ujid));
-	ptrT tszNick(GetChatUserNick(ujid));
+	ptrW tszUID(str2t(ujid));
+	ptrW tszNick(GetChatUserNick(ujid));
 
-	GCDEST gcd = { m_szModuleName, pInfo->tszJid, GC_EVENT_JOIN };
-
-	GCEVENT gce = { sizeof(gce), &gcd };
+	GCEVENT gce = { m_szModuleName, pInfo->tszJid, GC_EVENT_JOIN };
 	gce.dwFlags = GCEF_ADDTOLOG;
 	gce.ptszUID = tszUID;
 	gce.ptszNick = tszNick;
 	gce.time = ts;
-	CallServiceSync(MS_GC_EVENT, NULL, (LPARAM)&gce);
+	Chat_Event(&gce);
 }
 
 void WhatsAppProto::onGroupRemoveUser(const std::string &gjid, const std::string &ujid, int ts)
@@ -464,17 +440,15 @@ void WhatsAppProto::onGroupRemoveUser(const std::string &gjid, const std::string
 	if (pInfo == NULL)
 		return;
 
-	ptrT tszUID(str2t(ujid));
-	ptrT tszNick(GetChatUserNick(ujid));
+	ptrW tszUID(str2t(ujid));
+	ptrW tszNick(GetChatUserNick(ujid));
 
-	GCDEST gcd = { m_szModuleName, pInfo->tszJid, GC_EVENT_PART };
-
-	GCEVENT gce = { sizeof(gce), &gcd };
+	GCEVENT gce = { m_szModuleName, pInfo->tszJid, GC_EVENT_PART };
 	gce.dwFlags = GCEF_ADDTOLOG;
 	gce.ptszUID = tszUID;
 	gce.ptszNick = tszNick;
 	gce.time = ts;
-	CallServiceSync(MS_GC_EVENT, NULL, (LPARAM)&gce);
+	Chat_Event(&gce);
 }
 
 void WhatsAppProto::onLeaveGroup(const std::string &gjid)
@@ -483,13 +457,9 @@ void WhatsAppProto::onLeaveGroup(const std::string &gjid)
 	if (pInfo == NULL)
 		return;
 
-	GCDEST gcd = { m_szModuleName, pInfo->tszJid, GC_EVENT_CONTROL };
-	
-	GCEVENT gce = { sizeof(gce), &gcd };
-	gce.ptszUID = pInfo->tszJid;
-	CallServiceSync(MS_GC_EVENT, SESSION_TERMINATE, (LPARAM)&gce);
+	Chat_Terminate(m_szModuleName, pInfo->tszJid);
 
-	CallService(MS_DB_CONTACT_DELETE, pInfo->hContact, 0);
+	db_delete_contact(pInfo->hContact);
 	m_chats.erase((char*)_T2A(pInfo->tszJid));
 }
 
@@ -505,16 +475,14 @@ void WhatsAppProto::onGetParticipants(const std::string &gjid, const std::vector
 	for (size_t i = 0; i < participants.size(); i++) {
 		std::string curr = participants[i];
 
-		ptrT ujid(str2t(curr)), nick(GetChatUserNick(curr));
-		bool bIsOwner = !mir_tstrcmp(ujid, pInfo->tszOwner);
+		ptrW ujid(str2t(curr)), nick(GetChatUserNick(curr));
+		bool bIsOwner = !mir_wstrcmp(ujid, pInfo->tszOwner);
 
-		GCDEST gcd = { m_szModuleName, pInfo->tszJid, GC_EVENT_JOIN };
-
-		GCEVENT gce = { sizeof(gce), &gcd };
+		GCEVENT gce = { m_szModuleName, pInfo->tszJid, GC_EVENT_JOIN };
 		gce.ptszNick = nick;
 		gce.ptszUID = utils::removeA(ujid);
-		gce.ptszStatus = (bIsOwner) ? _T("Owners") : _T("Members");
-		CallServiceSync(MS_GC_EVENT, NULL, (LPARAM)&gce);
+		gce.ptszStatus = (bIsOwner) ? L"Owners" : L"Members";
+		Chat_Event(&gce);
 	}
 }
 
@@ -538,19 +506,17 @@ void WhatsAppProto::onGroupMessageReceived(const FMessage &msg)
 	if (p == pInfo->m_unsentMsgs.end())
 		return;
 
-	ptrT tszUID(str2t(m_szJid));
-	ptrT tszNick(str2t(m_szNick));
+	ptrW tszUID(str2t(m_szJid));
+	ptrW tszNick(str2t(m_szNick));
 
-	GCDEST gcd = { m_szModuleName, pInfo->tszJid, GC_EVENT_MESSAGE };
-
-	GCEVENT gce = { sizeof(gce), &gcd };
+	GCEVENT gce = { m_szModuleName, pInfo->tszJid, GC_EVENT_MESSAGE };
 	gce.dwFlags = GCEF_ADDTOLOG;
 	gce.ptszUID = tszUID;
 	gce.ptszNick = tszNick;
 	gce.time = time(NULL);
 	gce.ptszText = p->second.c_str();
 	gce.bIsMe = m_szJid == msg.remote_resource;
-	CallServiceSync(MS_GC_EVENT, NULL, (LPARAM)&gce);
+	Chat_Event(&gce);
 
 	pInfo->m_unsentMsgs.erase(p);
 }

@@ -20,11 +20,11 @@ Unsichtbar
 Für Chat bereit
 [Away]
 Abwesend
-[NA]
+[Not available]
 Außer Haus
 [Occupied]
 Beschäftigt
-[DND]
+[Do not disturb]
 Bitte nicht stören
 [Out to lunch]
 Zum Essen

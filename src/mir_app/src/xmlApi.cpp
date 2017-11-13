@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -40,34 +40,34 @@ MIR_APP_DLL(void) xmlDestroyNode(HXML n)
 
 MIR_APP_DLL(HXML) xmlParseFile(LPCTSTR str, int* datalen, LPCTSTR tag)
 {
-	if (str == NULL) return NULL;
+	if (str == nullptr) return nullptr;
 
 	XMLResults res;
 	XMLNode result = XMLNode::parseFile(str, tag, &res);
 
-	if (datalen != NULL)
+	if (datalen != nullptr)
 		datalen[0] += res.nChars;
 
-	return (res.error == eXMLErrorNone || (tag != NULL && res.error == eXMLErrorMissingEndTag)) ? result.detach() : NULL;
+	return (res.error == eXMLErrorNone || (tag != nullptr && res.error == eXMLErrorMissingEndTag)) ? result.detach() : nullptr;
 }
 
 MIR_APP_DLL(HXML) xmlParseString(LPCTSTR str, int* datalen, LPCTSTR tag)
 {
-	if (str == NULL) return NULL;
+	if (str == nullptr) return nullptr;
 
 	XMLResults res;
 	XMLNode result = XMLNode::parseString(str, tag, &res);
 
-	if (datalen != NULL)
+	if (datalen != nullptr)
 		datalen[0] += res.nChars;
 
-	return (res.error == eXMLErrorNone || (tag != NULL && res.error == eXMLErrorMissingEndTag)) ? result.detach() : NULL;
+	return (res.error == eXMLErrorNone || (tag != nullptr && res.error == eXMLErrorMissingEndTag)) ? result.detach() : nullptr;
 }
 
 MIR_APP_DLL(HXML) xmlAddChild(HXML _n, LPCTSTR name, LPCTSTR text)
 {
 	XMLNode result = XMLNode(_n).addChild(name);
-	if (text != NULL)
+	if (text != nullptr)
 		result.updateText(text);
 	return result;
 }
@@ -171,19 +171,19 @@ MIR_APP_DLL(LPTSTR) xmlToString(HXML _n, int* datalen)
 
 MIR_APP_DLL(XMLError) xmlToFile(HXML _n, LPCTSTR filename, int withformatting)
 {
-	return XMLNode(_n).writeToFile(filename, NULL, withformatting);
+	return XMLNode(_n).writeToFile(filename, nullptr, withformatting);
 }
 
 MIR_APP_DLL(void) xmlAddAttr(HXML _n, LPCTSTR attrName, LPCTSTR attrValue)
 {
-	if (attrName != NULL && attrValue != NULL)
+	if (attrName != nullptr && attrValue != nullptr)
 		XMLNode(_n).addAttribute(attrName, attrValue);
 }
 
 MIR_APP_DLL(void) xmlAddAttrInt(HXML _n, LPCTSTR attrName, int attrValue)
 {
-	TCHAR buf[40];
-	_itot(attrValue, buf, 10);
+	wchar_t buf[40];
+	_itow(attrValue, buf, 10);
 	XMLNode(_n).addAttribute(attrName, buf);
 }
 
@@ -247,15 +247,15 @@ MIR_APP_DLL(int) xmlGetElement(HXML _n, XML_ELEMENT_POS pos, XML_ELEMENT_TYPE *t
 {
 	// reset all values
 	if (child)
-		*child = NULL;
+		*child = nullptr;
 	if (value)
-		*value = NULL;
+		*value = nullptr;
 	if (name)
-		*name = NULL;
+		*name = nullptr;
 	if (openTag)
-		*openTag = NULL;
+		*openTag = nullptr;
 	if (closeTag)
-		*closeTag = NULL;
+		*closeTag = nullptr;
 
 	if (!type || pos >= XMLNode(_n).nElement())
 		return false;
@@ -325,12 +325,12 @@ MIR_APP_DLL(void) xmlAddChildEx2(HXML _n, HXML parent, XML_ELEMENT_POS pos)
 
 MIR_APP_DLL(void) xmlSetAttrByIndex(HXML _n, int i, LPCTSTR value)
 {
-	XMLNode(_n).updateAttribute(value, NULL, i);
+	XMLNode(_n).updateAttribute(value, nullptr, i);
 }
 
 MIR_APP_DLL(void) xmlSetAttrByName(HXML _n, LPCTSTR name, LPCTSTR value)
 {
-	XMLNode(_n).updateAttribute(value, NULL, name);
+	XMLNode(_n).updateAttribute(value, nullptr, name);
 }
 
 MIR_APP_DLL(void) xmlDeleteNodeContent(HXML _n)

@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
-// Copyright (ñ) 2012-15 Miranda NG project,
+// Copyright (ñ) 2012-17 Miranda NG project,
 // Copyright (c) 2000-09 Miranda ICQ/IM project,
 // all portions of this codebase are copyrighted to the people
 // listed in contributors.txt.
@@ -31,14 +31,14 @@
 
 #define RTF_CTABLE_DEFSIZE 8
 
-#define RTF_DEFAULT_HEADER _T("{\\rtf1\\ansi\\deff0\\pard\\li%u\\fi-%u\\ri%u\\tx%u")
+#define RTF_DEFAULT_HEADER L"{\\rtf1\\ansi\\deff0\\pard\\li%u\\fi-%u\\ri%u\\tx%u"
 
 #define CNT_KEYNAME "CNTW_Def"
 #define CNT_BASEKEYNAME "CNTW_"
 
 struct TRTFColorTable
 {
-	TCHAR    szName[10];
+	wchar_t    szName[10];
 	COLORREF clr;
 	int      menuid;
 };
@@ -46,21 +46,12 @@ struct TRTFColorTable
 class Utils {
 
 public:
-	enum {
-		CMD_CONTAINER = 1,
-		CMD_MSGDIALOG = 2,
-		CMD_INFOPANEL = 4,
-	};
-
-	static int      FindRTLLocale(TWindowData *dat);
-	static TCHAR*   GetPreviewWithEllipsis(TCHAR *szText, size_t iMaxLen);
-	static TCHAR*   FilterEventMarkers(TCHAR *wszText);
-	static LPCTSTR  FormatRaw(TWindowData *dat, const TCHAR *msg, int flags, BOOL isSent);
-	static bool     FormatTitleBar(const TWindowData *dat, const TCHAR *szFormat, CMString &dest);
+	static wchar_t* GetPreviewWithEllipsis(wchar_t *szText, size_t iMaxLen);
+	static wchar_t* FilterEventMarkers(wchar_t *wszText);
 	static char*    FilterEventMarkers(char *szText);
-	static void     DoubleAmpersands(TCHAR *pszText, size_t len);
+	static void     DoubleAmpersands(wchar_t *pszText, size_t len);
 	static void     RTF_CTableInit();
-	static void     RTF_ColorAdd(const TCHAR *tszColname, size_t length);
+	static void     RTF_ColorAdd(const wchar_t *tszColname, size_t length);
 	static int      ReadContainerSettingsFromDB(const MCONTACT hContact, TContainerSettings *cs, const char *szKey = 0);
 	static int      WriteContainerSettingsToDB(const MCONTACT hContact, TContainerSettings *cs, const char *szKey = 0);
 	static void     SettingsToContainer(TContainerData *pContainer);
@@ -69,17 +60,14 @@ public:
 	static void     SaveContainerSettings(TContainerData *pContainer, const char *szSetting);
 
 	static DWORD    CALLBACK StreamOut(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG cb, LONG * pcb);
-	static LRESULT  CmdDispatcher(UINT uType, HWND hwndDlg, UINT cmd, WPARAM wParam, LPARAM lParam, TWindowData *dat = 0, TContainerData *pContainer = 0);
 
-	static void     addMenuItem(const HMENU& m, MENUITEMINFO& mii, HICON hIcon, const TCHAR *szText, UINT uID, UINT pos);
+	static void     addMenuItem(const HMENU& m, MENUITEMINFO& mii, HICON hIcon, const wchar_t *szText, UINT uID, UINT pos);
 	static void     enableDlgControl(const HWND hwnd, UINT id, bool fEnable = true);
 	static void     showDlgControl(const HWND hwnd, UINT id, int showCmd);
-	static int      mustPlaySound(const TWindowData *dat);
-	static HICON    iconFromAvatar(const TWindowData *dat);
 	static void     setAvatarContact(HWND hWnd, MCONTACT hContact);
 	static void     getIconSize(HICON hIcon, int& sizeX, int& sizeY);
 
-	static bool     extractResource(const HMODULE h, const UINT uID, const TCHAR *tszName, const TCHAR *tszPath, const TCHAR *tszFilename, bool fForceOverwrite);
+	static bool     extractResource(const HMODULE h, const UINT uID, const wchar_t *tszName, const wchar_t *tszPath, const wchar_t *tszFilename, bool fForceOverwrite);
 	static void     scaleAvatarHeightLimited(const HBITMAP hBm, double& dNewWidth, double& dNewHeight, const LONG maxHeight);
 
 	static AVATARCACHEENTRY*  loadAvatarFromAVS(const MCONTACT hContact);
@@ -96,7 +84,7 @@ public:
 
 	static size_t   CopyToClipBoard(const wchar_t *str, const HWND hwndOwner);
 
-	static void     AddToFileList(TCHAR ***pppFiles, int *totalCount, LPCTSTR szFilename);
+	static void     AddToFileList(wchar_t ***pppFiles, int *totalCount, LPCTSTR szFilename);
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// safe mir_strlen function - do not overflow the given buffer length
@@ -116,8 +104,7 @@ public:
 	}
 
 public:
-	static	TRTFColorTable*		rtf_ctable;
-	static	int					rtf_ctable_size;
+	static OBJLIST<TRTFColorTable> rtf_clrs;
 };
 
 __forceinline LRESULT _dlgReturn(HWND hWnd, LRESULT result)
@@ -167,7 +154,7 @@ public:
 	LRESULT ShowDialog() const;
 
 private:
-	ptrT  m_szTitle, m_szText;
+	ptrW  m_szTitle, m_szText;
 	UINT  m_uId;
 	HFONT m_hFontCaption;
 	DWORD m_dwFlags;

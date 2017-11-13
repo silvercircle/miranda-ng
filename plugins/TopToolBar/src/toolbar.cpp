@@ -5,7 +5,7 @@ pfnCustomProc g_CustomProc = NULL;
 LPARAM g_CustomProcParam = 0;
 TTBCtrl *g_ctrl = NULL;
 
-INT_PTR OnEventFire(WPARAM wParam, LPARAM lParam);
+void CALLBACK OnEventFire();
 
 HWND hwndContactList = 0;
 
@@ -79,7 +79,7 @@ void InsertLBut(int i)
 	ttb.hIconDn = (HICON)LoadImage(hInst, MAKEINTRESOURCE(IDI_RUN), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
 	ttb.dwFlags = TTBBF_VISIBLE | TTBBF_ISLBUTTON | TTBBF_INTERNAL;
 	ttb.name = LPGEN("Default");
-	ttb.program = _T("Execute Path");
+	ttb.program = L"Execute Path";
 	ttb.wParamDown = i;
 	TTBAddButton((WPARAM)&ttb, 0);
 }
@@ -177,7 +177,7 @@ TopButtonInt *CreateButton(TTBButton *but)
 		b->bPushed = (but->dwFlags & TTBBF_PUSHED) ? TRUE : FALSE;
 
 		if (but->dwFlags & TTBBF_ISLBUTTON) {
-			b->ptszProgram = mir_tstrdup(but->program);
+			b->ptszProgram = mir_wstrdup(but->program);
 			b->pszService = mir_strdup(TTB_LAUNCHSERVICE);
 		}
 		else {
@@ -190,8 +190,8 @@ TopButtonInt *CreateButton(TTBButton *but)
 		Icon2button(but, b->hIconHandleUp, b->hIconUp, true);
 		Icon2button(but, b->hIconHandleDn, b->hIconDn, false);
 
-		b->ptszTooltipUp = mir_a2t(but->pszTooltipUp);
-		b->ptszTooltipDn = mir_a2t(but->pszTooltipDn);
+		b->ptszTooltipUp = mir_a2u(but->pszTooltipUp);
+		b->ptszTooltipDn = mir_a2u(but->pszTooltipDn);
 	}
 	return b;
 }
@@ -399,7 +399,7 @@ INT_PTR TTBGetOptions(WPARAM wParam, LPARAM lParam)
 			lpTTB->wParamDown = b->wParamDown;
 
 			if (b->dwFlags & TTBBF_ISLBUTTON)
-				replaceStrT(lpTTB->program, b->ptszProgram);
+				replaceStrW(lpTTB->program, b->ptszProgram);
 			else
 				replaceStr(lpTTB->pszService, b->pszService);
 
@@ -440,7 +440,7 @@ INT_PTR TTBSetOptions(WPARAM wParam, LPARAM lParam)
 		if (lParam == 0)
 			return -1;
 
-		replaceStrT(b->ptszTooltip, TranslateTS(_A2T((LPCSTR)lParam)));
+		replaceStrW(b->ptszTooltip, TranslateW(_A2T((LPCSTR)lParam)));
 		SendMessage(b->hwnd, BUTTONADDTOOLTIP, (WPARAM)b->ptszTooltip, BATF_UNICODE);
 		return 1;
 
@@ -467,7 +467,7 @@ INT_PTR TTBSetOptions(WPARAM wParam, LPARAM lParam)
 			}
 
 			if (b->dwFlags & TTBBF_ISLBUTTON)
-				replaceStrT(b->ptszProgram, lpTTB->program);
+				replaceStrW(b->ptszProgram, lpTTB->program);
 			else
 				replaceStr(b->pszService, lpTTB->pszService);
 
@@ -575,9 +575,7 @@ static int OnModulesLoad(WPARAM, LPARAM)
 
 	ArrangeButtons();
 
-	HANDLE hEvent = CreateEvent(NULL, TRUE, TRUE, NULL);//anonymous event
-	if (hEvent != 0)
-		CallService(MS_SYSTEM_WAITONHANDLE, (WPARAM)hEvent, (LPARAM)"TTB_ONSTARTUPFIRE");
+	Miranda_WaitOnHandle(OnEventFire);
 
 	if (HookEvent(ME_BACKGROUNDCONFIG_CHANGED, OnBGChange)) {
 		char buf[256];
@@ -622,7 +620,7 @@ int LoadToolbarModule()
 {
 	if (!ServiceExists(MS_CLIST_FRAMES_ADDFRAME)) {
 		if (!db_get_b(NULL, TTB_OPTDIR, "WarningDone", 0))
-			MessageBox(0, TranslateT("Frames service has not been found, so plugin will be disabled.\nTo run it you need to install and / or enable contact list plugin that supports it:\n- Modern contact list\n- Nicer+\nYou can get them at http://wiki.miranda-ng.org/Download"), TranslateT("TopToolBar"), 0);
+			MessageBox(0, TranslateT("Frames service has not been found, so plugin will be disabled.\nTo run it you need to install and / or enable contact list plugin that supports it:\n- Modern contact list\n- Clist nicer\nYou can get them at https://wiki.miranda-ng.org/Download"), TranslateT("TopToolBar"), 0);
 		db_set_b(NULL, TTB_OPTDIR, "WarningDone", 1);
 		return 1;
 	}
@@ -638,8 +636,6 @@ int LoadToolbarModule()
 	g_ctrl->bAutoSize = db_get_b(0, TTB_OPTDIR, "AutoSize", true);
 
 	db_unset(NULL, TTB_OPTDIR, "WarningDone");
-
-	hBmpSeparator = LoadBitmap(hInst, MAKEINTRESOURCE(IDB_SEP));
 
 	HookEvent(ME_SYSTEM_MODULELOAD, OnPluginLoad);
 	HookEvent(ME_SYSTEM_MODULEUNLOAD, OnPluginUnload);
@@ -662,7 +658,6 @@ int LoadToolbarModule()
 	CreateServiceFunction(TTB_LAUNCHSERVICE, LaunchService);
 
 	CreateServiceFunction("TopToolBar/SetCustomProc", TTBSetCustomProc);
-	CreateServiceFunction("TTB_ONSTARTUPFIRE", OnEventFire);
 
 	buttonWndProc = (WNDPROC)CallService("Button/GetWindowProc", 0, 0);
 	WNDCLASSEX wc = {0};
@@ -682,8 +677,6 @@ int LoadToolbarModule()
 int UnloadToolbarModule()
 {
 	DestroyHookableEvent(hTTBModuleLoaded);
-
-	DeleteObject(hBmpSeparator);
 
 	for (int i = 0; i < Buttons.getCount(); i++)
 		delete Buttons[i];

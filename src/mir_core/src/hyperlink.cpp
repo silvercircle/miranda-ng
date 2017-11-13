@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -157,7 +157,7 @@ static LRESULT CALLBACK HyperlinkWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPA
 	
 	case WM_CREATE:
 	case HLK_MEASURETEXT:
-		TCHAR szText[256];
+		wchar_t szText[256];
 		if (!GetWindowText(hwnd, szText, _countof(szText))) return 0;
 		lParam = (LPARAM)szText;
 		/* fall thru */
@@ -172,7 +172,7 @@ static LRESULT CALLBACK HyperlinkWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPA
 			if (dat->hEnableFont != NULL) hPrevFont = (HFONT)SelectObject(hdc, dat->hEnableFont);
 			if (dat->hEnableFont == NULL || hPrevFont != NULL) { /* select failed? */
 				SIZE textSize;
-				if (GetTextExtentPoint32(hdc, (TCHAR*)lParam, (int)mir_tstrlen((TCHAR*)lParam), &textSize)) {
+				if (GetTextExtentPoint32(hdc, (wchar_t*)lParam, (int)mir_wstrlen((wchar_t*)lParam), &textSize)) {
 					if (GetClientRect(hwnd, &rc)) {
 						dat->rcText.top = 0;
 						dat->rcText.bottom = dat->rcText.top + textSize.cy;
@@ -264,6 +264,9 @@ static LRESULT CALLBACK HyperlinkWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPA
 
 void InitHyperlink(void)
 {
+	g_hCursorNS = LoadCursor(NULL, IDC_SIZENS);
+	g_hCursorWE = LoadCursor(NULL, IDC_SIZEWE);
+
 	WNDCLASS wcl = { 0 };
 	wcl.lpfnWndProc = HyperlinkWndProc;
 	wcl.cbWndExtra = sizeof(struct HyperlinkWndData*);

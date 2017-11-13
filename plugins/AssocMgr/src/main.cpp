@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "stdafx.h"
 
+#pragma comment(lib, "delayimp.lib")
+
 HINSTANCE hInst;
 static HANDLE hHookModulesLoaded;
 int hLangpack;
@@ -39,41 +41,29 @@ PLUGININFOEX pluginInfo = {
 	{0x52685cd7, 0xec7, 0x44c1, {0xa1, 0xa6, 0x38, 0x16, 0x12, 0x41, 0x82, 0x2}}
 };
 
+/////////////////////////////////////////////////////////////////////////////////////////
+// if we run here, we're running from the command prompt
+
+static bool bPathSet = false;
+
+FARPROC WINAPI myDliHook(unsigned dliNotify, PDelayLoadInfo)
+{
+	if (dliNotify == dliNotePreLoadLibrary && !bPathSet) {
+		bPathSet = true;
+		SetCurrentDirectoryW(L"Libs");
+		LoadLibraryW(L"ucrtbase.dll");
+	}
+	return NULL;
+}
+
+PfnDliHook  __pfnDliNotifyHook2 = &myDliHook;
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD, LPVOID)
 {
 	hInst = hinstDLL;
 	return TRUE;
-}
-
-static void InstallFile(const TCHAR *pszFileName,const TCHAR *pszDestSubDir)
-{
-	TCHAR szFileFrom[MAX_PATH+1],szFileTo[MAX_PATH+1];
-	if (!GetModuleFileName(hInst, szFileFrom, _countof(szFileFrom) - (int)mir_tstrlen(pszFileName)))
-		return;
-
-	TCHAR *p = _tcsrchr(szFileFrom,_T('\\'));
-	if (p != NULL)
-		*(++p) = 0;
-	mir_tstrcat(szFileFrom,pszFileName); /* buffer safe */
-
-	HANDLE hFile = CreateFile(szFileFrom,0,FILE_SHARE_READ,0,OPEN_EXISTING,0,0);
-	if (hFile == INVALID_HANDLE_VALUE)
-		return;
-	CloseHandle(hFile);
-
-	if (!GetModuleFileName(NULL, szFileTo, _countof(szFileTo)-(int)mir_tstrlen(pszDestSubDir)-(int)mir_tstrlen(pszFileName)))
-		return;
-	p = _tcsrchr(szFileTo,_T('\\'));
-	if (p)
-		*(++p)=0;
-	mir_tstrcat(szFileTo,pszDestSubDir); /* buffer safe */
-	CreateDirectory(szFileTo,NULL);
-	mir_tstrcat(szFileTo,pszFileName);  /* buffer safe */
-
-	if ( !MoveFile(szFileFrom,szFileTo) && GetLastError() == ERROR_ALREADY_EXISTS) {
-		DeleteFile(szFileTo);
-		MoveFile(szFileFrom,szFileTo);
-	}
 }
 
 static int AssocMgrModulesLoaded(WPARAM,LPARAM)
@@ -94,10 +84,6 @@ extern "C" __declspec(dllexport) int Load(void)
 	InitAssocList();
 	InitDde();
 
-	/* installation */
-	InstallFile(_T("AssocMgr-Readme.txt"),_T("Docs\\"));
-	InstallFile(_T("AssocMgr-License.txt"),_T("Docs\\"));
-	InstallFile(_T("AssocMgr-SDK.zip"),_T("Docs\\"));
 	hHookModulesLoaded=HookEvent(ME_SYSTEM_MODULESLOADED,AssocMgrModulesLoaded);
 	return 0;
 }

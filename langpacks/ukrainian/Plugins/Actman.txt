@@ -42,7 +42,7 @@
 [Registered actions]
 Зареєстровані дії
 [Your Actman settings are for old version. If you are ready to upgrade settings, press OK. Else press Cancel and change manually Actman plugin back to old version or make settings backup. To keep previously exported macros please import them back before conversion.]
-Ваші налаштування Actman призначені для застарілої версії плагіна. Натисніть "OK" для конвертування налаштувань у новий формат, або "Скасувати", щоб повернути попередню версію плагіна вручну чи зробити резервну копію налаштувань. Якщо ви експортували макроси раніше, не забудьте імпортувати їх назад перед конвертуванням у новий формат, оскільки новая версія плагіна не може імпортувати макроси, експортовані попередньою версією.
+Поточні налаштування Actman призначені для застарілої версії плагіна. Натисніть "OK" для конвертування налаштувань у новий формат, або "Скасувати", щоб повернути попередню версію плагіна вручну чи зробити резервну копію налаштувань. Якщо ви експортували макроси раніше, не забудьте імпортувати їх назад перед конвертуванням у новий формат, оскільки новая версія плагіна не може імпортувати макроси, експортовані попередньою версією.
 [Please, don't use macro test for non-saved macros. If you had 'Advanced' or file writing actions previously, check them - their logic was changed.]
 Не користуйтеся перевіркою макросів, якщо є незбережені макроси. Якщо макроси містять дії з категорії "Розширене" або операції запису у файл, не забудьте перевірити правильність їх роботи, оскільки логіку цих дій було змінено.
 [Actman settings converted to new version]
@@ -354,7 +354,7 @@ UTF16+сигнатури
 [Retry, Cancel]
 Повтор, Скасувати
 [Database]
-Профіль
+База даних
 [Contact type]
 Тип контакту
 [Own settings]
@@ -476,7 +476,7 @@ UTF16+сигнатури
 [Main menu]
 Головне меню
 [Contact menu]
-Меню контакта
+Меню контакту
 [Tray menu]
 Меню трею
 [Protocol menus]
@@ -533,19 +533,19 @@ UTF16+сигнатури
 В мережі
 [Away]
 Відсутній
-[DND]
+[Do not disturb]
 Не турбувати
-[NA]
+[Not available]
 Недоступний
 [Occupied]
 Зайнятий
-[Free for Chat]
+[Free for chat]
 Готовий до чату
 [Invisible]
 Невидимий
-[On the Phone]
+[On the phone]
 Телефоную
-[Out to Lunch]
+[Out to lunch]
 Обідаю
 [Set global status]
 Встановлює глобальний статус
@@ -561,6 +561,8 @@ UTF16+сигнатури
 Текст ANSI
 [Removes all settings for the specified module]
 Видаляє всі налаштування вказаного модуля
+[Import settings/contacts from file]
+Імпортує налаштування/контакти з файлу
 [displays File Transfer window]
 Відкриває вікно передачі файлів
 [on Desktop]
@@ -569,14 +571,16 @@ UTF16+сигнатури
 Показує вікно "Про Miranda NG"
 [Open support (originally - Miranda wiki) page]
 Відкриває сторінку підтримки (вікі)
+[Go to Miranda Homepage]
+Перехід на домашню сторінку Miranda
 [Open bug report page]
 Відкриває сторінку для створення повідомлення про помилку
 [System]
 система
 [Shows contact history or (wParam=0) system history]
-Відкриває історію контакта (або системну історію, якщо wParam=0)
+Відкриває історію контакту (або системну історію, якщо wParam=0)
 [Erases contact's history. hContact can be NULL(0) to empty system history]
-Видаляє історію контакта. Якщо hContact NULL(0), то буде видалено системну історію.
+Видаляє історію контакту. Якщо hContact NULL(0), то буде видалено системну історію.
 [Ignore all]
 ігнорувати все
 [Ignore messages]
@@ -603,16 +607,26 @@ UTF16+сигнатури
 Перезапускає Miranda
 [Station name]
 Ім'я станції
+[wParam is Ansi station name]
+wParam містить ім'я станції в ANSI
+[wParam is Unicode station name]
+wParam містить ім'я станції в Unicode
 [All protocols]
 усі протоколи
 [Protocol]
 Протокол
+[Shows a dialog to set the avatar for all possible protocols]
+Відкриває вікно встановлення аватару для всіх доступних протоколів
+[Open Options dialog]
+Відкриває вікно налаштувань програми
 [Check for updates]
 Перевіряє наявність оновлень
 [with confirmation]
 з підтвердженням
 [without confirmation]
 без підтвердження
+[Enables or disables Popup windows]
+Вмикає або вимикає спливаючі вікна
 [Notify]
 Сповіщення
 [YAPP or Popup]
@@ -621,8 +635,12 @@ YAPP або Popup
 Спливаюче вікно
 [Unicode Text]
 Текст Unicode
+[Enables or disables Popup windows (maybe deprecated)]
+Вмикає або вимикає спливаючі вікна (можливо, не підтримується)
 [displays the Account Manager]
 Відкриває менеджер облікових записів
+[Show the dialog to select the contact]
+Відкриває вікно вибору контакту
 [wParam is unicode]
 wParam в Unicode
 [wParam is Ansi]
@@ -633,6 +651,8 @@ wParam в ANSI
 структура
 [Send file to contact.]
 Відправляє контакту файл
+[Opens message window for contact with handle in wparam]
+Відкриває вікно повідомлень з контактом, handle якого знаходиться у wParam
 [remove all temporary contacts from db]
 Видаляє з бази всі тимчасові контакти
 [Filename]
@@ -689,8 +709,6 @@ wParam в ANSI
 Фотографую
 [Having fun]
 Веселюся
-[On the phone]
-Телефоную
 [Gaming]
 Граю
 [Studying]
@@ -745,3 +763,5 @@ wParam в ANSI
 Додавання нового контакту до бази
 [Contact deleting]
 Видалення контакту
+[Displays a modal dialog box that contains a system icon, a set of buttons, and a brief application-specific message, such as status or error information.]
+Показує модальне вікно із системним значком, набором кнопок і коротким повідомленням, пов'язаним із програмою (наприклад, статусом чи інформацією про помилку).

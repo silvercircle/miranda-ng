@@ -38,7 +38,7 @@ MyBitmap::MyBitmap(int w, int h)
 	allocate(w, h);
 }
 
-MyBitmap::MyBitmap(TCHAR *fn)
+MyBitmap::MyBitmap(wchar_t *fn)
 {
 	dcBmp = 0;
 	hBmp = 0;
@@ -118,23 +118,23 @@ void MyBitmap::restoreAlpha(int x, int y, int w, int h)
 	bitsSave = 0;
 }
 
-void MyBitmap::DrawText(TCHAR *str, int x, int y)
+void MyBitmap::DrawText(wchar_t *str, int x, int y)
 {
-	SIZE sz; GetTextExtentPoint32(this->getDC(), str, (int)mir_tstrlen(str), &sz);
+	SIZE sz; GetTextExtentPoint32(this->getDC(), str, (int)mir_wstrlen(str), &sz);
 	RECT rc; SetRect(&rc, x, y, x + 10000, y + 10000);
 	this->saveAlpha(x - 2, y - 2, sz.cx + 2, sz.cy + 2);
 	::DrawText(this->getDC(), str, -1, &rc, DT_LEFT | DT_TOP | DT_SINGLELINE | DT_NOPREFIX);
 	this->restoreAlpha(x - 2, y - 2, sz.cx + 2, sz.cy + 2);
 }
 
-bool MyBitmap::loadFromFile(TCHAR *fn)
+bool MyBitmap::loadFromFile(wchar_t *fn)
 {
 	if (bits) free();
 
-	HBITMAP hBmpLoaded = (HBITMAP)CallService(MS_IMG_LOAD, (WPARAM)fn, IMGL_TCHAR);
+	HBITMAP hBmpLoaded = (HBITMAP)CallService(MS_IMG_LOAD, (WPARAM)fn, IMGL_WCHAR);
 	if (!hBmpLoaded) {
 		#ifdef _DEBUG
-		logMessage(_T("MyBitmap::loadFromFile"), _T("Bitmap load failed"));
+		logMessage(L"MyBitmap::loadFromFile", L"Bitmap load failed");
 		#endif
 		return false;
 	}
@@ -166,7 +166,7 @@ void MyBitmap::allocate(int w, int h)
 	width = w;
 	height = h;
 
-	BITMAPINFO bi;
+	BITMAPINFO bi = { 0 };
 
 	bi.bmiHeader.biSize = sizeof(bi.bmiHeader);
 	bi.bmiHeader.biWidth = w;

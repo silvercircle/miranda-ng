@@ -22,11 +22,11 @@ Offline
 Online
 [Away]
 Na chvíli pryč
-[NA]
+[Not available]
 Nejsem tady
 [Occupied]
 Nemám čas
-[DND]
+[Do not disturb]
 Nerušit!
 [Free for chat]
 Mám volno

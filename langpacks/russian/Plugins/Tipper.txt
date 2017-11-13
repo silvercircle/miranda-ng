@@ -5,8 +5,8 @@
 ;  Version: 2.1.0.7
 ;  Authors: Scott Ellis, yaho
 ;============================================================
-[Tool Tip notification windows.]
-Плагин всплывающих подсказок для списка контактов.
+[Tooltip notification windows.]
+Всплывающие подсказки для списка контактов.
 [Layout]
 Размещение
 [Text indent:]
@@ -172,7 +172,7 @@
 [Handle tray tooltips by Tipper]
 Перехватывать подсказки в трее
 [Hide offline protocols]
-Прятать отключённые протоколы
+Прятать протоколы, находящиеся не в сети
 [Expand to second level after:]
 Второй уровень подсказки через:
 [ms]
@@ -197,12 +197,6 @@
 <Без метки>
 [Add item]
 Добавить
-[Add separator]
-Добавить разделитель
-[Move up]
-Выше
-[Move down]
-Ниже
 [No icon]
 Без значка
 [Icon on left]
@@ -288,7 +282,7 @@ xСтатус
 [Client]
 Клиент
 [%s (locked)]
-%s (заблокирован)
+%s (заблокирована)
 [%s ago]
 %s назад
 [Log on:]
@@ -469,6 +463,10 @@ xСтатус:
 Заголовок в трее
 [Tipper]
 Подсказки
+[Reload]
+Перегрузить
+[Apply]
+Применить
 [Female]
 Женский
 [Male]

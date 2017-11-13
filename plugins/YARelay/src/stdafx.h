@@ -31,7 +31,7 @@ Features:
 #include <win2k.h>
 
 #include "resource.h"
-#include "Version.h"
+#include "version.h"
 
 #define STATUS_OFFLINE               0x1
 #define STATUS_ONLINE                0x2
@@ -47,7 +47,7 @@ Features:
 extern HINSTANCE hInst;
 
 extern MCONTACT hForwardFrom, hForwardTo;
-extern TCHAR tszForwardTemplate[MAXTEMPLATESIZE];
+extern wchar_t tszForwardTemplate[MAXTEMPLATESIZE];
 extern int iSplit, iSplitMaxSize, iSendParts, iMarkRead, iSendAndHistory, iForwardOnStatus;
 
 struct MESSAGE_PROC

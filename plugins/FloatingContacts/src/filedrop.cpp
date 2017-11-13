@@ -113,7 +113,7 @@ HRESULT STDMETHODCALLTYPE CDropTarget::Drop(IDataObject *pData, DWORD, POINTL, D
 		}
 	}
 	else {
-		TCHAR *pText = (TCHAR*)GlobalLock(stg.hGlobal);
+		wchar_t *pText = (wchar_t*)GlobalLock(stg.hGlobal);
 		if (pText != NULL) {
 			SendMsgDialog(hwndCurDrag, pText);
 			GlobalUnlock(stg.hGlobal);
@@ -163,7 +163,7 @@ BOOL OnDropFiles(HDROP hDrop, ThumbInfo *pThumb)
 
 		ProcessDroppedItems(ppDroppedItems, nDroppedItemsCount, ppFiles);
 
-		bSuccess = (BOOL)CallService(MS_CLIST_CONTACTFILESDROPPED, (WPARAM)pThumb->hContact, (LPARAM)ppFiles);
+		bSuccess = (BOOL)CallService(MS_FILE_SENDSPECIFICFILES, pThumb->hContact, (LPARAM)ppFiles);
 
 		for (UINT iItem = 0; iItem < nFilesCount; ++iItem)
 			free(ppFiles[iItem]);

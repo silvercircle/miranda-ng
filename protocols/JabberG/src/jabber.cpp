@@ -5,7 +5,7 @@ Jabber Protocol Plugin for Miranda NG
 Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
 Copyright (c) 2007     Maxim Mluhov
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -36,14 +36,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #pragma comment(lib, "Secur32.lib")
 
 HINSTANCE hInst;
+HMODULE hMsftedit;
 
 int hLangpack;
 unsigned int g_nTempFileId;
+CHAT_MANAGER *pci;
 
 int g_cbCountries;
 CountryListEntry *g_countries;
 
-TCHAR szCoreVersion[100];
+wchar_t szCoreVersion[100];
 
 PLUGININFOEX pluginInfo = {
 	sizeof(PLUGININFOEX),
@@ -59,10 +61,10 @@ PLUGININFOEX pluginInfo = {
 };
 
 CLIST_INTERFACE* pcli;
-FI_INTERFACE *FIP = NULL;
+FI_INTERFACE *FIP = nullptr;
 
-HANDLE hExtraActivity = NULL;
-HANDLE hExtraMood = NULL;
+HANDLE hExtraActivity = nullptr;
+HANDLE hExtraMood = nullptr;
 HANDLE hExtListInit, hDiscoInfoResult;
 
 void JabberUserInfoInit(void);
@@ -74,7 +76,7 @@ bool bSecureIM, bMirOTR, bNewGPG, bPlatform;
 // Protocol instances
 static int sttCompareProtocols(const CJabberProto *p1, const CJabberProto *p2)
 {
-	return mir_tstrcmp(p1->m_tszUserName, p2->m_tszUserName);
+	return mir_wstrcmp(p1->m_tszUserName, p2->m_tszUserName);
 }
 
 LIST<CJabberProto> g_Instances(1, sttCompareProtocols);
@@ -108,8 +110,8 @@ static int OnModulesLoaded(WPARAM, LPARAM)
 	HookEvent(ME_TTB_MODULELOADED, g_OnToolbarInit);
 
 	bSecureIM = ServiceExists("SecureIM/IsContactSecured") != 0;
-	bMirOTR = GetModuleHandle(_T("mirotr.dll")) != NULL;
-	bNewGPG = GetModuleHandle(_T("new_gpg.dll")) != NULL;
+	bMirOTR = GetModuleHandle(L"mirotr.dll") != nullptr;
+	bNewGPG = GetModuleHandle(L"new_gpg.dll") != nullptr;
 	#ifdef _WIN64
 		bPlatform = 1;
 	#else
@@ -123,39 +125,39 @@ static int OnModulesLoaded(WPARAM, LPARAM)
 	}
 
 	// init fontservice for info frame
-	FontIDT fontid = { 0 };
+	FontIDW fontid = { 0 };
 	fontid.cbSize = sizeof(fontid);
-	_tcsncpy_s(fontid.group, LPGENT("Jabber"), _TRUNCATE);
+	wcsncpy_s(fontid.group, LPGENW("Jabber"), _TRUNCATE);
 	strncpy_s(fontid.dbSettingsGroup, GLOBAL_SETTING_MODULE, _TRUNCATE);
-	_tcsncpy_s(fontid.backgroundGroup, _T("Jabber"), _TRUNCATE);
-	_tcsncpy_s(fontid.backgroundName, _T("Background"), _TRUNCATE);
+	wcsncpy_s(fontid.backgroundGroup, L"Jabber", _TRUNCATE);
+	wcsncpy_s(fontid.backgroundName, L"Background", _TRUNCATE);
 	fontid.flags = FIDF_DEFAULTVALID;
 
 	fontid.deffontsettings.charset = DEFAULT_CHARSET;
 	fontid.deffontsettings.colour = GetSysColor(COLOR_WINDOWTEXT);
 	fontid.deffontsettings.size = -11;
-	mir_tstrncpy(fontid.deffontsettings.szFace, _T("MS Shell Dlg"), _countof(fontid.deffontsettings.szFace));
+	mir_wstrncpy(fontid.deffontsettings.szFace, L"MS Shell Dlg", _countof(fontid.deffontsettings.szFace));
 	fontid.deffontsettings.style = 0;
 
-	_tcsncpy_s(fontid.name, LPGENT("Frame title"), _TRUNCATE);
+	wcsncpy_s(fontid.name, LPGENW("Frame title"), _TRUNCATE);
 	strncpy_s(fontid.prefix, "fntFrameTitle", _TRUNCATE);
 	fontid.deffontsettings.style = DBFONTF_BOLD;
-	FontRegisterT(&fontid);
+	Font_RegisterW(&fontid);
 
-	_tcsncpy_s(fontid.name, LPGENT("Frame text"), _TRUNCATE);
+	wcsncpy_s(fontid.name, LPGENW("Frame text"), _TRUNCATE);
 	strncpy_s(fontid.prefix, "fntFrameClock", _TRUNCATE);
 	fontid.deffontsettings.style = 0;
-	FontRegisterT(&fontid);
+	Font_RegisterW(&fontid);
 
-	ColourIDT colourid = {0};
+	ColourIDW colourid = {0};
 	colourid.cbSize = sizeof(colourid);
-	_tcsncpy_s(colourid.group, _T("Jabber"), _TRUNCATE);
+	wcsncpy_s(colourid.group, L"Jabber", _TRUNCATE);
 	strncpy_s(colourid.dbSettingsGroup, GLOBAL_SETTING_MODULE, _TRUNCATE);
 
-	_tcsncpy_s(colourid.name, _T("Background"), _TRUNCATE);
+	wcsncpy_s(colourid.name, L"Background", _TRUNCATE);
 	strncpy_s(colourid.setting, "clFrameBack", _TRUNCATE);
 	colourid.defcolour = GetSysColor(COLOR_WINDOW);
-	ColourRegisterT(&colourid);
+	Colour_RegisterW(&colourid);
 
 	return 0;
 }
@@ -163,7 +165,7 @@ static int OnModulesLoaded(WPARAM, LPARAM)
 ///////////////////////////////////////////////////////////////////////////////
 // OnLoad - initialize the plugin instance
 
-static CJabberProto* jabberProtoInit(const char* pszProtoName, const TCHAR *tszUserName)
+static CJabberProto* jabberProtoInit(const char* pszProtoName, const wchar_t *tszUserName)
 {
 	CJabberProto *ppro = new CJabberProto(pszProtoName, tszUserName);
 	g_Instances.insert(ppro);
@@ -177,25 +179,27 @@ static int jabberProtoUninit(CJabberProto *ppro)
 	return 0;
 }
 
+
 extern "C" int __declspec(dllexport) Load()
 {
 	// set the memory, lists & utf8 managers
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pci = Chat_GetInterface();
+	pcli = Clist_GetInterface();
 
-	{
-		INT_PTR result = CallService(MS_IMG_GETINTERFACE, FI_IF_VERSION, (LPARAM)&FIP);
-		if (FIP == NULL || result != S_OK) {
-			MessageBoxEx(NULL, TranslateT("Fatal error, image services not found. Jabber Protocol will be disabled."), _T("Error"), MB_OK | MB_ICONERROR | MB_APPLMODAL, 0);
-			return 1;
-		}
+	INT_PTR result = CallService(MS_IMG_GETINTERFACE, FI_IF_VERSION, (LPARAM)&FIP);
+	if (FIP == nullptr || result != S_OK) {
+		MessageBoxEx(nullptr, TranslateT("Fatal error, image services not found. Jabber Protocol will be disabled."), L"Error", MB_OK | MB_ICONERROR | MB_APPLMODAL, 0);
+		return 1;
 	}
 
-	WORD v[4];
-	CallService(MS_SYSTEM_GETFILEVERSION, 0, (LPARAM)v);
-	mir_sntprintf(szCoreVersion, _T("%d.%d.%d.%d"), v[0], v[1], v[2], v[3]);
+	char mirVer[100];
+	Miranda_GetVersionText(mirVer, _countof(mirVer));
+	mir_wstrcpy(szCoreVersion, _A2T(mirVer));
 
 	CallService(MS_UTILS_GETCOUNTRYLIST, (WPARAM)&g_cbCountries, (LPARAM)&g_countries);
+
+	hMsftedit = LoadLibrary(L"Msftedit.dll");
 
 	hExtListInit = CreateHookableEvent(ME_JABBER_EXTLISTINIT);
 	hDiscoInfoResult = CreateHookableEvent(ME_JABBER_SRVDISCOINFO);
@@ -211,6 +215,7 @@ extern "C" int __declspec(dllexport) Load()
 
 	g_IconsInit();
 	g_XstatusIconsInit();
+
 	// Init extra icons
 	hExtraActivity = ExtraIcon_RegisterIcolib("activity", LPGEN("Jabber Activity"), "jabber_dancing");
 	hExtraMood = ExtraIcon_RegisterIcolib("mood", LPGEN("Jabber Mood"), "jabber_contemplative");
@@ -227,19 +232,22 @@ extern "C" int __declspec(dllexport) Unload(void)
 {
 	JabberUserInfoUninit();
 
+	if (hMsftedit != nullptr)
+		FreeLibrary(hMsftedit);
+
 	DestroyHookableEvent(hExtListInit);
 	DestroyHookableEvent(hDiscoInfoResult);
 
 	if (g_nTempFileId != 0) {
-		TCHAR tszTempPath[MAX_PATH], tszFilePath[MAX_PATH];
+		wchar_t tszTempPath[MAX_PATH], tszFilePath[MAX_PATH];
 		GetTempPath(_countof(tszTempPath), tszTempPath);
-		mir_sntprintf(tszFilePath, _T("%sjab*.tmp.*"), tszTempPath);
+		mir_snwprintf(tszFilePath, L"%sjab*.tmp.*", tszTempPath);
 
 		WIN32_FIND_DATA findData;
 		HANDLE hFind = FindFirstFile(tszFilePath, &findData);
 		if (hFind != INVALID_HANDLE_VALUE) {
 			do {
-				mir_sntprintf(tszFilePath, _T("%s%s"), tszTempPath, findData.cFileName);
+				mir_snwprintf(tszFilePath, L"%s%s", tszTempPath, findData.cFileName);
 				DeleteFile(tszFilePath);
 			} while (FindNextFile(hFind, &findData));
 			

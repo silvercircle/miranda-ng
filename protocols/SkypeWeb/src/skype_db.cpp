@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2015-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,6 +17,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
+struct SkypeDBType { int type; char *name; DWORD flags; } g_SkypeDBTypes[] =
+{
+	{ SKYPE_DB_EVENT_TYPE_INCOMING_CALL, LPGEN("Incoming call"), DETF_NONOTIFY },
+	{ SKYPE_DB_EVENT_TYPE_EDITED_MESSAGE, LPGEN("Edited message"), 0 },
+	{ SKYPE_DB_EVENT_TYPE_ACTION, LPGEN("Action"), 0 },
+	{ SKYPE_DB_EVENT_TYPE_CALL_INFO, LPGEN("Call information"), 0 },
+	{ SKYPE_DB_EVENT_TYPE_FILETRANSFER_INFO, LPGEN("File transfer information"), 0 },
+	{ SKYPE_DB_EVENT_TYPE_URIOBJ, LPGEN("URI object"), 0 },
+	{ SKYPE_DB_EVENT_TYPE_MOJI, LPGEN("Moji"), 0 },
+	{ SKYPE_DB_EVENT_TYPE_FILE, LPGEN("File"), 0 },
+	{ SKYPE_DB_EVENT_TYPE_UNKNOWN, LPGEN("Unknown event"), 0 },
+};
+
 MEVENT CSkypeProto::GetMessageFromDb(MCONTACT hContact, const char *messageId, LONGLONG timestamp)
 {
 	if (messageId == NULL)
@@ -26,9 +39,8 @@ MEVENT CSkypeProto::GetMessageFromDb(MCONTACT hContact, const char *messageId, L
 	size_t messageIdLength = mir_strlen(messageId);
 
 	mir_cslock lock(messageSyncLock);
-	for (MEVENT hDbEvent = db_event_last(hContact); hDbEvent; hDbEvent = db_event_prev(hContact, hDbEvent))
-	{
-		DBEVENTINFO dbei = { sizeof(dbei) };
+	for (MEVENT hDbEvent = db_event_last(hContact); hDbEvent; hDbEvent = db_event_prev(hContact, hDbEvent)) {
+		DBEVENTINFO dbei = {};
 		dbei.cbBlob = db_event_getBlobSize(hDbEvent);
 
 		if (dbei.cbBlob < messageIdLength)
@@ -66,34 +78,31 @@ MEVENT CSkypeProto::AddDbEvent(WORD type, MCONTACT hContact, DWORD timestamp, DW
 MEVENT CSkypeProto::AppendDBEvent(MCONTACT hContact, MEVENT hEvent, const char *szContent, const char *szUid, time_t edit_time)
 {
 	mir_cslock lck(m_AppendMessageLock);
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	dbei.cbBlob = db_event_getBlobSize(hEvent);
-	dbei.pBlob = mir_ptr<BYTE>((PBYTE)mir_alloc(dbei.cbBlob));
+	mir_ptr<BYTE> blob((PBYTE)mir_alloc(dbei.cbBlob));
+	dbei.pBlob = blob;
 	db_event_get(hEvent, &dbei);
 
 	JSONNode jMsg = JSONNode::parse((char*)dbei.pBlob);
-	if (jMsg)
-	{
+	if (jMsg) {
 		JSONNode &jEdits = jMsg["edits"];
-		if (jEdits)
-		{
-			for (auto it = jEdits.begin(); it != jEdits.end(); ++it)
-			{
+		if (jEdits) {
+			for (auto it = jEdits.begin(); it != jEdits.end(); ++it) {
 				const JSONNode &jEdit = *it;
 
 				if (jEdit["time"].as_int() == edit_time)
 					return hEvent;
 			}
 			JSONNode jEdit;
-			jEdit 
+			jEdit
 				<< JSONNode("time", (long)edit_time)
 				<< JSONNode("text", szContent);
 
 			jEdits << jEdit;
 		}
 	}
-	else
-	{
+	else {
 		jMsg = JSONNode();
 		JSONNode jOriginalMsg; jOriginalMsg.set_name("original_message");
 		JSONNode jEdits(JSON_ARRAY); jEdits.set_name("edits");
@@ -105,29 +114,28 @@ MEVENT CSkypeProto::AppendDBEvent(MCONTACT hContact, MEVENT hEvent, const char *
 
 		jMsg << jOriginalMsg;
 
-		jEdit 
+		jEdit
 			<< JSONNode("time", (long)edit_time)
 			<< JSONNode("text", szContent);
 
-		jEdits << jEdit;	
-		jMsg   << jEdits;
+		jEdits << jEdit;
+		jMsg << jEdits;
 
 
 	}
-	db_event_delete(hContact, hEvent);	
-	return AddDbEvent(SKYPE_DB_EVENT_TYPE_EDITED_MESSAGE, hContact, dbei.timestamp, DBEF_UTF, jMsg.write().c_str(), szUid);
+	db_event_delete(hContact, hEvent);
+	return AddDbEvent(SKYPE_DB_EVENT_TYPE_EDITED_MESSAGE, hContact, dbei.timestamp, dbei.flags, jMsg.write().c_str(), szUid);
 }
 
 MEVENT CSkypeProto::AddEventToDb(MCONTACT hContact, WORD type, DWORD timestamp, DWORD flags, DWORD cbBlob, PBYTE pBlob)
 {
-	DBEVENTINFO dbei;
-	dbei.cbSize    = sizeof(dbei);
-	dbei.szModule  = m_szModuleName;
+	DBEVENTINFO dbei = {};
+	dbei.szModule = m_szModuleName;
 	dbei.timestamp = timestamp;
 	dbei.eventType = type;
-	dbei.cbBlob    = cbBlob;
-	dbei.pBlob     = pBlob;
-	dbei.flags     = flags;
+	dbei.cbBlob = cbBlob;
+	dbei.pBlob = pBlob;
+	dbei.flags = flags;
 	return db_event_add(hContact, &dbei);
 }
 
@@ -142,32 +150,15 @@ void CSkypeProto::InitDBEvents()
 	dbEventType.iconService = MODULE "/GetEventIcon";
 	dbEventType.textService = MODULE "/GetEventText";
 
-	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_EDITED_MESSAGE;
-	dbEventType.descr = Translate("Edited message");
-	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
+	for (size_t i = 0; i < _countof(g_SkypeDBTypes); i++) {
+		SkypeDBType &cur = g_SkypeDBTypes[i];
 
-	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_ACTION;
-	dbEventType.descr = Translate("Action");
-	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
+		dbEventType.eventType = cur.type;
+		dbEventType.descr = Translate(cur.name);
+		dbEventType.flags |= cur.flags;
 
-	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_CALL_INFO;
-	dbEventType.descr = Translate("Call information");
-	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
+		DbEvent_RegisterType(&dbEventType);
 
-	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_FILETRANSFER_INFO;
-	dbEventType.descr = Translate("File transfer information");
-	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
-
-	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_URIOBJ;
-	dbEventType.descr = Translate("URI object");
-	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
-
-	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_UNKNOWN;
-	dbEventType.descr = Translate("Unknown event");
-	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
-
-	dbEventType.eventType = SKYPE_DB_EVENT_TYPE_INCOMING_CALL;
-	dbEventType.descr = Translate("Incoming call");
-	dbEventType.flags |= DETF_NONOTIFY;
-	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&dbEventType);
+		dbEventType.flags &= (~cur.flags);
+	}
 }

@@ -21,19 +21,19 @@ Boston, MA 02111-1307, USA.
 
 void CreateAuthString(char *auth, MCONTACT hContact, HWND hwndDlg)
 {
-	TCHAR *tlogin = NULL, *tpass = NULL;
+	wchar_t *tlogin = NULL, *tpass = NULL;
 	if (hContact && db_get_b(hContact, MODULE, "UseAuth", 0)) {
-		tlogin = db_get_tsa(hContact, MODULE, "Login");
-		tpass = db_get_tsa(hContact, MODULE, "Password");
+		tlogin = db_get_wsa(hContact, MODULE, "Login");
+		tpass = db_get_wsa(hContact, MODULE, "Password");
 	}
 	else if (hwndDlg && IsDlgButtonChecked(hwndDlg, IDC_USEAUTH)) {
-		TCHAR buf[MAX_PATH] = {0};
+		wchar_t buf[MAX_PATH] = {0};
 		GetDlgItemText(hwndDlg, IDC_LOGIN, buf, _countof(buf));
-		tlogin = mir_tstrdup(buf);
+		tlogin = mir_wstrdup(buf);
 		GetDlgItemText(hwndDlg, IDC_PASSWORD, buf, _countof(buf));
-		tpass = mir_tstrdup(buf);
+		tpass = mir_wstrdup(buf);
 	}
-	char *user = mir_t2a(tlogin), *pass = mir_t2a(tpass);
+	char *user = mir_u2a(tlogin), *pass = mir_u2a(tpass);
 
 	char str[MAX_PATH];
 	int len = mir_snprintf(str, "%s:%s", user, pass);
@@ -55,7 +55,7 @@ INT_PTR CALLBACK AuthenticationProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)&SelItem);
 
 			if (SelItem.hwndList) {
-				TCHAR str[MAX_PATH];
+				wchar_t str[MAX_PATH];
 				if (GetDlgItemText(SelItem.hwndList, IDC_FEEDTITLE, str, _countof(str)))
 					SetDlgItemText(hwndDlg, IDC_FEEDNAME, str);
 				else {
@@ -64,13 +64,13 @@ INT_PTR CALLBACK AuthenticationProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				}
 			}
 			else if (SelItem.hContact) {
-				TCHAR *ptszNick = db_get_tsa(SelItem.hContact, MODULE, "Nick");
+				wchar_t *ptszNick = db_get_wsa(SelItem.hContact, MODULE, "Nick");
 				if (ptszNick) {
 					SetDlgItemText(hwndDlg, IDC_FEEDNAME, ptszNick);
 					mir_free(ptszNick);
 				}
 				else {
-					TCHAR *ptszURL = db_get_tsa(SelItem.hContact, MODULE, "URL");
+					wchar_t *ptszURL = db_get_wsa(SelItem.hContact, MODULE, "URL");
 					if (ptszURL) {
 						SetDlgItemText(hwndDlg, IDC_FEEDNAME, ptszURL);
 						mir_free(ptszURL);
@@ -85,7 +85,7 @@ INT_PTR CALLBACK AuthenticationProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			case IDOK:
 			{
 				ItemInfo &SelItem = *(ItemInfo*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
-				TCHAR username[MAX_PATH];
+				wchar_t username[MAX_PATH];
 				char passw[MAX_PATH];
 				if (!GetDlgItemText(hwndDlg, IDC_FEEDUSERNAME, username, _countof(username))) {
 					MessageBox(hwndDlg, TranslateT("Enter your username"), TranslateT("Error"), MB_OK | MB_ICONERROR);
@@ -104,7 +104,7 @@ INT_PTR CALLBACK AuthenticationProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				}
 				else if (SelItem.hContact) {
 					db_set_b(SelItem.hContact, MODULE, "UseAuth", 1);
-					db_set_ts(SelItem.hContact, MODULE, "Login", username);
+					db_set_ws(SelItem.hContact, MODULE, "Login", username);
 					db_set_s(SelItem.hContact, MODULE, "Password", passw);
 				}
 				EndDialog(hwndDlg, IDOK);

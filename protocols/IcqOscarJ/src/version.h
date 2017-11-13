@@ -1,7 +1,7 @@
 #define __MAJOR_VERSION          0
 #define __MINOR_VERSION          11
 #define __RELEASE_NUM            3
-#define __BUILD_NUM              4
+#define __BUILD_NUM              5
 
 #include <stdver.h>
 
@@ -10,5 +10,5 @@
 #define __DESCRIPTION            "ICQ protocol support for Miranda NG."
 #define __AUTHOR                 "Joe Kucera, Bio, Martin \xd6" "berg, Richard Hughes, Jon Keating, etc."
 #define __AUTHOREMAIL            "jokusoftware@miranda-im.org"
-#define __AUTHORWEB              "http://miranda-ng.org/p/ICQ/"
-#define __COPYRIGHT              "© 2000-2015 M.\xd6" "berg, R.Hughes, J.Keating, Bio, Angeli-Ka, G.Hazan, J.Kucera"
+#define __AUTHORWEB              "https://miranda-ng.org/p/ICQ/"
+#define __COPYRIGHT              "© 2000-17 M.\xd6" "berg, R.Hughes, J.Keating, Bio, Angeli-Ka, G.Hazan, J.Kucera"

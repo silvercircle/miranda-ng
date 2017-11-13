@@ -131,8 +131,8 @@ void ColBaseWords::parseMsg(WordMap* pWords, const ext::string& msg, bool bOutgo
 	}
 
 	// start parsing into words if not already filtered
-	ext::string::size_type firstChar = 0;
-	ext::string::size_type nextSpace;
+	size_t firstChar = 0;
+	size_t nextSpace;
 
 	while (firstChar < msg.length() && getCharMapper()->mapChar(msg[firstChar]) == ' ')
 		++firstChar;
@@ -163,9 +163,9 @@ void ColBaseWords::parseMsg(WordMap* pWords, const ext::string& msg, bool bOutgo
 	}
 }
 
-ColBaseWords::ColBaseWords()
-	: m_nSource(2), m_nMinLength(1), m_nMaxLength(0), m_bFilterLinks(true),
-	m_hSource(NULL), m_hMinLength(NULL), m_hMaxLength(NULL), m_hFilterLinks(NULL)
+ColBaseWords::ColBaseWords() : m_nSource(2), m_nMinLength(1), m_nMaxLength(0), m_bFilterLinks(true),
+	m_hSource(NULL), m_hMinLength(NULL), m_hMaxLength(NULL), m_hFilterLinks(NULL),
+	m_bFilterMessages(false), m_bFilterWords(false)
 {
 }
 
@@ -194,7 +194,7 @@ void ColBaseWords::impl_configRead(const SettingsTree& settings)
 
 	upto_each_(i, nCount)
 	{
-		m_FilterWords.insert(settings.readStr((con::KeyFilterWords + utils::intToString(i)).c_str(), _T("")));
+		m_FilterWords.insert(settings.readStr((con::KeyFilterWords + utils::intToString(i)).c_str(), L""));
 	}
 }
 
@@ -224,8 +224,8 @@ void ColBaseWords::impl_configToUI(OptionsCtrl& Opt, OptionsCtrl::Item hGroup)
 	m_hSource = Opt.insertRadio (hTemp, NULL, TranslateT("Incoming messages"));
 	             Opt.insertRadio (hTemp, m_hSource, TranslateT("Outgoing messages"));
 	              Opt.insertRadio (hTemp, m_hSource, TranslateT("All messages"));
-	m_hMinLength = Opt.insertEdit(hGroup, TranslateT("Ignore words shorter than (chars)"), _T(""), OptionsCtrl::OCF_NUMBER);
-	m_hMaxLength = Opt.insertEdit(hGroup, TranslateT("Ignore words longer than (chars, 0=no limit)"), _T(""), OptionsCtrl::OCF_NUMBER);
+	m_hMinLength = Opt.insertEdit(hGroup, TranslateT("Ignore words shorter than (chars)"), L"", OptionsCtrl::OCF_NUMBER);
+	m_hMaxLength = Opt.insertEdit(hGroup, TranslateT("Ignore words longer than (chars, 0=no limit)"), L"", OptionsCtrl::OCF_NUMBER);
 	m_hFilterLinks = Opt.insertCheck(hGroup, TranslateT("Filter URLs/e-mail addresses"));
 	                 Opt.insertButton(hGroup, TranslateT("Filter words/messages"), TranslateT("Define..."), 0, Settings::biFilterWords);
 
@@ -249,7 +249,7 @@ void ColBaseWords::impl_configFromUI(OptionsCtrl& Opt)
 
 ext::string ColBaseWords::impl_contactDataGetUID() const
 {
-	ext::string strUID = ext::str(ext::format(_T("words-|-|-|-|"))
+	ext::string strUID = ext::str(ext::format(L"words-|-|-|-|")
 											% m_nSource
 											% m_nMinLength
 											% m_nMaxLength
@@ -257,7 +257,7 @@ ext::string ColBaseWords::impl_contactDataGetUID() const
 
 	citer_each_(ColFilterSet, i, m_FilterWords)
 	{
-		strUID += _T("-");
+		strUID += L"-";
 		strUID += *i;
 	}
 

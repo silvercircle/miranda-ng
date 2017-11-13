@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: NotesReminders.dll
 ;  Plugin: Sticky Notes & Reminders
-;  Version: 0.0.5.1
+;  Version: 0.1.0.1
 ;  Authors: Joe Kucera, Lubomir Kolev Ivanov, Georg Fischer
 ;============================================================
 [Sticky Notes & Reminders Implementation for Miranda NG.]
@@ -212,7 +212,7 @@
 [&Bring All to Front]
 &Переместить на передний план
 [Miranda could not load the Notes & Reminders plugin, Msftedit.dll is missing. If you are using WINE, please make sure you have Msftedit.dll installed. Press 'Yes' to continue loading Miranda.]
-Miranda не смогла загрузить плагин Notes & Reminders из-за отсутствия Msftedit.dll. Если вы используете WINE, то убедитесь, что установлена  библиотека Msftedit.dll. Нажмите "Да" для продолжения загрузки программы.
+Miranda не смогла загрузить плагин Notes & Reminders из-за отсутствия Msftedit.dll. Если вы используете WINE, то убедитесь, что установлена библиотека Msftedit.dll. Нажмите "Да" для продолжения запуска программы.
 [Black]
 Чёрный
 [Maroon]

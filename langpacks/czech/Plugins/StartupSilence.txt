@@ -45,7 +45,7 @@ Povolit zvuky
 ;file \plugins\StartupSilence\src\main.cpp
 [Events]
 Události
-;file \plugins\StartupSilence\src\StartupSilence.h
+;file \plugins\StartupSilence\src\stdafx.h
 [Silence at startup]
 
 [Toggle Silence OFF]
@@ -74,7 +74,7 @@ Události
 
 [Toggle Silence At Startup]
 
-[You have to install "TopToolBar" to use this option.]
+[You have to install TopToolBar plugin to use this option.]
 
-[You have to install "YAPP" or "Popup+" to use this option.]
+[You have to install popup plugin to use this option.]
 

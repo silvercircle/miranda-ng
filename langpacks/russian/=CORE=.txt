@@ -1,7 +1,7 @@
 ﻿;============================================================
 ;  File: miranda32/64.exe
 ;  Module: Miranda Core
-;  Version: 0.95.5
+;  Version: 0.95.7
 ;============================================================
 [Authorization request]
 Запрос авторизации
@@ -43,150 +43,10 @@
 Использовать сообщение:
 [Use %time% for the current time, %date% for the current date]
 %date% - сегодняшняя дата; %time% - текущее время
-[Status messages:]
-Сообщения статуса:
 [Change %s message]
 Изменить сообщение "%s"
 [Closing in %d]
 Закрыть (%d)
-[&Send]
-&Отправить
-[&Emoticons]
-&Смайлы
-[&Bold]
-&Жирный
-[&Italic]
-&Курсив
-[&Underline]
-&Подчёркнутый
-[&Color]
-&Цвет
-[&Background color]
-Цвет &фона
-[&History]
-&История
-[&Filter]
-&Фильтр
-[&Room settings]
-&Настройки
-[&Show/Hide nick list]
-&Показать/Скрыть список пользователей
-[Show these events only:]
-Показывать только:
-[Actions]
-Действия
-[Messages]
-Сообщения
-[Nick changes]
-Смена ника
-[Users joining]
-Входы в чат
-[Users leaving]
-Выходы из чата
-[Topic changes]
-Смены темы
-[Status changes]
-Смены статуса
-[Information]
-Информация
-[Disconnects]
-Отключения
-[User kicks]
-Пинки
-[Notices]
-Уведомления
-[Options]
-Настройки
-[Log options]
-Настройки журнала
-[Log timestamp]
-Записывать время
-[Timestamp]
-Время
-[Other name]
-Имена других
-[Your name]
-Ваше имя
-[Enable highlighting]
-Включить выделение
-[Limit log text to (events):]
-Ограничить журнал до (событий):
-[Trim to (KB)]
-Лимит (КБ)
-[Words to highlight (wildcards allowed)]
-Слова для подсветки (разрешены маски)
-[Enable logging to disk]
-Запись журнала на диск
-[Log directory]
-Папка журнала
-[Other]
-Другое
-[Add new rooms to group:]
-Добавлять комнаты чата в группу:
-[Nick list row distance (pixels):]
-Расстояние между строками (пикс.):
-[Use same style as in the message log]
-Тот же стиль, что и в журнале
-[Use default colors]
-Цвета по умолчанию
-[Use custom colors]
-Задать цвета
-[Popups for the Chat plugin]
-Всплывающие окна чата
-[Timeout (s)]
-Длительность (с)
-[Text]
-Текст
-[Background]
-Фон
-[(Setting timeout to 0 means default setting and -1 means indefinite time)]
-(Установка таймаута в 0 = значение по умолчанию, -1 = бесконечно)
-[List]
-Список
-[&Message]
-&Сообщение
-[Log]
-Журнал
-[Clear lo&g]
-Очистить ча&т
-[Co&py all]
-Ко&пировать всё
-[Word lookup]
-Найти слово
-[Wikipedia]
-Википедия
-[Link]
-Ссылка
-[Open a &new browser window]
-Открыть в &новом окне
-[&Open in current browser window]
-&Открыть в текущем окне
-[&Copy link]
-&Копировать ссылку
-[Message]
-Сообщение
-[Undo]
-Откат
-[Redo]
-Вернуть
-[Copy]
-Копировать
-[Cut]
-Вырезать
-[Paste]
-Вставить
-[Select all]
-Выделить всё
-[Clear]
-Очистить
-[Tabs]
-Вкладки
-[&Close tab]
-&Закрыть вкладку
-[C&lose other tabs]
-За&крыть остальные вкладки
-[&Open at this position]
-&Открыть в этом месте
 [Delete contact]
 Удалить контакт
 [No]
@@ -196,7 +56,7 @@
 [Hide from list only, in order to keep their history and ignore/visibility settings]
 Скрыть из списка (останутся история и настройки видимости)
 [Use Options -> Contacts -> Ignore to unhide contacts.]
-Скрытые контакты: "Настройки -> Контакты -> Игнорировать".
+Управление отображением контактов осуществляется в разделе "Настройки -> Контакты -> Игнорировать".
 [Are you sure you want to delete %s?]
 Удалить %s из списка?
 [This will erase all history and settings for this contact!]
@@ -383,16 +243,6 @@
 Бордюры на панелях
 [Show resize grip indicator]
 Индикатор изменения размера
-[Ordering:]
-Сортировка:
-[Contact list:]
-Список контактов:
-[If window is partially covered, bring it to front]
-Если окно частично закрыто, вывести его вперёд
-[Window:]
-Окно сообщений:
-[Contact list background:]
-Фон списка контактов:
 [&Main menu]
 &Главное меню
 [E&xit]
@@ -405,11 +255,11 @@
 В &сети\tCtrl+1
 [&Away\tCtrl+2]
 &Отсутствую\tCtrl+2
-[&NA\tCtrl+3]
+[&Not available\tCtrl+3]
 Не&доступен\tCtrl+3
 [Occ&upied\tCtrl+4]
 &Занят\tCtrl+4
-[&DND\tCtrl+5]
+[&Do not disturb\tCtrl+5]
 Не &беспокоить\tCtrl+5
 [&Free for chat\tCtrl+6]
 &Готов болтать\tCtrl+6
@@ -421,6 +271,8 @@
 Обед&аю\tCtrl+9
 [Send file(s)]
 Отправить файл(ы)
+[&Send]
+&Отправить
 [Cancel]
 Отмена
 [To:]
@@ -435,6 +287,8 @@
 Описание:
 [&User menu]
 Меню &пользователя
+[&History]
+&История
 [Incoming file transfer]
 Входящий файл
 [A&ccept]
@@ -540,7 +394,7 @@
 [About Miranda NG]
 О программе
 [Credits >]
-Авторы >
+Благодарности >
 [Become idle if the following is left unattended:]
 Перейти в режим ожидания, если неактивны:
 [Become idle if the screen saver is active]
@@ -565,10 +419,6 @@
 Режим ожидания, если приложение запущено в полноэкранном режиме
 [Disable sounds on idle]
 Отключить звуки при переходе в режим ожидания
-[Become idle if computer is left unattended for:]
-Режим бездействия, если компьютер неактивен более:
-[Idle (auto-away):]
-Режим бездействия:
 [Automatically popup window when:]
 Открывать окно, если:
 [In background]
@@ -585,8 +435,6 @@
 Располагать новые окна каскадом
 [Show 'Send' button]
 Показывать кнопку "Отправить"
-[Show username on top row]
-Показывать имя в верхней строке
 [Show toolbar buttons on top row]
 Показывать кнопки в верхней строке
 [Send message on double 'Enter']
@@ -615,10 +463,6 @@
 при посылке следующего сообщения:
 [Try again]
 Ещё раз
-[Message session]
-Беседа
-[&Details]
-&Детали
 [Message window event log]
 Журнал в окне сообщений
 [Show names]
@@ -641,6 +485,14 @@
 События, полученные менее чем
 [minutes old]
 минут назад
+[Use a tabbed interface]
+Использовать вкладки
+[Close tab on double click]
+Закрывать по двойному щелчку
+[Restore previously open tabs when showing the window]
+Восстанавливать открытые вкладки при показе окна
+[Show tabs at the bottom]
+Вкладки внизу
 [Send typing notifications to the following users when you are typing a message to them:]
 Уведомлять отмеченных пользователей о том, что вы набираете сообщение:
 [Show typing notifications when a user is typing a message]
@@ -653,20 +505,110 @@
 Мигать в трее и в списке контактов
 [Show balloon popup]
 Показывать всплывающую подсказку
-[Save the window position for each contact]
-Сохранять положение окна для каждого контакта
-[Message window behavior:]
-Поведение окна сообщений:
-[Messaging:]
-Сообщения:
+[Show these events only:]
+Показывать только:
+[Actions]
+Действия
+[Messages]
+Сообщения
+[Nick changes]
+Смена ника
+[Users joining]
+Входы в чат
+[Users leaving]
+Выходы из чата
+[Topic changes]
+Смены темы
+[Status changes]
+Смены статуса
+[Information]
+Информация
+[Disconnects]
+Отключения
+[User kicks]
+Пинки
+[Notices]
+Уведомления
+[Options]
+Настройки
+[Log options]
+Настройки журнала
+[Log timestamp]
+Записывать время
+[Timestamp]
+Время
+[Other name]
+Имена других
+[Your name]
+Ваше имя
+[Enable highlighting]
+Включить выделение
+[Limit log text to (events):]
+Ограничить журнал до (событий):
+[Trim to (KB)]
+Лимит (КБ)
+[Words to highlight (wildcards allowed)]
+Слова для подсветки (разрешены маски)
+[Enable logging to disk]
+Запись журнала на диск
+[Log directory]
+Папка журнала
+[Other]
+Другое
+[Add new rooms to group:]
+Добавлять комнаты чата в группу:
+[Nick list row distance (pixels):]
+Расстояние между строками (пикс.):
+[Use same style as in the message log]
+Тот же стиль, что и в журнале
+[Use default colors]
+Цвета по умолчанию
+[Use custom colors]
+Задать цвета
+[Popups for the Chat plugin]
+Всплывающие окна чата
+[Timeout (s)]
+Длительность (с)
+[Text]
+Текст
+[Background]
+Фон
+[(Setting timeout to 0 means default setting and -1 means indefinite time)]
+(Установка таймаута в 0 = значение по умолчанию, -1 = бесконечно)
+[Message]
+Сообщение
+[Undo]
+Откат
+[Redo]
+Вернуть
+[Copy]
+Копировать
+[Cut]
+Вырезать
+[Paste]
+Вставить
+[Select all]
+Выделить всё
+[Clear]
+Очистить
+[Tabs]
+Вкладки
+[&Close tab]
+&Закрыть вкладку
+[C&lose other tabs]
+За&крыть остальные вкладки
+[&Open at this position]
+&Открыть в этом месте
+[Log]
+Журнал
 [C&lear log]
 Оч&истить журнал
 [&Copy]
 &Копировать
+[Co&py all]
+Ко&пировать всё
 [Select &all]
 Выделить &всё
-[&Open link]
-&Открыть ссылку
 [Paste and send]
 Вставить и отправить
 [Delete]
@@ -821,8 +763,6 @@
 Основной диалог настроек Miranda NG
 [Apply]
 Применить
-[Switch to simple options]
-Упрощённый вид настроек
 [Please select a subentry from the list]
 Выберите подраздел из списка
 [Install database settings]
@@ -840,7 +780,7 @@
 [Database setting change]
 Изменение настроек базы данных
 [Database settings are being imported from]
-Настройки импортируются из
+Настройки базы данных импортируются из
 [This file wishes to change the setting]
 Этот файл изменяет настройку
 [to the value]
@@ -852,7 +792,7 @@
 [Cancel import]
 Отменить импорт
 [Database import complete]
-Импорт базы завершён
+Импорт базы данных завершён
 [The import has completed from]
 Импорт завершён из
 [What do you want to do with the file now?]
@@ -909,16 +849,6 @@
 Имя:
 [Enable sound events]
 Включить звуки событий
-[Icons]
-Значки
-[Show category:]
-Категория:
-[&Load icon set...]
-&Выбрать набор значков...
-[&Import icons >>]
-&Импорт значков >>
-[Download more icons]
-Загрузить с сайта Miranda NG
 [The following events are being ignored:]
 Следующие события будут проигнорированы:
 [URLs]
@@ -961,6 +891,8 @@
 В
 [<< &Import]
 << &Импорт
+[Download more icons]
+Загрузить с сайта Miranda NG
 [To default status icons]
 Значки по умолчанию
 [Logging...]
@@ -968,7 +900,7 @@
 [Outgoing connections]
 Исходящие соединения
 [Use proxy server]
-Использовать прокси
+Использовать прокси-сервер
 [Host:]
 Хост:
 [Port:]
@@ -993,22 +925,22 @@
 Входящие соединения
 [Enable UPnP port mapping]
 Включить перенаправление портов UPnP
-[You will need to reconnect for the changes you have made on this page to take effect.]
-Изменения вступят в силу при следующем входе в сеть.
+[These changes will take effect the next time you connect to the network.]
+Эти изменения вступят в силу при следующем подключении к сети.
 [Please complete the following form to create a new user profile]
 Заполните форму для создания профиля пользователя
 [Profile]
 Профиль
 [e.g., Workplace]
 например, "Рабочий"
-[You can select a different profile driver from the default, it may offer more features or abilities, if in doubt use the default.]
+[You can select a different database driver from the default, it may offer more features or abilities, if in doubt use the default.]
 Выбор драйвера базы данных. Если вы не уверены, какой выбрать - используйте драйвер по умолчанию.
 [e.g., dbx mmap]
 например, dbx mmap
 [Driver]
 Драйвер
 [Problem: Unable to find any database drivers, this means you cannot create a new profile, you need to get dbx_mmap.dll]
-Проблема: Не найден ни один драйвер базы данных, невозможно создать новый профиль, вам необходим файл dbx_mmap.dll
+Проблема: Не найден ни один драйвер базы данных, невозможно создать новый профиль, вам нужен файл dbx_mmap.dll
 [Download more plugins]
 Скачать плагины
 [Author(s):]
@@ -1016,9 +948,9 @@
 [Homepage:]
 Сайт:
 [Unique ID:]
-Уник. ID:
+Уникальный ID:
 [Copyright:]
-Права:
+Авторские права:
 [Please restart Miranda NG for your changes to take effect.]
 Изменения вступят в силу после перезапуска программы.
 [Fonts and colors]
@@ -1035,6 +967,12 @@
 Цвет текста
 [Choose font]
 Выбор шрифта
+[Icons]
+Значки
+[&Load icon set...]
+&Выбрать набор значков...
+[&Import icons >>]
+&Импорт значков >>
 [Menu objects]
 Виды меню
 [Menu items]
@@ -1056,7 +994,7 @@ Cлужба:
 [Default]
 По умолчанию
 [Set]
-Выбрать
+Установить
 [Enable icons]
 Включить значки
 [Show accounts in the following order,\ndrag to choose another order:]
@@ -1107,24 +1045,6 @@ Miranda NG перезапускается.\nПожалуйста, подожди
 Консоль ошибок
 [Error notifications]
 Уведомления об ошибках
-[Headers:]
-Заголовки:
-[This font is used to display main section titles or text elements.]
-Шрифт для заголовков основных разделов или текстовых элементов.
-[Normal text:]
-Обычный текст:
-[This font is used to display most text elements or section bodies.]
-Шрифт для большинства текстовых элементов или разделов.
-[Minor notes:]
-Примечания:
-[This font is used to display various additional notes.]
-Шрифт для различных дополнительных заметок.
-[Welcome to Miranda NG's account manager!\nHere you can set up your IM accounts.\n\nSelect an account from the list on the left to see the available options. Alternatively, just click on the Plus sign underneath the list to set up a new IM account.]
-Добро пожаловать в менеджер учётных записей Miranda NG!\nЗдесь вы можете настроить свои учётные записи.\n\nСлева в списке можно выбрать учётную запись, или кликнуть на значок плюса снизу для добавления новой учётной записи.
-[Event icon legend:]
-Описание значков событий:
-[Choose events you wish to ignore:]
-Следующие события будут проигнорированы:
 [Font effect]
 Эффект шрифта
 [Effect:]
@@ -1195,6 +1115,14 @@ UIN, E-mail и т.д.
 Перезагрузить языковой пакет
 [Download more language packs]
 Загрузить дополнительные переводы
+[Show in IM chats]
+Показывать в обычном окне
+[Show in chat rooms]
+Показывать в окне чата
+[Gap between buttons:]
+Промежуток кнопок:
+[Hide if there isn't enough space]
+Скрывать, если недостаточно места
 [Tray]
 Трей
 [&Hide/Show]
@@ -1231,14 +1159,30 @@ UIN, E-mail и т.д.
 &Добавить в список
 [Send &message]
 Отправить &сообщение
-[Open in &new window]
-&Открыть в новом окне
-[&Open in existing window]
-Открыть в &текущем окне
+[&Open link]
+&Открыть ссылку
+[&Copy link]
+&Копировать ссылку
 [Cancel change]
 Откатить изменения
 [Ungroup]
 Разгруппировать
+[List]
+Список
+[&Message]
+&Сообщение
+[Clear lo&g]
+Очистить ча&т
+[Word lookup]
+Найти слово
+[Yandex]
+Яндекс
+[Wikipedia (en)]
+Википедия (англ.)
+[Google Maps]
+Google Карты
+[Google Translate]
+Переводчик Google
 [%s requests authorization]
 %s запрашивает авторизацию
 [%u requests authorization]
@@ -1278,7 +1222,7 @@ UIN, E-mail и т.д.
 [Re&ad status message]
 Пр&очитать статусное сообщение
 [I've been away since %time%.]
-Отошёл в %time%.
+Отсутствую с %time%.
 [Give it up, I'm not in!]
 Ну нет меня сейчас, нет...
 [Not right now.]
@@ -1301,6 +1245,164 @@ UIN, E-mail и т.д.
 ожидание...
 [Status]
 Статус
+[Standard contacts]
+Стандартные контакты
+[Online contacts to whom you have a different visibility]
+Контакты с изменённой видимостью (в сети)
+[Offline contacts]
+Отключённые контакты
+[Contacts which are 'not on list']
+Контакты 'не в списке'
+[Group member counts]
+Счётчики групп
+[Dividers]
+Разделители
+[Offline contacts to whom you have a different visibility]
+Контакты с изменённой видимостью (отключённые)
+[Selected text]
+Выделенный текст
+[Hottrack text]
+Под курсором
+[Quicksearch text]
+Быстрый поиск
+[Not focused]
+Не в фокусе
+[Offline]
+Не в сети
+[Online]
+В сети
+[Away]
+Отсутствую
+[Not available]
+Недоступен
+[Occupied]
+Занят
+[Do not disturb]
+Не беспокоить
+[Free for chat]
+Готов болтать
+[Invisible]
+Невидимый
+[Out to lunch]
+Обедаю
+[On the phone]
+На телефоне
+[List background]
+Фон списка
+[Global]
+Глобальные
+[Standard crypto provider]
+Поставщик шифрования по умолчанию
+[User has not registered an e-mail address]
+Пользователь не зарегистрировал свой адрес e-mail.
+[Send e-mail]
+Отправить e-mail
+[File from %s]
+Файл от %s
+[bytes]
+байт
+[&File]
+&Файл
+[File &transfers...]
+Передачи &файлов...
+[Incoming]
+Входящие
+[Complete]
+Готово
+[Error]
+Ошибка
+[Denied]
+Отказано
+[%s file]
+%s файл
+[All files]
+Все файлы
+[Executable files]
+Исполняемые файлы
+[Events]
+События
+[Select folder]
+Выбрать папку
+[My received files]
+Принятые файлы
+[View user's history]
+История сообщений
+[User menu]
+Меню пользователя
+[Canceled]
+Отменённые
+[This file transfer has been canceled by the other side]
+Передача файла отменена другой стороной
+[%d files]
+%d файла(ов)
+[%d directories]
+%d каталога(ов)
+[This file has not yet been scanned for viruses. Are you certain you want to open it?]
+Этот файл ещё не проверялся антивирусом. Вы всё-таки хотите открыть его?
+[File received]
+Файл получен
+[of]
+из
+[Request sent, waiting for acceptance...]
+Запрос отправлен, ожидание подтверждения...
+[Waiting for connection...]
+Ожидание соединения...
+[Unable to initiate transfer.]
+Невозможно начать передачу.
+[Contact menu]
+Меню контакта
+[Open...]
+Открыть...
+[sec]
+с
+[remaining]
+осталось
+[Decision sent]
+Решение отправлено
+[Connecting...]
+Подключение...
+[Connecting to proxy...]
+Подключение к прокси...
+[Connected]
+Подключён
+[Initializing...]
+Инициализация...
+[Moving to next file...]
+Следующий файл...
+[Sending...]
+Передача...
+[Receiving...]
+Получение...
+[File transfer denied]
+В передаче файла отказано
+[File transfer failed]
+Неудачная передача файла
+[Transfer completed.]
+Передача завершена.
+[Transfer completed, open file.]
+Передача завершена, открыть файл.
+[Transfer completed, open folder.]
+Передача завершена, открыть папку.
+[Scanning for viruses...]
+Проверка на вирусы...
+[Transfer and virus scan complete]
+Передача и проверка на вирусы завершены
+[Outgoing]
+Исходящие
+[< Copyright]
+< Авторские права
+[&Help]
+&Справка
+[&About...]
+&О программе...
+[&Support]
+&Поддержка
+[&Miranda NG homepage]
+О&фициальный сайт Miranda NG
+[&Report bug]
+Сооб&щить об ошибке
+[Idle]
+Ожидание
 [Chat module]
 Модуль чата
 [Group chat log background]
@@ -1313,14 +1415,6 @@ UIN, E-mail и т.д.
 Цвета линий в списке пользователей
 [Nick list background (selected)]
 Заливка списка пользователей (выбрано)
-[Use a tabbed interface]
-Использовать вкладки
-[Close tab on double click]
-Закрывать по двойному щелчку
-[Restore previously open tabs when showing the window]
-Восстанавливать открытые вкладки при показе окна
-[Show tabs at the bottom]
-Вкладки внизу
 [Send message by pressing the 'Enter' key]
 ВВОД отправляет сообщение
 [Send message by pressing the 'Enter' key twice]
@@ -1339,10 +1433,6 @@ UIN, E-mail и т.д.
 Показывать кнопки форматирования текста
 [Show button menus when right clicking the buttons]
 Показывать меню кнопки по правому щелчку
-[Show new windows cascaded]
-Уложить каскадом
-[Save the size and position of chat rooms]
-Сохранять размер и положение окон комнат
 [Show the topic of the room on your contact list (if supported)]
 Показывать тему комнаты чата в списке контактов (если поддерживается)
 [Do not play sounds when the chat room is focused]
@@ -1539,8 +1629,6 @@ UIN, E-mail и т.д.
 Чаты
 [Group chats log]
 Журналы чатов
-[Options for using a tabbed interface]
-Настройки вкладок
 [Appearance and functionality of chat room windows]
 Интерфейс и функциональность окон чата
 [Appearance of the message log]
@@ -1553,48 +1641,16 @@ UIN, E-mail и т.д.
 Значки в трее
 [Popups to display]
 Всплывающие окна
-[Select folder]
-Выбрать папку
 [Message sessions]
 Беседы
 [General]
 Общее
 [Chat log]
 Журнал чата
+[Chat]
+Чат
 [Popups]
 Всплывающие окна
-[Look up '%s':]
-Искать '%s':
-[No word to look up]
-Нет слов для просмотра
-[&Message %s]
-&Сообщение %s
-[Insert a smiley]
-Вставить смайл
-[Make the text bold (CTRL+B)]
-Сделать текст жирным (CTRL+B)
-[Make the text italicized (CTRL+I)]
-Сделать текст курсивом (CTRL+I)
-[Make the text underlined (CTRL+U)]
-Подчеркнуть текст (CTRL+U)
-[Select a background color for the text (CTRL+L)]
-Выбрать фон текста (CTRL+L)
-[Select a foreground color for the text (CTRL+K)]
-Выбрать цвет текста (CTRL+K)
-[Show the history (CTRL+H)]
-Показать историю (CTRL+H)
-[Show/hide the nick list (CTRL+N)]
-Показать/скрыть список пользователей (CTRL+N)
-[Control this room (CTRL+O)]
-Управление комнатой чата (CTRL+O)
-[Enable/disable the event filter (CTRL+F)]
-Включить/выключить фильтр событий (CTRL+F)
-[Close current tab (CTRL+F4)]
-Закрыть текущую вкладку (CTRL+F4)
-[Nickname]
-Ник
-[Unique ID]
-Уник. ID
 [%s: chat room (%u user)]
 %s: комната чата (%u пользователь)
 [%s: chat room (%u users)]
@@ -1603,162 +1659,10 @@ UIN, E-mail и т.д.
 %s: беседа
 [%s: message session (%u users)]
 %s: беседа (%u пользователей)
-[Standard contacts]
-Стандартные контакты
-[Online contacts to whom you have a different visibility]
-Контакты с изменённой видимостью (в сети)
-[Offline contacts]
-Отключённые контакты
-[Contacts which are 'not on list']
-Контакты 'не в списке'
-[Group member counts]
-Счётчики групп
-[Dividers]
-Разделители
-[Offline contacts to whom you have a different visibility]
-Контакты с изменённой видимостью (отключённые)
-[Selected text]
-Выделенный текст
-[Hottrack text]
-Под курсором
-[Quicksearch text]
-Быстрый поиск
-[Not focused]
-Не в фокусе
-[Offline]
-Не в сети
-[Online]
-В сети
-[Away]
-Отсутствую
-[NA]
-Недоступен
-[Occupied]
-Занят
-[DND]
-Не беспокоить
-[Free for chat]
-Готов болтать
-[Invisible]
-Невидимый
-[Out to lunch]
-Обедаю
-[On the phone]
-На телефоне
-[List background]
-Фон списка
-[Global]
-Глобальные
-[Standard crypto provider]
-Поставщик шифрования по умолчанию
-[User has not registered an e-mail address]
-Пользователь не зарегистрировал свой адрес e-mail.
-[Send e-mail]
-Отправить e-mail
-[File from %s]
-Файл от %s
-[bytes]
-байт
-[&File]
-&Файл
-[File &transfers...]
-Передачи &файлов...
-[Incoming]
-Входящие
-[Complete]
-Готово
-[Error]
-Ошибка
-[Denied]
-Отказано
-[%s file]
-%s файл
-[All files]
-Все файлы
-[Executable files]
-Исполняемые файлы
-[Events]
-События
-[My received files]
-Принятые файлы
-[View user's history]
-История сообщений
-[User menu]
-Меню пользователя
-[Canceled]
-Отменённые
-[This file transfer has been canceled by the other side]
-Передача файла отменена другой стороной
-[%d files]
-%d файла(ов)
-[%d directories]
-%d каталога(ов)
-[This file has not yet been scanned for viruses. Are you certain you want to open it?]
-Этот файл ещё не проверялся антивирусом. Вы всё-таки хотите открыть его?
-[File received]
-Файл получен
-[of]
-из
-[Request sent, waiting for acceptance...]
-Запрос отправлен, ожидание подтверждения...
-[Waiting for connection...]
-Ожидание соединения...
-[Unable to initiate transfer.]
-Невозможно начать передачу.
-[Contact menu]
-Меню контакта
-[Open...]
-Открыть...
-[sec]
-с
-[remaining]
-осталось
-[Decision sent]
-Решение отправлено
-[Connecting...]
-Подключение...
-[Connecting to proxy...]
-Подключение к прокси...
-[Connected]
-Подключён
-[Initializing...]
-Инициализация...
-[Moving to next file...]
-Следующий файл...
-[Sending...]
-Передача...
-[Receiving...]
-Получение...
-[File transfer denied]
-В передаче файла отказано
-[File transfer failed]
-Неудачная передача файла
-[Transfer completed.]
-Передача завершена.
-[Transfer completed, open file.]
-Передача завершена, открыть файл.
-[Transfer completed, open folder.]
-Передача завершена, открыть папку.
-[Scanning for viruses...]
-Проверка на вирусы...
-[Transfer and virus scan complete]
-Передача и проверка на вирусы завершены
-[Outgoing]
-Исходящие
-[< Copyright]
-< Права
-[&Help]
-&Справка
-[&About...]
-&О программе...
-[&Support]
-&Поддержка
-[&Miranda NG homepage]
-О&фициальный сайт Miranda NG
-[&Report bug]
-Сооб&щить об ошибке
-[Idle]
-Ожидание
+[Nickname]
+Ник
+[Unique ID]
+Уник. ID
 [The message send timed out.]
 Таймаут отправки сообщения
 [Incoming message (10x10)]
@@ -1767,6 +1671,8 @@ UIN, E-mail и т.д.
 Исходящее сообщение (10x10)
 [Last message received on %s at %s.]
 Последнее сообщение вы получили %s в %s.
+[Message session]
+Беседа
 [%s is typing a message...]
 %s набирает текст...
 [Me]
@@ -1799,8 +1705,6 @@ UIN, E-mail и т.д.
 ** Новые контакты **
 [** Unknown contacts **]
 ** Неизвестные контакты **
-[Show balloon popup (unsupported system)]
-Показывать подсказки (неподдерживаемая система)
 [Messaging log]
 Журнал
 [Typing notify]
@@ -1811,6 +1715,40 @@ UIN, E-mail и т.д.
 %s набирает текст
 [Typing notification]
 Уведомление о наборе текста
+[View user's history (CTRL+H)]
+История сообщений (CTRL+H)
+[&Bold]
+&Жирный
+[Make the text bold (CTRL+B)]
+Сделать текст жирным (CTRL+B)
+[&Italic]
+&Курсив
+[Make the text italicized (CTRL+I)]
+Сделать текст курсивом (CTRL+I)
+[&Underline]
+&Подчёркнутый
+[Make the text underlined (CTRL+U)]
+Подчеркнуть текст (CTRL+U)
+[&Color]
+&Цвет
+[Select a foreground color for the text (CTRL+K)]
+Выбрать цвет текста (CTRL+K)
+[&Background color]
+Цвет &фона
+[Select a background color for the text (CTRL+L)]
+Выбрать фон текста (CTRL+L)
+[&Room settings]
+&Настройки
+[Control this room (CTRL+O)]
+Управление комнатой чата (CTRL+O)
+[&Show/hide nick list]
+&Показать/Скрыть список пользователей
+[Show/hide the nick list (CTRL+N)]
+Показать/скрыть список пользователей (CTRL+N)
+[&Filter]
+&Фильтр
+[Enable/disable the event filter (CTRL+F)]
+Включить/выключить фильтр событий (CTRL+F)
 [Miranda could not load the built-in message module, msftedit.dll is missing. Press 'Yes' to continue loading Miranda.]
 Miranda не смогла загрузить встроенную систему сообщений из-за отсутствия msftedit.dll. Нажмите "Да" для продолжения загрузки программы.
 [Instant messages]
@@ -1820,13 +1758,13 @@ Miranda не смогла загрузить встроенную систему
 [Incoming (unfocused window)]
 Входящие (неактивное окно)
 [Incoming (new session)]
-Входящие (новый сеанс)
+Входящие (новая сессия)
 [Message send error]
 Ошибка отправки сообщения
 [Contact started typing]
-Контакт начал набор сообщения
+Контакт начал набор текста
 [Contact stopped typing]
-Контакт закончил набор сообщения
+Контакт закончил набор текста
 [An unknown error has occurred.]
 Неизвестная ошибка.
 [Client cannot decode host message. Possible causes: host does not support SSL or requires not existing security package]
@@ -1881,6 +1819,28 @@ Miranda не смогла загрузить встроенную систему
 Женский
 [<not specified>]
 <не указано>
+[Single]
+В одиночестве
+[Close relationships]
+В близких отношениях
+[Engaged]
+Помолвлен(а)
+[Married]
+В браке
+[Divorced]
+В разводе
+[Separated]
+Разошлись
+[Widowed]
+Вдовец/вдова
+[Actively searching]
+В активном поиске
+[In love]
+Влюблённость
+[It's complicated]
+Всё сложно
+[In a civil union]
+В незарегистрированном браке
 [Summary]
 Резюме
 [Contact]
@@ -2021,6 +1981,24 @@ Miranda не смогла загрузить встроенную систему
 Тема '%s'
 [The topic is '%s' (set by %s)]
 Тема '%s' (установлена %s)
+[Look up '%s':]
+Искать '%s':
+[No word to look up]
+Нет слов для просмотра
+[&Message %s]
+&Сообщение %s
+[New group]
+Новая группа
+[Are you sure you want to delete group '%s'? This operation cannot be undone.]
+Вы уверены, что хотите удалить группу "%s"? Операция не может быть отменена.
+[Delete group]
+Удаление группы
+[You already have a group with that name. Please enter a unique name for the group.]
+Группа с таким именем уже есть. Введите уникальное имя для группы.
+[Rename group]
+Переименовать группу
+[This group]
+Эта группа
 [Connecting]
 Подключение
 [Connecting (attempt %d)]
@@ -2070,13 +2048,19 @@ Miranda NG не может открыть '%s', профиль в неизвес
 [Miranda was unable to open '%s'\nIt's inaccessible or used by other application or Miranda instance]
 Miranda NG не может открыть '%s'\nОн недоступен, занят другим приложением или другой копией Miranda NG
 [Miranda was unable to open '%s'\nThere is no suitable database driver installed]
-Miranda NG не может открыть '%s'\nНе установлен подходящий драйвер базы
+Miranda NG не может открыть '%s'\nНе установлен подходящий драйвер базы данных
 [No profile support installed!]
 Нет установленных плагинов базы!
 [Miranda can't open that profile]
 Miranda NG не может открыть этот профиль
 [Miranda can't understand that profile]
 Miranda не может распознать этот профиль
+[Authorization request from %s%s: %s]
+Запрос авторизации от %s%s: %s
+[You were added by %s%s]
+Вас добавил %s%s
+[Contacts: ]
+Контакты:\s
 [Security systems to prevent malicious changes are in place and you will be warned before every change that is made.]
 Система безопасности для предотвращения нежелательных изменений активна и вы будете предупреждены перед каждым произведённым изменением.
 [Security systems to prevent malicious changes are in place and you will be warned before changes that are known to be unsafe.]
@@ -2084,19 +2068,17 @@ Miranda не может распознать этот профиль
 [Security systems to prevent malicious changes have been disabled. You will receive no further warnings.]
 Система безопасности для предотвращения нежелательных изменений выключена. Вы не получите дальнейших предупреждений.
 [This change is known to be safe.]
-Это изменение известно, как безопасное.
+Это изменение известно как безопасное.
 [This change is known to be potentially hazardous.]
 Это изменение потенциально опасно.
 [This change is not known to be safe.]
 Неизвестно, будет ли изменение безопасным.
 [Invalid setting type for '%s'. The first character of every value must be b, w, d, l, s, e, u, g, h or n.]
 Неверный тип настройки для '%s'. Первая буква любого значения должна быть b, w, d, l, s, e, u, g, h или n.
-[Authorization request from %s%s: %s]
-Запрос авторизации от %s%s: %s
-[You were added by %s%s]
-Вас добавил %s%s
-[Contacts: ]
-Контакты:\s
+[Homepage]
+Сайт
+[Phone/SMS]
+Телефон/SMS
 [Chat activity]
 Активность в чате
 [You haven't filled in the search field. Please enter a search term and try again.]
@@ -2143,32 +2125,48 @@ Ctrl+Искать добавляет контакт
 Ошибка записи в файл
 [Customize]
 Тонкая настройка
-[Sample text]
-Пример текста
-[Fonts]
-Шрифты
 [Headers]
 Заголовки
 [Generic text]
 Основной текст
 [Small text]
 Дополнительный текст
-[New group]
-Новая группа
-[Are you sure you want to delete group '%s'? This operation cannot be undone.]
-Вы уверены, что хотите удалить группу "%s"? Операция не может быть отменена.
-[Delete group]
-Удаление группы
-[You already have a group with that name. Please enter a unique name for the group.]
-Группа с таким именем уже есть. Введите уникальное имя для группы.
-[Rename group]
-Переименовать группу
-[This group]
-Эта группа
+[Browser: Back]
+Браузер: Назад
+[Browser: Forward]
+Браузер: Вперёд
+[Browser: Refresh]
+Браузер: Обновить
+[Browser: Stop]
+Браузер: Остановить
+[Browser: Search]
+Браузер: Поиск
+[Browser: Fav]
+Браузер: Избранное
+[Browser: Home]
+Браузер: Домой
 [Mute]
-Вкл/выкл звук
+Включить/выключить звук
+[Vol-]
+Громкость-
+[Vol+]
+Громкость+
+[Media: Next Track]
+Музыка: Следующий трек
+[Media: Prev. Track]
+Музыка: Предыдущий трек
+[Media: Stop]
+Музыка: Стоп
+[Media: Play/Pause]
+Музыка: Воспроизведение/пауза
 [Mail]
 Почта
+[Media: Select]
+Музыка: Выбор
+[App 1]
+Приложение 1
+[App 2]
+Приложение 2
 [Remove shortcut]
 Удалить сочетание
 [Add another shortcut]
@@ -2199,18 +2197,18 @@ Ctrl+Искать добавляет контакт
 Настройки журналирования сети
 [Open 'Find user' dialog]
 Открыть диалог поиска контактов
+[built-in]
+встроенный
 [(incompatible)]
 (несовместим)
 [Unknown]
 Неизвестно
-[built-in]
-встроенный
 [Languages]
 Языки
 [Custom status]
 xСтатус
 [%s (locked)]
-%s (заблокирован)
+%s (заблокирована)
 [Status menu]
 Меню статусов
 [Main menu]
@@ -2238,7 +2236,7 @@ xСтатус
 [You are going to remove all the contacts associated with this metacontact.\nThis will delete the metacontact.\n\nProceed anyway?]
 Вы собираетесь удалить все субконтакты из метаконтакта.\nЭто приведёт к удалению метаконтакта.\n\nПродолжить?
 [Either there is no metacontact in the database (in this case you should first convert a contact into one)\nor there is none that can host this contact.\nAnother solution could be to convert this contact into a new metacontact.\n\nConvert this contact into a new metacontact?]
-В базе не найдено ни одного метаконтакта (в этом случае нужно сначала преобразовать один обычный контакт в метаконтакт).\nНапример, можно преобразовать этот контакт в новый метаконтакт.\n\nПреобразовать этот контакт в метаконтакт?
+В базе данных не найдено ни одного метаконтакта (в этом случае нужно сначала преобразовать один обычный контакт в метаконтакт).\nНапример, можно преобразовать этот контакт в новый метаконтакт.\n\nПреобразовать этот контакт в метаконтакт?
 [This contact is a metacontact.\nYou can't add a metacontact to another metacontact.\n\nPlease choose another.]
 Этот контакт уже является метаконтактом.\nНевозможно добавить один метаконтакт в другой.\n\nПожалуйста, выберите другой контакт.
 [Metacontact conflict]
@@ -2311,8 +2309,6 @@ xСтатус
 Не найдено контактов в сети.
 [Select metacontact]
 Выберите метаконтакт
-[Sender]
-Отправитель
 [Could not retrieve contact protocol]
 Не могу запросить протокол контакта
 [Assignment error]
@@ -2329,10 +2325,10 @@ xСтатус
 Ошибка записи уникального ID контакта в метаконтакт
 [Could not write nickname of contact to metacontact]
 Не могу записать ник контакта в метаконтакт
-[&Move to group]
-&Группа
 [<Root group>]
 <Корневая группа>
+[&Move to group]
+&Группа
 [Standard Netlib log]
 Стандартный журнал Netlib
 [No times]
@@ -2378,7 +2374,7 @@ xСтатус
 [Loading... %d%%]
 Загрузка... %d%%
 [%s options]
-%s опции
+Настройки %s
 [Miranda NG options]
 Настройки Miranda NG
 [Extra icons]
@@ -2438,21 +2434,23 @@ xСтатус
 [WARNING! The account is going to be deleted. It means that all its settings, contacts and histories will be also erased.\n\nAre you absolutely sure?]
 ВНИМАНИЕ! Учётная запись будет удалена. Это означает, что все настройки, контакты и история также будут удалены.\n\nВы точно уверены?
 [Your account was successfully upgraded. To activate it, restart of Miranda is needed.\n\nIf you want to restart Miranda now, press Yes, if you want to upgrade another account, press No]
-Ваша учётная запись успешно обновлена. Для её активации необходимо перезапустить Miranda.\n\n\Для перезапуска нажмите "Да", если хотите обновить другую учётную запись, нажмите "Нет".
+Ваша учётная запись успешно обновлена. Для её активации нужно перезапустить Miranda.\n\n\Для перезапуска нажмите "Да", если хотите обновить другую учётную запись, нажмите "Нет".
 [This account uses legacy protocol plugin. Use Miranda NG options dialogs to change its preferences.]
 Эта учётная запись использует старый протокол. Смена личных данных пользователя производится через основные настройки программы.
-[Account name must be filled.]
-Необходимо указать имя учётной записи.
-[Account error]
-Ошибка учётной записи
-[Account name has to be unique. Please enter unique name.]
-Имя учётной записи должно быть уникальным. Введите уникальное имя.
+[Welcome to Miranda NG's account manager!\nHere you can set up your IM accounts.\n\nSelect an account from the list on the left to see the available options. Alternatively, just click on the Plus sign underneath the list to set up a new IM account.]
+Добро пожаловать в менеджер учётных записей Miranda NG!\nЗдесь вы можете настроить свои учётные записи.\n\nСлева в списке можно выбрать учётную запись, или кликнуть на значок плюса снизу для добавления новой учётной записи.
 [Create new account]
 Новая учётная запись
 [Editing account]
 Изменение учётной записи
 [Upgrading account]
 Модернизация учётной записи
+[Account name must be filled.]
+Необходимо указать имя учётной записи.
+[Account error]
+Ошибка учётной записи
+[Account name has to be unique. Please enter unique name.]
+Имя учётной записи должно быть уникальным. Введите уникальное имя.
 [Account is disabled. Please activate it to access options.]
 Учётная запись отключена. Активируйте её для получения доступа к настройкам.
 [New account]
@@ -2463,12 +2461,6 @@ xСтатус
 Настройка...
 [Upgrade account]
 Модернизация
-[Account ID]
-ID учётной записи
-[<unknown>]
-<неизвестно>
-[Protocol is not loaded.]
-Протокол не загружен.
 [Rename]
 Переименовать
 [Configure]
@@ -2482,7 +2474,13 @@ ID учётной записи
 [Account %s is being deleted]
 Удаление учётной записи %s
 [You need to disable plugin to delete this account]
-Для удаления учётной записи необходимо отключить протокол
+Для удаления учётной записи нужно отключить протокол
+[Account ID]
+ID учётной записи
+[<unknown>]
+<неизвестно>
+[Protocol is not loaded.]
+Протокол не загружен.
 [&Accounts...]
 &Учётные записи...
 [Account]
@@ -2589,6 +2587,10 @@ ANSI плагин
 Звуковые файлы
 [WAV files]
 Файлы WAV
+[<Separator>]
+<Разделитель>
+[Toolbar]
+Панель кнопок
 [Unspecified]
 Не указано
 [Afghanistan]

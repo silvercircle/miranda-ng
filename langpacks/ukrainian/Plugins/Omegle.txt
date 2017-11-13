@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Omegle.dll
 ;  Plugin: Omegle protocol
-;  Version: 0.1.2.3
+;  Version: 0.1.3.2
 ;  Authors: Robert Pösel
 ;============================================================
 [Omegle protocol support for Miranda NG.]
@@ -15,8 +15,8 @@
 Видиме ім'я:
 [Meet strangers with common interests (separated by commas):]
 Шукати незнайомців із спільними інтересами (розділяти комою):
-[Automatically send this message to stranger after connection:]
-Автоматично надсилати повідомлення незнайомцю після підключення:
+[Automatically send one of these messages (each on new line) to stranger after connection:]
+Після підключення автоматично надсилати незнайомцю одне з цих повідомлень (кожне з нового рядка):
 [This text will be sent when you use "/asl" message:]
 Повідомлення для відправки по команді '/asl':
 [Last used question (Question mode):]
@@ -53,6 +53,10 @@
 Ви не підключені до незнайомця. Відправте '/help' або '/commands' для довідки.
 [You can't send messages in question mode.]
 Ви не можете відправляти повідомлення в режимі питань.
+[Admin]
+Адмін
+[Normal]
+Звичайний
 [Omegle is a great way of meeting new friends!]
 Omegle - чудовий спосіб знайти нових друзів!
 [You]
@@ -63,6 +67,8 @@ Omegle - чудовий спосіб знайти нових друзів!
 Підключений до сервера %s (%s користувачів у мережі).
 [Connected to server %s.]
 Підключений до сервера %s.
+[On whole Omegle are %s strangers online now.]
+Користувачів у мережі: %s
 [Stranger 1]
 Незнайомець 1
 [Stranger 2]
@@ -79,8 +85,8 @@ Omegle - чудовий спосіб знайти нових друзів!
 %s відключився.
 [Recaptcha is required.\nOpen http://omegle.com , solve Recaptcha and try again.]
 Потрібна капча.\nПерейдіть на http://omegle.com, введіть капчу і спробуйте знову.
-[Error: ]
-Помилка:\s
+[Error: %s]
+Помилка: %s
 [We are still waiting...]
 Ми досі чекаємо...
 [Connecting canceled.]
@@ -103,12 +109,14 @@ Omegle - чудовий спосіб знайти нових друзів!
 З'єднання з сервером %s
 [Unable to initialize Netlib for %s.]
 Не вдається встановити з'єднання Netlib для %s.
-[Stranger typing]
+[Stranger is typing]
 Незнайомець набирає
 [Stranger stopped typing]
 Незнайомець припинив набирати
 [Changing stranger]
 Зміна незнайомця
+[Receive message]
+Вхідне повідомлення
 [Visible name]
 Видиме ім'я
 [Network]

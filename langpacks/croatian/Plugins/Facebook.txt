@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Facebook.dll
 ;  Plugin: Facebook RM
-;  Version: 0.2.11.4
+;  Version: 0.3.3.2
 ;  Authors: Michal Zelinka, Robert Pösel
 ;============================================================
 [Facebook protocol support for Miranda NG.]
@@ -46,33 +46,35 @@ Pojedinosti o korisniku
 
 [Prefer real names instead of nicknames]
 
-[Event notifications]
+[Load also Messenger contacts at login (not only Facebook friends)]
 
-[Notifications]
+[Use Invisible status for Facebook Pages (instead of Offline)]
 
-[News feeds (WARNING: Causes excessive network traffic!)]
+[Popup notifications]
+
+[Show notifications]
+
+[Show wall posts (news feed) (WARNING: Causes excessive network traffic!)]
 
 [News feed types to notify:]
 
 [Don't show advertising posts]
 
-[Other events]
+[Show friendships changes (when someone removes/approves you)]
 
-[Client notifications]
+[Show real-time friends activity (ticker feed)]
 
-[Friendship notifications]
+[Show my "On this day" posts at login]
 
-[Ticker feeds]
+[Chatroom logging]
 
-[Show "On this day" posts at login]
+[Log notifications into special chatroom]
 
-[Use this server for opening links:]
+[Extra]
 
 [Use balloon notifications in system tray instead of popups]
 
-[Use logging notifications into special chatroom]
-
-[Preview]
+[Use this server for opening links:]
 
 [Statuses]
 
@@ -80,9 +82,15 @@ Pojedinosti o korisniku
 
 [Turn off chat on Facebook when going to offline in Miranda]
 
-[Map unsupported statuses to Invisible (instead of Online)]
+[Map unsupported statuses to Invisible (instead of Away)]
 
 [Allow posting statuses to my pages (may slow down login)]
+
+[Advanced]
+
+[Send typing notifications even when Invisible]
+
+[Typing is one way how user is determined active. If you don't want to be seen "active 1 min ago" on Facebook, uncheck this option and also don't interact with website at all. Sending messages from Miranda should be ok, but don't 100% rely on it either.]
 
 [Bots challenge test]
 
@@ -92,8 +100,6 @@ Pojedinosti o korisniku
 
 [Messages]
 poruke
-[Receive messages from "inbox" folder only]
-
 [Keep messages as unread on server (don't send "seen" info)]
 
 [Show stickers as custom smileys (EXPERIMENTAL)]
@@ -104,23 +110,31 @@ poruke
 
 [Do not open chat windows on creation]
 
-[History synchronization]
+[Automatically join active chats that exist in contact list]
 
-[Load last messages (24 hours old) on login (EXPERIMENTAL)]
+[History synchronization]
 
 [Load last messages on opening message window (EXPERIMENTAL)]
 
 [Number of messages to load:]
 
+[Facebook Login Approval]
+
+[Your security settings requires to input a security code to access your account from unknown browsers.\n\nYou can get the code via Facebook application on your phone or click button below to receive it via SMS.]
+
+[Send SMS]
+
 ;file \protocols\FacebookRM\src\captcha.cpp
 [Enter the text you see]
 
 ;file \protocols\FacebookRM\src\chat.cpp
+[Former]
+
 [Myself]
 
-[User]
-
 [Friend]
+
+[User]
 
 [&Invite user...]
 
@@ -130,6 +144,10 @@ poruke
 Detalji o &Korisniku
 [User &history]
 
+[Notifications]
+
+[%s and more (%d)]
+
 ;file \protocols\FacebookRM\src\communication.cpp
 [Login error: %s]
 
@@ -137,9 +155,19 @@ Detalji o &Korisniku
 
 [Login error: Invalid request.]
 
-[Login error: Some Facebook things are required.]
+[You entered too many invalid verification codes. Plugin will disconnect.]
+
+[You entered wrong verification code. Try it again.]
 
 [Login error: Your account is temporarily locked. You need to confirm this device from web browser.]
+
+[Check last login]
+
+[Do you recognize this activity?]
+
+[Login error: You need to confirm last unknown login or revoke it from web browser.]
+
+[Login error: Facebook thinks your computer is infected. Solve it by logging in via 'private browsing' mode of your web browser and run their antivirus check.]
 
 [Login error: Captcha code is required. You need to confirm this device from web browser.]
 
@@ -158,6 +186,10 @@ Detalji o &Korisniku
 [Timeout when sending message.]
 
 [Status update was successful.]
+
+[Error occurred when requesting verification SMS code.]
+
+[Verification SMS code was sent to your mobile phone.]
 
 ;file \protocols\FacebookRM\src\connection.cpp
 [Please enter a username.]
@@ -188,8 +220,6 @@ Detalji o &Korisniku
 [Only me]
 
 ;file \protocols\FacebookRM\src\contacts.cpp
-[%s and more (%d)]
-
 [Contact was removed from your server list.]
 
 [Error occurred when removing contact from server.]
@@ -217,20 +247,6 @@ Detalji o &Korisniku
 
 [What's on your mind, %s?]
 
-[Sample event]
-
-[Sample request]
-
-[Sample newsfeed]
-
-[Sample notification]
-
-[Sample friendship]
-
-[Sample ticker]
-
-[Sample on this day]
-
 ;file \protocols\FacebookRM\src\json.cpp
 [a sticker]
 
@@ -244,13 +260,17 @@ Detalji o &Korisniku
 
 [a photo]
 
+[a video]
+
+[a GIF]
+
 [User sent %s:]
 
 [User sent an unsupported attachment. Open your browser to see it.]
 
-[This message is no longer available, because it was marked as abusive or spam.]
-
 [%s is typing a message...]
+
+[This message is no longer available, because it was marked as abusive or spam.]
 
 ;file \protocols\FacebookRM\src\messages.cpp
 [You cannot send messages when you are offline.]
@@ -260,7 +280,33 @@ Detalji o &Korisniku
 
 [Contact is no longer on server-list.]
 
+[Loading history started.]
+
+[Loading messages: %d/%d]
+
+[Loading history completed.]
+
+[<attachment without text>]
+
+[Loading memories...]
+
 [On this day]
+
+[Found %d memories.]
+
+[Loading notifications...]
+
+[Found %d notifications.]
+
+[Loading friendship requests...]
+
+[Found %d friendship requests (%d seen).]
+
+[Found %d friendship requests.]
+
+[Loading wall posts...]
+
+[Found %d wall posts.]
 
 ;file \protocols\FacebookRM\src\proto.cpp
 [%s server connection]
@@ -283,19 +329,23 @@ Detalji o &Korisniku
 
 [Own wall]
 
-[Loading newsfeeds...]
+[Loading history is already in progress. It can't run for more contacts at once so please wait until it finishes.]
 
-[Checking friend requests...]
-
-[Refreshing buddy list...]
+[This will load all messages from the server. To avoid having duplicate messages in your history, delete existing messages manually before continuing.\nLoading process might take a while, so be patient.\n\nDo you want to continue?]
 
 [Do you want to cancel your friendship with '%s'?]
 
-[News feeds]
+[Client errors]
+
+[Wall posts]
+
+[Other events]
 
 [Friendship events]
 
-[On this day posts]
+[Real-time friends activity]
+
+[Memories]
 
 [Visit profile]
 
@@ -312,8 +362,6 @@ Detalji o &Korisniku
 [Friendship event]
 
 [Ticker event]
-
-[On this day event]
 
 [Message read: %s by %s]
 
@@ -336,9 +384,23 @@ Detalji o &Korisniku
 
 [Captcha form icon]
 
+[Angry]
+
+[Haha]
+
+[Like]
+Sviđa mi se
+[Love]
+
+[Sad]
+Tužno
+[Wow]
+
 [Visit friendship details]
 
 [Visit conversation]
+
+[Load history]
 
 [Cancel friendship]
 
@@ -352,9 +414,11 @@ Detalji o &Korisniku
 
 [Services...]
 
-[Refresh Buddy List]
+[Check friendship requests]
 
-[Check Friends Requests]
+[Check newsfeeds]
 
-[Check Newsfeeds]
+[Check memories]
+
+[Check notifications]
 

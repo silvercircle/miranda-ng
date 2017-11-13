@@ -18,11 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-static HANDLE hServiceParseLink;
-
 extern OBJLIST<CAimProto> g_Instances;
 
-static int SingleHexToDecimal(TCHAR c)
+static int SingleHexToDecimal(wchar_t c)
 {
 	if (c >= '0' && c <= '9') return c - '0';
 	if (c >= 'a' && c <= 'f') return c - 'a' + 10;
@@ -30,9 +28,9 @@ static int SingleHexToDecimal(TCHAR c)
 	return -1;
 }
 
-static TCHAR* url_decode(TCHAR* str)
+static wchar_t* url_decode(wchar_t* str)
 {
-	TCHAR* s = str, *d = str;
+	wchar_t* s = str, *d = str;
 
 	while (*s) {
 		if (*s == '%') {
@@ -41,7 +39,7 @@ static TCHAR* url_decode(TCHAR* str)
 				int digit2 = SingleHexToDecimal(s[2]);
 				if (digit2 != -1) {
 					s += 3;
-					*d++ = (TCHAR)((digit1 << 4) | digit2);
+					*d++ = (wchar_t)((digit1 << 4) | digit2);
 					continue;
 				}
 			}
@@ -57,15 +55,15 @@ static INT_PTR ServiceParseAimLink(WPARAM, LPARAM lParam)
 {
 	if (lParam == 0) return 1; /* sanity check */
 
-	TCHAR *arg = (TCHAR*)lParam;
+	wchar_t *arg = (wchar_t*)lParam;
 
 	/* skip leading prefix */
-	arg = _tcschr(arg, ':');
+	arg = wcschr(arg, ':');
 	if (arg == NULL) return 1; /* parse failed */
 
 	for (++arg; *arg == '/'; ++arg);
 
-	arg = NEWTSTR_ALLOCA(arg);
+	arg = NEWWSTR_ALLOCA(arg);
 
 	if (g_Instances.getCount() == 0) return 0;
 
@@ -84,17 +82,17 @@ static INT_PTR ServiceParseAimLink(WPARAM, LPARAM lParam)
 		open chatroom: aim:gochat?roomname=ROOM&exchange=NUM
 	*/
 	/* add a contact to the list */
-	if (!_tcsnicmp(arg, _T("addbuddy?"), 9)) {
-		TCHAR *tok, *tok2;
+	if (!wcsnicmp(arg, L"addbuddy?", 9)) {
+		wchar_t *tok, *tok2;
 		char *sn = NULL, *group = NULL;
 
 		for (tok = arg + 8; tok != NULL; tok = tok2) {
-			tok2 = _tcschr(++tok, '&'); /* first token */
+			tok2 = wcschr(++tok, '&'); /* first token */
 			if (tok2) *tok2 = 0;
-			if (!_tcsnicmp(tok, _T("screenname="), 11) && *(tok + 11) != 0)
-				sn = mir_t2a(url_decode(tok + 11));
-			if (!_tcsnicmp(tok, _T("groupname="), 10) && *(tok + 10) != 0)
-				group = mir_utf8encodeT(url_decode(tok + 10));  /* group is currently ignored */
+			if (!wcsnicmp(tok, L"screenname=", 11) && *(tok + 11) != 0)
+				sn = mir_u2a(url_decode(tok + 11));
+			if (!wcsnicmp(tok, L"groupname=", 10) && *(tok + 10) != 0)
+				group = mir_utf8encodeW(url_decode(tok + 10));  /* group is currently ignored */
 		}
 		if (sn == NULL) {
 			mir_free(group);
@@ -111,44 +109,44 @@ static INT_PTR ServiceParseAimLink(WPARAM, LPARAM lParam)
 		return 0;
 	}
 	/* send a message to a contact */
-	else if (!_tcsnicmp(arg, _T("goim?"), 5)) {
-		TCHAR *tok, *tok2, *msg = NULL;
+	else if (!wcsnicmp(arg, L"goim?", 5)) {
+		wchar_t *tok, *tok2, *msg = NULL;
 		char *sn = NULL;
 
 		for (tok = arg + 4; tok != NULL; tok = tok2) {
-			tok2 = _tcschr(++tok, '&'); /* first token */
+			tok2 = wcschr(++tok, '&'); /* first token */
 			if (tok2) *tok2 = 0;
-			if (!_tcsnicmp(tok, _T("screenname="), 11) && *(tok + 11) != 0)
-				sn = mir_t2a(url_decode(tok + 11));
-			if (!_tcsnicmp(tok, _T("message="), 8) && *(tok + 8) != 0)
+			if (!wcsnicmp(tok, L"screenname=", 11) && *(tok + 11) != 0)
+				sn = mir_u2a(url_decode(tok + 11));
+			if (!wcsnicmp(tok, L"message=", 8) && *(tok + 8) != 0)
 				msg = url_decode(tok + 8);
 		}
 		if (sn == NULL) return 1; /* parse failed */
 
 		MCONTACT hContact = proto->contact_from_sn(sn, true, true);
 		if (hContact)
-			CallService(MS_MSG_SENDMESSAGET, hContact, (LPARAM)msg);
+			CallService(MS_MSG_SENDMESSAGEW, hContact, (LPARAM)msg);
 
 		mir_free(sn);
 		return 0;
 	}
 
 	/* open a chatroom */
-	else if (!_tcsnicmp(arg, _T("gochat?"), 7)) {
-		TCHAR *tok, *tok2;
+	else if (!wcsnicmp(arg, L"gochat?", 7)) {
+		wchar_t *tok, *tok2;
 		char *rm = NULL;
 		int exchange = 0;
 
 		for (tok = arg + 6; tok != NULL; tok = tok2) {
-			tok2 = _tcschr(++tok, '&'); /* first token */
+			tok2 = wcschr(++tok, '&'); /* first token */
 			if (tok2) *tok2 = 0;
-			if (!_tcsnicmp(tok, _T("roomname="), 9) && *(tok + 9) != 0) {
-				rm = mir_t2a(url_decode(tok + 9));
+			if (!wcsnicmp(tok, L"roomname=", 9) && *(tok + 9) != 0) {
+				rm = mir_u2a(url_decode(tok + 9));
 				for (char *ch = rm; *ch; ++ch)
 					if (*ch == '+') *ch = ' ';
 			}
-			if (!_tcsnicmp(tok, _T("exchange="), 9))
-				exchange = _ttoi(tok + 9);
+			if (!wcsnicmp(tok, L"exchange=", 9))
+				exchange = _wtoi(tok + 9);
 		}
 		if (rm == NULL || exchange <= 0) {
 			mir_free(rm);
@@ -168,11 +166,6 @@ void aim_links_init(void)
 {
 	static const char szService[] = "AIM/ParseAimLink";
 
-	hServiceParseLink = CreateServiceFunction(szService, ServiceParseAimLink);
-	AssocMgr_AddNewUrlTypeT("aim:", TranslateT("AIM Link Protocol"), hInstance, IDI_AOL, szService, 0);
-}
-
-void aim_links_destroy(void)
-{
-	DestroyServiceFunction(hServiceParseLink);
+	CreateServiceFunction(szService, ServiceParseAimLink);
+	AssocMgr_AddNewUrlTypeT("aim:", TranslateT("AIM link protocol"), hInstance, IDI_AOL, szService, 0);
 }

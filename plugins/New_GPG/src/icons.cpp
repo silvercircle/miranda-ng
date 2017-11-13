@@ -51,7 +51,7 @@ void setSrmmIcon(MCONTACT h)
 	bool enabled = isContactSecured(hContact);	
 	MCONTACT hMC = db_mc_tryMeta(hContact);
 
-	StatusIconData sid = { sizeof(sid) };
+	StatusIconData sid = {};
 	sid.szModule = szGPGModuleName;
 	sid.hIcon = IcoLib_GetIcon("secured");
 	sid.dwId = 1;
@@ -68,13 +68,10 @@ void setSrmmIcon(MCONTACT h)
 		Srmm_ModifyIcon(hMC, &sid);
 }
 
-
 void RefreshContactListIcons() 
 {
-	CallService(MS_CLUI_LISTBEGINREBUILD,0,0);
-
 	for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact))
 		setClistIcon(hContact);
 
-	CallService(MS_CLUI_LISTENDREBUILD,0,0);
+	Clist_EndRebuild();
 }

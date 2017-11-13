@@ -4,7 +4,7 @@ Jabber Protocol Plugin for Miranda NG
 
 Copyright (c) 2002-04  Santithorn Bunchua
 Copyright (c) 2005-12  George Hazan
-Copyright (ñ) 2012-15 Miranda NG project
+Copyright (ñ) 2012-17 Miranda NG project
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -26,10 +26,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "jabber_iq.h"
 #include "jabber_caps.h"
 
+bool operator==(const DBEVENTINFO &ev1, const DBEVENTINFO &ev2)
+{
+	return ev1.timestamp == ev2.timestamp && ev1.eventType == ev2.eventType && ev1.cbBlob == ev2.cbBlob && (ev1.flags & DBEF_SENT) == (ev2.flags & DBEF_SENT);
+}
+
 void CJabberProto::EnableArchive(bool bEnable)
 {
-	m_ThreadInfo->send( XmlNodeIq(_T("set"), SerialNext())
-		<< XCHILDNS( _T("auto"), JABBER_FEAT_ARCHIVE) << XATTR(_T("save"), (bEnable) ? _T("true") : _T("false")));
+	m_ThreadInfo->send(XmlNodeIq(L"set", SerialNext())
+		<< XCHILDNS(L"auto", JABBER_FEAT_ARCHIVE) << XATTR(L"save", (bEnable) ? L"true" : L"false"));
 }
 
 void CJabberProto::RetrieveMessageArchive(MCONTACT hContact, JABBER_LIST_ITEM *pItem)
@@ -37,58 +42,41 @@ void CJabberProto::RetrieveMessageArchive(MCONTACT hContact, JABBER_LIST_ITEM *p
 	if (pItem->bHistoryRead)
 		return;
 
-	pItem->bHistoryRead = TRUE;
+	pItem->bHistoryRead = true;
 
-	XmlNodeIq iq( AddIQ(&CJabberProto::OnIqResultGetCollectionList, JABBER_IQ_TYPE_GET));
-	HXML list = iq << XCHILDNS( _T("list"), JABBER_FEAT_ARCHIVE) << XATTR(_T("with"), pItem->jid);
+	XmlNodeIq iq(AddIQ(&CJabberProto::OnIqResultGetCollectionList, JABBER_IQ_TYPE_GET));
+	HXML list = iq << XCHILDNS(L"list", JABBER_FEAT_ARCHIVE) << XATTR(L"with", pItem->jid);
 
 	time_t tmLast = getDword(hContact, "LastCollection", 0);
 	if (tmLast) {
-		TCHAR buf[40];
-		list << XATTR(_T("start"), time2str(tmLast, buf, _countof(buf)));
+		wchar_t buf[40];
+		list << XATTR(L"start", time2str(tmLast, buf, _countof(buf)));
 	}
 	m_ThreadInfo->send(iq);
 }
 
 void CJabberProto::OnIqResultGetCollectionList(HXML iqNode, CJabberIqInfo*)
 {
-	const TCHAR *to = XmlGetAttrValue(iqNode, _T("to"));
-	if (to == NULL || mir_tstrcmp( XmlGetAttrValue(iqNode, _T("type")), _T("result")))
+	const wchar_t *to = XmlGetAttrValue(iqNode, L"to");
+	if (to == nullptr || mir_wstrcmp(XmlGetAttrValue(iqNode, L"type"), L"result"))
 		return;
 
 	HXML list = XmlGetChild(iqNode, "list");
-	if (!list || mir_tstrcmp( XmlGetAttrValue(list, _T("xmlns")), JABBER_FEAT_ARCHIVE))
+	if (!list || mir_wstrcmp(XmlGetAttrValue(list, L"xmlns"), JABBER_FEAT_ARCHIVE))
 		return;
 
-	MCONTACT hContact = NULL;
-	time_t tmLast = 0;
-
-	for (int nodeIdx = 1; ; nodeIdx++) {
-		HXML itemNode = XmlGetNthChild(list, _T("chat"), nodeIdx);
+	for (int nodeIdx = 1;; nodeIdx++) {
+		HXML itemNode = XmlGetNthChild(list, L"chat", nodeIdx);
 		if (!itemNode)
 			break;
 
-		const TCHAR* start = XmlGetAttrValue(itemNode, _T("start"));
-		const TCHAR* with  = XmlGetAttrValue(itemNode, _T("with"));
+		const wchar_t* start = XmlGetAttrValue(itemNode, L"start");
+		const wchar_t* with = XmlGetAttrValue(itemNode, L"with");
 		if (!start || !with)
 			continue;
 
-		if (hContact == NULL) {
-			if ((hContact = HContactFromJID(with)) == NULL)
-				continue;
-
-			tmLast = getDword(hContact, "LastCollection", 0);
-		}
-
-		m_ThreadInfo->send(
-			XmlNodeIq( AddIQ(&CJabberProto::OnIqResultGetCollection, JABBER_IQ_TYPE_GET))
-				<< XCHILDNS( _T("retrieve"), JABBER_FEAT_ARCHIVE) << XATTR(_T("with"), with) << XATTR(_T("start"), start));
-
-		time_t tmThis = str2time(start);
-		if ( tmThis > tmLast) {
-			tmLast = tmThis;
-			setDword(hContact, "LastCollection", tmLast+1);
-		}
+		m_ThreadInfo->send(XmlNodeIq(AddIQ(&CJabberProto::OnIqResultGetCollection, JABBER_IQ_TYPE_GET))
+			<< XCHILDNS(L"retrieve", JABBER_FEAT_ARCHIVE) << XATTR(L"with", with) << XATTR(L"start", start));
 	}
 }
 
@@ -96,21 +84,19 @@ void CJabberProto::OnIqResultGetCollectionList(HXML iqNode, CJabberIqInfo*)
 
 static DWORD dwPreviousTimeStamp = -1;
 static MCONTACT hPreviousContact = INVALID_CONTACT_ID;
-static MEVENT hPreviousDbEvent = NULL;
+static MEVENT hPreviousDbEvent = 0;
 
 // Returns TRUE if the event already exist in the database
 BOOL IsDuplicateEvent(MCONTACT hContact, DBEVENTINFO& dbei)
 {
-	MEVENT hExistingDbEvent;
-	DWORD dwEventTimeStamp;
-
 	// get last event
-	if (!(hExistingDbEvent = db_event_last(hContact)))
+	MEVENT hExistingDbEvent = db_event_last(hContact);
+	if (!hExistingDbEvent)
 		return FALSE;
 
-	DBEVENTINFO dbeiExisting = { sizeof(dbeiExisting) };
+	DBEVENTINFO dbeiExisting = {};
 	db_event_get(hExistingDbEvent, &dbeiExisting);
-	dwEventTimeStamp = dbeiExisting.timestamp;
+	DWORD dwEventTimeStamp = dbeiExisting.timestamp;
 
 	// compare with last timestamp
 	if (dbei.timestamp > dwEventTimeStamp) {
@@ -131,7 +117,6 @@ BOOL IsDuplicateEvent(MCONTACT hContact, DBEVENTINFO& dbei)
 			return FALSE;
 
 		memset(&dbeiExisting, 0, sizeof(dbeiExisting));
-		dbeiExisting.cbSize = sizeof(dbeiExisting);
 		db_event_get(hExistingDbEvent, &dbeiExisting);
 		dwEventTimeStamp = dbeiExisting.timestamp;
 
@@ -141,7 +126,7 @@ BOOL IsDuplicateEvent(MCONTACT hContact, DBEVENTINFO& dbei)
 			dwPreviousTimeStamp = dwEventTimeStamp;
 			hPreviousDbEvent = hExistingDbEvent;
 
-			if ( dbei.timestamp != dwEventTimeStamp )
+			if (dbei.timestamp != dwEventTimeStamp)
 				return FALSE;
 		}
 	}
@@ -149,20 +134,15 @@ BOOL IsDuplicateEvent(MCONTACT hContact, DBEVENTINFO& dbei)
 	// check for equal timestamps
 	if (dbei.timestamp == dwPreviousTimeStamp) {
 		memset(&dbeiExisting, 0, sizeof(dbeiExisting));
-		dbeiExisting.cbSize = sizeof(dbeiExisting);
 		db_event_get(hPreviousDbEvent, &dbeiExisting);
 
-		if ((dbei.timestamp == dbeiExisting.timestamp) &&
-			(dbei.eventType == dbeiExisting.eventType) &&
-			(dbei.cbBlob == dbeiExisting.cbBlob) &&
-			((dbei.flags&DBEF_SENT) == (dbeiExisting.flags&DBEF_SENT)))
+		if (dbei == dbeiExisting)
 			return TRUE;
 
 		// find event with another timestamp
 		hExistingDbEvent = db_event_next(hContact, hPreviousDbEvent);
-		while (hExistingDbEvent != NULL) {
+		while (hExistingDbEvent != 0) {
 			memset(&dbeiExisting, 0, sizeof(dbeiExisting));
-			dbeiExisting.cbSize = sizeof(dbeiExisting);
 			db_event_get(hExistingDbEvent, &dbeiExisting);
 
 			if (dbeiExisting.timestamp != dwPreviousTimeStamp) {
@@ -181,9 +161,8 @@ BOOL IsDuplicateEvent(MCONTACT hContact, DBEVENTINFO& dbei)
 
 	if (dbei.timestamp <= dwPreviousTimeStamp) {
 		// look back
-		while (hExistingDbEvent != NULL) {
+		while (hExistingDbEvent != 0) {
 			memset(&dbeiExisting, 0, sizeof(dbeiExisting));
-			dbeiExisting.cbSize = sizeof(dbeiExisting);
 			db_event_get(hExistingDbEvent, &dbeiExisting);
 
 			if (dbei.timestamp > dbeiExisting.timestamp) {
@@ -194,11 +173,7 @@ BOOL IsDuplicateEvent(MCONTACT hContact, DBEVENTINFO& dbei)
 			}
 
 			// Compare event with import candidate
-			if ((dbei.timestamp == dbeiExisting.timestamp) &&
-				(dbei.eventType == dbeiExisting.eventType) &&
-				(dbei.cbBlob == dbeiExisting.cbBlob) &&
-				((dbei.flags & DBEF_SENT) == (dbeiExisting.flags & DBEF_SENT)))
-			{
+			if (dbei == dbeiExisting) {
 				// remember event
 				hPreviousDbEvent = hExistingDbEvent;
 				dwPreviousTimeStamp = dbeiExisting.timestamp;
@@ -211,9 +186,8 @@ BOOL IsDuplicateEvent(MCONTACT hContact, DBEVENTINFO& dbei)
 	}
 	else {
 		// look forward
-		while (hExistingDbEvent != NULL) {
+		while (hExistingDbEvent != 0) {
 			memset(&dbeiExisting, 0, sizeof(dbeiExisting));
-			dbeiExisting.cbSize = sizeof(dbeiExisting);
 			db_event_get(hExistingDbEvent, &dbeiExisting);
 
 			if (dbei.timestamp < dbeiExisting.timestamp) {
@@ -224,11 +198,7 @@ BOOL IsDuplicateEvent(MCONTACT hContact, DBEVENTINFO& dbei)
 			}
 
 			// Compare event with import candidate
-			if ((dbei.timestamp == dbeiExisting.timestamp) &&
-				(dbei.eventType == dbeiExisting.eventType) &&
-				(dbei.cbBlob == dbeiExisting.cbBlob) &&
-				((dbei.flags&DBEF_SENT) == (dbeiExisting.flags&DBEF_SENT)))
-			{
+			if (dbei == dbeiExisting) {
 				// remember event
 				hPreviousDbEvent = hExistingDbEvent;
 				dwPreviousTimeStamp = dbeiExisting.timestamp;
@@ -246,35 +216,37 @@ BOOL IsDuplicateEvent(MCONTACT hContact, DBEVENTINFO& dbei)
 
 void CJabberProto::OnIqResultGetCollection(HXML iqNode, CJabberIqInfo*)
 {
-	if ( mir_tstrcmp( XmlGetAttrValue(iqNode, _T("type")), _T("result")))
+	if (mir_wstrcmp(XmlGetAttrValue(iqNode, L"type"), L"result"))
 		return;
 
 	HXML chatNode = XmlGetChild(iqNode, "chat");
-	if (!chatNode || mir_tstrcmp( XmlGetAttrValue(chatNode, _T("xmlns")), JABBER_FEAT_ARCHIVE))
+	if (!chatNode || mir_wstrcmp(XmlGetAttrValue(chatNode, L"xmlns"), JABBER_FEAT_ARCHIVE))
 		return;
 
-	const TCHAR* start = XmlGetAttrValue(chatNode, _T("start"));
-	const TCHAR* with  = XmlGetAttrValue(chatNode, _T("with"));
+	const wchar_t* start = XmlGetAttrValue(chatNode, L"start");
+	const wchar_t* with = XmlGetAttrValue(chatNode, L"with");
 	if (!start || !with)
 		return;
+
+	_tzset();
 
 	MCONTACT hContact = HContactFromJID(with);
 	time_t tmStart = str2time(start);
 	if (hContact == 0 || tmStart == 0)
 		return;
 
-	_tzset();
+	time_t tmLast = getDword(hContact, "LastCollection", 0);
 
-	for (int nodeIdx = 0; ; nodeIdx++) {
+	for (int nodeIdx = 0;; nodeIdx++) {
 		HXML itemNode = XmlGetChild(chatNode, nodeIdx);
 		if (!itemNode)
 			break;
 
 		int from;
-		const TCHAR *itemName = XmlGetName(itemNode);
-		if (!mir_tstrcmp(itemName, _T("to")))
+		const wchar_t *itemName = XmlGetName(itemNode);
+		if (!mir_wstrcmp(itemName, L"to"))
 			from = DBEF_SENT;
-		else if (!mir_tstrcmp(itemName, _T("from")))
+		else if (!mir_wstrcmp(itemName, L"from"))
 			from = 0;
 		else
 			continue;
@@ -283,21 +255,28 @@ void CJabberProto::OnIqResultGetCollection(HXML iqNode, CJabberIqInfo*)
 		if (!body)
 			continue;
 
-		const TCHAR *tszBody = XmlGetText(body);
-		const TCHAR *tszSecs = XmlGetAttrValue(itemNode, _T("secs"));
+		const wchar_t *tszBody = XmlGetText(body);
+		const wchar_t *tszSecs = XmlGetAttrValue(itemNode, L"secs");
 		if (!tszBody || !tszSecs)
 			continue;
 
 		T2Utf szEventText(tszBody);
 
-		DBEVENTINFO dbei = { sizeof(DBEVENTINFO) };
+		DBEVENTINFO dbei = {};
 		dbei.eventType = EVENTTYPE_MESSAGE;
 		dbei.szModule = m_szModuleName;
-		dbei.cbBlob = (DWORD)mir_strlen(szEventText);
+		dbei.cbBlob = (DWORD)mir_strlen(szEventText)+1;
 		dbei.flags = DBEF_READ + DBEF_UTF + from;
 		dbei.pBlob = szEventText;
-		dbei.timestamp = TimeZone_ToLocal(tmStart + _ttol(tszSecs));
+		dbei.timestamp = tmStart + _wtol(tszSecs);
 		if (!IsDuplicateEvent(hContact, dbei))
 			db_event_add(hContact, &dbei);
+
+		tmStart = dbei.timestamp;
+		if (dbei.timestamp > tmLast)
+			tmLast = dbei.timestamp;
 	}
+
+	if (tmLast != 0)
+		setDword(hContact, "LastCollection", tmLast + 1);
 }

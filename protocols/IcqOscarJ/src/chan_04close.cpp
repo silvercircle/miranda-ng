@@ -6,6 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2009 Joe Kucera
+// Copyright © 2012-2017 Miranda NG Team
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -137,12 +138,12 @@ int CIcqProto::connectNewServer(serverthread_info *info)
 
 		hServerConn = NetLib_OpenConnection(m_hNetlibUser, NULL, &nloc);
 		if (hServerConn && info->newServerSSL) /* Start SSL session if requested */
-			if (!CallService(MS_NETLIB_STARTSSL, (WPARAM)hServerConn, 0))
+			if (!Netlib_StartSsl(hServerConn, NULL))
 				NetLib_CloseConnection(&hServerConn, FALSE);
 
 		if (hServerConn) {
 			/* Time to recreate the packet receiver */
-			info->hPacketRecver = (HANDLE)CallService(MS_NETLIB_CREATEPACKETRECVER, (WPARAM)hServerConn, 0x2400);
+			info->hPacketRecver = Netlib_CreatePacketReceiver(hServerConn, 0x2400);
 			if (!info->hPacketRecver)
 				debugLogA("Error: Failed to create packet receiver.");
 			else { // we need to reset receiving structs

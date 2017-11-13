@@ -6,7 +6,7 @@
 ;  Authors: Awkward
 ;============================================================
 [This plugin allows you to quick search for nickname, firstname, lastname, email, uin in your contact list. And now you may add any setting to display - for example user's version of Miranda, group or city.]
-Плагин позволит вам быстро найти ник, имя, фамилию, e-mail, uin в вашем списке контактов. Пользователь может добавить любую настройку для отображения (например, версии Miranda, группы или города).
+Позволяет быстро найти контакты по нику, имени, email, UIN и прочим данным в вашем списке контактов. Также может отображать некоторую информацию о контакте, такую как версию клиента, группу или город.
 [Quick Search]
 Поиск по списку
 [Quick search]
@@ -241,8 +241,14 @@ ID клиента
 Добавить цвет
 [QuickSearch window hotkey]
 Открыть окно быстрого поиска
+[Column content is simple database setting.]
+Колонка содержит настройку из базы.
+[Column content is script result.\r\nMore help from "Help" button in script dialog.]
+Колонка содержит результат выполнения скрипта.\r\nДля получения подробной информации нажмите "Помощь" в диалоге скрипта.
 [Column content is contact property (see list). Can be empty.]
 Колонка содержит свойство контакта (см. список). Может быть пустой.
+[Content is last online time.]
+Содержит время последнего появления в сети.
 [Content is time of last contact event.]
 Содержит время последнего события контакта.
 [Content is metacontact info.]

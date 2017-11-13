@@ -159,22 +159,9 @@ exit:
 	return 0;
 }
 
-MEVENT CSteamProto::AddDBEvent(MCONTACT hContact, WORD type, DWORD timestamp, DWORD flags, DWORD cbBlob, PBYTE pBlob)
+void CSteamProto::ShowNotification(const wchar_t *caption, const wchar_t *message, int flags, MCONTACT hContact)
 {
-	DBEVENTINFO dbei = { sizeof(dbei) };
-	dbei.szModule = m_szModuleName;
-	dbei.timestamp = timestamp;
-	dbei.eventType = type;
-	dbei.cbBlob = cbBlob;
-	dbei.pBlob = pBlob;
-	dbei.flags = flags;
-
-	return db_event_add(hContact, &dbei);
-}
-
-void CSteamProto::ShowNotification(const TCHAR *caption, const wchar_t *message, int flags, MCONTACT hContact)
-{
-	if (Miranda_Terminated())
+	if (Miranda_IsTerminated())
 		return;
 
 	if (ServiceExists(MS_POPUP_ADDPOPUPT) && db_get_b(NULL, "Popup", "ModuleIsEnabled", 1))
@@ -192,7 +179,23 @@ void CSteamProto::ShowNotification(const TCHAR *caption, const wchar_t *message,
 	MessageBox(NULL, message, caption, MB_OK | flags);
 }
 
-void CSteamProto::ShowNotification(const TCHAR *message, int flags, MCONTACT hContact)
+void CSteamProto::ShowNotification(const wchar_t *message, int flags, MCONTACT hContact)
 {
-	ShowNotification(TranslateT(MODULE), message, flags, hContact);
+	ShowNotification(_A2W(MODULE), message, flags, hContact);
+}
+
+INT_PTR __cdecl CSteamProto::OnGetEventTextChatStates(WPARAM pEvent, LPARAM datatype)
+{
+	// Retrieves a chat state description from an event
+
+	DBEVENTINFO *dbei = (DBEVENTINFO *)pEvent;
+	if (dbei->cbBlob > 0) {
+		if (dbei->pBlob[0] == STEAM_DB_EVENT_CHATSTATES_GONE) {
+			if (datatype == DBVT_WCHAR)
+				return (INT_PTR)mir_wstrdup(TranslateT("closed chat session"));
+			return (INT_PTR)mir_strdup(Translate("closed chat session"));
+		}
+	}
+
+	return NULL;
 }

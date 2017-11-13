@@ -7,27 +7,29 @@ fast.
 ## Protocol Support ##
 
 - AIM (AOL Instant Messenger)
+- Discord
 - Em-LAN
 - Facebook
 - Gadu-Gadu
 - ICQ
 - IRC (Internet Relay Chat)
 - Jabber
+- MinecraftDynmap
 - MRA
 - MSN
 - Omegle
 - Sametime
 - Skype
+- Steam
 - Tlen
+- Tox
 - Twitter
 - VKontakte
 - WhatsApp
-- Xfire
-- Yahoo
 
 ## Supported Operating Systems ##
 
-Windows 2003 / XP / Vista / 7 / 8
+Windows 2003 / XP / Vista / 7 / 8 / 10
 
 
 ## License ##
@@ -37,11 +39,10 @@ Miranda NG is published under the [GNU GPL license][2].
 
 ## Links ##
 
-- [Official web site](http://miranda-ng.org/)
-- [Forums](http://forum.miranda-ng.org/)
-- [Community Wiki](http://wiki.miranda-ng.org/)
-- [Main SVN repository](http://svn.miranda-ng.org/)
-- [Read-only Git mirror](https://github.com/miranda-ng/miranda-ng)
+- [Official web site](https://miranda-ng.org/)
+- [Forums](https://forum.miranda-ng.org/)
+- [Community Wiki](https://wiki.miranda-ng.org/)
+- [Main Git repository](https://github.com/miranda-ng/miranda-ng)
 
 
 ## Miranda NG Communities ##
@@ -50,7 +51,7 @@ Miranda NG is published under the [GNU GPL license][2].
 - [Miranda NG on Google Plus](https://plus.google.com/u/0/112395897441053008352/)
 - [Miranda NG Community on Google Plus](https://plus.google.com/u/0/communities/108135091636191321308)
 - [Miranda NG on Twitter](https://twitter.com/MirandaNewgen)
-- [Miranda NG SVN Commits on Twitter](https://twitter.com/MirandaNGcommit)
+- [Miranda NG Commits on Twitter](https://twitter.com/MirandaNGcommit)
 
-[1]: http://www.miranda-im.org/
-[2]: http://www.gnu.org/licenses/gpl-2.0.html
+[1]: https://www.miranda-im.org/
+[2]: https://www.gnu.org/licenses/gpl-2.0.html

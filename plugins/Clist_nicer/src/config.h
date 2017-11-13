@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-03 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -38,48 +38,20 @@ typedef HRESULT 	(WINAPI *pfnDwmIsCompositionEnabled_t)(BOOL *);
 class CRTException : public std::runtime_error
 {
 public:
-	CRTException(const char *szMsg, const TCHAR *szParam);
+	CRTException(const char *szMsg, const wchar_t *szParam);
 	~CRTException() {}
 
 	void display() const;
 
 private:
-	TCHAR	m_szParam[MAX_PATH];
+	wchar_t	m_szParam[MAX_PATH];
 };
 
 class cfg
 {
 public:
-   static DWORD   getDword(const MCONTACT hContact, const char *szModule, const char *szSetting, DWORD uDefault);
-   static DWORD   getDword(const char *szModule, const char *szSetting, DWORD uDefault);
-   static DWORD   getDword(const char *szSetting, DWORD uDefault);
-
-   static WORD    getWord(const MCONTACT hContact, const char *szModule, const char *szSetting, WORD uDefault);
-   static WORD    getWord(const char *szModule, const char *szSetting, WORD uDefault);
-   static WORD    getWord(const char *szSetting, WORD uDefault);
-
-   static int     getByte(const MCONTACT hContact, const char *szModule, const char *szSetting, int uDefault);
-   static int     getByte(const char *szModule, const char *szSetting, int uDefault);
-   static int     getByte(const char *szSetting, int uDefault);
-
-   static INT_PTR getTString(const MCONTACT hContact, const char *szModule, const char *szSetting, DBVARIANT *dbv);
-   static INT_PTR getString(const MCONTACT hContact, const char *szModule, const char *szSetting, DBVARIANT *dbv);
-
-   static INT_PTR writeDword(const MCONTACT hContact, const char *szModule, const char *szSetting, DWORD value);
-   static INT_PTR writeDword(const char *szModule, const char *szSetting, DWORD value);
-
-   static INT_PTR writeWord(const MCONTACT hContact, const char *szModule, const char *szSetting, WORD value);
-   static INT_PTR writeWord(const char *szModule, const char *szSetting, WORD value);
-
-   static INT_PTR writeByte(const MCONTACT hContact, const char *szModule, const char *szSetting, BYTE value);
-   static INT_PTR writeByte(const char *szModule, const char *szSetting, BYTE value);
-
-   static INT_PTR writeTString(const MCONTACT hContact, const char *szModule, const char *szSetting, const TCHAR *st);
-   static INT_PTR writeString(const MCONTACT hContact, const char *szModule, const char *szSetting, const char *st);
-
 	static TExtraCache* getCache(const MCONTACT hContact, const char *szProto);
 
-public:
    static TCluiData dat;
    static ClcData*  clcdat;
 
@@ -108,7 +80,7 @@ public:
 	static void 			Ex_CopyEditToClipboard		(HWND hWnd);
 	static INT_PTR CALLBACK Ex_DlgProc					(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static void 			Ex_Handler					();
-	static int 				Ex_ShowDialog				(EXCEPTION_POINTERS *ep, const char *szFile, int line, TCHAR* szReason, bool fAllowContinue);
+	static int 				Ex_ShowDialog				(EXCEPTION_POINTERS *ep, const char *szFile, int line, wchar_t* szReason, bool fAllowContinue);
 
 	static pfnDwmExtendFrameIntoClientArea_t			pfnDwmExtendFrameIntoClientArea;
 	static pfnDwmIsCompositionEnabled_t					pfnDwmIsCompositionEnabled;
@@ -120,7 +92,7 @@ public:
 	static CONTEXT			exCtx;
 	static LRESULT			exLastResult;
 	static char				exSzFile[MAX_PATH];
-	static TCHAR			exReason[256];
+	static wchar_t			exReason[256];
 	static int				exLine;
 	static bool				exAllowContinue;
 
@@ -133,7 +105,7 @@ class Utils
 public:
 	static void TSAPI 		enableDlgControl(const HWND hwnd, UINT id, BOOL fEnable);
 	static void TSAPI 		showDlgControl(const HWND hwnd, UINT id, int showCmd);
-	static HMODULE 			loadSystemLibrary(const TCHAR* szFilename, bool useGetHandle = false);
+	static HMODULE 			loadSystemLibrary(const wchar_t* szFilename, bool useGetHandle = false);
 
 };
 

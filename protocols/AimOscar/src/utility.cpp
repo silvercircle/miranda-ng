@@ -87,7 +87,7 @@ void CAimProto::start_connection(void*)
 		if (!getString(AIM_KEY_SN, &dbv))
 			db_free(&dbv);
 		else {
-			ShowPopup(LPGEN("Please, enter a username in the options dialog."), 0);
+			ShowPopup(LPGEN("Please, enter a user name in the options dialog."), 0);
 			broadcast_status(ID_STATUS_OFFLINE);
 			return;
 		}
@@ -99,28 +99,39 @@ void CAimProto::start_connection(void*)
 			return;
 		}
 
-		bool use_ssl = !getByte(AIM_KEY_DSSL, 0);
 
-		char* login_url = getStringA(AIM_KEY_HN);
-		if (login_url == NULL) login_url = mir_strdup(use_ssl ? AIM_DEFAULT_SERVER : AIM_DEFAULT_SERVER_NS);
+		bool use_clientlogin = getByte(AIM_KEY_CLIENTLOGIN, 1) != 0; //clientlogin should be enabled by default
+		if (!use_clientlogin)
+		{
+			char* login_url = getStringA(AIM_KEY_HN);
+			//if (login_url == NULL) login_url = mir_strdup(use_ssl ? AIM_DEFAULT_SERVER : AIM_DEFAULT_SERVER_NS);
 
-		m_hServerConn = aim_connect(login_url, get_default_port(), use_ssl, login_url);
 
-		mir_free(login_url);
+			if (login_url == NULL) login_url = mir_strdup(AIM_DEFAULT_SERVER);
 
-		m_pref1_flags = 0x77ffff;
-		m_pref1_set_flags = 0x77ffff;
-		mir_free(m_pref2_flags); m_pref2_flags = NULL; m_pref2_len = 0;
-		mir_free(m_pref2_set_flags); m_pref2_set_flags = NULL; m_pref2_set_len = 0;
+			m_hServerConn = aim_connect(login_url, get_default_port(), false, login_url); //ssl does not work anymore with old authorization algo
 
-		if (m_hServerConn)
-			aim_connection_authorization();
+			mir_free(login_url);
+
+			m_pref1_flags = 0x77ffff;
+			m_pref1_set_flags = 0x77ffff;
+			mir_free(m_pref2_flags); m_pref2_flags = NULL; m_pref2_len = 0;
+			mir_free(m_pref2_set_flags); m_pref2_set_flags = NULL; m_pref2_set_len = 0;
+
+			if (m_hServerConn)
+				aim_connection_authorization();
+			else
+				broadcast_status(ID_STATUS_OFFLINE);
+		}
 		else
-			broadcast_status(ID_STATUS_OFFLINE);
+		{
+			aim_connection_clientlogin();
+
+		}
 	}
 }
 
-bool CAimProto::wait_conn(HANDLE& hConn, HANDLE& hEvent, unsigned short service)
+bool CAimProto::wait_conn(HNETLIBCONN &hConn, HANDLE &hEvent, unsigned short service)
 {
 	if (m_iStatus == ID_STATUS_OFFLINE)
 		return false;
@@ -128,7 +139,7 @@ bool CAimProto::wait_conn(HANDLE& hConn, HANDLE& hEvent, unsigned short service)
 		mir_cslock lck(connMutex);
 		if (hConn == NULL && m_hServerConn) {
 			debugLogA("Starting Connection.");
-			hConn = (HANDLE)1;    //set so no additional service request attempts are made while aim is still processing the request
+			hConn = (HNETLIBCONN)1;    //set so no additional service request attempts are made while aim is still processing the request
 			aim_new_service_request(m_hServerConn, m_seqno, service);//general service connection!
 		}
 	}
@@ -136,7 +147,7 @@ bool CAimProto::wait_conn(HANDLE& hConn, HANDLE& hEvent, unsigned short service)
 	if (WaitForSingleObjectEx(hEvent, 10000, TRUE) != WAIT_OBJECT_0)
 		return false;
 
-	if (Miranda_Terminated() || m_iStatus == ID_STATUS_OFFLINE)
+	if (Miranda_IsTerminated() || m_iStatus == ID_STATUS_OFFLINE)
 		return false;
 
 	return true;
@@ -145,7 +156,8 @@ bool CAimProto::wait_conn(HANDLE& hConn, HANDLE& hEvent, unsigned short service)
 
 unsigned short CAimProto::get_default_port(void)
 {
-	return getWord(AIM_KEY_PN, getByte(AIM_KEY_DSSL, 0) ? AIM_DEFAULT_PORT : AIM_DEFAULT_SSL_PORT);
+	//return getWord(AIM_KEY_PN, getByte(AIM_KEY_DSSL, 0) ? AIM_DEFAULT_PORT : AIM_DEFAULT_SSL_PORT);
+	return AIM_DEFAULT_PORT;
 }
 
 bool CAimProto::is_my_contact(MCONTACT hContact)
@@ -183,7 +195,7 @@ MCONTACT CAimProto::contact_from_sn(const char* sn, bool addIfNeeded, bool tempo
 	}
 
 	if (addIfNeeded) {
-		MCONTACT hContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
+		MCONTACT hContact = db_add_contact();
 		if (hContact) {
 			if (Proto_AddToContact(hContact, m_szModuleName) == 0) {
 				setString(hContact, AIM_KEY_SN, norm_sn);
@@ -193,7 +205,7 @@ MCONTACT CAimProto::contact_from_sn(const char* sn, bool addIfNeeded, bool tempo
 					db_set_b(hContact, "CList", "NotOnList", 1);
 				return hContact;
 			}
-			CallService(MS_DB_CONTACT_DELETE, hContact, 0);
+			db_delete_contact(hContact);
 		}
 	}
 
@@ -349,8 +361,8 @@ void create_group(const char *group)
 {
 	if (mir_strcmp(group, AIM_DEFAULT_GROUP) == 0) return;
 
-	TCHAR* szGroupName = mir_utf8decodeT(group);
-	Clist_CreateGroup(0, szGroupName);
+	wchar_t* szGroupName = mir_utf8decodeW(group);
+	Clist_GroupCreate(0, szGroupName);
 	mir_free(szGroupName);
 }
 
@@ -515,22 +527,22 @@ int CAimProto::deleteGroupId(MCONTACT hContact, int i)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-int CAimProto::open_contact_file(const char*, const TCHAR* file, const char*, TCHAR* &path, bool contact_dir)
+int CAimProto::open_contact_file(const char*, const wchar_t* file, const char*, wchar_t* &path, bool contact_dir)
 {
-	path = (TCHAR*)mir_alloc(MAX_PATH * sizeof(TCHAR));
+	path = (wchar_t*)mir_alloc(MAX_PATH * sizeof(wchar_t));
 
-	int pos = mir_sntprintf(path, MAX_PATH, _T("%s\\%S"), VARST(_T("%miranda_userdata%")), m_szModuleName);
+	int pos = mir_snwprintf(path, MAX_PATH, L"%s\\%S", VARSW(L"%miranda_userdata%"), m_szModuleName);
 	if (contact_dir)
-		pos += mir_sntprintf(path + pos, MAX_PATH - pos, _T("\\%S"), m_szModuleName);
+		pos += mir_snwprintf(path + pos, MAX_PATH - pos, L"\\%S", m_szModuleName);
 
-	if (_taccess(path, 0))
-		CreateDirectoryTreeT(path);
+	if (_waccess(path, 0))
+		CreateDirectoryTreeW(path);
 
-	mir_sntprintf(path + pos, MAX_PATH - pos, _T("\\%s"), file);
-	int fid = _topen(path, _O_CREAT | _O_RDWR | _O_BINARY, _S_IREAD);
+	mir_snwprintf(path + pos, MAX_PATH - pos, L"\\%s", file);
+	int fid = _wopen(path, _O_CREAT | _O_RDWR | _O_BINARY, _S_IREAD);
 	if (fid < 0) {
-		TCHAR errmsg[512];
-		mir_sntprintf(errmsg, TranslateT("Failed to open file: %s %s"), path, __tcserror(NULL));
+		wchar_t errmsg[512];
+		mir_snwprintf(errmsg, TranslateT("Failed to open file: %s %s"), path, __tcserror(NULL));
 		ShowPopup((char*)errmsg, ERROR_POPUP | TCHAR_POPUP);
 	}
 	return fid;
@@ -538,8 +550,8 @@ int CAimProto::open_contact_file(const char*, const TCHAR* file, const char*, TC
 
 void CAimProto::write_away_message(const char* sn, const char* msg, bool utf)
 {
-	TCHAR* path;
-	int fid = open_contact_file(sn, _T("away.html"), "wb", path, 1);
+	wchar_t* path;
+	int fid = open_contact_file(sn, L"away.html", "wb", path, 1);
 	if (fid >= 0) {
 		if (utf) _write(fid, "\xEF\xBB\xBF", 3);
 		char* s_msg = process_status_msg(msg, sn);
@@ -548,7 +560,7 @@ void CAimProto::write_away_message(const char* sn, const char* msg, bool utf)
 		_write(fid, "'s Away Message:</h3>", 21);
 		_write(fid, s_msg, (unsigned)mir_strlen(s_msg));
 		_close(fid);
-		ShellExecute(NULL, _T("open"), path, NULL, NULL, SW_SHOW);
+		ShellExecute(NULL, L"open", path, NULL, NULL, SW_SHOW);
 		mir_free(path);
 		mir_free(s_msg);
 	}
@@ -556,8 +568,8 @@ void CAimProto::write_away_message(const char* sn, const char* msg, bool utf)
 
 void CAimProto::write_profile(const char* sn, const char* msg, bool utf)
 {
-	TCHAR* path;
-	int fid = open_contact_file(sn, _T("profile.html"), "wb", path, 1);
+	wchar_t* path;
+	int fid = open_contact_file(sn, L"profile.html", "wb", path, 1);
 	if (fid >= 0) {
 		if (utf) _write(fid, "\xEF\xBB\xBF", 3);
 		char* s_msg = process_status_msg(msg, sn);
@@ -566,7 +578,7 @@ void CAimProto::write_profile(const char* sn, const char* msg, bool utf)
 		_write(fid, "'s Profile:</h3>", 16);
 		_write(fid, s_msg, (unsigned)mir_strlen(s_msg));
 		_close(fid);
-		ShellExecute(NULL, _T("open"), path, NULL, NULL, SW_SHOW);
+		ShellExecute(NULL, L"open", path, NULL, NULL, SW_SHOW);
 		mir_free(path);
 		mir_free(s_msg);
 	}
@@ -590,10 +602,10 @@ unsigned long aim_oft_checksum_chunk(unsigned long dwChecksum, const unsigned ch
 	return checksum << 16;
 }
 
-unsigned int aim_oft_checksum_file(TCHAR *filename, unsigned __int64 size)
+unsigned int aim_oft_checksum_file(wchar_t *filename, unsigned __int64 size)
 {
 	unsigned long checksum = 0xffff0000;
-	int fid = _topen(filename, _O_RDONLY | _O_BINARY, _S_IREAD);
+	int fid = _wopen(filename, _O_RDONLY | _O_BINARY, _S_IREAD);
 	if (fid >= 0) {
 		unsigned __int64 sz = _filelengthi64(fid);
 		if (size > sz) size = sz;
@@ -648,3 +660,4 @@ unsigned short get_random(void)
 	id &= 0x7fff;
 	return id;
 }
+

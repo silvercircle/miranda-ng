@@ -16,7 +16,7 @@ No warranty for any misbehaviour.
 
 #include "stdafx.h"
 
-#include "../Utils/mir_fonts.h"
+#include "../../utils/mir_fonts.h"
 
 // Globals
 
@@ -26,8 +26,7 @@ static void LoadContact(MCONTACT hContact);
 
 // Internal funcs
 static void	RepaintWindow(HWND hwnd, HDC hdc);
-static void	LoadMenus();
-static void	CreateThumbWnd(TCHAR *ptszName, MCONTACT hContact, int nX, int nY);
+static void	CreateThumbWnd(wchar_t *ptszName, MCONTACT hContact, int nX, int nY);
 static void	RegisterWindowClass(void);
 static void	UnregisterWindowClass(void);
 static void LoadDBSettings(void);
@@ -124,11 +123,11 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD, LPVOID)
 
 static LPCTSTR s_fonts[FLT_FONTIDS] =
 {
-	{ LPGENT("Standard contacts") },
-	{ LPGENT("Online contacts to whom you have a different visibility") },
-	{ LPGENT("Offline contacts") },
-	{ LPGENT("Offline contacts to whom you have a different visibility") },
-	{ LPGENT("Contacts which are 'not on list'") }
+	{ LPGENW("Standard contacts") },
+	{ LPGENW("Online contacts to whom you have a different visibility") },
+	{ LPGENW("Offline contacts") },
+	{ LPGENW("Offline contacts to whom you have a different visibility") },
+	{ LPGENW("Contacts which are 'not on list'") }
 };
 
 ///////////////////////////////////////////////////////
@@ -212,7 +211,7 @@ static int OnContactDragStop(WPARAM hContact, LPARAM)
 static int OnSkinIconsChanged(WPARAM, LPARAM)
 {
 	// Get handle to the image list
-	himlMiranda = (HIMAGELIST)CallService(MS_CLIST_GETICONSIMAGELIST, 0, 0);
+	himlMiranda = Clist_GetImageList();
 
 	// Update thumbs
 	for (int i = 0; i < thumbList.getCount(); ++i)
@@ -229,7 +228,7 @@ static int OnContactSettingChanged(WPARAM hContact, LPARAM lParam)
 	DBCONTACTWRITESETTING *pdbcws = (DBCONTACTWRITESETTING*)lParam;
 
 	if (hContact == NULL) {
-		if ((0 == _stricmp(pdbcws->szModule, "CLC")) || (0 == _stricmp(pdbcws->szModule, MODULE))) {
+		if ((0 == strcmp(pdbcws->szModule, "CLC")) || (0 == strcmp(pdbcws->szModule, MODULE))) {
 			LoadDBSettings();
 			ApplyOptionsChanges();
 		}
@@ -241,15 +240,15 @@ static int OnContactSettingChanged(WPARAM hContact, LPARAM lParam)
 		return 0;
 
 	// Only on these 2 events we need to refresh
-	if (0 == _stricmp(pdbcws->szSetting, "Status"))
+	if (0 == strcmp(pdbcws->szSetting, "Status"))
 		idStatus = pdbcws->value.wVal;
-	else if (0 == _stricmp(pdbcws->szSetting, "ApparentMode"))
+	else if (0 == strcmp(pdbcws->szSetting, "ApparentMode"))
 		idStatus = GetContactStatus(hContact);
-	else if (0 == _stricmp(pdbcws->szSetting, "Nick"))
+	else if (0 == strcmp(pdbcws->szSetting, "Nick"))
 		idStatus = GetContactStatus(hContact);
-	else if (0 == _stricmp(pdbcws->szSetting, "MyHandle"))
+	else if (0 == strcmp(pdbcws->szSetting, "MyHandle"))
 		idStatus = GetContactStatus(hContact);
-	else if (fcOpt.bShowIdle && 0 == _stricmp(pdbcws->szSetting, "IdleTS"))
+	else if (fcOpt.bShowIdle && 0 == strcmp(pdbcws->szSetting, "IdleTS"))
 		idStatus = GetContactStatus(hContact);
 	else
 		bRefresh = FALSE;
@@ -311,11 +310,11 @@ static void LoadDBSettings()
 		bIsCListShow = (db_get_b(NULL, "CList", "State", 0) == 2);
 }
 
-void SendMsgDialog(HWND hwnd, TCHAR *pText)
+void SendMsgDialog(HWND hwnd, wchar_t *pText)
 {
 	ThumbInfo *pThumb = thumbList.FindThumb(hwnd);
 	if (pThumb != NULL)
-		CallService(MS_MSG_SENDMESSAGET, (WPARAM)pThumb->hContact, (LPARAM)pText);
+		CallService(MS_MSG_SENDMESSAGEW, (WPARAM)pThumb->hContact, (LPARAM)pText);
 }
 
 static void ShowContactMenu(HWND hwnd, POINT pt)
@@ -327,7 +326,7 @@ static void ShowContactMenu(HWND hwnd, POINT pt)
 			return;
 
 		int idCommand = TrackPopupMenu(hContactMenu, TPM_RIGHTALIGN | TPM_TOPALIGN | TPM_RETURNCMD, pt.x, pt.y, 0, hwnd, NULL);
-		CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(idCommand, MPCF_CONTACTMENU), (LPARAM)pThumb->hContact);
+		Clist_MenuProcessCommand(idCommand, MPCF_CONTACTMENU, pThumb->hContact);
 	}
 }
 
@@ -382,11 +381,11 @@ static LRESULT __stdcall CommWndProc(HWND	hwnd, UINT uMsg, WPARAM wParam, LPARAM
 		}
 
 	case WM_MEASUREITEM:
-		Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
+		Menu_MeasureItem(lParam);
 		break;
 
 	case WM_DRAWITEM:
-		Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
+		Menu_DrawItem(lParam);
 		break;
 
 	case WM_LBUTTONDOWN:
@@ -414,7 +413,7 @@ static LRESULT __stdcall CommWndProc(HWND	hwnd, UINT uMsg, WPARAM wParam, LPARAM
 
 	case WM_REFRESH_CONTACT:
 		if (pThumb) {
-			_tcsncpy(pThumb->ptszName, pcli->pfnGetContactDisplayName(pThumb->hContact, 0), USERNAME_LEN - 1);
+			wcsncpy(pThumb->ptszName, pcli->pfnGetContactDisplayName(pThumb->hContact, 0), USERNAME_LEN - 1);
 			pThumb->RefreshContactStatus((int)lParam);
 			pThumb->ResizeThumb();
 		}
@@ -501,7 +500,7 @@ static void UnregisterWindowClass()
 	UnregisterClass(WND_CLASS, hInst);
 }
 
-static void CreateThumbWnd(TCHAR *ptszName, MCONTACT hContact, int nX, int nY)
+static void CreateThumbWnd(wchar_t *ptszName, MCONTACT hContact, int nX, int nY)
 {
 	ThumbInfo *pThumb = thumbList.FindThumbByContact(hContact);
 	if (pThumb != NULL)
@@ -533,7 +532,7 @@ static void CreateThumbsFont()
 		}
 
 		LOGFONT lf;
-		FontService_GetFont(LPGENT("Floating contacts"), s_fonts[nFontId], &tColor[nFontId], &lf);
+		tColor[nFontId] = Font_GetW(LPGENW("Floating contacts"), s_fonts[nFontId], &lf);
 		hFont[nFontId] = CreateFontIndirect(&lf);
 	}
 }
@@ -571,7 +570,7 @@ static void CreateBackgroundBrush()
 	}
 
 	if (db_get_b(NULL, MODULE, "BkUseBitmap", FLT_DEFAULT_BKGNDUSEBITMAP)) {
-		ptrT tszBitmapName(db_get_tsa(NULL, MODULE, "BkBitmap"));
+		ptrW tszBitmapName(db_get_wsa(NULL, MODULE, "BkBitmap"));
 		if (tszBitmapName != NULL)
 			hBmpBackground = Bitmap_Load(tszBitmapName);
 	}
@@ -678,6 +677,12 @@ static void LoadContacts()
 /////////////////////////////////////////////////////////////////////////////////////////
 // Menus
 
+static IconItemT g_iconList[] =
+{
+	{ LPGENW("Show all thumbs"), "flt_show", IDI_HIDE },
+	{ LPGENW("Hide all thumbs"), "flt_hide", IDI_SHOW }
+};
+
 static INT_PTR OnMainMenu_HideAll(WPARAM, LPARAM)
 {
 	fcOpt.bHideAll = !fcOpt.bHideAll;
@@ -685,9 +690,8 @@ static INT_PTR OnMainMenu_HideAll(WPARAM, LPARAM)
 
 	OnStatusChanged();
 
-	Menu_ModifyItem(hMainMenuItemHideAll,
-		fcOpt.bHideAll ? LPGENT("Show all thumbs") : LPGENT("Hide all thumbs"),
-		LoadIcon(hInst, MAKEINTRESOURCE(fcOpt.bHideAll ? IDI_SHOW : IDI_HIDE)));
+	int i = (fcOpt.bHideAll) ? 0 : 1;
+	Menu_ModifyItem(hMainMenuItemHideAll, g_iconList[i].tszDescr, g_iconList[i].hIcolib);
 	return 0;
 }
 
@@ -719,32 +723,33 @@ static void LoadMenus()
 	CreateServiceFunction(MODULE "/RemoveThumb", OnContactMenu_Remove);
 	SET_UID(mi,0xbab83df0, 0xe126, 0x4d9a, 0xbc, 0xc3, 0x2b, 0xea, 0x84, 0x90, 0x58, 0xc8);
 	mi.position = 0xFFFFF;
-	mi.flags = CMIF_TCHAR;
+	mi.flags = CMIF_UNICODE;
 	mi.hIcolibItem = LoadIcon(hInst, MAKEINTRESOURCE(IDI_HIDE));
-	mi.name.t = LPGENT("Remove thumb");
+	mi.name.w = LPGENW("Remove thumb");
 	mi.pszService = MODULE "/RemoveThumb";
 	hMenuItemRemove = Menu_AddContactMenuItem(&mi);
 
 	// Hide all thumbs main menu item
 	CreateServiceFunction(MODULE "/MainHideAllThumbs", OnMainMenu_HideAll);
 	SET_UID(mi, 0x9ce9983f, 0x782a, 0x4ec1, 0xb5, 0x9b, 0x41, 0x4e, 0x9d, 0x92, 0x8e, 0xcb);
-	mi.hIcolibItem = LoadIcon(hInst, MAKEINTRESOURCE(fcOpt.bHideAll ? IDI_SHOW : IDI_HIDE));
-	mi.name.t = fcOpt.bHideAll ? LPGENT("Show all thumbs") : LPGENT("Hide all thumbs");
-	mi.pszService = MODULE "/MainHideAllThumbs";	
-	Menu_AddMainMenuItem(&mi);
+	mi.pszService = MODULE "/MainHideAllThumbs";
+	int i = (fcOpt.bHideAll) ? 0 : 1;
+	mi.hIcolibItem = g_iconList[i].hIcolib;
+	mi.name.w = g_iconList[i].tszDescr;
+	hMainMenuItemHideAll = Menu_AddMainMenuItem(&mi);
 
 	// Register hotkeys
-	HOTKEYDESC hkd = { sizeof(hkd) };
-	hkd.pszSection = "Floating Contacts";
+	HOTKEYDESC hkd = {};
+	hkd.szSection.a = "Floating Contacts";
 
 	hkd.pszName = MODULE "/MainHideAllThumbs";
-	hkd.pszDescription = LPGEN("Show/Hide all thumbs");
+	hkd.szDescription.a = LPGEN("Show/Hide all thumbs");
 	hkd.pszService = MODULE "/MainHideAllThumbs";
 	Hotkey_Register(&hkd);
 
 	CreateServiceFunction(MODULE "/HideWhenCListShow", OnHotKey_HideWhenCListShow);
 	hkd.pszName = MODULE "/HideWhenCListShow";
-	hkd.pszDescription = LPGEN("Hide when contact list is shown");
+	hkd.szDescription.a = LPGEN("Hide when contact list is shown");
 	hkd.pszService = MODULE "/HideWhenCListShow";
 	Hotkey_Register(&hkd);
 }
@@ -759,7 +764,7 @@ static void LoadContact(MCONTACT hContact)
 
 	DWORD	dwPos = db_get_dw(hContact, MODULE, "ThumbsPos", (DWORD)-1);
 	if (dwPos != -1) {
-		TCHAR	*ptName = pcli->pfnGetContactDisplayName(hContact, 0);
+		wchar_t	*ptName = pcli->pfnGetContactDisplayName(hContact, 0);
 		if (ptName != NULL) {
 			int nX = DB_POS_GETX(dwPos);
 			int nY = DB_POS_GETY(dwPos);
@@ -884,7 +889,6 @@ static int OnModulesLoded(WPARAM, LPARAM)
 	CreateBackgroundBrush();
 	CreateThumbsFont();
 	LoadContacts();
-	LoadMenus();
 
 	if (fcOpt.bToTop) {
 		fcOpt.ToTopTime = (fcOpt.ToTopTime < 1) ? 1 : fcOpt.ToTopTime;
@@ -904,8 +908,10 @@ static int OnPreshutdown(WPARAM, LPARAM)
 extern "C" int __declspec(dllexport) Load()
 {
 	mir_getLP(&pluginInfoEx);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
+	Icon_RegisterT(hInst, _A2W(MODULE), g_iconList, _countof(g_iconList));
+	LoadMenus();
 	InitOptions();
 
 	for (int i = 0; i < _countof(s_fonts); i++) {
@@ -918,7 +924,7 @@ extern "C" int __declspec(dllexport) Load()
 
 		char szId[20];
 		mir_snprintf(szId, "Font%d", i);
-		FontService_RegisterFont(MODULE, szId, LPGENT("Floating contacts"), s_fonts[i], NULL, NULL, i + 1, false, &lf, defColor);
+		FontService_RegisterFont(MODULE, szId, LPGENW("Floating contacts"), s_fonts[i], NULL, NULL, i + 1, false, &lf, defColor);
 	}
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoded);

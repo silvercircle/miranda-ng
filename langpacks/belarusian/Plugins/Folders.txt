@@ -6,8 +6,7 @@
 ;  Authors: Cristian Libotean, Miranda NG Team
 ;============================================================
 [Allows plugins to save their data to user selected folders; supports variables.]
-Дазваляе іншым плагiнам захоўваць свае дадзеныя ў адвольных тэчках. Падтрымліваюцца зменныя.
-;file \plugins\Folders\res\folders.rc
+Дазваляе іншым плагінам захоўваць свае дадзеныя ў адвольных тэчках. Падтрымліваюцца зменныя.
 [Custom folders]
 Тэчкі
 [Preview]
@@ -22,7 +21,6 @@
 Дапамога па зменных (Тэчкі)
 [Close]
 Зачыніць
-;file \plugins\Folders\src\dlg_handlers.cpp
 [Some changes weren't saved. Apply the changes now?]
 Змены не захаваны. Ужыць змены?
 [Changes not saved]
@@ -54,7 +52,7 @@
 [Note: Environment variables are expanded before any Miranda variables. So if you have, for]
 Нататка: Зменныя асяроддзя апрацоўваюцца найперш зменных Miranda NG. Калі ў вас,
 [example, %profile_path% defined as a system variable then it will be expanded to that value]
-напрыклад,  %profile_path% вызначана, як сістэмная зменная, тады будзе вернута значэнне сістэмнай
+напрыклад, %profile_path% вызначана, як сістэмная зменная, тады будзе вернута значэнне сістэмнай
 [instead of expanding to Miranda's profile path.]
 замест зменнай %profile_path% Miranda NG.
 [Examples:]

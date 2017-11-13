@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (c) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -34,6 +34,7 @@ INT_PTR CALLBACK ContactDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 #define SVS_MONTH         5
 #define SVS_SIGNED        6
 #define SVS_TIMEZONE      7
+#define SVS_MARITAL    	  8
 
 static int Proto_GetContactInfoSetting(MCONTACT hContact, const char *szProto, const char *szModule, const char *szSetting, DBVARIANT *dbv, const int nType)
 {
@@ -43,14 +44,14 @@ static int Proto_GetContactInfoSetting(MCONTACT hContact, const char *szProto, c
 	return CallProtoService(szProto, PS_GETINFOSETTING, hContact, (LPARAM)&cgs);
 }
 
-static TCHAR* Proto_GetContactInfoSettingStr(bool proto_service, MCONTACT hContact, const char *szModule, const char *szSetting)
+static wchar_t* Proto_GetContactInfoSettingStr(bool proto_service, MCONTACT hContact, const char *szModule, const char *szSetting)
 {
 	if (!proto_service)
-		return db_get_tsa(hContact, szModule, szSetting);
+		return db_get_wsa(hContact, szModule, szSetting);
 
 	DBVARIANT dbv;
 	DBCONTACTGETSETTING cgs = { szModule, szSetting, &dbv };
-	dbv.type = DBVT_TCHAR;
+	dbv.type = DBVT_WCHAR;
 	if (CallProtoService(szModule, PS_GETINFOSETTING, hContact, (LPARAM)&cgs))
 		return NULL;
 
@@ -60,7 +61,7 @@ static TCHAR* Proto_GetContactInfoSettingStr(bool proto_service, MCONTACT hConta
 static void SetValue(HWND hwndDlg, int idCtrl, MCONTACT hContact, char *szModule, char *szSetting, int special)
 {
 	char str[80], *pstr = NULL;
-	TCHAR *ptstr = NULL;
+	wchar_t *ptstr = NULL;
 	char *szProto = GetContactProto(hContact);
 	bool proto_service = szProto && (CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_4, 0) & PF4_INFOSETTINGSVC);
 
@@ -96,6 +97,48 @@ static void SetValue(HWND hwndDlg, int idCtrl, MCONTACT hContact, char *szModule
 					mir_snprintf(str, dbv.cVal ? "UTC%+d:%02d" : "UTC", -dbv.cVal / 2, (dbv.cVal & 1) * 30);
 				}
 			}
+			else if (special == SVS_MARITAL) {
+				switch (dbv.cVal) {
+				case 0:
+					ptstr = TranslateT("<not specified>");
+					break;
+				case 10:
+					ptstr = TranslateT("Single");
+					break;
+				case 11:
+					ptstr = TranslateT("Close relationships");
+					break;
+				case 12:
+					ptstr = TranslateT("Engaged");
+					break;
+				case 20:
+					ptstr = TranslateT("Married");
+					break;
+				case 30:
+					ptstr = TranslateT("Divorced");
+					break;
+				case 31:
+					ptstr = TranslateT("Separated");
+					break;
+				case 40:
+					ptstr = TranslateT("Widowed");
+					break;
+				case 50:
+					ptstr = TranslateT("Actively searching");
+					break;
+				case 60:
+					ptstr = TranslateT("In love");
+					break;
+				case 70:
+					ptstr = TranslateT("It's complicated");
+					break;
+				case 80:
+					ptstr = TranslateT("In a civil union");
+					break;
+				default:
+					unspecified = 1;
+				}
+			}
 			else {
 				unspecified = (special == SVS_ZEROISUNSPEC && dbv.bVal == 0);
 				pstr = _itoa(special == SVS_SIGNED ? dbv.cVal : dbv.bVal, str, 10);
@@ -108,7 +151,7 @@ static void SetValue(HWND hwndDlg, int idCtrl, MCONTACT hContact, char *szModule
 				if (wSave == (WORD)-1) {
 					char szSettingName[100];
 					mir_snprintf(szSettingName, "%sName", szSetting);
-					if (!db_get_ts(hContact, szModule, szSettingName, &dbv)) {
+					if (!db_get_ws(hContact, szModule, szSettingName, &dbv)) {
 						ptstr = dbv.ptszVal;
 						unspecified = false;
 						break;
@@ -145,7 +188,7 @@ static void SetValue(HWND hwndDlg, int idCtrl, MCONTACT hContact, char *szModule
 			if (!unspecified) {
 				WCHAR *wszStr;
 				Utf8Decode(dbv.pszVal, &wszStr);
-				SetDlgItemTextW(hwndDlg, idCtrl, TranslateTS(wszStr));
+				SetDlgItemTextW(hwndDlg, idCtrl, TranslateW(wszStr));
 				mir_free(wszStr);
 				goto LBL_Exit;
 			}
@@ -199,7 +242,7 @@ static INT_PTR CALLBACK SummaryDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 					SetValue(hwndDlg, IDC_DOBDAY, hContact, szProto, "BirthDay", 0);
 					SetValue(hwndDlg, IDC_DOBMONTH, hContact, szProto, "BirthMonth", SVS_MONTH);
 					SetValue(hwndDlg, IDC_DOBYEAR, hContact, szProto, "BirthYear", 0);
-					SetValue(hwndDlg, IDC_MARITAL, hContact, szProto, "MaritalStatus", 0);
+					SetValue(hwndDlg, IDC_MARITAL, hContact, szProto, "MaritalStatus", SVS_MARITAL);
 				}
 			}
 			break;
@@ -213,10 +256,10 @@ static INT_PTR CALLBACK SummaryDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			break;
 		case IDC_EMAIL:
 			if (IsWindowEnabled(GetDlgItem(hwndDlg, IDC_EMAIL))) {
-				TCHAR szExec[264], szEmail[256];
+				wchar_t szExec[264], szEmail[256];
 				GetDlgItemText(hwndDlg, IDC_EMAIL, szEmail, _countof(szEmail));
-				mir_sntprintf(szExec, _T("mailto:%s"), szEmail);
-				ShellExecute(hwndDlg, _T("open"), szExec, NULL, NULL, SW_SHOW);
+				mir_snwprintf(szExec, L"mailto:%s", szEmail);
+				ShellExecute(hwndDlg, L"open", szExec, NULL, NULL, SW_SHOW);
 			}
 			break;
 		}
@@ -242,8 +285,8 @@ static INT_PTR CALLBACK LocationDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, L
 		{
 			MCONTACT hContact = (MCONTACT)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
 			if (hContact != NULL) {
-				TCHAR szTime[80];
-				if (printDateTimeByContact(hContact, _T("s"), szTime, _countof(szTime), TZF_KNOWNONLY)) {
+				wchar_t szTime[80];
+				if (printDateTimeByContact(hContact, L"s", szTime, _countof(szTime), TZF_KNOWNONLY)) {
 					EnableWindow(GetDlgItem(hwndDlg, IDC_LOCALTIME), FALSE);
 					SetDlgItemText(hwndDlg, IDC_LOCALTIME, TranslateT("<not specified>"));
 				}
@@ -391,7 +434,7 @@ static INT_PTR CALLBACK BackgroundDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam,
 					char *szProto = GetContactProto(hContact);
 					if (szProto == NULL)
 						break;
-					
+
 					bool proto_service = (CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_4, 0) & PF4_INFOSETTINGSVC) == PF4_INFOSETTINGSVC;
 					SetValue(hwndDlg, IDC_WEBPAGE, hContact, szProto, "Homepage", SVS_ZEROISUNSPEC);
 
@@ -402,11 +445,11 @@ static INT_PTR CALLBACK BackgroundDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam,
 					lvi.iItem = 0;
 					for (int i = 0;; i++) {
 						mir_snprintf(idstr, "Past%d", i);
-						ptrT tszColText(Proto_GetContactInfoSettingStr(proto_service, hContact, szProto, idstr));
+						ptrW tszColText(Proto_GetContactInfoSettingStr(proto_service, hContact, szProto, idstr));
 						if (tszColText == NULL)
-							 break;
+							break;
 						mir_snprintf(idstr, "Past%dText", i);
-						ptrT tszText(db_get_tsa(hContact, szProto, idstr));
+						ptrW tszText(db_get_wsa(hContact, szProto, idstr));
 						if (tszText == NULL)
 							break;
 
@@ -419,11 +462,11 @@ static INT_PTR CALLBACK BackgroundDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam,
 					// affiliation
 					for (int i = 0;; i++) {
 						mir_snprintf(idstr, "Affiliation%d", i);
-						ptrT tszColText(Proto_GetContactInfoSettingStr(proto_service, hContact, szProto, idstr));
+						ptrW tszColText(Proto_GetContactInfoSettingStr(proto_service, hContact, szProto, idstr));
 						if (tszColText == NULL)
 							break;
 						mir_snprintf(idstr, "Affiliation%dText", i);
-						ptrT tszText(db_get_tsa(hContact, szProto, idstr));
+						ptrW tszText(db_get_wsa(hContact, szProto, idstr));
 						if (tszText == NULL)
 							break;
 
@@ -442,11 +485,11 @@ static INT_PTR CALLBACK BackgroundDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam,
 					lvi.iItem = 0;
 					for (int i = 0;; i++) {
 						mir_snprintf(idstr, "Interest%dCat", i);
-						ptrT tszColText(Proto_GetContactInfoSettingStr(proto_service, hContact, szProto, idstr));
+						ptrW tszColText(Proto_GetContactInfoSettingStr(proto_service, hContact, szProto, idstr));
 						if (tszColText == NULL)
 							break;
 						mir_snprintf(idstr, "Interest%dText", i);
-						ptrT tszText(db_get_tsa(hContact, szProto, idstr));
+						ptrW tszText(db_get_wsa(hContact, szProto, idstr));
 						if (tszText == NULL)
 							break;
 
@@ -503,12 +546,12 @@ static INT_PTR CALLBACK NotesDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 			lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
 			lf.lfQuality = DEFAULT_QUALITY;
 			lf.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
-			mir_tstrcpy(lf.lfFaceName, _T("Courier New"));
+			mir_wstrcpy(lf.lfFaceName, L"Courier New");
 			lf.lfCharSet = DEFAULT_CHARSET;
 			HFONT hFont = CreateFontIndirect(&lf);
 			SendDlgItemMessage(hwndDlg, IDC_ABOUT, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(TRUE, 0));
 
-			ptrT szNotes(db_get_tsa(lParam, "UserInfo", "MyNotes"));
+			ptrW szNotes(db_get_wsa(lParam, "UserInfo", "MyNotes"));
 			if (szNotes != nullptr)
 				SetDlgItemText(hwndDlg, IDC_MYNOTES, szNotes);
 		}
@@ -570,37 +613,37 @@ int DetailsInit(WPARAM wParam, LPARAM lParam)
 	odp.pfnDlgProc = SummaryDlgProc;
 	odp.position = -2100000000;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_INFO_SUMMARY);
-	odp.pszTitle = LPGEN("Summary");
+	odp.szTitle.a = LPGEN("Summary");
 	UserInfo_AddPage(wParam, &odp);
 
 	odp.pfnDlgProc = ContactDlgProc;
 	odp.position = -1800000000;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_INFO_CONTACT);
-	odp.pszTitle = LPGEN("Contact");
+	odp.szTitle.a = LPGEN("Contact");
 	UserInfo_AddPage(wParam, &odp);
 
 	odp.pfnDlgProc = LocationDlgProc;
 	odp.position = -1500000000;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_INFO_LOCATION);
-	odp.pszTitle = LPGEN("Location");
+	odp.szTitle.a = LPGEN("Location");
 	UserInfo_AddPage(wParam, &odp);
 
 	odp.pfnDlgProc = WorkDlgProc;
 	odp.position = -1200000000;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_INFO_WORK);
-	odp.pszTitle = LPGEN("Work");
+	odp.szTitle.a = LPGEN("Work");
 	UserInfo_AddPage(wParam, &odp);
 
 	odp.pfnDlgProc = BackgroundDlgProc;
 	odp.position = -900000000;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_INFO_BACKGROUND);
-	odp.pszTitle = LPGEN("Background info");
+	odp.szTitle.a = LPGEN("Background info");
 	UserInfo_AddPage(wParam, &odp);
 
 	odp.pfnDlgProc = NotesDlgProc;
 	odp.position = 0;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_INFO_NOTES);
-	odp.pszTitle = LPGEN("Notes");
+	odp.szTitle.a = LPGEN("Notes");
 	UserInfo_AddPage(wParam, &odp);
 	return 0;
 }

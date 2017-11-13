@@ -11,8 +11,7 @@ void CSteamPasswordEditor::OnInitDialog()
 {
 	char iconName[100];
 	mir_snprintf(iconName, "%s_%s", MODULE, "main");
-	SendMessage(m_hwnd, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIcon(iconName, false));
-	SendMessage(m_hwnd, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIcon(iconName, true));
+	Window_SetIcon_IcoLib(m_hwnd, IcoLib_GetIconHandle(iconName));
 
 	SendMessage(m_password.GetHwnd(), EM_LIMITTEXT, 64, 0);
 
@@ -25,9 +24,9 @@ void CSteamPasswordEditor::OnOk(CCtrlButton*)
 		mir_free(m_proto->password);
 	m_proto->password = m_password.GetText();
 	if (m_savePermanently.Enabled())
-		m_proto->setTString("Password", m_proto->password);
+		m_proto->setWString("Password", m_proto->password);
 
-	EndDialog(m_hwnd, 1);
+	EndDialog(m_hwnd, DIALOG_RESULT_OK);
 }
 
 void CSteamPasswordEditor::OnClose()
@@ -38,9 +37,12 @@ void CSteamPasswordEditor::OnClose()
 /////////////////////////////////////////////////////////////////////////////////
 
 CSteamGuardDialog::CSteamGuardDialog(CSteamProto *proto, const char *domain)
-	: CSteamDlgBase(proto, IDD_GUARD, false), m_ok(this, IDOK),
-	m_text(this, IDC_TEXT), m_link(this, IDC_GETDOMAIN, domain)
+	: CSteamDlgBase(proto, IDD_GUARD, false),
+	m_ok(this, IDOK),
+	m_text(this, IDC_TEXT),
+	m_link(this, IDC_GETDOMAIN, domain)
 {
+	memset(m_guardCode, 0, sizeof(m_guardCode));
 	mir_strcpy(m_domain, domain);
 	m_ok.OnClick = Callback(this, &CSteamGuardDialog::OnOk);
 }
@@ -49,8 +51,7 @@ void CSteamGuardDialog::OnInitDialog()
 {
 	char iconName[100];
 	mir_snprintf(iconName, "%s_%s", MODULE, "main");
-	SendMessage(m_hwnd, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIcon(iconName, false));
-	SendMessage(m_hwnd, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIcon(iconName, true));
+	Window_SetIcon_IcoLib(m_hwnd, IcoLib_GetIconHandle(iconName));
 
 	SendMessage(m_text.GetHwnd(), EM_LIMITTEXT, 5, 0);
 
@@ -59,8 +60,8 @@ void CSteamGuardDialog::OnInitDialog()
 
 void CSteamGuardDialog::OnOk(CCtrlButton*)
 {
-	mir_strncpy(m_guardCode, ptrA(m_text.GetTextA()), _countof(m_guardCode) + 1);
-	EndDialog(m_hwnd, 1);
+	mir_strncpy(m_guardCode, ptrA(m_text.GetTextA()), _countof(m_guardCode));
+	EndDialog(m_hwnd, DIALOG_RESULT_OK);
 }
 
 void CSteamGuardDialog::OnClose()
@@ -75,11 +76,50 @@ const char* CSteamGuardDialog::GetGuardCode()
 
 /////////////////////////////////////////////////////////////////////////////////
 
+CSteamTwoFactorDialog::CSteamTwoFactorDialog(CSteamProto *proto)
+: CSteamDlgBase(proto, IDD_TWOFACTOR, false),
+m_ok(this, IDOK),
+m_text(this, IDC_TEXT)
+{
+	memset(m_twoFactorCode, 0, sizeof(m_twoFactorCode));
+	m_ok.OnClick = Callback(this, &CSteamTwoFactorDialog::OnOk);
+}
+
+void CSteamTwoFactorDialog::OnInitDialog()
+{
+	char iconName[100];
+	mir_snprintf(iconName, "%s_%s", MODULE, "main");
+	Window_SetIcon_IcoLib(m_hwnd, IcoLib_GetIconHandle(iconName));
+
+	SendMessage(m_text.GetHwnd(), EM_LIMITTEXT, 5, 0);
+
+	Utils_RestoreWindowPosition(m_hwnd, NULL, m_proto->m_szModuleName, "TwoFactorWindow");
+}
+
+void CSteamTwoFactorDialog::OnOk(CCtrlButton*)
+{
+	mir_strncpy(m_twoFactorCode, ptrA(m_text.GetTextA()), _countof(m_twoFactorCode));
+	EndDialog(m_hwnd, DIALOG_RESULT_OK);
+}
+
+void CSteamTwoFactorDialog::OnClose()
+{
+	Utils_SaveWindowPosition(m_hwnd, NULL, m_proto->m_szModuleName, "TwoFactorWindow");
+}
+
+const char* CSteamTwoFactorDialog::GetTwoFactorCode()
+{
+	return m_twoFactorCode;
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+
 CSteamCaptchaDialog::CSteamCaptchaDialog(CSteamProto *proto, BYTE *captchaImage, int captchaImageSize)
 	: CSteamDlgBase(proto, IDD_CAPTCHA, false),
 	m_ok(this, IDOK), m_text(this, IDC_TEXT),
 	m_captchaImage(NULL)
 {
+	memset(m_captchaText, 0, sizeof(m_captchaText));
 	m_captchaImageSize = captchaImageSize;
 	m_captchaImage = (BYTE*)mir_alloc(captchaImageSize);
 	memcpy(m_captchaImage, captchaImage, captchaImageSize);
@@ -96,8 +136,7 @@ void CSteamCaptchaDialog::OnInitDialog()
 {
 	char iconName[100];
 	mir_snprintf(iconName, "%s_%s", MODULE, "main");
-	SendMessage(m_hwnd, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIcon(iconName, false));
-	SendMessage(m_hwnd, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIcon(iconName, true));
+	Window_SetIcon_IcoLib(m_hwnd, IcoLib_GetIconHandle(iconName));
 
 	SendMessage(m_text.GetHwnd(), EM_LIMITTEXT, 6, 0);
 
@@ -106,8 +145,8 @@ void CSteamCaptchaDialog::OnInitDialog()
 
 void CSteamCaptchaDialog::OnOk(CCtrlButton*)
 {
-	mir_strncpy(m_captchaText, ptrA(m_text.GetTextA()), _countof(m_captchaText) + 1);
-	EndDialog(m_hwnd, 1);
+	mir_strncpy(m_captchaText, ptrA(m_text.GetTextA()), _countof(m_captchaText));
+	EndDialog(m_hwnd, DIALOG_RESULT_OK);
 }
 
 void CSteamCaptchaDialog::OnClose()

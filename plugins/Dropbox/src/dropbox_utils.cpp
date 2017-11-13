@@ -1,9 +1,37 @@
 #include "stdafx.h"
 
+char* CDropbox::PreparePath(const char *oldPath, char *newPath)
+{
+	if (oldPath == NULL)
+		mir_strcpy(newPath, "");
+	else if (*oldPath != '/')
+	{
+		CMStringA result("/");
+		result.Append(oldPath);
+		result.Replace("\\", "/");
+		mir_strcpy(newPath, result);
+	}
+	else
+		mir_strcpy(newPath, oldPath);
+	return newPath;
+}
+
+char* CDropbox::PreparePath(const wchar_t *oldPath, char *newPath)
+{
+	return PreparePath(ptrA(mir_utf8encodeW(oldPath)), newPath);
+}
+
+bool CDropbox::IsAccountIntercepted(const char *module)
+{
+	const char *interceptedAccounts = db_get_sa(NULL, MODULE, "InterceptedAccounts");
+	if (interceptedAccounts == NULL)
+		interceptedAccounts = db_get_sa(NULL, MODULE, "InterceptedProtos");
+	return interceptedAccounts && strstr(interceptedAccounts, module);
+}
+
 char* CDropbox::HttpStatusToText(HTTP_STATUS status)
 {
-	switch (status)
-	{
+	switch (status) {
 	case HTTP_STATUS_ERROR:
 		return "Server does not respond";
 	case HTTP_STATUS_OK:
@@ -29,19 +57,39 @@ char* CDropbox::HttpStatusToText(HTTP_STATUS status)
 	return "Unknown error";
 }
 
-void CDropbox::HandleHttpResponseError(NETLIBHTTPREQUEST *response)
+void CDropbox::HandleHttpResponse(NETLIBHTTPREQUEST *response)
 {
 	if (response == NULL)
-		throw TransferException(HttpStatusToText(HTTP_STATUS_ERROR));
+		throw DropboxException(HttpStatusToText(HTTP_STATUS_ERROR));
+}
 
-	if (response->resultCode != HTTP_STATUS_OK)
-		throw TransferException(HttpStatusToText((HTTP_STATUS)response->resultCode));
+JSONNode CDropbox::HandleJsonResponse(NETLIBHTTPREQUEST *response)
+{
+	HandleHttpResponse(response);
+
+	if (response->resultCode != HTTP_STATUS_OK &&
+		response->resultCode != HTTP_STATUS_CONFLICT) {
+		if (response->dataLength)
+			throw DropboxException(response->pData);
+		throw DropboxException(HttpStatusToText((HTTP_STATUS)response->resultCode));
+	}
+
+	JSONNode root = JSONNode::parse(response->pData);
+	if (root.isnull())
+		throw DropboxException(HttpStatusToText(HTTP_STATUS_ERROR));
+
+	JSONNode error = root.at("error");
+	if (!error.isnull()) {
+		json_string tag = error.at(".tag").as_string();
+		throw DropboxException(tag.c_str());
+	}
+
+	return root;
 }
 
 MEVENT CDropbox::AddEventToDb(MCONTACT hContact, WORD type, DWORD flags, DWORD cbBlob, PBYTE pBlob)
 {
-	DBEVENTINFO dbei;
-	dbei.cbSize = sizeof(dbei);
+	DBEVENTINFO dbei = {};
 	dbei.szModule = MODULE;
 	dbei.timestamp = time(NULL);
 	dbei.eventType = type;
@@ -51,76 +99,51 @@ MEVENT CDropbox::AddEventToDb(MCONTACT hContact, WORD type, DWORD flags, DWORD c
 	return db_event_add(hContact, &dbei);
 }
 
-void CDropbox::SendToContact(MCONTACT hContact, const char* data)
+void CDropbox::SendToContact(MCONTACT hContact, const wchar_t *data)
 {
-	if (hContact == GetDefaultContact())
-	{
-		char *message = mir_utf8encode(data);
-		AddEventToDb(hContact, EVENTTYPE_MESSAGE, DBEF_UTF, mir_strlen(message), (PBYTE)message);
+	if (hContact == GetDefaultContact()) {
+		char *message = mir_utf8encodeW(data);
+		AddEventToDb(hContact, EVENTTYPE_MESSAGE, DBEF_UTF, (DWORD)mir_strlen(message), (PBYTE)message);
 		return;
 	}
 
 	const char *szProto = GetContactProto(hContact);
-	if (db_get_b(hContact, szProto, "ChatRoom", 0) == TRUE)
-	{
-		ptrT tszChatRoom(db_get_tsa(hContact, szProto, "ChatRoomID"));
-		GCDEST gcd = { szProto, tszChatRoom, GC_EVENT_SENDMESSAGE };
-		GCEVENT gce = { sizeof(gce), &gcd };
-		gce.bIsMe = TRUE;
-		gce.dwFlags = GCEF_ADDTOLOG;
-		gce.ptszText = mir_utf8decodeT(data);
-		gce.time = time(NULL);
-		CallServiceSync(MS_GC_EVENT, WINDOW_VISIBLE, (LPARAM)&gce);
-		mir_free((void*)gce.ptszText);
+	if (db_get_b(hContact, szProto, "ChatRoom", 0) == TRUE) {
+		ptrW tszChatRoom(db_get_wsa(hContact, szProto, "ChatRoomID"));
+		Chat_SendUserMessage(szProto, tszChatRoom, data);
 		return;
 	}
 
-	if (CallContactService(hContact, PSS_MESSAGE, 0, (LPARAM)data) != ACKRESULT_FAILED)
-	{
-		char *message = mir_utf8encode(data);
-		AddEventToDb(hContact, EVENTTYPE_MESSAGE, DBEF_UTF | DBEF_SENT, mir_strlen(message), (PBYTE)message);
-	}
+	char *message = mir_utf8encodeW(data);
+	if (ProtoChainSend(hContact, PSS_MESSAGE, 0, (LPARAM)message) != ACKRESULT_FAILED)
+		AddEventToDb(hContact, EVENTTYPE_MESSAGE, DBEF_UTF | DBEF_SENT, (DWORD)mir_strlen(message), (PBYTE)message);
 }
 
-void CDropbox::PasteToInputArea(MCONTACT hContact, const char* data)
+void CDropbox::PasteToInputArea(MCONTACT hContact, const wchar_t *data)
 {
-	MessageWindowInputData mwid = { sizeof(MessageWindowInputData) };
-	mwid.hContact = hContact;
-	mwid.uFlags = MSG_WINDOW_UFLAG_MSG_BOTH;
-
-	MessageWindowData mwd = { sizeof(MessageWindowData) };
-	if (!CallService(MS_MSG_GETWINDOWDATA, (WPARAM)&mwid, (LPARAM)&mwd))
-	{
-		HWND hEdit = GetDlgItem(mwd.hwndWindow, 1002 /*IDC_MESSAGE*/);
-		if (!hEdit) hEdit = GetDlgItem(mwd.hwndWindow, 1009 /*IDC_CHATMESSAGE*/);
-
-		ptrT text(mir_utf8decodeT(data));
-		SendMessage(hEdit, EM_REPLACESEL, TRUE, (LPARAM)text);
-	}
+	CallService(MS_MSG_SENDMESSAGEW, hContact, (LPARAM)data);
 }
 
-void CDropbox::PasteToClipboard(const char* data)
+void CDropbox::PasteToClipboard(const wchar_t *data)
 {
-	if (OpenClipboard(NULL))
-	{
+	if (OpenClipboard(NULL)) {
 		EmptyClipboard();
-		size_t size = sizeof(TCHAR) * (mir_strlen(data) + 1);
+
+		size_t size = sizeof(wchar_t) * (mir_wstrlen(data) + 1);
 		HGLOBAL hClipboardData = GlobalAlloc(NULL, size);
-		if (hClipboardData)
-		{
-			TCHAR *pchData = (TCHAR*)GlobalLock(hClipboardData);
-			if (pchData)
-			{
-				memcpy(pchData, (TCHAR*)data, size);
+		if (hClipboardData) {
+			wchar_t *pchData = (wchar_t*)GlobalLock(hClipboardData);
+			if (pchData) {
+				memcpy(pchData, (wchar_t*)data, size);
 				GlobalUnlock(hClipboardData);
-				SetClipboardData(CF_TEXT, hClipboardData);
+				SetClipboardData(CF_UNICODETEXT, hClipboardData);
 			}
 		}
 		CloseClipboard();
 	}
 }
 
-void CDropbox::Report(MCONTACT hContact, const char* data)
+void CDropbox::Report(MCONTACT hContact, const wchar_t *data)
 {
 	if (db_get_b(NULL, MODULE, "UrlAutoSend", 1))
 		SendToContact(hContact, data);

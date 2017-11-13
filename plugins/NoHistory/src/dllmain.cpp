@@ -9,7 +9,6 @@ static int SrmmMenu_ProcessEvent(WPARAM wParam, LPARAM lParam);
 static int SrmmMenu_ProcessIconClick(WPARAM wParam, LPARAM lParam);
 
 HGENMENU hMenuToggle, hMenuClear;
-HANDLE   hServiceToggle, hServiceClear;
 
 mir_cs list_cs;
 
@@ -56,7 +55,7 @@ extern "C" __declspec (dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 
 void RemoveReadEvents(MCONTACT hContact = 0)
 {
-	DBEVENTINFO info = { sizeof(info) };
+	DBEVENTINFO info = {};
 	bool remove;
 
 	mir_cslock lck(list_cs);
@@ -116,7 +115,7 @@ int OnDatabaseEventAdd(WPARAM hContact, LPARAM hDBEvent)
 	if (db_get_b(hContact, MODULE, DBSETTING_REMOVE, 0) == 0)
 		return 0;
 	
-	DBEVENTINFO info = { sizeof(info) };
+	DBEVENTINFO info = {};
 	if (!db_event_get(hDBEvent, &info)) {
 		if (info.eventType == EVENTTYPE_MESSAGE) {
 			EventListNode *node = (EventListNode *)malloc(sizeof(EventListNode));
@@ -150,9 +149,9 @@ int PrebuildContactMenu(WPARAM hContact, LPARAM)
 		Menu_ShowItem(hMenuToggle, false);
 	else {
 		if (remove)
-			Menu_ModifyItem(hMenuToggle, LPGENT("Enable History"), hIconKeep);
+			Menu_ModifyItem(hMenuToggle, LPGENW("Enable History"), hIconKeep);
 		else
-			Menu_ModifyItem(hMenuToggle, LPGENT("Disable History"), hIconRemove);
+			Menu_ModifyItem(hMenuToggle, LPGENW("Disable History"), hIconRemove);
 	}
 
 	Menu_ShowItem(hMenuClear, !chat_room && db_event_count(hContact) > 0);
@@ -165,7 +164,7 @@ INT_PTR ServiceToggle(WPARAM hContact, LPARAM)
 	remove = !remove;
 	db_set_b(hContact, MODULE, DBSETTING_REMOVE, remove != 0);
 
-	StatusIconData sid = { sizeof(sid) };
+	StatusIconData sid = {};
 	sid.szModule = MODULE;
 
 	for (int i = 0; i < 2; ++i) {
@@ -191,7 +190,7 @@ int WindowEvent(WPARAM, LPARAM lParam)
 		bool chat_room = (proto && db_get_b(hContact, proto, "ChatRoom", 0) != 0);
 		int remove = db_get_b(hContact, MODULE, DBSETTING_REMOVE, 0) != 0;
 
-		StatusIconData sid = { sizeof(sid) };
+		StatusIconData sid = {};
 		sid.szModule = MODULE;
 		for (int i=0; i < 2; ++i) {
 			sid.dwId = i;
@@ -206,7 +205,7 @@ int WindowEvent(WPARAM, LPARAM lParam)
 int IconPressed(WPARAM hContact, LPARAM lParam)
 {
 	StatusIconClickData *sicd = (StatusIconClickData *)lParam;
-	if (sicd->cbSize < sizeof(StatusIconClickData))
+	if (sicd == nullptr)
 		return 0;
 
 	if (sicd->flags & MBCF_RIGHTBUTTON) return 0; // ignore right-clicks
@@ -224,7 +223,7 @@ int IconPressed(WPARAM hContact, LPARAM lParam)
 // add icon to srmm status icons
 void SrmmMenu_Load()
 {
-	StatusIconData sid = { sizeof(sid) };
+	StatusIconData sid = {};
 	sid.szModule = MODULE;
 
 	sid.dwId = 0;
@@ -246,18 +245,18 @@ int ModulesLoaded(WPARAM, LPARAM)
 {
 	// create contact menu item
 	CMenuItem mi;
-	mi.flags = CMIF_TCHAR;
+	mi.flags = CMIF_UNICODE;
 
 	SET_UID(mi, 0xede12697, 0x3e9d, 0x47ca, 0x83, 0xe0, 0xc1, 0x40, 0x69, 0xbf, 0x2d, 0xab);
 	mi.position = -300010;
-	mi.name.t = LPGENT("Disable History");
+	mi.name.w = LPGENW("Disable History");
 	mi.pszService = MS_NOHISTORY_TOGGLE;
 	mi.hIcolibItem = hIconRemove;
 	hMenuToggle = Menu_AddContactMenuItem(&mi);
 
 	SET_UID(mi, 0x1c4b1c21, 0xc0d1, 0x44d1, 0xb5, 0x3c, 0xc7, 0x8d, 0xcf, 0x96, 0x51, 0xd7);
 	mi.position = -300005;
-	mi.name.t = LPGENT("Clear History");
+	mi.name.w = LPGENW("Clear History");
 	mi.pszService = MS_NOHISTORY_CLEAR;
 	mi.hIcolibItem = hIconClear;
 	hMenuClear = Menu_AddContactMenuItem(&mi);
@@ -282,16 +281,13 @@ extern "C" __declspec (dllexport) int Load()
 	HookEvent(ME_DB_EVENT_ADDED, OnDatabaseEventAdd);
 	HookEvent(ME_SYSTEM_MODULESLOADED, ModulesLoaded);
 
-	hServiceToggle = CreateServiceFunction(MS_NOHISTORY_TOGGLE, ServiceToggle);
-	hServiceClear = CreateServiceFunction(MS_NOHISTORY_CLEAR, ServiceClear);
+	CreateServiceFunction(MS_NOHISTORY_TOGGLE, ServiceToggle);
+	CreateServiceFunction(MS_NOHISTORY_CLEAR, ServiceClear);
 	return 0;
 }
 
 extern "C" __declspec (dllexport) int Unload(void)
 {
-	DestroyServiceFunction(hServiceToggle);
-	DestroyServiceFunction(hServiceClear);
-
 	RemoveReadEvents();
 	return 0;
 }

@@ -1,7 +1,48 @@
 #include "stdafx.h"
 
-static int lua_FindFirstContact(lua_State *L)
+void luaM_pushdbvt(lua_State *L, const DBVARIANT &value)
 {
+	switch (value.type)
+	{
+	case DBVT_BYTE:
+		lua_pushinteger(L, value.bVal);
+		break;
+	case DBVT_WORD:
+		lua_pushinteger(L,value.wVal);
+		break;
+	case DBVT_DWORD:
+		lua_pushnumber(L, value.dVal);
+		break;
+	case DBVT_ASCIIZ:
+		lua_pushstring(L, ptrA(mir_utf8encode(value.pszVal)));
+		break;
+	case DBVT_UTF8:
+		lua_pushstring(L, value.pszVal);
+		break;
+	case DBVT_WCHAR:
+		lua_pushstring(L, ptrA(mir_utf8encodeW(value.pwszVal)));
+		break;
+	case DBVT_BLOB:
+	{
+		lua_createtable(L, value.cpbVal, 0);
+		for (int i = 0; i < value.cpbVal; i++)
+		{
+			lua_pushinteger(L, value.pbVal[i]);
+			lua_rawseti(L, -2, i + 1);
+		}
+	}
+	break;
+	default:
+		lua_pushnil(L);
+	}
+}
+
+/***********************************************/
+
+static int db_FindFirstContact(lua_State *L)
+{
+	ObsoleteMethod(L, "Use Contacts method");
+
 	const char *szProto = lua_tostring(L, 1);
 
 	MCONTACT res = db_find_first(szProto);
@@ -10,8 +51,10 @@ static int lua_FindFirstContact(lua_State *L)
 	return 1;
 }
 
-static int lua_FindNextContact(lua_State *L)
+static int db_FindNextContact(lua_State *L)
 {
+	ObsoleteMethod(L, "Use Contacts method");
+
 	MCONTACT hContact = luaL_checkinteger(L, 1);
 	const char *szProto = lua_tostring(L, 2);
 
@@ -21,14 +64,14 @@ static int lua_FindNextContact(lua_State *L)
 	return 1;
 }
 
-static int lua_ContactIterator(lua_State *L)
+static int db_ContactIterator(lua_State *L)
 {
 	MCONTACT hContact = lua_tointeger(L, lua_upvalueindex(1));
-	const char *szProto = lua_tostring(L, lua_upvalueindex(2));
+	const char *szModule = lua_tostring(L, lua_upvalueindex(2));
 
 	hContact = hContact == NULL
-		? db_find_first(szProto)
-		: db_find_next(hContact);
+		? db_find_first(szModule)
+		: db_find_next(hContact, szModule);
 
 	if (hContact)
 	{
@@ -42,222 +85,420 @@ static int lua_ContactIterator(lua_State *L)
 	return 1;
 }
 
-static int lua_AllContacts(lua_State *L)
+static int db_Contacts(lua_State *L)
 {
-	const char *szProto = lua_tostring(L, 1);
+	const char *szModule = NULL;
 
-	lua_pushinteger(L, NULL);
-	lua_pushstring(L, szProto);
-	lua_pushcclosure(L, lua_ContactIterator, 2);
-
-	return 1;
-}
-
-/***********************************************/
-
-static int lua_GetEventCount(lua_State *L)
-{
-	MCONTACT hContact = luaL_checkinteger(L, 1);
-
-	int res = ::db_event_count(hContact);
-	lua_pushinteger(L, res);
-
-	return 1;
-}
-
-static int lua_GetFirstEvent(lua_State *L)
-{
-	MCONTACT hContact = luaL_checkinteger(L, 1);
-
-	MEVENT res = ::db_event_first(hContact);
-	lua_pushinteger(L, res);
-
-	return 1;
-}
-
-static int lua_GetPrevEvent(lua_State *L)
-{
-	MCONTACT hContact = luaL_checkinteger(L, 1);
-	MEVENT hEvent = luaL_checkinteger(L, 2);
-
-	MEVENT res = ::db_event_prev(hContact, hEvent);
-	lua_pushinteger(L, res);
-
-	return 1;
-}
-
-static int lua_GetNextEvent(lua_State *L)
-{
-	MCONTACT hContact = luaL_checkinteger(L, 1);
-	MEVENT hEvent = luaL_checkinteger(L, 2);
-
-	MEVENT res = ::db_event_next(hContact, hEvent);
-	lua_pushinteger(L, res);
-
-	return 1;
-}
-
-static int lua_GetLastEvent(lua_State *L)
-{
-	MCONTACT hContact = luaL_checkinteger(L, 1);
-
-	MEVENT res = ::db_event_last(hContact);
-	lua_pushinteger(L, res);
-
-	return 1;
-}
-
-static int lua_GetEvent(lua_State *L)
-{
-	MEVENT hEvent = luaL_checkinteger(L, 1);
-
-	DBEVENTINFO dbei = { sizeof(DBEVENTINFO) };
-	dbei.cbBlob = db_event_getBlobSize(hEvent);
-	dbei.pBlob = (PBYTE)mir_calloc(dbei.cbBlob);
-
-	int res = ::db_event_get(hEvent, &dbei);
-	if (res)
+	switch (lua_type(L, 1))
 	{
-		lua_pushnil(L);
-		return 1;
-	}
-
-	lua_newtable(L);
-	lua_pushliteral(L, "Module");
-	lua_pushstring(L, ptrA(mir_utf8encode(dbei.szModule)));
-	lua_settable(L, -3);
-	lua_pushliteral(L, "Timestamp");
-	lua_pushnumber(L, dbei.timestamp);
-	lua_settable(L, -3);
-	lua_pushliteral(L, "Type");
-	lua_pushinteger(L, dbei.eventType);
-	lua_settable(L, -3);
-	lua_pushliteral(L, "Flags");
-	lua_pushinteger(L, dbei.flags);
-	lua_settable(L, -3);
-	lua_pushliteral(L, "Length");
-	lua_pushnumber(L, dbei.cbBlob);
-	lua_settable(L, -3);
-	lua_pushliteral(L, "Blob");
-	lua_newtable(L);
-	for (DWORD i = 0; i < dbei.cbBlob; i++)
-	{
-		lua_pushinteger(L, i + 1);
-		lua_pushinteger(L, dbei.pBlob[i]);
-		lua_settable(L, -3);
-	}
-	lua_settable(L, -3);
-
-	mir_free(dbei.pBlob);
-
-	return 1;
-}
-
-static int lua_EventIterator(lua_State *L)
-{
-	MCONTACT hContact = luaL_checkinteger(L, lua_upvalueindex(1));
-	MEVENT hEvent = luaL_checkinteger(L, lua_upvalueindex(2));
-
-	hEvent = hEvent == NULL
-		? db_event_first(hContact)
-		: db_event_next(hContact, hEvent);
-
-	if (hEvent)
-	{
-		lua_pushinteger(L, hContact);
-		lua_pushvalue(L, -1);
-		lua_replace(L, lua_upvalueindex(2));
-	}
-	else
-		lua_pushnil(L);
-
-	return 1;
-}
-
-static int lua_AllEvents(lua_State *L)
-{
-	MCONTACT hContact = luaL_checkinteger(L, 1);
-
-	lua_pushinteger(L, hContact);
-	lua_pushinteger(L, NULL);
-	lua_pushcclosure(L, lua_EventIterator, 2);
-
-	return 1;
-}
-
-static int lua_EventReverseIterator(lua_State *L)
-{
-	MCONTACT hContact = luaL_checkinteger(L, lua_upvalueindex(1));
-	MEVENT hEvent = luaL_checkinteger(L, lua_upvalueindex(2));
-
-	hEvent = hEvent == NULL
-		? db_event_last(hContact)
-		: db_event_prev(hContact, hEvent);
-
-	if (hEvent)
-	{
-		lua_pushinteger(L, hContact);
-		lua_pushvalue(L, -1);
-		lua_replace(L, lua_upvalueindex(2));
-	}
-	else
-		lua_pushnil(L);
-
-	return 1;
-}
-
-static int lua_AllEventsFromEnd(lua_State *L)
-{
-	MCONTACT hContact = luaL_checkinteger(L, 1);
-
-	lua_pushinteger(L, hContact);
-	lua_pushinteger(L, NULL);
-	lua_pushcclosure(L, lua_EventReverseIterator, 2);
-
-	return 1;
-}
-
-/***********************************************/
-
-static int lua_WriteSetting(lua_State *L)
-{
-	MCONTACT hContact = lua_tointeger(L, 1);
-	LPCSTR szModule = luaL_checkstring(L, 2);
-	LPCSTR szSetting = luaL_checkstring(L, 3);
-
-	DBVARIANT dbv = { 0 };
-	int type = lua_type(L, 4);
-	switch (type)
-	{
-	case LUA_TBOOLEAN:
-		dbv.bVal = lua_toboolean(L, 4);
-		dbv.type = DBVT_BYTE;
-		break;
-	case LUA_TNUMBER:
-		dbv.dVal = lua_tonumber(L, 4);
-		dbv.type = DBVT_DWORD;
+	case LUA_TNONE:
 		break;
 	case LUA_TSTRING:
-		dbv.pszVal = (char*)lua_tostring(L, 4);
-		dbv.type = DBVT_UTF8;
+		szModule = lua_tostring(L, 1);
 		break;
-
+	case LUA_TUSERDATA:
+	{
+		PROTOACCOUNT **pa = (PROTOACCOUNT**)luaL_checkudata(L, 1, MT_PROTOACCOUNT);
+		szModule = (*pa)->szModuleName;
+		break;
+	}
 	default:
-		lua_pushinteger(L, 1);
+		luaL_argerror(L, 1, luaL_typename(L, 1));
+	}
+
+	lua_pushinteger(L, 0);
+	lua_pushstring(L, szModule);
+	lua_pushcclosure(L, db_ContactIterator, 2);
+
+	return 1;
+}
+
+static const char *mods[] =
+{
+	"FirstName",
+	"LastName",
+	"Nick",
+	"CustomNick",
+	"Email",
+	"City",
+	"State",
+	"Country",
+	"Phone",
+	"Homepage",
+	"About",
+	"Gender",
+	"Age",
+	"FullName",
+	"Uid",
+	"DisplayName",
+	NULL
+};
+
+static int db_GetContactInfo(lua_State *L)
+{
+	MCONTACT hContact = luaL_checkinteger(L, 1);
+
+	int type = 0;
+	switch (lua_type(L, 2))
+	{
+	case LUA_TNUMBER:
+		type = luaL_checkinteger(L, 2);
+		break;
+	case LUA_TSTRING:
+		type = luaL_checkoption(L, 2, NULL, mods) + 1;
+		break;
+	default:
+		luaL_argerror(L, 2, luaL_typename(L, 2));
+	}
+
+	ptrW value(Contact_GetInfo(type, hContact));
+	if (value)
+		lua_pushstring(L, ptrA(mir_utf8encodeW(value)));
+	else
+	{
+		lua_pushnil(L);
 		return 1;
 	}
 
-	INT_PTR res = db_set(hContact, szModule, szSetting, &dbv);
+	return 1;
+}
+
+/***********************************************/
+
+static int db_GetEventCount(lua_State *L)
+{
+	MCONTACT hContact = luaL_checkinteger(L, 1);
+
+	int res = db_event_count(hContact);
 	lua_pushinteger(L, res);
 
 	return 1;
 }
 
-static int lua_GetSetting(lua_State *L)
+static int db_GetFirstEvent(lua_State *L)
+{
+	MCONTACT hContact = luaL_checkinteger(L, 1);
+
+	MEVENT res = db_event_first(hContact);
+	lua_pushinteger(L, res);
+
+	return 1;
+}
+
+static int db_GetPrevEvent(lua_State *L)
+{
+	MCONTACT hContact = luaL_checkinteger(L, 1);
+	MEVENT hDbEvent = luaL_checkinteger(L, 2);
+
+	MEVENT res = db_event_prev(hContact, hDbEvent);
+	lua_pushinteger(L, res);
+
+	return 1;
+}
+
+static int db_GetNextEvent(lua_State *L)
+{
+	MCONTACT hContact = luaL_checkinteger(L, 1);
+	MEVENT hDbEvent = luaL_checkinteger(L, 2);
+
+	MEVENT res = db_event_next(hContact, hDbEvent);
+	lua_pushinteger(L, res);
+
+	return 1;
+}
+
+static int db_GetLastEvent(lua_State *L)
+{
+	MCONTACT hContact = luaL_checkinteger(L, 1);
+
+	MEVENT res = db_event_last(hContact);
+	lua_pushinteger(L, res);
+
+	return 1;
+}
+
+static int db_GetFirstUnreadEvent(lua_State *L)
+{
+	MCONTACT hContact = luaL_checkinteger(L, 1);
+
+	MEVENT res = db_event_firstUnread(hContact);
+	lua_pushinteger(L, res);
+
+	return 1;
+}
+
+static int db_EventIterator(lua_State *L)
+{
+	MCONTACT hContact = luaL_checkinteger(L, lua_upvalueindex(1));
+	MEVENT hDbEvent = luaL_checkinteger(L, lua_upvalueindex(2));
+
+	hDbEvent = hDbEvent == NULL
+		? db_event_first(hContact)
+		: db_event_next(hContact, hDbEvent);
+
+	if (hDbEvent)
+	{
+		lua_pushinteger(L, hDbEvent);
+		lua_pushvalue(L, -1);
+		lua_replace(L, lua_upvalueindex(2));
+	}
+	else
+		lua_pushnil(L);
+
+	return 1;
+}
+
+static int db_Events(lua_State *L)
+{
+	MCONTACT hContact = luaL_checkinteger(L, 1);
+
+	lua_pushinteger(L, hContact);
+	lua_pushinteger(L, NULL);
+	lua_pushcclosure(L, db_EventIterator, 2);
+
+	return 1;
+}
+
+static int db_EventReverseIterator(lua_State *L)
+{
+	MCONTACT hContact = luaL_checkinteger(L, lua_upvalueindex(1));
+	MEVENT hDbEvent = luaL_checkinteger(L, lua_upvalueindex(2));
+
+	hDbEvent = hDbEvent == NULL
+		? db_event_last(hContact)
+		: db_event_prev(hContact, hDbEvent);
+
+	if (hDbEvent)
+	{
+		lua_pushinteger(L, hDbEvent);
+		lua_pushvalue(L, -1);
+		lua_replace(L, lua_upvalueindex(2));
+	}
+	else
+		lua_pushnil(L);
+
+	return 1;
+}
+
+static int db_EventsFromEnd(lua_State *L)
+{
+	MCONTACT hContact = luaL_checkinteger(L, 1);
+
+	lua_pushinteger(L, hContact);
+	lua_pushinteger(L, NULL);
+	lua_pushcclosure(L, db_EventReverseIterator, 2);
+
+	return 1;
+}
+
+static int db_UnreadEventIterator(lua_State *L)
+{
+	MCONTACT hContact = luaL_checkinteger(L, lua_upvalueindex(1));
+	MEVENT hDbEvent = luaL_checkinteger(L, lua_upvalueindex(2));
+
+	hDbEvent = db_event_firstUnread(hContact);
+
+	if (hDbEvent)
+	{
+		lua_pushinteger(L, hDbEvent);
+		lua_pushvalue(L, -1);
+		lua_replace(L, lua_upvalueindex(2));
+	}
+	else
+		lua_pushnil(L);
+
+	return 1;
+}
+
+static int db_UnreadEvents(lua_State *L)
+{
+	MCONTACT hContact = luaL_checkinteger(L, 1);
+
+	lua_pushinteger(L, hContact);
+	lua_pushinteger(L, NULL);
+	lua_pushcclosure(L, db_UnreadEventIterator, 2);
+
+	return 1;
+}
+
+void MakeDbEvent(lua_State *L, DBEVENTINFO &dbei)
+{
+	lua_getfield(L, -1, "Module");
+	dbei.szModule = mir_strdup(lua_tostring(L, -1));
+	lua_pop(L, 1);
+
+	lua_getfield(L, -1, "Type");
+	dbei.eventType = lua_tointeger(L, -1);
+	lua_pop(L, 1);
+
+	lua_getfield(L, -1, "Timestamp");
+	dbei.timestamp = lua_tonumber(L, -1);
+	lua_pop(L, 1);
+
+	lua_getfield(L, -1, "Flags");
+	dbei.flags = lua_tointeger(L, -1);
+	lua_pop(L, 1);
+
+	lua_getfield(L, -1, "Blob");
+	switch (lua_type(L, -1))
+	{
+	case LUA_TTABLE:
+		dbei.cbBlob = (DWORD)lua_rawlen(L, 4);
+		dbei.pBlob = (BYTE*)mir_calloc(dbei.cbBlob);
+		for (DWORD i = 0; i < dbei.cbBlob; i++)
+		{
+			lua_geti(L, 4, i + 1);
+			dbei.pBlob[i] = lua_tointeger(L, -1);
+			lua_pop(L, 1);
+		}
+		break;
+	case LUA_TSTRING:
+		size_t nLen;
+		const char *str = lua_tolstring(L, -1, &nLen);
+		dbei.cbBlob = (DWORD)nLen;
+		dbei.pBlob = (BYTE*)mir_alloc(nLen);
+		memcpy(dbei.pBlob, str, nLen);
+		break;
+	}
+	lua_pop(L, 1);
+}
+
+static int db_AddEvent(lua_State *L)
+{
+	MCONTACT hContact = luaL_checkinteger(L, 1);
+	
+	DBEVENTINFO dbei;
+	MakeDbEvent(L, dbei);
+	MEVENT hDbEvent = db_event_add(hContact, &dbei);
+
+	if (hDbEvent)
+		lua_pushnumber(L, hDbEvent);
+	else
+		lua_pushnil(L);
+
+	return 1;
+}
+
+static int db_MarkReadEvent(lua_State *L)
+{
+	MCONTACT hContact = luaL_checkinteger(L, 1);
+	MEVENT hDbEvent = luaL_checkinteger(L, 2);
+
+	int res = db_event_markRead(hContact, hDbEvent);
+	lua_pushnumber(L, res);
+
+	return 1;
+}
+
+/***********************************************/
+
+static int ModulesEnumProc(const char *szModuleName, DWORD, LPARAM lParam)
+{
+	if (szModuleName)
+	{
+		LIST<char>* p = (LIST<char>*)lParam;
+		p->insert(mir_strdup(szModuleName));
+	}
+
+	return 0;
+}
+
+static int db_ModulesIterator(lua_State *L)
+{
+	int i = lua_tointeger(L, lua_upvalueindex(1));
+	LIST<char> &param = *(LIST<char>*)lua_touserdata(L, lua_upvalueindex(2));
+
+	if (i < param.getCount())
+	{
+		lua_pushinteger(L, (i + 1));
+		lua_replace(L, lua_upvalueindex(1));
+		lua_pushstring(L, ptrA(mir_utf8encode(param[i])));
+		mir_free(param[i]);
+	}
+	else
+	{
+		lua_pushnil(L);
+		delete &param;
+	}
+
+	return 1;
+}
+
+static int db_Modules(lua_State *L)
+{
+	LIST<char> *param = new LIST<char>(5, PtrKeySortT);
+
+	db_enum_modules(ModulesEnumProc, param);
+
+	lua_pushinteger(L, 0);
+	lua_pushlightuserdata(L, param);
+	lua_pushcclosure(L, db_ModulesIterator, 2);
+
+	return 1;
+}
+
+static int db_DeleteModule(lua_State *L)
 {
 	MCONTACT hContact = lua_tointeger(L, 1);
-	LPCSTR szModule = luaL_checkstring(L, 2);
-	LPCSTR szSetting = luaL_checkstring(L, 3);
+	const char *szModule = luaL_checkstring(L, 2);
+
+	INT_PTR res = db_delete_module(hContact, szModule);
+	lua_pushboolean(L, !res);
+
+	return 1;
+}
+
+static int SettingsEnumProc(const char* szSetting, LPARAM lParam)
+{
+	if (szSetting)
+	{
+		LIST<char>* p = (LIST<char>*)lParam;
+		p->insert(mir_strdup(szSetting));
+	}
+	return 0;
+}
+
+static int db_SettingIterator(lua_State *L)
+{
+	int i = lua_tointeger(L, lua_upvalueindex(1));
+	LIST<char> &param = *(LIST<char>*)lua_touserdata(L, lua_upvalueindex(2));
+
+	if (i < param.getCount())
+	{
+		lua_pushinteger(L, (i + 1));
+		lua_replace(L, lua_upvalueindex(1));
+		lua_pushstring(L, ptrA(mir_utf8encode(param[i])));
+		mir_free(param[i]);
+	}
+	else
+	{
+		lua_pushnil(L);
+		delete &param;
+	}
+
+	return 1;
+}
+
+static int db_Settings(lua_State *L)
+{
+	MCONTACT hContact = lua_tointeger(L, 1);
+	const char* szModule = luaL_checkstring(L, 2);
+
+	LIST<char> *param = new LIST<char>(5, PtrKeySortT);
+	db_enum_settings(hContact, SettingsEnumProc, szModule, param);
+
+	lua_pushinteger(L, 0);
+	lua_pushlightuserdata(L, param);
+	lua_pushcclosure(L, db_SettingIterator, 2);
+
+	return 1;
+}
+
+static int db_GetSetting(lua_State *L)
+{
+	MCONTACT hContact = lua_tointeger(L, 1);
+	const char *szModule = luaL_checkstring(L, 2);
+	const char *szSetting = luaL_checkstring(L, 3);
 
 	DBVARIANT dbv;
 	if (db_get(hContact, szModule, szSetting, &dbv))
@@ -266,318 +507,239 @@ static int lua_GetSetting(lua_State *L)
 		return 1;
 	}
 
+	luaM_pushdbvt(L, dbv);
+	db_free(&dbv);
+
+	if (lua_isnil(L, -1) && !lua_isnoneornil(L, 4))
+	{
+		lua_pop(L, 1);
+		lua_pushvalue(L, 4);
+	}
+
+	return 1;
+}
+
+static int db_WriteSetting(lua_State *L)
+{
+	MCONTACT hContact = lua_tointeger(L, 1);
+	const char *szModule = luaL_checkstring(L, 2);
+	const char *szSetting = luaL_checkstring(L, 3);
+	luaL_checkany(L, 4);
+
+	DBVARIANT dbv;
+	if (lua_isnoneornil(L, 5))
+	{
+		int type = lua_type(L, 4);
+		switch (type)
+		{
+		case LUA_TBOOLEAN:
+			dbv.type = DBVT_BYTE;
+			break;
+		case LUA_TNUMBER:
+			dbv.type = DBVT_DWORD;
+			break;
+		case LUA_TSTRING:
+			dbv.type = DBVT_UTF8;
+			break;
+		case LUA_TTABLE:
+			dbv.type = DBVT_BLOB;
+			break;
+		default:
+			lua_pushboolean(L, false);
+			return 1;
+		}
+	}
+	else
+		dbv.type = luaL_checkinteger(L, 5);
+
 	switch (dbv.type)
 	{
 	case DBVT_BYTE:
-		lua_pushinteger(L, dbv.bVal);
+		dbv.bVal = lua_isboolean(L, 4)
+			? lua_toboolean(L, 4)
+			: luaL_checknumber(L, 4);
 		break;
 	case DBVT_WORD:
-		lua_pushinteger(L, dbv.wVal);
+		dbv.wVal = luaL_checknumber(L, 4);
 		break;
 	case DBVT_DWORD:
-		lua_pushnumber(L, dbv.dVal);
-		break;
-	case DBVT_ASCIIZ:
-		lua_pushstring(L, ptrA(mir_utf8encode(dbv.pszVal)));
+		dbv.dVal = luaL_checknumber(L, 4);
 		break;
 	case DBVT_UTF8:
-		lua_pushstring(L, dbv.pszVal);
+		dbv.pszVal = mir_strdup(luaL_checkstring(L, 4));
+		break;
+	case DBVT_ASCIIZ:
+		dbv.pszVal = mir_utf8decodeA(luaL_checkstring(L, 4));
 		break;
 	case DBVT_WCHAR:
-		lua_pushstring(L, ptrA(mir_utf8encodeW(dbv.pwszVal)));
+		dbv.pwszVal = mir_utf8decodeW(luaL_checkstring(L, 4));
 		break;
-
+	case DBVT_BLOB:
+	{
+		dbv.cpbVal = (WORD)lua_rawlen(L, 4);
+		dbv.pbVal = (BYTE*)mir_calloc(dbv.cpbVal);
+		for (int i = 0; i < dbv.cpbVal; i++)
+		{
+			lua_geti(L, 4, i + 1);
+			dbv.pbVal[i] = lua_tointeger(L, -1);
+			lua_pop(L, 1);
+		}
+	}
+		break;
 	default:
-		db_free(&dbv);
-		lua_pushvalue(L, 4);
+		lua_pushboolean(L, false);
 		return 1;
 	}
 
-	db_free(&dbv);
+	INT_PTR res = db_set(hContact, szModule, szSetting, &dbv);
+	lua_pushboolean(L, !res);
 
 	return 1;
 }
 
-typedef struct
-{
-	int  count;
-	char **pszSettingName;
-}
-enumDBSettingsParam;
-
-static int SettingsEnumProc(const char* szSetting, LPARAM lParam)
-{
-	if (szSetting)
-	{
-		enumDBSettingsParam* p = (enumDBSettingsParam*)lParam;
-
-		p->count++;
-		p->pszSettingName = (char**)mir_realloc(p->pszSettingName, p->count * sizeof(char*));
-		p->pszSettingName[p->count - 1] = mir_strdup(szSetting);
-	}
-	return 0;
-}
-
-static int lua_SettingIterator(lua_State *L)
-{
-	int i = lua_tointeger(L, lua_upvalueindex(1));
-	enumDBSettingsParam* param = (enumDBSettingsParam*)lua_touserdata(L, lua_upvalueindex(2));
-
-	if (i < param->count)
-	{
-		lua_pushinteger(L, (i + 1));
-		lua_replace(L, lua_upvalueindex(1));
-		lua_pushstring(L, ptrA(mir_utf8encode(param->pszSettingName[i])));
-		mir_free(param->pszSettingName[i]);
-	}
-	else
-	{
-		lua_pushnil(L);
-		mir_free(param->pszSettingName);
-		//mir_free(param);
-	}
-
-	return 1;
-}
-
-static int lua_AllSettings(lua_State *L)
-{
-	const char* szModule = luaL_checkstring(L, 1);
-	MCONTACT hContact = lua_tointeger(L, 2);
-
-	enumDBSettingsParam* param = (enumDBSettingsParam*)mir_alloc(sizeof(enumDBSettingsParam));
-	param->count = 0;
-	param->pszSettingName = NULL;
-
-	DBCONTACTENUMSETTINGS dbces = { 0 };
-	dbces.pfnEnumProc = SettingsEnumProc;
-	dbces.szModule = szModule;
-	dbces.ofsSettings = 0;
-	dbces.lParam = (LPARAM)param;
-	::CallService(MS_DB_CONTACT_ENUMSETTINGS, hContact, (LPARAM)&dbces);
-
-	lua_pushinteger(L, 0);
-	lua_pushlightuserdata(L, param);
-	lua_pushcclosure(L, lua_SettingIterator, 2);
-
-	return 1;
-}
-
-static int lua_EnumSettings(lua_State *L)
-{
-	LPCSTR szModule = luaL_checkstring(L, 1);
-	MCONTACT hContact = lua_tointeger(L, 2);
-
-	if (!lua_isfunction(L, 3))
-	{
-		lua_pushlightuserdata(L, NULL);
-		return 1;
-	}
-
-	lua_pushvalue(L, 3);
-	int ref = luaL_ref(L, LUA_REGISTRYINDEX);
-
-	enumDBSettingsParam param = { 0, NULL };
-
-	DBCONTACTENUMSETTINGS dbces = { 0 };
-	dbces.pfnEnumProc = SettingsEnumProc;
-	dbces.szModule = szModule;
-	dbces.ofsSettings = 0;
-	dbces.lParam = (LPARAM)&param;
-	INT_PTR res = ::CallService(MS_DB_CONTACT_ENUMSETTINGS, hContact, (LPARAM)&dbces);
-
-	for (int i = 0; i < param.count; i++)
-	{
-		lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
-		lua_pushstring(L, mir_utf8encode(param.pszSettingName[i]));
-		if (lua_pcall(L, 1, 0, 0))
-			CallService(MS_NETLIB_LOG, (WPARAM)hNetlib, (LPARAM)lua_tostring(L, -1));
-
-		mir_free(param.pszSettingName[i]);
-	}
-	mir_free(param.pszSettingName);
-
-	luaL_unref(L, LUA_REGISTRYINDEX, ref);
-	lua_pushinteger(L, res);
-
-	return 1;
-}
-
-static int lua_DeleteSetting(lua_State *L)
+static int db_DeleteSetting(lua_State *L)
 {
 	MCONTACT hContact = lua_tointeger(L, 1);
 	LPCSTR szModule = luaL_checkstring(L, 2);
 	LPCSTR szSetting = luaL_checkstring(L, 3);
 
 	INT_PTR res = db_unset(hContact, szModule, szSetting);
-	lua_pushinteger(L, res);
+	lua_pushboolean(L, !res);
 
 	return 1;
 }
 
-static int lua_DeleteModule(lua_State *L)
-{
-	MCONTACT hContact = lua_tointeger(L, 1);
-	LPCSTR szModule = luaL_checkstring(L, 2);
-
-	INT_PTR res = ::CallService(MS_DB_MODULE_DELETE, hContact, (LPARAM)szModule);
-	lua_pushinteger(L, res);
-
-	return 1;
-}
-
-static int SettingsChangedHookEventObjParam(void *obj, WPARAM wParam, LPARAM lParam, LPARAM param)
-{
-	lua_State *L = (lua_State*)obj;
-
-	int ref = param;
-	lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
-
-	lua_pushnumber(L, wParam);
-
-	DBCONTACTWRITESETTING *dbcws = (DBCONTACTWRITESETTING*)lParam;
-	lua_newtable(L);
-	lua_pushliteral(L, "Module");
-	lua_pushstring(L, dbcws->szModule);
-	lua_settable(L, -3);
-	lua_pushliteral(L, "Setting");
-	lua_pushstring(L, dbcws->szSetting);
-	lua_settable(L, -3);
-	lua_pushliteral(L, "Value");
-	switch (dbcws->value.type)
-	{
-	case DBVT_BYTE:
-		lua_pushinteger(L, dbcws->value.bVal);
-		break;
-	case DBVT_WORD:
-		lua_pushinteger(L, dbcws->value.wVal);
-		break;
-	case DBVT_DWORD:
-		lua_pushnumber(L, dbcws->value.dVal);
-		break;
-	case DBVT_ASCIIZ:
-		lua_pushstring(L, ptrA(mir_utf8encode(dbcws->value.pszVal)));
-		break;
-	case DBVT_UTF8:
-		lua_pushstring(L, dbcws->value.pszVal);
-		break;
-	case DBVT_WCHAR:
-		lua_pushstring(L, ptrA(mir_utf8encodeW(dbcws->value.pwszVal)));
-		break;
-	default:
-		lua_pushvalue(L, 4);
-		return 1;
-	}
-	lua_settable(L, -3);
-
-	if (lua_pcall(L, 2, 1, 0))
-		printf("%s\n", lua_tostring(L, -1));
-
-	int res = (int)lua_tointeger(L, 1);
-
-	return res;
-}
-
-static int lua_OnSettingChanged(lua_State *L)
-{
-	if (!lua_isfunction(L, 1))
-	{
-		lua_pushlightuserdata(L, NULL);
-		return 1;
-	}
-
-	lua_pushvalue(L, 1);
-	int ref = luaL_ref(L, LUA_REGISTRYINDEX);
-
-	HANDLE res = ::HookEventObjParam(ME_DB_CONTACT_SETTINGCHANGED, SettingsChangedHookEventObjParam, L, ref);
-	lua_pushlightuserdata(L, res);
-
-	CMLua::Hooks.insert(res);
-	CMLua::HookRefs.insert(new HandleRefParam(L, res, ref));
-
-	return 1;
-}
-
-static int lua_DecodeDBCONTACTWRITESETTING(lua_State *L)
-{
-	DBCONTACTWRITESETTING *pDBCWS = (DBCONTACTWRITESETTING*)lua_tointeger(L, 1);
-
-	lua_newtable(L);
-	lua_pushliteral(L, "Module");
-	lua_pushstring(L, pDBCWS->szModule);
-	lua_settable(L, -3);
-	lua_pushliteral(L, "Setting");
-	lua_pushstring(L, pDBCWS->szSetting);
-	lua_settable(L, -3);
-	lua_pushliteral(L, "Value");
-	switch (pDBCWS->value.type)
-	{
-		case DBVT_BYTE:
-			lua_pushinteger(L, pDBCWS->value.bVal);
-			break;
-		case DBVT_WORD:
-			lua_pushinteger(L, pDBCWS->value.wVal);
-			break;
-		case DBVT_DWORD:
-			lua_pushnumber(L, pDBCWS->value.dVal);
-			break;
-		case DBVT_ASCIIZ:
-			lua_pushstring(L, ptrA(mir_utf8encode(pDBCWS->value.pszVal)));
-			break;
-		case DBVT_UTF8:
-			lua_pushstring(L, pDBCWS->value.pszVal);
-			break;
-		case DBVT_WCHAR:
-			lua_pushstring(L, ptrA(mir_utf8encodeW(pDBCWS->value.pwszVal)));
-			break;
-		default:
-			lua_pushvalue(L, 4);
-			return 1;
-	}
-	lua_settable(L, -3);
-
-	return 1;
-}
+/***********************************************/
 
 static luaL_Reg databaseApi[] =
 {
-	{ "FindFirstContact", lua_FindFirstContact },
-	{ "FindNextContact", lua_FindNextContact },
-	{ "AllContacts", lua_AllContacts },
+	{ "FindFirstContact", db_FindFirstContact },
+	{ "FindNextContact", db_FindNextContact },
+	{ "Contacts", db_Contacts },
+	{ "GetContactInfo", db_GetContactInfo },
 
-	{ "GetEventCount", lua_GetEventCount },
+	{ "GetEventCount", db_GetEventCount },
 
-	{ "GetFirstEvent", lua_GetFirstEvent },
-	{ "GetPrevEvent", lua_GetPrevEvent },
-	{ "GetNextEvent", lua_GetNextEvent },
-	{ "GetLastEvent", lua_GetLastEvent },
-	{ "AllEvents", lua_AllEvents },
-	{ "GetEventsFromEnd", lua_AllEventsFromEnd },
+	{ "GetFirstEvent", db_GetFirstEvent },
+	{ "GetPrevEvent", db_GetPrevEvent },
+	{ "GetNextEvent", db_GetNextEvent },
+	{ "GetLastEvent", db_GetLastEvent },
+	{ "GetFirstUnreadEvent", db_GetFirstUnreadEvent },
+	{ "Events", db_Events },
+	{ "EventsFromEnd", db_EventsFromEnd },
+	{ "UnreadEvents", db_UnreadEvents },
+	{ "AddEvent", db_AddEvent },
+	{ "MarkReadEvent", db_MarkReadEvent },
 
-	{ "GetEvent", lua_GetEvent },
+	{ "Settings", db_Settings },
+	{ "Modules", db_Modules },
 
-	{ "WriteContactSetting", lua_WriteSetting },
-	{ "WriteSetting", lua_WriteSetting },
-	
-	{ "GetContactSetting", lua_GetSetting },
-	{ "GetSetting", lua_GetSetting },
-	{ "AllSettings", lua_AllSettings },
-	{ "EnumSettings", lua_EnumSettings },
+	{ "DeleteModule", db_DeleteModule },
 
-	{ "DeleteContactSetting", lua_DeleteSetting },
-	{ "DeleteSetting", lua_DeleteSetting },
-	{ "DeleteModule", lua_DeleteModule },
+	{ "GetSetting", db_GetSetting },
+	{ "WriteSetting", db_WriteSetting },
+	{ "SetSetting", db_WriteSetting },
+	{ "DeleteSetting", db_DeleteSetting },
 
-	{ "OnContactSettingChanged", lua_OnSettingChanged },
-	{ "OnSettingChanged", lua_OnSettingChanged },
-	{ "DecodeDBCONTACTWRITESETTING", lua_DecodeDBCONTACTWRITESETTING },
+	{ "DBVT_BYTE", NULL },
+	{ "DBVT_WORD", NULL },
+	{ "DBVT_DWORD", NULL },
+	{ "DBVT_ASCIIZ", NULL },
+	{ "DBVT_UTF8", NULL },
+	{ "DBVT_WCHAR", NULL },
 
 	{ NULL, NULL }
 };
 
+/***********************************************/
+
+#define MT_DBCONTACTWRITESETTING "DBCONTACTWRITESETTING"
+
+template <>
+int MT<DBCONTACTWRITESETTING>::Get(lua_State *L, DBCONTACTWRITESETTING *dbcw)
+{
+	const char *key = luaL_checkstring(L, 2);
+
+	if (mir_strcmpi(key, "Value") == 0)
+		luaM_pushdbvt(L, dbcw->value);
+	else
+		lua_pushnil(L);
+
+	return 1;
+}
+
+/***********************************************/
+
+#define MT_DBEVENTINFO "DBEVENTINFO"
+
+template <>
+DBEVENTINFO* MT<DBEVENTINFO>::Init(lua_State *L)
+{
+	MEVENT hDbEvent = luaL_checkinteger(L, 1);
+
+	DBEVENTINFO* dbei = (DBEVENTINFO*)mir_calloc(sizeof(DBEVENTINFO));
+	dbei->cbBlob = db_event_getBlobSize((MEVENT)hDbEvent);
+	dbei->pBlob = (PBYTE)mir_calloc(dbei->cbBlob);
+	db_event_get((MEVENT)hDbEvent, dbei);
+
+	return dbei;
+}
+
+template <>
+int MT<DBEVENTINFO>::Get(lua_State *L, DBEVENTINFO *dbei)
+{
+	const char *key = luaL_checkstring(L, 2);
+
+	if (mir_strcmpi(key, "Blob") == 0)
+	{
+		lua_createtable(L, dbei->cbBlob, 0);
+		for (DWORD i = 0; i < dbei->cbBlob; i++)
+		{
+			lua_pushinteger(L, dbei->pBlob[i]);
+			lua_rawseti(L, -2, i + 1);
+		}
+	}
+	else
+		lua_pushnil(L);
+
+	return 1;
+}
+
+template <>
+void MT<DBEVENTINFO>::Free(lua_State*, DBEVENTINFO **dbei)
+{
+	mir_free((*dbei)->pBlob);
+	mir_free(*dbei);
+}
+
+/***********************************************/
+
 LUAMOD_API int luaopen_m_database(lua_State *L)
 {
 	luaL_newlib(L, databaseApi);
+
+	lua_pushnumber(L, DBVT_BYTE);
+	lua_setfield(L, -2, "DBVT_BYTE");
+	lua_pushnumber(L, DBVT_WORD);
+	lua_setfield(L, -2, "DBVT_WORD");
+	lua_pushnumber(L, DBVT_DWORD);
+	lua_setfield(L, -2, "DBVT_DWORD");
+	lua_pushnumber(L, DBVT_ASCIIZ);
+	lua_setfield(L, -2, "DBVT_ASCIIZ");
+	lua_pushnumber(L, DBVT_UTF8);
+	lua_setfield(L, -2, "DBVT_UTF8");
+	lua_pushnumber(L, DBVT_WCHAR);
+	lua_setfield(L, -2, "DBVT_WCHAR");
+
+	MT<DBCONTACTWRITESETTING>(L, MT_DBCONTACTWRITESETTING)
+		.Field(&DBCONTACTWRITESETTING::szModule, "Module", LUA_TSTRINGA)
+		.Field(&DBCONTACTWRITESETTING::szSetting, "Setting", LUA_TSTRINGA);
+
+	MT<DBEVENTINFO>(L, MT_DBEVENTINFO)
+		.Field(&DBEVENTINFO::szModule, "Module", LUA_TSTRINGA)
+		.Field(&DBEVENTINFO::timestamp, "Timestamp", LUA_TINTEGER)
+		.Field(&DBEVENTINFO::eventType, "Type", LUA_TINTEGER)
+		.Field(&DBEVENTINFO::flags, "Flags", LUA_TINTEGER);
 
 	return 1;
 }

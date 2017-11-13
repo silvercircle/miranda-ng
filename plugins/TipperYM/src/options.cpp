@@ -23,7 +23,7 @@ Boston, MA 02111-1307, USA.
 OPTIONS opt;
 ICONSTATE exIcons[EXICONS_COUNT];
 
-extern int IsTrayProto(const TCHAR *swzProto, BOOL bExtendedTip)
+extern int IsTrayProto(const wchar_t *swzProto, BOOL bExtendedTip)
 {
 	if (swzProto == NULL)
 		return 0;
@@ -36,8 +36,8 @@ extern int IsTrayProto(const TCHAR *swzProto, BOOL bExtendedTip)
 
 	DBVARIANT dbv;
 	int result = 1;
-	if (!db_get_ts(NULL, MODULE, szSetting, &dbv)) {
-		result = _tcsstr(dbv.ptszVal, swzProto) ? 1 : 0;
+	if (!db_get_ws(NULL, MODULE, szSetting, &dbv)) {
+		result = wcsstr(dbv.ptszVal, swzProto) ? 1 : 0;
 		db_free(&dbv);
 	}
 
@@ -49,8 +49,8 @@ void CreateDefaultItems()
 	for (int i = 0; defaultItemList[i].szName; i++) {
 		if (defaultItemList[i].szName[0] == '-') {
 			DIListNode *di_node = (DIListNode *)mir_alloc(sizeof(DIListNode));
-			_tcsncpy(di_node->di.swzLabel, _T(""), LABEL_LEN);
-			_tcsncpy(di_node->di.swzValue, _T(""), VALUE_LEN);
+			wcsncpy(di_node->di.swzLabel, L"", LABEL_LEN);
+			wcsncpy(di_node->di.swzValue, L"", VALUE_LEN);
 			di_node->di.bLineAbove = true;
 			di_node->di.bIsVisible = true;
 			di_node->di.bParseTipperVarsFirst = false;
@@ -67,7 +67,7 @@ void CreateDefaultItems()
 				if (subst == NULL) continue;
 
 				DSListNode *ds_node = (DSListNode *)mir_alloc(sizeof(DSListNode));
-				_tcsncpy(ds_node->ds.swzName, subst->swzName, LABEL_LEN);
+				wcsncpy(ds_node->ds.swzName, subst->swzName, LABEL_LEN);
 				ds_node->ds.type = subst->type;
 				strncpy(ds_node->ds.szSettingName, subst->szSettingName, SETTING_NAME_LEN);
 				ds_node->ds.iTranslateFuncId = subst->iTranslateFuncId;
@@ -77,8 +77,8 @@ void CreateDefaultItems()
 			}
 
 			DIListNode *di_node = (DIListNode *)mir_alloc(sizeof(DIListNode));
-			_tcsncpy(di_node->di.swzLabel, TranslateTS(item->swzLabel), LABEL_LEN);
-			_tcsncpy(di_node->di.swzValue, item->swzValue, VALUE_LEN);
+			wcsncpy(di_node->di.swzLabel, TranslateW(item->swzLabel), LABEL_LEN);
+			wcsncpy(di_node->di.swzValue, item->swzValue, VALUE_LEN);
 			di_node->di.bLineAbove = false;
 			di_node->di.bValueNewline = defaultItemList[i].bValueNewline;
 			di_node->di.bIsVisible = true;
@@ -97,10 +97,10 @@ bool LoadDS(DISPLAYSUBST *ds, int index)
 
 	mir_snprintf(setting, "Name%d", index);
 	ds->swzName[0] = 0;
-	if (db_get_ts(0, MODULE_ITEMS, setting, &dbv))
+	if (db_get_ws(0, MODULE_ITEMS, setting, &dbv))
 		return false;
 
-	_tcsncpy(ds->swzName, dbv.ptszVal, _countof(ds->swzName));
+	wcsncpy(ds->swzName, dbv.ptszVal, _countof(ds->swzName));
 	ds->swzName[_countof(ds->swzName) - 1] = 0;
 	db_free(&dbv);
 
@@ -140,7 +140,7 @@ void SaveDS(DISPLAYSUBST *ds, int index)
 	char setting[512];
 
 	mir_snprintf(setting, "Name%d", index);
-	db_set_ts(0, MODULE_ITEMS, setting, ds->swzName);
+	db_set_ws(0, MODULE_ITEMS, setting, ds->swzName);
 	mir_snprintf(setting, "Type%d", index);
 	db_set_b(0, MODULE_ITEMS, setting, (BYTE)ds->type);
 	mir_snprintf(setting, "Module%d", index);
@@ -158,17 +158,17 @@ bool LoadDI(DISPLAYITEM *di, int index)
 
 	mir_snprintf(setting, "DILabel%d", index);
 	di->swzLabel[0] = 0;
-	if (db_get_ts(0, MODULE_ITEMS, setting, &dbv))
+	if (db_get_ws(0, MODULE_ITEMS, setting, &dbv))
 		return false;
 
-	_tcsncpy(di->swzLabel, dbv.ptszVal, _countof(di->swzLabel));
+	wcsncpy(di->swzLabel, dbv.ptszVal, _countof(di->swzLabel));
 	di->swzLabel[_countof(di->swzLabel) - 1] = 0;
 	db_free(&dbv);
 
 	mir_snprintf(setting, "DIValue%d", index);
 	di->swzValue[0] = 0;
-	if (!db_get_ts(0, MODULE_ITEMS, setting, &dbv)) {
-		_tcsncpy(di->swzValue, dbv.ptszVal, _countof(di->swzValue));
+	if (!db_get_ws(0, MODULE_ITEMS, setting, &dbv)) {
+		wcsncpy(di->swzValue, dbv.ptszVal, _countof(di->swzValue));
 		di->swzValue[_countof(di->swzValue) - 1] = 0;
 		db_free(&dbv);
 	}
@@ -192,14 +192,14 @@ void SaveDI(DISPLAYITEM *di, int index)
 	char setting[512];
 
 	mir_snprintf(setting, "DILabel%d", index);
-	if (db_set_ts(0, MODULE_ITEMS, setting, di->swzLabel)) {
+	if (db_set_ws(0, MODULE_ITEMS, setting, di->swzLabel)) {
 		char buff[LABEL_LEN];
 		t2a(di->swzLabel, buff, LABEL_LEN);
 		db_set_s(0, MODULE_ITEMS, setting, buff);
 	}
 
 	mir_snprintf(setting, "DIValue%d", index);
-	if (db_set_ts(0, MODULE_ITEMS, setting, di->swzValue)) {
+	if (db_set_ws(0, MODULE_ITEMS, setting, di->swzValue)) {
 		char buff[VALUE_LEN];
 		t2a(di->swzValue, buff, VALUE_LEN);
 		db_set_s(0, MODULE_ITEMS, setting, buff);
@@ -275,7 +275,7 @@ void SaveItems()
 	opt.bWaitForStatusMsg = false;
 	while (di_node) {
 		SaveDI(&di_node->di, index);
-		if (di_node->di.bIsVisible && _tcsstr(di_node->di.swzValue, _T("sys:status_msg")))
+		if (di_node->di.bIsVisible && wcsstr(di_node->di.swzValue, L"sys:status_msg"))
 			opt.bWaitForStatusMsg = true;
 		di_node = di_node->next;
 		index++;
@@ -307,8 +307,8 @@ void LoadObsoleteSkinSetting()
 		mir_snprintf(setting, "SPaintMode%d", i);
 		opt.transfMode[i] = (TransformationMode)db_get_b(0, MODULE, setting, 0);
 		mir_snprintf(setting, "SImgFile%d", i);
-		if (!db_get_ts(NULL, MODULE, setting, &dbv)) {
-			opt.szImgFile[i] = mir_tstrdup(dbv.ptszVal);
+		if (!db_get_ws(NULL, MODULE, setting, &dbv)) {
+			opt.szImgFile[i] = mir_wstrdup(dbv.ptszVal);
 			db_free(&dbv);
 		}
 
@@ -372,7 +372,7 @@ void LoadOptions()
 			di_node->next = opt.diList;
 			opt.diList = di_node;
 			real_count++;
-			if (di_node->di.bIsVisible && _tcsstr(di_node->di.swzValue, _T("sys:status_msg")))
+			if (di_node->di.bIsVisible && wcsstr(di_node->di.swzValue, L"sys:status_msg"))
 				opt.bWaitForStatusMsg = true;
 		}
 		else
@@ -411,8 +411,8 @@ void LoadOptions()
 			di_node = opt.diList;
 		}
 
-		_tcsncpy(di_node->di.swzLabel, _T("Last message: (%sys:last_msg_reltime% ago)"), LABEL_LEN);
-		_tcsncpy(di_node->di.swzValue, _T("%sys:last_msg%"), VALUE_LEN);
+		wcsncpy(di_node->di.swzLabel, L"Last message: (%sys:last_msg_reltime% ago)", LABEL_LEN);
+		wcsncpy(di_node->di.swzValue, L"%sys:last_msg%", VALUE_LEN);
 		di_node->di.bLineAbove = di_node->di.bValueNewline = true;
 		di_node->next = 0;
 		opt.iDiCount++;
@@ -436,8 +436,8 @@ void LoadOptions()
 			di_node = opt.diList;
 		}
 
-		_tcsncpy(di_node->di.swzLabel, _T("Status message:"), LABEL_LEN);
-		_tcsncpy(di_node->di.swzValue, _T("%sys:status_msg%"), VALUE_LEN);
+		wcsncpy(di_node->di.swzLabel, L"Status message:", LABEL_LEN);
+		wcsncpy(di_node->di.swzValue, L"%sys:status_msg%", VALUE_LEN);
 		di_node->di.bLineAbove = di_node->di.bValueNewline = true;
 		di_node->next = 0;
 		opt.iDiCount++;
@@ -515,8 +515,8 @@ void LoadOptions()
 		LoadObsoleteSkinSetting();
 	}
 	else if (opt.skinMode == SM_IMAGE) {
-		if (!db_get_ts(NULL, MODULE, "SkinName", &dbv)) {
-			_tcsncpy(opt.szSkinName, dbv.ptszVal, _countof(opt.szSkinName) - 1);
+		if (!db_get_ws(NULL, MODULE, "SkinName", &dbv)) {
+			wcsncpy(opt.szSkinName, dbv.ptszVal, _countof(opt.szSkinName) - 1);
 			db_free(&dbv);
 		}
 	}
@@ -544,7 +544,7 @@ INT_PTR CALLBACK DlgProcAddItem(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 			SetDlgItemText(hwndDlg, IDC_ED_VALUE, di->swzValue);
 
 			for (int i = 0; i < _countof(displayItemTypes); i++) {
-				int index = SendDlgItemMessage(hwndDlg, IDC_CMB_TYPE, CB_ADDSTRING, (WPARAM)-1, (LPARAM)TranslateTS(displayItemTypes[i].title));
+				int index = SendDlgItemMessage(hwndDlg, IDC_CMB_TYPE, CB_ADDSTRING, (WPARAM)-1, (LPARAM)TranslateW(displayItemTypes[i].title));
 				SendDlgItemMessage(hwndDlg, IDC_CMB_TYPE, CB_SETITEMDATA, index, (LPARAM)displayItemTypes[i].type);
 				if (displayItemTypes[i].type == di->type)
 					SendDlgItemMessage(hwndDlg, IDC_CMB_TYPE, CB_SETCURSEL, index, 0);
@@ -555,7 +555,7 @@ INT_PTR CALLBACK DlgProcAddItem(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 			CheckDlgButton(hwndDlg, IDC_CHK_PARSETIPPERFIRST, di->bParseTipperVarsFirst ? BST_CHECKED : BST_UNCHECKED);
 
 			for (int i = 0; presetItems[i].szID; i++)
-				SendDlgItemMessage(hwndDlg, IDC_CMB_PRESETITEMS, CB_ADDSTRING, 0, (LPARAM)TranslateTS(presetItems[i].swzName));
+				SendDlgItemMessage(hwndDlg, IDC_CMB_PRESETITEMS, CB_ADDSTRING, 0, (LPARAM)TranslateW(presetItems[i].swzName));
 
 			variables_skin_helpbutton(hwndDlg, IDC_BTN_VARIABLE);
 
@@ -584,10 +584,10 @@ INT_PTR CALLBACK DlgProcAddItem(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 
 						sel = SendDlgItemMessage(hwndDlg, IDC_CMB_PRESETITEMS, CB_GETCURSEL, 0, 0);
 						if (sel != CB_ERR) {
-							TCHAR buff[256];
+							wchar_t buff[256];
 							SendDlgItemMessage(hwndDlg, IDC_CMB_PRESETITEMS, CB_GETLBTEXT, sel, (LPARAM)buff);
 							for (int i = 0; presetItems[i].szID; i++) {
-								if (mir_tstrcmp(buff, TranslateTS(presetItems[i].swzName)) == 0) {
+								if (mir_wstrcmp(buff, TranslateW(presetItems[i].swzName)) == 0) {
 									if (presetItems[i].szNeededSubst[0])
 										EndDialog(hwndDlg, IDPRESETITEM + i);
 									else
@@ -620,11 +620,11 @@ INT_PTR CALLBACK DlgProcAddItem(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 				if (LOWORD(wParam) == IDC_CMB_PRESETITEMS) {
 					int sel = SendDlgItemMessage(hwndDlg, IDC_CMB_PRESETITEMS, CB_GETCURSEL, 0, 0);
 					if (sel != CB_ERR) {
-						TCHAR buff[256];
+						wchar_t buff[256];
 						SendDlgItemMessage(hwndDlg, IDC_CMB_PRESETITEMS, CB_GETLBTEXT, sel, (LPARAM)buff);
 						for (int i = 0; presetItems[i].szID; i++) {
-							if (mir_tstrcmp(buff, TranslateTS(presetItems[i].swzName)) == 0) {
-								SetDlgItemText(hwndDlg, IDC_ED_LABEL, TranslateTS(presetItems[i].swzLabel));
+							if (mir_wstrcmp(buff, TranslateW(presetItems[i].swzName)) == 0) {
+								SetDlgItemText(hwndDlg, IDC_ED_LABEL, TranslateW(presetItems[i].swzLabel));
 								SetDlgItemText(hwndDlg, IDC_ED_VALUE, presetItems[i].swzValue);
 								break;
 							}
@@ -664,7 +664,7 @@ INT_PTR CALLBACK DlgProcAddSubst(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 			}
 
 			for (int i = 0; i < iTransFuncsCount; i++) {
-				int index = SendDlgItemMessage(hwndDlg, IDC_CMB_TRANSLATE, CB_ADDSTRING, (WPARAM)-1, (LPARAM)TranslateTS(translations[i].swzName));
+				int index = SendDlgItemMessage(hwndDlg, IDC_CMB_TRANSLATE, CB_ADDSTRING, (WPARAM)-1, (LPARAM)TranslateW(translations[i].swzName));
 				SendDlgItemMessage(hwndDlg, IDC_CMB_TRANSLATE, CB_SETITEMDATA, index, (LPARAM)translations[i].id);
 			}
 
@@ -737,11 +737,11 @@ INT_PTR CALLBACK DlgProcAddSubst(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 	return 0;
 }
 
-static void SetTreeItemText(DIListNode *node, TCHAR **pszText)
+static void SetTreeItemText(DIListNode *node, wchar_t **pszText)
 {
 	if (node->di.swzLabel[0] == 0) {
 		if (node->di.swzValue[0] == 0 && node->di.bLineAbove)
-			*pszText = _T("--------------------------------------");
+			*pszText = L"--------------------------------------";
 		else
 			*pszText = TranslateT("<No Label>");
 	}
@@ -749,35 +749,47 @@ static void SetTreeItemText(DIListNode *node, TCHAR **pszText)
 		*pszText = node->di.swzLabel;
 }
 
-static OPTBUTTON btns[9] = {
-	IDC_BTN_ADD, SKINICON_OTHER_ADDCONTACT, 0, LPGENT("Add item"),
-	IDC_BTN_SEPARATOR, 0, IDI_SEPARATOR, LPGENT("Add separator"),
-	IDC_BTN_EDIT, SKINICON_OTHER_RENAME, 0, LPGENT("Edit"),
-	IDC_BTN_REMOVE, SKINICON_OTHER_DELETE, 0, LPGENT("Remove"),
-	IDC_BTN_UP, 0, IDI_UP, LPGENT("Move up"),
-	IDC_BTN_DOWN, 0, IDI_DOWN, LPGENT("Move down"),
-	IDC_BTN_ADD2, SKINICON_OTHER_ADDCONTACT, 0, LPGENT("Add"),
-	IDC_BTN_REMOVE2, SKINICON_OTHER_DELETE, 0, LPGENT("Remove"),
-	IDC_BTN_EDIT2, SKINICON_OTHER_RENAME, 0, LPGENT("Edit")
-};
-
 INT_PTR CALLBACK DlgProcOptsContent(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
 
-		for (int i = 0; i < _countof(btns); i++) {
-			SendDlgItemMessage(hwndDlg, btns[i].id, BUTTONSETASFLATBTN, TRUE, 0);
-			SendDlgItemMessage(hwndDlg, btns[i].id, BUTTONADDTOOLTIP, (WPARAM)TranslateTS(btns[i].swzTooltip), BATF_TCHAR);
-			if (btns[i].uintCoreIconId)
-				SendDlgItemMessage(hwndDlg, btns[i].id, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(btns[i].uintCoreIconId));
-			else {
-				HICON hIcon = LoadIcon(hInst, MAKEINTRESOURCE(btns[i].uintResIconId));
-				SendDlgItemMessage(hwndDlg, btns[i].id, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
-				DestroyIcon(hIcon);
-			}
-		}
+		SendDlgItemMessage(hwndDlg, IDC_BTN_ADD, BUTTONSETASFLATBTN, TRUE, 0);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_ADD, BUTTONADDTOOLTIP, (WPARAM)Translate("Add item"), 0);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_ADD, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_ADDCONTACT));
+
+		SendDlgItemMessage(hwndDlg, IDC_BTN_SEPARATOR, BUTTONSETASFLATBTN, TRUE, 0);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_SEPARATOR, BUTTONADDTOOLTIP, (WPARAM)Translate(iconList[4].szDescr), 0);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_SEPARATOR, BM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIconByHandle(iconList[4].hIcolib));
+
+		SendDlgItemMessage(hwndDlg, IDC_BTN_EDIT, BUTTONSETASFLATBTN, TRUE, 0);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_EDIT, BUTTONADDTOOLTIP, (WPARAM)Translate("Edit"), 0);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_EDIT, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_RENAME));
+
+		SendDlgItemMessage(hwndDlg, IDC_BTN_REMOVE, BUTTONSETASFLATBTN, TRUE, 0);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_REMOVE, BUTTONADDTOOLTIP, (WPARAM)Translate("Remove"), 0);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_REMOVE, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_DELETE));
+
+		SendDlgItemMessage(hwndDlg, IDC_BTN_UP, BUTTONSETASFLATBTN, TRUE, 0);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_UP, BUTTONADDTOOLTIP, (WPARAM)Translate(iconList[2].szDescr), 0);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_UP, BM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIconByHandle(iconList[2].hIcolib));
+
+		SendDlgItemMessage(hwndDlg, IDC_BTN_DOWN, BUTTONSETASFLATBTN, TRUE, 0);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_DOWN, BUTTONADDTOOLTIP, (WPARAM)Translate(iconList[3].szDescr), 0);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_DOWN, BM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIconByHandle(iconList[3].hIcolib));
+
+		SendDlgItemMessage(hwndDlg, IDC_BTN_ADD2, BUTTONSETASFLATBTN, TRUE, 0);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_ADD2, BUTTONADDTOOLTIP, (WPARAM)Translate("Add"), 0);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_ADD2, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_ADDCONTACT));
+
+		SendDlgItemMessage(hwndDlg, IDC_BTN_REMOVE2, BUTTONSETASFLATBTN, TRUE, 0);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_REMOVE2, BUTTONADDTOOLTIP, (WPARAM)Translate("Remove"), 0);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_REMOVE2, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_DELETE));
+
+		SendDlgItemMessage(hwndDlg, IDC_BTN_EDIT2, BUTTONSETASFLATBTN, TRUE, 0);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_EDIT2, BUTTONADDTOOLTIP, (WPARAM)Translate("Edit"), 0);
+		SendDlgItemMessage(hwndDlg, IDC_BTN_EDIT2, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_RENAME));
 
 		SetWindowLongPtr(GetDlgItem(hwndDlg, IDC_TREE_FIRST_ITEMS), GWL_STYLE, GetWindowLongPtr(GetDlgItem(hwndDlg, IDC_TREE_FIRST_ITEMS), GWL_STYLE) | TVS_CHECKBOXES);
 		{
@@ -907,7 +919,7 @@ INT_PTR CALLBACK DlgProcOptsContent(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 									memset(ds_value, 0, sizeof(DSListNode));
 									ds_value->next = NULL;
 									ds_value->ds.type = subst->type;
-									_tcsncpy(ds_value->ds.swzName, subst->swzName, LABEL_LEN - 1);
+									wcsncpy(ds_value->ds.swzName, subst->swzName, LABEL_LEN - 1);
 
 									if (ds_value->ds.type == DVT_DB && subst->szModuleName)
 										strncpy(ds_value->ds.szModuleName, subst->szModuleName, MODULE_NAME_LEN - 1);
@@ -944,7 +956,7 @@ INT_PTR CALLBACK DlgProcOptsContent(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 					tvi.item.stateMask = TVIS_STATEIMAGEMASK;
 					tvi.item.lParam = (LPARAM)di_value;
 					tvi.item.state = INDEXTOSTATEIMAGEMASK(2);
-					tvi.item.pszText = _T("---------------------------------");
+					tvi.item.pszText = L"---------------------------------";
 
 					HTREEITEM hItem = TreeView_GetSelection(GetDlgItem(hwndDlg, IDC_TREE_FIRST_ITEMS));
 					if (hItem)
@@ -985,7 +997,7 @@ INT_PTR CALLBACK DlgProcOptsContent(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 							hNewItem = TreeView_GetNextSibling(GetDlgItem(hwndDlg, IDC_TREE_FIRST_ITEMS), hItem);
 
 						if (hNewItem) {
-							TCHAR buff[512], buff2[512];
+							wchar_t buff[512], buff2[512];
 							LPARAM tmpParam;
 							UINT tmpState;
 
@@ -1463,7 +1475,7 @@ INT_PTR CALLBACK DlgProcOptsExtra(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 			tvi.item.stateMask = TVIS_STATEIMAGEMASK;
 			for (int i = 0; i < _countof(extraIconName); i++) {
 				tvi.item.lParam = (LPARAM)&exIcons[i];
-				tvi.item.pszText = TranslateTS(extraIconName[exIcons[i].order]);
+				tvi.item.pszText = TranslateW(extraIconName[exIcons[i].order]);
 				tvi.item.state = INDEXTOSTATEIMAGEMASK(exIcons[i].vis ? 2 : 1);
 				TreeView_InsertItem(GetDlgItem(hwndDlg, IDC_TREE_EXTRAICONS), &tvi);
 			}
@@ -1643,7 +1655,7 @@ INT_PTR CALLBACK DlgProcOptsExtra(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM 
 			TreeView_GetItem(GetDlgItem(hwndDlg, IDC_TREE_EXTRAICONS), &item);
 			if (hti.flags & (TVHT_ONITEM | TVHT_ONITEMRIGHT) || (hti.hItem == TVI_FIRST)) {
 				TVINSERTSTRUCT tvis;
-				TCHAR swzName[256];
+				wchar_t swzName[256];
 				tvis.item.mask = TVIF_HANDLE | TVIF_PARAM | TVIF_TEXT | TVIF_STATE;
 				tvis.item.stateMask = TVIS_STATEIMAGEMASK;
 				tvis.item.pszText = swzName;
@@ -1703,19 +1715,15 @@ INT_PTR CALLBACK DlgProcOptsSkin(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 			iLastSel = RefreshSkinList(hwndDlg);
 
 			SendDlgItemMessage(hwndDlg, IDC_BTN_RELOADLIST, BUTTONSETASFLATBTN, TRUE, 0);
-			SendDlgItemMessage(hwndDlg, IDC_BTN_RELOADLIST, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Reload skin list"), BATF_TCHAR);
-			HICON hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_RELOAD));
-			SendDlgItemMessage(hwndDlg, IDC_BTN_RELOADLIST, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
-			DestroyIcon(hIcon);
+			SendDlgItemMessage(hwndDlg, IDC_BTN_RELOADLIST, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Reload skin list"), BATF_UNICODE);
+			SendDlgItemMessage(hwndDlg, IDC_BTN_RELOADLIST, BM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIconByHandle(iconList[5].hIcolib));
 
 			SendDlgItemMessage(hwndDlg, IDC_BTN_APPLYSKIN, BUTTONSETASFLATBTN, TRUE, 0);
-			SendDlgItemMessage(hwndDlg, IDC_BTN_APPLYSKIN, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Apply skin"), BATF_TCHAR);
-			hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_APPLY));
-			SendDlgItemMessage(hwndDlg, IDC_BTN_APPLYSKIN, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
-			DestroyIcon(hIcon);
+			SendDlgItemMessage(hwndDlg, IDC_BTN_APPLYSKIN, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Apply skin"), BATF_UNICODE);
+			SendDlgItemMessage(hwndDlg, IDC_BTN_APPLYSKIN, BM_SETIMAGE, IMAGE_ICON, (LPARAM)IcoLib_GetIconByHandle(iconList[6].hIcolib));
 
 			SendDlgItemMessage(hwndDlg, IDC_BTN_GETSKINS, BUTTONSETASFLATBTN, TRUE, 0);
-			SendDlgItemMessage(hwndDlg, IDC_BTN_GETSKINS, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Get more skins"), BATF_TCHAR);
+			SendDlgItemMessage(hwndDlg, IDC_BTN_GETSKINS, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Get more skins"), BATF_UNICODE);
 			SendDlgItemMessage(hwndDlg, IDC_BTN_GETSKINS, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(SKINICON_EVENT_URL));
 
 
@@ -1751,7 +1759,7 @@ INT_PTR CALLBACK DlgProcOptsSkin(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 
 				if (opt.szPreviewFile[0]) {
 					HDC hdcMem = CreateCompatibleDC(dis->hDC);
-					HBITMAP hbmpPreview = (HBITMAP)CallService(MS_IMG_LOAD, (WPARAM)opt.szPreviewFile, IMGL_TCHAR);
+					HBITMAP hbmpPreview = (HBITMAP)CallService(MS_IMG_LOAD, (WPARAM)opt.szPreviewFile, IMGL_WCHAR);
 					if (hbmpPreview) {
 						int iWidth = dis->rcItem.right - dis->rcItem.left;
 						int iHeight = dis->rcItem.bottom - dis->rcItem.top;
@@ -1794,7 +1802,7 @@ INT_PTR CALLBACK DlgProcOptsSkin(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 								EnableControls(hwndDlg, false);
 							}
 							else if (iSel != LB_ERR) {
-								TCHAR swzSkinName[256];
+								wchar_t swzSkinName[256];
 								if (ListBox_GetText(hwndList, iSel, swzSkinName) > 0)
 									ParseSkinFile(swzSkinName, false, true);
 								EnableControls(hwndDlg, true);
@@ -1828,7 +1836,7 @@ INT_PTR CALLBACK DlgProcOptsSkin(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 						}
 
 						db_set_b(0, MODULE, "SkinEngine", opt.skinMode);
-						db_set_ts(0, MODULE, "SkinName", opt.szSkinName);
+						db_set_ws(0, MODULE, "SkinName", opt.szSkinName);
 
 						DestroySkinBitmap();
 						SetDlgItemInt(hwndDlg, IDC_ED_TRANS, opt.iOpacity, FALSE);
@@ -1840,7 +1848,7 @@ INT_PTR CALLBACK DlgProcOptsSkin(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM l
 					else if (LOWORD(wParam) == IDC_CHK_LOADPROPORTIONS)
 						opt.bLoadProportions = IsDlgButtonChecked(hwndDlg, IDC_CHK_LOADPROPORTIONS) ? true : false;
 					else if (LOWORD(wParam) == IDC_BTN_GETSKINS)
-						Utils_OpenUrl("http://miranda-ng.org/addons/category/48");
+						Utils_OpenUrl("https://miranda-ng.org/addons/category/48");
 
 					break;
 				}
@@ -1882,12 +1890,8 @@ INT_PTR CALLBACK DlgProcFavouriteContacts(HWND hwndDlg, UINT msg, WPARAM wParam,
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
 
-		if (CallService(MS_CLUI_GETCAPS, 0, 0) & CLUIF_DISABLEGROUPS && !db_get_b(NULL, "CList", "UseGroups", SETTING_USEGROUPS_DEFAULT))
-			SendDlgItemMessage(hwndDlg, IDC_CLIST, CLM_SETUSEGROUPS, (WPARAM)FALSE, 0);
-		else
-			SendDlgItemMessage(hwndDlg, IDC_CLIST, CLM_SETUSEGROUPS, (WPARAM)TRUE, 0);
-
 		SendDlgItemMessage(hwndDlg, IDC_CLIST, CLM_SETHIDEEMPTYGROUPS, 1, 0);
+		SendDlgItemMessage(hwndDlg, IDC_CLIST, CLM_SETUSEGROUPS, db_get_b(NULL, "CList", "UseGroups", SETTING_USEGROUPS_DEFAULT), 0);
 		SendDlgItemMessage(hwndDlg, IDC_CLIST, CLM_SETGREYOUTFLAGS, 0, 0);
 		SendDlgItemMessage(hwndDlg, IDC_CLIST, CLM_SETLEFTMARGIN, 2, 0);
 		{
@@ -1980,7 +1984,7 @@ INT_PTR CALLBACK DlgProcOptsTraytip(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 			}
 
 			for (i = 0; i < _countof(trayTipItems); i++) {
-				tvi.item.pszText = TranslateTS(trayTipItems[i]);
+				tvi.item.pszText = TranslateW(trayTipItems[i]);
 				tvi.item.state = INDEXTOSTATEIMAGEMASK(opt.iFirstItems & (1 << i) ? 2 : 1);
 				TreeView_InsertItem(GetDlgItem(hwndDlg, IDC_TREE_FIRST_ITEMS), &tvi);
 				tvi.item.state = INDEXTOSTATEIMAGEMASK(opt.iSecondItems & (1 << i) ? 2 : 1);
@@ -2030,8 +2034,8 @@ INT_PTR CALLBACK DlgProcOptsTraytip(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 		switch (((LPNMHDR)lParam)->idFrom) {
 		case 0:
 			if (((LPNMHDR)lParam)->code == (unsigned)PSN_APPLY) {
-				TCHAR buff[256];
-				TCHAR swzProtos[1024] = { 0 };
+				wchar_t buff[256];
+				wchar_t swzProtos[1024] = { 0 };
 
 				TVITEM item;
 				item.hItem = TreeView_GetRoot(GetDlgItem(hwndDlg, IDC_TREE_FIRST_PROTOS));
@@ -2042,14 +2046,14 @@ INT_PTR CALLBACK DlgProcOptsTraytip(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				while (item.hItem != NULL) {
 					TreeView_GetItem(GetDlgItem(hwndDlg, IDC_TREE_FIRST_PROTOS), &item);
 					if (((item.state & TVIS_STATEIMAGEMASK) >> 12) == 2) {
-						mir_tstrcat(swzProtos, buff);
-						mir_tstrcat(swzProtos, _T(" "));
+						mir_wstrcat(swzProtos, buff);
+						mir_wstrcat(swzProtos, L" ");
 					}
 
 					item.hItem = TreeView_GetNextSibling(GetDlgItem(hwndDlg, IDC_TREE_FIRST_PROTOS), item.hItem);
 				}
 
-				db_set_ts(0, MODULE, "TrayProtocols", swzProtos);
+				db_set_ws(0, MODULE, "TrayProtocols", swzProtos);
 
 				swzProtos[0] = 0;
 				item.hItem = TreeView_GetRoot(GetDlgItem(hwndDlg, IDC_TREE_SECOND_PROTOS));
@@ -2057,14 +2061,14 @@ INT_PTR CALLBACK DlgProcOptsTraytip(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				while (item.hItem != NULL) {
 					TreeView_GetItem(GetDlgItem(hwndDlg, IDC_TREE_SECOND_PROTOS), &item);
 					if (((item.state & TVIS_STATEIMAGEMASK) >> 12) == 2) {
-						mir_tstrcat(swzProtos, buff);
-						mir_tstrcat(swzProtos, _T(" "));
+						mir_wstrcat(swzProtos, buff);
+						mir_wstrcat(swzProtos, L" ");
 					}
 
 					item.hItem = TreeView_GetNextSibling(GetDlgItem(hwndDlg, IDC_TREE_SECOND_PROTOS), item.hItem);
 				}
 
-				db_set_ts(0, MODULE, "TrayProtocolsEx", swzProtos);
+				db_set_ws(0, MODULE, "TrayProtocolsEx", swzProtos);
 
 				int count = 0;
 				opt.iFirstItems = 0;
@@ -2138,36 +2142,36 @@ int OptInit(WPARAM wParam, LPARAM)
 	odp.hInstance = hInst;
 
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_APPEARANCE);
-	odp.pszTab = LPGEN("Appearance");
-	odp.pszTitle = LPGEN("Tooltips");
-	odp.pszGroup = LPGEN("Customize");
+	odp.szTab.a = LPGEN("Appearance");
+	odp.szTitle.a = LPGEN("Tooltips");
+	odp.szGroup.a = LPGEN("Customize");
 	odp.pfnDlgProc = DlgProcOptsAppearance;
 	Options_AddPage(wParam, &odp);
 
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_SKIN);
-	odp.pszTab = LPGEN("Tooltips");
-	odp.pszGroup = LPGEN("Skins");
+	odp.szTab.a = LPGEN("Tooltips");
+	odp.szGroup.a = LPGEN("Skins");
 	odp.pfnDlgProc = DlgProcOptsSkin;
 	Options_AddPage(wParam, &odp);
 
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_CONTENT);
-	odp.pszTab = LPGEN("Content");
-	odp.pszTitle = LPGEN("Tooltips");
-	odp.pszGroup = LPGEN("Customize");
+	odp.szTab.a = LPGEN("Content");
+	odp.szTitle.a = LPGEN("Tooltips");
+	odp.szGroup.a = LPGEN("Customize");
 	odp.pfnDlgProc = DlgProcOptsContent;
 	Options_AddPage(wParam, &odp);
 
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_TRAYTIP);
-	odp.pszTab = LPGEN("Tray tooltip");
-	odp.pszTitle = LPGEN("Tooltips");
-	odp.pszGroup = LPGEN("Customize");
+	odp.szTab.a = LPGEN("Tray tooltip");
+	odp.szTitle.a = LPGEN("Tooltips");
+	odp.szGroup.a = LPGEN("Customize");
 	odp.pfnDlgProc = DlgProcOptsTraytip;
 	Options_AddPage(wParam, &odp);
 
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_EXTRA);
-	odp.pszTab = LPGEN("Extra");
-	odp.pszTitle = LPGEN("Tooltips");
-	odp.pszGroup = LPGEN("Customize");
+	odp.szTab.a = LPGEN("Extra");
+	odp.szTitle.a = LPGEN("Tooltips");
+	odp.szGroup.a = LPGEN("Customize");
 	odp.pfnDlgProc = DlgProcOptsExtra;
 	Options_AddPage(wParam, &odp);
 	return 0;

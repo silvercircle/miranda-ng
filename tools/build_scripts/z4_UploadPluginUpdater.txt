@@ -1,0 +1,13 @@
+option batch abort 
+
+option confirm off
+
+open miranda-ng
+
+put %Arch%\Icons\*.zip distr/x%tp%/Icons/
+put %Arch%\Languages\lang*.zip distr/x%tp%/Languages/
+put %Arch%\Plugins\*.zip distr/x%tp%/Plugins/
+put %Arch%\miranda%tp%.zip distr/x%tp%/
+put %Arch%\hashes.zip distr/x%tp%/
+
+exit

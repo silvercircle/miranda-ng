@@ -54,11 +54,11 @@ Odsutan
 Prisutan
 [Away]
 Neaktivan
-[NA]
+[Not available]
 Nedostupan
 [Occupied]
 Zauzet
-[DND]
+[Do not disturb]
 Ne uznemiravaj
 [Free for chat]
 Spreman za razgovor
@@ -87,9 +87,9 @@ Na ručku
 
 [Nudge as Default]
 
-[Send Nudge]
+[Send nudge]
 
-[Send &Nudge]
+[Send &nudge]
 
 [Show Nudge]
 

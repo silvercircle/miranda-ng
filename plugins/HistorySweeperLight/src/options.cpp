@@ -119,12 +119,12 @@ void LoadSettings(HWND hwndDlg)
 	SendDlgItemMessage(hwndDlg, IDC_SSKEEP, CB_RESETCONTENT, 0, 0);
 
 	for (i = 0; i < _countof(time_stamp_strings); i++) {
-		ptrT ptszTimeStr(Langpack_PcharToTchar(time_stamp_strings[i]));
+		ptrW ptszTimeStr(Langpack_PcharToTchar(time_stamp_strings[i]));
 		SendDlgItemMessage(hwndDlg, IDC_SSOLDER, CB_ADDSTRING, 0, (LPARAM)ptszTimeStr);
 	}
 
 	for (i = 0; i < _countof(keep_strings); i++) {
-		ptrT ptszTimeStr(Langpack_PcharToTchar(keep_strings[i]));
+		ptrW ptszTimeStr(Langpack_PcharToTchar(keep_strings[i]));
 		SendDlgItemMessage(hwndDlg, IDC_SSKEEP, CB_ADDSTRING, 0, (LPARAM)ptszTimeStr);
 	}
 
@@ -169,7 +169,6 @@ void SaveSettings(HWND hwndDlg)
 	int st = db_get_b(NULL, ModuleName, "SweepHistory", 0);
 
 	StatusIconData sid = { 0 };
-	sid.cbSize = sizeof(sid);
 	sid.szModule = ModuleName;
 	sid.dwId = 0;
 	sid.hIcon = LoadIconEx("actG");
@@ -275,8 +274,8 @@ int HSOptInitialise(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_HISTORYSWEEPER);
-	odp.pszTitle = ModuleName;
-	odp.pszGroup = LPGEN("History");
+	odp.szTitle.a = ModuleName;
+	odp.szGroup.a = LPGEN("History");
 	odp.pfnDlgProc = DlgProcHSOpts;
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);

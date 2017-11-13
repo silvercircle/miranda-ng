@@ -12,7 +12,6 @@ Distributed under GNU's GPL 2 or later
 HINSTANCE hI;
 
 HWND g_hWnd = 0;
-HANDLE hservosda;
 int hLangpack = 0;
 CLIST_INTERFACE *pcli;
 HANDLE hHookedInit, hProtoAck, hContactSettingChanged, hHookContactStatusChanged, hContactStatusChanged;
@@ -46,7 +45,7 @@ extern "C" __declspec(dllexport) PLUGININFOEX *MirandaPluginInfoEx(DWORD)
 extern "C" __declspec(dllexport) int Load()
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	logmsg("Load");
 	hHookedInit = HookEvent(ME_SYSTEM_MODULESLOADED, MainInit);
@@ -63,7 +62,6 @@ extern "C" __declspec(dllexport) int Unload()
 	UnhookEvent(hContactStatusChanged);
 	UnhookEvent(hHookedInit);
 
-	DestroyServiceFunction(hservosda);
 	DestroyHookableEvent(hHookContactStatusChanged);
 	return 0;
 }

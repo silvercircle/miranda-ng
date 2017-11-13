@@ -68,7 +68,7 @@ extern "C" __declspec(dllexport) const PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	INITCOMMONCONTROLSEX icc;
 	icc.dwSize = sizeof(icc);
@@ -92,7 +92,6 @@ extern "C" __declspec(dllexport) int Load(void)
 extern "C" __declspec(dllexport) int Unload(void)
 {
 	UninitOptions();
-	UninitSettingsDlg(); /* before UninitWatcher() */
 	UninitWatcher(); /* before UninitFrame() */
 	UninitFrame();
 	UninitShutdownSvc();

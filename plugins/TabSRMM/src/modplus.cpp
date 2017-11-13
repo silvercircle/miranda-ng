@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
-// Copyright (ñ) 2012-15 Miranda NG project,
+// Copyright (ñ) 2012-17 Miranda NG project,
 // Copyright (c) 2000-09 Miranda ICQ/IM project,
 // all portions of this codebase are copyrighted to the people
 // listed in contributors.txt.
@@ -40,27 +40,23 @@
 
 #include "stdafx.h"
 
-static TCHAR* getMenuEntry(int i)
+static wchar_t* getMenuEntry(int i)
 {
 	char MEntry[256];
 	mir_snprintf(MEntry, "MenuEntry_%u", i);
-	return db_get_tsa(NULL, "tabmodplus", MEntry);
+	return db_get_wsa(0, "tabmodplus", MEntry);
 }
 
 static int RegisterCustomButton(WPARAM, LPARAM)
 {
-	if (!ServiceExists(MS_BB_ADDBUTTON))
-		return 1;
-
-	BBButton bbd = { 0 };
-	bbd.cbSize = sizeof(BBButton);
-	bbd.bbbFlags = BBBF_ISIMBUTTON | BBBF_ISLSIDEBUTTON | BBBF_ISPUSHBUTTON;
+	BBButton bbd = {};
+	bbd.bbbFlags = BBBF_ISIMBUTTON | BBBF_ISPUSHBUTTON;
 	bbd.dwButtonID = 1;
 	bbd.dwDefPos = 200;
 	bbd.hIcon = PluginConfig.g_buttonBarIconHandles[3];
 	bbd.pszModuleName = "Tabmodplus";
-	bbd.ptszTooltip = LPGENT("Insert [img] tag / surround selected text with [img][/img]");
-	return CallService(MS_BB_ADDBUTTON, 0, (LPARAM)&bbd);
+	bbd.pwszTooltip = LPGENW("Insert [img] tag / surround selected text with [img][/img]");
+	return Srmm_AddButton(&bbd);
 }
 
 static int CustomButtonPressed(WPARAM wParam, LPARAM lParam)
@@ -69,102 +65,79 @@ static int CustomButtonPressed(WPARAM wParam, LPARAM lParam)
 	if (mir_strcmp(cbcd->pszModule, "Tabmodplus") || cbcd->dwButtonId != 1)
 		return 0;
 
-	BBButton bbd = { sizeof(bbd) };
+	BBButton bbd = {};
 	bbd.dwButtonID = 1;
 	bbd.pszModuleName = "Tabmodplus";
-	CallService(MS_BB_GETBUTTONSTATE, wParam, (LPARAM)&bbd);
+	Srmm_GetButtonState(cbcd->hwndFrom, &bbd);
 
-	TCHAR *pszText = _T("");
+	ptrW pszText;
 	CHARRANGE cr;
 	cr.cpMin = cr.cpMax = 0;
-	SendDlgItemMessage(cbcd->hwndFrom, IDC_MESSAGE, EM_EXGETSEL, 0, (LPARAM)&cr);
+	SendDlgItemMessage(cbcd->hwndFrom, IDC_SRMM_MESSAGE, EM_EXGETSEL, 0, (LPARAM)&cr);
 	UINT textlenght = cr.cpMax - cr.cpMin;
 	if (textlenght) {
-		pszText = (TCHAR*)mir_alloc((textlenght + 1)*sizeof(TCHAR));
-		memset(pszText, 0, ((textlenght + 1) * sizeof(TCHAR)));
-		SendDlgItemMessage(cbcd->hwndFrom, IDC_MESSAGE, EM_GETSELTEXT, 0, (LPARAM)pszText);
+		pszText = (wchar_t*)mir_alloc((textlenght + 1)*sizeof(wchar_t));
+		memset(pszText, 0, ((textlenght + 1) * sizeof(wchar_t)));
+		SendDlgItemMessage(cbcd->hwndFrom, IDC_SRMM_MESSAGE, EM_GETSELTEXT, 0, (LPARAM)pszText);
 	}
-
-	int state = 0;
-	if (cbcd->flags & BBCF_RIGHTBUTTON)
-		state = 1;
-	else if (textlenght)
-		state = 2;
-	else if (bbd.bbbFlags & BBSF_PUSHED)
-		state = 3;
-	else
-		state = 4;
-
-	TCHAR *pszFormatedText = NULL, *pszMenu[256] = { 0 };
 
 	size_t bufSize;
+	CMStringW pwszFormatedText;
 
-	switch (state) {
-	case 1:
-	{
+	if (cbcd->flags & BBCF_RIGHTBUTTON) {
 		int menulimit = M.GetByte("tabmodplus", "MenuCount", 0);
-		if (menulimit == 0)
-			break;
+		if (menulimit != 0) {
+			HMENU hMenu = CreatePopupMenu();
+			LIST<wchar_t> arMenuLines(1);
 
-		HMENU hMenu = CreatePopupMenu();
+			for (int menunum = 0; menunum < menulimit; menunum++) {
+				wchar_t *pwszText = getMenuEntry(menunum);
+				arMenuLines.insert(pwszText);
+				AppendMenu(hMenu, MF_STRING, menunum + 1, pwszText);
+			}
 
-		for (int menunum = 0; menunum < menulimit; menunum++) {
-			pszMenu[menunum] = getMenuEntry(menunum);
-			AppendMenu(hMenu, MF_STRING, menunum + 1, pszMenu[menunum]);
+			int res = TrackPopupMenu(hMenu, TPM_RETURNCMD, cbcd->pt.x, cbcd->pt.y, 0, cbcd->hwndFrom, nullptr);
+			if (res != 0) {
+				bufSize = textlenght + mir_wstrlen(arMenuLines[res-1]) + 2;
+				pwszFormatedText.Format(arMenuLines[res-1], pszText);
+			}
+
+			for (int i = 0; i < arMenuLines.getCount(); i++)
+				mir_free(arMenuLines[i]);
 		}
-
-		int res = TrackPopupMenu(hMenu, TPM_RETURNCMD, cbcd->pt.x, cbcd->pt.y, 0, cbcd->hwndFrom, NULL);
-		if (res == 0)
-			break;
-
-		bufSize = textlenght + mir_tstrlen(pszMenu[res - 1]) + 2;
-		pszFormatedText = (TCHAR*)_alloca(bufSize*sizeof(TCHAR));
-		mir_sntprintf(pszFormatedText, bufSize, pszMenu[res - 1], pszText);
 	}
-	break;
+	else if (textlenght) {
+		SendDlgItemMessage(cbcd->hwndFrom, IDC_SRMM_MESSAGE, EM_GETSELTEXT, 0, (LPARAM)pszText);
 
-	case 2:
-		SendDlgItemMessage(cbcd->hwndFrom, IDC_MESSAGE, EM_GETSELTEXT, 0, (LPARAM)pszText);
+		pwszFormatedText.Format(L"[img]%s[/img]", pszText);
 
-		bufSize = textlenght + 12;
-		pszFormatedText = (TCHAR*)_alloca(bufSize*sizeof(TCHAR));
-		mir_sntprintf(pszFormatedText, bufSize, _T("[img]%s[/img]"), pszText);
-
-		bbd.ptszTooltip = 0;
+		bbd.pwszTooltip = 0;
 		bbd.hIcon = 0;
 		bbd.bbbFlags = BBSF_RELEASED;
-		CallService(MS_BB_SETBUTTONSTATE, wParam, (LPARAM)&bbd);
-		break;
+		Srmm_SetButtonState(wParam, &bbd);
+	}
+	else if (bbd.bbbFlags & BBSF_PUSHED) {
+		pwszFormatedText = L"[img]";
 
-	case 3:
-		pszFormatedText = _T("[img]");
+		bbd.pwszTooltip = LPGENW("Insert [img] tag / surround selected text with [img][/img]");
+		Srmm_SetButtonState(wParam, &bbd);
+	}
+	else {
+		pwszFormatedText = L"[/img]";
 
-		bbd.ptszTooltip = LPGENT("Insert [img] tag / surround selected text with [img][/img]");
-		CallService(MS_BB_SETBUTTONSTATE, wParam, (LPARAM)&bbd);
-		break;
-
-	case 4:
-		pszFormatedText = _T("[/img]");
-
-		bbd.ptszTooltip = LPGENT("Insert [img] tag / surround selected text with [img][/img]");
-		CallService(MS_BB_SETBUTTONSTATE, wParam, (LPARAM)&bbd);
-		break;
+		bbd.pwszTooltip = LPGENW("Insert [img] tag / surround selected text with [img][/img]");
+		Srmm_SetButtonState(wParam, &bbd);
 	}
 
-	for (int i = 0; pszMenu[i]; i++)
-		mir_free(pszMenu[i]);
-
-	if (pszFormatedText)
-		SendDlgItemMessage(cbcd->hwndFrom, IDC_MESSAGE, EM_REPLACESEL, TRUE, (LPARAM)pszFormatedText);
-
-	if (textlenght)
-		mir_free(pszText);
+	if (!pwszFormatedText.IsEmpty())
+		SendDlgItemMessage(cbcd->hwndFrom, IDC_SRMM_MESSAGE, EM_REPLACESEL, TRUE, (LPARAM)pwszFormatedText.c_str());
 	return 1;
 }
 
 int ModPlus_Init()
 {
 	HookEvent(ME_MSG_BUTTONPRESSED, CustomButtonPressed);
-	HookEvent(ME_MSG_TOOLBARLOADED, RegisterCustomButton);
+	
+	HookTemporaryEvent(ME_MSG_TOOLBARLOADED, RegisterCustomButton);
 	return 0;
 }

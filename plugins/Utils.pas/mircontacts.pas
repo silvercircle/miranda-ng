@@ -45,7 +45,6 @@ function WndToContact(wnd:HWND):TMCONTACT; overload;
 function WndToContact:TMCONTACT; overload;
 
 procedure ShowContactDialog(hContact:TMCONTACT;DblClk:boolean=true;anystatus:boolean=true);
-procedure SendToChat(hContact:TMCONTACT;pszText:PWideChar);
 
 //----- List of contacts (combobox) -----
 
@@ -85,8 +84,7 @@ end;
 
 function GetContactDisplayName(hContact: TMCONTACT; Proto: PAnsiChar = nil; Contact: boolean = false): PWideChar;
 var
-  ci: TContactInfo;
-  pUnk:PWideChar;
+  pName, pUnk:PWideChar;
 begin
   if (hContact = 0) and Contact then
     StrDupW(Result, TranslateW('Server'))
@@ -99,17 +97,14 @@ begin
       StrDupW(Result, pUnk)
     else
     begin
-      ci.cbSize   := SizeOf(ci);
-      ci.hContact := hContact;
-      ci.szProto  := Proto;
-      ci.dwFlag   := CNF_DISPLAY + CNF_UNICODE;
-      if CallService(MS_CONTACT_GETCONTACTINFO, 0, LPARAM(@ci)) = 0 then
+      pName := Contact_GetInfo(CNF_DISPLAY, hContact, Proto);
+      if pName <> nil then
       begin
-        if StrCmpW(ci.retval.szVal.w, pUnk)=0 then
+        if StrCmpW(pName, pUnk)=0 then
           AnsiToWide(GetContactID(hContact, Proto), Result, CP_ACP)
         else
-          StrDupW(Result, ci.retval.szVal.w);
-        mir_free(ci.retval.szVal.w);
+          StrDupW(Result, pName);
+        mir_free(pName);
       end
       else
         AnsiToWide(GetContactID(hContact, Proto), Result);
@@ -135,9 +130,9 @@ begin
     uid := PAnsiChar(CallProtoService(Proto, PS_GETCAPS, PFLAG_UNIQUEIDSETTING, 0));
     if (uid <> PAnsiChar(CALLSERVICE_NOTFOUND)) and (uid <> nil) then
     begin
-      // DBGetContactSettingStr comparing to DBGetContactSetting don't translate strings
+      // db_get_s comparing to DBGetContactSetting don't translate strings
       // when uType=0 (DBVT_ASIS)
-      if DBGetContactSettingStr(hContact, Proto, uid, @dbv, DBVT_ASIS) = 0 then
+      if db_get_s(hContact, Proto, uid, @dbv, DBVT_ASIS) = 0 then
       begin
         case dbv._type of
           DBVT_BYTE:   StrDup(Result, IntToStr(buf,dbv.bVal));
@@ -154,7 +149,7 @@ begin
           end;
         end;
         // free variant
-        DBFreeVariant(@dbv);
+        db_free(@dbv);
       end;
     end;
   end;
@@ -319,7 +314,7 @@ begin
             end;
           end;
         end;
-        DBFreeVariant(@ldbv);
+        db_free(@ldbv);
       end;
     end;
     // added 2011.04.20
@@ -348,7 +343,7 @@ begin
 
   mFreeMem(Proto);
   if not is_chat then
-    DBFreeVariant(@dbv)
+    db_free(@dbv)
   else
     mFreeMem(dbv.szVal.W);
 end;
@@ -382,7 +377,7 @@ begin
         if DBReadSetting(hContact,Proto,uid,@cws)=0 then
         begin
           StrCopy(p,opt_cuid); DBWriteSetting(0,group,section,@cws);
-          DBFreeVariant(@cws);
+          db_free(@cws);
           result:=1;
         end;
       end;
@@ -414,25 +409,18 @@ end;
 function WndToContact(wnd:HWND):TMCONTACT;
 var
   hContact:TMCONTACT;
-  mwid:TMessageWindowInputData;
-  mwod:TMessageWindowOutputData;
+  mwod:TMessageWindowData;
 begin
-  wnd:=GetParent(wnd); //!!
+  wnd:=GetParent(wnd);
   hContact:=db_find_first();
-  with mwid do
-  begin
-    cbSize:=SizeOf(mwid);
-    uFlags:=MSG_WINDOW_UFLAG_MSG_BOTH;
-  end;
-  mwod.cbSize:=SizeOf(mwod);
+
   while hContact<>0 do
   begin
-    mwid.hContact:=hContact;
-    if CallService(MS_MSG_GETWINDOWDATA,wparam(@mwid),lparam(@mwod))=0 then
+    if Srmm_GetWindowData(hContact,@mwod)=0 then
     begin
-      if {((mwod.uState and MSG_WINDOW_STATE_FOCUS)<>0) and} (mwod.hwndWindow=wnd) then
+      if mwod.hwndWindow=wnd then
       begin
-        result:=mwid.hContact;
+        result:=hContact;
         exit;
       end
     end;
@@ -460,10 +448,7 @@ procedure ShowContactDialog(hContact:TMCONTACT;DblClk:boolean=true;anystatus:boo
 var
   pc:array [0..127] of AnsiChar;
 begin
-{
-CallService(MS_CLIST_CONTACTDOUBLECLICKED,hContact,0);
-}
-  if (hContact<>0) and (CallService(MS_DB_CONTACT_IS,hContact,0)<>0) then
+  if (hContact<>0) and (db_is_contact(hContact)<>0) then
   begin
     if StrCopy(pc,GetContactProto(hContact))<>nil then
       if DblClk or (DBReadByte(hContact,pc,'ChatRoom',0)=1) then // chat room
@@ -475,62 +460,18 @@ CallService(MS_CLIST_CONTACTDOUBLECLICKED,hContact,0);
         end;
         if anystatus then
         begin
-          CallService(MS_CLIST_CONTACTDOUBLECLICKED,hContact,0); //??
+          Clist_ContactDoubleClicked(hContact);
         // if chat exist, open chat
         // else create new session
         end;
       end
       else
       begin
-        if ServiceExists(MS_MSG_CONVERS)<>0 then // Convers compat.
+        if ServiceExists(MS_MSG_CONVERS) then // Convers compat.
           CallService(MS_MSG_CONVERS,hContact,0)
         else
           CallService(MS_MSG_SENDMESSAGE,hContact,0)
       end;
-  end;
-end;
-
-procedure SendChatText(pszID:pointer;pszModule:PAnsiChar;pszText:pointer);
-var
-  gcd:TGCDEST;
-  gce:TGCEVENT;
-begin
-  gcd.pszModule:=pszModule;
-  gcd.iType    :=GC_EVENT_SENDMESSAGE;
-  gcd.szID.w   :=pszID;
-
-  FillChar(gce,SizeOf(TGCEVENT),0);
-  gce.cbSize  :=SizeOf(TGCEVENT);
-  gce.pDest   :=@gcd;
-  gce.bIsMe   :=true;
-  gce.szText.w:=pszText;
-  gce.dwFlags :=GCEF_ADDTOLOG;
-  gce.time    :=GetCurrentTimeStamp;
-
-  CallServiceSync(MS_GC_EVENT,0,lparam(@gce));
-end;
-
-procedure SendToChat(hContact:TMCONTACT;pszText:PWideChar);
-var
-  gci:TGC_INFO;
-  pszModule:PAnsiChar;
-  i,cnt:integer;
-begin
-  pszModule:=GetContactProto(hContact);
-  cnt:=CallService(MS_GC_GETSESSIONCOUNT,0,lparam(pszModule));
-  i:=0;
-  gci.pszModule:=pszModule;
-  while i<cnt do
-  begin
-    gci.iItem:=i;
-    gci.Flags:=GCF_BYINDEX+GCF_HCONTACT+GCF_ID;
-    CallService(MS_GC_GETINFO,0,lparam(@gci));
-    if gci.hContact=hContact then
-    begin
-      SendChatText(gci.pszID.w,pszModule,pszText);
-      break;
-    end;
-    inc(i);
   end;
 end;
 
@@ -617,7 +558,7 @@ begin
               StrReplaceW(buf,'%uid%',p);
               if ldbv._type in [DBVT_UTF8,DBVT_ASCIIZ] then
                 mFreeMem(p);
-              DBFreeVariant(@ldbv);
+              db_free(@ldbv);
             end;
           end;
           StrReplaceW(buf,'%uid%',nil);

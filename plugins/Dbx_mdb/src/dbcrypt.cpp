@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -21,175 +21,109 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include "commonheaders.h"
+#include "stdafx.h"
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-//VERY VERY VERY BASIC ENCRYPTION FUNCTION
+char DBKey_Crypto_Provider   [] = "Provider";
+char DBKey_Crypto_Key        [] = "Key";
+char DBKey_Crypto_IsEncrypted[] = "EncryptedDB";
 
-static void Encrypt(char *msg, BOOL up)
+CRYPTO_PROVIDER* CDbxMdb::SelectProvider()
 {
-	int jump = (up) ? 5 : -5;
-	for (int i = 0; msg[i]; i++)
-		msg[i] = msg[i] + jump;
-}
+	CRYPTO_PROVIDER **ppProvs, *pProv;
+	int iNumProvs;
+	Crypto_EnumProviders(&iNumProvs, &ppProvs);
 
-__forceinline void DecodeString(LPSTR buf)
-{
-	Encrypt(buf, FALSE);
-}
+	if (iNumProvs == 0)
+		return nullptr;
 
-struct VarDescr
-{
-	VarDescr(LPCSTR var, LPCSTR value) :
-		szVar(mir_strdup(var)),
-		szValue(mir_strdup(value))
-	{}
+	bool bTotalCrypt = false;
 
-	VarDescr(LPCSTR var, LPSTR value) :
-		szVar(mir_strdup(var)),
-		szValue(value)
-	{}
-
-	VarDescr(LPCSTR var, PBYTE value, int len) :
-		szVar(mir_strdup(var)),
-		szValue((char*)memcpy(mir_alloc(len), value, len)),
-		iLen(len)
-	{}
-
-	ptrA szVar, szValue;
-	int  iLen;
-};
-
-struct SettingUgraderParam
-{
-	CDbxMdb *db;
-	LPCSTR    szModule;
-	MCONTACT  contactID;
-	OBJLIST<VarDescr>* pList;
-};
-
-int sttSettingUgrader(const char *szSetting, LPARAM lParam)
-{
-	SettingUgraderParam *param = (SettingUgraderParam*)lParam;
-	if (param->db->IsSettingEncrypted(param->szModule, szSetting)) {
-		DBVARIANT dbv = { DBVT_UTF8 };
-		if (!param->db->GetContactSettingStr(param->contactID, param->szModule, szSetting, &dbv)) {
-			if (dbv.type == DBVT_UTF8) {
-				DecodeString(dbv.pszVal);
-				param->pList->insert(new VarDescr(szSetting, (LPCSTR)dbv.pszVal));
-			}
-			param->db->FreeVariant(&dbv);
-		}
+	if (iNumProvs > 1)
+	{
+		CSelectCryptoDialog dlg(ppProvs, iNumProvs);
+		dlg.DoModal();
+		pProv = dlg.GetSelected();
+		bTotalCrypt = dlg.TotalSelected();
 	}
-	return 0;
-}
+	else pProv = ppProvs[0];
 
-void sttContactEnum(MCONTACT contactID, const char *szModule, CDbxMdb *db)
-{
-	OBJLIST<VarDescr> arSettings(1);
-	SettingUgraderParam param = { db, szModule, contactID, &arSettings };
+	for (;; Remap())
+	{
+		txn_ptr txn(m_pMdbEnv);
 
-	DBCONTACTENUMSETTINGS dbces = { 0 };
-	dbces.pfnEnumProc = sttSettingUgrader;
-	dbces.szModule = szModule;
-	dbces.lParam = (LPARAM)&param;
-	db->EnumContactSettings(NULL, &dbces);
+		MDBX_val key = { DBKey_Crypto_Provider, sizeof(DBKey_Crypto_Provider) }, value = { pProv->pszName, mir_strlen(pProv->pszName) + 1 };
+		MDBX_CHECK(mdbx_put(txn, m_dbCrypto, &key, &value, 0), nullptr);
 
-	for (int i = 0; i < arSettings.getCount(); i++) {
-		VarDescr &p = arSettings[i];
+		key.iov_len = sizeof(DBKey_Crypto_IsEncrypted); key.iov_base = DBKey_Crypto_IsEncrypted; value.iov_len = sizeof(bool); value.iov_base = &bTotalCrypt;
+		MDBX_CHECK(mdbx_put(txn, m_dbCrypto, &key, &value, 0), nullptr);
 
-		size_t len;
-		BYTE *pResult = db->m_crypto->encodeString(p.szValue, &len);
-		if (pResult != NULL) {
-			DBCONTACTWRITESETTING dbcws = { szModule, p.szVar };
-			dbcws.value.type = DBVT_ENCRYPTED;
-			dbcws.value.pbVal = pResult;
-			dbcws.value.cpbVal = (WORD)len;
-			db->WriteContactSetting(contactID, &dbcws);
-
-			mir_free(pResult);
-		}
+		if (txn.commit() == MDBX_SUCCESS)
+			break;
 	}
+
+	return pProv;
 }
-
-int sttModuleEnum(const char *szModule, DWORD, LPARAM lParam)
-{
-	CDbxMdb *db = (CDbxMdb*)lParam;
-	sttContactEnum(NULL, szModule, db);
-
-	for (MCONTACT contactID = db->FindFirstContact(); contactID; contactID = db->FindNextContact(contactID))
-		sttContactEnum(contactID, szModule, db);
-
-	return 0;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
 
 int CDbxMdb::InitCrypt()
 {
 	CRYPTO_PROVIDER *pProvider;
-	bool bMissingKey = false;
 
-	DBVARIANT dbv = { 0 };
-	dbv.type = DBVT_BLOB;
-	if (GetContactSetting(NULL, "CryptoEngine", "Provider", &dbv)) {
-	LBL_CreateProvider:
-		CRYPTO_PROVIDER **ppProvs;
-		int iNumProvs;
-		Crypto_EnumProviders(&iNumProvs, &ppProvs);
-		if (iNumProvs == 0)
-			return 1;
+	txn_ptr_ro txn(m_txn);
 
-		pProvider = ppProvs[0];  //!!!!!!!!!!!!!!!!!!
-
-		DBCONTACTWRITESETTING dbcws = { "CryptoEngine", "Provider" };
-		dbcws.value.type = DBVT_BLOB;
-		dbcws.value.pbVal = (PBYTE)pProvider->pszName;
-		dbcws.value.cpbVal = (int)strlen(pProvider->pszName) + 1;
-		WriteContactSetting(NULL, &dbcws);
+	MDBX_val key = { DBKey_Crypto_Provider, sizeof(DBKey_Crypto_Provider) }, value;
+	if (mdbx_get(txn, m_dbCrypto, &key, &value) == MDBX_SUCCESS)
+	{
+		pProvider = Crypto_GetProvider((const char*)value.iov_base);
+		if (pProvider == nullptr)
+			pProvider = SelectProvider();
 	}
-	else {
-		if (dbv.type != DBVT_BLOB) { // old version, clean it up
-			bMissingKey = true;
-			goto LBL_CreateProvider;
-		}
-
-		pProvider = Crypto_GetProvider(LPCSTR(dbv.pbVal));
-		FreeVariant(&dbv);
-		if (pProvider == NULL)
-			goto LBL_CreateProvider;
+	else
+	{
+		pProvider = SelectProvider();
 	}
+	if (pProvider == nullptr) 
+		return 1;
 
-	if ((m_crypto = pProvider->pFactory()) == NULL)
+	if ((m_crypto = pProvider->pFactory()) == nullptr)
 		return 3;
 
-	dbv.type = DBVT_BLOB;
-	if (GetContactSetting(NULL, "CryptoEngine", "StoredKey", &dbv)) {
-		bMissingKey = true;
-
-	LBL_SetNewKey:
-		m_crypto->generateKey(); // unencrypted key
+	key.iov_len = sizeof(DBKey_Crypto_Key); key.iov_base = DBKey_Crypto_Key;
+	if (mdbx_get(txn, m_dbCrypto, &key, &value) == MDBX_SUCCESS && (value.iov_len == m_crypto->getKeyLength()))
+	{
+		if (!m_crypto->setKey((const BYTE*)value.iov_base, value.iov_len))
+		{
+			DlgChangePassParam param = { this };
+			CEnterPasswordDialog dlg(&param);
+			while (true)
+			{
+				if (-128 != dlg.DoModal())
+					return 4;
+				m_crypto->setPassword(pass_ptrA(mir_utf8encodeW(param.newPass)));
+				if (m_crypto->setKey((const BYTE*)value.iov_base, value.iov_len))
+				{
+					m_bUsesPassword = true;
+					SecureZeroMemory(&param, sizeof(param));
+					break;
+				}
+				param.wrongPass++;
+			}
+		}
+	}
+	else
+	{
+		if (!m_crypto->generateKey())
+			return 6;
 		StoreKey();
 	}
-	else {
-		size_t iKeyLength = m_crypto->getKeyLength();
-		if (dbv.cpbVal != (WORD)iKeyLength)
-			goto LBL_SetNewKey;
 
-		if (!m_crypto->setKey(dbv.pbVal, iKeyLength))
-			if (!EnterPassword(dbv.pbVal, iKeyLength))  // password protected?
-				return 4;
-
-		FreeVariant(&dbv);
-	}
-
-	if (bMissingKey)
-		EnumModuleNames(sttModuleEnum, this);
-
-	dbv.type = DBVT_BYTE;
-	if (!GetContactSetting(NULL, "CryptoEngine", "DatabaseEncryption", &dbv))
-		m_bEncrypted = dbv.bVal != 0;
+	key.iov_len = sizeof(DBKey_Crypto_IsEncrypted); key.iov_base = DBKey_Crypto_IsEncrypted;
+	
+	if (mdbx_get(txn, m_dbCrypto, &key, &value) == MDBX_SUCCESS)
+		m_bEncrypted = *(const bool*)value.iov_base;
+	else 
+		m_bEncrypted = false;
 
 	InitDialogs();
 	return 0;
@@ -201,63 +135,112 @@ void CDbxMdb::StoreKey()
 	BYTE *pKey = (BYTE*)_alloca(iKeyLength);
 	m_crypto->getKey(pKey, iKeyLength);
 
-	DBCONTACTWRITESETTING dbcws = { "CryptoEngine", "StoredKey" };
-	dbcws.value.type = DBVT_BLOB;
-	dbcws.value.cpbVal = (WORD)iKeyLength;
-	dbcws.value.pbVal = pKey;
-	WriteContactSetting(NULL, &dbcws);
-
+	for (;; Remap())
+	{
+		txn_ptr txn(m_pMdbEnv);
+		MDBX_val key = { DBKey_Crypto_Key, sizeof(DBKey_Crypto_Key) }, value = { pKey, iKeyLength };
+		mdbx_put(txn, m_dbCrypto, &key, &value, 0);
+		if (txn.commit() == MDBX_SUCCESS)
+			break;
+	}
 	SecureZeroMemory(pKey, iKeyLength);
 }
 
 void CDbxMdb::SetPassword(LPCTSTR ptszPassword)
 {
-	if (ptszPassword == NULL || *ptszPassword == 0) {
+	if (ptszPassword == NULL || *ptszPassword == 0) 
+	{
 		m_bUsesPassword = false;
 		m_crypto->setPassword(NULL);
 	}
-	else {
+	else 
+	{
 		m_bUsesPassword = true;
-		m_crypto->setPassword(ptrA(mir_utf8encodeT(ptszPassword)));
+		m_crypto->setPassword(pass_ptrA(mir_utf8encodeW(ptszPassword)));
 	}
 	UpdateMenuItem();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-void CDbxMdb::ToggleEncryption()
+int CDbxMdb::EnableEncryption(bool bEncrypted)
 {
-	HANDLE hSave1 = hSettingChangeEvent;    hSettingChangeEvent = NULL;
-	HANDLE hSave2 = hEventAddedEvent;       hEventAddedEvent = NULL;
-	HANDLE hSave3 = hEventDeletedEvent;     hEventDeletedEvent = NULL;
-	HANDLE hSave4 = hEventFilterAddedEvent; hEventFilterAddedEvent = NULL;
+	if (m_bEncrypted == bEncrypted)
+		return 0;
 
-	mir_cslock lck(m_csDbAccess);
-	ToggleSettingsEncryption(NULL);
-	ToggleEventsEncryption(NULL);
 
-	for (MCONTACT contactID = FindFirstContact(); contactID; contactID = FindNextContact(contactID)) {
-		ToggleSettingsEncryption(contactID);
-		ToggleEventsEncryption(contactID);
+	{
+		txn_ptr_ro txn(m_txn);
+
+		MDBX_stat st;
+		mdbx_dbi_stat(txn, m_dbEvents, &st, sizeof(st));
+
+		std::vector<MEVENT> lstEvents;
+		lstEvents.reserve(st.ms_entries);
+
+		{
+			cursor_ptr_ro cursor(m_curEvents);
+			MDBX_val key, data;
+			while (mdbx_cursor_get(cursor, &key, &data, MDBX_NEXT) == MDBX_SUCCESS)
+			{
+				const MEVENT hDbEvent = *(const MEVENT*)key.iov_base;
+				lstEvents.push_back(hDbEvent);
+			}
+		}
+		for (auto it = lstEvents.begin(); it != lstEvents.end(); ++it)
+		{
+			MEVENT &hDbEvent = *it;
+			MDBX_val key = { &hDbEvent, sizeof(MEVENT) }, data;
+			mdbx_get(txn, m_dbEvents, &key, &data);
+
+			const DBEvent *dbEvent = (const DBEvent*)data.iov_base;
+			const BYTE    *pBlob = (BYTE*)(dbEvent + 1);
+
+			if (((dbEvent->flags & DBEF_ENCRYPTED) != 0) != bEncrypted)
+			{
+				mir_ptr<BYTE> pNewBlob;
+				size_t nNewBlob;
+				uint32_t dwNewFlags;
+
+				if (dbEvent->flags & DBEF_ENCRYPTED)
+				{
+					pNewBlob = (BYTE*)m_crypto->decodeBuffer(pBlob, dbEvent->cbBlob, &nNewBlob);
+					dwNewFlags = dbEvent->flags & (~DBEF_ENCRYPTED);
+				}
+				else
+				{
+					pNewBlob = m_crypto->encodeBuffer(pBlob, dbEvent->cbBlob, &nNewBlob);
+					dwNewFlags = dbEvent->flags | DBEF_ENCRYPTED;
+				}
+
+				for (;; Remap())
+				{
+					txn_ptr txn(m_pMdbEnv);
+					data.iov_len = sizeof(DBEvent)+nNewBlob;
+					MDBX_CHECK(mdbx_put(txn, m_dbEvents, &key, &data, MDBX_RESERVE), 1);
+
+					DBEvent *pNewDBEvent = (DBEvent *)data.iov_base;
+					*pNewDBEvent = *dbEvent;
+					pNewDBEvent->cbBlob = nNewBlob;
+					pNewDBEvent->flags = dwNewFlags;
+					memcpy(pNewDBEvent + 1, pNewBlob, nNewBlob);
+
+
+					if (txn.commit() == MDBX_SUCCESS)
+						break;
+				}
+			}
+		}
 	}
 
-	m_bEncrypted = !m_bEncrypted;
-
-	DBCONTACTWRITESETTING dbcws = { "CryptoEngine", "DatabaseEncryption" };
-	dbcws.value.type = DBVT_BYTE;
-	dbcws.value.bVal = m_bEncrypted;
-	WriteContactSetting(NULL, &dbcws);
-
-	hSettingChangeEvent = hSave1;
-	hEventAddedEvent = hSave2;
-	hEventDeletedEvent = hSave3;
-	hEventFilterAddedEvent = hSave4;
-}
-
-void CDbxMdb::ToggleSettingsEncryption(MCONTACT contactID)
-{
-}
-
-void CDbxMdb::ToggleEventsEncryption(MCONTACT contactID)
-{
+	for (;; Remap())
+	{
+		txn_ptr txn(m_pMdbEnv);
+		MDBX_val key = { DBKey_Crypto_IsEncrypted, sizeof(DBKey_Crypto_IsEncrypted) }, value = { &bEncrypted, sizeof(bool) };
+		MDBX_CHECK(mdbx_put(txn, m_dbCrypto, &key, &value, 0), 1);
+		if (txn.commit() == MDBX_SUCCESS)
+			break;
+	}
+	m_bEncrypted = bEncrypted;
+	return 0;
 }

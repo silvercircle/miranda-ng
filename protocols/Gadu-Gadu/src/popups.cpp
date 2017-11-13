@@ -23,14 +23,14 @@
 struct PopupData
 {
 	unsigned flags;
-	TCHAR* title;
-	TCHAR* text;
+	wchar_t* title;
+	wchar_t* text;
 	GGPROTO* gg;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Popup plugin window proc
-
+//
 LRESULT CALLBACK PopupWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg) 
@@ -69,17 +69,17 @@ LRESULT CALLBACK PopupWindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Popup plugin class registration
-
+//
 void GGPROTO::initpopups()
 {
-	TCHAR szDescr[256];
+	wchar_t szDescr[256];
 	char  szName[256];
 
 	POPUPCLASS puc = {0};
 	puc.cbSize = sizeof(puc);
 	puc.PluginWindowProc = PopupWindowProc;
 	puc.flags = PCF_TCHAR;
-	puc.ptszDescription = szDescr;
+	puc.pwszDescription = szDescr;
 	puc.pszName = szName;
 
 	puc.colorBack = RGB(173, 206, 247);
@@ -87,7 +87,7 @@ void GGPROTO::initpopups()
 	puc.hIcon = CopyIcon(LoadIconEx("main", FALSE));
 	ReleaseIconEx("main", FALSE);
 	puc.iSeconds = 4;
-	mir_sntprintf(szDescr, _T("%s/%s"), m_tszUserName, TranslateT("Notify"));
+	mir_snwprintf(szDescr, L"%s/%s", m_tszUserName, TranslateT("Notify"));
 	mir_snprintf(szName, "%s_%s", m_szModuleName, "Notify");
 	hPopupNotify = Popup_RegisterClass(&puc);
 
@@ -95,14 +95,14 @@ void GGPROTO::initpopups()
 	puc.colorText = RGB(255, 245, 225); // Yellow
 	puc.iSeconds = 60;
 	puc.hIcon = (HICON)LoadImage(NULL, IDI_WARNING, IMAGE_ICON, 0, 0, LR_SHARED);
-	mir_sntprintf(szDescr, _T("%s/%s"), m_tszUserName, TranslateT("Error"));
+	mir_snwprintf(szDescr, L"%s/%s", m_tszUserName, TranslateT("Error"));
 	mir_snprintf(szName, "%s_%s", m_szModuleName, "Error");
 	hPopupError = Popup_RegisterClass(&puc);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // Show popup - popup plugin support
-
+//
 void CALLBACK sttMainThreadCallback(PVOID dwParam)
 {
 	PopupData* puData = (PopupData*)dwParam;
@@ -111,8 +111,8 @@ void CALLBACK sttMainThreadCallback(PVOID dwParam)
 	if (ServiceExists(MS_POPUP_ADDPOPUPCLASS)) {
 		char szName[256];
 		POPUPDATACLASS ppd = {sizeof(ppd)};
-		ppd.ptszTitle = puData->title;
-		ppd.ptszText = puData->text;
+		ppd.pwszTitle = puData->title;
+		ppd.pwszText = puData->text;
 		ppd.PluginData = puData;
 		ppd.pszClassName = szName;
 		
@@ -149,14 +149,14 @@ void CALLBACK sttMainThreadCallback(PVOID dwParam)
 	mir_free(puData);
 }
 
-void GGPROTO::showpopup(const TCHAR* nickname, const TCHAR* msg, int flags)
+void GGPROTO::showpopup(const wchar_t* nickname, const wchar_t* msg, int flags)
 {
-	if (Miranda_Terminated()) return;
+	if (Miranda_IsTerminated()) return;
 
 	PopupData *puData = (PopupData*)mir_calloc(sizeof(PopupData));
 	puData->flags = flags;
-	puData->title = mir_tstrdup(nickname);
-	puData->text = mir_tstrdup(msg);
+	puData->title = mir_wstrdup(nickname);
+	puData->text = mir_wstrdup(msg);
 	puData->gg = this;
 
 	CallFunctionAsync(sttMainThreadCallback, puData);

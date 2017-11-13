@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "..\stdafx.h"
+#include "../stdafx.h"
 
 /***********************************************************************************************************
  * internal functions
@@ -53,17 +53,17 @@ static void DisplayNameToFileName(lpExImParam ExImContact, LPSTR pszFileName, WO
 				return;
 			}
 			
-			disp = temp = mir_t2a(pcli->pfnGetContactDisplayName(ExImContact->hContact, NULL));
+			disp = temp = mir_u2a(pcli->pfnGetContactDisplayName(ExImContact->hContact, NULL));
 			break;
 
 		case EXIM_SUBGROUP:
-			temp = mir_t2a(ExImContact->ptszName);
+			temp = mir_u2a(ExImContact->ptszName);
 			disp = temp;
 			break;
 
 		case EXIM_ACCOUNT:
 			PROTOACCOUNT* acc = Proto_GetAccount(ExImContact->pszName);
-			disp = temp = mir_t2a(acc->tszAccountName);
+			disp = temp = mir_u2a(acc->tszAccountName);
 			break;
 	}
 
@@ -161,42 +161,35 @@ INT_PTR SvcExImport_Import(lpExImParam ExImContact, HWND hwndParent)
 	// create the filename to suggest the user for the to export contact
 	DisplayNameToFileName(ExImContact, szFileName, _countof(szFileName));
 
-	int nIndex = DlgExIm_OpenFileName(hwndParent, 
+	int nIndex = DlgExIm_OpenFileName(hwndParent,
 		Translate("Import User Details from VCard"),
 		FilterString(ExImContact),
 		szFileName);
 
-// Stop during develop
-if (ExImContact->Typ == EXIM_ACCOUNT || 
-	ExImContact->Typ == EXIM_GROUP) return 1;
+	// Stop during develop
+	if (ExImContact->Typ == EXIM_ACCOUNT ||
+		ExImContact->Typ == EXIM_GROUP) return 1;
 
 	switch (nIndex) {
-		case 1:
-		{
-			CFileXml xmlFile;
-			CallService(MS_CLIST_SETHIDEOFFLINE, -1, 0);	//workarround to refresh the clist....
-			xmlFile.Import(ExImContact->hContact, szFileName);
-			CallService(MS_CLIST_SETHIDEOFFLINE, -1, 0);	//...after import.
-			//pcli->pfnClcBroadcast(CLM_AUTOREBUILD, 0, 0); //does not work
-			return 0;
-		}
+	case 1:
+		CFileXml().Import(ExImContact->hContact, szFileName);
+		Clist_BroadcastAsync(CLM_AUTOREBUILD, 0, 0);
+		return 0;
+
 		// .ini
-		case 2:
-			return SvcExImINI_Import(ExImContact->hContact, szFileName);
+	case 2:
+		return SvcExImINI_Import(ExImContact->hContact, szFileName);
 
 		// .vcf
-		case 3:
-		{
-			CVCardFileVCF vcfFile;
-
-			if (vcfFile.Open(ExImContact->hContact, szFileName, "rt")) {
-				SetCursor(LoadCursor(NULL, IDC_WAIT));
-				vcfFile.Import();
-				vcfFile.Close();
-				SetCursor(LoadCursor(NULL, IDC_ARROW));
-			}
-			return 0;
+	case 3:
+		CVCardFileVCF vcfFile;
+		if (vcfFile.Open(ExImContact->hContact, szFileName, "rt")) {
+			SetCursor(LoadCursor(NULL, IDC_WAIT));
+			vcfFile.Import();
+			vcfFile.Close();
+			SetCursor(LoadCursor(NULL, IDC_ARROW));
 		}
+		return 0;
 	}
 	return 1;
 }
@@ -266,7 +259,7 @@ INT_PTR svcExIm_Group_Service(WPARAM wParam, LPARAM)
 {
 	ExImParam ExIm;
 	INT_PTR hItem = 0, hRoot = 0, hParent = 0;
-	TCHAR tszGroup[120], tszItem[120];
+	wchar_t tszGroup[120], tszItem[120];
 	memset(&tszGroup, 0, sizeof(tszGroup));
 	memset(&tszItem, 0, sizeof(tszItem));
 	memset(&ExIm, 0, sizeof(ExIm));
@@ -280,8 +273,8 @@ INT_PTR svcExIm_Group_Service(WPARAM wParam, LPARAM)
 	while (hItem) {
 		if (SendMessage(hClist,CLM_GETITEMTYPE, (WPARAM)hItem, 0) == CLCIT_GROUP) {
 			SendMessage(hClist,CLM_GETITEMTEXT, (WPARAM)hItem, (LPARAM)ptszItem);
-			LPTSTR temp = mir_tstrdup(ptszGroup);
-			mir_sntprintf(tszGroup, _T("%s%s%s"), ptszItem, mir_tstrlen(temp)? _T("\\"):_T(""), temp);
+			LPTSTR temp = mir_wstrdup(ptszGroup);
+			mir_snwprintf(tszGroup, L"%s%s%s", ptszItem, mir_wstrlen(temp)? L"\\":L"", temp);
 			mir_free (temp);
 		}
 		hParent = SendMessage(hClist,CLM_GETNEXTITEM, (WPARAM)CLGN_PARENT, (LPARAM)hItem);

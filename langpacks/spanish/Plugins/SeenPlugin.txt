@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: SeenPlugin.dll
 ;  Plugin: Last seen
-;  Version: 5.0.5.2
+;  Version: 5.0.5.3
 ;  Authors: Heiko Schillinger, YB
 ;============================================================
 [Text]
@@ -11,18 +11,18 @@ Texto
 En línea
 [Away]
 Fuera
-[NA]
+[Not available]
 No disponible
 [Occupied]
 Ocupado
-[DND]
+[Do not disturb]
 No molestar
 [On the phone]
 En el teléfono
 [Out to lunch]
 Salí a comer
 [Free for chat]
-Libre para el chat	
+Libre para el chat
 [Invisible]
 Invisible
 [Offline]

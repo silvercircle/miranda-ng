@@ -4,7 +4,9 @@ Copyright (C) 2010, 2011 tico-tico
 
 #include "stdafx.h"
 
+#define DELAYIMP_INSECURE_WRITABLE_HOOKS
 #include <delayimp.h>
+
 #include "bass.h"
 
 #pragma comment(lib, "delayimp.lib")
@@ -16,14 +18,17 @@ Copyright (C) 2010, 2011 tico-tico
 
 static HINSTANCE hBass = NULL;
 
-FARPROC WINAPI delayHook(unsigned dliNotify, PDelayLoadInfo)
+FARPROC WINAPI delayHook(unsigned dliNotify, PDelayLoadInfo dli)
 {
-	if (dliNotify == dliNotePreLoadLibrary)
-		return (FARPROC)hBass;
+	switch (dliNotify)
+	{
+	case dliNotePreGetProcAddress:
+		return GetProcAddress(hBass, dli->dlp.szProcName);
+	}
 	return NULL;
 }
 
-extern "C" PfnDliHook __pfnDliNotifyHook2 = &delayHook;
+extern "C" PfnDliHook __pfnDliNotifyHook2 = delayHook;
 
 HINSTANCE hInst;
 int hLangpack;
@@ -55,7 +60,7 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 }
 
 #define MAXCHAN 5
-static TCHAR CurrBassPath[MAX_PATH], tmp[MAX_PATH];
+static wchar_t CurrBassPath[MAX_PATH], tmp[MAX_PATH];
 static int sndNSnd = 0, sndLimSnd;
 static HSTREAM sndSSnd[MAXCHAN] = { 0 };
 
@@ -73,7 +78,7 @@ HANDLE hBASSFolder = NULL, hPlaySound = NULL;
 
 static int OnPlaySnd(WPARAM wParam, LPARAM lParam)
 {
-	TCHAR* ptszFile = (TCHAR*)lParam;
+	wchar_t* ptszFile = (wchar_t*)lParam;
 	SYSTEMTIME systime;
 	BOOL doPlay = TRUE;
 
@@ -136,7 +141,7 @@ INT_PTR CALLBACK OptionsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 
 		SendDlgItemMessage(hwndDlg, IDC_MAXCHANNEL, CB_RESETCONTENT, 0, 0);
 		for (int i = 1; i <= MAXCHAN; i++)
-			SendDlgItemMessage(hwndDlg, IDC_MAXCHANNEL, CB_ADDSTRING, 0, (LPARAM)_itot(i, tmp, 10));
+			SendDlgItemMessage(hwndDlg, IDC_MAXCHANNEL, CB_ADDSTRING, 0, (LPARAM)_itow(i, tmp, 10));
 
 		SendDlgItemMessage(hwndDlg, IDC_MAXCHANNEL, CB_SETCURSEL, sndLimSnd - 1, 0);
 
@@ -153,11 +158,11 @@ INT_PTR CALLBACK OptionsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 			systime.wYear = 2000;
 			systime.wMonth = 1;
 			systime.wDay = 1;
-			SendDlgItemMessage(hwndDlg, IDC_TIME1, DTM_SETFORMAT, 0, (LPARAM)_T("HH:mm"));
+			SendDlgItemMessage(hwndDlg, IDC_TIME1, DTM_SETFORMAT, 0, (LPARAM)L"HH:mm");
 			SendDlgItemMessage(hwndDlg, IDC_TIME1, DTM_SETSYSTEMTIME, GDT_VALID, (LPARAM)&systime);
 			systime.wHour = HIBYTE(TimeWrd2);
 			systime.wMinute = LOBYTE(TimeWrd2);
-			SendDlgItemMessage(hwndDlg, IDC_TIME2, DTM_SETFORMAT, 0, (LPARAM)_T("HH:mm"));
+			SendDlgItemMessage(hwndDlg, IDC_TIME2, DTM_SETFORMAT, 0, (LPARAM)L"HH:mm");
 			SendDlgItemMessage(hwndDlg, IDC_TIME2, DTM_SETSYSTEMTIME, GDT_VALID, (LPARAM)&systime);
 		}
 
@@ -185,7 +190,7 @@ INT_PTR CALLBACK OptionsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 		}
 		else {
 			DWORD bassver = BASS_GetVersion();
-			mir_sntprintf(tmp, TranslateT("un4seen's bass version: %d.%d.%d.%d"), bassver >> 24, (bassver >> 16) & 0xff, (bassver >> 8) & 0xff, bassver & 0xff);
+			mir_snwprintf(tmp, TranslateT("un4seen's bass version: %d.%d.%d.%d"), bassver >> 24, (bassver >> 16) & 0xff, (bassver >> 8) & 0xff, bassver & 0xff);
 			SetDlgItemText(hwndDlg, IDC_BASSVERSION, tmp);
 
 			SendDlgItemMessage(hwndDlg, IDC_OUTDEVICE, CB_RESETCONTENT, 0, 0);
@@ -193,10 +198,10 @@ INT_PTR CALLBACK OptionsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 			SendDlgItemMessage(hwndDlg, IDC_OUTDEVICE, CB_SETCURSEL, 0, 0);
 
 			BASS_DEVICEINFO info;
-			ptrT tszDeviceName(db_get_tsa(NULL, ModuleName, OPT_OUTDEVICE));
+			ptrW tszDeviceName(db_get_wsa(NULL, ModuleName, OPT_OUTDEVICE));
 			for (int i = 1; BASS_GetDeviceInfo(i + newBass, &info); i++) {
 				SendDlgItemMessage(hwndDlg, IDC_OUTDEVICE, CB_ADDSTRING, 0, _A2T(info.name));
-				if (!mir_tstrcmp(tszDeviceName, _A2T(info.name)))
+				if (!mir_wstrcmp(tszDeviceName, _A2T(info.name)))
 					SendDlgItemMessage(hwndDlg, IDC_OUTDEVICE, CB_SETCURSEL, i, 0);
 			}
 		}
@@ -210,7 +215,7 @@ INT_PTR CALLBACK OptionsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 				SendMessage(hwndSlider, TBM_SETPOS, TRUE, Volume);
 				Preview = TRUE;
 				if (EnPreview)
-					SkinPlaySound("AlertMsg");
+					Skin_PlaySound("AlertMsg");
 				SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
 			}
 		break;
@@ -222,7 +227,7 @@ INT_PTR CALLBACK OptionsProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 				SYSTEMTIME systime = { 0 };
 
 				GetDlgItemText(hwndDlg, IDC_OUTDEVICE, tmp, _countof(tmp));
-				db_set_ts(NULL, ModuleName, OPT_OUTDEVICE, tmp);
+				db_set_ws(NULL, ModuleName, OPT_OUTDEVICE, tmp);
 
 				Volume = (DWORD)SendDlgItemMessage(hwndDlg, IDC_VOLUME, TBM_GETPOS, 0, 0);
 				db_set_b(NULL, ModuleName, OPT_VOLUME, Volume);
@@ -312,9 +317,9 @@ int OptionsInit(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONS);
-	odp.pszTitle = ModuleName;
+	odp.szTitle.a = ModuleName;
 	odp.pfnDlgProc = OptionsProc;
-	odp.pszGroup = LPGEN("Sounds");
+	odp.szGroup.a = LPGEN("Sounds");
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);
 	return 0;
@@ -355,14 +360,14 @@ static LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 
 	switch (msg) {
 	case WM_CREATE:
-		hwndMute = CreateWindow(MIRANDABUTTONCLASS, _T(""), WS_CHILD | WS_VISIBLE, 1, 1, 16, 16, hwnd,
+		hwndMute = CreateWindow(MIRANDABUTTONCLASS, L"", WS_CHILD | WS_VISIBLE, 1, 1, 16, 16, hwnd,
 			0, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
 		SendMessage(hwndMute, BUTTONSETASFLATBTN, 1, 0);
 		SendMessage(hwndMute, BUTTONSETCUSTOMPAINT, 0, (LPARAM)&fnPainter);
 
 		EnableFrameIcon(db_get_b(NULL, "Skin", "UseSound", 0) != 0);
 
-		hwndSlider = CreateWindow(TRACKBAR_CLASS, _T(""), WS_CHILD | WS_VISIBLE | TBS_NOTICKS | TBS_TOOLTIPS, 21, 1, 100, 20,
+		hwndSlider = CreateWindow(TRACKBAR_CLASS, L"", WS_CHILD | WS_VISIBLE | TBS_NOTICKS | TBS_TOOLTIPS, 21, 1, 100, 20,
 			hwnd, (HMENU)0, (HINSTANCE)GetWindowLongPtr(hwnd, GWLP_HINSTANCE), NULL);
 		SendMessage(hwndSlider, TBM_SETRANGE, FALSE, MAKELONG(SLIDER_MIN, SLIDER_MAX));
 		SendMessage(hwndSlider, TBM_SETPOS, TRUE, Volume);
@@ -386,7 +391,7 @@ static LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 				SendMessage(hwndOptSlider, TBM_SETPOS, TRUE, Volume);
 				Preview = TRUE;
 				if (EnPreview)
-					SkinPlaySound("AlertMsg");
+					Skin_PlaySound("AlertMsg");
 			}
 		break;
 
@@ -419,11 +424,7 @@ static LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
 
 int ReloadColors(WPARAM, LPARAM)
 {
-	ColourIDT colourid = { 0 };
-	colourid.cbSize = sizeof(colourid);
-	mir_tstrcpy(colourid.group, _T(ModuleName));
-	mir_tstrcpy(colourid.name, LPGENT("Frame background"));
-	clBack = CallService(MS_COLOUR_GETT, (WPARAM)&colourid, 0);
+	clBack = Colour_GetW(_A2W(ModuleName), LPGENW("Frame background"));
 
 	if (hBkgBrush)
 		DeleteObject(hBkgBrush);
@@ -442,38 +443,34 @@ void CreateFrame()
 		return;
 
 	WNDCLASS wndclass = { 0 };
-	wndclass.style = 0;
 	wndclass.lpfnWndProc = FrameWindowProc;
-	wndclass.cbClsExtra = 0;
-	wndclass.cbWndExtra = 0;
 	wndclass.hInstance = hInst;
-	wndclass.hIcon = NULL;
 	wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wndclass.hbrBackground = 0;
-	wndclass.lpszMenuName = NULL;
-	wndclass.lpszClassName = _T("BassInterfaceFrame");
+	wndclass.lpszClassName = L"BassInterfaceFrame";
 	RegisterClass(&wndclass);
 
-	hwnd_plugin = CreateWindow(_T("BassInterfaceFrame"), TranslateT("Bass Interface"),
+	hwnd_plugin = CreateWindow(L"BassInterfaceFrame", TranslateT("Bass Interface"),
 		WS_CHILD | WS_CLIPCHILDREN, 0, 0, 10, 10, pcli->hwndContactList, NULL, hInst, NULL);
 
 	CLISTFrame Frame = { sizeof(CLISTFrame) };
 	Frame.tname = TranslateT("Bass Interface");
 	Frame.hWnd = hwnd_plugin;
 	Frame.align = alBottom;
-	Frame.Flags = F_TCHAR | F_VISIBLE | F_SHOWTB | F_SHOWTBTIP;
+	Frame.Flags = F_UNICODE | F_VISIBLE | F_SHOWTB | F_SHOWTBTIP;
 	Frame.height = 22;
 	Frame.hIcon = Skin_LoadIcon(SKINICON_OTHER_FRAME);
 	frame_id = (HANDLE)CallService(MS_CLIST_FRAMES_ADDFRAME, (WPARAM)&Frame, 0);
 
-	ColourIDT colourid = { 0 };
-	colourid.cbSize = sizeof(ColourIDT);
-	mir_strcpy(colourid.dbSettingsGroup, ModuleName);
-	mir_strcpy(colourid.setting, "ColorFrame");
-	mir_tstrcpy(colourid.name, LPGENT("Frame background"));
-	mir_tstrcpy(colourid.group, _T(ModuleName));
+	ColourIDW colourid = { 0 };
+	colourid.cbSize = sizeof(ColourIDW);
+
+	strcpy_s(colourid.dbSettingsGroup, ModuleName);
+	strcpy_s(colourid.setting, "ColorFrame");
+	wcscpy_s(colourid.name, LPGENW("Frame background"));
+	wcscpy_s(colourid.group, _A2W(ModuleName));
+
 	colourid.defcolour = GetSysColor(COLOR_3DFACE);
-	ColourRegisterT(&colourid);
+	Colour_RegisterW(&colourid);
 
 	HookEvent(ME_COLOUR_RELOAD, ReloadColors);
 	ReloadColors(0, 0);
@@ -487,19 +484,21 @@ void DeleteFrame()
 	CallService(MS_CLIST_FRAMES_REMOVEFRAME, (WPARAM)frame_id, 0);
 }
 
-void LoadBassLibrary(const TCHAR *ptszPath)
+void LoadBassLibrary(const wchar_t *ptszPath)
 {
 	hBass = LoadLibrary(ptszPath);
-	if (hBass != NULL) {
+
+	if (hBass != NULL) 
+	{
 		newBass = (BASS_SetConfig(BASS_CONFIG_DEV_DEFAULT, TRUE) != 0); // will use new "Default" device
 
 		DBVARIANT dbv = { 0 };
 
 		BASS_DEVICEINFO info;
-		if (!db_get_ts(NULL, ModuleName, OPT_OUTDEVICE, &dbv))
-			for (int i = 1; BASS_GetDeviceInfo(i, &info); i++)
-				if (!mir_tstrcmp(dbv.ptszVal, _A2T(info.name)))
-					device = i;
+		if (!db_get_ws(NULL, ModuleName, OPT_OUTDEVICE, &dbv))
+			for (size_t i = 1; BASS_GetDeviceInfo((DWORD)i, &info); i++)
+				if (!mir_wstrcmp(dbv.ptszVal, _A2T(info.name)))
+					device = (int)i;
 
 		db_free(&dbv);
 
@@ -520,20 +519,17 @@ void LoadBassLibrary(const TCHAR *ptszPath)
 		hPlaySound = HookEvent(ME_SKIN_PLAYINGSOUND, OnPlaySnd);
 		CreateFrame();
 	}
-	else {
-		FreeLibrary(hBass);
-		hBass = NULL;
-	}
 }
 
 int OnFoldersChanged(WPARAM, LPARAM)
 {
-	FoldersGetCustomPathT(hBASSFolder, CurrBassPath, MAX_PATH, _T(""));
-	mir_tstrcat(CurrBassPath, _T("\\bass.dll"));
+	FoldersGetCustomPathT(hBASSFolder, CurrBassPath, MAX_PATH, L"");
+	mir_wstrcat(CurrBassPath, L"\\bass.dll");
 
 	if (hBass != NULL) {
 		BASS_Free();
 		FreeLibrary(hBass);
+		hBass = NULL;
 		UnhookEvent(hPlaySound);
 		DeleteFrame();
 	}
@@ -544,18 +540,18 @@ int OnFoldersChanged(WPARAM, LPARAM)
 
 int OnModulesLoaded(WPARAM, LPARAM)
 {
-	if (hBASSFolder = FoldersRegisterCustomPathT(LPGEN("Bass Interface"), LPGEN("Bass library"), PLUGINS_PATHT _T("\\Bass"))) {
-		FoldersGetCustomPathT(hBASSFolder, CurrBassPath, MAX_PATH, _T(""));
-		mir_tstrcat(CurrBassPath, _T("\\bass.dll"));
+	if (hBASSFolder = FoldersRegisterCustomPathT(LPGEN("Bass Interface"), LPGEN("Bass library"), PLUGINS_PATHT L"\\Bass")) {
+		FoldersGetCustomPathT(hBASSFolder, CurrBassPath, MAX_PATH, L"");
+		mir_wstrcat(CurrBassPath, L"\\bass.dll");
 	}
 	else {
 		DBVARIANT dbv;
-		if (db_get_ts(NULL, ModuleName, OPT_BASSPATH, &dbv)) {
-			mir_tstrncpy(CurrBassPath, VARST(_T("Plugins\\Bass\\bass.dll")), _countof(CurrBassPath));
-			db_set_ts(NULL, ModuleName, OPT_BASSPATH, CurrBassPath);
+		if (db_get_ws(NULL, ModuleName, OPT_BASSPATH, &dbv)) {
+			mir_wstrncpy(CurrBassPath, VARSW(L"Plugins\\Bass\\bass.dll"), _countof(CurrBassPath));
+			db_set_ws(NULL, ModuleName, OPT_BASSPATH, CurrBassPath);
 		}
 		else {
-			mir_tstrcpy(CurrBassPath, dbv.ptszVal);
+			mir_wstrcpy(CurrBassPath, dbv.ptszVal);
 			db_free(&dbv);
 		}
 	}
@@ -573,8 +569,8 @@ int OnSettingChanged(WPARAM wParam, LPARAM lParam)
 		return 0;
 
 	DBCONTACTWRITESETTING *dbcws = (DBCONTACTWRITESETTING*)lParam;
-	if (!mir_strcmp(dbcws->szModule, "Skin")) {
-		if (!mir_strcmp(dbcws->szSetting, "UseSound")) {
+	if (!strcmp(dbcws->szModule, "Skin")) {
+		if (!strcmp(dbcws->szSetting, "UseSound")) {
 			EnableFrameIcon(dbcws->value.bVal != 0);
 			return 0;
 		}
@@ -602,7 +598,7 @@ static IconItem iconList[] =
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
 	HookEvent(ME_SYSTEM_SHUTDOWN, OnShutdown);

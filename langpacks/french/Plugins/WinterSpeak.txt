@@ -34,9 +34,9 @@ Hors ligne
 En ligne
 [Away]
 Absent
-[DND]
+[Do not disturb]
 Ne pas déranger
-[NA]
+[Not available]
 Indisponible
 [Occupied]
 Occupé

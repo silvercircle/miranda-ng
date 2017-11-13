@@ -1,7 +1,7 @@
 /*
 
 Copyright (C) 2009 Ricardo Pescuma Domenecci
-Copyright (C) 2012-15 Miranda NG project
+Copyright (C) 2012-17 Miranda NG project
 
 This is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
@@ -23,12 +23,12 @@ Boston, MA 02111-1307, USA.
 
 #include "extraicons.h"
 
-BaseExtraIcon::BaseExtraIcon(int id, const char *name, const TCHAR *description, const char *descIcon, MIRANDAHOOKPARAM OnClick, LPARAM param) :
+BaseExtraIcon::BaseExtraIcon(int id, const char *name, const wchar_t *description, const char *descIcon, MIRANDAHOOKPARAM OnClick, LPARAM param) :
 	ExtraIcon(name),
 	m_id(id),
 	m_OnClick(OnClick),
 	m_onClickParam(param),
-	m_tszDescription(mir_tstrdup(description)),
+	m_tszDescription(mir_wstrdup(description)),
 	m_szDescIcon(mir_strdup(descIcon))
 {
 }
@@ -48,14 +48,14 @@ int BaseExtraIcon::getID() const
 	return m_id;
 }
 
-const TCHAR* BaseExtraIcon::getDescription() const
+const wchar_t* BaseExtraIcon::getDescription() const
 {
 	return m_tszDescription;
 }
 
-void BaseExtraIcon::setDescription(const TCHAR *desc)
+void BaseExtraIcon::setDescription(const wchar_t *desc)
 {
-	m_tszDescription = mir_tstrdup(desc);
+	m_tszDescription = mir_wstrdup(desc);
 }
 
 const char* BaseExtraIcon::getDescIcon() const
@@ -70,7 +70,7 @@ void BaseExtraIcon::setDescIcon(const char *icon)
 
 void BaseExtraIcon::onClick(MCONTACT hContact)
 {
-	if (m_OnClick != NULL)
+	if (m_OnClick != nullptr)
 		m_OnClick(hContact, (LPARAM)ConvertToClistSlot(m_slot), m_onClickParam);
 }
 

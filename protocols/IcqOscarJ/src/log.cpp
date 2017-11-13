@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2009 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -42,6 +42,7 @@ void __cdecl CIcqProto::icq_LogMessageThread(void* arg)
 	LogMessageInfo *err = (LogMessageInfo*)arg;
 	if (!err)
 		return;
+	Thread_SetName("ICQ: LogMessageThread");
 
 	if (bPopupService && getByte("PopupsLogEnabled", DEFAULT_LOG_POPUPS_ENABLED)) {
 		ShowPopupMsg(NULL, err->szTitle, err->szMsg, err->bLevel);
@@ -118,7 +119,7 @@ void CIcqProto::icq_LogUsingErrorCode(int level, DWORD dwError, const char *szMs
 		break;
 
 	default:
-		TCHAR err[512];
+		wchar_t err[512];
 		if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwError, 0, err, _countof(err), NULL)) {
 			pszErrorMsg = make_utf8_string(err);
 			bNeedFree = TRUE;

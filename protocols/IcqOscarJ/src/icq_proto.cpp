@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2010 Joe Kucera, George Hazan
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -70,7 +70,7 @@ static int CompareContactsCache(const icq_contacts_cache *p1, const icq_contacts
 	return mir_strcmpi(p1->szUid, p2->szUid);
 }
 
-CIcqProto::CIcqProto(const char* aProtoName, const TCHAR* aUserName) :
+CIcqProto::CIcqProto(const char* aProtoName, const wchar_t* aUserName) :
 	PROTO<CIcqProto>(aProtoName, aUserName),
 	cookies(10, CompareCookies),
 	directConns(10, CompareConns),
@@ -78,7 +78,8 @@ CIcqProto::CIcqProto(const char* aProtoName, const TCHAR* aUserName) :
 	contactsCache(10, CompareContactsCache),
 	CustomCapList(1),
 	cheekySearchId(-1),
-	m_arAvatars(5)	
+	m_arAvatars(5),
+	m_arFileTransfers(1)
 {
 	debugLogA("Setting protocol/module name to '%s'", m_szModuleName);
 
@@ -156,12 +157,12 @@ CIcqProto::CIcqProto(const char* aProtoName, const TCHAR* aUserName) :
 	HookProtoEvent(ME_CLIST_PREBUILDSTATUSMENU, &CIcqProto::OnPreBuildStatusMenu);
 
 	// Register netlib users
-	NETLIBUSER nlu = { 0 };
-	TCHAR szBuffer[MAX_PATH + 64];
-	mir_sntprintf(szBuffer, TranslateT("%s server connection"), m_tszUserName);
-	nlu.cbSize = sizeof(nlu);
-	nlu.flags = NUF_OUTGOING | NUF_HTTPCONNS | NUF_TCHAR;
-	nlu.ptszDescriptiveName = szBuffer;
+	wchar_t szBuffer[MAX_PATH + 64];
+	mir_snwprintf(szBuffer, TranslateT("%s server connection"), m_tszUserName);
+
+	NETLIBUSER nlu = {};
+	nlu.flags = NUF_OUTGOING | NUF_HTTPCONNS | NUF_UNICODE;
+	nlu.szDescriptiveName.w = szBuffer;
 	nlu.szSettingsModule = m_szModuleName;
 	nlu.szHttpGatewayHello = "http://http.proxy.icq.com/hello";
 	nlu.szHttpGatewayUserAgent = NETLIB_USER_AGENT;
@@ -169,16 +170,16 @@ CIcqProto::CIcqProto(const char* aProtoName, const TCHAR* aUserName) :
 	nlu.pfnHttpGatewayBegin = icq_httpGatewayBegin;
 	nlu.pfnHttpGatewayWrapSend = icq_httpGatewayWrapSend;
 	nlu.pfnHttpGatewayUnwrapRecv = icq_httpGatewayUnwrapRecv;
-	m_hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
+	m_hNetlibUser = Netlib_RegisterUser(&nlu);
 
 	char szP2PModuleName[MAX_PATH];
 	mir_snprintf(szP2PModuleName, "%sP2P", m_szModuleName);
-	mir_sntprintf(szBuffer, TranslateT("%s client-to-client connections"), m_tszUserName);
-	nlu.flags = NUF_OUTGOING | NUF_INCOMING | NUF_TCHAR;
-	nlu.ptszDescriptiveName = szBuffer;
+	mir_snwprintf(szBuffer, TranslateT("%s client-to-client connections"), m_tszUserName);
+	nlu.flags = NUF_OUTGOING | NUF_INCOMING | NUF_UNICODE;
+	nlu.szDescriptiveName.w = szBuffer;
 	nlu.szSettingsModule = szP2PModuleName;
 	nlu.minIncomingPorts = 1;
-	m_hDirectNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
+	m_hDirectNetlibUser = Netlib_RegisterUser(&nlu);
 
 	// Register custom database events
 	DBEVENTTYPEDESCR eventType = { sizeof(eventType) };
@@ -188,7 +189,7 @@ CIcqProto::CIcqProto(const char* aProtoName, const TCHAR* aUserName) :
 	eventType.textService = ICQ_DB_GETEVENTTEXT_MISSEDMESSAGE;
 	eventType.flags = DETF_HISTORY | DETF_MSGWINDOW;
 	// for now keep default "message" icon
-	CallService(MS_DB_EVENT_REGISTERTYPE, 0, (LPARAM)&eventType);
+	DbEvent_RegisterType(&eventType);
 
 	// Protocol instance is ready
 	debugLogA("%s: Protocol instance '%s' created.", ICQ_PROTOCOL_NAME, m_szModuleName);
@@ -211,8 +212,8 @@ CIcqProto::~CIcqProto()
 		delete m_arAvatars[i];
 
 	// NetLib clean-up
-	NetLib_SafeCloseHandle(&m_hDirectNetlibUser);
-	NetLib_SafeCloseHandle(&m_hNetlibUser);
+	Netlib_CloseHandle(m_hDirectNetlibUser);
+	Netlib_CloseHandle(m_hNetlibUser);
 
 	// Destroy hookable events
 	if (m_modeMsgsEvent)
@@ -292,17 +293,17 @@ MCONTACT CIcqProto::AddToList(int flags, PROTOSEARCHRESULT *psr)
 		
 		// aim contact
 		if (isr->hdr.flags & PSR_UNICODE)
-			unicode_to_ansi_static((WCHAR*)isr->hdr.id.t, szUid, MAX_PATH);
+			unicode_to_ansi_static((WCHAR*)isr->hdr.id.w, szUid, MAX_PATH);
 		else
-			null_strcpy(szUid, (char*)isr->hdr.id.t, MAX_PATH);
+			null_strcpy(szUid, (char*)isr->hdr.id.w, MAX_PATH);
 
 		return (szUid[0] == 0) ? 0 : AddToListByUID(szUid, flags);
 	}
 
 	if (psr->flags & PSR_UNICODE)
-		unicode_to_ansi_static((WCHAR*)psr->id.t, szUid, MAX_PATH);
+		unicode_to_ansi_static((WCHAR*)psr->id.w, szUid, MAX_PATH);
 	else
-		null_strcpy(szUid, (char*)psr->id.t, MAX_PATH);
+		null_strcpy(szUid, (char*)psr->id.w, MAX_PATH);
 
 	if (szUid[0] == 0)
 		return 0;
@@ -316,7 +317,7 @@ MCONTACT __cdecl CIcqProto::AddToListByEvent(int flags, int iContact, MEVENT hDb
 	DWORD uin = 0;
 	uid_str uid = { 0 };
 
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	if ((dbei.cbBlob = db_event_getBlobSize(hDbEvent)) == -1)
 		return 0;
 
@@ -386,7 +387,7 @@ int CIcqProto::Authorize(MEVENT hDbEvent)
 		if (getContactUid(hContact, &uin, &uid))
 			return 1;
 
-		icq_sendAuthResponseServ(uin, uid, 1, _T(""));
+		icq_sendAuthResponseServ(uin, uid, 1, L"");
 
 		delSetting(hContact, "Grant");
 
@@ -400,7 +401,7 @@ int CIcqProto::Authorize(MEVENT hDbEvent)
 ////////////////////////////////////////////////////////////////////////////////////////
 // PS_AuthDeny - handles the unsuccessful authorization
 
-int CIcqProto::AuthDeny(MEVENT hDbEvent, const TCHAR* szReason)
+int CIcqProto::AuthDeny(MEVENT hDbEvent, const wchar_t* szReason)
 {
 	if (icqOnline() && hDbEvent) {
 		MCONTACT hContact = HContactFromAuthEvent(hDbEvent);
@@ -415,7 +416,7 @@ int CIcqProto::AuthDeny(MEVENT hDbEvent, const TCHAR* szReason)
 		icq_sendAuthResponseServ(uin, uid, 0, szReason);
 
 		if (db_get_b(hContact, "CList", "NotOnList", 0))
-			CallService(MS_DB_CONTACT_DELETE, hContact, 0);
+			db_delete_contact(hContact);
 
 		return 0; // Success
 	}
@@ -437,7 +438,7 @@ int __cdecl CIcqProto::AuthRecv(MCONTACT hContact, PROTORECVEVENT* pre)
 ////////////////////////////////////////////////////////////////////////////////////////
 // PSS_AUTHREQUEST
 
-int __cdecl CIcqProto::AuthRequest(MCONTACT hContact, const TCHAR* szMessage)
+int __cdecl CIcqProto::AuthRequest(MCONTACT hContact, const wchar_t* szMessage)
 {
 	if (!icqOnline())
 		return 1;
@@ -449,7 +450,7 @@ int __cdecl CIcqProto::AuthRequest(MCONTACT hContact, const TCHAR* szMessage)
 			return 1; // Invalid contact
 
 		if (dwUin) {
-			char *utf = tchar_to_utf8(szMessage);
+			char *utf = make_utf8_string(szMessage);
 			icq_sendAuthReqServ(dwUin, szUid, utf);
 			SAFE_FREE(&utf);
 			return 0; // Success
@@ -463,7 +464,7 @@ int __cdecl CIcqProto::AuthRequest(MCONTACT hContact, const TCHAR* szMessage)
 ////////////////////////////////////////////////////////////////////////////////////////
 // PS_FileAllow - starts a file transfer
 
-HANDLE __cdecl CIcqProto::FileAllow(MCONTACT hContact, HANDLE hTransfer, const TCHAR* szPath)
+HANDLE __cdecl CIcqProto::FileAllow(MCONTACT hContact, HANDLE hTransfer, const wchar_t* szPath)
 {
 	DWORD dwUin;
 	uid_str szUid;
@@ -478,7 +479,7 @@ HANDLE __cdecl CIcqProto::FileAllow(MCONTACT hContact, HANDLE hTransfer, const T
 
 		if (dwUin && bft->ft_magic == FT_MAGIC_ICQ) {
 			filetransfer *ft = (filetransfer *)hTransfer;
-			ft->szSavePath = tchar_to_utf8(szPath);
+			ft->szSavePath = make_utf8_string(szPath);
 			{
 				mir_cslock l(expectedFileRecvMutex);
 				expectedFileRecvs.insert(ft);
@@ -521,7 +522,7 @@ int __cdecl CIcqProto::FileCancel(MCONTACT hContact, HANDLE hTransfer)
 			icq_CancelFileTransfer((filetransfer*)hTransfer);
 			return 0; // Success
 		}
-		else if (ft->ft_magic == FT_MAGIC_OSCAR) { // cancel oscar file transfer
+		if (ft->ft_magic == FT_MAGIC_OSCAR) { // cancel oscar file transfer
 			return oftFileCancel(hContact, hTransfer);
 		}
 	}
@@ -533,7 +534,7 @@ int __cdecl CIcqProto::FileCancel(MCONTACT hContact, HANDLE hTransfer)
 ////////////////////////////////////////////////////////////////////////////////////////
 // PS_FileDeny - denies a file transfer
 
-int __cdecl CIcqProto::FileDeny(MCONTACT hContact, HANDLE hTransfer, const TCHAR* szReason)
+int __cdecl CIcqProto::FileDeny(MCONTACT hContact, HANDLE hTransfer, const wchar_t* szReason)
 {
 	int nReturnValue = 1;
 	basic_filetransfer *bft = (basic_filetransfer*)hTransfer;
@@ -544,12 +545,12 @@ int __cdecl CIcqProto::FileDeny(MCONTACT hContact, HANDLE hTransfer, const TCHAR
 		return 1; // Invalid contact
 
 	if (icqOnline() && hTransfer && hContact) {
-		if (!IsValidFileTransfer(hTransfer))
+		if (!IsValidFileTransfer((basic_filetransfer*)hTransfer))
 			return 1; // Invalid transfer
 
 		if (dwUin && bft->ft_magic == FT_MAGIC_ICQ) { // deny old fashioned file transfer
 			filetransfer *ft = (filetransfer*)hTransfer;
-			char *szReasonUtf = tchar_to_utf8(szReason);
+			char *szReasonUtf = make_utf8_string(szReason);
 			// Was request received thru DC and have we a open DC, send through that
 			if (ft->bDC && IsDirectConnectionOpen(hContact, DIRECTCONN_STANDARD, 0))
 				icq_sendFileDenyDirect(hContact, ft, szReasonUtf);
@@ -564,7 +565,7 @@ int __cdecl CIcqProto::FileDeny(MCONTACT hContact, HANDLE hTransfer, const TCHAR
 		}
 	}
 	// Release possible orphan structure
-	SafeReleaseFileTransfer((void**)&bft);
+	SafeReleaseFileTransfer(&bft);
 
 	return nReturnValue;
 }
@@ -573,7 +574,7 @@ int __cdecl CIcqProto::FileDeny(MCONTACT hContact, HANDLE hTransfer, const TCHAR
 ////////////////////////////////////////////////////////////////////////////////////////
 // PS_FileResume - processes file renaming etc
 
-int __cdecl CIcqProto::FileResume(HANDLE hTransfer, int* action, const TCHAR** szFilename)
+int __cdecl CIcqProto::FileResume(HANDLE hTransfer, int* action, const wchar_t** szFilename)
 {
 	if (icqOnline() && hTransfer) {
 		basic_filetransfer *ft = (basic_filetransfer *)hTransfer;
@@ -582,7 +583,7 @@ int __cdecl CIcqProto::FileResume(HANDLE hTransfer, int* action, const TCHAR** s
 			return 1; // Invalid transfer
 
 		if (ft->ft_magic == FT_MAGIC_ICQ) {
-			char *szFileNameUtf = tchar_to_utf8(*szFilename);
+			char *szFileNameUtf = make_utf8_string(*szFilename);
 			icq_sendFileResume((filetransfer *)hTransfer, *action, szFileNameUtf);
 			SAFE_FREE(&szFileNameUtf);
 		}
@@ -613,72 +614,54 @@ DWORD_PTR __cdecl CIcqProto::GetCaps(int type, MCONTACT hContact)
 			PF1_VISLIST | PF1_INVISLIST | PF1_MODEMSG | PF1_FILE | PF1_EXTSEARCH |
 			PF1_EXTSEARCHUI | PF1_SEARCHBYEMAIL | PF1_SEARCHBYNAME |
 			PF1_ADDED | PF1_CONTACT;
-		if (!m_bAimEnabled)
-			nReturn |= PF1_NUMERICUSERID;
+
 		if (m_bSsiEnabled && getByte("ServerAddRemove", DEFAULT_SS_ADDSERVER))
 			nReturn |= PF1_SERVERCLIST;
 		break;
 
 	case PFLAGNUM_2:
-		nReturn = PF2_ONLINE | PF2_SHORTAWAY | PF2_LONGAWAY | PF2_LIGHTDND | PF2_HEAVYDND |
-			PF2_FREECHAT | PF2_INVISIBLE;
-		if (m_bAimEnabled)
-			nReturn |= PF2_ONTHEPHONE;
-		break;
+		return PF2_ONLINE | PF2_SHORTAWAY | PF2_LONGAWAY | PF2_LIGHTDND | PF2_HEAVYDND |
+			PF2_FREECHAT | PF2_INVISIBLE | PF2_ONTHEPHONE;
 
 	case PFLAGNUM_3:
-		nReturn = PF2_ONLINE | PF2_SHORTAWAY | PF2_LONGAWAY | PF2_LIGHTDND | PF2_HEAVYDND |
+		return PF2_ONLINE | PF2_SHORTAWAY | PF2_LONGAWAY | PF2_LIGHTDND | PF2_HEAVYDND |
 			PF2_FREECHAT | PF2_INVISIBLE;
-		break;
 
 	case PFLAGNUM_4:
-		nReturn = PF4_SUPPORTIDLE | PF4_IMSENDOFFLINE | PF4_INFOSETTINGSVC;
+		nReturn = PF4_SUPPORTIDLE | PF4_IMSENDOFFLINE | PF4_INFOSETTINGSVC | PF4_SUPPORTTYPING;
 		if (m_bAvatarsEnabled)
 			nReturn |= PF4_AVATARS;
-#ifdef DBG_CAPMTN
-		nReturn |= PF4_SUPPORTTYPING;
-#endif
 		break;
 
 	case PFLAGNUM_5:
-		nReturn = PF2_FREECHAT;
-		if (m_bAimEnabled)
-			nReturn |= PF2_ONTHEPHONE;
-		break;
+		return PF2_FREECHAT | PF2_ONTHEPHONE;
 
 	case PFLAG_UNIQUEIDTEXT:
-		nReturn = (DWORD_PTR)Translate("User ID");
-		break;
+		return (DWORD_PTR)Translate("User ID");
 
 	case PFLAG_UNIQUEIDSETTING:
-		nReturn = (DWORD_PTR)UNIQUEIDSETTING;
-		break;
-
-	case PFLAG_MAXCONTACTSPERPACKET:
-		if (hContact) { // determine per contact
-			BYTE bClientId = getByte(hContact, "ClientID", CLID_GENERIC);
-
-			if (bClientId == CLID_MIRANDA) {
-				if (CheckContactCapabilities(hContact, CAPF_CONTACTS) && getContactStatus(hContact) != ID_STATUS_OFFLINE)
-					nReturn = 0x100; // limited only by packet size
-				else
-					nReturn = MAX_CONTACTSSEND;
-			}
-			else if (bClientId == CLID_ICQ6) {
-				if (CheckContactCapabilities(hContact, CAPF_CONTACTS))
-					nReturn = 1; // crapy ICQ6 cannot handle multiple contacts in the transfer
-				else
-					nReturn = 0; // this version does not support contacts transfer at all
-			}
-			else
-				nReturn = MAX_CONTACTSSEND;
-		}
-		else // return generic limit
-			nReturn = MAX_CONTACTSSEND;
-		break;
+		return (DWORD_PTR)UNIQUEIDSETTING;
 
 	case PFLAG_MAXLENOFMESSAGE:
-		nReturn = MAX_MESSAGESNACSIZE - 102;
+		return MAX_MESSAGESNACSIZE - 102;
+
+	case PFLAG_MAXCONTACTSPERPACKET:
+		if (hContact == 0)
+			return MAX_CONTACTSSEND;
+
+		// determine per contact
+		BYTE bClientId = getByte(hContact, "ClientID", CLID_GENERIC);
+
+		if (bClientId == CLID_MIRANDA) {
+			if (CheckContactCapabilities(hContact, CAPF_CONTACTS) && getContactStatus(hContact) != ID_STATUS_OFFLINE)
+				return 0x100; // limited only by packet size
+			return MAX_CONTACTSSEND;
+		}
+		else if (bClientId == CLID_ICQ6) {
+			// crapy ICQ6 cannot handle multiple contacts in the transfer
+			return CheckContactCapabilities(hContact, CAPF_CONTACTS) != 0;
+		}
+		return MAX_CONTACTSSEND;
 	}
 
 	return nReturn;
@@ -716,12 +699,14 @@ void CIcqProto::CheekySearchThread(void*)
 	ICQSEARCHRESULT isr = { 0 };
 	isr.hdr.cbSize = sizeof(isr);
 
+	Thread_SetName("ICQ: CheekySearchThread");
+
 	if (cheekySearchUin) {
 		_itoa(cheekySearchUin, szUin, 10);
-		isr.hdr.id.t = (TCHAR*)szUin;
+		isr.hdr.id.w = (wchar_t*)szUin;
 	}
 	else {
-		isr.hdr.id.t = (TCHAR*)cheekySearchUid;
+		isr.hdr.id.w = (wchar_t*)cheekySearchUid;
 	}
 	isr.uin = cheekySearchUin;
 
@@ -731,7 +716,7 @@ void CIcqProto::CheekySearchThread(void*)
 }
 
 
-HANDLE __cdecl CIcqProto::SearchBasic(const TCHAR *pszSearch)
+HANDLE __cdecl CIcqProto::SearchBasic(const wchar_t *pszSearch)
 {
 	if (mir_wstrlen(pszSearch) == 0)
 		return 0;
@@ -740,21 +725,11 @@ HANDLE __cdecl CIcqProto::SearchBasic(const TCHAR *pszSearch)
 	int nHandle = 0;
 	size_t i, j;
 
-	if (!m_bAimEnabled) {
-		for (i = j = 0; (i < mir_wstrlen(pszSearch)) && (j < 255); i++) { // we take only numbers
-			if ((pszSearch[i] >= 0x30) && (pszSearch[i] <= 0x39)) {
-				pszUIN[j] = pszSearch[i];
-				j++;
-			}
-		}
-	}
-	else {
-		for (i = j = 0; (i < mir_wstrlen(pszSearch)) && (j < 255); i++) { // we remove spaces and slashes
-			if ((pszSearch[i] != 0x20) && (pszSearch[i] != '-')) {
-				if (pszSearch[i] >= 0x80) continue;
-				pszUIN[j] = pszSearch[i];
-				j++;
-			}
+	for (i = j = 0; (i < mir_wstrlen(pszSearch)) && (j < 255); i++) { // we remove spaces and slashes
+		if ((pszSearch[i] != 0x20) && (pszSearch[i] != '-')) {
+			if (pszSearch[i] >= 0x80) continue;
+			pszUIN[j] = pszSearch[i];
+			j++;
 		}
 	}
 	pszUIN[j] = 0;
@@ -789,14 +764,14 @@ HANDLE __cdecl CIcqProto::SearchBasic(const TCHAR *pszSearch)
 ////////////////////////////////////////////////////////////////////////////////////////
 // SearchByEmail - searches the contact by its e-mail
 
-HANDLE __cdecl CIcqProto::SearchByEmail(const TCHAR *email)
+HANDLE __cdecl CIcqProto::SearchByEmail(const wchar_t *email)
 {
 	if (email && icqOnline() && mir_wstrlen(email) > 0) {
-		char *szEmail = tchar_to_ansi(email);
+		char *szEmail = unicode_to_ansi(email);
 
 		// Success
 		DWORD dwSearchId = SearchByMail(szEmail);
-		DWORD dwSecId = (dwSearchId == 0 && m_bAimEnabled) ? icq_searchAimByEmail(szEmail, dwSearchId) : 0;
+		DWORD dwSecId = (dwSearchId == 0) ? icq_searchAimByEmail(szEmail, dwSearchId) : 0;
 
 		SAFE_FREE(&szEmail);
 
@@ -812,13 +787,13 @@ HANDLE __cdecl CIcqProto::SearchByEmail(const TCHAR *email)
 ////////////////////////////////////////////////////////////////////////////////////////
 // PS_SearchByName - searches the contact by its first or last name, or by a nickname
 
-HANDLE __cdecl CIcqProto::SearchByName(const TCHAR *nick, const TCHAR *firstName, const TCHAR *lastName)
+HANDLE __cdecl CIcqProto::SearchByName(const wchar_t *nick, const wchar_t *firstName, const wchar_t *lastName)
 {
 	if (icqOnline()) {
 		if (nick || firstName || lastName) {
-			char *nickUtf = tchar_to_utf8(nick);
-			char *firstNameUtf = tchar_to_utf8(firstName);
-			char *lastNameUtf = tchar_to_utf8(lastName);
+			char *nickUtf = make_utf8_string(nick);
+			char *firstNameUtf = make_utf8_string(firstName);
+			char *lastNameUtf = make_utf8_string(lastName);
 
 			// Success
 			HANDLE dwCookie = (HANDLE)SearchByNames(nickUtf, firstNameUtf, lastNameUtf, 0);
@@ -871,15 +846,15 @@ int __cdecl CIcqProto::RecvContacts(MCONTACT hContact, PROTORECVEVENT* pre)
 	DWORD flags = DBEF_UTF;
 
 	for (i = 0; i < pre->lParam; i++) {
-		cbBlob += mir_strlen((char*)isrList[i]->hdr.nick.t) + 2; // both trailing zeros
+		cbBlob += mir_strlen((char*)isrList[i]->hdr.nick.w) + 2; // both trailing zeros
 		if (isrList[i]->uin)
 			cbBlob += getUINLen(isrList[i]->uin);
 		else
-			cbBlob += mir_strlen((char*)isrList[i]->hdr.id.t);
+			cbBlob += mir_strlen((char*)isrList[i]->hdr.id.w);
 	}
 	PBYTE pBlob = (PBYTE)_alloca(cbBlob), pCurBlob;
 	for (i = 0, pCurBlob = pBlob; i < pre->lParam; i++) {
-		mir_strcpy((char*)pCurBlob, (char*)isrList[i]->hdr.nick.t);
+		mir_strcpy((char*)pCurBlob, (char*)isrList[i]->hdr.nick.w);
 		pCurBlob += mir_strlen((char*)pCurBlob) + 1;
 		if (isrList[i]->uin) {
 			char szUin[UINMAXLEN];
@@ -887,7 +862,7 @@ int __cdecl CIcqProto::RecvContacts(MCONTACT hContact, PROTORECVEVENT* pre)
 			mir_strcpy((char*)pCurBlob, szUin);
 		}
 		else // aim contact
-			mir_strcpy((char*)pCurBlob, (char*)isrList[i]->hdr.id.t);
+			mir_strcpy((char*)pCurBlob, (char*)isrList[i]->hdr.id.w);
 
 		pCurBlob += mir_strlen((char*)pCurBlob) + 1;
 	}
@@ -1155,7 +1130,7 @@ int __cdecl CIcqProto::SendContacts(MCONTACT hContact, int, int nContacts, MCONT
 ////////////////////////////////////////////////////////////////////////////////////////
 // SendFile - sends a file
 
-HANDLE __cdecl CIcqProto::SendFile(MCONTACT hContact, const TCHAR* szDescription, TCHAR** ppszFiles)
+HANDLE __cdecl CIcqProto::SendFile(MCONTACT hContact, const wchar_t* szDescription, wchar_t** ppszFiles)
 {
 	if (!icqOnline())
 		return 0;
@@ -1187,14 +1162,14 @@ HANDLE __cdecl CIcqProto::SendFile(MCONTACT hContact, const TCHAR* szDescription
 					ft->pszFiles = (char **)SAFE_MALLOC(sizeof(char *)* ft->dwFileCount);
 					ft->dwTotalSize = 0;
 					for (i = 0; i < (int)ft->dwFileCount; i++) {
-						ft->pszFiles[i] = (ppszFiles[i]) ? tchar_to_utf8(ppszFiles[i]) : NULL;
+						ft->pszFiles[i] = (ppszFiles[i]) ? make_utf8_string(ppszFiles[i]) : NULL;
 
-						if (_tstat(ppszFiles[i], &statbuf))
+						if (_wstat(ppszFiles[i], &statbuf))
 							debugLogA("IcqSendFile() was passed invalid filename(s)");
 						else
 							ft->dwTotalSize += statbuf.st_size;
 					}
-					ft->szDescription = tchar_to_utf8(szDescription);
+					ft->szDescription = make_utf8_string(szDescription);
 					ft->dwTransferSpeed = 100;
 					ft->sending = 1;
 					ft->fileId = -1;
@@ -1605,16 +1580,12 @@ int __cdecl CIcqProto::SetStatus(int iNewStatus)
 			}
 			SAFE_FREE(&szStatusNote);
 
-			if (m_bAimEnabled) {
-				mir_cslock l(m_modeMsgsMutex);
-
-				char ** pszStatusNote = MirandaStatusToAwayMsg(m_iStatus);
-
-				if (pszStatusNote)
-					icq_sendSetAimAwayMsgServ(*pszStatusNote);
-				else // clear the away message
-					icq_sendSetAimAwayMsgServ(NULL);
-			}
+			mir_cslock l(m_modeMsgsMutex);
+			char ** pszStatusNote = MirandaStatusToAwayMsg(m_iStatus);
+			if (pszStatusNote)
+				icq_sendSetAimAwayMsgServ(*pszStatusNote);
+			else // clear the away message
+				icq_sendSetAimAwayMsgServ(NULL);
 		}
 	}
 
@@ -1633,6 +1604,8 @@ struct status_message_thread_data
 
 void __cdecl CIcqProto::GetAwayMsgThread(void *pStatusData)
 {
+	Thread_SetName("ICQ: GetAwayMsgThread");
+
 	status_message_thread_data *pThreadData = (status_message_thread_data*)pStatusData;
 	if (pThreadData) {
 		// wait a little
@@ -1640,7 +1613,7 @@ void __cdecl CIcqProto::GetAwayMsgThread(void *pStatusData)
 
 		setStatusMsgVar(pThreadData->hContact, pThreadData->szMessage, false);
 
-		TCHAR *tszMsg = mir_utf8decodeT(pThreadData->szMessage);
+		wchar_t *tszMsg = mir_utf8decodeW(pThreadData->szMessage);
 		ProtoBroadcastAck(pThreadData->hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, pThreadData->hProcess, (LPARAM)tszMsg);
 		mir_free(tszMsg);
 
@@ -1739,7 +1712,7 @@ int __cdecl CIcqProto::RecvAwayMsg(MCONTACT hContact, int, PROTORECVEVENT* evt)
 {
 	setStatusMsgVar(hContact, evt->szMessage, false);
 
-	TCHAR* pszMsg = mir_utf8decodeT(evt->szMessage);
+	wchar_t* pszMsg = mir_utf8decodeW(evt->szMessage);
 	ProtoBroadcastAck(hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, (HANDLE)evt->lParam, (LPARAM)pszMsg);
 	mir_free(pszMsg);
 	return 0;
@@ -1749,7 +1722,7 @@ int __cdecl CIcqProto::RecvAwayMsg(MCONTACT hContact, int, PROTORECVEVENT* evt)
 ////////////////////////////////////////////////////////////////////////////////////////
 // PS_SetAwayMsg - sets the away status message
 
-int __cdecl CIcqProto::SetAwayMsg(int status, const TCHAR* msg)
+int __cdecl CIcqProto::SetAwayMsg(int status, const wchar_t* msg)
 {
 	mir_cslock l(m_modeMsgsMutex);
 
@@ -1758,7 +1731,7 @@ int __cdecl CIcqProto::SetAwayMsg(int status, const TCHAR* msg)
 		return 1; // Failure
 
 	// Prepare UTF-8 status message
-	char *szNewUtf = tchar_to_utf8(msg);
+	char *szNewUtf = make_utf8_string(msg);
 
 	if (mir_strcmp(szNewUtf, *ppszMsg)) {
 		// Free old message
@@ -1775,8 +1748,7 @@ int __cdecl CIcqProto::SetAwayMsg(int status, const TCHAR* msg)
 			if (!bXStatus)
 				SetStatusNote(szNote, 1000, FALSE);
 
-			if (m_bAimEnabled)
-				icq_sendSetAimAwayMsgServ(*ppszMsg);
+			icq_sendSetAimAwayMsgServ(*ppszMsg);
 		}
 	}
 	SAFE_FREE(&szNewUtf);
@@ -1858,11 +1830,11 @@ int __cdecl CIcqProto::OnEvent(PROTOEVENTTYPE eventType, WPARAM wParam, LPARAM l
 		{
 			char szDbSetting[MAX_PATH];
 			mir_snprintf(szDbSetting, "%sP2P", m_szModuleName);
-			CallService(MS_DB_MODULE_DELETE, 0, (LPARAM)szDbSetting);
+			db_delete_module(0, szDbSetting);
 			mir_snprintf(szDbSetting, "%sSrvGroups", m_szModuleName);
-			CallService(MS_DB_MODULE_DELETE, 0, (LPARAM)szDbSetting);
+			db_delete_module(0, szDbSetting);
 			mir_snprintf(szDbSetting, "%sGroups", m_szModuleName);
-			CallService(MS_DB_MODULE_DELETE, 0, (LPARAM)szDbSetting);
+			db_delete_module(0, szDbSetting);
 		}
 		break;
 

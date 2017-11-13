@@ -17,7 +17,7 @@ not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  
 */
 
-#include "..\stdafx.h"
+#include "../stdafx.h"
 
 static WATrack *instance = NULL;
 
@@ -32,7 +32,7 @@ int NewStatusCallback(WPARAM wParam, LPARAM lParam)
 
 WATrack::WATrack()
 {
-	name = _T("WATrack");
+	name = L"WATrack";
 	instance = this;
 	hNewStatusHook = NULL;
 }
@@ -88,29 +88,29 @@ void WATrack::GetData()
 	listening_info.ptszYear = DUP(si->year);
 
 	if (si->track > 0) {
-		listening_info.ptszTrack = (TCHAR*)mir_alloc(10 * sizeof(TCHAR));
-		_itot(si->track, listening_info.ptszTrack, 10);
+		listening_info.ptszTrack = (wchar_t*)mir_alloc(10 * sizeof(wchar_t));
+		_itow(si->track, listening_info.ptszTrack, 10);
 	}
 
 	listening_info.ptszGenre = DUP(si->genre);
 
 	if (si->total > 0) {
-		listening_info.ptszLength = (TCHAR*)mir_alloc(10 * sizeof(TCHAR));
+		listening_info.ptszLength = (wchar_t*)mir_alloc(10 * sizeof(wchar_t));
 
 		int s = si->total % 60;
 		int m = (si->total / 60) % 60;
 		int h = (si->total / 60) / 60;
 
 		if (h > 0)
-			mir_sntprintf(listening_info.ptszLength, 9, _T("%d:%02d:%02d"), h, m, s);
+			mir_snwprintf(listening_info.ptszLength, 9, L"%d:%02d:%02d", h, m, s);
 		else
-			mir_sntprintf(listening_info.ptszLength, 9, _T("%d:%02d"), m, s);
+			mir_snwprintf(listening_info.ptszLength, 9, L"%d:%02d", m, s);
 	}
 
 	if (si->width > 0)
-		listening_info.ptszType = mir_tstrdup(_T("Video"));
+		listening_info.ptszType = mir_wstrdup(L"Video");
 	else
-		listening_info.ptszType = mir_tstrdup(_T("Music"));
+		listening_info.ptszType = mir_wstrdup(L"Music");
 
 	listening_info.ptszPlayer = DUPD(si->player, name);
 

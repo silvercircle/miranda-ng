@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-10 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -30,7 +30,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 static HGENMENU hAwayMsgMenuItem, hCopyMsgMenuItem, hGoToURLMenuItem;
 static MWindowList hWindowList, hWindowList2;
 
-static TCHAR *StrNormNewline(TCHAR *tszStr)
+static wchar_t *StrNormNewline(wchar_t *tszStr)
 {
 	if (tszStr == NULL)
 		return NULL;
@@ -41,9 +41,9 @@ static TCHAR *StrNormNewline(TCHAR *tszStr)
 			nCR++;
 
 	if (!nCR)
-		return mir_tstrdup(tszStr);
+		return mir_wstrdup(tszStr);
 
-	TCHAR *tszNewStr = (TCHAR *)mir_alloc((mir_tstrlen(tszStr) + nCR + 1) * sizeof(TCHAR)), *ptszStr = tszNewStr;
+	wchar_t *tszNewStr = (wchar_t *)mir_alloc((mir_wstrlen(tszStr) + nCR + 1) * sizeof(wchar_t)), *ptszStr = tszNewStr;
 	while (*tszStr) {
 		if (*tszStr == 0x0A)
 			*ptszStr++ = 0x0D;
@@ -69,42 +69,41 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 	AwayMsgDlgData *dat = (AwayMsgDlgData *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
 
 	switch (message) {
-		case WM_INITDIALOG:
-			TranslateDialogDefault(hwndDlg);
-			dat = (AwayMsgDlgData *)mir_alloc(sizeof(AwayMsgDlgData));
-			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)dat);
+	case WM_INITDIALOG:
+		TranslateDialogDefault(hwndDlg);
+		dat = (AwayMsgDlgData *)mir_alloc(sizeof(AwayMsgDlgData));
+		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)dat);
 
-			dat->hContact = lParam;
-			dat->hSeq = (HANDLE)CallContactService(dat->hContact, PSS_GETAWAYMSG, 0, 0);
-			dat->hAwayMsgEvent = dat->hSeq ? HookEventMessage(ME_PROTO_ACK, hwndDlg, HM_AWAYMSG) : NULL;
-			WindowList_Add(hWindowList, hwndDlg, dat->hContact);
-			{
-				TCHAR str[256], format[128];
-				TCHAR *contactName = (TCHAR *)pcli->pfnGetContactDisplayName(dat->hContact, 0);
-				char *szProto = GetContactProto(dat->hContact);
-				WORD dwStatus = db_get_w(dat->hContact, szProto, "Status", ID_STATUS_OFFLINE);
-				TCHAR *status = pcli->pfnGetStatusModeDescription(dwStatus, 0);
+		dat->hContact = lParam;
+		dat->hSeq = (HANDLE)ProtoChainSend(dat->hContact, PSS_GETAWAYMSG, 0, 0);
+		dat->hAwayMsgEvent = dat->hSeq ? HookEventMessage(ME_PROTO_ACK, hwndDlg, HM_AWAYMSG) : NULL;
+		WindowList_Add(hWindowList, hwndDlg, dat->hContact);
+		{
+			wchar_t str[256], format[128];
+			wchar_t *contactName = (wchar_t *)pcli->pfnGetContactDisplayName(dat->hContact, 0);
+			char *szProto = GetContactProto(dat->hContact);
+			WORD dwStatus = db_get_w(dat->hContact, szProto, "Status", ID_STATUS_OFFLINE);
+			wchar_t *status = pcli->pfnGetStatusModeDescription(dwStatus, 0);
 
-				GetWindowText(hwndDlg, format, _countof(format));
-				mir_sntprintf(str, format, status, contactName);
-				SetWindowText(hwndDlg, str);
-				if (dat->hSeq) {
-					GetDlgItemText(hwndDlg, IDC_RETRIEVING, format, _countof(format));
-					mir_sntprintf(str, format, status);
-				}
-				else {
-					mir_sntprintf(str, TranslateT("Failed to retrieve %s message."), status);
-					SetDlgItemText(hwndDlg, IDOK, TranslateT("&Close"));
-				}
-				SetDlgItemText(hwndDlg, IDC_RETRIEVING, str);
-				SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)Skin_LoadProtoIcon(szProto, dwStatus));
-				SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)Skin_LoadProtoIcon(szProto, dwStatus));
-				EnableWindow(GetDlgItem(hwndDlg, IDC_COPY), FALSE);
+			GetWindowText(hwndDlg, format, _countof(format));
+			mir_snwprintf(str, format, status, contactName);
+			SetWindowText(hwndDlg, str);
+			if (dat->hSeq) {
+				GetDlgItemText(hwndDlg, IDC_RETRIEVING, format, _countof(format));
+				mir_snwprintf(str, format, status);
 			}
-			Utils_RestoreWindowPosition(hwndDlg, lParam, "SRAway", "AwayMsgDlg");
-			return TRUE;
+			else {
+				mir_snwprintf(str, TranslateT("Failed to retrieve %s message."), status);
+				SetDlgItemText(hwndDlg, IDOK, TranslateT("&Close"));
+			}
+			SetDlgItemText(hwndDlg, IDC_RETRIEVING, str);
+			Window_SetProtoIcon_IcoLib(hwndDlg, szProto, dwStatus);
+			EnableWindow(GetDlgItem(hwndDlg, IDC_COPY), FALSE);
+		}
+		Utils_RestoreWindowPosition(hwndDlg, lParam, "SRAway", "AwayMsgDlg");
+		return TRUE;
 
-		case HM_AWAYMSG:
+	case HM_AWAYMSG:
 		{
 			ACKDATA *ack = (ACKDATA *)lParam;
 			if (ack->hContact != dat->hContact || ack->type != ACKTYPE_AWAYMSG)
@@ -116,7 +115,7 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 				dat->hAwayMsgEvent = NULL;
 			}
 
-			TCHAR *tszMsg = StrNormNewline((TCHAR *)ack->lParam);
+			wchar_t *tszMsg = StrNormNewline((wchar_t *)ack->lParam);
 			SetDlgItemText(hwndDlg, IDC_MSG, tszMsg);
 			mir_free(tszMsg);
 
@@ -128,53 +127,52 @@ static INT_PTR CALLBACK ReadAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 			break;
 		}
 
-		case WM_COMMAND:
-			switch (LOWORD(wParam)) {
-				case IDCANCEL:
-				case IDOK:
-					DestroyWindow(hwndDlg);
-					break;
-
-				case IDC_COPY:
-					if (!OpenClipboard(hwndDlg))
-						break;
-					if (EmptyClipboard()) {
-						TCHAR msg[1024];
-						int len = GetDlgItemText(hwndDlg, IDC_MSG, msg, _countof(msg));
-						if (len) {
-							LPTSTR lptstrCopy;
-							HGLOBAL hglbCopy = GlobalAlloc(GMEM_MOVEABLE, (len + 1) * sizeof(TCHAR));
-							if (hglbCopy == NULL) {
-								CloseClipboard();
-								break;
-							}
-							lptstrCopy = (LPTSTR)GlobalLock(hglbCopy);
-							memcpy(lptstrCopy, msg, len * sizeof(TCHAR));
-							lptstrCopy[len] = (TCHAR)0;
-							GlobalUnlock(hglbCopy);
-
-							SetClipboardData(CF_UNICODETEXT, hglbCopy);
-
-						}
-					}
-					CloseClipboard();
-					break;
-			}
-			break;
-
-		case WM_CLOSE:
+	case WM_COMMAND:
+		switch (LOWORD(wParam)) {
+		case IDCANCEL:
+		case IDOK:
 			DestroyWindow(hwndDlg);
 			break;
 
-		case WM_DESTROY:
-			if (dat->hAwayMsgEvent)
-				UnhookEvent(dat->hAwayMsgEvent);
-			Utils_SaveWindowPosition(hwndDlg, dat->hContact, "SRAway", "AwayMsgDlg");
-			WindowList_Remove(hWindowList, hwndDlg);
-			IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_BIG, NULL));
-			IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, NULL));
-			mir_free(dat);
+		case IDC_COPY:
+			if (!OpenClipboard(hwndDlg))
+				break;
+			if (EmptyClipboard()) {
+				wchar_t msg[1024];
+				int len = GetDlgItemText(hwndDlg, IDC_MSG, msg, _countof(msg));
+				if (len) {
+					LPTSTR lptstrCopy;
+					HGLOBAL hglbCopy = GlobalAlloc(GMEM_MOVEABLE, (len + 1) * sizeof(wchar_t));
+					if (hglbCopy == NULL) {
+						CloseClipboard();
+						break;
+					}
+					lptstrCopy = (LPTSTR)GlobalLock(hglbCopy);
+					memcpy(lptstrCopy, msg, len * sizeof(wchar_t));
+					lptstrCopy[len] = (wchar_t)0;
+					GlobalUnlock(hglbCopy);
+
+					SetClipboardData(CF_UNICODETEXT, hglbCopy);
+
+				}
+			}
+			CloseClipboard();
 			break;
+		}
+		break;
+
+	case WM_CLOSE:
+		DestroyWindow(hwndDlg);
+		break;
+
+	case WM_DESTROY:
+		if (dat->hAwayMsgEvent)
+			UnhookEvent(dat->hAwayMsgEvent);
+		Utils_SaveWindowPosition(hwndDlg, dat->hContact, "SRAway", "AwayMsgDlg");
+		WindowList_Remove(hWindowList, hwndDlg);
+		Window_FreeIcon_IcoLib(hwndDlg);
+		mir_free(dat);
+		break;
 	}
 	return FALSE;
 }
@@ -185,8 +183,7 @@ static INT_PTR GetMessageCommand(WPARAM wParam, LPARAM)
 		SetForegroundWindow(hwnd);
 		SetFocus(hwnd);
 	}
-	else
-		CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_READAWAYMSG), NULL, ReadAwayMsgDlgProc, wParam);
+	else CreateDialogParam(g_hInst, MAKEINTRESOURCE(IDD_READAWAYMSG), NULL, ReadAwayMsgDlgProc, wParam);
 	return 0;
 }
 
@@ -195,29 +192,27 @@ static INT_PTR CALLBACK CopyAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 	AwayMsgDlgData *dat = (AwayMsgDlgData *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
 
 	switch (message) {
-		case WM_INITDIALOG:
+	case WM_INITDIALOG:
+		TranslateDialogDefault(hwndDlg);
 		{
-			TCHAR str[256], format[128];
-			TCHAR *contactName;
-
-			TranslateDialogDefault(hwndDlg);
 			dat = (AwayMsgDlgData *)mir_alloc(sizeof(AwayMsgDlgData));
 			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)dat);
 
 			dat->hContact = lParam;
-			dat->hSeq = (HANDLE)CallContactService(dat->hContact, PSS_GETAWAYMSG, 0, 0);
+			dat->hSeq = (HANDLE)ProtoChainSend(dat->hContact, PSS_GETAWAYMSG, 0, 0);
 			dat->hAwayMsgEvent = dat->hSeq ? HookEventMessage(ME_PROTO_ACK, hwndDlg, HM_AWAYMSG) : NULL;
 			WindowList_Add(hWindowList2, hwndDlg, dat->hContact);
-			contactName = (TCHAR *)pcli->pfnGetContactDisplayName(dat->hContact, 0);
+			wchar_t *contactName = pcli->pfnGetContactDisplayName(dat->hContact, 0);
+			wchar_t str[256], format[128];
 			GetWindowText(hwndDlg, format, _countof(format));
-			mir_sntprintf(str, format, contactName);
+			mir_snwprintf(str, format, contactName);
 			SetWindowText(hwndDlg, str);
 			if (!dat->hSeq)
 				DestroyWindow(hwndDlg);
-			return TRUE;
 		}
+		return TRUE;
 
-		case HM_AWAYMSG:
+	case HM_AWAYMSG:
 		{
 			ACKDATA *ack = (ACKDATA *)lParam;
 			if (ack->hContact != dat->hContact || ack->type != ACKTYPE_AWAYMSG) {
@@ -238,22 +233,22 @@ static INT_PTR CALLBACK CopyAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 				break;
 			}
 			if (EmptyClipboard()) {
-				TCHAR msg[1024];
-				TCHAR *tszMsg = StrNormNewline((TCHAR *)ack->lParam);
-				_tcsncpy_s(msg, tszMsg, _TRUNCATE);
+				wchar_t msg[1024];
+				wchar_t *tszMsg = StrNormNewline((wchar_t *)ack->lParam);
+				wcsncpy_s(msg, tszMsg, _TRUNCATE);
 				mir_free(tszMsg);
-				size_t len = mir_tstrlen(msg);
+				size_t len = mir_wstrlen(msg);
 				if (len) {
 					LPTSTR lptstrCopy;
-					HGLOBAL hglbCopy = GlobalAlloc(GMEM_MOVEABLE, (len + 1) * sizeof(TCHAR));
+					HGLOBAL hglbCopy = GlobalAlloc(GMEM_MOVEABLE, (len + 1) * sizeof(wchar_t));
 					if (hglbCopy == NULL) {
 						CloseClipboard();
 						DestroyWindow(hwndDlg);
 						break;
 					}
 					lptstrCopy = (LPTSTR)GlobalLock(hglbCopy);
-					memcpy(lptstrCopy, msg, len * sizeof(TCHAR));
-					lptstrCopy[len] = (TCHAR)0;
+					memcpy(lptstrCopy, msg, len * sizeof(wchar_t));
+					lptstrCopy[len] = (wchar_t)0;
 					GlobalUnlock(hglbCopy);
 
 					SetClipboardData(CF_UNICODETEXT, hglbCopy);
@@ -261,27 +256,27 @@ static INT_PTR CALLBACK CopyAwayMsgDlgProc(HWND hwndDlg, UINT message, WPARAM wP
 			}
 			CloseClipboard();
 			DestroyWindow(hwndDlg);
-			break;
 		}
+		break;
 
-		case WM_COMMAND:
-			switch (LOWORD(wParam)) {
-				case IDCANCEL:
-				case IDOK:
-					DestroyWindow(hwndDlg);
-				break;
-			}
-			break;
-
-		case WM_CLOSE:
+	case WM_COMMAND:
+		switch (LOWORD(wParam)) {
+		case IDCANCEL:
+		case IDOK:
 			DestroyWindow(hwndDlg);
 			break;
+		}
+		break;
 
-		case WM_DESTROY:
-			if (dat->hAwayMsgEvent) UnhookEvent(dat->hAwayMsgEvent);
-			WindowList_Remove(hWindowList2, hwndDlg);
-			mir_free(dat);
-			break;
+	case WM_CLOSE:
+		DestroyWindow(hwndDlg);
+		break;
+
+	case WM_DESTROY:
+		if (dat->hAwayMsgEvent) UnhookEvent(dat->hAwayMsgEvent);
+		WindowList_Remove(hWindowList2, hwndDlg);
+		mir_free(dat);
+		break;
 	}
 	return FALSE;
 }
@@ -336,39 +331,35 @@ static INT_PTR GoToURLMsgCommand(WPARAM wParam, LPARAM)
 
 static int AwayMsgPreBuildMenu(WPARAM hContact, LPARAM)
 {
-	TCHAR str[128];
-	char *szProto = GetContactProto(hContact);
-	int iHidden = szProto ? db_get_b(hContact, szProto, "ChatRoom", 0) : 0;
-	int iStatus;
+	Menu_ShowItem(hCopyMsgMenuItem, false);
+	Menu_ShowItem(hGoToURLMenuItem, false);
+	Menu_ShowItem(hAwayMsgMenuItem, false);
 
-	if (!iHidden) {
-		iHidden = 1;
-		iStatus = db_get_w(hContact, szProto, "Status", ID_STATUS_OFFLINE);
-		if (CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGRECV) {
-			if (CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_3, 0) & Proto_Status2Flag(iStatus == ID_STATUS_OFFLINE ? ID_STATUS_INVISIBLE : iStatus)) {
-				iHidden = 0;
-				HICON hIcon = Skin_LoadProtoIcon(szProto, iStatus);
-				mir_sntprintf(str, TranslateT("Re&ad %s message"), pcli->pfnGetStatusModeDescription(iStatus, 0));
-				Menu_ModifyItem(hAwayMsgMenuItem, str, hIcon, 0);
-				IcoLib_ReleaseIcon(hIcon);
+	char *szProto = GetContactProto(hContact);
+	if (szProto == NULL || db_get_b(hContact, szProto, "ChatRoom", 0))
+		return 0;
+
+	wchar_t str[128];
+	int iStatus = db_get_w(hContact, szProto, "Status", ID_STATUS_OFFLINE);
+	if (CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_1, 0) & PF1_MODEMSGRECV) {
+		if (CallProtoService(szProto, PS_GETCAPS, PFLAGNUM_3, 0) & Proto_Status2Flag(iStatus == ID_STATUS_OFFLINE ? ID_STATUS_INVISIBLE : iStatus)) {
+			HICON hIcon = Skin_LoadProtoIcon(szProto, iStatus);
+			mir_snwprintf(str, TranslateT("Re&ad %s message"), pcli->pfnGetStatusModeDescription(iStatus, 0));
+			Menu_ModifyItem(hAwayMsgMenuItem, str, hIcon, 0);
+			IcoLib_ReleaseIcon(hIcon);
+
+			ptrA szMsg(db_get_sa(hContact, "CList", "StatusMsg"));
+			if (szMsg != NULL) {
+				mir_snwprintf(str, TranslateT("Copy %s message"), pcli->pfnGetStatusModeDescription(iStatus, 0));
+				Menu_ModifyItem(hCopyMsgMenuItem, str);
+
+				if (StrFindURL(szMsg) != NULL) {
+					mir_snwprintf(str, TranslateT("&Go to URL in %s message"), pcli->pfnGetStatusModeDescription(iStatus, 0));
+					Menu_ModifyItem(hGoToURLMenuItem, str);
+				}
 			}
 		}
 	}
-	else Menu_ShowItem(hAwayMsgMenuItem, false);
-
-	ptrA szMsg(db_get_sa(hContact, "CList", "StatusMsg"));
-
-	if (!iHidden && szMsg != NULL) {
-		mir_sntprintf(str, TranslateT("Copy %s message"), pcli->pfnGetStatusModeDescription(iStatus, 0));
-		Menu_ModifyItem(hCopyMsgMenuItem, str);
-	}
-	else Menu_ShowItem(hCopyMsgMenuItem, false);
-
-	if (!iHidden && szMsg != NULL && StrFindURL(szMsg) != NULL) {
-		mir_sntprintf(str, TranslateT("&Go to URL in %s message"), pcli->pfnGetStatusModeDescription(iStatus, 0));
-		Menu_ModifyItem(hGoToURLMenuItem, str);
-	}
-	else Menu_ShowItem(hGoToURLMenuItem, false);
 
 	return 0;
 }
@@ -392,12 +383,12 @@ int LoadAwayMsgModule(void)
 	hWindowList2 = WindowList_Create();
 
 	CMenuItem mi;
-	mi.flags = CMIF_TCHAR;
+	mi.flags = CMIF_UNICODE;
 
 	SET_UID(mi, 0xd3282acc, 0x9ff1, 0x4ede, 0x8a, 0x1e, 0x36, 0x72, 0x3f, 0x44, 0x4f, 0x84);
 	CreateServiceFunction(MS_AWAYMSG_SHOWAWAYMSG, GetMessageCommand);
 	mi.position = -2000005000;
-	mi.name.t = LPGENT("Re&ad Away message");
+	mi.name.w = LPGENW("Re&ad Away message");
 	mi.pszService = MS_AWAYMSG_SHOWAWAYMSG;
 	hAwayMsgMenuItem = Menu_AddContactMenuItem(&mi);
 
@@ -405,7 +396,7 @@ int LoadAwayMsgModule(void)
 	CreateServiceFunction(MS_SIMPLESTATUSMSG_COPYMSG, CopyAwayMsgCommand);
 	mi.position = -2000006000;
 	mi.hIcolibItem = GetIconHandle(IDI_COPY);
-	mi.name.t = LPGENT("Copy Away message");
+	mi.name.w = LPGENW("Copy Away message");
 	mi.pszService = MS_SIMPLESTATUSMSG_COPYMSG;
 	hCopyMsgMenuItem = Menu_AddContactMenuItem(&mi);
 
@@ -413,11 +404,10 @@ int LoadAwayMsgModule(void)
 	CreateServiceFunction(MS_SIMPLESTATUSMSG_GOTOURLMSG, GoToURLMsgCommand);
 	mi.position = -2000007000;
 	mi.hIcolibItem = GetIconHandle(IDI_GOTOURL);
-	mi.name.t = LPGENT("&Go to URL in Away message");
+	mi.name.w = LPGENW("&Go to URL in Away message");
 	mi.pszService = MS_SIMPLESTATUSMSG_GOTOURLMSG;
 	hGoToURLMenuItem = Menu_AddContactMenuItem(&mi);
 
 	HookEvent(ME_CLIST_PREBUILDCONTACTMENU, AwayMsgPreBuildMenu);
-
 	return 0;
 }

@@ -1,0 +1,10 @@
+file(GLOB SOURCES "src/*.h" "src/*.cpp")
+if(CMAKE_CL_64)
+	list(APPEND SOURCES "src/libjson64.def")
+else()
+	list(APPEND SOURCES "src/libjson.def")
+endif()
+set(TARGET libjson)
+include(${CMAKE_SOURCE_DIR}/cmake/lib.cmake)
+
+set_target_properties(${TARGET} PROPERTIES COMPILE_DEFINITIONS "LIBJSON_EXPORTS")

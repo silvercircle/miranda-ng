@@ -41,8 +41,8 @@ GenericJob::GenericJob(GenericJob *job) :
 	m_ftp(job->m_ftp),
 	m_tab(job->m_tab)
 {
-	mir_tstrcpy(m_tszFilePath, job->m_tszFilePath);
-	mir_tstrcpy(m_tszFileName, job->m_tszFileName);
+	mir_wstrcpy(m_tszFilePath, job->m_tszFilePath);
+	mir_wstrcpy(m_tszFileName, job->m_tszFileName);
 	mir_strcpy(m_szSafeFileName, job->m_szSafeFileName);
 }
 
@@ -54,8 +54,8 @@ GenericJob::~GenericJob()
 
 int GenericJob::openFileDialog()
 {
-	TCHAR temp[MAX_PATH] = _T("");
-	mir_sntprintf(temp, _T("%s\0*.*\0"), TranslateT("All Files (*.*)"));
+	wchar_t temp[MAX_PATH] = L"";
+	mir_snwprintf(temp, L"%s\0*.*\0", TranslateT("All Files (*.*)"));
 	OPENFILENAME ofn = { 0 };
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = 0;
@@ -85,16 +85,16 @@ int GenericJob::openFolderDialog()
 
 void GenericJob::getFilesFromOpenDialog()
 {
-	TCHAR stzFile[MAX_PATH];
+	wchar_t stzFile[MAX_PATH];
 
-	size_t length = mir_tstrlen(m_tszFilePath);
+	size_t length = mir_wstrlen(m_tszFilePath);
 	if (m_tszFilePath[0] && m_tszFilePath[length + 1]) // multiple files
 	{
-		TCHAR *ptr = m_tszFilePath + length + 1;
+		wchar_t *ptr = m_tszFilePath + length + 1;
 		while (ptr[0]) {
-			mir_sntprintf(stzFile, _T("%s\\%s"), m_tszFilePath, ptr);
+			mir_snwprintf(stzFile, L"%s\\%s", m_tszFilePath, ptr);
 			addFile(stzFile);
-			ptr += mir_tstrlen(ptr) + 1;
+			ptr += mir_wstrlen(ptr) + 1;
 		}
 	}
 	else {
@@ -102,9 +102,9 @@ void GenericJob::getFilesFromOpenDialog()
 	}
 }
 
-int GenericJob::getFilesFromFolder(TCHAR *stzFolder)
+int GenericJob::getFilesFromFolder(wchar_t *stzFolder)
 {
-	TCHAR stzFile[MAX_PATH], stzDirSave[MAX_PATH];
+	wchar_t stzFile[MAX_PATH], stzDirSave[MAX_PATH];
 
 	GetCurrentDirectory(MAX_PATH, stzDirSave);
 	if (!SetCurrentDirectory(stzFolder)) {
@@ -113,10 +113,10 @@ int GenericJob::getFilesFromFolder(TCHAR *stzFolder)
 	}
 
 	WIN32_FIND_DATA ffd;
-	HANDLE hFind = FindFirstFile(_T("*.*"), &ffd);
+	HANDLE hFind = FindFirstFile(L"*.*", &ffd);
 	while (hFind != INVALID_HANDLE_VALUE) {
 		if (!(ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-			mir_sntprintf(stzFile, _T("%s\\%s"), stzFolder, ffd.cFileName);
+			mir_snwprintf(stzFile, L"%s\\%s", stzFolder, ffd.cFileName);
 			addFile(stzFile);
 		}
 
@@ -152,11 +152,11 @@ int GenericJob::getFiles()
 int GenericJob::getFiles(void **objects, int objCount, DWORD flags)
 {
 	if (m_mode == FTP_ZIPFOLDER) {
-		TCHAR *folder;
+		wchar_t *folder;
 		if (flags & FUPL_UNICODE)
-			folder = mir_u2t((wchar_t *)objects[0]);
+			folder = mir_wstrdup((wchar_t *)objects[0]);
 		else
-			folder = mir_a2t((char *)objects[0]);
+			folder = mir_a2u((char *)objects[0]);
 
 		int result = getFilesFromFolder(folder);
 		FREE(folder);
@@ -164,11 +164,11 @@ int GenericJob::getFiles(void **objects, int objCount, DWORD flags)
 	}
 	else {
 		for (int i = 0; i < objCount; i++) {
-			TCHAR *fileName;
+			wchar_t *fileName;
 			if (flags & FUPL_UNICODE)
-				fileName = mir_u2t((wchar_t *)objects[i]);
+				fileName = mir_wstrdup((wchar_t *)objects[i]);
 			else
-				fileName = mir_a2t((char *)objects[i]);
+				fileName = mir_a2u((char *)objects[i]);
 
 			addFile(fileName);
 			FREE(fileName);
@@ -178,9 +178,9 @@ int GenericJob::getFiles(void **objects, int objCount, DWORD flags)
 	return (m_files.size() == 0) ? 0 : 1;
 }
 
-void GenericJob::addFile(TCHAR *fileName)
+void GenericJob::addFile(wchar_t *fileName)
 {
-	TCHAR *buff = mir_tstrdup(fileName);
+	wchar_t *buff = mir_wstrdup(fileName);
 	m_files.push_back(buff);
 }
 
@@ -215,7 +215,7 @@ bool GenericJob::isConnecting()
 	return (m_status == STATUS_CONNECTING || m_status == STATUS_CREATED);
 }
 
-TCHAR *GenericJob::getStatusString()
+wchar_t *GenericJob::getStatusString()
 {
 	switch (m_status) {
 	case STATUS_CANCELED:   return TranslateT("CANCELED");

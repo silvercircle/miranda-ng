@@ -90,7 +90,8 @@ INT_PTR CALLBACK DlgProcPluginOpt(HWND hDlg, UINT msg, WPARAM wParam, LPARAM)
 					if (CB_ERR == (index = SendMessage(hCombo, CB_GETCURSEL, 0, 0)))
 						break;
 					id = SendMessage(hCombo, CB_GETITEMDATA, (WPARAM)index, 0);
-					EnterCriticalSection(&PluginRegCS);
+
+					mir_cslock lck(PluginRegCS);
 					for (PParser = FirstProtoPlugin; PParser != NULL; PParser = PParser->Next)
 						if (id == (INT_PTR)PParser->Plugin) {
 							SetDlgItemTextA(hDlg, IDC_STVER, PParser->Plugin->PluginInfo->Ver);
@@ -109,7 +110,6 @@ INT_PTR CALLBACK DlgProcPluginOpt(HWND hDlg, UINT msg, WPARAM wParam, LPARAM)
 							SetDlgItemTextA(hDlg, IDC_STWWW, FParser->Plugin->PluginInfo->WWW == NULL ? "" : FParser->Plugin->PluginInfo->WWW);
 							break;
 						}
-					LeaveCriticalSection(&PluginRegCS);
 				}
 				break;
 			case IDC_STWWW:
@@ -125,21 +125,18 @@ INT_PTR CALLBACK DlgProcPluginOpt(HWND hDlg, UINT msg, WPARAM wParam, LPARAM)
 		}
 	case WM_SHOWWINDOW:
 		if (TRUE == (BOOL)wParam) {
-			PYAMN_PROTOPLUGINQUEUE PParser;
-			PYAMN_FILTERPLUGINQUEUE FParser;
-			int index;
-
-			EnterCriticalSection(&PluginRegCS);
-			for (PParser = FirstProtoPlugin; PParser != NULL; PParser = PParser->Next) {
-				index = SendDlgItemMessageA(hDlg, IDC_COMBOPLUGINS, CB_ADDSTRING, 0, (LPARAM)PParser->Plugin->PluginInfo->Name);
-				index = SendDlgItemMessage(hDlg, IDC_COMBOPLUGINS, CB_SETITEMDATA, (WPARAM)index, (LPARAM)PParser->Plugin);
-			}
-			for (FParser = FirstFilterPlugin; FParser != NULL; FParser = FParser->Next) {
-				index = SendDlgItemMessageA(hDlg, IDC_COMBOPLUGINS, CB_ADDSTRING, 0, (LPARAM)FParser->Plugin->PluginInfo->Name);
-				index = SendDlgItemMessage(hDlg, IDC_COMBOPLUGINS, CB_SETITEMDATA, (WPARAM)index, (LPARAM)FParser->Plugin);
+			{
+				mir_cslock lck(PluginRegCS);
+				for (PYAMN_PROTOPLUGINQUEUE PParser = FirstProtoPlugin; PParser != NULL; PParser = PParser->Next) {
+					int index = SendDlgItemMessageA(hDlg, IDC_COMBOPLUGINS, CB_ADDSTRING, 0, (LPARAM)PParser->Plugin->PluginInfo->Name);
+					SendDlgItemMessage(hDlg, IDC_COMBOPLUGINS, CB_SETITEMDATA, (WPARAM)index, (LPARAM)PParser->Plugin);
+				}
+				for (PYAMN_FILTERPLUGINQUEUE FParser = FirstFilterPlugin; FParser != NULL; FParser = FParser->Next) {
+					int index = SendDlgItemMessageA(hDlg, IDC_COMBOPLUGINS, CB_ADDSTRING, 0, (LPARAM)FParser->Plugin->PluginInfo->Name);
+					SendDlgItemMessage(hDlg, IDC_COMBOPLUGINS, CB_SETITEMDATA, (WPARAM)index, (LPARAM)FParser->Plugin);
+				}
 			}
 
-			LeaveCriticalSection(&PluginRegCS);
 			SendDlgItemMessage(hDlg, IDC_COMBOPLUGINS, CB_SETCURSEL, 0, 0);
 			SendMessage(hDlg, WM_COMMAND, MAKELONG(IDC_COMBOPLUGINS, CBN_SELCHANGE), 0);
 			break;
@@ -160,28 +157,28 @@ int YAMNOptInitSvc(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = YAMNVar.hInst;
-	odp.pszGroup = LPGEN("Network");
-	odp.pszTitle = LPGEN("YAMN");
+	odp.szGroup.a = LPGEN("Network");
+	odp.szTitle.a = LPGEN("YAMN");
 	odp.flags = ODPF_BOLDGROUPS;
 
-	odp.pszTab = LPGEN("Accounts");
+	odp.szTab.a = LPGEN("Accounts");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_POP3ACCOUNTOPT);
 	odp.pfnDlgProc = DlgProcPOP3AccOpt;
 	Options_AddPage(wParam, &odp);
 
-	odp.pszTab = LPGEN("General");
+	odp.szTab.a = LPGEN("General");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_YAMNOPT);
 	odp.pfnDlgProc = DlgProcYAMNOpt;
 	Options_AddPage(wParam, &odp);
 
-	odp.pszTab = LPGEN("Plugins");
+	odp.szTab.a = LPGEN("Plugins");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_PLUGINOPT);
 	odp.pfnDlgProc = DlgProcPluginOpt;
 	Options_AddPage(wParam, &odp);
 
 	if (ServiceExists(MS_POPUP_ADDPOPUPT)) {
-		odp.pszGroup = LPGEN("Popups");
-		odp.pszTab = LPGEN("YAMN");
+		odp.szGroup.a = LPGEN("Popups");
+		odp.szTab.a = LPGEN("YAMN");
 		odp.pszTemplate = MAKEINTRESOURCEA(IDD_POP3ACCOUNTPOPUP);
 		odp.pfnDlgProc = DlgProcPOP3AccPopup;
 		Options_AddPage(wParam, &odp);
@@ -368,7 +365,7 @@ BOOL DlgShowAccount(HWND hDlg, WPARAM wParam, LPARAM lParam)
 	int i;
 
 	if ((DWORD)wParam == M_SHOWACTUAL) {
-		TCHAR accstatus[256];
+		wchar_t accstatus[256];
 		#ifdef DEBUG_SYNCHRO
 		DebugLog(SynchroFile, "Options:SHOWACCOUNT:ActualAccountSO-read wait\n");
 		#endif
@@ -653,7 +650,7 @@ INT_PTR CALLBACK DlgProcPOP3AccOpt(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lP
 			SendDlgItemMessage(hDlg, IDC_COMBOCP, CB_ADDSTRING, 0, (LPARAM)TranslateT("Default"));
 			for (i = 1; i < CPLENSUPP; i++) {
 				CPINFOEX info; GetCPInfoEx(CodePageNamesSupp[i].CP, 0, &info);
-				size_t len = mir_tstrlen(info.CodePageName + 7);
+				size_t len = mir_wstrlen(info.CodePageName + 7);
 				info.CodePageName[len + 6] = 0;
 				SendDlgItemMessage(hDlg, IDC_COMBOCP, CB_ADDSTRING, 0, (LPARAM)(info.CodePageName + 7));
 			}
@@ -675,7 +672,7 @@ INT_PTR CALLBACK DlgProcPOP3AccOpt(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lP
 
 	case WM_YAMN_CHANGESTATUS:
 		if ((HPOP3ACCOUNT)wParam == ActualAccount) {
-			TCHAR accstatus[256];
+			wchar_t accstatus[256];
 			GetAccountStatus(ActualAccount, accstatus);
 			SetDlgItemText(hDlg, IDC_STSTATUS, accstatus);
 			return TRUE;
@@ -689,8 +686,8 @@ INT_PTR CALLBACK DlgProcPOP3AccOpt(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lP
 
 	case WM_YAMN_CHANGETIME:
 		if ((HPOP3ACCOUNT)wParam == ActualAccount) {
-			TCHAR Text[256];
-			mir_sntprintf(Text, TranslateT("Time left to next check [s]: %d"), (DWORD)lParam);
+			wchar_t Text[256];
+			mir_snwprintf(Text, TranslateT("Time left to next check [s]: %d"), (DWORD)lParam);
 			SetDlgItemText(hDlg, IDC_STTIMELEFT, Text);
 		}
 		return TRUE;
@@ -832,8 +829,8 @@ INT_PTR CALLBACK DlgProcPOP3AccOpt(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lP
 
 		case IDC_BTNAPP:
 			{
-				TCHAR filter[MAX_PATH];
-				mir_sntprintf(filter, _T("%s (*.exe;*.bat;*.cmd;*.com)%c*.exe;*.bat;*.cmd;*.com%c%s (*.*)%c*.*%c"),
+				wchar_t filter[MAX_PATH];
+				mir_snwprintf(filter, L"%s (*.exe;*.bat;*.cmd;*.com)%c*.exe;*.bat;*.cmd;*.com%c%s (*.*)%c*.*%c",
 					TranslateT("Executables"), 0, 0, TranslateT("All Files"), 0, 0);
 
 				OPENFILENAME OFNStruct = { 0 };
@@ -842,8 +839,8 @@ INT_PTR CALLBACK DlgProcPOP3AccOpt(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lP
 				OFNStruct.lpstrFilter = filter;
 				OFNStruct.nFilterIndex = 1;
 				OFNStruct.nMaxFile = MAX_PATH;
-				OFNStruct.lpstrFile = new TCHAR[MAX_PATH];
-				OFNStruct.lpstrFile[0] = (TCHAR)0;
+				OFNStruct.lpstrFile = new wchar_t[MAX_PATH];
+				OFNStruct.lpstrFile[0] = (wchar_t)0;
 				OFNStruct.lpstrTitle = TranslateT("Select executable used for notification");
 				OFNStruct.Flags = OFN_FILEMUSTEXIST | OFN_NONETWORKBUTTON | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;
 				if (!GetOpenFileName(&OFNStruct)) {
@@ -872,7 +869,7 @@ INT_PTR CALLBACK DlgProcPOP3AccOpt(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lP
 			DlgSetItemTextT(hDlg, IDC_STTIMELEFT, TranslateT("Please wait while no account is in use."));
 
 			if (ActualAccount->hContact != NULL)
-				CallService(MS_DB_CONTACT_DELETE, ActualAccount->hContact, 0);
+				db_delete_contact(ActualAccount->hContact);
 
 			CallService(MS_YAMN_DELETEACCOUNT, (WPARAM)POP3Plugin, (LPARAM)ActualAccount);
 
@@ -1292,12 +1289,12 @@ INT_PTR CALLBACK DlgProcPOP3AccPopup(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 					TesterF.lchIcon = g_LoadIconEx(3);
 					TesterN.lchIcon = g_LoadIconEx(1);
 
-					mir_tstrncpy(Tester.lptzContactName, TranslateT("Account Test"), MAX_CONTACTNAME);
-					mir_tstrncpy(TesterF.lptzContactName, TranslateT("Account Test (failed)"), MAX_CONTACTNAME);
-					mir_tstrncpy(TesterN.lptzContactName, TranslateT("Account Test"), MAX_CONTACTNAME);
-					mir_tstrncpy(Tester.lptzText, TranslateT("You have N new mail messages"), MAX_SECONDLINE);
-					mir_tstrncpy(TesterF.lptzText, TranslateT("Connection failed message"), MAX_SECONDLINE);
-					mir_tstrncpy(TesterN.lptzText, TranslateT("No new mail message"), MAX_SECONDLINE);
+					mir_wstrncpy(Tester.lptzContactName, TranslateT("Account Test"), MAX_CONTACTNAME);
+					mir_wstrncpy(TesterF.lptzContactName, TranslateT("Account Test (failed)"), MAX_CONTACTNAME);
+					mir_wstrncpy(TesterN.lptzContactName, TranslateT("Account Test"), MAX_CONTACTNAME);
+					mir_wstrncpy(Tester.lptzText, TranslateT("You have N new mail messages"), MAX_SECONDLINE);
+					mir_wstrncpy(TesterF.lptzText, TranslateT("Connection failed message"), MAX_SECONDLINE);
+					mir_wstrncpy(TesterN.lptzText, TranslateT("No new mail message"), MAX_SECONDLINE);
 					if (TesterC) {
 						Tester.colorBack = SendDlgItemMessage(hDlg, IDC_CPB, CPM_GETCOLOUR, 0, 0);
 						Tester.colorText = SendDlgItemMessage(hDlg, IDC_CPT, CPM_GETCOLOUR, 0, 0);
@@ -1376,7 +1373,7 @@ INT_PTR CALLBACK DlgProcPOP3AccPopup(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 			switch (((LPNMHDR)lParam)->code) {
 			case PSN_APPLY:
 				{
-					TCHAR Text[MAX_PATH];
+					wchar_t Text[MAX_PATH];
 					BOOL Translated, CheckPopup, CheckPopupW;
 					BOOL CheckNPopup, CheckNPopupW, CheckFPopup, CheckFPopupW;
 					BOOL CheckPopN;

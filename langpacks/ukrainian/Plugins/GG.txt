@@ -37,8 +37,8 @@
 Показувати посилання від невідомих контактів
 [Enable avatars]
 Увімкнути аватари
-[You will need to reconnect for the changes you have made on this page to take effect.]
-Зміни вступлять у силу при наступному вході в мережу.
+[These changes will take effect the next time you connect to the GG network.]
+Зміни наберуть чинності при наступному вході в мережу Gadu-Gadu.
 [Conference policy]
 Політика конференцій
 [if total participant count greater than:]
@@ -124,7 +124,7 @@
 [Change Gadu-Gadu password]
 Змінити пароль Gadu-Gadu
 [Changes current Gadu-Gadu user password]
-Зміна поточного паролю Gadu-Gadu
+Зміна поточного пароля Gadu-Gadu
 [Change Gadu-Gadu e-mail]
 Змінити E-mail Gadu-Gadu
 [Changes current Gadu-Gadu user e-mail]
@@ -209,14 +209,6 @@
 Жіноча
 [<not specified>]
 <не вказано>
-[Network]
-Мережа
-[General]
-Загальне
-[Conference]
-Конференція
-[Advanced]
-Додатково
 [<Last Status>]
 <Останній статус>
 [System tray icon]
@@ -237,6 +229,14 @@
 Запитати
 [Ignore]
 Ігнорувати
+[Network]
+Мережа
+[General]
+Загальне
+[Conference]
+Конференція
+[Advanced]
+Додатково
 [HTTP failed connecting]
 HTTP помилка з'єднання
 [HTTP failed resolving]
@@ -315,10 +315,10 @@ HTTP невідома помилка
 Файли зображень (*.bmp,*.gif,*.jpeg,*.jpg,*.png)
 [Image cannot be written to disk.]
 Зображення не може бути записано на диск.
-[Delete image from the list]
-Видалити зображення зі списку
 [Save image to disk]
 Зберегти зображення на диск
+[Delete image from the list]
+Видалити зображення зі списку
 [Image from %s]
 Зображення від %s
 [Image for %s]

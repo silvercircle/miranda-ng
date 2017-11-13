@@ -1,7 +1,7 @@
 #define __MAJOR_VERSION       3
-#define __MINOR_VERSION       4
+#define __MINOR_VERSION       5
 #define __RELEASE_NUM         0
-#define __BUILD_NUM           11
+#define __BUILD_NUM           7
 
 #include <stdver.h>
 
@@ -10,5 +10,5 @@
 #define __DESCRIPTION         "IM and group chat module for Miranda NG."
 #define __AUTHOR              "The Miranda developers team and contributors"
 #define __AUTHOREMAIL         "silvercircle@gmail.com"
-#define __AUTHORWEB           "http://miranda-ng.org/p/TabSRMM/"
-#define __COPYRIGHT           "© 2012-15 Miranda NG team, 2000-2010 Miranda Project and contributors. See readme.txt for more."
+#define __AUTHORWEB           "https://miranda-ng.org/p/TabSRMM/"
+#define __COPYRIGHT           "© 2012-17 Miranda NG team, 2000-2010 Miranda Project and contributors."

@@ -113,7 +113,6 @@ type
 
 
 procedure reghotkeys;
-procedure unreghotkeys;
 
 procedure saveopt_wnd;
 procedure loadopt_wnd;
@@ -188,26 +187,20 @@ begin
   FillChar(hkrec,SizeOf(hkrec),0);
   with hkrec do
   begin
-    cbSize          :=SizeOf(hkrec);
     pszName         :=HKN_GLOBAL;
     pszDescription.a:='QuickSearch window hotkey';
     pszSection.a    :=qs_name;
     pszService      :=QS_SHOWSERVICE;
     DefHotKey       :=(HOTKEYF_ALT shl 8) or VK_F3;
   end;
-  CallService(MS_HOTKEY_REGISTER,0,lparam(@hkrec));
-end;
-
-procedure unreghotkeys;
-begin
-  CallService(MS_HOTKEY_UNREGISTER,0,lparam(HKN_GLOBAL));
+  Hotkey_Register(@hkrec);
 end;
 
 procedure removetoolbar;
 begin
   if hTTBButton<>0 then
   begin
-    if ServiceExists(MS_TTB_REMOVEBUTTON)>0 then
+    if ServiceExists(MS_TTB_REMOVEBUTTON) then
     begin
       CallService(MS_TTB_REMOVEBUTTON,WPARAM(hTTBButton),0);
       hTTBButton:=0;
@@ -221,7 +214,7 @@ var
 begin
   removetoolbar;
 
-  if ServiceExists(MS_TTB_ADDBUTTON)>0 then
+  if ServiceExists(MS_TTB_ADDBUTTON) then
   begin
     ZeroMemory(@ttbopt,sizeof(ttbopt));
     ttbopt.pszService:=QS_SHOWSERVICE;
@@ -242,6 +235,7 @@ begin
   if MainMenuItem<>0 then exit;
 
   ZeroMemory(@mi,sizeof(mi));
+  SET_UID(@mi, '98C2A92A-D93D-43E8-91C3-3BB6BE4344F0');
   mi.szName.a    :=qs_name;
   mi.position    :=500050000;
   mi.pszService  :=QS_SHOWSERVICE;
@@ -701,7 +695,7 @@ var
 begin
   if DBGetSettingType(0,qs_module,so_flags)=DBVT_DELETED then
   begin
-    DBDeleteModule(0,qs_module);
+    db_delete_module(0,qs_module);
     qsopt.flags:=
         QSO_SORTBYSTATUS or QSO_DRAWGRID or
         QSO_CLIENTICONS  or QSO_COLORIZE or

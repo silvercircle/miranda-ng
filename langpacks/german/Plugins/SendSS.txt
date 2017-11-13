@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: SendSS.dll
 ;  Plugin: Send ScreenShot+
-;  Version: 0.8.9.1
+;  Version: 0.8.10.1
 ;  Authors: Merlin
 ;============================================================
 [Take a screenshot and send it to a contact.]
@@ -206,8 +206,8 @@ SendSS-HTTP-Verbindungen
 SendSS
 [Screenshots]
 Screenshots
-[Image services (AdvaImg) not found.\nSendSS disabled.]
-Bilderdienste (AdvaImg) nicht gefunden.\nSendSS deaktiviert.
+[Image services (AdvaImg plugin) not found.\nSendSS disabled.]
+Bilderdienste (AdvaImg-Plugin) nicht gefunden.\nSendSS deaktiviert.
 [Buttons]
 Schaltflächen
 [Could not register Miranda service.]

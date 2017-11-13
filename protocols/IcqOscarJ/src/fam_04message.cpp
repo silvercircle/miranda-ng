@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2010 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -89,17 +89,8 @@ static void setMsgChannelParams(CIcqProto *ppro, WORD wChan, DWORD dwFlags)
 
 void CIcqProto::handleReplyICBM()
 {
-	// we don't care about the stuff, just change the params
-	DWORD dwFlags = 0x00000303;
-
-	#ifdef DBG_CAPHTML
-	dwFlags |= 0x00000400;
-	#endif
-	#ifdef DBG_CAPMTN
-	dwFlags |= 0x00000008;
-	#endif
 	// Set message parameters for all channels (imitate ICQ 6)
-	setMsgChannelParams(this, 0x0000, dwFlags);
+	setMsgChannelParams(this, 0x0000, 0x0000070B);
 }
 
 void CIcqProto::handleRecvServMsg(BYTE *buf, size_t wLen, DWORD dwRef)
@@ -947,9 +938,9 @@ void CIcqProto::handleRecvServMsgContacts(BYTE *buf, size_t wLen, DWORD dwUin, c
 						}
 						contacts[iContact] = (ICQSEARCHRESULT*)SAFE_MALLOC(sizeof(ICQSEARCHRESULT));
 						contacts[iContact]->hdr.cbSize = sizeof(ICQSEARCHRESULT);
-						contacts[iContact]->hdr.flags = PSR_TCHAR;
-						contacts[iContact]->hdr.nick.t = null_strdup(_T(""));
-						contacts[iContact]->hdr.id.t = ansi_to_tchar(szUid);
+						contacts[iContact]->hdr.flags = PSR_UNICODE;
+						contacts[iContact]->hdr.nick.w = null_strdup(L"");
+						contacts[iContact]->hdr.id.w = ansi_to_unicode(szUid);
 
 						if (IsStringUIN(szUid)) { // icq contact
 							contacts[iContact]->uin = atoi(szUid);
@@ -976,8 +967,8 @@ void CIcqProto::handleRecvServMsgContacts(BYTE *buf, size_t wLen, DWORD dwUin, c
 				debugLogA("Malformed '%s' message", "contacts");
 				disposeChain(&chain);
 				for (int i = 0; i < iContact; i++) {
-					SAFE_FREE(&contacts[i]->hdr.id.t);
-					SAFE_FREE(&contacts[i]->hdr.nick.t);
+					SAFE_FREE(&contacts[i]->hdr.id.w);
+					SAFE_FREE(&contacts[i]->hdr.nick.w);
 					SAFE_FREE((void**)&contacts[i]);
 				}
 				SAFE_FREE((void**)&contacts);
@@ -1015,8 +1006,8 @@ void CIcqProto::handleRecvServMsgContacts(BYTE *buf, size_t wLen, DWORD dwUin, c
 
 							unpackTypedTLV(pBuffer, wNickLen, 0x01, &wNickTLV, &wNickTLVLen, (LPBYTE*)&pNick);
 							if (wNickTLV == 0x01) {
-								SAFE_FREE(&contacts[iContact]->hdr.nick.t);
-								contacts[iContact]->hdr.nick.t = utf8_to_tchar(pNick);
+								SAFE_FREE(&contacts[iContact]->hdr.nick.w);
+								contacts[iContact]->hdr.nick.w = make_unicode_string(pNick);
 							}
 							else
 								SAFE_FREE(&pNick);
@@ -1051,8 +1042,8 @@ void CIcqProto::handleRecvServMsgContacts(BYTE *buf, size_t wLen, DWORD dwUin, c
 			}
 
 			for (int i = 0; i < iContact; i++) {
-				SAFE_FREE(&contacts[i]->hdr.id.t);
-				SAFE_FREE(&contacts[i]->hdr.nick.t);
+				SAFE_FREE(&contacts[i]->hdr.id.w);
+				SAFE_FREE(&contacts[i]->hdr.nick.w);
 				SAFE_FREE((void**)&contacts[i]);
 			}
 			SAFE_FREE((void**)&contacts);
@@ -1627,20 +1618,13 @@ void CIcqProto::handleMessageTypes(DWORD dwUin, char *szUID, DWORD dwTimestamp, 
 			break;
 		}
 		{
+			DB_AUTH_BLOB blob(hContact, pszMsgField[0], pszMsgField[1], pszMsgField[2], pszMsgField[3], pszMsgField[5]);
+			blob.set_uin(dwUin);
+
 			PROTORECVEVENT pre = { 0 };
 			pre.timestamp = dwTimestamp;
-			pre.lParam = sizeof(DWORD) * 2 + mir_strlen(pszMsgField[0]) + mir_strlen(pszMsgField[1]) + mir_strlen(pszMsgField[2]) + mir_strlen(pszMsgField[3]) + mir_strlen(pszMsgField[5]) + 5;
-
-			// blob is: uin(DWORD), hcontact(HANDLE), nick(ASCIIZ), first(ASCIIZ), last(ASCIIZ), email(ASCIIZ), reason(ASCIIZ)
-			char *szBlob, *pCurBlob = szBlob = (char *)_alloca(pre.lParam);
-			*(DWORD*)pCurBlob = dwUin; pCurBlob += sizeof(DWORD);
-			*(DWORD*)pCurBlob = DWORD(hContact); pCurBlob += sizeof(DWORD);
-			mir_strcpy((char*)pCurBlob, pszMsgField[0]); pCurBlob += mir_strlen((char*)pCurBlob) + 1;
-			mir_strcpy((char*)pCurBlob, pszMsgField[1]); pCurBlob += mir_strlen((char*)pCurBlob) + 1;
-			mir_strcpy((char*)pCurBlob, pszMsgField[2]); pCurBlob += mir_strlen((char*)pCurBlob) + 1;
-			mir_strcpy((char*)pCurBlob, pszMsgField[3]); pCurBlob += mir_strlen((char*)pCurBlob) + 1;
-			mir_strcpy((char*)pCurBlob, pszMsgField[5]);
-			pre.szMessage = (char *)szBlob;
+			pre.lParam = blob.size();
+			pre.szMessage = blob;
 			ProtoChainRecv(hContact, PSR_AUTH, 0, (LPARAM)&pre);
 		}
 		break;
@@ -1682,7 +1666,7 @@ void CIcqProto::handleMessageTypes(DWORD dwUin, char *szUID, DWORD dwTimestamp, 
 				for (int i = 0; i < nContacts; i++) {
 					isrList[i] = (ICQSEARCHRESULT*)SAFE_MALLOC(sizeof(ICQSEARCHRESULT));
 					isrList[i]->hdr.cbSize = sizeof(ICQSEARCHRESULT);
-					isrList[i]->hdr.flags = PSR_TCHAR;
+					isrList[i]->hdr.flags = PSR_UNICODE;
 					if (IsStringUIN(pszMsgField[1 + i * 2])) { // icq contact
 						isrList[i]->uin = atoi(pszMsgField[1 + i * 2]);
 						if (isrList[i]->uin == 0)
@@ -1692,8 +1676,8 @@ void CIcqProto::handleMessageTypes(DWORD dwUin, char *szUID, DWORD dwTimestamp, 
 						if (!mir_strlen(pszMsgField[1 + i * 2]))
 							valid = 0;
 					}
-					isrList[i]->hdr.id.t = ansi_to_tchar(pszMsgField[1 + i * 2]);
-					isrList[i]->hdr.nick.t = ansi_to_tchar(pszMsgField[2 + i * 2]);
+					isrList[i]->hdr.id.w = ansi_to_unicode(pszMsgField[1 + i * 2]);
+					isrList[i]->hdr.nick.w = ansi_to_unicode(pszMsgField[2 + i * 2]);
 				}
 
 				if (!valid)
@@ -1710,8 +1694,8 @@ void CIcqProto::handleMessageTypes(DWORD dwUin, char *szUID, DWORD dwTimestamp, 
 				}
 
 				for (int i = 0; i < nContacts; i++) {
-					SAFE_FREE(&isrList[i]->hdr.id.t);
-					SAFE_FREE(&isrList[i]->hdr.nick.t);
+					SAFE_FREE(&isrList[i]->hdr.id.w);
+					SAFE_FREE(&isrList[i]->hdr.nick.w);
 					SAFE_FREE((void**)&isrList[i]);
 				}
 			}
@@ -1925,7 +1909,7 @@ void CIcqProto::handleRecvMsgResponse(BYTE *buf, size_t wLen)
 		return;
 	}
 
-	if (IsValidOscarTransfer(pCookieData)) {
+	if (IsValidOscarTransfer((basic_filetransfer*)pCookieData)) {
 		// it is OFT response
 		handleRecvServResponseOFT(buf, wLen, dwUin, szUid, pCookieData);
 		return;

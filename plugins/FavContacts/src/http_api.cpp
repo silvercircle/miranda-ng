@@ -52,7 +52,7 @@ public:
 
 		int hContact;
 		sscanf(s, "/fav/open/%d", &hContact);
-		if (CallService(MS_DB_CONTACT_IS, hContact, 0))
+		if (db_is_contact(hContact))
 			CallServiceSync(MS_FAVCONTACTS_OPEN_CONTACT, hContact, 0);
 	}
 
@@ -74,7 +74,7 @@ public:
 		for (int i = 0; i < favList.getCount(); ++i)
 		{
 			MCONTACT hContact = favList[i]->getHandle();
-			TCHAR *name = (TCHAR *)pcli->pfnGetContactDisplayName(hContact, 0);
+			wchar_t *name = (wchar_t *)pcli->pfnGetContactDisplayName(hContact, 0);
 			AVATARCACHEENTRY *avatar = (AVATARCACHEENTRY *)CallService(MS_AV_GETAVATARBITMAP, hContact, 0);
 			int status = db_get_w(hContact, GetContactProto(hContact), "Status", ID_STATUS_OFFLINE);
 
@@ -87,7 +87,7 @@ public:
 			Send("', ");
 			Send(status);
 			Send(", '");
-			SendQuoted(avatar ? avatar->szFilename : _T(""));
+			SendQuoted(avatar ? avatar->szFilename : L"");
 			Send("');\r\n");
 		}
 		Send("} catch(e) {}\r\n");

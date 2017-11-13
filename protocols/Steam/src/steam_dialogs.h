@@ -3,6 +3,8 @@
 
 typedef CProtoDlgBase<CSteamProto> CSteamDlgBase;
 
+#define DIALOG_RESULT_OK 1
+
 /////////////////////////////////////////////////////////////////////////////////
 
 class CSteamPasswordEditor : public CSteamDlgBase
@@ -28,7 +30,7 @@ class CSteamGuardDialog : public CSteamDlgBase
 {
 private:
 	char m_domain[32];
-	char m_guardCode[5];
+	char m_guardCode[6];
 
 	CCtrlEdit m_text;
 	CCtrlButton m_ok;
@@ -47,10 +49,31 @@ public:
 
 /////////////////////////////////////////////////////////////////////////////////
 
+class CSteamTwoFactorDialog : public CSteamDlgBase
+{
+private:
+	char m_twoFactorCode[6];
+
+	CCtrlEdit m_text;
+	CCtrlButton m_ok;
+
+protected:
+	void OnInitDialog();
+	void OnOk(CCtrlButton*);
+	void OnClose();
+
+public:
+	CSteamTwoFactorDialog(CSteamProto *proto);
+
+	const char *GetTwoFactorCode();
+};
+
+/////////////////////////////////////////////////////////////////////////////////
+
 class CSteamCaptchaDialog : public CSteamDlgBase
 {
 private:
-	char m_captchaText[6];
+	char m_captchaText[7];
 
 	BYTE *m_captchaImage;
 	int m_captchaImageSize;

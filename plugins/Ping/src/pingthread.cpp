@@ -19,8 +19,8 @@ int frame_id = -1;
 
 HBRUSH tbrush = 0;
 
-FontIDT font_id;
-ColourIDT bk_col_id;
+FontIDW font_id;
+ColourIDW bk_col_id;
 HFONT hFont = 0;
 COLORREF bk_col = RGB(255, 255, 255);
 
@@ -55,7 +55,7 @@ void set_list_changed(bool f)
 	list_changed = f;
 }
 
-void SetProtoStatus(TCHAR *pszLabel, char *pszProto, int if_status, int new_status)
+void SetProtoStatus(wchar_t *pszLabel, char *pszProto, int if_status, int new_status)
 {
 	if (mir_strcmp(pszProto, Translate("<all>")) == 0) {
 		int num_protocols;
@@ -69,8 +69,8 @@ void SetProtoStatus(TCHAR *pszLabel, char *pszProto, int if_status, int new_stat
 		if (ProtoServiceExists(pszProto, PS_GETSTATUS)) {
 			if (CallProtoService(pszProto, PS_GETSTATUS, 0, 0) == if_status) {
 				if (options.logging) {
-					TCHAR buf[1024];
-					mir_sntprintf(buf, TranslateT("%s - setting status of protocol '%S' (%d)"), pszLabel, pszProto, new_status);
+					wchar_t buf[1024];
+					mir_snwprintf(buf, TranslateT("%s - setting status of protocol '%S' (%d)"), pszLabel, pszProto, new_status);
 					CallService(PLUG "/Log", (WPARAM)buf, 0);
 				}
 				CallProtoService(pszProto, PS_SETSTATUS, new_status, 0);
@@ -118,8 +118,8 @@ void __cdecl sttCheckStatusThreadProc(void*)
 						pa.item_id = i->item_id;
 						pa.miss_count = i->miss_count;
 						pa.port = i->port;
-						mir_tstrncpy(pa.pszLabel, i->pszLabel, _countof(pa.pszLabel));
-						mir_tstrncpy(pa.pszName, i->pszName, _countof(pa.pszName));
+						mir_wstrncpy(pa.pszLabel, i->pszLabel, _countof(pa.pszLabel));
+						mir_wstrncpy(pa.pszName, i->pszName, _countof(pa.pszName));
 						mir_strncpy(pa.pszProto, i->pszProto, _countof(pa.pszProto));
 						pa.set_status = i->set_status;
 						pa.status = i->status;
@@ -194,8 +194,8 @@ void __cdecl sttCheckStatusThreadProc(void*)
 						}
 					}
 					if (pa.miss_count == -1 - options.retries && options.logging) {
-						TCHAR buf[512];
-						mir_sntprintf(buf, TranslateT("%s - reply, %d"), pa.pszLabel, pa.round_trip_time);
+						wchar_t buf[512];
+						mir_snwprintf(buf, TranslateT("%s - reply, %d"), pa.pszLabel, pa.round_trip_time);
 						CallService(PLUG "/Log", (WPARAM)buf, 0);
 					}
 					SetProtoStatus(pa.pszLabel, pa.pszProto, pa.get_status, pa.set_status);
@@ -208,8 +208,8 @@ void __cdecl sttCheckStatusThreadProc(void*)
 							ShowPopup(TranslateT("Ping Timeout"), pa.pszLabel, 0);
 					}
 					if (pa.miss_count == 1 + options.retries && options.logging) {
-						TCHAR buf[512];
-						mir_sntprintf(buf, TranslateT("%s - timeout"), pa.pszLabel);
+						wchar_t buf[512];
+						mir_snwprintf(buf, TranslateT("%s - timeout"), pa.pszLabel);
 						CallService(PLUG "/Log", (WPARAM)buf, 0);
 					}
 				}
@@ -218,8 +218,8 @@ void __cdecl sttCheckStatusThreadProc(void*)
 			}
 		}
 
-		if (timeout) SkinPlaySound("PingTimeout");
-		if (reply) SkinPlaySound("PingReply");
+		if (timeout) Skin_PlaySound("PingTimeout");
+		if (reply) Skin_PlaySound("PingReply");
 
 		if (!get_list_changed()) {
 			upCount = count;
@@ -259,7 +259,7 @@ int FillList(WPARAM, LPARAM)
 {
 
 	if (options.logging)
-		CallService(PLUG "/Log", (WPARAM)_T("ping address list reload"), 0);
+		CallService(PLUG "/Log", (WPARAM)L"ping address list reload", 0);
 
 	PINGLIST pl;
 	CallService(PLUG "/GetPingList", 0, (LPARAM)&pl);
@@ -306,14 +306,14 @@ INT_PTR PingPlugShowWindow(WPARAM, LPARAM)
 void CALLBACK TimerProc(HWND, UINT, UINT_PTR, DWORD)
 {
 	if (frame_id != -1 && ServiceExists(MS_CLIST_FRAMES_ADDFRAME)) {
-		TCHAR TBcapt[255];
+		wchar_t TBcapt[255];
 		if (total > 0)
-			mir_sntprintf(TBcapt, _T("Ping (%d/%d)"), upCount, total);
+			mir_snwprintf(TBcapt, L"Ping (%d/%d)", upCount, total);
 		else
-			mir_sntprintf(TBcapt, _T("Ping"));
+			mir_snwprintf(TBcapt, L"Ping");
 
-		CallService(MS_CLIST_FRAMES_SETFRAMEOPTIONS, MAKEWPARAM(FO_TBNAME | FO_TCHAR, frame_id), (LPARAM)TBcapt);
-		CallService(MS_CLIST_FRAMES_SETFRAMEOPTIONS, MAKEWPARAM(FO_TBTIPNAME | FO_TCHAR, frame_id), (LPARAM)TBcapt);
+		CallService(MS_CLIST_FRAMES_SETFRAMEOPTIONS, MAKEWPARAM(FO_TBNAME | FO_UNICODETEXT, frame_id), (LPARAM)TBcapt);
+		CallService(MS_CLIST_FRAMES_SETFRAMEOPTIONS, MAKEWPARAM(FO_TBTIPNAME | FO_UNICODETEXT, frame_id), (LPARAM)TBcapt);
 		CallService(MS_CLIST_FRAMES_UPDATEFRAME, frame_id, FU_TBREDRAW);
 	}
 }
@@ -384,20 +384,20 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				dis->rcItem.left += options.indent;
 				DrawIconEx(dis->hDC, dis->rcItem.left, dis->rcItem.top + ((options.row_height - 16) >> 1), hIcon, 0, 0, 0, NULL, DI_NORMAL);
 
-				GetTextExtentPoint32(dis->hDC, itemData.pszLabel, (int)mir_tstrlen(itemData.pszLabel), &textSize);
-				TextOut(dis->hDC, dis->rcItem.left + 16 + 4, (dis->rcItem.top + dis->rcItem.bottom - textSize.cy) >> 1, itemData.pszLabel, (int)mir_tstrlen(itemData.pszLabel));
+				GetTextExtentPoint32(dis->hDC, itemData.pszLabel, (int)mir_wstrlen(itemData.pszLabel), &textSize);
+				TextOut(dis->hDC, dis->rcItem.left + 16 + 4, (dis->rcItem.top + dis->rcItem.bottom - textSize.cy) >> 1, itemData.pszLabel, (int)mir_wstrlen(itemData.pszLabel));
 
 				if (itemData.status != PS_DISABLED) {
-					TCHAR buf[256];
+					wchar_t buf[256];
 					if (itemData.responding) {
-						mir_sntprintf(buf, TranslateT("%d ms"), itemData.round_trip_time);
-						GetTextExtentPoint32(dis->hDC, buf, (int)mir_tstrlen(buf), &textSize);
-						TextOut(dis->hDC, dis->rcItem.right - textSize.cx - 2, (dis->rcItem.top + dis->rcItem.bottom - textSize.cy) >> 1, buf, (int)mir_tstrlen(buf));
+						mir_snwprintf(buf, TranslateT("%d ms"), itemData.round_trip_time);
+						GetTextExtentPoint32(dis->hDC, buf, (int)mir_wstrlen(buf), &textSize);
+						TextOut(dis->hDC, dis->rcItem.right - textSize.cx - 2, (dis->rcItem.top + dis->rcItem.bottom - textSize.cy) >> 1, buf, (int)mir_wstrlen(buf));
 					}
 					else if (itemData.miss_count > 0) {
-						mir_sntprintf(buf, _T("[%d]"), itemData.miss_count);
-						GetTextExtentPoint32(dis->hDC, buf, (int)mir_tstrlen(buf), &textSize);
-						TextOut(dis->hDC, dis->rcItem.right - textSize.cx - 2, (dis->rcItem.top + dis->rcItem.bottom - textSize.cy) >> 1, buf, (int)mir_tstrlen(buf));
+						mir_snwprintf(buf, L"[%d]", itemData.miss_count);
+						GetTextExtentPoint32(dis->hDC, buf, (int)mir_wstrlen(buf), &textSize);
+						TextOut(dis->hDC, dis->rcItem.right - textSize.cx - 2, (dis->rcItem.top + dis->rcItem.bottom - textSize.cy) >> 1, buf, (int)mir_wstrlen(buf));
 					}
 				}
 				SetBkMode(dis->hDC, OPAQUE);
@@ -477,7 +477,7 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 		return DefWindowProc(hwnd, msg, wParam, lParam);
 
 	case WM_CREATE:
-		list_hwnd = CreateWindow(_T("LISTBOX"), _T(""),
+		list_hwnd = CreateWindow(L"LISTBOX", L"",
 			//(WS_VISIBLE | WS_CHILD | LBS_NOINTEGRALHEIGHT| LBS_STANDARD | WS_CLIPCHILDREN | LBS_OWNERDRAWVARIABLE | LBS_NOTIFY) 
 			(WS_VISIBLE | WS_CHILD | LBS_STANDARD | LBS_OWNERDRAWFIXED | LBS_NOTIFY)
 			& ~WS_BORDER, 0, 0, 0, 0, hwnd, NULL, hInst, 0);
@@ -678,25 +678,11 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 			return TRUE;
 
 		case ID_MENU_OPTIONS:
-			{
-				OPENOPTIONSDIALOG oop = { 0 };
-				oop.cbSize = sizeof(oop);
-				oop.pszGroup = "Network";
-				oop.pszPage = "Ping";
-				oop.pszTab = "Settings";
-				Options_Open(&oop);
-			}
+			Options_Open(L"Network", L"Ping", L"Settings");
 			return TRUE;
 
 		case ID_MENU_DESTINATIONS:
-			{
-				OPENOPTIONSDIALOG oop = { 0 };
-				oop.cbSize = sizeof(oop);
-				oop.pszGroup = "Network";
-				oop.pszPage = "Ping";
-				oop.pszTab = "Hosts";
-				Options_Open(&oop);
-			}
+			Options_Open(L"Network", L"Ping", L"Hosts");
 			return TRUE;
 		}
 
@@ -716,8 +702,8 @@ LRESULT CALLBACK FrameWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 						if (wake) SetEvent(hWakeEvent);
 
 						if (options.logging) {
-							TCHAR buf[1024];
-							mir_sntprintf(buf, _T("%s - %s"), pItemData->pszLabel, (wake ? TranslateT("enabled") : TranslateT("double clicked")));
+							wchar_t buf[1024];
+							mir_snwprintf(buf, L"%s - %s", pItemData->pszLabel, (wake ? TranslateT("enabled") : TranslateT("double clicked")));
 							CallService(PLUG "/Log", (WPARAM)buf, 0);
 						}
 					}
@@ -781,11 +767,11 @@ int ReloadFont(WPARAM, LPARAM)
 	if (hFont) DeleteObject(hFont);
 
 	LOGFONT log_font;
-	CallService(MS_FONT_GETT, (WPARAM)&font_id, (LPARAM)&log_font);
+	Font_GetW(font_id, &log_font);
 	hFont = CreateFontIndirect(&log_font);
 	SendMessage(list_hwnd, WM_SETFONT, (WPARAM)hFont, TRUE);
 
-	bk_col = CallService(MS_COLOUR_GETT, (WPARAM)&bk_col_id, 0);
+	bk_col = Colour_GetW(bk_col_id);
 	RefreshWindow(0, 0);
 
 	return 0;
@@ -875,11 +861,11 @@ void InitList()
 	wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wndclass.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
 	wndclass.lpszMenuName = NULL;
-	wndclass.lpszClassName = _T(PLUG) _T("WindowClass");
+	wndclass.lpszClassName = _A2W(PLUG) L"WindowClass";
 	RegisterClass(&wndclass);
 
 	if (ServiceExists(MS_CLIST_FRAMES_ADDFRAME)) {
-		hpwnd = CreateWindow(_T(PLUG) _T("WindowClass"), _T("Ping"), (WS_BORDER | WS_CHILD | WS_CLIPCHILDREN), 0, 0, 0, 0, hwnd_clist, NULL, hInst, NULL);
+		hpwnd = CreateWindow(_A2W(PLUG) L"WindowClass", L"Ping", (WS_BORDER | WS_CHILD | WS_CLIPCHILDREN), 0, 0, 0, 0, hwnd_clist, NULL, hInst, NULL);
 
 		CLISTFrame frame = { 0 };
 		frame.name = PLUG;
@@ -893,7 +879,7 @@ void InitList()
 		frame_id = CallService(MS_CLIST_FRAMES_ADDFRAME, (WPARAM)&frame, 0);
 	}
 	else {
-		hpwnd = CreateWindowEx(WS_EX_TOOLWINDOW, _T(PLUG) _T("WindowClass"), _T("Ping"),
+		hpwnd = CreateWindowEx(WS_EX_TOOLWINDOW, _A2W(PLUG) L"WindowClass", L"Ping",
 			(WS_POPUPWINDOW | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_CLIPCHILDREN),
 			0, 0, 400, 300, hwnd_clist, NULL, hInst, NULL);
 
@@ -902,11 +888,13 @@ void InitList()
 		CreateServiceFunction(PLUG "/ShowWindow", PingPlugShowWindow);
 
 		CMenuItem mi;
+		mi.root = Menu_CreateRoot(MO_MAIN, LPGENW("Ping"), 1000200001);
+		Menu_ConfigureItem(mi.root, MCI_OPT_UID, "7CFBF239-86B5-48B2-8D5B-39E09A7DB514");
+
 		SET_UID(mi, 0x4adbd753, 0x27d6, 0x457a, 0xa6, 0x6, 0xdf, 0x4f, 0x2c, 0xd8, 0xb9, 0x3b);
-		mi.flags = CMIF_TCHAR;
-		mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Ping"), 1000200001);
+		mi.flags = CMIF_UNICODE;
 		mi.position = 3000320001;
-		mi.name.t = LPGENT("Show/Hide &Ping Window");
+		mi.name.w = LPGENW("Show/Hide &Ping Window");
 		mi.pszService = PLUG "/ShowWindow";
 		Menu_AddMainMenuItem(&mi);
 
@@ -914,30 +902,30 @@ void InitList()
 		else ShowWindow(hpwnd, SW_SHOW);
 	}
 
-	font_id.cbSize = sizeof(FontIDT);
-	mir_tstrncpy(font_id.group, LPGENT("Ping"), _countof(font_id.group));
-	mir_tstrncpy(font_id.name, LPGENT("List"), _countof(font_id.name));
+	font_id.cbSize = sizeof(FontIDW);
+	mir_wstrncpy(font_id.group, LPGENW("Ping"), _countof(font_id.group));
+	mir_wstrncpy(font_id.name, LPGENW("List"), _countof(font_id.name));
 	mir_strncpy(font_id.dbSettingsGroup, "PING", _countof(font_id.dbSettingsGroup));
 	mir_strncpy(font_id.prefix, "Font", _countof(font_id.prefix));
-	mir_tstrncpy(font_id.backgroundGroup, _T("Ping"), _countof(font_id.backgroundGroup));
-	mir_tstrncpy(font_id.backgroundName, _T("Background"), _countof(font_id.backgroundName));
+	mir_wstrncpy(font_id.backgroundGroup, L"Ping", _countof(font_id.backgroundGroup));
+	mir_wstrncpy(font_id.backgroundName, L"Background", _countof(font_id.backgroundName));
 	font_id.order = 0;
 	font_id.flags = FIDF_DEFAULTVALID;
 	font_id.deffontsettings.charset = DEFAULT_CHARSET;
 	font_id.deffontsettings.size = -14;
 	font_id.deffontsettings.style = 0;
 	font_id.deffontsettings.colour = RGB(255, 255, 255);
-	mir_tstrncpy(font_id.deffontsettings.szFace, _T("Tahoma"), _countof(font_id.deffontsettings.szFace));
+	mir_wstrncpy(font_id.deffontsettings.szFace, L"Tahoma", _countof(font_id.deffontsettings.szFace));
 
-	FontRegisterT(&font_id);
+	Font_RegisterW(&font_id);
 
-	bk_col_id.cbSize = sizeof(ColourIDT);
-	mir_tstrncpy(bk_col_id.group, _T("Ping"), _countof(bk_col_id.group));
-	mir_tstrncpy(bk_col_id.name, _T("Background"), _countof(bk_col_id.name));
+	bk_col_id.cbSize = sizeof(ColourIDW);
+	mir_wstrncpy(bk_col_id.group, L"Ping", _countof(bk_col_id.group));
+	mir_wstrncpy(bk_col_id.name, L"Background", _countof(bk_col_id.name));
 	mir_strncpy(bk_col_id.dbSettingsGroup, "PING", _countof(bk_col_id.dbSettingsGroup));
 	mir_strncpy(bk_col_id.setting, "BgColor", _countof(bk_col_id.setting));
 	bk_col_id.defcolour = RGB(0, 0, 0);
-	ColourRegisterT(&bk_col_id);
+	Colour_RegisterW(&bk_col_id);
 
 	HookEvent(ME_FONT_RELOAD, ReloadFont);
 

@@ -7,14 +7,14 @@ class WASocketConnection;
 
 struct WAChatInfo
 {
-	WAChatInfo(TCHAR *_jid, TCHAR *_nick) :
+	WAChatInfo(wchar_t *_jid, wchar_t *_nick) :
 		tszJid(_jid), tszNick(_nick)
 	{
 		bActive = false;
 	}
 
-	map<std::string, std::tstring> m_unsentMsgs;
-	ptrT tszJid, tszNick, tszOwner;
+	map<std::string, std::wstring> m_unsentMsgs;
+	ptrW tszJid, tszNick, tszOwner;
 	bool bActive;
 
 	MCONTACT hContact;
@@ -23,7 +23,7 @@ struct WAChatInfo
 class WhatsAppProto : public PROTO<WhatsAppProto>, public WAListener, public WAGroupListener
 {
 public:
-	WhatsAppProto(const char *proto_name, const TCHAR *username);
+	WhatsAppProto(const char *proto_name, const wchar_t *username);
 	~WhatsAppProto();
 
 	inline bool isOnline() const
@@ -44,13 +44,13 @@ public:
 
 	virtual	DWORD_PTR __cdecl GetCaps(int type, MCONTACT hContact = NULL);
 
-	virtual	HANDLE    __cdecl SearchBasic(const TCHAR* id);
+	virtual	HANDLE    __cdecl SearchBasic(const wchar_t* id);
 
 	virtual	int       __cdecl RecvMsg(MCONTACT hContact, PROTORECVEVENT*);
 
 	virtual	int       __cdecl SendMsg(MCONTACT hContact, int flags, const char* msg);
 
-	virtual	HANDLE    __cdecl SendFile(MCONTACT hContact, const TCHAR*, TCHAR **ppszFiles);
+	virtual	HANDLE    __cdecl SendFile(MCONTACT hContact, const wchar_t*, wchar_t **ppszFiles);
 
 	virtual	int       __cdecl SetStatus(int iNewStatus);
 
@@ -85,7 +85,7 @@ public:
 	MCONTACT ContactIDToHContact(const std::string&);
 	void     SetAllContactStatuses(int status, bool reset_client = false);
 	void     UpdateStatusMsg(MCONTACT hContact);
-	TCHAR*   GetContactDisplayName(const string &jid);
+	wchar_t*   GetContactDisplayName(const string &jid);
 	void     RequestFriendship(MCONTACT hContact);
 
 	// Group chats ///////////////////////////////////////////////////////////////////////
@@ -93,16 +93,16 @@ public:
 	std::vector<string> m_szInviteJids;
 	map<std::string, WAChatInfo*> m_chats;
 	mir_cs   m_csChats;
-	ptrT     m_tszDefaultGroup;
+	ptrW     m_tszDefaultGroup;
 
 	void     ChatLogMenuHook(WAChatInfo *pInfo, GCHOOK *gch);
 	void     NickListMenuHook(WAChatInfo *pInfo, GCHOOK *gch);
 
-	void     AddChatUser(WAChatInfo *pInfo, const TCHAR *ptszJid);
+	void     AddChatUser(WAChatInfo *pInfo, const wchar_t *ptszJid);
 	void     EditChatSubject(WAChatInfo *pInfo);
 	void     InviteChatUser(WAChatInfo *pInfo);
-	void     KickChatUser(WAChatInfo *pInfo, const TCHAR *ptszJid);
-	TCHAR*   GetChatUserNick(const std::string &jid);
+	void     KickChatUser(WAChatInfo *pInfo, const wchar_t *ptszJid);
+	wchar_t*   GetChatUserNick(const std::string &jid);
 	void     SetChatAvatar(WAChatInfo *pInfo);
 
 	void     onGroupMessageReceived(const FMessage &fmsg);
@@ -131,18 +131,19 @@ private:
 
 	/// Avatars //////////////////////////////////////////////////////////////////////////
 
-	std::tstring GetAvatarFileName(MCONTACT);
-	std::tstring m_tszAvatarFolder;
+	std::wstring GetAvatarFileName(MCONTACT);
+	std::wstring m_tszAvatarFolder;
 
 	INT_PTR __cdecl GetAvatarInfo(WPARAM, LPARAM);
 	INT_PTR __cdecl GetAvatarCaps(WPARAM, LPARAM);
 	INT_PTR __cdecl GetMyAvatar(WPARAM, LPARAM);
 	INT_PTR __cdecl SetMyAvatar(WPARAM, LPARAM);
 
-	int InternalSetAvatar(MCONTACT hContact, const char *szJid, const TCHAR *ptszFileName);
+	int InternalSetAvatar(MCONTACT hContact, const char *szJid, const wchar_t *ptszFileName);
 
 	// Private data //////////////////////////////////////////////////////////////////////
 	
+	void InitMenu();
 	HGENMENU m_hMenuCreateGroup;
 
 	HANDLE  update_loop_lock_;
@@ -162,41 +163,41 @@ protected:
 	// WAListener methods ////////////////////////////////////////////////////////////////
 	virtual void onMessageForMe(const FMessage &paramFMessage);
 	virtual void onMessageStatusUpdate(const FMessage &paramFMessage);
-	virtual void onMessageError(const FMessage &message, int paramInt) { ; }
+	virtual void onMessageError(const FMessage&, int) { }
 	virtual void onPing(const std::string &id) throw (WAException);
-	virtual void onPingResponseReceived() {  }
+	virtual void onPingResponseReceived() { }
 	virtual void onAvailable(const std::string &paramString, bool paramBoolean, DWORD lastSeenTime);
-	virtual void onClientConfigReceived(const std::string &paramString) {  }
+	virtual void onClientConfigReceived(const std::string&) { }
 	virtual void onIsTyping(const std::string &paramString, bool paramBoolean);
-	virtual void onAccountChange(int paramInt, time_t expire_date) {  }
-	virtual void onPrivacyBlockListAdd(const std::string &paramString) {  }
-	virtual void onPrivacyBlockListClear() {  }
-	virtual void onDirty(const std::map<string, string>& paramHashtable) {  }
-	virtual void onDirtyResponse(int paramHashtable) {  }
-	virtual void onRelayRequest(const std::string &paramString1, int paramInt, const std::string &paramString2) {  }
+	virtual void onAccountChange(int, time_t) { }
+	virtual void onPrivacyBlockListAdd(const std::string&) { }
+	virtual void onPrivacyBlockListClear() { }
+	virtual void onDirty(const std::map<string, string>&) { }
+	virtual void onDirtyResponse(int) { }
+	virtual void onRelayRequest(const std::string&, int, const std::string&) { }
 	virtual void onSendGetPicture(const std::string &jid, const std::vector<unsigned char>& data, const std::string &id);
 	virtual void onPictureChanged(const std::string &jid, const std::string &id, bool set);
 	virtual void onContactChanged(const std::string &jid, bool added);
-	virtual void onDeleteAccount(bool result) {}
+	virtual void onDeleteAccount(bool) {}
 
 	// WAGroupListener methods ///////////////////////////////////////////////////////////
 	virtual void onGroupAddUser(const std::string &gjid, const std::string &ujid, int ts);
 	virtual void onGroupRemoveUser(const std::string &gjid, const std::string &ujid, int ts);
 	virtual void onGroupNewSubject(const std::string &from, const std::string &author, const std::string &newSubject, int ts);
 	virtual void onGroupMessage(const FMessage &paramFMessage);
-	virtual void onServerProperties(std::map<std::string, std::string>* nameValueMap) {}
+	virtual void onServerProperties(std::map<std::string, std::string>*) { }
 	virtual void onGroupCreated(const std::string &gjid, const std::string &nick);
 	virtual void onGroupInfo(const std::string &jid, const std::string &owner, const std::string &subject, const std::string &subject_owner, int time_subject, int time_created);
-	virtual void onSetSubject(const std::string &paramString) {  }
-	virtual void onAddGroupParticipants(const std::string &paramString, const std::vector<string> &paramVector, int paramHashtable) {  }
-	virtual void onRemoveGroupParticipants(const std::string &paramString, const std::vector<string> &paramVector, int paramHashtable) {  }
+	virtual void onSetSubject(const std::string&) { }
+	virtual void onAddGroupParticipants(const std::string&, const std::vector<string>&, int) { }
+	virtual void onRemoveGroupParticipants(const std::string&, const std::vector<string>&, int) { }
 	virtual void onGetParticipants(const std::string &gjid, const std::vector<string> &participants);
 	virtual void onLeaveGroup(const std::string &paramString);
 
 	// Information providing /////////////////////////////////////////////////////////////
 
-	void NotifyEvent(const TCHAR *title, const TCHAR *info, MCONTACT contact, DWORD flags, TCHAR *url = NULL);
-	void NotifyEvent(const std::string &title, const std::string &info, MCONTACT contact, DWORD flags, TCHAR *url = NULL);
+	void NotifyEvent(const wchar_t *title, const wchar_t *info, MCONTACT contact, DWORD flags, wchar_t *url = NULL);
+	void NotifyEvent(const std::string &title, const std::string &info, MCONTACT contact, DWORD flags, wchar_t *url = NULL);
 };
 
 #endif

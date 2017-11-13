@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -960,11 +960,5 @@ MIR_CORE_EXPORT CMStringT<BaseType, StringTraits> CALLBACK operator+(char ch1, c
 
 typedef CMStringT< wchar_t, ChTraitsCRT< wchar_t > > CMStringW;
 typedef CMStringT< char, ChTraitsCRT< char > > CMStringA;
-
-#ifdef _UNICODE
-	typedef CMStringW CMString;
-#else
-	typedef CMStringA CMString;
-#endif
 
 #endif // M_STRING_H__

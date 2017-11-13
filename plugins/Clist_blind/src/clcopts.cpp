@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-03 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "stdafx.h"
 
-TCHAR* MyDBGetContactSettingTString(MCONTACT hContact, char* module, char* setting, TCHAR* out, size_t len, TCHAR *def);
+wchar_t* MyDBGetContactSettingTString(MCONTACT hContact, char* module, char* setting, wchar_t* out, size_t len, wchar_t *def);
 
 #define DBFONTF_BOLD       1
 #define DBFONTF_ITALIC     2
@@ -55,34 +55,34 @@ static const checkBoxToStyleEx[] = {
 struct CheckBoxValues_t
 {
 	DWORD  style;
-	TCHAR* szDescr;
+	wchar_t* szDescr;
 };
 
 static const struct CheckBoxValues_t greyoutValues[] = {
-	{ GREYF_UNFOCUS,  LPGENT("Not focused")   },
-	{ MODEF_OFFLINE,  LPGENT("Offline")       },
-	{ PF2_ONLINE,     LPGENT("Online")        },
-	{ PF2_SHORTAWAY,  LPGENT("Away")          },
-	{ PF2_LONGAWAY,   LPGENT("NA")            },
-	{ PF2_LIGHTDND,   LPGENT("Occupied")      },
-	{ PF2_HEAVYDND,   LPGENT("DND")           },
-	{ PF2_FREECHAT,   LPGENT("Free for chat") },
-	{ PF2_INVISIBLE,  LPGENT("Invisible")     },
-	{ PF2_OUTTOLUNCH, LPGENT("Out to lunch")  },
-	{ PF2_ONTHEPHONE, LPGENT("On the phone")  }
+	{ GREYF_UNFOCUS,  LPGENW("Not focused")   },
+	{ MODEF_OFFLINE,  LPGENW("Offline")       },
+	{ PF2_ONLINE,     LPGENW("Online")        },
+	{ PF2_SHORTAWAY,  LPGENW("Away")          },
+	{ PF2_LONGAWAY,   LPGENW("Not available") },
+	{ PF2_LIGHTDND,   LPGENW("Occupied")      },
+	{ PF2_HEAVYDND,   LPGENW("Do not disturb")},
+	{ PF2_FREECHAT,   LPGENW("Free for chat") },
+	{ PF2_INVISIBLE,  LPGENW("Invisible")     },
+	{ PF2_OUTTOLUNCH, LPGENW("Out to lunch")  },
+	{ PF2_ONTHEPHONE, LPGENW("On the phone")  }
 };
 
 static const struct CheckBoxValues_t offlineValues[] = {
-	{ MODEF_OFFLINE,  LPGENT("Offline")       },
-	{ PF2_ONLINE,     LPGENT("Online")        },
-	{ PF2_SHORTAWAY,  LPGENT("Away")          },
-	{ PF2_LONGAWAY,   LPGENT("NA")            },
-	{ PF2_LIGHTDND,   LPGENT("Occupied")      },
-	{ PF2_HEAVYDND,   LPGENT("DND")           },
-	{ PF2_FREECHAT,   LPGENT("Free for chat") },
-	{ PF2_INVISIBLE,  LPGENT("Invisible")     },
-	{ PF2_OUTTOLUNCH, LPGENT("Out to lunch")  },
-	{ PF2_ONTHEPHONE, LPGENT("On the phone")  }
+	{ MODEF_OFFLINE,  LPGENW("Offline")       },
+	{ PF2_ONLINE,     LPGENW("Online")        },
+	{ PF2_SHORTAWAY,  LPGENW("Away")          },
+	{ PF2_LONGAWAY,   LPGENW("Not available") },
+	{ PF2_LIGHTDND,   LPGENW("Occupied")      },
+	{ PF2_HEAVYDND,   LPGENW("Do not disturb")},
+	{ PF2_FREECHAT,   LPGENW("Free for chat") },
+	{ PF2_INVISIBLE,  LPGENW("Invisible")     },
+	{ PF2_OUTTOLUNCH, LPGENW("Out to lunch")  },
+	{ PF2_ONTHEPHONE, LPGENW("On the phone")  }
 };
 
 static void FillCheckBoxTree(HWND hwndTree, const struct CheckBoxValues_t *values, int nValues, DWORD style)
@@ -93,7 +93,7 @@ static void FillCheckBoxTree(HWND hwndTree, const struct CheckBoxValues_t *value
 	tvis.item.mask = TVIF_PARAM | TVIF_TEXT | TVIF_STATE;
 	for (int i = 0; i < nValues; i++) {
 		tvis.item.lParam = values[i].style;
-		tvis.item.pszText = TranslateTS( values[i].szDescr );
+		tvis.item.pszText = TranslateW( values[i].szDescr );
 		tvis.item.stateMask = TVIS_STATEIMAGEMASK;
 		tvis.item.state = INDEXTOSTATEIMAGEMASK((style & tvis.item.lParam) != 0 ? 2 : 1);
 		TreeView_InsertItem( hwndTree, &tvis);
@@ -118,7 +118,7 @@ static DWORD MakeCheckBoxTreeFlags(HWND hwndTree)
 
 static INT_PTR CALLBACK DlgProcClcMainOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	TCHAR tmp[1024];
+	wchar_t tmp[1024];
 
 	switch (msg) {
 	case WM_INITDIALOG:
@@ -233,13 +233,13 @@ static INT_PTR CALLBACK DlgProcClcMainOpts(HWND hwndDlg, UINT msg, WPARAM wParam
 				db_set_b(NULL, "CLC", "NoVScrollBar", (BYTE)(IsDlgButtonChecked(hwndDlg, IDC_NOSCROLLBAR) ? 1 : 0));
 
 				GetDlgItemText(hwndDlg, IDC_T_CONTACT, tmp, _countof(tmp));
-				db_set_ts(NULL, "CLC", "TemplateContact", tmp);
+				db_set_ws(NULL, "CLC", "TemplateContact", tmp);
 				GetDlgItemText(hwndDlg, IDC_T_GROUP, tmp, _countof(tmp));
-				db_set_ts(NULL, "CLC", "TemplateGroup", tmp);
+				db_set_ws(NULL, "CLC", "TemplateGroup", tmp);
 				GetDlgItemText(hwndDlg, IDC_T_DIVIDER, tmp, _countof(tmp));
-				db_set_ts(NULL, "CLC", "TemplateDivider", tmp);
+				db_set_ws(NULL, "CLC", "TemplateDivider", tmp);
 				GetDlgItemText(hwndDlg, IDC_T_INFO, tmp, _countof(tmp));
-				db_set_ts(NULL, "CLC", "TemplateInfo", tmp);
+				db_set_ws(NULL, "CLC", "TemplateInfo", tmp);
 
 				pcli->pfnClcOptionsChanged();
 				return TRUE;
@@ -263,9 +263,9 @@ int ClcOptInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = g_hInst;
-	odp.pszGroup = LPGEN("Contact list");
+	odp.szGroup.a = LPGEN("Contact list");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_CLC);
-	odp.pszTitle = LPGEN("List");
+	odp.szTitle.a = LPGEN("List");
 	odp.pfnDlgProc = DlgProcClcMainOpts;
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);

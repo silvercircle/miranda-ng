@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -24,15 +24,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "stdafx.h"
 
-static TCHAR* sttDecodeString(DWORD dwFlags, MAllStrings &src)
+static wchar_t* sttDecodeString(DWORD dwFlags, MAllStrings &src)
 {
 	if (dwFlags & PSR_UNICODE)
-		return mir_u2t(src.w);
+		return mir_wstrdup(src.w);
 
 	if (dwFlags & PSR_UTF8)
-		return mir_utf8decodeT(src.a);
+		return mir_utf8decodeW(src.a);
 
-	return mir_a2t(src.a);
+	return mir_a2u(src.a);
 }
 
 class CAddContactDlg : public CDlgBase
@@ -65,10 +65,10 @@ public:
 	void OnInitDialog()
 	{
 		char szUin[10];
-		Window_SetIcon_IcoLib(m_hwnd, SKINICON_OTHER_ADDCONTACT);
+		Window_SetSkinIcon_IcoLib(m_hwnd, SKINICON_OTHER_ADDCONTACT);
 		if (m_acs.handleType == HANDLE_EVENT) {
 			DWORD dwUin;
-			DBEVENTINFO dbei = { sizeof(dbei) };
+			DBEVENTINFO dbei = {};
 			dbei.cbBlob = sizeof(DWORD);
 			dbei.pBlob = (PBYTE)&dwUin;
 			db_event_get(m_acs.hDbEvent, &dbei);
@@ -77,7 +77,7 @@ public:
 		}
 
 		MCONTACT hContact;
-		TCHAR *szName = NULL, *tmpStr = NULL;
+		wchar_t *szName = nullptr, *tmpStr = nullptr;
 		if (m_acs.handleType == HANDLE_CONTACT)
 			szName = cli.pfnGetContactDisplayName(hContact = m_acs.hContact, 0);
 		else {
@@ -85,7 +85,7 @@ public:
 			hContact = 0;
 
 			if (m_acs.handleType == HANDLE_EVENT) {
-				DBEVENTINFO dbei = { sizeof(dbei) };
+				DBEVENTINFO dbei = {};
 				dbei.cbBlob = db_event_getBlobSize(m_acs.hDbEvent);
 				dbei.pBlob = (PBYTE)mir_alloc(dbei.cbBlob);
 				db_event_get(m_acs.hDbEvent, &dbei);
@@ -96,35 +96,33 @@ public:
 					isSet = 1;
 				}
 			}
-			if (!isSet)
-			{
+			if (!isSet) {
 				if (m_acs.handleType == HANDLE_EVENT)
-					szName = mir_a2t(szUin);
-				else
-				{
+					szName = mir_a2u(szUin);
+				else {
 					szName = sttDecodeString(m_acs.psr->flags, m_acs.psr->id);
-					if (!szName)
+					if (szName == nullptr)
 						szName = sttDecodeString(m_acs.psr->flags, m_acs.psr->nick);
 				}
 			}
 		}
 
 		if (szName && szName[0])
-			SetCaption(CMString(FORMAT, TranslateT("Add %s"), szName));
+			SetCaption(CMStringW(FORMAT, TranslateT("Add %s"), szName));
 		else
 			SetCaption(TranslateT("Add contact"));
 		mir_free(tmpStr);
 
 		if (m_acs.handleType == HANDLE_CONTACT && m_acs.hContact)
-			if (m_acs.szProto == NULL || (m_acs.szProto != NULL && *m_acs.szProto == 0))
+			if (m_acs.szProto == nullptr || (m_acs.szProto != nullptr && *m_acs.szProto == 0))
 				m_acs.szProto = GetContactProto(m_acs.hContact);
 
 		int groupSel = 0;
-		ptrT tszGroup(db_get_tsa(hContact, "CList", "Group"));
-		TCHAR *grpName;
-		for (int groupId = 1; (grpName = cli.pfnGetGroupName(groupId, NULL)) != NULL; groupId++) {
+		ptrW tszGroup(db_get_wsa(hContact, "CList", "Group"));
+		wchar_t *grpName;
+		for (int groupId = 1; (grpName = Clist_GroupGetName(groupId, nullptr)) != nullptr; groupId++) {
 			int id = m_group.AddString(grpName, groupId);
-			if (!mir_tstrcmpi(tszGroup, grpName))
+			if (!mir_wstrcmpi(tszGroup, grpName))
 				groupSel = id;
 		}
 
@@ -136,10 +134,10 @@ public:
 		m_chkAuth.SetState(true);
 
 		// Set last choice
-		if (db_get_b(NULL, "Miranda", "AuthOpenWindow", 1))
+		if (db_get_b(0, "Miranda", "AuthOpenWindow", 1))
 			m_chkOpen.SetState(true);
 
-		DWORD flags = (m_acs.szProto) ? CallProtoServiceInt(NULL, m_acs.szProto, PS_GETCAPS, PFLAGNUM_4, 0) : 0;
+		DWORD flags = (m_acs.szProto) ? CallProtoServiceInt(0, m_acs.szProto, PS_GETCAPS, PFLAGNUM_4, 0) : 0;
 		if (flags & PF4_FORCEADDED)  // force you were added requests for this protocol
 			m_chkAdded.Enable(false);
 
@@ -161,7 +159,7 @@ public:
 
 	void OnAuthClicked(CCtrlButton*)
 	{
-		DWORD flags = CallProtoServiceInt(NULL, m_acs.szProto, PS_GETCAPS, PFLAGNUM_4, 0);
+		DWORD flags = CallProtoServiceInt(0, m_acs.szProto, PS_GETCAPS, PFLAGNUM_4, 0);
 		if (flags & PF4_NOCUSTOMAUTH)
 			m_authReq.Enable(false);
 		else
@@ -171,7 +169,7 @@ public:
 	void OnOpenClicked(CCtrlButton*)
 	{
 		// Remember this choice
-		db_set_b(NULL, "Miranda", "AuthOpenWindow", m_chkOpen.Enabled());
+		db_set_b(0, "Miranda", "AuthOpenWindow", m_chkOpen.Enabled());
 	}
 
 	void OnOk(CCtrlButton*)
@@ -180,14 +178,14 @@ public:
 		switch (m_acs.handleType) {
 		case HANDLE_EVENT:
 			{
-				DBEVENTINFO dbei = { sizeof(dbei) };
+				DBEVENTINFO dbei = {};
 				db_event_get(m_acs.hDbEvent, &dbei);
-				hContact = (MCONTACT)CallProtoServiceInt(NULL, dbei.szModule, PS_ADDTOLISTBYEVENT, 0, (LPARAM)m_acs.hDbEvent);
+				hContact = (MCONTACT)CallProtoServiceInt(0, dbei.szModule, PS_ADDTOLISTBYEVENT, 0, (LPARAM)m_acs.hDbEvent);
 			}
 			break;
 
 		case HANDLE_SEARCHRESULT:
-			hContact = (MCONTACT)CallProtoServiceInt(NULL, m_acs.szProto, PS_ADDTOLIST, 0, (LPARAM)m_acs.psr);
+			hContact = (MCONTACT)CallProtoServiceInt(0, m_acs.szProto, PS_ADDTOLIST, 0, (LPARAM)m_acs.psr);
 			break;
 
 		case HANDLE_CONTACT:
@@ -195,32 +193,32 @@ public:
 			break;
 		}
 
-		if (hContact == NULL)
+		if (hContact == 0)
 			return;
 
-		ptrT szHandle(m_myHandle.GetText());
-		if (mir_tstrlen(szHandle))
-			db_set_ts(hContact, "CList", "MyHandle", szHandle);
+		ptrW szHandle(m_myHandle.GetText());
+		if (mir_wstrlen(szHandle))
+			db_set_ws(hContact, "CList", "MyHandle", szHandle);
 
 		int item = m_group.GetCurSel();
 		if (item > 0)
-			CallService(MS_CLIST_CONTACTCHANGEGROUP, hContact, m_group.GetItemData(item));
+			Clist_ContactChangeGroup(hContact, m_group.GetItemData(item));
 
 		db_unset(hContact, "CList", "NotOnList");
 
 		if (m_chkAdded.GetState())
-			CallContactService(hContact, PSS_ADDED, 0, 0);
+			ProtoChainSend(hContact, PSS_ADDED, 0, 0);
 
 		if (m_chkAuth.GetState()) {
-			DWORD flags = CallProtoServiceInt(NULL, m_acs.szProto, PS_GETCAPS, PFLAGNUM_4, 0);
+			DWORD flags = CallProtoServiceInt(0, m_acs.szProto, PS_GETCAPS, PFLAGNUM_4, 0);
 			if (flags & PF4_NOCUSTOMAUTH)
-				CallContactService(hContact, PSS_AUTHREQUEST, 0, 0);
+				ProtoChainSend(hContact, PSS_AUTHREQUEST, 0, 0);
 			else
-				CallContactService(hContact, PSS_AUTHREQUEST, 0, ptrT(m_authReq.GetText()));
+				ProtoChainSend(hContact, PSS_AUTHREQUEST, 0, ptrW(m_authReq.GetText()));
 		}
 
 		if (m_chkOpen.GetState())
-			CallService(MS_CLIST_CONTACTDOUBLECLICKED, hContact, 0);
+			Clist_ContactDoubleClicked(hContact);
 	}
 };
 

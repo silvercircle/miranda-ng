@@ -20,14 +20,14 @@
 #include "stdafx.h"
 extern BOOL bPopupExists;
 
-__inline void ShowMsg(TCHAR *FirstLine, TCHAR *SecondLine = _T(""), bool IsErrorMsg = false, int Timeout = 0)
+__inline void ShowMsg(wchar_t *FirstLine, wchar_t *SecondLine = L"", bool IsErrorMsg = false, int Timeout = 0)
 {
 	if (bPopupExists)
 	{
 		POPUPDATAT ppd = {0};
 		ppd.lchIcon = LoadIcon(NULL, IsErrorMsg ? IDI_EXCLAMATION : IDI_INFORMATION);
-		mir_tstrcpy(ppd.lptzContactName, FirstLine);
-		mir_tstrcpy(ppd.lptzText, SecondLine);
+		mir_wstrcpy(ppd.lptzContactName, FirstLine);
+		mir_wstrcpy(ppd.lptzText, SecondLine);
 		ppd.colorBack = IsErrorMsg ? 0x0202E3 : 0xE8F1FD;
 		ppd.colorText = IsErrorMsg ? 0xE8F1FD : 0x000000;
 		ppd.iSeconds = Timeout;
@@ -40,11 +40,11 @@ __inline void ShowMsg(TCHAR *FirstLine, TCHAR *SecondLine = _T(""), bool IsError
 
 __inline void ShowLog(TCString &LogFilePath)
 {
-	INT_PTR Result = (INT_PTR)ShellExecute(NULL, _T("open"), LogFilePath, NULL, NULL, SW_SHOW);
+	INT_PTR Result = (INT_PTR)ShellExecute(NULL, L"open", LogFilePath, NULL, NULL, SW_SHOW);
 	if (Result <= 32) // Error
 	{
-		TCHAR szError[64];
-		mir_sntprintf(szError, TranslateT("Error #%d"), Result);
+		wchar_t szError[64];
+		mir_snwprintf(szError, TranslateT("Error #%d"), Result);
 		ShowMsg(szError, TranslateT("Can't open log file ") + LogFilePath, true);
 	}
 }
@@ -52,10 +52,10 @@ __inline void ShowLog(TCString &LogFilePath)
 __inline void RecompileRegexps(TCString IgnoreSubstrings)
 {
 	FreePcreCompileData();
-	TCHAR *p = _tcstok(IgnoreSubstrings, _T(";"));
+	wchar_t *p = wcstok(IgnoreSubstrings, L";");
 	while (p)
 	{
 		CompileRegexp(p, p[0] != '/');
-		p = _tcstok(NULL, _T(";"));
+		p = wcstok(NULL, L";");
 	}
 }

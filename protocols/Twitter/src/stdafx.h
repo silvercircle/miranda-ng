@@ -10,13 +10,13 @@
 #include <Wincrypt.h>
 #include <stdio.h>
 #include <direct.h>
-#include <tchar.h>
 #include <time.h>
 
 #include <cstdio>
 #include <ctime>
 #include <fstream>
 #include <string>
+#include <memory>
 using std::string;
 using std::wstring;
 #include <map>
@@ -29,19 +29,18 @@ using std::list;
 using std::min;
 #include <sstream>
 
-typedef std::basic_string<TCHAR> tstring;
+typedef std::basic_string<wchar_t> wstring;
 
 #include "resource.h"
 
 #pragma warning(push)
 #	pragma warning(disable:4312)
-#include <m_system_cpp.h>
+#include <m_system.h>
 #include <newpluginapi.h>
 #include <m_avatars.h>
 #include <m_button.h>
 #include <m_chat.h>
 #include <m_clist.h>
-#include <m_clui.h>
 #include <m_database.h>
 #include <m_folders.h>
 #include <m_history.h>
@@ -55,7 +54,6 @@ typedef std::basic_string<TCHAR> tstring;
 #include <m_protoint.h>
 #include <m_skin.h>
 #include <statusmodes.h>
-#include <m_system.h>
 #include <m_userinfo.h>
 #include <m_icolib.h>
 #include <m_utils.h>

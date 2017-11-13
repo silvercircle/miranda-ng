@@ -1,30 +1,27 @@
-/*
+// Miranda NG: the free IM client for Microsoft* Windows*
+//
+// Copyright (c) 2012-17 Miranda NG project (https://miranda-ng.org)
+// Copyright (c) 2000-08 Miranda ICQ/IM project,
+// all portions of this codebase are copyrighted to the people
+// listed in contributors.txt.
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
-Copyright (c) 2000-08 Miranda ICQ/IM project,
-all portions of this codebase are copyrighted to the people
-listed in contributors.txt.
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*/
 #ifndef M_SKIN_H__
 #define M_SKIN_H__ 1
-
-extern int hLangpack;
 
 #ifndef M_CORE_H__
 #include <m_core.h>
@@ -98,7 +95,6 @@ extern int hLangpack;
 /////////////////////////////////////////////////////////////////////////////////////////
 // Miranda skin
 // in all these functions idx = SKINICON_* constant
-
 EXTERN_C MIR_APP_DLL(HICON)  Skin_LoadIcon(int idx, bool big = false);
 EXTERN_C MIR_APP_DLL(HANDLE) Skin_GetIconHandle(int idx);
 EXTERN_C MIR_APP_DLL(char*)  Skin_GetIconName(int idx);
@@ -125,99 +121,22 @@ EXTERN_C MIR_APP_DLL(char*)  Skin_GetIconName(int idx);
 EXTERN_C MIR_APP_DLL(HICON) Skin_LoadProtoIcon(const char *szProto, int status, bool big = false);
 
 /////////////////////////////////////////////////////////////////////////////////////////
-// add a new sound so it has a default and can be changed in the options dialog
-// wParam = hLangpack
-// lParam = (LPARAM)(SKINSOUNDDESC*)ssd;
+// adds a new sound so it has a default and can be changed in the options dialog
 // returns 0 on success, nonzero otherwise
 
-#define SSDF_UNICODE 0x0001
-
-#if defined(_UNICODE)
-	#define SSDF_TCHAR  SSDF_UNICODE
-#else
-	#define SSDF_TCHAR  0
-#endif
-
-typedef struct {
-	int cbSize;
-	const char *pszName;           // name to refer to sound when playing and in db
-	union {
-		const char *pszDescription;    // [TRANSLATED-BY-CORE] description for options dialog
-		const TCHAR *ptszDescription;
-	};
-	union {
-		const char *pszDefaultFile;    // default sound file to use
-		const TCHAR *ptszDefaultFile;
-	};
-	union {
-		const char *pszSection;        // [TRANSLATED-BY-CORE] section name used to group sounds (NULL is acceptable) (added during 0.3.4+ (2004/10/*))
-		const TCHAR *ptszSection;
-	};
-	DWORD dwFlags;
-}
-	SKINSOUNDDESCEX;
-
-__forceinline INT_PTR SkinAddNewSoundEx(const char *name, const char *section, const char *description)
-{
-	SKINSOUNDDESCEX ssd = { 0 };
-	ssd.cbSize = sizeof(ssd);
-	ssd.pszName = name;
-	ssd.pszSection = section;
-	ssd.pszDescription = description;
-	return CallService("Skin/Sounds/AddNew", hLangpack, (LPARAM)&ssd);
-}
-
-__forceinline INT_PTR SkinAddNewSound(const char *name, const char *description, const char *defaultFile)
-{
-	SKINSOUNDDESCEX ssd = { 0 };
-	ssd.cbSize = sizeof(ssd);
-	ssd.pszName = name;
-	ssd.pszDescription = description;
-	ssd.pszDefaultFile = defaultFile;
-	return CallService("Skin/Sounds/AddNew", hLangpack, (LPARAM)&ssd);
-}
-
-__forceinline INT_PTR SkinAddNewSoundExT(const char *name, const TCHAR *section, const TCHAR *description)
-{
-	SKINSOUNDDESCEX ssd = { 0 };
-	ssd.cbSize = sizeof(ssd);
-	ssd.dwFlags = SSDF_TCHAR;
-	ssd.pszName = name;
-	ssd.ptszSection = section;
-	ssd.ptszDescription = description;
-	return CallService("Skin/Sounds/AddNew", hLangpack, (LPARAM)&ssd);
-}
-
-__forceinline INT_PTR Skin_AddSound(SKINSOUNDDESCEX *ssd)
-{
-	return CallService("Skin/Sounds/AddNew", hLangpack, (LPARAM)ssd);
-}
+EXTERN_C MIR_APP_DLL(int) Skin_AddSound(const char *name, const wchar_t *section, const wchar_t *description, const wchar_t *defaultFile = nullptr, int = hLangpack);
 
 /////////////////////////////////////////////////////////////////////////////////////////
-// plays a named sound event
-// wParam = 0
-// lParam = (LPARAM)(const char*)pszName
-// pszName should have been added with Skin/Sounds/AddNew, but if not the
-// function will not fail, it will play the Windows default sound instead.
+// plays a registered sound
+// returns 0 on success, nonzero otherwise
 
-#define MS_SKIN_PLAYSOUND        "Skin/Sounds/Play"
-
-__forceinline INT_PTR SkinPlaySound(const char *name)
-{
-	return CallService(MS_SKIN_PLAYSOUND, 0, (LPARAM)name);
-}
+EXTERN_C MIR_APP_DLL(int) Skin_PlaySound(const char *name);
 
 /////////////////////////////////////////////////////////////////////////////////////////
-// plays any sound file
-// wParam = 0
-// lParam = (LPARAM)(const TCHAR*)ptszFileName
+// plays the sound file (non-registered)
+// returns 0 on success, nonzero otherwise
 
-#define MS_SKIN_PLAYSOUNDFILE        "Skin/Sounds/PlayFile"
-
-__forceinline INT_PTR SkinPlaySoundFile(const TCHAR *ptszFileName)
-{
-	return CallService(MS_SKIN_PLAYSOUNDFILE, 0, (LPARAM)ptszFileName);
-}
+EXTERN_C MIR_APP_DLL(int) Skin_PlaySoundFile(const wchar_t *pwszFileName);
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -228,15 +147,15 @@ EXTERN_C MIR_APP_DLL(void) KillModuleSounds(int hLangpack);
 // should re-make their image lists
 // wParam = lParam = 0
 
-#define ME_SKIN_ICONSCHANGED     "Skin/IconsChanged"
+#define ME_SKIN_ICONSCHANGED "Skin/IconsChanged"
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // wParam: 0 when playing sound (1 when sound is being previewed)
-// lParam: (TCHAR*) pszSoundFile
+// lParam: (wchar_t*) pszSoundFile
 // Affect: This hook is fired when the sound module needs to play a sound
 // Note  : This event has default processing, if no one HookEvent()'s this event then it will
 //         use the default hook code, which uses PlaySound()
 
-#define ME_SKIN_PLAYINGSOUND  "Skin/Sounds/Playing"
+#define ME_SKIN_PLAYINGSOUND "Skin/Sounds/Playing"
 
 #endif //M_SKIN_H__

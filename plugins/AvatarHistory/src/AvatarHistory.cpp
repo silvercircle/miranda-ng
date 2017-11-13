@@ -30,16 +30,16 @@ DWORD mirVer;
 
 HANDLE hFolder = NULL;
 
-TCHAR profilePath[MAX_PATH];		// database profile path (read at startup only)
-TCHAR basedir[MAX_PATH];
+wchar_t profilePath[MAX_PATH];		// database profile path (read at startup only)
+wchar_t basedir[MAX_PATH];
 int hLangpack = 0;
 MWindowList hAvatarWindowsList = NULL;
 
-int OptInit(WPARAM wParam,LPARAM lParam);
+int OptInit(WPARAM wParam, LPARAM lParam);
 
-TCHAR* GetHistoryFolder(TCHAR *fn);
-TCHAR* GetProtocolFolder(TCHAR *fn, char *proto);
-TCHAR* GetOldStyleAvatarName(TCHAR *fn, MCONTACT hContact);
+wchar_t* GetHistoryFolder(wchar_t *fn);
+wchar_t* GetProtocolFolder(wchar_t *fn, char *proto);
+wchar_t* GetOldStyleAvatarName(wchar_t *fn, MCONTACT hContact);
 
 void InitMenuItem();
 
@@ -75,17 +75,17 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD, LPVOID)
 
 static INT_PTR GetCachedAvatar(WPARAM wParam, LPARAM lParam)
 {
-	TCHAR hash[128];
+	wchar_t hash[128];
 
-	_tcsncpy_s(hash, (TCHAR*)lParam, _TRUNCATE);
+	wcsncpy_s(hash, (wchar_t*)lParam, _TRUNCATE);
 	ConvertToFilename(hash, _countof(hash));
 	return (INT_PTR)GetCachedAvatar((char*)wParam, hash);
 }
 
 static INT_PTR IsEnabled(WPARAM wParam, LPARAM)
 {
-	MCONTACT hContact = (MCONTACT) wParam;
-	return ContactEnabled(hContact, "LogToDisk", AVH_DEF_LOGTODISK) 
+	MCONTACT hContact = (MCONTACT)wParam;
+	return ContactEnabled(hContact, "LogToDisk", AVH_DEF_LOGTODISK)
 		|| ContactEnabled(hContact, "AvatarPopups", AVH_DEF_AVPOPUPS)
 		|| ContactEnabled(hContact, "LogToHistory", AVH_DEF_LOGTOHISTORY);
 }
@@ -115,70 +115,70 @@ static int AvatarChanged(WPARAM hContact, LPARAM lParam)
 	if (mir_strcmp(META_PROTO, proto) == 0)
 		return 0;
 
-	DBVARIANT dbvOldHash = {0};
-	bool ret = (db_get_ts(hContact,MODULE_NAME,"AvatarHash",&dbvOldHash) == 0);
+	DBVARIANT dbvOldHash = { 0 };
+	bool ret = (db_get_ws(hContact, MODULE_NAME, "AvatarHash", &dbvOldHash) == 0);
 
 	CONTACTAVATARCHANGEDNOTIFICATION* avatar = (CONTACTAVATARCHANGEDNOTIFICATION*)lParam;
 	if (avatar == NULL) {
-		if (!ret || !mir_tstrcmp(dbvOldHash.ptszVal, _T("-"))) {
+		if (!ret || !mir_wstrcmp(dbvOldHash.ptszVal, L"-")) {
 			//avoid duplicate "removed avatar" notifications
 			//do not notify on an empty profile
-			ShowDebugPopup(hContact, TranslateT("AVH Debug"), TranslateT("Removed avatar, no avatar before... skipping"));
+			ShowDebugPopup(hContact, L"AVH Debug", L"Removed avatar, no avatar before... skipping");
 			db_free(&dbvOldHash);
 			return 0;
 		}
-		SkinPlaySound("avatar_removed");
+		Skin_PlaySound("avatar_removed");
 
 		// Is a flash avatar or avs could not load it
-		db_set_ts(hContact, MODULE_NAME, "AvatarHash", _T("-"));
+		db_set_ws(hContact, MODULE_NAME, "AvatarHash", L"-");
 
 		if (ContactEnabled(hContact, "AvatarPopups", AVH_DEF_AVPOPUPS) && opts.popup_show_removed)
 			ShowPopup(hContact, NULL, opts.popup_removed);
 	}
 	else {
-		if (ret && !mir_tstrcmp(dbvOldHash.ptszVal, avatar->hash)) {
+		if (ret && !mir_wstrcmp(dbvOldHash.ptszVal, avatar->hash)) {
 			// same avatar hash, skipping
-			ShowDebugPopup(hContact, TranslateT("AVH Debug"), TranslateT("Hashes are the same... skipping"));
+			ShowDebugPopup(hContact, L"AVH Debug", L"Hashes are the same... skipping");
 			db_free(&dbvOldHash);
 			return 0;
 		}
-		SkinPlaySound("avatar_changed");
-		db_set_ts(hContact, "AvatarHistory", "AvatarHash", avatar->hash);
+		Skin_PlaySound("avatar_changed");
+		db_set_ws(hContact, "AvatarHistory", "AvatarHash", avatar->hash);
 
-		TCHAR history_filename[MAX_PATH] = _T("");
+		wchar_t history_filename[MAX_PATH] = L"";
 
 		if (ContactEnabled(hContact, "LogToDisk", AVH_DEF_LOGTODISK)) {
 			if (!opts.log_store_as_hash) {
 				if (opts.log_per_contact_folders) {
 					GetOldStyleAvatarName(history_filename, hContact);
 					if (CopyImageFile(avatar->filename, history_filename))
-						ShowPopup(hContact, TranslateT("Avatar History: Unable to save avatar"), history_filename);
+						ShowPopup(hContact, TranslateT("Avatar history: Unable to save avatar"), history_filename);
 					else
-						ShowDebugPopup(hContact, TranslateT("AVH Debug: File copied successfully"), history_filename);
+						ShowDebugPopup(hContact, L"AVH Debug: File copied successfully", history_filename);
 
 					MCONTACT hMetaContact = db_mc_getMeta(hContact);
 					if (hMetaContact && ContactEnabled(hMetaContact, "LogToDisk", AVH_DEF_LOGTOHISTORY)) {
-						TCHAR filename[MAX_PATH] = _T("");
+						wchar_t filename[MAX_PATH] = L"";
 
 						GetOldStyleAvatarName(filename, hMetaContact);
 						if (CopyImageFile(avatar->filename, filename))
-							ShowPopup(hContact, TranslateT("Avatar History: Unable to save avatar"), filename);
+							ShowPopup(hContact, TranslateT("Avatar history: Unable to save avatar"), filename);
 						else
-							ShowDebugPopup(hContact, TranslateT("AVH Debug: File copied successfully"), filename);
+							ShowDebugPopup(hContact, L"AVH Debug: File copied successfully", filename);
 					}
 				}
 			}
 			else {
 				// See if we already have the avatar
-				TCHAR hash[128];
+				wchar_t hash[128];
 
-				_tcsncpy_s(hash, avatar->hash, _TRUNCATE);
+				wcsncpy_s(hash, avatar->hash, _TRUNCATE);
 				ConvertToFilename(hash, _countof(hash));
 
-				TCHAR *file = GetCachedAvatar(proto, hash);
+				wchar_t *file = GetCachedAvatar(proto, hash);
 
 				if (file != NULL) {
-					mir_tstrncpy(history_filename, file, _countof(history_filename));
+					mir_wstrncpy(history_filename, file, _countof(history_filename));
 					mir_free(file);
 				}
 				else {
@@ -187,13 +187,13 @@ static int AvatarChanged(WPARAM hContact, LPARAM lParam)
 					else
 						GetProtocolFolder(history_filename, proto);
 
-					mir_sntprintf(history_filename, 
-							_T("%s\\%s"), history_filename, hash);
+					mir_snwprintf(history_filename,
+						L"%s\\%s", history_filename, hash);
 
 					if (CopyImageFile(avatar->filename, history_filename))
-						ShowPopup(hContact, TranslateT("Avatar History: Unable to save avatar"), history_filename);
+						ShowPopup(hContact, TranslateT("Avatar history: Unable to save avatar"), history_filename);
 					else
-						ShowDebugPopup(hContact, TranslateT("AVH Debug: File copied successfully"), history_filename);
+						ShowDebugPopup(hContact, L"AVH Debug: File copied successfully", history_filename);
 				}
 
 				if (opts.log_per_contact_folders) {
@@ -210,14 +210,14 @@ static int AvatarChanged(WPARAM hContact, LPARAM lParam)
 			ShowPopup(hContact, NULL, opts.popup_changed);
 
 		if (ContactEnabled(hContact, "LogToHistory", AVH_DEF_LOGTOHISTORY)) {
-			TCHAR rel_path[MAX_PATH];
-			PathToRelativeT(history_filename, rel_path);
+			wchar_t rel_path[MAX_PATH];
+			PathToRelativeW(history_filename, rel_path);
 			T2Utf blob(rel_path);
 
-			DBEVENTINFO dbei = { sizeof(dbei) };
+			DBEVENTINFO dbei = {};
 			dbei.szModule = GetContactProto(hContact);
 			dbei.flags = DBEF_READ | DBEF_UTF;
-			dbei.timestamp = (DWORD) time(NULL);
+			dbei.timestamp = (DWORD)time(NULL);
 			dbei.eventType = EVENTTYPE_AVATAR_CHANGE;
 			dbei.cbBlob = (DWORD)mir_strlen(blob) + 1;
 			dbei.pBlob = blob;
@@ -230,16 +230,16 @@ static int AvatarChanged(WPARAM hContact, LPARAM lParam)
 
 static int PreShutdown(WPARAM, LPARAM)
 {
-	WindowList_Broadcast(hAvatarWindowsList,WM_CLOSE,0,0);
+	WindowList_Broadcast(hAvatarWindowsList, WM_CLOSE, 0, 0);
 	return 0;
 }
 
 static int ModulesLoaded(WPARAM, LPARAM)
 {
-	mir_sntprintf(basedir, _T("%s\\Avatars History"), profilePath);
+	mir_snwprintf(basedir, L"%s\\Avatars History", profilePath);
 
-	hFolder = FoldersRegisterCustomPathT( LPGEN("Avatars"), LPGEN("Avatar History"),
-		PROFILE_PATHT _T("\\") CURRENT_PROFILET _T("\\Avatars History"));
+	hFolder = FoldersRegisterCustomPathT(LPGEN("Avatars"), LPGEN("Avatar History"),
+		PROFILE_PATHT L"\\" CURRENT_PROFILET L"\\Avatars History");
 
 	InitPopups();
 
@@ -249,9 +249,9 @@ static int ModulesLoaded(WPARAM, LPARAM)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-static INT_PTR CALLBACK FirstRunDlgProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM)
+static INT_PTR CALLBACK FirstRunDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM)
 {
-	switch(uMsg) {
+	switch (uMsg) {
 	case WM_INITDIALOG:
 		SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)createDefaultOverlayedIcon(TRUE));
 		SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)createDefaultOverlayedIcon(FALSE));
@@ -261,25 +261,23 @@ static INT_PTR CALLBACK FirstRunDlgProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM
 		break;
 
 	case WM_COMMAND:
-		switch(LOWORD(wParam)) {
+		switch (LOWORD(wParam)) {
 		case IDOK:
-			{
-				int ret = 0;
+			int ret = 0;
 
-				if (IsDlgButtonChecked(hwnd, IDC_MIR_SAME))
-					ret = IDC_MIR_SAME;
-				else if (IsDlgButtonChecked(hwnd, IDC_MIR_PROTO))
-					ret = IDC_MIR_PROTO;
-				else if (IsDlgButtonChecked(hwnd, IDC_MIR_SHORT))
-					ret = IDC_MIR_SHORT;
-				else if (IsDlgButtonChecked(hwnd, IDC_SHORT))
-					ret = IDC_SHORT;
-				else if (IsDlgButtonChecked(hwnd, IDC_DUP))
-					ret = IDC_DUP;
+			if (IsDlgButtonChecked(hwnd, IDC_MIR_SAME))
+				ret = IDC_MIR_SAME;
+			else if (IsDlgButtonChecked(hwnd, IDC_MIR_PROTO))
+				ret = IDC_MIR_PROTO;
+			else if (IsDlgButtonChecked(hwnd, IDC_MIR_SHORT))
+				ret = IDC_MIR_SHORT;
+			else if (IsDlgButtonChecked(hwnd, IDC_SHORT))
+				ret = IDC_SHORT;
+			else if (IsDlgButtonChecked(hwnd, IDC_DUP))
+				ret = IDC_DUP;
 
-				EndDialog(hwnd, ret);
-				return TRUE;
-			}
+			EndDialog(hwnd, ret);
+			return TRUE;
 		}
 		break;
 
@@ -294,12 +292,12 @@ static INT_PTR CALLBACK FirstRunDlgProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM
 extern "C" __declspec(dllexport) int Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	CoInitialize(NULL);
 
 	// Is first run?
-	if ( db_get_b(NULL, MODULE_NAME, "FirstRun", 1)) {
+	if (db_get_b(NULL, MODULE_NAME, "FirstRun", 1)) {
 		// Show dialog
 		int ret = DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_FIRST_RUN), NULL, FirstRunDlgProc, 0);
 		if (ret == 0)
@@ -334,7 +332,7 @@ extern "C" __declspec(dllexport) int Load(void)
 
 	LoadOptions();
 
-	HookEvent(ME_SYSTEM_MODULESLOADED,ModulesLoaded);
+	HookEvent(ME_SYSTEM_MODULESLOADED, ModulesLoaded);
 	HookEvent(ME_SYSTEM_PRESHUTDOWN, PreShutdown);
 	HookEvent(ME_OPT_INITIALISE, OptInit);
 	HookEvent(ME_SKIN2_ICONSCHANGED, IcoLibIconsChanged);
@@ -343,11 +341,10 @@ extern "C" __declspec(dllexport) int Load(void)
 	CreateServiceFunction(MS_AVATARHISTORY_ENABLED, IsEnabled);
 	CreateServiceFunction(MS_AVATARHISTORY_GET_CACHED_AVATAR, GetCachedAvatar);
 
-	if (CallService(MS_DB_GETPROFILEPATHT, MAX_PATH, (LPARAM)profilePath) != 0)
-		mir_tstrcpy(profilePath, _T(".")); // Failed, use current dir
+	Profile_GetPathW(MAX_PATH, profilePath);
 
-	SkinAddNewSoundExT("avatar_changed",LPGENT("Avatar History"),LPGENT("Contact changed avatar"));
-	SkinAddNewSoundExT("avatar_removed",LPGENT("Avatar History"),LPGENT("Contact removed avatar"));
+	Skin_AddSound("avatar_changed", LPGENW("Avatar history"), LPGENW("Contact changed avatar"));
+	Skin_AddSound("avatar_removed", LPGENW("Avatar history"), LPGENW("Contact removed avatar"));
 
 	hAvatarWindowsList = WindowList_Create();
 

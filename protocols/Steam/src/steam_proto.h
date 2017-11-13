@@ -28,8 +28,8 @@ enum
 	CMI_MAX   // this item shall be the last one
 };
 
-typedef void(CSteamProto::*SteamResponseCallback)(const NETLIBHTTPREQUEST *response);
-typedef void(CSteamProto::*SteamResponseWithArgCallback)(const NETLIBHTTPREQUEST *response, void *arg);
+typedef void(CSteamProto::*SteamResponseCallback)(const HttpResponse *response);
+typedef void(CSteamProto::*SteamResponseWithArgCallback)(const HttpResponse *response, void *arg);
 
 class CSteamProto : public PROTO<CSteamProto>
 {
@@ -46,18 +46,19 @@ public:
 	virtual	MCONTACT  __cdecl AddToList(int flags, PROTOSEARCHRESULT *psr);
 
 	virtual	int       __cdecl Authorize(MEVENT hDbEvent);
-	virtual	int       __cdecl AuthDeny(MEVENT hDbEvent, const TCHAR *szReason);
-	virtual	int       __cdecl AuthRequest(MCONTACT hContact, const TCHAR * szMessage);
+	virtual	int       __cdecl AuthDeny(MEVENT hDbEvent, const wchar_t *szReason);
+	virtual	int       __cdecl AuthRequest(MCONTACT hContact, const wchar_t * szMessage);
 
 	virtual	DWORD_PTR __cdecl GetCaps(int type, MCONTACT hContact = NULL);
 
-	virtual	HANDLE    __cdecl SearchBasic(const TCHAR *id);
-
-	virtual	int       __cdecl RecvMsg(MCONTACT hContact, PROTORECVEVENT*);
+	virtual	HANDLE    __cdecl SearchBasic(const wchar_t *id);
+	virtual HANDLE    __cdecl SearchByName(const wchar_t* nick, const wchar_t* firstName, const wchar_t* lastName);
 
 	virtual	int       __cdecl SendMsg(MCONTACT hContact, int flags, const char* msg);
 
 	virtual	int       __cdecl SetStatus(int iNewStatus);
+
+	virtual	int       __cdecl UserIsTyping(MCONTACT hContact, int type);
 
 	virtual	int       __cdecl OnEvent(PROTOEVENTTYPE eventType, WPARAM wParam, LPARAM lParam);
 
@@ -73,8 +74,8 @@ public:
 	static void UninitMenus();
 
 protected:
-	TCHAR *password;
-	bool isTerminated;
+	wchar_t *password;
+	bool isLoginAgain;
 	time_t m_idleTS;
 	HANDLE m_evRequestsQueue, m_hQueueThread;
 	HANDLE m_pollingConnection, m_hPollingThread;
@@ -83,6 +84,13 @@ protected:
 	mir_cs contact_search_lock;
 	mir_cs requests_queue_lock;
 	mir_cs set_status_lock;
+	std::map<HANDLE, time_t> m_mpOutMessages;
+
+	/**
+	 * Used only to compare in steam_history.cpp, others should write such value directly to db profile, because PollingThread
+	 * may start sooner than steam_history requests so it could possibly break getting history messages from server
+	 */
+	time_t m_lastMessageTS;
 
 	// instances
 	static LIST<CSteamProto> InstanceList;
@@ -108,17 +116,20 @@ protected:
 	// account
 	bool IsOnline();
 	bool IsMe(const char *steamId);
-
-	void OnGotRsaKey(const NETLIBHTTPREQUEST *response);
 	
-	void OnAuthorization(const NETLIBHTTPREQUEST *response);
+	bool Relogin();
+
+	void OnGotRsaKey(const HttpResponse *response);
+	
+	void OnAuthorization(const HttpResponse *response);
 	void OnAuthorizationError(const JSONNode &node);
 	void OnAuthorizationSuccess(const JSONNode &node);
-	void OnGotSession(const NETLIBHTTPREQUEST *response);
+	void OnGotSession(const HttpResponse *response);
 
-	void OnLoggedOn(const NETLIBHTTPREQUEST *response);
+	void OnLoggedOn(const HttpResponse *response);
 
 	void HandleTokenExpired();
+	void DeleteAuthSettings();
 
 	// contacts
 	void SetContactStatus(MCONTACT hContact, WORD status);
@@ -126,38 +137,42 @@ protected:
 
 	MCONTACT GetContactFromAuthEvent(MEVENT hEvent);
 
-	void UpdateContact(MCONTACT hContact, JSONNode *data);
-	void ProcessContact(std::map<std::string, JSONNode*>::iterator *it, MCONTACT hContact);
-	
+	void UpdateContactDetails(MCONTACT hContact, JSONNode *data);
+	void UpdateContactRelationship(MCONTACT hContact, JSONNode *data);
+
 	void ContactIsRemoved(MCONTACT hContact);
 	void ContactIsFriend(MCONTACT hContact);
 	void ContactIsIgnored(MCONTACT hContact);
+	void ContactIsAskingAuth(MCONTACT hContact);
 
 	MCONTACT FindContact(const char *steamId);
 	MCONTACT AddContact(const char *steamId, bool isTemporary = false);
 
-	void OnGotFriendList(const NETLIBHTTPREQUEST *response);
-	void OnGotBlockList(const NETLIBHTTPREQUEST *response);
-	void OnGotUserSummaries(const NETLIBHTTPREQUEST *response);
-	void OnGotAvatar(const NETLIBHTTPREQUEST *response, void *arg);
+	void OnGotFriendList(const HttpResponse *response);
+	void OnGotBlockList(const HttpResponse *response);
+	void OnGotUserSummaries(const HttpResponse *response);
+	void OnGotAvatar(const HttpResponse *response, void *arg);
 
-	void OnFriendAdded(const NETLIBHTTPREQUEST *response, void *arg);
-	void OnFriendBlocked(const NETLIBHTTPREQUEST *response, void *arg);
-	void OnFriendRemoved(const NETLIBHTTPREQUEST *response, void *arg);
+	void OnFriendAdded(const HttpResponse *response, void *arg);
+	void OnFriendBlocked(const HttpResponse *response, void *arg);
+	void OnFriendRemoved(const HttpResponse *response, void *arg);
 
-	void OnAuthRequested(const NETLIBHTTPREQUEST *response, void *arg);
+	void OnAuthRequested(const HttpResponse *response, void *arg);
 
-	void OnPendingApproved(const NETLIBHTTPREQUEST *response, void *arg);
-	void OnPendingIgnoreded(const NETLIBHTTPREQUEST *response, void *arg);
+	void OnPendingApproved(const HttpResponse *response, void *arg);
+	void OnPendingIgnoreded(const HttpResponse *response, void *arg);
 
-	void OnSearchByIdEnded(const NETLIBHTTPREQUEST *response, void *arg);
-
-	void OnSearchByNameStarted(const NETLIBHTTPREQUEST *response, void *arg);
-	void OnSearchByNameFinished(const NETLIBHTTPREQUEST *response, void *arg);
+	void OnSearchResults(const HttpResponse *response, void *arg);
+	void OnSearchByNameStarted(const HttpResponse *response, void *arg);
 
 	// messages
 	int OnSendMessage(MCONTACT hContact, const char* message);
-	void OnMessageSent(const NETLIBHTTPREQUEST *response, void *arg);
+	void OnMessageSent(const HttpResponse *response, void *arg);
+	int __cdecl OnPreCreateMessage(WPARAM, LPARAM lParam);
+
+	// history
+	void OnGotConversations(const HttpResponse *response);
+	void OnGotHistoryMessages(const HttpResponse *response, void *arg);
 
 	// menus
 	static int hChooserMenu;
@@ -177,7 +192,7 @@ protected:
 	void OnInitStatusMenu();
 
 	// avatars
-	TCHAR* GetAvatarFilePath(MCONTACT hContact);
+	wchar_t* GetAvatarFilePath(MCONTACT hContact);
 	bool GetDbAvatarInfo(PROTO_AVATAR_INFORMATION &pai);
 	void CheckAvatarChange(MCONTACT hContact, std::string avatarUrl);
 
@@ -197,7 +212,6 @@ protected:
 
 	// events
 	int OnModulesLoaded(WPARAM, LPARAM);
-	int OnPreShutdown(WPARAM, LPARAM);
 	int __cdecl OnIdleChanged(WPARAM, LPARAM);
 	int __cdecl OnOptionsInit(WPARAM wParam, LPARAM lParam);
 	INT_PTR __cdecl OnAccountManagerInit(WPARAM wParam, LPARAM lParam);
@@ -208,10 +222,10 @@ protected:
 
 	static int RsaEncrypt(const char *pszModulus, const char *data, BYTE *encrypted, DWORD &encryptedSize);
 
-	MEVENT AddDBEvent(MCONTACT hContact, WORD type, DWORD timestamp, DWORD flags, DWORD cbBlob, PBYTE pBlob);
+	static void CSteamProto::ShowNotification(const wchar_t *message, int flags = 0, MCONTACT hContact = NULL);
+	static void CSteamProto::ShowNotification(const wchar_t *caption, const wchar_t *message, int flags = 0, MCONTACT hContact = NULL);
 
-	static void CSteamProto::ShowNotification(const TCHAR *message, int flags = 0, MCONTACT hContact = NULL);
-	static void CSteamProto::ShowNotification(const TCHAR *caption, const wchar_t *message, int flags = 0, MCONTACT hContact = NULL);
+	INT_PTR __cdecl OnGetEventTextChatStates(WPARAM wParam, LPARAM lParam);
 
 	// helpers
 	inline int IdleSeconds() {
@@ -227,6 +241,13 @@ protected:
 
 		// ... or we can report real idle info
 		// return m_idleTS ? time(0) - m_idleTS : 0;
+	}
+
+	inline const char *AccountIdToSteamId(long long accountId)
+	{
+		static char steamId[20];
+		mir_snprintf(steamId, "%llu", accountId + 76561197960265728ll);
+		return steamId;
 	}
 };
 

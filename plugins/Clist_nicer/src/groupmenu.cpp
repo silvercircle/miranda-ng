@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -80,12 +80,12 @@ static int OnBuildGroupMenu(WPARAM, LPARAM)
 }
 
 IconItemT iconItem[] = {
-	{ LPGENT("Contact list"), "clist", IDI_CLIST }
+	{ LPGENW("Contact list"), "clist", IDI_CLIST }
 };
 
 void InitIconLibMenuIcons(void)
 {
-	Icon_RegisterT(g_hInst, LPGENT("Contact list"), iconItem, _countof(iconItem));
+	Icon_RegisterT(g_hInst, LPGENW("Contact list"), iconItem, _countof(iconItem));
 }
 
 void InitGroupMenus(void)
@@ -99,7 +99,7 @@ void InitGroupMenus(void)
 
 	SET_UID(mi, 0xe386678a, 0x5aee, 0x4bfa, 0xa8, 0x23, 0xd, 0xa0, 0x11, 0x99, 0xb1, 0x98);
 	mi.position = 500;
-	mi.pszService = MS_CLIST_SHOWHIDE;
+	mi.pszService = "Clist/ShowHide";
 	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_OTHER_SHOWHIDE);
 	mi.name.a = LPGEN("&Hide/show");
 	hHideShowMainMenuItem = Menu_AddGroupMenuItem(&mi);
@@ -152,10 +152,4 @@ void InitGroupMenus(void)
 	mi.name.a = LPGEN("&Options...");
 	Menu_AddGroupMenuItem(&mi);
 
-	SET_UID(mi, 0x44ec5e76, 0xa5cc, 0x4e72, 0xb9, 0xa7, 0x5e, 0x41, 0xef, 0x99, 0x13, 0x19);
-	mi.position = 1000000;
-	mi.hIcolibItem = Skin_GetIconHandle(SKINICON_OTHER_MIRANDA);
-	mi.pszService = "CLN/About";
-	mi.name.a = LPGEN("&About the contact list...");
-	Menu_AddGroupMenuItem(&mi);
 }

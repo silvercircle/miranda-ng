@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: WhatsApp.dll
 ;  Plugin: WhatsApp protocol
-;  Version: 0.1.3.1
+;  Version: 0.1.3.3
 ;  Authors: Uli Hecht
 ;============================================================
 [WhatsApp protocol support for Miranda NG.]
@@ -13,7 +13,7 @@ Téléphone
 [Nickname]
 Pseudo
 [Default group:]
-
+Groupes :
 [Use SSL connection (port 443)]
 
 [Use remote message timestamps]
@@ -108,7 +108,7 @@ Réseau
 Compte
 ;file \protocols\WhatsApp\src\messages.cpp
 [server]
-
+serveur
 [Message received: %s by %s]
 
 ;file \protocols\WhatsApp\src\proto.cpp

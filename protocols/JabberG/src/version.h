@@ -1,7 +1,7 @@
 #define __MAJOR_VERSION       0
 #define __MINOR_VERSION       11
 #define __RELEASE_NUM         0
-#define __BUILD_NUM           4
+#define __BUILD_NUM           5
 
 #include <stdver.h>
 
@@ -9,5 +9,5 @@
 #define __DESCRIPTION         "Jabber (XMPP) protocol support for Miranda NG."
 #define __AUTHOR              "George Hazan, Maxim Mluhov, Victor Pavlychko, Artem Shpynov, Michael Stepura"
 #define __AUTHOREMAIL         "ghazan@miranda.im"
-#define __COPYRIGHT           "© 2005-15 George Hazan, Maxim Mluhov, Victor Pavlychko, Artem Shpynov, Michael Stepura"
-#define __AUTHORWEB           "http://miranda-ng.org/p/Jabber/"
+#define __COPYRIGHT           "© 2005-17 George Hazan, Maxim Mluhov, Victor Pavlychko, Artem Shpynov, Michael Stepura"
+#define __AUTHORWEB           "https://miranda-ng.org/p/Jabber/"

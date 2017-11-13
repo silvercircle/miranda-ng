@@ -27,7 +27,7 @@ enum { IMG_GROUP, IMG_CHECK, IMG_NOCHECK, IMG_RCHECK, IMG_NORCHECK, IMG_GRPOPEN,
 
 static void OptTree_TranslateItem(HWND hwndTree, HTREEITEM hItem)
 {
-	TCHAR buf[64];
+	wchar_t buf[64];
 
 	TVITEM tvi = { 0 };
 	tvi.mask = TVIF_HANDLE | TVIF_TEXT;
@@ -35,7 +35,7 @@ static void OptTree_TranslateItem(HWND hwndTree, HTREEITEM hItem)
 	tvi.pszText = buf;
 	tvi.cchTextMax = _countof(buf);
 	SendMessage(hwndTree, TVM_GETITEMW, 0, (LPARAM)&tvi);
-	tvi.pszText = TranslateTS(tvi.pszText);
+	tvi.pszText = TranslateW(tvi.pszText);
 	SendMessage(hwndTree, TVM_SETITEMW, 0, (LPARAM)&tvi);
 }
 
@@ -65,10 +65,10 @@ void OptTree_Translate(HWND hwndTree)
 	}
 }
 
-HTREEITEM OptTree_FindNamedTreeItemAt(HWND hwndTree, HTREEITEM hItem, const TCHAR *name)
+HTREEITEM OptTree_FindNamedTreeItemAt(HWND hwndTree, HTREEITEM hItem, const wchar_t *name)
 {
 	TVITEM tvi = { 0 };
-	TCHAR str[MAX_PATH];
+	wchar_t str[MAX_PATH];
 
 	if (hItem)
 		tvi.hItem = TreeView_GetChild(hwndTree, hItem);
@@ -85,7 +85,7 @@ HTREEITEM OptTree_FindNamedTreeItemAt(HWND hwndTree, HTREEITEM hItem, const TCHA
 	while (tvi.hItem) {
 		TreeView_GetItem(hwndTree, &tvi);
 
-		if (!mir_tstrcmp(tvi.pszText, name))
+		if (!mir_wstrcmp(tvi.pszText, name))
 			return tvi.hItem;
 
 		tvi.hItem = TreeView_GetNextSibling(hwndTree, tvi.hItem);
@@ -95,21 +95,21 @@ HTREEITEM OptTree_FindNamedTreeItemAt(HWND hwndTree, HTREEITEM hItem, const TCHA
 
 HTREEITEM OptTree_AddItem(HWND hwndTree, LPTSTR name, LPARAM lParam, int iconIndex)
 {
-	TCHAR itemName[1024];
+	wchar_t itemName[1024];
 
-	TCHAR *sectionName;
+	wchar_t *sectionName;
 	int sectionLevel = 0;
 
 	HTREEITEM hSection = NULL, result = NULL;
-	mir_tstrcpy(itemName, name);
+	mir_wstrcpy(itemName, name);
 	sectionName = itemName;
 
 	while (sectionName) {
 		//  allow multi-level tree
-		TCHAR *pItemName = sectionName;
+		wchar_t *pItemName = sectionName;
 		HTREEITEM hItem;
 
-		if (sectionName = _tcschr(sectionName, '/')) {
+		if (sectionName = wcschr(sectionName, '/')) {
 			//  one level deeper
 			*sectionName = 0;
 			sectionName++;
@@ -154,7 +154,7 @@ BOOL OptTree_ProcessMessage(HWND hwnd, UINT msg, WPARAM, LPARAM lparam, int *res
 	case WM_INITDIALOG:
 	{
 		int indx;
-		TCHAR itemName[1024];
+		wchar_t itemName[1024];
 		HIMAGELIST hImgLst;
 
 		TreeView_SelectItem(hwndTree, NULL);
@@ -172,19 +172,19 @@ BOOL OptTree_ProcessMessage(HWND hwnd, UINT msg, WPARAM, LPARAM lparam, int *res
 
 		/* build options tree. based on code from IcoLib */
 		for (indx = 0; indx < optionCount; indx++) {
-			TCHAR *sectionName;
+			wchar_t *sectionName;
 			int sectionLevel = 0;
 
 			HTREEITEM hSection = NULL;
-			mir_tstrcpy(itemName, options[indx].pszOptionName);
+			mir_wstrcpy(itemName, options[indx].pszOptionName);
 			sectionName = itemName;
 
 			while (sectionName) {
 				//  allow multi-level tree
-				TCHAR *pItemName = sectionName;
+				wchar_t *pItemName = sectionName;
 				HTREEITEM hItem;
 
-				if (sectionName = _tcschr(sectionName, '/')) {
+				if (sectionName = wcschr(sectionName, '/')) {
 					//  one level deeper
 					*sectionName = 0;
 					sectionName++;
@@ -324,7 +324,7 @@ DWORD OptTree_GetOptions(HWND hwnd, int idcTree, OPTTREE_OPTION *options, int op
 	int i;
 	for (i = 0; i < optionCount; ++i) {
 		if ((!options[i].pszSettingName && !pszSettingName) ||
-			(options[i].pszSettingName && pszSettingName && !mir_tstrcmp(options[i].pszSettingName, pszSettingName)))
+			(options[i].pszSettingName && pszSettingName && !mir_wstrcmp(options[i].pszSettingName, pszSettingName)))
 		{
 			TVITEM tvi = { 0 };
 			tvi.mask = TVIF_HANDLE | TVIF_IMAGE;
@@ -342,7 +342,7 @@ void OptTree_SetOptions(HWND hwnd, int idcTree, OPTTREE_OPTION *options, int opt
 	HWND hwndTree = GetDlgItem(hwnd, idcTree);
 	for (int i = 0; i < optionCount; ++i) {
 		if ((!options[i].pszSettingName && !pszSettingName) ||
-			(options[i].pszSettingName && pszSettingName && !mir_tstrcmp(options[i].pszSettingName, pszSettingName)))
+			(options[i].pszSettingName && pszSettingName && !mir_wstrcmp(options[i].pszSettingName, pszSettingName)))
 		{
 			TVITEM tvi;
 			tvi.mask = TVIF_HANDLE | TVIF_IMAGE | TVIF_SELECTEDIMAGE;

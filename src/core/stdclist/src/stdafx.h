@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -38,13 +38,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <win2k.h>
 #include <newpluginapi.h>
 #include <m_clist.h>
-#include <m_clui.h>
 #include <m_system.h>
 #include <m_database.h>
 #include <m_langpack.h>
 #include <m_button.h>
 #include <m_options.h>
-#include <m_modernopt.h>
 #include <m_protosvc.h>
 #include <m_utils.h>
 #include <m_skin.h>
@@ -59,5 +57,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // shared vars
 extern HINSTANCE g_hInst;
 extern CLIST_INTERFACE coreCli;
+extern int g_bSortByStatus, g_bSortByProto;
 
 void LoadClcOptions(HWND hwnd, struct ClcData *dat, BOOL bFirst);

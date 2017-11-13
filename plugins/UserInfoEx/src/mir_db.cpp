@@ -28,42 +28,12 @@ namespace DB {
 **/
 
 namespace Contact {
-
-/**
- * Gets the number of contacts in the database, which does not count the user
- * @param	hContact	- handle to the contact
- * @return	Returns the number of contacts. They can be retrieved using
- *			contact/findfirst and contact/findnext
- **/
-INT_PTR GetCount()
-{
-	return CallService(MS_DB_CONTACT_GETCOUNT, 0, 0);
-}
-
-/**
- * Simply adds a new contact without setting up any protocol or something else
- * @return	HANDLE		The function returns the HANDLE of the new contact
- **/
-MCONTACT Add()
-{
-	return (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
-}
-
-/**
- * This function deletes a contact from the database.
- * @param	hContact	- handle to the contact
- **/
-BYTE Delete(MCONTACT hContact)
-{
-	return CallService(MS_DB_CONTACT_DELETE, hContact, 0) != 0;
-}
-
 /**
  * This function trys to guess, when an ICQ contact was added to database.
  **/
 DWORD	WhenAdded(DWORD dwUIN, LPCSTR)
 {
-	DBEVENTINFO	dbei = { sizeof(dbei) };
+	DBEVENTINFO	dbei = {};
 	for (MEVENT edbe = db_event_first(NULL); edbe != NULL; edbe = db_event_next(NULL, edbe)) {
 		// get eventtype and compare
 		if (!DB::Event::GetInfo(edbe, &dbei) && dbei.eventType == EVENTTYPE_ADDED) {
@@ -121,10 +91,7 @@ static int IsEmptyEnumProc(LPCSTR, LPARAM)
 
 bool IsEmpty(MCONTACT hContact, LPCSTR pszModule)
 {
-	DBCONTACTENUMSETTINGS dbces = { 0 };
-	dbces.pfnEnumProc = IsEmptyEnumProc;
-	dbces.szModule = pszModule;
-	return (0 > CallService(MS_DB_CONTACT_ENUMSETTINGS, hContact, (LPARAM)&dbces));
+	return 0 > db_enum_settings(hContact, IsEmptyEnumProc, pszModule);
 }
 
 /**
@@ -546,7 +513,6 @@ namespace Event {
 
 bool GetInfo(MEVENT hEvent, DBEVENTINFO *dbei)
 {
-	dbei->cbSize = sizeof(DBEVENTINFO);
 	dbei->cbBlob = 0;
 	dbei->pBlob  = NULL;
 	return db_event_get(hEvent, dbei) != 0;
@@ -564,7 +530,6 @@ bool GetInfo(MEVENT hEvent, DBEVENTINFO *dbei)
 
 bool GetInfoWithData(MEVENT hEvent, DBEVENTINFO *dbei)
 {
-	dbei->cbSize = sizeof(DBEVENTINFO);
 	if (!dbei->cbBlob) {
 		INT_PTR size = db_event_getBlobSize(hEvent);
 		dbei->cbBlob = (size != -1) ? (DWORD)size : 0;
@@ -755,7 +720,7 @@ LPSTR CEnumList::Insert(LPCSTR str)
 
 INT_PTR CEnumList::EnumModules()
 {
-	return CallService(MS_DB_MODULES_ENUM, (WPARAM)this, (LPARAM)CEnumList::EnumProc);
+	return db_enum_modules(CEnumList::EnumProc, this);
 }
 
 /**
@@ -765,11 +730,7 @@ INT_PTR CEnumList::EnumModules()
 
 INT_PTR CEnumList::EnumSettings(MCONTACT hContact, LPCSTR pszModule)
 {
-	DBCONTACTENUMSETTINGS dbces = { 0 };
-	dbces.pfnEnumProc = (DBSETTINGENUMPROC)CEnumList::EnumSettingsProc;
-	dbces.szModule = pszModule;
-	dbces.lParam = (LPARAM)this;
-	return CallService(MS_DB_CONTACT_ENUMSETTINGS, hContact, (LPARAM)&dbces);
+	return db_enum_settings(hContact, &CEnumList::EnumSettingsProc, pszModule, this);
 }
 
 } /* namespace DB */

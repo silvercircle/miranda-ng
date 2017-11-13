@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
-// Copyright (ñ) 2012-15 Miranda NG project,
+// Copyright (ñ) 2012-17 Miranda NG project,
 // Copyright (c) 2000-09 Miranda ICQ/IM project,
 // all portions of this codebase are copyrighted to the people
 // listed in contributors.txt.
@@ -29,11 +29,11 @@
 #ifndef __CONTACTCACHE_H
 #define __CONTACTCACHE_H
 
-#define C_INVALID_ACCOUNT _T("<account error>")
+#define C_INVALID_ACCOUNT L"<account error>"
 #define HISTORY_INITIAL_ALLOCSIZE 300
 
 struct TInputHistory {
-	TCHAR*	szText;
+	wchar_t*	szText;
 	size_t	lLen;
 };
 
@@ -57,91 +57,93 @@ struct TSessionStats {
 
 struct CContactCache : public MZeroedObject
 {
-	CContactCache() {}
-	CContactCache(const MCONTACT hContact);
+	CContactCache(MCONTACT hContact);
 	~CContactCache()
 	{
 		releaseAlloced();
 	}
 
-	const bool     isValid() const { return m_Valid; }
-	const WORD     getStatus() const { return m_wStatus; }
-	const WORD     getActiveStatus() const { return m_isMeta ? m_wMetaStatus : m_wStatus; }
-	const WORD     getOldStatus() const { return m_wOldStatus; }
-	const TCHAR*   getNick() const { return m_szNick; }
-	const MCONTACT getContact() const { return m_hContact; }
-	const MCONTACT getActiveContact() const { return (m_isMeta) ? m_hSub : m_hContact; }
-	const DWORD    getIdleTS() const { return m_idleTS; }
-	const char*    getProto() const { return cc->szProto; }
-	const char*    getActiveProto() const { return m_isMeta ? (m_szMetaProto ? m_szMetaProto : cc->szProto) : cc->szProto; }
-	bool           isMeta() const { return m_isMeta; }
-	bool           isSubContact() const { return cc->IsSub(); }
-	bool           isFavorite() const { return m_isFavorite; }
-	bool           isRecent() const { return m_isRecent; }
-	const TCHAR*   getRealAccount() const { return m_szAccount ? m_szAccount : C_INVALID_ACCOUNT; }
-	const TCHAR*   getUIN() const { return m_szUIN; }
-	const TCHAR*   getStatusMsg() const { return m_szStatusMsg; }
-	const TCHAR*   getXStatusMsg() const { return m_xStatusMsg; }
-	const TCHAR*   getListeningInfo() const { return m_ListeningInfo; }
-	BYTE           getXStatusId() const { return m_xStatus; }
-	const HWND     getWindowData(TWindowData*& dat) const { dat = m_dat; return m_hwnd; }
-	const HWND     getHwnd() const { return m_hwnd; }
-	int            getMaxMessageLength();
+	__forceinline bool     isValid() const { return m_isValid; }
+	__forceinline int      getActiveStatus() const { return m_isMeta ? m_iMetaStatus : getStatus(); }
+	__forceinline int      getOldStatus() const { return m_iOldStatus; }
+	__forceinline LPCWSTR  getNick() const { return m_szNick; }
+	__forceinline MCONTACT getContact() const { return m_hContact; }
+	__forceinline MCONTACT getActiveContact() const { return (m_isMeta) ? m_hSub : m_hContact; }
+	__forceinline DWORD    getIdleTS() const { return m_idleTS; }
+	__forceinline LPCSTR   getProto() const { return cc->szProto; }
+	__forceinline LPCSTR   getActiveProto() const { return m_isMeta ? (m_szMetaProto ? m_szMetaProto : cc->szProto) : cc->szProto; }
+	
+	__forceinline bool     isMeta() const { return m_isMeta; }
+	__forceinline bool     isSubContact() const { return cc->IsSub(); }
+	__forceinline bool     isFavorite() const { return m_isFavorite; }
+	__forceinline bool     isRecent() const { return m_isRecent; }
+	
+	__forceinline LPCWSTR  getRealAccount() const { return m_szAccount ? m_szAccount : C_INVALID_ACCOUNT; }
+	__forceinline LPCWSTR  getUIN() const { return m_szUIN; }
+	__forceinline LPCWSTR  getStatusMsg() const { return m_szStatusMsg; }
+	__forceinline LPCWSTR  getXStatusMsg() const { return m_xStatusMsg; }
+	__forceinline LPCWSTR  getListeningInfo() const { return m_ListeningInfo; }
+	__forceinline BYTE     getXStatusId() const { return m_xStatus; }
 
-	TWindowData*   getDat() const { return m_dat; }
+	__forceinline DWORD    getSessionStart() const { return m_stats->started; }
+	__forceinline int      getSessionMsgCount() const { return (int)m_stats->messageCount; }
 
-	void           updateStats(int iType, size_t value = 0);
-	const DWORD    getSessionStart() const { return m_stats->started; }
-	const int      getSessionMsgCount() const { return (int)m_stats->messageCount; }
+	__forceinline CSrmmWindow* getDat() const { return m_dat; }
+
+	int getStatus(void) const
+	{
+		return db_get_w(m_hContact, cc->szProto, "Status", ID_STATUS_OFFLINE);
+	}
+
+	size_t getMaxMessageLength();
+	void   updateStats(int iType, size_t value = 0);
 
 	////////////////////////////////////////////////////////////////////////////
 
-	void   updateState();
-	bool   updateStatus();
-	bool   updateNick();
-	void   updateMeta();
-	bool   updateUIN();
-	void   updateStatusMsg(const char *szKey = 0);
-	void   setWindowData(const HWND hwnd = 0, TWindowData *dat = 0);
-	void   resetMeta();
-	void   closeWindow();
-	void   deletedHandler();
-	void   updateFavorite();
-	TCHAR* getNormalizedStatusMsg(const TCHAR *src, bool fStripAll = false);
-	HICON  getIcon(int& iSize) const;
+	bool     updateStatus(int iStatus);
+	bool     updateNick();
+	void     updateMeta();
+	bool     updateUIN();
+	void     updateStatusMsg(const char *szKey = 0);
+	void     setWindowData(CSrmmWindow *dat = 0);
+	void     resetMeta();
+	void     closeWindow();
+	void     deletedHandler();
+	void     updateFavorite();
+	wchar_t* getNormalizedStatusMsg(const wchar_t *src, bool fStripAll = false);
+	HICON    getIcon(int& iSize) const;
 
 	/*
 	 * input history
 	 */
-	void   saveHistory(WPARAM wParam, LPARAM lParam);
-	void   inputHistoryEvent(WPARAM wParam);
+	void     saveHistory(int iHistorySize = 0);
+	void     inputHistoryEvent(WPARAM wParam);
 
 	static CContactCache* getContactCache(MCONTACT hContact);
 	static int cacheUpdateMetaChanged(WPARAM wParam, LPARAM lParam);
 
 private:
-	void   allocStats();
-	void   initPhaseTwo();
-	void   allocHistory();
-	void   releaseAlloced();
+	void     allocStats();
+	void     initPhaseTwo();
+	void     allocHistory();
+	void     releaseAlloced();
 
 	MCONTACT m_hContact, m_hSub;
-	WORD     m_wStatus, m_wOldStatus, m_wMetaStatus;
+	int      m_iStatus, m_iOldStatus, m_iMetaStatus;
 	char    *m_szMetaProto;
-	TCHAR   *m_szAccount;
-	TCHAR    m_szNick[80], m_szUIN[80];
-	TCHAR   *m_szStatusMsg, *m_xStatusMsg, *m_ListeningInfo;
+	wchar_t *m_szAccount;
+	wchar_t  m_szNick[80], m_szUIN[80];
+	wchar_t *m_szStatusMsg, *m_xStatusMsg, *m_ListeningInfo;
 	BYTE     m_xStatus;
 	DWORD    m_idleTS;
 	bool     m_isMeta;
-	bool     m_Valid;
+	bool     m_isValid;
 	bool     m_isFavorite;
 	bool     m_isRecent;
-	HWND     m_hwnd;
 	int      m_nMax;
 	int      m_iHistoryCurrent, m_iHistoryTop, m_iHistorySize;
 
-	TWindowData *m_dat;
+	CSrmmWindow *m_dat;
 	TSessionStats *m_stats;
 	TInputHistory *m_history;
 	DBCachedContact *cc;

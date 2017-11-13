@@ -30,7 +30,7 @@ HINSTANCE hInstance;
 // Protocol instances
 static int sttCompareProtocols(const CAimProto *p1, const CAimProto *p2)
 {
-	return mir_tstrcmp(p1->m_tszUserName, p2->m_tszUserName);
+	return mir_wstrcmp(p1->m_tszUserName, p2->m_tszUserName);
 }
 
 OBJLIST<CAimProto> g_Instances(1, sttCompareProtocols);
@@ -86,7 +86,7 @@ static int OnModulesLoaded(WPARAM, LPARAM)
 /////////////////////////////////////////////////////////////////////////////////////////
 // Load
 
-static PROTO_INTERFACE* protoInit(const char* pszProtoName, const TCHAR* tszUserName)
+static PROTO_INTERFACE* protoInit(const char* pszProtoName, const wchar_t* tszUserName)
 {
 	CAimProto *ppro = new CAimProto(pszProtoName, tszUserName);
 	g_Instances.insert(ppro);
@@ -102,7 +102,7 @@ static int protoUninit(PROTO_INTERFACE* ppro)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
 
@@ -116,7 +116,6 @@ extern "C" int __declspec(dllexport) Load(void)
 
 	InitIcons();
 	InitExtraIcons();
-
 	return 0;
 }
 
@@ -125,6 +124,5 @@ extern "C" int __declspec(dllexport) Load(void)
 
 extern "C" int __declspec(dllexport) Unload(void)
 {
-	aim_links_destroy();
 	return 0;
 }

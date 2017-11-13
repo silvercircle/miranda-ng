@@ -27,11 +27,11 @@ LCID packlcid;
 HANDLE hVerInfoFolder;
 HMODULE hMsftedit;
 
-TCHAR* vertxt;
-TCHAR* profname;
-TCHAR* profpath;
+wchar_t* vertxt;
+wchar_t* profname;
+wchar_t* profpath;
 
-TCHAR CrashLogFolder[MAX_PATH], VersionInfoFolder[MAX_PATH];
+wchar_t CrashLogFolder[MAX_PATH], VersionInfoFolder[MAX_PATH];
 
 bool servicemode, clsdates, dtsubfldr, catchcrashes, needrestart = 0;
 
@@ -65,14 +65,14 @@ extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = { MIID_SERVIC
 
 INT_PTR StoreVersionInfoToFile(WPARAM, LPARAM lParam)
 {
-	CreateDirectoryTree(VersionInfoFolder);
+	CreateDirectoryTreeW(VersionInfoFolder);
 
-	TCHAR path[MAX_PATH];
-	mir_sntprintf(path, TEXT("%s\\VersionInfo.txt"), VersionInfoFolder);
+	wchar_t path[MAX_PATH];
+	mir_snwprintf(path, TEXT("%s\\VersionInfo.txt"), VersionInfoFolder);
 
 	HANDLE hDumpFile = CreateFile(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hDumpFile != INVALID_HANDLE_VALUE) {
-		CMString buffer;
+		CMStringW buffer;
 		PrintVersionInfo(buffer, (unsigned int)lParam | VI_FLAG_PRNVAR);
 
 		WriteUtfFile(hDumpFile, T2Utf(buffer.c_str()));
@@ -87,7 +87,7 @@ INT_PTR StoreVersionInfoToFile(WPARAM, LPARAM lParam)
 
 INT_PTR StoreVersionInfoToClipboard(WPARAM, LPARAM lParam)
 {
-	CMString buffer;
+	CMStringW buffer;
 	WriteBBFile(buffer, true);
 	PrintVersionInfo(buffer, (unsigned int)lParam | VI_FLAG_PRNVAR | VI_FLAG_FORMAT);
 	WriteBBFile(buffer, false);
@@ -99,11 +99,11 @@ INT_PTR StoreVersionInfoToClipboard(WPARAM, LPARAM lParam)
 
 INT_PTR UploadVersionInfo(WPARAM, LPARAM lParam)
 {
-	CMString buffer;
+	CMStringW buffer;
 	PrintVersionInfo(buffer);
 
 	VerTrnsfr *trn = (VerTrnsfr*)mir_alloc(sizeof(VerTrnsfr));
-	trn->buf = mir_utf8encodeT(buffer.c_str());
+	trn->buf = mir_utf8encodeW(buffer.c_str());
 	trn->autot = lParam == 0xa1;
 
 	mir_forkthread(VersionInfoUploadThread, trn);
@@ -130,10 +130,10 @@ INT_PTR GetVersionInfo(WPARAM wParam, LPARAM lParam)
 {
 	int result = 1; //failure
 	if (lParam != NULL) {
-		CMString buffer;
+		CMStringW buffer;
 		PrintVersionInfo(buffer, (unsigned int)wParam);
 		char **retData = (char **)lParam;
-		*retData = mir_utf8encodeT(buffer.c_str());
+		*retData = mir_utf8encodeW(buffer.c_str());
 		if (*retData)
 			result = 0; //success
 	}
@@ -148,7 +148,7 @@ INT_PTR OpenUrl(WPARAM wParam, LPARAM)
 		break;
 
 	case 1:
-		OpenAuthUrl("http://vi.miranda-ng.org/detail/%s");
+		OpenAuthUrl("https://vi.miranda-ng.org/detail/%s");
 		break;
 	}
 	return 0;
@@ -156,12 +156,12 @@ INT_PTR OpenUrl(WPARAM wParam, LPARAM)
 
 INT_PTR CopyLinkToClipboard(WPARAM, LPARAM)
 {
-	ptrT tmp(db_get_wsa(NULL, PluginName, "Username"));
+	ptrW tmp(db_get_wsa(NULL, PluginName, "Username"));
 	if (tmp != NULL) {
-		TCHAR buffer[MAX_PATH];
-		mir_sntprintf(buffer, _T("http://vi.miranda-ng.org/detail/%s"), tmp);
+		wchar_t buffer[MAX_PATH];
+		mir_snwprintf(buffer, L"https://vi.miranda-ng.org/detail/%s", tmp);
 
-		int bufLen = (sizeof(buffer) + 1) * sizeof(TCHAR);
+		int bufLen = (sizeof(buffer) + 1) * sizeof(wchar_t);
 		HANDLE hData = GlobalAlloc(GMEM_MOVEABLE, bufLen);
 		LPSTR buf = (LPSTR)GlobalLock(hData);
 		memcpy(buf, buffer, bufLen);
@@ -203,8 +203,8 @@ int OptionsInit(WPARAM wParam, LPARAM)
 	odp.position = -790000000;
 	odp.hInstance = hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONS);
-	odp.pszTitle = PluginName;
-	odp.pszGroup = LPGEN("Services");
+	odp.szTitle.a = PluginName;
+	odp.szGroup.a = LPGEN("Services");
 	odp.flags = ODPF_BOLDGROUPS;
 	odp.pfnDlgProc = DlgProcOptions;
 	Options_AddPage(wParam, &odp);
@@ -241,11 +241,11 @@ static int ToolbarModulesLoaded(WPARAM, LPARAM)
 static int ModulesLoaded(WPARAM, LPARAM)
 {
 	char temp[MAX_PATH];
-	CallService(MS_SYSTEM_GETVERSIONTEXT, (WPARAM)_countof(temp), (LPARAM)temp);
+	Miranda_GetVersionText(temp, _countof(temp));
 	crs_a2t(vertxt, temp);
 
 	if (ServiceExists(MS_FOLDERS_REGISTER_PATH)) {
-		replaceStrT(profpath, _T("%miranda_userdata%"));
+		replaceStrW(profpath, L"%miranda_userdata%");
 
 		// Removed because it isn't available on Load()
 		//		hCrashLogFolder = FoldersRegisterCustomPathT(PluginName, LPGEN("Crash Reports"), CrashLogFolder);
@@ -256,7 +256,8 @@ static int ModulesLoaded(WPARAM, LPARAM)
 	}
 
 	CMenuItem mi;
-	mi.root = Menu_CreateRoot(MO_MAIN, LPGENT("Version Information"), 2000089999, GetIconHandle(IDI_VI));
+	mi.root = Menu_CreateRoot(MO_MAIN, LPGENW("Version Information"), 2000089999, GetIconHandle(IDI_VI));
+	Menu_ConfigureItem(mi.root, MCI_OPT_UID, "9A7A9C76-7FD8-4C05-B402-6C46060C2D78");
 
 	SET_UID(mi, 0x52930e40, 0xb2ee, 0x4433, 0xad, 0x77, 0xf5, 0x42, 0xe, 0xf6, 0x57, 0xc1);
 	mi.position = 2000089995;
@@ -316,16 +317,15 @@ static int ModulesLoaded(WPARAM, LPARAM)
 	mi.pszService = MS_CRASHDUMPER_URL;
 	Menu_ConfigureItem(Menu_AddMainMenuItem(&mi), MCI_OPT_EXECPARAM, 1);
 
-	HOTKEYDESC hk = { 0 };
-	hk.cbSize = sizeof(hk);
-	hk.pszSection = PluginName;
+	HOTKEYDESC hk = {};
+	hk.szSection.a = PluginName;
 
-	hk.pszDescription = LPGEN("Copy Version Info to clipboard");
+	hk.szDescription.a = LPGEN("Copy Version Info to clipboard");
 	hk.pszName = "CopyVerInfo";
 	hk.pszService = MS_CRASHDUMPER_STORETOCLIP;
 	Hotkey_Register(&hk);
 
-	hk.pszDescription = LPGEN("Show Version Info");
+	hk.szDescription.a = LPGEN("Show Version Info");
 	hk.pszName = "ShowVerInfo";
 	hk.pszService = MS_CRASHDUMPER_VIEWINFO;
 	Hotkey_Register(&hk);
@@ -354,7 +354,7 @@ static int PreShutdown(WPARAM, LPARAM)
 
 extern "C" int __declspec(dllexport) Load(void)
 {
-	hMsftedit = LoadLibrary(_T("Msftedit.dll"));
+	hMsftedit = LoadLibrary(L"Msftedit.dll");
 	if (hMsftedit == NULL)
 		return 1;
 
@@ -364,11 +364,11 @@ extern "C" int __declspec(dllexport) Load(void)
 
 	mir_getLP(&pluginInfoEx);
 
-	profname = Utils_ReplaceVarsT(_T("%miranda_profilename%.dat"));
-	profpath = Utils_ReplaceVarsT(_T("%miranda_userdata%"));
+	profname = Utils_ReplaceVarsW(L"%miranda_profilename%.dat");
+	profpath = Utils_ReplaceVarsW(L"%miranda_userdata%");
 	if (catchcrashes && !needrestart)
-		mir_sntprintf(CrashLogFolder, TEXT("%s\\CrashLog"), profpath);
-	_tcsncpy_s(VersionInfoFolder, profpath, _TRUNCATE);
+		mir_snwprintf(CrashLogFolder, TEXT("%s\\CrashLog"), profpath);
+	wcsncpy_s(VersionInfoFolder, profpath, _TRUNCATE);
 
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, ModulesLoaded);

@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: ICQ.dll
 ;  Plugin: IcqOscarJ protocol
-;  Version: 0.11.3.4
+;  Version: 0.11.3.5
 ;  Authors: Joe Kucera, Bio, Martin Öberg, Richard Hughes, Jon Keating, etc.
 ;============================================================
 [ICQ protocol support for Miranda NG.]
@@ -77,8 +77,8 @@
 Перевіряти цілісність аватара перед збереженням*
 [Load avatars automatically (like ICQ Lite)]
 Завантажувати аватари автоматично (як ICQ Lite)
-[You will need to reconnect to the ICQ network for the changes you have made on this page to take effect.]
-Зміни вступлять у силу при наступному вході в мережу ICQ.
+[These changes will take effect the next time you connect to the ICQ network.]
+Зміни наберуть чинності при наступному вході в мережу ICQ.
 [You cannot enable/disable the server-side contact list while you are connected to the ICQ network.]
 Неможливо ввімкнути/вимкнути зберігання списку контактів на сервері під час підключення до мережі ICQ.
 [Note: The options marked with an asterisk have important side-effects or caveats that may not be initially apparent documented in the help.]
@@ -109,8 +109,6 @@
 Автозавантаження xСтатусів
 [Block known Spam Bots]
 Блок. відомі спам-боти
-[Enable AIM contacts support]
-Увімкнути підтримку контактів AIM
 [Direct connections]
 Прямі з'єднання
 [Allowing direct connections will expose your IP address but may be necessary for some ICQ features to work properly.]
@@ -1428,13 +1426,13 @@ Web-дизайн
 [60-above]
 60 і більше
 [Single]
-Наодинці
+Неодружений/Незаміжня
 [Close relationships]
-У близьких відносинах
+Зустрічаюсь
 [Engaged]
 Заручений(а)
 [Married]
-У шлюбі
+Одружений/Заміжня
 [Divorced]
 Розлучений(а)
 [Separated]
@@ -1514,7 +1512,7 @@ Web-дизайн
 [%s server connection]
 З'єднання з сервером %s
 [%s client-to-client connections]
-З'єднання між клієнтами %s
+З'єднання між користувачами %s
 [User ID]
 ID користувача
 [You have not entered an ICQ number.\nConfigure this in Options -> Network -> ICQ and try again.]
@@ -1523,8 +1521,8 @@ ID користувача
 Неможливо встановити SSL-з'єднання з сервером ICQ
 [Unable to connect to ICQ login server]
 Неможливо підключитися до сервера ICQ
-[Miranda was unable to allocate a port to listen for direct peer-to-peer connections between clients. You will be able to use most of the ICQ network without problems but you may be unable to send or receive files.\n\nIf you have a firewall this may be blocking Miranda, in which case you should configure your firewall to leave some ports open and tell Miranda which ports to use in Options -> ICQ -> Network.]
-Не вдалося виділити порт для з'єднань між клієнтами. Усі функції ICQ будуть доступні, але можливі проблеми з передачею файлів.\n\nЯкщо у вас встановлений брандмауер (firewall), налаштуйте в ньому кілька портів і вкажіть їх у налаштуваннях (Мережа - з'єднання між користувачами).
+[Miranda was unable to allocate a port to listen for direct peer-to-peer connections between clients. You will be able to use most of the ICQ network without problems but you may be unable to send or receive files.\n\nIf you have a firewall this may be blocking Miranda, in which case you should configure your firewall to leave some ports open and tell Miranda which ports to use in Options -> Network -> ICQ client-to-client connections.]
+Не вдалося виділити порт для з'єднань між користувачами. Усі функції ICQ будуть доступні, але можливі проблеми з передачею файлів.\n\nЯкщо у вас встановлений брандмауер (firewall), відкрийте в ньому кілька портів і вкажіть їх у налаштуваннях (Мережа -> З'єднання між користувачами ICQ).
 [Connection failed.\nLogin sequence failed for unknown reason.\nTry again later.]
 Невдале з'єднання.\nПослідовність входу не вдалася з невідомої причини.\nСпробуйте пізніше.
 [Your connection with the ICQ server was abortively closed]
@@ -1715,8 +1713,8 @@ ID користувача
 Сумо
 [Broken hearted]
 Розбите серце
-[Free for Chat]
-Хочу спілкуватися
+[Free for chat]
+Готовий до чату
 [@home]
 Вдома
 [@work]
@@ -1776,7 +1774,7 @@ xСтатус ICQ
 [Your proxy rejected the user name and password that you provided. Please check them in Options -> Network.]
 Ваш проксі-сервер відкинув ім'я і пароль. Будь ласка, перевірте їх: Налаштування -> Мережа.
 [The server to which you are trying to connect does not exist. Check your spelling in Options -> Network -> ICQ.]
-Сервер, до якого ви намагаєтеся підключитися, не існує. Перевірте сервер: Налаштування -> Мережа -> ICQ.
+Сервер, до якого ви намагаєтеся підключитися, не існує. Перевірте адресу сервера: Налаштування -> Мережа -> ICQ.
 [error]
 помилка
 [Enter a password for UIN %u:]

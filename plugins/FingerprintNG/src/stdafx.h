@@ -1,7 +1,7 @@
 /*
 Fingerprint NG (client version) icons module for Miranda NG
 
-Copyright © 2006-12 ghazan, mataes, HierOS, FYR, Bio, nullbie, faith_healer and all respective contributors.
+Copyright © 2006-17 ghazan, mataes, HierOS, FYR, Bio, nullbie, faith_healer and all respective contributors.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -110,7 +110,7 @@ typedef struct _foundInfo
 
 #define MODULENAME   "Finger"
 
-#define DEFAULT_SKIN_FOLDER		_T("Icons\\Fp_icons.dll")
+#define DEFAULT_SKIN_FOLDER		L"Icons\\Fp_icons.dll"
 
 void ClearFI();
 

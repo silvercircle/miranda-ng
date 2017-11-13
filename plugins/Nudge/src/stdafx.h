@@ -11,9 +11,9 @@
 #include <m_clist.h>			
 #include <m_langpack.h>	
 #include <m_popup.h>	
-#include <m_clui.h>
 #include <m_message.h>
 #include <m_ignore.h>
+#include <m_hotkeys.h>
 #include <m_options.h>
 #include <m_skin.h>
 #include <m_database.h>
@@ -23,11 +23,10 @@
 
 #include <m_metacontacts.h>
 #include <m_nudge.h>
-#include <m_msg_buttonsbar.h>
 
 #include "resource.h"
 #include "shake.h"
-#include "Version.h"
+#include "version.h"
 #include "nudge.h"
 
 /*
@@ -43,7 +42,7 @@ int Preview();
 /*
 *
 ****************************/
-void Nudge_ShowPopup(CNudgeElement*, MCONTACT, TCHAR *);
+void Nudge_ShowPopup(CNudgeElement*, MCONTACT, wchar_t *);
 
 /*
 *

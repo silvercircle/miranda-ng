@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2010 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -196,7 +196,7 @@ void CIcqProto::icq_sendCloseConnection()
 	sendServPacket(&packet);
 }
 
-void CIcqProto::icq_requestnewfamily(WORD wFamily, void (CIcqProto::*familyhandler)(HANDLE hConn, char* cookie, size_t cookieLen))
+void CIcqProto::icq_requestnewfamily(WORD wFamily, void (CIcqProto::*familyhandler)(HNETLIBCONN hConn, char* cookie, size_t cookieLen))
 {
 	int bRequestSSL = m_bSecureConnection && (wFamily != ICQ_AVATAR_FAMILY); // Avatar servers does not support SSL
 
@@ -1547,12 +1547,12 @@ void CIcqProto::icq_sendAuthReqServ(DWORD dwUin, char *szUid, const char *szMsg)
 	sendServPacket(&packet);
 }
 
-void CIcqProto::icq_sendAuthResponseServ(DWORD dwUin, char* szUid, int auth, const TCHAR *szReason)
+void CIcqProto::icq_sendAuthResponseServ(DWORD dwUin, char* szUid, int auth, const wchar_t *szReason)
 {
 	BYTE nUinLen = getUIDLen(dwUin, szUid);
 
 	// Prepare custom utf-8 reason
-	char *szUtfReason = tchar_to_utf8(szReason);
+	char *szUtfReason = make_utf8_string(szReason);
 	size_t nReasonLen = mir_strlen(szUtfReason);
 
 	icq_packet packet;

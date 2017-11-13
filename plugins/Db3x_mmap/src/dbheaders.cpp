@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -40,23 +40,23 @@ int CDb3Mmap::CreateDbHeaders(const DBSignature& _sign)
 	// create user
 	m_dbHeader.ofsUser = m_dbHeader.ofsFileEnd;
 	m_dbHeader.ofsFileEnd += sizeof(DBContact);
-	SetFilePointer(m_hDbFile, 0, NULL, FILE_BEGIN);
+	SetFilePointer(m_hDbFile, 0, nullptr, FILE_BEGIN);
 
 	DWORD bytesWritten;
-	WriteFile(m_hDbFile, &m_dbHeader, sizeof(m_dbHeader), &bytesWritten, NULL);
+	WriteFile(m_hDbFile, &m_dbHeader, sizeof(m_dbHeader), &bytesWritten, nullptr);
 
 	DBContact user = { 0 };
 	user.signature = DBCONTACT_SIGNATURE;
-	SetFilePointer(m_hDbFile, m_dbHeader.ofsUser, NULL, FILE_BEGIN);
-	WriteFile(m_hDbFile, &user, sizeof(DBContact), &bytesWritten, NULL);
+	SetFilePointer(m_hDbFile, m_dbHeader.ofsUser, nullptr, FILE_BEGIN);
+	WriteFile(m_hDbFile, &user, sizeof(DBContact), &bytesWritten, nullptr);
 	FlushFileBuffers(m_hDbFile);
 	return 0;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-static TCHAR tszOldHeaders[] =
-LPGENT("This profile is too old to be updated with PluginUpdater, your database must be converted first.\n\nWould you like to read how to fix this?");
+static wchar_t tszOldHeaders[] =
+LPGENW("This profile is too old to be updated with PluginUpdater, your database must be converted first.\n\nWould you like to read how to fix this?");
 
 int CDb3Mmap::CheckDbHeaders(bool bInteractive)
 {
@@ -69,19 +69,19 @@ int CDb3Mmap::CheckDbHeaders(bool bInteractive)
 
 		if (!memcmp(&m_dbHeader.signature, &dbSignatureSD, sizeof(m_dbHeader.signature))) {
 			if (bInteractive)
-				if (IDYES == MessageBox(NULL, TranslateTS(tszOldHeaders), TranslateT("Obsolete database format"), MB_YESNO | MB_ICONWARNING)) {
-					TCHAR tszCurPath[MAX_PATH];
-					GetModuleFileName(NULL, tszCurPath, _countof(tszCurPath));
-					TCHAR *p = _tcsrchr(tszCurPath, '\\');
+				if (IDYES == MessageBox(nullptr, TranslateW(tszOldHeaders), TranslateT("Obsolete database format"), MB_YESNO | MB_ICONWARNING)) {
+					wchar_t tszCurPath[MAX_PATH];
+					GetModuleFileName(nullptr, tszCurPath, _countof(tszCurPath));
+					wchar_t *p = wcsrchr(tszCurPath, '\\');
 					if (p) *p = 0;
 
 					HKEY hPathSetting;
-					if (!RegCreateKey(HKEY_CURRENT_USER, _T("Software\\Miranda NG"), &hPathSetting)) {
-						RegSetValue(hPathSetting, _T("InstallPath"), REG_SZ, tszCurPath, sizeof(tszCurPath));
+					if (!RegCreateKey(HKEY_CURRENT_USER, L"Software\\Miranda NG", &hPathSetting)) {
+						RegSetValue(hPathSetting, L"InstallPath", REG_SZ, tszCurPath, sizeof(tszCurPath));
 						RegCloseKey(hPathSetting);
 					}
 
-					Utils_OpenUrl("http://wiki.miranda-ng.org/index.php?title=Updating_pre-0.94.9_version_to_0.95.1_and_later");
+					Utils_OpenUrl("https://wiki.miranda-ng.org/index.php?title=Updating_pre-0.94.9_version_to_0.95.1_and_later");
 					Sleep(1000);
 					exit(0);
 				}

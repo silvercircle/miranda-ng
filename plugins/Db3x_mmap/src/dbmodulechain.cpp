@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -30,32 +30,32 @@ void CDb3Mmap::AddToList(char *name, DWORD ofs)
 	mn->ofs = ofs;
 
 	if (m_lMods.getIndex(mn) != -1)
-		DatabaseCorruption(_T("%s (Module Name not unique)"));
+		DatabaseCorruption(L"%s (Module Name not unique)");
 	m_lMods.insert(mn);
 
 	if (m_lOfs.getIndex(mn) != -1)
-		DatabaseCorruption(_T("%s (Module Offset not unique)"));
+		DatabaseCorruption(L"%s (Module Offset not unique)");
 	m_lOfs.insert(mn);
 }
 
 int CDb3Mmap::InitModuleNames(void)
 {
 	DWORD ofsThis = m_dbHeader.ofsModuleNames;
-	DBModuleName *dbmn = (struct DBModuleName*)DBRead(ofsThis, NULL);
+	DBModuleName *dbmn = (struct DBModuleName*)DBRead(ofsThis, nullptr);
 	while (ofsThis) {
 		if (dbmn->signature != DBMODULENAME_SIGNATURE)
-			DatabaseCorruption(NULL);
+			DatabaseCorruption(nullptr);
 
 		int nameLen = dbmn->cbName;
 
 		char *mod = (char*)HeapAlloc(m_hModHeap, 0, nameLen + 1);
-		memcpy(mod, DBRead(ofsThis + offsetof(struct DBModuleName, name), NULL), nameLen);
+		memcpy(mod, DBRead(ofsThis + offsetof(struct DBModuleName, name), nullptr), nameLen);
 		mod[nameLen] = 0;
 
 		AddToList(mod, ofsThis);
 
 		ofsThis = dbmn->ofsNext;
-		dbmn = (struct DBModuleName*)DBRead(ofsThis, NULL);
+		dbmn = (struct DBModuleName*)DBRead(ofsThis, nullptr);
 	}
 	return 0;
 }
@@ -96,9 +96,9 @@ DWORD CDb3Mmap::GetModuleNameOfs(const char *szName)
 	dbmn.cbName = nameLen;
 	dbmn.ofsNext = m_dbHeader.ofsModuleNames;
 	m_dbHeader.ofsModuleNames = ofsNew;
-	DBWrite(0, &m_dbHeader, sizeof(m_dbHeader));
 	DBWrite(ofsNew, &dbmn, offsetof(struct DBModuleName, name));
 	DBWrite(ofsNew + offsetof(struct DBModuleName, name), (PVOID)szName, nameLen);
+	DBWrite(0, &m_dbHeader, sizeof(m_dbHeader));
 	DBFlush(0);
 
 	// add to cache
@@ -115,7 +115,7 @@ char* CDb3Mmap::GetModuleNameByOfs(DWORD ofs)
 	if (m_lastmn && m_lastmn->ofs == ofs)
 		return m_lastmn->name;
 
-	ModuleName mn = { NULL, ofs };
+	ModuleName mn = { nullptr, ofs };
 	int index = m_lOfs.getIndex(&mn);
 	if (index != -1) {
 		ModuleName *pmn = m_lOfs[index];
@@ -123,11 +123,11 @@ char* CDb3Mmap::GetModuleNameByOfs(DWORD ofs)
 		return pmn->name;
 	}
 
-	DatabaseCorruption(NULL);
-	return NULL;
+	DatabaseCorruption(nullptr);
+	return nullptr;
 }
 
-STDMETHODIMP_(BOOL) CDb3Mmap::EnumModuleNames(DBMODULEENUMPROC pFunc, void *pParam)
+STDMETHODIMP_(BOOL) CDb3Mmap::EnumModuleNames(DBMODULEENUMPROC pFunc, const void *pParam)
 {
 	for (int i = 0; i < m_lMods.getCount(); i++) {
 		ModuleName *pmn = m_lMods[i];

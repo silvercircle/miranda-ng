@@ -24,7 +24,6 @@
 
 #include "stdafx.h"
 
-int g_IsSrmmWindowAPI = 0;
 extern PLUGIN_DATA* PopupList[20];
 
 //---------------------------
@@ -62,7 +61,7 @@ int HookedNewEvent(WPARAM hContact, LPARAM hDbEvent)
 		return 0;
 
 	//get DBEVENTINFO without pBlob
-	DBEVENTINFO dbe = { sizeof(dbe) };
+	DBEVENTINFO dbe = {};
 	db_event_get(hDbEvent, &dbe);
 
 	//do not show popups for sub-contacts
@@ -70,12 +69,10 @@ int HookedNewEvent(WPARAM hContact, LPARAM hDbEvent)
 		return 0;
 
 	//custom database event types
-	if (ServiceExists(MS_DB_EVENT_GETTYPE)) {
-		DBEVENTTYPEDESCR *pei = (DBEVENTTYPEDESCR*)CallService(MS_DB_EVENT_GETTYPE, (WPARAM)dbe.szModule, (LPARAM)dbe.eventType);
-		// ignore events according to flags
-		if (pei && pei->flags & DETF_NONOTIFY)
-			return 0;
-    }
+	DBEVENTTYPEDESCR *pei = DbEvent_GetType(dbe.szModule, dbe.eventType);
+	// ignore events according to flags
+	if (pei && pei->flags & DETF_NONOTIFY)
+		return 0;
 
 	//if event was allready read don't show it
 	if (pluginOptions.bReadCheck && (dbe.flags & DBEF_READ))
@@ -115,8 +112,6 @@ int HookedInit(WPARAM, LPARAM)
 
 	if (pluginOptions.bMenuitem)
 		MenuitemInit(!pluginOptions.bDisable);
-
-	g_IsSrmmWindowAPI = ServiceExists(MS_MSG_GETWINDOWDATA) != 0;
 	return 0;
 }
 
@@ -141,7 +136,7 @@ extern "C" __declspec(dllexport) int Load(void)
 	HookEvent(ME_OPT_INITIALISE, HookedOptions);
 
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	OptionsInit(&pluginOptions);
 	pluginOptions.hInst = g_hInst;
@@ -171,18 +166,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD, LPVOID)
 
 int CheckMsgWnd(MCONTACT hContact)
 {
-	if (g_IsSrmmWindowAPI) {
-		MessageWindowData mwd;
-		MessageWindowInputData mwid;
-		mwid.cbSize = sizeof(MessageWindowInputData);
-		mwid.hContact = hContact;
-		mwid.uFlags = MSG_WINDOW_UFLAG_MSG_BOTH;
-		mwd.cbSize = sizeof(MessageWindowData);
-		mwd.hContact = hContact;
-		if (!CallService(MS_MSG_GETWINDOWDATA, (WPARAM) &mwid, (LPARAM) &mwd))
-			if (mwd.hwndWindow != NULL && (mwd.uState & MSG_WINDOW_STATE_EXISTS))
-				return 1;
-	}
+	MessageWindowData mwd;
+	if (!Srmm_GetWindowData(hContact, mwd))
+		if (mwd.hwndWindow != NULL && (mwd.uState & MSG_WINDOW_STATE_EXISTS))
+			return 1;
 
 	return 0;
 }

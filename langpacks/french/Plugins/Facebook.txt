@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Facebook.dll
 ;  Plugin: Facebook RM
-;  Version: 0.2.11.4
+;  Version: 0.3.3.2
 ;  Authors: Michal Zelinka, Robert Pösel
 ;============================================================
 [Facebook protocol support for Miranda NG.]
@@ -46,43 +46,51 @@ Groupes :
 Utiliser des grands avatars
 [Prefer real names instead of nicknames]
 
-[Event notifications]
+[Load also Messenger contacts at login (not only Facebook friends)]
 
-[Notifications]
-Notifications
-[News feeds (WARNING: Causes excessive network traffic!)]
+[Use Invisible status for Facebook Pages (instead of Offline)]
+
+[Popup notifications]
+
+[Show notifications]
+
+[Show wall posts (news feed) (WARNING: Causes excessive network traffic!)]
 
 [News feed types to notify:]
 
 [Don't show advertising posts]
 
-[Other events]
-Autres événements
-[Client notifications]
+[Show friendships changes (when someone removes/approves you)]
 
-[Friendship notifications]
+[Show real-time friends activity (ticker feed)]
 
-[Ticker feeds]
+[Show my "On this day" posts at login]
 
-[Show "On this day" posts at login]
+[Chatroom logging]
+
+[Log notifications into special chatroom]
+
+[Extra]
+
+[Use balloon notifications in system tray instead of popups]
 
 [Use this server for opening links:]
 Utiliser ce serveur pour ouvrir les liens :
-[Use balloon notifications in system tray instead of popups]
-
-[Use logging notifications into special chatroom]
-
-[Preview]
-Aperçu
 [Statuses]
 
 [Post Miranda statuses to Wall]
 Poster les statuts de Miranda sur le mur
 [Turn off chat on Facebook when going to offline in Miranda]
 
-[Map unsupported statuses to Invisible (instead of Online)]
+[Map unsupported statuses to Invisible (instead of Away)]
 
 [Allow posting statuses to my pages (may slow down login)]
+
+[Advanced]
+Avancé
+[Send typing notifications even when Invisible]
+
+[Typing is one way how user is determined active. If you don't want to be seen "active 1 min ago" on Facebook, uncheck this option and also don't interact with website at all. Sending messages from Miranda should be ok, but don't 100% rely on it either.]
 
 [Bots challenge test]
 
@@ -92,8 +100,6 @@ Instruction :
 Soumettre
 [Messages]
 Messages
-[Receive messages from "inbox" folder only]
-Recevoir uniquement les messages de la boîte de réception
 [Keep messages as unread on server (don't send "seen" info)]
 Conserver les messages comme non lus sur le serveur (ne pas envoyer "vu")
 [Show stickers as custom smileys (EXPERIMENTAL)]
@@ -104,24 +110,32 @@ Conserver les messages comme non lus sur le serveur (ne pas envoyer "vu")
 
 [Do not open chat windows on creation]
 
-[History synchronization]
+[Automatically join active chats that exist in contact list]
 
-[Load last messages (24 hours old) on login (EXPERIMENTAL)]
+[History synchronization]
 
 [Load last messages on opening message window (EXPERIMENTAL)]
 
 [Number of messages to load:]
 
+[Facebook Login Approval]
+
+[Your security settings requires to input a security code to access your account from unknown browsers.\n\nYou can get the code via Facebook application on your phone or click button below to receive it via SMS.]
+
+[Send SMS]
+Envoyer SMS
 ;file \protocols\FacebookRM\src\captcha.cpp
 [Enter the text you see]
 
 ;file \protocols\FacebookRM\src\chat.cpp
+[Former]
+
 [Myself]
+
+[Friend]
 
 [User]
 Utilisateur
-[Friend]
-
 [&Invite user...]
 &Inviter l'utilisateur...
 [&Leave chat session]
@@ -130,6 +144,10 @@ Utilisateur
 &Détails du contact
 [User &history]
 
+[Notifications]
+Notifications
+[%s and more (%d)]
+
 ;file \protocols\FacebookRM\src\communication.cpp
 [Login error: %s]
 
@@ -137,9 +155,19 @@ Utilisateur
 Erreur inconnue
 [Login error: Invalid request.]
 
-[Login error: Some Facebook things are required.]
+[You entered too many invalid verification codes. Plugin will disconnect.]
+
+[You entered wrong verification code. Try it again.]
 
 [Login error: Your account is temporarily locked. You need to confirm this device from web browser.]
+
+[Check last login]
+
+[Do you recognize this activity?]
+
+[Login error: You need to confirm last unknown login or revoke it from web browser.]
+
+[Login error: Facebook thinks your computer is infected. Solve it by logging in via 'private browsing' mode of your web browser and run their antivirus check.]
 
 [Login error: Captcha code is required. You need to confirm this device from web browser.]
 
@@ -159,6 +187,10 @@ Erreur inconnue
 
 [Status update was successful.]
 Mise à jour du statut avec succès.
+[Error occurred when requesting verification SMS code.]
+
+[Verification SMS code was sent to your mobile phone.]
+
 ;file \protocols\FacebookRM\src\connection.cpp
 [Please enter a username.]
 Veuillez entrer un nom d'utilisateur.
@@ -188,8 +220,6 @@ Public
 [Only me]
 
 ;file \protocols\FacebookRM\src\contacts.cpp
-[%s and more (%d)]
-
 [Contact was removed from your server list.]
 Le contact a été supprimé de votre liste sur le serveur.
 [Error occurred when removing contact from server.]
@@ -217,20 +247,6 @@ Défaut
 
 [What's on your mind, %s?]
 
-[Sample event]
-
-[Sample request]
-
-[Sample newsfeed]
-
-[Sample notification]
-
-[Sample friendship]
-
-[Sample ticker]
-
-[Sample on this day]
-
 ;file \protocols\FacebookRM\src\json.cpp
 [a sticker]
 un autocollant
@@ -244,14 +260,18 @@ un fichier
 photos
 [a photo]
 une photo
+[a video]
+
+[a GIF]
+
 [User sent %s:]
 
 [User sent an unsupported attachment. Open your browser to see it.]
 
-[This message is no longer available, because it was marked as abusive or spam.]
-Ce message n'est plus disponible, car il a été marqué comme injurieux ou indésirable.
 [%s is typing a message...]
 %s vous écrit un message...
+[This message is no longer available, because it was marked as abusive or spam.]
+Ce message n'est plus disponible, car il a été marqué comme injurieux ou indésirable.
 ;file \protocols\FacebookRM\src\messages.cpp
 [You cannot send messages when you are offline.]
 Vous ne pouvez pas envoyer de message si vous êtes Hors ligne.
@@ -260,7 +280,33 @@ Vous ne pouvez pas envoyer de message si vous êtes Hors ligne.
 
 [Contact is no longer on server-list.]
 Le contact n'est plus sur la liste du serveur.
+[Loading history started.]
+
+[Loading messages: %d/%d]
+
+[Loading history completed.]
+
+[<attachment without text>]
+
+[Loading memories...]
+
 [On this day]
+
+[Found %d memories.]
+
+[Loading notifications...]
+
+[Found %d notifications.]
+
+[Loading friendship requests...]
+
+[Found %d friendship requests (%d seen).]
+
+[Found %d friendship requests.]
+
+[Loading wall posts...]
+
+[Found %d wall posts.]
 
 ;file \protocols\FacebookRM\src\proto.cpp
 [%s server connection]
@@ -283,19 +329,23 @@ Envoi de message
 Partager le statut
 [Own wall]
 
-[Loading newsfeeds...]
+[Loading history is already in progress. It can't run for more contacts at once so please wait until it finishes.]
 
-[Checking friend requests...]
-
-[Refreshing buddy list...]
+[This will load all messages from the server. To avoid having duplicate messages in your history, delete existing messages manually before continuing.\nLoading process might take a while, so be patient.\n\nDo you want to continue?]
 
 [Do you want to cancel your friendship with '%s'?]
 
-[News feeds]
-Fil d'actualité
+[Client errors]
+
+[Wall posts]
+
+[Other events]
+Autres événements
 [Friendship events]
 
-[On this day posts]
+[Real-time friends activity]
+
+[Memories]
 
 [Visit profile]
 Visiter le profil
@@ -312,8 +362,6 @@ Autre événement
 [Friendship event]
 
 [Ticker event]
-
-[On this day event]
 
 [Message read: %s by %s]
 
@@ -336,9 +384,23 @@ Conversation
 
 [Captcha form icon]
 
+[Angry]
+Grrr
+[Haha]
+Haha
+[Like]
+J'aime
+[Love]
+J'adore
+[Sad]
+Triste
+[Wow]
+Wouah
 [Visit friendship details]
 Voir les détails
 [Visit conversation]
+
+[Load history]
 
 [Cancel friendship]
 Supprimer
@@ -352,9 +414,11 @@ Supprimer
 
 [Services...]
 Services...
-[Refresh Buddy List]
-Actualiser la liste d'amis
-[Check Friends Requests]
+[Check friendship requests]
 
-[Check Newsfeeds]
+[Check newsfeeds]
+
+[Check memories]
+
+[Check notifications]
 

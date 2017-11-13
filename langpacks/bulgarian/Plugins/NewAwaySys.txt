@@ -6,23 +6,23 @@
 ;  Authors: NightFox, Deathdemon, XF007, Goblineye Entertainment
 ;============================================================
 [On&line]
-На линия
+На &линия
 [&Away]
-Отсъстващ
-[&NA]
-Недостъпен
+&Отсъстващ
+[&Not available]
+&Недостъпен
 [Occ&upied]
-Зает
-[&DND]
-Не безпокойте
+&Зает
+[&Do not disturb]
+Не &безпокойте
 [&Free for chat]
-Готов за чат
+Готов за &чат
 [&Invisible]
-Невидим
+Не&видим
 [On the &phone]
-На телефона
+На &телефона
 [Out to &lunch]
-На обяд
+На обя&д
 [&Variables]
 Променливи
 [Se&ttings]
@@ -35,8 +35,6 @@
 Заглавие:
 [Delete]
 Изтриване
-[Status messages:]
-Текст за състояние:
 [seconds]
 секунди
 [%s message for %s]
@@ -65,7 +63,7 @@ URL
 Да, тук съм.
 [Away]
 Отсъстващ
-[NA]
+[Not available]
 Недостъпен
 [Give it up, I'm not in!]
 Няма ме, откажете се!!
@@ -73,7 +71,7 @@ URL
 Зает
 [Not right now.]
 Не точно сега.
-[DND]
+[Do not disturb]
 Не безпокойте
 [Give a guy some peace, would ya?]
 Дайте на човека малко спокойствие!
@@ -99,6 +97,10 @@ URL
 Задаване на текст за състояние
 [Add]
 Добавяне
+[Save]
+Запис
+[Settings]
+Настройки
 [Re&ad %s message]
 Показване на текста "%s"
 [%d hours]

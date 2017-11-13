@@ -20,11 +20,11 @@ Nevidljiv
 Spreman za razgovor
 [Away]
 Neaktivan
-[NA]
+[Not available]
 Nedostupan
 [Occupied]
 Zauzet
-[DND]
+[Do not disturb]
 Ne uznemiravaj
 [Out to lunch]
 Na ručku

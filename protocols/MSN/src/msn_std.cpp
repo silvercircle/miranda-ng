@@ -1,7 +1,7 @@
 /*
 Plugin of Miranda IM for communicating with users of the MSN Messenger protocol.
 
-Copyright (c) 2012-2014 Miranda NG Team
+Copyright (c) 2012-2017 Miranda NG Team
 Copyright (c) 2006-2012 Boris Krasnovskiy.
 Copyright (c) 2003-2005 George Hazan.
 Copyright (c) 2002-2003 Richard Hughes (original version).
@@ -26,38 +26,35 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 /////////////////////////////////////////////////////////////////////////////////////////
 // Standard functions
 
-int CMsnProto::getStringUtf(MCONTACT hContact, const char* name, DBVARIANT* result)
+int CMsnProto::getStringUtf(MCONTACT hContact, const char *name, DBVARIANT *result)
 {
 	return db_get_utf(hContact, m_szModuleName, name, result);
 }
 
-int CMsnProto::getStringUtf(const char* name, DBVARIANT* result)
+int CMsnProto::getStringUtf(const char *name, DBVARIANT *result)
 {
 	return db_get_utf(NULL, m_szModuleName, name, result);
 }
 
-void CMsnProto::setStringUtf(MCONTACT hContact, const char* name, const char* value)
+void CMsnProto::setStringUtf(MCONTACT hContact, const char *name, const char *value)
 {
 	db_set_utf(hContact, m_szModuleName, name, value);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-TCHAR* CMsnProto::GetContactNameT(MCONTACT hContact)
+wchar_t* CMsnProto::GetContactNameT(MCONTACT hContact)
 {
 	if (hContact)
-		return (TCHAR*)pcli->pfnGetContactDisplayName(WPARAM(hContact), 0);
+		return (wchar_t*)pcli->pfnGetContactDisplayName(hContact, 0);
 
-	CONTACTINFO ci = { 0 };
-	ci.cbSize = sizeof(ci);
-	ci.dwFlag = CNF_DISPLAY | CNF_TCHAR;
-	ci.szProto = m_szModuleName;
-	if (!CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ci)) {
-		if (m_DisplayNameCache) mir_free(m_DisplayNameCache);
-		return (TCHAR*)m_DisplayNameCache = ci.pszVal;
+	wchar_t *str = Contact_GetInfo(CNF_DISPLAY, NULL, m_szModuleName);
+	if (str != NULL) {
+		mir_free(m_DisplayNameCache);
+		return m_DisplayNameCache = str;
 	}
-	else
-		return _T("Me");
+
+	return L"Me";
 }
 
 unsigned MSN_GenRandom(void)

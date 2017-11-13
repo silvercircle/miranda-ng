@@ -2,7 +2,7 @@
 UserinfoEx plugin for Miranda NG
 
 Copyright:
-© 2012-15 Miranda NG project (http://miranda-ng.org)
+© 2012-17 Miranda NG project (https://miranda-ng.org)
 © 2006-10 DeathAxe, Yasnovidyashii, Merlin, K. Romanov, Kreol
 
 This program is free software; you can redistribute it and/or
@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "stdafx.h"
 #include <Commdlg.h>
-#include <m_clui.h>
 #include <m_skin.h>
 
 typedef struct _MSGPOPUPDATA
@@ -323,9 +322,9 @@ static INT_PTR CALLBACK MsgBoxProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 
 					case MB_OKCANCEL:
 						retOk = IDRETRY;
-						SetDlgItemText(hDlg, IDOK, LPGENT("OK"));
+						SetDlgItemText(hDlg, IDOK, LPGENW("OK"));
 						retCancel = IDCANCEL;
-						SetDlgItemText(hDlg, IDCANCEL, LPGENT("Cancel"));
+						SetDlgItemText(hDlg, IDCANCEL, LPGENW("Cancel"));
 						rcOk.left = dlgMid - okWidth - 10;
 						rcOk.right = rcOk.left + okWidth;
 						rcCancel.left = dlgMid + 10;
@@ -336,9 +335,9 @@ static INT_PTR CALLBACK MsgBoxProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 
 					case MB_RETRYCANCEL:
 						retOk = IDRETRY;
-						SetDlgItemText(hDlg, IDOK, LPGENT("Retry"));
+						SetDlgItemText(hDlg, IDOK, LPGENW("Retry"));
 						retCancel = IDCANCEL;
-						SetDlgItemText(hDlg, IDCANCEL, LPGENT("Cancel"));
+						SetDlgItemText(hDlg, IDCANCEL, LPGENW("Cancel"));
 						rcOk.left = dlgMid - okWidth - 10;
 						rcOk.right = rcOk.left + okWidth;
 						rcCancel.left = dlgMid + 10;
@@ -349,9 +348,9 @@ static INT_PTR CALLBACK MsgBoxProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 
 					case MB_YESNO:
 						retOk = IDYES;
-						SetDlgItemText(hDlg, IDOK, LPGENT("Yes"));
+						SetDlgItemText(hDlg, IDOK, LPGENW("Yes"));
 						retCancel = IDNO;
-						SetDlgItemText(hDlg, IDCANCEL, LPGENT("No"));
+						SetDlgItemText(hDlg, IDCANCEL, LPGENW("No"));
 						rcOk.left = dlgMid - okWidth - 10;
 						rcOk.right = rcOk.left + okWidth;
 						rcCancel.left = dlgMid + 10;
@@ -362,11 +361,11 @@ static INT_PTR CALLBACK MsgBoxProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 
 					case MB_ABORTRETRYIGNORE:
 						retOk = IDABORT;
-						SetDlgItemText(hDlg, IDOK, LPGENT("Abort"));
+						SetDlgItemText(hDlg, IDOK, LPGENW("Abort"));
 						retAll = IDABORT;
-						SetDlgItemText(hDlg, IDALL, LPGENT("Retry"));
+						SetDlgItemText(hDlg, IDALL, LPGENW("Retry"));
 						retCancel = IDCANCEL;
-						SetDlgItemText(hDlg, IDCANCEL, LPGENT("Ignore"));
+						SetDlgItemText(hDlg, IDCANCEL, LPGENW("Ignore"));
 						rcAll.left = dlgMid - (allWidth / 2);
 						rcAll.right = rcAll.left + allWidth;
 						rcOk.left = rcAll.left - okWidth - 5;
@@ -380,11 +379,11 @@ static INT_PTR CALLBACK MsgBoxProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 
 					case MB_YESNOCANCEL:
 						retOk = IDYES;
-						SetDlgItemText(hDlg, IDOK, LPGENT("Yes"));
+						SetDlgItemText(hDlg, IDOK, LPGENW("Yes"));
 						retAll = IDNO;
-						SetDlgItemText(hDlg, IDALL, LPGENT("No"));
+						SetDlgItemText(hDlg, IDALL, LPGENW("No"));
 						retCancel = IDCANCEL;
-						SetDlgItemText(hDlg, IDCANCEL, LPGENT("Cancel"));
+						SetDlgItemText(hDlg, IDCANCEL, LPGENW("Cancel"));
 						rcAll.left = dlgMid - (allWidth / 2);
 						rcAll.right = rcAll.left + allWidth;
 						rcOk.left = rcAll.left - okWidth - 5;
@@ -398,13 +397,13 @@ static INT_PTR CALLBACK MsgBoxProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 
 					case MB_YESALLNO:
 						retOk = IDYES;
-						SetDlgItemText(hDlg, IDOK, LPGENT("Yes"));
+						SetDlgItemText(hDlg, IDOK, LPGENW("Yes"));
 						retAll = IDALL;
-						SetDlgItemText(hDlg, IDALL, LPGENT("All"));
+						SetDlgItemText(hDlg, IDALL, LPGENW("All"));
 						//retNon = IDNONE;
-						SetDlgItemText(hDlg, IDNONE, LPGENT("None"));
+						SetDlgItemText(hDlg, IDNONE, LPGENW("None"));
 						retCancel = IDNO;
-						SetDlgItemText(hDlg, IDCANCEL, LPGENT("No"));
+						SetDlgItemText(hDlg, IDCANCEL, LPGENW("Cancel"));
 						rcCancel.right = rcDlg.right - rcDlg.left - 10;
 						rcCancel.left = rcCancel.right - caWidth;
 						rcNone.right = rcCancel.left - 5;
@@ -496,8 +495,8 @@ static INT_PTR CALLBACK MsgBoxPop(HWND hDlg, UINT uMsg, WPARAM, LPARAM lParam)
 			pd.lchContact = NULL; //(HANDLE)wParam;
 			// icon
 			pd.lchIcon = MsgLoadIcon(pMsgBox);
-			mir_tstrncpy(pd.lptzContactName, pMsgBox->ptszTitle, _countof(pd.lptzContactName));
-			mir_tstrncpy(pd.lptzText, pMsgBox->ptszMsg, _countof(pd.lptzText));
+			mir_wstrncpy(pd.lptzContactName, pMsgBox->ptszTitle, _countof(pd.lptzContactName));
+			mir_wstrncpy(pd.lptzText, pMsgBox->ptszMsg, _countof(pd.lptzText));
 
 			// CALLBAC Proc
 			pd.PluginWindowProc = PopupProc;
@@ -661,11 +660,11 @@ INT_PTR MsgBoxService(WPARAM, LPARAM lParam)
 **/
 INT_PTR CALLBACK MsgBox(HWND hParent, UINT uType, LPCTSTR pszTitle, LPCTSTR pszInfo, LPCTSTR pszFormat, ...)
 {
-	TCHAR tszMsg[MAX_SECONDLINE];
+	wchar_t tszMsg[MAX_SECONDLINE];
 
 	va_list vl;
 	va_start(vl, pszFormat);
-	mir_vsntprintf(tszMsg, _countof(tszMsg), TranslateTS(pszFormat), vl);
+	mir_vsnwprintf(tszMsg, _countof(tszMsg), TranslateW(pszFormat), vl);
 	va_end(vl);
 
 	MSGBOX mb = { 0 };
@@ -673,8 +672,8 @@ INT_PTR CALLBACK MsgBox(HWND hParent, UINT uType, LPCTSTR pszTitle, LPCTSTR pszI
 	mb.hParent = hParent;
 	mb.hiLogo = IcoLib_GetIcon(ICO_COMMON_MAIN);
 	mb.hiMsg = NULL;
-	mb.ptszTitle = TranslateTS(pszTitle);
-	mb.ptszInfoText = TranslateTS(pszInfo);
+	mb.ptszTitle = TranslateW(pszTitle);
+	mb.ptszInfoText = TranslateW(pszInfo);
 	mb.ptszMsg = tszMsg;
 	mb.uType = uType;
 	return MsgBoxService(NULL, (LPARAM)&mb);
@@ -687,12 +686,12 @@ INT_PTR CALLBACK MsgBox(HWND hParent, UINT uType, LPCTSTR pszTitle, LPCTSTR pszI
 **/
 INT_PTR CALLBACK MsgErr(HWND hParent, LPCTSTR pszFormat, ...)
 {
-	TCHAR tszTitle[MAX_SECONDLINE], tszMsg[MAX_SECONDLINE];
-	mir_sntprintf(tszTitle, _T("%s - %s"), _T(MODNAME), TranslateT("Error"));
+	wchar_t tszTitle[MAX_SECONDLINE], tszMsg[MAX_SECONDLINE];
+	mir_snwprintf(tszTitle, L"%s - %s", _T(MODNAME), TranslateT("Error"));
 
 	va_list vl;
 	va_start(vl, pszFormat);
-	mir_vsntprintf(tszMsg, TranslateTS(pszFormat), vl);
+	mir_vsnwprintf(tszMsg, TranslateW(pszFormat), vl);
 	va_end(vl);
 
 	MSGBOX mb = {0};

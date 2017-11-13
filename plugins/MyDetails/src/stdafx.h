@@ -33,7 +33,6 @@ Boston, MA 02111-1307, USA.
 #include <m_langpack.h>
 #include <m_contacts.h>
 #include <m_options.h>
-#include <m_clui.h>
 #include <m_fontservice.h>
 #include <m_avatars.h>
 #include <m_xstatus.h>
@@ -50,11 +49,11 @@ Boston, MA 02111-1307, USA.
 #include <m_mydetails.h>
 #include <m_skin_eng.h>
 
-#include "../utils/mir_smileys.h"
-#include "../utils/mir_options.h"
+#include "../../utils/mir_smileys.h"
+#include "../../utils/mir_options.h"
 
 #include "resource.h"
-#include "Version.h"
+#include "version.h"
 #include "data.h"
 #include "options.h"
 #include "frame.h"

@@ -34,11 +34,11 @@ Wyłącz autodpowiedź, gdy...
 &Dostępny
 [&Away]
 &Zaraz wracam
-[&NA]
+[&Not available]
 &Wrócę później
 [Occ&upied]
 Za&jęty
-[&DND]
+[&Do not disturb]
 &Nie przeszkadzać
 [&Free for chat]
 &Chętny do rozmowy
@@ -80,10 +80,6 @@ Nowy opis
 Nowa kategoria
 [Delete]
 Usuń
-[Status messages:]
-Opisy:
-[Configure autoaway]
-Skonfiguruj automatyczny status zaraz wracam
 [Wait]
 Odczekaj
 [seconds before closing the status message dialog (-1=don't close)]
@@ -213,7 +209,7 @@ Tak, jestem tu.
 Zaraz wracam
 [Been gone since %nas_awaysince_time%, will be back later.]
 Nie ma mnie od %nas_awaysince_time%, będę potem.
-[NA]
+[Not available]
 Wrócę później
 [Give it up, I'm not in!]
 Daj spokój, nie ma mnie!
@@ -221,7 +217,7 @@ Daj spokój, nie ma mnie!
 Zajęty
 [Not right now.]
 Nie teraz.
-[DND]
+[Do not disturb]
 Nie przeszkadzać
 [Give a guy some peace, would ya?]
 Proszę, daj mi spokój!
@@ -247,7 +243,7 @@ Wyłącz przełączanie
 [Toggle On]
 Włącz przełączanie
 [Dot]
-
+Kropka
 [Ignore]
 Ignorowanie
 [Indefinite]

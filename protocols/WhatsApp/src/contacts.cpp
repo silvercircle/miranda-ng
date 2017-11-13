@@ -1,4 +1,4 @@
-#include "common.h"
+#include "stdafx.h"
 
 MCONTACT WhatsAppProto::AddToContactList(const std::string &jid, const char *new_name)
 {
@@ -21,7 +21,7 @@ MCONTACT WhatsAppProto::AddToContactList(const std::string &jid, const char *new
 			if (oldName.compare(string(new_name)) != 0) {
 				db_set_utf(hContact, m_szModuleName, WHATSAPP_KEY_NICK, new_name);
 
-				CMString tmp(FORMAT, TranslateT("is now known as '%s'"), ptrT(mir_utf8decodeT(new_name)));
+				CMStringW tmp(FORMAT, TranslateT("is now known as '%s'"), ptrW(mir_utf8decodeW(new_name)));
 				this->NotifyEvent(_A2T(oldName.c_str()), tmp, hContact, WHATSAPP_EVENT_OTHER);
 			}
 		}
@@ -33,7 +33,7 @@ MCONTACT WhatsAppProto::AddToContactList(const std::string &jid, const char *new
 	}
 
 	// If not, make a new contact!
-	if ((hContact = CallService(MS_DB_CONTACT_ADD, 0, 0)) == 0)
+	if ((hContact = db_add_contact()) == 0)
 		return INVALID_CONTACT_ID;
 
 	Proto_AddToContact(hContact, m_szModuleName);
@@ -42,7 +42,7 @@ MCONTACT WhatsAppProto::AddToContactList(const std::string &jid, const char *new
 	setString(hContact, "MirVer", "WhatsApp");
 	db_unset(hContact, "CList", "MyHandle");
 	db_set_b(hContact, "CList", "NotOnList", 1);
-	db_set_ts(hContact, "CList", "Group", m_tszDefaultGroup);
+	db_set_ws(hContact, "CList", "Group", m_tszDefaultGroup);
 
 	if (new_name != NULL)
 		db_set_utf(hContact, m_szModuleName, WHATSAPP_KEY_NICK, new_name);
@@ -74,11 +74,11 @@ void WhatsAppProto::SetAllContactStatuses(int status, bool reset_client)
 {
 	for (MCONTACT hContact = db_find_first(m_szModuleName); hContact; hContact = db_find_next(hContact, m_szModuleName)) {
 		if (reset_client) {
-			ptrT tszMirVer(getTStringA(hContact, "MirVer"));
-			if (mir_tstrcmp(tszMirVer, _T("WhatsApp")))
-				setTString(hContact, "MirVer", _T("WhatsApp"));
+			ptrW tszMirVer(getWStringA(hContact, "MirVer"));
+			if (mir_wstrcmp(tszMirVer, L"WhatsApp"))
+				setWString(hContact, "MirVer", L"WhatsApp");
 
-			db_set_ws(hContact, "CList", "StatusMsg", _T(""));
+			db_set_ws(hContact, "CList", "StatusMsg", L"");
 		}
 
 		if (getWord(hContact, "Status", ID_STATUS_OFFLINE) != status)
@@ -133,11 +133,11 @@ void WhatsAppProto::UpdateStatusMsg(MCONTACT hContact)
 	bool denied = getBool(hContact, WHATSAPP_KEY_LAST_SEEN_DENIED, false);
 	if (lastSeen > 0) {
 		time_t ts = lastSeen;
-		TCHAR stzLastSeen[MAX_PATH];
+		wchar_t stzLastSeen[MAX_PATH];
 		if (status == ID_STATUS_ONLINE)
-			 _tcsftime(stzLastSeen, _countof(stzLastSeen), TranslateT("Last online on %x at %X"), localtime(&ts));
+			 wcsftime(stzLastSeen, _countof(stzLastSeen), TranslateT("Last online on %x at %X"), localtime(&ts));
 		else
-			_tcsftime(stzLastSeen, _countof(stzLastSeen), denied ? TranslateT("Denied: Last online on %x at %X") : TranslateT("Last seen on %x at %X"), localtime(&ts));
+			wcsftime(stzLastSeen, _countof(stzLastSeen), denied ? TranslateT("Denied: Last online on %x at %X") : TranslateT("Last seen on %x at %X"), localtime(&ts));
 
 		ss << stzLastSeen;
 	}
@@ -145,11 +145,11 @@ void WhatsAppProto::UpdateStatusMsg(MCONTACT hContact)
 	db_set_ws(hContact, "CList", "StatusMsg", ss.str().c_str());
 }
 
-void WhatsAppProto::onContactChanged(const std::string &jid, bool added)
+void WhatsAppProto::onContactChanged(const std::string&, bool)
 {
 }
 
-void WhatsAppProto::onPictureChanged(const std::string &jid, const std::string &id, bool set)
+void WhatsAppProto::onPictureChanged(const std::string &jid, const std::string&, bool)
 {
 	if (isOnline())
 		m_pConnection->sendGetPicture(jid.c_str(), "image");
@@ -162,15 +162,15 @@ void WhatsAppProto::onSendGetPicture(const std::string &jid, const std::vector<u
 		debugLogA("Updating avatar for jid %s", jid.c_str());
 
 		// Save avatar
-		std::tstring filename = GetAvatarFileName(hContact);
-		FILE *f = _tfopen(filename.c_str(), _T("wb"));
+		std::wstring filename = GetAvatarFileName(hContact);
+		FILE *f = _wfopen(filename.c_str(), L"wb");
 		size_t r = fwrite(std::string(data.begin(), data.end()).c_str(), 1, data.size(), f);
 		fclose(f);
 
 		PROTO_AVATAR_INFORMATION ai = { 0 };
 		ai.hContact = hContact;
 		ai.format = PA_FORMAT_JPEG;
-		_tcsncpy_s(ai.filename, filename.c_str(), _TRUNCATE);
+		wcsncpy_s(ai.filename, filename.c_str(), _TRUNCATE);
 
 		int ackResult;
 		if (r > 0) {
@@ -184,8 +184,8 @@ void WhatsAppProto::onSendGetPicture(const std::string &jid, const std::vector<u
 	}
 }
 
-TCHAR* WhatsAppProto::GetContactDisplayName(const string& jid)
+wchar_t* WhatsAppProto::GetContactDisplayName(const string& jid)
 {
 	MCONTACT hContact = ContactIDToHContact(jid);
-	return (hContact) ? pcli->pfnGetContactDisplayName(hContact, 0) : _T("none");
+	return (hContact) ? pcli->pfnGetContactDisplayName(hContact, 0) : L"none";
 }

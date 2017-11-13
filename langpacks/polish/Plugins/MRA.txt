@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: MRA.dll
 ;  Plugin: MRA protocol
-;  Version: 2.1.0.10
+;  Version: 2.1.1.1
 ;  Authors: Rozhuk Ivan
 ;============================================================
 [Miranda Mail.ru Agent protocol plugin.]
@@ -73,7 +73,7 @@ Miejsce
 [Country:]
 Kraj:
 [State:]
-Status:
+Stan:
 [Search online users only]
 Szukaj tylko wśród połączonych
 [City:]
@@ -219,8 +219,12 @@ Awatary: serwer zwrócił kod HTTP: %lu
 [Avatars: can't open file %s, error]
 Awatary: nie można otworzyć pliku %s, błąd
 ;file \protocols\MRA\src\MraChat.cpp
-[CHAT plugin is required for conferences. Install it before chatting]
-Żeby móc brać udział w konferencjach musisz zainstalować wtyczkę CHAT
+[Owners]
+Właściciel
+[Inviter]
+Zapraszający
+[Visitors]
+Goście
 [invite sender]
 zaproś nadawcę
 [invite new members]
@@ -298,6 +302,8 @@ Wysyłanie plików: nie można otworzyć pliku %s, błąd
 [Send files: requested file: %S - not found in send files list.]
 Wysyłanie plików: żądany plik: %S - nie został znaleziony na liście wysyłanych plików.
 ;file \protocols\MRA\src\MraIcons.cpp
+[Main icon]
+Główna ikona
 [Protocols]
 Protokoły
 [MRA]

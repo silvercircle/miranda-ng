@@ -39,26 +39,26 @@ Establecer
 Buscar/agregar contactos
 [Show/hide offline contacts]
 Mostrar/Ocultar contactos desconectados
-[Hide offline contacts]
-Ocultar contactos sin conexión
 [Show offline contacts]
 Mostrar contactos sin conexión
+[Hide offline contacts]
+Ocultar contactos sin conexión
 [Disable groups]
 Desactivar grupos
 [Enable/disable sounds]
 Habilitar/Desabilitar sonidos
-[Disable sounds]
-Desabilitar sonidos
 [Enable sounds]
 Habilitar sonidos
+[Disable sounds]
+Desabilitar sonidos
 [Exit]
 Salir
 [Default]
 Por defecto
-[Frames service has not been found, so plugin will be disabled.\nTo run it you need to install and / or enable contact list plugin that supports it:\n- Modern contact list\n- Nicer+\nYou can get them at http://wiki.miranda-ng.org/Download]
-No se ha encontrado el servicio Marcos, por lo que el plugin se desactivará.\nPara ejecutarlo es necesario instalar y/o activar el plugin de lista de contactos que lo soporte:\n- Lista de contactos Moderna\n- Nicer+\nUsted puede obtenerlo en http://wiki.miranda-ng.org/Download
+[Frames service has not been found, so plugin will be disabled.\nTo run it you need to install and / or enable contact list plugin that supports it:\n- Modern contact list\n- Clist nicer\nYou can get them at https://wiki.miranda-ng.org/Download]
+No se ha encontrado el servicio Marcos, por lo que el plugin se desactivará.\nPara ejecutarlo es necesario instalar y/o activar el plugin de lista de contactos que lo soporte:\n- Lista de contactos Moderna\n- Nicer\nUsted puede obtenerlo en https://wiki.miranda-ng.org/Download[TopToolBar]
 [TopToolBar]
-Barra de herramientas superior
+Barra de herramientas TopToolbar
 [Contact list]
 Lista de contactos
 [Toolbar]

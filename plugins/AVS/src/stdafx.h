@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-04 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -64,7 +64,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-struct CacheNode : public avatarCacheEntry, public MZeroedObject
+struct CacheNode : public AVATARCACHEENTRY, public MZeroedObject
 {
 	CacheNode();
 	~CacheNode();
@@ -76,8 +76,8 @@ struct CacheNode : public avatarCacheEntry, public MZeroedObject
 	void   wipeInfo();
 };
 
-// The same fields as avatarCacheEntry + proto name
-struct protoPicCacheEntry : public avatarCacheEntry, public MZeroedObject
+// The same fields as AVATARCACHEENTRY + proto name
+struct protoPicCacheEntry : public AVATARCACHEENTRY, public MZeroedObject
 {
 	protoPicCacheEntry() { memset(this, 0, sizeof(*this)); };
 	~protoPicCacheEntry();
@@ -85,7 +85,7 @@ struct protoPicCacheEntry : public avatarCacheEntry, public MZeroedObject
 	void clear();
 
 	char*  szProtoname;
-	TCHAR* tszAccName;
+	wchar_t* tszAccName;
 };
 
 extern OBJLIST<protoPicCacheEntry> g_ProtoPictures, g_MyAvatars;
@@ -109,7 +109,7 @@ extern FI_INTERFACE *fei;
 
 void mir_sleep(int time);
 extern bool  g_shutDown;
-extern TCHAR g_szDataPath[];		// user datae path (read at startup only)
+extern wchar_t g_szDataPath[];		// user datae path (read at startup only)
 extern BOOL  g_AvatarHistoryAvail;
 extern HWND  hwndSetMyAvatar;
 
@@ -120,16 +120,16 @@ extern HANDLE hGlobalAvatarFolder;
 extern HANDLE hLoaderEvent, hShutdownEvent;
 extern HANDLE hEventChanged, hEventContactAvatarChanged, hMyAvatarChanged;
 
-int   GetFileHash(TCHAR* filename);
-DWORD GetFileSize(TCHAR *szFilename);
+int   GetFileHash(wchar_t* filename);
+DWORD GetFileSize(wchar_t *szFilename);
 void  MakePathRelative(MCONTACT hContact);
-void  MakePathRelative(MCONTACT hContact, TCHAR *dest);
-void  MyPathToAbsolute(const TCHAR *ptszPath, TCHAR *ptszDest);
+void  MakePathRelative(MCONTACT hContact, wchar_t *dest);
+void  MyPathToAbsolute(const wchar_t *ptszPath, wchar_t *ptszDest);
 
-HBITMAP LoadPNG(struct avatarCacheEntry *ace, char *szFilename);
+HBITMAP LoadPNG(struct AVATARCACHEENTRY *ace, char *szFilename);
 
 void UnloadCache(void);
-int  CreateAvatarInCache(MCONTACT hContact, avatarCacheEntry *ace, char *szProto);
+int  CreateAvatarInCache(MCONTACT hContact, AVATARCACHEENTRY *ace, char *szProto);
 void DeleteAvatarFromCache(MCONTACT hContact, bool bForever);
 void PicLoader(LPVOID param);
 void NotifyMetaAware(MCONTACT hContact, CacheNode *node = NULL, AVATARCACHEENTRY *ace = (AVATARCACHEENTRY*)-1);

@@ -180,7 +180,7 @@ static INT_PTR APIENTRY OptSknWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LP
 		SendMessage(hwndDlg, M_REFRESHBKGBOXES, 0, 0);
 		{
 			DBVARIANT dbv;
-			if (!db_get_ts(NULL, MODULE, "BkBitmap", &dbv)) {
+			if (!db_get_ws(NULL, MODULE, "BkBitmap", &dbv)) {
 				SetDlgItemText(hwndDlg, IDC_FILENAME, dbv.ptszVal);
 				db_free(&dbv);
 			}
@@ -244,7 +244,7 @@ static INT_PTR APIENTRY OptSknWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LP
 
 		case IDC_BROWSE:
 			{
-				TCHAR str[MAX_PATH], filter[512];
+				wchar_t str[MAX_PATH], filter[512];
 				GetDlgItemText(hwndDlg, IDC_FILENAME, str, _countof(str));
 				Bitmap_GetFilter(filter, _countof(filter));
 
@@ -256,7 +256,7 @@ static INT_PTR APIENTRY OptSknWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LP
 				ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
 				ofn.nMaxFile = _countof(str);
 				ofn.nMaxFileTitle = MAX_PATH;
-				ofn.lpstrDefExt = _T("bmp");
+				ofn.lpstrDefExt = L"bmp";
 				if (!GetOpenFileName(&ofn))
 					return FALSE;
 				SetDlgItemText(hwndDlg, IDC_FILENAME, str);
@@ -301,9 +301,9 @@ static INT_PTR APIENTRY OptSknWndProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LP
 
 				db_set_b(NULL, MODULE, "BkUseBitmap", (BYTE)IsDlgButtonChecked(hwndDlg, IDC_BITMAP));
 
-				TCHAR str[MAX_PATH];
+				wchar_t str[MAX_PATH];
 				GetDlgItemText(hwndDlg, IDC_FILENAME, str, _countof(str));
-				db_set_ts(NULL, MODULE, "BkBitmap", str);
+				db_set_ws(NULL, MODULE, "BkBitmap", str);
 
 				WORD flags = 0;
 				if (IsDlgButtonChecked(hwndDlg, IDC_STRETCHH))
@@ -335,15 +335,15 @@ int OnOptionsInitialize(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_FLTCONT);
-	odp.pszTitle = LPGEN("Floating Contacts");
-	odp.pszGroup = LPGEN("Contact list");
-	odp.pszTab = LPGEN("Main Features");
+	odp.szTitle.a = LPGEN("Floating Contacts");
+	odp.szGroup.a = LPGEN("Contact list");
+	odp.szTab.a = LPGEN("Main Features");
 	odp.flags = ODPF_BOLDGROUPS;
 	odp.pfnDlgProc = OptWndProc;
 	Options_AddPage(wParam, &odp);
 
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_SKIN);
-	odp.pszTab = LPGEN("Appearance");
+	odp.szTab.a = LPGEN("Appearance");
 	odp.pfnDlgProc = OptSknWndProc;
 	Options_AddPage(wParam, &odp);
 	return 0;

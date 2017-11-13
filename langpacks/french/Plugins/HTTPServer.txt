@@ -38,8 +38,8 @@ Par défaut
 
 [Write log file]
 Journaliser
-[Enable / Disable HTTP server]
-Activer/désactiver HTTP server
+[Enable HTTP server]
+Activer HTTP server
 [Main menu items]
 Éléments du menu
 [Open log]
@@ -56,8 +56,8 @@ Variable %ExternalIP%
 Test
 [Transfer limit (Kb/s)]
 Limite de transfert (Kb/s)
-[No control when Away/NA]
-Sans contrôle si Absent/indisponible
+[No control when Away or Not available]
+Sans contrôle si Absent ou Indisponible
 [Connection control]
 
 [Index creation]
@@ -162,5 +162,3 @@ Réseau
 
 [Disable HTTP server]
 Désactiver HTTP server
-[Enable HTTP server]
-Activer HTTP server

@@ -4,13 +4,13 @@
  * (c) majvan 2002-2004
  */
 
-#include "..\stdafx.h"
+#include "../stdafx.h"
 
  //--------------------------------------------------------------------------------------------------
  //--------------------------------------------------------------------------------------------------
 
 BOOL SSLLoaded = FALSE;
-HANDLE hNetlibUser = NULL;
+HNETLIBUSER hNetlibUser = NULL;
 
 void __stdcall	SSL_DebugLog(const char *fmt, ...)
 {
@@ -27,13 +27,12 @@ void __stdcall	SSL_DebugLog(const char *fmt, ...)
 	else
 		str[sizeof(str) - 1] = 0;
 
-	CallService(MS_NETLIB_LOG, (WPARAM)hNetlibUser, (LPARAM)str);
+	Netlib_Log(hNetlibUser, str);
 	va_end(vararg);
 }
 
 HANDLE RegisterNLClient(const char *name)
 {
-	static NETLIBUSER nlu = { 0 };
 	char desc[128];
 
 	mir_snprintf(desc, Translate("%s connection"), name);
@@ -41,11 +40,12 @@ HANDLE RegisterNLClient(const char *name)
 	#ifdef DEBUG_COMM
 	DebugLog(CommFile, "<Register PROXY support>");
 	#endif
-	nlu.cbSize = sizeof(nlu);
+
+	NETLIBUSER nlu = {};
 	nlu.flags = NUF_OUTGOING | NUF_HTTPCONNS;
-	nlu.szDescriptiveName = desc;
+	nlu.szDescriptiveName.a = desc;
 	nlu.szSettingsModule = (char *)name;
-	hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
+	hNetlibUser = Netlib_RegisterUser(&nlu);
 
 	#ifdef DEBUG_COMM
 	if (NULL == hNetlibUser)
@@ -62,12 +62,12 @@ void CNLClient::SSLify() throw(DWORD)
 	#ifdef DEBUG_COMM
 	SSL_DebugLog("Staring SSL...");
 	#endif
-	int socket = CallService(MS_NETLIB_GETSOCKET, (WPARAM)hConnection, 0);
+	int socket = Netlib_GetSocket(hConnection);
 	if (socket != INVALID_SOCKET) {
 		#ifdef DEBUG_COMM
 		SSL_DebugLog("Staring netlib core SSL");
 		#endif
-		if (CallService(MS_NETLIB_STARTSSL, (WPARAM)hConnection, 0)) {
+		if (Netlib_StartSsl(hConnection, NULL)) {
 			#ifdef DEBUG_COMM
 			SSL_DebugLog("Netlib core SSL started");
 			#endif
@@ -85,8 +85,6 @@ void CNLClient::SSLify() throw(DWORD)
 //if not success, exception is throwed
 void CNLClient::Connect(const char* servername, const int port) throw(DWORD)
 {
-	NETLIBOPENCONNECTION nloc;
-
 	NetworkError = SystemError = 0;
 	isTLSed = false;
 
@@ -94,11 +92,12 @@ void CNLClient::Connect(const char* servername, const int port) throw(DWORD)
 	DebugLog(CommFile, "<connect>\n");
 	#endif
 	try {
+		NETLIBOPENCONNECTION nloc;
 		nloc.cbSize = sizeof(NETLIBOPENCONNECTION);
 		nloc.szHost = servername;
 		nloc.wPort = port;
 		nloc.flags = 0;
-		if (NULL == (hConnection = (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, (WPARAM)hNetlibUser, (LPARAM)&nloc))) {
+		if (NULL == (hConnection = Netlib_OpenConnection(hNetlibUser, &nloc))) {
 			SystemError = WSAGetLastError();
 			throw NetworkError = (DWORD)ENL_CONNECT;
 		}
@@ -117,16 +116,9 @@ void CNLClient::Connect(const char* servername, const int port) throw(DWORD)
 
 //Performs a simple query
 // query- command to send
-int CNLClient::LocalNetlib_Send(HANDLE hConn, const char *buf, int len, int flags)
+int CNLClient::LocalNetlib_Send(HNETLIBCONN hConn, const char *buf, int len, int flags)
 {
-	if (isTLSed) {
-		#ifdef DEBUG_COMM
-		SSL_DebugLog("SSL send: %s", buf);
-		#endif
-	}
-
-	NETLIBBUFFER nlb = { (char*)buf,len,flags };
-	return CallService(MS_NETLIB_SEND, (WPARAM)hConn, (LPARAM)&nlb);
+	return Netlib_Send(hConn, buf, len, flags);
 }
 
 void CNLClient::Send(const char *query) throw(DWORD)
@@ -164,10 +156,9 @@ void CNLClient::Send(const char *query) throw(DWORD)
 //You need free() returned buffer, which can be allocated in this function
 //if not success, exception is throwed
 
-int CNLClient::LocalNetlib_Recv(HANDLE hConn, char *buf, int len, int flags)
+int CNLClient::LocalNetlib_Recv(HNETLIBCONN hConn, char *buf, int len, int flags)
 {
-	NETLIBBUFFER nlb = { buf,len,flags };
-	int iReturn = CallService(MS_NETLIB_RECV, (WPARAM)hConn, (LPARAM)&nlb);
+	int iReturn = Netlib_Recv(hConn, buf, len, flags);
 	if (isTLSed) {
 		#ifdef DEBUG_COMM
 		SSL_DebugLog("SSL recv: %s", buf);
@@ -189,12 +180,10 @@ char* CNLClient::Recv(char *buf, int buflen) throw(DWORD)
 			throw NetworkError = (DWORD)ENL_RECVALLOC;
 
 		if (!isTLSed) {
-			NETLIBSELECT nls;
-			memset(&nls, 0, sizeof(NETLIBSELECT));
-			nls.cbSize = sizeof(NETLIBSELECT);
+			NETLIBSELECT nls = {};
 			nls.dwTimeout = 60000;
 			nls.hReadConns[0] = hConnection;
-			switch (CallService(MS_NETLIB_SELECT, 0, (LPARAM)&nls)) {
+			switch (Netlib_Select(&nls)) {
 			case SOCKET_ERROR:
 				free(buf);
 				SystemError = WSAGetLastError();
@@ -235,7 +224,7 @@ char* CNLClient::Recv(char *buf, int buflen) throw(DWORD)
 void CNLClient::Disconnect()
 {
 	Netlib_CloseHandle(hConnection);
-	hConnection = (HANDLE)NULL;
+	hConnection = NULL;
 }
 
 //Uninitializes netlib library
@@ -246,7 +235,7 @@ void UnregisterNLClient()
 	#endif
 
 	Netlib_CloseHandle(hNetlibUser);
-	hNetlibUser = (HANDLE)NULL;
+	hNetlibUser = NULL;
 	#ifdef DEBUG_COMM
 	DebugLog(CommFile, "</Unregister PROXY support>\n");
 	#endif

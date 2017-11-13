@@ -78,23 +78,10 @@ int Info(char *title, char *format, ...)
 returns the name of a contact
 */
 
-TCHAR *GetContactName(MCONTACT contact)
+wchar_t* GetContactName(MCONTACT contact)
 {
-	CONTACTINFO ctInfo = { sizeof(ctInfo) };
-	//	if(db_mc_isMeta(contact))
-	//		contact=db_mc_getMostOnline(contact);
-	ctInfo.szProto = GetContactProto(contact);
-	ctInfo.dwFlag = CNF_DISPLAY;
-#ifdef _UNICODE
-	ctInfo.dwFlag += CNF_UNICODE;
-#endif
-	ctInfo.hContact = contact;
-	if (CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ctInfo)){
-		return NULL;
-	}
-	TCHAR* buffer = _tcsdup(ctInfo.pszVal);
-	mir_free(ctInfo.pszVal);
-	return buffer;
+	ptrW name(Contact_GetInfo(CNF_DISPLAY, contact));
+	return (name) ? wcsdup(name) : NULL;
 }
 
 /*
@@ -224,19 +211,17 @@ SearchResult SearchHistory(MCONTACT contact, MEVENT hFirstEvent, void *searchDat
 	int index = 0;
 	MEVENT hEvent = hFirstEvent;
 	void *buffer = NULL;
-	TCHAR *search;
+	wchar_t *search;
 	bool found = false;
 	int oldSize, newSize;
 	oldSize = newSize = 0;
 
-	DBEVENTINFO dbEvent = { 0 };
-	dbEvent.cbSize = sizeof(dbEvent);
-
+	DBEVENTINFO dbEvent = {};
 	while ((!found) && (hEvent)){
 		newSize = db_event_getBlobSize(hEvent);
 		if (newSize > oldSize)
 		{
-			buffer = (TCHAR *)realloc(buffer, newSize);
+			buffer = (wchar_t *)realloc(buffer, newSize);
 			oldSize = newSize;
 		}
 		dbEvent.pBlob = (PBYTE)buffer;
@@ -260,8 +245,8 @@ SearchResult SearchHistory(MCONTACT contact, MEVENT hFirstEvent, void *searchDat
 #else
 				search = (char *) buffer;
 #endif
-				TCHAR *data = (TCHAR *)searchData;
-				TCHAR *tmp = _tcsstr(search, data);
+				wchar_t *data = (wchar_t *)searchData;
+				wchar_t *tmp = wcsstr(search, data);
 				if (tmp)
 				{
 					found = true;

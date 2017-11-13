@@ -48,7 +48,7 @@ static int StatusChangeGetMessage(WPARAM, LPARAM hDbEvent)
 	int status;
 	BOOL read, send, change_status;
 
-	DBEVENTINFO dbe = { sizeof(dbe) };
+	DBEVENTINFO dbe = {};
 	db_event_get(hDbEvent, &dbe);
 
 	status = (int)CallProtoService(dbe.szModule, PS_GETSTATUS, 0, 0);
@@ -315,9 +315,9 @@ int StatusChangeOptInit(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONS);
-	odp.ptszTitle = LPGENT("Status Change");
-	odp.ptszGroup = LPGENT("Status");
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+	odp.szTitle.w = LPGENW("Status Change");
+	odp.szGroup.w = LPGENW("Status");
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
 	odp.pfnDlgProc = DlgProcStatusChangeOpts;
 	Options_AddPage(wParam, &odp);
 	return 0;

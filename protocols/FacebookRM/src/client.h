@@ -3,7 +3,7 @@
 Facebook plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright � 2009-11 Michal Zelinka, 2011-15 Robert P�sel
+Copyright � 2009-11 Michal Zelinka, 2011-17 Robert P�sel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -32,23 +32,27 @@ class facebook_client
 public:
 
 	////////////////////////////////////////////////////////////
-
 	// Client definition
 
 	facebook_client()
 	{
 		msgid_ = error_count_ = last_feeds_update_ = last_notification_time_ = random_ = chat_msgs_recv_ = chat_req_ = 0;
 
-		buddies_lock_ = send_message_lock_ = notifications_lock_ = cookies_lock_ = NULL;
-		hMsgCon = NULL;
+		send_message_lock_ = notifications_lock_ = cookies_lock_ = loading_history_lock_ = NULL;
+		hChannelCon = NULL;
+		hMessagesCon = NULL;
 		hFcbCon = NULL;
 		fcb_conn_lock_ = NULL;
 		handle_ = NULL;
 		parent = NULL;
+
+		mbasicWorks = true;
+		loading_history = false;
 	}
 
-	HANDLE hMsgCon;
-	HANDLE hFcbCon;
+	HNETLIBCONN hChannelCon;
+	HNETLIBCONN hMessagesCon;
+	HNETLIBCONN hFcbCon;
 	HANDLE fcb_conn_lock_;
 
 	// Random generator value for this client
@@ -85,11 +89,14 @@ public:
 	int chat_msgs_recv_;
 	volatile unsigned int chat_req_;
 
+	bool mbasicWorks;
+
 	////////////////////////////////////////////////////////////
 
 	// Client vs protocol communication
 
-	void    client_notify(TCHAR* message);
+	void client_notify(wchar_t* message);
+	void info_notify(wchar_t* message);
 
 	////////////////////////////////////////////////////////////
 
@@ -115,13 +122,13 @@ public:
 	std::set<MCONTACT> typers;		// store info about typing contacts, because Facebook doesn't send "stopped typing" event when there is actual message being sent
 	std::map<MCONTACT, time_t> readers;
 
-	char*   load_cookies();
-	void    store_headers(http::response* resp, NETLIBHTTPHEADER* headers, int headers_count);
-	void    clear_cookies();
+	char*	load_cookies();
+	void	store_headers(http::response* resp, NETLIBHTTPHEADER* headers, int headers_count);
+	void	clear_cookies();
 	void	clear_notifications();
 	void	clear_chatrooms();
 	void	clear_readers();
-	void	insert_reader(MCONTACT, time_t, const std::tstring &reader = _T(""));
+	void	insert_reader(MCONTACT, time_t, const std::string &readerId = "");
 	void	erase_reader(MCONTACT);
 
 	////////////////////////////////////////////////////////////
@@ -130,9 +137,9 @@ public:
 
 	unsigned int error_count_;
 
-	bool    handle_entry(const std::string &method);
-	bool    handle_success(const std::string &method);
-	bool    handle_error(const std::string &method, int force_disconnect = 0);
+	bool handle_entry(const std::string &method);
+	bool handle_success(const std::string &method);
+	bool handle_error(const std::string &method, int force_disconnect = 0);
 
 	void __inline increment_error() { this->error_count_++; }
 	void __inline decrement_error() { if (error_count_ > 0) error_count_--; }
@@ -142,19 +149,19 @@ public:
 
 	// Helpers for data
 
-	std::string __inline __dyn() {
+	__inline const char *__dyn() {
 		return ""; // FIXME: What's this value and where it come from? Looks like it is the same through all requests.
 	}
 
-	std::string __inline __req() {
+	__inline CMStringA __req() {
 		// Increment request number and convert it to string with radix 36 (whole numbers + whole alphabet)
 		char buffer[10];
 		itoa(InterlockedIncrement(&this->chat_req_), buffer, 36);
-		return std::string(buffer);
+		return CMStringA(buffer);
 	}
 
-	std::string __inline __rev() {
-		return "1911928"; // FIXME: Some version of communication protocol? On 1.9.2015 was used "1911928"
+	__inline const char *__rev() {
+		return "2828561"; // FIXME: Some version of communication protocol? This version is from 12.2.2017
 	}
 
 	////////////////////////////////////////////////////////////
@@ -163,6 +170,7 @@ public:
 
 	bool    login(const char *username, const char *password);
 	bool    logout();
+	bool	sms_code(const char *fb_dtsg);
 
 	const std::string & get_username() const;
 
@@ -179,7 +187,6 @@ public:
 	// Updates handling
 
 	List::List<facebook_user> buddies;
-	HANDLE  buddies_lock_;
 	HANDLE  send_message_lock_;
 	HANDLE  notifications_lock_;
 
@@ -189,10 +196,13 @@ public:
 
 	std::map<std::string, int> messages_ignore;
 	std::map<int, time_t> messages_timestamp;
+	
+	bool loading_history;
+	HANDLE loading_history_lock_;
 
-	bool    channel();
-	bool	activity_ping();
-	int		send_message(int seqid, MCONTACT, const std::string &message_text, std::string *error_text, const std::string &captchaPersistData = "", const std::string &captcha = "");
+	bool channel();
+	bool activity_ping();
+	int  send_message(int seqid, MCONTACT, const std::string &message_text, std::string *error_text, const std::string &captchaPersistData = "", const std::string &captcha = "");
 
 	////////////////////////////////////////////////////////////
 
@@ -204,22 +214,14 @@ public:
 
 	// HTTP communication
 
-	http::response flap(RequestType request_type, std::string *post_data = NULL, std::string *get_data = NULL);
-	bool save_url(const std::string &url,const std::tstring &filename, HANDLE &nlc);
-
-	bool notify_errors(RequestType);
-	std::string choose_server(RequestType);
-	std::string choose_action(RequestType, std::string *get_data = NULL);
-
-	NETLIBHTTPHEADER *get_request_headers(int request_type, int *headers_count);
+	http::response sendRequest(HttpRequest *request);
+	bool save_url(const std::string &url, const std::wstring &filename, HNETLIBCONN &nlc);
 
 	////////////////////////////////////////////////////////////
-
 	// Netlib handle
 
-	HANDLE handle_;
-
-	void set_handle(HANDLE h)
+	HNETLIBUSER handle_;
+	void set_handle(HNETLIBUSER h)
 	{
 		handle_ = h;
 	}

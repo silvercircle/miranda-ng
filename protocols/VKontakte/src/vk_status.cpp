@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013-15 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2013-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -19,7 +19,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 int CVkProto::SetStatus(int iNewStatus)
 {
-	debugLogA("CVkProto::SetStatus iNewStatus = %d, m_iStatus = %d, m_iDesiredStatus = %d m_hWorkerThread = %d", iNewStatus, m_iStatus, m_iDesiredStatus, m_hWorkerThread == NULL ? 0 : 1);
+	debugLogA("CVkProto::SetStatus iNewStatus = %d, m_iStatus = %d, m_iDesiredStatus = %d m_hWorkerThread = %d",
+		iNewStatus, m_iStatus, m_iDesiredStatus, m_hWorkerThread == nullptr ? 0 : 1);
+
+	mir_cslock lck(m_csSetStatus);
+
 	if (m_iDesiredStatus == iNewStatus || iNewStatus == ID_STATUS_IDLE)
 		return 0;
 
@@ -34,28 +38,34 @@ int CVkProto::SetStatus(int iNewStatus)
 		}
 
 		m_iStatus = m_iDesiredStatus = ID_STATUS_OFFLINE;
-		ProtoBroadcastAck(NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, (HANDLE)oldStatus, m_iStatus);
-		debugLogA("CVkProto::SetStatus (1) iNewStatus = %d, m_iStatus = %d, m_iDesiredStatus = %d oldStatus = %d", iNewStatus, m_iStatus, m_iDesiredStatus, oldStatus);
+		ProtoBroadcastAck(0, ACKTYPE_STATUS, ACKRESULT_SUCCESS, (HANDLE)oldStatus, m_iStatus);
+		debugLogA("CVkProto::SetStatus (1) iNewStatus = %d, m_iStatus = %d, m_iDesiredStatus = %d oldStatus = %d",
+			iNewStatus, m_iStatus, m_iDesiredStatus, oldStatus);
 	}
-	else if (m_hWorkerThread == NULL && !IsStatusConnecting(m_iStatus)) {
+	else if (m_hWorkerThread == nullptr && !IsStatusConnecting(m_iStatus)) {
 		m_iStatus = ID_STATUS_CONNECTING;
-		ProtoBroadcastAck(NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, (HANDLE)oldStatus, m_iStatus);
-		debugLogA("CVkProto::SetStatus (2) iNewStatus = %d, m_iStatus = %d, m_iDesiredStatus = %d oldStatus = %d", iNewStatus, m_iStatus, m_iDesiredStatus, oldStatus);
-		m_hWorkerThread = ForkThreadEx(&CVkProto::WorkerThread, 0, NULL);
+		ProtoBroadcastAck(0, ACKTYPE_STATUS, ACKRESULT_SUCCESS, (HANDLE)oldStatus, m_iStatus);
+		debugLogA("CVkProto::SetStatus (2) iNewStatus = %d, m_iStatus = %d, m_iDesiredStatus = %d oldStatus = %d",
+			iNewStatus, m_iStatus, m_iDesiredStatus, oldStatus);
+		m_hWorkerThread = ForkThreadEx(&CVkProto::WorkerThread, 0, nullptr);
 	}
 	else if (IsOnline()) {
-		debugLogA("CVkProto::SetStatus (3) iNewStatus = %d, m_iStatus = %d, m_iDesiredStatus = %d oldStatus = %d", iNewStatus, m_iStatus, m_iDesiredStatus, oldStatus);
+		debugLogA("CVkProto::SetStatus (3) iNewStatus = %d, m_iStatus = %d, m_iDesiredStatus = %d oldStatus = %d",
+			iNewStatus, m_iStatus, m_iDesiredStatus, oldStatus);
 		SetServerStatus(iNewStatus);
 	}
 	else {
-		debugLogA("CVkProto::SetStatus (4) iNewStatus = %d, m_iStatus = %d, m_iDesiredStatus = %d oldStatus = %d", iNewStatus, m_iStatus, m_iDesiredStatus, oldStatus);
-		ProtoBroadcastAck(NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, (HANDLE)oldStatus, m_iStatus);
+		debugLogA("CVkProto::SetStatus (4) iNewStatus = %d, m_iStatus = %d, m_iDesiredStatus = %d oldStatus = %d",
+			iNewStatus, m_iStatus, m_iDesiredStatus, oldStatus);
+		ProtoBroadcastAck(0, ACKTYPE_STATUS, ACKRESULT_SUCCESS, (HANDLE)oldStatus, m_iStatus);
 		if (!IsStatusConnecting(m_iStatus))
 			m_iDesiredStatus = m_iStatus;
-		debugLogA("CVkProto::SetStatus (5) iNewStatus = %d, m_iStatus = %d, m_iDesiredStatus = %d oldStatus = %d", iNewStatus, m_iStatus, m_iDesiredStatus, oldStatus);
+		debugLogA("CVkProto::SetStatus (5) iNewStatus = %d, m_iStatus = %d, m_iDesiredStatus = %d oldStatus = %d",
+			iNewStatus, m_iStatus, m_iDesiredStatus, oldStatus);
 	}
 
-	debugLogA("CVkProto::SetStatus (ret) iNewStatus = %d, m_iStatus = %d, m_iDesiredStatus = %d oldStatus = %d", iNewStatus, m_iStatus, m_iDesiredStatus, oldStatus);
+	debugLogA("CVkProto::SetStatus (ret) iNewStatus = %d, m_iStatus = %d, m_iDesiredStatus = %d oldStatus = %d",
+		iNewStatus, m_iStatus, m_iDesiredStatus, oldStatus);
 	return 0;
 }
 
@@ -66,41 +76,37 @@ void CVkProto::SetServerStatus(int iNewStatus)
 		return;
 
 	int iOldStatus = m_iStatus;
-	CMString oldStatusMsg(ptrT(db_get_tsa(NULL, m_szModuleName, "OldStatusMsg")));
-	ptrT ptszListeningToMsg(db_get_tsa(NULL, m_szModuleName, "ListeningTo"));
+	CMStringW oldStatusMsg(ptrW(db_get_wsa(0, m_szModuleName, "OldStatusMsg")));
+	ptrW pwszListeningToMsg(db_get_wsa(0, m_szModuleName, "ListeningTo"));
 
 	if (iNewStatus == ID_STATUS_OFFLINE) {
 		m_bNeedSendOnline = false;
-		if (!IsEmpty(ptszListeningToMsg) && m_bSetBroadcast) {
+		if (!IsEmpty(pwszListeningToMsg) && m_bSetBroadcast) {
 			RetrieveStatusMsg(oldStatusMsg);
 			m_bSetBroadcast = false;
 		}
 		m_iStatus = ID_STATUS_OFFLINE;
 		if (iOldStatus != ID_STATUS_OFFLINE && iOldStatus != ID_STATUS_INVISIBLE)
-			Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/account.setOffline.json", true, &CVkProto::OnReceiveSmth)
-			<< VER_API);
+			Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/account.setOffline.json", true, &CVkProto::OnReceiveSmth));
 	}
 	else if (iNewStatus != ID_STATUS_INVISIBLE) {
 		m_bNeedSendOnline = true;
 		if (iOldStatus == ID_STATUS_ONLINE)
 			return;
 		m_iStatus = ID_STATUS_ONLINE;
-		Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/account.setOnline.json", true, &CVkProto::OnReceiveSmth)
-			<< VER_API);
+		Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/account.setOnline.json", true, &CVkProto::OnReceiveSmth));
 	}
 	else {
 		m_bNeedSendOnline = false;
-		if (!IsEmpty(ptszListeningToMsg) && m_bSetBroadcast) {
+		if (!IsEmpty(pwszListeningToMsg) && m_bSetBroadcast) {
 			RetrieveStatusMsg(oldStatusMsg);
 			m_bSetBroadcast = false;
 		}
 		m_iStatus = ID_STATUS_INVISIBLE;
-		if (iOldStatus == ID_STATUS_ONLINE)
-			Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/account.setOffline.json", true, &CVkProto::OnReceiveSmth)
-			<< VER_API);
+		Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/account.setOffline.json", true, &CVkProto::OnReceiveSmth));
 	}
 
-	ProtoBroadcastAck(NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, (HANDLE)iOldStatus, m_iStatus);
+	ProtoBroadcastAck(0, ACKTYPE_STATUS, ACKRESULT_SUCCESS, (HANDLE)iOldStatus, m_iStatus);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -111,10 +117,9 @@ INT_PTR __cdecl CVkProto::SvcSetStatusMsg(WPARAM, LPARAM)
 	if (!IsOnline())
 		return 1;
 
-	MsgPopup(NULL, TranslateT("Loading status message from vk.com.\nThis may take some time."), TranslateT("Waiting..."));
+	MsgPopup(TranslateT("Loading status message from vk.com.\nThis may take some time."), TranslateT("Waiting..."));
 
-	Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/status.get.json", true, &CVkProto::OnReceiveStatusMsg)
-		<< VER_API);
+	Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/status.get.json", true, &CVkProto::OnReceiveStatusMsg));
 
 	return 0;
 }
@@ -127,25 +132,25 @@ void CVkProto::OnReceiveStatusMsg(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pR
 
 	OnReceiveStatus(reply, pReq);
 
-	ptrT ptszOldStatusMsg(db_get_tsa(NULL, m_szModuleName, "OldStatusMsg"));
-	CMString tszOldStatusMsg(ptszOldStatusMsg);
+	ptrW pwszOldStatusMsg(db_get_wsa(0, m_szModuleName, "OldStatusMsg"));
+	CMStringW wszOldStatusMsg(pwszOldStatusMsg);
 
 	ENTER_STRING pForm = { sizeof(pForm) };
 	pForm.type = ESF_MULTILINE;
 	pForm.caption = TranslateT("Enter new status message");
-	pForm.ptszInitVal = ptszOldStatusMsg;
+	pForm.ptszInitVal = pwszOldStatusMsg;
 	pForm.szModuleName = m_szModuleName;
 	pForm.szDataPrefix = "statusmsgform_";
 
 	if (!EnterString(&pForm))
 		return;
 
-	CMString tszNewStatusMsg(ptrT(pForm.ptszResult));
-	if (tszOldStatusMsg == tszNewStatusMsg)
+	CMStringW wszNewStatusMsg(ptrW(pForm.ptszResult));
+	if (wszOldStatusMsg == wszNewStatusMsg)
 		return;
 
-	RetrieveStatusMsg(tszNewStatusMsg);
-	setTString("OldStatusMsg", ptszOldStatusMsg);
+	RetrieveStatusMsg(wszNewStatusMsg);
+	setWString("OldStatusMsg", pwszOldStatusMsg);
 }
 
 void CVkProto::OnReceiveStatus(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
@@ -160,96 +165,69 @@ void CVkProto::OnReceiveStatus(NETLIBHTTPREQUEST *reply, AsyncHttpRequest *pReq)
 
 	const JSONNode &jnAudio = jnResponse["audio"];
 	if (!jnAudio) {
-		CMString tszStatusText(jnResponse["text"].as_mstring());
-		if (tszStatusText[0] != TCHAR(9835))
-			setTString("OldStatusMsg", tszStatusText);
+		CMStringW wszStatusText(jnResponse["text"].as_mstring());
+		if (wszStatusText[0] != wchar_t(9835))
+			setWString("OldStatusMsg", wszStatusText);
 	}
 }
 
-void CVkProto::RetrieveStatusMsg(const CMString &StatusMsg)
+void CVkProto::RetrieveStatusMsg(const CMStringW &StatusMsg)
 {
 	debugLogA("CVkProto::RetrieveStatusMsg");
 	if (!IsOnline())
 		return;
 
 	Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/status.set.json", true, &CVkProto::OnReceiveSmth)
-		<< TCHAR_PARAM("text", StatusMsg)
-		<< VER_API);
+		<< WCHAR_PARAM("text", StatusMsg));
 }
 
-void CVkProto::RetrieveStatusMusic(const CMString &StatusMsg)
+void CVkProto::RetrieveStatusMusic(const CMStringW &StatusMsg)
 {
 	debugLogA("CVkProto::RetrieveStatusMusic");
-	if (!IsOnline() || m_iStatus == ID_STATUS_INVISIBLE || m_iMusicSendMetod == sendNone)
+	if (!IsOnline() || m_iStatus == ID_STATUS_INVISIBLE || m_vkOptions.iMusicSendMetod == MusicSendMetod::sendNone)
 		return;
 
-	CMString code;
-	CMString tszOldStatusMsg(db_get_tsa(0, m_szModuleName, "OldStatusMsg"));
+	CMStringW wszOldStatusMsg(db_get_wsa(0, m_szModuleName, "OldStatusMsg"));
 	if (StatusMsg.IsEmpty()) {
-		if (m_iMusicSendMetod == sendBroadcastOnly)
+		CMStringW code;
+		if (m_vkOptions.iMusicSendMetod == MusicSendMetod::sendBroadcastOnly)
 			code = "API.audio.setBroadcast();return null;";
 		else {
-			CMString codeformat("API.status.set({text:\"%s\"});return null;");
-			code.AppendFormat(codeformat, tszOldStatusMsg);
+			CMStringW codeformat("API.status.set({text:\"%s\"});return null;");
+			code.AppendFormat(codeformat, wszOldStatusMsg.c_str());
 		}
 		m_bSetBroadcast = false;
+		Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/execute.json", true, &CVkProto::OnReceiveStatus)
+			<< WCHAR_PARAM("code", code));
 	}
 	else {
-		if (m_iMusicSendMetod == sendBroadcastOnly) {
-			CMString codeformat("var StatusMsg=\"%s\";var CntLmt=100;var OldMsg=API.status.get();"
-				"var Tracks=API.audio.search({\"q\":StatusMsg,\"count\":CntLmt,\"search_own\":1});"
-				"var Cnt=Tracks.count;if(Cnt>CntLmt){Cnt=CntLmt;}"
-				"if(Cnt==0){API.audio.setBroadcast();}"
-				"else{var i=0;var j=0;var Track=\" \";"
-				"while(i<Cnt){Track=Tracks.items[i].artist+\" - \"+Tracks.items[i].title;if(Track==StatusMsg){j=i;}i=i+1;}"
-				"Track=Tracks.items[j].owner_id+\"_\"+Tracks.items[j].id;API.audio.setBroadcast({\"audio\":Track});"
-				"};return OldMsg;");
-			code.AppendFormat(codeformat, StatusMsg);
-		}
-		else if (m_iMusicSendMetod == sendStatusOnly) {
-			CMString codeformat("var StatusMsg=\"&#9835; %s\";var OldMsg=API.status.get();"
-				"API.status.set({\"text\":StatusMsg});"
-				"return OldMsg;");
-			code.AppendFormat(codeformat, StatusMsg);
-		}
-		else if (m_iMusicSendMetod == sendBroadcastAndStatus) {
-			CMString codeformat("var StatusMsg=\"%s\";var CntLmt=100;var Track=\" \";var OldMsg=API.status.get();"
-				"var Tracks=API.audio.search({\"q\":StatusMsg,\"count\":CntLmt,\"search_own\":1});"
-				"var Cnt=Tracks.count;if(Cnt>CntLmt){Cnt=CntLmt;}"
-				"if(Cnt==0){Track=\"&#9835; \"+StatusMsg;API.status.set({\"text\":Track});}"
-				"else{var i=0;var j=-1;"
-				"while(i<Cnt){Track=Tracks.items[i].artist+\" - \"+Tracks.items[i].title;if(Track==StatusMsg){j=i;}i=i+1;}"
-				"if(j==-1){Track=\"&#9835; \"+StatusMsg;API.status.set({\"text\":Track});}else{"
-				"Track=Tracks.items[j].owner_id+\"_\"+Tracks.items[j].id;};API.audio.setBroadcast({\"audio\":Track});"
-				"};return OldMsg;");
-			code.AppendFormat(codeformat, StatusMsg);
-		}
+		Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/execute.RetrieveStatusMusic", true, &CVkProto::OnReceiveStatus)
+			<< WCHAR_PARAM("statusmsg", StatusMsg)
+			<< INT_PARAM("func_v", (int)(m_vkOptions.iMusicSendMetod))
+		);
 		m_bSetBroadcast = true;
 	}
-	Push(new AsyncHttpRequest(this, REQUEST_GET, "/method/execute.json", true, &CVkProto::OnReceiveStatus)
-		<< TCHAR_PARAM("code", code)
-		<< VER_API);
 }
 
 INT_PTR __cdecl CVkProto::SvcSetListeningTo(WPARAM, LPARAM lParam)
 {
 	debugLogA("CVkProto::SvcSetListeningTo");
-	if (m_iMusicSendMetod == sendNone)
+	if (m_vkOptions.iMusicSendMetod == MusicSendMetod::sendNone)
 		return 1;
 
 	LISTENINGTOINFO *pliInfo = (LISTENINGTOINFO*)lParam;
-	CMString tszListeningTo;
-	if (pliInfo == NULL || pliInfo->cbSize != sizeof(LISTENINGTOINFO))
-		db_unset(NULL, m_szModuleName, "ListeningTo");
+	CMStringW wszListeningTo;
+	if (pliInfo == nullptr || pliInfo->cbSize != sizeof(LISTENINGTOINFO))
+		db_unset(0, m_szModuleName, "ListeningTo");
 	else if (pliInfo->dwFlags & LTI_UNICODE) {
 		if (ServiceExists(MS_LISTENINGTO_GETPARSEDTEXT))
-			tszListeningTo = ptrT((LPWSTR)CallService(MS_LISTENINGTO_GETPARSEDTEXT, (WPARAM)_T("%artist% - %title%"), (LPARAM)pliInfo));
+			wszListeningTo = ptrW((LPWSTR)CallService(MS_LISTENINGTO_GETPARSEDTEXT, (WPARAM)L"%artist% - %title%", (LPARAM)pliInfo));
 		else
-			tszListeningTo.Format(_T("%s - %s"),
-			pliInfo->ptszArtist ? pliInfo->ptszArtist : _T(""),
-			pliInfo->ptszTitle ? pliInfo->ptszTitle : _T(""));
-		setTString("ListeningTo", tszListeningTo);
+			wszListeningTo.Format(L"%s - %s",
+				pliInfo->ptszArtist ? pliInfo->ptszArtist : L"",
+				pliInfo->ptszTitle ? pliInfo->ptszTitle : L"");
+		setWString("ListeningTo", wszListeningTo);
 	}
-	RetrieveStatusMusic(tszListeningTo);
+	RetrieveStatusMusic(wszListeningTo);
 	return 0;
 }

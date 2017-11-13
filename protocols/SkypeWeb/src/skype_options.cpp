@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2015-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "stdafx.h"
 
 CSkypeOptionsMain::CSkypeOptionsMain(CSkypeProto *proto, int idDialog)
-: CSkypeDlgBase(proto, idDialog, false),
+	: CSkypeDlgBase(proto, idDialog, false),
 	m_skypename(this, IDC_SKYPENAME),
 	m_password(this, IDC_PASSWORD),
 	m_group(this, IDC_GROUP),
@@ -29,12 +29,12 @@ CSkypeOptionsMain::CSkypeOptionsMain(CSkypeProto *proto, int idDialog)
 	m_usebb(this, IDC_BBCODES),
 	m_link(this, IDC_CHANGEPASS, "https://login.skype.com/recovery/password-change") // TODO : ...?username=%username%
 {
-	CreateLink(m_group, SKYPE_SETTINGS_GROUP, _T("Skype"));
-	CreateLink(m_autosync, "AutoSync", DBVT_BYTE, 1);
-	CreateLink(m_allasunread, "MarkMesUnread", DBVT_BYTE, 1);
-	CreateLink(m_place, "Place", _T(""));
-	CreateLink(m_usehostname, "UseHostName", DBVT_BYTE, 0);
-	CreateLink(m_usebb, "UseBBCodes", DBVT_BYTE, 1);
+	CreateLink(m_group, proto->m_opts.wstrCListGroup);
+	CreateLink(m_autosync, proto->m_opts.bAutoHistorySync);
+	CreateLink(m_allasunread, proto->m_opts.bMarkAllAsUnread);
+	CreateLink(m_place, proto->m_opts.wstrPlace);
+	CreateLink(m_usehostname, proto->m_opts.bUseHostnameAsPlace);
+	CreateLink(m_usebb, proto->m_opts.bUseBBCodes);
 	m_usehostname.OnChange = Callback(this, &CSkypeOptionsMain::OnUsehostnameCheck);
 }
 
@@ -44,7 +44,7 @@ void CSkypeOptionsMain::OnInitDialog()
 
 	m_skypename.SetTextA(ptrA(m_proto->getStringA(SKYPE_SETTINGS_ID)));
 	m_password.SetTextA(pass_ptrA(m_proto->getStringA("Password")));
-	m_place.Enable(!m_proto->getBool("UseHostName", false));
+	m_place.Enable(!m_proto->m_opts.bUseHostnameAsPlace);
 	m_skypename.SendMsg(EM_LIMITTEXT, 32, 0);
 	m_password.SendMsg(EM_LIMITTEXT, 128, 0);
 	m_group.SendMsg(EM_LIMITTEXT, 64, 0);
@@ -53,17 +53,17 @@ void CSkypeOptionsMain::OnInitDialog()
 
 void CSkypeOptionsMain::OnApply()
 {
-	ptrA szNewSkypename(m_skypename.GetTextA()),	 
-		 szOldSkypename(m_proto->getStringA(SKYPE_SETTINGS_ID));
+	ptrA szNewSkypename(m_skypename.GetTextA()), 
+		szOldSkypename(m_proto->getStringA(SKYPE_SETTINGS_ID));
 	pass_ptrA szNewPassword(m_password.GetTextA()),
-			szOldPassword(m_proto->getStringA("Password"));
+		szOldPassword(m_proto->getStringA("Password"));
 	if (mir_strcmpi(szNewSkypename, szOldSkypename) || mir_strcmp(szNewPassword, szOldPassword))
 		m_proto->delSetting("TokenExpiresIn");
 	m_proto->setString(SKYPE_SETTINGS_ID, szNewSkypename);
 	m_proto->setString("Password", szNewPassword);
-	ptrT group(m_group.GetText());
-	if (mir_tstrlen(group) > 0 && !Clist_GroupExists(group))
-		Clist_CreateGroup(0, group);
+	ptrW group(m_group.GetText());
+	if (mir_wstrlen(group) > 0 && !Clist_GroupExists(group))
+		Clist_GroupCreate(0, group);
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -72,11 +72,11 @@ int CSkypeProto::OnOptionsInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { sizeof(odp) };
 	odp.hInstance = g_hInstance;
-	odp.ptszTitle = m_tszUserName;
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR | ODPF_DONTTRANSLATE;
-	odp.ptszGroup = LPGENT("Network");
+	odp.szTitle.w = m_tszUserName;
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE | ODPF_DONTTRANSLATE;
+	odp.szGroup.w = LPGENW("Network");
 
-	odp.ptszTab = LPGENT("Account");
+	odp.szTab.w = LPGENW("Account");
 	odp.pDialog = CSkypeOptionsMain::CreateOptionsPage(this);
 	Options_AddPage(wParam, &odp);
 

@@ -21,17 +21,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdio.h>
 #include <windows.h>
 
+#include <iostream>
+#include <io.h>
+#include <fcntl.h>
+
 #define NO_MIMCMD_COMMANDS
 
 #include <newpluginapi.h>
 #include <m_langpack.h>
 #include <m_system.h>
-#include <m_system_cpp.h>
 #include <m_string.h>
 
-#include "..\CmdLine\src\mimcmd_ipc.h"
+#include "../CmdLine/src/mimcmd_ipc.h"
 #include "version.h"
-#include "..\CmdLine\src\utils.h"
+#include "../CmdLine/src/utils.h"
 #include "commands.h"
 
 int lpprintf(const char *format, ...);

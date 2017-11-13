@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2010 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -58,13 +58,11 @@ static const plugin_guid MGTYPE_CHAT           = {MGTYPE_CHAT_s};
 static const plugin_guid MGTYPE_SMS_MESSAGE    = {MGTYPE_SMS_MESSAGE_s};
 static const plugin_guid MGTYPE_XTRAZ_SCRIPT   = {MGTYPE_XTRAZ_SCRIPT_s};
 
-
 // make GUID checks easy
-static BOOL CompareGUIDs(DWORD q1,DWORD q2,DWORD q3,DWORD q4, const plugin_guid guid)
+__forceinline bool CompareGUIDs(DWORD q1, DWORD q2, DWORD q3, DWORD q4, const plugin_guid guid)
 {
-  return ((q1 == guid[0]) && (q2 == guid[1]) && (q3 == guid[2]) && (q4 == guid[3]))?TRUE:FALSE;
+	return ((q1 == guid[0]) && (q2 == guid[1]) && (q3 == guid[2]) && (q4 == guid[3])) ? true : false;
 }
-
 
 // pack entire GUID into icq packet
 static __inline void packGUID(icq_packet *packet, const plugin_guid guid)

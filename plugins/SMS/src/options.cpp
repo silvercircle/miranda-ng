@@ -31,14 +31,14 @@ WORD wSMSSignControlsList[] = { IDC_BEGIN, IDC_END, IDC_SIGNATURE, IDC_SIGNGROUP
 
 INT_PTR CALLBACK DlgProcEditorOptions(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	TCHAR tszSign[1024];
+	wchar_t tszSign[1024];
 
 	switch(msg){
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hWndDlg);
 
 		if (DB_SMS_GetStaticStringW(NULL,"Signature",tszSign,_countof(tszSign),NULL)==FALSE)
-			mir_sntprintf(tszSign, TranslateT("From %s:\r\n\r\n"), pcli->pfnGetContactDisplayName(0, 0));
+			mir_snwprintf(tszSign, TranslateT("From %s:\r\n\r\n"), pcli->pfnGetContactDisplayName(0, 0));
 
 		SetDlgItemText(hWndDlg,IDC_SIGNATURE,tszSign);
 		{
@@ -91,10 +91,10 @@ int OptInitialise(WPARAM wParam,LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.position = 910000000;
 	odp.hInstance = ssSMSSettings.hInstance;
-	odp.pszGroup = LPGEN("Events");
+	odp.szGroup.a = LPGEN("Events");
 	odp.flags = ODPF_BOLDGROUPS;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_SMSPLUGIN);
-	odp.pszTitle = PROTOCOL_DISPLAY_NAME_ORIG;
+	odp.szTitle.a = PROTOCOL_DISPLAY_NAME_ORIG;
 	odp.pfnDlgProc = DlgProcEditorOptions;
 	Options_AddPage(wParam, &odp);	
 	return 0;

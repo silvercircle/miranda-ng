@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Import.dll
 ;  Plugin: Import contacts and messages
-;  Version: 0.95.4.2
+;  Version: 0.95.4.3
 ;  Authors: Miranda team
 ;============================================================
 [Imports contacts and messages from another Miranda profile or from an external program.]
@@ -106,17 +106,17 @@
 [Skipping contact with no protocol]
 Пропуск контактів без протоколу
 [Skipping contact, account %S cannot be mapped.]
-Пропуск контакта, неможливо імпортувати обліковий запис %S
+Пропуск контакту, неможливо імпортувати обліковий запис %S
 [Skipping contact, %S not installed.]
-Пропуск контакта, %S не встановлено.
+Пропуск контакту, %S не встановлено.
 [Skipping non-IM contact (%S)]
-Пропуск не-IM контакта (%S)
+Пропуск не-IM контакту (%S)
 [Skipping %S contact, ID not found]
-Пропуск контакта %S, ID не знайдений
+Пропуск контакту %S, ID не знайдений
 [Skipping duplicate %S contact %s]
 Пропуск дубліката %S контакт %s
 [Unknown error while adding %S contact %s]
-Невідома помилка додавання %S контакта %s
+Невідома помилка додавання %S контакту %s
 [Failed to add message]
 Не вдалося додати повідомлення
 [Error retrieving current profile, exiting.]
@@ -162,7 +162,7 @@
 [Miranda Import]
 Імпорт Miranda NG
 [Miranda NG database]
-База Miranda NG
+База даних Miranda NG
 [All Files]
 Усі файли
 [Skipping duplicate group %s.]

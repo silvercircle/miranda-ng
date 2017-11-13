@@ -47,7 +47,7 @@ INT_PTR CALLBACK DlgProcOptions(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lP
 				tvis.hInsertAfter = TVI_LAST;
 				tvis.item.mask = TVIF_PARAM | TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_STATE;
 				tvis.item.lParam = ii[i].type;
-				tvis.item.pszText = TranslateTS(ii[i].name);
+				tvis.item.pszText = TranslateW(ii[i].name);
 				tvis.item.iImage = tvis.item.iSelectedImage = index;
 				HTREEITEM hti = TreeView_InsertItem(hTree, &tvis);
 				TreeView_SetCheckState(hTree, hti, checkState(ii[i].type));
@@ -106,9 +106,9 @@ int onOptInitialise(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = g_hInst;
 	odp.flags = ODPF_BOLDGROUPS;
-	odp.pszGroup = LPGEN("Icons");
+	odp.szGroup.a = LPGEN("Icons");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_IGNORE_OPT);
-	odp.pszTitle = LPGEN("Ignore State");
+	odp.szTitle.a = LPGEN("Ignore State");
 	odp.pfnDlgProc = DlgProcOptions;
 	Options_AddPage(wParam, &odp);
 	return 0;

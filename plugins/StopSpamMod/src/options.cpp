@@ -17,10 +17,8 @@
 
 #include "stdafx.h"
 
-int CreateCListGroup(TCHAR* szGroupName);
-
 char *pluginDescription = LPGEN("No more spam! Robots can't go! Only human beings invited!\r\n\r\nThis plugin works pretty simple:\r\nWhile messages from users on your contact list go as there is no any anti-spam software, messages from unknown users are not delivered to you. But also they are not ignored, this plugin replies with a simple question, and if user gives the right answer, plugin adds him to your contact list so that he can contact you.");
-TCHAR const *defQuestion = TranslateT("Spammers made me to install small anti-spam system you are now speaking with.\r\nPlease reply \"nospam\" without quotes and spaces if you want to contact me.");
+wchar_t const *defQuestion = TranslateT("Spammers made me to install small anti-spam system you are now speaking with.\r\nPlease reply \"nospam\" without quotes and spaces if you want to contact me.");
 
 INT_PTR CALLBACK MainDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -93,7 +91,7 @@ INT_PTR CALLBACK MessagesDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 		case ID_RESTOREDEFAULTS:
 			SetDlgItemText(hwnd, ID_QUESTION, defQuestion);
-			SetDlgItemText(hwnd, ID_ANSWER, _T("nospam"));
+			SetDlgItemText(hwnd, ID_ANSWER, L"nospam");
 			SetDlgItemText(hwnd, ID_AUTHREPL, TranslateT("StopSpam: send a message and reply to an anti-spam bot question."));
 			SetDlgItemText(hwnd, ID_CONGRATULATION, TranslateT("Congratulations! You just passed human/robot test. Now you can write me a message."));
 			SendMessage(GetParent(hwnd), PSM_CHANGED, 0, 0);
@@ -113,7 +111,7 @@ INT_PTR CALLBACK MessagesDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 			db_set_ws(NULL, pluginName, "question", GetDlgItemString(hwnd, ID_QUESTION).c_str());
 			gbQuestion = DBGetContactSettingStringPAN(NULL, pluginName, "question", defQuestion);
 			db_set_ws(NULL, pluginName, "answer", GetDlgItemString(hwnd, ID_ANSWER).c_str());
-			gbAnswer = DBGetContactSettingStringPAN(NULL, pluginName, "answer", _T("nospam"));
+			gbAnswer = DBGetContactSettingStringPAN(NULL, pluginName, "answer", L"nospam");
 			db_set_ws(NULL, pluginName, "authrepl", GetDlgItemString(hwnd, ID_AUTHREPL).c_str());
 			gbAuthRepl = DBGetContactSettingStringPAN(NULL, pluginName, "authrepl", TranslateT("StopSpam: send a message and reply to an anti-spam bot question."));
 			db_set_ws(NULL, pluginName, "congratulation", GetDlgItemString(hwnd, ID_CONGRATULATION).c_str());
@@ -145,7 +143,7 @@ INT_PTR CALLBACK ProtoDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (LB_ERR != n) {
 				size_t len = SendDlgItemMessage(hwnd, ID_ALLPROTO, LB_GETTEXTLEN, n, 0);
 				if (LB_ERR != len) {
-					TCHAR * buf = new TCHAR[len + 1];
+					wchar_t * buf = new wchar_t[len + 1];
 					SendDlgItemMessage(hwnd, ID_ALLPROTO, LB_GETTEXT, n, (LPARAM)buf);
 					SendDlgItemMessage(hwnd, ID_USEDPROTO, LB_ADDSTRING, 0, (LPARAM)buf);
 					delete[]buf;
@@ -159,7 +157,7 @@ INT_PTR CALLBACK ProtoDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if (LB_ERR != n) {
 				size_t len = SendDlgItemMessage(hwnd, ID_USEDPROTO, LB_GETTEXTLEN, n, 0);
 				if (LB_ERR != len) {
-					TCHAR * buf = new TCHAR[len + 1];
+					wchar_t * buf = new wchar_t[len + 1];
 					SendDlgItemMessage(hwnd, ID_USEDPROTO, LB_GETTEXT, n, (LPARAM)buf);
 					SendDlgItemMessage(hwnd, ID_ALLPROTO, LB_ADDSTRING, 0, (LPARAM)buf);
 					delete[]buf;
@@ -224,8 +222,6 @@ INT_PTR CALLBACK AdvancedDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 		TranslateDialogDefault(hwnd);
 		CheckDlgButton(hwnd, IDC_INVIS_DISABLE, gbInvisDisable ? BST_CHECKED : BST_UNCHECKED);
 		CheckDlgButton(hwnd, IDC_CASE_INSENSITIVE, gbCaseInsensitive ? BST_CHECKED : BST_UNCHECKED);
-		gbDosServiceExist ? EnableWindow(GetDlgItem(hwnd, ID_DOS_INTEGRATION), 1) : EnableWindow(GetDlgItem(hwnd, ID_DOS_INTEGRATION), 0);
-		CheckDlgButton(hwnd, ID_DOS_INTEGRATION, gbDosServiceIntegration ? BST_CHECKED : BST_UNCHECKED);
 		SetDlgItemText(hwnd, ID_SPECIALGROUPNAME, gbSpammersGroup.c_str());
 		CheckDlgButton(hwnd, ID_SPECIALGROUP, gbSpecialGroup ? BST_CHECKED : BST_UNCHECKED);
 		CheckDlgButton(hwnd, ID_EXCLUDE, gbExclude ? BST_CHECKED : BST_UNCHECKED);
@@ -250,7 +246,6 @@ INT_PTR CALLBACK AdvancedDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 		case IDC_INVIS_DISABLE:
 		case IDC_CASE_INSENSITIVE:
-		case ID_DOS_INTEGRATION:
 		case ID_SPECIALGROUPNAME:
 		case ID_SPECIALGROUP:
 		case ID_EXCLUDE:
@@ -274,17 +269,16 @@ INT_PTR CALLBACK AdvancedDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 		case PSN_APPLY:
 			db_set_b(NULL, pluginName, "CaseInsensitive", gbCaseInsensitive = BST_CHECKED == IsDlgButtonChecked(hwnd, IDC_CASE_INSENSITIVE));
 			db_set_b(NULL, pluginName, "DisableInInvis", gbInvisDisable = BST_CHECKED == IsDlgButtonChecked(hwnd, IDC_INVIS_DISABLE));
-			db_set_b(NULL, pluginName, "DOSIntegration", gbDosServiceIntegration = BST_CHECKED == IsDlgButtonChecked(hwnd, ID_DOS_INTEGRATION));
 			{
-				static tstring NewGroupName, CurrentGroupName;
+				static wstring NewGroupName, CurrentGroupName;
 				NewGroupName = GetDlgItemString(hwnd, ID_SPECIALGROUPNAME);
-				CurrentGroupName = gbSpammersGroup = DBGetContactSettingStringPAN(NULL, pluginName, "SpammersGroup", _T("0"));
+				CurrentGroupName = gbSpammersGroup = DBGetContactSettingStringPAN(NULL, pluginName, "SpammersGroup", L"0");
 				if (mir_wstrcmp(CurrentGroupName.c_str(), NewGroupName.c_str()) != 0) {
 					bool GroupExist = Clist_GroupExists(NewGroupName.c_str()) != NULL;
 					db_set_ws(NULL, pluginName, "SpammersGroup", NewGroupName.c_str());
-					gbSpammersGroup = DBGetContactSettingStringPAN(NULL, pluginName, "SpammersGroup", _T("Spammers"));
+					gbSpammersGroup = DBGetContactSettingStringPAN(NULL, pluginName, "SpammersGroup", L"Spammers");
 					if (!GroupExist && gbSpecialGroup)
-						CreateCListGroup((TCHAR*)gbSpammersGroup.c_str());
+						Clist_GroupCreate(0, gbSpammersGroup.c_str());
 				}
 			}
 			db_set_b(NULL, pluginName, "SpecialGroup", gbSpecialGroup = BST_CHECKED == IsDlgButtonChecked(hwnd, ID_SPECIALGROUP));
@@ -300,15 +294,15 @@ INT_PTR CALLBACK AdvancedDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 			db_set_b(NULL, pluginName, "HistoryLog", gbHistoryLog = BST_CHECKED == IsDlgButtonChecked(hwnd, IDC_HISTORY_LOG));
 			db_set_b(NULL, pluginName, "MathExpression", gbMathExpression = BST_CHECKED == IsDlgButtonChecked(hwnd, IDC_MATH_QUESTION));
 			{
-				static tstring NewAGroupName, CurrentAGroupName;
+				static wstring NewAGroupName, CurrentAGroupName;
 				NewAGroupName = GetDlgItemString(hwnd, IDC_AUTOADDGROUP);
-				CurrentAGroupName = gbAutoAuthGroup = DBGetContactSettingStringPAN(NULL, pluginName, "AutoAuthGroup", _T("0"));
+				CurrentAGroupName = gbAutoAuthGroup = DBGetContactSettingStringPAN(NULL, pluginName, "AutoAuthGroup", L"0");
 				if (mir_wstrcmp(CurrentAGroupName.c_str(), NewAGroupName.c_str()) != 0) {
 					bool GroupExist = Clist_GroupExists(NewAGroupName.c_str()) != NULL;
 					db_set_ws(NULL, pluginName, "AutoAuthGroup", NewAGroupName.c_str());
-					gbAutoAuthGroup = DBGetContactSettingStringPAN(NULL, pluginName, "AutoAuthGroup", _T("Not Spammers"));
+					gbAutoAuthGroup = DBGetContactSettingStringPAN(NULL, pluginName, "AutoAuthGroup", L"Not Spammers");
 					if (!GroupExist && gbAutoAddToServerList)
-						CreateCListGroup((TCHAR*)gbAutoAuthGroup.c_str());
+						Clist_GroupCreate(0, gbAutoAuthGroup.c_str());
 				}
 			}
 			return TRUE;
@@ -318,33 +312,34 @@ INT_PTR CALLBACK AdvancedDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 	return FALSE;
 }
 
-HINSTANCE hInst;
-MIRANDA_HOOK_EVENT(ME_OPT_INITIALISE, w, l)
+int OnOptInit(WPARAM w, LPARAM l)
 {
+	UNREFERENCED_PARAMETER(l);
+
 	OPTIONSDIALOGPAGE odp = { 0 };
-	odp.ptszGroup = LPGENT("Message sessions");
-	odp.ptszTitle = LPGENT("StopSpam");
+	odp.szGroup.w = LPGENW("Message sessions");
+	odp.szTitle.w = LPGENW("StopSpam");
 	odp.position = -1;
 	odp.hInstance = hInst;
-	odp.flags = ODPF_TCHAR;
+	odp.flags = ODPF_UNICODE;
 
-	odp.ptszTab = LPGENT("General");
+	odp.szTab.w = LPGENW("General");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_MAIN);
 	odp.pfnDlgProc = MainDlgProc;
 	Options_AddPage(w, &odp);
 
 
-	odp.ptszTab = LPGENT("Messages");
+	odp.szTab.w = LPGENW("Messages");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_MESSAGES);
 	odp.pfnDlgProc = MessagesDlgProc;
 	Options_AddPage(w, &odp);
 
-	odp.ptszTab = LPGENT("Accounts");
+	odp.szTab.w = LPGENW("Accounts");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_PROTO);
 	odp.pfnDlgProc = ProtoDlgProc;
 	Options_AddPage(w, &odp);
 
-	odp.ptszTab = LPGENT("Advanced");
+	odp.szTab.w = LPGENW("Advanced");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_ADVANCED);
 	odp.pfnDlgProc = AdvancedDlgProc;
 	Options_AddPage(w, &odp);

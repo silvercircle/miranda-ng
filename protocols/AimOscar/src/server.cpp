@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-void CAimProto::snac_md5_authkey(SNAC &snac, HANDLE hServerConn, unsigned short &seqno, const char* username, const char* password)//family 0x0017
+void CAimProto::snac_md5_authkey(SNAC &snac, HNETLIBCONN hServerConn, unsigned short &seqno, const char* username, const char* password)//family 0x0017
 {
 	if (snac.subcmp(0x0007))//md5 authkey string
 	{
@@ -83,28 +83,28 @@ int CAimProto::snac_authorization_reply(SNAC &snac)//family 0x0017
 	}
 	return res;
 }
-void CAimProto::snac_supported_families(SNAC &snac, HANDLE hServerConn, unsigned short &seqno)//family 0x0001
+void CAimProto::snac_supported_families(SNAC &snac, HNETLIBCONN hServerConn, unsigned short &seqno)//family 0x0001
 {
 	if (snac.subcmp(0x0003))//server supported service list
 	{
 		aim_send_service_request(hServerConn, seqno);
 	}
 }
-void CAimProto::snac_supported_family_versions(SNAC &snac, HANDLE hServerConn, unsigned short &seqno)//family 0x0001
+void CAimProto::snac_supported_family_versions(SNAC &snac, HNETLIBCONN hServerConn, unsigned short &seqno)//family 0x0001
 {
 	if (snac.subcmp(0x0018))//service list okayed
 	{
 		aim_request_rates(hServerConn, seqno);//request some rate crap
 	}
 }
-void CAimProto::snac_rate_limitations(SNAC &snac, HANDLE hServerConn, unsigned short &seqno)// family 0x0001
+void CAimProto::snac_rate_limitations(SNAC &snac, HNETLIBCONN hServerConn, unsigned short &seqno)// family 0x0001
 {
 	if (snac.subcmp(0x0007)) {
 		aim_accept_rates(hServerConn, seqno);
 		aim_request_icbm(hServerConn, seqno);
 	}
 }
-void CAimProto::snac_mail_rate_limitations(SNAC &snac, HANDLE hServerConn, unsigned short &seqno)// family 0x0001
+void CAimProto::snac_mail_rate_limitations(SNAC &snac, HNETLIBCONN hServerConn, unsigned short &seqno)// family 0x0001
 {
 	if (snac.subcmp(0x0007)) {
 		aim_accept_rates(hServerConn, seqno);
@@ -114,7 +114,7 @@ void CAimProto::snac_mail_rate_limitations(SNAC &snac, HANDLE hServerConn, unsig
 	}
 }
 
-void CAimProto::snac_avatar_rate_limitations(SNAC &snac, HANDLE hServerConn, unsigned short &seqno)// family 0x0001
+void CAimProto::snac_avatar_rate_limitations(SNAC &snac, HNETLIBCONN hServerConn, unsigned short &seqno)// family 0x0001
 {
 	if (snac.subcmp(0x0007)) {
 		aim_accept_rates(hServerConn, seqno);
@@ -123,7 +123,7 @@ void CAimProto::snac_avatar_rate_limitations(SNAC &snac, HANDLE hServerConn, uns
 	}
 }
 
-void CAimProto::snac_chatnav_rate_limitations(SNAC &snac, HANDLE hServerConn, unsigned short &seqno)// family 0x0001
+void CAimProto::snac_chatnav_rate_limitations(SNAC &snac, HNETLIBCONN hServerConn, unsigned short &seqno)// family 0x0001
 {
 	if (snac.subcmp(0x0007)) {
 		aim_accept_rates(hServerConn, seqno);
@@ -131,7 +131,7 @@ void CAimProto::snac_chatnav_rate_limitations(SNAC &snac, HANDLE hServerConn, un
 	}
 }
 
-void CAimProto::snac_chat_rate_limitations(SNAC &snac, HANDLE hServerConn, unsigned short &seqno)// family 0x0001
+void CAimProto::snac_chat_rate_limitations(SNAC &snac, HNETLIBCONN hServerConn, unsigned short &seqno)// family 0x0001
 {
 	if (snac.subcmp(0x0007)) {
 		aim_accept_rates(hServerConn, seqno);
@@ -139,7 +139,7 @@ void CAimProto::snac_chat_rate_limitations(SNAC &snac, HANDLE hServerConn, unsig
 	}
 }
 
-void CAimProto::snac_icbm_limitations(SNAC &snac, HANDLE hServerConn, unsigned short &seqno)//family 0x0004
+void CAimProto::snac_icbm_limitations(SNAC &snac, HNETLIBCONN hServerConn, unsigned short &seqno)//family 0x0004
 {
 	if (snac.subcmp(0x0005)) {
 		switch (m_iDesiredStatus) {
@@ -487,7 +487,7 @@ void CAimProto::snac_user_online(SNAC &snac)//family 0x0003
 									char* msg_s = process_status_msg(msg, sn);
 									db_set_utf(hContact, MOD_KEY_CL, OTH_KEY_SM, msg_s);
 
-									TCHAR* tszMsg = mir_utf8decodeT(msg_s);
+									wchar_t* tszMsg = mir_utf8decodeW(msg_s);
 									ProtoBroadcastAck(hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, NULL, (LPARAM)tszMsg);
 									mir_free(tszMsg);
 									mir_free(msg);
@@ -889,7 +889,7 @@ void CAimProto::delete_ssi_list(SNAC &snac, int &offset)
 			}
 		}
 		if (i == 1)
-			CallService(MS_DB_CONTACT_DELETE, hContact, 0);
+			db_delete_contact(hContact);
 		break;
 
 	case 0x0001: //group record
@@ -913,7 +913,7 @@ void CAimProto::delete_ssi_list(SNAC &snac, int &offset)
 	mir_free(name);
 }
 
-void CAimProto::snac_contact_list(SNAC &snac, HANDLE hServerConn, unsigned short &seqno)//family 0x0013
+void CAimProto::snac_contact_list(SNAC &snac, HNETLIBCONN hServerConn, unsigned short &seqno)//family 0x0013
 {
 	if (snac.subcmp(0x0006)) { //contact list
 		debugLogA("Contact List Received");
@@ -941,7 +941,7 @@ void CAimProto::snac_contact_list(SNAC &snac, HANDLE hServerConn, unsigned short
 
 			if (getDword(AIM_KEY_LV, 0) < 0x80500) {
 				upload_nicks();
-				setDword(AIM_KEY_LV, (DWORD)CallService(MS_SYSTEM_GETVERSION, 0, 0));
+				setDword(AIM_KEY_LV, Miranda_GetVersion());
 			}
 
 			if (getByte(AIM_KEY_CM, 0))
@@ -988,7 +988,7 @@ void CAimProto::snac_message_accepted(SNAC &snac)//family 0x004
 		mir_free(icbm_cookie);
 	}
 }
-void CAimProto::snac_received_message(SNAC &snac, HANDLE hServerConn, unsigned short &seqno)//family 0x0004
+void CAimProto::snac_received_message(SNAC &snac, HNETLIBCONN hServerConn, unsigned short &seqno)//family 0x0004
 {
 	if (snac.subcmp(0x0007)) {
 		unsigned short channel = snac.ushort(8);
@@ -1178,7 +1178,7 @@ void CAimProto::snac_received_message(SNAC &snac, HANDLE hServerConn, unsigned s
 
 		if (channel == 1) { //Message not file
 			if (auto_response) { //this message must be an autoresponse
-				T2Utf away(TranslateT("[Auto-Response]:"));
+				T2Utf away(TranslateT("[Auto-response]:"));
 				size_t len = mir_strlen(msg_buf) + mir_strlen(away) + 2;
 				char* buf = (char*)mir_alloc(len);
 				mir_snprintf(buf, len, "%s %s", away, msg_buf);
@@ -1202,12 +1202,12 @@ void CAimProto::snac_received_message(SNAC &snac, HANDLE hServerConn, unsigned s
 				if (away_time > msg_time && *msgptr) {
 					char* s_msg = process_status_msg(*msgptr, sn);
 
-					T2Utf away(TranslateT("[Auto-Response]:"));
+					T2Utf away(TranslateT("[Auto-response]:"));
 					size_t len = mir_strlen(s_msg) + mir_strlen(away) + 2;
 					char* buf = (char*)alloca(len);
 					mir_snprintf(buf, len, "%s %s", away, s_msg);
 
-					DBEVENTINFO dbei = { sizeof(dbei) };
+					DBEVENTINFO dbei = {};
 					dbei.szModule = m_szModuleName;
 					dbei.timestamp = (DWORD)time(NULL);
 					dbei.flags = DBEF_SENT | DBEF_UTF;
@@ -1247,18 +1247,18 @@ void CAimProto::snac_received_message(SNAC &snac, HANDLE hServerConn, unsigned s
 
 				if (!descr_included) msg_buf = NULL;
 
-				TCHAR* filenameT = mir_utf8decodeT(filename);
+				wchar_t* filenameT = mir_utf8decodeW(filename);
 
 				PROTORECVFILET pre = { 0 };
-				pre.dwFlags = PRFF_TCHAR;
+				pre.dwFlags = PRFF_UNICODE;
 				pre.fileCount = 1;
 				pre.timestamp = time(NULL);
-				pre.descr.t = mir_utf8decodeT(msg_buf);
-				pre.files.t = &filenameT;
+				pre.descr.w = mir_utf8decodeW(msg_buf);
+				pre.files.w = &filenameT;
 				pre.lParam = (LPARAM)ft;
 				ProtoChainRecvFile(hContact, &pre);
 
-				mir_free(pre.descr.t);
+				mir_free(pre.descr.w);
 				mir_free(filenameT);
 
 				char cip[20];
@@ -1659,9 +1659,9 @@ void CAimProto::snac_mail_response(SNAC &snac)//family 0x0018
 			position += TLV_HEADER_SIZE + tlv.len();
 		}
 		if (new_mail && num_msgs) {
-			TCHAR msg[1024];
+			wchar_t msg[1024];
 
-			int len = mir_sntprintf(msg, _T("%S@%S (%d)\r\n%s "), sn, address, num_msgs,
+			int len = mir_snwprintf(msg, L"%S@%S (%d)\r\n%s ", sn, address, num_msgs,
 				TranslateT("You've got mail! Checked at"));
 
 			SYSTEMTIME stLocal;
@@ -1733,10 +1733,10 @@ void CAimProto::snac_email_search_results(SNAC &snac)//family 0x000A
 		while (offset < snac.len()) { // Loop through all the TLVs and pull out the buddy name
 			TLV tlv(snac.val(offset));
 			offset += TLV_HEADER_SIZE;
-			psr.id.t = (TCHAR*)tlv.dup();
+			psr.id.w = (wchar_t*)tlv.dup();
 			offset += tlv.len();
 			ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)1, (LPARAM)& psr);
-			mir_free(psr.nick.t);
+			mir_free(psr.nick.w);
 		}
 		ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE)1, 0);
 	}
@@ -1744,7 +1744,7 @@ void CAimProto::snac_email_search_results(SNAC &snac)//family 0x000A
 		CAimProto::ProtoBroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE)1, 0);
 }
 
-void CAimProto::snac_chatnav_info_response(SNAC &snac, HANDLE hServerConn, unsigned short &seqno)//family 0x000D
+void CAimProto::snac_chatnav_info_response(SNAC &snac, HNETLIBCONN hServerConn, unsigned short &seqno)//family 0x000D
 {
 	if (snac.subcmp(0x0009)) {
 		debugLogA("Chat Info Received");
@@ -1834,7 +1834,7 @@ void CAimProto::snac_chat_joined_left_users(SNAC &snac, chat_list_item* item)//f
 void CAimProto::snac_chat_received_message(SNAC &snac, chat_list_item* item)//family 0x000E
 {
 	if (snac.subcmp(0x0006)) {
-		TCHAR* message = NULL;
+		wchar_t* message = NULL;
 		char* sn = NULL;
 
 		//		unsigned long cookie = snac.ulong(0);
@@ -1864,19 +1864,19 @@ void CAimProto::snac_chat_received_message(SNAC &snac, chat_list_item* item)//fa
 						if (uni) {
 							char* msg = msg_tlv.dupw();
 							html_decode(msg);
-							message = mir_utf8decodeT(msg);
+							message = mir_utf8decodeW(msg);
 							mir_free(msg);
 						}
 						else if (utf) {
 							char* msg = msg_tlv.dup();
 							html_decode(msg);
-							message = mir_utf8decodeT(msg);
+							message = mir_utf8decodeW(msg);
 							mir_free(msg);
 						}
 						else {
 							char* msg = msg_tlv.dup();
 							html_decode(msg);
-							message = mir_a2t(msg);
+							message = mir_a2u(msg);
 							mir_free(msg);
 						}
 					}
@@ -1901,7 +1901,7 @@ void CAimProto::snac_chat_received_message(SNAC &snac, chat_list_item* item)//fa
 	}
 }
 
-void CAimProto::snac_admin_rate_limitations(SNAC &snac, HANDLE hServerConn, unsigned short &seqno)// family 0x0001
+void CAimProto::snac_admin_rate_limitations(SNAC &snac, HNETLIBCONN hServerConn, unsigned short &seqno)// family 0x0001
 {
 	if (snac.subcmp(0x0007)) {
 		aim_accept_rates(hServerConn, seqno);

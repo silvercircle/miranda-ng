@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: SkypeWeb.dll
 ;  Plugin: Skype protocol (Web)
-;  Version: 0.12.1.2
+;  Version: 0.12.2.3
 ;  Authors: Miranda NG Team
 ;============================================================
 [Skype protocol support for Miranda NG. Based on new Skype for Web.]
@@ -30,14 +30,16 @@ Výchozí skupina:
 Ostatní
 [Automatic messages synchronization]
 Automatická synchronizace zpráv
-[Use local time for received messages]
-Použít lokální čas počítače pro příchozí zprávy
 [Always notify as unread for all incoming message]
 Vždy upozornit všechny příchozí zprávy jako nepřečtené
 [Place:]
 Místo:
 [Use hostname]
-
+Použít název hostitele
+[Use BBCode]
+Použít BBCode
+[Change password]
+Změnit heslo
 [Enter password]
 Zadejte heslo
 [Save password]
@@ -52,6 +54,8 @@ Skype Link protokol
 Admin
 [User]
 Uživatel
+[Enter new nickname]
+Zadejte novou přezdívku
 [This chat is going to be destroyed forever with all its contents. This action cannot be undone. Are you sure?]
 Tato diskuse bude navždy zrušena s veškerým jejím obsahem. Tuto akci nelze vrátit zpět. Přejete si pokračovat?
 [Warning]
@@ -60,8 +64,8 @@ Varování
 Pozvat k d&iskusi...
 [&Leave chat session]
 &Opustit diskusi
-[&Change topic]
-&Změnit téma
+[&Change topic...]
+&Změnit téma...
 [Kick &user]
 Vykopnout &uživatele
 [Set &role]
@@ -70,43 +74,53 @@ Určit &roli
 &Správce
 [&User]
 &Uživatel
+[Change nick...]
+Změnit přezdívku...
 [Enter new chatroom topic]
-
+Zadejte nové téma diskuse
 ;file \protocols\SkypeWeb\src\skype_contacts.cpp
 [Are you sure?]
 Opravdu chcete pokračovat?
-;file \protocols\SkypeWeb\src\skype_events.cpp
+;file \protocols\SkypeWeb\src\skype_db.cpp
 [Incoming call]
 Příchozí hovor
+[Edited message]
+Upravená zpráva
 [Action]
 Akce
-[Call information.]
-Informace o hovoru.
-[Calls]
-Hovory
-[Notifications]
-Upozornění
-[Errors]
-Chyby
-;file \protocols\SkypeWeb\src\skype_history_sync.cpp
-[Edited at]
-Upraveno v
-[Call started]
-Hovor začal
-[Call ended]
-Hovor skončil
-[Duration]
-Doba trvání
-[File transfer]
-Přenos souboru
-[File name]
-Název souboru
-[Size]
-Velikost
-[bytes]
-bajtů
-[Image]
-Obrázek
+[Call information]
+Informace o hovoru
+[File transfer information]
+Informace o přenosu souboru
+[URI object]
+Objekt URI
+[Moji]
+Moji
+[File]
+Soubor
+[Unknown event]
+Neznámá událost
+;file \protocols\SkypeWeb\src\skype_events.cpp
+[SkypeWeb error: Invalid data!]
+SkypeWeb chyba: Neplatná data!
+[[b]Original message:[/b]\n%s\n]
+\[b]Původní zpráva:[/b]\n%s\n
+[Original message:\n%s\n]
+Původní zpráva:\n%s\n
+[[b]Edited at %s:[/b]\n%s\n]
+\[b]Upraveno v %s:[/b]\n%s\n
+[Edited at %s:\n%s\n]
+Upraveno v %s:\n%s\n
+[Call]
+Hovor
+[Call missed]
+Zmeškaný hovor
+[Call ended (%s)]
+Hovor ukončen (%s)
+[File transfer:\n\tFile name: %s \n\tSize: %lld bytes \n]
+Přenos souboru:\n\tNázev souboru: %s \n\tVelikost: %lld bajtů \n
+[Unknown event, please send this text for developer: "%s"]
+Neznámá událost, odešlete prosím tento text vývojáři: "%s"
 ;file \protocols\SkypeWeb\src\skype_icons.cpp
 [Protocol icon]
 Ikona protokolu
@@ -130,13 +144,13 @@ Ikona akce
 Protokoly
 ;file \protocols\SkypeWeb\src\skype_login.cpp
 [Authentication failed. Invalid username.]
-
+Ověření selhalo. Neplatné uživatelské jméno.
 [Authentication failed. Bad username or password.]
-
+Ověření selhalo. Neplatné uživatelské jméno nebo heslo.
 [Too many failed authentication attempts with given username or IP.]
-
+Příliš mnoho neúspěšných pokusů o ověření pro dané uživatelské jméno nebo IP.
 [Authentication failed. Unknown error.]
-
+Ověření selhalo. Neznámá chyba.
 ;file \protocols\SkypeWeb\src\skype_menus.cpp
 [Request authorization]
 Požádat o autorizaci
@@ -151,24 +165,37 @@ Odblokovat kontakt
 [Create new chat]
 Založit novou diskusi
 ;file \protocols\SkypeWeb\src\skype_messages.cpp
+[You cannot send when you are offline.]
+Nemůžete odesílat zprávy ve stavu offline.
+[Unknown error!]
+Neznámá chyba!
+[Network error!]
+Chyba sítě!
 ;file \protocols\SkypeWeb\src\skype_mslogin.cpp
 [Enter confirmation code]
-
+Zadejte potvrzovací kód
+;file \protocols\SkypeWeb\src\skype_network.cpp
+[%s connection]
+%s - spojení se serverem
 ;file \protocols\SkypeWeb\src\skype_options.cpp
 [Network]
 Sítě
+;file \protocols\SkypeWeb\src\skype_popups.cpp
+[Notifications]
+Upozornění
+[Errors]
+Chyby
+[Calls]
+Hovory
 ;file \protocols\SkypeWeb\src\skype_proto.cpp
-[%s connection]
-%s - spojení se serverem
 [Incoming call sound]
 Zvuk příchozího hovoru
 [Incoming call canceled sound]
 Zvuk zrušení příchozího hovoru
+[Skypename]
+Skype jméno
 ;file \protocols\SkypeWeb\src\skype_trouter.cpp
-[Failed establish a TRouter connection.]
+[Failed to establish a TRouter connection.]
 Nelze navázat TRouter spojení.
 [Incoming call from %s]
 Příchozí hovor (%s)
-;file \protocols\SkypeWeb\src\skype_utils.cpp
-[Message read: %s]
-Zpráva byla přečtena: %s

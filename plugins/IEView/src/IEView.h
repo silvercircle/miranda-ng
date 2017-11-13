@@ -558,5 +558,10 @@ public:
 	static void		release();
 	static void		setOptions();
 
+	inline MCONTACT Get_CurrentContact()
+	{
+		return hContact;
+	}
+
 };
 #endif

@@ -1,7 +1,7 @@
 #ifndef _COUTPUTMANAGER_H_
 #define _COUTPUTMANAGER_H_
 
-#include "LCDFramework\CLCDOutputManager.h"
+#include "LCDFramework/CLCDOutputManager.h"
 
 #include "CProtocolData.h"
 #include "CIRCHistory.h"
@@ -14,7 +14,7 @@
 #include "CCreditsScreen.h"
 #include "CScreensaverScreen.h"
 
-#include "LCDFramework\CLCDConnectionLogitech.h"
+#include "LCDFramework/CLCDConnectionLogitech.h"
 
 struct SMessageJob
 {
@@ -108,7 +108,7 @@ public:
 	// checks if the patched IRC protocol is in place
 	bool IsIRCHookEnabled();
 
-	static tstring TranslateString(TCHAR *szString,...);
+	static tstring TranslateString(wchar_t *szString,...);
 
 private:
 	list<CIRCHistory*> m_LIRCHistorys;

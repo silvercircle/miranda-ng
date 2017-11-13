@@ -38,7 +38,7 @@ INT_PTR svcShowMenuCentered(WPARAM, LPARAM)
 INT_PTR svcOpenContact(WPARAM wParam, LPARAM)
 {
 	hContactToActivate = wParam;
-	CallService(MS_CLIST_CONTACTDOUBLECLICKED, (WPARAM)hContactToActivate, 0);
+	Clist_ContactDoubleClicked(hContactToActivate);
 	return 0;
 }
 
@@ -52,7 +52,7 @@ int ProcessSrmmEvent(WPARAM, LPARAM lParam)
 		WindowList_Add(hDialogsList, event->hwndWindow, event->hContact);
 
 		BYTE fav = db_get_b(event->hContact, "FavContacts", "IsFavourite", 0);
-		StatusIconData sid = { sizeof(sid) };
+		StatusIconData sid = {};
 		sid.szModule = "FavContacts";
 		sid.flags = fav ? 0 : MBF_DISABLED;
 		Srmm_ModifyIcon(event->hContact, &sid);
@@ -92,7 +92,7 @@ int ProcessSrmmIconClick(WPARAM hContact, LPARAM lParam)
 		db_set_b(hContact, "FavContacts", "IsFavourite", fav);
 		if (fav) CallService(MS_AV_GETAVATARBITMAP, hContact, 0);
 
-		StatusIconData sid = { sizeof(sid) };
+		StatusIconData sid = {};
 		sid.szModule = "FavContacts";
 		sid.flags = fav ? 0 : MBF_DISABLED;
 		Srmm_ModifyIcon(hContact, &sid);
@@ -127,29 +127,17 @@ int ProcessReloadFonts(WPARAM, LPARAM)
 	if (g_Options.hfntSecond) DeleteObject(g_Options.hfntSecond);
 
 	LOGFONT lf = { 0 };
-	FontIDT fontid = { sizeof(fontid) };
-	mir_tstrcpy(fontid.group, LPGENT("Favorite Contacts"));
-	mir_tstrcpy(fontid.name, LPGENT("Contact name"));
-	g_Options.clLine1 = CallService(MS_FONT_GETT, (WPARAM)&fontid, (LPARAM)&lf);
+	g_Options.clLine1 = Font_GetW(LPGENW("Favorite Contacts"), LPGENW("Contact name"), &lf);
 	g_Options.hfntName = CreateFontIndirect(&lf);
 
-	mir_tstrcpy(fontid.name, LPGENT("Second line"));
-	g_Options.clLine2 = CallService(MS_FONT_GETT, (WPARAM)&fontid, (LPARAM)&lf);
+	g_Options.clLine2 = Font_GetW(LPGENW("Favorite Contacts"), LPGENW("Second line"), &lf);
 	g_Options.hfntSecond = CreateFontIndirect(&lf);
 
-	mir_tstrcpy(fontid.name, LPGENT("Selected contact name (color)"));
-	g_Options.clLine1Sel = CallService(MS_FONT_GETT, (WPARAM)&fontid, (LPARAM)&lf);
+	g_Options.clLine1Sel = Font_GetW(LPGENW("Favorite Contacts"), LPGENW("Selected contact name (color)"), &lf);
+	g_Options.clLine2Sel = Font_GetW(LPGENW("Favorite Contacts"), LPGENW("Selected second line (color)"), &lf);
 
-	mir_tstrcpy(fontid.name, LPGENT("Selected second line (color)"));
-	g_Options.clLine2Sel = CallService(MS_FONT_GETT, (WPARAM)&fontid, (LPARAM)&lf);
-
-	ColourIDT colourid = { sizeof(colourid) };
-	mir_tstrcpy(colourid.group, LPGENT("Favorite Contacts"));
-	mir_tstrcpy(colourid.name, LPGENT("Background"));
-	g_Options.clBack = CallService(MS_COLOUR_GETT, (WPARAM)&colourid, (LPARAM)&lf);
-
-	mir_tstrcpy(colourid.name, LPGENT("Selected background"));
-	g_Options.clBackSel = CallService(MS_COLOUR_GETT, (WPARAM)&colourid, (LPARAM)&lf);
+	g_Options.clBack = Colour_GetW(LPGENW("Favorite Contacts"), LPGENW("Background"));
+	g_Options.clBackSel = Colour_GetW(LPGENW("Favorite Contacts"), LPGENW("Selected background"));
 
 	return 0;
 }
@@ -158,7 +146,7 @@ int ProcessModulesLoaded(WPARAM, LPARAM)
 {
 	HookEvent(ME_TTB_MODULELOADED, ProcessTBLoaded);
 
-	StatusIconData sid = { sizeof(sid) };
+	StatusIconData sid = {};
 	sid.szModule = "FavContacts";
 	sid.szTooltip = LPGEN("Favorite Contacts");
 	sid.hIcon = IcoLib_GetIconByHandle(iconList[0].hIcolib);
@@ -170,59 +158,59 @@ int ProcessModulesLoaded(WPARAM, LPARAM)
 
 	/////////////////////////////////////////////////////////////////////////////////////
 
-	FontIDT fontid = { sizeof(fontid) };
-	mir_tstrcpy(fontid.group, LPGENT("Favorite Contacts"));
+	FontIDW fontid = { sizeof(fontid) };
+	mir_wstrcpy(fontid.group, LPGENW("Favorite Contacts"));
 	mir_strcpy(fontid.dbSettingsGroup, "FavContacts");
-	mir_tstrcpy(fontid.backgroundGroup, LPGENT("Favorite Contacts"));
+	mir_wstrcpy(fontid.backgroundGroup, LPGENW("Favorite Contacts"));
 	fontid.flags = FIDF_DEFAULTVALID;
 	fontid.deffontsettings.charset = DEFAULT_CHARSET;
 	fontid.deffontsettings.size = -11;
-	mir_tstrcpy(fontid.deffontsettings.szFace, _T("MS Shell Dlg"));
+	mir_wstrcpy(fontid.deffontsettings.szFace, L"MS Shell Dlg");
 	fontid.deffontsettings.style = 0;
 
-	mir_tstrcpy(fontid.backgroundName, LPGENT("Background"));
+	mir_wstrcpy(fontid.backgroundName, LPGENW("Background"));
 
-	mir_tstrcpy(fontid.name, LPGENT("Contact name"));
+	mir_wstrcpy(fontid.name, LPGENW("Contact name"));
 	mir_strcpy(fontid.prefix, "fntName");
 	fontid.deffontsettings.colour = GetSysColor(COLOR_MENUTEXT);
 	fontid.deffontsettings.style = DBFONTF_BOLD;
-	FontRegisterT(&fontid);
+	Font_RegisterW(&fontid);
 
-	mir_tstrcpy(fontid.name, LPGENT("Second line"));
+	mir_wstrcpy(fontid.name, LPGENW("Second line"));
 	mir_strcpy(fontid.prefix, "fntSecond");
 	fontid.deffontsettings.colour = sttShadeColor(GetSysColor(COLOR_MENUTEXT), GetSysColor(COLOR_MENU));
 	fontid.deffontsettings.style = 0;
-	FontRegisterT(&fontid);
+	Font_RegisterW(&fontid);
 
-	mir_tstrcpy(fontid.backgroundName, LPGENT("Selected background"));
+	mir_wstrcpy(fontid.backgroundName, LPGENW("Selected background"));
 
-	mir_tstrcpy(fontid.name, LPGENT("Selected contact name (color)"));
+	mir_wstrcpy(fontid.name, LPGENW("Selected contact name (color)"));
 	mir_strcpy(fontid.prefix, "fntNameSel");
 	fontid.deffontsettings.colour = GetSysColor(COLOR_HIGHLIGHTTEXT);
 	fontid.deffontsettings.style = DBFONTF_BOLD;
-	FontRegisterT(&fontid);
+	Font_RegisterW(&fontid);
 
-	mir_tstrcpy(fontid.name, LPGENT("Selected second line (color)"));
+	mir_wstrcpy(fontid.name, LPGENW("Selected second line (color)"));
 	mir_strcpy(fontid.prefix, "fntSecondSel");
 	fontid.deffontsettings.colour = sttShadeColor(GetSysColor(COLOR_HIGHLIGHTTEXT), GetSysColor(COLOR_HIGHLIGHT));
 	fontid.deffontsettings.style = 0;
-	FontRegisterT(&fontid);
+	Font_RegisterW(&fontid);
 
 	/////////////////////////////////////////////////////////////////////////////////////
 
-	ColourIDT colourid = { sizeof(colourid) };
-	mir_tstrcpy(colourid.group, LPGENT("Favorite Contacts"));
+	ColourIDW colourid = { sizeof(colourid) };
+	mir_wstrcpy(colourid.group, LPGENW("Favorite Contacts"));
 	mir_strcpy(colourid.dbSettingsGroup, "FavContacts");
 
-	mir_tstrcpy(colourid.name, LPGENT("Background"));
+	mir_wstrcpy(colourid.name, LPGENW("Background"));
 	mir_strcpy(colourid.setting, "BackColour");
 	colourid.defcolour = GetSysColor(COLOR_MENU);
-	ColourRegisterT(&colourid);
+	Colour_RegisterW(&colourid);
 
-	mir_tstrcpy(colourid.name, LPGENT("Selected background"));
+	mir_wstrcpy(colourid.name, LPGENW("Selected background"));
 	mir_strcpy(colourid.setting, "SelectedColour");
 	colourid.defcolour = GetSysColor(COLOR_HIGHLIGHT);
-	ColourRegisterT(&colourid);
+	Colour_RegisterW(&colourid);
 
 	HookEvent(ME_FONT_RELOAD, ProcessReloadFonts);
 	HookEvent(ME_COLOUR_RELOAD, ProcessReloadFonts);
@@ -230,10 +218,10 @@ int ProcessModulesLoaded(WPARAM, LPARAM)
 
 	/////////////////////////////////////////////////////////////////////////////////////
 
-	HOTKEYDESC hotkey = { sizeof(hotkey) };
+	HOTKEYDESC hotkey = {};
 	hotkey.pszName = "FavContacts/ShowMenu";
-	hotkey.pszDescription = LPGEN("Show favorite contacts");
-	hotkey.pszSection = "Contacts";
+	hotkey.szDescription.a = LPGEN("Show favorite contacts");
+	hotkey.szSection.a = "Contacts";
 	hotkey.pszService = MS_FAVCONTACTS_SHOWMENU_CENTERED;
 	hotkey.DefHotKey = MAKEWORD('Q', HOTKEYF_EXT);
 	Hotkey_Register(&hotkey);

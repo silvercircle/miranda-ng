@@ -23,8 +23,8 @@
 &Снять выбор
 [Hotkey]
 Горячая клавиша
-[Go to Customize -> Hotkeys to change the hotkey]
-Настройка в Тонкая настройка -> Горячие клавиши
+[Go to Options -> Customize -> Hotkeys to change the hotkey]
+Перейти в раздел "Тонкая настройка -> Горячие клавиши"
 [Update options]
 Настройки обновления
 [On startup]
@@ -35,8 +35,8 @@
 Каждые
 [Silent mode]
 Тихое обновление
-[Backup database before update (requires Db_autobackups)]
-Резервировать профиль перед обновлением (требуется Db_autobackups)
+[Backup database before update (requires Db_autobackups plugin)]
+Резервировать базу перед обновлением (требуется плагин Db_autobackups)
 [Files source]
 Источник обновления
 [Stable version]
@@ -49,6 +49,8 @@
 Заданная пользователем версия
 [Some component(s) was updated.\nYou need to restart your Miranda to apply installed updates.]
 Некоторые компоненты были обновлены.\nПрименение обновлений произойдёт после перезапуска программы.
+[Change platform to 32-bit]
+Перейти на 32-битную версию
 [Notifications]
 Уведомления
 [Restart]
@@ -151,18 +153,22 @@
 Обновлений нет.
 [Update checking already started!]
 Обновление уже запущено!
+[Plugin updater URI scheme]
+URI cхема
 [Close popup]
 Закрыть всплывающее окно
 [Do nothing]
 Ничего не делать
 [Backup database before update]
-Резервировать профиль перед обновлением
+Резервировать базу перед обновлением
 [Stable version (incompatible with current development version)]
 Стабильная версия (несовместима с версией в разработке)
 [hours]
 часа(ов)
 [days]
 дней
+[Change platform to 64-bit]
+Перейти на 64-битную версию
 [Test]
 Тест
 [Services]

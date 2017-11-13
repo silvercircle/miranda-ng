@@ -30,6 +30,7 @@
     <PlatformToolset Condition="'$(VisualStudioVersion)' == '11.0'">v110_xp</PlatformToolset>
     <PlatformToolset Condition="'$(VisualStudioVersion)' == '12.0'">v120_xp</PlatformToolset>
     <PlatformToolset Condition="'$(VisualStudioVersion)' == '14.0'">v140_xp</PlatformToolset>
+    <PlatformToolset Condition="'$(VisualStudioVersion)' == '15.0'">v141_xp</PlatformToolset>
     <OutDir Condition="'$(Platform)'=='Win32'">$(SolutionDir)$(Configuration)\Icons\</OutDir>
     <IntDir Condition="'$(Platform)'=='Win32'">$(SolutionDir)$(Configuration)\Obj\$(ProjectName)\</IntDir>
     <OutDir Condition="'$(Platform)'=='x64'">$(SolutionDir)$(Configuration)64\Icons\</OutDir>
@@ -88,7 +89,7 @@
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
-      <AdditionalOptions Condition="'$(VisualStudioVersion)' == '10.0'">/PDBALTPATH:%_PDB%</AdditionalOptions>
+      <AdditionalOptions>/PDBALTPATH:%_PDB%</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
 

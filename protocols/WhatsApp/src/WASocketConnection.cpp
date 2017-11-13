@@ -1,11 +1,11 @@
-#include "common.h"
+#include "stdafx.h"
 #include "WASocketConnection.h"
 
-HANDLE WASocketConnection::hNetlibUser = NULL;
+HNETLIBUSER g_hNetlibUser = NULL;
 
-void WASocketConnection::initNetwork(HANDLE hNetlibUser) throw (WAException)
+void WASocketConnection::initNetwork(HNETLIBUSER hNetlibUser) throw (WAException)
 {
-	WASocketConnection::hNetlibUser = hNetlibUser;
+	g_hNetlibUser = hNetlibUser;
 }
 
 void WASocketConnection::quitNetwork()
@@ -18,8 +18,7 @@ WASocketConnection::WASocketConnection(const std::string &dir, int port) throw (
 	noc.szHost = dir.c_str();
 	noc.wPort = port;
 	noc.flags = NLOCF_V2; // | NLOCF_SSL;
-	this->hConn = (HANDLE)CallService(MS_NETLIB_OPENCONNECTION, reinterpret_cast<WPARAM>(this->hNetlibUser),
-												 reinterpret_cast<LPARAM>(&noc));
+	this->hConn = Netlib_OpenConnection(g_hNetlibUser, &noc);
 	if (this->hConn == NULL)
 		throw WAException(getLastErrorMsg(), WAException::SOCKET_EX, WAException::SOCKET_EX_OPEN);
 
@@ -31,15 +30,9 @@ void WASocketConnection::write(int i)
 	char buffer;
 	buffer = (char)i;
 
-	NETLIBBUFFER nlb;
-	nlb.buf = &buffer;
-	nlb.len = 1;
-	nlb.flags = MSG_NOHTTPGATEWAYWRAP | MSG_NODUMP;
-
-	int result = CallService(MS_NETLIB_SEND, reinterpret_cast<WPARAM>(this->hConn), reinterpret_cast<LPARAM>(&nlb));
-	if (result < 1) {
+	int result = Netlib_Send(this->hConn, &buffer, 1, MSG_NOHTTPGATEWAYWRAP | MSG_NODUMP);
+	if (result < 1)
 		throw WAException(getLastErrorMsg(), WAException::SOCKET_EX, WAException::SOCKET_EX_SEND);
-	}
 }
 
 void WASocketConnection::makeNonBlock()
@@ -47,43 +40,14 @@ void WASocketConnection::makeNonBlock()
 	throw WAException("Error setting socket nonblocking!", WAException::SOCKET_EX, WAException::SOCKET_EX_OPEN);
 }
 
-int WASocketConnection::waitForRead()
-{
-	// #TODO Is this called at all?
-	return 0;
-
-	fd_set rfds;
-	struct timeval tv;
-	struct timeval* tvp;
-	int fd = 0;
-
-	FD_ZERO(&rfds);
-	FD_SET(fd, &rfds);
-	tv.tv_sec = 600; //ApplicationData::SELECT_TIMEOUT;
-	tv.tv_usec = 0; // 5000000;
-	tvp = &tv;
-
-	int retval = select(/*fd + 1*/ 0, &rfds, NULL, NULL, tvp);
-	if (!FD_ISSET(fd, &rfds))
-		retval = 0;
-
-	return retval;
-}
-
 void WASocketConnection::flush() {}
 
 void WASocketConnection::write(const std::vector<unsigned char> &bytes, int length)
 {
-	NETLIBBUFFER nlb;
 	std::string tmpBuf = std::string(bytes.begin(), bytes.end());
-	nlb.buf = (char*)&(tmpBuf.c_str()[0]);
-	nlb.len = length;
-	nlb.flags = MSG_NODUMP;
-
-	int result = CallService(MS_NETLIB_SEND, WPARAM(hConn), LPARAM(&nlb));
-	if (result < length) {
+	int result = Netlib_Send(hConn, tmpBuf.c_str(), length, MSG_NODUMP);
+	if (result < length)
 		throw WAException(getLastErrorMsg(), WAException::SOCKET_EX, WAException::SOCKET_EX_SEND);
-	}
 }
 
 unsigned char WASocketConnection::read()
@@ -130,7 +94,7 @@ void WASocketConnection::forceShutdown()
 
 void WASocketConnection::log(const char *prefix, const char *str)
 {
-	Netlib_Logf(WASocketConnection::hNetlibUser, "%s%s", prefix, str);
+	Netlib_Logf(g_hNetlibUser, "%s%s", prefix, str);
 }
 
 WASocketConnection::~WASocketConnection()

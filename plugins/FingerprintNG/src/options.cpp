@@ -1,7 +1,7 @@
 /*
 Fingerprint NG (client version) icons module for Miranda NG
 
-Copyright © 2006-12 ghazan, mataes, HierOS, FYR, Bio, nullbie, faith_healer and all respective contributors.
+Copyright © 2006-17 ghazan, mataes, HierOS, FYR, Bio, nullbie, faith_healer and all respective contributors.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -117,11 +117,11 @@ int OnOptInitialise(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = g_hInst;
-	odp.ptszGroup = LPGENT("Icons");
+	odp.szGroup.w = LPGENW("Icons");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_DIALOG);
-	odp.ptszTitle = LPGENT("Fingerprint");
+	odp.szTitle.w = LPGENW("Fingerprint");
 	odp.pfnDlgProc = DlgProcOptions;
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
 	Options_AddPage(wParam, &odp);
 	return 0;
 }

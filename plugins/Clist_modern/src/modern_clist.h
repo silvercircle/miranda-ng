@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -29,8 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void LoadContactTree(void);
 HTREEITEM GetTreeItemByHContact(MCONTACT hContact);
-void cli_ChangeContactIcon(MCONTACT hContact, int iIcon, int add);
-int GetContactInfosForSort(MCONTACT hContact, char **Proto, TCHAR **Name, int *Status);
+int GetContactInfosForSort(MCONTACT hContact, char **Proto, wchar_t **Name, int *Status);
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -40,7 +39,7 @@ public:
 	SortedList*	plText;
 	int			iMaxSmileyHeight;
 
-	CSmileyString() : plText(NULL), iMaxSmileyHeight(0) {};
+	CSmileyString() : plText(nullptr), iMaxSmileyHeight(0) {};
 	CSmileyString(const CSmileyString& ssIn)
 	{
 		_CopySmileyList(ssIn.plText);
@@ -60,13 +59,13 @@ public:
 		DestroySmileyList();
 	}
 
-	void ReplaceSmileys(struct SHORTDATA *dat, ClcCacheEntry *pdnce, TCHAR *szText, BOOL replace_smileys);
+	void ReplaceSmileys(ClcData *dat, ClcCacheEntry *pdnce, wchar_t *szText, BOOL replace_smileys);
 
 	/**	Destroy smiley list */
 	void DestroySmileyList();
 	/**  Copy Smiley List */
 	void _CopySmileyList(SortedList *plInput);
-	void AddListeningToIcon(SHORTDATA *dat, TCHAR *szText);
+	void AddListeningToIcon(ClcData *dat, wchar_t *szText);
 
 };
 
@@ -74,12 +73,12 @@ public:
 
 struct ClcCacheEntry : public ClcCacheEntryBase
 {
-	int      m_cache_nNoHiddenOffline;
+	int      m_bNoHiddenOffline;
 
-	int      m_cache_nStatus;
-	char*    m_cache_cszProto;
-	bool     m_bProtoNotExists, m_bIsSub;
-	bool     isUnknown;
+	int      m_iStatus;
+	char*    m_pszProto;
+	bool     m_bIsSub;
+	bool     m_bIsUnknown;
 
 	int      ApparentMode;
 	int      NotOnList;
@@ -87,17 +86,18 @@ struct ClcCacheEntry : public ClcCacheEntryBase
 	void*    ClcContact;
 	int      IsExpanded;
 
-	TCHAR*   szSecondLineText;
+	wchar_t*   szSecondLineText;
 	CSmileyString ssSecondLine;
 
-	TCHAR*   szThirdLineText;
+	wchar_t*   szThirdLineText;
 	CSmileyString ssThirdLine;
 
 	HANDLE   hTimeZone;
 	DWORD    dwLastMsgTime;
 
-	void     getName(void);
-	void     freeName(void);
+	int __forceinline getStatus() const
+	{	return m_iStatus;
+	}
 };
 
 ///////////////////////////////////////////////////////////////////////////////

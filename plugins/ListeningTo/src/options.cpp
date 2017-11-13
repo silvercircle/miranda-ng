@@ -21,14 +21,10 @@ Boston, MA 02111-1307, USA.
 
 // Prototypes /////////////////////////////////////////////////////////////////////////////////////
 
-HANDLE hOptHook = NULL;
-
 Options opts;
 
 extern std::vector<ProtocolInfo> proto_items;
 extern HANDLE hExtraIcon;
-
-BOOL ListeningToEnabled(char *proto, BOOL ignoreGlobal = FALSE);
 
 static INT_PTR CALLBACK OptionsDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 static INT_PTR CALLBACK PlayersDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -51,11 +47,11 @@ static OptPageControl optionsControls[] = {
 };
 
 static OptPageControl formatControls[] = {
-	{ &opts.templ, CONTROL_TEXT, IDC_TEMPLATE, "Template", (ULONG_PTR)_T("%artist% - %title%") },
-	{ &opts.unknown, CONTROL_TEXT, IDC_UNKNOWN, "Unknown", (ULONG_PTR)LPGENT("<Unknown>"), 0, 0, 128 },
-	{ &opts.xstatus_name, CONTROL_TEXT, IDC_XSTATUS_NAME, "XStatusName", (ULONG_PTR)LPGENT("Listening to") },
-	{ &opts.xstatus_message, CONTROL_TEXT, IDC_XSTATUS_MESSAGE, "XStatusMessage", (ULONG_PTR)_T("%listening%") },
-	{ &opts.nothing, CONTROL_TEXT, IDC_NOTHING, "Nothing", (ULONG_PTR)LPGENT("<Nothing is playing now>"), 0, 0, 128 }
+	{ &opts.templ, CONTROL_TEXT, IDC_TEMPLATE, "Template", (ULONG_PTR)L"%artist% - %title%" },
+	{ &opts.unknown, CONTROL_TEXT, IDC_UNKNOWN, "Unknown", (ULONG_PTR)LPGENW("<Unknown>"), 0, 0, 128 },
+	{ &opts.xstatus_name, CONTROL_TEXT, IDC_XSTATUS_NAME, "XStatusName", (ULONG_PTR)LPGENW("Listening to") },
+	{ &opts.xstatus_message, CONTROL_TEXT, IDC_XSTATUS_MESSAGE, "XStatusMessage", (ULONG_PTR)L"%listening%" },
+	{ &opts.nothing, CONTROL_TEXT, IDC_NOTHING, "Nothing", (ULONG_PTR)LPGENW("<Nothing is playing now>"), 0, 0, 128 }
 };
 
 static OptPageControl playersControls[] = {
@@ -78,20 +74,20 @@ int InitOptionsCallback(WPARAM wParam, LPARAM)
 	odp.hInstance = hInst;
 	odp.flags = ODPF_BOLDGROUPS;
 
-	odp.pszGroup = LPGEN("Status");
-	odp.pszTitle = LPGEN("Listening info");
-	odp.pszTab = LPGEN("General");
+	odp.szGroup.a = LPGEN("Status");
+	odp.szTitle.a = LPGEN("Listening info");
+	odp.szTab.a = LPGEN("General");
 	odp.pfnDlgProc = OptionsDlgProc;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONS);
 	Options_AddPage(wParam, &odp);
 
-	odp.pszTab = LPGEN("Format");
+	odp.szTab.a = LPGEN("Format");
 	odp.pfnDlgProc = FormatDlgProc;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_FORMAT);
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);
 
-	odp.pszTab = LPGEN("Players");
+	odp.szTab.a = LPGEN("Players");
 	odp.pfnDlgProc = PlayersDlgProc;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_PLAYERS);
 	Options_AddPage(wParam, &odp);
@@ -110,12 +106,7 @@ void InitOptions()
 
 	LoadOptions();
 
-	hOptHook = HookEvent(ME_OPT_INITIALISE, InitOptionsCallback);
-}
-
-void DeInitOptions()
-{
-	UnhookEvent(hOptHook);
+	HookEvent(ME_OPT_INITIALISE, InitOptionsCallback);
 }
 
 void LoadOptions()
@@ -131,11 +122,11 @@ BOOL IsTypeEnabled(LISTENINGTOINFO *lti)
 		return TRUE;
 
 	if (lti->dwFlags & LTI_UNICODE) {
-		if (mir_tstrcmpi(lti->ptszType, LPGENT("Music")) == 0)
+		if (mir_wstrcmpi(lti->ptszType, LPGENW("Music")) == 0)
 			return opts.enable_music;
-		if (mir_tstrcmpi(lti->ptszType, LPGENT("Radio")) == 0)
+		if (mir_wstrcmpi(lti->ptszType, LPGENW("Radio")) == 0)
 			return opts.enable_radio;
-		if (mir_tstrcmpi(lti->ptszType, LPGENT("Video")) == 0)
+		if (mir_wstrcmpi(lti->ptszType, LPGENW("Video")) == 0)
 			return opts.enable_video;
 		return opts.enable_others;
 	}
@@ -188,13 +179,13 @@ static INT_PTR CALLBACK OptionsDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 			// Init combo
 			int total = EXTRA_ICON_COUNT, first = 0;
 
-			SendDlgItemMessage(hwndDlg, IDC_ADV_ICON, CB_ADDSTRING, 0, (LPARAM)_T("1"));
-			SendDlgItemMessage(hwndDlg, IDC_ADV_ICON, CB_ADDSTRING, 0, (LPARAM)_T("2"));
+			SendDlgItemMessage(hwndDlg, IDC_ADV_ICON, CB_ADDSTRING, 0, (LPARAM)L"1");
+			SendDlgItemMessage(hwndDlg, IDC_ADV_ICON, CB_ADDSTRING, 0, (LPARAM)L"2");
 
 			if (total > 0) {
-				TCHAR tmp[10];
+				wchar_t tmp[10];
 				for (int i = first; i <= total; i++)
-					SendDlgItemMessage(hwndDlg, IDC_ADV_ICON, CB_ADDSTRING, 0, (LPARAM)_itot(i - first + 3, tmp, 10));
+					SendDlgItemMessage(hwndDlg, IDC_ADV_ICON, CB_ADDSTRING, 0, (LPARAM)_itow(i - first + 3, tmp, 10));
 			}
 		}
 

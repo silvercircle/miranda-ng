@@ -5,7 +5,7 @@
 ;  Version: 2.1.0.7
 ;  Authors: Scott Ellis, yaho
 ;============================================================
-[Tool Tip notification windows.]
+[Tooltip notification windows.]
 Informacje o kontaktach i programie w wyskakujących okienkach.
 ;file \plugins\TipperYM\res\resource.rc
 [Layout]
@@ -55,7 +55,7 @@ Pokaż tytuł
 [Status bar tips]
 Podpowiedzi paska statusu
 [Avatar border]
-Obramowanie awatara
+Ramka awatara
 [Round corners (avatar)]
 Zaokrąglone rogi (awatara)
 [Keep original avatar size]
@@ -200,12 +200,6 @@ Nieprawidłowe zastępstwo
 <Brak etykiety>
 [Add item]
 Dodaj
-[Add separator]
-Dodaj separator
-[Move up]
-Przesuń w górę
-[Move down]
-Przesuń w dół
 [No icon]
 Brak ikony
 [Icon on left]
@@ -380,7 +374,7 @@ Czas kontaktu
 [Time:]
 Czas:
 [xStatus title]
-Tytuł xStatus
+xStatus
 [xStatus title:]
 Tytuł xStatus:
 [xStatus text]
@@ -478,6 +472,16 @@ Wartości
 Tytuł w zasobniku
 [Tipper]
 Tipper
+[Copy item]
+
+[Arrow up]
+
+[Arrow down]
+
+[Reload]
+Odśwież
+[Apply]
+Zastosuj
 ;file \plugins\TipperYM\src\translations.cpp
 [Female]
 Kobieta

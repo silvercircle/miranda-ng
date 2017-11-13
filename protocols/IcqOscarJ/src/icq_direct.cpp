@@ -6,7 +6,7 @@
 // Copyright © 2001-2002 Jon Keating, Richard Hughes
 // Copyright © 2002-2004 Martin Öberg, Sam Kothari, Robert Rainwater
 // Copyright © 2004-2010 Joe Kucera
-// Copyright © 2012-2014 Miranda NG Team
+// Copyright © 2012-2017 Miranda NG Team
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -29,7 +29,7 @@ struct directthreadstartinfo
 {
 	int type;           // Only valid for outgoing connections
 	int incoming;       // 1=incoming, 0=outgoing
-	HANDLE hConnection; // only valid for incoming connections, handle to the connection
+	HNETLIBCONN hConnection; // only valid for incoming connections, handle to the connection
 	MCONTACT hContact;    // Only valid for outgoing connections
 	void* pvExtra;      // Only valid for outgoing connections
 };
@@ -50,7 +50,7 @@ void CIcqProto::CloseContactDirectConns(MCONTACT hContact)
 
 	for (int i = 0; i < directConns.getCount(); i++) {
 		if (!hContact || directConns[i]->hContact == hContact) {
-			HANDLE hConnection = directConns[i]->hConnection;
+			HNETLIBCONN hConnection = directConns[i]->hConnection;
 
 			directConns[i]->hConnection = NULL; // do not allow reuse
 			NetLib_CloseConnection(&hConnection, FALSE);
@@ -105,7 +105,7 @@ int CIcqProto::sendDirectPacket(directconnect* dc, icq_packet* pkt)
 	return nResult;
 }
 
-directthreadstartinfo* CreateDTSI(MCONTACT hContact, HANDLE hConnection, int type)
+directthreadstartinfo* CreateDTSI(MCONTACT hContact, HNETLIBCONN hConnection, int type)
 {
 	directthreadstartinfo *dtsi = (directthreadstartinfo*)SAFE_MALLOC(sizeof(directthreadstartinfo));
 	dtsi->hContact = hContact;
@@ -159,7 +159,7 @@ BOOL CIcqProto::IsDirectConnectionOpen(MCONTACT hContact, int type, int bPassive
 
 // This function is called from the Netlib when someone is connecting to
 // one of our incomming DC ports
-void icq_newConnectionReceived(HANDLE hNewConnection, DWORD, void *pExtra)
+void icq_newConnectionReceived(HNETLIBCONN hNewConnection, DWORD, void *pExtra)
 {
 	// Start a new thread for the incomming connection
 	CIcqProto* ppro = (CIcqProto*)pExtra;
@@ -192,9 +192,10 @@ void CIcqProto::CloseDirectConnection(directconnect *dc)
 
 void __cdecl CIcqProto::icq_directThread(directthreadstartinfo *dtsi)
 {
+	Thread_SetName("ICQ: directThread");
+
+	NETLIBPACKETRECVER packetRecv = {};
 	directconnect dc = { 0 };
-	NETLIBPACKETRECVER packetRecv = { 0 };
-	HANDLE hPacketRecver;
 	BOOL bFirstPacket = TRUE;
 	size_t nSkipPacketBytes = 0;
 	DWORD dwReqMsgID1 = 0, dwReqMsgID2 = 0;
@@ -314,7 +315,7 @@ void __cdecl CIcqProto::icq_directThread(directthreadstartinfo *dtsi)
 			if (dc.type == DIRECTCONN_FILE) {
 				ProtoBroadcastAck(dc.ft->hContact, ACKTYPE_FILE, ACKRESULT_FAILED, dc.ft, 0);
 				// Release transfer
-				SafeReleaseFileTransfer((void**)&dc.ft);
+				SafeReleaseFileTransfer((basic_filetransfer**)&dc.ft);
 			}
 			goto LBL_Exit;
 		}
@@ -331,16 +332,14 @@ void __cdecl CIcqProto::icq_directThread(directthreadstartinfo *dtsi)
 		}
 	}
 
-	hPacketRecver = (HANDLE)CallService(MS_NETLIB_CREATEPACKETRECVER, (WPARAM)dc.hConnection, 8192);
-	packetRecv.cbSize = sizeof(packetRecv);
-	packetRecv.bytesUsed = 0;
+	HANDLE hPacketRecver = Netlib_CreatePacketReceiver(dc.hConnection, 8192);
 
 	// Packet receiving loop
 
 	while (dc.hConnection) {
 		packetRecv.dwTimeout = dc.wantIdleTime ? 0 : 600000;
 
-		int recvResult = CallService(MS_NETLIB_GETMOREPACKETS, (WPARAM)hPacketRecver, (LPARAM)&packetRecv);
+		int recvResult = Netlib_GetMorePackets(hPacketRecver, &packetRecv);
 		if (recvResult == 0) {
 			NetLog_Direct("Clean closure of direct socket (%p)", dc.hConnection);
 			break;
@@ -429,7 +428,7 @@ void __cdecl CIcqProto::icq_directThread(directthreadstartinfo *dtsi)
 		else if (dc.ft->hConnection)
 			ProtoBroadcastAck(dc.ft->hContact, ACKTYPE_FILE, ACKRESULT_FAILED, dc.ft, 0);
 
-		SafeReleaseFileTransfer((void**)&dc.ft);
+		SafeReleaseFileTransfer((basic_filetransfer**)&dc.ft);
 		_chdir("\\");    /* so we don't leave a subdir handle open so it can't be deleted */
 	}
 
@@ -770,9 +769,6 @@ int DecryptDirectPacket(directconnect* dc, PBYTE buf, size_t wLen)
 		return 1;  // no decryption necessary.
 
 	if (size < 4)
-		return 1;
-
-	if (dc->wVersion < 4)
 		return 1;
 
 	// backup the first 6 bytes

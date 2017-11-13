@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Steam.dll
 ;  Plugin: Steam protocol
-;  Version: 0.11.4.2
+;  Version: 0.11.6.1
 ;  Authors: Miranda NG Team, Robert Pösel
 ;============================================================
 [Steam protocol support for Miranda NG.]
@@ -20,12 +20,14 @@ Konto
 Kontakty
 [Use bigger avatars]
 Używaj większych awatarów
+[Message sessions]
+Okno rozmowy
+[Show chat state events (i.e., user closed chat session)]
+
 [Captcha]
 Kod Captcha
 [Cancel]
 Anuluj
-[Steam Guard]
-Steam Guard
 [As an added account security measure, you'll need to grant access by entering the special code we've just sent to your email address.]
 Jako środek bezpieczeństwa dodanego konta, będziesz musiał udzielić dostępu podając specjalny kod, który właśnie wysłaliśmy na twój adres e-mail.
 [Go to email domain]
@@ -38,6 +40,8 @@ Wprowadź hasło
 Zapisz hasło
 [Enter the password to continue.]
 Wprowadź hasło, by kontynuować.
+[As an added account security measure, you'll need to grant access by entering the SMS code we've just sent to your mobile phone.]
+
 ;file \protocols\Steam\src\main.cpp
 [Steam game]
 Gra Steam
@@ -69,8 +73,10 @@ Sieć
 [Blocked contacts]
 Kontakty zablokowane
 ;file \protocols\Steam\src\steam_login.cpp
-[Connection token expired. Please login again.]
-Token połączenia wygasł. Zaloguj się ponownie.
+[Cannot obtain connection token.]
+Nie można uzyskać tokenu połączenia.
+[Unknown login error.]
+Nieznany błąd logowania.
 ;file \protocols\Steam\src\steam_menus.cpp
 [Steam menu chooser]
 Wybór menu Steam
@@ -93,8 +99,9 @@ Ikona protokołu
 Ikona grania
 [%s connection]
 Połączenie %s
-[SteamID]
-SteamID
 [You cannot send messages when you are offline.]
 Nie można wysłać wiadomości, gdy jesteś offline.
+;file \protocols\Steam\src\steam_utils.cpp
+[closed chat session]
+rozmówca zakończył sesję rozmowy
 ;file \protocols\Steam\src\steam_xstatus.cpp

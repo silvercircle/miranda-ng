@@ -20,13 +20,7 @@
 
 #include "gg.h"
 
-static INT_PTR CALLBACK gg_genoptsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
-static INT_PTR CALLBACK gg_confoptsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
-static INT_PTR CALLBACK gg_advoptsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 extern INT_PTR CALLBACK gg_userutildlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
-
-////////////////////////////////////////////////////////////////////////////////
-// SetValue
 
 #define SVS_NORMAL       0
 #define SVS_GENDER       1
@@ -38,12 +32,15 @@ extern INT_PTR CALLBACK gg_userutildlgproc(HWND hwndDlg, UINT msg, WPARAM wParam
 #define SVS_TIMEZONE     7
 #define SVS_GGVERSION    9
 
+////////////////////////////////////////////////////////////////////////////////
+// SetValue
+//
 static void SetValue(HWND hwndDlg, int idCtrl, MCONTACT hContact, char *szModule, char *szSetting, int special, int disableIfUndef)
 {
 	DBVARIANT dbv = {0};
-	TCHAR str[256];
-	TCHAR *ptstr = NULL;
-	TCHAR* valT = NULL;
+	wchar_t str[256];
+	wchar_t *ptstr = NULL;
+	wchar_t* valT = NULL;
 	int unspecified = 0;
 
 	dbv.type = DBVT_DELETED;
@@ -68,11 +65,11 @@ static void SetValue(HWND hwndDlg, int idCtrl, MCONTACT hContact, char *szModule
 				if (dbv.cVal == -100) unspecified = 1;
 				else {
 					ptstr = str;
-					mir_sntprintf(str, dbv.cVal ? _T("GMT%+d:%02d") : _T("GMT"), -dbv.cVal / 2, (dbv.cVal & 1) * 30);
+					mir_snwprintf(str, dbv.cVal ? L"GMT%+d:%02d" : L"GMT", -dbv.cVal / 2, (dbv.cVal & 1) * 30);
 				}
 			} else {
 				unspecified = (special == SVS_ZEROISUNSPEC && dbv.bVal == 0);
-				ptstr = _itot(special == SVS_SIGNED ? dbv.cVal : dbv.bVal, str, 10);
+				ptstr = _itow(special == SVS_SIGNED ? dbv.cVal : dbv.bVal, str, 10);
 			}
 			break;
 		case DBVT_WORD:
@@ -82,12 +79,12 @@ static void SetValue(HWND hwndDlg, int idCtrl, MCONTACT hContact, char *szModule
 					unspecified = 1;
 				} else {
 					ptstr = str;
-					mir_sntprintf(str, _T("%S"), pstr);
+					mir_snwprintf(str, L"%S", pstr);
 				}
 			}
 			else {
 				unspecified = (special == SVS_ZEROISUNSPEC && dbv.wVal == 0);
-				ptstr = _itot(special == SVS_SIGNED ? dbv.sVal : dbv.wVal, str, 10);
+				ptstr = _itow(special == SVS_SIGNED ? dbv.sVal : dbv.wVal, str, 10);
 			}
 			break;
 		case DBVT_DWORD:
@@ -100,35 +97,35 @@ static void SetValue(HWND hwndDlg, int idCtrl, MCONTACT hContact, char *szModule
 					unspecified = 1;
 				} else {
 					ptstr = str;
-					mir_sntprintf(str, _T("%S"), pstr);
+					mir_snwprintf(str, L"%S", pstr);
 				}
 				if (dbv.dVal == 0) unspecified = 1;
 			} else if (special == SVS_GGVERSION) {
 				ptstr = str;
-				mir_sntprintf(str, _T("%S"), (char *)gg_version2string(dbv.dVal));
+				mir_snwprintf(str, L"%S", (char *)gg_version2string(dbv.dVal));
 			} else {
-				ptstr = _itot(special == SVS_SIGNED ? dbv.lVal : dbv.dVal, str, 10);
+				ptstr = _itow(special == SVS_SIGNED ? dbv.lVal : dbv.dVal, str, 10);
 			}
 			break;
 		case DBVT_ASCIIZ:
 			unspecified = (special == SVS_ZEROISUNSPEC && dbv.pszVal[0] == '\0');
 			ptstr = str;
-			mir_sntprintf(str, _T("%S"), dbv.pszVal);
+			mir_snwprintf(str, L"%S", dbv.pszVal);
 			break;
-		case DBVT_TCHAR:
+		case DBVT_WCHAR:
 			unspecified = (special == SVS_ZEROISUNSPEC && dbv.ptszVal[0] == '\0');
 			ptstr = dbv.ptszVal;
 			break;
 		case DBVT_UTF8:
 			unspecified = (special == SVS_ZEROISUNSPEC && dbv.pszVal[0] == '\0');
-			valT = mir_utf8decodeT(dbv.pszVal);
+			valT = mir_utf8decodeW(dbv.pszVal);
 			ptstr = str;
-			_tcscpy_s(str, _countof(str), valT);
+			wcscpy_s(str, _countof(str), valT);
 			mir_free(valT);
 			break;
 		default:
 			ptstr = str;
-			mir_tstrcpy(str, _T("???"));
+			mir_wstrcpy(str, L"???");
 			break;
 		}
 	}
@@ -149,38 +146,8 @@ static void SetValue(HWND hwndDlg, int idCtrl, MCONTACT hContact, char *szModule
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// Options Page : Init
-
-int GGPROTO::options_init(WPARAM wParam, LPARAM lParam)
-{
-	OPTIONSDIALOGPAGE odp = { 0 };
-	odp.flags = ODPF_TCHAR;
-	odp.position = 1003000;
-	odp.hInstance = hInstance;
-	odp.ptszGroup = LPGENT("Network");
-	odp.ptszTitle = m_tszUserName;
-	odp.dwInitParam = (LPARAM)this;
-	odp.flags = ODPF_TCHAR | ODPF_BOLDGROUPS | ODPF_DONTTRANSLATE;
-
-	odp.ptszTab = LPGENT("General");
-	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_GG_GENERAL);
-	odp.pfnDlgProc = gg_genoptsdlgproc;
-	Options_AddPage(wParam, &odp);
-
-	odp.ptszTab = LPGENT("Conference");
-	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_GG_CONFERENCE);
-	odp.pfnDlgProc = gg_confoptsdlgproc;
-	Options_AddPage(wParam, &odp);
-
-	odp.ptszTab = LPGENT("Advanced");
-	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_GG_ADVANCED);
-	odp.pfnDlgProc = gg_advoptsdlgproc;
-	Options_AddPage(wParam, &odp);
-	return 0;
-}
-
-////////////////////////////////////////////////////////////////////////////////
 // Check if new user data has been filled in for specified account
+//
 void GGPROTO::checknewuser(uin_t uin, const char* passwd)
 {
 	char oldpasswd[128];
@@ -200,10 +167,10 @@ void GGPROTO::checknewuser(uin_t uin, const char* passwd)
 
 ////////////////////////////////////////////////////////////////////////////////
 // Options Page : Proc
-
+//
 static void gg_optsdlgcheck(HWND hwndDlg)
 {
-	TCHAR text[128];
+	wchar_t text[128];
 	GetDlgItemText(hwndDlg, IDC_UIN, text, _countof(text));
 	if (text[0]) {
 		GetDlgItemText(hwndDlg, IDC_EMAIL, text, _countof(text));
@@ -227,6 +194,7 @@ static void gg_optsdlgcheck(HWND hwndDlg)
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Proc: General options dialog
+//
 static INT_PTR CALLBACK gg_genoptsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	GGPROTO *gg = (GGPROTO *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
@@ -236,7 +204,7 @@ static INT_PTR CALLBACK gg_genoptsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 		{
 			DBVARIANT dbv;
 			DWORD num;
-			GGPROTO *gg = (GGPROTO *)lParam;
+			gg = (GGPROTO *)lParam;
 			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)lParam);
 
 			TranslateDialogDefault(hwndDlg);
@@ -513,7 +481,7 @@ static INT_PTR CALLBACK gg_genoptsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Proc: Conference options dialog
-
+//
 static INT_PTR CALLBACK gg_confoptsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	GGPROTO *gg = (GGPROTO *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
@@ -576,6 +544,7 @@ static INT_PTR CALLBACK gg_confoptsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Proc: Advanced options dialog
+//
 static INT_PTR CALLBACK gg_advoptsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	GGPROTO *gg = (GGPROTO *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
@@ -696,6 +665,7 @@ struct GGDETAILSDLGDATA
 ////////////////////////////////////////////////////////////////////////////////
 // Info Page : Proc
 // lParam: 0 if current user (account owner) details, hContact if on list user details
+//
 static INT_PTR CALLBACK gg_detailsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	struct GGDETAILSDLGDATA *dat = (struct GGDETAILSDLGDATA *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
@@ -712,7 +682,7 @@ static INT_PTR CALLBACK gg_detailsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 		// Add genders
 		if (!dat->hContact)
 		{
-			SendDlgItemMessage(hwndDlg, IDC_GENDER, CB_ADDSTRING, 0, (LPARAM)_T(""));				// 0
+			SendDlgItemMessage(hwndDlg, IDC_GENDER, CB_ADDSTRING, 0, (LPARAM)L"");				// 0
 			SendDlgItemMessage(hwndDlg, IDC_GENDER, CB_ADDSTRING, 0, (LPARAM)TranslateT("Female"));	// 1
 			SendDlgItemMessage(hwndDlg, IDC_GENDER, CB_ADDSTRING, 0, (LPARAM)TranslateT("Male"));	// 2
 		}
@@ -727,11 +697,10 @@ static INT_PTR CALLBACK gg_detailsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 				break;
 
 			case PSN_INFOCHANGED:
+				if (dat)
 				{
 					MCONTACT hContact = (MCONTACT)((LPPSHNOTIFY)lParam)->lParam;
 					GGPROTO *gg = dat->gg;
-					if (!dat)
-						break;
 
 					// Show updated message
 					if (dat->updating)
@@ -816,7 +785,7 @@ static INT_PTR CALLBACK gg_detailsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 				if (!dat || dat->hContact || dat->disableUpdate)
 					break;
 				{
-				TCHAR text[256];
+				wchar_t text[256];
 				GGPROTO *gg = dat->gg;
 
 				if (!gg->isonline())
@@ -830,21 +799,23 @@ static INT_PTR CALLBACK gg_detailsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 				EnableWindow(GetDlgItem(hwndDlg, IDC_SAVE), FALSE);
 
 				gg_pubdir50_t req = gg_pubdir50_new(GG_PUBDIR50_WRITE);
+				if (req == NULL)
+					break;
 
 				GetDlgItemText(hwndDlg, IDC_FIRSTNAME, text, _countof(text));
-				if (mir_tstrlen(text))
+				if (mir_wstrlen(text))
 					gg_pubdir50_add(req, GG_PUBDIR50_FIRSTNAME, T2Utf(text));
 
 				GetDlgItemText(hwndDlg, IDC_LASTNAME, text, _countof(text));
-				if (mir_tstrlen(text))
+				if (mir_wstrlen(text))
 					gg_pubdir50_add(req, GG_PUBDIR50_LASTNAME, T2Utf(text));
 
 				GetDlgItemText(hwndDlg, IDC_NICKNAME, text, _countof(text));
-				if (mir_tstrlen(text))
+				if (mir_wstrlen(text))
 					gg_pubdir50_add(req, GG_PUBDIR50_NICKNAME, T2Utf(text));
 
 				GetDlgItemText(hwndDlg, IDC_CITY, text, _countof(text));
-				if (mir_tstrlen(text))
+				if (mir_wstrlen(text))
 					gg_pubdir50_add(req, GG_PUBDIR50_CITY, T2Utf(text));
 
 				// Gadu-Gadu Female <-> Male
@@ -860,15 +831,15 @@ static INT_PTR CALLBACK gg_detailsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 				}
 
 				GetDlgItemText(hwndDlg, IDC_BIRTHYEAR, text, _countof(text));
-				if (mir_tstrlen(text))
+				if (mir_wstrlen(text))
 					gg_pubdir50_add(req, GG_PUBDIR50_BIRTHYEAR, T2Utf(text));
 
 				GetDlgItemText(hwndDlg, IDC_FAMILYNAME, text, _countof(text));
-				if (mir_tstrlen(text))
+				if (mir_wstrlen(text))
 					gg_pubdir50_add(req, GG_PUBDIR50_FAMILYNAME, T2Utf(text));
 
 				GetDlgItemText(hwndDlg, IDC_CITYORIGIN, text, _countof(text));
-				if (mir_tstrlen(text))
+				if (mir_wstrlen(text))
 					gg_pubdir50_add(req, GG_PUBDIR50_FAMILYCITY, T2Utf(text));
 
 				// Run update
@@ -892,9 +863,42 @@ static INT_PTR CALLBACK gg_detailsdlgproc(HWND hwndDlg, UINT msg, WPARAM wParam,
 	return FALSE;
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
+// Options Page : Init
+//
+int GGPROTO::options_init(WPARAM wParam, LPARAM)
+{
+	OPTIONSDIALOGPAGE odp = { 0 };
+	odp.flags = ODPF_UNICODE;
+	odp.position = 1003000;
+	odp.hInstance = hInstance;
+	odp.szGroup.w = LPGENW("Network");
+	odp.szTitle.w = m_tszUserName;
+	odp.dwInitParam = (LPARAM)this;
+	odp.flags = ODPF_UNICODE | ODPF_BOLDGROUPS | ODPF_DONTTRANSLATE;
+
+	odp.szTab.w = LPGENW("General");
+	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_GG_GENERAL);
+	odp.pfnDlgProc = gg_genoptsdlgproc;
+	Options_AddPage(wParam, &odp);
+
+	odp.szTab.w = LPGENW("Conference");
+	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_GG_CONFERENCE);
+	odp.pfnDlgProc = gg_confoptsdlgproc;
+	Options_AddPage(wParam, &odp);
+
+	odp.szTab.w = LPGENW("Advanced");
+	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_GG_ADVANCED);
+	odp.pfnDlgProc = gg_advoptsdlgproc;
+	Options_AddPage(wParam, &odp);
+	return 0;
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // Info Page : Init
-
+//
 int GGPROTO::details_init(WPARAM wParam, LPARAM lParam)
 {
 	MCONTACT hContact = lParam;
@@ -914,12 +918,12 @@ int GGPROTO::details_init(WPARAM wParam, LPARAM lParam)
 	}
 
 	OPTIONSDIALOGPAGE odp = { 0 };
-	odp.flags = ODPF_DONTTRANSLATE | ODPF_TCHAR;
+	odp.flags = ODPF_DONTTRANSLATE | ODPF_UNICODE;
 	odp.hInstance = hInstance;
 	odp.pfnDlgProc = gg_detailsdlgproc;
 	odp.position = -1900000000;
 	odp.pszTemplate = pszTemplate;
-	odp.ptszTitle = m_tszUserName;
+	odp.szTitle.w = m_tszUserName;
 	odp.dwInitParam = (LPARAM)this;
 	UserInfo_AddPage(wParam, &odp);
 
@@ -932,8 +936,8 @@ int GGPROTO::details_init(WPARAM wParam, LPARAM lParam)
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Proc: Account manager options dialog
+//
 INT_PTR CALLBACK gg_acc_mgr_guidlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
-////////////////////////////////////////////////////////////////////////////////////////////
 {
 	GGPROTO *gg = (GGPROTO *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
 
@@ -942,7 +946,7 @@ INT_PTR CALLBACK gg_acc_mgr_guidlgproc(HWND hwndDlg, UINT msg, WPARAM wParam, LP
 		{
 			DBVARIANT dbv;
 			DWORD num;
-			GGPROTO *gg = (GGPROTO *)lParam;
+			gg = (GGPROTO *)lParam;
 			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)lParam);
 
 			TranslateDialogDefault(hwndDlg);

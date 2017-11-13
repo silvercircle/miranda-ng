@@ -1,5 +1,5 @@
 /*
-Copyright © 2012-15 Miranda NG team
+Copyright © 2012-17 Miranda NG team
 Copyright © 2009 Jim Porter
 
 This program is free software: you can redistribute it and/or modify
@@ -49,8 +49,8 @@ MCONTACT TwitterProto::AddToList(int, PROTOSEARCHRESULT *psr)
 	if (m_iStatus != ID_STATUS_ONLINE)
 		return 0;
 
-	ForkThread(&TwitterProto::AddToListWorker, mir_utf8encodeT(psr->nick.t));
-	return AddToClientList(_T2A(psr->nick.t), "");
+	ForkThread(&TwitterProto::AddToListWorker, mir_utf8encodeW(psr->nick.w));
+	return AddToClientList(_T2A(psr->nick.w), "");
 }
 
 // *************************
@@ -93,10 +93,10 @@ int TwitterProto::GetInfo(MCONTACT hContact, int info_type)
 
 struct search_query
 {
-	search_query(const std::tstring &_query, bool _by_email) : query(_query), by_email(_by_email)
+	search_query(const std::wstring &_query, bool _by_email) : query(_query), by_email(_by_email)
 	{
 	}
-	std::tstring query;
+	std::wstring query;
 	bool by_email;
 };
 
@@ -126,28 +126,28 @@ void TwitterProto::DoSearch(void *pArg)
 
 	if (found) {
 		PROTOSEARCHRESULT psr = { sizeof(psr) };
-		psr.flags = PSR_TCHAR;
-		psr.nick.t = mir_a2t(info.username.c_str());
-		psr.firstName.t = mir_a2t(info.real_name.c_str());
+		psr.flags = PSR_UNICODE;
+		psr.nick.w = mir_a2u(info.username.c_str());
+		psr.firstName.w = mir_a2u(info.real_name.c_str());
 
 		ProtoBroadcastAck(0, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)1, (LPARAM)&psr);
 		ProtoBroadcastAck(0, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE)1, 0);
 
-		mir_free(psr.nick.t);
-		mir_free(psr.firstName.t);
+		mir_free(psr.nick.w);
+		mir_free(psr.firstName.w);
 	}
 	else ProtoBroadcastAck(0, ACKTYPE_SEARCH, ACKRESULT_SUCCESS, (HANDLE)1, 0);
 
 	delete query;
 }
 
-HANDLE TwitterProto::SearchBasic(const TCHAR *username)
+HANDLE TwitterProto::SearchBasic(const wchar_t *username)
 {
 	ForkThread(&TwitterProto::DoSearch, new search_query(username, false));
 	return (HANDLE)1;
 }
 
-HANDLE TwitterProto::SearchByEmail(const TCHAR *email)
+HANDLE TwitterProto::SearchByEmail(const wchar_t *email)
 {
 	ForkThread(&TwitterProto::DoSearch, new search_query(email, true));
 	return (HANDLE)1;
@@ -162,7 +162,7 @@ void TwitterProto::GetAwayMsgWorker(void *arg)
 		return;
 
 	DBVARIANT dbv;
-	if (!db_get_ts(hContact, "CList", "StatusMsg", &dbv)) {
+	if (!db_get_ws(hContact, "CList", "StatusMsg", &dbv)) {
 		ProtoBroadcastAck(hContact, ACKTYPE_AWAYMSG, ACKRESULT_SUCCESS, (HANDLE)1, (LPARAM)dbv.ptszVal);
 		db_free(&dbv);
 	}
@@ -240,25 +240,25 @@ MCONTACT TwitterProto::AddToClientList(const char *name, const char *status)
 		AddChatContact(name);
 
 	// If not, make a new contact!
-	hContact = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
+	hContact = db_add_contact();
 	if (hContact) {
 		if (Proto_AddToContact(hContact, m_szModuleName) == 0) {
 			setString(hContact, TWITTER_KEY_UN, name);
 			setWord(hContact, "Status", ID_STATUS_ONLINE);
 			db_set_utf(hContact, "CList", "StatusMsg", status);
 
-			std::string url = profile_base_url(twit_.get_base_url()) + http::url_encode(name);
+			std::string url = profile_base_url("https://twitter.com/") + http::url_encode(name);
 			setString(hContact, "Homepage", url.c_str());
-
+			Skin_PlaySound("TwitterNewContact");
 			DBVARIANT dbv;
-			if (!getTString(TWITTER_KEY_GROUP, &dbv)) {
-				db_set_ts(hContact, "CList", "Group", dbv.ptszVal);
+			if (!getWString(TWITTER_KEY_GROUP, &dbv)) {
+				db_set_ws(hContact, "CList", "Group", dbv.ptszVal);
 				db_free(&dbv);
 			}
 
 			return hContact;
 		}
-		CallService(MS_DB_CONTACT_DELETE, hContact, 0);
+		db_delete_contact(hContact);
 	}
 
 	return 0;

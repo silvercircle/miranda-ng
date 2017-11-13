@@ -17,7 +17,7 @@ not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 */
 
-#include "commons.h"
+#include "stdafx.h"
 
 static LRESULT CALLBACK EditProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 static INT_PTR CALLBACK AddReplacementDlgProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -25,8 +25,8 @@ static INT_PTR CALLBACK AddReplacementDlgProc(HWND hwndDlg, UINT msg, WPARAM wPa
 struct Data
 {
 	Dictionary *dict;
-	tstring find;
-	tstring replace;
+	std::wstring find;
+	std::wstring replace;
 	BOOL useVariables;
 
 	BOOL modal;
@@ -37,7 +37,7 @@ struct Data
 };
 
 BOOL ShowAutoReplaceDialog(HWND parent, BOOL modal,
-	Dictionary *dict, const TCHAR *find, const TCHAR *replace, BOOL useVariables,
+	Dictionary *dict, const wchar_t *find, const wchar_t *replace, BOOL useVariables,
 	BOOL findReadOnly, AutoReplaceDialogCallback callback, void *param)
 {
 	Data *data = new Data();
@@ -79,11 +79,11 @@ static LRESULT CALLBACK OnlyCharsEditProc(HWND hwnd, UINT msg, WPARAM wParam, LP
 		if (GetKeyState(VK_CONTROL) & 0x8000)	// CTRL key
 			break;
 		{
-			TCHAR c = (TCHAR)wParam;
+			wchar_t c = (wchar_t)wParam;
 			if (!data->dict->autoReplace->isWordChar(c))
 				return 1;
 
-			TCHAR tmp[2] = { c, 0 };
+			wchar_t tmp[2] = { c, 0 };
 			CharLower(tmp);
 			wParam = tmp[0];
 
@@ -96,10 +96,10 @@ static LRESULT CALLBACK OnlyCharsEditProc(HWND hwnd, UINT msg, WPARAM wParam, LP
 	switch (msg) {
 	case EM_PASTESPECIAL:
 	case WM_PASTE:
-		TCHAR text[256];
+		wchar_t text[256];
 		GetWindowText(hwnd, text, _countof(text));
 
-		scoped_free<TCHAR> dest = data->dict->autoReplace->filterText(text);
+		scoped_free<wchar_t> dest = data->dict->autoReplace->filterText(text);
 		SetWindowText(hwnd, dest);
 		break;
 	}
@@ -165,15 +165,13 @@ static INT_PTR CALLBACK AddReplacementDlgProc(HWND hwndDlg, UINT msg, WPARAM wPa
 			SetWindowLongPtr(GetDlgItem(hwndDlg, IDC_OLD), GWLP_USERDATA, (LONG_PTR)data);
 			mir_subclassWindow(GetDlgItem(hwndDlg, IDC_OLD), OnlyCharsEditProc);
 
-			HICON hIcon = IcoLib_GetIcon("spellchecker_enabled");
-			SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
-			IcoLib_ReleaseIcon(hIcon);
+			Window_SetIcon_IcoLib(hwndDlg, IcoLib_GetIconHandle("spellchecker_enabled"));
 
 			SendDlgItemMessage(hwndDlg, IDC_OLD, EM_LIMITTEXT, 256, 0);
 			SendDlgItemMessage(hwndDlg, IDC_NEW, EM_LIMITTEXT, 256, 0);
 
 			if (!data->find.empty()) {
-				scoped_free<TCHAR> tmp = data->dict->autoReplace->filterText(data->find.c_str());
+				scoped_free<wchar_t> tmp = data->dict->autoReplace->filterText(data->find.c_str());
 				SetDlgItemText(hwndDlg, IDC_OLD, tmp);
 			}
 			if (!data->replace.empty())
@@ -215,15 +213,15 @@ static INT_PTR CALLBACK AddReplacementDlgProc(HWND hwndDlg, UINT msg, WPARAM wPa
 		{
 			Data *data = (Data *)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
 
-			TCHAR find[256];
+			wchar_t find[256];
 			if (data->findReadOnly)
-				mir_tstrncpy(find, data->find.c_str(), _countof(find));
+				mir_wstrncpy(find, data->find.c_str(), _countof(find));
 			else {
 				GetDlgItemText(hwndDlg, IDC_OLD, find, _countof(find));
 				lstrtrim(find);
 			}
 
-			TCHAR replace[256];
+			wchar_t replace[256];
 			GetDlgItemText(hwndDlg, IDC_NEW, replace, _countof(replace));
 			lstrtrim(replace);
 
@@ -233,7 +231,7 @@ static INT_PTR CALLBACK AddReplacementDlgProc(HWND hwndDlg, UINT msg, WPARAM wPa
 			else if (replace[0] == 0)
 				MessageBox(hwndDlg, TranslateT("The correction can't be empty!"), TranslateT("Wrong Correction"), MB_OK | MB_ICONERROR);
 
-			else if (mir_tstrcmp(find, replace) == 0)
+			else if (mir_wstrcmp(find, replace) == 0)
 				MessageBox(hwndDlg, TranslateT("The correction can't be equal to the wrong word!"), TranslateT("Wrong Correction"), MB_OK | MB_ICONERROR);
 
 			else {

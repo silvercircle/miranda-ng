@@ -18,7 +18,7 @@
 //
 //***********************************************************
 
-#include "..\stdafx.h"
+#include "../stdafx.h"
 
 using namespace std;
 
@@ -27,7 +27,7 @@ UnRecentChooser::UnRecentChooser()
 {
 }
 
-void UnRecentChooser::AddChoice(tstring value, float prio)
+void UnRecentChooser::AddChoice(wstring value, float prio)
 {
 	if (items.count(value) != 0)
 	{
@@ -49,9 +49,9 @@ void UnRecentChooser::AddChoice(tstring value, float prio)
 	}
 }
 
-tstring UnRecentChooser::Choose()
+wstring UnRecentChooser::Choose()
 {
-	tstring res;
+	wstring res;
 	//Find answer
 	if (newItemsPrio != -1)
 	{
@@ -60,7 +60,7 @@ tstring UnRecentChooser::Choose()
 	}
 	else
 		if (minimum == -1)
-			res = _T("");
+			res = L"";
 		else
 		{
 			float minprio = maxOldPrio / 1.5F;
@@ -78,12 +78,12 @@ tstring UnRecentChooser::Choose()
 	return res;
 }
 
-void UnRecentChooser::SaveChoice(tstring choice)
+void UnRecentChooser::SaveChoice(wstring choice)
 {
 	//Add answer
 	if (items.find(choice) != items.end())
 	{
-		for (vector<tstring>::iterator it = itemsList.begin(); it != itemsList.end(); ++it)
+		for (vector<wstring>::iterator it = itemsList.begin(); it != itemsList.end(); ++it)
 			if (*it == choice)
 			{
 				itemsList.erase(it);

@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // Miranda NG: the free IM client for Microsoft* Windows*
 //
-// Copyright (ñ) 2012-15 Miranda NG project,
+// Copyright (ñ) 2012-17 Miranda NG project,
 // Copyright (c) 2000-09 Miranda ICQ/IM project,
 // all portions of this codebase are copyrighted to the people
 // listed in contributors.txt.
@@ -29,6 +29,10 @@
 #ifndef __INFOPANEL_H
 #define __INFOPANEL_H
 
+class CInfoPanel;
+class CTabBaseDlg;
+struct CSkinItem;
+
 /*
  * configuration data for the info panel (fonts, colors)
  * this is global for all panels
@@ -52,7 +56,7 @@ struct TInfoPanelConfig {
 	UINT		height1, height2;
 };
 
-extern TCHAR *xStatusDescr[];
+extern wchar_t *xStatusDescr[];
 
 /**
  * a simple tooltip class using a richedit control to display its content. Allows
@@ -71,12 +75,12 @@ public:
 		LEFT_BAR_WIDTH = 20
 	};
 
-	CTip(const HWND hwndParent, const MCONTACT hContact, const TCHAR *pszText = 0, const CInfoPanel *panel = 0);
+	CTip(const HWND hwndParent, const MCONTACT hContact, const wchar_t *pszText = 0, const CInfoPanel *panel = 0);
 	~CTip()
 	{
 		mir_free(m_pszText);
 	}
-	void						show(const RECT& rc, POINT& pt, const HICON hIcon = 0, const TCHAR *szTitle = 0);
+	void						show(const RECT& rc, POINT& pt, const HICON hIcon = 0, const wchar_t *szTitle = 0);
 	const HWND					getHwnd() const { return(m_hwnd); }
 
 	static void					registerClass();
@@ -125,31 +129,14 @@ public:
 		HTNIRVANA = 0
 	};
 
-	CInfoPanel(TWindowData *dat)
-	{
-		if (dat) {
-			m_dat = dat;
-			m_isChat = dat->bType == SESSIONTYPE_CHAT ? true : false;
-		}
-		m_defaultHeight = PluginConfig.m_panelHeight;
-		m_defaultMUCHeight = PluginConfig.m_MUCpanelHeight;
-		m_hwndConfig = 0;
-		m_hoverFlags = 0;
-		m_tip = 0;
-	}
-
-	~CInfoPanel()
-	{
-		if (m_hwndConfig)
-			::DestroyWindow(m_hwndConfig);
-		saveHeight(true);
-	}
+	CInfoPanel(CTabBaseDlg *dat);
+	~CInfoPanel();
 
 	__forceinline const LONG getHeight() const { return m_height; }
 	__forceinline bool isActive() const { return m_active; }
 	__forceinline bool isPrivateHeight() const { return m_fPrivateHeight; }
 	__forceinline DWORD isHovered() const { return m_active ? m_hoverFlags : 0; }
-	__forceinline const TWindowData* getDat() const { return m_dat; }
+	__forceinline const CTabBaseDlg* getDat() const { return m_dat; }
 
 	void setHeight(LONG newHeight, bool fBroadcast = false);
 	void setActive(const int newActive);
@@ -172,7 +159,6 @@ public:
 
 public:
 	static TInfoPanelConfig m_ipConfig;
-	static int setPanelHandler(TWindowData *dat, WPARAM wParam, LPARAM lParam);
 	static LRESULT CALLBACK avatarParentSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 private:
@@ -194,7 +180,7 @@ private:
 	bool  m_active;             // panel active and visible
 	bool  m_fPrivateHeight;
 	bool  m_fDialogCreated;
-	TWindowData *m_dat;         // this one OWNS us...
+	CTabBaseDlg *m_dat;         // this one OWNS us...
 	LONG  m_height;             // height (determined by position of IDC_PANELSPLITTER)
 	LONG  m_defaultHeight,
 		m_defaultMUCHeight;   // global values for the info bar height

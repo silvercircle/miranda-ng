@@ -17,6 +17,8 @@
 
 #include "stdafx.h"
 
+HINSTANCE hInst;
+
 BOOL gbDosServiceExist = 0;
 BOOL gbVarsServiceExist = 0;
 
@@ -31,7 +33,6 @@ BOOL gbExclude = 1;
 BOOL gbDelExcluded = 0;
 BOOL gbDelAllTempory = 0;
 BOOL gbHistoryLog = 0;
-BOOL gbDosServiceIntegration = 0;
 BOOL gbCaseInsensitive = 0;
 BOOL gbRegexMatch = 0;
 BOOL gbInvisDisable = 0;
@@ -44,14 +45,14 @@ BOOL gbMathExpression = 0;
 
 HANDLE hStopSpamLogDirH=0;
 
-tstring gbSpammersGroup = _T("Spammers");
-tstring gbAutoAuthGroup	= _T("NotSpammers");
+wstring gbSpammersGroup = L"Spammers";
+wstring gbAutoAuthGroup	= L"NotSpammers";
 
-tstring gbQuestion;
-tstring gbAnswer;
-tstring gbCongratulation;
+wstring gbQuestion;
+wstring gbAnswer;
+wstring gbCongratulation;
 std::wstring gbAuthRepl;
-extern TCHAR const * defQuestion;
+extern wchar_t const * defQuestion;
 extern int RemoveTmp(WPARAM,LPARAM);
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -76,22 +77,21 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 	return &pluginInfoEx;
 }
 
-extern tstring DBGetContactSettingStringPAN(MCONTACT hContact, char const * szModule, char const * szSetting, tstring errorValue);
+extern wstring DBGetContactSettingStringPAN(MCONTACT hContact, char const * szModule, char const * szSetting, wstring errorValue);
 
 void InitVars()
 {
-	gbDosServiceIntegration = db_get_b(NULL, pluginName, "DOSIntegration", 0);
-	gbSpammersGroup = DBGetContactSettingStringPAN(NULL, pluginName, "SpammersGroup", _T("Spammers"));
-	gbAnswer = DBGetContactSettingStringPAN(NULL, pluginName, "answer", _T("nospam"));
-	gbCongratulation = DBGetContactSettingStringPAN(NULL, pluginName, "congratulation", _T("Congratulations! You just passed human/robot test. Now you can write me a message."));
+	gbSpammersGroup = DBGetContactSettingStringPAN(NULL, pluginName, "SpammersGroup", L"Spammers");
+	gbAnswer = DBGetContactSettingStringPAN(NULL, pluginName, "answer", L"nospam");
+	gbCongratulation = DBGetContactSettingStringPAN(NULL, pluginName, "congratulation", L"Congratulations! You just passed human/robot test. Now you can write me a message.");
 	gbInfTalkProtection = db_get_b(NULL, pluginName, "infTalkProtection", 0);
 	gbAddPermanent = db_get_b(NULL, pluginName, "addPermanent", 0);
 	gbMaxQuestCount = db_get_dw(NULL, pluginName, "maxQuestCount", 5);
 	gbHandleAuthReq = db_get_b(NULL, pluginName, "handleAuthReq", 1);
 	gbQuestion = DBGetContactSettingStringPAN(NULL, pluginName, "question", defQuestion);
-	gbAnswer = DBGetContactSettingStringPAN(NULL, pluginName, "answer", _T("nospam"));
-	gbCongratulation = DBGetContactSettingStringPAN(NULL, pluginName, "congratulation", _T("Congratulations! You just passed human/robot test. Now you can write me a message."));
-	gbAuthRepl = DBGetContactSettingStringPAN(NULL, pluginName, "authrepl", _T("StopSpam: send a message and reply to an anti-spam bot question."));
+	gbAnswer = DBGetContactSettingStringPAN(NULL, pluginName, "answer", L"nospam");
+	gbCongratulation = DBGetContactSettingStringPAN(NULL, pluginName, "congratulation", L"Congratulations! You just passed human/robot test. Now you can write me a message.");
+	gbAuthRepl = DBGetContactSettingStringPAN(NULL, pluginName, "authrepl", L"StopSpam: send a message and reply to an anti-spam bot question.");
 	gbSpecialGroup = db_get_b(NULL, pluginName, "SpecialGroup", 0);
 	gbHideContacts = db_get_b(NULL, pluginName, "HideContacts", 0);
 	gbIgnoreContacts = db_get_b(NULL, pluginName, "IgnoreContacts", 0);
@@ -102,7 +102,7 @@ void InitVars()
 	gbRegexMatch = db_get_b(NULL, pluginName, "RegexMatch", 0);
 	gbInvisDisable = db_get_b(NULL, pluginName, "DisableInInvis", 0);
 	gbIgnoreURL = db_get_b(NULL, pluginName, "IgnoreURL", 0);
-	gbAutoAuthGroup = DBGetContactSettingStringPAN(NULL, pluginName, "AutoAuthGroup", _T("Not Spammers"));
+	gbAutoAuthGroup = DBGetContactSettingStringPAN(NULL, pluginName, "AutoAuthGroup", L"Not Spammers");
 	gbAutoAuth = db_get_b(NULL, pluginName, "AutoAuth", 0);
 	gbAutoAddToServerList = db_get_b(NULL, pluginName, "AutoAddToServerList", 0);
 	gbAutoReqAuth = db_get_b(NULL, pluginName, "AutoReqAuth", 0);
@@ -143,10 +143,14 @@ CLIST_INTERFACE *pcli;
 extern "C" int __declspec(dllexport) Load()
 {
 	mir_getLP(&pluginInfoEx);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	CreateServiceFunction("/RemoveTmp", (MIRANDASERVICE)RemoveTmp);
 	HookEvent(ME_SYSTEM_MODULESLOADED, OnSystemModulesLoaded);
+	HookEvent(ME_DB_EVENT_ADDED, OnDbEventAdded);
+	HookEvent(ME_DB_EVENT_FILTER_ADD, OnDbEventFilterAdd);
+	HookEvent(ME_DB_CONTACT_SETTINGCHANGED, OnDbContactSettingChanged);
+	HookEvent(ME_OPT_INITIALISE, OnOptInit);
 
 	CMenuItem mi;
 	SET_UID(mi, 0x60ce7660, 0x5a5, 0x4234, 0x99, 0xb6, 0x55, 0x21, 0xed, 0xa0, 0xb8, 0x32);
@@ -157,12 +161,10 @@ extern "C" int __declspec(dllexport) Load()
 
 	Menu_AddMainMenuItem(&mi);
 
-	miranda::EventHooker::HookAll();
 	return 0;
 }
 
 extern "C" int __declspec(dllexport) Unload(void)
 {
-	miranda::EventHooker::UnhookAll();
 	return 0;
 }

@@ -79,7 +79,7 @@ UploadDialog::Tab::Tab(GenericJob *Job) :
 	m_stzComplet[0] = 0;
 	m_stzRemain[0] = 0;
 
-	TCHAR buff[256];
+	wchar_t buff[256];
 	TCITEM tab = { 0 };
 	tab.mask = TCIF_TEXT;
 	tab.pszText = Utils::getTextFragment(m_job->m_tszFileName, 20, buff);
@@ -130,8 +130,8 @@ void UploadDialog::Tab::select()
 
 void UploadDialog::Tab::labelCompleted()
 {
-	TCHAR buff[64], buff2[256];
-	mir_sntprintf(buff2, _T("* %s"), Utils::getTextFragment(m_job->m_tszFileName, 20, buff));
+	wchar_t buff[64], buff2[256];
+	mir_snwprintf(buff2, L"* %s", Utils::getTextFragment(m_job->m_tszFileName, 20, buff));
 
 	TCITEM tab = { 0 };
 	tab.mask = TCIF_TEXT;
@@ -170,7 +170,7 @@ INT_PTR CALLBACK UploadDialog::UploadDlgProc(HWND hwndDlg, UINT msg, WPARAM wPar
 	switch (msg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)Utils::loadIconEx("main"));
+		Window_SetIcon_IcoLib(hwndDlg, Utils::getIconHandle("main"));
 
 		mir_subclassWindow(GetDlgItem(hwndDlg, IDC_TAB), TabControlProc);
 		{
@@ -191,45 +191,45 @@ INT_PTR CALLBACK UploadDialog::UploadDlgProc(HWND hwndDlg, UINT msg, WPARAM wPar
 			SendDlgItemMessage(hwndDlg, IDC_UP_CONTACT, WM_SETFONT, (WPARAM)hFont, 0);
 
 			SendDlgItemMessage(hwndDlg, IDC_BTN_PROTO, BUTTONSETASFLATBTN, 0, 0);
-			SendDlgItemMessage(hwndDlg, IDC_BTN_PROTO, BUTTONADDTOOLTIP, (WPARAM)TranslateT("User Info"), BATF_TCHAR);
+			SendDlgItemMessage(hwndDlg, IDC_BTN_PROTO, BUTTONADDTOOLTIP, (WPARAM)TranslateT("User Info"), BATF_UNICODE);
 
 			SendDlgItemMessage(hwndDlg, IDC_BTN_PAUSE, BUTTONSETASFLATBTN, 0, 0);
 			SendDlgItemMessage(hwndDlg, IDC_BTN_PAUSE, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Utils::loadIconEx("pause"));
-			SendDlgItemMessage(hwndDlg, IDC_BTN_PAUSE, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Pause"), BATF_TCHAR);
+			SendDlgItemMessage(hwndDlg, IDC_BTN_PAUSE, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Pause"), BATF_UNICODE);
 
 			SendDlgItemMessage(hwndDlg, IDC_BTN_CLIPBOARD, BUTTONSETASFLATBTN, 0, 0);
 			SendDlgItemMessage(hwndDlg, IDC_BTN_CLIPBOARD, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Utils::loadIconEx("clipboard"));
-			SendDlgItemMessage(hwndDlg, IDC_BTN_CLIPBOARD, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Copy Link to Clipboard"), BATF_TCHAR);
+			SendDlgItemMessage(hwndDlg, IDC_BTN_CLIPBOARD, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Copy Link to Clipboard"), BATF_UNICODE);
 
 			SendDlgItemMessage(hwndDlg, IDC_BTN_DOWNLOAD, BUTTONSETASFLATBTN, 0, 0);
 			SendDlgItemMessage(hwndDlg, IDC_BTN_DOWNLOAD, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(SKINICON_EVENT_URL));
-			SendDlgItemMessage(hwndDlg, IDC_BTN_DOWNLOAD, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Open in Browser"), BATF_TCHAR);
+			SendDlgItemMessage(hwndDlg, IDC_BTN_DOWNLOAD, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Open in Browser"), BATF_UNICODE);
 
 			SendDlgItemMessage(hwndDlg, IDC_BTN_FILEMANAGER, BUTTONSETASFLATBTN, 0, 0);
 			SendDlgItemMessage(hwndDlg, IDC_BTN_FILEMANAGER, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Utils::loadIconEx("main"));
-			SendDlgItemMessage(hwndDlg, IDC_BTN_FILEMANAGER, BUTTONADDTOOLTIP, (WPARAM)TranslateT("FTP File Manager"), BATF_TCHAR);
+			SendDlgItemMessage(hwndDlg, IDC_BTN_FILEMANAGER, BUTTONADDTOOLTIP, (WPARAM)TranslateT("FTP File Manager"), BATF_UNICODE);
 
 			SendDlgItemMessage(hwndDlg, IDC_BTN_OPTIONS, BUTTONSETASFLATBTN, 0, 0);
 			SendDlgItemMessage(hwndDlg, IDC_BTN_OPTIONS, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_OPTIONS));
-			SendDlgItemMessage(hwndDlg, IDC_BTN_OPTIONS, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Options"), BATF_TCHAR);
+			SendDlgItemMessage(hwndDlg, IDC_BTN_OPTIONS, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Options"), BATF_UNICODE);
 
 			SendDlgItemMessage(hwndDlg, IDC_BTN_CLOSE, BUTTONSETASFLATBTN, 0, 0);
 			SendDlgItemMessage(hwndDlg, IDC_BTN_CLOSE, BM_SETIMAGE, IMAGE_ICON, (LPARAM)Skin_LoadIcon(SKINICON_OTHER_DELETE));
-			SendDlgItemMessage(hwndDlg, IDC_BTN_CLOSE, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Close"), BATF_TCHAR);
+			SendDlgItemMessage(hwndDlg, IDC_BTN_CLOSE, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Close"), BATF_UNICODE);
 		}
 		break;
 
 	case WM_MEASUREITEM:
-		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
+		return Menu_MeasureItem(lParam);
 
 	case WM_DRAWITEM:
-		return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
+		return Menu_DrawItem(lParam);
 
 	case WM_COMMAND:
 		{
 			MCONTACT hContact = uDlg->m_tabs[uDlg->m_activeTab]->m_job->m_hContact;
 			if (hContact != NULL)
-				if (CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(LOWORD(wParam), MPCF_CONTACTMENU), hContact))
+				if (Clist_MenuProcessCommand(LOWORD(wParam), MPCF_CONTACTMENU, hContact))
 					break;
 
 			if (HIWORD(wParam) == BN_CLICKED) {
@@ -286,18 +286,18 @@ INT_PTR CALLBACK UploadDialog::UploadDlgProc(HWND hwndDlg, UINT msg, WPARAM wPar
 
 						int times[10] = { 5, 15, 30, 1 * 60, 2 * 60, 5 * 60, 10 * 60,  1 * 24 * 60, 2 * 24 * 60, 7 * 24 * 60 };
 						bool bChecked = (tab->m_iOptAutoDelete == -1);
-						TCHAR buff[256];
+						wchar_t buff[256];
 
 						for (int i = 0; i < _countof(times); i++) {
 							if (i == 3 || i == 7)
 								AppendMenu(hTimeMenu, MF_SEPARATOR, 0, 0);
 
 							if (i < 3)
-								mir_sntprintf(buff, TranslateT("%d minutes"), times[i]);
+								mir_snwprintf(buff, TranslateT("%d minutes"), times[i]);
 							else if (i < 7)
-								mir_sntprintf(buff, TranslateT("%d hours"), times[i] / 60);
+								mir_snwprintf(buff, TranslateT("%d hours"), times[i] / 60);
 							else
-								mir_sntprintf(buff, TranslateT("%d days"), times[i] / 60 / 24);
+								mir_snwprintf(buff, TranslateT("%d days"), times[i] / 60 / 24);
 
 							UINT check = MF_UNCHECKED;
 							if (!bChecked && tab->m_iOptAutoDelete == times[i]) {
@@ -310,9 +310,9 @@ INT_PTR CALLBACK UploadDialog::UploadDlgProc(HWND hwndDlg, UINT msg, WPARAM wPar
 
 						if (opt.bAutoDelete) {
 							switch (opt.timeRange) {
-							case Options::TR_MINUTES: mir_sntprintf(buff, TranslateT("%d minutes"), opt.iDeleteTime); break;
-							case Options::TR_HOURS: mir_sntprintf(buff, TranslateT("%d hours"), opt.iDeleteTime); break;
-							case Options::TR_DAYS: mir_sntprintf(buff, TranslateT("%d days"), opt.iDeleteTime); break;
+							case Options::TR_MINUTES: mir_snwprintf(buff, TranslateT("%d minutes"), opt.iDeleteTime); break;
+							case Options::TR_HOURS: mir_snwprintf(buff, TranslateT("%d hours"), opt.iDeleteTime); break;
+							case Options::TR_DAYS: mir_snwprintf(buff, TranslateT("%d days"), opt.iDeleteTime); break;
 							}
 
 							AppendMenu(hTimeMenu, MF_SEPARATOR, 0, 0);
@@ -391,11 +391,11 @@ INT_PTR CALLBACK UploadDialog::UploadDlgProc(HWND hwndDlg, UINT msg, WPARAM wPar
 				uDlg->m_tabs[i]->m_job->pause();
 
 			int result = IDYES;
-			if (!Miranda_Terminated() && UploadJob::iRunningJobCount > 0)
+			if (!Miranda_IsTerminated() && UploadJob::iRunningJobCount > 0)
 				result = Utils::msgBox(TranslateT("Do you really want to cancel all running jobs?"), MB_YESNO | MB_ICONQUESTION);
 
 			if (result == IDYES) {
-				SkinPlaySound(SOUND_CANCEL);
+				Skin_PlaySound(SOUND_CANCEL);
 				size_t count = uDlg->m_tabs.size();
 				for (UINT i = 0; i < count; i++)
 					uDlg->m_tabs[0]->m_job->closeAllTabs();

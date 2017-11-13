@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright (C) 2012 Mataes
 
 This is free software; you can redistribute it and/or
@@ -19,7 +19,8 @@ Boston, MA 02111-1307, USA.
 
 #include "stdafx.h"
 
-HANDLE hNetlibUser = NULL, hNetlibHttp;
+HNETLIBUSER hNetlibUser = NULL;
+HNETLIBCONN hNetlibHttp;
 bool UpdateListFlag = FALSE;
 
 bool IsMyContact(MCONTACT hContact)
@@ -30,11 +31,11 @@ bool IsMyContact(MCONTACT hContact)
 
 void NetlibInit()
 {
-	NETLIBUSER nlu = { sizeof(nlu) };
-	nlu.flags = NUF_OUTGOING | NUF_INCOMING | NUF_HTTPCONNS | NUF_TCHAR;	// | NUF_HTTPGATEWAY;
-	nlu.ptszDescriptiveName = TranslateT("NewsAggregator HTTP connection");
+	NETLIBUSER nlu = {};
+	nlu.flags = NUF_OUTGOING | NUF_INCOMING | NUF_HTTPCONNS | NUF_UNICODE;
+	nlu.szDescriptiveName.w = TranslateT("NewsAggregator HTTP connection");
 	nlu.szSettingsModule = MODULE;
-	hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
+	hNetlibUser = Netlib_RegisterUser(&nlu);
 }
 
 void NetlibUnInit()
@@ -43,18 +44,18 @@ void NetlibUnInit()
 	hNetlibUser = NULL;
 }
 
-void GetNewsData(TCHAR *tszUrl, char **szData, MCONTACT hContact, HWND hwndDlg)
+void GetNewsData(wchar_t *tszUrl, char **szData, MCONTACT hContact, HWND hwndDlg)
 {
-	Netlib_LogfT(hNetlibUser, _T("Getting feed data %s."), tszUrl);
+	Netlib_LogfW(hNetlibUser, L"Getting feed data %s.", tszUrl);
 	NETLIBHTTPREQUEST nlhr = { 0 };
 
 	// initialize the netlib request
 	nlhr.cbSize = sizeof(nlhr);
 	nlhr.requestType = REQUEST_GET;
 	nlhr.flags = NLHRF_DUMPASTEXT | NLHRF_HTTP11 | NLHRF_REDIRECT;
-	if (_tcsstr(tszUrl, _T("https://")) != NULL)
+	if (wcsstr(tszUrl, L"https://") != NULL)
 		nlhr.flags |= NLHRF_SSL;
-	char *szUrl = mir_t2a(tszUrl);
+	char *szUrl = mir_u2a(tszUrl);
 	nlhr.szUrl = szUrl;
 	nlhr.nlc = hNetlibHttp;
 
@@ -80,30 +81,29 @@ void GetNewsData(TCHAR *tszUrl, char **szData, MCONTACT hContact, HWND hwndDlg)
 	}
 
 	// download the page
-	NETLIBHTTPREQUEST *nlhrReply = (NETLIBHTTPREQUEST *)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)hNetlibUser, (LPARAM)&nlhr);
+	NETLIBHTTPREQUEST *nlhrReply = Netlib_HttpTransaction(hNetlibUser, &nlhr);
 	if (nlhrReply) {
 		// if the recieved code is 200 OK
 		if (nlhrReply->resultCode == 200 && nlhrReply->dataLength > 0) {
-			Netlib_LogfT(hNetlibUser, _T("Code 200: Succeeded getting feed data %s."), tszUrl);
+			Netlib_LogfW(hNetlibUser, L"Code 200: Succeeded getting feed data %s.", tszUrl);
 			// allocate memory and save the retrieved data
 			*szData = (char *)mir_alloc((size_t)(nlhrReply->dataLength + 2));
 			memcpy(*szData, nlhrReply->pData, (size_t)nlhrReply->dataLength);
 			(*szData)[nlhrReply->dataLength] = 0;
 		}
 		else if (nlhrReply->resultCode == 401) {
-			Netlib_LogfT(hNetlibUser, _T("Code 401: feed %s needs auth data."), tszUrl);
+			Netlib_LogfW(hNetlibUser, L"Code 401: feed %s needs auth data.", tszUrl);
 			ItemInfo SelItem = { 0 };
 			SelItem.hwndList = hwndDlg;
 			SelItem.hContact = hContact;
 			if (DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_AUTHENTICATION), hwndDlg, AuthenticationProc, (LPARAM)&SelItem) == IDOK)
 				GetNewsData(tszUrl, szData, hContact, hwndDlg);
 		}
-		else
-			Netlib_LogfT(hNetlibUser, _T("Code %d: Failed getting feed data %s."), nlhrReply->resultCode, tszUrl);
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)nlhrReply);
+		else Netlib_LogfW(hNetlibUser, L"Code %d: Failed getting feed data %s.", nlhrReply->resultCode, tszUrl);
+		
+		Netlib_FreeHttpRequest(nlhrReply);
 	}
-	else
-		Netlib_LogfT(hNetlibUser, _T("Failed getting feed data %s, no response."), tszUrl);
+	else Netlib_LogfW(hNetlibUser, L"Failed getting feed data %s, no response.", tszUrl);
 
 	mir_free(szUrl);
 }
@@ -142,14 +142,14 @@ void UpdateList(HWND hwndList)
 		UpdateListFlag = TRUE;
 		lvI.mask = LVIF_TEXT;
 		lvI.iSubItem = 0;
-		TCHAR *ptszNick = db_get_tsa(hContact, MODULE, "Nick");
+		wchar_t *ptszNick = db_get_wsa(hContact, MODULE, "Nick");
 		if (ptszNick) {
 			lvI.pszText = ptszNick;
 			lvI.iItem = i;
 			ListView_InsertItem(hwndList, &lvI);
 			lvI.iSubItem = 1;
 
-			TCHAR *ptszURL = db_get_tsa(hContact, MODULE, "URL");
+			wchar_t *ptszURL = db_get_wsa(hContact, MODULE, "URL");
 			if (ptszURL) {
 				lvI.pszText = ptszURL;
 				ListView_SetItem(hwndList, &lvI);
@@ -168,81 +168,81 @@ void DeleteAllItems(HWND hwndList)
 	ListView_DeleteAllItems(hwndList);
 }
 
-time_t __stdcall DateToUnixTime(const TCHAR *stamp, bool FeedType)
+time_t __stdcall DateToUnixTime(const wchar_t *stamp, bool FeedType)
 {
 	struct tm timestamp;
-	TCHAR date[9];
+	wchar_t date[9];
 	int i, y;
 	time_t t;
 
 	if (stamp == NULL)
 		return 0;
 
-	TCHAR *p = NEWTSTR_ALLOCA(stamp);
+	wchar_t *p = NEWWSTR_ALLOCA(stamp);
 
 	if (FeedType) {
 		// skip '-' chars
 		int si = 0, sj = 0;
 		while (true) {
-			if (p[si] == _T('-'))
+			if (p[si] == '-')
 				si++;
 			else if (!(p[sj++] = p[si++]))
 				break;
 		}
 	}
 	else {
-		TCHAR *weekday, monthstr[4], timezonesign[2];
+		wchar_t *weekday, monthstr[4], timezonesign[2];
 		int day, month = 0, year, hour, min, sec, timezoneh, timezonem;
-		if (_tcsstr(p, _T(","))) {
-			weekday = _tcstok(p, _T(","));
-			p = _tcstok(NULL, _T(","));
-			_stscanf(p + 1, _T("%d %3s %d %d:%d:%d %1s%02d%02d"), &day, &monthstr, &year, &hour, &min, &sec, &timezonesign, &timezoneh, &timezonem);
-			if (!mir_tstrcmpi(monthstr, _T("Jan")))
+		if (wcsstr(p, L",")) {
+			weekday = wcstok(p, L",");
+			p = wcstok(NULL, L",");
+			swscanf(p + 1, L"%d %3s %d %d:%d:%d %1s%02d%02d", &day, &monthstr, &year, &hour, &min, &sec, &timezonesign, &timezoneh, &timezonem);
+			if (!mir_wstrcmpi(monthstr, L"Jan"))
 				month = 1;
-			if (!mir_tstrcmpi(monthstr, _T("Feb")))
+			if (!mir_wstrcmpi(monthstr, L"Feb"))
 				month = 2;
-			if (!mir_tstrcmpi(monthstr, _T("Mar")))
+			if (!mir_wstrcmpi(monthstr, L"Mar"))
 				month = 3;
-			if (!mir_tstrcmpi(monthstr, _T("Apr")))
+			if (!mir_wstrcmpi(monthstr, L"Apr"))
 				month = 4;
-			if (!mir_tstrcmpi(monthstr, _T("May")))
+			if (!mir_wstrcmpi(monthstr, L"May"))
 				month = 5;
-			if (!mir_tstrcmpi(monthstr, _T("Jun")))
+			if (!mir_wstrcmpi(monthstr, L"Jun"))
 				month = 6;
-			if (!mir_tstrcmpi(monthstr, _T("Jul")))
+			if (!mir_wstrcmpi(monthstr, L"Jul"))
 				month = 7;
-			if (!mir_tstrcmpi(monthstr, _T("Aug")))
+			if (!mir_wstrcmpi(monthstr, L"Aug"))
 				month = 8;
-			if (!mir_tstrcmpi(monthstr, _T("Sep")))
+			if (!mir_wstrcmpi(monthstr, L"Sep"))
 				month = 9;
-			if (!mir_tstrcmpi(monthstr, _T("Oct")))
+			if (!mir_wstrcmpi(monthstr, L"Oct"))
 				month = 10;
-			if (!mir_tstrcmpi(monthstr, _T("Nov")))
+			if (!mir_wstrcmpi(monthstr, L"Nov"))
 				month = 11;
-			if (!mir_tstrcmpi(monthstr, _T("Dec")))
+			if (!mir_wstrcmpi(monthstr, L"Dec"))
 				month = 12;
 			if (year < 2000)
 				year += 2000;
-			if (!mir_tstrcmp(timezonesign, _T("+")))
-				mir_sntprintf(p, 4 + 2 + 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1, _T("%04d%02d%02dT%02d:%02d:%02d"), year, month, day, hour - timezoneh, min - timezonem, sec);
-			else if (!mir_tstrcmp(timezonesign, _T("-")))
-				mir_sntprintf(p, 4 + 2 + 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1, _T("%04d%02d%02dT%02d:%02d:%02d"), year, month, day, hour + timezoneh, min + timezonem, sec);
+			if (!mir_wstrcmp(timezonesign, L"+"))
+				mir_snwprintf(p, 4 + 2 + 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1, L"%04d%02d%02dT%02d:%02d:%02d", year, month, day, hour - timezoneh, min - timezonem, sec);
+			else if (!mir_wstrcmp(timezonesign, L"-"))
+				mir_snwprintf(p, 4 + 2 + 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1, L"%04d%02d%02dT%02d:%02d:%02d", year, month, day, hour + timezoneh, min + timezonem, sec);
 			else
-				mir_sntprintf(p, 4 + 2 + 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1, _T("%04d%02d%02dT%02d:%02d:%02d"), year, month, day, hour, min, sec);
+				mir_snwprintf(p, 4 + 2 + 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1, L"%04d%02d%02dT%02d:%02d:%02d", year, month, day, hour, min, sec);
 		}
-		else if (_tcsstr(p, _T("T"))) {
-			_stscanf(p, _T("%d-%d-%dT%d:%d:%d"), &year, &month, &day, &hour, &min, &sec);
-			mir_sntprintf(p, 4 + 2 + 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1, _T("%04d%02d%02dT%02d:%02d:%02d"), year, month, day, hour, min, sec);
+		else if (wcsstr(p, L"T")) {
+			swscanf(p, L"%d-%d-%dT%d:%d:%d", &year, &month, &day, &hour, &min, &sec);
+			mir_snwprintf(p, 4 + 2 + 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1, L"%04d%02d%02dT%02d:%02d:%02d", year, month, day, hour, min, sec);
 		}
 		else
 		{
-			_stscanf(p, _T("%d-%d-%d %d:%d:%d %1s%02d%02d"), &year, &month, &day, &hour, &min, &sec, &timezonesign, &timezoneh, &timezonem);
-			if (!mir_tstrcmp(timezonesign, _T("+")))
-				mir_sntprintf(p, 4 + 2 + 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1, _T("%04d%02d%02dT%02d:%02d:%02d"), year, month, day, hour - timezoneh, min - timezonem, sec);
-			else if (!mir_tstrcmp(timezonesign, _T("-")))
-				mir_sntprintf(p, 4 + 2 + 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1, _T("%04d%02d%02dT%02d:%02d:%02d"), year, month, day, hour + timezoneh, min + timezonem, sec);
+			swscanf(p, L"%d-%d-%d %d:%d:%d %1s%02d%02d", &year, &month, &day, &hour, &min, &sec, &timezonesign, &timezoneh, &timezonem);
+			if (!mir_wstrcmp(timezonesign, L"+"))
+				mir_snwprintf(p, 4 + 2 + 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1, L"%04d%02d%02dT%02d:%02d:%02d", year, month, day, hour - timezoneh, min - timezonem, sec);
+			else if (!mir_wstrcmp(timezonesign, L"-"))
+				mir_snwprintf(p, 4 + 2 + 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1, L"%04d%02d%02dT%02d:%02d:%02d", year, month, day, hour + timezoneh, min + timezonem, sec);
 			else
-				mir_sntprintf(p, 4 + 2 + 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1, _T("%04d%02d%02dT%02d:%02d:%02d"), year, month, day, hour, min, sec);
+				mir_snwprintf(p, 4 + 2 + 2 + 1 + 2 + 1 + 2 + 1 + 2 + 1, L"%04d%02d%02dT%02d:%02d:%02d", year, month, day, hour, min, sec);
 		}
 	}
 	// Get the date part
@@ -273,7 +273,7 @@ time_t __stdcall DateToUnixTime(const TCHAR *stamp, bool FeedType)
 	for (; *p != '\0' && !isdigit(*p); p++);
 
 	// Parse time
-	if (_stscanf(p, _T("%d:%d:%d"), &timestamp.tm_hour, &timestamp.tm_min, &timestamp.tm_sec) != 3)
+	if (swscanf(p, L"%d:%d:%d", &timestamp.tm_hour, &timestamp.tm_min, &timestamp.tm_sec) != 3)
 		return 0;
 
 	timestamp.tm_isdst = 0;	// DST is already present in _timezone below
@@ -290,7 +290,7 @@ bool DownloadFile(LPCTSTR tszURL, LPCTSTR tszLocal)
 	nlhr.cbSize = sizeof(nlhr);
 	nlhr.requestType = REQUEST_GET;
 	nlhr.flags = NLHRF_DUMPASTEXT | NLHRF_HTTP11;
-	char *szUrl = mir_t2a(tszURL);
+	char *szUrl = mir_u2a(tszURL);
 	nlhr.szUrl = szUrl;
 	NETLIBHTTPHEADER headers[4];
 	nlhr.headersCount = 4;
@@ -305,7 +305,7 @@ bool DownloadFile(LPCTSTR tszURL, LPCTSTR tszLocal)
 	nlhr.headers[3].szValue = "no-cache";
 
 	bool ret = false;
-	NETLIBHTTPREQUEST *pReply = (NETLIBHTTPREQUEST *)CallService(MS_NETLIB_HTTPTRANSACTION, (WPARAM)hNetlibUser, (LPARAM)&nlhr);
+	NETLIBHTTPREQUEST *pReply = Netlib_HttpTransaction(hNetlibUser, &nlhr);
 	if (pReply) {
 		if ((200 == pReply->resultCode) && (pReply->dataLength > 0)) {
 			char *date = NULL, *size = NULL;
@@ -320,16 +320,16 @@ bool DownloadFile(LPCTSTR tszURL, LPCTSTR tszLocal)
 				}
 			}
 			if (date != NULL && size != NULL) {
-				TCHAR *tdate = mir_a2t(date);
-				TCHAR *tsize = mir_a2t(size);
+				wchar_t *tdate = mir_a2u(date);
+				wchar_t *tsize = mir_a2u(size);
 				struct _stat buf;
 
-				int fh = _topen(tszLocal, _O_RDONLY);
+				int fh = _wopen(tszLocal, _O_RDONLY);
 				if (fh != -1) {
 					_fstat(fh, &buf);
 					time_t modtime = DateToUnixTime(tdate, 0);
 					time_t filemodtime = mktime(localtime(&buf.st_atime));
-					if (modtime > filemodtime && buf.st_size != _ttoi(tsize)) {
+					if (modtime > filemodtime && buf.st_size != _wtoi(tsize)) {
 						DWORD dwBytes;
 						HANDLE hFile = CreateFile(tszLocal, GENERIC_READ | GENERIC_WRITE, NULL, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 						WriteFile(hFile, pReply->pData, (DWORD)pReply->dataLength, &dwBytes, NULL);
@@ -359,7 +359,7 @@ bool DownloadFile(LPCTSTR tszURL, LPCTSTR tszLocal)
 					CloseHandle(hFile);
 			}
 		}
-		CallService(MS_NETLIB_FREEHTTPREQUESTSTRUCT, 0, (LPARAM)pReply);
+		Netlib_FreeHttpRequest(pReply);
 	}
 
 	mir_free(szUrl);
@@ -451,9 +451,9 @@ HRESULT TestDocumentText(IHTMLDocument3 *pHtmlDoc, BSTR &message)
 	return hr;
 }
 
-LPCTSTR ClearText(CMString &result, const TCHAR *message)
+LPCTSTR ClearText(CMStringW &result, const wchar_t *message)
 {
-	BSTR bstrHtml = SysAllocString(message), bstrRes = SysAllocString(_T(""));
+	BSTR bstrHtml = SysAllocString(message), bstrRes = SysAllocString(L"");
 	HRESULT hr = TestMarkupServices(bstrHtml, &TestDocumentText, bstrRes);
 	if (SUCCEEDED(hr))
 		result = bstrRes;
@@ -462,28 +462,47 @@ LPCTSTR ClearText(CMString &result, const TCHAR *message)
 	SysFreeString(bstrHtml);
 	SysFreeString(bstrRes);
 
+	result.Replace(L"&#163;", L"£"); //pound
+	result.Replace(L"&#178;", L"²"); //sup2
+	result.Replace(L"&#228;", L"ä"); //auml
+	result.Replace(L"&#235;", L"ë"); //euml
+	result.Replace(L"&#246;", L"ö"); //ouml
+	result.Replace(L"&#382;", L"ž"); //Latin Small Letter Z With Caron
+	result.Replace(L"&#774;", L"˘"); //Combining Breve
+	result.Replace(L"&#769;", L"´"); //Combining Acute Accent острое ударение
+	result.Replace(L"&#959;", L"ό"); // greek small letter omicron with tonos
+	result.Replace(L"&#1123;", L"ѣ"); //Cyrillic Small Letter Yat
+	result.Replace(L"&#8203;", L"");
+	result.Replace(L"&#8206;", L""); //lrm
+	result.Replace(L"&#8207;", L""); //rlm
+	result.Replace(L"&#8209;", L"‑"); //Non-Breaking Hyphen
+	result.Replace(L"&#8227;", L"‣"); //Triangular Bullet
+	result.Replace(L"&#8722;", L"−"); //minus
+	result.Replace(L"&#9786;", L"☺"); //White Smiling Face
+	result.Replace(L"&#65279;", L"");
+
 	return result;
 }
 
-MCONTACT GetContactByNick(const TCHAR *nick)
+MCONTACT GetContactByNick(const wchar_t *nick)
 {
 	MCONTACT hContact = NULL;
 
 	for (hContact = db_find_first(MODULE); hContact; hContact = db_find_next(hContact, MODULE)) {
 		ptrW contactNick(::db_get_wsa(hContact, MODULE, "Nick"));
-		if (!mir_tstrcmpi(contactNick, nick))
+		if (!mir_wstrcmpi(contactNick, nick))
 			break;
 	}
 	return hContact;
 }
 
-MCONTACT GetContactByURL(const TCHAR *url)
+MCONTACT GetContactByURL(const wchar_t *url)
 {
 	MCONTACT hContact = NULL;
 
 	for (hContact = db_find_first(MODULE); hContact; hContact = db_find_next(hContact, MODULE)) {
 		ptrW contactURL(::db_get_wsa(hContact, MODULE, "URL"));
-		if (!mir_tstrcmpi(contactURL, url))
+		if (!mir_wstrcmpi(contactURL, url))
 			break;
 	}
 	return hContact;

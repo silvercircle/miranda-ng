@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (с) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (с) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-09 Miranda ICQ/IM project,
 
 This file is part of Send Screenshot Plus, a Miranda IM plugin.
@@ -41,7 +41,8 @@ void TfrmMain::Unload()
 	}
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 INT_PTR CALLBACK TfrmMain::DlgProc_CaptureTabPage(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	// main message handling is done inside TfrmMain::DlgTfrmMain
@@ -71,11 +72,11 @@ INT_PTR CALLBACK TfrmMain::DlgProc_CaptureTabPage(HWND hDlg, UINT uMsg, WPARAM w
 	case WM_COMMAND:
 		if (HIWORD(wParam) == BN_CLICKED && LOWORD(wParam) == ID_btnExplore) { /// local file tab
 			OPENFILENAME ofn = { sizeof(OPENFILENAME) };
-			TCHAR filename[MAX_PATH];
+			wchar_t filename[MAX_PATH];
 			GetDlgItemText(hDlg, ID_edtSize, filename, _countof(filename));
 			ofn.lStructSize = sizeof(ofn);
 			ofn.hwndOwner = hDlg;
-			ofn.lpstrFilter = _T("Images\0*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff\0");
+			ofn.lpstrFilter = L"Images\0*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff\0";
 			ofn.nFilterIndex = 1;
 			ofn.lpstrFile = filename;
 			ofn.nMaxFile = MAX_PATH;
@@ -97,7 +98,7 @@ INT_PTR CALLBACK TfrmMain::DlgProc_CaptureTabPage(HWND hDlg, UINT uMsg, WPARAM w
 	return FALSE;
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
 
 TfrmMain::CHandleMapping TfrmMain::_HandleMapping;
 
@@ -129,7 +130,7 @@ INT_PTR CALLBACK TfrmMain::DlgTfrmMain(HWND hWnd, UINT msg, WPARAM wParam, LPARA
 
 	switch (msg) {
 	case WM_DROPFILES:{ /// Drag&Drop of local files
-			TCHAR filename[MAX_PATH];
+			wchar_t filename[MAX_PATH];
 			if (!DragQueryFile((HDROP)wParam, 0, filename, MAX_PATH)) *filename = '\0';
 			DragFinish((HDROP)wParam);
 			if (wnd->second->m_hwndTabPage)
@@ -167,17 +168,18 @@ INT_PTR CALLBACK TfrmMain::DlgTfrmMain(HWND hWnd, UINT msg, WPARAM wParam, LPARA
 	return 0;
 }
 
-//---------------------------------------------------------------------------
-//WM_INITDIALOG:
+/////////////////////////////////////////////////////////////////////////////////////////
+// WM_INITDIALOG:
+
 void TfrmMain::wmInitdialog(WPARAM, LPARAM)
 {
 	HWND hCtrl;
 	/// Taskbar and Window icon
-	SendMessage(m_hWnd, WM_SETICON, ICON_BIG, (LPARAM)GetIcon(ICO_MAIN));
-	SendMessage(m_hWnd, WM_SETICON, ICON_SMALL, (LPARAM)GetIcon(ICO_MAINXS));
-	TCHAR *pt = mir_tstrdup(pcli->pfnGetContactDisplayName(m_hContact, 0));
+	Window_SetIcon_IcoLib(m_hWnd, GetIconHandle(ICO_MAIN));
+
+	wchar_t *pt = mir_wstrdup(pcli->pfnGetContactDisplayName(m_hContact, 0));
 	if (pt && (m_hContact != 0)) {
-		CMString string;
+		CMStringW string;
 		string.AppendFormat(TranslateT("Send screenshot to %s"), pt);
 		SetWindowText(m_hWnd, string);
 	}
@@ -238,11 +240,11 @@ void TfrmMain::wmInitdialog(WPARAM, LPARAM)
 		ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, TranslateT("<Entire Desktop>")), 0);
 		ComboBox_SetCurSel(hCtrl, 0);
 		if (m_MonitorCount > 1) {
-			TCHAR tszTemp[120];
+			wchar_t tszTemp[120];
 			for (size_t mon = 0; mon < m_MonitorCount; ++mon) { /// @todo : fix format for non MSVC compilers
-				mir_sntprintf(tszTemp, _T("%Iu. %s%s"),
+				mir_snwprintf(tszTemp, L"%Iu. %s%s",
 					mon + 1, TranslateT("Monitor"),
-					(m_Monitors[mon].dwFlags & MONITORINFOF_PRIMARY) ? TranslateT(" (primary)") : _T("")
+					(m_Monitors[mon].dwFlags & MONITORINFOF_PRIMARY) ? TranslateT(" (primary)") : L""
 					);
 				ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, tszTemp), mon + 1);
 			}
@@ -278,11 +280,11 @@ void TfrmMain::wmInitdialog(WPARAM, LPARAM)
 	{
 		hCtrl = GetDlgItem(m_hWnd, ID_cboxFormat);
 		ComboBox_ResetContent(hCtrl);
-		ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, _T("PNG")), 0);
-		ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, _T("JPG")), 1);
-		ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, _T("BMP")), 2);
-		ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, _T("TIF")), 3);
-		ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, _T("GIF")), 4);
+		ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, L"PNG"), 0);
+		ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, L"JPG"), 1);
+		ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, L"BMP"), 2);
+		ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, L"TIF"), 3);
+		ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, L"GIF"), 4);
 		ComboBox_SelectItemData(hCtrl, m_opt_cboxFormat);	//use Workaround for MS bug ComboBox_SelectItemData
 	}
 	/// init SendBy combo box
@@ -294,7 +296,7 @@ void TfrmMain::wmInitdialog(WPARAM, LPARAM)
 			ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, TranslateT("File Transfer")), SS_FILESEND);
 			ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, TranslateT("E-mail")), SS_EMAIL);
 			if (g_myGlobals.PluginHTTPExist) {
-				ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, _T("HTTP Server")), SS_HTTPSERVER);
+				ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, L"HTTP Server"), SS_HTTPSERVER);
 			}
 			else if (m_opt_cboxSendBy == SS_HTTPSERVER) {
 				m_opt_cboxSendBy = SS_IMAGESHACK;
@@ -310,16 +312,16 @@ void TfrmMain::wmInitdialog(WPARAM, LPARAM)
 			m_opt_cboxSendBy = SS_IMAGESHACK;
 		}
 		if (g_myGlobals.PluginDropboxExist) {
-			ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, _T("Dropbox")), SS_DROPBOX);
+			ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, L"Dropbox"), SS_DROPBOX);
 		}
 		else if (m_opt_cboxSendBy == SS_DROPBOX) {
 			m_opt_cboxSendBy = SS_IMAGESHACK;
 		}
-		ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, _T("ImageShack")), SS_IMAGESHACK);
+		ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, L"ImageShack"), SS_IMAGESHACK);
 		ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, TranslateT("Upload Pie (30m)")), SS_UPLOADPIE_30M);
 		ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, TranslateT("Upload Pie (1d)")), SS_UPLOADPIE_1D);
 		ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, TranslateT("Upload Pie (1w)")), SS_UPLOADPIE_1W);
-		ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, _T("imgur")), SS_IMGUR);
+		ComboBox_SetItemData(hCtrl, ComboBox_AddString(hCtrl, L"imgur"), SS_IMGUR);
 		ComboBox_SelectItemData(hCtrl, m_opt_cboxSendBy);	//use Workaround for MS bug ComboBox_SelectItemData
 	}
 	/// init footer options
@@ -329,21 +331,21 @@ void TfrmMain::wmInitdialog(WPARAM, LPARAM)
 		SendDlgItemMessage(m_hWnd, ID_btnAbout, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Information"), MBBF_TCHAR);
 		HICON hIcon = GetIconBtn(ICO_BTN_HELP);
 		SendMessage(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
-		SetWindowText(hCtrl, hIcon ? _T("") : _T("?"));
+		SetWindowText(hCtrl, hIcon ? L"" : L"?");
 	}
 
 	if (hCtrl = GetDlgItem(m_hWnd, ID_btnExplore)) {
 		SendDlgItemMessage(m_hWnd, ID_btnExplore, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Open Folder"), MBBF_TCHAR);
 		HICON hIcon = GetIconBtn(ICO_BTN_FOLDER);
 		SendMessage(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
-		SetWindowText(hCtrl, hIcon ? _T("") : _T("..."));
+		SetWindowText(hCtrl, hIcon ? L"" : L"...");
 	}
 
 	if (hCtrl = GetDlgItem(m_hWnd, ID_chkDesc)) {
 		SendDlgItemMessage(m_hWnd, ID_chkDesc, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Fill description textbox."), MBBF_TCHAR);
 		HICON hIcon = GetIconBtn(m_opt_btnDesc ? ICO_BTN_DESCON : ICO_BTN_DESC);
 		SendMessage(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
-		SetWindowText(hCtrl, hIcon ? _T("") : _T("D"));
+		SetWindowText(hCtrl, hIcon ? L"" : L"D");
 		SendMessage(hCtrl, BM_SETCHECK, m_opt_btnDesc ? BST_CHECKED : BST_UNCHECKED, NULL);
 	}
 
@@ -351,7 +353,7 @@ void TfrmMain::wmInitdialog(WPARAM, LPARAM)
 		SendDlgItemMessage(m_hWnd, ID_chkDeleteAfterSend, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Delete after send"), MBBF_TCHAR);
 		HICON hIcon = GetIconBtn(m_opt_btnDeleteAfterSend ? ICO_BTN_DELON : ICO_BTN_DEL);
 		SendMessage(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
-		SetWindowText(hCtrl, hIcon ? _T("") : _T("X"));
+		SetWindowText(hCtrl, hIcon ? L"" : L"X");
 		SendMessage(hCtrl, BM_SETCHECK, m_opt_btnDeleteAfterSend ? BST_CHECKED : BST_UNCHECKED, NULL);
 	}
 
@@ -359,7 +361,7 @@ void TfrmMain::wmInitdialog(WPARAM, LPARAM)
 		SendDlgItemMessage(m_hWnd, ID_chkEditor, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Open editor before sending"), MBBF_TCHAR);
 		HICON hIcon = GetIconBtn(m_opt_chkEditor ? ICO_BTN_EDITON : ICO_BTN_EDIT);
 		SendMessage(hCtrl, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
-		SetWindowText(hCtrl, hIcon ? _T("") : _T("E"));
+		SetWindowText(hCtrl, hIcon ? L"" : L"E");
 		SendMessage(hCtrl, BM_SETCHECK, m_opt_chkEditor ? BST_CHECKED : BST_UNCHECKED, NULL);
 	}
 
@@ -375,10 +377,11 @@ void TfrmMain::wmInitdialog(WPARAM, LPARAM)
 	TranslateDialogDefault(m_hWnd);
 }
 
-//WM_COMMAND:
+/////////////////////////////////////////////////////////////////////////////////////////
+// WM_COMMAND:
+
 void TfrmMain::wmCommand(WPARAM wParam, LPARAM lParam)
 {
-	//---------------------------------------------------------------------------
 	int IDControl = LOWORD(wParam);
 	switch (HIWORD(wParam)) {
 	case BN_CLICKED:		//Button controls
@@ -496,13 +499,13 @@ void TfrmMain::SetTargetWindow(HWND hwnd)
 	}
 	m_hTargetWindow = hwnd;
 	int len = GetWindowTextLength(m_hTargetWindow) + 1;
-	TCHAR* lpTitle;
+	wchar_t* lpTitle;
 	if (len > 1) {
-		lpTitle = (TCHAR*)mir_alloc(len*sizeof(TCHAR));
+		lpTitle = (wchar_t*)mir_alloc(len*sizeof(wchar_t));
 		GetWindowText(m_hTargetWindow, lpTitle, len);
 	}
 	else {//no WindowText present, use WindowClass
-		lpTitle = (TCHAR*)mir_alloc(64 * sizeof(TCHAR));
+		lpTitle = (wchar_t*)mir_alloc(64 * sizeof(wchar_t));
 		RealGetWindowClass(m_hTargetWindow, lpTitle, 64);
 	}
 	SetDlgItemText(m_hwndTabPage, ID_edtCaption, lpTitle);
@@ -516,7 +519,7 @@ void TfrmMain::wmTimer(WPARAM wParam, LPARAM)
 		static int primarymouse;
 		if (!m_hTargetHighlighter) {
 			primarymouse = GetSystemMetrics(SM_SWAPBUTTON) ? VK_RBUTTON : VK_LBUTTON;
-			m_hTargetHighlighter = CreateWindowEx(WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW, (TCHAR*)g_clsTargetHighlighter, NULL, WS_POPUP, 0, 0, 0, 0, NULL, NULL, g_hSendSS, NULL);
+			m_hTargetHighlighter = CreateWindowEx(WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW, (wchar_t*)g_clsTargetHighlighter, NULL, WS_POPUP, 0, 0, 0, 0, NULL, NULL, g_hSendSS, NULL);
 			if (!m_hTargetHighlighter) return;
 			SetLayeredWindowAttributes(m_hTargetHighlighter, 0, 123, LWA_ALPHA);
 			SetSystemCursor(CopyCursor(GetIcon(ICO_TARGET)), OCR_IBEAM);//text cursor
@@ -658,7 +661,7 @@ void TfrmMain::UMevent(WPARAM, LPARAM lParam)
 	switch (lParam) {
 	case EVT_CaptureDone:
 		if (!m_Screenshot && m_opt_tabCapture != 2) {
-			TCHAR *err = TranslateT("Couldn't take a screenshot");
+			wchar_t *err = TranslateT("Couldn't take a screenshot");
 			MessageBox(NULL, err, ERROR_TITLE, MB_OK | MB_ICONWARNING);
 			Show();
 			return;
@@ -685,8 +688,9 @@ void TfrmMain::UMevent(WPARAM, LPARAM lParam)
 	}
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
 // Standard konstruktor/destruktor
+
 TfrmMain::TfrmMain()
 {
 	/* m_opt_XXX */
@@ -697,7 +701,7 @@ TfrmMain::TfrmMain()
 	m_bFormAbout = false;
 	m_hTargetWindow = m_hLastWin = NULL;
 	m_hTargetHighlighter = NULL;
-	m_FDestFolder = m_pszFile = m_pszFileDesc = NULL;
+	m_FDestFolder = m_pszFile = NULL;
 	m_Screenshot = NULL;
 	/* m_AlphaColor */
 	m_cSend = NULL;
@@ -715,7 +719,6 @@ TfrmMain::~TfrmMain()
 	_HandleMapping.erase(m_hWnd);
 	mir_free(m_pszFile);
 	mir_free(m_FDestFolder);
-	mir_free(m_pszFileDesc);
 	mir_free(m_Monitors);
 	if (m_Screenshot) FIP->FI_Unload(m_Screenshot);
 	if (m_cSend) delete m_cSend;
@@ -725,8 +728,9 @@ TfrmMain::~TfrmMain()
 	}
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
 // Load / Saving options from miranda's database
+
 void TfrmMain::LoadOptions(void)
 {
 	DWORD rgb = db_get_dw(NULL, SZ_SENDSS, "AlphaColor", 16777215);
@@ -780,10 +784,11 @@ void TfrmMain::SaveOptions(void)
 	}
 }
 
-//---------------------------------------------------------------------------
-void TfrmMain::Init(TCHAR* DestFolder, MCONTACT Contact)
+/////////////////////////////////////////////////////////////////////////////////////////
+
+void TfrmMain::Init(wchar_t* DestFolder, MCONTACT Contact)
 {
-	m_FDestFolder = mir_tstrdup(DestFolder);
+	m_FDestFolder = mir_wstrdup(DestFolder);
 	m_hContact = Contact;
 
 	// create window
@@ -796,24 +801,25 @@ void TfrmMain::Init(TCHAR* DestFolder, MCONTACT Contact)
 		m_cSend->SetContact(Contact);
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 void TfrmMain::btnCaptureClick()
 {
 	if (m_opt_tabCapture == 1) m_hTargetWindow = GetDesktopWindow();
 	else if (m_opt_tabCapture == 2) {
-		TCHAR filename[MAX_PATH];
+		wchar_t filename[MAX_PATH];
 		GetDlgItemText(m_hwndTabPage, ID_edtSize, filename, _countof(filename));
-		FILE* fp = _wfopen(filename, _T("rb"));
+		FILE* fp = _wfopen(filename, L"rb");
 		if (!fp) {
-			TCHAR *err = TranslateT("Select a file");
+			wchar_t *err = TranslateT("Select a file");
 			MessageBox(m_hWnd, err, ERROR_TITLE, MB_OK | MB_ICONWARNING);
 			return;
 		}
 		fclose(fp);
-		mir_free(m_pszFile); m_pszFile = mir_tstrdup(filename);
+		mir_free(m_pszFile); m_pszFile = mir_wstrdup(filename);
 	}
 	else if (!m_hTargetWindow) {
-		TCHAR *err = TranslateT("Select a target window.");
+		wchar_t *err = TranslateT("Select a target window.");
 		MessageBox(m_hWnd, err, ERROR_TITLE, MB_OK | MB_ICONWARNING);
 		return;
 	}
@@ -833,7 +839,8 @@ void TfrmMain::btnCaptureClick()
 	SendMessage(m_hWnd, UM_EVENT, 0, (LPARAM)EVT_CaptureDone);
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 void TfrmMain::chkTimedClick()
 {
 	Button_Enable(GetDlgItem(m_hWnd, ID_edtTimedLabel), (BOOL)m_opt_chkTimed);
@@ -841,7 +848,8 @@ void TfrmMain::chkTimedClick()
 	Button_Enable(GetDlgItem(m_hWnd, ID_upTimed), (BOOL)m_opt_chkTimed);
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 void TfrmMain::cboxSendByChange()
 {
 	BOOL bState;
@@ -899,7 +907,8 @@ void TfrmMain::cboxSendByChange()
 	Button_Enable(GetDlgItem(m_hWnd, ID_chkDesc), bState);
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 void TfrmMain::btnAboutClick()
 {
 	if (m_bFormAbout) return;
@@ -909,26 +918,30 @@ void TfrmMain::btnAboutClick()
 	m_bFormAbout = true;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
 // Edit window call this event before it closes
+
 void TfrmMain::btnAboutOnCloseWindow(HWND)
 {
 	m_bFormAbout = false;
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 void TfrmMain::btnExploreClick()
 {
 	if (m_FDestFolder)
-		ShellExecute(NULL, _T("explore"), m_FDestFolder, NULL, NULL, SW_SHOW);
+		ShellExecute(NULL, L"explore", m_FDestFolder, NULL, NULL, SW_SHOW);
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 void TfrmMain::edtSizeUpdate(HWND hWnd, BOOL ClientArea, HWND hTarget, UINT Ctrl)
 {
 	// get window dimensions
 	RECT rect = { 0 };
 	RECT cliRect = { 0 };
-	TCHAR B[33], H[16];
+	wchar_t B[33], H[16];
 	GetWindowRect(hWnd, &rect);
 	if (ClientArea) {
 		POINT pt = { 0 };
@@ -940,215 +953,143 @@ void TfrmMain::edtSizeUpdate(HWND hWnd, BOOL ClientArea, HWND hTarget, UINT Ctrl
 		pt.y = pt.y - rect.top;				//offset y for client area
 		rect = cliRect;
 	}
-	//	_itot_s(rect.right - rect.left, B, 33, 10);
-	_itot(rect.right - rect.left, B, 10);
-	//	_itot_s(rect.bottom - rect.top, H, 16, 10);
-	_itot(rect.bottom - rect.top, H, 10);
-	mir_tstrncat(B, _T("x"), _countof(B) - mir_tstrlen(B));
-	mir_tstrncat(B, H, _countof(B) - mir_tstrlen(B));
+	//	_itow_s(rect.right - rect.left, B, 33, 10);
+	_itow(rect.right - rect.left, B, 10);
+	//	_itow_s(rect.bottom - rect.top, H, 16, 10);
+	_itow(rect.bottom - rect.top, H, 10);
+	mir_wstrncat(B, L"x", _countof(B) - mir_wstrlen(B));
+	mir_wstrncat(B, H, _countof(B) - mir_wstrlen(B));
 	SetDlgItemText(hTarget, Ctrl, B);
 }
 
 void TfrmMain::edtSizeUpdate(RECT rect, HWND hTarget, UINT Ctrl)
 {
-	TCHAR B[33], H[16];
-	//	_itot_s(ABS(rect.right - rect.left), B, 33, 10);
-	_itot(ABS(rect.right - rect.left), B, 10);
-	//	_itot_s(ABS(rect.bottom - rect.top), H, 16, 10);
-	_itot(ABS(rect.bottom - rect.top), H, 10);
-	mir_tstrncat(B, _T("x"), _countof(B) - mir_tstrlen(B));
-	mir_tstrncat(B, H, _countof(B) - mir_tstrlen(B));
+	wchar_t B[33], H[16];
+	//	_itow_s(ABS(rect.right - rect.left), B, 33, 10);
+	_itow(ABS(rect.right - rect.left), B, 10);
+	//	_itow_s(ABS(rect.bottom - rect.top), H, 16, 10);
+	_itow(ABS(rect.bottom - rect.top), H, 10);
+	mir_wstrncat(B, L"x", _countof(B) - mir_wstrlen(B));
+	mir_wstrncat(B, H, _countof(B) - mir_wstrlen(B));
 	SetDlgItemText(hTarget, Ctrl, B);
 }
 
-//---------------------------------------------------------------------------
-INT_PTR TfrmMain::SaveScreenshot(FIBITMAP* dib)
+/////////////////////////////////////////////////////////////////////////////////////////
+
+INT_PTR TfrmMain::SaveScreenshot(FIBITMAP *dib)
 {
-	//generate File name
-	FREE_IMAGE_FORMAT fif = FIF_UNKNOWN;
-	TCHAR* ret;
-	TCHAR* path = NULL;
-	TCHAR* pszFilename = NULL;
-	TCHAR* pszFileDesc = NULL;
-	if (!dib) return 1;		//error
+	if (!dib)
+		return 1;		//error
+
+	// generate file name
 	unsigned FileNumber = db_get_dw(NULL, SZ_SENDSS, "FileNumber", 0) + 1;
-	if (FileNumber > 99999) FileNumber = 1;
-	//Generate FileName
-	mir_tstradd(path, m_FDestFolder);
-	if (path[mir_tstrlen(path) - 1] != _T('\\')) mir_tstradd(path, _T("\\"));
-	mir_tstradd(path, _T("shot%.5u"));//on format change, adapt "len" below
-	size_t len = mir_tstrlen(path) + 2;
-	pszFilename = (TCHAR*)mir_alloc(sizeof(TCHAR)*(len));
-	mir_sntprintf(pszFilename, len, path, FileNumber);
-	mir_free(path);
+	if (FileNumber > 99999)
+		FileNumber = 1;
+	
+	CMStringW wszFileName(m_FDestFolder);
+	if (wszFileName.Right(1) != L"\\")
+		wszFileName.Append(L"\\");
+	wszFileName.AppendFormat(L"shot%.5u", FileNumber);
 
-	//Generate a description according to the screenshot
-
-	TCHAR winText[1024];
+	// generate a description according to the screenshot
+	wchar_t winText[1024];
 	GetDlgItemText(m_hwndTabPage, ID_edtCaption, winText, _countof(winText));
 
-
-	CMString tszFileDesc;
-
+	CMStringW wszFileDesc;
 	if (m_opt_tabCapture)
-		tszFileDesc.Format(TranslateT("Screenshot of \"%s\""), winText);
-	else
-	{
+		wszFileDesc.Format(TranslateT("Screenshot of \"%s\""), winText);
+	else {
 		if (m_opt_chkClientArea)
-			tszFileDesc.Format(TranslateT("Screenshot for client area of \"%s\" window"), winText);
+			wszFileDesc.Format(TranslateT("Screenshot for client area of \"%s\" window"), winText);
 		else 
-			tszFileDesc.Format(TranslateT("Screenshot of \"%s\" window"), winText);
+			wszFileDesc.Format(TranslateT("Screenshot of \"%s\" window"), winText);
 	}
 
-	pszFileDesc = tszFileDesc.Detach();
-
-	// convert to 32Bits (make shure it is 32bit)
+	// convert to 32Bits (make sure it is 32bit)
 	FIBITMAP *dib_new = FIP->FI_ConvertTo32Bits(dib);
-	//RGBQUAD appColor = { 245, 0, 254, 0 };	//bgr0	schwarz
-	//FIP->FI_SetBackgroundColor(dib_new, &appColor);
 	FIP->FI_SetTransparent(dib_new, TRUE);
 
-	// Investigates the color type of the bitmap (test for RGB or CMYK colour space)
-	switch (FREE_IMAGE_COLOR_TYPE ColTye = FIP->FI_GetColorType(dib_new)) {
-	case FIC_MINISBLACK:
-		//Monochrome bitmap (1-bit) : first palette entry is black.
-		//Palletised bitmap (4 or 8-bit) and single channel non standard bitmap: the bitmap has a greyscale palette
-	case FIC_MINISWHITE:
-		//Monochrome bitmap (1-bit) : first palette entry is white.
-		//Palletised bitmap (4 or 8-bit) : the bitmap has an inverted greyscale palette
-	case FIC_PALETTE:
-		//Palettized bitmap (1, 4 or 8 bit)
-	case FIC_RGB:
-		//High-color bitmap (16, 24 or 32 bit), RGB16 or RGBF
-	case FIC_RGBALPHA:
-		//High-color bitmap with an alpha channel (32 bit bitmap, RGBA16 or RGBAF)
-	case FIC_CMYK:
-		//CMYK bitmap (32 bit only)
-	default:
-		break;
-	}
-
-	//	bool bDummy = !(FIP->FI_GetICCProfile(dib_new)->flags & FIICC_COLOR_IS_CMYK);
-
-	FIBITMAP *dib32, *dib24;
+	BOOL ret = FALSE;
 	HWND hwndCombo = GetDlgItem(m_hWnd, ID_cboxFormat);
 	switch (ComboBox_GetItemData(hwndCombo, ComboBox_GetCurSel(hwndCombo))) {
-	case 0: //PNG
-		ret = SaveImage(fif, dib_new, pszFilename, _T("png"));
+	case 0: // PNG
+		wszFileName.Append(L".png");
+		ret = FIP->FI_SaveU(FIF_PNG, dib_new, wszFileName, 0);
 		break;
 
-	case 1: //JPG
-		/*
-		#define JPEG_QUALITYSUPERB  0x80	// save with superb quality (100:1)
-		#define JPEG_QUALITYGOOD    0x0100	// save with good quality (75:1)
-		#define JPEG_QUALITYNORMAL  0x0200	// save with normal quality (50:1)
-		#define JPEG_QUALITYAVERAGE 0x0400	// save with average quality (25:1)
-		#define JPEG_QUALITYBAD     0x0800	// save with bad quality (10:1)
-		#define JPEG_PROGRESSIVE	0x2000	// save as a progressive-JPEG (use | to combine with other save flags)
-		*/
-		dib32 = FIP->FI_Composite(dib_new, FALSE, &m_AlphaColor, NULL);
-		dib24 = FIP->FI_ConvertTo24Bits(dib32);
-		FIP->FI_Unload(dib32);
-		ret = SaveImage(fif, dib24, pszFilename, _T("jpg"));
-		FIP->FI_Unload(dib24);
+	case 1: // JPG
+		wszFileName.Append(L".jpg");
+		{
+			FIBITMAP *dib32 = FIP->FI_Composite(dib_new, FALSE, &m_AlphaColor, NULL);
+			FIBITMAP *dib24 = FIP->FI_ConvertTo24Bits(dib32);
+			FIP->FI_Unload(dib32);
+			ret = FIP->FI_SaveU(FIF_JPEG, dib24, wszFileName, 0);
+			FIP->FI_Unload(dib24);
+		}
 		break;
 
-	case 2: //BMP
-		//	ret = SaveImage(FIF_BMP,dib_new, pszFilename, _T("bmp")); //32bit alpha BMP
-		dib32 = FIP->FI_Composite(dib_new, FALSE, &m_AlphaColor, NULL);
-		dib24 = FIP->FI_ConvertTo24Bits(dib32);
-		FIP->FI_Unload(dib32);
-		ret = SaveImage(FIF_BMP, dib24, pszFilename, _T("bmp"));
-		FIP->FI_Unload(dib24);
+	case 2: // BMP
+		wszFileName.Append(L".bmp");
+		{
+			FIBITMAP *dib32 = FIP->FI_Composite(dib_new, FALSE, &m_AlphaColor, NULL);
+			FIBITMAP *dib24 = FIP->FI_ConvertTo24Bits(dib32);
+			FIP->FI_Unload(dib32);
+			ret = FIP->FI_SaveU(FIF_BMP, dib24, wszFileName, 0);
+			FIP->FI_Unload(dib24);
+		}
 		break;
 
 	case 3: //TIFF (miranda freeimage interface do not support save tiff, we udse GDI+)
+		wszFileName.Append(L".tif");
 		{
-			TCHAR* pszFile = NULL;
-			mir_tstradd(pszFile, pszFilename);
-			mir_tstradd(pszFile, _T(".tif"));
-
-			dib32 = FIP->FI_Composite(dib_new, FALSE, &m_AlphaColor, NULL);
-			dib24 = FIP->FI_ConvertTo24Bits(dib32);
+			FIBITMAP *dib32 = FIP->FI_Composite(dib_new, FALSE, &m_AlphaColor, NULL);
+			FIBITMAP *dib24 = FIP->FI_ConvertTo24Bits(dib32);
 			FIP->FI_Unload(dib32);
-
+		
 			HBITMAP hBmp = FIP->FI_CreateHBITMAPFromDIB(dib24);
 			FIP->FI_Unload(dib24);
-			SaveTIF(hBmp, pszFile);
-			ret = pszFile;
+			SaveTIF(hBmp, wszFileName);
 			DeleteObject(hBmp);
 		}
+		ret = TRUE;
 		break;
 
 	case 4: //GIF
+		wszFileName.Append(L".gif");
 		{
-			//dib24 = FIP->FI_ConvertTo8Bits(dib_new);
-			//ret = SaveImage(FIF_GIF,dib24, pszFilename, _T("gif"));
-			//FIP->FI_Unload(dib24);
-			TCHAR* pszFile = NULL;
-			mir_tstradd(pszFile, pszFilename);
-			mir_tstradd(pszFile, _T(".gif"));
 			HBITMAP hBmp = FIP->FI_CreateHBITMAPFromDIB(dib_new);
-			SaveGIF(hBmp, pszFile);
-			ret = pszFile;
+			SaveGIF(hBmp, wszFileName);
 			DeleteObject(hBmp);
 		}
+		ret = TRUE;
 		break;
-
-	default:
-		ret = NULL;
 	}
-	/*	//load PNG and save file in user format (if differ)
-		//this get better result for transparent aereas
-		//TCHAR* pszFormat = (TCHAR*)ComboBox_GetItemData(hwndCombo, ComboBox_GetCurSel(hwndCombo));
-		TCHAR pszFormat[6];
-		ComboBox_GetText(hwndCombo, pszFormat, 6);
-		if(ret && (mir_tstrcmpi (pszFormat,_T("png")) != 0)) {
 
-		fif = FIP->FI_GetFIFFromFilenameU(ret);
-		dib_new = FIP->FI_LoadU(fif, ret,0);
-
-
-		if(dib_new) {
-		DeleteFile(ret);
-		mir_free(ret);
-		FIBITMAP *dib_save = FIP->FI_ConvertTo24Bits(dib_new);
-		ret = SaveImage(FIF_UNKNOWN,dib_save, pszFilename, pszFormat);
-		FIP->FI_Unload(dib_new); dib_new = NULL;
-		FIP->FI_Unload(dib_save); dib_save = NULL;
-		}
-		}*/
 	FIP->FI_Unload(dib_new);
-	mir_free(pszFilename);
 
-	if (ret) {
-		db_set_dw(NULL, SZ_SENDSS, "FileNumber", FileNumber);
-		mir_free(m_pszFile); m_pszFile = ret;
-		mir_free(m_pszFileDesc);
-		if (IsWindowEnabled(GetDlgItem(m_hWnd, ID_chkDesc)) && m_opt_btnDesc) {
-			m_pszFileDesc = pszFileDesc;
-		}
-		else {
-			mir_free(pszFileDesc);
-			m_pszFileDesc = mir_tstrdup(_T(""));
-		}
+	if (!ret)
+		return 1; // error
+	
+	db_set_dw(NULL, SZ_SENDSS, "FileNumber", FileNumber);
+	replaceStrW(m_pszFile, wszFileName);
 
-		if (m_cSend) {
-			m_cSend->SetFile(m_pszFile);
-			m_cSend->SetDescription(m_pszFileDesc);
-		}
-		return 0;//OK
+	if (!IsWindowEnabled(GetDlgItem(m_hWnd, ID_chkDesc)) || !m_opt_btnDesc)
+		wszFileDesc.Empty();
+
+	if (m_cSend) {
+		m_cSend->SetFile(m_pszFile);
+		m_cSend->SetDescription(wszFileDesc);
 	}
-	mir_free(pszFileDesc);
-	return 1;//error
+	return 0; // OK
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 void TfrmMain::FormClose()
 {
 	bool bCanDelete = m_opt_btnDeleteAfterSend;
 	if (m_opt_tabCapture == 2) { /// existing file
-		TCHAR description[1024];
+		wchar_t description[1024];
 		GetDlgItemText(m_hwndTabPage, ID_edtCaption, description, _countof(description));
 		if (!IsWindowEnabled(GetDlgItem(m_hWnd, ID_chkDesc)) || !m_opt_btnDesc)
 			*description = '\0';
@@ -1168,7 +1109,7 @@ void TfrmMain::FormClose()
 	if (m_opt_chkEditor) {
 		SHELLEXECUTEINFO shex = { sizeof(SHELLEXECUTEINFO) };
 		shex.fMask = SEE_MASK_NOCLOSEPROCESS;
-		shex.lpVerb = _T("edit");
+		shex.lpVerb = L"edit";
 		shex.lpFile = m_pszFile;
 		shex.nShow = SW_SHOWNORMAL;
 		ShellExecuteEx(&shex);
@@ -1197,7 +1138,7 @@ void TfrmMain::FormClose()
 			} while (res == WAIT_OBJECT_0 + 1);
 			CloseHandle(shex.hProcess);
 		}
-		if (MessageBox(m_hWnd, TranslateT("Send screenshot?"), _T("SendSS"), MB_YESNO | MB_ICONQUESTION | MB_SYSTEMMODAL) != IDYES)
+		if (MessageBox(m_hWnd, TranslateT("Send screenshot?"), L"SendSS", MB_YESNO | MB_ICONQUESTION | MB_SYSTEMMODAL) != IDYES)
 			send = false;
 	}
 

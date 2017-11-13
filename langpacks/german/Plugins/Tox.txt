@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Tox.dll
 ;  Plugin: Tox protocol
-;  Version: 0.11.1.14
+;  Version: 0.11.1.25
 ;  Authors: Miranda NG Team
 ;============================================================
 [Tox protocol support for Miranda NG.]
@@ -24,8 +24,6 @@ Name:
 Passwort:
 [Default group:]
 Standardgruppe:
-[Tox]
-Tox
 [Create Tox profile]
 Tox-Profil erstellen
 [Import Tox profile]
@@ -40,6 +38,10 @@ Verbindungseinstellungen
 UDP aktivieren (sonst ist Tox gezwungen TCP zu verwenden)
 [Enable IPv6]
 IPv6 aktivieren
+[Max connect retries:]
+Max. Verbindungsversuche:
+[Max reconnect retries:]
+Max. Wiederverbindungsversuche:
 [If this field contains Tox address (76 hex characters), you will be prompted to add it in your friend list. Otherwise, Miranda will search this query via Tox DNS discovery.]
 Wenn dieses Feld eine Tox-Adresse enthält (76 Hex-Zeichen), dann werden Sie gefragt ob Sie diese zu Ihrer Freundesliste hinzufügen wollen. Anderenfalls sucht Miranda über Tox-DNS-Erkennung
 [DNS name:]
@@ -54,6 +56,8 @@ Abbrechen
 Tox-Profil ist verschlüsselt. Geben Sie das Passwort ein um fortzusetzen.
 [Add]
 Hinzufügen
+[Update]
+Aktualisieren
 [IPv4 address/ Host]
 IPv4-Adresse/-Host
 [IPv6 address (optional)]
@@ -100,10 +104,10 @@ Kontakt&profil
 Ausgehender Anruf
 [To:]
 An:
-;file \protocols\Tox\src\tox_chatrooms.cpp
-[Group chat]
-Gruppenchat
-;file \protocols\Tox\src\tox_core.cpp
+;file \protocols\Tox\src\main.cpp
+[Current version of plugin is support Tox API version %i.%i.%i which is incompatible with %s]
+Aktuelle Version des Plugins unterstützt Tox-API %i.%i.%i, welche inkompatibel mit %s ist.
+;file \protocols\Tox\src\tox_connection.cpp
 [Unable to initialize Tox core]
 Konnte Tox-Core nicht initialisieren.
 ;file \protocols\Tox\src\tox_events.cpp
@@ -139,18 +143,6 @@ Sie können keine Nachricht versenden, so lange Sie offline sind.
 Eingehender Anruf von %s
 [Outgoing call to %s]
 Ausgehender Anruf an %s
-[Unable to find input audio device]
-Konnte kein Audioeingabegerät finden
-[Video call is unsupported]
-Videoanruf wird nicht unterstützt
-[Call canceled]
-Anruf abgebrochen
-[Unable to find output audio device]
-Konnte kein Audioausgabegerät finden
-[Call started]
-Anruf begonnen
-[Call ended]
-Anruf beendet
 ;file \protocols\Tox\src\tox_netlib.cpp
 [%s connection]
 %s-Verbindung
@@ -171,6 +163,8 @@ Knoten ändern
 IPv4 eingeben
 [Error]
 Fehler
+[Enter port]
+Port eingeben
 [Enter public key]
 Öffentlichen Schlüssel eingeben
 [Common nodes]
@@ -223,3 +217,13 @@ Das Profil ist verschlüsselt.
 Das Datenformat ist ungültig.
 [Unknown error]
 Unbekannter Fehler
+[The friend ID did not designate a valid friend]
+Die Freundes-ID zeigt keinen gültigen Kontakt an.
+[This client is currently not connected to the friend]
+Dieser Client ist momentan nicht mit dem Freund verbunden.
+[An allocation error occurred while increasing the send queue size]
+Ein Speicherzuweisungsfehler beim Erhöhen der Sendelistengröße.
+[Message length exceeded TOX_MAX_MESSAGE_LENGTH]
+Nachrichtenlänge überschreitet TOX_MAX_MESSAGE_LENGTH.
+[Attempted to send a zero-length message]
+Versuche, eine Nachricht der Länge 0 zu senden.

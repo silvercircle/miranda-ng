@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
 
@@ -40,14 +40,14 @@ static PLUGININFOEX pluginInfo =
 	{ 0xf7a6b27c, 0x9d9c, 0x4a42, { 0xbe, 0x86, 0xa4, 0x48, 0xae, 0x10, 0x91, 0x61 } }
 };
 
-HINSTANCE g_hInst = NULL;
+HINSTANCE g_hInst = nullptr;
 
 LIST<CDb3Mmap> g_Dbs(1, HandleKeySortT);
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
 // returns 0 if the profile is created, EMKPRF*
-static int makeDatabase(const TCHAR *profile)
+static int makeDatabase(const wchar_t *profile)
 {
 	std::auto_ptr<CDb3Mmap> db(new CDb3Mmap(profile, 0));
 	if (db->Create() != ERROR_SUCCESS)
@@ -57,7 +57,7 @@ static int makeDatabase(const TCHAR *profile)
 }
 
 // returns 0 if the given profile has a valid header
-static int grokHeader(const TCHAR *profile)
+static int grokHeader(const wchar_t *profile)
 {
 	std::auto_ptr<CDb3Mmap> db(new CDb3Mmap(profile, DBMODE_SHARED | DBMODE_READONLY));
 	if (db->Load(true) != ERROR_SUCCESS)
@@ -67,14 +67,14 @@ static int grokHeader(const TCHAR *profile)
 }
 
 // returns 0 if all the APIs are injected otherwise, 1
-static MIDatabase* LoadDatabase(const TCHAR *profile, BOOL bReadOnly)
+static MIDatabase* LoadDatabase(const wchar_t *profile, BOOL bReadOnly)
 {
 	// set the memory, lists & UTF8 manager
 	mir_getLP(&pluginInfo);
 
 	std::auto_ptr<CDb3Mmap> db(new CDb3Mmap(profile, (bReadOnly) ? DBMODE_READONLY : 0));
 	if (db->Load(false) != ERROR_SUCCESS)
-		return NULL;
+		return nullptr;
 
 	g_Dbs.insert(db.get());
 	return db.release();
@@ -87,16 +87,16 @@ static int UnloadDatabase(MIDatabase *db)
 	return 0;
 }
 
-MIDatabaseChecker* CheckDb(const TCHAR *profile, int *error)
+MIDatabaseChecker* CheckDb(const wchar_t *profile, int *error)
 {
 	std::auto_ptr<CDb3Mmap> db(new CDb3Mmap(profile, DBMODE_READONLY));
 	if (db->Load(true) != ERROR_SUCCESS) {
 		*error = ERROR_ACCESS_DENIED;
-		return NULL;
+		return nullptr;
 	}
 
 	if (db->PrepareCheck(error))
-		return NULL;
+		return nullptr;
 
 	return db.release();
 }
@@ -105,7 +105,7 @@ static DATABASELINK dblink =
 {
 	sizeof(DATABASELINK),
 	"dbx_mmap",
-	_T("dbx mmap driver"),
+	L"dbx mmap driver",
 	makeDatabase,
 	grokHeader,
 	LoadDatabase,

@@ -19,7 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#include "..\stdafx.h"
+#include "../stdafx.h"
 
 /***********************************************************************************************************
  * typedefs
@@ -196,7 +196,7 @@ INT_PTR CALLBACK SelectModulesToExport_DlgProc(HWND hDlg, UINT uMsg, WPARAM wPar
 			// Set the Window Title and description
 			{
 				LPCTSTR name = NULL; 
-				TCHAR	oldTitle[MAXDATASIZE], 
+				wchar_t	oldTitle[MAXDATASIZE], 
 						newTitle[MAXDATASIZE];
 				switch (pDat->ExImContact->Typ) {
 					case EXIM_ALL:
@@ -221,7 +221,7 @@ INT_PTR CALLBACK SelectModulesToExport_DlgProc(HWND hDlg, UINT uMsg, WPARAM wPar
 				}
 				TranslateDialogDefault(hDlg);			//to translate oldTitle
 				GetWindowText(hDlg, oldTitle, _countof(oldTitle));
-				mir_sntprintf(newTitle, _T("%s - %s"), name, oldTitle);
+				mir_snwprintf(newTitle, L"%s - %s", name, oldTitle);
 				SetWindowText(hDlg, newTitle);
 			}
 
@@ -301,7 +301,7 @@ INT_PTR CALLBACK SelectModulesToExport_DlgProc(HWND hDlg, UINT uMsg, WPARAM wPar
 												case EXIM_GROUP:
 													break;
 												case EXIM_SUBGROUP:
-													if (mir_tstrncmp(pDat->ExImContact->ptszName, DB::Setting::GetTString(hContact, "CList", "Group"), mir_tstrlen(pDat->ExImContact->ptszName))) {
+													if (mir_wstrncmp(pDat->ExImContact->ptszName, DB::Setting::GetTString(hContact, "CList", "Group"), mir_wstrlen(pDat->ExImContact->ptszName))) {
 														continue;
 													}
 													break;

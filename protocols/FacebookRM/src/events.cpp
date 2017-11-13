@@ -3,7 +3,7 @@
 Facebook plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2009-11 Michal Zelinka, 2011-15 Robert Pösel
+Copyright ï¿½ 2009-11 Michal Zelinka, 2011-17 Robert Pï¿½sel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,68 +22,45 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-HWND FacebookProto::NotifyEvent(TCHAR* title, TCHAR* info, MCONTACT contact, DWORD flags, std::string *url, std::string *notification_id)
+HWND FacebookProto::NotifyEvent(wchar_t* title, wchar_t* text, MCONTACT contact, EventType type, std::string *url, std::string *notification_id, const char *icon)
 {
-	if (title == NULL || info == NULL)
+	if (title == NULL || text == NULL)
 		return NULL;
 
 	char name[256];
 
-	switch (flags)
+	switch (type)
 	{
-	case FACEBOOK_EVENT_CLIENT:
-		if (!getByte(FACEBOOK_KEY_EVENT_CLIENT_ENABLE, DEFAULT_EVENT_CLIENT_ENABLE))
-			return NULL;
+	case EVENT_CLIENT:
 		mir_snprintf(name, "%s_%s", m_szModuleName, "Client");
-		flags |= NIIF_WARNING;
 		break;
 
-	case FACEBOOK_EVENT_NEWSFEED:
-		if (!getByte(FACEBOOK_KEY_EVENT_FEEDS_ENABLE, DEFAULT_EVENT_FEEDS_ENABLE))
-			return NULL;
+	case EVENT_NEWSFEED:
 		mir_snprintf(name, "%s_%s", m_szModuleName, "Newsfeed");
-		SkinPlaySound("NewsFeed");
-		flags |= NIIF_INFO;
 		break;
 
-	case FACEBOOK_EVENT_NOTIFICATION:
-		if (!getByte(FACEBOOK_KEY_EVENT_NOTIFICATIONS_ENABLE, DEFAULT_EVENT_NOTIFICATIONS_ENABLE))
-			return NULL;
+	case EVENT_NOTIFICATION:
 		mir_snprintf(name, "%s_%s", m_szModuleName, "Notification");
-		SkinPlaySound("Notification");
-		flags |= NIIF_INFO;
+		Skin_PlaySound("Notification");
 		break;
 
-	case FACEBOOK_EVENT_OTHER:
-		if (!getByte(FACEBOOK_KEY_EVENT_OTHER_ENABLE, DEFAULT_EVENT_OTHER_ENABLE))
-			return NULL;
+	case EVENT_OTHER:
 		mir_snprintf(name, "%s_%s", m_szModuleName, "Other");
-		SkinPlaySound("OtherEvent");
-		flags |= NIIF_INFO;
+		Skin_PlaySound("OtherEvent");
 		break;
 
-	case FACEBOOK_EVENT_FRIENDSHIP:
-		if (!getByte(FACEBOOK_KEY_EVENT_FRIENDSHIP_ENABLE, DEFAULT_EVENT_FRIENDSHIP_ENABLE))
-			return NULL;
+	case EVENT_FRIENDSHIP:
 		mir_snprintf(name, "%s_%s", m_szModuleName, "Friendship");
-		SkinPlaySound("Friendship");
-		flags |= NIIF_INFO;
+		Skin_PlaySound("Friendship");
 		break;
 
-	case FACEBOOK_EVENT_TICKER:
-		if (!getByte(FACEBOOK_KEY_EVENT_TICKER_ENABLE, DEFAULT_EVENT_TICKER_ENABLE))
-			return NULL;
+	case EVENT_TICKER:
 		mir_snprintf(name, "%s_%s", m_szModuleName, "Ticker");
-		SkinPlaySound("Ticker");
-		flags |= NIIF_INFO;
+		Skin_PlaySound("Ticker");
 		break;
 
-	case FACEBOOK_EVENT_ON_THIS_DAY:
-		if (!getByte(FACEBOOK_KEY_EVENT_ON_THIS_DAY_ENABLE, DEFAULT_EVENT_ON_THIS_DAY_ENABLE))
-			return NULL;
-		mir_snprintf(name, "%s_%s", m_szModuleName, "OnThisDay");
-		SkinPlaySound("OnThisDay");
-		flags |= NIIF_INFO;
+	case EVENT_ON_THIS_DAY:
+		mir_snprintf(name, "%s_%s", m_szModuleName, "Memories");		
 		break;
 	}
 
@@ -99,10 +76,13 @@ HWND FacebookProto::NotifyEvent(TCHAR* title, TCHAR* info, MCONTACT contact, DWO
 				}*/
 
 			POPUPDATACLASS pd = { sizeof(pd) };
-			pd.ptszTitle = title;
-			pd.ptszText = info;
+			pd.pwszTitle = title;
+			pd.pwszText = text;
 			pd.pszClassName = name;
 			pd.hContact = contact;
+			if (icon != NULL) {
+				// pd.hIcon = IcoLib_GetIconByHandle(GetIconHandle(icon)); // FIXME: Uncomment when implemented in Popup+ and YAPP correctly
+			}
 
 			if (url != NULL || notification_id != NULL) {
 				popup_data *data = new popup_data(this);
@@ -117,28 +97,12 @@ HWND FacebookProto::NotifyEvent(TCHAR* title, TCHAR* info, MCONTACT contact, DWO
 		}
 	}
 	else {
-		if (ServiceExists(MS_CLIST_SYSTRAY_NOTIFY))
-		{
-			MIRANDASYSTRAYNOTIFY err;
-			int niif_flags = flags;
-			REMOVE_FLAG(niif_flags, FACEBOOK_EVENT_CLIENT |
-				FACEBOOK_EVENT_NEWSFEED |
-				FACEBOOK_EVENT_NOTIFICATION |
-				FACEBOOK_EVENT_OTHER |
-				FACEBOOK_EVENT_FRIENDSHIP);
-			err.szProto = m_szModuleName;
-			err.cbSize = sizeof(err);
-			err.dwInfoFlags = NIIF_INTERN_TCHAR | niif_flags;
-			err.tszInfoTitle = title;
-			err.tszInfo = info;
-			err.uTimeout = 10000;
-			if (CallService(MS_CLIST_SYSTRAY_NOTIFY, 0, (LPARAM)& err) == 0)
-				return NULL;
-		}
+		if (!Clist_TrayNotifyW(m_szModuleName, title, text, type == EVENT_CLIENT ? NIIF_WARNING : NIIF_INFO, 10000))
+			return NULL;
 	}
 
-	if (FLAG_CONTAINS(flags, FACEBOOK_EVENT_CLIENT))
-		MessageBox(NULL, info, title, MB_OK | MB_ICONINFORMATION);
+	if (type == EVENT_CLIENT)
+		MessageBox(NULL, text, title, MB_OK | MB_ICONERROR);
 
 	return NULL;
 }

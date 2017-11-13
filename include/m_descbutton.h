@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2007-12 Miranda ICQ/IM project,
 Copyright (c) 2007 Artem Shpynov
 
@@ -27,15 +27,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef M_DESCBUTTON_H__
 #define M_DESCBUTTON_H__ 1
 
-#define MIRANDADESCBUTTONCLASS _T("MirandaDescButtonClass")
+#define MIRANDADESCBUTTONCLASS L"MirandaDescButtonClass"
 
 #define MDBCF_SHAREDICON	0x01
 #define MDBCF_UNICODE		0x02
-#ifdef _UNICODE
-	#define	MDBCF_TCHAR		MDBCF_UNICODE
-#else
-	#define	MDBCF_TCHAR		0
-#endif
 
 #define DBCM_FIRST			(WM_USER+1024)
 #define DBCM_LAST			(ITCM_FIRST+64)
@@ -45,9 +40,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define DBCM_SETICON		(DBCM_FIRST+3)		//WPARAM is set of flags, LPARAM icon handle
 
 #define MDescButton_SetTitle(hwnd, title)	\
-	(SendMessage((hwnd), DBCM_SETTITLE, MDBCF_TCHAR, (LPARAM)(title)))
+	(SendMessage((hwnd), DBCM_SETTITLE, MDBCF_UNICODE, (LPARAM)(title)))
 #define MDescButton_SetDescription(hwnd, title)	\
-	(SendMessage((hwnd), DBCM_SETDESCRIPTION, MDBCF_TCHAR, (LPARAM)(title)))
+	(SendMessage((hwnd), DBCM_SETDESCRIPTION, MDBCF_UNICODE, (LPARAM)(title)))
 #define MDescButton_SetIcon(hwnd, hicon)	\
 	(SendMessage((hwnd), DBCM_SETICON, 0, (LPARAM)(hicon)))
 #define MDescButton_SetIconShared(hwnd, hicon)	\

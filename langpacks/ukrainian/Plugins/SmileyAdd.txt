@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: SmileyAdd.dll
 ;  Plugin: SmileyAdd
-;  Version: 0.2.3.18
+;  Version: 0.2.4.1
 ;  Authors: Peacow, nightwish, bid, borkra
 ;============================================================
 [Smiley support for Miranda NG.]
@@ -39,12 +39,6 @@
 Мінімальна висота смайлів
 [Smiley selector]
 Вибір смайла
-[Surround inserted smiley with spaces]
-Вставити смайл з пробілами
-[Use first smiley for selection size]
-Розмір усіх смайлів як у першого
-[IEView style window]
-Вікно в стилі IEView
 [Input area]
 Поле вводу
 [Enable smileys]
@@ -53,10 +47,18 @@
 Не замінювати під курсором
 [Built-in message dialog support]
 Підтримка плагінів повідомлень
-[Disable]
-Вимкнути
+[Enable]
+Увімкнути
 [Smiley button]
 Кнопка смайла
+[Surround inserted smiley with spaces]
+Вставити смайл з пробілами
+[Use first smiley for selection size]
+Розмір усіх смайлів як у першого
+[IEView style window]
+Вікно в стилі IEView
+[Horizontal sorting]
+Впорядкувати горизонтально
 [Show smiley selection window]
 Показати вікно вибору смайлів
 [SmileyAdd]
@@ -69,22 +71,22 @@ HTTP-з'єднання SmileyAdd
 Кнопка смайла
 [Assign smiley category]
 Категорія смайлів
+[Background color]
+Колір фону
 [Only one instance of SmileyAdd could be executed.\nRemove duplicate instances from 'Plugins' directory]
 Може бути запущена тільки одна копія SmileyAdd.\nВидаліть дублікат з папки Plugins.
-[Smileys]
-Смайли
-[Customize]
-Тонке налаштування
-[Off]
-Вимк.
-[Top]
-Вгорі
-[Bottom]
-Внизу
+[Hide]
+Сховати
+[Show]
+Показати
 [Smiley packs]
 Набір смайлів
 [All files]
 Усі файли
+[Smileys]
+Смайли
+[Customize]
+Тонке налаштування
 [Protocol specific]
 Згідно з протоколом
 [Smiley pack %s for category "%s" not found.\nSelect correct smiley pack in the Options -> Customize -> Smileys.]

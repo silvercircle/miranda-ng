@@ -64,17 +64,15 @@ INT_PTR CALLBACK DlgProcView(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 	switch (msg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
+		Window_SetIcon_IcoLib(hwndDlg, GetIconHandle(IDI_VI));
 		{
-			SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)LoadIconEx(IDI_VI, true));
-			SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)LoadIconEx(IDI_VI));
-
 			CHARFORMAT2 chf;
 			chf.cbSize = sizeof(chf);
 			SendDlgItemMessage(hwndDlg, IDC_VIEWVERSIONINFO, EM_GETCHARFORMAT, SCF_DEFAULT, (LPARAM)&chf);
-			mir_tstrcpy(chf.szFaceName, TEXT("Courier New"));
+			mir_wstrcpy(chf.szFaceName, TEXT("Courier New"));
 			SendDlgItemMessage(hwndDlg, IDC_VIEWVERSIONINFO, EM_SETCHARFORMAT, SCF_ALL, (LPARAM)&chf);
 
-			CMString buffer;
+			CMStringW buffer;
 			PrintVersionInfo(buffer, (unsigned int)lParam);
 			SetDlgItemText(hwndDlg, IDC_VIEWVERSIONINFO, buffer.c_str());
 			SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
@@ -165,8 +163,7 @@ INT_PTR CALLBACK DlgProcView(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPara
 
 	case WM_DESTROY:
 		hViewWnd = NULL;
-		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_BIG, 0));
-		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, 0));
+		Window_FreeIcon_IcoLib(hwndDlg);
 		Utils_SaveWindowPosition(hwndDlg, NULL, PluginName, "ViewInfo_");
 		if (servicemode)
 			PostQuitMessage(0);
@@ -273,16 +270,16 @@ LRESULT CALLBACK DlgProcPopup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_COMMAND:
 		switch ((INT_PTR)PUGetPluginData(hWnd)) {
 		case 0:
-			OpenAuthUrl("http://vi.miranda-ng.org/detail/%s");
+			OpenAuthUrl("https://vi.miranda-ng.org/detail/%s");
 			break;
 
 		case 1:
-			OpenAuthUrl("http://vi.miranda-ng.org/global/%s");
+			OpenAuthUrl("https://vi.miranda-ng.org/global/%s");
 			break;
 
 		case 3:
-			TCHAR path[MAX_PATH];
-			mir_sntprintf(path, TEXT("%s\\VersionInfo.txt"), VersionInfoFolder);
+			wchar_t path[MAX_PATH];
+			mir_snwprintf(path, TEXT("%s\\VersionInfo.txt"), VersionInfoFolder);
 			ShellExecute(NULL, TEXT("open"), path, NULL, NULL, SW_SHOW);
 			break;
 
@@ -291,26 +288,25 @@ LRESULT CALLBACK DlgProcPopup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case UM_FREEPLUGINDATA:
-		IcoLib_ReleaseIcon((HICON)SendMessage(hWnd, WM_SETICON, ICON_BIG, 0));
-		IcoLib_ReleaseIcon((HICON)SendMessage(hWnd, WM_SETICON, ICON_SMALL, 0));
+		Window_FreeIcon_IcoLib(hWnd);
 		break;
 	}
 
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-void ShowMessage(int type, const TCHAR* format, ...)
+void ShowMessage(int type, const wchar_t* format, ...)
 {
 	POPUPDATAT pi = { 0 };
 
 	va_list va;
 	va_start(va, format);
-	int len = mir_vsntprintf(pi.lptzText, _countof(pi.lptzText) - 1, format, va);
+	int len = mir_vsnwprintf(pi.lptzText, _countof(pi.lptzText) - 1, format, va);
 	pi.lptzText[len] = 0;
 	va_end(va);
 
 	if (ServiceExists(MS_POPUP_ADDPOPUPT)) {
-		mir_tstrcpy(pi.lptzContactName, TEXT(PluginName));
+		mir_wstrcpy(pi.lptzContactName, TEXT(PluginName));
 		pi.lchIcon = LoadIconEx(IDI_VI);
 		pi.PluginWindowProc = DlgProcPopup;
 		pi.PluginData = (void*)type;

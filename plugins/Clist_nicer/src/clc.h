@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-03 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -30,7 +30,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define INTM_SORTCLC			(WM_USER+32)
 #define INTM_STATUSCHANGED		(WM_USER+33)
 #define INTM_METACHANGED		(WM_USER+34)
-#define INTM_INVALIDATECONTACT	(WM_USER+35)
 #define INTM_FORCESORT			(WM_USER+36)
 
 #define DEFAULT_TITLEBAR_HEIGHT	18
@@ -95,7 +94,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef struct _OrderTreeData
 {
 	BYTE			ID;
-	const TCHAR *	Name;
+	const wchar_t *	Name;
 	BYTE			Position;
 	BOOL			Visible;
 	BOOL			fReserved;
@@ -106,7 +105,7 @@ struct TExtraCache
 	MCONTACT	hContact;
 	HANDLE		hTimeZone;
 	BYTE		valid;
-	TCHAR		*statusMsg;
+	wchar_t		*statusMsg;
 	BYTE		bStatusMsgValid;
 	DWORD		dwCFlags;
 	DWORD		dwDFlags; // display flags for caching only
@@ -118,20 +117,20 @@ struct TExtraCache
 
 struct ClcContact : public ClcContactBase
 {
-	BOOL		bIsMeta;
-	BYTE		xStatus;
-	int			xStatusIcon;
+	BOOL     bIsMeta;
+	BYTE     xStatus;
+	int      xStatusIcon;
 	MCONTACT	hSubContact;
-	char		*metaProto;
-	DWORD		codePage;
-	WORD		wStatus;
-	int			avatarLeft, extraIconRightBegin;
-	int			isRtl;
-	DWORD		cFlags;
-	BYTE		bSecondLine;
+	char    *metaProto;
+	DWORD    codePage;
+	WORD     wStatus;
+	int      avatarLeft, extraIconRightBegin;
+	int      isRtl;
+	DWORD    cFlags;
+	BYTE     bSecondLine;
 
-	avatarCacheEntry	*ace;
-	TExtraCache*		pExtra;
+	AVATARCACHEENTRY *ace;
+	TExtraCache *pExtra;
 };
 
 #define DRAGSTAGE_NOTMOVED		0
@@ -169,10 +168,10 @@ struct ClcData : public ClcDataBase
 	BYTE isMultiSelect;
 	HWND hwndParent;
 	DWORD lastSort;
-	BOOL bNeedPaint, bisEmbedded, bHideSubcontacts;
 	DWORD lastRepaint;
-	BOOL forceScroll;
 	int oldSelection;
+
+	bool bNeedPaint, bisEmbedded, bHideSubcontacts, bForceScroll;
 };
 
 //#define CLUI_FRAME_SHOWTOPBUTTONS 1
@@ -222,7 +221,6 @@ struct TCluiData {
 	DWORD topOffset, bottomOffset;
 	int statusBarHeight;
 	int soundsOff;
-	BYTE tabSRMM_Avail;
 	BYTE bAvatarServiceAvail;
 	HICON hIconConnecting;
 	DWORD winFlags;
@@ -275,7 +273,7 @@ struct TCluiData {
 	BOOL bUsePerProto;
 	BOOL bOverridePerStatusColors;
 	BOOL bDontSeparateOffline;
-	TCHAR groupFilter[2048];
+	wchar_t groupFilter[2048];
 	char protoFilter[2048];
 	char varFilter[2048];
 	DWORD lastMsgFilter;
@@ -309,7 +307,7 @@ struct TCluiData {
 	int group_padding;
 	DWORD t_now;
 	BOOL realTimeSaving;
-	TCHAR tszProfilePath[MAX_PATH];
+	wchar_t tszProfilePath[MAX_PATH];
 	FILETIME ft;
 	SYSTEMTIME st;
 };
@@ -364,10 +362,6 @@ struct protoMenu
 	HICON hIcon;
 };
 
-// clcidents.c
-int FindItem(HWND hwnd, struct ClcData *dat, HANDLE hItem, ClcContact **contact, ClcGroup **subgroup, int *isVisible);
-HANDLE ContactToItemHandle(ClcContact *contact, DWORD *nmFlags);
-
 // clcitems.c
 void RebuildEntireList(HWND hwnd, struct ClcData *dat);
 DWORD INTSORT_GetLastMsgTime(MCONTACT hContact);
@@ -378,20 +372,14 @@ LRESULT ProcessExternalMessages(HWND hwnd, struct ClcData *dat, UINT msg, WPARAM
 // clcutils.c
 void 	SetGroupExpand(HWND hwnd, struct ClcData *dat, ClcGroup *group, int newState);
 void 	DoSelectionDefaultAction(HWND hwnd, struct ClcData *dat);
-int 	FindRowByText(HWND hwnd, struct ClcData *dat, const TCHAR *text, int prefixOk);
+int 	FindRowByText(HWND hwnd, struct ClcData *dat, const wchar_t *text, int prefixOk);
 void 	BeginRenameSelection(HWND hwnd, struct ClcData *dat);
 int 	HitTest(HWND hwnd, struct ClcData *dat, int testx, int testy, ClcContact **contact, ClcGroup **group, DWORD *flags);
 void 	ScrollTo(HWND hwnd, struct ClcData *dat, int desty, int noSmooth);
 void 	RecalcScrollBar(HWND hwnd, struct ClcData *dat);
-size_t 	MY_pathToRelative(const TCHAR *pSrc, TCHAR *pOut);
-size_t 	MY_pathToAbsolute(const TCHAR *pSrc, TCHAR *pOut);
+size_t 	MY_pathToRelative(const wchar_t *pSrc, wchar_t *pOut);
+size_t 	MY_pathToAbsolute(const wchar_t *pSrc, wchar_t *pOut);
 
-#define DROPTARGET_OUTSIDE		0
-#define DROPTARGET_ONSELF		1
-#define DROPTARGET_ONNOTHING	2
-#define DROPTARGET_ONGROUP		3
-#define DROPTARGET_ONCONTACT	4
-#define DROPTARGET_INSERTION	5
 int GetDropTargetInformation(HWND hwnd, struct ClcData *dat, POINT pt);
 void LoadClcOptions(HWND hwnd, struct ClcData *dat, BOOL bFirst);
 void RecalculateGroupCheckboxes(HWND hwnd, struct ClcData *dat);
@@ -410,21 +398,21 @@ int FrameNCPaint(HWND hwnd, WNDPROC oldWndProc, WPARAM wParam, LPARAM lParam, BO
 void FreeProtocolData( void );
 
 void GetClientID(ClcContact *contact, char *client);
-int LoadCLCButtonModule(void);
+int  LoadCLCButtonModule(void);
 void SetButtonStates();
 void ConfigureCLUIGeometry(int mode);
 void IcoLibReloadIcons();
-int CompareContacts(const ClcContact* p1, const ClcContact* p2);
+int  CompareContacts(const ClcContact* p1, const ClcContact* p2);
 void PaintNotifyArea(HDC hDC, RECT *rc);
-int AvatarChanged(WPARAM wParam, LPARAM lParam);
+int  AvatarChanged(WPARAM wParam, LPARAM lParam);
 void ConfigureFrame();
 void ConfigureEventArea();
 void ClearIcons(int mode);
 void SkinDrawBg(HWND hwnd, HDC hdc);
-int GetBasicFontID(ClcContact * contact);
-extern int __fastcall CLVM_GetContactHiddenStatus(MCONTACT hContact, char *szStatus, struct ClcData *dat);
+int  GetBasicFontID(ClcContact *contact);
+int  CLVM_GetContactHiddenStatus(MCONTACT hContact, char *szStatus, struct ClcData *dat);
 void CreateViewModeFrame();
-int GetExtraCache(MCONTACT hContact, char *szProto);
+int  GetExtraCache(MCONTACT hContact, char *szProto);
 void ReloadExtraInfo(MCONTACT hContact);
 void LoadAvatarForContact(ClcContact *p);
 void ApplyViewMode(const char *name);

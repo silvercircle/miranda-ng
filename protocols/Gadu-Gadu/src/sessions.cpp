@@ -107,7 +107,7 @@ static void gg_listsessions(GGPROTO* gg, HWND hwndDlg)
 	EnableWindow(GetDlgItem(hwndDlg, IDC_SIGNOUTALL), ListView_GetItemCount(hList) > 0);
 }
 
-static int sttSessionsDlgResizer(HWND hwndDlg, LPARAM lParam, UTILRESIZECONTROL* urc)
+static int sttSessionsDlgResizer(HWND, LPARAM, UTILRESIZECONTROL* urc)
 {
 	switch (urc->wId)
 	{
@@ -127,7 +127,7 @@ static BOOL IsOverAction(HWND hwndDlg)
 	LVHITTESTINFO hti;
 	RECT rc;
 	HDC hdc;
-	TCHAR szText[256];
+	wchar_t szText[256];
 	SIZE textSize;
 	int textPosX;
 
@@ -142,7 +142,7 @@ static BOOL IsOverAction(HWND hwndDlg)
 	szText[0] = 0;
 	ListView_GetItemText(hList, hti.iItem, hti.iSubItem, szText, _countof(szText));
 	hdc = GetDC(hList);
-	GetTextExtentPoint32(hdc, szText, (int)mir_tstrlen(szText), &textSize);
+	GetTextExtentPoint32(hdc, szText, (int)mir_wstrlen(szText), &textSize);
 	ReleaseDC(hList, hdc);
 	textPosX = rc.left + (((rc.right - rc.left) - textSize.cx) / 2);
 	return (hti.pt.x > textPosX && hti.pt.x < textPosX + textSize.cx);
@@ -164,13 +164,13 @@ static INT_PTR CALLBACK gg_sessions_viewdlg(HWND hwndDlg, UINT message, WPARAM w
 
 		SetWindowLongPtr(hwndDlg, DWLP_USER, (LONG_PTR)lParam);
 		{
-			TCHAR oldTitle[256], newTitle[256];
+			wchar_t oldTitle[256], newTitle[256];
 			HANDLE hProtoAckEvent;
 
 			GetWindowText(hwndDlg, oldTitle, _countof(oldTitle));
-			mir_sntprintf(newTitle, oldTitle, gg->m_tszUserName);
+			mir_snwprintf(newTitle, oldTitle, gg->m_tszUserName);
 			SetWindowText(hwndDlg, newTitle);
-			WindowSetIcon(hwndDlg, "sessions");
+			Window_SetIcon_IcoLib(hwndDlg, GetIconHandle(IDI_SESSIONS));
 
 			if (hHandCursor == NULL)
 				hHandCursor = LoadCursor(NULL, IDC_HAND);
@@ -247,7 +247,7 @@ static INT_PTR CALLBACK gg_sessions_viewdlg(HWND hwndDlg, UINT message, WPARAM w
 								GetClientRect(hwndHeader, &rcHeader);
 								rc.top += rcHeader.bottom;
 							}
-							int cbLen = (int)mir_tstrlen(szText);
+							int cbLen = (int)mir_wstrlen(szText);
 							SIZE textSize;
 							GetTextExtentPoint32(nm->nmcd.hdc, szText, cbLen, &textSize);
 							int textPosX = rc.left + (((rc.right - rc.left) - textSize.cx) / 2);
@@ -265,7 +265,7 @@ static INT_PTR CALLBACK gg_sessions_viewdlg(HWND hwndDlg, UINT message, WPARAM w
 							ListView_GetSubItemRect(nm->nmcd.hdr.hwndFrom, nm->nmcd.dwItemSpec, nm->iSubItem, LVIR_LABEL, &rc);
 							if (nm->nmcd.hdr.idFrom == IDC_SESSIONS && nm->iSubItem == 3)
 							{
-								TCHAR szText[256];
+								wchar_t szText[256];
 								szText[0] = 0;
 								ListView_GetItemText(nm->nmcd.hdr.hwndFrom, nm->nmcd.dwItemSpec, nm->iSubItem, szText, _countof(szText));
 								FillRect(nm->nmcd.hdc, &rc, GetSysColorBrush(COLOR_WINDOW));
@@ -320,7 +320,7 @@ static INT_PTR CALLBACK gg_sessions_viewdlg(HWND hwndDlg, UINT message, WPARAM w
 				switch (iSelection) {
 				case 10001:
 					{
-						TCHAR szText[512], szClientName[256], szIP[64], szLoginTime[64];
+						wchar_t szText[512], szClientName[256], szIP[64], szLoginTime[64];
 						HGLOBAL hData;
 						if (!OpenClipboard(hwndDlg))
 							break;
@@ -330,10 +330,10 @@ static INT_PTR CALLBACK gg_sessions_viewdlg(HWND hwndDlg, UINT message, WPARAM w
 						ListView_GetItemText(hList, lvhti.iItem, 0, szClientName, _countof(szClientName));
 						ListView_GetItemText(hList, lvhti.iItem, 1, szIP, _countof(szIP));
 						ListView_GetItemText(hList, lvhti.iItem, 2, szLoginTime, _countof(szLoginTime));
-						mir_sntprintf(szText, _T("%s\t%s\t%s"), szClientName, szIP, szLoginTime);
-						if ((hData = GlobalAlloc(GMEM_MOVEABLE, mir_tstrlen(szText) + 1)) != NULL)
+						mir_snwprintf(szText, L"%s\t%s\t%s", szClientName, szIP, szLoginTime);
+						if ((hData = GlobalAlloc(GMEM_MOVEABLE, mir_wstrlen(szText) + 1)) != NULL)
 						{
-							mir_tstrcpy((TCHAR*)GlobalLock(hData), szText);
+							mir_wstrcpy((wchar_t*)GlobalLock(hData), szText);
 							GlobalUnlock(hData);
 							SetClipboardData(CF_TEXT, hData);
 						}
@@ -343,11 +343,11 @@ static INT_PTR CALLBACK gg_sessions_viewdlg(HWND hwndDlg, UINT message, WPARAM w
 
 				case 10002:
 					{
-						TCHAR szUrl[256], szIP[64];
+						wchar_t szUrl[256], szIP[64];
 						szIP[0] = 0;
 						ListView_GetItemText(hList, lvhti.iItem, 1, szIP, _countof(szIP));
-						mir_sntprintf(szUrl, _T("http://whois.domaintools.com/%s"), szIP);
-						Utils_OpenUrlT(szUrl);
+						mir_snwprintf(szUrl, L"http://whois.domaintools.com/%s", szIP);
+						Utils_OpenUrlW(szUrl);
 						break;
 					}
 				}
@@ -383,14 +383,14 @@ static INT_PTR CALLBACK gg_sessions_viewdlg(HWND hwndDlg, UINT message, WPARAM w
 			HANDLE hProtoAckEvent = (HANDLE)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
 			if (hProtoAckEvent) UnhookEvent(hProtoAckEvent);
 			gg->hwndSessionsDlg = NULL;
-			WindowFreeIcon(hwndDlg);
+			Window_FreeIcon_IcoLib(hwndDlg);
 			break;
 		}
 	}
 	return FALSE;
 }
 
-INT_PTR GGPROTO::sessions_view(WPARAM wParam, LPARAM lParam)
+INT_PTR GGPROTO::sessions_view(WPARAM, LPARAM)
 {
 	if (hwndSessionsDlg && IsWindow(hwndSessionsDlg)) {
 		ShowWindow(hwndSessionsDlg, SW_SHOWNORMAL);
@@ -417,13 +417,13 @@ BOOL GGPROTO::sessions_closedlg()
 void GGPROTO::sessions_menus_init(HGENMENU hRoot)
 {
 	CMenuItem mi;
-	mi.flags = CMIF_TCHAR;
+	mi.flags = CMIF_UNICODE;
 	mi.root = hRoot;
 	
 	mi.pszService = GGS_CONCUR_SESS;
 	CreateProtoService(mi.pszService, &GGPROTO::sessions_view);
 	mi.position = 200003;
 	mi.hIcolibItem = iconList[16].hIcolib;
-	mi.name.t = LPGENT("Concurrent &sessions");
+	mi.name.w = LPGENW("Concurrent &sessions");
 	Menu_AddProtoMenuItem(&mi, m_szModuleName);
 }

@@ -24,8 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #pragma warning (disable: 4786)
 
-void DoIdent(HANDLE hConnection, DWORD dwRemoteIP, void* extra);
-void DoIncomingDcc(HANDLE hConnection, DWORD dwRemoteIP, void* extra);
+void DoIdent(HNETLIBCONN hConnection, DWORD dwRemoteIP, void* extra);
+void DoIncomingDcc(HNETLIBCONN hConnection, DWORD dwRemoteIP, void* extra);
 unsigned long ConvertIPToInteger(char * IP);
 char* ConvertIntegerToIP(unsigned long int_ip_addr);
 
@@ -38,18 +38,18 @@ struct DCCINFO : public MZeroedObject
 	DWORD    dwAdr;
 	unsigned __int64   dwSize;
 	DWORD    iType;
-	CMString sToken;
+	CMStringW sToken;
 	int      iPort;
 	BOOL     bTurbo;
 	BOOL     bSSL;
 	BOOL     bSender;
 	BOOL     bReverse;
-	CMString sPath;
-	CMString sFile;
-	CMString sFileAndPath;
-	CMString sHostmask;
+	CMStringW sPath;
+	CMStringW sFile;
+	CMStringW sFileAndPath;
+	CMStringW sHostmask;
 	MCONTACT hContact;
-	CMString sContactName;
+	CMStringW sContactName;
 };
 
 class CIrcMessage
@@ -57,29 +57,29 @@ class CIrcMessage
 public :
 	struct Prefix
 	{
-		CMString sNick, sUser, sHost;
+		CMStringW sNick, sUser, sHost;
 	}
 		prefix;
 
 	CIrcProto* m_proto;
-	CMString sCommand;
-	OBJLIST<CMString> parameters;
+	CMStringW sCommand;
+	OBJLIST<CMStringW> parameters;
 	bool m_bIncoming;
 	bool m_bNotify;
 	int  m_codePage;
 
 	//CIrcMessage( CIrcProto* ); // default constructor
-	CIrcMessage( CIrcProto*, const TCHAR* lpszCmdLine, int codepage, bool bIncoming=false, bool bNotify = true); // parser constructor
+	CIrcMessage( CIrcProto*, const wchar_t* lpszCmdLine, int codepage, bool bIncoming=false, bool bNotify = true); // parser constructor
 	CIrcMessage( const CIrcMessage& m ); // copy constructor
 	~CIrcMessage();
 
 	void Reset();
 
 	CIrcMessage& operator = (const CIrcMessage& m);
-	CIrcMessage& operator = (const TCHAR* lpszCmdLine);
+	CIrcMessage& operator = (const wchar_t* lpszCmdLine);
 
 private :
-	void ParseIrcCommand(const TCHAR* lpszCmdLine);
+	void ParseIrcCommand(const wchar_t* lpszCmdLine);
 };
 
 ////////////////////////////////////////////////////////////////////
@@ -87,13 +87,13 @@ private :
 struct CIrcSessionInfo
 {
 	CMStringA  sServer;
-	CMString sServerName;
-	CMString sNick;
-	CMString sUserID;
-	CMString sFullName;
+	CMStringW sServerName;
+	CMStringW sNick;
+	CMStringW sUserID;
+	CMStringW sFullName;
 	CMStringA  sPassword;
-	CMString sIdentServerType;
-	CMString sNetwork;
+	CMStringW sIdentServerType;
+	CMStringW sNetwork;
 	bool bIdentServer;
 	bool bNickFlag;
 	int m_iSSL;
@@ -110,11 +110,11 @@ struct CIrcSessionInfo
 
 struct CIrcIgnoreItem
 {
-	CIrcIgnoreItem( const TCHAR*, const TCHAR*, const TCHAR* );
+	CIrcIgnoreItem( const wchar_t*, const wchar_t*, const wchar_t* );
 	CIrcIgnoreItem( int codepage, const char*, const char*, const char* );
 	~CIrcIgnoreItem();
 
-   CMString mask, flags, network;
+   CMStringW mask, flags, network;
 };
 
 ////////////////////////////////////////////////////////////////////
@@ -123,8 +123,8 @@ class CDccSession
 {
 protected:
 	CIrcProto* m_proto;
-	HANDLE con;			// connection handle	
-	HANDLE hBindPort;	// handle for listening port
+	HNETLIBCONN con;			// connection handle	
+	HNETLIBBIND hBindPort;	// handle for listening port
 	static int nDcc;	// number of dcc objects
 	unsigned __int64 dwTotal;		// total bytes sent/received
 
@@ -132,7 +132,7 @@ protected:
 	int iGlobalToken;
 
 	PROTOFILETRANSFERSTATUS pfts; // structure used to setup and update the filetransfer dialogs of miranda
-	TCHAR* file[2];
+	wchar_t* file[2];
 
 	int SetupConnection();	
 	void DoSendFile();
@@ -145,7 +145,7 @@ protected:
 
 public:
 	
-	CDccSession(CIrcProto*, DCCINFO* pdci);  // constructor
+	CDccSession(CIrcProto*, DCCINFO *pdci);  // constructor
 	~CDccSession();               // destructor, что характерно
 
 	time_t tLastPercentageUpdate; // time of last update of the filetransfer dialog
@@ -154,7 +154,7 @@ public:
 
 	HANDLE hEvent;                // Manual object
 	long   dwWhatNeedsDoing;      // Set to indicate what FILERESUME_ action is chosen by the user
-	TCHAR* NewFileName;           // contains new file name if FILERESUME_RENAME chosen
+	wchar_t* NewFileName;           // contains new file name if FILERESUME_RENAME chosen
 	unsigned __int64 dwResumePos;           // position to resume from if FILERESUME_RESUME
 
 	int iToken;                   // used to identify (find) objects in reverse dcc filetransfers
@@ -163,8 +163,8 @@ public:
 
 	int Connect();					
 	void SetupPassive( DWORD adr, DWORD port );
-	int SendStuff(const TCHAR* fmt);
-	int IncomingConnection(HANDLE hConnection, DWORD dwIP);
+	int SendStuff(const wchar_t* fmt);
+	int IncomingConnection(HNETLIBCONN hConnection, DWORD dwIP);
 	int Disconnect();
 };
 

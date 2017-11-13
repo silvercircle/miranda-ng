@@ -195,11 +195,11 @@ void UpdateMenu()
 {
 	bool isEnabled = db_get_b(0, "Popup", "ModuleIsEnabled", 1) == 1;
 	if (isEnabled) {
-		Menu_ModifyItem(hMenuItem, LPGENT("Disable Popups"), IcoLib_GetIcon(ICO_POPUP_ON));
+		Menu_ModifyItem(hMenuItem, LPGENW("Disable Popups"), IcoLib_GetIcon(ICO_POPUP_ON));
 		Menu_ModifyItem(hMenuRoot, NULL, IcoLib_GetIcon(ICO_POPUP_ON));
 	}
 	else {
-		Menu_ModifyItem(hMenuItem, LPGENT("Enable Popups"), IcoLib_GetIcon(ICO_POPUP_OFF));
+		Menu_ModifyItem(hMenuItem, LPGENW("Enable Popups"), IcoLib_GetIcon(ICO_POPUP_OFF));
 		Menu_ModifyItem(hMenuRoot, NULL, IcoLib_GetIcon(ICO_POPUP_OFF));
 	}
 
@@ -214,6 +214,7 @@ INT_PTR PopupQuery(WPARAM wParam, LPARAM)
 		{
 			bool enabled = db_get_b(0, "Popup", "ModuleIsEnabled", 1) != 0;
 			if (!enabled) db_set_b(0, "Popup", "ModuleIsEnabled", 1);
+			UpdateMenu();
 			return !enabled;
 		}
 		break;
@@ -221,18 +222,17 @@ INT_PTR PopupQuery(WPARAM wParam, LPARAM)
 		{
 			bool enabled = db_get_b(0, "Popup", "ModuleIsEnabled", 1) != 0;
 			if (enabled) db_set_b(0, "Popup", "ModuleIsEnabled", 0);
+			UpdateMenu();
 			return enabled;
 		}
 		break;
 
 	case PUQS_GETSTATUS:
 		return db_get_b(0, "Popup", "ModuleIsEnabled", 1);
-
 	default:
+		UpdateMenu();
 		return 1;
 	}
-	UpdateMenu();
-	return 0;
 }
 
 static INT_PTR TogglePopups(WPARAM, LPARAM)
@@ -289,9 +289,9 @@ static INT_PTR ShowMessage(WPARAM wParam, LPARAM lParam)
 
 	if (db_get_b(0, "Popup", "ModuleIsEnabled", 1)) {
 		POPUPDATAT pd = {0};
-		mir_tstrcpy(pd.lptzContactName, lParam == SM_WARNING ? _T("Warning") : _T("Notification"));
+		mir_wstrcpy(pd.lptzContactName, lParam == SM_WARNING ? L"Warning" : L"Notification");
 		pd.lchIcon = LoadIcon(0, lParam == SM_WARNING ? IDI_WARNING : IDI_INFORMATION);
-		_tcsncpy(pd.lptzText, _A2T((char *)wParam), MAX_SECONDLINE); pd.lptzText[MAX_SECONDLINE-1] = 0;
+		wcsncpy(pd.lptzText, _A2T((char *)wParam), MAX_SECONDLINE); pd.lptzText[MAX_SECONDLINE-1] = 0;
 		CallService(MS_POPUP_ADDPOPUPT, (WPARAM)&pd, 0);
 	}
 	return 0;
@@ -410,6 +410,11 @@ static INT_PTR CreateClassPopup(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+INT_PTR Popup_DeletePopup(WPARAM, LPARAM lParam)
+{
+	return (INT_PTR)SendMessage((HWND)lParam, UM_DESTROYPOPUP, 0, 0);
+}
+
 //////////////////////////////////////////////////////////////////////////////
 
 void InitServices() 
@@ -429,10 +434,12 @@ void InitServices()
 	CreateServiceFunction(MS_POPUP_QUERY, PopupQuery);
 
 	CreateServiceFunction(MS_POPUP_SHOWMESSAGE, ShowMessage);
-	CreateServiceFunction(MS_POPUP_SHOWMESSAGE"W", ShowMessageW);
+	CreateServiceFunction(MS_POPUP_SHOWMESSAGEW, ShowMessageW);
 
 	CreateServiceFunction(MS_POPUP_SHOWHISTORY, Popup_ShowHistory);
 	CreateServiceFunction("Popup/EnableDisableMenuCommand", TogglePopups);
+
+	CreateServiceFunction(MS_POPUP_DESTROYPOPUP, Popup_DeletePopup);
 }
 
 void DeinitServices()

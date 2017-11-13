@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013-15 Miranda NG project (http://miranda-ng.org)
+Copyright (c) 2013-17 Miranda NG project (https://miranda-ng.org)
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,657 +17,494 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-//////////////////////////////////////////////////////////////////////////////
-// Account manager dialog
-
-INT_PTR CALLBACK VKAccountProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	CVkProto *ppro = (CVkProto*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
-
-	switch (uMsg) {
-	case WM_INITDIALOG:
-		TranslateDialogDefault(hwndDlg);
-
-		ppro = (CVkProto*)lParam;
-		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
-
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon, 1));
-		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon));
-		{
-			ptrT tszLogin(ppro->getTStringA("Login"));
-			if (tszLogin != NULL)
-				SetDlgItemText(hwndDlg, IDC_LOGIN, tszLogin);
-
-			ptrT tszPassw(ppro->GetUserStoredPassword());
-			if (tszPassw != NULL)
-				SetDlgItemText(hwndDlg, IDC_PASSWORD, tszPassw);
-		}
-		return TRUE;
-
-	case WM_COMMAND:
-		switch (LOWORD(wParam)) {
-		case IDC_URL:
-			Utils_OpenUrl("http://vk.com");
-			break;
-
-		case IDC_LOGIN:
-		case IDC_PASSWORD:
-			if (HIWORD(wParam) == EN_CHANGE && (HWND)lParam == GetFocus()) {
-				SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
-				break;
-			}
-		}
-		break;
-
-	case WM_NOTIFY:
-		switch (((LPNMHDR)lParam)->code) {
-		case PSN_APPLY:
-			TCHAR str[1025];
-			GetDlgItemText(hwndDlg, IDC_LOGIN, str, _countof(str));
-			ppro->setTString("Login", str);
-			
-			GetDlgItemText(hwndDlg, IDC_PASSWORD, str, _countof(str));
-			T2Utf szRawPasswd(str);
-			if (szRawPasswd != NULL)
-				ppro->setString("Password", szRawPasswd);
-		}
-		break;
-
-	case WM_CLOSE:
-		EndDialog(hwndDlg, 0);
-		break;
-
-	case WM_DESTROY:
-		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_BIG, 0));
-		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
-		break;
-	}
-
-	return FALSE;
-}
+////////////////////// Account manager dialog ////////////////////////////////
 
 INT_PTR CVkProto::SvcCreateAccMgrUI(WPARAM, LPARAM lParam)
 {
-	return (INT_PTR)CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_ACCMGRUI), (HWND)lParam, VKAccountProc, (LPARAM)this);
+	CVkAccMgrForm *dlg = new CVkAccMgrForm(this, (HWND)lParam);
+	dlg->Show();
+	return (INT_PTR)dlg->GetHwnd();
 }
 
 //////////////////////////////////////////////////////////////////////////////
-// Options
 
-INT_PTR CALLBACK CVkProto::OptionsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+CVkAccMgrForm::CVkAccMgrForm(CVkProto *proto, HWND hwndParent) :
+	CVkDlgBase(proto, IDD_ACCMGRUI, false),
+	m_edtLogin(this, IDC_LOGIN),
+	m_edtPassword(this, IDC_PASSWORD),
+	m_hlLink(this, IDC_URL, "https://vk.com/")
 {
-	CVkProto *ppro = (CVkProto*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
+	SetParent(hwndParent);
 
-	switch (uMsg) {
-	case WM_INITDIALOG:
-		TranslateDialogDefault(hwndDlg);
-
-		ppro = (CVkProto*)lParam;
-		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
-
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon, 1));
-		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon));
-		{
-			ptrT tszLogin(ppro->getTStringA("Login"));
-			if (tszLogin != NULL)
-				SetDlgItemText(hwndDlg, IDC_LOGIN, tszLogin);
-
-			ptrT tszPassw(ppro->GetUserStoredPassword());
-			if (tszPassw != NULL)
-				SetDlgItemText(hwndDlg, IDC_PASSWORD, tszPassw);
-
-			SetDlgItemText(hwndDlg, IDC_GROUPNAME, ppro->getGroup());
-		}
-
-		CheckDlgButton(hwndDlg, IDC_DELIVERY, ppro->m_bServerDelivery ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_USE_LOCAL_TIME, ppro->m_bUseLocalTime ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_AUTOCLEAN, ppro->getBool("AutoClean") ? BST_CHECKED : BST_UNCHECKED);
-		
-		CheckDlgButton(hwndDlg, IDC_ONREAD, (ppro->m_iMarkMessageReadOn == markOnRead) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_ONRECEIVE, (ppro->m_iMarkMessageReadOn == markOnReceive) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_ONREPLY, (ppro->m_iMarkMessageReadOn == markOnReply) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_ONTYPING, (ppro->m_iMarkMessageReadOn == markOnTyping) ? BST_CHECKED : BST_UNCHECKED);
-		
-		CheckDlgButton(hwndDlg, IDC_SYNC_OFF, (ppro->m_iSyncHistoryMetod == syncOff) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_SYNC_AUTO, (ppro->m_iSyncHistoryMetod == syncAuto) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_SYNC_LAST1DAY, (ppro->m_iSyncHistoryMetod == sync1Days) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_SYNC_LAST3DAY, (ppro->m_iSyncHistoryMetod == sync3Days) ? BST_CHECKED : BST_UNCHECKED);
-		
-		return TRUE;
-
-	case WM_COMMAND:
-		switch (LOWORD(wParam)) {
-		case IDC_URL:
-			Utils_OpenUrl("http://vk.com");
-			break;
-
-		case IDC_LOGIN:
-		case IDC_PASSWORD:
-		case IDC_GROUPNAME:
-			if (HIWORD(wParam) == EN_CHANGE && (HWND)lParam == GetFocus())
-				SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
-			break;
-
-		case IDC_DELIVERY: 
-		case IDC_USE_LOCAL_TIME:
-		case IDC_AUTOCLEAN:
-		
-		case IDC_ONREAD:
-		case IDC_ONRECEIVE:
-		case IDC_ONREPLY:
-		case IDC_ONTYPING:
-		
-		case IDC_SYNC_OFF:
-		case IDC_SYNC_AUTO:
-		case IDC_SYNC_LAST1DAY:
-		case IDC_SYNC_LAST3DAY:
-			if (HIWORD(wParam) == BN_CLICKED && (HWND)lParam == GetFocus())
-				SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
-			break;
-		}
-		break;
-
-	case WM_NOTIFY:
-		if (((LPNMHDR)lParam)->code == PSN_APPLY) {
-			TCHAR str[1025];
-			GetDlgItemText(hwndDlg, IDC_LOGIN, str, _countof(str));
-			ppro->setTString("Login", str);
-
-			GetDlgItemText(hwndDlg, IDC_GROUPNAME, str, _countof(str));
-			if (mir_tstrcmp(ppro->getGroup(), str)) {
-				ppro->setGroup(str);
-				ppro->setTString("ProtoGroup", str);
-			}
-			
-			GetDlgItemText(hwndDlg, IDC_PASSWORD, str, _countof(str));
-			T2Utf szRawPasswd(str);
-			if (szRawPasswd != NULL)
-				ppro->setString("Password", szRawPasswd);
-
-			ppro->m_bServerDelivery = IsDlgButtonChecked(hwndDlg, IDC_DELIVERY) == BST_CHECKED;
-			ppro->setByte("ServerDelivery", ppro->m_bServerDelivery);
-						
-			ppro->setByte("AutoClean", IsDlgButtonChecked(hwndDlg, IDC_AUTOCLEAN) == BST_CHECKED);
-
-			ppro->m_bUseLocalTime = IsDlgButtonChecked(hwndDlg, IDC_USE_LOCAL_TIME) == BST_CHECKED;
-			ppro->setByte("UseLocalTime", ppro->m_bUseLocalTime);
-
-			if (IsDlgButtonChecked(hwndDlg, IDC_ONREAD) == BST_CHECKED)
-				ppro->m_iMarkMessageReadOn = markOnRead;
-			if (IsDlgButtonChecked(hwndDlg, IDC_ONRECEIVE) == BST_CHECKED)
-				ppro->m_iMarkMessageReadOn = markOnReceive;
-			if (IsDlgButtonChecked(hwndDlg, IDC_ONREPLY) == BST_CHECKED)
-				ppro->m_iMarkMessageReadOn = markOnReply;
-			if (IsDlgButtonChecked(hwndDlg, IDC_ONTYPING) == BST_CHECKED)
-				ppro->m_iMarkMessageReadOn = markOnTyping;
-			ppro->setByte("MarkMessageReadOn", ppro->m_iMarkMessageReadOn);
-
-			if (IsDlgButtonChecked(hwndDlg, IDC_SYNC_OFF) == BST_CHECKED)
-				ppro->m_iSyncHistoryMetod = syncOff;
-			if (IsDlgButtonChecked(hwndDlg, IDC_SYNC_AUTO) == BST_CHECKED)
-				ppro->m_iSyncHistoryMetod = syncAuto;
-			if (IsDlgButtonChecked(hwndDlg, IDC_SYNC_LAST1DAY) == BST_CHECKED)
-				ppro->m_iSyncHistoryMetod = sync1Days;
-			if (IsDlgButtonChecked(hwndDlg, IDC_SYNC_LAST3DAY) == BST_CHECKED)
-				ppro->m_iSyncHistoryMetod = sync3Days;
-
-			ppro->setByte("SyncHistoryMetod", ppro->m_iSyncHistoryMetod);
-		}
-		break;
-
-	case WM_CLOSE:
-		EndDialog(hwndDlg, 0);
-		break;
-
-	case WM_DESTROY:
-		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_BIG, 0));
-		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
-		break;
-	}
-
-	return FALSE;
+	CreateLink(m_edtLogin, "Login", L"");
 }
 
-INT_PTR CALLBACK CVkProto::OptionsAdvProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+void CVkAccMgrForm::OnInitDialog()
 {
-	CVkProto *ppro = (CVkProto*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
+	CSuper::OnInitDialog();
 
-	switch (uMsg) {
-	case WM_INITDIALOG:
-		TranslateDialogDefault(hwndDlg);
+	m_pwszOldLogin = m_edtLogin.GetText();
+	m_edtLogin.SendMsg(EM_LIMITTEXT, 1024, 0);
 
-		ppro = (CVkProto*)lParam;
-		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
-
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon, 1));
-		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon));
-
-		CheckDlgButton(hwndDlg, IDC_HIDECHATS, ppro->m_bHideChats ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_SYNC_MSG_STATUS, ppro->m_bSyncReadMessageStatusFromServer ? BST_CHECKED : BST_UNCHECKED);
-		
-		EnableWindow(GetDlgItem(hwndDlg, IDC_MESASUREAD), IsDlgButtonChecked(hwndDlg, IDC_SYNC_MSG_STATUS) == BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_MESASUREAD, ppro->m_bMesAsUnread ? BST_CHECKED : BST_UNCHECKED);
-
-		CheckDlgButton(hwndDlg, IDC_FORCE_ONLINE_ON_ACT, ppro->m_bUserForceOnlineOnActivity ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_USENOSTDURLENCODE, ppro->m_bUseNonStandardUrlEncode ? BST_CHECKED : BST_UNCHECKED);
-
-		CheckDlgButton(hwndDlg, IDC_REPORT_ABUSE, ppro->m_bReportAbuse ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_CLEAR_SERVER_HISTORY, ppro->m_bClearServerHistory ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_REMOVE_FROM_FRENDLIST, ppro->m_bRemoveFromFrendlist ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_REMOVE_FROM_CLIST, ppro->m_bRemoveFromClist ? BST_CHECKED : BST_UNCHECKED);
-		
-		CheckDlgButton(hwndDlg, IDC_SEND_MUSIC_NONE, (ppro->m_iMusicSendMetod == sendNone) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_SEND_MUSIC_BROADCAST, (ppro->m_iMusicSendMetod == sendBroadcastOnly) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_SEND_MUSIC_STATUS, (ppro->m_iMusicSendMetod == sendStatusOnly) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_SEND_MUSIC_BROADCAST_AND_STATUS, (ppro->m_iMusicSendMetod == sendBroadcastAndStatus) ? BST_CHECKED : BST_UNCHECKED);
-
-		SendDlgItemMessage(hwndDlg, IDC_SPIN_INT_INVIS, UDM_SETRANGE, 0, MAKELONG(60, 0));
-		SendDlgItemMessage(hwndDlg, IDC_SPIN_INT_INVIS, UDM_SETPOS, 0, ppro->m_iInvisibleInterval);
-
-		return TRUE;
-
-	case WM_COMMAND:
-		switch (LOWORD(wParam)) {
-		case IDC_ED_INT_INVIS:
-			if ((HWND)lParam == GetFocus() && (HIWORD(wParam) == EN_CHANGE))
-				SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
-			break;
-		
-		case IDC_SYNC_MSG_STATUS:
-			if (HIWORD(wParam) == BN_CLICKED && (HWND)lParam == GetFocus()) {
-				EnableWindow(GetDlgItem(hwndDlg, IDC_MESASUREAD), IsDlgButtonChecked(hwndDlg, IDC_SYNC_MSG_STATUS) == BST_UNCHECKED);
-				SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
-			}
-			break;
-
-		case IDC_HIDECHATS:
-		case IDC_MESASUREAD:
-		case IDC_FORCE_ONLINE_ON_ACT:
-		case IDC_USENOSTDURLENCODE:
-		case IDC_REPORT_ABUSE:
-		case IDC_CLEAR_SERVER_HISTORY:
-		case IDC_REMOVE_FROM_FRENDLIST:
-		case IDC_REMOVE_FROM_CLIST:
-		case IDC_SEND_MUSIC_NONE:
-		case IDC_SEND_MUSIC_BROADCAST:
-		case IDC_SEND_MUSIC_STATUS:
-		case IDC_SEND_MUSIC_BROADCAST_AND_STATUS:
-			if (HIWORD(wParam) == BN_CLICKED && (HWND)lParam == GetFocus())
-				SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
-			break;
-		}
-		break;
-
-	case WM_NOTIFY:
-		if (((LPNMHDR)lParam)->code == UDN_DELTAPOS)
-			SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
-
-		if (((LPNMHDR)lParam)->code == PSN_APPLY) {
-			ppro->m_bHideChats = IsDlgButtonChecked(hwndDlg, IDC_HIDECHATS) == BST_CHECKED;
-			ppro->setByte("HideChats", ppro->m_bHideChats);
-			
-			ppro->m_bSyncReadMessageStatusFromServer = IsDlgButtonChecked(hwndDlg, IDC_SYNC_MSG_STATUS) == BST_CHECKED;
-			ppro->setByte("SyncReadMessageStatusFromServer", ppro->m_bSyncReadMessageStatusFromServer);
-
-			ppro->m_bMesAsUnread = IsDlgButtonChecked(hwndDlg, IDC_MESASUREAD) == BST_CHECKED;
-			ppro->setByte("MesAsUnread", ppro->m_bMesAsUnread);
-			
-			ppro->m_bUserForceOnlineOnActivity = IsDlgButtonChecked(hwndDlg, IDC_FORCE_ONLINE_ON_ACT) == BST_CHECKED;
-			ppro->setByte("UserForceOnlineOnActivity", ppro->m_bUserForceOnlineOnActivity);
-
-			ppro->m_bUseNonStandardUrlEncode = IsDlgButtonChecked(hwndDlg, IDC_USENOSTDURLENCODE) == BST_CHECKED;
-			ppro->setByte("UseNonStandardUrlEncode", ppro->m_bUseNonStandardUrlEncode);
-
-			ppro->m_bReportAbuse = IsDlgButtonChecked(hwndDlg, IDC_REPORT_ABUSE) == BST_CHECKED;
-			ppro->setByte("ReportAbuseOnBanUser", ppro->m_bReportAbuse);
-
-			ppro->m_bClearServerHistory = IsDlgButtonChecked(hwndDlg, IDC_CLEAR_SERVER_HISTORY) == BST_CHECKED;
-			ppro->setByte("ClearServerHistoryOnBanUser", ppro->m_bClearServerHistory);
-
-			ppro->m_bRemoveFromFrendlist = IsDlgButtonChecked(hwndDlg, IDC_REMOVE_FROM_FRENDLIST) == BST_CHECKED;
-			ppro->setByte("RemoveFromFrendlistOnBanUser", ppro->m_bRemoveFromFrendlist);
-
-			ppro->m_bRemoveFromClist = IsDlgButtonChecked(hwndDlg, IDC_REMOVE_FROM_CLIST) == BST_CHECKED;
-			ppro->setByte("RemoveFromClistOnBanUser", ppro->m_bRemoveFromClist);
-
-			if (IsDlgButtonChecked(hwndDlg, IDC_SEND_MUSIC_NONE) == BST_CHECKED)
-				ppro->m_iMusicSendMetod = sendNone;
-			if (IsDlgButtonChecked(hwndDlg, IDC_SEND_MUSIC_BROADCAST) == BST_CHECKED)
-				ppro->m_iMusicSendMetod = sendBroadcastOnly;
-			if (IsDlgButtonChecked(hwndDlg, IDC_SEND_MUSIC_STATUS) == BST_CHECKED)
-				ppro->m_iMusicSendMetod = sendStatusOnly;
-			if (IsDlgButtonChecked(hwndDlg, IDC_SEND_MUSIC_BROADCAST_AND_STATUS) == BST_CHECKED)
-				ppro->m_iMusicSendMetod = sendBroadcastAndStatus;
-			ppro->setByte("MusicSendMetod", ppro->m_iMusicSendMetod);
-			CMStringA szListeningTo(ppro->m_szModuleName);
-			szListeningTo += "Enabled";
-			db_set_b(NULL, "ListeningTo", szListeningTo, ppro->m_iMusicSendMetod == 0 ? 0 : 1);
-
-			TCHAR buffer[5] = { 0 };
-			GetDlgItemText(hwndDlg, IDC_ED_INT_INVIS, buffer, _countof(buffer));
-			ppro->setDword("InvisibleInterval", ppro->m_iInvisibleInterval = _ttoi(buffer));
-		}
-		break;
-
-	case WM_CLOSE:
-		EndDialog(hwndDlg, 0);
-		break;
-
-	case WM_DESTROY:
-		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_BIG, 0));
-		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
-		break;
-	}
-
-	return FALSE;
+	m_pwszOldPass = m_proto->GetUserStoredPassword();
+	m_edtPassword.SetText(m_pwszOldPass);
+	m_edtPassword.SendMsg(EM_LIMITTEXT, 1024, 0);
 }
 
-INT_PTR CALLBACK CVkProto::OptionsFeedsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+void CVkAccMgrForm::OnApply()
 {
-	CVkProto *ppro = (CVkProto*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
-
-	switch (uMsg) {
-	case WM_INITDIALOG:
-		TranslateDialogDefault(hwndDlg);
-
-		ppro = (CVkProto*)lParam;
-		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
-
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon, 1));
-		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon));
-
-		CheckDlgButton(hwndDlg, IDC_NEWS_ENBL, ppro->m_bNewsEnabled ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_NOTIF_ENBL, ppro->m_bNotificationsEnabled ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_NOTIF_MARK_VIEWED, ppro->m_bNotificationsMarkAsViewed ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_SPEC_CONT_ENBL, ppro->m_bSpecialContactAlwaysEnabled ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_NEWSAUTOCLEAR, ppro->m_bNewsAutoClearHistory ? BST_CHECKED : BST_UNCHECKED);
-
-		CheckDlgButton(hwndDlg, IDC_F_POSTS, ppro->m_bNewsFilterPosts ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_F_PHOTOS, ppro->m_bNewsFilterPhotos ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_F_TAGS, ppro->m_bNewsFilterTags ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_F_WALLPHOTOS, ppro->m_bNewsFilterWallPhotos ? BST_CHECKED : BST_UNCHECKED);
-		
-		CheckDlgButton(hwndDlg, IDC_S_FRIENDS, ppro->m_bNewsSourceFriends ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_S_GROUPS, ppro->m_bNewsSourceGroups ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_S_PAGES, ppro->m_bNewsSourcePages ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_S_FOLLOWING, ppro->m_bNewsSourceFollowing ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_S_BANNED, ppro->m_bNewsSourceIncludeBanned ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_S_NOREPOSTES, ppro->m_bNewsSourceNoReposts ? BST_CHECKED : BST_UNCHECKED);
-
-		CheckDlgButton(hwndDlg, IDC_N_COMMENTS, ppro->m_bNotificationFilterComments ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_N_LIKES, ppro->m_bNotificationFilterLikes ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_N_REPOSTS, ppro->m_bNotificationFilterReposts ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_N_MENTIONS, ppro->m_bNotificationFilterMentions ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_N_INVITES, ppro->m_bNotificationFilterInvites ? BST_CHECKED : BST_UNCHECKED);
-
-		SendDlgItemMessage(hwndDlg, IDC_SPIN_INT_NEWS, UDM_SETRANGE, 0, MAKELONG(60*24, 1));
-		SendDlgItemMessage(hwndDlg, IDC_SPIN_INT_NEWS, UDM_SETPOS, 0, ppro->m_iNewsInterval);
-
-		SendDlgItemMessage(hwndDlg, IDC_SPIN_INT_NOTIF, UDM_SETRANGE, 0, MAKELONG(60 * 24, 1));
-		SendDlgItemMessage(hwndDlg, IDC_SPIN_INT_NOTIF, UDM_SETPOS, 0, ppro->m_iNotificationsInterval);
-		
-		return TRUE;
-
-	case WM_COMMAND:
-		switch (LOWORD(wParam)) {
-		case IDC_ED_INT_NEWS:
-		case IDC_ED_INT_NOTIF:
-			if ((HWND)lParam == GetFocus() && (HIWORD(wParam) == EN_CHANGE))
-				SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
-			break;
-		
-		case IDC_NEWS_ENBL:
-		case IDC_NOTIF_ENBL:
-		case IDC_NOTIF_MARK_VIEWED:
-		case IDC_SPEC_CONT_ENBL:
-		case IDC_NEWSAUTOCLEAR:
-		case IDC_F_POSTS:
-		case IDC_F_PHOTOS:
-		case IDC_F_TAGS:
-		case IDC_F_WALLPHOTOS:
-		case IDC_S_FRIENDS:
-		case IDC_S_GROUPS:
-		case IDC_S_PAGES:
-		case IDC_S_FOLLOWING:
-		case IDC_S_BANNED:
-		case IDC_S_NOREPOSTES:
-		case IDC_N_COMMENTS:
-		case IDC_N_LIKES:
-		case IDC_N_REPOSTS:
-		case IDC_N_MENTIONS:
-		case IDC_N_INVITES:
-			if (HIWORD(wParam) == BN_CLICKED && (HWND)lParam == GetFocus())
-				SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
-			break;
-		}
-		break;
-
-	case WM_NOTIFY:
-		if (((LPNMHDR)lParam)->code == UDN_DELTAPOS)
-			SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
-
-		if (((LPNMHDR)lParam)->code == PSN_APPLY) {
-			ppro->m_bNewsEnabled = IsDlgButtonChecked(hwndDlg, IDC_NEWS_ENBL) == BST_CHECKED;
-			ppro->setByte("NewsEnabled", ppro->m_bNewsEnabled);
-
-			ppro->m_bNotificationsEnabled = IsDlgButtonChecked(hwndDlg, IDC_NOTIF_ENBL) == BST_CHECKED;
-			ppro->setByte("NotificationsEnabled", ppro->m_bNotificationsEnabled);
-
-			ppro->m_bNotificationsMarkAsViewed = IsDlgButtonChecked(hwndDlg, IDC_NOTIF_MARK_VIEWED) == BST_CHECKED;
-			ppro->setByte("NotificationsMarkAsViewed", ppro->m_bNotificationsMarkAsViewed);
-
-			ppro->m_bSpecialContactAlwaysEnabled = IsDlgButtonChecked(hwndDlg, IDC_SPEC_CONT_ENBL) == BST_CHECKED;
-			ppro->setByte("SpecialContactAlwaysEnabled", ppro->m_bSpecialContactAlwaysEnabled);
-
-			ppro->m_bNewsAutoClearHistory = IsDlgButtonChecked(hwndDlg, IDC_NEWSAUTOCLEAR) == BST_CHECKED;
-			ppro->setByte("NewsAutoClearHistory", ppro->m_bNewsAutoClearHistory);
-
-			ppro->m_bNewsFilterPosts = IsDlgButtonChecked(hwndDlg, IDC_F_POSTS) == BST_CHECKED;
-			ppro->setByte("NewsFilterPosts", ppro->m_bNewsFilterPosts);
-
-			ppro->m_bNewsFilterPhotos = IsDlgButtonChecked(hwndDlg, IDC_F_PHOTOS) == BST_CHECKED;
-			ppro->setByte("NewsFilterPhotos", ppro->m_bNewsFilterPhotos);
-
-			ppro->m_bNewsFilterTags = IsDlgButtonChecked(hwndDlg, IDC_F_TAGS) == BST_CHECKED;
-			ppro->setByte("NewsFilterTags", ppro->m_bNewsFilterTags);
-
-			ppro->m_bNewsFilterWallPhotos = IsDlgButtonChecked(hwndDlg, IDC_F_WALLPHOTOS) == BST_CHECKED;
-			ppro->setByte("NewsFilterWallPhotos", ppro->m_bNewsFilterWallPhotos);
-
-			ppro->m_bNewsSourceFriends = IsDlgButtonChecked(hwndDlg, IDC_S_FRIENDS) == BST_CHECKED;
-			ppro->setByte("NewsSourceFriends", ppro->m_bNewsSourceFriends);
-
-			ppro->m_bNewsSourceGroups = IsDlgButtonChecked(hwndDlg, IDC_S_GROUPS) == BST_CHECKED;
-			ppro->setByte("NewsSourceGroups", ppro->m_bNewsSourceGroups);
-
-			ppro->m_bNewsSourcePages = IsDlgButtonChecked(hwndDlg, IDC_S_PAGES) == BST_CHECKED;
-			ppro->setByte("NewsSourcePages", ppro->m_bNewsSourcePages);
-
-			ppro->m_bNewsSourceFollowing = IsDlgButtonChecked(hwndDlg, IDC_S_FOLLOWING) == BST_CHECKED;
-			ppro->setByte("NewsSourceFollowing", ppro->m_bNewsSourceFollowing);
-
-			ppro->m_bNewsSourceIncludeBanned = IsDlgButtonChecked(hwndDlg, IDC_S_BANNED) == BST_CHECKED;
-			ppro->setByte("NewsSourceIncludeBanned", ppro->m_bNewsSourceIncludeBanned);
-
-			ppro->m_bNewsSourceNoReposts = IsDlgButtonChecked(hwndDlg, IDC_S_NOREPOSTES) == BST_CHECKED;
-			ppro->setByte("NewsSourceNoReposts", ppro->m_bNewsSourceNoReposts);
-
-			ppro->m_bNotificationFilterComments = IsDlgButtonChecked(hwndDlg, IDC_N_COMMENTS) == BST_CHECKED;
-			ppro->setByte("NotificationFilterComments", ppro->m_bNotificationFilterComments);
-
-			ppro->m_bNotificationFilterLikes = IsDlgButtonChecked(hwndDlg, IDC_N_LIKES) == BST_CHECKED;
-			ppro->setByte("NotificationFilterLikes", ppro->m_bNotificationFilterLikes);
-
-			ppro->m_bNotificationFilterReposts = IsDlgButtonChecked(hwndDlg, IDC_N_REPOSTS) == BST_CHECKED;
-			ppro->setByte("NotificationFilterReposts", ppro->m_bNotificationFilterReposts);
-
-			ppro->m_bNotificationFilterMentions = IsDlgButtonChecked(hwndDlg, IDC_N_MENTIONS) == BST_CHECKED;
-			ppro->setByte("NotificationFilterMentions", ppro->m_bNotificationFilterMentions);
-
-			ppro->m_bNotificationFilterInvites = IsDlgButtonChecked(hwndDlg, IDC_N_INVITES) == BST_CHECKED;
-			ppro->setByte("NotificationFilterInvites", ppro->m_bNotificationFilterInvites);
-
-			TCHAR buffer[5] = { 0 };
-			GetDlgItemText(hwndDlg, IDC_ED_INT_NEWS, buffer, _countof(buffer));
-			ppro->setDword("NewsInterval", ppro->m_iNewsInterval = _ttoi(buffer));
-
-			GetDlgItemText(hwndDlg, IDC_ED_INT_NOTIF, buffer, _countof(buffer));
-			ppro->setDword("NotificationsInterval", ppro->m_iNotificationsInterval = _ttoi(buffer));
-			
-		}
-		break;
-
-	case WM_CLOSE:
-		EndDialog(hwndDlg, 0);
-		break;
-
-	case WM_DESTROY:
-		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_BIG, 0));
-		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
-		break;
+	pass_ptrW pwszNewPass(m_edtPassword.GetText());
+	bool bPassChanged = mir_wstrcmp(m_pwszOldPass, pwszNewPass) != 0;
+	if (bPassChanged) {
+		T2Utf szRawPasswd(pwszNewPass);
+		m_proto->setString("Password", szRawPasswd);
+		pass_ptrA pszPass(szRawPasswd.detach());
+		m_pwszOldPass = pwszNewPass;
 	}
 
-	return FALSE;
+	ptrW pwszNewLogin(m_edtLogin.GetText());
+	if (bPassChanged || mir_wstrcmpi(m_pwszOldLogin, pwszNewLogin))
+		m_proto->ClearAccessToken();
+	m_pwszOldLogin = pwszNewLogin;
 }
 
-INT_PTR CALLBACK CVkProto::OptionsViewProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	CVkProto *ppro = (CVkProto*)GetWindowLongPtr(hwndDlg, GWLP_USERDATA);
-
-	switch (uMsg) {
-	case WM_INITDIALOG:
-		TranslateDialogDefault(hwndDlg);
-
-		ppro = (CVkProto*)lParam;
-		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
-
-		SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon, 1));
-		SendMessage(hwndDlg, WM_SETICON, ICON_SMALL, (LPARAM)IcoLib_GetIconByHandle(ppro->m_hProtoIcon));
-
-		CheckDlgButton(hwndDlg, IDC_IMG_OFF, (ppro->m_iIMGBBCSupport == imgNo) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_IMG_FULLSIZE, (ppro->m_iIMGBBCSupport == imgFullSize) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_IMG_130, (ppro->m_iIMGBBCSupport == imgPreview130) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_IMG_604, (ppro->m_iIMGBBCSupport == imgPreview604) ? BST_CHECKED : BST_UNCHECKED);
-
-		CheckDlgButton(hwndDlg, IDC_NEWSBBC_OFF, (ppro->m_iBBCForNews == bbcNo) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_NEWSBBC_BASIC, (ppro->m_iBBCForNews == bbcBasic) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_NEWSBBC_ADV, (ppro->m_iBBCForNews == bbcAdvanced) ? BST_CHECKED : BST_UNCHECKED);
-
-		CheckDlgButton(hwndDlg, IDC_BBC_ATT_NEWS, ppro->m_bUseBBCOnAttacmentsAsNews ? BST_CHECKED : BST_UNCHECKED);
-
-		CheckDlgButton(hwndDlg, IDC_ATTBBC_OFF, (ppro->m_iBBCForAttachments == bbcNo) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_ATTBBC_BASIC, (ppro->m_iBBCForAttachments == bbcBasic) ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_ATTBBC_ADV, (ppro->m_iBBCForAttachments == bbcAdvanced) ? BST_CHECKED : BST_UNCHECKED);
-
-		CheckDlgButton(hwndDlg, IDC_STICKERS_AS_SMYLES, ppro->m_bStikersAsSmyles ? BST_CHECKED : BST_UNCHECKED);
-		CheckDlgButton(hwndDlg, IDC_SHOTEN_LINKS_FOR_AUDIO, ppro->m_bShortenLinksForAudio ? BST_CHECKED : BST_UNCHECKED);
-
-		return TRUE;
-
-	case WM_COMMAND:
-		switch (LOWORD(wParam)) {
-		case IDC_IMG_OFF:
-		case IDC_IMG_FULLSIZE:
-		case IDC_IMG_130:
-		case IDC_IMG_604:
-		case IDC_NEWSBBC_OFF:
-		case IDC_NEWSBBC_BASIC:
-		case IDC_NEWSBBC_ADV:
-		case IDC_BBC_ATT_NEWS:
-		case IDC_ATTBBC_OFF:
-		case IDC_ATTBBC_BASIC:
-		case IDC_ATTBBC_ADV:
-		case IDC_STICKERS_AS_SMYLES:
-		case IDC_SHOTEN_LINKS_FOR_AUDIO:
-			if (HIWORD(wParam) == BN_CLICKED && (HWND)lParam == GetFocus())
-				SendMessage(GetParent(hwndDlg), PSM_CHANGED, 0, 0);
-			break;
-		}
-		break;
-
-	case WM_NOTIFY:
-		if (((LPNMHDR)lParam)->code == PSN_APPLY) {
-			if (IsDlgButtonChecked(hwndDlg, IDC_IMG_OFF) == BST_CHECKED)
-				ppro->m_iIMGBBCSupport = imgNo;
-			if (IsDlgButtonChecked(hwndDlg, IDC_IMG_FULLSIZE) == BST_CHECKED)
-				ppro->m_iIMGBBCSupport = imgFullSize;
-			if (IsDlgButtonChecked(hwndDlg, IDC_IMG_130) == BST_CHECKED)
-				ppro->m_iIMGBBCSupport = imgPreview130;
-			if (IsDlgButtonChecked(hwndDlg, IDC_IMG_604) == BST_CHECKED)
-				ppro->m_iIMGBBCSupport = imgPreview604;
-			ppro->setByte("IMGBBCSupport", ppro->m_iIMGBBCSupport);
-
-			if (IsDlgButtonChecked(hwndDlg, IDC_NEWSBBC_OFF) == BST_CHECKED)
-				ppro->m_iBBCForNews = bbcNo;
-			if (IsDlgButtonChecked(hwndDlg, IDC_NEWSBBC_BASIC) == BST_CHECKED)
-				ppro->m_iBBCForNews = bbcBasic;
-			if (IsDlgButtonChecked(hwndDlg, IDC_NEWSBBC_ADV) == BST_CHECKED)
-				ppro->m_iBBCForNews = bbcAdvanced;
-			ppro->setByte("BBCForNews", ppro->m_iBBCForNews);
-
-			ppro->m_bUseBBCOnAttacmentsAsNews = IsDlgButtonChecked(hwndDlg, IDC_BBC_ATT_NEWS) == BST_CHECKED;
-			ppro->setByte("UseBBCOnAttacmentsAsNews", ppro->m_bStikersAsSmyles);
-
-			if (IsDlgButtonChecked(hwndDlg, IDC_ATTBBC_OFF) == BST_CHECKED)
-				ppro->m_iBBCForAttachments = bbcNo;
-			if (IsDlgButtonChecked(hwndDlg, IDC_ATTBBC_BASIC) == BST_CHECKED)
-				ppro->m_iBBCForAttachments = bbcBasic;
-			if (IsDlgButtonChecked(hwndDlg, IDC_ATTBBC_ADV) == BST_CHECKED)
-				ppro->m_iBBCForAttachments = bbcAdvanced;
-			ppro->setByte("BBCForAttachments", ppro->m_iBBCForAttachments);
-
-			ppro->m_bStikersAsSmyles = IsDlgButtonChecked(hwndDlg, IDC_STICKERS_AS_SMYLES) == BST_CHECKED;
-			ppro->setByte("StikersAsSmyles", ppro->m_bStikersAsSmyles);
-
-			ppro->m_bShortenLinksForAudio = IsDlgButtonChecked(hwndDlg, IDC_SHOTEN_LINKS_FOR_AUDIO) == BST_CHECKED;
-			ppro->setByte("ShortenLinksForAudio", ppro->m_bShortenLinksForAudio);
-		}
-		break;
-
-	case WM_CLOSE:
-		EndDialog(hwndDlg, 0);
-		break;
-
-	case WM_DESTROY:
-		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_BIG, 0));
-		IcoLib_ReleaseIcon((HICON)SendMessage(hwndDlg, WM_GETICON, ICON_SMALL, 0));
-		break;
-	}
-
-	return FALSE;
-}
+////////////////////// Options ///////////////////////////////////////////////
 
 int CVkProto::OnOptionsInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
-	odp.ptszTitle = m_tszUserName;
+	odp.szTitle.w = m_tszUserName;
 	odp.dwInitParam = LPARAM(this);
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR | ODPF_DONTTRANSLATE;
-	odp.ptszGroup = LPGENT("Network");
-	
-	odp.ptszTab = LPGENT("Account");
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE | ODPF_DONTTRANSLATE;
+	odp.szGroup.w = LPGENW("Network");
+
+	odp.szTab.w = LPGENW("Account");
 	odp.position = 1;
-	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_MAIN);
-	odp.pfnDlgProc = &CVkProto::OptionsProc;
+	odp.pDialog = new CVkOptionAccountForm(this);
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LPGENT("Advanced");
+	odp.szTab.w = LPGENW("Advanced");
 	odp.position = 2;
-	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_ADV);
-	odp.pfnDlgProc = &CVkProto::OptionsAdvProc;
+	odp.pDialog = new CVkOptionAdvancedForm(this);
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LPGENT("News and notifications");
+	odp.szTab.w = LPGENW("News and notifications");
 	odp.position = 3;
-	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_FEEDS);
-	odp.pfnDlgProc = &CVkProto::OptionsFeedsProc;
+	odp.pDialog = new CVkOptionFeedsForm(this);
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LPGENT("View");
+	odp.szTab.w = LPGENW("View");
 	odp.position = 4;
-	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_VIEW);
-	odp.pfnDlgProc = &CVkProto::OptionsViewProc;
+	odp.pDialog = new CVkOptionViewForm(this);
 	Options_AddPage(wParam, &odp);
+
+	odp.szTab.w = LPGENW("Menu");
+	odp.position = 5;
+	odp.pDialog = new CVkOptionMenuForm(this);
+	Options_AddPage(wParam, &odp);
+
 	return 0;
+}
+
+////////////////////// Account page //////////////////////////////////////////
+
+static CVKLang vkLangCodes[] = {
+	{ nullptr, LPGENW("Account language") },
+	{ L"en", LPGENW("English") },
+	{ L"ru", LPGENW("Russian") },
+	{ L"be", LPGENW("Belarusian") },
+	{ L"ua", LPGENW("Ukrainian") },
+	{ L"es", LPGENW("Spanish") },
+	{ L"fi", LPGENW("Finnish") },
+	{ L"de", LPGENW("German") },
+	{ L"it", LPGENW("Italian") },
+};
+
+static CVKSync vkHistorySyncMethods[] =
+{
+	{ TranslateT("off"), SyncHistoryMetod::syncOff },
+	{ TranslateT("automatically"), SyncHistoryMetod::syncAuto },
+	{ TranslateT("for last 1 day"), SyncHistoryMetod::sync1Days },
+	{ TranslateT("for last 3 days"), SyncHistoryMetod::sync3Days }
+};
+
+static CVKMarkMsgRead vkMarkMsgAsReadMethods[] =
+{
+	{ TranslateT("on read"), MarkMsgReadOn::markOnRead },
+	{ TranslateT("on receive"), MarkMsgReadOn::markOnReceive },
+	{ TranslateT("on reply"), MarkMsgReadOn::markOnReply },
+	{ TranslateT("on typing"), MarkMsgReadOn::markOnTyping }
+};
+
+CVkOptionAccountForm::CVkOptionAccountForm(CVkProto *proto) :
+	CVkDlgBase(proto, IDD_OPT_MAIN, false),
+	m_edtLogin(this, IDC_LOGIN),
+	m_edtPassword(this, IDC_PASSWORD),
+	m_hlLink(this, IDC_URL, "https://vk.com/"),
+	m_edtGroupName(this, IDC_GROUPNAME),
+	m_cbxVKLang(this, IDC_COMBO_LANGUAGE),
+	m_cbDelivery(this, IDC_DELIVERY),
+	m_cbLoadLastMessageOnMsgWindowsOpen(this, IDC_LASTHISTORYLOAD),
+	m_cbUseLocalTime(this, IDC_USE_LOCAL_TIME),
+	m_cbLoadOnlyFriends(this, IDC_LOADONLYFRIENDS),
+	m_cbxMarkAsRead(this, IDC_COMBO_MARKASREAD),
+	m_cbxSyncHistory(this, IDC_COMBO_SYNCHISTORY)
+{
+	CreateLink(m_edtLogin, "Login", L"");
+	CreateLink(m_edtGroupName, m_proto->m_vkOptions.pwszDefaultGroup);
+	CreateLink(m_cbDelivery, m_proto->m_vkOptions.bServerDelivery);
+	CreateLink(m_cbLoadLastMessageOnMsgWindowsOpen, m_proto->m_vkOptions.bLoadLastMessageOnMsgWindowsOpen);
+	CreateLink(m_cbUseLocalTime, m_proto->m_vkOptions.bUseLocalTime);
+	CreateLink(m_cbLoadOnlyFriends, m_proto->m_vkOptions.bLoadOnlyFriends);
+}
+
+void CVkOptionAccountForm::OnInitDialog()
+{
+	m_pwszOldLogin = m_edtLogin.GetText();
+	m_edtLogin.SendMsg(EM_LIMITTEXT, 1024, 0);
+
+	m_pwszOldPass = m_proto->GetUserStoredPassword();
+	m_edtPassword.SetText(m_pwszOldPass);
+	m_edtPassword.SendMsg(EM_LIMITTEXT, 1024, 0);
+
+	m_pwszOldGroup = m_edtGroupName.GetText();
+
+	int iListIndex = MarkMsgReadOn::markOnRead;
+	for (int i = 0; i < _countof(vkMarkMsgAsReadMethods); i++) {
+		m_cbxMarkAsRead.InsertString((wchar_t *)vkMarkMsgAsReadMethods[i].type, i, vkMarkMsgAsReadMethods[i].data);
+		if (vkMarkMsgAsReadMethods[i].data == m_proto->m_vkOptions.iMarkMessageReadOn)
+			iListIndex = i;
+	}
+	m_cbxMarkAsRead.SetCurSel(iListIndex);
+
+	iListIndex = SyncHistoryMetod::syncOff;
+	for (int i = 0; i < _countof(vkHistorySyncMethods); i++) {
+		m_cbxSyncHistory.InsertString((wchar_t *)vkHistorySyncMethods[i].type, i, vkHistorySyncMethods[i].data);
+		if (vkHistorySyncMethods[i].data == m_proto->m_vkOptions.iSyncHistoryMetod)
+			iListIndex = i;
+	}
+	m_cbxSyncHistory.SetCurSel(iListIndex);
+
+	iListIndex = 0;
+	for (int i = 0; i < _countof(vkLangCodes); i++) {
+		m_cbxVKLang.InsertString(TranslateW(vkLangCodes[i].szDescription), i, (LPARAM)vkLangCodes[i].szCode);
+		if (!mir_wstrcmpi(vkLangCodes[i].szCode, m_proto->m_vkOptions.pwszVKLang))
+			iListIndex = i;
+	}
+	m_cbxVKLang.SetCurSel(iListIndex);
+
+}
+
+void CVkOptionAccountForm::OnApply()
+{
+	m_proto->m_vkOptions.iSyncHistoryMetod = m_cbxSyncHistory.GetItemData(m_cbxSyncHistory.GetCurSel());
+	m_proto->m_vkOptions.iMarkMessageReadOn = m_cbxMarkAsRead.GetItemData(m_cbxMarkAsRead.GetCurSel());
+	m_proto->m_vkOptions.pwszVKLang = (wchar_t *)m_cbxVKLang.GetItemData(m_cbxVKLang.GetCurSel());
+
+	ptrW pwszGroupName(m_edtGroupName.GetText());
+	if (mir_wstrcmp(m_pwszOldGroup, pwszGroupName)) {
+		Clist_GroupCreate(0, pwszGroupName);
+		m_pwszOldGroup = pwszGroupName;
+	}
+
+	pass_ptrW pwszNewPass(m_edtPassword.GetText());
+	bool bPassChanged = mir_wstrcmp(m_pwszOldPass, pwszNewPass) != 0;
+	if (bPassChanged) {
+		T2Utf szRawPasswd(pwszNewPass);
+		m_proto->setString("Password", szRawPasswd);
+		pass_ptrA pszPass(szRawPasswd.detach());
+		m_pwszOldPass = pwszNewPass;
+	}
+
+	ptrW pwszNewLogin(m_edtLogin.GetText());
+	if (bPassChanged || mir_wstrcmpi(m_pwszOldLogin, pwszNewLogin))
+		m_proto->ClearAccessToken();
+	m_pwszOldLogin = pwszNewLogin;
+
+}
+
+////////////////////// Advanced page /////////////////////////////////////////
+
+CVkOptionAdvancedForm::CVkOptionAdvancedForm(CVkProto *proto) :
+	CVkDlgBase(proto, IDD_OPT_ADV, false),
+	m_cbHideChats(this, IDC_HIDECHATS),
+	m_cbSyncReadMessageStatusFromServer(this, IDC_SYNC_MSG_STATUS),
+	m_cbMesAsUnread(this, IDC_MESASUREAD),
+	m_cbForceInvisibleStatus(this, IDC_FORCE_ONLINE_ON_ACT),
+	m_edtInvInterval(this, IDC_ED_INT_INVIS),
+	m_spInvInterval(this, IDC_SPIN_INT_INVIS),
+	m_cbSendVKLinksAsAttachments(this, IDC_SENDVKURLSASATTACH),
+	m_cbLoadSentAttachments(this, IDC_LOADSENTATTACH),
+	m_cbPopupContactsMusic(this, IDC_POPUP_CONTACT_MUSIC),
+	m_cbReportAbuse(this, IDC_REPORT_ABUSE),
+	m_cbClearServerHistory(this, IDC_CLEAR_SERVER_HISTORY),
+	m_cbRemoveFromFrendlist(this, IDC_REMOVE_FROM_FRENDLIST),
+	m_cbRemoveFromCList(this, IDC_REMOVE_FROM_CLIST),
+	m_cbMusicSendOff(this, IDC_SEND_MUSIC_NONE),
+	m_cbMusicSendBroadcastAndStatus(this, IDC_SEND_MUSIC_BROADCAST_AND_STATUS),
+	m_cbSendMetodBroadcast(this, IDC_SEND_MUSIC_BROADCAST),
+	m_cbMusicSendStatus(this, IDC_SEND_MUSIC_STATUS),
+	m_edtReturnChatMessage(this, IDC_RET_CHAT_MES)
+{
+	CreateLink(m_cbHideChats, m_proto->m_vkOptions.bHideChats);
+	CreateLink(m_cbSyncReadMessageStatusFromServer, m_proto->m_vkOptions.bSyncReadMessageStatusFromServer);
+	CreateLink(m_cbMesAsUnread, m_proto->m_vkOptions.bMesAsUnread);
+	CreateLink(m_cbForceInvisibleStatus, m_proto->m_vkOptions.bUserForceInvisibleOnActivity);
+	CreateLink(m_edtInvInterval, m_proto->m_vkOptions.iInvisibleInterval);
+	CreateLink(m_cbSendVKLinksAsAttachments, m_proto->m_vkOptions.bSendVKLinksAsAttachments);
+	CreateLink(m_cbLoadSentAttachments, m_proto->m_vkOptions.bLoadSentAttachments);
+	CreateLink(m_cbPopupContactsMusic, m_proto->m_vkOptions.bPopupContactsMusic);
+	CreateLink(m_cbReportAbuse, m_proto->m_vkOptions.bReportAbuse);
+	CreateLink(m_cbClearServerHistory, m_proto->m_vkOptions.bClearServerHistory);
+	CreateLink(m_cbRemoveFromFrendlist, m_proto->m_vkOptions.bRemoveFromFrendlist);
+	CreateLink(m_cbRemoveFromCList, m_proto->m_vkOptions.bRemoveFromCList);
+	CreateLink(m_edtReturnChatMessage, m_proto->m_vkOptions.pwszReturnChatMessage);
+
+	m_cbForceInvisibleStatus.OnChange = Callback(this, &CVkOptionAdvancedForm::On_cbForceInvisibleStatusChange);
+	m_cbSendVKLinksAsAttachments.OnChange = Callback(this, &CVkOptionAdvancedForm::On_cbSendVKLinksAsAttachmentsChange);
+}
+
+void CVkOptionAdvancedForm::OnInitDialog()
+{
+	m_cbMusicSendOff.SetState(m_proto->m_vkOptions.iMusicSendMetod == MusicSendMetod::sendNone);
+	m_cbMusicSendBroadcastAndStatus.SetState(m_proto->m_vkOptions.iMusicSendMetod == MusicSendMetod::sendBroadcastAndStatus);
+	m_cbSendMetodBroadcast.SetState(m_proto->m_vkOptions.iMusicSendMetod == MusicSendMetod::sendBroadcastOnly);
+	m_cbMusicSendStatus.SetState(m_proto->m_vkOptions.iMusicSendMetod == MusicSendMetod::sendStatusOnly);
+
+	m_spInvInterval.SetRange(15);
+	m_spInvInterval.SetPosition(m_proto->m_vkOptions.iInvisibleInterval);
+
+	On_cbForceInvisibleStatusChange(&m_cbForceInvisibleStatus);
+	On_cbSendVKLinksAsAttachmentsChange(&m_cbSendVKLinksAsAttachments);
+}
+
+void CVkOptionAdvancedForm::OnApply()
+{
+	if (m_cbMusicSendOff.GetState())
+		m_proto->m_vkOptions.iMusicSendMetod = MusicSendMetod::sendNone;
+	if (m_cbMusicSendBroadcastAndStatus.GetState())
+		m_proto->m_vkOptions.iMusicSendMetod = MusicSendMetod::sendBroadcastAndStatus;
+	if (m_cbSendMetodBroadcast.GetState())
+		m_proto->m_vkOptions.iMusicSendMetod = MusicSendMetod::sendBroadcastOnly;
+	if (m_cbMusicSendStatus.GetState())
+		m_proto->m_vkOptions.iMusicSendMetod = MusicSendMetod::sendStatusOnly;
+
+	if (m_cbSendVKLinksAsAttachments.GetState() == 0)
+		m_proto->m_vkOptions.bLoadSentAttachments = false;
+}
+
+void CVkOptionAdvancedForm::On_cbForceInvisibleStatusChange(CCtrlCheck *)
+{
+	bool bEnable = m_cbForceInvisibleStatus.GetState() != 0;
+
+	m_edtInvInterval.Enable(bEnable);
+	m_spInvInterval.Enable(bEnable);
+}
+
+void CVkOptionAdvancedForm::On_cbSendVKLinksAsAttachmentsChange(CCtrlCheck *)
+{
+	m_cbLoadSentAttachments.Enable(m_cbSendVKLinksAsAttachments.GetState());
+}
+
+////////////////////// News and notifications ////////////////////////////////
+
+CVkOptionFeedsForm::CVkOptionFeedsForm(CVkProto *proto) :
+	CVkDlgBase(proto, IDD_OPT_FEEDS, false),
+	m_cbNewsEnabled(this, IDC_NEWS_ENBL),
+	m_edtNewsInterval(this, IDC_ED_INT_NEWS),
+	m_spNewsInterval(this, IDC_SPIN_INT_NEWS),
+	m_cbNotificationsEnabled(this, IDC_NOTIF_ENBL),
+	m_edtNotificationsInterval(this, IDC_ED_INT_NOTIF),
+	m_spNotificationsInterval(this, IDC_SPIN_INT_NOTIF),
+	m_cbNotificationsMarkAsViewed(this, IDC_NOTIF_MARK_VIEWED),
+	m_cbSpecialContactAlwaysEnabled(this, IDC_SPEC_CONT_ENBL),
+	m_cbNewsAutoClearHistory(this, IDC_NEWSAUTOCLEAR),
+	m_cbNewsFilterPosts(this, IDC_F_POSTS),
+	m_cbNewsFilterPhotos(this, IDC_F_PHOTOS),
+	m_cbNewsFilterTags(this, IDC_F_TAGS),
+	m_cbNewsFilterWallPhotos(this, IDC_F_WALLPHOTOS),
+	m_cbNewsSourceFriends(this, IDC_S_FRIENDS),
+	m_cbNewsSourceGroups(this, IDC_S_GROUPS),
+	m_cbNewsSourcePages(this, IDC_S_PAGES),
+	m_cbNewsSourceFollowing(this, IDC_S_FOLLOWING),
+	m_cbNewsSourceIncludeBanned(this, IDC_S_BANNED),
+	m_cbNewsSourceNoReposts(this, IDC_S_NOREPOSTES),
+	m_cbNotificationFilterComments(this, IDC_N_COMMENTS),
+	m_cbNotificationFilterLikes(this, IDC_N_LIKES),
+	m_cbNotificationFilterReposts(this, IDC_N_REPOSTS),
+	m_cbNotificationFilterMentions(this, IDC_N_MENTIONS),
+	m_cbNotificationFilterInvites(this, IDC_N_INVITES),
+	m_cbNotificationFilterAcceptedFriends(this, IDC_N_FRIENDACCEPTED)
+{
+	CreateLink(m_cbNewsEnabled, m_proto->m_vkOptions.bNewsEnabled);
+	CreateLink(m_edtNewsInterval, m_proto->m_vkOptions.iNewsInterval);
+	CreateLink(m_cbNotificationsEnabled, m_proto->m_vkOptions.bNotificationsEnabled);
+	CreateLink(m_edtNotificationsInterval, m_proto->m_vkOptions.iNotificationsInterval);
+	CreateLink(m_cbNotificationsMarkAsViewed, m_proto->m_vkOptions.bNotificationsMarkAsViewed);
+	CreateLink(m_cbSpecialContactAlwaysEnabled, m_proto->m_vkOptions.bSpecialContactAlwaysEnabled);
+	CreateLink(m_cbNewsAutoClearHistory, m_proto->m_vkOptions.bNewsAutoClearHistory);
+	CreateLink(m_cbNewsFilterPosts, m_proto->m_vkOptions.bNewsFilterPosts);
+	CreateLink(m_cbNewsFilterPhotos, m_proto->m_vkOptions.bNewsFilterPhotos);
+	CreateLink(m_cbNewsFilterTags, m_proto->m_vkOptions.bNewsFilterTags);
+	CreateLink(m_cbNewsFilterWallPhotos, m_proto->m_vkOptions.bNewsFilterWallPhotos);
+	CreateLink(m_cbNewsSourceFriends, m_proto->m_vkOptions.bNewsSourceFriends);
+	CreateLink(m_cbNewsSourceGroups, m_proto->m_vkOptions.bNewsSourceGroups);
+	CreateLink(m_cbNewsSourcePages, m_proto->m_vkOptions.bNewsSourcePages);
+	CreateLink(m_cbNewsSourceFollowing, m_proto->m_vkOptions.bNewsSourceFollowing);
+	CreateLink(m_cbNewsSourceIncludeBanned, m_proto->m_vkOptions.bNewsSourceIncludeBanned);
+	CreateLink(m_cbNewsSourceNoReposts, m_proto->m_vkOptions.bNewsSourceNoReposts);
+	CreateLink(m_cbNotificationFilterComments, m_proto->m_vkOptions.bNotificationFilterComments);
+	CreateLink(m_cbNotificationFilterLikes, m_proto->m_vkOptions.bNotificationFilterLikes);
+	CreateLink(m_cbNotificationFilterReposts, m_proto->m_vkOptions.bNotificationFilterReposts);
+	CreateLink(m_cbNotificationFilterMentions, m_proto->m_vkOptions.bNotificationFilterMentions);
+	CreateLink(m_cbNotificationFilterInvites, m_proto->m_vkOptions.bNotificationFilterInvites);
+	CreateLink(m_cbNotificationFilterAcceptedFriends, m_proto->m_vkOptions.bNotificationFilterAcceptedFriends);
+
+	m_cbNewsEnabled.OnChange = Callback(this, &CVkOptionFeedsForm::On_cbNewsEnabledChange);
+	m_cbNotificationsEnabled.OnChange = Callback(this, &CVkOptionFeedsForm::On_cbNotificationsEnabledChange);
+
+}
+
+void CVkOptionFeedsForm::OnInitDialog()
+{
+	m_spNewsInterval.SetRange(60 * 24, 1);
+	m_spNewsInterval.SetPosition(m_proto->m_vkOptions.iNewsInterval);
+
+	m_spNotificationsInterval.SetRange(60 * 24, 1);
+	m_spNotificationsInterval.SetPosition(m_proto->m_vkOptions.iNotificationsInterval);
+
+	On_cbNewsEnabledChange(&m_cbNewsEnabled);
+	On_cbNotificationsEnabledChange(&m_cbNotificationsEnabled);
+}
+
+void CVkOptionFeedsForm::On_cbNewsEnabledChange(CCtrlCheck*)
+{
+	bool bState = m_cbNewsEnabled.GetState() != 0;
+
+	m_edtNewsInterval.Enable(bState);
+	m_spNewsInterval.Enable(bState);
+	m_cbNewsFilterPosts.Enable(bState);
+	m_cbNewsFilterPhotos.Enable(bState);
+	m_cbNewsFilterTags.Enable(bState);
+	m_cbNewsFilterWallPhotos.Enable(bState);
+	m_cbNewsSourceFriends.Enable(bState);
+	m_cbNewsSourceGroups.Enable(bState);
+	m_cbNewsSourcePages.Enable(bState);
+	m_cbNewsSourceFollowing.Enable(bState);
+	m_cbNewsSourceIncludeBanned.Enable(bState);
+	m_cbNewsSourceNoReposts.Enable(bState);
+
+}
+
+void CVkOptionFeedsForm::On_cbNotificationsEnabledChange(CCtrlCheck*)
+{
+	bool bState = m_cbNotificationsEnabled.GetState() != 0;
+
+	m_cbNotificationsMarkAsViewed.Enable(bState);
+	m_edtNotificationsInterval.Enable(bState);
+	m_spNotificationsInterval.Enable(bState);
+	m_cbNotificationFilterComments.Enable(bState);
+	m_cbNotificationFilterLikes.Enable(bState);
+	m_cbNotificationFilterReposts.Enable(bState);
+	m_cbNotificationFilterMentions.Enable(bState);
+	m_cbNotificationFilterInvites.Enable(bState);
+}
+
+////////////////////// View page /////////////////////////////////////////////
+
+CVkOptionViewForm::CVkOptionViewForm(CVkProto *proto) :
+	CVkDlgBase(proto, IDD_OPT_VIEW, false),
+	m_cbIMGBBCSupportOff(this, IDC_IMG_OFF),
+	m_cbIMGBBCSupportFullSize(this, IDC_IMG_FULLSIZE),
+	m_cbIMGBBCSupport130(this, IDC_IMG_130),
+	m_cbIMGBBCSupport604(this, IDC_IMG_604),
+	m_cbBBCForNewsOff(this, IDC_NEWSBBC_OFF),
+	m_cbBBCForNewsBasic(this, IDC_NEWSBBC_BASIC),
+	m_cbBBCForNewsAdvanced(this, IDC_NEWSBBC_ADV),
+	m_cbUseBBCOnAttacmentsAsNews(this, IDC_BBC_ATT_NEWS),
+	m_cbBBCForAttachmentsOff(this, IDC_ATTBBC_OFF),
+	m_cbBBCForAttachmentsBasic(this, IDC_ATTBBC_BASIC),
+	m_cbBBCForAttachmentsAdvanced(this, IDC_ATTBBC_ADV),
+	m_cbStikersAsSmyles(this, IDC_STICKERS_AS_SMYLES),
+	m_cbShortenLinksForAudio(this, IDC_SHOTEN_LINKS_FOR_AUDIO),
+	m_cbAddMessageLinkToMesWAtt(this, IDC_ADD_MES_LINK_MES_ATT),
+	m_cbUseNonStandardNotifications(this, IDC_USENOSTDPOPUPS)
+{
+	CreateLink(m_cbUseBBCOnAttacmentsAsNews, m_proto->m_vkOptions.bUseBBCOnAttacmentsAsNews);
+	CreateLink(m_cbStikersAsSmyles, m_proto->m_vkOptions.bStikersAsSmyles);
+	CreateLink(m_cbShortenLinksForAudio, m_proto->m_vkOptions.bShortenLinksForAudio);
+	CreateLink(m_cbAddMessageLinkToMesWAtt, m_proto->m_vkOptions.bAddMessageLinkToMesWAtt);
+	CreateLink(m_cbUseNonStandardNotifications, m_proto->m_vkOptions.bUseNonStandardNotifications);
+}
+
+void CVkOptionViewForm::OnInitDialog()
+{
+	m_cbIMGBBCSupportOff.SetState(m_proto->m_vkOptions.iIMGBBCSupport == IMGBBCSypport::imgNo);
+	m_cbIMGBBCSupportFullSize.SetState(m_proto->m_vkOptions.iIMGBBCSupport == IMGBBCSypport::imgFullSize);
+	m_cbIMGBBCSupport130.SetState(m_proto->m_vkOptions.iIMGBBCSupport == IMGBBCSypport::imgPreview130);
+	m_cbIMGBBCSupport604.SetState(m_proto->m_vkOptions.iIMGBBCSupport == IMGBBCSypport::imgPreview604);
+
+	m_cbBBCForNewsOff.SetState(m_proto->m_vkOptions.iBBCForNews == BBCSupport::bbcNo);
+	m_cbBBCForNewsBasic.SetState(m_proto->m_vkOptions.iBBCForNews == BBCSupport::bbcBasic);
+	m_cbBBCForNewsAdvanced.SetState(m_proto->m_vkOptions.iBBCForNews == BBCSupport::bbcAdvanced);
+
+	m_cbBBCForAttachmentsOff.SetState(m_proto->m_vkOptions.iBBCForAttachments == BBCSupport::bbcNo);
+	m_cbBBCForAttachmentsBasic.SetState(m_proto->m_vkOptions.iBBCForAttachments == BBCSupport::bbcBasic);
+	m_cbBBCForAttachmentsAdvanced.SetState(m_proto->m_vkOptions.iBBCForAttachments == BBCSupport::bbcAdvanced);
+}
+
+void CVkOptionViewForm::OnApply()
+{
+	if (m_cbIMGBBCSupportOff.GetState())
+		m_proto->m_vkOptions.iIMGBBCSupport = IMGBBCSypport::imgNo;
+	if (m_cbIMGBBCSupportFullSize.GetState())
+		m_proto->m_vkOptions.iIMGBBCSupport = IMGBBCSypport::imgFullSize;
+	if (m_cbIMGBBCSupport130.GetState())
+		m_proto->m_vkOptions.iIMGBBCSupport = IMGBBCSypport::imgPreview130;
+	if (m_cbIMGBBCSupport604.GetState())
+		m_proto->m_vkOptions.iIMGBBCSupport = IMGBBCSypport::imgPreview604;
+
+	if (m_cbBBCForNewsOff.GetState())
+		m_proto->m_vkOptions.iBBCForNews = BBCSupport::bbcNo;
+	if (m_cbBBCForNewsBasic.GetState())
+		m_proto->m_vkOptions.iBBCForNews = BBCSupport::bbcBasic;
+	if (m_cbBBCForNewsAdvanced.GetState())
+		m_proto->m_vkOptions.iBBCForNews = BBCSupport::bbcAdvanced;
+
+	if (m_cbBBCForAttachmentsOff.GetState())
+		m_proto->m_vkOptions.iBBCForAttachments = BBCSupport::bbcNo;
+	if (m_cbBBCForAttachmentsBasic.GetState())
+		m_proto->m_vkOptions.iBBCForAttachments = BBCSupport::bbcBasic;
+	if (m_cbBBCForAttachmentsAdvanced.GetState())
+		m_proto->m_vkOptions.iBBCForAttachments = BBCSupport::bbcAdvanced;
+}
+
+////////////////////// Menu page /////////////////////////////////////////////
+
+CVkOptionMenuForm::CVkOptionMenuForm(CVkProto *proto) :
+	CVkDlgBase(proto, IDD_OPT_MENU, false),
+	m_cbMenuEnabled0(this, IDC_SHOW_MENU0),
+	m_cbMenuEnabled1(this, IDC_SHOW_MENU1),
+	m_cbMenuEnabled2(this, IDC_SHOW_MENU2),
+	m_cbMenuEnabled3(this, IDC_SHOW_MENU3),
+	m_cbMenuEnabled4(this, IDC_SHOW_MENU4),
+	m_cbMenuEnabled5(this, IDC_SHOW_MENU5),
+	m_cbMenuEnabled6(this, IDC_SHOW_MENU6)
+{
+	CreateLink(m_cbMenuEnabled0, m_proto->m_vkOptions.bShowProtoMenuItem0);
+	CreateLink(m_cbMenuEnabled1, m_proto->m_vkOptions.bShowProtoMenuItem1);
+	CreateLink(m_cbMenuEnabled2, m_proto->m_vkOptions.bShowProtoMenuItem2);
+	CreateLink(m_cbMenuEnabled3, m_proto->m_vkOptions.bShowProtoMenuItem3);
+	CreateLink(m_cbMenuEnabled4, m_proto->m_vkOptions.bShowProtoMenuItem4);
+	CreateLink(m_cbMenuEnabled5, m_proto->m_vkOptions.bShowProtoMenuItem5);
+	CreateLink(m_cbMenuEnabled6, m_proto->m_vkOptions.bShowProtoMenuItem6);
+}
+
+void CVkOptionMenuForm::OnApply()
+{
+	if (MessageBoxW(nullptr,
+		TranslateT("These changes will take effect after Miranda NG restart.\nWould you like to restart it now?"),
+		TranslateT("VKontakte protocol"), MB_ICONWARNING | MB_YESNO | MB_DEFBUTTON2) == IDYES)
+		CallServiceSync(MS_SYSTEM_RESTART, 1, 0);
 }

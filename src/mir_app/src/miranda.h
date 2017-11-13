@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -64,7 +64,7 @@ void UninitIni(void);
 extern HINSTANCE g_hInst;
 extern DWORD hMainThreadId;
 extern HANDLE hOkToExitEvent, hModulesLoadedEvent, hevLoadModule, hevUnloadModule;
-extern TCHAR mirandabootini[MAX_PATH];
+extern wchar_t mirandabootini[MAX_PATH];
 
 /**** newplugins.cpp *******************************************************************/
 
@@ -78,21 +78,18 @@ void InitPathVar(void);
 /**** srmm.cpp *************************************************************************/
 
 void KillModuleSrmmIcons(int hLangpack);
+void KillModuleToolbarIcons(int hLangpack);
 
 /**** utf.cpp **************************************************************************/
 
 __forceinline char* Utf8DecodeA(const char* src)
 {
 	char* tmp = mir_strdup(src);
-	Utf8Decode(tmp, NULL);
+	Utf8Decode(tmp, nullptr);
 	return tmp;
 }
 
 #pragma optimize("", on)
-
-/**** options.cpp **********************************************************************/
-
-HTREEITEM FindNamedTreeItemAtRoot(HWND hwndTree, const TCHAR* name);
 
 /**** skinicons.cpp ********************************************************************/
 
@@ -121,7 +118,7 @@ extern const int statusModeList[ MAX_STATUS_COUNT ];
 extern const int skinIconStatusList[ MAX_STATUS_COUNT ];
 extern const int skinIconStatusFlags[ MAX_STATUS_COUNT ];
 
-int TryProcessDoubleClick(MCONTACT hContact);
+extern OBJLIST<CListEvent> g_cliEvents;
 
 /**** protocols.cpp *********************************************************************/
 
@@ -135,7 +132,7 @@ extern LIST<PROTOCOLDESCRIPTOR> protos;
 
 INT_PTR ProtoCallService(LPCSTR szModule, const char *szService, WPARAM wParam, LPARAM lParam);
 
-PROTOACCOUNT* Proto_CreateAccount(const char *szModuleName, const char *szBaseProto, const TCHAR *tszAccountName);
+PROTOACCOUNT* Proto_CreateAccount(const char *szModuleName, const char *szBaseProto, const wchar_t *tszAccountName);
 
 PROTOACCOUNT* __fastcall Proto_GetAccount(MCONTACT hContact);
 
@@ -158,7 +155,7 @@ INT_PTR stubChainRecv(WPARAM, LPARAM);
 
 /**** utils.cpp ************************************************************************/
 
-void HotkeyToName(TCHAR *buf, int size, BYTE shift, BYTE key);
+void HotkeyToName(wchar_t *buf, int size, BYTE shift, BYTE key);
 WORD GetHotkeyValue(INT_PTR idHotkey);
 
 HBITMAP ConvertIconToBitmap(HIMAGELIST hIml, int iconId);

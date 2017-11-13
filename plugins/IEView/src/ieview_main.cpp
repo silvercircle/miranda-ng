@@ -57,17 +57,25 @@ static int ModulesLoaded(WPARAM, LPARAM)
 	return 0;
 }
 
+IconItem iconList[] =
+{
+	{ LPGEN("RTL On"), "RTL_ON", IDI_RTL_ON },
+	{ LPGEN("RTL Off"), "RTL_OFF", IDI_RTL_OFF },
+	{ LPGEN("Group On"), "GROUP_ON", IDI_GROUP_ON },
+	{ LPGEN("Group Off"), "GROUP_OFF", IDI_GROUP_OFF }
+};
+
 extern "C" int __declspec(dllexport) Load(void)
 {
 	int wdsize = GetCurrentDirectory(0, NULL);
-	TCHAR *workingDir = new TCHAR[wdsize];
+	wchar_t *workingDir = new wchar_t[wdsize];
 	GetCurrentDirectory(wdsize, workingDir);
 	Utils::convertPath(workingDir);
-	workingDirUtf8 = mir_utf8encodeT(workingDir);
+	workingDirUtf8 = mir_utf8encodeW(workingDir);
 	delete[] workingDir;
 
 	mir_getLP(&pluginInfoEx);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	HookEvent(ME_OPT_INITIALISE, IEViewOptInit);
 	HookEvent(ME_SYSTEM_MODULESLOADED, ModulesLoaded);
@@ -75,7 +83,9 @@ extern "C" int __declspec(dllexport) Load(void)
 	CreateServiceFunction(MS_IEVIEW_WINDOW, HandleIEWindow);
 	CreateServiceFunction(MS_IEVIEW_EVENT, HandleIEEvent);
 	CreateServiceFunction(MS_IEVIEW_NAVIGATE, HandleIENavigate);
+	CreateServiceFunction("IEView/ReloadOptions", ReloadOptions);
 	hHookOptionsChanged = CreateHookableEvent(ME_IEVIEW_OPTIONSCHANGED);
+	Icon_Register(hInstance, ieviewModuleName, iconList, _countof(iconList), ieviewModuleName);
 	return 0;
 }
 

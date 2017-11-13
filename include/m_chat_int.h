@@ -24,8 +24,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef M_CHAT_INT_H__
 #define M_CHAT_INT_H__ 1
 
+#pragma warning(disable:4512)
+
+#include <time.h>
+
+#ifndef M_CORE_H__
+#include <m_core.h>
+#endif
+
 #include <m_string.h>
 #include <m_chat.h>
+#include <m_gui.h>
+#include <m_utils.h>
 
 #define OPTIONS_FONTCOUNT 20
 #define STATUSICONCOUNT 6
@@ -34,42 +44,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CHATFONT_MODULE "ChatFonts"
 
 #define GC_FAKE_EVENT MEVENT(0xBABABEDA)
-
-#define GC_UPDATETITLE         (WM_USER+100)
-#define GC_SPLITTERMOVED       (WM_USER+101)
-#define GC_CLOSEWINDOW         (WM_USER+103)
-#define GC_GETITEMDATA         (WM_USER+104)
-#define GC_SETITEMDATA         (WM_USER+105)
-#define GC_UPDATESTATUSBAR     (WM_USER+106)
-#define GC_SETVISIBILITY       (WM_USER+107)
-#define GC_SETWNDPROPS         (WM_USER+108)
-#define GC_REDRAWLOG           (WM_USER+109)
-#define GC_FIREHOOK            (WM_USER+110)
-#define GC_FILTERFIX           (WM_USER+111)
-#define GC_CHANGEFILTERFLAG    (WM_USER+112)
-#define GC_SHOWFILTERMENU      (WM_USER+113)
-#define GC_SETWINDOWPOS        (WM_USER+114)
-#define GC_SAVEWNDPOS          (WM_USER+115)
-#define GC_REDRAWWINDOW        (WM_USER+118)
-#define GC_SHOWCOLORCHOOSER    (WM_USER+119)
-#define GC_ADDLOG              (WM_USER+120)
-#define GC_ACKMESSAGE          (WM_USER+121)
-#define GC_UPDATENICKLIST      (WM_USER+125)
-#define GC_TABCHANGE           (WM_USER+127)
-#define GC_ADDTAB              (WM_USER+128)
-#define GC_SCROLLTOBOTTOM      (WM_USER+129)
-#define GC_REMOVETAB           (WM_USER+130)
-#define GC_SESSIONNAMECHANGE   (WM_USER+131)
-#define GC_FIXTABICONS         (WM_USER+132)
-#define GC_DROPPEDTAB          (WM_USER+133)
-#define GC_TABCLICKED          (WM_USER+134)
-#define GC_SWITCHNEXTTAB       (WM_USER+135)
-#define GC_SWITCHPREVTAB       (WM_USER+136)
-#define GC_SWITCHTAB           (WM_USER+137)
-#define GC_SETTABHIGHLIGHT     (WM_USER+138)
-#define GC_SETMESSAGEHIGHLIGHT (WM_USER+139)
-#define GC_REDRAWLOG2          (WM_USER+140)
-#define GC_REDRAWLOG3          (WM_USER+141)
 
 #define TIMERID_FLASHWND       1
 
@@ -107,133 +81,110 @@ struct SESSION_INFO;
 struct MODULEINFO;
 struct LOGSTREAMDATA;
 
+class CChatRoomDlg;
+
 struct GCModuleInfoBase
 {
-	char*     pszModule;
-	TCHAR*    ptszModDispName;
-	char*     pszHeader;
-	bool      bBold;
-	bool      bUnderline;
-	bool      bItalics;
-	bool      bColor;
-	bool      bBkgColor;
-	bool      bChanMgr;
-	bool      bAckMsg;
-	bool      bSingleFormat;
-	bool      bFontSize;
-	int       nColorCount;
-	COLORREF* crColors;
-	HICON     hOnlineIcon;
-	HICON     hOfflineIcon;
-	HICON     hOnlineTalkIcon;
-	HICON     hOfflineTalkIcon;
+	char     *pszModule;
+	wchar_t  *ptszModDispName;
+	char     *pszHeader;
+	
+	bool      bBold, bItalics, bUnderline;
+	bool      bColor, bBkgColor;
+	bool      bChanMgr, bAckMsg;
+	
 	int       iMaxText;
-	MODULEINFO* next;
 };
 
 struct COMMANDINFO
 {
-   char *lpCommand;
-   COMMANDINFO *last, *next;
+	char *lpCommand;
+	COMMANDINFO *last, *next;
 };
 
 struct FONTINFO
 {
-   LOGFONT  lf;
-   COLORREF color;
+	LOGFONT  lf;
+	COLORREF color;
 };
 
 struct LOGINFO
 {
-   TCHAR*  ptszText;
-   TCHAR*  ptszNick;
-   TCHAR*  ptszUID;
-   TCHAR*  ptszStatus;
-   TCHAR*  ptszUserInfo;
-   BOOL    bIsMe;
-   BOOL    bIsHighlighted;
-   time_t  time;
-   int     iType;
-	DWORD   dwFlags;
-   LOGINFO *next, *prev;
+	wchar_t *ptszText;
+	wchar_t *ptszNick;
+	wchar_t *ptszUID;
+	wchar_t *ptszStatus;
+	wchar_t *ptszUserInfo;
+	BOOL     bIsMe;
+	BOOL     bIsHighlighted;
+	time_t   time;
+	int      iType;
+	DWORD    dwFlags;
+	LOGINFO *next, *prev;
 };
 
 struct STATUSINFO
 {
-   TCHAR*  pszGroup;
-   HICON   hIcon;
-   WORD    Status;
-   STATUSINFO *next;
+	wchar_t    *pszGroup;
+	HICON       hIcon;
+	WORD        Status;
+	STATUSINFO *next;
 };
 
 struct USERINFO
 {
-   TCHAR* pszNick;
-   TCHAR* pszUID;
-   WORD   Status;
-   int    iStatusEx;
-   WORD   ContactStatus;
-   USERINFO *next;
+	wchar_t* pszNick;
+	wchar_t* pszUID;
+	WORD     Status;
+	int      iStatusEx;
+	WORD     ContactStatus;
+	USERINFO *next;
 };
 
 struct GCSessionInfoBase
 {
-   HWND        hWnd;
-
-   BOOL        bFGSet;
-   BOOL        bBGSet;
-   BOOL        bFilterEnabled;
-   BOOL        bNicklistEnabled;
-   BOOL        bInitDone;
-	BOOL        bTrimmed;
-
-   char*       pszModule;
-   TCHAR*      ptszID;
-   TCHAR*      ptszName;
-   TCHAR*      ptszStatusbarText;
-   TCHAR*      ptszTopic;
-
-   int         iType;
-   int         iFG;
-   int         iBG;
-   int         iSplitterY;
-   int         iSplitterX;
-   int         iLogFilterFlags;
-   int         nUsersInNicklist;
-   int         iEventCount;
-   int         iWidth;
-   int         iHeight;
-   int         iStatusCount;
-
-   WORD        wStatus;
-   WORD        wState;
-   WORD        wCommandsNum;
-   DWORD       dwItemData;
-   DWORD       dwFlags;
 	MCONTACT    hContact;
-   HWND        hwndStatus;
-   time_t      LastTime;
 
-   COMMANDINFO* lpCommands;
-   COMMANDINFO* lpCurrentCommand;
-   LOGINFO*    pLog;
-   LOGINFO*    pLogEnd;
-   USERINFO*   pUsers;
-   USERINFO*   pMe;
-   STATUSINFO* pStatuses;
+	bool        bInitDone;
+	bool        bHasToolTip;
+	bool        bTrimmed;
 
-	TCHAR       pszLogFileName[MAX_PATH];
-	SESSION_INFO *next;
+	char*       pszModule;
+	wchar_t*    ptszID;
+	wchar_t*    ptszName;
+	wchar_t*    ptszStatusbarText;
+	wchar_t*    ptszTopic;
+
+	int         iType;
+	int         nUsersInNicklist;
+	int         iEventCount;
+	int         iStatusCount;
+
+	WORD        wStatus;
+	WORD        wState;
+	WORD        wCommandsNum;
+	void*       pItemData;
+	time_t      LastTime;
+
+	int         currentHovered;
+
+	CChatRoomDlg *pDlg;
+	COMMANDINFO *lpCommands, *lpCurrentCommand;
+	LOGINFO *pLog, *pLogEnd;
+	USERINFO *pUsers, *pMe;
+	STATUSINFO *pStatuses;
+
+	wchar_t pszLogFileName[MAX_PATH];
 };
 
 struct GCLogStreamDataBase
 {
-   char*         buffer;
-   int           bufferOffset, bufferLen;
-   HWND          hwnd;
-   LOGINFO*      lin;
-   BOOL          bStripFormat;
-   BOOL          bRedraw;
+	char*         buffer;
+	int           bufferOffset, bufferLen;
+	HWND          hwnd;
+	LOGINFO*      lin;
+	BOOL          bStripFormat;
+	BOOL          bRedraw;
 	SESSION_INFO *si;
 };
 
@@ -254,6 +205,7 @@ struct GlobalLogSettingsBase
 	bool     bTimeStampEventColour;
 	bool		bShowContactStatus;
 	bool		bContactStatusFirst;
+	bool     bDoubleClick4Privat;    // send a private message on dblclick in a nick list
 	DWORD    dwIconFlags;
 	DWORD    dwTrayIconFlags;
 	DWORD    dwPopupFlags;
@@ -263,16 +215,14 @@ struct GlobalLogSettingsBase
 	int      iEventLimit;
 	int      iPopupStyle;
 	int      iPopupTimeout;
-	int      iSplitterX;
-	int      iSplitterY;
 	int      iWidth;
 	int      iHeight;
-	TCHAR*   pszTimeStamp;
-	TCHAR*   pszTimeStampLog;
-	TCHAR*   pszIncomingNick;
-	TCHAR*   pszOutgoingNick;
-	TCHAR*   pszHighlightWords;
-	TCHAR*   pszLogDir;
+	wchar_t *pszTimeStamp;
+	wchar_t *pszTimeStampLog;
+	wchar_t *pszIncomingNick;
+	wchar_t *pszOutgoingNick;
+	wchar_t *pszHighlightWords;
+	wchar_t *pszLogDir;
 	HFONT    UserListFont;
 	HFONT    UserListHeadingsFont;
 	HFONT    NameFont;
@@ -295,136 +245,106 @@ struct CHAT_MANAGER_INITDATA
 {
 	GlobalLogSettingsBase *pSettings;
 	int cbModuleInfo, cbSession;
-	TCHAR *szFontGroup;
+	wchar_t *szFontGroup;
 	int iFontMode;
 };
 
+typedef BOOL (*pfnDoTrayIcon)(SESSION_INFO *si, GCEVENT *gce);
+typedef BOOL (*pfnDoPopup)(SESSION_INFO *si, GCEVENT *gce);
+
 struct CHAT_MANAGER
 {
-	void          (*SetActiveSession)(const TCHAR *pszID, const char *pszModule);
-	void          (*SetActiveSessionEx)(SESSION_INFO *si);
+	CHAT_MANAGER();
+
+	void          (*SetActiveSession)(SESSION_INFO *si);
 	SESSION_INFO* (*GetActiveSession)(void);
-	SESSION_INFO* (*SM_AddSession)(const TCHAR *pszID, const char *pszModule);
-	int           (*SM_RemoveSession)(const TCHAR *pszID, const char *pszModule, BOOL removeContact);
-	SESSION_INFO* (*SM_FindSession)(const TCHAR *pszID, const char *pszModule);
-	USERINFO*     (*SM_AddUser)(const TCHAR *pszID, const char *pszModule, const TCHAR *pszUID, const TCHAR *pszNick, WORD wStatus);
-	BOOL          (*SM_ChangeUID)(const TCHAR *pszID, const char *pszModule, const TCHAR *pszUID, const TCHAR* pszNewUID);
-	BOOL          (*SM_ChangeNick)(const TCHAR *pszID, const char *pszModule, GCEVENT *gce);
-	BOOL          (*SM_RemoveUser)(const TCHAR *pszID, const char *pszModule, const TCHAR *pszUID);
-	BOOL          (*SM_SetOffline)(const TCHAR *pszID, const char *pszModule);
-	BOOL          (*SM_SetTabbedWindowHwnd)(SESSION_INFO *si, HWND hwnd);
+	SESSION_INFO* (*SM_FindSession)(const wchar_t *pszID, const char *pszModule);
 	HICON         (*SM_GetStatusIcon)(SESSION_INFO *si, USERINFO * ui);
-	BOOL          (*SM_SetStatus)(const TCHAR *pszID, const char *pszModule, int wStatus);
-	BOOL          (*SM_SetStatusEx)(const TCHAR *pszID, const char *pszModule, const TCHAR* pszText, int flags);
-	BOOL          (*SM_SendUserMessage)(const TCHAR *pszID, const char *pszModule, const TCHAR* pszText);
-	STATUSINFO*   (*SM_AddStatus)(const TCHAR *pszID, const char *pszModule, const TCHAR *pszStatus);
-	BOOL          (*SM_AddEventToAllMatchingUID)(GCEVENT *gce);
-	BOOL          (*SM_AddEvent)(const TCHAR *pszID, const char *pszModule, GCEVENT *gce, BOOL bIsHighlighted);
-	LRESULT       (*SM_SendMessage)(const TCHAR *pszID, const char *pszModule, UINT msg, WPARAM wParam, LPARAM lParam);
-	BOOL          (*SM_PostMessage)(const TCHAR *pszID, const char *pszModule, UINT msg, WPARAM wParam, LPARAM lParam);
+	BOOL          (*SM_PostMessage)(const wchar_t *pszID, const char *pszModule, UINT msg, WPARAM wParam, LPARAM lParam);
 	BOOL          (*SM_BroadcastMessage)(const char *pszModule, UINT msg, WPARAM wParam, LPARAM lParam, BOOL bAsync);
-	BOOL          (*SM_RemoveAll)(void);
-	BOOL          (*SM_GiveStatus)(const TCHAR *pszID, const char *pszModule, const TCHAR *pszUID, const TCHAR *pszStatus);
-	BOOL          (*SM_SetContactStatus)(const TCHAR *pszID, const char *pszModule, const TCHAR *pszUID, WORD pszStatus);
-	BOOL          (*SM_TakeStatus)(const TCHAR *pszID, const char *pszModule, const TCHAR *pszUID, const TCHAR *pszStatus);
-	BOOL          (*SM_MoveUser)(const TCHAR *pszID, const char *pszModule, const TCHAR *pszUID);
-	void          (*SM_AddCommand)(const TCHAR *pszID, const char *pszModule, const char* lpNewCommand);
-	char*         (*SM_GetPrevCommand)(const TCHAR *pszID, const char *pszModule);
-	char*         (*SM_GetNextCommand)(const TCHAR *pszID, const char *pszModule);
+	void          (*SM_AddCommand)(const wchar_t *pszID, const char *pszModule, const char* lpNewCommand);
+	char*         (*SM_GetPrevCommand)(const wchar_t *pszID, const char *pszModule);
+	char*         (*SM_GetNextCommand)(const wchar_t *pszID, const char *pszModule);
 	int           (*SM_GetCount)(const char *pszModule);
 	SESSION_INFO* (*SM_FindSessionByIndex)(const char *pszModule, int iItem);
-	char*         (*SM_GetUsers)(SESSION_INFO *si);
-	USERINFO*     (*SM_GetUserFromIndex)(const TCHAR *pszID, const char *pszModule, int index);
+	USERINFO*     (*SM_GetUserFromIndex)(const wchar_t *pszID, const char *pszModule, int index);
 	void          (*SM_InvalidateLogDirectories)(void);
 
 	MODULEINFO*   (*MM_AddModule)(const char *pszModule);
 	MODULEINFO*   (*MM_FindModule)(const char *pszModule);
-	void          (*MM_FixColors)();
 	void          (*MM_FontsChanged)(void);
 	void          (*MM_IconsChanged)(void);
 	BOOL          (*MM_RemoveAll)(void);
 
-	STATUSINFO*   (*TM_AddStatus)(STATUSINFO** ppStatusList, const TCHAR *pszStatus, int* iCount);
-	STATUSINFO*   (*TM_FindStatus)(STATUSINFO* pStatusList, const TCHAR *pszStatus);
-	WORD          (*TM_StringToWord)(STATUSINFO* pStatusList, const TCHAR *pszStatus);
-	TCHAR*        (*TM_WordToString)(STATUSINFO* pStatusList, WORD Status);
+	STATUSINFO*   (*TM_AddStatus)(STATUSINFO **ppStatusList, const wchar_t *pszStatus, int* iCount);
+	STATUSINFO*   (*TM_FindStatus)(STATUSINFO *pStatusList, const wchar_t *pszStatus);
+	WORD          (*TM_StringToWord)(STATUSINFO *pStatusList, const wchar_t *pszStatus);
+	wchar_t*      (*TM_WordToString)(STATUSINFO *pStatusList, WORD Status);
 	BOOL          (*TM_RemoveAll)(STATUSINFO** pStatusList);
 
-	BOOL          (*UM_SetStatusEx)(USERINFO* pUserList, const TCHAR* pszText, int onlyMe);
-	USERINFO*     (*UM_AddUser)(STATUSINFO* pStatusList, USERINFO** pUserList, const TCHAR *pszUID, const TCHAR *pszNick, WORD wStatus);
-	USERINFO*     (*UM_SortUser)(USERINFO** ppUserList, const TCHAR *pszUID);
-	USERINFO*     (*UM_FindUser)(USERINFO* pUserList, const TCHAR *pszUID);
-	USERINFO*     (*UM_FindUserFromIndex)(USERINFO* pUserList, int index);
-	USERINFO*     (*UM_GiveStatus)(USERINFO* pUserList, const TCHAR *pszUID, WORD status);
-	USERINFO*     (*UM_SetContactStatus)(USERINFO* pUserList, const TCHAR *pszUID, WORD status);
-	USERINFO*     (*UM_TakeStatus)(USERINFO* pUserList, const TCHAR *pszUID, WORD status);
-	TCHAR*        (*UM_FindUserAutoComplete)(USERINFO* pUserList, const TCHAR* pszOriginal, const TCHAR* pszCurrent);
-	BOOL          (*UM_RemoveUser)(USERINFO** pUserList, const TCHAR *pszUID);
-	BOOL          (*UM_RemoveAll)(USERINFO** ppUserList);
-	int           (*UM_CompareItem)(USERINFO * u1, const TCHAR *pszNick, WORD wStatus);
+	BOOL          (*UM_SetStatusEx)(USERINFO *pUserList, const wchar_t* pszText, int onlyMe);
+	USERINFO*     (*UM_AddUser)(STATUSINFO *pStatusList, USERINFO **pUserList, const wchar_t *pszUID, const wchar_t *pszNick, WORD wStatus);
+	USERINFO*     (*UM_SortUser)(USERINFO **ppUserList, const wchar_t *pszUID);
+	USERINFO*     (*UM_FindUser)(USERINFO *pUserList, const wchar_t *pszUID);
+	USERINFO*     (*UM_FindUserFromIndex)(USERINFO *pUserList, int index);
+	USERINFO*     (*UM_GiveStatus)(USERINFO *pUserList, const wchar_t *pszUID, WORD status);
+	USERINFO*     (*UM_SetContactStatus)(USERINFO *pUserList, const wchar_t *pszUID, WORD status);
+	USERINFO*     (*UM_TakeStatus)(USERINFO *pUserList, const wchar_t *pszUID, WORD status);
+	wchar_t*      (*UM_FindUserAutoComplete)(USERINFO *pUserList, const wchar_t* pszOriginal, const wchar_t* pszCurrent);
+	BOOL          (*UM_RemoveUser)(USERINFO **pUserList, const wchar_t *pszUID);
+	BOOL          (*UM_RemoveAll)(USERINFO **ppUserList);
+	int           (*UM_CompareItem)(USERINFO *u1, const wchar_t *pszNick, WORD wStatus);
 
-	LOGINFO*      (*LM_AddEvent)(LOGINFO** ppLogListStart, LOGINFO** ppLogListEnd);
-	BOOL          (*LM_TrimLog)(LOGINFO** ppLogListStart, LOGINFO** ppLogListEnd, int iCount);
-	BOOL          (*LM_RemoveAll)(LOGINFO** ppLogListStart, LOGINFO** ppLogListEnd);
+	LOGINFO*      (*LM_AddEvent)(LOGINFO **ppLogListStart, LOGINFO **ppLogListEnd);
+	BOOL          (*LM_TrimLog)(LOGINFO **ppLogListStart, LOGINFO **ppLogListEnd, int iCount);
+	BOOL          (*LM_RemoveAll)(LOGINFO **ppLogListStart, LOGINFO **ppLogListEnd);
 
-	MCONTACT      (*AddRoom)(const char *pszModule, const TCHAR *pszRoom, const TCHAR *pszDisplayName, int iType);
 	BOOL          (*SetOffline)(MCONTACT hContact, BOOL bHide);
 	BOOL          (*SetAllOffline)(BOOL bHide, const char *pszModule);
-	BOOL          (*AddEvent)(MCONTACT hContact, HICON hIcon, MEVENT hEvent, int type, TCHAR* fmt, ...);
-	MCONTACT      (*FindRoom)(const char *pszModule, const TCHAR *pszRoom);
+	BOOL          (*AddEvent)(MCONTACT hContact, HICON hIcon, MEVENT hEvent, int type, wchar_t* fmt, ...);
+	MCONTACT      (*FindRoom)(const char *pszModule, const wchar_t *pszRoom);
 
 	char*         (*Log_CreateRTF)(LOGSTREAMDATA *streamData);
-	char*         (*Log_CreateRtfHeader)(MODULEINFO *mi);
+	char*         (*Log_CreateRtfHeader)(void);
 	void          (*LoadMsgDlgFont)(int i, LOGFONT *lf, COLORREF *color);
-	TCHAR*        (*MakeTimeStamp)(TCHAR *pszStamp, time_t time);
-
-	BOOL          (*DoEventHook)(const TCHAR *pszID, const char *pszModule, int iType, const TCHAR *pszUID, const TCHAR* pszText, INT_PTR dwItem);
-	BOOL          (*DoEventHookAsync)(HWND hwnd, const TCHAR *pszID, const char *pszModule, int iType, const TCHAR* pszUID, const TCHAR* pszText, INT_PTR dwItem);
+	wchar_t*      (*MakeTimeStamp)(wchar_t *pszStamp, time_t time);
 
 	BOOL          (*DoSoundsFlashPopupTrayStuff)(SESSION_INFO *si, GCEVENT *gce, BOOL bHighlight, int bManyFix);
 	BOOL          (*DoTrayIcon)(SESSION_INFO *si, GCEVENT *gce);
 	BOOL          (*DoPopup)(SESSION_INFO *si, GCEVENT *gce);
-	int           (*ShowPopup)(MCONTACT hContact, SESSION_INFO *si, HICON hIcon, char* pszProtoName, TCHAR* pszRoomName, COLORREF crBkg, const TCHAR* fmt, ...);
+	int           (*ShowPopup)(MCONTACT hContact, SESSION_INFO *si, HICON hIcon, char* pszProtoName, wchar_t* pszRoomName, COLORREF crBkg, const wchar_t* fmt, ...);
 	BOOL          (*LogToFile)(SESSION_INFO *si, GCEVENT *gce);
-	TCHAR*        (*GetChatLogsFilename)(SESSION_INFO *si, time_t tTime);
-	int           (*GetColorIndex)(const char *pszModule, COLORREF cr);
+	wchar_t*      (*GetChatLogsFilename)(SESSION_INFO *si, time_t tTime);
 	char*         (*Log_SetStyle)(int style);
 
-	BOOL          (*IsHighlighted)(SESSION_INFO *si, GCEVENT *pszText);
-	TCHAR*        (*RemoveFormatting)(const TCHAR *pszText);
+	bool          (*IsHighlighted)(SESSION_INFO *si, GCEVENT *pszText);
+	wchar_t*      (*RemoveFormatting)(const wchar_t *pszText);
 	void          (*ReloadSettings)(void);
 
-	void          (*ColorChooser)(SESSION_INFO *si, BOOL bFG, HWND hwndDlg, HWND hwndTarget, HWND hwndChooser);
-	int           (*DoRtfToTags)(CMString &pszText, int iNumColors, COLORREF *pColors);
+	int           (*DoRtfToTags)(CMStringW &pszText, int iNumColors, COLORREF *pColors);
 
 	int logPixelSY, logPixelSX;
 	char *szActiveWndModule;
-	TCHAR *szActiveWndID;
+	wchar_t *szActiveWndID;
 	HICON  hIcons[30];
 	HBRUSH hListBkgBrush, hListSelectedBkgBrush;
-	HANDLE hBuildMenuEvent, hSendEvent;
+	HANDLE hevWinPopup, hevPreCreate;
 	FONTINFO aFonts[OPTIONS_FONTCOUNT];
-	SESSION_INFO *wndList;
-	size_t *logIconBmpSize;
+	LIST<SESSION_INFO> &arSessions;
 	char **pLogIconBmpBits;
 
 	// user-defined custom callbacks
 	void (*OnCreateModule)(MODULEINFO*);
+	void (*OnDestroyModule)(MODULEINFO*);
 
 	void (*OnCreateSession)(SESSION_INFO*, MODULEINFO*);
-	void (*OnDblClickSession)(SESSION_INFO*);
 	void (*OnOfflineSession)(SESSION_INFO*);
-	void (*OnRemoveSession)(SESSION_INFO*);
-	void (*OnRenameSession)(SESSION_INFO*);
 	void (*OnReplaceSession)(SESSION_INFO*);
 
-	void (*ShowRoom)(SESSION_INFO*, WPARAM wp, BOOL bSetForeground);
-	void (*OnAddLog)(SESSION_INFO*, int);
-	void (*OnClearLog)(SESSION_INFO*);
-	void (*OnGetLogName)(SESSION_INFO*, const TCHAR*);
+	void (*ShowRoom)(SESSION_INFO*);
+	void (*OnGetLogName)(SESSION_INFO*, const wchar_t*);
 	void (*OnEventBroadcast)(SESSION_INFO *si, GCEVENT *gce);
 	
-	void (*OnSetStatusBar)(SESSION_INFO*);
 	void (*OnSetTopic)(SESSION_INFO*);
 
 	void (*OnAddUser)(SESSION_INFO*, USERINFO*);
@@ -440,12 +360,115 @@ struct CHAT_MANAGER
 	void (*OnFlashHighlight)(SESSION_INFO*, int bInactive);
 };
 
+#ifndef MIR_APP_EXPORTS
 extern CHAT_MANAGER *pci;
-extern int hLangpack;
+#endif
 
-__forceinline void mir_getCI(CHAT_MANAGER_INITDATA *pData)
+EXTERN_C MIR_APP_DLL(CHAT_MANAGER*) Chat_GetInterface(CHAT_MANAGER_INITDATA *pData = NULL, int = hLangpack);
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+// receives LOGSTREAMDATA* as the first parameter
+EXTERN_C MIR_APP_DLL(DWORD) CALLBACK Srmm_LogStreamCallback(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG cb, LONG *pcb);
+
+// sends a message to all SRMM windows
+EXTERN_C MIR_APP_DLL(void) Srmm_Broadcast(UINT, WPARAM, LPARAM);
+
+// finds a SRMM window using hContact
+EXTERN_C MIR_APP_DLL(HWND) Srmm_FindWindow(MCONTACT hContact);
+
+// updates options for all windows
+EXTERN_C MIR_APP_DLL(void) Chat_UpdateOptions();
+
+// runs ME_GC_EVENT with the parameters passed
+EXTERN_C MIR_APP_DLL(BOOL) Chat_DoEventHook(SESSION_INFO *si, int iType, const USERINFO *pUser, const wchar_t* pszText, INT_PTR dwItem);
+
+// chat menu creation / destruction
+EXTERN_C MIR_APP_DLL(UINT) Chat_CreateGCMenu(HWND hwnd, HMENU hMenu, POINT pt, SESSION_INFO *si, const wchar_t *pszUID, const wchar_t *pszWordText);
+EXTERN_C MIR_APP_DLL(void) Chat_DestroyGCMenu(HMENU hMenu, int iIndex);
+
+// calculates width or height of a string
+EXTERN_C MIR_APP_DLL(int) Chat_GetTextPixelSize(const wchar_t *pszText, HFONT hFont, bool bWidth);
+
+// message procedures' stubs
+EXTERN_C MIR_APP_DLL(LRESULT) CALLBACK stubLogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+EXTERN_C MIR_APP_DLL(LRESULT) CALLBACK stubMessageProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+EXTERN_C MIR_APP_DLL(LRESULT) CALLBACK stubNicklistProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
+#include <chat_resource.h>
+
+class MIR_APP_EXPORT CSrmmBaseDialog : public CDlgBase
 {
-	pci = (CHAT_MANAGER*)CallService("GChat/GetInterface", hLangpack, (LPARAM)pData);
-}
+	CSrmmBaseDialog(const CSrmmBaseDialog&);
+	CSrmmBaseDialog& operator=(const CSrmmBaseDialog&);
+
+protected:
+	CSrmmBaseDialog(HINSTANCE hInst, int idDialog, SESSION_INFO *si = nullptr);
+
+	virtual void OnInitDialog() override;
+	virtual void OnDestroy() override;
+
+	virtual INT_PTR DlgProc(UINT msg, WPARAM wParam, LPARAM lParam) override;
+
+	int  NotifyEvent(int code);
+	bool ProcessHotkeys(int key, bool bShift, bool bCtrl, bool bAlt);
+	void RefreshButtonStatus(void);
+	void RunUserMenu(HWND hwndOwner, USERINFO *ui, const POINT &pt);
+
+protected:
+	CCtrlRichEdit m_message, m_log;
+	SESSION_INFO *m_si;
+	COLORREF m_clrInputBG, m_clrInputFG;
+	time_t m_iLastEnterTime;
+
+	CCtrlListBox m_nickList;
+	CCtrlButton m_btnColor, m_btnBkColor;
+	CCtrlButton m_btnBold, m_btnItalic, m_btnUnderline;
+	CCtrlButton m_btnHistory, m_btnChannelMgr, m_btnNickList, m_btnFilter;
+
+	void onClick_BIU(CCtrlButton*);
+	void onClick_Color(CCtrlButton*);
+	void onClick_BkColor(CCtrlButton*);
+
+	void onClick_ChanMgr(CCtrlButton*);
+	void onClick_History(CCtrlButton*);
+
+	void onDblClick_List(CCtrlListBox*);
+
+public:
+	MCONTACT m_hContact;
+	int m_iLogFilterFlags;
+	bool m_bFilterEnabled, m_bNicklistEnabled;
+	bool m_bFGSet, m_bBGSet;
+	COLORREF m_iFG, m_iBG;
+
+	void ClearLog();
+	void RedrawLog2();
+	void ShowColorChooser(int iCtrlId);
+
+	virtual void AddLog();
+	virtual void CloseTab() {}
+	virtual void LoadSettings() PURE;
+	virtual void RedrawLog() {}
+	virtual void ScrollToBottom() {}
+	virtual void SetStatusText(const wchar_t*, HICON) {}
+	virtual void ShowFilterMenu() {}
+	virtual void StreamInEvents(LOGINFO*, bool) {}
+	virtual void UpdateNickList() {}
+	virtual void UpdateOptions() {}
+	virtual void UpdateStatusBar() {}
+	virtual void UpdateTitle() PURE;
+
+	virtual LRESULT WndProc_Log(UINT msg, WPARAM wParam, LPARAM lParam);
+	virtual LRESULT WndProc_Message(UINT msg, WPARAM wParam, LPARAM lParam);
+	virtual LRESULT WndProc_Nicklist(UINT msg, WPARAM wParam, LPARAM lParam);
+
+	__forceinline bool isChat() const { return m_si != nullptr; }
+
+	__inline void* operator new(size_t size){ return calloc(1, size); }
+	__inline void operator delete(void* p) { free(p); }
+};
 
 #endif // M_CHAT_INT_H__

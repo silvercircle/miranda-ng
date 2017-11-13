@@ -38,7 +38,7 @@ INT_PTR CALLBACK PSPProcContactHome(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		{
 			CCtrlList *pCtrlList = CCtrlList::CreateObj(hDlg);
 			if (pCtrlList) {
-				TCHAR szAddr[MAX_PATH];
+				wchar_t szAddr[MAX_PATH];
 				LPIDSTRLIST pList;
 				UINT nList;
 
@@ -46,16 +46,16 @@ INT_PTR CALLBACK PSPProcContactHome(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 				PSGetBoldFont(hDlg, hBoldFont);
 				SendDlgItemMessage(hDlg, IDC_PAGETITLE, WM_SETFONT, (WPARAM)hBoldFont, 0);
 
-				mir_sntprintf(szAddr, _T("%s (%s)"), TranslateT("Address"), TranslateT("home"));
+				mir_snwprintf(szAddr, L"%s (%s)", TranslateT("Address"), TranslateT("home"));
 				SetDlgItemText(hDlg, IDC_PAGETITLE, szAddr);
 				SendDlgItemMessage(hDlg, BTN_GOTO, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Open in browser"), MBBF_TCHAR);
 				TranslateDialogDefault(hDlg);
 
-				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_STREET, SET_CONTACT_STREET, DBVT_TCHAR));
-				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_CITY, SET_CONTACT_CITY, DBVT_TCHAR));
-				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_ZIP, SET_CONTACT_ZIP, DBVT_TCHAR));
-				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_STATE, SET_CONTACT_STATE, DBVT_TCHAR));
-				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_HOMEPAGE, SET_CONTACT_HOMEPAGE, DBVT_TCHAR));
+				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_STREET, SET_CONTACT_STREET, DBVT_WCHAR));
+				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_CITY, SET_CONTACT_CITY, DBVT_WCHAR));
+				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_ZIP, SET_CONTACT_ZIP, DBVT_WCHAR));
+				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_STATE, SET_CONTACT_STATE, DBVT_WCHAR));
+				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_HOMEPAGE, SET_CONTACT_HOMEPAGE, DBVT_WCHAR));
 
 				GetCountryList(&nList, &pList);
 				pCtrlList->insert(CCombo::CreateObj(hDlg, EDIT_COUNTRY, SET_CONTACT_COUNTRY, DBVT_WORD, pList, nList));
@@ -126,7 +126,7 @@ INT_PTR CALLBACK PSPProcContactHome(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 						{
 							HICON hIcon = IcoLib_GetIcon(ICO_BTN_GOTO);
 							SendDlgItemMessage(hDlg, BTN_GOTO, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
-							SetDlgItemText(hDlg, BTN_GOTO, hIcon ? _T("") : _T("->"));
+							SetDlgItemText(hDlg, BTN_GOTO, hIcon ? L"" : L"->");
 
 							hIcon = IcoLib_GetIcon(ICO_COMMON_ADDRESS);
 							SendDlgItemMessage(hDlg, ICO_ADDRESS, STM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
@@ -184,7 +184,7 @@ INT_PTR CALLBACK PSPProcContactWork(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			CCtrlList *pCtrlList = CCtrlList::CreateObj(hDlg);
 			if (pCtrlList)
 			{
-				TCHAR szAddr[MAX_PATH];
+				wchar_t szAddr[MAX_PATH];
 				LPIDSTRLIST pList;
 				UINT nList;
 
@@ -192,16 +192,16 @@ INT_PTR CALLBACK PSPProcContactWork(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 				PSGetBoldFont(hDlg, hBoldFont);
 				SendDlgItemMessage(hDlg, IDC_PAGETITLE, WM_SETFONT, (WPARAM)hBoldFont, 0);
 
-				mir_sntprintf(szAddr, _T("%s (%s)"), TranslateT("Address and contact"), TranslateT("company"));
+				mir_snwprintf(szAddr, L"%s (%s)", TranslateT("Address and contact"), TranslateT("company"));
 				SetDlgItemText(hDlg, IDC_PAGETITLE, szAddr);
 				SendDlgItemMessage(hDlg, BTN_GOTO, BUTTONADDTOOLTIP, (WPARAM)TranslateT("Open in browser"), MBBF_TCHAR);
 				TranslateDialogDefault(hDlg);
 
-				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_STREET, SET_CONTACT_COMPANY_STREET, DBVT_TCHAR));
-				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_CITY, SET_CONTACT_COMPANY_CITY, DBVT_TCHAR));
-				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_ZIP, SET_CONTACT_COMPANY_ZIP, DBVT_TCHAR));
-				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_STATE, SET_CONTACT_COMPANY_STATE, DBVT_TCHAR));
-				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_HOMEPAGE, SET_CONTACT_COMPANY_HOMEPAGE, DBVT_TCHAR));
+				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_STREET, SET_CONTACT_COMPANY_STREET, DBVT_WCHAR));
+				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_CITY, SET_CONTACT_COMPANY_CITY, DBVT_WCHAR));
+				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_ZIP, SET_CONTACT_COMPANY_ZIP, DBVT_WCHAR));
+				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_STATE, SET_CONTACT_COMPANY_STATE, DBVT_WCHAR));
+				pCtrlList->insert(CEditCtrl::CreateObj(hDlg, EDIT_HOMEPAGE, SET_CONTACT_COMPANY_HOMEPAGE, DBVT_WCHAR));
 
 				GetCountryList(&nList, &pList);
 				pCtrlList->insert(CCombo::CreateObj(hDlg, EDIT_COUNTRY, SET_CONTACT_COMPANY_COUNTRY, DBVT_WORD, pList, nList));
@@ -270,7 +270,7 @@ INT_PTR CALLBACK PSPProcContactWork(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 						{
 							HICON hIcon = IcoLib_GetIcon(ICO_BTN_GOTO);
 							SendDlgItemMessage(hDlg, BTN_GOTO, BM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
-							SetDlgItemText(hDlg, BTN_GOTO, hIcon ? _T("") : _T("->"));
+							SetDlgItemText(hDlg, BTN_GOTO, hIcon ? L"" : L"->");
 
 							hIcon = IcoLib_GetIcon(ICO_COMMON_ADDRESS);
 							SendDlgItemMessage(hDlg, ICO_ADDRESS, STM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);

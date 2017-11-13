@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (с) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (с) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-09 Miranda ICQ/IM project,
 
 This file is part of Send Screenshot Plus, a Miranda IM plugin.
@@ -29,27 +29,28 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include "stdafx.h"
 #define CSEND_DIALOG 8800
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 CSend::CSend(HWND /*Owner*/, MCONTACT hContact, bool bAsync, bool bSilent) :
-m_bDeleteAfterSend(false),
-m_bAsync(bAsync),
-m_bSilent(bSilent),
-m_pszFile(NULL),
-m_pszFileDesc(NULL),
-m_URL(NULL),
-m_URLthumb(NULL),
-m_pszSendTyp(NULL),
-m_pszProto(NULL),
-//	m_hContact(hContact), // initialized below
-m_EnableItem(0),
-m_ChatRoom(0),
-//	m_PFflag(0),
-m_cbEventMsg(0),
-m_szEventMsg(NULL),
-m_hSend(0),
-m_hOnSend(0),
-m_ErrorMsg(NULL),
-m_ErrorTitle(NULL)
+	m_bDeleteAfterSend(false),
+	m_bAsync(bAsync),
+	m_bSilent(bSilent),
+	m_pszFile(NULL),
+	m_pszFileDesc(NULL),
+	m_URL(NULL),
+	m_URLthumb(NULL),
+	m_pszSendTyp(NULL),
+	m_pszProto(NULL),
+	//	m_hContact(hContact), // initialized below
+	m_EnableItem(0),
+	m_ChatRoom(0),
+	//	m_PFflag(0),
+	m_cbEventMsg(0),
+	m_szEventMsg(NULL),
+	m_hSend(0),
+	m_hOnSend(0),
+	m_ErrorMsg(NULL),
+	m_ErrorTitle(NULL)
 {
 	SetContact(hContact);
 }
@@ -66,7 +67,8 @@ CSend::~CSend()
 	if (m_hOnSend) UnhookEvent(m_hOnSend);
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 void CSend::SetContact(MCONTACT hContact)
 {
 	m_hContact = hContact;
@@ -80,24 +82,18 @@ void CSend::SetContact(MCONTACT hContact)
 	}
 }
 
-//---------------------------------------------------------------------------
-/*bool	CSend::hasCap(unsigned int Flag) {
-	return (Flag & CallContactService(m_hContact, PS_GETCAPS, PFLAGNUM_1, NULL)) == Flag;
-	}// */
+/////////////////////////////////////////////////////////////////////////////////////////
 
-//---------------------------------------------------------------------------
 INT_PTR CALLBACK CSend::ResultDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
+		Window_SetIcon_IcoLib(hwndDlg, GetIconHandle(ICO_MAIN));
 		{
-			SendMessage(hwndDlg, WM_SETICON, ICON_BIG, (LPARAM)GetIcon(ICO_MAIN));
-			CSend* self = (CSend*)lParam;
-			TCHAR* tmp = mir_tstrdup(TranslateT("Resulting URL from\n"));
-			mir_tstradd(tmp, self->m_pszSendTyp);
-			SetDlgItemText(hwndDlg, IDC_HEADERBAR, tmp);
-			mir_free(tmp);
+			CSend *self = (CSend*)lParam;
+			SetDlgItemText(hwndDlg, IDC_HEADERBAR, CMStringW(TranslateT("Resulting URL from\n")) + self->m_pszSendTyp);
+
 			SendDlgItemMessage(hwndDlg, IDC_HEADERBAR, WM_SETICON, ICON_BIG, (LPARAM)GetIconBtn(ICO_BTN_ARROWR));
 			SetDlgItemTextA(hwndDlg, ID_edtURL, self->m_URL);
 			if (self->m_URLthumb) {
@@ -124,16 +120,16 @@ INT_PTR CALLBACK CSend::ResultDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
 				case ID_btnCopy:
 				case ID_btnThumbCopy:
 					SendDlgItemMessage(hwndDlg, i, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GetIconBtn(ICO_BTN_COPY));
-					SendDlgItemMessage(hwndDlg, i, BUTTONADDTOOLTIP, (WPARAM)LPGENT("Copy"), BATF_TCHAR);
+					SendDlgItemMessage(hwndDlg, i, BUTTONADDTOOLTIP, (WPARAM)LPGENW("Copy"), BATF_UNICODE);
 					break;
 				case ID_btnBBC:
 				case ID_btnThumbBBC:
 					SendDlgItemMessage(hwndDlg, i, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GetIconBtn(ICO_BTN_BBC));
-					SendDlgItemMessage(hwndDlg, i, BUTTONADDTOOLTIP, (WPARAM)LPGENT("Copy BBCode"), BATF_TCHAR);
+					SendDlgItemMessage(hwndDlg, i, BUTTONADDTOOLTIP, (WPARAM)LPGENW("Copy BBCode"), BATF_UNICODE);
 					break;
 				default:
 					SendDlgItemMessage(hwndDlg, i, BM_SETIMAGE, IMAGE_ICON, (LPARAM)GetIconBtn(ICO_BTN_BBCLNK));
-					SendDlgItemMessage(hwndDlg, i, BUTTONADDTOOLTIP, (WPARAM)LPGENT("Copy BBCode w/ link"), BATF_TCHAR);
+					SendDlgItemMessage(hwndDlg, i, BUTTONADDTOOLTIP, (WPARAM)LPGENW("Copy BBCode w/ link"), BATF_UNICODE);
 				}
 			}
 		}
@@ -151,7 +147,7 @@ INT_PTR CALLBACK CSend::ResultDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
 		case ID_btnBBC:
 		case ID_btnThumbBBC:
 		case ID_btnThumbBBC2:
-			TCHAR tmp[2048];
+			wchar_t tmp[2048];
 			int edtID = ID_edtURL;
 			int bbc = 0;
 			switch (LOWORD(wParam)) {
@@ -166,16 +162,16 @@ INT_PTR CALLBACK CSend::ResultDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
 			size_t len;
 			if (bbc) {
 				if (bbc == 1) {
-					memcpy(tmp, _T("[img]"), 5 * sizeof(TCHAR)); len = 5;
+					memcpy(tmp, L"[img]", 5 * sizeof(wchar_t)); len = 5;
 					len += GetDlgItemText(hwndDlg, edtID, tmp + len, 2048 - 11);
-					memcpy(tmp + len, _T("[/img]"), 7 * sizeof(TCHAR)); len += 7;
+					memcpy(tmp + len, L"[/img]", 7 * sizeof(wchar_t)); len += 7;
 				}
 				else {
-					memcpy(tmp, _T("[url="), 5 * sizeof(TCHAR)); len = 5;
+					memcpy(tmp, L"[url=", 5 * sizeof(wchar_t)); len = 5;
 					len += GetDlgItemText(hwndDlg, ID_edtURL, tmp + len, 1024);
-					memcpy(tmp + len, _T("][img]"), 6 * sizeof(TCHAR)); len += 6;
+					memcpy(tmp + len, L"][img]", 6 * sizeof(wchar_t)); len += 6;
 					len += GetDlgItemText(hwndDlg, edtID, tmp + len, 1024);
-					memcpy(tmp + len, _T("[/img][/url]"), 13 * sizeof(TCHAR)); len += 12;
+					memcpy(tmp + len, L"[/img][/url]", 13 * sizeof(wchar_t)); len += 12;
 				}
 			}
 			else
@@ -187,9 +183,9 @@ INT_PTR CALLBACK CSend::ResultDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
 					continue;
 				}
 				EmptyClipboard();
-				HGLOBAL clipbuffer = GlobalAlloc(GMEM_MOVEABLE, len*sizeof(TCHAR) + sizeof(TCHAR));
-				TCHAR* tmp2 = (TCHAR*)GlobalLock(clipbuffer);
-				mir_tstrncpy(tmp2, tmp, len + 1); tmp2[len] = '\0';
+				HGLOBAL clipbuffer = GlobalAlloc(GMEM_MOVEABLE, len*sizeof(wchar_t) + sizeof(wchar_t));
+				wchar_t* tmp2 = (wchar_t*)GlobalLock(clipbuffer);
+				mir_wstrncpy(tmp2, tmp, len + 1); tmp2[len] = '\0';
 				GlobalUnlock(clipbuffer);
 				SetClipboardData(CF_UNICODETEXT, clipbuffer);
 				CloseClipboard();
@@ -211,35 +207,29 @@ void CSend::svcSendMsgExit(const char* szMessage)
 	}
 	if (!m_hContact) {
 		if (!m_pszFileDesc)
-			m_pszFileDesc = mir_a2t(szMessage);
+			m_pszFileDesc = mir_a2u(szMessage);
 		Exit(CSEND_DIALOG); return;
 	}
 	if (m_ChatRoom) {
-		TCHAR* tmp = mir_a2t(szMessage);
+		CMStringW tmp(szMessage);
 		if (m_pszFileDesc) {
-			mir_tstradd(tmp, _T("\r\n"));
-			mir_tstradd(tmp, m_pszFileDesc);
+			tmp.Append(L"\r\n");
+			tmp.Append(m_pszFileDesc);
 		}
-		GC_INFO gci = { 0 };
+		
 		int res = GC_RESULT_NOSESSION;
-		int cnt = (int)CallService(MS_GC_GETSESSIONCOUNT, 0, (LPARAM)m_pszProto);
+		int cnt = pci->SM_GetCount(m_pszProto);
 
-		//loop on all gc session to get the right (save) ptszID for the chatroom from m_hContact
+		// loop on all gc session to get the right (save) ptszID for the chatroom from m_hContact
+		GC_INFO gci = { 0 };
 		gci.pszModule = m_pszProto;
 		for (int i = 0; i < cnt; i++) {
 			gci.iItem = i;
 			gci.Flags = GCF_BYINDEX | GCF_HCONTACT | GCF_ID;
-			CallService(MS_GC_GETINFO, 0, (LPARAM)&gci);
+			Chat_GetInfo(&gci);
 			if (gci.hContact == m_hContact) {
-				GCDEST gcd = { m_pszProto, gci.pszID, GC_EVENT_SENDMESSAGE };
-				GCEVENT gce = { sizeof(gce), &gcd };
-				gce.bIsMe = TRUE;
-				gce.dwFlags = GCEF_ADDTOLOG;
-				gce.ptszText = tmp;
-				gce.time = time(NULL);
-
-				//* returns 0 on success or error code on failure
-				res = 200 + (int)CallService(MS_GC_EVENT, 0, (LPARAM)&gce);
+				Chat_SendUserMessage(m_pszProto, gci.pszID, tmp);
+				res = 200;
 				break;
 			}
 		}
@@ -252,7 +242,7 @@ void CSend::svcSendMsgExit(const char* szMessage)
 		memset(m_szEventMsg, 0, (sizeof(char) * m_cbEventMsg));
 		mir_strcpy(m_szEventMsg, szMessage);
 		if (m_pszFileDesc && m_pszFileDesc[0] != NULL) {
-			char *temp = mir_t2a(m_pszFileDesc);
+			char *temp = mir_u2a(m_pszFileDesc);
 			mir_stradd(m_szEventMsg, "\r\n");
 			mir_stradd(m_szEventMsg, temp);
 			m_cbEventMsg = (DWORD)mir_strlen(m_szEventMsg) + 1;
@@ -263,7 +253,7 @@ void CSend::svcSendMsgExit(const char* szMessage)
 			m_hOnSend = HookEventObj(ME_PROTO_ACK, OnSend, this);
 		}
 		//start PSS_MESSAGE service
-		m_hSend = (HANDLE)CallContactService(m_hContact, PSS_MESSAGE, NULL, ptrA(mir_utf8encode(m_szEventMsg)));
+		m_hSend = (HANDLE)ProtoChainSend(m_hContact, PSS_MESSAGE, NULL, ptrA(mir_utf8encode(m_szEventMsg)));
 		// check we actually got an ft handle back from the protocol
 		if (!m_hSend) {
 			Unhook();
@@ -282,17 +272,17 @@ void CSend::svcSendFileExit()
 		Exit(ACKRESULT_SUCCESS); return;
 	}
 	if (!m_hContact) {
-		Error(LPGENT("%s requires a valid contact!"), m_pszSendTyp);
+		Error(LPGENW("%s requires a valid contact!"), m_pszSendTyp);
 		Exit(ACKRESULT_FAILED); return;
 	}
 	mir_freeAndNil(m_szEventMsg);
-	char* szFile = mir_t2a(m_pszFile);
+	char* szFile = mir_u2a(m_pszFile);
 	m_cbEventMsg = (DWORD)mir_strlen(szFile) + 2;
 	m_szEventMsg = (char*)mir_realloc(m_szEventMsg, (sizeof(char) * m_cbEventMsg));
 	memset(m_szEventMsg, 0, (sizeof(char) * m_cbEventMsg));
 	mir_strcpy(m_szEventMsg, szFile);
 	if (m_pszFileDesc && m_pszFileDesc[0] != NULL) {
-		char* temp = mir_t2a(m_pszFileDesc);
+		char* temp = mir_u2a(m_pszFileDesc);
 		m_cbEventMsg += (DWORD)mir_strlen(temp);
 		m_szEventMsg = (char*)mir_realloc(m_szEventMsg, sizeof(char)*m_cbEventMsg);
 		mir_strcpy(m_szEventMsg + mir_strlen(szFile) + 1, temp);
@@ -307,11 +297,11 @@ void CSend::svcSendFileExit()
 	}
 
 	// Start miranda PSS_FILE based on mir ver (T)
-	TCHAR* ppFile[2] = { 0, 0 };
-	TCHAR* pDesc = mir_tstrdup(m_pszFileDesc);
-	ppFile[0] = mir_tstrdup(m_pszFile);
+	wchar_t* ppFile[2] = { 0, 0 };
+	wchar_t* pDesc = mir_wstrdup(m_pszFileDesc);
+	ppFile[0] = mir_wstrdup(m_pszFile);
 	ppFile[1] = NULL;
-	m_hSend = (HANDLE)CallContactService(m_hContact, PSS_FILE, (WPARAM)pDesc, (LPARAM)ppFile);
+	m_hSend = (HANDLE)ProtoChainSend(m_hContact, PSS_FILE, (WPARAM)pDesc, (LPARAM)ppFile);
 	mir_free(pDesc);
 	mir_free(ppFile[0]);
 
@@ -323,7 +313,8 @@ void CSend::svcSendFileExit()
 	}
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 int CSend::OnSend(void *obj, WPARAM, LPARAM lParam)
 {
 	CSend* self = (CSend*)obj;
@@ -336,13 +327,13 @@ int CSend::OnSend(void *obj, WPARAM, LPARAM lParam)
 			*/
 
 	switch (ack->result) {
-	case ACKRESULT_INITIALISING:	//SetFtStatus(hwndDlg, LPGENT("Initialising..."), FTS_TEXT); break;
-	case ACKRESULT_CONNECTING:		//SetFtStatus(hwndDlg, LPGENT("Connecting..."), FTS_TEXT); break;
-	case ACKRESULT_CONNECTPROXY:	//SetFtStatus(hwndDlg, LPGENT("Connecting to proxy..."), FTS_TEXT); break;
-	case ACKRESULT_LISTENING:		//SetFtStatus(hwndDlg, LPGENT("Waiting for connection..."), FTS_TEXT); break;
-	case ACKRESULT_CONNECTED:		//SetFtStatus(hwndDlg, LPGENT("Connected"), FTS_TEXT); break;
-	case ACKRESULT_SENTREQUEST:		//SetFtStatus(hwndDlg, LPGENT("Decision sent"), FTS_TEXT); break;
-	case ACKRESULT_NEXTFILE:		//SetFtStatus(hwndDlg, LPGENT("Moving to next file..."), FTS_TEXT);
+	case ACKRESULT_INITIALISING:	//SetFtStatus(hwndDlg, LPGENW("Initialising..."), FTS_TEXT); break;
+	case ACKRESULT_CONNECTING:		//SetFtStatus(hwndDlg, LPGENW("Connecting..."), FTS_TEXT); break;
+	case ACKRESULT_CONNECTPROXY:	//SetFtStatus(hwndDlg, LPGENW("Connecting to proxy..."), FTS_TEXT); break;
+	case ACKRESULT_LISTENING:		//SetFtStatus(hwndDlg, LPGENW("Waiting for connection..."), FTS_TEXT); break;
+	case ACKRESULT_CONNECTED:		//SetFtStatus(hwndDlg, LPGENW("Connected"), FTS_TEXT); break;
+	case ACKRESULT_SENTREQUEST:		//SetFtStatus(hwndDlg, LPGENW("Decision sent"), FTS_TEXT); break;
+	case ACKRESULT_NEXTFILE:		//SetFtStatus(hwndDlg, LPGENW("Moving to next file..."), FTS_TEXT);
 	case ACKRESULT_FILERESUME:		//
 	case ACKRESULT_DATA:			//transfer is on progress
 		break;
@@ -383,7 +374,7 @@ int CSend::OnSend(void *obj, WPARAM, LPARAM lParam)
 
 void CSend::DB_EventAdd(WORD EventType)
 {
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	dbei.szModule = m_pszProto;
 	dbei.eventType = EventType;
 	dbei.flags = DBEF_SENT;
@@ -394,19 +385,20 @@ void CSend::DB_EventAdd(WORD EventType)
 	db_event_add(m_hContact, &dbei);
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 void CSend::Error(LPCTSTR pszFormat, ...)
 {
-	TCHAR tszMsg[MAX_SECONDLINE];
+	wchar_t tszMsg[MAX_SECONDLINE];
 
-	mir_sntprintf(tszMsg, _T("%s - %s"), _T(SZ_SENDSS), TranslateT("Error"));
-	mir_free(m_ErrorTitle), m_ErrorTitle = mir_tstrdup(tszMsg);
+	mir_snwprintf(tszMsg, L"%s - %s", _A2W(SZ_SENDSS), TranslateT("Error"));
+	mir_free(m_ErrorTitle), m_ErrorTitle = mir_wstrdup(tszMsg);
 
 	va_list vl;
 	va_start(vl, pszFormat);
-	mir_vsntprintf(tszMsg, _countof(tszMsg), TranslateTS(pszFormat), vl);
+	mir_vsnwprintf(tszMsg, _countof(tszMsg), TranslateW(pszFormat), vl);
 	va_end(vl);
-	mir_free(m_ErrorMsg), m_ErrorMsg = mir_tstrdup(tszMsg);
+	mir_free(m_ErrorMsg), m_ErrorMsg = mir_wstrdup(tszMsg);
 
 	memset(&m_box, 0, sizeof(MSGBOX));
 	m_box.cbSize = sizeof(MSGBOX);
@@ -418,45 +410,46 @@ void CSend::Error(LPCTSTR pszFormat, ...)
 	m_box.uType = MB_OK | MB_ICON_ERROR;
 }
 
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+
 void CSend::Exit(unsigned int Result)
 {
 	if (!m_bSilent) {
 		bool err = true;
 		switch (Result) {
 		case CSEND_DIALOG:
-			SkinPlaySound("FileDone");
+			Skin_PlaySound("FileDone");
 			DialogBoxParam(g_hSendSS, MAKEINTRESOURCE(IDD_UResultForm), 0, ResultDialogProc, (LPARAM)this);
 			err = false;
 			break;
 		case ACKRESULT_SUCCESS:
 		case GC_RESULT_SUCCESS:
-			SkinPlaySound("FileDone");
+			Skin_PlaySound("FileDone");
 			err = false;
 			break;
 		case ACKRESULT_DENIED:
-			SkinPlaySound("FileDenied");
-			Error(_T("%s (%i):\nFile transfer denied."), TranslateTS(m_pszSendTyp), Result);
+			Skin_PlaySound("FileDenied");
+			Error(L"%s (%i):\nFile transfer denied.", TranslateW(m_pszSendTyp), Result);
 			MsgBoxService(NULL, (LPARAM)&m_box);
 			err = false;
 			break;
 		case GC_RESULT_WRONGVER:	//.You appear to be using the wrong version of GC API.
-			Error(_T("%s (%i):\nYou appear to be using the wrong version of GC API"), TranslateT("GCHAT error"), Result);
+			Error(L"%s (%i):\nYou appear to be using the wrong version of GC API", TranslateT("GCHAT error"), Result);
 			break;
 		case GC_RESULT_ERROR:		// An internal GC error occurred.
-			Error(_T("%s (%i):\nAn internal GC error occurred."), TranslateT("GCHAT error"), Result);
+			Error(L"%s (%i):\nAn internal GC error occurred.", TranslateT("GCHAT error"), Result);
 			break;
 		case GC_RESULT_NOSESSION:	// contact has no open GC session
-			Error(_T("%s (%i):\nContact has no open GC session."), TranslateT("GCHAT error"), Result);
+			Error(L"%s (%i):\nContact has no open GC session.", TranslateT("GCHAT error"), Result);
 			break;
 		case ACKRESULT_FAILED:
 		default:
 			break;
 		}
 		if (err) {
-			SkinPlaySound("FileFailed");
+			Skin_PlaySound("FileFailed");
 			if (m_ErrorMsg) MsgBoxService(NULL, (LPARAM)&m_box);
-			else MsgErr(NULL, LPGENT("An unknown error has occurred."));
+			else MsgErr(NULL, LPGENW("An unknown error has occurred."));
 		}
 	}
 	if (m_pszFile && *m_pszFile && m_bDeleteAfterSend && m_EnableItem&SS_DLG_DELETEAFTERSSEND) {
@@ -466,8 +459,9 @@ void CSend::Exit(unsigned int Result)
 		delete this;/// deletes derived class since destructor is virtual (which also auto-calls base dtor)
 }
 
-/// helper functions used for HTTP uploads
-//---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////////////////
+// helper functions used for HTTP uploads
+
 #define snprintf _snprintf
 
 const char* CSend::GetHTMLContent(char* str, const char* startTag, const char* endTag)
@@ -656,7 +650,7 @@ void CSend::HTTPFormDestroy(NETLIBHTTPREQUEST* nlhr)
 	mir_free(nlhr->pData), nlhr->pData = NULL;
 }
 
-int CSend::HTTPFormCreate(NETLIBHTTPREQUEST* nlhr, int requestType, char* url, HTTPFormData* frm, size_t frmNum)
+int CSend::HTTPFormCreate(NETLIBHTTPREQUEST* nlhr, int requestType, const char* url, HTTPFormData* frm, size_t frmNum)
 {
 	char boundary[16];
 	memcpy(boundary, "--M461C/", 8);
@@ -677,7 +671,7 @@ int CSend::HTTPFormCreate(NETLIBHTTPREQUEST* nlhr, int requestType, char* url, H
 	nlhr->requestType = requestType;
 	nlhr->flags = NLHRF_HTTP11;
 	if (!strncmp(url, "https://", 8)) nlhr->flags |= NLHRF_SSL;
-	nlhr->szUrl = url;
+	nlhr->szUrl = (char*)url;
 	nlhr->headersCount = 3;
 	for (HTTPFormData* iter = frm, *end = frm + frmNum; iter != end; ++iter) {
 		if (!(iter->flags&HTTPFF_HEADER)) break;
@@ -754,7 +748,7 @@ int CSend::HTTPFormCreate(NETLIBHTTPREQUEST* nlhr, int requestType, char* url, H
 			}
 			if (!fp) {
 				HTTPFormDestroy(nlhr);
-				Error(_T("Error occurred when opening local file.\nAborting file upload..."));
+				Error(L"Error occurred when opening local file.\nAborting file upload...");
 				Exit(ACKRESULT_FAILED);
 				return 1;
 			}

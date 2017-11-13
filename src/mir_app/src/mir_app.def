@@ -1,7 +1,6 @@
 LIBRARY mir_app.mir
 
 EXPORTS
-CallContactService          @1
 CallProtoService            @2
 Skin_LoadProtoIcon          @4
 Skin_LoadIcon               @5
@@ -15,7 +14,7 @@ IcoLib_GetIconHandle       @12
 IcoLib_IsManaged           @13
 IcoLib_ReleaseIcon         @14
 Window_FreeIcon_IcoLib     @15
-Window_SetIcon_IcoLib      @16
+Window_SetSkinIcon_IcoLib      @16
 Window_SetProtoIcon_IcoLib @17
 ProtoServiceExists         @18
 mir_main                   @19
@@ -247,3 +246,214 @@ KillModuleExtraIcons @245
 KillModuleFonts @246
 KillModuleHotkeys @247
 KillModuleSounds @248
+IsPluginLoaded @249
+Clist_GroupBuildMenu @250
+Clist_GroupCreate @251
+Clist_GroupDelete @252
+Clist_GroupExists @253
+Clist_GroupMoveBefore @254
+Clist_GroupSetExpanded @255
+Clist_GroupSetFlags @256
+Clist_GroupGetName @257
+Clist_GroupRename @258
+Clist_EndRebuild @259
+Clist_GroupAdded @260
+Contact_GetInfo @261
+Clist_ContactToHItem @262
+Clist_ContactToItemHandle @263
+Window_SetSkinIcon_IcoLib @264
+Window_SetIcon_IcoLib @265
+Clist_Broadcast @266
+Clist_BroadcastAsync @267
+Clist_MenuProcessCommand @268
+Clist_IsDocked @269
+Clist_MenuProcessHotkey @270
+Clist_ContactChangeGroup @271
+Clist_ContactCompare @272
+Clist_ContactDoubleClicked @273
+Clist_GetImageList @274
+Clist_GetInterface @275
+Clist_TrayNotifyA @276
+Clist_TrayNotifyW @277
+Srmm_AddIcon @278
+Srmm_GetNthIcon @279 
+Srmm_ModifyIcon @280 
+Srmm_RemoveIcon @281
+ExtraIcon_AddIcon @282
+DbEvent_GetIcon @283
+DbEvent_GetString @284
+DbEvent_GetTextA @285
+DbEvent_GetTextW @286
+DbEvent_GetType @287
+DbEvent_RegisterType @288
+Profile_GetNameA @290
+Profile_GetNameW @291
+Profile_GetPathA @292
+Profile_GetPathW @293
+Profile_SetDefault @294
+DestroyDbInstance @295
+FindDatabasePlugin @296
+InitDbInstance @297
+RegisterDatabasePlugin @298
+Chat_GetInterface @299
+Chat_Event @300 
+Chat_GetInfo @301 
+Chat_NewSession @302 
+Chat_Register @303 
+Chat_GetUserInfo @304
+Chat_SetUserInfo @305
+Chat_ChangeUserId @306
+Chat_ChangeSessionName @307
+Chat_SetStatusbarText @308
+Chat_SendUserMessage @309
+Chat_SetStatusEx @310
+Chat_Terminate @311
+Chat_AddGroup @312
+Chat_Control @313
+Clist_FindItem @314
+Colour_Get @315
+Colour_GetW @316
+Colour_Register @317
+Colour_RegisterW @318
+Effect_Get @319
+Effect_GetW @320
+Effect_Register @321
+Effect_RegisterW @322
+Font_Get @323
+Font_GetW @324
+Font_Register @325
+Font_RegisterW @326
+Options_AddPage @327
+Options_Open @328
+Options_OpenPage @329
+Srmm_ModifyButton @331
+Srmm_AddButton @332
+Srmm_GetButtonState @333
+Srmm_RemoveButton @334
+Srmm_ResetToolbar @335
+Srmm_SetButtonState @336
+Srmm_UpdateToolbarIcons @337
+Srmm_RedrawToolbarIcons @338
+Srmm_GetNthButton @339
+Srmm_GetButtonCount @340
+Srmm_ClickToolbarIcon @341
+Miranda_WaitOnHandle @342
+Miranda_IsTerminated @343
+Miranda_OkToExit @344
+Miranda_GetVersion @345
+Miranda_GetFileVersion @346
+Miranda_GetVersionText @347
+Netlib_CloseHandle @349
+Netlib_Recv @350
+Netlib_Send @351
+Netlib_RegisterUser @352
+Netlib_Log @353
+Netlib_LogW @354
+Netlib_Logf @355
+Netlib_LogfW @356
+Netlib_GetConnNlu @357
+Netlib_RecvHttpHeaders @358
+Netlib_HttpTransaction @359
+Netlib_SendHttpRequest @360
+Netlib_GetUserSettings @361
+Netlib_SetUserSettings @362
+Netlib_OpenConnection @363
+Netlib_BindPort @364
+Netlib_Shutdown @365
+Netlib_CreatePacketReceiver @366
+Netlib_GetMorePackets @367
+Netlib_FreeHttpRequest @368
+Netlib_AddressToString @369
+Netlib_StringToAddress @370
+Netlib_Select @371
+Netlib_SelectEx @372
+Netlib_SendHttpRequest @373
+Netlib_SetStickyHeaders @374
+Netlib_SetPollingTimeout @375
+Netlib_GetSocket @376
+Netlib_StartSsl @377
+Netlib_GetConnectionInfo @378
+Netlib_GetMyIp @379
+Netlib_SetHttpProxyInfo @380
+Netlib_DestroySecurityProvider @381
+Netlib_InitSecurityProvider @382
+Netlib_NtlmCreateResponse @383
+??0DB_AUTH_BLOB@@QAE@IPBD0000@Z @384 NONAME
+??0DB_AUTH_BLOB@@QAE@PAE@Z @385 NONAME
+??1DB_AUTH_BLOB@@QAE@XZ @386 NONAME
+??4DB_AUTH_BLOB@@QAEAAV0@ABV0@@Z @387 NONAME
+??BDB_AUTH_BLOB@@QAEPADXZ @388 NONAME
+??BDB_AUTH_BLOB@@QAEPAEXZ @389 NONAME
+?get_contact@DB_AUTH_BLOB@@QBEIXZ @390 NONAME
+?get_email@DB_AUTH_BLOB@@QBEPBDXZ @391 NONAME
+?get_firstName@DB_AUTH_BLOB@@QBEPBDXZ @392 NONAME
+?get_lastName@DB_AUTH_BLOB@@QBEPBDXZ @393 NONAME
+?get_nick@DB_AUTH_BLOB@@QBEPBDXZ @394 NONAME
+?get_reason@DB_AUTH_BLOB@@QBEPBDXZ @395 NONAME
+?get_uin@DB_AUTH_BLOB@@QBEKXZ @396 NONAME
+?makeBlob@DB_AUTH_BLOB@@AAEPAEXZ @397 NONAME
+?size@DB_AUTH_BLOB@@QBEKXZ @398 NONAME
+Chat_UnescapeTags @399 NONAME
+ProtoGetAvatarFormatByMimeType @400
+ProtoGetAvatarMimeType @401
+?set_uin@DB_AUTH_BLOB@@QAEXK@Z @402 NONAME
+??0CSrmmBaseDialog@@IAE@PAUHINSTANCE__@@HPAUSESSION_INFO@@@Z @403 NONAME
+??0CSrmmBaseDialog@@AAE@ABV0@@Z @404 NONAME
+??1CSrmmBaseDialog@@UAE@XZ @405 NONAME
+??4CSrmmBaseDialog@@AAEAAV0@ABV0@@Z @406 NONAME
+??_7CSrmmBaseDialog@@6B@ @407 NONAME
+?DlgProc@CSrmmBaseDialog@@MAEHIIJ@Z @408 NONAME
+??2CSrmmBaseDialog@@SAPAXI@Z @409 NONAME
+??3CSrmmBaseDialog@@SAXPAX@Z @410 NONAME
+?isChat@CSrmmBaseDialog@@QBE_NXZ @411 NONAME
+Srmm_LogStreamCallback @412
+?RunUserMenu@CSrmmBaseDialog@@IAEXPAUHWND__@@PAUUSERINFO@@ABUtagPOINT@@@Z @414 NONAME
+?ClearLog@CSrmmBaseDialog@@QAEXXZ @415 NONAME
+?CloseTab@CSrmmBaseDialog@@UAEXXZ @416 NONAME
+?UpdateStatusBar@CSrmmBaseDialog@@UAEXXZ @417 NONAME
+Chat_UpdateOptions @418 NONAME
+?RedrawLog@CSrmmBaseDialog@@UAEXXZ @419 NONAME
+?UpdateOptions@CSrmmBaseDialog@@UAEXXZ @420 NONAME
+?ShowColorChooser@CSrmmBaseDialog@@QAEXH@Z @421 NONAME
+?ShowFilterMenu@CSrmmBaseDialog@@UAEXXZ @422 NONAME
+?OnInitDialog@CSrmmBaseDialog@@MAEXXZ @423 NONAME
+?StreamInEvents@CSrmmBaseDialog@@UAEXPAULOGINFO@@_N@Z @424 NONAME
+?AddLog@CSrmmBaseDialog@@UAEXXZ @425 NONAME
+?RedrawLog2@CSrmmBaseDialog@@QAEXXZ @426 NONAME
+?ScrollToBottom@CSrmmBaseDialog@@UAEXXZ @427 NONAME
+?UpdateNickList@CSrmmBaseDialog@@UAEXXZ @428 NONAME
+?onClick_BIU@CSrmmBaseDialog@@IAEXPAVCCtrlButton@@@Z @430 NONAME
+?onClick_BkColor@CSrmmBaseDialog@@IAEXPAVCCtrlButton@@@Z @431 NONAME
+?onClick_Color@CSrmmBaseDialog@@IAEXPAVCCtrlButton@@@Z @432 NONAME
+?RefreshButtonStatus@CSrmmBaseDialog@@IAEXXZ @433 NONAME
+?ProcessHotkeys@CSrmmBaseDialog@@IAE_NH_N00@Z @434 NONAME
+?onClick_History@CSrmmBaseDialog@@IAEXPAVCCtrlButton@@@Z @435 NONAME
+?onClick_ChanMgr@CSrmmBaseDialog@@IAEXPAVCCtrlButton@@@Z @436 NONAME
+?WndProc_Log@CSrmmBaseDialog@@UAEJIIJ@Z @437 NONAME
+?WndProc_Message@CSrmmBaseDialog@@UAEJIIJ@Z @438 NONAME
+?WndProc_Nicklist@CSrmmBaseDialog@@UAEJIIJ@Z @439 NONAME
+?onDblClick_List@CSrmmBaseDialog@@IAEXPAVCCtrlListBox@@@Z @440 NONAME
+?OnDestroy@CSrmmBaseDialog@@MAEXXZ @441 NONAME
+Chat_AddMenuItems @442 NONAME
+Chat_DestroyGCMenu @443 NONAME
+Chat_CreateGCMenu @444 NONAME
+Chat_DoEventHook @445 NONAME
+_stubLogProc@16 @446 NONAME
+_stubMessageProc@16 @447 NONAME
+_stubNicklistProc@16 @448 NONAME
+Chat_GetTextPixelSize @449 NONAME
+?NotifyEvent@CSrmmBaseDialog@@IAEHH@Z @450 NONAME
+Srmm_GetWindowData @451
+Srmm_FindWindow @452
+Srmm_Broadcast @453
+Hotkey_Register @454
+Hotkey_Subclass @455
+Hotkey_Unregister @456
+Hotkey_Unsubclass @457
+Hotkey_Check @458
+?SetStatusText@CSrmmBaseDialog@@UAEXPB_WPAUHICON__@@@Z @459 NONAME
+Srmm_SetStatusText @460
+Skin_AddSound @461
+Skin_PlaySound @462
+Skin_PlaySoundFile @463
+Clist_SetStatusMode @464

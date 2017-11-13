@@ -3,7 +3,7 @@
 Omegle plugin for Miranda Instant Messenger
 _____________________________________________
 
-Copyright © 2011-15 Robert Pösel
+Copyright © 2011-17 Robert Pösel
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,14 +22,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "stdafx.h"
 
-OmegleProto::OmegleProto(const char* proto_name, const TCHAR* username) :
-	PROTO<OmegleProto>(proto_name, username)
+OmegleProto::OmegleProto(const char* proto_name, const wchar_t* username) :
+PROTO<OmegleProto>(proto_name, username)
 {
 	this->facy.parent = this;
 
 	this->signon_lock_ = CreateMutex(NULL, FALSE, NULL);
 	this->log_lock_ = CreateMutex(NULL, FALSE, NULL);
-	this->facy.send_message_lock_ = CreateMutex(NULL, FALSE, NULL);
 	this->facy.connection_lock_ = CreateMutex(NULL, FALSE, NULL);
 	this->events_loop_lock_ = CreateMutex(NULL, FALSE, NULL);
 
@@ -43,24 +42,25 @@ OmegleProto::OmegleProto(const char* proto_name, const TCHAR* username) :
 	HookProtoEvent(ME_GC_EVENT, &OmegleProto::OnChatEvent);
 
 	// Create standard network connection
-	TCHAR descr[512];
-	NETLIBUSER nlu = { sizeof(nlu) };
-	nlu.flags = NUF_INCOMING | NUF_OUTGOING | NUF_HTTPCONNS | NUF_TCHAR;
+	wchar_t descr[512];
+	NETLIBUSER nlu = {};
+	nlu.flags = NUF_INCOMING | NUF_OUTGOING | NUF_HTTPCONNS | NUF_UNICODE;
 	nlu.szSettingsModule = m_szModuleName;
-	mir_sntprintf(descr, TranslateT("%s server connection"), m_tszUserName);
-	nlu.ptszDescriptiveName = descr;
-	m_hNetlibUser = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
+	mir_snwprintf(descr, TranslateT("%s server connection"), m_tszUserName);
+	nlu.szDescriptiveName.w = descr;
+	m_hNetlibUser = Netlib_RegisterUser(&nlu);
 	if (m_hNetlibUser == NULL) {
-		TCHAR error[200];
-		mir_sntprintf(error, TranslateT("Unable to initialize Netlib for %s."), m_tszUserName);
-		MessageBox(NULL, error, _T("Miranda NG"), MB_OK | MB_ICONERROR);
+		wchar_t error[200];
+		mir_snwprintf(error, TranslateT("Unable to initialize Netlib for %s."), m_tszUserName);
+		MessageBox(NULL, error, L"Miranda NG", MB_OK | MB_ICONERROR);
 	}
 
 	facy.set_handle(m_hNetlibUser);
 
-	SkinAddNewSoundExT("StrangerTyp", m_tszUserName, LPGENT("Stranger typing"));
-	SkinAddNewSoundExT("StrangerTypStop", m_tszUserName, LPGENT("Stranger stopped typing"));
-	SkinAddNewSoundExT("StrangerChange", m_tszUserName, LPGENT("Changing stranger"));
+	Skin_AddSound("StrangerTyp", m_tszUserName, LPGENW("Stranger is typing"));
+	Skin_AddSound("StrangerTypStop", m_tszUserName, LPGENW("Stranger stopped typing"));
+	Skin_AddSound("StrangerChange", m_tszUserName, LPGENW("Changing stranger"));
+	Skin_AddSound("StrangerMessage", m_tszUserName, LPGENW("Receive message"));
 }
 
 OmegleProto::~OmegleProto()
@@ -69,12 +69,10 @@ OmegleProto::~OmegleProto()
 
 	WaitForSingleObject(this->signon_lock_, IGNORE);
 	WaitForSingleObject(this->log_lock_, IGNORE);
-	WaitForSingleObject(this->facy.send_message_lock_, IGNORE);
 	WaitForSingleObject(this->events_loop_lock_, IGNORE);
 
 	CloseHandle(this->signon_lock_);
 	CloseHandle(this->log_lock_);
-	CloseHandle(this->facy.send_message_lock_);
 	CloseHandle(this->events_loop_lock_);
 	CloseHandle(this->facy.connection_lock_);
 }
@@ -167,14 +165,14 @@ INT_PTR OmegleProto::SvcCreateAccMgrUI(WPARAM, LPARAM lParam)
 int OmegleProto::OnModulesLoaded(WPARAM, LPARAM)
 {
 	// Register group chat
-	GCREGISTER gcr = { sizeof(gcr) };
+	GCREGISTER gcr = {};
 	gcr.dwFlags = 0; //GC_TYPNOTIF; //GC_ACKMSG;
 	gcr.pszModule = m_szModuleName;
 	gcr.ptszDispName = m_tszUserName;
 	gcr.iMaxText = OMEGLE_MESSAGE_LIMIT;
 	gcr.nColors = 0;
 	gcr.pColors = NULL;
-	CallService(MS_GC_REGISTER, 0, reinterpret_cast<LPARAM>(&gcr));
+	Chat_Register(&gcr);
 
 	return 0;
 }
@@ -183,13 +181,13 @@ int OmegleProto::OnOptionsInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = g_hInstance;
-	odp.ptszTitle = m_tszUserName;
+	odp.szTitle.w = m_tszUserName;
 	odp.dwInitParam = LPARAM(this);
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR | ODPF_DONTTRANSLATE;
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE | ODPF_DONTTRANSLATE;
 
 	odp.position = 271828;
-	odp.ptszGroup = LPGENT("Network");
-	odp.ptszTab = LPGENT("Account");
+	odp.szGroup.w = LPGENW("Network");
+	odp.szTab.w = LPGENW("Account");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPTIONS);
 	odp.pfnDlgProc = OmegleOptionsProc;
 	Options_AddPage(wParam, &odp);

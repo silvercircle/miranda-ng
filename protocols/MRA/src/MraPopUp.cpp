@@ -4,13 +4,13 @@
 #define POPUPS_TYPES_COUNT	7
 static LPCWSTR lpcwszPopupsTypes[] =
 {
-	LPGENT("None"),
-	LPGENT("Debug"),
-	LPGENT("Information"),
-	LPGENT("Question"),
-	LPGENT("Warning"),
-	LPGENT("Error"),
-	LPGENT("NewMail"),
+	LPGENW("None"),
+	LPGENW("Debug"),
+	LPGENW("Information"),
+	LPGENW("Question"),
+	LPGENW("Warning"),
+	LPGENW("Error"),
+	LPGENW("NewMail"),
 	NULL
 };
 
@@ -28,7 +28,7 @@ INT_PTR CALLBACK MraPopupDlgProcOpts(HWND hWndDlg, UINT msg, WPARAM wParam, LPAR
 			SendMessage(hWndCombo, CB_RESETCONTENT, 0, 0);
 
 			for (size_t i = 0; i < POPUPS_TYPES_COUNT; i++) {
-				DWORD dwItem = SendMessage(hWndCombo, CB_ADDSTRING, 0, (LPARAM)TranslateTS(lpcwszPopupsTypes[i]));
+				DWORD dwItem = SendMessage(hWndCombo, CB_ADDSTRING, 0, (LPARAM)TranslateW(lpcwszPopupsTypes[i]));
 				SendMessage(hWndCombo, CB_SETITEMDATA, dwItem, i);
 			}
 			SendMessage(hWndCombo, CB_SETCURSEL, 0, 0);
@@ -67,10 +67,8 @@ INT_PTR CALLBACK MraPopupDlgProcOpts(HWND hWndDlg, UINT msg, WPARAM wParam, LPAR
 			break;
 
 		case IDC_PREVIEW:
-			{
-				for (int i = 0; i < POPUPS_TYPES_COUNT; i++)
-					ppro->MraPopupShowFromAgentW(i, 0, TranslateTS(lpcwszPopupsTypes[i]));
-			}
+			for (int i = 0; i < POPUPS_TYPES_COUNT; i++)
+				ppro->MraPopupShowFromAgentW(i, TranslateW(lpcwszPopupsTypes[i]));
 			break;
 
 		case IDC_CHK_ENABLE:
@@ -84,6 +82,7 @@ INT_PTR CALLBACK MraPopupDlgProcOpts(HWND hWndDlg, UINT msg, WPARAM wParam, LPAR
 				EnableWindow(GetDlgItem(hWndDlg, IDC_POPUP_TEXTCOLOR), (bEnabled && bUseWinColors == FALSE));
 				EnableWindow(GetDlgItem(hWndDlg, IDC_POPUP_TIMEOUT), bEnabled);
 			}
+			// fall through
 		default:
 			if ((LOWORD(wParam) == IDC_POPUP_TIMEOUT) && (HIWORD(wParam) != EN_CHANGE || (HWND)lParam != GetFocus()))
 				return FALSE;
@@ -99,9 +98,9 @@ INT_PTR CALLBACK MraPopupDlgProcOpts(HWND hWndDlg, UINT msg, WPARAM wParam, LPAR
 				DWORD dwType = GET_CURRENT_COMBO_DATA(hWndDlg, IDC_COMBO_POPUP_TYPE);
 				DWORD dwPopupsEventFilter = ppro->getDword("PopupsEventFilter", MRA_DEFAULT_POPUPS_EVENT_FILTER);
 				if (IsDlgButtonChecked(hWndDlg, IDC_CHK_ENABLE))
-					dwPopupsEventFilter |= (1<<dwType);
+					dwPopupsEventFilter |= (1 << dwType);
 				else
-					dwPopupsEventFilter &= ~(1<<dwType);
+					dwPopupsEventFilter &= ~(1 << dwType);
 
 				ppro->setDword("PopupsEventFilter", dwPopupsEventFilter);
 
@@ -126,16 +125,15 @@ INT_PTR CALLBACK MraPopupDlgProcOpts(HWND hWndDlg, UINT msg, WPARAM wParam, LPAR
 
 int CMraProto::OnPopupOptInit(WPARAM wParam, LPARAM)
 {
-	if ( ServiceExists(MS_POPUP_ADDPOPUPT)) {
+	if (ServiceExists(MS_POPUP_ADDPOPUPT)) {
 		OPTIONSDIALOGPAGE odp = { 0 };
 		odp.dwInitParam = (LPARAM)this;
 		odp.position = 100000000;
 		odp.hInstance = g_hInstance;
 		odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_POPUPS);
-		odp.ptszTitle = m_tszUserName;
-		odp.ptszGroup = LPGENT("Popups");
-		odp.groupPosition = 900000000;
-		odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
+		odp.szTitle.w = m_tszUserName;
+		odp.szGroup.w = LPGENW("Popups");
+		odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
 		odp.pfnDlgProc = MraPopupDlgProcOpts;
 		Options_AddPage(wParam, &odp);
 	}
@@ -197,33 +195,32 @@ LRESULT CALLBACK MraPopupDlgProc(HWND hWndDlg, UINT msg, WPARAM wParam, LPARAM l
 	return DefWindowProc(hWndDlg, msg, wParam, lParam);
 }
 
-void CMraProto::MraPopupShowFromContactW(MCONTACT hContact, DWORD dwType, DWORD dwFlags, LPCWSTR lpszMessage)
+void CMraProto::MraPopupShowFromContactW(MCONTACT hContact, DWORD dwType, LPCWSTR lpszMessage)
 {
 	WCHAR szTitle[MAX_CONTACTNAME];
 	CMStringW szNick, szEmail;
 	mraGetStringW(hContact, "Nick", szNick);
 	mraGetStringW(hContact, "e-mail", szEmail);
 	if (hContact)
-		mir_snwprintf(szTitle, _countof(szTitle), L"%s <%s>", szNick, szEmail);
+		mir_snwprintf(szTitle, L"%s <%s>", szNick.c_str(), szEmail.c_str());
 	else
-		mir_snwprintf(szTitle, _countof(szTitle), L"%s:  %s <%s>", m_tszUserName, szNick, szEmail);
+		mir_snwprintf(szTitle, L"%s:  %s <%s>", m_tszUserName, szNick.c_str(), szEmail.c_str());
 
-	MraPopupShowW(hContact, dwType, dwFlags, szTitle, lpszMessage);
+	MraPopupShowW(hContact, dwType, szTitle, lpszMessage);
 }
 
-void CMraProto::MraPopupShowW(MCONTACT hContact, DWORD dwType, DWORD dwFlags, LPWSTR lpszTitle, LPCWSTR lpszMessage)
+void CMraProto::MraPopupShowW(MCONTACT hContact, DWORD dwType, LPWSTR lpszTitle, LPCWSTR lpszMessage)
 {
 	if (getByte("PopupsEnabled", MRA_DEFAULT_POPUPS_ENABLED))
 	if (GetBit(getDword("PopupsEventFilter", MRA_DEFAULT_POPUPS_EVENT_FILTER), dwType))
-	if ( ServiceExists(MS_POPUP_ADDPOPUPW)) {
-		POPUPDATAT ppd = { 0 };
-
+	if (ServiceExists(MS_POPUP_ADDPOPUPW)) {
 		// delete old email popup
 		if (dwType == MRA_POPUP_TYPE_EMAIL_STATUS && hWndEMailPopupStatus) {
 			PUDeletePopup(hWndEMailPopupStatus);
 			hWndEMailPopupStatus = NULL;
 		}
 
+		POPUPDATAT ppd = { 0 };
 		// load icon
 		switch (dwType) {
 		case MRA_POPUP_TYPE_NONE:// proto icon
@@ -249,15 +246,15 @@ void CMraProto::MraPopupShowW(MCONTACT hContact, DWORD dwType, DWORD dwFlags, LP
 			break;
 		}
 
-		MraPopupData *dat = (MraPopupData*)mir_calloc( sizeof(MraPopupData));
+		MraPopupData *dat = (MraPopupData*)mir_calloc(sizeof(MraPopupData));
 		dat->iPopupType = dwType;
 		dat->ppro = this;
 
 		ppd.lchContact = hContact;
 		if (lpszTitle)
-			mir_tstrncpy(ppd.lptzContactName, lpszTitle, MAX_CONTACTNAME);
+			mir_wstrncpy(ppd.lptzContactName, lpszTitle, MAX_CONTACTNAME);
 		if (lpszMessage)
-			mir_tstrncpy(ppd.lptzText, lpszMessage, MAX_SECONDLINE);
+			mir_wstrncpy(ppd.lptzText, lpszMessage, MAX_SECONDLINE);
 		ppd.PluginWindowProc = MraPopupDlgProc;
 		ppd.PluginData = dat;
 
@@ -284,6 +281,4 @@ void CMraProto::MraPopupShowW(MCONTACT hContact, DWORD dwType, DWORD dwFlags, LP
 		else
 			PUAddPopupW(&ppd);
 	}
-	else if (dwFlags & MRA_POPUP_ALLOW_MSGBOX)
-		MessageBox(NULL, lpszMessage, lpszTitle, MB_OK+(dwType == MRA_POPUP_TYPE_WARNING)?MB_ICONERROR:MB_ICONINFORMATION);
 }

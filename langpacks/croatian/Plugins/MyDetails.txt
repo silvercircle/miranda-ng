@@ -84,11 +84,11 @@ sekundi
 
 [&Away]
 
-[&NA]
+[&Not available]
 
 [Occ&upied]
 
-[&DND]
+[&Do not disturb]
 
 [&Free for chat]
 

@@ -25,7 +25,7 @@ CContactCache::~CContactCache()
 
 int __cdecl CContactCache::OnDbEventAdded(WPARAM hContact, LPARAM hEvent)
 {
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	db_event_get(hEvent, &dbei);
 	if (dbei.eventType != EVENTTYPE_MESSAGE)
 		return 0;
@@ -86,7 +86,7 @@ void CContactCache::Rebuild()
 		info->rate = 0;
 
 		for (MEVENT hEvent = db_event_last(hContact); hEvent; hEvent = db_event_prev(hContact, hEvent)) {
-			DBEVENTINFO dbei = { sizeof(dbei) };
+			DBEVENTINFO dbei = {};
 			if (!db_event_get(hEvent, &dbei)) {
 				if (float weight = GetEventWeight(timestamp - dbei.timestamp)) {
 					if (dbei.eventType == EVENTTYPE_MESSAGE)
@@ -114,31 +114,21 @@ float CContactCache::getWeight(int rate)
 	return -1;
 }
 
-static bool AppendInfo(TCHAR *buf, int size, MCONTACT hContact, int info)
+static bool AppendInfo(wchar_t *buf, int size, MCONTACT hContact, int info)
 {
-	CONTACTINFO ci = { 0 };
-	ci.cbSize = sizeof(ci);
-	ci.hContact = hContact;
-	ci.dwFlag = info;
-	ci.dwFlag |= CNF_UNICODE;
-
-	bool ret = false;
-
-	if (!CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)&ci) && (ci.type == CNFT_ASCIIZ) && ci.pszVal) {
-		if (*ci.pszVal && (mir_tstrlen(ci.pszVal) < size - 2)) {
-			mir_tstrcpy(buf, ci.pszVal);
-			ret = true;
-		}
-		mir_free(ci.pszVal);
+	ptrW str(Contact_GetInfo(info, hContact));
+	if (str != NULL) {
+		mir_wstrncpy(buf, str, size);
+		return true;
 	}
 
-	return ret;
+	return false;
 }
 
 void CContactCache::TContactInfo::LoadInfo()
 {
 	if (infoLoaded) return;
-	TCHAR *p = info;
+	wchar_t *p = info;
 
 	p[0] = p[1] = 0;
 
@@ -150,29 +140,29 @@ void CContactCache::TContactInfo::LoadInfo()
 
 	for (int i = 0; i < _countof(items); ++i)
 		if (AppendInfo(p, _countof(info) - (p - info), hContact, items[i]))
-			p += mir_tstrlen(p) + 1;
+			p += mir_wstrlen(p) + 1;
 
 	*p = 0;
 
 	infoLoaded = true;
 }
 
-TCHAR *nb_stristr(TCHAR *str, TCHAR *substr)
+wchar_t *nb_stristr(wchar_t *str, wchar_t *substr)
 {
 	if (!substr || !*substr) return str;
 	if (!str || !*str) return NULL;
 
-	TCHAR *str_up = NEWTSTR_ALLOCA(str);
-	TCHAR *substr_up = NEWTSTR_ALLOCA(substr);
+	wchar_t *str_up = NEWWSTR_ALLOCA(str);
+	wchar_t *substr_up = NEWWSTR_ALLOCA(substr);
 
-	CharUpperBuff(str_up, (DWORD)mir_tstrlen(str_up));
-	CharUpperBuff(substr_up, (DWORD)mir_tstrlen(substr_up));
+	CharUpperBuff(str_up, (DWORD)mir_wstrlen(str_up));
+	CharUpperBuff(substr_up, (DWORD)mir_wstrlen(substr_up));
 
-	TCHAR *p = _tcsstr(str_up, substr_up);
+	wchar_t *p = wcsstr(str_up, substr_up);
 	return p ? (str + (p - str_up)) : NULL;
 }
 
-bool CContactCache::filter(int rate, TCHAR *str)
+bool CContactCache::filter(int rate, wchar_t *str)
 {
 	if (!str || !*str)
 		return true;
@@ -182,12 +172,12 @@ bool CContactCache::filter(int rate, TCHAR *str)
 	HKL kbdLayouts[10];
 	int nKbdLayouts = GetKeyboardLayoutList(_countof(kbdLayouts), kbdLayouts);
 
-	TCHAR buf[256];
+	wchar_t buf[256];
 	BYTE keyState[256] = { 0 };
 
 	for (int iLayout = 0; iLayout < nKbdLayouts; ++iLayout) {
 		if (kbdLayoutActive == kbdLayouts[iLayout])
-			mir_tstrcpy(buf, str);
+			mir_wstrcpy(buf, str);
 		else {
 			int i;
 			for (i = 0; str[i]; ++i) {
@@ -198,7 +188,7 @@ bool CContactCache::filter(int rate, TCHAR *str)
 			buf[i] = 0;
 		}
 
-		for (TCHAR *p = m_cache[rate]->info; p && *p; p = p + mir_tstrlen(p) + 1)
+		for (wchar_t *p = m_cache[rate]->info; p && *p; p = p + mir_wstrlen(p) + 1)
 			if (nb_stristr(p, buf))
 				return true;
 	}

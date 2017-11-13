@@ -127,9 +127,9 @@ void CConfig::LoadSettings()
 		pProtoFilter = new CProtoFilter();
 		pProtoFilter->strName = toTstring(ppAccounts[i]->szModuleName);
 
-		strSetting = _T("ProtoFilter_") + pProtoFilter->strName;
+		strSetting = L"ProtoFilter_" + pProtoFilter->strName;
 		pProtoFilter->bNotificationFilter = db_get_dw(NULL, "MirandaG15", toNarrowString(strSetting).c_str(), 1) != 0;
-		strSetting = _T("ProtoCListFilter_") + pProtoFilter->strName;
+		strSetting = L"ProtoCListFilter_" + pProtoFilter->strName;
 		pProtoFilter->bContactlistFilter = db_get_dw(NULL, "MirandaG15", toNarrowString(strSetting).c_str(), 1) != 0;
 		m_ProtoList.push_back(pProtoFilter);
 	}
@@ -215,11 +215,11 @@ void CConfig::SaveSettings()
 
 	// save protocol specific settings
 	vector<CProtoFilter*>::iterator iter = m_ProtoList.begin();
-	tstring strSetting = _T("");
+	tstring strSetting = L"";
 	while (iter != m_ProtoList.end()) {
-		strSetting = _T("ProtoFilter_") + (*iter)->strName;
+		strSetting = L"ProtoFilter_" + (*iter)->strName;
 		db_set_dw(NULL, "MirandaG15", toNarrowString(strSetting).c_str(), (*iter)->bNotificationFilter);
-		strSetting = _T("ProtoCListFilter_") + (*iter)->strName;
+		strSetting = L"ProtoCListFilter_" + (*iter)->strName;
 		db_set_dw(NULL, "MirandaG15", toNarrowString(strSetting).c_str(), (*iter)->bContactlistFilter);
 		iter++;
 	}
@@ -250,31 +250,31 @@ int CConfig::InitOptionsDialog(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.position = 847000000;
 	odp.hInstance = hInstance;
-	odp.pszGroup = LPGEN("MirandaG15");
+	odp.szGroup.a = LPGEN("MirandaG15");
 	odp.flags = ODPF_BOLDGROUPS;
 
 	// ---------------------
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_FONTS);
-	odp.pszTitle = LPGEN("Appearance");
-	odp.pszGroup = LPGEN("MirandaG15");
+	odp.szTitle.a = LPGEN("Appearance");
+	odp.szGroup.a = LPGEN("MirandaG15");
 	odp.pfnDlgProc = CConfig::AppearanceDlgProc;
 	Options_AddPage(wParam, &odp);
 
 	// ---------------------
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_NOTIFICATIONS);
-	odp.pszTitle = LPGEN("Notifications");
+	odp.szTitle.a = LPGEN("Notifications");
 	odp.pfnDlgProc = CConfig::NotificationsDlgProc;
 	Options_AddPage(wParam, &odp);
 
 	// ---------------------
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_CHAT);
-	odp.pszTitle = LPGEN("Chat sessions");
+	odp.szTitle.a = LPGEN("Chat sessions");
 	odp.pfnDlgProc = CConfig::ChatDlgProc;
 	Options_AddPage(wParam, &odp);
 
 	// ---------------------
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_CLIST);
-	odp.pszTitle = LPGEN("Contact list");
+	odp.szTitle.a = LPGEN("Contact list");
 	odp.pfnDlgProc = CConfig::ContactlistDlgProc;
 	Options_AddPage(wParam, &odp);
 	return 0;
@@ -306,7 +306,7 @@ void CConfig::SaveFontSettings(int iFont)
 	
 	// Name
 	mir_snprintf(szSetting, "Font%dName", iFont);
-	db_set_ts(NULL, "MirandaG15", szSetting, m_logfont[iFont].lfFaceName);
+	db_set_ws(NULL, "MirandaG15", szSetting, m_logfont[iFont].lfFaceName);
 
 	UpdateFontSettings(iFont);
 }
@@ -337,10 +337,10 @@ void CConfig::LoadFontSettings(int iFont)
 	// Name
 	mir_snprintf(szSetting, "Font%dName", iFont);
 	DBVARIANT dbv;
-	if (db_get_ts(NULL, "MirandaG15", szSetting, &dbv))
-		mir_tstrcpy(m_logfont[iFont].lfFaceName, _T("Small Fonts"));
+	if (db_get_ws(NULL, "MirandaG15", szSetting, &dbv))
+		mir_wstrcpy(m_logfont[iFont].lfFaceName, L"Small Fonts");
 	else {
-		mir_tstrcpy(m_logfont[iFont].lfFaceName, dbv.ptszVal);
+		mir_wstrcpy(m_logfont[iFont].lfFaceName, dbv.ptszVal);
 		db_free(&dbv);
 	}
 
@@ -453,7 +453,7 @@ INT_PTR CALLBACK CConfig::AppearanceDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
 						DeleteObject(m_hSampleFont[iFont]);
 					m_hSampleFont[iFont] = CreateFontIndirect(&m_templogfont[iFont]);
 					SendDlgItemMessage(hwndDlg, CConfig::GetSampleField(iFont), WM_SETFONT, (WPARAM)m_hSampleFont[iFont], (LPARAM)true);
-					TRACE(_T("Font selected!"));
+					TRACE(L"Font selected!");
 				}
 			}
 			if (LOWORD(wParam) == IDC_DEVICE && SendDlgItemMessage(hwndDlg, IDC_DEVICE, CB_GETCURSEL, 0, 0) != m_aiIntSettings[DEVICE]) {

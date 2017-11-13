@@ -1,15 +1,15 @@
 #include "stdafx.h"
 
 int hLangpack;
-int hScriptsLangpack;
 
 HINSTANCE g_hInstance;
 
 CMLua *g_mLua;
 
-HANDLE g_hCommonScriptFolder;
+HANDLE g_hCLibsFolder;
+HANDLE g_hScriptsFolder;
 
-HANDLE hNetlib = NULL;
+HNETLIBUSER hNetlib = NULL;
 
 PLUGININFOEX pluginInfo =
 {
@@ -41,17 +41,32 @@ extern "C" __declspec(dllexport) PLUGININFOEX* MirandaPluginInfoEx(DWORD)
 
 int OnModulesLoaded(WPARAM, LPARAM)
 {
-	g_hCommonScriptFolder = FoldersRegisterCustomPathT(MODULE, Translate("Common scripts folder"), COMMON_SCRIPTS_PATHT);
+	g_hCLibsFolder = FoldersRegisterCustomPathT(MODULE, "CLibsFolder", MIRLUA_PATHT, TranslateT("C libs folder"));
+	g_hScriptsFolder = FoldersRegisterCustomPathT(MODULE, "ScriptsFolder", MIRLUA_PATHT, TranslateT("Scripts folder"));
 
-	HookEvent(ME_OPT_INITIALISE, CLuaOptions::OnOptionsInit);
+	HookEvent(ME_OPT_INITIALISE, CMLuaOptions::OnOptionsInit);
 
-	hRecvMessage = CreateHookableEvent(MODULE PSR_MESSAGE);
-	CreateProtoServiceFunction(MODULE, PSR_MESSAGE, FilterRecvMessage);
+	InitIcons();
 
 	g_mLua = new CMLua();
 	g_mLua->Load();
 
 	return 0;
+}
+
+INT_PTR Call(WPARAM wParam, LPARAM lParam)
+{
+	return g_mLua->Call(wParam, lParam);
+}
+
+INT_PTR Exec(WPARAM wParam, LPARAM lParam)
+{
+	return g_mLua->Exec(wParam, lParam);
+}
+
+INT_PTR Eval(WPARAM wParam, LPARAM lParam)
+{
+	return g_mLua->Eval(wParam, lParam);
 }
 
 extern "C" int __declspec(dllexport) Load(void)
@@ -60,12 +75,11 @@ extern "C" int __declspec(dllexport) Load(void)
 
 	HookEvent(ME_SYSTEM_MODULESLOADED, OnModulesLoaded);
 
-	NETLIBUSER nlu = { 0 };
-	nlu.cbSize = sizeof(nlu);
-	nlu.flags = NUF_OUTGOING | NUF_INCOMING | NUF_HTTPCONNS | NUF_UNICODE;
-	nlu.ptszDescriptiveName = _T(MODULE);
+	NETLIBUSER nlu = {};
+	nlu.flags = NUF_OUTGOING | NUF_INCOMING | NUF_HTTPCONNS;
+	nlu.szDescriptiveName.a = MODULE;
 	nlu.szSettingsModule = MODULE;
-	hNetlib = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
+	hNetlib = Netlib_RegisterUser(&nlu);
 
 	PROTOCOLDESCRIPTOR pd = { 0 };
 	pd.cbSize = sizeof(pd);
@@ -73,13 +87,12 @@ extern "C" int __declspec(dllexport) Load(void)
 	pd.type = PROTOTYPE_FILTER;
 	Proto_RegisterModule(&pd);
 
+	hRecvMessage = CreateHookableEvent(MODULE PSR_MESSAGE);
 	CreateProtoServiceFunction(MODULE, PSR_MESSAGE, FilterRecvMessage);
-	/*CreateProtoServiceFunction(MODULE, PSR_AUTH, FilterRecvAuth);
-	CreateProtoServiceFunction(MODULE, PSR_FILE, FilterRecvFile);
-	CreateProtoServiceFunction(MODULE, PSR_URL, FilterRecvUrl);
-	CreateProtoServiceFunction(MODULE, PSR_CONTACTS, FilterRecvUrl);
-	CreateProtoServiceFunction(MODULE, PSR_AWAYMSG, FilterRecvUrl);*/
-	
+
+	CreateServiceFunction(MS_LUA_CALL, Call);
+	CreateServiceFunction(MS_LUA_EXEC, Exec);
+	CreateServiceFunction(MS_LUA_EVAL, Eval);
 
 	return 0;
 }

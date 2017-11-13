@@ -21,13 +21,13 @@
 #include "Path.h"
 #include "Properties.h"
 
-void ShowMsg(TCHAR *FirstLine, TCHAR *SecondLine, bool IsErrorMsg, int Timeout)
+void ShowMsg(wchar_t *FirstLine, wchar_t *SecondLine, bool IsErrorMsg, int Timeout)
 {
 	if (ServiceExists(MS_POPUP_ADDPOPUPT)) {
 		POPUPDATAT ppd = { 0 };
 		ppd.lchIcon = LoadIcon(NULL, IsErrorMsg ? IDI_EXCLAMATION : IDI_INFORMATION);
-		mir_tstrncpy(ppd.lptzContactName, FirstLine, MAX_CONTACTNAME);
-		mir_tstrncpy(ppd.lptzText, SecondLine, MAX_SECONDLINE);
+		mir_wstrncpy(ppd.lptzContactName, FirstLine, MAX_CONTACTNAME);
+		mir_wstrncpy(ppd.lptzText, SecondLine, MAX_SECONDLINE);
 		ppd.colorBack = IsErrorMsg ? 0x0202E3 : 0xE8F1FD;
 		ppd.colorText = IsErrorMsg ? 0xE8F1FD : 0x000000;
 		ppd.iSeconds = Timeout;
@@ -41,10 +41,10 @@ static int CALLBACK MenuWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 {
 	switch (uMsg) {
 	case WM_MEASUREITEM:
-		return Menu_MeasureItem((LPMEASUREITEMSTRUCT)lParam);
+		return Menu_MeasureItem(lParam);
 
 	case WM_DRAWITEM:
-		return Menu_DrawItem((LPDRAWITEMSTRUCT)lParam);
+		return Menu_DrawItem(lParam);
 	}
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
@@ -53,12 +53,12 @@ static int CALLBACK MenuWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 static VOID CALLBACK ShowContactMenu(MCONTACT hContact)
 {
 	POINT pt;
-	HWND hMenuWnd = CreateWindowEx(WS_EX_TOOLWINDOW, _T("static"), _T(MOD_NAME)_T("_MenuWindow"), 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP, NULL, g_hInstance, NULL);
+	HWND hMenuWnd = CreateWindowEx(WS_EX_TOOLWINDOW, L"static", MOD_NAMEW L"_MenuWindow", 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND_DESKTOP, NULL, g_hInstance, NULL);
 	SetWindowLongPtr(hMenuWnd, GWLP_WNDPROC, (LONG_PTR)MenuWndProc);
 	HMENU hMenu = Menu_BuildContactMenu(hContact);
 	GetCursorPos(&pt);
 	SetForegroundWindow(hMenuWnd);
-	CallService(MS_CLIST_MENUPROCESSCOMMAND, MAKEWPARAM(TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y, 0, hMenuWnd, NULL), MPCF_CONTACTMENU), hContact);
+	Clist_MenuProcessCommand(TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y, 0, hMenuWnd, NULL), MPCF_CONTACTMENU, hContact);
 	PostMessage(hMenuWnd, WM_NULL, 0, 0);
 	DestroyMenu(hMenu);
 	DestroyWindow(hMenuWnd);
@@ -66,10 +66,10 @@ static VOID CALLBACK ShowContactMenu(MCONTACT hContact)
 
 void ShowLog(TCString &LogFilePath)
 {
-	INT_PTR Result = (INT_PTR)ShellExecute(NULL, _T("open"), LogFilePath, NULL, NULL, SW_SHOW);
+	INT_PTR Result = (INT_PTR)ShellExecute(NULL, L"open", LogFilePath, NULL, NULL, SW_SHOW);
 	if (Result <= 32) {
-		TCHAR szError[64];
-		mir_sntprintf(szError, TranslateT("Error #%d"), Result);
+		wchar_t szError[64];
+		mir_snwprintf(szError, TranslateT("Error #%d"), Result);
 		ShowMsg(szError, TranslateT("Can't open log file ") + LogFilePath, true);
 	}
 }

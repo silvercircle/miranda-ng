@@ -8,7 +8,6 @@
 
 #include <Windows.h>
 #include <CommCtrl.h>
-#include <tchar.h>
 #include <time.h>
 #include <string>
 #include <vector>
@@ -26,7 +25,6 @@ using namespace std;
 #include <m_clist.h>
 #include <m_protocols.h>
 #include <m_skin.h>
-#include <m_clui.h>
 #include <m_chat.h>
 #include <m_idle.h>
 #include <m_metacontacts.h>
@@ -40,7 +38,7 @@ using namespace std;
 
 #define ASSERT assert
 
-#include "LCDFramework\LCDFramework.h"
+#include "LCDFramework/LCDFramework.h"
 
 #include "Miranda.h"
 #include "CEvent.h"

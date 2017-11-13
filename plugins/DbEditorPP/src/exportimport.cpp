@@ -1,29 +1,29 @@
 #include "stdafx.h"
 
-TCHAR *GetFilter()
+wchar_t *GetFilter()
 {
-	static TCHAR filter[MAX_PATH];
-	mir_sntprintf(filter, _T("%s%c*.ini%c%s%c*.*%c"), TranslateT("INI Files"), 0, 0, TranslateT("All Files"), 0, 0);
+	static wchar_t filter[MAX_PATH];
+	mir_snwprintf(filter, L"%s%c*.ini%c%s%c*.*%c", TranslateT("INI Files"), 0, 0, TranslateT("All Files"), 0, 0);
 	return filter;
 }
 
-int Openfile(TCHAR *outputFile, const char *module, int maxlen)
+int Openfile(wchar_t *outputFile, const char *module, int maxlen)
 {
-	TCHAR filename[MAX_PATH];
+	wchar_t filename[MAX_PATH];
 
 	if (module) {
 		int n = 0;
-		mir_tstrncpy(filename, _A2T(module), _countof(filename));
+		mir_wstrncpy(filename, _A2T(module), _countof(filename));
 
 		while (filename[n]) {
 			switch (filename[n]) {
-			case _T('*'):
-			case _T(':'):
-			case _T('/'):
-			case _T('?'):
-			case _T('|'):
-			case _T('\\'):
-				filename[n] = _T('_');
+			case '*':
+			case ':':
+			case '/':
+			case '?':
+			case '|':
+			case '\\':
+				filename[n] = '_';
 				break;
 			}
 			n++;
@@ -38,11 +38,11 @@ int Openfile(TCHAR *outputFile, const char *module, int maxlen)
 	ofn.Flags = OFN_HIDEREADONLY | OFN_SHAREAWARE | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
 	ofn.lpstrTitle = TranslateT("Export to file");
 	ofn.nMaxFile = maxlen;
-	ofn.lpstrDefExt = _T("ini");
+	ofn.lpstrDefExt = L"ini";
 	if (!GetSaveFileName(&ofn))
 		return 0;
 
-	mir_tstrncpy(outputFile, filename, maxlen);
+	mir_wstrncpy(outputFile, filename, maxlen);
 	return 1;
 }
 
@@ -148,10 +148,10 @@ void exportDB(MCONTACT hContact, const char *module)
 	if (!EnumModules(&modlist))
 		return;
 
-	TCHAR fileName[MAX_PATH];
+	wchar_t fileName[MAX_PATH];
 
 	if (Openfile(fileName, (hContact == INVALID_CONTACT_ID) ? NULL : module, MAX_PATH)) {
-		FILE *file = _tfopen(fileName, _T("wt"));
+		FILE *file = _wfopen(fileName, L"wt");
 		if (!file) {
 			msg(TranslateT("Couldn't open file for writing"));
 			return;
@@ -330,7 +330,7 @@ void importSettings(MCONTACT hContact, char *utf8)
 			}
 
 			if (hContact == INVALID_CONTACT_ID) {
-				MCONTACT temp = (MCONTACT)CallService(MS_DB_CONTACT_ADD, 0, 0);
+				MCONTACT temp = db_add_contact();
 				if (temp)
 					hContact = temp;
 			}
@@ -356,18 +356,12 @@ void importSettings(MCONTACT hContact, char *utf8)
 				// get the type
 				type = *(end + 1);
 				if (mir_strcmp(module, "CList") == 0 && mir_strcmp(setting, "Group") == 0) {
-					ptrA GroupName(mir_utf8decodeA(end + 2));
+					ptrW GroupName(mir_utf8decodeW(end + 2));
 					if (!GroupName)
 						continue;
 
-					HANDLE GroupHandle = (HANDLE)CallService(MS_CLIST_GROUPEXISTS, 0, LPARAM(GroupName));
-					if (GroupHandle == 0) {
-						GroupHandle = (HANDLE)CallService(MS_CLIST_GROUPCREATE, 0, (LPARAM)GroupName);
-						if (GroupHandle) {
-							CallService(MS_CLUI_GROUPADDED, (WPARAM)GroupHandle, 0);
-							CallService(MS_CLIST_GROUPSETEXPANDED, (WPARAM)GroupHandle, 1);
-						}
-					}
+					MGROUP GroupHandle = Clist_GroupCreate(0, GroupName);
+					Clist_GroupSetExpanded(GroupHandle, true);
 				}
 
 				switch (type) {
@@ -433,11 +427,11 @@ INT_PTR CALLBACK ImportDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		TranslateDialogDefault(hwnd);
 		SendDlgItemMessage(hwnd, IDC_TEXT, EM_LIMITTEXT, (WPARAM)0x7FFFFFFF, 0);
 
-		TCHAR name[NAME_SIZE], msg[MSG_SIZE];
+		wchar_t name[NAME_SIZE], msg[MSG_SIZE];
 
 		GetContactName((MCONTACT)lParam, NULL, name, _countof(name));
 
-		mir_sntprintf(msg, TranslateT("Import to \"%s\""), name);
+		mir_snwprintf(msg, TranslateT("Import to \"%s\""), name);
 		SetWindowText(hwnd, msg);
 
 		break;
@@ -452,7 +446,7 @@ INT_PTR CALLBACK ImportDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 			MCONTACT hContact = (MCONTACT)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 			int length = GetWindowTextLength(GetDlgItem(hwnd, IDC_TEXT));
 			if (length) {
-				TCHAR *data = (TCHAR*)mir_alloc((length + 1)*sizeof(TCHAR));
+				wchar_t *data = (wchar_t*)mir_alloc((length + 1)*sizeof(wchar_t));
 				GetDlgItemText(hwnd, IDC_TEXT, data, length + 1);
 				importSettings(hContact, T2Utf(data));
 				mir_free(data);
@@ -469,7 +463,7 @@ void ImportSettingsMenuItem(MCONTACT hContact)
 	CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_IMPORT), hwnd2mainWindow, ImportDlgProc, hContact);
 }
 
-int Openfile2Import(TCHAR *outputFiles, int maxlen)
+int Openfile2Import(wchar_t *outputFiles, int maxlen)
 {
 	OPENFILENAME ofn = { 0 };
 	ofn.lStructSize = sizeof(ofn);
@@ -492,34 +486,34 @@ BOOL Exists(LPCTSTR strName)
 
 void ImportSettingsFromFileMenuItem(MCONTACT hContact, const char *FilePath)
 {
-	TCHAR szFileNames[MAX_PATH * 10];
-	TCHAR szPath[MAX_PATH] = { 0 };
-	TCHAR szFile[MAX_PATH];
+	wchar_t szFileNames[MAX_PATH * 10];
+	wchar_t szPath[MAX_PATH] = { 0 };
+	wchar_t szFile[MAX_PATH];
 
 	DWORD offset = 0;
 
-	mir_tstrcpy(szFileNames, _T(""));
+	mir_wstrcpy(szFileNames, L"");
 
 	if (!FilePath)
 		offset = Openfile2Import(szFileNames, _countof(szFileNames));
 	else {
 		_A2T tmp(FilePath);
 		if (GetFileAttributes(tmp) != INVALID_FILE_ATTRIBUTES)
-			mir_tstrncpy(szFileNames, tmp, _countof(szFileNames));
+			mir_wstrncpy(szFileNames, tmp, _countof(szFileNames));
 	}
 
 	int index = 0;
-	if (mir_tstrcmp(szFileNames, _T(""))) {
-		if ((DWORD)mir_tstrlen(szFileNames) < offset) {
+	if (mir_wstrcmp(szFileNames, L"")) {
+		if ((DWORD)mir_wstrlen(szFileNames) < offset) {
 			index += offset;
-			mir_tstrncpy(szPath, szFileNames, offset);
-			mir_tstrcat(szPath, _T("\\"));
+			mir_wstrncpy(szPath, szFileNames, offset);
+			mir_wstrcat(szPath, L"\\");
 		}
 
 		while (szFileNames[index]) {
-			mir_tstrcpy(szFile, szPath);
-			mir_tstrcat(szFile, &szFileNames[index]);
-			index += (int)mir_tstrlen(&szFileNames[index]) + 1;
+			mir_wstrcpy(szFile, szPath);
+			mir_wstrcat(szFile, &szFileNames[index]);
+			index += (int)mir_wstrlen(&szFileNames[index]) + 1;
 
 			HANDLE hFile = CreateFile(szFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 			if (hFile != INVALID_HANDLE_VALUE) {

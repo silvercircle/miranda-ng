@@ -14,7 +14,7 @@
 
 [Delete default picture]
 
-[CAUTION: These pictures are NOT your own avatars.\nTo set your own Avatar go to Main menu | View/change my details | Avatars.]
+[CAUTION: These pictures are NOT your own avatars.\nTo set your own avatar go to Main menu -> View/change my details -> Avatar.]
 
 [Try to draw avatar background transparent (for images without transparency)]
 
@@ -92,7 +92,7 @@ Avatari
 
 [Fatal error, image services not found. Avatar services will be disabled.]
 
-[Avatar Service]
+[Avatar service]
 
 ;file \plugins\AVS\src\options.cpp
 [Set avatar options for %s]
@@ -115,8 +115,6 @@ Kontakti
 
 [Are you sure you want to remove your avatar?]
 
-[Global Avatar]
-
 [Avatar]
 
 ;file \plugins\AVS\src\services.cpp
@@ -136,7 +134,7 @@ PNG slike
 
 [Grow avatar to fit max allowed protocol size]
 
-[Set My Avatar]
+[Set my avatar]
 
-[Set My Avatar for %s]
+[Set my avatar for %s]
 

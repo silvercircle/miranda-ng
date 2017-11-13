@@ -13,19 +13,19 @@ static PFolderItem GetSelectedItem(HWND hWnd)
 	return (PFolderItem)SendDlgItemMessage(hWnd, IDC_FOLDERS_ITEMS_LIST, LB_GETITEMDATA, index, 0);
 }
 
-static void GetEditText(HWND hWnd, TCHAR *buffer, int size)
+static void GetEditText(HWND hWnd, wchar_t *buffer, int size)
 {
 	GetWindowText(GetDlgItem(hWnd, IDC_FOLDER_EDIT), buffer, size);
 }
 
-static void SetEditText(HWND hWnd, const TCHAR *buffer)
+static void SetEditText(HWND hWnd, const wchar_t *buffer)
 {
 	bInitializing = 1;
 	SetDlgItemText(hWnd, IDC_FOLDER_EDIT, buffer);
 	bInitializing = 0;
 }
 
-static int ContainsSection(HWND hWnd, const TCHAR *section)
+static int ContainsSection(HWND hWnd, const wchar_t *section)
 {
 	int index = SendDlgItemMessage(hWnd, IDC_FOLDERS_SECTIONS_LIST, LB_FINDSTRINGEXACT, -1, (LPARAM)section);
 	return (index != LB_ERR);
@@ -37,9 +37,9 @@ static void LoadRegisteredFolderSections(HWND hWnd)
 
 	for (int i = 0; i < lstRegisteredFolders.getCount(); i++) {
 		CFolderItem &tmp = lstRegisteredFolders[i];
-		TCHAR *translated = mir_a2t(tmp.GetSection());
-		if (!ContainsSection(hWnd, TranslateTS(translated))) {
-			int idx = SendMessage(hwndList, LB_ADDSTRING, 0, (LPARAM)TranslateTS(translated));
+		wchar_t *translated = mir_a2u(tmp.GetSection());
+		if (!ContainsSection(hWnd, TranslateW(translated))) {
+			int idx = SendMessage(hwndList, LB_ADDSTRING, 0, (LPARAM)TranslateW(translated));
 			SendMessage(hwndList, LB_SETITEMDATA, idx, (LPARAM)tmp.GetSection());
 		}
 
@@ -61,7 +61,7 @@ static void LoadRegisteredFolderItems(HWND hWnd)
 	for (int i = 0; i < lstRegisteredFolders.getCount(); i++) {
 		CFolderItem &item = lstRegisteredFolders[i];
 		if (!mir_strcmp(szSection, item.GetSection())) {
-			idx = SendMessage(hwndItems, LB_ADDSTRING, 0, (LPARAM)TranslateTS(item.GetUserName()));
+			idx = SendMessage(hwndItems, LB_ADDSTRING, 0, (LPARAM)TranslateW(item.GetUserName()));
 			SendMessage(hwndItems, LB_SETITEMDATA, idx, (LPARAM)&item);
 		}
 	}
@@ -71,7 +71,7 @@ static void LoadRegisteredFolderItems(HWND hWnd)
 
 static void RefreshPreview(HWND hWnd)
 {
-	TCHAR tmp[MAX_FOLDER_SIZE];
+	wchar_t tmp[MAX_FOLDER_SIZE];
 	GetEditText(hWnd, tmp, MAX_FOLDER_SIZE);
 	SetDlgItemText(hWnd, IDC_PREVIEW_EDIT, ExpandPath(tmp));
 }
@@ -90,7 +90,7 @@ static void SaveItem(HWND hWnd, PFolderItem item, int bEnableApply)
 	if (!item)
 		return;
 
-	TCHAR buffer[MAX_FOLDER_SIZE];
+	wchar_t buffer[MAX_FOLDER_SIZE];
 	GetEditText(hWnd, buffer, _countof(buffer));
 	item->SetFormat(buffer);
 
@@ -103,9 +103,9 @@ static int ChangesNotSaved(HWND hWnd, PFolderItem item)
 	if (!item)
 		return 0;
 
-	TCHAR buffer[MAX_FOLDER_SIZE];
+	wchar_t buffer[MAX_FOLDER_SIZE];
 	GetEditText(hWnd, buffer, MAX_FOLDER_SIZE);
-	return mir_tstrcmp(item->GetFormat(), buffer) != 0;
+	return mir_wstrcmp(item->GetFormat(), buffer) != 0;
 }
 
 static void CheckForChanges(HWND hWnd, int bNeedConfirmation = 1)
@@ -119,11 +119,11 @@ static void CheckForChanges(HWND hWnd, int bNeedConfirmation = 1)
 
 static INT_PTR CALLBACK DlgProcVariables(HWND hWnd, UINT msg, WPARAM wParam, LPARAM)
 {
-	TCHAR tszMessage[2048];
+	wchar_t tszMessage[2048];
 
 	switch (msg) {
 	case WM_INITDIALOG:
-		mir_sntprintf(tszMessage, _T("%s\r\n%s\r\n\r\n%s\t\t%s\r\n%%miranda_path%%\t\t%s\r\n%%profile_path%%\t\t%s\r\n\t\t\t%s\r\n%%current_profile%%\t\t%s\r\n\t\t\t%s\r\n\r\n\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n\r\n%s\r\n%s\r\n%s\r\n%%miranda_path%%\t\t\t%s\r\n%%profile_path%%\t\t\t%s\r\n%%current_profile%%\t\t\t%s\r\n%%temp%%\t\t\t\t%s\r\n%%profile_path%%\\%%current_profile%%\t%s\r\n%%miranda_path%%\\plugins\\config\t%s\r\n'   %%miranda_path%%\\\\\\\\     '\t\t%s\r\n\r\n%s"),
+		mir_snwprintf(tszMessage, L"%s\r\n%s\r\n\r\n%s\t\t%s\r\n%%miranda_path%%\t\t%s\r\n%%profile_path%%\t\t%s\r\n\t\t\t%s\r\n%%current_profile%%\t\t%s\r\n\t\t\t%s\r\n\r\n\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n%s\r\n\r\n%s\r\n%s\r\n%s\r\n%%miranda_path%%\t\t\t%s\r\n%%profile_path%%\t\t\t%s\r\n%%current_profile%%\t\t\t%s\r\n%%temp%%\t\t\t\t%s\r\n%%profile_path%%\\%%current_profile%%\t%s\r\n%%miranda_path%%\\plugins\\config\t%s\r\n'   %%miranda_path%%\\\\\\\\     '\t\t%s\r\n\r\n%s",
 			TranslateT("Don't forget to click on Apply to save the changes. If you don't then the changes won't"),
 			TranslateT("be saved to the database, they will only be valid for this session."),
 			TranslateT("Variable string"),
@@ -251,9 +251,8 @@ static int OnOptionsInitialize(WPARAM wParam, LPARAM)
 	odp.position = 100000000;
 	odp.hInstance = hInstance;
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_FOLDERS);
-	odp.pszTitle = LPGEN("Folders");
-	odp.pszGroup = LPGEN("Customize");
-	odp.groupPosition = 910000000;
+	odp.szTitle.a = LPGEN("Folders");
+	odp.szGroup.a = LPGEN("Customize");
 	odp.flags = ODPF_BOLDGROUPS;
 	odp.pfnDlgProc = DlgProcOpts;
 	Options_AddPage(wParam, &odp);

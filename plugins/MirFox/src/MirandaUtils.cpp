@@ -20,7 +20,7 @@ void MirandaUtils::netlibLog(const wchar_t* szText){
 
 void MirandaUtils::netlibLog_int(const wchar_t* szText){
 	if (netlibHandle) {
-		CallService(MS_NETLIB_LOGW, (WPARAM)netlibHandle, (LPARAM)szText);
+		Netlib_LogfW(netlibHandle, szText);
 	}
 #ifdef _DEBUG
 	OutputDebugString(szText);
@@ -29,13 +29,12 @@ void MirandaUtils::netlibLog_int(const wchar_t* szText){
 
 void MirandaUtils::netlibRegister(){
 	// Register netlib user for logging function
-	NETLIBUSER nlu = { 0 };
-	nlu.cbSize = sizeof(nlu);
-	nlu.flags = NUF_TCHAR | NUF_NOOPTIONS;
+	NETLIBUSER nlu = {};
+	nlu.flags = NUF_UNICODE | NUF_NOOPTIONS;
 	nlu.szSettingsModule = PLUGIN_DB_ID;
-	nlu.ptszDescriptiveName = TranslateT("MirFox log");
+	nlu.szDescriptiveName.w = TranslateT("MirFox log");
 
-	netlibHandle = (HANDLE)CallService(MS_NETLIB_REGISTERUSER, 0, (LPARAM)&nlu);
+	netlibHandle = Netlib_RegisterUser(&nlu);
 }
 
 void MirandaUtils::netlibUnregister(){
@@ -52,7 +51,7 @@ std::wstring& MirandaUtils::getProfileName()
 	}
 	
 	wchar_t mirandaProfileNameW[128] = {0};
-	CallService(MS_DB_GETPROFILENAMEW, _countof(mirandaProfileNameW), (WPARAM)mirandaProfileNameW);
+	Profile_GetNameW(_countof(mirandaProfileNameW), mirandaProfileNameW);
 	profileName.append(mirandaProfileNameW);
 
 	return profileName;
@@ -68,7 +67,7 @@ std::wstring& MirandaUtils::getDisplayName()
 
 	displayName.append(L"Miranda NG v.");
 	char mirandaVersion[128];
-	CallService(MS_SYSTEM_GETVERSIONTEXT, (WPARAM)_countof(mirandaVersion), (LPARAM)mirandaVersion);
+	Miranda_GetVersionText(mirandaVersion, _countof(mirandaVersion));
 	displayName.append(_A2T(mirandaVersion));
 	displayName.append(L" (");
 	displayName.append(getProfileName());
@@ -175,18 +174,18 @@ void MirandaUtils::sendMessage(ActionThreadArgStruct* args, MFENUM_SEND_MESSAGE_
 				EnterCriticalSection(&ackMapCs);
 				myMfAck = ackMap[hProcess];
 				LeaveCriticalSection(&ackMapCs);
-				if(Miranda_Terminated() || args->mirfoxDataPtr->Plugin_Terminated){
-					logger->log_p(L"SMTC: ACK break by Plugin_Terminated (=%d) or Miranda_Terminated()", args->mirfoxDataPtr->Plugin_Terminated);
+				if(Miranda_IsTerminated() || args->mirfoxDataPtr->Plugin_Terminated){
+					logger->log_p(L"SMTC: ACK break by Plugin_Terminated (=%d) or Miranda_IsTerminated()", args->mirfoxDataPtr->Plugin_Terminated);
 					break;
 				}
-			} while (myMfAck == NULL && counter <= MAX_ACK_WAIT_COUNTER); //TODO or Plugin_Terminated or Miranda_Terminated()
+			} while (myMfAck == NULL && counter <= MAX_ACK_WAIT_COUNTER); //TODO or Plugin_Terminated or Miranda_IsTerminated()
 
 			logger->log_p(L"SMTC: ACK found  counter = [%d]   myMfAck = [" SCNuPTR L"]", counter, myMfAck);
 		}
 
 		MirandaContact* mirandaContact = args->mirfoxDataPtr->getMirandaContactPtrByHandle((UINT_PTR)args->targetHandle);
 		const wchar_t* contactNameW = NULL;
-		TCHAR* tszAccountName = NULL;
+		wchar_t* tszAccountName = NULL;
 		if (mirandaContact){
 			contactNameW = mirandaContact->contactNameW.c_str();
 			MirandaAccount* mirandaAccount = mirandaContact->mirandaAccountPtr;
@@ -199,12 +198,16 @@ void MirandaUtils::sendMessage(ActionThreadArgStruct* args, MFENUM_SEND_MESSAGE_
 				//show notyfication popup (only in SMM_ONLY_SEND mode)
 				wchar_t* buffer = new wchar_t[1024 * sizeof(wchar_t)];
 				if (contactNameW != NULL && tszAccountName != NULL)
-					mir_sntprintf(buffer, 1024, TranslateT("Message sent to %s (%s)"), contactNameW, tszAccountName);
+					if (args->mirfoxDataPtr->getAddAccountToContactNameCheckbox()){
+						mir_snwprintf(buffer, 1024, TranslateT("Message sent to %s"), contactNameW);
+					} else {
+						mir_snwprintf(buffer, 1024, TranslateT("Message sent to %s (%s)"), contactNameW, tszAccountName);
+					}
 				else
-					mir_sntprintf(buffer, 1024, TranslateT("Message sent"));
+					mir_snwprintf(buffer, 1024, TranslateT("Message sent"));
 
 				if(ServiceExists(MS_POPUP_ADDPOPUPCLASS))
-					ShowClassPopupT("MirFox_Notify", _T("MirFox"), buffer);
+					ShowClassPopupT("MirFox_Notify", L"MirFox", buffer);
 				else
 					PUShowMessageT(buffer, SM_NOTIFY);
 
@@ -213,10 +216,7 @@ void MirandaUtils::sendMessage(ActionThreadArgStruct* args, MFENUM_SEND_MESSAGE_
 			else if (mode == MFENUM_SMM_SEND_AND_SHOW_MW){
 				//notify hook to open window
 				if (args->mirfoxDataPtr != NULL && args->mirfoxDataPtr->hhook_EventOpenMW != NULL){
-					OnHookOpenMvStruct* onHookOpenMv = new(OnHookOpenMvStruct);
-					onHookOpenMv->targetHandle = args->targetHandle;
-					onHookOpenMv->msgBuffer = NULL;
-					NotifyEventHooks(args->mirfoxDataPtr->hhook_EventOpenMW, (WPARAM)onHookOpenMv, 0);
+					notifyHookToOpenMsgWindow(args, false);
 				}
 				else logger->log(L"SMTC: ERROR1 args->mirfoxDataPtr == NULL || args->mirfoxDataPtr->hhook_EventOpenMW == NULL");
 			}
@@ -228,23 +228,23 @@ void MirandaUtils::sendMessage(ActionThreadArgStruct* args, MFENUM_SEND_MESSAGE_
 				logger->log_p(L"SMTC: ERROR - Cannot send message - result = [%d] ", myMfAck->result);
 				if (myMfAck->errorDesc != NULL){
 					if (contactNameW != NULL && tszAccountName != NULL){
-						mir_sntprintf(buffer, 1024, TranslateT("Cannot send message to %s (%s) - %S"), contactNameW, tszAccountName, myMfAck->errorDesc);
+						mir_snwprintf(buffer, 1024, TranslateT("Cannot send message to %s (%s) - %S"), contactNameW, tszAccountName, myMfAck->errorDesc);
 					} else {
-						mir_sntprintf(buffer, 1024, TranslateT("Cannot send message - %S"), myMfAck->errorDesc);
+						mir_snwprintf(buffer, 1024, TranslateT("Cannot send message - %S"), myMfAck->errorDesc);
 					}
 				} else {
 					if (contactNameW != NULL && tszAccountName != NULL){
-						mir_sntprintf(buffer, 1024, TranslateT("Cannot send message to %s (%s)"), contactNameW, tszAccountName);
+						mir_snwprintf(buffer, 1024, TranslateT("Cannot send message to %s (%s)"), contactNameW, tszAccountName);
 					} else {
-						mir_sntprintf(buffer, 1024, TranslateT("Cannot send message"));
+						mir_snwprintf(buffer, 1024, TranslateT("Cannot send message"));
 					}
 				}
 			} else {
 				logger->log(L"SMTC: ERROR - Cannot send message 2");
 				if (contactNameW != NULL && tszAccountName != NULL){
-					mir_sntprintf(buffer, 1024, TranslateT("Cannot send message to %s (%s)"), contactNameW, tszAccountName);
+					mir_snwprintf(buffer, 1024, TranslateT("Cannot send message to %s (%s)"), contactNameW, tszAccountName);
 				} else {
-					mir_sntprintf(buffer, 1024, TranslateT("Cannot send message"));
+					mir_snwprintf(buffer, 1024, TranslateT("Cannot send message"));
 				}
 			}
 
@@ -252,6 +252,14 @@ void MirandaUtils::sendMessage(ActionThreadArgStruct* args, MFENUM_SEND_MESSAGE_
 				ShowClassPopupT("MirFox_Error", TranslateT("MirFox error"), buffer);
 			} else {
 				PUShowMessageT(buffer, SM_WARNING);
+			}
+
+			//if MFENUM_SMM_SEND_AND_SHOW_MW, even if error sending message - notify hook to open window
+			if (mode == MFENUM_SMM_SEND_AND_SHOW_MW){
+				if (args->mirfoxDataPtr != NULL && args->mirfoxDataPtr->hhook_EventOpenMW != NULL){
+					notifyHookToOpenMsgWindow(args, true);
+				}
+				else logger->log(L"SMTC: ERROR2 args->mirfoxDataPtr == NULL || args->mirfoxDataPtr->hhook_EventOpenMW == NULL");
 			}
 
 			delete[] buffer;
@@ -267,31 +275,22 @@ void MirandaUtils::sendMessage(ActionThreadArgStruct* args, MFENUM_SEND_MESSAGE_
 		LeaveCriticalSection(&ackMapCs);
 	}
 	else if (mode == MFENUM_SMM_ONLY_SHOW_MW) {
-		//notify hook to open window
+		//notify hook to open msg window
 		if (args->mirfoxDataPtr != NULL && args->mirfoxDataPtr->hhook_EventOpenMW != NULL){
-
-			OnHookOpenMvStruct* onHookOpenMv = new(OnHookOpenMvStruct);
-			onHookOpenMv->targetHandle = args->targetHandle;
-			//adding newline to message in Message Window, only in this mode
-			std::wstring* msgBuffer = new std::wstring(); //deleted at on_hook_OpenMW
-			msgBuffer->append(args->userActionSelection);
-			msgBuffer->append(L"\r\n");
-			onHookOpenMv->msgBuffer = msgBuffer;
-			NotifyEventHooks(args->mirfoxDataPtr->hhook_EventOpenMW, (WPARAM)onHookOpenMv, 0);
+			notifyHookToOpenMsgWindow(args, true);
 		}
-		else logger->log(L"SMTC: ERROR1 args->mirfoxDataPtr == NULL || args->mirfoxDataPtr->hhook_EventOpenMW == NULL");
+		else logger->log(L"SMTC: ERROR3 args->mirfoxDataPtr == NULL || args->mirfoxDataPtr->hhook_EventOpenMW == NULL");
 	}
 }
 
 HANDLE MirandaUtils::sendMessageMiranda(MCONTACT hContact, char *msgBuffer)
 {
-	return (HANDLE)CallContactService(hContact, PSS_MESSAGE, 0, (LPARAM)msgBuffer);
+	return (HANDLE)ProtoChainSend(hContact, PSS_MESSAGE, 0, (LPARAM)msgBuffer);
 }
 
 void MirandaUtils::addMessageToDB(MCONTACT hContact, char* msgBuffer, std::size_t bufSize, char* targetHandleSzProto)
 {
-	DBEVENTINFO dbei = {0};
-	dbei.cbSize = sizeof(dbei);
+	DBEVENTINFO dbei = {};
 	dbei.eventType = EVENTTYPE_MESSAGE;
 	dbei.flags = DBEF_SENT | DBEF_UTF;
 	dbei.szModule = targetHandleSzProto;
@@ -299,6 +298,23 @@ void MirandaUtils::addMessageToDB(MCONTACT hContact, char* msgBuffer, std::size_
 	dbei.cbBlob = (DWORD)bufSize;
 	dbei.pBlob = (PBYTE)msgBuffer;
 	db_event_add(hContact, &dbei);
+}
+
+void MirandaUtils::notifyHookToOpenMsgWindow(ActionThreadArgStruct* args, bool showMessageToSend)
+{
+	OnHookOpenMvStruct* onHookOpenMv = new(OnHookOpenMvStruct);
+	onHookOpenMv->targetHandle = args->targetHandle;
+	if (showMessageToSend){
+		//adding newline to message in Message Window, only in this mode
+		std::wstring* msgBuffer = new std::wstring(); //deleted at on_hook_OpenMW
+		msgBuffer->append(args->userActionSelection);
+		msgBuffer->append(L"\r\n");
+		onHookOpenMv->msgBuffer = msgBuffer;
+	} else {
+		onHookOpenMv->msgBuffer = NULL;
+	}
+
+	NotifyEventHooks(args->mirfoxDataPtr->hhook_EventOpenMW, (WPARAM)onHookOpenMv, 0);
 }
 
 
@@ -324,14 +340,14 @@ int MirandaUtils::on_hook_OpenMW(WPARAM wParam, LPARAM lParam)
 	OnHookOpenMvStruct* param = (OnHookOpenMvStruct*)wParam;
 
 	if (param->msgBuffer != NULL){
-		TCHAR *msgBuffer = mir_tstrdup(param->msgBuffer->c_str());
-		CallServiceSync(MS_MSG_SENDMESSAGET, (WPARAM)param->targetHandle, (LPARAM)msgBuffer);
+		wchar_t *msgBuffer = mir_wstrdup(param->msgBuffer->c_str());
+		CallServiceSync(MS_MSG_SENDMESSAGEW, (WPARAM)param->targetHandle, (LPARAM)msgBuffer);
 		mir_free(msgBuffer);
 
 		delete param->msgBuffer;
 	} else {
 		//only open window
-		CallServiceSync(MS_MSG_SENDMESSAGET, (WPARAM)param->targetHandle, 0);
+		CallServiceSync(MS_MSG_SENDMESSAGEW, (WPARAM)param->targetHandle, 0);
 	}
 
 	// show and focus window
@@ -341,24 +357,15 @@ int MirandaUtils::on_hook_OpenMW(WPARAM wParam, LPARAM lParam)
 	}
 
 	MessageWindowData mwd;
-	mwd.cbSize = sizeof(MessageWindowData);
-	mwd.hContact = (UINT_PTR)param->targetHandle;
-	mwd.uFlags = MSG_WINDOW_UFLAG_MSG_BOTH;
-
-	MessageWindowInputData mwid;
-	mwid.cbSize = sizeof(MessageWindowInputData);
-	mwid.hContact = (UINT_PTR)param->targetHandle;
-	mwid.uFlags = MSG_WINDOW_UFLAG_MSG_BOTH;
-
-	delete param;
-
-	if (!CallService(MS_MSG_GETWINDOWDATA, (WPARAM)&mwid, (LPARAM)&mwd) && mwd.hwndWindow){
+	if (!Srmm_GetWindowData((WPARAM)param->targetHandle, mwd) && mwd.hwndWindow){
 		HWND parent;
 		HWND hWnd = mwd.hwndWindow;
-		while((parent = GetParent(hWnd)) != 0) hWnd = parent; // ensure we have the top level window (need parent window for scriver & tabsrmm)
+		while((parent = GetParent(hWnd)) != 0)
+			hWnd = parent; // ensure we have the top level window (need parent window for scriver & tabsrmm)
 		ForceForegroundWindow(hWnd);
 	}
 
+	delete param;
 	return 0;
 }
 
@@ -374,7 +381,7 @@ void MirandaUtils::setStatusOnAccount(ActionThreadArgStruct* args)
 		result = CallProtoService(args->accountSzModuleName, PS_SETAWAYMSG, status, (LPARAM)args->userActionSelection);
 
 	MirandaAccount* mirandaAccount = args->mirfoxDataPtr->getMirandaAccountPtrBySzModuleName(args->accountSzModuleName);
-	TCHAR* tszAccountName = NULL;
+	wchar_t* tszAccountName = NULL;
 	if (mirandaAccount)
 		tszAccountName = mirandaAccount->tszAccountName;
 
@@ -382,24 +389,24 @@ void MirandaUtils::setStatusOnAccount(ActionThreadArgStruct* args)
 	if(result == 0){
 		if (tszAccountName != NULL){
 			logger->log_p(L"SSOA: Status message set on [%s]", tszAccountName);
-			mir_sntprintf(buffer, 1024, TranslateT("Status message set on %s"), tszAccountName);
+			mir_snwprintf(buffer, 1024, TranslateT("Status message set on %s"), tszAccountName);
 		} else {
 			logger->log(L"SSOA: Status message set");
-			mir_sntprintf(buffer, 1024, TranslateT("Status message set"));
+			mir_snwprintf(buffer, 1024, TranslateT("Status message set"));
 		}
 
 		if(ServiceExists(MS_POPUP_ADDPOPUPCLASS)) {
-			ShowClassPopupT("MirFox_Notify", _T("MirFox"), buffer);
+			ShowClassPopupT("MirFox_Notify", L"MirFox", buffer);
 		} else {
 			PUShowMessageT(buffer, SM_NOTIFY);
 		}
 	} else {
 		if (tszAccountName != NULL){
 			logger->log_p(L"SSOA: ERROR - Cannot set status message 2 on [%s] - result = [%d] ", tszAccountName, result);
-			mir_sntprintf(buffer, 1024, TranslateT("Cannot set status message on %s"), tszAccountName);
+			mir_snwprintf(buffer, 1024, TranslateT("Cannot set status message on %s"), tszAccountName);
 		} else {
 			logger->log_p(L"SSOA: ERROR - Cannot set status message 2 - result = [%d] ", result);
-			mir_sntprintf(buffer, 1024, TranslateT("Cannot set status message"));
+			mir_snwprintf(buffer, 1024, TranslateT("Cannot set status message"));
 		}
 
 		if(ServiceExists(MS_POPUP_ADDPOPUPCLASS)) {
@@ -469,10 +476,10 @@ void MirandaUtils::translateOldDBNames() {
 	}
 
 	DBVARIANT opt2Dbv = {0};
-	INT_PTR opt2Result = db_get_s(0, OLD_PLUGIN_DB_ID, "clientsProfilesFilterString", &opt2Dbv, DBVT_TCHAR);
+	INT_PTR opt2Result = db_get_s(0, OLD_PLUGIN_DB_ID, "clientsProfilesFilterString", &opt2Dbv, DBVT_WCHAR);
 	if (opt2Result == 0){	//success
 		std::wstring clientsProfilesFilterString = opt2Dbv.pwszVal;
-		db_set_ts(0, PLUGIN_DB_ID, "clientsProfilesFilterString", clientsProfilesFilterString.c_str());
+		db_set_ws(0, PLUGIN_DB_ID, "clientsProfilesFilterString", clientsProfilesFilterString.c_str());
 		db_unset(0, OLD_PLUGIN_DB_ID, "clientsProfilesFilterString");
 		logger->log(L"TranslateOldDBNames:  'clientsProfilesFilterString' db entry found and moved");
 		db_free(&opt2Dbv);
@@ -508,7 +515,7 @@ void MirandaUtils::translateOldDBNames() {
 		}
 	}
 
-	//delete db module
-	CallService(MS_DB_MODULE_DELETE, 0, (LPARAM)OLD_PLUGIN_DB_ID);
+	// delete db module
+	db_delete_module(0, OLD_PLUGIN_DB_ID);
 }
 

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -27,33 +27,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 HANDLE hDlgSucceeded, hDlgCanceled;
 
-TCHAR* PFTS_StringToTchar(int flags, const TCHAR* s);
-int PFTS_CompareWithTchar(PROTOFILETRANSFERSTATUS* ft, const TCHAR* s, TCHAR *r);
+wchar_t* PFTS_StringToTchar(int flags, const wchar_t* s);
+int PFTS_CompareWithTchar(PROTOFILETRANSFERSTATUS* ft, const wchar_t* s, wchar_t *r);
 
 static HGENMENU hSRFileMenuItem;
 
-TCHAR* GetContactID(MCONTACT hContact)
+wchar_t* GetContactID(MCONTACT hContact)
 {
 	char *szProto = GetContactProto(hContact);
-	if (db_get_b(hContact, szProto, "ChatRoom", 0) == 1) {
-		if (TCHAR *theValue = db_get_tsa(hContact, szProto, "ChatRoomID"))
+	if (db_get_b(hContact, szProto, "ChatRoom", 0) == 1)
+		if (wchar_t *theValue = db_get_wsa(hContact, szProto, "ChatRoomID"))
 			return theValue;
-	}
-	else {
-		CONTACTINFO ci = { sizeof(ci) };
-		ci.hContact = hContact;
-		ci.szProto = szProto;
-		ci.dwFlag = CNF_UNIQUEID | CNF_TCHAR;
-		if (!CallService(MS_CONTACT_GETCONTACTINFO, 0, (LPARAM)& ci)) {
-			switch (ci.type) {
-			case CNFT_ASCIIZ:
-				return (TCHAR*)ci.pszVal;
-			case CNFT_DWORD:
-				return _itot(ci.dVal, (TCHAR*)mir_alloc(sizeof(TCHAR)*32), 10);
-			}
-		}
-	}
-	return NULL;
+
+	return Contact_GetInfo(CNF_UNIQUEID, hContact, szProto);
 }
 
 static INT_PTR SendFileCommand(WPARAM hContact, LPARAM)
@@ -74,9 +60,9 @@ static INT_PTR SendSpecificFiles(WPARAM hContact, LPARAM lParam)
 	while (ppFiles[count] != NULL)
 		count++;
 
-	fsd.ppFiles = (const TCHAR**)alloca((count + 1) * sizeof(void*));
+	fsd.ppFiles = (const wchar_t**)alloca((count + 1) * sizeof(void*));
 	for (int i = 0; i < count; i++)
-		fsd.ppFiles[i] = mir_a2t(ppFiles[i]);
+		fsd.ppFiles[i] = mir_a2u(ppFiles[i]);
 	fsd.ppFiles[count] = NULL;
 
 	HWND hWnd = CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_FILESEND), NULL, DlgProcSendFile, (LPARAM)&fsd);
@@ -89,15 +75,15 @@ static INT_PTR SendSpecificFilesT(WPARAM hContact, LPARAM lParam)
 {
 	FileSendData fsd;
 	fsd.hContact = hContact;
-	fsd.ppFiles = (const TCHAR**)lParam;
+	fsd.ppFiles = (const wchar_t**)lParam;
 	return (INT_PTR)CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_FILESEND), NULL, DlgProcSendFile, (LPARAM)&fsd);
 }
 
 static INT_PTR GetReceivedFilesFolder(WPARAM wParam, LPARAM lParam)
 {
-	TCHAR buf[MAX_PATH];
+	wchar_t buf[MAX_PATH];
 	GetContactReceivedFilesDir(wParam, buf, MAX_PATH, TRUE);
-	char* dir = mir_t2a(buf);
+	char* dir = mir_u2a(buf);
 	mir_strncpy((char*)lParam, dir, MAX_PATH);
 	mir_free(dir);
 	return 0;
@@ -111,8 +97,7 @@ static INT_PTR RecvFileCommand(WPARAM, LPARAM lParam)
 
 void PushFileEvent(MCONTACT hContact, MEVENT hdbe, LPARAM lParam)
 {
-	CLISTEVENT cle = { 0 };
-	cle.cbSize = sizeof(cle);
+	CLISTEVENT cle = {};
 	cle.hContact = hContact;
 	cle.hDbEvent = hdbe;
 	cle.lParam = lParam;
@@ -120,16 +105,16 @@ void PushFileEvent(MCONTACT hContact, MEVENT hdbe, LPARAM lParam)
 		CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_FILERECV), NULL, DlgProcRecvFile, (LPARAM)&cle);
 	}
 	else {
-		SkinPlaySound("RecvFile");
+		Skin_PlaySound("RecvFile");
 
-		TCHAR szTooltip[256];
-		mir_sntprintf(szTooltip, TranslateT("File from %s"), pcli->pfnGetContactDisplayName(hContact, 0));
-		cle.ptszTooltip = szTooltip;
+		wchar_t szTooltip[256];
+		mir_snwprintf(szTooltip, TranslateT("File from %s"), pcli->pfnGetContactDisplayName(hContact, 0));
+		cle.szTooltip.w = szTooltip;
 
-		cle.flags |= CLEF_TCHAR;
+		cle.flags |= CLEF_UNICODE;
 		cle.hIcon = Skin_LoadIcon(SKINICON_EVENT_FILE);
 		cle.pszService = "SRFile/RecvFile";
-		CallService(MS_CLIST_ADDEVENT, 0, (LPARAM)&cle);
+		pcli->pfnAddEvent(&cle);
 	}
 }
 
@@ -137,7 +122,7 @@ static int FileEventAdded(WPARAM wParam, LPARAM lParam)
 {
 	DWORD dwSignature;
 
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	dbei.cbBlob = sizeof(DWORD);
 	dbei.pBlob = (PBYTE)&dwSignature;
 	db_event_get(lParam, &dbei);
@@ -148,7 +133,7 @@ static int FileEventAdded(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-int SRFile_GetRegValue(HKEY hKeyBase, const TCHAR *szSubKey, const TCHAR *szValue, TCHAR *szOutput, int cbOutput)
+int SRFile_GetRegValue(HKEY hKeyBase, const wchar_t *szSubKey, const wchar_t *szValue, wchar_t *szOutput, int cbOutput)
 {
 	HKEY hKey;
 	DWORD cbOut = cbOutput;
@@ -165,7 +150,7 @@ int SRFile_GetRegValue(HKEY hKeyBase, const TCHAR *szSubKey, const TCHAR *szValu
 	return 1;
 }
 
-void GetSensiblyFormattedSize(__int64 size, TCHAR *szOut, int cchOut, int unitsOverride, int appendUnits, int *unitsUsed)
+void GetSensiblyFormattedSize(__int64 size, wchar_t *szOut, int cchOut, int unitsOverride, int appendUnits, int *unitsUsed)
 {
 	if (!unitsOverride) {
 		if (size < 1000) unitsOverride = UNITS_BYTES;
@@ -179,22 +164,22 @@ void GetSensiblyFormattedSize(__int64 size, TCHAR *szOut, int cchOut, int unitsO
 		*unitsUsed = unitsOverride;
 	
 	switch (unitsOverride) {
-		case UNITS_BYTES: mir_sntprintf(szOut, cchOut, _T("%u%s%s"), (int)size, appendUnits ? _T(" ") : _T(""), appendUnits ? TranslateT("bytes") : _T("")); break;
-		case UNITS_KBPOINT1: mir_sntprintf(szOut, cchOut, _T("%.1lf%s"), size / 1024.0, appendUnits ? _T(" KB") : _T("")); break;
-		case UNITS_KBPOINT0: mir_sntprintf(szOut, cchOut, _T("%u%s"), (int)(size / 1024), appendUnits ? _T(" KB") : _T("")); break;
-		case UNITS_GBPOINT3: mir_sntprintf(szOut, cchOut, _T("%.3f%s"), (size >> 20) / 1024.0, appendUnits ? _T(" GB") : _T("")); break;
-		default: mir_sntprintf(szOut, cchOut, _T("%.2lf%s"), size / 1048576.0, appendUnits ? _T(" MB") : _T("")); break;
+		case UNITS_BYTES: mir_snwprintf(szOut, cchOut, L"%u%s%s", (int)size, appendUnits ? L" " : L"", appendUnits ? TranslateT("bytes") : L""); break;
+		case UNITS_KBPOINT1: mir_snwprintf(szOut, cchOut, L"%.1lf%s", size / 1024.0, appendUnits ? L" KB" : L""); break;
+		case UNITS_KBPOINT0: mir_snwprintf(szOut, cchOut, L"%u%s", (int)(size / 1024), appendUnits ? L" KB" : L""); break;
+		case UNITS_GBPOINT3: mir_snwprintf(szOut, cchOut, L"%.3f%s", (size >> 20) / 1024.0, appendUnits ? L" GB" : L""); break;
+		default: mir_snwprintf(szOut, cchOut, L"%.2lf%s", size / 1048576.0, appendUnits ? L" MB" : L""); break;
 	}
 }
 
 // Tripple redirection sucks but is needed to nullify the array pointer
-void FreeFilesMatrix(TCHAR ***files)
+void FreeFilesMatrix(wchar_t ***files)
 {
 	if (*files == NULL)
 		return;
 
 	// Free each filename in the pointer array
-	TCHAR **pFile = *files;
+	wchar_t **pFile = *files;
 	while (*pFile != NULL) {
 		mir_free(*pFile);
 		*pFile = NULL;
@@ -221,13 +206,13 @@ void CopyProtoFileTransferStatus(PROTOFILETRANSFERSTATUS *dest, PROTOFILETRANSFE
 	*dest = *src;
 	if (src->tszCurrentFile) dest->tszCurrentFile = PFTS_StringToTchar(src->flags, src->tszCurrentFile);
 	if (src->ptszFiles) {
-		dest->ptszFiles = (TCHAR**)mir_alloc(sizeof(TCHAR*)*src->totalFiles);
+		dest->ptszFiles = (wchar_t**)mir_alloc(sizeof(wchar_t*)*src->totalFiles);
 		for (int i = 0; i < src->totalFiles; i++)
 			dest->ptszFiles[i] = PFTS_StringToTchar(src->flags, src->ptszFiles[i]);
 	}
 	if (src->tszWorkingDir) dest->tszWorkingDir = PFTS_StringToTchar(src->flags, src->tszWorkingDir);
 	dest->flags &= ~PFTS_UTF;
-	dest->flags |= PFTS_TCHAR;
+	dest->flags |= PFTS_UNICODE;
 }
 
 void UpdateProtoFileTransferStatus(PROTOFILETRANSFERSTATUS *dest, PROTOFILETRANSFERSTATUS *src)
@@ -242,7 +227,7 @@ void UpdateProtoFileTransferStatus(PROTOFILETRANSFERSTATUS *dest, PROTOFILETRANS
 	}
 	if (src->ptszFiles) {
 		if (!dest->ptszFiles)
-			dest->ptszFiles = (TCHAR**)mir_calloc(sizeof(TCHAR*)*src->totalFiles);
+			dest->ptszFiles = (wchar_t**)mir_calloc(sizeof(wchar_t*)*src->totalFiles);
 		for (int i = 0; i < src->totalFiles; i++)
 			if (!dest->ptszFiles[i] || !src->ptszFiles[i] || PFTS_CompareWithTchar(src, src->ptszFiles[i], dest->ptszFiles[i])) {
 				mir_free(dest->ptszFiles[i]);
@@ -281,7 +266,7 @@ void UpdateProtoFileTransferStatus(PROTOFILETRANSFERSTATUS *dest, PROTOFILETRANS
 	dest->currentFileProgress = src->currentFileProgress;
 	dest->currentFileTime = src->currentFileTime;
 	dest->flags &= ~PFTS_UTF;
-	dest->flags |= PFTS_TCHAR;
+	dest->flags |= PFTS_UNICODE;
 }
 
 static void RemoveUnreadFileEvents(void)
@@ -289,7 +274,7 @@ static void RemoveUnreadFileEvents(void)
 	for (MCONTACT hContact = db_find_first(); hContact; hContact = db_find_next(hContact)) {
 		MEVENT hDbEvent = db_event_firstUnread(hContact);
 		while (hDbEvent) {
-			DBEVENTINFO dbei = { sizeof(dbei) };
+			DBEVENTINFO dbei = {};
 			db_event_get(hDbEvent, &dbei);
 			if (!(dbei.flags & (DBEF_SENT | DBEF_READ)) && dbei.eventType == EVENTTYPE_FILE)
 				db_event_markRead(hContact, hDbEvent);
@@ -322,14 +307,9 @@ static int SRFileProtoAck(WPARAM, LPARAM lParam)
 	if (ack->type != ACKTYPE_FILE) return 0;
 
 	int iEvent = 0;
-	CLISTEVENT *cle = NULL;
-	while ((cle = (CLISTEVENT*)CallService(MS_CLIST_GETEVENT, ack->hContact, iEvent++)) != NULL)
-	{
+	while (CLISTEVENT *cle = pcli->pfnGetEvent(ack->hContact, iEvent++))
 		if (cle->lParam == (LPARAM)ack->hProcess)
-		{
-			CallService(MS_CLIST_REMOVEEVENT, ack->hContact, cle->hDbEvent);
-		}
-	}
+			pcli->pfnRemoveEvent(ack->hContact, cle->hDbEvent);
 
 	return 0;
 }
@@ -356,17 +336,17 @@ INT_PTR FtMgrShowCommand(WPARAM, LPARAM)
 
 INT_PTR openContRecDir(WPARAM hContact, LPARAM)
 {
-	TCHAR szContRecDir[MAX_PATH];
+	wchar_t szContRecDir[MAX_PATH];
 	GetContactReceivedFilesDir(hContact, szContRecDir, _countof(szContRecDir), TRUE);
-	ShellExecute(0, _T("open"), szContRecDir, 0, 0, SW_SHOW);
+	ShellExecute(0, L"open", szContRecDir, 0, 0, SW_SHOW);
 	return 0;
 }
 
 INT_PTR openRecDir(WPARAM, LPARAM)
 {
-	TCHAR szContRecDir[MAX_PATH];
+	wchar_t szContRecDir[MAX_PATH];
 	GetReceivedFilesDir(szContRecDir, _countof(szContRecDir));
-	ShellExecute(0, _T("open"), szContRecDir, 0, 0, SW_SHOW);
+	ShellExecute(0, L"open", szContRecDir, 0, 0, SW_SHOW);
 	return 0;
 }
 
@@ -379,7 +359,7 @@ static INT_PTR Proto_RecvFileT(WPARAM, LPARAM lParam)
 	if (pre->fileCount == 0)
 		return 0;
 
-	DBEVENTINFO dbei = { sizeof(dbei) };
+	DBEVENTINFO dbei = {};
 	dbei.szModule = GetContactProto(ccs->hContact);
 	dbei.timestamp = pre->timestamp;
 	dbei.eventType = EVENTTYPE_FILE;
@@ -393,9 +373,9 @@ static INT_PTR Proto_RecvFileT(WPARAM, LPARAM lParam)
 	if (bUnicode) {
 		pszFiles = (char**)alloca(pre->fileCount * sizeof(char*));
 		for (int i = 0; i < pre->fileCount; i++)
-			pszFiles[i] = Utf8EncodeT(pre->files.t[i]);
+			pszFiles[i] = Utf8EncodeW(pre->files.w[i]);
 		
-		szDescr = Utf8EncodeT(pre->descr.t);
+		szDescr = Utf8EncodeW(pre->descr.w);
 	}
 	else {
 		pszFiles = pre->files.a;
@@ -463,9 +443,9 @@ int LoadSendRecvFileModule(void)
 	CreateServiceFunction("SRFile/OpenContRecDir", openContRecDir);
 	CreateServiceFunction("SRFile/OpenRecDir", openRecDir);
 
-	SkinAddNewSoundEx("RecvFile", LPGEN("File"), LPGEN("Incoming"));
-	SkinAddNewSoundEx("FileDone", LPGEN("File"), LPGEN("Complete"));
-	SkinAddNewSoundEx("FileFailed", LPGEN("File"), LPGEN("Error"));
-	SkinAddNewSoundEx("FileDenied", LPGEN("File"), LPGEN("Denied"));
+	Skin_AddSound("RecvFile",   LPGENW("File"), LPGENW("Incoming"));
+	Skin_AddSound("FileDone",   LPGENW("File"), LPGENW("Complete"));
+	Skin_AddSound("FileFailed", LPGENW("File"), LPGENW("Error"));
+	Skin_AddSound("FileDenied", LPGENW("File"), LPGENW("Denied"));
 	return 0;
 }

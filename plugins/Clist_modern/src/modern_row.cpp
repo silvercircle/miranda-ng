@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (с) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (с) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -26,29 +26,10 @@ Created by Anton Senko aka ZORG , tweaked by Artem Shpynov aka FYR
 
 #include "stdafx.h"
 
-/*
-#include <windows.h>
-#include <commctrl.h>
-#include <stdio.h>
-#include <time.h>
-#include <stddef.h>
-#include <process.h>
-#include <io.h>
-#include <string.h>
-#include <direct.h>
-#include "resource.h"
-#include "stdafx.h"
-*/
-#include "modern_row.h"
-
-//Futher declaration
 void rowCalculateMinSize(ROWCELL* cell);
 void rowEqualize(ROWCELL* cell);
 void rowResetEmptyRects(ROWCELL* cell);
 void rowDeleteTree(ROWCELL* cell);
-////////
-
-
 
 //extern ROWCELL * gl_RowRoot;	// Указатель на корневой тэг  < contact> в шаблоне
 //ROWOBJECTS RowTA;				// Структура, через которую осуществляется доступ к элементам контакта.
@@ -63,13 +44,13 @@ ROWCELL *cppInitModernRow(ROWCELL	** tabAccess)
 {
 	int fsize;
 	int seq = 0;
-	ROWCELL * RowRoot = NULL;
+	ROWCELL * RowRoot = nullptr;
 	FILE * hFile;
 	int i = 0;
-	if (!db_get_b(NULL, "ModernData", "UseAdvancedRowLayout", SETTING_ROW_ADVANCEDLAYOUT_DEFAULT)) return NULL;
-	tmplbuf = NULL;
-	if (db_get_b(NULL, "ModernData", "UseAdvancedRowLayout", SETTING_ROW_ADVANCEDLAYOUT_DEFAULT) == 1)
-		tmplbuf = db_get_sa(NULL, "ModernData", "RowTemplate");
+	if (!db_get_b(0, "ModernData", "UseAdvancedRowLayout", SETTING_ROW_ADVANCEDLAYOUT_DEFAULT)) return nullptr;
+	tmplbuf = nullptr;
+	if (db_get_b(0, "ModernData", "UseAdvancedRowLayout", SETTING_ROW_ADVANCEDLAYOUT_DEFAULT) == 1)
+		tmplbuf = db_get_sa(0, "ModernData", "RowTemplate");
 	if (tmplbuf) {
 		rowParse(RowRoot, RowRoot, tmplbuf, i, seq, tabAccess);
 		mir_free(tmplbuf);
@@ -85,12 +66,12 @@ ROWCELL *cppInitModernRow(ROWCELL	** tabAccess)
 		tmplbuf[i] = 0;
 		i = 0;
 		rowParse(RowRoot, RowRoot, tmplbuf, i, seq, tabAccess);
-		db_set_s(NULL, "ModernData", "RowTemplate", tmplbuf);
+		db_set_s(0, "ModernData", "RowTemplate", tmplbuf);
 		free(tmplbuf);
 		fclose(hFile);
 		return RowRoot;
 	}
-	return NULL;
+	return nullptr;
 
 }
 
@@ -102,7 +83,7 @@ void cppDeleteTree(ROWCELL	* RowRoot)
 
 int cppCalculateRowHeight(ROWCELL	*RowRoot)
 {
-	if (RowRoot == NULL)
+	if (RowRoot == nullptr)
 		return 0;
 	RowRoot->h = 0;
 	RowRoot->w = 0;
@@ -144,7 +125,7 @@ void rowDeleteTree(ROWCELL* cell)
 	if (cell->next)
 		rowDeleteTree((ROWCELL*)(cell->next));
 	free(cell);
-	cell = NULL;
+	cell = nullptr;
 	return;
 }
 
@@ -207,7 +188,7 @@ char * rowParserGetNextWord(char *tbuf, int &hbuf)
 		}
 		hbuf++;
 	}
-	return NULL;
+	return nullptr;
 }
 
 // rowParserGetParam
@@ -343,7 +324,7 @@ BOOL rowParse(ROWCELL* &cell, ROWCELL* parent, char *tbuf, int &hbuf, int &seque
 
 	if (!parent)
 	{
-		RowTabAccess[sequence] = NULL;
+		RowTabAccess[sequence] = nullptr;
 		return TRUE;
 	}
 
@@ -376,7 +357,7 @@ void rowResetEmptyRects(ROWCELL* cell)
 //
 void rowCalculateMinSize(ROWCELL* cell)
 {
-	ROWCELL* curchild = NULL;
+	ROWCELL* curchild = nullptr;
 	int w = 0, h = 0;
 	int wl = 0, hl = 0;
 	int fullWidth = 0;
@@ -450,7 +431,7 @@ void rowCalculateMinSize(ROWCELL* cell)
 //
 void rowEqualize(ROWCELL* cell)
 {
-	ROWCELL* curchild = NULL;
+	ROWCELL* curchild = nullptr;
 	if (!cell) return;
 	rowEqualize(cell->child);
 	rowEqualize(cell->next);
@@ -576,7 +557,7 @@ void rowLayerProc(pROWCELL cell, pROWCELL parent)
 //
 void rowPositioning(pROWCELL cell, int &dist)
 {
-	ROWCELL* curchild = NULL;
+	ROWCELL* curchild = nullptr;
 
 	int x = cell->r.left;
 	int y = cell->r.top;

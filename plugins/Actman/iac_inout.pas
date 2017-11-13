@@ -88,6 +88,7 @@ var
   tmp:PWideChar;
   blob,p:PAnsiChar;
   w:PWideChar;
+  ccs:TCCSDATA;
   hContact:TMCONTACT;
   wnd:HWND;
   fexist:bool;
@@ -128,7 +129,7 @@ begin
   begin
     if (flags and ACF_FILE_PATH)<>0 then
     begin
-      if CallService(MS_DB_CONTACT_IS,WorkData.Parameter,0)<>0 then
+      if db_is_contact(WorkData.Parameter)<>0 then
         hContact:=WorkData.Parameter
       else
         hContact:=0;
@@ -262,7 +263,7 @@ begin
 
     if hContact=0 then
     begin
-      if CallService(MS_DB_CONTACT_IS,WorkData.Parameter,0)<>0 then
+      if db_is_contact(WorkData.Parameter)<>0 then
         hContact:=WorkData.Parameter;
     end;
 
@@ -272,8 +273,13 @@ begin
     if DBReadByte(hContact,p,'ChatRoom',0)<>1 then
     begin
       WidetoUTF8(last,blob);
-      CallContactService(hContact,PSS_MESSAGE,0,tlparam(blob));
-      dbei.cbSize   :=sizeof(dbei);
+
+      ccs.hContact       := hContact;
+      ccs.szProtoService := PSS_MESSAGE;
+      ccs.wParam         := 0;
+      ccs.lParam         := tlparam(blob);
+      Proto_ChainSend(0, @ccs);
+
       dbei.cbBlob   :=StrLen(blob);
       dbei.pBlob    :=pByte(blob);
       dbei.eventType:=EVENTTYPE_MESSAGE;
@@ -282,9 +288,7 @@ begin
       dbei.flags    :=DBEF_SENT or DBEF_UTF;
       db_event_add(hContact, @dbei);
       mFreeMem(blob);
-    end
-    else
-      SendToChat(hContact,last);
+    end;
   end
   else
   begin

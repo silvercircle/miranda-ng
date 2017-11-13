@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-04 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -655,7 +655,7 @@ static INT_PTR CALLBACK SkinEdit_ExtBkDlgProc(HWND hwndDlg, UINT msg, WPARAM wPa
 		SendMessage(hwndDlg, WM_USER + 101, 0, 0);
 
 		psd->hMenuItems = CreatePopupMenu();
-		AppendMenu(psd->hMenuItems, MF_STRING | MF_DISABLED, (UINT_PTR)0, LPGENT("Copy from"));
+		AppendMenu(psd->hMenuItems, MF_STRING | MF_DISABLED, (UINT_PTR)0, LPGENW("Copy from"));
 		AppendMenuA(psd->hMenuItems, MF_SEPARATOR, (UINT_PTR)0, NULL);
 
 		{
@@ -895,12 +895,11 @@ static INT_PTR SkinEdit_Invoke(WPARAM, LPARAM lParam)
 	return (INT_PTR)psd->hwndSkinEdit;
 }
 
-static HANDLE hSvc_invoke = 0, hSvc_fillby = 0;
 
 static int LoadModule()
 {
-	hSvc_invoke = CreateServiceFunction(MS_CLNSE_INVOKE, SkinEdit_Invoke);
-	hSvc_fillby = CreateServiceFunction(MS_CLNSE_FILLBYCURRENTSEL, SkinEdit_FillByCurrentSel);
+	CreateServiceFunction(MS_CLNSE_INVOKE, SkinEdit_Invoke);
+	CreateServiceFunction(MS_CLNSE_FILLBYCURRENTSEL, SkinEdit_FillByCurrentSel);
 	return 0;
 }
 
@@ -909,29 +908,15 @@ extern "C" __declspec(dllexport) PLUGININFOEX * MirandaPluginInfoEx(DWORD)
 	return &pluginInfo;
 }
 
-static int ModulesLoaded(WPARAM, LPARAM)
-{
-	return 0;
-}
-
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	return(LoadModule());
-}
-
-static int ShutdownProc(WPARAM, LPARAM)
-{
-	if (hSvc_invoke)
-		DestroyServiceFunction(hSvc_invoke);
-	if (hSvc_fillby)
-		DestroyServiceFunction(hSvc_fillby);
-	return 0;
+	return LoadModule();
 }
 
 extern "C" int __declspec(dllexport) Unload(void)
 {
-	return ShutdownProc(0, 0);
+	return 0;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD, LPVOID)

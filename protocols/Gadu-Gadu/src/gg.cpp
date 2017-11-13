@@ -54,25 +54,45 @@ static unsigned long crc_table[256];
 
 //////////////////////////////////////////////////////////
 // Extra winsock function for error description
-
-TCHAR* ws_strerror(int code)
+//
+wchar_t* ws_strerror(int code)
 {
-   static TCHAR err_desc[160];
+   static wchar_t err_desc[160];
 
    // Not a windows error display WinSock
    if (code == 0)
    {
-      TCHAR buff[128];
+      wchar_t buff[128];
       int len = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, WSAGetLastError(), 0, buff, _countof(buff), NULL);
       if (len == 0)
-         mir_sntprintf(err_desc, _T("WinSock %u: Unknown error."), WSAGetLastError());
+         mir_snwprintf(err_desc, L"WinSock %u: Unknown error.", WSAGetLastError());
       else
-         mir_sntprintf(err_desc, _T("WinSock %d: %s"), WSAGetLastError(), buff);
+         mir_snwprintf(err_desc, L"WinSock %d: %s", WSAGetLastError(), buff);
       return err_desc;
    }
 
    // Return normal error
    return _tcserror(code);
+}
+
+char* as_strerror(int code)
+{
+   static char err_desc[160];
+
+   // Not a windows error display WinSock
+   if (code == 0)
+   {
+      char buff[128];
+      int len = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, NULL, WSAGetLastError(), 0, buff, _countof(buff), NULL);
+      if (len == 0)
+         mir_snprintf(err_desc, "WinSock %u: Unknown error.", WSAGetLastError());
+      else
+         mir_snprintf(err_desc, "WinSock %d: %s", WSAGetLastError(), buff);
+      return err_desc;
+   }
+
+   // Return normal error
+   return strerror(code);
 }
 
 //////////////////////////////////////////////////////////
@@ -112,7 +132,7 @@ unsigned long crc_get(char *mem)
 // http_error_string()
 //
 // returns http error text
-const TCHAR *http_error_string(int h)
+const wchar_t *http_error_string(int h)
 {
    switch (h)
    {
@@ -133,8 +153,8 @@ const TCHAR *http_error_string(int h)
 
 //////////////////////////////////////////////////////////
 // Gets plugin info
-
-extern "C" __declspec(dllexport) PLUGININFOEX *MirandaPluginInfoEx(DWORD mirandaVersion)
+//
+extern "C" __declspec(dllexport) PLUGININFOEX *MirandaPluginInfoEx(DWORD)
 {
    return &pluginInfo;
 }
@@ -143,7 +163,7 @@ extern "C" __declspec(dllexport) const MUUID MirandaInterfaces[] = {MIID_PROTOCO
 
 //////////////////////////////////////////////////////////
 // Cleanups from last plugin
-
+//
 void GGPROTO::cleanuplastplugin(DWORD version)
 {
 	// Store current plugin version
@@ -153,22 +173,22 @@ void GGPROTO::cleanuplastplugin(DWORD version)
 	if (version < PLUGIN_MAKE_VERSION(0, 11, 0, 2)){
 		debugLogA("cleanuplastplugin() 1: version=%d Cleaning junk avatar files from < 0.11.0.2", version);
 
-		TCHAR avatarsPath[MAX_PATH];
-		mir_sntprintf(avatarsPath, _T("%s\\%s"), VARST( _T("%miranda_avatarcache%")), m_tszUserName);
+		wchar_t avatarsPath[MAX_PATH];
+		mir_snwprintf(avatarsPath, L"%s\\%s", VARSW( L"%miranda_avatarcache%"), m_tszUserName);
 
-		debugLog(_T("cleanuplastplugin() 1: miranda_avatarcache = %s"), avatarsPath);
+		debugLogW(L"cleanuplastplugin() 1: miranda_avatarcache = %s", avatarsPath);
 
-		TCHAR spec[MAX_PATH + 10];
-		mir_sntprintf(spec, _T("%s\\*.(null)"), avatarsPath);
+		wchar_t spec[MAX_PATH + 10];
+		mir_snwprintf(spec, L"%s\\*.(null)", avatarsPath);
 		WIN32_FIND_DATA ffd;
 		HANDLE hFind = FindFirstFile(spec, &ffd);
 		if (hFind != INVALID_HANDLE_VALUE) {
 			do {
-				TCHAR filePathT [2*MAX_PATH + 10];
-				mir_sntprintf(filePathT, _T("%s\\%s"), avatarsPath, ffd.cFileName);
-				if (!_taccess(filePathT, 0)){
-					debugLog(_T("cleanuplastplugin() 1: remove file = %s"), filePathT);
-					_tremove(filePathT);
+				wchar_t filePathT [2*MAX_PATH + 10];
+				mir_snwprintf(filePathT, L"%s\\%s", avatarsPath, ffd.cFileName);
+				if (!_waccess(filePathT, 0)){
+					debugLogW(L"cleanuplastplugin() 1: remove file = %s", filePathT);
+					_wremove(filePathT);
 				}
 			} while (FindNextFile(hFind, &ffd) != 0);
 			FindClose(hFind);
@@ -178,7 +198,8 @@ void GGPROTO::cleanuplastplugin(DWORD version)
 
 //////////////////////////////////////////////////////////
 // When Miranda loaded its modules
-static int gg_modulesloaded(WPARAM wParam, LPARAM lParam)
+//
+static int gg_modulesloaded(WPARAM, LPARAM)
 {
    // Get SSL API
    mir_getSI(&sslApi);
@@ -191,6 +212,7 @@ static int gg_modulesloaded(WPARAM wParam, LPARAM lParam)
 
 //////////////////////////////////////////////////////////
 // Gets protocol instance associated with a contact
+//
 static GGPROTO* gg_getprotoinstance(MCONTACT hContact)
 {
    char* szProto = GetContactProto(hContact);
@@ -206,7 +228,8 @@ static GGPROTO* gg_getprotoinstance(MCONTACT hContact)
 
 //////////////////////////////////////////////////////////
 // Handles PrebuildContactMenu event
-static int gg_prebuildcontactmenu(WPARAM hContact, LPARAM lParam)
+//
+static int gg_prebuildcontactmenu(WPARAM hContact, LPARAM)
 {
    GGPROTO* gg = gg_getprotoinstance(hContact);
    if (gg == NULL)
@@ -215,24 +238,25 @@ static int gg_prebuildcontactmenu(WPARAM hContact, LPARAM lParam)
    if (gg->getDword(hContact, GG_KEY_UIN, 0) == gg->getByte(GG_KEY_UIN, 0) || gg->isChatRoom(hContact) || db_get_b(hContact, "CList", "NotOnList", 0))
       Menu_ShowItem(gg->hBlockMenuItem, false);
 	else
-		Menu_ModifyItem(gg->hBlockMenuItem, gg->getByte(hContact, GG_KEY_BLOCK, 0) ? LPGENT("&Unblock") : LPGENT("&Block"));
+		Menu_ModifyItem(gg->hBlockMenuItem, gg->getByte(hContact, GG_KEY_BLOCK, 0) ? LPGENW("&Unblock") : LPGENW("&Block"));
    return 0;
 }
 
 //////////////////////////////////////////////////////////
 // Contact block service function
-INT_PTR GGPROTO::blockuser(WPARAM hContact, LPARAM lParam)
+//
+INT_PTR GGPROTO::blockuser(WPARAM hContact, LPARAM)
 {
    setByte(hContact, GG_KEY_BLOCK, !getByte(hContact, GG_KEY_BLOCK, 0));
    notifyuser(hContact, 1);
    return 0;
 }
 
+#define GGS_BLOCKUSER "/BlockUser"
 
 //////////////////////////////////////////////////////////
 // Contact blocking initialization
-
-#define GGS_BLOCKUSER "/BlockUser"
+//
 void GGPROTO::block_init()
 {
    CMenuItem mi;
@@ -248,7 +272,7 @@ void GGPROTO::block_init()
 
 //////////////////////////////////////////////////////////
 // Contact blocking uninitialization
-
+//
 void GGPROTO::block_uninit()
 {
    Menu_RemoveItem(hBlockMenuItem);
@@ -256,20 +280,21 @@ void GGPROTO::block_uninit()
 
 //////////////////////////////////////////////////////////
 // Menus initialization
+//
 void GGPROTO::menus_init()
 {
 	HGENMENU hRoot = Menu_GetProtocolRoot(this);
 	
 	CMenuItem mi;
 	mi.root = hRoot;
-   mi.flags = CMIF_TCHAR;
+   mi.flags = CMIF_UNICODE;
 
-   mi.name.t = LPGENT("Conference");
+   mi.name.w = LPGENW("Conference");
    mi.position = 200001;
    mi.hIcolibItem = iconList[14].hIcolib;
 	HGENMENU hGCRoot = Menu_AddProtoMenuItem(&mi, m_szModuleName);
 
-   mi.name.t = LPGENT("Contact list");
+   mi.name.w = LPGENW("Contact list");
    mi.position = 200002;
    mi.hIcolibItem = iconList[7].hIcolib;
    HGENMENU hCLRoot = Menu_AddProtoMenuItem(&mi, m_szModuleName);
@@ -281,8 +306,8 @@ void GGPROTO::menus_init()
 
 //////////////////////////////////////////////////////////
 // Module instance initialization
-
-static GGPROTO *gg_proto_init(const char* pszProtoName, const TCHAR* tszUserName)
+//
+static GGPROTO *gg_proto_init(const char* pszProtoName, const wchar_t* tszUserName)
 {
    GGPROTO *gg = new GGPROTO(pszProtoName, tszUserName);
    g_Instances.insert(gg);
@@ -291,7 +316,7 @@ static GGPROTO *gg_proto_init(const char* pszProtoName, const TCHAR* tszUserName
 
 //////////////////////////////////////////////////////////
 // Module instance uninitialization
-
+//
 static int gg_proto_uninit(PROTO_INTERFACE *proto)
 {
    GGPROTO *gg = (GGPROTO *)proto;
@@ -302,11 +327,11 @@ static int gg_proto_uninit(PROTO_INTERFACE *proto)
 
 //////////////////////////////////////////////////////////
 // When plugin is loaded
-
+//
 extern "C" int __declspec(dllexport) Load(void)
 {
    mir_getLP(&pluginInfo);
-   mir_getCLI();
+   pcli = Clist_GetInterface();
 
    // Hook system events
    hHookModulesLoaded = HookEvent(ME_SYSTEM_MODULESLOADED, gg_modulesloaded);
@@ -326,7 +351,7 @@ extern "C" int __declspec(dllexport) Load(void)
 
 //////////////////////////////////////////////////////////
 // When plugin is unloaded
-
+//
 extern "C" int __declspec(dllexport) Unload()
 {
    WSACleanup();
@@ -417,15 +442,15 @@ void gg_debughandler(int level, const char *format, va_list ap)
    memcpy(szText, prefix, PREFIXLEN);
 
    mir_vsnprintf(szText + mir_strlen(szText), sizeof(szText) - mir_strlen(szText), szFormat, ap);
-   CallService(MS_NETLIB_LOG, NULL, (LPARAM)szText);
+   Netlib_Log(NULL, szText);
    free(szFormat);
 }
 #endif
 
 //////////////////////////////////////////////////////////
 // main DLL function
-
-BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD reason, LPVOID reserved)
+//
+BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD, LPVOID)
 {
    crc_gentable();
    hInstance = hInst;

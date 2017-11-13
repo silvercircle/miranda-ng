@@ -1,30 +1,30 @@
 #include "stdafx.h"
 
-TCHAR* CSteamProto::GetAvatarFilePath(MCONTACT hContact)
+wchar_t* CSteamProto::GetAvatarFilePath(MCONTACT hContact)
 {
-	TCHAR path[MAX_PATH];
-	mir_sntprintf(path, _T("%s\\%S"), VARST(_T("%miranda_avatarcache%")), m_szModuleName);
+	wchar_t path[MAX_PATH];
+	mir_snwprintf(path, L"%s\\%S", VARSW(L"%miranda_avatarcache%"), m_szModuleName);
 
 	DWORD dwAttributes = GetFileAttributes(path);
 	if (dwAttributes == 0xffffffff || (dwAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
-		CreateDirectoryTreeT(path);
+		CreateDirectoryTreeW(path);
 
 	ptrA steamId(getStringA(hContact, "SteamID"));
 	if (steamId != NULL)
-		mir_sntprintf(path, MAX_PATH, _T("%s\\%s.jpg"), path, _A2T(steamId));
+		mir_snwprintf(path, MAX_PATH, L"%s\\%s.jpg", path, _A2T(steamId));
 	else
 		return NULL;
 
-	return mir_tstrdup(path);
+	return mir_wstrdup(path);
 }
 
 bool CSteamProto::GetDbAvatarInfo(PROTO_AVATAR_INFORMATION &pai)
 {
-	ptrT path(GetAvatarFilePath(pai.hContact));
+	ptrW path(GetAvatarFilePath(pai.hContact));
 	if (!path)
 		return false;
 
-	_tcsncpy_s(pai.filename, path, _TRUNCATE);
+	wcsncpy_s(pai.filename, path, _TRUNCATE);
 	pai.format = PA_FORMAT_JPEG;
 
 	return true;
@@ -68,7 +68,7 @@ INT_PTR CSteamProto::GetAvatarInfo(WPARAM wParam, LPARAM lParam)
 
 	if (GetDbAvatarInfo(*pai))
 	{
-		bool fileExist = _taccess(pai->filename, 0) == 0;
+		bool fileExist = _waccess(pai->filename, 0) == 0;
 
 		bool needLoad;
 		if (pai->hContact)
@@ -141,13 +141,13 @@ INT_PTR CSteamProto::GetMyAvatar(WPARAM wParam, LPARAM lParam)
 	if (!wParam || !lParam)
 		return -3;
 
-	TCHAR* buf = (TCHAR*)wParam;
+	wchar_t* buf = (wchar_t*)wParam;
 	int  size = (int)lParam;
 
 	PROTO_AVATAR_INFORMATION ai = { 0 };
 	switch (GetAvatarInfo(0, (LPARAM)&ai)) {
 	case GAIR_SUCCESS:
-		_tcsncpy(buf, ai.filename, size);
+		wcsncpy(buf, ai.filename, size);
 		buf[size - 1] = 0;
 		return 0;
 

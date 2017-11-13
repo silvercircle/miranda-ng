@@ -126,7 +126,7 @@ function CreateServiceFunctionObjParam(const name:PAnsiChar; serviceProc:TMIRAND
                  external CoreDLL name 'CreateServiceFunctionObjParam';
 function DestroyServiceFunction(hService:THANDLE):int; stdcall;
                  external CoreDLL name 'DestroyServiceFunction';
-function ServiceExists(const name:PAnsiChar):int; stdcall;
+function ServiceExists(const name:PAnsiChar):byteBool; stdcall;
                  external CoreDLL name 'ServiceExists';
 
 function CallService(const name:PAnsiChar; wParam:WPARAM; lParam:LPARAM):int_ptr; stdcall;
@@ -141,8 +141,6 @@ procedure KillModuleServices(hInst:HINST); stdcall;
 procedure KillObjectServices(var ptr); stdcall;
                  external CoreDLL name 'KillObjectServices';
 
-function CallContactService(hContact:TMCONTACT;const name:PAnsiChar;wParam:WPARAM;lParam:LPARAM):int_ptr; stdcall;
-                 external AppDLL name 'CallContactService';
 function CallProtoService(const szModule:PAnsiChar;const szService:PAnsiChar;wParam:WPARAM;lParam:LPARAM):int_ptr; stdcall;
                  external AppDLL name 'CallProtoService';
 
@@ -153,6 +151,14 @@ function CallProtoService(const szModule:PAnsiChar;const szService:PAnsiChar;wPa
 // returned result must be freed using mir_free()
 function mir_urlEncode(url:PAnsiChar): PAnsiChar; stdcall;
                  external CoreDLL name 'mir_urlEncode';
+
+///////////////////////////////////////////////////////////////////////////////
+// wait handles
+
+type
+  MWaitableStub = procedure; stdcall;
+
+procedure Miranda_WaitOnHandle(pFunc:MWaitableStub; hEvent:THANDLE); stdcall; external AppDll;
 
 ///////////////////////////////////////////////////////////////////////////////
 // exceptions
@@ -553,10 +559,14 @@ function Thread_Pop():int_ptr; stdcall;
 procedure Thread_Wait(); stdcall;
                  external CoreDLL name 'Thread_Wait';
 
-function forkthread(func:pThreadFunc; stacksize:uint; arg:pointer):uint_ptr; stdcall;
-                 external CoreDLL name 'forkthread';
-function forkthreadex(sec:pointer; stacksize:uint; func:pThreadFuncEx; owner:pointer; arg:pointer; thraddr:puint_ptr):uint_ptr; stdcall;
-                 external CoreDLL name 'forkthreadex';
+function mir_forkthread(aFunc:pThreadFunc; arg:pointer):THANDLE; stdcall;
+                 external CoreDLL;
+
+function mir_forkthreadex(aFunc:pThreadFuncEx; arg:pointer; pThreadID:puint_ptr):THANDLE; stdcall;
+                 external CoreDLL;
+
+function mir_forkthreadowner(aFunc:pThreadFuncOwner; owner:pointer; arg:pointer; pThreadID:puint_ptr):THANDLE; stdcall;
+                 external CoreDLL;
 
 procedure Thread_SetName(const szThreadName:PAnsiChar); stdcall;
                  external CoreDLL name 'Thread_SetName';

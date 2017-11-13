@@ -5,19 +5,12 @@
 //************************************************************************
 // CLCDInput::CLCDInput
 //************************************************************************
-CLCDInput::CLCDInput()
+CLCDInput::CLCDInput() : m_hKBHook(0), m_bShowSymbols(true), m_bShowMarker(false),
+	m_lInputTime(0), m_iLinePosition(0), m_iLineCount(0), m_iBreakKeys(KEYS_RETURN),
+	m_lBlinkTimer(0), m_pScrollbar(NULL)
 {
-	m_lInputTime = 0;
-	m_iLinePosition = 0;
 	memset(&m_Marker, 0, sizeof(m_Marker));
 
-	m_pScrollbar = NULL;
-	m_bShowSymbols = true;
-	m_iBreakKeys = KEYS_RETURN;
-	m_bShowMarker = false;
-	m_lBlinkTimer = 0;
-
-	m_iLineCount = 0;
 //	SetScrollbarAlignment(TOP);
 	Reset();
 }
@@ -108,7 +101,7 @@ bool CLCDInput::Draw(CLCDGfx *pGfx)
 	int iLine = m_iLinePosition;
 	int iEndLine = m_iLinePosition + m_iLineCount;
 	int iLen = 0;
-	TCHAR *pcOffset = NULL;
+	wchar_t *pcOffset = NULL;
 	while(iLine <  iEndLine && iLine < m_vLineOffsets.size())
 	{
 		// Calculate the text length
@@ -122,7 +115,7 @@ bool CLCDInput::Draw(CLCDGfx *pGfx)
 		else iLen = (int)m_strText.length() - m_vLineOffsets[iLine].iOffset;
 		
 		// Draw the text
-		pcOffset = (TCHAR*)m_strText.c_str() + m_vLineOffsets[iLine].iOffset;
+		pcOffset = (wchar_t*)m_strText.c_str() + m_vLineOffsets[iLine].iOffset;
 		DrawTextEx(pGfx->GetHDC(),
 					(LPTSTR)pcOffset,
 					iLen,
@@ -305,9 +298,9 @@ LRESULT CLCDInput::ProcessKeyEvent(int Code, WPARAM wParam, LPARAM lParam)
 		
 		/*
 		if(bKeyDown)
-			TRACE(_T("Key pressed: %i\n"),key->vkCode);
+			TRACE(L"Key pressed: %i\n",key->vkCode);
 		else
-			TRACE(_T("Key released: %i\n"),key->vkCode);
+			TRACE(L"Key released: %i\n",key->vkCode);
 		*/
 		// Only handle Keyup
 		if(bKeyDown)
@@ -317,7 +310,7 @@ LRESULT CLCDInput::ProcessKeyEvent(int Code, WPARAM wParam, LPARAM lParam)
 					&& m_acKeyboardState[VK_SHIFT] & 0x80)
 				{
 					ActivateKeyboardLayout((HKL)HKL_NEXT,0);//KLF_SETFORPROCESS);
-					TRACE(_T("Keyboardlayout switched!\n"));
+					TRACE(L"Keyboardlayout switched!\n");
 					return 1;
 				}
 
@@ -387,7 +380,7 @@ LRESULT CLCDInput::ProcessKeyEvent(int Code, WPARAM wParam, LPARAM lParam)
 			{
 
 #ifdef _UNICODE
-				TCHAR output[4];
+				wchar_t output[4];
 #else
 				unsigned char output[2];
 #endif
@@ -426,9 +419,9 @@ LRESULT CLCDInput::ProcessKeyEvent(int Code, WPARAM wParam, LPARAM lParam)
 						return 1;
 
 					if(m_bInsert || m_strText[m_Marker[0].iPosition] == '\r')
-						m_strText.insert(m_Marker[0].iPosition,(TCHAR*)output,res);
+						m_strText.insert(m_Marker[0].iPosition,(wchar_t*)output,res);
 					else
-						m_strText.replace(m_Marker[0].iPosition,res,(TCHAR*)output);
+						m_strText.replace(m_Marker[0].iPosition,res,(wchar_t*)output);
 					
 					scroll = 1;
 					size = res;
@@ -573,7 +566,7 @@ void CLCDInput::Reset()
 
 	memset(&m_Marker[0], 0, sizeof(SMarker));
 
-	m_strText = _T("");
+	m_strText = L"";
 	m_vLineOffsets.clear();
 	m_iLinePosition = 0;
 	SLineEntry offset;
@@ -608,7 +601,7 @@ void CLCDInput::UpdateOffsets(int iModified)
 	// Initialize variables
 	int iLen = (int)m_strText.length();
 	int *piWidths = new int[iLen];
-	TCHAR *pszText = (TCHAR*)m_strText.c_str();
+	wchar_t *pszText = (wchar_t*)m_strText.c_str();
 	tstring::size_type pos = 0;
 	int iMaxChars = 0;
 
@@ -630,7 +623,7 @@ void CLCDInput::UpdateOffsets(int iModified)
 
 	bool bLineClosed = false;
 		
-	// TRACE(_T("InputText: Begin Update at #%i\n"),iLine);
+	// TRACE(L"InputText: Begin Update at #%i\n",iLine);
 	for(;iLine<m_vLineOffsets.size();iLine++)
 	{
 		bLineClosed = false;
@@ -640,7 +633,7 @@ void CLCDInput::UpdateOffsets(int iModified)
 		
 		if(!(iLen == 0) && iChar > iLen)
 		{
-			// TRACE(_T("InputText: Deleted offset #%i\n"),iLine);	
+			// TRACE(L"InputText: Deleted offset #%i\n",iLine);	
 			m_vLineOffsets.erase(m_vLineOffsets.begin()+iLine);
 			continue;
 		}
@@ -654,7 +647,7 @@ void CLCDInput::UpdateOffsets(int iModified)
 			iWordOffset= iChar;
 
 			GetTextExtentExPoint(hDC,pszText+iChar,iLen-iChar,GetWidth(),&iMaxChars,piWidths,&sizeLine);
-			pos = m_strText.find(_T("\n"),iChar);
+			pos = m_strText.find(L"\n",iChar);
 			// check for linebreaks
 			if(pos != tstring::npos && pos >= iChar && pos <= iChar + iMaxChars)
 			{
@@ -665,7 +658,7 @@ void CLCDInput::UpdateOffsets(int iModified)
 			else
 			{
 				// find the last space in the line
-				pos = m_strText.rfind(_T(" "),iChar + iMaxChars);
+				pos = m_strText.rfind(L" ",iChar + iMaxChars);
 				if(pos != tstring::npos && pos >= iChar)
 					iWordOffset = (int)pos +1;
 				else
@@ -708,7 +701,7 @@ void CLCDInput::UpdateOffsets(int iModified)
 							// if there are other offsets in front of this one, delete them
 							if(iLine2 != iLine + 1 )
 							{						
-								// TRACE(_T("InputText: Deleted offsets #%i to #%i\n"),iLine+1,iLine2-1);	
+								// TRACE(L"InputText: Deleted offsets #%i to #%i\n",iLine+1,iLine2-1);	
 								m_vLineOffsets.erase(m_vLineOffsets.begin()+iLine+1,m_vLineOffsets.begin()+iLine2);
 							}
 							break;
@@ -731,7 +724,7 @@ void CLCDInput::UpdateOffsets(int iModified)
 						else
 							m_vLineOffsets[iLine].iWidth = 0;
 
-						// TRACE(_T("InputText: shifted offsets #%i to end %i position(s)\n"),iLine+1,iDistance);
+						// TRACE(L"InputText: shifted offsets #%i to end %i position(s)\n",iLine+1,iDistance);
 						for(iLine++;iLine<m_vLineOffsets.size();iLine++)
 							m_vLineOffsets[iLine].iOffset += iDistance;
 						
@@ -749,7 +742,7 @@ void CLCDInput::UpdateOffsets(int iModified)
 					else
 						m_vLineOffsets.insert(m_vLineOffsets.begin()+iLine+1,offset);
 					
-					// TRACE(_T("InputText: Inserted new  %soffset at #%i\n"),m_strText[iChar] == '\n'?_T("linebreak "):_T(""),iLine+1);	
+					// TRACE(L"InputText: Inserted new  %soffset at #%i\n",m_strText[iChar] == '\n'?L"linebreak ":L"",iLine+1);	
 				}
 				break;
 			}
@@ -769,7 +762,7 @@ void CLCDInput::UpdateOffsets(int iModified)
 
 		if(iLine != m_vLineOffsets.size() - 1 && !bLineClosed)
 		{
-			// TRACE(_T("InputText: Deleted offsets #%i to #%i\n"),iLine+1,m_vLineOffsets.size()-1);	
+			// TRACE(L"InputText: Deleted offsets #%i to #%i\n",iLine+1,m_vLineOffsets.size()-1);	
 			m_vLineOffsets.erase(m_vLineOffsets.begin()+iLine+1,m_vLineOffsets.end());
 		}
 		

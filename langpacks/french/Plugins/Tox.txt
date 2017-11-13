@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: Tox.dll
 ;  Plugin: Tox protocol
-;  Version: 0.11.1.14
+;  Version: 0.11.1.25
 ;  Authors: Miranda NG Team
 ;============================================================
 [Tox protocol support for Miranda NG.]
@@ -24,8 +24,6 @@ Nom :
 Passe :
 [Default group:]
 Groupes :
-[Tox]
-
 [Create Tox profile]
 
 [Import Tox profile]
@@ -39,6 +37,10 @@ Groupes :
 [Enable UDP (otherwise force Tox to use TCP)]
 
 [Enable IPv6]
+
+[Max connect retries:]
+
+[Max reconnect retries:]
 
 [If this field contains Tox address (76 hex characters), you will be prompted to add it in your friend list. Otherwise, Miranda will search this query via Tox DNS discovery.]
 
@@ -54,6 +56,8 @@ Annuler
 
 [Add]
 Ajouter
+[Update]
+Mise à jour
 [IPv4 address/ Host]
 
 [IPv6 address (optional)]
@@ -100,10 +104,10 @@ Date :
 
 [To:]
 À :
-;file \protocols\Tox\src\tox_chatrooms.cpp
-[Group chat]
-Discussion de groupe
-;file \protocols\Tox\src\tox_core.cpp
+;file \protocols\Tox\src\main.cpp
+[Current version of plugin is support Tox API version %i.%i.%i which is incompatible with %s]
+
+;file \protocols\Tox\src\tox_connection.cpp
 [Unable to initialize Tox core]
 
 ;file \protocols\Tox\src\tox_events.cpp
@@ -139,18 +143,6 @@ Accorder l'autorisation
 
 [Outgoing call to %s]
 
-[Unable to find input audio device]
-
-[Video call is unsupported]
-
-[Call canceled]
-
-[Unable to find output audio device]
-
-[Call started]
-
-[Call ended]
-
 ;file \protocols\Tox\src\tox_netlib.cpp
 [%s connection]
 
@@ -171,6 +163,8 @@ Tous les fichiers
 
 [Error]
 Erreur
+[Enter port]
+
 [Enter public key]
 
 [Common nodes]
@@ -223,3 +217,13 @@ Compte
 
 [Unknown error]
 Erreur inconnue
+[The friend ID did not designate a valid friend]
+
+[This client is currently not connected to the friend]
+
+[An allocation error occurred while increasing the send queue size]
+
+[Message length exceeded TOX_MAX_MESSAGE_LENGTH]
+
+[Attempted to send a zero-length message]
+

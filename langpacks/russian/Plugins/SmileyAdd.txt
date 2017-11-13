@@ -2,7 +2,7 @@
 ;============================================================
 ;  File: SmileyAdd.dll
 ;  Plugin: SmileyAdd
-;  Version: 0.2.3.18
+;  Version: 0.2.4.1
 ;  Authors: Peacow, nightwish, bid, borkra
 ;============================================================
 [Smiley support for Miranda NG.]
@@ -47,12 +47,10 @@
 Не заменять под курсором
 [Built-in message dialog support]
 Поддержка плагинов сообщений
-[Disable]
-Выключить
+[Enable]
+Включить
 [Smiley button]
 Кнопка смайла
-[Background\ncolor]
-Цвет\nфона
 [Surround inserted smiley with spaces]
 Вставить смайл с пробелами
 [Use first smiley for selection size]
@@ -73,28 +71,28 @@ HTTP-подключения SmileyAdd
 Кнопка смайла
 [Assign smiley category]
 Категория смайлов
+[Background color]
+Цвет фона
 [Only one instance of SmileyAdd could be executed.\nRemove duplicate instances from 'Plugins' directory]
 Только одна копия SmileyAdd может быть запущена.\nУдалите дубликат из папки "Plugins"
-[Smileys]
-Смайлы
-[Customize]
-Тонкая настройка
-[Off]
-Отсутствует
-[Top]
-Вверху
-[Bottom]
-Внизу
+[Hide]
+Скрыть
+[Show]
+Показать
 [Smiley packs]
 Наборы смайлов
 [All files]
 Все файлы
+[Smileys]
+Смайлы
+[Customize]
+Тонкая настройка
 [Protocol specific]
 В соответствии с протоколом
 [Smiley pack %s for category "%s" not found.\nSelect correct smiley pack in the Options -> Customize -> Smileys.]
-Не найден набор смайлов %s для категории "%s".\nВыберите набор смайлов: Настройки -> Тонкая настройка -> Смайлы.
+Не найден набор смайлов %s для категории "%s".\nВыберите набор смайлов в разделе "Настройки -> Тонкая настройка -> Смайлы".
 [There were problems loading smiley pack (it should be corrected).\nSee network log for details.]
-Проблемы с загрузкой набора смайлов (необходимо исправить).\nДля подробностей смотрите сетевой лог.
+Проблемы с загрузкой набора смайлов (необходимо исправить).\nПодробности в сетевом логе.
 [Smiley #%u in file %s for smiley pack %s not found.]
 Смайл #%u в файле %s для набора смайлов %s не найден.
 [%s global smiley pack]

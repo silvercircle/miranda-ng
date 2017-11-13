@@ -29,8 +29,8 @@
 Напомняне за неинсталирани актуализации
 [Hotkey]
 Клавишна комбинация
-[Go to Customize -> Hotkeys to change the hotkey]
-За промени отидете в Персонализиране>Клавишни комбинации
+[Go to Options -> Customize -> Hotkeys to change the hotkey]
+За промени отидете в "Персонализиране > Клавишни комбинации"
 [Notifications]
 Уведомявания
 [Message boxes]
@@ -124,7 +124,7 @@ Pack Updater
 [Pack Updater HTTP connection]
 HTTP връзки на Pack Updater
 [URL for checking updates not found.]
-Не е  открит URL за актуализиране.
+Не е открит URL за актуализиране.
 [Downloading version info...]
 Сваляне на инф. за версията...
 [Name of Update's file is not supported.]

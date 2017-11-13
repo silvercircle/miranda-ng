@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 Copyright (c) 2007 Artem Shpynov
 all portions of this codebase are copyrighted to the people
@@ -43,8 +43,8 @@ struct MDescButtonCtrl
 	HWND     hwnd;
 	BOOL     bSharedIcon;
 	HICON    hIcon;
-	TCHAR   *lpzTitle;
-	TCHAR   *lpzDescription;
+	wchar_t   *lpzTitle;
+	wchar_t   *lpzDescription;
 
 	// UI info
 	BOOL     bMouseInside;
@@ -72,7 +72,7 @@ int LoadDescButtonModule()
 	wc.cbSize = sizeof(wc);
 	wc.lpszClassName = MIRANDADESCBUTTONCLASS;
 	wc.lpfnWndProc = MDescButtonWndProc;
-	wc.hCursor = LoadCursor(NULL, IDC_HAND);
+	wc.hCursor = LoadCursor(nullptr, IDC_HAND);
 	wc.cbWndExtra = sizeof(MDescButtonCtrl *);
 	wc.hbrBackground = 0; //GetStockObject(WHITE_BRUSH);
 	wc.style = CS_GLOBALCLASS | CS_SAVEBITS;
@@ -188,7 +188,7 @@ static LRESULT MDescButton_OnPaint(HWND hwndDlg, MDescButtonCtrl *dat)
 		textRect.top = DBC_BORDER_SIZE;
 		textRect.bottom = dat->height - DBC_BORDER_SIZE;
 		DrawText(tempDC, dat->lpzTitle, -1, &textRect, DT_TOP | DT_LEFT | DT_END_ELLIPSIS);
-		GetTextExtentPoint32(tempDC, dat->lpzTitle, (int)mir_tstrlen(dat->lpzTitle), &titleSize);
+		GetTextExtentPoint32(tempDC, dat->lpzTitle, (int)mir_wstrlen(dat->lpzTitle), &titleSize);
 
 		DeleteObject(SelectObject(tempDC, hOldFont));
 	}
@@ -200,7 +200,7 @@ static LRESULT MDescButton_OnPaint(HWND hwndDlg, MDescButtonCtrl *dat)
 		textRect.top = DBC_BORDER_SIZE + titleSize.cy ? titleSize.cy + DBC_HSPACING : 0;
 		textRect.bottom = dat->height - DBC_BORDER_SIZE;
 		DrawText(tempDC, dat->lpzDescription, -1, &textRect, DT_TOP | DT_LEFT | DT_WORDBREAK | DT_END_ELLIPSIS);
-		GetTextExtentPoint32(tempDC, dat->lpzTitle, (int)mir_tstrlen(dat->lpzTitle), &titleSize);
+		GetTextExtentPoint32(tempDC, dat->lpzTitle, (int)mir_wstrlen(dat->lpzTitle), &titleSize);
 	}
 
 	SelectObject(tempDC, hfntSave);
@@ -221,7 +221,7 @@ static LRESULT CALLBACK MDescButtonWndProc(HWND hwndDlg, UINT  msg, WPARAM wPara
 	switch (msg) {
 	case WM_NCCREATE:
 		dat = (MDescButtonCtrl*)mir_alloc(sizeof(MDescButtonCtrl));
-		if (dat == NULL)
+		if (dat == nullptr)
 			return FALSE;
 
 		memset(dat, 0, sizeof(MDescButtonCtrl));
@@ -252,13 +252,13 @@ static LRESULT CALLBACK MDescButtonWndProc(HWND hwndDlg, UINT  msg, WPARAM wPara
 			tme.hwndTrack = hwndDlg;
 			_TrackMouseEvent(&tme);
 			dat->bMouseInside = TRUE;
-			RedrawWindow(hwndDlg, NULL, NULL, RDW_INVALIDATE);
+			RedrawWindow(hwndDlg, nullptr, nullptr, RDW_INVALIDATE);
 		}
 		return 0;
 
 	case WM_MOUSELEAVE:
 		dat->bMouseInside = FALSE;
-		RedrawWindow(hwndDlg, NULL, NULL, RDW_INVALIDATE);
+		RedrawWindow(hwndDlg, nullptr, nullptr, RDW_INVALIDATE);
 		return 0;
 
 	case WM_LBUTTONUP:
@@ -269,7 +269,7 @@ static LRESULT CALLBACK MDescButtonWndProc(HWND hwndDlg, UINT  msg, WPARAM wPara
 		return 1;
 
 	case WM_NCPAINT:
-		InvalidateRect(hwndDlg, NULL, FALSE);
+		InvalidateRect(hwndDlg, nullptr, FALSE);
 		break;
 
 	case WM_PAINT:
@@ -280,20 +280,20 @@ static LRESULT CALLBACK MDescButtonWndProc(HWND hwndDlg, UINT  msg, WPARAM wPara
 		if (dat->lpzTitle)
 			mir_free(dat->lpzTitle);
 		if (wParam & MDBCF_UNICODE)
-			dat->lpzTitle = mir_u2t((WCHAR *)lParam);
+			dat->lpzTitle = mir_wstrdup((WCHAR *)lParam);
 		else
-			dat->lpzTitle = mir_a2t((char *)lParam);
-		RedrawWindow(hwndDlg, NULL, NULL, RDW_INVALIDATE);
+			dat->lpzTitle = mir_a2u((char *)lParam);
+		RedrawWindow(hwndDlg, nullptr, nullptr, RDW_INVALIDATE);
 		return TRUE;
 
 	case DBCM_SETDESCRIPTION:
 		if (dat->lpzDescription)
 			mir_free(dat->lpzDescription);
 		if (wParam & MDBCF_UNICODE)
-			dat->lpzDescription = mir_u2t((WCHAR *)lParam);
+			dat->lpzDescription = mir_wstrdup((WCHAR *)lParam);
 		else
-			dat->lpzDescription = mir_a2t((char *)lParam);
-		RedrawWindow(hwndDlg, NULL, NULL, RDW_INVALIDATE);
+			dat->lpzDescription = mir_a2u((char *)lParam);
+		RedrawWindow(hwndDlg, nullptr, nullptr, RDW_INVALIDATE);
 		return TRUE;
 
 	case DBCM_SETICON:
@@ -308,7 +308,7 @@ static LRESULT CALLBACK MDescButtonWndProc(HWND hwndDlg, UINT  msg, WPARAM wPara
 			dat->bSharedIcon = FALSE;
 			dat->hIcon = CopyIcon((HICON)lParam);
 		}
-		RedrawWindow(hwndDlg, NULL, NULL, RDW_INVALIDATE);
+		RedrawWindow(hwndDlg, nullptr, nullptr, RDW_INVALIDATE);
 		return TRUE;
 
 	case WM_DESTROY:

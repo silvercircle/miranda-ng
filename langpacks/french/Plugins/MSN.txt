@@ -2,14 +2,12 @@
 ;============================================================
 ;  File: MSN.dll
 ;  Plugin: MSN protocol
-;  Version: 0.12.1.1
+;  Version: 0.14.0.1
 ;  Authors: Boris Krasnovskiy, George Hazan, Richard Hughes, leecher
 ;============================================================
 [Microsoft Network (MSN) protocol support for Miranda NG.]
 Support du protocole Microsoft Network (MSN) pour Miranda NG.
 ;file \protocols\MSN\res\msn.rc
-[MSN]
-
 [Live ID:]
 
 [Password:]
@@ -58,8 +56,6 @@ Contact bloqué
 Vous êtes dans la liste de ce contact
 [Refresh]
 Actualiser
-[Hotmail]
-
 [Enable Popup notifications]
 Activer les notifications par popup
 [Enable Contact List notifications]
@@ -115,6 +111,10 @@ Pseudo
 [Add]
 Ajouter
 ;file \protocols\MSN\src\msn_chat.cpp
+[Admin]
+
+[User]
+Utilisateur
 [Chat #]
 
 [&Invite user...]
@@ -136,30 +136,6 @@ Ajouter
 
 [MSN Alert]
 Alerte MSN
-[Contact tried to open an audio conference (not currently supported)]
-Le contact vous a envoyé une invitation à une conférence audio (actuellement non supportée)
-[Accept NetMeeting request from %s?]
-
-[MSN Protocol]
-Protocole MSN
-[Chat session established by my request]
-Connexion au chat établie sur ma demande
-[Chat session established by contact request]
-Connexion au chat établie sur demande d'un contact
-[Contact left channel]
-Le contact a quitté le chat
-[This conversation has been inactive, participants will be removed.]
-Cette conversation est inactive, des participants l'on quitté.
-[To resume the conversation, please quit this session and start a new chat session.]
-Pour reprendre la conversation, fermer cette session et commencer un nouveau chat.
-[There is only 1 person left in the chat, do you want to switch back to standard message window?]
-Il n'y a plus qu'une personne dans le chat, voulez-vous revenir à la fenêtre de message standard ?
-[MSN Chat]
-
-[Others]
-Autres
-[Message delivery failed]
-Échec d'envoi du message.
 ;file \protocols\MSN\src\msn_errors.cpp
 [User not online]
 Contact non connecté
@@ -200,10 +176,6 @@ Hotmail de %s
 
 [Send &Hotmail E-mail]
 
-[You must be talking to start Netmeeting]
-Vous devez parler pour lancer Netmeeting
-[Set &Nickname]
-
 [Create &Chat]
 
 [Display &Hotmail Inbox]
@@ -212,8 +184,6 @@ Vous devez parler pour lancer Netmeeting
 
 [Setup Live &Alerts]
 
-[&Start Netmeeting]
-Lancer &Netmeeting
 ;file \protocols\MSN\src\msn_misc.cpp
 [Custom Smileys]
 
@@ -221,7 +191,8 @@ Lancer &Netmeeting
 
 [Error]
 Erreur
-;file \protocols\MSN\src\msn_msgqueue.cpp
+[MSN Protocol]
+Protocole MSN
 ;file \protocols\MSN\src\msn_opts.cpp
 [Protocol icon]
 
@@ -249,9 +220,9 @@ Liste de contacts
 
 [Server groups import may change your contact list layout after next login. Do you want to upload your groups to the server?]
 L'importation des groupes du serveur devrait changer l'apparence de votre liste de contacts à la prochaine connexion. Voulez-vous enregistrer vos groupes sur le serveur ?
-[The changes you have made require you to reconnect to the MSN Messenger network before they take effect]
-Les changements requièrent une reconnexion au réseau MSN Messenger avant qu'ils soient effectifs
-[MSN Options]
+[These changes will take effect the next time you connect to the MSN Messenger network.]
+Ces changements ne prendront effet qu'à la prochaine connexion au réseau MSN Messenger.
+[MSN options]
 Options MSN
 [Automatically obtain host/port]
 Port et hôte automatique
@@ -273,11 +244,6 @@ Compte
 Liste côté serveur
 [Notifications]
 Notifications
-;file \protocols\MSN\src\msn_p2p.cpp
-[Contact tried to send its webcam data (not currently supported)]
-Le contact vous a envoyé un flux webcam (actuellement non supporté)
-[Contact tried to view your webcam data (not currently supported)]
-Le contact a essayé de connecter à votre webcam (actuellement non supporté)
 ;file \protocols\MSN\src\msn_proto.cpp
 [Live Mail]
 
@@ -304,6 +270,3 @@ Message trop long : MSN les limite à 1202 caractères en UTF8
 
 [Convert to Chat]
 
-;file \protocols\MSN\src\msn_ws.cpp
-[Chat session dropped due to inactivity]
-La session chat a été arrêté car vous êtes inactif.

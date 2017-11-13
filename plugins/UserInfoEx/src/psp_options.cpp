@@ -67,7 +67,7 @@ static void FORCEINLINE ComboBox_SetCurSelByItemDataPtr(HWND hCombo, LPARAM pDat
 
 static void FORCEINLINE ComboBox_AddItemWithData(HWND hCombo, LPTSTR ptszText, LPARAM pData)
 {
-	ComboBox_SetItemData(hCombo, ComboBox_AddString(hCombo, TranslateTS(ptszText)), pData);
+	ComboBox_SetItemData(hCombo, ComboBox_AddString(hCombo, TranslateW(ptszText)), pData);
 }
 
 /**
@@ -447,9 +447,9 @@ static INT_PTR CALLBACK DlgProc_AdvancedOpts(HWND hDlg, UINT uMsg, WPARAM wParam
 		case BTN_OPT_RESET:
 			BYTE WantReset = MsgBox(hDlg,
 				MB_ICON_WARNING | MB_YESNO,
-				LPGENT("Question"),
-				LPGENT("Reset factory defaults"),
-				LPGENT("This will delete all settings, you've made!\nAll TreeView settings, window positions and any other settings!\n\nAre you sure to proceed?"));
+				LPGENW("Question"),
+				LPGENW("Reset factory defaults"),
+				LPGENW("This will delete all settings, you've made!\nAll TreeView settings, window positions and any other settings!\n\nAre you sure to proceed?"));
 
 			if (WantReset) {
 				MCONTACT hContact;
@@ -485,9 +485,9 @@ static INT_PTR CALLBACK DlgProc_AdvancedOpts(HWND hDlg, UINT uMsg, WPARAM wParam
 
 				SendMessage(GetParent(hDlg), PSM_FORCECHANGED, NULL, NULL);
 				MsgBox(hDlg, MB_ICON_INFO,
-					LPGENT("Ready"),
-					LPGENT("Everything is done!"),
-					LPGENT("All settings are reset to default values now!"));
+					LPGENW("Ready"),
+					LPGENW("Everything is done!"),
+					LPGENW("All settings are reset to default values now!"));
 			}
 		}
 	}
@@ -635,7 +635,7 @@ static INT_PTR CALLBACK DlgProc_ReminderOpts(HWND hDlg, UINT uMsg, WPARAM wParam
 				SendDlgItemMessage(hDlg, EDIT_BIRTHMODULE, CB_SETCURSEL, db_get_b(NULL, MODNAME, SET_REMIND_BIRTHMODULE, DEFVAL_REMIND_BIRTHMODULE), NULL);
 
 				MTime mtLast;
-				TCHAR szTime[MAX_PATH];
+				wchar_t szTime[MAX_PATH];
 
 				mtLast.DBGetStamp(NULL, MODNAME, SET_REMIND_LASTCHECK);
 				mtLast.UTCToLocal();
@@ -868,9 +868,9 @@ static INT_PTR CALLBACK DlgProc_Popups(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 			if (IsDlgButtonChecked(hDlg, RADIO_OPT_POPUP_PERMANENT))
 				db_set_b(NULL, MODNAME, SET_POPUP_DELAY, 255);
 			else if (IsDlgButtonChecked(hDlg, RADIO_OPT_POPUP_CUSTOM)) {
-				TCHAR szDelay[4];
+				wchar_t szDelay[4];
 				GetDlgItemText(hDlg, EDIT_DELAY, szDelay, _countof(szDelay));
-				db_set_b(NULL, MODNAME, SET_POPUP_DELAY, (BYTE)_tcstol(szDelay, NULL, 10));
+				db_set_b(NULL, MODNAME, SET_POPUP_DELAY, (BYTE)wcstol(szDelay, NULL, 10));
 			}
 			else
 				db_unset(NULL, MODNAME, SET_POPUP_DELAY);
@@ -883,10 +883,10 @@ static INT_PTR CALLBACK DlgProc_Popups(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 			{
 				POPUPDATAT ppd = { 0 };
 				ppd.iSeconds = (int)db_get_b(NULL, MODNAME, SET_POPUP_DELAY, 0);
-				mir_tstrncpy(ppd.lptzText, TranslateT("This is the reminder message"), MAX_SECONDLINE);
+				mir_wstrncpy(ppd.lptzText, TranslateT("This is the reminder message"), MAX_SECONDLINE);
 
 				// Birthday
-				mir_tstrncpy(ppd.lptzContactName, TranslateT("Birthday"), _countof(ppd.lptzContactName));
+				mir_wstrncpy(ppd.lptzContactName, TranslateT("Birthday"), _countof(ppd.lptzContactName));
 				ppd.lchIcon = IcoLib_GetIcon(ICO_RMD_DTB0);
 				if (IsDlgButtonChecked(hDlg, CHECK_OPT_POPUP_WINCLR)) {
 					ppd.colorBack = GetSysColor(COLOR_BTNFACE);
@@ -899,7 +899,7 @@ static INT_PTR CALLBACK DlgProc_Popups(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 				PUAddPopupT(&ppd);
 
 				// Anniversary
-				mir_tstrncpy(ppd.lptzContactName, TranslateT("Anniversary"), _countof(ppd.lptzContactName));
+				mir_wstrncpy(ppd.lptzContactName, TranslateT("Anniversary"), _countof(ppd.lptzContactName));
 				ppd.lchIcon = IcoLib_GetIcon(ICO_RMD_DTAX);
 				if (IsDlgButtonChecked(hDlg, CHECK_OPT_POPUP_WINCLR)) {
 					ppd.colorBack = GetSysColor(COLOR_BTNFACE);
@@ -1032,32 +1032,32 @@ static int OnInitOptions(WPARAM wParam, LPARAM)
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.position = 95400;
 	odp.hInstance = ghInst;
-	odp.pszTitle = MODULELONGNAME;
-	odp.pszGroup = LPGEN("Contacts");
+	odp.szTitle.a = MODULELONGNAME;
+	odp.szGroup.a = LPGEN("Contacts");
 
 	// Common page
-	odp.pszTab = LPGEN("Common");
+	odp.szTab.a = LPGEN("Common");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_COMMON);
 	odp.pfnDlgProc = DlgProc_CommonOpts;
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);
 
 	// Advanced page
-	odp.pszTab = LPGEN("Advanced");
+	odp.szTab.a = LPGEN("Advanced");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_ADVANCED);
 	odp.pfnDlgProc = DlgProc_AdvancedOpts;
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);
 
 	// Details Dialog page
-	odp.pszTab = LPGEN("Details dialog");
+	odp.szTab.a = LPGEN("Details dialog");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_DETAILSDLG);
 	odp.pfnDlgProc = DlgProc_DetailsDlgOpts;
 	odp.flags = ODPF_BOLDGROUPS;
 	Options_AddPage(wParam, &odp);
 
 	// Reminder page
-	odp.pszTab = LPGEN("Reminder");
+	odp.szTab.a = LPGEN("Reminder");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_REMINDER);
 	odp.pfnDlgProc = DlgProc_ReminderOpts;
 	odp.flags = ODPF_BOLDGROUPS;
@@ -1065,8 +1065,8 @@ static int OnInitOptions(WPARAM wParam, LPARAM)
 
 	// Popups page
 	if (ServiceExists(MS_POPUP_ADDPOPUPT)) {
-		odp.pszTitle = MODULELONGNAME;
-		odp.pszGroup = LPGEN("Popups");
+		odp.szTitle.a = MODULELONGNAME;
+		odp.szGroup.a = LPGEN("Popups");
 		odp.pszTemplate = MAKEINTRESOURCEA(IDD_OPT_POPUP);
 		odp.pfnDlgProc = DlgProc_Popups;
 		odp.flags = ODPF_BOLDGROUPS;

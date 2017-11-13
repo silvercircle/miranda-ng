@@ -42,7 +42,7 @@ inline void GetBmpSize(HBITMAP hbm, SIZE *sz)
 
 inline void DebugMsg(LPTSTR msg){
 	if (PopupOptions.debug){
-		MessageBox(NULL, msg, _T("debug"), MB_OK);
+		MessageBox(NULL, msg, L"debug", MB_OK);
 	}
 }
 
@@ -68,11 +68,11 @@ inline INT_PTR DBGetContactSettingStringX(MCONTACT hContact, const char *ModuleN
 	case DBVT_ASCIIZ:
 		ret = (INT_PTR)mir_strdup(result ? Default : dbv.pszVal);
 		break;
-	case DBVT_TCHAR:
+	case DBVT_WCHAR:
 		if (!result)
-			ret = (INT_PTR)mir_tstrdup(dbv.ptszVal);
+			ret = (INT_PTR)mir_wstrdup(dbv.ptszVal);
 		else
-			ret = (INT_PTR)mir_a2t(Default);
+			ret = (INT_PTR)mir_a2u(Default);
 		break;
 	}
 	if (!result)
@@ -89,13 +89,13 @@ inline void AddTooltipTranslated(HWND hwndToolTip, HWND hwnd, int id, RECT rc, c
 	ti.uId = id;
 	SendMessage(hwndToolTip, TTM_DELTOOL, 0, (LPARAM)&ti);
 
-	LPTSTR wtext = mir_a2t(text);
+	LPTSTR wtext = mir_a2u(text);
 
 	ti.uFlags = TTF_SUBCLASS;
 	ti.hwnd = hwnd;
 	ti.uId = id;
 	ti.hinst = hInst;
-	ti.lpszText = TranslateTS(wtext);
+	ti.lpszText = TranslateW(wtext);
 	ti.rect = rc;
 	SendMessage(hwndToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
 

@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org),
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org),
 Copyright (c) 2000-12 Miranda IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -45,76 +45,67 @@ LIST<PROTOACCOUNT> accounts(10, CompareAccounts);
 
 static int EnumDbModules(const char *szModuleName, DWORD, LPARAM)
 {
-	DBVARIANT dbv;
-	if (!db_get_s(NULL, szModuleName, "AM_BaseProto", &dbv)) {
+	ptrA szProtoName(db_get_sa(0, szModuleName, "AM_BaseProto"));
+	if (szProtoName) {
 		if (!Proto_GetAccount(szModuleName)) {
 			PROTOACCOUNT *pa = (PROTOACCOUNT*)mir_calloc(sizeof(PROTOACCOUNT));
 			pa->cbSize = sizeof(*pa);
 			pa->szModuleName = mir_strdup(szModuleName);
-			pa->szProtoName = mir_strdup(dbv.pszVal);
-			pa->tszAccountName = mir_a2t(szModuleName);
+			pa->szProtoName = szProtoName.detach();
+			pa->tszAccountName = mir_a2u(szModuleName);
 			pa->bIsVisible = TRUE;
 			pa->bIsEnabled = FALSE;
 			pa->iOrder = accounts.getCount();
 			accounts.insert(pa);
 		}
-		db_free(&dbv);
 	}
 	return 0;
 }
 
 void LoadDbAccounts(void)
 {
-	DBVARIANT dbv;
-	int ver = db_get_dw(NULL, "Protocols", "PrVer", -1);
-	int count = db_get_dw(NULL, "Protocols", "ProtoCount", 0);
+	int ver = db_get_dw(0, "Protocols", "PrVer", -1);
+	int count = db_get_dw(0, "Protocols", "ProtoCount", 0);
 
 	for (int i = 0; i < count; i++) {
 		char buf[10];
 		_itoa(i, buf, 10);
-		if (db_get_s(NULL, "Protocols", buf, &dbv))
+		char *szModuleName = db_get_sa(0, "Protocols", buf);
+		if (szModuleName == nullptr)
 			continue;
 
 		PROTOACCOUNT *pa = (PROTOACCOUNT*)mir_calloc(sizeof(PROTOACCOUNT));
-		if (pa == NULL) {
-			db_free(&dbv);
+		if (pa == nullptr) {
+			mir_free(szModuleName);
 			continue;
 		}
 		pa->cbSize = sizeof(*pa);
-		pa->szModuleName = mir_strdup(dbv.pszVal);
-		db_free(&dbv);
+		pa->szModuleName = szModuleName;
 
 		_itoa(OFFSET_VISIBLE + i, buf, 10);
-		pa->bIsVisible = db_get_dw(NULL, "Protocols", buf, 1) != 0;
+		pa->bIsVisible = db_get_dw(0, "Protocols", buf, 1) != 0;
 
 		_itoa(OFFSET_PROTOPOS + i, buf, 10);
-		pa->iOrder = db_get_dw(NULL, "Protocols", buf, 1);
+		pa->iOrder = db_get_dw(0, "Protocols", buf, 1);
 
 		if (ver >= 4) {
-			db_free(&dbv);
 			_itoa(OFFSET_NAME + i, buf, 10);
-			if (!db_get_ts(NULL, "Protocols", buf, &dbv)) {
-				pa->tszAccountName = mir_tstrdup(dbv.ptszVal);
-				db_free(&dbv);
-			}
+			pa->tszAccountName = db_get_wsa(0, "Protocols", buf);
 
 			_itoa(OFFSET_ENABLED + i, buf, 10);
-			pa->bIsEnabled = db_get_dw(NULL, "Protocols", buf, 1) != 0;
+			pa->bIsEnabled = db_get_dw(0, "Protocols", buf, 1) != 0;
 
-			if (!db_get_s(NULL, pa->szModuleName, "AM_BaseProto", &dbv)) {
-				pa->szProtoName = mir_strdup(dbv.pszVal);
-				db_free(&dbv);
-			}
+			pa->szProtoName = db_get_sa(0, szModuleName, "AM_BaseProto");
 		}
 		else pa->bIsEnabled = true;
 
 		if (!pa->szProtoName) {
-			pa->szProtoName = mir_strdup(pa->szModuleName);
-			db_set_s(NULL, pa->szModuleName, "AM_BaseProto", pa->szProtoName);
+			pa->szProtoName = mir_strdup(szModuleName);
+			db_set_s(0, szModuleName, "AM_BaseProto", pa->szProtoName);
 		}
 
 		if (!pa->tszAccountName)
-			pa->tszAccountName = mir_a2t(pa->szModuleName);
+			pa->tszAccountName = mir_a2u(szModuleName);
 
 		accounts.insert(pa);
 	}
@@ -123,7 +114,7 @@ void LoadDbAccounts(void)
 		WriteDbAccounts();
 
 	int anum = accounts.getCount();
-	CallService(MS_DB_MODULES_ENUM, 0, (LPARAM)EnumDbModules);
+	db_enum_modules(EnumDbModules);
 	if (anum != accounts.getCount())
 		WriteDbAccounts();
 }
@@ -152,14 +143,8 @@ static int enumDB_ProtoProc(const char* szSetting, LPARAM lParam)
 void WriteDbAccounts()
 {
 	// enum all old settings to delete
-	enumDB_ProtoProcParam param = { 0, NULL };
-
-	DBCONTACTENUMSETTINGS dbces;
-	dbces.pfnEnumProc = enumDB_ProtoProc;
-	dbces.szModule = "Protocols";
-	dbces.ofsSettings = 0;
-	dbces.lParam = (LPARAM)&param;
-	CallService(MS_DB_CONTACT_ENUMSETTINGS, 0, (LPARAM)&dbces);
+	enumDB_ProtoProcParam param = { 0, nullptr };
+	db_enum_settings(0, enumDB_ProtoProc, "Protocols", &param);
 
 	// delete all settings
 	if (param.arrlen) {
@@ -176,19 +161,19 @@ void WriteDbAccounts()
 
 		char buf[20];
 		_itoa(i, buf, 10);
-		db_set_s(NULL, "Protocols", buf, pa->szModuleName);
+		db_set_s(0, "Protocols", buf, pa->szModuleName);
 
 		_itoa(OFFSET_PROTOPOS + i, buf, 10);
-		db_set_dw(NULL, "Protocols", buf, pa->iOrder);
+		db_set_dw(0, "Protocols", buf, pa->iOrder);
 
 		_itoa(OFFSET_VISIBLE + i, buf, 10);
-		db_set_dw(NULL, "Protocols", buf, pa->bIsVisible);
+		db_set_dw(0, "Protocols", buf, pa->bIsVisible);
 
 		_itoa(OFFSET_ENABLED + i, buf, 10);
-		db_set_dw(NULL, "Protocols", buf, pa->bIsEnabled);
+		db_set_dw(0, "Protocols", buf, pa->bIsEnabled);
 
 		_itoa(OFFSET_NAME + i, buf, 10);
-		db_set_ts(NULL, "Protocols", buf, pa->tszAccountName);
+		db_set_ws(0, "Protocols", buf, pa->tszAccountName);
 	}
 
 	db_unset(0, "Protocols", "ProtoCount");
@@ -235,14 +220,14 @@ static int InitializeStaticAccounts(WPARAM, LPARAM)
 
 	BuildProtoMenus();
 
-	if (count == 0 && !db_get_b(NULL, "FirstRun", "AccManager", 0)) {
-		db_set_b(NULL, "FirstRun", "AccManager", 1);
+	if (count == 0 && !db_get_b(0, "FirstRun", "AccManager", 0)) {
+		db_set_b(0, "FirstRun", "AccManager", 1);
 		CallService(MS_PROTO_SHOWACCMGR, 0, 0);
 	}
 	// This is for pack creators with a profile with predefined accounts
-	else if (db_get_b(NULL, "FirstRun", "ForceShowAccManager", 0)) {
+	else if (db_get_b(0, "FirstRun", "ForceShowAccManager", 0)) {
 		CallService(MS_PROTO_SHOWACCMGR, 0, 0);
-		db_unset(NULL, "FirstRun", "ForceShowAccManager");
+		db_unset(0, "FirstRun", "ForceShowAccManager");
 	}
 	return 0;
 }
@@ -301,14 +286,14 @@ static HANDLE CreateProtoServiceEx(const char* szModule, const char* szService, 
 BOOL ActivateAccount(PROTOACCOUNT *pa)
 {
 	PROTOCOLDESCRIPTOR* ppd = Proto_IsProtocolLoaded(pa->szProtoName);
-	if (ppd == NULL)
+	if (ppd == nullptr)
 		return FALSE;
 
-	if (ppd->fnInit == NULL)
+	if (ppd->fnInit == nullptr)
 		return FALSE;
 
 	PROTO_INTERFACE *ppi = ppd->fnInit(pa->szModuleName, pa->tszAccountName);
-	if (ppi == NULL)
+	if (ppi == nullptr)
 		return FALSE;
 
 	pa->ppro = ppi;
@@ -361,7 +346,7 @@ static int DeactivationThread(DeactivationThreadParam* param)
 
 void DeactivateAccount(PROTOACCOUNT *pa, bool bIsDynamic, bool bErase)
 {
-	if (pa->ppro == NULL) {
+	if (pa->ppro == nullptr) {
 		if (bErase)
 			EraseAccount(pa->szModuleName);
 		return;
@@ -369,7 +354,7 @@ void DeactivateAccount(PROTOACCOUNT *pa, bool bIsDynamic, bool bErase)
 
 	if (pa->hwndAccMgrUI) {
 		DestroyWindow(pa->hwndAccMgrUI);
-		pa->hwndAccMgrUI = NULL;
+		pa->hwndAccMgrUI = nullptr;
 		pa->bAccMgrUIChanged = FALSE;
 	}
 
@@ -378,7 +363,7 @@ void DeactivateAccount(PROTOACCOUNT *pa, bool bIsDynamic, bool bErase)
 	param->fnUninit = GetProtocolDestructor(pa->szProtoName);
 	param->bIsDynamic = bIsDynamic;
 	param->bErase = bErase;
-	pa->ppro = NULL;
+	pa->ppro = nullptr;
 	if (bIsDynamic)
 		mir_forkthread((pThreadFunc)DeactivationThread, param);
 	else
@@ -387,17 +372,17 @@ void DeactivateAccount(PROTOACCOUNT *pa, bool bIsDynamic, bool bErase)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
-void EraseAccount(const char* pszModuleName)
+void EraseAccount(const char *pszModuleName)
 {
 	// remove protocol contacts first
-	for (MCONTACT hContact = db_find_first(pszModuleName); hContact != NULL;) {
+	for (MCONTACT hContact = db_find_first(pszModuleName); hContact != 0;) {
 		MCONTACT hNext = db_find_next(hContact, pszModuleName);
-		CallService(MS_DB_CONTACT_DELETE, hContact, 0);
+		db_delete_contact(hContact);
 		hContact = hNext;
 	}
 
 	// remove all protocol settings
-	CallService(MS_DB_MODULE_DELETE, 0, (LPARAM)pszModuleName);
+	db_delete_module(0, pszModuleName);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

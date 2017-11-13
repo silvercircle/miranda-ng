@@ -51,7 +51,6 @@ const
   INTM_NAMECHANGED         = WM_USER+10;
   INTM_ICONCHANGED         = WM_USER+11;
   INTM_GROUPCHANGED        = WM_USER+12;
-  INTM_GROUPSCHANGED       = WM_USER+13;
   INTM_CONTACTADDED        = WM_USER+14;
   INTM_CONTACTDELETED      = WM_USER+15;
   INTM_HIDDENCHANGED       = WM_USER+16;
@@ -182,17 +181,13 @@ type
     exStyle               :dword;
     ptInfoTip             :TPOINT;
     infoTipTimeout        :int;
-    hInfoTipItem          :THANDLE;
+    hInfoTipItem          :DWORD;
     himlExtraColumns      :THANDLE; // HIMAGELIST in CommCtrl
     extraColumnsCount     :int;
     extraColumnSpacing    :int;
     checkboxSize          :int;
-    showSelAlways         :int;
-    showIdle              :int;
-    noVScrollbar          :int;
-    useWindowsColours     :int;
-    needsResort           :int;
-    filterSearch          :int;
+	 bShowSelAlways, bShowIdle, bNoVScrollbar, bUseWindowsColours : byte;
+	 bNeedsResort, bFilterSearch, bLockScrollbar : byte;
   end;
 
   PtrayIconInfo_t = ^trayIconInfo_t;
@@ -261,14 +256,6 @@ const
   TIM_CALLBACK     = WM_USER+1857;
   TIM_CREATE       = WM_USER+1858;
 
-const
-{
-  Miranda 0.4.3.0+
-  retrieves the pointer to a CLIST_INTERFACE structure
-  NOTE: valid only for the clist clone building, not for the regular use
-}
-  MS_CLIST_RETRIEVE_INTERFACE:PansiChar = 'CList/RetrieveInterface';
-
   {**************************************************************************
    * CLIST_INTERFACE structure definition
    ************************************************************************** }
@@ -310,8 +297,8 @@ type
     clcProto        : PClcProtoStatus;
 
   (* clc.h *)
-    pfnClcOptionsChanged   : procedure ;cdecl;
-    pfnClcBroadcast        : procedure (_para1:int; _para2:WPARAM; _para3:LPARAM); cdecl;
+    pfnClcOptionsChanged   : procedure; cdecl;
+    unused3                : procedure; cdecl;
     pfnBuildGroupPopupMenu : function  (_para1:PClcGroup):HMENU; cdecl;
 
     pfnContactListControlWndProc:function(hwnd:HWND; msg:uint; wParam:WPARAM; lParam:LPARAM):LRESULT; stdcall;
@@ -321,14 +308,14 @@ type
     pfnUnregisterFileDropping : procedure (hwnd:HWND); cdecl;
 
   (* clcidents.c *)
+    blablabla6 : procedure; cdecl;
+
     pfnGetRowsPriorTo      : function (var group:TClcGroup; var subgroup:TClcGroup;
                              contactIndex:int):int; cdecl;
-    pfnFindItem            : function (hwnd:HWND; var dat:TClcData; dwItem:dword;
-                             var contact:PClcContact; var subgroup:PClcGroup; var isVisible:int):int; cdecl;
     pfnGetRowByIndex       : function (var dat:TClcData; testindex:int;
                              var contact:PClcContact; var subgroup:PClcGroup):int; cdecl;
-    pfnContactToHItem      : function (var contact:TClcContact):THANDLE;cdecl;
-    pfnContactToItemHandle : function (var contact:TClcContact; var nmFlags:dword):THANDLE; cdecl;
+    unused1                : function (var contact:TClcContact):THANDLE;cdecl;
+    unused2                : function (var contact:TClcContact; var nmFlags:dword):THANDLE; cdecl;
 
   (* clcitems.c *)
     pfnCreateClcContact    : function :PClcContact; cdecl;
@@ -340,12 +327,10 @@ type
     pfnFreeContact : procedure (var contact:TClcContact); cdecl;
     pfnFreeGroup   : procedure (var group:TClcGroup); cdecl;
 
-    pfnAddInfoItemToGroup      : function  (var group:TClcGroup; flags:int; pszText:TChar):int; cdecl;
-    pfnAddItemToGroup          : function  (var group:TClcGroup; iAboveItem:int):int; cdecl;
-    pfnAddContactToGroup       : function  (var dat:TClcData; var group:TClcGroup;
-                                 hContact:TMCONTACT):int; cdecl;
-    pfnAddContactToTree        : procedure (hwnd:HWND; var dat:TClcData; hContact:TMCONTACT;
-                                 updateTotalCount:int; checkHideOffline:int); cdecl;
+    pfnAddInfoItemToGroup      : function  (var group:TClcGroup; flags:int; pszText:TChar):PClcContact; cdecl;
+    pfnAddItemToGroup          : function  (var group:TClcGroup; iAboveItem:int):PClcContact; cdecl;
+    pfnAddContactToGroup       : function  (var dat:TClcData; var group:TClcGroup; hContact:TMCONTACT):PClcContact; cdecl;
+    pfnAddContactToTree        : procedure (hwnd:HWND; var dat:TClcData; hContact:TMCONTACT; updateTotalCount:int; checkHideOffline:int); cdecl;
     pfnDeleteItemFromTree      : procedure (hwnd:HWND; hItem:TMCONTACT); cdecl;
     pfnRebuildEntireList       : procedure (hwnd:HWND; var dat:TClcData); cdecl;
     pfnGetGroupContentsCount   : function  (var group:TClcGroup; visibleOnly:int):int; cdecl;
@@ -399,7 +384,7 @@ type
 
   (* clistmod.c *)
     pfnIconFromStatusMode       : function (szProto:PAnsiChar; status:int; hContact:TMCONTACT):int; cdecl;
-    pfnShowHide                 : function (_para1:WPARAM; _para2:LPARAM):int; cdecl;
+    pfnShowHide                 : function :int; cdecl;
     pfnGetStatusModeDescription : function (mode:int; flags:int) : PWideChar; cdecl;
 
   (* clistsettings.c *)
@@ -418,7 +403,7 @@ type
     pfnTrayIconIconsChanged        : procedure ; cdecl;
     pfnTrayIconPauseAutoHide       : function (wParam:WPARAM; lParam:LPARAM):int; cdecl;
     pfnTrayIconProcessMessage      : function (wParam:WPARAM; lParam:LPARAM):int_ptr; cdecl;
-    pfnCListTrayNotify             : function (_para1:PMIRANDASYSTRAYNOTIFY):int; cdecl;
+    blablabla5 : procedure; cdecl;
 
   (* clui.c *)
     pfnContactListWndProc:function(hwnd:HWND; msg:uint; wParam:WPARAM; lParam:LPARAM):int; stdcall;
@@ -433,30 +418,21 @@ type
     pfnChangeContactIcon : procedure (hContact:TMCONTACT; iIcon:int; add:int); cdecl;
     pfnLoadContactTree   : procedure ; cdecl;
     pfnCompareContacts   : function (var contact1:TClcContact; var contact2:TClcContact):int; cdecl;
-    pfnSortContacts      : procedure ; cdecl;
     pfnSetHideOffline    : function (wParam:WPARAM; lParam:LPARAM):int; cdecl;
 
   (* docking.c *)
     pfnDocking_ProcessWindowMessage : function (wParam:WPARAM; lParam:LPARAM):int; cdecl;
 
-  (* group.c *)
-    pfnGetGroupName : function (idx:int; var pdwFlags:dword):TChar; cdecl;
-    pfnRenameGroup  : function (groupID:int; newName:TChar):int; cdecl;
-
-  (* keyboard.c *)
-    pfnHotKeysRegister       : function (hwnd:HWND):int; cdecl;
-    pfnHotKeysUnregister     : procedure (hwnd:HWND); cdecl;
-    pfnHotKeysProcess        : function (hwnd:HWND; wParam:WPARAM; lParam:LPARAM):int; cdecl;
-    pfnHotkeysProcessMessage : function (wParam:WPARAM; lParam:LPARAM):int; cdecl;
+    blablabla1 : procedure; cdecl;
+    blablabla2 : procedure; cdecl;
+    blablabla3 : procedure; cdecl;
+    blablabla4 : procedure; cdecl;
 
   (*************************************************************************************
   * version 2 - events processing
   *************************************************************************************)
 
-    events : TEventList;
-
-    pfnCreateEvent : function :PCListEvent; cdecl;
-    pfnFreeEvent   : procedure (_para1:PCListEvent); cdecl;
+    events : PEventList;
 
     pfnAddEvent : function (_para1:PCLISTEVENT):PCListEvent; cdecl;
     pfnGetEvent : function (hContact:TMCONTACT; idx:int):PCLISTEVENT; cdecl;
@@ -540,6 +516,8 @@ type
     pfnInitAutoRebuild     :procedure(hwnd:HWND); cdecl;
     pfnSetContactCheckboxes:procedure(cc:PClcContact; checked:int); cdecl;
   end;
+
+function Clist_GetInterface : PCLIST_INTERFACE; stdcall; external AppDll;
 
 var
   cli : PCLIST_INTERFACE;

@@ -2,7 +2,7 @@
 #include <Shlwapi.h>
 
 #include <newpluginapi.h>
-#include <m_system_cpp.h>
+#include <m_system.h>
 #include <m_database.h>
 #include <m_protocols.h>
 #include <m_protosvc.h>
@@ -14,7 +14,7 @@
 #include <m_chat_int.h>
 
 #include "resource.h"
-#include "Version.h"
+#include "version.h"
 
 #define SETTINGSNAME "XSoundNotify"
 #define SETTINGSKEY "XSNPlugin_sound"
@@ -22,15 +22,17 @@
 
 struct XSN_Data
 {
-	MCONTACT hContact;
-	TCHAR path[MAX_PATH];
+	LPARAM hContact;
+	wchar_t path[MAX_PATH];
 	BYTE ignore;
+	BYTE iscontact;
 
-	__forceinline XSN_Data(MCONTACT _aContact, TCHAR *_path, BYTE _ignore) :
+	__forceinline XSN_Data(LPARAM _aContact, wchar_t *_path, BYTE _ignore, BYTE _iscontact) :
 		hContact(_aContact)
 	{
-		_tcsncpy(path, _path, _countof(path));
+		wcsncpy(path, _path, _countof(path));
 		ignore = _ignore;
+		iscontact = _iscontact;
 	}
 };
 

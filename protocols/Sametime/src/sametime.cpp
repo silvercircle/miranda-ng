@@ -59,8 +59,7 @@ INT_PTR CSametimeProto::GetStatus(WPARAM wParam, LPARAM lParam)
 
 /** Loads the icon corresponding to the status
 * Called by the CList when the status changes.
-* @param wParam :	one of the following values : \n
-					<tt>PLI_PROTOCOL | PLI_ONLINE | PLI_OFFLINE</tt>
+* @param wParam :	icon type
 * @return			an \c HICON in which the icon has been loaded.
 */
 INT_PTR CSametimeProto::SametimeLoadIcon(WPARAM wParam, LPARAM lParam)
@@ -124,12 +123,12 @@ void __cdecl sttFakeAckInfoSuccessThread(void *param)
 {
 	TFakeAckParams* tParam = (TFakeAckParams*)param;
 	CSametimeProto* proto = tParam->proto;
-	proto->debugLog(_T("sttFakeAckInfoSuccessThread() start"));
+	proto->debugLogW(L"sttFakeAckInfoSuccessThread() start");
 
 	Sleep(100);
 	proto->ProtoBroadcastAck(tParam->hContact, ACKTYPE_GETINFO, ACKRESULT_SUCCESS, (HANDLE)1, 0);
 
-	proto->debugLog(_T("sttFakeAckInfoSuccessThread() end"));
+	proto->debugLogW(L"sttFakeAckInfoSuccessThread() end");
 	mir_free(tParam);
 }
 
@@ -137,12 +136,12 @@ void __cdecl sttFakeAckMessageSuccessThread(void *param)
 {
 	TFakeAckParams* tParam = (TFakeAckParams*)param;
 	CSametimeProto* proto = tParam->proto;
-	proto->debugLog(_T("sttFakeAckMessageSuccessThread() start"));
+	proto->debugLogW(L"sttFakeAckMessageSuccessThread() start");
 
 	Sleep(100);
 	proto->ProtoBroadcastAck(tParam->hContact, ACKTYPE_MESSAGE, ACKRESULT_SUCCESS, (HANDLE)tParam->lParam, 0);
 
-	proto->debugLog(_T("sttFakeAckMessageSuccessThread() end"));
+	proto->debugLogW(L"sttFakeAckMessageSuccessThread() end");
 	mir_free(tParam);
 }
 
@@ -150,12 +149,12 @@ void __cdecl sttFakeAckMessageFailedThread(void *param)
 {
 	TFakeAckParams* tParam = (TFakeAckParams*)param;
 	CSametimeProto* proto = tParam->proto;
-	proto->debugLog(_T("sttFakeAckMessageFailedThread() start"));
+	proto->debugLogW(L"sttFakeAckMessageFailedThread() start");
 
 	Sleep(100);
 	proto->ProtoBroadcastAck(tParam->hContact, ACKTYPE_MESSAGE, ACKRESULT_FAILED, NULL, tParam->lParam); ///TODO tParam->lParam: add error message
 
-	proto->debugLog(_T("sttFakeAckMessageFailedThread() end"));
+	proto->debugLogW(L"sttFakeAckMessageFailedThread() end");
 	mir_free(tParam);
 }
 
@@ -163,12 +162,12 @@ void __cdecl sttRecvAwayThread(void *param)
 {
 	TFakeAckParams* tParam = (TFakeAckParams*)param;
 	CSametimeProto* proto = tParam->proto;
-	proto->debugLog(_T("sttRecvAwayThread() start"));
+	proto->debugLogW(L"sttRecvAwayThread() start");
 
 	Sleep(100);
 	proto->UserRecvAwayMessage(tParam->hContact);
 
-	proto->debugLog(_T("sttRecvAwayThread() end"));
+	proto->debugLogW(L"sttRecvAwayThread() end");
 	free(tParam);
 }
 
@@ -198,11 +197,11 @@ int CSametimeProto::OnIdleChanged(WPARAM, LPARAM lParam)
 int CSametimeProto::OnModulesLoaded(WPARAM, LPARAM)
 {
 	// register with chat module
-	GCREGISTER gcr = { sizeof(gcr) };
+	GCREGISTER gcr = {};
 	gcr.pszModule = m_szModuleName;
 	gcr.ptszDispName = m_tszUserName;
 	gcr.iMaxText = MAX_MESSAGE_SIZE;
-	CallService(MS_GC_REGISTER, 0, (LPARAM)&gcr);
+	Chat_Register(&gcr);
 	return 0;
 }
 
@@ -223,11 +222,11 @@ int CSametimeProto::OnSametimeContactDeleted(WPARAM hContact, LPARAM)
 
 void CSametimeProto::SetAllOffline()
 {
-	debugLog(_T("SetAllOffline() start"));
+	debugLogW(L"SetAllOffline() start");
 
 	for (MCONTACT hContact = db_find_first(m_szModuleName); hContact; hContact = db_find_next(hContact, m_szModuleName)) {
 		if (db_get_b(hContact, m_szModuleName, "ChatRoom", 0)) {
-			CallService(MS_DB_CONTACT_DELETE, (WPARAM)hContact, 0);
+			db_delete_contact(hContact);
 			continue;
 		}
 
@@ -241,14 +240,14 @@ void CSametimeProto::BroadcastNewStatus(int iNewStatus)
 	if (m_iStatus == iNewStatus)
 		return;
 
-	debugLog(_T("BroadcastNewStatus() m_iStatus=[%d], iNewStatus=[%d]"), m_iStatus, iNewStatus);
+	debugLogW(L"BroadcastNewStatus() m_iStatus=[%d], iNewStatus=[%d]", m_iStatus, iNewStatus);
 
 	previous_status = m_iStatus;
 	m_iStatus = iNewStatus;
 	ProtoBroadcastAck(NULL, ACKTYPE_STATUS, ACKRESULT_SUCCESS, (HANDLE)previous_status, m_iStatus);
 }
 
-static CSametimeProto* sametime_proto_init(const char* pszProtoName, const TCHAR* tszUserName)
+static CSametimeProto* sametime_proto_init(const char* pszProtoName, const wchar_t* tszUserName)
 {
 	CSametimeProto* proto = new CSametimeProto(pszProtoName, tszUserName);
 	g_Instances.insert(proto);
@@ -266,7 +265,7 @@ static int sametime_proto_uninit(PROTO_INTERFACE* ppro)
 extern "C" int __declspec(dllexport) Load(void)
 {
 	mir_getLP(&pluginInfo);
-	mir_getCLI();
+	pcli = Clist_GetInterface();
 
 	PROTOCOLDESCRIPTOR pd = { 0 };
 	pd.cbSize = sizeof(pd);

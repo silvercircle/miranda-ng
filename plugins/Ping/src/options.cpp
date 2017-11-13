@@ -81,8 +81,8 @@ static INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 				break;
 			case IDC_BTN_LOGBROWSE:
 			{
-				TCHAR filter[MAX_PATH];
-				mir_sntprintf(filter, _T("%s%c*.txt%c%s%c*.*%c"), TranslateT("Text Files (*.txt)"), 0, 0, TranslateT("All Files"), 0, 0);
+				wchar_t filter[MAX_PATH];
+				mir_snwprintf(filter, L"%s%c*.txt%c%s%c*.*%c", TranslateT("Text Files (*.txt)"), 0, 0, TranslateT("All Files"), 0, 0);
 				OPENFILENAME ofn = { 0 };
 				ofn.lStructSize = sizeof(ofn);
 				ofn.lpstrFile = options.log_filename;
@@ -150,7 +150,7 @@ static INT_PTR CALLBACK DlgProcOpts(HWND hwndDlg, UINT msg, WPARAM wParam, LPARA
 
 			RefreshWindow(0, 0);
 
-			if (options.logging) CallService(PLUG "/Log", (WPARAM)_T("options changed"), 0);
+			if (options.logging) CallService(PLUG "/Log", (WPARAM)L"options changed", 0);
 			if (hWakeEvent) SetEvent(hWakeEvent);
 			return TRUE;
 		}
@@ -169,7 +169,7 @@ INT_PTR CALLBACK DlgProcDestEdit(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM) 
 	case WM_INITDIALOG:
 		TranslateDialogDefault(hwndDlg);
 		for (int i = ID_STATUS_OFFLINE; i <= ID_STATUS_OUTTOLUNCH; i++) {
-			TCHAR *ret = pcli->pfnGetStatusModeDescription(i, 0);
+			wchar_t *ret = pcli->pfnGetStatusModeDescription(i, 0);
 			SendDlgItemMessage(hwndDlg, IDC_COMBO_DESTSTAT, CB_INSERTSTRING, (WPARAM)-1, (LPARAM)ret);
 			SendDlgItemMessage(hwndDlg, IDC_COMBO_DESTSTAT2, CB_INSERTSTRING, (WPARAM)-1, (LPARAM)ret);
 		}
@@ -505,16 +505,16 @@ int PingOptInit(WPARAM wParam, LPARAM)
 {
 	OPTIONSDIALOGPAGE odp = { 0 };
 	odp.hInstance = hInst;
-	odp.flags = ODPF_BOLDGROUPS | ODPF_TCHAR;
-	odp.ptszGroup = LPGENT("Network");
-	odp.ptszTitle = LPGENT("Ping");
+	odp.flags = ODPF_BOLDGROUPS | ODPF_UNICODE;
+	odp.szGroup.w = LPGENW("Network");
+	odp.szTitle.w = LPGENW("Ping");
 
-	odp.ptszTab = LPGENT("Settings");
+	odp.szTab.w = LPGENW("Settings");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_DIALOG1);
 	odp.pfnDlgProc = DlgProcOpts;
 	Options_AddPage(wParam, &odp);
 
-	odp.ptszTab = LPGENT("Hosts");
+	odp.szTab.w = LPGENW("Hosts");
 	odp.pszTemplate = MAKEINTRESOURCEA(IDD_DIALOG2);
 	odp.pfnDlgProc = DlgProcOpts2;
 	Options_AddPage(wParam, &odp);

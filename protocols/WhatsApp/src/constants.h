@@ -2,7 +2,7 @@
 #define CONSTANTS_H
 
 // Version management
-#define PRODUCT_NAME _T("WhatsApp Protocol")
+#define PRODUCT_NAME L"WhatsApp Protocol"
 
 // Limits
 #define WHATSAPP_GROUP_NAME_LIMIT   420
@@ -23,14 +23,15 @@
 // #TODO Move constants below to WhatsAPI++
 
 // WhatsApp
+#define WHATSAPP_TOKEN "PdA2DJyKoUrwLw1Bg6EIhzh502dF9noR9uFCllGk1478194306452"
 #define WHATSAPP_LOGIN_SERVER "c.whatsapp.net"
-#define ACCOUNT_USER_AGENT "WhatsApp/2.12.89 S40Version/14.26 Device/Nokia302"
+#define ACCOUNT_USER_AGENT "WhatsApp/2.16.11 S40Version/14.26 Device/Nokia302"
 #define ACCOUNT_URL_CODEREQUESTV2 "https://v.whatsapp.net/v2/code"
 #define ACCOUNT_URL_REGISTERREQUESTV2 "https://v.whatsapp.net/v2/register"
 #define ACCOUNT_URL_EXISTSV2 "https://v.whatsapp.net/v2/exist"
 
-// WhatsApp Nokia 302 S40
-#define ACCOUNT_RESOURCE  "S40-2.12.89"
+// WhatsApp Samsung Galaxy S3
+#define ACCOUNT_RESOURCE  "S40"
 
 #define WHATSAPP_RECV_MESSAGE 1
 #define WHATSAPP_SEND_MESSAGE 2

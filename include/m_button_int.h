@@ -2,7 +2,7 @@
 
 Miranda NG: the free IM client for Microsoft* Windows*
 
-Copyright (ñ) 2012-15 Miranda NG project (http://miranda-ng.org)
+Copyright (ñ) 2012-17 Miranda NG project (https://miranda-ng.org)
 Copyright (c) 2000-08 Miranda ICQ/IM project,
 all portions of this codebase are copyrighted to the people
 listed in contributors.txt.
@@ -42,7 +42,7 @@ struct MButtonCtrl
 	HBITMAP  hBitmap;
 	HTHEME   hThemeButton;
 	HTHEME   hThemeToolbar;
-	TCHAR    cHot;
+	wchar_t  cHot;
 	HWND     hwndToolTips;
 
 	bool     bIsPushBtn,  // button has two states

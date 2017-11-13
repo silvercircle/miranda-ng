@@ -7,7 +7,7 @@
 #define NUDGE_ACC_ST0	0x00000001		//Check (countdown) when Offline
 #define NUDGE_ACC_ST1	0x00000002		//Check (countdown) when Online
 #define NUDGE_ACC_ST2	0x00000004		//Check (countdown) when Away
-#define NUDGE_ACC_ST3	0x00000008		//Check (countdown) when N/A
+#define NUDGE_ACC_ST3	0x00000008		//Check (countdown) when Not available
 #define NUDGE_ACC_ST4	0x00000010		//Check (countdown) when Occupied
 #define NUDGE_ACC_ST5	0x00000020		//Check (countdown) when DND
 #define NUDGE_ACC_ST6	0x00000040		//Check (countdown) when Free for chat
@@ -31,10 +31,10 @@ struct CNudge
 struct CNudgeElement : public MZeroedObject
 {
 	char ProtocolName[64];
-	TCHAR AccountName[128];
+	wchar_t AccountName[128];
 	char NudgeSoundname[100];
-	TCHAR recText[TEXT_LEN];
-	TCHAR senText[TEXT_LEN];
+	wchar_t recText[TEXT_LEN];
+	wchar_t senText[TEXT_LEN];
 	bool showPopup;
 	bool showStatus;
 	bool openMessageWindow;

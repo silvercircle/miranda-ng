@@ -27,9 +27,9 @@
 Отсъстващ
 [Occupied]
 Зает
-[NA]
+[Not available]
 Недостъпен
-[DND]
+[Do not disturb]
 Не безпокойте
 [Free for chat]
 Готов за чат
@@ -89,17 +89,17 @@ URL събития
 ** Всички контакти **
 [** Unknown contacts **]
 ** Непознати контакти **
-[Events]
-Събития
+[None]
+Няма
+[Protocol]
+Протокол
+[All Files]
+Всички файлове
 [Accounts]
 Акаунти
 [Rules]
 Правила
 [Flashing]
 Мигане
-[Protocol]
-Протокол
-[All Files]
-Всички файлове
-[None]
-Няма
+[Events]
+Събития

@@ -20,15 +20,15 @@
 
 #include "gg.h"
 
-//////////////////////////////////////////////////////////
-// remind password
-
 typedef struct
 {
 	uin_t uin;
 	const char *email;
 } GG_REMIND_PASS;
 
+//////////////////////////////////////////////////////////
+// remind password
+//
 void __cdecl GGPROTO::remindpasswordthread(void *param)
 {
 	// Connection handle
@@ -56,10 +56,10 @@ void __cdecl GGPROTO::remindpasswordthread(void *param)
 
 	if (!(h = gg_remind_passwd3(rp->uin, rp->email, token.id, token.val, 0)))
 	{
-		TCHAR error[128];
-		mir_sntprintf(error, TranslateT("Password could not be reminded because of error:\n\t%s (Error: %d)"), _tcserror(errno), errno);
+		wchar_t error[128];
+		mir_snwprintf(error, TranslateT("Password could not be reminded because of error:\n\t%s (Error: %d)"), ws_strerror(errno), errno);
 		MessageBox(NULL, error, m_tszUserName, MB_OK | MB_ICONSTOP);
-		debugLogA("remindpasswordthread(): Password could not be reminded. errno=%d: %s", errno, strerror(errno));
+		debugLogW(L"remindpasswordthread(): Password could not be reminded. errno=%d: %s", errno, ws_strerror(errno));
 	}
 	else
 	{
