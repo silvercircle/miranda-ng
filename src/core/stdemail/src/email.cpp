@@ -35,6 +35,7 @@ void SendEmailThread(void *szUrl)
 static INT_PTR SendEMailCommand(WPARAM hContact, LPARAM lParam)
 {
 	DBVARIANT dbv;
+	
 	char *szProto = GetContactProto(hContact);
 	if (szProto == NULL || db_get_s(hContact, szProto, "e-mail", &dbv)) {
 		if (db_get_s(hContact, "UserInfo", "Mye-mail0", &dbv)) {

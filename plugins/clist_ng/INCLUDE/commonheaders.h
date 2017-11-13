@@ -277,3 +277,4 @@ void FreeAndNil( void** );
 #define  EXTRA_ICON_ADV3	9
 #define  EXTRA_ICON_ADV4	10
 
+#define NULL 0L

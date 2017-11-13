@@ -42,7 +42,7 @@ static void TZ_LoadTimeZone(MCONTACT hContact, struct TExtraCache *c, const char
 ClcContact* CLC::CreateClcContact()
 {
 	struct ClcContact* p = (struct ClcContact*)mir_alloc( sizeof( struct ClcContact ) );
-	if ( p != NULL ) {
+	if ( p != 0 ) {
 		ZeroMemory(p, sizeof(struct ClcContact));
 		//p->clientId = -1;
 		p->extraCacheEntry = -1;
@@ -59,7 +59,7 @@ int CLC::AddInfoItemToGroup(ClcGroup *group, int flags, const wchar_t *pszText)
 	ClcContact* p = group->cl.items[i];
 	p->bIsMeta = 0;
 	p->xStatus = 0;
-	p->ace = NULL;
+	p->ace = 0;
 	p->extraCacheEntry = -1;
 	p->avatarLeft = p->extraIconRightBegin = -1;
 	return i;
@@ -90,17 +90,17 @@ void LoadAvatarForContact(struct ClcContact *p)
     else
         p->cFlags = (p->dwDFlags & ECF_FORCEAVATAR ? p->cFlags | ECF_AVATAR : p->cFlags & ~ECF_AVATAR);
 
-    p->ace = NULL;
+    p->ace = 0;
     if(/*(p->cFlags & ECF_AVATAR) && */(!cfg::dat.bNoOfflineAvatars || p->wStatus != ID_STATUS_OFFLINE)) {
         p->ace = (struct avatarCacheEntry *)CallService(MS_AV_GETAVATARBITMAP, (WPARAM)p->hContact, 0);
         if(CALLSERVICE_NOTFOUND == (INT_PTR)p->ace)
         	p->ace = 0;
-        if (p->ace != NULL && p->ace->cbSize != sizeof(struct avatarCacheEntry))
-            p->ace = NULL;
-        if (p->ace != NULL)
+        if (p->ace != 0 && p->ace->cbSize != sizeof(struct avatarCacheEntry))
+            p->ace = 0;
+        if (p->ace != 0)
             p->ace->t_lastAccess = cfg::dat.t_now;
     }
-    if(p->ace == NULL)
+    if(p->ace == 0)
         p->cFlags &= ~ECF_AVATAR;
 }
 
@@ -123,7 +123,7 @@ int CLC::AddContactToGroup(struct ClcData *dat, struct ClcGroup *group, MCONTACT
 		p->iImage = CallService(MS_CLIST_GETCONTACTICON, (WPARAM) p->hSubContact, 0);
 	} else {
 		p->iImage = CallService(MS_CLIST_GETCONTACTICON, (WPARAM) hContact, 0);
-		p->metaProto = NULL;
+		p->metaProto = 0;
 	}
     p->bSecondLine = cfg::dat.dualRowMode;
     p->bSecondLineLocal = cfg::getByte(hContact, "CList", "CLN_2ndline", -1);
@@ -138,7 +138,7 @@ int CLC::AddContactToGroup(struct ClcData *dat, struct ClcGroup *group, MCONTACT
 		if(p->extraCacheEntry >= 0 && p->extraCacheEntry < cfg::nextCacheEntry) {
 			cfg::eCache[p->extraCacheEntry].proto_status_item = GetProtocolStatusItem(p->bIsMeta ? p->metaProto : p->proto);
 			if(cfg::getByte(p->hContact, "CList", "floating", 0) && g_floatoptions.enabled) {
-				if(cfg::eCache[p->extraCacheEntry].floater == NULL)
+				if(cfg::eCache[p->extraCacheEntry].floater == 0)
 					FLT_Create(p->extraCacheEntry);
 				else {
 					ShowWindow(cfg::eCache[p->extraCacheEntry].floater->hwnd, SW_SHOWNOACTIVATE);
@@ -180,7 +180,7 @@ void CLC::RebuildEntireList(HWND hwnd, ClcData *dat)
 
 		for (i = 1; ; i++) {
 			szGroupName = pcli->pfnGetGroupName(i, &groupFlags);
-			if (szGroupName == NULL)
+			if (szGroupName == 0)
 				break;
 			pcli->pfnAddGroup(hwnd, dat, szGroupName, groupFlags, i, 0);
 		}

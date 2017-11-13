@@ -1,4 +1,4 @@
-s/*
+/*
  * astyle --force-indent=tab=4 --brackets=linux --indent-switches
  *		  --pad=oper --one-line=keep-blocks  --unpad=paren
  *
@@ -40,7 +40,7 @@ static INT_PTR GetClistVersion(WPARAM wParam, LPARAM lParam)
 	static char g_szVersionString[256];
 
 	mir_snprintf(g_szVersionString, 256, "%s, %d.%d.%d.%d", pluginInfo.shortName, HIBYTE(HIWORD(pluginInfo.version)), LOBYTE(HIWORD(pluginInfo.version)), HIBYTE(LOWORD(pluginInfo.version)), LOBYTE(LOBYTE(pluginInfo.version)));
-	if(!IsBadWritePtr((LPVOID)lParam, 4))
+	if((LPVOID)lParam != nullptr)
 		*((DWORD *)lParam) = pluginInfo.version;
 
 	return (INT_PTR)g_szVersionString;
@@ -52,13 +52,13 @@ void FreeProtocolData( void )
 	//free protocol data
 	int nPanel;
 	int nParts=SendMessage(pcli->hwndStatus,SB_GETPARTS,0,0);
-	for (nPanel=0;nPanel<nParts;nPanel++) {
-		ProtocolData *PD;
-		PD=(ProtocolData *)SendMessage(pcli->hwndStatus,SB_GETTEXT,(WPARAM)nPanel,(LPARAM)0);
-		if (PD!=NULL&&!IsBadCodePtr((FARPROC)PD)) {
-			SendMessage(pcli->hwndStatus,SB_SETTEXT,(WPARAM)nPanel|SBT_OWNERDRAW,(LPARAM)0);
-			if (PD->RealName) mir_free(PD->RealName);
-			if (PD) mir_free(PD);
+	for (nPanel=0; nPanel < nParts; nPanel++) {
+		ProtocolData *pPD =(ProtocolData *)SendMessage(pcli->hwndStatus, SB_GETTEXT, (WPARAM)nPanel, (LPARAM)0);
+		if (pPD != nullptr) {
+			SendMessage(pcli->hwndStatus, SB_SETTEXT, (WPARAM)nPanel|SBT_OWNERDRAW, (LPARAM)0);
+			if(pPD->RealName) 
+				mir_free(pPD->RealName);
+			mir_free(pPD);
 		}
 	}
 }

@@ -900,6 +900,10 @@ int CLC::findItem(HWND hwnd, ClcData *dat, HANDLE hItem, ClcContact **contact, C
 	return 0;
 }
 
+/**
+ * count the number of avatars possibly visible in the list
+ * this is needed in the paint handler to determine basic metrics
+ */
 void CLC::countAvatars(ClcData *dat)
 {
 	if(dat->bisEmbedded)

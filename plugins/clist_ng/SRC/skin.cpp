@@ -1,6 +1,6 @@
 /*
  * astyle --force-indent=tab=4 --brackets=linux --indent-switches
- *		  --pad=oper --one-line=keep-blocks  --unpad=paren
+ *        --pad=oper --one-line=keep-blocks  --unpad=paren
  *
  * Miranda IM: the free IM client for Microsoft* Windows*
  *
@@ -47,22 +47,22 @@
 
 #include <commonheaders.h>
 
-TStatusItem*	Skin::statusItems = 0;
-TImageItem*		Skin::imageItems = 0;
-TImageItem*		Skin::glyphItem = 0;
-TSkinMetrics	Skin::metrics = {0};
+TStatusItem*    Skin::statusItems = 0;
+TImageItem*     Skin::imageItems = 0;
+TImageItem*     Skin::glyphItem = 0;
+TSkinMetrics    Skin::metrics = {0};
 TSkinSettings   Skin::settings = {0};
 
-int 			Skin::ID_EXTBK_LAST = ID_EXTBK_LAST_D;
+int             Skin::ID_EXTBK_LAST = ID_EXTBK_LAST_D;
 
-UINT 			SkinLoader::nextButtonID = IDC_TBFIRSTUID;
+UINT            SkinLoader::nextButtonID = IDC_TBFIRSTUID;
 
 
 
 /*
  * TODO Refactor
  */
-extern struct 	CluiTopButton top_buttons[];
+extern struct   CluiTopButton top_buttons[];
 extern TStatusItem DefaultStatusItems[ID_EXTBK_LAST_D + 1];
 
 HBRUSH g_CLUISkinnedBkColor = 0;
@@ -71,85 +71,85 @@ COLORREF g_CLUISkinnedBkColorRGB = 0;
 
 void Skin::setAeroMargins()
 {
-	if(cfg::isAero) {
-		MARGINS m = {-1};
-		Api::pfnDwmExtendFrameIntoClientArea(pcli->hwndContactList, &m);
-	}
-	else {
-		MARGINS m = {0};
-		Api::pfnDwmExtendFrameIntoClientArea(pcli->hwndContactList, &m);
-	}
+    if(cfg::isAero) {
+        MARGINS m = {-1};
+        Api::pfnDwmExtendFrameIntoClientArea(pcli->hwndContactList, &m);
+    }
+    else {
+        MARGINS m = {0};
+        Api::pfnDwmExtendFrameIntoClientArea(pcli->hwndContactList, &m);
+    }
 }
 
 void Skin::updateAeroState()
 {
-	cfg::isAero = (settings.fHaveAeroBG && settings.fUseAero && Api::sysState.isAero) ? true : false;
+    cfg::isAero = (settings.fHaveAeroBG && settings.fUseAero && Api::sysState.isAero) ? true : false;
 }
 
 void Skin::Activate()
 {
-	CLUI::applyBorderStyle();
-	CLUI::configureGeometry(1);
+    CLUI::applyBorderStyle();
+    CLUI::configureGeometry(1);
 
-	ShowWindow(pcli->hwndContactList, SW_SHOWNORMAL);
+    ShowWindow(pcli->hwndContactList, SW_SHOWNORMAL);
     SetWindowPos(pcli->hwndContactList, 0, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
     SendMessageW(pcli->hwndContactList, WM_SIZE, 0, 0);
     updateAeroState();
     setAeroMargins();
-	CLUI::Redraw();
+    CLUI::Redraw();
 }
 
 /**
  * free a single image item, release DC, delete bitmap
- * @param item		TImageItem* the item to free
+ * @param item      TImageItem* the item to free
  */
 void Skin::freeImageItem(TImageItem *item)
 {
     if(item) {
-    	if(!(item->dwFlags & IMAGE_GLYPH)) {
-    		SelectObject(item->hdc, item->hbmOld);
-    		DeleteObject(item->hbm);
-    		DeleteDC(item->hdc);
-    	}
-    	if(item->fillBrush)
-    		DeleteObject(item->fillBrush);
+        if(!(item->dwFlags & IMAGE_GLYPH)) {
+            SelectObject(item->hdc, item->hbmOld);
+            DeleteObject(item->hbm);
+            DeleteDC(item->hdc);
+        }
+        if(item->fillBrush)
+            DeleteObject(item->fillBrush);
     }
 }
 
 void Skin::colorizeGlyphByName(const char* szGlyphName, const COLORREF clr, float h, float s, float v)
 {
-	if(szGlyphName) {
-		TImageItem *_t = imageItems;
-		while(_t) {
-			if(!strcmp(_t->szName, szGlyphName)) {
-				Gfx::colorizeGlyph(_t, clr, h, s, v);
-				break;
-			}
-			_t = _t->nextItem;
-		}
-	}
+    if(szGlyphName) {
+        TImageItem *_t = imageItems;
+        while(_t) {
+            if(!strcmp(_t->szName, szGlyphName)) {
+                Gfx::colorizeGlyph(_t, clr, h, s, v);
+                break;
+            }
+            _t = _t->nextItem;
+        }
+    }
 }
 
 /**
  * render a image item with the given name to the target rectangle in the target
  * device context.
  *
- * @param szItemname	image item name (must include the preceeding $ or @)
- * @param rc			target rectangle
- * @param hdc			target dc
+ * @param szItemname    image item name (must include the preceeding $ or @)
+ * @param rc            target rectangle
+ * @param hdc           target dc
  */
 void Skin::renderNamedImageItem(const char *szItemname, RECT* rc, const HDC hdc)
 {
-	if(szItemname) {
-		TImageItem *_t = imageItems;
-		while(_t) {
-			if(_t->szName && !strcmp(_t->szName, szItemname)) {
-				Gfx::renderImageItem(hdc, _t, rc);
-				break;
-			}
-			_t = _t->nextItem;
-		}
-	}
+    if(szItemname) {
+        TImageItem *_t = imageItems;
+        while(_t) {
+            if(_t->szName && !strcmp(_t->szName, szItemname)) {
+                Gfx::renderImageItem(hdc, _t, rc);
+                break;
+            }
+            _t = _t->nextItem;
+        }
+    }
 }
 /**
  * free all skin items
@@ -162,13 +162,13 @@ void Skin::Unload()
     TImageItem *pItem = imageItems, *pNextItem;
     TButtonItem *pbItem = CLUI::buttonItems, *pbNextItem;
 
-	while(pItem) {
+    while(pItem) {
         freeImageItem(pItem);
         pNextItem = pItem->nextItem;
         free(pItem);
         pItem = pNextItem;
     }
-	imageItems = NULL;
+    imageItems = NULL;
     while(pbItem) {
         DestroyWindow(pbItem->hWnd);
         pbNextItem = pbItem->nextItem;
@@ -202,30 +202,30 @@ void Skin::Unload()
     glyphItem = NULL;
 
     if(statusItems) {
-    	TStatusItem* 	item;
-    	for(int i = 0; i <= ID_EXTBK_LAST; i++) {
-    		item = &statusItems[i];
+        TStatusItem*    item;
+        for(int i = 0; i <= ID_EXTBK_LAST; i++) {
+            item = &statusItems[i];
 
-    		if(item->span_allocator) {
-				delete item->gradient_renderer_x;
-				delete item->gradient_renderer_y;
-				delete item->solid_renderer;
-				delete item->span_gradient_x;
-				delete item->span_gradient_y;
-				delete item->gradient_trans;
-				delete item->gradient_func_x;
-				delete item->gradient_func_y;
-				delete item->color_array;
-				delete item->span_interpolator;
-				delete item->span_allocator;
-				delete item->pixfmt;
-				delete item->rbase;
-				delete item->rect;
-    		}
-    	}
-    	free(statusItems);
-    	statusItems = 0;
-    	ID_EXTBK_LAST = ID_EXTBK_LAST_D;
+            if(item->span_allocator) {
+                delete item->gradient_renderer_x;
+                delete item->gradient_renderer_y;
+                delete item->solid_renderer;
+                delete item->span_gradient_x;
+                delete item->span_gradient_y;
+                delete item->gradient_trans;
+                delete item->gradient_func_x;
+                delete item->gradient_func_y;
+                delete item->color_array;
+                delete item->span_interpolator;
+                delete item->span_allocator;
+                delete item->pixfmt;
+                delete item->rbase;
+                delete item->rect;
+            }
+        }
+        free(statusItems);
+        statusItems = 0;
+        ID_EXTBK_LAST = ID_EXTBK_LAST_D;
     }
 }
 
@@ -233,73 +233,73 @@ void Skin::Unload()
  * setup the items AGG rendering pipeline - set color values for the gradient
  * and the rectangle shape (corners)
  *
- * @param item		TStatusItem* - a skin item
+ * @param item      TStatusItem* - a skin item
  */
 void Skin::setupAGGItemContext(TStatusItem* item)
 {
-	BYTE	r = GetRValue(item->COLOR);
-	BYTE	g = GetGValue(item->COLOR);
-	BYTE	b = GetBValue(item->COLOR);
+    BYTE    r = GetRValue(item->COLOR);
+    BYTE    g = GetGValue(item->COLOR);
+    BYTE    b = GetBValue(item->COLOR);
 
-	BYTE	r2 = GetRValue(item->COLOR2);
-	BYTE	g2 = GetGValue(item->COLOR2);
-	BYTE	b2 = GetBValue(item->COLOR2);
+    BYTE    r2 = GetRValue(item->COLOR2);
+    BYTE    g2 = GetGValue(item->COLOR2);
+    BYTE    b2 = GetBValue(item->COLOR2);
 
-	if(0 == item->span_allocator)					// do not setup for image items only (these do not have AGG objects).
-		return;
+    if(0 == item->span_allocator)                   // do not setup for image items only (these do not have AGG objects).
+        return;
 
-	item->dwFlags &= ~(AGG_USE_GRADIENT_X_RENDERER | AGG_USE_GRADIENT_Y_RENDERER | AGG_USE_SOLID_RENDERER);
+    item->dwFlags &= ~(AGG_USE_GRADIENT_X_RENDERER | AGG_USE_GRADIENT_Y_RENDERER | AGG_USE_SOLID_RENDERER);
 
-	/*
-	 * alpha values as read from the skin definition are in PERCENT (0-100)
-	 */
-	if(item->GRADIENT & GRADIENT_ACTIVE) {
-		//agg::rgba8 r1 = agg::rgba8(r, g, b, percent_to_byte(item->ALPHA));
-		//agg::rgba8 r2 = agg::rgba8(r2, g2, b2, percent_to_byte(item->ALPHA2));
+    /*
+     * alpha values as read from the skin definition are in PERCENT (0-100)
+     */
+    if(item->GRADIENT & GRADIENT_ACTIVE) {
+        //agg::rgba8 r1 = agg::rgba8(r, g, b, percent_to_byte(item->ALPHA));
+        //agg::rgba8 r2 = agg::rgba8(r2, g2, b2, percent_to_byte(item->ALPHA2));
 
-		agg::rgba8 r1(r, g, b, percent_to_byte(item->ALPHA));
-		agg::rgba8 r2(r2, g2, b2, percent_to_byte(item->ALPHA2));
+        agg::rgba8 r1(r, g, b, percent_to_byte(item->ALPHA));
+        agg::rgba8 r2(r2, g2, b2, percent_to_byte(item->ALPHA2));
 
-		if(item->GRADIENT & GRADIENT_LR || item->GRADIENT & GRADIENT_TB) {
-			AGGContext::fill_color_array(*(item->color_array), r1, r2);
-			item->dwFlags |= (item->GRADIENT & GRADIENT_LR ? AGG_USE_GRADIENT_X_RENDERER : AGG_USE_GRADIENT_Y_RENDERER);
-		}
-		else {
-			item->dwFlags |= (item->GRADIENT & GRADIENT_RL ? AGG_USE_GRADIENT_X_RENDERER : AGG_USE_GRADIENT_Y_RENDERER);
-			AGGContext::fill_color_array(*(item->color_array), r2, r1);
-		}
-	}
-	else {
-		/*
-		 * if no gradient is defined for this item, use a solid renderer
-		 * it's faster.
-		 */
-		item->solid_renderer->color(agg::rgba8(r, g, b, percent_to_byte(item->ALPHA)));
-		item->dwFlags |= AGG_USE_SOLID_RENDERER;
-	}
+        if(item->GRADIENT & GRADIENT_LR || item->GRADIENT & GRADIENT_TB) {
+            AGGContext::fill_color_array(*(item->color_array), r1, r2);
+            item->dwFlags |= (item->GRADIENT & GRADIENT_LR ? AGG_USE_GRADIENT_X_RENDERER : AGG_USE_GRADIENT_Y_RENDERER);
+        }
+        else {
+            item->dwFlags |= (item->GRADIENT & GRADIENT_RL ? AGG_USE_GRADIENT_X_RENDERER : AGG_USE_GRADIENT_Y_RENDERER);
+            AGGContext::fill_color_array(*(item->color_array), r2, r1);
+        }
+    }
+    else {
+        /*
+         * if no gradient is defined for this item, use a solid renderer
+         * it's faster.
+         */
+        item->solid_renderer->color(agg::rgba8(r, g, b, percent_to_byte(item->ALPHA)));
+        item->dwFlags |= AGG_USE_SOLID_RENDERER;
+    }
 
-	/*
-	 * we can setup the corner radius values for our shape here. When rendering, we use
-	 * item->rect->rect() to set the dimensions of the rectangle only.
-	 *
-	 * TODO make radius customizable
-	 */
+    /*
+     * we can setup the corner radius values for our shape here. When rendering, we use
+     * item->rect->rect() to set the dimensions of the rectangle only.
+     *
+     * TODO make radius customizable
+     */
 
-	item->rect->radius(0, 0, 0, 0, 0, 0, 0, 0);
-	if(item->CORNER & CORNER_ACTIVE) {
-		double x1 = 0, y1 = 0, x2 = 0, y2 = 0, x3 = 0, y3 = 0, x4 = 0, y4 = 0;
+    item->rect->radius(0, 0, 0, 0, 0, 0, 0, 0);
+    if(item->CORNER & CORNER_ACTIVE) {
+        double x1 = 0, y1 = 0, x2 = 0, y2 = 0, x3 = 0, y3 = 0, x4 = 0, y4 = 0;
 
-		if(item->CORNER & CORNER_TL)
-			x1 = y1 = Skin::metrics.cCornerRadius;
-		if(item->CORNER & CORNER_TR)
-			x2 = y2 = Skin::metrics.cCornerRadius;
-		if(item->CORNER & CORNER_BL)
-			x4 = y4 = Skin::metrics.cCornerRadius;
-		if(item->CORNER & CORNER_BR)
-			x3 = y3 = Skin::metrics.cCornerRadius;
+        if(item->CORNER & CORNER_TL)
+            x1 = y1 = Skin::metrics.cCornerRadius;
+        if(item->CORNER & CORNER_TR)
+            x2 = y2 = Skin::metrics.cCornerRadius;
+        if(item->CORNER & CORNER_BL)
+            x4 = y4 = Skin::metrics.cCornerRadius;
+        if(item->CORNER & CORNER_BR)
+            x3 = y3 = Skin::metrics.cCornerRadius;
 
-		item->rect->radius(x1, y1, x2, y2, x3, y3, x4, y4);
-	}
+        item->rect->radius(x1, y1, x2, y2, x3, y3, x4, y4);
+    }
 }
 
 /**
@@ -308,34 +308,34 @@ void Skin::setupAGGItemContext(TStatusItem* item)
  */
 void Skin::exportSettingsToFile(const char *file)
 {
-	// TODO needs work
+    // TODO needs work
 
-	/*
-	int i = 0;
-	DWORD data;
-	char  cPrefix, szBuf[30];
-	*/
+    /*
+    int i = 0;
+    DWORD data;
+    char  cPrefix, szBuf[30];
+    */
 }
 /**
  * exports all skin-relevant customization to a file
- * @param file	file name (INI format)
+ * @param file  file name (INI format)
  */
 void Skin::exportToFile(const char *file)
 {
-    int 		n;
-    char 		szSection[255];
-    char 		szKey[255];
-    DBVARIANT 	dbv = {0};
-    DWORD 		data;
-    char*		szSectionName = 0, *p = 0;
+    int         n;
+    char        szSection[255];
+    char        szKey[255];
+    DBVARIANT   dbv = {0};
+    DWORD       data;
+    char*       szSectionName = 0, *p = 0;
 
     for (n = 0; n <= ID_EXTBK_LAST; n++) {
         if (statusItems[n].statusID != ID_EXTBKSEPARATOR) {
-        	szSectionName = p = statusItems[n].szName;
-        	if('{' == szSectionName[0])
-        		p += 3;
+            szSectionName = p = statusItems[n].szName;
+            if('{' == szSectionName[0])
+                p += 3;
 
-        	Utils::writeProfile(p, "ColorHigh", statusItems[n].COLOR, file);
+            Utils::writeProfile(p, "ColorHigh", statusItems[n].COLOR, file);
             Utils::writeProfile(p, "ColorLow", statusItems[n].COLOR2, file);
             Utils::writeProfile(p, "Textcolor", statusItems[n].TEXTCOLOR, file);
             Utils::writeProfile(p, "Ignored", statusItems[n].IGNORED, file);
@@ -382,7 +382,7 @@ void Skin::exportToFile(const char *file)
 }
 
 static TStatusItem default_item =  {
-	"{--Contact--}", 0,
+    "{--Contact--}", 0,
      CLCDEFAULT_GRADIENT, CLCDEFAULT_CORNER,
      CLCDEFAULT_COLOR, CLCDEFAULT_COLOR2, CLCDEFAULT_COLOR2_TRANSPARENT, -1,
      CLCDEFAULT_ALPHA, CLCDEFAULT_MRGN_LEFT, CLCDEFAULT_MRGN_TOP, CLCDEFAULT_MRGN_RIGHT,
@@ -392,7 +392,7 @@ static TStatusItem default_item =  {
 void SkinLoader::readItem(TStatusItem *this_item, const char *szItem)
 {
     TStatusItem *defaults = &default_item;
-    DWORD		tmpflags;
+    DWORD       tmpflags;
 
     this_item->ALPHA = (int)GetPrivateProfileIntA(szItem, "Alpha", defaults->ALPHA, m_szFilename);
     this_item->ALPHA = min(this_item->ALPHA, 100);
@@ -418,73 +418,73 @@ void SkinLoader::readItem(TStatusItem *this_item, const char *szItem)
 
 void SkinLoader::loadBaseItems()
 {
-	int protoCount = 	0, i, n;
-	PROTOACCOUNT**		accs = 0;
-	char*				p = 0;
+    int protoCount =    0, i, n;
+    PROTOACCOUNT**      accs = 0;
+    char*               p = 0;
 
-	Proto_EnumAccounts(&protoCount, &accs);
+    Proto_EnumAccounts(&protoCount, &accs);
 
-	if(Skin::statusItems) {
-		free(Skin::statusItems);
-		Skin::statusItems = 0;
-		Skin::ID_EXTBK_LAST = ID_EXTBK_LAST_D;
-	}
-	Skin::statusItems = (TStatusItem *)malloc(sizeof(TStatusItem) * ((Skin::ID_EXTBK_LAST) + protoCount + 2));
-	CopyMemory(Skin::statusItems, DefaultStatusItems, sizeof(DefaultStatusItems));
+    if(Skin::statusItems) {
+        free(Skin::statusItems);
+        Skin::statusItems = 0;
+        Skin::ID_EXTBK_LAST = ID_EXTBK_LAST_D;
+    }
+    Skin::statusItems = (TStatusItem *)malloc(sizeof(TStatusItem) * ((Skin::ID_EXTBK_LAST) + protoCount + 2));
+    CopyMemory(Skin::statusItems, DefaultStatusItems, sizeof(DefaultStatusItems));
 
-	for(i = 0; i < protoCount; i++) {
-		Skin::ID_EXTBK_LAST++;
-		CopyMemory(&Skin::statusItems[Skin::ID_EXTBK_LAST], &Skin::statusItems[0], sizeof(TStatusItem));
-		if(i == 0) {
-			lstrcpynA(Skin::statusItems[Skin::ID_EXTBK_LAST].szName, "{-}", 30);
-			strncat(Skin::statusItems[Skin::ID_EXTBK_LAST].szName, accs[i]->szModuleName, 30);
-		}
-		else
-			lstrcpynA(Skin::statusItems[Skin::ID_EXTBK_LAST].szName, accs[i]->szModuleName, 30);
-		Skin::statusItems[Skin::ID_EXTBK_LAST].statusID = Skin::ID_EXTBK_LAST;
-	}
-	for (n = 0; n <= Skin::ID_EXTBK_LAST; n++) {
-		if (Skin::statusItems[n].statusID != ID_EXTBKSEPARATOR) {
-			Skin::statusItems[n].imageItem = 0;
-			p = Skin::statusItems[n].szName;
-			if(*p == '{')
-				p += 3;
+    for(i = 0; i < protoCount; i++) {
+        Skin::ID_EXTBK_LAST++;
+        CopyMemory(&Skin::statusItems[Skin::ID_EXTBK_LAST], &Skin::statusItems[0], sizeof(TStatusItem));
+        if(i == 0) {
+            lstrcpynA(Skin::statusItems[Skin::ID_EXTBK_LAST].szName, "{-}", 30);
+            strncat(Skin::statusItems[Skin::ID_EXTBK_LAST].szName, accs[i]->szModuleName, 30);
+        }
+        else
+            lstrcpynA(Skin::statusItems[Skin::ID_EXTBK_LAST].szName, accs[i]->szModuleName, 30);
+        Skin::statusItems[Skin::ID_EXTBK_LAST].statusID = Skin::ID_EXTBK_LAST;
+    }
+    for (n = 0; n <= Skin::ID_EXTBK_LAST; n++) {
+        if (Skin::statusItems[n].statusID != ID_EXTBKSEPARATOR) {
+            Skin::statusItems[n].imageItem = 0;
+            p = Skin::statusItems[n].szName;
+            if(*p == '{')
+                p += 3;
 
-			TStatusItem* item = &Skin::statusItems[n];
+            TStatusItem* item = &Skin::statusItems[n];
 
-			readItem(item, p);
+            readItem(item, p);
 
-			if(!(item->dwFlags & S_ITEM_IMAGE_ONLY)) {
-				item->span_allocator	= new span_allocator_t;
-				item->color_array 		= new agg::pod_auto_array<agg::rgba8, 256>();
-				item->gradient_func_x 	= new agg::gradient_x();
-				item->gradient_func_y 	= new agg::gradient_y();
-				item->gradient_trans 	= new agg::trans_affine();
-				item->span_interpolator = new agg::span_interpolator_linear<>(*(item->gradient_trans));
-				item->span_gradient_x 	= new span_gradient_x_t(*(item->span_interpolator),
-						*(item->gradient_func_x), *(item->color_array), 0, 200);
+            if(!(item->dwFlags & S_ITEM_IMAGE_ONLY)) {
+                item->span_allocator    = new span_allocator_t;
+                item->color_array       = new agg::pod_auto_array<agg::rgba8, 256>();
+                item->gradient_func_x   = new agg::gradient_x();
+                item->gradient_func_y   = new agg::gradient_y();
+                item->gradient_trans    = new agg::trans_affine();
+                item->span_interpolator = new agg::span_interpolator_linear<>(*(item->gradient_trans));
+                item->span_gradient_x   = new span_gradient_x_t(*(item->span_interpolator),
+                        *(item->gradient_func_x), *(item->color_array), 0, 200);
 
-				item->span_gradient_y 	= new span_gradient_y_t(*(item->span_interpolator),
-						*(item->gradient_func_y), *(item->color_array), 0, 200);
+                item->span_gradient_y   = new span_gradient_y_t(*(item->span_interpolator),
+                        *(item->gradient_func_y), *(item->color_array), 0, 200);
 
-				item->pixfmt 			= new agg::pixfmt_bgra32(); //*(item->rbuf));
-				item->rbase				= new agg::renderer_base<agg::pixfmt_bgra32>(); //*(item->pixfmt));
-				item->gradient_renderer_x = new agg::renderer_scanline_aa<agg::renderer_base<agg::pixfmt_bgra32>, span_allocator_t, span_gradient_x_t>(*(item->rbase),
-						*(item->span_allocator), *(item->span_gradient_x));
+                item->pixfmt            = new agg::pixfmt_bgra32(); //*(item->rbuf));
+                item->rbase             = new agg::renderer_base<agg::pixfmt_bgra32>(); //*(item->pixfmt));
+                item->gradient_renderer_x = new agg::renderer_scanline_aa<agg::renderer_base<agg::pixfmt_bgra32>, span_allocator_t, span_gradient_x_t>(*(item->rbase),
+                        *(item->span_allocator), *(item->span_gradient_x));
 
-				item->gradient_renderer_y = new agg::renderer_scanline_aa<agg::renderer_base<agg::pixfmt_bgra32>, span_allocator_t, span_gradient_y_t>(*(item->rbase),
-						*(item->span_allocator), *(item->span_gradient_y));
+                item->gradient_renderer_y = new agg::renderer_scanline_aa<agg::renderer_base<agg::pixfmt_bgra32>, span_allocator_t, span_gradient_y_t>(*(item->rbase),
+                        *(item->span_allocator), *(item->span_gradient_y));
 
-				item->solid_renderer 	= new agg::renderer_scanline_aa_solid<agg::renderer_base<agg::pixfmt_bgra32> >(*(item->rbase));
+                item->solid_renderer    = new agg::renderer_scanline_aa_solid<agg::renderer_base<agg::pixfmt_bgra32> >(*(item->rbase));
 
-				item->rect				= new agg::rounded_rect(0, 0, 0, 0, 0);
+                item->rect              = new agg::rounded_rect(0, 0, 0, 0, 0);
 
-				Skin::setupAGGItemContext(item);
-			}
-			else
-				item->span_allocator = 0;
-		}
-	}
+                Skin::setupAGGItemContext(item);
+            }
+            else
+                item->span_allocator = 0;
+        }
+    }
 }
 
 /**
@@ -500,161 +500,161 @@ void SkinLoader::loadFonts()
     char szKey[255], szSection[255];
     DWORD data;
 
-	for(n = 0; n <= FONTID_LAST; n++) {
-		mir_snprintf(szSection, 255, "Font%d", n);
+    for(n = 0; n <= FONTID_LAST; n++) {
+        mir_snprintf(szSection, 255, "Font%d", n);
 
-		mir_snprintf(szKey, 255, "Font%dName", n);
-		GetPrivateProfileStringA(szSection, "Name", "Arial", buffer, sizeof(buffer), m_szFilename);
-		cfg::writeString(NULL, "CLC", szKey, buffer);
+        mir_snprintf(szKey, 255, "Font%dName", n);
+        GetPrivateProfileStringA(szSection, "Name", "Arial", buffer, sizeof(buffer), m_szFilename);
+        cfg::writeString(NULL, "CLC", szKey, buffer);
 
-		mir_snprintf(szKey, 255, "Font%dSize", n);
-		data = readInt(szSection, "Size", 10);
-		cfg::writeByte("CLC", szKey, (BYTE)data);
+        mir_snprintf(szKey, 255, "Font%dSize", n);
+        data = readInt(szSection, "Size", 10);
+        cfg::writeByte("CLC", szKey, (BYTE)data);
 
-		mir_snprintf(szKey, 255, "Font%dSty", n);
-		data = readInt(szSection, "Style", 0);
-		cfg::writeByte("CLC", szKey, (BYTE)data);
+        mir_snprintf(szKey, 255, "Font%dSty", n);
+        data = readInt(szSection, "Style", 0);
+        cfg::writeByte("CLC", szKey, (BYTE)data);
 
-		mir_snprintf(szKey, 255, "Font%dSet", n);
-		data = readInt(szSection, "Set", 1);
-		cfg::writeByte("CLC", szKey, (BYTE)data);
+        mir_snprintf(szKey, 255, "Font%dSet", n);
+        data = readInt(szSection, "Set", 1);
+        cfg::writeByte("CLC", szKey, (BYTE)data);
 
-		mir_snprintf(szKey, 255, "Font%dCol", n);
-		data = readInt(szSection, "Color", 0x00);
-		cfg::writeDword("CLC", szKey, data);
+        mir_snprintf(szKey, 255, "Font%dCol", n);
+        data = readInt(szSection, "Color", 0x00);
+        cfg::writeDword("CLC", szKey, data);
 
-		mir_snprintf(szKey, 255, "Font%dFlags", n);
-		data = readInt(szSection, "Flags", 0);
-		cfg::writeDword("CLC", szKey, (WORD)data);
-	}
+        mir_snprintf(szKey, 255, "Font%dFlags", n);
+        data = readInt(szSection, "Flags", 0);
+        cfg::writeDword("CLC", szKey, (WORD)data);
+    }
 }
 
 /**
  * load a skin with the given name.
- * @param wszFilename:	full path and file name of the skin
- *  					definition file (.cng format)
+ * @param wszFilename:  full path and file name of the skin
+ *                      definition file (.cng format)
  *
  * after constructing, check ::isValid() before using the Load()
  * method.
  */
 SkinLoader::SkinLoader(const wchar_t* wszFilename)
 {
-	wchar_t		wszBase[MAX_PATH], wszRelPath[MAX_PATH];
-	m_isValid = false;
-	wchar_t		wszDrive[_MAX_DRIVE], wszDir[_MAX_DIR], wszFile[_MAX_FNAME];
+    wchar_t     wszBase[MAX_PATH], wszRelPath[MAX_PATH];
+    m_isValid = false;
+    wchar_t     wszDrive[_MAX_DRIVE], wszDir[_MAX_DIR], wszFile[_MAX_FNAME];
 
-	Skin::settings.wszSkinBaseFolder[0] = Skin::settings.wszSkinName[0] = 0;
+    Skin::settings.wszSkinBaseFolder[0] = Skin::settings.wszSkinName[0] = 0;
 
-	mir_sntprintf(wszBase, MAX_PATH, L"%s%s", cfg::szProfileDir, L"skin\\clng\\base\\base.cng");
-	if(0 == wszFilename) {
-		if(PathFileExists(wszBase)) {
-			wcsncpy(m_wszFilename, wszBase, MAX_PATH);
-			m_wszFilename[MAX_PATH - 1] = 0;
-			WideCharToMultiByte(CP_ACP, 0, wszBase, MAX_PATH, m_szFilename, MAX_PATH, 0, 0);
-			m_isValid = true;
-		}
-	}
-	else {
-		if(PathFileExists(wszFilename)) {
-			WideCharToMultiByte(CP_ACP, 0, wszFilename, MAX_PATH, m_szFilename, MAX_PATH, 0, 0);
-			wcsncpy(m_wszFilename, wszFilename, MAX_PATH);
-			m_wszFilename[MAX_PATH - 1] = 0;
-		}
-		else {
-			WideCharToMultiByte(CP_ACP, 0, wszBase, MAX_PATH, m_szFilename, MAX_PATH, 0, 0);
-			wcsncpy(m_wszFilename, wszBase, MAX_PATH);
-			m_wszFilename[MAX_PATH - 1] = 0;
-		}
-		m_isValid = true;
-	}
-	Utils::pathToRelative(m_wszFilename, wszRelPath, cfg::szProfileDir);
-	cfg::writeTString(0, SKIN_DB_MODULE, "gCurrentSkin", wszRelPath);
-	_wsplitpath(m_wszFilename, wszDrive, wszDir, wszFile, 0);
-	mir_sntprintf(Skin::settings.wszSkinBaseFolder, MAX_PATH, L"%s%s", wszDrive, wszDir);
-	mir_sntprintf(Skin::settings.wszSkinName, MAX_PATH, L"%s", wszFile);
+    mir_sntprintf(wszBase, MAX_PATH, L"%s%s", cfg::szProfileDir, L"skin\\clng\\base\\base.cng");
+    if(0 == wszFilename) {
+        if(PathFileExists(wszBase)) {
+            wcsncpy(m_wszFilename, wszBase, MAX_PATH);
+            m_wszFilename[MAX_PATH - 1] = 0;
+            WideCharToMultiByte(CP_ACP, 0, wszBase, MAX_PATH, m_szFilename, MAX_PATH, 0, 0);
+            m_isValid = true;
+        }
+    }
+    else {
+        if(PathFileExists(wszFilename)) {
+            WideCharToMultiByte(CP_ACP, 0, wszFilename, MAX_PATH, m_szFilename, MAX_PATH, 0, 0);
+            wcsncpy(m_wszFilename, wszFilename, MAX_PATH);
+            m_wszFilename[MAX_PATH - 1] = 0;
+        }
+        else {
+            WideCharToMultiByte(CP_ACP, 0, wszBase, MAX_PATH, m_szFilename, MAX_PATH, 0, 0);
+            wcsncpy(m_wszFilename, wszBase, MAX_PATH);
+            m_wszFilename[MAX_PATH - 1] = 0;
+        }
+        m_isValid = true;
+    }
+    Utils::pathToRelative(m_wszFilename, wszRelPath, cfg::szProfileDir);
+    cfg::writeTString(0, SKIN_DB_MODULE, "gCurrentSkin", wszRelPath);
+    _wsplitpath(m_wszFilename, wszDrive, wszDir, wszFile, 0);
+    mir_sntprintf(Skin::settings.wszSkinBaseFolder, MAX_PATH, L"%s%s", wszDrive, wszDir);
+    mir_sntprintf(Skin::settings.wszSkinName, MAX_PATH, L"%s", wszFile);
 }
 
 /**
  * read a setting from the skin definition file
  * the filename is in m_szFilename and was set in the ctor
  *
- * @param szSection		INI section
- * @param szValue		key name
- * @param dwDefault		default when the entry is not found
- * @return				DWORD containing the read value (or the default)
+ * @param szSection     INI section
+ * @param szValue       key name
+ * @param dwDefault     default when the entry is not found
+ * @return              DWORD containing the read value (or the default)
  */
 DWORD SkinLoader::readInt(const char* szSection, const char* szValue, DWORD dwDefault)
 {
-	if(m_isValid)
-		return(GetPrivateProfileIntA(szSection, szValue, dwDefault, m_szFilename));
-	else
-		return(0);
+    if(m_isValid)
+        return(GetPrivateProfileIntA(szSection, szValue, dwDefault, m_szFilename));
+    else
+        return(0);
 }
 
 HRESULT SkinLoader::Load()
 {
-	/*
-	 * load metrics and other skin data
-	 */
+    /*
+     * load metrics and other skin data
+     */
 
-	Skin::metrics.cLeftSkinned = readInt("FramelessMetrics", "CLeft", 0);
-	Skin::metrics.cRightSkinned = readInt("FramelessMetrics", "CRight", 0);
-	Skin::metrics.cTopSkinned = readInt("FramelessMetrics", "CTop", 0);
-	Skin::metrics.cBottomSkinned = readInt("FramelessMetrics", "CBottom", 0);
+    Skin::metrics.cLeftSkinned = readInt("FramelessMetrics", "CLeft", 0);
+    Skin::metrics.cRightSkinned = readInt("FramelessMetrics", "CRight", 0);
+    Skin::metrics.cTopSkinned = readInt("FramelessMetrics", "CTop", 0);
+    Skin::metrics.cBottomSkinned = readInt("FramelessMetrics", "CBottom", 0);
 
-	Skin::metrics.cLeftFramed = readInt("Metrics", "CLeft", 0);
-	Skin::metrics.cRightFramed = readInt("Metrics", "CRight", 0);
-	Skin::metrics.cTopFramed = readInt("Metrics", "CTop", 0);
-	Skin::metrics.cBottomFramed = readInt("Metrics", "CBottom", 0);
+    Skin::metrics.cLeftFramed = readInt("Metrics", "CLeft", 0);
+    Skin::metrics.cRightFramed = readInt("Metrics", "CRight", 0);
+    Skin::metrics.cTopFramed = readInt("Metrics", "CTop", 0);
+    Skin::metrics.cBottomFramed = readInt("Metrics", "CBottom", 0);
 
-	Skin::metrics.bWindowStyle = readInt("Settings", "DefaultWindowStyle", SETTING_WINDOWSTYLE_NOBORDER);
-	Skin::metrics.cButtonHeight = readInt("Settings", "ButtonHeight", BUTTON_HEIGHT_D);
-	Skin::metrics.cFakeCaption = readInt("FramelessMetrics", "CaptionHeight", 0);
-	Skin::metrics.cFakeLeftBorder = readInt("FramelessMetrics", "LeftBorderWidth", 0);
-	Skin::metrics.cFakeRightBorder = readInt("FramelessMetrics", "RightBorderWidth", 0);
-	Skin::metrics.cFakeBtmBorder = readInt("FramelessMetrics", "BottomBorderWidth", 0);
+    Skin::metrics.bWindowStyle = readInt("Settings", "DefaultWindowStyle", SETTING_WINDOWSTYLE_NOBORDER);
+    Skin::metrics.cButtonHeight = readInt("Settings", "ButtonHeight", BUTTON_HEIGHT_D);
+    Skin::metrics.cFakeCaption = readInt("FramelessMetrics", "CaptionHeight", 0);
+    Skin::metrics.cFakeLeftBorder = readInt("FramelessMetrics", "LeftBorderWidth", 0);
+    Skin::metrics.cFakeRightBorder = readInt("FramelessMetrics", "RightBorderWidth", 0);
+    Skin::metrics.cFakeBtmBorder = readInt("FramelessMetrics", "BottomBorderWidth", 0);
 
-	Skin::metrics.cTopButtonset = readInt("Buttonset", "Top", 0);
-	Skin::metrics.cLeftButtonset = readInt("Buttonset", "Left", 0);
-	Skin::metrics.cRightButtonset = readInt("Buttonset", "Right", 0);
-	Skin::metrics.cBottomButtonset = readInt("Buttonset", "Bottom", 0);
+    Skin::metrics.cTopButtonset = readInt("Buttonset", "Top", 0);
+    Skin::metrics.cLeftButtonset = readInt("Buttonset", "Left", 0);
+    Skin::metrics.cRightButtonset = readInt("Buttonset", "Right", 0);
+    Skin::metrics.cBottomButtonset = readInt("Buttonset", "Bottom", 0);
 
-	Skin::metrics.cCornerRadius = readInt("Settings", "CornerRadius", 5);
-	Skin::settings.fUseAero = cfg::getByte(SKIN_DB_MODULE, "sfUseAero", 1) ? true : false;
+    Skin::metrics.cCornerRadius = readInt("Settings", "CornerRadius", 5);
+    Skin::settings.fUseAero = cfg::getByte(SKIN_DB_MODULE, "sfUseAero", 1) ? true : false;
 
-	/*
-	 * read the base items and fill the structure
-	 */
-	loadBaseItems();
+    /*
+     * read the base items and fill the structure
+     */
+    loadBaseItems();
 
-	/*
-	 * load all other skin elements (images, buttons, icons)
-	 */
-	if(!SUCCEEDED(loadItems()))
-		return(-S_FALSE);
+    /*
+     * load all other skin elements (images, buttons, icons)
+     */
+    if(!SUCCEEDED(loadItems()))
+        return(-S_FALSE);
 
-	/*
-	 * TODO read font settings only when necessary (when skin has changed)
-	 */
+    /*
+     * TODO read font settings only when necessary (when skin has changed)
+     */
 
-	loadFonts();
-	cfg::FS_RegisterFonts();
+    loadFonts();
+    cfg::FS_RegisterFonts();
 
-	/*
-	 * validations (check image items, border styles and make sure everything makes
-	 * sense). Protect against skin definition errors
-	 */
-	Skin::settings.fHaveAeroBG = CLUI::bgImageItem ? true : false;
-	if(Skin::metrics.bWindowStyle == SETTING_WINDOWSTYLE_NOBORDER && (0 == CLUI::bgImageItem || 0 == CLUI::bgImageItem_nonAero))
-		Skin::metrics.bWindowStyle = SETTING_WINDOWSTYLE_DEFAULT;
+    /*
+     * validations (check image items, border styles and make sure everything makes
+     * sense). Protect against skin definition errors
+     */
+    Skin::settings.fHaveAeroBG = CLUI::bgImageItem ? true : false;
+    if(Skin::metrics.bWindowStyle == SETTING_WINDOWSTYLE_NOBORDER && (0 == CLUI::bgImageItem || 0 == CLUI::bgImageItem_nonAero))
+        Skin::metrics.bWindowStyle = SETTING_WINDOWSTYLE_DEFAULT;
 
-	return(S_OK);
+    return(S_OK);
 }
 
 HRESULT SkinLoader::loadItems()
 {
-    char*		szSections = 0, *szFileName;
-    char*		p;
+    char*       szSections = 0, *szFileName;
+    char*       p;
 
     /*
      * TODO rewrite the skin loading in wchar_t manner
@@ -663,7 +663,7 @@ HRESULT SkinLoader::loadItems()
     if(!PathFileExistsA(m_szFilename) || !m_isValid)
         return(-S_FALSE);
 
-	szFileName = m_szFilename;
+    szFileName = m_szFilename;
 
     szSections = reinterpret_cast<char *>(malloc(3002));
     ZeroMemory(szSections, 3002);
@@ -673,7 +673,7 @@ HRESULT SkinLoader::loadItems()
     szSections[3001] = szSections[3000] = 0;
     p = szSections;
     while(lstrlenA(p) > 1) {
-		if(p[0] == '$' || p[0] == '@')
+        if(p[0] == '$' || p[0] == '@')
             readImageItem(p, szFileName);
         p += (lstrlenA(p) + 1);
     }
@@ -789,7 +789,7 @@ done_with_glyph:
                 *newItem = tmpItem;
 
                 if(Skin::imageItems == NULL)
-                	Skin::imageItems = newItem;
+                    Skin::imageItems = newItem;
                 else {
                     TImageItem *pItem = Skin::imageItems;
 
@@ -816,9 +816,9 @@ done_with_glyph:
                     *newItem = tmpItem;
 
                     if(!stricmp(buffer, "CLUIAero"))
-                    	CLUI::bgImageItem = newItem;
+                        CLUI::bgImageItem = newItem;
                     else if(!stricmp(buffer, "CLUIClient"))
-                    	CLUI::bgClientItem = newItem;
+                        CLUI::bgClientItem = newItem;
                     else {
                         GetPrivateProfileStringA(itemname, "Colorkey", "e5e5e5", buffer, 500, szFileName);
                         clr = Utils::hexStringToLong(buffer);
@@ -828,7 +828,7 @@ done_with_glyph:
                             DeleteObject(g_CLUISkinnedBkColor);
                         g_CLUISkinnedBkColor = CreateSolidBrush(clr);
                         g_CLUISkinnedBkColorRGB = clr;
-                    	CLUI::bgImageItem_nonAero = newItem;
+                        CLUI::bgImageItem_nonAero = newItem;
                     }
                 }
                 continue;
@@ -844,7 +844,7 @@ done_with_glyph:
                             *newItem = tmpItem;
                             Skin::statusItems[i].imageItem = newItem;
                             if(Skin::imageItems == NULL)
-                            	Skin::imageItems = newItem;
+                                Skin::imageItems = newItem;
                             else {
                                 TImageItem *pItem = Skin::imageItems;
 
@@ -856,7 +856,7 @@ done_with_glyph:
                         }
                     }
                     else if(newItem != NULL)
-                    	Skin::statusItems[i].imageItem = newItem;
+                        Skin::statusItems[i].imageItem = newItem;
                 }
             }
         }
@@ -924,10 +924,10 @@ void SkinLoader::readButtonItem(const char *itemName, const char *file)
     }
     GetPrivateProfileStringA(itemName, "Align", "lt", szBuffer, 1000, file);
     if(lstrlenA(szBuffer) == 2) {
-    	if(szBuffer[0] =='r' || szBuffer[0] == 'R')
-    		tmpItem.dwFlags |= BUTTON_HALIGN_R;
-    	if(szBuffer[1] == 'B' || szBuffer[1] == 'B')
-    		tmpItem.dwFlags |= BUTTON_VALIGN_B;
+        if(szBuffer[0] =='r' || szBuffer[0] == 'R')
+            tmpItem.dwFlags |= BUTTON_HALIGN_R;
+        if(szBuffer[1] == 'B' || szBuffer[1] == 'B')
+            tmpItem.dwFlags |= BUTTON_VALIGN_B;
     }
     GetPrivateProfileStringA(itemName, "NormalGlyph", "0, 0, 0, 0", szBuffer, 1000, file);
     sscanf(szBuffer, "%d,%d,%d,%d", &tmpItem.normalGlyphMetrics[0], &tmpItem.normalGlyphMetrics[1],

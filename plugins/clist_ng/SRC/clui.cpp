@@ -219,7 +219,6 @@ HWND CLUI::preCreateCLC(HWND parent)
 										 , 0, 0, 0, 0, parent, NULL, g_hInst, (LPVOID)0xff00ff00);
 
 	cfg::clcdat = (struct ClcData *)GetWindowLongPtr(pcli->hwndContactTree, 0);
-
 	return pcli->hwndContactTree;
 }
 
@@ -266,7 +265,7 @@ int CLUI::createCLC(HWND parent)
 		hFrameContactTree = (HWND)CallService(MS_CLIST_FRAMES_ADDFRAME, (WPARAM) & Frame, (LPARAM)0);
 		//free(Frame.name);
 		CallService(MS_CLIST_FRAMES_SETFRAMEOPTIONS, MAKEWPARAM(FO_TBTIPNAME, hFrameContactTree), (LPARAM)Translate("My Contacts"));
-
+		MS_CLIST_ADDEVENT;
 		/*
 		* ugly, but working hack. Prevent that annoying little scroll bar from appearing in the "My Contacts" title bar
 		*/
