@@ -99,7 +99,7 @@ END
 
 IDD_EXCEPTION DIALOGEX 0, 0, 370, 131
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "TabSRMM exception"
+CAPTION "CList NG exception"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     EDITTEXT        IDC_EXCEPTION_DETAILS,7,18,356,60,ES_MULTILINE | ES_READONLY
@@ -171,7 +171,7 @@ BEGIN
     LTEXT           "",IDC_WHITERECT,0,0,228,116
     DEFPUSHBUTTON   "OK",IDOK,168,123,55,14
     LTEXT           "Clist Nicer+",IDC_CLNICER,5,7,150,15
-    CTEXT           "Copyright © 2004-2009 by the Miranda IM project. More detailed copyright information can be found in the included README file.\n\nThis software is distributed and licensed under the terms of the GNU General Public License V2 or any later version.",IDC_COPYRIGHT,5,39,217,47
+    CTEXT           "Copyright Â© 2004-2009 by the Miranda IM project. More detailed copyright information can be found in the included README file.\n\nThis software is distributed and licensed under the terms of the GNU General Public License V2 or any later version.",IDC_COPYRIGHT,5,39,217,47
     ICON            0,IDC_LOGO,201,2,20,20
     LTEXT           "Version",IDC_VERSION,5,19,150,15
     CTEXT           "build time",IDC_BUILDTIME,37,105,150,11
@@ -665,7 +665,7 @@ IDC_DROPUSER            CURSOR                  "res/dropuser.cur"
 
 IDR_CLISTMENU MENU
 BEGIN
-    POPUP "&¤"
+    POPUP "&Â¤"
     BEGIN
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_ICQ_EXIT
